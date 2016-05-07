@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.162 2016/04/21 23:14:25 riastradh Exp $
+$NetBSD: acronyms.comp,v 1.163 2016/05/07 12:22:57 pgoyette Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1271,6 +1271,7 @@ TUI	{terminal,text-based,textual} user interface
 TX	{transmit out,transmitter}
 TZ	time zone
 UAC	user {access,account} control
+UAF	use-after-free
 UART	universal asynchronous receiver/transmitter
 UAT	user acceptance testing
 UC	uncacheable
