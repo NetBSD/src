@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.10 2015/04/01 22:51:33 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.11 2016/05/07 05:46:35 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,8 @@ batches of writes are issued atomically via a log
 only physical blocks, not logical file system operations, are stored in
 the log
 .It write-ahead
-blocks are written to the log before being written to the disk
+before writing a block to disk, its new content, rather than its old
+content for roll-back, is recorded in the log
 .El
 .Pp
 When a file system using
