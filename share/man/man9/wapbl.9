@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.12 2016/05/07 06:47:44 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.13 2016/05/07 16:01:00 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,22 +156,31 @@ method should call
 .Pp
 Before issuing any
 .Xr buffercache 9
-writes, the file system must lock the current
+writes, the file system must acquire a shared lock on the current
 .Nm
 transaction with
 .Fn wapbl_begin ,
 which may sleep until there is room in the transaction for new writes.
-After issuing the writes, the file system must unlock the transaction
-with
+After issuing the writes, the file system must release its shared lock
+on the transaction with
 .Fn wapbl_end .
 Either all writes issued between
 .Fn wapbl_begin
 and
 .Fn wapbl_end
 will complete, or none of them will.
+.Pp
+File systems may also witness an
+.Em exclusive
+lock on the current transaction when
+.Nm
+is flushing the transaction to disk, or aborting a flush, and invokes a
+file system's callback.
 File systems can assert that the transaction is locked with
 .Fn wapbl_jlock_assert ,
-or not exclusively locked, with
+or not
+.Em exclusively
+locked, with
 .Fn wapbl_junlock_assert .
 .Pp
 If a file system requires multiple transactions to initialize an
@@ -271,8 +280,8 @@ is a callback that
 .Nm
 will invoke as
 .Fa flushfn Ns ( Fa mp , Fa deallocblks , Fa dealloclens , Fa dealloccnt )
-just before it flushes a transaction to disk, with the transaction
-locked exclusively, where
+just before it flushes a transaction to disk, with the an exclusive
+lock held on the transaction, where
 .Fa mp
 is the mount point passed to
 .Fn wapbl_start ,
@@ -312,9 +321,10 @@ free memory associated with
 and return zero.
 .It Fn wapbl_begin wl file line
 Wait for space in the current transaction for new writes, flushing it
-if necessary, and lock it.
+if necessary, and acquire a shared lock on it.
 .Pp
-The lock is not exclusive: other threads may lock the transaction too.
+The lock is not exclusive: other threads may acquire shared locks on
+the transaction too.
 The lock is not recursive: a thread may not acquire it again without
 calling
 .Fa wapbl_end
@@ -328,15 +338,20 @@ and
 are the file name and line number of the caller for debugging
 purposes.
 .It Fn wapbl_end wl
-Unlock the transaction.
+Release a shared lock on the transaction acquired with
+.Fn wapbl_begin .
 .It Fn wapbl_flush wl wait
 Flush the current transaction to disk.
 If
 .Fa wait
 is nonzero, wait for all writes in the current transaction to
 complete.
+.Pp
+The current transaction must not be locked.
 .It Fn wapbl_discard wl
 Discard the current transaction, permanently losing any writes in it.
+.Pp
+The current transaction must not be locked.
 .It Fn wapbl_add_buf wl bp
 Add the buffer
 .Fa bp
@@ -421,7 +436,8 @@ and
 .Fn wapbl_end .
 .Pp
 There is no way to assert that the current transaction is not locked at
-all -- i.e., that the caller may lock the transaction with
+all -- i.e., that the caller may acquire a shared lock on the
+transaction with
 .Fn wapbl_begin
 without danger of deadlock.
 .El
