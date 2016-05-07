@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.11 2016/05/07 05:46:35 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.12 2016/05/07 06:47:44 riastradh Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -315,9 +315,6 @@ Wait for space in the current transaction for new writes, flushing it
 if necessary, and lock it.
 .Pp
 The lock is not exclusive: other threads may lock the transaction too.
-However, if there is not enough space, another thread will obtain an
-exclusive lock in order to flush the transaction.
-.Pp
 The lock is not recursive: a thread may not acquire it again without
 calling
 .Fa wapbl_end
