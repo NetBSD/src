@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.67 2016/05/03 19:43:45 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.68 2016/05/07 06:38:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,29 +36,30 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.67 2016/05/03 19:43:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.68 2016/05/07 06:38:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
+#include <sys/time.h>
+#include <sys/wapbl.h>
+#include <sys/wapbl_replay.h>
 
 #ifdef _KERNEL
-#include <sys/param.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/mutex.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
+#include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/module.h>
-#include <sys/resourcevar.h>
-#include <sys/conf.h>
-#include <sys/mount.h>
-#include <sys/kernel.h>
-#include <sys/kauth.h>
-#include <sys/mutex.h>
-#include <sys/atomic.h>
-#include <sys/wapbl.h>
-#include <sys/wapbl_replay.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -73,16 +74,13 @@ static int wapbl_verbose_commit = 0;
 static inline size_t wapbl_space_free(size_t, off_t, off_t);
 
 #else /* !_KERNEL */
+
 #include <assert.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <sys/time.h>
-#include <sys/wapbl.h>
-#include <sys/wapbl_replay.h>
 
 #define	KDASSERT(x) assert(x)
 #define	KASSERT(x) assert(x)
