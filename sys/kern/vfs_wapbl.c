@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.71 2016/05/07 20:16:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.72 2016/05/07 20:18:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.71 2016/05/07 20:16:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.72 2016/05/07 20:18:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1650,16 +1650,12 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 
 	wapbl_advance_head(wl->wl_circ_size, wl->wl_circ_off, flushsize,
 	    &head, &tail);
-#ifdef WAPBL_DEBUG
-	if (head != off) {
-		panic("lost head! head=%"PRIdMAX" tail=%" PRIdMAX
-		      " off=%"PRIdMAX" flush=%zu",
-		      (intmax_t)head, (intmax_t)tail, (intmax_t)off,
-		      flushsize);
-	}
-#else
-	KASSERT(head == off);
-#endif
+
+	KASSERTMSG(head == off,
+	    "lost head! head=%"PRIdMAX" tail=%" PRIdMAX
+	    " off=%"PRIdMAX" flush=%zu",
+	    (intmax_t)head, (intmax_t)tail, (intmax_t)off,
+	    flushsize);
 
 	/* Opportunistically move the tail forward if we can */
 	if (!wapbl_lazy_truncate) {
