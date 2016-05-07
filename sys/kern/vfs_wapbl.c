@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.75 2016/05/07 21:11:51 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.76 2016/05/07 21:15:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.75 2016/05/07 21:11:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.76 2016/05/07 21:15:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2131,8 +2131,8 @@ wapbl_cache_sync(struct wapbl *wl, const char *msg)
 	    FWRITE, FSCRED);
 	if (error) {
 		WAPBL_PRINTF(WAPBL_PRINT_ERROR,
-		    ("wapbl_cache_sync: DIOCCACHESYNC on dev 0x%x "
-		    "returned %d\n", wl->wl_devvp->v_rdev, error));
+		    ("wapbl_cache_sync: DIOCCACHESYNC on dev 0x%jx "
+		    "returned %d\n", (uintmax_t)wl->wl_devvp->v_rdev, error));
 	}
 	if (verbose) {
 		struct bintime d;
