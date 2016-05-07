@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.74 2016/05/07 20:59:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.75 2016/05/07 21:11:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.74 2016/05/07 20:59:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.75 2016/05/07 21:11:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1580,8 +1580,15 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	    wl->wl_dealloccnt);
 
 	/*
-	 * Now that we are fully locked and flushed,
-	 * do another check for nothing to do.
+	 * Now that we are exclusively locked and the file system has
+	 * issued any deferred block writes for this transaction, check
+	 * whether there are any blocks to write to the log.  If not,
+	 * skip waiting for space or writing any log entries.
+	 *
+	 * XXX Shouldn't this also check wl_dealloccnt and
+	 * wl_inohashcnt?  Perhaps wl_dealloccnt doesn't matter if the
+	 * file system didn't produce any blocks as a consequence of
+	 * it, but the same does not seem to be so of wl_inohashcnt.
 	 */
 	if (wl->wl_bufcount == 0) {
 		goto wait_out;
