@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.73 2016/05/07 20:39:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.74 2016/05/07 20:59:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.73 2016/05/07 20:39:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.74 2016/05/07 20:59:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -331,7 +331,7 @@ wapbl_init(void)
 }
 
 static int
-wapbl_fini(bool interface)
+wapbl_fini(void)
 {
 
 	if (wapbl_sysctl != NULL)
@@ -3135,7 +3135,7 @@ wapbl_modcmd(modcmd_t cmd, void *arg)
 		wapbl_init();
 		return 0;
 	case MODULE_CMD_FINI:
-		return wapbl_fini(true);
+		return wapbl_fini();
 	default:
 		return ENOTTY;
 	}
