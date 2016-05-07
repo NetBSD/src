@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.72 2016/05/07 20:18:44 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.73 2016/05/07 20:39:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.72 2016/05/07 20:18:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.73 2016/05/07 20:39:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -268,12 +268,6 @@ int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 #endif
 
 static int wapbl_replay_isopen1(struct wapbl_replay *);
-
-/*
- * This is useful for debugging.  If set, the log will
- * only be truncated when necessary.
- */
-int wapbl_lazy_truncate = 0;
 
 struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_discard	= wapbl_discard,
@@ -1295,19 +1289,18 @@ wapbl_advance_tail(size_t size, size_t off, size_t delta, off_t *headp,
 /****************************************************************/
 
 /*
- * wapbl_truncate(wl, minfree, waitonly)
+ * wapbl_truncate(wl, minfree)
  *
  *	Wait until at least minfree bytes are available in the log.
  *
- *	If it was necessary to wait for writes to complete, and if
- *	waitonly is not true, advance the circular queue tail to
- *	reflect the new write completions and issue a write commit to
- *	the log.
+ *	If it was necessary to wait for writes to complete,
+ *	advance the circular queue tail to reflect the new write
+ *	completions and issue a write commit to the log.
  *
  *	=> Caller must hold wl->wl_rwlock writer lock.
  */
 static int
-wapbl_truncate(struct wapbl *wl, size_t minfree, int waitonly)
+wapbl_truncate(struct wapbl *wl, size_t minfree)
 {
 	size_t delta;
 	size_t avail;
@@ -1365,9 +1358,6 @@ wapbl_truncate(struct wapbl *wl, size_t minfree, int waitonly)
 
 	if (error)
 		return error;
-
-	if (waitonly)
-		return 0;
 
 	/*
 	 * This is where head, tail and delta are unprotected
@@ -1624,7 +1614,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		panic("wapbl_flush: current transaction too big to flush");
 	}
 
-	error = wapbl_truncate(wl, flushsize, 0);
+	error = wapbl_truncate(wl, flushsize);
 	if (error)
 		goto out;
 
@@ -1658,13 +1648,11 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	    flushsize);
 
 	/* Opportunistically move the tail forward if we can */
-	if (!wapbl_lazy_truncate) {
-		mutex_enter(&wl->wl_mtx);
-		delta = wl->wl_reclaimable_bytes;
-		mutex_exit(&wl->wl_mtx);
-		wapbl_advance_tail(wl->wl_circ_size, wl->wl_circ_off, delta,
-		    &head, &tail);
-	}
+	mutex_enter(&wl->wl_mtx);
+	delta = wl->wl_reclaimable_bytes;
+	mutex_exit(&wl->wl_mtx);
+	wapbl_advance_tail(wl->wl_circ_size, wl->wl_circ_off, delta,
+	    &head, &tail);
 
 	error = wapbl_write_commit(wl, head, tail);
 	if (error)
@@ -1754,7 +1742,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 */
 	if (waitfor) {
 		error = wapbl_truncate(wl, wl->wl_circ_size - 
-			wl->wl_reserved_bytes, wapbl_lazy_truncate);
+			wl->wl_reserved_bytes);
 	}
 
  out:
