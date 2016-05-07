@@ -1,4 +1,4 @@
-.\"     $NetBSD: namei.9,v 1.36 2016/05/06 04:55:10 dholland Exp $
+.\"     $NetBSD: namei.9,v 1.37 2016/05/07 08:52:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -206,7 +206,7 @@ The
 mode is the baseline behavior, for all ordinary lookups that simply
 return a vnode.
 In this mode, if the requested object does not exist,
-.Dv ENOENT
+.Er ENOENT
 is returned.
 .Pp
 The
@@ -215,7 +215,7 @@ mode is used when doing the lookup for operations that create names in
 the file system namespace, such as
 .Xr mkdir 2 .
 In this mode, if the requested name already exists,
-.Dv EEXIST
+.Er EEXIST
 is returned.
 Otherwise if the requested name does not exist, the lookup succeeds
 and the returned vnode
@@ -448,7 +448,7 @@ In the rare case that another set of credentials is required for the
 namei operation,
 .Em ndp-\*[Gt]ni_cnd.cn_cred
 must be set manually after
-.Fn NDINIT.
+.Fn NDINIT .
 .It Fn NDAT "ndp" "dvp"
 This macro is used after
 .Fn NDINIT
@@ -684,7 +684,7 @@ The number of symbolic links encountered (and traversed) so far.
 If this exceeds a limit,
 .Nm
 fails with
-.Dv ELOOP .
+.Er ELOOP .
 This is not initialized by
 .Fn NDINIT
 and is used only internally.
@@ -742,7 +742,7 @@ does a complete path lookup by calling
 .Fn namei_init ,
 .Fn namei_tryemulroot ,
 and
-.Fn namei_cleanup.
+.Fn namei_cleanup .
 .It Fn namei_init
 sets up the basic internal state and makes some (precondition-type)
 assertions.
@@ -775,8 +775,9 @@ initializes the root directory state (both
 and
 .Fa ni_erootdir )
 and picks the starting directory, consuming the leading slashes of an
-absolute path and handling the magic ``/../'' string for bypassing the
-emulation root.
+absolute path and handling the magic
+.Dq /../
+string for bypassing the emulation root.
 A different version
 .Fn namei_getstartdir_for_nfsd
 is used for lookups coming from
@@ -806,7 +807,7 @@ than it is for
 The latter
 .Dq fails
 with
-.Dv EJUSTRETURN .
+.Er EJUSTRETURN .
 .Nm
 translates this into succeeding and returning a null vnode.
 .Sh CODE REFERENCES
