@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.49 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.50 2016/05/07 20:06:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.49 2016/05/02 01:46:31 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.50 2016/05/07 20:06:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,11 +404,15 @@ setinputfile(const char *fname, int push)
 	 */
 	if (lseek(fd, 0, SEEK_SET) == 0) {
 		if (read(fd, magic, 4) == 4) {
-			if (memcmp(magic, "\177ELF", 4) == 0)
+			if (memcmp(magic, "\177ELF", 4) == 0) {
+				(void)close(fd);
 				error("Cannot execute ELF binary %s", fname);
+			}
 		}
-		if (lseek(fd, 0, SEEK_SET) != 0)
+		if (lseek(fd, 0, SEEK_SET) != 0) {
+			(void)close(fd);
 			error("Cannot rewind the file %s", fname);
+		}
 	}
 
 	fd2 = to_upper_fd(fd);	/* closes fd, returns higher equiv */
