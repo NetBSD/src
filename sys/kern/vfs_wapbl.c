@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.69 2016/05/07 17:12:22 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.70 2016/05/07 17:47:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.69 2016/05/07 17:12:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.70 2016/05/07 17:47:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1505,8 +1505,8 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		goto out;
 
 	off = wl->wl_head;
-	KASSERT((off == 0) || ((off >= wl->wl_circ_off) && 
-	                      (off < wl->wl_circ_off + wl->wl_circ_size)));
+	KASSERT((off == 0) || (off >= wl->wl_circ_off));
+	KASSERT((off == 0) || (off < wl->wl_circ_off + wl->wl_circ_size));
 	error = wapbl_write_blocks(wl, &off);
 	if (error)
 		goto out;
