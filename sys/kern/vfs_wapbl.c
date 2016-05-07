@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.76 2016/05/07 21:15:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.77 2016/05/07 22:12:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.76 2016/05/07 21:15:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.77 2016/05/07 22:12:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1536,8 +1536,10 @@ wapbl_biodone(struct buf *bp)
  *	2. Wait for enough space in the log for the current transaction.
  *	3. Synchronously write the new log records, advancing the
  *	   circular queue head.
- *	4. If wait is true, also wait for all the logged writes to
- *	   complete so that the log is empty on return.
+ *	4. Issue the pending block writes asynchronously, now that they
+ *	   are recorded in the log and can be replayed after crash.
+ *	5. If wait is true, wait for all writes to complete and for the
+ *	   log to become empty.
  *
  *	On failure, call the file system's wl_flush_abort callback.
  */
