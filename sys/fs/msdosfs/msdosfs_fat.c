@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.30 2016/05/03 18:17:28 mlelstv Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.30 2016/05/03 18:17:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.31 2016/05/07 16:43:02 mlelstv Exp $");
 
 /*
  * kernel include files.
@@ -279,7 +279,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 		 */
 		if (cn < CLUST_FIRST || cn > pmp->pm_maxcluster) {
 			DPRINTF(("%s(cn, %lu not in %lu..%lu)\n", __func__,
-				cn, CLUST_FIRST, pmp->pm_maxcluster));
+				cn, (u_long)CLUST_FIRST, pmp->pm_maxcluster));
 			if (bp)
 				brelse(bp, 0);
 			return (EINVAL);
