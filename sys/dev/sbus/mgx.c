@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.8 2016/03/04 22:08:09 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.9 2016/05/07 15:32:08 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.8 2016/03/04 22:08:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.9 2016/05/07 15:32:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,14 @@ __KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.8 2016/03/04 22:08:09 macallan Exp $");
 #include <dev/ic/vgareg.h>
 #include <dev/sbus/mgxreg.h>
 
+#include "ioconf.h"
+
 #include "opt_wsemul.h"
 #include "opt_mgx.h"
 
 struct mgx_softc {
 	device_t	sc_dev;
+	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_blith;
 	bus_space_handle_t sc_vgah;
@@ -136,6 +139,35 @@ struct wsdisplay_accessops mgx_accessops = {
 	NULL,	/* scroll */
 };
 
+static void	mgx_unblank(device_t);
+
+dev_type_open(mgxopen);
+dev_type_close(mgxclose);
+dev_type_ioctl(mgxioctl);
+dev_type_mmap(mgxmmap);
+
+const struct cdevsw mgx_cdevsw = {
+	.d_open = mgxopen,
+	.d_close = mgxclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = mgxioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = mgxmmap,
+	.d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+	.d_flag = D_OTHER
+};
+
+/* frame buffer generic driver */
+static struct fbdriver mgx_fbdriver = {
+	mgx_unblank, mgxopen, mgxclose, mgxioctl, nopoll, mgxmmap,
+	nokqfilter
+};
+
+
 static inline void
 mgx_write_vga(struct mgx_softc *sc, uint32_t reg, uint8_t val)
 {
@@ -199,6 +231,7 @@ mgx_attach(device_t parent, device_t self, void *args)
 	struct mgx_softc *sc = device_private(self);
 	struct sbus_attach_args *sa = args;
 	struct wsemuldisplaydev_attach_args aa;
+	struct fbdevice *fb = &sc->sc_fb;
 	struct rasops_info *ri;
 	unsigned long defattr;
 	bus_space_handle_t bh;
@@ -320,6 +353,22 @@ mgx_attach(device_t parent, device_t self, void *args)
 	aa.accesscookie = &sc->vd;
 
 	config_found(self, &aa, wsemuldisplaydevprint);
+
+	/* now the Sun fb goop */
+	fb->fb_driver = &mgx_fbdriver;
+	fb->fb_device = sc->sc_dev;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_type.fb_type = FBTYPE_MGX;
+	fb->fb_pixels = NULL;
+
+	fb->fb_type.fb_depth = 32;
+	fb->fb_type.fb_width = sc->sc_width;
+	fb->fb_type.fb_height = sc->sc_height;
+	fb->fb_linebytes = sc->sc_stride * 4;
+
+	fb->fb_type.fb_cmsize = 256;
+	fb->fb_type.fb_size = sc->sc_fbsize;
+	fb_attach(&sc->sc_fb, isconsole);
 
 #if 0
 	{
@@ -854,6 +903,22 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf->cmsize = 256;
 			return 0;
 
+	case FBIOGTYPE:
+		*(struct fbtype *)data = sc->sc_fb.fb_type;
+		break;
+
+	case FBIOGATTR:
+#define fba ((struct fbgattr *)data)
+		fba->real_type = sc->sc_fb.fb_type.fb_type;
+		fba->owner = 0;		/* XXX ??? */
+		fba->fbtype = sc->sc_fb.fb_type;
+		fba->sattr.flags = 0;
+		fba->sattr.emu_type = sc->sc_fb.fb_type.fb_type;
+		fba->sattr.dev_specific[0] = -1;
+		fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
+		fba->emu_types[1] = -1;
+#undef fba
+		break;
 		case FBIOGVIDEO:
 		case WSDISPLAYIO_GVIDEO:
 			*(int *)data = sc->sc_video;
@@ -1095,4 +1160,89 @@ mgx_set_video(struct mgx_softc *sc, int v)
 		reg |= DPMS_SYNC_DISABLE_ALL;
 	}
 	mgx_write_1(sc, ATR_DPMS, reg);
+}
+
+/* Sun fb dev goop */
+static void
+mgx_unblank(device_t dev)
+{
+	struct mgx_softc *sc = device_private(dev);
+
+	mgx_set_video(sc, WSDISPLAYIO_VIDEO_ON);
+}
+
+paddr_t
+mgxmmap(dev_t dev, off_t offset, int prot)
+{
+	struct mgx_softc *sc = device_lookup_private(&mgx_cd, minor(dev));
+
+	/* regular fb mapping at 0 */
+	if ((offset >= 0) && (offset < sc->sc_fbsize)) {
+		return bus_space_mmap(sc->sc_tag, sc->sc_paddr,
+		    offset, prot, BUS_SPACE_MAP_LINEAR);
+	}
+
+	/*
+	 * Blitter registers at 0x80000000, only in mapped mode.
+	 * Restrict to root, even though I'm fairly sure the DMA engine lives
+	 * elsewhere ( and isn't documented anyway )
+	 */
+	if (kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM,
+	    NULL, NULL, NULL, NULL) != 0) {
+		aprint_normal("%s: mmap() rejected.\n",
+		    device_xname(sc->sc_dev));
+		return -1;
+	}
+	if ((sc->sc_mode == WSDISPLAYIO_MODE_MAPPED) &&
+	    (offset >= 0x80000000) && (offset < 0x80001000)) {
+		return bus_space_mmap(sc->sc_tag, sc->sc_rpaddr,
+		    offset, prot, BUS_SPACE_MAP_LINEAR);
+	}
+	return -1;
+}
+
+int
+mgxopen(dev_t dev, int flags, int mode, struct lwp *l)
+{
+	device_t dv = device_lookup(&mgx_cd, minor(dev));
+	struct mgx_softc *sc = device_private(dv);
+
+	if (dv == NULL)
+		return ENXIO;
+	if (sc->sc_mode == WSDISPLAYIO_MODE_MAPPED)
+		return 0;
+	sc->sc_mode = WSDISPLAYIO_MODE_MAPPED;
+	mgx_setup(sc, 32);
+	mgx_init_palette(sc);
+	return 0;
+}
+
+int
+mgxclose(dev_t dev, int flags, int mode, struct lwp *l)
+{
+	device_t dv = device_lookup(&mgx_cd, minor(dev));
+	struct mgx_softc *sc = device_private(dv);
+	struct vcons_screen *ms = sc->vd.active;
+
+	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)
+		return 0;
+
+	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+
+	mgx_setup(sc, MGX_DEPTH);
+	glyphcache_wipe(&sc->sc_gc);
+	mgx_init_palette(sc);
+	if (ms != NULL) {
+		vcons_redraw_screen(ms);
+	}
+	return 0;
+}
+
+int
+mgxioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
+{
+	struct mgx_softc *sc = device_lookup_private(&mgx_cd, minor(dev));
+
+	return mgx_ioctl(&sc->vd, NULL, cmd, data, flags, l);
 }
