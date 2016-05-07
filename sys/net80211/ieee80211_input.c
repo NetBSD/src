@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.82 2016/04/20 09:01:04 knakahara Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.83 2016/05/07 12:36:50 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.82 2016/04/20 09:01:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.83 2016/05/07 12:36:50 mlelstv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -282,8 +282,11 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 		}
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
-		if (HAS_SEQ(type)) {
-			u_int8_t tid;
+		if (HAS_SEQ(type) && (ic->ic_opmode != IEEE80211_M_STA ||
+		    !IEEE80211_IS_MULTICAST(wh->i_addr1))) {
+			u_int8_t tid, retry;
+			u_int16_t rxno, orxno;
+
 			if (ieee80211_has_qos(wh)) {
 				tid = ((struct ieee80211_qosframe *)wh)->
 					i_qos[0] & IEEE80211_QOS_TID;
@@ -293,15 +296,20 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			} else
 				tid = 0;
 			rxseq = le16toh(*(u_int16_t *)wh->i_seq);
-			if ((wh->i_fc[1] & IEEE80211_FC1_RETRY) &&
-			    SEQ_LEQ(rxseq, ni->ni_rxseqs[tid])) {
+			retry = wh->i_fc[1] & IEEE80211_FC1_RETRY;
+			rxno = rxseq >> IEEE80211_SEQ_SEQ_SHIFT;
+			orxno = ni->ni_rxseqs[tid] >> IEEE80211_SEQ_SEQ_SHIFT;
+			if (retry && (
+			    (orxno == 4095 && rxno == orxno) ||
+			    (orxno != 4095 &&
+			     SEQ_LEQ(rxseq, ni->ni_rxseqs[tid]))
+			    )) {
 				/* duplicate, discard */
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
 				    bssid, "duplicate",
 				    "seqno <%u,%u> fragno <%u,%u> tid %u",
-				    rxseq >> IEEE80211_SEQ_SEQ_SHIFT,
-				    ni->ni_rxseqs[tid] >>
-					IEEE80211_SEQ_SEQ_SHIFT,
+				    rxno,
+				    orxno,
 				    rxseq & IEEE80211_SEQ_FRAG_MASK,
 				    ni->ni_rxseqs[tid] &
 					IEEE80211_SEQ_FRAG_MASK,
