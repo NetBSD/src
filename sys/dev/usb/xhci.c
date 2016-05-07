@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.44 2016/05/06 10:27:14 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.45 2016/05/07 08:11:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.44 2016/05/06 10:27:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.45 2016/05/07 08:11:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3372,11 +3372,6 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		    xhci_timeout, xfer);
 	}
 
-	if (sc->sc_bus.ub_usepolling) {
-		DPRINTFN(1, "polling", 0, 0, 0, 0);
-		//xhci_waitintr(sc, xfer);
-	}
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -3492,11 +3487,6 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 		    xhci_timeout, xfer);
 	}
 
-	if (sc->sc_bus.ub_usepolling) {
-		DPRINTFN(1, "polling", 0, 0, 0, 0);
-		//xhci_waitintr(sc, xfer);
-	}
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -3600,11 +3590,6 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    xhci_timeout, xfer);
-	}
-
-	if (sc->sc_bus.ub_usepolling) {
-		DPRINTFN(1, "polling", 0, 0, 0, 0);
-		//xhci_waitintr(sc, xfer);
 	}
 
 	return USBD_IN_PROGRESS;
