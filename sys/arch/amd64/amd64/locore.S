@@ -1,7 +1,36 @@
-/*	$NetBSD: locore.S,v 1.83 2015/11/25 16:00:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.84 2016/05/07 11:49:21 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 1998, 2000, 2007, 2008, 2016 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum and Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -80,36 +109,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-/*-
- * Copyright (c) 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -144,9 +143,7 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
-/*
- * override user-land alignment before including asm.h
- */
+/* Override user-land alignment before including asm.h */
 #define	ALIGN_DATA	.align	8
 #define ALIGN_TEXT	.align 16,0x90
 #define _ALIGN_TEXT	ALIGN_TEXT
@@ -184,7 +181,6 @@
 #include <machine/i82489reg.h>
 #endif
 
-/* XXX temporary kluge; these should not be here */
 /* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
 #include <dev/isa/isareg.h>
 
@@ -204,7 +200,7 @@
 #endif
 
 #define PROC0_PML4_OFF	0
-#define PROC0_STK_OFF	(PROC0_PML4_OFF + PAGE_SIZE)
+#define PROC0_STK_OFF	(PROC0_PML4_OFF + 1 * PAGE_SIZE)
 #define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
 #define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
 #define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
@@ -222,20 +218,27 @@
  */
 #define fillkpt	\
 1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
-	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits 0 */	\
+	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits: 0 */	\
 	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
 	loop	1b			;
 
+/*
+ * killkpt - Destroy a kernel page table (long mode)
+ *	rbx = page table address
+ *	rcx = number of pages to destroy
+ */
+#define killkpt \
+1:	movq	$0,(%rbx)	; \
+	addq	$PDE_SIZE,%rbx	; \
+	loop	1b		;
+
 
 #ifdef XEN
-
 /*
  * Xen guest identifier and loader selection
  */
-
 .section __xen_guest
-
 	.ascii	"GUEST_OS=NetBSD,GUEST_VER=4.99"
 	.ascii	",XEN_VER=xen-3.0"
 	.ascii	",LOADER=generic"
@@ -247,7 +250,6 @@
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
-
 #endif	/* XEN */
 
 /*
@@ -257,9 +259,9 @@
 
 #if NLAPIC > 0
 	.align	PAGE_SIZE
-	.globl _C_LABEL(local_apic)
-	.globl _C_LABEL(lapic_id)
-	.globl _C_LABEL(lapic_tpr)
+	.globl	_C_LABEL(local_apic)
+	.globl	_C_LABEL(lapic_id)
+	.globl	_C_LABEL(lapic_tpr)
 
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
@@ -282,7 +284,7 @@ END(lapic_ppr)
 _C_LABEL(lapic_isr):
 	.space	PAGE_SIZE-LAPIC_ISR
 END(lapic_isr)
-#endif
+#endif /* NLAPIC > 0 */
 
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
@@ -297,34 +299,33 @@ END(lapic_isr)
 	.globl	_C_LABEL(cputype)
 
 	.type	_C_LABEL(cputype), @object
-LABEL(cputype)		.long	0	# are we 80486, Pentium, or..
+LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
 	.type	_C_LABEL(cpuid_level), @object
-LABEL(cpuid_level)	.long	-1	# max. level accepted by 'cpuid'
-					#   instruction
+LABEL(cpuid_level)	.long	-1	/* max. level accepted by cpuid instr */
 END(cpuid_level)
 	.type	_C_LABEL(esym), @object
-LABEL(esym)		.quad	0	# ptr to end of syms
+LABEL(esym)		.quad	0	/* ptr to end of syms */
 END(esym)
 	.type	_C_LABEL(eblob), @object
-LABEL(eblob)		.quad	0	# ptr to end of modules
+LABEL(eblob)		.quad	0	/* ptr to end of modules */
 END(eblob)
 	.type	_C_LABEL(atdevbase), @object
-LABEL(atdevbase)	.quad	0	# location of start of iomem in virtual
+LABEL(atdevbase)	.quad	0	/* location of start of iomem in virt */
 END(atdevbase)
 	.type	_C_LABEL(PDPpaddr), @object
-LABEL(PDPpaddr)		.quad	0	# paddr of PTD, for libkvm
+LABEL(PDPpaddr)		.quad	0	/* paddr of PTD, for libkvm */
 END(PDPpaddr)
 	.type	_C_LABEL(biosbasemem), @object
 #ifndef REALBASEMEM
-LABEL(biosbasemem)	.long	0	# base memory reported by BIOS
+LABEL(biosbasemem)	.long	0	/* base memory reported by BIOS */
 #else
 LABEL(biosbasemem)	.long	REALBASEMEM
 #endif
 END(biosbasemem)
 	.type	_C_LABEL(biosextmem), @object
 #ifndef REALEXTMEM
-LABEL(biosextmem)	.long	0	# extended memory reported by BIOS
+LABEL(biosextmem)	.long	0	/* extended memory reported by BIOS */
 #else
 LABEL(biosextmem)	.long	REALEXTMEM
 #endif
@@ -335,7 +336,6 @@ END(biosextmem)
 	.globl	gdt64_hi
 
 #define GDT64_LIMIT gdt64_end-gdt64_start-1
-
 /* Temporary gdt64, with base address in low memory */
 	.type	_C_LABEL(gdt64_lo), @object
 LABEL(gdt64_lo)
@@ -351,7 +351,6 @@ LABEL(gdt64_hi)
 	.quad	gdt64_start
 END(gdt64_hi)
 .align 64
-
 #undef GDT64_LIMIT
 
 	.type	_C_LABEL(gdt64_start), @object
@@ -367,11 +366,12 @@ _C_LABEL(farjmp64):
 	.long	_RELOC(longmode)
 	.word	GSEL(GCODE_SEL, SEL_KPL)
 END(farjmp64)
-	
+
 #endif	/* !XEN */
 
+	/* Space for the temporary stack */
 	.size	tmpstk, tmpstk - .
-	.space 512
+	.space	512
 tmpstk:
 
 	.globl _C_LABEL(cpu_private)
@@ -394,7 +394,7 @@ ENTRY(start)
 	movw	$0x1234,0x472
 
 	/*
-	 * Load parameters from the stack (32 bits):   
+	 * Load parameters from the stack (32 bits):
 	 *     boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem
 	 * We are not interested in 'bootdev'.
 	 */
@@ -425,7 +425,7 @@ bootinfo_entryloop:
 	pushl	%esi
 	pushl	%eax
 
-	movl	(%ecx),%eax		/* size of entry */
+	movl	(%ecx),%eax		/* btinfo_common::len (size of entry) */
 	movl	%edx,%edi
 	addl	(%ecx),%edx		/* update dest pointer */
 	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
@@ -438,10 +438,10 @@ bootinfo_entryloop:
 	 * If any modules were loaded, record where they end.  We'll need to
 	 * skip over them.
 	 */
-	cmpl	$BTINFO_MODULELIST,4(%esi)
+	cmpl	$BTINFO_MODULELIST,4(%esi) /* btinfo_common::type */
 	jne	0f
 
-	pushl	12(%esi)		/* endpa */
+	pushl	12(%esi)		/* btinfo_modulelist::endpa */
 	popl	RELOC(eblob)
 	addl	$KERNBASE_LO,RELOC(eblob)
 	adcl	$KERNBASE_HI,RELOC(eblob)+4
@@ -501,8 +501,10 @@ biosextmem_finished:
 
 biosbasemem_finished:
 	/*
-	 * Done with the parameters. First, reset the PSL.
+	 * Done with the parameters!
 	 */
+
+	/* First, reset the PSL. */
 	pushl	$PSL_MBO
 	popfl
 
@@ -519,23 +521,39 @@ biosbasemem_finished:
 	 * The boot program should check:
 	 *	text+data <= &stack_variable - more_space_for_stack
 	 *	text+data+bss+pad+space_for_page_tables <= end_of_memory
-	 * Oops, the gdt is in the carcass of the boot program so clearing
+	 * 
+	 * XXX: the gdt is in the carcass of the boot program so clearing
 	 * the rest of memory is still not possible.
 	 */
 	movl	$RELOC(tmpstk),%esp
 
 /*
- * Virtual address space of kernel:
+ * There are four levels of pages in amd64: PML4 -> PDP -> PD -> PT. They will
+ * be referred to as: L4 -> L3 -> L2 -> L1.
  *
- * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp | L2 ptp | L3
- *                            0          1       2      3
+ * Virtual address space of the kernel:
+ * +------+--------+------+-----+--------+---------------------+----------
+ * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | L4 ->
+ * +------+--------+------+-----+--------+---------------------+----------
+ *                             (1)      (2)                   (3)
+ *
+ * --------------+-----+-----+----+------------+
+ * -> PROC0 STK -> L3 -> L2 -> L1 | ISA IO MEM |
+ * --------------+-----+-----+----+------------+
+ *                               (4)
+ *
+ * PROC0 STK is obviously not linked as a page level. It just happens to be
+ * caught between L4 and L3.
+ *
+ * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
+ *
  */
 
-	/* Find end of kernel image. */
+	/* Find end of kernel image; brings us on (1). */
 	movl	$RELOC(end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
-	/* Save the symbols (if loaded). */
+	/* Save the symbols (if loaded); brinds us on (2). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
@@ -543,7 +561,7 @@ biosbasemem_finished:
 	movl	%eax,%edi
 1:
 #endif
-	/* Skip over any modules/blobs. */
+	/* Skip over any modules/blobs; brings us on (3). */
 	movl	RELOC(eblob),%eax
 	testl	%eax,%eax
 	jz	1f
@@ -551,13 +569,13 @@ biosbasemem_finished:
 	movl	%eax,%edi
 1:
 
-	/* Compute sizes */
+	/* We are on (3). Align up for BOOTSTRAP TABLES. */
 	movl	%edi,%esi
-	addl	$PGOFSET,%esi		/* page align up */
+	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
 	movl	%esi,%edi
 
-	/* Clear the tables */
+	/* Now, zero out the BOOTSTRAP TABLES (before filling them in). */
 	xorl	%eax,%eax
 	cld
 	movl	$TABLESIZE,%ecx
@@ -566,11 +584,16 @@ biosbasemem_finished:
 	stosl				/* copy eax -> edi */
 
 /*
- * Build initial page tables.
+ * Build the page tables and levels. We go from L1 to L4, and link the levels
+ * together. Note: RELOC computes &addr - KERNBASE in 32 bits; the value can't
+ * be > 4G, or we can't deal with it anyway, since we are in 32bit mode.
  */
+	/*
+	 * Build L1.
+	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Skip the first MB */
+	/* Skip the first MB. */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
@@ -591,7 +614,14 @@ biosbasemem_finished:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-	/* Map the data, BSS, and bootstrap tables read-write. */
+	/*
+	 * We actually have to be careful here. The memory layout is as
+	 * follows:
+	 *  +--------+----------+-------------------+------------------+
+	 *  | RODATA < DATA+BSS | PRELOADED MODULES | BOOTSTRAP TABLES >
+	 *  +--------+----------+-------------------+------------------+
+	 * We just map everything from < to > with RWX rights.
+	 */
 	leal	(PG_V|PG_KW)(%edx),%eax
 	movl	$TABLESIZE,%ecx
 	addl	%esi,%ecx		/* end of tables */
@@ -599,15 +629,14 @@ biosbasemem_finished:
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 
-	/* Map ISA I/O mem (later atdevbase) */
+	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx
 	fillkpt
 
-/*
- * Construct a page table directory.
- */
-	/* Set up level 2 pages */
+	/*
+	 * Build L2. Linked to L1.
+	 */
 	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
@@ -616,14 +645,16 @@ biosbasemem_finished:
 
 #if L2_SLOT_KERNBASE > 0
 	/* If needed, set up level 2 entries for actual kernel mapping */
-	leal	(PROC0_PTP2_OFF + L2_SLOT_KERNBASE*8)(%esi),%ebx
+	leal	(PROC0_PTP2_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 #endif
 
-	/* Set up level 3 pages */
+	/*
+	 * Build L3. Linked to L2.
+	 */
 	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
@@ -632,38 +663,40 @@ biosbasemem_finished:
 
 #if L3_SLOT_KERNBASE > 0
 	/* If needed, set up level 3 entries for actual kernel mapping */
-	leal	(PROC0_PTP3_OFF + L3_SLOT_KERNBASE*8)(%esi),%ebx
+	leal	(PROC0_PTP3_OFF + L3_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 #endif
 
-	/* Set up top level entries for identity mapping */
+	/*
+	 * Build L4 for identity mapping. Linked to L3.
+	 */
 	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
-	/* Set up top level entries for actual kernel mapping */
-	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE*8)(%esi),%ebx
+	/* Set up L4 entries for actual kernel mapping */
+	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
 	/* Install recursive top level PDE */
-	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE*8)(%esi),%ebx
+	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
-	movl	$0,4(%ebx)
+	movl	$0,(PDE_SIZE-4)(%ebx)
 
-	/* Save phys. addr of PTD, for libkvm. */
+	/* Save physical address of L4. */
 	movl	$RELOC(PDPpaddr),%ebp
 	movl	%esi,(%ebp)
-	movl	$0,4(%ebp)
+	movl	$0,(PDE_SIZE-4)(%ebp)
 
 	/*
 	 * Startup checklist:
@@ -735,25 +768,21 @@ longmode_hi:
 
 #if L2_SLOT_KERNBASE > 0
 	movq	$(NKL2_KIMG_ENTRIES+1),%rcx
-	leaq	(PROC0_PTP2_OFF)(%rsi),%rbx
-	addq	%r8,%rbx
-1:	movq	$0,(%rbx)
-	addq	$8,%rbx
-	loop	1b
+	leaq	(PROC0_PTP2_OFF)(%rsi),%rbx	/* old, phys address */
+	addq	%r8,%rbx			/* new, virt address */
+	killkpt
 #endif
 
 #if L3_SLOT_KERNBASE > 0
 	movq	$NKL3_KIMG_ENTRIES,%rcx
-	leaq	(PROC0_PTP3_OFF)(%rsi),%rbx
-	addq	%r8,%rbx
-1:	movq	$0,(%rbx)
-	addq	$8,%rbx
-	loop	1b
+	leaq	(PROC0_PTP3_OFF)(%rsi),%rbx	/* old, phys address */
+	addq	%r8,%rbx			/* new, virt address */
+	killkpt
 #endif
 
 	movq	$NKL4_KIMG_ENTRIES,%rcx
-	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys address of PML4
-	addq	%r8,%rbx			# new, virtual address of PML4
+	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	/* old, phys address of PML4 */
+	addq	%r8,%rbx			/* new, virt address of PML4 */
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
@@ -768,8 +797,8 @@ longmode_hi:
 	addq	%r8,%rax
 	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
-	movq	%rsi,PCB_CR3(%rax)	# pcb->pcb_cr3
-	xorq	%rbp,%rbp		# mark end of frames
+	movq	%rsi,PCB_CR3(%rax)		/* pcb->pcb_cr3 */
+	xorq	%rbp,%rbp			/* mark end of frames */
 
 	xorw	%ax,%ax
 	movw	%ax,%gs
@@ -850,25 +879,23 @@ longmode_hi:
 	 */
 	movq	%rax, %rsi
 	movq	%rsi,(_C_LABEL(lwp0)+L_PCB)	/* XXX L_PCB != uarea */
-	
+
 	/*
 	 * Set new stack and clear segments
 	 */
-
 	leaq	(USPACE-FRAMESIZE)(%rsi),%rsp
 	xorq	%rbp,%rbp
 
 	xorw	%ax,%ax
 	movw	%ax,%gs
 	movw	%ax,%fs
-	
+
 	/*
 	 * Set first_avail after proc0
 	 */
-
 	movq	%rsi,%rdi
 	addq	$USPACE,%rdi
-	subq	$KERNBASE,%rdi		# init_x86_64 want a physical address
+	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
 
 #endif	/* XEN */
 	call	_C_LABEL(init_x86_64)
@@ -936,21 +963,21 @@ END(longjmp)
  * Mimic cpu_switchto() for postmortem debugging.
  */
 ENTRY(dumpsys)
-	# build a fake switch frame.
+	/* Build a fake switch frame. */
 	pushq	%rbx
 	pushq	%r12
 	pushq	%r13
 	pushq	%r14
 	pushq	%r15
-	
-	# save a context.
+
+	/* Save a context. */
 	movq	$dumppcb, %rax
 	movq	%rsp, PCB_RSP(%rax)
 	movq	%rbp, PCB_RBP(%rax)
 
 	call	_C_LABEL(dodumpsys)
 
-	addq	$(5*8), %rsp	# sizeof(switchframe) - sizeof(%rip)
+	addq	$(5*8), %rsp	/* sizeof(switchframe) - sizeof(%rip) */
 	ret
 END(dumpsys)
 
@@ -972,8 +999,8 @@ ENTRY(cpu_switchto)
 	pushq	%r14
 	pushq	%r15
 
-	movq	%rdi,%r13	# oldlwp
-	movq	%rsi,%r12	# newlwp
+	movq	%rdi,%r13	/* oldlwp */
+	movq	%rsi,%r12	/* newlwp */
 
 	testq	%r13,%r13
 	jz	1f
@@ -1094,7 +1121,7 @@ ENTRY(cpu_switchto)
 	movq	%r12,%rdi
 	callq	_C_LABEL(x86_64_tls_switch)
 #endif
-	
+
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
 4:	movq	%r13,%rax
 	popq	%r15
@@ -1195,8 +1222,8 @@ IDTVEC(syscall)
 
 do_syscall:
 	movq	CPUVAR(CURLWP),%r14
-	incq	CPUVAR(NSYSCALL)	# count it atomically
-	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
+	incq	CPUVAR(NSYSCALL)	/* count it atomically */
+	movq	%rsp,L_MD_REGS(%r14)	/* save pointer to frame */
 	movq	L_PROC(%r14),%r15
 	andl	$~MDL_IRET,L_MD_FLAGS(%r14)   /* Allow sysret return */
 	movq	%rsp,%rdi		/* Pass frame as arg0 */
@@ -1305,12 +1332,12 @@ END(lwp_trampoline)
  */
 IDTVEC(oosyscall)
 	/* Set rflags in trap frame. */
-	pushq	(%rsp)		# move user's %eip
-	pushq	16(%rsp)	# and %cs
+	pushq	(%rsp)		/* move user's %eip */
+	pushq	16(%rsp)	/* and %cs */
 	popq	8(%rsp)
 	pushfq
 	popq	16(%rsp)
-	pushq	$7		# size of instruction for restart
+	pushq	$7		/* size of instruction for restart */
 	jmp	osyscall1
 IDTVEC_END(oosyscall)
 
@@ -1325,9 +1352,9 @@ IDTVEC(osyscall)
 	movq 8(%rsp),%r11
 	addq $0x10,%rsp
 #endif
-	pushq	$2		# size of instruction for restart
+	pushq	$2		/* size of instruction for restart */
 osyscall1:
-	pushq	$T_ASTFLT	# trap # for doing ASTs
+	pushq	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(si)
 	jmp	do_syscall
