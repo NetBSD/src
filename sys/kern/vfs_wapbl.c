@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.68 2016/05/07 06:38:47 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.69 2016/05/07 17:12:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.68 2016/05/07 06:38:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.69 2016/05/07 17:12:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1470,7 +1470,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 	 * do another check for nothing to do.
 	 */
 	if (wl->wl_bufcount == 0) {
-		goto out;
+		goto wait_out;
 	}
 
 #if 0
@@ -1502,20 +1502,20 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 
 	error = wapbl_truncate(wl, flushsize, 0);
 	if (error)
-		goto out2;
+		goto out;
 
 	off = wl->wl_head;
 	KASSERT((off == 0) || ((off >= wl->wl_circ_off) && 
 	                      (off < wl->wl_circ_off + wl->wl_circ_size)));
 	error = wapbl_write_blocks(wl, &off);
 	if (error)
-		goto out2;
+		goto out;
 	error = wapbl_write_revocations(wl, &off);
 	if (error)
-		goto out2;
+		goto out;
 	error = wapbl_write_inodes(wl, &off);
 	if (error)
-		goto out2;
+		goto out;
 
 	reserved = 0;
 	if (wl->wl_inohashcnt)
@@ -1548,7 +1548,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 
 	error = wapbl_write_commit(wl, head, tail);
 	if (error)
-		goto out2;
+		goto out;
 
 	we = pool_get(&wapbl_entry_pool, PR_WAITOK);
 
@@ -1626,7 +1626,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 		     curproc->p_pid, curlwp->l_lid));
 #endif
 
- out:
+ wait_out:
 
 	/*
 	 * If the waitfor flag is set, don't return until everything is
@@ -1637,7 +1637,7 @@ wapbl_flush(struct wapbl *wl, int waitfor)
 			wl->wl_reserved_bytes, wapbl_lazy_truncate);
 	}
 
- out2:
+ out:
 	if (error) {
 		wl->wl_flush_abort(wl->wl_mount, wl->wl_deallocblks,
 		    wl->wl_dealloclens, wl->wl_dealloccnt);
