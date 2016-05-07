@@ -1,13 +1,11 @@
-/*	$NetBSD: mptramp.S,v 1.19 2015/12/09 16:55:18 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.20 2016/05/07 13:08:30 maxv Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by RedBack Networks Inc.
- *
- * Author: Bill Sommerfeld
+ * by RedBack Networks Inc. (Author: Bill Sommerfeld), and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-	
+
 /*
  * Copyright (c) 1999 Stefan Grefen
  *
@@ -62,10 +60,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 /*
  * MP startup ...
- * the stuff from cpu_spinup_trampoline to mp_startup 
- * is copied into the first 640 KB
+ * the stuff from cpu_spinup_trampoline to mp_startup is copied into the
+ * first 640 KB.
  *
  * We startup the processors now when the kthreads become ready.
  * The steps are:
@@ -74,9 +73,9 @@
  *     2) halt the processors waiting for them to be enabled
  *        by a idle-thread 
  */
-	
+
 #include "opt_mpbios.h"		/* for MPDEBUG */
-		
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/specialreg.h>
@@ -91,22 +90,27 @@
 #define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
 #ifdef MPDEBUG
-
 /*
  * Debug code to stop aux. processors in various stages based on the
  * value in cpu_trace.
  *
- * %edi points at cpu_trace;  cpu_trace[0] is the "hold point";
- * cpu_trace[1] is the point which the CPU has reached.
+ * %edi points at cpu_trace;
+ * cpu_trace[0] is the "hold point";
+ * cpu_trace[1] is the point which the CPU has reached;
  * cpu_trace[2] is the last value stored by HALTT.
  */
-
-#define HALT(x)	1: movl (%edi),%ebx;cmpl $ x,%ebx ; jle 1b ; movl $x,4(%edi)
-#define HALTT(x,y)	movl y,8(%edi); HALT(x)
+#define HALT(x) \
+1:	movl (%edi),%ebx	;	\
+	cmpl $x,%ebx		;	\
+	jle 1b			;	\
+	movl $x,4(%edi)		;
+#define HALTT(x,y) \
+	movl y,8(%edi)		;	\
+	HALT(x)			;
 #else
-#define HALT(x)	/**/
-#define HALTT(x,y) /**/
-#endif
+#define HALT(x)
+#define HALTT(x,y)
+#endif /* MPDEBUG */
 
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
@@ -156,13 +160,14 @@ _TRMP_LABEL(mp_startup)
 	pushl	$PSL_MBO
 	popfl
 
+	/* Enable PAE, SSE, and PSE if available */
 	movl	%cr4,%eax
 	orl	$(CR4_PAE|CR4_OSFXSR|CR4_OSXMMEXCPT),%eax
 	movl	RELOC(pmap_largepages),%ecx
 	orl	%ecx,%ecx
-	jz	1f
+	jz	no_PSE
 	orl	$CR4_PSE,%eax
-1:
+no_PSE:
 	movl	%eax,%cr4
 
 	movl	$MSR_EFER,%ecx
@@ -171,12 +176,15 @@ _TRMP_LABEL(mp_startup)
 	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
+	/* Load %cr3. */
 	movl	RELOC(mp_pdirpa),%ecx	/* guaranteed < 4G */
-	movl	%ecx,%cr3		/* load ptd addr into mmu */
+	movl	%ecx,%cr3		/* load PTD addr into MMU */
 
-	movl	%cr0,%eax		/* get control word */
+	/* Enable paging and the rest of it. */
+	movl	%cr0,%eax
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
+
 	jmp	mptramp_compat
 mptramp_compat:
 
@@ -194,22 +202,23 @@ _TRMP_LABEL(mptramp_jmp64)
 	.long   mptramp_longmode
 	.word   GSEL(GCODE_SEL, SEL_KPL)
 
+#define GDT_LIMIT	0x17	/* 23 = 3 * 8 - 1 */
 _TRMP_LABEL(mptramp_gdt32)
 	.quad 0x0000000000000000
-	.quad 0x00cf9f000000ffff
-	.quad 0x00cf93000000ffff
+	.quad 0x00cf9f000000ffff	/* CS */
+	.quad 0x00cf93000000ffff	/* DS */
 _TRMP_LABEL(mptramp_gdt32_desc)
-	.word 0x17
+	.word GDT_LIMIT
 	.long mptramp_gdt32
 
 _TRMP_LABEL(mptramp_gdt64)
 	.quad 0x0000000000000000
-	.quad 0x00af9a000000ffff
-	.quad 0x00cf92000000ffff
+	.quad 0x00af9a000000ffff	/* CS */
+	.quad 0x00cf92000000ffff	/* DS */
 _TRMP_LABEL(mptramp_gdt64_desc)
-	.word 0x17
+	.word GDT_LIMIT
 	.long mptramp_gdt64
-
+#undef	GDT_LIMIT
 
 _TRMP_LABEL(mptramp_longmode)
 	.code64
