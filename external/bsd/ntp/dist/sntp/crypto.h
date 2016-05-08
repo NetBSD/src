@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.2.2.1 2014/12/25 02:34:42 snj Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.2.2.2 2016/05/08 22:02:13 snj Exp $	*/
 
 #ifndef CRYPTO_H
 #define CRYPTO_H
@@ -26,9 +26,11 @@ struct key {
 	char key_seq[64];
 };
 
-int auth_init(const char *keyfile, struct key **keys);
-void get_key(int key_id, struct key **d_key);
-int make_mac(char *pkt_data, int pkt_size, int mac_size, struct key *cmp_key, char *digest);
-int auth_md5(char *pkt_data, int pkt_size, int mac_size, struct key *cmp_key);
+extern	int	auth_init(const char *keyfile, struct key **keys);
+extern	void	get_key(int key_id, struct key **d_key);
+extern	int	make_mac(const void *pkt_data, int pkt_size, int mac_size,
+			 const struct key *cmp_key, void *digest);
+extern	int	auth_md5(const void *pkt_data, int pkt_size, int mac_size,
+			 const struct key *cmp_key);
 
 #endif

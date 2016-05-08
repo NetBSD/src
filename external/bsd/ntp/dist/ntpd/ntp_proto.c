@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.3.2.2 2015/11/07 22:26:36 snj Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.3.2.3 2016/05/08 22:02:10 snj Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -17,6 +17,7 @@
 #include "ntp_string.h"
 #include "ntp_leapsec.h"
 #include "refidsmear.h"
+#include "lib_strbuf.h"
 
 #include <stdio.h>
 #ifdef HAVE_LIBSCF_H
@@ -24,6 +25,11 @@
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+/* [Bug 3031] define automatic broadcastdelay cutoff preset */
+#ifndef BDELAY_DEFAULT
+# define BDELAY_DEFAULT (-0.050)
 #endif
 
 /*
@@ -49,6 +55,12 @@ enum kiss_codes {
 	RSTRKISS,			/* Restricted Kiss */
 	XKISS,				/* Experimental Kiss */
 	UNKNOWNKISS			/* Unknown Kiss Code */
+};
+
+enum nak_error_codes {
+	NONAK,				/* No NAK seen */
+	INVALIDNAK,			/* NAK cannot be used */
+	VALIDNAK			/* NAK is valid */
 };
 
 /*
@@ -154,7 +166,23 @@ u_long	sys_declined;		/* declined */
 u_long	sys_limitrejected;	/* rate exceeded */
 u_long	sys_kodsent;		/* KoD sent */
 
-static int kiss_code_check(u_char hisleap, u_char hisstratum, u_char hismode, u_int32 refid);
+/*
+ * Mechanism knobs: how soon do we unpeer()?
+ *
+ * The default way is "on-receipt".  If this was a packet from a
+ * well-behaved source, on-receipt will offer the fastest recovery.
+ * If this was from a DoS attack, the default way makes it easier
+ * for a bad-guy to DoS us.  So look and see what bites you harder
+ * and choose according to your environment.
+ */
+int unpeer_crypto_early		= 1;	/* bad crypto (TEST9) */
+int unpeer_crypto_nak_early	= 1;	/* crypto_NAK (TEST5) */
+int unpeer_digest_early		= 1;	/* bad digest (TEST5) */
+
+int dynamic_interleave = DYNAMIC_INTERLEAVE;	/* Bug 2978 mitigation */
+
+int kiss_code_check(u_char hisleap, u_char hisstratum, u_char hismode, u_int32 refid);
+enum nak_error_codes valid_NAK(struct peer *peer, struct recvbuf *rbufp, u_char hismode);
 static	double	root_distance	(struct peer *);
 static	void	clock_combine	(peer_select *, int, int);
 static	void	peer_xmit	(struct peer *);
@@ -174,8 +202,14 @@ void	pool_name_resolved	(int, int, void *, const char *,
 				 const struct addrinfo *);
 #endif /* WORKER */
 
+const char *	amtoa		(int am);
+
+
 void
-set_sys_leap(u_char new_sys_leap) {
+set_sys_leap(
+	u_char new_sys_leap
+	)
+{
 	sys_leap = new_sys_leap;
 	xmt_leap = sys_leap;
 
@@ -191,8 +225,9 @@ set_sys_leap(u_char new_sys_leap) {
 #ifdef LEAP_SMEAR
 		else {
 			/*
-			 * If leap smear is enabled in general we must never send a leap second warning
-			 * to clients, so make sure we only send "in sync".
+			 * If leap smear is enabled in general we must
+			 * never send a leap second warning to clients,
+			 * so make sure we only send "in sync".
 			 */
 			if (leap_smear.enabled)
 				xmt_leap = LEAP_NOWARNING;
@@ -201,34 +236,101 @@ set_sys_leap(u_char new_sys_leap) {
 	}
 }
 
+
 /*
  * Kiss Code check
  */
-int kiss_code_check(u_char hisleap, u_char hisstratum, u_char hismode, u_int32 refid) {
+int
+kiss_code_check(
+	u_char hisleap,
+	u_char hisstratum,
+	u_char hismode,
+	u_int32 refid
+	)
+{
 
 		if (   hismode == MODE_SERVER
 		    && hisleap == LEAP_NOTINSYNC
 		    && hisstratum == STRATUM_UNSPEC) {
 				if(memcmp(&refid,"RATE", 4) == 0) {
 					return (RATEKISS);	
-				}
-				else if(memcmp(&refid,"DENY", 4) == 0) {
+		} else if(memcmp(&refid,"DENY", 4) == 0) {
 					return (DENYKISS);	
-				}
-				else if(memcmp(&refid,"RSTR", 4) == 0) {
+		} else if(memcmp(&refid,"RSTR", 4) == 0) {
 					return (RSTRKISS);	
-				}
-				else if(memcmp(&refid,"X", 1) == 0) {
+		} else if(memcmp(&refid,"X", 1) == 0) {
 					return (XKISS);	
-				}
-				else {
+		} else {
 					return (UNKNOWNKISS);
 				}
+	} else {
+		return (NOKISS);
+	}
+}
+
+
+/* 
+ * Check that NAK is valid
+ */
+enum nak_error_codes
+valid_NAK(
+	  struct peer *peer,
+	  struct recvbuf *rbufp,
+	  u_char hismode
+	  )
+{
+	int base_packet_length = MIN_V4_PKT_LEN;
+	int remainder_size;
+	struct pkt *rpkt;
+	int keyid;
+
+	/*
+	 * Check to see if there is something beyond the basic packet
+	 */
+	if (rbufp->recv_length == base_packet_length) {
+		return NONAK;
+	}
+
+	remainder_size = rbufp->recv_length - base_packet_length;
+	/*
+	 * Is this a potential NAK?
+	 */
+	if (remainder_size != 4) {
+		return NONAK;
+	}
+
+	/*
+	 * Only server responses can contain NAK's
+	 */
+
+	if (hismode != MODE_SERVER &&
+	    hismode != MODE_ACTIVE &&
+	    hismode != MODE_PASSIVE
+	    ) {
+		return (INVALIDNAK);
+	}
+
+	/* 
+	 * Make sure that the extra field in the packet is all zeros
+	 */
+	rpkt = &rbufp->recv_pkt;
+	keyid = ntohl(((u_int32 *)rpkt)[base_packet_length / 4]);
+	if (keyid != 0) {
+		return (INVALIDNAK);
+	}
+
+	/* 
+	 * Only valid if peer uses a key
+	 */
+	if (peer->keyid > 0 || peer->flags & FLAG_SKEY) {
+		return (VALIDNAK);
 		}
 		else {
-			return (NOKISS);
+		return (INVALIDNAK);
 		}
 }
+
+
 /*
  * transmit - transmit procedure called by poll timeout
  */
@@ -418,6 +520,33 @@ transmit(
 	if (peer->hmode != MODE_BCLIENT)
 		peer_xmit(peer);
 	poll_update(peer, hpoll);
+
+	return;
+}
+
+
+const char *
+amtoa(
+	int am
+	)
+{
+	char *bp;
+
+	switch(am) {
+	    case AM_ERR:	return "AM_ERR";
+	    case AM_NOMATCH:	return "AM_NOMATCH";
+	    case AM_PROCPKT:	return "AM_PROCPKT";
+	    case AM_BCST:	return "AM_BCST";
+	    case AM_FXMIT:	return "AM_FXMIT";
+	    case AM_MANYCAST:	return "AM_MANYCAST";
+	    case AM_NEWPASS:	return "AM_NEWPASS";
+	    case AM_NEWBCL:	return "AM_NEWBCL";
+	    case AM_POSSBCL:	return "AM_POSSBCL";
+	    default:
+		LIB_GETBUF(bp);
+		snprintf(bp, LIB_BUFLENGTH, "AM_#%d", am);
+		return bp;
+	}
 }
 
 
@@ -436,10 +565,13 @@ receive(
 	u_char	hismode;		/* packet mode */
 	u_char	hisstratum;		/* packet stratum */
 	u_short	restrict_mask;		/* restrict bits */
+	const char *hm_str;		/* hismode string */
+	const char *am_str;		/* association match string */
 	int kissCode = NOKISS;	/* Kiss Code */
 	int	has_mac;		/* length of MAC field */
 	int	authlen;		/* offset of MAC field */
 	int	is_authentic = 0;	/* cryptosum ok */
+	int	crypto_nak_test;	/* result of crypto-NAK check */
 	int	retcode = AM_NOMATCH;	/* match code */
 	keyid_t	skeyid = 0;		/* key IDs */
 	u_int32	opcode = 0;		/* extension field opcode */
@@ -476,11 +608,12 @@ receive(
 		return;				/* bogus port */
 	}
 	restrict_mask = restrictions(&rbufp->recv_srcadr);
-	DPRINTF(2, ("receive: at %ld %s<-%s flags %x restrict %03x\n",
-		    current_time, stoa(&rbufp->dstadr->sin),
-		    stoa(&rbufp->recv_srcadr),
-		    rbufp->dstadr->flags, restrict_mask));
 	pkt = &rbufp->recv_pkt;
+	DPRINTF(2, ("receive: at %ld %s<-%s flags %x restrict %03x org %#010x.%08x xmt %#010x.%08x\n",
+		    current_time, stoa(&rbufp->dstadr->sin),
+		    stoa(&rbufp->recv_srcadr), rbufp->dstadr->flags,
+		    restrict_mask, ntohl(pkt->org.l_ui), ntohl(pkt->org.l_uf),
+		    ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf)));
 	hisversion = PKT_VERSION(pkt->li_vn_mode);
 	hisleap = PKT_LEAP(pkt->li_vn_mode);
 	hismode = (int)PKT_MODE(pkt->li_vn_mode);
@@ -563,6 +696,7 @@ receive(
 	 * extension field is present, so we subtract the length of the
 	 * field and go around again.
 	 */
+
 	authlen = LEN_PKT_NOMAC;
 	has_mac = rbufp->recv_length - authlen;
 	while (has_mac > 0) {
@@ -687,6 +821,8 @@ receive(
 	NTOHL_FP(&pkt->org, &p_org);
 	NTOHL_FP(&pkt->rec, &p_rec);
 	NTOHL_FP(&pkt->xmt, &p_xmt);
+	hm_str = modetoa(hismode);
+	am_str = amtoa(retcode);
 
 	/*
 	 * Authentication is conditioned by three switches:
@@ -711,29 +847,39 @@ receive(
 	 * is zero, acceptable outcomes of y are NONE and OK. If x is
 	 * one, the only acceptable outcome of y is OK.
 	 */
+	crypto_nak_test = valid_NAK(peer, rbufp, hismode);
+
+	/*
+	 * Drop any invalid crypto-NAKs
+	 */
+	if (crypto_nak_test == INVALIDNAK) {
+		report_event(PEVNT_AUTH, peer, "Invalid_NAK");
+		if (0 != peer) {
+			peer->badNAK++;
+		}
+		msyslog(LOG_ERR, "Invalid-NAK error at %ld %s<-%s", 
+			current_time, stoa(dstadr_sin), stoa(&rbufp->recv_srcadr));
+		return;
+	}
 
 	if (has_mac == 0) {
 		restrict_mask &= ~RES_MSSNTP;
 		is_authentic = AUTH_NONE; /* not required */
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "receive: at %ld %s<-%s mode %d len %d\n",
+		DPRINTF(2, ("receive: at %ld %s<-%s mode %d/%s:%s len %d org %#010x.%08x xmt %#010x.%08x NOMAC\n",
 			    current_time, stoa(dstadr_sin),
-			    stoa(&rbufp->recv_srcadr), hismode,
-			    authlen);
-#endif
-	} else if (has_mac == 4) {
+			    stoa(&rbufp->recv_srcadr), hismode, hm_str, am_str,
+			    authlen,
+			    ntohl(pkt->org.l_ui), ntohl(pkt->org.l_uf),
+			    ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf)));
+	} else if (crypto_nak_test == VALIDNAK) {
 		restrict_mask &= ~RES_MSSNTP;
 		is_authentic = AUTH_CRYPTO; /* crypto-NAK */
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "receive: at %ld %s<-%s mode %d keyid %08x len %d auth %d\n",
+		DPRINTF(2, ("receive: at %ld %s<-%s mode %d/%s:%s keyid %08x len %d auth %d org %#010x.%08x xmt %#010x.%08x MAC4\n",
 			    current_time, stoa(dstadr_sin),
-			    stoa(&rbufp->recv_srcadr), hismode, skeyid,
-			    authlen + has_mac, is_authentic);
-#endif
+			    stoa(&rbufp->recv_srcadr), hismode, hm_str, am_str,
+			    skeyid, authlen + has_mac, is_authentic,
+			    ntohl(pkt->org.l_ui), ntohl(pkt->org.l_uf),
+			    ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf)));
 
 #ifdef HAVE_NTP_SIGND
 		/*
@@ -858,14 +1004,12 @@ receive(
 		if (crypto_flags && skeyid > NTP_MAXKEY)
 			authtrust(skeyid, 0);
 #endif	/* AUTOKEY */
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "receive: at %ld %s<-%s mode %d keyid %08x len %d auth %d\n",
+		DPRINTF(2, ("receive: at %ld %s<-%s mode %d/%s:%s keyid %08x len %d auth %d org %#010x.%08x xmt %#010x.%08x\n",
 			    current_time, stoa(dstadr_sin),
-			    stoa(&rbufp->recv_srcadr), hismode, skeyid,
-			    authlen + has_mac, is_authentic);
-#endif
+			    stoa(&rbufp->recv_srcadr), hismode, hm_str, am_str,
+			    skeyid, authlen + has_mac, is_authentic,
+			    ntohl(pkt->org.l_ui), ntohl(pkt->org.l_uf),
+			    ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf)));
 	}
 
 	/*
@@ -1094,7 +1238,7 @@ receive(
 		/*
 		 * Determine whether to execute the initial volley.
 		 */
-		if (sys_bdelay != 0) {
+		if (sys_bdelay > 0.0) {
 #ifdef AUTOKEY
 			/*
 			 * If a two-way exchange is not possible,
@@ -1120,6 +1264,7 @@ receive(
 
 			} else {
 				peer->delay = sys_bdelay;
+				peer->bxmt = p_xmt;
 			}
 			break;
 		}
@@ -1140,6 +1285,7 @@ receive(
 			sys_restricted++;
 			return;			/* ignore duplicate */
 		}
+		peer->bxmt = p_xmt;
 #ifdef AUTOKEY
 		if (skeyid > NTP_MAXKEY)
 			crypto_recv(peer, rbufp);
@@ -1196,11 +1342,11 @@ receive(
 			 * debug-printed and not logged to avoid log
 			 * flooding.
 			 */
-			DPRINTF(1, ("receive: at %ld refusing to mobilize passive association"
-				    " with unknown peer %s mode %d keyid %08x len %d auth %d\n",
+			DPRINTF(2, ("receive: at %ld refusing to mobilize passive association"
+				    " with unknown peer %s mode %d/%s:%s keyid %08x len %d auth %d\n",
 				    current_time, stoa(&rbufp->recv_srcadr),
-				    hismode, skeyid, (authlen + has_mac),
-				    is_authentic));
+				    hismode, hm_str, am_str, skeyid,
+				    (authlen + has_mac), is_authentic));
 			sys_declined++;
 			return;
 		}
@@ -1249,6 +1395,74 @@ receive(
 			return;
 		}
 #endif /* AUTOKEY */
+
+		if (MODE_BROADCAST == hismode) {
+			int	bail = 0;
+			l_fp	tdiff;
+			u_long	deadband;
+
+			DPRINTF(2, ("receive: PROCPKT/BROADCAST: prev pkt %ld seconds ago, ppoll: %d, %d secs\n",
+				    (current_time - peer->timelastrec),
+				    peer->ppoll, (1 << peer->ppoll)
+				    ));
+			/* Things we can check:
+			 *
+			 * Did the poll interval change?
+			 * Is the poll interval in the packet in-range?
+			 * Did this packet arrive too soon?
+			 * Is the timestamp in this packet monotonic
+			 *  with respect to the previous packet?
+			 */
+
+			/* This is noteworthy, not error-worthy */
+			if (pkt->ppoll != peer->ppoll) {
+				msyslog(LOG_INFO, "receive: broadcast poll from %s changed from %ud to %ud",
+					stoa(&rbufp->recv_srcadr),
+					peer->ppoll, pkt->ppoll);
+			}
+
+			/* This is error-worthy */
+			if (pkt->ppoll < peer->minpoll ||
+			    pkt->ppoll > peer->maxpoll  ) {
+				msyslog(LOG_INFO, "receive: broadcast poll of %ud from %s is out-of-range (%d to %d)!",
+					pkt->ppoll, stoa(&rbufp->recv_srcadr),
+					peer->minpoll, peer->maxpoll);
+				++bail;
+			}
+
+			/* too early? worth an error, too! */
+			deadband = (1u << pkt->ppoll);
+			if (FLAG_BC_VOL & peer->flags)
+				deadband -= 3;	/* allow greater fuzz after volley */
+			if ((current_time - peer->timelastrec) < deadband) {
+				msyslog(LOG_INFO, "receive: broadcast packet from %s arrived after %lu, not %lu seconds!",
+					stoa(&rbufp->recv_srcadr),
+					(current_time - peer->timelastrec),
+					deadband);
+				++bail;
+			}
+
+			/* Alert if time from the server is non-monotonic */
+			tdiff = p_xmt;
+			L_SUB(&tdiff, &peer->bxmt);
+			if (tdiff.l_i < 0) {
+				msyslog(LOG_INFO, "receive: broadcast packet from %s contains non-monotonic timestamp: %#010x.%08x -> %#010x.%08x",
+					stoa(&rbufp->recv_srcadr),
+					peer->bxmt.l_ui, peer->bxmt.l_uf,
+					p_xmt.l_ui, p_xmt.l_uf
+					);
+				++bail;
+			}
+
+			peer->bxmt = p_xmt;
+
+			if (bail) {
+				peer->timelastrec = current_time;
+				sys_declined++;
+				return;
+			}
+		}
+
 		break;
 
 	/*
@@ -1282,6 +1496,7 @@ receive(
 		return;
 	}
 #endif	/* AUTOKEY */
+
 	peer->received++;
 	peer->flash &= ~PKT_TEST_MASK;
 	if (peer->flags & FLAG_XBOGUS) {
@@ -1293,12 +1508,22 @@ receive(
 	 * Next comes a rigorous schedule of timestamp checking. If the
 	 * transmit timestamp is zero, the server has not initialized in
 	 * interleaved modes or is horribly broken.
+	 *
+	 * A KoD packet we pay attention to cannot have a 0 transmit
+	 * timestamp.
 	 */
 	if (L_ISZERO(&p_xmt)) {
 		peer->flash |= TEST3;			/* unsynch */
+		if (0 == hisstratum) {			/* KoD packet */
+			peer->bogusorg++;		/* for TEST2 or TEST3 */
+			msyslog(LOG_INFO,
+				"receive: Unexpected zero transmit timestamp in KoD from %s",
+				ntoa(&peer->srcadr));
+			return;
+		}
 
 	/*
-	 * If the transmit timestamp duplicates a previous one, the
+	 * If the transmit timestamp duplicates our previous one, the
 	 * packet is a replay. This prevents the bad guys from replaying
 	 * the most recent packet, authenticated or not.
 	 */
@@ -1323,26 +1548,107 @@ receive(
 		}
 
 	/*
-	 * Check for bogus packet in basic mode. If found, switch to
-	 * interleaved mode and resynchronize, but only after confirming
-	 * the packet is not bogus in symmetric interleaved mode.
+	 * Basic KoD validation checking:
+	 *
+	 * KoD packets are a mixed-blessing.  Forged KoD packets
+	 * are DoS attacks.  There are rare situations where we might
+	 * get a valid KoD response, though.  Since KoD packets are
+	 * a special case that complicate the checks we do next, we
+	 * handle the basic KoD checks here.
+	 *
+	 * Note that we expect the incoming KoD packet to have its
+	 * (nonzero) org, rec, and xmt timestamps set to the xmt timestamp
+	 * that we have previously sent out.  Watch interleave mode.
+	 */
+	} else if (0 == hisstratum) {
+		DEBUG_INSIST(!L_ISZERO(&p_xmt));
+		if (   L_ISZERO(&p_org)		/* We checked p_xmt above */
+		    || L_ISZERO(&p_rec)) {
+			peer->bogusorg++;
+			msyslog(LOG_INFO,
+				"receive: KoD packet from %s has a zero org or rec timestamp.  Ignoring.",
+				ntoa(&peer->srcadr));
+			return;
+		}
+
+		if (   !L_ISEQU(&p_xmt, &p_org)
+		    || !L_ISEQU(&p_xmt, &p_rec)) {
+			peer->bogusorg++;
+			msyslog(LOG_INFO,
+				"receive: KoD packet from %s has inconsistent xmt/org/rec timestamps.  Ignoring.",
+				ntoa(&peer->srcadr));
+			return;
+		}
+
+		/* Be conservative */
+		if (peer->flip == 0 && !L_ISEQU(&p_org, &peer->aorg)) {
+			peer->bogusorg++;
+			msyslog(LOG_INFO,
+				"receive: flip 0 KoD origin timestamp %#010x.%08x from %s does not match %#010x.%08x - ignoring.",
+				p_org.l_ui, p_org.l_uf,
+				ntoa(&peer->srcadr),
+				peer->aorg.l_ui, peer->aorg.l_uf);
+			return;
+		} else if (peer->flip == 1 && !L_ISEQU(&p_org, &peer->borg)) {
+			peer->bogusorg++;
+			msyslog(LOG_INFO,
+				"receive: flip 1 KoD origin timestamp %#010x.%08x from %s does not match interleave %#010x.%08x - ignoring.",
+				p_org.l_ui, p_org.l_uf,
+				ntoa(&peer->srcadr),
+				peer->borg.l_ui, peer->borg.l_uf);
+			return;
+		}
+	
+	/*
+	 * Basic mode checks:
+	 *
+	 * If there is no origin timestamp, it's either an initial packet
+	 * or we've already received a response to our query.  Of course,
+	 * should 'aorg' be all-zero because this really was the original
+	 * transmit timestamp, we'll ignore this reply.  There is a window
+	 * of one nanosecond once every 136 years' time where this is
+	 * possible.  We currently ignore this situation.
+	 *
+	 * Otherwise, check for bogus packet in basic mode.
+	 * If it is bogus, switch to interleaved mode and resynchronize,
+	 * but only after confirming the packet is not bogus in
+	 * symmetric interleaved mode.
 	 *
 	 * This could also mean somebody is forging packets claiming to
 	 * be from us, attempting to cause our server to KoD us.
 	 */
 	} else if (peer->flip == 0) {
-		if (!L_ISEQU(&p_org, &peer->aorg)) {
+		INSIST(0 != hisstratum);
+		if (0) {
+		} else if (L_ISZERO(&p_org)) {
+			msyslog(LOG_INFO,
+				"receive: Got 0 origin timestamp from %s@%s xmt %#010x.%08x",
+				hm_str, ntoa(&peer->srcadr),
+				ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf));
+			L_CLR(&peer->aorg);
+		} else if (!L_ISEQU(&p_org, &peer->aorg)) {
+			/* are there cases here where we should bail? */
+			/* Should we set TEST2 if we decide to try xleave? */
 			peer->bogusorg++;
 			peer->flash |= TEST2;	/* bogus */
 			msyslog(LOG_INFO,
-				"receive: Unexpected origin timestamp from %s",
-				ntoa(&peer->srcadr));
+				"receive: Unexpected origin timestamp %#010x.%08x does not match aorg %#010x.%08x from %s@%s xmt %#010x.%08x",
+				ntohl(pkt->org.l_ui), ntohl(pkt->org.l_uf),
+				peer->aorg.l_ui, peer->aorg.l_uf,
+				hm_str, ntoa(&peer->srcadr),
+				ntohl(pkt->xmt.l_ui), ntohl(pkt->xmt.l_uf));
 			if (  !L_ISZERO(&peer->dst)
 			    && L_ISEQU(&p_org, &peer->dst)) {
+				/* Might be the start of an interleave */
+				if (dynamic_interleave) {
 				peer->flip = 1;
 				report_event(PEVNT_XLEAVE, peer, NULL);
+				} else {
+					msyslog(LOG_INFO,
+						"receive: Dynamic interleave from %s@%s denied",
+						hm_str, ntoa(&peer->srcadr));
+				}
 			}
-			return; /* Bogus packet, we are done */
 		} else {
 			L_CLR(&peer->aorg);
 		}
@@ -1372,12 +1678,14 @@ receive(
 	 * client packet. The server might have just changed keys. Clear
 	 * the association and restart the protocol.
 	 */
-	if (is_authentic == AUTH_CRYPTO) {
+	if (crypto_nak_test == VALIDNAK) {
 		report_event(PEVNT_AUTH, peer, "crypto_NAK");
 		peer->flash |= TEST5;		/* bad auth */
 		peer->badauth++;
 		if (peer->flags & FLAG_PREEMPT) {
+			if (unpeer_crypto_nak_early) {
 			unpeer(peer);
+			}
 			return;
 		}
 #ifdef AUTOKEY
@@ -1403,7 +1711,9 @@ receive(
 		    && (hismode == MODE_ACTIVE || hismode == MODE_PASSIVE))
 			fast_xmit(rbufp, MODE_ACTIVE, 0, restrict_mask);
 		if (peer->flags & FLAG_PREEMPT) {
+			if (unpeer_digest_early) {
 			unpeer(peer);
+			}
 			return;
 		}
 #ifdef AUTOKEY
@@ -1458,12 +1768,55 @@ receive(
 		return;		/* Drop any other kiss code packets */
 	}
 
+	/*
+	 * If:
+	 *	- this is a *cast (uni-, broad-, or m-) server packet
+	 *	- and it's symmetric-key authenticated
+	 * then see if the sender's IP is trusted for this keyid.
+	 * If it is, great - nothing special to do here.
+	 * Otherwise, we should report and bail.
+	 *
+	 * Autokey-authenticated packets are accepted.
+	 */
+
+	switch (hismode) {
+	    case MODE_SERVER:		/* server mode */
+	    case MODE_BROADCAST:	/* broadcast mode */
+	    case MODE_ACTIVE:		/* symmetric active mode */
+	    case MODE_PASSIVE:		/* symmetric passive mode */
+		if (   is_authentic == AUTH_OK
+		    && skeyid
+		    && skeyid <= NTP_MAXKEY
+		    && !authistrustedip(skeyid, &peer->srcadr)) {
+			report_event(PEVNT_AUTH, peer, "authIP");
+			peer->badauth++;
+			return;
+		}
+	    	break;
+
+	    case MODE_CLIENT:		/* client mode */
+#if 0		/* At this point, MODE_CONTROL is overloaded by MODE_BCLIENT */
+	    case MODE_CONTROL:		/* control mode */
+#endif
+	    case MODE_PRIVATE:		/* private mode */
+	    case MODE_BCLIENT:		/* broadcast client mode */
+	    	break;
+
+	    case MODE_UNSPEC:		/* unspecified (old version) */
+	    default:
+		msyslog(LOG_INFO,
+			"receive: Unexpected mode (%d) in packet from %s",
+			hismode, ntoa(&peer->srcadr));
+	    	break;
+	}
+
 
 	/*
 	 * That was hard and I am sweaty, but the packet is squeaky
 	 * clean. Get on with real work.
 	 */
 	peer->timereceived = current_time;
+	peer->timelastrec = current_time;
 	if (is_authentic == AUTH_OK)
 		peer->flags |= FLAG_AUTHENTIC;
 	else
@@ -1513,8 +1866,11 @@ receive(
 				    "crypto error");
 				peer_clear(peer, "CRYP");
 				peer->flash |= TEST9;	/* bad crypt */
-				if (peer->flags & FLAG_PREEMPT)
+				if (peer->flags & FLAG_PREEMPT) {
+					if (unpeer_crypto_early) {
 					unpeer(peer);
+			}
+				}
 			}
 			return;
 		}
@@ -1696,11 +2052,8 @@ process_packet(
 	 */
 	if (peer->flash & PKT_TEST_MASK) {
 		peer->seldisptoolarge++;
-#ifdef DEBUG
-		if (debug)
-			printf("packet: flash header %04x\n",
-			    peer->flash);
-#endif
+		DPRINTF(1, ("packet: flash header %04x\n",
+			    peer->flash));
 		return;
 	}
 
@@ -1784,6 +2137,9 @@ process_packet(
 			peer->aorg = p_xmt;
 			peer->borg = peer->dst;
 			if (t34 < 0 || t34 > 1.) {
+				/* drop all if in the initial volley */
+				if (FLAG_BC_VOL & peer->flags)
+					goto bcc_init_volley_fail;
 				snprintf(statstr, sizeof(statstr),
 				    "offset %.6f delay %.6f", t21, t34);
 				report_event(PEVNT_XERR, peer, statstr);
@@ -1809,11 +2165,23 @@ process_packet(
 		 * between the unicast timestamp and the broadcast
 		 * timestamp. This works for both basic and interleaved
 		 * modes.
+		 * [Bug 3031] Don't keep this peer when the delay 
+		 * calculation gives reason to suspect clock steps.
+		 * This is assumed for delays > 50ms.
 		 */
 		if (FLAG_BC_VOL & peer->flags) {
 			peer->flags &= ~FLAG_BC_VOL;
 			peer->delay = fabs(peer->offset - p_offset) * 2;
+			DPRINTF(2, ("broadcast volley: initial delay=%.6f\n",
+				peer->delay));
+			if (peer->delay > fabs(sys_bdelay)) {
+		bcc_init_volley_fail:
+				DPRINTF(2, ("%s", "broadcast volley: initial delay exceeds limit\n"));
+				unpeer(peer);
+				return;
+			}
 		}
+		peer->nextdate = current_time + (1u << peer->ppoll) - 2u;
 		p_del = peer->delay;
 		p_offset += p_del / 2;
 
@@ -1877,11 +2245,8 @@ process_packet(
 	peer->t21_last = peer->t21_bytes;
 	peer->t34 = -t34;
 	peer->t34_bytes = len;
-#ifdef DEBUG
-	if (debug > 1)
-		printf("packet: t21 %.9lf %d t34 %.9lf %d\n", peer->t21,
-		    peer->t21_bytes, peer->t34, peer->t34_bytes);
-#endif
+	DPRINTF(2, ("packet: t21 %.9lf %d t34 %.9lf %d\n", peer->t21,
+		    peer->t21_bytes, peer->t34, peer->t34_bytes));
 	if (peer->r21 > 0 && peer->r34 > 0 && p_del > 0) {
 		if (peer->pmode != MODE_BROADCAST)
 			td = (peer->r34 / (peer->r21 + peer->r34) -
@@ -1898,12 +2263,9 @@ process_packet(
 		 */
 		t21 -= td;
 		t34 -= td;
-#ifdef DEBUG
-		if (debug > 1)
-			printf("packet: del %.6lf r21 %.1lf r34 %.1lf %.6lf\n",
+		DPRINTF(2, ("packet: del %.6lf r21 %.1lf r34 %.1lf %.6lf\n",
 			    p_del, peer->r21 / 1e3, peer->r34 / 1e3,
-			    td);
-#endif
+			    td));
 	}
 #endif /* ASSYM */
 
@@ -1996,12 +2358,8 @@ clock_update(
 	sys_rootdelay = peer->delay + peer->rootdelay;
 	sys_reftime = peer->dst;
 
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "clock_update: at %lu sample %lu associd %d\n",
-		    current_time, peer->epoch, peer->associd);
-#endif
+	DPRINTF(1, ("clock_update: at %lu sample %lu associd %d\n",
+		    current_time, peer->epoch, peer->associd));
 
 	/*
 	 * Comes now the moment of truth. Crank the clock discipline and
@@ -2310,13 +2668,9 @@ peer_clear(
 #ifdef AUTOKEY
 	peer->refresh = current_time + (1 << NTP_REFRESH);
 #endif	/* AUTOKEY */
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "peer_clear: at %ld next %ld associd %d refid %s\n",
+	DPRINTF(1, ("peer_clear: at %ld next %ld associd %d refid %s\n",
 		    current_time, peer->nextdate, peer->associd,
-		    ident);
-#endif
+		    ident));
 }
 
 
@@ -2480,11 +2834,8 @@ clock_filter(
 	 * packets.
 	 */
 	if (peer->filter_epoch[k] <= peer->epoch) {
-#if DEBUG
-	if (debug > 1)
-		printf("clock_filter: old sample %lu\n", current_time -
-		    peer->filter_epoch[k]);
-#endif
+	DPRINTF(2, ("clock_filter: old sample %lu\n", current_time -
+		    peer->filter_epoch[k]));
 		return;
 	}
 	peer->epoch = peer->filter_epoch[k];
@@ -2496,13 +2847,9 @@ clock_filter(
 	 */
 	record_peer_stats(&peer->srcadr, ctlpeerstatus(peer),
 	    peer->offset, peer->delay, peer->disp, peer->jitter);
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "clock_filter: n %d off %.6f del %.6f dsp %.6f jit %.6f\n",
+	DPRINTF(1, ("clock_filter: n %d off %.6f del %.6f dsp %.6f jit %.6f\n",
 		    m, peer->offset, peer->delay, peer->disp,
-		    peer->jitter);
-#endif
+		    peer->jitter));
 	if (peer->burst == 0 || sys_leap == LEAP_NOTINSYNC)
 		clock_select();
 }
@@ -3159,11 +3506,11 @@ peer_xmit(
 	 * might not be usable.
 	 */
 	sendlen = LEN_PKT_NOMAC;
+	if (
 #ifdef AUTOKEY
-	if (!(peer->flags & FLAG_SKEY) && peer->keyid == 0) {
-#else	/* !AUTOKEY follows */
-	if (peer->keyid == 0) {
+	    !(peer->flags & FLAG_SKEY) &&
 #endif	/* !AUTOKEY */
+	    peer->keyid == 0) {
 
 		/*
 		 * Transmit a-priori timestamps
@@ -3209,13 +3556,11 @@ peer_xmit(
 		}
 		L_SUB(&xmt_ty, &xmt_tx);
 		LFPTOD(&xmt_ty, peer->xleave);
-#ifdef DEBUG
-		if (debug)
-			printf("transmit: at %ld %s->%s mode %d len %zu\n",
-		    	    current_time, peer->dstadr ?
-			    stoa(&peer->dstadr->sin) : "-",
-		            stoa(&peer->srcadr), peer->hmode, sendlen);
-#endif
+		DPRINTF(1, ("peer_xmit: at %ld %s->%s mode %d len %zu xmt %#010x.%08x\n",
+			    current_time,
+			    peer->dstadr ? stoa(&peer->dstadr->sin) : "-",
+		            stoa(&peer->srcadr), peer->hmode, sendlen,
+			    xmt_tx.l_ui, xmt_tx.l_uf));
 		return;
 	}
 
@@ -3500,7 +3845,7 @@ peer_xmit(
 		authtrust(xkeyid, 0);
 #endif	/* AUTOKEY */
 	if (sendlen > sizeof(xpkt)) {
-		msyslog(LOG_ERR, "proto: buffer overflow %zu", sendlen);
+		msyslog(LOG_ERR, "peer_xmit: buffer overflow %zu", sendlen);
 		exit (-1);
 	}
 	peer->t21_bytes = sendlen;
@@ -3523,30 +3868,33 @@ peer_xmit(
 	L_SUB(&xmt_ty, &xmt_tx);
 	LFPTOD(&xmt_ty, peer->xleave);
 #ifdef AUTOKEY
-#ifdef DEBUG
-	if (debug)
-		printf("transmit: at %ld %s->%s mode %d keyid %08x len %zu index %d\n",
+	DPRINTF(1, ("peer_xmit: at %ld %s->%s mode %d keyid %08x len %zu index %d\n",
 		    current_time, latoa(peer->dstadr),
 		    ntoa(&peer->srcadr), peer->hmode, xkeyid, sendlen,
-		    peer->keynumber);
-#endif
+		    peer->keynumber));
 #else	/* !AUTOKEY follows */
-#ifdef DEBUG
-	if (debug)
-		printf("transmit: at %ld %s->%s mode %d keyid %08x len %d\n",
+	DPRINTF(1, ("peer_xmit: at %ld %s->%s mode %d keyid %08x len %d\n",
 		    current_time, peer->dstadr ?
 		    ntoa(&peer->dstadr->sin) : "-",
-		    ntoa(&peer->srcadr), peer->hmode, xkeyid, sendlen);
-#endif
+		    ntoa(&peer->srcadr), peer->hmode, xkeyid, sendlen));
 #endif	/* !AUTOKEY */
+
+	return;
 }
 
 
 #ifdef LEAP_SMEAR
 
 static void
-leap_smear_add_offs(l_fp *t, l_fp *t_recv) {
+leap_smear_add_offs(
+	l_fp *t,
+	l_fp *t_recv
+	)
+{
+
 	L_ADD(t, &leap_smear.offset);
+
+	return;
 }
 
 #endif  /* LEAP_SMEAR */
@@ -3567,7 +3915,7 @@ fast_xmit(
 	struct pkt xpkt;	/* transmit packet structure */
 	struct pkt *rpkt;	/* receive packet structure */
 	l_fp	xmt_tx, xmt_ty;
-	int	sendlen;
+	size_t	sendlen;
 #ifdef AUTOKEY
 	u_int32	temp32;
 #endif
@@ -3683,16 +4031,13 @@ fast_xmit(
 	 * packet is not authenticated.
 	 */
 	sendlen = LEN_PKT_NOMAC;
-	if (rbufp->recv_length == sendlen) {
+	if ((size_t)rbufp->recv_length == sendlen) {
 		sendpkt(&rbufp->recv_srcadr, rbufp->dstadr, 0, &xpkt,
 		    sendlen);
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "transmit: at %ld %s->%s mode %d len %d\n",
+		DPRINTF(1, ("fast_xmit: at %ld %s->%s mode %d len %lu\n",
 			    current_time, stoa(&rbufp->dstadr->sin),
-			    stoa(&rbufp->recv_srcadr), xmode, sendlen);
-#endif
+			    stoa(&rbufp->recv_srcadr), xmode,
+			    (u_long)sendlen));
 		return;
 	}
 
@@ -3719,7 +4064,7 @@ fast_xmit(
 		 */
 		cookie = session_key(&rbufp->recv_srcadr,
 		    &rbufp->dstadr->sin, 0, sys_private, 0);
-		if (rbufp->recv_length > sendlen + (int)MAX_MAC_LEN) {
+		if ((size_t)rbufp->recv_length > sendlen + MAX_MAC_LEN) {
 			session_key(&rbufp->dstadr->sin,
 			    &rbufp->recv_srcadr, xkeyid, 0, 2);
 			temp32 = CRYPTO_RESP;
@@ -3743,13 +4088,10 @@ fast_xmit(
 	get_systime(&xmt_ty);
 	L_SUB(&xmt_ty, &xmt_tx);
 	sys_authdelay = xmt_ty;
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "transmit: at %ld %s->%s mode %d keyid %08x len %d\n",
+	DPRINTF(1, ("fast_xmit: at %ld %s->%s mode %d keyid %08x len %lu\n",
 		    current_time, ntoa(&rbufp->dstadr->sin),
-		    ntoa(&rbufp->recv_srcadr), xmode, xkeyid, sendlen);
-#endif
+		    ntoa(&rbufp->recv_srcadr), xmode, xkeyid,
+		    (u_long)sendlen));
 }
 
 
@@ -3829,11 +4171,8 @@ pool_xmit(
 		LEN_PKT_NOMAC);
 	pool->sent++;
 	pool->throttle += (1 << pool->minpoll) - 2;
-#ifdef DEBUG
-	if (debug)
-		printf("transmit: at %ld %s->%s pool\n",
-		    current_time, latoa(lcladr), stoa(rmtadr));
-#endif
+	DPRINTF(1, ("pool_xmit: at %ld %s->%s pool\n",
+		    current_time, latoa(lcladr), stoa(rmtadr)));
 	msyslog(LOG_INFO, "Soliciting pool server %s", stoa(rmtadr));
 #endif	/* WORKER */
 }
@@ -3851,7 +4190,8 @@ pool_xmit(
 	 * group	different	1		ignore
 	 * * ignore if notrust
 	 */
-int group_test(
+int
+group_test(
 	char	*grp,
 	char	*ident
 	)
@@ -3871,6 +4211,7 @@ int group_test(
 	return (1);
 }
 #endif /* AUTOKEY */
+
 
 #ifdef WORKER
 void
@@ -3931,11 +4272,8 @@ key_expire(
 	value_free(&peer->sndval);
 	peer->keynumber = 0;
 	peer->flags &= ~FLAG_ASSOC;
-#ifdef DEBUG
-	if (debug)
-		printf("key_expire: at %lu associd %d\n", current_time,
-		    peer->associd);
-#endif
+	DPRINTF(1, ("key_expire: at %lu associd %d\n", current_time,
+		    peer->associd));
 }
 #endif	/* AUTOKEY */
 
@@ -4190,7 +4528,7 @@ init_proto(void)
 	sys_survivors = 0;
 	sys_manycastserver = 0;
 	sys_bclient = 0;
-	sys_bdelay = 0;
+	sys_bdelay = BDELAY_DEFAULT;	/*[Bug 3031] delay cutoff */
 	sys_authenticate = 1;
 	sys_stattime = current_time;
 	orphwait = current_time + sys_orphwait;
@@ -4283,7 +4621,7 @@ proto_config(
 		break;
 
 	case PROTO_BROADDELAY:	/* default broadcast delay (bdelay) */
-		sys_bdelay = dvalue;
+		sys_bdelay = (dvalue ? dvalue : BDELAY_DEFAULT);
 		break;
 
 	case PROTO_CEILING:	/* stratum ceiling (ceiling) */
@@ -4343,6 +4681,22 @@ proto_config(
 	case PROTO_MULTICAST_DEL: /* delete group address */
 		if (svalue != NULL)
 			io_multicast_del(svalue);
+		break;
+
+	/*
+	 * Unpeer Early policy choices
+	 */
+
+	case PROTO_UECRYPTO:	/* Crypto */
+		unpeer_crypto_early = value;
+		break;
+
+	case PROTO_UECRYPTONAK:	/* Crypto_NAK */
+		unpeer_crypto_nak_early = value;
+		break;
+
+	case PROTO_UEDIGEST:	/* Digest */
+		unpeer_digest_early = value;
 		break;
 
 	default:

@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpd-opts.h,v 1.3.2.2 2015/11/07 22:26:37 snj Exp $	*/
+/*	$NetBSD: ntpd-opts.h,v 1.3.2.3 2016/05/08 22:02:10 snj Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.h)
  *
- *  It has been AutoGen-ed  October 21, 2015 at 12:35:59 PM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  April 26, 2016 at 08:26:13 PM by AutoGen 5.18.5
  *  From the definitions    ntpd-opts.def
  *  and the template file   options
  *
@@ -20,7 +20,7 @@
  * The ntpd program is copyrighted and licensed
  * under the following terms:
  *
- *  Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation, all rights reserved.
+ *  Copyright (C) 1992-2016 The University of Delaware and Network Time Foundation, all rights reserved.
  *  This is free software. It is licensed for use, modification and
  *  redistribution under the terms of the NTP License, copies of which
  *  can be seen at:
@@ -108,9 +108,9 @@ typedef enum {
 /** count of all options for ntpd */
 #define OPTION_CT    38
 /** ntpd version */
-#define NTPD_VERSION       "4.2.8p4"
+#define NTPD_VERSION       "4.2.8p7"
 /** Full ntpd version text */
-#define NTPD_FULL_VERSION  "ntpd 4.2.8p4"
+#define NTPD_FULL_VERSION  "ntpd 4.2.8p7"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

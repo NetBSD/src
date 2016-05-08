@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.1.1.2.2.2 2015/11/07 22:26:37 snj Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.1.1.2.2.3 2016/05/08 22:02:10 snj Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -383,7 +383,8 @@ static inline void memory_barrier(void)
 static enum segstat_t shm_query(volatile struct shmTime *shm_in, struct shm_stat_t *shm_stat)
 /* try to grab a sample from the specified SHM segment */
 {
-    volatile struct shmTime shmcopy, *shm = shm_in;
+    struct shmTime shmcopy;
+    volatile struct shmTime *shm = shm_in;
     volatile int cnt;
 
     unsigned int cns_new, rns_new;
@@ -420,7 +421,7 @@ static enum segstat_t shm_query(volatile struct shmTime *shm_in, struct shm_stat
      * (b) memset compiles to an uninterruptible single-instruction bitblt.
      */
     memory_barrier();
-    memcpy(__UNVOLATILE(&shmcopy), __UNVOLATILE(shm), sizeof(struct shmTime));
+    memcpy(&shmcopy, (void*)(uintptr_t)shm, sizeof(struct shmTime));
     shm->valid = 0;
     memory_barrier();
 
@@ -601,7 +602,7 @@ shm_timer(
 		     cd.year, cd.month, cd.monthday,
 		     cd.hour, cd.minute, cd.second,
 		     (long)shm_stat.tvt.tv_nsec);
-	pp->lencode = ((size_t)c < sizeof(pp->a_lastcode)) ? c : 0;
+	pp->lencode = (c > 0 && (size_t)c < sizeof(pp->a_lastcode)) ? c : 0;
 
 	/* check 1: age control of local time stamp */
 	tt = shm_stat.tvc.tv_sec - shm_stat.tvr.tv_sec;
