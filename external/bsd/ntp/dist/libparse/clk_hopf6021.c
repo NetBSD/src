@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_hopf6021.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
+/*	$NetBSD: clk_hopf6021.c,v 1.1.1.1.14.3 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_hopf6021.c,v 4.10 2004/11/14 15:29:41 kardel RELEASE_20050508_A
@@ -229,7 +229,7 @@ inp_hopf6021(
 {
 	unsigned int rtc;
 
-	parseprintf(DD_PARSE, ("inp_hopf6021(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_hopf6021(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	switch (ch)
 	{

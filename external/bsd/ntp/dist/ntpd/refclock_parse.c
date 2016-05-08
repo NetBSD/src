@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.5.6.2 2015/11/08 00:15:59 snj Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.5.6.3 2016/05/08 21:51:01 snj Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -1632,9 +1632,9 @@ list_err(
 static char *
 mkreadable(
 	char  *buffer,
-	long  blen,
+	size_t blen,
 	const char  *src,
-	u_long  srclen,
+	size_t srclen,
 	int hex
 	)
 {

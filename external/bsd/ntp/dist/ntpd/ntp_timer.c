@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.2.8.2 2015/11/08 00:15:59 snj Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.2.8.3 2016/05/08 21:51:01 snj Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -278,6 +278,12 @@ intres_timeout_req(
 	u_int	seconds		/* 0 cancels */
 	)
 {
+#if defined(HAVE_DROPROOT) && defined(NEED_EARLY_FORK)
+	if (droproot) {
+		worker_idle_timer = 0;
+		return;
+	}
+#endif
 	if (0 == seconds) {
 		worker_idle_timer = 0;
 		return;
@@ -556,9 +562,11 @@ check_leapsec(
 		leapsec_reset_frame();
 		memset(&lsdata, 0, sizeof(lsdata));
 	} else {
-	  int fired = leapsec_query(&lsdata, now, tpiv);
+	  int fired;
 
-	  DPRINTF(1, ("*** leapsec_query: fired %i, now %u (0x%08X), tai_diff %i, ddist %u\n",
+	  fired = leapsec_query(&lsdata, now, tpiv);
+
+	  DPRINTF(3, ("*** leapsec_query: fired %i, now %u (0x%08X), tai_diff %i, ddist %u\n",
 		  fired, now, now, lsdata.tai_diff, lsdata.ddist));
 
 #ifdef LEAP_SMEAR
@@ -574,8 +582,7 @@ check_leapsec(
 				DPRINTF(1, ("*** leapsec_query: setting leap_smear interval %li, begin %.0f, end %.0f\n",
 					leap_smear.interval, leap_smear.intv_start, leap_smear.intv_end));
 			}
-		}
-		else {
+		} else {
 			if (leap_smear.interval)
 				DPRINTF(1, ("*** leapsec_query: clearing leap_smear interval\n"));
 			leap_smear.interval = 0;
@@ -628,18 +635,19 @@ check_leapsec(
 		 * announce the leap event has happened.
 		 */
 		const char *leapmsg = NULL;
-		if (lsdata.warped < 0) {
+		double      lswarp  = lsdata.warped;
+		if (lswarp < 0.0) {
 			if (clock_max_back > 0.0 &&
-			    clock_max_back < abs(lsdata.warped)) {
-				step_systime(lsdata.warped);
+			    clock_max_back < -lswarp) {
+				step_systime(lswarp);
 				leapmsg = leapmsg_p_step;
 			} else {
 				leapmsg = leapmsg_p_slew;
 			}
-		} else 	if (lsdata.warped > 0) {
+		} else 	if (lswarp > 0.0) {
 			if (clock_max_fwd > 0.0 &&
-			    clock_max_fwd < abs(lsdata.warped)) {
-				step_systime(lsdata.warped);
+			    clock_max_fwd < lswarp) {
+				step_systime(lswarp);
 				leapmsg = leapmsg_n_step;
 			} else {
 				leapmsg = leapmsg_n_slew;

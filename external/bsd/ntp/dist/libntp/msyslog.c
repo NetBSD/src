@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.2.8.2 2015/11/08 00:15:58 snj Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.2.8.3 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -333,7 +333,7 @@ msnprintf(
 	)
 {
 	va_list	ap;
-	size_t	rc;
+	int	rc;
 
 	va_start(ap, fmt);
 	rc = mvsnprintf(buf, bufsiz, fmt, ap);

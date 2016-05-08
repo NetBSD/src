@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.3.6.2 2015/11/08 00:16:09 snj Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -12,6 +12,7 @@ void format_errmsg(char *, size_t, const char *, int);
 #endif
 
 
+void setUp(void);
 void test_msnprintf(void);
 void test_msnprintfLiteralPercentm(void);
 void test_msnprintfBackslashLiteralPercentm(void);
@@ -20,6 +21,15 @@ void test_msnprintfHangingPercent(void);
 void test_format_errmsgHangingPercent(void);
 void test_msnprintfNullTarget(void);
 void test_msnprintfTruncate(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void

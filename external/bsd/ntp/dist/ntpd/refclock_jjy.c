@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jjy.c,v 1.4.8.2 2015/11/08 00:15:59 snj Exp $	*/
+/*	$NetBSD: refclock_jjy.c,v 1.4.8.3 2016/05/08 21:51:01 snj Exp $	*/
 
 /*
  * refclock_jjy - clock driver for JJY receivers
@@ -629,7 +629,7 @@ jjy_receive ( struct recvbuf *rbufp )
 #ifdef DEBUG
 	printf( "\nrefclock_jjy.c : %s : Len=%d  ", sFunctionName, pp->lencode ) ;
 	for ( i = 0 ; i < pp->lencode ; i ++ ) {
-		if ( iscntrl( pp->a_lastcode[i] & 0x7F ) ) {
+		if ( iscntrl( (u_char)(pp->a_lastcode[i] & 0x7F) ) ) {
 			printf( "<x%02X>", pp->a_lastcode[i] & 0xFF ) ;
 		} else {
 			printf( "%c", pp->a_lastcode[i] ) ;
@@ -704,7 +704,7 @@ jjy_receive ( struct recvbuf *rbufp )
 				up->iLineBufLen ++ ;
 
 				/* Copy printable characters */
-				if ( ! iscntrl( (unsigned char)up->sRawBuf[i] ) ) {
+				if ( ! iscntrl( (u_char)up->sRawBuf[i] ) ) {
 					up->sTextBuf[up->iTextBufLen] = up->sRawBuf[i] ;
 					up->iTextBufLen ++ ;
 				}
@@ -1156,7 +1156,8 @@ jjy_receive_tristate_jjy01 ( struct recvbuf *rbufp )
 	struct refclockproc *pp ;
 	struct peer	    *peer;
 
-	char	*pBuf, sLog [ 100 ] ;
+	char *		pBuf ;
+	char		sLog [ 100 ] ;
 	int 	iLen ;
 	int 	rc ;
 
@@ -2012,7 +2013,8 @@ jjy_receive_tristate_gpsclock01 ( struct recvbuf *rbufp )
 	struct refclockproc *pp ;
 	struct peer	    *peer;
 
-	char	*pBuf, sLog [ 100 ] ;
+	char *		pBuf ;
+	char		sLog [ 100 ] ;
 	int 	iLen ;
 	int 	rc ;
 
@@ -2718,12 +2720,12 @@ jjy_start_telephone ( int unit, struct peer *peer, struct jjyunit *up )
 
 	iNumberOfDigitsOfPhoneNumber = iCommaCount = iCommaPosition = iFirstThreeDigitsCount = 0 ;
 	for ( i = 0 ; i < strlen( sys_phone[0] ) ; i ++ ) {
-		if ( isdigit( (unsigned char)*(sys_phone[0]+i) ) ) {
+		if ( isdigit( (u_char)sys_phone[0][i] ) ) {
 			if ( iFirstThreeDigitsCount < sizeof(sFirstThreeDigits)-1 ) {
-				sFirstThreeDigits[iFirstThreeDigitsCount++] = *(sys_phone[0]+i) ;
+				sFirstThreeDigits[iFirstThreeDigitsCount++] = sys_phone[0][i] ;
 			}
 			iNumberOfDigitsOfPhoneNumber ++ ;
-		} else if ( *(sys_phone[0]+i) == ',' ) {
+		} else if ( sys_phone[0][i] == ',' ) {
 			iCommaCount ++ ;
 			if ( iCommaCount > 1 ) {
 				msyslog( LOG_ERR, "refclock_jjy.c : jjy_start_telephone : phone in the ntpd.conf should be zero or one comma." ) ;
@@ -2732,7 +2734,7 @@ jjy_start_telephone ( int unit, struct peer *peer, struct jjyunit *up )
 			}
 			iFirstThreeDigitsCount = 0 ;
 			iCommaPosition = i ;
-		} else if ( *(sys_phone[0]+i) != '-' ) {
+		} else if ( sys_phone[0][i] != '-' ) {
 			msyslog( LOG_ERR, "refclock_jjy.c : jjy_start_telephone : phone in the ntpd.conf should be a number or a hyphen." ) ;
 			up->bInitError = TRUE ;
 			return 1 ;
@@ -4034,8 +4036,8 @@ modem_init_resp00 ( struct peer *peer, struct refclockproc *pp, struct jjyunit *
 			iSpeakerVolume = 2 ;
 		}
 
-		snprintf( cBuf, sizeof(cBuf), "ATM%dL%d\r\n", iSpeakerSwitch, iSpeakerVolume ) ;
 		pCmd = cBuf ;
+		snprintf( cBuf, sizeof(cBuf), "ATM%dL%d\r\n", iSpeakerSwitch, iSpeakerVolume ) ;
 		break ;
 
 	case 3 :
@@ -4063,8 +4065,8 @@ modem_init_resp00 ( struct peer *peer, struct refclockproc *pp, struct jjyunit *
 			iErrorCorrection = 3 ;
 		}
 
-		snprintf( cBuf, sizeof(cBuf), "AT\\N%d\r\n", iErrorCorrection ) ;
 		pCmd = cBuf ;
+		snprintf( cBuf, sizeof(cBuf), "AT\\N%d\r\n", iErrorCorrection ) ;
 		break ;
 
 	case 7 :

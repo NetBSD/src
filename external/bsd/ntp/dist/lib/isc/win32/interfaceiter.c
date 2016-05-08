@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.1.1.2.8.1 2014/12/25 02:28:07 snj Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.1.1.2.8.2 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@ struct isc_interfaceiter {
 	IP_ADAPTER_ADDRESSES *	ipaaCur;	/* enumeration position */
 	IP_ADAPTER_UNICAST_ADDRESS *ipuaCur;	/* enumeration subposition */
 	/* fields used for the older address enumeration ioctls */
-	int			socket;
+	SOCKET			socket;
 	INTERFACE_INFO		IFData;		/* Current Interface Info */
 	int			numIF;		/* Current Interface count */
 	int			v4IF;		/* Number of IPv4 Interfaces */

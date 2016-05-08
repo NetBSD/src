@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.4.6.3 2015/11/08 00:15:59 snj Exp $	*/
+/*	$NetBSD: refclock_gpsdjson.c,v 1.4.6.4 2016/05/08 21:51:01 snj Exp $	*/
 
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
@@ -378,7 +378,6 @@ static int16_t clamped_precision(int rawprec);
 /* =====================================================================
  * local / static stuff
  */
-
 
 static const char * const s_req_version =
     "?VERSION;\r\n";
@@ -1164,7 +1163,10 @@ json_token_skip(
 			++tid;
 			break;
 		}
-		if (tid > ctx->ntok) /* Impossible? Paranoia rulez. */
+		/* The next condition should never be true, but paranoia
+		 * prevails...
+		 */
+		if (tid < 0 || tid > ctx->ntok)
 			tid = ctx->ntok;
 	}
 	return tid;
@@ -1192,7 +1194,7 @@ json_object_lookup(
 			tid = json_token_skip(ctx, tid); /* skip val */
 		} else if (strcmp(key, ctx->buf + ctx->tok[tid].start)) {
 			tid = json_token_skip(ctx, tid+1); /* skip key+val */
-		} else if (what < 0 || (unsigned)what == ctx->tok[tid+1].type) {
+		} else if (what < 0 || (u_int)what == ctx->tok[tid+1].type) {
 			return tid + 1;
 		} else {
 			break;
@@ -1505,14 +1507,14 @@ process_version(
 	if (up->fl_watch)
 		return;
 
-/* The logon string is actually the ?WATCH command of GPSD, using JSON
- * data and selecting the GPS device name we created from our unit
- * number. We have an old a newer version that request PPS (and TOFF)
- * transmission.
+	/* The logon string is actually the ?WATCH command of GPSD,
+	 * using JSON data and selecting the GPS device name we created
+	 * from our unit number. We have an old a newer version that
+	 * request PPS (and TOFF) transmission.
  */
 	snprintf(up->buffer, sizeof(up->buffer),
 	    "?WATCH={\"device\":\"%s\",\"enable\":true,\"json\":true%s};\r\n",
-	    up->device, up->pf_toff ? ",\"pps\":true" : "");
+		 up->device, (up->pf_toff ? ",\"pps\":true" : ""));
 	buf = up->buffer;
 	len = strlen(buf);
 	log_data(peer, "send", buf, len);

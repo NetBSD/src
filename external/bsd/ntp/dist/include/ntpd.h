@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.h,v 1.3.8.2 2015/11/08 00:15:57 snj Exp $	*/
+/*	$NetBSD: ntpd.h,v 1.3.8.3 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
@@ -158,7 +158,7 @@ extern	u_int	sys_tai;
 extern 	int	freq_cnt;
 
 /* ntp_monitor.c */
-#define MON_HASH_SIZE		(1U << mon_hash_bits)
+#define MON_HASH_SIZE		((size_t)1U << mon_hash_bits)
 #define MON_HASH_MASK		(MON_HASH_SIZE - 1)
 #define	MON_HASH(addr)		(sock_hash(addr) & MON_HASH_MASK)
 extern	void	init_mon	(void);
@@ -410,6 +410,7 @@ extern int	hardpps_enable;		/* kernel PPS discipline enabled */
 extern int	ext_enable;		/* external clock enabled */
 extern int	cal_enable;		/* refclock calibrate enable */
 extern int	allow_panic;		/* allow panic correction (-g) */
+extern int	enable_panic_check;	/* Can we check allow_panic's state? */
 extern int	force_step_once;	/* always step time once at startup (-G) */
 extern int	mode_ntpdate;		/* exit on first clock set (-q) */
 extern int	peer_ntpdate;		/* count of ntpdate peers */

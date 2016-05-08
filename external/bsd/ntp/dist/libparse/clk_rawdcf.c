@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_rawdcf.c,v 1.2.14.2 2015/11/08 00:15:58 snj Exp $	*/
+/*	$NetBSD: clk_rawdcf.c,v 1.2.14.3 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_rawdcf.c,v 4.18 2006/06/22 18:40:01 kardel RELEASE_20060622_A
@@ -629,7 +629,7 @@ inp_rawdcf(
 {
 	static struct timeval timeout = { 1, 500000 }; /* 1.5 secongs denote second #60 */
 
-	parseprintf(DD_PARSE, ("inp_rawdcf(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_rawdcf(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	parseio->parse_dtime.parse_stime = *tstamp; /* collect timestamp */
 
