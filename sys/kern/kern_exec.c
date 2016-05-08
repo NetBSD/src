@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.426 2016/04/04 23:07:06 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.427 2016/05/08 01:28:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.426 2016/04/04 23:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.427 2016/05/08 01:28:09 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -759,7 +759,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 */
 
 #ifdef PAX_ASLR
-#define	ASLR_GAP(epp)	(pax_aslr_epp_active(epp) ? (cprng_fast32() % PAGE_SIZE) : 0)
+#define	ASLR_GAP(epp)	pax_aslr_stack_gap(epp)
 #else
 #define	ASLR_GAP(epp)	0
 #endif

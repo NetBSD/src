@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.41 2016/04/10 15:41:05 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.42 2016/05/08 01:28:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.41 2016/04/10 15:41:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.42 2016/05/08 01:28:09 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.41 2016/04/10 15:41:05 christos Exp $
 #include <sys/syslog.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
+#include <sys/bitops.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
 
@@ -136,8 +137,12 @@ int pax_mprotect_debug;
 int pax_aslr_debug;
 /* flag set means disable */
 int pax_aslr_flags;
-#define PAX_ASLR_STACK	1
-#define PAX_ASLR_MMAP	2
+uint32_t pax_aslr_rand;
+#define PAX_ASLR_STACK		0x01
+#define PAX_ASLR_STACK_GAP	0x02
+#define PAX_ASLR_MMAP		0x04
+#define PAX_ASLR_EXEC_OFFSET	0x08
+#define PAX_ASLR_FIXED		0x10
 #endif
 
 static int pax_segvguard_enabled = 1;
@@ -282,6 +287,12 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 		       CTLTYPE_INT, "flags",
 		       SYSCTL_DESCR("Disable/Enable select ASLR features."),
 		       NULL, 0, &pax_aslr_flags, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "rand",
+		       SYSCTL_DESCR("Use the given fixed random value"),
+		       NULL, 0, &pax_aslr_rand, 0,
 		       CTL_CREATE, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -459,7 +470,12 @@ pax_aslr_init_vm(struct lwp *l, struct vmspace *vm, struct exec_package *ep)
 	uint32_t len = (ep->ep_flags & EXEC_32) ?
 	    PAX_ASLR_DELTA_MMAP_LEN32 : PAX_ASLR_DELTA_MMAP_LEN;
 
-	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(cprng_fast32(),
+	uint32_t rand = cprng_fast32();
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_FIXED)
+		rand = pax_aslr_rand;
+#endif
+	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(rand,
 	    PAX_ASLR_DELTA_MMAP_LSB, len);
 
 	PAX_DPRINTF("delta_mmap=%#jx/%u", vm->vm_aslr_delta_mmap, len);
@@ -496,6 +512,40 @@ pax_aslr_mmap(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int f)
 	}
 }
 
+#define	PAX_TRUNC(a, b)	((a) & ~((b) - 1))
+vaddr_t
+pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
+{
+	size_t pax_align, l2, delta;
+	uint32_t rand;
+	vaddr_t offset;
+
+	if (!pax_aslr_epp_active(epp))
+		goto out;
+
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_EXEC_OFFSET)
+		goto out;
+#endif
+
+	pax_align = align == 0 ? PGSHIFT : align;
+	l2 = ilog2(pax_align);
+
+	rand = cprng_fast32();
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_FIXED)
+		rand = pax_aslr_rand;
+#endif
+	delta = PAX_ASLR_DELTA(rand, l2, PAX_ASLR_DELTA_EXEC_LEN);
+	offset = PAX_TRUNC(delta, pax_align) + PAGE_SIZE;
+
+	PAX_DPRINTF("rand=%#x l2=%#zx pax_align=%#zx delta=%#zx offset=%#jx",
+	    rand, l2, pax_align, delta, (uintmax_t)offset);
+	return offset;
+out:
+	return MAX(align, PAGE_SIZE);
+}
+
 void
 pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 {
@@ -508,8 +558,12 @@ pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 
 	uint32_t len = (epp->ep_flags & EXEC_32) ?
 	    PAX_ASLR_DELTA_STACK_LEN32 : PAX_ASLR_DELTA_STACK_LEN;
-	u_long d = PAX_ASLR_DELTA(cprng_fast32(), PAX_ASLR_DELTA_STACK_LSB,
-	    len);
+	uint32_t rand = cprng_fast32();
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_FIXED)
+		rand = pax_aslr_rand;
+#endif
+	u_long d = PAX_ASLR_DELTA(rand, PAX_ASLR_DELTA_STACK_LSB, len);
  	u_long newminsaddr = (u_long)STACK_ALLOC(epp->ep_minsaddr, d);
 	PAX_DPRINTF("old minsaddr=%#jx delta=%#lx new minsaddr=%#lx",
 	    (uintmax_t)epp->ep_minsaddr, d, newminsaddr);
@@ -517,6 +571,27 @@ pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 	*max_stack_size -= d;
 	if (epp->ep_ssize > *max_stack_size)
 		epp->ep_ssize = *max_stack_size;
+}
+
+uint32_t
+pax_aslr_stack_gap(struct exec_package *epp)
+{
+	if (!pax_aslr_epp_active(epp))
+		return 0;
+
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_STACK_GAP)
+		return 0;
+#endif
+
+	uint32_t rand = cprng_fast32();
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_FIXED)
+		rand = pax_aslr_rand;
+#endif
+	rand %= PAGE_SIZE;
+	PAX_DPRINTF("stack gap=%#x\n", rand);
+	return rand;
 }
 #endif /* PAX_ASLR */
 
