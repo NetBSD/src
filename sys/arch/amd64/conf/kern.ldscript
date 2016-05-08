@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.17 2016/05/07 12:45:55 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.18 2016/05/08 08:30:41 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -23,6 +23,7 @@ SECTIONS
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
+	__rodata_start = . ;
 	.rodata :
 	{
 		*(.rodata)
