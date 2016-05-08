@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.82 2016/03/19 18:56:37 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.83 2016/05/08 01:28:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.82 2016/03/19 18:56:37 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.83 2016/05/08 01:28:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -76,7 +76,6 @@ __KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.82 2016/03/19 18:56:37 christos Exp $
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/bitops.h>
-#include <sys/cprng.h>
 
 #include <sys/cpu.h>
 #include <machine/reg.h>
@@ -125,32 +124,10 @@ elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 		if (ph[i].p_type == PT_LOAD && ph[i].p_align > align)
 			align = ph[i].p_align;
 
-#ifdef PAX_ASLR
-	if (pax_aslr_epp_active(epp)) {
-		size_t pax_align, l2, delta;
-		uint32_t r;
-
-		pax_align = align;
-
-		r = cprng_fast32();
-
-		if (pax_align == 0)
-			pax_align = PGSHIFT;
-		l2 = ilog2(pax_align);
-		delta = PAX_ASLR_DELTA(r, l2, PAX_ASLR_DELTA_EXEC_LEN);
-		offset = ELF_TRUNC(delta, pax_align) + PAGE_SIZE;
-#ifdef PAX_ASLR_DEBUG
-		if (pax_aslr_debug) {
-			uprintf("%s: r=%#x l2=%#zx pax_align=%#zx delta=%#zx\n",
-			    __func__, r, l2, pax_align, delta);
-			uprintf("%s: pax offset=%#jx entry=%#jx\n", __func__,
-			    (uintmax_t)offset, (uintmax_t)eh->e_entry);
-		}
-#endif /* PAX_ASLR_DEBUG */
-	} else
-#endif /* PAX_ASLR */
-		offset = MAX(align, PAGE_SIZE);
-
+#ifndef PAX_ASLR
+# define pax_aslr_exec_offset(epp, align) MAX(align, PAGE_SIZE)
+#endif
+	offset = (Elf_Addr)pax_aslr_exec_offset(epp, align);
 	offset += epp->ep_vm_minaddr;
 
 	for (i = 0; i < eh->e_phnum; i++)
