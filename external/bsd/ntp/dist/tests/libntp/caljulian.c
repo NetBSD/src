@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.1.1.3.2.2 2015/11/07 22:26:46 snj Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.1.1.3.2.3 2016/05/08 22:02:14 snj Exp $	*/
 
 #include "config.h"
 
@@ -22,10 +22,12 @@ void test_uLongWrapped(void);
 
 
 char *
-CalendarToString(const struct calendar cal) {
+CalendarToString(const struct calendar cal)
+{
 	char * str = emalloc (sizeof (char) * 100);
-	
 	char buffer[100] ="";
+
+	*str = '\0';
 	snprintf(buffer, 100, "%u", cal.year);
 	strcat(str, buffer);
 	strcat(str, "-");
@@ -50,19 +52,25 @@ CalendarToString(const struct calendar cal) {
 }
 
 int // technically boolean
-IsEqual(const struct calendar expected, const struct calendar actual) {
-	if (expected.year == actual.year &&
-		(expected.yearday == actual.yearday ||
-		 (expected.month == actual.month &&
-		  expected.monthday == actual.monthday)) &&
-		expected.hour == actual.hour &&
-		expected.minute == actual.minute &&
-		expected.second == actual.second) {
+IsEqual(const struct calendar expected, const struct calendar actual)
+{
+	if (   expected.year == actual.year
+	    && (   expected.yearday == actual.yearday
+		|| (   expected.month == actual.month
+		    && expected.monthday == actual.monthday))
+	    && expected.hour == actual.hour
+	    && expected.minute == actual.minute
+	    && expected.second == actual.second) {
 		return TRUE;
 	} else {
-		printf("expected: %s but was %s", CalendarToString(expected) ,CalendarToString(actual));
-		return FALSE;
+		char *p_exp, *p_act;
 			
+		p_exp = CalendarToString(expected);
+		p_act = CalendarToString(actual);
+		printf("expected: %s but was %s", p_exp, p_act);
+		free(p_exp);
+		free(p_act);
+		return FALSE;
 	}
 }
 
@@ -72,17 +80,23 @@ setUp()
 {
     ntpcal_set_timefunc(timefunc);
     settime(1970, 1, 1, 0, 0, 0);
+    init_lib();
+
+    return;
 }
 
 void
 tearDown()
 {
     ntpcal_set_timefunc(NULL);
+
+    return;
 }
 
 
 void
-test_RegularTime(void) {
+test_RegularTime(void)
+{
 	u_long testDate = 3485080800UL; // 2010-06-09 14:00:00
 	struct calendar expected = {2010,160,6,9,14,0,0};
 
@@ -91,10 +105,13 @@ test_RegularTime(void) {
 	caljulian(testDate, &actual);
 
 	TEST_ASSERT_TRUE(IsEqual(expected, actual));
+
+	return;
 }
 
 void
-test_LeapYear(void) {
+test_LeapYear(void)
+{
 	u_long input = 3549902400UL; // 2012-06-28 20:00:00Z
 	struct calendar expected = {2012, 179, 6, 28, 20, 0, 0};
 
@@ -103,28 +120,36 @@ test_LeapYear(void) {
 	caljulian(input, &actual);
 
 	TEST_ASSERT_TRUE(IsEqual(expected, actual));
+
+	return;
 }
 
 void
-test_uLongBoundary(void) {
-	u_long time = 4294967295UL; // 2036-02-07 6:28:15
+test_uLongBoundary(void)
+{
+	u_long enc_time = 4294967295UL; // 2036-02-07 6:28:15
 	struct calendar expected = {2036,0,2,7,6,28,15};
 
 	struct calendar actual;
 
-	caljulian(time, &actual);
+	caljulian(enc_time, &actual);
 
 	TEST_ASSERT_TRUE(IsEqual(expected, actual));
+
+	return;
 }
 
 void
-test_uLongWrapped(void) {
-	u_long time = 0;
+test_uLongWrapped(void)
+{
+	u_long enc_time = 0;
 	struct calendar expected = {2036,0,2,7,6,28,16};
 
 	struct calendar actual;
 
-	caljulian(time, &actual);
+	caljulian(enc_time, &actual);
 
 	TEST_ASSERT_TRUE(IsEqual(expected, actual));
+
+	return;
 }

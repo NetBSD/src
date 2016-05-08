@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_schmid.c,v 1.1.1.1.8.2 2015/11/07 22:26:36 snj Exp $	*/
+/*	$NetBSD: clk_schmid.c,v 1.1.1.1.8.3 2016/05/08 22:02:09 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_schmid.c,v 4.9 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -207,7 +207,7 @@ inp_schmid(
 {
 	unsigned int rtc;
 
-	parseprintf(DD_PARSE, ("inp_schmid(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_schmid(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	switch ((uint8_t)ch)
 	{

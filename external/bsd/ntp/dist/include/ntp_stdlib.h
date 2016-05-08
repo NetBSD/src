@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.5.2.2 2015/11/07 22:26:34 snj Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.5.2.3 2016/05/08 22:02:08 snj Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -18,6 +18,7 @@
 #include "ntp_malloc.h"
 #include "ntp_string.h"
 #include "ntp_syslog.h"
+#include "ntp_keyacc.h"
 
 #ifdef __GNUC__
 #define NTP_PRINTF(fmt, args) __attribute__((__format__(__printf__, fmt, args)))
@@ -69,10 +70,11 @@ typedef void (*ctrl_c_fn)(void);
 /* authkeys.c */
 extern	void	auth_delkeys	(void);
 extern	int	auth_havekey	(keyid_t);
-extern	int	authdecrypt	(keyid_t, u_int32 *, int, int);
-extern	int	authencrypt	(keyid_t, u_int32 *, int);
+extern	int	authdecrypt	(keyid_t, u_int32 *, size_t, size_t);
+extern	size_t	authencrypt	(keyid_t, u_int32 *, size_t);
 extern	int	authhavekey	(keyid_t);
 extern	int	authistrusted	(keyid_t);
+extern	int	authistrustedip	(keyid_t, sockaddr_u *);
 extern	int	authreadkeys	(const char *);
 extern	void	authtrust	(keyid_t, u_long);
 extern	int	authusekey	(keyid_t, int, const u_char *);
@@ -99,9 +101,9 @@ extern	void	auth_prealloc_symkeys(int);
 extern	int	ymd2yd		(int, int, int);
 
 /* a_md5encrypt.c */
-extern	int	MD5authdecrypt	(int, u_char *, u_int32 *, int, int);
-extern	int	MD5authencrypt	(int, u_char *, u_int32 *, int);
-extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t);
+extern	int	MD5authdecrypt	(int, const u_char *, u_int32 *, size_t, size_t);
+extern	size_t	MD5authencrypt	(int, const u_char *, u_int32 *, size_t);
+extern	void	MD5auth_setkey	(keyid_t, int, const u_char *, size_t, KeyAccT *c);
 extern	u_int32	addr2refid	(sockaddr_u *);
 
 /* emalloc.c */
@@ -145,6 +147,7 @@ extern	int	atouint		(const char *, u_long *);
 extern	int	hextoint	(const char *, u_long *);
 extern	const char *	humanlogtime	(void);
 extern	const char *	humantime	(time_t);
+extern int	is_ip_address	(const char *, u_short, sockaddr_u *);
 extern	char *	mfptoa		(u_int32, u_int32, short);
 extern	char *	mfptoms		(u_int32, u_int32, short);
 extern	const char * modetoa	(size_t);
@@ -201,7 +204,7 @@ extern int	authnumfreekeys;
 extern keyid_t	cache_keyid;		/* key identifier */
 extern int	cache_type;		/* key type */
 extern u_char *	cache_secret;		/* secret */
-extern u_short	cache_secretsize;	/* secret octets */
+extern size_t	cache_secretsize;	/* secret octets */
 extern u_short	cache_flags;		/* KEY_ bit flags */
 
 /* getopt.c */

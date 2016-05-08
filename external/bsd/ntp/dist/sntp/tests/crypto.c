@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.3.2.2 2015/11/07 22:26:45 snj Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.3.2.3 2016/05/08 22:02:13 snj Exp $	*/
 
 #include "config.h"
 #include "unity.h"
@@ -20,8 +20,8 @@ void test_PacketSizeNotMultipleOfFourBytes(void);
 
 
 void
-test_MakeMd5Mac(void) {
-
+test_MakeMd5Mac(void)
+{
 	const char* PKT_DATA = "abcdefgh0123";
 	const int PKT_LEN = strlen(PKT_DATA);
 	const char* EXPECTED_DIGEST =
@@ -36,15 +36,17 @@ test_MakeMd5Mac(void) {
 	memcpy(&md5.type, "MD5", 4);
 
 	TEST_ASSERT_EQUAL(MD5_LENGTH,
-			  make_mac((char*)PKT_DATA, PKT_LEN, MD5_LENGTH, &md5, actual));
+			  make_mac(PKT_DATA, PKT_LEN, MD5_LENGTH, &md5, actual));
 
 	TEST_ASSERT_TRUE(memcmp(EXPECTED_DIGEST, actual, MD5_LENGTH) == 0);
 }
 
 
 void
-test_MakeSHA1Mac(void) {
+test_MakeSHA1Mac(void)
+{
 #ifdef OPENSSL
+
 	const char* PKT_DATA = "abcdefgh0123";
 	const int PKT_LEN = strlen(PKT_DATA);
 	const char* EXPECTED_DIGEST =
@@ -60,21 +62,25 @@ test_MakeSHA1Mac(void) {
 	memcpy(&sha1.type, "SHA1", 5);
 
 	TEST_ASSERT_EQUAL(SHA1_LENGTH,
-			  make_mac((char*)PKT_DATA, PKT_LEN, SHA1_LENGTH, &sha1, actual));
+			  make_mac(PKT_DATA, PKT_LEN, SHA1_LENGTH, &sha1, actual));
 
 	TEST_ASSERT_EQUAL_MEMORY(EXPECTED_DIGEST, actual, SHA1_LENGTH);
+	
 #else
+	
 	TEST_IGNORE_MESSAGE("OpenSSL not found, skipping...");
+	
 #endif	/* OPENSSL */
 }
 
 
 void
-test_VerifyCorrectMD5(void) {
+test_VerifyCorrectMD5(void)
+{
 	const char* PKT_DATA =
-		"sometestdata"		// Data
-		"\0\0\0\0"			// Key-ID (unused)
-		"\xc7\x58\x99\xdd\x99\x32\x0f\x71" // MAC
+	    "sometestdata"			/* Data */
+	    "\0\0\0\0"				/* Key-ID (unused) */
+	    "\xc7\x58\x99\xdd\x99\x32\x0f\x71"	/* MAC */
 		"\x2b\x7b\xfe\x4f\xa2\x32\xcf\xac";
 	const int PKT_LEN = 12;
 
@@ -85,17 +91,19 @@ test_VerifyCorrectMD5(void) {
 	memcpy(&md5.key_seq, "md5key", md5.key_len);
 	memcpy(&md5.type, "MD5", 4);
 
-	TEST_ASSERT_TRUE(auth_md5((char*)PKT_DATA, PKT_LEN, MD5_LENGTH, &md5));
+	TEST_ASSERT_TRUE(auth_md5(PKT_DATA, PKT_LEN, MD5_LENGTH, &md5));
 }
 
 
 void
-test_VerifySHA1(void) {
+test_VerifySHA1(void)
+{
 #ifdef OPENSSL
+
 	const char* PKT_DATA =
-		"sometestdata"		// Data
-		"\0\0\0\0"			// Key-ID (unused)
-		"\xad\x07\xde\x36\x39\xa6\x77\xfa\x5b\xce" // MAC
+	    "sometestdata"				/* Data */
+	    "\0\0\0\0"					/* Key-ID (unused) */
+	    "\xad\x07\xde\x36\x39\xa6\x77\xfa\x5b\xce"	/* MAC */
 		"\x2d\x8a\x7d\x06\x96\xe6\x0c\xbc\xed\xe1";
 	const int PKT_LEN = 12;
 
@@ -106,21 +114,26 @@ test_VerifySHA1(void) {
 	memcpy(&sha1.key_seq, "sha1key", sha1.key_len);
 	memcpy(&sha1.type, "SHA1", 5);
 
-	TEST_ASSERT_TRUE(auth_md5((char*)PKT_DATA, PKT_LEN, SHA1_LENGTH, &sha1));
+	TEST_ASSERT_TRUE(auth_md5(PKT_DATA, PKT_LEN, SHA1_LENGTH, &sha1));
+	
 #else
+	
 	TEST_IGNORE_MESSAGE("OpenSSL not found, skipping...");
+	
 #endif	/* OPENSSL */
 }
 
 void
-test_VerifyFailure(void) {
-	/* We use a copy of the MD5 verification code, but modify
-	 * the last bit to make sure verification fails. */
+test_VerifyFailure(void)
+{
+	/* We use a copy of the MD5 verification code, but modify the
+	 * last bit to make sure verification fails.
+	 */
 	const char* PKT_DATA =
-		"sometestdata"		// Data
-		"\0\0\0\0"			// Key-ID (unused)
-		"\xc7\x58\x99\xdd\x99\x32\x0f\x71"	// MAC
-		"\x2b\x7b\xfe\x4f\xa2\x32\xcf\x00"; // Last byte is wrong!
+	    "sometestdata"			/* Data */
+	    "\0\0\0\0"				/* Key-ID (unused) */
+	    "\xc7\x58\x99\xdd\x99\x32\x0f\x71"	/* MAC */
+	    "\x2b\x7b\xfe\x4f\xa2\x32\xcf\x00"; /* Last byte is wrong! */
 	const int PKT_LEN = 12;
 
 	struct key md5;
@@ -130,12 +143,13 @@ test_VerifyFailure(void) {
 	memcpy(&md5.key_seq, "md5key", md5.key_len);
 	memcpy(&md5.type, "MD5", 4);
 
-	TEST_ASSERT_FALSE(auth_md5((char*)PKT_DATA, PKT_LEN, MD5_LENGTH, &md5));
+	TEST_ASSERT_FALSE(auth_md5(PKT_DATA, PKT_LEN, MD5_LENGTH, &md5));
 }
 
 
 void
-test_PacketSizeNotMultipleOfFourBytes(void) {
+test_PacketSizeNotMultipleOfFourBytes(void)
+{
 	const char* PKT_DATA = "123456";
 	const int PKT_LEN = 6;
 	char actual[MD5_LENGTH];
@@ -147,5 +161,5 @@ test_PacketSizeNotMultipleOfFourBytes(void) {
 	memcpy(&md5.key_seq, "md5seq", md5.key_len);
 	memcpy(&md5.type, "MD5", 4);
 
-	TEST_ASSERT_EQUAL(0, make_mac((char*)PKT_DATA, PKT_LEN, MD5_LENGTH, &md5, actual));
+	TEST_ASSERT_EQUAL(0, make_mac(PKT_DATA, PKT_LEN, MD5_LENGTH, &md5, actual));
 }

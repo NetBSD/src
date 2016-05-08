@@ -1,4 +1,4 @@
-/*	$NetBSD: authusekey.c,v 1.1.1.1.8.1 2014/12/25 02:34:36 snj Exp $	*/
+/*	$NetBSD: authusekey.c,v 1.1.1.1.8.2 2016/05/08 22:02:09 snj Exp $	*/
 
 /*
  * authusekey - decode a key from ascii and use it
@@ -25,12 +25,12 @@ authusekey(
 	const u_char *str
 	)
 {
-	int len;
+	size_t	len;
 
 	len = strlen((const char *)str);
 	if (0 == len)
 		return 0;
 
-	MD5auth_setkey(keyno, keytype, str, len);
+	MD5auth_setkey(keyno, keytype, str, len, NULL);
 	return 1;
 }

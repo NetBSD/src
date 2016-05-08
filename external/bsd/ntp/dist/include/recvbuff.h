@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.h,v 1.1.1.2.2.1 2014/12/25 02:34:32 snj Exp $	*/
+/*	$NetBSD: recvbuff.h,v 1.1.1.2.2.2 2016/05/08 22:02:08 snj Exp $	*/
 
 #ifndef RECVBUFF_H
 #define RECVBUFF_H
@@ -93,7 +93,7 @@ extern	void	freerecvbuf(struct recvbuf *);
 
 /* signal safe - no malloc */
 extern	struct recvbuf *get_free_recv_buffer(void);
-/* signal unsafe - may malloc */
+/* signal unsafe - may malloc, never returs NULL */
 extern	struct recvbuf *get_free_recv_buffer_alloc(void);
 
 /*   Add a buffer to the full list
@@ -115,7 +115,7 @@ extern	struct recvbuf *get_full_recv_buffer(void);
  * purge_recv_buffers_for_fd() - purges any previously-received input
  *				 from a given file descriptor.
  */
-extern	void purge_recv_buffers_for_fd(SOCKET);
+extern	void purge_recv_buffers_for_fd(int);
 
 /*
  * Checks to see if there are buffers to process

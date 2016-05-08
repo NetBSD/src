@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.c,v 1.9.2.3 2015/11/07 22:26:36 snj Exp $	*/
+/*	$NetBSD: ntp_io.c,v 1.9.2.4 2016/05/08 22:02:10 snj Exp $	*/
 
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
@@ -43,6 +43,7 @@
 #include "timevalops.h"
 #include "timespecops.h"
 #include "ntpd-opts.h"
+#include "safecast.h"
 
 /* Don't include ISC's version of IPv6 variables and structures */
 #define ISC_IPV6_H 1
@@ -62,7 +63,6 @@
 #  include <linux/rtnetlink.h>
 # endif
 #endif
-
 
 /*
  * setsockopt does not always have the same arg declaration
@@ -281,9 +281,12 @@ static int	addr_samesubnet	(const sockaddr_u *, const sockaddr_u *,
 				 const sockaddr_u *, const sockaddr_u *);
 static	int	create_sockets	(u_short);
 static	SOCKET	open_socket	(sockaddr_u *, int, int, endpt *);
-static	char *	fdbits		(int, fd_set *);
 static	void	set_reuseaddr	(int);
 static	isc_boolean_t	socket_broadcast_enable	 (struct interface *, SOCKET, sockaddr_u *);
+
+#if !defined(HAVE_IO_COMPLETION_PORT) && !defined(HAVE_SIGNALED_IO)
+static	char *	fdbits		(int, const fd_set *);
+#endif
 #ifdef  OS_MISSES_SPECIFIC_ROUTE_UPDATES
 static	isc_boolean_t	socket_broadcast_disable (struct interface *, sockaddr_u *);
 #endif
@@ -338,12 +341,15 @@ static int		cmp_addr_distance(const sockaddr_u *,
 #if !defined(HAVE_IO_COMPLETION_PORT)
 static inline int	read_network_packet	(SOCKET, struct interface *, l_fp);
 static void		ntpd_addremove_io_fd	(int, int, int);
-static input_handler_t  input_handler;
+static void 		input_handler_scan	(const l_fp*, const fd_set*);
+static int/*BOOL*/	sanitize_fdset		(int errc);
 #ifdef REFCLOCK
 static inline int	read_refclock_packet	(SOCKET, struct refclockio *, l_fp);
 #endif
+#ifdef HAVE_SIGNALED_IO
+static void 		input_handler		(l_fp*);
 #endif
-
+#endif
 
 
 #ifndef HAVE_IO_COMPLETION_PORT
@@ -456,11 +462,9 @@ init_io(void)
 	addremove_io_fd = &ntpd_addremove_io_fd;
 #endif
 
-#ifdef SYS_WINNT
+#if defined(SYS_WINNT)
 	init_io_completion_port();
-#endif
-
-#if defined(HAVE_SIGNALED_IO)
+#elif defined(HAVE_SIGNALED_IO)
 	(void) set_signal(input_handler);
 #endif
 }
@@ -476,6 +480,7 @@ ntpd_addremove_io_fd(
 	UNUSED_ARG(is_pipe);
 
 #ifdef HAVE_SIGNALED_IO
+	if (!remove_it)
 	init_socket_sig(fd);
 #endif /* not HAVE_SIGNALED_IO */
 
@@ -718,78 +723,6 @@ addr_samesubnet(
 
 
 /*
- * Code to tell if we have an IP address
- * If we have then return the sockaddr structure
- * and set the return value
- * see the bind9/getaddresses.c for details
- */
-int
-is_ip_address(
-	const char *	host,
-	u_short		af,
-	sockaddr_u *	addr
-	)
-{
-	struct in_addr in4;
-	struct addrinfo hints;
-	struct addrinfo *result;
-	struct sockaddr_in6 *resaddr6;
-	char tmpbuf[128];
-	char *pch;
-
-	REQUIRE(host != NULL);
-	REQUIRE(addr != NULL);
-
-	ZERO_SOCK(addr);
-
-	/*
-	 * Try IPv4, then IPv6.  In order to handle the extended format
-	 * for IPv6 scoped addresses (address%scope_ID), we'll use a local
-	 * working buffer of 128 bytes.  The length is an ad-hoc value, but
-	 * should be enough for this purpose; the buffer can contain a string
-	 * of at least 80 bytes for scope_ID in addition to any IPv6 numeric
-	 * addresses (up to 46 bytes), the delimiter character and the
-	 * terminating NULL character.
-	 */
-	if (AF_UNSPEC == af || AF_INET == af)
-		if (inet_pton(AF_INET, host, &in4) == 1) {
-			AF(addr) = AF_INET;
-			SET_ADDR4N(addr, in4.s_addr);
-
-			return TRUE;
-		}
-
-	if (AF_UNSPEC == af || AF_INET6 == af)
-		if (sizeof(tmpbuf) > strlen(host)) {
-			if ('[' == host[0]) {
-				strlcpy(tmpbuf, &host[1], sizeof(tmpbuf));
-				pch = strchr(tmpbuf, ']');
-				if (pch != NULL)
-					*pch = '\0';
-			} else {
-				strlcpy(tmpbuf, host, sizeof(tmpbuf));
-			}
-			ZERO(hints);
-			hints.ai_family = AF_INET6;
-			hints.ai_flags |= AI_NUMERICHOST;
-			if (getaddrinfo(tmpbuf, NULL, &hints, &result) == 0) {
-				AF(addr) = AF_INET6;
-				resaddr6 = (struct sockaddr_in6 *)result->ai_addr;
-				SET_ADDR6N(addr, resaddr6->sin6_addr);
-				SET_SCOPE(addr, resaddr6->sin6_scope_id);
-
-				freeaddrinfo(result);
-				return TRUE;
-			}
-		}
-	/*
-	 * If we got here it was not an IP address
-	 */
-	return FALSE;
-}
-
-
-/*
  * interface list enumerator - visitor pattern
  */
 void
@@ -843,6 +776,12 @@ new_interface(
 	iface->ifnum = sys_ifnum++;
 	iface->starttime = current_time;
 
+#   ifdef HAVE_IO_COMPLETION_PORT
+	if (!io_completion_port_add_interface(iface)) {
+		msyslog(LOG_EMERG, "cannot register interface with IO engine -- will exit now");
+		exit(1);
+	}
+#   endif
 	return iface;
 }
 
@@ -850,11 +789,14 @@ new_interface(
 /*
  * return interface storage into free memory pool
  */
-static inline void
+static void
 delete_interface(
 	endpt *ep
 	)
 {
+#    ifdef HAVE_IO_COMPLETION_PORT
+	io_completion_port_remove_interface(ep);
+#    endif
 	free(ep);
 }
 
@@ -1072,6 +1014,9 @@ remove_interface(
 			ep->sent,
 			ep->notsent,
 			current_time - ep->starttime);
+#	    ifdef HAVE_IO_COMPLETION_PORT
+		io_completion_port_remove_socket(ep->fd, ep);
+#	    endif
 		close_and_delete_fd_from_list(ep->fd);
 		ep->fd = INVALID_SOCKET;
 	}
@@ -1080,10 +1025,15 @@ remove_interface(
 		msyslog(LOG_INFO,
 			"stop listening for broadcasts to %s on interface #%d %s",
 			stoa(&ep->bcast), ep->ifnum, ep->name);
+#	    ifdef HAVE_IO_COMPLETION_PORT
+		io_completion_port_remove_socket(ep->bfd, ep);
+#	    endif
 		close_and_delete_fd_from_list(ep->bfd);
 		ep->bfd = INVALID_SOCKET;
-		ep->flags &= ~INT_BCASTOPEN;
 	}
+#   ifdef HAVE_IO_COMPLETION_PORT
+	io_completion_port_remove_interface(ep);
+#   endif
 
 	ninterfaces--;
 	mon_clearinterface(ep);
@@ -2396,6 +2346,7 @@ get_broadcastclient_flag(void)
 {
 	return (broadcast_client_enabled);
 }
+
 /*
  * Check to see if the address is a multicast address
  */
@@ -2674,7 +2625,7 @@ io_setbclient(void)
 			continue;
 
 		/* Only IPv4 addresses are valid for broadcast */
-		REQUIRE(IS_IPV4(&interf->sin));
+		REQUIRE(IS_IPV4(&interf->bcast));
 
 		/* Do we already have the broadcast address open? */
 		if (interf->flags & INT_BCASTOPEN) {
@@ -2702,13 +2653,31 @@ io_setbclient(void)
 			msyslog(LOG_INFO,
 				"Listen for broadcasts to %s on interface #%d %s",
 				stoa(&interf->bcast), interf->ifnum, interf->name);
-		} else {
-			/* silently ignore EADDRINUSE as we probably opened
-			   the socket already for an address in the same network */
-			if (errno != EADDRINUSE)
+		} else switch (errno) {
+			/* Silently ignore EADDRINUSE as we probably
+			 * opened the socket already for an address in
+			 * the same network */
+		case EADDRINUSE:
+			/* Some systems cannot bind a socket to a broadcast
+			 * address, as that is not a valid host address. */
+		case EADDRNOTAVAIL:
+#		    ifdef SYS_WINNT	/*TODO: use for other systems, too? */
+			/* avoid recurrence here -- if we already have a
+			 * regular socket, it's quite useless to try this
+			 * again.
+			 */
+			if (interf->fd != INVALID_SOCKET) {
+				interf->flags |= INT_BCASTOPEN;
+				nif++;
+			}
+#		    endif
+			break;
+
+		default:
 				msyslog(LOG_INFO,
 					"failed to listen for broadcasts to %s on interface #%d %s",
 					stoa(&interf->bcast), interf->ifnum, interf->name);
+			break;
 		}
 	}
 	set_reuseaddr(0);
@@ -2746,10 +2715,13 @@ io_unsetbclient(void)
 			msyslog(LOG_INFO,
 				"stop listening for broadcasts to %s on interface #%d %s",
 				stoa(&ep->bcast), ep->ifnum, ep->name);
+#		    ifdef HAVE_IO_COMPLETION_PORT
+			io_completion_port_remove_socket(ep->bfd, ep);
+#		    endif
 			close_and_delete_fd_from_list(ep->bfd);
 			ep->bfd = INVALID_SOCKET;
-			ep->flags &= ~INT_BCASTOPEN;
 		}
+		ep->flags &= ~INT_BCASTOPEN;
 	}
 	broadcast_client_enabled = ISC_FALSE;
 }
@@ -3129,7 +3101,7 @@ open_socket(
 /*
  * Add the socket to the completion port
  */
-	if (io_completion_port_add_socket(fd, interf)) {
+	if (!io_completion_port_add_socket(fd, interf, bcast)) {
 		msyslog(LOG_ERR, "unable to set up io completion port - EXITING");
 		exit(1);
 	}
@@ -3138,10 +3110,6 @@ open_socket(
 }
 
 
-#ifdef SYS_WINNT
-#define sendto(fd, buf, len, flags, dest, destsz)	\
-	io_completion_port_sendto(fd, buf, len, (sockaddr_u *)(dest))
-#endif
 
 /* XXX ELIMINATE sendpkt similar in ntpq.c, ntpdc.c, ntp_io.c, ntptrace.c */
 /*
@@ -3229,6 +3197,9 @@ sendpkt(
 
 #ifdef SIM
 		cc = simulate_server(dest, src, pkt);
+#elif defined(HAVE_IO_COMPLETION_PORT)
+		cc = io_completion_port_sendto(src, src->fd, pkt,
+			(size_t)len, (sockaddr_u *)&dest->sa);
 #else
 		cc = sendto(src->fd, (char *)pkt, (u_int)len, 0,
 			    &dest->sa, SOCKLEN(dest));
@@ -3247,6 +3218,7 @@ sendpkt(
 
 
 #if !defined(HAVE_IO_COMPLETION_PORT)
+#if !defined(HAVE_SIGNALED_IO)
 /*
  * fdbits - generate ascii representation of fd_set (FAU debug support)
  * HFDF format - highest fd first.
@@ -3254,7 +3226,7 @@ sendpkt(
 static char *
 fdbits(
 	int count,
-	fd_set *set
+	const fd_set*	set
 	)
 {
 	static char buffer[256];
@@ -3270,7 +3242,7 @@ fdbits(
 
 	return buffer;
 }
-
+#endif
 
 #ifdef REFCLOCK
 /*
@@ -3408,7 +3380,7 @@ fetch_timestamp(
 #endif  /* HAVE_BINTIME */
 #ifdef HAVE_TIMESTAMPNS
 			case SCM_TIMESTAMPNS:
-				tsp = (struct timespec *)CMSG_DATA(cmsghdr);
+				tsp = UA_PTR(struct timespec, CMSG_DATA(cmsghdr));
 				if (sys_tick > measured_tick &&
 				    sys_tick > 1e-9) {
 					ticks = (unsigned long)((tsp->tv_nsec * 1e-9) /
@@ -3555,6 +3527,18 @@ read_network_packet(
 	DPRINTF(3, ("read_network_packet: fd=%d length %d from %s\n",
 		    fd, buflen, stoa(&rb->recv_srcadr)));
 
+#ifdef ENABLE_BUG3020_FIX
+	if (ISREFCLOCKADR(&rb->recv_srcadr)) {
+		msyslog(LOG_ERR, "recvfrom(%s) fd=%d: refclock srcadr on a network interface!",
+			stoa(&rb->recv_srcadr), fd);
+		DPRINTF(1, ("read_network_packet: fd=%d dropped (refclock srcadr))\n",
+			    fd));
+		packets_dropped++;
+		freerecvbuf(rb);
+		return (buflen);
+	}
+#endif
+
 	/*
 	** Bug 2672: Some OSes (MacOSX and Linux) don't block spoofed ::1
 	*/
@@ -3624,6 +3608,7 @@ io_handler(void)
 	 * and - lacking a hardware reference clock - I have
 	 * yet to learn about anything else that is.
 	 */
+	++handler_calls;
 	rdfdes = activefds;
 #   if !defined(VMS) && !defined(SYS_VXWORKS)
 	nfound = select(maxactivefd + 1, &rdfdes, NULL,
@@ -3632,7 +3617,6 @@ io_handler(void)
 	/* make select() wake up after one second */
 	{
 		struct timeval t1;
-
 		t1.tv_sec = 1;
 		t1.tv_usec = 0;
 		nfound = select(maxactivefd + 1,
@@ -3640,12 +3624,22 @@ io_handler(void)
 				&t1);
 	}
 #   endif	/* VMS, VxWorks */
+	if (nfound < 0 && sanitize_fdset(errno)) {
+		struct timeval t1;
+		t1.tv_sec  = 0;
+		t1.tv_usec = 0;
+		rdfdes = activefds;
+		nfound = select(maxactivefd + 1,
+				&rdfdes, NULL, NULL,
+				&t1);
+	}
+
 	if (nfound > 0) {
 		l_fp ts;
 
 		get_systime(&ts);
 
-		input_handler(&ts);
+		input_handler_scan(&ts, &rdfdes);
 	} else if (nfound == -1 && errno != EINTR) {
 		msyslog(LOG_ERR, "select() error: %m");
 	}
@@ -3661,27 +3655,110 @@ io_handler(void)
 #  endif /* HAVE_SIGNALED_IO */
 }
 
+#ifdef HAVE_SIGNALED_IO
 /*
  * input_handler - receive packets asynchronously
+ *
+ * ALWAYS IN SIGNAL HANDLER CONTEXT -- only async-safe functions allowed!
  */
-static void
+static RETSIGTYPE
 input_handler(
 	l_fp *	cts
 	)
 {
-	int		buflen;
 	int		n;
+	struct timeval	tvzero;
+	fd_set		fds;
+
+	++handler_calls;
+
+	/*
+	 * Do a poll to see who has data
+	 */
+
+	fds = activefds;
+	tvzero.tv_sec = tvzero.tv_usec = 0;
+
+	n = select(maxactivefd + 1, &fds, NULL, NULL, &tvzero);
+	if (n < 0 && sanitize_fdset(errno)) {
+		fds = activefds;
+		tvzero.tv_sec = tvzero.tv_usec = 0;
+		n = select(maxactivefd + 1, &fds, NULL, NULL, &tvzero);
+	}
+	if (n > 0)
+		input_handler_scan(cts, &fds);
+}
+#endif /* HAVE_SIGNALED_IO */
+
+
+	/*
+ * Try to sanitize the global FD set
+ *
+ * SIGNAL HANDLER CONTEXT if HAVE_SIGNALED_IO, ordinary userspace otherwise
+	 */
+static int/*BOOL*/
+sanitize_fdset(
+	int	errc
+	)
+{
+	int j, b, maxscan;
+
+#  ifndef HAVE_SIGNALED_IO
+		/*
+		 * extended FAU debugging output
+		 */
+	if (errc != EINTR) {
+			msyslog(LOG_ERR,
+				"select(%d, %s, 0L, 0L, &0.0) error: %m",
+				maxactivefd + 1,
+				fdbits(maxactivefd, &activefds));
+	}
+#   endif
+	
+	if (errc != EBADF)
+		return FALSE;
+
+	/* if we have oviously bad FDs, try to sanitize the FD set. */
+	for (j = 0, maxscan = 0; j <= maxactivefd; j++) {
+			if (FD_ISSET(j, &activefds)) {
+				if (-1 != read(j, &b, 0)) {
+				maxscan = j;
+					continue;
+				}
+#		    ifndef HAVE_SIGNALED_IO
+				msyslog(LOG_ERR,
+					"Removing bad file descriptor %d from select set",
+					j);
+#		    endif
+				FD_CLR(j, &activefds);
+			}
+		}
+	if (maxactivefd != maxscan)
+		maxactivefd = maxscan;
+	return TRUE;
+	}
+
+/*
+ * scan the known FDs (clocks, servers, ...) for presence in a 'fd_set'. 
+ *
+ * SIGNAL HANDLER CONTEXT if HAVE_SIGNALED_IO, ordinary userspace otherwise
+ */
+static void
+input_handler_scan(
+	const l_fp *	cts,
+	const fd_set *	pfds
+	)
+{
+	int		buflen;
 	u_int		idx;
 	int		doing;
 	SOCKET		fd;
 	blocking_child *c;
-	struct timeval	tvzero;
 	l_fp		ts;	/* Timestamp at BOselect() gob */
-#ifdef DEBUG_TIMING
+
+#if defined(DEBUG_TIMING)
 	l_fp		ts_e;	/* Timestamp at EOselect() gob */
 #endif
-	fd_set		fds;
-	size_t		select_count;
 	endpt *		ep;
 #ifdef REFCLOCK
 	struct refclockio *rp;
@@ -3693,82 +3770,26 @@ input_handler(
 	struct asyncio_reader *	next_asyncio_reader;
 #endif
 
-	handler_calls++;
-	select_count = 0;
-
-	/*
-	 * If we have something to do, freeze a timestamp.
-	 * See below for the other cases (nothing left to do or error)
-	 */
-	ts = *cts;
-
-	/*
-	 * Do a poll to see who has data
-	 */
-
-	fds = activefds;
-	tvzero.tv_sec = tvzero.tv_usec = 0;
-
-	n = select(maxactivefd + 1, &fds, (fd_set *)0, (fd_set *)0,
-		   &tvzero);
-
-	/*
-	 * If there are no packets waiting just return
-	 */
-	if (n < 0) {
-		int err = errno;
-		int j, b, prior;
-		/*
-		 * extended FAU debugging output
-		 */
-		if (err != EINTR)
-			msyslog(LOG_ERR,
-				"select(%d, %s, 0L, 0L, &0.0) error: %m",
-				maxactivefd + 1,
-				fdbits(maxactivefd, &activefds));
-		if (err != EBADF)
-			goto ih_return;
-		for (j = 0, prior = 0; j <= maxactivefd; j++) {
-			if (FD_ISSET(j, &activefds)) {
-				if (-1 != read(j, &b, 0)) {
-					prior = j;
-					continue;
-				}
-				msyslog(LOG_ERR,
-					"Removing bad file descriptor %d from select set",
-					j);
-				FD_CLR(j, &activefds);
-				if (j == maxactivefd)
-					maxactivefd = prior;
-			}
-		}
-		goto ih_return;
-	}
-	else if (n == 0)
-		goto ih_return;
-
 	++handler_pkts;
+	ts = *cts;
 
 #ifdef REFCLOCK
 	/*
 	 * Check out the reference clocks first, if any
 	 */
 
-	if (refio != NULL) {
 		for (rp = refio; rp != NULL; rp = rp->next) {
 			fd = rp->fd;
 
-			if (!FD_ISSET(fd, &fds))
+		if (!FD_ISSET(fd, pfds))
 				continue;
-			++select_count;
 			buflen = read_refclock_packet(fd, rp, ts);
 			/*
-			 * The first read must succeed after select()
-			 * indicates readability, or we've reached
-			 * a permanent EOF.  http://bugs.ntp.org/1732
-			 * reported ntpd munching CPU after a USB GPS
-			 * was unplugged because select was indicating
-			 * EOF but ntpd didn't remove the descriptor
+		 * The first read must succeed after select() indicates
+		 * readability, or we've reached a permanent EOF.
+		 * http://bugs.ntp.org/1732 reported ntpd munching CPU
+		 * after a USB GPS was unplugged because select was
+		 * indicating EOF but ntpd didn't remove the descriptor
 			 * from the activefds set.
 			 */
 			if (buflen < 0 && EAGAIN != errno) {
@@ -3788,7 +3809,6 @@ input_handler(
 				} while (buflen > 0);
 			}
 		}
-	}
 #endif /* REFCLOCK */
 
 	/*
@@ -3805,9 +3825,8 @@ input_handler(
 			}
 			if (fd < 0)
 				continue;
-			if (FD_ISSET(fd, &fds))
+			if (FD_ISSET(fd, pfds))
 				do {
-					++select_count;
 					buflen = read_network_packet(
 							fd, ep, ts);
 				} while (buflen > 0);
@@ -3824,10 +3843,8 @@ input_handler(
 	while (asyncio_reader != NULL) {
 		/* callback may unlink and free asyncio_reader */
 		next_asyncio_reader = asyncio_reader->link;
-		if (FD_ISSET(asyncio_reader->fd, &fds)) {
-			++select_count;
+		if (FD_ISSET(asyncio_reader->fd, pfds))
 			(*asyncio_reader->receiver)(asyncio_reader);
-		}
 		asyncio_reader = next_asyncio_reader;
 	}
 #endif /* HAS_ROUTING_SOCKET */
@@ -3839,26 +3856,14 @@ input_handler(
 		c = blocking_children[idx];
 		if (NULL == c || -1 == c->resp_read_pipe)
 			continue;
-		if (FD_ISSET(c->resp_read_pipe, &fds)) {
-			select_count++;
-			process_blocking_resp(c);
+		if (FD_ISSET(c->resp_read_pipe, pfds)) {
+			++c->resp_ready_seen;
+			++blocking_child_ready_seen;
 		}
 	}
 
-	/*
-	 * Done everything from that select.
-	 * If nothing to do, just return.
-	 * If an error occurred, complain and return.
-	 */
-	if (select_count == 0) { /* We really had nothing to do */
-#ifdef DEBUG
-		if (debug)
-			msyslog(LOG_DEBUG, "input_handler: select() returned 0");
-#endif /* DEBUG */
-		goto ih_return;
-	}
 	/* We've done our work */
-#ifdef DEBUG_TIMING
+#if defined(DEBUG_TIMING)
 	get_systime(&ts_e);
 	/*
 	 * (ts_e - ts) is the amount of time we spent
@@ -3872,12 +3877,8 @@ input_handler(
 			"input_handler: Processed a gob of fd's in %s msec",
 			lfptoms(&ts_e, 6));
 #endif /* DEBUG_TIMING */
-	/* We're done... */
-    ih_return:
-	return;
 }
 #endif /* !HAVE_IO_COMPLETION_PORT */
-
 
 /*
  * find an interface suitable for the src address
@@ -4367,7 +4368,7 @@ io_addclock(
 		return 0;
 	}
 # elif defined(HAVE_IO_COMPLETION_PORT)
-	if (io_completion_port_add_clock_io(rio)) {
+	if (!io_completion_port_add_clock_io(rio)) {
 		UNBLOCKIO();
 		return 0;
 	}
@@ -4406,13 +4407,23 @@ io_closeclock(
 	rio->active = FALSE;
 	UNLINK_SLIST(unlinked, refio, rio, next, struct refclockio);
 	if (NULL != unlinked) {
-		purge_recv_buffers_for_fd(rio->fd);
-		/*
-		 * Close the descriptor.
+		/* Close the descriptor. The order of operations is
+		 * important here in case of async / overlapped IO:
+		 * only after we have removed the clock from the
+		 * IO completion port we can be sure no further
+		 * input is queued. So...
+		 *  - we first disable feeding to the queu by removing
+		 *    the clock from the IO engine
+		 *  - close the file (which brings down any IO on it)
+		 *  - clear the buffer from results for this fd
 		 */
+#	    ifdef HAVE_IO_COMPLETION_PORT
+		io_completion_port_remove_clock_io(rio);
+#	    endif
 		close_and_delete_fd_from_list(rio->fd);
-	}
+		purge_recv_buffers_for_fd(rio->fd);
 	rio->fd = -1;
+	}
 
 	UNBLOCKIO();
 }
@@ -4490,7 +4501,7 @@ close_and_delete_fd_from_list(
 		break;
 
 	case FD_TYPE_FILE:
-		closeserial(lsock->fd);
+		closeserial((int)lsock->fd);
 		break;
 
 	default:
@@ -4686,7 +4697,7 @@ process_routing_msgs(struct asyncio_reader *reader)
 	 * process routing message
 	 */
 #ifdef HAVE_RTNETLINK
-	for (nh = (struct nlmsghdr *)buffer;
+	for (nh = UA_PTR(struct nlmsghdr, buffer);
 	     NLMSG_OK(nh, cnt);
 	     nh = NLMSG_NEXT(nh, cnt)) {
 		msg_type = nh->nlmsg_type;
