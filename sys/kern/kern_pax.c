@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.42 2016/05/08 01:28:09 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.43 2016/05/08 20:01:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.42 2016/05/08 01:28:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.43 2016/05/08 20:01:56 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -564,7 +564,8 @@ pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 		rand = pax_aslr_rand;
 #endif
 	u_long d = PAX_ASLR_DELTA(rand, PAX_ASLR_DELTA_STACK_LSB, len);
- 	u_long newminsaddr = (u_long)STACK_ALLOC(epp->ep_minsaddr, d);
+	d &= (*max_stack_size / 4) - 1;
+ 	u_long newminsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, d);
 	PAX_DPRINTF("old minsaddr=%#jx delta=%#lx new minsaddr=%#lx",
 	    (uintmax_t)epp->ep_minsaddr, d, newminsaddr);
 	epp->ep_minsaddr = (vaddr_t)newminsaddr;
