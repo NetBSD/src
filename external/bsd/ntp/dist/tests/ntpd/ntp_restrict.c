@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.1.1.1.6.2 2015/11/08 00:16:10 snj Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.1.1.1.6.3 2016/05/08 21:51:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -28,6 +28,7 @@ setUp(void) {
 }
 
 
+void
 tearDown(void) {
 	restrict_u *empty_restrict = malloc(sizeof(restrict_u));
 	memset(empty_restrict, 0, sizeof(restrict_u));

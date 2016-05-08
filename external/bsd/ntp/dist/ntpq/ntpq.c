@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.8.8.2 2015/11/08 00:16:00 snj Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.8.8.3 2016/05/08 21:51:02 snj Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -40,7 +40,7 @@
 #include <ssl_applink.c>
 
 #include "ntp_libopts.h"
-#include "ntpq-opts.h"
+#include "safecast.h"
 
 #ifdef SYS_VXWORKS		/* vxWorks needs mode flag -casey*/
 # define open(name, flags)   open(name, flags, 0777)
@@ -68,6 +68,11 @@ const char *prompt = "ntpq> ";	/* prompt to ask him about */
  */
 int	old_rv = 1;
 
+/*
+ * How should we display the refid?
+ * REFID_HASH, REFID_IPV4
+ */
+te_Refid drefid = -1;
 
 /*
  * for get_systime()
@@ -170,13 +175,13 @@ int		ntpqmain	(int,	char **);
 static	int	openhost	(const char *, int);
 static	void	dump_hex_printable(const void *, size_t);
 static	int	sendpkt		(void *, size_t);
-static	int	getresponse	(int, int, u_short *, int *, const char **, int);
-static	int	sendrequest	(int, associd_t, int, int, const char *);
+static	int	getresponse	(int, int, u_short *, size_t *, const char **, int);
+static	int	sendrequest	(int, associd_t, int, size_t, const char *);
 static	char *	tstflags	(u_long);
 #ifndef BUILD_AS_LIB
 static	void	getcmds		(void);
 #ifndef SYS_WINNT
-static	RETSIGTYPE abortcmd	(int);
+static	int	abortcmd	(void);
 #endif	/* SYS_WINNT */
 static	void	docmd		(const char *);
 static	void	tokenize	(const char *, char **, int *);
@@ -199,6 +204,7 @@ static	void	passwd		(struct parse *, FILE *);
 static	void	hostnames	(struct parse *, FILE *);
 static	void	setdebug	(struct parse *, FILE *);
 static	void	quit		(struct parse *, FILE *);
+static	void	showdrefid	(struct parse *, FILE *);
 static	void	version		(struct parse *, FILE *);
 static	void	raw		(struct parse *, FILE *);
 static	void	cooked		(struct parse *, FILE *);
@@ -210,15 +216,16 @@ static	void	error		(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	(const char *);
 static	void	atoascii	(const char *, size_t, char *, size_t);
-static	void	cookedprint	(int, int, const char *, int, int, FILE *);
-static	void	rawprint	(int, int, const char *, int, int, FILE *);
+static	void	cookedprint	(int, size_t, const char *, int, int, FILE *);
+static	void	rawprint	(int, size_t, const char *, int, int, FILE *);
 static	void	startoutput	(void);
 static	void	output		(FILE *, const char *, const char *);
 static	void	endoutput	(FILE *);
 static	void	outputarr	(FILE *, char *, int, l_fp *);
 static	int	assoccmp	(const void *, const void *);
+static	void	on_ctrlc	(void);
 	u_short	varfmt		(const char *);
-
+static	int	my_easprintf	(char**, const char *, ...) NTP_PRINTF(2, 3);
 void	ntpq_custom_opt_handler	(tOptions *, tOptDesc *);
 
 #ifdef OPENSSL
@@ -269,6 +276,9 @@ struct xcmd builtins[] = {
 	{ "keyid",	keyid,		{ OPT|NTP_UINT, NO, NO, NO },
 	  { "key#", "", "", "" },
 	  "set keyid to use for authenticated requests" },
+	{ "drefid",	showdrefid,	{ OPT|NTP_STR, NO, NO, NO },
+	  { "hash|ipv4", "", "", "" },
+	  "display refid's as IPv4 or hash" },
 	{ "version",	version,	{ NO, NO, NO, NO },
 	  { "", "", "", "" },
 	  "print version number" },
@@ -473,7 +483,6 @@ ntpqmain(
 	{
 	    char *list;
 	    char *msg;
-	    const char *fmt;
 
 	    list = list_digest_names();
 	    for (icmd = 0; icmd < sizeof(builtins)/sizeof(builtins[0]); icmd++) {
@@ -487,14 +496,15 @@ ntpqmain(
 
 #ifdef OPENSSL
 	    builtins[icmd].desc[0] = "digest-name";
-	    fmt = ", one of:";
+	    my_easprintf(&msg,
+			 "set key type to use for authenticated requests, one of:%s",
+			 list);
 #else
 	    builtins[icmd].desc[0] = "md5";
-	    fmt = ":";
-#endif
-	    asprintf(&msg,
-		"set key type to use for authenticated requests%s %s", fmt,
+	    my_easprintf(&msg,
+			 "set key type to use for authenticated requests (%s)",
 		list);
+#endif
 	    builtins[icmd].comment = msg;
 	    free(list);
 	}
@@ -532,6 +542,8 @@ ntpqmain(
 
 	old_rv = HAVE_OPT(OLD_RV);
 
+	drefid = OPT_VALUE_REFID;
+
 	if (0 == argc) {
 		ADDHOST(DEFHOST);
 	} else {
@@ -562,9 +574,10 @@ ntpqmain(
 		interactive = 1;
 	}
 
+	set_ctrl_c_hook(on_ctrlc);
 #ifndef SYS_WINNT /* Under NT cannot handle SIGINT, WIN32 spawns a handler */
 	if (interactive)
-	    (void) signal_no_reset(SIGINT, abortcmd);
+		push_ctrl_c_handler(abortcmd);
 #endif /* SYS_WINNT */
 
 	if (numcmds == 0) {
@@ -806,7 +819,7 @@ sendpkt(
 	if (debug >= 3)
 		printf("Sending %zu octets\n", xdatalen);
 
-	if (send(sockfd, xdata, (size_t)xdatalen, 0) == -1) {
+	if (send(sockfd, xdata, xdatalen, 0) == -1) {
 		warning("write to %s failed", currenthost);
 		return -1;
 	}
@@ -826,7 +839,7 @@ getresponse(
 	int opcode,
 	int associd,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata,
 	int timeo
 	)
@@ -845,6 +858,10 @@ getresponse(
 	fd_set fds;
 	int n;
 	int errcode;
+	/* absolute timeout checks. Not 'time_t' by intention! */
+	uint32_t tobase;	/* base value for timeout */
+	uint32_t tospan;	/* timeout span (max delay) */
+	uint32_t todiff;	/* current delay */
 
 	/*
 	 * This is pretty tricky.  We may get between 1 and MAXFRAG packets
@@ -861,6 +878,8 @@ getresponse(
 	numfrags = 0;
 	seenlastfrag = 0;
 
+	tobase = (uint32_t)time(NULL);
+	
 	FD_ZERO(&fds);
 
 	/*
@@ -873,14 +892,40 @@ getresponse(
 			tvo = tvout;
 		else
 			tvo = tvsout;
+		tospan = (uint32_t)tvo.tv_sec + (tvo.tv_usec != 0);
 
 		FD_SET(sockfd, &fds);
 		n = select(sockfd + 1, &fds, NULL, NULL, &tvo);
-
 		if (n == -1) {
+#if !defined(SYS_WINNT) && defined(EINTR)
+			/* Windows does not know about EINTR (until very
+			 * recently) and the handling of console events
+			 * is *very* different from POSIX/UNIX signal
+			 * handling anyway.
+			 *
+			 * Under non-windows targets we map EINTR as
+			 * 'last packet was received' and try to exit
+			 * the receive sequence.
+			 */
+			if (errno == EINTR) {
+				seenlastfrag = 1;
+				goto maybe_final;
+			}
+#endif
 			warning("select fails");
 			return -1;
 		}
+
+		/*
+		 * Check if this is already too late. Trash the data and
+		 * fake a timeout if this is so.
+		 */
+		todiff = (((uint32_t)time(NULL)) - tobase) & 0x7FFFFFFFu;
+		if ((n > 0) && (todiff > tospan)) {
+			n = recv(sockfd, (char *)&rpkt, sizeof(rpkt), 0);
+			n = 0; /* faked timeout return from 'select()'*/
+		}
+		
 		if (n == 0) {
 			/*
 			 * Timed out.  Return what we have
@@ -1143,14 +1188,17 @@ getresponse(
 		}
 
 		/*
-		 * Copy the data into the data buffer.
+		 * Copy the data into the data buffer, and bump the
+		 * timout base in case we need more.
 		 */
 		memcpy((char *)pktdata + offset, &rpkt.u, count);
+		tobase = (uint32_t)time(NULL);
 
 		/*
 		 * If we've seen the last fragment, look for holes in the sequence.
 		 * If there aren't any, we're done.
 		 */
+	  maybe_final:
 		if (seenlastfrag && offsets[0] == 0) {
 			for (f = 1; f < numfrags; f++)
 				if (offsets[f-1] + counts[f-1] !=
@@ -1175,22 +1223,22 @@ sendrequest(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata
 	)
 {
 	struct ntp_control qpkt;
-	int	pktsize;
+	size_t	pktsize;
 	u_long	key_id;
 	char *	pass;
-	int	maclen;
+	size_t	maclen;
 
 	/*
 	 * Check to make sure the data will fit in one packet
 	 */
 	if (qsize > CTL_MAX_DATA_LEN) {
 		fprintf(stderr,
-			"***Internal error!  qsize (%d) too large\n",
+			"***Internal error!  qsize (%zu) too large\n",
 			qsize);
 		return 1;
 	}
@@ -1269,7 +1317,7 @@ sendrequest(
 		return 1;
 	} else if ((size_t)maclen != (info_auth_hashlen + sizeof(keyid_t))) {
 		fprintf(stderr,
-			"%d octet MAC, %zu expected with %zu octet digest\n",
+			"%zu octet MAC, %zu expected with %zu octet digest\n",
 			maclen, (info_auth_hashlen + sizeof(keyid_t)),
 			info_auth_hashlen);
 		return 1;
@@ -1359,10 +1407,10 @@ doquery(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata
 	)
 {
@@ -1380,10 +1428,10 @@ doqueryex(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata,
 	int quiet
 	)
@@ -1464,16 +1512,18 @@ getcmds(void)
 /*
  * abortcmd - catch interrupts and abort the current command
  */
-static RETSIGTYPE
-abortcmd(
-	int sig
-	)
+static int
+abortcmd(void)
 {
 	if (current_output == stdout)
 	    (void) fflush(stdout);
 	putc('\n', stderr);
 	(void) fflush(stderr);
-	if (jump) longjmp(interrupt_buf, 1);
+	if (jump) {
+		jump = 0;
+		longjmp(interrupt_buf, 1);
+	}
+	return TRUE;
 }
 #endif	/* !SYS_WINNT && !BUILD_AS_LIB */
 
@@ -1747,7 +1797,7 @@ findcmd(
 	)
 {
 	struct xcmd *cl;
-	int clen;
+	size_t clen;
 	int nmatch;
 	struct xcmd *nearmatch = NULL;
 	struct xcmd *clist;
@@ -2403,6 +2453,47 @@ ntp_poll(
 
 
 /*
+ * showdrefid2str - return a string explanation of the value of drefid
+ */
+static const char *
+showdrefid2str(void)
+{
+	switch (drefid) {
+	    case REFID_HASH:
+	    	return "hash";
+	    case REFID_IPV4:
+	    	return "ipv4";
+	    default:
+	    	return "Unknown";
+	}
+}
+
+
+/*
+ * drefid - display/change "display hash" 
+ */
+static void
+showdrefid(
+	struct parse *pcmd,
+	FILE *fp
+	)
+{
+	if (pcmd->nargs == 0) {
+		(void) fprintf(fp, "drefid value is %s\n", showdrefid2str());
+		return;
+	} else if (STREQ(pcmd->argval[0].string, "hash")) {
+		drefid = REFID_HASH;
+	} else if (STREQ(pcmd->argval[0].string, "ipv4")) {
+		drefid = REFID_IPV4;
+	} else {
+		(void) fprintf(fp, "What?\n");
+		return;
+	}
+	(void) fprintf(fp, "drefid value set to %s\n", showdrefid2str());
+}
+
+
+/*
  * keyid - get a keyid to use for authenticating requests
  */
 static void
@@ -2669,7 +2760,7 @@ vwarning(const char *fmt, va_list ap)
 	int serrno = errno;
 	(void) fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, fmt, ap);
-	(void) fprintf(stderr, ": %s", strerror(serrno));
+	(void) fprintf(stderr, ": %s\n", strerror(serrno));
 }
 
 /*
@@ -2804,7 +2895,7 @@ do {							\
  */
 void
 makeascii(
-	int length,
+	size_t length,
 	const char *data,
 	FILE *fp
 	)
@@ -2920,7 +3011,7 @@ int nextcb = 0;
  */
 int
 nextvar(
-	int *datalen,
+	size_t *datalen,
 	const char **datap,
 	char **vname,
 	char **vvalue
@@ -2954,6 +3045,8 @@ nextvar(
 	len = srclen;
 	while (len > 0 && isspace((unsigned char)cp[len - 1]))
 		len--;
+	if (len >= sizeof(name))
+	    return 0;
 	if (len > 0)
 		memcpy(name, cp, len);
 	name[len] = '\0';
@@ -2967,7 +3060,7 @@ nextvar(
 		if (cp < cpend)
 			cp++;
 		*datap = cp;
-		*datalen = cpend - cp;
+		*datalen = size2int_sat(cpend - cp);
 		*vvalue = NULL;
 		return 1;
 	}
@@ -3007,7 +3100,7 @@ nextvar(
 	if (np < cpend && ',' == *np)
 		np++;
 	*datap = np;
-	*datalen = cpend - np;
+	*datalen = size2int_sat(cpend - np);
 	*vvalue = value;
 	return 1;
 }
@@ -3031,7 +3124,7 @@ varfmt(const char * varname)
  */
 void
 printvars(
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int sttype,
@@ -3052,7 +3145,7 @@ printvars(
 static void
 rawprint(
 	int datatype,
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int quiet,
@@ -3117,10 +3210,10 @@ output(
 	const char *value
 	)
 {
-	size_t len;
+	int len;
 
 	/* strlen of "name=value" */
-	len = strlen(name) + 1 + strlen(value);
+	len = size2int_sat(strlen(name) + 1 + strlen(value));
 
 	if (out_chars != 0) {
 		out_chars += 2;
@@ -3165,10 +3258,10 @@ outputarr(
 	l_fp *lfp
 	)
 {
-	register char *bp;
-	register char *cp;
-	register int i;
-	register int len;
+	char *bp;
+	char *cp;
+	size_t i;
+	size_t len;
 	char buf[256];
 
 	bp = buf;
@@ -3179,7 +3272,7 @@ outputarr(
 	    *bp++ = ' ';
 
 	for (i = narr; i > 0; i--) {
-		if (i != narr)
+		if (i != (size_t)narr)
 		    *bp++ = ' ';
 		cp = lfptoms(lfp, 2);
 		len = strlen(cp);
@@ -3250,7 +3343,7 @@ tstflags(
 static void
 cookedprint(
 	int datatype,
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int quiet,
@@ -3434,7 +3527,7 @@ grow_assoc_cache(void)
 	}
 	assoc_cache = erealloc_zero(assoc_cache, new_sz, prior_sz); 
 	prior_sz = new_sz;
-	assoc_cache_slots = new_sz / sizeof(assoc_cache[0]);
+	assoc_cache_slots = (u_int)(new_sz / sizeof(assoc_cache[0]));
 }
 
 
@@ -3569,4 +3662,87 @@ static char *list_digest_names(void)
 #endif
 
     return list;
+}
+
+#define CTRLC_STACK_MAX 4
+static volatile size_t		ctrlc_stack_len = 0;
+static volatile Ctrl_C_Handler	ctrlc_stack[CTRLC_STACK_MAX];
+
+
+
+int/*BOOL*/
+push_ctrl_c_handler(
+	Ctrl_C_Handler func
+	)
+{
+	size_t size = ctrlc_stack_len;
+	if (func && (size < CTRLC_STACK_MAX)) {
+		ctrlc_stack[size] = func;
+		ctrlc_stack_len = size + 1;
+		return TRUE;
+	}
+	return FALSE;	
+}
+
+int/*BOOL*/
+pop_ctrl_c_handler(
+	Ctrl_C_Handler func
+	)
+{
+	size_t size = ctrlc_stack_len;
+	if (size) {
+		--size;
+		if (func == NULL || func == ctrlc_stack[size]) {
+			ctrlc_stack_len = size;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void
+on_ctrlc(void)
+{
+	size_t size = ctrlc_stack_len;
+	while (size)
+		if ((*ctrlc_stack[--size])())
+			break;
+}
+
+static int
+my_easprintf(
+	char ** 	ppinto,
+	const char *	fmt   ,
+	...
+	)
+{
+	va_list	va;
+	int	prc;
+	size_t	len = 128;
+	char *	buf = emalloc(len);
+
+  again:
+	/* Note: we expect the memory allocation to fail long before the
+	 * increment in buffer size actually overflows.
+	 */
+	buf = (buf) ? erealloc(buf, len) : emalloc(len);
+
+	va_start(va, fmt);
+	prc = vsnprintf(buf, len, fmt, va);
+	va_end(va);
+
+	if (prc < 0) {
+		/* might be very old vsnprintf. Or actually MSVC... */
+		len += len >> 1;
+		goto again;
+	}
+	if ((size_t)prc >= len) {
+		/* at least we have the proper size now... */
+		len = (size_t)prc + 1;
+		goto again;
+	}
+	if ((size_t)prc < (len - 32))
+		buf = erealloc(buf, (size_t)prc + 1);
+	*ppinto = buf;
+	return prc;
 }

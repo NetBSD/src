@@ -289,7 +289,7 @@
 #define DFLT_RLIMIT_MEMLOCK 32
 
 /* Default number of 4k pages for RLIMIT_STACK */
-#define DFLT_RLIMIT_STACK 50
+#define DFLT_RLIMIT_STACK 64
 
 /* Directory separator character, usually / or \\ */
 #define DIR_SEP '/'
@@ -303,8 +303,14 @@
 /* The number of minutes in a DST adjustment */
 #define DSTMINUTES 60
 
+/* support dynamic interleave? */
+#define DYNAMIC_INTERLEAVE 0
+
 /* number of args to el_init() */
 #define EL_INIT_ARGS 4
+
+/* Provide the explicit 127.0.0.0/8 martian filter? */
+#define ENABLE_BUG3020_FIX 1
 
 /* nls support in libopts */
 /* #undef ENABLE_NLS */
@@ -836,7 +842,7 @@
 /* Define to 1 if you have the <stdatomic.h> header file. */
 /* #undef HAVE_STDATOMIC_H */
 
-/* Define to 1 if you have the <stdbool.h> header file. */
+/* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
 
 /* Define to 1 if you have the <stddef.h> header file. */
@@ -1207,6 +1213,9 @@
 /* define if select implicitly yields */
 #define HAVE_YIELDING_SELECT 1
 
+/* Define to 1 if the system has the type `_Bool'. */
+#define HAVE__BOOL 1
+
 /* Define to 1 if you have the `_exit' function. */
 #define HAVE__EXIT 1
 
@@ -1356,6 +1365,9 @@
    initialization. */
 /* #undef MISSING_C99_STRUCT_INIT */
 
+/* having to fork the DNS worker early when doing chroot? */
+/* #undef NEED_EARLY_FORK */
+
 /* Do we need HPUX adjtime() library support? */
 /* #undef NEED_HPUX_ADJTIME */
 
@@ -1447,7 +1459,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p4"
+#define PACKAGE_STRING "ntp 4.2.8p7"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1456,7 +1468,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p4"
+#define PACKAGE_VERSION "4.2.8p7"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1499,9 +1511,9 @@
 
 /* The size of `char*', as computed by sizeof. */
 #ifdef _LP64
-#define SIZEOF_CHARP 8
+#define SIZEOF_CHAR_P 8
 #else
-#define SIZEOF_CHARP 4
+#define SIZEOF_CHAR_P 4
 #endif
 
 /* The size of `int', as computed by sizeof. */
@@ -1611,7 +1623,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p4"
+#define VERSION "4.2.8p7"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */

@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.1.1.1.14.1 2014/12/25 02:28:05 snj Exp $	*/
+/*	$NetBSD: string.h,v 1.1.1.1.14.2 2016/05/08 21:51:00 snj Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -199,6 +199,24 @@ isc_string_regiondup(isc_mem_t *mctx, const isc_region_t *source);
  *	a pointer to a NUL terminated string or
  *	NULL if memory for the copy could not be allocated
  *
+ */
+
+int
+isc_tsmemcmp(const void *p1, const void *p2, size_t len);
+/*
+ * Lexicographic compare 'len' unsigned bytes from 'p1' and 'p2'
+ * like 'memcmp()'.
+ *
+ * This function is safe from timing attacks as it has a runtime that
+ * only depends on 'len' and has no early-out option.
+ *
+ * Use this to check MACs and other material that is security sensitive.
+ *
+ * Returns:
+ *  (let x be the byte offset of the first different byte)
+ *  -1 if (u_char)p1[x] < (u_char)p2[x]
+ *   1 if (u_char)p1[x] > (u_char)p2[x]
+ *   0 if byte series are equal
  */
 
 char *

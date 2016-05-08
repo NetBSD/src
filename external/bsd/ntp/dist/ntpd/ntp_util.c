@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.3.8.2 2015/11/08 00:15:59 snj Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.3.8.3 2016/05/08 21:51:01 snj Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -336,7 +336,7 @@ stats_config(
 {
 	FILE	*fp;
 	const char *value;
-	int	len;
+	size_t	len;
 	double	old_drift;
 	l_fp	now;
 	time_t  ttnow;
@@ -439,7 +439,7 @@ stats_config(
 			    (int)sizeof(statsdir) - 2);
 		} else {
 			int add_dir_sep;
-			int value_l;
+			size_t value_l;
 
 			/* Add a DIR_SEP unless we already have one. */
 			value_l = strlen(value);
@@ -935,7 +935,7 @@ getauthkeys(
 	const char *keyfile
 	)
 {
-	int len;
+	size_t len;
 
 	len = strlen(keyfile);
 	if (!len)
