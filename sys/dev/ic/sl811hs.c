@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.56 2016/04/26 10:38:42 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.57 2016/05/08 07:40:17 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.56 2016/04/26 10:38:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.57 2016/05/08 07:40:17 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1121,7 +1121,7 @@ slhci_preinit(struct slhci_softc *sc, PowerFunc pow, bus_space_tag_t iot,
 	t = &sc->sc_transfers;
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
 	/* sc->sc_ier = 0;	*/
 	/* t->rootintr = NULL;	*/
