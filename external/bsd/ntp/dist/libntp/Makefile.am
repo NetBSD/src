@@ -36,6 +36,7 @@ libisc_SRCS =								\
 	$(srcdir)/../lib/isc/unix/time.c				\
 	$(srcdir)/../lib/isc/sha1.c					\
 	$(srcdir)/../lib/isc/sockaddr.c					\
+	$(srcdir)/../lib/isc/tsmemcmp.c					\
 	$(NULL)
 
 if PTHREADS
@@ -70,6 +71,7 @@ libntp_a_SRCS =						\
 	humandate.c					\
 	icom.c						\
 	iosignal.c					\
+	is_ip_address.c					\
 	lib_strbuf.c					\
 	machines.c					\
 	mktime.c					\
