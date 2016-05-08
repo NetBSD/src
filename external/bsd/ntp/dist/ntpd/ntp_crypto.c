@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.4.16.2 2015/11/07 22:46:16 snj Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.4.16.3 2016/05/08 21:55:48 snj Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -271,7 +271,7 @@ session_key(
 	memcpy(&keyid, dgst, 4);
 	keyid = ntohl(keyid);
 	if (lifetime != 0) {
-		MD5auth_setkey(keyno, crypto_nid, dgst, len);
+		MD5auth_setkey(keyno, crypto_nid, dgst, len, NULL);
 		authtrust(keyno, lifetime);
 	}
 	DPRINTF(2, ("session_key: %s > %s %08x %08x hash %08x life %lu\n",
@@ -475,7 +475,7 @@ crypto_recv(
 		}
 
 		/* Check if the declared size fits into the remaining
-		 * buffer.
+		 * buffer. We *know* 'macbytes' > 0 here!
 		 */
 		if (len > (u_int)macbytes) {
 			DPRINTF(1, ("crypto_recv: possible attack detected, associd %d\n",

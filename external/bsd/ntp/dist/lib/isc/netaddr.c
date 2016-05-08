@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.3.16.1 2014/12/25 02:13:02 snj Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.3.16.2 2016/05/08 21:55:47 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -161,7 +161,7 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
 	if (r == NULL)
 		return (ISC_R_FAILURE);
 
-	alen = strlen(abuf);
+	alen = (unsigned int)strlen(abuf); /* no overflow possible */
 	INSIST(alen < sizeof(abuf));
 
 	zlen = 0;
@@ -282,7 +282,6 @@ isc_netaddr_masktoprefixlen(const isc_netaddr_t *s, unsigned int *lenp) {
 	for (; i < ipbytes; i++) {
 		if (p[i] != 0)
 			return (ISC_R_MASKNONCONTIG);
-		i++;
 	}
 	*lenp = nbytes * 8 + nbits;
 	return (ISC_R_SUCCESS);

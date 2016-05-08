@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.1.1.3.4.2 2015/11/07 22:46:27 snj Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
 
 #include "config.h"
 
@@ -11,8 +11,18 @@
 /* Might need to be updated if a new refclock gets this id. */
 static const int UNUSED_REFCLOCK_ID = 250;
 
+void setUp(void);
 void test_LocalClock(void);
 void test_UnknownId(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.2.16.2 2015/11/07 22:46:24 snj Exp $	*/
+/*	$NetBSD: configfile.c,v 1.2.16.3 2016/05/08 21:55:51 snj Exp $	*/
 
 /**
  * \file configfile.c
@@ -186,7 +186,7 @@ optionFindValue(const tOptDesc * odesc, char const * name, char const * val)
     else do {
         tArgList * argl  = odesc->optCookie;
         int        argct = argl->useCt;
-        const void **    poptv = (const void **)(argl->apzArgs);
+        const void ** poptv = VOIDP(argl->apzArgs);
 
         if (argct == 0) {
             errno = ENOENT;
@@ -268,7 +268,7 @@ optionFindNextValue(const tOptDesc * odesc, const tOptionValue * pPrevVal,
     else do {
         tArgList * argl = odesc->optCookie;
         int        ct   = argl->useCt;
-        const void **   poptv = (const void **)argl->apzArgs;
+        const void ** poptv = VOIDP(argl->apzArgs);
 
         while (--ct >= 0) {
             const tOptionValue * pOV = *(poptv++);
@@ -328,7 +328,7 @@ optionGetValue(tOptionValue const * oov, char const * vname)
 
     if (arg_list->useCt > 0) {
         int     ct     = arg_list->useCt;
-        const void ** ovlist = (const void **)(arg_list->apzArgs);
+        const void ** ovlist = VOIDP(arg_list->apzArgs);
 
         if (vname == NULL) {
             res = (const tOptionValue *)*ovlist;
@@ -387,7 +387,7 @@ optionNextValue(tOptionValue const * ov_list,tOptionValue const * oov )
     arg_list = ov_list->v.nestVal;
     {
         int     ct    = arg_list->useCt;
-        const void ** o_list = (const void **)(arg_list->apzArgs);
+        const void ** o_list = VOIDP(arg_list->apzArgs);
 
         while (ct-- > 0) {
             const tOptionValue * nov = *(o_list++);

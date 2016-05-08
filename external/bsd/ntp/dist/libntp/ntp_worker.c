@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_worker.c,v 1.2.2.3 2015/11/07 22:46:16 snj Exp $	*/
+/*	$NetBSD: ntp_worker.c,v 1.2.2.4 2016/05/08 21:55:47 snj Exp $	*/
 
 /*
  * ntp_worker.c
@@ -29,6 +29,8 @@ blocking_child **	blocking_children;
 size_t			blocking_children_alloc;
 int			worker_per_query;	/* boolean */
 int			intres_req_pending;
+volatile u_int		blocking_child_ready_seen;
+volatile u_int		blocking_child_ready_done;
 
 
 #ifndef HAVE_IO_COMPLETION_PORT
@@ -152,7 +154,8 @@ available_blocking_child_slot(void)
 					  prev_octets);
 	blocking_children_alloc = new_alloc;
 
-	return prev_alloc;
+	/* assume we'll never have enough workers to overflow u_int */
+	return (u_int)prev_alloc;
 }
 
 
@@ -261,6 +264,31 @@ process_blocking_resp(
 		intres_timeout_req(CHILD_MAX_IDLE);
 	else if (worker_per_query)
 		req_child_exit(c);
+}
+
+void
+harvest_blocking_responses(void)
+{
+	size_t		idx;
+	blocking_child*	cp;
+	u_int		scseen, scdone;
+
+	scseen = blocking_child_ready_seen;
+	scdone = blocking_child_ready_done;
+	if (scdone != scseen) {
+		blocking_child_ready_done = scseen;
+		for (idx = 0; idx < blocking_children_alloc; idx++) {
+			cp = blocking_children[idx];
+			if (NULL == cp)
+				continue;
+			scseen = cp->resp_ready_seen;
+			scdone = cp->resp_ready_done;
+			if (scdone != scseen) {
+				cp->resp_ready_done = scseen;
+				process_blocking_resp(cp);
+			}
+		}
+	}
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: strtolfp.c,v 1.1.1.3.4.2 2015/11/07 22:46:28 snj Exp $	*/
+/*	$NetBSD: strtolfp.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
 
 #include "config.h"
 
@@ -10,6 +10,7 @@
 
 /* This file tests both atolfp and mstolfp */
 
+void setUp(void);
 void test_PositiveInteger(void);
 void test_NegativeInteger(void);
 void test_PositiveFraction(void);
@@ -17,6 +18,15 @@ void test_NegativeFraction(void);
 void test_PositiveMsFraction(void);
 void test_NegativeMsFraction(void);
 void test_InvalidChars(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void test_PositiveInteger(void) {

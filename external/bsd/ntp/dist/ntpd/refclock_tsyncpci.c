@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_tsyncpci.c,v 1.2.2.2 2014/12/25 02:13:07 snj Exp $	*/
+/*	$NetBSD: refclock_tsyncpci.c,v 1.2.2.3 2016/05/08 21:55:49 snj Exp $	*/
 
 /*******************************************************************************
 *
@@ -551,7 +551,7 @@ static void tsync_poll(int unit, struct peer *peer)
     memcpy(ppsRef, pRefObj->pps, TSYNC_REF_LEN);
 
     // Extract the Clock Service Time Scale and convert to correct byte order
-    memcpy(&tmscl, ((TIME_SCALE*)(it1->payloads)), sizeof(tmscl));
+    memcpy(&tmscl, it1->payloads, sizeof(tmscl));
     tmscl = ntohl(tmscl);
 
     // Extract leap second info from ioctl payload and perform byte swapping

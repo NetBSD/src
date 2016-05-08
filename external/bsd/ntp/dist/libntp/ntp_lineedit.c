@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lineedit.c,v 1.3.16.2 2015/11/07 22:46:16 snj Exp $	*/
+/*	$NetBSD: ntp_lineedit.c,v 1.3.16.3 2016/05/08 21:55:47 snj Exp $	*/
 
 /*
  * ntp_lineedit.c - generic interface to various line editing libs
@@ -31,6 +31,7 @@
 #include "ntp.h"
 #include "ntp_stdlib.h"
 #include "ntp_lineedit.h"
+#include "safecast.h"
 
 #define MAXEDITLINE	512
 
@@ -215,7 +216,7 @@ ntp_readline(
 
 	line = fgets(line_buf, sizeof(line_buf), stdin);
 	if (NULL != line && *line) {
-		*pcount = strlen(line);
+		*pcount = (int)strlen(line); /* cannot overflow here */
 		line = estrdup(line);
 	} else
 		line = NULL;

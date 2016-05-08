@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_prio_q.c,v 1.1.1.1.4.2 2015/11/07 22:46:28 snj Exp $	*/
+/*	$NetBSD: ntp_prio_q.c,v 1.1.1.1.4.3 2016/05/08 21:55:52 snj Exp $	*/
 
 #include "config.h"
 
@@ -253,6 +253,7 @@ test_AppendQueues(void) {
 	free_node(e3_ptr);
 	free_node(e4_ptr);
 	free_node(e5_ptr);
+	free_node(e6_ptr);
 
 	TEST_ASSERT_EQUAL(0, get_no_of_elements(q4));
 
