@@ -1,4 +1,4 @@
-.\"	$NetBSD: wapbl.9,v 1.13 2016/05/07 16:01:00 riastradh Exp $
+.\"	$NetBSD: wapbl.9,v 1.14 2016/05/08 10:13:01 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -279,7 +279,7 @@ must be
 is a callback that
 .Nm
 will invoke as
-.Fa flushfn Ns ( Fa mp , Fa deallocblks , Fa dealloclens , Fa dealloccnt )
+.Fa flushfn ( Fa mp , Fa deallocblks , Fa dealloclens , Fa dealloccnt )
 just before it flushes a transaction to disk, with the an exclusive
 lock held on the transaction, where
 .Fa mp
