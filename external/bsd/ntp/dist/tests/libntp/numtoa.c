@@ -1,4 +1,4 @@
-/*	$NetBSD: numtoa.c,v 1.1.1.3.6.2 2015/11/08 00:16:09 snj Exp $	*/
+/*	$NetBSD: numtoa.c,v 1.1.1.3.6.3 2016/05/08 21:51:05 snj Exp $	*/
 
 #include "config.h"
 
@@ -7,8 +7,19 @@
 
 #include "unity.h"
 
+void setUp(void);
 void test_Address(void);
 void test_Netmask(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
+
 
 void
 test_Address(void) {

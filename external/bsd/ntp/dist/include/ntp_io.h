@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.h,v 1.1.1.2.8.2 2015/11/08 00:15:57 snj Exp $	*/
+/*	$NetBSD: ntp_io.h,v 1.1.1.2.8.3 2016/05/08 21:50:59 snj Exp $	*/
 
 #ifndef NTP_IO_H
 #define NTP_IO_H
@@ -41,6 +41,8 @@
 #endif
 
 #include "libntp.h"	/* This needs Something above for GETDTABLESIZE */
+
+#include "ntp_keyacc.h"
 
 /*
  * Define FNDELAY and FASYNC using O_NONBLOCK and O_ASYNC if we need
@@ -85,7 +87,6 @@ typedef enum {
 extern int	qos;
 SOCKET		move_fd(SOCKET fd);
 isc_boolean_t	get_broadcastclient_flag(void);
-extern int	is_ip_address(const char *, u_short, sockaddr_u *);
 extern void	sau_from_netaddr(sockaddr_u *, const isc_netaddr_t *);
 extern void	add_nic_rule(nic_rule_match match_type,
 			     const char *if_name, int prefixlen,
