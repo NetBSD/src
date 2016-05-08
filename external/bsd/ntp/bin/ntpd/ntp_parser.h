@@ -1,6 +1,3 @@
-#ifndef _yy_defines_h_
-#define _yy_defines_h_
-
 #define T_Abbrev 257
 #define T_Age 258
 #define T_All 259
@@ -172,26 +169,29 @@
 #define T_Ttl 425
 #define T_Type 426
 #define T_U_int 427
-#define T_Unconfig 428
-#define T_Unpeer 429
-#define T_Version 430
-#define T_WanderThreshold 431
-#define T_Week 432
-#define T_Wildcard 433
-#define T_Xleave 434
-#define T_Year 435
-#define T_Flag 436
-#define T_EOC 437
-#define T_Simulate 438
-#define T_Beep_Delay 439
-#define T_Sim_Duration 440
-#define T_Server_Offset 441
-#define T_Duration 442
-#define T_Freq_Offset 443
-#define T_Wander 444
-#define T_Jitter 445
-#define T_Prop_Delay 446
-#define T_Proc_Delay 447
+#define T_UEcrypto 428
+#define T_UEcryptonak 429
+#define T_UEdigest 430
+#define T_Unconfig 431
+#define T_Unpeer 432
+#define T_Version 433
+#define T_WanderThreshold 434
+#define T_Week 435
+#define T_Wildcard 436
+#define T_Xleave 437
+#define T_Year 438
+#define T_Flag 439
+#define T_EOC 440
+#define T_Simulate 441
+#define T_Beep_Delay 442
+#define T_Sim_Duration 443
+#define T_Server_Offset 444
+#define T_Duration 445
+#define T_Freq_Offset 446
+#define T_Wander 447
+#define T_Jitter 448
+#define T_Prop_Delay 449
+#define T_Proc_Delay 450
 #ifdef YYSTYPE
 #undef  YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
@@ -218,5 +218,3 @@ typedef union {
 } YYSTYPE;
 #endif /* !YYSTYPE_IS_DECLARED */
 extern YYSTYPE yylval;
-
-#endif /* _yy_defines_h_ */

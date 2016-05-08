@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.2.16.2 2015/11/07 22:46:17 snj Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.1.1.2.16.3 2016/05/08 21:55:48 snj Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -1266,7 +1266,7 @@ chu_a(
 			offset = up->charstamp;
 		else if (k > 0)
 			i = 1;
-		for (; i < nchar && i < k + 10; i++) {
+		for (; i < nchar && (i - 10) < k; i++) {
 			up->tstamp[up->ntstamp] = up->cstamp[i];
 			L_SUB(&up->tstamp[up->ntstamp], &offset);
 			L_ADD(&offset, &up->charstamp);

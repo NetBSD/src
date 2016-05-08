@@ -1,4 +1,4 @@
-/*	$NetBSD: socktoa.c,v 1.1.1.3.4.2 2015/11/07 22:46:28 snj Exp $	*/
+/*	$NetBSD: socktoa.c,v 1.1.1.3.4.3 2016/05/08 21:55:52 snj Exp $	*/
 
 #include "config.h"
 
@@ -9,17 +9,25 @@
 #include "sockaddrtest.h"
 
 
+void setUp(void);
 void test_IPv4AddressWithPort(void);
-//#ifdef ISC_PLATFORM_HAVEIPV6
 void test_IPv6AddressWithPort(void);
 void test_IgnoreIPv6Fields(void);
-//#endif /* ISC_PLATFORM_HAVEIPV6 */
 void test_ScopedIPv6AddressWithPort(void);
 void test_HashEqual(void);
 void test_HashNotEqual(void);
 
+
+void
+setUp(void)
+{
+	init_lib();
+}
+
+
 void 
-test_IPv4AddressWithPort(void) {
+test_IPv4AddressWithPort(void)
+{
 	sockaddr_u input = CreateSockaddr4("192.0.2.10", 123);
 
 	TEST_ASSERT_EQUAL_STRING("192.0.2.10", socktoa(&input));
@@ -28,8 +36,8 @@ test_IPv4AddressWithPort(void) {
 
 
 void 
-test_IPv6AddressWithPort(void) {
-
+test_IPv6AddressWithPort(void)
+{
 #ifdef ISC_PLATFORM_WANTIPV6
 
 	const struct in6_addr address = {
@@ -54,22 +62,24 @@ test_IPv6AddressWithPort(void) {
 	TEST_ASSERT_EQUAL_STRING(expected_port, sockporttoa(&input));
 
 #else
+
 	TEST_IGNORE_MESSAGE("IPV6 disabled in build, skipping.");
 
 #endif /* ISC_PLATFORM_HAVEIPV6 */
-
 }
 
 
 void 
-test_ScopedIPv6AddressWithPort(void) {
+test_ScopedIPv6AddressWithPort(void)
+{
 #ifdef ISC_PLATFORM_HAVESCOPEID
-	const struct in6_addr address = {
+    
+	const struct in6_addr address = { { {
 		0xfe, 0x80, 0x00, 0x00,
 		0x00, 0x00, 0x00, 0x00,
 		0x02, 0x12, 0x3f, 0xff, 
 		0xfe, 0x29, 0xff, 0xfa
-	};
+	} } };
 
 	const char* expected =
 		"fe80::212:3fff:fe29:fffa%5";
@@ -86,12 +96,16 @@ test_ScopedIPv6AddressWithPort(void) {
 	TEST_ASSERT_EQUAL_STRING(expected, socktoa(&input));
 	TEST_ASSERT_EQUAL_STRING(expected_port, sockporttoa(&input));
 #else
+	
 	TEST_IGNORE_MESSAGE("Skipping because ISC_PLATFORM does not have Scope ID");
+	
 #endif
 }
 
+
 void 
-test_HashEqual(void) {
+test_HashEqual(void)
+{
 	sockaddr_u input1 = CreateSockaddr4("192.00.2.2", 123);
 	sockaddr_u input2 = CreateSockaddr4("192.0.2.2", 123);
 
@@ -99,8 +113,10 @@ test_HashEqual(void) {
 	TEST_ASSERT_EQUAL(sock_hash(&input1), sock_hash(&input2));
 }
 
+
 void 
-test_HashNotEqual(void) {
+test_HashNotEqual(void)
+{
 	/* These two addresses should not generate the same hash. */
 	sockaddr_u input1 = CreateSockaddr4("192.0.2.1", 123);
 	sockaddr_u input2 = CreateSockaddr4("192.0.2.2", 123);
@@ -111,8 +127,8 @@ test_HashNotEqual(void) {
 
 
 void 
-test_IgnoreIPv6Fields(void) {
-
+test_IgnoreIPv6Fields(void)
+{
 #ifdef ISC_PLATFORM_WANTIPV6
 
 	const struct in6_addr address = {
@@ -137,7 +153,8 @@ test_IgnoreIPv6Fields(void) {
 	TEST_ASSERT_EQUAL(sock_hash(&input1), sock_hash(&input2));
 
 #else
+
 	TEST_IGNORE_MESSAGE("IPV6 disabled in build, skipping.");
+
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.2.16.1 2014/12/25 02:13:04 snj Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.2.16.2 2016/05/08 21:55:47 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -218,7 +218,8 @@ initialize_ipv6only(void) {
 
 static void
 try_ipv6pktinfo(void) {
-	int s, on;
+	SOCKET s;
+	int on;
 	char strbuf[ISC_STRERRORSIZE];
 	isc_result_t result;
 	int optname;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_dcf7000.c,v 1.1.1.1.22.2 2015/11/07 22:46:16 snj Exp $	*/
+/*	$NetBSD: clk_dcf7000.c,v 1.1.1.1.22.3 2016/05/08 21:55:48 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/clk_dcf7000.c,v 4.10 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -160,7 +160,7 @@ inp_dcf7000(
 {
 	unsigned int rtc;
 
-	parseprintf(DD_PARSE, ("inp_dcf7000(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_dcf7000(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	switch (ch)
 	{
