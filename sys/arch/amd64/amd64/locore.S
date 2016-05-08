@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.84 2016/05/07 11:49:21 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.85 2016/05/08 08:22:58 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -783,9 +783,7 @@ longmode_hi:
 	movq	$NKL4_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	/* old, phys address of PML4 */
 	addq	%r8,%rbx			/* new, virt address of PML4 */
-1:	movq	$0,(%rbx)
-	addq	$8,%rbx
-	loop	1b
+	killkpt
 
 	/* Relocate atdevbase. */
 	movq	$(TABLESIZE+KERNBASE),%rdx
