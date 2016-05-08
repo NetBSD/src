@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2014/12/25 02:34:48 snj Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2016/05/08 22:02:15 snj Exp $
 
 LIBISPRIVATE=yes
 
@@ -42,6 +42,7 @@ SRCS=   assertions.c               \
         task.c                     \
         thread.c                   \
         time.c                     \
+	tsmemcmp.c		   \
         sockaddr.c
 
 .if ${HAVE_GCC:U} != 4
