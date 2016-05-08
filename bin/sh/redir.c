@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.43 2016/05/02 01:46:31 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.44 2016/05/08 03:51:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.43 2016/05/02 01:46:31 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.44 2016/05/08 03:51:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: redir.c,v 1.43 2016/05/02 01:46:31 christos Exp $");
 
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
-#define	CLOSED -1		/* fd was not open before redir */
+#define CLOSED -1		/* fd was not open before redir */
 #ifndef PIPE_BUF
 # define PIPESIZE 4096		/* amount of buffering in a pipe */
 #else
@@ -222,8 +222,8 @@ redirect(union node *redir, int flags)
 		} else {
 			close(fd);
 		}
-                if (fd == 0)
-                        fd0_redirected++;
+		if (fd == 0)
+			fd0_redirected++;
 		openredirect(n, memory, flags);
 	}
 	if (memory[1])
@@ -417,7 +417,7 @@ SHELLPROC {
 int
 fd0_redirected_p(void)
 {
-        return fd0_redirected != 0;
+	return fd0_redirected != 0;
 }
 
 /*
