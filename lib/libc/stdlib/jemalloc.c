@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.34.2.1 2015/11/24 17:37:16 martin Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.34.2.2 2016/05/09 19:34:50 snj Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.34.2.1 2015/11/24 17:37:16 martin Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.34.2.2 2016/05/09 19:34:50 snj Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -1671,6 +1671,11 @@ arena_run_comp(arena_run_t *a, arena_run_t *b)
 	assert(a != NULL);
 	assert(b != NULL);
 
+	if (a->max_frun_npages < b->max_frun_npages)
+		return -1;
+	if (a->max_frun_npages > b->max_frun_npages)
+		return 1;
+
 	if ((uintptr_t)a < (uintptr_t)b)
 		return (-1);
 	else if (a == b)
@@ -1902,9 +1907,6 @@ arena_chunk_alloc(arena_t *arena)
 
 		chunk->arena = arena;
 
-		/* LINTED */
-		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
-
 		/*
 		 * Claim that no pages are in use, since the header is merely
 		 * overhead.
@@ -1924,6 +1926,8 @@ arena_chunk_alloc(arena_t *arena)
 		chunk->map[chunk_npages - 1].npages = chunk_npages -
 		    arena_chunk_header_npages;
 		chunk->map[chunk_npages - 1].pos = POS_FREE;
+
+		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
 	}
 
 	return (chunk);
@@ -1960,30 +1964,44 @@ arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk)
 static arena_run_t *
 arena_run_alloc(arena_t *arena, size_t size)
 {
-	arena_chunk_t *chunk;
+	arena_chunk_t *chunk, *chunk_tmp;
 	arena_run_t *run;
-	unsigned need_npages, limit_pages, compl_need_npages;
+	unsigned need_npages;
 
 	assert(size <= (chunksize - (arena_chunk_header_npages <<
 	    pagesize_2pow)));
 	assert((size & pagesize_mask) == 0);
 
 	/*
-	 * Search through arena's chunks in address order for a free run that is
-	 * large enough.  Look for the first fit.
+	 * Search through the arena chunk tree for a large enough free run.
+	 * Tree order ensures that any exact fit is picked immediately or
+	 * otherwise the lowest address of the next size.
 	 */
 	need_npages = (unsigned)(size >> pagesize_2pow);
-	limit_pages = chunk_npages - arena_chunk_header_npages;
-	compl_need_npages = limit_pages - need_npages;
 	/* LINTED */
-	RB_FOREACH(chunk, arena_chunk_tree_s, &arena->chunks) {
+	for (;;) {
+		chunk_tmp = RB_ROOT(&arena->chunks);
+		chunk = NULL;
+		while (chunk_tmp) {
+			if (chunk_tmp->max_frun_npages == need_npages) {
+				chunk = chunk_tmp;
+				break;
+			}
+			if (chunk_tmp->max_frun_npages < need_npages) {
+				chunk_tmp = RB_RIGHT(chunk_tmp, link);
+				continue;
+			}
+			chunk = chunk_tmp;
+			chunk_tmp = RB_LEFT(chunk, link);
+		}
+		if (chunk == NULL)
+			break;
 		/*
-		 * Avoid searching this chunk if there are not enough
-		 * contiguous free pages for there to possibly be a large
-		 * enough free run.
+		 * At this point, the chunk must have a cached run size large
+		 * enough to fit the allocation.
 		 */
-		if (chunk->pages_used <= compl_need_npages &&
-		    need_npages <= chunk->max_frun_npages) {
+		assert(need_npages <= chunk->max_frun_npages);
+		{
 			arena_chunk_map_t *mapelm;
 			unsigned i;
 			unsigned max_frun_npages = 0;
@@ -2021,7 +2039,9 @@ arena_run_alloc(arena_t *arena, size_t size)
 			 * chunk->min_frun_ind was already reset above (if
 			 * necessary).
 			 */
+			RB_REMOVE(arena_chunk_tree_s, &arena->chunks, chunk);
 			chunk->max_frun_npages = max_frun_npages;
+			RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
 		}
 	}
 
@@ -2104,8 +2124,11 @@ arena_run_dalloc(arena_t *arena, arena_run_t *run, size_t size)
 		assert(chunk->map[run_ind + run_pages - 1].pos == POS_FREE);
 	}
 
-	if (chunk->map[run_ind].npages > chunk->max_frun_npages)
+	if (chunk->map[run_ind].npages > chunk->max_frun_npages) {
+		RB_REMOVE(arena_chunk_tree_s, &arena->chunks, chunk);
 		chunk->max_frun_npages = chunk->map[run_ind].npages;
+		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
+	}
 	if (run_ind < chunk->min_frun_ind)
 		chunk->min_frun_ind = run_ind;
 
