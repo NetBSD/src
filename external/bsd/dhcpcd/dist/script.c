@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.25 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.26 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -411,20 +411,20 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 		ssize_t psl;
 
 		pfx_len = strlen(pfx);
-		psl = print_string(NULL, 0, ESCSTRING,
+		psl = print_string(NULL, 0, OT_ESCSTRING,
 		    (const uint8_t *)ifp->ssid, ifp->ssid_len);
 		if (psl != -1) {
 			EMALLOC(elen, pfx_len + (size_t)psl + 1);
 			memcpy(env[elen], pfx, pfx_len);
 			print_string(env[elen] + pfx_len, (size_t)psl + 1,
-			    ESCSTRING,
+			    OT_ESCSTRING,
 			    (const uint8_t *)ifp->ssid, ifp->ssid_len);
 			elen++;
 		}
 	}
 #ifdef INET
 	if (dhcp && state && state->old) {
-		n = dhcp_env(NULL, NULL, state->old, ifp);
+		n = dhcp_env(NULL, NULL, state->old, state->old_len, ifp);
 		if (n == -1)
 			goto eexit;
 		if (n > 0) {
@@ -433,7 +433,8 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			if (nenv == NULL)
 				goto eexit;
 			env = nenv;
-			n = dhcp_env(env + elen, "old", state->old, ifp);
+			n = dhcp_env(env + elen, "old",
+			    state->old, state->old_len, ifp);
 			if (n == -1)
 				goto eexit;
 			elen += (size_t)n;
@@ -479,7 +480,7 @@ dumplease:
 		}
 	}
 	if (dhcp && state && state->new) {
-		n = dhcp_env(NULL, NULL, state->new, ifp);
+		n = dhcp_env(NULL, NULL, state->new, state->new_len, ifp);
 		if (n > 0) {
 			nenv = realloc(env, sizeof(char *) *
 			    (elen + (size_t)n + 1));
@@ -487,7 +488,7 @@ dumplease:
 				goto eexit;
 			env = nenv;
 			n = dhcp_env(env + elen, "new",
-			    state->new, ifp);
+			    state->new, state->new_len, ifp);
 			if (n == -1)
 				goto eexit;
 			elen += (size_t)n;
@@ -694,7 +695,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 
 	/* Resize for PATH and RC_SVCNAME */
 	svcname = getenv(RC_SVCNAME);
-	ep = realloc(env, sizeof(char *) * (elen + 2 + (svcname ? 1 : 0)));
+	ep = reallocarray(env, elen + 2 + (svcname ? 1 : 0), sizeof(char *));
 	if (ep == NULL) {
 		elen = 0;
 		goto out;
@@ -781,7 +782,9 @@ out:
 	while (*ep)
 		free(*ep++);
 	free(env);
-	if (elen == 0)
+	if (elen == 0) {
+		logger(ifp->ctx, LOG_ERR, "%s: malloc: %m", __func__);
 		return -1;
+	}
 	return WEXITSTATUS(status);
 }

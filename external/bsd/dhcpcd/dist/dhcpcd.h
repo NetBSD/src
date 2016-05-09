@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.16 2016/04/10 21:00:53 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.17 2016/05/09 10:15:59 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -158,15 +158,15 @@ struct dhcpcd_ctx {
 	struct rt_head *ipv4_kroutes;
 
 	int udp_fd;
-	uint8_t *packet;
 
 	/* Our aggregate option buffer.
 	 * We ONLY use this when options are split, which for most purposes is
 	 * practically never. See RFC3396 for details. */
 	uint8_t *opt_buffer;
+	size_t opt_buffer_len;
 #endif
 #ifdef INET6
-	unsigned char secret[SECRET_LEN];
+	uint8_t *secret;
 	size_t secret_len;
 
 	struct dhcp_opt *nd_opts;
