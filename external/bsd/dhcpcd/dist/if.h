@@ -83,6 +83,14 @@
 #define RAW_EOF			1 << 0
 #define RAW_PARTIALCSUM		2 << 0
 
+#ifdef __sun
+/* platform does not supply AF_LINK with getifaddrs. */
+struct ifaddrs;
+int if_getifaddrs(struct ifaddrs **);
+#else
+#define GETIFADDRS_AFLINK
+#endif
+
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))
 struct if_head *if_discover(struct dhcpcd_ctx *, int, char * const *);

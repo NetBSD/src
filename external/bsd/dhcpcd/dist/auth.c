@@ -320,8 +320,8 @@ gottoken:
 
 	/* RFC3318, section 5.2 - zero giaddr and hops */
 	if (mp == 4) {
-		*(mm + offsetof(struct dhcp_message, hwopcount)) = '\0';
-		memset(mm + offsetof(struct dhcp_message, giaddr), 0, 4);
+		*(mm + offsetof(struct bootp, hops)) = '\0';
+		memset(mm + offsetof(struct bootp, giaddr), 0, 4);
 	}
 
 	memset(hmac, 0, sizeof(hmac));
@@ -638,10 +638,10 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 
 	/* RFC3318, section 5.2 - zero giaddr and hops */
 	if (mp == 4) {
-		p = m + offsetof(struct dhcp_message, hwopcount);
+		p = m + offsetof(struct bootp, hops);
 		hops = *p;
 		*p = '\0';
-		p = m + offsetof(struct dhcp_message, giaddr);
+		p = m + offsetof(struct bootp, giaddr);
 		memcpy(&giaddr, p, sizeof(giaddr));
 		memset(p, 0, sizeof(giaddr));
 	} else {
@@ -660,9 +660,9 @@ dhcp_auth_encode(struct auth *auth, const struct token *t,
 
 	/* RFC3318, section 5.2 - restore giaddr and hops */
 	if (mp == 4) {
-		p = m + offsetof(struct dhcp_message, hwopcount);
+		p = m + offsetof(struct bootp, hops);
 		*p = hops;
-		p = m + offsetof(struct dhcp_message, giaddr);
+		p = m + offsetof(struct bootp, giaddr);
 		memcpy(p, &giaddr, sizeof(giaddr));
 	}
 

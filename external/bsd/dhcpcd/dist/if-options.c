@@ -100,6 +100,7 @@
 #define O_DEFINEND		O_BASE + 43
 #define O_NODELAY		O_BASE + 44
 #define O_INFORM6		O_BASE + 45
+#define O_LASTLEASE_EXTEND	O_BASE + 46
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -198,6 +199,7 @@ const struct option cf_options[] = {
 	{"bootp",           no_argument,       NULL, O_BOOTP},
 	{"nodelay",         no_argument,       NULL, O_NODELAY},
 	{"noup",            no_argument,       NULL, O_NOUP},
+	{"lastleaseextend", no_argument,       NULL, O_LASTLEASE_EXTEND},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -678,6 +680,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 #ifdef INET6
 	i = 0;
 #endif
+
+/* Add a guard for static analysers.
+ * This should not be needed really because of the argument_required option
+ * in the options declaration above. */
+#define ARG_REQUIRED if (arg == NULL) goto arg_required
+
 	switch(opt) {
 	case 'f': /* FALLTHROUGH */
 	case 'g': /* FALLTHROUGH */
@@ -693,6 +701,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_BACKGROUND;
 		break;
 	case 'c':
+		ARG_REQUIRED;
 		free(ifo->script);
 		ifo->script = strdup(arg);
 		if (ifo->script == NULL)
@@ -702,6 +711,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_DEBUG;
 		break;
 	case 'e':
+		ARG_REQUIRED;
 		add_environ(ctx, ifo, arg, 1);
 		break;
 	case 'h':
@@ -737,6 +747,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		*ifo->vendorclassid = (uint8_t)s;
 		break;
 	case 'j':
+		ARG_REQUIRED;
 		/* per interface logging is not supported
 		 * don't want to overide the commandline */
 		if (ifname == NULL && ctx->logfile == NULL) {
@@ -749,6 +760,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_RELEASE;
 		break;
 	case 'l':
+		ARG_REQUIRED;
 		ifo->leasetime = (uint32_t)strtou(arg, NULL,
 		    0, 0, UINT32_MAX, &e);
 		if (e) {
@@ -757,6 +769,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'm':
+		ARG_REQUIRED;
 		ifo->metric = (int)strtoi(arg, NULL, 0, 0, INT32_MAX, &e);
 		if (e) {
 			logger(ctx, LOG_ERR, "failed to convert metric %s", arg);
@@ -764,6 +777,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'o':
+		ARG_REQUIRED;
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
@@ -775,6 +789,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case O_REJECT:
+		ARG_REQUIRED;
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, reject, arg, 1) != 0 ||
@@ -813,6 +828,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_INFORM6;
 		break;
 	case 't':
+		ARG_REQUIRED;
 		ifo->timeout = (time_t)strtoi(arg, NULL, 0, 0, INT32_MAX, &e);
 		if (e) {
 			logger(ctx, LOG_ERR, "failed to convert timeout");
@@ -833,6 +849,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'v':
+		ARG_REQUIRED;
 		p = strchr(arg, ',');
 		if (!p || !p[1]) {
 			logger(ctx, LOG_ERR, "invalid vendor format: %s", arg);
@@ -904,6 +921,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'y':
+		ARG_REQUIRED;
 		ifo->reboot = (time_t)strtoi(arg, NULL, 0, 0, UINT32_MAX, &e);
 		if (e) {
 			logger(ctx, LOG_ERR, "failed to convert reboot %s", arg);
@@ -911,6 +929,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'z':
+		ARG_REQUIRED;
 		if (ifname == NULL)
 			ctx->ifav = splitv(ctx, &ctx->ifac, ctx->ifav, arg);
 		break;
@@ -923,6 +942,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options &= ~DHCPCD_DAEMONISE;
 		break;
 	case 'C':
+		ARG_REQUIRED;
 		/* Commas to spaces for shell */
 		while ((p = strchr(arg, ',')))
 			*p = ' ';
@@ -994,6 +1014,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->options |= DHCPCD_MASTER;
 		break;
 	case 'O':
+		ARG_REQUIRED;
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
@@ -1005,6 +1026,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'Q':
+		ARG_REQUIRED;
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, require, arg, 1) != 0 ||
@@ -1017,6 +1039,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case 'S':
+		ARG_REQUIRED;
 		p = strchr(arg, '=');
 		if (p == NULL) {
 			logger(ctx, LOG_ERR, "static assignment required");
@@ -1193,6 +1216,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->blacklist[ifo->blacklist_len++] = addr2.s_addr;
 		break;
 	case 'Z':
+		ARG_REQUIRED;
 		if (ifname == NULL)
 			ctx->ifdv = splitv(ctx, &ctx->ifdc, ctx->ifdv, arg);
 		break;
@@ -1239,6 +1263,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case O_DESTINATION:
+		ARG_REQUIRED;
 		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl,
@@ -1253,6 +1278,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		break;
 	case O_FALLBACK:
+		ARG_REQUIRED;
 		free(ifo->fallback);
 		ifo->fallback = strdup(arg);
 		if (ifo->fallback == NULL) {
@@ -1262,6 +1288,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 #endif
 	case O_IAID:
+		ARG_REQUIRED;
 		if (ifname == NULL) {
 			logger(ctx, LOG_ERR,
 			    "IAID must belong in an interface block");
@@ -1444,13 +1471,6 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 						    ifname);
 						goto err_sla;
 					}
-					if (sla->sla == 0) {
-						logger(ctx, LOG_WARNING,
-						    "%s: sla of 0 is not "
-						    "RFC3633 (section 12.1) "
-						    "compliant",
-						    ifname);
-					}
 				}
 				p = np;
 			}
@@ -1491,9 +1511,19 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			for (sl = 0; sl < ia->sla_len - 1; sl++) {
 				slap = &ia->sla[sl];
 				if (slap->sla_set != sla->sla_set) {
-					logger(ctx, LOG_WARNING,
+					logger(ctx, LOG_ERR,
 					    "%s: cannot mix automatic "
 					    "and fixed SLA",
+					    sla->ifname);
+					goto err_sla;
+				}
+				if (ia->prefix_len &&
+				    (sla->prefix_len == ia->prefix_len ||
+				    slap->prefix_len == ia->prefix_len))
+				{
+					logger(ctx, LOG_ERR,
+					    "%s: cannot delegte the same"
+					    "prefix length more than once",
 					    sla->ifname);
 					goto err_sla;
 				}
@@ -1507,13 +1537,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 					    sla->ifname);
 					goto err_sla;
 				}
-				if (slap->sla_set &&
-				    (slap->sla == 0 || sla->sla == 0))
+				if (slap->sla_set && sla->sla_set &&
+				    slap->sla == sla->sla)
 				{
 					logger(ctx, LOG_ERR, "%s: cannot"
-					    " assign multiple prefixes"
-					    " with a SLA of 0",
-					    ifname);
+					    " assign the same SLA %u"
+					    " more than once",
+					    sla->ifname, sla->sla);
 					goto err_sla;
 				}
 			}
@@ -1529,6 +1559,7 @@ err_sla:
 		ifo->options |= DHCPCD_HOSTNAME | DHCPCD_HOSTNAME_SHORT;
 		break;
 	case O_DEV:
+		ARG_REQUIRED;
 #ifdef PLUGIN_DEV
 		if (ctx->dev_load)
 			free(ctx->dev_load);
@@ -1577,6 +1608,7 @@ err_sla:
 		}
 		/* FALLTHROUGH */
 	case O_ENCAP:
+		ARG_REQUIRED;
 		if (dop == NULL) {
 			if (*ldop == NULL) {
 				logger(ctx, LOG_ERR, "encap must be after a define");
@@ -1631,7 +1663,7 @@ err_sla:
 		}
 		t = 0;
 		if (strcasecmp(arg, "request") == 0) {
-			t |= REQUEST;
+			t |= OT_REQUEST;
 			arg = strskipwhite(fp);
 			fp = strwhite(arg);
 			if (fp == NULL) {
@@ -1640,7 +1672,7 @@ err_sla:
 			}
 			*fp++ = '\0';
 		} else if (strcasecmp(arg, "norequest") == 0) {
-			t |= NOREQ;
+			t |= OT_NOREQ;
 			arg = strskipwhite(fp);
 			fp = strwhite(arg);
 			if (fp == NULL) {
@@ -1650,7 +1682,7 @@ err_sla:
 			*fp++ = '\0';
 		}
 		if (strcasecmp(arg, "optional") == 0) {
-			t |= OPTIONAL;
+			t |= OT_OPTIONAL;
 			arg = strskipwhite(fp);
 			fp = strwhite(arg);
 			if (fp == NULL) {
@@ -1661,7 +1693,7 @@ err_sla:
 			*fp++ = '\0';
 		}
 		if (strcasecmp(arg, "index") == 0) {
-			t |= INDEX;
+			t |= OT_INDEX;
 			arg = strskipwhite(fp);
 			fp = strwhite(arg);
 			if (fp == NULL) {
@@ -1671,7 +1703,7 @@ err_sla:
 			*fp++ = '\0';
 		}
 		if (strcasecmp(arg, "array") == 0) {
-			t |= ARRAY;
+			t |= OT_ARRAY;
 			arg = strskipwhite(fp);
 			fp = strwhite(arg);
 			if (fp == NULL) {
@@ -1681,72 +1713,72 @@ err_sla:
 			*fp++ = '\0';
 		}
 		if (strcasecmp(arg, "ipaddress") == 0)
-			t |= ADDRIPV4;
+			t |= OT_ADDRIPV4;
 		else if (strcasecmp(arg, "ip6address") == 0)
-			t |= ADDRIPV6;
+			t |= OT_ADDRIPV6;
 		else if (strcasecmp(arg, "string") == 0)
-			t |= STRING;
+			t |= OT_STRING;
 		else if (strcasecmp(arg, "byte") == 0)
-			t |= UINT8;
+			t |= OT_UINT8;
 		else if (strcasecmp(arg, "bitflags") == 0)
-			t |= BITFLAG;
+			t |= OT_BITFLAG;
 		else if (strcasecmp(arg, "uint8") == 0)
-			t |= UINT8;
+			t |= OT_UINT8;
 		else if (strcasecmp(arg, "int8") == 0)
-			t |= INT8;
+			t |= OT_INT8;
 		else if (strcasecmp(arg, "uint16") == 0)
-			t |= UINT16;
+			t |= OT_UINT16;
 		else if (strcasecmp(arg, "int16") == 0)
-			t |= INT16;
+			t |= OT_INT16;
 		else if (strcasecmp(arg, "uint32") == 0)
-			t |= UINT32;
+			t |= OT_UINT32;
 		else if (strcasecmp(arg, "int32") == 0)
-			t |= INT32;
+			t |= OT_INT32;
 		else if (strcasecmp(arg, "flag") == 0)
-			t |= FLAG;
+			t |= OT_FLAG;
 		else if (strcasecmp(arg, "raw") == 0)
-			t |= STRING | RAW;
+			t |= OT_STRING | OT_RAW;
 		else if (strcasecmp(arg, "ascii") == 0)
-			t |= STRING | ASCII;
+			t |= OT_STRING | OT_ASCII;
 		else if (strcasecmp(arg, "domain") == 0)
-			t |= STRING | DOMAIN | RFC1035;
+			t |= OT_STRING | OT_DOMAIN | OT_RFC1035;
 		else if (strcasecmp(arg, "dname") == 0)
-			t |= STRING | DOMAIN;
+			t |= OT_STRING | OT_DOMAIN;
 		else if (strcasecmp(arg, "binhex") == 0)
-			t |= STRING | BINHEX;
+			t |= OT_STRING | OT_BINHEX;
 		else if (strcasecmp(arg, "embed") == 0)
-			t |= EMBED;
+			t |= OT_EMBED;
 		else if (strcasecmp(arg, "encap") == 0)
-			t |= ENCAP;
+			t |= OT_ENCAP;
 		else if (strcasecmp(arg, "rfc3361") ==0)
-			t |= STRING | RFC3361;
+			t |= OT_STRING | OT_RFC3361;
 		else if (strcasecmp(arg, "rfc3442") ==0)
-			t |= STRING | RFC3442;
+			t |= OT_STRING | OT_RFC3442;
 		else if (strcasecmp(arg, "option") == 0)
-			t |= OPTION;
+			t |= OT_OPTION;
 		else {
 			logger(ctx, LOG_ERR, "unknown type: %s", arg);
 			return -1;
 		}
-		if (l && !(t & (STRING | BINHEX))) {
+		if (l && !(t & (OT_STRING | OT_BINHEX))) {
 			logger(ctx, LOG_WARNING,
 			    "ignoring length for type `%s'", arg);
 			l = 0;
 		}
-		if (t & ARRAY && t & (STRING | BINHEX) &&
-		    !(t & (RFC1035 | DOMAIN)))
+		if (t & OT_ARRAY && t & (OT_STRING | OT_BINHEX) &&
+		    !(t & (OT_RFC1035 | OT_DOMAIN)))
 		{
 			logger(ctx, LOG_WARNING, "ignoring array for strings");
-			t &= ~ARRAY;
+			t &= ~OT_ARRAY;
 		}
-		if (t & BITFLAG) {
+		if (t & OT_BITFLAG) {
 			if (bp == NULL)
 				logger(ctx, LOG_WARNING,
 				    "missing bitflag assignment");
 		}
 		/* variable */
 		if (!fp) {
-			if (!(t & OPTION)) {
+			if (!(t & OT_OPTION)) {
 			        logger(ctx, LOG_ERR,
 				    "type %s requires a variable name", arg);
 				return -1;
@@ -1766,7 +1798,7 @@ err_sla:
 				}
 			} else {
 				np = NULL;
-				t |= RESERVED;
+				t |= OT_RESERVED;
 			}
 		}
 		if (opt != O_EMBED) {
@@ -1822,6 +1854,7 @@ err_sla:
 		}
 		break;
 	case O_VENDCLASS:
+		ARG_REQUIRED;
 		fp = strwhite(arg);
 		if (fp)
 			*fp++ = '\0';
@@ -1864,6 +1897,7 @@ err_sla:
 		vivco->data = (uint8_t *)np;
 		break;
 	case O_AUTHPROTOCOL:
+		ARG_REQUIRED;
 		fp = strwhite(arg);
 		if (fp)
 			*fp++ = '\0';
@@ -1913,6 +1947,7 @@ err_sla:
 		ifo->auth.options |= DHCPCD_AUTH_SEND;
 		break;
 	case O_AUTHTOKEN:
+		ARG_REQUIRED;
 		fp = strwhite(arg);
 		if (fp == NULL) {
 			logger(ctx, LOG_ERR, "authtoken requires a realm");
@@ -2022,6 +2057,7 @@ err_sla:
 		ifo->options &= ~DHCPCD_DHCP6;
 		break;
 	case O_CONTROLGRP:
+		ARG_REQUIRED;
 #ifdef _REENTRANT
 		l = sysconf(_SC_GETGR_R_SIZE_MAX);
 		if (l == -1)
@@ -2080,6 +2116,7 @@ err_sla:
 		ifo->options &= ~DHCPCD_IF_UP;
 		break;
 	case O_SLAAC:
+		ARG_REQUIRED;
 		if (strcmp(arg, "private") == 0 ||
 		    strcmp(arg, "stableprivate") == 0 ||
 		    strcmp(arg, "stable") == 0)
@@ -2093,11 +2130,21 @@ err_sla:
 	case O_NODELAY:
 		ifo->options &= ~DHCPCD_INITIAL_DELAY;
 		break;
+	case O_LASTLEASE_EXTEND:
+		ifo->options |= DHCPCD_LASTLEASE | DHCPCD_LASTLEASE_EXTEND;
+		break;
 	default:
 		return 0;
 	}
 
 	return 1;
+
+#ifdef ARG_REQUIRED
+arg_required:
+	logger(ctx, LOG_ERR, "option %d requires an argument", opt);
+	return -1;
+#undef ARG_REQUIRED
+#endif
 }
 
 static int

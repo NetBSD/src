@@ -77,6 +77,7 @@ struct iarp_state {
 	((const struct iarp_state *)(ifp)->if_data[IF_DATA_ARP])
 
 #ifdef INET
+int arp_open(struct interface *);
 ssize_t arp_request(const struct interface *, in_addr_t, in_addr_t);
 void arp_report_conflicted(const struct arp_state *, const struct arp_msg *);
 void arp_announce(struct arp_state *);
