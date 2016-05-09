@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.17 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.18 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -182,43 +182,28 @@ ipv6_readsecret(struct dhcpcd_ctx *ctx)
 	uint32_t r;
 	int x;
 
-	if ((fp = fopen(SECRET, "r"))) {
-		len = 0;
-		while (fgets(line, sizeof(line), fp)) {
-			len = strlen(line);
-			if (len) {
-				if (line[len - 1] == '\n')
-					line[len - 1] = '\0';
-			}
-			len = hwaddr_aton(NULL, line);
-			if (len) {
-				ctx->secret_len = hwaddr_aton(ctx->secret,
-				    line);
-				break;
-			}
-			len = 0;
-		}
-		fclose(fp);
-		if (len)
-			return (ssize_t)len;
-	} else {
-		if (errno != ENOENT)
-			logger(ctx, LOG_ERR,
-			    "error reading secret: %s: %m", SECRET);
-	}
+	if ((ctx->secret_len = read_hwaddr_aton(&ctx->secret, SECRET)) != 0)
+		return (ssize_t)ctx->secret_len;
+
+	if (errno != ENOENT)
+		logger(ctx, LOG_ERR, "error reading secret: %s: %m", SECRET);
 
 	/* Chaining arc4random should be good enough.
 	 * RFC7217 section 5.1 states the key SHOULD be at least 128 bits.
 	 * To attempt and future proof ourselves, we'll generate a key of
 	 * 512 bits (64 bytes). */
+	if (ctx->secret_len < 64) {
+		if ((ctx->secret = malloc(64)) == NULL) {
+			logger(ctx, LOG_ERR, "%s: malloc: %m", __func__);
+			return -1;
+		}
+		ctx->secret_len = 64;
+	}
 	p = ctx->secret;
-	ctx->secret_len = 0;
 	for (len = 0; len < 512 / NBBY; len += sizeof(r)) {
 		r = arc4random();
 		memcpy(p, &r, sizeof(r));
 		p += sizeof(r);
-		ctx->secret_len += sizeof(r);
-
 	}
 
 	/* Ensure that only the dhcpcd user can read the secret.
@@ -412,21 +397,25 @@ ipv6_makeaddr(struct in6_addr *addr, struct interface *ifp,
 int
 ipv6_makeprefix(struct in6_addr *prefix, const struct in6_addr *addr, int len)
 {
-	int bytelen, bitlen;
+	int bytes, bits;
 
 	if (len < 0 || len > 128) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	bytelen = len / NBBY;
-	bitlen = len % NBBY;
-	memcpy(&prefix->s6_addr, &addr->s6_addr, (size_t)bytelen);
-	if (bitlen != 0)
-		prefix->s6_addr[bytelen] =
-		    (uint8_t)(prefix->s6_addr[bytelen] >> (NBBY - bitlen));
-	memset((char *)prefix->s6_addr + bytelen, 0,
-	    sizeof(prefix->s6_addr) - (size_t)bytelen);
+	bytes = len / NBBY;
+	bits = len % NBBY;
+	memcpy(&prefix->s6_addr, &addr->s6_addr, (size_t)bytes);
+	if (bits != 0) {
+		/* Coverify false positive.
+		 * bytelen cannot be 16 if bitlen is non zero */
+		/* coverity[overrun-local] */
+		prefix->s6_addr[bytes] =
+		    (uint8_t)(prefix->s6_addr[bytes] >> (NBBY - bits));
+	}
+	memset((char *)prefix->s6_addr + bytes, 0,
+	    sizeof(prefix->s6_addr) - (size_t)bytes);
 	return 0;
 }
 
@@ -447,8 +436,12 @@ ipv6_mask(struct in6_addr *mask, int len)
 	bits = len % NBBY;
 	for (i = 0; i < bytes; i++)
 		mask->s6_addr[i] = 0xff;
-	if (bits)
+	if (bits) {
+		/* Coverify false positive.
+		 * bytelen cannot be 16 if bitlen is non zero */
+		/* coverity[overrun-local] */
 		mask->s6_addr[bytes] = masks[bits - 1];
+	}
 	return 0;
 }
 
@@ -513,8 +506,7 @@ ipv6_userprefix(
 	uint64_t vh, vl, user_low, user_high;
 
 	if (prefix_len < 1 || prefix_len > 128 ||
-	    result_len < 1 || result_len > 128 ||
-	    user_number == 0)
+	    result_len < 1 || result_len > 128)
 	{
 		errno = EINVAL;
 		return -1;
@@ -526,6 +518,12 @@ ipv6_userprefix(
 	{
 	       errno = ERANGE;
 	       return -1;
+	}
+
+	/* If user_number is zero, just copy the prefix into the result. */
+	if (user_number == 0) {
+		*result = *prefix;
+		return 0;
 	}
 
 	/* Shift user_number so it fit's just inside result_len.
@@ -586,7 +584,6 @@ ipv6_checkaddrflags(void *arg)
 }
 #endif
 
-
 static void
 ipv6_deleteaddr(struct ipv6_addr *ia)
 {
@@ -598,6 +595,13 @@ ipv6_deleteaddr(struct ipv6_addr *ia)
 	if (if_deladdress6(ia) == -1 &&
 	    errno != EADDRNOTAVAIL && errno != ENXIO && errno != ENODEV)
 		logger(ia->iface->ctx, LOG_ERR, "if_deladdress6: :%m");
+
+	/* NOREJECT is set if we delegated exactly the prefix to another
+	 * address.
+	 * This can only be one address, so just clear the flag.
+	 * This should ensure the reject route will be restored. */
+	if (ia->delegating_prefix != NULL)
+		ia->delegating_prefix->flags &= ~IPV6_AF_NOREJECT;
 
 	state = IPV6_STATE(ia->iface);
 	TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -726,7 +730,7 @@ ipv6_addaddr(struct ipv6_addr *ap, const struct timespec *now)
 
 	ap->flags &= ~IPV6_AF_NEW;
 	ap->flags |= IPV6_AF_ADDED;
-	if (ap->delegating_iface)
+	if (ap->delegating_prefix != NULL)
 		ap->flags |= IPV6_AF_DELEGATED;
 
 #ifdef IPV6_POLLADDRFLAG
@@ -845,6 +849,16 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 void
 ipv6_freeaddr(struct ipv6_addr *ap)
 {
+	struct ipv6_addr *ia;
+
+	/* Forget the reference */
+	if (ap->flags & IPV6_AF_DELEGATEDPFX) {
+		TAILQ_FOREACH(ia, &ap->pd_pfxs, pd_next) {
+			ia->delegating_prefix = NULL;
+		}
+	} else if (ap->delegating_prefix != NULL) {
+		TAILQ_REMOVE(&ap->delegating_prefix->pd_pfxs, ap, pd_next);
+	}
 
 	eloop_q_timeout_delete(ap->iface->ctx->eloop, 0, NULL, ap);
 	free(ap);
@@ -859,7 +873,9 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 
 	timespecclear(&now);
 	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
-		if (ifd && ap->delegating_iface != ifd)
+		if (ifd != NULL &&
+		    (ap->delegating_prefix == NULL ||
+		    ap->delegating_prefix->iface != ifd))
 			continue;
 		if (drop != 2)
 			TAILQ_REMOVE(addrs, ap, next);
@@ -976,6 +992,11 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 			const char *cbp;
 
 			ap = calloc(1, sizeof(*ap));
+			if (ap == NULL) {
+				logger(ctx, LOG_ERR,
+				    "%s: calloc: %m", __func__);
+				break;
+			}
 			ap->iface = ifp;
 			ap->addr = *addr;
 			ap->prefix_len = prefix_len;
@@ -1208,8 +1229,8 @@ ipv6_addlinklocal(struct interface *ifp)
 	if (ap == NULL)
 		return -1;
 
+	dadcounter = 0;
 	if (ifp->options->options & DHCPCD_SLAACPRIVATE) {
-		dadcounter = 0;
 nextslaacprivate:
 		if (ipv6_makestableprivate(&ap->addr,
 			&ap->prefix, ap->prefix_len, ifp, &dadcounter) == -1)
@@ -1421,7 +1442,7 @@ ipv6_startstatic(struct interface *ifp)
 		ia = ipv6_newaddr(ifp, &ifp->options->req_addr6,
 		    ifp->options->req_prefix_len);
 		if (ia == NULL)
-	    		return -1;
+			return -1;
 		state = IPV6_STATE(ifp);
 		TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 		run_script = 0;
@@ -1499,6 +1520,7 @@ ipv6_ctxfree(struct dhcpcd_ctx *ctx)
 	if (ctx->ipv6 == NULL)
 		return;
 
+	free(ctx->secret);
 	ipv6_freerts(ctx->ipv6->routes);
 	free(ctx->ipv6->routes);
 	free(ctx->ipv6->ra_routers);
@@ -2162,9 +2184,25 @@ make_prefix(const struct interface *ifp, const struct ra *rap,
 	    !(addr->flags & (IPV6_AF_ONLINK | IPV6_AF_DELEGATEDPFX)))
 		return NULL;
 
-	/* Don't install a blackhole route when not creating bigger prefixes */
-	if (addr->flags & IPV6_AF_DELEGATEDZERO)
+	/* Don't install a reject route when not creating bigger prefixes */
+	if (addr->flags & IPV6_AF_NOREJECT)
 		return NULL;
+
+	/* This address is the delegated prefix, so add a reject route for
+	 * it via the loopback interface. */
+	if (addr->flags & IPV6_AF_DELEGATEDPFX) {
+		struct interface *lo0;
+
+		TAILQ_FOREACH(lo0, ifp->ctx->ifaces, next) {
+			if (lo0->flags & IFF_LOOPBACK)
+				break;
+		}
+		if (lo0 == NULL)
+			logger(ifp->ctx, LOG_WARNING,
+			    "cannot find a loopback interface to reject via");
+		else
+			ifp = lo0;
+	}
 
 	r = make_route(ifp, rap);
 	if (r == NULL)
@@ -2348,7 +2386,8 @@ ipv6_buildroutes(struct dhcpcd_ctx *ctx)
 	}
 
 	/* Free any routes we failed to add/change */
-	while ((rt = TAILQ_FIRST(&dnr))) {
+	/* coverity[use_after_free] */
+	while ((rt = TAILQ_FIRST(&dnr)) != NULL) {
 		TAILQ_REMOVE(&dnr, rt, next);
 		free(rt);
 	}
@@ -2356,10 +2395,12 @@ ipv6_buildroutes(struct dhcpcd_ctx *ctx)
 	/* Remove old routes we used to manage
 	 * If we own the default route, but not RA management itself
 	 * then we need to preserve the last best default route we had */
-	while ((rt = TAILQ_LAST(ctx->ipv6->routes, rt6_head))) {
+	while ((rt = TAILQ_LAST(ctx->ipv6->routes, rt6_head)) != NULL) {
 		TAILQ_REMOVE(ctx->ipv6->routes, rt, next);
 		if (find_route6(nrs, rt) == NULL) {
-			o = rt->iface->options->options;
+			o = rt->iface->options ?
+			    rt->iface->options->options :
+			    rt->iface->ctx->options;
 			if (!have_default &&
 			    (o & DHCPCD_IPV6RA_OWN_DEFAULT) &&
 			    !(o & DHCPCD_IPV6RA_OWN) &&
@@ -2368,7 +2409,7 @@ ipv6_buildroutes(struct dhcpcd_ctx *ctx)
 				/* no need to add it back to our routing table
 				 * as we delete an exiting route when we add
 				 * a new one */
-			else if ((rt->iface->options->options &
+			else if ((o &
 				(DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 				(DHCPCD_EXITING | DHCPCD_PERSISTENT))
 				d_route(rt);
