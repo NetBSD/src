@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.33 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.34 2016/05/09 21:37:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.33 2016/04/11 18:56:31 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.34 2016/05/09 21:37:34 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -91,8 +91,7 @@ el_parse(EditLine *el, int argc, const char *argv[])
 	int ret;
 	const wchar_t **wargv;
 
-	wargv = (const wchar_t **)
-	    ct_decode_argv(argc, argv, &el->el_lgcyconv);
+	wargv = (void *)ct_decode_argv(argc, argv, &el->el_lgcyconv);
 	if (!wargv)
 		return -1;
 	ret = el_wparse(el, argc, wargv);
@@ -171,8 +170,7 @@ el_set(EditLine *el, int op, ...)
 			if ((argv[i] = va_arg(ap, const char *)) == NULL)
 			    break;
 		argv[0] = argv[i] = NULL;
-		wargv = (const wchar_t **)
-		    ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
+		wargv = (void *)ct_decode_argv(i + 1, argv, &el->el_lgcyconv);
 		if (!wargv) {
 		    ret = -1;
 		    goto out;
