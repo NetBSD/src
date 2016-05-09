@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.26 2016/05/09 21:38:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -58,10 +58,8 @@
 # endif
 #endif
 
-#ifndef protected
-# define protected	/* Redefined from elsewhere to "static" */
-			/* When we want to hide everything	*/
-#endif
+/* If your compiler does not support this, define it to be empty. */
+#define protected __attribute__((__visibility__("hidden")))
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))
