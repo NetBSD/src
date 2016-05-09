@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.47 2016/01/20 19:42:33 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.48 2016/05/09 10:15:59 roy Exp $
 .\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 14, 2016
+.Dd April 30, 2016
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -167,23 +167,31 @@ only works with those interfaces, otherwise
 discovers available Ethernet interfaces that can be configured.
 When
 .Nm
-is operating on more than one interface,
-it is called Master mode. and this behaviour can be forced with the
-.Fl M , Fl Fl master
-option so that an individual interface can start
-.Nm
-but only one instance is running.
+not limited to one interface on the command line,
+it is running in Master mode.
 The
 .Nm dhcpcd-ui
 project expects dhcpcd to be running this way.
 .Pp
 If a single interface is given then
 .Nm
-only works for that interface and runs as a separate instance.
-The
+only works for that interface and runs as a separate instance to other
+.Nm
+processes.
 .Fl w , Fl Fl waitip
 option is enabled in this instance to maintain compatibility with older
 versions.
+Using a single interface also affects the
+.Fl k ,
+.Fl N ,
+.Fl n
+and
+.Fl x
+options where the same interface will need to be specified as a lack of an
+interace will imply Master mode which this is not.
+To force starting in Master mode with only one interface, the
+.Fl M , Fl Fl master
+option can be used.
 .Pp
 Interfaces are preferred by carrier, DHCP lease/IPv4LL and then lowest metric.
 For systems that support route metrics, each route will be tagged with the
@@ -261,9 +269,12 @@ If
 .Nm
 cannot obtain a lease, then try to use the last lease acquired for the
 interface.
-If the
-.Fl p, Fl Fl persistent
-option is not given then the lease is used if it hasn't expired.
+.It Fl Fl lastleaseextend
+Same as the above, but he lease will be retained even if it expires.
+.Nm
+will give it up if any other host tries to claim it for their own via ARP.
+This is does violate RFC2131 section 3.7 which states the lease should be
+dropped once it has expired.
 .It Fl e , Fl Fl env Ar value
 Push
 .Ar value
@@ -356,7 +367,7 @@ regardless of the
 option.
 If no
 .Ar interface
-is specified then this applies to all interfaces.
+is specified then this applies to all interfaces in Master mode.
 If no interfaces are left running,
 .Nm
 will exit.
@@ -383,7 +394,9 @@ Notifies
 .Nm
 to reload its configuration and rebind the specified
 .Ar interface .
-If no interface is specified then this applies to all interfaces.
+If no
+.Ar interface
+is specified then this applies to all interfaces in Master mode.
 If
 .Nm
 is not running, then it starts up as normal.
@@ -396,7 +409,9 @@ Notifies
 .Nm
 to renew existing addresses on the specified
 .Ar interface .
-If no interface is specified then this applies to all interfaces.
+If no
+.Ar interface
+is specified then this applies to all interfaces in Master mode.
 If
 .Nm
 is not running, then it starts up as normal.
@@ -539,7 +554,9 @@ This will signal an existing
 process running on the
 .Ar interface
 to exit.
-If no interface is specified, then the above is applied to all interfaces.
+If no
+.Ar interface
+is specified, then the above is applied to all interfaces in Master mode.
 See the
 .Fl p , Fl Fl persistent
 option to control configuration persistence on exit,

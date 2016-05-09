@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.29 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.30 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -281,7 +281,7 @@ get_addrs(int type, char *cp, struct sockaddr **sa)
 
 #if defined(INET) || defined(INET6)
 static struct interface *
-if_findsdl(struct dhcpcd_ctx *ctx, struct sockaddr_dl *sdl)
+if_findsdl(struct dhcpcd_ctx *ctx, const struct sockaddr_dl *sdl)
 {
 
 	if (sdl->sdl_index)
@@ -305,6 +305,56 @@ if_findsdl(struct dhcpcd_ctx *ctx, struct sockaddr_dl *sdl)
 		}
 	}
 
+	errno = ENOENT;
+	return NULL;
+}
+
+static struct interface *
+if_findsa(struct dhcpcd_ctx *ctx, const struct sockaddr *sa)
+{
+	if (sa == NULL) {
+		errno = EINVAL;
+		return NULL;
+	}
+
+	switch (sa->sa_family) {
+	case AF_LINK:
+	{
+		const struct sockaddr_dl *sdl;
+
+		sdl = (const void *)sa;
+		return if_findsdl(ctx, sdl);
+	}
+#ifdef INET
+	case AF_INET:
+	{
+		const struct sockaddr_in *sin;
+		struct ipv4_addr *ia;
+
+		sin = (const void *)sa;
+		if ((ia = ipv4_findmaskaddr(ctx, &sin->sin_addr)))
+			return ia->iface;
+		break;
+	}
+#endif
+#ifdef INET6
+	case AF_INET6:
+	{
+		const struct sockaddr_in6 *sin;
+		struct ipv6_addr *ia;
+
+		sin = (const void *)sa;
+		if ((ia = ipv6_findmaskaddr(ctx, &sin->sin6_addr)))
+			return ia->iface;
+		break;
+	}
+#endif
+	default:
+		errno = EAFNOSUPPORT;
+		return NULL;
+	}
+
+	errno = ENOENT;
 	return NULL;
 }
 #endif
@@ -483,6 +533,7 @@ next:
 	}
 }
 
+
 int
 if_address(const struct interface *ifp, const struct in_addr *address,
     const struct in_addr *netmask, const struct in_addr *broadcast,
@@ -515,9 +566,6 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 {
 	char *cp;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	struct sockaddr_dl *sdl;
-	struct sockaddr_in *sin;
-	struct ipv4_addr *ia;
 
 	cp = (void *)(rtm + 1);
 	sa = (void *)cp;
@@ -552,33 +600,18 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 
 	if (rtm->rtm_index)
 		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
-	else if (rtm->rtm_addrs & RTA_IFP) {
-		sdl = (void *)rti_info[RTAX_IFP];
-		rt->iface = if_findsdl(ctx, sdl);
-	} else if (rtm->rtm_addrs & RTA_GATEWAY) {
-		sa = rti_info[RTAX_GATEWAY];
-		switch (sa->sa_family) {
-		case AF_LINK:
-			sdl = (void *)sa;
-			rt->iface = if_findsdl(ctx, sdl);
-			break;
-		case AF_INET:
-			sin = (void *)sa;
-			if ((ia = ipv4_findmaskaddr(ctx, &sin->sin_addr)))
-				rt->iface = ia->iface;
-			break;
-		default:
-			errno = EAFNOSUPPORT;
-			logger(ctx, LOG_ERR, "%s: %m", __func__);
-			return -1;
-		}
-	}
+	else if (rtm->rtm_addrs & RTA_IFP)
+		rt->iface = if_findsa(ctx, rti_info[RTAX_IFP]);
+	else if (rtm->rtm_addrs & RTA_GATEWAY)
+		rt->iface = if_findsa(ctx, rti_info[RTAX_GATEWAY]);
 
 	/* If we don't have an interface and it's a host route, it maybe
 	 * to a local ip via the loopback interface. */
 	if (rt->iface == NULL &&
 	    !(~rtm->rtm_flags & (RTF_HOST | RTF_GATEWAY)))
 	{
+		struct ipv4_addr *ia;
+
 		if ((ia = ipv4_findaddr(ctx, &rt->dest)))
 			rt->iface = ia->iface;
 	}
@@ -765,8 +798,10 @@ if_initrt(struct interface *ifp)
 		return 0;
 	if ((buf = malloc(needed)) == NULL)
 		return -1;
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1)
+	if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1) {
+		free(buf);
 		return -1;
+	}
 
 	end = buf + needed;
 	for (p = buf; p < end; p += rtm->rtm_msglen) {
@@ -888,9 +923,6 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 {
 	char *cp;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
-	struct sockaddr_dl *sdl;
-	struct sockaddr_in6 *sin;
-	struct ipv6_addr *ia;
 
 	cp = (void *)(rtm + 1);
 	sa = (void *)cp;
@@ -973,33 +1005,18 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 
 	if (rtm->rtm_index)
 		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
-	else if (rtm->rtm_addrs & RTA_IFP) {
-		sdl = (void *)rti_info[RTAX_IFP];
-		rt->iface = if_findsdl(ctx, sdl);
-	} else if (rtm->rtm_addrs & RTA_GATEWAY) {
-		sa = rti_info[RTAX_GATEWAY];
-		switch (sa->sa_family) {
-		case AF_LINK:
-			sdl = (void *)sa;
-			rt->iface = if_findsdl(ctx, sdl);
-			break;
-		case AF_INET6:
-			sin = (void *)sa;
-			if ((ia = ipv6_findmaskaddr(ctx, &sin->sin6_addr)))
-				rt->iface = ia->iface;
-			break;
-		default:
-			errno = EAFNOSUPPORT;
-			logger(ctx, LOG_ERR, "%s: %m", __func__);
-			return -1;
-		}
-	}
+	else if (rtm->rtm_addrs & RTA_IFP)
+		rt->iface = if_findsa(ctx, rti_info[RTAX_IFP]);
+	else if (rtm->rtm_addrs & RTA_GATEWAY)
+		rt->iface = if_findsa(ctx, rti_info[RTAX_GATEWAY]);
 
 	/* If we don't have an interface and it's a host route, it maybe
 	 * to a local ip via the loopback interface. */
 	if (rt->iface == NULL &&
 	    !(~rtm->rtm_flags & (RTF_HOST | RTF_GATEWAY)))
 	{
+		struct ipv6_addr *ia;
+
 		if ((ia = ipv6_findaddr(ctx, &rt->dest, 0)))
 			rt->iface = ia->iface;
 	}
@@ -1075,7 +1092,7 @@ if_route6(unsigned char cmd, const struct rt6 *rt)
 
 	if (cmd == RTM_ADD || cmd == RTM_CHANGE) {
 		rtm.hdr.rtm_addrs |= RTA_GATEWAY;
-	    	if (!(rtm.hdr.rtm_flags & RTF_REJECT))
+		if (!(rtm.hdr.rtm_flags & RTF_REJECT))
 			rtm.hdr.rtm_addrs |= RTA_IFP | RTA_IFA;
 	}
 
@@ -1148,8 +1165,10 @@ if_initrt6(struct interface *ifp)
 		return 0;
 	if ((buf = malloc(needed)) == NULL)
 		return -1;
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1)
+	if (sysctl(mib, 6, buf, &needed, NULL, 0) == -1) {
+		free(buf);
 		return -1;
+	}
 
 	end = buf + needed;
 	for (p = buf; p < end; p += rtm->rtm_msglen) {
@@ -1249,26 +1268,6 @@ if_managelink(struct dhcpcd_ctx *ctx)
 	e = msg + bytes;
 	for (p = msg; p < e; p += rtm->rtm_msglen) {
 		rtm = (void *)p;
-		if (rtm->rtm_type == RTM_MISS)
-			continue;
-		/* Ignore messages generated by us */
-		if (rtm->rtm_pid == getpid()) {
-			ctx->options &= ~DHCPCD_RTM_PPID;
-			continue;
-		}
-		/* Ignore messages sent by the parent process after forking */
-		if ((ctx->options & (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED)) ==
-		    (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED) &&
-		    rtm->rtm_pid == ctx->ppid)
-		{
-			/* If this is the last successful message sent clear
-			 * the check flag as it's possible another process could
-			 * re-use the same pid and also manipulate the kernel
-			 * routing table. */
-			if (rtm->rtm_seq == ctx->pseq)
-				ctx->options &= ~DHCPCD_RTM_PPID;
-			continue;
-		}
 		switch(rtm->rtm_type) {
 #ifdef RTM_IFANNOUNCE
 		case RTM_IFANNOUNCE:
@@ -1314,6 +1313,25 @@ if_managelink(struct dhcpcd_ctx *ctx)
 		case RTM_ADD:
 		case RTM_CHANGE:
 		case RTM_DELETE:
+			/* Ignore messages generated by us */
+			if (rtm->rtm_pid == getpid()) {
+				ctx->options &= ~DHCPCD_RTM_PPID;
+				continue;
+			}
+			/* Ignore messages sent by the parent after forking */
+			if ((ctx->options &
+			    (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED)) ==
+			    (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED) &&
+			    rtm->rtm_pid == ctx->ppid)
+			{
+				/* If this is the last successful message sent,
+				 * clear the check flag as it's possible another
+				 * process could re-use the same pid and also
+				 * manipulate therouting table. */
+				if (rtm->rtm_seq == ctx->pseq)
+					ctx->options &= ~DHCPCD_RTM_PPID;
+				continue;
+			}
 			cp = (void *)(rtm + 1);
 			sa = (void *)cp;
 			switch (sa->sa_family) {
@@ -1363,6 +1381,9 @@ if_managelink(struct dhcpcd_ctx *ctx)
 #endif
 		case RTM_DELADDR:	/* FALLTHROUGH */
 		case RTM_NEWADDR:
+			/* XXX We have no way of knowing who generated these
+			 * messages wich truely sucks because we want to
+			 * avoid listening to our own delete messages. */
 			ifam = (void *)p;
 			ifp = if_findindex(ctx->ifaces, ifam->ifam_index);
 			if (ifp == NULL)
