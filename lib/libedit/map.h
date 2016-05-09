@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.12 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: map.h,v 1.13 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -66,14 +66,14 @@ typedef struct el_map_t {
 
 #define N_KEYS      256
 
-protected int	map_bind(EditLine *, int, const wchar_t **);
-protected int	map_init(EditLine *);
-protected void	map_end(EditLine *);
-protected void	map_init_vi(EditLine *);
-protected void	map_init_emacs(EditLine *);
-protected int	map_set_editor(EditLine *, wchar_t *);
-protected int	map_get_editor(EditLine *, const wchar_t **);
-protected int	map_addfunc(EditLine *, const wchar_t *, const wchar_t *,
+libedit_private int	map_bind(EditLine *, int, const wchar_t **);
+libedit_private int	map_init(EditLine *);
+libedit_private void	map_end(EditLine *);
+libedit_private void	map_init_vi(EditLine *);
+libedit_private void	map_init_emacs(EditLine *);
+libedit_private int	map_set_editor(EditLine *, wchar_t *);
+libedit_private int	map_get_editor(EditLine *, const wchar_t **);
+libedit_private int	map_addfunc(EditLine *, const wchar_t *, const wchar_t *,
     el_func_t);
 
 #endif /* _h_el_map */
