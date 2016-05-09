@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.17 2016/04/10 21:00:53 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.18 2016/05/09 10:15:59 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -36,7 +36,7 @@
 #include "config.h"
 
 #ifndef __linux__
-#  ifndef __QNX__
+#  if !defined(__QNX__) && !defined(__sun)
 #    include <sys/endian.h>
 #  endif
 #  include <net/if.h>
@@ -140,6 +140,7 @@
 #define IN6_IFF_NOTUSEABLE \
 	(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED | IN6_IFF_DETACHED)
 
+TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 struct ipv6_addr {
 	TAILQ_ENTRY(ipv6_addr) next;
 	struct interface *iface;
@@ -155,7 +156,11 @@ struct ipv6_addr {
 	char saddr[INET6_ADDRSTRLEN];
 	uint8_t iaid[4];
 	uint16_t ia_type;
-	struct interface *delegating_iface;
+
+	struct ipv6_addr *delegating_prefix;
+	struct ipv6_addrhead pd_pfxs;
+	TAILQ_ENTRY(ipv6_addr) pd_next;
+
 	uint8_t prefix_exclude_len;
 	struct in6_addr prefix_exclude;
 
@@ -165,22 +170,21 @@ struct ipv6_addr {
 	size_t nslen;
 	int nsprobes;
 };
-TAILQ_HEAD(ipv6_addrhead, ipv6_addr);
 
-#define IPV6_AF_ONLINK		0x0001
+#define	IPV6_AF_ONLINK		0x0001
 #define	IPV6_AF_NEW		0x0002
-#define IPV6_AF_STALE		0x0004
-#define IPV6_AF_ADDED		0x0008
-#define IPV6_AF_AUTOCONF	0x0010
-#define IPV6_AF_DUPLICATED	0x0020
-#define IPV6_AF_DADCOMPLETED	0x0040
-#define IPV6_AF_DELEGATED	0x0080
-#define IPV6_AF_DELEGATEDPFX	0x0100
-#define IPV6_AF_DELEGATEDZERO	0x0200
-#define IPV6_AF_REQUEST		0x0400
-#define IPV6_AF_STATIC		0x0800
+#define	IPV6_AF_STALE		0x0004
+#define	IPV6_AF_ADDED		0x0008
+#define	IPV6_AF_AUTOCONF	0x0010
+#define	IPV6_AF_DUPLICATED	0x0020
+#define	IPV6_AF_DADCOMPLETED	0x0040
+#define	IPV6_AF_DELEGATED	0x0080
+#define	IPV6_AF_DELEGATEDPFX	0x0100
+#define	IPV6_AF_NOREJECT	0x0200
+#define	IPV6_AF_REQUEST		0x0400
+#define	IPV6_AF_STATIC		0x0800
 #ifdef IPV6_MANAGETEMPADDR
-#define IPV6_AF_TEMPORARY	0X1000
+#define	IPV6_AF_TEMPORARY	0X1000
 #endif
 
 struct rt6 {

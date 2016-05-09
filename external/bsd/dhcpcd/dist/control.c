@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: control.c,v 1.12 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: control.c,v 1.13 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -314,20 +314,21 @@ freeit:
 }
 
 int
-control_open(struct dhcpcd_ctx *ctx, const char *ifname)
+control_open(const char *ifname)
 {
 	struct sockaddr_un sa;
-	socklen_t len;
+	int fd;
 
-	if ((ctx->control_fd = make_sock(&sa, ifname, 0)) == -1)
-		return -1;
-	len = (socklen_t)SUN_LEN(&sa);
-	if (connect(ctx->control_fd, (struct sockaddr *)&sa, len) == -1) {
-		close(ctx->control_fd);
-		ctx->control_fd = -1;
-		return -1;
+	if ((fd = make_sock(&sa, ifname, 0)) != -1) {
+		socklen_t len;
+		
+		len = (socklen_t)SUN_LEN(&sa);
+		if (connect(fd, (struct sockaddr *)&sa, len) == -1) {
+			close(fd);
+			fd = -1;
+		}
 	}
-	return 0;
+	return fd;
 }
 
 ssize_t

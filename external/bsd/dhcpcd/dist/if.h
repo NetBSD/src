@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.15 2016/04/20 08:53:01 roy Exp $ */
+/* $NetBSD: if.h,v 1.16 2016/05/09 10:15:59 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -84,6 +84,14 @@
 
 #define RAW_EOF			1 << 0
 #define RAW_PARTIALCSUM		2 << 0
+
+#ifdef __sun
+/* platform does not supply AF_LINK with getifaddrs. */
+struct ifaddrs;
+int if_getifaddrs(struct ifaddrs **);
+#else
+#define GETIFADDRS_AFLINK
+#endif
 
 int if_setflag(struct interface *ifp, short flag);
 #define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING))

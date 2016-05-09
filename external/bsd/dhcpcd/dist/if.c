@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.20 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.21 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -195,7 +195,7 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 	struct ifaddrs *ifa;
 	struct interface *ifp;
 #ifdef INET
-	const struct sockaddr_in *addr, *net, *dst;
+	const struct sockaddr_in *addr, *net, *brd;
 #endif
 #ifdef INET6
 	struct sockaddr_in6 *sin6, *net6;
@@ -214,15 +214,14 @@ static void if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 			addr = (void *)ifa->ifa_addr;
 			net = (void *)ifa->ifa_netmask;
 			if (ifa->ifa_flags & IFF_POINTOPOINT)
-				dst = (const struct sockaddr_in *)
+				brd = (const struct sockaddr_in *)
 				    (void *)ifa->ifa_dstaddr;
 			else
-				dst = NULL;
+				brd = (void *)ifa->ifa_broadaddr;
 			ifa_flags = if_addrflags(&addr->sin_addr, ifp);
 			ipv4_handleifa(ctx, RTM_NEWADDR, ifs, ifa->ifa_name,
-				&addr->sin_addr,
-				&net->sin_addr,
-				dst ? &dst->sin_addr : NULL, ifa_flags);
+				&addr->sin_addr, &net->sin_addr, &brd->sin_addr,
+				ifa_flags);
 			break;
 #endif
 #ifdef INET6
@@ -275,8 +274,13 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	const struct sockaddr_ll *sll;
 #endif
 
+#ifdef GETIFADDRS_AFLINK
 	if (getifaddrs(&ifaddrs) == -1)
 		return NULL;
+#else
+	if (if_getifaddrs(&ifaddrs) == -1)
+		return NULL;
+#endif
 	ifs = malloc(sizeof(*ifs));
 	if (ifs == NULL)
 		return NULL;
@@ -553,8 +557,15 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
-	if_learnaddrs(ctx, ifs, ifaddrs);
+#ifdef GETIFADDRS_AFLINK
+	{
+#else
 	freeifaddrs(ifaddrs);
+	if (getifaddrs(&ifaddrs) != -1) {
+#endif
+		if_learnaddrs(ctx, ifs, ifaddrs);
+		freeifaddrs(ifaddrs);
+	}
 
 	return ifs;
 }

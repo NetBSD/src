@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.19 2016/04/10 21:00:53 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.20 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -279,7 +279,7 @@ addvard(struct dhcpcd_ctx *ctx,
 }
 
 char *
-hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
+hwaddr_ntoa(const uint8_t *hwaddr, size_t hwlen, char *buf, size_t buflen)
 {
 	char *p;
 	size_t i;
@@ -304,16 +304,18 @@ hwaddr_ntoa(const unsigned char *hwaddr, size_t hwlen, char *buf, size_t buflen)
 }
 
 size_t
-hwaddr_aton(unsigned char *buffer, const char *addr)
+hwaddr_aton(uint8_t *buffer, const char *addr)
 {
 	char c[3];
 	const char *p = addr;
-	unsigned char *bp = buffer;
+	uint8_t *bp = buffer;
 	size_t len = 0;
 
 	c[2] = '\0';
 	while (*p) {
 		c[0] = *p++;
+		if (c[0] == '\n')
+			continue;
 		c[1] = *p++;
 		/* Ensure that digits are hex */
 		if (isxdigit((unsigned char)c[0]) == 0 ||
@@ -328,15 +330,50 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 			return 0;
 		}
 		/* Ensure that next data is EOL or a seperator with data */
-		if (!(*p == '\0' || (*p == ':' && *(p + 1) != '\0'))) {
+		if (!(*p == '\0' || *p == '\n' ||
+		    (*p == ':' && *(p + 1) != '\0')))
+		{
 			errno = EINVAL;
 			return 0;
 		}
 		if (*p)
 			p++;
 		if (bp)
-			*bp++ = (unsigned char)strtol(c, NULL, 16);
+			*bp++ = (uint8_t)strtol(c, NULL, 16);
 		len++;
 	}
+	return len;
+}
+
+size_t
+read_hwaddr_aton(uint8_t **data, const char *path)
+{
+	FILE *fp;
+	char *buf;
+	size_t buf_len, len;
+	ssize_t llen;
+
+	if ((fp = fopen(path, "r")) == NULL)
+		return 0;
+
+	buf = NULL;
+	buf_len = len = 0;
+	*data = NULL;
+	while ((llen = getline(&buf, &buf_len, fp)) != -1) {
+		if ((len = hwaddr_aton(NULL, buf)) != 0) {
+			if (buf_len >= len)
+				*data = (uint8_t *)buf;
+			else {
+				if ((*data = malloc(len)) == NULL)
+					len = 0;
+			}
+			if (len != 0)
+				(void)hwaddr_aton(*data, buf);
+			if (buf_len < len)
+				free(buf);
+			break;
+		}
+	}
+	fclose(fp);
 	return len;
 }

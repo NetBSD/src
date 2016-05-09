@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.33 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.34 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -464,25 +464,6 @@ configure_interface1(struct interface *ifp)
 			ifo->options |= DHCPCD_IPV6RA_OWN;
 	}
 
-	/* If we haven't specified a ClientID and our hardware address
-	 * length is greater than DHCP_CHADDR_LEN then we enforce a ClientID
-	 * of the hardware address family and the hardware address.
-	 * If there is no hardware address and no ClientID set,
-	 * force a DUID based ClientID. */
-	if (ifp->hwlen > DHCP_CHADDR_LEN)
-		ifo->options |= DHCPCD_CLIENTID;
-	else if (ifp->hwlen == 0 && !(ifo->options & DHCPCD_CLIENTID))
-		ifo->options |= DHCPCD_CLIENTID | DHCPCD_DUID;
-
-	/* Firewire and InfiniBand interfaces require ClientID and
-	 * the broadcast option being set. */
-	switch (ifp->family) {
-	case ARPHRD_IEEE1394:	/* FALLTHROUGH */
-	case ARPHRD_INFINIBAND:
-		ifo->options |= DHCPCD_CLIENTID | DHCPCD_BROADCAST;
-		break;
-	}
-
 	if (!(ifo->options & DHCPCD_IAID)) {
 		/*
 		 * An IAID is for identifying a unqiue interface within
@@ -577,7 +558,7 @@ dhcpcd_selectprofile(struct interface *ifp, const char *profile)
 	if (ifp->ssid_len) {
 		ssize_t r;
 
-		r = print_string(pssid, sizeof(pssid), ESCSTRING,
+		r = print_string(pssid, sizeof(pssid), OT_ESCSTRING,
 		    ifp->ssid, ifp->ssid_len);
 		if (r == -1) {
 			logger(ifp->ctx, LOG_ERR,
@@ -614,12 +595,14 @@ configure_interface(struct interface *ifp, int argc, char **argv,
 
 	old = ifp->options ? ifp->options->mtime : 0;
 	dhcpcd_selectprofile(ifp, NULL);
+	if (ifp->options == NULL)
+		return;
 	add_options(ifp->ctx, ifp->name, ifp->options, argc, argv);
 	ifp->options->options |= options;
 	configure_interface1(ifp);
 
 	/* If the mtime has changed drop any old lease */
-	if (ifp->options && old != 0 && ifp->options->mtime != old) {
+	if (old != 0 && ifp->options->mtime != old) {
 		logger(ifp->ctx, LOG_WARNING,
 		    "%s: confile file changed, expiring leases", ifp->name);
 		dhcpcd_drop(ifp, 0);
@@ -1192,6 +1175,7 @@ stop_all_interfaces(struct dhcpcd_ctx *ctx, unsigned long long opts)
 {
 	struct interface *ifp;
 
+	ctx->options |= DHCPCD_EXITING;
 	/* Drop the last interface first */
 	TAILQ_FOREACH_REVERSE(ifp, ctx->ifaces, if_head, next) {
 		if (ifp->options) {
@@ -1470,7 +1454,6 @@ main(int argc, char **argv)
 	}
 
 	memset(&ctx, 0, sizeof(ctx));
-	closefrom(3);
 
 	ctx.log_fd = -1;
 	logger_open(&ctx);
@@ -1701,7 +1684,8 @@ printpidfile:
 			ifp->ctx = &ctx;
 			TAILQ_INSERT_HEAD(ctx.ifaces, ifp, next);
 			if (family == 0) {
-				if (ctx.pidfile[strlen(ctx.pidfile) - 1] == '6')
+				if (ctx.pidfile[0] != '\0' &&
+				    ctx.pidfile[strlen(ctx.pidfile) - 1] == '6')
 					family = AF_INET6;
 				else
 					family = AF_INET;
@@ -1730,13 +1714,11 @@ printpidfile:
 	    !(ctx.options & DHCPCD_TEST))
 	{
 #endif
-		if (ctx.options & DHCPCD_MASTER)
-			i = -1;
-		else
-			i = control_open(&ctx, argv[optind]);
-		if (i == -1)
-			i = control_open(&ctx, NULL);
-		if (i != -1) {
+		if (!(ctx.options & DHCPCD_MASTER))
+			ctx.control_fd = control_open(argv[optind]);
+		if (ctx.control_fd == -1)
+			ctx.control_fd = control_open(NULL);
+		if (ctx.control_fd != -1) {
 			logger(&ctx, LOG_INFO,
 			    "sending commands to master dhcpcd process");
 			len = control_send(&ctx, argc, argv);
@@ -1794,6 +1776,12 @@ printpidfile:
 	}
 
 	if (!(ctx.options & DHCPCD_TEST)) {
+		/* Ensure we have the needed directories */
+		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST)
+			logger(&ctx, LOG_ERR, "mkdir `%s': %m", RUNDIR);
+		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST)
+			logger(&ctx, LOG_ERR, "mkdir `%s': %m", DBDIR);
+
 		if ((pid = pidfile_lock(ctx.pidfile)) != 0) {
 			if (pid == -1)
 				logger(&ctx, LOG_ERR, "%s: pidfile_lock: %m",
@@ -1804,12 +1792,6 @@ printpidfile:
 				    pid, ctx.pidfile);
 			goto exit_failure;
 		}
-
-		/* Ensure we have the needed directories */
-		if (mkdir(RUNDIR, 0755) == -1 && errno != EEXIST)
-			logger(&ctx, LOG_ERR, "mkdir `%s': %m", RUNDIR);
-		if (mkdir(DBDIR, 0755) == -1 && errno != EEXIST)
-			logger(&ctx, LOG_ERR, "mkdir `%s': %m", DBDIR);
 	}
 
 	if (ctx.options & DHCPCD_MASTER) {

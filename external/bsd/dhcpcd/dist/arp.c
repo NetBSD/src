@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.18 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.19 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -175,8 +175,13 @@ arp_packet(void *arg)
 			    memcmp(hw_s, ifn->hwaddr, ifn->hwlen) == 0)
 				break;
 		}
-		if (ifn)
+		if (ifn) {
+#if 0
+			logger(ifp->ctx, LOG_DEBUG,
+			    "%s: ignoring ARP from self", ifp->name);
+#endif
 			continue;
+		}
 		/* Copy out the HW and IP addresses */
 		memcpy(&arm.sha, hw_s, ar.ar_hln);
 		memcpy(&arm.sip.s_addr, hw_s + ar.ar_hln, ar.ar_pln);
@@ -191,7 +196,7 @@ arp_packet(void *arg)
 	}
 }
 
-static void
+int
 arp_open(struct interface *ifp)
 {
 	struct iarp_state *state;
@@ -202,10 +207,11 @@ arp_open(struct interface *ifp)
 		if (state->fd == -1) {
 			logger(ifp->ctx, LOG_ERR, "%s: %s: %m",
 			    __func__, ifp->name);
-			return;
+			return -1;
 		}
 		eloop_event_add(ifp->ctx->eloop, state->fd, arp_packet, ifp);
 	}
+	return state->fd;
 }
 
 static void
@@ -218,8 +224,7 @@ arp_announced(void *arg)
 		return;
 	}
 
-	/* Nothing more to do, so free us */
-	arp_free(astate);
+	/* Keep ARP open so we can detect duplicates. */
 }
 
 static void
@@ -250,7 +255,11 @@ void
 arp_announce(struct arp_state *astate)
 {
 
-	arp_open(astate->iface);
+	if (arp_open(astate->iface) == -1) {
+		logger(astate->iface->ctx, LOG_ERR,
+		    "%s: %s: %m", __func__, astate->iface->name);
+		return;
+	}
 	astate->claims = 0;
 	arp_announce1(astate);
 }
@@ -294,7 +303,11 @@ void
 arp_probe(struct arp_state *astate)
 {
 
-	arp_open(astate->iface);
+	if (arp_open(astate->iface) == -1) {
+		logger(astate->iface->ctx, LOG_ERR,
+		    "%s: %s: %m", __func__, astate->iface->name);
+		return;
+	}
 	astate->probes = 0;
 	logger(astate->iface->ctx, LOG_DEBUG, "%s: probing for %s",
 	    astate->iface->name, inet_ntoa(astate->addr));
