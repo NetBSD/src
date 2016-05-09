@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.c,v 1.29 2016/05/02 16:48:34 christos Exp $	*/
+/*	$NetBSD: chartype.c,v 1.30 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: chartype.c,v 1.29 2016/05/02 16:48:34 christos Exp $");
+__RCSID("$NetBSD: chartype.c,v 1.30 2016/05/09 21:46:56 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <ctype.h>
@@ -139,7 +139,7 @@ ct_decode_string(const char *s, ct_buffer_t *conv)
 }
 
 
-protected wchar_t **
+libedit_private wchar_t **
 ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 {
 	size_t bufspace;
@@ -179,7 +179,7 @@ ct_decode_argv(int argc, const char *argv[], ct_buffer_t *conv)
 }
 
 
-protected size_t
+libedit_private size_t
 ct_enc_width(wchar_t c)
 {
 	/* UTF-8 encoding specific values */
@@ -195,7 +195,7 @@ ct_enc_width(wchar_t c)
 		return 0; /* not a valid codepoint */
 }
 
-protected ssize_t
+libedit_private ssize_t
 ct_encode_char(char *dst, size_t len, wchar_t c)
 {
 	ssize_t l = 0;
@@ -210,7 +210,7 @@ ct_encode_char(char *dst, size_t len, wchar_t c)
 	return l;
 }
 
-protected const wchar_t *
+libedit_private const wchar_t *
 ct_visual_string(const wchar_t *s, ct_buffer_t *conv)
 {
 	wchar_t *dst;
@@ -253,7 +253,7 @@ ct_visual_string(const wchar_t *s, ct_buffer_t *conv)
 
 
 
-protected int
+libedit_private int
 ct_visual_width(wchar_t c)
 {
 	int t = ct_chr_class(c);
@@ -277,7 +277,7 @@ ct_visual_width(wchar_t c)
 }
 
 
-protected ssize_t
+libedit_private ssize_t
 ct_visual_char(wchar_t *dst, size_t len, wchar_t c)
 {
 	int t = ct_chr_class(c);
@@ -324,7 +324,7 @@ ct_visual_char(wchar_t *dst, size_t len, wchar_t c)
 
 
 
-protected int
+libedit_private int
 ct_chr_class(wchar_t c)
 {
 	if (c == '\t')
