@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp-common.h,v 1.12 2016/04/20 08:53:01 roy Exp $ */
+/* $NetBSD: dhcp-common.h,v 1.13 2016/05/09 10:15:59 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -28,7 +28,7 @@
  */
 
 #ifndef DHCPCOMMON_H
-#define DHCPCOMMON_H
+#define	DHCPCOMMON_H
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -39,38 +39,39 @@
 #include "dhcpcd.h"
 
 /* Max MTU - defines dhcp option length */
-#define MTU_MAX             1500
-#define MTU_MIN             576
+#define	IP_UDP_SIZE		  28
+#define	MTU_MAX			1500 - IP_UDP_SIZE
+#define	MTU_MIN			 576 + IP_UDP_SIZE
 
-#define REQUEST		(1 << 0)
-#define UINT8		(1 << 1)
-#define INT8		(1 << 2)
-#define UINT16		(1 << 3)
-#define INT16		(1 << 4)
-#define UINT32		(1 << 5)
-#define INT32		(1 << 6)
-#define ADDRIPV4	(1 << 7)
-#define STRING		(1 << 8)
-#define ARRAY		(1 << 9)
-#define RFC3361		(1 << 10)
-#define RFC1035		(1 << 11)
-#define RFC3442		(1 << 12)
-#define OPTIONAL	(1 << 13)
-#define ADDRIPV6	(1 << 14)
-#define BINHEX		(1 << 15)
-#define FLAG		(1 << 16)
-#define NOREQ		(1 << 17)
-#define EMBED		(1 << 18)
-#define ENCAP		(1 << 19)
-#define INDEX		(1 << 20)
-#define OPTION		(1 << 21)
-#define DOMAIN		(1 << 22)
-#define ASCII		(1 << 23)
-#define RAW		(1 << 24)
-#define ESCSTRING	(1 << 25)
-#define ESCFILE		(1 << 26)
-#define BITFLAG		(1 << 27)
-#define RESERVED	(1 << 28)
+#define	OT_REQUEST		(1 << 0)
+#define	OT_UINT8		(1 << 1)
+#define	OT_INT8			(1 << 2)
+#define	OT_UINT16		(1 << 3)
+#define	OT_INT16		(1 << 4)
+#define	OT_UINT32		(1 << 5)
+#define	OT_INT32		(1 << 6)
+#define	OT_ADDRIPV4		(1 << 7)
+#define	OT_STRING		(1 << 8)
+#define	OT_ARRAY		(1 << 9)
+#define	OT_RFC3361		(1 << 10)
+#define	OT_RFC1035		(1 << 11)
+#define	OT_RFC3442		(1 << 12)
+#define	OT_OPTIONAL		(1 << 13)
+#define	OT_ADDRIPV6		(1 << 14)
+#define	OT_BINHEX		(1 << 15)
+#define	OT_FLAG			(1 << 16)
+#define	OT_NOREQ		(1 << 17)
+#define	OT_EMBED		(1 << 18)
+#define	OT_ENCAP		(1 << 19)
+#define	OT_INDEX		(1 << 20)
+#define	OT_OPTION		(1 << 21)
+#define	OT_DOMAIN		(1 << 22)
+#define	OT_ASCII		(1 << 23)
+#define	OT_RAW			(1 << 24)
+#define	OT_ESCSTRING		(1 << 25)
+#define	OT_ESCFILE		(1 << 26)
+#define	OT_BITFLAG		(1 << 27)
+#define	OT_RESERVED		(1 << 28)
 
 struct dhcp_opt {
 	uint32_t option; /* Also used for IANA Enterpise Number */
@@ -97,11 +98,11 @@ struct dhcp_opt *vivso_find(uint32_t, const void *);
 ssize_t dhcp_vendor(char *, size_t);
 
 void dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols);
-#define add_option_mask(var, val) \
+#define	add_option_mask(var, val) \
 	((var)[(val) >> 3] = (uint8_t)((var)[(val) >> 3] | 1 << ((val) & 7)))
-#define del_option_mask(var, val) \
+#define	del_option_mask(var, val) \
 	((var)[(val) >> 3] = (uint8_t)((var)[(val) >> 3] & ~(1 << ((val) & 7))))
-#define has_option_mask(var, val) \
+#define	has_option_mask(var, val) \
 	((var)[(val) >> 3] & (uint8_t)(1 << ((val) & 7)))
 int make_option_mask(const struct dhcp_opt *, size_t,
     const struct dhcp_opt *, size_t,
@@ -119,5 +120,6 @@ size_t dhcp_envoption(struct dhcpcd_ctx *,
     const uint8_t *, size_t, struct dhcp_opt **),
     const uint8_t *od, size_t ol);
 void dhcp_zero_index(struct dhcp_opt *);
+size_t dhcp_read_lease_fd(int, uint8_t **);
 
 #endif
