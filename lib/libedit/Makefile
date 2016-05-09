@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2016/05/02 14:12:09 wiz Exp $
+#	$NetBSD: Makefile,v 1.62 2016/05/09 21:38:27 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -14,9 +14,10 @@ COPTS+=	-Wunused-parameter
 CWARNFLAGS.gcc+=	-Wconversion
 CWARNFLAGS.clang+=	-Wno-cast-qual
 
-OSRCS=	chared.c common.c el.c eln.c emacs.c filecomplete.c \
-	hist.c keymacro.c map.c chartype.c \
-	parse.c prompt.c read.c refresh.c search.c sig.c terminal.c tty.c vi.c
+SRCS =	chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c \
+	hist.c history.c historyn.c keymacro.c map.c \
+	parse.c prompt.c read.c readline.c refresh.c search.c sig.c \
+	terminal.c tokenizer.c tokenizern.c tty.c vi.c
 
 MAN=	editline.3 editrc.5 editline.7
 
@@ -63,13 +64,6 @@ editline.3 tok_winit.3 \
 editline.3 tok_wline.3 \
 editline.3 tok_wreset.3 \
 editline.3 tok_wstr.3
-
-# For speed and debugging
-#SRCS=   ${OSRCS}
-# For protection
-SRCS=	editline.c
-
-SRCS += history.c historyn.c tokenizer.c tokenizern.c readline.c
 
 LIBEDITDIR?=${.CURDIR}
 
