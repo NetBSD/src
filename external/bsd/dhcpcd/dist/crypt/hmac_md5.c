@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: hmac_md5.c,v 1.7 2015/03/27 11:33:47 roy Exp $");
+ __RCSID("$NetBSD: hmac_md5.c,v 1.8 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -69,8 +69,10 @@ hmac_md5(const uint8_t *text, size_t text_len,
 	/* store key in pads */
 	memcpy(k_ipad, key, key_len);
 	memcpy(k_opad, key, key_len);
-	memset(k_ipad + key_len, 0, sizeof(k_ipad) - key_len);
-	memset(k_opad + key_len, 0, sizeof(k_opad) - key_len);
+	if (key_len != HMAC_PAD_LEN) {
+		memset(k_ipad + key_len, 0, sizeof(k_ipad) - key_len);
+		memset(k_opad + key_len, 0, sizeof(k_opad) - key_len);
+	}
 
 	/* XOR key with ipad and opad values */
 	for (i = 0; i < HMAC_PAD_LEN; i++) {

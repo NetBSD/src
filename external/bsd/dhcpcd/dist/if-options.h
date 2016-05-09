@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.18 2016/04/10 21:00:53 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.19 2016/05/09 10:15:59 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -112,7 +112,7 @@
 #define DHCPCD_RTM_PPID			(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
-// unassigned	(1ULL << 56)
+#define DHCPCD_LASTLEASE_EXTEND		(1ULL << 56)
 #define DHCPCD_BOOTP			(1ULL << 57)
 #define DHCPCD_INITIAL_DELAY		(1ULL << 58)
 #define DHCPCD_PRINT_PIDFILE		(1ULL << 59)

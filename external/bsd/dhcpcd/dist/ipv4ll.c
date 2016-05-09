@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.15 2016/04/20 08:53:01 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.16 2016/05/09 10:15:59 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -61,11 +61,15 @@ ipv4ll_pick_addr(const struct arp_state *astate)
 	setstate(istate->randomstate);
 
 	do {
+		long r;
+
 		/* RFC 3927 Section 2.1 states that the first 256 and
 		 * last 256 addresses are reserved for future use.
-		 * See ipv4ll_start for why we don't use arc4_random. */
+		 * See ipv4ll_start for why we don't use arc4random. */
+		/* coverity[dont_call] */
+		r = random();
 		addr.s_addr = ntohl(LINKLOCAL_ADDR |
-		    ((uint32_t)(random() % 0xFD00) + 0x0100));
+		    ((uint32_t)(r % 0xFD00) + 0x0100));
 
 		/* No point using a failed address */
 		if (addr.s_addr == astate->failed.s_addr)
@@ -355,6 +359,7 @@ ipv4ll_start(void *arg)
 		} else
 			memcpy(&seed, ifp->hwaddr + ifp->hwlen - sizeof(seed),
 			    sizeof(seed));
+		/* coverity[dont_call] */
 		orig = initstate(seed,
 		    state->randomstate, sizeof(state->randomstate));
 
