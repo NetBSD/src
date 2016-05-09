@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.254 2016/05/04 15:42:32 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.255 2016/05/09 07:02:10 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.254 2016/05/04 15:42:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.255 2016/05/09 07:02:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1500,7 +1500,7 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 static int
 ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;	// XXX: gcc [ppc]
 	struct in_addr ia;
 	int i, error;
 
