@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.28 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.29 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -135,31 +135,31 @@ typedef struct el_chared_t {
 #define	MODE_REPLACE_1	2
 
 
-protected int	 cv__isword(wint_t);
-protected int	 cv__isWord(wint_t);
-protected void	 cv_delfini(EditLine *);
-protected wchar_t *cv__endword(wchar_t *, wchar_t *, int, int (*)(wint_t));
-protected int	 ce__isword(wint_t);
-protected void	 cv_undo(EditLine *);
-protected void	 cv_yank(EditLine *, const wchar_t *, int);
-protected wchar_t *cv_next_word(EditLine*, wchar_t *, wchar_t *, int,
+libedit_private int	 cv__isword(wint_t);
+libedit_private int	 cv__isWord(wint_t);
+libedit_private void	 cv_delfini(EditLine *);
+libedit_private wchar_t *cv__endword(wchar_t *, wchar_t *, int, int (*)(wint_t));
+libedit_private int	 ce__isword(wint_t);
+libedit_private void	 cv_undo(EditLine *);
+libedit_private void	 cv_yank(EditLine *, const wchar_t *, int);
+libedit_private wchar_t *cv_next_word(EditLine*, wchar_t *, wchar_t *, int,
 			int (*)(wint_t));
-protected wchar_t *cv_prev_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
-protected wchar_t *c__next_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
-protected wchar_t *c__prev_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
-protected void	 c_insert(EditLine *, int);
-protected void	 c_delbefore(EditLine *, int);
-protected void	 c_delbefore1(EditLine *);
-protected void	 c_delafter(EditLine *, int);
-protected void	 c_delafter1(EditLine *);
-protected int	 c_gets(EditLine *, wchar_t *, const wchar_t *);
-protected int	 c_hpos(EditLine *);
+libedit_private wchar_t *cv_prev_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
+libedit_private wchar_t *c__next_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
+libedit_private wchar_t *c__prev_word(wchar_t *, wchar_t *, int, int (*)(wint_t));
+libedit_private void	 c_insert(EditLine *, int);
+libedit_private void	 c_delbefore(EditLine *, int);
+libedit_private void	 c_delbefore1(EditLine *);
+libedit_private void	 c_delafter(EditLine *, int);
+libedit_private void	 c_delafter1(EditLine *);
+libedit_private int	 c_gets(EditLine *, wchar_t *, const wchar_t *);
+libedit_private int	 c_hpos(EditLine *);
 
-protected int	 ch_init(EditLine *);
-protected void	 ch_reset(EditLine *, int);
-protected int	 ch_resizefun(EditLine *, el_zfunc_t, void *);
-protected int	 ch_aliasfun(EditLine *, el_afunc_t, void *);
-protected int	 ch_enlargebufs(EditLine *, size_t);
-protected void	 ch_end(EditLine *);
+libedit_private int	 ch_init(EditLine *);
+libedit_private void	 ch_reset(EditLine *, int);
+libedit_private int	 ch_resizefun(EditLine *, el_zfunc_t, void *);
+libedit_private int	 ch_aliasfun(EditLine *, el_afunc_t, void *);
+libedit_private int	 ch_enlargebufs(EditLine *, size_t);
+libedit_private void	 ch_end(EditLine *);
 
 #endif /* _h_el_chared */

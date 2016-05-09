@@ -1,4 +1,4 @@
-/*	$NetBSD: chartype.h,v 1.33 2016/05/02 16:48:34 christos Exp $	*/
+/*	$NetBSD: chartype.h,v 1.34 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -67,13 +67,13 @@ wchar_t *ct_decode_string(const char *, ct_buffer_t *);
 
 /* Decode a (multi)?byte argv string array.
  * The pointer returned must be free()d when done. */
-protected wchar_t **ct_decode_argv(int, const char *[],  ct_buffer_t *);
+libedit_private wchar_t **ct_decode_argv(int, const char *[],  ct_buffer_t *);
 
 /* Encode a character into the destination buffer, provided there is sufficient
  * buffer space available. Returns the number of bytes used up (zero if the
  * character cannot be encoded, -1 if there was not enough space available). */
-protected ssize_t ct_encode_char(char *, size_t, wchar_t);
-protected size_t ct_enc_width(wchar_t);
+libedit_private ssize_t ct_encode_char(char *, size_t, wchar_t);
+libedit_private size_t ct_enc_width(wchar_t);
 
 /* The maximum buffer size to hold the most unwieldy visual representation,
  * in this case \U+nnnnn. */
@@ -86,16 +86,16 @@ protected size_t ct_enc_width(wchar_t);
 
 /* Visual width of character c, taking into account ^? , \0177 and \U+nnnnn
  * style visual expansions. */
-protected int ct_visual_width(wchar_t);
+libedit_private int ct_visual_width(wchar_t);
 
 /* Turn the given character into the appropriate visual format, matching
  * the width given by ct_visual_width(). Returns the number of characters used
  * up, or -1 if insufficient space. Buffer length is in count of wchar_t's. */
-protected ssize_t ct_visual_char(wchar_t *, size_t, wchar_t);
+libedit_private ssize_t ct_visual_char(wchar_t *, size_t, wchar_t);
 
 /* Convert the given string into visual format, using the ct_visual_char()
  * function. Uses a static buffer, so not threadsafe. */
-protected const wchar_t *ct_visual_string(const wchar_t *, ct_buffer_t *);
+libedit_private const wchar_t *ct_visual_string(const wchar_t *, ct_buffer_t *);
 
 
 /* printable character, use ct_visual_width() to find out display width */
@@ -109,6 +109,6 @@ protected const wchar_t *ct_visual_string(const wchar_t *, ct_buffer_t *);
 /* non-printable character */
 #define CHTYPE_NONPRINT     (-4)
 /* classification of character c, as one of the above defines */
-protected int ct_chr_class(wchar_t c);
+libedit_private int ct_chr_class(wchar_t c);
 
 #endif /* _chartype_f */

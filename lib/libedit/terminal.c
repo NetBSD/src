@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.31 2016/05/02 16:48:34 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.32 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.31 2016/05/02 16:48:34 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.32 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -265,7 +265,7 @@ terminal_setflags(EditLine *el)
 /* terminal_init():
  *	Initialize the terminal stuff
  */
-protected int
+libedit_private int
 terminal_init(EditLine *el)
 {
 
@@ -316,7 +316,7 @@ fail1:
 /* terminal_end():
  *	Clean up the terminal stuff
  */
-protected void
+libedit_private void
 terminal_end(EditLine *el)
 {
 
@@ -496,7 +496,7 @@ terminal_free_display(EditLine *el)
  *	move to line <where> (first line == 0)
  *	as efficiently as possible
  */
-protected void
+libedit_private void
 terminal_move_to_line(EditLine *el, int where)
 {
 	int del;
@@ -559,7 +559,7 @@ terminal_move_to_line(EditLine *el, int where)
 /* terminal_move_to_char():
  *	Move to the character position specified
  */
-protected void
+libedit_private void
 terminal_move_to_char(EditLine *el, int where)
 {
 	int del, i;
@@ -654,7 +654,7 @@ mc_again:
  *	Overstrike num characters
  *	Assumes MB_FILL_CHARs are present to keep the column count correct
  */
-protected void
+libedit_private void
 terminal_overwrite(EditLine *el, const wchar_t *cp, size_t n)
 {
 	if (n == 0)
@@ -702,7 +702,7 @@ terminal_overwrite(EditLine *el, const wchar_t *cp, size_t n)
 /* terminal_deletechars():
  *	Delete num characters
  */
-protected void
+libedit_private void
 terminal_deletechars(EditLine *el, int num)
 {
 	if (num <= 0)
@@ -744,7 +744,7 @@ terminal_deletechars(EditLine *el, int num)
  *	characters in the line
  *      Assumes MB_FILL_CHARs are present to keep column count correct
  */
-protected void
+libedit_private void
 terminal_insertwrite(EditLine *el, wchar_t *cp, int num)
 {
 	if (num <= 0)
@@ -803,7 +803,7 @@ terminal_insertwrite(EditLine *el, wchar_t *cp, int num)
 /* terminal_clear_EOL():
  *	clear to end of line.  There are num characters to clear
  */
-protected void
+libedit_private void
 terminal_clear_EOL(EditLine *el, int num)
 {
 	int i;
@@ -821,7 +821,7 @@ terminal_clear_EOL(EditLine *el, int num)
 /* terminal_clear_screen():
  *	Clear the screen
  */
-protected void
+libedit_private void
 terminal_clear_screen(EditLine *el)
 {				/* clear the whole screen and home */
 
@@ -842,7 +842,7 @@ terminal_clear_screen(EditLine *el)
 /* terminal_beep():
  *	Beep the way the terminal wants us
  */
-protected void
+libedit_private void
 terminal_beep(EditLine *el)
 {
 	if (GoodStr(T_bl))
@@ -853,7 +853,7 @@ terminal_beep(EditLine *el)
 }
 
 
-protected void
+libedit_private void
 terminal_get(EditLine *el, const char **term)
 {
 	*term = el->el_terminal.t_name;
@@ -863,7 +863,7 @@ terminal_get(EditLine *el, const char **term)
 /* terminal_set():
  *	Read in the terminal capabilities from the requested terminal
  */
-protected int
+libedit_private int
 terminal_set(EditLine *el, const char *term)
 {
 	int i;
@@ -952,7 +952,7 @@ terminal_set(EditLine *el, const char *term)
  *	Return the new window size in lines and cols, and
  *	true if the size was changed.
  */
-protected int
+libedit_private int
 terminal_get_size(EditLine *el, int *lins, int *cols)
 {
 
@@ -988,7 +988,7 @@ terminal_get_size(EditLine *el, int *lins, int *cols)
 /* terminal_change_size():
  *	Change the size of the terminal
  */
-protected int
+libedit_private int
 terminal_change_size(EditLine *el, int lins, int cols)
 {
 	/*
@@ -1103,7 +1103,7 @@ terminal_reset_arrow(EditLine *el)
 /* terminal_set_arrow():
  *	Set an arrow key binding
  */
-protected int
+libedit_private int
 terminal_set_arrow(EditLine *el, const wchar_t *name, keymacro_value_t *fun,
     int type)
 {
@@ -1123,7 +1123,7 @@ terminal_set_arrow(EditLine *el, const wchar_t *name, keymacro_value_t *fun,
 /* terminal_clear_arrow():
  *	Clear an arrow key binding
  */
-protected int
+libedit_private int
 terminal_clear_arrow(EditLine *el, const wchar_t *name)
 {
 	funckey_t *arrow = el->el_terminal.t_fkey;
@@ -1141,7 +1141,7 @@ terminal_clear_arrow(EditLine *el, const wchar_t *name)
 /* terminal_print_arrow():
  *	Print the arrow key bindings
  */
-protected void
+libedit_private void
 terminal_print_arrow(EditLine *el, const wchar_t *name)
 {
 	int i;
@@ -1158,7 +1158,7 @@ terminal_print_arrow(EditLine *el, const wchar_t *name)
 /* terminal_bind_arrow():
  *	Bind the arrow keys
  */
-protected void
+libedit_private void
 terminal_bind_arrow(EditLine *el)
 {
 	el_action_t *map;
@@ -1247,7 +1247,7 @@ terminal_tputs(EditLine *el, const char *cap, int affcnt)
 /* terminal__putc():
  *	Add a character
  */
-protected int
+libedit_private int
 terminal__putc(EditLine *el, wint_t c)
 {
 	char buf[MB_LEN_MAX +1];
@@ -1264,7 +1264,7 @@ terminal__putc(EditLine *el, wint_t c)
 /* terminal__flush():
  *	Flush output
  */
-protected void
+libedit_private void
 terminal__flush(EditLine *el)
 {
 
@@ -1274,7 +1274,7 @@ terminal__flush(EditLine *el)
 /* terminal_writec():
  *	Write the given character out, in a human readable form
  */
-protected void
+libedit_private void
 terminal_writec(EditLine *el, wint_t c)
 {
 	wchar_t visbuf[VISUAL_WIDTH_MAX +1];
@@ -1290,7 +1290,7 @@ terminal_writec(EditLine *el, wint_t c)
 /* terminal_telltc():
  *	Print the current termcap characteristics
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv __attribute__((__unused__)))
@@ -1332,7 +1332,7 @@ terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
 /* terminal_settc():
  *	Change the current terminal characteristics
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)
@@ -1411,7 +1411,7 @@ terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
 /* terminal_gettc():
  *	Get the current terminal characteristics
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
 {
@@ -1465,7 +1465,7 @@ terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
 /* terminal_echotc():
  *	Print the termcap string out with variable substitution
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)

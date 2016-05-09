@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.95 2016/04/19 19:50:53 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.96 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.95 2016/04/19 19:50:53 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.96 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -69,7 +69,7 @@ static void	read_pop(c_macro_t *);
 /* read_init():
  *	Initialize the read stuff
  */
-protected int
+libedit_private int
 read_init(EditLine *el)
 {
 	if ((el->el_read = el_malloc(sizeof(*el->el_read))) == NULL)
@@ -84,7 +84,7 @@ read_init(EditLine *el)
  *	Set the read char function to the one provided.
  *	If it is set to EL_BUILTIN_GETCFN, then reset to the builtin one.
  */
-protected int
+libedit_private int
 el_read_setfn(struct el_read_t *el_read, el_rfunc_t rc)
 {
 	el_read->read_char = (rc == EL_BUILTIN_GETCFN) ? read_char : rc;
@@ -96,7 +96,7 @@ el_read_setfn(struct el_read_t *el_read, el_rfunc_t rc)
  *	return the current read char function, or EL_BUILTIN_GETCFN
  *	if it is the default one
  */
-protected el_rfunc_t
+libedit_private el_rfunc_t
 el_read_getfn(struct el_read_t *el_read)
 {
        return el_read->read_char == read_char ?
@@ -406,7 +406,7 @@ el_wgetc(EditLine *el, wchar_t *cp)
 	return num_read;
 }
 
-protected void
+libedit_private void
 read_prepare(EditLine *el)
 {
 	if (el->el_flags & HANDLE_SIGNALS)
@@ -427,7 +427,7 @@ read_prepare(EditLine *el)
 		terminal__flush(el);
 }
 
-protected void
+libedit_private void
 read_finish(EditLine *el)
 {
 	if ((el->el_flags & UNBUFFERED) == 0)

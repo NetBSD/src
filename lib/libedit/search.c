@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.46 2016/04/28 12:27:45 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.47 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.46 2016/04/28 12:27:45 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.47 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: search.c,v 1.46 2016/04/28 12:27:45 christos Exp $");
 /* search_init():
  *	Initialize the search stuff
  */
-protected int
+libedit_private int
 search_init(EditLine *el)
 {
 
@@ -87,7 +87,7 @@ search_init(EditLine *el)
 /* search_end():
  *	Initialize the search stuff
  */
-protected void
+libedit_private void
 search_end(EditLine *el)
 {
 
@@ -111,7 +111,7 @@ regerror(const char *msg)
 /* el_match():
  *	Return if string matches pattern
  */
-protected int
+libedit_private int
 el_match(const wchar_t *str, const wchar_t *pat)
 {
 	static ct_buffer_t conv;
@@ -158,7 +158,7 @@ el_match(const wchar_t *str, const wchar_t *pat)
 /* c_hmatch():
  *	 return True if the pattern matches the prefix
  */
-protected int
+libedit_private int
 c_hmatch(EditLine *el, const wchar_t *str)
 {
 #ifdef SDEBUG
@@ -173,7 +173,7 @@ c_hmatch(EditLine *el, const wchar_t *str)
 /* c_setpat():
  *	Set the history seatch pattern
  */
-protected void
+libedit_private void
 c_setpat(EditLine *el)
 {
 	if (el->el_state.lastcmd != ED_SEARCH_PREV_HISTORY &&
@@ -205,7 +205,7 @@ c_setpat(EditLine *el)
 /* ce_inc_search():
  *	Emacs incremental search
  */
-protected el_action_t
+libedit_private el_action_t
 ce_inc_search(EditLine *el, int dir)
 {
 	static const wchar_t STRfwd[] = L"fwd", STRbck[] = L"bck";
@@ -452,7 +452,7 @@ ce_inc_search(EditLine *el, int dir)
 /* cv_search():
  *	Vi search.
  */
-protected el_action_t
+libedit_private el_action_t
 cv_search(EditLine *el, int dir)
 {
 	wchar_t ch;
@@ -526,7 +526,7 @@ cv_search(EditLine *el, int dir)
 /* ce_search_line():
  *	Look for a pattern inside a line
  */
-protected el_action_t
+libedit_private el_action_t
 ce_search_line(EditLine *el, int dir)
 {
 	wchar_t *cp = el->el_line.cursor;
@@ -568,7 +568,7 @@ ce_search_line(EditLine *el, int dir)
 /* cv_repeat_srch():
  *	Vi repeat search
  */
-protected el_action_t
+libedit_private el_action_t
 cv_repeat_srch(EditLine *el, wint_t c)
 {
 
@@ -594,7 +594,7 @@ cv_repeat_srch(EditLine *el, wint_t c)
 /* cv_csearch():
  *	Vi character search
  */
-protected el_action_t
+libedit_private el_action_t
 cv_csearch(EditLine *el, int direction, wint_t ch, int count, int tflag)
 {
 	wchar_t *cp;

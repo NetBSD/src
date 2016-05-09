@@ -1,4 +1,4 @@
-/*	$NetBSD: sys.h,v 1.26 2016/05/09 21:38:27 christos Exp $	*/
+/*	$NetBSD: sys.h,v 1.27 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
 #endif
 
 /* If your compiler does not support this, define it to be empty. */
-#define protected __attribute__((__visibility__("hidden")))
+#define libedit_private __attribute__((__visibility__("hidden")))
 
 #ifndef __arraycount
 # define __arraycount(a) (sizeof(a) / sizeof(*(a)))

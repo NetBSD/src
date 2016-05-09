@@ -1,4 +1,4 @@
-/*	$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: hist.c,v 1.29 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $");
+__RCSID("$NetBSD: hist.c,v 1.29 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $");
 /* hist_init():
  *	Initialization function.
  */
-protected int
+libedit_private int
 hist_init(EditLine *el)
 {
 
@@ -70,7 +70,7 @@ hist_init(EditLine *el)
 /* hist_end():
  *	clean up history;
  */
-protected void
+libedit_private void
 hist_end(EditLine *el)
 {
 
@@ -82,7 +82,7 @@ hist_end(EditLine *el)
 /* hist_set():
  *	Set new history interface
  */
-protected int
+libedit_private int
 hist_set(EditLine *el, hist_fun_t fun, void *ptr)
 {
 
@@ -96,7 +96,7 @@ hist_set(EditLine *el, hist_fun_t fun, void *ptr)
  *	Get a history line and update it in the buffer.
  *	eventno tells us the event to get.
  */
-protected el_action_t
+libedit_private el_action_t
 hist_get(EditLine *el)
 {
 	const wchar_t *hp;
@@ -155,7 +155,7 @@ hist_get(EditLine *el)
 /* hist_command()
  *	process a history command
  */
-protected int
+libedit_private int
 hist_command(EditLine *el, int argc, const wchar_t **argv)
 {
 	const wchar_t *str;
@@ -192,7 +192,7 @@ hist_command(EditLine *el, int argc, const wchar_t **argv)
  *	Enlarge history buffer to specified value. Called from el_enlargebufs().
  *	Return 0 for failure, 1 for success.
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 {
@@ -212,7 +212,7 @@ hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 	return 1;
 }
 
-protected wchar_t *
+libedit_private wchar_t *
 hist_convert(EditLine *el, int fn, void *arg)
 {
 	HistEventW ev;

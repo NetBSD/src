@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.64 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.65 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.64 2016/04/18 17:01:19 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.65 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -568,7 +568,7 @@ tty_setup(EditLine *el)
 	return 0;
 }
 
-protected int
+libedit_private int
 tty_init(EditLine *el)
 {
 
@@ -584,7 +584,7 @@ tty_init(EditLine *el)
 /* tty_end():
  *	Restore the tty to its original settings
  */
-protected void
+libedit_private void
 /*ARGSUSED*/
 tty_end(EditLine *el)
 {
@@ -891,7 +891,7 @@ tty__setchar(struct termios *td, unsigned char *s)
 /* tty_bind_char():
  *	Rebind the editline functions
  */
-protected void
+libedit_private void
 tty_bind_char(EditLine *el, int force)
 {
 
@@ -991,7 +991,7 @@ tty_update_char(EditLine *el, int mode, int c) {
 /* tty_rawmode():
  *	Set terminal into 1 character at a time mode.
  */
-protected int
+libedit_private int
 tty_rawmode(EditLine *el)
 {
 
@@ -1046,7 +1046,7 @@ tty_rawmode(EditLine *el)
 
 		if (i != C_NCC) {
 			/*
-			 * Propagate changes only to the unprotected
+			 * Propagate changes only to the unlibedit_private
 			 * chars that have been modified just now.
 			 */
 			for (i = 0; i < C_NCC; i++)
@@ -1076,7 +1076,7 @@ tty_rawmode(EditLine *el)
 /* tty_cookedmode():
  *	Set the tty back to normal mode
  */
-protected int
+libedit_private int
 tty_cookedmode(EditLine *el)
 {				/* set tty in normal setup */
 
@@ -1101,7 +1101,7 @@ tty_cookedmode(EditLine *el)
 /* tty_quotemode():
  *	Turn on quote mode
  */
-protected int
+libedit_private int
 tty_quotemode(EditLine *el)
 {
 	if (el->el_tty.t_mode == QU_IO)
@@ -1126,7 +1126,7 @@ tty_quotemode(EditLine *el)
 /* tty_noquotemode():
  *	Turn off quote mode
  */
-protected int
+libedit_private int
 tty_noquotemode(EditLine *el)
 {
 
@@ -1147,7 +1147,7 @@ tty_noquotemode(EditLine *el)
 /* tty_stty():
  *	Stty builtin
  */
-protected int
+libedit_private int
 /*ARGSUSED*/
 tty_stty(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.50 2016/04/18 17:01:19 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.51 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.50 2016/04/18 17:01:19 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.51 2016/05/09 21:46:56 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -897,7 +897,7 @@ static const el_action_t el_map_vi_command[] = {
 /* map_init():
  *	Initialize and allocate the maps
  */
-protected int
+libedit_private int
 map_init(EditLine *el)
 {
 
@@ -946,7 +946,7 @@ map_init(EditLine *el)
 /* map_end():
  *	Free the space taken by the editor maps
  */
-protected void
+libedit_private void
 map_end(EditLine *el)
 {
 
@@ -1024,7 +1024,7 @@ map_init_meta(EditLine *el)
 /* map_init_vi():
  *	Initialize the vi bindings
  */
-protected void
+libedit_private void
 map_init_vi(EditLine *el)
 {
 	int i;
@@ -1054,7 +1054,7 @@ map_init_vi(EditLine *el)
 /* map_init_emacs():
  *	Initialize the emacs bindings
  */
-protected void
+libedit_private void
 map_init_emacs(EditLine *el)
 {
 	int i;
@@ -1088,7 +1088,7 @@ map_init_emacs(EditLine *el)
 /* map_set_editor():
  *	Set the editor
  */
-protected int
+libedit_private int
 map_set_editor(EditLine *el, wchar_t *editor)
 {
 
@@ -1107,7 +1107,7 @@ map_set_editor(EditLine *el, wchar_t *editor)
 /* map_get_editor():
  *	Retrieve the editor
  */
-protected int
+libedit_private int
 map_get_editor(EditLine *el, const wchar_t **editor)
 {
 
@@ -1250,7 +1250,7 @@ map_print_all_keys(EditLine *el)
 /* map_bind():
  *	Add/remove/change bindings
  */
-protected int
+libedit_private int
 map_bind(EditLine *el, int argc, const wchar_t **argv)
 {
 	el_action_t *map;
@@ -1396,7 +1396,7 @@ map_bind(EditLine *el, int argc, const wchar_t **argv)
 /* map_addfunc():
  *	add a user defined function
  */
-protected int
+libedit_private int
 map_addfunc(EditLine *el, const wchar_t *name, const wchar_t *help,
     el_func_t func)
 {

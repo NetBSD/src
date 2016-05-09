@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.h,v 1.14 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: prompt.h,v 1.15 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,10 +49,10 @@ typedef struct el_prompt_t {
 	int		p_wide;
 } el_prompt_t;
 
-protected void	prompt_print(EditLine *, int);
-protected int	prompt_set(EditLine *, el_pfunc_t, wchar_t, int, int);
-protected int	prompt_get(EditLine *, el_pfunc_t *, wchar_t *, int);
-protected int	prompt_init(EditLine *);
-protected void	prompt_end(EditLine *);
+libedit_private void	prompt_print(EditLine *, int);
+libedit_private int	prompt_set(EditLine *, el_pfunc_t, wchar_t, int, int);
+libedit_private int	prompt_get(EditLine *, el_pfunc_t *, wchar_t *, int);
+libedit_private int	prompt_init(EditLine *);
+libedit_private void	prompt_end(EditLine *);
 
 #endif /* _h_el_prompt */

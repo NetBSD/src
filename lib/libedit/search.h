@@ -1,4 +1,4 @@
-/*	$NetBSD: search.h,v 1.13 2016/04/11 00:50:13 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.14 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,15 +50,15 @@ typedef struct el_search_t {
 } el_search_t;
 
 
-protected int		el_match(const wchar_t *, const wchar_t *);
-protected int		search_init(EditLine *);
-protected void		search_end(EditLine *);
-protected int		c_hmatch(EditLine *, const wchar_t *);
-protected void		c_setpat(EditLine *);
-protected el_action_t	ce_inc_search(EditLine *, int);
-protected el_action_t	cv_search(EditLine *, int);
-protected el_action_t	ce_search_line(EditLine *, int);
-protected el_action_t	cv_repeat_srch(EditLine *, wint_t);
-protected el_action_t	cv_csearch(EditLine *, int, wint_t, int, int);
+libedit_private int		el_match(const wchar_t *, const wchar_t *);
+libedit_private int		search_init(EditLine *);
+libedit_private void		search_end(EditLine *);
+libedit_private int		c_hmatch(EditLine *, const wchar_t *);
+libedit_private void		c_setpat(EditLine *);
+libedit_private el_action_t	ce_inc_search(EditLine *, int);
+libedit_private el_action_t	cv_search(EditLine *, int);
+libedit_private el_action_t	ce_search_line(EditLine *, int);
+libedit_private el_action_t	cv_repeat_srch(EditLine *, wint_t);
+libedit_private el_action_t	cv_csearch(EditLine *, int, wint_t, int, int);
 
 #endif /* _h_el_search */
