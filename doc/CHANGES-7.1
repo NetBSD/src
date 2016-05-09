@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.83 2016/05/04 22:52:13 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.84 2016/05/09 19:50:05 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4213,4 +4213,28 @@ doc/3RDPARTY					patch
 
 	Update OpenSSL to 1.0.1t.
 	[spz, ticket #1165]
+
+lib/libc/stdlib/jemalloc.c			1.40
+
+	PR lib/50791: Instead of using sorting the arena chunks by
+	address only, sort by size of the longest run and address
+	as tie break.  Avoids long linear searches for code heavy
+	on medium sized allocations.
+	[joerg, ticket #1161]
+
+sys/rump/librump/rumpkern/rump.c		1.329
+
+	Align the message buffer. The kernel routines normally are
+	used only with page aligned buffers and they assume at least
+	pointer alignment. Be defensive here and align to 256 Bytes.
+	[joerg, ticket #1162]
+
+sys/fs/tmpfs/tmpfs_vfsops.c			1.66, 1.67
+sys/fs/tmpfs/tmpfs_vnops.c			1.124
+
+	Only recheck size/node limits on update mounts if they
+	actually have been specified.
+
+	Implement most of mount -ur functionality for tmpfs.
+	[joerg, ticket #1163]
 
