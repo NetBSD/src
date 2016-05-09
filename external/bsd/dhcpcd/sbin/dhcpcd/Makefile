@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2016/04/10 21:06:54 roy Exp $
+# $NetBSD: Makefile,v 1.31 2016/05/09 10:19:26 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -10,7 +10,7 @@ SRCS+=		if-bsd.c
 WARNS?=		6
 USE_FORT?=	yes	# network client (local server)
 
-CPPFLAGS+=	-DHAVE_CONFIG_H
+CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
 .include <bsd.own.mk>
 
