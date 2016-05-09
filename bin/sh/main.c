@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2016/05/09 20:55:51 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2016/05/09 21:03:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2016/05/09 20:55:51 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2016/05/09 21:03:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -282,7 +282,7 @@ cmdloop(int top)
 		} else if (n != NULL && nflag == 0) {
 			job_warning = (job_warning == 2) ? 1 : 0;
 			numeof = 0;
-			evaltree(n, 0);
+			evaltree(n, EV_MORE);
 		}
 		popstackmark(&smark);
 		setstackmark(&smark);
