@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.6 2016/05/02 01:47:14 christos Exp $
+# $NetBSD: t_redir.sh,v 1.7 2016/05/09 22:34:37 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -472,6 +472,50 @@ local_redirections_body()
 	fi
 }
 
+atf_test_case named_fd_redirections
+named_fd_redirections_head()
+{
+	atf_set "descr" "Tests redirections to /dev/stdout (etc)"
+
+}
+named_fd_redirections_body()
+{
+	if test -c /dev/stdout
+	then
+		atf_check -s exit:0 -o inline:'OK\n' -e empty \
+			${TEST_SH} -c 'echo OK >/dev/stdout'
+		atf_check -s exit:0 -o inline:'OK\n' -e empty \
+			${TEST_SH} -c '/bin/echo OK >/dev/stdout'
+	fi
+
+	if test -c /dev/stdin
+	then
+		atf_require_prog cat
+
+		echo GOOD | atf_check -s exit:0 -o inline:'GOOD\n' -e empty \
+			${TEST_SH} -c 'read var </dev/stdin; echo $var'
+		echo GOOD | atf_check -s exit:0 -o inline:'GOOD\n' -e empty \
+			${TEST_SH} -c 'cat </dev/stdin'
+	fi
+
+	if test -c /dev/stderr
+	then
+		atf_check -s exit:0 -e inline:'OK\n' -o empty \
+			${TEST_SH} -c 'echo OK 2>/dev/stderr >&2'
+		atf_check -s exit:0 -e inline:'OK\n' -o empty \
+			${TEST_SH} -c '/bin/echo OK 2>/dev/stderr >&2'
+	fi
+
+	if test -c /dev/fd/8 && test -c /dev/fd/9
+	then
+		atf_check -s exit:0 -o inline:'EIGHT\n' -e empty \
+			${TEST_SH} -c 'printf "%s\n" EIGHT 8>&1 >/dev/fd/8 |
+					cat 9<&0 </dev/fd/9'
+	fi
+
+	return 0
+}
+
 atf_test_case redir_in_case
 redir_in_case_head()
 {
@@ -702,6 +746,118 @@ ulimit_redirection_interaction_body()
 	atf_check -s exit:0 -o empty -e empty ${TEST_SH} helper.sh
 }
 
+atf_test_case validate_fn_redirects
+validate_fn_redirects_head()
+{
+	# These test cases inspired by PR bin/48875 and the sh
+	# changes that were required to fix it.
+
+	atf_set "descr" "Tests various redirections applied to functions " \
+		"See PR bin/48875"
+}
+validate_fn_redirects_body()
+{
+	cat <<- 'DONE' > f-def
+		f() {
+			printf '%s\n' In-Func
+		}
+	DONE
+
+	atf_check -s exit:0 -o inline:'In-Func\nsuccess1\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f ; printf '%s\n' success1"
+	atf_check -s exit:0 -o inline:'success2\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f >/dev/null; printf '%s\n' success2"
+	atf_check -s exit:0 -o inline:'success3\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f >&- ; printf '%s\n' success3"
+	atf_check -s exit:0 -o inline:'In-Func\nsuccess4\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f & wait; printf '%s\n' success4"
+	atf_check -s exit:0 -o inline:'success5\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f >&- & wait; printf '%s\n' success5"
+	atf_check -s exit:0 -o inline:'In-Func\nIn-Func\nsuccess6\n' -e empty \
+		${TEST_SH} -c ". ./f-def; f;f; printf '%s\n' success6"
+	atf_check -s exit:0 -o inline:'In-Func\nIn-Func\nsuccess7\n' -e empty \
+		${TEST_SH} -c ". ./f-def; { f;f;}; printf '%s\n' success7"
+	atf_check -s exit:0 -o inline:'In-Func\nIn-Func\nsuccess8\n' -e empty \
+		${TEST_SH} -c ". ./f-def; { f;f;}& wait; printf '%s\n' success8"
+	atf_check -s exit:0 -o inline:'In-Func\nsuccess9\n' -e empty \
+		${TEST_SH} -c \
+		   ". ./f-def; { f>/dev/null;f;}& wait; printf '%s\n' success9"
+	atf_check -s exit:0 -o inline:'In-Func\nsuccess10\n' -e empty \
+		${TEST_SH} -c \
+		   ". ./f-def; { f;f>/dev/null;}& wait; printf '%s\n' success10"
+
+	# Tests with sh reading stdin, which is not quite the same internal
+	# mechanism.
+	echo ". ./f-def || echo >&2 FAIL
+		f
+		printf '%s\n' stdin1
+	"| atf_check -s exit:0 -o inline:'In-Func\nstdin1\n' -e empty ${TEST_SH}
+
+	echo '
+		. ./f-def || echo >&2 FAIL
+		f >&-
+		printf '%s\n' stdin2
+	' | atf_check -s exit:0 -o inline:'stdin2\n' -e empty ${TEST_SH}
+
+	cat <<- 'DONE' > fgh.def
+		f() {
+			echo -n f >&3
+			sleep 4
+			echo -n F >&3
+		}
+		g() {
+			echo -n g >&3
+			sleep 2
+			echo -n G >&3
+		}
+		h() {
+			echo -n h >&3
+		}
+	DONE
+
+	atf_check -s exit:0 -o inline:'fFgGh' -e empty \
+		${TEST_SH} -c '. ./fgh.def || echo >&2 FAIL
+			exec 3>&1
+			f; g; h'
+
+	atf_check -s exit:0 -o inline:'fghGF' -e empty \
+		${TEST_SH} -c '. ./fgh.def || echo >&2 FAIL
+			exec 3>&1
+			f & sleep 1; g & sleep 1; h; wait'
+
+	atf_check -s exit:0 -o inline:'fFgGhX Y\n' -e empty \
+		${TEST_SH} -c '. ./fgh.def || echo >&2 FAIL
+			exec 3>&1
+			echo X $( f ; g ; h ) Y'
+
+	# This one is the real test for PR bin/48875.  If the
+	# cmdsub does not complete before f g (and h) exit,
+	# then the 'F' & 'G' will precede 'X Y' in the output.
+	# If the cmdsub finishes while f & g are still running,
+	# then the X Y will appear before the F and G.
+	# The trailing "sleep 3" is just so we catch all the
+	# output (otherwise atf_check will be finished while
+	# f & g are still sleeping).
+
+	atf_check -s exit:0 -o inline:'fghX Y\nGF' -e empty \
+		${TEST_SH} -c '. ./fgh.def || echo >&2 FAIL
+			exec 3>&1
+			echo X $( f >&- & sleep 1; g >&- & sleep 1 ; h ) Y
+			sleep 3
+			exec 4>&1 || echo FD_FAIL
+			'
+
+	# Do the test again to verify it also all works reading stdin
+	# (which is a slightly different path through the shell)
+	echo '
+		. ./fgh.def || echo >&2 FAIL
+		exec 3>&1
+		echo X $( f >&- & sleep 1; g >&- & sleep 1 ; h ) Y
+		sleep 3
+		exec 4>&1 || echo FD_FAIL
+	' | atf_check -s exit:0 -o inline:'fghX Y\nGF' -e empty ${TEST_SH}
+}
+
 atf_init_test_cases() {
 	atf_add_test_case basic_test_method_test
 	atf_add_test_case do_input_redirections
@@ -709,8 +865,10 @@ atf_init_test_cases() {
 	atf_add_test_case fd_redirections
 	atf_add_test_case local_redirections
 	atf_add_test_case incorrect_redirections
+	atf_add_test_case named_fd_redirections
 	atf_add_test_case redir_here_doc
 	atf_add_test_case redir_in_case
 	atf_add_test_case subshell_redirections
 	atf_add_test_case ulimit_redirection_interaction
+	atf_add_test_case validate_fn_redirects
 }
