@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.39 2016/05/02 16:48:34 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.40 2016/05/09 21:46:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,7 +139,7 @@ struct editline {
 	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
 };
 
-protected int	el_editmode(EditLine *, int, const wchar_t **);
+libedit_private int	el_editmode(EditLine *, int, const wchar_t **);
 
 #ifdef DEBUG
 #define	EL_ABORT(a)	do { \
