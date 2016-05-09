@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.308.2.3 2015/03/25 16:54:37 snj Exp $	*/
+/*	$NetBSD: rump.c,v 1.308.2.4 2016/05/09 19:40:44 snj Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.308.2.3 2015/03/25 16:54:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.308.2.4 2016/05/09 19:40:44 snj Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -109,7 +109,8 @@ static void rump_hyp_execnotify(const char *);
 static void rump_component_addlocal(void);
 static struct lwp *bootlwp;
 
-static char rump_msgbuf[16*1024]; /* 16k should be enough for std rump needs */
+/* 16k should be enough for std rump needs */
+static  char rump_msgbuf[16*1024] __aligned(256);
 
 bool rump_ttycomponent = false;
 
