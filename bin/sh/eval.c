@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.124 2016/05/09 20:55:51 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.125 2016/05/09 21:03:10 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.124 2016/05/09 20:55:51 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.125 2016/05/09 21:03:10 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,7 +219,7 @@ evalstring(char *s, int flag)
 	while ((n = parsecmd(0)) != NEOF) {
 		TRACE(("evalstring: "); showtree(n));
 		if (nflag == 0)
-			evaltree(n, flag);
+			evaltree(n, flag | EV_MORE);
 		popstackmark(&smark);
 	}
 	popfile();
@@ -257,19 +257,20 @@ evaltree(union node *n, int flags)
 #endif
 	switch (n->type) {
 	case NSEMI:
-		evaltree(n->nbinary.ch1, flags & EV_TESTED);
+		evaltree(n->nbinary.ch1, (flags & EV_TESTED) |
+		    (n->nbinary.ch2 ? EV_MORE : 0));
 		if (nflag || evalskip)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NAND:
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
 		if (nflag || evalskip || exitstatus != 0)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
 		break;
 	case NOR:
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
 		if (nflag || evalskip || exitstatus == 0)
 			goto out;
 		evaltree(n->nbinary.ch2, flags);
@@ -281,14 +282,14 @@ evaltree(union node *n, int flags)
 		popredir();
 		break;
 	case NSUBSHELL:
-		evalsubshell(n, flags);
+		evalsubshell(n, flags & ~EV_MORE);
 		do_etest = !(flags & EV_TESTED);
 		break;
 	case NBACKGND:
-		evalsubshell(n, flags);
+		evalsubshell(n, flags & ~EV_MORE);
 		break;
 	case NIF: {
-		evaltree(n->nif.test, EV_TESTED);
+		evaltree(n->nif.test, EV_TESTED | EV_MORE);
 		if (nflag || evalskip)
 			goto out;
 		if (exitstatus == 0)
@@ -314,7 +315,7 @@ evaltree(union node *n, int flags)
 		exitstatus = 0;
 		break;
 	case NNOT:
-		evaltree(n->nnot.com, EV_TESTED);
+		evaltree(n->nnot.com, (flags & EV_MORE) | EV_TESTED);
 		exitstatus = !exitstatus;
 		break;
 	case NPIPE:
@@ -360,7 +361,7 @@ evalloop(union node *n, int flags)
 	TRACE(("evalloop  done\n"));
 
 	for (;;) {
-		evaltree(n->nbinary.ch1, EV_TESTED);
+		evaltree(n->nbinary.ch1, EV_TESTED | EV_MORE);
 		if (nflag)
 			break;
 		if (evalskip) {
@@ -379,7 +380,7 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 			if (exitstatus == 0)
 				break;
 		}
-		evaltree(n->nbinary.ch2, flags & EV_TESTED);
+		evaltree(n->nbinary.ch2, flags & (EV_TESTED | EV_MORE));
 		status = exitstatus;
 		if (evalskip)
 			goto skipping;
@@ -413,7 +414,7 @@ evalfor(union node *n, int flags)
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
 		setvar(n->nfor.var, sp->text, 0);
-		evaltree(n->nfor.body, flags & EV_TESTED);
+		evaltree(n->nfor.body, flags & (EV_TESTED | EV_MORE));
 		status = exitstatus;
 		if (nflag)
 			break;
@@ -881,6 +882,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		INTOFF;
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
+		if (mode)
+			flags &= ~EV_MORE;
 		if (flags & EV_BACKCMD) {
 			mode = FORK_NOJOB;
 			if (sh_pipe(pip) < 0)
@@ -967,7 +970,7 @@ normal_fork:
 #ifdef DEBUG
 		trputs("Shell function:  ");  trargs(argv);
 #endif
-		redirect(cmd->ncmd.redirect, REDIR_PUSH);
+		redirect(cmd->ncmd.redirect, flags & EV_MORE ? REDIR_PUSH : 0);
 		saveparam = shellparam;
 		shellparam.malloc = 0;
 		shellparam.reset = 1;
@@ -1005,7 +1008,8 @@ normal_fork:
 		freeparam(&shellparam);
 		shellparam = saveparam;
 		handler = savehandler;
-		popredir();
+		if (flags & EV_MORE)
+			popredir();
 		INTON;
 		if (evalskip == SKIPFUNC) {
 			evalskip = SKIPNONE;
