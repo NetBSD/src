@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.40 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.41 2016/05/09 20:28:08 martin Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -890,7 +890,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 			AREA_CHECK(2);
 			*p++ = DHO_MAXMESSAGESIZE;
 			*p++ = 2;
-			sz = htons((uint16_t)mtu - IP_UDP_SIZE);
+			sz = htons((uint16_t)(mtu - IP_UDP_SIZE));
 			memcpy(p, &sz, 2);
 			p += 2;
 		}
