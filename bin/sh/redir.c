@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.45 2016/05/08 20:14:27 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.46 2016/05/09 20:50:08 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.45 2016/05/08 20:14:27 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.46 2016/05/09 20:50:08 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,8 +302,8 @@ openredirect(union node *redir, char memory[10], int flags)
 			    memory[redir->ndup.dupfd])
 				memory[fd] = 1;
 			else
-				copyfd(redir->ndup.dupfd, fd, 1,
-				    (flags & REDIR_PUSH) != 0);
+				copyfd(redir->ndup.dupfd, fd, 1, (flags &
+				    (REDIR_PUSH|REDIR_KEEP)) == REDIR_PUSH);
 		} else
 			close(fd);
 		INTON;
@@ -514,7 +514,7 @@ to_upper_fd(int fd)
 	if (big_sh_fd < 10)
 		find_big_fd();
 	do {
-		i = fcntl(fd, F_DUPFD, big_sh_fd);
+		i = fcntl(fd, F_DUPFD_CLOEXEC, big_sh_fd);
 		if (i >= 0) {
 			if (fd != i)
 				close(fd);
@@ -525,5 +525,11 @@ to_upper_fd(int fd)
 		find_big_fd();
 	} while (big_sh_fd > 10);
 
+	/*
+	 * If we wamted to move this fd to some random high number
+	 * we certainly do not intend to pass it through exec, even
+	 * if the reassignment failed.
+	 */
+	(void)fcntl(fd, F_SETFD, FD_CLOEXEC);
 	return fd;
 }
