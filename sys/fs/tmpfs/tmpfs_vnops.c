@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.120.2.1 2014/12/22 02:05:08 msaitoh Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.120.2.2 2016/05/09 19:45:00 snj Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.120.2.1 2014/12/22 02:05:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.120.2.2 2016/05/09 19:45:00 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -588,6 +588,11 @@ tmpfs_write(void *v)
 	int error;
 
 	KASSERT(VOP_ISLOCKED(vp));
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY) != 0) {
+		error = EROFS;
+		goto out;
+	}
 
 	node = VP_TO_TMPFS_NODE(vp);
 	oldsize = node->tn_size;
@@ -1265,6 +1270,11 @@ tmpfs_putpages(void *v)
 	if (vp->v_type != VREG) {
 		mutex_exit(vp->v_interlock);
 		return 0;
+	}
+
+	if ((vp->v_mount->mnt_flag & MNT_RDONLY) != 0) {
+		mutex_exit(vp->v_interlock);
+		return EROFS;
 	}
 
 	node = VP_TO_TMPFS_NODE(vp);
