@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.96 2016/04/27 19:35:17 jakllsch Exp $	*/
+/*	$NetBSD: uhid.c,v 1.97 2016/05/09 04:55:34 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.96 2016/04/27 19:35:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.97 2016/05/09 04:55:34 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -340,7 +340,10 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 	mutex_exit(&sc->sc_access_lock);
 
-	sc->sc_obuf = kmem_alloc(sc->sc_osize, KM_SLEEP);
+	if (sc->sc_osize > 0)
+		sc->sc_obuf = kmem_alloc(sc->sc_osize, KM_SLEEP);
+	else
+		sc->sc_obuf = NULL;
 	sc->sc_state &= ~UHID_IMMED;
 
 	mutex_enter(proc_lock);
@@ -368,7 +371,8 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	uhidev_stop(&sc->sc_hdev);
 
 	clfree(&sc->sc_q);
-	kmem_free(sc->sc_obuf, sc->sc_osize);
+	if (sc->sc_osize > 0)
+		kmem_free(sc->sc_obuf, sc->sc_osize);
 
 	uhidev_close(&sc->sc_hdev);
 
@@ -473,7 +477,7 @@ uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 
 	size = sc->sc_osize;
 	error = 0;
-	if (uio->uio_resid != size)
+	if (uio->uio_resid != size || size == 0)
 		return EINVAL;
 	error = uiomove(sc->sc_obuf, size, uio);
 	if (!error) {
