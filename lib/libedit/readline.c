@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.131 2016/05/09 21:25:11 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.132 2016/05/09 21:27:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.131 2016/05/09 21:25:11 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.132 2016/05/09 21:27:55 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -155,6 +155,14 @@ char *rl_special_prefixes = NULL;
  * the line. Default is ' ' (a space).
  */
 int rl_completion_append_character = ' ';
+
+/*
+ * When the history cursor is on the newest element and next_history()
+ * is called, GNU readline moves the cursor beyond the newest element.
+ * The editline library does not provide data structures to express
+ * that state, so we need a local flag.
+ */
+static int current_history_valid = 1;
 
 /* stuff below is used internally by libedit for readline emulation */
 
@@ -290,6 +298,8 @@ rl_initialize(void)
 	HistEvent ev;
 	int editmode = 1;
 	struct termios t;
+
+	current_history_valid = 1;
 
 	if (e != NULL)
 		el_end(e);
@@ -1451,6 +1461,7 @@ add_history(const char *line)
 	(void)history(h, &ev, H_ENTER, line);
 	if (history(h, &ev, H_GETSIZE) == 0)
 		history_length = ev.num;
+	current_history_valid = 1;
 
 	return !(history_length > 0); /* return 0 if all is okay */
 }
@@ -1543,6 +1554,7 @@ clear_history(void)
 
 	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
+	current_history_valid = 1;
 }
 
 
@@ -1575,7 +1587,7 @@ HIST_ENTRY *
 current_history(void)
 {
 
-	return _move_history(H_CURR);
+	return current_history_valid ? _move_history(H_CURR) : NULL;
 }
 
 
@@ -1620,6 +1632,7 @@ history_set_pos(int pos)
 
 	(void)history(h, &ev, H_CURR);
 	curr_num = ev.num;
+	current_history_valid = 1;
 
 	/*
 	 * use H_DELDATA to set to nth history (without delete) by passing
@@ -1635,12 +1648,17 @@ history_set_pos(int pos)
 
 /*
  * returns previous event in history and shifts pointer accordingly
+ * Note that readline and editline define directions in opposite ways.
  */
 HIST_ENTRY *
 previous_history(void)
 {
 
-	return _move_history(H_PREV);
+	if (current_history_valid == 0) {
+		current_history_valid = 1;
+		return _move_history(H_CURR);
+	}
+	return _move_history(H_NEXT);
 }
 
 
@@ -1650,8 +1668,12 @@ previous_history(void)
 HIST_ENTRY *
 next_history(void)
 {
+	HIST_ENTRY *he;
 
-	return _move_history(H_NEXT);
+	he = _move_history(H_PREV);
+	if (he == NULL)
+		current_history_valid = 0;
+	return he;
 }
 
 
