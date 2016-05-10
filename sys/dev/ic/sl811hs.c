@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.59 2016/05/10 21:13:48 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.60 2016/05/10 21:15:54 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.59 2016/05/10 21:13:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.60 2016/05/10 21:15:54 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1296,6 +1296,8 @@ slhci_abort(struct usbd_xfer *xfer)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 
 	if (spipe == NULL)
@@ -1312,7 +1314,6 @@ slhci_abort(struct usbd_xfer *xfer)
 
 callback:
 	xfer->ux_status = USBD_CANCELLED;
-	/* Abort happens at IPL_USB. */
 	usb_transfer_complete(xfer);
 }
 
