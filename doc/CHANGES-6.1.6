@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.64 2016/05/08 21:59:43 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.65 2016/05/10 23:18:37 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -8261,4 +8261,10 @@ external/bsd/ntp/bin/ntpd/ntp_parser.h		patch
 
 	Update ntp to 4.2.8p7.
 	[spz, ticket #1380]
+
+sys/miscfs/specfs/spec_vnops.c			1.161, 1.162 via patch
+
+	Avoid a race with spec_revoke when extracting v_rdev.
+	Fixes PR kern/50467.
+	[hannken, ticket #1376]
 
