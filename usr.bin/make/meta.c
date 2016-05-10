@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.55 2016/05/10 00:02:31 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.56 2016/05/10 23:45:45 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -62,6 +62,9 @@ static char *metaIgnorePathsStr;	/* string storage for the list */
 #ifndef MAKE_META_IGNORE_PATHS
 #define MAKE_META_IGNORE_PATHS ".MAKE.META.IGNORE_PATHS"
 #endif
+#ifndef MAKE_META_IGNORE_PATTERNS
+#define MAKE_META_IGNORE_PATTERNS ".MAKE.META.IGNORE_PATTERNS"
+#endif
 
 Boolean useMeta = FALSE;
 static Boolean useFilemon = FALSE;
@@ -69,6 +72,7 @@ static Boolean writeMeta = FALSE;
 static Boolean metaEnv = FALSE;		/* don't save env unless asked */
 static Boolean metaVerbose = FALSE;
 static Boolean metaIgnoreCMDs = FALSE;	/* ignore CMDs in .meta files */
+static Boolean metaIgnorePatterns = FALSE; /* do we need to do pattern matches */
 static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
 static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 
@@ -615,6 +619,15 @@ meta_mode_init(const char *make_mode)
 		   VARF_WANTRES);
     if (metaIgnorePathsStr) {
 	str2Lst_Append(metaIgnorePaths, metaIgnorePathsStr, NULL);
+    }
+
+    /*
+     * We ignore any paths that match ${.MAKE.META.IGNORE_PATTERNS}
+     */
+    cp = NULL;
+    if (Var_Value(MAKE_META_IGNORE_PATTERNS, VAR_GLOBAL, &cp)) {
+	metaIgnorePatterns = TRUE;
+	free(cp);
     }
 }
 
@@ -1210,11 +1223,30 @@ meta_oodate(GNode *gn, Boolean oodate)
 			if (Lst_ForEach(metaIgnorePaths, prefix_match, fname1)) {
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
-				fprintf(debug_file, "meta_oodate: ignoring: %s\n",
+				fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
 					p);
 #endif
 			    break;
 			}
+		    }
+
+		    if (metaIgnorePatterns) {
+			char *pm;
+
+			snprintf(fname1, sizeof(fname1),
+				 "${%s:@m@${%s:L:M$m}@}",
+				 MAKE_META_IGNORE_PATTERNS, p);
+			pm = Var_Subst(NULL, fname1, gn, VARF_WANTRES);
+			if (*pm) {
+#ifdef DEBUG_META_MODE
+			    if (DEBUG(META))
+				fprintf(debug_file, "meta_oodate: ignoring pattern: %s\n",
+					p);
+#endif
+			    free(pm);
+			    break;
+			}
+			free(pm);
 		    }
 
 		    /*
