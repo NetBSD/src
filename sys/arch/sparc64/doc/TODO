@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.15 2016/05/01 19:41:01 palle Exp $ */
+ /* $NetBSD: TODO,v 1.16 2016/05/10 19:35:08 palle Exp $ */
 
 Things to be done:
 
@@ -25,4 +25,5 @@ sun4v:
 - ci_tsb_desc->td_ctxidx: -1 or 1?
 - MP support - currently bypassed in pmap_bootstrap() for sun4v
 - vpci.c/vpcivar.h: cleanup FIXMEs
-- interrups not handled properly
+- interrups not handled properly (com at ebus only...)
+- mpt(4) complains: mpt0: Phy 0: Link Status Unknown
