@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.166 2016/05/04 22:42:40 christos Exp $
+# $NetBSD: HACKS,v 1.167 2016/05/10 19:32:47 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -27,6 +27,20 @@
 #
 # this is a comment.
 
+hack	gcc-5.3 miscompiles crt* leading to ctor/dtor related crashes
+mdate	10 May 2016
+who	mrg martin
+file	lib/csu/common/Makefile.inc : 1.26, 1.27, 1.31
+descr
+	GCC assumes non-constant data is constant and assumes that it
+	can generate direct calls out of the ctor/dtor space, which
+	generally breaks their usage.  On SPARC, an explicit call to
+	0 is generated as "clr %g1; call %g1", for example.
+
+	Compiling with -O1 fixes this problem.
+pr	51121
+kcah
+
 hack	gcc-5.3 optimizes memset+malloc -> calloc inside calloc
 mdate	4 May 2016
 who	christos
@@ -35,6 +49,16 @@ descr
 	resulting in infinite recursion; we prevent this with
 	-fno-builtin-malloc
 kcah
+
+hack	turn off tree-vrp for parts of ufs_lookup.c
+mdate	28 April 2016
+who	mrg christos
+file	src/sys/ufs/ufs/ufs_lookup.c : 1.144
+pr	51094
+descr
+	with -ftree-vrp enabled in ufs_lookup.c sometimes bad dir
+	panicks are see.
+hcah
 
 hack	netstat ieee1394 address printing.
 mdate	14 Nov 2000
@@ -790,14 +814,6 @@ port	x86
 	descr
 		Turning on DISK_DEBUG shows the problem. We should find
 		out which option is causing this.
-	hcah
-
-	hack	turn off -ftree-vrp for ufs_lookup.c
-	who	mrg
-	file	src/sys/arch/amd64/conf/Makefile.amd64 : 1.54
-	descr
-		with -ftree-vrp enabled in ufs_lookup.c sometimes bad dir
-		panicks are see.  see PR 51094.
 	hcah
 
 port	powerpc
