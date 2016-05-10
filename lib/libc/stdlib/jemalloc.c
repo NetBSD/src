@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.34.2.2 2016/05/09 19:34:50 snj Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.34.2.3 2016/05/10 09:10:11 martin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.34.2.2 2016/05/09 19:34:50 snj Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.34.2.3 2016/05/10 09:10:11 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -1651,6 +1651,11 @@ arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 	assert(a != NULL);
 	assert(b != NULL);
 
+	if (a->max_frun_npages < b->max_frun_npages)
+		return -1;
+	if (a->max_frun_npages > b->max_frun_npages)
+		return 1;
+
 	if ((uintptr_t)a < (uintptr_t)b)
 		return (-1);
 	else if (a == b)
@@ -1670,11 +1675,6 @@ arena_run_comp(arena_run_t *a, arena_run_t *b)
 
 	assert(a != NULL);
 	assert(b != NULL);
-
-	if (a->max_frun_npages < b->max_frun_npages)
-		return -1;
-	if (a->max_frun_npages > b->max_frun_npages)
-		return 1;
 
 	if ((uintptr_t)a < (uintptr_t)b)
 		return (-1);
