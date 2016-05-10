@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.76 2015/04/01 18:38:30 palle Exp $
+#	$NetBSD: genassym.cf,v 1.77 2016/05/10 19:24:00 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)
 define	CI_MMFSA	offsetof(struct cpu_info, ci_mmfsa)
 define	CI_TSB_DESC	offsetof(struct cpu_info, ci_tsb_desc)
 define	CI_CPUMQ	offsetof(struct cpu_info, ci_cpumq)
+define	CI_DEVMQ	offsetof(struct cpu_info, ci_devmq)
 ifdef MULTIPROCESSOR
 define	CI_IPIEVC	offsetof(struct cpu_info, ci_ipi_evcnt[0].ev_count)
 endif
@@ -254,6 +255,7 @@ define	IH_PEND		offsetof(struct intrhand, ih_pending)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
+define	IH_ACK		offsetof(struct intrhand, ih_ack)
 define  IH_CNT		offsetof(struct intrhand, ih_cnt)
 	
 # mbuf fields of import
