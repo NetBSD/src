@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.111 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.112 2016/05/10 10:40:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.111 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.112 2016/05/10 10:40:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1396,24 +1396,24 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	mutex_enter(&sc->sc_lock);
-	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
+	if (status == USBD_CANCELLED)
+		return;
 
-	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
+	mutex_enter(&sc->sc_lock);
+	if (status == USBD_IOERROR ||
 	    sc->sc_dying) {
 		DPRINTF("dying", 0, 0, 0, 0);
-		ub->ub_index = ub->ub_len = 0;
 		/* Send something to wake upper layer */
-		if (status != USBD_CANCELLED) {
-			(tp->t_linesw->l_rint)('\n', tp);
-			mutex_spin_enter(&tty_lock);	/* XXX */
-			ttwakeup(tp);
-			mutex_spin_exit(&tty_lock);	/* XXX */
-		}
+		(tp->t_linesw->l_rint)('\n', tp);
+		mutex_spin_enter(&tty_lock);	/* XXX */
+		ttwakeup(tp);
+		mutex_spin_exit(&tty_lock);	/* XXX */
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
+
+	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
 
 	if (status == USBD_STALLED) {
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
@@ -1474,18 +1474,10 @@ ucom_cleanup(struct ucom_softc *sc)
 
 	ucom_shutdown(sc);
 	if (sc->sc_bulkin_pipe != NULL) {
-		struct usbd_pipe *bulkin_pipe = sc->sc_bulkin_pipe;
-		sc->sc_bulkin_pipe = NULL;
-		mutex_exit(&sc->sc_lock);
-		usbd_abort_pipe(bulkin_pipe);
-		mutex_enter(&sc->sc_lock);
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
-		struct usbd_pipe *bulkout_pipe = sc->sc_bulkout_pipe;
-		sc->sc_bulkout_pipe = NULL;
-		mutex_exit(&sc->sc_lock);
-		usbd_abort_pipe(bulkout_pipe);
-		mutex_enter(&sc->sc_lock);
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 	}
 }
 
