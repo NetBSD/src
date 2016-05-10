@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.390 2016/03/09 12:20:20 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.391 2016/05/10 19:24:00 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1071,7 +1071,8 @@ _C_LABEL(trapbase_sun4v):
 	HARDINT4V(15)						! 0x04f = level 15 interrupt
 	sun4v_trap_entry 44					! 0x050-0x07b
 	VTRAP(T_CPU_MONDO, sun4v_cpu_mondo)			! 0x07c = cpu mondo
-	sun4v_trap_entry 3					! 0x07d-0x07f
+	VTRAP(T_DEV_MONDO, sun4v_dev_mondo)			! 0x07d = dev mondo
+	sun4v_trap_entry 2					! 0x07e-0x07f
 	SPILL64(uspill8_sun4vt0,ASI_AIUS)			! 0x080 spill_0_normal -- used to save user windows in user mode
 	SPILL32(uspill4_sun4vt0,ASI_AIUS)			! 0x084 spill_1_normal
 	SPILLBOTH(uspill8_sun4vt0,uspill4_sun4vt0,ASI_AIUS)	! 0x088 spill_2_normal
@@ -3592,6 +3593,8 @@ ret_from_intr_vector:
 	 nop				! XXX spitfire bug?
 
 sun4v_cpu_mondo:
+! XXX Rework this when a UP kernel works - crash for now	
+	sir			
 	mov	0x3c0, %g1			 ! CPU Mondo Queue Head
 	ldxa	[%g1] ASI_QUEUE, %g2		 ! fetch index value for head
 	set	CPUINFO_VA, %g3
@@ -3616,7 +3619,45 @@ sun4v_cpu_mondo:
 	retry
 	NOTREACHED
 
-	
+sun4v_dev_mondo:
+	mov	0x3d0, %g1			! Dev Mondo Queue Head
+	ldxa	[%g1] ASI_QUEUE, %g2		! fetch index value
+	mov	0x3d8, %g1			! Dev Mondo Queue Tail
+	ldxa	[%g1] ASI_QUEUE, %g4		! fetch index value
+	cmp	%g2, %g4			! head = queue? 
+	bne,pt 	%xcc, 2f			! unsually not the case
+	 nop
+	retry					! unlikely, ingnore interrupt
+2:	
+	set	CPUINFO_VA, %g3			 ! fetch cpuinfo pa
+	LDPTR	[%g3 + CI_PADDR], %g3		 ! fetch intstack pa
+	set	CPUINFO_VA-INTSTACK, %g4	 ! offset to cpuinfo
+	add	%g4, %g3, %g3			 ! %g3 is now cpuifo
+	add	%g3, CI_DEVMQ, %g3		 ! calc offset to devmq
+	ldxa	[%g3] ASI_PHYS_CACHED, %g3	 ! fetch address of devmq
+	ldxa	[%g3 + %g2] ASI_PHYS_CACHED, %g5 !
+	add	%g2, 64, %g2			 ! each element is 64 bytes 		
+	and	%g2, 0x7ff, %g2			 ! assume 32 elements
+	mov	0x3d0, %g1			 ! Dev Mondo Queue Head
+	stxa	%g2, [%g1] ASI_QUEUE		 ! ajust head index value
+	membar	#Sync
+
+	cmp	%g5, MAXINTNUM			! out of bounds?
+	bgeu,pn	%xcc, 2f
+	 nop					! no just continue
+
+	sethi	%hi(_C_LABEL(intrlev)), %g3
+	or	%g3, %lo(_C_LABEL(intrlev)), %g3
+	sllx	%g5, 3, %g5		! Calculate entry number
+	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
+1:
+	brnz,pt	%g5, setup_sparcintr	! branch if valid handle
+	 nop
+
+	ba,a	3b			! log if invalid handle
+	 nop
+2:
+	sir				! out of bounds - crash
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
  * on a soft interrupt, is we should check which bits in SOFTINT(%asr22)
@@ -3910,6 +3951,12 @@ sparc_intr_retry:
 	stx	%g0, [%l1]		! Clear intr source
 	membar	#Sync			! Should not be needed
 0:
+	ldx	[%l2 + IH_ACK], %l1	! ih->ih_ack
+	brz,pn	%l1, 1f
+	 nop
+	jmpl	%l1, %o7		! (*ih->ih_ack)(ih)
+	 mov	%l2, %o0
+1:	
 	cmp	%l7, -1
 	bne,pn	CCCR, 2b		! 'Nother?
 	 mov	%l7, %l2
