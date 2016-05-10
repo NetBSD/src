@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.58 2016/05/08 07:48:24 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.59 2016/05/10 21:13:48 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.58 2016/05/08 07:48:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.59 2016/05/10 21:13:48 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1398,6 +1398,7 @@ slhci_mem_use(struct usbd_bus *bus, int val)
 void
 slhci_reset_entry(void *arg)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = arg;
 
 	mutex_enter(&sc->sc_intr_lock);
@@ -2492,12 +2493,14 @@ slhci_callback_schedule(struct slhci_softc *sc)
 static void
 slhci_do_callback_schedule(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
+	DLOG(D_MSG, "flags %#x", t->flags, 0, 0, 0);
 	if (!(t->flags & F_CALLBACK)) {
 		t->flags |= F_CALLBACK;
 		softint_schedule(sc->sc_cb_softintr);
