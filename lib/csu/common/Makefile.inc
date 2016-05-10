@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2016/05/01 07:25:46 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2016/05/10 10:23:09 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,7 @@ CFLAGS.crtbegin.c+= -fPIE
      !exists(${ARCHDIR}/crtbegin.S)
 CFLAGS.crt0-common.c+=	-O1
 CFLAGS.crtbeginS.c+=	-O1
+CFLAGS.crtbegin.c+=	-O1
 . endif
 .endif
 
