@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.45 2016/05/07 08:11:49 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.46 2016/05/10 15:14:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,9 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.45 2016/05/07 08:11:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.46 2016/05/10 15:14:03 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
