@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.118 2015/09/07 20:00:49 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.119 2016/05/10 19:24:00 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -361,6 +361,7 @@ struct intrhand {
 	struct intrhand		*ih_pending;	/* interrupt queued */
 	volatile uint64_t	*ih_map;	/* Interrupt map reg */
 	volatile uint64_t	*ih_clr;	/* clear interrupt reg */
+	void			(*ih_ack)(struct intrhand *); /* ack interrupt function */
 	struct evcnt		ih_cnt;		/* counter for vmstat */
 	uint32_t		ih_ivec;
 	char			ih_name[32];	/* name for the above */
@@ -372,6 +373,7 @@ void	intr_establish(int level, bool mpsafe, struct intrhand *);
 void	*sparc_softintr_establish(int, int (*)(void *), void *);
 void	sparc_softintr_schedule(void *);
 void	sparc_softintr_disestablish(void *);
+struct intrhand *intrhand_alloc(void);
 
 /* cpu.c */
 int	cpu_myid(void);
