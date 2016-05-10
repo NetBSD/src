@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.75 2015/09/21 06:05:00 mrg Exp $	*/
+/*	$NetBSD: atactl.c,v 1.76 2016/05/10 08:08:59 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.75 2015/09/21 06:05:00 mrg Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.76 2016/05/10 08:08:59 mrg Exp $");
 #endif
 
 
@@ -333,8 +333,8 @@ static const struct {
 	{ 241,		"Total LBAs Written", NULL },
 	{ 242,		"Total LBAs Read", NULL },
 	{ 246,		"Total Host Sector Writes", NULL },
-	{ 247,		"Contact Factory (Micron)", NULL },
-	{ 248,		"Contact Factory (Micron)", NULL },
+	{ 247,		"Host Program NAND Pages Count", NULL },
+	{ 248,		"FTL Program Pages Count ", NULL },
 	{ 250,		"Read error retry rate", NULL },
 	{ 254,		"Free Fall Sensor", NULL },
 	{   0,		"Unknown", NULL },
