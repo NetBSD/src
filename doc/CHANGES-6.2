@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.248 2016/05/08 22:06:34 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.249 2016/05/10 23:17:59 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14264,4 +14264,15 @@ external/bsd/ntp/bin/ntpd/ntp_parser.h		patch
 
 	Update ntp to 4.2.8p7.
 	[spz, ticket #1380]
+
+sys/dev/usb/uslsa.c				1.19
+
+	Improve support for CP2104.
+	[riastradh, ticket #1381]
+
+sys/miscfs/specfs/spec_vnops.c			1.161, 1.162 via patch
+
+	Avoid a race with spec_revoke when extracting v_rdev.
+	Fixes PR kern/50467.
+	[hannken, ticket #1376]
 
