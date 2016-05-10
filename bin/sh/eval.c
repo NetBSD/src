@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.125 2016/05/09 21:03:10 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.126 2016/05/10 15:14:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.125 2016/05/09 21:03:10 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.126 2016/05/10 15:14:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,7 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 			if (exitstatus == 0)
 				break;
 		}
-		evaltree(n->nbinary.ch2, flags & (EV_TESTED | EV_MORE));
+		evaltree(n->nbinary.ch2, (flags & EV_TESTED) | EV_MORE);
 		status = exitstatus;
 		if (evalskip)
 			goto skipping;
