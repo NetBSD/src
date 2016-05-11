@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.428 2016/05/08 20:00:21 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.429 2016/05/11 02:18:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.428 2016/05/08 20:00:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.429 2016/05/11 02:18:27 ozaki-r Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -133,7 +133,7 @@ static int copyinargstrs(struct execve_data * restrict, char * const *,
     execve_fetch_element_t, char **, size_t *, void (*)(const void *, size_t));
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(DEBUG_EXEC)
 #define DEBUG_EXEC
 #endif
 #ifdef DEBUG_EXEC
