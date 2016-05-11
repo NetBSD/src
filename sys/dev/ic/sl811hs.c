@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.63 2016/05/11 21:03:01 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.64 2016/05/11 21:05:12 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.63 2016/05/11 21:03:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.64 2016/05/11 21:05:12 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1372,7 +1372,6 @@ slhci_poll(struct usbd_bus *bus) /* XXX necessary? */
 void
 slhci_done(struct usbd_xfer *xfer)
 {
-	/* xfer may not be valid here */
 }
 
 void
