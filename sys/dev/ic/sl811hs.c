@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.62 2016/05/11 21:02:10 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.63 2016/05/11 21:03:01 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.62 2016/05/11 21:02:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.63 2016/05/11 21:03:01 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2448,6 +2448,7 @@ slhci_xfer_timer(struct slhci_softc *sc, struct slhci_pipe *spipe)
 static void
 slhci_callback_schedule(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
