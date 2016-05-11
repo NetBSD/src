@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.922 2016/04/28 18:29:20 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.923 2016/05/11 13:41:56 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -68,12 +68,10 @@ MKGCC?=		no
 HAVE_GCC?=	0
 .elif \
     ${MACHINE} == "amd64" || \
-    ${MACHINE} == "alpha" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC?=	53
 .else
@@ -164,14 +162,12 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 # What binutils is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
+.if ${MACHINE} == "amd64" || \
     ${MACHINE} == "evbarm" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "powerpc"
