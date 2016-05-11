@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.20 2016/05/07 13:08:30 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.21 2016/05/11 19:35:08 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -170,10 +170,19 @@ _TRMP_LABEL(mp_startup)
 no_PSE:
 	movl	%eax,%cr4
 
+	/*
+	 * Set Long Mode Enable in EFER. Also enable the syscall extensions,
+	 * and NOX if available.
+	 */
 	movl	$MSR_EFER,%ecx
 	rdmsr
 	xorl	%eax,%eax
 	orl	$(EFER_LME|EFER_SCE),%eax
+	movl	RELOC(nox_flag),%ebx
+	cmpl	$0,%ebx
+	je 	no_NOX
+	orl	$(EFER_NXE),%eax
+no_NOX:
 	wrmsr
 
 	/* Load %cr3. */
@@ -227,17 +236,6 @@ _TRMP_LABEL(mptramp_longmode)
 
 
 _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
-	/*
-	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
-	 * will raise a #GP. Avoid that by setting the NXE feature now.
-	 */
-	movl	_C_LABEL(cpu_feature)+2*4,%eax	/* cpu_feature[2] */
-	andl	$CPUID_NOX,%eax
-	jz	1f
-	movl	$MSR_EFER,%ecx
-	rdmsr
-	orl	$EFER_NXE,%eax	/* enable No-Execute feature */
-	wrmsr
 
 1:
 	/* Don't touch lapic until BP has done init sequence. */
