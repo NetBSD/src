@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.2 2016/05/11 13:55:28 nonaka Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2 2016/05/11 13:55:28 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,12 +110,9 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	struct nvme_softc *sc = &psc->psc_nvme;
 	struct pci_attach_args *pa = aux;
 	pcireg_t memtype;
-	char intr_xname[INTRDEVNAMEBUF];
-	char intrbuf[PCI_INTRSTR_LEN];
-	const char *intrstr = NULL;
 	bus_addr_t memaddr;
 	int flags, msixoff;
-	int i, nq, error;
+	int nq, error;
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
@@ -175,34 +172,10 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "unable to allocate ih memory\n");
 		goto intr_release;
 	}
-	i = 0;
-	if (!sc->sc_use_mq) {
-		for (; i < nq; i++) {
-			if (nvme_pci_mpsafe) {
-				pci_intr_setattr(pa->pa_pc, &psc->psc_intrs[i],
-				    PCI_INTR_MPSAFE, true);
-			}
-			snprintf(intr_xname, sizeof(intr_xname), "%s",
-			    device_xname(self));
-			sc->sc_ih[i] = pci_intr_establish_xname(pa->pa_pc,
-			    psc->psc_intrs[i], IPL_BIO, nvme_intr, sc,
-			    intr_xname);
-			if (sc->sc_ih[i] == NULL) {
-				aprint_error_dev(self,
-				    "unable to establish %s interrupt\n",
-				    intr_xname);
-				goto intr_disestablish;
-			}
-			intrstr = pci_intr_string(pa->pa_pc, psc->psc_intrs[i],
-			    intrbuf, sizeof(intrbuf));
-			aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-			    intrstr);
-		}
-	}
 
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
-		goto intr_disestablish;
+		goto intr_free;
 	}
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -211,9 +184,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	SET(sc->sc_flags, NVME_F_ATTACHED);
 	return;
 
-intr_disestablish:
-	while (--i >= 0)
-		pci_intr_disestablish(pa->pa_pc, sc->sc_ih[i]);
+intr_free:
 	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * sc->sc_nq);
 	sc->sc_nq = 0;
 intr_release:
