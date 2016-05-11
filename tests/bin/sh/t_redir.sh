@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.7 2016/05/09 22:34:37 kre Exp $
+# $NetBSD: t_redir.sh,v 1.8 2016/05/11 17:43:17 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -786,6 +786,20 @@ validate_fn_redirects_body()
 		${TEST_SH} -c \
 		   ". ./f-def; { f;f>/dev/null;}& wait; printf '%s\n' success10"
 
+	# This one tests the issue etcupdate had with the original 48875 fix
+	atf_check -s exit:0 -o inline:'Func a\nFunc b\nFunc c\n' -e empty \
+		${TEST_SH} -c '
+			f() {
+				echo Func "$1"
+			}
+			exec 3<&0 4>&1
+			( echo x-a; echo y-b; echo z-c ) |
+			while read A
+			do
+				B=${A#?-}
+				f "$B" <&3 >&4
+			done >&2'
+
 	# Tests with sh reading stdin, which is not quite the same internal
 	# mechanism.
 	echo ". ./f-def || echo >&2 FAIL
@@ -796,7 +810,7 @@ validate_fn_redirects_body()
 	echo '
 		. ./f-def || echo >&2 FAIL
 		f >&-
-		printf '%s\n' stdin2
+		printf "%s\n" stdin2
 	' | atf_check -s exit:0 -o inline:'stdin2\n' -e empty ${TEST_SH}
 
 	cat <<- 'DONE' > fgh.def
