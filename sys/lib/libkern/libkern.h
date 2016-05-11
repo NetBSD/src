@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.122 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: libkern.h,v 1.123 2016/05/11 03:17:22 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -337,15 +337,22 @@ tolower(int ch)
  */
 #ifdef __COVERITY__
 #define __validate_container_of(PTR, TYPE, FIELD) 0
+#define __validate_const_container_of(PTR, TYPE, FIELD) 0
 #else
 #define __validate_container_of(PTR, TYPE, FIELD)			\
     (0 * sizeof((PTR) - &((TYPE *)(((char *)(PTR)) -			\
+    offsetof(TYPE, FIELD)))->FIELD))
+#define __validate_const_container_of(PTR, TYPE, FIELD)			\
+    (0 * sizeof((PTR) - &((const TYPE *)(((const char *)(PTR)) -	\
     offsetof(TYPE, FIELD)))->FIELD))
 #endif
 
 #define	container_of(PTR, TYPE, FIELD)					\
     ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))			\
 	+ __validate_container_of(PTR, TYPE, FIELD))
+#define	const_container_of(PTR, TYPE, FIELD)				\
+    ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
+	+ __validate_const_container_of(PTR, TYPE, FIELD))
 
 #define	MTPRNG_RLEN		624
 struct mtprng_state {
