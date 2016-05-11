@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.4.1.2.1 2015/11/08 01:55:21 riz Exp $
+#	$NetBSD: Makefile,v 1.16.4.1.2.2 2016/05/11 10:02:29 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -72,12 +72,13 @@ SRCS=	cmd_args.c				\
 	refclock_wwvb.c				\
 	refclock_zyfer.c
 
+.include "${.CURDIR}/../Makefile.inc"
+
 LDADD+=		-L${LIBPARSE} -lparse -L${LIBISC} -liscntp -lm -lutil
 DPADD+=		${LIBPARSE}/libparse.a ${LIBISC}/libiscntp.a ${LIBOPTS}/libopts.a  ${LIBNTP}/libntp.a ${LIBM} ${LIBUTIL}
 
 COPTS.ntp_control.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-nonliteral :}
 
-.include "${.CURDIR}/../Makefile.inc"
 
 DIST=${IDIST}/ntpd
 
@@ -85,5 +86,10 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I.
 
 .PATH: ${DIST}
 YHEADER=1
+
+# XXXGCC5
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 53 && ${ACTIVE_CC} == "gcc"
+COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
+.endif
 
 .include <bsd.prog.mk>

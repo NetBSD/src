@@ -1,7 +1,8 @@
-/*	$NetBSD: kodDatabase.c,v 1.1.1.3.10.2 2015/11/08 01:55:35 riz Exp $	*/
+/*	$NetBSD: kodDatabase.c,v 1.1.1.3.10.3 2016/05/11 10:02:42 martin Exp $	*/
 
 #include "config.h"
 
+#include "ntp_workimpl.h"
 #include "ntp_types.h"
 #include "sntptest.h"
 #include "ntp_stdlib.h"
@@ -22,6 +23,7 @@ void test_DeleteEntry(void);
 void
 setUp(void) {
 	kod_init_kod_db("/dev/null", TRUE);
+	init_lib();
 }
 
 

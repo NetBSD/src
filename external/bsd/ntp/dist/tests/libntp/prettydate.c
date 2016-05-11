@@ -1,4 +1,4 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.3.10.2 2015/11/08 01:55:37 riz Exp $	*/
+/*	$NetBSD: prettydate.c,v 1.1.1.3.10.3 2016/05/11 10:02:43 martin Exp $	*/
 
 #include "config.h"
 
@@ -8,15 +8,26 @@
 
 #include "unity.h"
 
+void setUp(void);
 void test_ConstantDate(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void
 test_ConstantDate(void) {
 	const u_int32 HALF = 2147483648UL;
 
-	l_fp time = {{3485080800UL}, HALF}; /* 2010-06-09 14:00:00.5 */
+	l_fp e_time = {{3485080800UL}, HALF}; /* 2010-06-09 14:00:00.5 */
 
 	TEST_ASSERT_EQUAL_STRING("cfba1ce0.80000000  Wed, Jun  9 2010 14:00:00.500",
-		gmprettydate(&time));
+		gmprettydate(&e_time));
+	return;
 }

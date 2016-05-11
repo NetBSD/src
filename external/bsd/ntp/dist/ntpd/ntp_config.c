@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.8.4.2.2.1 2015/11/08 01:55:29 riz Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.8.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
 
 /* ntp_config.c
  *
@@ -55,7 +55,8 @@
 #include "ntp_parser.h"
 #include "ntpd-opts.h"
 
-int yyparse(void);
+extern int yyparse(void);
+
 /* Bug 2817 */
 #if defined(HAVE_SYS_MMAN_H)
 # include <sys/mman.h>
@@ -2982,6 +2983,18 @@ apply_enable_disable(
 
 		case T_Stats:
 			proto_config(PROTO_FILEGEN, enable, 0., NULL);
+			break;
+
+		case T_UEcrypto:
+			proto_config(PROTO_UECRYPTO, enable, 0., NULL);
+			break;
+
+		case T_UEcryptonak:
+			proto_config(PROTO_UECRYPTONAK, enable, 0., NULL);
+			break;
+
+		case T_UEdigest:
+			proto_config(PROTO_UEDIGEST, enable, 0., NULL);
 			break;
 
 #ifdef BC_LIST_FRAMEWORK_NOT_YET_USED

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.7.4.2.2.1 2015/11/08 01:55:29 riz Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.7.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -29,13 +29,15 @@
 #include "ntp_libopts.h"
 #include "ntpd-opts.h"
 
-/* there's a short treatise below what the thread stuff is for */
+/* there's a short treatise below what the thread stuff is for.
+ * [Bug 2954] enable the threading warm-up only for Linux.
+ */
 #if defined(HAVE_PTHREADS) && HAVE_PTHREADS && !defined(NO_THREADS)
 # ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 # endif
-# ifdef __linux__
-# define NEED_PTHREAD_WARMUP
+# if defined(linux)
+#  define NEED_PTHREAD_WARMUP
 # endif
 #endif
 
@@ -209,6 +211,11 @@ extern int syscall	(int, ...);
 
 
 #if !defined(SIM) && defined(SIGDIE1)
+static volatile int signalled	= 0;
+static volatile int signo	= 0;
+
+/* In an ideal world, 'finish_safe()' would declared as noreturn... */
+static	void		finish_safe	(int);
 static	RETSIGTYPE	finish		(int);
 #endif
 
@@ -273,6 +280,9 @@ static void	library_unexpected_error(const char *, int,
  * This uses only the standard pthread API and should work with all
  * implementations of pthreads. It is not necessary everywhere, but it's
  * cheap enough to go on nearly unnoticed.
+ *
+ * Addendum: Bug 2954 showed that the assumption that this should work
+ * with all OS is wrong -- at least FreeBSD bombs heavily.
  */
 #ifdef NEED_PTHREAD_WARMUP
 
@@ -295,11 +305,28 @@ my_pthread_warmup_worker(
 static void
 my_pthread_warmup(void)
 {
-	pthread_t thread;
-	int       rc;
+	pthread_t 	thread;
+	pthread_attr_t	thr_attr;
+	int       	rc;
+	
+	pthread_attr_init(&thr_attr);
+#if defined(HAVE_PTHREAD_ATTR_GETSTACKSIZE) && \
+    defined(HAVE_PTHREAD_ATTR_SETSTACKSIZE) && \
+    defined(PTHREAD_STACK_MIN)
+	rc = pthread_attr_setstacksize(&thr_attr, PTHREAD_STACK_MIN);
+	if (0 != rc)
+		msyslog(LOG_ERR,
+			"my_pthread_warmup: pthread_attr_setstacksize() -> %s",
+			strerror(rc));
+#endif
 	rc = pthread_create(
-		&thread, NULL, my_pthread_warmup_worker, NULL);
-	if (0 == rc) {
+		&thread, &thr_attr, my_pthread_warmup_worker, NULL);
+	pthread_attr_destroy(&thr_attr);
+	if (0 != rc) {
+		msyslog(LOG_ERR,
+			"my_pthread_warmup: pthread_create() -> %s",
+			strerror(rc));
+	} else {
 		pthread_cancel(thread);
 		pthread_join(thread, NULL);
 	}
@@ -307,6 +334,16 @@ my_pthread_warmup(void)
 
 #endif /*defined(NEED_PTHREAD_WARMUP)*/
 
+#ifdef NEED_EARLY_FORK
+static void
+dummy_callback(void) { return; }
+
+static void
+fork_nonchroot_worker(void) {
+	getaddrinfo_sometime("localhost", "ntp", NULL, INITIAL_DNS_RETRY,
+			     (gai_sometime_callback)&dummy_callback, NULL);
+}
+#endif /* NEED_EARLY_FORK */
 
 void
 parse_cmdline_opts(
@@ -650,6 +687,9 @@ ntpdmain(
 # endif
 
 # ifdef HAVE_WORKING_FORK
+	/* make sure the FDs are initialised */
+	pipe_fds[0] = -1;
+	pipe_fds[1] = -1;
 	do {					/* 'loop' once */
 		if (!HAVE_OPT( WAIT_SYNC ))
 			break;
@@ -903,6 +943,11 @@ ntpdmain(
 
 # ifdef HAVE_DROPROOT
 	if (droproot) {
+
+#ifdef NEED_EARLY_FORK
+		fork_nonchroot_worker();
+#endif
+
 		/* Drop super-user privileges and chroot now if the OS supports this */
 
 #  ifdef HAVE_LINUX_CAPABILITIES
@@ -1198,6 +1243,10 @@ int scmp_sc[] = {
 # ifdef HAVE_IO_COMPLETION_PORT
 
 	for (;;) {
+#if !defined(SIM) && defined(SIGDIE1)
+		if (signalled)
+			finish_safe(signo);
+#endif
 		GetReceivedBuffers();
 # else /* normal I/O */
 
@@ -1205,11 +1254,19 @@ int scmp_sc[] = {
 	was_alarmed = FALSE;
 
 	for (;;) {
+#if !defined(SIM) && defined(SIGDIE1)
+		if (signalled)
+			finish_safe(signo);
+#endif		
 		if (alarm_flag) {	/* alarmed? */
 			was_alarmed = TRUE;
 			alarm_flag = FALSE;
 		}
 
+		/* collect async name/addr results */
+		if (!was_alarmed)
+		    harvest_blocking_responses();
+		
 		if (!was_alarmed && !has_full_recv_buffer()) {
 			/*
 			 * Nothing to do.  Wait for something.
@@ -1324,9 +1381,9 @@ int scmp_sc[] = {
 /*
  * finish - exit gracefully
  */
-static RETSIGTYPE
-finish(
-	int sig
+static void
+finish_safe(
+	int	sig
 	)
 {
 	const char *sig_desc;
@@ -1347,6 +1404,16 @@ finish(
 	peer_cleanup();
 	exit(0);
 }
+
+static RETSIGTYPE
+finish(
+	int	sig
+	)
+{
+	signalled = 1;
+	signo = sig;
+}
+
 #endif	/* !SIM && SIGDIE1 */
 
 

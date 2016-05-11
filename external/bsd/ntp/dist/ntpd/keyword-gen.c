@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.4.4.2.2.1 2015/11/08 01:55:28 riz Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.4.4.2.2.2 2016/05/11 10:02:38 martin Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -204,6 +204,9 @@ struct key_tok ntp_keywords[] = {
 { "ntp",		T_Ntp,			FOLLBY_TOKEN },
 { "mode7",		T_Mode7,		FOLLBY_TOKEN },
 { "stats",		T_Stats,		FOLLBY_TOKEN },
+{ "unpeer_crypto_early",	T_UEcrypto,	FOLLBY_TOKEN },
+{ "unpeer_crypto_nak_early",	T_UEcryptonak,	FOLLBY_TOKEN },
+{ "unpeer_digest_early",	T_UEdigest,	FOLLBY_TOKEN },
 /* rlimit_option */
 { "memlock",		T_Memlock,		FOLLBY_TOKEN },
 { "stacksize",		T_Stacksize,		FOLLBY_TOKEN },

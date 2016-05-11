@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.7.4.2.2.1 2015/11/08 01:55:29 riz Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.7.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
 
 /* ntp_parser.y
  *
@@ -241,6 +241,9 @@
 %token	<Integer>	T_Ttl
 %token	<Integer>	T_Type
 %token	<Integer>	T_U_int			/* Not a token */
+%token	<Integer>	T_UEcrypto
+%token	<Integer>	T_UEcryptonak
+%token	<Integer>	T_UEdigest
 %token	<Integer>	T_Unconfig
 %token	<Integer>	T_Unpeer
 %token	<Integer>	T_Version
@@ -970,7 +973,14 @@ fudge_factor
 	|	fudge_factor_bool_keyword boolean
 			{ $$ = create_attr_ival($1, $2); }
 	|	T_Stratum T_Integer
-			{ $$ = create_attr_ival($1, $2); }
+		{
+			if ($2 >= 0 && $2 <= 16) {
+				$$ = create_attr_ival($1, $2);
+			} else {
+				$$ = NULL;
+				yyerror("fudge factor: stratum value not in [0..16], ignored");
+			}
+		}
 	|	T_Abbrev T_String
 			{ $$ = create_attr_sval($1, $2); }
 	|	T_Refid T_String
@@ -1078,6 +1088,9 @@ system_option_flag_keyword
 system_option_local_flag_keyword
 	:	T_Mode7
 	|	T_Stats
+	|	T_UEcrypto
+	|	T_UEcryptonak
+	|	T_UEdigest
 	;
 
 /* Tinker Commands

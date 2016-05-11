@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.1.1.3.10.2 2015/11/08 01:55:37 riz Exp $	*/
+/*	$NetBSD: statestr.c,v 1.1.1.3.10.3 2016/05/11 10:02:43 martin Exp $	*/
 
 #include "config.h"
 
@@ -8,10 +8,21 @@
 
 #include "unity.h"
 
+void setUp(void);
 void test_PeerRestart(void);
 void test_SysUnspecified(void);
 void test_ClockCodeExists(void);
 void test_ClockCodeUnknown(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
+
 
 // eventstr()
 void

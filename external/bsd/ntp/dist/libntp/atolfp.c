@@ -1,4 +1,4 @@
-/*	$NetBSD: atolfp.c,v 1.3.4.1.2.1 2015/11/08 01:55:28 riz Exp $	*/
+/*	$NetBSD: atolfp.c,v 1.3.4.1.2.2 2016/05/11 10:02:38 martin Exp $	*/
 
 /*
  * atolfp - convert an ascii string to an l_fp number
@@ -70,7 +70,7 @@ atolfp(
 
 	while (*cp != '\0' && (ind = strchr(digits, *cp)) != NULL) {
 		dec_i = (dec_i << 3) + (dec_i << 1);	/* multiply by 10 */
-		dec_i += (ind - digits);
+		dec_i += (u_long)(ind - digits);
 		cp++;
 	}
 
@@ -82,7 +82,7 @@ atolfp(
 		       && (ind = strchr(digits, *cp)) != NULL) {
 			ndec++;
 			dec_f = (dec_f << 3) + (dec_f << 1);	/* *10 */
-			dec_f += (ind - digits);
+			dec_f += (u_long)(ind - digits);
 			cp++;
 		}
 

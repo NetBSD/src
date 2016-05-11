@@ -1,4 +1,4 @@
-/*	$NetBSD: modetoa.c,v 1.1.1.3.10.2 2015/11/08 01:55:37 riz Exp $	*/
+/*	$NetBSD: modetoa.c,v 1.1.1.3.10.3 2016/05/11 10:02:42 martin Exp $	*/
 
 #include "config.h"
 
@@ -6,8 +6,18 @@
 
 #include "unity.h"
 
+void setUp(void);
 void test_KnownMode(void);
 void test_UnknownMode(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void

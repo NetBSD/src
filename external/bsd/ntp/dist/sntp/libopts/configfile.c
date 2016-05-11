@@ -1,4 +1,4 @@
-/*	$NetBSD: configfile.c,v 1.3.4.1.2.1 2015/11/08 01:55:34 riz Exp $	*/
+/*	$NetBSD: configfile.c,v 1.3.4.1.2.2 2016/05/11 10:02:42 martin Exp $	*/
 
 /**
  * \file configfile.c
@@ -184,9 +184,9 @@ optionFindValue(const tOptDesc * odesc, char const * name, char const * val)
     }
 
     else do {
-        tArgList * argl  = odesc->optCookie;
-        int        argct = argl->useCt;
-        const void **    poptv = (const void **)(argl->apzArgs);
+        tArgList *    argl  = odesc->optCookie;
+        int           argct = argl->useCt;
+        const void ** poptv = VOIDP(argl->apzArgs);
 
         if (argct == 0) {
             errno = ENOENT;
@@ -266,9 +266,9 @@ optionFindNextValue(const tOptDesc * odesc, const tOptionValue * pPrevVal,
     }
 
     else do {
-        tArgList * argl = odesc->optCookie;
-        int        ct   = argl->useCt;
-        const void **   poptv = (const void **)argl->apzArgs;
+        tArgList *    argl  = odesc->optCookie;
+        int           ct    = argl->useCt;
+        const void ** poptv = VOIDP(argl->apzArgs);
 
         while (--ct >= 0) {
             const tOptionValue * pOV = *(poptv++);
@@ -317,7 +317,7 @@ optionFindNextValue(const tOptDesc * odesc, const tOptionValue * pPrevVal,
 tOptionValue const *
 optionGetValue(tOptionValue const * oov, char const * vname)
 {
-    tArgList *     arg_list;
+    tArgList *           arg_list;
     const tOptionValue * res = NULL;
 
     if ((oov == NULL) || (oov->valType != OPARG_TYPE_HIERARCHY)) {
@@ -327,8 +327,8 @@ optionGetValue(tOptionValue const * oov, char const * vname)
     arg_list = oov->v.nestVal;
 
     if (arg_list->useCt > 0) {
-        int     ct     = arg_list->useCt;
-        const void ** ovlist = (const void **)(arg_list->apzArgs);
+        int           ct     = arg_list->useCt;
+        const void ** ovlist = VOIDP(arg_list->apzArgs);
 
         if (vname == NULL) {
             res = (const tOptionValue *)*ovlist;
@@ -376,9 +376,9 @@ optionGetValue(tOptionValue const * oov, char const * vname)
 tOptionValue const *
 optionNextValue(tOptionValue const * ov_list,tOptionValue const * oov )
 {
-    tArgList *     arg_list;
+    tArgList *           arg_list;
     const tOptionValue * res = NULL;
-    int            err = EINVAL;
+    int                  err = EINVAL;
 
     if ((ov_list == NULL) || (ov_list->valType != OPARG_TYPE_HIERARCHY)) {
         errno = EINVAL;
@@ -386,8 +386,8 @@ optionNextValue(tOptionValue const * ov_list,tOptionValue const * oov )
     }
     arg_list = ov_list->v.nestVal;
     {
-        int     ct    = arg_list->useCt;
-        const void ** o_list = (const void **)(arg_list->apzArgs);
+        int           ct     = arg_list->useCt;
+        const void ** o_list = VOIDP(arg_list->apzArgs);
 
         while (ct-- > 0) {
             const tOptionValue * nov = *(o_list++);
