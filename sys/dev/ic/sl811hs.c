@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.61 2016/05/11 06:07:52 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.62 2016/05/11 21:02:10 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.61 2016/05/11 06:07:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.62 2016/05/11 21:02:10 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -493,7 +493,6 @@ static void slhci_enter_xfers(struct slhci_softc *);
 static void slhci_queue_timed(struct slhci_softc *, struct slhci_pipe *);
 static void slhci_xfer_timer(struct slhci_softc *, struct slhci_pipe *);
 
-static void slhci_do_repeat(struct slhci_softc *, struct usbd_xfer *);
 static void slhci_callback_schedule(struct slhci_softc *);
 static void slhci_do_callback_schedule(struct slhci_softc *);
 #if 0
@@ -1474,23 +1473,18 @@ repeat:
 void
 slhci_do_callback(struct slhci_softc *sc, struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
-
-	int repeat;
 
 	start_cc_time(&t_callback, (u_int)xfer);
 	mutex_exit(&sc->sc_intr_lock);
 
 	mutex_enter(&sc->sc_lock);
-	repeat = xfer->ux_pipe->up_repeat;
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	mutex_enter(&sc->sc_intr_lock);
 	stop_cc_time(&t_callback);
-
-	if (repeat && !sc->sc_bus.ub_usepolling)
-		slhci_do_repeat(sc, xfer);
 }
 
 int
@@ -2449,30 +2443,6 @@ slhci_xfer_timer(struct slhci_softc *sc, struct slhci_pipe *spipe)
 
 	FIND_TO(q, t, spp, spp->to_frame >= spipe->to_frame);
 	gcq_insert_before(q, &spipe->to);
-}
-
-static void
-slhci_do_repeat(struct slhci_softc *sc, struct usbd_xfer *xfer)
-{
-	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
-	struct slhci_transfers *t;
-	struct slhci_pipe *spipe;
-
-	t = &sc->sc_transfers;
-	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
-
-	if (xfer == t->rootintr)
-		return;
-
-	DLOG(D_TRACE, "REPEAT: xfer %p actlen %d frame %u now %u",
-	    xfer, xfer->ux_actlen, spipe->frame, sc->sc_transfers.frame);
-
-	xfer->ux_actlen = 0;
-	spipe->xfer = xfer;
-	if (spipe->tregs[LEN])
-		KASSERT(spipe->buffer == xfer->ux_buf);
-	slhci_queue_timed(sc, spipe);
-	slhci_dotransfer(sc);
 }
 
 static void
