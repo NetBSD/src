@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq_subs.c,v 1.1.1.3.4.1 2014/12/24 00:05:22 riz Exp $	*/
+/*	$NetBSD: libntpq_subs.c,v 1.1.1.3.4.2 2016/05/11 11:35:39 martin Exp $	*/
 
 /*****************************************************************************
  *
@@ -44,7 +44,7 @@ ntpq_doquerylist(
 	associd_t associd,
 	int auth,
 	u_short *rstatus,
-	int *dsize,
+	size_t *dsize,
 	const char **datap
 	)
 {

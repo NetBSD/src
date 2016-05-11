@@ -1,4 +1,4 @@
-/*	$NetBSD: refnumtoa.c,v 1.1.1.3.8.2 2015/11/08 01:51:16 riz Exp $	*/
+/*	$NetBSD: refnumtoa.c,v 1.1.1.3.8.3 2016/05/11 11:35:42 martin Exp $	*/
 
 #include "config.h"
 
@@ -11,8 +11,18 @@
 /* Might need to be updated if a new refclock gets this id. */
 static const int UNUSED_REFCLOCK_ID = 250;
 
+void setUp(void);
 void test_LocalClock(void);
 void test_UnknownId(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void
@@ -28,7 +38,7 @@ test_LocalClock(void) {
 	sockaddr_u address;
 	address.sa4.sin_family = AF_INET;
 	address.sa4.sin_addr.s_addr = htonl(addr);
-	
+
 	char stringStart[100]= "";
 
 	strcat(stringStart, clockname(REFCLK_LOCALCLOCK));
@@ -37,7 +47,7 @@ test_LocalClock(void) {
 	char * expected = stringStart;
 
 	TEST_ASSERT_EQUAL_STRING(expected, refnumtoa(&address));
-#else	
+#else
 	TEST_IGNORE_MESSAGE("REFCLOCK NOT DEFINED, SKIPPING TEST");
 #endif	/* REFCLOCK */
 }
@@ -53,16 +63,16 @@ test_UnknownId(void) {
 	sockaddr_u address;
 	address.sa4.sin_family = AF_INET;
 	address.sa4.sin_addr.s_addr = htonl(addr);
-	
+
 	char stringStart[100]= "REFCLK(";
-	char value[100] ;	
+	char value[100] ;
 	snprintf(value, sizeof(value), "%d", UNUSED_REFCLOCK_ID);
 	strcat(stringStart,value);
 	strcat(stringStart,",4)");
 	char * expected = stringStart;
 
 	TEST_ASSERT_EQUAL_STRING(expected, refnumtoa(&address));
-#else 	
+#else
 	TEST_IGNORE_MESSAGE("REFCLOCK NOT DEFINED, SKIPPING TEST");
 #endif	/* REFCLOCK */
 }

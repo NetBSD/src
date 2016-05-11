@@ -1,4 +1,4 @@
-/*	$NetBSD: nested.c,v 1.5.4.2 2015/11/08 01:51:13 riz Exp $	*/
+/*	$NetBSD: nested.c,v 1.5.4.3 2016/05/11 11:35:42 martin Exp $	*/
 
 
 /**
@@ -861,7 +861,7 @@ LOCAL int
 get_special_char(char const ** ppz, int * ct)
 {
     char const * pz = *ppz;
-    char *rz;
+    char *       rz;
 
     if (*ct < 3)
         return '&';
@@ -876,7 +876,7 @@ get_special_char(char const ** ppz, int * ct)
             pz++;
         }
         retch = (int)strtoul(pz, &rz, base);
-	pz = rz;
+        pz = rz;
         if (*pz != ';')
             return '&';
         base = (int)(++pz - *ppz);

@@ -1,10 +1,11 @@
-/*	$NetBSD: rc_cmdlength.c,v 1.1.1.1.8.2 2015/11/08 01:51:17 riz Exp $	*/
+/*	$NetBSD: rc_cmdlength.c,v 1.1.1.1.8.3 2016/05/11 11:35:43 martin Exp $	*/
 
 #include "config.h"
 
 #include "ntp.h"
 #include "ntp_calendar.h"
 #include "ntp_stdlib.h"
+#include "rc_cmdlength.h"
 
 #include "unity.h"
 

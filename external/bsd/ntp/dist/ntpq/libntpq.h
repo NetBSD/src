@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.h,v 1.1.1.3.4.2 2015/11/08 01:51:09 riz Exp $	*/
+/*	$NetBSD: libntpq.h,v 1.1.1.3.4.3 2016/05/11 11:35:39 martin Exp $	*/
 
 /*****************************************************************************
  *
@@ -108,4 +108,4 @@ extern int ntpq_read_assoc_clockvars( associd_t associd, char *resultbuf, int ma
 extern int ntpq_dogetassoc(void);
 extern char ntpq_decodeaddrtype(sockaddr_u *sock);
 extern int ntpq_doquerylist(struct ntpq_varlist *, int, associd_t, int,
-			    u_short *, int *, const char **datap);
+			    u_short *, size_t *, const char **datap);
