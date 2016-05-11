@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.85 2016/05/08 08:22:58 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.86 2016/05/11 19:35:08 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -187,6 +187,9 @@
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
+/* 32bit version of PG_NX */
+#define PG_NX32	0x80000000
+
 #if L2_SLOT_KERNBASE > 0
 #define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
 #else
@@ -286,6 +289,7 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif /* NLAPIC > 0 */
 
+	.globl	_C_LABEL(nox_flag)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
@@ -298,6 +302,9 @@ END(lapic_isr)
 	.globl	_C_LABEL(gdtstore)
 	.globl	_C_LABEL(cputype)
 
+	.type	_C_LABEL(nox_flag), @object
+LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
+END(nox_flag)
 	.type	_C_LABEL(cputype), @object
 LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
@@ -527,6 +534,16 @@ biosbasemem_finished:
 	 */
 	movl	$RELOC(tmpstk),%esp
 
+	/*
+	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 */
+	movl	$0x80000001,%eax
+	cpuid
+	andl	$CPUID_NOX,%edx
+	jz	no_NOX
+	movl	$PG_NX32,RELOC(nox_flag)
+no_NOX:
+
 /*
  * There are four levels of pages in amd64: PML4 -> PDP -> PD -> PT. They will
  * be referred to as: L4 -> L3 -> L2 -> L1.
@@ -707,13 +724,18 @@ biosbasemem_finished:
 	movl	%eax,%cr4
 
 	/*
-	 * 2. Set Long Mode Enable in EFER. Also enable the
-	 *    syscall extensions.
+	 * 2. Set Long Mode Enable in EFER. Also enable the syscall extensions,
+	 *    and NOX if available.
 	 */
 	movl	$MSR_EFER,%ecx
 	rdmsr
 	xorl	%eax,%eax	/* XXX */
 	orl	$(EFER_LME|EFER_SCE),%eax
+	movl	RELOC(nox_flag),%ebx
+	cmpl	$0,%ebx
+	je 	skip_NOX
+	orl	$(EFER_NXE),%eax
+skip_NOX:
 	wrmsr
 
 	/*
