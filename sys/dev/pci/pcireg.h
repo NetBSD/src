@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.112 2015/11/18 04:24:02 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.113 2016/05/11 05:12:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1889,5 +1889,39 @@ struct pci_rom {
 #define	PCI_L1PM_CTL2	0x0c	/* Control Register 2 */
 #define	PCI_L1PM_CTL2_TPOSCALE	__BITS(1, 0)	/* T_POWER_ON Scale */
 #define	PCI_L1PM_CTL2_TPOVAL	__BITS(7, 3)	/* T_POWER_ON Value */
+
+/*
+ * Extended capability ID: 0x001f
+ * Precision Time Management
+ */
+#define	PCI_PTM_CAP	0x04	/* Capabilities Register */
+#define	PCI_PTM_CAP_REQ		__BIT(0)	/* PTM Requester Capable */
+#define	PCI_PTM_CAP_RESP	__BIT(1)	/* PTM Responder Capable */
+#define	PCI_PTM_CAP_ROOT	__BIT(2)	/* PTM Root Capable */
+#define	PCI_PTM_CAP_LCLCLKGRNL	__BITS(15, 8)	/* Local Clock Granularity */
+#define	PCI_PTM_CTL	0x08	/* Control Register */
+#define	PCI_PTM_CTL_EN		__BIT(0)	/* PTM Enable */
+#define	PCI_PTM_CTL_ROOTSEL	__BIT(1)	/* Root Select */
+#define	PCI_PTM_CTL_EFCTGRNL	__BITS(15, 8)	/* Effective Granularity */
+
+/*
+ * Extended capability ID: 0x0020
+ * M-PCIe
+ */
+
+/*
+ * Extended capability ID: 0x0021
+ * Function Reading Status Queueing
+ */
+
+/*
+ * Extended capability ID: 0x0022
+ * Readiness Time Reporting
+ */
+
+/*
+ * Extended capability ID: 0x0023
+ * Designated Vendor-Specific
+ */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
