@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.394 2016/05/06 10:56:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.395 2016/05/11 02:23:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.394 2016/05/06 10:56:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.395 2016/05/11 02:23:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5172,7 +5172,11 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 
 			preg = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 			    WM_PCI_DESCRING_STATUS);
-			if (preg & DESCRING_STATUS_FLUSH_REQ) {
+			reg = CSR_READ(sc, WMREG_TDLEN(0));
+			printf("XXX RST: FLUSH = %lu, len = %u\n",
+			    preg & DESCRING_STATUS_FLUSH_REQ, reg);
+			if (((preg & DESCRING_STATUS_FLUSH_REQ) != 0)
+			    && (reg != 0)) {
 				/* TX */
 				printf("XXX need TX flush (reg = %08x)\n",
 				    preg);
