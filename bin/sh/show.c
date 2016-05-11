@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.32 2016/02/29 23:52:04 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.33 2016/05/11 17:28:30 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.32 2016/02/29 23:52:04 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.33 2016/05/11 17:28:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -502,21 +502,7 @@ opentrace(void)
 		/* leave open because libedit might be using it */
 		return;
 	}
-#ifdef not_this_way
-	{
-		char *p;
-		if ((p = getenv("HOME")) == NULL) {
-			if (geteuid() == 0)
-				p = "/";
-			else
-				p = "/tmp";
-		}
-		scopy(p, s);
-		strcat(s, "/trace");
-	}
-#else
 	snprintf(s, sizeof(s), "./trace.%d", (int)getpid());
-#endif /* not_this_way */
 	if (tracefile) {
 		if (!freopen(s, "a", tracefile)) {
 			fprintf(stderr, "Can't re-open %s\n", s);
