@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.397 2015/10/25 22:48:23 khorben Exp $
+# $NetBSD: ALL,v 1.398 2016/05/11 02:09:10 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.397 $"
+#ident 		"ALL-$Revision: 1.398 $"
 
 maxusers	64		# estimated number of users
 
@@ -610,8 +610,8 @@ intelfb* 	at intelfbbus?
 radeon* 	at pci? dev ? function ?
 radeondrmkmsfb* at radeonfbbus?
 
-#nouveau*	at pci? dev ? function ?
-#nouveaufb*	at nouveaufbbus
+nouveau*	at pci? dev ? function ?
+nouveaufb*	at nouveaufbbus?
 
 # DRMUMS drivers
 viadrmums* 	at drm?
@@ -2253,7 +2253,6 @@ options NOTDEF_DEBUG
 options NOT_DEBUG
 options NSIODEBUG
 options NTFS_DEBUG
-options NV_DEBUG
 options OBOE_DEBUG
 options OFW_DEBUG
 options OHCI_DEBUG
