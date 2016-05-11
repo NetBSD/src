@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.395 2016/05/11 02:23:50 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.396 2016/05/11 03:46:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.395 2016/05/11 02:23:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.396 2016/05/11 03:46:06 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2616,8 +2616,6 @@ wm_detach(device_t self, int flags __unused)
 	}
 	/* Must unlock here */
 
-	wm_free_txrx_queues(sc);
-
 	/* Disestablish the interrupt handler */
 	for (i = 0; i < sc->sc_nintrs; i++) {
 		if (sc->sc_ihs[i] != NULL) {
@@ -2626,6 +2624,8 @@ wm_detach(device_t self, int flags __unused)
 		}
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
+
+	wm_free_txrx_queues(sc);
 
 	/* Unmap the registers */
 	if (sc->sc_ss) {
