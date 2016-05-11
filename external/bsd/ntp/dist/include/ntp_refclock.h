@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.1.1.3.4.1 2014/12/24 00:05:16 riz Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.1.1.3.4.2 2016/05/11 11:35:37 martin Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -107,7 +107,8 @@ struct refclockio {
 	int	active;		/* nonzero when in use */
 
 #ifdef HAVE_IO_COMPLETION_PORT
-	void *	device_context;	/* device-related data for i/o subsystem */
+	void *	ioreg_ctx;	/* IO registration context */
+	void *	device_ctx;	/* device-related data for i/o subsystem */
 #endif
 };
 
@@ -222,7 +223,7 @@ extern	void	refclock_buginfo(sockaddr_u *,
 extern	void	refclock_control(sockaddr_u *,
 				 const struct refclockstat *,
 				 struct refclockstat *);
-extern	int	refclock_open	(char *, u_int, u_int);
+extern	int	refclock_open	(const char *, u_int, u_int);
 extern	int	refclock_setup	(int, u_int, u_int);
 extern	void	refclock_timer	(struct peer *);
 extern	void	refclock_transmit(struct peer *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmacmd5.c,v 1.1.1.2.4.1 2014/12/24 00:05:17 riz Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.1.1.2.4.2 2016/05/11 11:35:37 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -147,5 +147,5 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_MD5_DIGESTLENGTH);
 	isc_hmacmd5_sign(ctx, newdigest);
-	return (ISC_TF(memcmp(digest, newdigest, len) == 0));
+	return (ISC_TF(isc_tsmemcmp(digest, newdigest, len) == 0));
 }

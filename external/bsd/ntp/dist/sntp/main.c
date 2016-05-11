@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10.4.2 2015/04/23 18:53:05 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.10.4.3 2016/05/11 11:35:41 martin Exp $	*/
 
 #include <config.h>
 
@@ -1137,7 +1137,7 @@ generate_pkt (
 	if (pkt_key != NULL) {
 		x_pkt->exten[0] = htonl(key_id);
 		mac_size = 20; /* max room for MAC */
-		mac_size = make_mac((char *)x_pkt, pkt_len, mac_size,
+		mac_size = make_mac(x_pkt, pkt_len, mac_size,
 				    pkt_key, (char *)&x_pkt->exten[1]);
 		if (mac_size > 0)
 			pkt_len += mac_size + 4;

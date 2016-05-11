@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.h,v 1.4.4.1 2014/12/24 00:05:22 riz Exp $	*/
+/*	$NetBSD: ntpq.h,v 1.4.4.2 2016/05/11 11:35:39 martin Exp $	*/
 
 /*
  * ntpq.h - definitions of interest to ntpq
@@ -14,6 +14,8 @@
 #include "ntp_assert.h"
 #include "ntp_control.h"
 #include "lib_strbuf.h"
+
+#include "ntpq-opts.h"
 
 /*
  * Maximum number of arguments
@@ -128,6 +130,7 @@ extern chost	chosts[];
 
 extern int	interactive;	/* are we prompting? */
 extern int	old_rv;		/* use old rv behavior? --old-rv */
+extern te_Refid	drefid;		/* How should we display a refid? */
 extern u_int	assoc_cache_slots;/* count of allocated array entries */
 extern u_int	numassoc;	/* number of cached associations */
 extern u_int	numhosts;
@@ -138,19 +141,23 @@ extern	int	getnetnum	(const char *, sockaddr_u *, char *, int);
 extern	void	sortassoc	(void);
 extern	void	show_error_msg	(int, associd_t);
 extern	int	dogetassoc	(FILE *);
-extern	int	doquery		(int, associd_t, int, int, const char *,
-				 u_short *, int *, const char **);
-extern	int	doqueryex	(int, associd_t, int, int, const char *,
-				 u_short *, int *, const char **, int);
+extern	int	doquery		(int, associd_t, int, size_t, const char *,
+				 u_short *, size_t *, const char **);
+extern	int	doqueryex	(int, associd_t, int, size_t, const char *,
+				 u_short *, size_t *, const char **, int);
 extern	const char * nntohost	(sockaddr_u *);
 extern	const char * nntohost_col (sockaddr_u *, size_t, int);
 extern	const char * nntohostp	(sockaddr_u *);
 extern	int	decodets	(char *, l_fp *);
 extern	int	decodeuint	(char *, u_long *);
-extern	int	nextvar		(int *, const char **, char **, char **);
+extern	int	nextvar		(size_t *, const char **, char **, char **);
 extern	int	decodetime	(char *, l_fp *);
-extern	void	printvars	(int, const char *, int, int, int, FILE *);
+extern	void	printvars	(size_t, const char *, int, int, int, FILE *);
 extern	int	decodeint	(char *, long *);
-extern	void	makeascii	(int, const char *, FILE *);
+extern	void	makeascii	(size_t, const char *, FILE *);
 extern	const char * trunc_left	(const char *, size_t);
 extern	const char * trunc_right(const char *, size_t);
+
+typedef	int/*BOOL*/ (*Ctrl_C_Handler)(void);
+extern	int/*BOOL*/ 	push_ctrl_c_handler(Ctrl_C_Handler);
+extern	int/*BOOL*/ 	pop_ctrl_c_handler(Ctrl_C_Handler);

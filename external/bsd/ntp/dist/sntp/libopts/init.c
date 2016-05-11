@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.2.6.2 2015/11/08 01:51:13 riz Exp $	*/
+/*	$NetBSD: init.c,v 1.2.6.3 2016/05/11 11:35:42 martin Exp $	*/
 
 /**
  * \file initialize.c
@@ -99,8 +99,7 @@ validate_struct(tOptions * opts, char const * pname)
      */
     if (opts->pzProgName == NULL) {
         char const *  pz = strrchr(pname, DIRCH);
-        char const ** pp =
-            VOIDP(&(opts->pzProgName));
+        char const ** pp = VOIDP(&(opts->pzProgName));
 
         if (pz != NULL)
             *pp = pz+1;

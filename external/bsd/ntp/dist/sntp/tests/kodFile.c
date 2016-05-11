@@ -1,4 +1,4 @@
-/*	$NetBSD: kodFile.c,v 1.1.1.3.8.2 2015/11/08 01:51:14 riz Exp $	*/
+/*	$NetBSD: kodFile.c,v 1.1.1.3.8.3 2016/05/11 11:35:42 martin Exp $	*/
 
 #include "config.h"
 
@@ -30,6 +30,7 @@ void
 setUp(void) {
 	kod_db_cnt = 0;
 	kod_db = NULL;
+	init_lib();
 }
 
 

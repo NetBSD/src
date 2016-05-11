@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2.4.1 2014/12/24 00:05:17 riz Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.2.4.2 2016/05/11 11:35:37 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -408,7 +408,7 @@ isc__buffer_putmem(isc_buffer_t *b, const unsigned char *base,
 
 void
 isc__buffer_putstr(isc_buffer_t *b, const char *source) {
-	unsigned int l;
+	size_t l;
 	unsigned char *cp;
 
 	REQUIRE(ISC_BUFFER_VALID(b));
@@ -423,7 +423,7 @@ isc__buffer_putstr(isc_buffer_t *b, const char *source) {
 
 	cp = isc_buffer_used(b);
 	memcpy(cp, source, l);
-	b->used += l;
+	b->used += (u_int)l; /* checked above - no overflow here */
 }
 
 isc_result_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_computime.c,v 1.1.1.1.26.2 2015/04/23 18:53:02 snj Exp $	*/
+/*	$NetBSD: clk_computime.c,v 1.1.1.1.26.3 2016/05/11 11:35:38 martin Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -159,7 +159,7 @@ inp_computime(
 {
 	unsigned int rtc;
 
-	parseprintf(DD_PARSE, ("inp_computime(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("inp_computime(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	switch (ch)
 	{

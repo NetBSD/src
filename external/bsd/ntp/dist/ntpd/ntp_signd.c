@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_signd.c,v 1.1.1.2.4.1 2014/12/24 00:05:21 riz Exp $	*/
+/*	$NetBSD: ntp_signd.c,v 1.1.1.2.4.2 2016/05/11 11:35:39 martin Exp $	*/
 
 /* Copyright 2008, Red Hat, Inc.
    Copyright 2008, Andrew Tridgell.
@@ -68,7 +68,7 @@ write_all(int fd, const void *buf, size_t len)
 	while (len) {
 		int n = write(fd, buf, len);
 		if (n <= 0) return total;
-		buf = n + (char *)buf;
+		buf = n + (const char *)buf;
 		len -= n;
 		total += n;
 	}
@@ -112,9 +112,10 @@ recv_packet(int fd, char **buf, uint32_t *len)
 {
 	if (read_all(fd, len, sizeof(*len)) != sizeof(*len)) return -1;
 	*len = ntohl(*len);
-	(*buf) = emalloc(*len);
+	*buf = emalloc(*len);
 	if (read_all(fd, *buf, *len) != *len) {
 		free(*buf);
+		*buf = NULL;
 		return -1;
 	}
 	return 0;

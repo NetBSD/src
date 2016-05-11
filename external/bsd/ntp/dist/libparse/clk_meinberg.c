@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.2.26.3 2015/11/08 01:51:07 riz Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.2.26.4 2016/05/11 11:35:38 martin Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
@@ -436,7 +436,7 @@ mbg_input(
 {
 	unsigned int rtc;
 
-	parseprintf(DD_PARSE, ("mbg_input(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+	parseprintf(DD_PARSE, ("mbg_input(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
 	switch (ch)
 	{
@@ -604,7 +604,7 @@ gps_input(
 
   msg_buf = (struct msg_buf *)parseio->parse_pdata;
 
-  parseprintf(DD_PARSE, ("gps_input(0x%lx, 0x%x, ...)\n", (long)parseio, ch));
+  parseprintf(DD_PARSE, ("gps_input(0x%p, 0x%x, ...)\n", (void*)parseio, ch));
 
   if (!msg_buf)
     return PARSE_INP_SKIP;

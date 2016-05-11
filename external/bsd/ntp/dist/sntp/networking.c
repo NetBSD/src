@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.7.4.3 2015/11/08 01:51:11 riz Exp $	*/
+/*	$NetBSD: networking.c,v 1.7.4.4 2016/05/11 11:35:41 martin Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -138,7 +138,7 @@ process_pkt (
 		return PACKET_UNUSEABLE;
 	}
 	/* Note: pkt_len must be a multiple of 4 at this point! */
-	packet_end = (u_int32*)((char*)rpkt + pkt_len);
+	packet_end = (void*)((char*)rpkt + pkt_len);
 	exten_end = skip_efields(rpkt->exten, packet_end);
 	if (NULL == exten_end) {
 		msyslog(LOG_ERR,
@@ -186,7 +186,7 @@ process_pkt (
 		** keyfile and compare those md5sums.
 		*/
 		mac_size = exten_len << 2;
-		if (!auth_md5((char *)rpkt, pkt_len - mac_size,
+		if (!auth_md5(rpkt, pkt_len - mac_size,
 			      mac_size - 4, pkt_key)) {
 			is_authentic = FALSE;
 			break;

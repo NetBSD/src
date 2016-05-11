@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.85 2016/05/10 19:04:36 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.86 2016/05/11 11:35:29 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4237,4 +4237,20 @@ sys/fs/tmpfs/tmpfs_vnops.c			1.124, 1.125
 
 	Implement most of mount -ur functionality for tmpfs.
 	[joerg, ticket #1163]
+
+external/gpl3/gcc.old/dist/gcc/config.gcc	1.5 (via patch)
+
+	Re-order includes so that ARM_TARGET2_DWARF_FORMAT takes effect
+
+	Fixes PR/51066: C++ text relocations
+	[skrll, ticket #1160]
+
+usr.bin/config/config.5				1.35
+usr.bin/config/gram.y				1.53
+usr.bin/config/sem.c				1.74
+
+	Extend syntax of config phrase, a quoted string instead of a
+	device name is passed as root specification string.
+	This can be used to specify a wedge by name.
+	[mlelstv, ticket #1164]
 
