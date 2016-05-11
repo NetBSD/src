@@ -1,4 +1,4 @@
-/*	$NetBSD: mstolfp.c,v 1.3.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: mstolfp.c,v 1.3.4.1.2.1 2016/05/11 10:02:38 martin Exp $	*/
 
 /*
  * mstolfp - convert an ascii string in milliseconds to an l_fp number
@@ -72,8 +72,7 @@ mstolfp(
 	 */
 	*bp++ = '.';
 	if ((cpdec - cp) < 3) {
-		register int i = 3 - (cpdec - cp);
-
+		size_t i = 3 - (cpdec - cp);
 		do {
 			*bp++ = '0';
 		} while (--i > 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_local.c,v 1.1.1.1.26.1.2.1 2015/11/08 01:55:29 riz Exp $	*/
+/*	$NetBSD: refclock_local.c,v 1.1.1.1.26.1.2.2 2016/05/11 10:02:39 martin Exp $	*/
 
 
 /*
@@ -207,6 +207,7 @@ local_poll(
 	pp->disp = 0;
 	pp->jitter = 0;
 #else /* KERNEL_PLL LOCKCLOCK */
+	pp->leap = LEAP_NOWARNING;
 	pp->disp = DISPERSION;
 	pp->jitter = 0;
 #endif /* KERNEL_PLL LOCKCLOCK */

@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.2.6.1 2014/12/24 00:05:17 riz Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.2.6.1.2.1 2016/05/11 10:02:37 martin Exp $	*/
 
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -280,7 +280,7 @@ isc_backtrace_getsymbol(const void *addr, const char **symbolp,
 		result = ISC_R_NOTFOUND;
 	else {
 		*symbolp = found->symbol;
-		*offsetp = (const char *)addr - (char *)found->addr;
+		*offsetp = (u_long)((const char *)addr - (char *)found->addr);
 	}
 
 	return (result);

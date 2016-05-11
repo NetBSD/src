@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.2.6.2.2.1 2015/11/08 01:55:28 riz Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.2.6.2.2.2 2016/05/11 10:02:38 martin Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -459,7 +459,7 @@ fork_blocking_child(
 		}
 	}
 
-#ifdef HAVE_DROPROOT
+#if defined(HAVE_DROPROOT) && !defined(NEED_EARLY_FORK)
 	/* defer the fork until after root is dropped */
 	if (droproot && !root_dropped)
 		return;
@@ -547,6 +547,11 @@ fork_blocking_child(
 	exit_worker(blocking_child_common(c));
 }
 
+
+void worker_global_lock(int inOrOut)
+{
+	(void)inOrOut;
+}
 
 #else	/* !WORK_FORK follows */
 char work_fork_nonempty_compilation_unit;
