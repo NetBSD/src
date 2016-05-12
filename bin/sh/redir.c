@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.46 2016/05/09 20:50:08 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.47 2016/05/12 13:31:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.46 2016/05/09 20:50:08 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.47 2016/05/12 13:31:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,7 @@ STATIC void fd_rename(struct redirtab *, int, int);
 STATIC void free_rl(struct redirtab *, int);
 STATIC void openredirect(union node *, char[10], int);
 STATIC int openhere(const union node *);
+STATIC int copyfd(int, int, int);
 STATIC void find_big_fd(void);
 
 STATIC const struct renamelist *
@@ -188,7 +189,9 @@ redirect(union node *redir, int flags)
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
 		    n->ndup.dupfd == fd) {
 			/* redirect from/to same file descriptor */
-			fcntl(fd, F_SETFD, 0);	/* make sure it stays open */
+			/* make sure it stays open */
+			if (fcntl(fd, F_SETFD, 0) < 0)
+				error("fd %d: %s", fd, strerror(errno));
 			continue;
 		}
 
@@ -301,11 +304,12 @@ openredirect(union node *redir, char memory[10], int flags)
 			if (fd < 10 && redir->ndup.dupfd < 10 &&
 			    memory[redir->ndup.dupfd])
 				memory[fd] = 1;
-			else
-				copyfd(redir->ndup.dupfd, fd, 1, (flags &
-				    (REDIR_PUSH|REDIR_KEEP)) == REDIR_PUSH);
+			else if (copyfd(redir->ndup.dupfd, fd,
+			    (flags&(REDIR_PUSH|REDIR_KEEP)) == REDIR_PUSH) < 0)
+				error("Redirect (from %d to %d) failed: %s",
+				    redir->ndup.dupfd, fd, strerror(errno));
 		} else
-			close(fd);
+			(void) close(fd);
 		INTON;
 		return;
 	case NHERE:
@@ -318,7 +322,13 @@ openredirect(union node *redir, char memory[10], int flags)
 
 	cloexec = fd > 2 && (flags & REDIR_KEEP) == 0;
 	if (f != fd) {
-		copyfd(f, fd, 1, cloexec);
+		if (copyfd(f, fd, cloexec) < 0) {
+			int e = errno;
+
+			close(f);
+			error("redirect reassignment (fd %d) failed: %s", fd,
+			    strerror(e));
+		}
 		close(f);
 	} else if (cloexec)
 		(void)fcntl(f, F_SETFD, FD_CLOEXEC);
@@ -441,36 +451,33 @@ clearredir(int vforked)
 
 
 /*
- * Copy a file descriptor to be >= to.  Returns -1
- * if the source file descriptor is closed, EMPTY if there are no unused
- * file descriptors left.
+ * Copy a file descriptor to be == to.
+ * cloexec indicates if we want close-on-exec or not.
+ * Returns -1 if any error occurs.
  */
 
-int
-copyfd(int from, int to, int equal, int cloexec)
+STATIC int
+copyfd(int from, int to, int cloexec)
 {
 	int newfd;
 
-	if (cloexec && to > 2) {
-	    if (equal)
-		    newfd = dup3(from, to, O_CLOEXEC);
-	    else
-		    newfd = fcntl(from, F_DUPFD_CLOEXEC, to);
-	} else {
-	    if (equal)
-		    newfd = dup2(from, to);
-	    else
-		    newfd = fcntl(from, F_DUPFD, to);
-	}
-	if (newfd < 0) {
-		if (errno == EMFILE)
-			return EMPTY;
-		else
-			error("%d: %s", from, strerror(errno));
-	}
+	if (cloexec && to > 2)
+		newfd = dup3(from, to, O_CLOEXEC);
+	else
+		newfd = dup2(from, to);
+
 	return newfd;
 }
 
+/*
+ * rename fd from to be fd to (closing from).
+ * close-on-exec is never set on 'to' (unless
+ * from==to and it was set on from) - ie: a no-op
+ * returns to (or errors() if an error occurs).  
+ *
+ * This is mostly used for rearranging the
+ * results from pipe().
+ */
 int
 movefd(int from, int to)
 {
@@ -478,8 +485,12 @@ movefd(int from, int to)
 		return to;
 
 	(void) close(to);
-	if (copyfd(from, to, 1, 0) != to)
-		error("Unable to make fd %d", to);
+	if (copyfd(from, to, 0) != to) {
+		int e = errno;
+
+		(void) close(from);
+		error("Unable to make fd %d: %s", to, strerror(e));
+	}
 	(void) close(from);
 
 	return to;
@@ -506,6 +517,13 @@ find_big_fd(void)
 	big_sh_fd = fd;
 }
 
+/*
+ * If possible, move file descriptor fd out of the way
+ * of expected user fd values.   Returns the new fd
+ * (which may be the input fd if things do not go well.)
+ * Always set close-on-exec on the result, and close
+ * the input fd unless it is to be our result.
+ */
 int
 to_upper_fd(int fd)
 {
@@ -526,7 +544,7 @@ to_upper_fd(int fd)
 	} while (big_sh_fd > 10);
 
 	/*
-	 * If we wamted to move this fd to some random high number
+	 * If we wanted to move this fd to some random high number
 	 * we certainly do not intend to pass it through exec, even
 	 * if the reassignment failed.
 	 */

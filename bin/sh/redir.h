@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.20 2016/05/03 03:08:21 kre Exp $	*/
+/*	$NetBSD: redir.h,v 1.21 2016/05/12 13:31:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,6 +45,5 @@ void redirect(union node *, int);
 void popredir(void);
 int fd0_redirected_p(void);
 void clearredir(int);
-int copyfd(int, int, int, int);
 int movefd(int, int);
 int to_upper_fd(int);
