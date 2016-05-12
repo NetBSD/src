@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.22 2016/05/12 02:24:16 ozaki-r Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.23 2016/05/12 03:01:57 ozaki-r Exp $	 */
 
 /*-
  * Copyright (c) 1995, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.22 2016/05/12 02:24:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.23 2016/05/12 03:01:57 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,7 +112,7 @@ svr4_32_sock_ioctl(file_t *fp, struct lwp *l, register_t *retval, int fd, u_long
 
 			s = pserialize_read_enter();
 			IFNET_READER_FOREACH(ifp)
-				ifnum += svr4_count_ifnum(ifp)
+				ifnum += svr4_count_ifnum(ifp);
 			pserialize_read_exit(s);
 
 			DPRINTF(("SIOCGIFNUM %d\n", ifnum));
