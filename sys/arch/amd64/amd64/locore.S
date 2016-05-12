@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.86 2016/05/11 19:35:08 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.87 2016/05/12 06:45:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -617,11 +617,11 @@ no_NOX:
 	addl	%ecx,%ebx
 
 	/*
-	 * Compute &__data_start - KERNBASE. This can't be > 4G, or we can't
+	 * Compute &__rodata_start - KERNBASE. This can't be > 4G, or we can't
 	 * deal with it anyway, since we can't load it in 32 bit mode. So use
 	 * the bottom 32 bits.
 	 */
-	movl	$RELOC(__data_start),%edx
+	movl	$RELOC(__rodata_start),%edx
 	andl	$~PGOFSET,%edx
 
 	/* Map the kernel text read-only. */
