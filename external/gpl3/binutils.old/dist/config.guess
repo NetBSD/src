@@ -193,16 +193,9 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	case "${UNAME_MACHINE_ARCH}" in
 	    coldfire) os=netbsdelf ;;
 	    earm*)
-		eval $set_cc_for_build
-		if echo __ARM_PCS_VFP | $CC_FOR_BUILD -E - 2>/dev/null \
-			| grep -q __ARM_PCS_VFP
-		then
-		    os=netbsdelf-eabi
-		else
-		    os=netbsdelf-eabihf
-		fi
+		os=netbsdelf
 		;;
-	    arm*|earm*|i386|m68k|ns32k|sh3*|sparc|vax)
+	    arm*|i386|m68k|ns32k|sh3*|sparc|vax)
 		eval $set_cc_for_build
 		if echo __ELF__ | $CC_FOR_BUILD -E - 2>/dev/null \
 			| grep -q __ELF__
