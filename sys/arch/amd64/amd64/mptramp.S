@@ -1,6 +1,6 @@
-/*	$NetBSD: mptramp.S,v 1.21 2016/05/11 19:35:08 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.22 2016/05/12 09:40:23 maxv Exp $	*/
 
-/*-
+/*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -71,7 +71,7 @@
  *     1) Get the processors running kernel-code from a special
  *        page-table and stack page, do chip identification.
  *     2) halt the processors waiting for them to be enabled
- *        by a idle-thread 
+ *        by a idle-thread
  */
 
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -84,10 +84,10 @@
 #include <machine/i82489reg.h>
 #include <machine/gdt.h>
 
-#define _RELOC(x)       ((x) - KERNBASE)
-#define RELOC(x)        _RELOC(_C_LABEL(x))
+#define _RELOC(x)	((x) - KERNBASE)
+#define RELOC(x)	_RELOC(_C_LABEL(x))
 
-#define _TRMP_LABEL(a)  a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
+#define _TRMP_LABEL(a)	a = . - _C_LABEL(cpu_spinup_trampoline) + MP_TRAMPOLINE
 
 #ifdef MPDEBUG
 /*
@@ -131,10 +131,10 @@ LABEL(cpu_spinup_trampoline)
 #ifdef __clang__
 	lgdt (mptramp_gdt32_desc)	/* load flat descriptor table */
 #else
-	data32 addr32 lgdt (mptramp_gdt32_desc)   /* load flat descriptor table */
+	data32 addr32 lgdt (mptramp_gdt32_desc) /* load flat descriptor table */
 #endif
 	movl	%cr0, %eax	/* get cr0 */
-	orl	$0x1, %eax	/* enable protected mode */
+	orl	$CR0_PE, %eax	/* enable protected mode */
 	movl	%eax, %cr0	/* doit */
 	ljmpl	$0x8, $mp_startup
 
@@ -149,7 +149,7 @@ _TRMP_LABEL(mp_startup)
 	movw	%ax, %gs
 
 	/* bootstrap stack end, with scratch space.. */
-	movl	$(MP_TRAMPOLINE+NBPG-16),%esp
+	movl	$(MP_TRAMPOLINE+PAGE_SIZE-16),%esp
 
 #ifdef MPDEBUG
 	leal	RELOC(cpu_trace),%edi
@@ -208,8 +208,8 @@ mptramp_compat:
 	ljmp	*(%eax)
 
 _TRMP_LABEL(mptramp_jmp64)
-	.long   mptramp_longmode
-	.word   GSEL(GCODE_SEL, SEL_KPL)
+	.long	mptramp_longmode
+	.word	GSEL(GCODE_SEL, SEL_KPL)
 
 #define GDT_LIMIT	0x17	/* 23 = 3 * 8 - 1 */
 _TRMP_LABEL(mptramp_gdt32)
@@ -237,8 +237,8 @@ _TRMP_LABEL(mptramp_longmode)
 
 _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 
-1:
 	/* Don't touch lapic until BP has done init sequence. */
+1:
 	movq	_C_LABEL(cpu_starting),%rdi
 	pause
 	testq	%rdi, %rdi
