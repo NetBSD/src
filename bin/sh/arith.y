@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.24 2016/03/16 15:43:38 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.25 2016/05/12 13:05:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.24 2016/03/16 15:43:38 christos Exp $");
+__RCSID("$NetBSD: arith.y,v 1.25 2016/05/12 13:05:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ int error(char *);
 %}
 %token ARITH_NUM ARITH_LPAREN ARITH_RPAREN
 
-%left ARITH_QM ARITH_COLON
+%right ARITH_QM ARITH_COLON
 %left ARITH_OR
 %left ARITH_AND
 %left ARITH_BOR
