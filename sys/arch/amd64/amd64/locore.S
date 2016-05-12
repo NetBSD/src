@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.88 2016/05/12 07:21:18 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.89 2016/05/12 07:51:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -225,6 +225,19 @@
 	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
 	loop	1b			;
+
+/*
+ * fillkpt_nox - Same as fillkpt, but sets the NX/XD bit.
+ */
+#define fillkpt_nox \
+	pushl	%ebp			;	\
+	movl	RELOC(nox_flag),%ebp	;	\
+1:	movl	%eax,(%ebx)		;	/* store phys addr */	\
+	movl	%ebp,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: NX */ \
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
+	loop	1b			;	\
+	popl	%ebp			;
 
 /*
  * killkpt - Destroy a kernel page table (long mode)
@@ -625,13 +638,13 @@ no_NOX:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-	/* Map the kernel rodata ROX. */
+	/* Map the kernel rodata RO. */
 	movl	$RELOC(__rodata_start),%eax
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KR),%eax
-	fillkpt
+	fillkpt_nox
 
 	/*
 	 * We actually have to be careful here. The memory layout is as
