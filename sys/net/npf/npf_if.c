@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_if.c,v 1.5 2015/07/12 23:51:53 rmind Exp $	*/
+/*	$NetBSD: npf_if.c,v 1.6 2016/05/12 02:24:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.5 2015/07/12 23:51:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.6 2016/05/12 02:24:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -139,9 +139,11 @@ npf_ifmap_flush(void)
 	npf_ifmap_cnt = 0;
 
 	KERNEL_LOCK(1, NULL);
-	IFNET_FOREACH(ifp) {
+	IFNET_LOCK();
+	IFNET_WRITER_FOREACH(ifp) {
 		ifp->if_pf_kif = (void *)(uintptr_t)0;
 	}
+	IFNET_UNLOCK();
 	KERNEL_UNLOCK_ONE(NULL);
 }
 

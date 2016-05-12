@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.193 2016/04/26 09:30:01 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.194 2016/05/12 02:24:17 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.193 2016/04/26 09:30:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.194 2016/05/12 02:24:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2090,12 +2090,15 @@ nd6_slowtimo(void *ignored_arg)
 {
 	struct nd_ifinfo *nd6if;
 	struct ifnet *ifp;
+	int s;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
-	IFNET_FOREACH(ifp) {
+
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		nd6if = ND_IFINFO(ifp);
 		if (nd6if->basereachable && /* already initialized */
 		    (nd6if->recalctm -= ND6_SLOWTIMER_INTERVAL) <= 0) {
@@ -2109,6 +2112,8 @@ nd6_slowtimo(void *ignored_arg)
 			nd6if->reachable = ND_COMPUTE_RTIME(nd6if->basereachable);
 		}
 	}
+	pserialize_read_exit(s);
+
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
