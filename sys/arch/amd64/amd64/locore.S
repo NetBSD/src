@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.87 2016/05/12 06:45:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.88 2016/05/12 07:21:18 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -564,6 +564,8 @@ no_NOX:
  *
  * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
+ * Important note: the kernel segments are properly 4k-aligned
+ * (see kern.ldscript), so there's no need to enforce alignment.
  */
 
 	/* Find end of kernel image; brings us on (1). */
@@ -616,16 +618,16 @@ no_NOX:
 	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
 	addl	%ecx,%ebx
 
-	/*
-	 * Compute &__rodata_start - KERNBASE. This can't be > 4G, or we can't
-	 * deal with it anyway, since we can't load it in 32 bit mode. So use
-	 * the bottom 32 bits.
-	 */
-	movl	$RELOC(__rodata_start),%edx
-	andl	$~PGOFSET,%edx
+	/* Map the kernel text RX. */
+	movl	$RELOC(__rodata_start),%ecx
+	subl	%eax,%ecx
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KR),%eax
+	fillkpt
 
-	/* Map the kernel text read-only. */
-	movl	%edx,%ecx
+	/* Map the kernel rodata ROX. */
+	movl	$RELOC(__rodata_start),%eax
+	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KR),%eax
@@ -639,11 +641,12 @@ no_NOX:
 	 *  +--------+----------+-------------------+------------------+
 	 * We just map everything from < to > with RWX rights.
 	 */
-	leal	(PG_V|PG_KW)(%edx),%eax
-	movl	$TABLESIZE,%ecx
-	addl	%esi,%ecx		/* end of tables */
-	subl	%edx,%ecx		/* subtract end of text */
+	movl	$RELOC(__data_start),%eax
+	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
+	addl	$TABLESIZE,%ecx		/* end of BOOTSTRAP TABLES */
+	subl	%eax,%ecx		/* subtract start of DATA */
 	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW),%eax
 	fillkpt
 
 	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
