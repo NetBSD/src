@@ -12,9 +12,9 @@ SRCDIR/gcc/config/netbsd.h
 SRCDIR/gcc/config/netbsd-stdint.h
 SRCDIR/gcc/config/netbsd-elf.h
 SRCDIR/gcc/config/arm/elf.h
+SRCDIR/gcc/config/arm/netbsd-elf.h
 SRCDIR/gcc/config/arm/aout.h
 SRCDIR/gcc/config/arm/arm.h
-SRCDIR/gcc/config/arm/netbsd-elf.h
 SRCDIR/gcc/config/initfini-array.h
 SRCDIR/gcc/defaults.h
 SRCDIR/gcc/../include/hashtab.h
