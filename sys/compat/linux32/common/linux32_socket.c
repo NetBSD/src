@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.20 2015/07/24 13:02:52 maxv Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.21 2016/05/12 02:24:16 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.20 2015/07/24 13:02:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.21 2016/05/12 02:24:16 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,6 +419,9 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	int space = 0, error;
 	const int sz = (int)sizeof(ifr);
 	bool docopy;
+	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
+	struct psref psref;
 
 	error = copyin(data, &ifc, sizeof(ifc));
 	if (error)
@@ -430,11 +433,18 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 		ifrp = NETBSD32PTR64(ifc.ifc_req);
 	}
 
-	IFNET_FOREACH(ifp) {
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
+
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
-		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
-			return ENAMETOOLONG;
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0') {
+			error = ENAMETOOLONG;
+			goto release_exit;
+		}
 		if (IFADDR_EMPTY(ifp))
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
@@ -448,12 +458,17 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					return error;
+					goto release_exit;
 				ifrp++;
 			}
 			space -= sz;
 		}
+
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 
 	if (docopy)
 		ifc.ifc_len -= space;
@@ -461,6 +476,11 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 		ifc.ifc_len = -space;
 
 	return copyout(&ifc, data, sizeof(ifc));
+
+release_exit:
+	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	return error;
 }
 
 int
@@ -474,6 +494,7 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	struct sockaddr_dl *sadl;
 	int error, found;
 	int index, ifnum;
+	int s;
 
 	/*
 	 * We can't emulate this ioctl by calling sys_ioctl() to run
@@ -505,7 +526,8 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	 * Try real interface name first, then fake "ethX"
 	 */
 	found = 0;
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (found)
 			break;
 		if (strcmp(lreq.ifr_name, ifp->if_xname))
@@ -528,10 +550,13 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 				   sizeof(lreq.ifr_hwaddr.sa_data)));
 			lreq.ifr_hwaddr.sa_family =
 				sadl->sdl_family;
+			pserialize_read_exit(s);
+
 			error = copyout(&lreq, data, sizeof(lreq));
 			goto out;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (strncmp(lreq.ifr_name, "eth", 3) == 0) {
 		for (ifnum = 0, index = 3;
@@ -542,10 +567,8 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		}
 
 		error = EINVAL;			/* in case we don't find one */
-		found = 0;
-		IFNET_FOREACH(ifp) {
-			if (found)
-				break;
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp) {
 			memcpy(lreq.ifr_name, ifp->if_xname,
 			       MIN(LINUX32_IFNAMSIZ, IFNAMSIZ));
 			IFADDR_FOREACH(ifa, ifp) {
@@ -564,11 +587,13 @@ linux32_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 					   sizeof(lreq.ifr_hwaddr.sa_data)));
 				lreq.ifr_hwaddr.sa_family =
 					sadl->sdl_family;
+				pserialize_read_exit(s);
+
 				error = copyout(&lreq, data, sizeof(lreq));
-				found = 1;
-				break;
+				goto out;
 			}
 		}
+		pserialize_read_exit(s);
 	} else {
 		/* unknown interface, not even an "eth*" name */
 		error = ENODEV;
