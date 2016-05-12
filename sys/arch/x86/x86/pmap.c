@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2016/01/26 14:34:50 hannken Exp $	*/
+/*	$NetBSD: pmap.c,v 1.191 2016/05/12 06:45:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2016/01/26 14:34:50 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2016/05/12 06:45:16 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1301,7 +1301,7 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	if (cpu_feature[0] & CPUID_PSE) {
 		paddr_t pa;
-		extern char __data_start;
+		extern char __rodata_start;
 
 		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
 		pmap_largepages = 1;	/* enable software */
@@ -1317,9 +1317,9 @@ pmap_bootstrap(vaddr_t kva_start)
 		/*
 		 * now, remap the kernel text using large pages.  we
 		 * assume that the linker has properly aligned the
-		 * .data segment to a NBPD_L2 boundary.
+		 * .rodata segment to a NBPD_L2 boundary.
 		 */
-		kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
+		kva_end = rounddown((vaddr_t)&__rodata_start, NBPD_L1);
 		for (pa = 0, kva = KERNBASE; kva + NBPD_L2 <= kva_end;
 		     kva += NBPD_L2, pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
@@ -1331,7 +1331,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		aprint_normal("kernel text is mapped with %" PRIuPSIZE " large "
 		    "pages and %" PRIuPSIZE " normal pages\n",
 		    howmany(kva - KERNBASE, NBPD_L2),
-		    howmany((vaddr_t)&__data_start - kva, NBPD_L1));
+		    howmany((vaddr_t)&__rodata_start - kva, NBPD_L1));
 #endif /* defined(DEBUG) */
 	}
 #endif /* !XEN */
