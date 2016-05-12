@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 2016/02/15 20:35:59 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 2016/05/12 06:45:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2016/02/15 20:35:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2016/05/12 06:45:16 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -2102,6 +2102,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
 		*handled = true;
+		/* Either the text or rodata segment */
 		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
 			return EFAULT;
 
