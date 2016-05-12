@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.3 2016/04/25 21:21:02 rjs Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.4 2016/05/12 02:24:17 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.3 2016/04/25 21:21:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.4 2016/05/12 02:24:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -897,6 +897,7 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	struct sockaddr_in *sin;
 	struct in_addr ans;
 	struct ifaddr *ifa;
+	int s;
 	/*
 	 * For v4 we can use (in boundall) any address in the association. If
 	 * non_asoc_addr_ok is set we can use any address (at least in theory).
@@ -975,7 +976,8 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         address. If we reache here we are in trouble I think.
 	 */
  bound_all_v4_plan_c:
-	IFNET_FOREACH(ifn) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifn) {
 		if (ifn == inp->next_ifn_touse)
 			break;
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
@@ -1008,9 +1010,11 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 									  ipv4_scope, cur_addr_num);
 		if (sin == NULL)
 			continue;
+		pserialize_read_exit(s);
 		return (sin->sin_addr);
 
 	}
+	pserialize_read_exit(s);
 
 	/*
 	 * plan_d: We are in deep trouble. No prefered address on
@@ -1021,7 +1025,8 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         illicit an ABORT, falling through.
 	 */
 
-	IFNET_FOREACH(ifn) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifn) {
 		if (ifn == inp->next_ifn_touse)
 			break;
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
@@ -1044,9 +1049,11 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 					continue;
 				}
 			}
+			pserialize_read_exit(s);
 			return (sin->sin_addr);
 		}
 	}
+	pserialize_read_exit(s);
 	/*
 	 * Ok we can find NO address to source from that is
 	 * not on our negative list. It is either the special
@@ -1636,6 +1643,7 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 	 */
 	struct ifnet *ifn;
 	struct sockaddr_in6 *sin6;
+	int s;
 
 	ifn = rt->rt_ifp;
 	if (net) {
@@ -1715,14 +1723,14 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 #endif
 	if (inp->next_ifn_touse == NULL) {
 		started_at_beginning=1;
-		inp->next_ifn_touse = IFNET_FIRST();
+		inp->next_ifn_touse = IFNET_READER_FIRST();
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
 			printf("Start at first IFN:%p\n", inp->next_ifn_touse);
 		}
 #endif
 	} else {
-		inp->next_ifn_touse = IFNET_NEXT(inp->next_ifn_touse);
+		inp->next_ifn_touse = IFNET_READER_NEXT(inp->next_ifn_touse);
 #ifdef SCTP_DEBUG
 		if (sctp_debug_on & SCTP_DEBUG_OUTPUT1) {
 			printf("Resume at IFN:%p\n", inp->next_ifn_touse);
@@ -1735,10 +1743,12 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 			}
 #endif
 			started_at_beginning=1;
-			inp->next_ifn_touse = IFNET_FIRST();
+			inp->next_ifn_touse = IFNET_READER_FIRST();
 		}
 	}
-	IFNET_FOREACH(ifn) {
+
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifn) {
 		if (loopscope == 0 && ifn->if_type == IFT_LOOP) {
 			/* wrong base scope */
 			continue;
@@ -1797,8 +1807,11 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 			       cur_addr_num, ifn);
 		}
 #endif
+		pserialize_read_exit(s);
 		return (sin6);
 	}
+	pserialize_read_exit(s);
+
 	if (started_at_beginning == 0) {
 		/* we have not been through all of them yet, force
 		 * us to go through them all.
@@ -2711,9 +2724,11 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		struct ifnet *ifn;
 		struct ifaddr *ifa;
 		int cnt;
+		int s;
 
 		cnt = cnt_inits_to;
- 		IFNET_FOREACH(ifn) {
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifn) {
 			if ((stcb->asoc.loopback_scope == 0) &&
 			    (ifn->if_type == IFT_LOOP)) {
 				/*
@@ -2735,8 +2750,11 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 				cnt++;
 			}
 		}
+		pserialize_read_exit(s);
+
 		if (cnt > 1) {
-			IFNET_FOREACH(ifn) {
+			s = pserialize_read_enter();
+			IFNET_READER_FOREACH(ifn) {
 				if ((stcb->asoc.loopback_scope == 0) &&
 				    (ifn->if_type == IFT_LOOP)) {
 					/*
@@ -2758,6 +2776,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 					m_at = sctp_add_addr_to_mbuf(m_at, ifa);
 				}
 			}
+			pserialize_read_exit(s);
 		}
 	} else {
 		struct sctp_laddr *laddr;
@@ -3657,8 +3676,10 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 		struct ifnet *ifn;
 		struct ifaddr *ifa;
 		int cnt = cnt_inits_to;
+		int s;
 
-		IFNET_FOREACH(ifn) {
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifn) {
 			if ((stc.loopback_scope == 0) &&
 			    (ifn->if_type == IFT_LOOP)) {
 				/*
@@ -3677,8 +3698,11 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 				cnt++;
 			}
 		}
+		pserialize_read_exit(s);
+
 		if (cnt > 1) {
-			IFNET_FOREACH(ifn) {
+			s = pserialize_read_enter();
+			IFNET_READER_FOREACH(ifn) {
 				if ((stc.loopback_scope == 0) &&
 				    (ifn->if_type == IFT_LOOP)) {
 					/*
@@ -3698,6 +3722,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 					m_at = sctp_add_addr_to_mbuf(m_at, ifa);
 				}
 			}
+			pserialize_read_exit(s);
 		}
 	} else {
 		struct sctp_laddr *laddr;

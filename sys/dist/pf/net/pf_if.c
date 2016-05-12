@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.26 2014/05/17 21:00:33 rmind Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.27 2016/05/12 02:24:16 ozaki-r Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.26 2014/05/17 21:00:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.27 2016/05/12 02:24:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,6 +100,9 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 void
 pfi_initialize(void)
 {
+	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
+
 	if (pfi_all != NULL)	/* already initialized */
 		return;
 
@@ -119,10 +122,21 @@ pfi_initialize(void)
 
 #ifdef __NetBSD__
 	ifnet_t *ifp;
-	IFNET_FOREACH(ifp) {
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
+
 		pfi_init_groups(ifp);
 		pfi_attach_ifnet(ifp);
+
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 
 	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
@@ -135,14 +149,27 @@ pfi_destroy(void)
 {
 	struct pfi_kif *p;
 	ifnet_t *ifp;
+	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
 
 	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
 	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 
-	IFNET_FOREACH(ifp) {
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
+
 		pfi_detach_ifnet(ifp);
 		pfi_destroy_groups(ifp);
+
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 
 	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
 		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);

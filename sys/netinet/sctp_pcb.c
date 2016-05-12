@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.4 2016/04/25 21:21:02 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.5 2016/05/12 02:24:17 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.4 2016/04/25 21:21:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.5 2016/05/12 02:24:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2338,7 +2338,10 @@ sctp_is_address_on_local_host(struct sockaddr *addr)
 {
 	struct ifnet *ifn;
 	struct ifaddr *ifa;
-	IFNET_FOREACH(ifn) {
+	int s;
+
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifn) {
 		IFADDR_FOREACH(ifa, ifn) {
 			if (addr->sa_family == ifa->ifa_addr->sa_family) {
 				/* same family */
@@ -2350,6 +2353,7 @@ sctp_is_address_on_local_host(struct sockaddr *addr)
 					if (sin->sin_addr.s_addr ==
 					    sin_c->sin_addr.s_addr) {
 						/* we are on the same machine */
+						pserialize_read_exit(s);
 						return (1);
 					}
 				} else if (addr->sa_family == AF_INET6) {
@@ -2360,12 +2364,15 @@ sctp_is_address_on_local_host(struct sockaddr *addr)
 					if (SCTP6_ARE_ADDR_EQUAL(&sin6->sin6_addr,
 					    &sin_c6->sin6_addr)) {
 						/* we are on the same machine */
+						pserialize_read_exit(s);
 						return (1);
 					}
 				}
 			}
 		}
 	}
+	pserialize_read_exit(s);
+
 	return (0);
 }
 

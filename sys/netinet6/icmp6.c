@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.182 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.183 2016/05/12 02:24:17 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.182 2016/04/04 07:37:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.183 2016/05/12 02:24:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1650,7 +1650,7 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 		}
 	}
 
-	IFNET_FOREACH(ifp) {
+	IFNET_READER_FOREACH(ifp) {
 		addrsofif = 0;
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -1716,7 +1716,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 	struct icmp6_nodeinfo *nni6, struct ifnet *ifp0,
 	int resid)
 {
-	struct ifnet *ifp = ifp0 ? ifp0 : IFNET_FIRST();
+	struct ifnet *ifp = ifp0 ? ifp0 : IFNET_READER_FIRST();
 	struct in6_ifaddr *ifa6;
 	struct ifaddr *ifa;
 	struct ifnet *ifp_dep = NULL;
@@ -1730,7 +1730,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 
   again:
 
-	for (; ifp; ifp = TAILQ_NEXT(ifp, if_list))
+	for (; ifp; ifp = IFNET_READER_NEXT(ifp))
 	{
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)

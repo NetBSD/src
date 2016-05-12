@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.203 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.204 2016/05/12 02:24:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,6 +85,9 @@
 #include <net/pfil.h>
 #ifdef _KERNEL
 #include <net/pktqueue.h>
+#include <sys/pslist.h>
+#include <sys/pserialize.h>
+#include <sys/psref.h>
 #endif
 
 /*
@@ -251,6 +254,7 @@ struct if_percpuq;
 
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	TAILQ_ENTRY(ifnet) if_list;	/* all struct ifnets are chained */
 	TAILQ_HEAD(, ifaddr) if_addrlist; /* linked list of addresses per if */
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
@@ -354,6 +358,8 @@ typedef struct ifnet {
 	struct if_percpuq	*if_percpuq; /* We should remove it in the future */
 	void	*if_link_si;		/* softint to handle link state changes */
 	uint16_t	if_link_queue;	/* masked link state change queue */
+	struct pslist_entry	if_pslist_entry;
+	struct psref_target     if_psref;
 #endif
 } ifnet_t;
  
@@ -984,10 +990,6 @@ __END_DECLS
 
 #ifdef _KERNEL
 
-#define	IFNET_FIRST()			TAILQ_FIRST(&ifnet_list)
-#define	IFNET_EMPTY()			TAILQ_EMPTY(&ifnet_list)
-#define	IFNET_NEXT(__ifp)		TAILQ_NEXT((__ifp), if_list)
-#define	IFNET_FOREACH(__ifp)		TAILQ_FOREACH(__ifp, &ifnet_list, if_list)
 #define	IFADDR_FIRST(__ifp)		TAILQ_FIRST(&(__ifp)->if_addrlist)
 #define	IFADDR_NEXT(__ifa)		TAILQ_NEXT((__ifa), ifa_list)
 #define	IFADDR_FOREACH(__ifa, __ifp)	TAILQ_FOREACH(__ifa, \
@@ -997,7 +999,52 @@ __END_DECLS
 					    &(__ifp)->if_addrlist, ifa_list, __nifa)
 #define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
 
-extern struct ifnet_head ifnet_list;
+#define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
+#define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)
+#define	IFNET_LOCKED()			mutex_owned(&ifnet_mtx)
+
+#define IFNET_READER_EMPTY() \
+	(PSLIST_READER_FIRST(&ifnet_pslist, struct ifnet, if_pslist_entry) == NULL)
+#define IFNET_READER_FIRST() \
+	PSLIST_READER_FIRST(&ifnet_pslist, struct ifnet, if_pslist_entry)
+#define IFNET_READER_NEXT(__ifp) \
+	PSLIST_READER_NEXT((__ifp), struct ifnet, if_pslist_entry)
+#define IFNET_READER_FOREACH(__ifp) \
+	PSLIST_READER_FOREACH((__ifp), &ifnet_pslist, struct ifnet, \
+	                      if_pslist_entry)
+#define IFNET_WRITER_INSERT_HEAD(__ifp) \
+	PSLIST_WRITER_INSERT_HEAD(&ifnet_pslist, (__ifp), if_pslist_entry)
+#define IFNET_WRITER_REMOVE(__ifp) \
+	PSLIST_WRITER_REMOVE((__ifp), if_pslist_entry)
+#define IFNET_WRITER_FOREACH(__ifp) \
+	PSLIST_WRITER_FOREACH((__ifp), &ifnet_pslist, struct ifnet, \
+	                      if_pslist_entry)
+#define IFNET_WRITER_NEXT(__ifp) \
+	PSLIST_WRITER_NEXT((__ifp), struct ifnet, if_pslist_entry)
+#define IFNET_WRITER_INSERT_AFTER(__ifp, __new) \
+	PSLIST_WRITER_INSERT_AFTER((__ifp), (__new), if_pslist_entry)
+#define IFNET_WRITER_EMPTY() \
+	(PSLIST_WRITER_FIRST(&ifnet_pslist, struct ifnet, if_pslist_entry) == NULL)
+#define IFNET_WRITER_INSERT_TAIL(__new)					\
+	do {								\
+		if (IFNET_WRITER_EMPTY()) {				\
+			IFNET_WRITER_INSERT_HEAD((__new));		\
+		} else {						\
+			struct ifnet *__ifp;				\
+			IFNET_WRITER_FOREACH(__ifp) {			\
+				if (IFNET_WRITER_NEXT(__ifp) == NULL) {	\
+					IFNET_WRITER_INSERT_AFTER(__ifp,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
+
+extern struct pslist_head ifnet_pslist;
+extern struct psref_class *ifnet_psref_class;
+extern kmutex_t ifnet_mtx;
+
 extern struct ifnet *lo0ifp;
 
 ifnet_t *	if_byindex(u_int);

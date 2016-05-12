@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.16 2015/05/21 02:04:22 rtr Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.17 2016/05/12 02:24:16 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.16 2015/05/21 02:04:22 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.17 2016/05/12 02:24:16 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -131,16 +131,20 @@ tftproot_dhcpboot(device_t bootdv)
 	int error = -1;
 
 	if (rootspec != NULL) {
-		IFNET_FOREACH(ifp)
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp)
 			if (strcmp(rootspec, ifp->if_xname) == 0)
 				break;
+		pserialize_read_exit(s);
 	} 
 
 	if ((ifp == NULL) &&
 	    (bootdv != NULL && device_class(bootdv) == DV_IFNET)) {
-		IFNET_FOREACH(ifp)
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp)
 			if (strcmp(device_xname(bootdv), ifp->if_xname) == 0)
 				break;
+		pserialize_read_exit(s);
 	}
 
 	if (ifp == NULL) {

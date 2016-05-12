@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.216 2014/11/22 11:04:57 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.217 2016/05/12 02:24:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.216 2014/11/22 11:04:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.217 2016/05/12 02:24:16 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -224,7 +224,8 @@ setroot(device_t bootdv, int bootpartition)
 	if (vops != NULL && strcmp(rootfstype, MOUNT_NFS) == 0 &&
 	    rootspec == NULL &&
 	    (bootdv == NULL || device_class(bootdv) != DV_IFNET)) {
-		IFNET_FOREACH(ifp) {
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp) {
 			if ((ifp->if_flags &
 			     (IFF_LOOPBACK|IFF_POINTOPOINT)) == 0)
 				break;
@@ -242,6 +243,7 @@ setroot(device_t bootdv, int bootpartition)
 			 */
 			rootspec = (const char *)ifp->if_xname;
 		}
+		pserialize_read_exit(s);
 	}
 	if (vops != NULL)
 		vfs_delref(vops);
