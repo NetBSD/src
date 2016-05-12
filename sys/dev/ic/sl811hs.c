@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.66 2016/05/11 21:28:21 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.67 2016/05/12 05:30:17 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.66 2016/05/11 21:28:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.67 2016/05/12 05:30:17 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -1725,7 +1725,7 @@ slhci_dointr(struct slhci_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	DLOG(D_INTR, "Flags %#x sc_ier #%x ISR=#%x", t->flags, sc->sc_ier,
+	DLOG(D_INTR, "Flags %#x sc_ier %#x ISR=%#x", t->flags, sc->sc_ier,
 	    slhci_read(sc, SL11_ISR), 0);
 
 	if (sc->sc_ier == 0)
