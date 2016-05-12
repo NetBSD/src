@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.115 2016/05/11 17:48:05 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.116 2016/05/12 06:45:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.115 2016/05/11 17:48:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.116 2016/05/12 06:45:16 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -613,11 +613,11 @@ try586:	/* Use the `cpuid' instruction. */
  * Build initial page tables.
  */
 	/*
-	 * Compute &__data_start - KERNBASE. This can't be > 4G,
+	 * Compute &__rodata_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
 	 * 32 bit mode. So use the bottom 32 bits.
 	 */
-	movl	$RELOC(__data_start),%edx
+	movl	$RELOC(__rodata_start),%edx
 	andl	$~PGOFSET,%edx
 
 	/*

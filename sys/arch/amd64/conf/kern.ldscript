@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.18 2016/05/08 08:30:41 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.19 2016/05/12 06:45:16 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -23,18 +23,18 @@ SECTIONS
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
+	/*
+	 * Push the rodata segment up to the next large page boundary so that we
+	 * can map the text segment with large pages.
+	 */
+	. = ALIGN(__LARGE_PAGE_SIZE);
+
 	__rodata_start = . ;
 	.rodata :
 	{
 		*(.rodata)
 		*(.rodata.*)
 	}
-
-	/*
-	 * Push the data segment up to the next large page boundary so that we
-	 * can map the text+rodata segments with large pages.
-	 */
-	. = ALIGN(__LARGE_PAGE_SIZE);
 
 	__data_start = . ;
 	.data :
