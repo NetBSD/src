@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.72 2015/03/23 18:33:17 roy Exp $
+.\"	$NetBSD: netstat.1,v 1.73 2016/05/12 03:44:11 ozaki-r Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd March 19, 2015
+.Dd May 12, 2016
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -367,26 +367,6 @@ detail in the
 and
 .Xr route 4
 manual pages.
-The mapping between letters and flags is:
-.Bl -column XXXX RTF_BLACKHOLE
-.It 1	RTF_PROTO1	Protocol specific routing flag #1
-.It 2	RTF_PROTO2	Protocol specific routing flag #2
-.It B	RTF_BLACKHOLE	Just discard pkts (during updates)
-.It b	RTF_BROADCAST	Route represents a broadcast address
-.It C	RTF_CLONING	Generate new routes on use
-.It c	RTF_CLONED	Cloned routes (generated from RTF_CLONING)
-.It D	RTF_DYNAMIC	Created dynamically (by redirect)
-.It G	RTF_GATEWAY	Destination requires forwarding by intermediary
-.It H	RTF_HOST	Host entry (net otherwise)
-.It L	RTF_LLINFO	Valid protocol to link address translation.
-.It l	RTF_LOCAL	Route represents a local address
-.It M	RTF_MODIFIED	Modified dynamically (by redirect)
-.It p	RTF_ANNOUNCE	Link level proxy
-.It R	RTF_REJECT	Host or net unreachable
-.It S	RTF_STATIC	Manually added
-.It U	RTF_UP	Route usable
-.It X	RTF_XRESOLVE	External daemon translates proto to link address
-.El
 .Pp
 Direct routes are created for each
 interface attached to the local host;
