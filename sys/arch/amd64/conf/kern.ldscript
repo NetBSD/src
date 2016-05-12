@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.20 2016/05/12 07:21:18 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.21 2016/05/12 09:05:16 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -13,7 +13,6 @@ __LARGE_PAGE_SIZE = 0x200000 ;
 ENTRY(_start)
 SECTIONS
 {
-	/* Read-only sections, merged into text segment: */
 	.text :
 	{
 		*(.text)
@@ -66,7 +65,12 @@ SECTIONS
 		*(COMMON)
 		. = ALIGN(64 / 8);
 	}
-	. = ALIGN(64 / 8);
+
+	. = ALIGN(__PAGE_SIZE);
+
+	/* End of the kernel image */
+	__kernel_end = . ;
+
 	_end = . ;
 	PROVIDE (end = .) ;
 	.note.netbsd.ident :
