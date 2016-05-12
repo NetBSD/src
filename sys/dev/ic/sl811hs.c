@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.67 2016/05/12 05:30:17 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.68 2016/05/12 18:57:38 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.67 2016/05/12 05:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.68 2016/05/12 18:57:38 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -3171,9 +3171,11 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		break;
 	case UR_SET_FEATURE:
 		if (type == UT_WRITE_CLASS_OTHER) {
-			if (index == 1 /* Port */)
+			if (index == 1 /* Port */) {
+				mutex_enter(&sc->sc_intr_lock);
 				error = slhci_set_feature(sc, value);
-			else
+				mutex_exit(&sc->sc_intr_lock);
+			} else
 				DLOG(D_ROOT, "Set Port Feature "
 				    "index = %#.4x", index, 0,0,0);
 		} else if (type != UT_WRITE_CLASS_DEVICE)
@@ -3187,8 +3189,10 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (type == UT_READ_CLASS_OTHER) {
 			if (index == 1 /* Port */ && len == /* XXX >=? */
 			    sizeof(usb_port_status_t)) {
+				mutex_enter(&sc->sc_intr_lock);
 				slhci_get_status(sc, (usb_port_status_t *)
 				    buf);
+				mutex_exit(&sc->sc_intr_lock);
 				actlen = sizeof(usb_port_status_t);
 				error = USBD_NORMAL_COMPLETION;
 			} else
