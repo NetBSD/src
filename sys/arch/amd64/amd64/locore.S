@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.89 2016/05/12 07:51:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.90 2016/05/12 09:05:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -646,18 +646,26 @@ no_NOX:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt_nox
 
+	/* Map the kernel data+bss RW. */
+	movl	$RELOC(__data_start),%eax
+	movl	$RELOC(__kernel_end),%ecx
+	subl	%eax,%ecx
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW),%eax
+	fillkpt_nox
+
 	/*
 	 * We actually have to be careful here. The memory layout is as
 	 * follows:
-	 *  +--------+----------+-------------------+------------------+
-	 *  | RODATA < DATA+BSS | PRELOADED MODULES | BOOTSTRAP TABLES >
-	 *  +--------+----------+-------------------+------------------+
+	 *    +----------+---------------------+------------------+
+	 *    | DATA+BSS < [PRELOADED MODULES] | BOOTSTRAP TABLES >
+	 *    +----------+---------------------+------------------+
 	 * We just map everything from < to > with RWX rights.
 	 */
-	movl	$RELOC(__data_start),%eax
+	movl	$RELOC(__kernel_end),%eax
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	addl	$TABLESIZE,%ecx		/* end of BOOTSTRAP TABLES */
-	subl	%eax,%ecx		/* subtract start of DATA */
+	subl	%eax,%ecx		/* subtract end of kernel image */
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt
