@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.23 2010/03/31 21:55:23 joerg Exp $	*/
+/*	$NetBSD: head.c,v 1.24 2016/05/12 01:56:44 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.23 2010/03/31 21:55:23 joerg Exp $");
+__RCSID("$NetBSD: head.c,v 1.24 2016/05/12 01:56:44 nonaka Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,8 @@ main(int argc, char *argv[])
 	int ch;
 	FILE *fp;
 	int first;
-	uintmax_t linecnt;
-	uintmax_t bytecnt;
+	intmax_t linecnt;
+	intmax_t bytecnt;
 	char *ep;
 	int eval = 0;
 	int qflag = 0;
