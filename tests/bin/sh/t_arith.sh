@@ -1,4 +1,4 @@
-# $NetBSD: t_arith.sh,v 1.4 2016/05/12 13:34:23 kre Exp $
+# $NetBSD: t_arith.sh,v 1.5 2016/05/12 14:25:11 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -836,9 +836,9 @@ make_selection_body()
 		'echo $(( 0x1234 ? 111 : 222 ))'
 
 	atf_check -s exit:0 -o inline:'-1\n' -e empty ${TEST_SH} -c \
-		'echo $(( 1 < 2 ? -1 : i > 2 ? 1 : 0 ))'
+		'echo $(( 1 < 2 ? -1 : 1 > 2 ? 1 : 0 ))'
 	atf_check -s exit:0 -o inline:'0\n' -e empty ${TEST_SH} -c \
-		'echo $(( 1 < 1 ? -1 : i > 1 ? 1 : 0 ))'
+		'echo $(( 1 < 1 ? -1 : 1 > 1 ? 1 : 0 ))'
 	atf_check -s exit:0 -o inline:'1\n' -e empty ${TEST_SH} -c \
 		'echo $(( 2 < 1 ? -1 : 2 > 1 ? 1 : 0 ))'
 }
