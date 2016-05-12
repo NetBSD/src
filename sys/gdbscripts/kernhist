@@ -1,4 +1,4 @@
-#	$NetBSD: kernhist,v 1.1 2016/05/11 09:22:55 mrg Exp $
+#	$NetBSD: kernhist,v 1.2 2016/05/12 00:35:10 mrg Exp $
 
 # by mrg and skrll
 
@@ -12,13 +12,13 @@ define kernhist
 
 	printf "Kernel history %s has %d entries (next free %d)\n", $hist->name, $histn, $histf
 	while (1)
-		set $e = &$hist->e[$lcv]
-		set $fmt = $e->fmt
+		set $e = $hist->e[$lcv]
+		set $fmt = $e.fmt
 
 		if ($fmt)
-			printf "%06lx.%06d ", $e->tv.tv_sec, $e->tv.tv_usec
-			printf "%s#%ld@%d: ", $e->fn, $e->call, $e->cpunum
-			printf "%s: %lx %lx %lx %lx\n", $fmt, $e->v[0], $e->v[1], $e->v[2], $e->v[3]
+			printf "%06lx.%06d ", $e.tv.tv_sec, $e.tv.tv_usec
+			printf "%s#%ld@%d: ", $e.fn, $e.call, $e.cpunum
+			printf "%s: %lx %lx %lx %lx\n", $fmt, $e.v[0], $e.v[1], $e.v[2], $e.v[3]
 			set $lcv = ($lcv + 1) % $histn
 		else
 			if ($histf == 0)
