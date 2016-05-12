@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.56 2016/05/10 23:45:45 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.57 2016/05/12 20:28:34 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -157,28 +157,33 @@ filemon_open(BuildMon *pbm)
  * Read the build monitor output file and write records to the target's
  * metadata file.
  */
-static void
+static int
 filemon_read(FILE *mfp, int fd)
 {
     char buf[BUFSIZ];
     int n;
+    int error;
 
     /* Check if we're not writing to a meta data file.*/
     if (mfp == NULL) {
 	if (fd >= 0)
 	    close(fd);			/* not interested */
-	return;
+	return 0;
     }
     /* rewind */
     (void)lseek(fd, (off_t)0, SEEK_SET);
 
+    error = 0;
     fprintf(mfp, "\n-- filemon acquired metadata --\n");
 
     while ((n = read(fd, buf, sizeof(buf))) > 0) {
-	fwrite(buf, 1, n, mfp);
+	if ((int)fwrite(buf, 1, n, mfp) < n)
+	    error = EIO;
     }
     fflush(mfp);
-    close(fd);
+    if (close(fd) < 0)
+	error = errno;
+    return error;
 }
 #endif
 
@@ -753,27 +758,35 @@ meta_job_output(Job *job, char *cp, const char *nl)
     }
 }
 
-void
+int
 meta_cmd_finish(void *pbmp)
 {
+    int error = 0;
 #ifdef USE_FILEMON
     BuildMon *pbm = pbmp;
+    int x;
 
     if (!pbm)
 	pbm = &Mybm;
 
     if (pbm->filemon_fd >= 0) {
-	close(pbm->filemon_fd);
-	filemon_read(pbm->mfp, pbm->mon_fd);
+	if (close(pbm->filemon_fd) < 0)
+	    error = errno;
+	x = filemon_read(pbm->mfp, pbm->mon_fd);
+	if (error == 0 && x != 0)
+	    error = x;
 	pbm->filemon_fd = pbm->mon_fd = -1;
     }
 #endif
+    return error;
 }
 
-void
+int
 meta_job_finish(Job *job)
 {
     BuildMon *pbm;
+    int error = 0;
+    int x;
 
     if (job != NULL) {
 	pbm = &job->bm;
@@ -781,11 +794,14 @@ meta_job_finish(Job *job)
 	pbm = &Mybm;
     }
     if (pbm->mfp != NULL) {
-	meta_cmd_finish(pbm);
-	fclose(pbm->mfp);
+	error = meta_cmd_finish(pbm);
+	x = fclose(pbm->mfp);
+	if (error == 0 && x != 0)
+	    error = errno;
 	pbm->mfp = NULL;
 	pbm->meta_fname[0] = '\0';
     }
+    return error;
 }
 
 void
