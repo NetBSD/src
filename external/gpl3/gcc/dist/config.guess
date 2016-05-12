@@ -214,8 +214,14 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
 	# Determine ABI tags.
 	case "${UNAME_MACHINE_ARCH}" in
 	    earm*)
-		expr='s/^earmv[0-9]/-eabi/;s/eb$//'
-		abi=`echo ${UNAME_MACHINE_ARCH} | sed -e "$expr"`
+		eval $set_cc_for_build
+		if echo __ARM_PCS_VFP | $CC_FOR_BUILD -E - 2>/dev/null \
+			| grep -q __ARM_PCS_VFP
+		then
+		    abi=-eabi
+		else
+		    abi=-eabihf
+		fi
 		;;
 	esac
 	# The OS release
