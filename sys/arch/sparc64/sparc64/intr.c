@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.68 2016/05/10 19:24:00 palle Exp $ */
+/*	$NetBSD: intr.c,v 1.69 2016/05/13 21:24:11 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.68 2016/05/10 19:24:00 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.69 2016/05/13 21:24:11 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.68 2016/05/10 19:24:00 palle Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 
 #include <dev/cons.h>
 
@@ -309,7 +308,7 @@ void
 sparc_softintr_disestablish(void *cookie)
 {
 
-	free(cookie, M_DEVBUF);
+	kmem_free(cookie, sizeof(struct intrhand));
 }
 
 void
