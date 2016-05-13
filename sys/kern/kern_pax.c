@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.43 2016/05/08 20:01:56 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.44 2016/05/13 17:33:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.43 2016/05/08 20:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.44 2016/05/13 17:33:43 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -104,11 +104,12 @@ int pax_aslr_global = PAX_ASLR;
 #define PAX_ASLR_DELTA_STACK_LSB	PGSHIFT
 #endif
 #ifndef PAX_ASLR_DELTA_STACK_LEN
-#define PAX_ASLR_DELTA_STACK_LEN 	PAX_ASLR_DELTA_MMAP_LEN
+#define PAX_ASLR_DELTA_STACK_LEN 	((sizeof(void *) * NBBY) / 4)
 #endif
 #ifndef PAX_ASLR_DELTA_STACK_LEN32
-#define PAX_ASLR_DELTA_STACK_LEN32 	PAX_ASLR_DELTA_MMAP_LEN32
+#define PAX_ASLR_DELTA_STACK_LEN32 	((sizeof(uint32_t) * NBBY) / 4)
 #endif
+#define PAX_ASLR_MAX_STACK_WASTE	8
 
 static bool pax_aslr_elf_flags_active(uint32_t);
 #endif /* PAX_ASLR */
@@ -335,6 +336,12 @@ pax_init(void)
 		panic("pax_init: segvguard_id: error=%d\n", error);
 	}
 #endif /* PAX_SEGVGUARD */
+#ifdef PAX_ASLR
+	/* Adjust maximum stack by the size we can consume for ASLR */
+	extern rlim_t maxsmap;
+	maxsmap = MAXSSIZ - (MAXSSIZ / PAX_ASLR_MAX_STACK_WASTE);
+	// XXX: compat32 is not handled.
+#endif
 }
 
 void
@@ -564,14 +571,12 @@ pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 		rand = pax_aslr_rand;
 #endif
 	u_long d = PAX_ASLR_DELTA(rand, PAX_ASLR_DELTA_STACK_LSB, len);
-	d &= (*max_stack_size / 4) - 1;
+	d &= (*max_stack_size / PAX_ASLR_MAX_STACK_WASTE) - 1;
  	u_long newminsaddr = (u_long)STACK_GROW(epp->ep_minsaddr, d);
 	PAX_DPRINTF("old minsaddr=%#jx delta=%#lx new minsaddr=%#lx",
 	    (uintmax_t)epp->ep_minsaddr, d, newminsaddr);
 	epp->ep_minsaddr = (vaddr_t)newminsaddr;
 	*max_stack_size -= d;
-	if (epp->ep_ssize > *max_stack_size)
-		epp->ep_ssize = *max_stack_size;
 }
 
 uint32_t
