@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.118 2015/12/13 18:41:09 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.119 2016/05/13 21:23:30 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.118 2015/12/13 18:41:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.119 2016/05/13 21:23:30 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.118 2015/12/13 18:41:09 christos Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
-#include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
 #ifdef GPROF
@@ -129,11 +128,6 @@ int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
 #ifndef MULTIPROCESSOR
 static int statscheddiv;
-#endif
-
-static struct intrhand level10 = { .ih_fun = clockintr, .ih_pil = PIL_CLOCK };
-#ifndef MULTIPROCESSOR
-static struct intrhand level14 = { .ih_fun = statintr, .ih_pil = PIL_STATCLOCK };
 static struct intrhand *schedint;
 #endif
 
@@ -293,18 +287,24 @@ timerattach(device_t parent, device_t self, void *aux)
 	     (CPU_UPAID << INTMAP_TID_SHIFT));
 
 	/* Install the appropriate interrupt vector here */
-	level10.ih_number = INTVEC(ma->ma_interrupts[0]);
-	level10.ih_clr = &timerreg_4u.t_clrintr[0];
-	intr_establish(PIL_CLOCK, true, &level10);
-	printf(" irq vectors %lx", (u_long)level10.ih_number);
+	struct intrhand *level10 = intrhand_alloc();
+	level10->ih_fun = clockintr;
+	level10->ih_pil = PIL_CLOCK;
+	level10->ih_number = INTVEC(ma->ma_interrupts[0]);
+	level10->ih_clr = &timerreg_4u.t_clrintr[0];
+	intr_establish(PIL_CLOCK, true, level10);
+	printf(" irq vectors %lx", (u_long)level10->ih_number);
 #ifndef MULTIPROCESSOR
 	/*
 	 * On SMP kernel, don't establish interrupt to use it as timecounter.
 	 */
-	level14.ih_number = INTVEC(ma->ma_interrupts[1]);
-	level14.ih_clr = &timerreg_4u.t_clrintr[1];
-	intr_establish(PIL_STATCLOCK, true, &level14);
-	printf(" and %lx", (u_long)level14.ih_number);
+	struct intrhand *level14 = intrhand_alloc();
+	level14->ih_fun = statintr;
+	level14->ih_pil = PIL_STATCLOCK;
+	level14->ih_number = INTVEC(ma->ma_interrupts[1]);
+	level14->ih_clr = &timerreg_4u.t_clrintr[1];
+	intr_establish(PIL_STATCLOCK, true, level14);
+	printf(" and %lx", (u_long)level14->ih_number);
 #endif
 
 #if 0
