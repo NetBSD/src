@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.191 2016/05/12 06:45:16 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.192 2016/05/13 10:24:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2016/05/12 06:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2016/05/13 10:24:42 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1272,7 +1272,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * which happens in cpu_init(), which is run on each cpu
 	 * (and happens later)
 	 */
-
 	if (cpu_feature[0] & CPUID_PGE) {
 		pmap_pg_g = PG_G;		/* enable software */
 
@@ -1296,18 +1295,19 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 
 	/*
-	 * enable large pages if they are supported.
+	 * Enable large pages if they are supported.
 	 */
-
 	if (cpu_feature[0] & CPUID_PSE) {
 		paddr_t pa;
 		extern char __rodata_start;
+		extern char __data_start;
+		extern char __kernel_end;
 
 		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
 		pmap_largepages = 1;	/* enable software */
 
 		/*
-		 * the TLB must be flushed after enabling large pages
+		 * The TLB must be flushed after enabling large pages
 		 * on Pentium CPUs, according to section 3.6.2.2 of
 		 * "Intel Architecture Software Developer's Manual,
 		 * Volume 3: System Programming".
@@ -1315,16 +1315,18 @@ pmap_bootstrap(vaddr_t kva_start)
 		tlbflushg();
 
 		/*
-		 * now, remap the kernel text using large pages.  we
-		 * assume that the linker has properly aligned the
-		 * .rodata segment to a NBPD_L2 boundary.
+		 * Now, we remap several kernel segments with large pages. We
+		 * cover as many pages as we can.
 		 */
+
+		/* Remap the kernel text using large pages. */
+		kva = KERNBASE;
 		kva_end = rounddown((vaddr_t)&__rodata_start, NBPD_L1);
-		for (pa = 0, kva = KERNBASE; kva + NBPD_L2 <= kva_end;
-		     kva += NBPD_L2, pa += NBPD_L2) {
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS |
-			    PG_KR | PG_V;	/* zap! */
+			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
 			tlbflushg();
 		}
 #if defined(DEBUG)
@@ -1333,6 +1335,28 @@ pmap_bootstrap(vaddr_t kva_start)
 		    howmany(kva - KERNBASE, NBPD_L2),
 		    howmany((vaddr_t)&__rodata_start - kva, NBPD_L1));
 #endif /* defined(DEBUG) */
+
+		/* Remap the kernel rodata using large pages. */
+		kva = roundup((vaddr_t)&__rodata_start, NBPD_L2);
+		kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KR | PG_V;
+			tlbflushg();
+		}
+
+		/* Remap the kernel data+bss using large pages. */
+		kva = roundup((vaddr_t)&__data_start, NBPD_L2);
+		kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KW | PG_V;
+			tlbflushg();
+		}
 	}
 #endif /* !XEN */
 
