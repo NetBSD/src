@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.391 2016/05/10 19:24:00 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.392 2016/05/13 21:21:25 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3598,7 +3598,7 @@ sun4v_cpu_mondo:
 	mov	0x3c0, %g1			 ! CPU Mondo Queue Head
 	ldxa	[%g1] ASI_QUEUE, %g2		 ! fetch index value for head
 	set	CPUINFO_VA, %g3
-	LDPTR	[%g3 + CI_PADDR], %g3
+	ldx	[%g3 + CI_PADDR], %g3
 	add	%g3, CI_CPUMQ, %g3	
 	ldxa	[%g3] ASI_PHYS_CACHED, %g3	 ! fetch head element
 	ldxa	[%g3 + %g2] ASI_PHYS_CACHED, %g4 ! fetch func 
@@ -3630,7 +3630,7 @@ sun4v_dev_mondo:
 	retry					! unlikely, ingnore interrupt
 2:	
 	set	CPUINFO_VA, %g3			 ! fetch cpuinfo pa
-	LDPTR	[%g3 + CI_PADDR], %g3		 ! fetch intstack pa
+	ldx	[%g3 + CI_PADDR], %g3		 ! fetch intstack pa
 	set	CPUINFO_VA-INTSTACK, %g4	 ! offset to cpuinfo
 	add	%g4, %g3, %g3			 ! %g3 is now cpuifo
 	add	%g3, CI_DEVMQ, %g3		 ! calc offset to devmq
@@ -3647,9 +3647,9 @@ sun4v_dev_mondo:
 	 nop					! no just continue
 
 	sethi	%hi(_C_LABEL(intrlev)), %g3
+	sllx	%g5, PTRSHFT, %g5	! Calculate entry number
 	or	%g3, %lo(_C_LABEL(intrlev)), %g3
-	sllx	%g5, 3, %g5		! Calculate entry number
-	ldx	[%g3 + %g5], %g5	! We have a pointer to the handler
+	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
 1:
 	brnz,pt	%g5, setup_sparcintr	! branch if valid handle
 	 nop
@@ -3951,7 +3951,7 @@ sparc_intr_retry:
 	stx	%g0, [%l1]		! Clear intr source
 	membar	#Sync			! Should not be needed
 0:
-	ldx	[%l2 + IH_ACK], %l1	! ih->ih_ack
+	LDPTR	[%l2 + IH_ACK], %l1	! ih->ih_ack
 	brz,pn	%l1, 1f
 	 nop
 	jmpl	%l1, %o7		! (*ih->ih_ack)(ih)
