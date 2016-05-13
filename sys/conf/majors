@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.72 2016/05/13 02:00:36 soda Exp $
+# $NetBSD: majors,v 1.73 2016/05/13 07:41:47 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -56,11 +56,19 @@ device-major dtrace    char 207		   dtrace
 device-major spiflash  char 208 block 208  spiflash
 device-major lua       char 209            lua
 
+# NOTE:
+# The following ranges are reserved for devices that have historical MD
+# definition, but are for "partially" MI use.
+# 
+# Any new port should use these "previously not" MI definitions instead of
+# separate MD values.
+# 
+# New MI devices should go to this file instead of majors.*
+#
 # 210-219 reserved for previously not MI ws devices
 # 220-239 reserved for previously not MI usb devices
 # 240-259 reserved for previously not MI "std" devices
 # 260-269 reserved for previously not MI tty devices
 # 310-339 reserved for previously not MI storage devices
-# NOTE: new MI devices should go to this file instead of above
 
 device-major hdmicec   char 340            hdmicec
