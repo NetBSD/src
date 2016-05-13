@@ -1,11 +1,12 @@
-/*	$NetBSD: kern.ldscript,v 1.17 2016/05/12 06:45:16 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.18 2016/05/13 10:18:01 maxv Exp $	*/
 
 #include "assym.h"
+
+__PAGE_SIZE = 0x1000 ;
 
 ENTRY(_start)
 SECTIONS
 {
-	/* Read-only sections, merged into text segment: */
 	.text :
 	{
 		*(.text)
@@ -45,6 +46,7 @@ SECTIONS
 		*(.data.read_mostly)
 	}
 	. = ALIGN(COHERENCY_UNIT);
+
 	_edata = . ;
 	PROVIDE (edata = .) ;
 	__bss_start = . ;
@@ -55,7 +57,12 @@ SECTIONS
 		*(COMMON)
 	. = ALIGN(32 / 8);
 	}
-	. = ALIGN(32 / 8);
+
+	. = ALIGN(__PAGE_SIZE);
+
+	/* End of the kernel image */
+	__kernel_end = . ;
+
 	_end = . ;
 	PROVIDE (end = .) ;
 	.note.netbsd.ident :
