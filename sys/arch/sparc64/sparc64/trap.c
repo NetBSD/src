@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.182 2016/05/01 19:57:55 palle Exp $ */
+/*	$NetBSD: trap.c,v 1.183 2016/05/13 21:21:43 palle Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.182 2016/05/01 19:57:55 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.183 2016/05/13 21:21:43 palle Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -438,7 +438,7 @@ print_trapframe(struct trapframe64 *tf)
 
 /*
  * Called from locore.s trap handling, for non-MMU-related traps.
- * (MMU-related traps go through mem_access_fault, below.)
+ * (MMU-related traps go through data_access_fault, below.)
  */
 void
 trap(struct trapframe64 *tf, unsigned int type, vaddr_t pc, long tstate)
@@ -1053,7 +1053,7 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
 			(long)(curproc?curproc->p_pid:-1), tf, type,
-			(void *)addr, (void *)pc,
+			(void *)pc, (void *)addr, 
 			sfva, sfsr, (int)curpcb->pcb_nsaved);
 #ifdef DDB
 		if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved))
