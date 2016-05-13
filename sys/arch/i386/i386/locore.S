@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.116 2016/05/12 06:45:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.117 2016/05/13 14:03:00 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.116 2016/05/12 06:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.117 2016/05/13 14:03:00 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -340,10 +340,13 @@ _C_LABEL(Multiboot_Header):
 1:
 	/*
 	 * At this point, we know that a NetBSD-specific boot loader
-	 * booted this kernel.  The stack carries the following parameters:
-	 * (boothowto, [bootdev], bootinfo, esym, biosextmem, biosbasemem),
-	 * 4 bytes each.
+	 * booted this kernel.
+	 *
+	 * Load parameters from the stack (32 bits):
+	 *     boothowto, [bootdev], bootinfo, esym, biosextmem, biosbasemem
+	 * We are not interested in 'bootdev'.
 	 */
+
 	addl	$4,%esp		/* Discard return address to boot loader */
 	call	_C_LABEL(native_loader)
 	addl	$24,%esp
@@ -537,22 +540,43 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$_RELOC(tmpstk),%esp
 
 /*
- * Virtual address space of kernel, without PAE. The page dir is 1 page long.
+ * There are two different layouts possible, depending on whether PAE is
+ * enabled or not.
  *
- * text | data | bss | [syms] | [blobs] | page dir | proc0 kstack | L1 ptp
- *			                0          1       2      3
+ * If PAE is not enabled, there are two levels of pages: PD -> PT. They will
+ * be referred to as: L2 -> L1. L2 is 1 page long. The BOOTSTRAP TABLES have
+ * the following layout:
+ * 	+-----+------------+----+
+ * 	| L2 -> PROC0 STK -> L1 |
+ * 	+-----+------------+----+
  *
- * Virtual address space of kernel, with PAE. We need 4 pages for the page dir
- * and 1 page for the L3.
- * text | data | bss | [syms] | [blobs] | L3 | page dir | proc0 kstack | L1 ptp
- * 					0    1          5       6      7
+ * If PAE is enabled, there are three levels of pages: PDP -> PD -> PT. They
+ * will be referred to as: L3 -> L2 -> L1. L3 is 1 page long, L2 is 4 page
+ * long. The BOOTSTRAP TABLES have the following layout:
+ * 	+-----+-----+------------+----+
+ * 	| L3 -> L2 -> PROC0 STK -> L1 |
+ * 	+-----+-----+------------+----+
+ *
+ * Virtual address space of the kernel in both cases:
+ * +------+--------+------+-----+--------+---------------------+-----------
+ * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | BOOTSTRAP
+ * +------+--------+------+-----+--------+---------------------+-----------
+ *                             (1)      (2)                   (3)
+ *
+ * -------+------------+
+ * TABLES | ISA IO MEM |
+ * -------+------------+
+ *       (4)
+ *
+ * PROC0 STK is obviously not linked as a page level. It just happens to be
+ * caught between L2 and L1.
  */
 
-	/* Find end of kernel image. */
+	/* Find end of kernel image; brings us on (1). */
 	movl	$RELOC(end),%edi
 
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
-	/* Save the symbols (if loaded). */
+	/* Save the symbols (if loaded); brinds us on (2). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
 	jz	1f
@@ -561,14 +585,15 @@ try586:	/* Use the `cpuid' instruction. */
 1:
 #endif
 
-	/* Skip over any modules/blobs. */
+	/* Skip over any modules/blobs; brings us on (3). */
 	movl	RELOC(eblob),%eax
 	testl	%eax,%eax
 	jz	1f
 	subl	$KERNBASE,%eax
 	movl	%eax,%edi
 1:
-	/* Compute sizes */
+
+	/* We are on (3). Align up for BOOTSTRAP TABLES. */
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
@@ -577,20 +602,20 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
-	incl	%eax		/* one more ptp for VAs stolen by bootstrap */
+	incl	%eax		/* one more PTP for VAs stolen by bootstrap */
 1:	movl	%eax,RELOC(nkptp)+1*4
 
 	/* tablesize = (PDP_SIZE + UPAGES + nkptp) << PGSHIFT; */
 	addl	$(PDP_SIZE+UPAGES),%eax
 #ifdef PAE
-	incl	%eax 		/* one more page for the L3 PD */
+	incl	%eax 		/* one more page for L3 */
 	shll	$PGSHIFT+1,%eax	/* PTP tables are twice larger with PAE */
 #else
 	shll	$PGSHIFT,%eax
 #endif
 	movl	%eax,RELOC(tablesize)
 
-	/* ensure that nkptp covers bootstrap tables */
+	/* Ensure that nkptp covers BOOTSTRAP TABLES. */
 	addl	%esi,%eax
 	addl	$~L2_FRAME,%eax
 	shrl	$L2_SHIFT,%eax
@@ -598,36 +623,35 @@ try586:	/* Use the `cpuid' instruction. */
 	cmpl	%eax,RELOC(nkptp)+1*4
 	jnz	1b
 
-	/* Clear tables */
+	/* Now, zero out the BOOTSTRAP TABLES (before filling them in). */
 	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
 	movl	RELOC(tablesize),%ecx
 	shrl	$2,%ecx
 	rep
-	stosl
-
-	leal	(PROC0_PTP1_OFF)(%esi), %ebx
+	stosl				/* copy eax -> edi */
 
 /*
- * Build initial page tables.
+ * Build the page tables and levels. We go from L1 to L2/L3, and link the levels
+ * together. Note: RELOC computes &addr - KERNBASE in 32 bits; the value can't
+ * be > 4G, or we can't deal with it anyway, since we are in 32bit mode.
  */
 	/*
-	 * Compute &__rodata_start - KERNBASE. This can't be > 4G,
-	 * or we can't deal with it anyway, since we can't load it in
-	 * 32 bit mode. So use the bottom 32 bits.
+	 * Build L1.
 	 */
+	leal	(PROC0_PTP1_OFF)(%esi),%ebx
+
+	/* Compute &__rodata_start - KERNBASE. */
 	movl	$RELOC(__rodata_start),%edx
 	andl	$~PGOFSET,%edx
 
-	/*
-	 * Skip the first MB.
-	 */
+	/* Skip the first MB. */
 	movl	$_RELOC(KERNTEXTOFF),%eax
 	movl	%eax,%ecx
-	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # pdes */
+	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # PDEs */
 #ifdef PAE
-	shll	$1,%ecx			/* pdes are twice larger with PAE */
+	shll	$1,%ecx			/* PDEs are twice larger with PAE */
 #endif
 	addl	%ecx,%ebx
 
@@ -651,32 +675,33 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx
 	fillkpt
 
-/*
- * Construct a page table directory.
- */
-	/* Set up top level entries for identity mapping */
+	/*
+	 * Build L2 for identity mapping. Linked to L1.
+	 */
 	leal	(PROC0_PDIR_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
-	/* Set up top level entries for actual kernel mapping */
-	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE*PDE_SIZE)(%esi),%ebx
+	/* Set up L2 entries for actual kernel mapping */
+	leal	(PROC0_PDIR_OFF + L2_SLOT_KERNBASE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
-	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE*PDE_SIZE)(%esi),%ebx
+	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$PDP_SIZE,%ecx
 	fillkpt
 
 #ifdef PAE
-	/* Fill in proc0 L3 page with entries pointing to the page dirs */
+	/*
+	 * Build L3. Linked to L2.
+	 */
 	leal	(PROC0_L3_OFF)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
 	orl	$(PG_V),%eax
@@ -689,16 +714,16 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,%cr4
 #endif
 
-	/* Save phys. addr of PDP, for libkvm. */
+	/* Save physical address of L2. */
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
 	movl	%eax,RELOC(PDPpaddr)
 
 	/*
 	 * Startup checklist:
-	 * 1. Load %cr3 with pointer to PDIR (or L3 PD page for PAE).
+	 * 1. Load %cr3 with pointer to L2 (or L3 for PAE).
 	 */
-	movl	%esi,%eax		/* phys address of PTD in proc0 */
-	movl	%eax,%cr3		/* load PTD addr into MMU */
+	movl	%esi,%eax
+	movl	%eax,%cr3
 
 	/*
 	 * 2. Enable paging and the rest of it.
@@ -712,9 +737,8 @@ try586:	/* Use the `cpuid' instruction. */
 
 begin:
 	/*
-	 * We have arrived.
-	 * There's no need anymore for the identity mapping in low
-	 * memory, remove it.
+	 * We have arrived. There's no need anymore for the identity mapping in
+	 * low memory, remove it.
 	 */
 	movl	_C_LABEL(nkptp)+1*4,%ecx
 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	/* old, phys address of PDIR */
