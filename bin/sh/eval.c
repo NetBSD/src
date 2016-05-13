@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.126 2016/05/10 15:14:30 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.127 2016/05/13 10:32:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.126 2016/05/10 15:14:30 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.127 2016/05/13 10:32:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -413,8 +413,13 @@ evalfor(union node *n, int flags)
 
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
+		int f = flags & (EV_TESTED | EV_MORE);
+
+		if (sp->next)
+			f |= EV_MORE;
+
 		setvar(n->nfor.var, sp->text, 0);
-		evaltree(n->nfor.body, flags & (EV_TESTED | EV_MORE));
+		evaltree(n->nfor.body, f);
 		status = exitstatus;
 		if (nflag)
 			break;
