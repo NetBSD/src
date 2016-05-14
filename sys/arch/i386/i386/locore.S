@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.119 2016/05/14 08:34:00 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.119 2016/05/14 08:34:00 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -167,6 +167,9 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $");
 #define	_RELOC(x)	((x))
 #endif /* XEN */
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
+
+/* 32bit version of PG_NX */
+#define PG_NX32	0x80000000
 
 #ifndef PAE
 #define	PROC0_PDIR_OFF	0
@@ -234,6 +237,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $");
  */
 	.data
 
+	.globl	_C_LABEL(nox_flag)
 	.globl	_C_LABEL(cputype)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
@@ -279,6 +283,10 @@ LABEL(lapic_tpr)
 	.long 0
 END(lapic_tpr)
 #endif
+
+	.type	_C_LABEL(nox_flag), @object
+LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
+END(nox_flag)
 	.type	_C_LABEL(cputype), @object
 LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
@@ -550,6 +558,16 @@ try586:	/* Use the `cpuid' instruction. */
 	 */
 	movl	$_RELOC(tmpstk),%esp
 
+	/*
+	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 */
+	movl	$0x80000001,%eax
+	cpuid
+	andl	$CPUID_NOX,%edx
+	jz	no_NOX
+	movl	$PG_NX32,RELOC(nox_flag)
+no_NOX:
+
 /*
  * There are two different layouts possible, depending on whether PAE is
  * enabled or not.
@@ -737,7 +755,20 @@ try586:	/* Use the `cpuid' instruction. */
 	movl	%eax,%cr3
 
 	/*
-	 * 2. Enable paging and the rest of it.
+	 * 2. Set NOX in EFER, if available.
+	 */
+	movl	RELOC(nox_flag),%ebx
+	cmpl	$0,%ebx
+	je 	skip_NOX
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	xorl	%eax,%eax
+	orl	$(EFER_NXE),%eax
+	wrmsr
+skip_NOX:
+
+	/*
+	 * 3. Enable paging and the rest of it.
 	 */
 	movl	%cr0,%eax
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
