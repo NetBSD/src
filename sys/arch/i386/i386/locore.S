@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.119 2016/05/14 08:34:00 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.120 2016/05/14 08:39:41 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.119 2016/05/14 08:34:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.120 2016/05/14 08:39:41 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -198,6 +198,19 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.119 2016/05/14 08:34:00 maxv Exp $");
 	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			;
+
+/*
+ * fillkpt_nox - Same as fillkpt, but sets the NX/XD bit.
+ */
+#define fillkpt_nox \
+	pushl	%ebp			; \
+	movl	RELOC(nox_flag),%ebp	; \
+1:	movl	%ebp,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: NX */ \
+	movl	%eax,(%ebx)		;	/* store phys addr */	\
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
+	loop	1b			; \
+	popl	%ebp			;
 
 /*
  * killkpt - Destroy a kernel page table
