@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.68 2016/05/12 18:57:38 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.69 2016/05/14 08:52:20 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.68 2016/05/12 18:57:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.69 2016/05/14 08:52:20 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -3162,9 +3162,11 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	/* Write Requests */
 	case UR_CLEAR_FEATURE:
 		if (type == UT_WRITE_CLASS_OTHER) {
-			if (index == 1 /* Port */)
+			if (index == 1 /* Port */) {
+				mutex_enter(&sc->sc_intr_lock);
 				error = slhci_clear_feature(sc, value);
-			else
+				mutex_exit(&sc->sc_intr_lock);
+			} else
 				DLOG(D_ROOT, "Clear Port Feature "
 				    "index = %#.4x", index, 0,0,0);
 		}
