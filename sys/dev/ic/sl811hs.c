@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.69 2016/05/14 08:52:20 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.70 2016/05/14 10:07:52 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.69 2016/05/14 08:52:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.70 2016/05/14 10:07:52 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -3096,8 +3096,10 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe,
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	KASSERT(spipe->ptype == PT_ROOT_INTR);
+#if 0
 	LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
 	    USBD_CANCELLED);
+#endif
 	t->rootintr = xfer;
 	if (t->flags & F_CHANGE)
 		t->flags |= F_ROOTINTR;
