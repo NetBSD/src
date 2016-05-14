@@ -585,9 +585,9 @@ static void dtrace_enabling_provide(dtrace_provider_t *);
 static int dtrace_enabling_match(dtrace_enabling_t *, int *);
 static void dtrace_enabling_matchall(void);
 static dtrace_state_t *dtrace_anon_grab(void);
-#if defined(sun)
 static uint64_t dtrace_helper(int, dtrace_mstate_t *,
     dtrace_state_t *, uint64_t, uint64_t);
+#if defined(sun)
 static dtrace_helpers_t *dtrace_helpers_create(proc_t *);
 #endif
 static void dtrace_buffer_drop(dtrace_buffer_t *);
@@ -2894,7 +2894,6 @@ dtrace_dif_variable(dtrace_mstate_t *mstate, dtrace_state_t *state, uint64_t v,
 		}
 		return (mstate->dtms_stackdepth);
 
-#if defined(sun)
 	case DIF_VAR_USTACKDEPTH:
 		if (!dtrace_priv_proc(state))
 			return (0);
@@ -2914,7 +2913,6 @@ dtrace_dif_variable(dtrace_mstate_t *mstate, dtrace_state_t *state, uint64_t v,
 			mstate->dtms_present |= DTRACE_MSTATE_USTACKDEPTH;
 		}
 		return (mstate->dtms_ustackdepth);
-#endif
 
 	case DIF_VAR_CALLER:
 		if (!dtrace_priv_kernel(state))
@@ -2951,7 +2949,6 @@ dtrace_dif_variable(dtrace_mstate_t *mstate, dtrace_state_t *state, uint64_t v,
 		}
 		return (mstate->dtms_caller);
 
-#if defined(sun)
 	case DIF_VAR_UCALLER:
 		if (!dtrace_priv_proc(state))
 			return (0);
@@ -2975,7 +2972,6 @@ dtrace_dif_variable(dtrace_mstate_t *mstate, dtrace_state_t *state, uint64_t v,
 		}
 
 		return (mstate->dtms_ucaller);
-#endif
 
 	case DIF_VAR_PROBEPROV:
 		ASSERT(mstate->dtms_present & DTRACE_MSTATE_PROBE);
@@ -5820,7 +5816,6 @@ dtrace_action_chill(dtrace_mstate_t *mstate, hrtime_t val)
 #endif
 }
 
-#if defined(sun)
 static void
 dtrace_action_ustack(dtrace_mstate_t *mstate, dtrace_state_t *state,
     uint64_t *buf, uint64_t arg)
@@ -5933,7 +5928,6 @@ dtrace_action_ustack(dtrace_mstate_t *mstate, dtrace_state_t *state,
 out:
 	mstate->dtms_scratch_ptr = old;
 }
-#endif
 
 /*
  * If you're looking for the epicenter of DTrace, you just found it.  This
@@ -6256,7 +6250,6 @@ dtrace_probe(dtrace_id_t id, uintptr_t arg0, uintptr_t arg1,
 				    (uint32_t *)arg0);
 				continue;
 
-#if defined(sun)
 			case DTRACEACT_JSTACK:
 			case DTRACEACT_USTACK:
 				if (!dtrace_priv_proc(state))
@@ -6298,7 +6291,6 @@ dtrace_probe(dtrace_id_t id, uintptr_t arg0, uintptr_t arg1,
 				    DTRACE_USTACK_NFRAMES(rec->dtrd_arg) + 1);
 				DTRACE_CPUFLAG_CLEAR(CPU_DTRACE_NOFAULT);
 				continue;
-#endif
 
 			default:
 				break;
@@ -13889,7 +13881,6 @@ dtrace_anon_property(void)
 	}
 }
 
-#if defined(sun)
 /*
  * DTrace Helper Functions
  */
@@ -13953,9 +13944,7 @@ dtrace_helper_trace(dtrace_helper_action_t *helper,
 		    ((uint64_t *)(uintptr_t)svar->dtsv_data)[curcpu_id];
 	}
 }
-#endif
 
-#if defined(sun)
 static uint64_t
 dtrace_helper(int which, dtrace_mstate_t *mstate,
     dtrace_state_t *state, uint64_t arg0, uint64_t arg1)
@@ -13963,7 +13952,7 @@ dtrace_helper(int which, dtrace_mstate_t *mstate,
 	uint16_t *flags = &cpu_core[curcpu_id].cpuc_dtrace_flags;
 	uint64_t sarg0 = mstate->dtms_arg[0];
 	uint64_t sarg1 = mstate->dtms_arg[1];
-	uint64_t rval;
+	uint64_t rval = 0;
 	dtrace_helpers_t *helpers = curproc->p_dtrace_helpers;
 	dtrace_helper_action_t *helper;
 	dtrace_vstate_t *vstate;
@@ -14047,6 +14036,7 @@ err:
 	return (0);
 }
 
+#if defined(sun)
 static void
 dtrace_helper_action_destroy(dtrace_helper_action_t *helper,
     dtrace_vstate_t *vstate)
@@ -14154,9 +14144,7 @@ dtrace_helper_destroygen(int gen)
 
 	return (0);
 }
-#endif
 
-#if defined(sun)
 static int
 dtrace_helper_validate(dtrace_helper_action_t *helper)
 {
@@ -14171,9 +14159,7 @@ dtrace_helper_validate(dtrace_helper_action_t *helper)
 
 	return (err == 0);
 }
-#endif
 
-#if defined(sun)
 static int
 dtrace_helper_action_add(int which, dtrace_ecbdesc_t *ep)
 {
@@ -14854,7 +14840,7 @@ dtrace_helpers_duplicate(proc_t *from, proc_t *to)
 			new->dtha_actions = kmem_alloc(sz, KM_SLEEP);
 
 			for (j = 0; j < new->dtha_nactions; j++) {
-				dtrace_difo_t *dp = helper->dtha_actions[j];
+				dp = helper->dtha_actions[j];
 
 				ASSERT(dp != NULL);
 				dp = dtrace_difo_duplicate(dp, vstate);
@@ -14893,9 +14879,7 @@ dtrace_helpers_duplicate(proc_t *from, proc_t *to)
 	if (hasprovs)
 		dtrace_helper_provider_register(to, newhelp, NULL);
 }
-#endif
 
-#if defined(sun)
 /*
  * DTrace Hook Functions
  */
