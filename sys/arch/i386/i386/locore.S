@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.117 2016/05/13 14:03:00 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.117 2016/05/13 14:03:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.118 2016/05/14 06:49:34 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -194,6 +194,17 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.117 2016/05/13 14:03:00 maxv Exp $");
 	movl	%eax,(%ebx)		;	/* store phys addr */	\
 	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
+	loop	1b			;
+
+/*
+ * killkpt - Destroy a kernel page table
+ *	ebx = page table address
+ *	ecx = number of pages to destroy
+ */
+#define killkpt \
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper bits (for PAE) */ \
+	movl	$0,(%ebx)		; \
+	addl	$PDE_SIZE,%ebx		; \
 	loop	1b			;
 
 
@@ -647,7 +658,7 @@ try586:	/* Use the `cpuid' instruction. */
 	andl	$~PGOFSET,%edx
 
 	/* Skip the first MB. */
-	movl	$_RELOC(KERNTEXTOFF),%eax
+	movl	$(KERNTEXTOFF - KERNBASE),%eax
 	movl	%eax,%ecx
 	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # PDEs */
 #ifdef PAE
@@ -743,10 +754,7 @@ begin:
 	movl	_C_LABEL(nkptp)+1*4,%ecx
 	leal	(PROC0_PDIR_OFF)(%esi),%ebx	/* old, phys address of PDIR */
 	addl	$(KERNBASE), %ebx		/* new, virt address of PDIR */
-1:	movl	$0,(PDE_SIZE-4)(%ebx)		/* upper bits (for PAE) */
-	movl	$0,(%ebx)
-	addl	$PDE_SIZE,%ebx
-	loop	1b
+	killkpt
 
 	/* Relocate atdevbase. */
 	movl	$KERNBASE,%edx
