@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.770 2016/04/23 23:28:13 christos Exp $
+# $NetBSD: shl.mi,v 1.771 2016/05/14 14:39:39 spz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -276,7 +276,7 @@
 ./usr/lib/libexecinfo.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libexpat.so				base-sys-shlib		compatfile
 ./usr/lib/libexpat.so.2				base-sys-shlib		compatfile
-./usr/lib/libexpat.so.2.1			base-sys-shlib		compatfile
+./usr/lib/libexpat.so.2.2			base-sys-shlib		compatfile
 ./usr/lib/libfetch.so				base-sys-shlib		compatfile
 ./usr/lib/libfetch.so.3				base-sys-shlib		compatfile
 ./usr/lib/libfetch.so.3.0			base-sys-shlib		compatfile

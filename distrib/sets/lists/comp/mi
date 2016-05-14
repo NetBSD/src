@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2034 2016/05/06 09:30:05 snj Exp $
+#	$NetBSD: mi,v 1.2035 2016/05/14 14:39:39 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3635,6 +3635,7 @@
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
+./usr/lib/pkgconfig/expat.pc			comp-c-lib
 ./usr/lib/pkgconfig/kyua-testers.pc		comp-kyua-lib		kyua,share
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		crypto,share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		crypto,share
