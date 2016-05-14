@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.44 2016/05/13 17:33:43 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.45 2016/05/14 17:04:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.44 2016/05/13 17:33:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.45 2016/05/14 17:04:09 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -411,7 +411,7 @@ pax_mprotect_adjust(
 	if ((*prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) != VM_PROT_EXECUTE) {
 #ifdef PAX_MPROTECT_DEBUG
 		struct proc *p = l->l_proc;
-		if (pax_mprotect_debug) {
+		if ((*prot & VM_PROT_EXECUTE) && pax_mprotect_debug) {
 			printf("%s: %s,%zu: %d.%d (%s): -x\n",
 			    __func__, file, line,
 			    p->p_pid, l->l_lid, p->p_comm);
@@ -422,7 +422,7 @@ pax_mprotect_adjust(
 	} else {
 #ifdef PAX_MPROTECT_DEBUG
 		struct proc *p = l->l_proc;
-		if (pax_mprotect_debug) {
+		if ((*prot & VM_PROT_WRITE) && pax_mprotect_debug) {
 			printf("%s: %s,%zu: %d.%d (%s): -w\n",
 			    __func__, file, line,
 			    p->p_pid, l->l_lid, p->p_comm);
