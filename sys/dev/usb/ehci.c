@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.251 2016/05/06 16:30:01 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.252 2016/05/14 07:14:31 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.251 2016/05/06 16:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.252 2016/05/14 07:14:31 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1953,7 +1953,8 @@ ehci_open(struct usbd_pipe *pipe)
 			sqh->qh.qh_endphub |= htole32(
 			    EHCI_QH_SET_PORT(hshubport) |
 			    EHCI_QH_SET_HUBA(hshubaddr) |
-			    EHCI_QH_SET_CMASK(0x08) /* XXX */
+			    (xfertype == UE_INTERRUPT ?
+				 EHCI_QH_SET_CMASK(0x08) : 0)
 			);
 		sqh->qh.qh_curqtd = EHCI_NULL;
 		/* Fill the overlay qTD */
