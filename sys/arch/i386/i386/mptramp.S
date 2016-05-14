@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.28 2016/05/12 09:40:23 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.29 2016/05/14 08:34:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.28 2016/05/12 09:40:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.29 2016/05/14 08:34:00 maxv Exp $");
 
 #include "opt_mpbios.h"		/* for MPDEBUG */
 
@@ -177,11 +177,25 @@ no_PSE:
 	movl	%eax,%cr4
 #endif
 
+	/*
+	 * Set NOX in EFER, if available.
+	 */
+	movl	RELOC(nox_flag),%ebx
+	cmpl	$0,%ebx
+	je 	no_NOX
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	xorl	%eax,%eax
+	orl	$(EFER_NXE),%eax
+	wrmsr
+no_NOX:
+
+	/* Load %cr3. */
 	movl	RELOC(mp_pdirpa),%ecx
 	HALTT(0x5,%ecx)
-
-	/* Load base of page directory and enable mapping. */
 	movl	%ecx,%cr3		/* load PTD addr into MMU */
+
+	/* Enable paging and the rest of it. */
 	movl	%cr0,%eax
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
@@ -191,17 +205,6 @@ no_PSE:
 #endif
 	HALT(0x6)
 
-	/*
-	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
-	 * will raise a #GP. Avoid that by setting the NXE feature now.
-	 */
-	movl	_C_LABEL(cpu_feature)+2*4,%eax	/* cpu_feature[2] */
-	andl	$CPUID_NOX,%eax
-	jz	1f
-	movl	$MSR_EFER,%ecx
-	rdmsr
-	orl	$EFER_NXE,%eax	/* enable No-Execute feature */
-	wrmsr
 
 /*
  * ok, we are now running with paging enabled and sharing page tables
