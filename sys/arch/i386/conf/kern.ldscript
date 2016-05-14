@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.18 2016/05/13 10:18:01 maxv Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.19 2016/05/14 08:19:42 maxv Exp $	*/
 
 #include "assym.h"
 
@@ -16,11 +16,7 @@ SECTIONS
 	_etext = . ;
 	PROVIDE (etext = .) ;
 
-	/*
-	 * Adjust the address for the rodata segment.  We want to adjust up to
-	 * the same address within the page on the next page up.
-	 */
-	. = ALIGN(0x1000) + (. & (0x1000 - 1));
+	. = ALIGN(__PAGE_SIZE);
 
 	__rodata_start = . ;
 	.rodata :
@@ -28,6 +24,8 @@ SECTIONS
 		*(.rodata)
 		*(.rodata.*)
 	}
+
+	. = ALIGN(__PAGE_SIZE);
 
 	__data_start = . ;
 	.data :
@@ -55,7 +53,7 @@ SECTIONS
 		*(.bss)
 		*(.bss.*)
 		*(COMMON)
-	. = ALIGN(32 / 8);
+		. = ALIGN(32 / 8);
 	}
 
 	. = ALIGN(__PAGE_SIZE);
