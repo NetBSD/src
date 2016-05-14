@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.121 2016/05/14 08:49:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.122 2016/05/14 09:51:56 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.121 2016/05/14 08:49:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.122 2016/05/14 09:51:56 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -555,6 +555,16 @@ try586:	/* Use the `cpuid' instruction. */
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
 
+	/*
+	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
+	 */
+	movl	$0x80000001,%eax
+	cpuid
+	andl	$CPUID_NOX,%edx
+	jz	no_NOX
+	movl	$PG_NX32,RELOC(nox_flag)
+no_NOX:
+
 2:
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
@@ -570,16 +580,6 @@ try586:	/* Use the `cpuid' instruction. */
 	 * the rest of memory is still not possible.
 	 */
 	movl	$_RELOC(tmpstk),%esp
-
-	/*
-	 * Retrieve the NX/XD flag. We use the 32bit version of PG_NX.
-	 */
-	movl	$0x80000001,%eax
-	cpuid
-	andl	$CPUID_NOX,%edx
-	jz	no_NOX
-	movl	$PG_NX32,RELOC(nox_flag)
-no_NOX:
 
 /*
  * There are two different layouts possible, depending on whether PAE is
