@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.193 2016/05/13 11:47:02 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.194 2016/05/14 09:37:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2016/05/13 11:47:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2016/05/14 09:37:21 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1343,12 +1343,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
 		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-#ifdef __x86_64__
 			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KR | PG_V;
-#else
-			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
-#endif
-
 			tlbflushg();
 		}
 
@@ -1359,11 +1354,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
 		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-#ifdef __x86_64__
 			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KW | PG_V;
-#else
-			*pde = pa | pmap_pg_g | PG_PS | PG_KW | PG_V;
-#endif
 			tlbflushg();
 		}
 	}
