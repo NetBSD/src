@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.13 2016/05/05 06:17:45 dholland Exp $
+$NetBSD: storage,v 1.14 2016/05/14 21:32:50 mlelstv Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -221,8 +221,9 @@ Semi-relatedly, it is also time for scsipi to become MPSAFE.
 
  - As of May 2016 a port of OpenBSD's driver has been commited. This
    will be in -8.
- - However, the driver still needs to be made MPSAFE, and we still
-   need to attend to scsipi and various other I/O path bottlenecks.
+ - The nvme driver is a backend to ld(4) which is MPSAFE, but we still
+   need to attend to I/O path bottlenecks. Better instrumentation
+   is needed.
  - There is no clear timeframe or release target for these points.
  - Contact msaitoh or agc for further information.
 
