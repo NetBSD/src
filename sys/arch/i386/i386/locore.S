@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.120 2016/05/14 08:39:41 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.121 2016/05/14 08:49:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.120 2016/05/14 08:39:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.121 2016/05/14 08:49:16 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -684,10 +684,6 @@ no_NOX:
 	 */
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
-	/* Compute &__rodata_start - KERNBASE. */
-	movl	$RELOC(__rodata_start),%edx
-	andl	$~PGOFSET,%edx
-
 	/* Skip the first MB. */
 	movl	$(KERNTEXTOFF - KERNBASE),%eax
 	movl	%eax,%ecx
@@ -697,19 +693,43 @@ no_NOX:
 #endif
 	addl	%ecx,%ebx
 
-	/* Map the kernel text read-only. */
-	movl	%edx,%ecx
+	/* Map the kernel text RX. */
+	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-	/* Map the data, BSS, and bootstrap tables read-write. */
-	leal	(PG_V|PG_KW)(%edx),%eax
-	movl	RELOC(tablesize),%ecx
-	addl	%esi,%ecx			/* end of tables */
-	subl	%edx,%ecx			/* subtract end of text */
+	/* Map the kernel rodata R. */
+	movl	$RELOC(__rodata_start),%eax
+	movl	$RELOC(__data_start),%ecx
+	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KR),%eax
+	fillkpt_nox
+
+	/* Map the kernel data+bss RW. */
+	movl	$RELOC(__data_start),%eax
+	movl	$RELOC(__kernel_end),%ecx
+	subl	%eax,%ecx
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW),%eax
+	fillkpt_nox
+
+	/*
+	 * We actually have to be careful here. The memory layout is as
+	 * follows:
+	 *    +----------+---------------------+------------------+
+	 *    | DATA+BSS < [PRELOADED MODULES] | BOOTSTRAP TABLES >
+	 *    +----------+---------------------+------------------+
+	 * We just map everything from < to > with RWX rights.
+	 */
+	movl	$RELOC(__kernel_end),%eax
+	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
+	addl	RELOC(tablesize),%ecx	/* end of BOOTSTRAP TABLES */
+	subl	%eax,%ecx		/* subtract end of kernel image */
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW),%eax
 	fillkpt
 
 	/* Map ISA I/O mem (later atdevbase) */
