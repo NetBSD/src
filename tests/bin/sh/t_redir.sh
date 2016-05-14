@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.8 2016/05/11 17:43:17 kre Exp $
+# $NetBSD: t_redir.sh,v 1.9 2016/05/14 00:33:02 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -799,6 +799,21 @@ validate_fn_redirects_body()
 				B=${A#?-}
 				f "$B" <&3 >&4
 			done >&2'
+
+	# And this tests a similar condition with that same fix
+	cat  <<- 'DONE' >Script
+		f() {
+			printf '%s' " hello $1"
+		}
+		exec 3>&1
+		echo $( for i in a b c
+			do printf '%s' @$i; f $i >&3; done >foo
+		)
+		printf '%s\n' foo=$(cat foo)
+	DONE
+	atf_check -s exit:0 -e empty \
+	    -o inline:' hello a hello b hello c\nfoo=@a@b@c\n' \
+	    ${TEST_SH} Script
 
 	# Tests with sh reading stdin, which is not quite the same internal
 	# mechanism.
