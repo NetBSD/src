@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.64 2015/11/10 13:01:41 tnn Exp $
+# $NetBSD: XEN3_DOMU,v 1.65 2016/05/14 17:11:30 christos Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -231,8 +231,8 @@ pseudo-device	bridge			# simple inter-network bridging
 #pseudo-device	pfsync			# PF sync if
 #pseudo-device	npf			# NPF packet filter
 
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
-options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
