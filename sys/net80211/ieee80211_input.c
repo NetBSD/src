@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.83 2016/05/07 12:36:50 mlelstv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.84 2016/05/14 13:35:40 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.83 2016/05/07 12:36:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.84 2016/05/14 13:35:40 mlelstv Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -223,6 +223,18 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 				/* not interested in */
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
 				    bssid, NULL, "%s", "not to bss");
+				ic->ic_stats.is_rx_wrongbss++;
+				goto out;
+			}
+
+			/* Filter out packets not directed to us in case the
+			 * device is in promiscous mode
+			 */
+			if ((! IEEE80211_IS_MULTICAST(wh->i_addr1))
+			    && (! IEEE80211_ADDR_EQ(wh->i_addr1, ic->ic_myaddr))) {
+				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
+				    bssid, NULL, "not to cur sta: lladdr=%6D, addr1=%6D",
+				    ic->ic_myaddr, ":", wh->i_addr1, ":");
 				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
