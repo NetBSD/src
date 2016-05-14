@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_isa.c,v 1.4 2012/06/11 15:18:05 chs Exp $	*/
+/*	$NetBSD: dtrace_isa.c,v 1.5 2016/05/14 21:19:05 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -32,20 +32,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-//#include <sys/stack.h>
-//#include <sys/pcpu.h>
 
 #include <machine/frame.h>
-//#include <machine/md_var.h>
 #include <machine/reg.h>
-//#include <machine/stack.h>
 
-//#include <vm/vm.h>
-//#include <vm/vm_param.h>
-//#include <vm/pmap.h>
 #include <machine/vmparam.h>
-#include <machine/pmap.h>
-
 
 uint8_t dtrace_fuword8_nocheck(void *);
 uint16_t dtrace_fuword16_nocheck(void *);
@@ -113,19 +104,17 @@ dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
 	}
 }
 
-#ifdef notyet
 static int
 dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
     uintptr_t sp)
 {
 	volatile uint16_t *flags =
 	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
-	struct amd64_frame *frame;
 	int ret = 0;
 
 	ASSERT(pcstack == NULL || pcstack_limit > 0);
 
-	while (pc != 0 && sp != 0) {
+	while (pc != 0) {
 		ret++;
 		if (pcstack != NULL) {
 			*pcstack++ = (uint64_t)pc;
@@ -134,10 +123,12 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 				break;
 		}
 
-		frame = (struct amd64_frame *) sp;
+		if (sp == 0)
+			break;
 
-		pc = dtrace_fulword(&frame->f_retaddr);
-		sp = dtrace_fulword(&frame->f_frame);
+		pc = dtrace_fuword64((void *)(sp +
+			offsetof(struct amd64_frame, f_retaddr)));
+		sp = dtrace_fuword64((void *)sp);
 
 		/*
 		 * This is totally bogus:  if we faulted, we're going to clear
@@ -156,10 +147,9 @@ dtrace_getustack_common(uint64_t *pcstack, int pcstack_limit, uintptr_t pc,
 void
 dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 {
-	klwp_t *lwp = ttolwp(curthread);
 	proc_t *p = curproc;
-	struct regs *rp;
-	uintptr_t pc, sp;
+	struct trapframe *tf;
+	uintptr_t pc, sp, fp;
 	volatile uint16_t *flags =
 	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
 	int n;
@@ -173,7 +163,7 @@ dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 	/*
 	 * If there's no user context we still need to zero the stack.
 	 */
-	if (lwp == NULL || p == NULL || (rp = lwp->lwp_regs) == NULL)
+	if (p == NULL || (tf = curlwp->l_md.md_regs) == NULL)
 		goto zero;
 
 	*pcstack++ = (uint64_t)p->p_pid;
@@ -182,19 +172,29 @@ dtrace_getupcstack(uint64_t *pcstack, int pcstack_limit)
 	if (pcstack_limit <= 0)
 		return;
 
-	pc = rp->r_rip;
-	sp = rp->r_rsp;
+	pc = tf->tf_rip;
+	fp = tf->tf_rbp;
+	sp = tf->tf_rsp;
 
 	if (DTRACE_CPUFLAG_ISSET(CPU_DTRACE_ENTRY)) {
+		/* 
+		 * In an entry probe.  The frame pointer has not yet been
+		 * pushed (that happens in the function prologue).  The
+		 * best approach is to add the current pc as a missing top
+		 * of stack and back the pc up to the caller, which is stored
+		 * at the current stack pointer address since the call 
+		 * instruction puts it there right before the branch.
+		 */
+
 		*pcstack++ = (uint64_t)pc;
 		pcstack_limit--;
 		if (pcstack_limit <= 0)
 			return;
 
-		pc = dtrace_fulword((void *) sp);
+		pc = dtrace_fuword64((void *) sp);
 	}
 
-	n = dtrace_getustack_common(pcstack, pcstack_limit, pc, sp);
+	n = dtrace_getustack_common(pcstack, pcstack_limit, pc, fp);
 	ASSERT(n >= 0);
 	ASSERT(n <= pcstack_limit);
 
@@ -209,18 +209,52 @@ zero:
 int
 dtrace_getustackdepth(void)
 {
+	proc_t *p = curproc;
+	struct trapframe *tf;
+	uintptr_t pc, fp, sp;
+	int n = 0;
+
+	if (p == NULL || (tf = curlwp->l_md.md_regs) == NULL)
+		return (0);
+
+	if (DTRACE_CPUFLAG_ISSET(CPU_DTRACE_FAULT))
+		return (-1);
+
+	pc = tf->tf_rip;
+	fp = tf->tf_rbp;
+	sp = tf->tf_rsp;
+
+	if (DTRACE_CPUFLAG_ISSET(CPU_DTRACE_ENTRY)) {
+		/* 
+		 * In an entry probe.  The frame pointer has not yet been
+		 * pushed (that happens in the function prologue).  The
+		 * best approach is to add the current pc as a missing top
+		 * of stack and back the pc up to the caller, which is stored
+		 * at the current stack pointer address since the call 
+		 * instruction puts it there right before the branch.
+		 */
+
+		pc = dtrace_fuword64((void *) sp);
+		n++;
+	}
+
+	n += dtrace_getustack_common(NULL, 0, pc, fp);
+
+	return (n);
 }
 
 void
 dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 {
-	klwp_t *lwp = ttolwp(curthread);
 	proc_t *p = curproc;
-	struct regs *rp;
-	uintptr_t pc, sp, oldcontext;
+	struct trapframe *tf;
+	uintptr_t pc, sp, fp;
 	volatile uint16_t *flags =
 	    (volatile uint16_t *)&cpu_core[cpu_number()].cpuc_dtrace_flags;
+#ifdef notyet	/* XXX signal stack */
+	uintptr_t oldcontext;
 	size_t s1, s2;
+#endif
 
 	if (*flags & CPU_DTRACE_FAULT)
 		return;
@@ -231,7 +265,7 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 	/*
 	 * If there's no user context we still need to zero the stack.
 	 */
-	if (lwp == NULL || p == NULL || (rp = lwp->lwp_regs) == NULL)
+	if (p == NULL || (tf = curlwp->l_md.md_regs) == NULL)
 		goto zero;
 
 	*pcstack++ = (uint64_t)p->p_pid;
@@ -240,12 +274,15 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 	if (pcstack_limit <= 0)
 		return;
 
-	pc = rp->r_pc;
-	sp = rp->r_fp;
-	oldcontext = lwp->lwp_oldcontext;
+	pc = tf->tf_rip;
+	sp = tf->tf_rsp;
+	fp = tf->tf_rbp;
 
+#ifdef notyet /* XXX signal stack */
+	oldcontext = lwp->lwp_oldcontext;
 	s1 = sizeof (struct xframe) + 2 * sizeof (long);
 	s2 = s1 + sizeof (siginfo_t);
+#endif
 
 	if (DTRACE_CPUFLAG_ISSET(CPU_DTRACE_ENTRY)) {
 		*pcstack++ = (uint64_t)pc;
@@ -254,19 +291,20 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 		if (pcstack_limit <= 0)
 			return;
 
-		if (p->p_model == DATAMODEL_NATIVE)
-			pc = dtrace_fulword((void *)rp->r_sp);
-		else
-			pc = dtrace_fuword32((void *)rp->r_sp);
+		pc = dtrace_fuword64((void *)sp);
 	}
 
-	while (pc != 0 && sp != 0) {
+	while (pc != 0) {
 		*pcstack++ = (uint64_t)pc;
-		*fpstack++ = sp;
+		*fpstack++ = fp;
 		pcstack_limit--;
 		if (pcstack_limit <= 0)
 			break;
 
+		if (fp == 0)
+			break;
+
+#ifdef notyet /* XXX signal stack */
 		if (oldcontext == sp + s1 || oldcontext == sp + s2) {
 			ucontext_t *ucp = (ucontext_t *)oldcontext;
 			greg_t *gregs = ucp->uc_mcontext.gregs;
@@ -275,11 +313,12 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 			pc = dtrace_fulword(&gregs[REG_PC]);
 
 			oldcontext = dtrace_fulword(&ucp->uc_link);
-		} else {
-			struct xframe *fr = (struct xframe *)sp;
-
-			pc = dtrace_fulword(&fr->fr_savpc);
-			sp = dtrace_fulword(&fr->fr_savfp);
+		} else
+#endif /* XXX */
+		{
+			pc = dtrace_fuword64((void *)(fp +
+				offsetof(struct amd64_frame, f_retaddr)));
+			fp = dtrace_fuword64((void *)fp);
 		}
 
 		/*
@@ -295,9 +334,8 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 
 zero:
 	while (pcstack_limit-- > 0)
-		*pcstack++ = NULL;
+		*pcstack++ = 0;
 }
-#endif
 
 /*ARGSUSED*/
 uint64_t
@@ -328,7 +366,7 @@ dtrace_getarg(int arg, int aframes)
 			 * we'll pull the true stack pointer out of the saved
 			 * registers and decrement our argument by the number
 			 * of arguments passed in registers; if the argument
-			 * we're seeking is passed in regsiters, we can just
+			 * we're seeking is passed in registers, we can just
 			 * load it directly.
 			 */
 			struct reg *rp = (struct reg *)((uintptr_t)&fp[1] +

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_asm.S,v 1.3 2010/03/13 22:31:15 christos Exp $	*/
+/*	$NetBSD: dtrace_asm.S,v 1.4 2016/05/14 21:19:05 chs Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -48,14 +48,8 @@
 	 * dtrace_invop wants us to do.
 	 */
 	call	dtrace_invop
-
-	/*
-	 * We pushed 3 times for the arguments to dtrace_invop,
-	 * so we need to increment the stack pointer to get rid of
-	 * those values.
-	 */
+	ALTENTRY(dtrace_invop_callsite)
 	addl	$12, %esp
-//	ALTENTRY(dtrace_invop_callsite)
 	cmpl	$DTRACE_INVOP_PUSHL_EBP, %eax
 	je	invop_push
 	cmpl	$DTRACE_INVOP_POPL_EBP, %eax
