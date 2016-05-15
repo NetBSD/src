@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.163 2016/05/07 12:22:57 pgoyette Exp $
+$NetBSD: acronyms.comp,v 1.164 2016/05/15 23:40:46 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -618,6 +618,8 @@ IST	interrupt stack table
 ISV	independent software vendor
 IT	information technology
 ITB	Intel Turbo Boost
+ITIL	information technology infrastructure library
+ITSM	IT service management
 IV	initialization vector
 IVT	interrupt vector table
 JBOD	just a bunch of disks
@@ -1121,6 +1123,7 @@ SFTP	SSH File Transfer Protocol
 SFTP	Serial File Transfer Protocol
 SFTP	Simple File Transfer Protocol
 SGRAM	synchronous graphics random access memory
+SIEM	security information and event management
 SIFS	short inter-frame space
 SIMD	single instruction, multiple data
 SIMM	single inline memory module
@@ -1137,6 +1140,8 @@ SLOC	source lines of code
 SLRU	segmented LRU
 SMA	smart memory access
 SMAF	system management action field
+SMAP	Simple Mail Access Protocol
+SMAP	supervisor mode access prevention
 SMART	self-monitoring analysis and reporting technology
 SMBIOS	System Management BIOS
 SMC	system management controller
