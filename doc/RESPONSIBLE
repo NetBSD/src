@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.109 2014/07/19 18:38:33 lneto Exp $
+#	$NetBSD: RESPONSIBLE,v 1.110 2016/05/15 22:47:12 kamil Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -295,7 +295,6 @@ newsmips	core
 next68k		core
 ofppc		garbled
 playstation2	martin
-pmax		simonb
 pmax		simonb
 pmppc		core
 prep		garbled
