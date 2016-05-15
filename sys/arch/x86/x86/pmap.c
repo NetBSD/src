@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.194 2016/05/14 09:37:21 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.195 2016/05/15 10:35:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.194 2016/05/14 09:37:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2016/05/15 10:35:54 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4531,15 +4531,15 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 {
 	static bool maps_loaded;
 	static const paddr_t x86_tmp_pml_paddr[] = {
-	    4 * PAGE_SIZE,
-	    5 * PAGE_SIZE,
-	    6 * PAGE_SIZE,
-	    7 * PAGE_SIZE
+	    4 * PAGE_SIZE,	/* L1 */
+	    5 * PAGE_SIZE,	/* L2 */
+	    6 * PAGE_SIZE,	/* L3 */
+	    7 * PAGE_SIZE	/* L4 */
 	};
 	static vaddr_t x86_tmp_pml_vaddr[] = { 0, 0, 0, 0 };
 
 	pd_entry_t *tmp_pml, *kernel_pml;
-	
+
 	int level;
 
 	if (!maps_loaded) {

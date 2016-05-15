@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.216 2016/05/12 06:45:16 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.217 2016/05/15 10:35:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2016/05/12 06:45:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2016/05/15 10:35:54 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1579,7 +1579,7 @@ init_x86_64(paddr_t first_avail)
 	 * Low memory reservations:
 	 * Page 0:	BIOS data
 	 * Page 1:	BIOS callback (not used yet, for symmetry with i386)
-	 * Page 2:	MP bootstrap
+	 * Page 2:	MP bootstrap code (MP_TRAMPOLINE)
 	 * Page 3:	ACPI wakeup code (ACPI_WAKEUP_ADDR)
 	 * Page 4:	Temporary page table for 0MB-4MB
 	 * Page 5:	Temporary page directory
