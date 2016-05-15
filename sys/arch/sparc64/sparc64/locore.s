@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.393 2016/05/13 21:48:15 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.394 2016/05/15 23:54:58 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7078,8 +7078,8 @@ ENTRY(sparc64_ipi_ccall)
 	call %o5					! call function
 	 nop
 
-	ba,a	return_from_trap			! and return from IPI
-	 nop
+	b	return_from_trap			! and return from IPI
+	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 
 #endif
 
