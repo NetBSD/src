@@ -1,4 +1,4 @@
-# $NetBSD: t_redircloexec.sh,v 1.2 2016/03/16 21:13:51 christos Exp $
+# $NetBSD: t_redircloexec.sh,v 1.3 2016/05/15 15:44:43 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,6 +82,40 @@ exec_redir_closed_body() {
 	cleanhelper exec
 }
 
+atf_test_case exec_redir_open
+exec_redir_open_head() {
+	atf_set "descr" "Tests that redirections created by exec can remain open"
+}
+exec_redir_open_body() {
+
+	mkhelper exec 6 \
+		"exec 6> out 6>&6; echo exec1 >&6; ${TEST_SH} exec2; exec 6>&-"
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} ./exec1
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} -e ./exec1
+
+	mkhelper exec 9 \
+		"exec 9> out ; echo exec1 >&9; ${TEST_SH} exec2 9>&9"
+
+	atf_check -s exit:0 -o empty -e empty ${TEST_SH} ./exec1
+
+	mkhelper exec 8 \
+		"exec 8> out; printf OK; exec 8>&8; echo exec1 >&8;" \
+		"printf OK; ${TEST_SH} exec2; printf OK"
+
+	atf_check -s exit:0 -o match:OKOKOK -e empty \
+		${TEST_SH} -e ./exec1
+
+	mkhelper exec 7 \
+		"exec 7> out; printf OK; echo exec1 >&7;" \
+		"printf OK; ${TEST_SH} 7>&7 exec2; printf OK"
+
+	atf_check -s exit:0 -o match:OKOKOK -e empty \
+		${TEST_SH} -e ./exec1
+
+	cleanhelper exec
+}
+
 atf_test_case loop_redir_open
 loop_redir_open_head() {
 	atf_set "descr" "Tests that redirections in loops don't close on exec"
@@ -136,6 +170,7 @@ subshell_redir_open_body() {
 
 atf_init_test_cases() {
 	atf_add_test_case exec_redir_closed
+	atf_add_test_case exec_redir_open
 	atf_add_test_case loop_redir_open
 	atf_add_test_case compound_redir_open
 	atf_add_test_case simple_redir_open
