@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.164 2016/05/15 23:40:46 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.165 2016/05/15 23:54:19 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -109,6 +109,7 @@ BFS	breadth-first search
 BFT	binary file transfer
 BGA	ball grid array
 BGP	Border Gateway Protocol
+BGPSEC	BGP Security
 BIND	Berkeley Internet Name Daemon
 BIOS	Basic Input/Output System
 BIOS	built-in operating system
@@ -1052,6 +1053,7 @@ RMW	read, modify, write
 RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
+RPKI	resource PKI
 RPL	requested privilege level
 RPM	revolutions per minute
 RPN	reverse Polish notation
