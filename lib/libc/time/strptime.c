@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.59 2016/05/15 20:36:42 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.60 2016/05/15 20:37:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.59 2016/05/15 20:36:42 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.60 2016/05/15 20:37:48 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -476,7 +476,6 @@ literal:
 			 * Note: J maybe used to denote non-nautical
 			 *       local time
 			 */
-printf("start parsing %s\n", bp);
 			if (mandatory)
 				while (isspace(*bp))
 					bp++;
@@ -518,7 +517,6 @@ namedzone:
 				if (delim(bp[1]) &&
 				    ((*bp >= 'A' && *bp <= 'I') ||
 				    (*bp >= 'L' && *bp <= 'Y'))) {
-printf("military\n");
 #ifdef TM_GMTOFF
 					/* Argh! No 'J'! */
 					if (*bp >= 'A' && *bp <= 'I')
@@ -538,7 +536,6 @@ printf("military\n");
 				}
 				/* 'J' is local time */
 				if (delim(bp[1]) && *bp == 'J') {
-printf("localtime\n");
 #ifdef TM_GMTOFF
 					tm->TM_GMTOFF = -timezone;
 #endif
@@ -556,10 +553,8 @@ printf("localtime\n");
 				if (delim(bp[0]) || delim(bp[1]) ||
 				    delim(bp[2]) || !delim(bp[3]))
 					goto loadzone;
-printf("findstring\n");
 				ep = find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
-printf("foundstring\n");
 #ifdef TM_GMTOFF
 					tm->TM_GMTOFF = (-5 - i) * SECSPERHOUR;
 #endif
@@ -569,10 +564,8 @@ printf("foundstring\n");
 					bp = ep;
 					continue;
 				}
-printf("findstring2\n");
 				ep = find_string(bp, &i, nadt, NULL, 4);
 				if (ep != NULL) {
-printf("foundstring2\n");
 					tm->tm_isdst = 1;
 #ifdef TM_GMTOFF
 					tm->TM_GMTOFF = (-4 - i) * SECSPERHOUR;
@@ -586,12 +579,10 @@ printf("foundstring2\n");
 				/*
 				 * Our current timezone
 				 */
-printf("findstring3\n");
 				ep = find_string(bp, &i,
 					       	 (const char * const *)tzname,
 					       	  NULL, 2);
 				if (ep != NULL) {
-printf("foundstring3\n");
 					tm->tm_isdst = i;
 #ifdef TM_GMTOFF
 					tm->TM_GMTOFF = -timezone;
@@ -603,7 +594,6 @@ printf("foundstring3\n");
 					continue;
 				}
 loadzone:
-printf("loadzone\n");
 				/*
 				 * The hard way, load the zone!
 				 */
@@ -624,7 +614,6 @@ printf("loadzone\n");
 				}
 				break;
 			}
-printf("offs=%ld i=%d\n", (long)offs, i);
 			if (isdigit(*bp))
 				goto out;
 			switch (i) {
@@ -648,7 +637,6 @@ printf("offs=%ld i=%d\n", (long)offs, i);
 			}
 			if (offs >= (HOURSPERDAY * SECSPERHOUR))
 				goto out;
-printf("done neg=%d offs=%ld\n", neg, (long)offs);
 			if (neg)
 				offs = -offs;
 			tm->tm_isdst = 0;	/* XXX */
