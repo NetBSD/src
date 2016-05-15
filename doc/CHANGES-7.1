@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.88 2016/05/12 08:49:49 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.89 2016/05/15 09:09:13 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4660,5 +4660,14 @@ external/bsd/ntp/scripts/mkver                  up to 1.10
 
 	Update ntp to 4.2.8p7.
 	[snj, ticket #1166]
+
+
+sys/net80211/ieee80211_input.c			1.83-1.84
+
+	Don't check sequence number on multicast packets in station mode.
+	Handle overflow of 12bit sequence number.
+	In station mode filter packets that or not for us in case the
+	interface is in promiscous mode or doesn't filter packets itself.
+	[mlelstv, ticket #1167]
 
 
