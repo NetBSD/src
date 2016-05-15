@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.245 2016/02/13 23:12:34 dholland Exp $
+$NetBSD: acronyms,v 1.246 2016/05/15 23:40:46 jnemeth Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -443,6 +443,7 @@ SFAICT	so far as I can tell
 SHID	slaps head in disgust
 SIMCA	sitting in my chair amused
 SITD	still in the dark
+SMAP	Soil Moisture Active Passive
 SMH	shaking my head
 SMLSFB	so many losers, so few bullets
 SMOP	simple matter of programming
