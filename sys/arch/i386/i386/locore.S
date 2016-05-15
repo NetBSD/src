@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.122 2016/05/14 09:51:56 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.123 2016/05/15 07:01:36 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.122 2016/05/14 09:51:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.123 2016/05/15 07:01:36 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -191,7 +191,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.122 2016/05/14 09:51:56 maxv Exp $");
  * This is done by the first instruction of fillkpt. In the non-PAE case, this
  * instruction just clears the page table entry.
  */
-
 #define fillkpt	\
 1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
 	movl	%eax,(%ebx)		;	/* store phys addr */	\
@@ -612,6 +611,9 @@ no_NOX:
  *
  * PROC0 STK is obviously not linked as a page level. It just happens to be
  * caught between L2 and L1.
+ *
+ * Important note: the kernel segments are properly 4k-aligned
+ * (see kern.ldscript), so there's no need to enforce alignment.
  */
 
 	/* Find end of kernel image; brings us on (1). */
@@ -732,7 +734,7 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt
 
-	/* Map ISA I/O mem (later atdevbase) */
+	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx
 	fillkpt
