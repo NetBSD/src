@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.90 2016/05/12 09:05:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.91 2016/05/15 07:01:36 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -220,23 +220,23 @@
  * Each entry is 8 (PDE_SIZE) bytes long: we must set the 4 upper bytes to 0.
  */
 #define fillkpt	\
-1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
-	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits: 0 */	\
-	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
-	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
+	movl	%eax,(%ebx)		;	/* store phys addr */	\
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			;
 
 /*
  * fillkpt_nox - Same as fillkpt, but sets the NX/XD bit.
  */
 #define fillkpt_nox \
-	pushl	%ebp			;	\
-	movl	RELOC(nox_flag),%ebp	;	\
-1:	movl	%eax,(%ebx)		;	/* store phys addr */	\
-	movl	%ebp,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: NX */ \
+	pushl	%ebp			; \
+	movl	RELOC(nox_flag),%ebp	; \
+1:	movl	%ebp,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: NX */ \
+	movl	%eax,(%ebx)		;	/* store phys addr */	\
 	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
-	loop	1b			;	\
+	loop	1b			; \
 	popl	%ebp			;
 
 /*
@@ -415,7 +415,7 @@ ENTRY(start)
 
 	/*
 	 * Load parameters from the stack (32 bits):
-	 *     boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem
+	 *     boothowto, [bootdev], bootinfo, esym, biosextmem, biosbasemem
 	 * We are not interested in 'bootdev'.
 	 */
 
@@ -605,9 +605,9 @@ no_NOX:
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
-	movl	%esi,%edi
 
 	/* Now, zero out the BOOTSTRAP TABLES (before filling them in). */
+	movl	%esi,%edi
 	xorl	%eax,%eax
 	cld
 	movl	$TABLESIZE,%ecx
@@ -638,7 +638,7 @@ no_NOX:
 	orl	$(PG_V|PG_KR),%eax
 	fillkpt
 
-	/* Map the kernel rodata RO. */
+	/* Map the kernel rodata R. */
 	movl	$RELOC(__rodata_start),%eax
 	movl	$RELOC(__data_start),%ecx
 	subl	%eax,%ecx
