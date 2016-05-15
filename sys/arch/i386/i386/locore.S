@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.123 2016/05/15 07:01:36 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.124 2016/05/15 07:17:53 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.123 2016/05/15 07:01:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.124 2016/05/15 07:17:53 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -718,21 +718,20 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/*
-	 * We actually have to be careful here. The memory layout is as
-	 * follows:
-	 *    +----------+---------------------+------------------+
-	 *    | DATA+BSS < [PRELOADED MODULES] | BOOTSTRAP TABLES >
-	 *    +----------+---------------------+------------------+
-	 * We just map everything from < to > with RWX rights.
-	 */
+	/* Map [SYMS]+[PRELOADED MODULES] RWX. */
 	movl	$RELOC(__kernel_end),%eax
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
-	addl	RELOC(tablesize),%ecx	/* end of BOOTSTRAP TABLES */
-	subl	%eax,%ecx		/* subtract end of kernel image */
+	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt
+
+	/* Map the BOOTSTRAP TABLES RW. */
+	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
+	movl	RELOC(tablesize),%ecx	/* length of BOOTSTRAP TABLES */
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW),%eax
+	fillkpt_nox
 
 	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
