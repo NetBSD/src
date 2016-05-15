@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.754 2015/04/24 00:04:04 khorben Exp $	*/
+/*	$NetBSD: machdep.c,v 1.755 2016/05/15 10:35:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.754 2015/04/24 00:04:04 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.755 2016/05/15 10:35:54 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1197,8 +1197,8 @@ init386(paddr_t first_avail)
 	 * Low memory reservations:
 	 * Page 0:	BIOS data
 	 * Page 1:	BIOS callback
-	 * Page 2:	MP bootstrap
-	 * Page 3:	ACPI wakeup code
+	 * Page 2:	MP bootstrap code (MP_TRAMPOLINE)
+	 * Page 3:	ACPI wakeup code (ACPI_WAKEUP_ADDR)
 	 * Page 4:	Temporary page table for 0MB-4MB
 	 * Page 5:	Temporary page directory
 	 */
