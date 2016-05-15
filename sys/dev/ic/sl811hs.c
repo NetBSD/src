@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.70 2016/05/14 10:07:52 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.71 2016/05/15 13:59:36 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.70 2016/05/14 10:07:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.71 2016/05/15 13:59:36 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -3054,7 +3054,7 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	/*
-	 * We do not have a way to detect over current or bable and
+	 * We do not have a way to detect over current or babble and
 	 * suspend is currently not implemented, so connect and reset
 	 * are the only changes that need to be reported.
 	 */
