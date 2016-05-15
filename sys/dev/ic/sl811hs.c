@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.71 2016/05/15 13:59:36 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.72 2016/05/15 14:00:08 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.71 2016/05/15 13:59:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.72 2016/05/15 14:00:08 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2332,7 +2332,7 @@ slhci_dotransfer(struct slhci_softc *sc)
 }
 
 /*
- * slhci_callback is called after the lock is taken from splusb.
+ * slhci_callback is called after the lock.
  */
 static void
 slhci_callback(struct slhci_softc *sc)
