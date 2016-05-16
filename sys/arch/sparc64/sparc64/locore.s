@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.394 2016/05/15 23:54:58 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.395 2016/05/16 20:03:07 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -83,7 +83,6 @@
 #include <machine/signal.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/intr.h>
 #include <machine/asm.h>
@@ -2785,15 +2784,15 @@ sun4v_dtsb_miss:
 1:
 	LDPTRA	[%g6] ASI_PHYS_CACHED, %g4	! Fetch TTE
 	brgez,pn %g4, sun4v_datatrap		! Entry invalid?  Punt
-	 or	%g4, A_SUN4V_TLB_ACCESS, %g7	! Update the access bit
+	 or	%g4, SUN4V_TLB_ACCESS, %g7	! Update the access bit
 
-	btst	A_SUN4V_TLB_ACCESS, %g4		! Need to update access bit?
+	btst	SUN4V_TLB_ACCESS, %g4		! Need to update access bit?
 	bne,pt	%xcc, 2f
 	 nop
 	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7	!  and write it out
 	cmp	%g4, %g7
 	bne,pn	%xcc, 1b
-	 or	%g4, A_SUN4V_TLB_ACCESS, %g4	! Update the access bit
+	 or	%g4, SUN4V_TLB_ACCESS, %g4	! Update the access bit
 2:
 	GET_TSB_DMMU %g2
 
@@ -6441,13 +6440,13 @@ ENTRY(pseg_set_real)
 	cmp	%g5, CPU_SUN4V
 	bne,pt	%icc, 0f
 	 nop
-	sethi	%hh(A_SUN4V_TLB_TSB_LOCK), %g5
+	sethi	%hh(SUN4V_TLB_TSB_LOCK), %g5
 	sllx	%g5, 32, %g5
 	ba	1f
 	 nop
 0:		
 #endif		
-	set	A_SUN4U_TLB_TSB_LOCK, %g5
+	set	SUN4U_TLB_TSB_LOCK, %g5
 1:		
 	xor	%o2, %o5, %o3			! %o3 - what changed
 
