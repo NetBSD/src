@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.122 2016/05/04 18:59:55 roy Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.123 2016/05/16 01:23:51 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.122 2016/05/04 18:59:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.123 2016/05/16 01:23:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -728,26 +728,37 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	struct bridge_iflist *bif = NULL;
 	struct ifnet *ifs;
 	int error = 0;
+	struct psref psref;
 
-	ifs = ifunit(req->ifbr_ifsname);
+	ifs = if_get(req->ifbr_ifsname, &psref);
 	if (ifs == NULL)
 		return (ENOENT);
 
-	if (sc->sc_if.if_mtu != ifs->if_mtu)
-		return (EINVAL);
+	if (sc->sc_if.if_mtu != ifs->if_mtu) {
+		error = EINVAL;
+		goto out;
+	}
 
-	if (ifs->if_bridge == sc)
-		return (EEXIST);
+	if (ifs->if_bridge == sc) {
+		error = EEXIST;
+		goto out;
+	}
 
-	if (ifs->if_bridge != NULL)
-		return (EBUSY);
+	if (ifs->if_bridge != NULL) {
+		error = EBUSY;
+		goto out;
+	}
 
-	if (ifs->_if_input != ether_input)
-		return EINVAL;
+	if (ifs->_if_input != ether_input) {
+		error = EINVAL;
+		goto out;
+	}
 
 	/* FIXME: doesn't work with non-IFF_SIMPLEX interfaces */
-	if ((ifs->if_flags & IFF_SIMPLEX) == 0)
-		return EINVAL;
+	if ((ifs->if_flags & IFF_SIMPLEX) == 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	bif = kmem_alloc(sizeof(*bif), KM_SLEEP);
 
@@ -789,6 +800,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		bstp_stop(sc);
 
  out:
+	if_put(ifs, &psref);
 	if (error) {
 		if (bif != NULL)
 			kmem_free(bif, sizeof(*bif));
