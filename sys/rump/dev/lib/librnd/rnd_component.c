@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_component.c,v 1.3 2016/01/26 23:12:16 pooka Exp $	*/
+/*	$NetBSD: rnd_component.c,v 1.4 2016/05/16 16:31:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.3 2016/01/26 23:12:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.4 2016/05/16 16:31:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,4 +62,31 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 
 	rump_pdev_add(rndattach, 4);
 	rnd_init();
+}
+
+/*
+ * XXX: the following hack works around PR kern/51135 and should ASAP be
+ * nuked to and then from orbit.
+ */
+#define RNDPRELOAD 256
+#include <sys/rndio.h>
+RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
+{
+	rnddata_t *rd;
+	size_t dsize, i;
+
+	CTASSERT(RNDPRELOAD <= sizeof(rd->data));
+
+	aprint_verbose("/dev/random: "
+	    "loading initial entropy to workaround PR kern/51135\n");
+	rd = kmem_alloc(sizeof(*rd), KM_SLEEP);
+	for (i = 0; i < RNDPRELOAD; i += dsize) {
+		if (rumpuser_getrandom(rd->data,
+		    RNDPRELOAD-i, RUMPUSER_RANDOM_HARD, &dsize) != 0)
+			panic("rumpuser_getrandom failed"); /* XXX */
+		rd->len = dsize;
+		rd->entropy = dsize*NBBY;
+		if (rnd_system_ioctl(NULL, RNDADDDATA, rd))
+			panic("rnd_system_ioctl failed"); /* XXX */
+	}
 }
