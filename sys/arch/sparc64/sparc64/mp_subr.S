@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_subr.S,v 1.9 2015/06/15 07:48:08 martin Exp $	*/
+/*	$NetBSD: mp_subr.S,v 1.10 2016/05/16 20:03:07 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -72,7 +72,6 @@
 #include <machine/signal.h>
 #include <machine/trap.h>
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/intr.h>
 #include <machine/asm.h>
