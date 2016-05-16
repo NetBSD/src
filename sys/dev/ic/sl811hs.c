@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.74 2016/05/16 08:00:25 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.75 2016/05/16 15:09:29 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.74 2016/05/16 08:00:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.75 2016/05/16 15:09:29 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -524,8 +524,6 @@ static void slhci_insert(struct slhci_softc *);
 static usbd_status slhci_clear_feature(struct slhci_softc *, unsigned int);
 static usbd_status slhci_set_feature(struct slhci_softc *, unsigned int);
 static void slhci_get_status(struct slhci_softc *, usb_port_status_t *);
-static usbd_status slhci_root(struct slhci_softc *, struct slhci_pipe *,
-    struct usbd_xfer *);
 
 #define	SLHCIHIST_FUNC()	USBHIST_FUNC()
 #define	SLHCIHIST_CALLED()	USBHIST_CALLED(slhcidebug)
@@ -993,7 +991,20 @@ slhci_root_start(struct usbd_xfer *xfer)
 	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 	sc = SLHCI_XFER2SC(xfer);
 
-	return slhci_lock_call(sc, &slhci_root, spipe, xfer);
+	struct slhci_transfers *t = &sc->sc_transfers;
+
+	LK_SLASSERT(spipe != NULL && xfer != NULL, sc, spipe, xfer, return
+	    USBD_CANCELLED);
+
+	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
+
+	KASSERT(spipe->ptype == PT_ROOT_INTR);
+
+	mutex_enter(&sc->sc_intr_lock);
+	t->rootintr = xfer;
+	mutex_exit(&sc->sc_intr_lock);
+
+	return USBD_IN_PROGRESS;
 }
 
 usbd_status
@@ -3078,32 +3089,6 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 	USETW(ps->wPortStatus, status);
 	USETW(ps->wPortChange, change);
 	DLOG(D_ROOT, "status=%#.4x, change=%#.4x", status, change, 0,0);
-}
-
-static usbd_status
-slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe,
-    struct usbd_xfer *xfer)
-{
-	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
-	struct slhci_transfers *t;
-
-	t = &sc->sc_transfers;
-
-	LK_SLASSERT(spipe != NULL && xfer != NULL, sc, spipe, xfer, return
-	    USBD_CANCELLED);
-
-	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
-
-	KASSERT(spipe->ptype == PT_ROOT_INTR);
-#if 0
-	LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
-	    USBD_CANCELLED);
-#endif
-	t->rootintr = xfer;
-	if (t->flags & F_CHANGE)
-		t->flags |= F_ROOTINTR;
-	return USBD_IN_PROGRESS;
 }
 
 static int
