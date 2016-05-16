@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/20 08:57:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2016/05/16 22:19:10 christos Exp $
 
 .include <bsd.own.mk>
 
-.PATH:	${X11SRCDIR.freetype}/include/cache
+.PATH:	${X11SRCDIR.freetype}/include/freetype/cache
 
-INCSDIR=${X11INCDIR}/freetype2/cache
+INCSDIR=${X11INCDIR}/freetype2/freetype/cache
 
 INCS=	ftcimage.h ftcmanag.h \
 	ftcsbits.h ftcmru.h
