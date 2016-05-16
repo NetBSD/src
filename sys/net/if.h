@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.205 2016/05/16 01:06:31 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.206 2016/05/16 01:16:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -211,32 +211,11 @@ struct ifqueue {
 	kmutex_t	*ifq_lock;
 };
 
-struct ifnet_lock;
-
 #ifdef _KERNEL
-#include <sys/condvar.h>
 #include <sys/percpu.h>
 #include <sys/callout.h>
 #include <sys/rwlock.h>
 
-struct ifnet_lock {
-	kmutex_t il_lock;	/* Protects the critical section. */
-	uint64_t il_nexit;	/* Counts threads across all CPUs who
-				 * have exited the critical section.
-				 * Access to il_nexit is synchronized
-				 * by il_lock.
-				 */
-	percpu_t *il_nenter;	/* Counts threads on each CPU who have
-				 * entered or who wait to enter the
-				 * critical section protected by il_lock.
-				 * Synchronization is not required.
-				 */
-	kcondvar_t il_emptied;	/* The ifnet_lock user must arrange for
-				 * the last threads in the critical
-				 * section to signal this condition variable
-				 * before they leave.
-				 */
-};
 #endif /* _KERNEL */
 
 /*
@@ -351,7 +330,7 @@ typedef struct ifnet {
 	int (*if_mcastop)(struct ifnet *, const unsigned long,
 	    const struct sockaddr *);
 	int (*if_setflags)(struct ifnet *, const short);
-	struct ifnet_lock *if_ioctl_lock;
+	kmutex_t	*if_ioctl_lock;
 #ifdef _KERNEL /* XXX kvm(3) */
 	struct callout *if_slowtimo_ch;
 	struct krwlock	*if_afdata_lock;
