@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.334 2016/05/12 02:24:16 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.335 2016/05/16 01:06:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.334 2016/05/12 02:24:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.335 2016/05/16 01:06:31 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2119,10 +2119,90 @@ out:
 	return ifp;
 }
 
+/*
+ * Get a reference of an ifnet object by an interface name.
+ * The returned reference is protected by psref(9). The caller
+ * must release a returned reference by if_put after use.
+ */
+struct ifnet *
+if_get(const char *name, struct psref *psref)
+{
+	struct ifnet *ifp;
+	const char *cp = name;
+	u_int unit = 0;
+	u_int i;
+	int s;
+
+	/*
+	 * If the entire name is a number, treat it as an ifindex.
+	 */
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+		unit = unit * 10 + (*cp - '0');
+	}
+
+	/*
+	 * If the number took all of the name, then it's a valid ifindex.
+	 */
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
+		if (unit >= if_indexlim)
+			return NULL;
+		ifp = ifindex2ifnet[unit];
+		if (ifp == NULL || ifp->if_output == if_nulloutput)
+			return NULL;
+		return ifp;
+	}
+
+	ifp = NULL;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+		if (strcmp(ifp->if_xname, name) == 0) {
+			psref_acquire(psref, &ifp->if_psref,
+			    ifnet_psref_class);
+			goto out;
+		}
+	}
+out:
+	pserialize_read_exit(s);
+	return ifp;
+}
+
+/*
+ * Release a reference of an ifnet object given by if_get or
+ * if_get_byindex.
+ */
+void
+if_put(const struct ifnet *ifp, struct psref *psref)
+{
+
+	psref_release(psref, &ifp->if_psref, ifnet_psref_class);
+}
+
 ifnet_t *
 if_byindex(u_int idx)
 {
 	return (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+}
+
+/*
+ * Get a reference of an ifnet object by an interface index.
+ * The returned reference is protected by psref(9). The caller
+ * must release a returned reference by if_put after use.
+ */
+ifnet_t *
+if_get_byindex(u_int idx, struct psref *psref)
+{
+	ifnet_t *ifp;
+	int s;
+
+	s = pserialize_read_enter();
+	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+	if (ifp != NULL)
+		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+	pserialize_read_exit(s);
+
+	return ifp;
 }
 
 /* common */
