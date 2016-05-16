@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.204 2016/05/12 02:24:16 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.205 2016/05/16 01:06:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -912,6 +912,10 @@ extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
+struct	ifnet *if_get(const char *, struct psref *);
+ifnet_t *if_byindex(u_int);
+ifnet_t *if_get_byindex(u_int, struct psref *);
+void	if_put(const struct ifnet *, struct psref *);
 int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
 int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
@@ -1046,8 +1050,6 @@ extern struct psref_class *ifnet_psref_class;
 extern kmutex_t ifnet_mtx;
 
 extern struct ifnet *lo0ifp;
-
-ifnet_t *	if_byindex(u_int);
 
 /*
  * ifq sysctl support
