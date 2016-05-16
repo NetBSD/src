@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.335 2016/05/16 01:06:31 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.336 2016/05/16 01:16:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.335 2016/05/16 01:06:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.336 2016/05/16 01:16:24 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -192,10 +192,6 @@ pfil_head_t *	if_pfil;
 static kauth_listener_t if_listener;
 
 static int doifioctl(struct socket *, u_long, void *, struct lwp *);
-static int ifioctl_attach(struct ifnet *);
-static void ifioctl_detach(struct ifnet *);
-static void ifnet_lock_enter(struct ifnet_lock *);
-static void ifnet_lock_exit(struct ifnet_lock *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
@@ -348,10 +344,6 @@ int
 if_nullioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
-	/* Wake ifioctl_detach(), who may wait for all threads to
-	 * quit the critical section.
-	 */
-	cv_signal(&ifp->if_ioctl_lock->il_emptied);
 	return ENXIO;
 }
 
@@ -653,6 +645,7 @@ if_initialize(ifnet_t *ifp)
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
+	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	IFNET_LOCK();
 	if_getindex(ifp);
@@ -665,8 +658,12 @@ if_initialize(ifnet_t *ifp)
 void
 if_register(ifnet_t *ifp)
 {
-	if (ifioctl_attach(ifp) != 0)
-		panic("%s: ifioctl_attach() failed", __func__);
+	/*
+	 * If the driver has not supplied its own if_ioctl, then
+	 * supply the default.
+	 */
+	if (ifp->if_ioctl == NULL)
+		ifp->if_ioctl = ifioctl_common;
 
 	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
 
@@ -1047,6 +1044,9 @@ if_detach(struct ifnet *ifp)
 	s = splnet();
 
 	sysctl_teardown(&ifp->if_sysctl_log);
+	mutex_enter(ifp->if_ioctl_lock);
+	ifp->if_ioctl = if_nullioctl;
+	mutex_exit(ifp->if_ioctl_lock);
 
 	IFNET_LOCK();
 	ifindex2ifnet[ifp->if_index] = NULL;
@@ -1058,6 +1058,9 @@ if_detach(struct ifnet *ifp)
 	/* Wait for all readers to drain before freeing.  */
 	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
 	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
+
+	mutex_obj_free(ifp->if_ioctl_lock);
+	ifp->if_ioctl_lock = NULL;
 
 	if (ifp->if_slowtimo != NULL) {
 		ifp->if_slowtimo = NULL;
@@ -1191,8 +1194,6 @@ again:
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
-	ifioctl_detach(ifp);
-
 	IF_AFDATA_LOCK_DESTROY(ifp);
 
 	softint_disestablish(ifp->if_link_si);
@@ -1300,13 +1301,18 @@ if_clone_create(const char *name)
 {
 	struct if_clone *ifc;
 	int unit;
+	struct ifnet *ifp;
+	struct psref psref;
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return EINVAL;
 
-	if (ifunit(name) != NULL)
+	ifp = if_get(name, &psref);
+	if (ifp != NULL) {
+		if_put(ifp, &psref);
 		return EEXIST;
+	}
 
 	return (*ifc->ifc_create)(ifc, unit);
 }
@@ -1319,17 +1325,29 @@ if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
+	struct psref psref;
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
 		return EINVAL;
 
-	ifp = ifunit(name);
+	if (ifc->ifc_destroy == NULL)
+		return EOPNOTSUPP;
+
+	ifp = if_get(name, &psref);
 	if (ifp == NULL)
 		return ENXIO;
 
-	if (ifc->ifc_destroy == NULL)
-		return EOPNOTSUPP;
+	/* We have to disable ioctls here */
+	mutex_enter(ifp->if_ioctl_lock);
+	ifp->if_ioctl = if_nullioctl;
+	mutex_exit(ifp->if_ioctl_lock);
+
+	/*
+	 * We cannot call ifc_destroy with holding ifp.
+	 * Releasing ifp here is safe thanks to if_clone_mtx.
+	 */
+	if_put(ifp, &psref);
 
 	return (*ifc->ifc_destroy)(ifp);
 }
@@ -2421,32 +2439,6 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 }
 
-static void
-ifnet_lock_enter(struct ifnet_lock *il)
-{
-	uint64_t *nenter;
-
-	/* Before trying to acquire the mutex, increase the count of threads
-	 * who have entered or who wait to enter the critical section.
-	 * Avoid one costly locked memory transaction by keeping a count for
-	 * each CPU.
-	 */
-	nenter = percpu_getref(il->il_nenter);
-	(*nenter)++;
-	percpu_putref(il->il_nenter);
-	mutex_enter(&il->il_lock);
-}
-
-static void
-ifnet_lock_exit(struct ifnet_lock *il)
-{
-	/* Increase the count of threads who have exited the critical
-	 * section.  Increase while we still hold the lock.
-	 */
-	il->il_nexit++;
-	mutex_exit(&il->il_lock);
-}
-
 /*
  * Interface ioctls.
  */
@@ -2465,6 +2457,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct oifreq *oifr = NULL;
 #endif
 	int r;
+	struct psref psref;
+	int bound = curlwp->l_pflag & LP_BOUND;
 
 	switch (cmd) {
 #ifdef COMPAT_OIFREQ
@@ -2493,24 +2487,29 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #endif
 		ifr = data;
 
-	ifp = ifunit(ifr->ifr_name);
-
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
+		curlwp->l_pflag |= LP_BOUND;
 		if (l != NULL) {
+			ifp = if_get(ifr->ifr_name, &psref);
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    (void *)cmd, NULL);
-			if (error != 0)
+			if (ifp != NULL)
+				if_put(ifp, &psref);
+			if (error != 0) {
+				curlwp->l_pflag ^= bound ^ LP_BOUND;
 				return error;
+			}
 		}
 		mutex_enter(&if_clone_mtx);
 		r = (cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name);
 		mutex_exit(&if_clone_mtx);
+		curlwp->l_pflag ^= bound ^ LP_BOUND;
 		return r;
 
 	case SIOCIFGCLONERS:
@@ -2521,8 +2520,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 	}
 
-	if (ifp == NULL)
+	curlwp->l_pflag |= LP_BOUND;
+	ifp = if_get(ifr->ifr_name, &psref);
+	if (ifp == NULL) {
+		curlwp->l_pflag ^= bound ^ LP_BOUND;
 		return ENXIO;
+	}
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -2557,13 +2560,14 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    (void *)cmd, NULL);
 			if (error != 0)
-				return error;
+				goto out;
 		}
 	}
 
 	oif_flags = ifp->if_flags;
 
-	ifnet_lock_enter(ifp->if_ioctl_lock);
+	mutex_enter(ifp->if_ioctl_lock);
+
 	error = (*ifp->if_ioctl)(ifp, cmd, data);
 	if (error != ENOTTY)
 		;
@@ -2590,98 +2594,11 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		ifreqn2o(oifr, ifr);
 #endif
 
-	ifnet_lock_exit(ifp->if_ioctl_lock);
+	mutex_exit(ifp->if_ioctl_lock);
+out:
+	if_put(ifp, &psref);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 	return error;
-}
-
-/* This callback adds to the sum in `arg' the number of
- * threads on `ci' who have entered or who wait to enter the
- * critical section.
- */
-static void
-ifnet_lock_sum(void *p, void *arg, struct cpu_info *ci)
-{
-	uint64_t *sum = arg, *nenter = p;
-
-	*sum += *nenter;
-}
-
-/* Return the number of threads who have entered or who wait
- * to enter the critical section on all CPUs.
- */
-static uint64_t
-ifnet_lock_entrances(struct ifnet_lock *il)
-{
-	uint64_t sum = 0;
-
-	percpu_foreach(il->il_nenter, ifnet_lock_sum, &sum);
-
-	return sum;
-}
-
-static int
-ifioctl_attach(struct ifnet *ifp)
-{
-	struct ifnet_lock *il;
-
-	/* If the driver has not supplied its own if_ioctl, then
-	 * supply the default.
-	 */
-	if (ifp->if_ioctl == NULL)
-		ifp->if_ioctl = ifioctl_common;
-
-	/* Create an ifnet_lock for synchronizing ifioctls. */
-	if ((il = kmem_zalloc(sizeof(*il), KM_SLEEP)) == NULL)
-		return ENOMEM;
-
-	il->il_nenter = percpu_alloc(sizeof(uint64_t));
-	if (il->il_nenter == NULL) {
-		kmem_free(il, sizeof(*il));
-		return ENOMEM;
-	}
-
-	mutex_init(&il->il_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&il->il_emptied, ifp->if_xname);
-
-	ifp->if_ioctl_lock = il;
-
-	return 0;
-}
-
-/*
- * This must not be called until after `ifp' has been withdrawn from the
- * ifnet tables so that ifioctl() cannot get a handle on it by calling
- * ifunit().
- */
-static void
-ifioctl_detach(struct ifnet *ifp)
-{
-	struct ifnet_lock *il;
-
-	il = ifp->if_ioctl_lock;
-	mutex_enter(&il->il_lock);
-	/* Install if_nullioctl to make sure that any thread that
-	 * subsequently enters the critical section will quit it
-	 * immediately and signal the condition variable that we
-	 * wait on, below.
-	 */
-	ifp->if_ioctl = if_nullioctl;
-	/* Sleep while threads are still in the critical section or
-	 * wait to enter it.
-	 */
-	while (ifnet_lock_entrances(il) != il->il_nexit)
-		cv_wait(&il->il_emptied, &il->il_lock);
-	/* At this point, we are the only thread still in the critical
-	 * section, and no new thread can get a handle on the ifioctl
-	 * lock, so it is safe to free its memory.
-	 */
-	mutex_exit(&il->il_lock);
-	ifp->if_ioctl_lock = NULL;
-	percpu_free(il->il_nenter, sizeof(uint64_t));
-	il->il_nenter = NULL;
-	cv_destroy(&il->il_emptied);
-	mutex_destroy(&il->il_lock);
-	kmem_free(il, sizeof(*il));
 }
 
 /*
@@ -2906,6 +2823,7 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
+		/* FIXME: may not hold if_ioctl_lock */
 	         (rc = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
 		rc = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ifa);
 
@@ -2972,6 +2890,7 @@ if_flags_set(ifnet_t *ifp, const short flags)
 		memset(&ifr, 0, sizeof(ifr));
 
 		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
+		/* FIXME: may not hold if_ioctl_lock */
 		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
 
 		if (rc != 0 && cantflags != 0)
