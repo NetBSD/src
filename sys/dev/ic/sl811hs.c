@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.73 2016/05/16 07:59:42 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.74 2016/05/16 08:00:25 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.73 2016/05/16 07:59:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.74 2016/05/16 08:00:25 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -2479,7 +2479,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 }
 
 #if 0
-/* must be called with lock taken from IPL_USB */
+/* must be called with lock taken. */
 /* XXX static */ void
 slhci_pollxfer(struct slhci_softc *sc, struct usbd_xfer *xfer)
 {
