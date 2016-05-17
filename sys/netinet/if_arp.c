@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.209 2016/04/25 14:38:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.210 2016/05/17 09:00:24 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.209 2016/04/25 14:38:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.210 2016/05/17 09:00:24 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -598,7 +598,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 
 		rt->rt_expire = 0;
 		if (useloopback) {
-			ifp = rt->rt_ifp = lo0ifp;
+			rt->rt_ifp = lo0ifp;
 			rt->rt_rmx.rmx_mtu = 0;
 		}
 		rt->rt_flags |= RTF_LOCAL;
