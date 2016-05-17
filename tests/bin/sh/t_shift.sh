@@ -1,4 +1,4 @@
-# $NetBSD: t_shift.sh,v 1.1 2016/03/08 14:26:26 christos Exp $
+# $NetBSD: t_shift.sh,v 1.2 2016/05/17 09:05:14 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,7 +120,7 @@ function_shift_head() {
 	atf_set "descr" "Test that shift in a function does not affect outside"
 }
 function_shift_body() {
-	# later...
+	: # later...
 }
 
 atf_test_case non_numeric_shift
