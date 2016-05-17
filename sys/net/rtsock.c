@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.186 2016/05/12 02:24:16 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.187 2016/05/17 12:58:21 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.186 2016/05/12 02:24:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.187 2016/05/17 12:58:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -480,13 +480,72 @@ route_get_sdl(const struct ifnet *ifp, const struct sockaddr *dst,
 	}
 }
 
+static int
+route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
+    struct rt_xmsghdr *rtm, struct rt_xmsghdr **new_rtm)
+{
+	int len;
+	struct ifnet *ifp;
+
+	if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
+		;
+	else if ((ifp = rt->rt_ifp) != NULL) {
+		const struct ifaddr *rtifa;
+		info->rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
+		/* rtifa used to be simply rt->rt_ifa.
+		 * If rt->rt_ifa != NULL, then
+		 * rt_get_ifa() != NULL.  So this
+		 * ought to still be safe. --dyoung
+		 */
+		rtifa = rt_get_ifa(rt);
+		info->rti_info[RTAX_IFA] = rtifa->ifa_addr;
+#ifdef RTSOCK_DEBUG
+		if (info->rti_info[RTAX_IFA]->sa_family == AF_INET) {
+			char ibuf[INET_ADDRSTRLEN];
+			char abuf[INET_ADDRSTRLEN];
+			printf("%s: copying out RTAX_IFA %s "
+			    "for info->rti_info[RTAX_DST] %s "
+			    "ifa_getifa %p ifa_seqno %p\n",
+			    __func__,
+			    RT_IN_PRINT(ibuf, RTAX_IFA),
+			    RT_IN_PRINT(abuf, RTAX_DST),
+			    (void *)rtifa->ifa_getifa,
+			    rtifa->ifa_seqno);
+		}
+#endif /* RTSOCK_DEBUG */
+		if (ifp->if_flags & IFF_POINTOPOINT)
+			info->rti_info[RTAX_BRD] = rtifa->ifa_dstaddr;
+		else
+			info->rti_info[RTAX_BRD] = NULL;
+		rtm->rtm_index = ifp->if_index;
+	} else {
+		info->rti_info[RTAX_IFP] = NULL;
+		info->rti_info[RTAX_IFA] = NULL;
+	}
+	(void)rt_msg2(rtm->rtm_type, info, NULL, NULL, &len);
+	if (len > rtm->rtm_msglen) {
+		struct rt_xmsghdr *old_rtm = rtm;
+		R_Malloc(*new_rtm, struct rt_xmsghdr *, len);
+		if (*new_rtm == NULL)
+			return ENOBUFS;
+		(void)memcpy(*new_rtm, old_rtm, old_rtm->rtm_msglen);
+		rtm = *new_rtm;
+	}
+	(void)rt_msg2(rtm->rtm_type, info, rtm, NULL, 0);
+	rtm->rtm_flags = rt->rt_flags;
+	rtm_setmetrics(rt, rtm);
+	rtm->rtm_addrs = info->rti_addrs;
+
+	return 0;
+}
+
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 {
 	struct sockproto proto = { .sp_family = PF_XROUTE, };
 	struct rt_xmsghdr *rtm = NULL;
-	struct rt_xmsghdr *old_rtm = NULL;
+	struct rt_xmsghdr *old_rtm = NULL, *new_rtm = NULL;
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
@@ -494,8 +553,6 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	struct ifnet *ifp = NULL;
 	struct ifaddr *ifa = NULL;
 	sa_family_t family;
-	bool is_ll = false;
-	int ll_flags = 0;
 	struct sockaddr_dl sdl;
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
@@ -621,9 +678,20 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		}
 #endif /* INET */
 		error = rtrequest1(rtm->rtm_type, &info, &saved_nrt);
-		if (error == 0) {
-			rt = saved_nrt;
-			goto report;
+		if (error != 0)
+			break;
+
+		rt = saved_nrt;
+		info.rti_info[RTAX_DST] = rt_getkey(rt);
+		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+		info.rti_info[RTAX_TAG] = rt_gettag(rt);
+		error = route_output_report(rt, &info, rtm, &new_rtm);
+		if (error)
+			senderr(error);
+		if (new_rtm != NULL) {
+			old_rtm = rtm;
+			rtm = new_rtm;
 		}
 		break;
 
@@ -661,73 +729,34 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		     (rtm->rtm_flags & RTF_UP) == 0) &&
 		    rtm->rtm_type == RTM_GET &&
 		    sockaddr_cmp(rt_getkey(rt), info.rti_info[RTAX_DST]) != 0) {
+			int ll_flags = 0;
 			route_get_sdl(rt->rt_ifp, info.rti_info[RTAX_DST], &sdl,
 			    &ll_flags);
 			info.rti_info[RTAX_GATEWAY] = sstocsa(&sdl);
-			is_ll = true;
-			goto skip;
+			error = route_output_report(rt, &info, rtm, &new_rtm);
+			if (error)
+				senderr(error);
+			if (new_rtm != NULL) {
+				old_rtm = rtm;
+				rtm = new_rtm;
+			}
+			rtm->rtm_flags |= RTF_LLDATA;
+			rtm->rtm_flags |= (ll_flags & LLE_STATIC) ? RTF_STATIC : 0;
+			break;
 		}
 
 		switch (rtm->rtm_type) {
 		case RTM_GET:
-		report:
 			info.rti_info[RTAX_DST] = rt_getkey(rt);
 			info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 			info.rti_info[RTAX_TAG] = rt_gettag(rt);
-		skip:
-			if ((rtm->rtm_addrs & (RTA_IFP | RTA_IFA)) == 0)
-				;
-			else if ((ifp = rt->rt_ifp) != NULL) {
-				const struct ifaddr *rtifa;
-				info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
-                                /* rtifa used to be simply rt->rt_ifa.
-                                 * If rt->rt_ifa != NULL, then
-                                 * rt_get_ifa() != NULL.  So this
-                                 * ought to still be safe. --dyoung
-				 */
-				rtifa = rt_get_ifa(rt);
-				info.rti_info[RTAX_IFA] = rtifa->ifa_addr;
-#ifdef RTSOCK_DEBUG
-				if (info.rti_info[RTAX_IFA]->sa_family ==
-				    AF_INET) {
-					char ibuf[INET_ADDRSTRLEN];
-					char abuf[INET_ADDRSTRLEN];
-					printf("%s: copying out RTAX_IFA %s "
-					    "for info.rti_info[RTAX_DST] %s "
-					    "ifa_getifa %p ifa_seqno %p\n",
-					    __func__,
-					    RT_IN_PRINT(ibuf, RTAX_IFA),
-					    RT_IN_PRINT(abuf, RTAX_DST),
-					    (void *)rtifa->ifa_getifa,
-					    rtifa->ifa_seqno);
-				}
-#endif /* RTSOCK_DEBUG */
-				if (ifp->if_flags & IFF_POINTOPOINT) {
-					info.rti_info[RTAX_BRD] =
-					    rtifa->ifa_dstaddr;
-				} else
-					info.rti_info[RTAX_BRD] = NULL;
-				rtm->rtm_index = ifp->if_index;
-			} else {
-				info.rti_info[RTAX_IFP] = NULL;
-				info.rti_info[RTAX_IFA] = NULL;
-			}
-			(void)rt_msg2(rtm->rtm_type, &info, NULL, NULL, &len);
-			if (len > rtm->rtm_msglen) {
+			error = route_output_report(rt, &info, rtm, &new_rtm);
+			if (error)
+				senderr(error);
+			if (new_rtm != NULL) {
 				old_rtm = rtm;
-				R_Malloc(rtm, struct rt_xmsghdr *, len);
-				if (rtm == NULL)
-					senderr(ENOBUFS);
-				(void)memcpy(rtm, old_rtm, old_rtm->rtm_msglen);
-			}
-			(void)rt_msg2(rtm->rtm_type, &info, rtm, NULL, 0);
-			rtm->rtm_flags = rt->rt_flags;
-			rtm_setmetrics(rt, rtm);
-			rtm->rtm_addrs = info.rti_addrs;
-			if (is_ll) {
-				rtm->rtm_flags |= RTF_LLDATA;
-				rtm->rtm_flags |= (ll_flags & LLE_STATIC) ? RTF_STATIC : 0;
+				rtm = new_rtm;
 			}
 			break;
 
