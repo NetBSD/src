@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.16 2016/05/10 19:35:08 palle Exp $ */
+ /* $NetBSD: TODO,v 1.17 2016/05/17 19:39:44 palle Exp $ */
 
 Things to be done:
 
@@ -15,7 +15,7 @@ sun4v:
 - 32-bit kernel support
 - libkvm
 - ofwboot: tlb_init_sun4v() hardcodes number of slots to 64
-- locore.s: sun4v_datatrap missing implementation for trap levels 0 and 1
+- locore.s: sun4v_datatrap missing implementation for trap level 1
 - check build without SUN4V defined
 - replace relevant references to %ver with GET_MAXCWP
 - pmap_mp_init(): sun4v missing handling
