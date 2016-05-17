@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbreg.h,v 1.4 2015/09/04 07:35:56 skrll Exp $	*/
+/*	$NetBSD: imxusbreg.h,v 1.5 2016/05/17 06:44:46 ryo Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -94,11 +94,12 @@
 
 
 /* extension to PORTSCx register of EHCI. */
-#define	PORTSC_PTS 		__BITS(31,30)
+#define	PORTSC_PTS		__BITS(31,30)
 #define	PORTSC_PTS_UTMI		__SHIFTIN(0,PORTSC_PTS)
 #define	PORTSC_PTS_PHILIPS	__SHIFTIN(1,PORTSC_PTS) /* not in i.MX51*/
 #define	PORTSC_PTS_ULPI		__SHIFTIN(2,PORTSC_PTS)
 #define	PORTSC_PTS_SERIAL	__SHIFTIN(3,PORTSC_PTS)
+#define	PORTSC_PTS2		__BIT(25)	/* iMX6,7 */
 
 #define	PORTSC_STS	__BIT(29)	/* serial transeiver select */
 #define	PORTSC_PTW	__BIT(28)	/* parallel transceiver width */
