@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2162 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2163 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -293,3 +293,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		permissions on amd64 and i386. [maxv 20160514]
 	x86: Use processor-specific features to optimize memory access time to
 		the kernel image on amd64 and i386. [maxv 20160515]
+	arm: Add support for i.MX7 SoC. [ryo 20160517]
