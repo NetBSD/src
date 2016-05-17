@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.78 2016/05/16 20:03:07 palle Exp $
+#	$NetBSD: genassym.cf,v 1.79 2016/05/17 19:43:28 palle Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -148,6 +148,8 @@ export SUN4U_TTE_CV
 export SUN4U_TTE_P
 export SUN4U_TTE_EXEC
 export SUN4V_TLB_ACCESS
+export SUN4V_TLB_MODIFY
+export SUN4V_TLB_W
 export SUN4V_TLB_TSB_LOCK
 
 export PG_SHIFT4U

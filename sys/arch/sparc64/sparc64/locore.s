@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.395 2016/05/16 20:03:07 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.396 2016/05/17 19:43:28 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1068,7 +1068,9 @@ _C_LABEL(trapbase_sun4v):
 	HARDINT4V(13)						! 0x04d = level 13 interrupt
 	HARDINT4V(14)						! 0x04e = level 14 interrupt
 	HARDINT4V(15)						! 0x04f = level 15 interrupt
-	sun4v_trap_entry 44					! 0x050-0x07b
+	sun4v_trap_entry 28					! 0x050-0x06b
+	VTRAP(T_FDMMU_PROT, sun4v_tl0_dtsb_prot)		! 0x6c
+	sun4v_trap_entry 15					! 0x06d-0x07b
 	VTRAP(T_CPU_MONDO, sun4v_cpu_mondo)			! 0x07c = cpu mondo
 	VTRAP(T_DEV_MONDO, sun4v_dev_mondo)			! 0x07d = dev mondo
 	sun4v_trap_entry 2					! 0x07e-0x07f
@@ -2891,7 +2893,105 @@ sun4v_datatrap_tl0:
 sun4v_datatrap_tl1:
 	/* XXX missing implementaion */
 	sir
-			
+
+sun4v_tl0_dtsb_prot:
+	GET_MMFSA %g1				! MMU Fault status area
+	add	%g1, 0x48, %g3
+	LDPTRA	[%g3] ASI_PHYS_CACHED, %g3	! Data fault address
+	add	%g1, 0x50, %g6
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+
+	GET_CTXBUSY %g4
+	sllx	%g6, 3, %g6			! Make it into an offset into ctxbusy
+	LDPTR	[%g4 + %g6], %g4		! Load up our page table.
+
+	srax	%g3, HOLESHIFT, %g5		! Check for valid address
+	brz,pt	%g5, 0f				! Should be zero or -1
+	 inc	%g5				! Make -1 -> 0
+	brnz,pn	%g5, sun4v_datatrap		! Error! In hole!
+0:
+	srlx	%g3, STSHIFT, %g6
+	and	%g6, STMASK, %g6		! Index into pm_segs
+	sll	%g6, 3, %g6
+	add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page directory pointer
+
+	srlx	%g3, PDSHIFT, %g6
+	and	%g6, PDMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_datatrap		! NULL entry? check somewhere else
+	 add	%g4, %g6, %g4
+	LDPTRA	[%g4] ASI_PHYS_CACHED, %g4	! Load page table pointer
+
+	srlx	%g3, PTSHIFT, %g6		! Convert to ptab offset
+	and	%g6, PTMASK, %g6
+	sll	%g6, 3, %g6
+	brz,pn	%g4, sun4v_datatrap		! NULL entry? check somewhere else
+	 add	%g4, %g6, %g6
+1:
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g4	! Fetch TTE
+	brgez,pn %g4, sun4v_datatrap		! Entry invalid?  Punt
+	 or	%g4, SUN4V_TLB_MODIFY|SUN4V_TLB_ACCESS|SUN4V_TLB_W, %g7
+	! Update the modified bit
+
+#	btst	SUN4V_TLB_REAL_W|SUN4V_TLB_W, %g4	! Is it a ref fault?
+	mov	1, %g2
+	sllx	%g2, 61, %g2
+	or	%g2, SUN4V_TLB_W, %g2
+	btst	%g2, %g4
+	bz,pn	%xcc, sun4v_datatrap			! No -- really fault
+	 nop
+	casxa	[%g6] ASI_PHYS_CACHED, %g4, %g7		!  and write it out
+	cmp	%g4, %g7
+	bne,pn	%xcc, 1b
+	 or	%g4, SUN4V_TLB_MODIFY|SUN4V_TLB_ACCESS|SUN4V_TLB_W, %g4
+		! Update the modified bit
+2:
+	GET_TSB_DMMU %g2
+
+	mov	%g1, %g7			! save MMFSA
+
+	/* Construct TSB tag word. */
+	add	%g1, 0x50, %g6
+	LDPTRA	[%g6] ASI_PHYS_CACHED, %g6	! Data fault context
+	mov	%g3, %g1			! Data fault address
+	srlx	%g1, 22, %g1			! 63..22 of virt addr
+	sllx	%g6, 48, %g6			! context_id in 63..48
+	or	%g1, %g6, %g1			! construct TTE tag
+
+	srlx	%g3, PTSHIFT, %g3
+	sethi	%hi(_C_LABEL(tsbsize)), %g5
+	mov	512, %g6
+	ld	[%g5 + %lo(_C_LABEL(tsbsize))], %g5
+	sllx	%g6, %g5, %g5			! %g5 = 512 << tsbsize = TSBENTS
+	sub	%g5, 1, %g5			! TSBENTS -> offset
+	and	%g3, %g5, %g3			! mask out TTE index
+	sllx	%g3, 4, %g3			! TTE size is 16 bytes
+	add	%g2, %g3, %g2			! location of TTE in ci_tsb_dmmu
+
+	membar	#StoreStore
+	
+	STPTR	%g4, [%g2 + 8]		! store TTE data
+	STPTR	%g1, [%g2]		! store TTE tag
+
+	mov	%o0, %g1
+	mov	%o1, %g2
+	mov	%o2, %g3
+
+	add	%g7, 0x48, %o0
+	ldxa	[%o0] ASI_PHYS_CACHED, %o0	! Data fault address
+	add	%g7, 0x50, %o1
+	ldxa	[%o1] ASI_PHYS_CACHED, %o1	! Data fault context
+	mov	MAP_DTLB, %o2
+	ta	ST_MMU_UNMAP_ADDR
+
+	mov	%g1, %o0
+	mov	%g2, %o1
+	mov	%g3, %o2
+
+	retry
+	NOTREACHED
+	
 /*
  * End of traps for sun4v.
  */
