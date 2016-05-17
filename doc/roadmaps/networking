@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.9 2012/01/15 02:56:17 agc Exp $
+$NetBSD: networking,v 1.10 2016/05/17 20:53:53 christos Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -6,42 +6,65 @@ NetBSD Networking Roadmap
 This is a small roadmap document, and deals with the networking
 side of the operating system.
 
-The following projects are expected to be included in NetBSD 6.0
-8. SMP-aware Network Packet Filter
+The following projects are expected to be included in NetBSD 8.0
+0. SCTP
 
 The following features are expected to be in future releases:
-1. Mobile IPv6
-2. SCTP
+1. net80211 support [n/ac]
+2. Mobile IPv6
 3. network driver polling
 4. ALTQ processing on input
 5. integrated multicast dns / zeroconf
 6. tcp support in libsa
 7. netboot from http
+8. MP network stack
 
 We'll continue to update this roadmap as features and dates get firmed up.
-
 
 Some explanations
 =================
 
-2. SCTP
+0. SCTP
 -------
 
 Add support for the SCTP for both IPv4 and IPv6.
 
-Responsible: TBD
+Responsible: rjs
+Status: committed, done
 
+1. net80211 [n/ac]
+------------------
+
+Resync FreeBSD stack to get support for n, ac, VAP
+
+Responsible: christos
+Status: started porting FreeBSD code
+Comment[christos]: This will add VAP support too, and needs changes to all
+the specific drivers.
+
+2. Mobile IPv6
+--------------
+
+Responsible: TBD
+Status: not started
+Comment[christos]: XXX: Fill in the project description and justification.
 
 3. network driver polling
 -------------------------
 
 Responsible: matt
+Status: not started
+Comment[christos]: XXX: Fill in the project description and justification.
 
 
 4. ALTQ processing for input
 ----------------------------
 
 Responsible: matt
+Status: not started
+Comment[christos]: The ALTQ code and interface is very messy and there
+is a lot of code duplication. People (ozaki-r/knakahara) are working on
+this as part as MP stack
 
 
 5. multicast DNS / zeroconf
@@ -50,6 +73,8 @@ Responsible: matt
 Add support for multicast DNS (name.local)
 
 Responsible: tsarna
+Status: not started
+Comment[christos]: XXX: Fill in the project description and justification.
 
 
 6. tcp support in libsa
@@ -58,6 +83,8 @@ Responsible: tsarna
 Add a tiny tcp implementation to libsa.
 
 Responsible: matt
+Status: not started
+Comment[christos]: XXX: Why? What's going to use it?
 
 
 7. http netbooting
@@ -67,18 +94,19 @@ Be able to use a HTTP server hosting a kernel and/or disk image as a
 read-only root device.
 
 Responsible: TBD
+Status: not started
+Comment[christos]: Not very interesting
 
-8. SMP-aware Packet Filter
---------------------------
+8. net SMP work
+------------------
 
-A new packet filter which is SMP-aware has been written by rmind, as a
-project funded by the NetBSD Foundation.  zoltan has updated it for
-IPv6, and various bits contributed by christos, dholland and martin. 
-This will be in 6.0
+Make multi-threaded network stack
 
-Responsible: rmind, zoltan, christos, dholland, martin
-
+Responsible: ozaki-r,knakahara
+Status: in progress
 
 Matt Thomas
 Alistair Crooks
 Sat Jan 14 11:44:46 PST 2012
+Christos Zoulas
+Tue May 17 16:46:54 EDT 2016
