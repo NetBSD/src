@@ -23,6 +23,8 @@
  *     ${var_name}   (var_name is the name of the environ variable)
  *     $var_name     (var_name ends w/ non-alphanumeric char other than '_')
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: expand_path.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include <sys/types.h>

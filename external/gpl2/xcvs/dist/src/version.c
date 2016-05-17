@@ -13,6 +13,8 @@
  * 
  * version.c - the CVS version number
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: version.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 
