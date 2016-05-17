@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.187 2016/05/17 12:58:21 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.188 2016/05/17 15:21:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.187 2016/05/17 12:58:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.188 2016/05/17 15:21:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -140,8 +140,8 @@ DOMAIN_DEFINE(routedomain); /* forward declare and add to link set */
 #endif
 
 #ifdef RTSOCK_DEBUG
-#define RT_IN_PRINT(b, a) (in_print((b), sizeof(b), \
-    &((const struct sockaddr_in *)info.rti_info[(a)])->sin_addr), (b))
+#define RT_IN_PRINT(info, b, a) (in_print((b), sizeof(b), \
+    &((const struct sockaddr_in *)(info)->rti_info[(a)])->sin_addr), (b))
 #endif /* RTSOCK_DEBUG */
 
 struct route_info COMPATNAME(route_info) = {
@@ -507,8 +507,8 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 			    "for info->rti_info[RTAX_DST] %s "
 			    "ifa_getifa %p ifa_seqno %p\n",
 			    __func__,
-			    RT_IN_PRINT(ibuf, RTAX_IFA),
-			    RT_IN_PRINT(abuf, RTAX_DST),
+			    RT_IN_PRINT(info, ibuf, RTAX_IFA),
+			    RT_IN_PRINT(info, abuf, RTAX_DST),
 			    (void *)rtifa->ifa_getifa,
 			    rtifa->ifa_seqno);
 		}
@@ -589,7 +589,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	if (info.rti_info[RTAX_DST]->sa_family == AF_INET) {
 		char abuf[INET_ADDRSTRLEN];
 		printf("%s: extracted info.rti_info[RTAX_DST] %s\n", __func__,
-		    RT_IN_PRINT(abuf, RTAX_DST));
+		    RT_IN_PRINT(&info, abuf, RTAX_DST));
 	}
 #endif /* RTSOCK_DEBUG */
 	if (info.rti_info[RTAX_DST] == NULL ||
