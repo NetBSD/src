@@ -19,6 +19,8 @@
  * 
  * Returns non-zero on error.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: checkin.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include "fileattr.h"

@@ -16,6 +16,8 @@
  * current head of a module, or between two releases.  Can specify the
  * release as either a date or a revision number.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: patch.c,v 1.7 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include "getline.h"
