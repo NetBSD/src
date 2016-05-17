@@ -16,6 +16,8 @@
  * Tag uses the checked out revision in the current directory, rtag uses
  * the modules database, if necessary.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tag.c,v 1.4 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include <grp.h>
