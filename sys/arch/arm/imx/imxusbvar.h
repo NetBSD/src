@@ -13,7 +13,8 @@ struct imxusbc_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 
-	/* filled in by platform dependent routine */
+	/* filled in by platform dependent param & routine */
+	bus_size_t sc_ehci_size;
 	void (* sc_init_md_hook)(struct imxehci_softc *);
 	void (* sc_setup_md_hook)(struct imxehci_softc *, enum imx_usb_role);
 };
@@ -31,7 +32,8 @@ enum imx_usb_if {
 	IMXUSBC_IF_PHILIPS,
 	IMXUSBC_IF_ULPI,
 	IMXUSBC_IF_SERIAL,
-	IMXUSBC_IF_UTMI_WIDE
+	IMXUSBC_IF_UTMI_WIDE,
+	IMXUSBC_IF_HSIC
 };
 
 struct imxehci_softc {
