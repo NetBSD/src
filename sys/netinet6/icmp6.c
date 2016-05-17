@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.183 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.184 2016/05/17 03:24:46 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.183 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.184 2016/05/17 03:24:46 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2140,8 +2140,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct in6_addr reddst6;
 	union nd_opts ndopts;
 
-	if (!ifp)
-		return;
+	if (ifp == NULL)
+		goto freeit;
 
 	/* XXX if we are router, we don't update route by icmp6 redirect */
 	if (ip6_forwarding)
@@ -2277,7 +2277,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
 			goto freeit;
 		if (0 <= icmp6_redirect_hiwat && rtcount > icmp6_redirect_hiwat)
-			return;
+			goto freeit;
 		else if (0 <= icmp6_redirect_lowat &&
 		    rtcount > icmp6_redirect_lowat) {
 			/*
