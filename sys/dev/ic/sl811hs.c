@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.75 2016/05/16 15:09:29 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.76 2016/05/17 03:20:58 martin Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.75 2016/05/16 15:09:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.76 2016/05/17 03:20:58 martin Exp $");
 
 #include "opt_slhci.h"
 
@@ -986,7 +986,7 @@ slhci_root_start(struct usbd_xfer *xfer)
 {
 	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
-	struct slhci_pipe *spipe;
+	struct slhci_pipe *spipe __diagused;
 
 	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 	sc = SLHCI_XFER2SC(xfer);
