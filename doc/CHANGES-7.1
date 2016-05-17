@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.89 2016/05/15 09:09:13 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.90 2016/05/17 18:51:39 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4661,7 +4661,6 @@ external/bsd/ntp/scripts/mkver                  up to 1.10
 	Update ntp to 4.2.8p7.
 	[snj, ticket #1166]
 
-
 sys/net80211/ieee80211_input.c			1.83-1.84
 
 	Don't check sequence number on multicast packets in station mode.
@@ -4670,4 +4669,11 @@ sys/net80211/ieee80211_input.c			1.83-1.84
 	interface is in promiscous mode or doesn't filter packets itself.
 	[mlelstv, ticket #1167]
 
+crypto/external/bsd/openssh/dist/session.c	1.19
+
+	If PAM is configured to read user-specified environment variables
+	and UseLogin=yes in sshd_config, then a hostile local user may
+	attack /bin/login via LD_PRELOAD or similar environment variables
+	set via PAM.  CVE-2015-8325.
+	[christos, ticket #1168]
 
