@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_snvs.c,v 1.2 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_snvs.c,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -26,32 +26,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * i.MX6 Secure Non-Volatile Storage
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_snvs.c,v 1.2 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_snvs.c,v 1.1 2016/05/17 06:44:45 ryo Exp $");
 
+#include "locators.h"
 #include "opt_imx.h"
 
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/param.h>
 
-#include <arm/imx/imx6var.h>
-#include <arm/imx/imx6_reg.h>
+#include <arm/imx/imx7var.h>
+#include <arm/imx/imx7reg.h>
 #include <arm/imx/imxsnvsvar.h>
-#include "locators.h"
 
 /* ARGSUSED */
 int
-imxsnvs_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
+imxsnvs_match(device_t parent __unused, struct cfdata *match __unused,
+              void *aux)
 {
 	struct axi_attach_args *aa = aux;
 
 	switch (aa->aa_addr) {
-	case IMX6_AIPS1_BASE + AIPS1_SNVS_BASE:
+	case IMX7_AIPS_BASE + AIPS1_SNVS_BASE:
 		return 1;
 	}
 
@@ -70,4 +67,3 @@ imxsnvs_attach(device_t parent __unused, device_t self, void *aux)
 	imxsnvs_attach_common(parent, self,
 	    aa->aa_iot, aa->aa_addr, aa->aa_size, aa->aa_irq, 0);
 }
-
