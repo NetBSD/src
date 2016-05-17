@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.184 2016/05/17 03:24:46 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.185 2016/05/17 03:27:02 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.184 2016/05/17 03:24:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.185 2016/05/17 03:27:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -453,10 +453,11 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - *offp;
 	int code, sum, noff, i;
+	struct ifnet *rcvif = m->m_pkthdr.rcvif;
 
 #define ICMP6_MAXLEN (sizeof(*nip6) + sizeof(*nicmp6) + 4)
 	KASSERT(ICMP6_MAXLEN < MCLBYTES);
-	icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_msg);
+	icmp6_ifstat_inc(rcvif, ifs6_in_msg);
 
 	/*
 	 * Locate icmp6 structure in mbuf, and check
@@ -465,7 +466,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 
 	if (icmp6len < sizeof(struct icmp6_hdr)) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -473,7 +474,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 #if 0 /* m is 0 here */
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 #endif
 		goto freeit;
 	}
@@ -485,7 +486,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	if (icmp6 == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		/* m is invalid */
-		/*icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);*/
+		/*icmp6_ifstat_inc(rcvif, ifs6_in_error);*/
 		return IPPROTO_DONE;
 	}
 	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
@@ -495,7 +496,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		nd6log(LOG_ERR, "ICMP6 checksum error(%d|%x) %s\n",
 		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src));
 		ICMP6_STATINC(ICMP6_STAT_CHECKSUM);
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_error);
+		icmp6_ifstat_inc(rcvif, ifs6_in_error);
 		goto freeit;
 	}
 
@@ -521,13 +522,13 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 
 	switch (icmp6->icmp6_type) {
 	case ICMP6_DST_UNREACH:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_dstunreach);
+		icmp6_ifstat_inc(rcvif, ifs6_in_dstunreach);
 		switch (code) {
 		case ICMP6_DST_UNREACH_NOROUTE:
 			code = PRC_UNREACH_NET;
 			break;
 		case ICMP6_DST_UNREACH_ADMIN:
-			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_adminprohib);
+			icmp6_ifstat_inc(rcvif, ifs6_in_adminprohib);
 			code = PRC_UNREACH_PROTOCOL; /* is this a good code? */
 			break;
 		case ICMP6_DST_UNREACH_ADDR:
@@ -552,7 +553,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto deliver;
 
 	case ICMP6_PACKET_TOO_BIG:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
+		icmp6_ifstat_inc(rcvif, ifs6_in_pkttoobig);
 
 		/*
 		 * MTU is checked in icmp6_mtudisc.
@@ -566,7 +567,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto deliver;
 
 	case ICMP6_TIME_EXCEEDED:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_timeexceed);
+		icmp6_ifstat_inc(rcvif, ifs6_in_timeexceed);
 		switch (code) {
 		case ICMP6_TIME_EXCEED_TRANSIT:
 			code = PRC_TIMXCEED_INTRANS;
@@ -580,7 +581,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto deliver;
 
 	case ICMP6_PARAM_PROB:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_paramprob);
+		icmp6_ifstat_inc(rcvif, ifs6_in_paramprob);
 		switch (code) {
 		case ICMP6_PARAMPROB_NEXTHEADER:
 			code = PRC_UNREACH_PROTOCOL;
@@ -595,7 +596,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto deliver;
 
 	case ICMP6_ECHO_REQUEST:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echo);
+		icmp6_ifstat_inc(rcvif, ifs6_in_echo);
 		if (code != 0)
 			goto badcode;
 		/*
@@ -644,7 +645,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ICMP6_ECHO_REPLY:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_echoreply);
+		icmp6_ifstat_inc(rcvif, ifs6_in_echoreply);
 		if (code != 0)
 			goto badcode;
 		break;
@@ -654,9 +655,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		if (icmp6len < sizeof(struct mld_hdr))
 			goto badlen;
 		if (icmp6->icmp6_type == MLD_LISTENER_QUERY) /* XXX: ugly... */
-			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldquery);
+			icmp6_ifstat_inc(rcvif, ifs6_in_mldquery);
 		else
-			icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mldreport);
+			icmp6_ifstat_inc(rcvif, ifs6_in_mldreport);
 		if ((n = m_copym(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {
 			/* give up local */
 			mld_input(m, off);
@@ -668,7 +669,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case MLD_LISTENER_DONE:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_mlddone);
+		icmp6_ifstat_inc(rcvif, ifs6_in_mlddone);
 		if (icmp6len < sizeof(struct mld_hdr))	/* necessary? */
 			goto badlen;
 		break;		/* nothing to be done in kernel */
@@ -761,7 +762,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ND_ROUTER_SOLICIT:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_routersolicit);
+		icmp6_ifstat_inc(rcvif, ifs6_in_routersolicit);
 		if (code != 0)
 			goto badcode;
 		if (icmp6len < sizeof(struct nd_router_solicit))
@@ -777,7 +778,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ND_ROUTER_ADVERT:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_routeradvert);
+		icmp6_ifstat_inc(rcvif, ifs6_in_routeradvert);
 		if (code != 0)
 			goto badcode;
 		if (icmp6len < sizeof(struct nd_router_advert))
@@ -793,7 +794,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ND_NEIGHBOR_SOLICIT:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_neighborsolicit);
+		icmp6_ifstat_inc(rcvif, ifs6_in_neighborsolicit);
 		if (code != 0)
 			goto badcode;
 		if (icmp6len < sizeof(struct nd_neighbor_solicit))
@@ -809,7 +810,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ND_NEIGHBOR_ADVERT:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_neighboradvert);
+		icmp6_ifstat_inc(rcvif, ifs6_in_neighboradvert);
 		if (code != 0)
 			goto badcode;
 		if (icmp6len < sizeof(struct nd_neighbor_advert))
@@ -825,7 +826,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		break;
 
 	case ND_REDIRECT:
-		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_redirect);
+		icmp6_ifstat_inc(rcvif, ifs6_in_redirect);
 		if (code != 0)
 			goto badcode;
 		if (icmp6len < sizeof(struct nd_redirect))
@@ -852,7 +853,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		nd6log(LOG_DEBUG, "unknown type %d(src=%s, dst=%s, ifid=%d)\n",
 		    icmp6->icmp6_type, ip6_sprintf(&ip6->ip6_src),
 		    ip6_sprintf(&ip6->ip6_dst),
-		    m->m_pkthdr.rcvif ? m->m_pkthdr.rcvif->if_index : 0);
+		    rcvif ? rcvif->if_index : 0);
 		if (icmp6->icmp6_type < ICMP6_ECHO_REQUEST) {
 			/* ICMPv6 error: MUST deliver it by spec... */
 			code = PRC_NCMDS;
@@ -2157,8 +2158,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	redtgt6 = nd_rd->nd_rd_target;
 	reddst6 = nd_rd->nd_rd_dst;
 
-	if (in6_setscope(&redtgt6, m->m_pkthdr.rcvif, NULL) ||
-	    in6_setscope(&reddst6, m->m_pkthdr.rcvif, NULL)) {
+	if (in6_setscope(&redtgt6, ifp, NULL) ||
+	    in6_setscope(&reddst6, ifp, NULL)) {
 		goto freeit;
 	}
 
