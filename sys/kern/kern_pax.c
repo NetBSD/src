@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.45 2016/05/14 17:04:09 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.46 2016/05/17 00:38:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.45 2016/05/14 17:04:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.46 2016/05/17 00:38:50 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -481,6 +481,9 @@ pax_aslr_init_vm(struct lwp *l, struct vmspace *vm, struct exec_package *ep)
 #ifdef PAX_ASLR_DEBUG
 	if (pax_aslr_flags & PAX_ASLR_FIXED)
 		rand = pax_aslr_rand;
+#endif
+#ifdef PAX_ASLR_RAND_MMAP_MAX
+	rand &= PAX_ASLR_RAND_MMAP_MAX - 1;
 #endif
 	vm->vm_aslr_delta_mmap = PAX_ASLR_DELTA(rand,
 	    PAX_ASLR_DELTA_MMAP_LSB, len);
