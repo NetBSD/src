@@ -11,6 +11,8 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: history.c,v 1.4 2016/05/17 14:00:09 christos Exp $");
 
 /* **************** History of Users and Module ****************
  *

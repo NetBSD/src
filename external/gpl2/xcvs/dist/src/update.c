@@ -37,6 +37,8 @@
  * directories added to the repository are automatically created and updated
  * as well.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: update.c,v 1.5 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include <assert.h>

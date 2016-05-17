@@ -16,6 +16,8 @@
  * the shell-script CVS system that this is based on.
  *
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: main.c,v 1.6 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 

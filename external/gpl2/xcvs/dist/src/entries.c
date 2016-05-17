@@ -15,6 +15,8 @@
  * Creates the file Files containing the names that comprise the project, from
  * the Entries file.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: entries.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include "getline.h"

@@ -12,6 +12,8 @@
  * 
  * Status Information
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: status.c,v 1.4 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 

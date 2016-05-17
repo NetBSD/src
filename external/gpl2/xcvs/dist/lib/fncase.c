@@ -12,6 +12,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: fncase.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

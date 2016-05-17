@@ -20,6 +20,8 @@
  * Finds all pertinent sub-directories of the checked out instantiation and the
  * repository (and optionally the attic)
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: find_names.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 #include <glob.h>

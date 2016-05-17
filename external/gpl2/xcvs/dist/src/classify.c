@@ -11,6 +11,8 @@
  * specified in the README file that comes with the CVS source distribution.
  * 
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: classify.c,v 1.2 2016/05/17 14:00:09 christos Exp $");
 
 #include "cvs.h"
 

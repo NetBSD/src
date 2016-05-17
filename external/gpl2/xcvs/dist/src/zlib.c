@@ -12,6 +12,8 @@
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: zlib.c,v 1.3 2016/05/17 14:00:09 christos Exp $");
 
 /* The routines in this file are the interface between the CVS
    client/server support and the zlib compression library.  */
