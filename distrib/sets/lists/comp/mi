@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.20 2014/12/25 17:53:57 msaitoh Exp $
+#	$NetBSD: mi,v 1.1738.2.21 2016/05/18 10:49:22 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3360,6 +3360,7 @@
 ./usr/lib/pkgconfig/atf-c.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf-sh.pc			comp-atf-lib		atf,share
 ./usr/lib/pkgconfig/atf.pc			comp-obsolete		obsolete
+./usr/lib/pkgconfig/expat.pc			comp-c-lib
 ./usr/lib/pkgconfig/sqlite3.pc			comp-c-lib
 ./usr/lib/pkgconfig/libcrypto.pc		comp-c-lib		crypto
 ./usr/lib/pkgconfig/libssl.pc			comp-c-lib		crypto
