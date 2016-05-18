@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.61.2.11 2016/03/13 08:06:18 martin Exp $
+# $NetBSD: md.sparc64,v 1.61.2.12 2016/05/18 09:14:14 snj Exp $
 ./usr/lib/sparc/i18n/libBIG5_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libDECHanyu_g.a		comp-obsolete		obsolete
 ./usr/lib/sparc/i18n/libEUCTW_g.a		comp-obsolete		obsolete
@@ -220,7 +220,7 @@
 ./usr/libdata/debug/usr/lib/sparc/libevent_openssl.so.4.0.debug		comp-compat-shlib	compat,pic,debug,crypto
 ./usr/libdata/debug/usr/lib/sparc/libevent_pthreads.so.4.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libexecinfo.so.0.0.debug		comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/sparc/libexpat.so.2.1.debug			comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/sparc/libexpat.so.2.3.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libfetch.so.3.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libform.so.6.0.debug			comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/sparc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,pic,debug

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.71.2.14 2016/03/13 08:06:18 martin Exp $
+# $NetBSD: shl.mi,v 1.71.2.15 2016/05/18 09:14:14 snj Exp $
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/lib/libc.so.12.193.1.debug		comp-sys-debug	debug
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug
@@ -86,7 +86,7 @@
 ./usr/libdata/debug/usr/lib/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,crypto
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug	comp-sys-debug	debug
-./usr/libdata/debug/usr/lib/libexpat.so.2.1.debug	comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/libexpat.so.2.3.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libfetch.so.3.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libform.so.6.0.debug	comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug

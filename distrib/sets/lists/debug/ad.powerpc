@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.18.2.10 2016/03/13 08:06:18 martin Exp $
+# $NetBSD: ad.powerpc,v 1.18.2.11 2016/05/18 09:14:14 snj Exp $
 ./usr/lib/powerpc/libamu_g.a			comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libarchive_g.a		comp-c-debuglib		compat,arch64,debuglib
 ./usr/lib/powerpc/libasan_g.a			comp-c-debuglib		compat,arch64,debuglib,gcc=48
@@ -176,7 +176,7 @@
 ./usr/libdata/debug/usr/lib/powerpc/libevent_openssl.so.4.0.debug		comp-compat-shlib	compat,arch64,debug,pic,crypto
 ./usr/libdata/debug/usr/lib/powerpc/libevent_pthreads.so.4.0.debug	comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libexecinfo.so.0.0.debug		comp-compat-shlib	compat,arch64,debug,pic
-./usr/libdata/debug/usr/lib/powerpc/libexpat.so.2.1.debug			comp-compat-shlib	compat,arch64,debug,pic
+./usr/libdata/debug/usr/lib/powerpc/libexpat.so.2.3.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libfetch.so.3.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libform.so.6.0.debug			comp-compat-shlib	compat,arch64,debug,pic
 ./usr/libdata/debug/usr/lib/powerpc/libgcc_s.so.1.0.debug			comp-compat-shlib	compat,arch64,debug,pic

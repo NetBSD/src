@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.38.2.10 2016/03/13 08:06:18 martin Exp $
+# $NetBSD: ad.mips,v 1.38.2.11 2016/05/18 09:14:14 snj Exp $
 ./usr/lib/64/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib,arch64
 ./usr/lib/64/libcrypto_idea_g.a			comp-obsolete		obsolete
 ./usr/lib/64/libcrypto_mdc2_g.a			comp-obsolete		obsolete
@@ -94,7 +94,7 @@
 ./usr/libdata/debug/usr/lib/64/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto,arch64
 ./usr/libdata/debug/usr/lib/64/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/64/libexpat.so.2.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/64/libexpat.so.2.3.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libfetch.so.3.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libform.so.6.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/64/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat,arch64
@@ -273,7 +273,7 @@
 ./usr/libdata/debug/usr/lib/o32/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto,arch64
 ./usr/libdata/debug/usr/lib/o32/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat,arch64
-./usr/libdata/debug/usr/lib/o32/libexpat.so.2.1.debug	comp-sys-debug	debug,compat,arch64
+./usr/libdata/debug/usr/lib/o32/libexpat.so.2.3.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libfetch.so.3.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libform.so.6.0.debug	comp-sys-debug	debug,compat,arch64
 ./usr/libdata/debug/usr/lib/o32/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat,arch64

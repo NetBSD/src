@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.48.2.12 2016/03/13 08:06:17 martin Exp $
+# $NetBSD: ad.mips,v 1.48.2.13 2016/05/18 09:14:13 snj Exp $
 ./lib/64					base-compat-shlib	compat,arch64
 ./lib/64/npf					base-npf-shlib		compat,arch64
 ./lib/64/npf/ext_log.so				base-npf-shlib		compat,pic,arch64
@@ -138,7 +138,7 @@
 ./usr/lib/64/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libexecinfo.so.0.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libexpat.so.2			base-compat-shlib	compat,pic,arch64
-./usr/lib/64/libexpat.so.2.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libexpat.so.2.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libfetch.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libfetch.so.3.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/64/libform.so.6			base-compat-shlib	compat,pic,arch64
@@ -482,7 +482,7 @@
 ./usr/lib/o32/libexecinfo.so.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libexecinfo.so.0.0		base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libexpat.so.2			base-compat-shlib	compat,pic,arch64
-./usr/lib/o32/libexpat.so.2.1			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libexpat.so.2.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libfetch.so.3			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libfetch.so.3.0			base-compat-shlib	compat,pic,arch64
 ./usr/lib/o32/libform.so.6			base-compat-shlib	compat,pic,arch64

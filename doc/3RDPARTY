@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1145.2.24 2016/05/11 11:35:29 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1145.2.25 2016/05/18 09:14:14 snj Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -344,13 +344,13 @@ Location:	external/bsd/ekermit
 Notes:
 
 Package:	expat
-Version:	2.1.0
-Current Vers:	2.1.0
-Maintainer:	mrg
+Version:	2.1.1
+Current Vers:	2.1.1
+Maintainer:	Expat Project
 Archive Site:	http://sourceforge.net/projects/expat/files/expat/
 Home Page:	http://www.libexpat.org/
 Mailing List:	expat-discuss@libexpat.org
-Responsible:
+Responsible:	mrg
 License:	MIT
 Location:	src/external/mit/expat/dist
 Notes:

@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.9 2016/03/13 08:06:17 martin Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.10 2016/05/18 09:14:13 snj Exp $
 ./lib/eabi					base-compat-shlib	compat
 ./lib/eabi/npf					base-npf-shlib		compat
 ./lib/eabi/npf/ext_log.so			base-npf-shlib		compat,pic
@@ -146,7 +146,7 @@
 ./usr/lib/eabi/libexecinfo.so.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libexecinfo.so.0.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libexpat.so.2			base-compat-shlib	compat,pic
-./usr/lib/eabi/libexpat.so.2.1			base-compat-shlib	compat,pic
+./usr/lib/eabi/libexpat.so.2.3			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/eabi/libform.so.6			base-compat-shlib	compat,pic
@@ -460,7 +460,7 @@
 #./usr/lib/eabihf/libexecinfo.so.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libexecinfo.so.0.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libexpat.so.2			base-compat-shlib	compat,pic
-#./usr/lib/eabihf/libexpat.so.2.1			base-compat-shlib	compat,pic
+#./usr/lib/eabihf/libexpat.so.2.3			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libfetch.so.3			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libfetch.so.3.0			base-compat-shlib	compat,pic
 #./usr/lib/eabihf/libform.so.6			base-compat-shlib	compat,pic
@@ -774,7 +774,7 @@
 ./usr/lib/oabi/libexecinfo.so.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libexecinfo.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/oabi/libexpat.so.2			base-compat-shlib	compat,pic
-./usr/lib/oabi/libexpat.so.2.1			base-compat-shlib	compat,pic
+./usr/lib/oabi/libexpat.so.2.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/oabi/libform.so.6			base-compat-shlib	compat,pic
