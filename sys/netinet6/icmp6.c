@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.185 2016/05/17 03:27:02 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.186 2016/05/18 08:40:51 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.185 2016/05/17 03:27:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.186 2016/05/18 08:40:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2061,7 +2061,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 		sockaddr_in6_init(&sin6, &ip6->ip6_dst, 0, 0, 0);
 
 		memset(&ro, 0, sizeof(ro));
-		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, &outif, &e);
+		src = in6_selectsrc(&sin6, NULL, NULL, &ro, NULL, NULL, &e);
 		rtcache_free(&ro);
 		if (src == NULL) {
 			nd6log(LOG_DEBUG,
