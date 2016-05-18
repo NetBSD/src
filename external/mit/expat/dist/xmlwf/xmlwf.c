@@ -634,8 +634,7 @@ static void
 usage(const XML_Char *prog, int rc)
 {
   ftprintf(stderr,
-           T("usage: %s [-n] [-p] [-r] [-s] [-w] [-x] [-d output-dir] "
-             "[-e encoding] file ...\n"), prog);
+           T("usage: %s [-s] [-n] [-p] [-x] [-e encoding] [-w] [-d output-dir] [-c] [-m] [-r] [-t] [file ...]\n"), prog);
   exit(rc);
 }
 
@@ -849,8 +848,10 @@ tmain(int argc, XML_Char **argv)
       if (outputType == 'm')
         metaEndDocument(parser);
       fclose(fp);
-      if (!result)
+      if (!result) {
         tremove(outName);
+        exit(2);
+      }
       free(outName);
     }
     XML_ParserFree(parser);
