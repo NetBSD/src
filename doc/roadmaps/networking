@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.10 2016/05/17 20:53:53 christos Exp $
+$NetBSD: networking,v 1.11 2016/05/18 09:12:04 ozaki-r Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -17,7 +17,8 @@ The following features are expected to be in future releases:
 5. integrated multicast dns / zeroconf
 6. tcp support in libsa
 7. netboot from http
-8. MP network stack
+8. MP network stack (Layer 3 and below)
+9. MP network stack (rest)
 
 We'll continue to update this roadmap as features and dates get firmed up.
 
@@ -97,16 +98,28 @@ Responsible: TBD
 Status: not started
 Comment[christos]: Not very interesting
 
-8. net SMP work
-------------------
+8. net SMP work (Layer 3 and below)
+-----------------------------------
 
-Make multi-threaded network stack
+Make multi-threaded network stack. Targets are Layer 3 (IP forwarding),
+Layer 2 (ARP, NDP, bridge, vlan and bpf) and some tunnel devices (gif,
+ipsec and pppoe).
 
 Responsible: ozaki-r,knakahara
 Status: in progress
+
+9. net SMP work (rest)
+----------------------
+
+Make multi-threaded network stack. Get tasks other than the above targets down.
+
+Responsible: TBD
+Status: not started
 
 Matt Thomas
 Alistair Crooks
 Sat Jan 14 11:44:46 PST 2012
 Christos Zoulas
 Tue May 17 16:46:54 EDT 2016
+Ryota Ozaki
+Wed May 18 18:07:43 JST 2016
