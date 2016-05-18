@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.2.2.7.2.2 2016/03/13 08:00:40 martin Exp $
+# $NetBSD: ad.aarch64,v 1.2.2.7.2.3 2016/05/18 09:15:15 snj Exp $
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetmask.debug
 -./usr/libdata/debug/usr/tests/lib/libc/gen/t_fpsetround.debug
 ./usr/lib/eabi/libcrypto_g.a			comp-c-debuglib		compat,crypto,debuglib
@@ -88,7 +88,7 @@
 ./usr/libdata/debug/usr/lib/eabi/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
 ./usr/libdata/debug/usr/lib/eabi/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/eabi/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/eabi/libexpat.so.2.3.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libform.so.6.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/eabi/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
@@ -240,7 +240,7 @@
 #./usr/libdata/debug/usr/lib/eabihf/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
 #./usr/libdata/debug/usr/lib/eabihf/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
-#./usr/libdata/debug/usr/lib/eabihf/libexpat.so.2.1.debug	comp-sys-debug	debug,compat
+#./usr/libdata/debug/usr/lib/eabihf/libexpat.so.2.3.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libfetch.so.3.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libform.so.6.0.debug	comp-sys-debug	debug,compat
 #./usr/libdata/debug/usr/lib/eabihf/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
@@ -393,7 +393,7 @@
 ./usr/libdata/debug/usr/lib/oabi/libevent_openssl.so.4.0.debug	comp-sys-debug	debug,compat,crypto
 ./usr/libdata/debug/usr/lib/oabi/libevent_pthreads.so.4.0.debug	comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libexecinfo.so.0.0.debug	comp-sys-debug	debug,compat
-./usr/libdata/debug/usr/lib/oabi/libexpat.so.2.1.debug		comp-sys-debug	debug,compat
+./usr/libdata/debug/usr/lib/oabi/libexpat.so.2.3.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libfetch.so.3.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libform.so.6.0.debug		comp-sys-debug	debug,compat
 ./usr/libdata/debug/usr/lib/oabi/libg2c.so.2.0.debug		comp-sys-debug	gcc=3,debug,compat
