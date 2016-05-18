@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.59 2015/12/12 23:34:25 christos Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.60 2016/05/18 09:32:05 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.59 2015/12/12 23:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.60 2016/05/18 09:32:05 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -279,10 +279,6 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	}
 #endif /* MIP6 && NMIP > 0 */
 
-#ifdef DIAGNOSTIC
-	if (ifp == NULL)	/* this should not happen */
-		panic("in6_selectsrc: NULL ifp");
-#endif
 	*errorp = in6_setscope(&dst, ifp, &odstzone);
 	if (*errorp != 0)
 		return (NULL);
