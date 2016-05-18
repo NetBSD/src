@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.397 2016/05/11 04:37:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.398 2016/05/18 06:55:51 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.397 2016/05/11 04:37:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.398 2016/05/18 06:55:51 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -188,7 +188,7 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NTXDESC_82544	4096
 #define	WM_NTXDESC(txq)		((txq)->txq_ndesc)
 #define	WM_NTXDESC_MASK(txq)	(WM_NTXDESC(txq) - 1)
-#define	WM_TXDESCSIZE(txq)	(WM_NTXDESC(txq) * sizeof(wiseman_txdesc_t))
+#define	WM_TXDESCS_SIZE(txq)	(WM_NTXDESC(txq) * (txq)->txq_descsize)
 #define	WM_NEXTTX(txq, x)	(((x) + 1) & WM_NTXDESC_MASK(txq))
 #define	WM_NEXTTXS(txq, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(txq))
 
@@ -210,7 +210,7 @@ typedef union txdescs {
 	nq_txdesc_t      sctxu_nq_txdescs[WM_NTXDESC_82544];
 } txdescs_t;
 
-#define	WM_CDTXOFF(x)	(sizeof(wiseman_txdesc_t) * x)
+#define	WM_CDTXOFF(txq, x)	((txq)->txq_descsize * (x))
 #define	WM_CDRXOFF(x)	(sizeof(wiseman_rxdesc_t) * x)
 
 /*
@@ -263,11 +263,12 @@ struct wm_txqueue {
 
 	/* TX control data structures. */
 	int txq_ndesc;			/* must be a power of two */
+	size_t txq_descsize;		/* a tx descriptor size */
 	txdescs_t *txq_descs_u;
         bus_dmamap_t txq_desc_dmamap;	/* control data DMA map */
 	bus_dma_segment_t txq_desc_seg;	/* control data segment */
 	int txq_desc_rseg;		/* real number of control segment */
-	size_t txq_desc_size;		/* control data size */
+	size_t txq_descs_size;		/* control data size */
 #define	txq_desc_dma	txq_desc_dmamap->dm_segs[0].ds_addr
 #define	txq_descs	txq_descs_u->sctxu_txdescs
 #define	txq_nq_descs	txq_descs_u->sctxu_nq_txdescs
@@ -509,7 +510,7 @@ do {									\
 	bus_space_write_2((sc)->sc_flasht, (sc)->sc_flashh,		\
 	    (reg) + sc->sc_flashreg_offset, (data))
 
-#define	WM_CDTXADDR(txq, x)	((txq)->txq_desc_dma + WM_CDTXOFF((x)))
+#define	WM_CDTXADDR(txq, x)	((txq)->txq_desc_dma + WM_CDTXOFF((txq), (x)))
 #define	WM_CDRXADDR(rxq, x)	((rxq)->rxq_desc_dma + WM_CDRXOFF((x)))
 
 #define	WM_CDTXADDR_LO(txq, x)	(WM_CDTXADDR((txq), (x)) & 0xffffffffU)
@@ -1384,7 +1385,7 @@ wm_cdtxsync(struct wm_txqueue *txq, int start, int num, int ops)
 	/* If it will wrap around, sync to the end of the ring. */
 	if ((start + num) > WM_NTXDESC(txq)) {
 		bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_dmamap,
-		    WM_CDTXOFF(start), sizeof(wiseman_txdesc_t) *
+		    WM_CDTXOFF(txq, start), txq->txq_descsize *
 		    (WM_NTXDESC(txq) - start), ops);
 		num -= (WM_NTXDESC(txq) - start);
 		start = 0;
@@ -1392,7 +1393,7 @@ wm_cdtxsync(struct wm_txqueue *txq, int start, int num, int ops)
 
 	/* Now sync whatever is left. */
 	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_dmamap,
-	    WM_CDTXOFF(start), sizeof(wiseman_txdesc_t) * num, ops);
+	    WM_CDTXOFF(txq, start), txq->txq_descsize * num, ops);
 }
 
 static inline void
@@ -5358,13 +5359,17 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	 */
 	if (sc->sc_type < WM_T_82544) {
 		WM_NTXDESC(txq) = WM_NTXDESC_82542;
-		txq->txq_desc_size = sizeof(wiseman_txdesc_t) *WM_NTXDESC(txq);
+		txq->txq_descs_size = sizeof(wiseman_txdesc_t) *WM_NTXDESC(txq);
 	} else {
 		WM_NTXDESC(txq) = WM_NTXDESC_82544;
-		txq->txq_desc_size = sizeof(txdescs_t);
+		txq->txq_descs_size = sizeof(txdescs_t);
 	}
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+		txq->txq_descsize = sizeof(nq_txdesc_t);
+	else
+		txq->txq_descsize = sizeof(wiseman_txdesc_t);
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, txq->txq_desc_size,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, txq->txq_descs_size,
 		    PAGE_SIZE, (bus_size_t) 0x100000000ULL, &txq->txq_desc_seg,
 		    1, &txq->txq_desc_rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -5374,15 +5379,15 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &txq->txq_desc_seg,
-		    txq->txq_desc_rseg, txq->txq_desc_size,
+		    txq->txq_desc_rseg, txq->txq_descs_size,
 		    (void **)&txq->txq_descs_u, BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map TX control data, error = %d\n", error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, txq->txq_desc_size, 1,
-		    txq->txq_desc_size, 0, 0, &txq->txq_desc_dmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, txq->txq_descs_size, 1,
+		    txq->txq_descs_size, 0, 0, &txq->txq_desc_dmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create TX control data DMA map, error = %d\n",
 		    error);
@@ -5390,7 +5395,7 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, txq->txq_desc_dmamap,
-		    txq->txq_descs_u, txq->txq_desc_size, NULL, 0)) != 0) {
+		    txq->txq_descs_u, txq->txq_descs_size, NULL, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to load TX control data DMA map, error = %d\n",
 		    error);
@@ -5403,7 +5408,7 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	bus_dmamap_destroy(sc->sc_dmat, txq->txq_desc_dmamap);
  fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (void *)txq->txq_descs_u,
-	    txq->txq_desc_size);
+	    txq->txq_descs_size);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &txq->txq_desc_seg, txq->txq_desc_rseg);
  fail_0:
@@ -5417,7 +5422,7 @@ wm_free_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	bus_dmamap_unload(sc->sc_dmat, txq->txq_desc_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, txq->txq_desc_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (void *)txq->txq_descs_u,
-	    txq->txq_desc_size);
+	    txq->txq_descs_size);
 	bus_dmamem_free(sc->sc_dmat, &txq->txq_desc_seg, txq->txq_desc_rseg);
 }
 
@@ -5717,7 +5722,7 @@ wm_init_tx_descs(struct wm_softc *sc __unused, struct wm_txqueue *txq)
 	KASSERT(WM_TX_LOCKED(txq));
 
 	/* Initialize the transmit descriptor ring. */
-	memset(txq->txq_descs, 0, WM_TXDESCSIZE(txq));
+	memset(txq->txq_descs, 0, WM_TXDESCS_SIZE(txq));
 	wm_cdtxsync(txq, 0, WM_NTXDESC(txq),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	txq->txq_free = WM_NTXDESC(txq);
@@ -5733,7 +5738,7 @@ wm_init_tx_regs(struct wm_softc *sc, struct wm_txqueue *txq)
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(txq, 0));
 		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(txq, 0));
-		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(txq));
+		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCS_SIZE(txq));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
@@ -5742,7 +5747,7 @@ wm_init_tx_regs(struct wm_softc *sc, struct wm_txqueue *txq)
 
 		CSR_WRITE(sc, WMREG_TDBAH(qid), WM_CDTXADDR_HI(txq, 0));
 		CSR_WRITE(sc, WMREG_TDBAL(qid), WM_CDTXADDR_LO(txq, 0));
-		CSR_WRITE(sc, WMREG_TDLEN(qid), WM_TXDESCSIZE(txq));
+		CSR_WRITE(sc, WMREG_TDLEN(qid), WM_TXDESCS_SIZE(txq));
 		CSR_WRITE(sc, WMREG_TDH(qid), 0);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
