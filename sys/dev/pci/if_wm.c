@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.401 2016/05/18 08:41:42 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.402 2016/05/18 08:59:56 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.401 2016/05/18 08:41:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.402 2016/05/18 08:59:56 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7605,7 +7605,6 @@ wm_txintr_msix(void *arg)
 	struct wm_txqueue *txq = arg;
 	struct wm_softc *sc = txq->txq_sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int handled = 0;
 
 	DPRINTF(WM_DEBUG_TX,
 	    ("%s: TX: got Tx intr\n", device_xname(sc->sc_dev)));
@@ -7623,7 +7622,7 @@ wm_txintr_msix(void *arg)
 		goto out;
 
 	WM_EVCNT_INCR(&sc->sc_ev_txdw);
-	handled = wm_txeof(sc);
+	wm_txeof(sc);
 
 out:
 	WM_TX_UNLOCK(txq);
@@ -7635,12 +7634,12 @@ out:
 	else
 		CSR_WRITE(sc, WMREG_EIMS, 1 << txq->txq_intr_idx);
 
-	if (handled) {
+	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		/* Try to get more packets going. */
 		ifp->if_start(ifp);
 	}
 
-	return handled;
+	return 1;
 }
 
 /*
