@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.398 2016/05/18 06:55:51 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.399 2016/05/18 06:59:59 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.398 2016/05/18 06:55:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.399 2016/05/18 06:59:59 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -268,7 +268,6 @@ struct wm_txqueue {
         bus_dmamap_t txq_desc_dmamap;	/* control data DMA map */
 	bus_dma_segment_t txq_desc_seg;	/* control data segment */
 	int txq_desc_rseg;		/* real number of control segment */
-	size_t txq_descs_size;		/* control data size */
 #define	txq_desc_dma	txq_desc_dmamap->dm_segs[0].ds_addr
 #define	txq_descs	txq_descs_u->sctxu_txdescs
 #define	txq_nq_descs	txq_descs_u->sctxu_nq_txdescs
@@ -5357,19 +5356,16 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	 * memory.  So must Rx descriptors.  We simplify by allocating
 	 * both sets within the same 4G segment.
 	 */
-	if (sc->sc_type < WM_T_82544) {
+	if (sc->sc_type < WM_T_82544)
 		WM_NTXDESC(txq) = WM_NTXDESC_82542;
-		txq->txq_descs_size = sizeof(wiseman_txdesc_t) *WM_NTXDESC(txq);
-	} else {
+	else
 		WM_NTXDESC(txq) = WM_NTXDESC_82544;
-		txq->txq_descs_size = sizeof(txdescs_t);
-	}
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		txq->txq_descsize = sizeof(nq_txdesc_t);
 	else
 		txq->txq_descsize = sizeof(wiseman_txdesc_t);
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, txq->txq_descs_size,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, WM_TXDESCS_SIZE(txq),
 		    PAGE_SIZE, (bus_size_t) 0x100000000ULL, &txq->txq_desc_seg,
 		    1, &txq->txq_desc_rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -5379,15 +5375,15 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &txq->txq_desc_seg,
-		    txq->txq_desc_rseg, txq->txq_descs_size,
+		    txq->txq_desc_rseg, WM_TXDESCS_SIZE(txq),
 		    (void **)&txq->txq_descs_u, BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to map TX control data, error = %d\n", error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, txq->txq_descs_size, 1,
-		    txq->txq_descs_size, 0, 0, &txq->txq_desc_dmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, WM_TXDESCS_SIZE(txq), 1,
+		    WM_TXDESCS_SIZE(txq), 0, 0, &txq->txq_desc_dmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to create TX control data DMA map, error = %d\n",
 		    error);
@@ -5395,7 +5391,7 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, txq->txq_desc_dmamap,
-		    txq->txq_descs_u, txq->txq_descs_size, NULL, 0)) != 0) {
+		    txq->txq_descs_u, WM_TXDESCS_SIZE(txq), NULL, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to load TX control data DMA map, error = %d\n",
 		    error);
@@ -5408,7 +5404,7 @@ wm_alloc_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	bus_dmamap_destroy(sc->sc_dmat, txq->txq_desc_dmamap);
  fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (void *)txq->txq_descs_u,
-	    txq->txq_descs_size);
+	    WM_TXDESCS_SIZE(txq));
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &txq->txq_desc_seg, txq->txq_desc_rseg);
  fail_0:
@@ -5422,7 +5418,7 @@ wm_free_tx_descs(struct wm_softc *sc, struct wm_txqueue *txq)
 	bus_dmamap_unload(sc->sc_dmat, txq->txq_desc_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, txq->txq_desc_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, (void *)txq->txq_descs_u,
-	    txq->txq_descs_size);
+	    WM_TXDESCS_SIZE(txq));
 	bus_dmamem_free(sc->sc_dmat, &txq->txq_desc_seg, txq->txq_desc_rseg);
 }
 
