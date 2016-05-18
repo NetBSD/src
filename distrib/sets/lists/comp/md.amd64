@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.155.2.5.2.5 2016/03/09 00:34:34 snj Exp $
+# $NetBSD: md.amd64,v 1.155.2.5.2.6 2016/05/18 10:40:41 snj Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1076,7 +1076,7 @@
 ./usr/libdata/debug/usr/lib/i386/libedit.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libelf.so.0.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libevent.so.3.2.debug	comp-compat-shlib	compat,pic,debug
-./usr/libdata/debug/usr/lib/i386/libexpat.so.2.0.debug	comp-compat-shlib	compat,pic,debug
+./usr/libdata/debug/usr/lib/i386/libexpat.so.2.3.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libfetch.so.3.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libform.so.6.0.debug	comp-compat-shlib	compat,pic,debug
 ./usr/libdata/debug/usr/lib/i386/libgcc_s.so.1.0.debug	comp-compat-shlib	compat,pic,debug
