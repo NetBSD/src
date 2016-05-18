@@ -1,0 +1,5 @@
+Name: expat
+Version: @VERSION@
+Description: expat XML parser
+URL: http://www.libexpat.org
+Libs: -lexpat
