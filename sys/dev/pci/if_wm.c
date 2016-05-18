@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.399 2016/05/18 06:59:59 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.400 2016/05/18 07:49:34 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.399 2016/05/18 06:59:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.400 2016/05/18 07:49:34 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -286,6 +286,13 @@ struct wm_txqueue {
 	int txq_fifo_head;		/* current head of FIFO */
 	uint32_t txq_fifo_addr;		/* internal address of start of FIFO */
 	int txq_fifo_stall;		/* Tx FIFO is stalled */
+
+	/*
+	 * NEWQUEUE devices must use not ifp->if_flags but txq->txq_flags
+	 * to manage Tx H/W queue's busy flag.
+	 */
+	int txq_flags;			/* flags for H/W queue, see below */
+#define	WM_TXQ_WORKING	0x1
 
 	/* XXX which event counter is required? */
 };
@@ -6695,6 +6702,8 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
+	if ((txq->txq_flags & WM_TXQ_WORKING) != 0)
+		return;
 
 	sent = false;
 
@@ -6778,7 +6787,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
 			    segs_needed, txq->txq_free - 1));
-			ifp->if_flags |= IFF_OACTIVE;
+			txq->txq_flags |= WM_TXQ_WORKING;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
@@ -6935,7 +6944,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 	}
 
 	if (m0 != NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
+		txq->txq_flags |= WM_TXQ_WORKING;
 		WM_EVCNT_INCR(&sc->sc_ev_txdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
 			__func__));
@@ -6944,7 +6953,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		ifp->if_flags |= IFF_OACTIVE;
+		txq->txq_flags |= WM_TXQ_WORKING;
 	}
 
 	if (sent) {
@@ -6974,7 +6983,7 @@ wm_txeof(struct wm_softc *sc)
 	if (sc->sc_stopping)
 		return 0;
 
-	ifp->if_flags &= ~IFF_OACTIVE;
+	txq->txq_flags &= ~WM_TXQ_WORKING;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
