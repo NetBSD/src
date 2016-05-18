@@ -14,7 +14,7 @@
 #include "winconfig.h"
 #elif defined(MACOS_CLASSIC)
 #include "macconfig.h"
-#elif defined(__amigaos4__)
+#elif defined(__amigaos__)
 #include "amigaconfig.h"
 #elif defined(__WATCOMC__)
 #include "watcomconfig.h"
@@ -540,6 +540,9 @@ struct XML_ParserStruct {
   NS_ATT *m_nsAtts;
   unsigned long m_nsAttsVersion;
   unsigned char m_nsAttsPower;
+#ifdef XML_ATTR_INFO
+  XML_AttrInfo *m_attInfo;
+#endif
   POSITION m_position;
   STRING_POOL m_tempPool;
   STRING_POOL m_temp2Pool;
@@ -648,6 +651,7 @@ struct XML_ParserStruct {
 #define nsAtts (parser->m_nsAtts)
 #define nsAttsVersion (parser->m_nsAttsVersion)
 #define nsAttsPower (parser->m_nsAttsPower)
+#define attInfo (parser->m_attInfo)
 #define tempPool (parser->m_tempPool)
 #define temp2Pool (parser->m_temp2Pool)
 #define groupConnector (parser->m_groupConnector)
@@ -759,9 +763,20 @@ parserCreate(const XML_Char *encodingName,
     FREE(parser);
     return NULL;
   }
+#ifdef XML_ATTR_INFO
+  attInfo = (XML_AttrInfo*)MALLOC(attsSize * sizeof(XML_AttrInfo));
+  if (attInfo == NULL) {
+    FREE(atts);
+    FREE(parser);
+    return NULL;
+  }
+#endif
   dataBuf = (XML_Char *)MALLOC(INIT_DATA_BUF_SIZE * sizeof(XML_Char));
   if (dataBuf == NULL) {
     FREE(atts);
+#ifdef XML_ATTR_INFO
+    FREE(attInfo);
+#endif
     FREE(parser);
     return NULL;
   }
@@ -774,6 +789,9 @@ parserCreate(const XML_Char *encodingName,
     if (_dtd == NULL) {
       FREE(dataBuf);
       FREE(atts);
+#ifdef XML_ATTR_INFO
+      FREE(attInfo);
+#endif
       FREE(parser);
       return NULL;
     }
@@ -1160,6 +1178,9 @@ XML_ParserFree(XML_Parser parser)
 #endif /* XML_DTD */
     dtdDestroy(_dtd, (XML_Bool)!parentParser, &parser->m_mem);
   FREE((void *)atts);
+#ifdef XML_ATTR_INFO
+  FREE((void *)attInfo);
+#endif
   FREE(groupConnector);
   FREE(buffer);
   FREE(dataBuf);
@@ -1239,6 +1260,14 @@ XML_GetIdAttributeIndex(XML_Parser parser)
 {
   return idAttIndex;
 }
+
+#ifdef XML_ATTR_INFO
+const XML_AttrInfo * XMLCALL
+XML_GetAttributeInfo(XML_Parser parser)
+{
+  return attInfo;
+}
+#endif
 
 void XMLCALL
 XML_SetElementHandler(XML_Parser parser,
@@ -1521,7 +1550,7 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
   else if (bufferPtr == bufferEnd) {
     const char *end;
     int nLeftOver;
-    enum XML_Error result;
+    enum XML_Status result;
     parseEndByteIndex += len;
     positionPtr = s;
     ps_finalBuffer = (XML_Bool)isFinal;
@@ -1561,15 +1590,11 @@ XML_Parse(XML_Parser parser, const char *s, int len, int isFinal)
                 : (char *)REALLOC(buffer, len * 2));
         if (temp == NULL) {
           errorCode = XML_ERROR_NO_MEMORY;
-          return XML_STATUS_ERROR;
-        }
-        buffer = temp;
-        if (!buffer) {
-          errorCode = XML_ERROR_NO_MEMORY;
           eventPtr = eventEndPtr = NULL;
           processor = errorProcessor;
           return XML_STATUS_ERROR;
         }
+        buffer = temp;
         bufferLim = buffer + len * 2;
       }
       memcpy(buffer, end, nLeftOver);
@@ -1653,6 +1678,10 @@ XML_ParseBuffer(XML_Parser parser, int len, int isFinal)
 void * XMLCALL
 XML_GetBuffer(XML_Parser parser, int len)
 {
+  if (len < 0) {
+    errorCode = XML_ERROR_NO_MEMORY;
+    return NULL;
+  }
   switch (ps_parsing) {
   case XML_SUSPENDED:
     errorCode = XML_ERROR_SUSPENDED;
@@ -1664,8 +1693,12 @@ XML_GetBuffer(XML_Parser parser, int len)
   }
 
   if (len > bufferLim - bufferEnd) {
-    /* FIXME avoid integer overflow */
-    int neededSize = len + (int)(bufferEnd - bufferPtr);
+    /* Do not invoke signed arithmetic overflow: */
+    int neededSize = (int) ((unsigned)len + (unsigned)(bufferEnd - bufferPtr));
+    if (neededSize < 0) {
+      errorCode = XML_ERROR_NO_MEMORY;
+      return NULL;
+    }
 #ifdef XML_CONTEXT_BYTES
     int keep = (int)(bufferPtr - buffer);
 
@@ -1693,8 +1726,13 @@ XML_GetBuffer(XML_Parser parser, int len)
       if (bufferSize == 0)
         bufferSize = INIT_BUFFER_SIZE;
       do {
-        bufferSize *= 2;
-      } while (bufferSize < neededSize);
+        /* Do not invoke signed arithmetic overflow: */
+        bufferSize = (int) (2U * (unsigned) bufferSize);
+      } while (bufferSize < neededSize && bufferSize > 0);
+      if (bufferSize <= 0) {
+        errorCode = XML_ERROR_NO_MEMORY;
+        return NULL;
+      }
       newBuf = (char *)MALLOC(bufferSize);
       if (newBuf == 0) {
         errorCode = XML_ERROR_NO_MEMORY;
@@ -1725,6 +1763,8 @@ XML_GetBuffer(XML_Parser parser, int len)
       bufferPtr = buffer = newBuf;
 #endif  /* not defined XML_CONTEXT_BYTES */
     }
+    eventPtr = eventEndPtr = NULL;
+    positionPtr = NULL;
   }
   return bufferEnd;
 }
@@ -2010,6 +2050,9 @@ XML_GetFeatureList(void)
 #ifdef XML_LARGE_SIZE
     {XML_FEATURE_LARGE_SIZE,       XML_L("XML_LARGE_SIZE"), 0},
 #endif    
+#ifdef XML_ATTR_INFO
+    {XML_FEATURE_ATTR_INFO,        XML_L("XML_ATTR_INFO"), 0},
+#endif
     {XML_FEATURE_END,              NULL, 0}
   };
 
@@ -2385,11 +2428,11 @@ doContent(XML_Parser parser,
           for (;;) {
             int bufSize;
             int convLen;
-            XmlConvert(enc,
+            const enum XML_Convert_Result convert_res = XmlConvert(enc,
                        &fromPtr, rawNameEnd,
                        (ICHAR **)&toPtr, (ICHAR *)tag->bufEnd - 1);
             convLen = (int)(toPtr - (XML_Char *)tag->buf);
-            if (fromPtr == rawNameEnd) {
+            if ((convert_res == XML_CONVERT_COMPLETED) || (convert_res == XML_CONVERT_INPUT_INCOMPLETE)) {
               tag->name.strLen = convLen;
               break;
             }
@@ -2610,11 +2653,11 @@ doContent(XML_Parser parser,
           if (MUST_CONVERT(enc, s)) {
             for (;;) {
               ICHAR *dataPtr = (ICHAR *)dataBuf;
-              XmlConvert(enc, &s, next, &dataPtr, (ICHAR *)dataBufEnd);
+              const enum XML_Convert_Result convert_res = XmlConvert(enc, &s, next, &dataPtr, (ICHAR *)dataBufEnd);
               *eventEndPP = s;
               charDataHandler(handlerArg, dataBuf,
                               (int)(dataPtr - (ICHAR *)dataBuf));
-              if (s == next)
+              if ((convert_res == XML_CONVERT_COMPLETED) || (convert_res == XML_CONVERT_INPUT_INCOMPLETE))
                 break;
               *eventPP = s;
             }
@@ -2702,23 +2745,44 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
   if (n + nDefaultAtts > attsSize) {
     int oldAttsSize = attsSize;
     ATTRIBUTE *temp;
+#ifdef XML_ATTR_INFO
+    XML_AttrInfo *temp2;
+#endif
     attsSize = n + nDefaultAtts + INIT_ATTS_SIZE;
     temp = (ATTRIBUTE *)REALLOC((void *)atts, attsSize * sizeof(ATTRIBUTE));
     if (temp == NULL)
       return XML_ERROR_NO_MEMORY;
     atts = temp;
+#ifdef XML_ATTR_INFO
+    temp2 = (XML_AttrInfo *)REALLOC((void *)attInfo, attsSize * sizeof(XML_AttrInfo));
+    if (temp2 == NULL)
+      return XML_ERROR_NO_MEMORY;
+    attInfo = temp2;
+#endif
     if (n > oldAttsSize)
       XmlGetAttributes(enc, attStr, n, atts);
   }
 
   appAtts = (const XML_Char **)atts;
   for (i = 0; i < n; i++) {
+    ATTRIBUTE *currAtt = &atts[i];
+#ifdef XML_ATTR_INFO
+    XML_AttrInfo *currAttInfo = &attInfo[i];
+#endif
     /* add the name and value to the attribute list */
-    ATTRIBUTE_ID *attId = getAttributeId(parser, enc, atts[i].name,
-                                         atts[i].name
-                                         + XmlNameLength(enc, atts[i].name));
+    ATTRIBUTE_ID *attId = getAttributeId(parser, enc, currAtt->name,
+                                         currAtt->name
+                                         + XmlNameLength(enc, currAtt->name));
     if (!attId)
       return XML_ERROR_NO_MEMORY;
+#ifdef XML_ATTR_INFO
+    currAttInfo->nameStart = parseEndByteIndex - (parseEndPtr - currAtt->name);
+    currAttInfo->nameEnd = currAttInfo->nameStart +
+                           XmlNameLength(enc, currAtt->name);
+    currAttInfo->valueStart = parseEndByteIndex -
+                            (parseEndPtr - currAtt->valuePtr);
+    currAttInfo->valueEnd = parseEndByteIndex - (parseEndPtr - currAtt->valueEnd);
+#endif
     /* Detect duplicate attributes by their QNames. This does not work when
        namespace processing is turned on and different prefixes for the same
        namespace are used. For this case we have a check further down.
@@ -2860,6 +2924,8 @@ storeAtts(XML_Parser parser, const ENCODING *enc,
         unsigned long uriHash = hash_secret_salt;
         ((XML_Char *)s)[-1] = 0;  /* clear flag */
         id = (ATTRIBUTE_ID *)lookup(parser, &dtd->attributeIds, s, 0);
+        if (!id || !id->prefix)
+          return XML_ERROR_NO_MEMORY;
         b = id->prefix->binding;
         if (!b)
           return XML_ERROR_UNBOUND_PREFIX;
@@ -3197,11 +3263,11 @@ doCdataSection(XML_Parser parser,
           if (MUST_CONVERT(enc, s)) {
             for (;;) {
               ICHAR *dataPtr = (ICHAR *)dataBuf;
-              XmlConvert(enc, &s, next, &dataPtr, (ICHAR *)dataBufEnd);
+              const enum XML_Convert_Result convert_res = XmlConvert(enc, &s, next, &dataPtr, (ICHAR *)dataBufEnd);
               *eventEndPP = next;
               charDataHandler(handlerArg, dataBuf,
                               (int)(dataPtr - (ICHAR *)dataBuf));
-              if (s == next)
+              if ((convert_res == XML_CONVERT_COMPLETED) || (convert_res == XML_CONVERT_INPUT_INCOMPLETE))
                 break;
               *eventPP = s;
             }
@@ -3839,15 +3905,17 @@ doProlog(XML_Parser parser,
 #endif /* XML_DTD */
       dtd->hasParamEntityRefs = XML_TRUE;
       if (startDoctypeDeclHandler) {
+        XML_Char *pubId;
         if (!XmlIsPublicId(enc, s, next, eventPP))
           return XML_ERROR_PUBLICID;
-        doctypePubid = poolStoreString(&tempPool, enc,
+        pubId = poolStoreString(&tempPool, enc,
                                        s + enc->minBytesPerChar,
                                        next - enc->minBytesPerChar);
-        if (!doctypePubid)
+        if (!pubId)
           return XML_ERROR_NO_MEMORY;
-        normalizePublicId((XML_Char *)doctypePubid);
+        normalizePublicId(pubId);
         poolFinish(&tempPool);
+        doctypePubid = pubId;
         handleDefault = XML_FALSE;
         goto alreadyChecked;
       }
@@ -5276,6 +5344,7 @@ reportDefault(XML_Parser parser, const ENCODING *enc,
               const char *s, const char *end)
 {
   if (MUST_CONVERT(enc, s)) {
+    enum XML_Convert_Result convert_res;
     const char **eventPP;
     const char **eventEndPP;
     if (enc == encoding) {
@@ -5288,11 +5357,11 @@ reportDefault(XML_Parser parser, const ENCODING *enc,
     }
     do {
       ICHAR *dataPtr = (ICHAR *)dataBuf;
-      XmlConvert(enc, &s, end, &dataPtr, (ICHAR *)dataBufEnd);
+      convert_res = XmlConvert(enc, &s, end, &dataPtr, (ICHAR *)dataBufEnd);
       *eventEndPP = s;
       defaultHandler(handlerArg, dataBuf, (int)(dataPtr - (ICHAR *)dataBuf));
       *eventPP = s;
-    } while (s != end);
+    } while ((convert_res != XML_CONVERT_COMPLETED) && (convert_res != XML_CONVERT_INPUT_INCOMPLETE));
   }
   else
     defaultHandler(handlerArg, (XML_Char *)s, (int)((XML_Char *)end - (XML_Char *)s));
@@ -5422,6 +5491,8 @@ getAttributeId(XML_Parser parser, const ENCODING *enc,
             return NULL;
           id->prefix = (PREFIX *)lookup(parser, &dtd->prefixes, poolStart(&dtd->pool),
                                         sizeof(PREFIX));
+          if (!id->prefix)
+            return NULL;
           if (id->prefix->name == poolStart(&dtd->pool))
             poolFinish(&dtd->pool);
           else
@@ -6095,8 +6166,8 @@ poolAppend(STRING_POOL *pool, const ENCODING *enc,
   if (!pool->ptr && !poolGrow(pool))
     return NULL;
   for (;;) {
-    XmlConvert(enc, &ptr, end, (ICHAR **)&(pool->ptr), (ICHAR *)pool->end);
-    if (ptr == end)
+    const enum XML_Convert_Result convert_res = XmlConvert(enc, &ptr, end, (ICHAR **)&(pool->ptr), (ICHAR *)pool->end);
+    if ((convert_res == XML_CONVERT_COMPLETED) || (convert_res == XML_CONVERT_INPUT_INCOMPLETE))
       break;
     if (!poolGrow(pool))
       return NULL;
@@ -6180,8 +6251,13 @@ poolGrow(STRING_POOL *pool)
     }
   }
   if (pool->blocks && pool->start == pool->blocks->s) {
-    int blockSize = (int)(pool->end - pool->start)*2;
-    BLOCK *temp = (BLOCK *)
+    BLOCK *temp;
+    int blockSize = (int)((unsigned)(pool->end - pool->start)*2U);
+
+    if (blockSize < 0)
+      return XML_FALSE;
+
+    temp = (BLOCK *)
       pool->mem->realloc_fcn(pool->blocks,
                              (offsetof(BLOCK, s)
                               + blockSize * sizeof(XML_Char)));
@@ -6196,6 +6272,10 @@ poolGrow(STRING_POOL *pool)
   else {
     BLOCK *tem;
     int blockSize = (int)(pool->end - pool->start);
+
+    if (blockSize < 0)
+      return XML_FALSE;
+
     if (blockSize < INIT_BLOCK_SIZE)
       blockSize = INIT_BLOCK_SIZE;
     else

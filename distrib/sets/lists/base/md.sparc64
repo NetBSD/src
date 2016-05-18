@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.147.2.10.2.5 2016/03/09 00:39:25 snj Exp $
+# $NetBSD: md.sparc64,v 1.147.2.10.2.6 2016/05/18 10:45:12 snj Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-sysutil-root	obsolete
 ./usr/bin/fdformat				base-util-bin
@@ -97,7 +97,7 @@
 ./usr/lib/sparc/libevent.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libevent.so.3.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libexpat.so.2			base-compat-shlib	compat,pic
-./usr/lib/sparc/libexpat.so.2.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/libexpat.so.2.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libfetch.so.3.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libform.so.6			base-compat-shlib	compat,pic
