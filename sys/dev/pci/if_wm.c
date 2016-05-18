@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.400 2016/05/18 07:49:34 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.401 2016/05/18 08:41:42 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.400 2016/05/18 07:49:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.401 2016/05/18 08:41:42 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -292,7 +292,7 @@ struct wm_txqueue {
 	 * to manage Tx H/W queue's busy flag.
 	 */
 	int txq_flags;			/* flags for H/W queue, see below */
-#define	WM_TXQ_WORKING	0x1
+#define	WM_TXQ_NO_SPACE	0x1
 
 	/* XXX which event counter is required? */
 };
@@ -6702,7 +6702,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-	if ((txq->txq_flags & WM_TXQ_WORKING) != 0)
+	if ((txq->txq_flags & WM_TXQ_NO_SPACE) != 0)
 		return;
 
 	sent = false;
@@ -6787,7 +6787,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
 			    segs_needed, txq->txq_free - 1));
-			txq->txq_flags |= WM_TXQ_WORKING;
+			txq->txq_flags |= WM_TXQ_NO_SPACE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
 			break;
@@ -6944,7 +6944,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 	}
 
 	if (m0 != NULL) {
-		txq->txq_flags |= WM_TXQ_WORKING;
+		txq->txq_flags |= WM_TXQ_NO_SPACE;
 		WM_EVCNT_INCR(&sc->sc_ev_txdrop);
 		DPRINTF(WM_DEBUG_TX, ("%s: TX: error after IFQ_DEQUEUE\n",
 			__func__));
@@ -6953,7 +6953,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 	if (txq->txq_sfree == 0 || txq->txq_free <= 2) {
 		/* No more slots; notify upper layer. */
-		txq->txq_flags |= WM_TXQ_WORKING;
+		txq->txq_flags |= WM_TXQ_NO_SPACE;
 	}
 
 	if (sent) {
@@ -6983,7 +6983,7 @@ wm_txeof(struct wm_softc *sc)
 	if (sc->sc_stopping)
 		return 0;
 
-	txq->txq_flags &= ~WM_TXQ_WORKING;
+	txq->txq_flags &= ~WM_TXQ_NO_SPACE;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
