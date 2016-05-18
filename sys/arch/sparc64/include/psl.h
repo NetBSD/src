@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.56 2014/12/25 14:02:03 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.57 2016/05/18 07:59:30 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -165,14 +165,14 @@
 /*
  * SPARC V9 TSTATE register
  *
- *   39 32 31 24 23 18  17   8	7 5 4   0
+ *   39 32 31 24 23 20  19   8	7 5 4   0
  *  +-----+-----+-----+--------+---+-----+
  *  | CCR | ASI |  -  | PSTATE | - | CWP |
  *  +-----+-----+-----+--------+---+-----+
  */
 
 #define TSTATE_CWP		0x01f
-#define TSTATE_PSTATE		0x6ff00
+#define TSTATE_PSTATE		0xfff00
 #define TSTATE_PSTATE_SHIFT	8
 #define TSTATE_ASI		0xff000000LL
 #define TSTATE_ASI_SHIFT	24
