@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.396 2016/05/17 19:43:28 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.397 2016/05/18 15:14:08 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -7147,7 +7147,6 @@ ENTRY(sparc64_ipi_ccall)
 
 	wrpr	%g0, PSTATE_KERN, %pstate	! Get back to normal globals
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
-	mov	%g1, %o1			! code
 	rdpr	%tpc, %o2			! (pc)
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	rdpr	%tstate, %g1
@@ -7157,7 +7156,6 @@ ENTRY(sparc64_ipi_ccall)
 	rd	%y, %o4
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
-	wrpr	%g0, 0, %tl			! return to tl=0
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
 
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
@@ -7169,6 +7167,10 @@ ENTRY(sparc64_ipi_ccall)
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_PIL]
 	stb	%g5, [%sp + CC64FSZ + STKB + TF_OLDPIL]
 
+	rdpr	%tl, %g7
+	dec	%g7
+	movrlz	%g7, %g0, %g7
+	wrpr	%g0, %g7, %tl
 	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
 	!! In our case we need to clear it before calling any C-code
 	clr	%g4
