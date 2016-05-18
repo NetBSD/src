@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.67 2016/05/10 23:18:17 snj Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.68 2016/05/18 10:44:41 snj Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -8547,4 +8547,97 @@ sys/miscfs/specfs/spec_vnops.c			1.161, 1.162 via patch
 	Avoid a race with spec_revoke when extracting v_rdev.
 	Fixes PR kern/50467.
 	[hannken, ticket #1376]
+
+distrib/sets/lists/base/ad.mips64eb		patch
+distrib/sets/lists/base/ad.mips64el		patch
+distrib/sets/lists/base/md.amd64		patch
+distrib/sets/lists/base/md.sparc64		patch
+distrib/sets/lists/base/shl.mi			1.771, 1.772 via patch
+distrib/sets/lists/comp/ad.mips64eb		patch
+distrib/sets/lists/comp/ad.mips64el		patch
+distrib/sets/lists/comp/md.amd64		patch
+distrib/sets/lists/comp/md.sparc64		patch
+distrib/sets/lists/comp/mi			1.2035 via patch
+distrib/sets/lists/comp/shl.mi			patch
+external/mit/expat/dist/CMake.README		up to 1.1.1.2
+external/mit/expat/dist/CMakeLists.txt		up to 1.1.1.2
+external/mit/expat/dist/Changes			up to 1.1.1.3
+external/mit/expat/dist/ConfigureChecks.cmake	up to 1.1.1.1
+external/mit/expat/dist/MANIFEST		up to 1.1.1.3
+external/mit/expat/dist/Makefile.in		up to 1.1.1.3
+external/mit/expat/dist/README			up to 1.1.1.3
+external/mit/expat/dist/aclocal.m4		up to 1.1.1.2
+external/mit/expat/dist/configure		up to 1.1.1.3
+external/mit/expat/dist/configure.ac		up to 1.1.1.1
+external/mit/expat/dist/configure.in		up to 1.1.1.2
+external/mit/expat/dist/expat.pc.in		up to 1.1.1.1
+external/mit/expat/dist/expat_config.h.cmake	up to 1.1.1.1
+external/mit/expat/dist/expat_config.h.in	up to 1.1.1.3
+external/mit/expat/dist/amiga/Makefile		up to 1.1.1.2
+external/mit/expat/dist/amiga/README.txt	up to 1.1.1.2
+external/mit/expat/dist/amiga/expat_68k.c	up to 1.1.1.1
+external/mit/expat/dist/amiga/expat_68k.h	up to 1.1.1.1
+external/mit/expat/dist/amiga/expat_68k_handler_stubs.c up to 1.1.1.1
+external/mit/expat/dist/amiga/expat_base.h	up to 1.1.1.1
+external/mit/expat/dist/amiga/expat_lib.c	up to 1.1.1.2
+external/mit/expat/dist/amiga/expat_vectors.c	up to 1.1.1.2
+external/mit/expat/dist/amiga/launch.c		up to 1.1.1.2
+external/mit/expat/dist/amiga/stdlib.c		delete
+external/mit/expat/dist/bcb5/elements.bpr	up to 1.1.1.2
+external/mit/expat/dist/bcb5/expat.bpr		up to 1.1.1.2
+external/mit/expat/dist/bcb5/expat_static.bpr	up to 1.1.1.2
+external/mit/expat/dist/bcb5/expatw.bpr		up to 1.1.1.2
+external/mit/expat/dist/bcb5/expatw_static.bpr	up to 1.1.1.2
+external/mit/expat/dist/bcb5/outline.bpr	up to 1.1.1.2
+external/mit/expat/dist/bcb5/xmlwf.bpr		up to 1.1.1.2
+external/mit/expat/dist/conftools/ac_c_bigendian_cross.m4 up to 1.4
+external/mit/expat/dist/conftools/config.guess	up to 1.1.1.3
+external/mit/expat/dist/conftools/config.sub	up to 1.1.1.3
+external/mit/expat/dist/conftools/expat.m4	up to 1.1.1.2
+external/mit/expat/dist/conftools/install-sh	up to 1.1.1.3
+external/mit/expat/dist/conftools/libtool.m4	delete
+external/mit/expat/dist/conftools/ltmain.sh	up to 1.1.1.3
+external/mit/expat/dist/conftools/mkinstalldirs	up to 1.4
+external/mit/expat/dist/doc/reference.html	up to 1.1.1.3
+external/mit/expat/dist/doc/xmlwf.1		up to 1.1.1.2
+external/mit/expat/dist/doc/xmlwf.sgml		up to 1.1.1.3
+external/mit/expat/dist/examples/elements.c	up to 1.1.1.2
+external/mit/expat/dist/examples/elements.dsp	up to 1.1.1.2
+external/mit/expat/dist/examples/outline.dsp	up to 1.1.1.2
+external/mit/expat/dist/lib/amigaconfig.h	up to 1.1.1.2
+external/mit/expat/dist/lib/expat.dsp		up to 1.1.1.2
+external/mit/expat/dist/lib/expat.h		up to 1.1.1.3
+external/mit/expat/dist/lib/expat_static.dsp	up to 1.1.1.2
+external/mit/expat/dist/lib/expatw.dsp		up to 1.1.1.2
+external/mit/expat/dist/lib/libexpat.def	up to 1.1.1.2
+external/mit/expat/dist/lib/libexpatw.def	up to 1.1.1.2
+external/mit/expat/dist/lib/xmlparse.c		up to 1.4
+external/mit/expat/dist/lib/xmlrole.c		up to 1.1.1.2
+external/mit/expat/dist/lib/xmltok.c		up to 1.1.1.2
+external/mit/expat/dist/lib/xmltok.h		up to 1.1.1.1
+external/mit/expat/dist/lib/xmltok_impl.c	up to 1.3
+external/mit/expat/dist/m4/libtool.m4		up to 1.1.1.2
+external/mit/expat/dist/m4/ltoptions.m4		up to 1.1.1.2
+external/mit/expat/dist/m4/ltsugar.m4		up to 1.1.1.1
+external/mit/expat/dist/m4/ltversion.m4		up to 1.1.1.2
+external/mit/expat/dist/m4/lt~obsolete.m4	up to 1.1.1.1
+external/mit/expat/dist/tests/README.txt	up to 1.1.1.2
+external/mit/expat/dist/tests/chardata.c	up to 1.1.1.2
+external/mit/expat/dist/tests/minicheck.h	up to 1.1.1.2
+external/mit/expat/dist/tests/runtests.c	up to 1.1.1.2
+external/mit/expat/dist/tests/xmltest.sh	up to 1.1.1.2
+external/mit/expat/dist/tests/benchmark/README.txt up to 1.1.1.2
+external/mit/expat/dist/tests/benchmark/benchmark.dsp up to 1.1.1.2
+external/mit/expat/dist/win32/README.txt	up to 1.1.1.2
+external/mit/expat/dist/win32/expat.iss		up to 1.1.1.3
+external/mit/expat/dist/xmlwf/unixfilemap.c	up to 1.1.1.2
+external/mit/expat/dist/xmlwf/xmlwf.c		up to 1.1.1.3
+external/mit/expat/dist/xmlwf/xmlwf.dsp		up to 1.1.1.2
+external/mit/expat/lib/libexpat/Makefile	up to 1.2
+external/mit/expat/lib/libexpat/expat.pc.in	up to 1.1
+external/mit/expat/lib/libexpat/expat_config.h	up to 1.3
+external/mit/expat/lib/libexpat/shlib_version	up to 1.3
+
+	Update expat to 2.1.1.  Apply fixes for CVE-2016-0718.
+	[spz, ticket #1383]
 
