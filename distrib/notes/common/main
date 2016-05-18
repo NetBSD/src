@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.528 2016/05/06 10:48:53 hiroshi Exp $
+.\"	$NetBSD: main,v 1.529 2016/05/18 16:36:53 abhinav Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1434,6 +1434,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Colin Wood Ta Mt ender@NetBSD.org
 .It Ta Steve Woodford Ta Mt scw@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
+.It Ta Abhinav Upadhyay Ta Mt abhinav@NetBSD.org	
 .It Ta Yuji Yamano Ta Mt yyamano@NetBSD.org
 .It Ta David Young Ta Mt dyoung@NetBSD.org
 .It Ta Arnaud Ysmal Ta Mt stacktic@NetBSD.org
