@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.194 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.195 2016/05/18 11:28:44 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.194 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.195 2016/05/18 11:28:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1457,7 +1457,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		    &satocsin6(rt_getkey(rt))->sin6_addr);
 		if (ifa != NULL) {
 			if (nd6_useloopback) {
-				ifp = rt->rt_ifp = lo0ifp;	/* XXX */
+				rt->rt_ifp = lo0ifp;	/* XXX */
 				/*
 				 * Make sure rt_ifa be equal to the ifaddr
 				 * corresponding to the address.
