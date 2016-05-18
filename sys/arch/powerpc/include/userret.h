@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.22.8.4 2015/11/19 08:50:05 bouyer Exp $	*/
+/*	$NetBSD: userret.h,v 1.22.8.5 2016/05/18 08:44:41 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,7 +58,13 @@ userret(struct lwp *l, struct trapframe *tf)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	KASSERTMSG((tf->tf_srr1 & PSL_FP) == 0
+	    || l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU] == l,
+	    "tf=%p: srr1 (%#lx): PSL_FP set but FPU curlwp %p is not curlwp %p!",
+	    tf, tf->tf_srr1, l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU], l);
+
+	/* clear SRR1 status bits */
+	tf->tf_srr1 &= (PSL_USERSRR1|PSL_FP|PSL_VEC);
 
 #ifdef ALTIVEC
 	/*
