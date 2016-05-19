@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.1 2016/05/17 06:44:46 ryo Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.2 2016/05/19 05:15:51 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.1 2016/05/17 06:44:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.2 2016/05/19 05:15:51 ryo Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -96,10 +96,6 @@ u_int uboot_args[4] = { 0 };
 void imx7_setup_iomux(void);
 void imx7_setup_gpio(void);
 void imx7board_device_register(device_t, void *);
-
-static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
-static const int comcnspeed = CONSPEED;
-static const int comcnmode = CONMODE | CLOCAL;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
