@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.77 2016/05/07 22:12:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.77 2016/05/07 22:12:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1431,44 +1431,18 @@ wapbl_biodone(struct buf *bp)
 #endif
 
 	if (bp->b_error) {
-#ifdef notyet /* Can't currently handle possible dirty buffer reuse */
 		/*
-		 * XXXpooka: interfaces not fully updated
-		 * Note: this was not enabled in the original patch
-		 * against netbsd4 either.  I don't know if comment
-		 * above is true or not.
+		 * If an error occurs, it would be nice to leave the buffer
+		 * as a delayed write on the LRU queue so that we can retry
+		 * it later. But buffercache(9) can't handle dirty buffer
+		 * reuse, so just mark the log permanently errored out.
 		 */
-
-		/*
-		 * If an error occurs, report the error and leave the
-		 * buffer as a delayed write on the LRU queue.
-		 * restarting the write would likely result in
-		 * an error spinloop, so let it be done harmlessly
-		 * by the syncer.
-		 */
-		bp->b_flags &= ~(B_DONE);
-		simple_unlock(&bp->b_interlock);
-
-		if (we->we_error == 0) {
-			mutex_enter(&wl->wl_mtx);
-			wl->wl_error_count++;
-			mutex_exit(&wl->wl_mtx);
-			cv_broadcast(&wl->wl_reclaimable_cv);
-		}
-		we->we_error = bp->b_error;
-		bp->b_error = 0;
-		brelse(bp);
-		return;
-#else
-		/* For now, just mark the log permanently errored out */
-
 		mutex_enter(&wl->wl_mtx);
 		if (wl->wl_error_count == 0) {
 			wl->wl_error_count++;
 			cv_broadcast(&wl->wl_reclaimable_cv);
 		}
 		mutex_exit(&wl->wl_mtx);
-#endif
 	}
 
 	/*
