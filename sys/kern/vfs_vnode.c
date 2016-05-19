@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.48 2016/05/19 14:47:33 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.49 2016/05/19 14:50:18 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.48 2016/05/19 14:47:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.49 2016/05/19 14:50:18 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1372,6 +1372,8 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	new_node->vn_key = new_vcache_key;
 
 	mutex_enter(&vcache.lock);
+
+	/* Insert locked new node used as placeholder. */
 	node = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (node != NULL) {
 		mutex_exit(&vcache.lock);
@@ -1380,6 +1382,8 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	}
 	SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
 	    new_node, vn_hash);
+
+	/* Lock old node. */
 	node = vcache_hash_lookup(&old_vcache_key, old_hash);
 	KASSERT(node != NULL);
 	KASSERT(node->vn_vnode == vp);
@@ -1399,7 +1403,7 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 {
 	uint32_t old_hash, new_hash;
 	struct vcache_key old_vcache_key, new_vcache_key;
-	struct vcache_node *node;
+	struct vcache_node *old_node, *new_node;
 
 	old_vcache_key.vk_mount = mp;
 	old_vcache_key.vk_key = old_key;
@@ -1412,18 +1416,30 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	new_hash = vcache_hash(&new_vcache_key);
 
 	mutex_enter(&vcache.lock);
-	node = vcache_hash_lookup(&new_vcache_key, new_hash);
-	KASSERT(node != NULL && node->vn_vnode == NULL);
-	KASSERT(node->vn_key.vk_key_len == new_key_len);
-	node->vn_vnode = vp;
-	node->vn_key = new_vcache_key;
-	node = vcache_hash_lookup(&old_vcache_key, old_hash);
-	KASSERT(node != NULL);
-	KASSERT(node->vn_vnode == NULL);
-	SLIST_REMOVE(&vcache.hashtab[old_hash & vcache.hashmask],
-	    node, vcache_node, vn_hash);
+
+	/* Lookup old and new node. */
+	old_node = vcache_hash_lookup(&old_vcache_key, old_hash);
+	KASSERT(old_node != NULL);
+	KASSERT(old_node->vn_vnode == NULL);
+	new_node = vcache_hash_lookup(&new_vcache_key, new_hash);
+	KASSERT(new_node != NULL && new_node->vn_vnode == NULL);
+	KASSERT(new_node->vn_key.vk_key_len == new_key_len);
+
+	/* Rekey old node and put it onto its new hashlist. */
+	old_node->vn_vnode = vp;
+	old_node->vn_key = new_vcache_key;
+	if (old_hash != new_hash) {
+		SLIST_REMOVE(&vcache.hashtab[old_hash & vcache.hashmask],
+		    old_node, vcache_node, vn_hash);
+		SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
+		    old_node, vn_hash);
+	}
+
+	/* Remove new node used as placeholder. */
+	SLIST_REMOVE(&vcache.hashtab[new_hash & vcache.hashmask],
+	    new_node, vcache_node, vn_hash);
 	mutex_exit(&vcache.lock);
-	pool_cache_put(vcache.pool, node);
+	pool_cache_put(vcache.pool, new_node);
 }
 
 /*
