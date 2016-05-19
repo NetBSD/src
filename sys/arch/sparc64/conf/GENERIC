@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.184 2016/03/19 23:21:03 gdt Exp $
+# $NetBSD: GENERIC,v 1.185 2016/05/19 15:37:06 christos Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.184 $"
+#ident 		"GENERIC-$Revision: 1.185 $"
 
 maxusers	64
 
@@ -1006,5 +1006,9 @@ pseudo-device   nsmb		# experimental - SMB requester
 # drvctl - needed to show device dictionary via drvctl(8)
 pseudo-device	drvctl
 
-#options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
-					# (for static binaries only for now)
+options         PAX_ASLR_DEBUG=1        # PaX ASLR debug
+options         PAX_SEGVGUARD=0         # PaX Segmentation fault guard
+# XXX: MPROTECT is broken!
+options         PAX_MPROTECT=0          # PaX mprotect(2) restrictions
+options         PAX_MPROTECT_DEBUG=1    # PaX mprotect debug
+options         PAX_ASLR=1              # PaX Address Space Layout Randomization
