@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.14 2016/05/17 00:39:43 christos Exp $ */
+/*	$NetBSD: proc.h,v 1.15 2016/05/19 15:36:35 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,6 @@ struct mdproc {
 
 #define netbsd32_syscall_intern syscall_intern
 
-#define PAX_ASLR_RAND_MMAP_MAX 0x80000
+#define PAX_ASLR_RAND_MMAP_MAX 0x40000
 
 #endif /* _SPARC64_PROC_H */
