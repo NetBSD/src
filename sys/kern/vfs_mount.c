@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.38 2016/05/19 14:47:33 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.39 2016/05/19 14:48:28 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.38 2016/05/19 14:47:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.39 2016/05/19 14:48:28 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -394,7 +394,7 @@ again:
 		}
 		mutex_enter(vp->v_interlock);
 		if (vnis_marker(vp) ||
-		    ISSET(vp->v_iflag, VI_XLOCK) ||
+		    vdead_check(vp, VDEAD_NOWAIT) ||
 		    (f && !(*f)(cl, vp))) {
 			mutex_exit(vp->v_interlock);
 			vp = TAILQ_NEXT(vp, v_mntvnodes);
