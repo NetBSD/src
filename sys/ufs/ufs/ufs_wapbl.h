@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.10 2016/05/19 18:32:11 riastradh Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.11 2016/05/19 18:32:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ ufs_wapbl_end(struct mount *mp)
 }
 
 #define	UFS_WAPBL_BEGIN(mp)						\
-	ufs_wapbl_begin(mp, __FUNCTION__, __LINE__)
+	ufs_wapbl_begin(mp, __func__, __LINE__)
 #define	UFS_WAPBL_END(mp) ufs_wapbl_end(mp)
 
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
