@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.8 2013/11/10 18:28:08 christos Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.9 2016/05/19 18:32:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -134,10 +134,7 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 
 #define	UFS_WAPBL_BEGIN(mp)						\
 	ufs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_BEGIN1(mp, v1)					\
-	ufs_wapbl_begin2(mp, v1, NULL, __FUNCTION__, __LINE__)
 #define	UFS_WAPBL_END(mp)	ufs_wapbl_end2(mp, NULL, NULL)
-#define	UFS_WAPBL_END1(mp, v1)	ufs_wapbl_end2(mp, v1, NULL)
 
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
 	if ((vp)->v_mount->mnt_wapbl) {					\
@@ -164,9 +161,7 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 
 #else /* ! WAPBL */
 #define	UFS_WAPBL_BEGIN(mp) (__USE(mp), 0)
-#define	UFS_WAPBL_BEGIN1(mp, v1) 0
 #define	UFS_WAPBL_END(mp)	do { } while (0)
-#define	UFS_WAPBL_END1(mp, v1)
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)	do { } while (0)
 #define	UFS_WAPBL_JLOCK_ASSERT(mp)
 #define	UFS_WAPBL_JUNLOCK_ASSERT(mp)
