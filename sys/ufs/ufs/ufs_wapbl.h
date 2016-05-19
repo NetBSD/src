@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.9 2016/05/19 18:32:03 riastradh Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.10 2016/05/19 18:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -95,16 +95,10 @@ void	ufs_wapbl_verify_inodes(struct mount *, const char *);
 #endif
 
 static __inline int
-ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
-		 const char *file, int line)
+ufs_wapbl_begin(struct mount *mp, const char *file, int line)
 {
 	if (mp->mnt_wapbl) {
 		int error;
-
-		if (vp1)
-			vref(vp1);
-		if (vp2)
-			vref(vp2);
 		error = wapbl_begin(mp->mnt_wapbl, file, line);
 		if (error)
 			return error;
@@ -117,7 +111,7 @@ ufs_wapbl_begin2(struct mount *mp, struct vnode *vp1, struct vnode *vp2,
 }
 
 static __inline void
-ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
+ufs_wapbl_end(struct mount *mp)
 {
 	if (mp->mnt_wapbl) {
 #ifdef WAPBL_DEBUG_INODES
@@ -125,16 +119,12 @@ ufs_wapbl_end2(struct mount *mp, struct vnode *vp1, struct vnode *vp2)
 			ufs_wapbl_verify_inodes(mp, "wapbl_end");
 #endif
 		wapbl_end(mp->mnt_wapbl);
-		if (vp2)
-			vrele(vp2);
-		if (vp1)
-			vrele(vp1);
 	}
 }
 
 #define	UFS_WAPBL_BEGIN(mp)						\
-	ufs_wapbl_begin2(mp, NULL, NULL, __FUNCTION__, __LINE__)
-#define	UFS_WAPBL_END(mp)	ufs_wapbl_end2(mp, NULL, NULL)
+	ufs_wapbl_begin(mp, __FUNCTION__, __LINE__)
+#define	UFS_WAPBL_END(mp) ufs_wapbl_end(mp)
 
 #define	UFS_WAPBL_UPDATE(vp, access, modify, flags)			\
 	if ((vp)->v_mount->mnt_wapbl) {					\
