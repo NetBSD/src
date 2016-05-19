@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.47 2016/04/22 15:01:54 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.48 2016/05/19 14:47:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.47 2016/04/22 15:01:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.48 2016/05/19 14:47:33 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -195,6 +195,8 @@ static void		vclean(vnode_t *);
 static void		vrelel(vnode_t *, int);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
+static vnode_t *	vnalloc(struct mount *);
+static void		vnfree(vnode_t *);
 static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
 static void		vwait(vnode_t *, int);
@@ -236,10 +238,41 @@ vfs_vnode_sysinit(void)
 }
 
 /*
+ * Allocate a new marker vnode.
+ */
+vnode_t *
+vnalloc_marker(struct mount *mp)
+{
+
+	return vnalloc(mp);
+}
+
+/*
+ * Free a marker vnode.
+ */
+void
+vnfree_marker(vnode_t *vp)
+{
+
+	KASSERT(ISSET(vp->v_iflag, VI_MARKER));
+	vnfree(vp);
+}
+
+/*
+ * Test a vnode for being a marker vnode.
+ */
+bool
+vnis_marker(vnode_t *vp)
+{
+
+	return (ISSET(vp->v_iflag, VI_MARKER));
+}
+
+/*
  * Allocate a new, uninitialized vnode.  If 'mp' is non-NULL, this is a
  * marker vnode.
  */
-vnode_t *
+static vnode_t *
 vnalloc(struct mount *mp)
 {
 	vnode_t *vp;
@@ -280,7 +313,7 @@ vnalloc(struct mount *mp)
 /*
  * Free an unused, unreferenced vnode.
  */
-void
+static void
 vnfree(vnode_t *vp)
 {
 
