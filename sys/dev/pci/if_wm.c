@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.403 2016/05/19 08:20:06 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.404 2016/05/19 08:22:37 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.403 2016/05/19 08:20:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.404 2016/05/19 08:22:37 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -407,6 +407,8 @@ struct wm_softc {
 
 	int sc_nrxqueues;
 	struct wm_rxqueue *sc_rxq;
+
+	int sc_affinity_offset;
 
 #ifdef WM_EVENT_COUNTERS
 	/* Event counters. */
@@ -4377,11 +4379,20 @@ wm_setup_msix(struct wm_softc *sc)
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char intr_xname[INTRDEVNAMEBUF];
-	/*
-	 * To avoid other devices' interrupts, the affinity of Tx/Rx interrupts
-	 * start from CPU#1.
-	 */
-	int affinity_offset = 1;
+
+	if (sc->sc_ntxqueues + sc->sc_nrxqueues < ncpu) {
+		/*
+		 * To avoid other devices' interrupts, the affinity of Tx/Rx
+		 * interrupts start from CPU#1.
+		 */
+		sc->sc_affinity_offset = 1;
+	} else {
+		/*
+		 * In this case, this device use all CPUs. So, we unify
+		 * affinitied cpu_index to msix vector number for readability.
+		 */
+		sc->sc_affinity_offset = 0;
+	}
 
 	error = wm_alloc_txrx_queues(sc);
 	if (error) {
@@ -4399,7 +4410,7 @@ wm_setup_msix(struct wm_softc *sc)
 	tx_established = 0;
 	for (qidx = 0; qidx < sc->sc_ntxqueues; qidx++) {
 		struct wm_txqueue *txq = &sc->sc_txq[qidx];
-		int affinity_to = (affinity_offset + intr_idx) % ncpu;
+		int affinity_to = (sc->sc_affinity_offset + intr_idx) % ncpu;
 
 		intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 		    sizeof(intrbuf));
@@ -4446,7 +4457,7 @@ wm_setup_msix(struct wm_softc *sc)
 	rx_established = 0;
 	for (qidx = 0; qidx < sc->sc_nrxqueues; qidx++) {
 		struct wm_rxqueue *rxq = &sc->sc_rxq[qidx];
-		int affinity_to = (affinity_offset + intr_idx) % ncpu;
+		int affinity_to = (sc->sc_affinity_offset + intr_idx) % ncpu;
 
 		intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 		    sizeof(intrbuf));
@@ -6745,8 +6756,7 @@ wm_nq_select_txqueue(struct ifnet *ifp, struct mbuf *m)
 	 * TODO:
 	 * destribute by flowid(RSS has value).
 	 */
-
-	return cpuid % sc->sc_ntxqueues;
+	return (cpuid + sc->sc_affinity_offset) % sc->sc_ntxqueues;
 }
 
 static int
