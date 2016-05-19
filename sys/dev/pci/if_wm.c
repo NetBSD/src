@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.402 2016/05/18 08:59:56 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.403 2016/05/19 08:20:06 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.402 2016/05/18 08:59:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.403 2016/05/19 08:20:06 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.402 2016/05/18 08:59:56 knakahara Exp $"
 #include <sys/queue.h>
 #include <sys/syslog.h>
 #include <sys/interrupt.h>
+#include <sys/cpu.h>
+#include <sys/pcq.h>
 
 #include <sys/rndsource.h>
 
@@ -193,6 +195,8 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NEXTTXS(txq, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(txq))
 
 #define	WM_MAXTXDMA		 (2 * round_page(IP_MAXPACKET)) /* for TSO */
+
+#define	WM_TXINTERQSIZE		256
 
 /*
  * Receive descriptor list size.  We have one Rx buffer for normal
@@ -286,6 +290,12 @@ struct wm_txqueue {
 	int txq_fifo_head;		/* current head of FIFO */
 	uint32_t txq_fifo_addr;		/* internal address of start of FIFO */
 	int txq_fifo_stall;		/* Tx FIFO is stalled */
+
+	/*
+	 * When ncpu > number of Tx queues, a Tx queue is shared by multiple
+	 * CPUs. This queue intermediate them without block.
+	 */
+	pcq_t *txq_interq;
 
 	/*
 	 * NEWQUEUE devices must use not ifp->if_flags but txq->txq_flags
@@ -459,6 +469,7 @@ struct wm_softc {
 };
 
 #define WM_TX_LOCK(_txq)	if ((_txq)->txq_lock) mutex_enter((_txq)->txq_lock)
+#define WM_TX_TRYLOCK(_txq)	((_txq)->txq_lock == NULL || mutex_tryenter((_txq)->txq_lock))
 #define WM_TX_UNLOCK(_txq)	if ((_txq)->txq_lock) mutex_exit((_txq)->txq_lock)
 #define WM_TX_LOCKED(_txq)	(!(_txq)->txq_lock || mutex_owned((_txq)->txq_lock))
 #define WM_RX_LOCK(_rxq)	if ((_rxq)->rxq_lock) mutex_enter((_rxq)->rxq_lock)
@@ -559,6 +570,7 @@ static int	wm_detach(device_t, int);
 static bool	wm_suspend(device_t, const pmf_qual_t *);
 static bool	wm_resume(device_t, const pmf_qual_t *);
 static void	wm_watchdog(struct ifnet *);
+static void	wm_watchdog_txq(struct ifnet *, struct wm_txqueue *);
 static void	wm_tick(void *);
 static int	wm_ifflags_cb(struct ethercom *);
 static int	wm_ioctl(struct ifnet *, u_long, void *);
@@ -615,12 +627,16 @@ static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
     uint32_t *, uint8_t *);
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
-static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txsoft *,
-    uint32_t *, uint32_t *, bool *);
+static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txqueue *,
+    struct wm_txsoft *, uint32_t *, uint32_t *, bool *);
 static void	wm_nq_start(struct ifnet *);
 static void	wm_nq_start_locked(struct ifnet *);
+static int	wm_nq_transmit(struct ifnet *, struct mbuf *);
+static inline int	wm_nq_select_txqueue(struct ifnet *, struct mbuf *);
+static void	wm_nq_transmit_locked(struct ifnet *, struct wm_txqueue *);
+static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *, bool);
 /* Interrupt */
-static int	wm_txeof(struct wm_softc *);
+static int	wm_txeof(struct wm_softc *, struct wm_txqueue *);
 static void	wm_rxeof(struct wm_rxqueue *);
 static void	wm_linkintr_gmii(struct wm_softc *, uint32_t);
 static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
@@ -2394,9 +2410,11 @@ alloc_retry:
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = wm_ioctl;
-	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
-	else
+		if (sc->sc_ntxqueues > 1)
+			ifp->if_transmit = wm_nq_transmit;
+	} else
 		ifp->if_start = wm_start;
 	ifp->if_watchdog = wm_watchdog;
 	ifp->if_init = wm_init;
@@ -2686,15 +2704,37 @@ wm_resume(device_t self, const pmf_qual_t *qual)
 static void
 wm_watchdog(struct ifnet *ifp)
 {
+	int qid;
 	struct wm_softc *sc = ifp->if_softc;
-	struct wm_txqueue *txq = &sc->sc_txq[0];
+
+	for (qid = 0; qid < sc->sc_ntxqueues; qid++) {
+		struct wm_txqueue *txq = &sc->sc_txq[qid];
+
+		wm_watchdog_txq(ifp, txq);
+	}
+
+	/* Reset the interface. */
+	(void) wm_init(ifp);
+
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ
+	 */
+	/* Try to get more packets going. */
+	ifp->if_start(ifp);
+}
+
+static void
+wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq)
+{
+	struct wm_softc *sc = ifp->if_softc;
 
 	/*
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
 	WM_TX_LOCK(txq);
-	wm_txeof(sc);
+	wm_txeof(sc, txq);
 	WM_TX_UNLOCK(txq);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
@@ -2725,12 +2765,7 @@ wm_watchdog(struct ifnet *ifp)
 			}
 		}
 #endif
-		/* Reset the interface. */
-		(void) wm_init(ifp);
 	}
-
-	/* Try to get more packets going. */
-	ifp->if_start(ifp);
 }
 
 /*
@@ -4294,9 +4329,6 @@ wm_adjust_qnum(struct wm_softc *sc, int nvectors)
 		sc->sc_ntxqueues = ncpu;
 	if (ncpu < sc->sc_nrxqueues)
 		sc->sc_nrxqueues = ncpu;
-
-	/* XXX Currently, this driver supports RX multiqueue only. */
-	sc->sc_ntxqueues = 1;
 }
 
 /*
@@ -5623,6 +5655,13 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 			wm_free_tx_descs(sc, txq);
 			break;
 		}
+		txq->txq_interq = pcq_create(WM_TXINTERQSIZE, KM_SLEEP);
+		if (txq->txq_interq == NULL) {
+			wm_free_tx_descs(sc, txq);
+			wm_free_tx_buffer(sc, txq);
+			error = ENOMEM;
+			break;
+		}
 		tx_done++;
 	}
 	if (error)
@@ -5679,6 +5718,7 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
  fail_1:
 	for (i = 0; i < tx_done; i++) {
 		struct wm_txqueue *txq = &sc->sc_txq[i];
+		pcq_destroy(txq->txq_interq);
 		wm_free_tx_buffer(sc, txq);
 		wm_free_tx_descs(sc, txq);
 		if (txq->txq_lock)
@@ -6201,7 +6241,7 @@ wm_start_locked(struct ifnet *ifp)
 
 		/* Get a work queue entry. */
 		if (txq->txq_sfree < WM_TXQUEUE_GC(txq)) {
-			wm_txeof(sc);
+			wm_txeof(sc, txq);
 			if (txq->txq_sfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: no free job descriptors\n",
@@ -6477,10 +6517,9 @@ wm_start_locked(struct ifnet *ifp)
  *	specified packet, for NEWQUEUE devices
  */
 static int
-wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
-    uint32_t *cmdlenp, uint32_t *fieldsp, bool *do_csum)
+wm_nq_tx_offload(struct wm_softc *sc, struct wm_txqueue *txq,
+    struct wm_txsoft *txs, uint32_t *cmdlenp, uint32_t *fieldsp, bool *do_csum)
 {
-	struct wm_txqueue *txq = &sc->sc_txq[0];
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct m_tag *mtag;
 	uint32_t vl_len, mssidx, cmdc;
@@ -6691,6 +6730,67 @@ wm_nq_start_locked(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_txq[0];
+
+	wm_nq_send_common_locked(ifp, txq, false);
+}
+
+static inline int
+wm_nq_select_txqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct wm_softc *sc = ifp->if_softc;
+	u_int cpuid = cpu_index(curcpu());
+
+	/*
+	 * Currently, simple distribute strategy.
+	 * TODO:
+	 * destribute by flowid(RSS has value).
+	 */
+
+	return cpuid % sc->sc_ntxqueues;
+}
+
+static int
+wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	int qid;
+	struct wm_softc *sc = ifp->if_softc;
+	struct wm_txqueue *txq;
+
+	qid = wm_nq_select_txqueue(ifp, m);
+	txq = &sc->sc_txq[qid];
+
+	if (__predict_false(!pcq_put(txq->txq_interq, m))) {
+		m_freem(m);
+		WM_EVCNT_INCR(&sc->sc_ev_txdrop);
+		return ENOBUFS;
+	}
+
+	if (WM_TX_TRYLOCK(txq)) {
+		/* XXXX should be per TX queue */
+		ifp->if_obytes += m->m_pkthdr.len;
+		if (m->m_flags & M_MCAST)
+			ifp->if_omcasts++;
+
+		if (!sc->sc_stopping)
+			wm_nq_transmit_locked(ifp, txq);
+		WM_TX_UNLOCK(txq);
+	}
+
+	return 0;
+}
+
+static void
+wm_nq_transmit_locked(struct ifnet *ifp, struct wm_txqueue *txq)
+{
+
+	wm_nq_send_common_locked(ifp, txq, true);
+}
+
+static void
+wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
+    bool is_transmit)
+{
+	struct wm_softc *sc = ifp->if_softc;
 	struct mbuf *m0;
 	struct m_tag *mtag;
 	struct wm_txsoft *txs;
@@ -6717,7 +6817,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 		/* Get a work queue entry. */
 		if (txq->txq_sfree < WM_TXQUEUE_GC(txq)) {
-			wm_txeof(sc);
+			wm_txeof(sc, txq);
 			if (txq->txq_sfree == 0) {
 				DPRINTF(WM_DEBUG_TX,
 				    ("%s: TX: no free job descriptors\n",
@@ -6728,7 +6828,10 @@ wm_nq_start_locked(struct ifnet *ifp)
 		}
 
 		/* Grab a packet off the queue. */
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (is_transmit)
+			m0 = pcq_get(txq->txq_interq);
+		else
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -6820,7 +6923,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 		    (M_CSUM_TSOv4 | M_CSUM_TSOv6 |
 			M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
 			M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
-			if (wm_nq_tx_offload(sc, txs, &cmdlen, &fields,
+			if (wm_nq_tx_offload(sc, txq, txs, &cmdlen, &fields,
 			    &do_csum) != 0) {
 				/* Error message already displayed. */
 				bus_dmamap_unload(sc->sc_dmat, dmamap);
@@ -6970,9 +7073,8 @@ wm_nq_start_locked(struct ifnet *ifp)
  *	Helper; handle transmit interrupts.
  */
 static int
-wm_txeof(struct wm_softc *sc)
+wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 {
-	struct wm_txqueue *txq = &sc->sc_txq[0];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wm_txsoft *txs;
 	bool processed = false;
@@ -7564,7 +7666,7 @@ wm_intr_legacy(void *arg)
 			WM_EVCNT_INCR(&sc->sc_ev_txdw);
 		}
 #endif
-		wm_txeof(sc);
+		wm_txeof(sc, txq);
 
 		WM_TX_UNLOCK(txq);
 		WM_CORE_LOCK(sc);
@@ -7622,7 +7724,7 @@ wm_txintr_msix(void *arg)
 		goto out;
 
 	WM_EVCNT_INCR(&sc->sc_ev_txdw);
-	wm_txeof(sc);
+	wm_txeof(sc, txq);
 
 out:
 	WM_TX_UNLOCK(txq);
@@ -7634,9 +7736,19 @@ out:
 	else
 		CSR_WRITE(sc, WMREG_EIMS, 1 << txq->txq_intr_idx);
 
-	if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
-		/* Try to get more packets going. */
-		ifp->if_start(ifp);
+	/* Try to get more packets going. */
+	if (pcq_peek(txq->txq_interq) != NULL) {
+		WM_TX_LOCK(txq);
+		wm_nq_transmit_locked(ifp, txq);
+		WM_TX_UNLOCK(txq);
+	}
+	/*
+	 * There are still some upper layer processing which call
+	 * ifp->if_start(). e.g. ALTQ
+	 */
+	if (txq->txq_id == 0) {
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			ifp->if_start(ifp);
 	}
 
 	return 1;
