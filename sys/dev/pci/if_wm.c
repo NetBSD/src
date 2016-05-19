@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.405 2016/05/19 08:27:57 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.406 2016/05/19 08:35:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.405 2016/05/19 08:27:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.406 2016/05/19 08:35:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5880,7 +5880,7 @@ wm_init_rx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 static int
 wm_init_txrx_queues(struct wm_softc *sc)
 {
-	int i, error;
+	int i, error = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
