@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.37 2015/08/19 08:40:02 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.38 2016/05/19 14:47:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.37 2015/08/19 08:40:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.38 2016/05/19 14:47:33 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -346,7 +346,7 @@ vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vip)
 {
 	struct vnode *vp;
 
-	vp = vnalloc(mp);
+	vp = vnalloc_marker(mp);
 
 	mutex_enter(&mntvnode_lock);
 	TAILQ_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
@@ -362,13 +362,13 @@ vfs_vnode_iterator_destroy(struct vnode_iterator *vi)
 	struct vnode *mvp = &vi->vi_vnode;
 
 	mutex_enter(&mntvnode_lock);
-	KASSERT(ISSET(mvp->v_iflag, VI_MARKER));
+	KASSERT(vnis_marker(mvp));
 	if (mvp->v_usecount != 0) {
 		TAILQ_REMOVE(&mvp->v_mount->mnt_vnodelist, mvp, v_mntvnodes);
 		mvp->v_usecount = 0;
 	}
 	mutex_exit(&mntvnode_lock);
-	vnfree(mvp);
+	vnfree_marker(mvp);
 }
 
 struct vnode *
@@ -380,7 +380,7 @@ vfs_vnode_iterator_next(struct vnode_iterator *vi,
 	struct vnode *vp;
 	int error;
 
-	KASSERT(ISSET(mvp->v_iflag, VI_MARKER));
+	KASSERT(vnis_marker(mvp));
 
 	do {
 		mutex_enter(&mntvnode_lock);
@@ -393,7 +393,7 @@ again:
 	       		return NULL;
 		}
 		mutex_enter(vp->v_interlock);
-		if (ISSET(vp->v_iflag, VI_MARKER) ||
+		if (vnis_marker(vp) ||
 		    ISSET(vp->v_iflag, VI_XLOCK) ||
 		    (f && !(*f)(cl, vp))) {
 			mutex_exit(vp->v_interlock);
