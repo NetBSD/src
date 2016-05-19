@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2016/03/10 09:00:24 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2016/05/19 15:41:18 christos Exp $
 
 .ifndef __INCLUDED_STAND_MAKEFILE_INC
 __INCLUDED_STAND_MAKEFILE_INC=
@@ -6,6 +6,7 @@ __INCLUDED_STAND_MAKEFILE_INC=
 .include <bsd.own.mk>
 
 BINDIR=		/usr/mdec
+NOPIE=		yes
 
 CPPFLAGS+=	-DSTANDALONE -I.
 CFLAGS+=	-ffreestanding ${${ACTIVE_CC} == "gcc":? -msoft-float :}
