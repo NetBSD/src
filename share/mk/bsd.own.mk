@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.924 2016/05/19 15:38:13 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.925 2016/05/20 01:36:16 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1049,7 +1049,9 @@ MKCTF?=		yes
 #
 # PIE is enabled on amd64 by default
 #
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "sparc64"
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "sparc64"
 MKPIE?=		yes
 .else
 MKPIE?=		no
