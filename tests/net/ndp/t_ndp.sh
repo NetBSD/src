@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.10 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.11 2016/05/20 06:48:52 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -210,12 +210,11 @@ command_body()
 	atf_check -s exit:0 -o ignore -e ignore rump.ndp -n fc00::11
 	atf_check -s exit:0 -o ignore -e ignore rump.ndp -n fc00::12
 
-	# Test temp option (XXX it doesn't work; expire time isn't set)
 	$DEBUG && rump.ndp -n -a
-	#atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10 temp
+	atf_check -s exit:0 -o ignore rump.ndp -s fc00::10 b2:a0:20:00:00:10 temp
 	rump.ndp -s fc00::10 b2:a0:20:00:00:10 temp
 	$DEBUG && rump.ndp -n -a
-	#atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n fc00::10
+	atf_check -s exit:0 -o not-match:'permanent' rump.ndp -n fc00::10
 
 	return 0
 }
