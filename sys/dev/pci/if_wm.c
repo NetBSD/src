@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.406 2016/05/19 08:35:03 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.407 2016/05/20 08:17:14 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -74,7 +74,8 @@
  *
  *	- Check XXX'ed comments
  *	- Disable D0 LPLU on 8257[12356], 82580 and I350.
- *	- TX Multi queue
+ *	- TX Multi queue improvement (refine queue selection logic)
+ *	- Advanced Receive Descriptor
  *	- EEE (Energy Efficiency Ethernet)
  *	- Virtual Function
  *	- Set LED correctly (based on contents in EEPROM)
@@ -83,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.406 2016/05/19 08:35:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.407 2016/05/20 08:17:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
