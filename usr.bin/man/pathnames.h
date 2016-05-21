@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 2016/05/21 17:21:40 abhinav Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 2016/05/21 20:54:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,4 +35,5 @@
 
 #define	_PATH_MANCONF	"/etc/man.conf"
 #define	_PATH_PAGER	"/usr/bin/more -s"
+#define	_PATH_WHATIS	"whatis.db"
 #define	TMPFILE		"man.XXXXXX"
