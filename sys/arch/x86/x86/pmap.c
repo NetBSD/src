@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.195 2016/05/15 10:35:54 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.196 2016/05/21 07:15:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.195 2016/05/15 10:35:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2016/05/21 07:15:56 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1366,7 +1366,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	pte = PTE_BASE + pl1_i(tmpva);
 
 	/*
-	 * Map the direct map.  Use 1GB pages if they are available,
+	 * Map the direct map RW.  Use 1GB pages if they are available,
 	 * otherwise use 2MB pages.  Note that the unused parts of
 	 * PTPs * must be zero outed, as they might be accessed due
 	 * to speculative execution.  Also, PG_G is not allowed on
@@ -1382,51 +1382,51 @@ pmap_bootstrap(vaddr_t kva_start)
 	ndmpdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 	dmpdp = avail_start;	avail_start += PAGE_SIZE;
 
-	*pte = dmpdp | PG_V | PG_RW;
+	*pte = dmpdp | PG_V | PG_RW | pg_nx;
 	pmap_update_pg(tmpva);
 	memset((void *)tmpva, 0, PAGE_SIZE);
 
 	if (cpu_feature[2] & CPUID_P1GB) {
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L3_SHIFT) |
-				PG_RW | PG_V | PG_U | PG_PS | PG_G;
+			*pde = ((paddr_t)i << L3_SHIFT) | PG_RW | pg_nx |
+			    PG_V | PG_U | PG_PS | PG_G;
 		}
 	} else {
 		dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
 
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = dmpd + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			memset((void *)tmpva, 0, PAGE_SIZE);
 		}
 		for (i = 0; i < NPDPG * ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L2_SHIFT) |
-				PG_RW | PG_V | PG_U | PG_PS | PG_G;
+			*pde = ((paddr_t)i << L2_SHIFT) | PG_RW | pg_nx |
+			    PG_V | PG_U | PG_PS | PG_G;
 		}
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg((vaddr_t)tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (dmpd + (i << PAGE_SHIFT)) |
-				PG_RW | PG_V | PG_U;
+			*pde = (dmpd + (i << PAGE_SHIFT)) | PG_RW | pg_nx |
+			    PG_V | PG_U;
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | pg_nx | PG_V | PG_U;
 
 	tlbflush();
 
