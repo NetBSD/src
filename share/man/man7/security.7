@@ -1,4 +1,4 @@
-.\" $NetBSD: security.7,v 1.13 2015/06/14 16:56:36 christos Exp $
+.\" $NetBSD: security.7,v 1.14 2016/05/21 21:07:43 christos Exp $
 .\"
 .\" Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 2015
+.Dd May 21, 2016
 .Dt SECURITY 7
 .Os
 .Sh NAME
@@ -197,6 +197,23 @@ globally:
 .Bd -literal -offset indent
 # sysctl -w security.pax.mprotect.global=1
 .Ed
+.Pp
+PaX MPROTECT affects the following three uses:
+.Bl -bullet -offset indent
+.It
+Processes that utilize code generation (such as the JVM) might need to have
+MPROTECT disabled.
+.It
+Miscompiled programs that have text relocations, will now core dump instead
+of having their relocations corrected.
+You will need to fix those programs (recompile them properly).
+.It
+Debugger breakpoints:
+.Xr gdb 1
+needs to be able to write to the text segment in order to insert and
+delete breakpoints.
+This will not work unless MPROTECT is disabled on the executable.
+.El
 .Ss PaX Segvguard
 .Em PaX Segvguard
 monitors the number of segmentation faults in a program on a per-user basis,
