@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.62 2014/08/14 15:31:12 apb Exp $	*/
+/*	$NetBSD: man.c,v 1.63 2016/05/21 17:21:40 abhinav Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.62 2014/08/14 15:31:12 apb Exp $");
+__RCSID("$NetBSD: man.c,v 1.63 2016/05/21 17:21:40 abhinav Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: man.c,v 1.62 2014/08/14 15:31:12 apb Exp $");
 
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
 #include <glob.h>
@@ -160,7 +159,8 @@ main(int argc, char **argv)
 			break;
 		case 'M':
 		case 'P':	/* -P for backward compatibility */
-			m.manpath = strdup(optarg);
+			if ((m.manpath = strdup(optarg)) == NULL)
+				err(EXIT_FAILURE, "malloc failed");
 			break;
 		case 'p':
 			m.getpath = 1;
