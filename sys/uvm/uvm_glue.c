@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.161 2014/11/27 14:25:01 uebayasi Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.162 2016/05/21 06:37:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.161 2014/11/27 14:25:01 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.162 2016/05/21 06:37:28 maxv Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -240,31 +240,28 @@ static pool_cache_t uvm_uarea_system_cache;
 static void *
 uarea_poolpage_alloc(struct pool *pp, int flags)
 {
-#if defined(PMAP_MAP_POOLPAGE)
-	if (USPACE == PAGE_SIZE && USPACE_ALIGN == 0) {
-		struct vm_page *pg;
-		vaddr_t va;
+#if defined(PMAP_MAP_POOLPAGE) && (USPACE == PAGE_SIZE && USPACE_ALIGN == 0)
+	struct vm_page *pg;
+	vaddr_t va;
 
 #if defined(PMAP_ALLOC_POOLPAGE)
-		pg = PMAP_ALLOC_POOLPAGE(
-		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
+	pg = PMAP_ALLOC_POOLPAGE(
+	   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
 #else
-		pg = uvm_pagealloc(NULL, 0, NULL,
-		   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
-#endif
-		if (pg == NULL)
-			return NULL;
-		va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
-		if (va == 0)
-			uvm_pagefree(pg);
-		return (void *)va;
-	}
-#endif
-#if defined(__HAVE_CPU_UAREA_ROUTINES)
+	pg = uvm_pagealloc(NULL, 0, NULL,
+	   ((flags & PR_WAITOK) == 0 ? UVM_KMF_NOWAIT : 0));
+#endif /* PMAP_ALLOC_POOLPAGE */
+	if (pg == NULL)
+		return NULL;
+	va = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
+	if (va == 0)
+		uvm_pagefree(pg);
+	return (void *)va;
+#elif defined(__HAVE_CPU_UAREA_ROUTINES)
 	void *va = cpu_uarea_alloc(false);
 	if (va)
 		return (void *)va;
-#endif
+#endif /* __HAVE_CPU_UAREA_ROUTINES */
 	return (void *)uvm_km_alloc(kernel_map, pp->pr_alloc->pa_pagesz,
 	    USPACE_ALIGN, UVM_KMF_WIRED |
 	    ((flags & PR_WAITOK) ? UVM_KMF_WAITVA :
