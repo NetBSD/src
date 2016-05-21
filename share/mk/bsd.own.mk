@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.925 2016/05/20 01:36:16 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.926 2016/05/21 18:34:52 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -70,6 +70,7 @@ HAVE_GCC?=	0
     ${MACHINE} == "amd64" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
+    ${MACHINE} == "evbarm" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "vax"
@@ -1051,6 +1052,7 @@ MKCTF?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm" || \
     ${MACHINE} == "sparc64"
 MKPIE?=		yes
 .else
