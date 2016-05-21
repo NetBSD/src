@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.16 2015/02/07 04:09:13 christos Exp $ */
+/*	$NetBSD: lua.c,v 1.17 2016/05/21 12:39:32 salazar Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -355,7 +355,10 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case LUAREQUIRE:	/* 'require' a module in a State */
 		require = data;
 		LIST_FOREACH(s, &lua_states, lua_next)
-			if (!strcmp(s->lua_name, require->state))
+			if (!strcmp(s->lua_name, require->state)) {
+				LIST_FOREACH(m, &s->lua_modules, mod_next)
+					if (!strcmp(m->mod_name, require->module))
+						return ENXIO;
 				LIST_FOREACH(m, &lua_modules, mod_next)
 					if (!strcmp(m->mod_name,
 					    require->module)) {
@@ -379,6 +382,7 @@ luaioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					    	    mod_next);
 					    	return 0;
 					}
+			}
 		return ENXIO;
 	case LUALOAD:
 		load = data;
