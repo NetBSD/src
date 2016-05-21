@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2163 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2164 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -283,6 +283,20 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	openresolv(8): Import openresolv-3.8.0 [roy 20160411]
 	ddb(4): rename show arptab to show routes [ozaki-r 20160413]
 	dhcpcd(8): Import dhcpcd-6.10.3 [roy 20160420]
+	usb(4) subsystem: Merge nick-nhusb [skrll 20160423]
+		- API / infra changes to support memory management changes.
+		- Memory management improvements and bug fixes.
+		- HCDs should now be MP safe
+		- conversion to KERNHIST based debug
+		- FS/LS isoc support on ehci(4).
+		- conversion to kmem(9)
+		- Some USB 3 support - mostly from Takahiro HAYASHI (t-hash).
+		- interrupt transfers now get proper DMA operations
+		- general bug fixes
+		    - kern/48308
+		    - uhub status notification improvements
+		    - umass(4) probe fix (applied to HEAD already)
+		    - ohci(4) short transfer fix
 	nvme(4): Add a driver for Non-Volatile Memory Host Controller Interface
 		devices, ported from OpenBSD. [nonaka 20160501]
 	ntp: Import ntp 4.2.8p7. [christos 20160501]
