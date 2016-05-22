@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.429 2016/05/11 02:18:27 ozaki-r Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.430 2016/05/22 14:26:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.429 2016/05/11 02:18:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.430 2016/05/22 14:26:09 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -761,12 +761,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * Calculate the new stack size.
 	 */
 
-#ifdef PAX_ASLR
-#define	ASLR_GAP(epp)	pax_aslr_stack_gap(epp)
-#else
-#define	ASLR_GAP(epp)	0
-#endif
-
 #ifdef __MACHINE_STACK_GROWS_UP
 /*
  * copyargs() fills argc/argv/envp from the lower address even on
@@ -782,7 +776,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	data->ed_argslen = calcargs(data, argenvstrlen);
 
-	const size_t len = calcstack(data, ASLR_GAP(epp) + RTLD_GAP);
+	const size_t len = calcstack(data, pax_aslr_stack_gap(epp) + RTLD_GAP);
 
 	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
@@ -1164,9 +1158,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_maxsaddr = (void *)epp->ep_maxsaddr;
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
-#ifdef PAX_ASLR
 	pax_aslr_init_vm(l, vm, epp);
-#endif /* PAX_ASLR */
 
 	/* Now map address space. */
 	error = execve_dovmcmds(l, data);

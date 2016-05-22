@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.48 2016/05/22 01:09:09 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.49 2016/05/22 14:26:09 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.48 2016/05/22 01:09:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.49 2016/05/22 14:26:09 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -451,13 +451,13 @@ pax_aslr_elf_flags_active(uint32_t flags)
 	return true;
 }
 
-bool
+static bool
 pax_aslr_epp_active(struct exec_package *epp)
 {
 	return pax_flags_active(epp->ep_pax_flags, P_PAX_ASLR);
 }
 
-bool
+static bool
 pax_aslr_active(struct lwp *l)
 {
 	return pax_flags_active(l->l_proc->p_pax, P_PAX_ASLR);
