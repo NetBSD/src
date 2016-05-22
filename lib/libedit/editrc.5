@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.31 2016/04/28 15:50:34 christos Exp $
+.\"	$NetBSD: editrc.5,v 1.32 2016/05/22 23:54:20 christos Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 25, 2014
+.Dd May 22, 2016
 .Dt EDITRC 5
 .Os
 .Sh NAME
@@ -88,21 +88,19 @@ shell.
 .Pp
 The following builtin commands are available:
 .Bl -tag -width 4n
-.It Ic bind Oo Fl a Oc Oo Fl e Oc Oo Fl k Oc Oo Fl l Oc Oo Fl r Oc \
-Oo Fl s Oc Oo Fl v Oc Oo Ar key Oo Ar command Oc Oc
-Without options, list all bound keys, and the editor command to which
-each is bound.
-If
+.It Ic bind Oo Fl aeklrsv Oc Op Ar key Op Ar command
+Without options and arguments, list all bound keys and macros, and
+the editor command or input string to which each one is bound.
+If only
 .Ar key
-is supplied, show the bindings for
-.Ar key .
+is supplied, show the binding for that key or macro.
 If
 .Ar key command
-is supplied, bind
+is supplied, bind the editor
 .Ar command
-to
-.Ar key .
-Options include:
+to that key or macro.
+.Pp
+The options are as follows:
 .Bl -tag -width 4n
 .It Fl a
 List or change key bindings in the
@@ -121,13 +119,15 @@ or
 .It Fl l
 List all editor commands and a short description of each.
 .It Fl r
-Remove a key's binding.
+Remove the binding of the key or macro
+.Ar key .
 .It Fl s
+Define a keyboard macro rather than a key binding or command macro:
 .Ar command
-is taken as a literal string and treated as terminal input when
+is taken as a literal string and appended to the input queue whenever
 .Ar key
 is typed.
-Bound keys in
+Bound keys and macros in
 .Ar command
 are themselves reinterpreted, and this continues for ten levels of
 interpretation.
@@ -137,10 +137,10 @@ Bind all keys to the standard
 bindings.
 .El
 .Pp
-.Ar command
-may be one of the editor commands documented in the
+The
 .Xr editline 7
-manual, or another key.
+manual documents all editor commands and contains more information
+about macros and the input queue.
 .Pp
 .Ar key
 and
