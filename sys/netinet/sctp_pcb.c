@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.5 2016/05/12 02:24:17 ozaki-r Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.6 2016/05/22 22:18:41 rjs Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.5 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.6 2016/05/22 22:18:41 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2899,6 +2899,7 @@ sctp_free_remote_addr(struct sctp_nets *net)
 		callout_destroy(&net->rxt_timer.timer);
 		callout_destroy(&net->pmtu_timer.timer);
 		net->dest_state = SCTP_ADDR_NOT_REACHABLE;
+		rtcache_free(&net->ro);
 		SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_net, net);
 		sctppcbinfo.ipi_count_raddr--;
 	}
@@ -3160,6 +3161,7 @@ sctp_free_assoc(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 		}
 		prev = net;
 		TAILQ_REMOVE(&asoc->nets, net, sctp_next);
+		rtcache_free(&net->ro);
 		/* free it */
 		net->ref_count = 0;
 		SCTP_ZONE_FREE(sctppcbinfo.ipi_zone_net, net);
