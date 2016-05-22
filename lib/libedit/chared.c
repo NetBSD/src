@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.55 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.56 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.55 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.56 2016/05/22 19:44:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -51,8 +51,6 @@ __RCSID("$NetBSD: chared.c,v 1.55 2016/05/09 21:46:56 christos Exp $");
 #include "el.h"
 #include "common.h"
 #include "fcns.h"
-
-static void ch__clearmacro (EditLine *);
 
 /* value to leave unused in line buffer */
 #define	EL_LEAVE	2
@@ -398,8 +396,6 @@ cv__endword(wchar_t *p, wchar_t *high, int n, int (*wtest)(wint_t))
 libedit_private int
 ch_init(EditLine *el)
 {
-	c_macro_t *ma = &el->el_chared.c_macro;
-
 	el->el_line.buffer		= el_malloc(EL_BUFSIZ *
 	    sizeof(*el->el_line.buffer));
 	if (el->el_line.buffer == NULL)
@@ -451,11 +447,6 @@ ch_init(EditLine *el)
 	el->el_state.argument		= 1;
 	el->el_state.lastcmd		= ED_UNASSIGNED;
 
-	ma->level	= -1;
-	ma->offset	= 0;
-	ma->macro	= el_malloc(EL_MAXMACRO * sizeof(*ma->macro));
-	if (ma->macro == NULL)
-		return -1;
 	return 0;
 }
 
@@ -463,7 +454,7 @@ ch_init(EditLine *el)
  *	Reset the character editor
  */
 libedit_private void
-ch_reset(EditLine *el, int mclear)
+ch_reset(EditLine *el)
 {
 	el->el_line.cursor		= el->el_line.buffer;
 	el->el_line.lastchar		= el->el_line.buffer;
@@ -485,17 +476,6 @@ ch_reset(EditLine *el, int mclear)
 	el->el_state.lastcmd		= ED_UNASSIGNED;
 
 	el->el_history.eventno		= 0;
-
-	if (mclear)
-		ch__clearmacro(el);
-}
-
-static void
-ch__clearmacro(EditLine *el)
-{
-	c_macro_t *ma = &el->el_chared.c_macro;
-	while (ma->level >= 0)
-		el_free(ma->macro[ma->level--]);
 }
 
 /* ch_enlargebufs():
@@ -606,9 +586,7 @@ ch_end(EditLine *el)
 	el->el_chared.c_redo.cmd = ED_UNASSIGNED;
 	el_free(el->el_chared.c_kill.buf);
 	el->el_chared.c_kill.buf = NULL;
-	ch_reset(el, 1);
-	el_free(el->el_chared.c_macro.macro);
-	el->el_chared.c_macro.macro = NULL;
+	ch_reset(el);
 }
 
 
