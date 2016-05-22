@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.92 2016/05/15 07:17:53 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.93 2016/05/22 10:11:55 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -606,6 +606,11 @@ no_NOX:
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
 
+	/* We are on the BOOTSTRAP TABLES. Save L4's physical address. */
+	movl	$RELOC(PDPpaddr),%ebp
+	movl	%esi,(%ebp)
+	movl	$0,4(%ebp)
+
 	/* Now, zero out the BOOTSTRAP TABLES (before filling them in). */
 	movl	%esi,%edi
 	xorl	%eax,%eax
@@ -732,11 +737,6 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
 	movl	$0,(PDE_SIZE-4)(%ebx)
-
-	/* Save physical address of L4. */
-	movl	$RELOC(PDPpaddr),%ebp
-	movl	%esi,(%ebp)
-	movl	$0,(PDE_SIZE-4)(%ebp)
 
 	/*
 	 * Startup checklist:
