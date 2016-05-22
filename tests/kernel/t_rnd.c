@@ -1,4 +1,4 @@
-/*	$NetBSD: t_rnd.c,v 1.8 2016/05/13 13:22:28 pooka Exp $	*/
+/*	$NetBSD: t_rnd.c,v 1.9 2016/05/22 04:34:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rnd.c,v 1.8 2016/05/13 13:22:28 pooka Exp $");
+__RCSID("$NetBSD: t_rnd.c,v 1.9 2016/05/22 04:34:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/fcntl.h>
@@ -98,8 +98,6 @@ ATF_TC_BODY(read_random, tc)
 {
 	char buf[128];
 	int fd;
-
-	atf_tc_expect_fail("PR kern/51135");
 
 	rump_init();
 	RL(fd = rump_sys_open("/dev/random", O_RDONLY));
