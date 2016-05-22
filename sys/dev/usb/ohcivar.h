@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.57 2016/05/22 07:52:09 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.58 2016/05/22 08:02:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,12 +66,12 @@ typedef struct ohci_soft_td {
 
 typedef struct ohci_soft_itd {
 	ohci_itd_t itd;
-	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
-	struct ohci_soft_itd *dnext; /* next in done list */
+	struct ohci_soft_itd *nextitd;	/* mirrors nexttd in ITD */
+	struct ohci_soft_itd *dnext;	/* next in done list */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
-	LIST_ENTRY(ohci_soft_itd) hnext;
+	LIST_ENTRY(ohci_soft_itd) hnext;/* next on hash list */
 	struct usbd_xfer *xfer;
 	uint16_t flags;
 	bool isdone;	/* used only when DIAGNOSTIC is defined */
