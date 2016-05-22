@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.7 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.8 2016/05/22 23:04:27 rjs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.7 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.8 2016/05/22 23:04:27 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2959,7 +2959,7 @@ sctp_is_there_an_abort_here(struct mbuf *m, int iphlen, int *vtagfill)
  * so, create this function to compare link local scopes
  */
 uint32_t
-sctp_is_same_scope(struct sockaddr_in6 *addr1, struct sockaddr_in6 *addr2)
+sctp_is_same_scope(const struct sockaddr_in6 *addr1, const struct sockaddr_in6 *addr2)
 {
 	struct sockaddr_in6 a, b;
 

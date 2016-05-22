@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.h,v 1.15 2005/03/06 16:04:19 itojun Exp $	*/
-/*	$NetBSD: sctputil.h,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctputil.h,v 1.2 2016/05/22 23:04:27 rjs Exp $ */
 
 #ifndef __SCTPUTIL_H__
 #define __SCTPUTIL_H__
@@ -190,7 +190,8 @@ void sctp_handle_ootb(struct mbuf *, int, int, struct sctphdr *,
     struct sctp_inpcb *, struct mbuf *);
 
 int sctp_is_there_an_abort_here(struct mbuf *, int, int *);
-uint32_t sctp_is_same_scope(struct sockaddr_in6 *, struct sockaddr_in6 *);
+uint32_t sctp_is_same_scope(const struct sockaddr_in6 *,
+	const struct sockaddr_in6 *);
 const struct sockaddr_in6 *sctp_recover_scope(const struct sockaddr_in6 *,
 	struct sockaddr_in6 *);
 
