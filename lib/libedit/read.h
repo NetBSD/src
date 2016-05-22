@@ -1,4 +1,4 @@
-/*	$NetBSD: read.h,v 1.11 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: read.h,v 1.12 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #define	_h_el_read
 
 libedit_private int		read_init(EditLine *);
+libedit_private void		read_end(struct el_read_t *);
 libedit_private void		read_prepare(EditLine *);
 libedit_private void		read_finish(EditLine *);
 libedit_private int		el_read_setfn(struct el_read_t *, el_rfunc_t);
