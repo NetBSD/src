@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.7 2015/09/25 04:34:17 snj Exp $
+.\"	$NetBSD: main,v 1.510.4.7.2.1 2016/05/22 10:48:37 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd September 25, 2015
+.Dd May 22, 2016
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -480,32 +480,25 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0 and 7.0 Releases
+.Ss Changes Between The NetBSD 7.0 and 7.0.1 Releases
 .Pp
-The
 .Nx
-\*V release
-provides many significant changes, including support for many new
-devices, hundreds of bug fixes, new and updated kernel subsystems, and
-numerous userland enhancements.
-The result of these improvements is a stable operating system fit for
-production use that rivals most commercially available systems.
+\*V
+is the first critical/security update of the NetBSD 7.0 release branch.
+It represents a selected subset of fixes deemed critical for security
+or stability reasons.
 .Pp
-It is impossible to completely summarize the massive development that
-went into the
+The complete list of changes can be found in the
+CHANGES-7.0.1:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0.1/CHANGES-7.0.1
+file in the top level directory of the
 .Nx
-\*V release.
+\*V
+release tree.
+.Pp
 See
-.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.0.html
+.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.0.1.html
 for some of the more noteworthy changes in this release.
-.Pp
-A more extensive list of changes can be found in the
-CHANGES:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES
-and
-CHANGES-7.0:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES-7.0
-files in the top level directory of the NetBSD 7.0 release tree.
 .Pp
 .\} \" \n[FOR_RELEASE]
 .
@@ -573,6 +566,8 @@ The root directory of the
 Changes between the 6.0 and 7.0 releases.
 .It Li CHANGES-7.0
 Changes between the initial 7.0 branch and the final release of 7.0.
+.It Li CHANGES-7.0.1
+Changes between the 7.0 and 7.0.1 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
