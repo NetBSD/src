@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.20 2016/05/08 01:28:09 christos Exp $ */
+/* $NetBSD: pax.h,v 1.21 2016/05/22 14:26:10 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -52,8 +52,14 @@ struct vmspace;
 extern int pax_aslr_debug;
 #endif
 
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 void pax_init(void);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
+#else
+# define pax_init()
+# define pax_setup_elf_flags(e, flags) __USE(flags)
+#endif
+
 void pax_mprotect_adjust(
 #ifdef PAX_MPROTECT_DEBUG
     const char *, size_t,
@@ -75,12 +81,18 @@ int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
     (((delta) & ((1UL << (len)) - 1)) << (lsb))
 
-bool pax_aslr_epp_active(struct exec_package *);
-bool pax_aslr_active(struct lwp *);
+#ifdef PAX_ASLR
 void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, u_long *);
 uint32_t pax_aslr_stack_gap(struct exec_package *);
 vaddr_t pax_aslr_exec_offset(struct exec_package *, vaddr_t);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
+#else
+# define pax_aslr_init_vm(l, v, e)
+# define pax_aslr_stack(e, o)
+# define pax_aslr_stack_gap(e)	0
+# define pax_aslr_exec_offset(e, a) MAX(a, PAGE_SIZE)
+# define pax_aslr_mmap(l, a, b, c)
+#endif
 
 #endif /* !_SYS_PAX_H_ */
