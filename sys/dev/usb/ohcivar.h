@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.56 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.57 2016/05/22 07:52:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@ typedef struct ohci_soft_ed {
 
 typedef struct ohci_soft_td {
 	ohci_td_t td;
-	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
-	struct ohci_soft_td *dnext; /* next in done list */
+	struct ohci_soft_td *nexttd;	/* mirrors nexttd in TD */
+	struct ohci_soft_td *dnext;	/* next in done list */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
-	LIST_ENTRY(ohci_soft_td) hnext;
+	LIST_ENTRY(ohci_soft_td) hnext;	/* next on hash list */
 	struct usbd_xfer *xfer;
 	uint16_t len;
 	uint16_t flags;
