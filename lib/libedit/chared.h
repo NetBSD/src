@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.h,v 1.29 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: chared.h,v 1.30 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,8 +40,6 @@
 #ifndef _h_el_chared
 #define	_h_el_chared
 
-#define	EL_MAXMACRO	10
-
 /*
  * This is an issue of basic "vi" look-and-feel. Defining VI_MOVE works
  * like real vi: i.e. the transition from command<->insert modes moves
@@ -53,13 +51,6 @@
  * this fact.
  */
 #define	VI_MOVE
-
-
-typedef struct c_macro_t {
-	int	  level;
-	int	  offset;
-	wchar_t	**macro;
-} c_macro_t;
 
 /*
  * Undo information for vi - no undo in emacs (yet)
@@ -110,7 +101,6 @@ typedef struct el_chared_t {
 	c_kill_t	c_kill;
 	c_redo_t	c_redo;
 	c_vcmd_t	c_vcmd;
-	c_macro_t	c_macro;
 	el_zfunc_t	c_resizefun;
 	el_afunc_t	c_aliasfun;
 	void *		c_resizearg;
@@ -156,7 +146,7 @@ libedit_private int	 c_gets(EditLine *, wchar_t *, const wchar_t *);
 libedit_private int	 c_hpos(EditLine *);
 
 libedit_private int	 ch_init(EditLine *);
-libedit_private void	 ch_reset(EditLine *, int);
+libedit_private void	 ch_reset(EditLine *);
 libedit_private int	 ch_resizefun(EditLine *, el_zfunc_t, void *);
 libedit_private int	 ch_aliasfun(EditLine *, el_afunc_t, void *);
 libedit_private int	 ch_enlargebufs(EditLine *, size_t);

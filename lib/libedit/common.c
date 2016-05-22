@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.46 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.47 2016/05/22 19:44:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.46 2016/05/09 21:46:56 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.47 2016/05/22 19:44:26 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -530,7 +530,7 @@ libedit_private el_action_t
 ed_start_over(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
-	ch_reset(el, 0);
+	ch_reset(el);
 	return CC_REFRESH;
 }
 
