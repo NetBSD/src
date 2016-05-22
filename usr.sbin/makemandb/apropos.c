@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.20 2016/04/23 14:15:36 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.21 2016/05/22 19:26:04 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.20 2016/04/23 14:15:36 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.21 2016/05/22 19:26:04 abhinav Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -50,6 +50,7 @@ typedef struct apropos_flags {
 	query_format format;
 	int legacy;
 	const char *machine;
+	const char *manconf;
 } apropos_flags;
 
 typedef struct callback_data {
@@ -72,8 +73,9 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 {
 	int ch;
 	char sec[2] = {0, 0};
+	aflags->manconf = MANCONF;
 
-	while ((ch = getopt(argc, argv, "123456789Cchiln:PprS:s:")) != -1) {
+	while ((ch = getopt(argc, argv, "123456789C:hilMmn:PprS:s:")) != -1) {
 		switch (ch) {
 		case '1':
 		case '2':
@@ -97,10 +99,7 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 				concat2(&aflags->sec_nums, sec, 1);
 			break;
 		case 'C':
-			aflags->no_context = 1;
-			break;
-		case 'c':
-			aflags->no_context = 0;
+			aflags->manconf = optarg;
 			break;
 		case 'h':
 			aflags->format = APROPOS_HTML;
@@ -112,6 +111,12 @@ parseargs(int argc, char **argv, struct apropos_flags *aflags)
 			aflags->legacy = 1;
 			aflags->no_context = 1;
 			aflags->format = APROPOS_NONE;
+			break;
+		case 'M':
+			aflags->no_context = 1;
+			break;
+		case 'm':
+			aflags->no_context = 0;
 			break;
 		case 'n':
 			aflags->nresults = atoi(optarg);
@@ -210,7 +215,7 @@ main(int argc, char *argv[])
 	else
 		free(str);
 
-	if ((db = init_db(MANDB_READONLY, MANCONF)) == NULL)
+	if ((db = init_db(MANDB_READONLY, aflags.manconf)) == NULL)
 		exit(EXIT_FAILURE);
 
 	/* If user wants to page the output, then set some settings */
@@ -348,7 +353,7 @@ remove_stopwords(const char *query)
 static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-123456789Ccilpr] [-n results] "
+	fprintf(stderr, "Usage: %s [-123456789ilMmpr] [-C path] [-n results] "
 	    "[-S machine] [-s section] query\n",
 	    getprogname());
 	exit(1);

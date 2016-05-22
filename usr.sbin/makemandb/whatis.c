@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.4 2012/10/06 15:33:59 wiz Exp $	*/
+/*	$NetBSD: whatis.c,v 1.5 2016/05/22 19:26:04 abhinav Exp $	*/
 /*-
  * Copyright (c) 2012 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: whatis.c,v 1.4 2012/10/06 15:33:59 wiz Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.5 2016/05/22 19:26:04 abhinav Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -41,7 +41,7 @@ __RCSID("$NetBSD: whatis.c,v 1.4 2012/10/06 15:33:59 wiz Exp $");
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "%s ...\n", "whatis");
+	fprintf(stderr, "%s [-C path] ...\n", "whatis");
 	exit(EXIT_FAILURE);
 }
 
@@ -78,9 +78,13 @@ main(int argc, char *argv[])
 {
 	sqlite3 *db;
 	int ch, retval;
+	const char *manconf = MANCONF;
 
-	while ((ch = getopt(argc, argv, "")) != -1) {
+	while ((ch = getopt(argc, argv, "C:")) != -1) {
 		switch (ch) {
+		case 'C':
+			manconf = optarg;
+			break;
 		default:
 			usage();
 		}
@@ -91,7 +95,7 @@ main(int argc, char *argv[])
 	if (argc == 0)
 		usage();
 
-	if ((db = init_db(MANDB_READONLY, MANCONF)) == NULL)
+	if ((db = init_db(MANDB_READONLY, manconf)) == NULL)
 		exit(EXIT_FAILURE);
 
 	retval = 0;
