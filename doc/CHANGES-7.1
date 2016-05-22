@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.91 2016/05/18 09:22:11 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.92 2016/05/22 10:29:51 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4743,4 +4743,18 @@ external/mit/expat/lib/libexpat/shlib_version	up to 1.3
 
 	Update expat to 2.1.1.  Apply fixes for CVE-2016-0718.
 	[spz, ticket #1169]
+
+sys/dev/ic/gem.c				1.105
+
+	PR kern/46083:
+	Track the start of each packet, so that we set the "Start of
+	Frame" bit in all the relevant transmit descriptors when enqueing
+	multiple packets.
+	[jdc, ticket #1170]
+
+
+sys/modules/lua/lua.c				1.17
+
+	Fix double require bug.
+	[salazar, ticket #1171]
 
