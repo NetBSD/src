@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.83 2016/05/08 01:28:09 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.84 2016/05/22 14:26:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.83 2016/05/08 01:28:09 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.84 2016/05/22 14:26:09 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -124,9 +124,6 @@ elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 		if (ph[i].p_type == PT_LOAD && ph[i].p_align > align)
 			align = ph[i].p_align;
 
-#ifndef PAX_ASLR
-# define pax_aslr_exec_offset(epp, align) MAX(align, PAGE_SIZE)
-#endif
 	offset = (Elf_Addr)pax_aslr_exec_offset(epp, align);
 	offset += epp->ep_vm_minaddr;
 
@@ -929,13 +926,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    ELF_NOTE_PAX_NAMESZ) == 0) {
 				uint32_t flags;
 				memcpy(&flags, ndesc, sizeof(flags));
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 				/* Convert the flags and insert them into
 				 * the exec package. */
 				pax_setup_elf_flags(epp, flags);
-#else
-				(void)flags; /* UNUSED */
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 				break;
 			}
 			BADNOTE("PaX tag");

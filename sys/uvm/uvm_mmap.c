@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.156 2016/04/07 12:07:36 christos Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.157 2016/05/22 14:26:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.156 2016/04/07 12:07:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.157 2016/05/22 14:26:09 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -417,9 +417,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 
 	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
 
-#ifdef PAX_ASLR
 	pax_aslr_mmap(l, &addr, orig_addr, flags);
-#endif /* PAX_ASLR */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
