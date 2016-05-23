@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.409 2016/05/23 04:07:29 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.410 2016/05/23 23:36:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,10 +81,11 @@
  *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
  *	- Image Unique ID
+ *	- restructure evcnt
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.409 2016/05/23 04:07:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.410 2016/05/23 23:36:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
