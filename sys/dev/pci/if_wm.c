@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.408 2016/05/23 03:30:40 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.409 2016/05/23 04:07:29 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.408 2016/05/23 03:30:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.409 2016/05/23 04:07:29 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6992,7 +6992,10 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 	if (sc->sc_stopping)
 		return 0;
 
-	txq->txq_flags &= ~WM_TXQ_NO_SPACE;
+	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+		txq->txq_flags &= ~WM_TXQ_NO_SPACE;
+	else
+		sc->sc_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
