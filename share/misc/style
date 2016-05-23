@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.52 2015/10/24 15:46:09 christos Exp $ */
+/* $NetBSD: style,v 1.53 2016/05/23 11:41:06 salazar Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.52 2015/10/24 15:46:09 christos Exp $");
+__RCSID("$NetBSD: style,v 1.53 2016/05/23 11:41:06 salazar Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -367,7 +367,7 @@ function(int a1, int a2, float fl, int a4)
 	 * where we don't have control over the NULL definition (on NetBSD
 	 * it is defined as ((void *)0), but on other systems it can be
 	 * defined as (0) and both definitions are valid under ANSI C), it
-	 * it advised to cast NULL to a pointer on varyadic functions,
+	 * it advised to cast NULL to a pointer on variadic functions,
 	 * because on machines where sizeof(pointer) != sizeof(int) and in
 	 * the absence of a prototype in scope, passing an un-casted NULL,
 	 * will result in passing an int on the stack instead of a pointer.
@@ -414,7 +414,7 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 		err(1, "Unable to stat %s", p);
 
 	/*
-	 * To printf quantities that might be larger that "long", include
+	 * To printf quantities that might be larger than "long", include
 	 * <inttypes.h>, cast quantities to intmax_t or uintmax_t and use
 	 * PRI?MAX constants.
 	 */
