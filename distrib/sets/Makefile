@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 2015/12/19 22:29:23 christos Exp $
+#	$NetBSD: Makefile,v 1.101 2016/05/24 22:28:56 christos Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -90,7 +90,7 @@ print_set_lists_base print_set_lists_x print_set_lists_ext \
 list_set_lists_base list_set_lists_x list_set_lists_ext \
 list_set_files_base list_set_files_x list_set_files_ext \
 		: .PHONY
-	@${SETSENV}; rundir="${.CURDIR}"; . ./sets.subr; ${.TARGET}
+	@export ${SETSENV}; rundir="${.CURDIR}"; . ./sets.subr; ${.TARGET}
 
 #
 # METALOG MANIPULATION TARGETS
