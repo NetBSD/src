@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.137 2016/05/10 15:23:39 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.138 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.137 2016/05/10 15:23:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.138 2016/05/24 09:55:57 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -319,27 +319,25 @@ udf_setup_writeparams(struct udf_mount *ump)
 }
 
 
-int
-udf_synchronise_caches(struct udf_mount *ump)
+void
+udf_mmc_synchronise_caches(struct udf_mount *ump)
 {
 	struct mmc_op mmc_op;
 
-	DPRINTF(CALL, ("udf_synchronise_caches()\n"));
+	DPRINTF(CALL, ("udf_mcc_synchronise_caches()\n"));
 
 	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
-		return 0;
+		return;
 
 	/* discs are done now */
 	if (ump->discinfo.mmc_class == MMC_CLASS_DISC)
-		return 0;
+		return;
 
 	memset(&mmc_op, 0, sizeof(struct mmc_op));
 	mmc_op.operation = MMC_OP_SYNCHRONISECACHE;
 
 	/* ignore return code */
 	(void) VOP_IOCTL(ump->devvp, MMCOP, &mmc_op, FKIOCTL, NOCRED);
-
-	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -2833,7 +2831,6 @@ udf_writeout_vat(struct udf_mount *ump)
 	if (error)
 		printf("udf_writeout_vat: error writing VAT node!\n");
 out:
-
 	return error;
 }
 
@@ -3710,10 +3707,9 @@ udf_open_logvol(struct udf_mount *ump)
 			/* write out the VAT data and all its descriptors */
 			DPRINTF(VOLUMES, ("writeout vat_node\n"));
 			udf_writeout_vat(ump);
-			vflushbuf(ump->vat_node->vnode, 1 /* sync */);
 
-			(void) VOP_FSYNC(ump->vat_node->vnode,
-					FSCRED, FSYNC_WAIT, 0, 0);
+			/* force everything to be synchronized on the device */
+			(void) udf_synchronise_caches(ump);
 		}
 	}
 
@@ -3763,15 +3759,6 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		/* write out the VAT data and all its descriptors */
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
-		(void) vflushbuf(ump->vat_node->vnode, FSYNC_WAIT);
-
-		(void) VOP_FSYNC(ump->vat_node->vnode,
-				FSCRED, FSYNC_WAIT, 0, 0);
-
-		if (ump->lvclose & UDF_CLOSE_SESSION) {
-			DPRINTF(VOLUMES, ("udf_close_logvol: closing session "
-				"as requested\n"));
-		}
 
 		/* at least two DVD packets and 3 CD-R packets */
 		nvats = 32;
@@ -3806,6 +3793,9 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 			if (!error)
 				nok++;
 		}
+		/* force everything to be synchronized on the device */
+		(void) udf_synchronise_caches(ump);
+
 		if (nok < 14) {
 			/* arbitrary; but at least one or two CD frames */
 			printf("writeout of at least 14 VATs failed\n");
@@ -3817,6 +3807,8 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 
 	/* finish closing of session */
 	if (ump->lvclose & UDF_CLOSE_SESSION) {
+		DPRINTF(VOLUMES, ("udf_close_logvol: closing session "
+			"as requested\n"));
 		error = udf_validate_session_start(ump);
 		if (error)
 			return error;

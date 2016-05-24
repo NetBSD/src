@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.51 2016/05/10 15:23:39 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.52 2016/05/24 09:55:57 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -76,7 +76,7 @@ extern int udf_verbose;
 #define UDF_DEBUG_RESERVE	0x1000000
 
 /* initial value of udf_verbose */
-#define UDF_DEBUGGING		0
+#define UDF_DEBUGGING		(0)
 
 #ifdef UDF_DEBUG
 #define DPRINTF(name, arg) { \
@@ -252,6 +252,7 @@ struct udf_strategy {
 	int  (*read_logvol_dscr)    (struct udf_strat_args *args);
 	int  (*write_logvol_dscr)   (struct udf_strat_args *args);
 	void (*queuebuf)	    (struct udf_strat_args *args);
+	void (*sync_caches)	    (struct udf_strat_args *args);
 	void (*discstrat_init)      (struct udf_strat_args *args);
 	void (*discstrat_finish)    (struct udf_strat_args *args);
 };
