@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.99 2016/05/24 17:42:54 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.99 2016/05/24 17:42:54 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -266,8 +266,6 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, wchar_t *ch)
 				break;
 			}
 		}
-		if (el->el_map.alt == NULL)
-			el->el_map.current = el->el_map.key;
 	} while (cmd == ED_SEQUENCE_LEAD_IN);
 	*cmdnum = cmd;
 	return 0;
