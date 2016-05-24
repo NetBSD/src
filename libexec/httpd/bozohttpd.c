@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.80 2016/04/15 17:57:21 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.81 2016/05/24 21:18:29 agc Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2374,4 +2374,10 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 			httpd->virthostname, httpd->slashdir));
 
 	return 1;
+}
+
+int
+bozo_get_version(char *buf, size_t size)
+{
+	return snprintf(buf, size, "%s", SERVER_SOFTWARE);
 }
