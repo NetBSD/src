@@ -1,4 +1,4 @@
-.\" $NetBSD: init_db.3,v 1.2 2012/10/06 15:33:59 wiz Exp $
+.\" $NetBSD: init_db.3,v 1.3 2016/05/24 18:06:42 abhinav Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 5, 2011
+.Dd May 22, 2016
 .Dt INIT_DB 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In apropos-utils.h
 .Ft sqlite3 *
-.Fn init_db "int db_flag" "char *manconf"
+.Fn init_db "mandb_access_mode db_flag" "const char *manconf"
 .Sh DESCRIPTION
 The
 .Fn init_db
@@ -95,8 +95,6 @@ tag.
 .Sh SEE ALSO
 .Xr apropos-utils 3 ,
 .Xr close_db 3 ,
-.Xr run_query 3 ,
-.Xr run_query_html 3 ,
-.Xr run_query_pager 3
+.Xr run_query 3
 .Sh AUTHORS
 .An Abhinav Upadhyay
