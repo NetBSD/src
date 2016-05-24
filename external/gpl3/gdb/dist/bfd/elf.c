@@ -9241,6 +9241,20 @@ elfcore_grok_netbsd_note (bfd *abfd, Elf_Internal_Note *note)
       return elfcore_grok_netbsd_procinfo (abfd, note);
     }
 
+  if (note->type == NT_NETBSDCORE_AUXV)
+    {
+      asection *sect = bfd_make_section_anyway_with_flags (abfd, ".auxv",
+							   SEC_HAS_CONTENTS);
+
+      if (sect == NULL)
+	return FALSE;
+      sect->size = note->descsz;
+      sect->filepos = note->descpos;
+      sect->alignment_power = 1 + bfd_get_arch_size (abfd) / 32;
+
+      return TRUE;
+    }
+
   /* As of Jan 2002 there are no other machine-independent notes
      defined for NetBSD core files.  If the note type is less
      than the start of the machine-dependent note types, we don't

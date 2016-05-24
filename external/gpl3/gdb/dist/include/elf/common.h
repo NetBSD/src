@@ -598,6 +598,7 @@
    must start with "NetBSD-CORE".  */
 
 #define NT_NETBSDCORE_PROCINFO	1	/* Has a struct procinfo */
+#define NT_NETBSDCORE_AUXV	2	/* Has a copy of Elfxx_auxv_t */
 #define NT_NETBSDCORE_FIRSTMACH	32	/* start of machdep note types */
 
 
