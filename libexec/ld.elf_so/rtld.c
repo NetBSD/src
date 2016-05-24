@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.177 2015/04/06 09:34:15 yamt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.178 2016/05/24 20:32:33 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.177 2015/04/06 09:34:15 yamt Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.178 2016/05/24 20:32:33 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -654,6 +654,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	_rtld_objloads++;
 
 	_rtld_linkmap_add(_rtld_objmain);
+	_rtld_objself.path = xstrdup(_rtld_objself.path);
 	_rtld_linkmap_add(&_rtld_objself);
 
 	++_rtld_objmain->refcount;
