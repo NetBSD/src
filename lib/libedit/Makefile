@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.62 2016/05/09 21:38:27 christos Exp $
+#	$NetBSD: Makefile,v 1.63 2016/05/24 17:42:54 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -75,7 +75,7 @@ CLEANFILES+=help.h.tmp vi.h.tmp tc1.o tc1 .depend
 
 CPPFLAGS+=-I. -I${LIBEDITDIR}
 CPPFLAGS+=-I. -I${.CURDIR}
-#CPPFLAGS+=-DDEBUG_TTY -DDEBUG_KEY -DDEBUG_READ -DDEBUG -DDEBUG_REFRESH
+#CPPFLAGS+=-DDEBUG_TTY -DDEBUG_KEY -DDEBUG -DDEBUG_REFRESH
 #CPPFLAGS+=-DDEBUG_PASTE -DDEBUG_EDIT
 
 AHDR=vi.h emacs.h common.h
