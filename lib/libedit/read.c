@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.98 2016/05/24 15:00:45 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.99 2016/05/24 17:42:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.98 2016/05/24 15:00:45 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.99 2016/05/24 17:42:54 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -135,25 +135,6 @@ el_read_getfn(struct el_read_t *el_read)
        return el_read->read_char == read_char ?
 	    EL_BUILTIN_GETCFN : el_read->read_char;
 }
-
-
-#ifdef DEBUG_EDIT
-static void
-read_debug(EditLine *el)
-{
-
-	if (el->el_line.cursor > el->el_line.lastchar)
-		(void) fprintf(el->el_errfile, "cursor > lastchar\r\n");
-	if (el->el_line.cursor < el->el_line.buffer)
-		(void) fprintf(el->el_errfile, "cursor < buffer\r\n");
-	if (el->el_line.cursor > el->el_line.limit)
-		(void) fprintf(el->el_errfile, "cursor > limit\r\n");
-	if (el->el_line.lastchar > el->el_line.limit)
-		(void) fprintf(el->el_errfile, "lastchar > limit\r\n");
-	if (el->el_line.limit != &el->el_line.buffer[EL_BUFSIZ - 2])
-		(void) fprintf(el->el_errfile, "limit != &buffer[EL_BUFSIZ-2]\r\n");
-}
-#endif /* DEBUG_EDIT */
 
 
 /* read__fixio():
@@ -428,15 +409,9 @@ el_wgetc(EditLine *el, wchar_t *cp)
 		return 1;
 	}
 
-#ifdef DEBUG_READ
-	(void) fprintf(el->el_errfile, "Turning raw mode on\n");
-#endif /* DEBUG_READ */
 	if (tty_rawmode(el) < 0)/* make sure the tty is set up correctly */
 		return 0;
 
-#ifdef DEBUG_READ
-	(void) fprintf(el->el_errfile, "Reading a character\n");
-#endif /* DEBUG_READ */
 	num_read = (*el->el_read->read_char)(el, cp);
 
 	/*
@@ -447,9 +422,6 @@ el_wgetc(EditLine *el, wchar_t *cp)
 	if (num_read < 0)
 		el->el_read->read_errno = errno;
 
-#ifdef DEBUG_READ
-	(void) fprintf(el->el_errfile, "Got it %lc\n", *cp);
-#endif /* DEBUG_READ */
 	return num_read;
 }
 
@@ -574,39 +546,12 @@ el_wgets(EditLine *el, int *nread)
 	}
 
 	for (num = -1; num == -1;) {  /* while still editing this line */
-#ifdef DEBUG_EDIT
-		read_debug(el);
-#endif /* DEBUG_EDIT */
 		/* if EOF or error */
-		if (read_getcmd(el, &cmdnum, &ch) == -1) {
-#ifdef DEBUG_READ
-			(void) fprintf(el->el_errfile,
-			    "Returning from el_gets\n");
-#endif /* DEBUG_READ */
+		if (read_getcmd(el, &cmdnum, &ch) == -1)
 			break;
-		}
-		if ((size_t)cmdnum >= el->el_map.nfunc) {	/* BUG CHECK command */
-#ifdef DEBUG_EDIT
-			(void) fprintf(el->el_errfile,
-			    "ERROR: illegal command from key 0%o\r\n", ch);
-#endif /* DEBUG_EDIT */
+		if ((size_t)cmdnum >= el->el_map.nfunc) /* BUG CHECK command */
 			continue;	/* try again */
-		}
 		/* now do the real command */
-#ifdef DEBUG_READ
-		{
-			el_bindings_t *b;
-			for (b = el->el_map.help; b->name; b++)
-				if (b->func == cmdnum)
-					break;
-			if (b->name)
-				(void) fprintf(el->el_errfile,
-				    "Executing %ls\n", b->name);
-			else
-				(void) fprintf(el->el_errfile,
-				    "Error command = %d\n", cmdnum);
-		}
-#endif /* DEBUG_READ */
 		/* vi redo needs these way down the levels... */
 		el->el_state.thiscmd = cmdnum;
 		el->el_state.thisch = ch;
@@ -621,10 +566,6 @@ el_wgets(EditLine *el, int *nread)
 				*el->el_chared.c_redo.pos++ = ch;
 		}
 		retval = (*el->el_map.func[cmdnum]) (el, ch);
-#ifdef DEBUG_READ
-		(void) fprintf(el->el_errfile,
-			"Returned state %d\n", retval );
-#endif /* DEBUG_READ */
 
 		/* save the last command here */
 		el->el_state.lastcmd = cmdnum;
@@ -671,10 +612,6 @@ el_wgets(EditLine *el, int *nread)
 			break;
 
 		case CC_FATAL:	/* fatal error, reset to known state */
-#ifdef DEBUG_READ
-			(void) fprintf(el->el_errfile,
-			    "*** editor fatal ERROR ***\r\n\n");
-#endif /* DEBUG_READ */
 			/* put (real) cursor in a known place */
 			re_clear_display(el);	/* reset the display stuff */
 			ch_reset(el);	/* reset the input pointers */
@@ -684,10 +621,6 @@ el_wgets(EditLine *el, int *nread)
 
 		case CC_ERROR:
 		default:	/* functions we don't know about */
-#ifdef DEBUG_READ
-			(void) fprintf(el->el_errfile,
-			    "*** editor ERROR ***\r\n\n");
-#endif /* DEBUG_READ */
 			terminal_beep(el);
 			terminal__flush(el);
 			break;
