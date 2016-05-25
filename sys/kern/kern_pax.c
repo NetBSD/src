@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.53 2016/05/25 20:07:54 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.54 2016/05/25 20:49:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.53 2016/05/25 20:07:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.54 2016/05/25 20:49:00 wiz Exp $");
 
 #include "opt_pax.h"
 
@@ -362,7 +362,7 @@ pax_set_flags(struct exec_package *epp, struct proc *p)
 	if (pax_mprotect_ptrace == 0)
 		return;
 	/*
-         * If we are running under the debugger, turn off MPROTECT so
+	 * If we are running under the debugger, turn off MPROTECT so
  	 * the debugger can insert/delete breakpoints
 	 */
 	if (p->p_slflag & PSL_TRACED)
