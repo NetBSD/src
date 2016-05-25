@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.50 2016/05/24 17:30:01 martin Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.51 2016/05/25 17:25:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.50 2016/05/24 17:30:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.51 2016/05/25 17:25:32 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -143,7 +143,8 @@ uint32_t pax_aslr_rand;
 #define PAX_ASLR_STACK_GAP	0x02
 #define PAX_ASLR_MMAP		0x04
 #define PAX_ASLR_EXEC_OFFSET	0x08
-#define PAX_ASLR_FIXED		0x10
+#define PAX_ASLR_RTLD_OFFSET	0x10
+#define PAX_ASLR_FIXED		0x20
 #endif
 
 static int pax_segvguard_enabled = 1;
@@ -525,21 +526,12 @@ pax_aslr_mmap(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int f)
 	}
 }
 
-#define	PAX_TRUNC(a, b)	((a) & ~((b) - 1))
-vaddr_t
-pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
+static vaddr_t
+pax_aslr_offset(vaddr_t align)
 {
 	size_t pax_align, l2, delta;
 	uint32_t rand;
 	vaddr_t offset;
-
-	if (!pax_aslr_epp_active(epp))
-		goto out;
-
-#ifdef PAX_ASLR_DEBUG
-	if (pax_aslr_flags & PAX_ASLR_EXEC_OFFSET)
-		goto out;
-#endif
 
 	pax_align = align == 0 ? PGSHIFT : align;
 	l2 = ilog2(pax_align);
@@ -549,14 +541,50 @@ pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
 	if (pax_aslr_flags & PAX_ASLR_FIXED)
 		rand = pax_aslr_rand;
 #endif
+
+#define	PAX_TRUNC(a, b)	((a) & ~((b) - 1))
+
 	delta = PAX_ASLR_DELTA(rand, l2, PAX_ASLR_DELTA_EXEC_LEN);
 	offset = PAX_TRUNC(delta, pax_align) + PAGE_SIZE;
 
 	PAX_DPRINTF("rand=%#x l2=%#zx pax_align=%#zx delta=%#zx offset=%#jx",
 	    rand, l2, pax_align, delta, (uintmax_t)offset);
+
 	return offset;
+}
+
+vaddr_t
+pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
+{
+	if (!pax_aslr_epp_active(epp))
+		goto out;
+
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_EXEC_OFFSET)
+		goto out;
+#endif
+	return pax_aslr_offset(align) + PAGE_SIZE;
 out:
 	return MAX(align, PAGE_SIZE);
+}
+
+voff_t
+pax_aslr_rtld_offset(struct exec_package *epp, vaddr_t align, int use_topdown)
+{
+	voff_t offset;
+
+	if (!pax_aslr_epp_active(epp))
+		return 0;
+
+#ifdef PAX_ASLR_DEBUG
+	if (pax_aslr_flags & PAX_ASLR_RTLD_OFFSET)
+		return 0;
+#endif
+	offset = pax_aslr_offset(align);
+	if (use_topdown)
+		offset = -offset;
+
+	return offset;
 }
 
 void
