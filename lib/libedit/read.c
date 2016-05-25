@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.101 2016/05/25 13:01:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,13 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.100 2016/05/24 19:31:27 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.101 2016/05/25 13:01:11 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
- * read.c: Clean this junk up! This is horrible code.
- *	   Terminal read functions
+ * read.c: Terminal read functions
  */
 #include <ctype.h>
 #include <errno.h>
@@ -76,6 +75,7 @@ static int	read_char(EditLine *, wchar_t *);
 static int	read_getcmd(EditLine *, el_action_t *, wchar_t *);
 static void	read_clearmacros(struct macros *);
 static void	read_pop(struct macros *);
+static const wchar_t *noedit_wgets(EditLine *, int *);
 
 /* read_init():
  *	Initialize the read stuff
@@ -453,15 +453,37 @@ read_finish(EditLine *el)
 		sig_clr(el);
 }
 
+static const wchar_t *
+noedit_wgets(EditLine *el, int *nread)
+{
+	el_line_t	*lp = &el->el_line;
+	int		 num;
+
+	while ((num = (*el->el_read->read_char)(el, lp->lastchar)) == 1) {
+		if (lp->lastchar + 1 >= lp->limit &&
+		    !ch_enlargebufs(el, (size_t)2))
+			break;
+		lp->lastchar++;
+		if (el->el_flags & UNBUFFERED ||
+		    lp->lastchar[-1] == '\r' ||
+		    lp->lastchar[-1] == '\n')
+			break;
+	}
+	if (num == -1 && errno == EINTR)
+		lp->lastchar = lp->buffer;
+	lp->cursor = lp->lastchar;
+	*lp->lastchar = '\0';
+	*nread = (int)(lp->lastchar - lp->buffer);
+	return *nread ? lp->buffer : NULL;
+}
+
 const wchar_t *
 el_wgets(EditLine *el, int *nread)
 {
 	int retval;
 	el_action_t cmdnum = 0;
 	int num;		/* how many chars we have read at NL */
-	wchar_t wc;
-	wchar_t ch, *cp;
-	int crlf = 0;
+	wchar_t ch;
 	int nrb;
 
 	if (nread == NULL)
@@ -470,29 +492,9 @@ el_wgets(EditLine *el, int *nread)
 	el->el_read->read_errno = 0;
 
 	if (el->el_flags & NO_TTY) {
-		size_t idx;
-
-		cp = el->el_line.buffer;
-		while ((num = (*el->el_read->read_char)(el, &wc)) == 1) {
-			*cp = wc;
-			/* make sure there is space for next character */
-			if (cp + 1 >= el->el_line.limit) {
-				idx = (size_t)(cp - el->el_line.buffer);
-				if (!ch_enlargebufs(el, (size_t)2))
-					break;
-				cp = &el->el_line.buffer[idx];
-			}
-			cp++;
-			if (el->el_flags & UNBUFFERED)
-				break;
-			if (cp[-1] == '\r' || cp[-1] == '\n')
-				break;
-		}
-		if (num == -1 && errno == EINTR)
-			cp = el->el_line.buffer;
-		goto noedit;
+		el->el_line.lastchar = el->el_line.buffer;
+		return noedit_wgets(el, nread);
 	}
-
 
 #ifdef FIONREAD
 	if (el->el_tty.t_mode == EX_IO && el->el_read->macros.level < 0) {
@@ -513,34 +515,10 @@ el_wgets(EditLine *el, int *nread)
 		read_prepare(el);
 
 	if (el->el_flags & EDIT_DISABLED) {
-		size_t idx;
-
 		if ((el->el_flags & UNBUFFERED) == 0)
-			cp = el->el_line.buffer;
-		else
-			cp = el->el_line.lastchar;
-
+			el->el_line.lastchar = el->el_line.buffer;
 		terminal__flush(el);
-
-		while ((num = (*el->el_read->read_char)(el, &wc)) == 1) {
-			*cp = wc;
-			/* make sure there is space next character */
-			if (cp + 1 >= el->el_line.limit) {
-				idx = (size_t)(cp - el->el_line.buffer);
-				if (!ch_enlargebufs(el, (size_t)2))
-					break;
-				cp = &el->el_line.buffer[idx];
-			}
-			cp++;
-			crlf = cp[-1] == '\r' || cp[-1] == '\n';
-			if (el->el_flags & UNBUFFERED)
-				break;
-			if (crlf)
-				break;
-		}
-		if (num == -1 && errno == EINTR)
-			cp = el->el_line.buffer;
-		goto noedit;
+		return noedit_wgets(el, nread);
 	}
 
 	for (num = -1; num == -1;) {  /* while still editing this line */
@@ -635,15 +613,9 @@ el_wgets(EditLine *el, int *nread)
 	if ((el->el_flags & UNBUFFERED) == 0) {
 		read_finish(el);
 		*nread = num != -1 ? num : 0;
-	} else {
+	} else
 		*nread = (int)(el->el_line.lastchar - el->el_line.buffer);
-	}
-	goto done;
-noedit:
-	el->el_line.cursor = el->el_line.lastchar = cp;
-	*cp = '\0';
-	*nread = (int)(el->el_line.cursor - el->el_line.buffer);
-done:
+
 	if (*nread == 0) {
 		if (num == -1) {
 			*nread = -1;
