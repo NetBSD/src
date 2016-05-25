@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.22 2016/05/25 17:25:32 christos Exp $ */
+/* $NetBSD: pax.h,v 1.23 2016/05/25 17:43:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -67,6 +67,7 @@ void pax_mprotect_adjust(
     struct lwp *, vm_prot_t *, vm_prot_t *);
 #ifndef PAX_MPROTECT
 # define PAX_MPROTECT_ADJUST(a, b, c)
+# define pax_mprotect_prot(l)	0
 #else
 # ifdef PAX_MPROTECT_DEBUG
 #  define PAX_MPROTECT_ADJUST(a, b, c) \
@@ -75,6 +76,7 @@ void pax_mprotect_adjust(
 #  define PAX_MPROTECT_ADJUST(a, b, c) \
     pax_mprotect_adjust((a), (b), (c))
 # endif
+extern int pax_mprotect_prot(struct lwp *);
 #endif
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 

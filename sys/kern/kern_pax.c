@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.51 2016/05/25 17:25:32 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.52 2016/05/25 17:43:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.51 2016/05/25 17:25:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.52 2016/05/25 17:43:58 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -117,6 +117,7 @@ static bool pax_aslr_elf_flags_active(uint32_t);
 #ifdef PAX_MPROTECT
 static int pax_mprotect_enabled = 1;
 static int pax_mprotect_global = PAX_MPROTECT;
+static int pax_mprotect_ptrace = 0;
 static bool pax_mprotect_elf_flags_active(uint32_t);
 #endif /* PAX_MPROTECT */
 #ifdef PAX_MPROTECT_DEBUG
@@ -205,6 +206,14 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 				    "specified, apply restrictions to "
 				    "all processes."),
 		       NULL, 0, &pax_mprotect_global, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ptrace",
+		       SYSCTL_DESCR("When enabled, allow ptrace(2) to "
+			    "override mprotect permissions on traced "
+			    "processes"),
+		       NULL, 0, &pax_mprotect_ptrace, 0,
 		       CTL_CREATE, CTL_EOL);
 #ifdef PAX_MPROTECT_DEBUG
 	sysctl_createv(clog, 0, &rnode, NULL,
@@ -433,6 +442,24 @@ pax_mprotect_adjust(
 		*maxprot &= ~VM_PROT_WRITE;
 	}
 }
+
+/*
+ * Bypass MPROTECT for traced processes
+ */
+int
+pax_mprotect_prot(struct lwp *l)
+{
+	uint32_t flags;
+
+	flags = l->l_proc->p_pax;
+	if (!pax_flags_active(flags, P_PAX_MPROTECT))
+		return 0;
+	if (!pax_mprotect_ptrace)
+		return 0;
+	return UVM_EXTRACT_PROT_ALL;
+}
+
+
 #endif /* PAX_MPROTECT */
 
 #ifdef PAX_ASLR
