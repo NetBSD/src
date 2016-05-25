@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.52 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.53 2016/05/25 20:07:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.52 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.53 2016/05/25 20:07:54 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -117,7 +117,7 @@ static bool pax_aslr_elf_flags_active(uint32_t);
 #ifdef PAX_MPROTECT
 static int pax_mprotect_enabled = 1;
 static int pax_mprotect_global = PAX_MPROTECT;
-static int pax_mprotect_ptrace = 0;
+static int pax_mprotect_ptrace = 1;
 static bool pax_mprotect_elf_flags_active(uint32_t);
 #endif /* PAX_MPROTECT */
 #ifdef PAX_MPROTECT_DEBUG
@@ -355,6 +355,21 @@ pax_init(void)
 }
 
 void
+pax_set_flags(struct exec_package *epp, struct proc *p)
+{
+	p->p_pax = epp->ep_pax_flags;
+
+	if (pax_mprotect_ptrace == 0)
+		return;
+	/*
+         * If we are running under the debugger, turn off MPROTECT so
+ 	 * the debugger can insert/delete breakpoints
+	 */
+	if (p->p_slflag & PSL_TRACED)
+		p->p_pax &= ~P_PAX_MPROTECT;
+}
+
+void
 pax_setup_elf_flags(struct exec_package *epp, uint32_t elf_flags)
 {
 	uint32_t flags = 0;
@@ -454,7 +469,7 @@ pax_mprotect_prot(struct lwp *l)
 	flags = l->l_proc->p_pax;
 	if (!pax_flags_active(flags, P_PAX_MPROTECT))
 		return 0;
-	if (!pax_mprotect_ptrace)
+	if (pax_mprotect_ptrace < 2)
 		return 0;
 	return UVM_EXTRACT_PROT_ALL;
 }

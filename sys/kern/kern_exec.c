@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.430 2016/05/22 14:26:09 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.431 2016/05/25 20:07:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.430 2016/05/22 14:26:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.431 2016/05/25 20:07:54 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1131,7 +1131,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	timers_free(p, TIMERS_POSIX);
 
 	/* Set the PaX flags. */
-	p->p_pax = epp->ep_pax_flags;
+	pax_set_flags(epp, p);
 
 	/*
 	 * Do whatever is necessary to prepare the address space

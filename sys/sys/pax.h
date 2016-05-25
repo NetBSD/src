@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.23 2016/05/25 17:43:58 christos Exp $ */
+/* $NetBSD: pax.h,v 1.24 2016/05/25 20:07:54 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -37,6 +37,7 @@
 #define P_PAX_GUARD	0x04	/* Enable Segvguard */
 
 struct lwp;
+struct proc;
 struct exec_package;
 struct vmspace;
 
@@ -54,9 +55,11 @@ extern int pax_aslr_debug;
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 void pax_init(void);
+void pax_set_flags(struct exec_package *, struct proc *);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
 #else
 # define pax_init()
+# define pax_set_flags(e, p)
 # define pax_setup_elf_flags(e, flags) __USE(flags)
 #endif
 
