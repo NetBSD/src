@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.100 2016/05/25 19:52:32 christos Exp $
+.\"	$NetBSD: sysctl.7,v 1.101 2016/05/25 20:47:57 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -456,7 +456,7 @@ Mapping of CPU number to CPU id.
 .It Li kern.cp_time ( Dv KERN_CP_TIME )
 Returns an array of
 .Dv CPUSTATES
-.Vt uint64_t Ns s.
+.Vt uint64_t Ns s .
 This array contains the
 number of clock ticks spent in different CPU states.
 On multi-processor systems, the sum across all CPUs is returned unless
