@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.84 2016/05/22 14:26:09 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.85 2016/05/25 17:25:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.84 2016/05/22 14:26:09 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.85 2016/05/25 17:25:32 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -505,6 +505,8 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,
 		    epp->ep_daddr,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr),
+		    use_topdown);
+		addr += (Elf_Addr)pax_aslr_rtld_offset(epp, base_ph->p_align,
 		    use_topdown);
 	} else {
 		addr = *last; /* may be ELF_LINK_ADDR */
