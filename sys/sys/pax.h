@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.21 2016/05/22 14:26:10 christos Exp $ */
+/* $NetBSD: pax.h,v 1.22 2016/05/25 17:25:32 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -86,12 +86,14 @@ void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, u_long *);
 uint32_t pax_aslr_stack_gap(struct exec_package *);
 vaddr_t pax_aslr_exec_offset(struct exec_package *, vaddr_t);
+voff_t pax_aslr_rtld_offset(struct exec_package *, vaddr_t, int);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 #else
 # define pax_aslr_init_vm(l, v, e)
 # define pax_aslr_stack(e, o)
 # define pax_aslr_stack_gap(e)	0
 # define pax_aslr_exec_offset(e, a) MAX(a, PAGE_SIZE)
+# define pax_aslr_rtld_offset(e, a, u) 0
 # define pax_aslr_mmap(l, a, b, c)
 #endif
 
