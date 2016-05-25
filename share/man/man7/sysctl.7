@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.99 2016/03/30 05:55:04 ozaki-r Exp $
+.\"	$NetBSD: sysctl.7,v 1.100 2016/05/25 19:52:32 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 30, 2016
+.Dd May 25, 2016
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2414,6 +2414,7 @@ The available third and fourth level names are:
 .\".It Li security.pax.aslr.stack_len	integer	yes
 .It Li security.pax.mprotect.enabled	integer	yes
 .It Li security.pax.mprotect.global	integer	yes
+.It Li security.pax.mprotect.ptrace	integer	yes
 .It Li security.pax.segvguard.enabled	integer	yes
 .It Li security.pax.segvguard.expiry_timeout	integer	yes
 .It Li security.pax.segvguard.global	integer	yes
@@ -2461,6 +2462,19 @@ except those exempted with
 Otherwise, all programs will not get the PaX MPROTECT restrictions,
 except those specifically marked as such with
 .Xr paxctl 8 .
+.It Li security.pax.mprotect.ptrace
+This variable allows
+.Xr ptrace 2
+to override PaX MPROTECT permissions.
+It can have the following values:
+.Bl -tag -width XX -compact
+.It 0
+Does not let override any permissions.
+.It 1
+Disables PaX MPROTECT from processes that start executing while traced (default).
+.It 2
+Bypasses PaX MPROTECT for all processes being traced.
+.El
 .It Li security.pax.segvguard.enabled
 Enable PaX Segvguard.
 .Pp
