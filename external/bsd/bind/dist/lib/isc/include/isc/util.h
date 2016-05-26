@@ -1,7 +1,7 @@
-/*	$NetBSD: util.h,v 1.11 2015/12/17 04:00:45 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.12 2016/05/26 16:50:00 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2010-2012, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2010-2012, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -207,6 +207,17 @@
 #define INSERTBEFORE(li, b, e, ln)	ISC_LIST_INSERTBEFORE(li, b, e, ln)
 #define INSERTAFTER(li, a, e, ln)	ISC_LIST_INSERTAFTER(li, a, e, ln)
 #define APPENDLIST(list1, list2, link)	ISC_LIST_APPENDLIST(list1, list2, link)
+
+/*%
+ * Performance
+ */
+#ifdef HAVE_BUILTIN_EXPECT
+#define ISC_LIKELY(x)            __builtin_expect(!!(x), 1)
+#define ISC_UNLIKELY(x)          __builtin_expect(!!(x), 0)
+#else
+#define ISC_LIKELY(x)            (x)
+#define ISC_UNLIKELY(x)          (x)
+#endif
 
 /*
  * Assertions

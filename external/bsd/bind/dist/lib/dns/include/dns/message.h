@@ -1,7 +1,7 @@
-/*	$NetBSD: message.h,v 1.9 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.10 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -104,10 +104,11 @@
 #define DNS_MESSAGEEXTFLAG_DO		0x8000U
 
 /*%< EDNS0 extended OPT codes */
-#define DNS_OPT_NSID		0x0003		/*%< NSID opt code */
-#define DNS_OPT_CLIENT_SUBNET	0x0008		/*%< client subnet opt code */
-#define DNS_OPT_EXPIRE		0x0009		/*%< EXPIRE opt code */
-#define DNS_OPT_COOKIE		0x000a		/*%< COOKIE opt code */
+#define DNS_OPT_NSID		3		/*%< NSID opt code */
+#define DNS_OPT_CLIENT_SUBNET	8		/*%< client subnet opt code */
+#define DNS_OPT_EXPIRE		9		/*%< EXPIRE opt code */
+#define DNS_OPT_COOKIE		10		/*%< COOKIE opt code */
+#define DNS_OPT_PAD		12		/*%< PAD opt code */
 
 /*%< The number of EDNS options we know about. */
 #define DNS_EDNSOPTIONS	4
