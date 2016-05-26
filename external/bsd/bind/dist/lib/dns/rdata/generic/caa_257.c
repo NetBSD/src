@@ -1,7 +1,7 @@
-/*	$NetBSD: caa_257.c,v 1.1.1.4 2015/12/17 03:22:09 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.1.1.5 2016/05/26 15:45:51 christos Exp $	*/
 
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -60,7 +60,7 @@ fromtext_caa(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	if (token.value.as_ulong > 255U)
 		RETTOK(ISC_R_RANGE);
-	flags = token.value.as_ulong;
+	flags = (isc_uint8_t)(token.value.as_ulong & 255U);
 	RETERR(uint8_tobuffer(flags, target));
 
 	/*

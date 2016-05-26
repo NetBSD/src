@@ -60,7 +60,7 @@
       <PreprocessorDefinitions>BIND9;WIN32;_DEBUG;_WINDOWS;_USRDLL;LIBISC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;win32;..\..\isccfg\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 @END PKCS11
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
@@ -125,6 +125,11 @@ echo Copying Visual C x86 Redistributable Installer.
 
 copy /Y @VCREDIST_PATH@	..\Build\Debug\
 
+echo Copying install files (flags and file list).
+
+copy InstallFlags ..\Build\Debug\
+copy InstallFiles ..\Build\Debug\
+
 </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
@@ -185,6 +190,8 @@ copy ..\FAQ ..\Build\Release
 echo Copying the standalone manual pages.
 
 copy ..\bin\named\named.html ..\Build\Release
+copy ..\bin\named\named.conf.html ..\Build\Release
+copy ..\bin\named\lwresd.html ..\Build\Release
 copy ..\bin\rndc\*.html ..\Build\Release
 copy ..\bin\confgen\*.html ..\Build\Release
 copy ..\bin\dig\*.html ..\Build\Release
@@ -260,6 +267,11 @@ copy @ICONV_DLL@ ..\Build\Release\
 echo Copying Visual C x86 Redistributable Installer.
 
 copy /Y @VCREDIST_PATH@ ..\Build\Release\
+
+echo Copying install files (flags and file list).
+
+copy InstallFlags ..\Build\Release\
+copy InstallFiles ..\Build\Release\
 
 </Command>
     </PreBuildEvent>
@@ -338,6 +350,7 @@ copy /Y @VCREDIST_PATH@ ..\Build\Release\
     <ClInclude Include="..\include\isc\sha2.h" />
     <ClInclude Include="..\include\isc\sockaddr.h" />
     <ClInclude Include="..\include\isc\socket.h" />
+    <ClInclude Include="..\include\isc\stats.h" />
     <ClInclude Include="..\include\isc\stdio.h" />
     <ClInclude Include="..\include\isc\stdlib.h" />
     <ClInclude Include="..\include\isc\string.h" />
