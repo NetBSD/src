@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.187 2016/05/25 20:00:50 nakayama Exp $
+# $NetBSD: GENERIC,v 1.188 2016/05/26 04:26:05 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.187 $"
+#ident		"GENERIC-$Revision: 1.188 $"
 
 maxusers	64
 
@@ -503,9 +503,9 @@ cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 en*	at pci? dev ? function ?	# ENI/Adaptec ATM UT
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
-ex*	at pci? dev ? function ?	# 3Com 90x[B]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card UT
+ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
@@ -525,9 +525,9 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial UT
 ral*	at pci? dev ? function ?	# ralink wifi UT
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 skc*	at pci? dev ? function ?	# SysKonnect SK9821 Gigabit Ethernet
 sk*	at skc?				# SysKonnect SK9821 Gigabit Ethernet
-sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
@@ -546,10 +546,10 @@ exphy*	at mii? phy ?			# 3Com internal PHYs
 gentbi* at mii? phy ?			# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy* at mii? phy ?			# Integrated Circuit Systems ICS189x
+igphy*	at mii? phy ?			# Intel IGP01E1000
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
-igphy*	at mii? phy ?			# Intel IGP01E1000
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
