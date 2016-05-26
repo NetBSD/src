@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.15 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.16 2016/05/26 09:09:47 prlw1 Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -132,9 +132,6 @@ enum FQDN {
 	FQDN_PTR        = 0x20,
 	FQDN_BOTH       = 0x31
 };
-
-/* Some crappy DHCP servers require the BOOTP minimum length */
-#define BOOTP_MESSAGE_LENTH_MIN 300
 
 /* Don't import common.h as that defines __unused which causes problems
  * on some Linux systems which define it as part of a structure */
