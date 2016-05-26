@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -14,9 +14,9 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- Id: isc-docbook-text.xsl,v 1.3 2007/06/19 23:47:13 tbox Exp  -->
+<!-- Id -->
 
-<!-- Tweaks to Docbook-XSL HTML for producing flat ASCII text. --> 
+<!-- Tweaks to Docbook-XSL HTML for producing flat ASCII text. -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
 		xmlns:l="http://docbook.sourceforge.net/xmlns/l10n/1.0">
@@ -43,7 +43,7 @@
 
 </xsl:stylesheet>
 
-<!-- 
+<!--
   - Local variables:
   - mode: sgml
   - End:

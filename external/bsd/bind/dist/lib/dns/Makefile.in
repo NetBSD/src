@@ -1,4 +1,4 @@
-# Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 1998-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -21,7 +21,7 @@ top_srcdir =	@top_srcdir@
 .NOTPARALLEL:
 .NO_PARALLEL:
 
-@BIND9_VERSION@
+VERSION=@BIND9_VERSION@
 @BIND9_MAJOR@
 
 @LIBDNS_MAPAPI@
@@ -57,7 +57,7 @@ PKCS11LINKOBJS	= pkcs11dh_link.@O@ pkcs11dsa_link.@O@ pkcs11rsa_link.@O@ \
 
 DSTOBJS =	@DST_EXTRA_OBJS@ @OPENSSLLINKOBJS@ @PKCS11LINKOBJS@ \
 		dst_api.@O@ dst_lib.@O@ dst_parse.@O@ dst_result.@O@ \
-		gssapi_link.@O@ gssapictx.@O@ hmac_link.@O@ key.@O@ 
+		gssapi_link.@O@ gssapictx.@O@ hmac_link.@O@ key.@O@
 
 GEOIPLINKOBJS = geoip.@O@
 
@@ -98,12 +98,12 @@ DSTSRCS =	@DST_EXTRA_SRCS@ @OPENSSLLINKSRCS@ @PKCS11LINKSRCS@ \
 		dst_result.c gssapi_link.c gssapictx.c \
 		hmac_link.c key.c
 
-GEOIOLINKSRCS = geoip.c 
+GEOIOLINKSRCS = geoip.c
 
 DNSSRCS =	acache.c acl.c adb.c byaddr.c \
 		cache.c callbacks.c clientinfo.c compress.c \
 		db.c dbiterator.c dbtable.c diff.c dispatch.c \
-		dlz.c dns64.c dnssec.c ds.c forward.c geoip.c \
+		dlz.c dns64.c dnssec.c ds.c forward.c \
 		iptable.c journal.c keydata.c keytable.c lib.c log.c \
 		lookup.c master.c masterdump.c message.c \
 		name.c ncache.c nsec.c nsec3.c order.c peer.c portlist.c \
