@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.49 2016/05/19 14:50:18 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.50 2016/05/26 11:07:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.49 2016/05/19 14:50:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.50 2016/05/26 11:07:33 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -154,14 +154,16 @@ struct vcache_key {
 	size_t vk_key_len;
 };
 struct vcache_node {
+	struct vnode vn_data;
 	SLIST_ENTRY(vcache_node) vn_hash;
 	struct vnode *vn_vnode;
 	struct vcache_key vn_key;
 };
 
-u_int			numvnodes		__cacheline_aligned;
+#define VN_TO_VP(node)	((vnode_t *)(node))
+#define VP_TO_VN(vp)	((struct vcache_node *)(vp))
 
-static pool_cache_t	vnode_cache		__read_mostly;
+u_int			numvnodes		__cacheline_aligned;
 
 /*
  * There are two free lists: one is for vnodes which have no buffer/page
@@ -189,14 +191,14 @@ static struct {
 }			vcache			__cacheline_aligned;
 
 static int		cleanvnode(void);
+static struct vcache_node *vcache_alloc(void);
+static void		vcache_free(struct vcache_node *);
 static void		vcache_init(void);
 static void		vcache_reinit(void);
 static void		vclean(vnode_t *);
 static void		vrelel(vnode_t *, int);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
-static vnode_t *	vnalloc(struct mount *);
-static void		vnfree(vnode_t *);
 static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
 static void		vwait(vnode_t *, int);
@@ -210,10 +212,6 @@ void
 vfs_vnode_sysinit(void)
 {
 	int error __diagused;
-
-	vnode_cache = pool_cache_init(sizeof(vnode_t), 0, 0, 0, "vnodepl",
-	    NULL, IPL_NONE, NULL, NULL, NULL);
-	KASSERT(vnode_cache != NULL);
 
 	dead_rootmount = vfs_mountalloc(&dead_vfsops, NULL);
 	KASSERT(dead_rootmount != NULL);
@@ -243,8 +241,18 @@ vfs_vnode_sysinit(void)
 vnode_t *
 vnalloc_marker(struct mount *mp)
 {
+	struct vcache_node *node;
+	vnode_t *vp;
 
-	return vnalloc(mp);
+	node = pool_cache_get(vcache.pool, PR_WAITOK);
+	memset(node, 0, sizeof(*node));
+	vp = VN_TO_VP(node);
+	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
+	vp->v_mount = mp;
+	vp->v_type = VBAD;
+	vp->v_iflag = VI_MARKER;
+
+	return vp;
 }
 
 /*
@@ -253,9 +261,12 @@ vnalloc_marker(struct mount *mp)
 void
 vnfree_marker(vnode_t *vp)
 {
+	struct vcache_node *node;
 
+	node = VP_TO_VN(vp);
 	KASSERT(ISSET(vp->v_iflag, VI_MARKER));
-	vnfree(vp);
+	uvm_obj_destroy(&vp->v_uobj, true);
+	pool_cache_put(vcache.pool, node);
 }
 
 /*
@@ -266,69 +277,6 @@ vnis_marker(vnode_t *vp)
 {
 
 	return (ISSET(vp->v_iflag, VI_MARKER));
-}
-
-/*
- * Allocate a new, uninitialized vnode.  If 'mp' is non-NULL, this is a
- * marker vnode.
- */
-static vnode_t *
-vnalloc(struct mount *mp)
-{
-	vnode_t *vp;
-
-	vp = pool_cache_get(vnode_cache, PR_WAITOK);
-	KASSERT(vp != NULL);
-
-	memset(vp, 0, sizeof(*vp));
-	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
-	cv_init(&vp->v_cv, "vnode");
-	/*
-	 * Done by memset() above.
-	 *	LIST_INIT(&vp->v_nclist);
-	 *	LIST_INIT(&vp->v_dnclist);
-	 */
-
-	if (mp != NULL) {
-		vp->v_mount = mp;
-		vp->v_type = VBAD;
-		vp->v_iflag = VI_MARKER;
-		return vp;
-	}
-
-	mutex_enter(&vnode_free_list_lock);
-	numvnodes++;
-	if (numvnodes > desiredvnodes + desiredvnodes / 10)
-		cv_signal(&vdrain_cv);
-	mutex_exit(&vnode_free_list_lock);
-
-	rw_init(&vp->v_lock);
-	vp->v_usecount = 1;
-	vp->v_type = VNON;
-	vp->v_size = vp->v_writesize = VSIZENOTSET;
-
-	return vp;
-}
-
-/*
- * Free an unused, unreferenced vnode.
- */
-static void
-vnfree(vnode_t *vp)
-{
-
-	KASSERT(vp->v_usecount == 0);
-
-	if ((vp->v_iflag & VI_MARKER) == 0) {
-		rw_destroy(&vp->v_lock);
-		mutex_enter(&vnode_free_list_lock);
-		numvnodes--;
-		mutex_exit(&vnode_free_list_lock);
-	}
-
-	uvm_obj_destroy(&vp->v_uobj, true);
-	cv_destroy(&vp->v_cv);
-	pool_cache_put(vnode_cache, vp);
 }
 
 /*
@@ -740,7 +688,7 @@ vrelel(vnode_t *vp, int flags)
 		if (vp->v_type == VBLK || vp->v_type == VCHR) {
 			spec_node_destroy(vp);
 		}
-		vnfree(vp);
+		vcache_free(VP_TO_VN(vp));
 	} else {
 		/*
 		 * Otherwise, put it back onto the freelist.  It
@@ -1156,6 +1104,63 @@ vcache_hash_lookup(const struct vcache_key *key, uint32_t hash)
 }
 
 /*
+ * Allocate a new, uninitialized vcache node.
+ */
+static struct vcache_node *
+vcache_alloc(void)
+{
+	struct vcache_node *node;
+	vnode_t *vp;
+
+	node = pool_cache_get(vcache.pool, PR_WAITOK);
+	memset(node, 0, sizeof(*node));
+
+	/* SLIST_INIT(&node->vn_hash); */
+
+	vp = VN_TO_VP(node);
+	uvm_obj_init(&vp->v_uobj, &uvm_vnodeops, true, 0);
+	cv_init(&vp->v_cv, "vnode");
+	/* LIST_INIT(&vp->v_nclist); */
+	/* LIST_INIT(&vp->v_dnclist); */
+
+	mutex_enter(&vnode_free_list_lock);
+	numvnodes++;
+	if (numvnodes > desiredvnodes + desiredvnodes / 10)
+		cv_signal(&vdrain_cv);
+	mutex_exit(&vnode_free_list_lock);
+
+	rw_init(&vp->v_lock);
+	vp->v_usecount = 1;
+	vp->v_type = VNON;
+	vp->v_size = vp->v_writesize = VSIZENOTSET;
+
+	return node;
+}
+
+/*
+ * Free an unused, unreferenced vcache node.
+ */
+static void
+vcache_free(struct vcache_node *node)
+{
+	vnode_t *vp;
+
+	vp = VN_TO_VP(node);
+
+	KASSERT(vp->v_usecount == 0);
+	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+
+	rw_destroy(&vp->v_lock);
+	mutex_enter(&vnode_free_list_lock);
+	numvnodes--;
+	mutex_exit(&vnode_free_list_lock);
+
+	uvm_obj_destroy(&vp->v_uobj, true);
+	cv_destroy(&vp->v_cv);
+	pool_cache_put(vcache.pool, node);
+}
+
+/*
  * Get a vnode / fs node pair by key and return it referenced through vpp.
  */
 int
@@ -1208,10 +1213,9 @@ again:
 	error = vfs_busy(mp, NULL);
 	if (error)
 		return error;
-	new_node = pool_cache_get(vcache.pool, PR_WAITOK);
-	new_node->vn_vnode = NULL;
+	new_node = vcache_alloc();
 	new_node->vn_key = vcache_key;
-	vp = vnalloc(NULL);
+	vp = VN_TO_VP(new_node);
 	mutex_enter(&vcache.lock);
 	node = vcache_hash_lookup(&vcache_key, hash);
 	if (node == NULL) {
@@ -1223,10 +1227,9 @@ again:
 
 	/* If another thread beat us inserting this node, retry. */
 	if (node != new_node) {
-		pool_cache_put(vcache.pool, new_node);
 		KASSERT(vp->v_usecount == 1);
 		vp->v_usecount = 0;
-		vnfree(vp);
+		vcache_free(new_node);
 		vfs_unbusy(mp, false, NULL);
 		goto again;
 	}
@@ -1239,10 +1242,9 @@ again:
 		SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
 		    new_node, vcache_node, vn_hash);
 		mutex_exit(&vcache.lock);
-		pool_cache_put(vcache.pool, new_node);
 		KASSERT(vp->v_usecount == 1);
 		vp->v_usecount = 0;
-		vnfree(vp);
+		vcache_free(new_node);
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
 		return error;
@@ -1287,20 +1289,18 @@ vcache_new(struct mount *mp, struct vnode *dvp, struct vattr *vap,
 	error = vfs_busy(mp, NULL);
 	if (error)
 		return error;
-	new_node = pool_cache_get(vcache.pool, PR_WAITOK);
+	new_node = vcache_alloc();
 	new_node->vn_key.vk_mount = mp;
-	new_node->vn_vnode = NULL;
-	vp = vnalloc(NULL);
+	vp = VN_TO_VP(new_node);
 
 	/* Create and load the fs node. */
 	vp->v_iflag |= VI_CHANGING;
 	error = VFS_NEWVNODE(mp, dvp, vp, vap, cred,
 	    &new_node->vn_key.vk_key_len, &new_node->vn_key.vk_key);
 	if (error) {
-		pool_cache_put(vcache.pool, new_node);
 		KASSERT(vp->v_usecount == 1);
 		vp->v_usecount = 0;
-		vnfree(vp);
+		vcache_free(VP_TO_VN(vp));
 		vfs_unbusy(mp, false, NULL);
 		KASSERT(*vpp == NULL);
 		return error;
@@ -1367,8 +1367,7 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	new_vcache_key.vk_key_len = new_key_len;
 	new_hash = vcache_hash(&new_vcache_key);
 
-	new_node = pool_cache_get(vcache.pool, PR_WAITOK);
-	new_node->vn_vnode = NULL;
+	new_node = vcache_alloc();
 	new_node->vn_key = new_vcache_key;
 
 	mutex_enter(&vcache.lock);
@@ -1377,7 +1376,9 @@ vcache_rekey_enter(struct mount *mp, struct vnode *vp,
 	node = vcache_hash_lookup(&new_vcache_key, new_hash);
 	if (node != NULL) {
 		mutex_exit(&vcache.lock);
-		pool_cache_put(vcache.pool, new_node);
+		KASSERT(VN_TO_VP(new_node)->v_usecount == 1);
+		VN_TO_VP(new_node)->v_usecount = 0;
+		vcache_free(new_node);
 		return EEXIST;
 	}
 	SLIST_INSERT_HEAD(&vcache.hashtab[new_hash & vcache.hashmask],
@@ -1439,7 +1440,9 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 	SLIST_REMOVE(&vcache.hashtab[new_hash & vcache.hashmask],
 	    new_node, vcache_node, vn_hash);
 	mutex_exit(&vcache.lock);
-	pool_cache_put(vcache.pool, new_node);
+	KASSERT(VN_TO_VP(new_node)->v_usecount == 1);
+	VN_TO_VP(new_node)->v_usecount = 0;
+	vcache_free(new_node);
 }
 
 /*
@@ -1463,7 +1466,27 @@ vcache_remove(struct mount *mp, const void *key, size_t key_len)
 	SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
 	    node, vcache_node, vn_hash);
 	mutex_exit(&vcache.lock);
-	pool_cache_put(vcache.pool, node);
+}
+
+/*
+ * Print a vcache node.
+ */
+void
+vcache_print(vnode_t *vp, const char *prefix, void (*pr)(const char *, ...))
+{
+	int n;
+	const uint8_t *cp;
+	struct vcache_node *node;
+
+	node = VP_TO_VN(vp);
+	n = node->vn_key.vk_key_len;
+	cp = node->vn_key.vk_key;
+
+	(*pr)("%skey(%d)", prefix, n);
+
+	while (n-- > 0)
+		(*pr)(" %02x", *cp++);
+	(*pr)("\n");
 }
 
 /*

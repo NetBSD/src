@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.260 2016/05/19 14:47:33 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.261 2016/05/26 11:07:33 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -610,6 +610,8 @@ struct vnode *
 	vnalloc_marker(struct mount *);
 void	vnfree_marker(vnode_t *);
 bool	vnis_marker(vnode_t *);
+void	vcache_print(vnode_t *, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
 #endif	/* _VFS_VNODE_PRIVATE */
 
 #endif /* _KERNEL */
