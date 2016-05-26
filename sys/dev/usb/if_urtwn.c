@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.42 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.43 2016/05/26 05:01:12 ozaki-r Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.42 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.43 2016/05/26 05:01:12 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2661,7 +2661,7 @@ urtwn_start(struct ifnet *ifp)
 				return;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m);
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
 		}
