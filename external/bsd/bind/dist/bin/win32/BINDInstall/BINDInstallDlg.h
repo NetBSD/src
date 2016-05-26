@@ -1,7 +1,7 @@
-/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.6 2014/12/10 03:34:31 christos Exp $	*/
+/*	$NetBSD: BINDInstallDlg.h,v 1.1.1.7 2016/05/26 15:45:45 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -70,6 +70,9 @@ protected:
 
 	void CreateDirs();
 	void RemoveDirs(BOOL uninstall);
+
+	void ReadInstallFlags();
+	void ReadInstallFileList();
 
 	void CopyFiles();
 	void DeleteFiles(BOOL uninstall);

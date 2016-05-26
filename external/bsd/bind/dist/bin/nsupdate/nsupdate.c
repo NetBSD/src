@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.18 2015/12/17 03:21:53 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.19 2016/05/26 15:45:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -220,6 +220,8 @@ typedef struct nsu_gssinfo {
 	gss_ctx_id_t context;
 } nsu_gssinfo_t;
 
+static void
+failed_gssrequest();
 static void
 start_gssrequest(dns_name_t *master);
 static void
@@ -642,6 +644,8 @@ read_sessionkey(isc_mem_t *mctx, isc_log_t *lctx) {
 
 	len = strlen(algorithm) + strlen(mykeyname) + strlen(secretstr) + 3;
 	keystr = isc_mem_allocate(mctx, len);
+	if (keystr == NULL)
+		fatal("out of memory");
 	snprintf(keystr, len, "%s:%s:%s", algorithm, mykeyname, secretstr);
 	setup_keystr();
 
@@ -2642,7 +2646,8 @@ get_ticket_realm(isc_mem_t *mctx) {
 	krb5_error_code rc;
 	krb5_ccache ccache;
 	krb5_principal princ;
-	char *name, *ticket_realm;
+	char *name;
+	const char * ticket_realm;
 
 	rc = krb5_init_context(&ctx);
 	if (rc != 0)
@@ -2682,6 +2687,15 @@ get_ticket_realm(isc_mem_t *mctx) {
 		fprintf(stderr, "Found realm from ticket: %s\n", realm+1);
 }
 
+static void
+failed_gssrequest() {
+	seenerror = ISC_TRUE;
+
+	dns_name_free(&tmpzonename, gmctx);
+	dns_name_free(&restart_master, gmctx);
+
+	done_update();
+}
 
 static void
 start_gssrequest(dns_name_t *master) {
@@ -2689,7 +2703,7 @@ start_gssrequest(dns_name_t *master) {
 	isc_buffer_t buf;
 	isc_result_t result;
 	isc_uint32_t val = 0;
-	dns_message_t *rmsg;
+	dns_message_t *rmsg = NULL;
 	dns_request_t *request = NULL;
 	dns_name_t *servname;
 	dns_fixedname_t fname;
@@ -2769,14 +2783,24 @@ start_gssrequest(dns_name_t *master) {
 	result = dns_tkey_buildgssquery(rmsg, keyname, servname, NULL, 0,
 					&context, use_win2k_gsstsig,
 					gmctx, &err_message);
-	if (result == ISC_R_FAILURE)
-		fatal("tkey query failed: %s",
-		      err_message != NULL ? err_message : "unknown error");
+	if (result == ISC_R_FAILURE) {
+		fprintf(stderr, "tkey query failed: %s\n",
+			err_message != NULL ? err_message : "unknown error");
+		goto failure;
+	}
 	if (result != ISC_R_SUCCESS)
 		fatal("dns_tkey_buildgssquery failed: %s",
 		      isc_result_totext(result));
 
 	send_gssrequest(kserver, rmsg, &request, context);
+	return;
+
+failure:
+	if (rmsg != NULL)
+		dns_message_destroy(&rmsg);
+	if (err_message != NULL)
+		isc_mem_free(gmctx, err_message);
+	failed_gssrequest();
 }
 
 static void

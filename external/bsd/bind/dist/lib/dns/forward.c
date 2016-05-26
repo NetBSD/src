@@ -1,7 +1,7 @@
-/*	$NetBSD: forward.c,v 1.1.1.7 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: forward.c,v 1.1.1.8 2016/05/26 15:45:49 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.c,v 1.14 2009/09/02 23:48:02 tbox Exp  */
-
 /*! \file */
 
 #include <config.h>
@@ -26,7 +24,6 @@
 #include <isc/magic.h>
 #include <isc/mem.h>
 #include <isc/rwlock.h>
-#include <isc/sockaddr.h>
 #include <isc/util.h>
 
 #include <dns/forward.h>

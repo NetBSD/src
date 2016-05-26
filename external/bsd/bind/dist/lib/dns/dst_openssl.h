@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_openssl.h,v 1.1.1.10 2015/12/17 03:22:06 christos Exp $	*/
+/*	$NetBSD: dst_openssl.h,v 1.1.1.11 2016/05/26 15:45:49 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -38,7 +38,7 @@
 #define USE_ENGINE 1
 #endif
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 /*
  * These are new in OpenSSL 1.1.0.  BN_GENCB _cb needs to be declared in
  * the function like this before the BN_GENCB_new call:

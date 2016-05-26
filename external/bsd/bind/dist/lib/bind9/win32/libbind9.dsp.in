@@ -118,6 +118,10 @@ SOURCE=..\include\bind9\check.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\include\bind9\getaddresses.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\include\bind9\version.h
 # End Source File
 # End Group

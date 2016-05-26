@@ -336,7 +336,7 @@ esac
 
 AC_MSG_CHECKING(for file system DLZ driver)
 AC_ARG_WITH(dlz_filesystem,
-[  --with-dlz-filesystem[=PATH]   Build with filesystem DLZ driver [yes|no].
+[  --with-dlz-filesystem[=ARG]    Build with filesystem DLZ driver [yes|no].
 			       (Required to use file system driver with DLZ)],
     use_dlz_filesystem="$withval", use_dlz_filesystem="no")
 
@@ -461,7 +461,7 @@ esac
 
 AC_MSG_CHECKING(for stub DLZ driver)
 AC_ARG_WITH(dlz_stub,
-[  --with-dlz-stub[=PATH]   Build with stub DLZ driver [yes|no].
+[  --with-dlz-stub[=ARG]    Build with stub DLZ driver [yes|no].
 			       (Required to use stub driver with DLZ)],
     use_dlz_stub="$withval", use_dlz_stub="no")
 

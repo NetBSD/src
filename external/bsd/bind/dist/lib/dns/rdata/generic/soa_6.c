@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.1.1.10 2015/12/17 03:22:09 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.1.1.11 2016/05/26 15:45:51 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,8 @@ fromtext_soa(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,

@@ -1,4 +1,4 @@
-/*	$NetBSD: commandline.c,v 1.1.1.7 2015/12/17 03:22:10 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.1.1.8 2016/05/26 15:45:52 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2008, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@ static char endopt = '\0';
 int
 isc_commandline_parse(int argc, char * const *argv, const char *options) {
 	static char *place = ENDOPT;
-	char *option;			/* Index into *options of option. */
+	const char *option;		/* Index into *options of option. */
 
 	REQUIRE(argc >= 0 && argv != NULL && options != NULL);
 

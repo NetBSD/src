@@ -1,0 +1,107 @@
+%%
+%% This style is derivated from the docbook one
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{armstyle}[]
+
+%% Just use the original package and pass the options
+\RequirePackageWithOptions{db2latex}
+
+% 2015-09-03 reed -- used with figure
+\usepackage{float}
+
+% For page layout
+\usepackage{geometry}
+
+% don't want date on the cover page
+\let\@date\@empty
+
+% get rid of "Chapter" on start of each chapter
+\def\@makechapterhead#1{%
+  \vspace*{50\p@}%
+  {\parindent \z@ \raggedright \normalfont
+    \ifnum \c@secnumdepth >\m@ne
+      \if@mainmatter
+        \Huge\bfseries\sffamily \thechapter\space\space\space\space%
+      \fi
+    \fi
+    \interlinepenalty\@M
+    \Huge \bfseries \sffamily #1\par\nobreak
+    \vskip 40\p@
+  }}
+
+% for use of \titleformat
+\usepackage{titlesec}
+
+\titleformat*{\section}{\Large\bfseries\scshape\sffamily}
+\titleformat*{\subsection}{\large\bfseries\sffamily}
+
+% Contents font too ; note I don't know what last parts of this are for
+\titleformat{\chapter}{\Huge\bfseries\sffamily}{\thechapter}{1em}{} \vspace{6pt}
+
+% font for the Index headline also
+\titleformat{\index}{\Huge\bfseries\sffamily}{Index}{1em}{} \vspace{6pt}
+
+% following two lines for no indenting paragraphs and spacing between
+\setlength\parskip{\medskipamount}
+\setlength\parindent{0pt}
+
+% fancy footers
+\pagestyle{fancy}
+\fancyfoot[ce,co]{\thepage}
+\fancyfoot[le,ro]{@BIND9_VERSIONSHORT@}
+\renewcommand{\headrulewidth}{0.4 pt}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[ce,co]{\thepage}%
+  \fancyfoot[le,ro]{@BIND9_VERSIONSHORT@}
+  \renewcommand{\headrulewidth}{0 pt}
+}
+\fancypagestyle{empty}{%
+  \fancyhf{}%
+  \renewcommand{\headrulewidth}{0 pt}
+  \renewcommand{\footrulewidth}{0 pt}
+}
+
+% custom title and copyright pages
+\def\maketitle{
+  \thispagestyle{empty}
+  \null\vfil
+  \vskip 60pt
+  \begin{center}%
+    { %\LARGE
+      \Huge
+      \bfseries
+      \DBKtitle \\
+       \par
+    }
+    \vskip 3em%
+    { %\large
+      \Large
+      \lineskip .75em%
+      @BIND9_VERSIONSTRING@
+      \par
+    }
+    \vfil\null
+    % Not sure exactly how much to trim logo, but given that
+    % this is a centered environment, we need not be too precise
+    % so long as the image is centered in the input PDF, we
+    % trim enough for it to fit on page, and we do not trim
+    % so much that we clip out part of the graphic itself.
+    % This seems to work, anyway.
+    \includegraphics[trim=400 400 400 400,scale=2.5]{isc-logo}
+  \end{center}\par
+  \newpage
+  \thispagestyle{empty}
+  \vfill
+  \DBKcopyright \\
+  \vfill\null
+  \begin{center}
+    Internet Systems Consortium \\
+    950 Charter Street \\
+    Redwood City, California \\
+    USA \\
+    https://www.isc.org/
+  \end{center}
+  \vfil\null
+}
