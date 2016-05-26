@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.30 2015/01/07 07:05:48 ozaki-r Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.31 2016/05/26 05:01:12 ozaki-r Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.30 2015/01/07 07:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.31 2016/05/26 05:01:12 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1806,7 +1806,7 @@ rt2661_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				break;
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
 			m0->m_pkthdr.rcvif = NULL;
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rt2661_tx_mgt(sc, m0, ni) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.8 2016/05/06 18:07:17 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.9 2016/05/26 05:01:12 ozaki-r Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.8 2016/05/06 18:07:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.9 2016/05/26 05:01:12 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1733,7 +1733,7 @@ rt2860_start(struct ifnet *ifp)
 		/* send pending management frames first */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
 		}

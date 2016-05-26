@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.26 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.27 2016/05/26 05:01:12 ozaki-r Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.26 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.27 2016/05/26 05:01:12 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2091,7 +2091,7 @@ otus_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
 		}
