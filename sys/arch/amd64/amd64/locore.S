@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.93 2016/05/22 10:11:55 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.94 2016/05/26 07:24:55 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -220,16 +220,21 @@
  * Each entry is 8 (PDE_SIZE) bytes long: we must set the 4 upper bytes to 0.
  */
 #define fillkpt	\
+	cmpl	$0,%ecx			;	/* zero-sized? */	\
+	je 	2f			; \
 1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
 	movl	%eax,(%ebx)		;	/* store phys addr */	\
 	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
-	loop	1b			;
+	loop	1b			; \
+2:					;
 
 /*
  * fillkpt_nox - Same as fillkpt, but sets the NX/XD bit.
  */
 #define fillkpt_nox \
+	cmpl	$0,%ecx			;	/* zero-sized? */	\
+	je 	2f			; \
 	pushl	%ebp			; \
 	movl	RELOC(nox_flag),%ebp	; \
 1:	movl	%ebp,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: NX */ \
@@ -237,7 +242,8 @@
 	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			; \
-	popl	%ebp			;
+	popl	%ebp			; \
+2:					;
 
 /*
  * killkpt - Destroy a kernel page table (long mode)
