@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.9 2016/05/26 05:01:12 ozaki-r Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.10 2016/05/26 05:04:46 ozaki-r Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.9 2016/05/26 05:01:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.10 2016/05/26 05:04:46 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1734,7 +1734,7 @@ rt2860_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
 			ni = M_GETCTX(m, struct ieee80211_node *);
-			m->m_pkthdr.rcvif = NULL;
+			M_CLEARCTX(m);
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

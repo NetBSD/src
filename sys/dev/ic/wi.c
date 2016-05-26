@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.238 2016/05/26 05:01:12 ozaki-r Exp $	*/
+/*	$NetBSD: wi.c,v 1.239 2016/05/26 05:04:46 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.238 2016/05/26 05:01:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.239 2016/05/26 05:04:46 ozaki-r Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1107,7 +1107,7 @@ wi_start(struct ifnet *ifp)
 			frmhdr.wi_ehdr.ether_type = 0;
                         wh = mtod(m0, struct ieee80211_frame *);
 			ni = M_GETCTX(m0, struct ieee80211_node *);
-			m0->m_pkthdr.rcvif = NULL;
+			M_CLEARCTX(m0);
 		} else if (ic->ic_state == IEEE80211_S_RUN) {
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
