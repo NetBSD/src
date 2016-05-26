@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2009, 2014, 2015 Internet Systems Consortium, Inc. ("ISC")
  - 
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -13,14 +13,13 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- Id -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>ddns-confgen</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
 </head>
-<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry" lang="en">
+<body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF"><div class="refentry">
 <a name="man.ddns-confgen"></a><div class="titlepage"></div>
 <div class="refnamediv">
 <h2>Name</h2>
@@ -31,45 +30,45 @@
 <div class="cmdsynopsis"><p><code class="command">tsig-keygen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-h</code>] [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>] [name]</p></div>
 <div class="cmdsynopsis"><p><code class="command">ddns-confgen</code>  [<code class="option">-a <em class="replaceable"><code>algorithm</code></em></code>] [<code class="option">-h</code>] [<code class="option">-k <em class="replaceable"><code>keyname</code></em></code>] [<code class="option">-q</code>] [<code class="option">-r <em class="replaceable"><code>randomfile</code></em></code>] [ -s <em class="replaceable"><code>name</code></em>  |   -z <em class="replaceable"><code>zone</code></em> ]</p></div>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2543434"></a><h2>DESCRIPTION</h2>
+<div class="refsection">
+<a name="id-1.7"></a><h2>DESCRIPTION</h2>
 <p>
-      <span><strong class="command">tsig-keygen</strong></span> and <span><strong class="command">ddns-confgen</strong></span>
+      <span class="command"><strong>tsig-keygen</strong></span> and <span class="command"><strong>ddns-confgen</strong></span>
       are invocation methods for a utility that generates keys for use
       in TSIG signing.  The resulting keys can be used, for example,
       to secure dynamic DNS updates to a zone or for the
-      <span><strong class="command">rndc</strong></span> command channel.
+      <span class="command"><strong>rndc</strong></span> command channel.
     </p>
 <p>
-      When run as <span><strong class="command">tsig-keygen</strong></span>, a domain name
+      When run as <span class="command"><strong>tsig-keygen</strong></span>, a domain name
       can be specified on the command line which will be used as
       the name of the generated key.  If no name is specified,
       the default is <code class="constant">tsig-key</code>.
     </p>
 <p>
-      When run as <span><strong class="command">ddns-confgen</strong></span>, the generated
+      When run as <span class="command"><strong>ddns-confgen</strong></span>, the generated
       key is accompanied by configuration text and instructions
-      that can be used with <span><strong class="command">nsupdate</strong></span> and
-      <span><strong class="command">named</strong></span> when setting up dynamic DNS,
-      including an example <span><strong class="command">update-policy</strong></span>
+      that can be used with <span class="command"><strong>nsupdate</strong></span> and
+      <span class="command"><strong>named</strong></span> when setting up dynamic DNS,
+      including an example <span class="command"><strong>update-policy</strong></span>
       statement.  (This usage similar to the
-      <span><strong class="command">rndc-confgen</strong></span> command for setting
+      <span class="command"><strong>rndc-confgen</strong></span> command for setting
       up command channel security.)
     </p>
 <p>
-      Note that <span><strong class="command">named</strong></span> itself can configure a
-      local DDNS key for use with <span><strong class="command">nsupdate -l</strong></span>:
+      Note that <span class="command"><strong>named</strong></span> itself can configure a
+      local DDNS key for use with <span class="command"><strong>nsupdate -l</strong></span>:
       it does this when a zone is configured with
-      <span><strong class="command">update-policy local;</strong></span>.
-      <span><strong class="command">ddns-confgen</strong></span> is only needed when a 
+      <span class="command"><strong>update-policy local;</strong></span>.
+      <span class="command"><strong>ddns-confgen</strong></span> is only needed when a
       more elaborate configuration is required: for instance,
-      if <span><strong class="command">nsupdate</strong></span> is to be used from a remote
+      if <span class="command"><strong>nsupdate</strong></span> is to be used from a remote
       system.
     </p>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2543508"></a><h2>OPTIONS</h2>
-<div class="variablelist"><dl>
+<div class="refsection">
+<a name="id-1.8"></a><h2>OPTIONS</h2>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term">-a <em class="replaceable"><code>algorithm</code></em></span></dt>
 <dd><p>
             Specifies the algorithm to use for the TSIG key.  Available
@@ -96,9 +95,9 @@
 	  </p></dd>
 <dt><span class="term">-q</span></dt>
 <dd><p>
-	    (<span><strong class="command">ddns-confgen</strong></span> only.) Quiet mode:  Print
+	    (<span class="command"><strong>ddns-confgen</strong></span> only.) Quiet mode:  Print
             only the key, with no explanatory text or usage examples;
-            This is essentially identical to <span><strong class="command">tsig-keygen</strong></span>.
+            This is essentially identical to <span class="command"><strong>tsig-keygen</strong></span>.
 	  </p></dd>
 <dt><span class="term">-r <em class="replaceable"><code>randomfile</code></em></span></dt>
 <dd><p>
@@ -114,9 +113,9 @@
 	  </p></dd>
 <dt><span class="term">-s <em class="replaceable"><code>name</code></em></span></dt>
 <dd><p>
-            (<span><strong class="command">ddns-confgen</strong></span> only.)
+            (<span class="command"><strong>ddns-confgen</strong></span> only.)
 	    Generate configuration example to allow dynamic updates
-            of a single hostname.  The example <span><strong class="command">named.conf</strong></span>
+            of a single hostname.  The example <span class="command"><strong>named.conf</strong></span>
             text shows how to set an update policy for the specified
             <em class="replaceable"><code>name</code></em>
 	    using the "name" nametype.  The default key name is
@@ -127,9 +126,9 @@
 	  </p></dd>
 <dt><span class="term">-z <em class="replaceable"><code>zone</code></em></span></dt>
 <dd><p>
-            (<span><strong class="command">ddns-confgen</strong></span> only.)
+            (<span class="command"><strong>ddns-confgen</strong></span> only.)
 	    Generate configuration example to allow dynamic updates
-            of a zone:  The example <span><strong class="command">named.conf</strong></span> text
+            of a zone:  The example <span class="command"><strong>named.conf</strong></span> text
             shows how to set an update policy for the specified
 	    <em class="replaceable"><code>zone</code></em>
 	    using the "zonesub" nametype, allowing updates to
@@ -139,17 +138,12 @@
 	  </p></dd>
 </dl></div>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2543705"></a><h2>SEE ALSO</h2>
+<div class="refsection">
+<a name="id-1.9"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">nsupdate</span>(1)</span>,
       <span class="citerefentry"><span class="refentrytitle">named.conf</span>(5)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
       <em class="citetitle">BIND 9 Administrator Reference Manual</em>.
-    </p>
-</div>
-<div class="refsect1" lang="en">
-<a name="id2543744"></a><h2>AUTHOR</h2>
-<p><span class="corpauthor">Internet Systems Consortium</span>
     </p>
 </div>
 </div></body>
