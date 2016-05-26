@@ -9,6 +9,7 @@ a601.example.		3600	IN	A6	127 ::1 foo.
 a601.example.		3600	IN	A6	128  .
 afsdb01.example.	3600	IN	AFSDB	0 hostname.example.
 afsdb02.example.	3600	IN	AFSDB	65535 .
+avc.example.		3600	IN	AVC	"foo:bar"
 caa01.example.		3600	IN	CAA	0 issue "ca.example.net\; policy=ev"
 caa02.example.		3600	IN	CAA	128 tbs "Unknown"
 caa03.example.		3600	IN	CAA	128 tbs ""
@@ -18,6 +19,9 @@ cert01.example.		3600	IN	CERT	65534 65535 PRIVATEOID MxFcby9k/yvedMfQgKzhH5er0Mu
 cname01.example.	3600	IN	CNAME	cname-target.
 cname02.example.	3600	IN	CNAME	cname-target.example.
 cname03.example.	3600	IN	CNAME	.
+csync01.example.	3600	IN	CSYNC	0 0 A NS AAAA
+csync02.example.	3600	IN	CSYNC	0 0
+dlv.example.		3600	IN	DLV	30795 1 1 310D27F4D82C1FC2400704EA9939FE6E1CEAA3B9
 dname01.example.	3600	IN	DNAME	dname-target.
 dname02.example.	3600	IN	DNAME	dname-target.example.
 dname03.example.	3600	IN	DNAME	.
@@ -57,6 +61,21 @@ mx01.example.		3600	IN	MX	10 mail.example.
 mx02.example.		3600	IN	MX	10 .
 naptr01.example.	3600	IN	NAPTR	0 0 "" "" "" .
 naptr02.example.	3600	IN	NAPTR	65535 65535 "blurgh" "blorf" "blllbb" foo.
+ninfo01.example.	3600	IN	NINFO	"foo"
+ninfo02.example.	3600	IN	NINFO	"foo" "bar"
+ninfo03.example.	3600	IN	NINFO	"foo"
+ninfo04.example.	3600	IN	NINFO	"foo" "bar"
+ninfo05.example.	3600	IN	NINFO	"foo bar"
+ninfo06.example.	3600	IN	NINFO	"foo bar"
+ninfo07.example.	3600	IN	NINFO	"foo bar"
+ninfo08.example.	3600	IN	NINFO	"foo\010bar"
+ninfo09.example.	3600	IN	NINFO	"foo\010bar"
+ninfo10.example.	3600	IN	NINFO	"foo bar"
+ninfo11.example.	3600	IN	NINFO	"\"foo\""
+ninfo12.example.	3600	IN	NINFO	"\"foo\""
+ninfo13.example.	3600	IN	NINFO	"foo;"
+ninfo14.example.	3600	IN	NINFO	"foo;"
+ninfo15.example.	3600	IN	NINFO	"bar\\;"
 ns2.example.		3600	IN	A	10.53.0.2
 ns3.example.		3600	IN	A	10.53.0.3
 nsap-ptr01.example.	3600	IN	NSAP-PTR .
@@ -71,13 +90,21 @@ openpgpkey.example.	3600	IN	OPENPGPKEY  AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7
 ptr01.example.		3600	IN	PTR	example.
 px01.example.		3600	IN	PX	65535 foo. bar.
 px02.example.		3600	IN	PX	65535 . .
+rkey01.example.		3600	IN	RKEY	512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2od GWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60z yGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
 rp01.example.		3600	IN	RP	mbox-dname.example. txt-dname.example.
 rp02.example.		3600	IN	RP	. .
 rt01.example.		3600	IN	RT	0 intermediate-host.example.
 rt02.example.		3600	IN	RT	65535 .
 rrsig01.example.		3600	IN	RRSIG	NSEC 1 3 3600 20000102030405 19961211100908 2143 foo.nil. MxFcby9k/yvedMfQgKzhH5er0Mu/vILz45IkskceFGgiWCn/GxHhai6V AuHAoNUz4YoU1tVfSCSqQYn6//11U6Nld80jEeC8aTrO+KKmCaY=
+sink01.example.		3600	IN	SINK	1 0 0
+sink02.example.		3600	IN	SINK	8 0 2 l4ik
+smimea.example.		3600	IN	SMIMEA	1 1 2 92003BA34942DC74152E2F2C408D29ECA5A520E7F2E06BB944F4DCA3 46BAF63C1B177615D466F6C4B71C216A50292BD58C9EBDD2F74E38FE 51FFD48C43326CBC
 srv01.example.		3600	IN	SRV	0 0 0 .
 srv02.example.		3600	IN	SRV	65535 65535 65535 old-slow-box.example.
+ta.example.		3600	IN	TA	30795 1 1 310D27F4D82C1FC2400704EA9939FE6E1CEAA3B9
+talink0.example.	3600	IN	TALINK	. talink1.example.
+talink1.example.	3600	IN	TALINK	talink0.example. talink2.example.
+talink2.example.	3600	IN	TALINK	talink2.example. .
 tlsa.example.		3600	IN	TLSA	1 1 2 92003BA34942DC74152E2F2C408D29ECA5A520E7F2E06BB944F4DCA3 46BAF63C1B177615D466F6C4B71C216A50292BD58C9EBDD2F74E38FE 51FFD48C43326CBC
 txt01.example.		3600	IN	TXT	"foo"
 txt02.example.		3600	IN	TXT	"foo" "bar"

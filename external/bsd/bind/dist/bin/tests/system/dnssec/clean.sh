@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -77,6 +77,8 @@ rm -f ns3/split-smart.example.db
 rm -f ns3/ttlpatch.example.db ns3/ttlpatch.example.db.signed
 rm -f ns3/ttlpatch.example.db.patched
 rm -f ns3/unsecure.example.db ns3/bogus.example.db ns3/keyless.example.db
+rm -f ns3/revkey.example.db
+rm -f ns3/managed-future.example.db
 rm -f ns4/managed-keys.bind*
 rm -f ns4/named.conf
 rm -f ns4/named.conf ns5/named.conf
@@ -92,3 +94,5 @@ rm -f signer/example.db.changed
 rm -f signer/nsec3param.out
 rm -f signer/signer.out.*
 rm -f signing.out*
+rm -f signer/*.signed.pre*
+rm -f signer/*.signed.post*
