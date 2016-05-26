@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.50 2016/05/26 11:07:33 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.51 2016/05/26 11:08:44 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.50 2016/05/26 11:07:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.51 2016/05/26 11:08:44 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -148,6 +148,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.50 2016/05/26 11:07:33 hannken Exp $
 #define	VRELEL_ASYNC_RELE	0x0001	/* Always defer to vrele thread. */
 #define	VRELEL_CHANGING_SET	0x0002	/* VI_CHANGING set by caller. */
 
+enum vcache_state {
+	VN_MARKER,	/* Stable, used as marker. Will not change. */
+	VN_LOADING,	/* Intermediate, initialising the fs node. */
+	VN_ACTIVE,	/* Stable, valid fs node attached. */
+	VN_BLOCKED,	/* Intermediate, active, no new references allowed. */
+	VN_RECLAIMING,	/* Intermediate, detaching the fs node. */
+	VN_RECLAIMED	/* Stable, no fs node attached. */
+};
 struct vcache_key {
 	struct mount *vk_mount;
 	const void *vk_key;
@@ -155,6 +163,7 @@ struct vcache_key {
 };
 struct vcache_node {
 	struct vnode vn_data;
+	enum vcache_state vn_state;
 	SLIST_ENTRY(vcache_node) vn_hash;
 	struct vnode *vn_vnode;
 	struct vcache_key vn_key;
@@ -185,6 +194,7 @@ static int		vrele_gen		__cacheline_aligned;
 SLIST_HEAD(hashhead, vcache_node);
 static struct {
 	kmutex_t	lock;
+	kcondvar_t	cv;
 	u_long		hashmask;
 	struct hashhead	*hashtab;
 	pool_cache_t	pool;
@@ -207,6 +217,145 @@ static void		vwait(vnode_t *, int);
 extern struct mount	*dead_rootmount;
 extern int		(**dead_vnodeop_p)(void *);
 extern struct vfsops	dead_vfsops;
+
+/* Vnode state operations and diagnostics. */
+
+static const char *
+vstate_name(enum vcache_state state)
+{
+
+	switch (state) {
+	case VN_MARKER:
+		return "MARKER";
+	case VN_LOADING:
+		return "LOADING";
+	case VN_ACTIVE:
+		return "ACTIVE";
+	case VN_BLOCKED:
+		return "BLOCKED";
+	case VN_RECLAIMING:
+		return "RECLAIMING";
+	case VN_RECLAIMED:
+		return "RECLAIMED";
+	default:
+		return "ILLEGAL";
+	}
+}
+
+#if defined(DIAGNOSTIC)
+
+#define VSTATE_GET(vp) \
+	vstate_assert_get((vp), __func__, __LINE__)
+#define VSTATE_CHANGE(vp, from, to) \
+	vstate_assert_change((vp), (from), (to), __func__, __LINE__)
+#define VSTATE_WAIT_STABLE(vp) \
+	vstate_assert_wait_stable((vp), __func__, __LINE__)
+#define VSTATE_ASSERT(vp, state) \
+	vstate_assert((vp), (state), __func__, __LINE__)
+
+static void __unused
+vstate_assert(vnode_t *vp, enum vcache_state state, const char *func, int line)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
+
+	if (__predict_true(node->vn_state == state))
+		return;
+	vnpanic(vp, "state is %s, expected %s at %s:%d",
+	    vstate_name(node->vn_state), vstate_name(state), func, line);
+}
+
+static enum vcache_state __unused
+vstate_assert_get(vnode_t *vp, const char *func, int line)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
+	if (node->vn_state == VN_MARKER)
+		vnpanic(vp, "state is %s at %s:%d",
+		    vstate_name(node->vn_state), func, line);
+
+	return node->vn_state;
+}
+
+static void __unused
+vstate_assert_wait_stable(vnode_t *vp, const char *func, int line)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
+	if (node->vn_state == VN_MARKER)
+		vnpanic(vp, "state is %s at %s:%d",
+		    vstate_name(node->vn_state), func, line);
+
+	while (node->vn_state != VN_ACTIVE && node->vn_state != VN_RECLAIMED)
+		cv_wait(&vp->v_cv, vp->v_interlock);
+
+	if (node->vn_state == VN_MARKER)
+		vnpanic(vp, "state is %s at %s:%d",
+		    vstate_name(node->vn_state), func, line);
+}
+
+static void __unused
+vstate_assert_change(vnode_t *vp, enum vcache_state from, enum vcache_state to,
+    const char *func, int line)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	KASSERTMSG(mutex_owned(vp->v_interlock), "at %s:%d", func, line);
+	if (from == VN_LOADING)
+		KASSERTMSG(mutex_owned(&vcache.lock), "at %s:%d", func, line);
+
+	if (from == VN_MARKER)
+		vnpanic(vp, "from is %s at %s:%d",
+		    vstate_name(from), func, line);
+	if (to == VN_MARKER)
+		vnpanic(vp, "to is %s at %s:%d",
+		    vstate_name(to), func, line);
+	if (node->vn_state != from)
+		vnpanic(vp, "from is %s, expected %s at %s:%d\n",
+		    vstate_name(node->vn_state), vstate_name(from), func, line);
+
+	node->vn_state = to;
+	if (from == VN_LOADING)
+		cv_broadcast(&vcache.cv);
+	if (to == VN_ACTIVE || to == VN_RECLAIMED)
+		cv_broadcast(&vp->v_cv);
+}
+
+#else /* defined(DIAGNOSTIC) */
+
+#define VSTATE_GET(vp) \
+	(VP_TO_VN((vp))->vn_state)
+#define VSTATE_CHANGE(vp, from, to) \
+	vstate_change((vp), (from), (to))
+#define VSTATE_WAIT_STABLE(vp) \
+	vstate_wait_stable((vp))
+#define VSTATE_ASSERT(vp, state)
+
+static void __unused
+vstate_wait_stable(vnode_t *vp)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	while (node->vn_state != VN_ACTIVE && node->vn_state != VN_RECLAIMED)
+		cv_wait(&vp->v_cv, vp->v_interlock);
+}
+
+static void __unused
+vstate_change(vnode_t *vp, enum vcache_state from, enum vcache_state to)
+{
+	struct vcache_node *node = VP_TO_VN(vp);
+
+	node->vn_state = to;
+	if (from == VN_LOADING)
+		cv_broadcast(&vcache.cv);
+	if (to == VN_ACTIVE || to == VN_RECLAIMED)
+		cv_broadcast(&vp->v_cv);
+}
+
+#endif /* defined(DIAGNOSTIC) */
 
 void
 vfs_vnode_sysinit(void)
@@ -1051,6 +1200,7 @@ vcache_init(void)
 	    "vcachepl", NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(vcache.pool != NULL);
 	mutex_init(&vcache.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&vcache.cv, "vcache");
 	vcache.hashtab = hashinit(desiredvnodes, HASH_SLIST, true,
 	    &vcache.hashmask);
 }
@@ -1133,6 +1283,8 @@ vcache_alloc(void)
 	vp->v_usecount = 1;
 	vp->v_type = VNON;
 	vp->v_size = vp->v_writesize = VSIZENOTSET;
+
+	node->vn_state = VN_LOADING;
 
 	return node;
 }
@@ -1482,7 +1634,7 @@ vcache_print(vnode_t *vp, const char *prefix, void (*pr)(const char *, ...))
 	n = node->vn_key.vk_key_len;
 	cp = node->vn_key.vk_key;
 
-	(*pr)("%skey(%d)", prefix, n);
+	(*pr)("%sstate %s, key(%d)", prefix, vstate_name(node->vn_state), n);
 
 	while (n-- > 0)
 		(*pr)(" %02x", *cp++);
