@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.21 2016/05/11 18:33:40 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.22 2016/05/26 07:45:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -934,11 +934,9 @@ awin_gpio_pin_ctl(void *cookie, int pin, int flags)
 static void
 awin_gpio_pin_irqen(void *cookie, int pin, bool enable)
 {
-	struct awin_gpio_pin_group * const grp = cookie;
 	uint32_t enabled;
 	struct awin_gpio_softc *sc = &awin_gpio_sc;
 
-	KASSERT(grp->grp_index == 7);
 	mutex_enter(&sc->sc_intr_lock);
 	enabled = bus_space_read_4(sc->sc_bst, sc->sc_eint_bsh,
 	    INT_OFFSET(AWIN_PIO_INT_CTL_REG));
