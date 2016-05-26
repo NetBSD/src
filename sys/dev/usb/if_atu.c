@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.52 2016/05/26 05:01:12 ozaki-r Exp $ */
+/*	$NetBSD: if_atu.c,v 1.53 2016/05/26 05:04:46 ozaki-r Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.52 2016/05/26 05:01:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.53 2016/05/26 05:04:46 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1940,7 +1940,7 @@ atu_start(struct ifnet *ifp)
 			 * to pass it along.
 			 */
 			ni = M_GETCTX(m, struct ieee80211_node *);
-			m->m_pkthdr.rcvif = NULL;
+			M_CLEARCTX(m);
 
 			/* sc->sc_stats.ast_tx_mgmt++; */
 		}
