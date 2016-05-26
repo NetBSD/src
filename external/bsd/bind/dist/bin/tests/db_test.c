@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.8 2015/12/17 04:00:42 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.9 2016/05/26 16:49:57 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -297,7 +297,8 @@ load(const char *filename, const char *origintext, isc_boolean_t cache) {
 		dns_dbtable_adddefault(dbtable, dbi->db);
 		cache_dbi = dbi;
 	} else {
-		if (dns_dbtable_add(dbtable, dbi->db) != ISC_R_SUCCESS) {
+		result = dns_dbtable_add(dbtable, dbi->db);
+		if (result != ISC_R_SUCCESS) {
 			dns_db_detach(&dbi->db);
 			isc_mem_put(mctx, dbi, sizeof(*dbi));
 			return (result);
@@ -368,7 +369,7 @@ main(int argc, char *argv[]) {
 	dns_name_t *fname;
 	unsigned int options = 0, zcoptions;
 	isc_time_t start, finish;
-	char *origintext;
+	const char *origintext;
 	dbinfo *dbi;
 	dns_dbversion_t *version;
 	dns_name_t *origin;

@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.8 2016/05/26 16:49:58 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -877,12 +877,12 @@ dns_db_nodecount(dns_db_t *db) {
 	return ((db->methods->nodecount)(db));
 }
 
-unsigned int
+size_t
 dns_db_hashsize(dns_db_t *db) {
 	REQUIRE(DNS_DB_VALID(db));
 
 	if (db->methods->hashsize == NULL)
-		return (ISC_R_NOTIMPLEMENTED);
+		return (0);
 
 	return ((db->methods->hashsize)(db));
 }
