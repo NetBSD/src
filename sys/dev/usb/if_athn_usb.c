@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.10 2016/05/26 05:01:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.11 2016/05/26 05:04:46 ozaki-r Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.10 2016/05/26 05:01:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.11 2016/05/26 05:04:46 ozaki-r Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2428,7 +2428,7 @@ athn_usb_start(struct ifnet *ifp)
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
 			ni = M_GETCTX(m, struct ieee80211_node *);
-			m->m_pkthdr.rcvif = NULL;
+			M_CLEARCTX(m);
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)
