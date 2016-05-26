@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.7 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.8 2016/05/26 05:01:12 ozaki-r Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.7 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.8 2016/05/26 05:01:12 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2433,7 +2433,7 @@ urtw_start(struct ifnet *ifp)
 				break;
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
 			m0->m_pkthdr.rcvif = NULL;
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (urtw_tx_start(sc, ni, m0, URTW_PRIORITY_NORMAL)
