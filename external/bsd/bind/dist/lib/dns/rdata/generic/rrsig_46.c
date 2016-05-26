@@ -1,4 +1,4 @@
-/*	$NetBSD: rrsig_46.c,v 1.8 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: rrsig_46.c,v 1.9 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -143,7 +143,8 @@ fromtext_rrsig(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 
 	/*
