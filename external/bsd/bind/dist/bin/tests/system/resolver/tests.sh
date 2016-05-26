@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -435,24 +435,24 @@ n=`expr $n + 1`
 echo "I:check prefetch disabled (${n})"
 ret=0
 $DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.1.${n} || ret=1
-ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 1 }' dig.out.1.${n}`
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
 # sleep so we are in expire range
 sleep ${ttl1:-0}
-# look for zero ttl, allow for one miss at getting zero ttl
+# look for ttl = 1, allow for one miss at getting zero ttl
 zerotonine="0 1 2 3 4 5 6 7 8 9"
 for i in $zerotonine $zerotonine $zerotonine $zerotonine
 do 
 	$DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.2.${n} || ret=1
 	ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
-	test ${ttl2:-1} -eq 0 && break
+	test ${ttl2:-2} -eq 1 && break
 	$PERL -e 'select(undef, undef, undef, 0.05);' 
 done
-test ${ttl2:-1} -eq 0 || ret=1
+test ${ttl2:-2} -eq 1 || ret=1
 # delay so that any prefetched record will have a lower ttl than expected
 sleep 3
 # check that prefetch has not occured
 $DIG @10.53.0.7 -p 5300 fetch.example.net txt > dig.out.3.${n} || ret=1
-ttl=`awk '/"A" "short" "ttl"/ { print $2 - 1 }' dig.out.3.${n}`
+ttl=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.3.${n}`
 test ${ttl:-0} -eq ${ttl1:-1} || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -533,5 +533,133 @@ grep "CLIENT-SUBNET: 255.255.254.0/23/0" dig.out.ns5.test${n} > /dev/null || ret
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo "I:check that SOA query returns data for delegation-only apex (${n})"
+ret=0
+$DIG soa delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+n=`expr $n + 1`
+echo "I:check that NS query returns data for delegation-only apex (${n})"
+ret=0
+$DIG ns delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that A query returns data for delegation-only A apex (${n})"
+ret=0
+$DIG a delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that CDS query returns data for delegation-only apex (${n})"
+ret=0
+$DIG cds delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that AAAA query returns data for delegation-only AAAA apex (${n})"
+ret=0
+$DIG a delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo "I:check that DNSKEY query returns data for delegation-only apex (${n})"
+ret=0
+$DIG dnskey delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that CDNSKEY query returns data for delegation-only apex (${n})"
+ret=0
+$DIG cdnskey delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex A data (${n})"
+ret=0
+$DIG a a.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex CDS data (${n})"
+ret=0
+$DIG cds cds.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex AAAA data (${n})"
+ret=0
+$DIG aaaa aaaa.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+n=`expr $n + 1`
+
+echo "I:check that NXDOMAIN is returned for delegation-only non-apex CDNSKEY data (${n})"
+ret=0
+$DIG cdnskey cdnskey.delegation-only @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
+grep "status: NXDOMAIN" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check zero ttl not returned for learnt non zero ttl records (${n})"
+ret=0
+# use prefetch disabled server
+$DIG @10.53.0.7 -p 5300 non-zero.example.net txt > dig.out.1.${n} || ret=1
+ttl1=`awk '/"A" "short" "ttl"/ { print $2 - 2 }' dig.out.1.${n}`
+# sleep so we are in expire range
+sleep ${ttl1:-0}
+# look for ttl = 1, allow for one miss at getting zero ttl
+zerotonine="0 1 2 3 4 5 6 7 8 9"
+zerotonine="$zerotonine $zerotonine $zerotonine"
+for i in $zerotonine $zerotonine $zerotonine $zerotonine
+do
+	$DIG @10.53.0.7 -p 5300 non-zero.example.net txt > dig.out.2.${n} || ret=1
+	ttl2=`awk '/"A" "short" "ttl"/ { print $2 }' dig.out.2.${n}`
+	test ${ttl2:-1} -eq 0 && break
+	test ${ttl2:-1} -ge ${ttl1:-0} && break
+	$PERL -e 'select(undef, undef, undef, 0.05);'
+done
+test ${ttl2:-1} -eq 0 && ret=1
+test ${ttl2:-1} -ge ${ttl1:-0} || break
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check zero ttl is returned for learnt zero ttl records (${n})"
+ret=0
+$DIG @10.53.0.7 -p 5300 zero.example.net txt > dig.out.1.${n} || ret=1
+ttl=`awk '/"A" "zero" "ttl"/ { print $2 }' dig.out.1.${n}`
+test ${ttl:-1} -eq 0 || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 echo "I:exit status: $status"
 exit $status
