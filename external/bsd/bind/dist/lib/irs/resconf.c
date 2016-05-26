@@ -1,7 +1,7 @@
-/*	$NetBSD: resconf.c,v 1.8 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.9 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -175,11 +175,12 @@ eatwhite(FILE *fp) {
 static int
 getword(FILE *fp, char *buffer, size_t size) {
 	int ch;
-	char *p = buffer;
+	char *p;
 
 	REQUIRE(buffer != NULL);
 	REQUIRE(size > 0U);
 
+	p = buffer;
 	*p = '\0';
 
 	ch = eatwhite(fp);

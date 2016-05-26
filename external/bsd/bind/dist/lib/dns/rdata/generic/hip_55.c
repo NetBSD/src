@@ -1,4 +1,4 @@
-/*	$NetBSD: hip_55.c,v 1.6 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: hip_55.c,v 1.7 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -96,6 +96,9 @@ fromtext_hip(ARGS_FROMTEXT) {
 		RETTOK(ISC_R_RANGE);
 	RETERR(uint16_tobuffer((isc_uint32_t)len, &key_len));
 
+	if (origin == NULL)
+		origin = dns_rootname;
+
 	/*
 	 * Rendezvous Servers.
 	 */
@@ -107,7 +110,6 @@ fromtext_hip(ARGS_FROMTEXT) {
 		if (token.type != isc_tokentype_string)
 			break;
 		buffer_fromregion(&buffer, &token.value.as_region);
-		origin = (origin != NULL) ? origin : dns_rootname;
 		RETTOK(dns_name_fromtext(&name, &buffer, origin, options,
 					 target));
 	} while (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.11 2015/12/17 04:00:43 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.12 2016/05/26 16:49:58 christos Exp $	*/
 
 /*
  * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -1176,7 +1176,6 @@ client_resfind(resctx_t *rctx, dns_fetchevent_t *event) {
 	UNLOCK(&rctx->lock);
 }
 
-
 static void
 suspend(isc_task_t *task, isc_event_t *event) {
 	isc_appctx_t *actx = event->ev_arg;
@@ -1493,6 +1492,13 @@ dns_client_destroyrestrans(dns_clientrestrans_t **transp) {
 
 	mctx = client->mctx;
 	dns_view_detach(&rctx->view);
+
+	/*
+	 * Wait for the lock in client_resfind to be released before
+	 * destroying the lock.
+	 */
+	LOCK(&rctx->lock);
+	UNLOCK(&rctx->lock);
 
 	LOCK(&client->lock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.12 2015/12/17 04:00:41 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.13 2016/05/26 16:49:56 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -107,9 +107,9 @@ options {\n\
 	transfers-per-ns 2;\n\
 	transfers-in 10;\n\
 	transfers-out 10;\n\
-	treat-cr-as-space true;\n\
-	use-id-pool true;\n\
-	use-ixfr true;\n\
+#	treat-cr-as-space <obsolete>;\n\
+#	use-id-pool <obsolete>;\n\
+#	use-ixfr <obsolete>;\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
 "
