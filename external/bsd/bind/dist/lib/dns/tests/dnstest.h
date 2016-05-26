@@ -1,7 +1,7 @@
-/*	$NetBSD: dnstest.h,v 1.3 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: dnstest.h,v 1.4 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,7 @@ extern isc_socketmgr_t *socketmgr;
 extern dns_zonemgr_t *zonemgr;
 extern isc_boolean_t app_running;
 extern int ncpus;
+extern isc_boolean_t debug_mem_record;
 
 isc_result_t
 dns_test_begin(FILE *logfile, isc_boolean_t create_managers);

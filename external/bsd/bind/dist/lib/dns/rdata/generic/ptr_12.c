@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.6 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,8 @@ fromtext_ptr(ARGS_FROMTEXT) {
 
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	if (rdclass == dns_rdataclass_in &&
 	    (options & DNS_RDATA_CHECKNAMES) != 0 &&

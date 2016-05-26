@@ -1,4 +1,4 @@
-/*	$NetBSD: rp_17.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
+/*	$NetBSD: rp_17.c,v 1.6 2016/05/26 16:49:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -40,7 +40,8 @@ fromtext_rp(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 
 	for (i = 0; i < 2; i++) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
