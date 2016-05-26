@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.261 2016/05/26 11:07:33 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.262 2016/05/26 11:09:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -204,17 +204,7 @@ typedef struct vnode vnode_t;
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
-#endif	/* _VFS_VNODE_PRIVATE */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
-#endif	/* _VFS_VNODE_PRIVATE */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_CLEAN	0x00080000	/* has been reclaimed */
-#define	VI_CHANGING	0x00100000	/* vnode changes state */
-#endif	/* _VFS_VNODE_PRIVATE */
 
 /*
  * The third set are locked by the underlying file system.
@@ -223,8 +213,7 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\24CLEAN\25CHANGING\31DIROP"
+    "\13WRMAP\14WRMAPDIRTY\17ONWORKLST\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
