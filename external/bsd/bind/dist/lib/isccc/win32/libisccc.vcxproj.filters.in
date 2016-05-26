@@ -86,5 +86,8 @@
     <ClInclude Include="..\include\isccc\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isccc\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

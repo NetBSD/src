@@ -244,6 +244,10 @@ SOURCE=..\include\lwres\stdlib.h
 
 SOURCE=..\include\lwres\string.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\include\lwres\version.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 

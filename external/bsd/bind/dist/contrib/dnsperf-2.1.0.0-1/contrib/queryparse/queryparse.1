@@ -1,0 +1,52 @@
+.\"	$NetBSD: queryparse.1,v 1.1.1.1 2016/05/26 15:45:46 christos Exp $
+.\"
+.TH "queryparse" 1
+.SH NAME
+queryparse \- extract DNS queries from pcap capture files.
+.SH SYNOPSIS
+.B queryparse [-i 
+.I input file
+.B ] [-o
+.I output file
+.B ] [-r
+.I recursion only
+.B ] [-R
+.I parse responses
+.B ]
+.SH DESCRIPTION
+.B queryparse
+is a tool designed to extract DNS queries from pcap-formatted packet
+capture files and save them in a form suitable for input to Nominum's 
+dnsperf or resperf benchmarking tools.
+.B queryparse
+will only examine UDP packets, and currently supports Ethernet and Cisco HDLC frame types.
+.SH OPTIONS
+.IP "\-i filename"
+Attempt to extract DNS queries from
+.I filename,
+which should be a pcap-formatted packet capture session (e.g., a file created
+by tcpdump or ethereal).
+.IP "\-o filename"
+Write queries to 
+.I filename
+in a format suitable for input to Nominum's dnsperf or resperf benchmarking tools.
+.IP "\-r"
+Keep queries that do not have the RD (recursion desired) flag set.  This is useful when parsing packet captures from authoritative nameservers.  When parsing captures from caching nameservers, do not use it unless you also want to parse the outgoing queries from the nameserver.  Defaults to discarding queries with RD=0.     
+.IP "\-R"
+Parse responses (QR=1) instead of queries (QR=0).
+.SH FILES
+None
+.SH ENVIRONMENT
+None
+.SH DIAGNOSTICS
+None
+.SH BUGS
+None
+.SH AUTHOR
+Nominum, Inc.
+.SH "SEE ALSO"
+.BR dnsperf (1),
+.BR resperf (1),
+.BR pcap (3),
+.BR tcpdump (8)
+

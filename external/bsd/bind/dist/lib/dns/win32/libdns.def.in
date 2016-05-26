@@ -89,9 +89,9 @@ dns_cache_getcleaninginterval
 dns_cache_getname
 dns_cache_getstats
 dns_cache_load
-@IF JSON
+@IF NOTYET
 dns_cache_renderjson
-@END JSON
+@END NOTYET
 @IF LIBXML2
 dns_cache_renderxml
 @END LIBXML2
@@ -510,7 +510,9 @@ dns_name_isabsolute
 dns_name_isdnssd
 dns_name_ishostname
 dns_name_ismailbox
+dns_name_isrfc1918
 dns_name_issubdomain
+dns_name_isula
 dns_name_isvalid
 dns_name_iswildcard
 dns_name_matcheswildcard

@@ -1,0 +1,315 @@
+.\"	$NetBSD: dnsperf.1,v 1.1.1.1 2016/05/26 15:45:46 christos Exp $
+.\"
+.\" Copyright (C) Nominum, Inc.
+.\"
+.\" All rights reserved.
+.TH DNSPERF 1 "Dec 9, 2015" Nominum Nominum
+.SH NAME
+\%dnsperf - test the performance of a DNS server
+.SH SYNOPSIS
+.hy 0
+.ad l
+\fBdnsperf\fR\ [\fB\-a\ \fIlocal_addr\fB\fR]
+[\fB\-b\ \fIbufsize\fB\fR]
+[\fB\-c\ \fIclients\fB\fR]
+[\fB\-d\ \fIdatafile\fB\fR]
+[\fB\-D\fR]
+[\fB\-e\fR]
+[\fB\-f\ \fIfamily\fB\fR]
+[\fB\-h\fR]
+[\fB\-l\ \fIlimit\fB\fR]
+[\fB\-n\ \fIruns_through_file\fB\fR]
+[\fB\-p\ \fIport\fB\fR]
+[\fB\-q\ \fInum_queries\fB\fR]
+[\fB\-Q\ \fImax_qps\fB\fR]
+[\fB\-s\ \fIserver_addr\fB\fR]
+[\fB\-S\ \fIstats_interval\fB\fR]
+[\fB\-t\ \fItimeout\fB\fR]
+[\fB\-T\ \fIthreads\fB\fR]
+[\fB\-u\fR]
+[\fB\-v\fR]
+[\fB\-x\ \fIlocal_port\fB\fR]
+[\fB\-y\ \fI[alg:]name:secret\fB\fR]
+.ad
+.hy
+.SH DESCRIPTION
+\fBdnsperf\fR is a DNS server performance testing tool. It is primarily
+intended for measuring the performance of authoritative DNS servers, but it
+can also be used for measuring caching server performance in a closed
+laboratory environment. For testing caching servers resolving against the
+live Internet, the \fBresperf\fR program is preferred.
+
+It is recommended that \fBdnsperf\fR and the name server under test be run
+on separate machines, so that the CPU usage of \fBdnsperf\fR itself does not
+slow down the name server. The two machines should be connected with a fast
+network, preferably a dedicated Gigabit Ethernet segment. Testing through a
+router or firewall is not advisable.
+.SS "Configuring the name server"
+If using \fBdnsperf\fR to test an authoritative server, the name server
+under test should be set up to serve one or more zones similar in size and
+number to what the server is expected to serve in production.
+
+Also, be sure to turn off recursion in the server's configuration (in BIND
+8/9, specify "recursion no;" in the options block). In BIND 8, you should
+also specify "fetch-glue no;"; otherwise the server may attempt to retrieve
+glue information from the Internet during the test, slowing it down by an
+unpredictable factor.
+.SS "Constructing a query input file"
+A \fBdnsperf\fR input file should contain a large and realistic set of
+queries, on the order of ten thousand to a million. The input file contains
+one line per query, consisting of a domain name and an RR type name
+separated by a space. The class of the query is implicitly IN.
+
+When measuring the performance serving non-terminal zones such as the root
+zone or TLDs, note that such servers spend most of their time providing
+referral responses, not authoritative answers. Therefore, a realistic input
+file might consist mostly of queries for type A for names *below*, not at,
+the delegations present in the zone. For example, when testing the
+performance of a server configured to be authoritative for the top-level
+domain "fi.", which contains delegations for domains like "helsinki.fi" and
+"turku.fi", the input file could contain lines like
+.RS
+.hy 0
+
+.nf
+www.turku.fi A
+www.helsinki.fi A
+.fi
+.hy
+.RE
+
+where the "www" prefix ensures that the server will respond with a referral.
+Ideally, a realistic proportion of queries for nonexistent domains should be
+mixed in with those for existing ones, and the lines of the input file
+should be in a random order.
+.SS "Constructing a dynamic update input file"
+To test dynamic update performance, \fBdnsperf\fR is run with the \fB\-u\fR
+option, and the input file is constructed of blocks of lines describing
+dynamic update messages. The first line in a block contains the zone name:
+.RS
+.hy 0
+
+.nf
+example.com
+.fi
+.hy
+.RE
+
+Subsequent lines contain prerequisites, if there are any. Prerequisites can
+specify that a name may or may not exist, an rrset may or may not exist, or
+an rrset exists and its rdata matches all specified rdata for that name and
+type. The keywords "require" and "prohibit" are followed by the appropriate
+information. All relative names are considered to be relative to the zone
+name. The following lines show the 5 types of prerequisites.
+.RS
+.hy 0
+
+.nf
+require a
+require a A
+require a A 1.2.3.4
+prohibit x
+prohibit x A
+.fi
+.hy
+.RE
+
+Subsequent lines contain records to be added, records to be deleted, rrsets
+to be deleted, or names to be deleted. The keywords "add" or "delete" are
+followed by the appropriate information. All relative names are considered
+to be relative to the zone name. The following lines show the 4 types of
+updates.
+.RS
+.hy 0
+
+.nf
+add x 3600 A 10.1.2.3
+delete y A 10.1.2.3
+delete z A
+delete w
+.fi
+.hy
+.RE
+
+Each update message is terminated by a line containing the command:
+.RS
+.hy 0
+
+.nf
+send
+.fi
+.hy
+.RE
+.SS "Running the tests"
+When running \fBdnsperf\fR, a data file (the \fB\-d\fR option) and server
+(the \fB\-s\fR option) will normally be specified. The output of dnsperf is
+mostly self-explanatory. Pay attention to the number of dropped packets
+reported - when running the test over a local Ethernet connection, it should
+be zero. If one or more packets has been dropped, there may be a problem
+with the network connection. In that case, the results should be considered
+suspect and the test repeated.
+.SH OPTIONS
+
+\fB-a \fIlocal_addr\fB\fR
+.br
+.RS
+Specifies the local address from which to send requests. The default is the
+wildcard address.
+.RE
+
+\fB-b \fIbufsize\fB\fR
+.br
+.RS
+Sets the size of the socket's send and receive buffers, in kilobytes. If not
+specified, the operating system's default is used.
+.RE
+
+\fB-c \fIclients\fB\fR
+.br
+.RS
+Act as multiple clients. Requests are sent from multiple sockets. The
+default is to act as 1 client.
+.RE
+
+\fB-d \fIdatafile\fB\fR
+.br
+.RS
+Specifies the input data file. If not specified, \fBdnsperf\fR will read
+from standard input.
+.RE
+
+\fB-D\fR
+.br
+.RS
+Sets the DO (DNSSEC OK) bit [RFC3225] in all packets sent. This also enables
+EDNS0, which is required for DNSSEC.
+.RE
+
+\fB-e\fR
+.br
+.RS
+Enables EDNS0 [RFC2671], by adding an OPT record to all packets sent.
+.RE
+
+\fB-f \fIfamily\fB\fR
+.br
+.RS
+Specifies the address family used for sending DNS packets. The possible
+values are "inet", "inet6", or "any". If "any" (the default value) is
+specified, \fBdnsperf\fR will use whichever address family is appropriate
+for the server it is sending packets to.
+.RE
+
+\fB-h\fR
+.br
+.RS
+Print a usage statement and exit.
+.RE
+
+\fB-l \fIlimit\fB\fR
+.br
+.RS
+Specifies a time limit for the run, in seconds. This may cause the input to
+be read multiple times, or only some of the input to be read. The default
+behavior is to read the input once, and have no specific time limit.
+.RE
+
+\fB-n \fIruns_through_file\fB\fR
+.br
+.RS
+Run through the input file at most this many times. If no time limit is set,
+the file will be read exactly this number of times; if a time limit is set,
+the file may be read fewer times.
+.RE
+
+\fB-p \fIport\fB\fR
+.br
+.RS
+Sets the port on which the DNS packets are sent. If not specified, the
+standard DNS port (53) is used.
+.RE
+
+\fB-q \fInum_queries\fB\fR
+.br
+.RS
+Sets the maximum number of outstanding requests. When this value is reached,
+\fBdnsperf\fR will not send any more requests until either responses are
+received or requests time out. The default value is 100.
+.RE
+
+\fB-Q \fImax_qps\fB\fR
+.br
+.RS
+Limits the number of requests per second. There is no default limit.
+.RE
+
+\fB-s \fIserver_addr\fB\fR
+.br
+.RS
+Specifies the name or address of the server to which requests will be sent.
+The default is the loopback address, 127.0.0.1.
+.RE
+
+\fB-S \fIstats_interval\fB\fR
+.br
+.RS
+If this parameter is specified, a count of the number of queries per second
+during the interval will be printed out every stats_interval seconds.
+.RE
+
+\fB-t \fItimeout\fB\fR
+.br
+.RS
+Specifies the request timeout value, in seconds. \fBdnsperf\fR will no
+longer wait for a response to a particular request after this many seconds
+have elapsed. The default is 5 seconds.
+.RE
+
+\fB-T \fIthreads\fB\fR
+.br
+.RS
+Run multiple client threads. By default, \fBdnsperf\fR uses one thread for
+sending requests and one thread for receiving responses. If this option is
+specified, \fBdnsperf\fR will instead use N pairs of send/receive threads.
+.RE
+
+\fB-u\fR
+.br
+.RS
+Instructs \fBdnsperf\fR to send DNS dynamic update messages, rather than
+queries. The format of the input file is different in this case; see the
+"Constructing a dynamic update input file" section for more details.
+.RE
+
+\fB-v\fR
+.br
+.RS
+Enables verbose mode. The DNS RCODE of each response will be reported to
+standard output when the response is received, as will the latency. If a
+query times out, it will be reported with the special string "T" instead of
+a normal DNS RCODE. If a query is interrupted, it will be reported with the
+special string "I".
+.RE
+
+\fB-x \fIlocal_port\fB\fR
+.br
+.RS
+Specifies the local port from which to send requests. The default is the
+wildcard port (0).
+
+If acting as multiple clients and the wildcard port is used, each client
+will use a different random port. If a port is specified, the clients will
+use a range of ports starting with the specified one.
+.RE
+
+\fB-y \fI[alg:]name:secret\fB\fR
+.br
+.RS
+Add a TSIG record [RFC2845] to all packets sent, using the specified TSIG
+key algorithm, name and secret, where the algorithm defaults to hmac-md5 and
+the secret is expressed as a base-64 encoded string.
+.RE
+.SH AUTHOR
+Nominum, Inc.
+.SH "SEE ALSO"
+\fBresperf\fR(1)

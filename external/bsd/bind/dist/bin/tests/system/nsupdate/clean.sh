@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -27,7 +27,8 @@ rm -f nsupdate.out
 rm -f ns2/example.bk
 rm -f ns2/update.bk ns2/update.alt.bk
 rm -f */named.memstats
-rm -f nsupdate.out
+rm -f */named.run
+rm -f nsupdate.out*
 rm -f ns3/example.db.jnl ns3/example.db
 rm -f ns3/nsec3param.test.db.signed.jnl ns3/nsec3param.test.db ns3/nsec3param.test.db.signed ns3/dsset-nsec3param.test.
 rm -f ns3/dnskey.test.db.signed.jnl ns3/dnskey.test.db ns3/dnskey.test.db.signed ns3/dsset-dnskey.test.

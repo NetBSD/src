@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;USE_MD5;@CRYPTO@_DEBUG;_WINDOWS;_USRDLL;LIBISCCC_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;..\..\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
@@ -131,6 +131,7 @@
     <ClInclude Include="..\include\isccc\symtype.h" />
     <ClInclude Include="..\include\isccc\types.h" />
     <ClInclude Include="..\include\isccc\util.h" />
+    <ClInclude Include="..\include\isccc\version.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -162,7 +162,7 @@ n=`expr $n + 1`
 # Note: for a short term workaround we use ::1, assuming it's configured and
 # usable for our tests.  We should eventually use the test ULA and available
 # checks introduced in change 2916.
-if $PERL ../testsock6.pl ::1 2> /dev/null
+if $TESTSOCK6 ../testsock6.pl ::1 2> /dev/null
 then
     echo "I:checking IPv6 static-stub address ($n)"
     ret=0

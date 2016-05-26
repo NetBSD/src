@@ -14,9 +14,11 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- ISC customizations for Docbook-XSL HTML generator --> 
+<!-- ISC customizations for Docbook-XSL HTML generator -->
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet version="1.0"
+  xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  xmlns:db="http://docbook.org/ns/docbook">
 
   <!-- Import the Docbook HTML stuff -->
   <xsl:import href="@XSLT_DOCBOOK_STYLE_HTML@"/>
@@ -35,6 +37,10 @@
 
   <!-- Set comment convention for this output format -->
   <xsl:param name="isc.copyright.leader"> - </xsl:param>
+  <xsl:param name="isc.copyright.breakline"/>
+
+  <!-- Generate consistent id attributes -->
+  <xsl:param name="generate.consistent.ids" select="1"/>
 
   <!-- Override Docbook template to insert copyright -->
   <xsl:template name="user.preroot">
@@ -56,7 +62,7 @@
 
 </xsl:stylesheet>
 
-<!-- 
+<!--
   - Local variables:
   - mode: sgml
   - End:

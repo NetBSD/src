@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>BIND9;WIN32;USE_MD5;@CRYPTO@@USE_GSSAPI@@USE_ISC_SPNEGO@_DEBUG;_WINDOWS;_USRDLL;LIBDNS_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>.\;..\..\..\;include;..\include;..\..\isc\win32;..\..\isc\win32\include;..\..\isc\include;@LIBXML2_INC@@OPENSSL_INC@@GSSAPI_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
@@ -245,6 +245,7 @@
     <ClInclude Include="..\include\dns\ds.h" />
     <ClInclude Include="..\include\dns\dsdigest.h" />
     <ClInclude Include="..\include\dns\ecdb.h" />
+    <ClInclude Include="..\include\dns\edns.h" />
     <ClInclude Include="..\include\dns\enumclass.h" />
     <ClInclude Include="..\include\dns\enumtype.h" />
     <ClInclude Include="..\include\dns\events.h" />
@@ -320,6 +321,7 @@
     <ClInclude Include="..\include\dst\result.h" />
     <ClInclude Include="..\rbtdb.h" />
     <ClInclude Include="..\rbtdb64.h" />
+    <ClInclude Include="..\rdatalist_p.h" />
     <ClInclude Include="..\spnego.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

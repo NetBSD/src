@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2013, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -36,3 +36,6 @@ rm -f ns7/*.db ns7/*.bk ns7/*.jnl
 rm -f */named.memstats
 rm -f */named.run
 rm -f */ans.run
+rm -f ns2/mapped.db
+rm -f ns3/mapped.bk
+rm -f dig.out.?.*

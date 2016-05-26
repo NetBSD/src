@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2001, 2002  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -33,3 +33,5 @@ cp -f ns4/named.conf.base ns4/named.conf
 
 cp ns2/slave.db.in ns2/slave.db
 touch -t 200101010000 ns2/slave.db
+
+cp ns2/mapped.db.in ns2/mapped.db
