@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.188 2016/05/26 04:26:05 nakayama Exp $
+# $NetBSD: GENERIC,v 1.189 2016/05/26 10:38:07 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.188 $"
+#ident		"GENERIC-$Revision: 1.189 $"
 
 maxusers	64
 
@@ -773,7 +773,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 
 # CardBus network interfaces
 #ath*	at cardbus? function ?	# Atheros 5210/5211/5212 802.11
+#athn*	at cardbus? function ?	# Atheros AR9k (802.11a/g/n) UT
 #atw*	at cardbus? function ?	# ADMtek ADM8211 (802.11) UT
+#bwi*	at cardbus? function ?	# Broadcom BCM43xx wireless
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
 #ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
@@ -786,6 +788,9 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? function ?	# Open Host Controller
 #uhci*	at cardbus? function ?	# Universal Host Controller (Intel) UT
+
+# CardBus IEEE1394 controllers
+#fwohci* at cardbus? function ?	# IEEE1394 Open Host Controller UT
 
 ## PCMCIA cards; UT marks untested.
 
