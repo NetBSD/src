@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2165 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2166 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -309,3 +309,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	x86: Use processor-specific features to optimize memory access time to
 		the kernel image on amd64 and i386. [maxv 20160515]
 	arm: Add support for i.MX7 SoC. [ryo 20160517]
+	bind: Import version 9.10.4-P1. [christos 20160526]
