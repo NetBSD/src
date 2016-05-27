@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.54 2016/05/25 20:49:00 wiz Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.54 2016/05/25 20:49:00 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -359,6 +359,7 @@ pax_set_flags(struct exec_package *epp, struct proc *p)
 {
 	p->p_pax = epp->ep_pax_flags;
 
+#ifdef PAX_MPROTECT
 	if (pax_mprotect_ptrace == 0)
 		return;
 	/*
@@ -367,6 +368,7 @@ pax_set_flags(struct exec_package *epp, struct proc *p)
 	 */
 	if (p->p_slflag & PSL_TRACED)
 		p->p_pax &= ~P_PAX_MPROTECT;
+#endif
 }
 
 void
