@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.95 2016/05/28 08:43:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.96 2016/05/28 09:03:16 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -242,6 +242,20 @@
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			; \
 	popl	%ebp			; \
+2:					;
+
+/*
+ * fillkpt_blank - Fill in a kernel page table with blank entries
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
+#define fillkpt_blank	\
+	cmpl	$0,%ecx			;	/* zero-sized? */	\
+	je 	2f			; \
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
+	movl	$0,(%ebx)		;	/* lower 32 bits: 0 */	\
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	loop	1b			; \
 2:					;
 
 /*
@@ -643,12 +657,12 @@ no_NOX:
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
 	/* Skip the first MB. */
-	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
-	movl	%eax,%ecx
-	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
-	addl	%ecx,%ebx
+	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%ecx
+	shrl	$PGSHIFT,%ecx
+	fillkpt_blank
 
 	/* Map the kernel text RX. */
+	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax	/* start of TEXT */
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
