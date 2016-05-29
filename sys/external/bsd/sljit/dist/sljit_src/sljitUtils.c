@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitUtils.c,v 1.8 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitUtils.c,v 1.9 2016/05/29 17:19:01 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -294,7 +294,7 @@ SLJIT_API_FUNC_ATTRIBUTE struct sljit_stack* SLJIT_CALL sljit_allocate_stack(slj
 	v = uvm_km_alloc(kernel_map, max_limit, PAGE_SIZE, UVM_KMF_WIRED|UVM_KMF_ZERO);
 	base.ptr = (void *)v;
 	if (base.ptr == NULL) {
-		SLJIT_FREE(stack);
+		SLJIT_FREE(stack, allocator_data);
 		return NULL;
 	}
 	stack->base = base.uw;
