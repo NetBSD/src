@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsid.8,v 1.12 2015/11/10 12:41:18 tnn Exp $
+.\" $NetBSD: iscsid.8,v 1.13 2016/05/29 13:35:45 mlelstv Exp $
 .\"
 .\" Copyright (c) 2011 Alistair Crooks <agc@NetBSD.org>
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Nd interface to kernel iSCSI driver
 .Sh SYNOPSIS
 .Nm
-.Op Fl n
+.Op Fl D
 .Op Fl d Ar lvl
 .Sh DESCRIPTION
 The iSCSI initiator runs as a kernel driver, and provides access
@@ -60,14 +60,14 @@ or when an error occurs reading from or writing to the socket.
 .Pp
 The
 .Fl d
-flag increases the debug level to
+flag increases the log level to
 .Ar lvl .
-Any level above 0 causes
-.Nm
-to remain in the foreground, and increases the amount of debug output.
+At level 0 only start and stop messages are logged.
 The
-.Fl n
-flag makes the daemon single-threaded.
+.Fl D
+flag causes
+.Nm
+to remain in the foreground and to write log output to stdout.
 .Pp
 It is envisaged that user-level communication take place with
 .Nm
