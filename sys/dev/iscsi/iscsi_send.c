@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.15 2015/12/24 03:41:03 knakahara Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.16 2016/05/29 13:51:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #include <sys/filedesc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/atomic.h>
 
 /*#define LUN_1  1 */
 
@@ -57,11 +58,13 @@ my_soo_write(connection_t *conn, struct uio *u)
 	int ret;
 #ifdef ISCSI_DEBUG
 	size_t resid = u->uio_resid;
-
-	assert(resid != 0);
 #endif
 
+	KASSERT(u->uio_resid != 0);
+
+	KERNEL_LOCK(1, curlwp);
 	ret = sosend(so, NULL, u, NULL, NULL, 0, conn->threadobj);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	DEB(99, ("soo_write done: len = %zu\n", u->uio_resid));
 
@@ -90,8 +93,10 @@ assign_connection(session_t *session, bool waitok)
 {
 	connection_t *conn, *next;
 
+	mutex_enter(&session->lock);
 	do {
 		if ((conn = session->mru_connection) == NULL) {
+			mutex_exit(&session->lock);
 			return NULL;
 		}
 		next = conn;
@@ -105,15 +110,17 @@ assign_connection(session_t *session, bool waitok)
 
 		if (next->state != ST_FULL_FEATURE) {
 			if (waitok) {
-				tsleep(session, PRIBIO, "iscsi_assign_connection", 0);
+				cv_wait(&session->sess_cv, &session->lock);
 				next = TAILQ_FIRST(&session->conn_list);
 			} else {
+				mutex_exit(&session->lock);
 				return NULL;
 			}
 		} else {
 			session->mru_connection = next;
 		}
 	} while (next != NULL && next->state != ST_FULL_FEATURE);
+	mutex_exit(&session->lock);
 
 	return next;
 }
@@ -138,7 +145,6 @@ reassign_tasks(connection_t *oldconn)
 	pdu_t *opdu;
 	int no_tm = 1;
 	int rc = 1;
-	int s;
 
 	if ((conn = assign_connection(sess, FALSE)) == NULL) {
 		DEB(1, ("Reassign_tasks of Session %d, connection %d failed, "
@@ -163,7 +169,7 @@ reassign_tasks(connection_t *oldconn)
 		if (!no_tm && oldconn->Time2Wait) {
 			DEBC(conn, 1, ("Time2Wait=%d, hz=%d, waiting...\n",
 						   oldconn->Time2Wait, hz));
-			tsleep(&no_tm, PRIBIO, "Time2Wait", oldconn->Time2Wait * hz);
+			kpause("Time2Wait", false, oldconn->Time2Wait * hz, NULL);
 		}
 	}
 
@@ -214,7 +220,7 @@ reassign_tasks(connection_t *oldconn)
 
 		/* fixup reference counts */
 		oldconn->usecount--;
-		conn->usecount++;
+		atomic_inc_uint(&conn->usecount);
 
 		DEBC(conn, 1, ("CCB %p: Copied PDU %p to %p\n",
 					   ccb, opdu, pdu));
@@ -226,9 +232,7 @@ reassign_tasks(connection_t *oldconn)
 		free_pdu(opdu);
 
 		/* put ready CCB into waiting list of new connection */
-		s = splbio();
 		suspend_ccb(ccb, TRUE);
-		splx(s);
 	}
 
 	if (pdu == NULL) {
@@ -248,6 +252,7 @@ reassign_tasks(connection_t *oldconn)
 		}
 		/* if we get an error on reassign, restart the original request */
 		if (no_tm || rc) {
+			mutex_enter(&sess->lock);
 			if (ccb->CmdSN < sess->ExpCmdSN) {
 				pdu = ccb->pdu_waiting;
 
@@ -260,6 +265,7 @@ reassign_tasks(connection_t *oldconn)
 				}
 				pdu->pdu.p.command.CmdSN = htonl(ccb->CmdSN);
 			}
+			mutex_exit(&sess->lock);
 			resend_pdu(ccb);
 		} else {
 			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
@@ -287,29 +293,21 @@ iscsi_send_thread(void *par)
 	ccb_t *ccb, *nccb;
 	pdu_t *pdu;
 	struct file *fp;
-	int s;
 
 	sess = conn->session;
 	/* so cleanup thread knows there's someone left */
 	iscsi_num_send_threads++;
 
 	do {
+		mutex_enter(&conn->lock);
 		while (!conn->terminating) {
-			s = splbio();
 			while (!conn->terminating &&
 				(pdu = TAILQ_FIRST(&conn->pdus_to_send)) != NULL) {
 				TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
 				pdu->flags &= ~PDUF_INQUEUE;
-				splx(s);
+				mutex_exit(&conn->lock);
 
-#ifdef ISCSI_DEBUG
-				if (!pdu->uio.uio_resid) {
-					DEBOUT(("uio.resid = 0 in iscsi_send_thread! pdu=%p\n",
-							pdu));
-					assert(pdu->uio.uio_resid != 0);
-				}
-#endif
-				/*DEB (99,("Send thread woke up, pdu = %x)\n", (int)pdu)); */
+				KASSERT(!pdu->uio.uio_resid);
 
 				/* update ExpStatSN here to avoid discontinuities */
 				/* and delays in updating target */
@@ -317,26 +315,20 @@ iscsi_send_thread(void *par)
 
 				if (conn->HeaderDigest)
 					pdu->pdu.HeaderDigest = gen_digest(&pdu->pdu, BHS_SIZE);
+				DEBC(conn, 99, ("Send thread transmitting data\n"));
 				my_soo_write(conn, &pdu->uio);
 
 				if (pdu->disp <= PDUDISP_FREE) {
 					free_pdu(pdu);
 				} else {
-					pdu->flags &= ~PDUF_BUSY;
-				}
-				s = splbio();
+					pdu->flags &= ~PDUF_BUSY; }
+				mutex_enter(&conn->lock);
 			}
 
-			/*DEB (99,("Send thread done, waiting (conn->terminating = %d)\n", */
-			/* 		conn->terminating)); */
-
-			if (!conn->terminating) {
-				tsleep(&conn->pdus_to_send, PRIBIO,
-						"iscsisend", 0);
-			}
-
-			splx(s);
+			if (!conn->terminating)
+				cv_wait(&conn->conn_cv, &conn->lock);
 		}
+		mutex_exit(&conn->lock);
 
 		/* ------------------------------------------------------------------------
 		 *    Here this thread takes over cleanup of the terminating connection.
@@ -369,15 +361,19 @@ iscsi_send_thread(void *par)
 		}
 
 		/* clean out anything left in send queue */
+		mutex_enter(&conn->lock);
 		while ((pdu = TAILQ_FIRST(&conn->pdus_to_send)) != NULL) {
 			TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
 			pdu->flags &= ~(PDUF_INQUEUE | PDUF_BUSY);
+			mutex_exit(&conn->lock);
 			/* if it's not attached to a waiting CCB, free it */
 			if (pdu->owner == NULL ||
 			    pdu->owner->pdu_waiting != pdu) {
 				free_pdu(pdu);
 			}
+			mutex_enter(&conn->lock);
 		}
+		mutex_exit(&conn->lock);
 
 		/* If there's another connection available, transfer pending tasks */
 		if (sess->active_connections &&
@@ -386,7 +382,7 @@ iscsi_send_thread(void *par)
 			reassign_tasks(conn);
 		} else if (!conn->destroy && conn->Time2Wait) {
 			DEBC(conn, 1, ("Time2Wait\n"));
-			tsleep(&s, PRIBIO, "Time2Wait", conn->Time2Wait * hz);
+			kpause("Time2Wait", false, conn->Time2Wait * hz, NULL);
 			DEBC(conn, 1, ("Time2Wait\n"));
 		}
 		/* notify event handlers of connection shutdown */
@@ -396,32 +392,31 @@ iscsi_send_thread(void *par)
 				  sess->id, conn->id, conn->terminating);
 
 		DEBC(conn, 1, ("Waiting for conn_idle\n"));
+		mutex_enter(&conn->lock);
 		if (!conn->destroy)
-			tsleep(conn, PRIBIO, "conn_idle", 30 * hz);
+			cv_timedwait(&conn->idle_cv, &conn->lock, CONNECTION_IDLE_TIMEOUT);
+		mutex_exit(&conn->lock);
 		DEBC(conn, 1, ("Waited for conn_idle, destroy = %d\n", conn->destroy));
 
 	} while (!conn->destroy);
 
 	/* wake up anyone waiting for a PDU */
-	wakeup(&conn->pdu_pool);
+	cv_broadcast(&conn->conn_cv);
 
 	/* wake up any waiting CCBs */
 	while ((ccb = TAILQ_FIRST(&conn->ccbs_waiting)) != NULL) {
+		KASSERT(ccb->disp >= CCBDISP_NOWAIT);
 		wake_ccb(ccb, conn->terminating);
 		/* NOTE: wake_ccb will remove the CCB from the queue */
 	}
 
-	s = splbio();
 	if (conn->in_session) {
 		conn->in_session = FALSE;
 		TAILQ_REMOVE(&sess->conn_list, conn, connections);
 		sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 	}
 
-	TAILQ_INSERT_TAIL(&iscsi_cleanupc_list, conn, connections);
-	splx(s);
-
-	wakeup(&iscsi_cleanupc_list);
+	add_connection_cleanup(conn);
 
 	conn->sendproc = NULL;
 	DEBC(conn, 1, ("Send thread exits\n"));
@@ -448,7 +443,6 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 {
 	connection_t *conn = pdu->connection;
 	ccb_disp_t prev_cdisp = 0;
-	int s;
 
 	if (ccb != NULL) {
 		prev_cdisp = ccb->disp;
@@ -463,7 +457,7 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 	DEBC(conn, 10, ("Send_pdu: ccb=%p, pcd=%d, cdsp=%d, pdu=%p, pdsp=%d\n",
 			ccb, prev_cdisp, cdisp, pdu, pdisp));
 
-	s = splbio();
+	mutex_enter(&conn->lock);
 	if (pdisp == PDUDISP_WAIT) {
 		ccb->pdu_waiting = pdu;
 
@@ -480,8 +474,9 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 		TAILQ_INSERT_HEAD(&conn->pdus_to_send, pdu, send_chain);
 	else
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
+	mutex_exit(&conn->lock);
 
-	wakeup(&conn->pdus_to_send);
+	cv_broadcast(&conn->conn_cv);
 
 	if (cdisp != CCBDISP_NOWAIT) {
 		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
@@ -489,10 +484,16 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 		if (prev_cdisp <= CCBDISP_NOWAIT)
 			suspend_ccb(ccb, TRUE);
 
-		if (cdisp == CCBDISP_WAIT)
-			tsleep(ccb, PWAIT, "sendpdu", 0);
+		mutex_enter(&conn->lock);
+		while (ccb->disp == CCBDISP_WAIT) {
+			DEBC(conn, 15, ("Send_pdu: ccb=%p cdisp=%d waiting\n",
+				ccb, ccb->disp));
+			cv_wait(&conn->ccb_cv, &conn->lock);
+			DEBC(conn, 15, ("Send_pdu: ccb=%p cdisp=%d returned\n",
+				ccb, ccb->disp));
+		}
+		mutex_exit(&conn->lock);
 	}
-	splx(s);
 }
 
 
@@ -509,15 +510,14 @@ resend_pdu(ccb_t *ccb)
 {
 	connection_t *conn = ccb->connection;
 	pdu_t *pdu = ccb->pdu_waiting;
-	int s;
 
-	s = splbio ();
+	mutex_enter(&conn->lock);
 	if (pdu == NULL || (pdu->flags & PDUF_BUSY)) {
-		splx (s);
+		mutex_exit(&conn->lock);
 		return;
 	}
 	pdu->flags |= PDUF_BUSY;
-	splx (s);
+	mutex_exit(&conn->lock);
 
 	/* restore UIO and IOVEC */
 	pdu->uio = pdu->save_uio;
@@ -525,8 +525,7 @@ resend_pdu(ccb_t *ccb)
 
 	DEBC(conn, 8, ("ReSend_pdu ccb=%p, pdu=%p\n", ccb, pdu));
 
-	s = splbio ();
-
+	mutex_enter(&conn->lock);
 	/* Enqueue for sending */
 	pdu->flags |= PDUF_INQUEUE;
 
@@ -536,9 +535,9 @@ resend_pdu(ccb_t *ccb)
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
 	}
 	callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
-	splx (s);
+	mutex_exit(&conn->lock);
 
-	wakeup(&conn->pdus_to_send);
+	cv_broadcast(&conn->conn_cv);
 }
 
 
@@ -1278,7 +1277,7 @@ send_data_out(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb,
 	uint32_t totlen, len, offs, sn;
 	pdu_t *tx_pdu;
 
-	assert(conn->max_transfer != 0);
+	KASSERT(conn->max_transfer != 0);
 
 	if (rx_pdu) {
 		offs = ntohl(rx_pdu->pdu.p.r2t.BufferOffset);
@@ -1294,7 +1293,7 @@ send_data_out(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb,
 
 		tx_pdu = get_pdu(conn, waitok);
 		if (tx_pdu == NULL) {
-			DEBOUT(("No PDU in send_data_out\n"));
+			DEBC(conn, 5, ("No PDU in send_data_out\n"));
 
 			tx_ccb->disp = disp;
 			tx_ccb->status = ISCSI_STATUS_NO_RESOURCES;
@@ -1348,9 +1347,8 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	session_t *sess = ccb->session;
 	pdu_t *ppdu;
 	pdu_header_t *pdu;
-	int s;
 
-	s = splbio();
+	mutex_enter(&sess->lock);
 	while (/*CONSTCOND*/ISCSI_THROTTLING_ENABLED &&
 	    /*CONSTCOND*/!ISCSI_SERVER_TRUSTED &&
 	    !sn_a_le_b(sess->CmdSN, sess->MaxCmdSN)) {
@@ -1361,18 +1359,23 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		throttle_ccb(ccb, TRUE);
 
 		if (!waitok) {
-			splx(s);
+			DEBOUT(("Throttling send_command, ccb = %p\n",ccb));
 			return;
 		}
 
-		tsleep(ccb, PWAIT, "waitMaxCmd", 0);
+		cv_wait(&sess->ccb_cv, &sess->lock);
+
+		DEBOUT(("Resuming send_command, ccb = %p\n",ccb));
 
 		throttle_ccb(ccb, FALSE);
 		ccb->flags &= ~CCBF_WAITING;
 	}
-	splx(s);
+	mutex_exit(&sess->lock);
+
 	ppdu = get_pdu(conn, FALSE);
 	if (ppdu == NULL) {
+		DEBOUT(("No PDU for send_command, ccb = %p\n",ccb));
+		ccb->disp = disp;
 		wake_ccb(ccb, ISCSI_STATUS_NO_RESOURCES);
 		return;
 	}
@@ -1401,6 +1404,9 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		}
 	}
 
+	/* currently ignoring tag type and id */
+	pdu->Flags |= ATTR_SIMPLE;
+
 	if (!totlen)
 		pdu->Flags |= FLAG_FINAL;
 
@@ -1412,11 +1418,11 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	ccb->residual = 0;
 	ccb->flags |= CCBF_REASSIGN;
 
-	s = splbio();
+	mutex_enter(&sess->lock);
 	ccb->CmdSN = sess->CmdSN;
 	if (!immed)
 		sess->CmdSN++;
-	splx(s);
+	mutex_exit(&sess->lock);
 
 	pdu->p.command.CmdSN = htonl(ccb->CmdSN);
 
@@ -1473,8 +1479,7 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	ccb = get_ccb(conn, waitok);
 	if (ccb == NULL) {
 		xs->error = XS_BUSY;
-		xs->status = SCSI_QUEUE_FULL;
-		DEBC(conn, 0, ("No CCB in run_xfer\n"));
+		DEBC(conn, 5, ("No CCB in run_xfer, %d in use.\n", conn->usecount));
 		scsipi_done(xs);
 		return;
 	}
@@ -1579,13 +1584,12 @@ send_io_command(session_t *session, uint64_t lun, scsireq_t *req,
  *    before those time out.
  *
  *    Parameter:
- *          par      The connection
+ *          conn     The connection
  */
 
 void
-connection_timeout(void *par)
+connection_timeout(connection_t *conn)
 {
-	connection_t *conn = (connection_t *) par;
 
 	if (++conn->num_timeouts > MAX_CONN_TIMEOUTS)
 		handle_connection_error(conn, ISCSI_STATUS_TIMEOUT, NO_LOGOUT);
@@ -1602,16 +1606,18 @@ connection_timeout(void *par)
  *    Handle timeout of a sent command.
  *
  *    Parameter:
- *          par      The CCB
+ *          ccb      The CCB
  */
 
 void
-ccb_timeout(void *par)
+ccb_timeout(ccb_t *ccb)
 {
-	ccb_t *ccb = (ccb_t *) par;
 	connection_t *conn = ccb->connection;
 
 	ccb->total_tries++;
+
+	DEBC(conn, 0, ("ccb_timeout: num=%d total=%d disp=%d\n",
+		ccb->num_timeouts+1, ccb->total_tries, ccb->disp));
 
 	if (++ccb->num_timeouts > MAX_CCB_TIMEOUTS ||
 		ccb->total_tries > MAX_CCB_TRIES ||
@@ -1631,3 +1637,4 @@ ccb_timeout(void *par)
 		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
 	}
 }
+
