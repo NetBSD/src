@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.244.4.2 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.244.4.3 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.4.2 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.4.3 2016/05/29 08:44:37 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -790,6 +790,18 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
 	error = do_sys_waitid(idtype, id, &pid, &status, SCARG(uap, options),
 	    wrup, sip);
 
+	retval[0] = pid; 	/* tell userland who it was */
+
+#if 0
+	/* 
+	 * should we copyout if there was no process, hence no useful data?
+	 * We don't for an old sytle wait4() (etc) but I believe
+	 * FreeBSD does for wait6(), so a tossup...  Go with FreeBSD for now.
+	 */
+	if (pid == 0)
+		return error;
+#endif
+
 	if (SCARG(uap, status) != NULL && error == 0)
 		error = copyout(&status, SCARG(uap, status), sizeof(status));
 	if (SCARG(uap, wru) != NULL && error == 0)
@@ -999,8 +1011,10 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 			}
 
 			if ((options & WCONTINUED) != 0 &&
-			    child->p_xsig == SIGCONT) {
+			    child->p_xsig == SIGCONT &&
+			    (child->p_sflag & PS_CONTINUED)) {
 				if ((options & WNOWAIT) == 0) {
+					child->p_sflag &= ~PS_CONTINUED;
 					child->p_waited = 1;
 					parent->p_nstopchild--;
 				}

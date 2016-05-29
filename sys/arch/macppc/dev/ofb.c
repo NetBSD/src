@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.69 2012/10/27 17:18:00 chs Exp $	*/
+/*	$NetBSD: ofb.c,v 1.69.14.1 2016/05/29 08:44:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.69 2012/10/27 17:18:00 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.69.14.1 2016/05/29 08:44:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -317,7 +317,6 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct ofb_softc *sc = vd->cookie;
-	struct rasops_info *ri;
 	u_int32_t *ap = sc->sc_addrs;
 	int i;
 
@@ -325,8 +324,6 @@ ofb_mmap(void *v, void *vs, off_t offset, int prot)
 		printf("%s: no active screen.\n", device_xname(sc->sc_dev));
 		return -1;
 	}
-	
-	ri = &vd->active->scr_ri;
 	
 	/* framebuffer at offset 0 */
 	if ((offset >= 0) && (offset < sc->sc_fbsize))
@@ -444,10 +441,10 @@ ofb_putpalreg(struct ofb_softc *sc, int idx, uint8_t r, uint8_t g, uint8_t b)
 static void
 ofb_init_cmap(struct ofb_softc *sc)
 {
-	int idx, i;
+	int i;
+
 	/* mess with the palette only when we're running in 8 bit */
 	if (rascons_console_screen.scr_ri.ri_depth == 8) {
-		idx = 0;
 		for (i = 0; i < 256; i++) {
 			ofb_putpalreg(sc, i, rasops_cmap[(i * 3) + 0],
 			     rasops_cmap[(i * 3) + 1],

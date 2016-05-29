@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.4 2016/03/19 11:30:34 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.2.5 2016/05/29 08:44:39 skrll Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
@@ -28,22 +28,35 @@ SRCS+=	pci_at_mainbus.c
 .error RUMP_PCI_IOSPACE defined in Makefile.  Use userfeatures.h instead.
 .endif
 
+RUMPCOMP_USER_CPPFLAGS:=-I${.PARSEDIR}
+
+# current state-of-the-art interface (remains to be seen if it's "good enuf")
+.ifdef RUMPCOMP_MAKEFILEINC_rumpdev_pci
+.include "${RUMPCOMP_MAKEFILEINC_rumpdev_pci}"
+.endif
+
+# old-style ("compat") interfaces.  will go away some day or year.
+# why?  the "protocol" requires passing variables via the env, and
+# the names include dots which POSIX does not, strictly speaking,
+# allow in env names.  There is at least one shell (dash >= 0.58)
+# which refuses to pass variables with dots.
+.if defined(RUMPCOMP_USER_SRCS.rumpdev_pci) \
+    || defined(RUMPCOMP_MAKEFILEINC.rumpdev_pci)
+.warning Use new style RUMPCOMP_MAKEFILEINC_rumpdev_pci
+.endif
+.ifdef RUMPCOMP_USER_PATH.rumpdev_pci
 .PATH:			${RUMPCOMP_USER_PATH.rumpdev_pci}
 RUMPCOMP_USER_SRCS=	${RUMPCOMP_USER_SRCS.rumpdev_pci}
-MYDIR:=			${.PARSEDIR}
-RUMPCOMP_USER_CPPFLAGS=	-I${MYDIR}
 RUMPCOMP_USER_CPPFLAGS+=${RUMPCOMP_USER_CPPFLAGS.rumpdev_pci}
 RUMPCOMP_USER_CFLAGS=	${RUMPCOMP_USER_CFLAGS.rumpdev_pci}
-
 CPPFLAGS+=		${RUMPCOMP_CPPFLAGS.rumpdev_pci}
+.endif
+.ifdef RUMPCOMP_MAKEFILEINC.rumpdev_pci
+.include "${RUMPCOMP_MAKEFILEINC.rumpdev_pci}"
+.endif
 
 # XXX: messy
 .undef RUMPKERN_ONLY
-
-.ifdef RUMPCOMP_MAKEFILEINC.rumpdev_pci
-.warning RUMPCOMP_MAKEFILEINC interface is unstable and may change
-.include "${RUMPCOMP_MAKEFILEINC.rumpdev_pci}"
-.endif
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

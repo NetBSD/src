@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.33 2014/02/11 16:00:13 maxv Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.33.6.1 2016/05/29 08:44:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33 2014/02/11 16:00:13 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33.6.1 2016/05/29 08:44:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -58,11 +58,10 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33 2014/02/11 16:00:13 maxv Exp $"
 struct futex;
 
 struct waiting_proc {
-	lwp_t *wp_l;
-	struct futex *wp_new_futex;
+	struct futex *wp_futex;
 	kcondvar_t wp_futex_cv;
 	TAILQ_ENTRY(waiting_proc) wp_list;
-	TAILQ_ENTRY(waiting_proc) wp_rqlist;
+	bool wp_onlist;
 };
 struct futex {
 	void *f_uaddr;
@@ -70,7 +69,6 @@ struct futex {
 	uint32_t f_bitset;
 	LIST_ENTRY(futex) f_list;
 	TAILQ_HEAD(, waiting_proc) f_waiting_proc;
-	TAILQ_HEAD(, waiting_proc) f_requeue_proc;
 };
 
 static LIST_HEAD(futex_list, futex) futex_list;
@@ -432,7 +430,6 @@ futex_get(void *uaddr, uint32_t bitset)
 	f->f_bitset = bitset;
 	f->f_refcount = 1;
 	TAILQ_INIT(&f->f_waiting_proc);
-	TAILQ_INIT(&f->f_requeue_proc);
 	LIST_INSERT_HEAD(&futex_list, f, f_list);
 
 	return f;
@@ -456,7 +453,6 @@ futex_put(struct futex *f)
 	f->f_refcount--;
 	if (f->f_refcount == 0) {
 		KASSERT(TAILQ_EMPTY(&f->f_waiting_proc));
-		KASSERT(TAILQ_EMPTY(&f->f_requeue_proc));
 		LIST_REMOVE(f, f_list);
 		kmem_free(f, sizeof(*f));
 	}
@@ -465,107 +461,78 @@ futex_put(struct futex *f)
 static int 
 futex_sleep(struct futex **fp, lwp_t *l, int timeout, struct waiting_proc *wp)
 {
-	struct futex *f, *newf;
+	struct futex *f;
 	int ret;
 
 	FUTEX_LOCKASSERT;
 
 	f = *fp;
-	wp->wp_l = l;
-	wp->wp_new_futex = NULL;
-
-requeue:
+	wp->wp_futex = f;
 	TAILQ_INSERT_TAIL(&f->f_waiting_proc, wp, wp_list);
+	wp->wp_onlist = true;
 	ret = cv_timedwait_sig(&wp->wp_futex_cv, &futex_lock, timeout);
-	TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
 
-	/* if futex_wake() tells us to requeue ... */
-	newf = wp->wp_new_futex;
-	if (ret == 0 && newf != NULL) {
-		/* ... requeue ourselves on the new futex */
-		futex_put(f);
-		wp->wp_new_futex = NULL;
-		TAILQ_REMOVE(&newf->f_requeue_proc, wp, wp_rqlist);
-		*fp = f = newf;
-		goto requeue;
+	/*
+	 * we may have been requeued to a different futex before we were
+	 * woken up, so let the caller know which futex to put.   if we were
+	 * woken by futex_wake() then it took us off the waiting list,
+	 * but if our sleep was interrupted or timed out then we might
+	 * need to take ourselves off the waiting list.
+	 */
+
+	f = wp->wp_futex;
+	if (wp->wp_onlist) {
+		TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
 	}
+	*fp = f;
 	return ret;
 }
 
 static int
 futex_wake(struct futex *f, int n, struct futex *newf, int n2)
 {
-	struct waiting_proc *wp, *wpnext;
-	int count;
+	struct waiting_proc *wp;
+	int count = 0;
 
 	FUTEX_LOCKASSERT;
 
-	count = newf ? 0 : 1;
-
 	/*
-	 * first, wake up any threads sleeping on this futex.
-	 * note that sleeping threads are not in the process of requeueing.
+	 * wake up up to n threads waiting on this futex.
 	 */
 
-	TAILQ_FOREACH(wp, &f->f_waiting_proc, wp_list) {
-		KASSERT(wp->wp_new_futex == NULL);
+	while (n--) {
+		wp = TAILQ_FIRST(&f->f_waiting_proc);
+		if (wp == NULL)
+			return count;
 
-		FUTEXPRINTF(("%s: signal f %p l %p ref %d\n", __func__,
-		    f, wp->wp_l, f->f_refcount));
+		KASSERT(f == wp->wp_futex);
+		TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
+		wp->wp_onlist = false;
 		cv_signal(&wp->wp_futex_cv);
-		if (count <= n) {
-			count++;
-		} else {
-			if (newf == NULL)
-				break;
-
-			/* matching futex_put() is called by the other thread. */
-			futex_ref(newf);
-			wp->wp_new_futex = newf;
-			TAILQ_INSERT_TAIL(&newf->f_requeue_proc, wp, wp_rqlist);
-			FUTEXPRINTF(("%s: requeue newf %p l %p ref %d\n",
-			    __func__, newf, wp->wp_l, newf->f_refcount));
-			if (count - n >= n2)
-				goto out;
-		}
+		count++;
 	}
+	if (newf == NULL)
+		return count;
 
 	/*
-	 * next, deal with threads that are requeuing to this futex.
-	 * we don't need to signal these threads, any thread on the
-	 * requeue list has already been signaled but hasn't had a chance
-	 * to run and requeue itself yet.  if we would normally wake
-	 * a thread, just remove the requeue info.  if we would normally
-	 * requeue a thread, change the requeue target.
+	 * then requeue up to n2 additional threads to newf
+	 * (without waking them up).
 	 */
 
-	TAILQ_FOREACH_SAFE(wp, &f->f_requeue_proc, wp_rqlist, wpnext) {
-		KASSERT(wp->wp_new_futex == f);
+	while (n2--) {
+		wp = TAILQ_FIRST(&f->f_waiting_proc);
+		if (wp == NULL)
+			return count;
 
-		FUTEXPRINTF(("%s: unrequeue f %p l %p ref %d\n", __func__,
-		    f, wp->wp_l, f->f_refcount));
-		wp->wp_new_futex = NULL;
-		TAILQ_REMOVE(&f->f_requeue_proc, wp, wp_rqlist);
+		KASSERT(f == wp->wp_futex);
+		TAILQ_REMOVE(&f->f_waiting_proc, wp, wp_list);
 		futex_put(f);
 
-		if (count <= n) {
-			count++;
-		} else {
-			if (newf == NULL)
-				break;
-
-			/* matching futex_put() is called by the other thread. */
-			futex_ref(newf);
-			wp->wp_new_futex = newf;
-			TAILQ_INSERT_TAIL(&newf->f_requeue_proc, wp, wp_rqlist);
-			FUTEXPRINTF(("%s: rerequeue newf %p l %p ref %d\n",
-			    __func__, newf, wp->wp_l, newf->f_refcount));
-			if (count - n >= n2)
-				break;
-		}
+		wp->wp_futex = newf;
+		futex_ref(newf);
+		TAILQ_INSERT_TAIL(&newf->f_waiting_proc, wp, wp_list);
+		count++;
 	}
-
-out:
 	return count;
 }
 

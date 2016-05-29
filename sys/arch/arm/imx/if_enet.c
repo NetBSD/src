@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.3 2016/03/19 11:29:56 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.4 2016/05/29 08:44:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,14 +27,12 @@
  */
 
 /*
- * i.MX6 10/100/1000-Mbps ethernet MAC (ENET)
+ * i.MX6,7 10/100/1000-Mbps ethernet MAC (ENET)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.3 2016/03/19 11:29:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.4 2016/05/29 08:44:16 skrll Exp $");
 
-#include "imxocotp.h"
-#include "imxccm.h"
 #include "vlan.h"
 
 #include <sys/param.h>
@@ -61,17 +59,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.3 2016/03/19 11:29:56 skrll Exp $"
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#include <arm/imx/imx6var.h>
-#include <arm/imx/imx6_reg.h>
-#include <arm/imx/imx6_ocotpreg.h>
-#include <arm/imx/imx6_ocotpvar.h>
-#include <arm/imx/imx6_ccmreg.h>
-#include <arm/imx/imx6_ccmvar.h>
 #include <arm/imx/if_enetreg.h>
-#include "locators.h"
+#include <arm/imx/if_enetvar.h>
 
 #undef DEBUG_ENET
 #undef ENET_EVENT_COUNTER
+
+#define ENET_TICK	hz
 
 #ifdef DEBUG_ENET
 int enet_debug = 0;
@@ -83,7 +77,7 @@ int enet_debug = 0;
 
 
 #define RXDESC_MAXBUFSIZE	0x07f0
-				/* iMX6 ENET not work greather than 0x0800... */
+				/* ENET does not work greather than 0x0800... */
 
 #undef ENET_SUPPORT_JUMBO	/* JUMBO FRAME SUPPORT is unstable */
 #ifdef ENET_SUPPORT_JUMBO
@@ -97,94 +91,9 @@ int enet_debug = 0;
 
 
 #define ENET_MAX_PKT_NSEGS	64
-#define ENET_TX_RING_CNT	256	/* must be 2^n */
-#define ENET_RX_RING_CNT	256	/* must be 2^n */
 
-#define ENET_TX_NEXTIDX(idx)	(((idx) + 1) & (ENET_TX_RING_CNT - 1))
-#define ENET_RX_NEXTIDX(idx)	(((idx) + 1) & (ENET_RX_RING_CNT - 1))
-
-struct enet_txsoft {
-	struct mbuf *txs_mbuf;		/* head of our mbuf chain */
-	bus_dmamap_t txs_dmamap;	/* our DMA map */
-};
-
-struct enet_rxsoft {
-	struct mbuf *rxs_mbuf;		/* head of our mbuf chain */
-	bus_dmamap_t rxs_dmamap;	/* our DMA map */
-};
-
-struct enet_softc {
-	device_t sc_dev;
-
-	bus_addr_t sc_addr;
-	bus_space_tag_t sc_iot;
-	bus_space_handle_t sc_ioh;
-	bus_dma_tag_t sc_dmat;
-
-	/* interrupts */
-	void *sc_ih;
-	callout_t sc_tick_ch;
-	bool sc_stopping;
-
-	/* TX */
-	struct enet_txdesc *sc_txdesc_ring;	/* [ENET_TX_RING_CNT] */
-	bus_dmamap_t sc_txdesc_dmamap;
-	struct enet_rxdesc *sc_rxdesc_ring;	/* [ENET_RX_RING_CNT] */
-	bus_dmamap_t sc_rxdesc_dmamap;
-	struct enet_txsoft sc_txsoft[ENET_TX_RING_CNT];
-	int sc_tx_considx;
-	int sc_tx_prodidx;
-	int sc_tx_free;
-
-	/* RX */
-	struct enet_rxsoft sc_rxsoft[ENET_RX_RING_CNT];
-	int sc_rx_readidx;
-
-	/* misc */
-	int sc_if_flags;			/* local copy of if_flags */
-	int sc_flowflags;			/* 802.3x flow control flags */
-	struct ethercom sc_ethercom;		/* interface info */
-	struct mii_data sc_mii;
-	uint8_t sc_enaddr[ETHER_ADDR_LEN];
-	krndsource_t sc_rnd_source;
-
-#ifdef ENET_EVENT_COUNTER
-	struct evcnt sc_ev_t_drop;
-	struct evcnt sc_ev_t_packets;
-	struct evcnt sc_ev_t_bc_pkt;
-	struct evcnt sc_ev_t_mc_pkt;
-	struct evcnt sc_ev_t_crc_align;
-	struct evcnt sc_ev_t_undersize;
-	struct evcnt sc_ev_t_oversize;
-	struct evcnt sc_ev_t_frag;
-	struct evcnt sc_ev_t_jab;
-	struct evcnt sc_ev_t_col;
-	struct evcnt sc_ev_t_p64;
-	struct evcnt sc_ev_t_p65to127n;
-	struct evcnt sc_ev_t_p128to255n;
-	struct evcnt sc_ev_t_p256to511;
-	struct evcnt sc_ev_t_p512to1023;
-	struct evcnt sc_ev_t_p1024to2047;
-	struct evcnt sc_ev_t_p_gte2048;
-	struct evcnt sc_ev_t_octets;
-	struct evcnt sc_ev_r_packets;
-	struct evcnt sc_ev_r_bc_pkt;
-	struct evcnt sc_ev_r_mc_pkt;
-	struct evcnt sc_ev_r_crc_align;
-	struct evcnt sc_ev_r_undersize;
-	struct evcnt sc_ev_r_oversize;
-	struct evcnt sc_ev_r_frag;
-	struct evcnt sc_ev_r_jab;
-	struct evcnt sc_ev_r_p64;
-	struct evcnt sc_ev_r_p65to127;
-	struct evcnt sc_ev_r_p128to255;
-	struct evcnt sc_ev_r_p256to511;
-	struct evcnt sc_ev_r_p512to1023;
-	struct evcnt sc_ev_r_p1024to2047;
-	struct evcnt sc_ev_r_p_gte2048;
-	struct evcnt sc_ev_r_octets;
-#endif /* ENET_EVENT_COUNTER */
-};
+#define ENET_TX_NEXTIDX(idx)	(((idx) >= (ENET_TX_RING_CNT - 1)) ? 0 : ((idx) + 1))
+#define ENET_RX_NEXTIDX(idx)	(((idx) >= (ENET_RX_RING_CNT - 1)) ? 0 : ((idx) + 1))
 
 #define TXDESC_WRITEOUT(idx)					\
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdesc_dmamap,	\
@@ -216,8 +125,6 @@ struct enet_softc {
 #define ENET_REG_WRITE(sc, reg, value)				\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, reg, value)
 
-static int enet_match(device_t, struct cfdata *, void *);
-static void enet_attach(device_t, device_t, void *);
 #ifdef ENET_EVENT_COUNTER
 static void enet_attach_evcnt(struct enet_softc *);
 static void enet_update_evcnt(struct enet_softc *);
@@ -242,13 +149,11 @@ static int enet_miibus_readreg(device_t, int, int);
 static void enet_miibus_writereg(device_t, int, int, int);
 static void enet_miibus_statchg(struct ifnet *);
 
-static void enet_ocotp_getmacaddr(uint8_t *);
 static void enet_gethwaddr(struct enet_softc *, uint8_t *);
 static void enet_sethwaddr(struct enet_softc *, uint8_t *);
 static void enet_setmulti(struct enet_softc *);
 static int enet_encap_mbufalign(struct mbuf **);
 static int enet_encap_txring(struct enet_softc *, struct mbuf **);
-static int enet_init_plls(struct enet_softc *);
 static int enet_init_regs(struct enet_softc *, int);
 static int enet_alloc_ring(struct enet_softc *);
 static void enet_init_txring(struct enet_softc *);
@@ -263,43 +168,22 @@ static int enet_alloc_dma(struct enet_softc *, size_t, void **,
 CFATTACH_DECL_NEW(enet, sizeof(struct enet_softc),
     enet_match, enet_attach, NULL, NULL);
 
-/* ARGSUSED */
-static int
-enet_match(device_t parent __unused, struct cfdata *match __unused, void *aux)
-{
-	struct axi_attach_args *aa;
-
-	aa = aux;
-
-	switch (aa->aa_addr) {
-	case (IMX6_AIPS2_BASE + AIPS2_ENET_BASE):
-		return 1;
-	}
-
-	return 0;
-}
-
-/* ARGSUSED */
-static void
-enet_attach(device_t parent __unused, device_t self, void *aux)
+void
+enet_attach_common(device_t self, bus_space_tag_t iot,
+    bus_dma_tag_t dmat, bus_addr_t addr, bus_size_t size, int irq)
 {
 	struct enet_softc *sc;
-	struct axi_attach_args *aa;
 	struct ifnet *ifp;
 
-	aa = aux;
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_iot;
-	sc->sc_addr = aa->aa_addr;
-	sc->sc_dmat = aa->aa_dmat;
-
-	if (aa->aa_size == AXICF_SIZE_DEFAULT)
-		aa->aa_size = AIPS2_ENET_SIZE;
+	sc->sc_iot = iot;
+	sc->sc_addr = addr;
+	sc->sc_dmat = dmat;
 
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
-	if (bus_space_map(sc->sc_iot, sc->sc_addr, aa->aa_size, 0,
+	if (bus_space_map(sc->sc_iot, sc->sc_addr, size, 0,
 	    &sc->sc_ioh)) {
 		aprint_error_dev(self, "cannot map registers\n");
 		return;
@@ -313,22 +197,20 @@ enet_attach(device_t parent __unused, device_t self, void *aux)
 	((enaddr[0] | enaddr[1] | enaddr[2] |		\
 	 enaddr[3] | enaddr[4] | enaddr[5]) == 0)
 
-	/* get mac-address from SoC eFuse */
-	enet_ocotp_getmacaddr(sc->sc_enaddr);
 	if (IS_ENADDR_ZERO(sc->sc_enaddr)) {
 		/* by any chance, mac-address is already set by bootloader? */
 		enet_gethwaddr(sc, sc->sc_enaddr);
 		if (IS_ENADDR_ZERO(sc->sc_enaddr)) {
 			/* give up. set randomly */
-			uint32_t addr = random();
+			uint32_t eaddr = random();
 			/* not multicast */
-			sc->sc_enaddr[0] = (addr >> 24) & 0xfc;
-			sc->sc_enaddr[1] = addr >> 16;
-			sc->sc_enaddr[2] = addr >> 8;
-			sc->sc_enaddr[3] = addr;
-			addr = random();
-			sc->sc_enaddr[4] = addr >> 8;
-			sc->sc_enaddr[5] = addr;
+			sc->sc_enaddr[0] = (eaddr >> 24) & 0xfc;
+			sc->sc_enaddr[1] = eaddr >> 16;
+			sc->sc_enaddr[2] = eaddr >> 8;
+			sc->sc_enaddr[3] = eaddr;
+			eaddr = random();
+			sc->sc_enaddr[4] = eaddr >> 8;
+			sc->sc_enaddr[5] = eaddr;
 
 			aprint_error_dev(self,
 			    "cannot get mac address. set randomly\n");
@@ -339,16 +221,30 @@ enet_attach(device_t parent __unused, device_t self, void *aux)
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(sc->sc_enaddr));
 
-	/* power up and init */
-	if (enet_init_plls(sc) != 0)
-		goto failure;
 	enet_init_regs(sc, 1);
 
 	/* setup interrupt handlers */
-	if ((sc->sc_ih = intr_establish(aa->aa_irq, IPL_NET,
+	if ((sc->sc_ih = intr_establish(irq, IPL_NET,
 	    IST_LEVEL, enet_intr, sc)) == NULL) {
 		aprint_error_dev(self, "unable to establish interrupt\n");
 		goto failure;
+	}
+
+	if (sc->sc_imxtype == 7) {
+		/* i.MX7 use 3 interrupts */
+		if ((sc->sc_ih2 = intr_establish(irq + 1, IPL_NET,
+		    IST_LEVEL, enet_intr, sc)) == NULL) {
+			aprint_error_dev(self, "unable to establish 2nd interrupt\n");
+			intr_disestablish(sc->sc_ih);
+			goto failure;
+		}
+		if ((sc->sc_ih3 = intr_establish(irq + 2, IPL_NET,
+		    IST_LEVEL, enet_intr, sc)) == NULL) {
+			aprint_error_dev(self, "unable to establish 3rd interrupt\n");
+			intr_disestablish(sc->sc_ih2);
+			intr_disestablish(sc->sc_ih);
+			goto failure;
+		}
 	}
 
 	/* callout will be scheduled from enet_init() */
@@ -418,7 +314,7 @@ enet_attach(device_t parent __unused, device_t self, void *aux)
 	return;
 
  failure:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, aa->aa_size);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 	return;
 }
 
@@ -527,7 +423,6 @@ enet_tick(void *arg)
 	if (sc->sc_stopping)
 		goto out;
 
-
 #ifdef ENET_EVENT_COUNTER
 	enet_update_evcnt(sc);
 #endif
@@ -545,7 +440,7 @@ enet_tick(void *arg)
  out:
 
 	if (!sc->sc_stopping)
-		callout_schedule(&sc->sc_tick_ch, hz);
+		callout_schedule(&sc->sc_tick_ch, ENET_TICK);
 
 	splx(s);
 }
@@ -560,11 +455,17 @@ enet_intr(void *arg)
 	sc = arg;
 	status = ENET_REG_READ(sc, ENET_EIR);
 
-	if (status & ENET_EIR_TXF)
-		enet_tx_intr(arg);
-
-	if (status & ENET_EIR_RXF)
-		enet_rx_intr(arg);
+	if (sc->sc_imxtype == 7) {
+		if (status & (ENET_EIR_TXF|ENET_EIR_TXF1|ENET_EIR_TXF2))
+			enet_tx_intr(arg);
+		if (status & (ENET_EIR_RXF|ENET_EIR_RXF1|ENET_EIR_RXF2))
+			enet_rx_intr(arg);
+	} else {
+		if (status & ENET_EIR_TXF)
+			enet_tx_intr(arg);
+		if (status & ENET_EIR_RXF)
+			enet_rx_intr(arg);
+	}
 
 	if (status & ENET_EIR_EBERR) {
 		device_printf(sc->sc_dev, "Ethernet Bus Error\n");
@@ -900,24 +801,6 @@ enet_setmulti(struct enet_softc *sc)
 }
 
 static void
-enet_ocotp_getmacaddr(uint8_t *macaddr)
-{
-#if NIMXOCOTP > 0
-	uint32_t addr;
-
-	addr = imxocotp_read(OCOTP_MAC1);
-	macaddr[0] = addr >> 8;
-	macaddr[1] = addr;
-
-	addr = imxocotp_read(OCOTP_MAC0);
-	macaddr[2] = addr >> 24;
-	macaddr[3] = addr >> 16;
-	macaddr[4] = addr >> 8;
-	macaddr[5] = addr;
-#endif
-}
-
-static void
 enet_gethwaddr(struct enet_softc *sc, uint8_t *hwaddr)
 {
 	uint32_t paddr;
@@ -988,7 +871,7 @@ enet_init(struct ifnet *ifp)
 	ENET_REG_WRITE(sc, ENET_RDAR, ENET_RDAR_ACTIVE);
 
 	sc->sc_stopping = false;
-	callout_schedule(&sc->sc_tick_ch, hz);
+	callout_schedule(&sc->sc_tick_ch, ENET_TICK);
 
  init_failure:
 	splx(s);
@@ -1879,21 +1762,6 @@ enet_encap_txring(struct enet_softc *sc, struct mbuf **mp)
  * device initialize
  */
 static int
-enet_init_plls(struct enet_softc *sc)
-{
-#if NIMXCCM > 0
-	/* PLL power up */
-	if (imx6_pll_power(CCM_ANALOG_PLL_ENET, 1) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
-		return -1;
-	}
-#endif
-
-	return 0;
-}
-
-static int
 enet_init_regs(struct enet_softc *sc, int init)
 {
 	struct mii_data *mii;
@@ -1948,9 +1816,9 @@ enet_init_regs(struct enet_softc *sc, int init)
 	ENET_REG_WRITE(sc, ENET_MIBC, ENET_MIBC_MIB_CLEAR);
 	ENET_REG_WRITE(sc, ENET_MIBC, 0);
 
-	/* MII speed setup. MDCclk(=2.5MHz) = PLL6clk/((val+1)*2) */
-	val = (imx6_get_clock(IMX6CLK_PLL6) / 500000 - 1) / 10;
-	ENET_REG_WRITE(sc, ENET_MSCR, val);
+	/* MII speed setup. MDCclk(=2.5MHz) = ENET_PLL/((val+1)*2) */
+	val = ((sc->sc_pllclock) / 500000 - 1) / 10;
+	ENET_REG_WRITE(sc, ENET_MSCR, val << 1);
 
 	/* Opcode/Pause Duration */
 	ENET_REG_WRITE(sc, ENET_OPD, 0x00010020);
@@ -2005,11 +1873,10 @@ enet_init_regs(struct enet_softc *sc, int init)
 	    sc->sc_rxdesc_dmamap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
 	/* enable interrupts */
-	ENET_REG_WRITE(sc, ENET_EIMR,
-	    ENET_EIR_TXF |
-	    ENET_EIR_RXF |
-	    ENET_EIR_EBERR |
-	    0);
+	val = ENET_EIMR|ENET_EIR_TXF|ENET_EIR_RXF|ENET_EIR_EBERR;
+	if (sc->sc_imxtype == 7)
+		val |= ENET_EIR_TXF2|ENET_EIR_RXF2|ENET_EIR_TXF1|ENET_EIR_RXF1;
+	ENET_REG_WRITE(sc, ENET_EIMR, val);
 
 	/* enable ether */
 	ENET_REG_WRITE(sc, ENET_ECR,

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.1.42.2 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.1.42.3 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.1.42.2 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.1.42.3 2016/05/29 08:44:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -223,7 +223,7 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&uio);
-	error = uvm_io(&vm->vm_map, &uio);
+	error = uvm_io(&vm->vm_map, &uio, 0);
 
 	return (error);
 }
@@ -256,7 +256,7 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_WRITE;
 	UIO_SETUP_SYSSPACE(&uio);
-	error = uvm_io(&vm->vm_map, &uio);
+	error = uvm_io(&vm->vm_map, &uio, 0);
 
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280.2.3 2015/12/27 12:09:44 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.280.2.4 2016/05/29 08:44:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280.2.3 2015/12/27 12:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280.2.4 2016/05/29 08:44:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2368,11 +2368,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = intrhand_alloc();
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	intr_establish(pil, level != IPL_VM, ih);

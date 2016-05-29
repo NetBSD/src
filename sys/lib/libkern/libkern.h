@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.116.2.3 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: libkern.h,v 1.116.2.4 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -337,15 +337,22 @@ tolower(int ch)
  */
 #ifdef __COVERITY__
 #define __validate_container_of(PTR, TYPE, FIELD) 0
+#define __validate_const_container_of(PTR, TYPE, FIELD) 0
 #else
 #define __validate_container_of(PTR, TYPE, FIELD)			\
     (0 * sizeof((PTR) - &((TYPE *)(((char *)(PTR)) -			\
+    offsetof(TYPE, FIELD)))->FIELD))
+#define __validate_const_container_of(PTR, TYPE, FIELD)			\
+    (0 * sizeof((PTR) - &((const TYPE *)(((const char *)(PTR)) -	\
     offsetof(TYPE, FIELD)))->FIELD))
 #endif
 
 #define	container_of(PTR, TYPE, FIELD)					\
     ((TYPE *)(((char *)(PTR)) - offsetof(TYPE, FIELD))			\
 	+ __validate_container_of(PTR, TYPE, FIELD))
+#define	const_container_of(PTR, TYPE, FIELD)				\
+    ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
+	+ __validate_const_container_of(PTR, TYPE, FIELD))
 
 #define	MTPRNG_RLEN		624
 struct mtprng_state {
@@ -464,6 +471,10 @@ unsigned int	popcount64(uint64_t) __constfunc;
 
 void	*explicit_memset(void *, int, size_t);
 int	consttime_memequal(const void *, const void *, size_t);
+int	strnvisx(char *, size_t, const char *, size_t, int);
+#define VIS_OCTAL	0x01
+#define VIS_SAFE	0x20
+#define VIS_TRIM	0x40
 
 #ifdef notyet
 /*

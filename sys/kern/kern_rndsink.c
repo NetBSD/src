@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndsink.c,v 1.10.2.1 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_rndsink.c,v 1.10.2.2 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.10.2.1 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndsink.c,v 1.10.2.2 2016/05/29 08:44:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -142,21 +142,10 @@ rndsinks_enqueue(struct rndsink *rndsink)
 
 	KASSERT(mutex_owned(&rndsinks.lock));
 
-	/*
-	 * XXX This should request only rndsink->rs_bytes bytes of
-	 * entropy, but that might get buffered up indefinitely because
-	 * kern_rndq has no bound on the duration before it will
-	 * process queued entropy samples.  To work around this, we are
-	 * a little too incestuous with kern_rndq: we avoid marking polled
-	 * sources "fast" there, and know here that for non-fast sources,
-	 * that code will buffer two ints worth of data per source.
-	 * Later, we ought to (a) bound the duration before
-	 * queued entropy samples get processed, and (b) add a target
-	 * or something -- as soon as we get that much from the entropy
-	 * sources, distribute it.
-	 */
-	rnd_getmore(MAX(rndsink->rsink_bytes, 2 * sizeof(uint32_t)));
+	/* Kick on-demand entropy sources.  */
+	rnd_getmore(rndsink->rsink_bytes);
 
+	/* Ensure this rndsink is on the queue.  */
 	switch (rndsink->rsink_state) {
 	case RNDSINK_IDLE:
 		/* Not on the queue and nobody is handling it.  */

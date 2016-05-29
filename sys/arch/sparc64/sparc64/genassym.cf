@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.75.2.1 2015/04/06 15:18:03 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.75.2.2 2016/05/29 08:44:19 skrll Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -136,12 +136,25 @@ define	PM_PHYS		offsetof(struct pmap, pm_physaddr)
 define	PM_RESIDENT	offsetof(struct pmap, pm_stats.resident_count)
 define	PM_WIRED	offsetof(struct pmap, pm_stats.wired_count)
 
-# the assembler doesn't grok C constants with LL suffix
-define	A_SUN4U_TLB_TSB_LOCK	SUN4U_TLB_TSB_LOCK
-ifdef SUN4V
-define	A_SUN4V_TLB_ACCESS	SUN4V_TLB_ACCESS
-define	A_SUN4V_TLB_TSB_LOCK	SUN4V_TLB_TSB_LOCK
-endif
+# TLB/TTE defines
+export SUN4U_TLB_TSB_LOCK
+export SUN4U_TTE_MODIFY
+export SUN4U_TTE_ACCESS
+export SUN4U_TTE_REAL_W
+export SUN4U_TTE_W
+export SUN4U_TTE_L
+export SUN4U_TTE_CP
+export SUN4U_TTE_CV
+export SUN4U_TTE_P
+export SUN4U_TTE_EXEC
+export SUN4V_TLB_ACCESS
+export SUN4V_TLB_MODIFY
+export SUN4V_TLB_W
+export SUN4V_TLB_TSB_LOCK
+
+export PG_SHIFT4U
+
+export CTX_MASK
 
 # CPU info structure
 define	CI_SELF		offsetof(struct cpu_info, ci_self)
@@ -170,6 +183,7 @@ define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)
 define	CI_MMFSA	offsetof(struct cpu_info, ci_mmfsa)
 define	CI_TSB_DESC	offsetof(struct cpu_info, ci_tsb_desc)
 define	CI_CPUMQ	offsetof(struct cpu_info, ci_cpumq)
+define	CI_DEVMQ	offsetof(struct cpu_info, ci_devmq)
 ifdef MULTIPROCESSOR
 define	CI_IPIEVC	offsetof(struct cpu_info, ci_ipi_evcnt[0].ev_count)
 endif
@@ -254,6 +268,7 @@ define	IH_PEND		offsetof(struct intrhand, ih_pending)
 define	IH_NEXT		offsetof(struct intrhand, ih_next)
 define	IH_MAP		offsetof(struct intrhand, ih_map)
 define	IH_CLR		offsetof(struct intrhand, ih_clr)
+define	IH_ACK		offsetof(struct intrhand, ih_ack)
 define  IH_CNT		offsetof(struct intrhand, ih_cnt)
 	
 # mbuf fields of import

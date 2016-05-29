@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.121.2.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.121.2.2 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.121.2.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.121.2.2 2016/05/29 08:44:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -262,8 +262,37 @@ sonewconn(struct socket *head, bool soready)
 	KASSERT(solocked(head));
 
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2) {
-		/* Listen queue overflow. */
-		return NULL;
+		/*
+		 * Listen queue overflow.  If there is an accept filter
+		 * active, pass through the oldest cxn it's handling.
+		 */
+		if (head->so_accf == NULL) {
+			return NULL;
+		} else {
+			struct socket *so2, *next;
+
+			/* Pass the oldest connection waiting in the
+			   accept filter */
+			for (so2 = TAILQ_FIRST(&head->so_q0);
+			     so2 != NULL; so2 = next) {
+				next = TAILQ_NEXT(so2, so_qe);
+				if (so2->so_upcall == NULL) {
+					continue;
+				}
+				so2->so_upcall = NULL;
+				so2->so_upcallarg = NULL;
+				so2->so_options &= ~SO_ACCEPTFILTER;
+				so2->so_rcv.sb_flags &= ~SB_UPCALL;
+				soisconnected(so2);
+				break;
+			}
+
+			/* If nothing was nudged out of the acept filter, bail
+			 * out; otherwise proceed allocating the socket. */
+			if (so2 == NULL) {
+				return NULL;
+			}
+		}
 	}
 	if ((head->so_options & SO_ACCEPTFILTER) != 0) {
 		soready = false;

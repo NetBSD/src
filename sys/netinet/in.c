@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.6 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.7 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.6 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.7 2016/05/29 08:44:38 skrll Exp $");
 
 #include "arp.h"
 
@@ -157,7 +157,7 @@ static void	in_sysctl_init(struct sysctllog **);
 #endif
 
 #ifndef HOSTZEROBROADCAST
-#define HOSTZEROBROADCAST 1
+#define HOSTZEROBROADCAST 0
 #endif
 
 /* Note: 61, 127, 251, 509, 1021, 2039 are good. */

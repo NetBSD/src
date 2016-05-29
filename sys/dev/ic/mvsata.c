@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.33.6.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.33.6.2 2016/05/29 08:44:21 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.33.6.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.33.6.2 2016/05/29 08:44:21 skrll Exp $");
 
 #include "opt_mvsata.h"
 
@@ -888,10 +888,12 @@ mvsata_atapi_probe_device(struct atapibus_softc *sc, int target)
 		sa.sa_inqbuf.type = ATAPI_CFG_TYPE(id->atap_config);
 		sa.sa_inqbuf.removable = id->atap_config & ATAPI_CFG_REMOV ?
 		    T_REMOV : T_FIXED;
-		scsipi_strvis((u_char *)model, 40, id->atap_model, 40);
-		scsipi_strvis((u_char *)serial_number, 20, id->atap_serial, 20);
-		scsipi_strvis((u_char *)firmware_revision, 8, id->atap_revision,
-		    8);
+		strnvisx(model, sizeof(model), id->atap_model, 40,
+		    VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+		strnvisx(serial_number, sizeof(serial_number), id->atap_serial,
+		    20, VIS_TRIM|VIS_SAFE|VIS_OCTAL);
+		strnvisx(firmware_revision, sizeof(firmware_revision),
+		    id->atap_revision, 8, VIS_TRIM|VIS_SAFE|VIS_OCTAL);
 		sa.sa_inqbuf.vendor = model;
 		sa.sa_inqbuf.product = serial_number;
 		sa.sa_inqbuf.revision = firmware_revision;

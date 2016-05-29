@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.10 2015/12/28 10:15:09 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.11 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.10 2015/12/28 10:15:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.11 2016/05/29 08:44:31 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1786,7 +1786,9 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 		 * before starting the USB transfer, and send a longer one.
 		 */
 		ep->soliciting = 1;
+		kpreempt_disable();
 		softint_schedule(ep->solicit_cookie);
+		kpreempt_enable();
 	}
 
 	if (--sc->sc_refcnt < 0)

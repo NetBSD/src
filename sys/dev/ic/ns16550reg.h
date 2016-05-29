@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550reg.h,v 1.10 2013/10/03 13:23:03 kiyohara Exp $	*/
+/*	$NetBSD: ns16550reg.h,v 1.10.6.1 2016/05/29 08:44:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -54,4 +54,9 @@
 #ifdef COM_16750
 #define com_usr		31	/* status register (R) */
 #endif
-
+#ifdef	COM_AWIN
+#define	com_usr		31	/* status register (R) */
+#define	com_tfl		32	/* transmit fifo level (R) */
+#define	com_rfl		33	/* receive fifo level (R) */
+#define	com_halt	41	/* halt tx (R/W) */
+#endif

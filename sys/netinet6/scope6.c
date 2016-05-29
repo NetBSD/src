@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.10.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: scope6.c,v 1.10.2.2 2016/05/29 08:44:39 skrll Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.2 2016/05/29 08:44:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.1 2015/04/06 15:18:23 skrll Exp $"
 #include <sys/queue.h>
 #include <sys/syslog.h>
 
-#include <net/route.h>
 #include <net/if.h>
 
 #include <netinet/in.h>
@@ -381,12 +380,7 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	uint32_t zoneid = 0;
 	const struct scope6_id *sid = SID(ifp);
 
-#ifdef DIAGNOSTIC
-	if (sid == NULL) { /* should not happen */
-		panic("in6_setscope: scope array is NULL");
-		/* NOTREACHED */
-	}
-#endif
+	KASSERT(sid != NULL);
 
 	/*
 	 * special case: the loopback address can only belong to a loopback

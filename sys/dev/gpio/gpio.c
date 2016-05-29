@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.57 2014/07/25 08:10:36 dholland Exp $ */
+/* $NetBSD: gpio.c,v 1.57.4.1 2016/05/29 08:44:21 skrll Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.57 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.57.4.1 2016/05/29 08:44:21 skrll Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -298,6 +298,45 @@ gpiobus_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
+/* called from backends when a interrupt even occurs */
+void
+gpio_intr(device_t self, uint32_t evts)
+{
+	struct gpio_softc *sc = device_private(self);
+	void (*callback)(void *);
+	void *callback_arg;
+
+	for (int i = 0; i < sc->sc_npins; i++) {
+		if (evts & (1 << i)) {
+			mutex_enter(&sc->sc_mtx);
+			callback = sc->sc_pins[i].pin_callback;
+			callback_arg = sc->sc_pins[i].pin_callback_arg;
+			DPRINTFN(2, ("gpio pin %d event callback %p\n", i, callback));
+			if (callback != NULL) {
+				callback(callback_arg);
+			}
+			mutex_exit(&sc->sc_mtx);
+		}
+	}
+}
+
+void *
+gpio_find_device(const char *name)
+{
+	device_t gpio_dev;
+	gpio_dev = device_find_by_xname(name);
+	if (gpio_dev == NULL)
+		return NULL;
+	return device_private(gpio_dev);
+}
+
+const char *
+gpio_get_name(void *gpio)
+{
+	struct gpio_softc *sc = gpio;
+	return device_xname(sc->sc_dev);
+}
+
 /* return 1 if all pins can be mapped, 0 if not */
 int
 gpio_pin_can_map(void *gpio, int offset, uint32_t mask)
@@ -379,8 +418,42 @@ void
 gpio_pin_ctl(void *gpio, struct gpio_pinmap *map, int pin, int flags)
 {
 	struct gpio_softc *sc = gpio;
+	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
 
-	return gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	KASSERT((flags & GPIO_PIN_EVENTS) == 0);
+	mutex_enter(&sc->sc_mtx);
+	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	pinp->pin_callback = NULL;
+	pinp->pin_callback_arg = NULL;
+	mutex_exit(&sc->sc_mtx);
+}
+
+int
+gpio_pin_ctl_intr(void *gpio, struct gpio_pinmap *map, int pin, int flags,
+    int ipl, void (*callback)(void *), void *arg)
+{
+	struct gpio_softc *sc = gpio;
+	struct gpio_pin *pinp = &sc->sc_pins[map->pm_map[pin]];
+	KASSERT((flags & GPIO_PIN_EVENTS) != 0);
+	if (ipl != IPL_VM)
+		return EINVAL;
+	mutex_enter(&sc->sc_mtx);
+	if (pinp->pin_callback != NULL) {
+		mutex_exit(&sc->sc_mtx);
+		return EEXIST;
+	}
+	pinp->pin_callback = callback;
+	pinp->pin_callback_arg = arg;
+	gpiobus_pin_ctl(sc->sc_gc, map->pm_map[pin], flags);
+	mutex_exit(&sc->sc_mtx);
+	return 0;
+}
+
+void
+gpio_pin_irqen(void *gpio, struct gpio_pinmap *map, int pin, bool en)
+{
+	struct gpio_softc *sc = gpio;
+	gpiobus_pin_irqen(sc->sc_gc, map->pm_map[pin], en);
 }
 
 int

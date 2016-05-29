@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rio.c,v 1.21.40.1 2016/04/22 15:44:08 skrll Exp $	*/
+/*	$NetBSD: altq_rio.c,v 1.21.40.2 2016/05/29 08:44:15 skrll Exp $	*/
 /*	$KAME: altq_rio.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.21.40.1 2016/04/22 15:44:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rio.c,v 1.21.40.2 2016/05/29 08:44:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -326,19 +326,6 @@ dscp2index(u_int8_t dscp)
 }
 #endif
 
-#if 1
-/*
- * kludge: when a packet is dequeued, we need to know its drop precedence
- * in order to keep the queue length of each drop precedence.
- * use m_pkthdr.rcvif to pass this info.
- */
-#define	RIOM_SET_PRECINDEX(m, idx)	\
-	do { (m)->m_pkthdr.rcvif = (struct ifnet *)((long)(idx)); } while (0)
-#define	RIOM_GET_PRECINDEX(m)	\
-	({ long idx; idx = (long)((m)->m_pkthdr.rcvif); \
-	(m)->m_pkthdr.rcvif = NULL; idx; })
-#endif
-
 int
 rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
     struct altq_pktattr *pktattr)
@@ -436,7 +423,7 @@ rio_addq(rio_t *rp, class_queue_t *q, struct mbuf *m,
 		rp->rio_precstate[i].qlen++;
 
 	/* save drop precedence index in mbuf hdr */
-	RIOM_SET_PRECINDEX(m, dpindex);
+	M_SETCTX(m, (intptr_t)dpindex);
 
 	if (rp->rio_flags & RIOF_CLEARDSCP)
 		dsfield &= ~DSCP_MASK;
@@ -461,7 +448,7 @@ rio_getq(rio_t *rp, class_queue_t *q)
 	if ((m = _getq(q)) == NULL)
 		return NULL;
 
-	dpindex = RIOM_GET_PRECINDEX(m);
+	dpindex = M_GETCTX(m, intptr_t);
 	for (i = dpindex; i < RIO_NDROPPREC; i++) {
 		if (--rp->rio_precstate[i].qlen == 0) {
 			if (rp->rio_precstate[i].idle == 0) {

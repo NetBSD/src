@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.6 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.7 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.6 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.7 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -728,26 +728,37 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 	struct bridge_iflist *bif = NULL;
 	struct ifnet *ifs;
 	int error = 0;
+	struct psref psref;
 
-	ifs = ifunit(req->ifbr_ifsname);
+	ifs = if_get(req->ifbr_ifsname, &psref);
 	if (ifs == NULL)
 		return (ENOENT);
 
-	if (sc->sc_if.if_mtu != ifs->if_mtu)
-		return (EINVAL);
+	if (sc->sc_if.if_mtu != ifs->if_mtu) {
+		error = EINVAL;
+		goto out;
+	}
 
-	if (ifs->if_bridge == sc)
-		return (EEXIST);
+	if (ifs->if_bridge == sc) {
+		error = EEXIST;
+		goto out;
+	}
 
-	if (ifs->if_bridge != NULL)
-		return (EBUSY);
+	if (ifs->if_bridge != NULL) {
+		error = EBUSY;
+		goto out;
+	}
 
-	if (ifs->_if_input != ether_input)
-		return EINVAL;
+	if (ifs->_if_input != ether_input) {
+		error = EINVAL;
+		goto out;
+	}
 
 	/* FIXME: doesn't work with non-IFF_SIMPLEX interfaces */
-	if ((ifs->if_flags & IFF_SIMPLEX) == 0)
-		return EINVAL;
+	if ((ifs->if_flags & IFF_SIMPLEX) == 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	bif = kmem_alloc(sizeof(*bif), KM_SLEEP);
 
@@ -789,6 +800,7 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		bstp_stop(sc);
 
  out:
+	if_put(ifs, &psref);
 	if (error) {
 		if (bif != NULL)
 			kmem_free(bif, sizeof(*bif));
@@ -1381,8 +1393,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
 
-	IFQ_ENQUEUE(&dst_ifp->if_snd, m, error);
-
+	error = (*dst_ifp->if_transmit)(dst_ifp, m);
 	if (error) {
 		/* mbuf is already freed */
 		sc->sc_if.if_oerrors++;
@@ -1391,16 +1402,8 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += len;
-
-	dst_ifp->if_obytes += len;
-
-	if (mflags & M_MCAST) {
+	if (mflags & M_MCAST)
 		sc->sc_if.if_omcasts++;
-		dst_ifp->if_omcasts++;
-	}
-
-	if ((dst_ifp->if_flags & IFF_OACTIVE) == 0)
-		(*dst_ifp->if_start)(dst_ifp);
 }
 
 /*
@@ -1415,7 +1418,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
  */
 int
 bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct ether_header *eh;
 	struct ifnet *dst_if;
@@ -1430,6 +1433,14 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 
 	eh = mtod(m, struct ether_header *);
 	sc = ifp->if_bridge;
+
+	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		if (memcmp(etherbroadcastaddr,
+		    eh->ether_dhost, ETHER_ADDR_LEN) == 0)
+			m->m_flags |= M_BCAST;
+		else
+			m->m_flags |= M_MCAST;
+	}
 
 	/*
 	 * If bridge is down, but the original output interface is up,
@@ -1446,11 +1457,13 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	 * If the packet is a multicast, or we don't know a better way to
 	 * get there, send to all interfaces.
 	 */
-	if (ETHER_IS_MULTICAST(eh->ether_dhost))
+	if ((m->m_flags & (M_MCAST | M_BCAST)) != 0)
 		dst_if = NULL;
 	else
 		dst_if = bridge_rtlookup(sc, eh->ether_dhost);
 	if (dst_if == NULL) {
+		/* XXX Should call bridge_broadcast, but there are locking
+		 * issues which need resolving first. */
 		struct bridge_iflist *bif;
 		struct mbuf *mc;
 		bool used = false;
@@ -1483,7 +1496,10 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			}
 
 			if (PSLIST_READER_NEXT(bif, struct bridge_iflist,
-			    bif_next) == NULL) {
+			    bif_next) == NULL &&
+			    ((m->m_flags & (M_MCAST | M_BCAST)) == 0 ||
+			    dst_if == ifp))
+			{
 				used = true;
 				mc = m;
 			} else {
@@ -1501,6 +1517,36 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 #ifndef NET_MPSAFE
 			splx(s);
 #endif
+
+			if ((m->m_flags & (M_MCAST | M_BCAST)) != 0 &&
+			    dst_if != ifp)
+			{
+				if (PSLIST_READER_NEXT(bif,
+				    struct bridge_iflist, bif_next) == NULL)
+				{
+					used = true;
+					mc = m;
+				} else {
+					mc = m_copym(m, 0, M_COPYALL,
+					    M_DONTWAIT);
+					if (mc == NULL) {
+						sc->sc_if.if_oerrors++;
+						goto next;
+					}
+				}
+
+				mc->m_pkthdr.rcvif = dst_if;
+				mc->m_flags &= ~M_PROMISC;
+
+#ifndef NET_MPSAFE
+				s = splnet();
+#endif
+				ether_input(dst_if, mc);
+#ifndef NET_MPSAFE
+				splx(s);
+#endif
+			}
+
 next:
 			BRIDGE_PSZ_RENTER(s);
 			bridge_release_member(sc, bif, &psref);
@@ -1784,8 +1830,6 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 			if (bridge_ourether(_bif, eh, 0)) {
 				bridge_acquire_member(sc, _bif, &_psref);
 				BRIDGE_PSZ_REXIT(s);
-				if (_bif == NULL)
-					goto out;
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);

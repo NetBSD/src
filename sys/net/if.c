@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.6 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.7 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.6 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.7 2016/05/29 08:44:38 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -161,13 +161,19 @@ MALLOC_DEFINE(M_IFMADDR, "ether_multi", "link-level multicast address");
 /*
  * Global list of interfaces.
  */
+/* DEPRECATED. Remove it once kvm(3) users disappeared */
 struct ifnet_head		ifnet_list;
-static ifnet_t **		ifindex2ifnet = NULL;
 
+struct pslist_head		ifnet_pslist;
+static ifnet_t **		ifindex2ifnet = NULL;
 static u_int			if_index = 1;
 static size_t			if_indexlim = 0;
 static uint64_t			index_gen;
-static kmutex_t			index_gen_mtx;
+/* Mutex to protect the above objects. */
+kmutex_t			ifnet_mtx __cacheline_aligned;
+struct psref_class		*ifnet_psref_class __read_mostly;
+static pserialize_t		ifnet_psz;
+
 static kmutex_t			if_clone_mtx;
 
 struct ifnet *lo0ifp;
@@ -186,10 +192,6 @@ pfil_head_t *	if_pfil;
 static kauth_listener_t if_listener;
 
 static int doifioctl(struct socket *, u_long, void *, struct lwp *);
-static int ifioctl_attach(struct ifnet *);
-static void ifioctl_detach(struct ifnet *);
-static void ifnet_lock_enter(struct ifnet_lock *);
-static void ifnet_lock_exit(struct ifnet_lock *);
 static void if_detach_queues(struct ifnet *, struct ifqueue *);
 static void sysctl_sndq_setup(struct sysctllog **, const char *,
     struct ifaltq *);
@@ -269,9 +271,12 @@ ifinit(void)
 void
 ifinit1(void)
 {
-	mutex_init(&index_gen_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&if_clone_mtx, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&ifnet_list);
+	mutex_init(&ifnet_mtx, MUTEX_DEFAULT, IPL_NONE);
+	ifnet_psz = pserialize_create();
+	ifnet_psref_class = psref_class_create("ifnet", IPL_SOFTNET);
+	PSLIST_INIT(&ifnet_pslist);
 	if_indexlim = 8;
 
 	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
@@ -308,7 +313,7 @@ if_initname(struct ifnet *ifp, const char *name, int unit)
 
 int
 if_nulloutput(struct ifnet *ifp, struct mbuf *m,
-    const struct sockaddr *so, struct rtentry *rt)
+    const struct sockaddr *so, const struct rtentry *rt)
 {
 
 	return ENXIO;
@@ -329,13 +334,16 @@ if_nullstart(struct ifnet *ifp)
 }
 
 int
+if_nulltransmit(struct ifnet *ifp, struct mbuf *m)
+{
+
+	return ENXIO;
+}
+
+int
 if_nullioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 
-	/* Wake ifioctl_detach(), who may wait for all threads to
-	 * quit the critical section.
-	 */
-	cv_signal(&ifp->if_ioctl_lock->il_emptied);
 	return ENXIO;
 }
 
@@ -518,9 +526,7 @@ if_getindex(ifnet_t *ifp)
 {
 	bool hitlimit = false;
 
-	mutex_enter(&index_gen_mtx);
 	ifp->if_index_gen = index_gen++;
-	mutex_exit(&index_gen_mtx);
 
 	ifp->if_index = if_index;
 	if (ifindex2ifnet == NULL) {
@@ -637,7 +643,13 @@ if_initialize(ifnet_t *ifp)
 	if (ifp->if_link_si == NULL)
 		panic("%s: softint_establish() failed", __func__);
 
+	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
+	psref_target_init(&ifp->if_psref, ifnet_psref_class);
+	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+
+	IFNET_LOCK();
 	if_getindex(ifp);
+	IFNET_UNLOCK();
 }
 
 /*
@@ -646,8 +658,12 @@ if_initialize(ifnet_t *ifp)
 void
 if_register(ifnet_t *ifp)
 {
-	if (ifioctl_attach(ifp) != 0)
-		panic("%s: ifioctl_attach() failed", __func__);
+	/*
+	 * If the driver has not supplied its own if_ioctl, then
+	 * supply the default.
+	 */
+	if (ifp->if_ioctl == NULL)
+		ifp->if_ioctl = ifioctl_common;
 
 	sysctl_sndq_setup(&ifp->if_sysctl_log, ifp->if_xname, &ifp->if_snd);
 
@@ -665,7 +681,13 @@ if_register(ifnet_t *ifp)
 		if_slowtimo(ifp);
 	}
 
+	if (ifp->if_transmit == NULL || ifp->if_transmit == if_nulltransmit)
+		ifp->if_transmit = if_transmit;
+
+	IFNET_LOCK();
 	TAILQ_INSERT_TAIL(&ifnet_list, ifp, if_list);
+	IFNET_WRITER_INSERT_TAIL(ifp);
+	IFNET_UNLOCK();
 }
 
 /*
@@ -902,7 +924,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
  * See the above comment of if_initialize.
  *
  * Note that it implicitly enables if_percpuq to make drivers easy to
- * migrate softinet-based if_input without much changes. If you don't
+ * migrate softint-based if_input without much changes. If you don't
  * want to enable it, use if_initialize instead.
  */
 void
@@ -919,11 +941,20 @@ if_attachdomain(void)
 {
 	struct ifnet *ifp;
 	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
 
-	s = splnet();
-	IFNET_FOREACH(ifp)
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
 		if_attachdomain1(ifp);
-	splx(s);
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 }
 
 static void
@@ -959,6 +990,7 @@ if_deactivate(struct ifnet *ifp)
 	ifp->if_output	 = if_nulloutput;
 	ifp->_if_input	 = if_nullinput;
 	ifp->if_start	 = if_nullstart;
+	ifp->if_transmit = if_nulltransmit;
 	ifp->if_ioctl	 = if_nullioctl;
 	ifp->if_init	 = if_nullinit;
 	ifp->if_stop	 = if_nullstop;
@@ -1011,8 +1043,24 @@ if_detach(struct ifnet *ifp)
 
 	s = splnet();
 
+	sysctl_teardown(&ifp->if_sysctl_log);
+	mutex_enter(ifp->if_ioctl_lock);
+	ifp->if_ioctl = if_nullioctl;
+	mutex_exit(ifp->if_ioctl_lock);
+
+	IFNET_LOCK();
 	ifindex2ifnet[ifp->if_index] = NULL;
 	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
+	IFNET_WRITER_REMOVE(ifp);
+	pserialize_perform(ifnet_psz);
+	IFNET_UNLOCK();
+
+	/* Wait for all readers to drain before freeing.  */
+	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
+	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
+
+	mutex_obj_free(ifp->if_ioctl_lock);
+	ifp->if_ioctl_lock = NULL;
 
 	if (ifp->if_slowtimo != NULL) {
 		ifp->if_slowtimo = NULL;
@@ -1035,8 +1083,6 @@ if_detach(struct ifnet *ifp)
 
 	if (ifp->if_snd.ifq_lock)
 		mutex_obj_free(ifp->if_snd.ifq_lock);
-
-	sysctl_teardown(&ifp->if_sysctl_log);
 
 #if NCARP > 0
 	/* Remove the interface from any carp group it is a part of.  */
@@ -1148,8 +1194,6 @@ again:
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
-	ifioctl_detach(ifp);
-
 	IF_AFDATA_LOCK_DESTROY(ifp);
 
 	softint_disestablish(ifp->if_link_si);
@@ -1257,13 +1301,18 @@ if_clone_create(const char *name)
 {
 	struct if_clone *ifc;
 	int unit;
+	struct ifnet *ifp;
+	struct psref psref;
 
 	ifc = if_clone_lookup(name, &unit);
 	if (ifc == NULL)
 		return EINVAL;
 
-	if (ifunit(name) != NULL)
+	ifp = if_get(name, &psref);
+	if (ifp != NULL) {
+		if_put(ifp, &psref);
 		return EEXIST;
+	}
 
 	return (*ifc->ifc_create)(ifc, unit);
 }
@@ -1276,17 +1325,29 @@ if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
+	struct psref psref;
 
 	ifc = if_clone_lookup(name, NULL);
 	if (ifc == NULL)
 		return EINVAL;
 
-	ifp = ifunit(name);
+	if (ifc->ifc_destroy == NULL)
+		return EOPNOTSUPP;
+
+	ifp = if_get(name, &psref);
 	if (ifp == NULL)
 		return ENXIO;
 
-	if (ifc->ifc_destroy == NULL)
-		return EOPNOTSUPP;
+	/* We have to disable ioctls here */
+	mutex_enter(ifp->if_ioctl_lock);
+	ifp->if_ioctl = if_nullioctl;
+	mutex_exit(ifp->if_ioctl_lock);
+
+	/*
+	 * We cannot call ifc_destroy with holding ifp.
+	 * Releasing ifp here is safe thanks to if_clone_mtx.
+	 */
+	if_put(ifp, &psref);
 
 	return (*ifc->ifc_destroy)(ifp);
 }
@@ -1445,8 +1506,10 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
+	int s;
 
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
@@ -1462,6 +1525,7 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 				return ifa;
 		}
 	}
+	pserialize_read_exit(s);
 	return NULL;
 }
 
@@ -1474,8 +1538,10 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
+	int s;
 
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
@@ -1488,6 +1554,7 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 				return ifa;
 		}
 	}
+	pserialize_read_exit(s);
 	return NULL;
 }
 
@@ -1504,6 +1571,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 	const char *addr_data = addr->sa_data, *cplim;
+	int s;
 
 	if (af == AF_LINK) {
 		sdl = satocsdl(addr);
@@ -1517,7 +1585,8 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	if (af == AF_APPLETALK) {
 		const struct sockaddr_at *sat, *sat2;
 		sat = (const struct sockaddr_at *)addr;
-		IFNET_FOREACH(ifp) {
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifp) {
 			if (ifp->if_output == if_nulloutput)
 				continue;
 			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
@@ -1531,10 +1600,12 @@ ifa_ifwithnet(const struct sockaddr *addr)
 				ifa_maybe = ifa;
 			}
 		}
+		pserialize_read_exit(s);
 		return ifa_maybe;
 	}
 #endif
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
@@ -1560,6 +1631,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 				ifa_maybe = ifa;
 		}
 	}
+	pserialize_read_exit(s);
 	return ifa_maybe;
 }
 
@@ -1584,17 +1656,21 @@ struct ifaddr *
 ifa_ifwithaf(int af)
 {
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
+	int s;
 
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == af)
-				return ifa;
+				goto out;
 		}
 	}
-	return NULL;
+out:
+	pserialize_read_exit(s);
+	return ifa;
 }
 
 /*
@@ -2027,6 +2103,7 @@ ifunit(const char *name)
 	const char *cp = name;
 	u_int unit = 0;
 	u_int i;
+	int s;
 
 	/*
 	 * If the entire name is a number, treat it as an ifindex.
@@ -2047,19 +2124,103 @@ ifunit(const char *name)
 		return ifp;
 	}
 
-	IFNET_FOREACH(ifp) {
+	ifp = NULL;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (ifp->if_output == if_nulloutput)
 			continue;
 	 	if (strcmp(ifp->if_xname, name) == 0)
-			return ifp;
+			goto out;
 	}
-	return NULL;
+out:
+	pserialize_read_exit(s);
+	return ifp;
+}
+
+/*
+ * Get a reference of an ifnet object by an interface name.
+ * The returned reference is protected by psref(9). The caller
+ * must release a returned reference by if_put after use.
+ */
+struct ifnet *
+if_get(const char *name, struct psref *psref)
+{
+	struct ifnet *ifp;
+	const char *cp = name;
+	u_int unit = 0;
+	u_int i;
+	int s;
+
+	/*
+	 * If the entire name is a number, treat it as an ifindex.
+	 */
+	for (i = 0; i < IFNAMSIZ && *cp >= '0' && *cp <= '9'; i++, cp++) {
+		unit = unit * 10 + (*cp - '0');
+	}
+
+	/*
+	 * If the number took all of the name, then it's a valid ifindex.
+	 */
+	if (i == IFNAMSIZ || (cp != name && *cp == '\0')) {
+		if (unit >= if_indexlim)
+			return NULL;
+		ifp = ifindex2ifnet[unit];
+		if (ifp == NULL || ifp->if_output == if_nulloutput)
+			return NULL;
+		return ifp;
+	}
+
+	ifp = NULL;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		if (ifp->if_output == if_nulloutput)
+			continue;
+		if (strcmp(ifp->if_xname, name) == 0) {
+			psref_acquire(psref, &ifp->if_psref,
+			    ifnet_psref_class);
+			goto out;
+		}
+	}
+out:
+	pserialize_read_exit(s);
+	return ifp;
+}
+
+/*
+ * Release a reference of an ifnet object given by if_get or
+ * if_get_byindex.
+ */
+void
+if_put(const struct ifnet *ifp, struct psref *psref)
+{
+
+	psref_release(psref, &ifp->if_psref, ifnet_psref_class);
 }
 
 ifnet_t *
 if_byindex(u_int idx)
 {
 	return (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+}
+
+/*
+ * Get a reference of an ifnet object by an interface index.
+ * The returned reference is protected by psref(9). The caller
+ * must release a returned reference by if_put after use.
+ */
+ifnet_t *
+if_get_byindex(u_int idx, struct psref *psref)
+{
+	ifnet_t *ifp;
+	int s;
+
+	s = pserialize_read_enter();
+	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
+	if (ifp != NULL)
+		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+	pserialize_read_exit(s);
+
+	return ifp;
 }
 
 /* common */
@@ -2278,32 +2439,6 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 }
 
-static void
-ifnet_lock_enter(struct ifnet_lock *il)
-{
-	uint64_t *nenter;
-
-	/* Before trying to acquire the mutex, increase the count of threads
-	 * who have entered or who wait to enter the critical section.
-	 * Avoid one costly locked memory transaction by keeping a count for
-	 * each CPU.
-	 */
-	nenter = percpu_getref(il->il_nenter);
-	(*nenter)++;
-	percpu_putref(il->il_nenter);
-	mutex_enter(&il->il_lock);
-}
-
-static void
-ifnet_lock_exit(struct ifnet_lock *il)
-{
-	/* Increase the count of threads who have exited the critical
-	 * section.  Increase while we still hold the lock.
-	 */
-	il->il_nexit++;
-	mutex_exit(&il->il_lock);
-}
-
 /*
  * Interface ioctls.
  */
@@ -2322,6 +2457,8 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct oifreq *oifr = NULL;
 #endif
 	int r;
+	struct psref psref;
+	int bound = curlwp->l_pflag & LP_BOUND;
 
 	switch (cmd) {
 #ifdef COMPAT_OIFREQ
@@ -2350,24 +2487,29 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #endif
 		ifr = data;
 
-	ifp = ifunit(ifr->ifr_name);
-
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
+		curlwp->l_pflag |= LP_BOUND;
 		if (l != NULL) {
+			ifp = if_get(ifr->ifr_name, &psref);
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    (void *)cmd, NULL);
-			if (error != 0)
+			if (ifp != NULL)
+				if_put(ifp, &psref);
+			if (error != 0) {
+				curlwp->l_pflag ^= bound ^ LP_BOUND;
 				return error;
+			}
 		}
 		mutex_enter(&if_clone_mtx);
 		r = (cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name);
 		mutex_exit(&if_clone_mtx);
+		curlwp->l_pflag ^= bound ^ LP_BOUND;
 		return r;
 
 	case SIOCIFGCLONERS:
@@ -2378,8 +2520,12 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 	}
 
-	if (ifp == NULL)
+	curlwp->l_pflag |= LP_BOUND;
+	ifp = if_get(ifr->ifr_name, &psref);
+	if (ifp == NULL) {
+		curlwp->l_pflag ^= bound ^ LP_BOUND;
 		return ENXIO;
+	}
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -2414,13 +2560,14 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    (void *)cmd, NULL);
 			if (error != 0)
-				return error;
+				goto out;
 		}
 	}
 
 	oif_flags = ifp->if_flags;
 
-	ifnet_lock_enter(ifp->if_ioctl_lock);
+	mutex_enter(ifp->if_ioctl_lock);
+
 	error = (*ifp->if_ioctl)(ifp, cmd, data);
 	if (error != ENOTTY)
 		;
@@ -2447,98 +2594,11 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		ifreqn2o(oifr, ifr);
 #endif
 
-	ifnet_lock_exit(ifp->if_ioctl_lock);
+	mutex_exit(ifp->if_ioctl_lock);
+out:
+	if_put(ifp, &psref);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 	return error;
-}
-
-/* This callback adds to the sum in `arg' the number of
- * threads on `ci' who have entered or who wait to enter the
- * critical section.
- */
-static void
-ifnet_lock_sum(void *p, void *arg, struct cpu_info *ci)
-{
-	uint64_t *sum = arg, *nenter = p;
-
-	*sum += *nenter;
-}
-
-/* Return the number of threads who have entered or who wait
- * to enter the critical section on all CPUs.
- */
-static uint64_t
-ifnet_lock_entrances(struct ifnet_lock *il)
-{
-	uint64_t sum = 0;
-
-	percpu_foreach(il->il_nenter, ifnet_lock_sum, &sum);
-
-	return sum;
-}
-
-static int
-ifioctl_attach(struct ifnet *ifp)
-{
-	struct ifnet_lock *il;
-
-	/* If the driver has not supplied its own if_ioctl, then
-	 * supply the default.
-	 */
-	if (ifp->if_ioctl == NULL)
-		ifp->if_ioctl = ifioctl_common;
-
-	/* Create an ifnet_lock for synchronizing ifioctls. */
-	if ((il = kmem_zalloc(sizeof(*il), KM_SLEEP)) == NULL)
-		return ENOMEM;
-
-	il->il_nenter = percpu_alloc(sizeof(uint64_t));
-	if (il->il_nenter == NULL) {
-		kmem_free(il, sizeof(*il));
-		return ENOMEM;
-	}
-
-	mutex_init(&il->il_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&il->il_emptied, ifp->if_xname);
-
-	ifp->if_ioctl_lock = il;
-
-	return 0;
-}
-
-/*
- * This must not be called until after `ifp' has been withdrawn from the
- * ifnet tables so that ifioctl() cannot get a handle on it by calling
- * ifunit().
- */
-static void
-ifioctl_detach(struct ifnet *ifp)
-{
-	struct ifnet_lock *il;
-
-	il = ifp->if_ioctl_lock;
-	mutex_enter(&il->il_lock);
-	/* Install if_nullioctl to make sure that any thread that
-	 * subsequently enters the critical section will quit it
-	 * immediately and signal the condition variable that we
-	 * wait on, below.
-	 */
-	ifp->if_ioctl = if_nullioctl;
-	/* Sleep while threads are still in the critical section or
-	 * wait to enter it.
-	 */
-	while (ifnet_lock_entrances(il) != il->il_nexit)
-		cv_wait(&il->il_emptied, &il->il_lock);
-	/* At this point, we are the only thread still in the critical
-	 * section, and no new thread can get a handle on the ifioctl
-	 * lock, so it is safe to free its memory.
-	 */
-	mutex_exit(&il->il_lock);
-	ifp->if_ioctl_lock = NULL;
-	percpu_free(il->il_nenter, sizeof(uint64_t));
-	il->il_nenter = NULL;
-	cv_destroy(&il->il_emptied);
-	mutex_destroy(&il->il_lock);
-	kmem_free(il, sizeof(*il));
 }
 
 /*
@@ -2580,17 +2640,27 @@ ifconf(u_long cmd, void *data)
 	int space = 0, error = 0;
 	const int sz = (int)sizeof(struct ifreq);
 	const bool docopy = ifc->ifc_req != NULL;
+	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
+	struct psref psref;
 
 	if (docopy) {
 		space = ifc->ifc_len;
 		ifrp = ifc->ifc_req;
 	}
 
-	IFNET_FOREACH(ifp) {
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
+
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
-		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0')
-			return ENAMETOOLONG;
+		if (ifr.ifr_name[sizeof(ifr.ifr_name) - 1] != '\0') {
+			error = ENAMETOOLONG;
+			goto release_exit;
+		}
 		if (IFADDR_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
@@ -2601,7 +2671,7 @@ ifconf(u_long cmd, void *data)
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					return error;
+					goto release_exit;
 				ifrp++;
 				space -= sz;
 			}
@@ -2620,11 +2690,17 @@ ifconf(u_long cmd, void *data)
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
 				if (error != 0)
-					return (error);
+					goto release_exit;
 				ifrp++; space -= sz;
 			}
 		}
+
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
+
 	if (docopy) {
 		KASSERT(0 <= space && space <= ifc->ifc_len);
 		ifc->ifc_len -= space;
@@ -2633,6 +2709,11 @@ ifconf(u_long cmd, void *data)
 		ifc->ifc_len = space;
 	}
 	return (0);
+
+release_exit:
+	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	return error;
 }
 
 int
@@ -2667,28 +2748,42 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 }
 
 /*
+ * wrapper function for the drivers which doesn't have if_transmit().
+ */
+int
+if_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	int s, error;
+
+	s = splnet();
+
+	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+	if (error != 0) {
+		/* mbuf is already freed */
+		goto out;
+	}
+
+	ifp->if_obytes += m->m_pkthdr.len;;
+	if (m->m_flags & M_MCAST)
+		ifp->if_omcasts++;
+
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+out:
+	splx(s);
+
+	return error;
+}
+
+/*
  * Queue message on interface, and start output if interface
  * not yet active.
  */
 int
 ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
-	int len = m->m_pkthdr.len;
-	int mflags = m->m_flags;
-	int s = splnet();
-	int error;
 
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error != 0)
-		goto out;
-	ifp->if_obytes += len;
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-out:
-	splx(s);
-	return error;
+	return (*ifp->if_transmit)(ifp, m);
 }
 
 /*
@@ -2728,6 +2823,7 @@ if_addr_init(ifnet_t *ifp, struct ifaddr *ifa, const bool src)
 	if (ifp->if_initaddr != NULL)
 		rc = (*ifp->if_initaddr)(ifp, ifa, src);
 	else if (src ||
+		/* FIXME: may not hold if_ioctl_lock */
 	         (rc = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ifa)) == ENOTTY)
 		rc = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ifa);
 
@@ -2794,6 +2890,7 @@ if_flags_set(ifnet_t *ifp, const short flags)
 		memset(&ifr, 0, sizeof(ifr));
 
 		ifr.ifr_flags = flags & ~IFF_CANTCHANGE;
+		/* FIXME: may not hold if_ioctl_lock */
 		rc = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
 
 		if (rc != 0 && cantflags != 0)

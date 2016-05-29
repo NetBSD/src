@@ -39,6 +39,7 @@ OBJECTS = \
 	$(OBJDIR)/osunixxf.o\
 	$(OBJDIR)/tbprint.o\
 	$(OBJDIR)/tbxfroot.o\
+	$(OBJDIR)/utascii.o\
 	$(OBJDIR)/utbuffer.o\
 	$(OBJDIR)/utdebug.o\
 	$(OBJDIR)/utexcep.o\
@@ -61,6 +62,10 @@ HOST_FAMILY = BSD
 endif
 
 ifeq ($(HOST), _NetBSD)
+HOST_FAMILY = BSD
+endif
+
+ifeq ($(HOST), _QNX)
 HOST_FAMILY = BSD
 endif
 

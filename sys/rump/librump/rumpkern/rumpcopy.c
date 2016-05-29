@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpcopy.c,v 1.18.6.3 2016/03/19 11:30:37 skrll Exp $	*/
+/*	$NetBSD: rumpcopy.c,v 1.18.6.4 2016/05/29 08:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.3 2016/03/19 11:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpcopy.c,v 1.18.6.4 2016/05/29 08:44:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/lwp.h>
@@ -180,7 +180,7 @@ kcopy(const void *src, void *dst, size_t len)
  * i.e. the current thread does not have an appropriate vm context.
  */
 int
-uvm_io(struct vm_map *vm, struct uio *uio)
+uvm_io(struct vm_map *vm, struct uio *uio, int flag)
 {
 	int error = 0;
 

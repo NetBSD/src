@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.3 2012/03/18 05:26:58 mrg Exp $	*/
+/*	$NetBSD: fhc.c,v 1.3.16.1 2016/05/29 08:44:19 skrll Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.3 2012/03/18 05:26:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.3.16.1 2016/05/29 08:44:19 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -251,10 +251,7 @@ fhc_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	vec = ((sc->sc_ign << INTMAP_IGN_SHIFT) & INTMAP_IGN) |
 	    INTINO(ihandle);
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	ih->ih_ivec = ihandle;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.117.2.1 2016/04/22 15:44:13 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.117.2.2 2016/05/29 08:44:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117.2.1 2016/04/22 15:44:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117.2.2 2016/05/29 08:44:21 skrll Exp $");
 #endif
 
 /*
@@ -1399,8 +1399,8 @@ ath_start(struct ifnet *ifp)
 			 * tags which we consider too expensive to use)
 			 * to pass it along.
 			 */
-			ni = (struct ieee80211_node *) m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 
 			wh = mtod(m, struct ieee80211_frame *);
 			if ((wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==

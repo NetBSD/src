@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.5 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.6 2016/05/29 08:44:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.5 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.6 2016/05/29 08:44:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -160,6 +160,12 @@ int     rf_kdebug_level = 0;
 #else				/* DEBUG */
 #define db1_printf(a) { }
 #endif				/* DEBUG */
+
+#ifdef DEBUG_ROOT
+#define DPRINTF(a, ...) printf(a, __VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
+#endif
 
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 static rf_declare_mutex2(rf_sparet_wait_mutex);
@@ -537,12 +543,32 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		device_t candidate_root;
 		if (dksc->sc_dkdev.dk_nwedges != 0) {
 			char cname[sizeof(cset->ac->devname)];
-			/* XXX: assume 'a' */
+			/* XXX: assume partition 'a' first */
 			snprintf(cname, sizeof(cname), "%s%c",
 			    device_xname(dksc->sc_dev), 'a');
 			candidate_root = dkwedge_find_by_wname(cname);
+			DPRINTF("%s: candidate wedge root=%s\n", __func__,
+			    cname);
+			if (candidate_root == NULL) {
+				/*
+				 * If that is not found, because we don't use
+				 * disklabel, return the first dk child
+				 * XXX: we can skip the 'a' check above
+				 * and always do this...
+				 */
+				size_t i = 0;
+				candidate_root = dkwedge_find_by_parent(
+				    device_xname(dksc->sc_dev), &i);
+			}
+			DPRINTF("%s: candidate wedge root=%p\n", __func__,
+			    candidate_root);
 		} else
 			candidate_root = dksc->sc_dev;
+		DPRINTF("%s: candidate root=%p\n", __func__, candidate_root);
+		DPRINTF("%s: booted_device=%p root_partition=%d "
+		   "contains_boot=%d\n", __func__, booted_device,
+		   rsc->sc_r.root_partition,
+		   rf_containsboot(&rsc->sc_r, booted_device));
 		if (booted_device == NULL ||
 		    rsc->sc_r.root_partition == 1 ||
 		    rf_containsboot(&rsc->sc_r, booted_device)) {
@@ -550,6 +576,8 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 			booted_partition = 0;	/* XXX assume 'a' */
 		}
 	} else if (num_root > 1) {
+		DPRINTF("%s: many roots=%d, %p\n", __func__, num_root,
+		    booted_device);
 
 		/*
 		 * Maybe the MD code can help. If it cannot, then

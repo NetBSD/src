@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.127.2.5 2016/03/19 11:30:31 skrll Exp $ */
+/* $NetBSD: udf_subr.c,v 1.127.2.6 2016/05/29 08:44:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.5 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.6 2016/05/29 08:44:37 skrll Exp $");
 #endif /* not lint */
 
 
@@ -319,27 +319,25 @@ udf_setup_writeparams(struct udf_mount *ump)
 }
 
 
-int
-udf_synchronise_caches(struct udf_mount *ump)
+void
+udf_mmc_synchronise_caches(struct udf_mount *ump)
 {
 	struct mmc_op mmc_op;
 
-	DPRINTF(CALL, ("udf_synchronise_caches()\n"));
+	DPRINTF(CALL, ("udf_mcc_synchronise_caches()\n"));
 
 	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
-		return 0;
+		return;
 
 	/* discs are done now */
 	if (ump->discinfo.mmc_class == MMC_CLASS_DISC)
-		return 0;
+		return;
 
 	memset(&mmc_op, 0, sizeof(struct mmc_op));
 	mmc_op.operation = MMC_OP_SYNCHRONISECACHE;
 
 	/* ignore return code */
 	(void) VOP_IOCTL(ump->devvp, MMCOP, &mmc_op, FKIOCTL, NOCRED);
-
-	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -946,7 +944,7 @@ udf_read_anchors(struct udf_mount *ump)
 
 	/* VATs are only recorded on sequential media, but initialise */
 	ump->first_possible_vat_location = track_start + 2;
-	ump->last_possible_vat_location  = track_end + last_track.packet_size;
+	ump->last_possible_vat_location  = track_end;
 
 	return ok;
 }
@@ -2833,7 +2831,6 @@ udf_writeout_vat(struct udf_mount *ump)
 	if (error)
 		printf("udf_writeout_vat: error writing VAT node!\n");
 out:
-
 	return error;
 }
 
@@ -2995,6 +2992,10 @@ udf_check_for_vat(struct udf_node *vat_node)
 	ump->logvol_integrity->integrity_type = udf_rw32(UDF_INTEGRITY_CLOSED);
 	ump->logvol_integrity->time           = *mtime;
 
+	/* if we're updating, free old allocated space */
+	if (ump->vat_table)
+		free(ump->vat_table, M_UDFVOLD);
+
 	ump->vat_table_len = vat_length;
 	ump->vat_table_alloc_len = vat_table_alloc_len;
 	ump->vat_table   = vat_table;
@@ -3017,49 +3018,70 @@ out:
 static int
 udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 {
-	struct udf_node *vat_node;
+	struct udf_node *vat_node, *accepted_vat_node;
 	struct long_ad	 icb_loc;
-	uint32_t early_vat_loc, vat_loc;
+	uint32_t early_vat_loc, late_vat_loc, vat_loc;
 	int error;
 
 	/* mapping info not needed */
 	mapping = mapping;
 
-	vat_loc = ump->last_possible_vat_location;
-	early_vat_loc = vat_loc - 256;	/* 8 blocks of 32 sectors */
-
-	DPRINTF(VOLUMES, ("1) last possible %d, early_vat_loc %d \n",
-		vat_loc, early_vat_loc));
-	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
-
-	DPRINTF(VOLUMES, ("2) last possible %d, early_vat_loc %d \n",
-		vat_loc, early_vat_loc));
-
-	/* start looking from the end of the range */
+	DPRINTF(VOLUMES, ("Searching VAT\n"));
+	
+	/*
+	 * Start reading forward in blocks from the first possible vat
+	 * location. If not found in this block, start again a bit before
+	 * until we get a hit.
+	 */
+	late_vat_loc = ump->last_possible_vat_location;
+	early_vat_loc = MAX(late_vat_loc - 64, ump->first_possible_vat_location);
+ 
+	DPRINTF(VOLUMES, ("\tfull range %d to %d\n", early_vat_loc, late_vat_loc));
+	accepted_vat_node = NULL;
 	do {
-		DPRINTF(VOLUMES, ("Checking for VAT at sector %d\n", vat_loc));
-		icb_loc.loc.part_num = udf_rw16(UDF_VTOP_RAWPART);
-		icb_loc.loc.lb_num   = udf_rw32(vat_loc);
+		vat_loc = early_vat_loc;
+		DPRINTF(VOLUMES, ("\tchecking range %d to %d\n",
+			early_vat_loc, late_vat_loc));
+		do {
+			DPRINTF(VOLUMES, ("\t\tChecking for VAT at sector %d\n",
+				vat_loc));
+			icb_loc.loc.part_num = udf_rw16(UDF_VTOP_RAWPART);
+			icb_loc.loc.lb_num   = udf_rw32(vat_loc);
 
-		error = udf_get_node(ump, &icb_loc, &vat_node);
-		if (!error) {
-			error = udf_check_for_vat(vat_node);
-			DPRINTFIF(VOLUMES, !error,
-				("VAT accepted at %d\n", vat_loc));
-			if (!error)
-				break;
-		}
-		if (vat_node) {
-			vput(vat_node->vnode);
-			vat_node = NULL;
-		}
-		vat_loc--;	/* walk backwards */
-	} while (vat_loc >= early_vat_loc);
+			error = udf_get_node(ump, &icb_loc, &vat_node);
+			if (!error) {
+				error = udf_check_for_vat(vat_node);
+				vat_node->i_flags = 0;	/* reset access */
+			}
+			if (!error) {
+				DPRINTFIF(VOLUMES, !error,
+					("VAT candidate accepted at %d\n",
+					 vat_loc));
+				if (accepted_vat_node)
+					vput(accepted_vat_node->vnode);
+				accepted_vat_node = vat_node;
+				accepted_vat_node->i_flags |= IN_NO_DELETE;
+				vat_node = NULL;
+			}
+			if (vat_node)
+				vput(vat_node->vnode);
+			vat_loc++;	/* walk forward */
+		} while (vat_loc < late_vat_loc);
+		if (accepted_vat_node)
+			break;
 
-	/* keep our VAT node around */
-	if (vat_node) {
-		UDF_SET_SYSTEMFILE(vat_node->vnode);
-		ump->vat_node = vat_node;
+		early_vat_loc = MAX(early_vat_loc - 64, ump->first_possible_vat_location);
+		late_vat_loc = MIN(early_vat_loc + 64, ump->last_possible_vat_location);
+	} while (late_vat_loc > ump->first_possible_vat_location);
+
+	/* keep our last accepted VAT node around */
+	if (accepted_vat_node) {
+		/* revert no delete flag again to avoid potential side effects */
+		accepted_vat_node->i_flags &= ~IN_NO_DELETE;
+
+		UDF_SET_SYSTEMFILE(accepted_vat_node->vnode);
+		ump->vat_node = accepted_vat_node;
+		return 0;
 	}
 
 	return error;
@@ -3674,6 +3696,21 @@ udf_open_logvol(struct udf_mount *ump)
 
 		/* determine data and metadata tracks again */
 		error = udf_search_writing_tracks(ump);
+
+		if (ump->lvclose & UDF_WRITE_VAT) {
+			/*
+			 * we writeout the VAT to get a self-sustained session
+			 * for fsck
+			 */
+			DPRINTF(VOLUMES, ("lvclose & UDF_WRITE_VAT\n"));
+
+			/* write out the VAT data and all its descriptors */
+			DPRINTF(VOLUMES, ("writeout vat_node\n"));
+			udf_writeout_vat(ump);
+
+			/* force everything to be synchronized on the device */
+			(void) udf_synchronise_caches(ump);
+		}
 	}
 
 	/* mark it open */
@@ -3722,15 +3759,6 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 		/* write out the VAT data and all its descriptors */
 		DPRINTF(VOLUMES, ("writeout vat_node\n"));
 		udf_writeout_vat(ump);
-		(void) vflushbuf(ump->vat_node->vnode, FSYNC_WAIT);
-
-		(void) VOP_FSYNC(ump->vat_node->vnode,
-				FSCRED, FSYNC_WAIT, 0, 0);
-
-		if (ump->lvclose & UDF_CLOSE_SESSION) {
-			DPRINTF(VOLUMES, ("udf_close_logvol: closing session "
-				"as requested\n"));
-		}
 
 		/* at least two DVD packets and 3 CD-R packets */
 		nvats = 32;
@@ -3765,6 +3793,9 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 			if (!error)
 				nok++;
 		}
+		/* force everything to be synchronized on the device */
+		(void) udf_synchronise_caches(ump);
+
 		if (nok < 14) {
 			/* arbitrary; but at least one or two CD frames */
 			printf("writeout of at least 14 VATs failed\n");
@@ -3776,6 +3807,8 @@ udf_close_logvol(struct udf_mount *ump, int mntflags)
 
 	/* finish closing of session */
 	if (ump->lvclose & UDF_CLOSE_SESSION) {
+		DPRINTF(VOLUMES, ("udf_close_logvol: closing session "
+			"as requested\n"));
 		error = udf_validate_session_start(ump);
 		if (error)
 			return error;
@@ -5562,6 +5595,8 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	int error;
 	struct vnode *vp;
 
+	*udf_noderes = NULL;
+
 	error = vcache_get(ump->vfs_mountp, &node_icb_loc->loc,
 	    sizeof(node_icb_loc->loc), &vp);
 	if (error)
@@ -5926,6 +5961,9 @@ udf_delete_node(struct udf_node *udf_node)
 	void *dscr;
 	struct long_ad *loc;
 	int extnr, lvint, dummy;
+
+	if (udf_node->i_flags & IN_NO_DELETE)
+		return;
 
 	/* paranoia check on integrity; should be open!; we could panic */
 	lvint = udf_rw32(udf_node->ump->logvol_integrity->integrity_type);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.15.6.1 2015/12/27 12:09:43 skrll Exp $	*/
+/*	$NetBSD: pyro.c,v 1.15.6.2 2016/05/29 08:44:19 skrll Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.15.6.1 2015/12/27 12:09:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.15.6.2 2016/05/29 08:44:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -580,9 +580,7 @@ pyro_intr_establish(bus_space_tag_t t, int ihandle, int level,
 
 	ino |= INTVEC(ihandle);
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;

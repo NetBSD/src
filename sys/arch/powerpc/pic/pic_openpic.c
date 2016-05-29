@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.8 2012/02/01 09:54:03 matt Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.8.24.1 2016/05/29 08:44:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.8 2012/02/01 09:54:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.8.24.1 2016/05/29 08:44:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -67,7 +67,7 @@ setup_openpic(void *addr, int passthrough)
 	    "Supports %d CPUs and %d interrupt sources.\n",
 	    x & 0xff, ((x & 0x1f00) >> 8) + 1, ((x & 0x07ff0000) >> 16) + 1);
 
-	pic->pic_numintrs = ((x & 0x07ff0000) >> 16) + 1;
+	pic->pic_numintrs = ((x & 0x07ff0000) >> 16) + 2; /* one more slot for IPI */
 	pic->pic_cookie = addr;
 	pic->pic_enable_irq = opic_enable_irq;
 	pic->pic_reenable_irq = opic_enable_irq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.156.2.4 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.156.2.5 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -715,6 +715,7 @@ do {									\
  */
 #define	M_GETCTX(m, t)		((t)(m)->m_pkthdr.rcvif)
 #define	M_SETCTX(m, c)		((void)((m)->m_pkthdr.rcvif = (void *)(c)))
+#define	M_CLEARCTX(m)		M_SETCTX((m), NULL)
 
 #endif /* defined(_KERNEL) */
 

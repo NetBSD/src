@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.2 2014/04/03 23:49:47 mrg Exp $	*/
+/*	$NetBSD: siop.c,v 1.2.6.1 2016/05/29 08:44:18 skrll Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -864,7 +864,7 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 {
 	struct scsi_sense_data *sense;
 	u_int8_t key;
-	int error;
+	int error = 0;
 	uint32_t info;
 	static const char *error_mes[] = {
 		"soft error (corrected)",
@@ -923,7 +923,6 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 				xs->resid = 0;	/* not short read */
 			}
 		case SKEY_EQUAL:
-			error = 0;
 			break;
 		case SKEY_NOT_READY:
 			if (adp->sd->sc_flags & FLAGS_REMOVABLE)
@@ -952,7 +951,6 @@ scsi_interpret_sense(struct siop_adapter *adp, struct scsi_xfer *xs)
 			error = EROFS;
 			break;
 		case SKEY_BLANK_CHECK:
-			error = 0;
 			break;
 		case SKEY_ABORTED_COMMAND:
 			break;
