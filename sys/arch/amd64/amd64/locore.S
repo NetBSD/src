@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.97 2016/05/29 09:04:19 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.98 2016/05/29 09:16:11 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -322,6 +322,7 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif /* NLAPIC > 0 */
 
+	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
@@ -335,6 +336,9 @@ END(lapic_isr)
 	.globl	_C_LABEL(gdtstore)
 	.globl	_C_LABEL(cputype)
 
+	.type	_C_LABEL(tablesize), @object
+_C_LABEL(tablesize):	.long	TABLESIZE
+END(tablesize)
 	.type	_C_LABEL(nox_flag), @object
 LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
 END(nox_flag)
