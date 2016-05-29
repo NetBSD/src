@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.12 2014/07/23 18:19:45 alnsn Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.13 2016/05/29 17:09:33 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -140,13 +140,28 @@
 #define SLJIT_EXECUTABLE_ALLOCATOR 1
 #endif
 
+/* Force cdecl calling convention even if a better calling
+   convention (e.g. fastcall) is supported by the C compiler.
+   If this option is enabled, C functions without
+   SLJIT_CALL can also be called from JIT code. */
+#ifndef SLJIT_USE_CDECL_CALLING_CONVENTION
+/* Disabled by default */
+#define SLJIT_USE_CDECL_CALLING_CONVENTION 0
+#endif
+
+/* Return with error when an invalid argument is passed. */
+#ifndef SLJIT_ARGUMENT_CHECKS
+/* Disabled by default */
+#define SLJIT_ARGUMENT_CHECKS 0
+#endif
+
 /* Debug checks (assertions, etc.). */
 #ifndef SLJIT_DEBUG
 /* Enabled by default */
 #define SLJIT_DEBUG 1
 #endif
 
-/* Verbose operations */
+/* Verbose operations. */
 #ifndef SLJIT_VERBOSE
 /* Enabled by default */
 #define SLJIT_VERBOSE 1
