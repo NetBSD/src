@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.6 2015/12/27 12:10:00 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.7 2016/05/29 08:44:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -96,6 +96,9 @@
 #define	 XHCI_CMD_CRS		0x00000200	/* RW Controller Restore State */
 #define	 XHCI_CMD_EWE		0x00000400	/* RW Enable Wrap Event */
 #define	 XHCI_CMD_EU3S		0x00000800	/* RW Enable U3 MFINDEX Stop */
+
+#define	XHCI_WAIT_CNR		100		/* in 1ms */
+#define	XHCI_WAIT_HCRST		100		/* in 1ms */
 
 #define	XHCI_USBSTS		0x04	/* XHCI status */
 #define	 XHCI_STS_HCH		0x00000001	/* RO - Host Controller Halted */

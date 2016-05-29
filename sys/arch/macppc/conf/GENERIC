@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.320.2.1 2016/04/22 15:44:10 skrll Exp $
+# $NetBSD: GENERIC,v 1.320.2.2 2016/05/29 08:44:18 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.320.2.1 $"
+#ident 		"GENERIC-$Revision: 1.320.2.2 $"
 
 maxusers	32
 
@@ -89,7 +89,7 @@ options         DKWEDGE_AUTODISCOVER    # Automatically add dk(4) instances
 options         DKWEDGE_METHOD_GPT      # Supports GPT partitions as wedges
 #options		DKWEDGE_METHOD_BSDLABEL # Support disklabel entries as wedges
 #options		DKWEDGE_METHOD_MBR      # Support MBR partitions as wedges
-options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
+#options		DKWEDGE_METHOD_APPLE    # Support Apple partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS

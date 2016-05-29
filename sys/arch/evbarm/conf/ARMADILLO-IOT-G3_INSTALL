@@ -1,0 +1,11 @@
+#	$NetBSD: ARMADILLO-IOT-G3_INSTALL,v 1.1.2.2 2016/05/29 08:44:16 skrll Exp $
+#
+#	ARMADILLO-IOT-G3_INSTALL -- ARMADILLO-IOT-G3 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/ARMADILLO-IOT-G3"
+include "arch/evbarm/conf/INSTALL"
+
+makeoptions	RAMDISKNAME=ramdisk
+no makeoptions	DEBUG

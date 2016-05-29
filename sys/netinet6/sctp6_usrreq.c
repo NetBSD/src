@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.1.2.3 2016/05/29 08:44:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.1.2.3 2016/05/29 08:44:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -81,11 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.1.2.2 2015/12/27 12:10:07 skrll E
 #include <netinet6/nd6.h>
 
 #ifdef IPSEC
-#ifndef __OpenBSD__
-#include <netinet6/ipsec.h>
-#else
-#undef IPSEC
-#endif
+#include <netipsec/ipsec.h>
+#include <netipsec/ipsec6.h>
 #endif /*IPSEC*/
 
 #if defined(NFAITH) && NFAITH > 0
@@ -240,10 +237,10 @@ sctp_skip_csum:
 	/*
 	 * Check AH/ESP integrity.
 	 */
-	if (ipsec6_in_reject_so(m, in6p->sctp_socket)) {
+	if (ipsec_used && ipsec6_in_reject_so(m, in6p->sctp_socket)) {
 /* XXX */
-#ifndef __APPLE__
-		/* FIX ME: need to find right stat for __APPLE__ */
+#if 0
+		/* FIX ME: need to find right stat */
 		ipsec6stat.in_polvio++;
 #endif
 		goto bad;

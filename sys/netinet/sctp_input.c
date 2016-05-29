@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.1.2.3 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.3 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -84,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.2 2015/12/27 12:10:07 skrll Exp
 #include <netinet/sctp_asconf.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /*IPSEC*/
 
 #include <net/net_osdep.h>
@@ -4237,9 +4237,10 @@ sctp_input(struct mbuf *m, ...)
 	 * I very much doubt any of the IPSEC stuff will work but I have
 	 * no idea, so I will leave it in place.
 	 */
-
-	if (ipsec4_in_reject_so(m, inp->ip_inp.inp.inp_socket)) {
+	if (ipsec_used && ipsec4_in_reject_so(m, inp->ip_inp.inp.inp_socket)) {
+#if 0
 		ipsecstat.in_polvio++;
+#endif
 		sctp_pegs[SCTP_HDR_DROPS]++;
 		goto bad;
 	}

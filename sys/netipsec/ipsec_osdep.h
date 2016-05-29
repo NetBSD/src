@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.24 2013/05/09 19:21:50 gdt Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.24.10.1 2016/05/29 08:44:39 skrll Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ read_random(void *bufp, u_int len)
 static __inline int
 if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 {
-	int need_if_start = 0;
 	int s = splnet();
 
 	KERNEL_LOCK(1, NULL);
@@ -152,15 +151,9 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 		m_freem(m);
 		return (0);
 	}
-	if (ifp != NULL) {
-		ifp->if_obytes += m->m_pkthdr.len + adjust;
-		if (m->m_flags & M_MCAST)
-			ifp->if_omcasts++;
-		need_if_start = !(ifp->if_flags & IFF_OACTIVE);
-	}
-	IF_ENQUEUE(ifq, m);
-	if (need_if_start)
-		(*ifp->if_start)(ifp);
+	if (ifp != NULL)
+		(void)(*ifp->if_transmit)(ifp, m);
+
 	KERNEL_UNLOCK_ONE(NULL);
 	splx(s);
 	return (1);

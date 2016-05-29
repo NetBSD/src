@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.19.2.2 2016/04/22 15:44:18 skrll Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.19.2.3 2016/05/29 08:44:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,11 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.19.2.2 2016/04/22 15:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.19.2.3 2016/05/29 08:44:39 skrll Exp $");
 
+#include <sys/mutex.h>
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socketvar.h>
+#include <sys/pslist.h>
+#include <sys/psref.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -65,6 +68,9 @@ __weak_alias(pppoe_input,rumpnet_stub);
 __weak_alias(pppoedisc_input,rumpnet_stub);
 
 struct ifnet_head ifnet_list;
+struct pslist_head ifnet_pslist;
+struct psref_class *ifnet_psref_class;
+kmutex_t ifnet_mtx;
 
 int
 compat_ifconf(u_long cmd, void *data)

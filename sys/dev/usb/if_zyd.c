@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.10 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.10 2016/05/29 08:44:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2326,8 +2326,8 @@ zyd_start(struct ifnet *ifp)
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (zyd_tx_mgt(sc, m0, ni) != 0)
 				break;

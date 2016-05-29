@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.5 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.6 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.5 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.6 2016/05/29 08:44:38 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -549,10 +549,12 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 			 * Smash the current notion of the gateway to
 			 * this destination.  Should check about netmask!!!
 			 */
-			rt->rt_flags |= RTF_MODIFIED;
-			flags |= RTF_MODIFIED;
+			error = rt_setgate(rt, gateway);
+			if (error == 0) {
+				rt->rt_flags |= RTF_MODIFIED;
+				flags |= RTF_MODIFIED;
+			}
 			stat = &rtstat.rts_newgateway;
-			rt_setgate(rt, gateway);
 		}
 	} else
 		error = EHOSTUNREACH;
@@ -771,10 +773,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			senderr(ESRCH);
 		if ((rt = rt_deladdr(rtbl, dst, netmask)) == NULL)
 			senderr(ESRCH);
-		if (rt->rt_gwroute) {
-			rtfree(rt->rt_gwroute);
-			rt->rt_gwroute = NULL;
-		}
 		rt->rt_flags &= ~RTF_UP;
 		if ((ifa = rt->rt_ifa)) {
 			if (ifa->ifa_flags & IFA_ROUTE &&
@@ -808,25 +806,29 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		memset(rt, 0, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
 		LIST_INIT(&rt->rt_timer);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (rt_setkey(rt, dst, M_NOWAIT) == NULL ||
-		    rt_setgate(rt, gateway) != 0) {
-			pool_put(&rtentry_pool, rt);
-			senderr(ENOBUFS);
-		}
+
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (netmask) {
 			rt_maskedcopy(dst, (struct sockaddr *)&maskeddst,
 			    netmask);
 			rt_setkey(rt, (struct sockaddr *)&maskeddst, M_NOWAIT);
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		} else {
 			rt_setkey(rt, dst, M_NOWAIT);
-			RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		}
+		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
+		if (rt_getkey(rt) == NULL ||
+		    rt_setgate(rt, gateway) != 0) {
+			pool_put(&rtentry_pool, rt);
+			senderr(ENOBUFS);
+		}
+
 		rt_set_ifa(rt, ifa);
-		if (info->rti_info[RTAX_TAG] != NULL)
-			rt_settag(rt, info->rti_info[RTAX_TAG]);
+		if (info->rti_info[RTAX_TAG] != NULL) {
+			const struct sockaddr *tag;
+			tag = rt_settag(rt, info->rti_info[RTAX_TAG]);
+			if (tag == NULL)
+				senderr(ENOBUFS);
+		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (info->rti_info[RTAX_IFP] != NULL &&
 		    (ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP])) != NULL &&
@@ -839,8 +841,6 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rc != 0) {
 			ifafree(ifa);
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
 			rt_destroy(rt);
 			pool_put(&rtentry_pool, rt);
 			senderr(rc);
@@ -877,17 +877,10 @@ bad:
 int
 rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 {
-	KASSERT(rt != rt->rt_gwroute);
 
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
-	if (rt->rt_gwroute) {
-		rtfree(rt->rt_gwroute);
-		rt->rt_gwroute = NULL;
-	}
-	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 	if (rt->rt_gateway != NULL)
 		sockaddr_free(rt->rt_gateway);
 	KASSERT(rt->_rt_key != NULL);
@@ -898,9 +891,7 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
 	if (rt->rt_flags & RTF_GATEWAY) {
-		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		rt->rt_gwroute = rtalloc1(gate, 1);
+		struct rtentry *gwrt = rtalloc1(gate, 1);
 		/*
 		 * If we switched gateways, grab the MTU from the new
 		 * gateway route if the current MTU, if the current MTU is
@@ -908,13 +899,15 @@ rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 		 * Note that, if the MTU of gateway is 0, we will reset the
 		 * MTU of the route to run PMTUD again from scratch. XXX
 		 */
-		KASSERT(rt->_rt_key != NULL);
-		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (rt->rt_gwroute
-		    && !(rt->rt_rmx.rmx_locks & RTV_MTU)
-		    && rt->rt_rmx.rmx_mtu
-		    && rt->rt_rmx.rmx_mtu > rt->rt_gwroute->rt_rmx.rmx_mtu) {
-			rt->rt_rmx.rmx_mtu = rt->rt_gwroute->rt_rmx.rmx_mtu;
+		if (gwrt != NULL) {
+			KASSERT(gwrt->_rt_key != NULL);
+			RT_DPRINTF("gwrt->_rt_key = %p\n", gwrt->_rt_key);
+			if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
+			    rt->rt_rmx.rmx_mtu &&
+			    rt->rt_rmx.rmx_mtu > gwrt->rt_rmx.rmx_mtu) {
+				rt->rt_rmx.rmx_mtu = gwrt->rt_rmx.rmx_mtu;
+			}
+			rtfree(gwrt);
 		}
 	}
 	KASSERT(rt->_rt_key != NULL);
@@ -1495,9 +1488,27 @@ rt_settag(struct rtentry *rt, const struct sockaddr *tag)
 }
 
 struct sockaddr *
-rt_gettag(struct rtentry *rt)
+rt_gettag(const struct rtentry *rt)
 {
 	return rt->rt_tag;
+}
+
+int
+rt_check_reject_route(const struct rtentry *rt, const struct ifnet *ifp)
+{
+
+	if ((rt->rt_flags & RTF_REJECT) != 0) {
+		/* Mimic looutput */
+		if (ifp->if_flags & IFF_LOOPBACK)
+			return (rt->rt_flags & RTF_HOST) ?
+			    EHOSTUNREACH : ENETUNREACH;
+		else if (rt->rt_rmx.rmx_expire == 0 ||
+		    time_uptime < rt->rt_rmx.rmx_expire)
+			return (rt->rt_flags & RTF_GATEWAY) ?
+			    EHOSTUNREACH : EHOSTDOWN;
+	}
+
+	return 0;
 }
 
 #ifdef DDB

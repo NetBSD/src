@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.4.6.1 2015/09/22 12:06:12 skrll Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.4.6.2 2016/05/29 08:44:39 skrll Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.4.6.1 2015/09/22 12:06:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.4.6.2 2016/05/29 08:44:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,7 +113,6 @@ __KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.4.6.1 2015/09/22 12:06:12 skrll Exp $
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

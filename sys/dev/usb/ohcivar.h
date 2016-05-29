@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.13 2016/04/30 10:34:14 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.14 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@ typedef struct ohci_soft_ed {
 
 typedef struct ohci_soft_td {
 	ohci_td_t td;
-	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
-	struct ohci_soft_td *dnext; /* next in done list */
+	struct ohci_soft_td *nexttd;	/* mirrors nexttd in TD */
+	struct ohci_soft_td *dnext;	/* next in done list */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
-	LIST_ENTRY(ohci_soft_td) hnext;
+	LIST_ENTRY(ohci_soft_td) hnext;	/* next on hash list */
 	struct usbd_xfer *xfer;
 	uint16_t len;
 	uint16_t flags;
@@ -66,12 +66,12 @@ typedef struct ohci_soft_td {
 
 typedef struct ohci_soft_itd {
 	ohci_itd_t itd;
-	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
-	struct ohci_soft_itd *dnext; /* next in done list */
+	struct ohci_soft_itd *nextitd;	/* mirrors nexttd in ITD */
+	struct ohci_soft_itd *dnext;	/* next in done list */
 	ohci_physaddr_t physaddr;
 	usb_dma_t dma;
 	int offs;
-	LIST_ENTRY(ohci_soft_itd) hnext;
+	LIST_ENTRY(ohci_soft_itd) hnext;/* next on hash list */
 	struct usbd_xfer *xfer;
 	uint16_t flags;
 	bool isdone;	/* used only when DIAGNOSTIC is defined */

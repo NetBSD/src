@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.26 2014/04/07 00:07:40 pooka Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.26.4.1 2016/05/29 08:44:38 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.26 2014/04/07 00:07:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.26.4.1 2016/05/29 08:44:38 skrll Exp $");
 #endif
 
 /*
@@ -515,10 +515,10 @@ ieee80211_drain_ifq(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+		ni = M_GETCTX(m, struct ieee80211_node *);
 		KASSERT(ni != NULL);
 		ieee80211_free_node(ni);
-		m->m_pkthdr.rcvif = NULL;
+		M_SETCTX(m, NULL);
 
 		m_freem(m);
 	}

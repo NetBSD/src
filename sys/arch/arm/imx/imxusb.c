@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.7.2.4 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.7.2.5 2016/05/29 08:44:16 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7.2.4 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7.2.5 2016/05/29 08:44:16 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -103,13 +103,16 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": i.MX USB Controller\n");
 
+	if (usbc->sc_ehci_size == 0)
+		usbc->sc_ehci_size = IMXUSB_EHCI_SIZE;	/* use default */
+
 	/* per unit registers */
 	if (bus_space_subregion(iot, aa->aa_ioh,
-		aa->aa_unit * IMXUSB_EHCI_SIZE, IMXUSB_EHCI_SIZE,
+		aa->aa_unit * usbc->sc_ehci_size, usbc->sc_ehci_size,
 		&sc->sc_ioh) ||
 	    bus_space_subregion(iot, aa->aa_ioh,
-		aa->aa_unit * IMXUSB_EHCI_SIZE + IMXUSB_EHCIREGS,
-		IMXUSB_EHCI_SIZE - IMXUSB_EHCIREGS,
+		aa->aa_unit * usbc->sc_ehci_size + IMXUSB_EHCIREGS,
+		usbc->sc_ehci_size - IMXUSB_EHCIREGS,
 		&sc->sc_hsc.ioh)) {
 
 		aprint_error_dev(self, "can't subregion\n");
@@ -219,7 +222,7 @@ imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 	struct ehci_softc *hsc = &sc->sc_hsc;
 
 	reg = EOREAD4(hsc, EHCI_PORTSC(1));
-	reg &= ~(PORTSC_PTS | PORTSC_PTW);
+	reg &= ~(PORTSC_PTS | PORTSC_PTW | PORTSC_PTS2);
 	switch (interface) {
 	case IMXUSBC_IF_UTMI_WIDE:
 		reg |= PORTSC_PTW_16;
@@ -234,6 +237,9 @@ imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 		break;
 	case IMXUSBC_IF_SERIAL:
 		reg |= PORTSC_PTS_SERIAL;
+		break;
+	case IMXUSBC_IF_HSIC:
+		reg |= PORTSC_PTS2;
 		break;
 	}
 	EOWRITE4(hsc, EHCI_PORTSC(1), reg);

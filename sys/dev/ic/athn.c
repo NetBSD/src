@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.10.4.1 2015/12/27 12:09:49 skrll Exp $	*/
+/*	$NetBSD: athn.c,v 1.10.4.2 2016/05/29 08:44:21 skrll Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.10.4.1 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.10.4.2 2016/05/29 08:44:21 skrll Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -2623,7 +2623,7 @@ athn_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)

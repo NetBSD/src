@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.23.2.4 2015/12/27 12:09:28 skrll Exp $
+# $NetBSD: ALL,v 1.23.2.5 2016/05/29 08:44:15 skrll Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.23.2.4 $"
+#ident 		"ALL-$Revision: 1.23.2.5 $"
 
 maxusers	64		# estimated number of users
 
@@ -863,6 +863,11 @@ cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
 uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
+
+
+# NVM Express controllers and devices
+nvme*	at pci? dev ? function ?
+ld*	at nvme? nsid ?
 
 
 # Miscellaneous mass storage devices
@@ -2152,6 +2157,7 @@ options SIOP_DEBUG_DR
 options SIOP_DEBUG_INTR
 options SIOP_DEBUG_SCHED
 options SK_DEBUG
+options SLHCI_DEBUG
 options SMAP_DEBUG
 options SMB_IOD_DEBUG
 options SMB_SOCKETDATA_DEBUG
@@ -2314,6 +2320,7 @@ options XENNET_DEBUG
 options XENNET_DEBUG_DUMP
 options XEN_CLOCK_DEBUG
 options XE_DEBUG
+options XHCI_DEBUG
 options XXXXENDEBUG_LOW
 options XYC_DEBUG
 options ZSKBD_DEBUG

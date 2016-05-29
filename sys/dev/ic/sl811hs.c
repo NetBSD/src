@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.16 2016/03/25 08:32:43 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.17 2016/05/29 08:44:21 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,26 +68,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.16 2016/03/25 08:32:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.17 2016/05/29 08:44:21 skrll Exp $");
 
 #include "opt_slhci.h"
 
-#include <sys/cdefs.h>
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
+
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/kmem.h>
-#include <sys/queue.h>
 #include <sys/gcq.h>
 #include <sys/intr.h>
-#include <sys/cpu.h>
-#include <sys/bus.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usbhist.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>
 #include <dev/usb/usbroothub.h>
@@ -168,8 +174,6 @@ pnames(int ptype)
 	return names[ptype];
 }
 #endif
-
-#define SLHCI_XFER_TYPE(x) (((struct slhci_pipe *)((x)->pipe))->ptype)
 
 /*
  * Maximum allowable reserved bus time.  Since intr/isoc transfers have
@@ -297,6 +301,9 @@ struct slhci_pipe {
 #define SLHCI_XFER2SC(xfer)	SLHCI_BUS2SC((xfer)->ux_bus)
 
 #define SLHCI_PIPE2SPIPE(pipe)	((struct slhci_pipe *)(pipe))
+#define SLHCI_XFER2SPIPE(xfer)	SLHCI_PIPE2SPIPE((xfer)->ux_pipe)
+
+#define SLHCI_XFER_TYPE(x)	(SLHCI_XFER2SPIPE(xfer)->ptype)
 
 #ifdef SLHCI_PROFILE_TRANSFER
 #if defined(__mips__)
@@ -486,7 +493,6 @@ static void slhci_enter_xfers(struct slhci_softc *);
 static void slhci_queue_timed(struct slhci_softc *, struct slhci_pipe *);
 static void slhci_xfer_timer(struct slhci_softc *, struct slhci_pipe *);
 
-static void slhci_do_repeat(struct slhci_softc *, struct usbd_xfer *);
 static void slhci_callback_schedule(struct slhci_softc *);
 static void slhci_do_callback_schedule(struct slhci_softc *);
 #if 0
@@ -518,8 +524,9 @@ static void slhci_insert(struct slhci_softc *);
 static usbd_status slhci_clear_feature(struct slhci_softc *, unsigned int);
 static usbd_status slhci_set_feature(struct slhci_softc *, unsigned int);
 static void slhci_get_status(struct slhci_softc *, usb_port_status_t *);
-static usbd_status slhci_root(struct slhci_softc *, struct slhci_pipe *,
-    struct usbd_xfer *);
+
+#define	SLHCIHIST_FUNC()	USBHIST_FUNC()
+#define	SLHCIHIST_CALLED()	USBHIST_CALLED(slhcidebug)
 
 #ifdef SLHCI_DEBUG
 void slhci_log_buffer(struct usbd_xfer *);
@@ -531,8 +538,6 @@ void slhci_log_spipe(struct slhci_pipe *);
 void slhci_print_intr(void);
 void slhci_log_sc(void);
 void slhci_log_slreq(struct slhci_pipe *);
-
-extern int usbdebug;
 
 /* Constified so you can read the values from ddb */
 const int SLHCI_D_TRACE =	0x0001;
@@ -550,49 +555,40 @@ const int SLHCI_D_ROOT =	0x0800;
 const int SLHCI_D_SOF =		0x1000;
 const int SLHCI_D_NAK =		0x2000;
 
-int slhci_debug = 0x1cbc; /* 0xc8c; */ /* 0xffff; */ /* 0xd8c; */
+int slhcidebug = 0x1cbc; /* 0xc8c; */ /* 0xffff; */ /* 0xd8c; */
+
+SYSCTL_SETUP(sysctl_hw_slhci_setup, "sysctl hw.slhci setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "slhci",
+	    SYSCTL_DESCR("slhci global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &slhcidebug, sizeof(slhcidebug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
+
 struct slhci_softc *ssc;
-#ifdef USB_DEBUG
-int slhci_usbdebug = -1; /* value to set usbdebug on attach, -1 = leave alone */
-#endif
 
-/*
- * XXXMRG the SLHCI UVMHIST code has been converted to KERNHIST, but it has
- * not been tested.  the extra instructions to enable it can probably be
- * commited to the kernhist code, and these instructions reduced to simply
- * enabling SLHCI_DEBUG.
- */
-
-/*
- * Add KERNHIST history for debugging:
- *
- *   Before kern_hist in sys/kern/subr_kernhist.c add:
- *      KERNHIST_DECL(slhcihist);
- *
- *   In kern_hist add:
- *      if ((bitmask & KERNHIST_SLHCI))
- *              hists[i++] = &slhcihist;
- *
- *   In sys/sys/kernhist.h add KERNHIST_SLHCI define.
- */
-
-#include <sys/kernhist.h>
-KERNHIST_DECL(slhcihist);
-
-#if !defined(KERNHIST) || !defined(KERNHIST_SLHCI)
-#error "SLHCI_DEBUG requires KERNHIST (with modifications, see sys/dev/ic/sl81hs.c)"
-#endif
-
-#ifndef SLHCI_NHIST
-#define SLHCI_NHIST 409600
-#endif
-const unsigned int SLHCI_HISTMASK = KERNHIST_SLHCI;
-struct kern_history_ent slhci_he[SLHCI_NHIST];
-
-#define SLHCI_DEXEC(x, y) do { if ((slhci_debug & SLHCI_ ## x)) { y; } \
+#define SLHCI_DEXEC(x, y) do { if ((slhcidebug & SLHCI_ ## x)) { y; } \
 } while (/*CONSTCOND*/ 0)
-#define DDOLOG(f, a, b, c, d) do { const char *_kernhist_name = __func__; \
-    u_long _kernhist_call = 0; KERNHIST_LOG(slhcihist, f, a, b, c, d);	     \
+#define DDOLOG(f, a, b, c, d) do { KERNHIST_LOG(usbhist, f, a, b, c, d); \
 } while (/*CONSTCOND*/0)
 #define DLOG(x, f, a, b, c, d) SLHCI_DEXEC(x, DDOLOG(f, a, b, c, d))
 /*
@@ -602,10 +598,9 @@ struct kern_history_ent slhci_he[SLHCI_NHIST];
  * a-h are flag names (must evaluate to string constants, msb first).
  */
 #define DDOLOGFLAG8(y, z, a, b, c, d, e, f, g, h) do { uint8_t _DLF8 = (z);   \
-    const char *_kernhist_name = __func__; u_long _kernhist_call = 0;	      \
-    if (_DLF8 & 0xf0) KERNHIST_LOG(slhcihist, y " %s %s %s %s", _DLF8 & 0x80 ?  \
+    if (_DLF8 & 0xf0) KERNHIST_LOG(usbhist, y " %s %s %s %s", _DLF8 & 0x80 ?  \
     (a) : "", _DLF8 & 0x40 ? (b) : "", _DLF8 & 0x20 ? (c) : "", _DLF8 & 0x10 ? \
-    (d) : ""); if (_DLF8 & 0x0f) KERNHIST_LOG(slhcihist, y " %s %s %s %s",      \
+    (d) : ""); if (_DLF8 & 0x0f) KERNHIST_LOG(usbhist, y " %s %s %s %s",      \
     _DLF8 & 0x08 ? (e) : "", _DLF8 & 0x04 ? (f) : "", _DLF8 & 0x02 ? (g) : "", \
     _DLF8 & 0x01 ? (h) : "");		      				       \
 } while (/*CONSTCOND*/ 0)
@@ -618,6 +613,7 @@ struct kern_history_ent slhci_he[SLHCI_NHIST];
 static void
 DDOLOGBUF(uint8_t *buf, unsigned int length)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	int i;
 
 	for(i=0; i+8 <= length; i+=8)
@@ -646,6 +642,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 }
 #define DLOGBUF(x, b, l) SLHCI_DEXEC(x, DDOLOGBUF(b, l))
 #else /* now !SLHCI_DEBUG */
+#define slhcidebug 0
 #define slhci_log_spipe(spipe) ((void)0)
 #define slhci_log_xfer(xfer) ((void)0)
 #define SLHCI_DEXEC(x, y) ((void)0)
@@ -766,6 +763,7 @@ enter_all_pipes(struct slhci_transfers *t, struct slhci_pipe *spipe)
 struct usbd_xfer *
 slhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct usbd_xfer *xfer;
 
 	xfer = kmem_zalloc(sizeof(*xfer), KM_SLEEP);
@@ -785,6 +783,7 @@ slhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 void
 slhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	DLOG(D_MEM, "freex xfer %p spipe %p", xfer, xfer->ux_pipe,0,0);
 
 #ifdef SLHCI_MEM_ACCOUNTING
@@ -817,6 +816,7 @@ slhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 usbd_status
 slhci_transfer(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = SLHCI_XFER2SC(xfer);
 	usbd_status error;
 
@@ -851,6 +851,7 @@ slhci_transfer(struct usbd_xfer *xfer)
 usbd_status
 slhci_start(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = SLHCI_XFER2SC(xfer);
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct slhci_pipe *spipe = SLHCI_PIPE2SPIPE(pipe);
@@ -983,18 +984,33 @@ slhci_start(struct usbd_xfer *xfer)
 usbd_status
 slhci_root_start(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
-	struct slhci_pipe *spipe;
+	struct slhci_pipe *spipe __diagused;
 
 	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 	sc = SLHCI_XFER2SC(xfer);
 
-	return slhci_lock_call(sc, &slhci_root, spipe, xfer);
+	struct slhci_transfers *t = &sc->sc_transfers;
+
+	LK_SLASSERT(spipe != NULL && xfer != NULL, sc, spipe, xfer, return
+	    USBD_CANCELLED);
+
+	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
+
+	KASSERT(spipe->ptype == PT_ROOT_INTR);
+
+	mutex_enter(&sc->sc_intr_lock);
+	t->rootintr = xfer;
+	mutex_exit(&sc->sc_intr_lock);
+
+	return USBD_IN_PROGRESS;
 }
 
 usbd_status
 slhci_open(struct usbd_pipe *pipe)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct usbd_device *dev;
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
@@ -1115,11 +1131,8 @@ slhci_preinit(struct slhci_softc *sc, PowerFunc pow, bus_space_tag_t iot,
 
 	t = &sc->sc_transfers;
 
-#ifdef SLHCI_DEBUG
-	KERNHIST_INIT_STATIC(slhcihist, slhci_he);
-#endif
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 
 	/* sc->sc_ier = 0;	*/
 	/* t->rootintr = NULL;	*/
@@ -1178,18 +1191,14 @@ slhci_attach(struct slhci_softc *sc)
 
 #ifdef SLHCI_DEBUG
 	ssc = sc;
-#ifdef USB_DEBUG
-	if (slhci_usbdebug >= 0)
-		usbdebug = slhci_usbdebug;
-#endif
 #endif
 
 	if (t->sltype == SLTYPE_SL811HS_R12)
-		rev = " (rev 1.2)";
+		rev = "(rev 1.2)";
 	else if (t->sltype == SLTYPE_SL811HS_R14)
-		rev = " (rev 1.4 or 1.5)";
+		rev = "(rev 1.4 or 1.5)";
 	else
-		rev = " (unknown revision)";
+		rev = "(unknown revision)";
 
 	aprint_normal("%s: ScanLogic SL811HS/T USB Host Controller %s\n",
 	    SC_NAME(sc), rev);
@@ -1264,6 +1273,7 @@ slhci_detach(struct slhci_softc *sc, int flags)
 		ret = config_detach(sc->sc_child, flags);
 
 #ifdef SLHCI_MEM_ACCOUNTING
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	if (sc->sc_mem_use) {
 		printf("%s: Memory still in use after detach! mem_use (count)"
 		    " = %d\n", SC_NAME(sc), sc->sc_mem_use);
@@ -1292,6 +1302,7 @@ slhci_activate(device_t self, enum devact act)
 void
 slhci_abort(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
@@ -1301,7 +1312,6 @@ slhci_abort(struct usbd_xfer *xfer)
 		goto callback;
 
 	sc = SLHCI_XFER2SC(xfer);
-
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DLOG(D_TRACE, "%s abort xfer %p spipe %p spipe->xfer %p",
@@ -1311,13 +1321,13 @@ slhci_abort(struct usbd_xfer *xfer)
 
 callback:
 	xfer->ux_status = USBD_CANCELLED;
-	/* Abort happens at IPL_USB. */
 	usb_transfer_complete(xfer);
 }
 
 void
 slhci_close(struct usbd_pipe *pipe)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
@@ -1333,6 +1343,7 @@ slhci_close(struct usbd_pipe *pipe)
 void
 slhci_clear_toggle(struct usbd_pipe *pipe)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_pipe *spipe;
 
 	spipe = SLHCI_PIPE2SPIPE(pipe);
@@ -1359,6 +1370,7 @@ slhci_clear_toggle(struct usbd_pipe *pipe)
 void
 slhci_poll(struct usbd_bus *bus) /* XXX necessary? */
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
 
 	sc = SLHCI_BUS2SC(bus);
@@ -1371,7 +1383,6 @@ slhci_poll(struct usbd_bus *bus) /* XXX necessary? */
 void
 slhci_done(struct usbd_xfer *xfer)
 {
-	/* xfer may not be valid here */
 }
 
 void
@@ -1384,7 +1395,6 @@ void
 slhci_mem_use(struct usbd_bus *bus, int val)
 {
 	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
-	int s;
 
 	mutex_enter(&sc->sc_intr_lock);
 	sc->sc_mem_use += val;
@@ -1395,6 +1405,7 @@ slhci_mem_use(struct usbd_bus *bus, int val)
 void
 slhci_reset_entry(void *arg)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = arg;
 
 	mutex_enter(&sc->sc_intr_lock);
@@ -1445,6 +1456,7 @@ slhci_start_entry(struct slhci_softc *sc, struct slhci_pipe *spipe)
 void
 slhci_callback_entry(void *arg)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc;
 	struct slhci_transfers *t;
 
@@ -1471,28 +1483,24 @@ repeat:
 void
 slhci_do_callback(struct slhci_softc *sc, struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
-
-	int repeat;
 
 	start_cc_time(&t_callback, (u_int)xfer);
 	mutex_exit(&sc->sc_intr_lock);
 
 	mutex_enter(&sc->sc_lock);
-	repeat = xfer->ux_pipe->up_repeat;
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
 
 	mutex_enter(&sc->sc_intr_lock);
 	stop_cc_time(&t_callback);
-
-	if (repeat && !sc->sc_bus.ub_usepolling)
-		slhci_do_repeat(sc, xfer);
 }
 
 int
 slhci_intr(void *arg)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = arg;
 	int ret;
 
@@ -1511,6 +1519,7 @@ slhci_intr(void *arg)
 void
 slhci_main(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -1695,6 +1704,7 @@ slhci_read_multi(struct slhci_softc *sc, uint8_t addr, uint8_t *buf, int l)
 static void
 slhci_waitintr(struct slhci_softc *sc, int wait_time)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -1717,6 +1727,7 @@ slhci_waitintr(struct slhci_softc *sc, int wait_time)
 static int
 slhci_dointr(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *tosp;
 	uint8_t r;
@@ -1725,14 +1736,17 @@ slhci_dointr(struct slhci_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
+	DLOG(D_INTR, "Flags %#x sc_ier %#x ISR=%#x", t->flags, sc->sc_ier,
+	    slhci_read(sc, SL11_ISR), 0);
+
 	if (sc->sc_ier == 0)
 		return 0;
 
 	r = slhci_read(sc, SL11_ISR);
 
 #ifdef SLHCI_DEBUG
-	if (slhci_debug & SLHCI_D_INTR && r & sc->sc_ier &&
-	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhci_debug &
+	if (slhcidebug & SLHCI_D_INTR && r & sc->sc_ier &&
+	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhcidebug &
 	    SLHCI_D_SOF)) {
 		uint8_t e, f;
 
@@ -1889,6 +1903,7 @@ slhci_dointr(struct slhci_softc *sc)
 static void
 slhci_abdone(struct slhci_softc *sc, int ab)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *spipe;
 	struct usbd_xfer *xfer;
@@ -1981,7 +1996,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	}
 
 #ifdef SLHCI_DEBUG
-	if (slhci_debug & SLHCI_D_NAK || (status & SL11_EPSTAT_ERRBITS) !=
+	if (slhcidebug & SLHCI_D_NAK || (status & SL11_EPSTAT_ERRBITS) !=
 	    SL11_EPSTAT_NAK)
 		DLOGFLAG8(D_XFER, "STATUS=", status, "STALL", "NAK",
 		    "Overflow", "Setup", "Data Toggle", "Timeout", "Error",
@@ -2252,6 +2267,7 @@ pend:
 static void
 slhci_dotransfer(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *spipe;
 	int ab, i;
@@ -2327,11 +2343,12 @@ slhci_dotransfer(struct slhci_softc *sc)
 }
 
 /*
- * slhci_callback is called after the lock is taken from splusb.
+ * slhci_callback is called after the lock is taken.
  */
 static void
 slhci_callback(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *spipe;
 	struct usbd_xfer *xfer;
@@ -2374,6 +2391,7 @@ do_callback:
 static void
 slhci_enter_xfer(struct slhci_softc *sc, struct slhci_pipe *spipe)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -2441,31 +2459,9 @@ slhci_xfer_timer(struct slhci_softc *sc, struct slhci_pipe *spipe)
 }
 
 static void
-slhci_do_repeat(struct slhci_softc *sc, struct usbd_xfer *xfer)
-{
-	struct slhci_transfers *t;
-	struct slhci_pipe *spipe;
-
-	t = &sc->sc_transfers;
-	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
-
-	if (xfer == t->rootintr)
-		return;
-
-	DLOG(D_TRACE, "REPEAT: xfer %p actlen %d frame %u now %u",
-	    xfer, xfer->ux_actlen, spipe->frame, sc->sc_transfers.frame);
-
-	xfer->ux_actlen = 0;
-	spipe->xfer = xfer;
-	if (spipe->tregs[LEN])
-		KASSERT(spipe->buffer == xfer->ux_buf);
-	slhci_queue_timed(sc, spipe);
-	slhci_dotransfer(sc);
-}
-
-static void
 slhci_callback_schedule(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -2479,12 +2475,14 @@ slhci_callback_schedule(struct slhci_softc *sc)
 static void
 slhci_do_callback_schedule(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
+	DLOG(D_MSG, "flags %#x", t->flags, 0, 0, 0);
 	if (!(t->flags & F_CALLBACK)) {
 		t->flags |= F_CALLBACK;
 		softint_schedule(sc->sc_cb_softintr);
@@ -2492,7 +2490,7 @@ slhci_do_callback_schedule(struct slhci_softc *sc)
 }
 
 #if 0
-/* must be called with lock taken from IPL_USB */
+/* must be called with lock taken. */
 /* XXX static */ void
 slhci_pollxfer(struct slhci_softc *sc, struct usbd_xfer *xfer)
 {
@@ -2518,6 +2516,7 @@ static usbd_status
 slhci_lsvh_warn(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
     usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -2536,6 +2535,7 @@ static usbd_status
 slhci_isoc_warn(struct slhci_softc *sc, struct slhci_pipe *spipe, struct
     usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -2630,6 +2630,7 @@ static usbd_status
 slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe,
     struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
@@ -2696,6 +2697,7 @@ slhci_intrchange(struct slhci_softc *sc, uint8_t new_ier)
 static void
 slhci_drain(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *spipe;
 	struct gcq *q;
@@ -2754,6 +2756,7 @@ slhci_drain(struct slhci_softc *sc)
 void
 slhci_reset(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	struct slhci_pipe *spipe;
 	struct gcq *q;
@@ -2861,6 +2864,7 @@ static int
 slhci_reserve_bustime(struct slhci_softc *sc, struct slhci_pipe *spipe, int
     reserve)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	int bustime, max_packet;
 
@@ -2917,6 +2921,7 @@ slhci_reserve_bustime(struct slhci_softc *sc, struct slhci_pipe *spipe, int
 static void
 slhci_insert(struct slhci_softc *sc)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 
 	t = &sc->sc_transfers;
@@ -2938,20 +2943,10 @@ slhci_insert(struct slhci_softc *sc)
  * Data structures and routines to emulate the root hub.
  */
 
-static const usb_hub_descriptor_t slhci_hubd = {
-	.bDescLength = USB_HUB_DESCRIPTOR_SIZE,
-	.bDescriptorType = UDESC_HUB,
-	.bNbrPorts = 1,
-	.wHubCharacteristics = USETWD(UHD_PWR_INDIVIDUAL | UHD_OC_NONE),
-	.bPwrOn2PwrGood = 50,
-	.bHubContrCurrent = 0,
-	.DeviceRemovable = { 0x00 },
-	.PortPowerCtrlMask = { 0x00 }
-};
-
 static usbd_status
 slhci_clear_feature(struct slhci_softc *sc, unsigned int what)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	usbd_status error;
 
@@ -2989,6 +2984,7 @@ slhci_clear_feature(struct slhci_softc *sc, unsigned int what)
 static usbd_status
 slhci_set_feature(struct slhci_softc *sc, unsigned int what)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	uint8_t r;
 
@@ -3060,6 +3056,7 @@ slhci_set_feature(struct slhci_softc *sc, unsigned int what)
 static void
 slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_transfers *t;
 	unsigned int status, change;
 
@@ -3068,7 +3065,7 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	/*
-	 * We do not have a way to detect over current or bable and
+	 * We do not have a way to detect over current or babble and
 	 * suspend is currently not implemented, so connect and reset
 	 * are the only changes that need to be reported.
 	 */
@@ -3094,33 +3091,11 @@ slhci_get_status(struct slhci_softc *sc, usb_port_status_t *ps)
 	DLOG(D_ROOT, "status=%#.4x, change=%#.4x", status, change, 0,0);
 }
 
-static usbd_status
-slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe,
-    struct usbd_xfer *xfer)
-{
-	struct slhci_transfers *t;
-
-	t = &sc->sc_transfers;
-
-	LK_SLASSERT(spipe != NULL && xfer != NULL, sc, spipe, xfer, return
-	    USBD_CANCELLED);
-
-	DLOG(D_TRACE, "%s start", pnames(SLHCI_XFER_TYPE(xfer)), 0,0,0);
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
-
-	KASSERT(spipe->ptype == PT_ROOT_INTR);
-	LK_SLASSERT(t->rootintr == NULL, sc, spipe, xfer, return
-	    USBD_CANCELLED);
-	t->rootintr = xfer;
-	if (t->flags & F_CHANGE)
-		t->flags |= F_ROOTINTR;
-	return USBD_IN_PROGRESS;
-}
-
 static int
 slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 	struct slhci_transfers *t = &sc->sc_transfers;
 	usbd_status error = USBD_IOERROR; /* XXX should be STALL */
@@ -3174,18 +3149,22 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	/* Write Requests */
 	case UR_CLEAR_FEATURE:
 		if (type == UT_WRITE_CLASS_OTHER) {
-			if (index == 1 /* Port */)
+			if (index == 1 /* Port */) {
+				mutex_enter(&sc->sc_intr_lock);
 				error = slhci_clear_feature(sc, value);
-			else
+				mutex_exit(&sc->sc_intr_lock);
+			} else
 				DLOG(D_ROOT, "Clear Port Feature "
 				    "index = %#.4x", index, 0,0,0);
 		}
 		break;
 	case UR_SET_FEATURE:
 		if (type == UT_WRITE_CLASS_OTHER) {
-			if (index == 1 /* Port */)
+			if (index == 1 /* Port */) {
+				mutex_enter(&sc->sc_intr_lock);
 				error = slhci_set_feature(sc, value);
-			else
+				mutex_exit(&sc->sc_intr_lock);
+			} else
 				DLOG(D_ROOT, "Set Port Feature "
 				    "index = %#.4x", index, 0,0,0);
 		} else if (type != UT_WRITE_CLASS_DEVICE)
@@ -3199,8 +3178,10 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (type == UT_READ_CLASS_OTHER) {
 			if (index == 1 /* Port */ && len == /* XXX >=? */
 			    sizeof(usb_port_status_t)) {
+				mutex_enter(&sc->sc_intr_lock);
 				slhci_get_status(sc, (usb_port_status_t *)
 				    buf);
+				mutex_exit(&sc->sc_intr_lock);
 				actlen = sizeof(usb_port_status_t);
 				error = USBD_NORMAL_COMPLETION;
 			} else
@@ -3285,6 +3266,7 @@ slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 void
 slhci_log_buffer(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	u_char *buf;
 
 	if(xfer->ux_length > 0 &&
@@ -3300,6 +3282,7 @@ slhci_log_buffer(struct usbd_xfer *xfer)
 void
 slhci_log_req(usb_device_request_t *r)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	static const char *xmes[]={
 		"GETSTAT",
 		"CLRFEAT",
@@ -3332,6 +3315,7 @@ slhci_log_req(usb_device_request_t *r)
 void
 slhci_log_req_hub(usb_device_request_t *r)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	static const struct {
 		int req;
 		int type;
@@ -3371,6 +3355,7 @@ slhci_log_req_hub(usb_device_request_t *r)
 void
 slhci_log_dumpreg(void)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	uint8_t r;
 	unsigned int aaddr, alen, baddr, blen;
 	static u_char buf[240];
@@ -3441,16 +3426,17 @@ slhci_log_dumpreg(void)
 void
 slhci_log_xfer(struct usbd_xfer *xfer)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	DDOLOG("xfer: length=%u, actlen=%u, flags=%#x, timeout=%u,",
 		xfer->ux_length, xfer->ux_actlen, xfer->ux_flags, xfer->ux_timeout);
-	if (xfer->ux_dmabuf.block)
-		DDOLOG("buffer=%p", xfer->ux_buf, 0,0,0);
+	DDOLOG("buffer=%p", xfer->ux_buf, 0,0,0);
 	slhci_log_req_hub(&xfer->ux_request);
 }
 
 void
 slhci_log_spipe(struct slhci_pipe *spipe)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	DDOLOG("spipe %p onlists: %s %s %s", spipe, gcq_onlist(&spipe->ap) ?
 	    "AP" : "", gcq_onlist(&spipe->to) ? "TO" : "",
 	    gcq_onlist(&spipe->xq) ? "XQ" : "");

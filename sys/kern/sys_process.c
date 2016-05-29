@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.165.2.3 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.165.2.4 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,16 +118,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.3 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.4 2016/05/29 08:44:37 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
+#include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/exec.h>
+#include <sys/pax.h>
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/ras.h>
@@ -1118,7 +1120,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	mutex_exit(&vm->vm_map.misc_lock);
 	if (error != 0)
 		return (error);
-	error = uvm_io(&vm->vm_map, uio);
+	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
 	uvmspace_free(vm);
 
 #ifdef PMAP_NEED_PROCWR

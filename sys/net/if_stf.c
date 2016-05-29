@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.80.4.2 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.80.4.3 2016/05/29 08:44:38 skrll Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.2 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.3 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -168,7 +168,7 @@ static const struct encapsw in_stf_encapsw =
 static int stf_encapcheck(struct mbuf *, int, int, void *);
 static struct in6_ifaddr *stf_getsrcifa6(struct ifnet *);
 static int stf_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	struct rtentry *);
+	const struct rtentry *);
 static int isrfc1918addr(const struct in_addr *);
 static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 	struct ifnet *);
@@ -325,7 +325,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 
 static int
 stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt0)
 {
 	struct rtentry *rt;
 	struct stf_softc *sc;

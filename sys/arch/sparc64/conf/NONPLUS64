@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.44.2.2 2015/12/27 12:09:43 skrll Exp $
+# 	$NetBSD: NONPLUS64,v 1.44.2.3 2016/05/29 08:44:19 skrll Exp $
 
-include "arch/sparc64/conf/std.sparc64"
+include 	"arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.44.2.2 $"
+#ident		"NONPLUS64-$Revision: 1.44.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -123,14 +123,14 @@ options 	EXEC_ELF32	# Exec module for NetBSD/sparc 1.5 binaries.
 options 	EXEC_AOUT	# Exec module for NetBSD/sparc pre-1.5 binaries.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 ## File systems.  You probably need at least one of FFS or NFS.
 file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
-file-system 	OVERLAY		# overlay file system
+file-system	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -297,7 +297,7 @@ uk*	at scsibus? target ? lun ?		# unknown SCSI
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	
+pseudo-device	vnd
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
@@ -307,7 +307,7 @@ pseudo-device	ccd
 ## Memory disk device, used on boot floppies with compressed
 ## kernel-plus-root-disk images.
 
-#pseudo-device	md	
+#pseudo-device	md
 
 
 #### Network interfaces
@@ -337,17 +337,17 @@ le*		at lebuffer?				# SBus
 pseudo-device	loop
 
 ## SLIP and CSLIP interfaces, for IP over a serial line.
-#pseudo-device	sl		
+#pseudo-device	sl
 
 ## PPP, the successor to SLIP.  See pppd(8).
-pseudo-device	ppp		
+pseudo-device	ppp
 
 ## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		
+#pseudo-device	strip
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.
-pseudo-device	tun		
+pseudo-device	tun
 
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.

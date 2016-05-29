@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.7 2014/10/03 11:40:54 skrll Exp $
+#	$NetBSD: files.rpi,v 1.7.2.1 2016/05/29 08:44:16 skrll Exp $
 #
 # Raspberry Pi
 #
@@ -9,6 +9,7 @@ file   arch/arm/arm32/arm32_reboot.c
 
 file	arch/evbarm/rpi/rpi_machdep.c
 file	arch/evbarm/rpi/vcprop_subr.c
+makeoptions	"COPTS.vcprop_subr.c"+="-fno-stack-protector"
 
 # Kernel boot arguments
 defparam opt_machdep.h				BOOT_ARGS

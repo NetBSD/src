@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.11.74.3 2016/04/22 15:44:19 skrll Exp $ */
+/* $NetBSD: pax.h,v 1.11.74.4 2016/05/29 08:44:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -37,6 +37,7 @@
 #define P_PAX_GUARD	0x04	/* Enable Segvguard */
 
 struct lwp;
+struct proc;
 struct exec_package;
 struct vmspace;
 
@@ -52,8 +53,16 @@ struct vmspace;
 extern int pax_aslr_debug;
 #endif
 
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 void pax_init(void);
+void pax_set_flags(struct exec_package *, struct proc *);
 void pax_setup_elf_flags(struct exec_package *, uint32_t);
+#else
+# define pax_init()
+# define pax_set_flags(e, p)
+# define pax_setup_elf_flags(e, flags) __USE(flags)
+#endif
+
 void pax_mprotect_adjust(
 #ifdef PAX_MPROTECT_DEBUG
     const char *, size_t,
@@ -61,6 +70,7 @@ void pax_mprotect_adjust(
     struct lwp *, vm_prot_t *, vm_prot_t *);
 #ifndef PAX_MPROTECT
 # define PAX_MPROTECT_ADJUST(a, b, c)
+# define pax_mprotect_prot(l)	0
 #else
 # ifdef PAX_MPROTECT_DEBUG
 #  define PAX_MPROTECT_ADJUST(a, b, c) \
@@ -69,16 +79,27 @@ void pax_mprotect_adjust(
 #  define PAX_MPROTECT_ADJUST(a, b, c) \
     pax_mprotect_adjust((a), (b), (c))
 # endif
+extern int pax_mprotect_prot(struct lwp *);
 #endif
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
     (((delta) & ((1UL << (len)) - 1)) << (lsb))
 
-bool pax_aslr_epp_active(struct exec_package *);
-bool pax_aslr_active(struct lwp *);
+#ifdef PAX_ASLR
 void pax_aslr_init_vm(struct lwp *, struct vmspace *, struct exec_package *);
 void pax_aslr_stack(struct exec_package *, u_long *);
+uint32_t pax_aslr_stack_gap(struct exec_package *);
+vaddr_t pax_aslr_exec_offset(struct exec_package *, vaddr_t);
+voff_t pax_aslr_rtld_offset(struct exec_package *, vaddr_t, int);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
+#else
+# define pax_aslr_init_vm(l, v, e)
+# define pax_aslr_stack(e, o)
+# define pax_aslr_stack_gap(e)	0
+# define pax_aslr_exec_offset(e, a) MAX(a, PAGE_SIZE)
+# define pax_aslr_rtld_offset(e, a, u) 0
+# define pax_aslr_mmap(l, a, b, c)
+#endif
 
 #endif /* !_SYS_PAX_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hppa,v 1.1.12.1 2015/06/06 14:39:59 skrll Exp $
+#	$NetBSD: majors.hppa,v 1.1.12.2 2016/05/29 08:44:17 skrll Exp $
 #
 # Device majors for hppa
 #
@@ -52,3 +52,5 @@ device-major	nsmb		char 98			nsmb
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in
 # sys/conf/majors.
+
+include "conf/majors.usb"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.4 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.5 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.4 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.5 2016/05/29 08:44:37 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -133,6 +133,9 @@ static int copyinargstrs(struct execve_data * restrict, char * const *,
     execve_fetch_element_t, char **, size_t *, void (*)(const void *, size_t));
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
+#if defined(DEBUG) && !defined(DEBUG_EXEC)
+#define DEBUG_EXEC
+#endif
 #ifdef DEBUG_EXEC
 #define DPRINTF(a) printf a
 #define COPYPRINTF(s, a, b) printf("%s, %d: copyout%s @%p %zu\n", __func__, \
@@ -758,12 +761,6 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * Calculate the new stack size.
 	 */
 
-#ifdef PAX_ASLR
-#define	ASLR_GAP(epp)	(pax_aslr_epp_active(epp) ? (cprng_fast32() % PAGE_SIZE) : 0)
-#else
-#define	ASLR_GAP(epp)	0
-#endif
-
 #ifdef __MACHINE_STACK_GROWS_UP
 /*
  * copyargs() fills argc/argv/envp from the lower address even on
@@ -779,7 +776,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	data->ed_argslen = calcargs(data, argenvstrlen);
 
-	const size_t len = calcstack(data, ASLR_GAP(epp) + RTLD_GAP);
+	const size_t len = calcstack(data, pax_aslr_stack_gap(epp) + RTLD_GAP);
 
 	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
@@ -850,7 +847,9 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 	/* create the new process's VM space by running the vmcmds */
 	KASSERTMSG(epp->ep_vmcmds.evs_used != 0, "%s: no vmcmds", __func__);
 
+#ifdef TRACE_EXEC
 	DUMPVMCMDS(epp, 0, 0);
+#endif
 
 	base_vcp = NULL;
 
@@ -1132,7 +1131,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	timers_free(p, TIMERS_POSIX);
 
 	/* Set the PaX flags. */
-	p->p_pax = epp->ep_pax_flags;
+	pax_set_flags(epp, p);
 
 	/*
 	 * Do whatever is necessary to prepare the address space
@@ -1159,9 +1158,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_maxsaddr = (void *)epp->ep_maxsaddr;
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
-#ifdef PAX_ASLR
 	pax_aslr_init_vm(l, vm, epp);
-#endif /* PAX_ASLR */
 
 	/* Now map address space. */
 	error = execve_dovmcmds(l, data);
@@ -1318,7 +1315,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	pathbuf_stringcopy_put(data->ed_pathbuf, data->ed_pathstring);
 	pathbuf_destroy(data->ed_pathbuf);
 	PNBUF_PUT(data->ed_resolvedpathbuf);
+#ifdef TRACE_EXEC
 	DPRINTF(("%s finished\n", __func__));
+#endif
 	return EJUSTRETURN;
 
  exec_abort:

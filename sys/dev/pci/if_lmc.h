@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.21.14.1 2015/09/22 12:05:59 skrll Exp $
+ * $NetBSD: if_lmc.h,v 1.21.14.2 2016/05/29 08:44:21 skrll Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1311,7 +1311,7 @@ static int rawip_detach(softc_t *);
 #if IFNET
 static void ifnet_input(struct ifnet *, struct mbuf *);
 static int ifnet_output(struct ifnet *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *);
+			const struct sockaddr *, const struct rtentry *);
 static int ifnet_ioctl(struct ifnet *, u_long, void *);
 static void ifnet_start(struct ifnet *);
 static void ifnet_watchdog(struct ifnet *);

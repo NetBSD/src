@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.26 2013/03/30 14:14:31 christos Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.26.12.1 2016/05/29 08:44:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -79,6 +79,17 @@ struct ieee80211_qosframe {
 	u_int8_t	i_qos[2];
 	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
 	/* see below */
+} __packed;
+
+struct ieee80211_htframe {		/* 11n */
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
+	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	u_int8_t	i_qos[2];
+	u_int8_t	i_ht[4];
 } __packed;
 
 struct ieee80211_qoscntl {

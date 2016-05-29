@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.5 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -204,17 +204,7 @@ typedef struct vnode vnode_t;
 #define	VI_EXECMAP	0x00000200	/* might have PROT_EXEC mappings */
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
-#endif	/* _VFS_VNODE_PRIVATE */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_MARKER	0x00008000	/* Dummy marker vnode */
-#endif	/* _VFS_VNODE_PRIVATE */
-#ifdef _VFS_VNODE_PRIVATE
-#define	VI_CLEAN	0x00080000	/* has been reclaimed */
-#define	VI_CHANGING	0x00100000	/* vnode changes state */
-#endif	/* _VFS_VNODE_PRIVATE */
 
 /*
  * The third set are locked by the underlying file system.
@@ -223,8 +213,7 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
-    "\24CLEAN\25CHANGING\31DIROP"
+    "\13WRMAP\14WRMAPDIRTY\17ONWORKLST\31DIROP"
 
 #define	VSIZENOTSET	((voff_t)-1)
 
@@ -546,9 +535,6 @@ int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 int	vdead_check(struct vnode *, int);
 void	vrevoke(struct vnode *);
-struct vnode *
-	vnalloc(struct mount *);
-void	vnfree(struct vnode *);
 void	vremfree(struct vnode *);
 int	vcache_get(struct mount *, const void *, size_t, struct vnode **);
 int	vcache_new(struct mount *, struct vnode *,
@@ -604,6 +590,18 @@ void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif /* DDB */
+
+#ifdef _VFS_VNODE_PRIVATE
+/*
+ * Private vnode manipulation functions.
+ */
+struct vnode *
+	vnalloc_marker(struct mount *);
+void	vnfree_marker(vnode_t *);
+bool	vnis_marker(vnode_t *);
+void	vcache_print(vnode_t *, const char *,
+    void (*)(const char *, ...) __printflike(1, 2));
+#endif	/* _VFS_VNODE_PRIVATE */
 
 #endif /* _KERNEL */
 

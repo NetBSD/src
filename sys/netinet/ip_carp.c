@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.59.4.3 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.59.4.4 2016/05/29 08:44:38 skrll Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59.4.3 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.59.4.4 2016/05/29 08:44:38 skrll Exp $");
 
 /*
  * TODO:
@@ -928,10 +928,18 @@ carp_send_ad_all(void)
 	struct ifnet *ifp;
 	struct carp_if *cif;
 	struct carp_softc *vh;
+	int s;
+	int bound = curlwp->l_pflag & LP_BOUND;
 
-	IFNET_FOREACH(ifp) {
+	curlwp->l_pflag |= LP_BOUND;
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
+		struct psref psref;
 		if (ifp->if_carp == NULL || ifp->if_type == IFT_CARP)
 			continue;
+
+		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
+		pserialize_read_exit(s);
 
 		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
@@ -939,7 +947,12 @@ carp_send_ad_all(void)
 			    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER)
 				carp_send_ad(vh);
 		}
+
+		s = pserialize_read_enter();
+		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
+	pserialize_read_exit(s);
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
 }
 
 
@@ -2090,7 +2103,7 @@ carp_start(struct ifnet *ifp)
 
 int
 carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct carp_softc *sc = ((struct carp_softc *)ifp->if_softc);
 	KASSERT(KERNEL_LOCKED_P());

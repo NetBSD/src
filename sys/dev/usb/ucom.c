@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.13 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.14 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.13 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.14 2016/05/29 08:44:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,6 +174,7 @@ struct ucom_softc {
 	int			sc_swflags;
 
 	u_char			sc_opening;	/* lock during open */
+	u_char			sc_closing;	/* lock during close */
 	int			sc_refcnt;
 	u_char			sc_dying;	/* disconnecting */
 
@@ -282,6 +283,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tx_stopped = 0;
 	sc->sc_swflags = 0;
 	sc->sc_opening = 0;
+	sc->sc_closing = 0;
 	sc->sc_refcnt = 0;
 	sc->sc_dying = 0;
 
@@ -542,9 +544,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	}
 
 	/*
-	 * Do the following iff this is a first open.
+	 * Wait while the device is initialized by the
+	 * first opener or cleaned up by the last closer.
 	 */
-	while (sc->sc_opening) {
+	while (sc->sc_opening || sc->sc_closing) {
 		error = cv_wait_sig(&sc->sc_opencv, &sc->sc_lock);
 
 		if (error) {
@@ -681,6 +684,10 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 	mutex_enter(&sc->sc_lock);
 	tp = sc->sc_tty;
 
+	while (sc->sc_closing)
+		cv_wait(&sc->sc_opencv, &sc->sc_lock);
+	sc->sc_closing = 1;
+
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		goto out;
 	}
@@ -706,6 +713,9 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
 
 out:
+	sc->sc_closing = 0;
+	cv_signal(&sc->sc_opencv);
+
 	mutex_exit(&sc->sc_lock);
 
 	return 0;
@@ -1396,24 +1406,24 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	mutex_enter(&sc->sc_lock);
-	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
+	if (status == USBD_CANCELLED)
+		return;
 
-	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
+	mutex_enter(&sc->sc_lock);
+	if (status == USBD_IOERROR ||
 	    sc->sc_dying) {
 		DPRINTF("dying", 0, 0, 0, 0);
-		ub->ub_index = ub->ub_len = 0;
 		/* Send something to wake upper layer */
-		if (status != USBD_CANCELLED) {
-			(tp->t_linesw->l_rint)('\n', tp);
-			mutex_spin_enter(&tty_lock);	/* XXX */
-			ttwakeup(tp);
-			mutex_spin_exit(&tty_lock);	/* XXX */
-		}
+		(tp->t_linesw->l_rint)('\n', tp);
+		mutex_spin_enter(&tty_lock);	/* XXX */
+		ttwakeup(tp);
+		mutex_spin_exit(&tty_lock);	/* XXX */
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
+
+	ub = SIMPLEQ_FIRST(&sc->sc_ibuff_empty);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
 
 	if (status == USBD_STALLED) {
 		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
@@ -1474,18 +1484,10 @@ ucom_cleanup(struct ucom_softc *sc)
 
 	ucom_shutdown(sc);
 	if (sc->sc_bulkin_pipe != NULL) {
-		struct usbd_pipe *bulkin_pipe = sc->sc_bulkin_pipe;
-		sc->sc_bulkin_pipe = NULL;
-		mutex_exit(&sc->sc_lock);
-		usbd_abort_pipe(bulkin_pipe);
-		mutex_enter(&sc->sc_lock);
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
-		struct usbd_pipe *bulkout_pipe = sc->sc_bulkout_pipe;
-		sc->sc_bulkout_pipe = NULL;
-		mutex_exit(&sc->sc_lock);
-		usbd_abort_pipe(bulkout_pipe);
-		mutex_enter(&sc->sc_lock);
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 	}
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.121 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: rtw.c,v 1.121.6.1 2016/05/29 08:44:21 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.121 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.121.6.1 2016/05/29 08:44:21 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1902,7 +1902,7 @@ rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 			    "could not allocate beacon\n");
 			return;
 		}
-		m->m_pkthdr.rcvif = (void *)ieee80211_ref_node(ic->ic_bss);
+		M_SETCTX(m, ieee80211_ref_node(ic->ic_bss));
 		IF_ENQUEUE(&sc->sc_beaconq, m);
 		rtw_start(&sc->sc_if);
 	}
@@ -3062,8 +3062,8 @@ rtw_80211_dequeue(struct rtw_softc *sc, struct ifqueue *ifq, int pri,
 		return NULL;
 	}
 	IF_DEQUEUE(ifq, m);
-	*nip = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-	m->m_pkthdr.rcvif = NULL;
+	*nip = M_GETCTX(m, struct ieee80211_node *);
+	M_SETCTX(m, NULL);
 	KASSERT(*nip != NULL);
 	return m;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.55.2.6 2016/04/22 15:44:08 skrll Exp $ */
+/* $NetBSD: awin_reg.h,v 1.55.2.7 2016/05/29 08:44:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1293,6 +1293,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PIO_INT_DEB_REG		0x0218
 #define AWIN_PIO_SDR_PAD_DEV_REG	0x0220
 #define AWIN_PIO_SDR_PAD_PUL_REG	0x0224
+#define AWIN_PIO_INT_SIZE		0x0028
 
 #define AWIN_PIO_CFG_PINMASK(pin)	(7 << (4*((pin) & 7)))
 #define AWIN_PIO_DRV_MASK(pin)		((x) << (2*((pin) & 15)))
@@ -3029,5 +3030,45 @@ struct awin_a31_dma_desc {
 #define AWIN_A80_PIO_PM_DAUDIO1_PINS	0x00007cf0 /* PM pins 14-10,7-4 */
 
 #define AWIN_A80_PIO_PN_PINS		2
+
+#define AWIN_LRADC_CTRL_REG		0x00
+#define AWIN_LRADC_CTRL_FIRSTCONV_MASK		__BITS(31,24)
+#define AWIN_LRADC_CTRL_FIRSTCONV_SHIFT		24
+#define AWIN_LRADC_CTRL_CHAN_MASK		__BITS(23,22)
+#define AWIN_LRADC_CTRL_CHAN_SHIFT		22
+#define AWIN_LRADC_CTRL_CONT_MASK		__BITS(19,16)
+#define AWIN_LRADC_CTRL_CONT_SHIFT		16
+#define AWIN_LRADC_CTRL_KMODE_MASK		__BITS(13,12)
+#define AWIN_LRADC_CTRL_KMODE_NORMAL		(0 << 12)
+#define AWIN_LRADC_CTRL_KMODE_SINGLE		(1 << 12)
+#define AWIN_LRADC_CTRL_KMODE_CONTINUE		(2 << 12)
+#define AWIN_LRADC_CTRL_LV_A_B_CNT_MASK		__BITS(11,8)
+#define AWIN_LRADC_CTRL_LV_A_B_CNT_SHIFT	8
+#define AWIN_LRADC_CTRL_HOLD_EN			__BIT(6)
+#define AWIN_LRADC_CTRL_LEVEL_B_MASK		__BITS(5,4)
+#define AWIN_LRADC_CTRL_LEVEL_B_3C		(0 << 4)
+#define AWIN_LRADC_CTRL_LEVEL_B_39		(1 << 4)
+#define AWIN_LRADC_CTRL_LEVEL_B_36		(2 << 4)
+#define AWIN_LRADC_CTRL_LEVEL_B_33		(3 << 4)
+#define AWIN_LRADC_CTRL_RATE_MASK		__BITS(3,2)
+#define AWIN_LRADC_CTRL_RATE_250		(0 << 2)
+#define AWIN_LRADC_CTRL_RATE_125		(1 << 2)
+#define AWIN_LRADC_CTRL_RATE_62			(2 << 2)
+#define AWIN_LRADC_CTRL_RATE_31			(3 << 2)
+#define AWIN_LRADC_CTRL_EN			__BIT(0)
+#define AWIN_LRADC_INTC_REG		0x04
+#define AWIN_LRADC_INTS_REG		0x08
+#define AWIN_LRADC_INT_KEYUP1		__BIT(12)
+#define AWIN_LRADC_INT_ALREADYHOLD1	__BIT(11)
+#define AWIN_LRADC_INT_HOLD1		__BIT(10)
+#define AWIN_LRADC_INT_KEY1		__BIT(9)
+#define AWIN_LRADC_INT_DATA1		__BIT(8)
+#define AWIN_LRADC_INT_KEYUP0		__BIT(4)
+#define AWIN_LRADC_INT_ALREADYHOLD0	__BIT(3)
+#define AWIN_LRADC_INT_HOLD0		__BIT(2)
+#define AWIN_LRADC_INT_KEY0		__BIT(1)
+#define AWIN_LRADC_INT_DATA0		__BIT(0)
+#define AWIN_LRADC_DATA0_REG		0x0c
+#define AWIN_LRADC_DATA1_REG		0x10
 
 #endif /* _ARM_ALLWINNER_AWIN_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.5.2.1 2015/12/27 12:10:00 skrll Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.5.2.2 2016/05/29 08:44:35 skrll Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.5.2.1 2015/12/27 12:10:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.5.2.2 2016/05/29 08:44:35 skrll Exp $");
 
 #include <core/engine.h>
 #include <linux/swiotlb.h>
@@ -1524,6 +1524,16 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 #endif
 }
 
+#ifdef __NetBSD__
+static void
+nouveau_ttm_tt_swapout(struct ttm_tt *ttm)
+{
+	struct ttm_dma_tt *ttm_dma = container_of(ttm, struct ttm_dma_tt, ttm);
+
+	ttm_bus_dma_swapout(ttm_dma);
+}
+#endif
+
 void
 nouveau_bo_fence(struct nouveau_bo *nvbo, struct nouveau_fence *fence)
 {
@@ -1581,6 +1591,7 @@ struct ttm_bo_driver nouveau_bo_driver = {
 	.ttm_tt_populate = &nouveau_ttm_tt_populate,
 	.ttm_tt_unpopulate = &nouveau_ttm_tt_unpopulate,
 #ifdef __NetBSD__
+	.ttm_tt_swapout = &nouveau_ttm_tt_swapout,
 	.ttm_uvm_ops = &nouveau_uvm_ops,
 #endif
 	.invalidate_caches = nouveau_bo_invalidate_caches,

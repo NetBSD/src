@@ -267,7 +267,7 @@
 #define ACPI_GET_FUNCTION_NAME          _AcpiFunctionName
 
 /*
- * The Name parameter should be the procedure name as a quoted string.
+ * The Name parameter should be the procedure name as a non-quoted string.
  * The function name is also used by the function exit macros below.
  * Note: (const char) is used to be compatible with the debug interfaces
  * and macros such as __FUNCTION__.
@@ -357,7 +357,7 @@
 
 #define ACPI_TRACE_ENTRY(Name, Function, Type, Param) \
     ACPI_FUNCTION_NAME (Name) \
-    Function (ACPI_DEBUG_PARAMETERS, (Type) (Param))
+    Function (ACPI_DEBUG_PARAMETERS, (const Type) (Param))
 
 /* The actual entry trace macros */
 

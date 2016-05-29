@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26.2.5 2016/03/19 11:29:55 skrll Exp $
+#	$NetBSD: files.awin,v 1.26.2.6 2016/05/29 08:44:16 skrll Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -65,7 +65,7 @@ attach	awincnt at awinio with awin_cnt
 file	arch/arm/allwinner/awin_cnt.c		awin_cnt
 
 # A10/A20 UART
-options 	COM_16750			# for IIR_BUSY
+options 	COM_AWIN			# for IIR_BUSY
 attach	com at awinio with awin_com
 file	arch/arm/allwinner/awin_com.c		awin_com
 
@@ -177,3 +177,8 @@ file	arch/arm/allwinner/awin_fb.c		awin_fb		needs-flag
 device	awinir: irbus
 attach	awinir at awinio with awin_ir
 file	arch/arm/allwinner/awin_ir.c		awin_ir
+
+# A20 LRADC
+device	awinlradc
+attach	awinlradc at awinio with awin_lradc
+file	arch/arm/allwinner/awin_lradc.c		awin_lradc

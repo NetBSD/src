@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.65.2.4 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.65.2.5 2016/05/29 08:44:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -202,6 +202,10 @@ struct livengood_tcpip_ctxdesc {
 /* registers for FLASH access on ICH8 */
 #define WM_ICH8_FLASH	0x0014
 
+/* XXX Only for PCH_SPT? */
+#define WM_PCI_DESCRING_STATUS	0xe4
+#define DESCRING_STATUS_FLUSH_REQ	__BIT(8)
+
 /*
  * Wiseman Control/Status Registers.
  */
@@ -270,6 +274,12 @@ struct livengood_tcpip_ctxdesc {
 #define	STATUS_GIO_M_ENA (1U << 19)	/* GIO master enable */
 #define	STATUS_DEV_RST_SET (1U << 20)	/* Device Reset Set */
 
+/* Strapping Option Register (PCH_SPT and newer) */
+#define WMREG_STRAP	0x000c
+#define STRAP_NVMSIZE	__BITS(1, 6)
+#define STRAP_FREQ	__BITS(12, 13)
+#define STRAP_SMBUSADDR	__BITS(17, 23)
+
 #define	WMREG_EECD	0x0010	/* EEPROM Control Register */
 #define	EECD_SK		(1U << 0)	/* clock */
 #define	EECD_CS		(1U << 1)	/* chip select */
@@ -301,6 +311,7 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
 #define	CTRL_EXT_NSICR		__BIT(0) /* Non Interrupt clear on read */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
+#define CTRL_EXT_NVMVS		__BITS(0, 1) /* NVM valid sector */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
 /* The bit order of the SW Definable pin is not 6543 but 3654! */
@@ -310,6 +321,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_SWDPIO_MASK	0x0d
 #define	CTRL_EXT_SWDPIO(x)	(1U << (CTRL_EXT_SWDPIO_SHIFT \
 		+ ((x) == 3 ? 3 : ((x) - 4))))
+#define	CTRL_EXT_FORCE_SMBUS	__BIT(11)  /* Force SMBus mode */
 #define	CTRL_EXT_ASDCHK		(1U << 12) /* ASD check */
 #define	CTRL_EXT_EE_RST		(1U << 13) /* EEPROM reset */
 #define	CTRL_EXT_IPS		(1U << 14) /* invert power state bit 0 */
@@ -497,6 +509,7 @@ struct livengood_tcpip_ctxdesc {
 #define	RCTL_RDMTS_MASK	RCTL_RDMTS(3)
 #define	RCTL_MO(x)	((x) << 12)	/* multicast offset */
 #define	RCTL_BAM	(1U << 15)	/* broadcast accept mode */
+#define	RCTL_RDMTS_HEX	__BIT(16)
 #define	RCTL_2k		(0 << 16)	/* 2k Rx buffers */
 #define	RCTL_1k		(1 << 16)	/* 1k Rx buffers */
 #define	RCTL_512	(2 << 16)	/* 512 byte Rx buffers */
@@ -714,6 +727,8 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
 #define	PHY_CTRL_GBE_DIS	(1 << 6)
+
+#define	WMREG_IOSFPC	0x0f28	/* Tx corrupted data */
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
@@ -1021,6 +1036,9 @@ struct livengood_tcpip_ctxdesc {
 #define	SWFW_FIRM_SHIFT		16	/* firmware semaphores */
 
 #define WMREG_GCR2	0x5b64	/* 3GPIO Control Register 2 */
+#define WMREG_FEXTNVM9	0x5bb4	/* Future Extended NVM 9 */
+#define WMREG_FEXTNVM11	0x5bbc	/* Future Extended NVM 11 */
+#define FEXTNVM11_DIS_MULRFIX	__BIT(13)	/* Disable MULR fix */
 
 #define WMREG_CRC_OFFSET 0x5f50
 
@@ -1243,6 +1261,9 @@ struct livengood_tcpip_ctxdesc {
 #define ICH_NVM_SIG_MASK	0xc000
 #define ICH_NVM_VALID_SIG_MASK	0xc0
 #define ICH_NVM_SIG_VALUE	0x80
+
+#define NVM_SIZE_MULTIPLIER 4096	/* multiplier for NVMS field */
+#define WM_PCH_SPT_FLASHOFFSET	0xe000	/* offset of NVM access regs(PCH_SPT)*/
 
 /* for PCI express Capability registers */
 #define	WM_PCIE_DCSR2_16MS	0x00000005

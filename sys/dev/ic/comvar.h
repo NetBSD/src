@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.79.2.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: comvar.h,v 1.79.2.2 2016/05/29 08:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -94,6 +94,12 @@ int com_is_console(bus_space_tag_t, bus_addr_t, bus_space_handle_t *);
 #ifdef	COM_16750
 #define	COM_REG_USR		31
 #endif
+#ifdef	COM_AWIN
+#define	COM_REG_USR		31
+#define	COM_REG_TFL		32
+#define	COM_REG_RFL		33
+#define	COM_REG_HALT		41
+#endif
 
 struct com_regs {
 	bus_space_tag_t		cr_iot;
@@ -140,6 +146,12 @@ extern const bus_size_t com_std_map[16];
 #define	COM_REG_MDR1		8
 #ifdef	COM_16750
 #define COM_REG_USR		com_usr
+#endif
+#ifdef	COM_AWIN
+#define COM_REG_USR		com_usr
+#define	COM_REG_TFL		com_tfl
+#define	COM_REG_RFL		com_rfl
+#define	COM_REG_HALT		com_halt
 #endif
 
 struct com_regs {

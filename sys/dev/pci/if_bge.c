@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.5 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.6 2016/05/29 08:44:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.5 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.6 2016/05/29 08:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1516,6 +1516,7 @@ bge_update_all_threshes(int lvl)
 	struct ifnet *ifp;
 	const char * const namebuf = "bge";
 	int namelen;
+	int s;
 
 	if (lvl < 0)
 		lvl = 0;
@@ -1526,13 +1527,15 @@ bge_update_all_threshes(int lvl)
 	/*
 	 * Now search all the interfaces for this name/number
 	 */
-	IFNET_FOREACH(ifp) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifp) {
 		if (strncmp(ifp->if_xname, namebuf, namelen) != 0)
 		      continue;
 		/* We got a match: update if doing auto-threshold-tuning */
 		if (bge_auto_thresh)
 			bge_set_thresh(ifp, lvl);
 	}
+	pserialize_read_exit(s);
 }
 
 /*

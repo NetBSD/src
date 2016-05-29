@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.88.2.1 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.88.2.2 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.88.2.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.88.2.2 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.88.2.1 2015/09/22 12:06:11 skrll Exp
 #include <sys/kernel.h>
 
 #include <net/if.h>
-#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>

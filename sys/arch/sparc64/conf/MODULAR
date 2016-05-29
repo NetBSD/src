@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.5 2013/03/12 21:52:47 christos Exp $
+# $NetBSD: MODULAR,v 1.5.14.1 2016/05/29 08:44:19 skrll Exp $
 #
 # MODULAR kernel - like GENERIC, but excluding lots of stuff that can
 # be loaded as a module later
@@ -6,20 +6,20 @@
 
 include 	"arch/sparc64/conf/GENERIC"
 
-#ident		"MODULAR-$Revision: 1.5 $"
+#ident		"MODULAR-$Revision: 1.5.14.1 $"
 
-options		INSECURE	# disable kernel security levels initially
+options 	INSECURE	# disable kernel security levels initially
 				# (we can't load file system modules otherwise)
 
-#no options 	EXEC_AOUT	# execve(2) support for a.out binaries
-#no options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
+#no options	EXEC_AOUT	# execve(2) support for a.out binaries
+#no options	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 
-#no options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-no options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+#no options	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
+no options	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 no file-system	KERNFS		# kernel data-structure filesystem
 no file-system	NULLFS		# NULL layered filesystem
-no file-system 	OVERLAY		# overlay file system
+no file-system	OVERLAY		# overlay file system
 no file-system	MFS		# memory-based filesystem
 no file-system	FDESC		# user file descriptor filesystem
 no file-system	UMAPFS		# uid/gid remapping filesystem

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.19.32.1 2015/09/22 12:06:10 skrll Exp $       */
+/*      $NetBSD: if_atm.h,v 1.19.32.2 2016/05/29 08:44:38 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -136,7 +136,7 @@ void	atm_ifattach(struct ifnet *);
 void	atm_input(struct ifnet *, struct atm_pseudohdr *,
 		struct mbuf *, void *);
 int	atm_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
-		struct rtentry *);
+		const struct rtentry *);
 #endif
 #ifdef ATM_PVCEXT
 #ifdef _KERNEL
