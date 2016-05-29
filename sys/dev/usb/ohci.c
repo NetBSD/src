@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.73 2016/04/30 10:34:14 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.74 2016/05/29 06:13:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.73 2016/04/30 10:34:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.74 2016/05/29 06:13:02 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -665,7 +665,7 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 		}
 	}
 	cur->td.td_flags |=
-	    (xfer->ux_flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0);
+	    HTOO32(xfer->ux_flags & USBD_SHORT_XFER_OK ? OHCI_TD_R : 0);
 
 	if (!rd &&
 	    (flags & USBD_FORCE_SHORT_XFER) &&
