@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.8 2016/04/25 02:01:32 knakahara Exp $
+# $NetBSD: Makefile,v 1.9 2016/05/29 02:28:07 christos Exp $
 #
 # Public Domain
 #
 
 PROG=		npftest
 NOMAN=		# no man page
+PAXCTL_FLAGS.npftest += +m
 
 WARNS=		5
 NOLINT=		# disabled (note: deliberately)
