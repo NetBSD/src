@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.125 2016/05/26 07:24:55 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.125 2016/05/26 07:24:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -255,6 +255,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.125 2016/05/26 07:24:55 maxv Exp $");
  */
 	.data
 
+	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
 	.globl	_C_LABEL(cputype)
 	.globl	_C_LABEL(cpuid_level)
@@ -302,6 +303,9 @@ LABEL(lapic_tpr)
 END(lapic_tpr)
 #endif
 
+	.type	_C_LABEL(tablesize), @object
+_C_LABEL(tablesize):	.long	0
+END(tablesize)
 	.type	_C_LABEL(nox_flag), @object
 LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
 END(nox_flag)
@@ -320,9 +324,6 @@ END(lwp0uarea)
 	.type	_C_LABEL(PDPpaddr), @object
 LABEL(PDPpaddr)		.long	0	/* paddr of PDP, for libkvm */
 END(PDPpaddr)
-	.type	_C_LABEL(tablesize), @object
-_C_LABEL(tablesize):	.long	0
-END(tablesize)
 
 	/* Space for the temporary stack */
 	.size	tmpstk, tmpstk - .
