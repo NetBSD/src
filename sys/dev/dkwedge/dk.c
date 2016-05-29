@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.90 2016/05/29 12:48:40 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.90 2016/05/29 12:48:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -545,7 +545,8 @@ dkwedge_cleanup_parent(struct dkwedge_softc *sc, int flags)
 	rc = 0;
 	mutex_enter(&dk->dk_openlock);
 	if (dk->dk_openmask == 0)
-		;	/* nothing to do */
+		/* nothing to do */
+		mutex_exit(&dk->dk_openlock);
 	else if ((flags & DETACH_FORCE) == 0) {
 		rc = EBUSY;
 		mutex_exit(&dk->dk_openlock);
