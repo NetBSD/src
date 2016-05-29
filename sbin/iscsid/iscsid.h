@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid.h,v 1.4 2015/02/21 20:33:44 joerg Exp $	*/
+/*	$NetBSD: iscsid.h,v 1.5 2016/05/29 13:35:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2006,2011 The NetBSD Foundation, Inc.
@@ -907,8 +907,6 @@ typedef struct {
    driver_xxx
       Corresponding version information for driver.
 */
-
-extern int nothreads;
 
 __END_DECLS
 
