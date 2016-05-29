@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativePPC_common.c,v 1.5 2016/05/29 17:09:33 alnsn Exp $	*/
+/*	$NetBSD: sljitNativePPC_common.c,v 1.6 2016/05/29 17:17:48 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -48,10 +48,10 @@ typedef sljit_u32 sljit_ins;
 #define SLJIT_PASS_ENTRY_ADDR_TO_CALL 1
 #endif
 
-#define TMP_REG1	(SLJIT_NO_REGISTERS + 1)
-#define TMP_REG2	(SLJIT_NO_REGISTERS + 2)
-#define TMP_REG3	(SLJIT_NO_REGISTERS + 3)
-#define TMP_ZERO	(SLJIT_NO_REGISTERS + 4)
+#define TMP_REG1	(SLJIT_NUMBER_OF_REGISTERS + 2)
+#define TMP_REG2	(SLJIT_NUMBER_OF_REGISTERS + 3)
+#define TMP_REG3	(SLJIT_NUMBER_OF_REGISTERS + 4)
+#define TMP_ZERO	(SLJIT_NUMBER_OF_REGISTERS + 5)
 
 #if (defined SLJIT_PASS_ENTRY_ADDR_TO_CALL && SLJIT_PASS_ENTRY_ADDR_TO_CALL)
 #define TMP_CALL_REG	(SLJIT_NUMBER_OF_REGISTERS + 6)
