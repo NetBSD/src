@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.83 2015/05/16 02:33:12 matt Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.84 2016/05/29 16:12:58 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.83 2015/05/16 02:33:12 matt Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.84 2016/05/29 16:12:58 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -918,6 +918,7 @@ top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
+    fprintf(outmk, "NOPIE=\n");
     fprintf(outmk, "NOMAN=\n\n");
 
     fprintf(outmk, "DBG=%s\n", dbg);
