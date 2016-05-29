@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.35 2011/09/20 00:12:24 jym Exp $	*/
+/*	$NetBSD: xen.h,v 1.36 2016/05/29 17:06:17 bouyer Exp $	*/
 
 /*
  *
@@ -344,6 +344,18 @@ xen_atomic_clear_bit(volatile void *ptr, unsigned long bitno)
 #undef XATOMIC_T
 
 void	wbinvd(void);
+
+#include <xen/xen-public/features.h>
+#include <sys/systm.h>
+
+extern bool xen_feature_tables[];
+void xen_init_features(void);
+static __inline bool
+xen_feature(int f)
+{
+	KASSERT(f < XENFEAT_NR_SUBMAPS * 32);
+	return xen_feature_tables[f];
+}
 
 #endif /* !__ASSEMBLY__ */
 
