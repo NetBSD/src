@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.96 2016/05/28 09:03:16 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.97 2016/05/29 09:04:19 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -203,11 +203,12 @@
 #endif
 
 #define PROC0_PML4_OFF	0
-#define PROC0_PTP3_OFF	(PROC0_PML4_OFF + 1 * PAGE_SIZE)
+#define PROC0_STK_OFF	(PROC0_PML4_OFF + 1 * PAGE_SIZE)
+#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
 #define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
 #define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
 #define TABLESIZE \
-  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1) \
+  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
 
 /*
@@ -321,7 +322,6 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif /* NLAPIC > 0 */
 
-	.globl	_C_LABEL(proc0stack)
 	.globl	_C_LABEL(nox_flag)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
@@ -335,9 +335,6 @@ END(lapic_isr)
 	.globl	_C_LABEL(gdtstore)
 	.globl	_C_LABEL(cputype)
 
-	.type	_C_LABEL(proc0stack), @object
-LABEL(proc0stack)	.quad	0	/* physical address of proc0's stack */
-END(proc0stack)
 	.type	_C_LABEL(nox_flag), @object
 LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
 END(nox_flag)
@@ -585,17 +582,20 @@ no_NOX:
  * be referred to as: L4 -> L3 -> L2 -> L1.
  *
  * Virtual address space of the kernel:
- * +------+--------+------+-----+--------+---------------------+-----------+-
- * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | PROC0 STK |
- * +------+--------+------+-----+--------+---------------------+-----------+-
- *                             (1)      (2)                   (3)         (4)
+ * +------+--------+------+-----+--------+---------------------+----------
+ * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | L4 ->
+ * +------+--------+------+-----+--------+---------------------+----------
+ *                             (1)      (2)                   (3)
  *
- * -----+-----+-----+----+------------+
- *  L4 -> L3 -> L2 -> L1 | ISA IO MEM |
- * -----+-----+-----+----+------------+
- *                      (5)
+ * --------------+-----+-----+----+------------+
+ * -> PROC0 STK -> L3 -> L2 -> L1 | ISA IO MEM |
+ * --------------+-----+-----+----+------------+
+ *                               (4)
  *
- * (L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
+ * PROC0 STK is obviously not linked as a page level. It just happens to be
+ * caught between L4 and L3.
+ *
+ * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
  * Important note: the kernel segments are properly 4k-aligned
  * (see kern.ldscript), so there's no need to enforce alignment.
@@ -621,16 +621,10 @@ no_NOX:
 	movl	%eax,%edi
 1:
 
-	/* We are on (3). Align up for PROC0 STK. */
+	/* We are on (3). Align up for BOOTSTRAP TABLES. */
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
-
-	/* Save proc0's stack pa, and allocate it. Brings us on (4). */
-	movl	$RELOC(proc0stack),%ebp
-	movl	%esi,(%ebp)
-	movl	$0,4(%ebp)
-	addl	$USPACE,%esi
 
 	/* We are on the BOOTSTRAP TABLES. Save L4's physical address. */
 	movl	$RELOC(PDPpaddr),%ebp
@@ -687,19 +681,11 @@ no_NOX:
 
 	/* Map [SYMS]+[PRELOADED MODULES] RWX. */
 	movl	$RELOC(__kernel_end),%eax
-	movl	RELOC(proc0stack),%ecx	/* start of PROC0 STK */
-	subl	%eax,%ecx
-	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
-	fillkpt
-
-	/* Map PROC0 STK RW. */
-	movl	RELOC(proc0stack),%eax	/* start of PROC0 STK */
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW),%eax
-	fillkpt_nox
+	fillkpt
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
@@ -708,7 +694,7 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (5). Map ISA I/O mem (later atdevbase) RWX. */
+	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
 	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
 	movl	$(IOM_SIZE>>PGSHIFT),%ecx
 	fillkpt
@@ -870,7 +856,7 @@ longmode_hi:
 	movq	%rdx,_C_LABEL(atdevbase)(%rip)
 
 	/* Set up bootstrap stack. */
-	movq	_C_LABEL(proc0stack),%rax
+	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
 	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
