@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.35 2013/07/31 22:37:55 soren Exp $       */
+/*      $NetBSD: catman.c,v 1.36 2016/05/29 22:09:51 dholland Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,9 +28,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: catman.c,v 1.36 2016/05/29 22:09:51 dholland Exp $");
+#endif /* not lint */
+
 #include <sys/types.h>
 #include <sys/queue.h>
-#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
