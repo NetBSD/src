@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.98 2016/05/29 09:16:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.99 2016/05/29 17:06:17 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -271,21 +271,41 @@
 
 
 #ifdef XEN
+#define __ASSEMBLY__
+#include <xen/xen-public/elfnote.h>
+#include <xen/xen-public/xen.h>
+#define ELFNOTE(name, type, desctype, descdata...) \
+.pushsection .note.name			;	\
+  .align 4				;	\
+  .long 2f - 1f		/* namesz */	;	\
+  .long 4f - 3f		/* descsz */	;	\
+  .long type				;	\
+1:.asciz #name				;	\
+2:.align 4				;	\
+3:desctype descdata			;	\
+4:.align 4				;	\
+.popsection
+
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
-	.ascii	"GUEST_OS=NetBSD,GUEST_VER=4.99"
-	.ascii	",XEN_VER=xen-3.0"
-	.ascii	",LOADER=generic"
-	.ascii	",VIRT_BASE=0xffffffff80000000"
-	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
-	.ascii	",VIRT_ENTRY=0xffffffff80100000"
-	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_OS,       .asciz, "NetBSD")
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_VERSION,  .asciz, "4.99")
+	ELFNOTE(Xen, XEN_ELFNOTE_XEN_VERSION,    .asciz, "xen-3.0")
+	ELFNOTE(Xen, XEN_ELFNOTE_VIRT_BASE,      .quad,  KERNBASE)
+	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .quad,  KERNBASE)
+	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,          .quad,  start)
+	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE, .quad,  hypercall_page)
+	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .quad,  HYPERVISOR_VIRT_START)
+	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "")
+	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
+	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PG_V, PG_V)\
+	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
+	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
-	.ascii	",BSD_SYMTAB=yes"
+	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
-	.byte	0
 #endif	/* XEN */
 
 /*
