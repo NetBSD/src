@@ -5,6 +5,7 @@
 
 PROG=		npftest
 NOMAN=		# no man page
+PAXCTL_FLAGS.npftest += +m
 
 WARNS=		5
 NOLINT=		# disabled (note: deliberately)
