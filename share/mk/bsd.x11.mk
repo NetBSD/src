@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.118 2016/03/13 17:56:56 christos Exp $
+#	$NetBSD: bsd.x11.mk,v 1.119 2016/05/29 03:02:07 nakayama Exp $
 
 .include <bsd.init.mk>
 
@@ -269,6 +269,7 @@ ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile
 		s,@COMPOSITEEXT_VERSION@,$${_pkg_version%.*},; \
 		s,@DAMAGEEXT_VERSION@,$${_pkg_version%.*},; \
 		s,@FIXESEXT_VERSION@,$${_pkg_version%.*},; \
+		s,@PRESENTEXT_VERSION@,$${_pkg_version%.*},; \
 		s,@RANDR_VERSION@,$${_pkg_version%.*},; \
 		s,@RENDER_VERSION@,$${_pkg_version%.*}," \
 		-e "s,@LIBS@,,; \
