@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgtvar.h,v 1.1.44.2 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: if_upgtvar.h,v 1.1.44.3 2016/05/29 08:18:45 skrll Exp $	*/
 /*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
@@ -412,6 +412,7 @@ struct upgt_softc {
 	struct upgt_data	 cmd_data;
 	int			 tx_queued;
 	kmutex_t		 sc_mtx;
+	kcondvar_t		 sc_cv;
 
 	uint8_t			 sc_device_type;
 	struct ieee80211com	 sc_ic;
