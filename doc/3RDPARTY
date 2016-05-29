@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1332 2016/05/26 16:55:08 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1333 2016/05/29 22:41:54 alnsn Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1526,8 +1526,8 @@ Location:	external/cddl/osnet
 Notes:
 
 Package:	sljit
-Version:	0.91 (svn revision 257)
-Current Vers:	svn revision 268
+Version:	svn revision 313
+Current Vers:	svn revision 313
 Maintainer:	Zoltán Herczeg <hzmester@freemail.hu
 Archive Site:	http://sourceforge.net/projects/sljit/
 Home Page:	http://sljit.sourceforge.net/
