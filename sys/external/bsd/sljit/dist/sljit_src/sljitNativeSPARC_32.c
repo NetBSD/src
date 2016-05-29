@@ -24,7 +24,7 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static sljit_si load_immediate(struct sljit_compiler *compiler, sljit_si dst, sljit_sw imm)
+static sljit_s32 load_immediate(struct sljit_compiler *compiler, sljit_s32 dst, sljit_sw imm)
 {
 	if (imm <= SIMM_MAX && imm >= SIMM_MIN)
 		return push_inst(compiler, OR | D(dst) | S1(0) | IMM(imm), DR(dst));
@@ -35,26 +35,26 @@ static sljit_si load_immediate(struct sljit_compiler *compiler, sljit_si dst, sl
 
 #define ARG2(flags, src2) ((flags & SRC2_IMM) ? IMM(src2) : S2(src2))
 
-static SLJIT_INLINE sljit_si emit_single_op(struct sljit_compiler *compiler, sljit_si op, sljit_si flags,
-	sljit_si dst, sljit_si src1, sljit_sw src2)
+static SLJIT_INLINE sljit_s32 emit_single_op(struct sljit_compiler *compiler, sljit_s32 op, sljit_s32 flags,
+	sljit_s32 dst, sljit_s32 src1, sljit_sw src2)
 {
 	SLJIT_COMPILE_ASSERT(ICC_IS_SET == SET_FLAGS, icc_is_set_and_set_flags_must_be_the_same);
 
 	switch (op) {
 	case SLJIT_MOV:
-	case SLJIT_MOV_UI:
-	case SLJIT_MOV_SI:
+	case SLJIT_MOV_U32:
+	case SLJIT_MOV_S32:
 	case SLJIT_MOV_P:
 		SLJIT_ASSERT(src1 == TMP_REG1 && !(flags & SRC2_IMM));
 		if (dst != src2)
 			return push_inst(compiler, OR | D(dst) | S1(0) | S2(src2), DR(dst));
 		return SLJIT_SUCCESS;
 
-	case SLJIT_MOV_UB:
-	case SLJIT_MOV_SB:
+	case SLJIT_MOV_U8:
+	case SLJIT_MOV_S8:
 		SLJIT_ASSERT(src1 == TMP_REG1 && !(flags & SRC2_IMM));
 		if ((flags & (REG_DEST | REG2_SOURCE)) == (REG_DEST | REG2_SOURCE)) {
-			if (op == SLJIT_MOV_UB)
+			if (op == SLJIT_MOV_U8)
 				return push_inst(compiler, AND | D(dst) | S1(src2) | IMM(0xff), DR(dst));
 			FAIL_IF(push_inst(compiler, SLL | D(dst) | S1(src2) | IMM(24), DR(dst)));
 			return push_inst(compiler, SRA | D(dst) | S1(dst) | IMM(24), DR(dst));
@@ -63,12 +63,12 @@ static SLJIT_INLINE sljit_si emit_single_op(struct sljit_compiler *compiler, slj
 			SLJIT_ASSERT_STOP();
 		return SLJIT_SUCCESS;
 
-	case SLJIT_MOV_UH:
-	case SLJIT_MOV_SH:
+	case SLJIT_MOV_U16:
+	case SLJIT_MOV_S16:
 		SLJIT_ASSERT(src1 == TMP_REG1 && !(flags & SRC2_IMM));
 		if ((flags & (REG_DEST | REG2_SOURCE)) == (REG_DEST | REG2_SOURCE)) {
 			FAIL_IF(push_inst(compiler, SLL | D(dst) | S1(src2) | IMM(16), DR(dst)));
-			return push_inst(compiler, (op == SLJIT_MOV_SH ? SRA : SRL) | D(dst) | S1(dst) | IMM(16), DR(dst));
+			return push_inst(compiler, (op == SLJIT_MOV_S16 ? SRA : SRL) | D(dst) | S1(dst) | IMM(16), DR(dst));
 		}
 		else if (dst != src2)
 			SLJIT_ASSERT_STOP();
@@ -110,8 +110,8 @@ static SLJIT_INLINE sljit_si emit_single_op(struct sljit_compiler *compiler, slj
 		if (!(flags & SET_FLAGS))
 			return SLJIT_SUCCESS;
 		FAIL_IF(push_inst(compiler, SRA | D(TMP_REG1) | S1(dst) | IMM(31), DR(TMP_REG1)));
-		FAIL_IF(push_inst(compiler, RDY | D(TMP_REG4), DR(TMP_REG4)));
-		return push_inst(compiler, SUB | SET_FLAGS | D(0) | S1(TMP_REG1) | S2(TMP_REG4), MOVABLE_INS | SET_FLAGS);
+		FAIL_IF(push_inst(compiler, RDY | D(TMP_LINK), DR(TMP_LINK)));
+		return push_inst(compiler, SUB | SET_FLAGS | D(0) | S1(TMP_REG1) | S2(TMP_LINK), MOVABLE_INS | SET_FLAGS);
 
 	case SLJIT_AND:
 		return push_inst(compiler, AND | (flags & SET_FLAGS) | D(dst) | S1(src1) | ARG2(flags, src2), DR(dst) | (flags & SET_FLAGS));
@@ -139,7 +139,7 @@ static SLJIT_INLINE sljit_si emit_single_op(struct sljit_compiler *compiler, slj
 	return SLJIT_SUCCESS;
 }
 
-static SLJIT_INLINE sljit_si emit_const(struct sljit_compiler *compiler, sljit_si dst, sljit_sw init_value)
+static SLJIT_INLINE sljit_s32 emit_const(struct sljit_compiler *compiler, sljit_s32 dst, sljit_sw init_value)
 {
 	FAIL_IF(push_inst(compiler, SETHI | D(dst) | ((init_value >> 10) & 0x3fffff), DR(dst)));
 	return push_inst(compiler, OR | D(dst) | S1(dst) | IMM_ARG | (init_value & 0x3ff), DR(dst));
