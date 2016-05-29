@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.9 2015/05/30 16:00:51 joerg Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.10 2016/05/29 13:35:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <syslog.h>
+#include <util.h>
 
 #define DEVICE    "/dev/iscsi0"
 
@@ -47,13 +49,14 @@
 list_head_t list[NUM_DAEMON_LISTS];	/* the lists this daemon keeps */
 
 pthread_mutex_t sesslist_lock;	/* session list lock */
-pthread_t event_thread;			/* event thread handle */
+pthread_t main_thread;		/* main thread handle */
+pthread_t event_thread;		/* event thread handle */
 
-int driver = -1;				/* the driver's file desc */
-int client_sock;				/* the client communication socket */
+int driver = -1;		/* the driver's file desc */
+int client_sock;		/* the client communication socket */
 
-int debug_level;	/* How much info to display */
-int nothreads;
+int debug_level;		/* How much info to display */
+int debugging;
 
 /*
    To avoid memory fragmentation (and speed things up a bit), we use the
@@ -72,7 +75,6 @@ usage(void)
 	fprintf(stderr, "Usage: %s [-d <lvl>] [-n]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
-
 
 /*
  * create_node_name:
@@ -99,7 +101,7 @@ create_node_name(void)
 	siz = ISCSI_STRING_LENGTH - 45;
 	sysctl(mib, 2, snp.InitiatorAlias, &siz, NULL, 0);
 
-	DEB(1, ("Host Name: <%s>, Host ID: %u\n", snp.InitiatorAlias, hid));
+	DEB(3, ("Host Name: <%s>, Host ID: %u", snp.InitiatorAlias, hid));
 	if (!snp.InitiatorAlias[0]) {
 		printf("Warning: iSCSI Node Name not set (No Host Name)!\n");
 		return ISCSID_STATUS_NO_INITIATOR_NAME;
@@ -165,7 +167,7 @@ init_daemon(void)
 		list[i].num_entries = 0;
 	}
 
-	if (!nothreads && (i = pthread_mutex_init(&sesslist_lock, NULL)) != 0) {
+	if ((i = pthread_mutex_init(&sesslist_lock, NULL)) != 0) {
 		printf("Mutex init failed (%d)\n", i);
 		close(sock);
 		return -1;
@@ -175,8 +177,7 @@ init_daemon(void)
 		printf("Couldn't register event handler\n");
 		close(sock);
 		unlink(ISCSID_SOCK_NAME);
-		if (!nothreads)
-			pthread_mutex_destroy(&sesslist_lock);
+		pthread_mutex_destroy(&sesslist_lock);
 		return -1;
 	}
 
@@ -398,7 +399,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		login((iscsid_login_req_t *)p, rsp);
+		log_in((iscsid_login_req_t *)p, rsp);
 		break;
 
 	case ISCSID_ADD_CONNECTION:
@@ -414,7 +415,7 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 			rsp->status = ISCSID_STATUS_INVALID_PARAMETER;
 			break;
 		}
-		rsp->status = logout((iscsid_sym_id_t *)p);
+		rsp->status = log_out((iscsid_sym_id_t *)p);
 		break;
 
 	case ISCSID_REMOVE_CONNECTION:
@@ -464,13 +465,21 @@ process_message(iscsid_request_t *req, iscsid_response_t **prsp, int *prsp_temp)
 	}
 }
 
+void
+iscsid_log(const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vsyslog(LOG_INFO, fmt, ap);
+	va_end(ap);
+}
 
 /*
  * exit_daemon:
  *    Deregister the event handler, deregister isns servers, then exit program.
  */
 
-void
+static void
 exit_daemon(void)
 {
 	LOCK_SESSIONS;
@@ -479,11 +488,19 @@ exit_daemon(void)
 #ifndef ISCSI_MINIMAL
 	dereg_all_isns_servers();
 #endif
-
-	printf("iSCSI Daemon Exits\n");
 	exit(0);
 }
 
+static void
+handler_exit(void)
+{
+	pthread_kill(main_thread, SIGINT);
+}
+
+static void
+sighandler(int sig)
+{
+}
 
 /*
  * main:
@@ -506,79 +523,74 @@ main(int argc, char **argv)
 	socklen_t fromlen;
 	iscsid_request_t *req;
 	iscsid_response_t *rsp;
-	struct timeval seltout = { 2, 0 };	/* 2 second poll interval */
 	char *p;
+	struct sigaction sa;
 
-	while ((c = getopt(argc, argv, "d:n")) != -1)
+	while ((c = getopt(argc, argv, "Dd:")) != -1)
 		switch (c) {
-		case 'n':
-			nothreads++;
+		case 'D':
+			debugging++;
 			break;
 		case 'd':
 			debug_level=(int)strtol(optarg, &p, 10);
 			if (*p)
-				errx(EXIT_FAILURE, "illegal debug level -- %s",
+				errx(EXIT_FAILURE, "illegal log level -- %s",
 				    optarg);
 			break;
 		default:
 			usage();
 		}
 
+	openlog("iscsid", (debugging ? LOG_PERROR : 0) | LOG_PID, LOG_DAEMON);
+
 	client_sock = init_daemon();
 	if (client_sock < 0)
 		exit(1);
 
-	printf("iSCSI Daemon loaded\n");
+	DEBOUT(("iSCSI daemon loaded"));
 
-	if (!debug_level)
-		daemon(0, 1);
+	if (!debugging) {
+		if (daemon(0, 1) < 0)
+			err(EXIT_FAILURE, "daemon() failed");
+		pidfile(NULL);
+	}
 
-	if (nothreads)
-		setsockopt(client_sock, SOL_SOCKET, SO_RCVTIMEO, &seltout,
-		    sizeof(seltout));
-	else {
-		ret = pthread_create(&event_thread, NULL, event_handler, NULL);
-		if (ret) {
-			printf("Thread creation failed (%zd)\n", ret);
-			close(client_sock);
-			unlink(ISCSID_SOCK_NAME);
-			deregister_event_handler();
-			pthread_mutex_destroy(&sesslist_lock);
-			return -1;
-		}
+	memset(&sa, 0, sizeof(sa));
+	sa.sa_handler = sighandler;
+	sigaction(SIGINT, &sa, NULL);
+	sigaction(SIGTERM, &sa, NULL);
+
+	main_thread = pthread_self();
+	ret = pthread_create(&event_thread, NULL, event_handler, handler_exit);
+	if (ret) {
+		printf("Thread creation failed (%zd)\n", ret);
+		close(client_sock);
+		unlink(ISCSID_SOCK_NAME);
+		deregister_event_handler();
+		pthread_mutex_destroy(&sesslist_lock);
+		return -1;
 	}
 
     /* ---------------------------------------------------------------------- */
 
 	for (;;) {
+
 		/* First, get size of request */
 		req = (iscsid_request_t *)(void *)req_buf;
 		fromlen = sizeof(from);
 		len = sizeof(iscsid_request_t);
 
-		if (nothreads) {
-			do {
-				ret = recvfrom(client_sock, req, len, MSG_PEEK |
-				MSG_WAITALL, (struct sockaddr *)(void *)&from,
-			    	&fromlen);
-				if (ret == -1)
-					event_handler(NULL);
-			} while (ret == -1 && errno == EAGAIN);
-		} else {
-			do {
-				ret = recvfrom(client_sock, req, len, MSG_PEEK |
-				    MSG_WAITALL, (struct sockaddr *) &from,
-				    &fromlen);
-				if (ret == -1)
-					event_handler(NULL);
-			} while (ret == -1 && errno == EAGAIN);
-		}
+		do {
+			ret = recvfrom(client_sock, req, len, MSG_PEEK |
+			    MSG_WAITALL, (struct sockaddr *) &from,
+			    &fromlen);
+		} while (ret == -1 && errno == EAGAIN);
 
 		if ((size_t)ret != len) {
-			perror("Receiving from socket");
+			DEBOUT(("Receiving from socket: %s",strerror(errno)));
 			break;
 		}
-		DEB(98, ("Request %d, parlen %d\n",
+		DEB(2, ("Request %d, parlen %d",
 				req->request, req->parameter_length));
 
 		len += req->parameter_length;
@@ -598,7 +610,7 @@ main(int argc, char **argv)
 		ret = recvfrom(client_sock, req, len, MSG_WAITALL,
 						(struct sockaddr *)(void *)&from, &fromlen);
 		if ((size_t)ret != len) {
-			DEBOUT(("Error receiving from socket!\n"));
+			DEB(2, ("Error receiving from socket!"));
 			if (req_temp)
 				free(req);
 			continue;
@@ -611,6 +623,7 @@ main(int argc, char **argv)
 		if (req->request == ISCSID_DAEMON_TEST) {
 			if (req_temp)
 				free(req);
+			DEB(2, ("Test message!"));
 			continue;
 		}
 		/* no return path? then we can't send a reply, */
@@ -618,7 +631,7 @@ main(int argc, char **argv)
 		if (!from.sun_path[0]) {
 			if (req_temp)
 				free(req);
-			DEBOUT(("No Return Address!\n"));
+			DEB(2, ("No Return Address!"));
 			continue;
 		}
 		/* process the request */
@@ -626,11 +639,11 @@ main(int argc, char **argv)
 		if (rsp == NULL) {
 			if (req_temp)
 				free(req);
-			DEBOUT(("Invalid message!\n"));
+			DEB(2, ("Invalid message!"));
 			continue;
 		}
 
-		DEB(98, ("Sending reply: status %d, len %d\n",
+		DEB(2, ("Sending reply: status %d, len %d",
 				rsp->status, rsp->parameter_length));
 
 		/* send the response */
@@ -638,7 +651,7 @@ main(int argc, char **argv)
 		ret = sendto(client_sock, rsp, len, 0,
 					(struct sockaddr *)(void *)&from, fromlen);
 		if (len != (size_t)ret) {
-			DEBOUT(("Error sending reply!\n"));
+			DEB(2, ("Error sending reply!"));
 		}
 		/* free temp buffers if we needed them */
 		if (req_temp)
@@ -646,6 +659,10 @@ main(int argc, char **argv)
 		if (rsp_temp)
 			free(rsp);
 	}
+
+	pthread_join(event_thread, NULL);
+
+	DEBOUT(("Exiting daemon"));
 
 	exit_daemon();
 

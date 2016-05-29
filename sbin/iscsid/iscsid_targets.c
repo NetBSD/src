@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_targets.c,v 1.5 2012/12/29 08:28:20 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_targets.c,v 1.6 2016/05/29 13:35:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@ create_portal(target_t *target, iscsi_portal_address_t *addr,
 	portal_t *portal;
 	u_short tag = addr->group_tag;
 
-	DEB(9, ("Create Portal addr %s port %d group %d\n",
+	DEB(9, ("Create Portal addr %s port %d group %d",
 			addr->address, addr->port, addr->group_tag));
 
 	if ((portal = find_portal_by_addr(target, addr)) != NULL)
@@ -71,7 +71,7 @@ create_portal(target_t *target, iscsi_portal_address_t *addr,
 
 	portal = calloc(1, sizeof(*portal));
 	if (!portal) {
-		DEBOUT(("Out of memory in create_portal!\n"));
+		DEBOUT(("Out of memory in create_portal!"));
 		return NULL;
 	}
 	portal->addr = *addr;
@@ -96,7 +96,7 @@ create_portal(target_t *target, iscsi_portal_address_t *addr,
 		curr = calloc(1, sizeof(*curr));
 		if (!curr) {
 			free(portal);
-			DEBOUT(("Out of memory in create_portal!\n"));
+			DEBOUT(("Out of memory in create_portal!"));
 			return NULL;
 		}
 		curr->tag = tag;
@@ -114,7 +114,7 @@ create_portal(target_t *target, iscsi_portal_address_t *addr,
 	TAILQ_INSERT_TAIL(&list[PORTAL_LIST].list, &portal->entry, link);
 	list[PORTAL_LIST].num_entries++;
 
-	DEB(9, ("create_portal returns %p\n", portal));
+	DEB(9, ("create_portal returns %p", portal));
 	return portal;
 }
 
@@ -172,10 +172,10 @@ create_target(uint8_t * name)
 {
 	target_t *target;
 
-	DEB(9, ("Create Target %s\n", name));
+	DEB(9, ("Create Target %s", name));
 
 	if ((target = calloc(1, sizeof(*target))) == NULL) {
-		DEBOUT(("Out of memory in create_target!\n"));
+		DEBOUT(("Out of memory in create_target!"));
 		return NULL;
 	}
 
@@ -244,7 +244,7 @@ create_send_target(uint8_t * name, iscsi_portal_address_t * addr)
 {
 	send_target_t *target;
 
-	DEB(9, ("Create Send Target %s\n", name));
+	DEB(9, ("Create Send Target %s", name));
 
 	if ((target = calloc(1, sizeof(*target))) == NULL)
 		return NULL;
@@ -318,7 +318,7 @@ add_target(iscsid_add_target_req_t *par, iscsid_response_t **prsp,
 	portal_t *portal;
 	int i, num;
 
-	DEB(9, ("Add Target, name %s, num_portals %d\n",
+	DEB(9, ("Add Target, name %s, num_portals %d",
 			par->TargetName, par->num_portals));
 
 	if (par->list_kind == SEND_TARGETS_LIST && par->num_portals != 1) {
@@ -403,7 +403,7 @@ add_target(iscsid_add_target_req_t *par, iscsid_response_t **prsp,
 		res->num_portals = i;
 	}
 
-	DEB(9, ("AddTarget returns\n"));
+	DEB(9, ("AddTarget returns"));
 }
 
 
@@ -431,7 +431,7 @@ add_discovered_target(uint8_t * TargetName, iscsi_portal_address_t * addr,
 	target_t *target;
 	portal_t *portal;
 
-	DEB(9, ("Add Discovered Target, name %s, addr %s\n",
+	DEB(9, ("Add Discovered Target, name %s, addr %s",
 			TargetName, addr->address));
 
 	if ((target = find_TargetName(TARGET_LIST, TargetName)) == NULL) {
@@ -528,7 +528,7 @@ get_target_info(iscsid_list_id_t *par, iscsid_response_t **prsp, int *prsp_temp)
 	portal_t *curr = NULL;
 	int num = 1;
 
-	DEB(10, ("get_target_info, id %d\n", par->id.id));
+	DEB(10, ("get_target_info, id %d", par->id.id));
 
 	if ((target = find_target(par->list_kind, &par->id)) == NULL) {
 		if (par->list_kind == SEND_TARGETS_LIST ||
@@ -587,7 +587,7 @@ add_portal(iscsid_add_portal_req_t *par, iscsid_response_t **prsp,
 	target_t *target;
 	portal_t *portal;
 
-	DEB(9, ("Add portal: target %d (%s), symname %s, addr %s\n",
+	DEB(9, ("Add portal: target %d (%s), symname %s, addr %s",
 			par->target_id.id, par->target_id.name,
 			par->sym_name, par->portal.address));
 
@@ -624,7 +624,7 @@ add_portal(iscsid_add_portal_req_t *par, iscsid_response_t **prsp,
 	res->portal_id = portal->entry.sid;
 #endif
 
-	DEB(9, ("AddPortal success (id %d)\n", portal->entry.sid.id));
+	DEB(9, ("AddPortal success (id %d)", portal->entry.sid.id));
 }
 
 
@@ -649,7 +649,7 @@ get_portal_info(iscsid_list_id_t *par, iscsid_response_t **prsp, int *prsp_temp)
 	send_target_t *starg = NULL;
 	int err;
 
-	DEB(10, ("get_portal_info, id %d\n", par->id.id));
+	DEB(10, ("get_portal_info, id %d", par->id.id));
 
 	if (par->list_kind == SEND_TARGETS_LIST)
 		err = ((starg = (send_target_t *)(void *)find_target(par->list_kind,
@@ -699,7 +699,7 @@ remove_target(iscsid_list_id_t * par)
 	send_target_t *starg = NULL;
 	int err;
 
-	DEB(9, ("remove_target, id %d\n", par->id.id));
+	DEB(9, ("remove_target, id %d", par->id.id));
 
 	if (par->list_kind == SEND_TARGETS_LIST) {
 		err = ((starg = (send_target_t *)(void *)find_target(par->list_kind,
@@ -850,7 +850,7 @@ refresh_send_target(uint32_t id)
 		tp = response_buffer;
 		while (*tp) {
 			if (strncmp((char *)tp, "TargetName=", 11) != 0) {
-				DEBOUT(("Response not TargetName <%s>\n", tp));
+				DEBOUT(("Response not TargetName <%s>", tp));
 				break;
 			}
 			tp += 11;
@@ -872,7 +872,7 @@ refresh_send_target(uint32_t id)
 						&addr, PORTAL_TYPE_SENDTARGET,
 						id);
 				} else {
-					DEBOUT(("Syntax error in returned target address <%s>\n", sp));
+					DEBOUT(("Syntax error in returned target address <%s>", sp));
 					break;
 				}
 			}
@@ -982,7 +982,7 @@ refresh_targets(iscsid_refresh_req_t * par)
 		break;
 
 	case SEND_TARGETS_LIST:
-		DEB(9, ("Refresh Send Targets List - num_ids = %d\n",
+		DEB(9, ("Refresh Send Targets List - num_ids = %d",
 				par->num_ids));
 		if (par->num_ids) {
 			/* Target ids are specified */
@@ -1004,7 +1004,7 @@ refresh_targets(iscsid_refresh_req_t * par)
 
 #ifndef ISCSI_MINIMAL
 	case ISNS_LIST:
-		DEB(9, ("Refresh iSNS List - num_ids = %d\n", par->num_ids));
+		DEB(9, ("Refresh iSNS List - num_ids = %d", par->num_ids));
 		if (par->num_ids) {
 			/*Target ids are specified */
 			for (t = 0; t < par->num_ids; t++)

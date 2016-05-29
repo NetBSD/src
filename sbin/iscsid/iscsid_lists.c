@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_lists.c,v 1.8 2012/12/29 08:28:20 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_lists.c,v 1.9 2016/05/29 13:35:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ find_TargetName(iscsid_list_kind_t lst, uint8_t * name)
 	}
 
 	/* return curr instead of t because curr==NULL if name not found */
-	DEB(10, ("Find_TargetName returns %p\n", curr));
+	DEB(10, ("Find_TargetName returns %p", curr));
 	return (target_t *)curr;
 }
 
@@ -255,7 +255,7 @@ find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 
 	TAILQ_FOREACH(curr, &list[PORTAL_LIST].list, link) {
 		p = (void *)curr;
-		DEB(10, ("Find_portal_by_addr - addr %s port %d target %p\n",
+		DEB(10, ("Find_portal_by_addr - addr %s port %d target %p",
 				 p->addr.address,
 				 p->addr.port,
 				 p->target));
@@ -267,7 +267,7 @@ find_portal_by_addr(target_t * target, iscsi_portal_address_t * addr)
 	}
 
 	/* return curr instead of p because curr==NULL if not found */
-	DEB(10, ("Find_portal_by_addr returns %p\n", curr));
+	DEB(10, ("Find_portal_by_addr returns %p", curr));
 	return (portal_t *)curr;
 }
 
@@ -295,7 +295,7 @@ find_send_target_by_addr(iscsi_portal_address_t * addr)
 	}
 
 	/* return curr instead of p because curr==NULL if not found */
-	DEB(10, ("Find_send_target_by_addr returns %p\n", curr));
+	DEB(10, ("Find_send_target_by_addr returns %p", curr));
 	return (send_target_t *)curr;
 }
 
@@ -321,7 +321,7 @@ get_list(iscsid_get_list_req_t * par, iscsid_response_t ** prsp, int *prsp_temp)
 	generic_list_t *plist;
 	generic_entry_t *curr;
 
-	DEB(10, ("get_list, kind %d\n", par->list_kind));
+	DEB(10, ("get_list, kind %d", par->list_kind));
 
 	if (par->list_kind == SESSION_LIST)
 		LOCK_SESSIONS;
@@ -380,7 +380,7 @@ search_list(iscsid_search_list_req_t * par, iscsid_response_t ** prsp,
 	iscsid_response_t *rsp = *prsp;
 	generic_entry_t *elem = NULL;
 
-	DEB(10, ("search_list, list_kind %d, search_kind %d\n",
+	DEB(10, ("search_list, list_kind %d, search_kind %d",
 			 par->list_kind, par->search_kind));
 
 	if (par->list_kind == SESSION_LIST)
@@ -514,7 +514,7 @@ get_session_list(iscsid_response_t ** prsp, int *prsp_temp)
 	connection_t *conn;
 	int num;
 
-	DEB(10, ("get_session_list\n"));
+	DEB(10, ("get_session_list"));
 
 	LOCK_SESSIONS;
 	plist = &list[SESSION_LIST].list;
@@ -581,7 +581,7 @@ get_connection_list(iscsid_sym_id_t *req, iscsid_response_t **prsp,
 	connection_t *conn;
 	int num;
 
-	DEB(10, ("get_connection_list\n"));
+	DEB(10, ("get_connection_list"));
 
 	LOCK_SESSIONS;
 	if ((sess = find_session(req)) == NULL) {
@@ -635,7 +635,7 @@ get_connection_info(iscsid_get_connection_info_req_t * req,
 	connection_t *conn;
 	initiator_t *init = NULL;
 
-	DEB(10, ("get_connection_info, session %d, connection %d\n",
+	DEB(10, ("get_connection_info, session %d, connection %d",
 			 req->session_id.id, req->connection_id.id));
 
 	LOCK_SESSIONS;
@@ -713,7 +713,7 @@ find_initiator_by_addr(uint8_t * addr)
 	}
 
 	/* return curr instead of i because if not found, curr==NULL */
-	DEB(9, ("Find_initiator_by_addr returns %p\n", curr));
+	DEB(9, ("Find_initiator_by_addr returns %p", curr));
 	return (initiator_t *)curr;
 }
 
@@ -737,7 +737,7 @@ add_initiator_portal(iscsid_add_initiator_req_t *par, iscsid_response_t **prsp,
 	iscsid_response_t *rsp = *prsp;
 	initiator_t *init;
 
-	DEB(9, ("AddInitiatorPortal '%s' (name '%s')\n", par->address, par->name));
+	DEB(9, ("AddInitiatorPortal '%s' (name '%s')", par->address, par->name));
 
 	if (find_initiator_by_addr(par->address) != NULL) {
 		rsp->status = ISCSID_STATUS_DUPLICATE_ENTRY;
@@ -754,7 +754,7 @@ add_initiator_portal(iscsid_add_initiator_req_t *par, iscsid_response_t **prsp,
 		return;
 	}
 
-	DEB(9, ("AddInitiatorPortal initiator_id = %d\n", initiator_id));
+	DEB(9, ("AddInitiatorPortal initiator_id = %d", initiator_id));
 
 	for (initiator_id++;
 		 !initiator_id || find_initiator_id(initiator_id) != NULL;)
@@ -829,7 +829,7 @@ get_initiator_portal(iscsid_sym_id_t *par, iscsid_response_t **prsp,
 	iscsid_response_t *rsp = *prsp;
 	initiator_t *init;
 
-	DEB(10, ("get_initiator_portal, id %d (%s)\n", par->id, par->name));
+	DEB(10, ("get_initiator_portal, id %d (%s)", par->id, par->name));
 
 	if ((init = find_initiator(par)) == NULL) {
 		rsp->status = ISCSID_STATUS_INVALID_INITIATOR_ID;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_discover.c,v 1.4 2012/06/24 13:08:38 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_discover.c,v 1.5 2016/05/29 13:35:45 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	t = isns_new_trans(isns_handle, isnsp_DevAttrQry, MY_FLAGS);
 	if (ISNS_INVALID_TRANS == t) {
-		DEBOUT(("%s: get_targets iscsi_new_trans failed\n", __func__));
+		DEB(10,("%s: get_targets iscsi_new_trans failed", __func__));
 		return ISCSID_STATUS_NO_RESOURCES;
 	}
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
@@ -132,20 +132,20 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	/*tag=27: security bitmap */
 
 	retval = isns_send_trans(t, &tout, &status);
-	DEB(9, ("isns_send_trans called, returns %d, status %d\n", retval, status));
+	DEB(9, ("isns_send_trans called, returns %d, status %d", retval, status));
 	if (retval) {
-		DEBOUT(("iSNS Attribute Query failed, rc = %d\n", retval));
+		DEB(10,("iSNS Attribute Query failed, rc = %d", retval));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
 	/* First is target name (the one we put in), ignore */
 	if (isns_get_tlv(t, ISNS_TLV_FIRST, &tag, &data_len, &data_p)) {
-		DEBOUT(("iSNS Attribute Query returned nothing\n"));
+		DEB(10,("iSNS Attribute Query returned nothing"));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
 	if (tag != isnst_iSCSIName) {
-		DEBOUT(("iSNS Query returned bad type (tag = %d, length = %d)\n",
+		DEB(10,("iSNS Query returned bad type (tag = %d, length = %d)",
 				tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
@@ -153,7 +153,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 	if (tag != isnst_Delimiter) {
-		DEBOUT(("Attr Query Missing Delimiter (tag = %d, length = %d)\n",
+		DEB(10,("Attr Query Missing Delimiter (tag = %d, length = %d)",
 				tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
@@ -161,8 +161,8 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 	if (tag != isnst_iSCSIName || !data_len || data_len >= ISCSI_STRING_LENGTH) {
-		DEBOUT(("iSNS Query returned no or invalid name (tag = %d, "
-				"length = %d)\n", tag, data_len));
+		DEB(10,("iSNS Query returned no or invalid name (tag = %d, "
+				"length = %d)", tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
@@ -170,14 +170,14 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 	if (tag != isnst_iSCSINodeType || data_len != 4) {
-		DEBOUT(("iSNS Query returned no or invalid node type (tag = %d, "
-				"length = %d)\n", tag, data_len));
+		DEB(10,("iSNS Query returned no or invalid node type (tag = %d, "
+				"length = %d)", tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
 	u32 = ntohl(*((uint32_t *) data_p));
 	if (!(u32 & 1)) {
-		DEBOUT(("iSNS Query returned bad type (type=%x, should be 1)\n", u32));
+		DEB(10,("iSNS Query returned bad type (type=%x, should be 1)", u32));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
@@ -185,7 +185,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 	if (tag == isnst_iSCSIAlias) {
 		if (data_len >= ISCSI_STRING_LENGTH) {
-			DEBOUT(("iSNS Query returned invalid alias (tag=%d, length=%d)\n",
+			DEB(10,("iSNS Query returned invalid alias (tag=%d, length=%d)",
 					tag, data_len));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
@@ -199,7 +199,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	if (ISNS_INVALID_TRANS ==
 		(t = isns_new_trans(isns_handle, isnsp_DevAttrQry, MY_FLAGS))) {
-		DEBOUT(("get_targets iscsi_new_trans failed\n"));
+		DEB(10,("get_targets iscsi_new_trans failed"));
 		return ISCSID_STATUS_NO_RESOURCES;
 	}
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
@@ -213,20 +213,20 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	isns_add_tlv(t, isnst_PGTag, 0, NULL);	/* 51: group tag */
 
 	retval = isns_send_trans(t, &tout, &status);
-	DEB(9, ("isns_send_trans called, returns %d, status %d\n", retval, status));
+	DEB(9, ("isns_send_trans called, returns %d, status %d", retval, status));
 	if (retval) {
-		DEBOUT(("iSNS Attribute Query failed, rc = %d\n", retval));
+		DEB(10,("iSNS Attribute Query failed, rc = %d", retval));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
 	/* First is target name (the one we put in), ignore */
 	if (isns_get_tlv(t, ISNS_TLV_FIRST, &tag, &data_len, &data_p)) {
-		DEBOUT(("iSNS Attribute Query returned nothing\n"));
+		DEB(10,("iSNS Attribute Query returned nothing"));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
 	}
 	if (tag != isnst_iSCSIName) {
-		DEBOUT(("iSNS Query2 returned bad name (tag = %d, length = %d)\n",
+		DEB(10,("iSNS Query2 returned bad name (tag = %d, length = %d)",
 				tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
@@ -234,7 +234,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 	isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 	if (tag != isnst_Delimiter) {
-		DEBOUT(("Attr Query2 Missing Delimiter (tag = %d, length = %d)\n",
+		DEB(10,("Attr Query2 Missing Delimiter (tag = %d, length = %d)",
 				tag, data_len));
 		isns_free_trans(t);
 		return ISCSID_STATUS_ISNS_SERVER_ERROR;
@@ -243,8 +243,8 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 	while (!isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p)) {
 		if (tag != isnst_PGiSCSIName || !data_len ||
 			data_len >= ISCSI_STRING_LENGTH) {
-			DEBOUT(("iSNS Query2 returned no or invalid name (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS Query2 returned no or invalid name (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
 		}
@@ -252,8 +252,8 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 		isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 		if (tag != isnst_PGPortIPAddr || data_len != 16) {
-			DEBOUT(("iSNS Query returned no or invalid address (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS Query returned no or invalid address (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
 		}
@@ -262,15 +262,15 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 		/* Now comes the port */
 		isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 		if (tag != isnst_PGPortIPPort || data_len != 4) {
-			DEBOUT(("iSNS Query returned no or invalid port (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS Query returned no or invalid port (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
 		}
 		u32 = ntohl(*((uint32_t *) data_p));
 		if (u32 & 0xffff0000) {
-			DEBOUT(("iSNS Query returned invalid port (flags=%x, "
-					"should be 0)\n", u32 >> 16));
+			DEB(10,("iSNS Query returned invalid port (flags=%x, "
+					"should be 0)", u32 >> 16));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
 		}
@@ -279,8 +279,8 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 		/* And each target must have a group tag */
 		isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p);
 		if (tag != isnst_PGTag || (data_len && data_len != 4)) {
-			DEBOUT(("iSNS Query returned no or invalid group tag (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS Query returned no or invalid group tag (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			return ISCSID_STATUS_ISNS_SERVER_ERROR;
 		}
@@ -292,7 +292,7 @@ get_isns_target_info(isns_t * isns, uint8_t * TargetName)
 
 		/* we have everything necessary to describe the target, add it. */
 
-		DEB(1, ("Adding <%s>, IP <%s>, Port %d, Tag %d\n",
+		DEB(2, ("Adding <%s>, IP <%s>, Port %d, Tag %d",
 				name, addr.address, addr.port, addr.group_tag));
 
 		if ((targ = add_discovered_target((unsigned char *)name, &addr, PORTAL_TYPE_ISNS,
@@ -335,7 +335,7 @@ deregister_isns_server(isns_t * isns)
 
 	if (ISNS_INVALID_TRANS == (t = isns_new_trans(isns_handle, isnsp_DevDereg,
 												  MY_FLAGS))) {
-		DEBOUT(("dereg_isns_server iscsi_new_trans failed\n"));
+		DEB(10,("dereg_isns_server iscsi_new_trans failed"));
 		return ISCSID_STATUS_NO_RESOURCES;
 	}
 
@@ -349,7 +349,7 @@ deregister_isns_server(isns_t * isns)
 	isns_add_string(t, isnst_iSCSIName, (char *)isns->reg_iscsi_name);
 
 	retval = isns_send_trans(t, &tout, &status);
-	DEB(9, ("DevAttrReg request returns %d, status %d\n", retval, status));
+	DEB(9, ("DevAttrReg request returns %d, status %d", retval, status));
 
 	isns_free_trans(t);
 	return ISCSID_STATUS_SUCCESS;
@@ -375,7 +375,7 @@ register_isns_server(isns_t * isns)
 
 	if (ISNS_INVALID_TRANS == (t = isns_new_trans(isns_handle, isnsp_DevAttrReg,
 												  MY_FLAGS))) {
-		DEBOUT(("iscsi_new_trans failed\n"));
+		DEB(10,("iscsi_new_trans failed"));
 		return ISCSID_STATUS_NO_RESOURCES;
 	}
 
@@ -394,7 +394,7 @@ register_isns_server(isns_t * isns)
 		/*tag=33 (node type = intiator) */
 
 	retval = isns_send_trans(t, &tout, &status);
-	DEB(9, ("DevAttrReg request returns %d, status %d\n", retval, status));
+	DEB(9, ("DevAttrReg request returns %d, status %d", retval, status));
 	isns_free_trans(t);
 
 	if (retval || status)
@@ -427,7 +427,7 @@ get_registration_info(isns_t * isns)
 	/*Get our source IP and port numbers */
 	n = sizeof(sa);
 	if (getsockname(isns->sock, (struct sockaddr *)(void *)&sa, &n)) {
-		DEBOUT(("Getsockname returned error %d\n", errno));
+		DEB(10,("Getsockname returned error %d", errno));
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
 	switch (sa.ss_family) {
@@ -456,7 +456,7 @@ get_registration_info(isns_t * isns)
 		break;
 
 	default:
-		DEBOUT(("Getsockname returned unknown address family: %d\n",
+		DEB(10,("Getsockname returned unknown address family: %d",
 				sa.ss_family));
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
@@ -488,7 +488,7 @@ iscsi_isns_serverconn(isns_t * isns)
 	if (isns_handle == ISNS_INVALID_HANDLE) {
 		if ((retval = isns_init(&isns_handle, 0)) != 0) {
 			/*Couldn't initialize the iSNS library */
-			DEBOUT(("isns_init failed with code %d\n", retval));
+			DEB(10,("isns_init failed with code %d", retval));
 			isns_handle = ISNS_INVALID_HANDLE;
 			return ISCSID_STATUS_GENERAL_ERROR;
 		}
@@ -507,7 +507,7 @@ iscsi_isns_serverconn(isns_t * isns)
 
 	retval = getaddrinfo((char *)isns->address, port, &hints, &ai);
 	if (retval) {
-		DEBOUT(("getaddrinfo failed with code %d (%s)\n",
+		DEB(10,("getaddrinfo failed with code %d (%s)",
 				retval, gai_strerror(retval)));
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
@@ -517,7 +517,7 @@ iscsi_isns_serverconn(isns_t * isns)
 		    addr->ai_protocol);
 
 		if (sock == -1) {
-			DEBOUT(("%s: socket call FAILED!\n", __func__));
+			DEB(10,("%s: socket call FAILED!", __func__));
 			freeaddrinfo(ai);
 			return (uint32_t)-1;
 		}
@@ -525,19 +525,19 @@ iscsi_isns_serverconn(isns_t * isns)
 		if (connect(sock, addr->ai_addr, addr->ai_addrlen) != -1)
 			break;
 
-		DEB(1, ("%s: connect call FAILED!\n", __func__));
+		DEB(1, ("%s: connect call FAILED!", __func__));
 		close(sock);
 		sock = -1;
 	}
 
 	if (addr == NULL) {
-		DEBOUT(("%s: couldn't connect!\n", __func__));
+		DEB(10,("%s: couldn't connect!", __func__));
 		freeaddrinfo(ai);
 		return ISCSID_STATUS_GENERAL_ERROR;
 	}
 
 	if (isns_add_servercon(isns_handle, sock, addr)) {
-		DEBOUT(("%s: FAILED!\n", __func__));
+		DEB(10,("%s: FAILED!", __func__));
 		close(sock);
 		freeaddrinfo(ai);
 		return ISCSID_STATUS_GENERAL_ERROR;
@@ -581,12 +581,12 @@ update_isns_server_info(isns_t * isns)
 	uint8_t TargetName[ISCSI_STRING_LENGTH];
 
 
-	DEB(9, ("update_isns_server_info for iSNS %s\n", isns->address));
+	DEB(9, ("update_isns_server_info for iSNS %s", isns->address));
 
 	if (isns->sock < 0) {
 		if ((status = iscsi_isns_serverconn(isns)) != 0) {
 			/*We couldn't connect to the iSNS server */
-			DEB(9, ("update_isns_server_info iscsi_isns_serverconn failed\n"));
+			DEB(9, ("update_isns_server_info iscsi_isns_serverconn failed"));
 			return status;
 		}
 	}
@@ -594,7 +594,7 @@ update_isns_server_info(isns_t * isns)
 	for (TargetName[0] = 0;;) {
 		if (ISNS_INVALID_TRANS == (t = isns_new_trans(isns_handle,
 												isnsp_DevGetNext, MY_FLAGS))) {
-			DEBOUT(("update_isns_server_info iscsi_new_trans failed\n"));
+			DEB(10,("update_isns_server_info iscsi_new_trans failed"));
 			return ISCSID_STATUS_NO_RESOURCES;
 		}
 
@@ -609,18 +609,18 @@ update_isns_server_info(isns_t * isns)
 		isns_add_tlv(t, isnst_iSCSINodeType, 0, NULL);
 
 		if ((retval = isns_send_trans(t, &tout, &status)) != 0) {
-			DEBOUT(("isns_send_trans returns rc %d, status %d\n",
+			DEB(10,("isns_send_trans returns rc %d, status %d",
 					retval, status));
 			isns_free_trans(t);
 			break;
 		}
 		if (status) {
-			DEB(9, ("DevGetNext Status = %d\n", status));
+			DEB(9, ("DevGetNext Status = %d", status));
 			break;
 		}
 
 		if (isns_get_tlv(t, ISNS_TLV_FIRST, &tag, &data_len, &data_p)) {
-			DEBOUT(("No TLV in DevGetNext response!\n"));
+			DEB(10,("No TLV in DevGetNext response!"));
 			isns_free_trans(t);
 			break;
 		}
@@ -628,8 +628,8 @@ update_isns_server_info(isns_t * isns)
 
 		if (tag != isnst_iSCSIName || !data_len ||
 			data_len >= ISCSI_STRING_LENGTH) {
-			DEBOUT(("iSNS GetNextDev returned no or invalid name (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS GetNextDev returned no or invalid name (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			break;
 		}
@@ -637,19 +637,19 @@ update_isns_server_info(isns_t * isns)
 
 		/* We must get at least the node type, and it must be a target */
 		if (isns_get_tlv(t, ISNS_TLV_NEXT, &tag, &data_len, &data_p)) {
-			DEBOUT(("iSNS GetDevNext did not return node type\n"));
+			DEB(10,("iSNS GetDevNext did not return node type"));
 			isns_free_trans(t);
 			break;
 		}
 		if (tag == isnst_Delimiter && isns_get_tlv(t, ISNS_TLV_NEXT, &tag,
 													&data_len, &data_p)) {
-			DEBOUT(("iSNS GetDevNext did not return node type (past delim)\n"));
+			DEB(10,("iSNS GetDevNext did not return node type (past delim)"));
 			isns_free_trans(t);
 			break;
 		}
 		if (tag != isnst_iSCSINodeType || data_len != 4) {
-			DEBOUT(("iSNS Query returned no or invalid node type (tag=%d, "
-					"length=%d)\n", tag, data_len));
+			DEB(10,("iSNS Query returned no or invalid node type (tag=%d, "
+					"length=%d)", tag, data_len));
 			isns_free_trans(t);
 			break;
 		}
@@ -660,7 +660,7 @@ update_isns_server_info(isns_t * isns)
 			get_isns_target_info(isns, TargetName);
 	}
 
-	DEB(9, ("update_isns_server_info returning SUCCESS!\n"));
+	DEB(9, ("update_isns_server_info returning SUCCESS!"));
 	return ISCSID_STATUS_SUCCESS;
 }
 
@@ -683,7 +683,7 @@ create_isns(iscsid_add_isns_server_req_t * req)
 {
 	isns_t *isns;
 
-	DEB(9, ("Create iSNS %s\n", req->address));
+	DEB(9, ("Create iSNS %s", req->address));
 
 	if ((isns = calloc(1, sizeof(*isns))) == NULL)
 		return NULL;
@@ -727,7 +727,7 @@ add_isns_server(iscsid_add_isns_server_req_t * req, iscsid_response_t ** prsp,
 	iscsid_add_isns_server_rsp_t *res;
 	isns_t *isns;
 
-	DEB(9, ("IN add_isns_server\n"));
+	DEB(9, ("IN add_isns_server"));
 
 	/*
 	 * Make a response
@@ -735,7 +735,7 @@ add_isns_server(iscsid_add_isns_server_req_t * req, iscsid_response_t ** prsp,
 
 	rsp = make_rsp(sizeof(iscsid_add_isns_server_rsp_t), prsp, prsp_temp);
 	if (rsp == NULL) {
-		DEB(9, ("OUT add_isns_server: make_rsp FAILED\n"));
+		DEB(9, ("OUT add_isns_server: make_rsp FAILED"));
 		return;
 	}
 
@@ -748,7 +748,7 @@ add_isns_server(iscsid_add_isns_server_req_t * req, iscsid_response_t ** prsp,
 	isns = create_isns(req);
 	if (isns == NULL) {
 		rsp->status = ISCSID_STATUS_NO_RESOURCES;
-		DEB(9, ("OUT add_isns_server: create_isns FAILED!\n"));
+		DEB(9, ("OUT add_isns_server: create_isns FAILED!"));
 		return;
 	}
 
@@ -756,7 +756,7 @@ add_isns_server(iscsid_add_isns_server_req_t * req, iscsid_response_t ** prsp,
 	list[ISNS_LIST].num_entries++;
 	res->server_id = isns->entry.sid.id;
 
-	DEB(9, ("OUT add_isns_server: server_id = %d, name = %s\n",
+	DEB(9, ("OUT add_isns_server: server_id = %d, name = %s",
 			isns->entry.sid.id, isns->address));
 
 	/*
@@ -786,17 +786,17 @@ get_isns_server(iscsid_sym_id_t * preq, iscsid_response_t ** prsp,
 	iscsid_get_isns_server_rsp_t *res;
 	isns_t *isns;
 
-	DEB(9, ("IN get_isns_server\n"));
+	DEB(9, ("IN get_isns_server"));
 	isns = find_isns(preq);
 	if (isns == NULL) {
 		rsp->status = ISCSID_STATUS_INVALID_ISNS_ID;
-		DEB(9, ("OUT get_isns_server: find_isns FAILED!\n"));
+		DEB(9, ("OUT get_isns_server: find_isns FAILED!"));
 		return;
 	}
 
 	rsp = make_rsp(sizeof(iscsid_get_isns_server_rsp_t), prsp, prsp_temp);
 	if (rsp == NULL) {
-		DEB(9, ("OUT get_isns_server: make_rsp FAILED!\n"));
+		DEB(9, ("OUT get_isns_server: make_rsp FAILED!"));
 		return;
 	}
 	res = (iscsid_get_isns_server_rsp_t *)(void *)rsp->parameter;
@@ -805,7 +805,7 @@ get_isns_server(iscsid_sym_id_t * preq, iscsid_response_t ** prsp,
 	    sizeof(res->address));
 	res->port = isns->port;
 	res->server_id = isns->entry.sid;
-	DEB(9, ("OUT get_isns_server: id = %d, address = %s\n",
+	DEB(9, ("OUT get_isns_server: id = %d, address = %s",
 			res->server_id.id, res->address));
 }
 

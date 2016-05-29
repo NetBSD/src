@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/08/11 06:04:38 dholland Exp $
+#	$NetBSD: Makefile,v 1.6 2016/05/29 13:35:45 mlelstv Exp $
 
 PROG=	iscsid
 
@@ -11,7 +11,7 @@ CPPFLAGS+= -D_THREAD_SAFE
 
 MAN=	iscsid.8
 
-LDADD = -lpthread -lisns
+LDADD = -lpthread -lisns -lutil
 
 INCSDIR= /usr/include
 
