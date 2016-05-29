@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.13 2015/05/30 20:09:47 joerg Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.14 2016/05/29 13:51:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 /* ------------------------ Code selection constants ------------------------ */
 
-/* #define ISCSI_DEBUG      1 */
+#define ISCSI_DEBUG      0
 
 /* -------------------------  Global Constants  ----------------------------- */
 
@@ -96,7 +96,7 @@ now only in iscsi_send.c.
    high values of First/MaxBurstLength and small values of
    MaxRecvDataSegmentLength of the target.
 */
-#define PDUS_PER_CONNECTION   64	/* ToDo: Reasonable number?? */
+#define PDUS_PER_CONNECTION   128	/* ToDo: Reasonable number?? */
 
 /* max outstanding serial nums before we give up on the connection */
 #define SERNUM_BUFFER_LENGTH  (CCBS_PER_SESSION / 2)	/* ToDo: Reasonable?? */
@@ -181,7 +181,6 @@ typedef enum {
 
 typedef enum {
 	PDUDISP_UNUSED,		/* 0 = In free pool */
-	PDUDISP_SIGNAL,		/* Free this PDU when done and wakeup(pdu) */
 	PDUDISP_FREE,		/* Free this PDU when done */
 	PDUDISP_WAIT		/* Waiting for acknowledge */
 } pdu_disp_t;
@@ -253,6 +252,7 @@ struct ccb_s {
 	ccb_disp_t		disp;	/* what to do with this ccb */
 
 	struct callout		timeout; /* To make sure it isn't lost */
+	TAILQ_ENTRY(ccb_s)	tchain;
 	int			num_timeouts;
 	/* How often we've sent out SNACK without answer */
 	int			total_tries;
@@ -309,6 +309,11 @@ typedef struct ccb_list_s ccb_list_t;
 struct connection_s {
 	TAILQ_ENTRY(connection_s)	connections;
 
+	kmutex_t			lock;
+	kcondvar_t			conn_cv;
+	kcondvar_t			ccb_cv;
+	kcondvar_t			idle_cv;
+
 	pdu_list_t			pdu_pool; /* the free PDU pool */
 
 	ccb_list_t			ccbs_waiting;
@@ -358,7 +363,7 @@ struct connection_s {
 					/* if closing down: status */
 	int				recover; /* recovery count */
 		/* (reset on first successful data transfer) */
-	int				usecount; /* number of active CCBs */
+	unsigned			usecount; /* number of active CCBs */
 
 	bool				destroy; /* conn will be destroyed */
 	bool				in_session;
@@ -367,6 +372,7 @@ struct connection_s {
 		/* status of logout (for recovery) */
 	struct callout			timeout;
 		/* Timeout for checking if connection is dead */
+	TAILQ_ENTRY(connection_s)	tchain;
 	int				num_timeouts;
 		/* How often we've sent out a NOP without answer */
 	uint32_t			idle_timeout_val;
@@ -401,6 +407,10 @@ struct session_s {
 
 	/* local stuff */
 	TAILQ_ENTRY(session_s)	sessions;	/* the list of sessions */
+
+	kmutex_t		lock;
+	kcondvar_t		sess_cv;
+	kcondvar_t		ccb_cv;
 
 	ccb_list_t		ccb_pool;	/* The free CCB pool */
 	ccb_list_t		ccbs_throttled;
@@ -457,18 +467,6 @@ typedef struct session_list_s session_list_t;
 
 
 /*
-   The softc structure. This driver doesn't really need one, because there's
-   always just one instance, and for the time being it's only loaded as
-   an LKM (which doesn't create a softc), but we need one to put into the
-   scsipi interface structures, so here it is.
-*/
-
-typedef struct iscsi_softc {
-	device_t		sc_dev;
-} iscsi_softc_t;
-
-
-/*
    Event notification structures
 */
 
@@ -502,7 +500,9 @@ typedef struct event_handler_list_s event_handler_list_t;
 
 /* /dev/iscsi0 state */
 struct iscsifd {
-	char dummy;
+	TAILQ_ENTRY(iscsifd)		link;
+	device_t	dev;
+	int		unit;
 };
 
 /* -------------------------  Global Variables  ----------------------------- */
@@ -512,12 +512,7 @@ struct iscsifd {
 extern struct cfattach iscsi_ca;		/* the device attach structure */
 
 extern session_list_t iscsi_sessions;		/* the list of sessions */
-
-extern connection_list_t iscsi_cleanupc_list;	/* connections to clean up */
-extern session_list_t iscsi_cleanups_list;	/* sessions to clean up */
 extern bool iscsi_detaching;			/* signal to cleanup thread it should exit */
-extern struct lwp *iscsi_cleanproc;		/* pointer to cleanup proc */
-
 extern uint32_t iscsi_num_send_threads;		/* the number of active send threads */
 
 extern uint8_t iscsi_InitiatorName[ISCSI_STRING_LENGTH];
@@ -539,7 +534,7 @@ extern int iscsi_debug_level;	/* How much debug info to display */
 #define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
 				conn ? conn->session->id : -1, \
 				conn ? conn->id : -1); printf x ;}}
-void dump(void *buf, int len);
+void iscsi_hexdump(void *buf, int len);
 
 #define STATIC static
 
@@ -548,7 +543,7 @@ void dump(void *buf, int len);
 #define DEBOUT(x)
 #define DEB(lev,x)
 #define DEBC(conn,lev,x)
-#define dump(a,b)
+#define iscsi_hexdump(a,b)
 
 #define STATIC static
 
@@ -634,6 +629,11 @@ sn_a_le_b(uint32_t a, uint32_t b)
 
 /* in iscsi_ioctl.c */
 
+void iscsi_init_cleanup(void);
+void iscsi_destroy_cleanup(void);
+void iscsi_notify_cleanup(void);
+
+
 /* Parameter for logout is reason code in logout PDU, -1 for don't send logout */
 #define NO_LOGOUT          -1
 #define LOGOUT_SESSION     0
@@ -646,7 +646,7 @@ void kill_connection(connection_t *, uint32_t, int, bool);
 void kill_session(session_t *, uint32_t, int, bool);
 void kill_all_sessions(void);
 void handle_connection_error(connection_t *, uint32_t, int);
-void iscsi_cleanup_thread(void *);
+void add_connection_cleanup(connection_t *);
 
 #ifndef ISCSI_MINIMAL
 uint32_t map_databuf(struct proc *, void **, uint32_t);
@@ -664,7 +664,7 @@ connection_t *find_connection(session_t *, uint32_t);
 int iscsidetach(device_t, int);
 
 void iscsi_done(ccb_t *);
-int map_session(session_t *);
+int map_session(session_t *, device_t);
 int unmap_session(session_t *);
 
 /* in iscsi_send.c */
@@ -694,8 +694,11 @@ void send_command(ccb_t *, ccb_disp_t, bool, bool);
 int send_io_command(session_t *, uint64_t, scsireq_t *, bool, uint32_t);
 #endif
 
-void connection_timeout(void *);
-void ccb_timeout(void *);
+void connection_timeout_co(void *);
+void ccb_timeout_co(void *);
+
+void connection_timeout(connection_t *);
+void ccb_timeout(ccb_t *);
 
 /* in iscsi_rcv.c */
 
