@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 2003/08/07 11:25:13 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 2016/05/29 22:33:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,4 +34,4 @@
 #define	_PATH_MANCONF	"/etc/man.conf"
 #define	_PATH_PAGER	"/usr/bin/more -s"
 #define	_PATH_TMP	"/tmp/man.XXXXXX"
-#define	_PATH_WHATIS	"/usr/libexec/makewhatis"
+#define	_PATH_MAKEWHATIS "/usr/libexec/makewhatis"
