@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.10 2015/05/30 18:09:31 joerg Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.11 2016/05/29 13:51:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,9 @@ my_soo_read(connection_t *conn, struct uio *u, int flags)
 
 	DEBC(conn, 99, ("soo_read req: %zu\n", resid));
 
+	KERNEL_LOCK(1, curlwp);
 	ret = soreceive(so, NULL, u, NULL, NULL, &flags);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (ret || (flags != MSG_DONTWAIT && u->uio_resid)) {
 		DEBC(conn, 1, ("Read failed (ret: %d, req: %zu, out: %zu)\n", ret, resid,
@@ -159,7 +161,7 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	int i, pad;
 	connection_t *conn = pdu->connection;
 
-	DEBOUT(("read_pdu_data: data segment length = %d\n",
+	DEB(1, ("read_pdu_data: data segment length = %d\n",
 		ntoh3(pdu->pdu.DataSegmentLength)));
 	if (!(len = ntoh3(pdu->pdu.DataSegmentLength))) {
 		return 0;
@@ -168,7 +170,8 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	if (pad) {
 		pad = 4 - pad;
 	}
-	assert((data != NULL) || (offset == 0));
+
+	KASSERT(data != NULL || offset == 0);
 
 	if (data == NULL) {
 		/*
@@ -542,7 +545,7 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		callout_stop(&conn->timeout);
 
 		/* let send thread take over next step of cleanup */
-		wakeup(&conn->pdus_to_send);
+		cv_broadcast(&conn->conn_cv);
 	}
 
 	return !otherconn;
@@ -990,7 +993,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 {
 	ccb_t *req_ccb;
 	ccb_list_t waiting;
-	int rc, s;
+	int rc;
 	uint32_t MaxCmdSN, digest;
 	session_t *sess = conn->session;
 
@@ -1101,20 +1104,22 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	 * Un-throttle - wakeup all CCBs waiting for MaxCmdSN to increase.
 	 * We have to handle wait/nowait CCBs a bit differently.
 	 */
+	mutex_enter(&sess->lock);
 	if (MaxCmdSN != sess->MaxCmdSN) {
 		sess->MaxCmdSN = MaxCmdSN;
-		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL)
+		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL) {
+			mutex_exit(&sess->lock);
 			return 0;
+		}
 
 		DEBC(conn, 1, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
 
-		s = splbio();
 		TAILQ_INIT(&waiting);
 		while ((req_ccb = TAILQ_FIRST(&sess->ccbs_throttled)) != NULL) {
 			throttle_ccb(req_ccb, FALSE);
 			TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
 		}
-		splx(s);
+		mutex_exit(&sess->lock);
 
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);
@@ -1122,12 +1127,13 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			DEBC(conn, 1, ("Unthrottling - ccb = %p, disp = %d\n",
 					req_ccb, req_ccb->disp));
 
-			if (req_ccb->flags & CCBF_WAITING)
-				wakeup(req_ccb);
-			else
+			if (req_ccb->flags & CCBF_WAITING) {
+				cv_broadcast(&conn->ccb_cv);
+			} else
 				send_command(req_ccb, req_ccb->disp, FALSE, FALSE);
 		}
-	}
+	} else
+		mutex_exit(&sess->lock);
 
 	return 0;
 }
@@ -1185,9 +1191,11 @@ iscsi_rcv_thread(void *par)
 				break;
 			}
 		}
+		mutex_enter(&conn->lock);
 		if (!conn->destroy) {
-			tsleep(conn, PRIBIO, "conn_idle", 30 * hz);
+			cv_timedwait(&conn->idle_cv, &conn->lock, CONNECTION_IDLE_TIMEOUT);
 		}
+		mutex_exit(&conn->lock);
 	} while (!conn->destroy);
 
 	conn->rcvproc = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.8 2015/05/30 18:12:09 joerg Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.9 2016/05/29 13:51:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
 #include <sys/buf.h>
 #include <sys/socketvar.h>
 #include <sys/bswap.h>
+#include <sys/atomic.h>
 
 
 #ifdef ISCSI_DEBUG
 
 /* debug helper routine */
 void
-dump(void *buff, int len)
+iscsi_hexdump(void *buff, int len)
 {
 	uint8_t *bp = (uint8_t *) buff;
 	int i;
@@ -219,23 +220,23 @@ get_ccb(connection_t *conn, bool waitok)
 {
 	ccb_t *ccb;
 	session_t *sess = conn->session;
-	int s;
 
+	mutex_enter(&sess->lock);
 	do {
-		s = splbio();
 		ccb = TAILQ_FIRST(&sess->ccb_pool);
-		if (ccb != NULL)
-			TAILQ_REMOVE(&sess->ccb_pool, ccb, chain);
-		splx(s);
-
 		DEB(100, ("get_ccb: ccb = %p, waitok = %d\n", ccb, waitok));
-		if (ccb == NULL) {
+
+		if (ccb != NULL) {
+			TAILQ_REMOVE(&sess->ccb_pool, ccb, chain);
+		} else {
 			if (!waitok || conn->terminating) {
+				mutex_exit(&sess->lock);
 				return NULL;
 			}
-			tsleep(&sess->ccb_pool, PWAIT, "get_ccb", 0);
+			cv_wait(&sess->ccb_cv, &sess->lock);
 		}
 	} while (ccb == NULL);
+	mutex_exit(&sess->lock);
 
 	ccb->flags = 0;
 	ccb->xs = NULL;
@@ -245,7 +246,11 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->ITT = (ccb->ITT & 0xffffff) | (++sess->itt_id << 24);
 	ccb->disp = CCBDISP_NOWAIT;
 	ccb->connection = conn;
-	conn->usecount++;
+	atomic_inc_uint(&conn->usecount);
+
+	DEBC(conn, 5, (
+		"get_ccb: ccb = %p, usecount = %d\n",
+		ccb, conn->usecount));
 
 	return ccb;
 }
@@ -262,13 +267,20 @@ free_ccb(ccb_t *ccb)
 {
 	session_t *sess = ccb->session;
 	pdu_t *pdu;
-	int s;
+
+	DEBC(ccb->connection, 5, (
+		"free_ccb: ccb = %p, usecount = %d\n",
+		ccb, ccb->connection->usecount-1));
 
 	KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 	KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
 
-	ccb->connection->usecount--;
+	atomic_dec_uint(&ccb->connection->usecount);
 	ccb->connection = NULL;
+
+	if (ccb->disp > CCBDISP_NOWAIT) {
+		DEBOUT(("Freeing CCB with disp %d\n",ccb->disp));
+	}
 
 	ccb->disp = CCBDISP_UNUSED;
 
@@ -285,11 +297,11 @@ free_ccb(ccb_t *ccb)
 		free_pdu(pdu);
 	}
 
-	s = splbio();
+	mutex_enter(&sess->lock);
 	TAILQ_INSERT_TAIL(&sess->ccb_pool, ccb, chain);
-	splx(s);
+	mutex_exit(&sess->lock);
 
-	wakeup(&sess->ccb_pool);
+	cv_broadcast(&sess->ccb_cv);
 }
 
 /*
@@ -314,10 +326,10 @@ create_ccbs(session_t *sess)
 		ccb->ITT = i | sid;
 		ccb->session = sess;
 
-		callout_init(&ccb->timeout, 0);
-		callout_setfunc(&ccb->timeout, ccb_timeout, ccb);
+		callout_init(&ccb->timeout, CALLOUT_MPSAFE);
+		callout_setfunc(&ccb->timeout, ccb_timeout_co, ccb);
 
-		/*DEB (9, ("Create_ccbs: ccb %x itt %x\n", ccb, ccb->ITT)); */
+		DEB(9, ("Create_ccbs: ccb %p itt %x\n", ccb, ccb->ITT));
 		TAILQ_INSERT_HEAD(&sess->ccb_pool, ccb, chain);
 	}
 }
@@ -353,6 +365,8 @@ throttle_ccb(ccb_t *ccb, bool yes)
 {
 	session_t *sess;
 
+	KASSERT(mutex_owned(&sess->lock));
+
 	sess = ccb->session;
 	if (yes) {
 		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
@@ -381,7 +395,6 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 {
 	ccb_disp_t disp;
 	connection_t *conn;
-	int s;
 
 	conn = ccb->connection;
 
@@ -392,11 +405,11 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 
 	callout_stop(&ccb->timeout);
 
-	s = splbio();
+	mutex_enter(&conn->lock);
 	disp = ccb->disp;
 	if (disp <= CCBDISP_NOWAIT ||
 		(disp == CCBDISP_DEFER && conn->state <= ST_WINDING_DOWN)) {
-		splx(s);
+		mutex_exit(&conn->lock);
 		return;
 	}
 
@@ -406,7 +419,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 	/* change the disposition so nobody tries this again */
 	ccb->disp = CCBDISP_BUSY;
 	ccb->status = status;
-	splx(s);
+	mutex_exit(&conn->lock);
 
 	switch (disp) {
 	case CCBDISP_FREE:
@@ -414,7 +427,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 		break;
 
 	case CCBDISP_WAIT:
-		wakeup(ccb);
+		cv_broadcast(&conn->ccb_cv);
 		break;
 
 	case CCBDISP_SCSIPI:
@@ -451,22 +464,24 @@ pdu_t *
 get_pdu(connection_t *conn, bool waitok)
 {
 	pdu_t *pdu;
-	int s;
 
+	mutex_enter(&conn->lock);
 	do {
-		s = splbio();
 		pdu = TAILQ_FIRST(&conn->pdu_pool);
 		if (pdu != NULL)
 			TAILQ_REMOVE(&conn->pdu_pool, pdu, chain);
-		splx(s);
 
 		DEB(100, ("get_pdu_c: pdu = %p, waitok = %d\n", pdu, waitok));
+
 		if (pdu == NULL) {
-			if (!waitok || conn->terminating)
+			if (!waitok || conn->terminating) {
+				mutex_exit(&conn->lock);
 				return NULL;
-			tsleep(&conn->pdu_pool, PWAIT, "get_pdu_c", 0);
+			}
+			cv_wait(&conn->conn_cv, &conn->lock);
 		}
 	} while (pdu == NULL);
+	mutex_exit(&conn->lock);
 
 	memset(pdu, 0, sizeof(pdu_t));
 	pdu->connection = conn;
@@ -487,29 +502,27 @@ free_pdu(pdu_t *pdu)
 {
 	connection_t *conn = pdu->connection;
 	pdu_disp_t pdisp;
-	int s;
 
 	if (PDUDISP_UNUSED == (pdisp = pdu->disp))
 		return;
 	pdu->disp = PDUDISP_UNUSED;
 
+	mutex_enter(&conn->lock);
 	if (pdu->flags & PDUF_INQUEUE) {
 		TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
 		pdu->flags &= ~PDUF_INQUEUE;
 	}
-
-	if (pdisp == PDUDISP_SIGNAL)
-		wakeup(pdu);
+	mutex_exit(&conn->lock);
 
 	/* free temporary data in this PDU */
 	if (pdu->temp_data)
 		free(pdu->temp_data, M_TEMP);
 
-	s = splbio();
+	mutex_enter(&conn->lock);
 	TAILQ_INSERT_TAIL(&conn->pdu_pool, pdu, chain);
-	splx(s);
+	mutex_exit(&conn->lock);
 
-	wakeup(&conn->pdu_pool);
+	cv_broadcast(&conn->conn_cv);
 }
 
 /*
