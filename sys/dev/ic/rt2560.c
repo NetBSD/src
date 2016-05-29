@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.25 2012/02/18 13:38:35 drochner Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.25.16.1 2016/05/29 08:44:21 skrll Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25 2012/02/18 13:38:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.25.16.1 2016/05/29 08:44:21 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -2072,8 +2072,8 @@ rt2560_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				break;
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 			bpf_mtap3(ic->ic_rawbpf, m0);
 			if (rt2560_tx_mgt(sc, m0, ni) != 0)
 				break;

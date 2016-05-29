@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.145.2.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.145.2.5 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -975,6 +975,8 @@ typedef struct {
  *
  *	ELF_NOTE_NETBSD_CORE_PROCINFO
  *		Note is a "netbsd_elfcore_procinfo" structure.
+ *	ELF_NOTE_NETBSD_CORE_AUXV
+ *		Note is an array of AuxInfo structures.
  *
  * We also use ptrace(2) request numbers (the ones that exist in
  * machine-dependent space) to identify register info notes.  The
@@ -988,6 +990,7 @@ typedef struct {
 #define ELF_NOTE_NETBSD_CORE_NAME	"NetBSD-CORE"
 
 #define ELF_NOTE_NETBSD_CORE_PROCINFO	1
+#define ELF_NOTE_NETBSD_CORE_AUXV	2
 
 #define NETBSD_ELFCORE_PROCINFO_VERSION 1
 

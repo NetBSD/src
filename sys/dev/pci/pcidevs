@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1205.2.5 2016/03/19 11:30:11 skrll Exp $
+$NetBSD: pcidevs,v 1.1205.2.6 2016/05/29 08:44:22 skrll Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -568,6 +568,7 @@ vendor ICENSEMBLE	0x1412	IC Ensemble / VIA Technologies
 vendor MICROSOFT	0x1414	Microsoft
 vendor OXFORDSEMI	0x1415	Oxford Semiconductor
 vendor CHELSIO		0x1425	Chelsio Communications
+vendor EDIMAX		0x1432	Edimax
 vendor TAMARACK		0x143d	Tamarack Microelectronics
 vendor SAMSUNGELEC3	0x144d	Samsung Electronics (3rd vendor ID)
 vendor ASKEY		0x144f	Askey Computer
@@ -631,7 +632,9 @@ vendor FREESCALE	0x1957	Freescale Semiconductor
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor JMICRON		0x197b	JMicron Technology
 vendor ASPEED		0x1a03	ASPEED Technology
+vendor AWT		0x1a3b	AWT
 vendor EVE		0x1adb	EVE
+vendor FUSIONIO		0x1aed	Fusion-io
 vendor QUMRANET		0x1af4	Qumranet
 vendor ASMEDIA		0x1b21  ASMedia
 vendor REDHAT		0x1b36	Red Hat
@@ -1630,6 +1633,9 @@ product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz!PCI v2.0 ISDN Interface
 product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
+/* AWT products */
+product AWT RT2890		0x1059	RT2890
+
 /* RMI products */
 product RMI XLR_PCIX		0x000b	XLR PCI-X bridge
 product RMI XLS_PCIE		0xabcd	XLS PCIe-PCIe bridge
@@ -2138,6 +2144,15 @@ product DOMEX PCISCSI	0x0001	DMX-3191D
 
 /* Dynalink products */
 product DYNALINK IS64PH		0x1702	IS64PH ISDN Adapter
+
+/* Edimax products */
+product EDIMAX RT2860_1		0x7708	RT2860
+product EDIMAX RT2860_4		0x7727	RT2860
+product EDIMAX RT2860_2		0x7728	RT2860
+product EDIMAX RT2860_5		0x7738	RT2860
+product EDIMAX RT2860_6		0x7748	RT2860
+product EDIMAX RT2860_3		0x7758	RT2860
+product EDIMAX RT2860_7		0x7768	RT2860
 
 /* ELSA products */
 product ELSA	QS1PCI		0x1000	QuickStep 1000 ISDN Card
@@ -4197,6 +4212,50 @@ product INTEL CORE5G_M_S_UART_0	0x9ce3	Core 5G (mobile) Serial I/O UART
 product INTEL CORE5G_M_S_UART_1	0x9ce4	Core 5G (mobile) Serial I/O UART
 product INTEL CORE5G_M_S_GSPI_0	0x9ce5	Core 5G (mobile) Serial I/O GSPI
 product INTEL CORE5G_M_S_GSPI_1	0x9ce6	Core 5G (mobile) Serial I/O GSPI
+product INTEL 100SERIES_LP_AHCI	0x9d03	100 Series SATA (AHCI)
+product INTEL 100SERIES_LP_RAID 0x9d07	100 Series SATA (AHCI, RAID)
+product INTEL 100SERIES_LP_PCIE_1 0x9d10 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_2 0x9d11 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_3 0x9d12 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_4 0x9d13 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_5 0x9d14 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_6 0x9d15 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_7 0x9d16 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_8 0x9d17 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_9 0x9d18 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_10 0x9d19 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_11 0x9d1a 100 Series PCIE
+product INTEL 100SERIES_LP_PCIE_12 0x9d1b 100 Series PCIE
+product INTEL 100SERIES_LP_P2SB	0x9d20	100 Series P2SB
+product INTEL 100SERIES_LP_PMC	0x9d21	100 Series PMC
+product INTEL 100SERIES_LP_SMB	0x9d23	100 Series SMBus
+product INTEL 100SERIES_LP_SPI	0x9d24	100 Series SPI
+product INTEL 100SERIES_LP_TRACE 0x9d26	100 Series Trace Hub
+product INTEL 100SERIES_LP_UART_0 0x9d27 100 Series UART 0
+product INTEL 100SERIES_LP_UART_1 0x9d28 100 Series UART 1
+product INTEL 100SERIES_LP_GSPI_0 0x9d29 100 Series GSPI 0
+product INTEL 100SERIES_LP_GSPI_1 0x9d2a 100 Series GSPI 1
+product INTEL 100SERIES_LP_EMMC	0x9d2b	100 Series eMMC
+product INTEL 100SERIES_LP_SDXC	0x9d2d	100 Series SDXC
+product INTEL 100SERIES_LP_XHCI	0x9d2f	100 Series xHCI
+product INTEL 100SERIES_LP_USBOTG 0x9d30 100 Series USB (OTG)
+product INTEL 100SERIES_LP_THERM 0x9d31	100 Series Thermal
+product INTEL 100SERIES_LP_CAMERA 0x9d32 100 Series Camera IO
+product INTEL 100SERIES_LP_ISH	0x9d35	100 Series ISH
+product INTEL 100SERIES_LP_MEI_1 0x9d3a	100 Series MEI
+product INTEL 100SERIES_LP_MEI_2 0x9d3b	100 Series MEI
+product INTEL 100SERIES_LP_IDER	0x9d3c	100 Series IDER
+product INTEL 100SERIES_LP_KT	0x9d3d	100 Series KT
+product INTEL 100SERIES_LP_MEI_3 0x9d3e	100 Series MEI
+product INTEL 100SERIES_LP_LPC_1 0x9d43	100 Series (PCH-U) LPC
+product INTEL 100SERIES_LP_LPC_2 0x9d46	100 Series (PCH-Y) LPC
+product INTEL 100SERIES_LP_LPC_3 0x9d48	100 Series (PCH-U) LPC
+product INTEL 100SERIES_LP_I2C_0 0x9d60	100 Series I2C 0
+product INTEL 100SERIES_LP_I2C_1 0x9d61	100 Series I2C 1
+product INTEL 100SERIES_LP_I2C_2 0x9d62	100 Series I2C 2
+product INTEL 100SERIES_LP_I2C_3 0x9d63	100 Series I2C 3
+product INTEL 100SERIES_LP_UART_2 0x9d66 100 Series UART 2
+product INTEL 100SERIES_LP_HDA	0x9d70	100 Series HD Audio
 product INTEL PINEVIEW_HB	0xa000	Pineview Host Bridge
 product INTEL PINEVIEW_IGD	0xa001	Pineview Integrated Graphics Device
 product INTEL PINEVIEW_IGD_1	0xa002	Pineview Integrated Graphics Device
@@ -5411,8 +5470,21 @@ product	RALINK	RT2560		0x0201	RT2560 802.11b/g
 product	RALINK	RT2561S		0x0301	RT2561S 802.11b/g
 product	RALINK	RT2561		0x0302	RT2561 802.11b/g
 product	RALINK	RT2661		0x0401	RT2661 802.11b/g/n
+product RALINK	RT2860		0x0601	RT2860
+product RALINK	RT2890		0x0681	RT2890
+product RALINK	RT2760		0x0701	RT2760
+product RALINK	RT2790		0x0781	RT2790
+product RALINK	RT3060		0x3060	RT3060
+product RALINK	RT3062		0x3062	RT3062
 product	RALINK	RT3090		0x3090	RT3090 802.11b/g/n
-
+product RALINK	RT3091		0x3091	RT3091
+product RALINK	RT3092		0x3092	RT3092
+product RALINK	RT3298		0x3298	Bluetooth
+product RALINK	RT3562		0x3562	RT3562
+product RALINK	RT3592		0x3592	RT3592
+product RALINK	RT3593		0x3593	RT3593
+product RALINK	RT5390		0x5390	RT5390
+	
 /* RATOC Systems products */
 product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 

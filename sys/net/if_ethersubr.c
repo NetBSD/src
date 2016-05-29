@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.6 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.7 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.6 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.7 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -178,7 +178,7 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 #define senderr(e) { error = (e); goto bad;}
 
 static	int ether_output(struct ifnet *, struct mbuf *,
-	    const struct sockaddr *, struct rtentry *);
+	    const struct sockaddr *, const struct rtentry *);
 
 /*
  * Ethernet output routine.
@@ -188,7 +188,7 @@ static	int ether_output(struct ifnet *, struct mbuf *,
 static int
 ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	const struct sockaddr * const dst,
-	struct rtentry *rt)
+	const struct rtentry *rt)
 {
 	uint16_t etype = 0;
 	int error = 0, hdrcmplt = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.28.2.4 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.28.2.5 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28.2.4 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.28.2.5 2016/05/29 08:44:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -257,6 +257,19 @@ void
 rnd_getmore(size_t byteswanted)
 {
 	krndsource_t *rs, *next;
+
+	/*
+	 * Due to buffering in rnd_process_events, even if the entropy
+	 * sources provide the requested number of bytes, users may not
+	 * be woken because the data may be stuck in unfilled buffers.
+	 * So ask for enough data to fill all the buffers.
+	 *
+	 * XXX Just get rid of this buffering and solve the
+	 * /dev/random-as-side-channel-for-keystroke-timings a
+	 * different way.
+	 */
+	byteswanted = MAX(byteswanted,
+	    MAX(RND_POOLBITS/NBBY, sizeof(uint32_t)*RND_SAMPLE_COUNT));
 
 	mutex_spin_enter(&rnd_global.lock);
 	LIST_FOREACH_SAFE(rs, &rnd_global.sources, list, next) {

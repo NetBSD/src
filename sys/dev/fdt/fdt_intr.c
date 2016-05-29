@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.3.2.3 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.3.2.4 2016/05/29 08:44:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.3.2.3 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.3.2.4 2016/05/29 08:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -334,7 +334,6 @@ static u_int *get_specifier_by_index(int phandle, int pindex,
 		return NULL;
 	}
 
-	const u_int clen = interrupt_cells * sizeof(u_int);
 	const u_int nintr = len / interrupt_cells;
 
 	if (pindex >= nintr)
@@ -349,7 +348,7 @@ static u_int *get_specifier_by_index(int phandle, int pindex,
 	specifier = kmem_alloc(interrupt_cells * sizeof(u_int), KM_SLEEP);
 	*spec_length = interrupt_cells * sizeof(u_int);
 	for (int i = 0; i < interrupt_cells; i++)
-		specifier[i] = specifiers[pindex * clen + i];
+		specifier[i] = specifiers[pindex * interrupt_cells + i];
 	kmem_free(specifiers, len);
 	return specifier;
 }

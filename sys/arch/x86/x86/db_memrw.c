@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.1 2012/05/07 17:45:29 jym Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.1.20.1 2016/05/29 08:44:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1 2012/05/07 17:45:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.1.20.1 2016/05/29 08:44:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -174,13 +174,15 @@ db_write_text(vaddr_t addr, size_t size, const char *data)
 void
 db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
+	extern int __rodata_start;
 	extern int __data_start;
 	char *dst;
 
 	dst = (char *)addr;
 
-	/* If any part is in kernel text, use db_write_text() */
-	if (addr >= KERNBASE && addr < (vaddr_t)&__data_start) {
+	/* If any part is in kernel text or rodata, use db_write_text() */
+	if ((addr >= KERNBASE && addr < (vaddr_t)&__rodata_start) ||
+	    (addr >= (vaddr_t)&__rodata_start && addr < (vaddr_t)&__data_start)) {
 		db_write_text(addr, size, data);
 		return;
 	}

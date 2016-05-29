@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.2.2.3 2016/03/19 11:30:33 skrll Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.2.2.3 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -83,8 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.2.2.3 2016/03/19 11:30:33 skrll Ex
 #include <netinet/sctp_uio.h>
 #include <netinet/sctp_timer.h>
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /*IPSEC*/
 
 #include <net/net_osdep.h>

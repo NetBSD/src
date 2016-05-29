@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.224.2.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.224.2.4 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.224.2.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.224.2.4 2016/05/29 08:44:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -151,7 +151,7 @@ ufs_create(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
@@ -160,7 +160,7 @@ ufs_create(void *v)
 		fstrans_done(dvp->v_mount);
 		return (error);
 	}
-	UFS_WAPBL_END1(dvp->v_mount, dvp);
+	UFS_WAPBL_END(dvp->v_mount);
 	fstrans_done(dvp->v_mount);
 	VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*ap->a_vpp);
@@ -194,7 +194,7 @@ ufs_mknod(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
@@ -204,7 +204,7 @@ ufs_mknod(void *v)
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	UFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
-	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	UFS_WAPBL_END(ap->a_dvp->v_mount);
 	VOP_UNLOCK(*vpp);
 out:
 	fstrans_done(ap->a_dvp->v_mount);
@@ -1200,7 +1200,7 @@ ufs_symlink(void *v)
 	UFS_CHECK_CRAPCOUNTER(VTOI(ap->a_dvp));
 
 	/*
-	 * UFS_WAPBL_BEGIN1(dvp->v_mount, dvp) performed by successful
+	 * UFS_WAPBL_BEGIN(dvp->v_mount) performed by successful
 	 * ufs_makeinode
 	 */
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
@@ -1232,7 +1232,7 @@ ufs_symlink(void *v)
 		error = ufs_bufio(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    IO_NODELOCKED | IO_JOURNALLOCKED, ap->a_cnp->cn_cred, NULL,
 		    NULL);
-	UFS_WAPBL_END1(ap->a_dvp->v_mount, ap->a_dvp);
+	UFS_WAPBL_END(ap->a_dvp->v_mount);
 	VOP_UNLOCK(vp);
 	if (error)
 		vrele(vp);
@@ -1784,7 +1784,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	}
 	*vpp = tvp;
 	ip = VTOI(tvp);
-	error = UFS_WAPBL_BEGIN1(dvp->v_mount, dvp);
+	error = UFS_WAPBL_BEGIN(dvp->v_mount);
 	if (error) {
 		vput(tvp);
 		return (error);
@@ -1832,7 +1832,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
-	UFS_WAPBL_END1(dvp->v_mount, dvp);
+	UFS_WAPBL_END(dvp->v_mount);
 	vput(tvp);
 	return (error);
 }

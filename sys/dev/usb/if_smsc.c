@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.10 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.11 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1492,7 +1492,7 @@ smsc_tx_list_init(struct smsc_softc *sc)
 			    sc->sc_bufsz, USBD_FORCE_SHORT_XFER, 0,
 			    &c->sc_xfer);
 			if (error)
-				;
+				return EIO;
 			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}

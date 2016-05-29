@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.28.2.3 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_io.c,v 1.28.2.4 2016/05/29 08:44:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -97,7 +97,8 @@ awinio_print(void *aux, const char *pnp)
 
 static const struct awin_locators awin_locators[] = {
 	{ "awinicu", OFFANDSIZE(INTC), NOPORT, NOINTR, A10|REQ },
-	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, A10|A20|A31|REQ },
+	{ "awingpio", OFFANDSIZE(PIO), NOPORT, AWIN_IRQ_PIO, A10|A20|REQ },
+	{ "awingpio", OFFANDSIZE(PIO), NOPORT, NOINTR, A31|REQ },
 	{ "awingpio", OFFANDSIZE(A80_PIO), NOPORT, NOINTR, A80|REQ },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_IRQ_DMA, A10|A20 },
 	{ "awindma", OFFANDSIZE(DMA), NOPORT, AWIN_A31_IRQ_DMA, A31 },
@@ -190,6 +191,7 @@ static const struct awin_locators awin_locators[] = {
 	{ "awinir", OFFANDSIZE(IR1), 1, AWIN_IRQ_IR1, A10|A20 },
 	{ "awinir", OFFANDSIZE(A31_CIR), NOPORT, AWIN_A31_IRQ_CIR, A31 },
 	{ "awinir", OFFANDSIZE(A80_CIR), NOPORT, AWIN_A80_IRQ_R_CIR, A80 },
+	{ "awinlradc", OFFANDSIZE(LRADC), NOPORT, AWIN_IRQ_LRADC, A20 },
 };
 
 static int

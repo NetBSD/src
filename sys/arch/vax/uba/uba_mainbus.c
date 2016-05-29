@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.10.36.1 2015/09/22 12:05:53 skrll Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.10.36.2 2016/05/29 08:44:19 skrll Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.10.36.1 2015/09/22 12:05:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.10.36.2 2016/05/29 08:44:19 skrll Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -193,7 +193,7 @@ qba_beforescan(struct uba_softc *sc)
 {
 #define	QIPCR	0x1f40
 #define	Q_LMEAE	0x20
-	bus_space_write_2(sc->uh_tag, sc->uh_ioh, QIPCR, Q_LMEAE);
+	bus_space_write_2(sc->uh_iot, sc->uh_ioh, QIPCR, Q_LMEAE);
 }
 
 void

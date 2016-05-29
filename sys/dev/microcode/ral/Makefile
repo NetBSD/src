@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2006/06/08 15:22:03 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.5.134.1 2016/05/29 08:44:21 skrll Exp $
 
 NOMAN=	# defined
 
-FILES=	ral-rt2561 ral-rt2561s ral-rt2661 ral-license
+FILES=	ral-rt2561 ral-rt2561s ral-rt2661 ral-rt2860 ral-license
 
 # XXX
 includes:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.9 2016/04/22 15:44:14 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.10 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.9 2016/04/22 15:44:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.10 2016/05/29 08:44:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -421,7 +421,8 @@ Static int  uhso_ifnet_ioctl(struct ifnet *, u_long, void *);
 Static int  uhso_ifnet_init(struct uhso_port *);
 Static void uhso_ifnet_clean(struct uhso_port *);
 Static void uhso_ifnet_start(struct ifnet *);
-Static int  uhso_ifnet_output(struct ifnet *, struct mbuf *, const struct sockaddr *, struct rtentry *);
+Static int  uhso_ifnet_output(struct ifnet *, struct mbuf *,
+    const struct sockaddr *, const struct rtentry *);
 
 
 /*******************************************************************************
@@ -2339,7 +2340,7 @@ uhso_ifnet_start(struct ifnet *ifp)
 
 Static int
 uhso_ifnet_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt0)
+    const struct rtentry *rt0)
 {
 	int error;
 

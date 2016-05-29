@@ -104,9 +104,12 @@ AnMethodTypingWalkEnd (
                  * The called method is untyped at this time (typically a
                  * forward reference).
                  *
-                 * Check for a recursive method call first.
+                 * Check for a recursive method call first. Note: the
+                 * Child->Node will be null if the method has not been
+                 * resolved.
                  */
-                if (Op->Asl.ParentMethod != Op->Asl.Child->Asl.Node->Op)
+                if (Op->Asl.Child->Asl.Node &&
+                    (Op->Asl.ParentMethod != Op->Asl.Child->Asl.Node->Op))
                 {
                     /* We must type the method here */
 
@@ -859,8 +862,19 @@ AnAnalyzeStoreOperator (
     case PARSEOP_DEREFOF:
     case PARSEOP_REFOF:
     case PARSEOP_INDEX:
-    case PARSEOP_METHODCALL:
 
+        return;
+
+    case PARSEOP_METHODCALL:
+        /*
+         * A target is not allowed to be a method call.
+         * It is not supported by the ACPICA interpreter, nor is it
+         * supported by the MS ASL compiler or the MS interpreter.
+         * Although legal syntax up until ACPI 6.1, support for this
+         * will be removed for ACPI 6.2 (02/2016)
+         */
+        AslError (ASL_ERROR, ASL_MSG_SYNTAX,
+            TargetOperandOp, "Illegal method invocation as a target operand");
         return;
 
     default:

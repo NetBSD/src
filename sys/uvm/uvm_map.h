@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.72 2012/10/29 16:00:05 para Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.72.14.1 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -108,6 +108,7 @@
 #define UVM_EXTRACT_QREF	0x04	/* use quick refs */
 #define UVM_EXTRACT_FIXPROT	0x08	/* set prot to maxprot as we go */
 #define UVM_EXTRACT_RESERVED	0x10	/* caller did uvm_map_reserve() */
+#define UVM_EXTRACT_PROT_ALL	0x20	/* set prot to UVM_PROT_ALL */
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_disp_nvd0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_disp_nvd0.c,v 1.2.2.1 2016/05/29 08:44:36 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nvd0.c,v 1.2 2014/08/23 08:03:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_disp_nvd0.c,v 1.2.2.1 2016/05/29 08:44:36 skrll Exp $");
 
 #include <core/object.h>
 #include <core/parent.h>
@@ -1042,7 +1042,8 @@ exec_clkcmp(struct nv50_disp_priv *priv, int head, int id,
 	}
 
 	data = nvbios_ocfg_match(bios, data, conf, &ver, &hdr, &cnt, &len, &info2);
-	if (data && id < 0xff) {
+	CTASSERT(__arraycount(info2.clkcmp) <= 0xff);
+	if (data && id < __arraycount(info2.clkcmp)) {
 		data = nvbios_oclk_match(bios, info2.clkcmp[id], pclk);
 		if (data) {
 			struct nvbios_init init = {

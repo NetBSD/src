@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.11 2016/04/30 08:48:09 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.12 2016/05/29 08:44:31 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.11 2016/04/30 08:48:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.12 2016/05/29 08:44:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -1464,8 +1464,8 @@ upgt_start(struct ifnet *ifp)
 			/* management frame */
 			IF_DEQUEUE(&ic->ic_mgtq, m);
 
-			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 
 			bpf_mtap3(ic->ic_rawbpf, m);
 

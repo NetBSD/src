@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.320.6.4 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.320.6.5 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -384,6 +384,7 @@ struct proc {
 #define	PS_STOPEXIT	0x02000000 /* Will be stopped at process exit */
 #define	PS_NOTIFYSTOP	0x10000000 /* Notify parent of successful STOP */
 #define	PS_COREDUMP	0x20000000 /* Process core-dumped */
+#define	PS_CONTINUED	0x40000000 /* Process is continued */
 #define	PS_STOPPING	0x80000000 /* Transitioning SACTIVE -> SSTOP */
 
 /*

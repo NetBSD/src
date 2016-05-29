@@ -399,12 +399,19 @@ CgGenerateAmlLengths (
         break;
 
     case PARSEOP_DEFAULT_ARG:
-    case PARSEOP_EXTERNAL:
     case PARSEOP_INCLUDE:
     case PARSEOP_INCLUDE_END:
 
         /* Ignore the "default arg" nodes, they are extraneous at this point */
 
+        break;
+
+    case PARSEOP_EXTERNAL:
+
+        if (Gbl_DoExternals == TRUE)
+        {
+            CgGenerateAmlOpcodeLength (Op);
+        }
         break;
 
     default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.28 2016/02/06 08:53:03 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.29 2016/05/29 08:44:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.28 2016/02/06 08:53:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.29 2016/05/29 08:44:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -179,7 +179,6 @@ static void		motg_device_intr_tx(struct motg_softc *, int);
 static void		motg_device_data_read(struct usbd_xfer *);
 static void		motg_device_data_write(struct usbd_xfer *);
 
-static void		motg_waitintr(struct motg_softc *, struct usbd_xfer *);
 static void		motg_device_clear_toggle(struct usbd_pipe *);
 static void		motg_device_xfer_abort(struct usbd_xfer *);
 
@@ -1286,8 +1285,6 @@ motg_device_ctrl_start(struct usbd_xfer *xfer)
 	mutex_exit(&sc->sc_lock);
 	if (err != USBD_IN_PROGRESS)
 		return err;
-	if (sc->sc_bus.ub_usepolling)
-		motg_waitintr(sc, xfer);
 	return USBD_IN_PROGRESS;
 }
 
@@ -1407,7 +1404,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	KASSERT(ep->phase == DATA_IN || ep->phase != STATUS_IN);
+	KASSERT(ep->phase == DATA_IN || ep->phase == STATUS_IN);
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
@@ -1727,8 +1724,6 @@ motg_device_data_start(struct usbd_xfer *xfer)
 	mutex_exit(&sc->sc_lock);
 	if (err != USBD_IN_PROGRESS)
 		return err;
-	if (sc->sc_bus.ub_usepolling)
-		motg_waitintr(sc, xfer);
 	return USBD_IN_PROGRESS;
 }
 
@@ -2153,42 +2148,6 @@ motg_device_data_done(struct usbd_xfer *xfer)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(otgpipe->hw_ep->xfer != xfer);
-}
-
-/*
- * Wait here until controller claims to have an interrupt.
- * Then call motg_intr and return.  Use timeout to avoid waiting
- * too long.
- * Only used during boot when interrupts are not enabled yet.
- */
-void
-motg_waitintr(struct motg_softc *sc, struct usbd_xfer *xfer)
-{
-	int timo = xfer->ux_timeout;
-	MOTGHIST_FUNC(); MOTGHIST_CALLED();
-
-	mutex_enter(&sc->sc_lock);
-
-	DPRINTF("timeout = %dms", timo, 0, 0, 0);
-
-	for (; timo >= 0; timo--) {
-		mutex_exit(&sc->sc_lock);
-		usb_delay_ms(&sc->sc_bus, 1);
-		mutex_spin_enter(&sc->sc_intr_lock);
-		motg_poll(&sc->sc_bus);
-		mutex_spin_exit(&sc->sc_intr_lock);
-		mutex_enter(&sc->sc_lock);
-		if (xfer->ux_status != USBD_IN_PROGRESS)
-			goto done;
-	}
-
-	/* Timeout */
-	DPRINTF("timeout", 0, 0, 0, 0);
-	panic("motg_waitintr: timeout");
-	/* XXX handle timeout ! */
-
-done:
-	mutex_exit(&sc->sc_lock);
 }
 
 void

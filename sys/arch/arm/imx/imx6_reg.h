@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_reg.h,v 1.3.2.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: imx6_reg.h,v 1.3.2.2 2016/05/29 08:44:16 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -210,7 +210,6 @@
 #define	AIPS2_USDHC_SIZE	0x000000d0
 #define	AIPS2_MLB150_BASE	0x0008c000
 #define	AIPS2_ENET_BASE		0x00088000
-#define	AIPS2_ENET_SIZE		0x00000800
 #define	AIPS2_USBOH_BASE	0x00084000
 #define	AIPS2_USBOH_SIZE	0x00000820
 #define	AIPS2_CONFIG_BASE	0x0007c000

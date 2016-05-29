@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.4.2.2 2016/03/19 11:29:56 skrll Exp $
+#	$NetBSD: files.imx6,v 1.4.2.3 2016/05/29 08:44:16 skrll Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -78,6 +78,7 @@ defflag opt_imxuart.h				IMXUARTCONSOLE
 device	enet: ether, ifnet, arp, mii, bus_dma_generic
 attach	enet at axi
 file	arch/arm/imx/if_enet.c			enet
+file	arch/arm/imx/if_enet_imx6.c		enet
 
 # USB Controller
 # attach of this driver need to be specified in paltform configuration
@@ -98,5 +99,6 @@ file	arch/arm/imx/imx6_ahcisata.c		imx6_ahcisata
 # iMX6 Secure Non-Volatile Storage (SNVS)
 device	imxsnvs
 attach	imxsnvs at axi
+file	arch/arm/imx/imxsnvs.c			imxsnvs
 file	arch/arm/imx/imx6_snvs.c		imxsnvs
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.4 2016/03/19 11:29:54 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.5 2016/05/29 08:44:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.4 2016/03/19 11:29:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.5 2016/05/29 08:44:15 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1579,7 +1579,7 @@ init_x86_64(paddr_t first_avail)
 	 * Low memory reservations:
 	 * Page 0:	BIOS data
 	 * Page 1:	BIOS callback (not used yet, for symmetry with i386)
-	 * Page 2:	MP bootstrap
+	 * Page 2:	MP bootstrap code (MP_TRAMPOLINE)
 	 * Page 3:	ACPI wakeup code (ACPI_WAKEUP_ADDR)
 	 * Page 4:	Temporary page table for 0MB-4MB
 	 * Page 5:	Temporary page directory
@@ -2102,6 +2102,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= (vaddr_t)&start && v < (vaddr_t)kern_end) {
 		*handled = true;
+		/* Either the text or rodata segment */
 		if (v < (vaddr_t)&__data_start && (prot & VM_PROT_WRITE))
 			return EFAULT;
 

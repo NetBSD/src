@@ -96,7 +96,6 @@
 #include <sys/domain.h>
 #include <sys/kernel.h>
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -124,7 +123,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.2 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.3 2016/05/29 08:44:38 skrll Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

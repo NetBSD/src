@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187.2.3 2016/03/19 11:30:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.2.4 2016/05/29 08:44:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.3 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.4 2016/05/29 08:44:19 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1272,7 +1272,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * which happens in cpu_init(), which is run on each cpu
 	 * (and happens later)
 	 */
-
 	if (cpu_feature[0] & CPUID_PGE) {
 		pmap_pg_g = PG_G;		/* enable software */
 
@@ -1296,18 +1295,19 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 
 	/*
-	 * enable large pages if they are supported.
+	 * Enable large pages if they are supported.
 	 */
-
 	if (cpu_feature[0] & CPUID_PSE) {
 		paddr_t pa;
+		extern char __rodata_start;
 		extern char __data_start;
+		extern char __kernel_end;
 
 		lcr4(rcr4() | CR4_PSE);	/* enable hardware (via %cr4) */
 		pmap_largepages = 1;	/* enable software */
 
 		/*
-		 * the TLB must be flushed after enabling large pages
+		 * The TLB must be flushed after enabling large pages
 		 * on Pentium CPUs, according to section 3.6.2.2 of
 		 * "Intel Architecture Software Developer's Manual,
 		 * Volume 3: System Programming".
@@ -1315,24 +1315,48 @@ pmap_bootstrap(vaddr_t kva_start)
 		tlbflushg();
 
 		/*
-		 * now, remap the kernel text using large pages.  we
-		 * assume that the linker has properly aligned the
-		 * .data segment to a NBPD_L2 boundary.
+		 * Now, we remap several kernel segments with large pages. We
+		 * cover as many pages as we can.
 		 */
-		kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
-		for (pa = 0, kva = KERNBASE; kva + NBPD_L2 <= kva_end;
-		     kva += NBPD_L2, pa += NBPD_L2) {
+
+		/* Remap the kernel text using large pages. */
+		kva = KERNBASE;
+		kva_end = rounddown((vaddr_t)&__rodata_start, NBPD_L1);
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS |
-			    PG_KR | PG_V;	/* zap! */
+			*pde = pa | pmap_pg_g | PG_PS | PG_KR | PG_V;
 			tlbflushg();
 		}
 #if defined(DEBUG)
 		aprint_normal("kernel text is mapped with %" PRIuPSIZE " large "
 		    "pages and %" PRIuPSIZE " normal pages\n",
 		    howmany(kva - KERNBASE, NBPD_L2),
-		    howmany((vaddr_t)&__data_start - kva, NBPD_L1));
+		    howmany((vaddr_t)&__rodata_start - kva, NBPD_L1));
 #endif /* defined(DEBUG) */
+
+		/* Remap the kernel rodata using large pages. */
+		kva = roundup((vaddr_t)&__rodata_start, NBPD_L2);
+		kva_end = rounddown((vaddr_t)&__data_start, NBPD_L1);
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KR | PG_V;
+			tlbflushg();
+		}
+
+		/* Remap the kernel data+bss using large pages. */
+		kva = roundup((vaddr_t)&__data_start, NBPD_L2);
+		kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
+		pa = kva - KERNBASE;
+		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
+		    pa += NBPD_L2) {
+			pde = &L2_BASE[pl2_i(kva)];
+			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KW | PG_V;
+			tlbflushg();
+		}
 	}
 #endif /* !XEN */
 
@@ -1342,7 +1366,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	pte = PTE_BASE + pl1_i(tmpva);
 
 	/*
-	 * Map the direct map.  Use 1GB pages if they are available,
+	 * Map the direct map RW.  Use 1GB pages if they are available,
 	 * otherwise use 2MB pages.  Note that the unused parts of
 	 * PTPs * must be zero outed, as they might be accessed due
 	 * to speculative execution.  Also, PG_G is not allowed on
@@ -1358,51 +1382,51 @@ pmap_bootstrap(vaddr_t kva_start)
 	ndmpdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 	dmpdp = avail_start;	avail_start += PAGE_SIZE;
 
-	*pte = dmpdp | PG_V | PG_RW;
+	*pte = dmpdp | PG_V | PG_RW | pg_nx;
 	pmap_update_pg(tmpva);
 	memset((void *)tmpva, 0, PAGE_SIZE);
 
 	if (cpu_feature[2] & CPUID_P1GB) {
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L3_SHIFT) |
-				PG_RW | PG_V | PG_U | PG_PS | PG_G;
+			*pde = ((paddr_t)i << L3_SHIFT) | PG_RW | pg_nx |
+			    PG_V | PG_U | PG_PS | PG_G;
 		}
 	} else {
 		dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
 
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = dmpd + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			memset((void *)tmpva, 0, PAGE_SIZE);
 		}
 		for (i = 0; i < NPDPG * ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L2_SHIFT) |
-				PG_RW | PG_V | PG_U | PG_PS | PG_G;
+			*pde = ((paddr_t)i << L2_SHIFT) | PG_RW | pg_nx |
+			    PG_V | PG_U | PG_PS | PG_G;
 		}
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
 			pmap_update_pg((vaddr_t)tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (dmpd + (i << PAGE_SHIFT)) |
-				PG_RW | PG_V | PG_U;
+			*pde = (dmpd + (i << PAGE_SHIFT)) | PG_RW | pg_nx |
+			    PG_V | PG_U;
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | PG_V | PG_U;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | pg_nx | PG_V | PG_U;
 
 	tlbflush();
 
@@ -4507,15 +4531,15 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 {
 	static bool maps_loaded;
 	static const paddr_t x86_tmp_pml_paddr[] = {
-	    4 * PAGE_SIZE,
-	    5 * PAGE_SIZE,
-	    6 * PAGE_SIZE,
-	    7 * PAGE_SIZE
+	    4 * PAGE_SIZE,	/* L1 */
+	    5 * PAGE_SIZE,	/* L2 */
+	    6 * PAGE_SIZE,	/* L3 */
+	    7 * PAGE_SIZE	/* L4 */
 	};
 	static vaddr_t x86_tmp_pml_vaddr[] = { 0, 0, 0, 0 };
 
 	pd_entry_t *tmp_pml, *kernel_pml;
-	
+
 	int level;
 
 	if (!maps_loaded) {

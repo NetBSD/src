@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.74.2.2 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.74.2.3 2016/05/29 08:44:21 skrll Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.2 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.3 2016/05/29 08:44:21 skrll Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -3100,7 +3100,7 @@ iwn_start(struct ifnet *ifp)
 		/* Send pending management frames first. */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			ac = 0;
 			goto sendit;
 		}

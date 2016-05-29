@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14.6.4 2015/12/27 12:09:31 skrll Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.6.5 2016/05/29 08:44:16 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.4 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.5 2016/05/29 08:44:16 skrll Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -227,7 +227,8 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
 #if defined(OMAP_3530)
-	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
+	if (omap_chipid() == CHIPID_OMAP3530)
+		sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */

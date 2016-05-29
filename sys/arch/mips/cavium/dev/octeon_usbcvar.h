@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_usbcvar.h,v 1.1.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_usbcvar.h,v 1.1.2.3 2016/05/29 08:44:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -152,7 +152,7 @@ typedef struct octeon_usbc_soft_td {
 	struct octeon_usbc_soft_td	*next;
 	struct octeon_usbc_soft_ed	*sed;
 	usb_dma_t		*buff;
-	usbd_xfer_handle	xfer;
+	struct usbd_xfer	*xfer;
 	u_int32_t	offset;
 	u_int32_t	base_offset;
 	u_int8_t	error_count;
@@ -196,7 +196,7 @@ typedef struct octeon_usbc_softc {
 	int sc_noport;
 	u_int8_t sc_addr;		/* device address */
 	u_int8_t sc_conf;		/* device configuration */
-	usbd_xfer_handle sc_intrxfer;
+	struct usbd_xfer *sc_intrxfer;
 	char sc_isreset;		/* USBC is reseted ? */
 	char sc_connstat_change;	/* USBC is disconnected ? */
 #define USBC_PRT_STAT_CONNECTED		0x01
@@ -229,9 +229,6 @@ typedef struct octeon_usbc_softc {
 	device_ptr_t sc_child;			/* /dev/usb# device */
 #endif
 	char sc_dying;
-#ifdef __NetBSD__
-	struct usb_dma_reserve sc_dma_reserve;
-#endif
 
 	u_int8_t sc_port_speed;
 #ifndef USBC_HPRT_PRTSPD_HIGH

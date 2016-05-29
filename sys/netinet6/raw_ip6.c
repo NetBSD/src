@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.136.4.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136.4.4 2016/05/29 08:44:39 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.4 2016/05/29 08:44:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.3 2015/09/22 12:06:11 skrll Exp 
 #include <sys/kmem.h>
 
 #include <net/if.h>
-#include <net/route.h>
 #include <net/if_types.h>
 #include <net/net_stats.h>
 
@@ -668,7 +667,7 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 
 	if (addr->sin6_len != sizeof(*addr))
 		return EINVAL;
-	if (IFNET_EMPTY() || addr->sin6_family != AF_INET6)
+	if (IFNET_READER_EMPTY() || addr->sin6_family != AF_INET6)
 		return EADDRNOTAVAIL;
 
 	if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
@@ -713,7 +712,7 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(in6p != NULL);
 	KASSERT(nam != NULL);
 
-	if (IFNET_EMPTY())
+	if (IFNET_READER_EMPTY())
 		return EADDRNOTAVAIL;
 	if (addr->sin6_family != AF_INET6)
 		return EAFNOSUPPORT;

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.5 2016/04/22 15:44:08 skrll Exp $
+# $NetBSD: XEN3_DOM0,v 1.112.2.6 2016/05/29 08:44:15 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -529,6 +529,10 @@ ld*	at mlx? unit ?
 
 icpsp*	at icp? unit ?			# SCSI pass-through
 
+# NVM Express controllers and devices
+nvme*	at pci? dev ? function ?
+ld*	at nvme? nsid ?
+
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -850,8 +854,8 @@ pseudo-device	xenevt
 pseudo-device	xvif
 pseudo-device	xbdback
 
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
-options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
 
 # Atheros HAL options
 include "external/isc/atheros_hal/conf/std.ath_hal"

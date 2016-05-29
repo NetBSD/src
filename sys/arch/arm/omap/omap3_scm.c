@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_scm.c,v 1.2 2013/03/13 03:08:17 khorben Exp $ */
+/* $NetBSD: omap3_scm.c,v 1.2.14.1 2016/05/29 08:44:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.2 2013/03/13 03:08:17 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.2.14.1 2016/05/29 08:44:16 skrll Exp $");
 
 #include "opt_omap.h"
 
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.2 2013/03/13 03:08:17 khorben Exp $"
 #define CONTROL_TEMP_SENSOR_EOCZ	__BIT(7)
 #define CONTROL_TEMP_SENSOR_TEMP_MASK	__BITS(6,0)
 
+#define CONTROL_OMAP_STATUS		0x44c
+
 /* CONTROL_TEMP_SENSOR TEMP bits to tenths of a degree */
 static const int omap3_scm_adc2temp[128] = {
 	-400, -400, -400, -400, -400,
@@ -102,6 +104,8 @@ struct omap3_scm_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	uint32_t		sc_cid;
 
 	/* GENERAL */
 	struct sysmon_envsys	*sc_sme;
@@ -140,6 +144,8 @@ omap3_scm_attach(device_t parent, device_t self, void *opaque)
 	struct omap3_scm_softc *sc = device_private(self);
 	struct obio_attach_args *obio = opaque;
 	uint32_t rev;
+	char buf[256];
+	const char *cid;
 
 	aprint_naive("\n");
 
@@ -156,6 +162,29 @@ omap3_scm_attach(device_t parent, device_t self, void *opaque)
 
 	rev = SCM_READ_REG(sc, CONTROL_REVISION);
 	aprint_normal(": rev. 0x%x\n", rev & 0xff);
+	sc->sc_cid = SCM_READ_REG(sc, CONTROL_OMAP_STATUS & 0xffff);
+	switch (sc->sc_cid) {
+	case CHIPID_OMAP3503:	cid = "OMAP3503";	break;
+	case CHIPID_OMAP3515:	cid = "OMAP3515";	break;
+	case CHIPID_OMAP3525:	cid = "OMAP3525";	break;
+	case CHIPID_OMAP3530:	cid = "OMAP3530";	break;
+	default:		cid = "unknwon";	break;
+	}
+	aprint_normal_dev(self, "%s: ", cid);
+	snprintb(buf, sizeof(buf), "\177\020"
+	    "b\0TO_OUT\0"
+	    "b\1four_bit_mmc\0"
+	    "b\2CCP2_CSI1\0"
+	    "b\3CMADS_FL3G\0"
+	    "b\4NEON_VFPLite\0"
+	    "b\5ISP_disable\0"
+	    "f\6\2IVA2_MHz\0=\0 430\0=\2 266\0"
+	    "f\10\2ARM_MHz\0=\0 600\0=\1 400\0=\2 266\0"
+	    "f\12\2MPU_L2_cache_size\0=\0 0KB\0=\1 64KB\0=\2 128KB\0=\3 Full\0"
+	    "b\14IVA_disable_acc\0"
+	    "f\15\2SGX_scalable_control\0=\0Full\0=\1Half\0=\2not-present\0\0",
+	    sc->sc_cid);
+	aprint_normal("%s\n", buf);
 
 	omap3_scm_sensor_attach(sc);
 }
@@ -224,4 +253,16 @@ omap3_scm_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->value_cur = val * (1000000/10) + 273150000;
 		edata->state = ENVSYS_SVALID;
 	}
+}
+
+uint32_t
+omap_chipid(void)
+{
+	struct omap3_scm_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_xname("omapscm0");
+	KASSERT(dev != NULL);
+	sc = device_private(dev);
+	return sc->sc_cid;
 }

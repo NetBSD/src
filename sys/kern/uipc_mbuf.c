@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.159.2.3 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.159.2.4 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.3 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.4 2016/05/29 08:44:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -556,9 +556,23 @@ m_reclaim(void *arg, int flags)
 			if (pr->pr_drain)
 				(*pr->pr_drain)();
 	}
-	IFNET_FOREACH(ifp) {
-		if (ifp->if_drain)
-			(*ifp->if_drain)(ifp);
+	/* XXX we cannot use psref in H/W interrupt */
+	if (!cpu_intr_p()) {
+		int bound = curlwp->l_pflag & LP_BOUND;
+		curlwp->l_pflag |= LP_BOUND;
+		IFNET_READER_FOREACH(ifp) {
+			struct psref psref;
+
+			psref_acquire(&psref, &ifp->if_psref,
+			    ifnet_psref_class);
+
+			if (ifp->if_drain)
+				(*ifp->if_drain)(ifp);
+
+			psref_release(&psref, &ifp->if_psref,
+			    ifnet_psref_class);
+		}
+		curlwp->l_pflag ^= bound ^ LP_BOUND;
 	}
 	splx(s);
 	mbstat.m_drain++;

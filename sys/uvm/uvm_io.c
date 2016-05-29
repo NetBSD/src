@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.27 2012/01/27 19:48:41 para Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.27.24.1 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.27 2012/01/27 19:48:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.27.24.1 2016/05/29 08:44:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.27 2012/01/27 19:48:41 para Exp $");
  */
 
 int
-uvm_io(struct vm_map *map, struct uio *uio)
+uvm_io(struct vm_map *map, struct uio *uio, int flags)
 {
 	vaddr_t baseva, endva, pageoffset, kva;
 	vsize_t chunksz, togo, sz;
@@ -86,6 +86,7 @@ uvm_io(struct vm_map *map, struct uio *uio)
 	chunksz = MIN(round_page(togo + pageoffset), trunc_page(MAXPHYS));
 	error = 0;
 
+	flags |= UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | UVM_EXTRACT_FIXPROT;
 	/*
 	 * step 1: main loop...  while we've got data to move
 	 */
@@ -97,8 +98,7 @@ uvm_io(struct vm_map *map, struct uio *uio)
 		 */
 
 		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
-			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG |
-			    UVM_EXTRACT_FIXPROT);
+		    flags);
 		if (error) {
 
 			/* retry with a smaller chunk... */

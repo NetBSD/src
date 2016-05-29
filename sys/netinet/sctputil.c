@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.1.2.4 2016/04/22 15:44:18 skrll Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.1.2.5 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.4 2016/04/22 15:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.5 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.1.2.4 2016/04/22 15:44:18 skrll Exp $
 #include <netinet/sctp_pcb.h>
 
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /* IPSEC */
 
 #include <netinet/sctputil.h>
@@ -2959,7 +2959,7 @@ sctp_is_there_an_abort_here(struct mbuf *m, int iphlen, int *vtagfill)
  * so, create this function to compare link local scopes
  */
 uint32_t
-sctp_is_same_scope(struct sockaddr_in6 *addr1, struct sockaddr_in6 *addr2)
+sctp_is_same_scope(const struct sockaddr_in6 *addr1, const struct sockaddr_in6 *addr2)
 {
 	struct sockaddr_in6 a, b;
 
@@ -3607,9 +3607,11 @@ sctp_find_ifa_by_addr(struct sockaddr *sa)
 {
 	struct ifnet *ifn;
 	struct ifaddr *ifa;
+	int s;
 
 	/* go through all our known interfaces */
-	IFNET_FOREACH(ifn) {
+	s = pserialize_read_enter();
+	IFNET_READER_FOREACH(ifn) {
 		/* go through each interface addresses */
 		IFADDR_FOREACH(ifa, ifn) {
 			/* correct family? */
@@ -3632,6 +3634,7 @@ sctp_find_ifa_by_addr(struct sockaddr *sa)
 				if (memcmp(&sin1->sin6_addr, &sin2->sin6_addr,
 					   sizeof(struct in6_addr)) == 0) {
 					/* found it */
+					pserialize_read_exit(s);
 					return (ifa);
 				}
 			} else
@@ -3644,12 +3647,15 @@ sctp_find_ifa_by_addr(struct sockaddr *sa)
 				if (sin1->sin_addr.s_addr ==
 				    sin2->sin_addr.s_addr) {
 					/* found it */
+					pserialize_read_exit(s);
 					return (ifa);
 				}
 			}
 			/* else, not AF_INET or AF_INET6, so skip */
 		} /* end foreach ifa */
 	} /* end foreach ifn */
+	pserialize_read_exit(s);
+
 	/* not found! */
 	return (NULL);
 }

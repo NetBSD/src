@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29.2.6 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.29.2.7 2016/05/29 08:44:21 skrll Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.6 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.7 2016/05/29 08:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -5793,7 +5793,7 @@ iwm_start(struct ifnet *ifp)
 		/* need to send management frames even if we're not RUNning */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m) {
-			ni = (void *)m->m_pkthdr.rcvif;
+			ni = M_GETCTX(m, struct ieee80211_node *);
 			ac = 0;
 			goto sendit;
 		}

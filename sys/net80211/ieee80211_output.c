@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.52.2.1 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.52.2.2 2016/05/29 08:44:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.52.2.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.52.2.2 2016/05/29 08:44:38 skrll Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -185,9 +185,9 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (m == NULL)
 		return ENOMEM;
 #ifdef __FreeBSD__
-	KASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
+	KASSERT(M_GETCTX(m, struct ieee80211_node *) == NULL);
 #endif
-	m->m_pkthdr.rcvif = (void *)ni;
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh, 
@@ -247,7 +247,7 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 		ieee80211_unref_node(&ni);
 		return ENOMEM;
 	}
-	m->m_pkthdr.rcvif = (void *) ni;
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh,
@@ -1344,8 +1344,8 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-	IASSERT(m->m_pkthdr.rcvif == NULL, ("rcvif not null"));
-	m->m_pkthdr.rcvif = (void *)ni;
+	KASSERT(M_GETCTX(m, struct ieee80211_node *) == NULL);
+	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ieee80211_send_setup(ic, ni, wh,

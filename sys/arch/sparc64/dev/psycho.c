@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.120.2.1 2015/12/27 12:09:43 skrll Exp $	*/
+/*	$NetBSD: psycho.c,v 1.120.2.2 2016/05/29 08:44:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120.2.1 2015/12/27 12:09:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120.2.2 2016/05/29 08:44:19 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -707,8 +707,7 @@ psycho_set_intr(struct psycho_softc *sc, int ipl, void *handler,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)malloc(sizeof(struct intrhand),
-		M_DEVBUF, M_NOWAIT);
+	ih = intrhand_alloc();
 	ih->ih_arg = sc;
 	ih->ih_map = mapper;
 	ih->ih_clr = clearer;
@@ -1273,9 +1272,7 @@ psycho_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int ino;
 	long vec = INTVEC(ihandle);
 
-	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	ih->ih_ivec = ihandle;
 

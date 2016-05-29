@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.50.4.1 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.50.4.2 2016/05/29 08:44:38 skrll Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.50.4.1 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.50.4.2 2016/05/29 08:44:38 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.50.4.1 2015/09/22 12:06:10 skrll Exp 
 
 static int	faithioctl(struct ifnet *, u_long, void *);
 static int	faithoutput(struct ifnet *, struct mbuf *,
-		            const struct sockaddr *, struct rtentry *);
+		            const struct sockaddr *, const struct rtentry *);
 static void	faithrtrequest(int, struct rtentry *,
 		               const struct rt_addrinfo *);
 
@@ -143,7 +143,7 @@ faith_clone_destroy(struct ifnet *ifp)
 
 static int
 faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	pktqueue_t *pktq;
 	size_t pktlen;

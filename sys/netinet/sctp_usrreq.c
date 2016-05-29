@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.2.2.3 2016/04/22 15:44:18 skrll Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2.2.3 2016/04/22 15:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -78,8 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2.2.3 2016/04/22 15:44:18 skrll Ex
 #include <netinet/sctp_indata.h>
 #include <netinet/sctp_asconf.h>
 #ifdef IPSEC
-#include <netinet6/ipsec.h>
-#include <netkey/key.h>
+#include <netipsec/ipsec.h>
+#include <netipsec/key.h>
 #endif /* IPSEC */
 
 #include <net/net_osdep.h>
@@ -943,7 +943,8 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 	}
 
 	if (inp->sctp_flags & SCTP_PCB_FLAGS_BOUNDALL) {
-		IFNET_FOREACH(ifn) {
+		int s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifn) {
 			if ((loopback_scope == 0) &&
 			    (ifn->if_type == IFT_LOOP)) {
 				/* Skip loopback if loopback_scope not set */
@@ -988,6 +989,7 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 						actual += sizeof(*sin);
 					}
 					if (actual >= limit) {
+						pserialize_read_exit(s);
 						return (actual);
 					}
 				} else if ((ifa->ifa_addr->sa_family == AF_INET6) &&
@@ -1010,11 +1012,13 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 					sas = (struct sockaddr_storage *)((vaddr_t)sas + sizeof(*sin6));
 					actual += sizeof(*sin6);
 					if (actual >= limit) {
+						pserialize_read_exit(s);
 						return (actual);
 					}
 				}
 			}
 		}
+		pserialize_read_exit(s);
 	} else {
 		struct sctp_laddr *laddr;
 		/*
@@ -1095,8 +1099,10 @@ sctp_count_max_addresses(struct sctp_inpcb *inp)
 	if (inp->sctp_flags & SCTP_PCB_FLAGS_BOUNDALL) {
 		struct ifnet *ifn;
 		struct ifaddr *ifa;
+		int s;
 
-		IFNET_FOREACH(ifn) {
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(ifn) {
 			IFADDR_FOREACH(ifa, ifn) {
 				/* Count them if they are the right type */
 				if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -1109,6 +1115,7 @@ sctp_count_max_addresses(struct sctp_inpcb *inp)
 					cnt += sizeof(struct sockaddr_in6);
 			}
 		}
+		pserialize_read_exit(s);
 	} else {
 		struct sctp_laddr *laddr;
 		LIST_FOREACH(laddr, &inp->sctp_addr_list, sctp_nxt_addr) {

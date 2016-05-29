@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.48 2013/10/20 00:29:10 htodd Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.48.6.1 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.48 2013/10/20 00:29:10 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.48.6.1 2016/05/29 08:44:40 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -127,8 +127,10 @@ ffs_getblk(struct vnode *vp, daddr_t lblkno, daddr_t blkno, int size,
 		(*bpp)->b_blkno = blkno;
 	if (clearbuf)
 		clrbuf(*bpp);
-	if ((*bpp)->b_blkno >= 0 && (error = fscow_run(*bpp, false)) != 0)
+	if ((*bpp)->b_blkno >= 0 && (error = fscow_run(*bpp, false)) != 0) {
 		brelse(*bpp, BC_INVAL);
+		*bpp = NULL;
+	}
 	return error;
 }
 

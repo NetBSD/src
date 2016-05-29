@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152.2.3 2016/04/22 15:44:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.152.2.4 2016/05/29 08:44:40 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -34,8 +34,8 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	queue.h quota.h quotactl.h \
 	ras.h rbtree.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
 	rnd.h rndio.h rwlock.h \
-	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h sha1.h \
-	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
+	scanio.h sched.h scsiio.h sdt.h select.h selinfo.h sem.h semaphore.h \
+	sha1.h sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h spawn.h specificdata.h stat.h \
 	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdbool.h \

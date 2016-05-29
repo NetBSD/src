@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.331.2.3 2015/12/27 12:10:19 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.331.2.4 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.3 2015/12/27 12:10:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.4 2016/05/29 08:44:40 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2546,6 +2546,7 @@ uvm_map_replace(struct vm_map *map, vaddr_t start, vaddr_t end,
  *      UVM_EXTRACT_CONTIG: abort if unmapped area (advisory only)
  *      UVM_EXTRACT_QREF: for a temporary extraction do quick obj refs
  *      UVM_EXTRACT_FIXPROT: set prot to maxprot as we go
+ *      UVM_EXTRACT_PROT_ALL: set prot to UVM_PROT_ALL as we go
  *    >>>NOTE: if you set REMOVE, you are not allowed to use CONTIG or QREF!<<<
  *    >>>NOTE: QREF's must be unmapped via the QREF path, thus should only
  *             be used from within the kernel in a kernel level map <<<
@@ -2704,9 +2705,14 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 			newentry->offset = 0;
 		}
 		newentry->etype = entry->etype;
-		newentry->protection = (flags & UVM_EXTRACT_FIXPROT) ?
-			entry->max_protection : entry->protection;
-		newentry->max_protection = entry->max_protection;
+		if (flags & UVM_EXTRACT_PROT_ALL) {
+			newentry->protection = newentry->max_protection =
+			    UVM_PROT_ALL;
+		} else {
+			newentry->protection = (flags & UVM_EXTRACT_FIXPROT) ?
+			    entry->max_protection : entry->protection;
+			newentry->max_protection = entry->max_protection;
+		}
 		newentry->inheritance = entry->inheritance;
 		newentry->wired_count = 0;
 		newentry->aref.ar_amap = entry->aref.ar_amap;

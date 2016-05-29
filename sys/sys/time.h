@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.67.4.3 2015/12/27 12:10:18 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.67.4.4 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -284,6 +284,8 @@ struct	itimerspec {
 #define	CLOCK_VIRTUAL	1
 #define	CLOCK_PROF	2
 #define	CLOCK_MONOTONIC	3
+#define CLOCK_THREAD_CPUTIME_ID		0x80000000
+#define CLOCK_PROCESS_CPUTIME_ID	0x40000000
 
 #if defined(_NETBSD_SOURCE)
 #define	TIMER_RELTIME	0x0	/* relative timer */

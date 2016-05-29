@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enetreg.h,v 1.1 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: if_enetreg.h,v 1.1.2.1 2016/05/29 08:44:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 /*
- * i.MX6 10/100/1000-Mbps ethernet MAC (ENET)
+ * i.MX6,7 10/100/1000-Mbps ethernet MAC (ENET)
  */
 
 #ifndef _ARM_IMX_IF_ENETREG_H_
@@ -52,6 +52,17 @@
 # define ENET_EIR_WAKEUP		__BIT(17)
 # define ENET_EIR_TS_AVAIL		__BIT(16)
 # define ENET_EIR_TS_TIMER		__BIT(15)
+# define ENET_EIR_RXFLUSH_2		__BIT(14)	/* imx7 */
+# define ENET_EIR_RXFLUSH_1		__BIT(13)	/* imx7 */
+# define ENET_EIR_RXFLUSH_0		__BIT(12)	/* imx7 */
+# define ENET_EIR_TXF2			__BIT(7)	/* imx7 */
+# define ENET_EIR_TXB2			__BIT(6)	/* imx7 */
+# define ENET_EIR_RXF2			__BIT(5)	/* imx7 */
+# define ENET_EIR_RXB2			__BIT(4)	/* imx7 */
+# define ENET_EIR_TXF1			__BIT(3)	/* imx7 */
+# define ENET_EIR_TXB1			__BIT(2)	/* imx7 */
+# define ENET_EIR_RXF1			__BIT(1)	/* imx7 */
+# define ENET_EIR_RXB1			__BIT(1)	/* imx7 */
 #define ENET_EIMR			0x00000008
 #define ENET_RDAR			0x00000010
 # define ENET_RDAR_ACTIVE		__BIT(24)
@@ -59,6 +70,9 @@
 # define ENET_TDAR_ACTIVE		__BIT(24)
 
 #define ENET_ECR			0x00000024
+# define ENET_ECR_SVLANDBL		__BIT(11)	/* imx7 */
+# define ENET_ECR_VLANUE2ND		__BIT(10)	/* imx7 */
+# define ENET_ECR_SVLANEN		__BIT(9)	/* imx7 */
 # define ENET_ECR_DBSWP			__BIT(8)
 # define ENET_ECR_STOPEN		__BIT(7)
 # define ENET_ECR_DBGEN			__BIT(6)
@@ -115,6 +129,14 @@
 #define ENET_PALR			0x000000e4
 #define ENET_PAUR			0x000000e8
 #define ENET_OPD			0x000000ec
+
+#define ENET_TXIC0			0x000000f0	/* imx7 */
+#define ENET_TXIC1			0x000000f4	/* imx7 */
+#define ENET_TXIC2			0x000000f8	/* imx7 */
+#define ENET_RXIC0			0x00000100	/* imx7 */
+#define ENET_RXIC1			0x00000104	/* imx7 */
+#define ENET_RXIC2			0x00000108	/* imx7 */
+
 #define ENET_IAUR			0x00000118
 #define ENET_IALR			0x0000011c
 #define ENET_GAUR			0x00000120
@@ -122,6 +144,14 @@
 #define ENET_TFWR			0x00000144
 # define ENET_TFWR_STRFWD		__BIT(8)
 # define ENET_TFWR_FIFO(n)		__SHIFTIN(((n) / 64), __BITS(5, 0))
+
+#define ENET_RDSR1			0x00000160	/* imx7 */
+#define ENET_TDSR1			0x00000164	/* imx7 */
+#define ENET_MRBR1			0x00000168	/* imx7 */
+#define ENET_RDSR2			0x0000016c	/* imx7 */
+#define ENET_TDSR2			0x00000170	/* imx7 */
+#define ENET_MRBR2			0x00000174	/* imx7 */
+
 #define ENET_RDSR			0x00000180
 #define ENET_TDSR			0x00000184
 #define ENET_MRBR			0x00000188
@@ -144,6 +174,16 @@
 # define ENET_RACC_PRODIS		__BIT(2)
 # define ENET_RACC_IPDIS		__BIT(1)
 # define ENET_RACC_PADREM		__BIT(0)
+
+#define ENET_RCMR1			0x000001c8	/* imx7 */
+#define ENET_RCMR2			0x000001cc	/* imx7 */
+#define ENET_DMA1CFG			0x000001d8	/* imx7 */
+#define ENET_DMA2CFG			0x000001dc	/* imx7 */
+#define ENET_RDAR1			0x000001e0	/* imx7 */
+#define ENET_TDAR1			0x000001e4	/* imx7 */
+#define ENET_RDAR2			0x000001e8	/* imx7 */
+#define ENET_TDAR2			0x000001ec	/* imx7 */
+#define ENET_QOS			0x000001f0	/* imx7 */
 
 /* Statistics counters */
 #define ENET_RMON_T_DROP		0x00000200
@@ -221,6 +261,8 @@
 #define ENET_TCSR3			0x00000620
 #define ENET_TCCR3			0x00000624
 
+#define AIPS_ENET_SIZE			0x00000800
+
 /* enhanced transmit buffer descriptor */
 struct enet_txdesc {
 	uint32_t tx_flags1_len;
@@ -277,6 +319,7 @@ struct enet_rxdesc {
 #define RXFLAGS2_CE			__BIT(25)	/* Collision */
 #define RXFLAGS2_UC			__BIT(24)	/* Unicast */
 #define RXFLAGS2_INT			__BIT(23)	/* RXB/RXF interrupt */
+#define RXFLAGS2_VPCP			__BITS(15, 31)	/* VLAN prio pts (imx7) */
 #define RXFLAGS2_ICE			__BIT(5)	/* IP csum error */
 #define RXFLAGS2_PCR			__BIT(4)	/* Proto csum error */
 #define RXFLAGS2_VLAN			__BIT(2)	/* VLAN */

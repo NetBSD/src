@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.18.36.1 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.18.36.2 2016/05/29 08:44:32 skrll Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18.36.1 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18.36.2 2016/05/29 08:44:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18.36.1 2015/09/22 12:06:01 skrll Exp
 void	pflogdetach(void);
 #endif /* _MODULE */
 int	pflogoutput(struct ifnet *, struct mbuf *, const struct sockaddr *,
-	    	       struct rtentry *);
+	    const struct rtentry *);
 int	pflogioctl(struct ifnet *, u_long, void *);
 void	pflogstart(struct ifnet *);
 int	pflog_clone_create(struct if_clone *, int);
@@ -208,7 +208,7 @@ pflogstart(struct ifnet *ifp)
 
 int
 pflogoutput(struct ifnet *ifp, struct mbuf *m,
-    const struct sockaddr *dst, struct rtentry *rt)
+    const struct sockaddr *dst, const struct rtentry *rt)
 {
 	m_freem(m);
 	return (0);

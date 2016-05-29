@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.c,v 1.5.32.1 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in_offload.c,v 1.5.32.2 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.5.32.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_offload.c,v 1.5.32.2 2016/05/29 08:44:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -55,7 +55,7 @@ ip_tso_output_callback(void *vp, struct mbuf *m)
 	struct ip_tso_output_args *args = vp;
 	struct ifnet *ifp = args->ifp;
 
-	return ip_hresolv_output(ifp, m, args->sa, args->rt);
+	return ip_if_output(ifp, m, args->sa, args->rt);
 }
 
 int

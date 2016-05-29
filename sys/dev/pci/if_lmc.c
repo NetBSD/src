@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.56.2.2 2016/04/22 15:44:13 skrll Exp $ */
+/* $NetBSD: if_lmc.c,v 1.56.2.3 2016/05/29 08:44:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -74,7 +74,7 @@
  */
 
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.56.2.2 2016/04/22 15:44:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.56.2.3 2016/05/29 08:44:21 skrll Exp $");
 # include <sys/param.h>	/* OS version */
 # include "opt_inet.h"	/* INET6, INET */
 # include "opt_altq_enabled.h" /* ALTQ */
@@ -3355,7 +3355,7 @@ ifnet_input(struct ifnet *ifp, struct mbuf *mbuf)
  */
 static int  /* context: process */
 ifnet_output(struct ifnet *ifp, struct mbuf *m,
- const struct sockaddr *dst, struct rtentry *rt)
+ const struct sockaddr *dst, const struct rtentry *rt)
   {
   softc_t *sc = IFP2SC(ifp);
   int error = 0;

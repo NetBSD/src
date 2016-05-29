@@ -44,6 +44,13 @@
 #include "acpixtract.h"
 
 
+/* Local prototypes */
+
+static BOOLEAN
+AxIsFileAscii (
+    FILE                    *Handle);
+
+
 /******************************************************************************
  *
  * FUNCTION:    AxExtractTables
@@ -72,7 +79,8 @@ AxExtractTables (
     unsigned int            FoundTable = 0;
     unsigned int            Instances = 0;
     unsigned int            ThisInstance;
-    char                    ThisSignature[4];
+    char                    ThisSignature[5];
+    char                    UpperSignature[5];
     int                     Status = 0;
     unsigned int            State = AX_STATE_FIND_HEADER;
 
@@ -86,17 +94,27 @@ AxExtractTables (
         return (-1);
     }
 
+    if (!AxIsFileAscii (InputFile))
+    {
+        fclose (InputFile);
+        return (-1);
+    }
+
     if (Signature)
     {
+        strncpy (UpperSignature, Signature, 4);
+        UpperSignature[4] = 0;
+        AcpiUtStrupr (UpperSignature);
+
         /* Are there enough instances of the table to continue? */
 
-        AxNormalizeSignature (Signature);
+        AxNormalizeSignature (UpperSignature);
 
-        Instances = AxCountTableInstances (InputPathname, Signature);
+        Instances = AxCountTableInstances (InputPathname, UpperSignature);
         if (Instances < MinimumInstances)
         {
             printf ("Table [%s] was not found in %s\n",
-                Signature, InputPathname);
+                UpperSignature, InputPathname);
             fclose (InputFile);
             return (-1);
         }
@@ -126,7 +144,7 @@ AxExtractTables (
             {
                 /* Ignore signatures that don't match */
 
-                if (!ACPI_COMPARE_NAME (ThisSignature, Signature))
+                if (!ACPI_COMPARE_NAME (ThisSignature, UpperSignature))
                 {
                     continue;
                 }
@@ -205,8 +223,7 @@ AxExtractTables (
 
     if (!FoundTable)
     {
-        printf ("Table [%s] was not found in %s\n",
-            Signature, InputPathname);
+        printf ("No ACPI tables were found in %s\n", InputPathname);
     }
 
 
@@ -222,7 +239,7 @@ CleanupAndExit:
 
     if (Gbl_TableCount > 1)
     {
-        printf ("\n%d binary ACPI tables extracted\n",
+        printf ("\n%u binary ACPI tables extracted\n",
             Gbl_TableCount);
     }
 
@@ -273,6 +290,12 @@ AxExtractToMultiAmlFile (
     if (!InputFile)
     {
         printf ("Could not open input file %s\n", InputPathname);
+        return (-1);
+    }
+
+    if (!AxIsFileAscii (InputFile))
+    {
+        fclose (InputFile);
         return (-1);
     }
 
@@ -360,7 +383,7 @@ CleanupAndExit:
             ThisSignature, ThisTableBytesWritten, Gbl_OutputFilename);
     }
 
-    printf ("\n%d binary ACPI tables extracted and written to %s (%u bytes)\n",
+    printf ("\n%u binary ACPI tables extracted and written to %s (%u bytes)\n",
         Gbl_TableCount, Gbl_OutputFilename, TotalBytesWritten);
 
     fclose (InputFile);
@@ -398,6 +421,12 @@ AxListTables (
     if (!InputFile)
     {
         printf ("Could not open input file %s\n", InputPathname);
+        return (-1);
+    }
+
+    if (!AxIsFileAscii (InputFile))
+    {
+        fclose (InputFile);
         return (-1);
     }
 
@@ -442,6 +471,11 @@ AxListTables (
             continue;
         }
 
+        if (!AcpiUtValidNameseg (TableHeader->Signature))
+        {
+            continue;
+        }
+
         /* Signature and Table length */
 
         Gbl_TableCount++;
@@ -470,7 +504,59 @@ AxListTables (
             TableHeader->AslCompilerId, TableHeader->AslCompilerRevision);
     }
 
-    printf ("\nFound %u ACPI tables\n", Gbl_TableCount);
+    printf ("\nFound %u ACPI tables in %s\n", Gbl_TableCount, InputPathname);
     fclose (InputFile);
     return (0);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AxIsFileAscii
+ *
+ * PARAMETERS:  Handle              - To open input file
+ *
+ * RETURN:      TRUE if file is entirely ASCII and printable
+ *
+ * DESCRIPTION: Verify that the input file is entirely ASCII.
+ *
+ ******************************************************************************/
+
+static BOOLEAN
+AxIsFileAscii (
+    FILE                    *Handle)
+{
+    UINT8                   Byte;
+
+
+    /* Read the entire file */
+
+    while (fread (&Byte, 1, 1, Handle) == 1)
+    {
+        /* Check for an ASCII character */
+
+        if (!ACPI_IS_ASCII (Byte))
+        {
+            goto ErrorExit;
+        }
+
+        /* Ensure character is either printable or a "space" char */
+
+        else if (!isprint (Byte) && !isspace (Byte))
+        {
+            goto ErrorExit;
+        }
+    }
+
+    /* File is OK (100% ASCII) */
+
+    fseek (Handle, 0, SEEK_SET);
+    return (TRUE);
+
+ErrorExit:
+
+    printf ("File is binary (contains non-text or non-ascii characters)\n");
+    fseek (Handle, 0, SEEK_SET);
+    return (FALSE);
+
 }

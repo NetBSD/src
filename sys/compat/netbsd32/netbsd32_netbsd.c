@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.193.4.3 2016/03/19 11:30:08 skrll Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.193.4.4 2016/05/29 08:44:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193.4.3 2016/03/19 11:30:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193.4.4 2016/05/29 08:44:20 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1448,23 +1448,51 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 	return sys_fpathconf(l, &ua, retval);
 }
 
+static void
+fixlimit(int which, struct rlimit *alim)
+{
+	switch (which) {
+	case RLIMIT_DATA:
+		if (LIMITCHECK(alim->rlim_cur, MAXDSIZ32))
+			alim->rlim_cur = MAXDSIZ32;
+		if (LIMITCHECK(alim->rlim_max, MAXDSIZ32))
+			alim->rlim_max = MAXDSIZ32;
+		return;	
+	case RLIMIT_STACK:
+		if (LIMITCHECK(alim->rlim_cur, MAXSSIZ32))
+			alim->rlim_cur = MAXSSIZ32;
+		if (LIMITCHECK(alim->rlim_max, MAXSSIZ32))
+			alim->rlim_max = MAXSSIZ32;
+		return;
+	default:
+		return;
+	}
+}
+
 int
-netbsd32_getrlimit(struct lwp *l, const struct netbsd32_getrlimit_args *uap, register_t *retval)
+netbsd32_getrlimit(struct lwp *l, const struct netbsd32_getrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
 		syscallarg(netbsd32_rlimitp_t) rlp;
 	} */
 	int which = SCARG(uap, which);
+	struct rlimit alim;
 
 	if ((u_int)which >= RLIM_NLIMITS)
-		return (EINVAL);
-	return (copyout(&l->l_proc->p_rlimit[which],
-	    SCARG_P32(uap, rlp), sizeof(struct rlimit)));
+		return EINVAL;
+
+	alim = l->l_proc->p_rlimit[which];
+
+	fixlimit(which, &alim);
+
+	return copyout(&alim, SCARG_P32(uap, rlp), sizeof(alim));
 }
 
 int
-netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap, register_t *retval)
+netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -1474,28 +1502,16 @@ netbsd32_setrlimit(struct lwp *l, const struct netbsd32_setrlimit_args *uap, reg
 	struct rlimit alim;
 	int error;
 
+	if ((u_int)which >= RLIM_NLIMITS)
+		return EINVAL;
+
 	error = copyin(SCARG_P32(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
 
-	switch (which) {
-	case RLIMIT_DATA:
-		if (LIMITCHECK(alim.rlim_cur, MAXDSIZ32))
-			alim.rlim_cur = MAXDSIZ32;
-		if (LIMITCHECK(alim.rlim_max, MAXDSIZ32))
-			alim.rlim_max = MAXDSIZ32;
-		break;
+	fixlimit(which, &alim);
 
-	case RLIMIT_STACK:
-		if (LIMITCHECK(alim.rlim_cur, MAXSSIZ32))
-			alim.rlim_cur = MAXSSIZ32;
-		if (LIMITCHECK(alim.rlim_max, MAXSSIZ32))
-			alim.rlim_max = MAXSSIZ32;
-	default:
-		break;
-	}
-
-	return (dosetrlimit(l, l->l_proc, which, &alim));
+	return dosetrlimit(l, l->l_proc, which, &alim);
 }
 
 int

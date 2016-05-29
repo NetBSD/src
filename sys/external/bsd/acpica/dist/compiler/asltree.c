@@ -58,6 +58,29 @@ TrGetNextNode (
 
 /*******************************************************************************
  *
+ * FUNCTION:    TrSetParent
+ *
+ * PARAMETERS:  Op                  - To be set to new parent
+ *              ParentOp            - The parent
+ *
+ * RETURN:      None, sets Op parent directly
+ *
+ * DESCRIPTION: Change the parent of a parse op.
+ *
+ ******************************************************************************/
+
+void
+TrSetParent (
+    ACPI_PARSE_OBJECT       *Op,
+    ACPI_PARSE_OBJECT       *ParentOp)
+{
+
+    Op->Asl.Parent = ParentOp;
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    TrGetNextNode
  *
  * PARAMETERS:  None
@@ -982,7 +1005,7 @@ TrCreateNode (
     {
     case PARSEOP_ASL_CODE:
 
-        RootNode = Op;
+        Gbl_ParseTreeRoot = Op;
         Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
         break;
@@ -1111,7 +1134,7 @@ TrLinkChildren (
     {
     case PARSEOP_ASL_CODE:
 
-        RootNode = Op;
+        Gbl_ParseTreeRoot = Op;
         Op->Asl.ParseOpcode = PARSEOP_DEFAULT_ARG;
         DbgPrint (ASL_PARSE_OUTPUT, "ASLCODE (Tree Completed)->");
         break;
@@ -1417,7 +1440,7 @@ TrWalkParseTree (
     ACPI_STATUS             Status;
 
 
-    if (!RootNode)
+    if (!Gbl_ParseTreeRoot)
     {
         return (AE_OK);
     }

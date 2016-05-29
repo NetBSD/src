@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.1.2.4 2015/12/27 12:09:43 skrll Exp $	*/
+/*	$NetBSD: vpci.c,v 1.1.2.5 2016/05/29 08:44:19 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.1.2.4 2015/12/27 12:09:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.1.2.5 2016/05/29 08:44:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -114,7 +114,7 @@ void vpci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 static void * vpci_pci_intr_establish(pci_chipset_tag_t pc,
 				      pci_intr_handle_t ih, int level,
 				      int (*func)(void *), void *arg);
-
+void vpci_intr_ack(struct intrhand *);
 int vpci_intr_map(const struct pci_attach_args *, pci_intr_handle_t *);
 int vpci_bus_map(bus_space_tag_t, bus_addr_t,
     bus_size_t, int, vaddr_t, bus_space_handle_t *);
@@ -596,9 +596,7 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ino |= INTVEC(ihandle);
 	DPRINTF(VDB_INTR, ("%s: ih %lx; level %d ino %#x\n", __func__, (u_long)ihandle, level, ino));
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	ih->ih_ivec = ihandle;
 	ih->ih_fun = handler;
@@ -606,10 +604,42 @@ vpci_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_pil = level;
 	ih->ih_number = ino;
 	ih->ih_pending = 0;
-
+	ih->ih_ack = vpci_intr_ack;
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
+	uint64_t sysino = INTVEC(ihandle);
+	DPRINTF(VDB_INTR, ("vpci_intr_establish(): sysino 0x%lx\n", sysino));
+
+	int err;
+
+	err = hv_intr_settarget(sysino, cpus->ci_cpuid);
+	if (err != H_EOK)
+		printf("hv_intr_settarget(%lu, %u) failed - err = %d\n", 
+		       (long unsigned int)sysino, cpus->ci_cpuid, err);
+
+	/* Clear pending interrupts. */
+	err = hv_intr_setstate(sysino, INTR_IDLE);
+	if (err != H_EOK)
+	  printf("hv_intr_setstate(%lu, INTR_IDLE) failed - err = %d\n", 
+		(long unsigned int)sysino, err);
+
+	err = hv_intr_setenabled(sysino, INTR_ENABLED);
+	if (err != H_EOK)
+	  printf("hv_intr_setenabled(%lu) failed - err = %d\n", 
+		(long unsigned int)sysino, err);
+
+	DPRINTF(VDB_INTR, ("%s() returning %p\n", __func__, ih));
 	return (ih);
+}
+
+void
+vpci_intr_ack(struct intrhand *ih)
+{
+	int err;
+	err = hv_intr_setstate(ih->ih_number, INTR_IDLE);
+	if (err != H_EOK)
+	  panic("%s(%u, INTR_IDLE) failed - err = %d\n", 
+		__func__, ih->ih_number, err);
 }
 
 static void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.29.2.3 2015/12/27 12:09:33 skrll Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.29.2.4 2016/05/29 08:44:16 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29.2.3 2015/12/27 12:09:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.29.2.4 2016/05/29 08:44:16 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -264,6 +264,8 @@ static void awin_display_sysconfig(prop_dictionary_t);
 static void awin_hdmi_sysconfig(prop_dictionary_t);
 static void awin_tcon_sysconfig(device_t, prop_dictionary_t);
 static void awin_tcon_lcd_sysconfig(const char *, prop_dictionary_t);
+static void awin_lradc_sysconfig(prop_dictionary_t);
+static void awin_lradc_chan_sysconfig(int, prop_dictionary_t);
 #endif
 
 #if NCOM > 0
@@ -871,6 +873,11 @@ awin_device_register(device_t self, void *aux)
 			awin_tcon_sysconfig(self, dict);
 		}
 	}
+	if (device_is_a(self, "awinlradc")) {
+		if (awin_sysconfig_p) {
+			awin_lradc_sysconfig(dict);
+		}
+	}
 #endif
 
 #if NAXP20X > 0
@@ -1194,5 +1201,55 @@ awin_tcon_lcd_sysconfig(const char *key, prop_dictionary_t dict)
 		}
 	}
 
+}
+
+static void
+awin_lradc_sysconfig(prop_dictionary_t dict)
+{
+	int chan;
+	int vref;
+
+	switch(awin_sysconfig_get_int("lradc_para", "lradc_used")) {
+	case 0:
+		/* unused */
+		return;
+	case 1:
+		/* used */
+		break;
+	default:
+		/* error */
+		return;
+	}
+	vref = awin_sysconfig_get_int("lradc_para", "lradc_vref");
+	if (vref <= 0)
+		return;
+	prop_dictionary_set_int32(dict, "vref", vref);
+	for (chan = 0; chan < 2; chan++)
+		awin_lradc_chan_sysconfig(chan, dict);
+}
+
+static void
+awin_lradc_chan_sysconfig(int chan, prop_dictionary_t dict)
+{
+	int i;
+	char level_key[14];
+	int level;
+	char name_key[13];
+	const char *name;
+
+	for (i = 0; i < 32; i++) {
+		snprintf(level_key, sizeof(level_key), "chan%d_level%d",
+		    chan, i);
+		snprintf(name_key, sizeof(name_key), "chan%d_name%d",
+		    chan, i);
+		level = awin_sysconfig_get_int("lradc_para", level_key);
+		if (level < 0)
+			break;
+		name = awin_sysconfig_get_string("lradc_para", name_key);
+		if (name == NULL)
+			break;
+		prop_dictionary_set_int32(dict, level_key, level);
+		prop_dictionary_set_cstring(dict, name_key, name);
+	}
 }
 #endif

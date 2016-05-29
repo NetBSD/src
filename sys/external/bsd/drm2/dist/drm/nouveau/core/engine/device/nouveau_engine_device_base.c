@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.3.2.4 2016/04/22 15:44:15 skrll Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.3.2.5 2016/05/29 08:44:36 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3.2.4 2016/04/22 15:44:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3.2.5 2016/05/29 08:44:36 skrll Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -297,12 +297,6 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 #ifdef __NetBSD__
 	if (!(args->disable & NV_DEVICE_DISABLE_MMIO) &&
 	    !nv_subdev(device)->mmiosz) {
-		/*
-		 * Map only through PRAMIN -- don't map the command
-		 * FIFO MMIO regions, which start at NV_FIFO_OFFSET =
-		 * 0x800000 and are mapped separately.
-		 */
-		mmio_size = MIN(mmio_size, 0x800000);
 		/* XXX errno NetBSD->Linux */
 		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
 		if (ret) {

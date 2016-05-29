@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.80.4.4 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.80.4.5 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.4 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.5 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -205,7 +205,7 @@ loop_clone_destroy(struct ifnet *ifp)
 
 int
 looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *ifq = NULL;
@@ -254,10 +254,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			return (ENOBUFS);
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
-		s = splnet();
-		IFQ_ENQUEUE(&ifp->if_snd, m, error);
-		(*ifp->if_start)(ifp);
-		splx(s);
+		error = ifp->if_transmit(ifp, m);
 		return (error);
 	}
 #endif /* ALTQ */

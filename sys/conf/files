@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1121.2.7 2016/04/22 15:44:12 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.8 2016/05/29 08:44:20 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -661,10 +661,11 @@ file	dev/ic/rtw.c			rtw
 file	dev/ic/rtwphy.c			rtw
 file	dev/ic/rtwphyio.c		rtw
 
-# Ralink RT2500/RT2600 802.11
+# Ralink RT2500/RT2600/RT2860 802.11
 device	ral: arp, ether, ifnet, wlan, firmload
 file	dev/ic/rt2560.c			ral
 file	dev/ic/rt2661.c			ral
+file	dev/ic/rt2860.c			ral
 
 # Marvell Libertas Open
 device  malo: arp, ether, ifnet, wlan, firmload
@@ -869,7 +870,7 @@ defflag	opt_com.h		COM_DEBUG
 # XXX In a perfect world, this would be done with attributes
 defflag	opt_com.h		COM_16650 COM_16750
 				COM_HAYESP COM_PXA2X0 COM_AU1X00
-				COM_REGMAP COM_FUNCMAP
+				COM_REGMAP COM_FUNCMAP COM_AWIN
 defparam opt_com.h		COM_TOLERANCE
 device	com { } : tty
 file	dev/ic/com.c			com			needs-flag
@@ -1261,7 +1262,7 @@ device	motg: usbus, usbroothub
 file	dev/usb/motg.c			motg			needs-flag
 
 # SL811HS/T USB controller
-defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
+defflag	opt_slhci.h	SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
@@ -1372,6 +1373,14 @@ file	dev/ic/bwi.c			bwi
 #
 device	dme: arp, ether, ifnet
 file	dev/ic/dm9000.c			dme
+
+# NVM Express Controller
+#
+device	nvme {nsid = -1}
+file	dev/ic/nvme.c			nvme
+
+attach	ld at nvme with ld_nvme
+file	dev/ic/ld_nvme.c		ld_nvme
 
 # legitimate pseudo-devices
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233.2.5 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233.2.6 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.5 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.6 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -157,46 +157,9 @@ extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
 int	ip_do_loopback_cksum = 0;
 
-static bool
-ip_hresolv_needed(const struct ifnet * const ifp)
-{
-	switch (ifp->if_type) {
-	case IFT_ARCNET:
-	case IFT_ATM:
-	case IFT_ECONET:
-	case IFT_ETHER:
-	case IFT_FDDI:
-	case IFT_HIPPI:
-	case IFT_IEEE1394:
-	case IFT_ISO88025:
-	case IFT_SLIP:
-		return true;
-	default:
-		return false;
-	}
-}
-
 static int
-klock_if_output(struct ifnet * const ifp, struct mbuf * const m,
-    const struct sockaddr * const dst, struct rtentry *rt)
-{
-	int error;
-
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
-
-	error = (*ifp->if_output)(ifp, m, dst, rt);
-
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
-
-	return error;
-}
-
-static int
-ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt)
+ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m,
+    const struct rtentry *rt)
 {
 	int error = 0;
 #ifdef MPLS
@@ -228,81 +191,37 @@ ip_mark_mpls(struct ifnet * const ifp, struct mbuf * const m, struct rtentry *rt
 
 /*
  * Send an IP packet to a host.
- *
- * If necessary, resolve the arbitrary IP route, rt0, to an IP host route before
- * calling ifp's output routine.
  */
 int
-ip_hresolv_output(struct ifnet * const ifp, struct mbuf * const m,
-    const struct sockaddr * const dst, struct rtentry *rt0)
+ip_if_output(struct ifnet * const ifp, struct mbuf * const m,
+    const struct sockaddr * const dst, const struct rtentry *rt)
 {
 	int error = 0;
-	struct rtentry *rt = rt0, *gwrt;
 
-#define RTFREE_IF_NEEDED(_rt) \
-	if ((_rt) != NULL && (_rt) != rt0) \
-		rtfree((_rt));
-
-	if (!ip_hresolv_needed(ifp))
-		goto out;
-
-	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) == 0)
-		goto out;
-
-	gwrt = rt_get_gwroute(rt);
-	RTFREE_IF_NEEDED(rt);
-	rt = gwrt;
-	if (rt == NULL || (rt->rt_flags & RTF_UP) == 0) {
-		if (rt != NULL) {
-			RTFREE_IF_NEEDED(rt);
-			rt = rt0;
-		}
-		if (rt == NULL) {
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		gwrt = rtalloc1(rt->rt_gateway, 1);
-		rt_set_gwroute(rt, gwrt);
-		RTFREE_IF_NEEDED(rt);
-		rt = gwrt;
-		if (rt == NULL) {
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-		/* the "G" test below also prevents rt == rt0 */
-		if ((rt->rt_flags & RTF_GATEWAY) != 0 || rt->rt_ifp != ifp) {
-			if (rt0->rt_gwroute != NULL)
-				rtfree(rt0->rt_gwroute);
-			rt0->rt_gwroute = NULL;
-			error = EHOSTUNREACH;
-			goto bad;
-		}
-	}
-	if ((rt->rt_flags & RTF_REJECT) != 0) {
-		if (rt->rt_rmx.rmx_expire == 0 ||
-		    time_uptime < rt->rt_rmx.rmx_expire) {
-			error = (rt == rt0) ? EHOSTDOWN : EHOSTUNREACH;
-			goto bad;
+	if (rt != NULL) {
+		error = rt_check_reject_route(rt, ifp);
+		if (error != 0) {
+			m_freem(m);
+			return error;
 		}
 	}
 
-out:
-	error = ip_mark_mpls(ifp, m, rt0);
-	if (error != 0)
-		goto bad;
-
-	error = klock_if_output(ifp, m, dst, rt);
-	goto exit;
-
-bad:
-	if (m != NULL)
+	error = ip_mark_mpls(ifp, m, rt);
+	if (error != 0) {
 		m_freem(m);
-exit:
-	RTFREE_IF_NEEDED(rt);
+		return error;
+	}
 
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
+
+	error = (*ifp->if_output)(ifp, m, dst, rt);
+
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	return error;
-
-#undef RTFREE_IF_NEEDED
 }
 
 /*
@@ -715,7 +634,7 @@ sendit:
 		if (__predict_true(
 		    (m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0 ||
 		    (ifp->if_capenable & IFCAP_TSOv4) != 0)) {
-			error = ip_hresolv_output(ifp, m, sa, rt);
+			error = ip_if_output(ifp, m, sa, rt);
 		} else {
 			error = ip_tso_output(ifp, m, sa, rt);
 		}
@@ -783,7 +702,7 @@ sendit:
 		} else {
 			KASSERT((m->m_pkthdr.csum_flags &
 			    (M_CSUM_UDPv4 | M_CSUM_TCPv4)) == 0);
-			error = ip_hresolv_output(ifp, m,
+			error = ip_if_output(ifp, m,
 			    (m->m_flags & M_MCAST) ?
 			    sintocsa(rdst) : sintocsa(dst), rt);
 		}
@@ -1581,7 +1500,7 @@ ip_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 static int
 ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;	// XXX: gcc [ppc]
 	struct in_addr ia;
 	int i, error;
 
@@ -1637,8 +1556,8 @@ ip_add_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 static int
 ip_drop_membership(struct ip_moptions *imo, const struct sockopt *sopt)
 {
-	struct in_addr ia;
-	struct ifnet *ifp;
+	struct in_addr ia = { .s_addr = 0 };	// XXX: gcc [ppc]
+	struct ifnet *ifp = NULL;		// XXX: gcc [ppc]
 	int i, error;
 
 	if (sopt->sopt_size == sizeof(struct ip_mreq))

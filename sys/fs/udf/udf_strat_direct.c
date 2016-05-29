@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.12.6.1 2015/12/27 12:10:04 skrll Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.12.6.2 2016/05/29 08:44:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.12.6.1 2015/12/27 12:10:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.12.6.2 2016/05/29 08:44:37 skrll Exp $");
 #endif /* not lint */
 
 
@@ -393,6 +393,15 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 
 
 static void
+udf_sync_caches_direct(struct udf_strat_args *args)
+{
+	struct udf_mount *ump = args->ump;
+
+	udf_mmc_synchronise_caches(ump);
+}
+
+
+static void
 udf_discstrat_init_direct(struct udf_strat_args *args)
 {
 	struct udf_mount  *ump = args->ump;
@@ -441,6 +450,7 @@ struct udf_strategy udf_strat_direct =
 	udf_read_nodedscr_direct,
 	udf_write_nodedscr_direct,
 	udf_queue_buf_direct,
+	udf_sync_caches_direct,
 	udf_discstrat_init_direct,
 	udf_discstrat_finish_direct
 };

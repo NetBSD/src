@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.2 2016/03/19 11:30:07 skrll Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.3 2016/05/29 08:44:20 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.2 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.3 2016/05/29 08:44:20 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -720,8 +720,9 @@ xennetback_tx_check_packet(const netif_tx_request_t *txreq, int vlan)
 	if (__predict_false(txreq->offset + txreq->size > PAGE_SIZE))
 		return "crossing a page boundary";
 
-	const int maxlen =
-	    vlan ? (ETHER_VLAN_ENCAP_LEN + ETHER_MAX_LEN) : ETHER_MAX_LEN;
+	int maxlen = ETHER_MAX_LEN - ETHER_CRC_LEN;
+	if (vlan)
+		maxlen += ETHER_VLAN_ENCAP_LEN;
 	if (__predict_false(txreq->size > maxlen))
 		return "too big";
 

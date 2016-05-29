@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.84.4.4 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.84.4.5 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -403,25 +403,9 @@ int	rt_setgate(struct rtentry *, const struct sockaddr *);
 const struct sockaddr *
 	rt_settag(struct rtentry *, const struct sockaddr *);
 struct sockaddr *
-	rt_gettag(struct rtentry *);
+	rt_gettag(const struct rtentry *);
 
-static inline struct rtentry *
-rt_get_gwroute(struct rtentry *rt)
-{
-	if (rt->rt_gwroute == NULL)
-		return NULL;
-	rt->rt_gwroute->rt_refcnt++;
-	return rt->rt_gwroute;
-}
-
-static inline void
-rt_set_gwroute(struct rtentry *rt, struct rtentry *gwrt)
-{
-
-	rt->rt_gwroute = gwrt;
-	if (rt->rt_gwroute != NULL)
-		rt->rt_gwroute->rt_refcnt++;
-}
+int	rt_check_reject_route(const struct rtentry *, const struct ifnet *);
 
 static inline void
 rt_assert_referenced(const struct rtentry *rt)

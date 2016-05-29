@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.10.4.1 2015/06/06 14:40:04 skrll Exp $ */
+/* $NetBSD: vmt.c,v 1.10.4.2 2016/05/29 08:44:19 skrll Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -803,10 +803,12 @@ vmt_tclo_tick(void *xarg)
 	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
 		struct ifnet *iface;
 		struct sockaddr_in *guest_ip;
+		int s;
 
 		/* find first available ipv4 address */
 		guest_ip = NULL;
-		IFNET_FOREACH(iface) {
+		s = pserialize_read_enter();
+		IFNET_READER_FOREACH(iface) {
 			struct ifaddr *iface_addr;
 
 			/* skip loopback */
@@ -824,6 +826,7 @@ vmt_tclo_tick(void *xarg)
 				break;
 			}
 		}
+		pserialize_read_exit(s);
 
 		if (guest_ip != NULL) {
 			if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",

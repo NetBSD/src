@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.3.18.1 2016/03/19 11:30:09 skrll Exp $ */
+/*	$NetBSD: malo.c,v 1.3.18.2 2016/05/29 08:44:21 skrll Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3.18.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3.18.2 2016/05/29 08:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -997,8 +997,8 @@ malo_start(struct ifnet *ifp)
 			}
 			IF_DEQUEUE(&ic->ic_mgtq, m0);
 
-			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
-			m0->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m0, struct ieee80211_node *);
+			M_CLEARCTX(m0);
 
 			bpf_mtap3(ic->ic_rawbpf, m0);
 

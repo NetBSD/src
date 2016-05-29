@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.108.2.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.108.2.2 2016/05/29 08:44:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.108.2.1 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.108.2.2 2016/05/29 08:44:16 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -680,8 +680,11 @@ module_init_md(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	if (pa >= physical_start && pa < physical_end)
+		return 0;
 
-	return (pa < ctob(physmem)) ? 0 : EFAULT;
+	return kauth_authorize_machdep(kauth_cred_get(),
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 }
 
 #ifdef __HAVE_CPU_UAREA_ALLOC_IDLELWP

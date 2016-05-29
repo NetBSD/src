@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.193.4.2 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.193.4.3 2016/05/29 08:44:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.193.4.2 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.193.4.3 2016/05/29 08:44:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2114,7 +2114,7 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 			auio.uio_resid = xlen;
 			auio.uio_rw = UIO_READ;
 			UIO_SETUP_SYSSPACE(&auio);
-			error = uvm_io(&vmspace->vm_map, &auio);
+			error = uvm_io(&vmspace->vm_map, &auio, 0);
 			if (error)
 				goto done;
 

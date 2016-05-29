@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.102.2.5 2016/04/22 15:44:18 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102.2.6 2016/05/29 08:44:39 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.5 2016/04/22 15:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.6 2016/05/29 08:44:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -149,7 +149,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
 		if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
-			nd6log(LOG_INFO, "NS packet from non-neighbor\n");
+			nd6log(LOG_INFO,
+			    "NS packet from non-neighbor %s on %s\n",
+			    ip6_sprintf(&saddr6), if_name(ifp));
 			goto bad;
 		}
 	}
@@ -625,7 +627,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	sockaddr_in6_init(&ssin6, &saddr6, 0, 0, 0);
 	if (nd6_is_addr_neighbor(&ssin6, ifp) == 0) {
-		nd6log(LOG_INFO, "ND packet from non-neighbor\n");
+		nd6log(LOG_INFO, "ND packet from non-neighbor %s on %s\n",
+		    ip6_sprintf(&saddr6), if_name(ifp));
 		goto bad;
 	}
 

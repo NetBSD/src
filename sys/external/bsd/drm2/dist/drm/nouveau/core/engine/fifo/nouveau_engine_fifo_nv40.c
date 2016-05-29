@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nv40.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nv40.c,v 1.1.1.1.8.1 2016/05/29 08:44:36 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nv40.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nv40.c,v 1.1.1.1.8.1 2016/05/29 08:44:36 skrll Exp $");
 
 #include <core/os.h>
 #include <core/class.h>
@@ -315,6 +315,7 @@ nv40_fifo_init(struct nouveau_object *object)
 	case 0x49:
 	case 0x4b:
 		nv_wr32(priv, 0x002230, 0x00000001);
+		/*FALLTHROUGH*/
 	case 0x40:
 	case 0x41:
 	case 0x42:

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2012/08/31 13:12:52 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.23.16.1 2016/05/29 08:44:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23 2012/08/31 13:12:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.16.1 2016/05/29 08:44:18 skrll Exp $");
 
 #include "opt_interrupt.h"
 #include "opt_multiprocessor.h"
@@ -548,18 +548,8 @@ pic_handle_intr(void *cookie)
 	const int pcpl = ci->ci_cpl;
 
 	do {
-#ifdef MULTIPROCESSOR
-		/* THIS IS WRONG XXX */
-		if (picirq == ipiops.ppc_ipi_vector) {
-			ci->ci_cpl = IPL_HIGH;
-			ipi_intr(NULL);
-			ci->ci_cpl = pcpl;
-			pic->pic_ack_irq(pic, picirq);
-			continue;
-		}
-#endif
-
 		const int virq = virq_map[picirq + pic->pic_intrbase];
+
 		KASSERT(virq != 0);
 		KASSERT(picirq < pic->pic_numintrs);
 		imask_t v_imen = PIC_VIRQ_TO_MASK(virq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.120.4.3 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.120.4.4 2016/05/29 08:44:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.3 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.4 2016/05/29 08:44:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -73,7 +73,7 @@ static kmutex_t tun_softc_lock;
 
 static int	tun_ioctl(struct ifnet *, u_long, void *);
 static int	tun_output(struct ifnet *, struct mbuf *,
-			const struct sockaddr *, struct rtentry *rt);
+			const struct sockaddr *, const struct rtentry *rt);
 static int	tun_clone_create(struct if_clone *, int);
 static int	tun_clone_destroy(struct ifnet *);
 
@@ -494,7 +494,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 static int
 tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
-    struct rtentry *rt)
+    const struct rtentry *rt)
 {
 	struct tun_softc *tp = ifp->if_softc;
 	int		s;

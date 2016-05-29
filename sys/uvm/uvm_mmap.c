@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.149.2.4 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.149.2.5 2016/05/29 08:44:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.4 2016/04/22 15:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.5 2016/05/29 08:44:40 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -67,10 +67,10 @@ static int uvm_mmap(struct vm_map *, vaddr_t *, vsize_t, vm_prot_t, vm_prot_t,
 		    int, int, struct uvm_object *, voff_t, vsize_t);
 
 static int
-range_test(vaddr_t addr, vsize_t size, bool ismmap)
+range_test(struct vm_map *map, vaddr_t addr, vsize_t size, bool ismmap)
 {
-	vaddr_t vm_min_address = VM_MIN_ADDRESS;
-	vaddr_t vm_max_address = VM_MAXUSER_ADDRESS;
+	vaddr_t vm_min_address = vm_map_min(map);
+	vaddr_t vm_max_address = vm_map_max(map);
 	vaddr_t eaddr = addr + size;
 	int res = 0;
 
@@ -353,7 +353,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		if (addr & PAGE_MASK)
 			return (EINVAL);
 
-		error = range_test(addr, size, true);
+		error = range_test(&p->p_vmspace->vm_map, addr, size, true);
 		if (error) {
 			return error;
 		}
@@ -417,9 +417,7 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 
 	PAX_MPROTECT_ADJUST(l, &prot, &maxprot);
 
-#ifdef PAX_ASLR
 	pax_aslr_mmap(l, &addr, orig_addr, flags);
-#endif /* PAX_ASLR */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
@@ -482,15 +480,15 @@ sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	error = range_test(addr, size, false);
-	if (error)
-		return error;
 
 	/*
 	 * get map
 	 */
-
 	map = &p->p_vmspace->vm_map;
+
+	error = range_test(map, addr, size, false);
+	if (error)
+		return error;
 
 	/*
 	 * XXXCDC: do we really need this semantic?
@@ -568,11 +566,11 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 	if (size == 0)
 		return (0);
 
-	error = range_test(addr, size, false);
+	map = &p->p_vmspace->vm_map;
+
+	error = range_test(map, addr, size, false);
 	if (error)
 		return error;
-
-	map = &p->p_vmspace->vm_map;
 
 	/*
 	 * interesting system call semantic: make sure entire range is
@@ -629,7 +627,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 	size += pageoff;
 	size = round_page(size);
 
-	error = range_test(addr, size, false);
+	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
 		return error;
 
@@ -670,7 +668,7 @@ sys_minherit(struct lwp *l, const struct sys_minherit_args *uap,
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	error = range_test(addr, size, false);
+	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
 		return error;
 
@@ -711,7 +709,7 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	error = range_test(addr, size, false);
+	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
 		return error;
 
@@ -811,7 +809,7 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	error = range_test(addr, size, false);
+	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
 		return error;
 
@@ -862,7 +860,7 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 	size += pageoff;
 	size = (vsize_t)round_page(size);
 
-	error = range_test(addr, size, false);
+	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
 		return error;
 

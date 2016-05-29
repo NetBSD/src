@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.279.6.1 2016/03/19 11:30:09 skrll Exp $ */
+/*	$NetBSD: wdc.c,v 1.279.6.2 2016/05/29 08:44:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.279.6.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.279.6.2 2016/05/29 08:44:21 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -989,10 +989,8 @@ wdc_reset_channel(struct ata_channel *chp, int flags)
 				 * DMA engine
 				 */
 				if (chp->ch_flags & ATACH_DMA_WAIT) {
-					(*wdc->dma_finish)(
-					    wdc->dma_arg,
-					    chp->ch_channel,
-					    xfer->c_drive,
+					(*wdc->dma_finish)(wdc->dma_arg,
+					    chp->ch_channel, xfer->c_drive,
 					    WDC_DMAEND_ABRT_QUIET);
 					chp->ch_flags &= ~ATACH_DMA_WAIT;
 				}
@@ -1027,10 +1025,11 @@ wdcreset(struct ata_channel *chp, int poll)
 #endif
 	wdc->reset(chp, poll);
 
-	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE) ? 0x01:0x00;
+	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
+	    ? 0x01 : 0x00;
 	if (chp->ch_ndrives > 1) 
-		drv_mask1 |=
-		    (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE) ? 0x02:0x00;
+		drv_mask1 |= (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE)
+		    ? 0x02 : 0x00;
 	drv_mask2 = __wdcwait_reset(chp, drv_mask1,
 	    (poll == RESET_SLEEP) ? 0 : 1);
 	if (drv_mask2 != drv_mask1) {
@@ -1336,15 +1335,13 @@ wdctimeout(void *arg)
 	if ((chp->ch_flags & ATACH_IRQ_WAIT) != 0) {
 		__wdcerror(chp, "lost interrupt");
 		printf("\ttype: %s tc_bcount: %d tc_skip: %d\n",
-		    (xfer->c_flags & C_ATAPI) ?  "atapi" : "ata",
-		    xfer->c_bcount,
-		    xfer->c_skip);
+		    (xfer->c_flags & C_ATAPI) ? "atapi" : "ata",
+		    xfer->c_bcount, xfer->c_skip);
 #if NATA_DMA || NATA_PIOBM
 		if (chp->ch_flags & ATACH_DMA_WAIT) {
 			wdc->dma_status =
-			    (*wdc->dma_finish)(wdc->dma_arg,
-				chp->ch_channel, xfer->c_drive,
-				WDC_DMAEND_ABRT);
+			    (*wdc->dma_finish)(wdc->dma_arg, chp->ch_channel,
+				xfer->c_drive, WDC_DMAEND_ABRT);
 			chp->ch_flags &= ~ATACH_DMA_WAIT;
 		}
 #endif
@@ -1432,8 +1429,7 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	ATADEBUG_PRINT(("__wdccommand_start %s:%d:%d\n",
 	    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
-	    xfer->c_drive),
-	    DEBUG_FUNCS);
+	    xfer->c_drive), DEBUG_FUNCS);
 
 	if (wdc->select)
 		wdc->select(chp,drive);

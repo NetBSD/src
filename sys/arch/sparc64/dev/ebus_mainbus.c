@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus_mainbus.c,v 1.15 2014/11/04 18:11:42 palle Exp $	*/
+/*	$NetBSD: ebus_mainbus.c,v 1.15.2.1 2016/05/29 08:44:19 skrll Exp $	*/
 /*	$OpenBSD: ebus_mainbus.c,v 1.7 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.15 2014/11/04 18:11:42 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus_mainbus.c,v 1.15.2.1 2016/05/29 08:44:19 skrll Exp $");
 
 #ifdef DEBUG
 #define	EDB_PROM	0x01
@@ -350,9 +350,7 @@ XXX
 	intrclrptr = &iclr[ino];
 	ino |= INTVEC(ihandle);
 
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	ih = intrhand_alloc();
 
 	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;

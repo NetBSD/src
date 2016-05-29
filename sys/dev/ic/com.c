@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.329.2.3 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: com.c,v 1.329.2.4 2016/05/29 08:44:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.3 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.4 2016/05/29 08:44:21 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -424,7 +424,7 @@ com_attach_subr(struct com_softc *sc)
 			    (u_long)comcons_info.regs.cr_iobase);
 		}
 
-#ifdef COM_16750
+#if defined(COM_16750) || defined(COM_AWIN)
 		/* Use in comintr(). */
  		sc->sc_lcr = cflag2lcr(comcons_info.cflag);
 #endif
@@ -1580,7 +1580,7 @@ com_iflush(struct com_softc *sc)
 		aprint_error_dev(sc->sc_dev, "com_iflush timeout %02x\n", reg);
 #endif
 
-#ifdef COM_16750
+#if defined(COM_16750) || defined(COM_AWIN)
 	uint8_t fifo;
 	/*
 	 * Reset all Rx/Tx FIFO, preserve current FIFO length.
@@ -2027,6 +2027,9 @@ comintr(void *arg)
 
 	/* Handle ns16750-specific busy interrupt. */
 #ifdef COM_16750
+#ifdef COM_AWIN
+#error "COM_16750 and COM_AWIN are exclusive"
+#endif
 	int timeout;
 	if ((iir & IIR_BUSY) == IIR_BUSY) {
 		for (timeout = 10000;
@@ -2043,7 +2046,39 @@ comintr(void *arg)
 		iir = CSR_READ_1(regsp, COM_REG_IIR);
 	}
 #endif /* COM_16750 */
-
+#ifdef COM_AWIN
+	/* Allwinner BUSY interrupt */
+	if ((iir & IIR_BUSY) == IIR_BUSY) {
+		if ((CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0) {
+			CSR_WRITE_1(regsp, COM_REG_HALT, HALT_CHCFG_EN);
+			CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr | LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_DLBL, sc->sc_dlbl);
+			CSR_WRITE_1(regsp, COM_REG_DLBH, sc->sc_dlbh);
+			CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
+			CSR_WRITE_1(regsp, COM_REG_HALT,
+			    HALT_CHCFG_EN | HALT_CHCFG_UD);
+			for (int timeout = 10000000;
+			    (CSR_READ_1(regsp, COM_REG_HALT) & HALT_CHCFG_UD) != 0;
+			    timeout--) {
+				if (timeout <= 0) {
+					aprint_error_dev(sc->sc_dev,
+					    "timeout while waiting for HALT "
+					    "update acknowledge 0x%x 0x%x\n",
+					    CSR_READ_1(regsp, COM_REG_HALT),
+					    CSR_READ_1(regsp, COM_REG_USR));
+					break;
+				}
+			}
+			CSR_WRITE_1(regsp, COM_REG_HALT, 0);
+			(void)CSR_READ_1(regsp, COM_REG_USR);
+		} else {
+			CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr | LCR_DLAB);
+			CSR_WRITE_1(regsp, COM_REG_DLBL, sc->sc_dlbl);
+			CSR_WRITE_1(regsp, COM_REG_DLBH, sc->sc_dlbh);
+			CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
+		}
+	}
+#endif /* COM_AWIN */
 
 	if (ISSET(iir, IIR_NOPEND)) {
 		mutex_spin_exit(&sc->sc_lock);

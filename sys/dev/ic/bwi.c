@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.24.6.3 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: bwi.c,v 1.24.6.4 2016/05/29 08:44:21 skrll Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.3 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.24.6.4 2016/05/29 08:44:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -7365,8 +7365,8 @@ bwi_start(struct ifnet *ifp)
 
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 
 			mgt_pkt = 1;
 		} else {
