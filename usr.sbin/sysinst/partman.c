@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.11 2015/05/17 10:13:24 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.12 2016/05/30 17:00:38 dholland Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -469,9 +469,11 @@ pm_raid_set_value(menudesc *m, void *arg)
 		case PMR_MENU_NUMROW:
 			process_menu(MENU_ok, deconst(MSG_raid_nomultidim));
 			return 0;
+#if 0 /* notyet */
 			msg_to_show = MSG_raid_numrow_ask;
 			out_var = &(dev_ptr->numRow);
 			break;
+#endif
 		case PMR_MENU_NUMCOL:
 			msg_to_show = MSG_raid_numcol_ask;
 			out_var = &(dev_ptr->numCol);
