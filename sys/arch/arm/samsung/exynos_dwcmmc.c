@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.2 2015/12/27 20:49:01 jmcneill Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.3 2016/05/30 16:38:35 dholland Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.2 2015/12/27 20:49:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.3 2016/05/30 16:38:35 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,7 +84,7 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int bus_width, ciu_div, fifo_depth;
+	u_int ciu_div, fifo_depth;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -92,9 +92,9 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (of_getprop_uint32(phandle, "bus-width", &bus_width)) {
-		bus_width = 4;
-	}
+	//if (of_getprop_uint32(phandle, "bus-width", &bus_width)) {
+	//	bus_width = 4;
+	//}
 	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth)) {
 		fifo_depth = 64;
 	}
