@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativePPC_common.c,v 1.6 2016/05/29 17:17:48 alnsn Exp $	*/
+/*	$NetBSD: sljitNativePPC_common.c,v 1.7 2016/05/30 09:34:39 alnsn Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -47,6 +47,51 @@ typedef sljit_u32 sljit_ins;
 #if (defined SLJIT_LITTLE_ENDIAN && SLJIT_LITTLE_ENDIAN)
 #define SLJIT_PASS_ENTRY_ADDR_TO_CALL 1
 #endif
+
+#if (defined SLJIT_CACHE_FLUSH_OWN_IMPL && SLJIT_CACHE_FLUSH_OWN_IMPL)
+
+static void ppc_cache_flush(sljit_ins *from, sljit_ins *to)
+{
+#ifdef _AIX
+	_sync_cache_range((caddr_t)from, (int)((size_t)to - (size_t)from));
+#elif defined(__GNUC__) || (defined(__IBM_GCC_ASM) && __IBM_GCC_ASM)
+#	if defined(_ARCH_PWR) || defined(_ARCH_PWR2)
+	/* Cache flush for POWER architecture. */
+	while (from < to) {
+		__asm__ volatile (
+			"clf 0, %0\n"
+			"dcs\n"
+			: : "r"(from)
+		);
+		from++;
+	}
+	__asm__ volatile ( "ics" );
+#	elif defined(_ARCH_COM) && !defined(_ARCH_PPC)
+#	error "Cache flush is not implemented for PowerPC/POWER common mode."
+#	else
+	/* Cache flush for PowerPC architecture. */
+	while (from < to) {
+		__asm__ volatile (
+			"dcbf 0, %0\n"
+			"sync\n"
+			"icbi 0, %0\n"
+			: : "r"(from)
+		);
+		from++;
+	}
+	__asm__ volatile ( "isync" );
+#	endif
+#	ifdef __xlc__
+#	warning "This file may fail to compile if -qfuncsect is used"
+#	endif
+#elif defined(__xlc__)
+#error "Please enable GCC syntax for inline assembly statements with -qasm=gcc"
+#else
+#error "This platform requires a cache flush implementation."
+#endif /* _AIX */
+}
+
+#endif /* (defined SLJIT_CACHE_FLUSH_OWN_IMPL && SLJIT_CACHE_FLUSH_OWN_IMPL) */
 
 #define TMP_REG1	(SLJIT_NUMBER_OF_REGISTERS + 2)
 #define TMP_REG2	(SLJIT_NUMBER_OF_REGISTERS + 3)
