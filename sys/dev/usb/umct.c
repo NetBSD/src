@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.12 2016/04/16 13:30:35 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.13 2016/05/30 06:54:17 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.12 2016/04/16 13:30:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.13 2016/05/30 06:54:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,17 @@ int	umctdebug = 0;
 
 struct	umct_softc {
 	device_t		sc_dev;		/* base device */
-	struct usbd_device *	sc_udev;	/* USB device */
-	struct usbd_interface *	sc_iface;	/* interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 	uint16_t		sc_product;
 
+	int			sc_inendpt;	/* data in endpoint */
+	struct usbd_pipe	*sc_inpipe;	/* data in pipe */
+	u_char			*sc_inbuf;	/* interrupt buffer */
+
 	int			sc_intr_number;	/* interrupt number */
-	struct usbd_pipe *	sc_intr_pipe;	/* interrupt pipe */
+	struct usbd_pipe	*sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
 	int			sc_isize;
 
@@ -112,6 +116,8 @@ Static	void umct_init(struct umct_softc *);
 Static	void umct_set_baudrate(struct umct_softc *, u_int);
 Static	void umct_set_lcr(struct umct_softc *, u_int);
 Static	void umct_intr(struct usbd_xfer *, void *, usbd_status);
+
+Static	void umct_rxintr(struct usbd_xfer *, void *, usbd_status);
 
 Static	void umct_set(void *, int, int, int);
 Static	void umct_dtr(struct umct_softc *, int);
@@ -242,14 +248,15 @@ umct_attach(device_t parent, device_t self, void *aux)
 		}
 
 		/*
-		 * The Bulkin endpoint is marked as an interrupt. Since
+		 * Input is done via an interrupt endpoint, so we handle
+		 * the pipe and pass RX characters up to ucom.  Since
 		 * we can't rely on the endpoint descriptor order, we'll
 		 * check the wMaxPacketSize field to differentiate.
 		 */
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT &&
 		    UGETW(ed->wMaxPacketSize) != 0x2) {
-			ucaa.ucaa_bulkin = ed->bEndpointAddress;
+			sc->sc_inendpt = ed->bEndpointAddress;
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			ucaa.ucaa_bulkout = ed->bEndpointAddress;
@@ -260,8 +267,8 @@ umct_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (ucaa.ucaa_bulkin == -1) {
-		aprint_error_dev(self, "Could not find data bulk in\n");
+	if (sc->sc_inendpt == -1) {
+		aprint_error_dev(self, "Could not find data in\n");
 		sc->sc_dying = 1;
 		return;
 	}
@@ -278,6 +285,16 @@ umct_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (sc->sc_inendpt != -1) {
+		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_inendpt,
+		    USBD_SHORT_XFER_OK, &sc->sc_inpipe, sc, sc->sc_inbuf,
+		    sc->sc_isize, umct_rxintr, USBD_DEFAULT_INTERVAL);
+		if (err) {
+			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
+			    device_xname(sc->sc_dev), sc->sc_inendpt));
+			return EIO;
+		}
+	}
 	sc->sc_dtr = sc->sc_rts = 0;
 	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
 	/* ucaa_bulkin, ucaa_bulkout set above */
@@ -592,8 +609,18 @@ umct_close(void *addr, int portno)
 }
 
 void
-umct_intr(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
+umct_rxintr(struct usbd_xfer *xfer, void *priv, usbd_status status)
+{
+	struct umct_softc *sc = priv;
+
+	if (sc->sc_dying)
+		return;
+
+	ucomreadcb(xfer, device_private(sc->sc_subdev), status);
+}
+
+void
+umct_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct umct_softc *sc = priv;
 	u_char *tbuf = sc->sc_intr_buf;

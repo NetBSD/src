@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.14 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.15 2016/05/30 06:54:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.14 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.15 2016/05/30 06:54:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,11 @@ struct ucom_softc {
 	SIMPLEQ_HEAD(, ucom_buffer) sc_obuff_free;
 	SIMPLEQ_HEAD(, ucom_buffer) sc_obuff_full;
 
+	struct usbd_pipe	*sc_ipipe;
+	struct usbd_xfer	*sc_ixfer;
+	struct usbd_pipe	*sc_opipe;
+	struct usbd_xfer	*sc_oxfer;
+
 	void			*sc_si;
 
 	const struct ucom_methods *sc_methods;
@@ -224,7 +229,6 @@ static void	ucom_break(struct ucom_softc *, int);
 static void	tiocm_to_ucom(struct ucom_softc *, u_long, int);
 static int	ucom_to_tiocm(struct ucom_softc *);
 
-static void	ucomreadcb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_submit_write(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_write_status(struct ucom_softc *, struct ucom_buffer *,
 			usbd_status);
@@ -263,6 +267,9 @@ ucom_attach(device_t parent, device_t self, void *aux)
 
 	prop_dictionary_set_int32(device_properties(self), "port",
 	    ucaa->ucaa_portno);
+
+	KASSERT(ucaa->ucaa_bulkin != -1 || (ucaa->ucaa_ipipe && ucaa->ucaa_ixfer));
+	KASSERT(ucaa->ucaa_bulkout != -1 || (ucaa->ucaa_opipe && ucaa->ucaa_oxfer));
 
 	sc->sc_dev = self;
 	sc->sc_udev = ucaa->ucaa_device;
@@ -307,41 +314,57 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	usbd_status err;
 	int error;
 
-	/* Open the bulk pipes */
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-	if (err) {
-		DPRINTF("open bulk in error (addr %d), err=%d",
-		    sc->sc_bulkin_no, err, 0, 0);
-		error = EIO;
-		goto fail_0;
-	}
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-	if (err) {
-		DPRINTF("open bulk out error (addr %d), err=%d",
-		    sc->sc_bulkout_no, err, 0, 0);
-		error = EIO;
-		goto fail_1;
+	if (sc->sc_bulkin_no != -1) {
+		/* Open the bulk pipes */
+		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
+		    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+		if (err) {
+			DPRINTF("open bulk in error (addr %d), err=%d",
+			    sc->sc_bulkin_no, err, 0, 0);
+			error = EIO;
+			goto fail_0;
+		}
+		/* Allocate input buffers */
+		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
+		    ub++) {
+			error = usbd_create_xfer(sc->sc_bulkin_pipe,
+			    sc->sc_ibufsizepad, USBD_SHORT_XFER_OK, 0,
+			    &ub->ub_xfer);
+			if (error)
+				goto fail_1;
+			ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+		}
+
 	}
 
-	/* Allocate input buffers */
-	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
-	    ub++) {
-		error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_ibufsizepad,
-		    USBD_SHORT_XFER_OK, 0, &ub->ub_xfer);
-		if (error)
-			goto fail_2;
-		ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+	if (sc->sc_bulkout_no != -1) {
+		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
+		    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+		if (err) {
+			DPRINTF("open bulk out error (addr %d), err=%d",
+			    sc->sc_bulkout_no, err, 0, 0);
+			error = EIO;
+			goto fail_1;
+		}
+		for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
+		    ub++) {
+			error = usbd_create_xfer(sc->sc_bulkout_pipe,
+			    sc->sc_obufsize, 0, 0, &ub->ub_xfer);
+			if (error)
+				goto fail_2;
+			ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+			SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
+		}
 	}
 
-	for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
-	    ub++) {
-		error = usbd_create_xfer(sc->sc_bulkout_pipe, sc->sc_obufsize,
-		    0, 0, &ub->ub_xfer);
-		if (error)
-			goto fail_2;
-		ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+	if (sc->sc_ipipe && sc->sc_ixfer) {
+		ub = &sc->sc_ibuff[0];
+		ub->ub_data = usbd_get_buffer(sc->sc_ixfer);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_empty, ub, ub_link);
+	}
+	if (sc->sc_opipe && sc->sc_oxfer) {
+		ub = &sc->sc_obuff[0];
+		ub->ub_data = usbd_get_buffer(sc->sc_oxfer);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
 	}
 
@@ -362,18 +385,20 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail_2:
-	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
-	    ub++) {
-		if (ub->ub_xfer)
-			usbd_destroy_xfer(ub->ub_xfer);
-	}
 	for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
 	    ub++) {
 		if (ub->ub_xfer)
 			usbd_destroy_xfer(ub->ub_xfer);
 	}
 
+	usbd_close_pipe(sc->sc_bulkout_pipe);
+
 fail_1:
+	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
+	    ub++) {
+		if (ub->ub_xfer)
+			usbd_destroy_xfer(ub->ub_xfer);
+	}
 	usbd_close_pipe(sc->sc_bulkin_pipe);
 
 fail_0:
@@ -620,6 +645,9 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_rx_stopped = 0;
 		sc->sc_tx_stopped = 0;
 
+		/*
+		 * ucomsubmitread handles bulk vs other
+		 */
 		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
 		    ub++) {
 			if (ucomsubmitread(sc, ub) != USBD_NORMAL_COMPLETION) {
@@ -643,8 +671,10 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 
 fail_2:
-	usbd_abort_pipe(sc->sc_bulkin_pipe);
-	usbd_abort_pipe(sc->sc_bulkout_pipe);
+	if (sc->sc_bulkin_no != -1)
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	if (sc->sc_bulkout_no != -1)
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
 
 	mutex_enter(&sc->sc_lock);
 	sc->sc_opening = 0;
@@ -1381,13 +1411,15 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 {
 	usbd_status err;
 
-	usbd_setup_xfer(ub->ub_xfer, sc, ub->ub_data, sc->sc_ibufsize,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
+	if (sc->sc_bulkin_no != -1) {
+		usbd_setup_xfer(ub->ub_xfer, sc, ub->ub_data, sc->sc_ibufsize,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
 
-	if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
-		/* XXX: Recover from this, please! */
-		printf("ucomsubmitread: err=%s\n", usbd_errstr(err));
-		return err;
+		if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
+			/* XXX: Recover from this, please! */
+			printf("%s: err=%s\n", __func__, usbd_errstr(err));
+			return err;
+		}
 	}
 
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ibuff_empty, ub, ub_link);
@@ -1395,7 +1427,7 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 	return USBD_NORMAL_COMPLETION;
 }
 
-static void
+void
 ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
@@ -1426,7 +1458,10 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	SIMPLEQ_REMOVE_HEAD(&sc->sc_ibuff_empty, ub_link);
 
 	if (status == USBD_STALLED) {
-		usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
+		if (sc->sc_bulkin_no != -1)
+			usbd_clear_endpoint_stall_async(sc->sc_bulkin_pipe);
+		if (sc->sc_ipipe)
+			usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 		ucomsubmitread(sc, ub);
 		mutex_exit(&sc->sc_lock);
 		return;
