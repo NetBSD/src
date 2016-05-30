@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.4 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.5 2016/05/30 22:58:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.4 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.5 2016/05/30 22:58:52 christos Exp $");
 
 #include "assym.h"
 
@@ -330,7 +330,7 @@ ENTRY(cpu_in_cksum)
 
 .Lout_of_mbufs:
 	pushl	$1f
-	call	_C_LABEL(printf)
+	call	PIC_PLT(_C_LABEL(printf))
 	leal	4(%esp), %esp
 	jmp	.Lreturn
 1:
