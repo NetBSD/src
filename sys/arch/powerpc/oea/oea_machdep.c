@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.72 2015/07/06 05:20:50 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.73 2016/05/30 13:04:24 chs Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.72 2015/07/06 05:20:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.73 2016/05/30 13:04:24 chs Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -1004,6 +1004,16 @@ oea_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&cpuset_info.cpus_running, true);
+	kcpuset_create(&cpuset_info.cpus_hatched, true);
+	kcpuset_create(&cpuset_info.cpus_paused, true);
+	kcpuset_create(&cpuset_info.cpus_resumed, true);
+	kcpuset_create(&cpuset_info.cpus_halted, true);
+
+	kcpuset_set(cpuset_info.cpus_running, cpu_number());
+#endif
 }
 
 /*
