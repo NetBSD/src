@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd.c,v 1.2 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: cmd.c,v 1.3 2016/05/30 02:30:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ cmd_exec(const char *buf)
 		if (*p == ' ') {
 			*p = 0;
 			sep = 1;
-		} else if (sep && (*p != ' ' || *p == '\0')) {
+		} else if (sep) {
 			sep = 0;
 			argp[argc++] = p;
 		}
