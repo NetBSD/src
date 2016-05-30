@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_globals.h,v 1.8 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_globals.h,v 1.9 2016/05/30 22:02:41 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -385,7 +385,7 @@ extern int debug_level;
 
 #define DEBOUT(x) iscsid_log x
 #define DEB(lev,x) { if (debug_level >= lev) iscsid_log x ; }
-void iscsid_log(const char *, ...);
+void iscsid_log(const char *, ...) __printflike(1, 2);
 
 /* Session list protection shortcuts */
 
