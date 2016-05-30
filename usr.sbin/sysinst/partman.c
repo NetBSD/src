@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.12 2016/05/30 17:00:38 dholland Exp $ */
+/*	$NetBSD: partman.c,v 1.13 2016/05/30 17:03:21 dholland Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -1807,6 +1807,7 @@ pm_wedge_create(int num, pm_devs_t **pm_dk)
 		if (! wedges[i].allocated && wedges[i].todel) {
 			hackerr = run_program(RUN_SILENT | RUN_ERROR_OK,
 				"dkctl %s delwedge dk%d", wedges[num].pm->diskdev, i);
+			(void)hackerr; /* XXX */
 			wedges[i].todel = 0;
 		}
 
