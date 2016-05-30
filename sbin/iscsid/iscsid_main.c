@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsid_main.c,v 1.10 2016/05/29 13:35:45 mlelstv Exp $	*/
+/*	$NetBSD: iscsid_main.c,v 1.11 2016/05/30 21:58:32 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -479,7 +479,7 @@ iscsid_log(const char *fmt, ...)
  *    Deregister the event handler, deregister isns servers, then exit program.
  */
 
-static void
+static void __dead
 exit_daemon(void)
 {
 	LOCK_SESSIONS;
