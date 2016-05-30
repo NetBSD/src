@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.14 2016/05/30 02:57:32 dholland Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.15 2016/05/30 03:02:58 dholland Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -33,7 +33,7 @@ static char synusage[] =
 
 static char desusage[] =
 "DESCRIPTION\n"
-"\tAllows the patching of BSD binaries, for example,a distributed\n"
+"\tAllows the patching of BSD binaries, for example, a distributed\n"
 "\tkernel. Recient additions allows the user to index into an array\n"
 "\tand assign a value. Binpatch has internal variables to allow\n"
 "\tyou to test it on itself under NetBSD.\n"
@@ -75,7 +75,7 @@ static char desusage[] =
 extern char *optarg;
 extern int optind;
 
-void error (char *) __attribute__((__noreturn__));
+void error(char *) __attribute__((__noreturn__));
 static void Synopsis(char *program_name);
 static void Usage(char *program_name);
 static u_long FindAssign(char *symbol, u_long *rvalue);
@@ -114,64 +114,64 @@ main(int argc, char *argv[])
 	u_char  cval;
 
 
-	while ((c = getopt (argc, argv, "H:a:bwlr:s:o:")) != -1) {
+	while ((c = getopt(argc, argv, "H:a:bwlr:s:o:")) != -1) {
 		switch (c) {
-		    case 'H':
+		case 'H':
 			Usage(argv[0]);
 			break;
-		    case 'a':
+		case 'a':
 			if (addr || symbol) {
-				error ("only one address/symbol allowed");
+				error("only one address/symbol allowed");
 			}
 			if (!strncmp(optarg, "0x", 2)) {
-				sscanf (optarg, "%x", &addr);
+				sscanf(optarg, "%x", &addr);
 			} else {
-				addr = atoi (optarg);
+				addr = atoi(optarg);
 			}
 			if (!addr) {
-				error ("invalid address");
+				error("invalid address");
 			}
 			break;
 
-		    case 'b':
+		case 'b':
 			size = 1;
 			size_opt = 1;
 			break;
 
-		    case 'w':
+		case 'w':
 			size = 2;
 			size_opt = 1;
 			break;
 
-		    case 'l':
+		case 'l':
 			size = 4;
 			size_opt = 1;
 			break;
 
-		    case 'r':
+		case 'r':
 			do_replace = 1;
 			if (!strncmp(optarg, "0x", 2)) {
-				sscanf (optarg, "%x", &replace);
+				sscanf(optarg, "%x", &replace);
 			} else {
-				replace = atoi (optarg);
+				replace = atoi(optarg);
 			}
 			break;
 
-		    case 's':
+		case 's':
 			if (addr || symbol) {
-				error ("only one address/symbol allowed");
+				error("only one address/symbol allowed");
 			}
 			symbol = optarg;
 			break;
 
-		    case 'o':
+		case 'o':
 			if (offset) {
-				error ("only one offset allowed");
+				error("only one offset allowed");
 			}
-			if (! strncmp (optarg, "0x", 2)) {
-				sscanf (optarg, "%x", &offset);
+			if (!strncmp(optarg, "0x", 2)) {
+				sscanf(optarg, "%x", &offset);
 			} else {
-				offset = atoi (optarg);
+				offset = atoi(optarg);
 			}
 			break;
 		}
@@ -184,17 +184,17 @@ main(int argc, char *argv[])
 			argc -= optind;
 
 			if (argc < 1) {
-				error ("No file to patch.");
+				error("No file to patch.");
 			}
 
 			fname = argv[0];
-			if ((fd = open (fname, 0)) < 0) {
-				error ("Can't open file");
+			if ((fd = open(fname, 0)) < 0) {
+				error("Can't open file");
 			}
 
-			if (read (fd, &e, sizeof (e)) != sizeof (e)
-			    || N_BADMAG (e)) {
-				error ("Not a valid executable.");
+			if (read(fd, &e, sizeof(e)) != sizeof(e)
+			    || N_BADMAG(e)) {
+				error("Not a valid executable.");
 			}
 
 			/* fake mid, so the N_ macros work on the amiga.. */
@@ -211,7 +211,7 @@ main(int argc, char *argv[])
 					if (new_do_replace && do_replace)
 						error("Cannot use both '=' "
 						      "and '-r' option!");
-					FindOffset(symbol,&index);
+					FindOffset(symbol, &index);
 					if (size_opt) {
 						/* Treat like an index */
 						offset = index*size;
@@ -224,9 +224,10 @@ main(int argc, char *argv[])
 				}
 				nl[0].n_un.n_name = symbol;
 				nl[1].n_un.n_name = 0;
-				if (nlist (fname, nl) != 0) {
-					fprintf(stderr,"Symbol is %s ",symbol);
-					error ("Symbol not found.");
+				if (nlist(fname, nl) != 0) {
+					fprintf(stderr, "Symbol is %s ",
+						symbol);
+					error("Symbol not found.");
 				}
 				addr = nl[0].n_value;
 				type = nl[0].n_type & N_TYPE;
@@ -249,8 +250,8 @@ main(int argc, char *argv[])
 			 * least not under AmigaDOS)
 			 */
 			if (do_replace) {
-				close (fd);
-				if ((fd = open (fname, 2)) == -1) {
+				close(fd);
+				if ((fd = open(fname, 2)) == -1) {
 					error("Can't reopen file for writing.");
 				}
 			}
@@ -267,7 +268,7 @@ main(int argc, char *argv[])
 			}
 
 			if (lseek(fd, off, 0) == -1) {
-				error ("lseek");
+				error("lseek");
 			}
 
 			/*
@@ -275,23 +276,23 @@ main(int argc, char *argv[])
 			 * endian machines
 			 */
 			switch (size) {
-			    case 1:
+			case 1:
 				if (read(fd, &cval, 1) != 1) {
-					error ("cread");
+					error("cread");
 				}
 				lval = cval;
 				break;
 
-			    case 2:
+			case 2:
 				if (read(fd, &sval, 2) != 2) {
-					error ("sread");
+					error("sread");
 				}
 				lval = sval;
 				break;
 
-			    case 4:
+			case 4:
 				if (read(fd, &lval, 4) != 4) {
-					error ("lread");
+					error("lread");
 				}
 				break;
 			}/* switch size */
@@ -305,33 +306,33 @@ main(int argc, char *argv[])
 			}
 
 			if (do_replace) {
-				if (lseek (fd, off, 0) == -1) {
-					error ("write-lseek");
+				if (lseek(fd, off, 0) == -1) {
+					error("write-lseek");
 				}
 				switch (size) {
-				    case 1:
+				case 1:
 					cval = replace;
 					if (cval != replace) {
-						error ("byte-value overflow.");
+						error("byte-value overflow.");
 					}
 					if (write(fd, &cval, 1) != 1) {
-						error ("cwrite");
+						error("cwrite");
 					}
 					break;
 
-				    case 2:
+				case 2:
 					sval = replace;
 					if (sval != replace) {
-						error ("word-value overflow.");
+						error("word-value overflow.");
 					}
 					if (write(fd, &sval, 2) != 2) {
-						error ("swrite");
+						error("swrite");
 					}
 					break;
 
-				    case 4:
+				case 4:
 					if (write(fd, &replace, 4) != 4) {
-						error ("lwrite");
+						error("lwrite");
 					}
 					break;
 				}
@@ -339,7 +340,7 @@ main(int argc, char *argv[])
 			}
 			/* end if (do_replace) */
 
-			close (fd);
+			close(fd);
 		} else { 
 			/* not (addr || symbol) */
 			error("Must specify either address or symbol.");
@@ -358,8 +359,8 @@ main(int argc, char *argv[])
 void
 error(char *str)
 {
-	fprintf (stderr, "%s\n", str);
-	exit (1);
+	fprintf(stderr, "%s\n", str);
+	exit(1);
 }
 
 /* Give user very short help to avoid scrolling screen much */
@@ -399,10 +400,10 @@ static void
 FindOffset(char *symbol, u_long *index)
 {
 	/* Start of '[', now line must contain matching']' */
-	char *sb = strchr(symbol,'[');
+	char *sb = strchr(symbol, '[');
 
 	/* End of ']' */					
-	char *eb = strchr(symbol,']');
+	char *eb = strchr(symbol, ']');
 
 	/* symbol size */
 	short sz = strlen(symbol);
@@ -452,7 +453,7 @@ static u_long
 FindAssign(char *symbol, u_long *rvalue)
 {
 	/* Assign symbol some number */
-	char *ce = rindex(symbol,'=');
+	char *ce = rindex(symbol, '=');
 
 	/* This should point at some number, no spaces allowed */
 	char *cn = ce + 1;
