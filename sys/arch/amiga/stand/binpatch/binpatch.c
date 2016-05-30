@@ -1,4 +1,4 @@
-/*	$NetBSD: binpatch.c,v 1.11 2006/06/27 10:53:11 tsutsui Exp $	*/
+/*	$NetBSD: binpatch.c,v 1.12 2016/05/30 02:36:37 dholland Exp $	*/
 
 /* Author: Markus Wild mw@eunet.ch ???   */
 /* Modified: Rob Leland leland@mitre.org */
@@ -403,7 +403,7 @@ static u_long FindAssign(char *symbol,u_long *rvalue)
   {
     int nscan; /* number of variaables scanned in */
     /* get the number to assign to symbol and strip off = */
-    for (cn=ce + 1;((*cn==' ')&&(*cn!='\0'));cn++)
+    for (cn=ce + 1; *cn==' '; cn++)
     ;
     if (! strncmp (cn, "0x", 2))
 	nscan = sscanf (cn, "%x",rvalue);
