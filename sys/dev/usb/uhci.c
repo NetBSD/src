@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.76 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.77 2016/05/30 06:51:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.76 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.77 2016/05/30 06:51:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3320,18 +3320,15 @@ uhci_add_intr(uhci_softc_t *sc, uhci_soft_qh_t *sqh)
 
 	eqh = vf->eqh;
 	usb_syncmem(&eqh->dma, eqh->offs + offsetof(uhci_qh_t, qh_hlink),
-	    sizeof(eqh->qh.qh_hlink),
-	    BUS_DMASYNC_POSTWRITE);
+	    sizeof(eqh->qh.qh_hlink), BUS_DMASYNC_POSTWRITE);
 	sqh->hlink       = eqh->hlink;
 	sqh->qh.qh_hlink = eqh->qh.qh_hlink;
 	usb_syncmem(&sqh->dma, sqh->offs + offsetof(uhci_qh_t, qh_hlink),
-	    sizeof(sqh->qh.qh_hlink),
-	    BUS_DMASYNC_PREWRITE);
+	    sizeof(sqh->qh.qh_hlink), BUS_DMASYNC_PREWRITE);
 	eqh->hlink       = sqh;
 	eqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_QH);
 	usb_syncmem(&eqh->dma, eqh->offs + offsetof(uhci_qh_t, qh_hlink),
-	    sizeof(eqh->qh.qh_hlink),
-	    BUS_DMASYNC_PREWRITE);
+	    sizeof(eqh->qh.qh_hlink), BUS_DMASYNC_PREWRITE);
 	vf->eqh = sqh;
 	vf->bandwidth++;
 }
