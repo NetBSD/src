@@ -21,7 +21,7 @@
  * Additional arguments specify more Vendor Release Tags.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: import.c,v 1.6 2016/05/17 14:00:09 christos Exp $");
+__RCSID("$NetBSD: import.c,v 1.7 2016/05/30 17:49:51 christos Exp $");
 
 #include "cvs.h"
 #include "lstat.h"
@@ -1409,7 +1409,7 @@ add_rcs_file (const char *message, const char *rcs, const char *user,
 	    /* We are going to put the log message in the revision on the
 	       branch.  So putting it here too seems kind of redundant, I
 	       guess (and that is what CVS has always done, anyway).  */
-	    if (fprintf (fprcs, "Initial revision") < 0)
+	    if (fprintf (fprcs, "Initial revision\n") < 0)
 		goto write_error;
 	}
 	else
@@ -1417,7 +1417,7 @@ add_rcs_file (const char *message, const char *rcs, const char *user,
 	    if (expand_at_signs (message, (off_t) strlen (message), fprcs) < 0)
 		goto write_error;
 	}
-	if (fprintf (fprcs, "\012@\012") < 0 ||
+	if (fprintf (fprcs, "@\012") < 0 ||
 	    fprintf (fprcs, "text\012@") < 0)
 	{
 	    goto write_error;
@@ -1443,7 +1443,7 @@ add_rcs_file (const char *message, const char *rcs, const char *user,
 		fprintf (fprcs, "log\012@") < 0 ||
 		expand_at_signs (message,
 				 (off_t) strlen (message), fprcs) < 0 ||
-		fprintf (fprcs, "\012@\012text\012") < 0 ||
+		fprintf (fprcs, "@\012text\012") < 0 ||
 		fprintf (fprcs, "@@\012") < 0)
 		goto write_error;
 	}
