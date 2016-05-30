@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.16 2015/08/09 09:49:25 shm Exp $	*/
+/*	$NetBSD: filter.c,v 1.17 2016/05/30 16:26:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: filter.c,v 1.16 2015/08/09 09:49:25 shm Exp $");
+__RCSID("$NetBSD: filter.c,v 1.17 2016/05/30 16:26:34 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -108,20 +108,14 @@ getignored(const char *auxname)
 	     fgets(inbuffer, sizeof(inbuffer)-1, fyle) != NULL; nignored++)
 		continue;
 	names_ignored = Calloc(nignored+1, sizeof (char *));
-	if (freopen(filename, "r", fyle) == NULL) {
-#ifdef FULLDEBUG
-		fprintf(stderr, "%s: Failure to open \"%s\" for second read.\n",
-			processname, filename);
-#endif
-		nignored = 0;
-		return;
-	}
+	rewind(fyle);
 	for (i=0; i < nignored &&
 	          (fgets (inbuffer, sizeof(inbuffer)-1, fyle) != NULL); i++) {
 		names_ignored[i] = strdup(inbuffer);
 		(void)substitute(names_ignored[i], '\n', '\0');
 	}
 	qsort(names_ignored, nignored, sizeof *names_ignored, lexsort);
+	fclose(fyle);
 #ifdef FULLDEBUG
 	printf("Names to ignore follow.\n");
 	for (i=0; i < nignored; i++) {
