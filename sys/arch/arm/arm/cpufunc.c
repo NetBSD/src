@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.160 2016/01/23 21:39:17 christos Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.161 2016/05/30 17:18:38 dholland Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.160 2016/01/23 21:39:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.161 2016/05/30 17:18:38 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2330,8 +2330,7 @@ early_abort_fixup(void *arg)
 			registers[base] += offset;
 			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 		}
-	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
-		return ABORT_FIXUP_FAILED;
+	}
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
 
