@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.69 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.70 2016/05/30 06:48:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.69 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.70 2016/05/30 06:48:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1017,6 +1017,7 @@ xhci_init(struct xhci_softc *sc)
 	}
 
 	cv_init(&sc->sc_command_cv, "xhcicmd");
+	cv_init(&sc->sc_cmdbusy_cv, "xhcicmdq");
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "xhciab");
@@ -2024,11 +2025,15 @@ xhci_event_cmd(struct xhci_softc * const sc,
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
 	trb_3 = le32toh(trb->trb_3);
 
 	if (trb_0 == sc->sc_command_addr) {
+		sc->sc_resultpending = false;
+
 		sc->sc_result_trb.trb_0 = trb_0;
 		sc->sc_result_trb.trb_2 = trb_2;
 		sc->sc_result_trb.trb_3 = trb_3;
@@ -2633,9 +2638,11 @@ xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb
 	KASSERTMSG(!cpu_intr_p() && !cpu_softintr_p(), "called from intr ctx");
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
-	KASSERT(sc->sc_command_addr == 0);
+	while (sc->sc_command_addr != 0)
+		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
+
 	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
+	sc->sc_resultpending = true;
 
 	mutex_enter(&cr->xr_lock);
 	xhci_ring_put(sc, cr, NULL, trb, 1);
@@ -2643,11 +2650,13 @@ xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb
 
 	xhci_db_write_4(sc, XHCI_DOORBELL(0), 0);
 
-	if (cv_timedwait(&sc->sc_command_cv, &sc->sc_lock,
-	    MAX(1, mstohz(timeout))) == EWOULDBLOCK) {
-		xhci_abort_command(sc);
-		err = USBD_TIMEOUT;
-		goto timedout;
+	while (sc->sc_resultpending) {
+		if (cv_timedwait(&sc->sc_command_cv, &sc->sc_lock,
+		    MAX(1, mstohz(timeout))) == EWOULDBLOCK) {
+			xhci_abort_command(sc);
+			err = USBD_TIMEOUT;
+			goto timedout;
+		}
 	}
 
 	trb->trb_0 = sc->sc_result_trb.trb_0;
@@ -2671,7 +2680,10 @@ xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb
 	}
 
 timedout:
+	sc->sc_resultpending = false;
 	sc->sc_command_addr = 0;
+	cv_broadcast(&sc->sc_cmdbusy_cv);
+
 	return err;
 }
 
