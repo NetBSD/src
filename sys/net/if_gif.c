@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.108 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.109 2016/05/31 03:52:40 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.108 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.109 2016/05/31 03:52:40 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -91,6 +91,14 @@ static void	gifintr(void *);
  * gif global variable definitions
  */
 static LIST_HEAD(, gif_softc) gif_softc_list;
+
+static void	gifattach0(struct gif_softc *);
+static int	gif_output(struct ifnet *, struct mbuf *,
+			   const struct sockaddr *, const struct rtentry *);
+static int	gif_ioctl(struct ifnet *, u_long, void *);
+static int	gif_set_tunnel(struct ifnet *, struct sockaddr *,
+			       struct sockaddr *);
+static void	gif_delete_tunnel(struct ifnet *);
 
 static void	gif_sysctl_setup(struct sysctllog **);
 
@@ -169,7 +177,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void
+static void
 gifattach0(struct gif_softc *sc)
 {
 
@@ -304,7 +312,7 @@ gif_check_nesting(struct ifnet *ifp, struct mbuf *m)
 	return 0;
 }
 
-int
+static int
 gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     const struct rtentry *rt)
 {
@@ -488,7 +496,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 }
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */
-int
+static int
 gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct gif_softc *sc  = ifp->if_softc;
@@ -775,7 +783,7 @@ gif_encap_detach(struct gif_softc *sc)
 	return error;
 }
 
-int
+static int
 gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
 	struct gif_softc *sc = ifp->if_softc;
@@ -903,7 +911,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	return error;
 }
 
-void
+static void
 gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
