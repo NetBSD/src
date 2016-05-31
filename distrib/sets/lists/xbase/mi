@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.131 2016/05/16 22:20:10 christos Exp $
+# $NetBSD: mi,v 1.132 2016/05/31 02:37:15 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2715,6 +2715,7 @@
 ./usr/X11R7/man/cat4/x86					base-x11-root	xorg
 ./usr/X11R7/man/cat5					base-x11-root	xorg
 ./usr/X11R7/man/cat5/fonts-conf.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/fonts.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7					base-x11-root	xorg
 ./usr/X11R7/man/cat7/Consortium.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7/Standards.0			-unknown-	.cat,xorg
@@ -2857,6 +2858,7 @@
 ./usr/X11R7/man/html4/x86					base-x11-root	xorg
 ./usr/X11R7/man/html5					base-x11-root	xorg
 ./usr/X11R7/man/html5/fonts-conf.html			-unknown-	html,xorg
+./usr/X11R7/man/html5/fonts.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html7					base-x11-root	xorg
 ./usr/X11R7/man/html7/Consortium.html			-unknown-	html,xorg
 ./usr/X11R7/man/html7/Standards.html			-unknown-	html,xorg
@@ -3000,6 +3002,7 @@
 ./usr/X11R7/man/man4/x86					base-x11-root	xorg
 ./usr/X11R7/man/man5					base-x11-root	xorg
 ./usr/X11R7/man/man5/fonts-conf.5			-unknown-	.man,xorg
+./usr/X11R7/man/man5/fonts.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/man/man7					base-x11-root	xorg
 ./usr/X11R7/man/man7/Consortium.7			-unknown-	.man,xorg
 ./usr/X11R7/man/man7/Standards.7			-unknown-	.man,xorg
