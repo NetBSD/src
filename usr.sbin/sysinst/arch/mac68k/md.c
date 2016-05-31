@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2015/05/11 12:57:55 martin Exp $ */
+/*	$NetBSD: md.c,v 1.5 2016/05/31 02:49:50 dholland Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -173,6 +173,21 @@ md_get_info(void)
 	 *  need to completely initialize the disk.
 	 */
 	pm->dlsize = disklabel.d_secperunit;
+/*
+ * XXX this code is broken: it accesses off the end of new_map[],
+ * because NEW_MAP_SIZE is substantially larger than the number of
+ * entries in new_map[]. Based on the description of struct
+ * apple_part_map_entry in sys/bootblock.h, and the usage of it in
+ * new_map[], NEW_MAP_SIZE is expected to be a block count, not an
+ * entry count. As far I can tell the logic here is just wrong; it
+ * needs someone with platform knowledge to sort it out.
+ *
+ * Note that nothing uses the data this writes into new_map[] so
+ * disabling it should have no adverse consequences.
+ *
+ *   - dholland 20160530
+ */
+#if 0 /* XXX broken */
 	for (i=0;i<NEW_MAP_SIZE;i++) {
 	   if (i > 0)
 		new_map[i].pmPyPartStart = new_map[i-1].pmPyPartStart +
@@ -185,6 +200,7 @@ md_get_info(void)
 	   }
 	   pm->dlsize -= new_map[i].pmPartBlkCnt;
 	}
+#endif /* 0 - broken */
 	pm->dlsize = disklabel.d_secperunit;
 #if 0
 	msg_display(MSG_dldebug, blk_size, pm->dlcyl, pm->dlhead, pm->dlsec, pm->dlsize);
