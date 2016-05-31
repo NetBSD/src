@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.4 2014/03/26 17:47:10 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.5 2016/05/31 04:05:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -442,7 +442,7 @@ gettrailer(char *arg)
 		*options++ = '\0';
 
 	/* trim leading blanks */
-	while (*options && *options == ' ')
+	while (*options == ' ')
 		options++;
 
 	return (options);
