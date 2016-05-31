@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.c,v 1.25 2016/05/31 02:17:18 macallan Exp $ */
+/*	$NetBSD: pmu.c,v 1.26 2016/05/31 03:50:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.25 2016/05/31 02:17:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu.c,v 1.26 2016/05/31 03:50:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1025,7 +1025,7 @@ pmu_thread(void *cookie)
 		}
 
 		if (sc->sc_pswitch_pending) {
-			sc->sc_pswitch_pending = 1;
+			sc->sc_pswitch_pending = 0;
 			sysmon_pswitch_event(&sc->sc_lidswitch, 
 	    		    sc->sc_lid_closed ? PSWITCH_EVENT_PRESSED : 
 			    PSWITCH_EVENT_RELEASED);
