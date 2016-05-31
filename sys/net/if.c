@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.336 2016/05/16 01:16:24 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.337 2016/05/31 04:05:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.336 2016/05/16 01:16:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.337 2016/05/31 04:05:01 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2215,8 +2215,8 @@ if_get_byindex(u_int idx, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
-	if (ifp != NULL)
+	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
+	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 	pserialize_read_exit(s);
 
