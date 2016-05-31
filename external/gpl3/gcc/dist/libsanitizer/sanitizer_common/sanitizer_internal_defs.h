@@ -154,11 +154,7 @@ using namespace __sanitizer;  // NOLINT
 # define UNLIKELY(x) (x)
 # define PREFETCH(x) /* _mm_prefetch(x, _MM_HINT_NTA) */
 #else  // _MSC_VER
-# ifdef __NetBSD__
-#  define ALWAYS_INLINE // inline __attribute__((always_inline))
-# else
-#  define ALWAYS_INLINE inline __attribute__((always_inline))
-# endif
+# define ALWAYS_INLINE inline __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
 // Please only use the ALIGNED macro before the type.
 // Using ALIGNED after the variable declaration is not portable!
