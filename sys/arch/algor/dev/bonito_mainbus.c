@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_mainbus.c,v 1.16 2015/06/09 22:47:12 matt Exp $	*/
+/*	$NetBSD: bonito_mainbus.c,v 1.17 2016/05/31 03:51:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.16 2015/06/09 22:47:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_mainbus.c,v 1.17 2016/05/31 03:51:55 dholland Exp $");
 
 #include "opt_algor_p6032.h"
 
@@ -85,6 +85,9 @@ bonito_mainbus_attach(device_t parent, device_t self, void *aux)
 	 */
 #if defined(ALGOR_P6032)
 	bc = &p6032_configuration.ac_bonito;
+#else
+	/* I guess... XXX? */
+	bc = NULL;
 #endif
 	sc->sc_bonito = bc;
 
