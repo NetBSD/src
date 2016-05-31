@@ -11,7 +11,7 @@
 #ifndef SANITIZER_PLATFORM_H
 #define SANITIZER_PLATFORM_H
 
-#if !defined(__linux__) && !defined(__FreeBSD__) && \
+#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__NetBSD__) && \
   !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported"
 #endif
@@ -26,6 +26,12 @@
 # define SANITIZER_FREEBSD 1
 #else
 # define SANITIZER_FREEBSD 0
+#endif
+
+#if defined(__NetBSD__)
+# define SANITIZER_NETBSD 1
+#else
+# define SANITIZER_NETBSD 0
 #endif
 
 #if defined(__APPLE__)
@@ -53,7 +59,7 @@
 # define SANITIZER_ANDROID 0
 #endif
 
-#define SANITIZER_POSIX (SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_MAC)
+#define SANITIZER_POSIX (SANITIZER_NETBSD || SANITIZER_FREEBSD || SANITIZER_LINUX || SANITIZER_MAC)
 
 #if __LP64__ || defined(_WIN64)
 #  define SANITIZER_WORDSIZE 64

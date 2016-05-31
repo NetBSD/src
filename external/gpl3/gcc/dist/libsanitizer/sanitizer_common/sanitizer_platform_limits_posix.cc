@@ -75,7 +75,7 @@
 #include <linux/posix_types.h>
 #endif
 
-#if SANITIZER_FREEBSD
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD
 # include <sys/mount.h>
 # include <sys/sockio.h>
 # include <sys/socket.h>
@@ -90,13 +90,9 @@
 # include <sys/statvfs.h>
 # include <sys/soundcard.h>
 # include <sys/mtio.h>
-# include <sys/consio.h>
-# include <sys/kbio.h>
-# include <sys/link_elf.h>
 # include <netinet/ip_mroute.h>
 # include <netinet/in.h>
 # include <netinet/ip_compat.h>
-# include <net/ethernet.h>
 # include <net/ppp_defs.h>
 # include <glob.h>
 # include <term.h>
@@ -106,6 +102,20 @@
 #undef _KERNEL
 
 #undef INLINE  // to avoid clashes with sanitizers' definitions
+#endif
+
+#if SANITIZER_FREEBSD
+# include <sys/consio.h>
+# include <sys/kbio.h>
+# include <sys/link_elf.h>
+# include <net/ethernet.h>
+#endif
+
+#if SANITIZER_NETBSD
+# include <link_elf.h>
+# include <net/if_ether.h>
+# define statfs statvfs
+# define d_ino d_fileno
 #endif
 
 #if SANITIZER_FREEBSD || SANITIZER_IOS || SANITIZER_NETBSD
@@ -257,7 +267,7 @@ namespace __sanitizer {
 #endif
 
 
-#if (SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD) && !SANITIZER_ANDROID
+#if (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
   unsigned struct_shminfo_sz = sizeof(struct shminfo);
   unsigned struct_shm_info_sz = sizeof(struct shm_info);
   int shmctl_ipc_stat = (int)IPC_STAT;
@@ -359,7 +369,7 @@ namespace __sanitizer {
   unsigned struct_vt_stat_sz = sizeof(struct vt_stat);
 #endif  // SANITIZER_LINUX
 
-#if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_LINUX || SANITIZER_FREEBSD
 #if SOUND_VERSION >= 0x040000
   unsigned struct_copr_buffer_sz = 0;
   unsigned struct_copr_debug_buf_sz = 0;
@@ -377,7 +387,7 @@ namespace __sanitizer {
   unsigned struct_seq_event_rec_sz = sizeof(struct seq_event_rec);
   unsigned struct_synth_info_sz = sizeof(struct synth_info);
   unsigned struct_vt_mode_sz = sizeof(struct vt_mode);
-#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned struct_ax25_parms_struct_sz = sizeof(struct ax25_parms_struct);
@@ -652,7 +662,7 @@ namespace __sanitizer {
   unsigned IOCTL_VT_SENDSIG = VT_SENDSIG;
 #endif // SANITIZER_LINUX
 
-#if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_LINUX || SANITIZER_FREEBSD
   unsigned IOCTL_MTIOCGET = MTIOCGET;
   unsigned IOCTL_MTIOCTOP = MTIOCTOP;
   unsigned IOCTL_SNDCTL_DSP_GETBLKSIZE = SNDCTL_DSP_GETBLKSIZE;
@@ -745,7 +755,7 @@ namespace __sanitizer {
   unsigned IOCTL_VT_RELDISP = VT_RELDISP;
   unsigned IOCTL_VT_SETMODE = VT_SETMODE;
   unsigned IOCTL_VT_WAITACTIVE = VT_WAITACTIVE;
-#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD
 
 #if SANITIZER_LINUX && !SANITIZER_ANDROID
   unsigned IOCTL_CYGETDEFTHRESH = CYGETDEFTHRESH;
@@ -838,7 +848,7 @@ namespace __sanitizer {
   unsigned IOCTL_TIOCSSERIAL = TIOCSSERIAL;
 #endif  // SANITIZER_LINUX && !SANITIZER_ANDROID
 
-#if (SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD) && !SANITIZER_ANDROID
+#if (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
   unsigned IOCTL_GIO_SCRNMAP = GIO_SCRNMAP;
   unsigned IOCTL_KDDISABIO = KDDISABIO;
   unsigned IOCTL_KDENABIO = KDENABIO;
@@ -854,7 +864,7 @@ namespace __sanitizer {
   unsigned IOCTL_PIO_SCRNMAP = PIO_SCRNMAP;
   unsigned IOCTL_SNDCTL_DSP_GETISPACE = SNDCTL_DSP_GETISPACE;
   unsigned IOCTL_SNDCTL_DSP_GETOSPACE = SNDCTL_DSP_GETOSPACE;
-#endif  // (SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD) && !SANITIZER_ANDROID
+#endif  // (SANITIZER_LINUX || SANITIZER_FREEBSD) && !SANITIZER_ANDROID
 
   const int errno_EINVAL = EINVAL;
 // EOWNERDEAD is not present in some older platforms.
@@ -1052,9 +1062,12 @@ CHECK_TYPE_SIZE(ether_addr);
 
 #if (SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD) && !SANITIZER_ANDROID
 CHECK_TYPE_SIZE(ipc_perm);
-# if SANITIZER_FREEBSD || SANITIZER_NETBSD
+# if SANITIZER_FREEBSD
 CHECK_SIZE_AND_OFFSET(ipc_perm, key);
 CHECK_SIZE_AND_OFFSET(ipc_perm, seq);
+# elif SANITIZER_NETBSD
+CHECK_SIZE_AND_OFFSET(ipc_perm, _key);
+CHECK_SIZE_AND_OFFSET(ipc_perm, _seq);
 # else
 CHECK_SIZE_AND_OFFSET(ipc_perm, __key);
 CHECK_SIZE_AND_OFFSET(ipc_perm, __seq);
