@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.101 2016/05/25 20:47:57 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.102 2016/05/31 05:44:19 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd May 25, 2016
+.Dd May 31, 2016
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -315,6 +315,7 @@ privilege may change the value.
 .It kern.maxproc	integer	yes
 .It kern.maxptys	integer	yes
 .It kern.maxvnodes	integer	yes
+.It kern.messages	integer yes
 .It kern.mbuf	node	not applicable
 .It kern.memlock	integer	no
 .It kern.memlock_range	integer	no
@@ -739,6 +740,18 @@ Returns 1 if the
 .St -p1003.1b-93
 Memory Protection Option is available on this system,
 otherwise\ 0.
+.It Li kern.messages
+Kernel console message verbosity.
+See
+.Sy \<sys/reboot.h\>
+.Bl -column "verbosity" "setting" -offset indent
+.It Sy Verbosity       Setting
+.It \ \ \ \ 0  Silent Sy AB_SILENT
+.It \ \ \ \ 1  Quiet Sy AB_QUIET
+.It \ \ \ \ 2  Normal Sy AB_NORMAL
+.It \ \ \ \ 3  Verbose Sy AB_VERBOSE
+.It \ \ \ \ 4  Debug Sy AB_DEBUG
+.El
 .It Li kern.module
 Settings related to kernel modules.
 The third level names for the settings are described below.
