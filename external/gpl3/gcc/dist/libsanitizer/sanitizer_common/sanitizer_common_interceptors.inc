@@ -39,7 +39,7 @@
 #define va_copy(dst, src) ((dst) = (src))
 #endif // _WIN32
 
-#if SANITIZER_FREEBSD
+#if SANITIZER_BSD
 #define pthread_setname_np pthread_set_name_np
 #endif
 
