@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.125 2016/05/31 06:55:02 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -29,6 +29,8 @@
  * SUCH DAMAGE.
  */
 
+#define __MKTEMP_OK__	/* All uses of mktemp have been checked */
+
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #else
@@ -46,11 +48,10 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.124 2015/06/19 17:20:02 christos Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.125 2016/05/31 06:55:02 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
-#define __MKTEMP_OK__	/* All uses of mktemp have been checked */
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
