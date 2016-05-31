@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.52 2016/05/31 06:00:38 pgoyette Exp $
+.\"	$NetBSD: queue.3,v 1.53 2016/05/31 08:24:43 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1041,7 +1041,7 @@ TAILQ_FOREACH(np, \*[Am]head, entries)	/* Forward traversal. */
 					/* Reverse traversal. */
 TAILQ_FOREACH_REVERSE(np, \*[Am]head, tailhead, entries)
 	np-\*[Gt] ...
-					
+
 while (TAILQ_FIRST(\*[Am]head) != NULL)	/* Delete. */
 	TAILQ_REMOVE(\*[Am]head, TAILQ_FIRST(\*[Am]head), entries);
 if (TAILQ_EMPTY(\*[Am]head))			/* Test for emptiness. */
