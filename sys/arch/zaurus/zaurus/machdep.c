@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2013/08/18 21:42:16 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2016/05/31 04:14:12 dholland Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2013/08/18 21:42:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2016/05/31 04:14:12 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1205,7 +1205,7 @@ gettrailer(char *arg)
 		*options++ = '\0';
 
 	/* trim leading blanks */
-	while (*options && *options == ' ')
+	while (*options == ' ')
 		options++;
 
 	return options;
