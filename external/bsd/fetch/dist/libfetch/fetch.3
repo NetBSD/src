@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.3 2014/03/18 18:20:36 riastradh Exp $
+.\" $NetBSD: fetch.3,v 1.4 2016/05/31 16:26:47 abhinav Exp $
 .\"
 .Dd January 22, 2010
 .Dt FETCH 3
@@ -91,7 +91,7 @@
 .Ft int
 .Fn fetchStatURL "const char *URL" "struct url_stat *us" "const char *flags"
 .Ft int
-.Fn fetchListURL "struct url_list *list" "const char *URL" "const char *flags"
+.Fn fetchListURL "struct url_list *list" "const char *URL" "const char *pattern" "const char *flags"
 .Ft fetchIO *
 .Fn fetchXGet "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft fetchIO *
@@ -101,7 +101,7 @@
 .Ft int
 .Fn fetchStat "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft int
-.Fn fetchList "struct url_list *list" "struct url *u" "const char *flags"
+.Fn fetchList "struct url_list *list" "struct url *u" "const char *pattern" "const char *flags"
 .Ft fetchIO *
 .Fn fetchXGetFile "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft fetchIO *
@@ -111,7 +111,7 @@
 .Ft int
 .Fn fetchStatFile "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft int
-.Fn fetchListFile "struct url_list *list" "struct url *u" "const char *flags"
+.Fn fetchListFile "struct url_list *list" "struct url *u" "const char *pattern" "const char *flags"
 .Ft fetchIO *
 .Fn fetchXGetHTTP "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft fetchIO *
@@ -121,7 +121,7 @@
 .Ft int
 .Fn fetchStatHTTP "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft int
-.Fn fetchListHTTP "struct url_list *list" "struct url *u" "const char *flags"
+.Fn fetchListHTTP "struct url_list *list" "struct url *u" "const char *pattern" "const char *flags"
 .Ft fetchIO *
 .Fn fetchXGetFTP "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft fetchIO *
@@ -131,7 +131,7 @@
 .Ft int
 .Fn fetchStatFTP "struct url *u" "struct url_stat *us" "const char *flags"
 .Ft int
-.Fn fetchListFTP "struct url_list *list" "struct url *u" "const char *flags"
+.Fn fetchListFTP "struct url_list *list" "struct url *u" "const char *pattern" "const char *flags"
 .Ft void
 .Fn fetchInitURLList "struct url_list *ul"
 .Ft int
@@ -158,7 +158,7 @@ its components function according to the Common Internet Scheme Syntax
 detailed in RFC 1738.
 A regular expression which produces this syntax is:
 .Bd -literal -offset indent
-\*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]document\*[Gt])?
+\*[Lt]scheme\*[Gt]:(//(\*[Lt]user\*[Gt](:\*[Lt]pwd\*[Gt])?@)?\*[Lt]host\*[Gt](:\*[Lt]port\*[Gt])?)?/(\*[Lt]doc\*[Gt])?
 .Ed
 .Pp
 If the URL does not seem to begin with a scheme name, it is assumed to be a local path.
@@ -169,7 +169,7 @@ all URL schemes.
 For instance, the file scheme only needs the
 .Aq scheme
 and
-.Aq document
+.Aq doc
 components.
 .Fn fetchParseURL
 quotes any unsafe character in the URL automatically.
