@@ -14,7 +14,7 @@
 
 // For now, only support Linux, FreeBSD and Darwin. Other platforms should
 // be easy to add, and probably work as-is.
-#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__APPLE__)
+#if !defined(__linux__) && !defined(__FreeBSD__) && !defined(__APPLE__) && !defined(__NetBSD__)
 #error "UBSan not supported for this platform!"
 #endif
 

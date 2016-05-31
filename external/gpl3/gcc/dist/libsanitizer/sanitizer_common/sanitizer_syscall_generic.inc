@@ -9,13 +9,23 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if SANITIZER_FREEBSD
+#ifdef SANITIZER_NETBSD
+# define SYS_stat SYS___stat50
+# define SYS_lstat SYS___lstat50
+# define SYS_fstat SYS___fstat50
+# define SYS_gettimeofday SYS___gettimeofday50
+# define SYS_wait4 SYS___wait450
+# define SYS_getdents SYS___getdents30
+# define SYS_sigaltstack SYS___sigaltstack14
+# define SYS_sigprocmask SYS___sigprocmask14
+#endif
+#if SANITIZER_FREEBSD || SANITIZER_NETBSD
 # define SYSCALL(name) SYS_ ## name
 #else
 # define SYSCALL(name) __NR_ ## name
 #endif
 
-#if SANITIZER_FREEBSD && defined(__x86_64__)
+#if (SANITIZER_FREEBSD && defined(__x86_64__)) || SANITIZER_NETBSD
 # define internal_syscall __syscall
 # else
 # define internal_syscall syscall
