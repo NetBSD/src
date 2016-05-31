@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2014/07/16 14:05:04 nakayama Exp $
+#	$NetBSD: Makefile,v 1.18 2016/05/31 02:35:49 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -89,6 +89,8 @@ MAN=	FcAtomicCreate.3 FcAtomicDeleteNew.3 FcAtomicDestroy.3 FcAtomicLock.3 \
 	FcLangSetDel.3 FcLangSetSubtract.3 FcLangSetUnion.3
 
 MAN+=	fonts-conf.5
+
+MLINKS= fonts-conf.5 fonts.conf.5
 
 LIBDPLIBS=\
 	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
