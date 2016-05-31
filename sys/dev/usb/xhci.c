@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.46 2016/05/10 15:14:03 pooka Exp $	*/
+/*	$NetBSD: xhci.c,v 1.47 2016/05/31 09:22:11 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.46 2016/05/10 15:14:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.47 2016/05/31 09:22:11 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2559,7 +2559,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	}
 
 	xhci_trb_put(&xr->xr_trb[xr->xr_ep], parameter, status, control);
-	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
+	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * xr->xr_ep, XHCI_TRB_SIZE * 1,
 	    BUS_DMASYNC_PREWRITE);
 	xr->xr_cookies[xr->xr_ep] = cookie;
 
