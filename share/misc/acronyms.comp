@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.165 2016/05/15 23:54:19 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.166 2016/05/31 23:15:05 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -377,6 +377,7 @@ EABI	embedded-application binary interface
 EAI	Email Address Internationalization
 EAI	Enterprise Application Integration
 EAP	Extensible Authentication Protocol
+EAPOL	EAP over Lan
 EBCDIC	Extended Binary Coded Decimal Interchange Code
 EBR	extended boot record
 EC	elliptical curve
@@ -919,6 +920,7 @@ PDP	page {descriptor,directory} page
 PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
+PEAP	Protected EAP
 PECI	platform environment control interface
 PEP	protocol extension protocol
 PER	packed encoding rules
@@ -1062,6 +1064,7 @@ RR	round robin
 RS	relay station
 RSA	Rivest, Shamir, [and] Adleman
 RSIP	Realm Specific IP
+RSN	Robust Secure Network
 RSS	really simple syndication
 RSS	residual sum of squares
 RT	real time
