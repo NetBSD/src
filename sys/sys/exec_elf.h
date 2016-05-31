@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.154 2016/05/24 00:49:55 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.155 2016/05/31 20:02:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1059,6 +1059,7 @@ struct netbsd_elfcore_procinfo {
 #define ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
 #define ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
 #define ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
+#define	ElfW(x)		CONCAT(Elf,CONCAT(ELFSIZE,CONCAT(_,x)))
 #endif
 
 #if defined(ELFSIZE) && (ELFSIZE == 32)
