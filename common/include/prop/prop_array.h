@@ -1,4 +1,4 @@
-/*     $NetBSD: prop_array.h,v 1.13 2011/09/30 22:08:18 jym Exp $    */
+/*     $NetBSD: prop_array.h,v 1.14 2016/05/31 09:29:25 pgoyette Exp $    */
 
 /*-
  * Copyright (c) 2006, 2009 The NetBSD Foundation, Inc.
@@ -144,11 +144,13 @@ bool		prop_array_add_uint32(prop_array_t, uint32_t);
 bool		prop_array_add_int64(prop_array_t, int64_t);
 bool		prop_array_add_uint64(prop_array_t, uint64_t);
 
+bool		prop_array_add_cstring(prop_array_t, const char *);
 bool		prop_array_get_cstring(prop_array_t, unsigned int,
 					     char **);
 bool		prop_array_set_cstring(prop_array_t, unsigned int,
 					    const char *);
 
+bool		prop_array_add_cstring_nocopy(prop_array_t, const char *);
 bool		prop_array_get_cstring_nocopy(prop_array_t,
                                                    unsigned int,
 						   const char **);

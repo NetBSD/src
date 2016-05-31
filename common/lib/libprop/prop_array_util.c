@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.4 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.5 2016/05/31 09:29:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -201,6 +201,21 @@ TEMPLATE(64)
 #undef TEMPLATE
 
 #define	TEMPLATE(variant, qualifier)					\
+bool									\
+prop_array_add_cstring ## variant (prop_array_t array,			\
+					const char *cp)			\
+{									\
+	prop_string_t str;						\
+	bool rv;							\
+									\
+	str = prop_string_create_cstring ## variant (cp);		\
+	if (str == NULL)						\
+		return false;						\
+	rv = prop_array_add(array, str);				\
+	prop_object_release(str);					\
+	return rv;							\
+}									\
+									\
 bool								        \
 prop_array_get_cstring ## variant (prop_array_t array,		        \
 					unsigned int indx,		\
