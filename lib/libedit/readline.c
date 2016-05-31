@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.133 2016/05/13 15:55:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.134 2016/05/31 19:25:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.133 2016/05/13 15:55:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.134 2016/05/31 19:25:17 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1190,7 +1190,7 @@ stifle_history(int max)
 		if (max < len)
 			history_base += len - max;
 		for (i = 0; i < len - max; i++) {
-			he = remove_history(i);
+			he = remove_history(0);
 			el_free(he->data);
 			el_free((void *)(unsigned long)he->line);
 			el_free(he);
