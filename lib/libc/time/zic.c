@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.57 2016/03/15 15:16:01 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.58 2016/05/31 03:47:49 dholland Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.57 2016/03/15 15:16:01 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.58 2016/05/31 03:47:49 dholland Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -2551,6 +2551,7 @@ error(_("can't determine time zone abbreviation to use just after until time"));
 		*/
 		struct rule xr;
 		struct attype *lastat;
+		memset(&xr, 0, sizeof(xr));
 		xr.r_month = TM_JANUARY;
 		xr.r_dycode = DC_DOM;
 		xr.r_dayofmonth = 1;
