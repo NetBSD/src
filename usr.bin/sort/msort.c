@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.30 2010/02/05 21:58:42 enami Exp $	*/
+/*	$NetBSD: msort.c,v 1.31 2016/06/01 02:37:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #include "sort.h"
 #include "fsort.h"
 
-__RCSID("$NetBSD: msort.c,v 1.30 2010/02/05 21:58:42 enami Exp $");
+__RCSID("$NetBSD: msort.c,v 1.31 2016/06/01 02:37:55 kre Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -365,7 +365,7 @@ insert(struct mfile **flist, struct mfile *rec, int ttop, int delete)
  * check order on one file
  */
 void
-order(struct filelist *filelist, struct field *ftbl)
+order(struct filelist *filelist, struct field *ftbl, int quiet)
 {
 	get_func_t get = SINGL_FLD ? makeline : makekey;
 	RECHEADER *crec, *prec, *trec;
@@ -387,10 +387,14 @@ order(struct filelist *filelist, struct field *ftbl)
 		exit(0);
 	while (get(fp, crec, crec_end, ftbl) == 0) {
 		if (0 < (c = cmp(prec, crec))) {
+			if (quiet)
+				exit(1);
 			crec->data[crec->length-1] = 0;
 			errx(1, "found disorder: %s", crec->data+crec->offset);
 		}
 		if (UNIQUE && !c) {
+			if (quiet)
+				exit(1);
 			crec->data[crec->length-1] = 0;
 			errx(1, "found non-uniqueness: %s",
 			    crec->data+crec->offset);
