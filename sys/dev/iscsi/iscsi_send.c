@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.16 2016/05/29 13:51:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.17 2016/06/01 04:19:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -145,6 +145,7 @@ reassign_tasks(connection_t *oldconn)
 	pdu_t *opdu;
 	int no_tm = 1;
 	int rc = 1;
+	uint32_t sn;
 
 	if ((conn = assign_connection(sess, FALSE)) == NULL) {
 		DEB(1, ("Reassign_tasks of Session %d, connection %d failed, "
@@ -255,14 +256,12 @@ reassign_tasks(connection_t *oldconn)
 			mutex_enter(&sess->lock);
 			if (ccb->CmdSN < sess->ExpCmdSN) {
 				pdu = ccb->pdu_waiting;
+				sn = get_sernum(sess, !(pdu->pdu.Opcode & OP_IMMEDIATE));
 
 				/* update CmdSN */
 				DEBC(conn, 1, ("Resend Updating CmdSN - old %d, new %d\n",
 					   ccb->CmdSN, sess->CmdSN));
-				ccb->CmdSN = sess->CmdSN;
-				if (!(pdu->pdu.Opcode & OP_IMMEDIATE)) {
-					sess->CmdSN++;
-				}
+				ccb->CmdSN = sn;
 				pdu->pdu.p.command.CmdSN = htonl(ccb->CmdSN);
 			}
 			mutex_exit(&sess->lock);
@@ -1351,7 +1350,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	mutex_enter(&sess->lock);
 	while (/*CONSTCOND*/ISCSI_THROTTLING_ENABLED &&
 	    /*CONSTCOND*/!ISCSI_SERVER_TRUSTED &&
-	    !sn_a_le_b(sess->CmdSN, sess->MaxCmdSN)) {
+	    !sernum_in_window(sess)) {
 
 		ccb->disp = disp;
 		if (waitok)
@@ -1419,9 +1418,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	ccb->flags |= CCBF_REASSIGN;
 
 	mutex_enter(&sess->lock);
-	ccb->CmdSN = sess->CmdSN;
-	if (!immed)
-		sess->CmdSN++;
+	ccb->CmdSN = get_sernum(sess, !immed);
 	mutex_exit(&sess->lock);
 
 	pdu->p.command.CmdSN = htonl(ccb->CmdSN);
