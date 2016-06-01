@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2035 2016/05/14 14:39:39 spz Exp $
+#	$NetBSD: mi,v 1.2036 2016/06/01 17:10:04 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3147,8 +3147,8 @@
 ./usr/lib/libamu_p.a				comp-obsolete		obsolete
 ./usr/lib/libarchive.a				comp-c-lib		compatfile
 ./usr/lib/libarchive_p.a			comp-c-proflib		compatfile,profile
-./usr/lib/libasan.a				comp-c-lib		compatfile,gcc=48
-./usr/lib/libasan_p.a				comp-c-proflib		compatfile,gcc=48,profile
+./usr/lib/libasan.a				comp-c-lib		compatfile
+./usr/lib/libasan_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libasn1.a				comp-krb5-lib		compatfile,kerberos
 ./usr/lib/libasn1_p.a				comp-krb5-proflib	compatfile,kerberos,profile
 ./usr/lib/libatf-c++.a				comp-atf-lib		compatfile,atf
