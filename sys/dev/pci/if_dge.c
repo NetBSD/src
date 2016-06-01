@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.41 2016/02/09 08:32:11 ozaki-r Exp $ */
+/*	$NetBSD: if_dge.c,v 1.42 2016/06/01 11:28:45 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.41 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.42 2016/06/01 11:28:45 pgoyette Exp $");
 
 
 
@@ -256,6 +256,7 @@ struct dge_softc {
 	int sc_bus_speed;		/* PCI/PCIX bus speed */
 	int sc_pcix_offset;		/* PCIX capability register offset */
 
+	const struct dge_product *sc_dgep; /* Pointer to the dge_product entry */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pt;
 	int sc_mmrbc;			/* Max PCIX memory read byte count */
@@ -643,13 +644,49 @@ CFATTACH_DECL_NEW(dge, sizeof(struct dge_softc),
 static char (*dge_txseg_evcnt_names)[DGE_NTXSEGS][8 /* "txseg00" + \0 */];
 #endif /* DGE_EVENT_COUNTERS */
 
+/*
+ * Devices supported by this driver.
+ */
+static const struct dge_product {
+  pci_vendor_id_t      dgep_vendor;
+  pci_product_id_t  dgep_product;
+  const char     *dgep_name;
+  int         dgep_flags;
+#define DGEP_F_10G_LR     0x01
+#define DGEP_F_10G_SR     0x02
+} dge_products[] = {
+  { PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX,
+    "Intel i82597EX 10GbE-LR Ethernet",
+    DGEP_F_10G_LR },
+
+  { PCI_VENDOR_INTEL,  PCI_PRODUCT_INTEL_82597EX_SR,
+    "Intel i82597EX 10GbE-SR Ethernet",
+    DGEP_F_10G_SR },
+
+  { 0,        0,
+    NULL,
+    0 },
+};
+
+static const struct dge_product *
+dge_lookup(const struct pci_attach_args *pa)
+{
+	const struct dge_product *dgep;
+
+	for (dgep = dge_products; dgep->dgep_name != NULL; dgep++) {
+		if (PCI_VENDOR(pa->pa_id) == dgep->dgep_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == dgep->dgep_product)
+			return dgep;
+		}
+	return NULL;
+}
+
 static int
 dge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82597EX)
+	if (dga_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
@@ -670,6 +707,13 @@ dge_attach(device_t parent, device_t self, void *aux)
 	pcireg_t preg, memtype;
 	uint32_t reg;
 	char intrbuf[PCI_INTRSTR_LEN];
+	const struct dge_product *dgep;
+
+	sc->sc_dgep = dgep = dge_lookup(pa);
+	if (dgep == NULL) {
+		printf("\n");
+		panic("dge_attach: impossible");
+	}
 
 	sc->sc_dev = self;
 	sc->sc_dmat = pa->pa_dmat;
@@ -677,7 +721,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pt = pa->pa_tag;
 
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
-		"Intel i82597EX 10GbE-LR Ethernet", 1);
+		dgep->dgep_name, 1);
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, DGE_PCI_BAR);
         if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
@@ -863,8 +907,13 @@ dge_attach(device_t parent, device_t self, void *aux)
 	 */
         ifmedia_init(&sc->sc_media, IFM_IMASK, dge_xgmii_mediachange,
             dge_xgmii_mediastatus);
-        ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_LR, 0, NULL);
-        ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_LR);
+	if (dgep->dgep_flags & DGEP_F_10G_SR) {
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_SR, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_SR);
+	} else { /* XXX default is LR */
+		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_10G_LR, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_10G_LR);
+	}
 
 	ifp = &sc->sc_ethercom.ec_if;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
@@ -2358,7 +2407,11 @@ dge_xgmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct dge_softc *sc = ifp->if_softc;
 
 	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER|IFM_10G_LR;
+	if (sc->sc_dgep->dgep_flags & DGEP_F_10G_SR ) {
+		ifmr->ifm_active = IFM_ETHER|IFM_10G_SR;
+	} else {
+		ifmr->ifm_active = IFM_ETHER|IFM_10G_LR;
+	}
 
 	if (CSR_READ(sc, DGE_STATUS) & STATUS_LINKUP)
 		ifmr->ifm_status |= IFM_ACTIVE;
