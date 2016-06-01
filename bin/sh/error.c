@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.38 2012/03/15 02:02:20 joerg Exp $	*/
+/*	$NetBSD: error.c,v 1.39 2016/06/01 02:50:02 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.38 2012/03/15 02:02:20 joerg Exp $");
+__RCSID("$NetBSD: error.c,v 1.39 2016/06/01 02:50:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,6 +179,11 @@ error(const char *msg, ...)
 {
 	va_list ap;
 
+	/*
+	 * On error, we certainly never want exit(0)...
+	 */
+	if (exerrno == 0)
+		exerrno = 1;
 	va_start(ap, msg);
 	exverror(EXERROR, msg, ap);
 	/* NOTREACHED */
