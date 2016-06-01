@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.62 2016/06/01 02:37:55 kre Exp $	*/
+/*	$NetBSD: sort.c,v 1.63 2016/06/01 08:24:03 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-__RCSID("$NetBSD: sort.c,v 1.62 2016/06/01 02:37:55 kre Exp $");
+__RCSID("$NetBSD: sort.c,v 1.63 2016/06/01 08:24:03 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -404,7 +404,7 @@ usage(const char *msg)
 	(void)fprintf(stderr,
 	    "             [-t char] [file ...]\n");
 	(void)fprintf(stderr,
-	    "   or: %s -[cC] [-bdfilnru] [-k kstart[,kend]] [-o output]"
+	    "   or: %s -C|-c [-bdfilnru] [-k kstart[,kend]] [-o output]"
 	    " [-R char]\n", pn);
 	(void)fprintf(stderr,
 	    "             [-t char] [file]\n");
