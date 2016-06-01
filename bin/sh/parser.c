@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.119 2016/05/09 20:36:07 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.120 2016/06/01 02:47:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.119 2016/05/09 20:36:07 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.120 2016/06/01 02:47:05 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -488,12 +488,16 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		n1->type = NSUBSHELL;
 		n1->nredir.n = list(0, 0);
 		n1->nredir.redirect = NULL;
+		if (n1->nredir.n == NULL)
+			synexpect(-1, 0);
 		if (readtoken() != TRP)
 			synexpect(TRP, 0);
 		checkkwd = 1;
 		break;
 	case TBEGIN:
 		n1 = list(0, 0);
+		if (posix && n1 == NULL)
+			synexpect(-1, 0);
 		if (readtoken() != TEND)
 			synexpect(TEND, 0);
 		checkkwd = 1;
@@ -620,6 +624,9 @@ simplecmd(union node **rpp, union node *redir)
 			break;
 		}
 	}
+
+	if (args == NULL && redir == NULL)
+		synexpect(-1, 0);
 	*app = NULL;
 	*rpp = NULL;
 	n = stalloc(sizeof(struct ncmd));
