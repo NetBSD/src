@@ -30,7 +30,7 @@ void ReadProcMaps(ProcSelfMapsBuff *proc_maps) {
   size_t MmapedSize = Size * 4 / 3;
   void *VmMap = MmapOrDie(MmapedSize, "ReadProcMaps()");
   Size = MmapedSize;
-  Err = sysctl(Mib, 4, VmMap, &Size, NULL, 0);
+  Err = sysctl(Mib, __arraycount(Mib), VmMap, &Size, NULL, 0);
   CHECK_EQ(Err, 0);
 
   proc_maps->data = (char*)VmMap;
