@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.18 2016/06/01 05:13:07 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.19 2016/06/01 05:31:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1221,7 +1221,7 @@ send_task_management(connection_t *conn, ccb_t *ref_ccb, struct scsipi_xfer *xs,
 	/* can only happen if terminating... */
 	if (ccb == NULL)
 		return conn->terminating;
-	ppdu = get_pdu(conn, TRUE);
+	ppdu = get_pdu(conn, xs == NULL);
 	if (ppdu == NULL) {
 		free_ccb(ccb);
 		return conn->terminating;
@@ -1371,7 +1371,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 	}
 	mutex_exit(&sess->lock);
 
-	ppdu = get_pdu(conn, FALSE);
+	ppdu = get_pdu(conn, waitok);
 	if (ppdu == NULL) {
 		DEBOUT(("No PDU for send_command, ccb = %p\n",ccb));
 		ccb->disp = disp;
