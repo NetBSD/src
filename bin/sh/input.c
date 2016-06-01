@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.50 2016/05/07 20:06:30 kre Exp $	*/
+/*	$NetBSD: input.c,v 1.51 2016/06/01 05:11:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.50 2016/05/07 20:06:30 kre Exp $");
+__RCSID("$NetBSD: input.c,v 1.51 2016/06/01 05:11:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: input.c,v 1.50 2016/05/07 20:06:30 kre Exp $");
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 /*
  * This file implements the input routines used by the parser.
@@ -392,6 +393,7 @@ setinputfile(const char *fname, int push)
 	unsigned char magic[4];
 	int fd;
 	int fd2;
+	struct stat sb;
 
 	INTOFF;
 	if ((fd = open(fname, O_RDONLY)) < 0)
@@ -402,7 +404,8 @@ setinputfile(const char *fname, int push)
 	 * avoid that message. The first lseek tries to make sure that
 	 * we can later rewind the file.
 	 */
-	if (lseek(fd, 0, SEEK_SET) == 0) {
+	if (fstat(fd, &sb) == 0 && S_ISREG(sb.st_mode) &&
+	    lseek(fd, 0, SEEK_SET) == 0) {
 		if (read(fd, magic, 4) == 4) {
 			if (memcmp(magic, "\177ELF", 4) == 0) {
 				(void)close(fd);
