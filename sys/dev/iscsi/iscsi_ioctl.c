@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.14 2016/05/29 13:51:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.15 2016/06/01 04:07:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1645,7 +1645,10 @@ iscsi_cleanup_thread(void *par)
 			mutex_destroy(&conn->lock);
 			free(conn, M_DEVBUF);
 
-			--sess->total_connections;
+			if (--sess->total_connections == 0) {
+				DEB(1, ("Cleanup: session %d\n", sess->id));
+				TAILQ_INSERT_HEAD(&iscsi_cleanups_list, sess, sessions);
+			}
 
 			TAILQ_FOREACH_SAFE(sess, &iscsi_cleanups_list, sessions, nxt) {
 				if (sess->total_connections != 0)
