@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1250 2016/05/30 04:17:30 nonaka Exp $
+$NetBSD: pcidevs,v 1.1251 2016/06/01 11:00:15 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3062,6 +3062,7 @@ product INTEL 82840_PCI		0x1a24	82840 PCI
 product INTEL 82845_HB		0x1a30	82845 Host
 product INTEL 82845_AGP		0x1a31	82845 AGP
 product INTEL 5000_DMA		0x1a38	5000 Series Chipset DMA Engine
+product INTEL 82597EX_SR	0x1a48	PRO/10GbE SR Server Adapter
 product INTEL 6SERIES_SATA_1	0x1c00	6 Series SATA
 product INTEL 6SERIES_SATA_2	0x1c01	6 Series SATA
 product INTEL 6SERIES_AHCI_1	0x1c02	6 Series AHCI
