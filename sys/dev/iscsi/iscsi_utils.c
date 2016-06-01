@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.10 2016/06/01 04:19:08 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.11 2016/06/01 05:13:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -403,7 +403,7 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 		ccb, ccb->disp));
 #endif
 
-	callout_stop(&ccb->timeout);
+	ccb_timeout_stop(ccb);
 
 	mutex_enter(&conn->lock);
 	disp = ccb->disp;
