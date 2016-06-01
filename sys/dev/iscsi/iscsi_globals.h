@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.14 2016/05/29 13:51:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.15 2016/06/01 04:19:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -289,7 +289,7 @@ struct ccb_s {
 	int			sense_len_got; /* actual sense data length */
 
 	pdu_t			*pdu_waiting; /* PDU waiting to be ack'ed */
-	uint32_t		CmdSN; /* CmdSN associated with waiting PDU */
+	volatile uint32_t	CmdSN; /* CmdSN associated with waiting PDU */
 
 	int			flags;
 	connection_t		*connection; /* connection for CCB */
@@ -363,7 +363,7 @@ struct connection_s {
 					/* if closing down: status */
 	int				recover; /* recovery count */
 		/* (reset on first successful data transfer) */
-	unsigned			usecount; /* number of active CCBs */
+	volatile unsigned		usecount; /* number of active CCBs */
 
 	bool				destroy; /* conn will be destroyed */
 	bool				in_session;
@@ -723,6 +723,9 @@ void free_pdu(pdu_t *);
 void init_sernum(sernum_buffer_t *);
 int add_sernum(sernum_buffer_t *, uint32_t);
 uint32_t ack_sernum(sernum_buffer_t *, uint32_t);
+
+uint32_t get_sernum(session_t *, bool);
+int sernum_in_window(session_t *);
 
 /* in iscsi_text.c */
 
