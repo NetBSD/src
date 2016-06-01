@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.35 2015/08/05 07:10:03 mrg Exp $	*/
+/*	$NetBSD: sort.h,v 1.36 2016/06/01 02:37:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ int	 makekey(FILE *, RECHEADER *, u_char *, struct field *);
 int	 makeline(FILE *, RECHEADER *, u_char *, struct field *);
 void	 makeline_copydown(RECHEADER *);
 int	 optval(int, int);
-__dead void	 order(struct filelist *, struct field *);
+__dead void	 order(struct filelist *, struct field *, int);
 void	 putline(const RECHEADER *, FILE *);
 void	 putrec(const RECHEADER *, FILE *);
 void	 putkeydump(const RECHEADER *, FILE *);
