@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.97 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.98 2016/06/01 04:54:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.97 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.98 2016/06/01 04:54:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,17 @@ Static const struct umass_quirk umass_quirks[] = {
 
 	/* Meizu M6 doesn't like synchronize-cache, see PR 40442 */
 	{ { USB_VENDOR_MEIZU, USB_PRODUCT_MEIZU_M6_SL },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
+	 * SanDisk Cruzer rejects cache sync.
+	 */
+	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_CRUZER },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  0,
 	  PQUIRK_NOSYNCCACHE,
