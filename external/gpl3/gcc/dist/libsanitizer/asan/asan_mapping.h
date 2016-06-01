@@ -97,7 +97,7 @@ static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 # if SANITIZER_WORDSIZE == 32
 #  if defined(__mips__)
 #    define SHADOW_OFFSET kMIPS32_ShadowOffset32
-#  elif SANITIZER_FREEBSD || SANITIZER_NETBSD
+#  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset32
 #  else
 #    if SANITIZER_IOS
@@ -111,7 +111,7 @@ static const u64 kFreeBSD_ShadowOffset64 = 1ULL << 46;  // 0x400000000000
 #    define SHADOW_OFFSET kAArch64_ShadowOffset64
 #  elif defined(__powerpc64__)
 #    define SHADOW_OFFSET kPPC64_ShadowOffset64
-#  elif SANITIZER_FREEBSD || SANITIZER_NETBSD
+#  elif SANITIZER_FREEBSD
 #    define SHADOW_OFFSET kFreeBSD_ShadowOffset64
 #  elif SANITIZER_MAC
 #   define SHADOW_OFFSET kDefaultShadowOffset64
