@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.9 2016/05/29 13:51:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.10 2016/06/01 04:19:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -678,3 +678,35 @@ ack_sernum(sernum_buffer_t *buff, uint32_t num)
 
 	return buff->ExpSN;
 }
+
+/*
+ * next_sernum:
+ *   Return the current command serial number of the session
+ *   and optionally increment it for the next query
+ */
+uint32_t
+get_sernum(session_t *sess, bool bump)
+{
+	uint32_t sn;
+
+	KASSERT(mutex_owned(&sess->lock));
+
+	sn = sess->CmdSN;
+	if (bump)
+		atomic_inc_32(&sess->CmdSN);
+	return sn;
+}
+
+/*
+ * sernum_in_window:
+ *   Check wether serial number is in send window
+ *
+ */
+int
+sernum_in_window(session_t *sess)
+{
+
+	KASSERT(mutex_owned(&sess->lock));
+	return sn_a_le_b(sess->CmdSN, sess->MaxCmdSN);
+}
+
