@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.42 2016/06/01 11:28:45 pgoyette Exp $ */
+/*	$NetBSD: if_dge.c,v 1.43 2016/06/01 12:45:46 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.42 2016/06/01 11:28:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.43 2016/06/01 12:45:46 pgoyette Exp $");
 
 
 
@@ -686,7 +686,7 @@ dge_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (dga_lookup(pa) != NULL)
+	if (dge_lookup(pa) != NULL)
 		return (1);
 
 	return (0);
