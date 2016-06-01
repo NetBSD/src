@@ -85,7 +85,10 @@ along with GCC; see the file COPYING3.  If not see
      %{!static: \
        %{rdynamic:-export-dynamic} \
        -dynamic-linker /usr/libexec/ld.elf_so} \
-     %{static:-static}}"
+     %{static:-static}} \
+   %{!nostdlib:%{!nodefaultlibs:\
+     %{%:sanitize(address): -lasan } \
+     %{%:sanitize(undefined): -lubsan}}}"
 
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
