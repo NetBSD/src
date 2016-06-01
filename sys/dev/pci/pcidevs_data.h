@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1242 2016/05/30 04:18:20 nonaka Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1243 2016/06/01 11:01:36 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1250 2016/05/30 04:17:30 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1251 2016/06/01 11:00:15 pgoyette Exp
  */
 
 /*
@@ -4880,6 +4880,8 @@ static const uint16_t pci_products[] = {
 	    19762, 8157, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_DMA, 
 	    17799, 6289, 10122, 19768, 18083, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX_SR, 
+	    18374, 18804, 6038, 5722, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_1, 
 	    13353, 6289, 8338, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6SERIES_SATA_2, 
@@ -11704,7 +11706,7 @@ static const char pci_words[] = { "."
 	    "3c595-MII\0" /* 1 refs @ 5694 */
 	    "3c555\0" /* 1 refs @ 5704 */
 	    "3CRWE154G72\0" /* 1 refs @ 5710 */
-	    "Adapter\0" /* 74 refs @ 5722 */
+	    "Adapter\0" /* 75 refs @ 5722 */
 	    "3c556B\0" /* 1 refs @ 5730 */
 	    "3CCFEM656\0" /* 2 refs @ 5737 */
 	    "56k\0" /* 5 refs @ 5747 */
@@ -11739,7 +11741,7 @@ static const char pci_words[] = { "."
 	    "OfficeConnect\0" /* 1 refs @ 6010 */
 	    "10/100B\0" /* 1 refs @ 6024 */
 	    "3c980\0" /* 1 refs @ 6032 */
-	    "Server\0" /* 3 refs @ 6038 */
+	    "Server\0" /* 4 refs @ 6038 */
 	    "3c980C-TXM\0" /* 1 refs @ 6045 */
 	    "3c990-TX\0" /* 1 refs @ 6056 */
 	    "3XP\0" /* 8 refs @ 6065 */
@@ -13480,7 +13482,7 @@ static const char pci_words[] = { "."
 	    "PRO/Wireless\0" /* 7 refs @ 18353 */
 	    "2100\0" /* 1 refs @ 18366 */
 	    "3B\0" /* 1 refs @ 18371 */
-	    "PRO/10GbE\0" /* 1 refs @ 18374 */
+	    "PRO/10GbE\0" /* 2 refs @ 18374 */
 	    "LR\0" /* 2 refs @ 18384 */
 	    "i82801H\0" /* 8 refs @ 18387 */
 	    "(M_AMT)\0" /* 1 refs @ 18395 */
@@ -13533,7 +13535,7 @@ static const char pci_words[] = { "."
 	    "82598EB\0" /* 3 refs @ 18774 */
 	    "i82567LM-3\0" /* 1 refs @ 18782 */
 	    "i82567LF-3\0" /* 1 refs @ 18793 */
-	    "SR\0" /* 1 refs @ 18804 */
+	    "SR\0" /* 2 refs @ 18804 */
 	    "Quad-1000baseT\0" /* 1 refs @ 18807 */
 	    "(PM)\0" /* 1 refs @ 18822 */
 	    "i82567LM-4\0" /* 1 refs @ 18827 */

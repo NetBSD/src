@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1243 2016/05/30 04:18:20 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1244 2016/06/01 11:01:36 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1250 2016/05/30 04:17:30 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1251 2016/06/01 11:00:15 pgoyette Exp
  */
 
 /*
@@ -3069,6 +3069,7 @@
 #define	PCI_PRODUCT_INTEL_82845_HB	0x1a30		/* 82845 Host */
 #define	PCI_PRODUCT_INTEL_82845_AGP	0x1a31		/* 82845 AGP */
 #define	PCI_PRODUCT_INTEL_5000_DMA	0x1a38		/* 5000 Series Chipset DMA Engine */
+#define	PCI_PRODUCT_INTEL_82597EX_SR	0x1a48		/* PRO/10GbE SR Server Adapter */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_1	0x1c00		/* 6 Series SATA */
 #define	PCI_PRODUCT_INTEL_6SERIES_SATA_2	0x1c01		/* 6 Series SATA */
 #define	PCI_PRODUCT_INTEL_6SERIES_AHCI_1	0x1c02		/* 6 Series AHCI */
