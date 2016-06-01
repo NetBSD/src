@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.61 2011/09/16 15:39:29 joerg Exp $	*/
+/*	$NetBSD: sort.c,v 1.62 2016/06/01 02:37:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
  The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
-__RCSID("$NetBSD: sort.c,v 1.61 2011/09/16 15:39:29 joerg Exp $");
+__RCSID("$NetBSD: sort.c,v 1.62 2016/06/01 02:37:55 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -117,7 +117,7 @@ int
 main(int argc, char *argv[])
 {
 	int ch, i, stdinflag = 0;
-	char cflag = 0, mflag = 0;
+	char mode = 0;
 	char *outfile, *outpath = 0;
 	struct field *fldtab;
 	size_t fldtab_sz, fld_cnt;
@@ -145,9 +145,9 @@ main(int argc, char *argv[])
 	fldtab = emalloc(fldtab_sz * sizeof(*fldtab));
 	memset(fldtab, 0, fldtab_sz * sizeof(*fldtab));
 
-#define SORT_OPTS "bcdD:fHik:lmno:rR:sSt:T:ux"
+#define SORT_OPTS "bcCdD:fHik:lmno:rR:sSt:T:u"
 
-	/* Convert "+field" args to -f format */
+	/* Convert "+field" args to -k format */
 	fixit(&argc, argv, SORT_OPTS);
 
 	if (!(tmpdir = getenv("TMPDIR")))
@@ -158,8 +158,10 @@ main(int argc, char *argv[])
 		case 'b':
 			fldtab[0].flags |= BI | BT;
 			break;
-		case 'c':
-			cflag = 1;
+		case 'c': case 'C': case 'm':
+			if (mode)
+				usage("Incompatible operation modes");
+			mode = ch;
 			break;
 		case 'D': /* Debug flags */
 			for (i = 0; optarg[i]; i++)
@@ -179,14 +181,32 @@ main(int argc, char *argv[])
 
 			setfield(optarg, &fldtab[++fld_cnt], fldtab[0].flags);
 			break;
-		case 'm':
-			mflag = 1;
-			break;
 		case 'o':
 			outpath = optarg;
 			break;
 		case 'r':
 			REVERSE = 1;
+			break;
+		case 'R':
+			if (REC_D != '\n')
+				usage("multiple record delimiters");
+			REC_D = *optarg;
+			if (optarg[1] != '\0') {
+				char *ep;
+				int t = 0;
+
+				if (optarg[0] == '\\')
+					optarg++, t = 8;
+				REC_D = (int)strtol(optarg, &ep, t);
+				if (*ep != '\0' || REC_D < 0 ||
+				    REC_D >= (int)__arraycount(d_mask))
+					errx(2, "invalid record delimiter %s",
+					    optarg);
+			}
+			if (REC_D == '\n')
+				break;
+			d_mask['\n'] = d_mask[' '];
+			d_mask[REC_D] = REC_D_F;
 			break;
 		case 's':
 			/*
@@ -213,29 +233,10 @@ main(int argc, char *argv[])
 			SEP_FLAG = 1;
 			d_mask[' '] &= ~FLD_D;
 			d_mask['\t'] &= ~FLD_D;
+			d_mask['\n'] &= ~FLD_D;
 			d_mask[(u_char)*optarg] |= FLD_D;
 			if (d_mask[(u_char)*optarg] & REC_D_F)
 				errx(2, "record/field delimiter clash");
-			break;
-		case 'R':
-			if (REC_D != '\n')
-				usage("multiple record delimiters");
-			REC_D = *optarg;
-			if (REC_D == '\n')
-				break;
-			if (optarg[1] != '\0') {
-				char *ep;
-				int t = 0;
-				if (optarg[0] == '\\')
-					optarg++, t = 8;
-				REC_D = (int)strtol(optarg, &ep, t);
-				if (*ep != '\0' || REC_D < 0 ||
-				    REC_D >= (int)__arraycount(d_mask))
-					errx(2, "invalid record delimiter %s",
-					    optarg);
-			}
-			d_mask['\n'] = d_mask[' '];
-			d_mask[REC_D] = REC_D_F;
 			break;
 		case 'T':
 			/* -T tmpdir */
@@ -254,13 +255,13 @@ main(int argc, char *argv[])
 		/* Don't sort on raw record if keys match */
 		posix_sort = 0;
 
-	if (cflag && argc > optind+1)
+	if ((mode == 'c' || mode == 'C') && argc > optind+1)
 		errx(2, "too many input files for -c option");
 	if (argc - 2 > optind && !strcmp(argv[argc-2], "-o")) {
 		outpath = argv[argc-1];
 		argc -= 2;
 	}
-	if (mflag && argc - optind > (MAXFCT - (16+1))*16)
+	if (mode == 'm' && argc - optind > (MAXFCT - (16+1))*16)
 		errx(2, "too many input files for -m option");
 
 	for (i = optind; i < argc; i++) {
@@ -309,8 +310,8 @@ main(int argc, char *argv[])
 		num_input_files = argc - optind;
 	}
 
-	if (cflag) {
-		order(&filelist, fldtab);
+	if (mode == 'c' || mode == 'C') {
+		order(&filelist, fldtab, mode == 'C');
 		/* NOT REACHED */
 	}
 
@@ -348,7 +349,7 @@ main(int argc, char *argv[])
 			err(2, "output file %s", outfile);
 	}
 
-	if (mflag)
+	if (mode == 'm')
 		fmerge(&filelist, num_input_files, outfp, fldtab);
 	else
 		fsort(&filelist, num_input_files, outfp, fldtab);
@@ -393,13 +394,20 @@ cleanup(void)
 static void
 usage(const char *msg)
 {
+	const char *pn = getprogname();
+
 	if (msg != NULL)
 		(void)fprintf(stderr, "%s: %s\n", getprogname(), msg);
 	(void)fprintf(stderr,
-	    "usage: %s [-bcdfHilmnrSsu] [-k field1[,field2]] [-o output]"
-	    " [-R char] [-T dir]", getprogname());
+	    "usage: %s [-bdfHilmnrSsu] [-k kstart[,kend]] [-o output]"
+	    " [-R char] [-T dir]\n", pn);
 	(void)fprintf(stderr,
 	    "             [-t char] [file ...]\n");
+	(void)fprintf(stderr,
+	    "   or: %s -[cC] [-bdfilnru] [-k kstart[,kend]] [-o output]"
+	    " [-R char]\n", pn);
+	(void)fprintf(stderr,
+	    "             [-t char] [file]\n");
 	exit(2);
 }
 
