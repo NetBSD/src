@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.127 2016/05/13 10:32:52 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.128 2016/06/01 05:10:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.127 2016/05/13 10:32:52 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.128 2016/06/01 05:10:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1266,18 +1266,40 @@ find_dot_file(char *basename)
 	/* don't try this for absolute or relative paths */
 	if (strchr(basename, '/')) {
 		if (stat(basename, &statb) == 0) {
-			if (S_ISREG(statb.st_mode))
-				return basename;
-			error("%s: not a regular file", basename);
-			/* NOTREACHED */
+			if (S_ISDIR(statb.st_mode))
+				error("%s: is a directory", basename);
+			if (S_ISBLK(statb.st_mode))
+				error("%s: is a block device", basename);
+			return basename;
 		}
 	} else while ((fullname = padvance(&path, basename)) != NULL) {
-		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode)) {
-			/*
-			 * Don't bother freeing here, since it will
-			 * be freed by the caller.
-			 */
-			return fullname;
+		if ((stat(fullname, &statb) == 0)) {
+			/* weird format is to ease future code... */
+			if (S_ISDIR(statb.st_mode) || S_ISBLK(statb.st_mode))
+				;
+#if notyet
+			else if (unreadable()) {
+				/*
+				 * testing this via st_mode is ugly to get
+				 * correct (and would ignore ACLs).
+				 * better way is just to open the file.
+				 * But doing that here would (currently)
+				 * mean opening the file twice, which
+				 * might not be safe.  So, defer this
+				 * test until code is restructures so
+				 * we can return a fd.   Then we also
+				 * get to fix the mem leak just below...
+				 */
+			}
+#endif
+			else {
+				/*
+				 * Don't bother freeing here, since
+				 * it will be freed by the caller.
+				 * XXX no it won't - a bug for later.
+				 */
+				return fullname;
+			}
 		}
 		stunalloc(fullname);
 	}
