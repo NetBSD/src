@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.63 2016/06/01 02:37:47 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.63 2016/06/01 02:37:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.64 2016/06/01 08:06:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static void wb_w83627ehf_refresh_nvolt(struct lm_softc *, int);
 static void wb_refresh_temp(struct lm_softc *, int);
 static void wb_refresh_fanrpm(struct lm_softc *, int);
 static void wb_w83792d_refresh_fanrpm(struct lm_softc *, int);
-
+static void wb_nct6776f_refresh_fanrpm(struct lm_softc *, int);
 static void as_refresh_temp(struct lm_softc *, int);
 
 struct lm_chip {
