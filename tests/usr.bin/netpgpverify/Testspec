@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: Testspec,v 1.1 2016/06/01 06:39:11 agc Exp $
+# $NetBSD: Testspec,v 1.2 2016/06/01 14:52:56 agc Exp $
 
 # Copyright (c) 2016 Alistair Crooks <agc@NetBSD.org>
 # All rights reserved.
@@ -102,11 +102,6 @@ expected44
 expected45
 expected46
 '
-TESTSET_2_CASE_1="-s eq:0 -o file:3.expected -e empty b2e < 3.in"
-TESTSET_2_CASE_2="-s eq:0 -o file:4.expected -e empty b2e < 4.in"
-DISABLE_TESTSET_2_CASE_3="-s eq:0 -o file:5.expected -e empty b2e < 5.in"
-TESTSET_2_CASE_4="-s eq:0 -o file:6.expected -e empty b2e < 6.in"
-
 TESTSET_2_CASE_1="-s eq:0 -o file:expected36 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.gpg"
 TESTSET_2_CASE_2="-s eq:0 -o file:expected37 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg < in1.gpg"
 TESTSET_2_CASE_3="-s eq:0 -o file:expected38 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in1.asc"
