@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.25 2016/04/24 18:11:43 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.26 2016/06/01 15:59:18 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.25 2016/04/24 18:11:43 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.26 2016/06/01 15:59:18 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -489,48 +489,21 @@ rank_func(sqlite3_context *pctx, int nval, sqlite3_value **apval)
 }
 
 /*
- *  run_query_internal --
- *  Performs the searches for the keywords entered by the user.
- *  The 2nd param: snippet_args is an array of strings providing values for the
- *  last three parameters to the snippet function of sqlite. (Look at the docs).
- *  The 3rd param: args contains rest of the search parameters. Look at
- *  arpopos-utils.h for the description of individual fields.
- *
+ * generates sql query for matching the user entered query
  */
-static int
-run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
+static char *
+generate_search_query(query_args *args, const char *snippet_args[3])
 {
 	const char *default_snippet_args[3];
 	char *section_clause = NULL;
 	char *limit_clause = NULL;
 	char *machine_clause = NULL;
 	char *query;
-	const char *section;
-	char *name;
-	const char *name_desc;
-	const char *machine;
-	const char *snippet;
-	const char *name_temp;
-	char *slash_ptr;
-	char *m = NULL;
-	int rc;
-	inverse_document_frequency idf = {0, 0};
-	sqlite3_stmt *stmt;
 
 	if (args->machine)
 		easprintf(&machine_clause, "AND machine = \'%s\' ",
 		    args->machine);
 
-	/* Register the rank function */
-	rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY,
-	    (void *)&idf, rank_func, NULL, NULL);
-	if (rc != SQLITE_OK) {
-		warnx("Unable to register the ranking function: %s",
-		    sqlite3_errmsg(db));
-		sqlite3_close(db);
-		sqlite3_shutdown();
-		exit(EXIT_FAILURE);
-	}
 
 	/* We want to build a query of the form: "select x,y,z from mandb where
 	 * mandb match :query [AND (section LIKE '1' OR section LIKE '2' OR...)]
@@ -539,8 +512,6 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 	 *   1. The portion in square brackets is optional, it will be there
 	 *      only if the user has specified an option on the command line
 	 *      to search in one or more specific sections.
-	 *   2. I am using LIKE operator because '=' or IN operators do not
-	 *      seem to be working with the compression option enabled.
 	 */
 	char *sections_str = args->sec_nums;
 	char *temp;
@@ -573,11 +544,11 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 			if (section_clause[section_clause_len - 1] == ',')
 				section_clause[section_clause_len - 1] = 0;
 			temp = section_clause;
-			easprintf(&section_clause, " AND section IN (%s)",
-			    temp);
+			easprintf(&section_clause, " AND section IN (%s)", temp);
 			free(temp);
 		}
 	}
+
 	if (args->nrec >= 0) {
 		/* Use the provided number of records and offset */
 		easprintf(&limit_clause, " LIMIT %d OFFSET %d",
@@ -590,16 +561,15 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		default_snippet_args[2] = "...";
 		snippet_args = default_snippet_args;
 	}
+
 	if (args->legacy) {
 	    char *wild;
 	    easprintf(&wild, "%%%s%%", args->search_str);
-	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine,"
-		" snippet(mandb, %Q, %Q, %Q, -1, 40 )"
+	    query = sqlite3_mprintf("SELECT section, name, name_desc, machine"
 		" FROM mandb"
 		" WHERE name LIKE %Q OR name_desc LIKE %Q "
 		"%s"
 		"%s",
-		snippet_args[0], snippet_args[1], snippet_args[2],
 		wild, wild,
 		section_clause ? section_clause : "",
 		limit_clause ? limit_clause : "");
@@ -622,28 +592,59 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 	free(machine_clause);
 	free(section_clause);
 	free(limit_clause);
+	return query;
+}
 
-	if (query == NULL) {
-		*args->errmsg = estrdup("malloc failed");
-		return -1;
+/*
+ * Execute the full text search query and return the number of results
+ * obtained.
+ */
+static unsigned int
+execute_search_query(sqlite3 *db, char *query, query_args *args)
+{
+	sqlite3_stmt *stmt;
+	const char *section;
+	char *name;
+	char *slash_ptr;
+	const char *name_desc;
+	const char *machine;
+	const char *snippet = "";
+	const char *name_temp;
+	char *m = NULL;
+	int rc;
+	inverse_document_frequency idf = {0, 0};
+
+	if (!args->legacy) {
+		/* Register the rank function */
+		rc = sqlite3_create_function(db, "rank_func", 1, SQLITE_ANY,
+		    (void *) &idf, rank_func, NULL, NULL);
+		if (rc != SQLITE_OK) {
+			warnx("Unable to register the ranking function: %s",
+			    sqlite3_errmsg(db));
+			sqlite3_close(db);
+			sqlite3_shutdown();
+			exit(EXIT_FAILURE);
+		}
 	}
+
 	rc = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
 	if (rc == SQLITE_IOERR) {
 		warnx("Corrupt database. Please rerun makemandb");
-		sqlite3_free(query);
 		return -1;
 	} else if (rc != SQLITE_OK) {
 		warnx("%s", sqlite3_errmsg(db));
-		sqlite3_free(query);
 		return -1;
 	}
 
+	unsigned int nresults = 0;
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		nresults++;
 		section = (const char *) sqlite3_column_text(stmt, 0);
 		name_temp = (const char *) sqlite3_column_text(stmt, 1);
 		name_desc = (const char *) sqlite3_column_text(stmt, 2);
 		machine = (const char *) sqlite3_column_text(stmt, 3);
-		snippet = (const char *) sqlite3_column_text(stmt, 4);
+		if (!args->legacy)
+			snippet = (const char *) sqlite3_column_text(stmt, 4);
 		if ((slash_ptr = strrchr(name_temp, '/')) != NULL)
 			name_temp = slash_ptr + 1;
 		if (machine && machine[0]) {
@@ -656,12 +657,34 @@ run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
 		}
 
 		(args->callback)(args->callback_data, section, name,
-		    name_desc, snippet, strlen(snippet));
-
+		    name_desc, snippet, args->legacy? 0: strlen(snippet));
 		free(name);
 	}
-
 	sqlite3_finalize(stmt);
+	return nresults;
+}
+
+
+/*
+ *  run_query_internal --
+ *  Performs the searches for the keywords entered by the user.
+ *  The 2nd param: snippet_args is an array of strings providing values for the
+ *  last three parameters to the snippet function of sqlite. (Look at the docs).
+ *  The 3rd param: args contains rest of the search parameters. Look at
+ *  arpopos-utils.h for the description of individual fields.
+ *
+ */
+static int
+run_query_internal(sqlite3 *db, const char *snippet_args[3], query_args *args)
+{
+	char *query;
+	query = generate_search_query(args, snippet_args);
+	if (query == NULL) {
+		*args->errmsg = estrdup("malloc failed");
+		return -1;
+	}
+
+	execute_search_query(db, query, args);
 	sqlite3_free(query);
 	return *(args->errmsg) == NULL ? 0 : -1;
 }
