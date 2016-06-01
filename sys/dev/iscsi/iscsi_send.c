@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.17 2016/06/01 04:19:08 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.18 2016/06/01 05:13:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ reassign_tasks(connection_t *oldconn)
 			mutex_exit(&sess->lock);
 			resend_pdu(ccb);
 		} else {
-			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+			ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 		}
 		DEBC(conn, 1, ("Reassign ccb %p, no_tm=%d, rc=%d\n",
 					   ccb, no_tm, rc));
@@ -333,7 +333,7 @@ iscsi_send_thread(void *par)
 		 *    Here this thread takes over cleanup of the terminating connection.
 		 * ------------------------------------------------------------------------
 		 */
-		callout_stop(&conn->timeout);
+		connection_timeout_stop(conn);
 		conn->idle_timeout_val = CONNECTION_IDLE_TIMEOUT;
 
 		fp = conn->sock;
@@ -354,7 +354,7 @@ iscsi_send_thread(void *par)
 					ccb,&ccb->timeout));
 				wake_ccb(ccb, conn->terminating);
 			} else {
-				callout_stop(&ccb->timeout);
+				ccb_timeout_stop(ccb);
 				ccb->num_timeouts = 0;
 			}
 		}
@@ -377,7 +377,7 @@ iscsi_send_thread(void *par)
 		/* If there's another connection available, transfer pending tasks */
 		if (sess->active_connections &&
 			TAILQ_FIRST(&conn->ccbs_waiting) != NULL) {
-			DEBC(conn, 1, ("Reassign Tasks\n"));
+			
 			reassign_tasks(conn);
 		} else if (!conn->destroy && conn->Time2Wait) {
 			DEBC(conn, 1, ("Time2Wait\n"));
@@ -478,7 +478,7 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 	cv_broadcast(&conn->conn_cv);
 
 	if (cdisp != CCBDISP_NOWAIT) {
-		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+		ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 
 		if (prev_cdisp <= CCBDISP_NOWAIT)
 			suspend_ccb(ccb, TRUE);
@@ -533,7 +533,7 @@ resend_pdu(ccb_t *ccb)
 	} else {
 		TAILQ_INSERT_TAIL(&conn->pdus_to_send, pdu, send_chain);
 	}
-	callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+	ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 	mutex_exit(&conn->lock);
 
 	cv_broadcast(&conn->conn_cv);
@@ -1594,7 +1594,7 @@ connection_timeout(connection_t *conn)
 		if (conn->state == ST_FULL_FEATURE)
 			send_nop_out(conn, NULL);
 
-		callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
+		connection_timeout_start(conn, CONNECTION_TIMEOUT);
 	}
 }
 
@@ -1631,7 +1631,7 @@ ccb_timeout(ccb_t *ccb)
 			/* request resend of all missing status */
 			snack_missing(conn, NULL, SNACK_STATUS_NAK, 0, 0);
 		}
-		callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+		ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 	}
 }
 

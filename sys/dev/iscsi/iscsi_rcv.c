@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.11 2016/05/29 13:51:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.12 2016/06/01 05:13:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -471,7 +471,7 @@ receive_text_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	}
 
 	if (req_ccb->pdu_waiting != NULL) {
-		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
+		ccb_timeout_start(req_ccb, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -542,7 +542,7 @@ receive_logout_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		conn->state = ST_SETTLING;
 		conn->loggedout = (response) ? LOGOUT_FAILED : LOGOUT_SUCCESS;
 
-		callout_stop(&conn->timeout);
+		connection_timeout_stop(conn);
 
 		/* let send thread take over next step of cleanup */
 		cv_broadcast(&conn->conn_cv);
@@ -578,7 +578,7 @@ receive_data_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	req_ccb->flags |= CCBF_GOT_RSP;
 
 	if (req_ccb->pdu_waiting != NULL) {
-		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
+		ccb_timeout_start(req_ccb, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -659,7 +659,7 @@ receive_r2t_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	if (req_ccb != NULL) {
 		if (req_ccb->pdu_waiting != NULL) {
-			callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
+			ccb_timeout_start(req_ccb, COMMAND_TIMEOUT);
 			req_ccb->num_timeouts = 0;
 		}
 		send_data_out(conn, pdu, req_ccb, CCBDISP_NOWAIT, TRUE);
@@ -702,7 +702,7 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	}
 
 	if (req_ccb->pdu_waiting != NULL) {
-		callout_schedule(&req_ccb->timeout, COMMAND_TIMEOUT);
+		ccb_timeout_start(req_ccb, COMMAND_TIMEOUT);
 		req_ccb->num_timeouts = 0;
 	}
 
@@ -1095,9 +1095,9 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	/* received a valid frame, reset timeout */
 	if ((pdu->pdu.Opcode & OPCODE_MASK) == TOP_NOP_In &&
 	    TAILQ_EMPTY(&conn->ccbs_waiting))
-		callout_schedule(&conn->timeout, conn->idle_timeout_val);
+		connection_timeout_start(conn, conn->idle_timeout_val);
 	else
-		callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
+		connection_timeout_start(conn, CONNECTION_TIMEOUT);
 	conn->num_timeouts = 0;
 
 	/*

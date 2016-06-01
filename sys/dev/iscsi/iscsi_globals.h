@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.15 2016/06/01 04:19:08 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.16 2016/06/01 05:13:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -253,6 +253,7 @@ struct ccb_s {
 
 	struct callout		timeout; /* To make sure it isn't lost */
 	TAILQ_ENTRY(ccb_s)	tchain;
+	bool			timedout;
 	int			num_timeouts;
 	/* How often we've sent out SNACK without answer */
 	int			total_tries;
@@ -373,6 +374,7 @@ struct connection_s {
 	struct callout			timeout;
 		/* Timeout for checking if connection is dead */
 	TAILQ_ENTRY(connection_s)	tchain;
+	bool				timedout;
 	int				num_timeouts;
 		/* How often we've sent out a NOP without answer */
 	uint32_t			idle_timeout_val;
@@ -698,7 +700,11 @@ void connection_timeout_co(void *);
 void ccb_timeout_co(void *);
 
 void connection_timeout(connection_t *);
+void connection_timeout_start(connection_t *, int);
+void connection_timeout_stop(connection_t *);
 void ccb_timeout(ccb_t *);
+void ccb_timeout_start(ccb_t *, int);
+void ccb_timeout_stop(ccb_t *);
 
 /* in iscsi_rcv.c */
 

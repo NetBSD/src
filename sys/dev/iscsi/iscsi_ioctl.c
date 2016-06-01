@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.15 2016/06/01 04:07:03 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.16 2016/06/01 05:13:07 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -497,7 +497,7 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		/* of logging in */
 		if (logout >= 0) {
 			conn->state = ST_WINDING_DOWN;
-			callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
+			connection_timeout_start(conn, CONNECTION_TIMEOUT);
 
 			if (sess->ErrorRecoveryLevel < 2 &&
 			    logout == RECOVER_CONNECTION) {
@@ -887,7 +887,7 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 			mutex_exit(&session->lock);
 			resend_pdu(ccb);
 		} else {
-			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+			ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 		}
 	}
 
@@ -1576,10 +1576,29 @@ connection_timeout_co(void *par)
 	connection_t *conn = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
+	conn->timedout = true;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, tchain);
 	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
 }
+
+void            
+connection_timeout_start(connection_t *conn, int ticks)
+{
+	callout_schedule(&conn->timeout, ticks);
+}                           
+
+void                    
+connection_timeout_stop(connection_t *conn)
+{                                                
+	callout_halt(&conn->timeout, NULL);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->timedout) {
+		TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
+		conn->timedout = false;
+	}               
+	mutex_exit(&iscsi_cleanup_mtx);
+}                        
 
 void
 ccb_timeout_co(void *par)
@@ -1587,9 +1606,28 @@ ccb_timeout_co(void *par)
 	ccb_t *ccb = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
+	ccb->timedout = true;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, tchain);
 	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
+}
+
+void    
+ccb_timeout_start(ccb_t *ccb, int ticks)
+{       
+	callout_schedule(&ccb->timeout, ticks);
+} 
+ 
+void
+ccb_timeout_stop(ccb_t *ccb)
+{
+	callout_halt(&ccb->timeout, NULL);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (ccb->timedout) {
+		TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
+		ccb->timedout = false;
+	} 
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 /*
