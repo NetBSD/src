@@ -1,20 +1,22 @@
-# $NetBSD: tzdata2netbsd,v 1.8 2016/03/15 17:33:14 christos Exp $
+# $NetBSD: tzdata2netbsd,v 1.9 2016/06/01 00:02:12 agc Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
 # 0. Be in an up-to-date checkout of src/external/public-domain/tz
 #    from NetBSD-current.
 # 1. Edit OLDVER and NEWVER below.
-# 2. Run this script.  You will be prompted for confirmation before
+# 2. Make sure that you have Paul Eggert's 4K RSA public key in your
+#    keyring (62AA7E34, eggert@cs.ucla.edu)
+# 3. Run this script.  You will be prompted for confirmation before
 #    anything major (such as a cvs operation).
-# 3. If something fails, abort the script and fix it.
-# 4. Re-run this script until you are happy.  It's designed to
+# 4. If something fails, abort the script and fix it.
+# 5. Re-run this script until you are happy.  It's designed to
 #    be re-run over and over, and later runs will try not to
 #    redo non-trivial work done by earlier runs.
 #
 
-OLDVER=2015f
-NEWVER=2016b
+OLDVER=2016b
+NEWVER=2016d
 
 # Uppercase variants of OLDVER and NEWVER
 OLDVER_UC="$( echo "${OLDVER}" | tr '[a-z]' '[A-Z]' )"
@@ -48,6 +50,8 @@ IMPORTDONEFILE="${WORKDIR}/import.done"
 MERGSMSGFILE="${WORKDIR}/merge.msg"
 MERGEDONEFILE="${WORKDIR}/merge.done"
 COMMITMERGEDONEFILE="${WORKDIR}/commitmerge.done"
+
+EDITOR=${EDITOR:-vi}
 
 DOIT()
 {
@@ -266,7 +270,7 @@ editimportmsg()
 	fi
 	# Pass both IMPORTMSGFILE and NEWSFILE to the editor, so that the
 	# user can easily consult NEWSFILE while editing IMPORTMSGFILE.
-	vi "${IMPORTMSGFILE}" "${NEWSFILE}"
+	${EDITOR} "${IMPORTMSGFILE}" "${NEWSFILE}"
 }
 
 cvsimport()
