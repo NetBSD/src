@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.158 2016/05/24 20:20:57 martin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.159 2016/06/01 12:14:08 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.158 2016/05/24 20:20:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.159 2016/06/01 12:14:08 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -453,7 +453,8 @@ sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
 	vaddr_t addr;
 	vsize_t size, pageoff;
 	struct vm_map *map;
-	int error, rv, flags, uvmflags;
+	int error, flags, uvmflags;
+	bool rv;
 
 	/*
 	 * extract syscall args from the uap
