@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.772 2016/05/17 23:53:02 spz Exp $
+# $NetBSD: shl.mi,v 1.773 2016/06/01 17:10:04 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -172,9 +172,11 @@
 ./usr/lib/libarchive.so				base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.3			base-sys-shlib		compatfile
 ./usr/lib/libarchive.so.3.1			base-sys-shlib		compatfile
-./usr/lib/libasan.so				base-sys-shlib		compatfile,gcc=48
+./usr/lib/libasan.so				base-sys-shlib		compatfile
 ./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc=48
-./usr/lib/libasan.so.0.0			base-sys-shlib		compatfile,gcc=48
+./usr/lib/libasan.so.0				base-sys-shlib		compatfile,gcc=48
+./usr/lib/libasan.so.1.0			base-sys-shlib		compatfile,gcc=53
+./usr/lib/libasan.so.1.0			base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.9				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.9.0			base-krb5-shlib		compatfile,kerberos

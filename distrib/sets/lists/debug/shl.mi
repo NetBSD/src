@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.134 2016/05/17 23:53:02 spz Exp $
+# $NetBSD: shl.mi,v 1.135 2016/06/01 17:10:05 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.202.debug			comp-sys-debug	debug,dynamicroot
@@ -55,6 +55,7 @@
 ./usr/libdata/debug/usr/lib/libamu.so.5.0.debug			comp-amd-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libarchive.so.3.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libasan.so.0.0.debug		comp-krb5-debug	debug,compatfile,gcc=48
+./usr/libdata/debug/usr/lib/libasan.so.1.0.debug		comp-krb5-debug	debug,compatfile,gcc=53
 ./usr/libdata/debug/usr/lib/libasn1.so.9.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libatf-c++.so.0.0.debug		comp-atf-debug	debug,compatfile,atf,obsolete
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug		comp-atf-debug	debug,compatfile,atf
