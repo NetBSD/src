@@ -1,4 +1,4 @@
-.\"	$NetBSD: sort.1,v 1.35 2016/06/01 02:37:55 kre Exp $
+.\"	$NetBSD: sort.1,v 1.36 2016/06/01 08:24:03 wiz Exp $
 .\"
 .\" Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\"     @(#)sort.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 29, 2013
+.Dd June 1, 2016
 .Dt SORT 1
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@
 .Op Fl t Ar char
 .Op Ar
 .Nm
-.Fl c|C
+.Fl C Ns | Ns Fl c
 .Op Fl bdfilnru
 .Oo
 .Fl k
@@ -99,6 +99,10 @@ regards each input line as a single field.
 .Pp
 The following options are available:
 .Bl -tag -width Fl
+.It Fl C
+Identical to
+.Fl c
+without the error messages in the case of unsorted input.
 .It Fl c
 Check that the single input file is sorted.
 If the file is not sorted,
@@ -111,10 +115,6 @@ returns 0.
 produces no output.
 See also
 .Fl u .
-.It Fl C
-Identical to
-.Fl c
-without the error messages in the case of unsorted input.
 .It Fl H
 Ignored for compatibility with earlier versions of
 .Nm .
@@ -216,6 +216,34 @@ option (see below).
 Note that the
 .Fl b
 option has no effect unless key fields are specified.
+.It Fl k Ar kstart Ns Op Li \&, Ns Ar kend
+Designates the starting position,
+.Ar kstart ,
+and optional ending position,
+.Ar kend ,
+of a key field.
+The
+.Fl k
+option replaces the obsolescent options
+.Cm \(pl Ns Ar pos1
+and
+.Fl Ns Ar pos2 .
+.It Fl R Ar char
+.Ar char
+is used as the record separator character.
+This should be used with discretion;
+.Fl R Aq Ar alphanumeric
+usually produces undesirable results.
+If char is not a single character, then it
+specifies the value of the desired record
+separator as an integer specified in any
+of the normal NNN, 0ooo, or 0xXXX ways,
+or as an octal value preceded by \e.
+Caution: do not attempt to specify Ctl-A
+as
+.Dq -R 1
+which will not do what was intended at all!
+The default record separator is newline.
 .It Fl t Ar char
 .Ar char
 is used as the field separator character.
@@ -236,34 +264,6 @@ blank-space characters, and consecutive blank spaces do
 delimit an empty field; further, the initial blank space
 .Em is
 considered part of a field when determining key offsets.
-.It Fl R Ar char
-.Ar char
-is used as the record separator character.
-This should be used with discretion;
-.Fl R Aq Ar alphanumeric
-usually produces undesirable results.
-If char is not a single character, then it
-specifies the value of the desired record
-separator as an integer specified in any
-of the normal NNN, 0ooo, or 0xXXX ways,
-or as an octal value preceded by \e.
-Caution: do not attempt to specify Ctl-A
-as
-.Dq -R 1
-which will not do what was intended at all!
-The default record separator is newline.
-.It Fl k Ar kstart Ns Op Li \&, Ns Ar kend
-Designates the starting position,
-.Ar kstart ,
-and optional ending position,
-.Ar kend ,
-of a key field.
-The
-.Fl k
-option replaces the obsolescent options
-.Cm \(pl Ns Ar pos1
-and
-.Fl Ns Ar pos2 .
 .El
 .Pp
 The following operands are available:
