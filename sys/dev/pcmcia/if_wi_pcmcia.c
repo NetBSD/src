@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.90 2013/03/30 03:22:14 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.91 2016/06/01 23:37:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.90 2013/03/30 03:22:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.91 2016/06/01 23:37:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE737A,
 	  PCMCIA_CIS_3COM_3CRWE737A },
+
+	{ PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CRWE777A,
+	  PCMCIA_CIS_3COM_3CRWE777A },
 
 	{ PCMCIA_VENDOR_ALVARION,
 	  PCMCIA_PRODUCT_ALVARION_BREEZENET,
