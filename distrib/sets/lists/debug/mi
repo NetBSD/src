@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.153 2016/06/01 17:10:05 christos Exp $
+# $NetBSD: mi,v 1.154 2016/06/01 23:59:21 joerg Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -26,7 +26,8 @@
 ./usr/lib/i18n/libmapper_zone_g.a		comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libamu_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libarchive_g.a			comp-c-debuglib		debuglib,compatfile
-./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=48
+./usr/lib/libasan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=53
 ./usr/lib/libasn1_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libatf-c++_g.a			comp-c-debuglib		debuglib,compatfile,atf
 ./usr/lib/libatf-c_g.a				comp-c-debuglib		debuglib,compatfile,atf
