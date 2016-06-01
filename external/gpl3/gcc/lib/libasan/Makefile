@@ -89,7 +89,7 @@ CPPFLAGS+=-D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMI
 LIBDPLIBS+=    stdc++ ${.CURDIR}/../libstdc++-v3
 LIBDPLIBS+=    pthread ${.CURDIR}/../../../../../lib/libpthread
 COPTS+=-std=gnu++11 -fsized-deallocation -fvisibility=hidden
-COPTS+=-fno-builtin -fno-exceptions -fno-rtti-funwind-tables
+COPTS+=-fno-builtin -fno-exceptions -fno-rtti -funwind-tables
 # Can't profile without it`
 #-fomit-frame-pointer
 
