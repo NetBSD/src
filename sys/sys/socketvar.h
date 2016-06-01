@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.139 2015/05/09 15:22:47 rtr Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.140 2016/06/01 04:15:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -184,15 +184,6 @@ struct socket {
 	kauth_cred_t	so_cred;	/* socket credentials */
 };
 
-#define	SB_EMPTY_FIXUP(sb)						\
-do {									\
-	KASSERT(solocked((sb)->sb_so));					\
-	if ((sb)->sb_mb == NULL) {					\
-		(sb)->sb_mbtail = NULL;					\
-		(sb)->sb_lastrecord = NULL;				\
-	}								\
-} while (/*CONSTCOND*/0)
-
 /*
  * Socket state bits.
  */
@@ -236,6 +227,15 @@ struct sockopt {
 	void *		sopt_data;		/* data pointer */
 	uint8_t		sopt_buf[sizeof(int)];	/* internal storage */
 };
+
+#define	SB_EMPTY_FIXUP(sb)						\
+do {									\
+	KASSERT(solocked((sb)->sb_so));					\
+	if ((sb)->sb_mb == NULL) {					\
+		(sb)->sb_mbtail = NULL;					\
+		(sb)->sb_lastrecord = NULL;				\
+	}								\
+} while (/*CONSTCOND*/0)
 
 extern u_long		sb_max;
 extern int		somaxkva;
