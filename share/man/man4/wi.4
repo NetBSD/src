@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.41 2016/06/01 23:40:05 pgoyette Exp $
+.\"     $NetBSD: wi.4,v 1.42 2016/06/02 08:11:23 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.41 2016/06/01 23:40:05 pgoyette Exp $
+.\"	$Id: wi.4,v 1.42 2016/06/02 08:11:23 wiz Exp $
 .\"
 .Dd June 2, 2016
 .Dt WI 4
@@ -61,10 +61,12 @@ even though they are 16-bit cards.
 The core of the WaveLAN/IEEE is the Lucent Hermes controller.
 All host/device interaction is via programmed I/O with the Hermes.
 The Hermes supports 802.11 and 802.3 frames, power management, BSS, WDS
-and ad-hoc operation modes.  The Silver and the Gold cards of the
-WaveLAN/IEEE also support WEP.  Unlike the other IEEE 802.11 network cards,
-the WaveLAN Gold cards accept 104 bits key (13 characters) for WEP
-encryption.  The Intersil PRISM-II controller supports WEP as well.
+and ad-hoc operation modes.
+The Silver and the Gold cards of the
+WaveLAN/IEEE also support WEP.
+Unlike the other IEEE 802.11 network cards, the WaveLAN Gold cards
+accept 104 bits key (13 characters) for WEP encryption.
+The Intersil PRISM-II controller supports WEP as well.
 .Pp
 The
 .Nm
@@ -80,18 +82,21 @@ The
 .Nm
 driver supports configuration of Lucent cards for special ad-hoc operation.
 In this mode, the nwid is ignored and stations can communicate among each
-other without the aid of an access point.  Note that this mode is specific
-to Lucent chips, and not in the IEEE 802.11 specification.  Due to changes
+other without the aid of an access point.
+Note that this mode is specific
+to Lucent chips, and not in the IEEE 802.11 specification.
+Due to changes
 in the implementation of this special ad-hoc mode, Lucent-based cards with
-different firmware revisions may not interoperate in this mode.  This mode
-is no longer the default and must be selected using the
+different firmware revisions may not interoperate in this mode.
+This mode is no longer the default and must be selected using the
 .Xr ifconfig 8
 .Pq media option Dq adhoc,flag0
 utility.
 .Pp
 Recent versions of Lucent and PRISM-II firmware support IBSS creation.
-IBSS is the standard IEEE 802.11 ad-hoc mode.  In this mode, the nwid
-should be specified.  At least one node must be able to create IBSS.
+IBSS is the standard IEEE 802.11 ad-hoc mode.
+In this mode, the nwid should be specified.
+At least one node must be able to create IBSS.
 The IBSS mode is enabled by
 .Dq adhoc
 or
@@ -104,10 +109,11 @@ The
 driver defaults to infrastructure mode (i.e., using an access point).
 .Pp
 Recent versions of PRISM-II firmware support operating as an 802.11
-Access Point.  In this mode, the Access Point station should set the
-nwid.  This will create a standard 802.11 network, and the Access Point
-station will show up in an Access Point scan.  This mode is enabled
-using the
+Access Point.
+In this mode, the Access Point station should set the nwid.
+This will create a standard 802.11 network, and the Access Point
+station will show up in an Access Point scan.
+This mode is enabled using the
 .Dq hostap
 media option.
 .Pp
