@@ -398,7 +398,7 @@ namespace __sanitizer {
     char **gr_mem;
   };
 
-#if defined(__x86_64__) && !defined(_LP64)
+#if (defined(__x86_64__) && !defined(_LP64)) || SANITIZER_NETBSD
   typedef long long __sanitizer_time_t;
 #else
   typedef long __sanitizer_time_t;
