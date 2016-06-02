@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.80 2016/04/30 05:23:03 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.81 2016/06/02 21:19:24 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -775,7 +775,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 			sc->sc_fb.fb_type.fb_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
-			defattr);
+			DEFATTR);
 	}
 
 	cg14_init_cmap(sc);
