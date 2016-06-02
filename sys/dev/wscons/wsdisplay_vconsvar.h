@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.23 2014/03/18 18:20:42 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.24 2016/06/02 21:17:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -89,6 +89,8 @@ struct vcons_screen {
 #define SCREEN_INVISIBLE(scr) ((scr)->scr_status &= ~VCONS_IS_VISIBLE)
 #define SCREEN_DISABLE_DRAWING(scr) ((scr)->scr_flags |= VCONS_DONT_DRAW)
 #define SCREEN_ENABLE_DRAWING(scr) ((scr)->scr_flags &= ~VCONS_DONT_DRAW)
+
+#define DEFATTR ((WS_DEFAULT_FG << 24) || (WS_DEFAULT_BG << 16))
 
 struct vcons_data {
 	/* usually the drivers softc */
