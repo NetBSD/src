@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.134 2016/05/31 19:25:17 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.135 2016/06/02 15:11:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.134 2016/05/31 19:25:17 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.135 2016/06/02 15:11:18 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1179,17 +1179,13 @@ stifle_history(int max)
 {
 	HistEvent ev;
 	HIST_ENTRY *he;
-	int i, len;
 
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	len = history_length;
 	if (history(h, &ev, H_SETSIZE, max) == 0) {
 		max_input_history = max;
-		if (max < len)
-			history_base += len - max;
-		for (i = 0; i < len - max; i++) {
+		while (history_length > max) {
 			he = remove_history(0);
 			el_free(he->data);
 			el_free((void *)(unsigned long)he->line);
@@ -1452,18 +1448,19 @@ add_history(const char *line)
 {
 	HistEvent ev;
 
-	if (line == NULL)
-		return 0;
-
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
-	(void)history(h, &ev, H_ENTER, line);
-	if (history(h, &ev, H_GETSIZE) == 0)
+	if (history(h, &ev, H_ENTER, line) == -1)
+		return 0;
+
+	(void)history(h, &ev, H_GETSIZE);
+	if (ev.num == history_length)
+		history_base++;
+	else
 		history_length = ev.num;
 	current_history_valid = 1;
-
-	return !(history_length > 0); /* return 0 if all is okay */
+	return 0;
 }
 
 
