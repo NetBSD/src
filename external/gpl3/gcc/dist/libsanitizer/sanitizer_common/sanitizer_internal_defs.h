@@ -80,7 +80,8 @@ typedef int fd_t;
 // _FILE_OFFSET_BITS. This definition of OFF_T matches the ABI of system calls
 // like pread and mmap, as opposed to pread64 and mmap64.
 // Mac and Linux/x86-64 are special.
-#if SANITIZER_MAC || (SANITIZER_LINUX && defined(__x86_64__))
+#if SANITIZER_MAC || (SANITIZER_LINUX && defined(__x86_64__)) || SANITIZER_NETBSD
+// XXX: It is signed!
 typedef u64 OFF_T;
 #else
 typedef uptr OFF_T;
