@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.52 2015/07/01 06:48:25 dholland Exp $	*/
+/*	$NetBSD: calendar.c,v 1.53 2016/06/03 02:06:40 agc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.52 2015/07/01 06:48:25 dholland Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.53 2016/06/03 02:06:40 agc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,8 @@ __RCSID("$NetBSD: calendar.c,v 1.52 2015/07/01 06:48:25 dholland Exp $");
 #include <unistd.h>
 
 #include "pathnames.h"
+
+#define CALENDAR_VERSION	"calendar-20160601"
 
 	/* flags used by calendar file parser */
 #define	F_ISMONTH	0x01
@@ -133,7 +135,7 @@ main(int argc, char **argv)
 
 	(void)setprogname(argv[0]);	/* for portability */
 
-	while ((ch = getopt(argc, argv, "-ad:f:l:w:x")) != -1) {
+	while ((ch = getopt(argc, argv, "-ad:f:l:vw:x")) != -1) {
 		switch (ch) {
 		case '-':		/* backward contemptible */
 		case 'a':
@@ -152,6 +154,9 @@ main(int argc, char **argv)
 		case 'l':
 			atodays(ch, optarg, &lookahead);
 			break;
+		case 'v':
+			printf("%s\n", CALENDAR_VERSION);
+			return 0;
 		case 'w':
 			atodays(ch, optarg, &weekend);
 			break;
