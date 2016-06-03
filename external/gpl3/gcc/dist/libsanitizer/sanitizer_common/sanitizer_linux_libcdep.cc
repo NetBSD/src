@@ -236,7 +236,7 @@ uptr ThreadSelf() {
 }
 #endif  // (defined(__x86_64__) || defined(__i386__)) && SANITIZER_LINUX
 
-#if SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_FREEBSD
 static void **ThreadSelfSegbase() {
   void **segbase = 0;
 # if defined(__i386__)
@@ -254,7 +254,13 @@ static void **ThreadSelfSegbase() {
 uptr ThreadSelf() {
   return (uptr)ThreadSelfSegbase()[2];
 }
-#endif  // SANITIZER_FREEBSD || SANITIZER_NETBSD
+#endif  // SANITIZER_FREEBSD
+
+#if SANITIZER_NETBSD
+uptr ThreadSelf() {
+  return (uptr)pthread_self();
+}
+#endif // SANITIZER_NETBSD
 
 static void GetTls(uptr *addr, uptr *size) {
 #if SANITIZER_LINUX
@@ -267,7 +273,7 @@ static void GetTls(uptr *addr, uptr *size) {
   *addr = 0;
   *size = 0;
 # endif
-#elif SANITIZER_FREEBSD || SANITIZER_NETBSD
+#elif SANITIZER_FREEBSD
   void** segbase = ThreadSelfSegbase();
   *addr = 0;
   *size = 0;
@@ -280,6 +286,10 @@ static void GetTls(uptr *addr, uptr *size) {
     *addr = (uptr) dtv[2];
     *size = (*addr == 0) ? 0 : ((uptr) segbase[0] - (uptr) dtv[2]);
   }
+#elif SANITIZER_NETBSD
+  // XXX: for now
+  *addr = 0;
+  *size = 0;
 #else
 # error "Unknown OS"
 #endif
