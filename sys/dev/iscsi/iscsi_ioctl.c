@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.16 2016/06/01 05:13:07 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.17 2016/06/03 06:55:16 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -800,6 +800,8 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 	int rc;
 	ccb_t *ccb;
 	ccb_list_t old_waiting;
+	pdu_t *pdu;
+	uint32_t sn;
 
 	DEB(1, ("ReCreate Connection %d for Session %d, ERL=%d\n",
 		connection->id, connection->session->id,
@@ -874,14 +876,13 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 		if (rc && ccb->pdu_waiting != NULL) {
 			mutex_enter(&session->lock);
 			if (ccb->CmdSN < session->ExpCmdSN) {
-				pdu_t *pdu = ccb->pdu_waiting;
+				pdu = ccb->pdu_waiting;
+				sn = get_sernum(session, !(pdu->pdu.Opcode & OP_IMMEDIATE));
 
 				/* update CmdSN */
 				DEBC(connection, 1, ("Resend Updating CmdSN - old %d, new %d\n",
-					   ccb->CmdSN, session->CmdSN));
-				ccb->CmdSN = session->CmdSN;
-				if (!(pdu->pdu.Opcode & OP_IMMEDIATE))
-					session->CmdSN++;
+					   ccb->CmdSN, sn));
+				ccb->CmdSN = sn;
 				pdu->pdu.p.command.CmdSN = htonl(ccb->CmdSN);
 			}
 			mutex_exit(&session->lock);
