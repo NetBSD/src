@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.25 2010/06/08 03:08:47 riz Exp $
+.\"	$NetBSD: calendar.1,v 1.26 2016/06/03 02:06:40 agc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)calendar.1	8.1 (Berkeley) 6/29/93
 .\"
-.Dd August 27, 2009
+.Dd June 1, 2016
 .Dt CALENDAR 1
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd reminder service
 .Sh SYNOPSIS
 .Nm
-.Op Fl ax
+.Op Fl avx
 .Op Fl d Ar MMDD[[YY]YY]
 .Op Fl f Ar file
 .Op Fl l Ar days
@@ -95,6 +95,11 @@ number if and only if the day specified is a Friday.
 The default value is two, which causes
 .Nm
 to print entries through the weekend on Fridays.
+.It Fl v
+Causes
+.Nm
+to print version information for itself,
+and then exit.
 .It Fl x
 Causes
 .Nm
