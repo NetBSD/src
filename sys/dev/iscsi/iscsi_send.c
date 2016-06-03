@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.19 2016/06/01 05:31:59 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.20 2016/06/03 06:53:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -260,7 +260,7 @@ reassign_tasks(connection_t *oldconn)
 
 				/* update CmdSN */
 				DEBC(conn, 1, ("Resend Updating CmdSN - old %d, new %d\n",
-					   ccb->CmdSN, sess->CmdSN));
+					   ccb->CmdSN, sn));
 				ccb->CmdSN = sn;
 				pdu->pdu.p.command.CmdSN = htonl(ccb->CmdSN);
 			}
