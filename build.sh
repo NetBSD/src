@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.309 2016/04/29 16:08:09 christos Exp $
+#	$NetBSD: build.sh,v 1.310 2016/06/03 00:00:01 kre Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -506,7 +506,7 @@ initdefaults()
 	# XXX Except that doesn't work on Solaris. Or many Linuces.
 	#
 	unset PWD
-	TOP=$(/bin/pwd -P 2>/dev/null || /bin/pwd 2>/dev/null)
+	TOP=$( (exec pwd -P 2>/dev/null) || (exec pwd 2>/dev/null) )
 
 	# The user can set HOST_SH in the environment, or we try to
 	# guess an appropriate value.  Then we set several other
@@ -1876,7 +1876,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.309 2016/04/29 16:08:09 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.310 2016/06/03 00:00:01 kre Exp $
 # with these arguments: ${_args}
 #
 
