@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.56 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.57 2016/06/03 10:34:03 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.56 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.57 2016/06/03 10:34:03 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -828,7 +828,8 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
-	ahci_channel_start(sc, chp, flags, 1);
+	ahci_channel_start(sc, chp, flags,
+	    (sc->sc_ahci_cap & AHCI_CAP_CLO) ? 1 : 0);
 	/* wait 31s for BSY to clear */
 	for (i = 0; i <AHCI_RST_WAIT; i++) {
 		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
