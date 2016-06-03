@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.c,v 1.13 2012/06/25 22:32:44 abs Exp $	*/
+/*	$NetBSD: signal.c,v 1.14 2016/06/03 23:57:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)signal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: signal.c,v 1.13 2012/06/25 22:32:44 abs Exp $");
+__RCSID("$NetBSD: signal.c,v 1.14 2016/06/03 23:57:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,4 +63,20 @@ signal(int s, sig_t a)
 	if (sigaction(s, &sa, &osa) < 0)
 		return (SIG_ERR);
 	return (osa.sa_handler);
+}
+
+void 
+(*bsd_signal(int sig, void (*func)(int)))(int) 
+{
+	struct sigaction act, oact;
+
+	act.sa_handler = func;
+	act.sa_flags = SA_RESTART;
+
+	sigemptyset(&act.sa_mask);
+	sigaddset(&act.sa_mask, sig);
+	if (sigaction(sig, &act, &oact) < 0)
+		return (SIG_ERR);
+
+	return (oact.sa_handler);
 }
