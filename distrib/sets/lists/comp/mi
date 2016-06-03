@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2037 2016/06/01 23:59:21 joerg Exp $
+#	$NetBSD: mi,v 1.2038 2016/06/03 21:55:50 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3030,6 +3030,7 @@
 ./usr/include/ufs/ext2fs/ext2fs.h		comp-c-include
 ./usr/include/ufs/ext2fs/ext2fs_dinode.h	comp-c-include
 ./usr/include/ufs/ext2fs/ext2fs_dir.h		comp-c-include
+./usr/include/ufs/ext2fs/ext2fs_extents.h	comp-c-include
 ./usr/include/ufs/ext2fs/ext2fs_extern.h	comp-c-include
 ./usr/include/ufs/ffs/ffs_extern.h		comp-c-include
 ./usr/include/ufs/ffs/fs.h			comp-c-include
