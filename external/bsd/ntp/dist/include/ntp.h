@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.1.1.10 2016/05/01 15:57:23 christos Exp $	*/
+/*	$NetBSD: ntp.h,v 1.1.1.11 2016/06/03 20:19:12 christos Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -725,6 +725,7 @@ struct pkt {
 #define	PROTO_UECRYPTO		29
 #define	PROTO_UECRYPTONAK	30
 #define	PROTO_UEDIGEST		31
+#define	PROTO_PCEDIGEST		32
 
 /*
  * Configuration items for the loop filter
