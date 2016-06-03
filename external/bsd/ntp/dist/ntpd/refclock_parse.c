@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.18 2016/01/08 21:35:39 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.19 2016/06/03 20:39:02 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2266,8 +2266,8 @@ local_input(
 							if (debug > 3)
 							{
 								printf(
-								       "parse: local_receive: fd %d PPSAPI seq %ld - PPS %s\n",
-								       rbufp->fd,
+								       "parse: local_receive: fd %ld PPSAPI seq %ld - PPS %s\n",
+								       (long)rbufp->fd,
 								       (long)pps_info.assert_sequence + (long)pps_info.clear_sequence,
 								       lfptoa(&parse->parseio.parse_dtime.parse_ptime.fp, 6));
 							}
@@ -2279,8 +2279,8 @@ local_input(
 							if (debug > 3)
 							{
 								printf(
-								       "parse: local_receive: fd %d PPSAPI seq assert %ld, seq clear %ld - NO PPS event\n",
-								       rbufp->fd,
+								       "parse: local_receive: fd %ld PPSAPI seq assert %ld, seq clear %ld - NO PPS event\n",
+								       (long)rbufp->fd,
 								       (long)pps_info.assert_sequence, (long)pps_info.clear_sequence);
 							}
 						}
@@ -2293,8 +2293,8 @@ local_input(
 						if (debug > 3)
 						{
 							printf(
-							       "parse: local_receive: fd %d PPSAPI time_pps_fetch errno = %d\n",
-							       rbufp->fd,
+							       "parse: local_receive: fd %ld PPSAPI time_pps_fetch errno = %d\n",
+							       (long)rbufp->fd,
 							       errno);
 						}
 					}
