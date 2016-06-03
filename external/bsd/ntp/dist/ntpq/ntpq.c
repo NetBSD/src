@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.15 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.16 2016/06/03 20:39:03 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -1065,7 +1065,7 @@ getresponse(
 
 		if (n < shouldbesize) {
 			printf("Response packet claims %u octets payload, above %ld received\n",
-			       count, (long)n - CTL_HEADER_LEN);
+			       count, (long)(n - CTL_HEADER_LEN));
 			return ERR_INCOMPLETE;
 		}
 
@@ -1198,7 +1198,10 @@ getresponse(
 		 * If we've seen the last fragment, look for holes in the sequence.
 		 * If there aren't any, we're done.
 		 */
-	  maybe_final:
+#if !defined(SYS_WINNT) && defined(EINTR)
+		maybe_final:
+#endif
+
 		if (seenlastfrag && offsets[0] == 0) {
 			for (f = 1; f < numfrags; f++)
 				if (offsets[f-1] + counts[f-1] !=
