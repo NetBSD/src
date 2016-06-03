@@ -1,8 +1,9 @@
 #include <machine/asm.h>
 
 .globl	OPENSSL_cpuid_setup
-.section	.init
-	call	PIC_PLT(OPENSSL_cpuid_setup)
+.section	.ctors
+.align	8
+.quad	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
 .comm	OPENSSL_ia32cap_P,8,4
