@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.58 2016/06/03 01:16:27 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.59 2016/06/03 01:21:59 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -251,7 +251,7 @@ meta_name(struct GNode *gn, char *mname, size_t mnamelen,
      * basename as given to us.
      */
     if ((cp = strrchr(tname, '/'))) {
-	if (realpath(tname, buf)) {
+	if (cached_realpath(tname, buf)) {
 	    if ((rp = strrchr(buf, '/'))) {
 		rp++;
 		cp++;
@@ -433,7 +433,7 @@ meta_needed(GNode *gn, const char *dname, const char *tname,
     }
 
     /* make sure these are canonical */
-    if (realpath(dname, objdir))
+    if (cached_realpath(dname, objdir))
 	dname = objdir;
 
     /* If we aren't in the object directory, don't create a meta file. */
@@ -1256,7 +1256,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * they are _expected_ to change.
 		     */
 		    if (*p == '/') {
-			realpath(p, fname1); /* clean it up */
+			cached_realpath(p, fname1); /* clean it up */
 			if (Lst_ForEach(metaIgnorePaths, prefix_match, fname1)) {
 #ifdef DEBUG_META_MODE
 			    if (DEBUG(META))
@@ -1341,7 +1341,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 				oodate = TRUE;
 			    } else if (S_ISDIR(fs.st_mode)) {
 				/* Update the latest directory. */
-				realpath(p, latestdir);
+				cached_realpath(p, latestdir);
 			    }
 			} else if (errno == ENOENT && *p == '/' &&
 				   strncmp(p, cwd, cwdlen) != 0) {
