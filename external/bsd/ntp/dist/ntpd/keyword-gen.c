@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword-gen.c,v 1.9 2016/05/01 23:32:00 christos Exp $	*/
+/*	$NetBSD: keyword-gen.c,v 1.10 2016/06/03 20:39:02 christos Exp $	*/
 
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
@@ -201,8 +201,9 @@ struct key_tok ntp_keywords[] = {
 { "bclient",		T_Bclient,		FOLLBY_TOKEN },
 { "calibrate",		T_Calibrate,		FOLLBY_TOKEN },
 { "kernel",		T_Kernel,		FOLLBY_TOKEN },
-{ "ntp",		T_Ntp,			FOLLBY_TOKEN },
 { "mode7",		T_Mode7,		FOLLBY_TOKEN },
+{ "ntp",		T_Ntp,			FOLLBY_TOKEN },
+{ "peer_clear_digest_early",	T_PCEdigest,	FOLLBY_TOKEN },
 { "stats",		T_Stats,		FOLLBY_TOKEN },
 { "unpeer_crypto_early",	T_UEcrypto,	FOLLBY_TOKEN },
 { "unpeer_crypto_nak_early",	T_UEcryptonak,	FOLLBY_TOKEN },
