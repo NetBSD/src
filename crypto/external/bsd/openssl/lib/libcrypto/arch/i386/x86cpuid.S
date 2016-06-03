@@ -342,7 +342,5 @@ OPENSSL_ia32_rdrand:
 	ret
 .size	OPENSSL_ia32_rdrand,.-.L_OPENSSL_ia32_rdrand_begin
 .comm	OPENSSL_ia32cap_P,8,4
-.section	.init
-	PIC_PROLOGUE
-	call	PIC_PLT(OPENSSL_cpuid_setup)
-	PIC_EPILOGUE
+.section	.ctors
+.long	OPENSSL_cpuid_setup
