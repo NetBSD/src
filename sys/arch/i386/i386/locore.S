@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.128 2016/06/04 09:52:41 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.129 2016/06/04 10:02:12 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.128 2016/06/04 09:52:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.129 2016/06/04 10:02:12 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -216,6 +216,20 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.128 2016/06/04 09:52:41 maxv Exp $");
 	addl	$PAGE_SIZE,%eax		;	/* next phys page */	\
 	loop	1b			; \
 	popl	%ebp			; \
+2:					;
+
+/*
+ * fillkpt_blank - Fill in a kernel page table with blank entries
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
+#define fillkpt_blank	\
+	cmpl	$0,%ecx			;	/* zero-sized? */	\
+	je 	2f			; \
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
+	movl	$0,(%ebx)		;	/* lower 32 bits: 0 */	\
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	loop	1b			; \
 2:					;
 
 /*
@@ -696,15 +710,12 @@ no_NOX:
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
 	/* Skip the first MB. */
-	movl	$(KERNTEXTOFF - KERNBASE),%eax
-	movl	%eax,%ecx
-	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # PDEs */
-#ifdef PAE
-	shll	$1,%ecx			/* PDEs are twice larger with PAE */
-#endif
-	addl	%ecx,%ebx
+	movl	$(KERNTEXTOFF - KERNBASE),%ecx
+	shrl	$PGSHIFT,%ecx
+	fillkpt_blank
 
 	/* Map the kernel text RX. */
+	movl	$(KERNTEXTOFF - KERNBASE),%eax	/* start of TEXT */
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
