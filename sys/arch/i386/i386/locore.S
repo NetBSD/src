@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.130 2016/06/04 10:19:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.131 2016/06/04 10:48:11 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.130 2016/06/04 10:19:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.131 2016/06/04 10:48:11 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -753,12 +753,12 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (4). Map ISA I/O MEM RWX. */
+	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
-	fillkpt
+	fillkpt_nox
 
 	/*
 	 * Build L2 for identity mapping. Linked to L1.
