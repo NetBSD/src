@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.1 2016/05/01 10:21:02 nonaka Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.2 2016/06/04 16:11:51 nonaka Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -79,6 +79,8 @@ struct nvme_queue {
 struct nvme_namespace {
 	struct nvm_identify_namespace *ident;
 	device_t dev;
+	uint32_t flags;
+#define	NVME_NS_F_OPEN	__BIT(0)
 };
 
 struct nvme_softc {
@@ -113,6 +115,7 @@ struct nvme_softc {
 
 	uint32_t		sc_flags;
 #define	NVME_F_ATTACHED	__BIT(0)
+#define	NVME_F_OPEN	__BIT(1)
 };
 
 #define	lemtoh16(p)	le16toh(*((uint16_t *)(p)))
