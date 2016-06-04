@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.100 2016/06/04 09:45:57 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.101 2016/06/04 10:19:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -611,9 +611,9 @@ no_NOX:
  * +------+--------+------+-----+--------+---------------------+----------
  *                             (1)      (2)                   (3)
  *
- * --------------+-----+-----+----+------------+
- * -> PROC0 STK -> L3 -> L2 -> L1 | ISA IO MEM |
- * --------------+-----+-----+----+------------+
+ * --------------+-----+-----+----+-------------+
+ * -> PROC0 STK -> L3 -> L2 -> L1 | ISA I/O MEM |
+ * --------------+-----+-----+----+-------------+
  *                               (4)
  *
  * PROC0 STK is obviously not linked as a page level. It just happens to be
@@ -718,9 +718,11 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
-	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx
+	/* We are on (4). Map ISA I/O MEM RWX. */
+	movl	$IOM_BEGIN,%eax
+	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
 	fillkpt
 
 	/*
