@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: logpage.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2013 EMC Corp.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 285796 2015-07-22 16:10:29Z jimharris $");
 #endif
@@ -248,7 +248,7 @@ static struct logpage_function {
 	{0,				NULL			},
 };
 
-static void
+__dead static void
 logpage_usage(void)
 {
 	fprintf(stderr, "usage:\n");

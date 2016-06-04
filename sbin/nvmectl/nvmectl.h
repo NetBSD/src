@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -69,19 +69,19 @@
 #define POWER_USAGE							       \
 "       nvmectl power [-l] [-p new-state [-w workload-hint]] <controller id>\n"
 
-void devlist(int, char *[]);
-void identify(int, char *[]);
+void devlist(int, char *[]) __dead;
+void identify(int, char *[]) __dead;
 #ifdef PERFTEST_USAGE
 void perftest(int, char *[]);
 #endif
 #ifdef RESET_USAGE
 void reset(int, char *[]);
 #endif
-void logpage(int, char *[]);
+void logpage(int, char *[]) __dead;
 #ifdef FIRMWARE_USAGE
 void firmware(int, char *[]);
 #endif
-void power(int, char *[]);
+void power(int, char *[]) __dead;
 
 int open_dev(const char *, int *, int, int);
 void parse_ns_str(const char *, char *, int *);

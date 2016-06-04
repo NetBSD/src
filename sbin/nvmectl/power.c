@@ -1,4 +1,4 @@
-/*	$NetBSD: power.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: power.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2016 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: power.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: power.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 296672 2016-03-11 17:25:18Z dim $");
 #endif
@@ -48,7 +48,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/power.c 296672 2016-03-11 17:25:18Z di
 
 #include "nvmectl.h"
 
-static void
+__dead static void
 power_usage(void)
 {
 	fprintf(stderr, "usage:\n");
