@@ -1,4 +1,4 @@
-/*	$NetBSD: devlist.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: devlist.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devlist.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: devlist.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 260381 2014-01-06 23:48:47Z jimharris $");
 #endif
@@ -48,7 +48,7 @@ __FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 260381 2014-01-06 23:48:47Z 
 
 #include "nvmectl.h"
 
-static void
+__dead static void
 devlist_usage(void)
 {
 	fprintf(stderr, "usage:\n");
