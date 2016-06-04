@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.241 2016/03/17 00:09:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.242 2016/06/04 00:11:01 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -173,7 +173,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 SUBDIR+=	.WAIT
 
 SANITIZER_DIR=../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libasan
-.if !defined(HAVE_GCC) || ${HAVE_GCC} != 53
+.if !defined(HAVE_GCC)
 .if exists(${SANITIZER_DIR})
 SUBDIR+=	${SANITIZER_DIR}
 .endif
