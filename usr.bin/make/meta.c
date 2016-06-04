@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.59 2016/06/03 01:21:59 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.60 2016/06/04 22:17:14 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1451,18 +1451,27 @@ meta_oodate(GNode *gn, Boolean oodate)
 			fname, (char *)Lst_Datum(Lst_First(missingFiles)));
 	    oodate = TRUE;
 	}
-    } else {
-	if (writeMeta && metaMissing) {
+	if (!oodate && !have_filemon && filemonMissing) {
 	    if (DEBUG(META))
-		fprintf(debug_file, "%s: required but missing\n", fname);
+		fprintf(debug_file, "%s: missing filemon data\n", fname);
 	    oodate = TRUE;
 	}
-    }
+    } else {
+	if (writeMeta && metaMissing) {
+	    cp = NULL;
 
-    if (!oodate && !have_filemon && filemonMissing) {
-	if (DEBUG(META))
-	    fprintf(debug_file, "%s: missing filemon data\n", fname);
-	oodate = TRUE;
+	    /* if target is in .CURDIR we do not need a meta file */
+	    if (gn->path && (cp = strrchr(gn->path, '/')) && cp > gn->path) {
+		if (strncmp(curdir, gn->path, (cp - gn->path)) != 0) {
+		    cp = NULL;		/* not in .CURDIR */
+		}
+	    }
+	    if (!cp) {
+		if (DEBUG(META))
+		    fprintf(debug_file, "%s: required but missing\n", fname);
+		oodate = TRUE;
+	    }
+	}
     }
 
     Lst_Destroy(missingFiles, (FreeProc *)free);
