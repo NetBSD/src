@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1126 2016/06/04 15:27:11 agc Exp $
+# $NetBSD: mi,v 1.1127 2016/06/04 16:29:35 nonaka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -527,6 +527,7 @@
 ./sbin/nfsiod					base-obsolete		obsolete
 ./sbin/nologin					base-sysutil-root
 ./sbin/npfctl					base-npf-bin		npf
+./sbin/nvmectl					base-sysutil-root
 ./sbin/pdisk					base-sysutil-root
 ./sbin/pfctl					base-pf-root		pf
 ./sbin/pflogd					base-pf-root		pf
