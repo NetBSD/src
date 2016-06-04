@@ -1,7 +1,36 @@
-/*	$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.127 2016/06/04 09:45:57 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009, 2016
+ * The NetBSD Foundation, Inc., All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum, by Andrew Doran and by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -65,35 +94,6 @@
  */
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum, and by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.127 2016/06/04 09:45:57 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -147,13 +147,14 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $");
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <machine/cputypes.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <machine/i82489reg.h>
 #include <machine/frameasm.h>
 #include <machine/i82489reg.h>
+#include <machine/cputypes.h>
+
 #ifndef XEN
 #include <machine/multiboot.h>
 #endif
@@ -255,17 +256,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $");
  */
 	.data
 
-	.globl	_C_LABEL(tablesize)
-	.globl	_C_LABEL(nox_flag)
-	.globl	_C_LABEL(cputype)
-	.globl	_C_LABEL(cpuid_level)
-	.globl	_C_LABEL(esym)
-	.globl	_C_LABEL(eblob)
-	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(lwp0uarea)
-	.globl	_C_LABEL(PDPpaddr)
-	.globl	_C_LABEL(gdt)
-	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
@@ -274,7 +264,9 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.126 2016/05/29 09:16:12 maxv Exp $");
 #else
 	.align	12
 #endif
-	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
+	.globl	_C_LABEL(local_apic)
+	.globl	_C_LABEL(lapic_id)
+
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
 	.space	LAPIC_ID
@@ -303,6 +295,18 @@ LABEL(lapic_tpr)
 END(lapic_tpr)
 #endif
 
+	.globl	_C_LABEL(tablesize)
+	.globl	_C_LABEL(nox_flag)
+	.globl	_C_LABEL(cputype)
+	.globl	_C_LABEL(cpuid_level)
+	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(eblob)
+	.globl	_C_LABEL(atdevbase)
+	.globl	_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea)
+	.globl	_C_LABEL(gdt)
+	.globl	_C_LABEL(idt)
+
 	.type	_C_LABEL(tablesize), @object
 _C_LABEL(tablesize):	.long	0
 END(tablesize)
@@ -313,7 +317,7 @@ END(nox_flag)
 LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
 	.type	_C_LABEL(cpuid_level), @object
-LABEL(cpuid_level)	.long	0
+LABEL(cpuid_level)	.long	0	/* max. level accepted by cpuid instr */
 END(cpuid_level)
 	.type	_C_LABEL(atdevbase), @object
 LABEL(atdevbase)	.long	0	/* location of start of iomem in virt */
