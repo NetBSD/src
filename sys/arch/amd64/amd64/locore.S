@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.101 2016/06/04 10:19:09 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.102 2016/06/04 10:48:11 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -718,12 +718,12 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (4). Map ISA I/O MEM RWX. */
+	/* We are on (4). Map ISA I/O MEM RW. */
 	movl	$IOM_BEGIN,%eax
 	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
-	fillkpt
+	fillkpt_nox
 
 	/*
 	 * Build L2. Linked to L1.
