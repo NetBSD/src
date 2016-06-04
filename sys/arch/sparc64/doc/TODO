@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.17 2016/05/17 19:39:44 palle Exp $ */
+ /* $NetBSD: TODO,v 1.18 2016/06/04 21:26:26 palle Exp $ */
 
 Things to be done:
 
@@ -27,3 +27,4 @@ sun4v:
 - vpci.c/vpcivar.h: cleanup FIXMEs
 - interrups not handled properly (com at ebus only...)
 - mpt(4) complains: mpt0: Phy 0: Link Status Unknown
+- locore.s: TRAP_SETUP() - sun4u specific ASI_DMMU
