@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1524 2016/05/01 10:21:01 nonaka Exp $
+# $NetBSD: mi,v 1.1525 2016/06/04 15:27:11 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -541,6 +541,7 @@
 ./usr/share/man/cat1/sum.0			man-util-catman		.cat
 ./usr/share/man/cat1/sup.0			man-sup-catman		.cat
 ./usr/share/man/cat1/suspend.0			man-util-catman		.cat
+./usr/share/man/cat1/sys_info.0			man-util-catman		.cat
 ./usr/share/man/cat1/sysstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/systat.0			man-util-catman		.cat
 ./usr/share/man/cat1/systrace.0			man-obsolete		obsolete
@@ -3677,6 +3678,7 @@
 ./usr/share/man/html1/sum.html			man-util-htmlman	html
 ./usr/share/man/html1/sup.html			man-sup-htmlman		html
 ./usr/share/man/html1/suspend.html		man-util-htmlman	html
+./usr/share/man/html1/sys_info.html		man-util-htmlman	html
 ./usr/share/man/html1/sysstat.html		man-util-htmlman	html
 ./usr/share/man/html1/systat.html		man-util-htmlman	html
 ./usr/share/man/html1/tabs.html			man-util-htmlman	html
@@ -6465,6 +6467,7 @@
 ./usr/share/man/man1/sum.1			man-util-man		.man
 ./usr/share/man/man1/sup.1			man-sup-man		.man
 ./usr/share/man/man1/suspend.1			man-util-man		.man
+./usr/share/man/man1/sys_info.1			man-util-man		.man
 ./usr/share/man/man1/sysstat.1			man-util-man		.man
 ./usr/share/man/man1/systat.1			man-util-man		.man
 ./usr/share/man/man1/systrace.1			man-obsolete		obsolete
