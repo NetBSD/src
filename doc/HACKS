@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.167 2016/05/10 19:32:47 mrg Exp $
+# $NetBSD: HACKS,v 1.168 2016/06/04 11:25:43 joerg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -26,20 +26,6 @@
 #  	  closing bracket.
 #
 # this is a comment.
-
-hack	gcc-5.3 miscompiles crt* leading to ctor/dtor related crashes
-mdate	10 May 2016
-who	mrg martin
-file	lib/csu/common/Makefile.inc : 1.26, 1.27, 1.31
-descr
-	GCC assumes non-constant data is constant and assumes that it
-	can generate direct calls out of the ctor/dtor space, which
-	generally breaks their usage.  On SPARC, an explicit call to
-	0 is generated as "clr %g1; call %g1", for example.
-
-	Compiling with -O1 fixes this problem.
-pr	51121
-kcah
 
 hack	gcc-5.3 optimizes memset+malloc -> calloc inside calloc
 mdate	4 May 2016
