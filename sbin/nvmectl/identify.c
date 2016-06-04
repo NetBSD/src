@@ -1,4 +1,4 @@
-/*	$NetBSD: identify.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: identify.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: identify.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: identify.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/identify.c 253476 2013-07-19 21:40:57Z jimharris $");
 #endif
@@ -166,7 +166,7 @@ print_namespace(struct nvm_identify_namespace *nsdata)
 		    i, 1 << nsdata->lbaf[i].lbads, nsdata->lbaf[i].ms);
 }
 
-static void
+__dead static void
 identify_usage(void)
 {
 	fprintf(stderr, "usage:\n");
@@ -174,7 +174,7 @@ identify_usage(void)
 	exit(1);
 }
 
-static void
+__dead static void
 identify_ctrlr(int argc, char *argv[])
 {
 	struct nvm_identify_controller	cdata;
@@ -221,7 +221,7 @@ identify_ctrlr(int argc, char *argv[])
 	exit(0);
 }
 
-static void
+__dead static void
 identify_ns(int argc, char *argv[])
 {
 	struct nvm_identify_namespace	nsdata;
