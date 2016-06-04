@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2038 2016/06/03 21:55:50 joerg Exp $
+#	$NetBSD: mi,v 1.2039 2016/06/04 16:11:50 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -498,6 +498,8 @@
 ./usr/include/dev/ic/nec765reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/ns16450reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/ns16550reg.h		comp-obsolete		obsolete
+./usr/include/dev/ic/nvmeio.h			comp-c-include
+./usr/include/dev/ic/nvmereg.h			comp-c-include
 ./usr/include/dev/ic/opl3sa3.h			comp-obsolete		obsolete
 ./usr/include/dev/ic/opl3sa3reg.h		comp-obsolete		obsolete
 ./usr/include/dev/ic/pcdisplay.h		comp-obsolete		obsolete

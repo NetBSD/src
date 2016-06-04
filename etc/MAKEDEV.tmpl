@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.179 2016/01/28 19:06:39 riz Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.180 2016/06/04 16:11:50 nonaka Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -264,6 +264,8 @@
 #	np*	UNIBUS Ethernet co-processor interface, for downloading.
 #	npf	NPF packet filter
 #	nsmb*	SMB requester
+#	nvme*	Non-Volatile Memory Host Controller Interface device driver
+#	nvme*ns* Non-Volatile Memory namespace
 #	openfirm OpenFirmware accessor
 #	pad*	Pseudo-audio device driver
 #	pci*	PCI bus access devices
@@ -2199,6 +2201,22 @@ iscsi[0-9]*)
 
 vchiq)
 	mkdev vchiq c %vchiq_chr% 0 600
+	;;
+
+nvme[0-9]*ns[0-9]*)
+	unit=${i#nvme}
+	unit=${unit%ns*}
+	subunit=${i#nvme${unit}ns}
+	if [ 0$subunit -le 0 -o 0$subunit -ge 65536 ]; then
+		warn "bad nsid for $i: $subunit"
+		break
+	fi
+	mkdev nvme${unit}ns$subunit c %nvmens_chr% $(($unit * 65536 + $subunit))
+	;;
+
+nvme[0-9]*)
+	unit=${i#nvme}
+	mkdev nvme$unit c %nvme_chr% $unit
 	;;
 
 midevend)

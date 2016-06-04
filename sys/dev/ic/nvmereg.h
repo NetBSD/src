@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.1 2016/05/01 10:21:02 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.2 2016/06/04 16:11:51 nonaka Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef	__NVMEREG_H__
+#define	__NVMEREG_H__
 
 #define NVME_CAP	0x0000	/* Controller Capabilities */
 #define  NVME_CAP_MPSMAX(_r)	(12 + (((_r) >> 52) & 0xf)) /* shift */
@@ -385,3 +388,5 @@ struct nvm_identify_namespace {
 
 	uint8_t		vs[3712];
 } __packed __aligned(8);
+
+#endif	/* __NVMEREG_H__ */

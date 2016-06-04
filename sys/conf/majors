@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.73 2016/05/13 07:41:47 skrll Exp $
+# $NetBSD: majors,v 1.74 2016/06/04 16:11:50 nonaka Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -72,3 +72,5 @@ device-major lua       char 209            lua
 # 310-339 reserved for previously not MI storage devices
 
 device-major hdmicec   char 340            hdmicec
+device-major nvme      char 341		   nvme
+device-major nvmens    char 342		   nvmens
