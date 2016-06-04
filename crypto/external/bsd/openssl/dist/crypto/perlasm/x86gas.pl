@@ -215,8 +215,14 @@ sub ::initseg
 .long	$f
 ___
     }
-    elsif ($::elf || $::coff) # Let the linker use whatever it wants.
-    {   $initseg.=<<___;
+    elsif ($::elf)
+    {	$initseg.=<<___;
+.section	.init
+	call	$f
+___
+    }
+    elsif ($::coff)
+    {   $initseg.=<<___;	# applies to both Cygwin and Mingw
 .section	.ctors
 .long	$f
 ___
