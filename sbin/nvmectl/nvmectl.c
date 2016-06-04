@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: nvmectl.c,v 1.2 2016/06/04 20:59:49 joerg Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nvmectl.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $");
+__RCSID("$NetBSD: nvmectl.c,v 1.2 2016/06/04 20:59:49 joerg Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/nvmecontrol.c 295087 2016-01-30 22:48:06Z imp $");
 #endif
@@ -75,7 +75,7 @@ static struct nvme_function {
 	{NULL,		NULL,		NULL},
 };
 
-static void
+__dead static void
 usage(void)
 {
 	struct nvme_function *f;
