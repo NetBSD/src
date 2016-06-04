@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.127 2016/06/04 09:45:57 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.128 2016/06/04 09:52:41 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.127 2016/06/04 09:45:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.128 2016/06/04 09:52:41 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -317,7 +317,7 @@ END(nox_flag)
 LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
 	.type	_C_LABEL(cpuid_level), @object
-LABEL(cpuid_level)	.long	0	/* max. level accepted by cpuid instr */
+LABEL(cpuid_level)	.long	-1	/* max. level accepted by cpuid instr */
 END(cpuid_level)
 	.type	_C_LABEL(atdevbase), @object
 LABEL(atdevbase)	.long	0	/* location of start of iomem in virt */
@@ -402,8 +402,6 @@ _C_LABEL(Multiboot_Header):
 	xorl	%eax,%eax
 	movw	%ax,%fs
 	movw	%ax,%gs
-	decl	%eax
-	movl	%eax,RELOC(cpuid_level)
 
 	/* Find out our CPU type. */
 
