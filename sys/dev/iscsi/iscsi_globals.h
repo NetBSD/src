@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.16 2016/06/01 05:13:07 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.17 2016/06/05 04:48:17 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -185,6 +185,14 @@ typedef enum {
 	PDUDISP_WAIT		/* Waiting for acknowledge */
 } pdu_disp_t;
 
+/* Timeout state */
+
+typedef enum {
+	TOUT_NONE,		/* Initial */
+	TOUT_ARMED,		/* callout is scheduled */
+	TOUT_QUEUED,		/* put into timeout queue */
+	TOUT_BUSY		/* cleanup thread working */
+} tout_state_t;
 
 typedef struct connection_s connection_t;
 typedef struct session_s session_t;
@@ -253,7 +261,7 @@ struct ccb_s {
 
 	struct callout		timeout; /* To make sure it isn't lost */
 	TAILQ_ENTRY(ccb_s)	tchain;
-	bool			timedout;
+	tout_state_t		timedout;
 	int			num_timeouts;
 	/* How often we've sent out SNACK without answer */
 	int			total_tries;
@@ -374,7 +382,7 @@ struct connection_s {
 	struct callout			timeout;
 		/* Timeout for checking if connection is dead */
 	TAILQ_ENTRY(connection_s)	tchain;
-	bool				timedout;
+	tout_state_t			timedout;
 	int				num_timeouts;
 		/* How often we've sent out a NOP without answer */
 	uint32_t			idle_timeout_val;
