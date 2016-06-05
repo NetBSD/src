@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.48 2016/06/05 07:52:16 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.49 2016/06/05 07:54:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.48 2016/06/05 07:52:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.49 2016/06/05 07:54:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2231,8 +2231,6 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	struct xhci_slot *xs;
 	uint32_t *cp;
 	uint32_t route = 0;
-	uint8_t slot = 0;
-	uint8_t addr;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "port=%d depth=%d speed=%d upport %d",
@@ -2351,6 +2349,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		if (err)
 			goto bad;
 	} else {
+		uint8_t slot = 0;
+
 		/* 4.3.2 */
 		err = xhci_enable_slot(sc, &slot);
 		if (err)
@@ -2381,7 +2381,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
 		cp = xhci_slot_get_dcv(sc, xs, XHCI_DCI_SLOT);
 		//hexdump("slot context", cp, sc->sc_ctxsz);
-		addr = XHCI_SCTX_3_DEV_ADDR_GET(cp[3]);
+		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(cp[3]);
 		DPRINTFN(4, "device address %u", addr, 0, 0, 0);
 		/* XXX ensure we know when the hardware does something
 		   we can't yet cope with */
