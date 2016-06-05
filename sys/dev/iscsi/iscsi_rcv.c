@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.12 2016/06/01 05:13:07 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.13 2016/06/05 04:36:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -64,10 +64,10 @@ my_soo_read(connection_t *conn, struct uio *u, int flags)
 	KERNEL_UNLOCK_ONE(curlwp);
 
 	if (ret || (flags != MSG_DONTWAIT && u->uio_resid)) {
-		DEBC(conn, 1, ("Read failed (ret: %d, req: %zu, out: %zu)\n", ret, resid,
-				u->uio_resid));
+		DEBC(conn, 1, ("Read failed (ret: %d, req: %zu, out: %zu)\n",
+		               ret, resid, u->uio_resid));
 		handle_connection_error(conn, ISCSI_STATUS_SOCKET_ERROR,
-								RECOVER_CONNECTION);
+		                        RECOVER_CONNECTION);
 		return 1;
 	}
 	return 0;
@@ -131,6 +131,9 @@ ccb_from_itt(connection_t *conn, uint32_t itt)
 	}
 	ccb = &conn->session->ccb[cidx];
 	if (ccb->ITT != itt || ccb->disp <= CCBDISP_BUSY) {
+		DEBC(conn, 0,
+		     ("ccb_from_itt: received invalid CCB itt %08x != %08x\n",
+		      itt, ccb->ITT));
 		return NULL;
 	}
 	return ccb;
@@ -161,7 +164,7 @@ read_pdu_data(pdu_t *pdu, uint8_t *data, uint32_t offset)
 	int i, pad;
 	connection_t *conn = pdu->connection;
 
-	DEB(1, ("read_pdu_data: data segment length = %d\n",
+	DEB(15, ("read_pdu_data: data segment length = %d\n",
 		ntoh3(pdu->pdu.DataSegmentLength)));
 	if (!(len = ntoh3(pdu->pdu.DataSegmentLength))) {
 		return 0;
@@ -373,7 +376,7 @@ check_CmdSN(connection_t *conn, uint32_t nw_sn)
 		if (ccb->pdu_waiting != NULL && ccb->CmdSN > sn &&
 			!(ccb->flags & CCBF_GOT_RSP)) {
 			DEBC(conn, 1, ("CheckCmdSN resending - CmdSN=%d, ExpCmdSn=%d\n",
-						   ccb->CmdSN, sn));
+			               ccb->CmdSN, sn));
 
 			ccb->total_tries++;
 
@@ -944,7 +947,7 @@ STATIC int
 receive_nop_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
 	DEBC(conn, 10,
-		("Received NOP-In PDU, req_ccb=%p, ITT=%x, TTT=%x, StatSN=%x\n",
+		("Received NOP_In PDU, req_ccb=%p, ITT=%x, TTT=%x, StatSN=%x\n",
 		req_ccb, pdu->pdu.InitiatorTaskTag,
 		pdu->pdu.p.nop_in.TargetTransferTag,
 		ntohl(pdu->pdu.p.nop_in.StatSN)));
@@ -971,6 +974,9 @@ receive_nop_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 		wake_ccb(req_ccb, ISCSI_STATUS_SUCCESS);
 
 		check_StatSN(conn, pdu->pdu.p.nop_in.StatSN, TRUE);
+	} else {
+		DEBC(conn, 0, ("Received unsolicted NOP_In, itt=%08x\n",
+		               pdu->pdu.InitiatorTaskTag));
 	}
 
 	return 0;
@@ -1008,6 +1014,9 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			return 0;
 		}
 	}
+
+	DEBC(conn, 99, ("Received PDU ExpCmdSN = %u\n",
+	     ntohl(pdu->pdu.p.response.ExpCmdSN)));
 
 	req_ccb = ccb_from_itt(conn, pdu->pdu.InitiatorTaskTag);
 
@@ -1112,7 +1121,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 			return 0;
 		}
 
-		DEBC(conn, 1, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
+		DEBC(conn, 5, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
 
 		TAILQ_INIT(&waiting);
 		while ((req_ccb = TAILQ_FIRST(&sess->ccbs_throttled)) != NULL) {
@@ -1124,7 +1133,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
 			TAILQ_REMOVE(&waiting, req_ccb, chain);
 
-			DEBC(conn, 1, ("Unthrottling - ccb = %p, disp = %d\n",
+			DEBC(conn, 10, ("Unthrottling - ccb = %p, disp = %d\n",
 					req_ccb, req_ccb->disp));
 
 			if (req_ccb->flags & CCBF_WAITING) {
