@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.17 2016/06/05 09:03:10 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.18 2016/06/05 09:21:14 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -398,8 +398,10 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 {
 	ccb_disp_t disp;
 	connection_t *conn;
+	session_t *sess;
 
 	conn = ccb->connection;
+	sess = ccb->session;
 
 #ifdef ISCSI_DEBUG
 	DEBC(conn, 9, ("CCB done, ccb = %p, disp = %d\n",
@@ -417,12 +419,15 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 	}
 
 	suspend_ccb(ccb, FALSE);
-	throttle_ccb(ccb, FALSE);
 
 	/* change the disposition so nobody tries this again */
 	ccb->disp = CCBDISP_BUSY;
 	ccb->status = status;
 	mutex_exit(&conn->lock);
+
+	mutex_enter(&sess->lock);
+	throttle_ccb(ccb, FALSE);
+	mutex_exit(&sess->lock);
 
 	switch (disp) {
 	case CCBDISP_FREE:
