@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.21 2016/06/05 04:36:05 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.22 2016/06/05 05:18:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -190,6 +190,8 @@ reassign_tasks(connection_t *oldconn)
 		TAILQ_REMOVE(&oldconn->ccbs_waiting, ccb, chain);
 
 		opdu = ccb->pdu_waiting;
+		KASSERT((opdu->flags & PDUF_INQUEUE) == 0);
+
 		*pdu = *opdu;
 
 		/* restore overwritten back ptr */
@@ -303,7 +305,6 @@ iscsi_send_thread(void *par)
 			while (!conn->terminating &&
 				(pdu = TAILQ_FIRST(&conn->pdus_to_send)) != NULL) {
 				TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
-				pdu->flags &= ~PDUF_INQUEUE;
 				mutex_exit(&conn->lock);
 
 				KASSERT(!pdu->uio.uio_resid);
@@ -318,10 +319,15 @@ iscsi_send_thread(void *par)
 				                ntohl(pdu->pdu.p.command.CmdSN)));
 				my_soo_write(conn, &pdu->uio);
 
-				if (pdu->disp <= PDUDISP_FREE) {
+				mutex_enter(&conn->lock);
+				pdu->flags &= ~PDUF_INQUEUE;
+				if (pdu->disp > PDUDISP_FREE)
+					pdu->flags &= ~PDUF_BUSY;
+				mutex_exit(&conn->lock);
+
+				if (pdu->disp <= PDUDISP_FREE)
 					free_pdu(pdu);
-				} else {
-					pdu->flags &= ~PDUF_BUSY; }
+
 				mutex_enter(&conn->lock);
 			}
 
