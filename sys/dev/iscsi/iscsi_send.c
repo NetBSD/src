@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.20 2016/06/03 06:53:40 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.21 2016/06/05 04:36:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -314,7 +314,8 @@ iscsi_send_thread(void *par)
 
 				if (conn->HeaderDigest)
 					pdu->pdu.HeaderDigest = gen_digest(&pdu->pdu, BHS_SIZE);
-				DEBC(conn, 99, ("Send thread transmitting data\n"));
+				DEBC(conn, 99, ("Transmitting PDU CmdSN = %u\n",
+				                ntohl(pdu->pdu.p.command.CmdSN)));
 				my_soo_write(conn, &pdu->uio);
 
 				if (pdu->disp <= PDUDISP_FREE) {
@@ -1358,13 +1359,13 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		throttle_ccb(ccb, TRUE);
 
 		if (!waitok) {
-			DEBOUT(("Throttling send_command, ccb = %p\n",ccb));
+			DEBC(conn, 10, ("Throttling send_command, ccb = %p\n",ccb));
 			return;
 		}
 
+		DEBC(conn, 15, ("Wait send_command, ccb = %p\n",ccb));
 		cv_wait(&sess->ccb_cv, &sess->lock);
-
-		DEBOUT(("Resuming send_command, ccb = %p\n",ccb));
+		DEBC(conn, 15, ("Resuming send_command, ccb = %p\n",ccb));
 
 		throttle_ccb(ccb, FALSE);
 		ccb->flags &= ~CCBF_WAITING;
@@ -1423,8 +1424,8 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 
 	pdu->p.command.CmdSN = htonl(ccb->CmdSN);
 
-	DEBC(conn, 10, ("Send Command: CmdSN %d, data_in %d, len %d, totlen %d\n",
-			ccb->CmdSN, ccb->data_in, len, totlen));
+	DEBC(conn, 10, ("Send Command: CmdSN %d (%d), data_in %d, len %d, totlen %d\n",
+			ccb->CmdSN, sess->MaxCmdSN, ccb->data_in, len, totlen));
 
 	setup_tx_uio(ppdu, len, ccb->data_ptr, ccb->data_in);
 	send_pdu(ccb, ppdu, (totlen) ? CCBDISP_DEFER : disp, PDUDISP_WAIT);
