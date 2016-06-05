@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.14 2016/06/05 04:51:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.15 2016/06/05 05:07:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -376,7 +376,8 @@ check_CmdSN(connection_t *conn, uint32_t nw_sn)
 		DEBC(conn, 10,
 			("CheckCmdSN - CmdSN=%d, ExpCmdSn=%d, waiting=%p, flags=%x\n",
 			ccb->CmdSN, sn, ccb->pdu_waiting, ccb->flags));
-		if (ccb->pdu_waiting != NULL && ccb->CmdSN > sn &&
+		if (ccb->pdu_waiting != NULL &&
+			sn_a_lt_b(sn, ccb->CmdSN) &&
 			!(ccb->flags & CCBF_GOT_RSP)) {
 			DEBC(conn, 1, ("CheckCmdSN resending - CmdSN=%d, ExpCmdSn=%d\n",
 			               ccb->CmdSN, sn));
@@ -385,14 +386,24 @@ check_CmdSN(connection_t *conn, uint32_t nw_sn)
 
 			if (++ccb->num_timeouts > MAX_CCB_TIMEOUTS ||
 				ccb->total_tries > MAX_CCB_TRIES) {
-				handle_connection_error(conn, ISCSI_STATUS_TIMEOUT,
-					(ccb->total_tries <= MAX_CCB_TRIES) ? RECOVER_CONNECTION
-														: LOGOUT_CONNECTION);
+				handle_connection_error(conn,
+					ISCSI_STATUS_TIMEOUT,
+					(ccb->total_tries <= MAX_CCB_TRIES)
+						? RECOVER_CONNECTION
+						: LOGOUT_CONNECTION);
 				break;
 			} else {
 				resend_pdu(ccb);
 			}
 		}
+
+		/*
+		 * The target can respond to a NOP-In before subsequent
+		 * commands are processed. So our CmdSN can exceed the
+		 * returned ExpCmdSN by the number of commands that are
+		 * in flight. Adjust the expected value accordingly.
+		 */
+		sn++;
 	}
 }
 
