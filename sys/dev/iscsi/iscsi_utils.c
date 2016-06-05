@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.18 2016/06/05 09:21:14 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.19 2016/06/05 13:54:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -268,16 +268,17 @@ void
 free_ccb(ccb_t *ccb)
 {
 	session_t *sess = ccb->session;
+	connection_t *conn = ccb->connection;
 	pdu_t *pdu;
 
-	DEBC(ccb->connection, 15, (
+	DEBC(conn, 15, (
 		"free_ccb: ccb = %p, usecount = %d\n",
-		ccb, ccb->connection->usecount-1));
+		ccb, conn->usecount-1));
 
 	KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 	KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
 
-	atomic_dec_uint(&ccb->connection->usecount);
+	atomic_dec_uint(&conn->usecount);
 	ccb->connection = NULL;
 
 	if (ccb->disp > CCBDISP_NOWAIT) {
@@ -296,6 +297,12 @@ free_ccb(ccb_t *ccb)
 	/* free PDU waiting for ACK */
 	if ((pdu = ccb->pdu_waiting) != NULL) {
 		ccb->pdu_waiting = NULL;
+		mutex_enter(&conn->lock);
+		if ((pdu->flags & PDUF_INQUEUE) != 0) {
+			TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
+			pdu->flags &= ~PDUF_INQUEUE;
+		}
+		mutex_exit(&conn->lock);
 		free_pdu(pdu);
 	}
 
