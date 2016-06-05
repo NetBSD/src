@@ -1,4 +1,4 @@
-.\" $NetBSD: nvmectl.8,v 1.1 2016/06/04 16:29:35 nonaka Exp $
+.\" $NetBSD: nvmectl.8,v 1.2 2016/06/05 09:13:08 wiz Exp $
 .\"
 .\" Copyright (c) 2012 Intel Corporation
 .\" All rights reserved.
@@ -45,14 +45,13 @@
 .Ic devlist
 .Nm
 .Ic identify
-.Op Fl v
-.Op Fl x
-.Aq device id
+.Op Fl x Op Fl v
+.Ar device_id
 .\".Nm
 .\".Ic perftest
+.\".Op Fl p
 .\".Aq Fl n Ar num_threads
 .\".Aq Fl o Ar read|write
-.\".Op Fl p
 .\".Aq Fl s Ar size_in_bytes
 .\".Aq Fl t Ar time_in_sec
 .\".Aq namespace id
@@ -61,21 +60,21 @@
 .\".Aq controller id
 .Nm
 .Ic logpage
-.Aq Fl p Ar page_id
 .Op Fl x
-.Aq device id
-.Aq namespace id
+.Op Fl p Ar page_id
+.Ar device_id Ns | Ns Ar namespace_id
 .\".Nm
 .\".Ic firmware
+.\".Op Fl a
 .\".Op Fl s Ar slot
 .\".Op Fl f Ar path_to_firmware
-.\".Op Fl a
 .\".Aq device id
 .Nm
 .Ic power
 .Op Fl l
-.Op Fl p power_state
-.Op fl w workload_hint
+.Op Fl p Ar power_state
+.Op Fl w Ar workload_hint
+.Ar device_id
 .Sh DESCRIPTION
 NVM Express (NVMe) is a storage protocol standard, for SSDs and other
 high-speed storage devices over PCI Express.
@@ -90,8 +89,9 @@ Display a human-readable summary of the nvme0 IDENTIFY_CONTROLLER data.
 .Pp
 .Dl nvmectl identify -x -v nvme0ns1
 .Pp
-Display an hexadecimal dump of the nvme0 IDENTIFY_NAMESPACE data for namespace
-1.
+Display an hexadecimal dump of the nvme0
+.Dv IDENTIFY_NAMESPACE
+data for namespace 1.
 .\".Pp
 .\".Dl nvmectl perftest -n 32 -o read -s 512 -t 30 nvme0ns1
 .\".Pp
