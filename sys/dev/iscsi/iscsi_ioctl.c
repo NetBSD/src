@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.17 2016/06/03 06:55:16 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.18 2016/06/05 04:48:17 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1577,7 +1577,7 @@ connection_timeout_co(void *par)
 	connection_t *conn = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
-	conn->timedout = true;
+	conn->timedout = TOUT_QUEUED;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, tchain);
 	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
@@ -1586,7 +1586,12 @@ connection_timeout_co(void *par)
 void            
 connection_timeout_start(connection_t *conn, int ticks)
 {
-	callout_schedule(&conn->timeout, ticks);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->timedout != TOUT_QUEUED) {
+		conn->timedout = TOUT_ARMED;
+		callout_schedule(&conn->timeout, ticks);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
 }                           
 
 void                    
@@ -1594,10 +1599,14 @@ connection_timeout_stop(connection_t *conn)
 {                                                
 	callout_halt(&conn->timeout, NULL);
 	mutex_enter(&iscsi_cleanup_mtx);
-	if (conn->timedout) {
+	if (conn->timedout == TOUT_QUEUED) {
 		TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
-		conn->timedout = false;
+		conn->timedout = TOUT_NONE;
 	}               
+	if (curlwp != iscsi_cleanproc) {
+		while (conn->timedout == TOUT_BUSY)
+			kpause("connbusy", false, 1, &iscsi_cleanup_mtx);
+	}
 	mutex_exit(&iscsi_cleanup_mtx);
 }                        
 
@@ -1607,7 +1616,7 @@ ccb_timeout_co(void *par)
 	ccb_t *ccb = par;
 
 	mutex_enter(&iscsi_cleanup_mtx);
-	ccb->timedout = true;
+	ccb->timedout = TOUT_QUEUED;
 	TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, tchain);
 	mutex_exit(&iscsi_cleanup_mtx);
 	iscsi_notify_cleanup();
@@ -1616,7 +1625,12 @@ ccb_timeout_co(void *par)
 void    
 ccb_timeout_start(ccb_t *ccb, int ticks)
 {       
-	callout_schedule(&ccb->timeout, ticks);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (ccb->timedout != TOUT_QUEUED) {
+		ccb->timedout = TOUT_ARMED;
+		callout_schedule(&ccb->timeout, ticks);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
 } 
  
 void
@@ -1624,10 +1638,14 @@ ccb_timeout_stop(ccb_t *ccb)
 {
 	callout_halt(&ccb->timeout, NULL);
 	mutex_enter(&iscsi_cleanup_mtx);
-	if (ccb->timedout) {
+	if (ccb->timedout == TOUT_QUEUED) {
 		TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
-		ccb->timedout = false;
+		ccb->timedout = TOUT_NONE;
 	} 
+	if (curlwp != iscsi_cleanproc) {
+		while (ccb->timedout == TOUT_BUSY)
+			kpause("ccbbusy", false, 1, &iscsi_cleanup_mtx);
+	}
 	mutex_exit(&iscsi_cleanup_mtx);
 }
 
@@ -1727,16 +1745,24 @@ iscsi_cleanup_thread(void *par)
 			/* handle ccb timeouts */
 			while ((ccb = TAILQ_FIRST(&iscsi_timeout_ccb_list)) != NULL) {
 				TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
+				KASSERT(ccb->timedout == TOUT_QUEUED);
+				ccb->timedout = TOUT_BUSY;
 				mutex_exit(&iscsi_cleanup_mtx);
 				ccb_timeout(ccb);
 				mutex_enter(&iscsi_cleanup_mtx);
+				if (ccb->timedout == TOUT_BUSY)
+					ccb->timedout = TOUT_NONE;
 			}
 			/* handle connection timeouts */
 			while ((conn = TAILQ_FIRST(&iscsi_timeout_conn_list)) != NULL) {
 				TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
+				KASSERT(conn->timedout == TOUT_QUEUED);
+				conn->timedout = TOUT_BUSY;
 				mutex_exit(&iscsi_cleanup_mtx);
 				connection_timeout(conn);
 				mutex_enter(&iscsi_cleanup_mtx);
+				if (conn->timedout == TOUT_BUSY)
+					conn->timedout = TOUT_NONE;
 			}
 
 			/* if timed out, not woken up */
