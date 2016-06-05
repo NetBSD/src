@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.52 2016/06/05 08:10:59 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.53 2016/06/05 08:12:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.52 2016/06/05 08:10:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.53 2016/06/05 08:12:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1055,7 +1055,7 @@ xhci_init(struct xhci_softc *sc)
 		xhci_rt_write_4(sc, XHCI_IMOD(0), XHCI_IMOD_DEFAULT_LP);
 	else
 		xhci_rt_write_4(sc, XHCI_IMOD(0), 0);
-	aprint_debug_dev(sc->sc_dev, "setting IMOD %u\n",
+	aprint_debug_dev(sc->sc_dev, "current IMOD %u\n",
 	    xhci_rt_read_4(sc, XHCI_IMOD(0)));
 
 	xhci_op_write_4(sc, XHCI_USBCMD, XHCI_CMD_INTE|XHCI_CMD_RS); /* Go! */
@@ -1387,9 +1387,13 @@ xhci_open(struct usbd_pipe *pipe)
 	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(1, "addr %d depth %d port %d speed %d",
-	    dev->ud_addr, dev->ud_depth, dev->ud_powersrc->up_portno,
-	    dev->ud_speed);
+	DPRINTFN(1, "addr %d depth %d port %d speed %d", dev->ud_addr,
+	    dev->ud_depth, dev->ud_powersrc->up_portno, dev->ud_speed);
+	DPRINTFN(1, " dci %u type 0x%02x epaddr 0x%02x attr 0x%02x",
+	    xhci_ep_get_dci(ed), ed->bDescriptorType, ed->bEndpointAddress,
+	    ed->bmAttributes);
+	DPRINTFN(1, " mps %u ival %u", UGETW(ed->wMaxPacketSize), ed->bInterval,
+	    0, 0);
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -1524,7 +1528,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
-		DPRINTFN(4, "dying", 0, 0, 0, 0);
+		DPRINTFN(4, "xfer %p dying %u", xfer, xfer->ux_status, 0, 0);
 		xfer->ux_status = status;  /* make software ignore it */
 		callout_stop(&xfer->ux_callout);
 		usb_transfer_complete(xfer);
@@ -1661,8 +1665,11 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * hciversion == 0.96 and FSE of hcc1 is set.
 		 */
 		if (xx == NULL || trbcode == XHCI_TRB_ERROR_LENGTH) {
-			DPRINTFN(1, "xx NULL: #%u: cookie %p: code %u trb_0 %"
-			    PRIx64, idx, xx, trbcode, trb_0);
+			DPRINTFN(1, "Ignore #%u: cookie %p cc %u dci %u",
+			    idx, xx, trbcode, dci);
+			DPRINTFN(1, " orig TRB %"PRIx64" type %u", trb_0,
+			    XHCI_TRB_3_TYPE_GET(le32toh(xr->xr_trb[idx].trb_3)),
+			    0, 0);
 		}
 	} else {
 		/* When ED != 0, trb_0 is kaddr of struct xhci_xfer. */
@@ -1843,7 +1850,7 @@ xhci_softintr(void *v)
 	i = er->xr_ep;
 	j = er->xr_cs;
 
-	DPRINTFN(16, "xr_ep %d xr_cs %d", i, j, 0, 0);
+	DPRINTFN(16, "er: xr_ep %d xr_cs %d", i, j, 0, 0);
 
 	while (1) {
 		usb_syncmem(&er->xr_dma, XHCI_TRB_SIZE * i, XHCI_TRB_SIZE,
@@ -2719,6 +2726,8 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	default:
 		break;
 	}
+	DPRINTFN(4, "setting ival %u MaxBurst %#x",
+	    XHCI_EPCTX_0_IVAL_GET(cp[0]), XHCI_EPCTX_1_MAXB_GET(cp[1]), 0, 0);
 
 	/* can't use xhci_ep_get_dci() yet? */
 	*(uint64_t *)(&cp[2]) = htole64(
