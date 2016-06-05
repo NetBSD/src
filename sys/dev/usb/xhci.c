@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.53 2016/06/05 08:12:00 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.54 2016/06/05 08:25:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.53 2016/06/05 08:12:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.54 2016/06/05 08:25:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1219,7 +1219,7 @@ xhci_xspeed2psspeed(int xspeed)
 }
 
 /*
- * Construct input contexts and issue TRB
+ * Construct input contexts and issue TRB to open pipe.
  */
 static usbd_status
 xhci_configure_endpoint(struct usbd_pipe *pipe)
@@ -1336,9 +1336,11 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
 
 /*
  * Set TR Dequeue Pointer.
- * xCHI 1.1  4.6.10  6.4.3.9
- * Purge all of the transfer requests on ring.
- * EPSTATE of endpoint must be ERROR or STOPPED, or CONTEXT_STATE error.
+ * xHCI 1.1  4.6.10  6.4.3.9
+ * Purge all of the TRBs on ring and reinitialize ring.
+ * Set TR dequeue Pointr to 0 and Cycle State to 1.
+ * EPSTATE of endpoint must be ERROR or STOPPED, otherwise CONTEXT_STATE
+ * error will be generated.
  */
 static usbd_status
 xhci_set_dequeue(struct usbd_pipe *pipe)
@@ -1512,7 +1514,6 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 
 /*
  * Abort transfer.
- * Called with sc_lock held.
  * May be called from softintr context.
  */
 static void
@@ -1529,7 +1530,7 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (sc->sc_dying) {
 		/* If we're dying, just do the software part. */
 		DPRINTFN(4, "xfer %p dying %u", xfer, xfer->ux_status, 0, 0);
-		xfer->ux_status = status;  /* make software ignore it */
+		xfer->ux_status = status;
 		callout_stop(&xfer->ux_callout);
 		usb_transfer_complete(xfer);
 		return;
@@ -1672,7 +1673,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 			    0, 0);
 		}
 	} else {
-		/* When ED != 0, trb_0 is kaddr of struct xhci_xfer. */
+		/* When ED != 0, trb_0 is virtual addr of struct xhci_xfer. */
 		xx = (void *)(uintptr_t)(trb_0 & ~0x3);
 	}
 	/* XXX this may not happen */
@@ -1709,6 +1710,26 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	switch (trbcode) {
 	case XHCI_TRB_ERROR_SHORT_PKT:
 	case XHCI_TRB_ERROR_SUCCESS:
+		/*
+		 * A ctrl transfer generates two events if it has a Data stage.
+		 * After a successful Data stage we cannot call call
+		 * usb_transfer_complete - this can only happen after the Data
+		 * stage.
+		 *
+		 * Note: Data and Status stage events point at same xfer.
+		 * ux_actlen and ux_dmabuf will be passed to
+		 * usb_transfer_complete after the Status stage event.
+		 *
+		 * It can be distingished which stage generates the event:
+		 * + by checking least 3 bits of trb_0 if ED==1.
+		 *   (see xhci_device_ctrl_start).
+		 * + by checking the type of original TRB if ED==0.
+		 *
+		 * In addition, intr, bulk, and isoc transfer currently
+		 * consists of single TD, so the "skip" is not needed.
+		 * ctrl xfer uses EVENT_DATA, and others do not.
+		 * Thus driver can switch the flow by checking ED bit.
+		 */
 		xfer->ux_actlen =
 		    xfer->ux_length - XHCI_TRB_2_REM_GET(trb_2);
 		err = USBD_NORMAL_COMPLETION;
@@ -1954,6 +1975,7 @@ extern uint32_t usb_cookie_no;
  *   Determine initial MaxPacketSize (mps) by speed.
  *   Read full device descriptor.
  *   Register this device.
+ * Finally state of device transitions ADDRESSED.
  */
 static usbd_status
 xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
@@ -2270,7 +2292,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 
 /*
  * Stop execution commands, purge all commands on command ring, and
- * rewind enqueue pointer.
+ * rewind dequeue pointer.
  */
 static void
 xhci_abort_command(struct xhci_softc *sc)
@@ -2310,10 +2332,10 @@ xhci_abort_command(struct xhci_softc *sc)
 
 /*
  * Put a command on command ring, ring bell, set timer, and cv_timedwait.
- * Command completion is notified by cv_signal from xhci_handle_event
- * (called from interrupt from xHCI), or timed-out.
- * Command validation is performed in xhci_handle_event by checking if
- * trb_0 in CMD_COMPLETE TRB and sc->sc_command_addr are identical.
+ * Command completion is notified by cv_signal from xhci_event_cmd()
+ * (called from xhci_softint), or timed-out.
+ * The completion code is copied to sc->sc_result_trb in xhci_event_cmd(),
+ * then do_command examines it.
  */
 static usbd_status
 xhci_do_command_locked(struct xhci_softc * const sc,
