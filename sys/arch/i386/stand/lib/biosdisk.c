@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.44 2015/01/18 20:18:07 jakllsch Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.45 2016/06/05 14:06:31 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -701,24 +701,13 @@ biosdisk_findpartition(int biosdev, daddr_t sector)
 static void
 add_biosdisk_bootinfo(void)
 {
-	static bool done;
-
 	if (bootinfo == NULL) {
-		done = false;
 		return;
 	}
-	
-	if (done)
-		return;
-
 	BI_ADD(&bi_disk, BTINFO_BOOTDISK, sizeof(bi_disk));
 	BI_ADD(&bi_wedge, BTINFO_BOOTWEDGE, sizeof(bi_wedge));
-
-	done = true;
-
 	return;
 }
-
 #endif
 
 int
