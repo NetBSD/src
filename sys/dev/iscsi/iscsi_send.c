@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.23 2016/06/05 05:25:59 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.24 2016/06/05 05:31:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -62,9 +62,7 @@ my_soo_write(connection_t *conn, struct uio *u)
 
 	KASSERT(u->uio_resid != 0);
 
-	KERNEL_LOCK(1, curlwp);
-	ret = sosend(so, NULL, u, NULL, NULL, 0, conn->threadobj);
-	KERNEL_UNLOCK_ONE(curlwp);
+	ret = (*so->so_send)(so, NULL, u, NULL, NULL, 0, conn->threadobj);
 
 	DEB(99, ("soo_write done: len = %zu\n", u->uio_resid));
 
