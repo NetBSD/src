@@ -18,9 +18,11 @@
 
 using namespace __tsan;  // NOLINT
 
+#if !SANITIZER_NETBSD
 typedef u16 uint16_t;
 typedef u32 uint32_t;
 typedef u64 uint64_t;
+#endif
 
 void __tsan_init() {
   Initialize(cur_thread());
