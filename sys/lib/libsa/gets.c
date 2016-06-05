@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.11 2016/06/05 13:33:03 maxv Exp $	*/
+/*	$NetBSD: gets.c,v 1.12 2016/06/05 15:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,54 +36,7 @@
 void
 gets(char *buf)
 {
-	int c;
-	char *lp;
-
-	for (lp = buf;;) {
-		switch (c = getchar() & 0177) {
-		case '\n':
-		case '\r':
-			*lp = '\0';
-			putchar('\n');
-			return;
-		case '\b':
-		case '\177':
-			if (lp > buf) {
-				lp--;
-				putchar('\b');
-				putchar(' ');
-				putchar('\b');
-			}
-			break;
-#if HASH_ERASE
-		case '#':
-			if (lp > buf)
-				--lp;
-			break;
-#endif
-		case 'r' & 037: {
-			char *p;
-
-			putchar('\n');
-			for (p = buf; p < lp; ++p)
-				putchar(*p);
-			break;
-		}
-#if AT_ERASE
-		case '@':
-#endif
-		case 'u' & 037:
-		case 'w' & 037:
-			lp = buf;
-			putchar('\n');
-			break;
-		default:
-			*lp++ = c;
-			putchar(c);
-			break;
-		}
-	}
-	/*NOTREACHED*/
+	gets_s(buf, (size_t)-1);
 }
 
 void
