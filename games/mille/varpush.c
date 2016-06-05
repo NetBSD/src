@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.12 2011/08/31 16:24:56 plunky Exp $	*/
+/*	$NetBSD: varpush.c,v 1.13 2016/06/05 18:39:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: varpush.c,v 1.12 2011/08/31 16:24:56 plunky Exp $");
+__RCSID("$NetBSD: varpush.c,v 1.13 2016/06/05 18:39:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,10 +81,12 @@ varpush(int file, ssize_t (*func)(int, const struct iovec *, int))
 		Topcard = &Deck[temp];
 #ifdef DEBUG
 		if (Debug) {
-			char	buf[80];
+			char	buf[80], *bp;
 over:
 			printf("Debug file:");
-			gets(buf);
+			fgets(buf, (int)sizeof(buf), stdin);
+			if ((bp = strchr(buf, '\n')) != NULL)
+				*bp = '\0';
 			if ((outf = fopen(buf, "w")) == NULL) {
 				warn("%s", buf);
 				goto over;
