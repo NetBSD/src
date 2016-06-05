@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.26 2016/06/05 05:40:29 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.27 2016/06/05 06:19:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1368,6 +1368,7 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		throttle_ccb(ccb, TRUE);
 
 		if (!waitok) {
+			mutex_exit(&sess->lock);
 			DEBC(conn, 10, ("Throttling send_command, ccb = %p\n",ccb));
 			return;
 		}
