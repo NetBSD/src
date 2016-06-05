@@ -88,10 +88,15 @@ typedef uptr OFF_T;
 #endif
 typedef u64  OFF64_T;
 
+#if SANITIZER_NETBSD
+#include <sys/types.h>
+typedef size_t operator_new_size_type;
+#else
 #if (SANITIZER_WORDSIZE == 64) || SANITIZER_MAC
 typedef uptr operator_new_size_type;
 #else
 typedef u32 operator_new_size_type;
+#endif
 #endif
 }  // namespace __sanitizer
 
