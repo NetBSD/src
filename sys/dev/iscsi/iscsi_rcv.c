@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.19 2016/06/05 11:01:39 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.20 2016/06/05 14:00:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1148,6 +1148,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 
 	if (sn_a_lt_b(sess->MaxCmdSN, MaxCmdSN)) {
 		sess->MaxCmdSN = MaxCmdSN;
+
 		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL) {
 			mutex_exit(&sess->lock);
 			return 0;
@@ -1157,24 +1158,39 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 
 		TAILQ_INIT(&waiting);
 		while ((req_ccb = TAILQ_FIRST(&sess->ccbs_throttled)) != NULL) {
-			throttle_ccb(req_ccb, FALSE);
-			TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
+			if (!conn->terminating ||
+			    (req_ccb->flags & CCBF_WAITING) != 0) {
+				throttle_ccb(req_ccb, FALSE);
+				TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
+			}
 		}
-		mutex_exit(&sess->lock);
 
 		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
+			if (!sernum_in_window(sess))
+				break;
+			mutex_exit(&sess->lock);
+
 			TAILQ_REMOVE(&waiting, req_ccb, chain);
 
 			DEBC(conn, 10, ("Unthrottling - ccb = %p, disp = %d\n",
 					req_ccb, req_ccb->disp));
 
-			if (req_ccb->flags & CCBF_WAITING) {
+			if ((req_ccb->flags & CCBF_WAITING) != 0) {
 				cv_broadcast(&conn->ccb_cv);
-			} else
+			} else {
 				send_command(req_ccb, req_ccb->disp, FALSE, FALSE);
+			}
+
+			mutex_enter(&sess->lock);
 		}
-	} else
-		mutex_exit(&sess->lock);
+
+		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
+			TAILQ_REMOVE(&waiting, req_ccb, chain);
+			throttle_ccb(req_ccb, TRUE);
+		}
+	}
+
+	mutex_exit(&sess->lock);
 
 	return 0;
 }
