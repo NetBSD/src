@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.18 2016/06/05 04:48:17 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.19 2016/06/05 08:30:13 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1789,7 +1789,7 @@ iscsi_cleanup_thread(void *par)
 }
 
 void
-iscsi_init_cleanup()
+iscsi_init_cleanup(void)
 {
 
 	mutex_init(&iscsi_cleanup_mtx, MUTEX_DEFAULT, IPL_BIO);
@@ -1803,7 +1803,7 @@ iscsi_init_cleanup()
 }
 
 void
-iscsi_destroy_cleanup()
+iscsi_destroy_cleanup(void)
 {
 	
 	iscsi_detaching = true;
@@ -1820,7 +1820,7 @@ iscsi_destroy_cleanup()
 }
 
 void
-iscsi_notify_cleanup()
+iscsi_notify_cleanup(void)
 {
 	cv_signal(&iscsi_cleanup_cv);
 }
