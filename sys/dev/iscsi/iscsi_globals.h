@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.18 2016/06/05 05:07:23 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.19 2016/06/05 05:36:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 
 #include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsi_message.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsipiconf.h>
@@ -285,6 +286,7 @@ struct ccb_s {
 	/* length of text data so far */
 
 	uint64_t		lun; /* LUN */
+	uint32_t		tag; /* Command tag */
 	uint8_t			*cmd; /* SCSI command block */
 	uint16_t		cmdlen; /* SCSI command block length */
 	bool			data_in; /* if this is a read request */
@@ -461,8 +463,6 @@ struct session_s {
 	connection_list_t	conn_list;	/* the list of connections */
 	connection_t		*mru_connection;
 				/* the most recently used connection */
-
-	uint8_t			itt_id; 	/* counter for use in ITT */
 
 	ccb_t			ccb[CCBS_PER_SESSION];		/* CCBs */
 

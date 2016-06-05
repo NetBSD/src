@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.14 2016/06/05 05:18:58 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.15 2016/06/05 05:36:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->temp_data = NULL;
 	ccb->text_data = NULL;
 	ccb->status = ISCSI_STATUS_SUCCESS;
-	ccb->ITT = (ccb->ITT & 0xffffff) | (++sess->itt_id << 24);
+	ccb->ITT = (ccb->ITT & 0xffffff);
 	ccb->disp = CCBDISP_NOWAIT;
 	ccb->connection = conn;
 	atomic_inc_uint(&conn->usecount);

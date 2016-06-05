@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.24 2016/06/05 05:31:43 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.25 2016/06/05 05:36:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1414,11 +1414,9 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 		}
 	}
 
-	/* currently ignoring tag type and id */
-	pdu->Flags |= ATTR_SIMPLE;
-
 	if (!totlen)
 		pdu->Flags |= FLAG_FINAL;
+	pdu->Flags |= ccb->tag;
 
 	if (ccb->data_in)
 		init_sernum(&ccb->DataSN_buf);
@@ -1506,6 +1504,22 @@ send_run_xfer(session_t *session, struct scsipi_xfer *xs)
 	ccb->cmdlen = xs->cmdlen;
 	DEB(10, ("RunXfer: Periph_lun = %d, cmd[1] = %x, cmdlen = %d\n",
 			xs->xs_periph->periph_lun, ccb->cmd[1], xs->cmdlen));
+
+	ccb->ITT |= xs->xs_tag_id << 24;
+	switch (xs->xs_tag_type) {
+	case MSG_ORDERED_Q_TAG:
+		ccb->tag = ATTR_ORDERED;
+		break;
+	case MSG_SIMPLE_Q_TAG:
+		ccb->tag = ATTR_SIMPLE;
+		break;
+	case MSG_HEAD_OF_Q_TAG:
+		ccb->tag = ATTR_HEAD_OF_QUEUE;
+		break;
+	default:
+		ccb->tag = 0;
+		break;
+	}
 
 #ifdef LUN_1
 	ccb->lun += 0x1000000000000LL;
