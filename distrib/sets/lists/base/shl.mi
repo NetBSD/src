@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.775 2016/06/02 19:55:52 christos Exp $
+# $NetBSD: shl.mi,v 1.776 2016/06/05 01:31:03 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -797,6 +797,9 @@
 ./usr/lib/libtspi.so				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm
+./usr/lib/libubsan.so				base-sys-shlib		compatfile,gcc=53
+./usr/lib/libubsan.so.0				base-sys-shlib		compatfile,gcc=53
+./usr/lib/libubsan.so.0.0			base-sys-shlib		compatfile,gcc=53
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump
