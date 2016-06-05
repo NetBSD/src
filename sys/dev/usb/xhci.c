@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.55 2016/06/05 09:16:02 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.56 2016/06/05 10:45:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.55 2016/06/05 09:16:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.56 2016/06/05 10:45:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1356,13 +1356,7 @@ xhci_set_dequeue(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "slot %u dci %u", xs->xs_idx, dci, 0, 0);
 
-	memset(xr->xr_trb, 0, xr->xr_ntrb * XHCI_TRB_SIZE);
-	usb_syncmem(&xr->xr_dma, 0, xr->xr_ntrb * XHCI_TRB_SIZE,
-	    BUS_DMASYNC_PREWRITE);
-	memset(xr->xr_cookies, 0, xr->xr_ntrb * sizeof(*xr->xr_cookies));
-
-	xr->xr_ep = 0;
-	xr->xr_cs = 1;
+	xhci_host_dequeue(xr);
 
 	/* set DCS */
 	trb.trb_0 = xhci_ring_trbp(xr, 0) | 1; /* XXX */
