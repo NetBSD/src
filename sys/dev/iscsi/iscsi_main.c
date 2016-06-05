@@ -355,8 +355,8 @@ map_session(session_t *session, device_t dev)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_request = iscsi_scsipi_request;
 	adapt->adapt_minphys = iscsi_minphys;
-	adapt->adapt_openings = CCBS_PER_SESSION;
-	adapt->adapt_max_periph = CCBS_PER_SESSION;
+	adapt->adapt_openings = CCBS_PER_SESSION - 1;
+	adapt->adapt_max_periph = CCBS_PER_SESSION - 1;
 
 	/*
 	 * Fill in the scsipi_channel.
