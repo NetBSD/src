@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.19 2016/06/05 08:30:13 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.20 2016/06/05 13:45:56 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1690,6 +1690,11 @@ iscsi_cleanup_thread(void *par)
 				if (conn->usecount != last_usecount) {
 					DEBC(conn, 5,("Cleanup: %d CCBs busy\n", conn->usecount));
 					last_usecount = conn->usecount;
+					mutex_enter(&conn->lock);
+					TAILQ_FOREACH(ccb, &conn->ccbs_waiting, chain) {
+						DEBC(conn, 5,("Cleanup: ccb=%p disp=%d timedout=%d\n", ccb,ccb->disp, ccb->timedout));
+					}
+					mutex_exit(&conn->lock);
 				}
 				kpause("finalwait", false, hz, NULL);
 			}
