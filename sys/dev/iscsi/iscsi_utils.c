@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.15 2016/06/05 05:36:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.16 2016/06/05 05:41:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -247,6 +247,7 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->ITT = (ccb->ITT & 0xffffff);
 	ccb->disp = CCBDISP_NOWAIT;
 	ccb->connection = conn;
+	ccb->num_timeouts = 0;
 	atomic_inc_uint(&conn->usecount);
 
 	DEBC(conn, 15, (
