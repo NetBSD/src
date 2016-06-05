@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.15 2016/06/05 05:07:23 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.16 2016/06/05 05:11:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -1014,7 +1014,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	ccb_t *req_ccb;
 	ccb_list_t waiting;
 	int rc;
-	uint32_t MaxCmdSN, digest;
+	uint32_t MaxCmdSN, ExpCmdSN, digest;
 	session_t *sess = conn->session;
 
 	if (conn->HeaderDigest) {
@@ -1112,7 +1112,7 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		return rc;
 
 	/* MaxCmdSN and ExpCmdSN are in the same place in all received PDUs */
-	sess->ExpCmdSN = max(sess->ExpCmdSN, ntohl(pdu->pdu.p.nop_in.ExpCmdSN));
+	ExpCmdSN = ntohl(pdu->pdu.p.nop_in.ExpCmdSN);
 	MaxCmdSN = ntohl(pdu->pdu.p.nop_in.MaxCmdSN);
 
 	/* received a valid frame, reset timeout */
@@ -1128,7 +1128,17 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 	 * We have to handle wait/nowait CCBs a bit differently.
 	 */
 	mutex_enter(&sess->lock);
-	if (MaxCmdSN != sess->MaxCmdSN) {
+
+	if (sn_a_lt_b(MaxCmdSN, ExpCmdSN-1)) {
+		/* both are ignored */
+		mutex_exit(&sess->lock);
+		return 0;
+	}
+
+	if (sn_a_lt_b(sess->ExpCmdSN, ExpCmdSN))
+		sess->ExpCmdSN = ExpCmdSN;
+
+	if (sn_a_lt_b(sess->MaxCmdSN, MaxCmdSN)) {
 		sess->MaxCmdSN = MaxCmdSN;
 		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL) {
 			mutex_exit(&sess->lock);
