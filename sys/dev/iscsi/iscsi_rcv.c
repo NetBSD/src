@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.16 2016/06/05 05:11:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.17 2016/06/05 05:31:43 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -59,9 +59,7 @@ my_soo_read(connection_t *conn, struct uio *u, int flags)
 
 	DEBC(conn, 99, ("soo_read req: %zu\n", resid));
 
-	KERNEL_LOCK(1, curlwp);
-	ret = soreceive(so, NULL, u, NULL, NULL, &flags);
-	KERNEL_UNLOCK_ONE(curlwp);
+	ret = (*so->so_receive)(so, NULL, u, NULL, NULL, &flags);
 
 	if (ret || (flags != MSG_DONTWAIT && u->uio_resid)) {
 		DEBC(conn, 1, ("Read failed (ret: %d, req: %zu, out: %zu)\n",
