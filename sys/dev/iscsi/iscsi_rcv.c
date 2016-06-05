@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.13 2016/06/05 04:36:05 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.14 2016/06/05 04:51:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -124,6 +124,9 @@ ccb_from_itt(connection_t *conn, uint32_t itt)
 {
 	ccb_t *ccb;
 	int cidx;
+
+	if (itt == 0xffffffff)
+		return NULL;
 
 	cidx = itt & 0xff;
 	if (cidx >= CCBS_PER_SESSION) {
