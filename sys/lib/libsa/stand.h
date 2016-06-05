@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.79 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: stand.h,v 1.80 2016/06/05 13:33:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -78,6 +78,7 @@
 #ifdef LIBSA_RENAME_PRINTF
 #define getchar		libsa_getchar
 #define gets		libsa_gets
+#define gets_s		libsa_gets_s
 #define printf		libsa_printf
 #define putchar		libsa_putchar
 #define vprintf		libsa_vprintf
@@ -258,6 +259,7 @@ int	vsnprintf(char *, size_t, const char *, va_list)
     __attribute__((__format__(__printf__, 3, 0)));
 void	twiddle(void);
 void	gets(char *);
+void	gets_s(char *, size_t);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
 __dead void	exit(int);

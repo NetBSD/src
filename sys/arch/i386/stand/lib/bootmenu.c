@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.14 2014/08/10 07:40:49 isaki Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.15 2016/06/05 13:33:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ doboottypemenu(void)
 				printf("\nOption: [%d]:",
 				    bootcfg_info.def + 1);
 
-			gets(input);
+			gets_s(input, sizeof(input));
 			choice = getchoicefrominput(input, bootcfg_info.def);
 		} else if (bootcfg_info.timeout == 0)
 			choice = bootcfg_info.def;
