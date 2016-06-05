@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2039 2016/06/04 16:11:50 nonaka Exp $
+#	$NetBSD: mi,v 1.2040 2016/06/05 01:31:03 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3611,6 +3611,8 @@
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
+./usr/lib/libubsan.a				comp-c-lib		compatfile,gcc=53
+./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,gcc=53
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
 ./usr/lib/libukfs_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/libumem.a				comp-zfs-lib		compatfile,zfs
