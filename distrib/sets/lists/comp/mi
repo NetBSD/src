@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2041 2016/06/05 17:17:35 christos Exp $
+#	$NetBSD: mi,v 1.2042 2016/06/05 17:33:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5362,7 +5362,6 @@
 ./usr/share/man/cat3/border.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bottom_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/box.0			comp-c-catman		.cat
-./usr/share/man/cat3/bsd_signal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bsd_signal.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bstring.0			comp-c-catman		.cat
