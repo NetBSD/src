@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.22 2016/06/05 05:18:58 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.23 2016/06/05 05:25:59 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -619,17 +619,20 @@ setup_tx_uio(pdu_t *pdu, uint32_t dsl, void *data, bool read)
  *
  *    Parameter:
  *          conn     The connection
+ *          ccb      The CCB
  *          pdu      The PDU
  */
 
 STATIC void
-init_login_pdu(connection_t *conn, pdu_t *ppdu, bool next)
+init_login_pdu(connection_t *conn, ccb_t *ccb, pdu_t *ppdu, bool next)
 {
 	pdu_header_t *pdu = &ppdu->pdu;
 	login_isid_t *isid = (login_isid_t *) & pdu->LUN;
 	uint8_t c_phase;
 
 	pdu->Opcode = IOP_Login_Request | OP_IMMEDIATE;
+
+	ccb->CmdSN = get_sernum(conn->session, false);
 
 	if (next) {
 		c_phase = (pdu->Flags >> CSG_SHIFT) & SG_MASK;
@@ -641,7 +644,7 @@ init_login_pdu(connection_t *conn, pdu_t *ppdu, bool next)
 	isid->TSIH = conn->session->TSIH;
 
 	pdu->p.login_req.CID = htons(conn->id);
-	pdu->p.login_req.CmdSN = htonl(conn->session->CmdSN);
+	pdu->p.login_req.CmdSN = htonl(ccb->CmdSN);
 }
 
 
@@ -715,7 +718,7 @@ negotiate_login(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
 		wake_ccb(tx_ccb, rc);
 		free_pdu(tx_pdu);
 	} else {
-		init_login_pdu(conn, tx_pdu, next);
+		init_login_pdu(conn, tx_ccb, tx_pdu, next);
 		setup_tx_uio(tx_pdu, tx_pdu->temp_data_len, tx_pdu->temp_data, FALSE);
 		send_pdu(tx_ccb, tx_pdu, CCBDISP_NOWAIT, PDUDISP_FREE);
 	}
@@ -728,17 +731,20 @@ negotiate_login(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
  *
  *    Parameter:
  *          conn     The connection
+ *          ccb      The transmit CCB
  *          ppdu     The transmit PDU
  *          rx_pdu   The received PDU if this is an unsolicited negotiation
  */
 
 STATIC void
-init_text_pdu(connection_t *conn, pdu_t *ppdu, pdu_t *rx_pdu)
+init_text_pdu(connection_t *conn, ccb_t *ccb, pdu_t *ppdu, pdu_t *rx_pdu)
 {
 	pdu_header_t *pdu = &ppdu->pdu;
 
 	pdu->Opcode = IOP_Text_Request | OP_IMMEDIATE;
 	pdu->Flags = FLAG_FINAL;
+
+	ccb->CmdSN = get_sernum(conn->session, false);
 
 	if (rx_pdu != NULL) {
 		pdu->p.text_req.TargetTransferTag =
@@ -747,7 +753,7 @@ init_text_pdu(connection_t *conn, pdu_t *ppdu, pdu_t *rx_pdu)
 	} else
 		pdu->p.text_req.TargetTransferTag = 0xffffffff;
 
-	pdu->p.text_req.CmdSN = htonl(conn->session->CmdSN);
+	pdu->p.text_req.CmdSN = htonl(ccb->CmdSN);
 }
 
 
@@ -772,9 +778,9 @@ acknowledge_text(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
 
 	if (rx_pdu != NULL &&
 		(rx_pdu->pdu.Opcode & OPCODE_MASK) == IOP_Login_Request)
-		init_login_pdu(conn, tx_pdu, FALSE);
+		init_login_pdu(conn, tx_ccb, tx_pdu, FALSE);
 	else
-		init_text_pdu(conn, tx_pdu, rx_pdu);
+		init_text_pdu(conn, tx_ccb, tx_pdu, rx_pdu);
 
 	setup_tx_uio(tx_pdu, 0, NULL, FALSE);
 	send_pdu(tx_ccb, tx_pdu, CCBDISP_NOWAIT, PDUDISP_FREE);
@@ -810,7 +816,7 @@ start_text_negotiation(connection_t *conn)
 		return;
 	}
 
-	init_text_pdu(conn, pdu, NULL);
+	init_text_pdu(conn, ccb, pdu, NULL);
 	setup_tx_uio(pdu, 0, NULL, FALSE);
 	send_pdu(ccb, pdu, CCBDISP_FREE, PDUDISP_WAIT);
 }
@@ -856,7 +862,7 @@ negotiate_text(connection_t *conn, pdu_t *rx_pdu, ccb_t *tx_ccb)
 
 			handle_connection_error(conn, rc, LOGOUT_CONNECTION);
 		} else if (tx_pdu != NULL) {
-			init_text_pdu(conn, tx_pdu, rx_pdu);
+			init_text_pdu(conn, tx_ccb, tx_pdu, rx_pdu);
 			setup_tx_uio(tx_pdu, tx_pdu->temp_data_len, tx_pdu->temp_data,
 						 FALSE);
 			send_pdu(tx_ccb, tx_pdu, CCBDISP_NOWAIT, PDUDISP_FREE);
@@ -912,7 +918,7 @@ send_send_targets(session_t *session, uint8_t *key)
 		return rc;
 	}
 
-	init_text_pdu(conn, pdu, NULL);
+	init_text_pdu(conn, ccb, pdu, NULL);
 
 	setup_tx_uio(pdu, pdu->temp_data_len, pdu->temp_data, FALSE);
 	send_pdu(ccb, pdu, CCBDISP_WAIT, PDUDISP_WAIT);
@@ -1122,7 +1128,7 @@ send_login(connection_t *conn)
 	}
 
 	if ((rc = assemble_login_parameters(conn, ccb, pdu)) <= 0) {
-		init_login_pdu(conn, pdu, !rc);
+		init_login_pdu(conn, ccb, pdu, !rc);
 		setup_tx_uio(pdu, pdu->temp_data_len, pdu->temp_data, FALSE);
 		send_pdu(ccb, pdu, CCBDISP_WAIT, PDUDISP_FREE);
 		rc = ccb->status;
