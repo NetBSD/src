@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.49 2016/06/05 07:54:01 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.50 2016/06/05 07:55:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.49 2016/06/05 07:54:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.50 2016/06/05 07:55:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2015,8 +2015,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 
 /* Process Command complete events */
 static void
-xhci_event_cmd(struct xhci_softc * const sc,
-    const struct xhci_trb * const trb)
+xhci_event_cmd(struct xhci_softc * const sc, const struct xhci_trb * const trb)
 {
 	uint64_t trb_0;
 	uint32_t trb_2, trb_3;
@@ -2250,6 +2249,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	dev->ud_ep0desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->ud_ep0desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->ud_ep0desc.bmAttributes = UE_CONTROL;
+
 	/* 4.3,  4.8.2.1 */
 	switch (speed) {
 	case USB_SPEED_SUPER:
@@ -2355,8 +2355,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		err = xhci_enable_slot(sc, &slot);
 		if (err)
 			goto bad;
+
 		xs = &sc->sc_slots[slot];
 		dev->ud_hcpriv = xs;
+
 		/* 4.3.3 initialize slot structure */
 		err = xhci_init_slot(dev, slot);
 		if (err) {
@@ -2379,6 +2381,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 		/* Allow device time to set new address */
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
+
 		cp = xhci_slot_get_dcv(sc, xs, XHCI_DCI_SLOT);
 		//hexdump("slot context", cp, sc->sc_ctxsz);
 		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(cp[3]);
@@ -2394,6 +2397,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		err = usbd_get_initial_ddesc(dev, dd);
 		if (err)
 			goto bad;
+
 		/* 4.8.2.1 */
 		if (USB_IS_SS(speed)) {
 			if (dd->bMaxPacketSize != 9) {
@@ -2411,6 +2415,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		DPRINTFN(4, "bMaxPacketSize %u", dd->bMaxPacketSize, 0, 0, 0);
 		xhci_update_ep0_mps(sc, xs,
 		    UGETW(dev->ud_ep0desc.wMaxPacketSize));
+
 		err = usbd_reload_device_desc(dev);
 		if (err)
 			goto bad;
@@ -2626,8 +2631,8 @@ xhci_abort_command(struct xhci_softc *sc)
  * trb_0 in CMD_COMPLETE TRB and sc->sc_command_addr are identical.
  */
 static usbd_status
-xhci_do_command_locked(struct xhci_softc * const sc, struct xhci_trb * const trb,
-    int timeout)
+xhci_do_command_locked(struct xhci_softc * const sc,
+    struct xhci_trb * const trb, int timeout)
 {
 	struct xhci_ring * const cr = &sc->sc_cr;
 	usbd_status err;
