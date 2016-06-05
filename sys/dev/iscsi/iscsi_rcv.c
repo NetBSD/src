@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.17 2016/06/05 05:31:43 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.18 2016/06/05 05:40:29 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -127,16 +127,18 @@ ccb_from_itt(connection_t *conn, uint32_t itt)
 		return NULL;
 
 	cidx = itt & 0xff;
-	if (cidx >= CCBS_PER_SESSION) {
+	if (cidx >= CCBS_PER_SESSION)
 		return NULL;
-	}
+
 	ccb = &conn->session->ccb[cidx];
+
 	if (ccb->ITT != itt || ccb->disp <= CCBDISP_BUSY) {
 		DEBC(conn, 0,
 		     ("ccb_from_itt: received invalid CCB itt %08x != %08x\n",
 		      itt, ccb->ITT));
 		return NULL;
 	}
+
 	return ccb;
 }
 
