@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.50 2016/06/05 07:55:28 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.51 2016/06/05 08:05:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.50 2016/06/05 07:55:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.51 2016/06/05 08:05:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -150,7 +150,7 @@ static usbd_status xhci_do_command_locked(struct xhci_softc * const,
     struct xhci_trb * const, int);
 static usbd_status xhci_init_slot(struct usbd_device *, uint32_t);
 static void xhci_free_slot(struct xhci_softc *, struct xhci_slot *, int, int);
-static usbd_status xhci_set_address(struct usbd_device *, uint32_t, uint32_t, int, bool);
+static usbd_status xhci_set_address(struct usbd_device *, uint32_t, bool);
 static usbd_status xhci_enable_slot(struct xhci_softc * const,
     uint8_t * const);
 static usbd_status xhci_disable_slot(struct xhci_softc * const, uint8_t);
@@ -162,6 +162,12 @@ static usbd_status xhci_update_ep0_mps(struct xhci_softc * const,
 static usbd_status xhci_ring_init(struct xhci_softc * const,
     struct xhci_ring * const, size_t, size_t);
 static void xhci_ring_free(struct xhci_softc * const, struct xhci_ring * const);
+
+static void xhci_setup_ctx(struct usbd_pipe *);
+static void xhci_setup_route(struct usbd_pipe *, uint32_t *);
+static void xhci_setup_tthub(struct usbd_pipe *, uint32_t *);
+static void xhci_setup_maxburst(struct usbd_pipe *, uint32_t *);
+static uint32_t xhci_bival2ival(uint32_t, uint32_t);
 
 static void xhci_noop(struct usbd_pipe *);
 
@@ -561,7 +567,6 @@ xhci_detach(struct xhci_softc *sc, int flags)
 
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
-	cv_destroy(&sc->sc_softwake_cv);
 
 	pool_cache_destroy(sc->sc_xferpool);
 
@@ -1018,7 +1023,6 @@ xhci_init(struct xhci_softc *sc)
 	cv_init(&sc->sc_command_cv, "xhcicmd");
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
-	cv_init(&sc->sc_softwake_cv, "xhciab");
 
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
@@ -1214,267 +1218,6 @@ xhci_xspeed2psspeed(int xspeed)
 	}
 }
 
-/* construct slot context */
-static void
-xhci_setup_sctx(struct usbd_device *dev, uint32_t *cp)
-{
-	usb_device_descriptor_t * const dd = &dev->ud_ddesc;
-	int speed = dev->ud_speed;
-	int tthubslot, ttportnum;
-	bool ishub;
-	bool usemtt;
-
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
-	/*
-	 * 6.2.2, Table 57-60, 6.2.2.1, 6.2.2.2
-	 * tthubslot:
-	 *   This is the slot ID of parent HS hub
-	 *   if LS/FS device is connected && connected through HS hub.
-	 *   This is 0 if device is not LS/FS device ||
-	 *   parent hub is not HS hub ||
-	 *   attached to root hub.
-	 * ttportnum:
-	 *   This is the downstream facing port of parent HS hub
-	 *   if LS/FS device is connected.
-	 *   This is 0 if device is not LS/FS device ||
-	 *   parent hub is not HS hub ||
-	 *   attached to root hub.
-	 */
-	if (dev->ud_myhsport != NULL &&
-	    dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	    (dev->ud_myhub != NULL &&
-	     dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
-	    (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL)) {
-		ttportnum = dev->ud_myhsport->up_portno;
-		tthubslot = dev->ud_myhsport->up_parent->ud_addr;
-	} else {
-		ttportnum = 0;
-		tthubslot = 0;
-	}
-	DPRINTFN(4, "myhsport %p ttportnum=%d tthubslot=%d",
-	    dev->ud_myhsport, ttportnum, tthubslot, 0);
-
-	/* ishub is valid after reading UDESC_DEVICE */
-	ishub = (dd->bDeviceClass == UDCLASS_HUB);
-
-	/* dev->ud_hub is valid after reading UDESC_HUB */
-	if (ishub && dev->ud_hub) {
-		usb_hub_descriptor_t *hd = &dev->ud_hub->uh_hubdesc;
-
-		cp[1] |= htole32(XHCI_SCTX_1_NUM_PORTS_SET(hd->bNbrPorts));
-		cp[2] |= htole32(XHCI_SCTX_2_TT_THINK_TIME_SET(
-		    __SHIFTOUT(UGETW(hd->wHubCharacteristics), UHD_TT_THINK)));
-		DPRINTFN(4, "nports=%d ttt=%d",
-		    hd->bNbrPorts, XHCI_SCTX_2_TT_THINK_TIME_GET(cp[2]), 0, 0);
-	}
-
-#define IS_TTHUB(dd) \
-    ((dd)->bDeviceProtocol == UDPROTO_HSHUBSTT || \
-     (dd)->bDeviceProtocol == UDPROTO_HSHUBMTT)
-
-	/*
-	 * MTT flag is set if
-	 * 1. this is HS hub && MTT is enabled
-	 *  or
-	 * 2. this is not hub && this is LS or FS device &&
-	 *    MTT of parent HS hub (and its parent, too) is enabled
-	 */
-	if (ishub && speed == USB_SPEED_HIGH && IS_TTHUB(dd))
-		usemtt = true;
-	else if (!ishub &&
-	     (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
-	     dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
-	     (dev->ud_myhub != NULL &&
-	      dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
-	     dev->ud_myhsport != NULL &&
-	     IS_TTHUB(&dev->ud_myhsport->up_parent->ud_ddesc))
-		usemtt = true;
-	else
-		usemtt = false;
-	DPRINTFN(4, "class %u proto %u ishub %d usemtt %d",
-	    dd->bDeviceClass, dd->bDeviceProtocol, ishub, usemtt);
-
-	cp[0] |= htole32(
-	    XHCI_SCTX_0_SPEED_SET(xhci_speed2xspeed(speed)) |
-	    XHCI_SCTX_0_HUB_SET(ishub ? 1 : 0) |
-	    XHCI_SCTX_0_MTT_SET(usemtt ? 1 : 0)
-	    );
-	cp[1] |= htole32(0);
-	cp[2] |= htole32(
-	    XHCI_SCTX_2_IRQ_TARGET_SET(0) |
-	    XHCI_SCTX_2_TT_HUB_SID_SET(tthubslot) |
-	    XHCI_SCTX_2_TT_PORT_NUM_SET(ttportnum)
-	    );
-	cp[3] |= htole32(0);
-}
-
-static uint32_t
-xhci_get_maxburst(struct usbd_pipe *pipe)
-{
-	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
-	usbd_desc_iter_t iter;
-	const usb_cdc_descriptor_t *cdcd;
-	const usb_endpoint_ss_comp_descriptor_t * esscd = NULL;
-	uint32_t maxb = 0;
-	uint8_t ep;
-
-	cdcd = (const usb_cdc_descriptor_t *)usb_find_desc(
-	    pipe->up_dev, UDESC_INTERFACE, USBD_CDCSUBTYPE_ANY);
-	usb_desc_iter_init(pipe->up_dev, &iter);
-	iter.cur = (const void *)cdcd;
-
-	/* find endpoint_ss_comp desc for ep of this pipe */
-	for (ep = 0;;) {
-		cdcd = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter);
-		if (cdcd == NULL)
-			break;
-		if (ep == 0 && cdcd->bDescriptorType == UDESC_ENDPOINT) {
-			ep = ((const usb_endpoint_descriptor_t *)cdcd)->
-			    bEndpointAddress;
-			if (UE_GET_ADDR(ep) ==
-			    UE_GET_ADDR(ed->bEndpointAddress)) {
-				cdcd = (const usb_cdc_descriptor_t *)
-				    usb_desc_iter_next(&iter);
-				break;
-			}
-			ep = 0;
-		}
-	}
-	if (cdcd != NULL && cdcd->bDescriptorType == UDESC_ENDPOINT_SS_COMP) {
-		esscd = (const usb_endpoint_ss_comp_descriptor_t *)cdcd;
-		maxb = esscd->bMaxBurst;
-	}
-
-	return maxb;
-}
-
-/*
- * Convert endpoint bInterval value to endpoint context interval value
- * for Interrupt pipe.
- * xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6
- */
-static uint32_t
-xhci_bival2ival(uint32_t ival, int speed)
-{
-	if (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) {
-		int i;
-
-		/*
-		 * round ival down to "the nearest base 2 multiple of
-		 * bInterval * 8".
-		 * bInterval is at most 255 as its type is uByte.
-		 * 255(ms) = 2040(x 125us) < 2^11, so start with 10.
-		 */
-		for (i = 10; i > 0; i--) {
-			if ((ival * 8) >= (1 << i))
-				break;
-		}
-		ival = i;
-	} else {
-		/* Interval = bInterval-1 for SS/HS */
-		ival--;
-	}
-
-	return ival;
-}
-
-/*
- * 4.8.2, 6.2.3.2
- * construct common endpoint parameters
- */
-static void
-xhci_setup_endp_ctx(struct usbd_pipe *pipe, uint32_t *cp)
-{
-	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
-	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
-	const u_int dci = xhci_ep_get_dci(ed);
-	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
-	uint32_t mps = UGETW(ed->wMaxPacketSize);
-	uint32_t maxb = 0;
-	int speed = pipe->up_dev->ud_speed;
-	uint32_t ival = ed->bInterval;
-
-	cp[0] = htole32(
-	    XHCI_EPCTX_0_EPSTATE_SET(0) |
-	    XHCI_EPCTX_0_MULT_SET(0) |	/* always 0 except SS iscoh */
-	    XHCI_EPCTX_0_MAXP_STREAMS_SET(0) |
-	    XHCI_EPCTX_0_LSA_SET(0) |
-	    XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(0)
-	    );
-	cp[1] = htole32(
-	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(ed)) |
-	    XHCI_EPCTX_1_HID_SET(0) |
-	    XHCI_EPCTX_1_MAXB_SET(0)
-	    );
-	if (xfertype != UE_ISOCHRONOUS)
-		cp[1] |= htole32(XHCI_EPCTX_1_CERR_SET(3));
-
-	/* 6.2.3.4,  4.8.2.4 */
-	if (USB_IS_SS(speed)) {
-		/* UBS 3.1  9.6.6 */
-		cp[1] |= htole32(XHCI_EPCTX_1_MAXP_SIZE_SET(mps));
-		/* UBS 3.1  9.6.7 */
-		maxb = xhci_get_maxburst(pipe);
-		cp[1] |= htole32(XHCI_EPCTX_1_MAXB_SET(maxb));
-	} else {
-		/* UBS 2.0  9.6.6 */
-		cp[1] |= htole32(XHCI_EPCTX_1_MAXP_SIZE_SET(UE_GET_SIZE(mps)));
-
-		/* 6.2.3.4 */
-		if (speed == USB_SPEED_HIGH &&
-		   (xfertype == UE_ISOCHRONOUS || xfertype == UE_INTERRUPT)) {
-			maxb = UE_GET_TRANS(mps);
-		} else {
-			/* LS/FS or HS CTRL or HS BULK */
-			maxb = 0;
-		}
-		cp[1] |= htole32(XHCI_EPCTX_1_MAXB_SET(maxb));
-	}
-
-	if (xfertype == UE_CONTROL)
-		cp[4] = htole32(XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)); /* 6.2.3 */
-	else if (USB_IS_SS(speed))
-		cp[4] = htole32(XHCI_EPCTX_4_AVG_TRB_LEN_SET(mps));
-	else
-		cp[4] = htole32(XHCI_EPCTX_4_AVG_TRB_LEN_SET(UE_GET_SIZE(mps)));
-
-	switch (xfertype) {
-	case UE_CONTROL:
-		break;
-	case UE_BULK:
-		/* XXX Set MaxPStreams, HID, and LSA if streams enabled */
-		break;
-	case UE_INTERRUPT:
-		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
-			ival = pipe->up_interval;
-
-		ival = xhci_bival2ival(ival, speed);
-		cp[0] |= htole32(XHCI_EPCTX_0_IVAL_SET(ival));
-		break;
-	case UE_ISOCHRONOUS:
-		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
-			ival = pipe->up_interval;
-
-		/* xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6 */
-		if (speed == USB_SPEED_FULL)
-			ival += 3; /* 1ms -> 125us */
-		ival--;
-		cp[0] |= htole32(XHCI_EPCTX_0_IVAL_SET(ival));
-
-		if (USB_IS_SS(speed)) {
-			/* XXX if LEC = 1, set ESIT instead */
-			cp[0] |= htole32(XHCI_EPCTX_0_MULT_SET(0));
-		}
-		break;
-	default:
-		break;
-	}
-	*(uint64_t *)(&cp[2]) = htole64(
-	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
-	    XHCI_EPCTX_2_DCS_SET(1));
-}
-
 /*
  * Construct input contexts and issue TRB
  */
@@ -1486,32 +1229,21 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	const u_int dci = xhci_ep_get_dci(pipe->up_endpoint->ue_edesc);
 	struct xhci_trb trb;
 	usbd_status err;
-	uint32_t *cp;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "slot %u dci %u epaddr 0x%02x attr 0x%02x",
 	    xs->xs_idx, dci, pipe->up_endpoint->ue_edesc->bEndpointAddress,
 	    pipe->up_endpoint->ue_edesc->bmAttributes);
 
+	KASSERT(!mutex_owned(&sc->sc_lock));
+
 	/* XXX ensure input context is available? */
 
 	memset(xhci_slot_get_icv(sc, xs, 0), 0, sc->sc_pgsz);
 
-	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
-	cp[0] = htole32(0);
-	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(dci));
+	/* set up context */
+	xhci_setup_ctx(pipe);
 
-	/* set up input slot context */
-	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_SLOT));
-	xhci_setup_sctx(pipe->up_dev, cp);
-	cp[0] |= htole32(XHCI_SCTX_0_CTX_NUM_SET(dci));
-
-	/* set up input endpoint context */
-	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(dci));
-	xhci_setup_endp_ctx(pipe, cp);
-
-	/* sync input contexts before they are read from memory */
-	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
 	hexdump("input control context", xhci_slot_get_icv(sc, xs, 0),
 	    sc->sc_ctxsz * 1);
 	hexdump("input endpoint context", xhci_slot_get_icv(sc, xs,
@@ -2224,31 +1956,38 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 	struct usbd_device *dev;
 	usbd_status err;
 	usb_device_descriptor_t *dd;
-	struct usbd_device *hub;
-	struct usbd_device *adev;
-	int rhport = 0;
 	struct xhci_slot *xs;
 	uint32_t *cp;
-	uint32_t route = 0;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "port=%d depth=%d speed=%d upport %d",
-		 port, depth, speed, up->up_portno);
+	DPRINTFN(4, "port %u depth %u speed %u up %p", port, depth, speed, up);
 
 	dev = kmem_zalloc(sizeof(*dev), KM_SLEEP);
 	if (dev == NULL)
 		return USBD_NOMEM;
 
 	dev->ud_bus = bus;
+	dev->ud_quirks = &usbd_no_quirk;
+	dev->ud_addr = 0;
+	dev->ud_ddesc.bMaxPacketSize = 0;
+	dev->ud_depth = depth;
+	dev->ud_powersrc = up;
+	dev->ud_myhub = up->up_parent;
+	dev->ud_speed = speed;
+	dev->ud_langid = USBD_NOLANG;
+	dev->ud_cookie.cookie = ++usb_cookie_no;
 
 	/* Set up default endpoint handle. */
 	dev->ud_ep0.ue_edesc = &dev->ud_ep0desc;
+	/* doesn't matter, just don't let it uninitialized */
+	dev->ud_ep0.ue_toggle = 0;
 
 	/* Set up default endpoint descriptor. */
 	dev->ud_ep0desc.bLength = USB_ENDPOINT_DESCRIPTOR_SIZE;
 	dev->ud_ep0desc.bDescriptorType = UDESC_ENDPOINT;
 	dev->ud_ep0desc.bEndpointAddress = USB_CONTROL_ENDPOINT;
 	dev->ud_ep0desc.bmAttributes = UE_CONTROL;
+	dev->ud_ep0desc.bInterval = 0;
 
 	/* 4.3,  4.8.2.1 */
 	switch (speed) {
@@ -2266,69 +2005,8 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		USETW(dev->ud_ep0desc.wMaxPacketSize, USB_MAX_IPACKET);
 		break;
 	}
-	dev->ud_ep0desc.bInterval = 0;
-
-	/* doesn't matter, just don't let it uninitialized */
-	dev->ud_ep0.ue_toggle = 0;
-
-	DPRINTFN(4, "up %p portno %d", up, up->up_portno, 0, 0);
-
-	dev->ud_quirks = &usbd_no_quirk;
-	dev->ud_addr = 0;
-	dev->ud_ddesc.bMaxPacketSize = 0;
-	dev->ud_depth = depth;
-	dev->ud_powersrc = up;
-	dev->ud_myhub = up->up_parent;
 
 	up->up_dev = dev;
-
-	/* Locate root hub port */
-	for (hub = dev; hub != NULL; hub = hub->ud_myhub) {
-		uint32_t dep;
-
-		DPRINTFN(4, "hub %p depth %d upport %p upportno %d",
-		    hub, hub->ud_depth, hub->ud_powersrc,
-		    hub->ud_powersrc ? hub->ud_powersrc->up_portno : -1);
-
-		if (hub->ud_powersrc == NULL)
-			break;
-		dep = hub->ud_depth;
-		if (dep == 0)
-			break;
-		rhport = hub->ud_powersrc->up_portno;
-		if (dep > USB_HUB_MAX_DEPTH)
-			continue;
-
-		route |=
-		    (rhport > UHD_SS_NPORTS_MAX ? UHD_SS_NPORTS_MAX : rhport)
-		    << ((dep - 1) * 4);
-	}
-	route = route >> 4;
-	DPRINTFN(4, "rhport %d Route %05x hub %p", rhport, route, hub, 0);
-
-	/* Locate port on upstream high speed hub */
-	for (adev = dev, hub = up->up_parent;
-	     hub != NULL && hub->ud_speed != USB_SPEED_HIGH;
-	     adev = hub, hub = hub->ud_myhub)
-		;
-	if (hub) {
-		int p;
-		for (p = 0; p < hub->ud_hub->uh_hubdesc.bNbrPorts; p++) {
-			if (hub->ud_hub->uh_ports[p].up_dev == adev) {
-				dev->ud_myhsport = &hub->ud_hub->uh_ports[p];
-				goto found;
-			}
-		}
-		panic("xhci_new_device: cannot find HS port");
-	found:
-		DPRINTFN(4, "high speed port %d", p, 0, 0, 0);
-	} else {
-		dev->ud_myhsport = NULL;
-	}
-
-	dev->ud_speed = speed;
-	dev->ud_langid = USBD_NOLANG;
-	dev->ud_cookie.cookie = ++usb_cookie_no;
 
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe(dev, 0, &dev->ud_ep0, USBD_DEFAULT_INTERVAL,
@@ -2375,7 +2053,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		}
 
 		/* 4.3.4 Address Assignment */
-		err = xhci_set_address(dev, slot, route, rhport, false);
+		err = xhci_set_address(dev, slot, false);
 		if (err)
 			goto bad;
 
@@ -2917,48 +2595,19 @@ xhci_free_slot(struct xhci_softc *sc, struct xhci_slot *xs, int start_dci,
  * Set Address Device command.
  */
 static usbd_status
-xhci_set_address(struct usbd_device *dev, uint32_t slot, uint32_t route,
-    int rhport, bool bsr)
+xhci_set_address(struct usbd_device *dev, uint32_t slot, bool bsr)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
 	struct xhci_slot *xs;
 	usbd_status err;
-	uint32_t *cp;
-	uint32_t mps = UGETW(dev->ud_ep0desc.wMaxPacketSize);
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	DPRINTFN(4, "slot %u bsr %u", slot, bsr, 0, 0);
 
 	xs = &sc->sc_slots[slot];
 
-	/* set up initial input control context */
-	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
-	cp[0] = htole32(0);
-	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_EP_CONTROL)|
-	    XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
+	xhci_setup_ctx(dev->ud_pipe0);
 
-	/* set up input slot context */
-	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_SLOT));
-	xhci_setup_sctx(dev, cp);
-	cp[0] |= htole32(XHCI_SCTX_0_CTX_NUM_SET(1));
-	cp[0] |= htole32(XHCI_SCTX_0_ROUTE_SET(route));
-	cp[1] |= htole32(XHCI_SCTX_1_RH_PORT_SET(rhport));
-
-	/* set up input EP0 context */
-	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_EP_CONTROL));
-	cp[0] = htole32(0);
-	cp[1] = htole32(
-		XHCI_EPCTX_1_MAXP_SIZE_SET(mps) |
-		XHCI_EPCTX_1_EPTYPE_SET(4) |
-		XHCI_EPCTX_1_CERR_SET(3)
-		);
-	/* can't use xhci_ep_get_dci() yet? */
-	*(uint64_t *)(&cp[2]) = htole64(
-	    xhci_ring_trbp(&xs->xs_ep[XHCI_DCI_EP_CONTROL].xe_tr, 0) |
-	    XHCI_EPCTX_2_DCS_SET(1));
-	cp[4] = htole32(
-		XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)
-		);
-
-	/* sync input contexts before they are read from memory */
-	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
 	hexdump("input context", xhci_slot_get_icv(sc, xs, 0),
 	    sc->sc_ctxsz * 3);
 
@@ -2971,6 +2620,390 @@ xhci_set_address(struct usbd_device *dev, uint32_t slot, uint32_t route,
 	    sc->sc_ctxsz * 2);
 
 	return err;
+}
+
+/*
+ * 4.8.2, 6.2.3.2
+ * construct slot/endpoint context parameters and do syncmem
+ */
+static void
+xhci_setup_ctx(struct usbd_pipe *pipe)
+{
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+	struct usbd_device *dev = pipe->up_dev;
+	struct xhci_slot * const xs = dev->ud_hcpriv;
+	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
+	const u_int dci = xhci_ep_get_dci(ed);
+	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+	uint32_t *cp;
+	uint16_t mps = UGETW(ed->wMaxPacketSize);
+	uint8_t speed = dev->ud_speed;
+	uint8_t ival = ed->bInterval;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	DPRINTFN(4, "pipe %p: slot %u dci %u speed %u", pipe, xs->xs_idx, dci,
+	    speed);
+
+	/* set up initial input control context */
+	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
+	cp[0] = htole32(0);
+	cp[1] = htole32(XHCI_INCTX_1_ADD_MASK(dci));
+	if (dci == XHCI_DCI_EP_CONTROL)
+		cp[1] |= htole32(XHCI_INCTX_1_ADD_MASK(XHCI_DCI_SLOT));
+	cp[7] = htole32(0);
+
+	/* set up input slot context */
+	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_SLOT));
+	cp[0] =
+	    XHCI_SCTX_0_CTX_NUM_SET(dci) |
+	    XHCI_SCTX_0_SPEED_SET(xhci_speed2xspeed(speed));
+	cp[1] = 0;
+	cp[2] = XHCI_SCTX_2_IRQ_TARGET_SET(0);
+	cp[3] = 0;
+	xhci_setup_route(pipe, cp);
+	xhci_setup_tthub(pipe, cp);
+
+	cp[0] = htole32(cp[0]);
+	cp[1] = htole32(cp[1]);
+	cp[2] = htole32(cp[2]);
+	cp[3] = htole32(cp[3]);
+
+	/* set up input endpoint context */
+	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(dci));
+	cp[0] =
+	    XHCI_EPCTX_0_EPSTATE_SET(0) |
+	    XHCI_EPCTX_0_MULT_SET(0) |
+	    XHCI_EPCTX_0_MAXP_STREAMS_SET(0) |
+	    XHCI_EPCTX_0_LSA_SET(0) |
+	    XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(0);
+	cp[1] =
+	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(ed)) |
+	    XHCI_EPCTX_1_HID_SET(0) |
+	    XHCI_EPCTX_1_MAXB_SET(0);
+
+	if (xfertype != UE_ISOCHRONOUS)
+		cp[1] |= XHCI_EPCTX_1_CERR_SET(3);
+
+	if (xfertype == UE_CONTROL)
+		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(8); /* 6.2.3 */
+	else if (USB_IS_SS(speed))
+		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(mps);
+	else
+		cp[4] = XHCI_EPCTX_4_AVG_TRB_LEN_SET(UE_GET_SIZE(mps));
+
+	xhci_setup_maxburst(pipe, cp);
+
+	switch (xfertype) {
+	case UE_CONTROL:
+		break;
+	case UE_BULK:
+		/* XXX Set MaxPStreams, HID, and LSA if streams enabled */
+		break;
+	case UE_INTERRUPT:
+		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
+			ival = pipe->up_interval;
+
+		ival = xhci_bival2ival(ival, speed);
+		cp[0] |= XHCI_EPCTX_0_IVAL_SET(ival);
+		break;
+	case UE_ISOCHRONOUS:
+		if (pipe->up_interval != USBD_DEFAULT_INTERVAL)
+			ival = pipe->up_interval;
+
+		/* xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6 */
+		if (speed == USB_SPEED_FULL)
+			ival += 3; /* 1ms -> 125us */
+		ival--;
+		cp[0] |= XHCI_EPCTX_0_IVAL_SET(ival);
+		break;
+	default:
+		break;
+	}
+
+	/* can't use xhci_ep_get_dci() yet? */
+	*(uint64_t *)(&cp[2]) = htole64(
+	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
+	    XHCI_EPCTX_2_DCS_SET(1));
+
+	cp[0] = htole32(cp[0]);
+	cp[1] = htole32(cp[1]);
+	cp[4] = htole32(cp[4]);
+
+	/* sync input contexts before they are read from memory */
+	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
+}
+
+/*
+ * Setup route string and roothub port of given device for slot context
+ */
+static void
+xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
+{
+	struct usbd_device *dev = pipe->up_dev;
+	struct usbd_port *up = dev->ud_powersrc;
+	struct usbd_device *hub;
+	struct usbd_device *adev;
+	uint8_t rhport = 0;
+	uint32_t route = 0;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	/* Locate root hub port and Determine route string */
+	/* 4.3.3 route string does not include roothub port */
+	for (hub = dev; hub != NULL; hub = hub->ud_myhub) {
+		uint32_t dep;
+
+		DPRINTFN(4, "hub %p depth %d upport %p upportno %d",
+		    hub, hub->ud_depth, hub->ud_powersrc,
+		    hub->ud_powersrc ? hub->ud_powersrc->up_portno : -1);
+
+		if (hub->ud_powersrc == NULL)
+			break;
+		dep = hub->ud_depth;
+		if (dep == 0)
+			break;
+		rhport = hub->ud_powersrc->up_portno;
+		if (dep > USB_HUB_MAX_DEPTH)
+			continue;
+
+		route |=
+		    (rhport > UHD_SS_NPORTS_MAX ? UHD_SS_NPORTS_MAX : rhport)
+		    << ((dep - 1) * 4);
+	}
+	route = route >> 4;
+	DPRINTFN(4, "rhport %u Route %05x hub %p", rhport, route, hub, 0);
+
+	/* Locate port on upstream high speed hub */
+	for (adev = dev, hub = up->up_parent;
+	     hub != NULL && hub->ud_speed != USB_SPEED_HIGH;
+	     adev = hub, hub = hub->ud_myhub)
+		;
+	if (hub) {
+		int p;
+		for (p = 0; p < hub->ud_hub->uh_hubdesc.bNbrPorts; p++) {
+			if (hub->ud_hub->uh_ports[p].up_dev == adev) {
+				dev->ud_myhsport = &hub->ud_hub->uh_ports[p];
+				goto found;
+			}
+		}
+		panic("xhci_setup_route: cannot find HS port");
+	found:
+		DPRINTFN(4, "high speed port %d", p, 0, 0, 0);
+	} else {
+		dev->ud_myhsport = NULL;
+	}
+
+	cp[0] |= XHCI_SCTX_0_ROUTE_SET(route);
+	cp[1] |= XHCI_SCTX_1_RH_PORT_SET(rhport);
+}
+
+/*
+ * Setup whether device is hub, whether device uses MTT, and
+ * TT informations if it uses MTT.
+ */
+static void
+xhci_setup_tthub(struct usbd_pipe *pipe, uint32_t *cp)
+{
+	struct usbd_device *dev = pipe->up_dev;
+	usb_device_descriptor_t * const dd = &dev->ud_ddesc;
+	uint32_t speed = dev->ud_speed;
+	uint8_t tthubslot, ttportnum;
+	bool ishub;
+	bool usemtt;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	/*
+	 * 6.2.2, Table 57-60, 6.2.2.1, 6.2.2.2
+	 * tthubslot:
+	 *   This is the slot ID of parent HS hub
+	 *   if LS/FS device is connected && connected through HS hub.
+	 *   This is 0 if device is not LS/FS device ||
+	 *   parent hub is not HS hub ||
+	 *   attached to root hub.
+	 * ttportnum:
+	 *   This is the downstream facing port of parent HS hub
+	 *   if LS/FS device is connected.
+	 *   This is 0 if device is not LS/FS device ||
+	 *   parent hub is not HS hub ||
+	 *   attached to root hub.
+	 */
+	if (dev->ud_myhsport != NULL &&
+	    dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
+	    (dev->ud_myhub != NULL &&
+	     dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
+	    (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL)) {
+		ttportnum = dev->ud_myhsport->up_portno;
+		tthubslot = dev->ud_myhsport->up_parent->ud_addr;
+	} else {
+		ttportnum = 0;
+		tthubslot = 0;
+	}
+	DPRINTFN(4, "myhsport %p ttportnum=%d tthubslot=%d",
+	    dev->ud_myhsport, ttportnum, tthubslot, 0);
+
+	/* ishub is valid after reading UDESC_DEVICE */
+	ishub = (dd->bDeviceClass == UDCLASS_HUB);
+
+	/* dev->ud_hub is valid after reading UDESC_HUB */
+	if (ishub && dev->ud_hub) {
+		usb_hub_descriptor_t *hd = &dev->ud_hub->uh_hubdesc;
+		uint8_t ttt =
+		    __SHIFTOUT(UGETW(hd->wHubCharacteristics), UHD_TT_THINK);
+
+		cp[1] |= XHCI_SCTX_1_NUM_PORTS_SET(hd->bNbrPorts);
+		cp[2] |= XHCI_SCTX_2_TT_THINK_TIME_SET(ttt);
+		DPRINTFN(4, "nports=%d ttt=%d", hd->bNbrPorts, ttt, 0, 0);
+	}
+
+#define IS_TTHUB(dd) \
+    ((dd)->bDeviceProtocol == UDPROTO_HSHUBSTT || \
+     (dd)->bDeviceProtocol == UDPROTO_HSHUBMTT)
+
+	/*
+	 * MTT flag is set if
+	 * 1. this is HS hub && MTT is enabled
+	 *  or
+	 * 2. this is not hub && this is LS or FS device &&
+	 *    MTT of parent HS hub (and its parent, too) is enabled
+	 */
+	if (ishub && speed == USB_SPEED_HIGH && IS_TTHUB(dd))
+		usemtt = true;
+	else if (!ishub &&
+	     (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) &&
+	     dev->ud_myhub != NULL && dev->ud_myhub->ud_depth != 0 &&
+	     (dev->ud_myhub != NULL &&
+	      dev->ud_myhub->ud_speed == USB_SPEED_HIGH) &&
+	     dev->ud_myhsport != NULL &&
+	     IS_TTHUB(&dev->ud_myhsport->up_parent->ud_ddesc))
+		usemtt = true;
+	else
+		usemtt = false;
+	DPRINTFN(4, "class %u proto %u ishub %d usemtt %d",
+	    dd->bDeviceClass, dd->bDeviceProtocol, ishub, usemtt);
+
+#undef IS_TTHUB
+
+	cp[0] |=
+	    XHCI_SCTX_0_HUB_SET(ishub ? 1 : 0) |
+	    XHCI_SCTX_0_MTT_SET(usemtt ? 1 : 0);
+	cp[2] |=
+	    XHCI_SCTX_2_TT_HUB_SID_SET(tthubslot) |
+	    XHCI_SCTX_2_TT_PORT_NUM_SET(ttportnum);
+}
+
+/* set up params for periodic endpoint */
+static void
+xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
+{
+	struct usbd_device *dev = pipe->up_dev;
+	usb_endpoint_descriptor_t * const ed = pipe->up_endpoint->ue_edesc;
+	const uint8_t xfertype = UE_GET_XFERTYPE(ed->bmAttributes);
+	usbd_desc_iter_t iter;
+	const usb_cdc_descriptor_t *cdcd;
+	uint32_t maxb = 0;
+	uint16_t mps = UGETW(ed->wMaxPacketSize);
+	uint8_t speed = dev->ud_speed;
+	uint8_t ep;
+
+	/* config desc is NULL when opening ep0 */
+	if (dev == NULL || dev->ud_cdesc == NULL)
+		goto no_cdcd;
+	cdcd = (const usb_cdc_descriptor_t *)usb_find_desc(dev,
+	    UDESC_INTERFACE, USBD_CDCSUBTYPE_ANY);
+	if (cdcd == NULL)
+		goto no_cdcd;
+	usb_desc_iter_init(dev, &iter);
+	iter.cur = (const void *)cdcd;
+
+	/* find endpoint_ss_comp desc for ep of this pipe */
+	for (ep = 0;;) {
+		cdcd = (const usb_cdc_descriptor_t *)usb_desc_iter_next(&iter);
+		if (cdcd == NULL)
+			break;
+		if (ep == 0 && cdcd->bDescriptorType == UDESC_ENDPOINT) {
+			ep = ((const usb_endpoint_descriptor_t *)cdcd)->
+			    bEndpointAddress;
+			if (UE_GET_ADDR(ep) ==
+			    UE_GET_ADDR(ed->bEndpointAddress)) {
+				cdcd = (const usb_cdc_descriptor_t *)
+				    usb_desc_iter_next(&iter);
+				break;
+			}
+			ep = 0;
+		}
+	}
+	if (cdcd != NULL && cdcd->bDescriptorType == UDESC_ENDPOINT_SS_COMP) {
+		const usb_endpoint_ss_comp_descriptor_t * esscd =
+		    (const usb_endpoint_ss_comp_descriptor_t *)cdcd;
+		maxb = esscd->bMaxBurst;
+	}
+
+ no_cdcd:
+	/* 6.2.3.4,  4.8.2.4 */
+	if (USB_IS_SS(speed)) {
+		/* UBS 3.1  9.6.6 */
+		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(mps);
+		/* UBS 3.1  9.6.7 */
+		cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
+#ifdef notyet
+		if (xfertype == UE_ISOCHRONOUS) {
+		}
+		if (XHCI_HCC2_LEC(sc->sc_hcc2) != 0) {
+			/* use ESIT */
+			cp[4] |= XHCI_EPCTX_4_MAX_ESIT_PAYLOAD_SET(x);
+			cp[0] |= XHCI_EPCTX_0_MAX_ESIT_PAYLOAD_HI_SET(x);
+
+			/* XXX if LEC = 1, set ESIT instead */
+			cp[0] |= XHCI_EPCTX_0_MULT_SET(0);
+		} else {
+			/* use ival */
+		}
+#endif
+	} else {
+		/* UBS 2.0  9.6.6 */
+		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(UE_GET_SIZE(mps));
+
+		/* 6.2.3.4 */
+		if (speed == USB_SPEED_HIGH &&
+		   (xfertype == UE_ISOCHRONOUS || xfertype == UE_INTERRUPT)) {
+			maxb = UE_GET_TRANS(mps);
+		} else {
+			/* LS/FS or HS CTRL or HS BULK */
+			maxb = 0;
+		}
+		cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
+	}
+}
+
+/*
+ * Convert endpoint bInterval value to endpoint context interval value
+ * for Interrupt pipe.
+ * xHCI 6.2.3.6 Table 65, USB 2.0 9.6.6
+ */
+static uint32_t
+xhci_bival2ival(uint32_t ival, uint32_t speed)
+{
+	if (speed == USB_SPEED_LOW || speed == USB_SPEED_FULL) {
+		int i;
+
+		/*
+		 * round ival down to "the nearest base 2 multiple of
+		 * bInterval * 8".
+		 * bInterval is at most 255 as its type is uByte.
+		 * 255(ms) = 2040(x 125us) < 2^11, so start with 10.
+		 */
+		for (i = 10; i > 0; i--) {
+			if ((ival * 8) >= (1 << i))
+				break;
+		}
+		ival = i;
+	} else {
+		/* Interval = bInterval-1 for SS/HS */
+		ival--;
+	}
+
+	return ival;
 }
 
 /* ----- */
