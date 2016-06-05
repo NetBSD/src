@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.20 2016/06/05 13:45:56 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.21 2016/06/05 15:04:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -875,7 +875,7 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 		/* if we get an error on reassign, restart the original request */
 		if (rc && ccb->pdu_waiting != NULL) {
 			mutex_enter(&session->lock);
-			if (ccb->CmdSN < session->ExpCmdSN) {
+			if (sn_a_lt_b(ccb->CmdSN, session->ExpCmdSN)) {
 				pdu = ccb->pdu_waiting;
 				sn = get_sernum(session, !(pdu->pdu.Opcode & OP_IMMEDIATE));
 
