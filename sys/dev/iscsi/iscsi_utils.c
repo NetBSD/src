@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.12 2016/06/05 04:36:05 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.13 2016/06/05 04:48:17 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -239,6 +239,7 @@ get_ccb(connection_t *conn, bool waitok)
 	mutex_exit(&sess->lock);
 
 	ccb->flags = 0;
+	ccb->timedout = TOUT_NONE;
 	ccb->xs = NULL;
 	ccb->temp_data = NULL;
 	ccb->text_data = NULL;
