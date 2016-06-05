@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.25 2016/06/05 05:36:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.26 2016/06/05 05:40:29 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -210,7 +210,6 @@ reassign_tasks(connection_t *oldconn)
 		}
 		pdu->save_iovec [0].iov_len =
 			(conn->HeaderDigest) ? BHS_SIZE + 4 : BHS_SIZE;
-
 
 		/* link new PDU into old CCB */
 		ccb->pdu_waiting = pdu;
@@ -1413,7 +1412,6 @@ send_command(ccb_t *ccb, ccb_disp_t disp, bool waitok, bool immed)
 			totlen = conn->max_firstdata ? totlen - len : 0;
 		}
 	}
-
 	if (!totlen)
 		pdu->Flags |= FLAG_FINAL;
 	pdu->Flags |= ccb->tag;
