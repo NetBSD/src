@@ -2266,6 +2266,7 @@ struct ScopedSyscall {
   }
 };
 
+#if !SANITIZER_NETBSD
 static void syscall_access_range(uptr pc, uptr p, uptr s, bool write) {
   TSAN_SYSCALL();
   MemoryAccessRange(thr, pc, p, s, write);
@@ -2287,6 +2288,7 @@ static void syscall_fd_close(uptr pc, int fd) {
   TSAN_SYSCALL();
   FdClose(thr, pc, fd);
 }
+#endif
 
 static USED void syscall_fd_acquire(uptr pc, int fd) {
   TSAN_SYSCALL();
@@ -2300,6 +2302,7 @@ static USED void syscall_fd_release(uptr pc, int fd) {
   FdRelease(thr, pc, fd);
 }
 
+#if !SANITIZER_NETBSD
 static void syscall_pre_fork(uptr pc) {
   TSAN_SYSCALL();
   ForkBefore(thr, pc);
@@ -2319,6 +2322,7 @@ static void syscall_post_fork(uptr pc, int pid) {
     ForkParentAfter(thr, pc);
   }
 }
+#endif
 
 #define COMMON_SYSCALL_PRE_READ_RANGE(p, s) \
   syscall_access_range(GET_CALLER_PC(), (uptr)(p), (uptr)(s), false)
