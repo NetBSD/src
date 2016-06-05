@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.47 2016/05/31 09:22:11 mlelstv Exp $	*/
+/*	$NetBSD: xhci.c,v 1.48 2016/06/05 07:52:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.47 2016/05/31 09:22:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.48 2016/06/05 07:52:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -148,7 +148,9 @@ static usbd_status xhci_do_command(struct xhci_softc * const,
     struct xhci_trb * const, int);
 static usbd_status xhci_do_command_locked(struct xhci_softc * const,
     struct xhci_trb * const, int);
-static usbd_status xhci_init_slot(struct usbd_device *, uint32_t, uint32_t, int);
+static usbd_status xhci_init_slot(struct usbd_device *, uint32_t);
+static void xhci_free_slot(struct xhci_softc *, struct xhci_slot *, int, int);
+static usbd_status xhci_set_address(struct usbd_device *, uint32_t, uint32_t, int, bool);
 static usbd_status xhci_enable_slot(struct xhci_softc * const,
     uint8_t * const);
 static usbd_status xhci_disable_slot(struct xhci_softc * const, uint8_t);
@@ -2349,12 +2351,14 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		if (err)
 			goto bad;
 	} else {
+		/* 4.3.2 */
 		err = xhci_enable_slot(sc, &slot);
 		if (err)
 			goto bad;
 		xs = &sc->sc_slots[slot];
 		dev->ud_hcpriv = xs;
-		err = xhci_init_slot(dev, slot, route, rhport);
+		/* 4.3.3 initialize slot structure */
+		err = xhci_init_slot(dev, slot);
 		if (err) {
 			dev->ud_hcpriv = NULL;
 			/*
@@ -2367,6 +2371,11 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 			mutex_exit(&sc->sc_lock);
 			goto bad;
 		}
+
+		/* 4.3.4 Address Assignment */
+		err = xhci_set_address(dev, slot, route, rhport, false);
+		if (err)
+			goto bad;
 
 		/* Allow device time to set new address */
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
@@ -2735,12 +2744,7 @@ xhci_disable_slot(struct xhci_softc * const sc, uint8_t slot)
 	if (!err) {
 		xs = &sc->sc_slots[slot];
 		if (xs->xs_idx != 0) {
-			for (int i = XHCI_DCI_SLOT + 1; i < 32; i++) {
-				xhci_ring_free(sc, &xs->xs_ep[i].xe_tr);
-				memset(&xs->xs_ep[i], 0, sizeof(xs->xs_ep[i]));
-			}
-			usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
-			usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
+			xhci_free_slot(sc, xs, XHCI_DCI_SLOT + 1, 32);
 			xhci_set_dcba(sc, 0, slot);
 			memset(xs, 0, sizeof(*xs));
 		}
@@ -2827,23 +2831,19 @@ xhci_set_dcba(struct xhci_softc * const sc, uint64_t dcba, int si)
 }
 
 /*
- * Allocate DMA buffer and ring buffer for specified slot
- * and set Device Context Base Address
- * and issue Set Address device command.
+ * Allocate device and input context DMA buffer, and
+ * TRB DMA buffer for each endpoint.
  */
 static usbd_status
-xhci_init_slot(struct usbd_device *dev, uint32_t slot, uint32_t route, int rhport)
+xhci_init_slot(struct usbd_device *dev, uint32_t slot)
 {
 	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
 	struct xhci_slot *xs;
 	usbd_status err;
 	u_int dci;
-	uint32_t *cp;
-	uint32_t mps = UGETW(dev->ud_ep0desc.wMaxPacketSize);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %u speed %d route %05x rhport %d",
-	    slot, dev->ud_speed, route, rhport);
+	DPRINTFN(4, "slot %u", slot, 0, 0, 0);
 
 	xs = &sc->sc_slots[slot];
 
@@ -2872,6 +2872,56 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot, uint32_t route, int rhpor
 			goto bad2;
 		}
 	}
+
+ bad2:
+	if (err == USBD_NORMAL_COMPLETION) {
+		xs->xs_idx = slot;
+	} else {
+		xhci_free_slot(sc, xs, XHCI_DCI_SLOT + 1, dci);
+	}
+
+	return err;
+
+ bad1:
+	usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
+	xs->xs_idx = 0;
+	return err;
+}
+
+static void
+xhci_free_slot(struct xhci_softc *sc, struct xhci_slot *xs, int start_dci,
+    int end_dci)
+{
+	u_int dci;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+	DPRINTFN(4, "slot %u start %u end %u", xs->xs_idx, start_dci, end_dci,
+	    0);
+
+	for (dci = start_dci; dci < end_dci; dci++) {
+		xhci_ring_free(sc, &xs->xs_ep[dci].xe_tr);
+		memset(&xs->xs_ep[dci], 0, sizeof(xs->xs_ep[dci]));
+	}
+	usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
+	usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
+	xs->xs_idx = 0;
+}
+
+/*
+ * Setup slot context, set Device Context Base Address, and issue
+ * Set Address Device command.
+ */
+static usbd_status
+xhci_set_address(struct usbd_device *dev, uint32_t slot, uint32_t route,
+    int rhport, bool bsr)
+{
+	struct xhci_softc * const sc = XHCI_BUS2SC(dev->ud_bus);
+	struct xhci_slot *xs;
+	usbd_status err;
+	uint32_t *cp;
+	uint32_t mps = UGETW(dev->ud_ep0desc.wMaxPacketSize);
+
+	xs = &sc->sc_slots[slot];
 
 	/* set up initial input control context */
 	cp = xhci_slot_get_icv(sc, xs, XHCI_ICI_INPUT_CONTROL);
@@ -2909,26 +2959,11 @@ xhci_init_slot(struct usbd_device *dev, uint32_t slot, uint32_t route, int rhpor
 
 	xhci_set_dcba(sc, DMAADDR(&xs->xs_dc_dma, 0), slot);
 
-	err = xhci_address_device(sc, xhci_slot_get_icp(sc, xs, 0), slot,
-	    false);
+	err = xhci_address_device(sc, xhci_slot_get_icp(sc, xs, 0), slot, bsr);
 
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
 	hexdump("output context", xhci_slot_get_dcv(sc, xs, 0),
 	    sc->sc_ctxsz * 2);
-
- bad2:
-	if (err == USBD_NORMAL_COMPLETION) {
-		xs->xs_idx = slot;
-	} else {
-		for (int i = 1; i < dci; i++) {
-			xhci_ring_free(sc, &xs->xs_ep[i].xe_tr);
-			memset(&xs->xs_ep[i], 0, sizeof(xs->xs_ep[i]));
-		}
-		usb_freemem(&sc->sc_bus, &xs->xs_ic_dma);
- bad1:
-		usb_freemem(&sc->sc_bus, &xs->xs_dc_dma);
-		xs->xs_idx = 0;
-	}
 
 	return err;
 }
