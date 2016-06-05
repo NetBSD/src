@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.18 2016/06/05 05:40:29 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.19 2016/06/05 11:01:39 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -132,10 +132,17 @@ ccb_from_itt(connection_t *conn, uint32_t itt)
 
 	ccb = &conn->session->ccb[cidx];
 
-	if (ccb->ITT != itt || ccb->disp <= CCBDISP_BUSY) {
+	if (ccb->ITT != itt) {
 		DEBC(conn, 0,
 		     ("ccb_from_itt: received invalid CCB itt %08x != %08x\n",
 		      itt, ccb->ITT));
+		return NULL;
+	}
+
+	if (ccb->disp <= CCBDISP_BUSY) {
+		DEBC(conn, 0,
+		     ("ccb_from_itt: received CCB with invalid disp %d\n",
+		      ccb->disp));
 		return NULL;
 	}
 
@@ -1029,7 +1036,8 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		}
 	}
 
-	DEBC(conn, 99, ("Received PDU ExpCmdSN = %u\n",
+	DEBC(conn, 99, ("Received PDU ExpCmdSN = %u, MaxCmdSN = %u\n",
+	     ntohl(pdu->pdu.p.response.ExpCmdSN),
 	     ntohl(pdu->pdu.p.response.ExpCmdSN)));
 
 	req_ccb = ccb_from_itt(conn, pdu->pdu.InitiatorTaskTag);
