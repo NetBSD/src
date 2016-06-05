@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.13 2009/04/12 11:09:49 lukem Exp $	*/
+/*	$NetBSD: lexi.c,v 1.14 2016/06/05 18:35:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lexi.c,v 1.13 2009/04/12 11:09:49 lukem Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.14 2016/06/05 18:35:32 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -108,7 +108,7 @@ struct templ specials[1000] =
 	{"double", 4},
 	{"long", 4},
 	{"short", 4},
-	{"typdef", 4},
+	{"typedef", 4},
 	{"unsigned", 4},
 	{"register", 4},
 	{"static", 4},
