@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.16 2016/06/05 05:41:53 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.17 2016/06/05 09:03:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -367,9 +367,10 @@ throttle_ccb(ccb_t *ccb, bool yes)
 {
 	session_t *sess;
 
+	sess = ccb->session;
+
 	KASSERT(mutex_owned(&sess->lock));
 
-	sess = ccb->session;
 	if (yes) {
 		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
