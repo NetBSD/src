@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.51 2016/06/05 08:05:27 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.52 2016/06/05 08:10:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.51 2016/06/05 08:05:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.52 2016/06/05 08:10:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1031,7 +1031,7 @@ xhci_init(struct xhci_softc *sc)
 	struct xhci_erste *erst;
 	erst = KERNADDR(&sc->sc_eventst_dma, 0);
 	erst[0].erste_0 = htole64(xhci_ring_trbp(&sc->sc_er, 0));
-	erst[0].erste_2 = htole32(XHCI_EVENT_RING_TRBS);
+	erst[0].erste_2 = htole32(sc->sc_er.xr_ntrb);
 	erst[0].erste_3 = htole32(0);
 	usb_syncmem(&sc->sc_eventst_dma, 0,
 	    XHCI_ERSTE_SIZE * XHCI_EVENT_RING_SEGMENTS, BUS_DMASYNC_PREWRITE);
@@ -1857,7 +1857,7 @@ xhci_softintr(void *v)
 		xhci_handle_event(sc, trb);
 
 		i++;
-		if (i == XHCI_EVENT_RING_TRBS) {
+		if (i == er->xr_ntrb) {
 			i = 0;
 			j ^= 1;
 		}
