@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.17 2016/06/05 04:48:17 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.18 2016/06/05 05:07:23 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ effectively says "don't bother testing these values", and is used right
 now only in iscsi_send.c.
  */
 #define ISCSI_THROTTLING_ENABLED	1
-#define ISCSI_SERVER_TRUSTED	1
+#define ISCSI_SERVER_TRUSTED		0
 
 /*
    NOTE: CCBS_PER_SESSION must not exceed 256 due to the way the ITT
