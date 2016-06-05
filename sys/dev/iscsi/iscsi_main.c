@@ -663,11 +663,11 @@ iscsi_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		sysctl_teardown(&clog);
-
 		error = config_cfdata_detach(iscsi_cfdata);
 		if (error)
 			return error;
+
+		sysctl_teardown(&clog);
 
 		config_cfattach_detach(iscsi_cd.cd_name, &iscsi_ca);
 		config_cfdriver_detach(&iscsi_cd);
