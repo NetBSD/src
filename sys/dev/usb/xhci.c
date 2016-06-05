@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.54 2016/06/05 08:25:05 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.55 2016/06/05 09:16:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.54 2016/06/05 08:25:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.55 2016/06/05 09:16:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -142,6 +142,7 @@ static usbd_status xhci_configure_endpoint(struct usbd_pipe *);
 static usbd_status xhci_reset_endpoint(struct usbd_pipe *);
 static usbd_status xhci_stop_endpoint(struct usbd_pipe *);
 
+static void xhci_host_dequeue(struct xhci_ring * const);
 static usbd_status xhci_set_dequeue(struct usbd_pipe *);
 
 static usbd_status xhci_do_command(struct xhci_softc * const,
@@ -1500,6 +1501,9 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(XHCI_DCI_SLOT));
 	cp[0] = htole32(XHCI_SCTX_0_CTX_NUM_SET(dci));
 
+	/* configure ep context performs an implicit dequeue */
+	xhci_host_dequeue(&xs->xs_ep[dci].xe_tr);
+
 	/* sync input contexts before they are read from memory */
 	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
 
@@ -1543,6 +1547,19 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+}
+
+static void
+xhci_host_dequeue(struct xhci_ring * const xr)
+{
+	/* When dequeueing the controller, update our struct copy too */
+	memset(xr->xr_trb, 0, xr->xr_ntrb * XHCI_TRB_SIZE);
+	usb_syncmem(&xr->xr_dma, 0, xr->xr_ntrb * XHCI_TRB_SIZE,
+	    BUS_DMASYNC_PREWRITE);
+	memset(xr->xr_cookies, 0, xr->xr_ntrb * sizeof(*xr->xr_cookies));
+
+	xr->xr_ep = 0;
+	xr->xr_cs = 1;
 }
 
 /*
@@ -2173,11 +2190,8 @@ xhci_ring_init(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	xr->xr_cookies = kmem_zalloc(sizeof(*xr->xr_cookies) * ntrb, KM_SLEEP);
 	xr->xr_trb = xhci_ring_trbv(xr, 0);
 	xr->xr_ntrb = ntrb;
-	xr->xr_ep = 0;
-	xr->xr_cs = 1;
-	memset(xr->xr_trb, 0, size);
-	usb_syncmem(&xr->xr_dma, 0, size, BUS_DMASYNC_PREWRITE);
 	xr->is_halted = false;
+	xhci_host_dequeue(xr);
 
 	return USBD_NORMAL_COMPLETION;
 }
@@ -2751,6 +2765,7 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	DPRINTFN(4, "setting ival %u MaxBurst %#x",
 	    XHCI_EPCTX_0_IVAL_GET(cp[0]), XHCI_EPCTX_1_MAXB_GET(cp[1]), 0, 0);
 
+	/* rewind TR dequeue pointer in xHC */
 	/* can't use xhci_ep_get_dci() yet? */
 	*(uint64_t *)(&cp[2]) = htole64(
 	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
@@ -2759,6 +2774,12 @@ xhci_setup_ctx(struct usbd_pipe *pipe)
 	cp[0] = htole32(cp[0]);
 	cp[1] = htole32(cp[1]);
 	cp[4] = htole32(cp[4]);
+
+	/* rewind TR dequeue pointer in driver */
+	struct xhci_ring *xr = &xs->xs_ep[dci].xe_tr;
+	mutex_enter(&xr->xr_lock);
+	xhci_host_dequeue(xr);
+	mutex_exit(&xr->xr_lock);
 
 	/* sync input contexts before they are read from memory */
 	usb_syncmem(&xs->xs_ic_dma, 0, sc->sc_pgsz, BUS_DMASYNC_PREWRITE);
