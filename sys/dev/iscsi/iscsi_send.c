@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.29 2016/06/05 09:12:48 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.30 2016/06/05 13:54:28 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -291,6 +291,7 @@ iscsi_send_thread(void *par)
 	ccb_t *ccb, *nccb;
 	pdu_t *pdu;
 	struct file *fp;
+	pdu_disp_t pdisp;
 
 	sess = conn->session;
 	/* so cleanup thread knows there's someone left */
@@ -302,6 +303,7 @@ iscsi_send_thread(void *par)
 			while (!conn->terminating &&
 				(pdu = TAILQ_FIRST(&conn->pdus_to_send)) != NULL) {
 				TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
+				pdu->flags &= ~PDUF_INQUEUE;
 				mutex_exit(&conn->lock);
 
 				/* update ExpStatSN here to avoid discontinuities */
@@ -315,12 +317,14 @@ iscsi_send_thread(void *par)
 				my_soo_write(conn, &pdu->uio);
 
 				mutex_enter(&conn->lock);
-				pdu->flags &= ~PDUF_INQUEUE;
-				if (pdu->disp > PDUDISP_FREE)
+				pdisp = pdu->disp;
+				if (pdisp <= PDUDISP_FREE)
+					pdu->disp = PDUDISP_UNUSED;
+				else
 					pdu->flags &= ~PDUF_BUSY;
 				mutex_exit(&conn->lock);
 
-				if (pdu->disp <= PDUDISP_FREE)
+				if (pdisp <= PDUDISP_FREE)
 					free_pdu(pdu);
 
 				mutex_enter(&conn->lock);
