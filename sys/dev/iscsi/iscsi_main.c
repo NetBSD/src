@@ -107,7 +107,7 @@ struct cdevsw iscsi_cdevsw = {
 /******************************************************************************/
 
 STATIC void iscsi_scsipi_request(struct scsipi_channel *,
-								 scsipi_adapter_req_t, void *);
+                                 scsipi_adapter_req_t, void *);
 STATIC void iscsi_minphys(struct buf *);
 
 /******************************************************************************/
