@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.27 2016/06/05 06:19:59 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.28 2016/06/05 09:09:57 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -629,7 +629,9 @@ init_login_pdu(connection_t *conn, ccb_t *ccb, pdu_t *ppdu, bool next)
 
 	pdu->Opcode = IOP_Login_Request | OP_IMMEDIATE;
 
+	mutex_enter(&conn->session->lock);
 	ccb->CmdSN = get_sernum(conn->session, false);
+	mutex_exit(&conn->session->lock);
 
 	if (next) {
 		c_phase = (pdu->Flags >> CSG_SHIFT) & SG_MASK;
@@ -741,7 +743,9 @@ init_text_pdu(connection_t *conn, ccb_t *ccb, pdu_t *ppdu, pdu_t *rx_pdu)
 	pdu->Opcode = IOP_Text_Request | OP_IMMEDIATE;
 	pdu->Flags = FLAG_FINAL;
 
+	mutex_enter(&conn->session->lock);
 	ccb->CmdSN = get_sernum(conn->session, false);
+	mutex_exit(&conn->session->lock);
 
 	if (rx_pdu != NULL) {
 		pdu->p.text_req.TargetTransferTag =
