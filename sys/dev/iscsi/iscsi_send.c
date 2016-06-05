@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.28 2016/06/05 09:09:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.29 2016/06/05 09:12:48 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -303,8 +303,6 @@ iscsi_send_thread(void *par)
 				(pdu = TAILQ_FIRST(&conn->pdus_to_send)) != NULL) {
 				TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
 				mutex_exit(&conn->lock);
-
-				KASSERT(!pdu->uio.uio_resid);
 
 				/* update ExpStatSN here to avoid discontinuities */
 				/* and delays in updating target */
