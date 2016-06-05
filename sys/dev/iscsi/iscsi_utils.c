@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.11 2016/06/01 05:13:07 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.12 2016/06/05 04:36:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ get_ccb(connection_t *conn, bool waitok)
 	ccb->connection = conn;
 	atomic_inc_uint(&conn->usecount);
 
-	DEBC(conn, 5, (
+	DEBC(conn, 15, (
 		"get_ccb: ccb = %p, usecount = %d\n",
 		ccb, conn->usecount));
 
@@ -268,7 +268,7 @@ free_ccb(ccb_t *ccb)
 	session_t *sess = ccb->session;
 	pdu_t *pdu;
 
-	DEBC(ccb->connection, 5, (
+	DEBC(ccb->connection, 15, (
 		"free_ccb: ccb = %p, usecount = %d\n",
 		ccb, ccb->connection->usecount-1));
 
@@ -622,7 +622,7 @@ add_sernum(sernum_buffer_t *buff, uint32_t num)
 	}
 
 	buff->top = t;
-	DEB(10, ("AddSernum bottom %d [%d], top %d, num %u, diff %d\n",
+	DEB(11, ("AddSernum bottom %d [%d], top %d, num %u, diff %d\n",
 			 b, buff->sernum[b], buff->top, num, diff));
 
 	return diff;
@@ -673,7 +673,7 @@ ack_sernum(sernum_buffer_t *buff, uint32_t num)
 	if (!sn_a_lt_b(num, buff->ExpSN))
 		buff->ExpSN = num + 1;
 
-	DEB(10, ("AckSernum bottom %d, top %d, num %d ExpSN %d\n",
+	DEB(11, ("AckSernum bottom %d, top %d, num %d ExpSN %d\n",
 			 buff->bottom, buff->top, num, buff->ExpSN));
 
 	return buff->ExpSN;

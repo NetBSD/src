@@ -455,7 +455,7 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		}
 
 		send_run_xfer(session, xs);
-		DEB(9, ("scsipi_req returns\n"));
+		DEB(15, ("scsipi_req returns\n"));
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
