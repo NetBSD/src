@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.13 2016/06/05 04:48:17 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.14 2016/06/05 05:18:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -504,16 +504,11 @@ free_pdu(pdu_t *pdu)
 	connection_t *conn = pdu->connection;
 	pdu_disp_t pdisp;
 
+	KASSERT((pdu->flags & PDUF_INQUEUE) == 0);
+
 	if (PDUDISP_UNUSED == (pdisp = pdu->disp))
 		return;
 	pdu->disp = PDUDISP_UNUSED;
-
-	mutex_enter(&conn->lock);
-	if (pdu->flags & PDUF_INQUEUE) {
-		TAILQ_REMOVE(&conn->pdus_to_send, pdu, send_chain);
-		pdu->flags &= ~PDUF_INQUEUE;
-	}
-	mutex_exit(&conn->lock);
 
 	/* free temporary data in this PDU */
 	if (pdu->temp_data)
