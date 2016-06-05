@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2016/06/01 22:48:55 christos Exp $
+# $NetBSD: Makefile,v 1.5 2016/06/05 20:08:26 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,12 @@ tsan_stat.o \
 tsan_suppressions.o \
 tsan_symbolize.o \
 tsan_sync.o
+
+.if exists(${SANITIZER}/tsan/tsan_rtl_${MACHINE}.S)
+TSAN_SRCS+= tsan_rtl_${MACHINE}.S
+.else
+TSAN_SRCS+= tsan_rtl_unimpl.cc
+.endif
 
 LIB=	tsan
 SRCS+=	${TSAN_SRCS}
