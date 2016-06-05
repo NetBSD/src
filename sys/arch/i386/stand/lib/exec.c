@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.59 2014/04/06 19:18:00 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.60 2016/06/05 14:06:31 maxv Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 out:
 	BI_FREE();
-	bootinfo = 0;
+	bootinfo = NULL;
 	return -1;
 }
 
