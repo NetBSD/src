@@ -1,4 +1,4 @@
-.\"	$NetBSD: yacc.1,v 1.5 2016/06/05 16:24:34 christos Exp $
+.\"	$NetBSD: yacc.1,v 1.6 2016/06/06 08:22:52 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -31,8 +31,8 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)yacc.1	5.7 (Berkeley) 7/30/91
-.\"	from: Id: yacc.1,v 1.24 2014/10/06 00:03:48 tom Exp 
-.\"	$NetBSD: yacc.1,v 1.5 2016/06/05 16:24:34 christos Exp $
+.\"	from: Id: yacc.1,v 1.24 2014/10/06 00:03:48 tom Exp
+.\"	$NetBSD: yacc.1,v 1.6 2016/06/06 08:22:52 wiz Exp $
 .\"
 .Dd October 5, 2014
 .Dt YACC 1
@@ -94,7 +94,7 @@ parser to be written to the file
 in graphviz format, ready to be processed by
 .Xr dot 1 .
 .It Fl i
-The 
+The
 .Fl i
 option causes a supplementary header file
 .Pa y.tab.i
@@ -105,7 +105,7 @@ and supplementary #define's as needed to map the conventional
 yy-prefixed names to whatever the
 .Fl p
 option may specify.
-The code file, e.g., 
+The code file, e.g.,
 .Pa y.tab.c
 is modified to #include this file
 as well as the
@@ -128,7 +128,7 @@ option is specified,
 will not insert the #line directives.
 #line directives specified by the user will be retained.
 .It Fl L
-Enable position processing, e.g., 
+Enable position processing, e.g.,
 .Dq %locations
 (compile-type configuration for
 .Nm ) .
@@ -139,7 +139,7 @@ the file prefix concatenated with the file suffix, e.g.
 .Pa y.tab.c .
 This overrides the
 .Fl b
-option. 
+option.
 .It Fl P
 The
 .Fl P
@@ -166,29 +166,29 @@ The code file is named
 .Pa y.code.c ,
 and the tables file is named
 .Pa y.tab.c .
-The prefix 
-.Dq y.
+The prefix
+.Dq y .
 can be overridden using the
 .Fl b
 option.
 .It Fl s
-Suppress 
+Suppress
 .Dq #define
 statements generated for string literals in a
 .Dq %token
 statement, to more closely match original
-.Nm 
+.Nm
 behavior.
 .Pp
 Normally when
-.Nm 
+.Nm
 sees a line such as
 .Dq %token OP_ADD "ADD"
 it notices that the quoted
 .Dq ADD
-is a valid C identifier, and generates a #define not only for 
+is a valid C identifier, and generates a #define not only for
 .Dv OP_ADD ,
-but for 
+but for
 .Dv ADD
 as well,
 e.g.,
@@ -200,7 +200,7 @@ The original
 .Nm
 does not generate the second
 .Dq #define .
-The 
+The
 .Fl s
 option suppresses this
 .Dq #define .
@@ -209,7 +209,7 @@ option suppresses this
 documents only names and numbers for
 .Dq %token ,
 though the original
-.Nm 
+.Nm
 and
 .Xr bison 1
 also accept string literals.
@@ -242,11 +242,11 @@ provides some extensions for
 compatibility with
 .Xr bison 1
 and other implementations of yacc.
-The 
+The
 .Dq %destructor
-and 
+and
 .Dq %locations
-features are available only if 
+features are available only if
 .Nm yacc
 has been configured and compiled to support the back-tracking functionality.
 The remaining features are always available:
@@ -270,11 +270,11 @@ if the
 .Dq YYSTYPE
 value is, or contains, pointers to dynamically allocated memory.
 .Pp
-The bracketed 
+The bracketed
 .Dv code
 is invoked whenever the parser discards one of the symbols.
 Within
-.Dv  code , 
+.Dv  code ,
 .Dq $$
 or
 .Dq $\*[Lt]tag\*[Gt]$
@@ -285,7 +285,7 @@ designates its location (see
 directive).
 .Pp
 A per-symbol destructor is defined by listing a grammar symbol
-in 
+in
 .Dv symbol+ .
 A per-type destructor is defined  by listing a semantic type tag (e.g.,
 .Dq \*[Lt]some_tag\*[Gt] )
@@ -304,10 +304,10 @@ The code for
 .Dq \*[Lt]*\*[Gt]
 is used
 for grammar symbols that have an explicitly declared semantic type tag
-(via 
+(via
 .Dq %type ) ;
 .Pp
-the code for 
+the code for
 .Dq \*[Lt]\*[Gt]
 is used for grammar symbols that have no declared semantic type tag.
 .Pp
@@ -318,7 +318,7 @@ Tell
 the expected number of shift/reduce conflicts.
 That makes it only report the number if it differs.
 .It Dv %expect-rr Ar number
-Tell 
+Tell
 .Nm
 the expected number of reduce/reduce conflicts.
 That makes it only report the number if it differs.
@@ -329,8 +329,8 @@ allowable in
 parsers.
 .It Dv %locations
 Tell
-.Nm 
-to enable  management of position information associated with each token, 
+.Nm
+to enable  management of position information associated with each token,
 provided by the lexer in the global variable
 .Dv yylloc ,
 similar to management of semantic value information provided in
@@ -339,8 +339,8 @@ similar to management of semantic value information provided in
 As for semantic values, locations can be referenced within actions using
 .Dv @$
 to refer to the location of the left hand side symbol, and
-.Dv @N (
-.Dv N
+.Dv @N
+.Dv ( N
 an integer) to refer to the location of one of the right hand side
 symbols.
 Also as for semantic values, when a rule is matched, a default
@@ -355,7 +355,7 @@ in a rule action.
 .Pp
 The type of
 .Dv yylloc
-is 
+is
 .Dv YYLTYPE ,
 which is defined by default as:
 .Bd -literal -offset indent
@@ -368,8 +368,8 @@ typedef struct YYLTYPE {
 .Ed
 .Pp
 .Dv YYLTYPE
-can be redefined by the user (
-.Dv YYLTYPE_IS_DEFINED
+can be redefined by the user
+.Dv ( YYLTYPE_IS_DEFINED
 must be defined, to inhibit the default)
 in the declarations section of the specification file.
 As in
@@ -384,16 +384,16 @@ This directive adds a
 .Dv YYLTYPE
 parameter to
 .Fn yyerror .
-If the 
+If the
 .Dq %pure-parser
 directive is present,
-a 
+a
 .Dv YYLTYPE
-parameter is added to 
+parameter is added to
 .Fn yylex
 calls.
 .It Dv %lex-param Ar { Ar argument-declaration Ar }
-By default, the lexer accepts no parameters, e.g., 
+By default, the lexer accepts no parameters, e.g.,
 .Fn yylex .
 Use this directive to add parameter declarations for your customized lexer.
 .It Dv %parse-param Ar { Ar argument-declaration Ar }
@@ -401,7 +401,7 @@ By default, the parser accepts no parameters, e.g.,
 .Fn yyparse .
 Use this directive to add parameter declarations for your customized parser.
 .It Dv %pure-parser
-Most variables (other than 
+Most variables (other than
 .Fa yydebug
 and
 .Fa yynerrs )
@@ -441,7 +441,7 @@ POSIX compliance.
 That said, you may be interested in reusing grammar files with some
 other implementation which is not strictly compatible with AT\*[Am]T yacc.
 For instance, there is
-.Xr bison 1.
+.Xr bison 1 .
 Here are a few differences:
 .Nm
 accepts an equals mark preceding the left curly brace
@@ -466,7 +466,7 @@ and
 without providing prototypes.
 .Pp
 .Xr bison 1
-support for 
+support for
 .Dq %expect
 is broken in more than one release.
 For best results using
@@ -475,7 +475,7 @@ delete that directive.
 .Pp
 .Xr bison 1
 no equivalent for some of
-.Nm 's 
+.Nm 's
 command-line options, relying on directives embedded in the grammar file.
 .Pp
 .Xr bison 1
@@ -483,8 +483,8 @@ command-line options, relying on directives embedded in the grammar file.
 option does not affect bison's lack of support for
 features of AT\*[Am]T yacc which were deemed obsolescent.
 .Pp
-.Nm 
-accepts multiple parameters with 
+.Nm
+accepts multiple parameters with
 .Dq %lex-param
 and
 .Dq %parse-param
@@ -501,9 +501,9 @@ release may generate bad code.
 Like
 .Xr bison 1 ,
 .Nm
-will add parameters specified via 
+will add parameters specified via
 .Dq %parse-param
-to 
+to
 .Fn yyparse ,
 .Fn yyerror
 and (if configured for back-tracking)
@@ -511,7 +511,7 @@ and (if configured for back-tracking)
 .Dq %destructor .
 .Pp
 .Xr bison 1
-puts the additional parameters 
+puts the additional parameters
 .Dv first
 for
 .Fn yyparse
