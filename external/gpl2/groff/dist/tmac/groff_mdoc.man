@@ -391,7 +391,7 @@ that is, a blank space preceded by the escape character
 .Ql \e .
 This method may be used with any macro but has the side effect of
 interfering with the adjustment of text over the length of a line.
-.Xr Troff
+.Xr troff 1
 sees the hard space as if it were any other printable character and cannot
 split the string into blank or newline separated pieces as one would expect.
 This method is useful for strings which are not expected to overlap a line
@@ -433,7 +433,7 @@ would see three arguments, and the result would be:
 .
 .Ss "Trailing Blank Space Characters"
 .
-.Xr Troff
+.Xr troff 1
 can be confused by blank space characters at the end of a line.
 It is a wise preventive measure to globally remove all blank spaces
 from
@@ -1123,7 +1123,7 @@ The following punctuation characters are recognized by
 .El
 .Pp
 .
-.Xr Troff
+.Xr troff 1
 is limited as a macro language, and has difficulty when presented with a
 string containing a member of the mathematical, logical or quotation set:
 .
@@ -1133,7 +1133,7 @@ string containing a member of the mathematical, logical or quotation set:
 .Pp
 .
 The problem is that
-.Xr troff
+.Xr troff 1
 may assume it is supposed to actually perform the operation or evaluation
 suggested by the characters.
 To prevent the accidental evaluation of these characters, escape them with
@@ -3230,7 +3230,7 @@ This
 .Em left
 aligns the block about two inches from the right side of the page.
 This macro needs work and perhaps may never do the right thing within
-.Xr troff .
+.Xr troff 1 .
 .El
 .Pp
 .
