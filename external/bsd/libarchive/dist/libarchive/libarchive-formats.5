@@ -24,8 +24,8 @@
 .\"
 .\" $FreeBSD: head/lib/libarchive/libarchive-formats.5 201077 2009-12-28 01:50:23Z kientzle $
 .\"
-.Dd December 27, 2009
-.Dt libarchive-formats 5
+.Dd May 31, 2016
+.Dt LIBARCHIVE-FORMATS 5
 .Os
 .Sh NAME
 .Nm libarchive-formats
@@ -65,7 +65,6 @@ Later variants have extended this by either appropriating undefined
 areas of the header record, extending the header to multiple records,
 or by storing special entries that modify the interpretation of
 subsequent entries.
-.Pp
 .Bl -tag -width indent
 .It Cm gnutar
 The
@@ -315,7 +314,7 @@ of a file hierarchy in which each line specifies the name of a file and
 provides specific metadata about that file.
 Libarchive can read all of the keywords supported by both
 the NetBSD and FreeBSD versions of
-.Xr mtree 1 ,
+.Xr mtree 8 ,
 although many of the keywords cannot currently be stored in an
 .Tn archive_entry
 object.
