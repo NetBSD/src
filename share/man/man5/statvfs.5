@@ -1,4 +1,4 @@
-.\"	$NetBSD: statvfs.5,v 1.13 2013/04/05 17:33:06 christos Exp $
+.\"	$NetBSD: statvfs.5,v 1.14 2016/06/06 15:02:32 abhinav Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd April 5, 2013
+.Dd June 2, 2016
 .Dt STATVFS 5
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ field is the same as the
 .Fa f_flags
 field in the
 .Bx 4.3
-.Xr statfs 2
+.Ic statfs
 system call.
 .It f_fsid
 Is defined to be
@@ -163,7 +163,7 @@ so we define an additional
 field.
 .It f_bavail
 Could historically be negative (in the
-.Xr statfs 2
+.Ic statfs
 system call) when the used space has exceeded
 the non-superuser free space.
 In order to comply with the X/Open standard, we have to define
