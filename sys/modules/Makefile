@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.165 2015/12/26 01:00:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.166 2016/06/07 01:06:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
+SUBDIR+=	bpf_filter
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
@@ -43,6 +44,7 @@ SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	i2cexec
+SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
