@@ -3,6 +3,6 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 /* Generated automatically by the program `build/gcov-iov'
-   from `5.3.0 (5 3) and  (*)'.  */
+   from `5.4.0 (5 4) and  (*)'.  */
 
-#define GCOV_VERSION ((gcov_unsigned_t)0x3530332a)  /* 503* */
+#define GCOV_VERSION ((gcov_unsigned_t)0x3530342a)  /* 504* */

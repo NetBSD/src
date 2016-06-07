@@ -605,6 +605,12 @@
 #endif
 
 
+/* Define if your assembler supports .stabs. */
+#ifndef USED_FOR_TARGET
+#define HAVE_AS_STABS_DIRECTIVE 1
+#endif
+
+
 /* Define if your assembler and linker support thread-local storage. */
 #ifndef USED_FOR_TARGET
 #define HAVE_AS_TLS 1
