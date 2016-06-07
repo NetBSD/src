@@ -1115,6 +1115,16 @@ aarch64_split_simd_move (rtx dst, rtx src)
     }
 }
 
+bool
+aarch64_zero_extend_const_eq (machine_mode xmode, rtx x,
+			      machine_mode ymode, rtx y)
+{
+  rtx r = simplify_const_unary_operation (ZERO_EXTEND, xmode, y, ymode);
+  gcc_assert (r != NULL);
+  return rtx_equal_p (x, r);
+}
+			      
+
 static rtx
 aarch64_force_temporary (machine_mode mode, rtx x, rtx value)
 {
@@ -3751,6 +3761,13 @@ aarch64_select_cc_mode (RTX_CODE code, rtx x, rtx y)
     return ((code == GT || code == GE || code == LE || code == LT)
 	    ? CC_SESWPmode : CC_ZESWPmode);
 
+  /* A test for unsigned overflow.  */
+  if ((GET_MODE (x) == DImode || GET_MODE (x) == TImode)
+      && code == NE
+      && GET_CODE (x) == PLUS
+      && GET_CODE (y) == ZERO_EXTEND)
+    return CC_Cmode;
+
   /* For everything else, return CCmode.  */
   return CCmode;
 }
@@ -3897,6 +3914,15 @@ aarch64_get_condition_code_1 (enum machine_mode mode, enum rtx_code comp_code)
 	{
 	case NE: return AARCH64_NE;
 	case EQ: return AARCH64_EQ;
+	default: return -1;
+	}
+      break;
+
+    case CC_Cmode:
+      switch (comp_code)
+	{
+	case NE: return AARCH64_CS;
+	case EQ: return AARCH64_CC;
 	default: return -1;
 	}
       break;
@@ -6891,10 +6917,26 @@ aarch64_override_options (void)
 static void
 aarch64_override_options_after_change (void)
 {
+  /* The logic here is that if we are disabling all frame pointer generation
+     then we do not need to disable leaf frame pointer generation as a
+     separate operation.  But if we are *only* disabling leaf frame pointer
+     generation then we set flag_omit_frame_pointer to true, but in
+     aarch64_frame_pointer_required we return false only for leaf functions.
+
+     PR 70044: We have to be careful about being called multiple times for the
+     same function.  Once we have decided to set flag_omit_frame_pointer just
+     so that we can omit leaf frame pointers, we must then not interpret a
+     second call as meaning that all frame pointer generation should be
+     omitted.  We do this by setting flag_omit_frame_pointer to a special,
+     non-zero value.  */
+
+  if (flag_omit_frame_pointer == 2)
+    flag_omit_frame_pointer = 0;
+
   if (flag_omit_frame_pointer)
     flag_omit_leaf_frame_pointer = false;
   else if (flag_omit_leaf_frame_pointer)
-    flag_omit_frame_pointer = true;
+    flag_omit_frame_pointer = 2;
 
   /* If not optimizing for size, set the default
      alignment to what the target wants */
@@ -10181,6 +10223,24 @@ aarch64_vectorize_vec_perm_const_ok (machine_mode vmode,
   end_sequence ();
 
   return ret;
+}
+
+/* Implement target hook CANNOT_CHANGE_MODE_CLASS.  */
+bool
+aarch64_cannot_change_mode_class (machine_mode from,
+				  machine_mode to,
+				  enum reg_class rclass)
+{
+  /* We cannot allow word_mode subregs of full vector modes.
+     Otherwise the middle-end will assume it's ok to store to
+     (subreg:DI (reg:TI 100) 0) in order to modify only the low 64 bits
+     of the 128-bit register.  However, after reload the subreg will
+     be dropped leaving a plain DImode store.  See PR67609 for a more
+     detailed dicussion.  In all other cases, we want to be permissive
+     and return false.  */
+  return (reg_classes_intersect_p (FP_REGS, rclass)
+	  && GET_MODE_SIZE (to) == UNITS_PER_WORD
+	  && GET_MODE_SIZE (from) > UNITS_PER_WORD);
 }
 
 rtx
