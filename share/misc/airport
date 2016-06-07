@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.61 2016/01/03 15:25:31 mbalmer Exp $
+#	$NetBSD: airport,v 1.62 2016/06/07 19:42:47 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -625,7 +625,6 @@ BEN:Benghazi (Benina), Libya
 BEO:Newcastle (Belmont Airport), NSW, Australia
 BEP:Bellary, India
 BEQ:Bury St. Edmunds, England, UK
-BER:All Airports around Berlin, Germany
 BES:Brest (Guipavas), France
 BET:Bethel Airport, AK, USA
 BEU:Bedourie, Queensland, Australia
