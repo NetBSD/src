@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.195 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.196 2016/06/07 01:06:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.195 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.196 2016/06/07 01:06:28 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2107,7 +2107,7 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_mtap_sl_out =	_bpf_mtap_sl_out,
 };
 
-MODULE(MODULE_CLASS_DRIVER, bpf, NULL);
+MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");
 
 static int
 bpf_modcmd(modcmd_t cmd, void *arg)
