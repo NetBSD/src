@@ -649,7 +649,8 @@ remap_decls (tree decls, vec<tree, va_gc> **nonlocalized_list,
 	  /* We need to add this variable to the local decls as otherwise
 	     nothing else will do so.  */
 	  if (TREE_CODE (old_var) == VAR_DECL
-	      && ! DECL_EXTERNAL (old_var))
+	      && ! DECL_EXTERNAL (old_var)
+	      && cfun)
 	    add_local_decl (cfun, old_var);
 	  if ((!optimize || debug_info_level > DINFO_LEVEL_TERSE)
 	      && !DECL_IGNORED_P (old_var)
@@ -872,7 +873,7 @@ is_parm (tree decl)
 static unsigned short
 remap_dependence_clique (copy_body_data *id, unsigned short clique)
 {
-  if (clique == 0)
+  if (clique == 0 || processing_debug_stmt)
     return 0;
   if (!id->dependence_map)
     id->dependence_map
@@ -4111,7 +4112,7 @@ estimate_num_insns (gimple stmt, eni_weights *weights)
 	      return 0;
 	    else if (is_inexpensive_builtin (decl))
 	      return weights->target_builtin_call_cost;
-	    else if (DECL_BUILT_IN_CLASS (decl) == BUILT_IN_NORMAL)
+	    else if (gimple_call_builtin_p (stmt, BUILT_IN_NORMAL))
 	      {
 		/* We canonicalize x * x to pow (x, 2.0) with -ffast-math, so
 		   specialize the cheap expansion we do here.

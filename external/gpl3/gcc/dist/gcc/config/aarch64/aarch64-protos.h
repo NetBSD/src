@@ -184,6 +184,9 @@ int aarch64_get_condition_code (rtx);
 bool aarch64_bitmask_imm (HOST_WIDE_INT val, machine_mode);
 enum aarch64_symbol_type
 aarch64_classify_symbolic_expression (rtx, enum aarch64_symbol_context);
+bool aarch64_cannot_change_mode_class (machine_mode,
+				       machine_mode,
+				       enum reg_class);
 bool aarch64_const_vec_all_same_int_p (rtx, HOST_WIDE_INT);
 bool aarch64_constant_address_p (rtx);
 bool aarch64_expand_movmem (rtx *);
@@ -197,6 +200,7 @@ bool aarch64_label_mentioned_p (rtx);
 bool aarch64_legitimate_pic_operand_p (rtx);
 bool aarch64_modes_tieable_p (machine_mode mode1,
 			      machine_mode mode2);
+bool aarch64_zero_extend_const_eq (machine_mode, rtx, machine_mode, rtx);
 bool aarch64_move_imm (HOST_WIDE_INT, machine_mode);
 bool aarch64_mov_operand_p (rtx, enum aarch64_symbol_context,
 			    machine_mode);
