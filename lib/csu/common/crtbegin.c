@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crtbegin.c,v 1.11 2016/06/05 00:43:39 joerg Exp $");
+__RCSID("$NetBSD: crtbegin.c,v 1.12 2016/06/07 12:07:35 joerg Exp $");
 
 #include "crtbegin.h"
 
@@ -41,8 +41,6 @@ __weakref_visible void Jv_RegisterClasses(const fptr_t *)
 #if !defined(HAVE_INITFINI_ARRAY)
 __weakref_visible const fptr_t __CTOR_LIST__start
     __weak_reference(__CTOR_LIST__);
-__weakref_visible const fptr_t __CTOR_LIST__end
-    __weak_reference(__CTOR_LIST_END__);
 
 __dso_hidden const fptr_t __aligned(sizeof(void *)) __CTOR_LIST__[] __section(".ctors") = {
 	(fptr_t) -1,
@@ -95,7 +93,7 @@ __do_global_ctors_aux(void)
 		Jv_RegisterClasses(__JCR_LIST__);
 
 #if !defined(HAVE_INITFINI_ARRAY)
-	for (const fptr_t *p = &__CTOR_LIST__end; p > &__CTOR_LIST__start + 1; ) {
+	for (const fptr_t *p = __CTOR_LIST_END__; p > &__CTOR_LIST__start + 1; ) {
 		(*(*--p))();
 	}
 #endif
@@ -105,8 +103,6 @@ __do_global_ctors_aux(void)
 #if !defined(HAVE_INITFINI_ARRAY)
 __weakref_visible const fptr_t __DTOR_LIST__start
     __weak_reference(__DTOR_LIST__);
-__weakref_visible const fptr_t __DTOR_LIST__end
-    __weak_reference(__DTOR_LIST_END__);
 
 __dso_hidden const fptr_t __aligned(sizeof(void *)) __DTOR_LIST__[] __section(".dtors") = {
 	(fptr_t) -1,
@@ -132,7 +128,7 @@ __do_global_dtors_aux(void)
 #endif
 
 #if !defined(HAVE_INITFINI_ARRAY)
-	for (const fptr_t *p = &__DTOR_LIST__start + 1; p < &__DTOR_LIST__end; ) {
+	for (const fptr_t *p = &__DTOR_LIST__start + 1; p < __DTOR_LIST_END__; ) {
 		(*(*p++))();
 	}
 #endif
