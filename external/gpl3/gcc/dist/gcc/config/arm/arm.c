@@ -10306,8 +10306,10 @@ arm_new_rtx_costs (rtx x, enum rtx_code code, enum rtx_code outer_code,
 	      /* SMUL[TB][TB].  */
 	      if (speed_p)
 		*cost += extra_cost->mult[0].extend;
-	      *cost += (rtx_cost (XEXP (x, 0), SIGN_EXTEND, 0, speed_p)
-			+ rtx_cost (XEXP (x, 1), SIGN_EXTEND, 0, speed_p));
+	      *cost += rtx_cost (XEXP (XEXP (x, 0), 0),
+				 SIGN_EXTEND, 0, speed_p);
+	      *cost += rtx_cost (XEXP (XEXP (x, 1), 0),
+				 SIGN_EXTEND, 1, speed_p);
 	      return true;
 	    }
 	  if (speed_p)
@@ -17207,7 +17209,7 @@ thumb1_reorg (void)
   FOR_EACH_BB_FN (bb, cfun)
     {
       rtx dest, src;
-      rtx pat, op0, set = NULL;
+      rtx cmp, op0, op1, set = NULL;
       rtx_insn *prev, *insn = BB_END (bb);
       bool insn_clobbered = false;
 
@@ -17220,8 +17222,13 @@ thumb1_reorg (void)
 	continue;
 
       /* Get the register with which we are comparing.  */
-      pat = PATTERN (insn);
-      op0 = XEXP (XEXP (SET_SRC (pat), 0), 0);
+      cmp = XEXP (SET_SRC (PATTERN (insn)), 0);
+      op0 = XEXP (cmp, 0);
+      op1 = XEXP (cmp, 1);
+
+      /* Check that comparison is against ZERO.  */
+      if (!CONST_INT_P (op1) || INTVAL (op1) != 0)
+	continue;
 
       /* Find the first flag setting insn before INSN in basic block BB.  */
       gcc_assert (insn != BB_HEAD (bb));
@@ -17261,7 +17268,7 @@ thumb1_reorg (void)
 	  PATTERN (prev) = gen_rtx_SET (VOIDmode, dest, src);
 	  INSN_CODE (prev) = -1;
 	  /* Set test register in INSN to dest.  */
-	  XEXP (XEXP (SET_SRC (pat), 0), 0) = copy_rtx (dest);
+	  XEXP (cmp, 0) = copy_rtx (dest);
 	  INSN_CODE (insn) = -1;
 	}
     }
@@ -21206,7 +21213,11 @@ arm_expand_prologue (void)
 
   /* Naked functions don't have prologues.  */
   if (IS_NAKED (func_type))
-    return;
+    {
+      if (flag_stack_usage_info)
+	current_function_static_stack_size = 0;
+      return;
+    }
 
   /* Make a copy of c_f_p_a_s as we may need to modify it locally.  */
   args_to_push = crtl->args.pretend_args_size;
@@ -24451,7 +24462,11 @@ thumb1_expand_prologue (void)
 
   /* Naked functions don't have prologues.  */
   if (IS_NAKED (func_type))
-    return;
+    {
+      if (flag_stack_usage_info)
+	current_function_static_stack_size = 0;
+      return;
+    }
 
   if (IS_INTERRUPT (func_type))
     {

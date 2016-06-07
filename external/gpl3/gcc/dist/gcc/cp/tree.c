@@ -1007,7 +1007,8 @@ move (tree expr)
    the C version of this function does not properly maintain canonical
    types (which are not used in C).  */
 tree
-c_build_qualified_type (tree type, int type_quals)
+c_build_qualified_type (tree type, int type_quals, tree /* orig_qual_type */,
+			size_t /* orig_qual_indirect */)
 {
   return cp_build_qualified_type (type, type_quals);
 }
@@ -1345,6 +1346,9 @@ strip_typedefs (tree t)
 	  }
 	result = make_typename_type (strip_typedefs (TYPE_CONTEXT (t)),
 				     fullname, typename_type, tf_none);
+	/* Handle 'typedef typename A::N N;'  */
+	if (typedef_variant_p (result))
+	  result = TYPE_MAIN_VARIANT (DECL_ORIGINAL_TYPE (TYPE_NAME (result)));
       }
       break;
     case DECLTYPE_TYPE:
@@ -1362,7 +1366,18 @@ strip_typedefs (tree t)
     }
 
   if (!result)
-      result = TYPE_MAIN_VARIANT (t);
+    {
+      if (typedef_variant_p (t))
+	{
+	  /* Explicitly get the underlying type, as TYPE_MAIN_VARIANT doesn't
+	     strip typedefs with attributes.  */
+	  result = TYPE_MAIN_VARIANT (DECL_ORIGINAL_TYPE (TYPE_NAME (t)));
+	  result = strip_typedefs (result);
+	}
+      else
+	result = TYPE_MAIN_VARIANT (t);
+    }
+  gcc_assert (!typedef_variant_p (result));
   if (TYPE_USER_ALIGN (t) != TYPE_USER_ALIGN (result)
       || TYPE_ALIGN (t) != TYPE_ALIGN (result))
     {

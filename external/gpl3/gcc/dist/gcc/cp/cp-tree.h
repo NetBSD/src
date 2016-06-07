@@ -5237,6 +5237,7 @@ extern tree make_temporary_var_for_ref_to_temp	(tree, tree);
 extern bool type_has_extended_temps		(tree);
 extern tree strip_top_quals			(tree);
 extern bool reference_related_p			(tree, tree);
+extern int remaining_arguments			(tree);
 extern tree perform_implicit_conversion		(tree, tree, tsubst_flags_t);
 extern tree perform_implicit_conversion_flags	(tree, tree, tsubst_flags_t, int);
 extern tree build_integral_nontype_arg_conv	(tree, tree, tsubst_flags_t);
@@ -5792,7 +5793,7 @@ extern tree get_template_parms_at_level (tree, int);
 extern tree get_template_innermost_arguments	(const_tree);
 extern tree get_template_argument_pack_elems	(const_tree);
 extern tree get_function_template_decl		(const_tree);
-extern tree resolve_nondeduced_context		(tree);
+extern tree resolve_nondeduced_context		(tree, tsubst_flags_t);
 extern hashval_t iterative_hash_template_arg (tree arg, hashval_t val);
 
 /* in repo.c */

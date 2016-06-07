@@ -1991,7 +1991,31 @@ duplicate_decls (tree newdecl, tree olddecl, bool newdecl_is_friend)
       /* For typedefs use the old type, as the new type's DECL_NAME points
 	 at newdecl, which will be ggc_freed.  */
       if (TREE_CODE (newdecl) == TYPE_DECL)
-	newtype = oldtype;
+	{
+	  /* But NEWTYPE might have an attribute, honor that.  */
+	  tree tem = TREE_TYPE (newdecl);
+	  newtype = oldtype;
+
+	  if (TYPE_USER_ALIGN (tem))
+	    {
+	      if (TYPE_ALIGN (tem) > TYPE_ALIGN (newtype))
+		TYPE_ALIGN (newtype) = TYPE_ALIGN (tem);
+	      TYPE_USER_ALIGN (newtype) = true;
+	    }
+
+	  /* And remove the new type from the variants list.  */
+	  if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
+	    {
+	      tree remove = TREE_TYPE (newdecl);
+	      for (tree t = TYPE_MAIN_VARIANT (remove); ;
+		   t = TYPE_NEXT_VARIANT (t))
+		if (TYPE_NEXT_VARIANT (t) == remove)
+		  {
+		    TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
+		    break;
+		  }
+	    }
+	}
       else
 	/* Merge the data types specified in the two decls.  */
 	newtype = merge_types (TREE_TYPE (newdecl), TREE_TYPE (olddecl));
@@ -6127,8 +6151,11 @@ make_rtl_for_nonlocal_decl (tree decl, tree init, const char* asmspec)
     return;
 
   /* We defer emission of local statics until the corresponding
-     DECL_EXPR is expanded.  */
-  defer_p = DECL_FUNCTION_SCOPE_P (decl) || DECL_VIRTUAL_P (decl);
+     DECL_EXPR is expanded.  But with constexpr its function might never
+     be expanded, so go ahead and tell cgraph about the variable now.  */
+  defer_p = ((DECL_FUNCTION_SCOPE_P (decl)
+	      && !DECL_DECLARED_CONSTEXPR_P (DECL_CONTEXT (decl)))
+	     || DECL_VIRTUAL_P (decl));
 
   /* Defer template instantiations.  */
   if (DECL_LANG_SPECIFIC (decl)
@@ -6436,7 +6463,7 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
       if (TREE_CODE (d_init) == TREE_LIST)
 	d_init = build_x_compound_expr_from_list (d_init, ELK_INIT,
 						  tf_warning_or_error);
-      d_init = resolve_nondeduced_context (d_init);
+      d_init = resolve_nondeduced_context (d_init, tf_warning_or_error);
       type = TREE_TYPE (decl) = do_auto_deduction (type, d_init,
 						   auto_node);
       if (type == error_mark_node)
@@ -7360,7 +7387,8 @@ cp_complete_array_type (tree *ptype, tree initial_value, bool do_default)
 
   /* Don't get confused by a CONSTRUCTOR for some other type.  */
   if (initial_value && TREE_CODE (initial_value) == CONSTRUCTOR
-      && !BRACE_ENCLOSED_INITIALIZER_P (initial_value))
+      && !BRACE_ENCLOSED_INITIALIZER_P (initial_value)
+      && TREE_CODE (TREE_TYPE (initial_value)) != ARRAY_TYPE)
     return 1;
 
   if (initial_value)
@@ -13937,7 +13965,9 @@ begin_destructor_body (void)
       initialize_vtbl_ptrs (current_class_ptr);
       finish_compound_stmt (compound_stmt);
 
-      if (flag_lifetime_dse)
+      if (flag_lifetime_dse
+	  /* Clobbering an empty base is harmful if it overlays real data.  */
+	  && !is_empty_class (current_class_type))
 	{
 	  /* Insert a cleanup to let the back end know that the object is dead
 	     when we exit the destructor, either normally or via exception.  */
@@ -14557,7 +14587,8 @@ complete_vars (tree type)
 
 /* If DECL is of a type which needs a cleanup, build and return an
    expression to perform that cleanup here.  Return NULL_TREE if no
-   cleanup need be done.  */
+   cleanup need be done.  DECL can also be a _REF when called from
+   split_nonconstant_init_1.  */
 
 tree
 cxx_maybe_build_cleanup (tree decl, tsubst_flags_t complain)
@@ -14575,7 +14606,10 @@ cxx_maybe_build_cleanup (tree decl, tsubst_flags_t complain)
   /* Handle "__attribute__((cleanup))".  We run the cleanup function
      before the destructor since the destructor is what actually
      terminates the lifetime of the object.  */
-  attr = lookup_attribute ("cleanup", DECL_ATTRIBUTES (decl));
+  if (DECL_P (decl))
+    attr = lookup_attribute ("cleanup", DECL_ATTRIBUTES (decl));
+  else
+    attr = NULL_TREE;
   if (attr)
     {
       tree id;
@@ -14594,7 +14628,8 @@ cxx_maybe_build_cleanup (tree decl, tsubst_flags_t complain)
 	 ordinary FUNCTION_DECL.  */
       fn = lookup_name (id);
       arg = build_address (decl);
-      mark_used (decl);
+      if (!mark_used (decl, complain) && !(complain & tf_error))
+	return error_mark_node;
       cleanup = cp_build_function_call_nary (fn, complain, arg, NULL_TREE);
       if (cleanup == error_mark_node)
 	return error_mark_node;
@@ -14634,10 +14669,12 @@ cxx_maybe_build_cleanup (tree decl, tsubst_flags_t complain)
     SET_EXPR_LOCATION (cleanup, UNKNOWN_LOCATION);
 
   if (cleanup
-      && !lookup_attribute ("warn_unused", TYPE_ATTRIBUTES (TREE_TYPE (decl))))
-    /* Treat objects with destructors as used; the destructor may do
-       something substantive.  */
-    mark_used (decl);
+      && DECL_P (decl)
+      && !lookup_attribute ("warn_unused", TYPE_ATTRIBUTES (TREE_TYPE (decl)))
+      /* Treat objects with destructors as used; the destructor may do
+	 something substantive.  */
+      && !mark_used (decl, complain) && !(complain & tf_error))
+    return error_mark_node;
 
   return cleanup;
 }

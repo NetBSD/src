@@ -355,7 +355,7 @@ Objective-C and Objective-C++ Dialects}.
 -fmem-report -fpre-ipa-mem-report -fpost-ipa-mem-report -fprofile-arcs @gol
 -fopt-info @gol
 -fopt-info-@var{options}@r{[}=@var{file}@r{]} @gol
--frandom-seed=@var{number} -fsched-verbose=@var{n} @gol
+-frandom-seed=@var{string} -fsched-verbose=@var{n} @gol
 -fsel-sched-verbose -fsel-sched-dump-cfg -fsel-sched-pipelining-verbose @gol
 -fstack-usage  -ftest-coverage  -ftime-report -fvar-tracking @gol
 -fvar-tracking-assignments  -fvar-tracking-assignments-toggle @gol
@@ -2118,6 +2118,9 @@ scope.
 Version 8, which first appeared in G++ 4.9, corrects the substitution
 behavior of function types with function-cv-qualifiers.
 
+Version 9, which first appeared in G++ 5.2, corrects the alignment of
+@code{nullptr_t}.
+
 See also @option{-Wabi}.
 
 @item -fabi-compat-version=@var{n}
@@ -2619,7 +2622,15 @@ When mangling a function type with function-cv-qualifiers, the
 un-qualified function type was incorrectly treated as a substitution
 candidate.
 
-This was fixed in @option{-fabi-version=8}.
+This was fixed in @option{-fabi-version=8}, the default for GCC 5.1.
+
+@item
+@code{decltype(nullptr)} incorrectly had an alignment of 1, leading to
+unaligned accesses.  Note that this did not affect the ABI of a
+function with a @code{nullptr_t} parameter, as parameters have a
+minimum alignment.
+
+This was fixed in @option{-fabi-version=9}, the default for GCC 5.2.
 @end itemize
 
 It also warns about psABI-related changes.  The known psABI changes at this
@@ -7133,7 +7144,7 @@ the first option takes effect and the subsequent options are
 ignored. Thus only @file{vec.miss} is produced which contains
 dumps from the vectorizer about missed opportunities.
 
-@item -frandom-seed=@var{number}
+@item -frandom-seed=@var{string}
 @opindex frandom-seed
 This option provides a seed that GCC uses in place of
 random numbers in generating certain symbol names
@@ -7142,7 +7153,11 @@ place unique stamps in coverage data files and the object files that
 produce them.  You can use the @option{-frandom-seed} option to produce
 reproducibly identical object files.
 
-The @var{number} should be different for every file you compile.
+The @var{string} can either be a number (decimal, octal or hex) or an
+arbitrary string (in which case it's converted to a number by
+computing CRC32).
+
+The @var{string} should be different for every file you compile.
 
 @item -fsched-verbose=@var{n}
 @opindex fsched-verbose
@@ -22978,7 +22993,7 @@ useful together with @option{-mrecord-mcount}.
 @itemx -mno-skip-rax-setup
 @opindex mskip-rax-setup
 When generating code for the x86-64 architecture with SSE extensions
-disabled, @option{-skip-rax-setup} can be used to skip setting up RAX
+disabled, @option{-mskip-rax-setup} can be used to skip setting up RAX
 register when there are no variable arguments passed in vector registers.
 
 @strong{Warning:} Since RAX register is used to avoid unnecessarily
