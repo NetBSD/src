@@ -1,3 +1,74 @@
+2016-06-03  Release Manager
+
+	* GCC 5.4.0 released.
+
+2016-04-18  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2016-03-31  Marek Polacek  <polacek@redhat.com>
+
+	PR c/70297
+	* c-decl.c (merge_decls): Also set TYPE_ALIGN and TYPE_USER_ALIGN.
+
+2016-02-17  Bernd Schmidt  <bschmidt@redhat.com>
+
+	Backport from mainline
+	2016-02-12  Bernd Schmidt  <bschmidt@redhat.com>
+
+	PR c/69522
+	* c-parser.c (c_parser_braced_init): New arg outer_obstack.  All
+	callers changed.  If nested_p is true, use it to call
+	finish_implicit_inits.
+	* c-tree.h (finish_implicit_inits): Declare.
+	* c-typeck.c (finish_implicit_inits): New function.  Move code
+	from ...
+	(push_init_level): ... here.
+	(set_designator, process_init_element): Call finish_implicit_inits.
+
+2016-02-10  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2016-02-04  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c/69669
+	* c-decl.c (finish_enum): When honoring mode attribute,
+	make sure to use proper TYPE_MIN_VALUE and TYPE_MAX_VALUE.
+
+2016-01-28  Marek Polacek  <polacek@redhat.com>
+
+	* c-typeck.c (build_binary_op) [GE_EXPR]: Move the duplicated hunk of
+	code...
+	(build_binary_op) [EQ_EXPR]: ... here.
+
+2016-01-27  Marek Polacek  <polacek@redhat.com>
+
+	Backport from mainline
+	2016-01-27  Marek Polacek  <polacek@redhat.com>
+
+	PR c/68062
+	* c-typeck.c (build_binary_op) [EQ_EXPR, GE_EXPR]: Promote operand
+	to unsigned, if needed.  Add -Wsign-compare warning.
+
+2015-12-30  Joseph Myers  <joseph@codesourcery.com>
+
+	PR c/69037
+	Backport from mainline:
+
+	2015-12-07  Marek Polacek  <polacek@redhat.com>
+
+	PR c/68668
+	* c-decl.c (grokdeclarator): If ORIG_QUAL_INDIRECT is indirect, use
+	TREE_TYPE of ORIG_QUAL_TYPE, otherwise decrement ORIG_QUAL_INDIRECT.
+
+2015-12-16  Joseph Myers  <joseph@codesourcery.com>
+
+	PR c/68162
+	* c-decl.c (grokdeclarator): Set first_non_attr_kind before
+	following link from declarator to next declarator.  Track original
+	qualified type and pass it to c_build_qualified_type.
+	* c-typeck.c (c_build_qualified_type): Add arguments
+	orig_qual_type and orig_qual_indirect.
+
 2015-12-04  Release Manager
 
 	* GCC 5.3.0 released.

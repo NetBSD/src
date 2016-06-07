@@ -1,3 +1,334 @@
+2016-06-03  Release Manager
+
+	* GCC 5.4.0 released.
+
+2016-05-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-04-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/70762
+	* testsuite/util/testsuite_fs.h (__gnu_test::nonexistent_path): Use
+	static counter to return a different path on every call.
+
+	* testsuite/experimental/filesystem/path/native/string.cc: Add
+	dg-require-filesystem-ts directive.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-04-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69703
+	* src/c++11/codecvt.cc (__codecvt_utf8_base<char16_t>::do_in,
+	__codecvt_utf8_utf16_base<char16_t>::do_in): Fix mask operations.
+
+	Backport from mainline
+	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69703
+	* src/c++11/codecvt.cc (__codecvt_utf8_base<char16_t>::do_in)):
+	Override endianness bit in mode.
+	* testsuite/22_locale/codecvt/codecvt_utf8/69703.cc: New test.
+	* testsuite/22_locale/codecvt/codecvt_utf8_utf16/66855.cc: Test
+	that little_endian mode is ignored.
+	* testsuite/experimental/filesystem/path/native/string.cc: New test.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/bits/fs_dir.h (begin, end): Add noexcept.
+	* testsuite/experimental/filesystem/iterators/directory_iterator.cc:
+	Test begin and end functions.
+	* testsuite/experimental/filesystem/iterators/
+	recursive_directory_iterator.cc: Likewise.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71038
+	* src/filesystem/ops.cc (do_copy_file): Fix backwards conditions.
+	* testsuite/experimental/filesystem/operations/copy_file.cc: New test.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/bits/fs_dir.h (__directory_iterator_proxy):
+	Overload operator* to move from rvalues.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71036
+	* src/filesystem/ops.cc (create_dir): Handle EEXIST from mkdir.
+	* testsuite/experimental/filesystem/operations/create_directory.cc:
+	New test.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71037
+	* src/filesystem/ops.cc (canonical(const path&, const path&)): Add
+	base path to exception.
+	* testsuite/experimental/filesystem/operations/canonical.cc: Test
+	paths contained in exception.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71005
+	* include/experimental/bits/fs_dir.h (__directory_iterator_proxy):
+	New type.
+	(directory_iterator::operator++(int)): Return proxy.
+	(recursive_directory_iterator::operator++(int)): Likewise.
+	* testsuite/experimental/filesystem/iterators/directory_iterator.cc:
+	Test post-increment.
+	* testsuite/experimental/filesystem/iterators/
+	recursive_directory_iterator.cc: Likewise.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-05-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/71004
+	* include/experimental/bits/fs_dir.h (recursive_directory_iterator):
+	Initialize scalar member variables in default constructor.
+	* testsuite/experimental/filesystem/iterators/
+	recursive_directory_iterator.cc: Test default construction.
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/70609
+	* src/filesystem/ops.cc (close_fd): New function.
+	(do_copy_file): Set permissions before copying file contents. Check
+	result of closing file descriptors. Don't copy streambuf when file
+	is empty.
+	(copy(const path&, const path&, copy_options, error_code&)): Use
+	lstat for source file when copy_symlinks is set.
+	* testsuite/experimental/filesystem/operations/copy.cc: Test copy().
+
+2016-05-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-04-19  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/bits/fs_fwd.h (operator&, operator|, operator^,
+	operator~ operator&=, operator|=, operator^=): Add noexcept to
+	overloaded operators for copy_options, perms and directory_options.
+	* src/filesystem/ops.cc (make_file_type, make_file_status,
+	is_not_found_errno, file_time): Add noexcept.
+
+2016-04-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2016-01-26  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69478
+	* include/bits/stl_algobase.h (__copy_move<_IsMove, true,
+	random_access_iterator_tag>): Check is_move_assignable when moving.
+	(__copy_move_backwards<_IsMove, true, random_access_iterator_tag>):
+	Likewise.
+	* testsuite/25_algorithms/copy/move_iterators/69478.cc: New.
+	* testsuite/25_algorithms/copy_backward/move_iterators/69478.cc: New.
+	* testsuite/25_algorithms/move/69478.cc: New.
+	* testsuite/25_algorithms/move_backward/69478.cc: New.
+
+	Backport from mainline
+	2016-04-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/70503
+	* src/c++11/thread.cc (execute_native_thread_routine,
+	execute_native_thread_routine_compat): Give internal linkage.
+	* testsuite/30_threads/thread/70503.cc: New test.
+
+	Backport from mainline
+	2016-01-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69464
+	* include/Makefile.am: Add new header.
+	* include/Makefile.in: Regenerate.
+	* include/bits/random.h (uniform_int_distribution): Move to
+	bits/uniform_int_dist.h.
+	* include/bits/random.tcc (uniform_int_distribution::operator(),
+	uniform_int_distribution::__generate_impl): Likewise.
+	* include/bits/uniform_int_dist.h: New header.
+	* include/bits/stl_algo.h [__cplusplus >= 201103L]: Include
+	<bits/uniform_int_dist.h> instead of <random>.
+	* testsuite/20_util/specialized_algorithms/uninitialized_copy/
+	move_iterators/1.cc: Include correct header for uninitialized_copy.
+	* testsuite/20_util/specialized_algorithms/uninitialized_copy_n/
+	move_iterators/1.cc: Likewise.
+	* testsuite/25_algorithms/nth_element/58800.cc: Include correct
+	header for vector.
+	* testsuite/26_numerics/random/pr60037-neg.cc: Adjust dg-error lines.
+	* testsuite/libstdc++-prettyprinters/whatis.cc: Include <random>.
+
+2016-04-06  Eric Botcazou  <ebotcazou@adacore.com>
+
+	* src/Makefile.am (libstdc++-symbols.ver): Remove useless /dev/null.
+	* src/Makefile.in: Regenerate.
+
+2016-02-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69939
+	* include/experimental/tuple (__apply_impl): Qualify get and forward.
+
+2016-02-16  Tim Shen  <timshen@google.com>
+
+	Backport from mainline
+	2016-02-16  Tim Shen  <timshen@google.com>
+
+	PR libstdc++/69794
+	* include/bits/regex_scanner.h: Add different special character
+	sets for grep and egrep regex.
+	* include/bits/regex_scanner.tcc: Use _M_spec_char more uniformly.
+	* testsuite/28_regex/regression.cc: Add new testcase.
+
+2016-02-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60976
+	* include/bits/alloc_traits.h (allocator_traits<allocator<_Tp>>):
+	Define partial specialization.
+	* testsuite/20_util/shared_ptr/cons/58659.cc: Add construct and
+	destroy members to std::allocator explicit specialization.
+
+2016-02-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69116
+	* include/bits/valarray_before.h (__fun, __fun_with_valarray): Only
+	define result_type for types which can be safely used with valarrays.
+	* testsuite/26_numerics/valarray/69116.cc: New.
+
+2016-01-18  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60637
+	* include/c_global/cmath (signbit) [__cplusplus < 201103L]: Use
+	__builtin_signbitf or __builtin_signbitl as appropriate.
+	* testsuite/26_numerics/headers/cmath/60637.cc: New.
+
+2016-01-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from mainline
+	* config/abi/post/x86_64-linux-gnu/x32/baseline_symbols.txt: Add
+	__int128 symbols.
+
+2016-01-12  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/69092
+	* include/bits/basic_string.h (basic_string::_S_copy_chars<_Iterator>):
+	Remove _GLIBCXX_NOEXCEPT.
+	testsuite/21_strings/basic_string/cons/char/69092.cc: New.
+
+	PR libstdc++/68995
+	* include/std/functional (_Function_handler::_M_invoke): Qualify
+	__callable_functor.
+	* testsuite/20_util/function/68995.cc: New.
+
+	PR libstdc++/69005
+	PR libstdc++/69222
+	* include/std/functional (function::_Invoke): Remove, use result_of.
+	(function::_Callable): Replace alias template with class template
+	and use partial specialization instead of _NotSelf alias template.
+	(function(_Functor)): Add "not self" constraint so that _Callable is
+	not used while type is incomplete.
+	* testsuite/20_util/function/69222.cc: New.
+
+2015-12-27  Edward Smith-Rowland  <3dw4rd@verizon.net>
+
+	* include/bits/c++0x_warning.h Remove experimental language.
+
+2015-12-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/68912
+	* include/std/functional (_Bind::operator()): Use lvalue functor to
+	deduce return type.
+	* testsuite/20_util/bind/68912.cc: New.
+
+	PR libstdc++/68921
+	* src/c++11/futex.cc
+	(__atomic_futex_unsigned_base::_M_futex_wait_until): Use null pointer
+	as timeout argument.
+
+2015-12-15  Tim Shen  <timshen@google.com>
+
+	Backport from mainline
+	2015-12-15  Tim Shen  <timshen@google.com>
+
+	PR libstdc++/68863
+	* include/bits/regex_executor.tcc (_Executor::_M_lookahead):
+	Copy the captured content for lookahead, so that the backreferences
+	inside can refer to them.
+	* testsuite/28_regex/algorithms/regex_match/ecma/char/68863.cc:
+	New testcase.
+
+2015-12-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/doxygen/user.cfg.in: Use EXTENSION_MAPPING tag. Add new headers
+	to INPUT. Remove obsolete XML_SCHEMA and XML_DTD tags. Update
+	PREDEFINED macros. Set BRIEF_MEMBER_DESC for man-pages.
+	* include/backward/strstream: Correct @file comment.
+	* include/bits/forward_list.h: Improve Doxygen comments.
+	* include/bits/locale_facets_nonio.h: Likewise.
+	* include/debug/vector (_Safe_vector): Add @brief section to comment.
+	* include/experimental/fs_fwd.h: Correct @file comment.
+	* include/experimental/fs_ops.h: Likewise.
+	* include/experimental/string_view.tcc: Likewise.
+	* include/experimental/optional: Document experimental status.
+	* include/experimental/string_view: Correct @file comment.
+	* include/ext/pb_ds/detail/bin_search_tree_/traits.hpp: Reduce
+	whitespace to avoid Doxygen bug.
+	* include/std/bitset: Remove redundant @class Doxygen command. Add
+	parentheses to avoid Doxygen bug.
+	* include/std/mutex: Improve Doxygen comments.
+	* include/tr2/dynamic_bitset: Add missing @param documentation.
+	* scripts/run_doxygen: Rename man pages for std::experimental types.
+
+2015-12-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/abi.xml: Backport documentation improvements from
+	mainline.
+	* doc/xml/manual/configure.xml: Likewise.
+	* doc/xml/manual/diagnostics.xml: Likewise.
+	* doc/xml/manual/extensions.xml: Likewise.
+	* doc/xml/manual/status_cxx2011.xml: Likewise.
+	* doc/xml/manual/status_cxx2014.xml: Likewise.
+	* doc/xml/manual/using.xml: Likewise.
+	* doc/html/*: Regenerate.
+
+2015-12-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/56383
+	* testsuite/20_util/enable_shared_from_this/56383.cc: New.
+	* include/bits/shared_ptr_base.h (__enable_shared_from_this): Make
+	friend declaration match previous declaration of
+	__enable_shared_from_this_helper.
+	* include/bits/shared_ptr.h (enable_shared_from_this): Likewise.
+
+2015-12-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/bits/fs_path.h (path::_Cmpt): Move definition
+	after __is_encoded_char explicit specializations.
+
+2015-12-04  Jason Merrill  <jason@redhat.com>
+
+	* include/bits/c++config: Fix abi_tag in special modes.
+
 2015-12-04  Release Manager
 
 	* GCC 5.3.0 released.
