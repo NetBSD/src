@@ -255,7 +255,7 @@ get_tinfo_decl_dynamic (tree exp, tsubst_flags_t complain)
   if (error_operand_p (exp))
     return error_mark_node;
 
-  exp = resolve_nondeduced_context (exp);
+  exp = resolve_nondeduced_context (exp, complain);
 
   /* peel back references, so they match.  */
   type = non_reference (TREE_TYPE (exp));
@@ -345,7 +345,7 @@ build_typeid (tree exp, tsubst_flags_t complain)
       /* So we need to look into the vtable of the type of exp.
          Make sure it isn't a null lvalue.  */
       exp = cp_build_addr_expr (exp, complain);
-      exp = stabilize_reference (exp);
+      exp = save_expr (exp);
       cond = cp_convert (boolean_type_node, exp, complain);
       exp = cp_build_indirect_ref (exp, RO_NULL, complain);
     }
@@ -708,10 +708,12 @@ build_dynamic_cast_1 (tree type, tree expr, tsubst_flags_t complain)
 	  target_type = TYPE_MAIN_VARIANT (TREE_TYPE (type));
 	  static_type = TYPE_MAIN_VARIANT (TREE_TYPE (exprtype));
 	  td2 = get_tinfo_decl (target_type);
-	  mark_used (td2);
+	  if (!mark_used (td2, complain) && !(complain & tf_error))
+	    return error_mark_node;
 	  td2 = cp_build_addr_expr (td2, complain);
 	  td3 = get_tinfo_decl (static_type);
-	  mark_used (td3);
+	  if (!mark_used (td3, complain) && !(complain & tf_error))
+	    return error_mark_node;
 	  td3 = cp_build_addr_expr (td3, complain);
 
 	  /* Determine how T and V are related.  */

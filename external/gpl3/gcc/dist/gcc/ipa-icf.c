@@ -444,7 +444,7 @@ bool
 sem_function::param_used_p (unsigned int i)
 {
   if (ipa_node_params_sum == NULL)
-    return false;
+    return true;
 
   struct ipa_node_params *parms_info = IPA_NODE_REF (get_node ());
 
@@ -1526,6 +1526,11 @@ sem_function::parse (cgraph_node *node, bitmap_obstack *stack)
     return NULL;
 
   if (lookup_attribute_by_prefix ("omp ", DECL_ATTRIBUTES (node->decl)) != NULL)
+    return NULL;
+
+  /* PR ipa/70306.  */
+  if (DECL_STATIC_CONSTRUCTOR (node->decl)
+      || DECL_STATIC_DESTRUCTOR (node->decl))
     return NULL;
 
   sem_function *f = new sem_function (node, 0, stack);
