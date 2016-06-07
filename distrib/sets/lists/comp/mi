@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2042 2016/06/05 17:33:49 christos Exp $
+#	$NetBSD: mi,v 1.2043 2016/06/07 19:16:46 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1078,6 +1078,7 @@
 ./usr/include/g++/bits/time_members.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/type_traits.h		comp-obsolete		obsolete
 ./usr/include/g++/bits/unique_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/uniform_int_dist.h	comp-cxx-include	gcc=53,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_map.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/unordered_set.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/uses_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
