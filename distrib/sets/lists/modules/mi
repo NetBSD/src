@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.83 2015/12/26 01:00:01 pgoyette Exp $
+# $NetBSD: mi,v 1.84 2016/06/07 01:07:11 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -22,6 +22,8 @@
 ./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/bpf_filter			base-kernel-modules	kmod
+./@MODULEDIR@/bpf_filter/bpf_filter.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/camellia				base-kernel-modules	kmod
 ./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cast128				base-kernel-modules	kmod
@@ -126,6 +128,8 @@
 ./@MODULEDIR@/if_smsc/if_smsc.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
 ./@MODULEDIR@/iic/iic.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/i2c_bitbang			base-kernel-modules	kmod
+./@MODULEDIR@/i2c_bitbang/i2c_bitbang.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/iscsi				base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/iscsi/iscsi.kmod			base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod
