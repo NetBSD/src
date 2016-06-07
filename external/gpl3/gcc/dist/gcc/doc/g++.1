@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCC 1"
-.TH GCC 1 "2015-12-04" "gcc-5.3.0" "GNU"
+.TH GCC 1 "2016-06-03" "gcc-5.4.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -385,7 +385,7 @@ in the following sections.
 \&\-fmem\-report \-fpre\-ipa\-mem\-report \-fpost\-ipa\-mem\-report \-fprofile\-arcs 
 \&\-fopt\-info 
 \&\-fopt\-info\-\fR\fIoptions\fR[\fB=\fR\fIfile\fR] 
-\&\fB\-frandom\-seed=\fR\fInumber\fR \fB\-fsched\-verbose=\fR\fIn\fR 
+\&\fB\-frandom\-seed=\fR\fIstring\fR \fB\-fsched\-verbose=\fR\fIn\fR 
 \&\fB\-fsel\-sched\-verbose \-fsel\-sched\-dump\-cfg \-fsel\-sched\-pipelining\-verbose 
 \&\-fstack\-usage  \-ftest\-coverage  \-ftime\-report \-fvar\-tracking 
 \&\-fvar\-tracking\-assignments  \-fvar\-tracking\-assignments\-toggle 
@@ -2119,6 +2119,9 @@ scope.
 Version 8, which first appeared in G++ 4.9, corrects the substitution
 behavior of function types with function-cv-qualifiers.
 .Sp
+Version 9, which first appeared in G++ 5.2, corrects the alignment of
+\&\f(CW\*(C`nullptr_t\*(C'\fR.
+.Sp
 See also \fB\-Wabi\fR.
 .IP "\fB\-fabi\-compat\-version=\fR\fIn\fR" 4
 .IX Item "-fabi-compat-version=n"
@@ -2577,7 +2580,14 @@ When mangling a function type with function-cv-qualifiers, the
 un-qualified function type was incorrectly treated as a substitution
 candidate.
 .Sp
-This was fixed in \fB\-fabi\-version=8\fR.
+This was fixed in \fB\-fabi\-version=8\fR, the default for \s-1GCC\s0 5.1.
+.IP "*" 4
+\&\f(CW\*(C`decltype(nullptr)\*(C'\fR incorrectly had an alignment of 1, leading to
+unaligned accesses.  Note that this did not affect the \s-1ABI\s0 of a
+function with a \f(CW\*(C`nullptr_t\*(C'\fR parameter, as parameters have a
+minimum alignment.
+.Sp
+This was fixed in \fB\-fabi\-version=9\fR, the default for \s-1GCC\s0 5.2.
 .RE
 .RS 4
 .Sp
@@ -6483,8 +6493,8 @@ the first option takes effect and the subsequent options are
 ignored. Thus only \fIvec.miss\fR is produced which contains
 dumps from the vectorizer about missed opportunities.
 .RE
-.IP "\fB\-frandom\-seed=\fR\fInumber\fR" 4
-.IX Item "-frandom-seed=number"
+.IP "\fB\-frandom\-seed=\fR\fIstring\fR" 4
+.IX Item "-frandom-seed=string"
 This option provides a seed that \s-1GCC\s0 uses in place of
 random numbers in generating certain symbol names
 that have to be different in every compiled file.  It is also used to
@@ -6492,7 +6502,11 @@ place unique stamps in coverage data files and the object files that
 produce them.  You can use the \fB\-frandom\-seed\fR option to produce
 reproducibly identical object files.
 .Sp
-The \fInumber\fR should be different for every file you compile.
+The \fIstring\fR can either be a number (decimal, octal or hex) or an
+arbitrary string (in which case it's converted to a number by
+computing \s-1CRC32\s0).
+.Sp
+The \fIstring\fR should be different for every file you compile.
 .IP "\fB\-fsched\-verbose=\fR\fIn\fR" 4
 .IX Item "-fsched-verbose=n"
 On targets that use instruction scheduling, this option controls the
@@ -21569,7 +21583,7 @@ useful together with \fB\-mrecord\-mcount\fR.
 .IX Item "-mno-skip-rax-setup"
 .PD
 When generating code for the x86\-64 architecture with \s-1SSE\s0 extensions
-disabled, \fB\-skip\-rax\-setup\fR can be used to skip setting up \s-1RAX\s0
+disabled, \fB\-mskip\-rax\-setup\fR can be used to skip setting up \s-1RAX\s0
 register when there are no variable arguments passed in vector registers.
 .Sp
 \&\fBWarning:\fR Since \s-1RAX\s0 register is used to avoid unnecessarily
