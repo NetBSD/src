@@ -2659,10 +2659,16 @@ reset_type_linkage_2 (tree type)
 	  reset_decl_linkage (ti);
 	}
       for (tree m = TYPE_FIELDS (type); m; m = DECL_CHAIN (m))
-	if (TREE_CODE (m) == VAR_DECL)
-	  reset_decl_linkage (m);
+	{
+	  tree mem = STRIP_TEMPLATE (m);
+	  if (VAR_P (mem))
+	    reset_decl_linkage (mem);
+	}
       for (tree m = TYPE_METHODS (type); m; m = DECL_CHAIN (m))
-	reset_decl_linkage (m);
+	{
+	  tree mem = STRIP_TEMPLATE (m);
+	  reset_decl_linkage (mem);
+	}
       binding_table_foreach (CLASSTYPE_NESTED_UTDS (type),
 			     bt_reset_linkage_2, NULL);
     }
@@ -4197,6 +4203,9 @@ decl_maybe_constant_var_p (tree decl)
     return false;
   if (DECL_DECLARED_CONSTEXPR_P (decl))
     return true;
+  if (DECL_HAS_VALUE_EXPR_P (decl))
+    /* A proxy isn't constant.  */
+    return false;
   return (CP_TYPE_CONST_NON_VOLATILE_P (type)
 	  && INTEGRAL_OR_ENUMERATION_TYPE_P (type));
 }

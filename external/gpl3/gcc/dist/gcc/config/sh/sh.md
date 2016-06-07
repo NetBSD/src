@@ -2199,14 +2199,23 @@
   [(set_attr "type" "arith")])
 
 ;; Old reload might generate add insns directly (not through the expander) for
-;; the memory address of complex insns like atomic insns when reloading.
+;; address register calculations when reloading, in which case it won't try
+;; the addsi_scr pattern.  Because reload will sometimes try to validate
+;; the generated insns and their constraints, this pattern must be
+;; recognizable during and after reload.  However, when reload generates
+;; address register calculations for the stack pointer, we don't allow this
+;; pattern.  This will make reload prefer using indexed @(reg + reg) address
+;; modes when the displacement of a @(disp + reg) doesn't fit.
 (define_insn_and_split "*addsi3"
   [(set (match_operand:SI 0 "arith_reg_dest" "=r")
 	(plus:SI (match_operand:SI 1 "arith_reg_operand" "r")
 		 (match_operand:SI 2 "arith_or_int_operand" "rn")))]
   "TARGET_SH1 && !sh_lra_p ()
-   && reload_completed
-   && !reg_overlap_mentioned_p (operands[0], operands[1])"
+   && (reload_completed || reload_in_progress)
+   && !reg_overlap_mentioned_p (operands[0], operands[1])
+   && (!reload_in_progress
+       || ((!REG_P (operands[1]) || REGNO (operands[1]) != SP_REG)
+	   && (!REG_P (operands[2]) || REGNO (operands[2]) != SP_REG)))"
   "#"
   "&& 1"
   [(set (match_dup 0) (plus:SI (match_dup 0) (match_dup 2)))]
@@ -10241,12 +10250,16 @@ label:
 		      (const_string "single") (const_string "double")))
    (set_attr "type" "jump_ind")])
 
+;; sibcall_value_pcrel used to have a =&k clobber for the scratch register
+;; that it needs for the branch address.  This causes troubles when there
+;; is a big overlap of argument and return value registers.  Hence, use a
+;; fixed call clobbered register for the address.  See also PR 67260.
 (define_insn_and_split "sibcall_value_pcrel"
   [(set (match_operand 0 "" "=rf")
 	(call (mem:SI (match_operand:SI 1 "symbol_ref_operand" ""))
 	      (match_operand 2 "" "")))
    (use (reg:SI FPSCR_MODES_REG))
-   (clobber (match_scratch:SI 3 "=&k"))
+   (clobber (reg:SI R1_REG))
    (return)]
   "TARGET_SH2"
   "#"
@@ -10255,6 +10268,8 @@ label:
 {
   rtx lab = PATTERN (gen_call_site ());
   rtx call_insn;
+
+  operands[3] =  gen_rtx_REG (SImode, R1_REG);
 
   emit_insn (gen_sym_label2reg (operands[3], operands[1], lab));
   call_insn = emit_call_insn (gen_sibcall_valuei_pcrel (operands[0],
@@ -11368,12 +11383,16 @@ label:
 ;; ??? reload might clobber r0 if we use it explicitly in the RTL before
 ;; reload; using a R0_REGS pseudo reg is likely to give poor code.
 ;; So we keep the use of r0 hidden in a R0_REGS clobber until after reload.
+;;
+;; The use on the T_REG in the casesi_worker* patterns links the bounds
+;; checking insns and the table memory access.  See also PR 69713.
 (define_insn "casesi_worker_0"
   [(set (match_operand:SI 0 "register_operand" "=r,r")
 	(unspec:SI [(match_operand:SI 1 "register_operand" "0,r")
 		 (label_ref (match_operand 2 "" ""))] UNSPEC_CASESI))
    (clobber (match_scratch:SI 3 "=X,1"))
-   (clobber (match_scratch:SI 4 "=&z,z"))]
+   (clobber (match_scratch:SI 4 "=&z,z"))
+   (use (reg:SI T_REG))]
   "TARGET_SH1"
   "#")
 
@@ -11382,7 +11401,8 @@ label:
 	(unspec:SI [(match_operand:SI 1 "register_operand" "")
 		    (label_ref (match_operand 2 "" ""))] UNSPEC_CASESI))
    (clobber (match_scratch:SI 3 ""))
-   (clobber (match_scratch:SI 4 ""))]
+   (clobber (match_scratch:SI 4))
+   (use (reg:SI T_REG))]
   "TARGET_SH1 && ! TARGET_SH2 && reload_completed"
   [(set (reg:SI R0_REG) (unspec:SI [(label_ref (match_dup 2))] UNSPEC_MOVA))
    (parallel [(set (match_dup 0)
@@ -11400,7 +11420,8 @@ label:
 	(unspec:SI [(match_operand:SI 1 "register_operand" "")
 		    (label_ref (match_operand 2 "" ""))] UNSPEC_CASESI))
    (clobber (match_scratch:SI 3 ""))
-   (clobber (match_scratch:SI 4 ""))]
+   (clobber (match_scratch:SI 4))
+   (use (reg:SI T_REG))]
   "TARGET_SH2 && reload_completed"
   [(set (reg:SI R0_REG) (unspec:SI [(label_ref (match_dup 2))] UNSPEC_MOVA))
    (parallel [(set (match_dup 0)

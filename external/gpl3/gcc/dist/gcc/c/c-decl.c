@@ -2376,6 +2376,35 @@ merge_decls (tree newdecl, tree olddecl, tree newtype, tree oldtype)
   DECL_ATTRIBUTES (newdecl)
     = targetm.merge_decl_attributes (olddecl, newdecl);
 
+  /* For typedefs use the old type, as the new type's DECL_NAME points
+     at newdecl, which will be ggc_freed.  */
+  if (TREE_CODE (newdecl) == TYPE_DECL)
+    {
+      /* But NEWTYPE might have an attribute, honor that.  */
+      tree tem = newtype;
+      newtype = oldtype;
+
+      if (TYPE_USER_ALIGN (tem))
+	{
+	  if (TYPE_ALIGN (tem) > TYPE_ALIGN (newtype))
+	    TYPE_ALIGN (newtype) = TYPE_ALIGN (tem);
+	  TYPE_USER_ALIGN (newtype) = true;
+	}
+
+      /* And remove the new type from the variants list.  */
+      if (TYPE_NAME (TREE_TYPE (newdecl)) == newdecl)
+	{
+	  tree remove = TREE_TYPE (newdecl);
+	  for (tree t = TYPE_MAIN_VARIANT (remove); ;
+	       t = TYPE_NEXT_VARIANT (t))
+	    if (TYPE_NEXT_VARIANT (t) == remove)
+	      {
+		TYPE_NEXT_VARIANT (t) = TYPE_NEXT_VARIANT (remove);
+		break;
+	      }
+	}
+    }
+
   /* Merge the data types specified in the two decls.  */
   TREE_TYPE (newdecl)
     = TREE_TYPE (olddecl)
@@ -5366,6 +5395,8 @@ grokdeclarator (const struct c_declarator *declarator,
   tree returned_attrs = NULL_TREE;
   bool bitfield = width != NULL;
   tree element_type;
+  tree orig_qual_type = NULL;
+  size_t orig_qual_indirect = 0;
   struct c_arg_info *arg_info = 0;
   addr_space_t as1, as2, address_space;
   location_t loc = UNKNOWN_LOCATION;
@@ -5404,9 +5435,9 @@ grokdeclarator (const struct c_declarator *declarator,
 	case cdk_function:
 	case cdk_pointer:
 	  funcdef_syntax = (decl->kind == cdk_function);
-	  decl = decl->declarator;
 	  if (first_non_attr_kind == cdk_attrs)
 	    first_non_attr_kind = decl->kind;
+	  decl = decl->declarator;
 	  break;
 
 	case cdk_attrs:
@@ -5528,12 +5559,17 @@ grokdeclarator (const struct c_declarator *declarator,
   if ((TREE_CODE (type) == ARRAY_TYPE
        || first_non_attr_kind == cdk_array)
       && TYPE_QUALS (element_type))
-    type = TYPE_MAIN_VARIANT (type);
+    {
+      orig_qual_type = type;
+      type = TYPE_MAIN_VARIANT (type);
+    }
   type_quals = ((constp ? TYPE_QUAL_CONST : 0)
 		| (restrictp ? TYPE_QUAL_RESTRICT : 0)
 		| (volatilep ? TYPE_QUAL_VOLATILE : 0)
 		| (atomicp ? TYPE_QUAL_ATOMIC : 0)
 		| ENCODE_QUAL_ADDR_SPACE (address_space));
+  if (type_quals != TYPE_QUALS (element_type))
+    orig_qual_type = NULL_TREE;
 
   /* Applying the _Atomic qualifier to an array type (through the use
      of typedefs or typeof) must be detected here.  If the qualifier
@@ -6024,6 +6060,7 @@ grokdeclarator (const struct c_declarator *declarator,
 		array_ptr_attrs = NULL_TREE;
 		array_parm_static = 0;
 	      }
+	    orig_qual_indirect++;
 	    break;
 	  }
 	case cdk_function:
@@ -6033,6 +6070,7 @@ grokdeclarator (const struct c_declarator *declarator,
 	       attributes.  */
 	    bool really_funcdef = false;
 	    tree arg_types;
+	    orig_qual_type = NULL_TREE;
 	    if (funcdef_flag)
 	      {
 		const struct c_declarator *t = declarator->declarator;
@@ -6133,7 +6171,9 @@ grokdeclarator (const struct c_declarator *declarator,
 	      pedwarn (loc, OPT_Wpedantic,
 		       "ISO C forbids qualified function types");
 	    if (type_quals)
-	      type = c_build_qualified_type (type, type_quals);
+	      type = c_build_qualified_type (type, type_quals, orig_qual_type,
+					     orig_qual_indirect);
+	    orig_qual_type = NULL_TREE;
 	    size_varies = false;
 
 	    /* When the pointed-to type involves components of variable size,
@@ -6331,7 +6371,8 @@ grokdeclarator (const struct c_declarator *declarator,
 	pedwarn (loc, OPT_Wpedantic,
 		 "ISO C forbids qualified function types");
       if (type_quals)
-	type = c_build_qualified_type (type, type_quals);
+	type = c_build_qualified_type (type, type_quals, orig_qual_type,
+				       orig_qual_indirect);
       decl = build_decl (declarator->id_loc,
 			 TYPE_DECL, declarator->u.id, type);
       if (declspecs->explicit_signed_p)
@@ -6384,7 +6425,8 @@ grokdeclarator (const struct c_declarator *declarator,
 	pedwarn (loc, OPT_Wpedantic,
 		 "ISO C forbids const or volatile function types");
       if (type_quals)
-	type = c_build_qualified_type (type, type_quals);
+	type = c_build_qualified_type (type, type_quals, orig_qual_type,
+				       orig_qual_indirect);
       return type;
     }
 
@@ -6431,8 +6473,16 @@ grokdeclarator (const struct c_declarator *declarator,
 	  {
 	    /* Transfer const-ness of array into that of type pointed to.  */
 	    type = TREE_TYPE (type);
+	    if (orig_qual_type != NULL_TREE)
+	      {
+		if (orig_qual_indirect == 0)
+		  orig_qual_type = TREE_TYPE (orig_qual_type);
+		else
+		  orig_qual_indirect--;
+	      }
 	    if (type_quals)
-	      type = c_build_qualified_type (type, type_quals);
+	      type = c_build_qualified_type (type, type_quals, orig_qual_type,
+					     orig_qual_indirect);
 	    type = c_build_pointer_type (type);
 	    type_quals = array_ptr_quals;
 	    if (type_quals)
@@ -6523,7 +6573,8 @@ grokdeclarator (const struct c_declarator *declarator,
 	    TYPE_DOMAIN (type) = build_range_type (sizetype, size_zero_node,
 						   NULL_TREE);
 	  }
-	type = c_build_qualified_type (type, type_quals);
+	type = c_build_qualified_type (type, type_quals, orig_qual_type,
+				       orig_qual_indirect);
 	decl = build_decl (declarator->id_loc,
 			   FIELD_DECL, declarator->u.id, type);
 	DECL_NONADDRESSABLE_P (decl) = bitfield;
@@ -6635,7 +6686,8 @@ grokdeclarator (const struct c_declarator *declarator,
 	/* An uninitialized decl with `extern' is a reference.  */
 	int extern_ref = !initialized && storage_class == csc_extern;
 
-	type = c_build_qualified_type (type, type_quals);
+	type = c_build_qualified_type (type, type_quals, orig_qual_type,
+				       orig_qual_indirect);
 
 	/* C99 6.2.2p7: It is invalid (compile-time undefined
 	   behavior) to create an 'extern' declaration for a
@@ -7996,7 +8048,22 @@ finish_enum (tree enumtype, tree values, tree attributes)
   precision = MAX (tree_int_cst_min_precision (minnode, sign),
 		   tree_int_cst_min_precision (maxnode, sign));
 
-  if (TYPE_PACKED (enumtype) || precision > TYPE_PRECISION (integer_type_node))
+  /* If the precision of the type was specified with an attribute and it
+     was too small, give an error.  Otherwise, use it.  */
+  if (TYPE_PRECISION (enumtype))
+    {
+      if (precision > TYPE_PRECISION (enumtype))
+	{
+	  TYPE_PRECISION (enumtype) = 0;
+	  error ("specified mode too small for enumeral values");
+	}
+      else
+	precision = TYPE_PRECISION (enumtype);
+    }
+
+  if (TYPE_PACKED (enumtype)
+      || precision > TYPE_PRECISION (integer_type_node)
+      || TYPE_PRECISION (enumtype))
     {
       tem = c_common_type_for_size (precision, sign == UNSIGNED ? 1 : 0);
       if (tem == NULL)
@@ -8012,16 +8079,7 @@ finish_enum (tree enumtype, tree values, tree attributes)
   TYPE_MAX_VALUE (enumtype) = TYPE_MAX_VALUE (tem);
   TYPE_UNSIGNED (enumtype) = TYPE_UNSIGNED (tem);
   TYPE_SIZE (enumtype) = 0;
-
-  /* If the precision of the type was specific with an attribute and it
-     was too small, give an error.  Otherwise, use it.  */
-  if (TYPE_PRECISION (enumtype))
-    {
-      if (precision > TYPE_PRECISION (enumtype))
-	error ("specified mode too small for enumeral values");
-    }
-  else
-    TYPE_PRECISION (enumtype) = TYPE_PRECISION (tem);
+  TYPE_PRECISION (enumtype) = TYPE_PRECISION (tem);
 
   layout_type (enumtype);
 

@@ -7312,6 +7312,31 @@ really_start_incremental_init (tree type)
     }
 }
 
+/* Called when we see an open brace for a nested initializer.  Finish
+   off any pending levels with implicit braces.  */
+void
+finish_implicit_inits (location_t loc, struct obstack *braced_init_obstack)
+{
+  while (constructor_stack->implicit)
+    {
+      if ((TREE_CODE (constructor_type) == RECORD_TYPE
+	   || TREE_CODE (constructor_type) == UNION_TYPE)
+	  && constructor_fields == 0)
+	process_init_element (input_location,
+			      pop_init_level (loc, 1, braced_init_obstack),
+			      true, braced_init_obstack);
+      else if (TREE_CODE (constructor_type) == ARRAY_TYPE
+	       && constructor_max_index
+	       && tree_int_cst_lt (constructor_max_index,
+				   constructor_index))
+	process_init_element (input_location,
+			      pop_init_level (loc, 1, braced_init_obstack),
+			      true, braced_init_obstack);
+      else
+	break;
+    }
+}
+
 /* Push down into a subobject, for initialization.
    If this is for an explicit set of braces, IMPLICIT is 0.
    If it is because the next element belongs at a lower level,
@@ -7323,34 +7348,6 @@ push_init_level (location_t loc, int implicit,
 {
   struct constructor_stack *p;
   tree value = NULL_TREE;
-
-  /* If we've exhausted any levels that didn't have braces,
-     pop them now.  If implicit == 1, this will have been done in
-     process_init_element; do not repeat it here because in the case
-     of excess initializers for an empty aggregate this leads to an
-     infinite cycle of popping a level and immediately recreating
-     it.  */
-  if (implicit != 1)
-    {
-      while (constructor_stack->implicit)
-	{
-	  if ((TREE_CODE (constructor_type) == RECORD_TYPE
-	       || TREE_CODE (constructor_type) == UNION_TYPE)
-	      && constructor_fields == 0)
-	    process_init_element (input_location,
-				  pop_init_level (loc, 1, braced_init_obstack),
-				  true, braced_init_obstack);
-	  else if (TREE_CODE (constructor_type) == ARRAY_TYPE
-		   && constructor_max_index
-		   && tree_int_cst_lt (constructor_max_index,
-				       constructor_index))
-	    process_init_element (input_location,
-				  pop_init_level (loc, 1, braced_init_obstack),
-				  true, braced_init_obstack);
-	  else
-	    break;
-	}
-    }
 
   /* Unless this is an explicit brace, we need to preserve previous
      content if any.  */
@@ -7783,6 +7780,7 @@ set_designator (location_t loc, int array,
     }
 
   constructor_designated = 1;
+  finish_implicit_inits (loc, braced_init_obstack);
   push_init_level (loc, 2, braced_init_obstack);
   return 0;
 }
@@ -9168,6 +9166,7 @@ process_init_element (location_t loc, struct c_expr value, bool implicit,
 	      p = p->next;
 	      if (!p)
 		break;
+	      finish_implicit_inits (loc, braced_init_obstack);
 	      push_init_level (loc, 2, braced_init_obstack);
 	      p->stack = constructor_stack;
 	      if (p->range_end && tree_int_cst_equal (p->index, p->range_end))
@@ -10754,6 +10753,20 @@ build_binary_op (location_t location, enum tree_code code,
               return error_mark_node;
             }
 
+	  /* It's not precisely specified how the usual arithmetic
+	     conversions apply to the vector types.  Here, we use
+	     the unsigned type if one of the operands is signed and
+	     the other one is unsigned.  */
+	  if (TYPE_UNSIGNED (type0) != TYPE_UNSIGNED (type1))
+	    {
+	      if (!TYPE_UNSIGNED (type0))
+		op0 = build1 (VIEW_CONVERT_EXPR, type1, op0);
+	      else
+		op1 = build1 (VIEW_CONVERT_EXPR, type0, op1);
+	      warning_at (location, OPT_Wsign_compare, "comparison between "
+			  "types %qT and %qT", type0, type1);
+	    }
+
           /* Always construct signed integer vector type.  */
           intt = c_common_type_for_size (GET_MODE_BITSIZE
 					   (TYPE_MODE (TREE_TYPE (type0))), 0);
@@ -10895,6 +10908,20 @@ build_binary_op (location_t location, enum tree_code code,
                                   "number of elements");
               return error_mark_node;
             }
+
+	  /* It's not precisely specified how the usual arithmetic
+	     conversions apply to the vector types.  Here, we use
+	     the unsigned type if one of the operands is signed and
+	     the other one is unsigned.  */
+	  if (TYPE_UNSIGNED (type0) != TYPE_UNSIGNED (type1))
+	    {
+	      if (!TYPE_UNSIGNED (type0))
+		op0 = build1 (VIEW_CONVERT_EXPR, type1, op0);
+	      else
+		op1 = build1 (VIEW_CONVERT_EXPR, type0, op1);
+	      warning_at (location, OPT_Wsign_compare, "comparison between "
+			  "types %qT and %qT", type0, type1);
+	    }
 
           /* Always construct signed integer vector type.  */
           intt = c_common_type_for_size (GET_MODE_BITSIZE
@@ -12578,10 +12605,15 @@ c_finish_transaction (location_t loc, tree block, int flags)
 }
 
 /* Make a variant type in the proper way for C/C++, propagating qualifiers
-   down to the element type of an array.  */
+   down to the element type of an array.  If ORIG_QUAL_TYPE is not
+   NULL, then it should be used as the qualified type
+   ORIG_QUAL_INDIRECT levels down in array type derivation (to
+   preserve information about the typedef name from which an array
+   type was derived).  */
 
 tree
-c_build_qualified_type (tree type, int type_quals)
+c_build_qualified_type (tree type, int type_quals, tree orig_qual_type,
+			size_t orig_qual_indirect)
 {
   if (type == error_mark_node)
     return type;
@@ -12590,18 +12622,22 @@ c_build_qualified_type (tree type, int type_quals)
     {
       tree t;
       tree element_type = c_build_qualified_type (TREE_TYPE (type),
-						  type_quals);
+						  type_quals, orig_qual_type,
+						  orig_qual_indirect - 1);
 
       /* See if we already have an identically qualified type.  */
-      for (t = TYPE_MAIN_VARIANT (type); t; t = TYPE_NEXT_VARIANT (t))
-	{
-	  if (TYPE_QUALS (strip_array_types (t)) == type_quals
-	      && TYPE_NAME (t) == TYPE_NAME (type)
-	      && TYPE_CONTEXT (t) == TYPE_CONTEXT (type)
-	      && attribute_list_equal (TYPE_ATTRIBUTES (t),
-				       TYPE_ATTRIBUTES (type)))
-	    break;
-	}
+      if (orig_qual_type && orig_qual_indirect == 0)
+	t = orig_qual_type;
+      else
+	for (t = TYPE_MAIN_VARIANT (type); t; t = TYPE_NEXT_VARIANT (t))
+	  {
+	    if (TYPE_QUALS (strip_array_types (t)) == type_quals
+		&& TYPE_NAME (t) == TYPE_NAME (type)
+		&& TYPE_CONTEXT (t) == TYPE_CONTEXT (type)
+		&& attribute_list_equal (TYPE_ATTRIBUTES (t),
+					 TYPE_ATTRIBUTES (type)))
+	      break;
+	  }
       if (!t)
 	{
           tree domain = TYPE_DOMAIN (type);
@@ -12639,7 +12675,10 @@ c_build_qualified_type (tree type, int type_quals)
       type_quals &= ~TYPE_QUAL_RESTRICT;
     }
 
-  return build_qualified_type (type, type_quals);
+  tree var_type = (orig_qual_type && orig_qual_indirect == 0
+		   ? orig_qual_type
+		   : build_qualified_type (type, type_quals));
+  return var_type;
 }
 
 /* Build a VA_ARG_EXPR for the C parser.  */

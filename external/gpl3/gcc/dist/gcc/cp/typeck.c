@@ -1926,7 +1926,7 @@ decay_conversion (tree exp, tsubst_flags_t complain)
 
   exp = mark_rvalue_use (exp);
 
-  exp = resolve_nondeduced_context (exp);
+  exp = resolve_nondeduced_context (exp, complain);
   if (type_unknown_p (exp))
     {
       if (complain & tf_error)
@@ -2298,7 +2298,8 @@ build_class_member_access_expr (tree object, tree member,
   if (DECL_P (member))
     {
       member_scope = DECL_CLASS_CONTEXT (member);
-      mark_used (member);
+      if (!mark_used (member, complain) && !(complain & tf_error))
+	return error_mark_node;
       if (TREE_DEPRECATED (member))
 	warn_deprecated_use (member, NULL_TREE);
     }
@@ -3468,7 +3469,8 @@ cp_build_function_call_vec (tree function, vec<tree, va_gc> **params,
 
   if (TREE_CODE (function) == FUNCTION_DECL)
     {
-      mark_used (function);
+      if (!mark_used (function, complain) && !(complain & tf_error))
+	return error_mark_node;
       fndecl = function;
 
       /* Convert anything with function type to a pointer-to-function.  */
@@ -4231,7 +4233,7 @@ cp_build_binary_op (location_t location,
 	    {
 	      tree m1 = build_all_ones_cst (TREE_TYPE (op0));
 	      tree z = build_zero_cst (TREE_TYPE (op0));
-	      op1 = build_conditional_expr (location, op1, z, m1, complain);
+	      op1 = build_conditional_expr (location, op1, m1, z, complain);
 	    }
 	  else if (!COMPARISON_CLASS_P (op1))
 	    op1 = cp_build_binary_op (EXPR_LOCATION (op1), NE_EXPR, op1,
@@ -4670,6 +4672,20 @@ cp_build_binary_op (location_t location,
 			  type0, type1);
 		}
 	      return error_mark_node;
+	    }
+
+	  /* It's not precisely specified how the usual arithmetic
+	     conversions apply to the vector types.  Here, we use
+	     the unsigned type if one of the operands is signed and
+	     the other one is unsigned.  */
+	  if (TYPE_UNSIGNED (type0) != TYPE_UNSIGNED (type1))
+	    {
+	      if (!TYPE_UNSIGNED (type0))
+		op0 = build1 (VIEW_CONVERT_EXPR, type1, op0);
+	      else
+		op1 = build1 (VIEW_CONVERT_EXPR, type0, op1);
+	      warning_at (location, OPT_Wsign_compare, "comparison between "
+			  "types %qT and %qT", type0, type1);
 	    }
 
 	  /* Always construct signed integer vector type.  */
@@ -5367,7 +5383,8 @@ cp_build_addr_expr_1 (tree arg, bool strict_lvalue, tsubst_flags_t complain)
 	 and the created OFFSET_REF.  */
       tree base = TYPE_MAIN_VARIANT (TREE_TYPE (TREE_OPERAND (arg, 0)));
       tree fn = get_first_fn (TREE_OPERAND (arg, 1));
-      mark_used (fn);
+      if (!mark_used (fn, complain) && !(complain & tf_error))
+	return error_mark_node;
 
       if (! flag_ms_extensions)
 	{
@@ -5554,7 +5571,8 @@ cp_build_addr_expr_1 (tree arg, bool strict_lvalue, tsubst_flags_t complain)
 	 function.  */
       gcc_assert (TREE_CODE (fn) == FUNCTION_DECL
 		  && DECL_STATIC_FUNCTION_P (fn));
-      mark_used (fn);
+      if (!mark_used (fn, complain) && !(complain & tf_error))
+	return error_mark_node;
       val = build_address (fn);
       if (TREE_SIDE_EFFECTS (TREE_OPERAND (arg, 0)))
 	/* Do not lose object's side effects.  */
@@ -6519,7 +6537,7 @@ build_static_cast_1 (tree type, tree expr, bool c_cast_p,
 	  result = cp_fold_convert (type, result);
 	  /* Make sure we don't fold back down to a named rvalue reference,
 	     because that would be an lvalue.  */
-	  if (DECL_P (result))
+	  if (real_lvalue_p (result))
 	    result = build1 (NON_LVALUE_EXPR, type, result);
 	  return convert_from_reference (result);
 	}

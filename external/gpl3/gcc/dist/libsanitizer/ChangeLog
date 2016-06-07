@@ -1,3 +1,23 @@
+2016-06-03  Release Manager
+
+	* GCC 5.4.0 released.
+
+2016-05-18  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from mainline
+	2016-05-17  Jakub Jelinek  <jakub@redhat.com>
+
+	PR sanitizer/71160
+	* asan/asan_malloc_linux.cc: Cherry pick upstream r254395
+	and r269633.
+
+2016-01-13  Maxim Ostapenko  <m.ostapenko@partner.samsung.com>
+
+	PR sanitizer/69147
+	* asan/asan_mac.cc: Cherry pick upstream r241487.
+	* sanitizer_common/sanitizer_mac.cc: Cherry pick upstream r224315.
+	* sanitizer_common/sanitizer_mac.h: Likewise.
+
 2015-12-04  Release Manager
 
 	* GCC 5.3.0 released.

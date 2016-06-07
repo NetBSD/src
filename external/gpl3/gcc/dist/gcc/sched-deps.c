@@ -2742,9 +2742,12 @@ sched_analyze_2 (struct deps_desc *deps, rtx x, rtx_insn *insn)
 	return;
       }
 
-    /* Force pending stores to memory in case a trap handler needs them.  */
+    /* Force pending stores to memory in case a trap handler needs them.
+       Also force pending loads from memory; loads and stores can segfault
+       and the signal handler won't be triggered if the trap insn was moved
+       above load or store insn.  */
     case TRAP_IF:
-      flush_pending_lists (deps, insn, true, false);
+      flush_pending_lists (deps, insn, true, true);
       break;
 
     case PREFETCH:
@@ -2893,6 +2896,17 @@ sched_macro_fuse_insns (rtx_insn *insn)
 
 }
 
+/* Get the implicit reg pending clobbers for INSN and save them in TEMP.  */
+void
+get_implicit_reg_pending_clobbers (HARD_REG_SET *temp, rtx_insn *insn)
+{
+  extract_insn (insn);
+  preprocess_constraints (insn);
+  alternative_mask preferred = get_preferred_alternatives (insn);
+  ira_implicitly_set_insn_hard_regs (temp, preferred);
+  AND_COMPL_HARD_REG_SET (*temp, ira_no_alloc_regs);
+}
+
 /* Analyze an INSN with pattern X to find all dependencies.  */
 static void
 sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
@@ -2905,12 +2919,7 @@ sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
   if (! reload_completed)
     {
       HARD_REG_SET temp;
-
-      extract_insn (insn);
-      preprocess_constraints (insn);
-      alternative_mask prefrred = get_preferred_alternatives (insn);
-      ira_implicitly_set_insn_hard_regs (&temp, prefrred);
-      AND_COMPL_HARD_REG_SET (temp, ira_no_alloc_regs);
+      get_implicit_reg_pending_clobbers (&temp, insn);
       IOR_HARD_REG_SET (implicit_reg_pending_clobbers, temp);
     }
 
@@ -3523,7 +3532,8 @@ sched_analyze_insn (struct deps_desc *deps, rtx x, rtx_insn *insn)
     {
       if (deps->last_args_size)
 	add_dependence (insn, deps->last_args_size, REG_DEP_OUTPUT);
-      deps->last_args_size = insn;
+      if (!deps->readonly)
+	deps->last_args_size = insn;
     }
 }
 

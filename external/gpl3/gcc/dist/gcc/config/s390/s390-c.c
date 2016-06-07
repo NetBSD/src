@@ -427,22 +427,14 @@ s390_get_vstring_flags (int ob_fcode)
   switch (ob_fcode)
     {
 
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq_or_0_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne_or_0_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq_or_0_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne_or_0_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg_or_0_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg_or_0_idx:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg_or_0_idx_cc:
-    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg_or_0_idx_cc:
+    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq:
+    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne:
+    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_eq_cc:
+    case S390_OVERLOADED_BUILTIN_s390_vec_find_any_ne_cc:
+    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg:
+    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg:
+    case S390_OVERLOADED_BUILTIN_s390_vec_cmprg_cc:
+    case S390_OVERLOADED_BUILTIN_s390_vec_cmpnrg_cc:
       flags |= __VSTRING_FLAG_RT;
       break;
     default:
@@ -828,13 +820,14 @@ s390_resolve_overloaded_builtin (location_t loc,
 
   if (last_match_type == INT_MAX)
     {
-      error_at (loc, "invalid parameter combination for intrinsic");
+      error_at (loc, "invalid parameter combination for intrinsic %qs",
+		IDENTIFIER_POINTER (DECL_NAME (ob_fndecl)));
       return error_mark_node;
     }
   else if (num_matches > 1)
     {
-      error_at (loc, "ambiguous overload for intrinsic: %s\n",
-	     IDENTIFIER_POINTER (DECL_NAME (ob_fndecl)));
+      error_at (loc, "ambiguous overload for intrinsic %qs",
+		IDENTIFIER_POINTER (DECL_NAME (ob_fndecl)));
       return error_mark_node;
     }
 

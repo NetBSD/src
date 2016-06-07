@@ -5163,8 +5163,10 @@ update_ebb_live_info (rtx_insn *head, rtx_insn *tail)
       curr_id = lra_get_insn_recog_data (curr_insn);
       curr_static_id = curr_id->insn_static_data;
       remove_p = false;
-      if ((set = single_set (curr_insn)) != NULL_RTX && REG_P (SET_DEST (set))
+      if ((set = single_set (curr_insn)) != NULL_RTX
+	  && REG_P (SET_DEST (set))
 	  && (regno = REGNO (SET_DEST (set))) >= FIRST_PSEUDO_REGISTER
+	  && SET_DEST (set) != pic_offset_table_rtx
 	  && bitmap_bit_p (&check_only_regs, regno)
 	  && ! bitmap_bit_p (&live_regs, regno))
 	remove_p = true;
@@ -5802,6 +5804,24 @@ get_regno (rtx reg)
   return -1;
 }
 
+/* Delete a move INSN with destination reg DREGNO and a previous
+   clobber insn with the same regno.  The inheritance/split code can
+   generate moves with preceding clobber and when we delete such moves
+   we should delete the clobber insn too to keep the correct life
+   info.  */
+static void
+delete_move_and_clobber (rtx_insn *insn, int dregno)
+{
+  rtx_insn *prev_insn = PREV_INSN (insn);
+
+  lra_set_insn_deleted (insn);
+  lra_assert (dregno > 0);
+  if (prev_insn != NULL && NONDEBUG_INSN_P (prev_insn)
+      && GET_CODE (PATTERN (prev_insn)) == CLOBBER
+      && dregno == get_regno (XEXP (PATTERN (prev_insn), 0)))
+    lra_set_insn_deleted (prev_insn);
+}
+
 /* Remove inheritance/split pseudos which are in REMOVE_PSEUDOS and
    return true if we did any change.  The undo transformations for
    inheritance looks like
@@ -5874,7 +5894,7 @@ remove_inheritance_pseudos (bitmap remove_pseudos)
 			       ? "split" : "inheritance");
 		      dump_insn_slim (lra_dump_file, curr_insn);
 		    }
-		  lra_set_insn_deleted (curr_insn);
+		  delete_move_and_clobber (curr_insn, dregno);
 		  done_p = true;
 		}
 	      else if (bitmap_bit_p (remove_pseudos, sregno)
@@ -6074,7 +6094,7 @@ undo_optional_reloads (void)
 			       INSN_UID (insn));
 		      dump_insn_slim (lra_dump_file, insn);
 		    }
-		  lra_set_insn_deleted (insn);
+		  delete_move_and_clobber (insn, REGNO (dest));
 		  continue;
 		}
 	      /* We should not worry about generation memory-memory
