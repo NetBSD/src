@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.70 2015/02/11 12:53:15 alnsn Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.71 2016/06/07 01:06:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.70 2015/02/11 12:53:15 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.71 2016/06/07 01:06:28 pgoyette Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -50,6 +50,10 @@ static const char rcsid[] =
 #include <sys/time.h>
 #include <sys/kmem.h>
 #include <sys/endian.h>
+
+#ifdef _KERNEL
+#include <sys/module.h>
+#endif
 
 #define	__BPF_PRIVATE
 #include <net/bpf.h>
@@ -809,3 +813,22 @@ out:
 #endif
 	return ok;
 }
+
+/* Kernel module interface */
+
+#ifdef _KERNEL
+MODULE(MODULE_CLASS_MISC, bpf_filter, NULL);
+
+static int
+bpf_filter_modcmd(modcmd_t cmd, void *opaque) 
+{
+ 
+	switch (cmd) {
+	case MODULE_CMD_INIT: 
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+#endif
