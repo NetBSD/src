@@ -35,7 +35,7 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The current version of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20151204
+#define __GLIBCXX__ 20160603
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -298,7 +298,7 @@ namespace std
 # endif
 
 # if _GLIBCXX_USE_CXX11_ABI
-  inline namespace __cxx11 __attribute__((__abi_tag__)) { }
+  inline namespace __cxx11 __attribute__((__abi_tag__ ("cxx11"))) { }
 # endif
   }
 
