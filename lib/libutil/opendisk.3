@@ -1,4 +1,4 @@
-.\"	$NetBSD: opendisk.3,v 1.12 2016/06/06 17:50:19 christos Exp $
+.\"	$NetBSD: opendisk.3,v 1.13 2016/06/07 11:20:45 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -116,7 +116,7 @@ and a suffix of
 .El
 .El
 .Pp
-If the above fails, than the original
+If the above fails, then the original
 .Fa path
 is tried using the following two variations:
 .Pp
@@ -150,6 +150,11 @@ may set
 .Va errno
 to one of the following values:
 .Bl -tag -width Er
+.It Bq Er EFAULT
+.Fa buf
+was the
+.Dv NULL
+pointer.
 .It Bq Er EINVAL
 .Dv O_CREAT
 was set in
@@ -157,11 +162,6 @@ was set in
 or
 .Xr getrawpartition 3
 didn't return a valid partition.
-.It Bq Er EFAULT
-.Fa buf
-was the
-.Dv NULL
-pointer.
 .El
 .Pp
 The
