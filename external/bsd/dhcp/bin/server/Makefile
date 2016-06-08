@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/03/24 15:54:30 christos Exp $
+# $NetBSD: Makefile,v 1.2 2016/06/08 01:41:43 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,7 @@ FILESDIR= /usr/share/examples/dhcp
 
 FILES=	dhcpd.conf
 .endif
+
+COPTS.omapi.c +=	-Wno-stack-protector
 
 .include <bsd.prog.mk>
