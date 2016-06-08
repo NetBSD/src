@@ -1,4 +1,4 @@
-/*	$NetBSD: loop-bsd.c,v 1.12 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: loop-linux2.c,v 1.1 2016/06/08 01:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -11,6 +11,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mats O Jansson.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -26,26 +31,21 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: loop-bsd.c,v 1.12 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: loop-linux2.c,v 1.1 2016/06/08 01:11:49 christos Exp $");
 #endif
 
-#include <errno.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <unistd.h>
-#if defined(__bsdi__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#include <errno.h>
+#if defined(__bsdi__) || defined(__FreeBSD__)
 #include <sys/time.h>
 #endif
-#include <net/bpf.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <assert.h>
 
 #include "os.h"
 #include "common.h"
-#include "device.h"
 #include "mopdef.h"
-#include "log.h"
 
 int
 mopOpenRC(struct if_info *p, int trans)
@@ -85,7 +85,7 @@ mopReadDL(void)
 
 /*
  * The list of all interfaces that are being listened to.  loop()
- * "polls" on the descriptors in this list.
+ * "selects" on the descriptors in this list.
  */
 struct if_info *iflist;
 
@@ -99,67 +99,60 @@ void
 Loop(void)
 {
 	u_char *buf, *bp, *ep;
-	int     cc, n, m;
-	struct	pollfd *set;
-	int     bufsize;
-	struct	if_info *ii;
+	int     cc;
+	fd_set  fds, listeners;
+	int     bufsize = 1100, maxfd =0;
+	struct if_info *ii;
 
-	if (iflist == 0)
-		mopLogErrX("no interfaces");
-	if (iflist->fd != -1) {
-		if (ioctl(iflist->fd, BIOCGBLEN, (caddr_t) & bufsize) < 0)
-			mopLogErr("BIOCGBLEN");
-	} else
-		mopLogErrX("cannot get buffer size");
-	buf = (u_char *) malloc((unsigned) bufsize);
-	if (buf == 0)
-		mopLogErr("malloc");
+
+	if (iflist == 0) {
+		syslog(LOG_ERR, "no interfaces");
+		exit(0);
+	}
+
+	 buf = (u_char *) malloc((unsigned) bufsize); 
+
+	if (buf == 0) {
+		syslog(LOG_ERR, "malloc: %m");
+		exit(0);
+	}
 	/*
-         * Find the highest numbered file descriptor for poll().
+         * Find the highest numbered file descriptor for select().
          * Initialize the set of descriptors to listen to.
          */
-	for (ii = iflist, n = 0; ii; ii = ii->next, n++)
-		;
-	set = malloc(n * sizeof(*set));
-	for (ii = iflist, m = 0; ii; ii = ii->next, m++) {
-		assert(ii->fd != -1);
-		set[m].fd = ii->fd;
-		set[m].events = POLLIN;
+	FD_ZERO(&fds);
+	for (ii = iflist; ii; ii = ii->next) {
+		if (ii->fd != -1) {
+			FD_SET(ii->fd, &fds);
+			if (ii->fd > maxfd)
+				maxfd = ii->fd;
+	        }
 	}
-	for (;;) {
-		if (poll(set, n, INFTIM) < 0)
-			mopLogErr("poll");
-		for (ii = iflist, m = 0; ii; ii = ii->next, m++) {
-			if (!(set[m].revents & POLLIN))
-				continue;
+	while (1) {
+		listeners = fds;
+		if (select(maxfd + 1, &listeners, (fd_set *) 0,
+			(fd_set *) 0, (struct timeval *) 0) < 0) {
+			syslog(LOG_ERR, "select: %m");
+			exit(0);
+		}
+		for (ii = iflist; ii; ii = ii->next) {
+			if (ii->fd != -1) {
+				if (!FD_ISSET(ii->fd, &listeners))
+					continue;
+			}
 	again:
 			cc = read(ii->fd, (char *) buf, bufsize);
 			/* Don't choke when we get ptraced */
 			if (cc < 0 && errno == EINTR)
 				goto again;
-			/* Due to a SunOS bug, after 2^31 bytes, the file
-			 * offset overflows and read fails with EINVAL.  The
-			 * lseek() to 0 will fix things. */
-			if (cc < 0) {
-				if (errno == EINVAL &&
-				    (lseek(ii->fd, 0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(ii->fd, 0, 0);
-					goto again;
-				}
-				mopLogErr("read");
-			}
-			/* Loop through the packet(s) */
-#define bhp ((struct bpf_hdr *)bp)
+
 			bp = buf;
 			ep = bp + cc;
-			while (bp < ep) {
-				int caplen, hdrlen;
-
-				caplen = bhp->bh_caplen;
-				hdrlen = bhp->bh_hdrlen;
-				mopProcess(ii, bp + hdrlen);
-				bp += BPF_WORDALIGN(hdrlen + caplen);
+	
+			if(bp < ep) {
+				mopProcess(ii,buf);
 			}
+
 		}
-	}
+	}		
 }
