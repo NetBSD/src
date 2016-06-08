@@ -1224,8 +1224,18 @@ die_sou_resolve(tdesc_t *tdp, tdesc_t **tdpp __unused, void *private)
 			    (mt->t_name == NULL || mt->t_name[0] == '\0'))
 			    continue;
 
-			printf("%s unresolved type = %d (%s)\n", tdesc_name(tdp),
-				mt->t_type, tdesc_name(mt));
+			/*
+			 * XXX: Gcc-5.4 DW_TAG_typedef without DW_AT_type;
+			 * assume pointer
+			 */
+			if (mt->t_id == TID_VOID) {
+			    ml->ml_size = dw->dw_ptrsz;
+			    continue;
+			}
+
+			fprintf(stderr, "%s unresolved type=%d (%s) tid=%#x\n", 
+			    tdesc_name(tdp), mt->t_type, tdesc_name(mt),
+			    mt->t_id);
 			dw->dw_nunres++;
 			return (1);
 		}
