@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.6 2009/10/20 00:51:13 snj Exp $	*/
+/*	$NetBSD: os.h,v 1.7 2016/06/08 01:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-95 Mats O Jansson.  All rights reserved.
@@ -23,7 +23,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: os.h,v 1.6 2009/10/20 00:51:13 snj Exp $
+ *	$NetBSD: os.h,v 1.7 2016/06/08 01:11:49 christos Exp $
  *
  */
 
@@ -37,8 +37,11 @@
 #include <sys/time.h>
 
 #include <net/if.h>
+#include <netinet/in.h>
+#ifdef __NetBSD__
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#endif
 
 #include <err.h>
 #include <errno.h>
