@@ -1,4 +1,4 @@
-/*	$NetBSD: mopprobe.c,v 1.12 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: mopprobe.c,v 1.13 2016/06/08 01:17:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: mopprobe.c,v 1.12 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: mopprobe.c,v 1.13 2016/06/08 01:17:54 christos Exp $");
 #endif
 
 /*
