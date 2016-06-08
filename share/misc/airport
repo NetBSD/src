@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.62 2016/06/07 19:42:47 mbalmer Exp $
+#	$NetBSD: airport,v 1.63 2016/06/08 04:25:31 kre Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -2856,7 +2856,7 @@ HDL:Holikachuk, AK, USA
 HDM:Hamadan, Iran
 HDN:Steamboat Springs (Hayden), CO, USA
 HDO:Hondo Municipal Airport, TX, USA
-HDY:Hat Yai (Hatyai) [Songkhia], Thailand
+HDY:Hat Yai (Hatyai) [Songkhla], Thailand
 HEA:Herat, Afghanistan
 HEB:Henzada, Myanmar
 HED:Herendeen Bay Airport, AK, USA
@@ -7929,7 +7929,7 @@ UBB:Mabuiag Island, Queensland, Australia
 UBE:Cumberland (Municipal Airport), WI, USA
 UBI:Buin, Papua New Guinea
 UBJ:Ube, Japan
-UBP:Ubon Ratchathni, Thailand
+UBP:Ubon Ratchathani, Thailand
 UBS:Columbus (Lowndes County Airport), MS, USA
 UBT:Ubatuba, Brazil
 UBU:Kalumburu, Western Australia, Australia
@@ -8058,7 +8058,7 @@ USH:Ushuaia, Argentina
 USI:Mabaruma, Guyana
 USK:Usinsk, Russia
 USL:Useless Loop, Western Australia, Australia
-USM:Koh Samui, Thailand
+USM:Ko Samui, Thailand
 USN:Ulsan, South Korea
 USO:Usino, Papua New Guinea
 UST:St. Augustine Airport, FL, USA
