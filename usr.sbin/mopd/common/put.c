@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.7 2011/05/24 13:08:16 joerg Exp $	*/
+/*	$NetBSD: put.c,v 1.8 2016/06/08 01:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -24,9 +24,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: put.c,v 1.7 2011/05/24 13:08:16 joerg Exp $");
+__RCSID("$NetBSD: put.c,v 1.8 2016/06/08 01:11:49 christos Exp $");
 #endif
 
 #include "os.h"
