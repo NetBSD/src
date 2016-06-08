@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.14 2016/05/29 17:06:17 bouyer Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.15 2016/06/08 01:59:06 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.14 2016/05/29 17:06:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.15 2016/06/08 01:59:06 jnemeth Exp $");
 
 #include "opt_xen.h"
 
@@ -406,6 +406,7 @@ xen_init_features(void)
 	xen_feature_info_t features;
 
 	for (int sm = 0; sm < XENFEAT_NR_SUBMAPS; sm++) {
+		features.submap_idx = sm;
 		if (HYPERVISOR_xen_version(XENVER_get_features, &features) < 0)
 			break;
 		for (int f = 0; f < 32; f++) {
