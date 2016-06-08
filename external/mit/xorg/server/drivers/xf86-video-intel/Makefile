@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2015/05/14 02:43:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2016/06/08 02:27:31 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -197,6 +197,13 @@ LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
 CWARNFLAGS.clang+=	-Wno-parentheses -Wno-tautological-compare \
 			-Wno-empty-body -Wno-error
 
-COPTS.sna_display.c=	-Wno-stack-protector
+COPTS.sna_display.c+=	-Wno-stack-protector
+COPTS.sna_threads.c+=	-Wno-stack-protector
+COPTS.sna_trapezoids.c+=	-Wno-stack-protector
+COPTS.sna_trapezoids_boxes.c+=	-Wno-stack-protector
+COPTS.sna_trapezoids_imprecise.c+=	-Wno-stack-protector
+COPTS.sna_trapezoids_mono.c+=	-Wno-stack-protector
+COPTS.sna_trapezoids_precise.c+=	-Wno-stack-protector
+COPTS.i965_video.c+=	-Wno-stack-protector
 
 .include <bsd.subdir.mk>
