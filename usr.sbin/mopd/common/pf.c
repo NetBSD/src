@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.12 2009/11/17 18:58:07 drochner Exp $	*/
+/*	$NetBSD: pf.c,v 1.13 2016/06/08 01:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,9 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.12 2009/11/17 18:58:07 drochner Exp $");
+__RCSID("$NetBSD: pf.c,v 1.13 2016/06/08 01:11:49 christos Exp $");
 #endif
 
 #include "os.h"
