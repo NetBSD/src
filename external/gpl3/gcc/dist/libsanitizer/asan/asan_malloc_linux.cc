@@ -56,9 +56,14 @@ INTERCEPTOR(void, cfree, void *ptr) {
 }
 
 INTERCEPTOR(void*, malloc, uptr size) {
+#if SANITIZER_LINUX
+  // This is a workaround for glibc, by which asan_malloc() fails into infinite
+  // recursion of AsanInitInternal(): http://reviews.llvm.org/rL254395
+  // It is irrelevant to us, rather causes abort due to shortage of buffer.
   if (UNLIKELY(!asan_inited))
     // Hack: dlsym calls malloc before REAL(malloc) is retrieved from dlsym.
     return AllocateFromLocalPool(size);
+#endif
   GET_STACK_TRACE_MALLOC;
   return asan_malloc(size, &stack);
 }
