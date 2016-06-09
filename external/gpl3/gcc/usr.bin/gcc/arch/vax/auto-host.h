@@ -64,7 +64,7 @@
 
 /* The default for -fdiagnostics-color option */
 #ifndef USED_FOR_TARGET
-#define DIAGNOSTICS_COLOR_DEFAULT DIAGNOSTICS_COLOR_AUTO
+#define DIAGNOSTICS_COLOR_DEFAULT -1
 #endif
 
 
@@ -602,6 +602,12 @@
    against hidden symbols. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_SPARC_UA_PCREL_HIDDEN */
+#endif
+
+
+/* Define if your assembler supports .stabs. */
+#ifndef USED_FOR_TARGET
+#define HAVE_AS_STABS_DIRECTIVE 1
 #endif
 
 
