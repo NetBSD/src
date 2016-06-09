@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.15 2016/06/09 05:04:07 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.16 2016/06/09 05:06:20 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.15 2016/06/09 05:04:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.16 2016/06/09 05:06:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,16 +285,6 @@ umct_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (sc->sc_inendpt != -1) {
-		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_inendpt,
-		    USBD_SHORT_XFER_OK, &sc->sc_inpipe, sc, sc->sc_inbuf,
-		    sc->sc_isize, umct_rxintr, USBD_DEFAULT_INTERVAL);
-		if (err) {
-			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
-			    device_xname(sc->sc_dev), sc->sc_inendpt));
-			return EIO;
-		}
-	}
 	sc->sc_dtr = sc->sc_rts = 0;
 	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
 	/* ucaa_bulkin, ucaa_bulkout set above */
@@ -579,6 +569,17 @@ umct_open(void *addr, int portno)
 			return EIO;
 		}
 	}
+	if (sc->sc_inendpt != -1 && sc->sc_inpipe == NULL) {
+		sc->sc_inbuf = kmem_alloc(UMCTIBUFSIZE, KM_SLEEP);
+		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_inendpt,
+		    USBD_SHORT_XFER_OK, &sc->sc_inpipe, sc, sc->sc_inbuf,
+		    UMCTIBUFSIZE, umct_rxintr, USBD_DEFAULT_INTERVAL);
+		if (err) {
+			DPRINTF(("%s: cannot open rx interrupt pipe (%d)\n",
+			    device_xname(sc->sc_dev), sc->sc_inendpt));
+			return EIO;
+		}
+	}
 
 	return 0;
 }
@@ -605,6 +606,18 @@ umct_close(void *addr, int portno)
 				device_xname(sc->sc_dev), usbd_errstr(err));
 		kmem_free(sc->sc_intr_buf, sc->sc_isize);
 		sc->sc_intr_pipe = NULL;
+	}
+	if (sc->sc_inpipe != NULL) {
+		err = usbd_abort_pipe(sc->sc_inpipe);
+		if (err)
+			printf("%s: abort rx interrupt pipe failed: %s\n",
+				device_xname(sc->sc_dev), usbd_errstr(err));
+		err = usbd_close_pipe(sc->sc_inpipe);
+		if (err)
+			printf("%s: close rx interrupt pipe failed: %s\n",
+				device_xname(sc->sc_dev), usbd_errstr(err));
+		kmem_free(sc->sc_inbuf, UMCTIBUFSIZE);
+		sc->sc_inpipe = NULL;
 	}
 }
 
