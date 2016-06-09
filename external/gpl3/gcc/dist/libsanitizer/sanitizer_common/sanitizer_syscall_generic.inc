@@ -25,7 +25,22 @@
 # define SYSCALL(name) __NR_ ## name
 #endif
 
-#if (SANITIZER_FREEBSD && defined(__x86_64__)) || SANITIZER_NETBSD
+#if SANITIZER_NETBSD
+// We use 3 kinds of internal_syscall's for different types of retval in order
+// to address problems related to the byte order.
+//   - internal_syscall     for 32-bit length (int, pid_t)
+//   - internal_syscall64   for 64-bit length (off_t)
+//   - internal_syscall_ptr for pointer and (s)size_t
+# define  internal_syscall	syscall
+# define  internal_syscall64	__syscall
+# if SANITIZER_WORDSIZE == 64
+#  define internal_syscall_ptr	__syscall
+# else
+#  define internal_syscall_ptr	syscall
+# endif
+#endif
+
+#if (SANITIZER_FREEBSD && defined(__x86_64__))
 # define internal_syscall __syscall
 # else
 # define internal_syscall syscall
