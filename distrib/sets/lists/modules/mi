@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.85 2016/06/08 08:34:43 pgoyette Exp $
+# $NetBSD: mi,v 1.86 2016/06/09 04:46:08 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -130,6 +130,8 @@
 ./@MODULEDIR@/if_smsc/if_smsc.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
 ./@MODULEDIR@/iic/iic.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ipl				base-kernel-modules	kmod
+./@MODULEDIR@/ipl/ipl.kmod 			base-kernel-modules	kmod
 ./@MODULEDIR@/iscsi				base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/iscsi/iscsi.kmod			base-kernel-modules	kmod,iscsi
 ./@MODULEDIR@/kernfs				base-kernel-modules	kmod
