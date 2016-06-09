@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.45 2015/12/25 12:16:03 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.46 2016/06/09 15:12:54 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 25, 2015
+.Dd June 9, 2016
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -211,13 +211,17 @@ command.
 The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
-.It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
+.It Nm Ic biosboot Oo Fl ac Ar bootcode Oc Oo Fl i Ar index Oc \
 Oo Fl L Ar label Oc
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
 primary bootstrap program, used during
 .Xr boot 8 .
+.Pp
+The
+.Fl a
+options sets the PMBR partition active.
 .Pp
 The
 .Fl c
@@ -238,7 +242,7 @@ option selects the partition by label.
 If there are multiple partitions with the same label, it will use the
 first one found.
 .\" ==== create ====
-.It Nm Ic create Oo Fl fP Oc Oo Fl p Ar partitions Oc
+.It Nm Ic create Oo Fl afP Oc Oo Fl p Ar partitions Oc
 The
 .Ic create
 command allows the user to create a new (empty) GPT.
@@ -250,6 +254,10 @@ If the
 .Fl f
 option is specified, an existing MBR is destroyed and any partitions
 described by the MBR are lost.
+.Pp
+The
+.Fl a
+options sets the PMBR partition active.
 .Pp
 The
 .Fl P
@@ -343,7 +351,7 @@ The
 option is used to specify the label in the command line.
 The label is assumed to be encoded in UTF-8.
 .\" ==== migrate ====
-.It Nm Ic migrate Oo Fl fs Oc Oo Fl p Ar partitions Oc
+.It Nm Ic migrate Oo Fl afs Oc Oo Fl p Ar partitions Oc
 The
 .Ic migrate
 command allows the user to migrate an MBR-based disk partitioning into a
@@ -357,6 +365,10 @@ Specifying the
 .Fl f
 option will cause unknown partitions to be ignored and any data in it
 to be lost.
+.Pp
+The
+.Fl a
+options sets the PMBR partition active.
 .Pp
 The
 .Fl s

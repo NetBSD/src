@@ -92,7 +92,7 @@ struct gpt_hdr *gpt_hdr(gpt_t);
 void	gpt_msg(gpt_t, const char *, ...) __printflike(2, 3);
 void	gpt_warn(gpt_t, const char *, ...) __printflike(2, 3);
 void	gpt_warnx(gpt_t, const char *, ...) __printflike(2, 3);
-void	gpt_create_pmbr_part(struct mbr_part *, off_t);
+void	gpt_create_pmbr_part(struct mbr_part *, off_t, int);
 struct gpt_ent *gpt_ent(map_t, map_t, unsigned int);
 struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
 struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
