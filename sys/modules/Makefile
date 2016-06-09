@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.166 2016/06/07 01:06:27 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.167 2016/06/09 04:44:18 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -50,6 +50,7 @@ SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
 SUBDIR+=	if_smsc
 SUBDIR+=	iic
+SUBDIR+=	ipl
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
