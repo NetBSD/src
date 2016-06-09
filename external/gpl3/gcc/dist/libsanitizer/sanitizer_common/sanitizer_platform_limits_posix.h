@@ -668,7 +668,13 @@ namespace __sanitizer {
     int ai_socktype;
     int ai_protocol;
 #if SANITIZER_ANDROID || SANITIZER_MAC || SANITIZER_FREEBSD || SANITIZER_NETBSD
+#if SANITIZER_NETBSD && defined(__sparc__) && defined(_LP64)
+    int __ai_pad0;
+#endif
     unsigned ai_addrlen;
+#if SANITIZER_NETBSD && defined(__alpha__) || (defined(__i386__) && defined(_LP64))
+    int __ai_pad0;
+#endif
     char *ai_canonname;
     void *ai_addr;
 #else // LINUX
