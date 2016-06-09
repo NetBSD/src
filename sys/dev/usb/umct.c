@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.13 2016/05/30 06:54:17 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.14 2016/06/09 04:57:43 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.13 2016/05/30 06:54:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.14 2016/06/09 04:57:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,7 +576,7 @@ umct_open(void *addr, int portno)
 		if (err) {
 			DPRINTF(("%s: cannot open interrupt pipe (addr %d)\n",
 				device_xname(sc->sc_dev), sc->sc_intr_number));
-					return EIO;
+			return EIO;
 		}
 	}
 
