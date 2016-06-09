@@ -1,4 +1,4 @@
-.\"    $NetBSD: dmsetup.8,v 1.2 2009/02/18 12:16:13 haad Exp $
+.\"    $NetBSD: dmsetup.8,v 1.3 2016/06/09 09:01:21 abhinav Exp $
 .\"
 .TH DMSETUP 8 "Apr 06 2006" "Linux" "MAINTENANCE COMMANDS"
 .SH NAME
@@ -234,7 +234,7 @@ process to be killed.
 .br
 Attempts to remove all device definitions i.e. reset the driver.
 Use with care!  From version 4.8.0 onwards, if devices can't
-be removed because uninterruptible processess are waiting for
+be removed because uninterruptible processes are waiting for
 I/O to return from them, adding --force will replace the table 
 with one that fails all I/O, which might allow the 
 process to be killed.  This also runs \fBmknodes\fP afterwards.
