@@ -52,8 +52,9 @@ case "$1" in
 add)
 	case "$pf" in
 	ipf)
+		/sbin/ipfstat -io | /sbin/ipf -I -f -
 		echo block in quick proto $proto from $addr/$mask to \
-		    any port=$port | /sbin/ipf -f -
+		    any port=$port head $port$6 | /sbin/ipf -I -f - -s
 		;;
 	ipfw)
 		# use $ipfw_offset+$port for rule number
@@ -79,8 +80,9 @@ add)
 rem)
 	case "$pf" in
 	ipf)
-		echo "$0: $1 is unsupported by ipfilter" 1>&2
-		exit 1
+		/sbin/ipfstat -io | /sbin/ipf -I -f -
+		echo block in quick proto $proto from $addr/$mask to any \
+		    port =$port head port$6 | /sbin/ipf -r -f - -s
 		;;
 	ipfw)
 		/sbin/ipfw table "port$6" delete "$addr/$mask" 2>/dev/null
