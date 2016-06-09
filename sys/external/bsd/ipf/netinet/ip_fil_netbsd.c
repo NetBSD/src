@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.12 2016/01/20 22:11:23 riastradh Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.13 2016/06/09 04:43:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.12 2016/01/20 22:11:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.13 2016/06/09 04:43:46 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -23,7 +23,13 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #endif
 #include <sys/param.h>
 #if (NetBSD >= 199905) && !defined(IPFILTER_LKM)
-# include "opt_ipsec.h"
+# if (__NetBSD_Version__ >= 799003000)
+#   ifdef _KERNEL_OPT
+#    include "opt_ipsec.h"
+#   endif
+# else
+#  include "opt_ipsec.h"
+# endif
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -46,6 +52,10 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #include <sys/poll.h>
 #if (__NetBSD_Version__ >= 399002000)
 # include <sys/kauth.h>
+#endif
+#if (__NetBSD_Version__ >= 799003000)
+#include <sys/module.h>
+#include <sys/mutex.h>
 #endif
 
 #include <net/if.h>
@@ -147,6 +157,10 @@ const struct cdevsw ipl_cdevsw = {
 	.d_flag = 0
 #endif
 };
+#if (__NetBSD_Version__ >= 799003000)
+kmutex_t ipf_ref_mutex;
+int	ipf_active;
+#endif
 
 ipf_main_softc_t ipfmain;
 
@@ -315,6 +329,9 @@ void
 ipfilterattach(int count)
 {
 
+#if (__NetBSD_Version__ >= 799003000)
+	return;
+#else
 #if (__NetBSD_Version__ >= 599002000)
 	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    ipf_listener_cb, NULL);
@@ -322,6 +339,7 @@ ipfilterattach(int count)
 
 	if (ipf_load_all() == 0)
 		(void) ipf_create_all(&ipfmain);
+#endif
 }
 
 
@@ -1988,6 +2006,13 @@ static int ipfopen(dev_t dev, int flags
 			break;
 		}
 	}
+#if (__NetBSD_Version__ >= 799003000)
+	if (error == 0) {
+		mutex_enter(&ipf_ref_mutex);
+		ipf_active = 1;
+		mutex_exit(&ipf_ref_mutex);
+	}
+#endif
 	return error;
 }
 
@@ -2001,10 +2026,15 @@ static int ipfclose(dev_t dev, int flags
 	u_int	unit = GET_MINOR(dev);
 
 	if (IPL_LOGMAX < unit)
-		unit = ENXIO;
-	else
-		unit = 0;
-	return unit;
+		return ENXIO;
+	else {
+#if (__NetBSD_Version__ >= 799003000)
+		mutex_enter(&ipf_ref_mutex);
+		ipf_active = 0;
+		mutex_exit(&ipf_ref_mutex);
+#endif
+		return 0;
+	}
 }
 
 /*
@@ -2123,3 +2153,99 @@ ipf_pcksum(fr_info_t *fin, int hlen, u_int sum)
 	sum2 = ~sum & 0xffff;
 	return sum2;
 }
+
+#if (__NetBSD_Version__ >= 799003000)
+
+/* NetBSD module interface */
+
+MODULE(MODULE_CLASS_DRIVER, ipl, "bpf_filter");
+
+static int ipl_init(void *);
+static int ipl_fini(void *);
+static int ipl_modcmd(modcmd_t, void *);
+
+static devmajor_t ipl_cmaj = -1, ipl_bmaj = -1;
+
+static int
+ipl_modcmd(modcmd_t cmd, void *opaque)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return ipl_init(opaque);
+	case MODULE_CMD_FINI:
+		return ipl_fini(opaque);
+	default:
+		return ENOTTY;
+	}
+}
+
+static int
+ipl_init(void *opaque)
+{
+	int error;
+
+	ipf_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
+	    ipf_listener_cb, NULL);
+
+	if ((error = ipf_load_all()) != 0)
+		return error;
+
+	if (ipf_create_all(&ipfmain) == NULL) {
+		ipf_unload_all();
+		return ENODEV;
+	}
+
+	/* Initialize our mutex and reference count */
+	mutex_init(&ipf_ref_mutex, MUTEX_DEFAULT, IPL_NONE);
+	ipf_active = 0;
+
+	/*
+	 * Insert ourself into the cdevsw list.  It's OK if we are
+	 * already there, since this will happen when our module is
+	 * built-in to the kernel.  (We could skip the insert in
+	 * that case, but that would break the possibility of a
+	 * unload/re-load sequence for the built-in module, which
+	 * corresponds to disable/re-enable.)
+	 */
+	error = devsw_attach("ipl", NULL, &ipl_bmaj, &ipl_cdevsw, &ipl_cmaj);
+	if (error == EEXIST)
+		error = 0;
+
+	if (error)
+		ipl_fini(opaque);
+
+	return error;
+}
+
+static int
+ipl_fini(void *opaque)
+{
+
+	(void)devsw_detach(NULL, &ipl_cdevsw);
+
+	/*
+	 * Grab the mutex, verify that there are no references
+	 * and that there are no running filters.  If either
+	 * of these exists, reinsert our cdevsw entry and return
+	 * an error.
+	 */
+	mutex_enter(&ipf_ref_mutex);
+	if (ipf_active != 0 || ipfmain.ipf_running > 0) {
+		(void)devsw_attach("ipl", NULL, &ipl_bmaj,
+		    &ipl_cdevsw, &ipl_cmaj);
+		mutex_exit(&ipf_ref_mutex);
+		return EBUSY;
+	}
+
+	/* Clean up the rest of our state before being unloaded */
+
+	mutex_exit(&ipf_ref_mutex);
+	mutex_destroy(&ipf_ref_mutex);
+	ipf_destroy_all(&ipfmain);
+	ipf_unload_all();
+	kauth_unlisten_scope(ipf_listener);
+
+	return 0;
+}
+#endif /* (__NetBSD_Version__ >= 799003000) */
