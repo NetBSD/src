@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.67 2016/01/08 18:59:01 joerg Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.68 2016/06/09 15:12:54 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -336,7 +336,8 @@ gpt_mbr(gpt_t gpt, off_t lba)
 		/* start is relative to the offset of the MBR itself. */
 		start += lba;
 		if (gpt->verbose > 2)
-			gpt_msg(gpt, "MBR part: type=%d, start=%ju, size=%ju",
+			gpt_msg(gpt, "MBR part: flag=%#x type=%d, start=%ju, "
+			    "size=%ju", mbr->mbr_part[i].part_flag,
 			    mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
@@ -705,8 +706,9 @@ gpt_write_backup(gpt_t gpt)
 }
 
 void
-gpt_create_pmbr_part(struct mbr_part *part, off_t last)
+gpt_create_pmbr_part(struct mbr_part *part, off_t last, int active)
 {
+	part->part_flag = active ? 0x80 : 0;
 	part->part_shd = 0x00;
 	part->part_ssect = 0x02;
 	part->part_scyl = 0x00;

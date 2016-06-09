@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.24 2015/12/29 16:45:04 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.25 2016/06/09 15:12:54 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.24 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.25 2016/06/09 15:12:54 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: biosboot.c,v 1.24 2015/12/29 16:45:04 christos Exp $");
 static int cmd_biosboot(gpt_t, int, char *[]);
 
 static const char *biosboothelp[] = {
-	"[-c bootcode] [-i index] [-L label]",
+	"[-a] [-c bootcode] [-i index] [-L label]",
 #if notyet
 	"[-a alignment] [-b blocknr] [-i index] [-l label]",
 	"[-s size] [-t type]",
@@ -164,7 +164,7 @@ set_bootable(gpt_t gpt, map_t map, map_t tbl, unsigned int i)
 
 static int
 biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
-    const char *bootpath)
+    const char *bootpath, int active)
 {
 	map_t mbrmap, m;
 	struct mbr *mbr, *bootcode;
@@ -196,6 +196,10 @@ biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
 	(void)memcpy(&mbr->mbr_code, &bootcode->mbr_code,
 		sizeof(mbr->mbr_code));
 	free(bootcode);
+
+	for (i = 0; i < __arraycount(mbr->mbr_part); i++)
+		if (mbr->mbr_part[i].part_typ == MBR_PTYPE_PMBR)
+			mbr->mbr_part[i].part_flag = active ? 0x80 : 0;
 
 	/*
 	 * Walk through the GPT and see where we can boot from
@@ -255,12 +259,16 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	gpt_t ngpt = gpt;
 	daddr_t start = 0;
 	uint64_t size = 0;
+	int active = 0;
 	unsigned int entry = 0;
 	uint8_t *label = NULL;
 	char *bootpath = NULL;
 
-	while ((ch = getopt(argc, argv, "c:i:L:")) != -1) {
+	while ((ch = getopt(argc, argv, "ac:i:L:")) != -1) {
 		switch(ch) {
+		case 'a':
+			active = 1;
+			break;
 		case 'c':
 			if (gpt_name_get(gpt, &bootpath) == -1)
 				goto usage;
@@ -295,7 +303,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 			goto cleanup;
 	}
 #endif
-	if (biosboot(ngpt, start, size, entry, label, bootpath) == -1)
+	if (biosboot(ngpt, start, size, entry, label, bootpath, active) == -1)
 		goto cleanup;
 	if (ngpt != gpt)
 		gpt_close(ngpt);

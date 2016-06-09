@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.30 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.31 2016/06/09 15:12:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: migrate.c,v 1.30 2015/12/29 16:45:04 christos Exp $");
 static int cmd_migrate(gpt_t, int, char *[]);
 
 static const char *migratehelp[] = {
-	"[-fs] [-p partitions]",
+	"[-afs] [-p partitions]",
 };
 
 struct gpt_cmd c_migrate = {
@@ -233,7 +233,7 @@ migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent,
 }
 
 static int
-migrate(gpt_t gpt, u_int parts, int force, int slice)
+migrate(gpt_t gpt, u_int parts, int force, int slice, int active)
 {
 	off_t last = gpt_last(gpt);
 	map_t map;
@@ -314,7 +314,7 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 	 * Turn the MBR into a Protective MBR.
 	 */
 	memset(mbr->mbr_part, 0, sizeof(mbr->mbr_part));
-	gpt_create_pmbr_part(mbr->mbr_part, last);
+	gpt_create_pmbr_part(mbr->mbr_part, last, active);
 	if (gpt_write(gpt, map) == -1) {
 		gpt_warn(gpt, "Cant write PMBR");
 		return -1;
@@ -328,11 +328,15 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 	int ch;
 	int force = 0;
 	int slice = 0;
+	int active = 0;
 	u_int parts = 128;
 
 	/* Get the migrate options */
-	while ((ch = getopt(argc, argv, "fp:s")) != -1) {
+	while ((ch = getopt(argc, argv, "afp:s")) != -1) {
 		switch(ch) {
+		case 'a':
+			active = 1;
+			break;
 		case 'f':
 			force = 1;
 			break;
@@ -351,5 +355,5 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return migrate(gpt, parts, force, slice);
+	return migrate(gpt, parts, force, slice, active);
 }
