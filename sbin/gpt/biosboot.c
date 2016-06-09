@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.25 2016/06/09 15:12:54 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.26 2016/06/09 19:04:43 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.25 2016/06/09 15:12:54 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.26 2016/06/09 19:04:43 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: biosboot.c,v 1.25 2016/06/09 15:12:54 christos Exp $");
 static int cmd_biosboot(gpt_t, int, char *[]);
 
 static const char *biosboothelp[] = {
-	"[-a] [-c bootcode] [-i index] [-L label]",
+	"[-A] [-c bootcode] [-i index] [-L label]",
 #if notyet
 	"[-a alignment] [-b blocknr] [-i index] [-l label]",
 	"[-s size] [-t type]",
@@ -264,9 +264,9 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	uint8_t *label = NULL;
 	char *bootpath = NULL;
 
-	while ((ch = getopt(argc, argv, "ac:i:L:")) != -1) {
+	while ((ch = getopt(argc, argv, "Ac:i:L:")) != -1) {
 		switch(ch) {
-		case 'a':
+		case 'A':
 			active = 1;
 			break;
 		case 'c':
