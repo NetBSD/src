@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2016/06/01 22:48:55 christos Exp $
+# $NetBSD: Makefile,v 1.17 2016/06/09 07:11:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -36,6 +36,7 @@ SRCS+=	${ASAN_SRCS}
 
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator2.cc += -O1
+COPTS.asan_report.cc += -O1
 .endif
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.1 2016/06/01 22:48:55 christos Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.2 2016/06/09 07:11:08 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -69,8 +69,14 @@ COPTS+=-fno-builtin -fno-exceptions -fno-rtti -funwind-tables
 #-fomit-frame-pointer
 
 .if ${MACHINE_ARCH} == "vax"
+COPTS.sanitizer_allocator.cc += -O1
+COPTS.sanitizer_coverage_libcdep.cc += -O1
+COPTS.sanitizer_coverage_mapping_libcdep.cc += -O1
+COPTS.sanitizer_deadlock_detector1.cc += -O1
 COPTS.sanitizer_mac.cc += -O1
 COPTS.sanitizer_netbsd.cc += -O1
 COPTS.sanitizer_printf.cc += -O1
+COPTS.sanitizer_procmaps_common.cc += -O1
 COPTS.sanitizer_stackdepot.cc += -O1
+COPTS.sanitizer_symbolizer_libcdep.cc += -O1
 .endif
