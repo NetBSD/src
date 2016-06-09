@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.21 2016/06/09 15:12:54 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.22 2016/06/09 19:04:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: create.c,v 1.21 2016/06/09 15:12:54 christos Exp $");
 static int cmd_create(gpt_t, int, char *[]);
 
 static const char *createhelp[] = {
-	"[-afP] [-p partitions]",
+	"[-AfP] [-p partitions]",
 };
 
 struct gpt_cmd c_create = {
@@ -130,9 +130,9 @@ cmd_create(gpt_t gpt, int argc, char *argv[])
 	int primary_only = 0;
 	u_int parts = 128;
 
-	while ((ch = getopt(argc, argv, "afPp:")) != -1) {
+	while ((ch = getopt(argc, argv, "AfPp:")) != -1) {
 		switch(ch) {
-		case 'a':
+		case 'A':
 			active = 1;
 			break;
 		case 'f':

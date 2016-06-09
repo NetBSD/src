@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.31 2016/06/09 15:12:54 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.32 2016/06/09 19:04:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: migrate.c,v 1.31 2016/06/09 15:12:54 christos Exp $");
 static int cmd_migrate(gpt_t, int, char *[]);
 
 static const char *migratehelp[] = {
-	"[-afs] [-p partitions]",
+	"[-Afs] [-p partitions]",
 };
 
 struct gpt_cmd c_migrate = {
@@ -332,9 +332,9 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 	u_int parts = 128;
 
 	/* Get the migrate options */
-	while ((ch = getopt(argc, argv, "afp:s")) != -1) {
+	while ((ch = getopt(argc, argv, "Afp:s")) != -1) {
 		switch(ch) {
-		case 'a':
+		case 'A':
 			active = 1;
 			break;
 		case 'f':
