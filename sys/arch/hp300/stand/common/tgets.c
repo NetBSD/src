@@ -1,4 +1,4 @@
-/*	$NetBSD: tgets.c,v 1.6 2016/06/05 17:43:02 christos Exp $	*/
+/*	$NetBSD: tgets.c,v 1.7 2016/06/09 03:05:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -48,7 +48,7 @@ tgets_s(char *buf, size_t size)
                 if (lp - buf == size) {
                         lp--;
                         *lp = '\0';
-                        return; 
+                        return 0;
                 }
 		c = tgetchar() & 0177;
 		if (c) {
