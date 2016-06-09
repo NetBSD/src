@@ -10,12 +10,20 @@
 # $7 id
 
 pf=
-for f in npf pf; do
-	if [ -f "/etc/$f.conf" ]; then
-		pf="$f"
-		break
-	fi
-done
+if [ -z "$pf" -a -f "/etc/ipfw-blacklist.rc" ]; then
+	  pf="ipfw"
+	  . /etc/ipfw-blacklist.rc
+	  ipfw_offset=${ipfw_offset:-2000}
+fi
+
+if [ -z "$pf" ]; then
+	for f in npf pf ipf; do
+		if [ -f "/etc/$f.conf" ]; then
+			pf="$f"
+			break
+		fi
+	done
+fi
 
 if [ -z "$pf" ]; then
 	echo "$0: Unsupported packet filter" 1>&2
@@ -43,6 +51,19 @@ esac
 case "$1" in
 add)
 	case "$pf" in
+	ipf)
+		echo block in quick proto $proto from $addr/$mask to \
+		    any port=$port | /sbin/ipf -f -
+		;;
+	ipfw)
+		# use $ipfw_offset+$port for rule number
+		rule=$(($ipfw_offset + $6))
+		tname="port$6"
+		/sbin/ipfw table $tname create type addr 2>/dev/null
+		/sbin/ipfw -q table $tname add "$addr/$mask"
+		/sbin/ipfw -q add $rule drop $3 from "table("$tname")" to \
+		    any dst-port $6
+		;;
 	npf)
 		/sbin/npfctl rule "$2" add block in final $proto from \
 		    "$addr/$mask" to any $port
@@ -57,6 +78,13 @@ add)
 	;;
 rem)
 	case "$pf" in
+	ipf)
+		echo "$0: $1 is unsupported by ipfilter" 1>&2
+		exit 1
+		;;
+	ipfw)
+		/sbin/ipfw table "port$6" delete "$addr/$mask" 2>/dev/null
+		;;
 	npf)
 		/sbin/npfctl rule "$2" rem-id "$7"
 		;;
@@ -67,6 +95,12 @@ rem)
 	;;
 flush)
 	case "$pf" in 
+	ipf)
+		/sbin/ipf -Z -I -Fa -s
+		;;
+	ipfw)
+		/sbin/ipfw table "port$6" flush 2>/dev/null
+		;;
 	npf)
 		/sbin/npfctl rule "$2" flush
 		;;
