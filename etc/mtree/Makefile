@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2016/06/09 04:07:46 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2016/06/09 04:26:07 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -36,19 +36,13 @@ EXTRA_DIST_FILES+=	NetBSD.dist.dtrace
 EXTRA_DIST_FILES+=	NetBSD.dist.extsrc
 .endif
 
-#
-# The NetBSD.dist.base and ${EXTRA_DIST_FILES} should really be part
-# of the NetBSD.dist.tmp rule, but that needs to have no dependencies
-# so that it is re-run every time, yet it depends upon files existing.
-#
-.if !target(obj) && !target(clean) && !target(cleandir)
-.BEGIN: NetBSD.dist.base ${EXTRA_DIST_FILES} 
-.endif
 NetBSD.dist:	NetBSD.dist.tmp
 	cmp -s NetBSD.dist.tmp NetBSD.dist || { \
 		echo "Updating NetBSD.dist"; \
 		mv NetBSD.dist.tmp NetBSD.dist; \
 	}
+# Rebuild every time
+.PHONY: NetBSD.dist.tmp
 NetBSD.dist.tmp: NetBSD.dist.base ${EXTRA_DIST_FILES}
 	${TOOL_CAT} ${.ALLSRC} > ${.TARGET}
 
