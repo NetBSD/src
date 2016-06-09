@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.7 2014/03/20 20:43:12 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.8 2016/06/09 04:43:46 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -837,7 +837,13 @@ typedef unsigned int    u_32_t;
 #  if (__NetBSD_Version__ < 399001400)
 #   include "opt_ipfilter_log.h"
 #  else
-#   include "opt_ipfilter.h"
+#   if (__NetBSD_Version__ >= 799003000)
+#    if defined(_KERNEL_OPT)
+#     include "opt_ipfilter.h"
+#    endif
+#   else
+#    include "opt_ipfilter.h"
+#   endif
 #  endif
 # endif
 # if defined(_KERNEL)
@@ -857,7 +863,13 @@ typedef unsigned int    u_32_t;
 #    include "bpfilter.h"
 #  endif
 #  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
-#   include "opt_inet.h"
+#   if (__NetBSD_Version__ >= 799003000)
+#    if defined(_KERNEL_OPT)
+#     include "opt_inet.h"
+#    endif
+#   else
+#    include "opt_inet.h"
+#   endif
 #  endif
 #  ifdef INET6
 #   define USE_INET6
