@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.12 2015/03/30 03:51:50 ozaki-r Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.13 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key_debug.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: key_debug.c,v 1.26 2001/06/27 10:46:50 sakane Exp $	*/
 
@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.12 2015/03/30 03:51:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.13 2016/06/10 13:31:44 ozaki-r Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -620,7 +620,7 @@ kdebug_mbufhdr(const struct mbuf *m)
 
 	if (m->m_flags & M_PKTHDR) {
 		printf("  m_pkthdr{ len:%d rcvif:%p }\n",
-		    m->m_pkthdr.len, m->m_pkthdr.rcvif);
+		    m->m_pkthdr.len, m_get_rcvif_NOMPSAFE(m));
 	}
 
 	if (m->m_flags & M_EXT) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.110 2016/04/26 08:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.111 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.110 2016/04/26 08:44:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.111 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,14 +131,21 @@ nd6_is_llinfo_probreach(struct nd_defrouter *dr)
 void
 nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
+	struct ifnet *ifp;
+	struct nd_ifinfo *ndi;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_solicit *nd_rs;
 	struct in6_addr saddr6 = ip6->ip6_src;
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	union nd_opts ndopts;
+	struct psref psref;
+
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (ifp == NULL)
+		goto freeit;
+
+	ndi = ND_IFINFO(ifp);
 
 	/* If I'm not a router, ignore it. */
 	if (nd6_accepts_rtadv(ndi) || !ip6_forwarding)
@@ -188,11 +195,13 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_ROUTER_SOLICIT, 0);
 
  freeit:
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
 
  bad:
 	ICMP6_STATINC(ICMP6_STAT_BADRS);
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 }
 
@@ -206,8 +215,8 @@ nd6_rs_input(struct mbuf *m, int off, int icmp6len)
 void
 nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
-	struct nd_ifinfo *ndi = ND_IFINFO(ifp);
+	struct ifnet *ifp;
+	struct nd_ifinfo *ndi;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_router_advert *nd_ra;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -220,7 +229,13 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	int mcast = 0;
 	union nd_opts ndopts;
 	struct nd_defrouter *dr;
+	struct psref psref;
 
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (ifp == NULL)
+		goto freeit;
+
+	ndi = ND_IFINFO(ifp);
 	/*
 	 * We only accept RAs when
 	 * the system-wide variable allows the acceptance, and the
@@ -245,6 +260,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
 	if (nd_ra == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+		m_put_rcvif_psref(ifp, &psref);
 		return;
 	}
 
@@ -335,7 +351,7 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
 			memset(&prc, 0, sizeof(prc));
 			sockaddr_in6_init(&prc.ndprc_prefix,
 			    &pi->nd_opt_pi_prefix, 0, 0, 0);
-			prc.ndprc_ifp = (struct ifnet *)m->m_pkthdr.rcvif;
+			prc.ndprc_ifp = ifp;
 
 			prc.ndprc_raf_onlink = (pi->nd_opt_pi_flags_reserved &
 			    ND_OPT_PI_FLAG_ONLINK) ? 1 : 0;
@@ -415,11 +431,13 @@ nd6_ra_input(struct mbuf *m, int off, int icmp6len)
     }
 
  freeit:
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
 
  bad:
 	ICMP6_STATINC(ICMP6_STAT_BADRA);
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 }
 

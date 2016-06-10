@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.89 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.90 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.89 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.90 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -584,7 +584,7 @@ in_stf_input(struct mbuf *m, int off, int proto)
 	 * for source, perform ingress filter as well.
 	 */
 	if (stf_checkaddr4(sc, &ip->ip_dst, NULL) < 0 ||
-	    stf_checkaddr4(sc, &ip->ip_src, m->m_pkthdr.rcvif) < 0) {
+	    stf_checkaddr4(sc, &ip->ip_src, m_get_rcvif_NOMPSAFE(m)) < 0) {
 		m_freem(m);
 		return;
 	}
@@ -604,7 +604,7 @@ in_stf_input(struct mbuf *m, int off, int proto)
 	 * for source, perform ingress filter as well.
 	 */
 	if (stf_checkaddr6(sc, &ip6->ip6_dst, NULL) < 0 ||
-	    stf_checkaddr6(sc, &ip6->ip6_src, m->m_pkthdr.rcvif) < 0) {
+	    stf_checkaddr6(sc, &ip6->ip6_src, m_get_rcvif_NOMPSAFE(m)) < 0) {
 		m_freem(m);
 		return;
 	}

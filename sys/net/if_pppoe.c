@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.107 2016/06/10 13:27:16 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.108 2016/06/10 13:31:44 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.107 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.108 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #include "pppoe.h"
 
@@ -495,7 +495,9 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				}
 			}
 			break;	/* ignored */
-		case PPPOE_TAG_HUNIQUE:
+		case PPPOE_TAG_HUNIQUE: {
+			struct ifnet *rcvif;
+			int s;
 			if (sc != NULL)
 				break;
 			n = m_pulldown(m, off + sizeof(*pt), len, &noff);
@@ -508,11 +510,14 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			hunique = mtod(n, uint8_t *) + noff;
 			hunique_len = len;
 #endif
+			rcvif = m_get_rcvif(m, &s);
 			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
-			    len, m->m_pkthdr.rcvif);
+			    len, rcvif);
+			m_put_rcvif(rcvif, &s);
 			if (sc != NULL)
 				devname = sc->sc_sppp.pp_if.if_xname;
 			break;
+		}
 		case PPPOE_TAG_ACCOOKIE:
 			if (ac_cookie == NULL) {
 				n = m_pulldown(m, off + sizeof(*pt), len,
@@ -623,7 +628,7 @@ breakbreak:;
 		}
 		sc = pppoe_find_softc_by_hunique(ac_cookie,
 						 ac_cookie_len,
-						 m->m_pkthdr.rcvif);
+						 m_get_rcvif_NOMPSAFE(m));
 		if (sc == NULL) {
 			/* be quiet if there is not a single pppoe instance */
 			if (!LIST_EMPTY(&pppoe_softc_list))
@@ -718,12 +723,18 @@ breakbreak:;
 		sc->sc_state = PPPOE_STATE_SESSION;
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
 		break;
-	case PPPOE_CODE_PADT:
-		sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
+	case PPPOE_CODE_PADT: {
+		struct ifnet *rcvif;
+		int s;
+
+		rcvif = m_get_rcvif(m, &s);
+		sc = pppoe_find_softc_by_session(session, rcvif);
+		m_put_rcvif(rcvif, &s);
 		if (sc == NULL)
 			goto done;
 		pppoe_clear_softc(sc, "received PADT");
 		break;
+	}
 	default:
 		printf("%s: unknown code (0x%04x) session = 0x%04x\n",
 		    sc? sc->sc_sppp.pp_if.if_xname : "pppoe",
@@ -755,6 +766,8 @@ pppoe_data_input(struct mbuf *m)
 	uint16_t session, plen;
 	struct pppoe_softc *sc;
 	struct pppoehdr *ph;
+	struct ifnet *rcvif;
+	struct psref psref;
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 	uint8_t shost[ETHER_ADDR_LEN];
 #endif
@@ -789,15 +802,18 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 
 	session = ntohs(ph->session);
-	sc = pppoe_find_softc_by_session(session, m->m_pkthdr.rcvif);
+	rcvif = m_get_rcvif_psref(m, &psref);
+	sc = pppoe_find_softc_by_session(session, rcvif);
 	if (sc == NULL) {
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 		printf("pppoe: input for unknown session 0x%x, sending PADT\n",
 		    session);
-		pppoe_send_padt(m->m_pkthdr.rcvif, session, shost);
+		pppoe_send_padt(rcvif, session, shost);
 #endif
+		m_put_rcvif_psref(rcvif, &psref);
 		goto drop;
 	}
+	m_put_rcvif_psref(rcvif, &psref);
 
 	plen = ntohs(ph->plen);
 

@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.4 2016/04/25 21:21:02 rjs Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.5 2016/06/10 13:31:44 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.4 2016/04/25 21:21:02 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.5 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -160,8 +160,8 @@ sctp6_input(struct mbuf **mp, int *offp, int proto)
 	if (sh->dest_port == 0)
 		goto bad;
 	if ((sctp_no_csum_on_loopback == 0) ||
-	   (m->m_pkthdr.rcvif == NULL) ||
-	   (m->m_pkthdr.rcvif->if_type != IFT_LOOP)) {
+	   (m_get_rcvif_NOMPSAFE(m) == NULL) ||
+	   (m_get_rcvif_NOMPSAFE(m)->if_type != IFT_LOOP)) {
 		/* we do NOT validate things from the loopback if the
 		 * sysctl is set to 1.
 		 */

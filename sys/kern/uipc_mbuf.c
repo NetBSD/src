@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.166 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.167 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.166 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.167 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1171,7 +1171,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		if (n == NULL)
 			return NULL;
 		MCLAIM(n, m0->m_owner);
-		m_set_rcvif(n, m0->m_pkthdr.rcvif);
+		m_copy_rcvif(n, m0);
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
@@ -1783,7 +1783,7 @@ nextchain:
 		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
 		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
-		    m->m_pkthdr.len, m->m_pkthdr.rcvif,
+		    m->m_pkthdr.len, m_get_rcvif_NOMPSAFE(m),
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
 	}
 	if ((m->m_flags & M_EXT)) {

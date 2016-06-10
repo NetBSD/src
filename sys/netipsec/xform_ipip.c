@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.38 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.39 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.38 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.39 2016/06/10 13:31:44 ozaki-r Exp $");
 
 /*
  * IP-inside-IP processing
@@ -330,8 +330,8 @@ _ipip_input(struct mbuf *m, int iphlen, struct ifnet *gifp)
 	}
 
 	/* Check for local address spoofing. */
-	if ((m->m_pkthdr.rcvif == NULL ||
-	    !(m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK)) &&
+	if ((m_get_rcvif_NOMPSAFE(m) == NULL ||
+	    !(m_get_rcvif_NOMPSAFE(m)->if_flags & IFF_LOOPBACK)) &&
 	    ipip_allow != 2) {
 		int s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifp) {

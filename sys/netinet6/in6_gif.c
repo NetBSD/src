@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.73 2016/02/29 01:29:15 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.74 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.73 2016/02/29 01:29:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.74 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -229,11 +229,15 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	if (!gif_validate6(ip6, sc, m->m_pkthdr.rcvif)) {
+	struct psref psref;
+	struct ifnet *rcvif = m_get_rcvif_psref(m, &psref);
+	if (!gif_validate6(ip6, sc, rcvif)) {
+		m_put_rcvif_psref(rcvif, &psref);
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
+	m_put_rcvif_psref(rcvif, &psref);
 #endif
 
 	otos = ip6->ip6_flow;
@@ -350,7 +354,7 @@ gif_encapcheck6(struct mbuf *m, int off, int proto, void *arg)
 	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip6), (void *)&ip6);
-	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
+	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m_get_rcvif_NOMPSAFE(m) : NULL;
 
 	return gif_validate6(&ip6, sc, ifp);
 }

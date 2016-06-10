@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.122 2016/04/26 08:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.123 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.122 2016/04/26 08:44:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.123 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -519,7 +519,7 @@ udp6_input_checksum(struct mbuf *m, const struct udphdr *uh, int off, int len)
 	}
 
 	switch (m->m_pkthdr.csum_flags &
-	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv6) |
+	    ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_UDPv6) |
 	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 	case M_CSUM_UDPv6|M_CSUM_TCP_UDP_BAD:
 		UDP_CSUM_COUNTER_INCR(&udp6_hwcsum_bad);

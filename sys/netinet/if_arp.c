@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.210 2016/05/17 09:00:24 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.211 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.210 2016/05/17 09:00:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.211 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -890,6 +890,8 @@ arpintr(void)
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 	while (arpintrq.ifq_head) {
+		struct ifnet *rcvif;
+
 		s = splnet();
 		IF_DEQUEUE(&arpintrq, m);
 		splx(s);
@@ -906,7 +908,8 @@ arpintr(void)
 		    (ar = mtod(m, struct arphdr *)) == NULL)
 			goto badlen;
 
-		switch (m->m_pkthdr.rcvif->if_type) {
+		rcvif = m_get_rcvif(m, &s);
+		switch (rcvif->if_type) {
 		case IFT_IEEE1394:
 			arplen = sizeof(struct arphdr) +
 			    ar->ar_hln + 2 * ar->ar_pln;
@@ -916,6 +919,7 @@ arpintr(void)
 			    2 * ar->ar_hln + 2 * ar->ar_pln;
 			break;
 		}
+		m_put_rcvif(rcvif, &s);
 
 		if (/* XXX ntohs(ar->ar_hrd) == ARPHRD_ETHER && */
 		    m->m_len >= arplen)
@@ -955,7 +959,7 @@ static void
 in_arpinput(struct mbuf *m)
 {
 	struct arphdr *ah;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp, *rcvif = NULL;
 	struct llentry *la = NULL;
 	struct in_ifaddr *ia;
 #if NBRIDGE > 0
@@ -969,12 +973,14 @@ in_arpinput(struct mbuf *m)
 	int op;
 	void *tha;
 	uint64_t *arps;
+	struct psref psref;
 
 	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
 		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
+	rcvif = ifp = m_get_rcvif_psref(m, &psref);
 	/*
 	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or
 	 * ar_tpa().
@@ -1014,14 +1020,14 @@ in_arpinput(struct mbuf *m)
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING))) {
 			index++;
-			if (ia->ia_ifp == m->m_pkthdr.rcvif &&
+			if (ia->ia_ifp == rcvif &&
 			    carp_iamatch(ia, ar_sha(ah),
 			    &count, index)) {
 				break;
 				}
 		} else
 #endif
-			    if (ia->ia_ifp == m->m_pkthdr.rcvif)
+			    if (ia->ia_ifp == rcvif)
 				break;
 #if NBRIDGE > 0
 		/*
@@ -1031,8 +1037,8 @@ in_arpinput(struct mbuf *m)
 		 * layer.  Note we still prefer a perfect match,
 		 * but allow this weaker match if necessary.
 		 */
-		if (m->m_pkthdr.rcvif->if_bridge != NULL &&
-		    m->m_pkthdr.rcvif->if_bridge == ia->ia_ifp->if_bridge)
+		if (rcvif->if_bridge != NULL &&
+		    rcvif->if_bridge == ia->ia_ifp->if_bridge)
 			bridge_ia = ia;
 #endif /* NBRIDGE > 0 */
 
@@ -1042,13 +1048,16 @@ in_arpinput(struct mbuf *m)
 #if NBRIDGE > 0
 	if (ia == NULL && bridge_ia != NULL) {
 		ia = bridge_ia;
+		m_put_rcvif_psref(rcvif, &psref);
+		rcvif = NULL;
+		/* FIXME */
 		ifp = bridge_ia->ia_ifp;
 	}
 #endif
 
 	if (ia == NULL) {
 		INADDR_TO_IA(isaddr, ia);
-		while ((ia != NULL) && ia->ia_ifp != m->m_pkthdr.rcvif)
+		while ((ia != NULL) && ia->ia_ifp != rcvif)
 			NEXT_IA_WITH_SAME_ADDR(ia);
 
 		if (ia == NULL) {
@@ -1272,11 +1281,12 @@ reply:
 		/* Proxy ARP */
 		struct llentry *lle = NULL;
 		struct sockaddr_in sin;
-
 #if NCARP > 0
-		if (ifp->if_type == IFT_CARP &&
-		    m->m_pkthdr.rcvif->if_type != IFT_CARP)
+		int s;
+		struct ifnet *_rcvif = m_get_rcvif(m, &s);
+		if (ifp->if_type == IFT_CARP && _rcvif->if_type != IFT_CARP)
 			goto out;
+		m_put_rcvif(_rcvif, &s);
 #endif
 
 		tha = ar_tha(ah);
@@ -1325,12 +1335,16 @@ reply:
 	arps[ARP_STAT_SNDREPLY]++;
 	ARP_STAT_PUTREF();
 	(*ifp->if_output)(ifp, m, &sa, NULL);
+	if (rcvif != NULL)
+		m_put_rcvif_psref(rcvif, &psref);
 	return;
 
 out:
 	if (la != NULL)
 		LLE_WUNLOCK(la);
 drop:
+	if (rcvif != NULL)
+		m_put_rcvif_psref(rcvif, &psref);
 	m_freem(m);
 }
 
@@ -1784,15 +1798,17 @@ out:
 void
 in_revarpinput(struct mbuf *m)
 {
-	struct ifnet *ifp;
 	struct arphdr *ah;
 	void *tha;
 	int op;
+	struct ifnet *rcvif;
+	int s;
 
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
 
-	switch (m->m_pkthdr.rcvif->if_type) {
+	rcvif = m_get_rcvif(m, &s);
+	switch (rcvif->if_type) {
 	case IFT_IEEE1394:
 		/* ARP without target hardware address is not supported */
 		goto out;
@@ -1803,6 +1819,7 @@ in_revarpinput(struct mbuf *m)
 	switch (op) {
 	case ARPOP_REQUEST:
 	case ARPOP_REPLY:	/* per RFC */
+		m_put_rcvif(rcvif, &s);
 		in_arpinput(m);
 		return;
 	case ARPOP_REVREPLY:
@@ -1813,15 +1830,14 @@ in_revarpinput(struct mbuf *m)
 	}
 	if (!revarp_in_progress)
 		goto out;
-	ifp = m->m_pkthdr.rcvif;
-	if (ifp != myip_ifp) /* !same interface */
+	if (rcvif != myip_ifp) /* !same interface */
 		goto out;
 	if (myip_initialized)
 		goto wake;
 	tha = ar_tha(ah);
 	if (tha == NULL)
 		goto out;
-	if (memcmp(tha, CLLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
+	if (memcmp(tha, CLLADDR(rcvif->if_sadl), rcvif->if_sadl->sdl_alen))
 		goto out;
 	memcpy(&srv_ip, ar_spa(ah), sizeof(srv_ip));
 	memcpy(&myip, ar_tpa(ah), sizeof(myip));
@@ -1830,6 +1846,7 @@ wake:	/* Do wakeup every time in case it was missed. */
 	wakeup((void *)&myip);
 
 out:
+	m_put_rcvif(rcvif, &s);
 	m_freem(m);
 }
 
