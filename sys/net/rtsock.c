@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.188 2016/05/17 15:21:14 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.189 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.188 2016/05/17 15:21:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.189 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1038,7 +1038,7 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 	} else {
 		m->m_pkthdr.len = m->m_len = len;
 	}
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m_copyback(m, 0, datalen, data);
 	if (len > datalen)
 		(void)memset(mtod(m, char *) + datalen, 0, len - datalen);

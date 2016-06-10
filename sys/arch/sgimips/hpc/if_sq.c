@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.46 2016/06/10 13:27:12 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1013,7 +1013,7 @@ sq_rxintr(struct sq_softc *sc)
 
 
 		m->m_data += 2;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = framelen;
 
 		ifp->if_ipackets++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.44 2016/02/09 08:32:09 ozaki-r Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.45 2016/06/10 13:27:12 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.44 2016/02/09 08:32:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.45 2016/06/10 13:27:12 ozaki-r Exp $");
 
 #include "opt_emac.h"
 
@@ -1666,7 +1666,7 @@ emac_rxeob_intr(void *arg)
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

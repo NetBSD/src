@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.11 2016/05/26 05:04:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.12 2016/06/10 13:27:15 ozaki-r Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.11 2016/05/26 05:04:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.12 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2088,7 +2088,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m)
 		goto skip;
 
 	m_adj(m, sizeof(*rs));	/* Strip Rx status. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

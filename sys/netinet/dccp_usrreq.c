@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.7 2015/08/24 22:21:26 pooka Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.8 2016/06/10 13:27:16 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.7 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.8 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1427,7 +1427,7 @@ again:
 		dp->ndp++;
 	}
 
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 
 	if (!isipv6 && (len + hdrlen) > IP_MAXPACKET) {
 		error = EMSGSIZE;

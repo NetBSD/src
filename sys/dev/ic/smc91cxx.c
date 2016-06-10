@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.91 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.92 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.91 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.92 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1167,7 +1167,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		goto out;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = packetlen;
 
 	/*

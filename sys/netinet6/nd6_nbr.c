@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.117 2016/04/29 11:46:17 is Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.118 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.117 2016/04/29 11:46:17 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.118 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -388,7 +388,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	}
 	if (m == NULL)
 		return;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
@@ -885,7 +885,7 @@ nd6_na_output(
 	}
 	if (m == NULL)
 		return;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	if (IN6_IS_ADDR_MULTICAST(&daddr6)) {
 		m->m_flags |= M_MCAST;

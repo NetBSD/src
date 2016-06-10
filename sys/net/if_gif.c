@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.109 2016/05/31 03:52:40 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.110 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.109 2016/05/31 03:52:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.110 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -458,7 +458,7 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	pktlen = m->m_pkthdr.len;
 
 	bpf_mtap_af(ifp, af, m);

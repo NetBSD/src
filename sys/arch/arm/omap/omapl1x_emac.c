@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.3 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.4 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -653,7 +653,7 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 		buf_len -= ETHER_CRC_LEN;
 
 	bus_dmamap_unload(sc->sc_buft, map);
-	mb->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(mb, ifp);
 	mb->m_pkthdr.len = mb->m_len = buf_len;
 	ifp->if_ipackets++;
 
