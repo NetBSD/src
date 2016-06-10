@@ -1,4 +1,4 @@
-.\"	$NetBSD: sd.4,v 1.19 2016/06/09 14:52:48 kre Exp $
+.\"	$NetBSD: sd.4,v 1.20 2016/06/10 08:05:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -129,11 +129,12 @@ to partition the disk into a
 .Tn BIOS
 level partition.
 This allows sharing the disk with other operating systems.
-.Pp
+.\".Pp
 .\"If an uninitialized disk is opened, the slice table will be
 .\"initialized with a fictitious
 .\".Tn FreeBSD
-.\"slice spanning the entire disk.  Similarly, if an uninitialized
+.\"slice spanning the entire disk.
+.\"Similarly, if an uninitialized
 .\"(or
 .\".No non- Ns Tn FreeBSD )
 .\"slice is opened, its disklabel will be initialized with parameters returned
@@ -157,12 +158,13 @@ disks as well as to other disks.
 .Bl -tag -width SD_IO_TIMEOUT
 .It Dv SDRETRIES
 Set the number of retries that will be performed for operations it
-makes sense to retry (e.g., normal reads and writes). The default
-is four (4).
+makes sense to retry (e.g., normal reads and writes).
+The default is four (4).
 .It Dv SD_IO_TIMEOUT
 Set amount of time, in milliseconds, a normal read or write is expected
-to take. The defaults is sixty seconds (60000 milliseconds). This is used
-to set watchdog timers in the
+to take.
+The defaults is sixty seconds (60000 milliseconds).
+This is used to set watchdog timers in the
 .Tn SCSI
 HBA driver to catch commands that might have died on the device.
 .El
