@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.71 2016/06/05 10:50:36 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.72 2016/06/10 14:43:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.71 2016/06/05 10:50:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.72 2016/06/10 14:43:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -878,9 +878,6 @@ xhci_init(struct xhci_softc *sc)
 	if (rv != 0) {
 		return rv;
 	}
-
-	if (sc->sc_vendor_init)
-		sc->sc_vendor_init(sc);
 
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
