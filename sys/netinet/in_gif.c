@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.75 2016/01/26 06:00:10 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.76 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.75 2016/01/26 06:00:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.76 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -199,6 +199,8 @@ in_gif_input(struct mbuf *m, int off, int proto)
 	const struct ip *ip;
 	int af;
 	u_int8_t otos;
+	struct ifnet *rcvif;
+	struct psref psref;
 
 	ip = mtod(m, const struct ip *);
 
@@ -218,11 +220,14 @@ in_gif_input(struct mbuf *m, int off, int proto)
 		return;
 	}
 
-	if (!gif_validate4(ip, sc, m->m_pkthdr.rcvif)) {
+	rcvif = m_get_rcvif_psref(m, &psref);
+	if (!gif_validate4(ip, sc, rcvif)) {
+		m_put_rcvif_psref(rcvif, &psref);
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
+	m_put_rcvif_psref(rcvif, &psref);
 #endif
 	otos = ip->ip_tos;
 	m_adj(m, off);
@@ -349,7 +354,7 @@ gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip), &ip);
-	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
+	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m_get_rcvif_NOMPSAFE(m) : NULL;
 
 	return gif_validate4(&ip, sc, ifp);
 }

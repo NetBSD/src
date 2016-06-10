@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.51 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: natm.c,v 1.52 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.51 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.52 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -457,7 +457,7 @@ next:
     panic("natmintr no HDR");
 #endif
 
-  npcb = (struct natmpcb *) m->m_pkthdr.rcvif; /* XXX: overloaded */
+  npcb = (struct natmpcb *) m_get_rcvif_NOMPSAFE(m); /* XXX: overloaded */
   so = npcb->npcb_socket;
 
   s = splnet();			/* could have atm devs @ different levels */
