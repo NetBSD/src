@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.186 2016/05/18 08:40:51 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.187 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.186 2016/05/18 08:40:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.187 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -427,7 +427,7 @@ icmp6_error(struct mbuf *m, int type, int code, int param)
 	 * clear m->m_pkthdr.rcvif for safety, we should have enough scope
 	 * information in ip header (nip6).
 	 */
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
 	icmp6_reflect(m, sizeof(struct ip6_hdr)); /* header order: IPv6 - ICMPv6 */
@@ -721,7 +721,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 				/* Give up remote */
 				break;
 			}
-			n->m_pkthdr.rcvif = NULL;
+			m_reset_rcvif(n);
 			n->m_len = 0;
 			maxhlen = M_TRAILINGSPACE(n) - ICMP6_MAXLEN;
 			if (maxhlen < 0)
@@ -2384,7 +2384,7 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 
 	if (!m)
 		goto fail;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m->m_len = 0;
 	maxlen = M_TRAILINGSPACE(m);
 	maxlen = min(IPV6_MMTU, maxlen);

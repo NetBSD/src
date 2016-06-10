@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.82 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.83 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.82 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.83 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1347,7 +1347,7 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 			goto done;
 		}
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = pktlen;
 	m->m_len = pktlen;
 	m->m_data += fudge;

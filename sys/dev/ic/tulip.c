@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.186 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: tulip.c,v 1.187 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.186 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.187 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1352,7 +1352,7 @@ tlp_rxintr(struct tulip_softc *sc)
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*
