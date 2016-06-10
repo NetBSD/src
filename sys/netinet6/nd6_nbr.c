@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.118 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.119 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.118 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.119 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 void
 nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_solicit *nd_ns;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -111,10 +111,16 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	int tlladdr;
 	union nd_opts ndopts;
 	const struct sockaddr_dl *proxydl = NULL;
+	struct psref psref;
+
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (ifp == NULL)
+		goto freeit;
 
 	IP6_EXTHDR_GET(nd_ns, struct nd_neighbor_solicit *, m, off, icmp6len);
 	if (nd_ns == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
+		m_put_rcvif_psref(ifp, &psref);
 		return;
 	}
 	ip6 = mtod(m, struct ip6_hdr *); /* adjust pointer for safety */
@@ -325,6 +331,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	    (router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
 	    tlladdr, (const struct sockaddr *)proxydl);
  freeit:
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
 
@@ -333,6 +340,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6log(LOG_ERR, "dst=%s\n", ip6_sprintf(&daddr6));
 	nd6log(LOG_ERR, "tgt=%s\n", ip6_sprintf(&taddr6));
 	ICMP6_STATINC(ICMP6_STAT_BADNS);
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 }
 
@@ -532,7 +540,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 void
 nd6_na_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_advert *nd_na;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -550,6 +558,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct sockaddr_in6 ssin6;
 	int rt_announce;
 	bool checklink = false;
+	struct psref psref;
+
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (ifp == NULL)
+		goto freeit;
 
 	if (ip6->ip6_hlim != 255) {
 		nd6log(LOG_ERR,
@@ -561,6 +574,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 
 	IP6_EXTHDR_GET(nd_na, struct nd_neighbor_advert *, m, off, icmp6len);
 	if (nd_na == NULL) {
+		m_put_rcvif_psref(ifp, &psref);
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
 		return;
 	}
@@ -571,8 +585,10 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	is_override = ((flags & ND_NA_FLAG_OVERRIDE) != 0);
 
 	taddr6 = nd_na->nd_na_target;
-	if (in6_setscope(&taddr6, ifp, NULL))
+	if (in6_setscope(&taddr6, ifp, NULL)) {
+		m_put_rcvif_psref(ifp, &psref);
 		return;		/* XXX: impossible */
+	}
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log(LOG_ERR, "invalid target address %s\n",
@@ -815,6 +831,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (checklink)
 		pfxlist_onlink_check();
 
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
 
@@ -823,6 +840,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		LLE_WUNLOCK(ln);
 
 	ICMP6_STATINC(ICMP6_STAT_BADNA);
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 }
 

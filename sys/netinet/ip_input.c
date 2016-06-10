@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.328 2016/01/21 15:41:30 riastradh Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.329 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.328 2016/01/21 15:41:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.329 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -284,7 +284,7 @@ struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 
 static void		ipintr(void *);
 static void		ip_input(struct mbuf *);
-static void		ip_forward(struct mbuf *, int);
+static void		ip_forward(struct mbuf *, int, struct ifnet *);
 static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
@@ -374,13 +374,15 @@ ip_input(struct mbuf *m)
 	int checkif;
 	int srcrt = 0;
 	ifnet_t *ifp;
+	struct psref psref;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_input: not in the software "
 	    "interrupt handler; synchronization assumptions violated");
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	ifp = m->m_pkthdr.rcvif;
+
+	ifp = m_get_rcvif_psref(m, &psref);
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -403,12 +405,12 @@ ip_input(struct mbuf *m)
 				  (max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
 			IP_STATINC(IP_STAT_TOOSMALL);
-			return;
+			goto out;
 		}
 	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
 			IP_STATINC(IP_STAT_TOOSMALL);
-			return;
+			goto out;
 		}
 	}
 	ip = mtod(m, struct ip *);
@@ -424,7 +426,7 @@ ip_input(struct mbuf *m)
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
 			IP_STATINC(IP_STAT_BADHLEN);
-			return;
+			goto out;
 		}
 		ip = mtod(m, struct ip *);
 	}
@@ -528,7 +530,7 @@ ip_input(struct mbuf *m)
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
 		SOFTNET_UNLOCK();
 		if (freed || m == NULL) {
-			return;
+			goto out;
 		}
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
@@ -557,7 +559,7 @@ ip_input(struct mbuf *m)
 		if ((*altq_input)(m, AF_INET) == 0) {
 			/* Packet dropped by traffic conditioner. */
 			SOFTNET_UNLOCK();
-			return;
+			goto out;
 		}
 		SOFTNET_UNLOCK();
 	}
@@ -571,7 +573,7 @@ ip_input(struct mbuf *m)
 	 */
 	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m))
-		return;
+		goto out;
 
 	/*
 	 * Enable a consistency check between the destination address
@@ -659,8 +661,7 @@ ip_input(struct mbuf *m)
 			if (ip_mforward(m, ifp) != 0) {
 				SOFTNET_UNLOCK();
 				IP_STATINC(IP_STAT_CANTFORWARD);
-				m_freem(m);
-				return;
+				goto bad;
 			}
 			SOFTNET_UNLOCK();
 
@@ -681,8 +682,7 @@ ip_input(struct mbuf *m)
 		 */
 		if (!in_multi_group(ip->ip_dst, ifp, 0)) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
-			m_freem(m);
-			return;
+			goto bad;
 		}
 		goto ours;
 	}
@@ -694,6 +694,7 @@ ip_input(struct mbuf *m)
 	 * Not for us; forward if possible and desirable.
 	 */
 	if (ipforwarding == 0) {
+		m_put_rcvif_psref(ifp, &psref);
 		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 	} else {
@@ -704,6 +705,7 @@ ip_input(struct mbuf *m)
 		 * forwarding loop till TTL goes to 0.
 		 */
 		if (downmatch) {
+			m_put_rcvif_psref(ifp, &psref);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			return;
@@ -720,11 +722,14 @@ ip_input(struct mbuf *m)
 			SOFTNET_UNLOCK();
 		}
 #endif
-		ip_forward(m, srcrt);
+		ip_forward(m, srcrt, ifp);
+		m_put_rcvif_psref(ifp, &psref);
 	}
 	return;
 
 ours:
+	m_put_rcvif_psref(ifp, &psref);
+
 	/*
 	 * If offset or IP_MF are set, must reassemble.
 	 */
@@ -781,12 +786,17 @@ ours:
 	SOFTNET_UNLOCK();
 	return;
 bad:
+	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
 
 badcsum:
+	m_put_rcvif_psref(ifp, &psref);
 	IP_STATINC(IP_STAT_BADSUM);
 	m_freem(m);
+	return;
+out:
+	m_put_rcvif_psref(ifp, &psref);
 }
 
 /*
@@ -988,7 +998,10 @@ ip_dooptions(struct mbuf *m)
 			case IPOPT_TS_TSONLY:
 				break;
 
-			case IPOPT_TS_TSANDADDR:
+			case IPOPT_TS_TSANDADDR: {
+				struct ifnet *rcvif;
+				int s;
+
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
 					code = (u_char *)&ipt->ipt_ptr -
@@ -996,14 +1009,17 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				}
 				ipaddr.sin_addr = dst;
+				rcvif = m_get_rcvif(m, &s);
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
-				    m->m_pkthdr.rcvif));
+				    rcvif));
+				m_put_rcvif(rcvif, &s);
 				if (ia == 0)
 					continue;
 				bcopy(&ia->ia_addr.sin_addr,
 				    cp0, sizeof(struct in_addr));
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
+			}
 
 			case IPOPT_TS_PRESPEC:
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
@@ -1034,12 +1050,18 @@ ip_dooptions(struct mbuf *m)
 		}
 	}
 	if (forward) {
+		struct ifnet *rcvif;
+		struct psref psref;
+
 		if (ip_forwsrcrt == 0) {
 			type = ICMP_UNREACH;
 			code = ICMP_UNREACH_SRCFAIL;
 			goto bad;
 		}
-		ip_forward(m, 1);
+
+		rcvif = m_get_rcvif_psref(m, &psref);
+		ip_forward(m, 1, rcvif);
+		m_put_rcvif_psref(rcvif, &psref);
 		return true;
 	}
 	return false;
@@ -1186,7 +1208,7 @@ ip_drainstub(void)
  * via a source route.
  */
 static void
-ip_forward(struct mbuf *m, int srcrt)
+ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct rtentry *rt;
@@ -1254,7 +1276,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	 * Also, don't send redirect if forwarding using a default route
 	 * or a route modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
+	if (rt->rt_ifp == rcvif &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr) &&
 	    ipsendredirects && !srcrt) {
@@ -1360,9 +1382,11 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 	struct socket *so = inp->inp_socket;
-	ifnet_t *ifp = m->m_pkthdr.rcvif;
+	ifnet_t *ifp;
 	int inpflags = inp->inp_flags;
+	struct psref psref;
 
+	ifp = m_get_rcvif_psref(m, &psref);
 	if (so->so_options & SO_TIMESTAMP
 #ifdef SO_OTIMESTAMP
 	    || so->so_options & SO_OTIMESTAMP
@@ -1423,6 +1447,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
+	m_put_rcvif_psref(ifp, &psref);
 }
 
 /*
