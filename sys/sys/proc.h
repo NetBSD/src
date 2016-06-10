@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.330 2016/04/27 21:15:40 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.331 2016/06/10 23:24:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -305,6 +305,7 @@ struct proc {
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
 	pid_t 		p_fpid;		/* :: forked pid */
+	u_int		p_nsems;	/* Count of semaphores */
 
 /*
  * End area that is zeroed on creation

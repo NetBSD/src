@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.45 2016/02/26 17:13:01 christos Exp $
+.\"	$NetBSD: sysconf.3,v 1.46 2016/06/10 23:24:33 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -148,6 +148,9 @@ The version of
 and its
 Semaphores
 option to which the system attempts to conform,
+otherwise \-1.
+.It Li _SC_SEM_NSEMS_MAX
+The maximum number of semaphores that one process can have open at a time,
 otherwise \-1.
 .It Li _SC_SHELL
 Return 1 if
