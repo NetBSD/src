@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_ttl.c,v 1.7 2016/06/10 13:27:16 ozaki-r Exp $ */
+/*	$NetBSD: mpls_ttl.c,v 1.8 2016/06/10 13:31:44 ozaki-r Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.7 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_ttl.c,v 1.8 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -311,7 +311,7 @@ mpls_icmp_error(struct mbuf *n, int type, int code, n_long dest,
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 	m->m_pkthdr.len = m->m_len;
-	m_set_rcvif(m, n->m_pkthdr.rcvif);
+	m_copy_rcvif(m, n);
 	nip = mtod(m, struct ip *);
 	/* ip_v set in ip_output */
 	nip->ip_hl = sizeof(struct ip) >> 2;
