@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.22 2016/04/28 00:16:56 ozaki-r Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.23 2016/06/10 13:31:44 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.22 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.23 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -188,13 +188,13 @@ mplsintr(void)
 			return;
 
 		if (((m->m_flags & M_PKTHDR) == 0) ||
-		    (m->m_pkthdr.rcvif == 0))
+		    (m->m_pkthdr.rcvif_index == 0))
 			panic("mplsintr(): no pkthdr or rcvif");
 
 #ifdef MBUFTRACE
 		m_claimm(m, &mpls_owner);
 #endif
-		mpls_input(m->m_pkthdr.rcvif, m);
+		mpls_input(m_get_rcvif_NOMPSAFE(m), m);
 	}
 }
 

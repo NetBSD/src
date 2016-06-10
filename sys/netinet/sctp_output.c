@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.5 2016/06/10 13:27:16 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.6 2016/06/10 13:31:44 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.5 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.6 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3470,7 +3470,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 				/* pull out the scope_id from incoming pkt */
 #if defined(SCTP_BASE_FREEBSD) || defined(__APPLE__)
 				(void)in6_recoverscope(sin6, &in6_src,
-				    init_pkt->m_pkthdr.rcvif);
+				    m_get_rcvif_NOMPSAFE(init_pkt));
 				in6_embedscope(&sin6->sin6_addr, sin6, NULL,
 				    NULL);
 #else
@@ -8104,9 +8104,8 @@ sctp_send_shutdown_complete2(struct mbuf *m, int iphlen, struct sctphdr *sh)
 
 	mout->m_pkthdr.len = mout->m_len;
 	/* add checksum */
-	if ((sctp_no_csum_on_loopback) &&
-	   (m->m_pkthdr.rcvif) &&
-	   (m->m_pkthdr.rcvif->if_type == IFT_LOOP)) {
+	if ((sctp_no_csum_on_loopback) && m_get_rcvif_NOMPSAFE(m) != NULL &&
+	    m_get_rcvif_NOMPSAFE(m)->if_type == IFT_LOOP) {
 		comp_cp->sh.checksum =  0;
 	} else {
 		comp_cp->sh.checksum = sctp_calculate_sum(mout, NULL, offset_out);
@@ -9046,9 +9045,8 @@ sctp_send_abort(struct mbuf *m, int iphlen, struct sctphdr *sh, uint32_t vtag,
 	}
 
 	/* add checksum */
-	if ((sctp_no_csum_on_loopback) &&
-	   (m->m_pkthdr.rcvif) &&
-	   (m->m_pkthdr.rcvif->if_type == IFT_LOOP)) {
+	if ((sctp_no_csum_on_loopback) && m_get_rcvif_NOMPSAFE(m) != NULL &&
+	    m_get_rcvif_NOMPSAFE(m)->if_type == IFT_LOOP) {
 		abm->sh.checksum =  0;
 	} else {
 		abm->sh.checksum = sctp_calculate_sum(mout, NULL, iphlen_out);
@@ -9130,9 +9128,8 @@ sctp_send_operr_to(struct mbuf *m, int iphlen,
 		padlen = 4 - (scm->m_pkthdr.len % 4);
 		m_copyback(scm, scm->m_pkthdr.len, padlen, (void *)&cpthis);
 	}
-	if ((sctp_no_csum_on_loopback) &&
-	    (m->m_pkthdr.rcvif) &&
-	    (m->m_pkthdr.rcvif->if_type == IFT_LOOP)) {
+	if ((sctp_no_csum_on_loopback) && m_get_rcvif_NOMPSAFE(m) != NULL &&
+	    m_get_rcvif_NOMPSAFE(m)->if_type == IFT_LOOP) {
 		val = 0;
 	} else {
 		val = sctp_calculate_sum(scm, NULL, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.337 2016/05/31 04:05:01 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.338 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.337 2016/05/31 04:05:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.338 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1245,7 +1245,7 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 		KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 		next = m->m_nextpkt;
-		if (m->m_pkthdr.rcvif != ifp) {
+		if (m->m_pkthdr.rcvif_index != ifp->if_index) {
 			prev = m;
 			continue;
 		}
@@ -2222,6 +2222,26 @@ if_get_byindex(u_int idx, struct psref *psref)
 
 	return ifp;
 }
+
+/*
+ * XXX unsafe
+ */
+void
+if_acquire_unsafe(struct ifnet *ifp, struct psref *psref)
+{
+
+	KASSERT(ifp->if_index != 0);
+	KASSERT(if_byindex(ifp->if_index) != NULL);
+	psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+}
+
+bool
+if_held(struct ifnet *ifp)
+{
+
+	return psref_held(&ifp->if_psref, ifnet_psref_class);
+}
+
 
 /* common */
 int

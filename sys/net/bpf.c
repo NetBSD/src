@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.197 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.198 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.197 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.198 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1469,7 +1469,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	struct mbuf mb;
 
 	/* Skip outgoing duplicate packets. */
-	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif_index == 0) {
 		m->m_flags &= ~M_PROMISC;
 		return;
 	}
@@ -1486,7 +1486,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	mb.m_data = data;
 	mb.m_len = dlen;
 
-	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif != NULL);
+	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif_index != 0);
 }
 
 /*
@@ -1500,7 +1500,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 	void *marg;
 
 	/* Skip outgoing duplicate packets. */
-	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif_index == 0) {
 		m->m_flags &= ~M_PROMISC;
 		return;
 	}
@@ -1517,7 +1517,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 		buflen = 0;
 	}
 
-	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif != NULL);
+	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif_index != 0);
 }
 
 /*
