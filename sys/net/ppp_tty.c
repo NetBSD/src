@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.59 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.60 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.59 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.60 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #include "ppp.h"
 
@@ -396,7 +396,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
 
     m0->m_len = 0;
     m0->m_pkthdr.len = uio->uio_resid;
-    m0->m_pkthdr.rcvif = NULL;
+    m_reset_rcvif(m0);
 
     if (uio->uio_resid >= MCLBYTES / 2)
 	MCLGET(m0, M_DONTWAIT);

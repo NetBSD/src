@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.71 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.72 2016/06/10 13:27:15 ozaki-r Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.71 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.72 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1076,7 +1076,7 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		m->m_data += ETHER_ALIGN;
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pktlen;
 
 		memcpy(mtod(m, uint8_t *), buf, pktlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.49 2016/01/20 21:44:00 riastradh Exp $	*/
+/*	$NetBSD: keysock.c,v 1.50 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.49 2016/01/20 21:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.50 2016/06/10 13:27:16 ozaki-r Exp $");
 
 /* This code has derived from sys/net/rtsock.c on FreeBSD2.2.5 */
 
@@ -271,7 +271,7 @@ key_sendup(struct socket *so, struct sadb_msg *msg, u_int len,
 		n = NULL;
 	}
 	m->m_pkthdr.len = len;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m_copyback(m, 0, len, msg);
 
 	/* avoid duplicated statistics */

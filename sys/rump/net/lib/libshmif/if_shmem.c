@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.66 2016/04/19 05:48:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.67 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.66 2016/04/19 05:48:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.67 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -743,7 +743,7 @@ shmif_rcv(void *arg)
 		}
 
 		m->m_len = m->m_pkthdr.len = sp.sp_len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/*
 		 * Test if we want to pass the packet upwards

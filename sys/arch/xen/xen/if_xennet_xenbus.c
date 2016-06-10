@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.67 2016/02/16 08:41:32 bouyer Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.68 2016/06/10 13:27:13 ozaki-r Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.67 2016/02/16 08:41:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.68 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1073,7 +1073,7 @@ again:
 		}
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		req->rxreq_va = (vaddr_t)pool_cache_get_paddr(
 		    if_xennetrxbuf_cache, PR_NOWAIT, &req->rxreq_pa);
 		if (__predict_false(req->rxreq_va == 0)) {

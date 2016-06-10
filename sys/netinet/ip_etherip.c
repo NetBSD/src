@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.16 2016/02/09 08:32:12 ozaki-r Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.17 2016/06/10 13:27:16 ozaki-r Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.16 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.17 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -251,7 +251,7 @@ ip_etherip_input(struct mbuf *m, ...)
 		return;
 	}
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 
 	bpf_mtap(ifp, m);

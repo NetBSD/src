@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.38 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.39 2016/06/10 13:27:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.38 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.39 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -267,7 +267,7 @@ kttcp_sosend(struct socket *so, unsigned long long slen,
 					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
-					m->m_pkthdr.rcvif = NULL;
+					m_reset_rcvif(m);
 				} else {
 					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;
