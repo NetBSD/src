@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.56 2016/06/05 10:45:16 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.57 2016/06/10 15:19:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.56 2016/06/05 10:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.57 2016/06/10 15:19:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1764,6 +1764,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * UF_ENDPOINT_HALT).
 		 */
 		xfer->ux_status = err;
+		callout_stop(&xfer->ux_callout);
 		xhci_clear_endpoint_stall_async(xfer);
 		return;
 	default:
