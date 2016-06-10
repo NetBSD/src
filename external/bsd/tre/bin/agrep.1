@@ -1,5 +1,5 @@
-.\" $NetBSD: agrep.1,v 1.1 2011/11/05 22:39:13 christos Exp $
-.Dd November 21, 2004
+.\" $NetBSD: agrep.1,v 1.2 2016/06/10 05:11:17 agc Exp $
+.Dd January 29, 2015
 .Dt AGREP 1
 .Os
 .Sh NAME
@@ -97,6 +97,9 @@ defines mail messages as records in a Mailbox format file.
 Select non-matching records instead of matching records.
 .It Fl V , Fl Fl version
 Print version information and exit.
+.It Fl r , Fl Fl recursive
+If a directory is given as one of the command line arguments,
+look in every directory entry in the subdirectory, recursively.
 .It Fl y , Fl Fl nothing
 Does nothing.
 This options exists only for compatibility with the

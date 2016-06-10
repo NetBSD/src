@@ -42,7 +42,7 @@
 
 /* Short options. */
 static char const short_options[] =
-"cd:e:hiklnqsvwyBD:E:HI:MS:V0123456789-:";
+"cd:e:hiklnqrsvwyBD:E:HI:MS:V0123456789-:";
 
 static int show_help;
 char *program_name;
@@ -76,6 +76,7 @@ static struct option const long_options[] =
   {"nothing", no_argument, NULL, 'y'},
   {"quiet", no_argument, NULL, 'q'},
   {"record-number", no_argument, NULL, 'n'},
+  {"recursive", no_argument, NULL, 'r'},
   {"regexp", required_argument, NULL, 'e'},
   {"show-cost", no_argument, NULL, 's'},
   {"show-position", no_argument, NULL, SHOW_POSITION_OPTION},
@@ -126,6 +127,7 @@ Miscellaneous:\n\
   -d, --delimiter=PATTERN   set the record delimiter regular expression\n\
   -v, --invert-match	    select non-matching records\n\
   -V, --version		    print version information and exit\n\
+  -r, --recursive           also search in any subdirectories\n\
   -y, --nothing		    does nothing (for compatibility with the non-free\n\
 			    agrep program)\n\
       --help		    display this help and exit\n\
@@ -186,6 +188,7 @@ static int count_matches;  /* Count matching records. */
 static int list_files;	   /* List matching files. */
 static int color_option;   /* Highlight matches. */
 static int print_position;  /* Show start and end offsets for matches. */
+static int recursive;       /* Search in subdirectories too */
 
 static int best_match;	     /* Output only best matches. */
 static int best_cost;	     /* Best match cost found so far. */
@@ -307,6 +310,82 @@ tre_agrep_get_next_record(int fd, const char *filename)
     }
 }
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+
+#include <dirent.h>
+
+static int
+isbinaryfile(const char *filename)
+{
+	struct stat	 st;
+	size_t		 size;
+	size_t		 i;
+	char		*mapped;
+	FILE		*fp;
+	int		 isbin;
+
+	if ((fp = fopen(filename, "r")) == NULL) {
+		return 1;
+	}
+	fstat(fileno(fp), &st);
+	isbin = 0;
+	if ((st.st_mode & S_IFMT) != S_IFREG) {
+		isbin = 1;
+	} else {
+		size = (size_t)st.st_size;
+		mapped = mmap(NULL, size, PROT_READ, MAP_SHARED, fileno(fp), 0);
+		for (i = 0 ; !isbin && i < size ; i++) {
+			if (mapped[i] == 0x0) {
+				isbin = 1;
+			}
+		}
+		munmap(mapped, size);
+	}
+	fclose(fp);
+	return isbin;
+}
+
+static int tre_agrep_handle_file(const char */*filename*/);
+
+static int
+tre_agrep_handle_dirent(const char *ent)
+{
+	struct dirent	 storage;
+	struct dirent	*dp;
+	struct stat	 st;
+	char		 path[8192];
+	DIR		*dirp;
+	int		 ret;
+	int		 ok;
+
+	if (ent == NULL || strcmp(ent, "-") == 0) {
+		return tre_agrep_handle_file(ent);
+	}
+	if (lstat(ent, &st) < 0) {
+		return tre_agrep_handle_file(ent);
+	}
+	if ((st.st_mode & S_IFMT) == S_IFDIR && recursive) {
+		if ((dirp = opendir(ent)) == NULL) {
+			fprintf(stderr, "can't open directory '%s'\n", ent);
+			return 0;
+		}
+		for (ret = 0 ; readdir_r(dirp, &storage, &dp) == 0 && dp != NULL ; ) {
+			if (strcmp(dp->d_name, ".") == 0 ||
+			    strcmp(dp->d_name, "..") == 0) {
+				continue;
+			}
+			snprintf(path, sizeof(path), "%s/%s", ent, dp->d_name);
+			if ((ok = tre_agrep_handle_dirent(path)) != 0) {
+				ret = ok;
+			}
+		}
+		closedir(dirp);
+		return ret;
+	}
+	return tre_agrep_handle_file(ent);
+}
 
 static int
 tre_agrep_handle_file(const char *filename)
@@ -404,6 +483,11 @@ tre_agrep_handle_file(const char *filename)
 	    {
 	      printf("%s\n", filename);
 	      break;
+	    }
+	  else if (!count_matches && isbinaryfile(filename))
+	    {
+	      if (print_filename)
+		printf("Binary file %s matches\n", filename);
 	    }
 	  else if (!count_matches)
 	    {
@@ -546,6 +630,11 @@ main(int argc, char **argv)
 	  break;
 	case 'q':
 	  be_silent = 1;
+	  break;
+	case 'r':
+	  /* also search in sub-directories */
+	  recursive = 1;
+	  print_filename = 1;
 	  break;
 	case 's':
 	  /* Print match cost of matching record. */
@@ -797,7 +886,7 @@ Copyright (c) 2001-2009 Ville Laurikari <vl@iki.fi>.\n"));
       /* Scan all files once without outputting anything, searching
 	 for the best matches. */
       while (optind < argc)
-	tre_agrep_handle_file(argv[optind++]);
+	tre_agrep_handle_dirent(argv[optind++]);
 
       /* If there were no matches, bail out now. */
       if (best_cost == INT_MAX)
@@ -810,13 +899,13 @@ Copyright (c) 2001-2009 Ville Laurikari <vl@iki.fi>.\n"));
       best_match = 2;
       optind = first_ind;
       while (optind < argc)
-	tre_agrep_handle_file(argv[optind++]);
+	tre_agrep_handle_dirent(argv[optind++]);
     }
   else
     {
       /* Normal mode. */
       while (optind < argc)
-	tre_agrep_handle_file(argv[optind++]);
+	tre_agrep_handle_dirent(argv[optind++]);
     }
 
   return have_matches == 0;
