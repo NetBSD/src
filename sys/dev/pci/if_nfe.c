@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.60 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.61 2016/06/10 13:27:14 ozaki-r Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.60 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.61 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -917,7 +917,7 @@ nfe_rxeof(struct nfe_softc *sc)
 mbufcopied:
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		if ((sc->sc_flags & NFE_HW_CSUM) != 0) {
 			/*

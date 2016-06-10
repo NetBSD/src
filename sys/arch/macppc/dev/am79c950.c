@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.34 2016/02/09 08:32:08 ozaki-r Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.35 2016/06/10 13:27:11 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.34 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.35 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -616,7 +616,7 @@ mace_get(struct mc_softc *sc, uint8_t *pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.48 2016/05/26 05:04:46 ozaki-r Exp $ */
+/*	$NetBSD: if_ural.c,v 1.49 2016/06/10 13:27:15 ozaki-r Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.48 2016/05/26 05:04:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.49 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -950,7 +950,7 @@ ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 	m->m_flags |= M_HASFCS;	/* h/w leaves FCS */
 
