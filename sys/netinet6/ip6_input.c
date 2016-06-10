@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.159 2016/05/19 08:53:25 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.160 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.159 2016/05/19 08:53:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.160 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -217,16 +217,23 @@ ip6intr(void *arg __unused)
 
 	mutex_enter(softnet_lock);
 	while ((m = pktq_dequeue(ip6_pktq)) != NULL) {
-		const ifnet_t *ifp = m->m_pkthdr.rcvif;
+		struct psref psref;
+		struct ifnet *rcvif = m_get_rcvif_psref(m, &psref);
 
-		/*
-		 * Drop the packet if IPv6 is disabled on the interface.
-		 */
-		if ((ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED)) {
+		if (rcvif == NULL) {
 			m_freem(m);
 			continue;
 		}
-		ip6_input(m);
+		/*
+		 * Drop the packet if IPv6 is disabled on the interface.
+		 */
+		if ((ND_IFINFO(rcvif)->flags & ND6_IFF_IFDISABLED)) {
+			m_put_rcvif_psref(rcvif, &psref);
+			m_freem(m);
+			continue;
+		}
+		ip6_input(m, rcvif);
+		m_put_rcvif_psref(rcvif, &psref);
 	}
 	mutex_exit(softnet_lock);
 }
@@ -234,7 +241,7 @@ ip6intr(void *arg __unused)
 extern struct	route ip6_forward_rt;
 
 void
-ip6_input(struct mbuf *m)
+ip6_input(struct mbuf *m, struct ifnet *rcvif)
 {
 	struct ip6_hdr *ip6;
 	int hit, off = sizeof(struct ip6_hdr), nest;
@@ -248,7 +255,6 @@ ip6_input(struct mbuf *m)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
-	struct ifnet *rcvif = m->m_pkthdr.rcvif;
 
 	/*
 	 * make sure we don't have onion peering information into m_tag.
@@ -1058,8 +1064,7 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 
 		memcpy(&pi6.ipi6_addr, &ip6->ip6_dst, sizeof(struct in6_addr));
 		in6_clearscope(&pi6.ipi6_addr);	/* XXX */
-		pi6.ipi6_ifindex = m->m_pkthdr.rcvif ?
-		    m->m_pkthdr.rcvif->if_index : 0;
+		pi6.ipi6_ifindex = m->m_pkthdr.rcvif_index;
 		*mp = sbcreatecontrol((void *) &pi6,
 		    sizeof(struct in6_pktinfo),
 		    IS2292(IPV6_2292PKTINFO, IPV6_PKTINFO), IPPROTO_IPV6);
