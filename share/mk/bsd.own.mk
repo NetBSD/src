@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.930 2016/06/10 00:17:48 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.931 2016/06/10 03:36:55 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1358,9 +1358,18 @@ X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
+# During transition from xorg-server 1.10 to 1.18
+.if 1
+XORG_SERVER_SUBDIR?=xorg-server
+.else
+XORG_SERVER_SUBDIR?=xorg-server.old
+.endif
+
+X11SRCDIR.xorg-server?=		${X11SRCDIRMIT}/${XORG_SERVER_SUBDIR}/dist
+
 .for _dir in \
 	xtrans fontconfig freetype evieext mkfontscale bdftopcf \
-	xkbcomp xorg-cf-files imake xorg-server xbiff xkeyboard-config \
+	xkbcomp xorg-cf-files imake xbiff xkeyboard-config \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts fstobdf \
 	glu glw mesa-demos MesaGLUT MesaLib MesaLib7 \
