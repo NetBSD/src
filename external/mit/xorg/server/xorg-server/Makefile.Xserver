@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.13 2012/10/03 21:50:14 gsutre Exp $
+#	$NetBSD: Makefile.Xserver,v 1.14 2016/06/10 03:37:34 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -63,7 +63,7 @@
 	hw/xfree86/xf86modes
 
 .if !defined(LIBDIR.${_SL})
-LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/${_SL} && ${PRINTOBJDIR}
+LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/${_SL} && ${PRINTOBJDIR}
 .MAKEOVERRIDES+=LIBDIR.${_SL}
 .endif
 LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a

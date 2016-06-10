@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2010/11/23 08:22:32 mrg Exp $
+# $NetBSD: Makefile,v 1.11 2016/06/10 03:37:34 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -34,7 +34,7 @@ CPPFLAGS.xf86RandR12.c=	-Wno-error
 CPPFLAGS.xf86dga2.c=	-Wno-error
 CPPFLAGS.xf86vmode.c=	-Wno-error	# XXX xf86vmstr.h
 
-XEXTMODULEOBJDIR!=  cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/Xext/Xextmodule && ${PRINTOBJDIR}
+XEXTMODULEOBJDIR!=  cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/Xext/Xextmodule && ${PRINTOBJDIR}
 LIBXEXTMODULE=	${XEXTMODULEOBJDIR}/libXextmodule.a
 
 LDADD=  -L${XEXTMODULEOBJDIR} -lXextmodule
