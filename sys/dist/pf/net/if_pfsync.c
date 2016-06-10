@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.13 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.14 2016/06/10 13:31:44 ozaki-r Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.13 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.14 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -374,7 +374,7 @@ pfsync_input(struct mbuf *m, ...)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
-	if (sc->sc_sync_ifp != m->m_pkthdr.rcvif) {
+	if (sc->sc_sync_ifp->if_index != m->m_pkthdr.rcvif_index) {
 		PFSYNC_STATINC(PFSYNC_STAT_BADIF);
 		goto done;
 	}

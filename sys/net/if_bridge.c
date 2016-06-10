@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.125 2016/06/10 13:31:44 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.125 2016/06/10 13:31:44 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1610,12 +1610,18 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct ifnet *src_if, *dst_if;
 	struct ether_header *eh;
 	struct psref psref;
+	struct psref psref_src;
 	DECLARE_LOCK_VARIABLE;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
-	src_if = m->m_pkthdr.rcvif;
+	src_if = m_get_rcvif_psref(m, &psref_src);
+	if (src_if == NULL) {
+		/* Interface is being destroyed? */
+		m_freem(m);
+		goto out;
+	}
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -1690,8 +1696,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		dst_if = NULL;
 	}
 
-	if (pfil_run_hooks(sc->sc_if.if_pfil, &m,
-	    m->m_pkthdr.rcvif, PFIL_IN) != 0) {
+	if (pfil_run_hooks(sc->sc_if.if_pfil, &m, src_if, PFIL_IN) != 0) {
 		if (m != NULL)
 			m_freem(m);
 		goto out;
@@ -1703,6 +1708,9 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		bridge_broadcast(sc, src_if, m);
 		goto out;
 	}
+
+	m_put_rcvif_psref(src_if, &psref_src);
+	src_if = NULL;
 
 	/*
 	 * At this point, we're dealing with a unicast frame
@@ -1736,7 +1744,8 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	bridge_enqueue(sc, dst_if, m, 1);
 	RELEASE_GLOBAL_LOCKS();
 out:
-	/* XXX gcc */
+	if (src_if != NULL)
+		m_put_rcvif_psref(src_if, &psref_src);
 	return;
 }
 
@@ -2642,7 +2651,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	}
 
         switch (m->m_pkthdr.csum_flags &
-                ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
+                ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_IPv4) |
                  M_CSUM_IPv4_BAD)) {
         case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
                 /* INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad); */
@@ -2710,7 +2719,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
          * IPv6 header is in the first mbuf of the chain.
          */
         if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-                struct ifnet *inifp = m->m_pkthdr.rcvif;
+                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {
                         /* XXXJRT new stat, please */
@@ -2719,7 +2728,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
                         goto bad;
                 }
         } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-                struct ifnet *inifp = m->m_pkthdr.rcvif;
+                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
                 if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
@@ -2731,7 +2740,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 
         if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		ip6_statinc(IP6_STAT_BADVERS);
-                in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+                in6_ifstat_inc(m_get_rcvif_NOMPSAFE(m), ifs6_in_hdrerr);
                 goto bad;
         }
 
