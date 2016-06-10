@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.96 2016/02/09 08:32:11 ozaki-r Exp $ */
+/* $NetBSD: if_ti.c,v 1.97 2016/06/10 13:27:14 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.96 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.97 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1966,7 +1966,7 @@ ti_rxeof(struct ti_softc *sc)
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/*
 	 	 * Handle BPF listeners. Let the BPF user see the packet, but

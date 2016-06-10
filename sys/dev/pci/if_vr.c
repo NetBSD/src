@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.116 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.117 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.116 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.117 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 
@@ -778,7 +778,7 @@ vr_rxeof(struct vr_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet, but

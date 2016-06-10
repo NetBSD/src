@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.55 2015/05/21 02:04:22 rtr Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.56 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.55 2015/05/21 02:04:22 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.56 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs_boot.h"
@@ -597,7 +597,7 @@ bootpc_call(struct nfs_diskless *nd, struct lwp *lwp, int *flags)
 	m_clget(m, M_WAIT);
 	bootp = mtod(m, struct bootp*);
 	m->m_pkthdr.len = m->m_len = BOOTP_SIZE_MAX;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	/*
 	 * Build the BOOTP reqest message.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.53 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.54 2016/06/10 13:27:15 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.53 2016/04/28 01:37:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.54 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -519,7 +519,7 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

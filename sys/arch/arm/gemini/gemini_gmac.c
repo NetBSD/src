@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.8 2016/02/09 08:32:08 ozaki-r Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.9 2016/06/10 13:27:11 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.8 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.9 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -847,7 +847,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	 * Now get the whole chain.
 	 */
 	m = hwq->hwq_rxmbuf;
-	m->m_pkthdr.rcvif = ifp;	/* set receive interface */
+	m_set_rcvif(m, ifp);	/* set receive interface */
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;
 	switch (DESC0_RXSTS_GET(d->d_desc0)) {
