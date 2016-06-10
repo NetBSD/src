@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.27 2016/05/29 08:44:36 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.28 2016/06/10 08:15:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.27 2016/05/29 08:44:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.28 2016/06/10 08:15:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1264,7 +1264,7 @@ dwc2_init(struct dwc2_softc *sc)
 
 	TAILQ_INIT(&sc->sc_complete);
 
-	sc->sc_rhc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	sc->sc_rhc_si = softint_establish(SOFTINT_USB | SOFTINT_MPSAFE,
 	    dwc2_rhc, sc);
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct dwc2_xfer), 0, 0, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.90.4.12 2016/03/25 08:34:16 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.90.4.13 2016/06/10 08:15:22 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -295,10 +295,11 @@ struct usbif_attach_arg {
  *
  * Eventually, IPL_USB can/should be changed
  */
-#define splusb splsoftnet
-#define splhardusb splvm
-#define IPL_SOFTUSB IPL_SOFTNET
 #define IPL_USB IPL_VM
-#define SOFTINT_USB SOFTINT_NET
+#define splhardusb splvm
+
+#define SOFTINT_USB SOFTINT_SERIAL
+#define IPL_SOFTUSB IPL_SOFTSERIAL
+#define splusb splsoftserial
 
 #endif /* _USBDI_H_ */
