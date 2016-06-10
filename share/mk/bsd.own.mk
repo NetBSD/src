@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.932 2016/06/10 05:31:24 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.933 2016/06/10 05:35:33 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -143,11 +143,11 @@ USE_SSP?=	yes
 # What GDB is used?
 #
 .if ${MACHINE} == "amd64" || \
-    ${MACHINE} == "evbarm" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
 HAVE_GDB?=	710
