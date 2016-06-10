@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.8 2016/06/09 04:43:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.9 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -1964,8 +1964,8 @@ MALLOC_DECLARE(M_IPFILTER);
 						if (_o->m_flags & M_PKTHDR) { \
 							(m)->m_pkthdr.len += \
 							    _o->m_pkthdr.len; \
-							(m)->m_pkthdr.rcvif = \
-							  _o->m_pkthdr.rcvif; \
+							m_set_rcvif((m), \
+							    _o->m_pkthdr.rcvif); \
 						} \
 					} while (0)
 # endif

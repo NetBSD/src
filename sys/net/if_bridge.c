@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.123 2016/05/16 01:23:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.123 2016/05/16 01:23:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1535,7 +1535,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 					}
 				}
 
-				mc->m_pkthdr.rcvif = dst_if;
+				m_set_rcvif(mc, dst_if);
 				mc->m_flags &= ~M_PROMISC;
 
 #ifndef NET_MPSAFE
@@ -1833,7 +1833,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
-				_ifp = m->m_pkthdr.rcvif = _bif->bif_ifp;
+				m_set_rcvif(m, _bif->bif_ifp);
+				_ifp = _bif->bif_ifp;
 				bridge_release_member(sc, _bif, &_psref);
 				goto out;
 			}
@@ -1944,7 +1945,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 				goto next;
 			}
 
-			mc->m_pkthdr.rcvif = dst_if;
+			m_set_rcvif(mc, dst_if);
 			mc->m_flags &= ~M_PROMISC;
 
 			ACQUIRE_GLOBAL_LOCKS();

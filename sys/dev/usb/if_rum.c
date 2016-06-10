@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.54 2016/05/26 05:04:46 ozaki-r Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.55 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.54 2016/05/26 05:04:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.55 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -866,7 +866,7 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_data = (void *)(desc + 1);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.6 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.7 2016/06/10 13:27:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.6 2016/05/17 06:44:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.7 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #include "vlan.h"
 
@@ -641,7 +641,7 @@ enet_rx_intr(void *arg)
 			} else {
 				/* packet receive ok */
 				ifp->if_ipackets++;
-				m0->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(m0, ifp);
 				m0->m_pkthdr.len = amount;
 
 				bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,

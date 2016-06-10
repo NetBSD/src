@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.86 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.87 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.86 2016/04/28 01:37:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.87 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -222,7 +222,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		panic("looutput: no header mbuf");
 	if (ifp->if_flags & IFF_LOOPBACK)
 		bpf_mtap_af(ifp, dst->sa_family, m);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	if (rt && rt->rt_flags & (RTF_REJECT|RTF_BLACKHOLE)) {
 		m_freem(m);

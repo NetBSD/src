@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.24 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.25 2016/06/10 13:27:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.24 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.25 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -494,7 +494,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 		MGETHDR(m0, M_DONTWAIT, MT_DATA);
 		if (m0 == NULL)
 			break;
-		m0->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m0, ifp);
 		m0->m_pkthdr.len = total_length;
 		length = MHLEN;
 		m = m0;
