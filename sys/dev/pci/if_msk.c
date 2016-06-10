@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.50 2016/06/01 03:37:35 pgoyette Exp $ */
+/* $NetBSD: if_msk.c,v 1.51 2016/06/10 13:27:14 ozaki-r Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.50 2016/06/01 03:37:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.51 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1742,7 +1742,7 @@ msk_rxeof(struct sk_if_softc *sc_if, u_int16_t len, u_int32_t rxstat)
 		m_adj(m0, ETHER_ALIGN);
 		m = m0;
 	} else {
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 	}
 

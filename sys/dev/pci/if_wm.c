@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.411 2016/05/30 03:54:12 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.412 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.411 2016/05/30 03:54:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.412 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7229,7 +7229,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		}
 
 		/* No errors.  Receive the packet. */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*

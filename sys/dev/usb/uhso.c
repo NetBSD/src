@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.20 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: uhso.c,v 1.21 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.20 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.21 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2164,7 +2164,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 			break;
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = got;
 
 		s = splnet();

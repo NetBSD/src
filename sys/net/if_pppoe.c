@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.106 2016/04/24 16:59:15 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.107 2016/06/10 13:27:16 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.106 2016/04/24 16:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.107 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #include "pppoe.h"
 
@@ -825,7 +825,7 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 
 	/* fix incoming interface pointer (not the raw ethernet interface anymore) */
-	m->m_pkthdr.rcvif = &sc->sc_sppp.pp_if;
+	m_set_rcvif(m, &sc->sc_sppp.pp_if);
 
 	/* pass packet up and account for it */
 	sc->sc_sppp.pp_if.if_ipackets++;
@@ -1013,7 +1013,7 @@ pppoe_get_mbuf(size_t len)
 	m->m_data += sizeof(struct ether_header);
 	m->m_len = len;
 	m->m_pkthdr.len = len;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 
 	return m;
 }

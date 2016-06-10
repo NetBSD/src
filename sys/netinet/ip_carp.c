@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.65 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.66 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.65 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.66 2016/06/10 13:27:16 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -1016,7 +1016,7 @@ carp_send_ad(void *v)
 		MCLAIM(m, &carp_proto_mowner_tx);
 		len = sizeof(*ip) + sizeof(ch);
 		m->m_pkthdr.len = len;
-		m->m_pkthdr.rcvif = NULL;
+		m_reset_rcvif(m);
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		m->m_flags |= M_MCAST;
@@ -1097,7 +1097,7 @@ carp_send_ad(void *v)
 		MCLAIM(m, &carp_proto6_mowner_tx);
 		len = sizeof(*ip6) + sizeof(ch);
 		m->m_pkthdr.len = len;
-		m->m_pkthdr.rcvif = NULL;
+		m_reset_rcvif(m);
 		m->m_len = len;
 		MH_ALIGN(m, m->m_len);
 		m->m_flags |= M_MCAST;
@@ -1406,7 +1406,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 			m0 = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (m0 == NULL)
 				continue;
-			m0->m_pkthdr.rcvif = &vh->sc_if;
+			m_set_rcvif(m0, &vh->sc_if);
 			ether_input(&vh->sc_if, m0);
 		}
 		return (1);
@@ -1417,7 +1417,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 		return (1);
 	}
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	bpf_mtap(ifp, m);
 	ifp->if_ipackets++;

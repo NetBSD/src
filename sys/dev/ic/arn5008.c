@@ -1,4 +1,4 @@
-/*	$NetBSD: arn5008.c,v 1.10 2016/03/09 20:06:31 christos Exp $	*/
+/*	$NetBSD: arn5008.c,v 1.11 2016/06/10 13:27:13 ozaki-r Exp $	*/
 /*	$OpenBSD: ar5008.c,v 1.21 2012/08/25 12:14:31 kettenis Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.10 2016/03/09 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn5008.c,v 1.11 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -849,7 +849,7 @@ ar5008_rx_process(struct athn_softc *sc)
 
 			len = MS(ds->ds_status1, AR_RXS1_DATA_LEN);
 			m = bf->bf_m;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 			wh = mtod(m, struct ieee80211_frame *);
 
@@ -905,7 +905,7 @@ ar5008_rx_process(struct athn_softc *sc)
 	bf->bf_m = m1;
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = len;
 
 	/* Grab a reference to the source node. */

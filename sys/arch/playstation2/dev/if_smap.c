@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.20 2016/04/03 09:58:45 martin Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.21 2016/06/10 13:27:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.20 2016/04/03 09:58:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.21 2016/06/10 13:27:12 ozaki-r Exp $");
 
 #include "debug_playstation2.h"
 
@@ -389,7 +389,7 @@ smap_rxeof(void *arg)
 		}
 
 		m->m_data += 2; /* for alignment */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = sz;
 		memcpy(mtod(m, void *), (void *)sc->rx_buf, sz);
 

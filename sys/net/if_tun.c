@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.125 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.126 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.125 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.126 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -934,7 +934,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	top->m_pkthdr.len = tlen;
-	top->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(top, ifp);
 
 	bpf_mtap_af(ifp, dst.sa_family, top);
 

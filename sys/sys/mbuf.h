@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.162 2016/05/26 05:04:46 ozaki-r Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.163 2016/06/10 13:27:17 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -964,6 +964,20 @@ m_hdr_init(struct mbuf *m, short type, struct mbuf *next, char *data, int len)
 }
 
 static __inline void
+m_set_rcvif(struct mbuf *m, struct ifnet *ifp)
+{
+
+	m->m_pkthdr.rcvif = ifp;
+}
+
+static __inline void
+m_reset_rcvif(struct mbuf *m)
+{
+
+	m_set_rcvif(m, NULL);
+}
+
+static __inline void
 m_pkthdr_init(struct mbuf *m)
 {
 
@@ -972,7 +986,7 @@ m_pkthdr_init(struct mbuf *m)
 	m->m_data = m->m_pktdat;
 	m->m_flags = M_PKTHDR;
 
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = 0;
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;

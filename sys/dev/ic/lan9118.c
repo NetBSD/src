@@ -1,4 +1,4 @@
-/*	$NetBSD: lan9118.c,v 1.21 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: lan9118.c,v 1.22 2016/06/10 13:27:13 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.21 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lan9118.c,v 1.22 2016/06/10 13:27:13 ozaki-r Exp $");
 
 /*
  * The LAN9118 Family
@@ -992,7 +992,7 @@ dropit:
 		m->m_data += pad;
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = (pktlen - ETHER_CRC_LEN);
 
 		/*

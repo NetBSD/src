@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.50 2015/11/06 21:33:07 christos Exp $	*/
+/*	$NetBSD: natm.c,v 1.51 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.50 2015/11/06 21:33:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.51 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -477,10 +477,10 @@ next:
   }
 
 #ifdef NEED_TO_RESTORE_IFP
-  m->m_pkthdr.rcvif = npcb->npcb_ifp;
+  m_set_rcvif(m, npcb->npcb_ifp);
 #else
 #ifdef DIAGNOSTIC
-m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
+  m_reset_rcvif(m);	/* null it out to be safe */
 #endif
 #endif
 

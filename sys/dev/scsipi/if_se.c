@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.89 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_se.c,v 1.90 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.89 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.90 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -577,7 +577,7 @@ se_get(struct se_softc *sc, char *data, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

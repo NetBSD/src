@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.49 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.49 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.50 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1583,7 +1583,7 @@ sca_frame_process(sca_port_t *scp)
 #ifdef INET
 	case HDLC_PROTOCOL_IP:
 		SCA_DPRINTF(SCA_DEBUG_RX, ("Received IP packet\n"));
-		m->m_pkthdr.rcvif = &scp->sp_if;
+		m_set_rcvif(m, &scp->sp_if);
 		m->m_pkthdr.len -= sizeof(struct hdlc_header);
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
@@ -1593,7 +1593,7 @@ sca_frame_process(sca_port_t *scp)
 #ifdef INET6
 	case HDLC_PROTOCOL_IPV6:
 		SCA_DPRINTF(SCA_DEBUG_RX, ("Received IP packet\n"));
-		m->m_pkthdr.rcvif = &scp->sp_if;
+		m_set_rcvif(m, &scp->sp_if);
 		m->m_pkthdr.len -= sizeof(struct hdlc_header);
 		m->m_data += sizeof(struct hdlc_header);
 		m->m_len -= sizeof(struct hdlc_header);
@@ -1620,7 +1620,7 @@ sca_frame_process(sca_port_t *scp)
 
 		cisco = (struct cisco_pkt *)
 		    (mtod(m, u_int8_t *) + HDLC_HDRLEN);
-		m->m_pkthdr.rcvif = &scp->sp_if;
+		m_set_rcvif(m, &scp->sp_if);
 
 		switch (ntohl(cisco->type)) {
 		case CISCO_ADDR_REQ:

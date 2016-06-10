@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.10 2016/02/09 08:32:07 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_eth.c,v 1.11 2016/06/10 13:27:10 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -412,7 +412,7 @@ awin_eth_mgethdr(struct awin_eth_softc *sc, size_t rxlen)
 	m->m_data += 2;
 	m->m_len = rxlen;
 	m->m_pkthdr.len = rxlen;
-	m->m_pkthdr.rcvif = &sc->sc_ec.ec_if;
+	m_set_rcvif(m, &sc->sc_ec.ec_if);
 
 	return m;
 }

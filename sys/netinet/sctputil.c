@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.8 2016/05/22 23:04:27 rjs Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.9 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.8 2016/05/22 23:04:27 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.9 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2076,7 +2076,7 @@ sctp_notify_assoc_change(u_int32_t event, struct sctp_tcb *stcb,
 
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = sizeof(struct sctp_assoc_change);
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_assoc_change);
 	m_notify->m_next = NULL;
 
@@ -2163,7 +2163,7 @@ sctp_notify_peer_addr_change(struct sctp_tcb *stcb, uint32_t state,
 
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = sizeof(struct sctp_paddr_change);
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_paddr_change);
 	m_notify->m_next = NULL;
 
@@ -2256,7 +2256,7 @@ sctp_notify_send_failed(struct sctp_tcb *stcb, u_int32_t error,
 		m->m_flags |= M_EOR;
 	}
 	m_notify->m_pkthdr.len = length;
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_send_failed);
 
 	/* Steal off the mbuf */
@@ -2329,7 +2329,7 @@ sctp_notify_adaption_layer(struct sctp_tcb *stcb,
 
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = sizeof(struct sctp_adaption_event);
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_adaption_event);
 	m_notify->m_next = NULL;
 
@@ -2399,7 +2399,7 @@ sctp_notify_partial_delivery_indication(struct sctp_tcb *stcb,
 
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = sizeof(struct sctp_pdapi_event);
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_pdapi_event);
 	m_notify->m_next = NULL;
 
@@ -2478,7 +2478,7 @@ sctp_notify_shutdown_event(struct sctp_tcb *stcb)
 
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = sizeof(struct sctp_shutdown_event);
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = sizeof(struct sctp_shutdown_event);
 	m_notify->m_next = NULL;
 
@@ -2570,7 +2570,7 @@ sctp_notify_stream_reset(struct sctp_tcb *stcb,
 	}
 	m_notify->m_flags |= M_EOR | M_NOTIFICATION;
 	m_notify->m_pkthdr.len = len;
-	m_notify->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m_notify);
 	m_notify->m_len = len;
 	m_notify->m_next = NULL;
 	if (sctp_sbspace(&stcb->sctp_socket->so_rcv) < m_notify->m_len) {

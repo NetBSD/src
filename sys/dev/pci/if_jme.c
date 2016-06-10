@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.30 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.29 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.30 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1144,7 +1144,7 @@ jme_intr_rx(jme_softc_t *sc) {
 		}
 
 		/* build mbuf chain: head, then remaining segments */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = JME_RX_BYTES(buflen) - JME_RX_PAD_BYTES;
 		m->m_len = (nsegs > 1) ? (MCLBYTES - JME_RX_PAD_BYTES) :
 		    m->m_pkthdr.len;

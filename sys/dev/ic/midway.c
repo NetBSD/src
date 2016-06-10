@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.96 2016/01/22 06:51:47 ozaki-r Exp $	*/
+/*	$NetBSD: midway.c,v 1.97 2016/06/10 13:27:13 ozaki-r Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.96 2016/01/22 06:51:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.97 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include "opt_natm.h"
 
@@ -638,7 +638,7 @@ STATIC INLINE struct mbuf *en_mget(struct en_softc *sc, u_int totlen, u_int *drq
   MGETHDR(m, M_DONTWAIT, MT_DATA);
   if (m == NULL)
     return(NULL);
-  m->m_pkthdr.rcvif = &sc->enif;
+  m_set_rcvif(m, &sc->enif);
   m->m_pkthdr.len = totlen;
   m->m_len = MHLEN;
   top = NULL;
@@ -2760,7 +2760,7 @@ EN_INTR_TYPE en_intr(void *arg)
 	  /* if there's a subinterface for this vci, override ifp. */
 	  ifp = en_vci2ifp(sc, sc->rxslot[slot].atm_vci);
 	  ifp->if_ipackets++;
-	  m->m_pkthdr.rcvif = ifp;	/* XXX */
+	  m_set_rcvif(m, ifp);	/* XXX */
 #else
 	  ifp = &sc->enif;
 	  ifp->if_ipackets++;

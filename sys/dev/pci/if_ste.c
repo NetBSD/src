@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.46 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.47 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.46 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.47 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1040,7 +1040,7 @@ ste_rxintr(struct ste_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

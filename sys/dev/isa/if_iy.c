@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.95 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.96 2016/06/10 13:27:14 ozaki-r Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.95 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.96 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -992,7 +992,7 @@ iyget(struct iy_softc *sc, bus_space_tag_t iot, bus_space_handle_t ioh, int rxle
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		goto dropped;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = rxlen;
 	len = MHLEN;
 	top = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.345 2016/02/15 14:59:03 rtr Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.346 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.345 2016/02/15 14:59:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.346 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4577,7 +4577,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 			so = NULL;
 	} else
 		so = NULL;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	memset(mtod(m, u_char *), 0, tlen);
 
 	switch (sc->sc_src.sa.sa_family) {

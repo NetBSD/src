@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.5 2016/02/09 08:32:08 ozaki-r Exp $ */
+/* $NetBSD: if_gpn.c,v 1.6 2016/06/10 13:27:11 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.5 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.6 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -298,7 +298,7 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		struct mbuf *m;
 		m = sc->sc_rxmbuf;
 		sc->sc_rxmbuf = NULL;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		KASSERT(((m->m_pkthdr.len + 63) >> 6) == gd->gd_pktlen64);
 		ifp->if_ipackets++;
 		ifp->if_ibytes += m->m_pkthdr.len;

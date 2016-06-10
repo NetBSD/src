@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.139 2016/04/26 08:44:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.140 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.139 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.140 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1881,7 +1881,7 @@ vif_input(struct mbuf *m, int off, int proto)
 	}
 
 	m_adj(m, off);
-	m->m_pkthdr.rcvif = vifp->v_ifp;
+	m_set_rcvif(m, vifp->v_ifp);
 
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);

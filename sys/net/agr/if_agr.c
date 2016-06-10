@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.34 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.35 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.34 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.35 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 
 	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 #define DNH_DEBUG
 #if NVLAN > 0

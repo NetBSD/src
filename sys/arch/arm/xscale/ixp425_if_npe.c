@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.30 2016/02/09 08:32:08 ozaki-r Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.31 2016/06/10 13:27:11 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.30 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.31 2016/06/10 13:27:11 ozaki-r Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -953,7 +953,7 @@ npe_rxdone(int qid, void *arg)
 			/* set m_len etc. per rx frame size */
 			mrx->m_len = be32toh(hw->ix_ne[0].len) & 0xffff;
 			mrx->m_pkthdr.len = mrx->m_len;
-			mrx->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(mrx, ifp);
 			/* Don't add M_HASFCS. See below */
 
 #if 1

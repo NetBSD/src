@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.51 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.52 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.51 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.52 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1039,7 +1039,7 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	m = c->url_mbuf;
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

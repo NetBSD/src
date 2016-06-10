@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.46 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.47 2016/06/10 13:27:15 ozaki-r Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.46 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.47 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1177,7 +1177,7 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	total_len -= ETHER_CRC_LEN;
 
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

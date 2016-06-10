@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.36 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.37 2016/06/10 13:27:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.36 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.37 2016/06/10 13:27:13 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1729,7 +1729,7 @@ cs_process_receive(struct cs_softc *sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 
 	/* number of bytes to align ip header on word boundary for ipintr */
@@ -1811,7 +1811,7 @@ cs_process_rx_early(struct cs_softc *sc)
 		    CS_READ_PACKET_PAGE(sc, PKTPG_RX_CFG) | RX_CFG_SKIP);
 		return;
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	/*
 	 * save processing by always using a mbuf cluster, guaranteed to fit
 	 * packet

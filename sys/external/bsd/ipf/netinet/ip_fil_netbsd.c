@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.13 2016/06/09 04:43:46 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.14 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.13 2016/06/09 04:43:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.14 2016/06/10 13:27:15 ozaki-r Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -742,7 +742,7 @@ ipf_send_reset(fr_info_t *fin)
 	m->m_len = sizeof(*tcp2) + hlen;
 	m->m_data += max_linkhdr;
 	m->m_pkthdr.len = m->m_len;
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 	ip = mtod(m, struct ip *);
 	bzero((char *)ip, hlen);
 #ifdef USE_INET6
@@ -852,7 +852,7 @@ ipf_send_ip(fr_info_t *fin, mb_t *m)
 		return EINVAL;
 	}
 #ifdef KAME_IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 #endif
 
 	fnew.fin_ifp = fin->fin_ifp;
@@ -986,7 +986,7 @@ ipf_send_icmp_err(int type, fr_info_t *fin, int dst)
 		xtra = avail;
 	iclen += xtra;
 	m->m_data += max_linkhdr;
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = iclen;
 	m->m_len = iclen;
 	ip = mtod(m, ip_t *);
@@ -1209,7 +1209,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 	/*
 	 * If small enough for interface, can just send directly.
 	 */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	ip_len = ntohs(ip->ip_len);
 	if (ip_len <= ifp->if_mtu) {
@@ -1292,7 +1292,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 			goto sendorfree;
 		}
 		m->m_pkthdr.len = mhlen + len;
-		m->m_pkthdr.rcvif = NULL;
+		m_reset_rcvif(m);
 		mhip->ip_off = htons((u_short)mhip->ip_off);
 		mhip->ip_sum = 0;
 #ifdef INET

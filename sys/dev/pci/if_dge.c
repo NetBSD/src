@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.43 2016/06/01 12:45:46 pgoyette Exp $ */
+/*	$NetBSD: if_dge.c,v 1.44 2016/06/10 13:27:14 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.43 2016/06/01 12:45:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.44 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 
@@ -1782,7 +1782,7 @@ dge_rxintr(struct dge_softc *sc)
 		/*
 		 * No errors.  Receive the packet.
 		 */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*

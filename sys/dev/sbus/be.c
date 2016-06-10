@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.82 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: be.c,v 1.83 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.82 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.83 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -504,7 +504,7 @@ be_get(struct be_softc *sc, int idx, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);

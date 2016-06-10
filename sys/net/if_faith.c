@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.52 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.53 2016/06/10 13:27:16 ozaki-r Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.52 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.53 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -187,7 +187,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	/* XXX do we need more sanity checks? */
 	KASSERT(pktq != NULL);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 	if (__predict_true(pktq_enqueue(pktq, m, 0))) {

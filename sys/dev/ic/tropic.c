@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: tropic.c,v 1.46 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.45 2016/02/09 08:32:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.46 2016/06/10 13:27:14 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -1436,7 +1436,7 @@ tr_get(struct tr_softc *sc, int totlen, struct ifnet *ifp)
 	if (m0 == 0)
 		return (0);
 
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.47 2016/02/09 08:32:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.48 2016/06/10 13:27:11 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.47 2016/02/09 08:32:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.48 2016/06/10 13:27:11 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -645,7 +645,7 @@ bmac_get(struct bmac_softc *sc, void *pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

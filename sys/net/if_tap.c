@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.83 2016/02/09 08:32:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.84 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.83 2016/02/09 08:32:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1057,7 +1057,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	bpf_mtap(ifp, m);
 	s = splnet();

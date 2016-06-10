@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.265 2016/02/15 14:59:03 rtr Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.266 2016/06/10 13:27:16 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.265 2016/02/15 14:59:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.266 2016/06/10 13:27:16 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -852,7 +852,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 		tlen += th->th_off << 2;
 	m->m_len = hlen + tlen;
 	m->m_pkthdr.len = hlen + tlen;
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	th->th_flags = flags;
 	th->th_urp = 0;
 

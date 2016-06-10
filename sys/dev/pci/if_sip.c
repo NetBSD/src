@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.160 2016/02/09 08:32:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.161 2016/06/10 13:27:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.160 2016/02/09 08:32:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.161 2016/06/10 13:27:14 ozaki-r Exp $");
 
 
 
@@ -2232,7 +2232,7 @@ gsip_rxintr(struct sip_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*
@@ -2399,7 +2399,7 @@ sip_rxintr(struct sip_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

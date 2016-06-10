@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.196 2016/06/07 01:06:28 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.197 2016/06/10 13:27:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.196 2016/06/07 01:06:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.197 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -300,7 +300,7 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 		return (EIO);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = (int)(len - hlen);
 	if (len + align > MHLEN) {
 		m_clget(m, M_WAIT);
@@ -715,7 +715,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (d->bd_feedback) {
 		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc != NULL)
-			mc->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(mc, ifp);
 		/* Set M_PROMISC for outgoing packets to be discarded. */
 		if (1 /*d->bd_direction == BPF_D_INOUT*/)
 			m->m_flags |= M_PROMISC;

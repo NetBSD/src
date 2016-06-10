@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.16 2016/02/09 08:32:11 ozaki-r Exp $*/
+/*$NetBSD: ixv.c,v 1.17 2016/06/10 13:27:15 ozaki-r Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -3593,7 +3593,7 @@ ixv_rxeof(struct ix_queue *que, int count)
 		++processed;
 		/* Sending this frame? */
 		if (eop) {
-			sendmp->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(sendmp, ifp);
 			ifp->if_ipackets++;
 			rxr->rx_packets.ev_count++;
 			/* capture data for AIM */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.9 2016/02/09 08:32:10 ozaki-r Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.10 2016/06/10 13:27:13 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -1220,7 +1220,7 @@ dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) return NULL;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	/* Ensure that we always allocate an even number of
 	 * bytes in order to avoid writing beyond the buffer
 	 */

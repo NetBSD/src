@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.122 2016/05/16 09:53:59 ozaki-r Exp $ */
+/* $NetBSD: rtw.c,v 1.123 2016/06/10 13:27:13 ozaki-r Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.122 2016/05/16 09:53:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.123 2016/06/10 13:27:13 ozaki-r Exp $");
 
 
 #include <sys/param.h>
@@ -1606,7 +1606,7 @@ rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 		/* Note well: now we cannot recycle the rs_mbuf unless
 		 * we restore its original length.
 		 */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		wh = mtod(m, struct ieee80211_frame_min *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.72 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.72 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -771,7 +771,7 @@ cue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m_adj(m, sizeof(uint16_t));
 	m->m_pkthdr.len = m->m_len = total_len;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 
