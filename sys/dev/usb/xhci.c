@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.72 2016/06/10 14:43:35 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.73 2016/06/10 14:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.72 2016/06/10 14:43:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.73 2016/06/10 14:44:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -553,6 +553,7 @@ xhci_detach(struct xhci_softc *sc, int flags)
 	xhci_op_write_8(sc, XHCI_CRCR, 0);
 	xhci_ring_free(sc, &sc->sc_cr);
 	cv_destroy(&sc->sc_command_cv);
+	cv_destroy(&sc->sc_cmdbusy_cv);
 
 	xhci_rt_write_4(sc, XHCI_ERSTSZ(0), 0);
 	xhci_rt_write_8(sc, XHCI_ERSTBA(0), 0);
