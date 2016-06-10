@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.47 2016/06/10 23:26:43 wiz Exp $
+.\"	$NetBSD: sysconf.3,v 1.48 2016/06/10 23:29:20 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -184,6 +184,15 @@ The version of
 and its
 Timers
 option to which the system attempts to conform,
+otherwise \-1.
+.It Li _SC_CPUTIME
+The clockID CLOCK_PROCESS_CPUTIME_ID is supported,
+otherwise \-1.
+.It Li _SC_THREAD_CPUTIME
+The clockID CLOCK_THREAD_CPUTIME_ID is supported,
+otherwise \-1.
+.It Li _SC_DELAYTIMER_MAX
+The maximum number of overrun for a specific timer,
 otherwise \-1.
 .It Li _SC_TZNAME_MAX
 The minimum maximum number of types supported for the name of a

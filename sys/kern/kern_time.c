@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.186 2016/04/23 23:08:26 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.187 2016/06/10 23:29:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.186 2016/04/23 23:08:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.187 2016/06/10 23:29:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -97,6 +97,7 @@ CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
 
+#define	DELAYTIMER_MAX	32
 
 /*
  * Initialize timekeeping.
@@ -980,6 +981,8 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 		return (EINVAL);
 	}
 	*retval = pt->pt_poverruns;
+	if (*retval >= DELAYTIMER_MAX)
+		*retval = DELAYTIMER_MAX;
 	mutex_spin_exit(&timer_lock);
 
 	return (0);
