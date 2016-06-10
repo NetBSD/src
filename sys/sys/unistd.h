@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.56 2016/02/26 17:10:41 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.57 2016/06/10 23:24:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -308,7 +308,7 @@
 #define	_SC_SHARED_MEMORY_OBJECTS	87
 
 #define	_SC_TIMER_MAX			88
-
+#define	_SC_SEM_NSEMS_MAX		89
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121
