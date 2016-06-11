@@ -38,9 +38,7 @@
 # else
 #  define internal_syscall_ptr	syscall
 # endif
-#endif
-
-#if (SANITIZER_FREEBSD && defined(__x86_64__))
+#elif (SANITIZER_FREEBSD && defined(__x86_64__))
 # define internal_syscall __syscall
 # else
 # define internal_syscall syscall
