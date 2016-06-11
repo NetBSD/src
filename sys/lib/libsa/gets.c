@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.12 2016/06/05 15:05:49 christos Exp $	*/
+/*	$NetBSD: gets.c,v 1.13 2016/06/11 06:20:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,11 +36,11 @@
 void
 gets(char *buf)
 {
-	gets_s(buf, (size_t)-1);
+	kgets(buf, (size_t)-1);
 }
 
 void
-gets_s(char *buf, size_t size)
+kgets(char *buf, size_t size)
 {
 	int c;
 	char *lp;
