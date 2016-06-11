@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2011/01/22 19:19:21 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2016/06/11 06:35:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -230,7 +230,7 @@ main(void)
 
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
-			gets(bootline);
+			kgets(bootline, sizeof(bootline));
 			parseargs(bootline, &boothowto);
 		}
 
