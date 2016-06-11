@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.33 2015/06/05 16:01:55 martin Exp $ */
+/*	$NetBSD: boot.c,v 1.34 2016/06/11 06:42:27 dholland Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -163,7 +163,7 @@ Xmain(void)
 		char *c, *d;
 
 		printf("> ");
-		gets(line);
+		kgets(line, sizeof(line));
 
 		c = line;
 		while (*c == ' ')
