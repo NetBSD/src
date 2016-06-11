@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.16 2016/06/05 17:43:02 christos Exp $	*/
+/*	$NetBSD: uboot.c,v 1.17 2016/06/11 06:22:11 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -109,7 +109,7 @@ getbootdev(int *howto)
 	printf("Boot: [[[%s%d%c:]%s][-a][-c][-d][-s][-v][-q]] :- ",
 	    devsw[bdev].dv_name, bctlr + (8 * badapt), 'a' + bpart, name);
 
-	if (tgets_s(line, sizeof(line))) {
+	if (tgets(line, sizeof(line))) {
 		if (strcmp(line, "reset") == 0) {
 			call_req_reboot();      /* reset machine */
 			printf("panic: can't reboot, halting\n");
