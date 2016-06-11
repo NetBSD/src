@@ -538,7 +538,7 @@ uptr internal_ptrace(int request, int pid, void *addr, void *data) {
 }
 
 uptr internal_waitpid(int pid, int *status, int options) {
-+#if SANITIZER_NETBSD
+#if SANITIZER_NETBSD
   return internal_syscall(SYSCALL(wait4), pid, status, options,
                           NULL /* rusage */);
 #else
@@ -556,7 +556,9 @@ uptr internal_getppid() {
 }
 
 uptr internal_getdents(fd_t fd, struct linux_dirent *dirp, unsigned int count) {
-#if SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
+#if SANITIZER_NETBSD
+  return internal_syscall(SYSCALL(getdents), fd, dirp, (uptr)count);
+#elif SANITIZER_USES_CANONICAL_LINUX_SYSCALLS
   return internal_syscall(SYSCALL(getdents64), fd, (uptr)dirp, count);
 #else
   return internal_syscall(SYSCALL(getdents), fd, (uptr)dirp, count);
