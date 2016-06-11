@@ -56,6 +56,7 @@ extern "C" {
 extern char **environ;  // provided by crt1
 #endif  // SANITIZER_FREEBSD
 #if SANITIZER_NETBSD
+#include <limits.h>	// For NAME_MAX
 #include <sys/sysctl.h>
 extern char **environ;  // provided by crt1
 #endif  // SANITIZER_NETBSD
@@ -494,6 +495,17 @@ void BlockingMutex::CheckLocked() {
 // The actual size of this structure is specified by d_reclen.
 // Note that getdents64 uses a different structure format. We only provide the
 // 32-bit syscall here.
+#if SANITIZER_NETBSD
+// struct dirent is different for Linux and us. At this moment, we use only
+// d_fileno (Linux call this d_ino), d_reclen, and d_name.
+struct linux_dirent {
+  u64  d_ino;     // d_fileno
+  u16  d_reclen;
+  u16  d_namlen;  // not used
+  u8   d_type;    // not used
+  char d_name[NAME_MAX + 1];
+};
+#else
 struct linux_dirent {
 #if SANITIZER_X32
   u64 d_ino;
@@ -505,10 +517,18 @@ struct linux_dirent {
   unsigned short     d_reclen;
   char               d_name[256];
 };
+#endif
 
 // Syscall wrappers.
 uptr internal_ptrace(int request, int pid, void *addr, void *data) {
 #if SANITIZER_NETBSD
+// XXX We need additional work for ptrace:
+//   - for request, we use PT_FOO whereas Linux uses PTRACE_FOO
+//   - data is int for us, but void * for Linux
+//   - Linux sometimes uses data in the case where we use addr instead
+// At this moment, this function is used only within
+// "#if SANITIZER_LINUX && defined(__x86_64__)" block in
+// sanitizer_stoptheworld_linux_libcdep.cc.
   return internal_syscall_ptr(SYSCALL(ptrace), request, pid, (uptr)addr,
                           (uptr)data);
 #else
@@ -518,8 +538,13 @@ uptr internal_ptrace(int request, int pid, void *addr, void *data) {
 }
 
 uptr internal_waitpid(int pid, int *status, int options) {
++#if SANITIZER_NETBSD
+  return internal_syscall(SYSCALL(wait4), pid, status, options,
+                          NULL /* rusage */);
+#else
   return internal_syscall(SYSCALL(wait4), pid, (uptr)status, options,
                           0 /* rusage */);
+#endif
 }
 
 uptr internal_getpid() {
