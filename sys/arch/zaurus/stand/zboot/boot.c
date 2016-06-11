@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2016/05/31 04:13:26 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2016/06/11 06:58:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -416,7 +416,7 @@ bootmenu(void)
 
 		input[0] = '\0';
 		printf("> ");
-		gets(input);
+		kgets(input, sizeof(input));
 
 		/*
 		 * Skip leading whitespace.
