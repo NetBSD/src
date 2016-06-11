@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.7 2011/01/22 19:19:23 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 2016/06/11 06:41:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,7 +232,7 @@ main(void)
 
 		if (boothowto & RB_ASKNAME) {
 			printf("Boot: ");
-			gets(bootline);
+			kgets(bootline, sizeof(bootline));
 			parseargs(bootline, &boothowto);
 		}
 
