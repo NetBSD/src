@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.23 2016/06/11 06:50:21 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.24 2016/06/11 06:57:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -307,7 +307,7 @@ bootmenu(void)
 		char *p, *options;
 
 		printf("> ");
-		kgets(input, sizeof(input));
+		gets(input);
 
 		for (p = &input[0]; p - &input[0] < 80 && *p == ' '; p++)
 			;
