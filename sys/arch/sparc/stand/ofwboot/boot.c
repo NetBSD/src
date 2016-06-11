@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.32 2016/05/30 10:37:14 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.33 2016/06/11 06:43:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -463,7 +463,7 @@ main(void *ofw)
 			char cmdline[PROM_MAX_PATH];
 
 			printf("Boot: ");
-			gets(cmdline);
+			kgets(cmdline, sizeof(cmdline));
 
 			if (!strcmp(cmdline,"exit") ||
 			    !strcmp(cmdline,"halt")) {
