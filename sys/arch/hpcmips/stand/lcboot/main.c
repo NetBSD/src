@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.6 2011/01/22 19:19:18 joerg Exp $ */
+/* $NetBSD: main.c,v 1.7 2016/06/11 06:29:24 dholland Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -107,7 +107,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.6 2011/01/22 19:19:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.7 2016/06/11 06:29:24 dholland Exp $");
 
 #include <lib/libsa/stand.h>
 
@@ -833,7 +833,7 @@ bootmenu(void)
 		/* input a line */
 		input[0] = '\0';
 		printf("> ");
-		gets(input);
+		kgets(input, sizeof(input));
 		cmd = input;
 
 		/* skip leading whitespace. */

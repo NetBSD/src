@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2014/08/06 13:55:08 joerg Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2016/06/11 06:34:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ main(void)
 	for (;;) {
 		if (ask) {
 			printf("boot: ");
-			gets(line);
+			kgets(line, sizeof(line));
 			if (strcmp(line, "halt") == 0)
 				break;
 
