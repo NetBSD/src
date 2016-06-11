@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.68 2016/06/03 23:57:37 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.69 2016/06/11 00:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -73,6 +73,7 @@
 #define	SIGTTIN		21	/* to readers pgrp upon background tty read */
 #define	SIGTTOU		22	/* like TTIN for output if (tp->t_local&LTOSTOP) */
 #define	SIGIO		23	/* input/output possible signal */
+#define	SIGPOLL		SIGIO	/* compatibility */
 #define	SIGXCPU		24	/* exceeded CPU time limit */
 #define	SIGXFSZ		25	/* exceeded file size limit */
 #define	SIGVTALRM	26	/* virtual time alarm */
