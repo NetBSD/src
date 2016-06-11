@@ -1,4 +1,4 @@
-.\"	$NetBSD: gpio.3lua,v 1.4 2014/01/07 21:54:17 mbalmer Exp $
+.\"	$NetBSD: gpio.3lua,v 1.5 2016/06/11 15:17:34 abhinav Exp $
 .\"
 .\" Copyright (c) 2013, 2014 Marc Balmer <mbalmer@NetBSD.org>.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd Januar 7, 2014
+.Dd January 7, 2014
 .Dt GPIO 3lua
 .Os
 .Sh NAME
@@ -60,7 +60,6 @@ device using the
 interface.
 .Pp
 .Bl -tag -width XXXX -compact
-.Pp
 .It Dv gpiodev = gpio.open(path)
 Open the gpio device and return an object to access its pins.
 .Pp
