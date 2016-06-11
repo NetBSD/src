@@ -12,7 +12,7 @@
 
 
 #include "sanitizer_common/sanitizer_platform.h"
-#if SANITIZER_LINUX || SANITIZER_FREEBSD
+#if SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
 
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -316,7 +316,7 @@ static void CheckAndProtect() {
     if (p >= 0xf000000000000000ull)  // vdso
       break;
     Printf("FATAL: ThreadSanitizer: unexpected memory mapping %p-%p\n", p, end);
-    Die();
+//    Die();
   }
 
   ProtectRange(kLoAppMemEnd, kShadowBeg);
@@ -423,4 +423,4 @@ int call_pthread_cancel_with_cleanup(int(*fn)(void *c, void *m,
 
 }  // namespace __tsan
 
-#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD
+#endif  // SANITIZER_LINUX || SANITIZER_FREEBSD || SANITIZER_NETBSD
