@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.122 2015/09/05 20:19:43 dholland Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.123 2016/06/11 16:55:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.122 2015/09/05 20:19:43 dholland Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.123 2016/06/11 16:55:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1745,27 +1745,28 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 		struct tm parsed;
 		time_t timeval;
 		char tsbuf[MAX_TIMESTAMPLEN];
-		int i = 0;
+		int i = 0, j;
 
 		DPRINTF(D_CALL, "check_timestamp(): convert ISO->BSD\n");
 		for(i = 0; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != '.' && from_buf[i] != ' '; i++)
 			tsbuf[i] = from_buf[i]; /* copy date & time */
+		j = i;
 		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
 		    && from_buf[i] != '+' && from_buf[i] != '-'
 		    && from_buf[i] != 'Z' && from_buf[i] != ' '; i++)
 			;			   /* skip fraction digits */
 		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
-		    && from_buf[i] != ':' && from_buf[i] != ' ' ; i++)
-			tsbuf[i] = from_buf[i]; /* copy TZ */
+		    && from_buf[i] != ':' && from_buf[i] != ' ' ; i++, j++)
+			tsbuf[j] = from_buf[i]; /* copy TZ */
 		if (from_buf[i] == ':') i++;	/* skip colon */
 		for(; i < MAX_TIMESTAMPLEN && from_buf[i] != '\0'
-		    && from_buf[i] != ' ' ; i++)
-			tsbuf[i] = from_buf[i]; /* copy TZ */
+		    && from_buf[i] != ' ' ; i++, j++)
+			tsbuf[j] = from_buf[i]; /* copy TZ */
 
 		(void)memset(&parsed, 0, sizeof(parsed));
-		parsed.tm_isdst = -1;
 		(void)strptime(tsbuf, "%FT%T%z", &parsed);
+		parsed.tm_isdst = -1;
 		timeval = mktime(&parsed);
 
 		*to_buf = make_timestamp(&timeval, false, BSD_TIMESTAMPLEN);
