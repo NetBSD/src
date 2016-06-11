@@ -36,6 +36,13 @@ using namespace __tsan;  // NOLINT
 #define stdout __stdoutp
 #define stderr __stderrp
 #endif
+#if SANITIZER_NETBSD
+#define	__errno_location __errno
+#define	pthread_yield sched_yield
+#define	fileno_unlocked fileno
+#define	stdout __sF[1]
+#define	stderr __sF[2]
+#endif
 
 const int kSigCount = 65;
 
@@ -73,7 +80,11 @@ extern "C" void __libc_free(void *ptr);
 #if !SANITIZER_FREEBSD && !SANITIZER_NETBSD
 extern "C" int mallopt(int param, int value);
 #endif
+#if SANITIZER_NETBSD
+extern __sanitizer_FILE **__sF;
+#else
 extern __sanitizer_FILE *stdout, *stderr;
+#endif
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int EINVAL = 22;
