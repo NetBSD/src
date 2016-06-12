@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.15 2015/12/04 16:46:24 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.16 2016/06/12 12:48:32 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ static int
 recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 {
 	const char *name, *origname;
-	map_t *dgpt, dtbl, sgpt, stbl;
+	map_t *dgpt, dtbl, sgpt, stbl __unused;
 	struct gpt_hdr *hdr;
 
 	if (gpt_add_hdr(gpt, type, last) == -1)
@@ -99,7 +99,7 @@ recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 	memcpy((*dgpt)->map_data, sgpt->map_data, gpt->secsz);
 	hdr = (*dgpt)->map_data;
 	hdr->hdr_lba_self = htole64((uint64_t)(*dgpt)->map_start);
-	hdr->hdr_lba_alt = htole64((uint64_t)stbl->map_start);
+	hdr->hdr_lba_alt = htole64((uint64_t)sgpt->map_start);
 	hdr->hdr_lba_table = htole64((uint64_t)dtbl->map_start);
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
@@ -151,7 +151,9 @@ recover_gpt_tbl(gpt_t gpt, int type, off_t start)
 static int
 recover(gpt_t gpt, int recoverable)
 {
-	uint64_t last;
+	off_t last = gpt_last(gpt);
+	map_t map;
+	struct mbr *mbr;
 
 	if (map_find(gpt, MAP_TYPE_MBR) != NULL) {
 		gpt_warnx(gpt, "Device contains an MBR");
@@ -174,10 +176,9 @@ recover(gpt_t gpt, int recoverable)
 		return -1;
 	}
 
-	last = (uint64_t)(gpt->mediasz / gpt->secsz - 1LL);
-
 	if (gpt->gpt != NULL &&
-	    ((struct gpt_hdr *)(gpt->gpt->map_data))->hdr_lba_alt != last) {
+	    ((struct gpt_hdr *)(gpt->gpt->map_data))->hdr_lba_alt !=
+	    (uint64_t)last) {
 		gpt_warnx(gpt, "Media size has changed, please use "
 		   "'%s resizedisk'", getprogname());
 		return -1;
@@ -185,7 +186,7 @@ recover(gpt_t gpt, int recoverable)
 
 	if (gpt->tbl != NULL && gpt->lbt == NULL) {
 		if (recover_gpt_tbl(gpt, MAP_TYPE_SEC_GPT_TBL,
-		    (off_t)last - gpt->tbl->map_size) == -1)
+		    last - gpt->tbl->map_size) == -1)
 			return -1;
 	} else if (gpt->tbl == NULL && gpt->lbt != NULL) {
 		if (recover_gpt_tbl(gpt, MAP_TYPE_PRI_GPT_TBL, 2LL) == -1)
@@ -193,12 +194,37 @@ recover(gpt_t gpt, int recoverable)
 	}
 
 	if (gpt->gpt != NULL && gpt->tpg == NULL) {
-		if (recover_gpt_hdr(gpt, MAP_TYPE_SEC_GPT_HDR,
-		    (off_t)last) == -1)
+		if (recover_gpt_hdr(gpt, MAP_TYPE_SEC_GPT_HDR, last) == -1)
 			return -1;
 	} else if (gpt->gpt == NULL && gpt->tpg != NULL) {
 		if (recover_gpt_hdr(gpt, MAP_TYPE_PRI_GPT_HDR, 1LL) == -1)
 			return -1;
+	}
+
+	/*
+	 * Create PMBR if it doesn't already exist.
+	 */
+	if (map_find(gpt, MAP_TYPE_PMBR) == NULL) {
+		if (map_free(gpt, 0LL, 1LL) == 0) {
+			gpt_warnx(gpt, "No room for the PMBR");
+			return -1;
+		}
+		mbr = gpt_read(gpt, 0LL, 1);
+		if (mbr == NULL) {
+			gpt_warnx(gpt, "Error reading MBR");
+			return -1;
+		}
+		memset(mbr, 0, sizeof(*mbr));
+		mbr->mbr_sig = htole16(MBR_SIG);
+		gpt_create_pmbr_part(mbr->mbr_part, last, 0);
+
+		map = map_add(gpt, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
+		if (gpt_write(gpt, map) == -1) {
+			gpt_warn(gpt, "Can't write PMBR");
+			return -1;
+		}
+		gpt_msg(gpt,
+		    "Recreated PMBR (you may need to rerun 'gpt biosboot'");
 	}
 	return 0;
 }
