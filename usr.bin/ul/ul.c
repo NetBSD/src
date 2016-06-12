@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.16 2012/03/20 20:34:59 matt Exp $	*/
+/*	$NetBSD: ul.c,v 1.17 2016/06/12 13:29:29 abhinav Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,14 +39,16 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.16 2012/03/20 20:34:59 matt Exp $");
+__RCSID("$NetBSD: ul.c,v 1.17 2016/06/12 13:29:29 abhinav Exp $");
 #endif /* not lint */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <term.h>
 #include <unistd.h>
+#include <util.h>
 
 #define	IESC	'\033'
 #define	SO	'\016'
@@ -74,25 +76,25 @@ struct	CHAR	{
 	char	c_char;
 } ;
 
-struct	CHAR	obuf[MAXBUF];
-int	col, maxcol;
+size_t col, maxcol;
 int	mode;
 int	halfpos;
 int	upln;
 int	iflag;
 
-int	main __P((int, char **));
-void	filter __P((FILE *));
-void	flushln __P((void));
-void	fwd __P((void));
-void	iattr __P((void));
-void	initbuf __P((void));
-void	initcap __P((void));
-void	outc __P((int));
-int	outchar __P((int));
-void	overstrike __P((void));
-void	reverse __P((void));
-void	setulmode __P((int));
+void filter(FILE *);
+void flushln(struct CHAR *, size_t);
+void fwd(struct CHAR *, size_t);
+void iattr(struct CHAR *);
+void initbuf(struct CHAR *, size_t);
+void initcap(void);
+void outc(int);
+int outchar(int);
+void overstrike(struct CHAR *);
+void reverse(struct CHAR *, size_t);
+void setulmode(int);
+static void alloc_buf(struct CHAR **, size_t *);
+static void set_mode(void);
 
 
 #define	PRINT(s)	if (s == NULL) /* void */; else tputs(s, 1, outchar)
@@ -128,19 +130,19 @@ main(int argc, char **argv)
 	setupterm(termtype, 0, NULL);
 	if ((over_strike && enter_bold_mode == NULL) ||
 	    (transparent_underline && enter_underline_mode == NULL &&
-	     underline_char == NULL))
-	initbuf();
+		underline_char == NULL)) {
+		set_mode();
+	}
 	if (optind == argc)
 		filter(stdin);
-	else for (; optind<argc; optind++) {
-		f = fopen(argv[optind],"r");
-		if (f == NULL) {
-			perror(argv[optind]);
-			exit(1);
+	else {
+		for (; optind < argc; optind++) {
+			f = fopen(argv[optind], "r");
+			if (f == NULL)
+				err(EXIT_FAILURE, "Failed to open `%s'", argv[optind]);
+			filter(f);
+			fclose(f);
 		}
-
-		filter(f);
-		fclose(f);
 	}
 	exit(0);
 }
@@ -149,6 +151,9 @@ void
 filter(FILE *f)
 {
 	int c;
+	struct	CHAR *obuf = NULL;
+	size_t obuf_size = 0;
+	alloc_buf(&obuf, &obuf_size);
 
 	while ((c = getc(f)) != EOF) switch(c) {
 
@@ -161,6 +166,8 @@ filter(FILE *f)
 		col = (col+8) & ~07;
 		if (col > maxcol)
 			maxcol = col;
+		if (col >= obuf_size)
+			alloc_buf(&obuf, &obuf_size);
 		continue;
 
 	case '\r':
@@ -187,7 +194,7 @@ filter(FILE *f)
 				halfpos--;
 			} else {
 				halfpos = 0;
-				reverse();
+				reverse(obuf, obuf_size);
 			}
 			continue;
 
@@ -200,12 +207,12 @@ filter(FILE *f)
 				halfpos++;
 			} else {
 				halfpos = 0;
-				fwd();
+				fwd(obuf, obuf_size);
 			}
 			continue;
 
 		case FREV:
-			reverse();
+			reverse(obuf, obuf_size);
 			continue;
 
 		default:
@@ -214,7 +221,6 @@ filter(FILE *f)
 				IESC, c);
 			exit(1);
 		}
-		continue;
 
 	case '_':
 		if (obuf[col].c_char)
@@ -225,14 +231,16 @@ filter(FILE *f)
 		col++;
 		if (col > maxcol)
 			maxcol = col;
+		if (col >= obuf_size)
+			alloc_buf(&obuf, &obuf_size);
 		continue;
 
 	case '\n':
-		flushln();
+		flushln(obuf, obuf_size);
 		continue;
 
 	case '\f':
-		flushln();
+		flushln(obuf, obuf_size);
 		putchar('\f');
 		continue;
 
@@ -252,17 +260,21 @@ filter(FILE *f)
 		col++;
 		if (col > maxcol)
 			maxcol = col;
+		if (col >= obuf_size)
+			alloc_buf(&obuf, &obuf_size);
 		continue;
 	}
 	if (maxcol)
-		flushln();
+		flushln(obuf, obuf_size);
+
+	free(obuf);
 }
 
 void
-flushln(void)
+flushln(struct CHAR *obuf, size_t obuf_size)
 {
 	int lastmode;
-	int i;
+	size_t i;
 	int hadmodes = 0;
 
 	lastmode = NORMAL;
@@ -286,14 +298,14 @@ flushln(void)
 		setulmode(0);
 	}
 	if (must_overstrike && hadmodes)
-		overstrike();
+		overstrike(obuf);
 	putchar('\n');
 	if (iflag && hadmodes)
-		iattr();
+		iattr(obuf);
 	(void)fflush(stdout);
 	if (upln)
 		upln--;
-	initbuf();
+	initbuf(obuf, obuf_size);
 }
 
 /*
@@ -301,9 +313,9 @@ flushln(void)
  * We don't do anything with halfline ups and downs, or Greek.
  */
 void
-overstrike(void)
+overstrike(struct CHAR *obuf)
 {
-	int i;
+	size_t i;
 	char lbuf[256];
 	char *cp = lbuf;
 	int hadbold=0;
@@ -339,9 +351,9 @@ overstrike(void)
 }
 
 void
-iattr(void)
+iattr(struct CHAR *obuf)
 {
-	int i;
+	size_t i;
 	char lbuf[256];
 	char *cp = lbuf;
 
@@ -363,32 +375,38 @@ iattr(void)
 }
 
 void
-initbuf(void)
+initbuf(struct CHAR *obuf, size_t obuf_size)
 {
 
-	memset((char *)obuf, 0, sizeof (obuf));	/* depends on NORMAL == 0 */
+	memset(obuf, 0, obuf_size * sizeof(*obuf));	/* depends on NORMAL == 0 */
 	col = 0;
 	maxcol = 0;
+	set_mode();
+}
+
+static void
+set_mode(void)
+{
 	mode &= ALTSET;
 }
 
 void
-fwd(void)
+fwd(struct CHAR *obuf, size_t obuf_size)
 {
 	int oldcol, oldmax;
 
 	oldcol = col;
 	oldmax = maxcol;
-	flushln();
+	flushln(obuf, obuf_size);
 	col = oldcol;
 	maxcol = oldmax;
 }
 
 void
-reverse(void)
+reverse(struct CHAR *obuf, size_t obuf_size)
 {
 	upln++;
-	fwd();
+	fwd(obuf, obuf_size);
 	PRINT(cursor_up);
 	PRINT(cursor_up);
 	upln++;
@@ -483,4 +501,17 @@ setulmode(int newmode)
 		}
 	}
 	curmode = newmode;
+}
+
+/*
+ * Reallocates the buffer pointed to by *buf and sets
+ * the newly allocated set of bytes to 0.
+ */
+void
+alloc_buf(struct CHAR **buf, size_t *size)
+{
+        size_t osize = *size;
+        *size += MAXBUF;
+        ereallocarr(buf, *size, sizeof(**buf));
+        memset(*buf + osize, 0, (*size - osize) * sizeof(**buf));
 }
