@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.81 2014/05/17 11:31:40 apb Exp $
+.\"	$NetBSD: find.1,v 1.82 2016/06/12 03:21:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd May 17, 2014
+.Dd June 12, 2016
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -96,7 +96,7 @@ By default,
 .Nm
 visits directories in pre-order, i.e., before their contents.
 Note, the default is
-.Ar not
+.Em not
 a breadth-first traversal.
 .It Fl E
 Causes
@@ -460,13 +460,13 @@ displayed preceded by
 The format is identical to that produced by
 .Dq ls -dgils .
 .Pp
-.It Ic -maxdepth Ar n
+.It Ic -maxdepth Ar depth
 True if the current search depth is less than or equal to what is specified in
-.Ar n .
+.Ar depth .
 .Pp
-.It Ic -mindepth Ar n
+.It Ic -mindepth Ar depth
 True if the current search depth is at least what is specified in
-.Ar n .
+.Ar depth .
 .Pp
 .It Ic -mmin Ar n
 True if the difference between the file last modification time and the time
