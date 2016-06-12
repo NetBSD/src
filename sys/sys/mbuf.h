@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.164 2016/06/10 13:31:45 ozaki-r Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.165 2016/06/12 10:14:12 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -980,7 +980,9 @@ static __inline void
 m_reset_rcvif(struct mbuf *m)
 {
 
-	m->m_pkthdr.rcvif_index = 0;
+	/* A caller may expect whole _rcvif union is zeroed */
+	/* m->m_pkthdr.rcvif_index = 0; */
+	m->m_pkthdr._rcvif.ctx = NULL;
 }
 
 static __inline void
