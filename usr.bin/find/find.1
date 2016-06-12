@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.82 2016/06/12 03:21:35 pgoyette Exp $
+.\"	$NetBSD: find.1,v 1.83 2016/06/12 20:50:10 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -406,7 +406,7 @@ If
 .Ar gname
 is numeric and there is no such group name, then
 .Ar gname
-is treated as a group id.
+is treated as a group id (and considered a numeric argument).
 .Pp
 .It Ic -iname Ar pattern
 True if the last component of the pathname being examined matches
@@ -673,13 +673,13 @@ whiteout
 whiteout
 .El
 .Pp
-.It Ic -user Ar uname
+.It Ic -user Ar username
 True if the file belongs to the user
-.Ar uname .
+.Ar username .
 If
-.Ar uname
-is numeric and there is no such user name, then
-.Ar uname
+.Ar username
+is numeric and there is no such user on the system, then
+.Ar username
 is treated as a user id (and considered a numeric argument).
 .Pp
 .It Ic -xdev
