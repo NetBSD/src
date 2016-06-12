@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26 2011/08/16 11:10:54 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.27 2016/06/12 02:15:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.26 2011/08/16 11:10:54 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.27 2016/06/12 02:15:26 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -562,12 +562,17 @@ panic(const char *fmt, ...)
 {
 	va_list ap;
 
+	if (interactive) {
+		bdisp();
+		cursfini();
+	}
+
 	fprintf(stderr, "%s: ", prog);
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
 
-	fputs("resign\n", stdout);
-	quit();
+	fputs("I resign\n", stdout);
+	exit(1);
 }
