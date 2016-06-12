@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $	*/
+/*	$NetBSD: function.c,v 1.73 2016/06/12 20:50:10 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.72 2013/05/04 06:29:32 uebayasi Exp $");
+__RCSID("$NetBSD: function.c,v 1.73 2016/06/12 20:50:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1060,7 +1060,7 @@ int
 f_group(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_gid == plan->g_data);
+	COMPARE(entry->fts_statp->st_gid, plan->g_data);
 }
 
 PLAN *
@@ -1074,15 +1074,19 @@ c_group(char ***argvp, int isok)
 	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
+	new = palloc(N_GROUP, f_group);
 	g = getgrnam(gname);
 	if (g == NULL) {
-		gid = atoi(gname);
-		if (gid == 0 && gname[0] != '0')
+		if (atoi(gname) == 0 && gname[0] != '0' &&
+		    strcmp(gname, "+0") && strcmp(gname, "-0"))
 			errx(1, "-group: %s: no such group", gname);
-	} else
-		gid = g->gr_gid;
+		gid = find_parsenum(new, "-group", gname, NULL);
 
-	new = palloc(N_GROUP, f_group);
+	} else {
+		new->flags = F_EQUAL;
+		gid = g->gr_gid;
+	}
+
 	new->g_data = gid;
 	return (new);
 }
