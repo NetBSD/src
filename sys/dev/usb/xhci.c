@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.74 2016/06/10 14:53:31 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.75 2016/06/12 15:25:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.74 2016/06/10 14:53:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.75 2016/06/12 15:25:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1238,8 +1238,6 @@ xhci_configure_endpoint(struct usbd_pipe *pipe)
 	    xs->xs_idx, dci, pipe->up_endpoint->ue_edesc->bEndpointAddress,
 	    pipe->up_endpoint->ue_edesc->bmAttributes);
 
-	KASSERT(!mutex_owned(&sc->sc_lock));
-
 	/* XXX ensure input context is available? */
 
 	memset(xhci_slot_get_icv(sc, xs, 0), 0, sc->sc_pgsz);
@@ -1293,8 +1291,6 @@ xhci_reset_endpoint(struct usbd_pipe *pipe)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "slot %u dci %u", xs->xs_idx, dci, 0, 0);
-
-	KASSERT(!mutex_owned(&sc->sc_lock));
 
 	trb.trb_0 = 0;
 	trb.trb_2 = 0;
