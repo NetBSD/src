@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.83 2016/06/12 20:50:10 dholland Exp $
+.\"	$NetBSD: find.1,v 1.84 2016/06/12 22:17:18 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,6 +170,13 @@ a preceding minus sign means
 .Dq less than Ar n ,
 and neither means
 .Dq exactly Ar n .
+(The argument specified for the
+.Fl user
+and 
+.Fl group
+primaries
+are similarly treated if the value is numeric and does not correspond to a
+valid user or group name.)
 .Pp
 .Bl -tag -width Ds -compact
 .It Ic -amin Ar n
