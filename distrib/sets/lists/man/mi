@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1526 2016/06/04 16:29:35 nonaka Exp $
+# $NetBSD: mi,v 1.1527 2016/06/12 18:44:46 abhinav Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2502,7 +2502,7 @@
 ./usr/share/man/cat8/hostapd_cli.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/hp300/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp300/boot.0		man-sys-catman		.cat
-./usr/share/man/cat8/hp300/crash.0		man-sys-catman		.cat
+./usr/share/man/cat8/hp300/crash.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp300/format.0		man-sys-catman		.cat
 ./usr/share/man/cat8/hp300/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/hp700/MAKEDEV.0		man-obsolete		obsolete
@@ -5416,7 +5416,7 @@
 ./usr/share/man/html8/hostapd.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hostapd_cli.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/hp300/boot.html		man-sys-htmlman		html
-./usr/share/man/html8/hp300/crash.html		man-sys-htmlman		html
+./usr/share/man/html8/hp300/crash.html		man-obsolete 		obsolete
 ./usr/share/man/html8/hp300/format.html		man-sys-htmlman		html
 ./usr/share/man/html8/hp700/boot.html		man-obsolete		obsolete
 ./usr/share/man/html8/hp700/mkboot.html		man-obsolete		obsolete
@@ -8429,7 +8429,7 @@
 ./usr/share/man/man8/hostapd_cli.8		man-sysutil-man		.man
 ./usr/share/man/man8/hp300/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp300/boot.8		man-sys-man		.man
-./usr/share/man/man8/hp300/crash.8		man-sys-man		.man
+./usr/share/man/man8/hp300/crash.8		man-obsolete 	obsolete
 ./usr/share/man/man8/hp300/format.8		man-sys-man		.man
 ./usr/share/man/man8/hp300/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/hp700/MAKEDEV.8		man-obsolete		obsolete
