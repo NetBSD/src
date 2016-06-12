@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.33 2016/05/02 19:18:29 christos Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.34 2016/06/12 02:16:15 christos Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.33 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.34 2016/06/12 02:16:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -108,6 +108,59 @@ static void 	arc_create_sensors(void *);
 static void 	arc_refresh_sensors(struct sysmon_envsys *, envsys_data_t *);
 static int	arc_fw_parse_status_code(struct arc_softc *, uint8_t *);
 #endif
+
+/* 
+ * interface for scsi midlayer to talk to.
+ */
+static void 	arc_scsi_cmd(struct scsipi_channel *, scsipi_adapter_req_t,
+    void *);
+
+/* 
+ * code to deal with getting bits in and out of the bus space.
+ */
+static uint32_t arc_read(struct arc_softc *, bus_size_t);
+static void 	arc_read_region(struct arc_softc *, bus_size_t, void *,
+    size_t);
+static void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
+static void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
+    size_t);
+static int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
+    uint32_t);
+#ifdef unused
+static int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
+    uint32_t);
+#endif
+static int	arc_msg0(struct arc_softc *, uint32_t);
+static struct arc_dmamem 	*arc_dmamem_alloc(struct arc_softc *, size_t);
+static void	arc_dmamem_free(struct arc_softc *,
+    struct arc_dmamem *);
+
+static int 	arc_alloc_ccbs(device_t);
+static struct arc_ccb	*arc_get_ccb(struct arc_softc *);
+static void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
+static int 	arc_load_xs(struct arc_ccb *);
+static int 	arc_complete(struct arc_softc *, struct arc_ccb *, int);
+static void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
+    uint32_t);
+
+/* 
+ * real stuff for dealing with the hardware.
+ */
+static int 	arc_map_pci_resources(device_t, struct pci_attach_args *);
+static void 	arc_unmap_pci_resources(struct arc_softc *);
+static int 	arc_query_firmware(device_t);
+
+/* 
+ * stuff to do messaging via the doorbells.
+ */
+static void 	arc_lock(struct arc_softc *);
+static void 	arc_unlock(struct arc_softc *);
+static void 	arc_wait(struct arc_softc *);
+static uint8_t 	arc_msg_cksum(void *, uint16_t);
+static int 	arc_msgbuf(struct arc_softc *, void *, size_t, void *, size_t);
+
+#define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
+#define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
 
 static int
 arc_match(device_t parent, cfdata_t match, void *aux)
@@ -1867,7 +1920,7 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 #endif /* NBIO > 0 */
 
-uint32_t
+static uint32_t
 arc_read(struct arc_softc *sc, bus_size_t r)
 {
 	uint32_t			v;
@@ -1882,7 +1935,7 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 	return v;
 }
 
-void
+static void
 arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 {
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, len,
@@ -1891,7 +1944,7 @@ arc_read_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	    (uint32_t *)buf, len >> 2);
 }
 
-void
+static void
 arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 {
 	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n",
@@ -1902,7 +1955,7 @@ arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-void
+static void
 arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 {
 	bus_space_write_region_4(sc->sc_iot, sc->sc_ioh, r,
@@ -1911,7 +1964,7 @@ arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
-int
+static int
 arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
@@ -1929,7 +1982,8 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	return 1;
 }
 
-int
+#if unused
+static int
 arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	    uint32_t target)
 {
@@ -1946,8 +2000,9 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 
 	return 1;
 }
+#endif
 
-int
+static int
 arc_msg0(struct arc_softc *sc, uint32_t m)
 {
 	/* post message */
@@ -1963,7 +2018,7 @@ arc_msg0(struct arc_softc *sc, uint32_t m)
 	return 0;
 }
 
-struct arc_dmamem *
+static struct arc_dmamem *
 arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 {
 	struct arc_dmamem		*adm;
@@ -2007,7 +2062,7 @@ admfree:
 	return NULL;
 }
 
-void
+static void
 arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 {
 	bus_dmamap_unload(sc->sc_dmat, adm->adm_map);
@@ -2017,7 +2072,7 @@ arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 	kmem_free(adm, sizeof(*adm));
 }
 
-int
+static int
 arc_alloc_ccbs(device_t self)
 {
 	struct arc_softc 	*sc = device_private(self);
@@ -2073,7 +2128,7 @@ free_ccbs:
 	return 1;
 }
 
-struct arc_ccb *
+static struct arc_ccb *
 arc_get_ccb(struct arc_softc *sc)
 {
 	struct arc_ccb			*ccb;
@@ -2085,7 +2140,7 @@ arc_get_ccb(struct arc_softc *sc)
 	return ccb;
 }
 
-void
+static void
 arc_put_ccb(struct arc_softc *sc, struct arc_ccb *ccb)
 {
 	ccb->ccb_xs = NULL;
