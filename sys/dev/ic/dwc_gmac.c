@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.4 2016/06/12 07:18:52 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.5 2016/06/12 08:33:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.4 2016/06/12 07:18:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.5 2016/06/12 08:33:29 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -765,7 +765,7 @@ dwc_gmac_init_locked(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_RUNNING)
 		return 0;
 
-	dwc_gmac_stop(ifp, 0);
+	dwc_gmac_stop_locked(ifp, 0);
 
 	/*
 	 * Configure DMA burst/transfer mode and RX/TX priorities.
