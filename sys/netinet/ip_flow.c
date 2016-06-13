@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.68 2016/06/13 08:04:44 knakahara Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.69 2016/06/13 08:29:55 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.68 2016/06/13 08:04:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.69 2016/06/13 08:29:55 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ do { \
 static int ip_maxflows = IPFLOW_MAX;
 static int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
+static struct ipflow *ipflow_reap(bool);
 static void ipflow_sysctl_init(struct sysctllog **);
 
 static size_t 
@@ -349,7 +350,7 @@ ipflow_free(struct ipflow *ipf)
 	pool_put(&ipflow_pool, ipf);
 }
 
-struct ipflow *
+static struct ipflow *
 ipflow_reap(bool just_one)
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
