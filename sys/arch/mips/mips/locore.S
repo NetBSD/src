@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.197 2015/06/11 07:30:10 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.198 2016/06/13 01:14:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,12 @@
 #define	NOP_L		nop
 #else
 #define	NOP_L		/* nothing */
+#endif
+
+#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
+#define MFC0_HAZARD	nop
+#else
+#define MFC0_HAZARD	/* nothing */
 #endif
 
 	.set	noreorder
@@ -187,6 +193,7 @@ _C_LABEL(kernel_text):
 	ei
 #else
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
 #endif
@@ -226,6 +233,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #endif
 
 	mfc0	t0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	t0, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	t0, 0
@@ -350,6 +358,7 @@ END(cpu_switchto)
 softint_cleanup:
 #ifdef PARANOIA
 	mfc0	t1, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	v0, 0
@@ -393,9 +402,11 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
  	 */
 	mfc0	t1, MIPS_COP_0_STATUS
 #if defined(PARANOIA) && __mips >= 32
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
 	teqi	v0, 0
 #elif defined(PARANOID_LOOP)
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
 1:	beqz	v0, 1b
 	 nop
@@ -488,6 +499,7 @@ END(lwp_oncpu)
 LEAF(savectx)
 #ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	t0, v0, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	t0, 0
