@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.86 2016/06/13 00:04:40 pgoyette Exp $
+.\"	$NetBSD: find.1,v 1.87 2016/06/13 06:17:19 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,7 +172,7 @@ and neither means
 .Dq exactly Ar n .
 (The argument specified for the
 .Ic -user
-and 
+and
 .Ic -group
 primaries
 are similarly treated if the value is numeric and does not correspond to a
@@ -196,7 +196,7 @@ minutes.
 True if the current file has a more recent last access time than
 .Ar file .
 .Pp
-.It Ic -asince Ar "timestamp"
+.It Ic -asince Ar timestamp
 True if the file last access time is greater than the specified
 .Ar timestamp .
 .Pp
@@ -219,7 +219,7 @@ minutes.
 True if the current file has a more recent last change time than
 .Ar file .
 .Pp
-.It Ic -csince Ar "timestamp"
+.It Ic -csince Ar timestamp
 True if the file last status change time is greater than the specified
 .Ar timestamp .
 .Pp
@@ -673,7 +673,7 @@ basic regular expression
 This is a match on the whole path, not a search for the regular expression
 within the path.
 .Pp
-.It Ic -since Ar "timestamp"
+.It Ic -since Ar timestamp
 True if the file last modification time is more recent than
 .Ar timestamp .
 .Pp
