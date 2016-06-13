@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.70 2016/06/13 08:34:23 knakahara Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.71 2016/06/13 08:37:15 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.70 2016/06/13 08:34:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.71 2016/06/13 08:37:15 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,7 +357,6 @@ ipflow_addstats(struct ipflow *ipf)
 static void
 ipflow_free(struct ipflow *ipf)
 {
-	int s;
 
 	KASSERT(mutex_owned(&ipflow_lock));
 
@@ -366,9 +365,8 @@ ipflow_free(struct ipflow *ipf)
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	s = splnet();
 	IPFLOW_REMOVE(ipf);
-	splx(s);
+
 	ipflow_addstats(ipf);
 	rtcache_free(&ipf->ipf_ro);
 	ipflow_inuse--;
@@ -383,7 +381,6 @@ ipflow_reap(bool just_one)
 
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
-		int s;
 
 		ipf = LIST_FIRST(&ipflowlist);
 		while (ipf != NULL) {
@@ -412,9 +409,8 @@ ipflow_reap(bool just_one)
 		/*
 		 * Remove the entry from the flow table.
 		 */
-		s = splnet();
 		IPFLOW_REMOVE(ipf);
-		splx(s);
+
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
 		if (just_one)
@@ -462,7 +458,6 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	const struct ip *const ip = mtod(m, const struct ip *);
 	struct ipflow *ipf;
 	size_t hash;
-	int s;
 
 	mutex_enter(&ipflow_lock);
 
@@ -493,9 +488,8 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		}
 		memset(ipf, 0, sizeof(*ipf));
 	} else {
-		s = splnet();
 		IPFLOW_REMOVE(ipf);
-		splx(s);
+
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
 		ipf->ipf_uses = ipf->ipf_last_uses = 0;
@@ -515,9 +509,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip);
-	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
-	splx(s);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
@@ -528,13 +520,12 @@ int
 ipflow_invalidate_all(int new_size)
 {
 	struct ipflow *ipf, *next_ipf;
-	int s, error;
+	int error;
 
 	error = 0;
 
 	mutex_enter(&ipflow_lock);
 
-	s = splnet();
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		ipflow_free(ipf);
@@ -542,7 +533,6 @@ ipflow_invalidate_all(int new_size)
 
 	if (new_size)
 		error = ipflow_reinit(new_size);
-	splx(s);
 
 	mutex_exit(&ipflow_lock);
 
