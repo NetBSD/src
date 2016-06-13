@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/06/09 04:44:19 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.2 2016/06/13 20:03:07 ryoon Exp $
 #
 
 .include "../Makefile.inc"
@@ -53,5 +53,7 @@ SRCS+=	ip_state.c
 SRCS+=	ip_sync.c
 SRCS+=	ip_fil_compat.c
 SRCS+=	radix_ipf.c
+
+CWARNFLAGS.clang+=	-Wno-self-assign
 
 .include <bsd.kmodule.mk>
