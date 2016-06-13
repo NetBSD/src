@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.25 2016/06/13 08:34:23 knakahara Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.26 2016/06/13 08:37:15 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.25 2016/06/13 08:34:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.26 2016/06/13 08:37:15 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,6 @@ ip6flow_addstats(const struct ip6flow *ip6f)
 static void
 ip6flow_free(struct ip6flow *ip6f)
 {
-	int s;
 
 	KASSERT(mutex_owned(&ip6flow_lock));
 
@@ -386,9 +385,8 @@ ip6flow_free(struct ip6flow *ip6f)
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	s = splnet();
 	IP6FLOW_REMOVE(ip6f);
-	splx(s);
+
 	ip6flow_inuse--;
 	ip6flow_addstats(ip6f);
 	rtcache_free(&ip6f->ip6f_ro);
@@ -403,7 +401,6 @@ ip6flow_reap_locked(int just_one)
 
 	while (just_one || ip6flow_inuse > ip6_maxflows) {
 		struct ip6flow *ip6f, *maybe_ip6f = NULL;
-		int s;
 
 		ip6f = LIST_FIRST(&ip6flowlist);
 		while (ip6f != NULL) {
@@ -432,9 +429,8 @@ ip6flow_reap_locked(int just_one)
 		/*
 		 * Remove the entry from the flow table
 		 */
-		s = splnet();
 		IP6FLOW_REMOVE(ip6f);
-		splx(s);
+
 		rtcache_free(&ip6f->ip6f_ro);
 		if (just_one) {
 			ip6flow_addstats(ip6f);
@@ -500,7 +496,6 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	const struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;
 	size_t hash;
-	int s;
 
 	mutex_enter(&ip6flow_lock);
 
@@ -542,9 +537,8 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 		}
 		memset(ip6f, 0, sizeof(*ip6f));
 	} else {
-		s = splnet();
 		IP6FLOW_REMOVE(ip6f);
-		splx(s);
+
 		ip6flow_addstats(ip6f);
 		rtcache_free(&ip6f->ip6f_ro);
 		ip6f->ip6f_uses = 0;
@@ -566,9 +560,7 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ip6flow_hash(ip6);
-	s = splnet();
 	IP6FLOW_INSERT(&ip6flowtable[hash], ip6f);
-	splx(s);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
@@ -583,13 +575,12 @@ int
 ip6flow_invalidate_all(int new_size)
 {
 	struct ip6flow *ip6f, *next_ip6f;
-	int s, error;
+	int error;
 
 	error = 0;
 
 	mutex_enter(&ip6flow_lock);
 
-	s = splnet();
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		ip6flow_free(ip6f);
@@ -597,7 +588,6 @@ ip6flow_invalidate_all(int new_size)
 
 	if (new_size) 
 		error = ip6flow_init_locked(new_size);
-	splx(s);
 
 	mutex_exit(&ip6flow_lock);
 
