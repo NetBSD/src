@@ -1,4 +1,4 @@
-/*	$NetBSD: find.c,v 1.29 2012/03/20 20:34:57 matt Exp $	*/
+/*	$NetBSD: find.c,v 1.30 2016/06/13 00:04:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)find.c	8.5 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: find.c,v 1.29 2012/03/20 20:34:57 matt Exp $");
+__RCSID("$NetBSD: find.c,v 1.30 2016/06/13 00:04:40 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,16 +102,16 @@ find_formplan(char **argv)
 	 */
 	if (!isoutput) {
 		if (plan == NULL) {
-			new = c_print(NULL, 0);
+			new = c_print(NULL, 0, NULL);
 			tail = plan = new;
 		} else {
-			new = c_openparen(NULL, 0);
+			new = c_openparen(NULL, 0, NULL);
 			new->next = plan;
 			plan = new;
-			new = c_closeparen(NULL, 0);
+			new = c_closeparen(NULL, 0, NULL);
 			tail->next = new;
 			tail = new;
-			new = c_print(NULL, 0);
+			new = c_print(NULL, 0, NULL);
 			tail->next = new;
 			tail = new;
 		}
