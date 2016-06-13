@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.74 2016/06/13 00:04:40 pgoyette Exp $	*/
+/*	$NetBSD: function.c,v 1.75 2016/06/13 02:06:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.74 2016/06/13 00:04:40 pgoyette Exp $");
+__RCSID("$NetBSD: function.c,v 1.75 2016/06/13 02:06:44 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1168,7 +1168,7 @@ c_group(char ***argvp, int isok, char *opt)
 	if (g == NULL) {
 		if (atoi(gname) == 0 && gname[0] != '0' &&
 		    strcmp(gname, "+0") && strcmp(gname, "-0"))
-			errx(1, %s: %s: no such group", opt, gname);
+			errx(1, "%s: %s: no such group", opt, gname);
 		gid = find_parsenum(new, "-group", gname, NULL);
 
 	} else {
