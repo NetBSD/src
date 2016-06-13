@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.17 2016/06/12 13:29:29 abhinav Exp $	*/
+/*	$NetBSD: ul.c,v 1.18 2016/06/13 14:58:57 abhinav Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.17 2016/06/12 13:29:29 abhinav Exp $");
+__RCSID("$NetBSD: ul.c,v 1.18 2016/06/13 14:58:57 abhinav Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -507,7 +507,7 @@ setulmode(int newmode)
  * Reallocates the buffer pointed to by *buf and sets
  * the newly allocated set of bytes to 0.
  */
-void
+static void
 alloc_buf(struct CHAR **buf, size_t *size)
 {
         size_t osize = *size;
