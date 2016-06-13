@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.ximcp,v 1.3 2016/06/02 22:41:26 mrg Exp $
+# $NetBSD: Makefile.ximcp,v 1.4 2016/06/13 20:03:07 ryoon Exp $
 
 .PATH:	${X11SRCDIR.X11}/modules/im/ximcp
 SRCS.ximcp= \
@@ -43,3 +43,4 @@ CPPFLAGS.imDefLkup.c=	-Wno-error
 CPPFLAGS.imRm.c=	-Wno-error
 CPPFLAGS.imTrans.c=	-Wno-error
 CPPFLAGS.imLcLkup.c=	-Wno-stack-protector
+CPPFLAGS.imInsClbk.c=	-Wno-unused-value
