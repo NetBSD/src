@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.67 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.68 2016/06/13 08:04:44 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.67 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.68 2016/06/13 08:04:44 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,9 +346,7 @@ ipflow_free(struct ipflow *ipf)
 	ipflow_addstats(ipf);
 	rtcache_free(&ipf->ipf_ro);
 	ipflow_inuse--;
-	s = splnet();
 	pool_put(&ipflow_pool, ipf);
-	splx(s);
 }
 
 struct ipflow *
@@ -453,9 +451,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		if (ipflow_inuse >= ip_maxflows) {
 			ipf = ipflow_reap(true);
 		} else {
-			s = splnet();
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
-			splx(s);
 			if (ipf == NULL)
 				goto out;
 			ipflow_inuse++;
