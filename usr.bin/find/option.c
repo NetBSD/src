@@ -1,4 +1,4 @@
-/*	$NetBSD: option.c,v 1.26 2007/02/06 15:33:22 perry Exp $	*/
+/*	$NetBSD: option.c,v 1.27 2016/06/13 00:04:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)option.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: option.c,v 1.26 2007/02/06 15:33:22 perry Exp $");
+__RCSID("$NetBSD: option.c,v 1.27 2016/06/13 00:04:40 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,11 @@ static OPTION const options[] = {
 	{ "-amin",	N_AMIN,		c_amin,		1 },
 	{ "-and",	N_AND,		c_null,		0 },
 	{ "-anewer",	N_ANEWER,	c_anewer,	1 },
+	{ "-asince",	N_ASINCE,	c_asince,	1 },
 	{ "-atime",	N_ATIME,	c_atime,	1 },
 	{ "-cmin",	N_CMIN,		c_cmin,		1 },
 	{ "-cnewer",	N_CNEWER,	c_cnewer,	1 },
+	{ "-csince",	N_CSINCE,	c_csince,	1 },
 	{ "-ctime",	N_CTIME,	c_ctime,	1 },
 	{ "-delete",	N_DELETE,	c_delete,	0 },
 	{ "-depth",	N_DEPTH,	c_depth,	0 },
@@ -91,6 +93,38 @@ static OPTION const options[] = {
 	{ "-mtime",	N_MTIME,	c_mtime,	1 },
 	{ "-name",	N_NAME,		c_name,		1 },
 	{ "-newer",	N_NEWER,	c_newer,	1 },
+
+/* Aliases for compatability with Gnu findutils */
+	{ "-neweraa",	N_ANEWER,	c_anewer,	1 },
+	{ "-newerat",	N_ASINCE,	c_asince,	1 },
+	{ "-newercc",	N_CNEWER,	c_cnewer,	1 },
+	{ "-newerct",	N_CSINCE,	c_csince,	1 },
+	{ "-newermm",	N_NEWER,	c_newer,	1 },
+	{ "-newermt",	N_SINCE,	c_since,	1 },
+
+/*
+ * Unimplemented Gnu findutils options 
+ *
+ * If you implement any of these, be sure to re-sort the table
+ * in ascii(7) order!
+ *
+        { "-newerBB",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerBa",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerBc",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerBm",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerBt",	N_UNIMPL,	c_unimpl,	1 },
+        { "-neweraB",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerac",	N_UNIMPL,	c_unimpl,	1 },
+        { "-neweram",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerca",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newercm",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newercB",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newermB",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newerma",	N_UNIMPL,	c_unimpl,	1 },
+        { "-newermc",	N_UNIMPL,	c_unimpl,	1 },
+ *
+ */
+
 	{ "-nogroup",	N_NOGROUP,	c_nogroup,	0 },
 	{ "-nouser",	N_NOUSER,	c_nouser,	0 },
 	{ "-o",		N_OR,		c_or,		0 },
@@ -104,6 +138,7 @@ static OPTION const options[] = {
 	{ "-prune",	N_PRUNE,	c_prune,	0 },
 	{ "-regex",	N_REGEX,	c_regex,	1 },
 	{ "-rm",	N_DELETE,	c_delete,	0 },
+	{ "-since",	N_SINCE,	c_since,	1 },
 	{ "-size",	N_SIZE,		c_size,		1 },
 	{ "-type",	N_TYPE,		c_type,		1 },
 	{ "-user",	N_USER,		c_user,		1 },
@@ -124,16 +159,18 @@ find_create(char ***argvp)
 	OPTION *p;
 	PLAN *new;
 	char **argv;
+	char *opt;
 
 	argv = *argvp;
+	opt = *argv;
 
-	if ((p = option(*argv)) == NULL)
-		errx(1, "%s: unknown option", *argv);
+	if ((p = option(opt)) == NULL)
+		errx(1, "%s: unknown option", opt);
 	++argv;
 	if (p->arg && !*argv)
-		errx(1, "%s: requires additional arguments", *--argv);
+		errx(1, "%s: requires additional arguments", opt);
 
-	new = (p->create)(&argv, p->token == N_OK);
+	new = (p->create)(&argv, p->token == N_OK, opt);
 
 	*argvp = argv;
 	return (new);

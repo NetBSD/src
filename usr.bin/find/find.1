@@ -1,4 +1,4 @@
-.\"	$NetBSD: find.1,v 1.85 2016/06/12 22:25:13 pgoyette Exp $
+.\"	$NetBSD: find.1,v 1.86 2016/06/13 00:04:40 pgoyette Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)find.1	8.7 (Berkeley) 5/9/95
 .\"
-.Dd June 12, 2016
+.Dd June 13, 2016
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -178,6 +178,12 @@ primaries
 are similarly treated if the value is numeric and does not correspond to a
 valid user or group name.)
 .Pp
+For primaries which take a
+.Ar timestamp
+argument, the argument must be valid input to
+.Xr parsedate 3 .
+If the argument contains multiple words, enclose the argument in quotes.
+.Pp
 .Bl -tag -width Ds -compact
 .It Ic -amin Ar n
 True if the difference between the file last access time and the time
@@ -189,6 +195,10 @@ minutes.
 .It Ic -anewer Ar file
 True if the current file has a more recent last access time than
 .Ar file .
+.Pp
+.It Ic -asince Ar "timestamp"
+True if the file last access time is greater than the specified
+.Ar timestamp .
 .Pp
 .It Ic -atime Ar n
 True if the difference between the file last access time and the time
@@ -208,6 +218,10 @@ minutes.
 .It Ic -cnewer Ar file
 True if the current file has a more recent last change time than
 .Ar file .
+.Pp
+.It Ic -csince Ar "timestamp"
+True if the file last status change time is greater than the specified
+.Ar timestamp .
 .Pp
 .It Ic -ctime Ar n
 True if the difference between the time of last change of file status
@@ -532,6 +546,21 @@ backslash
 True if the current file has a more recent last modification time than
 .Ar file .
 .Pp
+.It Ic -newerXY Ar reference
+For compatability with Gnu findutils.
+.Bl -column -offset indent ".Sy findutils" ".Sy equivalent"
+.It Sy findutils Ta Sy find
+.It Sy option Ta Sy equivalent
+.It -neweraa Ta -anewer
+.It -newerat Ta -asince
+.It -newercc Ta -cnewer
+.It -newerct Ta -csince
+.It -newermm Ta -newer
+.It -newermt Ta -since
+.El
+.Pp
+Other option variants from findutils are not implemented.
+.Pp
 .It Ic -nouser
 True if the file belongs to an unknown user.
 .Pp
@@ -643,6 +672,10 @@ basic regular expression
 .Ar regexp .
 This is a match on the whole path, not a search for the regular expression
 within the path.
+.Pp
+.It Ic -since Ar "timestamp"
+True if the file last modification time is more recent than
+.Ar timestamp .
 .Pp
 .It Ic -size Ar n Ns Op Cm c
 True if the file's size, rounded up, in 512-byte blocks is
@@ -816,8 +849,10 @@ standard.
 The options and the
 .Ic -amin ,
 .Ic -anewer ,
+.Ic -asince ,
 .Ic -cmin ,
 .Ic -cnewer ,
+.Ic -csince ,
 .Ic -delete ,
 .Ic -empty ,
 .Ic -execdir ,
@@ -835,8 +870,9 @@ The options and the
 .Ic -print0 ,
 .Ic -printx ,
 .Ic -regex ,
+.Ic -rm ,
 and
-.Ic -rm
+.Ic -since
 primaries are extensions to
 .St -p1003.2 .
 .Pp
