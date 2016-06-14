@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.935 2016/06/10 08:59:26 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.936 2016/06/14 13:26:45 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1062,6 +1062,16 @@ MKCTF?=		yes
 MKPIE?=		yes
 .else
 MKPIE?=		no
+.endif
+
+#
+# RELRO is enabled on i386 and amd64 by default
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+MKRELRO?=	partial
+.else
+MKRELRO?=	no
 .endif
 
 #
