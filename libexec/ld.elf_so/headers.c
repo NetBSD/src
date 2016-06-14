@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.60 2016/05/22 19:28:39 joerg Exp $	 */
+/*	$NetBSD: headers.c,v 1.61 2016/06/14 13:06:41 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.60 2016/05/22 19:28:39 joerg Exp $");
+__RCSID("$NetBSD: headers.c,v 1.61 2016/06/14 13:06:41 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -431,6 +431,17 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			    "PT_DYNAMIC", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
 			break;
+
+#ifdef GNU_RELRO
+		case PT_GNU_RELRO:
+			obj->relro_page = obj->relocbase
+			    + round_down(ph->p_vaddr);
+			obj->relro_size = round_up(ph->p_memsz);
+			dbg(("headers: %s %p phsize %" PRImemsz,
+			    "PT_GNU_RELRO", (void *)(uintptr_t)vaddr,
+			     ph->p_memsz));
+			break;
+#endif
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 		case PT_TLS:
