@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.61 2016/06/07 00:40:00 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.62 2016/06/14 18:16:06 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1470,6 +1470,7 @@ meta_oodate(GNode *gn, Boolean oodate)
 		if (DEBUG(META))
 		    fprintf(debug_file, "%s: required but missing\n", fname);
 		oodate = TRUE;
+		needOODATE = TRUE;	/* assume the worst */
 	    }
 	}
     }
