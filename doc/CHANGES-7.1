@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.92 2016/05/22 10:29:51 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.93 2016/06/14 09:05:16 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4752,9 +4752,52 @@ sys/dev/ic/gem.c				1.105
 	multiple packets.
 	[jdc, ticket #1170]
 
-
 sys/modules/lua/lua.c				1.17
 
 	Fix double require bug.
 	[salazar, ticket #1171]
+
+sys/dev/pci/ixgbe/README			1.2
+sys/dev/pci/ixgbe/ixgbe.c			1.30-1.33, 1.35 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.8 via patch
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.5 via patch
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.10 via patch
+sys/dev/pci/ixgbe/ixgbe_api.c			1.8-1.11 via patch
+sys/dev/pci/ixgbe/ixgbe_api.h			1.5-1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_common.c		1.6-1.7 via patch
+sys/dev/pci/ixgbe/ixgbe_common.h		1.5 via patch
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.9 via patch
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_phy.h			1.5 via patch
+sys/dev/pci/ixgbe/ixgbe_type.h			1.11, 1.13 via patch
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.5-1.6 via patch
+sys/dev/pci/ixgbe/ixv.c				1.9-1.10, 1.12-1.14 via patch
+sys/dev/pci/ixgbe/ixv.h				1.6 via patch
+sys/dev/pci/ixgbe/ixgbe_dcb.c			1.1
+sys/dev/pci/ixgbe/ixgbe_dcb.h			1.1
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.c		1.1
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.h		1.1
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.c		1.1
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.h		1.1
+
+	Sync ixg(4) up to ixgbe.c rev. 1.35 except MSI/MSI-X and NET_MPSAFE:
+	- Sync ixg(4) up to FreeBSD r279805 (or r280181) which include some
+	  bugfixes.
+	- Add missing evcnt_detach(&rxr->rx_copies) in ixgbe_detach().
+	- Fix error path in ixgbe_attach() and ixgbe_detatch() to prevent
+	  panic.
+	- Remove unreachable code.
+	- Remove duplicated assignment of mh->m_len.
+	- Reduce the diff against FreeBSD (tabs, spaces and comments)
+	- ixv.c: Fix unintialized data. Include vlan.h and check NVLAN.
+	- Avoid shadowing global `min'.
+	[msaitoh, ticket #1174]
+
+external/gpl3/gcc/dist/gcc/cp/Make-lang.in	1.6
+external/gpl3/gcc/dist/gcc/cp/cfns.gperf	1.2
+external/gpl3/gcc/dist/gcc/cp/cfns.h		1.2
+external/gpl3/gcc/dist/gcc/cp/except.c		1.2
+
+	Fix building GCC with GCC-6.1.
+	[kamil, ticket #1176]
 
