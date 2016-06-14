@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.258 2016/04/12 18:50:45 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.259 2016/06/14 13:26:45 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -56,6 +56,14 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc" :? -Wno-traditional :}
 # Set assembler warnings to be fatal
 CFLAGS+=	-Wa,--fatal-warnings
 .endif
+
+.if ${MKRELRO:Uno} != "no"
+LDFLAGS+=	-Wl,-z,relro
+.endif
+.if ${MKRELRO:Uno} == "full"
+LDFLAGS+=	-Wl,-z,now
+.endif
+
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
