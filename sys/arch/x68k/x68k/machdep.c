@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2015/09/16 05:48:52 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2016/06/14 07:51:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2015/09/16 05:48:52 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2016/06/14 07:51:10 isaki Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -421,7 +421,7 @@ check_emulator(char *buf, int bufsize)
 		xm6imark = intio_get_sysport_sramwp();
 		switch (xm6imark) {
 		case 0xff:	/* Original XM6 or unknown compatibles */
-			snprintf(buf, bufsize, "XM6 v%d.%02d",
+			snprintf(buf, bufsize, "XM6 v%x.%02x",
 				xm6major, xm6minor);
 			break;
 
@@ -433,7 +433,7 @@ check_emulator(char *buf, int bufsize)
 			break;
 
 		case 'g':	/* XM6 TypeG */
-			snprintf(buf, bufsize, "XM6 TypeG v%d.%02d",
+			snprintf(buf, bufsize, "XM6 TypeG v%x.%02x",
 				xm6major, xm6minor);
 			break;
 
