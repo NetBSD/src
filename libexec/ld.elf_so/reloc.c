@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.108 2016/04/12 19:10:48 christos Exp $	 */
+/*	$NetBSD: reloc.c,v 1.109 2016/06/14 13:06:41 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.108 2016/04/12 19:10:48 christos Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.109 2016/06/14 13:06:41 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -223,6 +223,17 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		/* Set the special PLTGOT entries. */
 		if (obj->pltgot != NULL)
 			_rtld_setup_pltgot(obj);
+#ifdef GNU_RELRO
+		if (obj->relro_size > 0) {
+			if (mprotect(obj->relro_page, obj->relro_size,
+			    PROT_READ) == -1) {
+				_rtld_error("%s: Cannot enforce relro "
+				    "protection: %s", obj->path,
+				    xstrerror(errno));
+				return -1;
+			}
+		}
+#endif
 	}
 
 	return 0;
