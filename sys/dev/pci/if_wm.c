@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.413 2016/06/14 09:07:22 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.414 2016/06/14 17:09:20 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.413 2016/06/14 09:07:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.414 2016/06/14 17:09:20 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5562,11 +5562,8 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 		rxq->rxq_sc = sc;
-#ifdef WM_MPSAFE
 		rxq->rxq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-		rxq->rxq_lock = NULL;
-#endif
+
 		error = wm_alloc_rx_descs(sc, rxq);
 		if (error)
 			break;
