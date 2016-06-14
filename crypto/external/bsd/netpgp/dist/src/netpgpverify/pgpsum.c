@@ -41,6 +41,9 @@
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
+#undef swap16
+#undef swap32
+
 /* add the ascii armor line endings (except for last line) */
 static size_t
 don_armor(digest_t *hash, uint8_t *in, size_t insize, int doarmor)

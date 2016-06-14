@@ -62,12 +62,12 @@ typedef struct digest_t {
 	uint32_t		 alg;		/* algorithm */
 	size_t			 size;		/* size */
 	union {
-		MD5_CTX		 md5ctx;	/* MD5 */
-		SHA1_CTX	 sha1ctx;	/* SHA1 */
-		RMD160_CTX	 rmd160ctx;	/* RIPEMD */
-		SHA256_CTX	 sha256ctx;	/* SHA256 */
-		SHA512_CTX	 sha512ctx;	/* SHA512 */
-		TIGER_CTX	 tigerctx;	/* TIGER/TIGER2 */
+		NETPGPV_MD5_CTX		 md5ctx;	/* MD5 */
+		NETPGPV_SHA1_CTX	 sha1ctx;	/* SHA1 */
+		NETPGPV_RMD160_CTX	 rmd160ctx;	/* RIPEMD */
+		NETPGPV_SHA256_CTX	 sha256ctx;	/* SHA256 */
+		NETPGPV_SHA512_CTX	 sha512ctx;	/* SHA512 */
+		NETPGPV_TIGER_CTX	 tigerctx;	/* TIGER/TIGER2 */
 	} u;
 	void			*prefix;	/* points to specific prefix */
 	uint32_t		 len;		/* prefix length */

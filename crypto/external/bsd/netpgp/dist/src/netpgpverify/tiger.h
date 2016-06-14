@@ -44,21 +44,21 @@ __BEGIN_DECLS
 #define TIGER_DIGEST_LENGTH            24
 #define TIGER_DIGEST_STRING_LENGTH     ((TIGER_DIGEST_LENGTH * 2) + 1)
 
-typedef struct TIGER_CTX {
+typedef struct NETPGPV_TIGER_CTX {
 	uint64_t	ctx[3];
 	int		init;
 	uint8_t		pad;
-} TIGER_CTX;
+} NETPGPV_TIGER_CTX;
 
-void TIGER_Init(TIGER_CTX *);
-void TIGER2_Init(TIGER_CTX *);
-void TIGER_Update(TIGER_CTX *, const void *, size_t);
-void TIGER_Final(uint8_t *, TIGER_CTX *);
+void netpgpv_TIGER_Init(NETPGPV_TIGER_CTX *);
+void netpgpv_TIGER2_Init(NETPGPV_TIGER_CTX *);
+void netpgpv_TIGER_Update(NETPGPV_TIGER_CTX *, const void *, size_t);
+void netpgpv_TIGER_Final(uint8_t *, NETPGPV_TIGER_CTX *);
 
-char *TIGER_End(TIGER_CTX *, char *);
+char *netpgpv_TIGER_End(NETPGPV_TIGER_CTX *, char *);
 
-char *TIGER_File(char *, char *, int);
-char *TIGER_Data(const uint8_t *, size_t, char *, int);
+char *netpgpv_TIGER_File(char *, char *, int);
+char *netpgpv_TIGER_Data(const uint8_t *, size_t, char *, int);
 
 __END_DECLS
 
