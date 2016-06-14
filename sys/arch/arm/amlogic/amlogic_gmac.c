@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_gmac.c,v 1.2.4.3 2016/06/12 07:18:52 skrll Exp $ */
+/* $NetBSD: amlogic_gmac.c,v 1.2.4.4 2016/06/14 12:14:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014, 2015 The NetBSD Foundation, Inc.
@@ -31,9 +31,13 @@
 
 #include "locators.h"
 
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_gmac.c,v 1.2.4.3 2016/06/12 07:18:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_gmac.c,v 1.2.4.4 2016/06/14 12:14:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>

@@ -32,9 +32,13 @@
 #include "axp806pm.h"
 #include "axp809pm.h"
 
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
+
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19.2.2 2016/06/12 07:18:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gige.c,v 1.19.2.3 2016/06/14 12:14:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
