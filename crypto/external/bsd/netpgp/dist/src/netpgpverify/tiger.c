@@ -719,7 +719,7 @@ sprint_uint64(char *buf, uint64_t val)
 
 /* common function to initialise context */
 static void
-initcontext(TIGER_CTX *ctx, uint8_t pad)
+initcontext(NETPGPV_TIGER_CTX *ctx, uint8_t pad)
 {
 	(void) memset(ctx, 0x0, sizeof(*ctx));
 	ctx->ctx[0] = 0x0123456789ABCDEFLL;
@@ -731,7 +731,7 @@ initcontext(TIGER_CTX *ctx, uint8_t pad)
 
 /* set the version number (0 is same as 1 for Tiger) */
 static int
-setversion(TIGER_CTX *ctx, int version)
+setversion(NETPGPV_TIGER_CTX *ctx, int version)
 {
 	switch(version) {
 	case 0:
@@ -751,7 +751,7 @@ setversion(TIGER_CTX *ctx, int version)
 /*****************************************************************************/
 
 void
-TIGER_Init(TIGER_CTX *ctx)
+netpgpv_TIGER_Init(NETPGPV_TIGER_CTX *ctx)
 {
 	if (ctx) {
 		initcontext(ctx, 0x01);
@@ -759,7 +759,7 @@ TIGER_Init(TIGER_CTX *ctx)
 }
 
 void
-TIGER2_Init(TIGER_CTX *ctx)
+netpgpv_TIGER2_Init(NETPGPV_TIGER_CTX *ctx)
 {
 	if (ctx) {
 		initcontext(ctx, 0x80);
@@ -767,7 +767,7 @@ TIGER2_Init(TIGER_CTX *ctx)
 }
 
 void
-TIGER_Update(TIGER_CTX *ctx, const void *data, size_t length)
+netpgpv_TIGER_Update(NETPGPV_TIGER_CTX *ctx, const void *data, size_t length)
 {
 	const uint64_t	*str = (const uint64_t *)data;
 	uint64_t	 i;
@@ -824,7 +824,7 @@ TIGER_Update(TIGER_CTX *ctx, const void *data, size_t length)
 }
 
 void
-TIGER_Final(uint8_t *digest, TIGER_CTX *ctx)
+netpgpv_TIGER_Final(uint8_t *digest, NETPGPV_TIGER_CTX *ctx)
 {
 	uint64_t	le[3];
 	int		indian = 1;
@@ -834,8 +834,8 @@ TIGER_Final(uint8_t *digest, TIGER_CTX *ctx)
 		return;
 	}
 	if (!ctx->init) {
-		TIGER_Init(ctx);
-		TIGER_Update(ctx, NULL, 0);
+		netpgpv_TIGER_Init(ctx);
+		netpgpv_TIGER_Update(ctx, NULL, 0);
 	}
 	if (IS_LITTLE_ENDIAN(indian)) {
 		for (i = 0; i < 3; ++i) {
@@ -848,7 +848,7 @@ TIGER_Final(uint8_t *digest, TIGER_CTX *ctx)
 }
 
 char *
-TIGER_End(TIGER_CTX *ctx, char *buf)
+netpgpv_TIGER_End(NETPGPV_TIGER_CTX *ctx, char *buf)
 {   
 	int	i;
 
@@ -859,8 +859,8 @@ TIGER_End(TIGER_CTX *ctx, char *buf)
 		return NULL;
 	}
 	if (!ctx->init) {
-		TIGER_Init(ctx);
-		TIGER_Update(ctx, NULL, 0);
+		netpgpv_TIGER_Init(ctx);
+		netpgpv_TIGER_Update(ctx, NULL, 0);
 	}
 	for (i = 0; i < 3; ++i) {
 		sprint_uint64(buf + i * 16, ctx->ctx[i]);
@@ -870,9 +870,9 @@ TIGER_End(TIGER_CTX *ctx, char *buf)
 }
 
 char *
-TIGER_File(char *filename, char *buf, int version)
+netpgpv_TIGER_File(char *filename, char *buf, int version)
 {   
-	TIGER_CTX	ctx;
+	NETPGPV_TIGER_CTX	ctx;
 	uint8_t		buffer[BUFSIZ];
 	ssize_t		num;
 	int		fd;
@@ -885,22 +885,22 @@ TIGER_File(char *filename, char *buf, int version)
 		return NULL;
 	}
 	while ((num = read(fd, buffer, sizeof(buffer))) > 0) {
-		TIGER_Update(&ctx, buffer, (size_t)num);
+		netpgpv_TIGER_Update(&ctx, buffer, (size_t)num);
 	}
 	oerrno = errno;
 	close(fd);
 	errno = oerrno;
-	return (num < 0) ? NULL : TIGER_End(&ctx, buf);
+	return (num < 0) ? NULL : netpgpv_TIGER_End(&ctx, buf);
 }
 
 char *
-TIGER_Data(const uint8_t *data, size_t len, char *buf, int version)
+netpgpv_TIGER_Data(const uint8_t *data, size_t len, char *buf, int version)
 {   
-	TIGER_CTX	ctx;
+	NETPGPV_TIGER_CTX	ctx;
 
 	if (data == NULL || buf == NULL || !setversion(&ctx, version)) {
 		return NULL;
 	}
-	TIGER_Update(&ctx, data, len);
-	return TIGER_End(&ctx, buf);
+	netpgpv_TIGER_Update(&ctx, data, len);
+	return netpgpv_TIGER_End(&ctx, buf);
 }
