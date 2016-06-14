@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/12/05 04:42:36 agc Exp $
+#	$NetBSD: Makefile,v 1.14 2016/06/14 20:47:43 agc Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -36,3 +36,5 @@ t tst: ${PROG}
 	./${PROG} -S ${EXTDIST}/src/netpgpverify/sshtest-20140202.pub ${EXTDIST}/src/netpgpverify/data.sig
 	@echo "expected failure, to check bad signatures fail to verify"
 	-sed -e 's|A|B|' ${EXTDIST}/src/netpgpverify/data.gpg | ./${PROG} -S ${EXTDIST}/src/netpgpverify/sshtest-20140202.pub 
+	@echo "testing signatures with no version"
+	./${PROG} -k ${EXTDIST}/src/netpgpverify/pubring.gpg ${EXTDIST}/src/netpgpverify/noversion.asc
