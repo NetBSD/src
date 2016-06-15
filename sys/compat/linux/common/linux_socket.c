@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.127 2016/05/12 02:24:16 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.128 2016/06/15 06:01:21 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.127 2016/05/12 02:24:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.128 2016/06/15 06:01:21 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1092,16 +1092,21 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 	struct ifnet *ifp;
 	struct linux_ifreq ifr;
 	int error;
+	int s;
 
 	error = copyin(data, &ifr, sizeof(ifr));
 	if (error)
 		return error;
 
+	s = pserialize_read_enter();
 	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		pserialize_read_exit(s);
 		return ENODEV;
+	}
 
 	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
+	pserialize_read_exit(s);
 
 	return copyout(&ifr, data, sizeof(ifr));
 }

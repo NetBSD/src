@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.111 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.112 2016/06/15 06:01:21 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.111 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.112 2016/06/15 06:01:21 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2123,8 +2123,12 @@ nd6_setdefaultiface(int ifindex)
 {
 	ifnet_t *ifp;
 	int error = 0;
+	int s;
 
-	if ((ifp = if_byindex(ifindex)) == NULL) {
+	s = pserialize_read_enter();
+	ifp = if_byindex(ifindex);
+	if (ifp == NULL) {
+		pserialize_read_exit(s);
 		return EINVAL;
 	}
 	if (nd6_defifindex != ifindex) {
@@ -2138,6 +2142,7 @@ nd6_setdefaultiface(int ifindex)
 		 */
 		scope6_setdefault(nd6_defifp);
 	}
+	pserialize_read_exit(s);
 
 	return (error);
 }
