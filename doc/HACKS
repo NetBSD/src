@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.169 2016/06/15 02:12:14 mrg Exp $
+# $NetBSD: HACKS,v 1.170 2016/06/15 05:01:58 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -633,18 +633,6 @@ port	arm
 		Debugging with -fdump-tree-all shows that
 		softfloat.c.021t.cleanup_cfg is ok but softfloat.c.023t.ssa
 		is broken.
-	kcah
-
-	hack	gcc-5.3 arm and openssh and -fstrict-aliases
-	cdate	Tue Jun 14 19:05:51 PDT 2016
-	who	mrg
-	file	crypto/external/bsd/openssh/dist/umac.c : 1.10
-	pr	
-	descr	GCC has some yet-unknown code-gen problem on ARM with this
-		file that leads to SSH giving errors and dropping connections.
-		The bpw=8 path of endian_convert(), if compiled with
-		"no-strict-aliases" optimiser attribite, works.  The same
-		problem exist with GCC 5.3 and 5.4.
 	kcah
 
 port	sh3
