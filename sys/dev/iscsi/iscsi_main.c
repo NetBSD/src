@@ -262,6 +262,7 @@ static int
 iscsi_detach(device_t self, int flags)
 {
 	struct iscsi_softc *sc;
+	int error;
 
 	DEB(1, ("ISCSI: detach\n"));
 	sc = (struct iscsi_softc *) device_private(self);
@@ -274,8 +275,13 @@ iscsi_detach(device_t self, int flags)
 	iscsi_detaching = true;
 	mutex_exit(&sc->lock);
 
-	kill_all_sessions();
-	iscsi_destroy_cleanup();
+	error = kill_all_sessions();
+	if (error)
+		return error;
+
+	error = iscsi_destroy_cleanup();
+	if (error)
+		return error;
 
 	mutex_destroy(&sc->lock);
 
@@ -348,6 +354,10 @@ map_session(session_t *session, device_t dev)
 	struct scsipi_channel *chan = &session->sc_channel;
 	const quirktab_t	*tgt;
 
+	mutex_enter(&session->lock);
+	session->send_window = max(2, window_size(session, CCBS_FOR_SCSIPI));
+	mutex_exit(&session->lock);
+
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
@@ -355,8 +365,8 @@ map_session(session_t *session, device_t dev)
 	adapt->adapt_nchannels = 1;
 	adapt->adapt_request = iscsi_scsipi_request;
 	adapt->adapt_minphys = iscsi_minphys;
-	adapt->adapt_openings = CCBS_PER_SESSION - 1;
-	adapt->adapt_max_periph = CCBS_PER_SESSION - 1;
+	adapt->adapt_openings = session->send_window;
+	adapt->adapt_max_periph = CCBS_FOR_SCSIPI;
 
 	/*
 	 * Fill in the scsipi_channel.
@@ -369,7 +379,7 @@ map_session(session_t *session, device_t dev)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
+	chan->chan_flags = SCSIPI_CHAN_NOSETTLE | SCSIPI_CHAN_CANGROW;
 	chan->chan_ntargets = 1;
 	chan->chan_nluns = 16;		/* ToDo: ??? */
 	chan->chan_id = session->id;
@@ -405,6 +415,29 @@ unmap_session(session_t *session)
 	return rv;
 }
 
+/*
+ * grow_resources
+ *    Try to grow openings up to current window size
+ */
+static void
+grow_resources(session_t *session)
+{
+	struct scsipi_adapter *adapt = &session->sc_adapter;
+	int win;
+
+	mutex_enter(&session->lock);
+	if (session->refcount < CCBS_FOR_SCSIPI &&
+	    session->send_window < CCBS_FOR_SCSIPI) {
+		win = window_size(session, CCBS_FOR_SCSIPI - session->refcount);
+		if (win > session->send_window) {
+			session->send_window++;
+			adapt->adapt_openings++;
+			DEB(5, ("Grow send window to %d\n", session->send_window));
+		}
+	}
+	mutex_exit(&session->lock);
+}
+
 /******************************************************************************/
 
 /*****************************************************************************
@@ -425,8 +458,11 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 	session_t *session;
 	int flags;
 	struct scsipi_xfer_mode *xm;
+	int error;
 
 	session = (session_t *) adapt;	/* adapter is first field in session */
+
+	error = ref_session(session);
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -434,11 +470,20 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		xs = arg;
 		flags = xs->xs_control;
 
+		if (error) {
+			DEB(9, ("ISCSI: refcount too high: %d, winsize %d\n",
+				session->refcount, session->send_window));
+			xs->error = XS_BUSY;
+			xs->status = XS_BUSY;
+			scsipi_done(xs);
+			return;
+		}
+
 		if ((flags & XS_CTL_POLL) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			DEBOUT(("Run Xfer request with polling\n"));
 			scsipi_done(xs);
-			return;
+			break;
 		}
 		/*
 		 * NOTE: It appears that XS_CTL_DATA_UIO is not actually used anywhere.
@@ -451,28 +496,32 @@ iscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			xs->error = XS_DRIVER_STUFFUP;
 			DEBOUT(("Run Xfer with data in UIO\n"));
 			scsipi_done(xs);
-			return;
+			break;
 		}
 
 		send_run_xfer(session, xs);
-		DEB(15, ("scsipi_req returns\n"));
+		DEB(15, ("scsipi_req returns, refcount = %d\n", session->refcount));
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
 		DEB(5, ("ISCSI: scsipi_request GROW_RESOURCES\n"));
-		return;
+		grow_resources(session);
+		break;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
 		DEB(5, ("ISCSI: scsipi_request SET_XFER_MODE\n"));
 		xm = (struct scsipi_xfer_mode *)arg;
 		xm->xm_mode = PERIPH_CAP_TQING;
 		scsipi_async_event(chan, ASYNC_EVENT_XFER_MODE, xm);
-		return;
+		break;
 
 	default:
+		DEBOUT(("ISCSI: scsipi_request with invalid REQ code %d\n", req));
 		break;
 	}
-	DEBOUT(("ISCSI: scsipi_request with invalid REQ code %d\n", req));
+
+	if (!error)
+		unref_session(session);
 }
 
 /* cap the transfer at 64K */
@@ -522,6 +571,8 @@ iscsi_done(ccb_t *ccb)
 			break;
 
 		case ISCSI_STATUS_TARGET_BUSY:
+		case ISCSI_STATUS_NO_RESOURCES:
+			DEBC(ccb->connection, 5, ("target busy, ccb %p\n", ccb));
 			xs->error = XS_BUSY;
 			xs->status = SCSI_BUSY;
 			break;
@@ -532,7 +583,8 @@ iscsi_done(ccb_t *ccb)
 			xs->status = SCSI_BUSY;
 			break;
 
-		case ISCSI_STATUS_NO_RESOURCES:
+		case ISCSI_STATUS_QUEUE_FULL:
+			DEBC(ccb->connection, 5, ("queue full, ccb %p\n", ccb));
 			xs->error = XS_BUSY;
 			xs->status = SCSI_QUEUE_FULL;
 			break;
@@ -550,6 +602,8 @@ iscsi_done(ccb_t *ccb)
 	} else {
 		DEBOUT(("ISCSI: iscsi_done CCB %p without XS\n", ccb));
 	}
+
+	unref_session(ccb->session);
 }
 
 SYSCTL_SETUP(sysctl_iscsi_setup, "ISCSI subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.20 2016/06/15 03:51:55 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.21 2016/06/15 04:30:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -71,33 +71,25 @@
 #define VERSION_STRING		"NetBSD iSCSI Software Initiator 20110407"
 
 /*
-Various checks are made that the expected cmd Serial Number is less than
-the actual command serial number. The extremely paranoid amongst us
-believe that a malicious iSCSI server could set this artificially low
-and effectively DoS a naive initiator. For this (possibly ludicrous)
-reason, I have added the two definitions below (agc, 2011/04/09). The
-throttling definition enables a check that the CmdSN is less than the
-ExpCmdSN in iscsi_send.c, and is enabled by default. The second definition
-effectively says "don't bother testing these values", and is used right
-now only in iscsi_send.c.
- */
-#define ISCSI_THROTTLING_ENABLED	1
-#define ISCSI_SERVER_TRUSTED		0
-
-/*
    NOTE: CCBS_PER_SESSION must not exceed 256 due to the way the ITT
    is constructed (it has the CCB index in its lower 8 bits). If it should ever
    be necessary to increase the number beyond that (which isn't expected),
    the corresponding ITT generation and extraction code must be rewritten.
 */
-#define CCBS_PER_SESSION      64	/* ToDo: Reasonable number?? */
+#define CCBS_PER_SESSION      32	/* ToDo: Reasonable number?? */
+/*
+   NOTE: CCBS_FOR_SCSPI limits the number of outstanding commands for
+   SCSI commands, leaving some CCBs for keepalive and logout attempts,
+   which are needed for each connection.
+*/
+#define CCBS_FOR_SCSIPI       16	/* ToDo: Reasonable number?? */
 /*
    NOTE: PDUS_PER_CONNECTION is a number that could potentially impact
    performance if set too low, as a single command may use up a lot of PDUs for
    high values of First/MaxBurstLength and small values of
    MaxRecvDataSegmentLength of the target.
 */
-#define PDUS_PER_CONNECTION   128	/* ToDo: Reasonable number?? */
+#define PDUS_PER_CONNECTION   64	/* ToDo: Reasonable number?? */
 
 /* max outstanding serial nums before we give up on the connection */
 #define SERNUM_BUFFER_LENGTH  (CCBS_PER_SESSION / 2)	/* ToDo: Reasonable?? */
@@ -106,7 +98,7 @@ now only in iscsi_send.c.
 #define DEFAULT_MaxRecvDataSegmentLength     (64*1024)
 
 /* Command timeout (reset on received PDU associated with the command's CCB) */
-#define COMMAND_TIMEOUT		(7 * hz) /* ToDo: Reasonable? (7 seconds) */
+#define COMMAND_TIMEOUT		(60 * hz) /* ToDo: Reasonable? (60 seconds) */
 #define MAX_CCB_TIMEOUTS	3		/* Max number of tries to resend or SNACK */
 #define MAX_CCB_TRIES		9      	/* Max number of total tries to recover */
 
@@ -131,12 +123,10 @@ now only in iscsi_send.c.
 #define CCBF_COMPLETE   0x0001	/* received status */
 #define CCBF_RESENT     0x0002	/* ccb was resent */
 #define CCBF_SENDTARGET 0x0004	/* SendTargets text request, not negotiation */
-#define CCBF_WAITING    0x0008	/* CCB is waiting for MaxCmdSN, wake it up */
 #define CCBF_GOT_RSP    0x0010	/* Got at least one response to this request */
 #define CCBF_REASSIGN   0x0020	/* Command can be reassigned */
 #define CCBF_OTHERCONN  0x0040	/* a logout for a different connection */
 #define CCBF_WAITQUEUE  0x0080	/* CCB is on waiting queue */
-#define CCBF_THROTTLING 0x0100	/* CCB is on throttling queue */
 
 /* ---------------------------  Global Types  ------------------------------- */
 
@@ -322,6 +312,7 @@ struct connection_s {
 
 	kmutex_t			lock;
 	kcondvar_t			conn_cv;
+	kcondvar_t			pdu_cv;
 	kcondvar_t			ccb_cv;
 	kcondvar_t			idle_cv;
 
@@ -375,6 +366,7 @@ struct connection_s {
 	int				recover; /* recovery count */
 		/* (reset on first successful data transfer) */
 	volatile unsigned		usecount; /* number of active CCBs */
+	volatile unsigned		pducount; /* number of active PDUs */
 
 	bool				destroy; /* conn will be destroyed */
 	bool				in_session;
@@ -417,6 +409,8 @@ struct session_s {
 	device_t		child_dev;
 	/* the child we're associated with - (NULL if not mapped) */
 
+	int			refcount;	/* session in use by scsipi */
+
 	/* local stuff */
 	TAILQ_ENTRY(session_s)	sessions;	/* the list of sessions */
 
@@ -425,8 +419,8 @@ struct session_s {
 	kcondvar_t		ccb_cv;
 
 	ccb_list_t		ccb_pool;	/* The free CCB pool */
-	ccb_list_t		ccbs_throttled;
-				/* CCBs waiting for MaxCmdSN to increase */
+
+	int			send_window;
 
 	uint16_t		id;	/* session ID (unique within driver) */
 	uint16_t		TSIH;	/* Target assigned session ID */
@@ -638,7 +632,7 @@ sn_a_le_b(uint32_t a, uint32_t b)
 /* in iscsi_ioctl.c */
 
 void iscsi_init_cleanup(void);
-void iscsi_destroy_cleanup(void);
+int iscsi_destroy_cleanup(void);
 void iscsi_notify_cleanup(void);
 
 
@@ -652,7 +646,7 @@ void add_event(iscsi_event_t, uint32_t, uint32_t, uint32_t);
 
 void kill_connection(connection_t *, uint32_t, int, bool);
 void kill_session(session_t *, uint32_t, int, bool);
-void kill_all_sessions(void);
+int kill_all_sessions(void);
 void handle_connection_error(connection_t *, uint32_t, int);
 void add_connection_cleanup(connection_t *);
 
@@ -664,7 +658,8 @@ int iscsiioctl(struct file *, u_long, void *);
 
 session_t *find_session(uint32_t);
 connection_t *find_connection(session_t *, uint32_t);
-
+int ref_session(session_t *);
+void unref_session(session_t *);
 
 /* in iscsi_main.c */
 
@@ -725,7 +720,6 @@ void create_ccbs(session_t *);
 ccb_t *get_ccb(connection_t *, bool);
 void free_ccb(ccb_t *);
 void suspend_ccb(ccb_t *, bool);
-void throttle_ccb(ccb_t *, bool);
 void wake_ccb(ccb_t *, uint32_t);
 
 void create_pdus(connection_t *);
@@ -736,8 +730,9 @@ void init_sernum(sernum_buffer_t *);
 int add_sernum(sernum_buffer_t *, uint32_t);
 uint32_t ack_sernum(sernum_buffer_t *, uint32_t);
 
-uint32_t get_sernum(session_t *, bool);
+uint32_t get_sernum(session_t *, pdu_t *);
 int sernum_in_window(session_t *);
+int window_size(session_t *, int);
 
 /* in iscsi_text.c */
 
