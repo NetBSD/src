@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.13 2015/11/11 07:48:41 ozaki-r Exp $	*/
+/*	$NetBSD: dump.c,v 1.14 2016/06/15 13:57:39 riastradh Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -113,11 +113,11 @@ if_dump(void)
 		if (rai->lastsent.tv_sec) {
 			/* note that ctime() appends CR by itself */
 			fprintf(fp, "  Last RA sent: %s",
-				ctime((time_t *)&rai->lastsent.tv_sec));
+				ctime(&rai->lastsent.tv_sec));
 		}
 		if (rai->timer) {
 			fprintf(fp, "  Next RA will be sent: %s",
-				ctime((time_t *)&rai->timer->tm.tv_sec));
+				ctime(&rai->timer->tm.tv_sec));
 		}
 		else
 			fprintf(fp, "  RA timer is stopped");
