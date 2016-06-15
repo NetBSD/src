@@ -2718,8 +2718,8 @@ elf_i386_readonly_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  struct bfd_link_info *info = (struct bfd_link_info *) inf;
 	  if (info->warn_shared_textrel)
 	    (*_bfd_error_handler)
-	      (_("warning: dynamic relocation in readonly section `%s'"),
-	      h->root.root.string); 
+	      (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
+	      h->root.root.string, s->name); 
 	  info->flags |= DF_TEXTREL;
 
 	  if ((info->warn_shared_textrel && bfd_link_pic (info))
