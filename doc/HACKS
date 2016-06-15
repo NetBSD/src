@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.170 2016/06/15 05:01:58 mrg Exp $
+# $NetBSD: HACKS,v 1.171 2016/06/15 13:29:30 riastradh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -101,20 +101,6 @@ descr
 	fail with "makes integer from pointer without a cast".  This
 	is observed on e.g. the sun3 port.  Ideally the "types" for
 	symbols should be consistent across all ports.
-kcah
-
-hack	gcc-strict-aliasing
-cdate	6 August 2004
-who	junyoung
-pr	26516
-file	src/usr.sbin/racoon/racoon/Makefile : 1.21
-descr
-	GCC issues a warning "dereferencing type-punned pointer will break
-	strict-aliasing rules" when compiling
-	crypto/dist/kame/racoon/crypto/openssl.c with -O[23s]. Note that this
-	is due to use of type casting in a non-standard way in the code and
-	not a compiler bug. Once a new release of KAME with a proper fix
-	applied is imported this should be backed out.
 kcah
 
 hack	gcc4 wrong uninitialized variable
