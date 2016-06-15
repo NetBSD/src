@@ -211,6 +211,7 @@ obuf_add_mem(obuf_t *obuf, const char *s, size_t len)
 }
 
 /* varargs-based printf to string */
+__printflike(2, 3)
 static bool
 obuf_printf(obuf_t *obuf, const char *fmt, ...)
 {
