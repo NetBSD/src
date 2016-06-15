@@ -2816,8 +2816,8 @@ elf_m68k_check_relocs (bfd *abfd,
 		{
 		  if (info->warn_shared_textrel)
 		    (*_bfd_error_handler)
-		      (_("warning: dynamic relocation in readonly section `%s'"),
-		      h->root.root.string); 
+		      (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
+		      h->root.root.string, sec->name); 
 		  info->flags |= DF_TEXTREL;
 		}
 
@@ -3439,8 +3439,8 @@ elf_m68k_discard_copies (struct elf_link_hash_entry *h,
 	      {
 		if (info->warn_shared_textrel)
 		  (*_bfd_error_handler)
-		    (_("warning: dynamic relocation in readonly section `%s'"),
-		    h->root.root.string); 
+		    (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
+		    h->root.root.string, s->name); 
 		info->flags |= DF_TEXTREL;
 		break;
 	      }
