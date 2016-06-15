@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.21 2016/06/15 04:30:30 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.22 2016/06/15 04:33:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,16 @@ my_soo_read(connection_t *conn, struct uio *u, int flags)
 
 	DEBC(conn, 99, ("soo_read req: %zu\n", resid));
 
-	ret = (*so->so_receive)(so, NULL, u, NULL, NULL, &flags);
+	if (flags & MSG_WAITALL) {
+		flags &= ~MSG_WAITALL;
+		do {
+			int oresid = u->uio_resid;
+			ret = (*so->so_receive)(so, NULL, u, NULL, NULL, &flags);
+			if (!ret && u->uio_resid == oresid)
+				break;
+		} while (!ret && u->uio_resid > 0);
+	} else
+		ret = (*so->so_receive)(so, NULL, u, NULL, NULL, &flags);
 
 	if (ret || (flags != MSG_DONTWAIT && u->uio_resid)) {
 		DEBC(conn, 1, ("Read failed (ret: %d, req: %zu, out: %zu)\n",
