@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.173 2016/06/15 13:57:26 riastradh Exp $
+# $NetBSD: HACKS,v 1.174 2016/06/15 14:11:15 riastradh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -253,7 +253,6 @@ file	usr.sbin/bootp/bootptest/Makefile : 1.2
 file	usr.sbin/chrtbl/Makefile	: 1.6
 file	usr.sbin/cron/Makefile		: 1.12
 file	usr.sbin/dhcp/Makefile.inc	: 1.20
-file	usr.sbin/dumplfs/Makefile	: 1.11
 file	usr.sbin/hprop/Makefile		: 1.13
 file	usr.sbin/installboot/Makefile	: 1.35
 file	usr.sbin/ipf/ipftest/Makefile	: 1.32
