@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.61 2015/10/15 06:24:46 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.62 2016/06/15 14:07:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.61 2015/10/15 06:24:46 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.62 2016/06/15 14:07:54 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: dumplfs.c,v 1.61 2015/10/15 06:24:46 dholland Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fstab.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
