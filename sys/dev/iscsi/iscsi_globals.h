@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.19 2016/06/05 05:36:57 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.20 2016/06/15 03:51:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -544,7 +544,6 @@ extern int iscsi_debug_level;	/* How much debug info to display */
 #define DEBC(conn,lev,x) { if (iscsi_debug_level >= lev) { printf("S%dC%d: ", \
 				conn ? conn->session->id : -1, \
 				conn ? conn->id : -1); printf x ;}}
-void iscsi_hexdump(void *buf, int len);
 
 #define STATIC static
 
@@ -553,7 +552,6 @@ void iscsi_hexdump(void *buf, int len);
 #define DEBOUT(x)
 #define DEB(lev,x)
 #define DEBC(conn,lev,x)
-#define iscsi_hexdump(a,b)
 
 #define STATIC static
 
