@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2015/11/11 07:48:41 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.19 2016/06/15 13:57:26 riastradh Exp $
 
 WARNS?=	4
 
@@ -27,7 +27,3 @@ CPPFLAGS+=	-DRUMP_ACTION
 
 
 .include <bsd.prog.mk>
-
-.if defined(HAVE_GCC) || defined(HAVE_LLVM)
-COPTS.dump.c=-fno-strict-aliasing
-.endif
