@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.7 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.8 2016/06/15 07:26:11 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.7 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.8 2016/06/15 07:26:11 ryo Exp $");
 
 #include "vlan.h"
 
@@ -1744,9 +1744,10 @@ enet_encap_txring(struct enet_softc *sc, struct mbuf **mp)
 		sc->sc_txdesc_ring[idx].tx_databuf = map->dm_segs[i].ds_addr;
 		sc->sc_txdesc_ring[idx].tx_flags2 = flags2;
 		sc->sc_txdesc_ring[idx].tx_flags3 = 0;
+		TXDESC_WRITEOUT(idx);
+
 		sc->sc_txdesc_ring[idx].tx_flags1_len =
 		    flags1 | TXFLAGS1_LEN(map->dm_segs[i].ds_len);
-
 		TXDESC_WRITEOUT(idx);
 
 		idx = ENET_TX_NEXTIDX(idx);
