@@ -2185,8 +2185,8 @@ readonly_dynrelocs (struct elf_link_hash_entry *eh, void *inf)
 
           if (info->warn_shared_textrel)
             (*_bfd_error_handler)
-              (_("warning: dynamic relocation in readonly section `%s'"),
-              eh->root.root.string);
+              (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
+              eh->root.root.string, sec->name);
 	  info->flags |= DF_TEXTREL;
 
 	  /* Not an error, just cut short the traversal.  */
