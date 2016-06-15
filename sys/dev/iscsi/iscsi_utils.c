@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.19 2016/06/05 13:54:28 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.20 2016/06/15 03:51:55 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -36,25 +36,6 @@
 #include <sys/bswap.h>
 #include <sys/atomic.h>
 
-
-#ifdef ISCSI_DEBUG
-
-/* debug helper routine */
-void
-iscsi_hexdump(void *buff, int len)
-{
-	uint8_t *bp = (uint8_t *) buff;
-	int i;
-
-	while (len > 0) {
-		for (i = min(16, len); i > 0; i--)
-			printf("%02x ", *bp++);
-		printf("\n");
-		len -= 16;
-	}
-}
-
-#endif
 
 /*****************************************************************************
  * Digest functions
