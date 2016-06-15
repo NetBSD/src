@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.172 2016/06/15 13:47:26 riastradh Exp $
+# $NetBSD: HACKS,v 1.173 2016/06/15 13:57:26 riastradh Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -276,7 +276,6 @@ file	usr.sbin/pppd/pppd/Makefile	: 1.38
 file	usr.sbin/rarpd/Makefile		: 1.10
 file	usr.sbin/rbootd/Makefile	: 1.10
 file	usr.sbin/rpc.pcnfsd/Makefile	: 1.17
-file	usr.sbin/rtadvd/Makefile	: 1.9
 file	usr.sbin/tcpdump/Makefile	: 1.42
 descr
 	GCC 4.1 warns on pointer sign comparision/assignments and lots of
