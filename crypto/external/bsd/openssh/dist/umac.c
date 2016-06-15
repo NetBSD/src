@@ -1,4 +1,4 @@
-/*	$NetBSD: umac.c,v 1.9 2015/04/03 23:58:19 christos Exp $	*/
+/*	$NetBSD: umac.c,v 1.10 2016/06/15 02:12:14 mrg Exp $	*/
 /* $OpenBSD: umac.c,v 1.11 2014/07/22 07:13:42 guenther Exp $ */
 /* -----------------------------------------------------------------------
  * 
@@ -67,7 +67,7 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.9 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.10 2016/06/15 02:12:14 mrg Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
@@ -566,6 +566,9 @@ static void nh_transform(nh_ctx *hc, const UINT8 *buf, UINT32 nbytes)
 /* ---------------------------------------------------------------------- */
 
 #if (__LITTLE_ENDIAN__)
+#if __GNUC_PREREQ__(5, 3) && defined(__arm__)
+__attribute__((__optimize__("no-strict-aliasing")))
+#endif
 static void endian_convert(void *buf, UWORD bpw, UINT32 num_bytes)
 /* We endian convert the keys on little-endian computers to               */
 /* compensate for the lack of big-endian memory reads during hashing.     */
