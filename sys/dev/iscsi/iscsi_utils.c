@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.20 2016/06/15 03:51:55 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.21 2016/06/15 04:30:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -256,7 +256,6 @@ free_ccb(ccb_t *ccb)
 		"free_ccb: ccb = %p, usecount = %d\n",
 		ccb, conn->usecount-1));
 
-	KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 	KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
 
 	atomic_dec_uint(&conn->usecount);
@@ -334,43 +333,18 @@ suspend_ccb(ccb_t *ccb, bool yes)
 	connection_t *conn;
 
 	conn = ccb->connection;
+
+	KASSERT(mutex_owned(&conn->lock));
+
 	if (yes) {
-		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
 		TAILQ_INSERT_TAIL(&conn->ccbs_waiting, ccb, chain);
 		ccb->flags |= CCBF_WAITQUEUE;
 	} else if (ccb->flags & CCBF_WAITQUEUE) {
-		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
 		TAILQ_REMOVE(&conn->ccbs_waiting, ccb, chain);
 		ccb->flags &= ~CCBF_WAITQUEUE;
 	}
 }
-
-/*
- * throttle_ccb:
- *    Put CCB on throttling queue
- */
-void
-throttle_ccb(ccb_t *ccb, bool yes)
-{
-	session_t *sess;
-
-	sess = ccb->session;
-
-	KASSERT(mutex_owned(&sess->lock));
-
-	if (yes) {
-		KASSERT((ccb->flags & CCBF_THROTTLING) == 0);
-		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
-		TAILQ_INSERT_TAIL(&sess->ccbs_throttled, ccb, chain);
-		ccb->flags |= CCBF_THROTTLING;
-	} else if (ccb->flags & CCBF_THROTTLING) {
-		KASSERT((ccb->flags & CCBF_WAITQUEUE) == 0);
-		TAILQ_REMOVE(&sess->ccbs_throttled, ccb, chain);
-		ccb->flags &= ~CCBF_THROTTLING;
-	}
-}
-
 
 /*
  * wake_ccb:
@@ -386,15 +360,11 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 {
 	ccb_disp_t disp;
 	connection_t *conn;
-	session_t *sess;
 
 	conn = ccb->connection;
-	sess = ccb->session;
 
-#ifdef ISCSI_DEBUG
-	DEBC(conn, 9, ("CCB done, ccb = %p, disp = %d\n",
-		ccb, ccb->disp));
-#endif
+	DEBC(conn, 9, ("CCB %d done, ccb = %p, disp = %d\n",
+		ccb->CmdSN, ccb, ccb->disp));
 
 	ccb_timeout_stop(ccb);
 
@@ -412,10 +382,6 @@ wake_ccb(ccb_t *ccb, uint32_t status)
 	ccb->disp = CCBDISP_BUSY;
 	ccb->status = status;
 	mutex_exit(&conn->lock);
-
-	mutex_enter(&sess->lock);
-	throttle_ccb(ccb, FALSE);
-	mutex_exit(&sess->lock);
 
 	switch (disp) {
 	case CCBDISP_FREE:
@@ -467,21 +433,23 @@ get_pdu(connection_t *conn, bool waitok)
 		if (pdu != NULL)
 			TAILQ_REMOVE(&conn->pdu_pool, pdu, chain);
 
-		DEB(100, ("get_pdu_c: pdu = %p, waitok = %d\n", pdu, waitok));
-
 		if (pdu == NULL) {
 			if (!waitok || conn->terminating) {
 				mutex_exit(&conn->lock);
+				DEB(15, ("get_pdu: failed"));
 				return NULL;
 			}
-			cv_wait(&conn->conn_cv, &conn->lock);
+			cv_wait(&conn->pdu_cv, &conn->lock);
 		}
 	} while (pdu == NULL);
+	atomic_inc_uint(&conn->pducount);
 	mutex_exit(&conn->lock);
 
 	memset(pdu, 0, sizeof(pdu_t));
 	pdu->connection = conn;
 	pdu->disp = PDUDISP_FREE;
+
+	DEBC(conn, 15, ("get_pdu: pdu = %p, usecount = %d\n", pdu, conn->pducount));
 
 	return pdu;
 }
@@ -499,6 +467,8 @@ free_pdu(pdu_t *pdu)
 	connection_t *conn = pdu->connection;
 	pdu_disp_t pdisp;
 
+	DEBC(conn, 15, ("free_pdu: pdu = %p, usecount = %d\n", pdu, conn->pducount-1));
+
 	KASSERT((pdu->flags & PDUF_INQUEUE) == 0);
 
 	if (PDUDISP_UNUSED == (pdisp = pdu->disp))
@@ -510,10 +480,11 @@ free_pdu(pdu_t *pdu)
 		free(pdu->temp_data, M_TEMP);
 
 	mutex_enter(&conn->lock);
+	atomic_dec_uint(&conn->pducount);
 	TAILQ_INSERT_TAIL(&conn->pdu_pool, pdu, chain);
 	mutex_exit(&conn->lock);
 
-	cv_broadcast(&conn->conn_cv);
+	cv_broadcast(&conn->pdu_cv);
 }
 
 /*
@@ -676,14 +647,14 @@ ack_sernum(sernum_buffer_t *buff, uint32_t num)
  *   and optionally increment it for the next query
  */
 uint32_t
-get_sernum(session_t *sess, bool bump)
+get_sernum(session_t *sess, pdu_t *pdu)
 {
 	uint32_t sn;
 
 	KASSERT(mutex_owned(&sess->lock));
 
 	sn = sess->CmdSN;
-	if (bump)
+	if ((pdu->pdu.Opcode & OP_IMMEDIATE) == 0)
 		atomic_inc_32(&sess->CmdSN);
 	return sn;
 }
@@ -701,3 +672,22 @@ sernum_in_window(session_t *sess)
 	return sn_a_le_b(sess->CmdSN, sess->MaxCmdSN);
 }
 
+/*
+ * window_size:
+ *    Compute send window size
+ */
+int
+window_size(session_t *sess, int limit)
+{
+	uint32_t win;
+
+	KASSERT(mutex_owned(&sess->lock));
+
+	win = 0;
+	if (sn_a_le_b(sess->CmdSN, sess->MaxCmdSN))
+		win = sess->MaxCmdSN - sess->CmdSN + 1;
+	if (win > INT_MAX || win > limit)
+		win = limit;
+
+	return win;
+}
