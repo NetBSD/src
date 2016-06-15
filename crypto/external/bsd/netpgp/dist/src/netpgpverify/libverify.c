@@ -2021,18 +2021,14 @@ read_ascii_armor(pgpv_cursor_t *cursor, pgpv_mem_t *mem, const char *filename)
 		return 0;
 	}
 	litdata.u.litdata.len = litdata.s.size = (size_t)(p - datastart);
-	p += strlen(SIGSTART);
-	/* Work out whther there's a version line */
-	if (memcmp(p, "Version:", 8) == 0) {
-		if ((p = find_bin_string(p, mem->size, "\n\n",  2)) == NULL) {
-			snprintf(cursor->why, sizeof(cursor->why),
-				"malformed armed signature at %zu", (size_t)(p - mem->mem));
-			return 0;
-		}
-		p += 2;
-	} else {
-		p += 1;
+	/* this puts p at the newline character, so it will find \n\n if no version */
+	p += strlen(SIGSTART) - 1;
+	if ((p = find_bin_string(p, mem->size, "\n\n",  2)) == NULL) {
+		snprintf(cursor->why, sizeof(cursor->why),
+			"malformed armed signature at %zu", (size_t)(p - mem->mem));
+		return 0;
 	}
+	p += 2;
 	sigend = find_bin_string(p, mem->size, SIGEND, strlen(SIGEND));
 	binsigsize = b64decode((char *)p, (size_t)(sigend - p), binsig, sizeof(binsig));
 
