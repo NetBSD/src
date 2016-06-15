@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_rcv.c,v 1.20 2016/06/05 14:00:12 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_rcv.c,v 1.21 2016/06/15 04:30:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -645,7 +645,8 @@ receive_data_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 	done = sn_empty(&req_ccb->DataSN_buf);
 
 	if (pdu->pdu.Flags & FLAG_STATUS) {
-		DEBC(conn, 10, ("Rx Data In Complete, done = %d\n", done));
+		DEBC(conn, 10, ("Rx Data In %d, done = %d\n",
+			req_ccb->CmdSN, done));
 
 		req_ccb->flags |= CCBF_COMPLETE;
 		/* successful transfer, reset recover count */
@@ -760,8 +761,10 @@ receive_command_response_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 
 	done = status || sn_empty(&req_ccb->DataSN_buf);
 
-	DEBC(conn, 10, ("Rx Command Response rsp = %x, status = %x\n",
-			pdu->pdu.OpcodeSpecific[0], pdu->pdu.OpcodeSpecific[1]));
+	DEBC(conn, 10, ("Rx Response: CmdSN %d, rsp = %x, status = %x\n",
+			req_ccb->CmdSN,
+			pdu->pdu.OpcodeSpecific[0],
+			pdu->pdu.OpcodeSpecific[1]));
 
 	rc = check_StatSN(conn, pdu->pdu.p.response.StatSN, done);
 
@@ -968,7 +971,7 @@ STATIC int
 receive_nop_in_pdu(connection_t *conn, pdu_t *pdu, ccb_t *req_ccb)
 {
 	DEBC(conn, 10,
-		("Received NOP_In PDU, req_ccb=%p, ITT=%x, TTT=%x, StatSN=%x\n",
+		("Received NOP_In PDU, req_ccb=%p, ITT=%x, TTT=%x, StatSN=%u\n",
 		req_ccb, pdu->pdu.InitiatorTaskTag,
 		pdu->pdu.p.nop_in.TargetTransferTag,
 		ntohl(pdu->pdu.p.nop_in.StatSN)));
@@ -1019,7 +1022,6 @@ STATIC int
 receive_pdu(connection_t *conn, pdu_t *pdu)
 {
 	ccb_t *req_ccb;
-	ccb_list_t waiting;
 	int rc;
 	uint32_t MaxCmdSN, ExpCmdSN, digest;
 	session_t *sess = conn->session;
@@ -1036,9 +1038,11 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		}
 	}
 
-	DEBC(conn, 99, ("Received PDU ExpCmdSN = %u, MaxCmdSN = %u\n",
+	DEBC(conn, 10, ("Received PDU StatSN=%u, ExpCmdSN=%u MaxCmdSN=%u ExpDataSN=%u\n",
+	     ntohl(pdu->pdu.p.response.StatSN),
 	     ntohl(pdu->pdu.p.response.ExpCmdSN),
-	     ntohl(pdu->pdu.p.response.ExpCmdSN)));
+	     ntohl(pdu->pdu.p.response.MaxCmdSN),
+	     ntohl(pdu->pdu.p.response.ExpDataSN)));
 
 	req_ccb = ccb_from_itt(conn, pdu->pdu.InitiatorTaskTag);
 
@@ -1131,65 +1135,14 @@ receive_pdu(connection_t *conn, pdu_t *pdu)
 		connection_timeout_start(conn, CONNECTION_TIMEOUT);
 	conn->num_timeouts = 0;
 
-	/*
-	 * Un-throttle - wakeup all CCBs waiting for MaxCmdSN to increase.
-	 * We have to handle wait/nowait CCBs a bit differently.
-	 */
+	/* Update session window */
 	mutex_enter(&sess->lock);
-
-	if (sn_a_lt_b(MaxCmdSN, ExpCmdSN-1)) {
-		/* both are ignored */
-		mutex_exit(&sess->lock);
-		return 0;
+	if (sn_a_le_b(ExpCmdSN - 1, MaxCmdSN)) {
+		if (sn_a_lt_b(sess->ExpCmdSN, ExpCmdSN))
+			sess->ExpCmdSN = ExpCmdSN;
+		if (sn_a_lt_b(sess->MaxCmdSN, MaxCmdSN))
+			sess->MaxCmdSN = MaxCmdSN;
 	}
-
-	if (sn_a_lt_b(sess->ExpCmdSN, ExpCmdSN))
-		sess->ExpCmdSN = ExpCmdSN;
-
-	if (sn_a_lt_b(sess->MaxCmdSN, MaxCmdSN)) {
-		sess->MaxCmdSN = MaxCmdSN;
-
-		if (TAILQ_FIRST(&sess->ccbs_throttled) == NULL) {
-			mutex_exit(&sess->lock);
-			return 0;
-		}
-
-		DEBC(conn, 5, ("Unthrottling - MaxCmdSN = %d\n", MaxCmdSN));
-
-		TAILQ_INIT(&waiting);
-		while ((req_ccb = TAILQ_FIRST(&sess->ccbs_throttled)) != NULL) {
-			if (!conn->terminating ||
-			    (req_ccb->flags & CCBF_WAITING) != 0) {
-				throttle_ccb(req_ccb, FALSE);
-				TAILQ_INSERT_TAIL(&waiting, req_ccb, chain);
-			}
-		}
-
-		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
-			if (!sernum_in_window(sess))
-				break;
-			mutex_exit(&sess->lock);
-
-			TAILQ_REMOVE(&waiting, req_ccb, chain);
-
-			DEBC(conn, 10, ("Unthrottling - ccb = %p, disp = %d\n",
-					req_ccb, req_ccb->disp));
-
-			if ((req_ccb->flags & CCBF_WAITING) != 0) {
-				cv_broadcast(&conn->ccb_cv);
-			} else {
-				send_command(req_ccb, req_ccb->disp, FALSE, FALSE);
-			}
-
-			mutex_enter(&sess->lock);
-		}
-
-		while ((req_ccb = TAILQ_FIRST(&waiting)) != NULL) {
-			TAILQ_REMOVE(&waiting, req_ccb, chain);
-			throttle_ccb(req_ccb, TRUE);
-		}
-	}
-
 	mutex_exit(&sess->lock);
 
 	return 0;
@@ -1215,6 +1168,11 @@ iscsi_rcv_thread(void *par)
 	do {
 		while (!conn->terminating) {
 			pdu = get_pdu(conn, TRUE);
+			if (pdu == NULL) {
+				KASSERT(conn->terminating);
+				break;
+			}
+
 			pdu->uio.uio_iov = pdu->io_vec;
 			UIO_SETUP_SYSSPACE(&pdu->uio);
 			pdu->uio.uio_iovcnt = 1;
