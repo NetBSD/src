@@ -49,10 +49,11 @@ ptime(int64_t secs)
 static void
 pentry(pgpv_t *pgp, int n, const char *modifiers)
 {
+	size_t	 cc;
 	char	*s;
 
-	pgpv_get_entry(pgp, (unsigned)n, &s, modifiers);
-	printf("%s", s);
+	cc = pgpv_get_entry(pgp, (unsigned)n, &s, modifiers);
+	fwrite(s, 1, cc, stdout);
 	free(s);
 }
 
