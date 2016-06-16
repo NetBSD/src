@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.144 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.145 2016/06/16 02:38:40 ozaki-r Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.144 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.145 2016/06/16 02:38:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -387,9 +387,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	int type, code;		/* for ICMPv6 output statistics only */
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
-	int bound = curlwp->l_pflag & LP_BOUND;
-
-	curlwp->l_pflag |= LP_BOUND;
+	int bound = curlwp_bind();
 
 	in6p = sotoin6pcb(so);
 
@@ -536,7 +534,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
