@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.12 2016/06/16 13:01:08 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.13 2016/06/16 15:21:49 nonaka Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.12 2016/06/16 13:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.13 2016/06/16 15:21:49 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1337,7 +1337,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 
 		/* finalize mbuf */
 		m->m_data = (void *)(rxwi + 1);
-		m->m_pkthdr.rcvif = ifp;
+		M_SETCTX(m, ifp);
 		m->m_pkthdr.len = m->m_len = le16toh(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
