@@ -1,4 +1,4 @@
-# $NetBSD: README.models,v 1.1 2016/06/16 01:33:35 dholland Exp $
+# $NetBSD: README.models,v 1.2 2016/06/16 06:20:08 macallan Exp $
 
 MIPS models and architecture levels
 -----------------------------------
@@ -32,7 +32,7 @@ These architecture levels exist:
 
 Note that while MIPS32 is a 32-bit subset of MIPS64, each
 corresponding pair of MIPS32rN and MIPS64rN are comparable in age and
-properties. Later revisions (further down the list) are mostly subsets
+properties. Later revisions (further down the list) are mostly supersets
 of earlier revisions, although some exceptions exist.
 
 
@@ -55,6 +55,7 @@ which have model numbers with fewer zeros.)
 	R6000		MIPS-II ??
 	R8000		MIPS-IV (64-bit)	[idt96 1-5]
 	R10000		MIPS-IV (64-bit)	[idt96 1-5]
+	R1x000		MIPS-IV (64-bit)
 
 For later models than this I currently have no information.
 
@@ -89,6 +90,9 @@ bi-endian but are wired up one way or the other on motherboards.
 	... ??					??
 	(see http://research.microsoft.com/en-us/projects/emips/ )
    evbmips
+   	Loongson 2F ( gdium, lemote etc. )	more or less LE MIPS-III with
+   						some extensions
+   	xburst ( as in, jz4780, found on CI20 )	LE MIPS32R2 with extensions
 	... ??					?? (various-endian)
    ews4800mips (big-endian [buildsh])
 	EWS4800/350				??
@@ -141,17 +145,19 @@ bi-endian but are wired up one way or the other on motherboards.
         Indigo2 (R4x00)				R4?00 (MIPS-III) [portpage]
         Challenge M				??
         Indy (R4x00)				R4?00 (MIPS-III) [portpage]
-        Indy (R5000)				R5000 (??) [portpage]
+        Indy (R5000)				R5000 (MIPS-IV) [portpage]
         Challenge S (R4x00)			R4?00 (MIPS-III) [portpage]
-	Challenge S (R5000)			R5000 (??) [portpage]
+	Challenge S (R5000)			R5000 (MIPS-IV) [portpage]
 	R10000 Power Indigo2			R10000 (MIPS-IV) [portpage]
-	Octane					??
-        O2 (R5000)				R5000 (??) [portpage]
-	O2 (RM5200)				RM5200 (??) [portpage]
+	Octane					R1x000 (MIPS-IV) [portpage]
+        O2 (R5000)				R5000 (MIPS-IV) [portpage]
+	O2 (RM5200)				RM5200 (MIPS-IV) [portpage]
+	O2 (R7000)				R7000  (MIPS-IV) [portpage]
 	O2 (R10000)				R10000 (MIPS-IV) [portpage]
-	O2 (R12000)				R12000 (??) [portpage]
-	Fuel					??
-	Tezro					??
+	O2 (R12000)				R12000 (MIPS-IV) [portpage]
+	O2 (R14000)				R14000 (MIPS-IV) [portpage]
+	Fuel					R1x000 (MIPS-IV) [portpage]
+	Tezro					R1x000 (MIPS-IV) [portpage]
 	... ??
 
 
