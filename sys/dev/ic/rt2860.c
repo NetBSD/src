@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.11 2016/06/16 12:56:49 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.12 2016/06/16 13:01:08 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.11 2016/06/16 12:56:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.12 2016/06/16 13:01:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -507,12 +507,18 @@ rt2860_reset_tx_ring(struct rt2860_softc *sc, struct rt2860_tx_ring *ring)
 		if ((data = ring->data[i]) == NULL)
 			continue;	/* nothing mapped in this slot */
 
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, data->map);
-		m_freem(data->m);
-		data->m= NULL;
-		data->ni = NULL;	/* node already freed */
+		if (data->ni != NULL) {
+			ieee80211_free_node(data->ni);
+			data->ni = NULL;
+		}
+
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
+			data->m = NULL;
+		}
 
 		SLIST_INSERT_HEAD(&sc->data_pool, data, next);
 		ring->data[i] = NULL;
@@ -543,13 +549,23 @@ rt2860_free_tx_ring(struct rt2860_softc *sc, struct rt2860_tx_ring *ring)
 		if ((data = ring->data[i]) == NULL)
 			continue;	/* nothing mapped in this slot */
 
-		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
-		    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-		bus_dmamap_unload(sc->sc_dmat, data->map);
-		m_freem(data->m);
+		if (data->ni != NULL) {
+			ieee80211_free_node(data->ni);
+			data->ni = NULL;
+		}
+		if (data->m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+			bus_dmamap_unload(sc->sc_dmat, data->map);
+			m_freem(data->m);
+			data->m = NULL;
+		}
 
 		SLIST_INSERT_HEAD(&sc->data_pool, data, next);
+		ring->data[i] = NULL;
 	}
+	ring->queued = 0;
+	ring->cur = ring->next = 0;
 }
 
 /*
