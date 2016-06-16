@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.66 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.67 2016/06/16 03:03:33 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.66 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.67 2016/06/16 03:03:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -982,13 +982,18 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 	uint32_t tmp;
 	int error;
 	size_t written;
+	struct psref psref;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		curlwp_bindx(bound);
 		return ENODEV;
+	}
 
 	if (oldp == NULL) {
 		*oldlenp = 0;
@@ -1003,6 +1008,8 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 				    sizeof(uint32_t);
 			}
 		}
+		if_put(ifp, &psref);
+		curlwp_bindx(bound);
 		return 0;
 	}
 
@@ -1039,6 +1046,8 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 		}
 	}
 done:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 	*oldlenp = written;
 	return error;
 }

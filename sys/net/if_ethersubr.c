@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.222 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.223 2016/06/16 03:03:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.222 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.223 2016/06/16 03:03:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1475,24 +1475,31 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	struct ether_multi_sysctl addr;
 	struct ifnet *ifp;
 	struct ethercom *ec;
-	int error;
+	int error = 0;
 	size_t written;
+	struct psref psref;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
-		return ENODEV;
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		error = ENODEV;
+		goto out;
+	}
 	if (ifp->if_type != IFT_ETHER) {
+		if_put(ifp, &psref);
 		*oldlenp = 0;
-		return 0;
+		goto out;
 	}
 	ec = (struct ethercom *)ifp;
 
 	if (oldp == NULL) {
+		if_put(ifp, &psref);
 		*oldlenp = ec->ec_multicnt * sizeof(addr);
-		return 0;
+		goto out;
 	}
 
 	memset(&addr, 0, sizeof(addr));
@@ -1511,8 +1518,11 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 		written += sizeof(addr);
 		oldp = (char *)oldp + sizeof(addr);
 	}
+	if_put(ifp, &psref);
 
 	*oldlenp = written;
+out:
+	curlwp_bindx(bound);
 	return error;
 }
 
