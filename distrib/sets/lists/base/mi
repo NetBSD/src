@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1127 2016/06/04 16:29:35 nonaka Exp $
+# $NetBSD: mi,v 1.1128 2016/06/16 15:17:56 agc Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5841,6 +5841,7 @@
 ./usr/share/zoneinfo/SystemV/PST8PDT		base-obsolete		obsolete
 ./usr/share/zoneinfo/SystemV/YST9		base-obsolete		obsolete
 ./usr/share/zoneinfo/SystemV/YST9YDT		base-obsolete		obsolete
+./usr/share/zoneinfo/TZDATA_VERSION		base-sys-share		share
 ./usr/share/zoneinfo/Turkey			base-sys-share		share
 ./usr/share/zoneinfo/UCT			base-sys-share		share
 ./usr/share/zoneinfo/US				base-sys-share
