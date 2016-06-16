@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.9 2016/06/01 00:02:12 agc Exp $
+# $NetBSD: tzdata2netbsd,v 1.10 2016/06/16 15:17:56 agc Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -194,6 +194,7 @@ trimnews()
 		// { if (inrange) print; }
 		' \
 		<"${NEWSFILE}" >"${NEWSTRIMFILE}"
+	echo "tzdata-${NEWVER}" > ${TZDISTDIR}/TZDATA_VERSION
 }
 
 # Create IMPORTMSGFILE from NEWSTRIMFILE, by ignoring some sections,
