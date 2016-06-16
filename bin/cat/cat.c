@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.55 2015/07/25 16:17:01 sevan Exp $	*/
+/* $NetBSD: cat.c,v 1.56 2016/06/16 00:45:37 sevan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.55 2015/07/25 16:17:01 sevan Exp $");
+__RCSID("$NetBSD: cat.c,v 1.56 2016/06/16 00:45:37 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,7 @@ main(int argc, char *argv[])
 			vflag = 1;
 			break;
 		default:
+		case '?':
 			(void)fprintf(stderr,
 			    "Usage: %s [-beflnstuv] [-B bsize] [-] "
 			    "[file ...]\n", getprogname());
