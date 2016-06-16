@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.340 2016/06/16 03:03:33 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.341 2016/06/16 15:18:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.340 2016/06/16 03:03:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.341 2016/06/16 15:18:33 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3108,25 +3108,26 @@ if_sdl_sysctl(SYSCTLFN_ARGS)
 	ifp = if_get_byindex(name[0], &psref);
 	if (ifp == NULL) {
 		error = ENODEV;
-		goto out;
+		goto out0;
 	}
 
 	sdl = ifp->if_sadl;
 	if (sdl == NULL) {
 		*oldlenp = 0;
-		goto out;
+		goto out1;
 	}
 
 	if (oldp == NULL) {
 		*oldlenp = sdl->sdl_alen;
-		goto out;
+		goto out1;
 	}
 
 	if (*oldlenp >= sdl->sdl_alen)
 		*oldlenp = sdl->sdl_alen;
 	error = sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
-out:
+out1:
 	if_put(ifp, &psref);
+out0:
 	curlwp_bindx(bound);
 	return error;
 }
