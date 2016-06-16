@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.10 2016/05/26 05:04:46 ozaki-r Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.11 2016/06/16 12:56:49 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.10 2016/05/26 05:04:46 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.11 2016/06/16 12:56:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -700,7 +700,7 @@ rt2860_alloc_rx_ring(struct rt2860_softc *sc, struct rt2860_rx_ring *ring)
 			goto fail;
 		}
 
-		MGET(data->m, M_DONTWAIT, MT_DATA);
+		MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 		if (data->m == NULL) {
 			msg = "allocate Rx mbuf";
 			goto fail1;
@@ -1273,7 +1273,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			goto skip;
 		}
 
-		MGET(m1, M_DONTWAIT, MT_DATA);
+		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m1 == NULL)) {
 			ifp->if_ierrors++;
 			goto skip;
@@ -1321,6 +1321,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 
 		/* finalize mbuf */
 		m->m_data = (void *)(rxwi + 1);
+		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = le16toh(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
