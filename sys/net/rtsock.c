@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.189 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.190 2016/06/16 02:38:40 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.189 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.190 2016/06/16 02:38:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1460,11 +1460,10 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	int	len, error = 0;
 	int s;
 	struct psref psref;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound = curlwp_bind();
 
 	memset(&info, 0, sizeof(info));
 
-	curlwp->l_pflag |= LP_BOUND;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
@@ -1560,13 +1559,13 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	return 0;
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 

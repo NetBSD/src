@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.338 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.339 2016/06/16 02:38:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.338 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.339 2016/06/16 02:38:40 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -941,9 +941,8 @@ if_attachdomain(void)
 {
 	struct ifnet *ifp;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound = curlwp_bind();
 
-	curlwp->l_pflag |= LP_BOUND;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
@@ -954,7 +953,7 @@ if_attachdomain(void)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 }
 
 static void
@@ -2478,7 +2477,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #endif
 	int r;
 	struct psref psref;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 
 	switch (cmd) {
 #ifdef COMPAT_OIFREQ
@@ -2510,7 +2509,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
-		curlwp->l_pflag |= LP_BOUND;
+		bound = curlwp_bind();
 		if (l != NULL) {
 			ifp = if_get(ifr->ifr_name, &psref);
 			error = kauth_authorize_network(l->l_cred,
@@ -2520,7 +2519,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			if (ifp != NULL)
 				if_put(ifp, &psref);
 			if (error != 0) {
-				curlwp->l_pflag ^= bound ^ LP_BOUND;
+				curlwp_bindx(bound);
 				return error;
 			}
 		}
@@ -2529,7 +2528,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name);
 		mutex_exit(&if_clone_mtx);
-		curlwp->l_pflag ^= bound ^ LP_BOUND;
+		curlwp_bindx(bound);
 		return r;
 
 	case SIOCIFGCLONERS:
@@ -2540,10 +2539,10 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	ifp = if_get(ifr->ifr_name, &psref);
 	if (ifp == NULL) {
-		curlwp->l_pflag ^= bound ^ LP_BOUND;
+		curlwp_bindx(bound);
 		return ENXIO;
 	}
 
@@ -2617,7 +2616,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	mutex_exit(ifp->if_ioctl_lock);
 out:
 	if_put(ifp, &psref);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -2661,7 +2660,7 @@ ifconf(u_long cmd, void *data)
 	const int sz = (int)sizeof(struct ifreq);
 	const bool docopy = ifc->ifc_req != NULL;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 	struct psref psref;
 
 	if (docopy) {
@@ -2669,7 +2668,7 @@ ifconf(u_long cmd, void *data)
 		ifrp = ifc->ifc_req;
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -2719,7 +2718,7 @@ ifconf(u_long cmd, void *data)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	if (docopy) {
 		KASSERT(0 <= space && space <= ifc->ifc_len);
@@ -2732,7 +2731,7 @@ ifconf(u_long cmd, void *data)
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
