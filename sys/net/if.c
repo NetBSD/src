@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.339 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.340 2016/06/16 03:03:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.339 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.340 2016/06/16 03:03:33 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3097,28 +3097,38 @@ if_sdl_sysctl(SYSCTLFN_ARGS)
 {
 	struct ifnet *ifp;
 	const struct sockaddr_dl *sdl;
+	struct psref psref;
+	int error = 0;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
-		return ENODEV;
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		error = ENODEV;
+		goto out;
+	}
 
 	sdl = ifp->if_sadl;
 	if (sdl == NULL) {
 		*oldlenp = 0;
-		return 0;
+		goto out;
 	}
 
 	if (oldp == NULL) {
 		*oldlenp = sdl->sdl_alen;
-		return 0;
+		goto out;
 	}
 
 	if (*oldlenp >= sdl->sdl_alen)
 		*oldlenp = sdl->sdl_alen;
-	return sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+	error = sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+out:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")
