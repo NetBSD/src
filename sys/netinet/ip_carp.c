@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.67 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.67 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -933,9 +933,8 @@ carp_send_ad_all(void)
 	struct carp_if *cif;
 	struct carp_softc *vh;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound = curlwp_bind();
 
-	curlwp->l_pflag |= LP_BOUND;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
@@ -956,7 +955,7 @@ carp_send_ad_all(void)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.128 2016/06/15 06:01:21 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.129 2016/06/16 02:38:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.128 2016/06/15 06:01:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.129 2016/06/16 02:38:40 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1124,7 +1124,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	const int sz = (int)sizeof(ifr);
 	bool docopy;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 	struct psref psref;
 
 	error = copyin(data, &ifc, sizeof(ifc));
@@ -1137,7 +1137,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		ifrp = ifc.ifc_req;
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -1172,7 +1172,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	if (docopy)
 		ifc.ifc_len -= space;
@@ -1183,7 +1183,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
