@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.110 2016/02/06 22:48:07 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.111 2016/06/16 23:09:44 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.110 2016/02/06 22:48:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.111 2016/06/16 23:09:44 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1235,6 +1235,8 @@ module_do_unload(const char *name, bool load_requires_force)
 int
 module_prime(const char *name, void *base, size_t size)
 {
+	__link_set_decl(modules, modinfo_t);
+	modinfo_t *const *mip;
 	module_t *mod;
 	int error;
 
@@ -1243,6 +1245,18 @@ module_prime(const char *name, void *base, size_t size)
 		return ENOMEM;
 	}
 
+	/* Check for duplicate modules */
+
+	__link_set_foreach(mip, modules) {
+		if (*mip == &module_dummy)
+			continue;
+		if (strcmp((*mip)->mi_name, name) == 0) {
+			module_error("module `%s' pushed by boot loader "
+			    "already exists", name);
+			kmem_free(mod, sizeof(*mod));
+			return EEXIST;
+		}
+	}
 	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
 		kmem_free(mod, sizeof(*mod));
@@ -1254,8 +1268,8 @@ module_prime(const char *name, void *base, size_t size)
 	if (error != 0) {
 		kobj_unload(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
-		module_error("unable to load `%s' pushed by boot loader, "
-		    "error %d", name, error);
+		module_error("unable to fetch_info for `%s' pushed by boot "
+		    "loader, error %d", name, error);
 		return error;
 	}
 
