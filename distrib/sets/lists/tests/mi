@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.674 2016/04/21 05:10:15 ozaki-r Exp $
+# $NetBSD: mi,v 1.675 2016/06/16 04:03:37 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -811,6 +811,8 @@
 ./usr/tests/bin/cat/Kyuafile						tests-bin-tests		compattestfile,atf,kyua
 ./usr/tests/bin/cat/d_align.in						tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/cat/d_align.out						tests-bin-tests		compattestfile,atf
+./usr/tests/bin/cat/d_se_output.in					tests-bin-tests		compattestfile,atf
+./usr/tests/bin/cat/d_se_output.out					tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/cat/t_cat						tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/cp							tests-bin-tests		compattestfile,atf
 ./usr/tests/bin/cp/Atffile						tests-bin-tests		compattestfile,atf
