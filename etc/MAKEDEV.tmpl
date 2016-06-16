@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.180 2016/06/04 16:11:50 nonaka Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.181 2016/06/16 15:33:38 kre Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2252,6 +2252,10 @@ makedisk_p8()
 {
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
 
+	ro=%RAWDISK_OFF%
+	mkdev ${name}${unit}	b $blk $(($unit * 8 + $ro))	640 $g_operator
+	mkdev r${name}${unit}	c $chr $(($unit * 8 + $ro))	640 $g_operator
+
 	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
 	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
 	mkdev ${name}${unit}c	b $blk $(($unit * 8 + 2))	640 $g_operator
@@ -2274,6 +2278,10 @@ makedisk_p12high()
 {
 	ho=524280	# offset for partition 9 to 11 (same as ...p16high)
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	ro=%RAWDISK_OFF%
+	mkdev ${name}${unit}	b $blk $(($unit * 8 + $ro))	640 $g_operator
+	mkdev r${name}${unit}	c $chr $(($unit * 8 + $ro))	640 $g_operator
 
 	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
 	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
@@ -2304,6 +2312,10 @@ makedisk_p12high()
 makedisk_p16()
 {
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	ro=%RAWDISK_OFF%
+	mkdev ${name}${unit}	b $blk $(($unit * 16 + $ro))	640 $g_operator
+	mkdev r${name}${unit}	c $chr $(($unit * 16 + $ro))	640 $g_operator
 
 	mkdev ${name}${unit}a	b $blk $(($unit * 16 + 0))	640 $g_operator
 	mkdev ${name}${unit}b	b $blk $(($unit * 16 + 1))	640 $g_operator
@@ -2343,6 +2355,10 @@ makedisk_p16high()
 {
 	ho=524280	# offset for partition 9 to 16
 	name="$1"; unit="$2"; blk="$3"; chr="$4"
+
+	ro=%RAWDISK_OFF%
+	mkdev ${name}${unit}	b $blk $(($unit * 8 + $ro))	640 $g_operator
+	mkdev r${name}${unit}	c $chr $(($unit * 8 + $ro))	640 $g_operator
 
 	mkdev ${name}${unit}a	b $blk $(($unit * 8 + 0))	640 $g_operator
 	mkdev ${name}${unit}b	b $blk $(($unit * 8 + 1))	640 $g_operator
@@ -2386,6 +2402,9 @@ makedisk_minimal()
 	doff=%DISKMINOROFFSET%
 	ro=%RAWDISK_OFF%
 	rn=%RAWDISK_NAME%
+
+	mkdev ${name}${unit}	b $blk $(($unit * $doff + $ro))	640 $g_operator
+	mkdev r${name}${unit}	c $chr $(($unit * $doff + $ro))	640 $g_operator
 
 	mkdev ${name}${unit}a	b $blk $(($unit * $doff + 0))	640 $g_operator
 	mkdev ${name}${unit}$rn b $blk $(($unit * $doff + $ro)) 640 $g_operator
