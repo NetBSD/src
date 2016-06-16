@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.54 2016/06/14 13:06:41 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.55 2016/06/16 11:34:13 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.54 2016/06/14 13:06:41 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.55 2016/06/16 11:34:13 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -282,11 +282,6 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	obj->vaddrbase = base_vaddr;
 	obj->isdynamic = ehdr->e_type == ET_DYN;
 
-#ifdef GNU_RELRO
-	obj->relro_page = obj->relocbase + round_down(relro_page);
-	obj->relro_size = round_up(relro_size);
-#endif
-
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	if (phtls != NULL) {
 		++_rtld_tls_dtv_generation;
@@ -407,6 +402,11 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	obj->mapbase = mapbase;
 	obj->mapsize = mapsize;
 	obj->relocbase = mapbase - base_vaddr;
+
+#ifdef GNU_RELRO
+	obj->relro_page = obj->relocbase + round_down(relro_page);
+	obj->relro_size = round_up(relro_size);
+#endif
 
 	if (obj->dynamic)
 		obj->dynamic = (void *)(obj->relocbase + (Elf_Addr)(uintptr_t)obj->dynamic);
