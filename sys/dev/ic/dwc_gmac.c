@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.6 2016/06/12 08:35:47 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.7 2016/06/16 05:33:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.6 2016/06/12 08:35:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.7 2016/06/16 05:33:24 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1175,7 +1175,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
 		    mtod(mnew, void*), MCLBYTES, NULL,
 		    BUS_DMA_READ | BUS_DMA_NOWAIT);
-		    if (error != 0) {
+		if (error != 0) {
 			m_freem(mnew);
 			/* try to reload old mbuf */
 			error = bus_dmamap_load(sc->sc_dmat, data->rd_map,
