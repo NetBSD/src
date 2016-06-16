@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.170 2015/03/31 01:10:02 matt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.171 2016/06/16 02:34:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -520,6 +520,28 @@ KPREEMPT_ENABLE(lwp_t *l)
 /* For lwp::l_dopreempt */
 #define	DOPREEMPT_ACTIVE	0x01
 #define	DOPREEMPT_COUNTED	0x02
+
+/*
+ * Prevent curlwp from migrating between CPUs beteen curlwp_bind and
+ * curlwp_bindx. One use case is psref(9) that has a contract that
+ * forbids migrations.
+ */
+static inline int
+curlwp_bind(void)
+{
+	int bound;
+
+	bound = curlwp->l_pflag & LP_BOUND;
+	curlwp->l_pflag |= LP_BOUND;
+
+	return bound;
+}
+
+static inline void
+curlwp_bindx(int bound)
+{
+	curlwp->l_pflag ^= bound ^ LP_BOUND;
+}
 
 #endif /* _KERNEL */
 
