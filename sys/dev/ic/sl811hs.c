@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.77 2016/06/17 15:57:08 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.78 2016/06/17 16:07:40 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.77 2016/06/17 15:57:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.78 2016/06/17 16:07:40 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1735,11 +1735,10 @@ slhci_dointr(struct slhci_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	DLOG(D_INTR, "Flags %#x sc_ier %#x ISR=%#x", t->flags, sc->sc_ier,
-	    slhci_read(sc, SL11_ISR), 0);
-
-	if (sc->sc_ier == 0)
+	if (sc->sc_ier == 0) {
+		DLOG(D_INTR, "sc_ier is zero", 0, 0, 0, 0);
 		return 0;
+	}
 
 	r = slhci_read(sc, SL11_ISR);
 
@@ -1776,8 +1775,10 @@ slhci_dointr(struct slhci_softc *sc)
 
 	r &= sc->sc_ier;
 
-	if (r == 0)
+	if (r == 0) {
+		DLOG(D_INTR, "r is zero", 0, 0, 0, 0);
 		return 0;
+	}
 
 	sc->sc_ier_check = 0;
 
@@ -1787,6 +1788,7 @@ slhci_dointr(struct slhci_softc *sc)
 	/* If we have an insertion event we do not care about anything else. */
 	if (__predict_false(r & SL11_ISR_INSERT)) {
 		slhci_insert(sc);
+		DLOG(D_INTR, "... done", 0, 0, 0, 0);
 		return 1;
 	}
 
@@ -1895,6 +1897,8 @@ slhci_dointr(struct slhci_softc *sc)
 	}
 
 	slhci_dotransfer(sc);
+
+	DLOG(D_INTR, "... done", 0, 0, 0, 0);
 
 	return 1;
 }
