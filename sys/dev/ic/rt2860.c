@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.15 2016/06/17 15:38:54 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.16 2016/06/17 17:03:20 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.15 2016/06/17 15:38:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.16 2016/06/17 17:03:20 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2741,6 +2741,7 @@ rt2860_updateedca(struct ieee80211com *ic)
 	return 0;
 }
 
+#ifdef HW_CRYPTO
 static int
 rt2860_set_key(struct ieee80211com *ic, const struct ieee80211_key *ck,
     const uint8_t *mac)
@@ -2864,6 +2865,7 @@ rt2860_delete_key(struct ieee80211com *ic, const struct ieee80211_key *k)
 	}
 	return 1;
 }
+#endif
 
 static int8_t
 rt2860_rssi2dbm(struct rt2860_softc *sc, uint8_t rssi, uint8_t rxchain)
