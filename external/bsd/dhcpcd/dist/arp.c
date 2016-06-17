@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.19 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.20 2016/06/17 19:42:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -65,6 +65,7 @@ arp_request(const struct interface *ifp, in_addr_t sip, in_addr_t tip)
 	struct arphdr ar;
 	size_t len;
 	uint8_t *p;
+	const struct iarp_state *state;
 
 	ar.ar_hrd = htons(ifp->family);
 	ar.ar_pro = htons(ETHERTYPE_IP);
@@ -91,7 +92,9 @@ arp_request(const struct interface *ifp, in_addr_t sip, in_addr_t tip)
 	APPEND(&sip, sizeof(sip));
 	ZERO(ifp->hwlen);
 	APPEND(&tip, sizeof(tip));
-	return if_sendrawpacket(ifp, ETHERTYPE_ARP, arp_buffer, len);
+
+	state = ARP_CSTATE(ifp);
+	return if_sendraw(ifp, state->fd, ETHERTYPE_ARP, arp_buffer, len);
 
 eexit:
 	errno = ENOBUFS;
@@ -123,7 +126,7 @@ arp_packet(void *arg)
 {
 	struct interface *ifp = arg;
 	const struct interface *ifn;
-	uint8_t arp_buffer[ARP_LEN];
+	uint8_t buf[ARP_LEN];
 	struct arphdr ar;
 	struct arp_msg arm;
 	ssize_t bytes;
@@ -134,65 +137,62 @@ arp_packet(void *arg)
 
 	state = ARP_STATE(ifp);
 	flags = 0;
-	while (!(flags & RAW_EOF)) {
-		bytes = if_readrawpacket(ifp, ETHERTYPE_ARP,
-		    arp_buffer, sizeof(arp_buffer), &flags);
-		if (bytes == -1) {
-			logger(ifp->ctx, LOG_ERR,
-			    "%s: arp if_readrawpacket: %m", ifp->name);
-			arp_close(ifp);
-			return;
-		}
-		/* We must have a full ARP header */
-		if ((size_t)bytes < sizeof(ar))
-			continue;
-		memcpy(&ar, arp_buffer, sizeof(ar));
-		/* Families must match */
-		if (ar.ar_hrd != htons(ifp->family))
-			continue;
+	bytes = if_readraw(ifp, state->fd, buf, sizeof(buf), &flags);
+	if (bytes == -1) {
+		logger(ifp->ctx, LOG_ERR,
+		    "%s: arp if_readrawpacket: %m", ifp->name);
+		arp_close(ifp);
+		return;
+	}
+	/* We must have a full ARP header */
+	if ((size_t)bytes < sizeof(ar))
+		return;
+	memcpy(&ar, buf, sizeof(ar));
+	/* Families must match */
+	if (ar.ar_hrd != htons(ifp->family))
+		return;
 #if 0
-		/* These checks are enforced in the BPF filter. */
-		/* Protocol must be IP. */
-		if (ar.ar_pro != htons(ETHERTYPE_IP))
-			continue;
-		/* Only these types are recognised */
-		if (ar.ar_op != htons(ARPOP_REPLY) &&
-		    ar.ar_op != htons(ARPOP_REQUEST))
-			continue;
+	/* These checks are enforced in the BPF filter. */
+	/* Protocol must be IP. */
+	if (ar.ar_pro != htons(ETHERTYPE_IP))
+		continue;
+	/* Only these types are recognised */
+	if (ar.ar_op != htons(ARPOP_REPLY) &&
+	    ar.ar_op != htons(ARPOP_REQUEST))
+		continue;
 #endif
-		if (ar.ar_pln != sizeof(arm.sip.s_addr))
-			continue;
+	if (ar.ar_pln != sizeof(arm.sip.s_addr))
+		return;
 
-		/* Get pointers to the hardware addreses */
-		hw_s = arp_buffer + sizeof(ar);
-		hw_t = hw_s + ar.ar_hln + ar.ar_pln;
-		/* Ensure we got all the data */
-		if ((hw_t + ar.ar_hln + ar.ar_pln) - arp_buffer > bytes)
-			continue;
-		/* Ignore messages from ourself */
-		TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
-			if (ar.ar_hln == ifn->hwlen &&
-			    memcmp(hw_s, ifn->hwaddr, ifn->hwlen) == 0)
-				break;
-		}
-		if (ifn) {
+	/* Get pointers to the hardware addreses */
+	hw_s = buf + sizeof(ar);
+	hw_t = hw_s + ar.ar_hln + ar.ar_pln;
+	/* Ensure we got all the data */
+	if ((hw_t + ar.ar_hln + ar.ar_pln) - buf > bytes)
+		return;
+	/* Ignore messages from ourself */
+	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
+		if (ar.ar_hln == ifn->hwlen &&
+		    memcmp(hw_s, ifn->hwaddr, ifn->hwlen) == 0)
+			break;
+	}
+	if (ifn) {
 #if 0
-			logger(ifp->ctx, LOG_DEBUG,
-			    "%s: ignoring ARP from self", ifp->name);
+		logger(ifp->ctx, LOG_DEBUG,
+		    "%s: ignoring ARP from self", ifp->name);
 #endif
-			continue;
-		}
-		/* Copy out the HW and IP addresses */
-		memcpy(&arm.sha, hw_s, ar.ar_hln);
-		memcpy(&arm.sip.s_addr, hw_s + ar.ar_hln, ar.ar_pln);
-		memcpy(&arm.tha, hw_t, ar.ar_hln);
-		memcpy(&arm.tip.s_addr, hw_t + ar.ar_hln, ar.ar_pln);
+		return;
+	}
+	/* Copy out the HW and IP addresses */
+	memcpy(&arm.sha, hw_s, ar.ar_hln);
+	memcpy(&arm.sip.s_addr, hw_s + ar.ar_hln, ar.ar_pln);
+	memcpy(&arm.tha, hw_t, ar.ar_hln);
+	memcpy(&arm.tip.s_addr, hw_t + ar.ar_hln, ar.ar_pln);
 
-		/* Run the conflicts */
-		TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, astaten) {
-			if (astate->conflicted_cb)
-				astate->conflicted_cb(astate, &arm);
-		}
+	/* Run the conflicts */
+	TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, astaten) {
+		if (astate->conflicted_cb)
+			astate->conflicted_cb(astate, &arm);
 	}
 }
 
@@ -203,7 +203,7 @@ arp_open(struct interface *ifp)
 
 	state = ARP_STATE(ifp);
 	if (state->fd == -1) {
-		state->fd = if_openrawsocket(ifp, ETHERTYPE_ARP);
+		state->fd = if_openraw(ifp, ETHERTYPE_ARP);
 		if (state->fd == -1) {
 			logger(ifp->ctx, LOG_ERR, "%s: %s: %m",
 			    __func__, ifp->name);
@@ -391,7 +391,7 @@ arp_free(struct arp_state *astate)
 		    TAILQ_FIRST(&state->arp_states) == NULL)
 		{
 			eloop_event_delete(ifp->ctx->eloop, state->fd);
-			close(state->fd);
+			if_closeraw(ifp, state->fd);
 			free(state);
 			ifp->if_data[IF_DATA_ARP] = NULL;
 		}
@@ -428,22 +428,21 @@ arp_close(struct interface *ifp)
 }
 
 void
-arp_handleifa(int cmd, struct interface *ifp, const struct in_addr *addr,
-    int flags)
+arp_handleifa(int cmd, struct ipv4_addr *addr)
 {
 #ifdef IN_IFF_DUPLICATED
 	struct iarp_state *state;
 	struct arp_state *astate, *asn;
 
-	if (cmd != RTM_NEWADDR || (state = ARP_STATE(ifp)) == NULL)
+	if (cmd != RTM_NEWADDR || (state = ARP_STATE(addr->iface)) == NULL)
 		return;
 
 	TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, asn) {
-		if (astate->addr.s_addr == addr->s_addr) {
-			if (flags & IN_IFF_DUPLICATED) {
+		if (astate->addr.s_addr == addr->addr.s_addr) {
+			if (addr->addr_flags & IN_IFF_DUPLICATED) {
 				if (astate->conflicted_cb)
 					astate->conflicted_cb(astate, NULL);
-			} else if (!(flags & IN_IFF_NOTUSEABLE)) {
+			} else if (!(addr->addr_flags & IN_IFF_NOTUSEABLE)) {
 				if (astate->probed_cb)
 					astate->probed_cb(astate);
 			}
@@ -451,8 +450,6 @@ arp_handleifa(int cmd, struct interface *ifp, const struct in_addr *addr,
 	}
 #else
 	UNUSED(cmd);
-	UNUSED(ifp);
 	UNUSED(addr);
-	UNUSED(flags);
 #endif
 }

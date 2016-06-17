@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.18 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.19 2016/06/17 19:42:32 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -592,9 +592,9 @@ ipv6_deleteaddr(struct ipv6_addr *ia)
 
 	logger(ia->iface->ctx, LOG_INFO, "%s: deleting address %s",
 	    ia->iface->name, ia->saddr);
-	if (if_deladdress6(ia) == -1 &&
+	if (if_address6(RTM_DELADDR, ia) == -1 &&
 	    errno != EADDRNOTAVAIL && errno != ENXIO && errno != ENODEV)
-		logger(ia->iface->ctx, LOG_ERR, "if_deladdress6: :%m");
+		logger(ia->iface->ctx, LOG_ERR, "if_address6: :%m");
 
 	/* NOREJECT is set if we delegated exactly the prefix to another
 	 * address.
@@ -704,7 +704,7 @@ ipv6_addaddr(struct ipv6_addr *ap, const struct timespec *now)
 #endif
 	}
 
-	if (if_addaddress6(ap) == -1) {
+	if (if_address6(RTM_NEWADDR, ap) == -1) {
 		logger(ap->iface->ctx, LOG_ERR, "if_addaddress6: %m");
 		/* Restore real pltime and vltime */
 		ap->prefix_pltime = pltime;
@@ -827,10 +827,10 @@ ipv6_addaddrs(struct ipv6_addrhead *addrs)
 				    apf->iface->name,
 				    ap->saddr,
 				    ap->iface->name);
-				if (if_deladdress6(apf) == -1 &&
+				if (if_address6(RTM_DELADDR, apf) == -1 &&
 				    errno != EADDRNOTAVAIL && errno != ENXIO)
 					logger(apf->iface->ctx, LOG_ERR,
-					    "if_deladdress6: %m");
+					    "if_address6: %m");
 				apf->flags &=
 				    ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
 			} else if (apf)
@@ -1453,7 +1453,7 @@ ipv6_startstatic(struct interface *ifp)
 	ia->prefix_pltime = ND6_INFINITE_LIFETIME;
 	ia->dadcallback = ipv6_staticdadcallback;
 	ipv6_addaddr(ia, NULL);
-	if_initrt6(ifp);
+	if_initrt6(ifp->ctx);
 	ipv6_buildroutes(ifp->ctx);
 	if (run_script)
 		script_runreason(ifp, "STATIC6");
@@ -1476,7 +1476,7 @@ ipv6_start(struct interface *ifp)
 	}
 
 	/* Load existing routes */
-	if_initrt6(ifp);
+	if_initrt6(ifp->ctx);
 	if (!IN6_IS_ADDR_UNSPECIFIED(&ifp->options->req_addr6))
 		ipv6_buildroutes(ifp->ctx);
 	return 0;
@@ -1497,7 +1497,7 @@ ipv6_freedrop(struct interface *ifp, int drop)
 	ipv6_freedrop_addrs(&state->addrs, drop ? 2 : 0, NULL);
 	if (drop) {
 		if (ifp->ctx->ipv6 != NULL) {
-			if_initrt6(ifp);
+			if_initrt6(ifp->ctx);
 			ipv6_buildroutes(ifp->ctx);
 		}
 	} else {
@@ -1955,7 +1955,7 @@ find_route6(struct rt6_head *rts, const struct rt6 *r)
 		    (r->iface == NULL || rt->iface == NULL ||
 		    rt->iface->metric == r->iface->metric) &&
 #endif
-		    IN6_ARE_ADDR_EQUAL(&rt->net, &r->net))
+		    IN6_ARE_ADDR_EQUAL(&rt->mask, &r->mask))
 			return rt;
 	}
 	return NULL;
@@ -1975,16 +1975,16 @@ desc_route(const char *cmd, const struct rt6 *rt)
 	gate = inet_ntop(AF_INET6, &rt->gate, gatebuf, INET6_ADDRSTRLEN);
 	if (IN6_ARE_ADDR_EQUAL(&rt->gate, &in6addr_any))
 		logger(ctx, LOG_INFO, "%s: %s route to %s/%d",
-		    ifname, cmd, dest, ipv6_prefixlen(&rt->net));
+		    ifname, cmd, dest, ipv6_prefixlen(&rt->mask));
 	else if (IN6_ARE_ADDR_EQUAL(&rt->dest, &in6addr_any) &&
-	    IN6_ARE_ADDR_EQUAL(&rt->net, &in6addr_any))
+	    IN6_ARE_ADDR_EQUAL(&rt->mask, &in6addr_any))
 		logger(ctx, LOG_INFO, "%s: %s default route via %s",
 		    ifname, cmd, gate);
 	else
 		logger(ctx, LOG_INFO, "%s: %s%s route to %s/%d via %s",
 		    ifname, cmd,
 		    rt->flags & RTF_REJECT ? " reject" : "",
-		    dest, ipv6_prefixlen(&rt->net), gate);
+		    dest, ipv6_prefixlen(&rt->mask), gate);
 }
 
 static struct rt6*
@@ -2002,7 +2002,7 @@ ipv6_findrt(struct dhcpcd_ctx *ctx, const struct rt6 *rt, int flags)
 		    (!flags || rt->iface == r->iface ||
 		    (rt->flags & RTF_REJECT && r->flags & RTF_REJECT)) &&
 #endif
-		    IN6_ARE_ADDR_EQUAL(&rt->net, &r->net))
+		    IN6_ARE_ADDR_EQUAL(&rt->mask, &r->mask))
 			return r;
 	}
 	return NULL;
@@ -2064,7 +2064,7 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 
 	/* Don't set default routes if not asked to */
 	if (IN6_IS_ADDR_UNSPECIFIED(&nrt->dest) &&
-	    IN6_IS_ADDR_UNSPECIFIED(&nrt->net) &&
+	    IN6_IS_ADDR_UNSPECIFIED(&nrt->mask) &&
 	    !(nrt->iface->options->options & DHCPCD_GATEWAY))
 		return -1;
 
@@ -2208,7 +2208,7 @@ make_prefix(const struct interface *ifp, const struct ra *rap,
 	if (r == NULL)
 		return NULL;
 	r->dest = addr->prefix;
-	ipv6_mask(&r->net, addr->prefix_len);
+	ipv6_mask(&r->mask, addr->prefix_len);
 	if (addr->flags & IPV6_AF_DELEGATEDPFX) {
 		r->flags |= RTF_REJECT;
 		r->gate = in6addr_loopback;
@@ -2226,14 +2226,14 @@ make_router(const struct ra *rap)
 	if (r == NULL)
 		return NULL;
 	r->dest = in6addr_any;
-	r->net = in6addr_any;
+	r->mask = in6addr_any;
 	r->gate = rap->from;
 	return r;
 }
 
 #define RT_IS_DEFAULT(rtp) \
 	(IN6_ARE_ADDR_EQUAL(&((rtp)->dest), &in6addr_any) &&		      \
-	    IN6_ARE_ADDR_EQUAL(&((rtp)->net), &in6addr_any))
+	    IN6_ARE_ADDR_EQUAL(&((rtp)->mask), &in6addr_any))
 
 static void
 ipv6_build_static_routes(struct dhcpcd_ctx *ctx, struct rt6_head *dnr)
