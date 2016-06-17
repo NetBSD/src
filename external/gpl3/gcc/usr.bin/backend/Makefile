@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2016/05/04 00:28:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2016/06/17 03:27:50 skrll Exp $
 
 LIBISPRIVATE=	yes
 
@@ -449,6 +449,7 @@ alpha.d alpha.o: tm-constrs.h tm_p.h insn-opinit.h target-hooks-def.h
 
 .if ${MACHINE_CPU} == "arm"
 arm.d arm.o: insn-constants.h tm_p.h insn-opinit.h target-hooks-def.h
+arm-builtins.d arm-builtins.o: insn-opinit.h
 .endif
 
 .if ${GCC_MACHINE_ARCH} == "i386" || ${GCC_MACHINE_ARCH} == "x86_64"
