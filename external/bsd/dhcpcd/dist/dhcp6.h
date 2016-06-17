@@ -248,6 +248,7 @@ void dhcp6_handleifa(struct dhcpcd_ctx *, int, const char *,
     const struct in6_addr *addr, int);
 int dhcp6_dadcompleted(const struct interface *);
 void dhcp6_drop(struct interface *, const char *);
+void dhcp6_dropnondelegates(struct interface *ifp);
 int dhcp6_dump(struct interface *);
 #else
 #define dhcp6_find_delegates(a) {}

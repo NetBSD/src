@@ -255,15 +255,6 @@ ipv6nd_makersprobe(struct interface *ifp)
 	return 0;
 }
 
-static void ipv6nd_dropdhcp6(struct interface *ifp)
-{
-	const struct dhcp6_state *d6;
-
-	/* Don't drop DHCP6 if the interface is delegated to. */
-	if ((d6 = D6_CSTATE(ifp)) != NULL && d6->state != DH6S_DELEGATED)
-		dhcp6_drop(ifp, "EXPIRE6");
-}
-
 static void
 ipv6nd_sendrsprobe(void *arg)
 {
@@ -327,7 +318,7 @@ ipv6nd_sendrsprobe(void *arg)
 		logger(ifp->ctx, LOG_WARNING,
 		    "%s: no IPv6 Routers available", ifp->name);
 		ipv6nd_drop(ifp);
-		ipv6nd_dropdhcp6(ifp);
+		dhcp6_dropnondelegates(ifp);
 	}
 }
 
@@ -657,9 +648,9 @@ ipv6nd_dadcallback(void *arg)
 			}
 			logger(ifp->ctx, LOG_INFO, "%s: deleting address %s",
 				ifp->name, ap->saddr);
-			if (if_deladdress6(ap) == -1 &&
+			if (if_address6(RTM_DELADDR, ap) == -1 &&
 			    errno != EADDRNOTAVAIL && errno != ENXIO)
-				logger(ifp->ctx, LOG_ERR, "if_deladdress6: %m");
+				logger(ifp->ctx, LOG_ERR, "if_address6: %m");
 			dadcounter = ap->dadcounter;
 			if (ipv6_makestableprivate(&ap->addr,
 			    &ap->prefix, ap->prefix_len,
@@ -1099,7 +1090,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 	/* Find any freshly added routes, such as the subnet route.
 	 * We do this because we cannot rely on recieving the kernel
 	 * notification right now via our link socket. */
-	if_initrt6(ifp);
+	if_initrt6(ifp->ctx);
 
 	ipv6_buildroutes(ifp->ctx);
 	if (ipv6nd_scriptrun(rap))
@@ -1392,7 +1383,7 @@ ipv6nd_expirera(void *arg)
 
 	/* No valid routers? Kill any DHCPv6. */
 	if (!validone)
-		ipv6nd_dropdhcp6(ifp);
+		dhcp6_dropnondelegates(ifp);
 }
 
 void
