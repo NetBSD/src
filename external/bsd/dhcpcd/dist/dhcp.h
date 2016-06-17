@@ -38,27 +38,27 @@
 #include "auth.h"
 #include "dhcp-common.h"
 
-/* UDP port numbers for DHCP */
-#define DHCP_SERVER_PORT    67
-#define DHCP_CLIENT_PORT    68
+/* UDP port numbers for BOOTP */
+#define BOOTPS			67
+#define BOOTPC			68
 
-#define MAGIC_COOKIE        0x63825363
-#define BROADCAST_FLAG      0x8000
+#define MAGIC_COOKIE		0x63825363
+#define BROADCAST_FLAG		0x8000
 
-/* DHCP message OP code */
-#define DHCP_BOOTREQUEST    1
-#define DHCP_BOOTREPLY      2
+/* BOOTP message OP code */
+#define BOOTREQUEST		1
+#define BOOTREPLY		2
 
 /* DHCP message type */
-#define DHCP_DISCOVER       1
-#define DHCP_OFFER          2
-#define DHCP_REQUEST        3
-#define DHCP_DECLINE        4
-#define DHCP_ACK            5
-#define DHCP_NAK            6
-#define DHCP_RELEASE        7
-#define DHCP_INFORM         8
-#define DHCP_FORCERENEW     9
+#define DHCP_DISCOVER		1
+#define DHCP_OFFER		2
+#define DHCP_REQUEST		3
+#define DHCP_DECLINE		4
+#define DHCP_ACK		5
+#define DHCP_NAK		6
+#define DHCP_RELEASE		7
+#define DHCP_INFORM		8
+#define DHCP_FORCERENEW		9
 
 /* Constants taken from RFC 2131. */
 #define T1			0.5
@@ -131,9 +131,6 @@ enum FQDN {
 	FQDN_BOTH       = 0x31
 };
 
-/* Some crappy DHCP servers require the BOOTP minimum length */
-#define BOOTP_MESSAGE_LENTH_MIN 300
-
 /* Don't import common.h as that defines __unused which causes problems
  * on some Linux systems which define it as part of a structure */
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
@@ -174,7 +171,7 @@ struct bootp {
 
 struct dhcp_lease {
 	struct in_addr addr;
-	struct in_addr net;
+	struct in_addr mask;
 	struct in_addr brd;
 	uint32_t leasetime;
 	uint32_t renewaltime;
@@ -216,9 +213,7 @@ struct dhcp_state {
 	int socket;
 
 	int raw_fd;
-	struct in_addr addr;
-	struct in_addr net;
-	struct in_addr brd;
+	struct ipv4_addr *addr;
 	uint8_t added;
 
 	char leasefile[sizeof(LEASEFILE) + IF_NAMESIZE + (IF_SSIDLEN * 4)];
@@ -254,10 +249,7 @@ struct rt_head *dhcp_get_routes(struct interface *);
 ssize_t dhcp_env(char **, const char *, const struct bootp *, size_t,
     const struct interface *);
 
-void dhcp_handleifa(int, struct interface *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *,
-    int);
-
+void dhcp_handleifa(int, struct ipv4_addr *);
 void dhcp_drop(struct interface *, const char *);
 void dhcp_start(struct interface *);
 void dhcp_abort(struct interface *);
