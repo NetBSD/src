@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.197 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.198 2016/06/17 14:28:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.197 2015/07/15 03:28:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.198 2016/06/17 14:28:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -349,7 +349,7 @@ nfs_reconnect(struct nfsreq *rep)
 {
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
-	int error;
+	int error, s;
 	time_t before_ts;
 
 	nfs_disconnect(nmp);
@@ -384,6 +384,7 @@ nfs_reconnect(struct nfsreq *rep)
 	 * Loop through outstanding request list and fix up all requests
 	 * on old socket.
 	 */
+	s = splsoftnet();
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
 		if (rp->r_nmp == nmp) {
 			if ((rp->r_flags & R_MUSTRESEND) == 0)
@@ -391,6 +392,7 @@ nfs_reconnect(struct nfsreq *rep)
 			rp->r_rexmit = 0;
 		}
 	}
+	splx(s);
 	return (0);
 }
 
