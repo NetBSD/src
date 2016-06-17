@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.34 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.35 2016/06/17 19:42:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -423,14 +423,17 @@ configure_interface1(struct interface *ifp)
 	if (ifo->options & DHCPCD_RELEASE)
 		ifo->options &= ~DHCPCD_PERSISTENT;
 
-	if (ifp->flags & IFF_POINTOPOINT && !(ifo->options & DHCPCD_INFORM))
-		ifo->options |= DHCPCD_STATIC;
+	if (ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) {
+		ifo->options &= ~DHCPCD_ARP;
+		if (!(ifp->flags & IFF_MULTICAST))
+			ifo->options &= ~DHCPCD_IPV6RS;
+		if (!(ifo->options & DHCPCD_INFORM))
+			ifo->options |= DHCPCD_STATIC;
+	}
 	if (ifp->flags & IFF_NOARP ||
+	    !(ifo->options & DHCPCD_ARP) ||
 	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
 		ifo->options &= ~DHCPCD_IPV4LL;
-	if (ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK) ||
-	    !(ifp->flags & IFF_MULTICAST))
-		ifo->options &= ~DHCPCD_IPV6RS;
 
 	if (ifo->metric != -1)
 		ifp->metric = (unsigned int)ifo->metric;
@@ -989,13 +992,13 @@ dhcpcd_activateinterface(struct interface *ifp, unsigned long long options)
 }
 
 static void
-handle_link(void *arg)
+dhcpcd_handlelink(void *arg)
 {
 	struct dhcpcd_ctx *ctx;
 
 	ctx = arg;
-	if (if_managelink(ctx) == -1) {
-		logger(ctx, LOG_ERR, "if_managelink: %m");
+	if (if_handlelink(ctx) == -1) {
+		logger(ctx, LOG_ERR, "if_handlelink: %m");
 		eloop_event_delete(ctx->eloop, ctx->link_fd);
 		close(ctx->link_fd);
 		ctx->link_fd = -1;
@@ -1089,7 +1092,7 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 
 void
 dhcpcd_handlehwaddr(struct dhcpcd_ctx *ctx, const char *ifname,
-    const uint8_t *hwaddr, uint8_t hwlen)
+    const void *hwaddr, uint8_t hwlen)
 {
 	struct interface *ifp;
 	char buf[sizeof(ifp->hwaddr) * 3];
@@ -1831,7 +1834,7 @@ printpidfile:
 
 	/* Start handling kernel messages for interfaces, addreses and
 	 * routes. */
-	eloop_event_add(ctx.eloop, ctx.link_fd, handle_link, &ctx);
+	eloop_event_add(ctx.eloop, ctx.link_fd, dhcpcd_handlelink, &ctx);
 
 	/* Start any dev listening plugin which may want to
 	 * change the interface name provided by the kernel */

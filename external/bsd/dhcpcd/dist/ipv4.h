@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.17 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.18 2016/06/17 19:42:32 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -57,7 +57,7 @@
 struct rt {
 	TAILQ_ENTRY(rt) next;
 	struct in_addr dest;
-	struct in_addr net;
+	struct in_addr mask;
 	struct in_addr gate;
 	const struct interface *iface;
 #ifdef HAVE_ROUTE_METRIC
@@ -73,12 +73,19 @@ TAILQ_HEAD(rt_head, rt);
 struct ipv4_addr {
 	TAILQ_ENTRY(ipv4_addr) next;
 	struct in_addr addr;
-	struct in_addr net;
+	struct in_addr mask;
 	struct in_addr brd;
 	struct interface *iface;
 	int addr_flags;
+	char saddr[INET_ADDRSTRLEN + 3];
 };
 TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
+
+#define	IPV4_ADDR_EQ(a1, a2)	((a1) && (a1)->addr.s_addr == (a2)->addr.s_addr)
+#define	IPV4_MASK1_EQ(a1, a2)	((a1) && (a1)->mask.s_addr == (a2)->mask.s_addr)
+#define	IPV4_MASK_EQ(a1, a2)	(IPV4_ADDR_EQ(a1, a2) && IPV4_MASK1_EQ(a1, a2))
+#define	IPV4_BRD1_EQ(a1, a2)	((a1) && (a1)->brd.s_addr == (a2)->brd.s_addr)
+#define	IPV4_BRD_EQ(a1, a2)	(IPV4_MASK_EQ(a1, a2) && IPV4_BRD1_EQ(a1, a2))
 
 struct ipv4_state {
 	struct ipv4_addrhead addrs;
@@ -87,7 +94,7 @@ struct ipv4_state {
 #ifdef BSD
 	/* Buffer for BPF */
 	size_t buffer_size, buffer_len, buffer_pos;
-	uint8_t *buffer;
+	char *buffer;
 #endif
 };
 
@@ -99,7 +106,6 @@ struct ipv4_state {
 #ifdef INET
 struct ipv4_state *ipv4_getstate(struct interface *);
 int ipv4_init(struct dhcpcd_ctx *);
-int ipv4_protocol_fd(const struct interface *, uint16_t);
 int ipv4_ifcmp(const struct interface *, const struct interface *);
 uint8_t inet_ntocidr(struct in_addr);
 int inet_cidrtoaddr(int, struct in_addr *);
@@ -110,8 +116,7 @@ int ipv4_hasaddr(const struct interface *);
 #define STATE_FAKE		0x02
 
 void ipv4_buildroutes(struct dhcpcd_ctx *);
-int ipv4_deladdr(struct interface *, const struct in_addr *,
-    const struct in_addr *, int);
+int ipv4_deladdr(struct ipv4_addr *, int);
 int ipv4_preferanother(struct interface *);
 struct ipv4_addr *ipv4_addaddr(struct interface *,
     const struct in_addr *, const struct in_addr *, const struct in_addr *);
