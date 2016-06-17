@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.17 2016/06/08 01:33:08 christos Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.18 2016/06/17 19:42:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -833,7 +833,7 @@ int
 dhcp_set_leasefile(char *leasefile, size_t len, int family,
     const struct interface *ifp)
 {
-	char ssid[1 + (IF_SSIDLEN * 4) + 1];
+	char ssid[1 + (IF_SSIDLEN * 4) + 1]; /* - prefix and NUL terminated. */
 
 	if (ifp->name[0] == '\0') {
 		strlcpy(leasefile, ifp->ctx->pidfile, len);

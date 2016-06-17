@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.27 2016/05/09 10:15:59 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.28 2016/06/17 19:42:31 roy Exp $
 .\" Copyright (c) 2006-2016 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 21, 2016
+.Dd June 14, 2016
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ should use with
 .Ic env
 .Va wpa_supplicant_driver=nl80211
 .Pp
-If the hostname is set, will be will set to the FQDN if possible as per
+If the hostname is set, it will be will set to the FQDN if possible as per
 RFC 4702 section 3.1.
 If the FQDN option is missing,
 .Nm dhcpcd
@@ -262,14 +262,14 @@ You can use this option to stop this from happening.
 Fallback to using this profile if DHCP fails.
 This allows you to configure a static profile instead of using ZeroConf.
 .It Ic hostname Ar name
-Sends
-.Ar hostname
+Sends the hostname
+.Ar name
 to the DHCP server so it can be registered in DNS.
 If
-.Ar hostname
+.Ar name
 is an empty string then the current system hostname is sent.
 If
-.Ar hostname
+.Ar name
 is a FQDN (ie, contains a .) then it will be encoded as such.
 .It Ic hostname_short
 Sends the short hostname to the DHCP server instead of the FQDN.
@@ -523,6 +523,12 @@ to handle ND options, but this only works for the
 and
 .Ic require
 options.
+.Pp
+To see a list of options you can use, call
+.Nm dhcpcd
+with the
+.Fl V , Fl Fl variables
+argument.
 .It Ic nooption Ar option
 Remove the option from the message before it's processed.
 .It Ic require Ar option
