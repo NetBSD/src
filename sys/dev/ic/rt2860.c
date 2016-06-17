@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.14 2016/06/16 15:51:13 riastradh Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.15 2016/06/17 15:38:54 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.14 2016/06/16 15:51:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.15 2016/06/17 15:38:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -137,10 +137,12 @@ static void	rt2860_set_macaddr(struct rt2860_softc *, const uint8_t *);
 static void	rt2860_updateslot(struct ifnet *);
 static void	rt2860_updateprot(struct ieee80211com *);
 static int	rt2860_updateedca(struct ieee80211com *);
+#ifdef HW_CRYPTO
 static int	rt2860_set_key(struct ieee80211com *, 
 		    const struct ieee80211_key *, const uint8_t *);
 static int	rt2860_delete_key(struct ieee80211com *,
 		    const struct ieee80211_key *);
+#endif
 static int8_t	rt2860_rssi2dbm(struct rt2860_softc *, uint8_t, uint8_t);
 static const char *	rt2860_get_rf(uint8_t);
 static int	rt2860_read_eeprom(struct rt2860_softc *);
@@ -378,8 +380,10 @@ rt2860_attachhook(device_t self)
 #endif
 	ic->ic_updateslot = rt2860_updateslot;
 	ic->ic_wme.wme_update = rt2860_updateedca;
+#ifdef HW_CRYPTO
 	ic->ic_crypto.cs_key_set = rt2860_set_key;
 	ic->ic_crypto.cs_key_delete = rt2860_delete_key;
+#endif
 	/* override state transition machine */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = rt2860_newstate;
@@ -1289,6 +1293,15 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			goto skip;
 		}
 
+#ifdef HW_CRYPTO
+		if (__predict_false(rxd->flags & htole32(RT2860_RX_MICERR))) {
+			/* report MIC failures to net80211 for TKIP */
+			ieee80211_notify_michael_failure(ic, wh, 0/* XXX */);
+			ifp->if_ierrors++;
+			goto skip;
+		}
+#endif
+
 		MGETHDR(m1, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m1 == NULL)) {
 			ifp->if_ierrors++;
@@ -1341,10 +1354,12 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		m->m_pkthdr.len = m->m_len = le16toh(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
+#ifdef HW_CRYPTO
 		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 			/* frame is decrypted by hardware */
 			wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 		}
+#endif
 
 		/* HW may insert 2 padding bytes after 802.11 header */
 		if (rxd->flags & htole32(RT2860_RX_L2PAD)) {
@@ -1352,13 +1367,6 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			memmove((char *)wh + 2, wh, hdrlen);
 			m->m_data += 2;
 			wh = mtod(m, struct ieee80211_frame *);
-		}
-
-		if (__predict_false(rxd->flags & htole32(RT2860_RX_MICERR))) {
-			/* report MIC failures to net80211 for TKIP */
-			ieee80211_notify_michael_failure(ic, wh, 0/* XXX */);
-			ifp->if_ierrors++;
-			goto skip;
 		}
 
 		ant = rt2860_maxrssi_chain(sc, rxwi);
@@ -1402,6 +1410,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		}
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_rxtap_len, m);
 skipbpf:
+		wh = mtod(m, struct ieee80211_frame *);
 		/* grab a reference to the source node */
 		ni = ieee80211_find_rxnode(ic,
 		    (struct ieee80211_frame_min *)wh);
