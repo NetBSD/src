@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsocket.c,v 1.4 2016/06/13 14:23:26 christos Exp $	*/
+/*	$NetBSD: nfs_clntsocket.c,v 1.5 2016/06/17 14:28:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.4 2016/06/13 14:23:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsocket.c,v 1.5 2016/06/17 14:28:29 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -324,7 +324,7 @@ nfs_reply(struct nfsreq *myrep, struct lwp *lwp)
 	struct mbuf *mrep, *nam, *md;
 	u_int32_t rxid, *tl;
 	char *dpos, *cp2;
-	int error;
+	int error, s;
 
 	/*
 	 * Loop around until we get our own reply
@@ -402,6 +402,7 @@ nfsmout:
 		 * Loop through the request list to match up the reply
 		 * Iff no match, just drop the datagram
 		 */
+		s = splsoftnet();
 		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep != NULL || rxid != rep->r_xid)
 				continue;
@@ -467,6 +468,7 @@ nfsmout:
 			nmp->nm_timeouts = 0;
 			break;
 		}
+		splx(s);
 		nfs_rcvunlock(nmp);
 		/*
 		 * If not matched to a request, drop it.
