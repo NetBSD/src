@@ -1,4 +1,4 @@
-.\" $NetBSD: apropos.1,v 1.17 2016/06/16 14:07:16 abhinav Exp $
+.\" $NetBSD: apropos.1,v 1.18 2016/06/17 18:48:07 abhinav Exp $
 .\"
 .\" Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
 .\" All rights reserved.
@@ -64,7 +64,7 @@ Quotes are optional for specifying multiword queries.
 It supports the following options:
 .Bl -tag -width indent
 .It Fl [1-9]
-Search only within the specified section manual pages.
+Search only within the specified section of manual pages.
 .It Fl C Ar path
 Use different
 .Xr man 1
@@ -96,7 +96,7 @@ Limit the search to the pages for the specified machine architecture.
 By default pages for all architectures are shown in the search results.
 .It Fl s Ar section
 Restrict the search to the specified section of the manual.
-By default, pages from all section are shown.
+By default, pages from all sections are shown.
 This option is for backwards compatibility with the classic version of apropos,
 using it is equivalent to using the
 .Op 123456789
@@ -112,7 +112,7 @@ tag.
 .Sh ENVIRONMENT VARIABLES
 The
 .Ev APROPOS
-environment variables is white-space tokenized as an argument vector
+environment variable is white-space tokenized as an argument vector
 and the options in it are parsed and set.
 Command line options override the environment options.
 .Sh SEE ALSO
