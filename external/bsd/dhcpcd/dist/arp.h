@@ -1,4 +1,4 @@
-/* $NetBSD: arp.h,v 1.13 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: arp.h,v 1.14 2016/06/17 19:42:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,6 +43,7 @@
 #define DEFEND_INTERVAL		10
 
 #include "dhcpcd.h"
+#include "if.h"
 
 struct arp_msg {
 	uint16_t op;
@@ -91,7 +92,7 @@ void arp_free_but(struct arp_state *);
 struct arp_state *arp_find(struct interface *, const struct in_addr *);
 void arp_close(struct interface *);
 
-void arp_handleifa(int, struct interface *, const struct in_addr *, int);
+void arp_handleifa(int, struct ipv4_addr *);
 #else
 #define arp_close(a) {}
 #endif

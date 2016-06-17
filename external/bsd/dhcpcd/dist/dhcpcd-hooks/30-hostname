@@ -1,4 +1,4 @@
-# $NetBSD: 30-hostname,v 1.7 2015/08/21 10:39:00 roy Exp $
+# $NetBSD: 30-hostname,v 1.8 2016/06/17 19:42:32 roy Exp $
 
 # Set the hostname from DHCP data if required
 
@@ -68,7 +68,7 @@ need_hostname()
 	
 	case "$hostname_fqdn" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1)	hfqdn=true;;
-	[Ss][Ee][Rr][Vv][Ee][Rr])		;;
+	""|[Ss][Ee][Rr][Vv][Ee][Rr])		;;
 	*)					hshort=true;;
 	esac
 
@@ -117,7 +117,7 @@ set_hostname()
 
 	case "$hostname_fqdn" in
 	[Yy][Ee][Ss]|[Tt][Rr][Uu][Ee]|1)	hfqdn=true;;
-	"")					;;
+	""|[Ss][Ee][Rr][Vv][Ee][Rr])		;;
 	*)					hshort=true;;
 	esac
 

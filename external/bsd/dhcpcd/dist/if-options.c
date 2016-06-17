@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.33 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.34 2016/06/17 19:42:31 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1093,7 +1093,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				*fp = ' ';
 				return -1;
 			}
-			if (parse_addr(ctx, &rt->dest, &rt->net, p) == -1 ||
+			if (parse_addr(ctx, &rt->dest, &rt->mask, p) == -1 ||
 			    parse_addr(ctx, &rt->gate, NULL, np) == -1)
 			{
 				free(rt);
@@ -1118,7 +1118,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				return -1;
 			}
 			rt->dest.s_addr = INADDR_ANY;
-			rt->net.s_addr = INADDR_ANY;
+			rt->mask.s_addr = INADDR_ANY;
 			if (parse_addr(ctx, &rt->gate, NULL, p) == -1) {
 				free(rt);
 				return -1;

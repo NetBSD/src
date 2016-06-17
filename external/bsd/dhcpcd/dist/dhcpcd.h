@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.17 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.18 2016/06/17 19:42:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -200,7 +200,7 @@ int dhcpcd_handleargs(struct dhcpcd_ctx *, struct fd_list *, int, char **);
 void dhcpcd_handlecarrier(struct dhcpcd_ctx *, int, unsigned int, const char *);
 int dhcpcd_handleinterface(void *, int, const char *);
 void dhcpcd_handlehwaddr(struct dhcpcd_ctx *, const char *,
-    const unsigned char *, uint8_t);
+    const void *, uint8_t);
 void dhcpcd_dropinterface(struct interface *, const char *);
 int dhcpcd_selectprofile(struct interface *, const char *);
 

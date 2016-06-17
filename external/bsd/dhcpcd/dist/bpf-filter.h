@@ -1,4 +1,4 @@
-/* $NetBSD: bpf-filter.h,v 1.10 2016/01/07 20:09:43 roy Exp $ */
+/* $NetBSD: bpf-filter.h,v 1.11 2016/06/17 19:42:31 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -51,7 +51,7 @@ static const struct bpf_insn arp_bpf_filter [] = {
 	/* Otherwise, drop it. */
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
-#define arp_bpf_filter_len sizeof(arp_bpf_filter) / sizeof(arp_bpf_filter[0])
+#define arp_bpf_filter_len __arraycount(arp_bpf_filter)
 
 
 /* dhcp_bpf_filter taken from bpf.c in dhcp-3.1.0
@@ -78,7 +78,7 @@ static const struct bpf_insn arp_bpf_filter [] = {
  *   http://www.isc.org/
  */
 
-static const struct bpf_insn dhcp_bpf_filter [] = {
+static const struct bpf_insn bootp_bpf_filter [] = {
 #ifndef BPF_SKIPTYPE
 	/* Make sure this is an IP packet... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
@@ -94,10 +94,10 @@ static const struct bpf_insn dhcp_bpf_filter [] = {
 	BPF_STMT(BPF_LDX + BPF_B + BPF_MSH, 14 + BPF_ETHCOOK),
 	/* Make sure it's to the right port... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16 + BPF_ETHCOOK),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, DHCP_CLIENT_PORT, 0, 1),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, BOOTPC, 0, 1),
 	/* If we passed all the tests, ask for the whole packet. */
 	BPF_STMT(BPF_RET + BPF_K, BPF_WHOLEPACKET),
 	/* Otherwise, drop it. */
 	BPF_STMT(BPF_RET + BPF_K, 0),
 };
-#define dhcp_bpf_filter_len sizeof(dhcp_bpf_filter) / sizeof(dhcp_bpf_filter[0])
+#define bootp_bpf_filter_len __arraycount(bootp_bpf_filter)
