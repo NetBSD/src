@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2011/11/18 01:32:33 joerg Exp $
+# $NetBSD: Makefile,v 1.5 2016/06/18 12:12:09 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,8 @@ DSODIR!=	cd ${.CURDIR}/../tls_dso && ${PRINTOBJDIR}
 
 SRCS.t_tls_static=	t_tls_static.c t_tls_static_helper.c
 DPADD.t_tls_static+=	${LIBPTHREAD}
-LDADD.t_tls_static+=	-lpthread -static
+LDADD.t_tls_static+=	-lpthread
+LDSTATIC.t_tls_static+=	-static
 DPADD.t_tls_dynamic+=	${LIBPTHREAD} ${DSODIR}/libh_tls_dynamic.so
 LDADD.t_tls_dynamic+=	-lpthread \
 			-Wl,-rpath,${TESTSDIR} -L${DSODIR} -lh_tls_dynamic
