@@ -1,4 +1,4 @@
-# $NetBSD: README.models,v 1.2 2016/06/16 06:20:08 macallan Exp $
+# $NetBSD: README.models,v 1.3 2016/06/18 12:53:21 maya Exp $
 
 MIPS models and architecture levels
 -----------------------------------
@@ -119,7 +119,8 @@ bi-endian but are wired up one way or the other on motherboards.
 	NWS-4000 series				R4600 (MIPS-III) [portpage]
 	NWS-5000				R4[04]00 (MIPS-III) [portpage]
    playstation2 (little-endian [buildsh])
-	playstation2				??
+	playstation2				R5900
+	(almost all of MIPS-III + movn/movz) [linux-mips wiki R5900]
    pmax (little-endian [buildsh])
 	DECstation/system 2100 and 3100		R2000 (MIPS-I) [portpage]
 	DECsystem 5100				R3000 (MIPS-I) [portpage]
@@ -234,7 +235,13 @@ had never been used for anything) was removed in MIPS-III [idt96 A-197].
 
 The branch likely instructions (e.g. BEQL) were added in MIPS-II
 [mips32insn 56] and deprecated not long after, at least by MIPS32
-[mips32insn 57] and may by now have finally been removed.
+[mips32insn 57] and were removed in release MIPS32 Release 6
+[mips32newinsn2a 71].
+
+SSNOP as a special NOP was deprecated in MIPS32/64 Release 6
+[mips32newinsn2a 375] and sequences using ssnop should include the
+new EHB [mips32newinsn2a 174] ... and possibly SYNC/SYNCI ???
+[mips32newinsn2a 394-401]
 
 ... ??
 
@@ -253,6 +260,8 @@ References:
 [idt96] "IDT MIPS Microprocessor Family Software Reference Manual",
 	Integrated Device Technology, Version 2.0, dated October 1996.
 
+[linux-mips wiki] https://www.linux-mips.org/wiki/
+
 [mips32intro] "MIPS32(TM) Architecture For Programmers Volume I:
 	Introduction to the MIPS32(TM) Architecture", MIPS
 	Technologies, Document Number MD00082, Revision 0.95, dated
@@ -264,10 +273,13 @@ References:
 	MIPS32(TM) Instruction Set", MIPS Technologies, Document Number
 	MD00086, Revision 0.95, March 12, 2001. Ditto.
 
+[mips32newinsn2a] "MIPS32(R) Architecture For Programmers Volume II-A:
+	The MIPS32(R) Instruction Set Manual", Imagination, Document
+	Number MD00086, Revision 6.02, dated December 10, 2014.
+
 [mips32priv] "MIPS32(TM) Architecture For Programmers Volume III: The
 	MIPS32(TM) Privileged Resource Architecture", Document Number
 	MD00090, Revision 0.95, dated March 2001. Ditto.
 
 [portpage] The port page for this NetBSD port on wiki.netbsd.org, or a
-	subpage. Ideally these references should be replaced with
-	something less self-referential.
+	subpage. Ideally these references should be replaced something less self-referential.
