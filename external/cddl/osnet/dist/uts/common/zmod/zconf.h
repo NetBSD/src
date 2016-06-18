@@ -94,6 +94,13 @@ extern "C" {
 #define	crc32			z_crc32
 #define	get_crc_table		z_get_crc_table
 #define	zError			z_zError
+#define _tr_flush_block 	z__tr_flush_block
+#define _length_code		z__length_code
+#define inflate_fast 		z_inflate_fast
+#define _tr_stored_block 	z__tr_stored_block
+#define _dist_code 		z__dist_code
+#define _tr_init 		z__tr_init
+#define _tr_align		z__tr_align
 
 #define	MAX_MEM_LEVEL	9
 #define	MAX_WBITS	15
