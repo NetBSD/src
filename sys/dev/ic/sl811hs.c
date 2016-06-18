@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.79 2016/06/18 19:30:24 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.80 2016/06/18 20:27:55 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.79 2016/06/18 19:30:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.80 2016/06/18 20:27:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -160,59 +160,6 @@ static const uint8_t slhci_tregs[2][4] =
 
 #ifdef SLHCI_DEBUG
 #define SLHCI_MEM_ACCOUNTING
-
-#define DDOLOGCTRL(x)	do {						\
-    DDOLOG("CTRL suspend=%d", !!((x) & SL11_CTRL_SUSPEND), 0, 0, 0);	\
-    DDOLOG("CTRL ls     =%d  jk     =%d  reset  =%d  sof    =%d",	\
-	!!((x) & SL11_CTRL_LOWSPEED), !!((x) & SL11_CTRL_JKSTATE),	\
-	!!((x) & SL11_CTRL_RESETENGINE), !!((x) & SL11_CTRL_ENABLESOF));\
-} while (0)
-
-#define DDOLOGISR(r)	do {						\
-    DDOLOG("ISR  data   =%d  det/res=%d  insert =%d  sof    =%d",	\
-	!!((r) & SL11_ISR_DATA), !!((r) & SL11_ISR_RESUME),		\
-	!!((r) & SL11_ISR_INSERT), !!!!((r) & SL11_ISR_SOF));		\
-    DDOLOG("ISR             babble =%d  usbb   =%d  usba   =%d",	\
-	!!((r) & SL11_ISR_BABBLE), !!((r) & SL11_ISR_USBB),		\
-	!!((r) & SL11_ISR_USBA), 0);					\
-} while (0)
-
-#define DDOLOGIER(r)	do {						\
-    DDOLOG("IER              det/res=%d  insert =%d  sof    =%d",	\
-	!!((r) & SL11_IER_RESUME),					\
-	!!((r) & SL11_IER_INSERT), !!!!((r) & SL11_IER_SOF), 0);		\
-    DDOLOG("IER              babble =%d  usbb   =%d  usba   =%d",	\
-	!!((r) & SL11_IER_BABBLE), !!((r) & SL11_IER_USBB),		\
-	!!((r) & SL11_IER_USBA), 0);					\
-} while (0)
-
-#define DDLOGSTATUS(s)	do {						\
-    DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
-	!!((s) & SL11_EPSTAT_STALL), !!((s) & SL11_EPSTAT_NAK),		\
-	!!((s) & SL11_EPSTAT_OVERFLOW), !!((s) & SL11_EPSTAT_SETUP));	\
-    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack   =%d",	\
-	!!((s) & SL11_EPSTAT_SEQUENCE),	!!((s) & SL11_EPSTAT_TIMEOUT),	\
-	!!((s) & SL11_EPSTAT_ERROR), !!((s) & SL11_EPSTAT_ACK));	\
-} while (0)
-
-#define DDLOGEPCTRL(r)	do {						\
-    DDOLOG("CTRL preamble=%d  toggle  =%d  sof     =%d  iso     =%d",	\
-	!!((r) & SL11_EPCTRL_PREAMBLE), !!((r) & SL11_EPCTRL_DATATOGGLE),\
-	!!((r) & SL11_EPCTRL_SOF), !!((r) & SL11_EPCTRL_ISO));		\
-    DDOLOG("CTRL              out     =%d  enable  =%d  arm     =%d",	\
-	!!((r) & SL11_EPCTRL_DIRECTION),				\
-	!!((r) & SL11_EPCTRL_ENABLE), !!((r) & SL11_EPCTRL_ARM), 0);	\
-} while (0)
-
-#define DDLOGEPSTAT(r)	do {						\
-    DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
-	!!((r) & SL11_EPSTAT_STALL), !!((r) & SL11_EPSTAT_NAK),		\
-	!!((r) & SL11_EPSTAT_OVERFLOW), !!((r) & SL11_EPSTAT_SETUP));	\
-    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack   =%d",	\
-	!!((r) & SL11_EPSTAT_SEQUENCE), !!((r) & SL11_EPSTAT_TIMEOUT),	\
-	!!((r) & SL11_EPSTAT_ERROR), !!((r) & SL11_EPSTAT_ACK));	\
-} while (0)
-
 #endif
 
 /*
@@ -666,6 +613,58 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 		DDOLOG("%.2x", buf[i], 0,0,0);
 }
 #define DLOGBUF(x, b, l) SLHCI_DEXEC(x, DDOLOGBUF(b, l))
+
+#define DDOLOGCTRL(x)	do {						\
+    DDOLOG("CTRL suspend=%d", !!((x) & SL11_CTRL_SUSPEND), 0, 0, 0);	\
+    DDOLOG("CTRL ls     =%d  jk     =%d  reset  =%d  sof    =%d",	\
+	!!((x) & SL11_CTRL_LOWSPEED), !!((x) & SL11_CTRL_JKSTATE),	\
+	!!((x) & SL11_CTRL_RESETENGINE), !!((x) & SL11_CTRL_ENABLESOF));\
+} while (0)
+
+#define DDOLOGISR(r)	do {						\
+    DDOLOG("ISR  data   =%d  det/res=%d  insert =%d  sof    =%d",	\
+	!!((r) & SL11_ISR_DATA), !!((r) & SL11_ISR_RESUME),		\
+	!!((r) & SL11_ISR_INSERT), !!!!((r) & SL11_ISR_SOF));		\
+    DDOLOG("ISR             babble =%d  usbb   =%d  usba   =%d",	\
+	!!((r) & SL11_ISR_BABBLE), !!((r) & SL11_ISR_USBB),		\
+	!!((r) & SL11_ISR_USBA), 0);					\
+} while (0)
+
+#define DDOLOGIER(r)	do {						\
+    DDOLOG("IER              det/res=%d  insert =%d  sof    =%d",	\
+	!!((r) & SL11_IER_RESUME),					\
+	!!((r) & SL11_IER_INSERT), !!!!((r) & SL11_IER_SOF), 0);		\
+    DDOLOG("IER              babble =%d  usbb   =%d  usba   =%d",	\
+	!!((r) & SL11_IER_BABBLE), !!((r) & SL11_IER_USBB),		\
+	!!((r) & SL11_IER_USBA), 0);					\
+} while (0)
+
+#define DDLOGSTATUS(s)	do {						\
+    DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
+	!!((s) & SL11_EPSTAT_STALL), !!((s) & SL11_EPSTAT_NAK),		\
+	!!((s) & SL11_EPSTAT_OVERFLOW), !!((s) & SL11_EPSTAT_SETUP));	\
+    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack   =%d",	\
+	!!((s) & SL11_EPSTAT_SEQUENCE),	!!((s) & SL11_EPSTAT_TIMEOUT),	\
+	!!((s) & SL11_EPSTAT_ERROR), !!((s) & SL11_EPSTAT_ACK));	\
+} while (0)
+
+#define DDLOGEPCTRL(r)	do {						\
+    DDOLOG("CTRL preamble=%d  toggle  =%d  sof     =%d  iso     =%d",	\
+	!!((r) & SL11_EPCTRL_PREAMBLE), !!((r) & SL11_EPCTRL_DATATOGGLE),\
+	!!((r) & SL11_EPCTRL_SOF), !!((r) & SL11_EPCTRL_ISO));		\
+    DDOLOG("CTRL              out     =%d  enable  =%d  arm     =%d",	\
+	!!((r) & SL11_EPCTRL_DIRECTION),				\
+	!!((r) & SL11_EPCTRL_ENABLE), !!((r) & SL11_EPCTRL_ARM), 0);	\
+} while (0)
+
+#define DDLOGEPSTAT(r)	do {						\
+    DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
+	!!((r) & SL11_EPSTAT_STALL), !!((r) & SL11_EPSTAT_NAK),		\
+	!!((r) & SL11_EPSTAT_OVERFLOW), !!((r) & SL11_EPSTAT_SETUP));	\
+    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack   =%d",	\
+	!!((r) & SL11_EPSTAT_SEQUENCE), !!((r) & SL11_EPSTAT_TIMEOUT),	\
+	!!((r) & SL11_EPSTAT_ERROR), !!((r) & SL11_EPSTAT_ACK));	\
+} while (0)
 #else /* now !SLHCI_DEBUG */
 #define slhcidebug 0
 #define slhci_log_spipe(spipe) ((void)0)
@@ -675,6 +674,12 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #define DLOG(x, f, a, b, c, d) ((void)0)
 #define DDOLOGBUF(b, l) ((void)0)
 #define DLOGBUF(x, b, l) ((void)0)
+#define DDOLOGCTRL(x) ((void)0)
+#define DDOLOGISR(r) ((void)0)
+#define DDOLOGIER(r) ((void)0)
+#define DDLOGSTATUS(s) ((void)0)
+#define DDLOGEPCTRL(r) ((void)0)
+#define DDLOGEPSTAT(r) ((void)0)
 #endif /* SLHCI_DEBUG */
 
 #ifdef DIAGNOSTIC
