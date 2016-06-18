@@ -1,4 +1,4 @@
-# $NetBSD: README.models,v 1.3 2016/06/18 12:53:21 maya Exp $
+# $NetBSD: README.models,v 1.4 2016/06/18 13:09:20 maya Exp $
 
 MIPS models and architecture levels
 -----------------------------------
@@ -239,8 +239,9 @@ The branch likely instructions (e.g. BEQL) were added in MIPS-II
 [mips32newinsn2a 71].
 
 SSNOP as a special NOP was deprecated in MIPS32/64 Release 6
-[mips32newinsn2a 375] and sequences using ssnop should include the
-new EHB [mips32newinsn2a 174] ... and possibly SYNC/SYNCI ???
+[mips32newinsn2a 375] and sequences using SSNOP should include the
+new EHB which counts as an SSNOP on older implementations
+[mips32newinsn2a 174] ... and possibly SYNC/SYNCI ???
 [mips32newinsn2a 394-401]
 
 ... ??
@@ -282,4 +283,5 @@ References:
 	MD00090, Revision 0.95, dated March 2001. Ditto.
 
 [portpage] The port page for this NetBSD port on wiki.netbsd.org, or a
-	subpage. Ideally these references should be replaced something less self-referential.
+	subpage. Ideally these references should be replaced with
+	something less self-referential.
