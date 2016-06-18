@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.145 2015/03/24 07:44:52 wiz Exp $	*/
+/*	$NetBSD: unistd.h,v 1.146 2016/06/18 14:39:15 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -361,7 +361,7 @@ int      issetugid(void);
 int	 mkstemps(char *, int);
 int	 nfssvc(int, void *);
 int	 pipe2(int *, int);
-int	 profil(char *, size_t, u_long, u_int);
+int	 profil(char *, size_t, unsigned long, unsigned int);
 #ifndef __PSIGNAL_DECLARED
 #define __PSIGNAL_DECLARED
 /* also in signal.h */
