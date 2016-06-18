@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.94 2015/10/18 15:34:08 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.94 2015/10/18 15:34:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.95 2016/06/18 16:51:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static struct evcnt bus_dma_bounced_destroys =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "bounced destroys");
 static struct evcnt bus_dma_destroys =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "destroys");
-static struct evcnt bus_dma_sync_prereadwrite = 
+static struct evcnt bus_dma_sync_prereadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prereadwrite");
 static struct evcnt bus_dma_sync_preread_begin =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread begin");
@@ -91,13 +91,13 @@ static struct evcnt bus_dma_sync_preread =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread");
 static struct evcnt bus_dma_sync_preread_tail =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync preread tail");
-static struct evcnt bus_dma_sync_prewrite = 
+static struct evcnt bus_dma_sync_prewrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync prewrite");
-static struct evcnt bus_dma_sync_postread = 
+static struct evcnt bus_dma_sync_postread =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postread");
-static struct evcnt bus_dma_sync_postreadwrite = 
+static struct evcnt bus_dma_sync_postreadwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postreadwrite");
-static struct evcnt bus_dma_sync_postwrite = 
+static struct evcnt bus_dma_sync_postwrite =
 	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "busdma", "sync postwrite");
 
 EVCNT_ATTACH_STATIC(bus_dma_creates);
@@ -189,7 +189,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		lastaddr = segs[nseg-1].ds_addr + segs[nseg-1].ds_len;
 	else
 		lastaddr = 0xdead;
-	
+
  again:
 	sgsize = size;
 
@@ -524,8 +524,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
 		error = _bus_dma_load_bouncebuf(t, map, buf, buflen,
 		    _BUS_DMA_BUFTYPE_LINEAR, flags);
-	}        
-#endif           
+	}
+#endif
 	return (error);
 }
 
@@ -603,12 +603,12 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			error = _bus_dmamap_load_paddr(t, map, paddr, size,
 			    false);
 			break;
-		
+
 		case M_EXT|M_EXT_PAGES:
 			KASSERT(m->m_ext.ext_buf <= m->m_data);
 			KASSERT(m->m_data <=
 			    m->m_ext.ext_buf + m->m_ext.ext_size);
-			
+
 			offset = (vaddr_t)m->m_data -
 			    trunc_page((vaddr_t)m->m_ext.ext_buf);
 			remainbytes = m->m_len;
@@ -616,7 +616,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			/* skip uninteresting pages */
 			pgs = (const struct vm_page * const *)
 			    m->m_ext.ext_pgs + (offset >> PAGE_SHIFT);
-			
+
 			offset &= PAGE_MASK;	/* offset in the first page */
 
 			/* load each page */
@@ -668,8 +668,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	if (cookie != NULL && (cookie->id_flags & _BUS_DMA_MIGHT_NEED_BOUNCE)) {
 		error = _bus_dma_load_bouncebuf(t, map, m0, m0->m_pkthdr.len,
 		    _BUS_DMA_BUFTYPE_MBUF, flags);
-	}        
-#endif           
+	}
+#endif
 	return (error);
 }
 
@@ -970,7 +970,7 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0) {
 			/*
 			 * If we are doing preread (DMAing into the mbuf),
-			 * this mbuf better not be readonly, 
+			 * this mbuf better not be readonly,
 			 */
 			KASSERT(!(ops & BUS_DMASYNC_PREREAD) || !M_ROMAP(m));
 			_bus_dmamap_sync_segment(va, pa, seglen, ops,
@@ -1359,7 +1359,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 		/*
 		 * The page can only be direct mapped if was allocated out
-		 * of the arm poolpage vm freelist.  
+		 * of the arm poolpage vm freelist.
 		 */
 		int lcv = vm_physseg_find(atop(pa), NULL);
 		KASSERT(lcv != -1);
@@ -1499,7 +1499,7 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 			map_flags |= ARM32_MMAP_WRITECOMBINE;
 
 		return (arm_btop((u_long)segs[i].ds_addr + off) | map_flags);
-		
+
 	}
 
 	/* Page not found. */
@@ -1829,7 +1829,7 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 	size_t nranges = 0;
 	size_t i;
 	for (i = 0, dr = tag->_ranges; i < tag->_nranges; i++, dr++) {
-		if (dr->dr_sysbase <= min_addr 
+		if (dr->dr_sysbase <= min_addr
 		    && max_addr <= dr->dr_sysbase + dr->dr_len - 1) {
 			subset = true;
 		}
