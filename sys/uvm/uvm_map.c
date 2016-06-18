@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.338 2016/06/01 00:49:44 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.339 2016/06/18 14:56:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.338 2016/06/01 00:49:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.339 2016/06/18 14:56:03 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2110,8 +2110,10 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#lx)", hint, 0,0,0);
-	KASSERT( topdown || hint >= orig_hint);
-	KASSERT(!topdown || hint <= orig_hint);
+	KASSERTMSG( topdown || hint >= orig_hint, "hint: %jx, orig_hint: %jx",
+	    (uintmax_t)hint, (uintmax_t)orig_hint);
+	KASSERTMSG(!topdown || hint <= orig_hint, "hint: %jx, orig_hint: %jx",
+	    (uintmax_t)hint, (uintmax_t)orig_hint);
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
 	return (entry);
