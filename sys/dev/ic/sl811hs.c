@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.80 2016/06/18 20:27:55 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.81 2016/06/19 06:47:04 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.80 2016/06/18 20:27:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.81 2016/06/19 06:47:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1745,6 +1745,7 @@ slhci_waitintr(struct slhci_softc *sc, int wait_time)
 		    return);
 		slhci_dointr(sc);
 	}
+	DLOG(D_WAIT, "... done", 0, 0, 0, 0);
 }
 
 static int
@@ -2403,7 +2404,7 @@ slhci_callback(struct slhci_softc *sc)
 		xfer = spipe->xfer;
 		LK_SLASSERT(xfer != NULL, sc, spipe, NULL, return);
 		spipe->xfer = NULL;
-		DLOG(D_XFER, "xfer callback length %d actlen %d spipe %d "
+		DLOG(D_XFER, "xfer callback length %d actlen %d spipe %p "
 		    "type %d", xfer->ux_length, xfer->ux_actlen, spipe,
 		    spipe->ptype);
 do_callback:
