@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.35 2016/06/19 06:58:17 dholland Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.36 2016/06/19 21:12:44 dholland Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.35 2016/06/19 06:58:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.36 2016/06/19 21:12:44 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,7 +72,9 @@ int arcdebug = 0;
 /* 
  * the fw header must always equal this.
  */
+#if NBIO > 0
 static struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
+#endif
 
 /*
  * autoconf(9) glue.
@@ -122,8 +124,10 @@ static uint32_t arc_read(struct arc_softc *, bus_size_t);
 static void 	arc_read_region(struct arc_softc *, bus_size_t, void *,
     size_t);
 static void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
+#if NBIO > 0
 static void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
     size_t);
+#endif
 static int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
     uint32_t);
 #ifdef unused
@@ -1956,6 +1960,7 @@ arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
+#if NBIO > 0
 static void
 arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 {
@@ -1964,6 +1969,7 @@ arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
+#endif /* NBIO > 0 */
 
 static int
 arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
