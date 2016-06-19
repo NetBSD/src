@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.36 2016/06/19 22:03:06 dholland Exp $	*/
-/*  from NetBSD: NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp  */
+/*	$NetBSD: ulfs_vnops.c,v 1.37 2016/06/19 22:07:17 dholland Exp $	*/
+/*  from NetBSD: ufs_vnops.c,v 1.216 2013/06/16 00:13:58 dholland Exp  */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.36 2016/06/19 22:03:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.37 2016/06/19 22:07:17 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -911,6 +911,12 @@ ulfs_readlink(void *v)
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
 	int		isize;
+
+	/*
+	 * The test against um_maxsymlinklen is off by one; it should
+	 * theoretically be <=, not <. However, it cannot be changed
+	 * as that would break compatibility with existing fs images.
+	 */
 
 	isize = ip->i_size;
 	if (isize < fs->um_maxsymlinklen ||
