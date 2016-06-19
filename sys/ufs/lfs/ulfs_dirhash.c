@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.14 2015/09/21 01:24:23 dholland Exp $	*/
-/*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
+/*	$NetBSD: ulfs_dirhash.c,v 1.15 2016/06/19 23:06:09 dholland Exp $	*/
+/*  from NetBSD: ufs_dirhash.c,v 1.35 2013/06/09 17:57:09 dholland Exp  */
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.14 2015/09/21 01:24:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.15 2016/06/19 23:06:09 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.

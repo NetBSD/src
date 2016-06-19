@@ -1,5 +1,5 @@
-/*	$NetBSD: lfs_rename.c,v 1.16 2015/09/21 01:24:23 dholland Exp $	*/
-/*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
+/*	$NetBSD: lfs_rename.c,v 1.17 2016/06/19 23:06:09 dholland Exp $	*/
+/*  from NetBSD: ufs_rename.c,v 1.8 2013/06/19 17:51:26 dholland Exp  */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.16 2015/09/21 01:24:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.17 2016/06/19 23:06:09 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

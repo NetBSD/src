@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.8 2015/09/21 01:24:23 dholland Exp $	*/
-/*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
+/*	$NetBSD: ulfs_dirhash.h,v 1.9 2016/06/19 23:06:09 dholland Exp $	*/
+/*  from NetBSD: dirhash.h,v 1.7 2013/06/09 17:57:09 dholland Exp  */
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
