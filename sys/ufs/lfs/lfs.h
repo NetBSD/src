@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs.h,v 1.197 2015/11/26 19:25:54 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.198 2016/06/19 22:38:23 dholland Exp $	*/
 
-/*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
-/*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
+/*  from NetBSD: dinode.h,v 1.24 2013/06/09 17:55:46 dholland Exp  */
+/*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
