@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota.h,v 1.5 2014/06/28 22:27:51 dholland Exp $	*/
-/*  from NetBSD: ufs_quota.h,v 1.21 2012/02/18 06:13:23 matt Exp  */
+/*	$NetBSD: ulfs_quota.h,v 1.6 2016/06/19 23:06:09 dholland Exp $	*/
+/*  from NetBSD: ufs_quota.h,v 1.22 2014/06/28 22:27:51 dholland Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
