@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.25 2016/06/19 09:23:16 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.26 2016/06/19 09:42:28 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -142,17 +142,6 @@ doboot(const char *file, int flags)
 
 	printf("Starting %s, flags 0x%x\n", file, flags);
 
-	loadflag = LOAD_KERNEL;
-	if (file[0] == 'f')
-		loadflag &= ~LOAD_BACKWARDS;
-		
-	marks[MARK_START] = 0x100000;
-	if ((fd = loadfile(file, marks, loadflag)) == -1) {
-		printf("loadfile failed\n");
-		return;
-	}
-	close(fd);
-
 	if (devparse(file, &dev, &unit, &part, &name) != 0) {
 		printf("XXX: unknown corruption in /boot.\n");
 	}
@@ -194,6 +183,17 @@ doboot(const char *file, int flags)
 	       B_X68K_SCSI_IF_UN(bootdev));
 #endif
 #endif
+
+	loadflag = LOAD_KERNEL;
+	if (file[0] == 'f')
+		loadflag &= ~LOAD_BACKWARDS;
+
+	marks[MARK_START] = 0x100000;
+	if ((fd = loadfile(file, marks, loadflag)) == -1) {
+		printf("loadfile failed\n");
+		return;
+	}
+	close(fd);
 
 	p = ((short*) marks[MARK_ENTRY]) - 1;
 #ifdef DEBUG
