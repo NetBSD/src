@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.34 2016/06/12 02:16:15 christos Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.35 2016/06/19 06:58:17 dholland Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.34 2016/06/12 02:16:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.35 2016/06/19 06:58:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -153,11 +153,13 @@ static int 	arc_query_firmware(device_t);
 /* 
  * stuff to do messaging via the doorbells.
  */
+#if NBIO > 0
 static void 	arc_lock(struct arc_softc *);
 static void 	arc_unlock(struct arc_softc *);
 static void 	arc_wait(struct arc_softc *);
 static uint8_t 	arc_msg_cksum(void *, uint16_t);
 static int 	arc_msgbuf(struct arc_softc *, void *, size_t, void *, size_t);
+#endif
 
 #define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
 #define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
@@ -1559,9 +1561,8 @@ out:
 	kmem_free(diskinfo, sizeof(*diskinfo));
 	return error;
 }
-#endif /* NBIO > 0 */
 
-uint8_t
+static uint8_t
 arc_msg_cksum(void *cmd, uint16_t len)
 {
 	uint8_t	*buf = cmd;
@@ -1576,7 +1577,7 @@ arc_msg_cksum(void *cmd, uint16_t len)
 }
 
 
-int
+static int
 arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	   size_t rbuflen)
 {
@@ -1720,7 +1721,7 @@ out:
 	return error;
 }
 
-void
+static void
 arc_lock(struct arc_softc *sc)
 {
 	rw_enter(&sc->sc_rwlock, RW_WRITER);
@@ -1729,7 +1730,7 @@ arc_lock(struct arc_softc *sc)
 	sc->sc_talking = 1;
 }
 
-void
+static void
 arc_unlock(struct arc_softc *sc)
 {
 	KASSERT(mutex_owned(&sc->sc_mutex));
@@ -1741,7 +1742,7 @@ arc_unlock(struct arc_softc *sc)
 	rw_exit(&sc->sc_rwlock);
 }
 
-void
+static void
 arc_wait(struct arc_softc *sc)
 {
 	KASSERT(mutex_owned(&sc->sc_mutex));
@@ -1752,7 +1753,7 @@ arc_wait(struct arc_softc *sc)
 		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
 }
 
-#if NBIO > 0
+
 static void
 arc_create_sensors(void *arg)
 {
