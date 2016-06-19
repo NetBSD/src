@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.293 2015/09/21 01:24:23 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.294 2016/06/19 22:07:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.293 2015/09/21 01:24:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.294 2016/06/19 22:07:17 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -654,6 +654,13 @@ lfs_symlink(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 
+	/*
+	 * This test is off by one. um_maxsymlinklen contains the
+	 * number of bytes available, and we aren't storing a \0, so
+	 * the test should properly be <=. However, it cannot be
+	 * changed as this would break compatibility with existing fs
+	 * images -- see the way ulfs_readlink() works.
+	 */
 	len = strlen(ap->a_target);
 	if (len < ip->i_lfs->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
