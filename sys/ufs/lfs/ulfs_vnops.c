@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.35 2015/11/14 22:03:54 pgoyette Exp $	*/
-/*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
+/*	$NetBSD: ulfs_vnops.c,v 1.36 2016/06/19 22:03:06 dholland Exp $	*/
+/*  from NetBSD: NetBSD: ufs_vnops.c,v 1.215 2013/06/09 18:54:05 christos Exp  */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.35 2015/11/14 22:03:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.36 2016/06/19 22:03:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -282,7 +282,8 @@ ulfs_setattr(void *v)
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
 
-		if ((vap->va_flags & SF_SETTABLE) != (ip->i_flags & SF_SETTABLE)) {
+		if ((vap->va_flags & SF_SETTABLE) !=
+		    (ip->i_flags & SF_SETTABLE)) {
 			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
 			changing_sysflags = true;
 		}
