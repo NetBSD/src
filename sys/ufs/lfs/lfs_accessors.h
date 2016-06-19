@@ -1,8 +1,8 @@
-/*	$NetBSD: lfs_accessors.h,v 1.44 2016/02/19 04:18:32 riastradh Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.45 2016/06/19 22:38:23 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
-/*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
-/*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
+/*  from NetBSD: dinode.h,v 1.24 2013/06/09 17:55:46 dholland Exp  */
+/*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
