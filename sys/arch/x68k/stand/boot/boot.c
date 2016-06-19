@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.24 2016/06/11 06:57:46 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.25 2016/06/19 09:23:16 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -132,7 +132,10 @@ doboot(const char *file, int flags)
 {
 	u_long		marks[MARK_MAX];
 	int fd;
-	int dev, unit, part;
+	int dev;	/* device number in devspec[] */
+	int unit;
+	int part;
+	int bootdev;
 	char *name;
 	short *p;
 	int loadflag;
@@ -166,29 +169,29 @@ doboot(const char *file, int flags)
 
 #ifndef NETBOOT
 	if (dev == 0) {		/* SCSI */
-		dev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
+		bootdev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
 					   hostadaptor >> 4,
 					   hostadaptor & 15,
 					   unit & 7, 0, 0);
 	} else {
-		dev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
+		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
 #else
-	dev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
+	bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
 #endif
 #ifdef DEBUG
-	printf("boot device = %x\n", dev);
+	printf("boot device = %x\n", bootdev);
 #ifndef NETBOOT
 	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
-	       B_X68K_SCSI_IF(dev),
-	       B_X68K_SCSI_IF_UN(dev),
-	       B_X68K_SCSI_ID(dev),
-	       B_X68K_SCSI_LUN(dev),
-	       B_X68K_SCSI_PART(dev) + 'a');
+	       B_X68K_SCSI_IF(bootdev),
+	       B_X68K_SCSI_IF_UN(bootdev),
+	       B_X68K_SCSI_ID(bootdev),
+	       B_X68K_SCSI_LUN(bootdev),
+	       B_X68K_SCSI_PART(bootdev) + 'a');
 #else
 	printf("if = %d, unit = %d\n",
-	       B_X68K_SCSI_IF(dev),
-	       B_X68K_SCSI_IF_UN(dev));
+	       B_X68K_SCSI_IF(bootdev),
+	       B_X68K_SCSI_IF_UN(bootdev));
 #endif
 #endif
 
@@ -207,7 +210,7 @@ doboot(const char *file, int flags)
 	}
 
 	exec_image(marks[MARK_START], 0, marks[MARK_ENTRY]-marks[MARK_START],
-		   marks[MARK_END]-marks[MARK_START], dev, flags);
+		   marks[MARK_END]-marks[MARK_START], bootdev, flags);
 
 	return;
 }
