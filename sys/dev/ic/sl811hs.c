@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.81 2016/06/19 06:47:04 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.82 2016/06/19 07:38:08 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.81 2016/06/19 06:47:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.82 2016/06/19 07:38:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -643,7 +643,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
     DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
 	!!((s) & SL11_EPSTAT_STALL), !!((s) & SL11_EPSTAT_NAK),		\
 	!!((s) & SL11_EPSTAT_OVERFLOW), !!((s) & SL11_EPSTAT_SETUP));	\
-    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack   =%d",	\
+    DDOLOG("STAT sequence=%d  timeout =%d  error    =%d  ack     =%d",	\
 	!!((s) & SL11_EPSTAT_SEQUENCE),	!!((s) & SL11_EPSTAT_TIMEOUT),	\
 	!!((s) & SL11_EPSTAT_ERROR), !!((s) & SL11_EPSTAT_ACK));	\
 } while (0)
@@ -2706,8 +2706,10 @@ slhci_halt(struct slhci_softc *sc, struct slhci_pipe *spipe,
 static void
 slhci_intrchange(struct slhci_softc *sc, uint8_t new_ier)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if (sc->sc_ier != new_ier) {
+		DLOG(D_INTR, "New IER %#x", new_ier, 0, 0, 0);
 		sc->sc_ier = new_ier;
 		slhci_write(sc, SL11_IER, new_ier);
 		BSB_SYNC(sc->iot, sc->ioh, sc->pst, sc->psz);
