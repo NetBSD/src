@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_bswap.h,v 1.6 2013/10/18 15:15:22 christos Exp $	*/
-/*  from NetBSD: ufs_bswap.h,v 1.19 2009/10/19 18:41:17 bouyer Exp  */
+/*	$NetBSD: ulfs_bswap.h,v 1.7 2016/06/19 22:46:19 dholland Exp $	*/
+/*  from NetBSD: ufs_bswap.h,v 1.21 2016/04/29 03:05:04 christos Exp  */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
