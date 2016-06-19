@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.148 2015/12/07 11:38:46 pgoyette Exp $ */
+/* $NetBSD: device.h,v 1.149 2016/06/19 09:35:06 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -349,6 +349,7 @@ struct cfattach __CONCAT(name,_ca) = {					\
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
 #define	DETACH_SHUTDOWN	0x04		/* detach because of system shutdown */
+#define	DETACH_POWEROFF	0x08		/* going to power off; power down devices */
 
 struct cfdriver {
 	LIST_ENTRY(cfdriver) cd_list;	/* link on allcfdrivers */
