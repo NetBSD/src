@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.34 2015/12/20 22:42:04 christos Exp $
+#	$NetBSD: Makefile.bootcd,v 1.35 2016/06/19 08:44:34 isaki Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -230,7 +230,7 @@ copy-releasedir:
 			release_destdir="${CUROBJDIR}/cdrom";		\
 			if [ -f $${cde} ]; then				\
 				echo Copying $${cde} to $$release_destdir ...;	\
-				${CP} $${cde} $${release_destdir};	\
+				${CP} -f $${cde} $${release_destdir};	\
 			elif [ -d $${cde} ]; then			\
 				cd $${cde};				\
 				echo Copying $$(pwd) to $$release_destdir ...;	\
