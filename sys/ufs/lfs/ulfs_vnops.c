@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.38 2016/06/19 22:11:55 dholland Exp $	*/
-/*  from NetBSD: ufs_vnops.c,v 1.217 2013/08/11 04:36:17 dholland Exp  */
+/*	$NetBSD: ulfs_vnops.c,v 1.39 2016/06/19 23:11:48 dholland Exp $	*/
+/*  from NetBSD: ufs_vnops.c,v 1.218 2013/09/15 15:32:18 martin Exp  */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.38 2016/06/19 22:11:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.39 2016/06/19 23:11:48 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
