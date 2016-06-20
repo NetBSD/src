@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.55 2016/06/20 08:30:59 knakahara Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.56 2016/06/20 08:57:18 ozaki-r Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.55 2016/06/20 08:30:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.56 2016/06/20 08:57:18 ozaki-r Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -184,9 +184,6 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-#ifdef __FreeBSD__
-	KASSERT(M_GETCTX(m, struct ieee80211_node *) == NULL);
-#endif
 	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -1344,7 +1341,6 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	M_PREPEND(m, sizeof(struct ieee80211_frame), M_DONTWAIT);
 	if (m == NULL)
 		return ENOMEM;
-	KASSERT(M_GETCTX(m, struct ieee80211_node *) == NULL);
 	M_SETCTX(m, ni);
 
 	wh = mtod(m, struct ieee80211_frame *);
