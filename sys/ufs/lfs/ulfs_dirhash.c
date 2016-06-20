@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.16 2016/06/20 00:00:47 dholland Exp $	*/
-/*  from NetBSD: ufs_dirhash.c,v 1.36 2014/02/25 18:30:13 pooka Exp  */
+/*	$NetBSD: ulfs_dirhash.c,v 1.17 2016/06/20 01:53:38 dholland Exp $	*/
+/*  from NetBSD: ufs_dirhash.c,v 1.37 2014/12/20 00:28:05 christos Exp  */
 
 /*
  * Copyright (c) 2001, 2002 Ian Dowse.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.16 2016/06/20 00:00:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.17 2016/06/20 01:53:38 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -258,6 +258,7 @@ ulfsdirhash_build(struct inode *ip)
 	return (0);
 
 fail:
+	ip->i_dirhash = NULL;
 	DIRHASH_UNLOCK(dh);
 	if (dh->dh_hash != NULL) {
 		for (i = 0; i < narrays; i++)
@@ -269,7 +270,6 @@ fail:
 		kmem_free(dh->dh_blkfree, dh->dh_blkfreesz);
 	mutex_destroy(&dh->dh_lock);
 	pool_cache_put(ulfsdirhash_cache, dh);
-	ip->i_dirhash = NULL;
 	atomic_add_int(&ulfs_dirhashmem, -memreqd);
 	return (-1);
 }
@@ -285,6 +285,8 @@ ulfsdirhash_free(struct inode *ip)
 
 	if ((dh = ip->i_dirhash) == NULL)
 		return;
+
+	ip->i_dirhash = NULL;
 
 	if (dh->dh_onlist) {
 		DIRHASHLIST_LOCK();
@@ -306,7 +308,6 @@ ulfsdirhash_free(struct inode *ip)
 	}
 	mutex_destroy(&dh->dh_lock);
 	pool_cache_put(ulfsdirhash_cache, dh);
-	ip->i_dirhash = NULL;
 
 	atomic_add_int(&ulfs_dirhashmem, -mem);
 }
