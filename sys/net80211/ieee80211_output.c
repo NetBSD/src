@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.54 2016/05/16 09:53:59 ozaki-r Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.55 2016/06/20 08:30:59 knakahara Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.54 2016/05/16 09:53:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.55 2016/06/20 08:30:59 knakahara Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -221,7 +221,7 @@ ieee80211_mgmt_output(struct ieee80211com *ic, struct ieee80211_node *ni,
 		ic->ic_mgt_timer = timer;
 		ifp->if_timer = 1;
 	}
-	(*ifp->if_start)(ifp);
+	if_start_lock(ifp);
 	return 0;
 }
 
@@ -268,7 +268,7 @@ ieee80211_send_nulldata(struct ieee80211_node *ni)
 	    wh->i_fc[1] & IEEE80211_FC1_PWR_MGT ? "ena" : "dis");
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);		/* cheat */
-	(*ifp->if_start)(ifp);
+	if_start_lock(ifp);
 
 	return 0;
 }
@@ -1362,7 +1362,7 @@ ieee80211_send_probereq(struct ieee80211_node *ni,
 	    ieee80211_chan2ieee(ic, ic->ic_curchan));
 
 	IF_ENQUEUE(&ic->ic_mgtq, m);
-	(*ic->ic_ifp->if_start)(ic->ic_ifp);
+	if_start_lock(ic->ic_ifp);
 	return 0;
 }
 
