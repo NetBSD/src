@@ -1,6 +1,6 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.25 2016/06/20 01:23:04 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.26 2016/06/20 02:03:32 dholland Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.37 2014/01/29 20:13:04 bouyer Exp  */
-/*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
+/*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
 /*-
   * Copyright (c) 2010 Manuel Bouyer
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.25 2016/06/20 01:23:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.26 2016/06/20 02:03:32 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1565,7 +1565,7 @@ lfs_quota2_mount(struct mount *mp)
 {
 	struct ulfsmount *ump = VFSTOULFS(mp);
 	struct lfs *fs = ump->um_lfs;
-	int error = 0;
+	int error;
 	struct vnode *vp;
 	struct lwp *l = curlwp;
 
@@ -1580,15 +1580,17 @@ lfs_quota2_mount(struct mount *mp)
 		    mp->mnt_stat.f_mntonname);
 		return EINVAL;
 	}
+
+	error = 0;
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA)) &&
             fs->lfs_quotaino[ULFS_USRQUOTA] == 0) {
-                printf("%s: no user quota inode\n",
+                printf("%s: No user quota inode\n",
 		    mp->mnt_stat.f_mntonname); 
                 error = EINVAL;
         }
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA)) &&
             fs->lfs_quotaino[ULFS_GRPQUOTA] == 0) {
-                printf("%s: no group quota inode\n",
+                printf("%s: No group quota inode\n",
 		    mp->mnt_stat.f_mntonname);
                 error = EINVAL;
         }
@@ -1628,6 +1630,7 @@ lfs_quota2_mount(struct mount *mp)
 		mutex_exit(vp->v_interlock);
 		VOP_UNLOCK(vp);
 	}
+
 	mp->mnt_flag |= MNT_QUOTA;
 	return 0;
 }
