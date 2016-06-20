@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.341 2016/06/16 15:18:33 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.342 2016/06/20 06:41:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.341 2016/06/16 15:18:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.342 2016/06/20 06:41:30 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1054,10 +1054,6 @@ if_detach(struct ifnet *ifp)
 	pserialize_perform(ifnet_psz);
 	IFNET_UNLOCK();
 
-	/* Wait for all readers to drain before freeing.  */
-	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
-	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
-
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
 
@@ -1225,6 +1221,10 @@ again:
 #endif
 	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(xc);
+
+	/* Wait for all readers to drain before freeing.  */
+	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
+	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
 
 	if (ifp->if_percpuq != NULL) {
 		if_percpuq_destroy(ifp->if_percpuq);
