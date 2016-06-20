@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.26 2016/06/20 02:03:32 dholland Exp $	*/
-/*  from NetBSD: ufs_quota2.c,v 1.37 2014/01/29 20:13:04 bouyer Exp  */
+/*	$NetBSD: ulfs_quota2.c,v 1.27 2016/06/20 02:25:03 dholland Exp $	*/
+/*  from NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
 /*-
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.26 2016/06/20 02:03:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.27 2016/06/20 02:25:03 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>

@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.38 2016/06/20 00:00:47 dholland Exp $	*/
-/*  from NetBSD: ufs_lookup.c,v 1.129 2014/02/07 15:29:23 hannken Exp  */
+/*	$NetBSD: ulfs_lookup.c,v 1.39 2016/06/20 02:25:03 dholland Exp $	*/
+/*  from NetBSD: ufs_lookup.c,v 1.135 2015/07/11 11:04:48 mlelstv  */
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.38 2016/06/20 00:00:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.39 2016/06/20 02:25:03 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"

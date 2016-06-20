@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfsmount.h,v 1.16 2016/06/19 22:11:55 dholland Exp $	*/
-/*  from NetBSD: ufsmount.h,v 1.41 2013/08/11 04:36:17 dholland Exp  */
+/*	$NetBSD: ulfsmount.h,v 1.17 2016/06/20 02:25:03 dholland Exp $	*/
+/*  from NetBSD: ufsmount.h,v 1.42 2015/03/17 09:39:29 hannken Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
