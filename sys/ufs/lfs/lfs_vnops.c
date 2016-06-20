@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.299 2016/06/20 02:31:47 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.300 2016/06/20 02:33:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.299 2016/06/20 02:31:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.300 2016/06/20 02:33:01 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -178,7 +178,7 @@ static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
 
-static int ulfs_makeinode(struct vattr *vap, struct vnode *,
+static int lfs_makeinode(struct vattr *vap, struct vnode *,
 		      const struct ulfs_lookup_results *,
 		      struct vnode **, struct componentname *);
 
@@ -359,7 +359,7 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
  * Allocate a new inode.
  */
 static int
-ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
+lfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	const struct ulfs_lookup_results *ulr,
 	struct vnode **vpp, struct componentname *cnp)
 {
@@ -719,7 +719,7 @@ lfs_symlink(void *v)
 		return error;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(ap->a_vap, dvp, ulr, vpp, ap->a_cnp);
+	error = lfs_makeinode(ap->a_vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
 		goto out;
 	}
@@ -807,7 +807,7 @@ lfs_mknod(void *v)
 		return error;
 
 	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
+	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	UNMARK_VNODE(dvp);
@@ -891,7 +891,7 @@ lfs_create(void *v)
 		return error;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
+	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
 		fstrans_done(dvp->v_mount);
 		goto out;
@@ -971,7 +971,7 @@ lfs_mkdir(void *v)
 	}
 
 	/*
-	 * Must simulate part of ulfs_makeinode here to acquire the inode,
+	 * Must simulate part of lfs_makeinode here to acquire the inode,
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
