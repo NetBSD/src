@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.10 2016/06/20 01:44:05 dholland Exp $	*/
-/*  from NetBSD: ufs_extattr.c,v 1.44 2014/11/14 10:09:50 manu  */
+/*	$NetBSD: ulfs_extattr.c,v 1.11 2016/06/20 01:47:58 dholland Exp $	*/
+/*  from NetBSD: ufs_extattr.c,v 1.45 2014/11/15 05:03:55 manu Exp  */
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.10 2016/06/20 01:44:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.11 2016/06/20 01:47:58 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -210,9 +210,9 @@ ulfs_extattr_valid_attrname(int attrnamespace, const char *attrname)
 /*
  * Autocreate an attribute storage
  */
-static struct ulfs_extattr_list_entry *
+static int
 ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
-    const char *attrname, struct lwp *l)
+    const char *attrname, struct lwp *l, struct ulfs_extattr_list_entry **uelep)
 {
 	struct mount *mp = vp->v_mount;
 	struct ulfsmount *ump = VFSTOULFS(mp);
@@ -246,9 +246,19 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		break;
 	default:
 		PNBUF_PUT(path);
-		return NULL;
+		*uelep = NULL;
+		return EINVAL;
 		break;
 	}
+
+	/*
+	 * Release extended attribute mount lock, otherwise
+	 * we can deadlock with another thread that would lock 
+	 * vp after we unlock it below, and call 
+	 * ulfs_extattr_uepm_lock(ump), for instance
+	 * in ulfs_getextattr().
+	 */
+	ulfs_extattr_uepm_unlock(ump);
 
 	/*
 	 * XXX unlock/lock should only be done when setting extattr
@@ -261,7 +271,12 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	pb = pathbuf_create(path);
 	NDINIT(&nd, CREATE, LOCKPARENT, pb);
 	
-	error = vn_open(&nd, O_CREAT|O_RDWR, 0600);
+	/*
+	 * Since we do not hold ulfs_extattr_uepm_lock anymore,
+	 * another thread may race with us for backend creation,
+	 * but only one can succeed here thanks to O_EXCL
+	 */
+	error = vn_open(&nd, O_CREAT|O_EXCL|O_RDWR, 0600);
 
 	/*
 	 * Reacquire the lock on the vnode
@@ -269,10 +284,13 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 	KASSERT(VOP_ISLOCKED(vp) == 0);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
+	ulfs_extattr_uepm_lock(ump);
+
 	if (error != 0) {
 		pathbuf_destroy(pb);
 		PNBUF_PUT(path);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	KASSERT(nd.ni_vp != NULL);
@@ -300,7 +318,8 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: write uef header failed for %s, error = %d\n", 
 		       __func__, attrname, error);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	/*
@@ -313,7 +332,8 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: enable %s failed, error %d\n", 
 		       __func__, attrname, error);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return error;
 	}
 
 	uele = ulfs_extattr_find_attr(ump, attrnamespace, attrname);
@@ -321,13 +341,15 @@ ulfs_extattr_autocreate_attr(struct vnode *vp, int attrnamespace,
 		printf("%s: atttribute %s created but not found!\n",
 		       __func__, attrname);
 		vn_close(backing_vp, FREAD|FWRITE, l->l_cred);
-		return NULL;
+		*uelep = NULL;
+		return ESRCH; /* really internal error */
 	}
 
 	printf("%s: EA backing store autocreated for %s\n",
 	       mp->mnt_stat.f_mntonname, attrname);
 
-	return uele;
+	*uelep = uele;
+	return 0;
 }
 
 /*
@@ -1405,10 +1427,17 @@ ulfs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 
 	attribute = ulfs_extattr_find_attr(ump, attrnamespace, name);
 	if (!attribute) {
-		attribute =  ulfs_extattr_autocreate_attr(vp, attrnamespace, 
-							 name, l);
-		if  (!attribute)
-			return (ENODATA);
+		error = ulfs_extattr_autocreate_attr(vp, attrnamespace, 
+						    name, l, &attribute);
+		if (error == EEXIST) {
+			/* Another thread raced us for backend creation */
+			error = 0;
+			attribute = 
+			    ulfs_extattr_find_attr(ump, attrnamespace, name);
+		}
+
+		if (error || !attribute)
+			return ENODATA;
 	}
 
 	/*
