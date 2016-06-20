@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.35 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.36 2016/06/20 06:46:37 knakahara Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.35 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.36 2016/06/20 06:46:37 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,7 +209,7 @@ agr_xmit_frame(struct ifnet *ifp_port, struct mbuf *m)
 	m_copydata(m, 0, hdrlen, &dst->sa_data);
 	m_adj(m, hdrlen);
 
-	error = (*ifp_port->if_output)(ifp_port, m, dst, NULL);
+	error = if_output_lock(ifp_port, ifp_port, m, dst, NULL);
 
 	return error;
 }
