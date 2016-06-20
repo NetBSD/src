@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_inode.c,v 1.14 2016/06/20 03:11:21 dholland Exp $	*/
-/*  from NetBSD: ufs_inode.c,v 1.93 2015/04/15 14:39:24 riastradh  */
+/*	$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $	*/
+/*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.14 2016/06/20 03:11:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
