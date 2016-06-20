@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.211 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.212 2016/06/20 06:46:38 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.211 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.212 2016/06/20 06:46:38 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -674,7 +674,7 @@ arprequest(struct ifnet *ifp,
 	arps[ARP_STAT_SNDTOTAL]++;
 	arps[ARP_STAT_SENDREQUEST]++;
 	ARP_STAT_PUTREF();
-	(*ifp->if_output)(ifp, m, &sa, NULL);
+	if_output_lock(ifp, ifp, m, &sa, NULL);
 }
 
 /*
@@ -1251,7 +1251,7 @@ in_arpinput(struct mbuf *m)
 		for (; m_hold != NULL; m_hold = m_hold_next) {
 			m_hold_next = m_hold->m_nextpkt;
 			m_hold->m_nextpkt = NULL;
-			(*ifp->if_output)(ifp, m_hold, sintosa(&sin), NULL);
+			if_output_lock(ifp, ifp, m_hold, sintosa(&sin), NULL);
 		}
 	} else
 		LLE_WUNLOCK(la);
@@ -1334,7 +1334,7 @@ reply:
 	arps[ARP_STAT_SNDTOTAL]++;
 	arps[ARP_STAT_SNDREPLY]++;
 	ARP_STAT_PUTREF();
-	(*ifp->if_output)(ifp, m, &sa, NULL);
+	if_output_lock(ifp, ifp, m, &sa, NULL);
 	if (rcvif != NULL)
 		m_put_rcvif_psref(rcvif, &psref);
 	return;
@@ -1888,9 +1888,7 @@ revarprequest(struct ifnet *ifp)
 	sa.sa_len = 2;
 	m->m_flags |= M_BCAST;
 
-	KERNEL_LOCK(1, NULL);
-	(*ifp->if_output)(ifp, m, &sa, NULL);
-	KERNEL_UNLOCK_ONE(NULL);
+	if_output_lock(ifp, ifp, m, &sa, NULL);
 }
 
 /*

@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.21 2016/04/28 00:16:56 ozaki-r Exp $ */
+/* $NetBSD: if_srt.c,v 1.22 2016/06/20 06:46:37 knakahara Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.21 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.22 2016/06/20 06:46:37 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -232,7 +232,7 @@ srt_if_output(
 		return 0; /* XXX ENETDOWN? */
 	}
 	/* XXX is 0 the right last arg here? */
-	return (*r->u.dstifp->if_output)(r->u.dstifp,m,&r->dst.sa,0);
+	return if_output_lock(r->u.dstifp, r->u.dstifp, m, &r->dst.sa, 0);
 }
 
 static int
