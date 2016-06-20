@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.37 2015/02/13 13:26:50 maxv Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.38 2016/06/20 08:30:58 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.37 2015/02/13 13:26:50 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.38 2016/06/20 08:30:58 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -911,7 +911,7 @@ pmf_class_network_resume(device_t dev, const pmf_qual_t *qual)
 		ifp->if_flags &= ~IFF_RUNNING;
 		if ((*ifp->if_init)(ifp) != 0)
 			aprint_normal_ifnet(ifp, "resume failed\n");
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	}
 	splx(s);
 
