@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.24 2016/06/20 06:46:37 knakahara Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.25 2016/06/20 22:59:36 knakahara Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.24 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.25 2016/06/20 22:59:36 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -478,7 +478,7 @@ mpls_send_frame(struct mbuf *m, struct ifnet *ifp, const struct rtentry *rt)
 #ifdef INET
 		ret = ip_if_output(ifp, m, rt->rt_gateway, rt);
 #else
-		if_output_lock(ifp, ifp, m, rt->rt_gateway, rt);
+		ret = if_output_lock(ifp, ifp, m, rt->rt_gateway, rt);
 #endif
 		return ret;
 		break;
