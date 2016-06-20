@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.125 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.126 2016/06/20 07:06:06 knakahara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.125 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.126 2016/06/20 07:06:06 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -424,6 +424,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
+	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
 	ifp->if_output = bridge_output;
@@ -1378,6 +1379,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	}
 
 #ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the member interface, do
 	 * classification; the queueing discipline might
@@ -1388,6 +1390,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 		/* XXX IFT_ETHER */
 		altq_etherclassify(&dst_ifp->if_snd, m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */
 
 	len = m->m_pkthdr.len;
@@ -1424,6 +1427,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
 	int s;
+
+	KASSERT(ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
 
 	if (m->m_len < ETHER_HDR_LEN) {
 		m = m_pullup(m, ETHER_HDR_LEN);
