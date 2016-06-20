@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.209 2016/06/20 06:41:15 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.210 2016/06/20 08:18:59 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -382,6 +382,7 @@ typedef struct ifnet {
 #define	IFEF_OUTPUT_MPSAFE	0x0001	/* if_output() can run parallel */
 #define	IFEF_START_MPSAFE	0x0002	/* if_start() can run parallel */
 
+#ifdef _KERNEL
 static inline bool
 if_output_is_mpsafe(struct ifnet *ifp)
 {
@@ -405,6 +406,7 @@ if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
 		return ret;
 	}
 }
+#endif /* _KERNEL */
 
 #define	IFFBITS \
     "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
