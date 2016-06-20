@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.83 2016/06/20 07:12:00 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.84 2016/06/20 07:13:07 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.83 2016/06/20 07:12:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.84 2016/06/20 07:13:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -639,7 +639,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 	!!((r) & SL11_IER_USBA), 0);					\
 } while (0)
 
-#define DDLOGSTATUS(s)	do {						\
+#define DDOLOGSTATUS(s)	do {						\
     DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
 	!!((s) & SL11_EPSTAT_STALL), !!((s) & SL11_EPSTAT_NAK),		\
 	!!((s) & SL11_EPSTAT_OVERFLOW), !!((s) & SL11_EPSTAT_SETUP));	\
@@ -648,7 +648,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 	!!((s) & SL11_EPSTAT_ERROR), !!((s) & SL11_EPSTAT_ACK));	\
 } while (0)
 
-#define DDLOGEPCTRL(r)	do {						\
+#define DDOLOGEPCTRL(r)	do {						\
     DDOLOG("CTRL preamble=%d  toggle  =%d  sof     =%d  iso     =%d",	\
 	!!((r) & SL11_EPCTRL_PREAMBLE), !!((r) & SL11_EPCTRL_DATATOGGLE),\
 	!!((r) & SL11_EPCTRL_SOF), !!((r) & SL11_EPCTRL_ISO));		\
@@ -657,7 +657,7 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 	!!((r) & SL11_EPCTRL_ENABLE), !!((r) & SL11_EPCTRL_ARM), 0);	\
 } while (0)
 
-#define DDLOGEPSTAT(r)	do {						\
+#define DDOLOGEPSTAT(r)	do {						\
     DDOLOG("STAT stall   =%d  nak     =%d  overflow =%d  setup   =%d",	\
 	!!((r) & SL11_EPSTAT_STALL), !!((r) & SL11_EPSTAT_NAK),		\
 	!!((r) & SL11_EPSTAT_OVERFLOW), !!((r) & SL11_EPSTAT_SETUP));	\
@@ -677,9 +677,9 @@ DDOLOGBUF(uint8_t *buf, unsigned int length)
 #define DDOLOGCTRL(x) ((void)0)
 #define DDOLOGISR(r) ((void)0)
 #define DDOLOGIER(r) ((void)0)
-#define DDLOGSTATUS(s) ((void)0)
-#define DDLOGEPCTRL(r) ((void)0)
-#define DDLOGEPSTAT(r) ((void)0)
+#define DDOLOGSTATUS(s) ((void)0)
+#define DDOLOGEPCTRL(r) ((void)0)
+#define DDOLOGEPSTAT(r) ((void)0)
 #endif /* SLHCI_DEBUG */
 
 #ifdef DIAGNOSTIC
@@ -2024,7 +2024,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	if ((slhcidebug & SLHCI_D_NAK) ||
 	    (status & SL11_EPSTAT_ERRBITS) != SL11_EPSTAT_NAK) {
 	    	DDOLOG("USB Status = %#.2x", status, 0, 0, 0);
-		DDLOGSTATUS(status);
+		DDOLOGSTATUS(status);
 	}
 #endif
 
@@ -2097,7 +2097,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 			DLOG(D_ERR, "Max retries reached! status %#x "
 			    "xfer->ux_status %#x", status, xfer->ux_status, 0,
 			    0);
-			DDLOGSTATUS(status);
+			DDOLOGSTATUS(status);
 
 			if (status == SL11_EPSTAT_OVERFLOW &&
 			    ratecheck(&sc->sc_overflow_warn_rate,
@@ -3330,7 +3330,7 @@ slhci_log_dumpreg(void)
 
 	r = slhci_read(ssc, SL11_E0CTRL);
 	DDOLOG("USB A Host Control = %#.2x", r, 0, 0, 0);
-	DDLOGEPCTRL(r);
+	DDOLOGEPCTRL(r);
 
 	aaddr = slhci_read(ssc, SL11_E0ADDR);
 	DDOLOG("USB A Base Address = %u", aaddr, 0,0,0);
@@ -3338,13 +3338,13 @@ slhci_log_dumpreg(void)
 	DDOLOG("USB A Length = %u", alen, 0,0,0);
 	r = slhci_read(ssc, SL11_E0STAT);
 	DDOLOG("USB A Status = %#.2x", r, 0,0,0);
-	DDLOGEPSTAT(r);
+	DDOLOGEPSTAT(r);
 
 	r = slhci_read(ssc, SL11_E0CONT);
 	DDOLOG("USB A Remaining or Overflow Length = %u", r, 0,0,0);
 	r = slhci_read(ssc, SL11_E1CTRL);
 	DDOLOG("USB B Host Control = %#.2x", r, 0,0,0);
-	DDLOGEPCTRL(r);
+	DDOLOGEPCTRL(r);
 
 	baddr = slhci_read(ssc, SL11_E1ADDR);
 	DDOLOG("USB B Base Address = %u", baddr, 0,0,0);
@@ -3352,7 +3352,7 @@ slhci_log_dumpreg(void)
 	DDOLOG("USB B Length = %u", blen, 0,0,0);
 	r = slhci_read(ssc, SL11_E1STAT);
 	DDOLOG("USB B Status = %#.2x", r, 0,0,0);
-	DDLOGEPSTAT(r);
+	DDOLOGEPSTAT(r);
 
 	r = slhci_read(ssc, SL11_E1CONT);
 	DDOLOG("USB B Remaining or Overflow Length = %u", r, 0,0,0);
@@ -3426,6 +3426,8 @@ slhci_print_intr(void)
 void
 slhci_log_sc(void)
 {
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
+
 	struct slhci_transfers *t;
 	int i;
 
@@ -3436,9 +3438,9 @@ slhci_log_sc(void)
 	    t->spipe[1], t->len[1]);
 
 	for (i=0; i<=Q_MAX; i++)
-		DDOLOG("Q %d: %p", i, gcq_first(&t->q[i]), 0,0);
+		DDOLOG("Q %d: %p", i, gcq_hq(&t->q[i]), 0,0);
 
-	DDOLOG("TIMED: %p", GCQ_ITEM(gcq_first(&t->to),
+	DDOLOG("TIMED: %p", GCQ_ITEM(gcq_hq(&t->to),
 	    struct slhci_pipe, to), 0,0,0);
 
 	DDOLOG("frame=%d rootintr=%p", t->frame, t->rootintr, 0,0);
@@ -3449,13 +3451,13 @@ slhci_log_sc(void)
 void
 slhci_log_slreq(struct slhci_pipe *r)
 {
-	DDOLOG("next: %p", r->q.next.sqe_next, 0,0,0);
+	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	DDOLOG("xfer: %p", r->xfer, 0,0,0);
 	DDOLOG("buffer: %p", r->buffer, 0,0,0);
 	DDOLOG("bustime: %u", r->bustime, 0,0,0);
 	DDOLOG("control: %#x", r->control, 0,0,0);
-	DDOLOGFLAG8("control=", r->control, "Preamble", "Data Toggle",
-	    "SOF Sync", "ISOC", "res", "Out", "Enable", "Arm");
+	DDOLOGEPCTRL(r->control);
+
 	DDOLOG("pid: %#x", r->tregs[PID], 0,0,0);
 	DDOLOG("dev: %u", r->tregs[DEV], 0,0,0);
 	DDOLOG("len: %u", r->tregs[LEN], 0,0,0);
