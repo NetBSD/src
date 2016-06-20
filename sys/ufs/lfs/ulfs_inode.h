@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.20 2016/06/20 02:25:03 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.21 2016/06/20 03:29:52 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
@@ -144,10 +144,10 @@ typedef struct lfs_res_blk {
 #ifdef _KERNEL
 /* This overlays the fid structure (see fstypes.h). */
 struct ulfs_ufid {
-	u_int16_t ufid_len;	/* Length of structure. */
-	u_int16_t ufid_pad;	/* Force 32-bit alignment. */
+	uint16_t ufid_len;	/* Length of structure. */
+	uint16_t ufid_pad;	/* Force 32-bit alignment. */
 	int32_t	  ufid_gen;	/* Generation number. */
-	u_int64_t ufid_ino;	/* File number (ino). */
+	uint64_t ufid_ino;	/* File number (ino). */
 };
 /* Filehandle structure for exported LFSes */
 struct lfid {
