@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.69 2016/06/20 06:46:38 knakahara Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.69 2016/06/20 06:46:38 knakahara Exp $");
 
 /*
  * TODO:
@@ -2112,7 +2112,7 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	KASSERT(KERNEL_LOCKED_P());
 
 	if (sc->sc_carpdev != NULL && sc->sc_state == MASTER) {
-		return (sc->sc_carpdev->if_output(ifp, m, sa, rt));
+		return if_output_lock(sc->sc_carpdev, ifp, m, sa, rt));
 	} else {
 		m_freem(m);
 		return (ENETUNREACH);
