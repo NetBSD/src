@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.302 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.303 2016/06/20 03:55:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.302 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.303 2016/06/20 03:55:34 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -806,22 +806,17 @@ lfs_mknod(void *v)
 	if (error)
 		return error;
 
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
 	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
 	lfs_unset_dirop(fs, dvp, "mknod");
-	/*
-	 * XXX this is where this used to be (though inside some evil
-	 * macros) but it clearly should be moved further down.
-	 * - dholland 20140515
-	 */
-	vrele(dvp);
 
 	if (error) {
-		fstrans_done(ap->a_dvp->v_mount);
+		fstrans_done(dvp->v_mount);
+		vrele(dvp);
 		*vpp = NULL;
 		return (error);
 	}
@@ -845,7 +840,8 @@ lfs_mknod(void *v)
 		/* return (error); */
 	}
 
-	fstrans_done(ap->a_dvp->v_mount);
+	fstrans_done(dvp->v_mount);
+	vrele(dvp);
 	KASSERT(error == 0);
 	VOP_UNLOCK(*vpp);
 	return (0);
