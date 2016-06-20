@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.127 2016/06/20 07:23:56 knakahara Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.128 2016/06/20 08:14:41 knakahara Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.127 2016/06/20 07:23:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.128 2016/06/20 08:14:41 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1427,6 +1427,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
 	int s;
+
+	/*
+	 * bridge_output() is called from ether_output(), furthermore
+	 * ifp argument doesn't point to bridge(4). So, don't assert
+	 * IFEF_OUTPUT_MPSAFE here.
+	 */
 
 	if (m->m_len < ETHER_HDR_LEN) {
 		m = m_pullup(m, ETHER_HDR_LEN);
