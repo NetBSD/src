@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.23 2016/06/20 00:00:47 dholland Exp $	*/
-/*  from NetBSD: ufs_quota2.c,v 1.36 2013/10/20 00:29:10 htodd Exp  */
+n/*	$NetBSD: ulfs_quota2.c,v 1.24 2016/06/20 00:09:42 dholland Exp $	*/
+/*  from NetBSD: ufs_quota2.c,v 1.37 2014/01/29 20:13:04 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
 /*-
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.23 2016/06/20 00:00:47 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.24 2016/06/20 00:09:42 dholland Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.23 2016/06/20 00:00:47 dholland Ex
 #include <sys/kauth.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
+#include <sys/timevar.h>
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_accessors.h>
@@ -629,6 +630,15 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 		goto out_il;
 	
 	lfsquota2_ulfs_rwq2e(q2ep, &q2e, needswap);
+	/*
+	 * Reset time limit if previously had no soft limit or were
+	 * under it, but now have a soft limit and are over it.
+	 */
+	if (val->qv_softlimit &&
+	    q2e.q2e_val[key->qk_objtype].q2v_cur >= val->qv_softlimit &&
+	    (q2e.q2e_val[key->qk_objtype].q2v_softlimit == 0 ||
+	     q2e.q2e_val[key->qk_objtype].q2v_cur < q2e.q2e_val[key->qk_objtype].q2v_softlimit))
+		q2e.q2e_val[key->qk_objtype].q2v_time = time_second + val->qv_grace;
 	quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 	lfsquota2_ulfs_rwq2e(&q2e, q2ep, needswap);
 	quota2_bwrite(ump->um_mountp, bp);
