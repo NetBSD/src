@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.57 2014/08/25 20:40:53 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.58 2016/06/20 08:12:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.57 2014/08/25 20:40:53 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.58 2016/06/20 08:12:25 martin Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -202,6 +202,7 @@ static const long reloc_target_bitmask[] = {
 #define	MOV17	0x9e106000	/*	or	%g1, 0, %o7 */
 #define	CALL	0x40000000	/*	call	0 */
 #define	SLLX	0x83287000	/*	sllx	%g1, 0, %g1 */
+#define	NEG	0x82200001	/*	neg	%g1 */
 #define	SETHIG5	0x0b000000	/*	sethi	%hi(0), %g5 */
 #define	ORG5	0x82104005	/*	or	%g1, %g5, %g1 */
 
@@ -662,7 +663,7 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *	nop
 		 *
 		 */
-		where[1] = BAA | ((offset >> 2) & 0x3fffff);
+		where[1] = BAA | ((offset >> 2) & 0x7ffff);
 		__asm volatile("iflush %0+4" : : "r" (where));
 	} else if (value < (1L<<32)) {
 		/* 
@@ -708,7 +709,8 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset <= (1L<<32) && (Elf_SOff)offset >= -((1L<<32) - 4)) {
+	} else if ((offset+8) <= (1L<<31) &&
+	    (Elf_SOff)(offset+8) >= -((1L<<31) - 4)) {
 		/* 
 		 * We're within 32-bits -- we can use a direct call insn 
 		 *
@@ -724,14 +726,15 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *	nop
 		 *
 		 */
+		offset += 8;	/* call is at where[2], 8 byte further */
 		where[3] = MOV17;
-		where[2] = CALL	  | ((offset >> 4) & 0x3fffffff);
+		where[2] = CALL	  | ((-offset >> 2) & 0x3fffffff);
 		where[1] = MOV71;
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if (offset < (1L<<44)) {
+	} else if ((Elf_SOff)value > 0 && value < (1L<<44)) {
 		/* 
 		 * We're within 44 bits.  We can generate this pattern:
 		 *
@@ -747,35 +750,38 @@ _rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rela *rela,
 		 *	nop
 		 *
 		 */
-		where[4] = JMP   | LOVAL(offset, 0);
+		where[4] = JMP   | LOVAL(value, 0);
 		where[3] = SLLX  | 12;
-		where[2] = OR    | (((offset) >> 12) & 0x00001fff);
-		where[1] = SETHI | HIVAL(offset, 22);
+		where[2] = OR    | (((value) >> 12) & 0x00001fff);
+		where[1] = SETHI | HIVAL(value, 22);
 		__asm volatile("iflush %0+16" : : "r" (where));
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
 		__asm volatile("iflush %0+4" : : "r" (where));
 
-	} else if ((Elf_SOff)offset < 0 && (Elf_SOff)offset > -(1L<<44)) {
-		/* 
-		 * We're within 44 bits.  We can generate this pattern:
+	} else if ((Elf_SOff)value < 0 && (Elf_SOff)value > -(1L<<44)) {
+		/*
+		 *  We're within 44 bits.  We can generate this pattern:
 		 *
 		 * The resulting code in the jump slot is:
 		 *
 		 *	sethi	%hi(. - .PLT0), %g1
-		 *	sethi	%h44(-addr), %g1
-		 *	xor	%g1, %m44(-addr), %g1
-		 *	sllx	%g1, 12, %g1	
-		 *	jmp	%g1+%l44(addr)	
-		 *	nop
+		 *	sethi	%hi((-addr)>>12), %g1
+		 *	or	%g1, %lo((-addr)>>12), %g1
+		 *	neg	%g1
+		 *	sllx	%g1, 12, %g1
+		 *	jmp	%g1+(addr&0x0fff)
 		 *	nop
 		 *	nop
 		 *
 		 */
-		where[4] = JMP   | LOVAL(offset, 0);
-		where[3] = SLLX  | 12;
-		where[2] = XOR   | (((~offset) >> 12) & 0x00001fff);
-		where[1] = SETHI | HIVAL(~offset, 22);
+		Elf_Addr neg = (~value+1)>>12;
+		where[5] = JMP   | (value & 0x0fff);
+		where[4] = SLLX  | 12;
+		where[3] = NEG;
+		where[2] = OR    | (LOVAL(neg, 0)+1);
+		where[1] = SETHI | HIVAL(neg, 10);
+		__asm volatile("iflush %0+20" : : "r" (where));
 		__asm volatile("iflush %0+16" : : "r" (where));
 		__asm volatile("iflush %0+12" : : "r" (where));
 		__asm volatile("iflush %0+8" : : "r" (where));
