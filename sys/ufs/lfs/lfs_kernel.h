@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kernel.h,v 1.2 2015/08/12 18:24:14 dholland Exp $	*/
+/*	$NetBSD: lfs_kernel.h,v 1.3 2016/06/20 03:29:52 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp  */
 
@@ -81,7 +81,7 @@ struct lfs_cluster {
 #define LFS_CL_MALLOC	0x00000001
 #define LFS_CL_SHIFT	0x00000002
 #define LFS_CL_SYNC	0x00000004
-	u_int32_t flags;       /* Flags */
+	uint32_t flags;        /* Flags */
 	struct lfs *fs;	       /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
 };
