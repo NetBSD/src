@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.433 2016/06/09 00:17:45 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.434 2016/06/20 19:14:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.433 2016/06/09 00:17:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.434 2016/06/20 19:14:35 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -916,11 +916,12 @@ execve_free_data(struct execve_data *data)
 }
 
 static void
-pathexec(struct exec_package *epp, struct proc *p, const char *pathstring)
+pathexec(struct exec_package *epp, struct lwp *l, const char *pathstring)
 {
 	const char		*commandname;
 	size_t			commandlen;
 	char			*path;
+	struct proc 		*p = l->l_proc;
 
 	/* set command name & other accounting info */
 	commandname = strrchr(epp->ep_resolvedname, '/');
@@ -939,12 +940,31 @@ pathexec(struct exec_package *epp, struct proc *p, const char *pathstring)
 	 * This handles the majority of the cases.
 	 * In the future perhaps we could canonicalize it?
 	 */
+	path = PNBUF_GET();
 	if (pathstring[0] == '/') {
-		path = PNBUF_GET();
 		(void)strlcpy(path, pathstring, MAXPATHLEN);
 		epp->ep_path = path;
-	} else
-		epp->ep_path = NULL;
+	}
+#ifdef notyet
+	/*
+	 * Although this works most of the time [since the entry was just
+	 * entered in the cache] we don't use it because it will fail for
+	 * entries that are not placed in the cache because their name is
+	 * longer than NCHNAMLEN and it is not the cleanest interface,
+	 * because there could be races. When the namei cache is re-written,
+	 * this can be changed to use the appropriate function.
+	 */
+	else if (!(error = vnode_to_path(path, MAXPATHLEN, p->p_textvp, l, p)))
+		epp->ep_path = path;
+#endif
+	else {
+#ifdef notyet
+		printf("Cannot get path for pid %d [%s] (error %d)\n",
+		    (int)p->p_pid, p->p_comm, error);
+#endif
+		PNBUF_PUT(path);
+ 		epp->ep_path = NULL;
+	}
 }
 
 /* XXX elsewhere */
@@ -1165,7 +1185,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (error != 0)
 		goto exec_abort;
 
-	pathexec(epp, p, data->ed_pathstring);
+	pathexec(epp, l, data->ed_pathstring);
 
 	char * const newstack = STACK_GROW(vm->vm_minsaddr, epp->ep_ssize);
 
