@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.210 2016/06/20 08:18:59 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.211 2016/06/20 08:24:36 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -404,6 +404,26 @@ if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
 		ret = (*cifp->if_output)(ifp, m, dst, rt);
 		KERNEL_UNLOCK_ONE(NULL);
 		return ret;
+	}
+}
+
+static inline bool
+if_start_is_mpsafe(struct ifnet *ifp)
+{
+
+	return ((ifp->if_extflags & IFEF_START_MPSAFE) != 0);
+}
+
+static inline void
+if_start_lock(struct ifnet *ifp)
+{
+
+	if (if_start_is_mpsafe(ifp)) {
+		(*ifp->if_start)(ifp);
+	} else {
+		KERNEL_LOCK(1, NULL);
+		(*ifp->if_start)(ifp);
+		KERNEL_UNLOCK_ONE(NULL);
 	}
 }
 #endif /* _KERNEL */
