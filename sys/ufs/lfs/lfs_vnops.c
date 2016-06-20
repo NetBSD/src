@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.298 2016/06/20 02:25:03 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.299 2016/06/20 02:31:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.298 2016/06/20 02:25:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.299 2016/06/20 02:31:47 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,6 +177,10 @@ static int lfs_getextattr(void *v);
 static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
+
+static int ulfs_makeinode(struct vattr *vap, struct vnode *,
+		      const struct ulfs_lookup_results *,
+		      struct vnode **, struct componentname *);
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -350,6 +354,75 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
 #define	LFS_READWRITE
 #include <ufs/lfs/ulfs_readwrite.c>
 #undef	LFS_READWRITE
+
+/*
+ * Allocate a new inode.
+ */
+static int
+ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
+	const struct ulfs_lookup_results *ulr,
+	struct vnode **vpp, struct componentname *cnp)
+{
+	struct inode	*ip;
+	struct vnode	*tvp;
+	int		error;
+
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	if (error)
+		return error;
+	error = vn_lock(tvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tvp);
+		return error;
+	}
+	lfs_mark_vnode(tvp);
+	*vpp = tvp;
+	ip = VTOI(tvp);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+	ip->i_nlink = 1;
+	DIP_ASSIGN(ip, nlink, 1);
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
+		if (error) {
+			ip->i_mode &= ~ISGID;
+			DIP_ASSIGN(ip, mode, ip->i_mode);
+		}
+	}
+
+	if (cnp->cn_flags & ISWHITEOUT) {
+		ip->i_flags |= UF_OPAQUE;
+		DIP_ASSIGN(ip, flags, ip->i_flags);
+	}
+
+	/*
+	 * Make sure inode goes to disk before directory entry.
+	 */
+	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+		goto bad;
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
+	if (error)
+		goto bad;
+	*vpp = tvp;
+	return (0);
+
+ bad:
+	/*
+	 * Write error occurred trying to update the inode
+	 * or the directory so must deallocate the inode.
+	 */
+	ip->i_nlink = 0;
+	DIP_ASSIGN(ip, nlink, 0);
+	ip->i_flag |= IN_CHANGE;
+	/* If IN_ADIROP, account for it */
+	lfs_unmark_vnode(tvp);
+	vput(tvp);
+	return (error);
+}
 
 /*
  * Synch an open file.
@@ -2297,3 +2370,4 @@ lfs_deleteextattr(void *v)
 	/* XXX Not implemented for ULFS2 file systems. */
 	return (EOPNOTSUPP);
 }
+
