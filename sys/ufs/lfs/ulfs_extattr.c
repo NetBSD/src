@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.8 2016/06/19 23:06:09 dholland Exp $	*/
-/*  from NetBSD: ufs_extattr.c,v 1.42 2013/06/09 17:57:09 dholland Exp  */
+/*	$NetBSD: ulfs_extattr.c,v 1.9 2016/06/20 00:00:47 dholland Exp $	*/
+/*  from NetBSD: ufs_extattr.c,v 1.43 2014/02/07 15:29:23 hannken Exp  */
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.8 2016/06/19 23:06:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.9 2016/06/20 00:00:47 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
