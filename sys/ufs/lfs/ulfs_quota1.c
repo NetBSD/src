@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.9 2015/07/26 08:33:53 hannken Exp $	*/
-/*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
+/*	$NetBSD: ulfs_quota1.c,v 1.10 2016/06/20 00:00:47 dholland Exp $	*/
+/*  from NetBSD: ufs_quota1.c,v 1.20 2014/05/24 16:34:04 christos Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.9 2015/07/26 08:33:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.10 2016/06/20 00:00:47 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
