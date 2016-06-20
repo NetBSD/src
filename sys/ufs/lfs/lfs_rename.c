@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.19 2016/06/20 01:20:01 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.20 2016/06/20 02:05:25 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.11 2014/05/25 13:45:39 hannken Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.19 2016/06/20 01:20:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.20 2016/06/20 02:05:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,7 +697,7 @@ ulfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		}
 
 		/* Neither -- keep ascending the family tree.  */
-		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_no), &dvp);
+		error = vcache_get(mp, &dotdot_ino, sizeof(dotdot_ino), &dvp);
 		vput(vp);
 		if (error)
 			return error;
