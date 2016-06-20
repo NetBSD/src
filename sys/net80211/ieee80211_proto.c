@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.31 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.32 2016/06/20 08:30:59 knakahara Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.31 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.32 2016/06/20 08:30:59 knakahara Exp $");
 #endif
 
 /*
@@ -1121,7 +1121,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 			if (ic->ic_opmode == IEEE80211_M_STA)
 				ieee80211_notify_node_join(ic, ni, 
 					arg == IEEE80211_FC0_SUBTYPE_ASSOC_RESP);
-			(*ifp->if_start)(ifp);	/* XXX not authorized yet */
+			if_start_lock(ifp);	/* XXX not authorized yet */
 			break;
 		}
 		/*
