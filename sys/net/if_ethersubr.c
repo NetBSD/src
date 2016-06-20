@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.223 2016/06/16 03:03:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.224 2016/06/20 07:01:45 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.223 2016/06/16 03:03:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.224 2016/06/20 07:01:45 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -204,9 +204,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
 
-#ifndef NET_MPSAFE
-	KASSERT(KERNEL_LOCKED_P());
-#endif
+	KASSERT(ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -238,13 +236,17 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
+		KERNEL_LOCK(1, NULL);
 		if (m->m_flags & M_BCAST)
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
-		    sizeof(edst))) != 0)
+		    sizeof(edst))) != 0) {
+			KERNEL_UNLOCK_ONE(NULL);
 			return error == EWOULDBLOCK ? 0 : error;
+		}
+		KERNEL_UNLOCK_ONE(NULL);
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -292,10 +294,12 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 #ifdef NETATALK
     case AF_APPLETALK:
+		KERNEL_LOCK(1, NULL);
 		if (aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */
+			KERNEL_UNLOCK_ONE(NULL);
 			return (0);
 		}
 		/*
@@ -303,8 +307,10 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		 */
 		aa = (struct at_ifaddr *) at_ifawithnet(
 		    (const struct sockaddr_at *)dst, ifp);
-		if (aa == NULL)
+		if (aa == NULL) {
+		    KERNEL_UNLOCK_ONE(NULL);
 		    goto bad;
+		}
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
@@ -325,6 +331,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 #endif /* NETATALK */
 	case pseudo_AF_HDRCMPLT:
@@ -349,6 +356,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	}
 
 #ifdef MPLS
+	KERNEL_LOCK(1, NULL);
 	{
 		struct m_tag *mtag;
 		mtag = m_tag_find(m, PACKET_TAG_MPLS, NULL);
@@ -358,6 +366,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			m_tag_delete(m, mtag);
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 #endif
 
 	if (mcopy)
@@ -410,6 +419,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif /* NCARP > 0 */
 
 #ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the parent interface, do
 	 * classification; the queueing discipline might not
@@ -418,6 +428,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 */
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		altq_etherclassify(&ifp->if_snd, m);
+	KERNEL_UNLOCK_ONE(NULL);
 #endif
 	return ifq_enqueue(ifp, m);
 
@@ -910,6 +921,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
+	ifp->if_extflags |= IFEF_OUTPUT_MPSAFE;
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
