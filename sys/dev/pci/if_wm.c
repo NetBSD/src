@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.414 2016/06/14 17:09:20 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.415 2016/06/20 08:34:59 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.414 2016/06/14 17:09:20 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.415 2016/06/20 08:34:59 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2407,6 +2407,7 @@ alloc_retry:
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
@@ -6080,6 +6081,8 @@ wm_start(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
 	mutex_enter(txq->txq_lock);
 	if (!sc->sc_stopping)
 		wm_start_locked(ifp);
@@ -6596,6 +6599,8 @@ wm_nq_start(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
+
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
 
 	mutex_enter(txq->txq_lock);
 	if (!sc->sc_stopping)
