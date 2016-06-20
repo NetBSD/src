@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.147 2016/05/11 05:12:57 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.148 2016/06/20 10:02:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.147 2016/05/11 05:12:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.148 2016/06/20 10:02:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2472,11 +2472,11 @@ pci_conf_print_pwrbdgt_base_power(uint8_t reg)
 
 	switch (reg) {
 	case 0xf0:
-		return "250W";
+		return "239W < x <= 250W";
 	case 0xf1:
-		return "275W";
+		return "250W < x <= 275W";
 	case 0xf2:
-		return "300W";
+		return "275W < x <= 300W";
 	default:
 		return "Unknown";
 	}
