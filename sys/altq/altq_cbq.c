@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.29 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.30 2016/06/20 08:30:58 knakahara Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.29 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.30 2016/06/20 08:30:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -592,7 +592,7 @@ cbqrestart(struct ifaltq *ifq)
 	ifp = ifq->altq_ifp;
 	if (ifp->if_start &&
 	    cbqp->cbq_qlen > 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 }
 
 static void
