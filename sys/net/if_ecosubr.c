@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.47 2016/06/20 06:46:37 knakahara Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.48 2016/06/20 08:30:58 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.47 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.48 2016/06/20 08:30:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -782,7 +782,7 @@ eco_inputidle(struct ifnet *ifp)
 		break;
 	}
 	ec->ec_state = ECO_IDLE;
-	ifp->if_start(ifp);
+	if_start_lock(ifp);
 }
 
 /*

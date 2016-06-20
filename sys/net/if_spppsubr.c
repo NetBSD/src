@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.142 2016/06/10 13:27:16 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.143 2016/06/20 08:30:59 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.142 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.143 2016/06/20 08:30:59 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -832,7 +832,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * framing according to RFC 1333.
 		 */
 		if (!(ifp->if_flags & IFF_OACTIVE))
-			(*ifp->if_start)(ifp);
+			if_start_lock(ifp);
 		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 	}
 	splx(s);
@@ -1214,7 +1214,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -1279,7 +1279,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -4715,7 +4715,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
