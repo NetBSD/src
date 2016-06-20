@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.108 2016/06/10 13:31:44 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.109 2016/06/20 06:46:37 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.108 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.109 2016/06/20 06:46:37 knakahara Exp $");
 
 #include "pppoe.h"
 
@@ -880,7 +880,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	sc->sc_sppp.pp_if.if_opackets++;
-	return sc->sc_eth_if->if_output(sc->sc_eth_if, m, &dst, NULL);
+	return if_output_lock(sc->sc_eth_if, sc->sc_eth_if, m, &dst, NULL);
 }
 
 static int
@@ -1377,7 +1377,7 @@ pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const uint8_t *dest)
 	memcpy(&eh->ether_dhost, dest, ETHER_ADDR_LEN);
 
 	m0->m_flags &= ~(M_BCAST|M_MCAST);
-	return outgoing_if->if_output(outgoing_if, m0, &dst, NULL);
+	return if_output_lock(outgoing_if, outgoing_if, m0, &dst, NULL);
 }
 
 #ifdef PPPOE_SERVER

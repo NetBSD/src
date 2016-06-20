@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.198 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.198 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -723,7 +723,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		mc = NULL;
 
 	s = splsoftnet();
-	error = (*ifp->if_output)(ifp, m, (struct sockaddr *) &dst, NULL);
+	error = if_output_lock(ifp, ifp, m, (struct sockaddr *) &dst, NULL);
 
 	if (mc != NULL) {
 		if (error == 0)

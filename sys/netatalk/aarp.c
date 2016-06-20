@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.36 2012/01/31 09:53:44 hauke Exp $	*/
+/*	$NetBSD: aarp.c,v 1.37 2016/06/20 06:46:38 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.36 2012/01/31 09:53:44 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.37 2016/06/20 06:46:38 knakahara Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -238,7 +238,7 @@ aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 
 	sa.sa_len = sizeof(struct sockaddr);
 	sa.sa_family = AF_UNSPEC;
-	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX NULL should be routing */
+	if_output_lock(ifp, ifp, m, &sa, NULL);	/* XXX NULL should be routing */
 						/* information */
 }
 
@@ -429,7 +429,7 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 			sat.sat_len = sizeof(struct sockaddr_at);
 			sat.sat_family = AF_APPLETALK;
 			sat.sat_addr = spa;
-			(*ifp->if_output)(ifp, aat->aat_hold,
+			if_output_lock(ifp, ifp, aat->aat_hold,
 			    (struct sockaddr *) & sat, NULL);	/* XXX */
 			aat->aat_hold = 0;
 		}

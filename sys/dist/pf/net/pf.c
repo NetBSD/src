@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: pf.c,v 1.74 2016/06/20 06:46:37 knakahara Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.73 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.74 2016/06/20 06:46:37 knakahara Exp $");
 
 #include "pflog.h"
 
@@ -5381,7 +5381,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			udpstat.udps_outhwcsum++;
 #endif /* !__NetBSD__ */
-		error = (*ifp->if_output)(ifp, m0, dst, NULL);
+		error = if_output_lock(ifp, ifp, m0, dst, NULL);
 		goto done;
 	}
 

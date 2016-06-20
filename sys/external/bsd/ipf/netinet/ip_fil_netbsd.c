@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.14 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.15 2016/06/20 06:46:37 knakahara Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.14 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.15 2016/06/20 06:46:37 knakahara Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1228,9 +1228,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 			ip->ip_sum = in_cksum(m, hlen);
 # endif /* M_CSUM_IPv4 */
 
-		KERNEL_LOCK(1, NULL);
-		error = (*ifp->if_output)(ifp, m, dst, rt);
-		KERNEL_UNLOCK_ONE(NULL);
+		error = if_output_lock(ifp, ifp, m, dst, rt);
 		goto done;
 	}
 

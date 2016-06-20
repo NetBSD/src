@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.18 2016/01/20 21:59:19 riastradh Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.19 2016/06/20 06:46:38 knakahara Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.18 2016/01/20 21:59:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.19 2016/06/20 06:46:38 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,5 +203,5 @@ ddp_route(struct mbuf *m, struct route *ro)
 #endif
 		looutput(lo0ifp, copym, rtcache_getdst(ro), NULL);
 	}
-	return (*ifp->if_output)(ifp, m, (struct sockaddr *)&gate, NULL);
+	return if_output_lock(ifp, ifp, m, (struct sockaddr *)&gate, NULL);
 }

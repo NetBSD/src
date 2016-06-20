@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.60 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.61 2016/06/20 06:46:37 knakahara Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.60 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.61 2016/06/20 06:46:37 knakahara Exp $");
 
 #include "ppp.h"
 
@@ -425,7 +425,7 @@ pppwrite(struct tty *tp, struct uio *uio, int flag)
     dst.sa_family = AF_UNSPEC;
     bcopy(mtod(m0, u_char *), dst.sa_data, PPP_HDRLEN);
     m_adj(m0, PPP_HDRLEN);
-    return ((*sc->sc_if.if_output)(&sc->sc_if, m0, &dst, (struct rtentry *)0));
+    return if_output_lock(&sc->sc_if, &sc->sc_if, m0, &dst, (struct rtentry *)0);
 }
 
 /*
