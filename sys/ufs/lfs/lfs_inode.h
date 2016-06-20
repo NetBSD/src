@@ -1,6 +1,6 @@
-/*	$NetBSD: lfs_inode.h,v 1.12 2016/06/19 23:06:09 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.13 2016/06/20 00:18:40 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
-/*  from NetBSD: inode.h,v 1.65 2013/06/09 17:55:46 dholland Exp  */
+/*  from NetBSD: inode.h,v 1.66 2014/05/08 08:21:53 hannken Exp  */
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -103,7 +103,6 @@ struct lfs_inode_ext;
  */
 struct inode {
 	struct genfs_node i_gnode;
-	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	TAILQ_ENTRY(inode) i_nextsnap; /* snapshot file list. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct  ulfsmount *i_ump; /* Mount point associated with this inode. */
