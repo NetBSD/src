@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_extern.h,v 1.23 2016/06/20 02:31:47 dholland Exp $	*/
-/*  from NetBSD: ufs_extern.h,v 1.78 2015/03/17 09:39:29 hannken Exp   */
+/*	$NetBSD: ulfs_extern.h,v 1.24 2016/06/20 03:36:09 dholland Exp $	*/
+/*  from NetBSD: ufs_extern.h,v 1.79 2015/03/27 17:27:56 riastradh Exp   */
 
 /*-
  * Copyright (c) 1991, 1993, 1994

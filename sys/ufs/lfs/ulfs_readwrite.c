@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.21 2016/06/19 23:06:09 dholland Exp $	*/
-/*  from NetBSD: ufs_readwrite.c,v 1.107 2013/06/23 07:28:37 dholland Exp  */
+/*	$NetBSD: ulfs_readwrite.c,v 1.22 2016/06/20 03:36:09 dholland Exp $	*/
+/*  from NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp  */
 
 /*-
  * Copyright (c) 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.21 2016/06/19 23:06:09 dholland Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.22 2016/06/20 03:36:09 dholland Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
