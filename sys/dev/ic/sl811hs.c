@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.84 2016/06/20 07:13:07 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.85 2016/06/20 14:18:30 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.84 2016/06/20 07:13:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.85 2016/06/20 14:18:30 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1537,7 +1537,7 @@ slhci_intr(void *arg)
 	return ret;
 }
 
-/* called with main lock only held, returns with locks released. */
+/* called with interrupt lock only held. */
 void
 slhci_main(struct slhci_softc *sc)
 {
