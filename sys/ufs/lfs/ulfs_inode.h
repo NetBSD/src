@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_inode.h,v 1.19 2016/06/20 01:05:36 dholland Exp $	*/
-/*  from NetBSD: inode.h,v 1.67 2014/05/14 13:46:19 martin Exp  */
+/*	$NetBSD: ulfs_inode.h,v 1.20 2016/06/20 02:25:03 dholland Exp $	*/
+/*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
 /*
  * Copyright (c) 1982, 1989, 1993
