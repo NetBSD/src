@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.207 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.208 2016/06/20 06:35:05 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ typedef struct ifnet {
 	u_short	if_index;		/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
 	short	if_flags;		/* up/down, broadcast, etc. */
-	short	if__pad1;		/* be nice to m68k ports */
+	short	if_extflags;		/* if_output MP-safe, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
@@ -255,7 +255,7 @@ typedef struct ifnet {
 		    (struct ifnet *, struct mbuf *);
 	void	(*if_start)		/* initiate output routine */
 		    (struct ifnet *);
-	int	(*if_transmit)		/* output routine (direct) */
+	int	(*if_transmit)		/* output routine, must be MP-safe */
 		    (struct ifnet *, struct mbuf *);
 	int	(*if_ioctl)		/* ioctl routine */
 		    (struct ifnet *, u_long, void *);
@@ -378,6 +378,9 @@ typedef struct ifnet {
 #define	IFF_LINK1	0x2000		/* per link layer defined bit */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
+
+#define	IFEF_OUTPUT_MPSAFE	0x0001	/* if_output() can run parallel */
+#define	IFEF_START_MPSAFE	0x0002	/* if_start() can run parallel */
 
 #define	IFFBITS \
     "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
