@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.342 2016/06/20 06:41:30 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.343 2016/06/20 08:30:58 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.342 2016/06/20 06:41:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.343 2016/06/20 08:30:58 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2787,7 +2787,7 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_omcasts++;
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 out:
 	splx(s);
 
