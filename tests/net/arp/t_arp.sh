@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.15 2016/04/18 02:27:34 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.16 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,65 +39,65 @@ IP4DST_PROXYARP2=10.0.1.4
 DEBUG=false
 TIMEOUT=1
 
-atf_test_case cache_expiration_5s cleanup
-atf_test_case cache_expiration_10s cleanup
-atf_test_case command cleanup
-atf_test_case garp cleanup
-atf_test_case cache_overwriting cleanup
-atf_test_case proxy_arp_pub cleanup
-atf_test_case proxy_arp_pubproxy cleanup
-atf_test_case link_activation cleanup
-atf_test_case static_arp cleanup
+atf_test_case arp_cache_expiration_5s cleanup
+atf_test_case arp_cache_expiration_10s cleanup
+atf_test_case arp_command cleanup
+atf_test_case arp_garp cleanup
+atf_test_case arp_cache_overwriting cleanup
+atf_test_case arp_proxy_arp_pub cleanup
+atf_test_case arp_proxy_arp_pubproxy cleanup
+atf_test_case arp_link_activation cleanup
+atf_test_case arp_static cleanup
 
-cache_expiration_5s_head()
+arp_cache_expiration_5s_head()
 {
 	atf_set "descr" "Tests for ARP cache expiration (5s)"
 	atf_set "require.progs" "rump_server"
 }
 
-cache_expiration_10s_head()
+arp_cache_expiration_10s_head()
 {
 	atf_set "descr" "Tests for ARP cache expiration (10s)"
 	atf_set "require.progs" "rump_server"
 }
 
-command_head()
+arp_command_head()
 {
-	atf_set "descr" "Tests for commands of arp(8)"
+	atf_set "descr" "Tests for arp_commands of arp(8)"
 	atf_set "require.progs" "rump_server"
 }
 
-garp_head()
+arp_garp_head()
 {
 	atf_set "descr" "Tests for GARP"
 	atf_set "require.progs" "rump_server"
 }
 
-cache_overwriting_head()
+arp_cache_overwriting_head()
 {
 	atf_set "descr" "Tests for behavior of overwriting ARP caches"
 	atf_set "require.progs" "rump_server"
 }
 
-proxy_arp_pub_head()
+arp_proxy_arp_pub_head()
 {
 	atf_set "descr" "Tests for Proxy ARP (pub)"
 	atf_set "require.progs" "rump_server"
 }
 
-proxy_arp_pubproxy_head()
+arp_proxy_arp_pubproxy_head()
 {
 	atf_set "descr" "Tests for Proxy ARP (pub proxy)"
 	atf_set "require.progs" "rump_server"
 }
 
-link_activation_head()
+arp_link_activation_head()
 {
 	atf_set "descr" "Tests for activating a new MAC address"
 	atf_set "require.progs" "rump_server"
 }
 
-static_arp_head()
+arp_static_head()
 {
 
 	atf_set "descr" "Tests for static ARP entries"
@@ -170,17 +170,17 @@ test_cache_expiration()
 	atf_check -s not-exit:0 -e ignore rump.arp -n $IP4DST
 }
 
-cache_expiration_5s_body()
+arp_cache_expiration_5s_body()
 {
 	test_cache_expiration 5
 }
 
-cache_expiration_10s_body()
+arp_cache_expiration_10s_body()
 {
 	test_cache_expiration 10
 }
 
-command_body()
+arp_command_body()
 {
 	local arp_keep=5
 	local bonus=2
@@ -269,7 +269,7 @@ make_pkt_str_arpreq()
 	echo $pkt
 }
 
-garp_body()
+arp_garp_body()
 {
 	local pkt=
 
@@ -306,7 +306,7 @@ garp_body()
 	atf_check -s not-exit:0 -x "cat ./out |grep -q '$pkt'"
 }
 
-cache_overwriting_body()
+arp_cache_overwriting_body()
 {
 	local arp_keep=5
 	local bonus=2
@@ -478,19 +478,19 @@ test_proxy_arp()
 	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 $IP4DST_PROXYARP2
 }
 
-proxy_arp_pub_body()
+arp_proxy_arp_pub_body()
 {
 
 	test_proxy_arp pub
 }
 
-proxy_arp_pubproxy_body()
+arp_proxy_arp_pubproxy_body()
 {
 
 	test_proxy_arp pubproxy
 }
 
-link_activation_body()
+arp_link_activation_body()
 {
 	local arp_keep=5
 	local bonus=2
@@ -528,7 +528,7 @@ link_activation_body()
 	    "cat ./out |grep '$pkt' |grep -q 'b2:a1:00:00:00:02'"
 }
 
-static_arp_body()
+arp_static_body()
 {
 	local arp_keep=5
 	local macaddr_src=
@@ -584,56 +584,56 @@ dump()
 	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
 }
 
-cache_expiration_5s_cleanup()
+arp_cache_expiration_5s_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-cache_expiration_10s_cleanup()
+arp_cache_expiration_10s_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-command_cleanup()
+arp_command_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-garp_cleanup()
+arp_garp_cleanup()
 {
 	$DEBUG && dump_src
 	$DEBUG && shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r -
 	env RUMP_SERVER=$SOCKSRC rump.halt
 }
 
-cache_overwriting_cleanup()
+arp_cache_overwriting_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-proxy_arp_pub_cleanup()
+arp_proxy_arp_pub_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-proxy_arp_pubproxy_cleanup()
+arp_proxy_arp_pubproxy_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-link_activation_cleanup()
+arp_link_activation_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-static_arp_cleanup()
+arp_static_cleanup()
 {
 	$DEBUG && dump
 	cleanup
@@ -641,13 +641,13 @@ static_arp_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case cache_expiration_5s
-	atf_add_test_case cache_expiration_10s
-	atf_add_test_case command
-	atf_add_test_case garp
-	atf_add_test_case cache_overwriting
-	atf_add_test_case proxy_arp_pub
-	atf_add_test_case proxy_arp_pubproxy
-	atf_add_test_case link_activation
-	atf_add_test_case static_arp
+	atf_add_test_case arp_cache_expiration_5s
+	atf_add_test_case arp_cache_expiration_10s
+	atf_add_test_case arp_command
+	atf_add_test_case arp_garp
+	atf_add_test_case arp_cache_overwriting
+	atf_add_test_case arp_proxy_arp_pub
+	atf_add_test_case arp_proxy_arp_pubproxy
+	atf_add_test_case arp_link_activation
+	atf_add_test_case arp_static
 }

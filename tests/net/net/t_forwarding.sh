@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.12 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.13 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,25 +46,25 @@ HTML_FILE=index.html
 DEBUG=false
 TIMEOUT=5
 
-atf_test_case basic cleanup
-atf_test_case basic6 cleanup
-atf_test_case fastforward cleanup
-atf_test_case fastforward6 cleanup
-atf_test_case misc cleanup
+atf_test_case ipforwarding_v4 cleanup
+atf_test_case ipforwarding_v6 cleanup
+atf_test_case ipforwarding_fastforward_v4 cleanup
+atf_test_case ipforwarding_fastforward_v6 cleanup
+atf_test_case ipforwarding_misc cleanup
 
-basic_head()
+ipforwarding_v4_head()
 {
 	atf_set "descr" "Does IPv4 forwarding tests"
 	atf_set "require.progs" "rump_server"
 }
 
-basic6_head()
+ipforwarding_v6_head()
 {
 	atf_set "descr" "Does IPv6 forwarding tests"
 	atf_set "require.progs" "rump_server"
 }
 
-misc_head()
+ipforwarding_misc_head()
 {
 	atf_set "descr" "Does IPv4 forwarding tests"
 	atf_set "require.progs" "rump_server"
@@ -427,7 +427,7 @@ test_hoplimit()
 	$DEBUG && rump.ifconfig -v shmif0
 }
 
-basic_body()
+ipforwarding_v4_body()
 {
 	setup
 	test_setup
@@ -441,7 +441,7 @@ basic_body()
 	test_ping_failure
 }
 
-basic6_body()
+ipforwarding_v6_body()
 {
 	setup6
 	test_setup6
@@ -456,7 +456,7 @@ basic6_body()
 	test_ping6_failure
 }
 
-fastforward_body()
+ipforwarding_fastforward_v4_body()
 {
 	setup
 	test_setup
@@ -468,7 +468,7 @@ fastforward_body()
 	test_http_get $IP4DST
 }
 
-fastforward6_body()
+ipforwarding_fastforward_v6_body()
 {
 	setup6
 	test_setup6
@@ -480,7 +480,7 @@ fastforward6_body()
 	test_http_get "[$IP6DST]"
 }
 
-misc_body()
+ipforwarding_misc_body()
 {
 	setup
 	test_setup
@@ -498,33 +498,33 @@ misc_body()
 	return 0
 }
 
-basic_cleanup()
+ipforwarding_v4_cleanup()
 {
 	dump
 	cleanup
 }
 
-basic6_cleanup()
+ipforwarding_v6_cleanup()
 {
 	dump
 	cleanup
 }
 
-fastforward_cleanup()
-{
-	dump
-	cleanup_bozo
-	cleanup
-}
-
-fastforward6_cleanup()
+ipforwarding_fastforward_v4_cleanup()
 {
 	dump
 	cleanup_bozo
 	cleanup
 }
 
-misc_cleanup()
+ipforwarding_fastforward_v6_cleanup()
+{
+	dump
+	cleanup_bozo
+	cleanup
+}
+
+ipforwarding_misc_cleanup()
 {
 	dump
 	cleanup_bozo
@@ -533,9 +533,9 @@ misc_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case basic
-	atf_add_test_case basic6
-	atf_add_test_case fastforward
-	atf_add_test_case fastforward6
-	atf_add_test_case misc
+	atf_add_test_case ipforwarding_v4
+	atf_add_test_case ipforwarding_v6
+	atf_add_test_case ipforwarding_fastforward_v4
+	atf_add_test_case ipforwarding_fastforward_v6
+	atf_add_test_case ipforwarding_misc
 }

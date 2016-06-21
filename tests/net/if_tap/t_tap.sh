@@ -1,4 +1,4 @@
-#	$NetBSD: t_tap.sh,v 1.1 2016/03/04 02:44:45 ozaki-r Exp $
+#	$NetBSD: t_tap.sh,v 1.2 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,15 +42,15 @@ IP6_REMOTE=fc00::3
 DEBUG=false
 TIMEOUT=1
 
-atf_test_case create_destroy cleanup
-create_destroy_head()
+atf_test_case tap_create_destroy cleanup
+tap_create_destroy_head()
 {
 
 	atf_set "descr" "tests of creation and deletion of tap interface"
 	atf_set "require.progs" "rump_server"
 }
 
-create_destroy_body()
+tap_create_destroy_body()
 {
 
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_LOCAL}
@@ -74,21 +74,21 @@ create_destroy_body()
 	atf_check -s exit:0 rump.ifconfig tap0 destroy
 }
 
-create_destroy_cleanup()
+tap_create_destroy_cleanup()
 {
 
 	RUMP_SERVER=${SOCK_LOCAL} rump.halt
 }
 
-atf_test_case stand_alone cleanup
-create_destroy_head()
+atf_test_case tap_stand_alone cleanup
+tap_create_destroy_head()
 {
 
 	atf_set "descr" "tests of alone tap interface"
 	atf_set "require.progs" "rump_server"
 }
 
-stand_alone_body()
+tap_stand_alone_body()
 {
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_LOCAL}
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_REMOTE}
@@ -126,22 +126,22 @@ stand_alone_body()
 	    rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
 }
 
-stand_alone_cleanup()
+tap_stand_alone_cleanup()
 {
 
 	RUMP_SERVER=${SOCK_LOCAL} rump.halt
 	RUMP_SERVER=${SOCK_REMOTE} rump.halt
 }
 
-atf_test_case bridged cleanup
-bridged_head()
+atf_test_case tap_bridged cleanup
+tap_bridged_head()
 {
 
 	atf_set "descr" "tests of alone tap interface"
 	atf_set "require.progs" "rump_server"
 }
 
-bridged_body()
+tap_bridged_body()
 {
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_LOCAL}
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_REMOTE}
@@ -182,7 +182,7 @@ bridged_body()
 	atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 $IP6_TAP
 }
 
-bridged_cleanup()
+tap_bridged_cleanup()
 {
 
 	RUMP_SERVER=${SOCK_LOCAL} rump.halt
@@ -192,7 +192,7 @@ bridged_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case create_destroy
-	atf_add_test_case stand_alone
-	atf_add_test_case bridged
+	atf_add_test_case tap_create_destroy
+	atf_add_test_case tap_stand_alone
+	atf_add_test_case tap_bridged
 }
