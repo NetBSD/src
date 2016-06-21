@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.213 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.214 2016/06/21 10:25:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -952,7 +952,7 @@ struct	ifnet *if_get(const char *, struct psref *);
 ifnet_t *if_byindex(u_int);
 ifnet_t *if_get_byindex(u_int, struct psref *);
 void	if_put(const struct ifnet *, struct psref *);
-void	if_acquire_unsafe(struct ifnet *, struct psref *);
+void	if_acquire_NOMPSAFE(struct ifnet *, struct psref *);
 
 static inline if_index_t
 if_get_index(const struct ifnet *ifp)

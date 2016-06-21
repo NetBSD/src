@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.169 2016/06/21 10:21:04 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.170 2016/06/21 10:25:27 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.169 2016/06/21 10:21:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.170 2016/06/21 10:25:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ ip6_output(
 )
 {
 	struct ip6_hdr *ip6, *mhip6;
-	struct ifnet *ifp, *origifp;
+	struct ifnet *ifp, *origifp = NULL;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
 	bool tso;
@@ -185,6 +185,9 @@ ip6_output(
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
 #endif
+	struct psref psref, psref_ia;
+	int bound = curlwp_bind();
+	bool release_psref_ia = false;
 
 	memset(&ip6route, 0, sizeof(ip6route));
 
@@ -488,8 +491,9 @@ ip6_output(
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
+	ifp = NULL;
 	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
-	    &ifp, &rt, 0)) != 0) {
+	    &ifp, &psref, &rt, 0)) != 0) {
 		if (ifp != NULL)
 			in6_ifstat_inc(ifp, ifs6_out_discard);
 		goto bad;
@@ -522,9 +526,11 @@ ip6_output(
 	 * destination addresses.  We should use ia_ifp to support the
 	 * case of sending packets to an address of our own.
 	 */
-	if (ia != NULL && ia->ia_ifp)
+	if (ia != NULL && ia->ia_ifp) {
 		origifp = ia->ia_ifp;
-	else
+		if_acquire_NOMPSAFE(origifp, &psref_ia);
+		release_psref_ia = true;
+	} else
 		origifp = ifp;
 
 	src0 = ip6->ip6_src;
@@ -976,6 +982,10 @@ done:
 		KEY_FREESP(&sp);
 #endif /* IPSEC */
 
+	if_put(ifp, &psref);
+	if (release_psref_ia)
+		if_put(origifp, &psref_ia);
+	curlwp_bindx(bound);
 
 	return (error);
 
