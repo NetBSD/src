@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.168 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.169 2016/06/21 10:21:04 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.168 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.169 2016/06/21 10:21:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2782,7 +2782,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 #endif
 	case IPV6_PKTINFO:
 	{
-		struct ifnet *ifp = NULL;
 		struct in6_pktinfo *pktinfo;
 
 		if (len != sizeof(struct in6_pktinfo))
@@ -2810,9 +2809,14 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 
 		/* Validate the interface index if specified. */
 		if (pktinfo->ipi6_ifindex) {
+			struct ifnet *ifp;
+			int s = pserialize_read_enter();
 			ifp = if_byindex(pktinfo->ipi6_ifindex);
-			if (ifp == NULL)
-				return (ENXIO);
+			if (ifp == NULL) {
+				pserialize_read_exit(s);
+				return ENXIO;
+			}
+			pserialize_read_exit(s);
 		}
 
 		/*
