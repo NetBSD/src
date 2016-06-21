@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.4 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.5 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -53,15 +53,15 @@ DEBUG=false
 TIMEOUT=1
 PING_OPTS="-n -c 1 -w $TIMEOUT"
 
-atf_test_case non_subnet_gateway cleanup
-non_subnet_gateway_head()
+atf_test_case route_non_subnet_gateway cleanup
+route_non_subnet_gateway_head()
 {
 
 	atf_set "descr" "tests of a gateway not on the local subnet"
 	atf_set "require.progs" "rump_server"
 }
 
-non_subnet_gateway_body()
+route_non_subnet_gateway_body()
 {
 
 	atf_check -s exit:0 rump_server ${RUMP_LIBS} ${SOCK_CLIENT}
@@ -107,7 +107,7 @@ non_subnet_gateway_body()
 	unset RUMP_SERVER
 }
 
-non_subnet_gateway_cleanup()
+route_non_subnet_gateway_cleanup()
 {
 
 	$DEBUG && shmif_dumpbus -p - $BUS 2>/dev/null | tcpdump -n -e -r -
@@ -115,16 +115,16 @@ non_subnet_gateway_cleanup()
 	env RUMP_SERVER=$SOCK_GW rump.halt
 }
 
-atf_test_case command_get cleanup
-atf_test_case command_get6 cleanup
-command_get_head()
+atf_test_case route_command_get cleanup
+atf_test_case route_command_get6 cleanup
+route_command_get_head()
 {
 
 	atf_set "descr" "tests of route get command"
 	atf_set "require.progs" "rump_server"
 }
 
-command_get6_head()
+route_command_get6_head()
 {
 
 	atf_set "descr" "tests of route get command (IPv6)"
@@ -373,7 +373,7 @@ destination: fc00:0:0:1::
 	atf_check -s exit:0 diff ./expect ./output
 }
 
-command_get_body()
+route_command_get_body()
 {
 
 	setup
@@ -381,7 +381,7 @@ command_get_body()
 	test_route_get
 }
 
-command_get6_body()
+route_command_get6_body()
 {
 
 	setup6
@@ -408,13 +408,13 @@ cleanup()
 	env RUMP_SERVER=$SOCKDST rump.halt
 }
 
-command_get_cleanup()
+route_command_get_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-command_get6_cleanup()
+route_command_get6_cleanup()
 {
 	dump
 	cleanup
@@ -423,7 +423,7 @@ command_get6_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case non_subnet_gateway
-	atf_add_test_case command_get
-	atf_add_test_case command_get6
+	atf_add_test_case route_non_subnet_gateway
+	atf_add_test_case route_command_get
+	atf_add_test_case route_command_get6
 }
