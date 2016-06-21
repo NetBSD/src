@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.434 2016/06/14 03:34:01 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.435 2016/06/21 11:37:25 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.434 $"
+#ident 		"GENERIC-$Revision: 1.435 $"
 
 maxusers	64		# estimated number of users
 
@@ -319,6 +319,7 @@ joy*		at acpi?		# Joystick/Game port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
+sdhc*		at acpi?		# SD Host Controller
 sony*		at acpi?		# Sony Notebook Controller
 spic*		at acpi?		# Sony Programmable I/O Controller
 wsmouse*	at spic?		# mouse
