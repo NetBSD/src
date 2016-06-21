@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.9 2016/04/28 01:20:31 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.10 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,15 +33,15 @@ RUMP_FLAGS=\
 
 TIMEOUT=3
 
-atf_test_case create_destroy cleanup
-create_destroy_head()
+atf_test_case ifconfig_create_destroy cleanup
+ifconfig_create_destroy_head()
 {
 
 	atf_set "descr" "tests of ifconfig create and destroy"
 	atf_set "require.progs" "rump_server"
 }
 
-create_destroy_body()
+ifconfig_create_destroy_body()
 {
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER1}
 
@@ -68,21 +68,21 @@ create_destroy_body()
 	unset RUMP_SERVER
 }
 
-create_destroy_cleanup()
+ifconfig_create_destroy_cleanup()
 {
 
 	RUMP_SERVER=${RUMP_SERVER1} rump.halt
 }
 
-atf_test_case options cleanup
-options_head()
+atf_test_case ifconfig_options cleanup
+ifconfig_options_head()
 {
 
 	atf_set "descr" "tests of ifconfig options"
 	atf_set "require.progs" "rump_server"
 }
 
-options_body()
+ifconfig_options_body()
 {
 
 	export RUMP_SERVER=${RUMP_SERVER1}
@@ -182,21 +182,21 @@ options_body()
 	unset RUMP_SERVER
 }
 
-options_cleanup()
+ifconfig_options_cleanup()
 {
 
 	env RUMP_SERVER=${RUMP_SERVER1} rump.halt
 }
 
 
-atf_test_case parameters cleanup
-parameters_head()
+atf_test_case ifconfig_parameters cleanup
+ifconfig_parameters_head()
 {
-	atf_set "descr" "tests of interface parametors"
+	atf_set "descr" "tests of interface parameters"
 	atf_set "require.progs" "rump_server"
 }
 
-parameters_body()
+ifconfig_parameters_body()
 {
 	local interval=
 
@@ -313,7 +313,7 @@ parameters_body()
 	unset RUMP_SERVER
 }
 
-parameters_cleanup()
+ifconfig_parameters_cleanup()
 {
 	env RUMP_SERVER=${RUMP_SERVER1} rump.halt
 	env RUMP_SERVER=${RUMP_SERVER2} rump.halt
@@ -322,7 +322,7 @@ parameters_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case create_destroy
-	atf_add_test_case options
-	atf_add_test_case parameters
+	atf_add_test_case ifconfig_create_destroy
+	atf_add_test_case ifconfig_options
+	atf_add_test_case ifconfig_parameters
 }
