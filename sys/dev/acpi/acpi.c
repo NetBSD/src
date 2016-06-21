@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.261 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: acpi.c,v 1.262 2016/06/21 11:33:33 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.261 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.262 2016/06/21 11:33:33 nonaka Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -452,6 +452,8 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = aa->aa_pc;
 	sc->sc_pciflags = aa->aa_pciflags;
 	sc->sc_ic = aa->aa_ic;
+	sc->sc_dmat = aa->aa_dmat;
+	sc->sc_dmat64 = aa->aa_dmat64;
 
 	SIMPLEQ_INIT(&sc->ad_head);
 
@@ -863,6 +865,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
+		aa.aa_dmat = sc->sc_dmat;
+		aa.aa_dmat64 = sc->sc_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
@@ -927,6 +931,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
+		aa.aa_dmat = sc->sc_dmat;
+		aa.aa_dmat64 = sc->sc_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
