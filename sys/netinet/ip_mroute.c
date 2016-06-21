@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.140 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.141 2016/06/21 03:28:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.140 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.141 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2104,7 +2104,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
 
-		imo.imo_multicast_ifp = vifp->v_ifp;
+		imo.imo_multicast_if_index = if_get_index(vifp->v_ifp);
 		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - 1;
 		imo.imo_multicast_loop = 1;
 #ifdef RSVP_ISI

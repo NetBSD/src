@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.166 2016/05/27 16:44:15 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.167 2016/06/21 03:28:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.166 2016/05/27 16:44:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.167 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1508,16 +1508,23 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 */
 	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
 		struct ip_moptions *imo;
-		struct ifnet *ifp;
 
 		imo = mopts;
-		if (imo->imo_multicast_ifp != NULL) {
-			ifp = imo->imo_multicast_ifp;
-			IFP_TO_IA(ifp, ia);		/* XXX */
-			if (ia == 0 || ia->ia4_flags & IN_IFF_NOTREADY) {
+		if (imo->imo_multicast_if_index != 0) {
+			struct ifnet *ifp;
+			int s = pserialize_read_enter();
+
+			ifp = if_byindex(imo->imo_multicast_if_index);
+			if (ifp != NULL) {
+				IFP_TO_IA(ifp, ia);		/* XXX */
+			} else
+				ia = NULL;
+			if (ia == NULL || ia->ia4_flags & IN_IFF_NOTREADY) {
+				pserialize_read_exit(s);
 				*errorp = EADDRNOTAVAIL;
 				return NULL;
 			}
+			pserialize_read_exit(s);
 		}
 	}
 	if (ia->ia_ifa.ifa_getifa != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.113 2016/06/13 08:29:55 knakahara Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.114 2016/06/21 03:28:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -114,7 +114,7 @@ struct ipoption {
  * passed to ip_output when IP multicast options are in use.
  */
 struct ip_moptions {
-	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	if_index_t imo_multicast_if_index; /* I/F for outgoing multicasts */
 	struct in_addr imo_multicast_addr; /* ifindex/addr on MULTICAST_IF */
 	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
 	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
