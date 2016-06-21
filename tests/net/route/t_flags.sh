@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.8 2016/04/23 15:47:54 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.9 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,7 +123,7 @@ check_entry_fail()
 	    "rump.netstat -rn -f inet | grep ^'$ip'"
 }
 
-test_lo()
+test_lo6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -132,7 +132,7 @@ test_lo()
 	check_entry_flags 127.0.0.1 UHl
 }
 
-test_connected()
+test_connected6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -144,7 +144,7 @@ test_connected()
 	check_entry_flags 10.0.0/24 UC
 }
 
-test_default_gateway()
+test_default_gateway6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -156,7 +156,7 @@ test_default_gateway()
 	check_entry_flags default UGS
 }
 
-test_static()
+test_static6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -176,7 +176,7 @@ test_static()
 	check_entry_flags 10.0.2/24 UGS
 }
 
-test_blackhole()
+test_blackhole6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -202,7 +202,7 @@ test_blackhole()
 	check_entry_fail 10.0.0.1 UH
 }
 
-test_reject()
+test_reject6()
 {
 
 	export RUMP_SERVER=$SOCK_LOCAL
@@ -261,7 +261,7 @@ test_reject()
 	return 0
 }
 
-test_icmp_redirect()
+test_icmp_redirect6()
 {
 
 	### Testing Dynamic flag ###
@@ -320,7 +320,7 @@ test_icmp_redirect()
 	teardown_gw
 }
 
-test_announce()
+test_announce6()
 {
 	export RUMP_SERVER=$SOCK_LOCAL
 
@@ -368,12 +368,12 @@ add_test()
 atf_init_test_cases()
 {
 
-	add_test lo              "Tests route flags: loop back interface"
-	add_test connected       "Tests route flags: connected route"
-	add_test default_gateway "Tests route flags: default gateway"
-	add_test static          "Tests route flags: static route"
-	add_test blackhole       "Tests route flags: blackhole route"
-	add_test reject          "Tests route flags: reject route"
-	add_test icmp_redirect   "Tests route flags: icmp redirect"
-	add_test announce        "Tests route flags: announce flag"
+	add_test lo6              "Tests route flags: loop back interface"
+	add_test connected6       "Tests route flags: connected route"
+	add_test default_gateway6 "Tests route flags: default gateway"
+	add_test static6          "Tests route flags: static route"
+	add_test blackhole6       "Tests route flags: blackhole route"
+	add_test reject6          "Tests route flags: reject route"
+	add_test icmp_redirect6   "Tests route flags: icmp redirect"
+	add_test announce6        "Tests route flags: announce flag"
 }

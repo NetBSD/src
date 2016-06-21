@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.11 2015/08/07 00:50:12 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.12 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,37 +42,37 @@ IP6BR2=fc00::12
 
 TIMEOUT=5
 
-atf_test_case basic cleanup
-atf_test_case basic6 cleanup
-atf_test_case rtable cleanup
-atf_test_case member_ip cleanup
-atf_test_case member_ip6 cleanup
+atf_test_case bridge_ipv4 cleanup
+atf_test_case bridge_ipv6 cleanup
+atf_test_case bridge_rtable cleanup
+atf_test_case bridge_member_ipv4 cleanup
+atf_test_case bridge_member_ipv6 cleanup
 
-basic_head()
+bridge_ipv4_head()
 {
 	atf_set "descr" "Does simple if_bridge tests"
 	atf_set "require.progs" "rump_server"
 }
 
-basic6_head()
+bridge_ipv6_head()
 {
 	atf_set "descr" "Does simple if_bridge tests (IPv6)"
 	atf_set "require.progs" "rump_server"
 }
 
-rtable_head()
+bridge_rtable_head()
 {
 	atf_set "descr" "Tests route table operations of if_bridge"
 	atf_set "require.progs" "rump_server"
 }
 
-member_ip_head()
+bridge_member_ipv4_head()
 {
 	atf_set "descr" "Tests if_bridge with members with an IP address"
 	atf_set "require.progs" "rump_server"
 }
 
-member_ip6_head()
+bridge_member_ipv6_head()
 {
 	atf_set "descr" "Tests if_bridge with members with an IP address (IPv6)"
 	atf_set "require.progs" "rump_server"
@@ -403,7 +403,7 @@ test_brconfig_maxaddr()
 	unset LD_PRELOAD
 }
 
-basic_body()
+bridge_ipv4_body()
 {
 	setup
 	test_setup
@@ -420,7 +420,7 @@ basic_body()
 	test_ping_failure
 }
 
-basic6_body()
+bridge_ipv6_body()
 {
 	setup6
 	test_setup6
@@ -436,7 +436,7 @@ basic6_body()
 	test_ping6_failure
 }
 
-rtable_body()
+bridge_rtable_body()
 {
 	addr1= addr3=
 
@@ -509,7 +509,7 @@ rtable_body()
 	#       wait here so long. Should we have a sysctl to change the period?
 }
 
-member_ip_body()
+bridge_member_ipv4_body()
 {
 	setup
 	test_setup
@@ -529,7 +529,7 @@ member_ip_body()
 	test_ping_failure
 }
 
-member_ip6_body()
+bridge_member_ipv6_body()
 {
 	setup6
 	test_setup6
@@ -548,31 +548,31 @@ member_ip6_body()
 	test_ping6_failure
 }
 
-basic_cleanup()
+bridge_ipv4_cleanup()
 {
 	dump_bus
 	cleanup
 }
 
-basic6_cleanup()
+bridge_ipv6_cleanup()
 {
 	dump_bus
 	cleanup
 }
 
-rtable_cleanup()
+bridge_rtable_cleanup()
 {
 	dump_bus
 	cleanup
 }
 
-member_ip_cleanup()
+bridge_member_ipv4_cleanup()
 {
 	dump_bus
 	cleanup
 }
 
-member_ip6_cleanup()
+bridge_member_ipv6_cleanup()
 {
 	dump_bus
 	cleanup
@@ -580,9 +580,9 @@ member_ip6_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case basic
-	atf_add_test_case basic6
-	atf_add_test_case rtable
-	atf_add_test_case member_ip
-	atf_add_test_case member_ip6
+	atf_add_test_case bridge_ipv4
+	atf_add_test_case bridge_ipv6
+	atf_add_test_case bridge_rtable
+	atf_add_test_case bridge_member_ipv4
+	atf_add_test_case bridge_member_ipv6
 }
