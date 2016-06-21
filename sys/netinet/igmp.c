@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.58 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.59 2016/06/21 03:28:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.58 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.59 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -618,7 +618,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 
-	imo.imo_multicast_ifp = inm->inm_ifp;
+	imo.imo_multicast_if_index = if_get_index(inm->inm_ifp);
 	imo.imo_multicast_ttl = 1;
 #ifdef RSVP_ISI
 	imo.imo_multicast_vif = -1;

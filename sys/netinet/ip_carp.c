@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.70 2016/06/20 08:08:13 knakahara Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.71 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.70 2016/06/20 08:08:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.71 2016/06/21 03:28:27 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -1532,7 +1532,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 		}
 	}
 	imo->imo_num_memberships = 0;
-	imo->imo_multicast_ifp = NULL;
+	imo->imo_multicast_if_index = 0;
 
 #ifdef INET6
 	while (!LIST_EMPTY(&im6o->im6o_memberships)) {
@@ -1542,7 +1542,7 @@ carp_multicast_cleanup(struct carp_softc *sc)
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
-	im6o->im6o_multicast_ifp = NULL;
+	im6o->im6o_multicast_if_index = 0;
 #endif
 
 	/* And any other multicast memberships */
@@ -1801,7 +1801,7 @@ carp_join_multicast(struct carp_softc *sc)
 
 	imo->imo_membership[0] = tmpimo.imo_membership[0];
 	imo->imo_num_memberships = 1;
-	imo->imo_multicast_ifp = &sc->sc_if;
+	imo->imo_multicast_if_index = sc->sc_if.if_index;
 	imo->imo_multicast_ttl = CARP_DFLTTL;
 	imo->imo_multicast_loop = 0;
 	return (0);
@@ -1909,7 +1909,7 @@ carp_join_multicast6(struct carp_softc *sc)
 	}
 
 	/* apply v6 multicast membership */
-	im6o->im6o_multicast_ifp = &sc->sc_if;
+	im6o->im6o_multicast_if_index = sc->sc_if.if_index;
 	if (imm)
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm,
 		    i6mm_chain);
