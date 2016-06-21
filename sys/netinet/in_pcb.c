@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.163 2016/02/15 14:59:03 rtr Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.164 2016/06/21 03:28:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.163 2016/02/15 14:59:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.164 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -694,6 +694,8 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 {
 	int i, gap;
 
+	KASSERT(ifp != NULL);
+
 	if (imo == NULL)
 		return;
 
@@ -701,8 +703,8 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 	 * Unselect the outgoing interface if it is being
 	 * detached.
 	 */
-	if (imo->imo_multicast_ifp == ifp)
-		imo->imo_multicast_ifp = NULL;
+	if (imo->imo_multicast_if_index == ifp->if_index)
+		imo->imo_multicast_if_index = 0;
 
 	/*
 	 * Drop multicast group membership if we joined

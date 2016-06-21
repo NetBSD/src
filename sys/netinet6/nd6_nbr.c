@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.119 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.120 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.119 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.120 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -400,7 +400,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 
 	if (daddr6 == NULL || IN6_IS_ADDR_MULTICAST(daddr6)) {
 		m->m_flags |= M_MCAST;
-		im6o.im6o_multicast_ifp = ifp;
+		im6o.im6o_multicast_if_index = if_get_index(ifp);
 		im6o.im6o_multicast_hlim = 255;
 		im6o.im6o_multicast_loop = 0;
 	}
@@ -907,7 +907,7 @@ nd6_na_output(
 
 	if (IN6_IS_ADDR_MULTICAST(&daddr6)) {
 		m->m_flags |= M_MCAST;
-		im6o.im6o_multicast_ifp = ifp;
+		im6o.im6o_multicast_if_index = if_get_index(ifp);
 		im6o.im6o_multicast_hlim = 255;
 		im6o.im6o_multicast_loop = 0;
 	}
