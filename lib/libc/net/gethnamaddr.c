@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.77.4.2 2013/12/23 22:56:48 riz Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.77.4.3 2016/06/21 19:39:25 snj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -57,7 +57,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.77.4.2 2013/12/23 22:56:48 riz Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.77.4.3 2016/06/21 19:39:25 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -742,10 +742,9 @@ gethostent_r(FILE *hf, struct hostent *hent, char *buf, size_t buflen, int *he)
 		goto again;
 	if (*p == '#')
 		goto again;
-	p[llen] = '\0';
-	if (!(cp = strpbrk(p, "#\n")))
-		goto again;
-	*cp = '\0';
+	p[llen - 1] = '\0';
+	if ((cp = strpbrk(p, "#")) != NULL)
+		*cp = '\0';
 	if (!(cp = strpbrk(p, " \t")))
 		goto again;
 	*cp++ = '\0';
