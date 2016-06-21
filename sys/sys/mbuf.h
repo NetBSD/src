@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.165 2016/06/12 10:14:12 ozaki-r Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.166 2016/06/21 03:07:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ struct m_hdr {
 struct	pkthdr {
 	union {
 		void		*ctx;		/* for M_GETCTX/M_SETCTX */
-		uint16_t	index;		/* rcv interface index */
+		if_index_t	index;		/* rcv interface index */
 	} _rcvif;
 #define rcvif_index		_rcvif.index
 	SLIST_HEAD(packet_tags, m_tag) tags;	/* list of packet tags */
