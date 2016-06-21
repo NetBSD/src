@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.11 2016/05/20 06:48:52 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.12 2016/06/21 05:04:16 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,37 +37,37 @@ IP6DST=fc00::2
 DEBUG=true
 TIMEOUT=1
 
-atf_test_case cache_expiration cleanup
-atf_test_case command cleanup
-atf_test_case cache_overwriting cleanup
-atf_test_case neighborgcthresh cleanup
-atf_test_case link_activation cleanup
+atf_test_case ndp_cache_expiration cleanup
+atf_test_case ndp_commands cleanup
+atf_test_case ndp_cache_overwriting cleanup
+atf_test_case ndp_neighborgcthresh cleanup
+atf_test_case ndp_link_activation cleanup
 
-cache_expiration_head()
+ndp_cache_expiration_head()
 {
 	atf_set "descr" "Tests for NDP cache expiration"
 	atf_set "require.progs" "rump_server"
 }
 
-command_head()
+ndp_commands_head()
 {
 	atf_set "descr" "Tests for commands of ndp(8)"
 	atf_set "require.progs" "rump_server"
 }
 
-cache_overwriting_head()
+ndp_cache_overwriting_head()
 {
 	atf_set "descr" "Tests for behavior of overwriting NDP caches"
 	atf_set "require.progs" "rump_server"
 }
 
-neighborgcthresh_head()
+ndp_neighborgcthresh_head()
 {
 	atf_set "descr" "Tests for GC of neighbor caches"
 	atf_set "require.progs" "rump_server"
 }
 
-link_activation_head()
+ndp_link_activation_head()
 {
 	atf_set "descr" "Tests for activating a new MAC address"
 	atf_set "require.progs" "rump_server"
@@ -116,7 +116,7 @@ get_timeout()
 	echo $timeout
 }
 
-cache_expiration_body()
+ndp_cache_expiration_body()
 {
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
 	atf_check -s exit:0 ${inetserver} $SOCKDST
@@ -152,7 +152,7 @@ ifdown_dst_server()
 	export RUMP_SERVER=$SOCKSRC
 }
 
-command_body()
+ndp_commands_body()
 {
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
 	atf_check -s exit:0 ${inetserver} $SOCKDST
@@ -219,7 +219,7 @@ command_body()
 	return 0
 }
 
-cache_overwriting_body()
+ndp_cache_overwriting_body()
 {
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
 	atf_check -s exit:0 ${inetserver} $SOCKDST
@@ -257,7 +257,7 @@ get_n_caches()
 	echo $(rump.ndp -a -n |grep -v -e Neighbor -e permanent |wc -l)
 }
 
-neighborgcthresh_body()
+ndp_neighborgcthresh_body()
 {
 
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
@@ -338,7 +338,7 @@ extract_new_packets()
 	cat ./diff
 }
 
-link_activation_body()
+ndp_link_activation_body()
 {
 	local linklocal=
 
@@ -413,31 +413,31 @@ dump()
 	$DEBUG && gdb -ex bt /usr/sbin/rump.ndp rump.ndp.core
 }
 
-cache_expiration_cleanup()
+ndp_cache_expiration_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-command_cleanup()
+ndp_commands_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-cache_overwriting_cleanup()
+ndp_cache_overwriting_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-neighborgcthresh_cleanup()
+ndp_neighborgcthresh_cleanup()
 {
 	$DEBUG && dump
 	cleanup
 }
 
-link_activation_cleanup()
+ndp_link_activation_cleanup()
 {
 	$DEBUG && dump
 	cleanup
@@ -445,9 +445,9 @@ link_activation_cleanup()
 
 atf_init_test_cases()
 {
-	atf_add_test_case cache_expiration
-	atf_add_test_case command
-	atf_add_test_case cache_overwriting
-	atf_add_test_case neighborgcthresh
-	atf_add_test_case link_activation
+	atf_add_test_case ndp_cache_expiration
+	atf_add_test_case ndp_commands
+	atf_add_test_case ndp_cache_overwriting
+	atf_add_test_case ndp_neighborgcthresh
+	atf_add_test_case ndp_link_activation
 }
