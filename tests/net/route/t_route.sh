@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.5 2016/06/21 05:04:16 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.6 2016/06/21 10:18:27 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -243,10 +243,11 @@ destination: 10.0.1.2
   interface: lo0
       flags: <UP,HOST,DONE,LLINFO,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get $IP4SRC > ./output
 	$DEBUG && cat ./expect ./output
+	# XXX: omit the last line because expire is unstable on rump kernel.
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Neighbor
@@ -258,10 +259,10 @@ destination: 10.0.1.0
   interface: shmif0
       flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Remote host
@@ -274,10 +275,10 @@ destination: default
   interface: shmif0
       flags: <UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get $IP4DST > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Create a ARP cache
@@ -292,10 +293,10 @@ destination: 10.0.1.0
   interface: shmif0
       flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get $IP4SRCGW > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 }
 
@@ -317,10 +318,10 @@ destination: fc00:0:0:1::2
   interface: lo0
       flags: <UP,HOST,DONE,LLINFO,LOCAL>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get -inet6 $IP6SRC > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Neighbor
@@ -332,10 +333,10 @@ destination: fc00:0:0:1::
   interface: shmif0
       flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Remote host
@@ -348,10 +349,10 @@ destination: ::
   interface: shmif0
       flags: <UP,GATEWAY,DONE,STATIC>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get -inet6 $IP6DST > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 
 	# Create a NDP cache
@@ -366,10 +367,10 @@ destination: fc00:0:0:1::
   interface: shmif0
       flags: <UP,DONE,CONNECTED>
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire
-       0         0         0         0         0         0         0         0 
 	EOF
 	rump.route -n get -inet6 $IP6SRCGW > ./output
 	$DEBUG && cat ./expect ./output
+	sed -i '$d' ./output
 	atf_check -s exit:0 diff ./expect ./output
 }
 
