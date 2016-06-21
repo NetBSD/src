@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.67 2016/06/12 09:08:09 jnemeth Exp $ */
+/* $NetBSD: hypervisor.c,v 1.68 2016/06/21 11:33:33 nonaka Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.67 2016/06/12 09:08:09 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.68 2016/06/21 11:33:33 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,6 +307,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
+		hac.hac_acpi.aa_dmat = &pci_bus_dma_tag;
+#ifdef _LP64
+		hac.hac_acpi.aa_dmat64 = &pci_bus_dma64_tag;
+#else
+		hac.hac_acpi.aa_dmat64 = NULL;
+#endif /* _LP64 */
 		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
 	}
 #endif /* NACPICA */
