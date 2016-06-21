@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.211 2016/06/20 08:24:36 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.212 2016/06/21 03:07:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,8 @@ struct callout;
 struct krwlock;
 struct if_percpuq;
 
+typedef unsigned short if_index_t;
+
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
 	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
@@ -239,7 +241,7 @@ typedef struct ifnet {
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	struct bpf_if *if_bpf;		/* packet filter structure */
-	u_short	if_index;		/* numeric abbreviation for this if */
+	if_index_t	if_index;	/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
 	short	if_flags;		/* up/down, broadcast, etc. */
 	short	if_extflags;		/* if_output MP-safe, etc. */
