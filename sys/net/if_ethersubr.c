@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.224 2016/06/20 07:01:45 knakahara Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.225 2016/06/21 03:54:04 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.224 2016/06/20 07:01:45 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225 2016/06/21 03:54:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -204,7 +204,12 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
 
-	KASSERT(ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
+	/*
+	 * some paths such as carp_output() call ethr_output() with "ifp"
+	 * argument as other than ether ifnet.
+	 */
+	KASSERT(ifp->if_output != ether_output
+	    || ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
