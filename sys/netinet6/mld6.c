@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.67 2016/06/16 03:03:33 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.68 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.67 2016/06/16 03:03:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.68 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -544,7 +544,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 
 	/* construct multicast option */
 	memset(&im6o, 0, sizeof(im6o));
-	im6o.im6o_multicast_ifp = ifp;
+	im6o.im6o_multicast_if_index = if_get_index(ifp);
 	im6o.im6o_multicast_hlim = 1;
 
 	/*

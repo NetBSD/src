@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.14 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.15 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.14 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.15 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -941,7 +941,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 			}
 			if (imo->imo_num_memberships > 0) {
 				in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-				imo->imo_multicast_ifp = NULL;
+				imo->imo_multicast_if_index = 0;
 			}
 			break;
 		}
@@ -961,7 +961,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 
 		if (imo->imo_num_memberships > 0) {
 			in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-			imo->imo_multicast_ifp = NULL;
+			imo->imo_multicast_if_index = 0;
 		}
 
 		if (sc->sc_sync_ifp &&
@@ -983,7 +983,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, void*  data)
 				return (ENOBUFS);
 			}
 			imo->imo_num_memberships++;
-			imo->imo_multicast_ifp = sc->sc_sync_ifp;
+			imo->imo_multicast_if_index = if_get_index(sc->sc_sync_ifp);
 			imo->imo_multicast_ttl = PFSYNC_DFLTTL;
 			imo->imo_multicast_loop = 0;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.143 2015/08/24 22:21:27 pooka Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.144 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.143 2015/08/24 22:21:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.144 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -812,6 +812,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 	struct ip6_moptions *im6o;
 	struct in6_multi_mship *imm, *nimm;
 
+	KASSERT(ifp != NULL);
+
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
@@ -823,8 +825,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			 * Unselect the outgoing interface if it is being
 			 * detached.
 			 */
-			if (im6o->im6o_multicast_ifp == ifp)
-				im6o->im6o_multicast_ifp = NULL;
+			if (im6o->im6o_multicast_if_index == ifp->if_index)
+				im6o->im6o_multicast_if_index = 0;
 
 			/*
 			 * Drop multicast group membership if we joined
