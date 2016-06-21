@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.66 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.67 2016/06/21 10:25:27 ozaki-r Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -397,10 +397,10 @@ struct route;
 
 struct 	in6_addr *in6_selectsrc(struct sockaddr_in6 *,
 	struct ip6_pktopts *, struct ip6_moptions *, struct route *,
-	struct in6_addr *, struct ifnet **, int *);
+	struct in6_addr *, struct ifnet **, struct psref *, int *);
 int in6_selectroute(struct sockaddr_in6 *, struct ip6_pktopts *,
 	struct ip6_moptions *, struct route *, struct ifnet **,
-	struct rtentry **, int);
+	struct psref *, struct rtentry **, int);
 int	ip6_get_membership(const struct sockopt *, struct ifnet **, void *,
 	size_t);
 

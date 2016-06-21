@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.343 2016/06/20 08:30:58 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.344 2016/06/21 10:25:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.343 2016/06/20 08:30:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.344 2016/06/21 10:25:27 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2193,6 +2193,9 @@ void
 if_put(const struct ifnet *ifp, struct psref *psref)
 {
 
+	if (ifp == NULL)
+		return;
+
 	psref_release(psref, &ifp->if_psref, ifnet_psref_class);
 }
 
@@ -2223,14 +2226,15 @@ if_get_byindex(u_int idx, struct psref *psref)
 }
 
 /*
- * XXX unsafe
+ * XXX it's safe only if the passed ifp is guaranteed to not be freed,
+ * for example the ifp is already held or some other object is held which
+ * guarantes the ifp to not be freed indirectly.
  */
 void
-if_acquire_unsafe(struct ifnet *ifp, struct psref *psref)
+if_acquire_NOMPSAFE(struct ifnet *ifp, struct psref *psref)
 {
 
 	KASSERT(ifp->if_index != 0);
-	KASSERT(if_byindex(ifp->if_index) != NULL);
 	psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 }
 
