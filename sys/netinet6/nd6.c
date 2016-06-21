@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.196 2016/06/20 06:46:38 knakahara Exp $	*/
+/*	$NetBSD: nd6.c,v 1.197 2016/06/21 02:14:11 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.196 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.197 2016/06/21 02:14:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2292,7 +2292,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 		LLE_WUNLOCK(ln);
 
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		error = if_output_lock(origifp, origifp, m, sin6tocsa(dst), rt);
+		error = if_output_lock(ifp, origifp, m, sin6tocsa(dst), rt);
 	else
 		error = if_output_lock(ifp, ifp, m, sin6tocsa(dst), rt);
 	goto exit;
