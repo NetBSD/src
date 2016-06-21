@@ -1,4 +1,4 @@
-/*	$NetBSD: vbus.c,v 1.1 2016/06/17 21:59:06 palle Exp $	*/
+/*	$NetBSD: vbus.c,v 1.2 2016/06/21 20:36:02 palle Exp $	*/
 /*	$OpenBSD: vbus.c,v 1.8 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -72,7 +72,7 @@ vbus_match(device_t parent, cfdata_t match, void *aux)
 void
 vbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct vbus_softc *sc = (struct vbus_softc *)self;
+        struct vbus_softc *sc = device_private(self);
 	struct mainbus_attach_args *ma = aux;
 	int node;
 
