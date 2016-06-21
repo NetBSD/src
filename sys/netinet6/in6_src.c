@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.60 2016/05/18 09:32:05 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.61 2016/06/21 03:28:27 ozaki-r Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.60 2016/05/18 09:32:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.61 2016/06/21 03:28:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -600,9 +600,11 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * If the destination address is a multicast address and the outgoing
 	 * interface for the address is specified by the caller, use it.
 	 */
-	if (IN6_IS_ADDR_MULTICAST(dst) &&
-	    mopts != NULL && (ifp = mopts->im6o_multicast_ifp) != NULL) {
-		goto done; /* we do not need a route for multicast. */
+	if (IN6_IS_ADDR_MULTICAST(dst) && mopts != NULL) {
+		/* XXX not MP-safe yet */
+		ifp = if_byindex(mopts->im6o_multicast_if_index);
+		if (ifp != NULL)
+			goto done; /* we do not need a route for multicast. */
 	}
 
   getroute:
