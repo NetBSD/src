@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.199 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.200 2016/06/22 07:48:17 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.199 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.200 2016/06/22 07:48:17 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1688,8 +1688,6 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	 * and to validate the address if necessary.
 	 */
 	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ifacount++;
@@ -1758,8 +1756,6 @@ in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 	struct ifaddr *best_ifa = NULL, *ifa;
 
 	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (!IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa)))
@@ -1810,8 +1806,6 @@ in6ifa_ifpwithaddr(const struct ifnet *ifp, const struct in6_addr *addr)
 	struct ifaddr *best_ifa = NULL, *ifa;
 
 	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (!IN6_ARE_ADDR_EQUAL(addr, IFA_IN6(ifa)))

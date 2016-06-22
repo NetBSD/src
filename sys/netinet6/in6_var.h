@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.76 2016/02/04 02:48:37 riastradh Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.77 2016/06/22 07:48:17 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -514,8 +514,6 @@ ifp_to_ia6(struct ifnet *ifp)
 	struct ifaddr *ifa;
 
 	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 			break;
 	}
