@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.h,v 1.4 2015/09/06 16:45:09 martin Exp $	*/
+/*	$NetBSD: mdesc.h,v 1.5 2016/06/22 20:13:00 palle Exp $	*/
 /*	$OpenBSD: mdesc.h,v 1.3 2014/11/30 22:26:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -15,6 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef	_MDESC_H_
+#define _MDESC_H_
 
 struct md_header {
 	uint32_t	transport_version;
@@ -37,6 +40,8 @@ struct md_element {
 	} d;
 };
 
+extern vaddr_t mdesc;
+
 #ifdef _KERNEL
 psize_t	mdesc_get_len(void);
 void	mdesc_init(vaddr_t, paddr_t, psize_t);
@@ -50,3 +55,5 @@ int	mdesc_find_node_by_idx(int, const char *);
 int	mdesc_next_node(int);
 const char *mdesc_name_by_idx(int);
 #endif
+
+#endif /* _MDESC_H_ */
