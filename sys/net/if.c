@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.344 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.345 2016/06/22 10:44:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.344 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.345 2016/06/22 10:44:32 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -199,6 +199,7 @@ static void if_slowtimo(void *);
 static void if_free_sadl(struct ifnet *);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
+static int if_transmit(struct ifnet *, struct mbuf *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
 static void if_link_state_change_si(void *);
@@ -2773,14 +2774,24 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 /*
  * wrapper function for the drivers which doesn't have if_transmit().
  */
-int
+static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, error;
 
 	s = splnet();
 
+	/*
+	 * If NET_MPSAFE is not defined , IFQ_LOCK() is nop.
+	 * use KERNEL_LOCK instead of ifq_lock.
+	 */
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	if (error != 0) {
 		/* mbuf is already freed */
 		goto out;
@@ -2798,6 +2809,27 @@ out:
 	return error;
 }
 
+int
+if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
+{
+	int error;
+
+#ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		error = if_transmit(ifp, m);
+		KERNEL_UNLOCK_ONE(NULL);
+	} else {
+		KERNEL_UNLOCK_ONE(NULL);
+		error = (*ifp->if_transmit)(ifp, m);
+	}
+#else /* !ALTQ */
+	error = (*ifp->if_transmit)(ifp, m);
+#endif /* !ALTQ */
+
+	return error;
+}
+
 /*
  * Queue message on interface, and start output if interface
  * not yet active.
@@ -2806,7 +2838,7 @@ int
 ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 
-	return (*ifp->if_transmit)(ifp, m);
+	return if_transmit_lock(ifp, m);
 }
 
 /*
