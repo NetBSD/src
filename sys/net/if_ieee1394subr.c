@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.55 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.56 2016/06/22 10:44:32 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.55 2016/04/28 01:37:17 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.56 2016/06/22 10:44:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -221,7 +221,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	while ((m = m0) != NULL) {
 		m0 = m->m_nextpkt;
 
-		error = (*ifp->if_transmit)(ifp, m);
+		error = if_transmit_lock(ifp, m);
 		if (error) {
 			/* mbuf is already freed */
 			goto bad;

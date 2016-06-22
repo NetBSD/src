@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.88 2016/06/20 06:52:44 knakahara Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.89 2016/06/22 10:44:32 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.88 2016/06/20 06:52:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.89 2016/06/22 10:44:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -256,7 +256,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		}
 		*(mtod(m, uint32_t *)) = dst->sa_family;
 
-		error = ifp->if_transmit(ifp, m);
+		error = if_transmit_lock(ifp, m);
 		goto out;
 	}
 #endif /* ALTQ */
