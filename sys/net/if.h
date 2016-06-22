@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.214 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.215 2016/06/22 10:44:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -992,7 +992,7 @@ void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
-int	if_transmit(struct ifnet *, struct mbuf *);
+int	if_transmit_lock(struct ifnet *, struct mbuf *);
 
 int	ifq_enqueue(struct ifnet *, struct mbuf *);
 int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);

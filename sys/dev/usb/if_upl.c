@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.54 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.55 2016/06/22 10:44:31 knakahara Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.54 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.55 2016/06/22 10:44:31 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1003,7 +1003,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	error = (*ifp->if_transmit)(ifp, m);
+	error = if_transmit_lock(ifp, m);
 
 	return error;
 }

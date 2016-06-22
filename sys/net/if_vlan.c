@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.89 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.90 2016/06/22 10:44:32 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.89 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.90 2016/06/22 10:44:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -700,6 +700,10 @@ vlan_start(struct ifnet *ifp)
 
 #ifdef ALTQ
 		/*
+		 * KERNEL_LOCK is required for ALTQ even if NET_MPSAFE if defined.
+		 */
+		KERNEL_LOCK(1, NULL);
+		/*
 		 * If ALTQ is enabled on the parent interface, do
 		 * classification; the queueing discipline might
 		 * not require classification, but might require
@@ -716,6 +720,7 @@ vlan_start(struct ifnet *ifp)
 #endif
 			}
 		}
+		KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */
 
 		bpf_mtap(ifp, m);
@@ -808,7 +813,7 @@ vlan_start(struct ifnet *ifp)
 		 * would have.  We are already running at splnet.
 		 */
 		if ((p->if_flags & IFF_RUNNING) != 0) {
-			error = (*p->if_transmit)(p, m);
+			error = if_transmit_lock(p, m);
 			if (error) {
 				/* mbuf is already freed */
 				ifp->if_oerrors++;
