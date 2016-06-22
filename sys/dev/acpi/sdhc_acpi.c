@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.1 2016/06/21 11:35:47 nonaka Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.2 2016/06/22 05:39:49 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.1 2016/06/21 11:35:47 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.2 2016/06/22 05:39:49 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,15 +65,6 @@ static const char * const sdhc_acpi_ids[] = {
 	"80860F14",
 	"80860F16",
 	NULL
-};
-
-static const struct sdhc_acpi_slot_map {
-	const char *device_id;
-	const char *unique_id;
-} sdhc_acpi_slot_map[] = {
-	{ "80860F14",	"1" },	/* eMMC */
-	{ "80860F14",	"3" },	/* SD */
-	{ "80860F16",	NULL },	/* SD */
 };
 
 static int
