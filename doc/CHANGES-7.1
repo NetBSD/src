@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.93 2016/06/14 09:05:16 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.94 2016/06/22 08:31:49 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4800,4 +4800,36 @@ external/gpl3/gcc/dist/gcc/cp/except.c		1.2
 
 	Fix building GCC with GCC-6.1.
 	[kamil, ticket #1176]
+
+sys/arch/i386/stand/misc/rawr32.exe.uue		up to 1.6
+
+	Update rawrite32 to 1.0.4.0.  Changes:
+	- now digitally signed
+	- avoid a crash when all hash types were deselected
+	- added support for .xz images
+	- minor bugfixes
+	[martin, ticket #1172]
+
+sys/dev/isapnp/isapnpdevs			1.69
+sys/dev/isapnp/isapnpdevs.c			regen
+sys/dev/isapnp/isapnpdevs.h			regen
+
+	Add support for SysKonnect SK-NET Flash ISAPNP cards.
+	PR kern/50449.
+	[pgoyette, ticket #1177]
+
+sys/arch/arm/allwinner/files.awin		1.36
+sys/conf/files					1.1159
+sys/dev/ic/com.c				1.339
+sys/dev/ic/comreg.h				1.25
+sys/dev/ic/comvar.h				1.82
+sys/dev/ic/ns16550reg.h				1.11
+
+	The UART in the allwiner SoCs is not full-compatible with
+	the 16550, and it's not a 16750 either. Like the 16750 it
+	has the IIR_BUSY interrupt, which is triggered when writing
+	to LCR while the chip can't accept it. But unlike the 16750,
+	it has a specific register, HALT, to allow writing to the
+	LCR and divisor registers, and then commit the changes.
+	[bouyer, ticket #1178]
 
