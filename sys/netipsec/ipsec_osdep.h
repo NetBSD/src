@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.25 2016/04/28 01:37:17 knakahara Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.26 2016/06/22 10:44:32 knakahara Exp $	*/
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/netipsec/ipsec_osdep.h,v 1.1 2003/09/29 22:47:45 sam Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 		return (0);
 	}
 	if (ifp != NULL)
-		(void)(*ifp->if_transmit)(ifp, m);
+		(void)if_transmit_lock(ifp, m);
 
 	KERNEL_UNLOCK_ONE(NULL);
 	splx(s);
