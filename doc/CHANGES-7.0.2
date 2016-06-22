@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.2 2016/06/14 08:59:50 snj Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.3 2016/06/22 08:31:21 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -16,4 +16,13 @@ external/gpl3/gcc/dist/gcc/cp/except.c		1.2
 
 	Fix building with GCC-6.1.
 	[kamil, ticket #1176]
+
+sys/arch/i386/stand/misc/rawr32.exe.uue		up to 1.6
+
+	Update rawrite32 to 1.0.4.0.  Changes:
+	- now digitally signed
+	- avoid a crash when all hash types were deselected
+	- added support for .xz images
+	- minor bugfixes
+	[martin, ticket #1172]
 
