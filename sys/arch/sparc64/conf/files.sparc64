@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.150 2016/06/17 21:38:09 palle Exp $
+#	$NetBSD: files.sparc64,v 1.151 2016/06/22 20:12:59 palle Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -72,6 +72,10 @@ file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
 device	vbus {}
 attach	vbus at mainbus
 file	arch/sparc64/dev/vbus.c			vbus
+
+device	cbus {}
+attach	cbus at vbus
+file	arch/sparc64/dev/cbus.c			cbus
 
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus

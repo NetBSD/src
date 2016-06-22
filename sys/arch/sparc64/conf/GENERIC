@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190 2016/06/17 21:38:09 palle Exp $
+# $NetBSD: GENERIC,v 1.191 2016/06/22 20:12:59 palle Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.190 $"
+#ident		"GENERIC-$Revision: 1.191 $"
 
 maxusers	64
 
@@ -248,6 +248,7 @@ ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
 vbus0	at mainbus0
+cbus*	at vbus?
 
 #### Standard system devices -- all required for a given architecture
 

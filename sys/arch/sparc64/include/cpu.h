@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2016/05/10 19:24:00 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.120 2016/06/22 20:13:00 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,6 +63,7 @@
 #include "opt_lockdebug.h"
 #endif
 
+#include <machine/bus_defs.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
@@ -362,6 +363,7 @@ struct intrhand {
 	volatile uint64_t	*ih_map;	/* Interrupt map reg */
 	volatile uint64_t	*ih_clr;	/* clear interrupt reg */
 	void			(*ih_ack)(struct intrhand *); /* ack interrupt function */
+	bus_space_tag_t		ih_bus;		/* parent bus */
 	struct evcnt		ih_cnt;		/* counter for vmstat */
 	uint32_t		ih_ivec;
 	char			ih_name[32];	/* name for the above */
