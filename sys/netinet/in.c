@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.167 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.168 2016/06/23 06:40:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.167 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.168 2016/06/23 06:40:48 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -641,7 +641,7 @@ in_ifaddlocal(struct ifaddr *ifa)
 	rt_ifa_addlocal(ifa);
 }
 
-/* Rempve loopback entry of ownaddr */
+/* Remove loopback entry of ownaddr */
 static void
 in_ifremlocal(struct ifaddr *ifa)
 {
