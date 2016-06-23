@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.111 2016/06/16 23:09:44 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.112 2016/06/23 04:41:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.111 2016/06/16 23:09:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.112 2016/06/23 04:41:03 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1240,12 +1240,7 @@ module_prime(const char *name, void *base, size_t size)
 	module_t *mod;
 	int error;
 
-	mod = module_newmodule(MODULE_SOURCE_BOOT);
-	if (mod == NULL) {
-		return ENOMEM;
-	}
-
-	/* Check for duplicate modules */
+	/* Check for module name same as a built-in module */
 
 	__link_set_foreach(mip, modules) {
 		if (*mip == &module_dummy)
@@ -1253,10 +1248,25 @@ module_prime(const char *name, void *base, size_t size)
 		if (strcmp((*mip)->mi_name, name) == 0) {
 			module_error("module `%s' pushed by boot loader "
 			    "already exists", name);
-			kmem_free(mod, sizeof(*mod));
 			return EEXIST;
 		}
 	}
+
+	/* Also eliminate duplicate boolist entries */
+
+	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+			module_error("duplicate bootlist entry for module "
+			    "`%s'", name);
+			return EEXIST;
+		}
+	}
+
+	mod = module_newmodule(MODULE_SOURCE_BOOT);
+	if (mod == NULL) {
+		return ENOMEM;
+	}
+
 	error = kobj_load_mem(&mod->mod_kobj, name, base, size);
 	if (error != 0) {
 		kmem_free(mod, sizeof(*mod));
