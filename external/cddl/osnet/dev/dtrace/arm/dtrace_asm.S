@@ -224,23 +224,6 @@ ENTRY(dtrace_invop_uninit)
 END(dtrace_invop_uninit)
 
 /*
-void
-vpanic(const char *format, va_list alist)
-*/
-ENTRY(vpanic)				/* Initial stack layout: */
-vpanic_common:
-	RET
-END(vpanic)
-
-/*
-void
-dtrace_vpanic(const char *format, va_list alist)
-*/
-ENTRY(dtrace_vpanic)			/* Initial stack layout: */
-	RET
-END(dtrace_vpanic)
-
-/*
 uintptr_t
 dtrace_caller(int aframes)
 */
