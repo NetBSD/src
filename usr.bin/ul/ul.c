@@ -1,4 +1,4 @@
-/*	$NetBSD: ul.c,v 1.18 2016/06/13 14:58:57 abhinav Exp $	*/
+/*	$NetBSD: ul.c,v 1.19 2016/06/23 03:58:13 abhinav Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ul.c,v 1.18 2016/06/13 14:58:57 abhinav Exp $");
+__RCSID("$NetBSD: ul.c,v 1.19 2016/06/23 03:58:13 abhinav Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -65,34 +65,29 @@ __RCSID("$NetBSD: ul.c,v 1.18 2016/06/13 14:58:57 abhinav Exp $");
 #define	UNDERL	010	/* Ul */
 #define	BOLD	020	/* Bold */
 
-struct tinfo *info;
-int	must_overstrike;
-const char *CURS_UP, *CURS_RIGHT, *CURS_LEFT,
-	*ENTER_STANDOUT, *EXIT_STANDOUT, *ENTER_UNDERLINE, *EXIT_UNDERLINE,
-	*ENTER_DIM, *ENTER_BOLD, *ENTER_REVERSE, *UNDER_CHAR, *EXIT_ATTRIBUTES;
+static int	must_overstrike;
 
 struct	CHAR	{
 	char	c_mode;
 	char	c_char;
 } ;
 
-size_t col, maxcol;
-int	mode;
-int	halfpos;
-int	upln;
-int	iflag;
+static size_t col, maxcol;
+static int	mode;
+static int	halfpos;
+static int	upln;
+static int	iflag;
 
-void filter(FILE *);
-void flushln(struct CHAR *, size_t);
-void fwd(struct CHAR *, size_t);
-void iattr(struct CHAR *);
-void initbuf(struct CHAR *, size_t);
-void initcap(void);
-void outc(int);
-int outchar(int);
-void overstrike(struct CHAR *);
-void reverse(struct CHAR *, size_t);
-void setulmode(int);
+static void filter(FILE *);
+static void flushln(struct CHAR *, size_t);
+static void fwd(struct CHAR *, size_t);
+static void iattr(struct CHAR *);
+static void initbuf(struct CHAR *, size_t);
+static void outc(int);
+static int outchar(int);
+static void overstrike(struct CHAR *);
+static void reverse(struct CHAR *, size_t);
+static void setulmode(int);
 static void alloc_buf(struct CHAR **, size_t *);
 static void set_mode(void);
 
@@ -147,7 +142,7 @@ main(int argc, char **argv)
 	exit(0);
 }
 
-void
+static void
 filter(FILE *f)
 {
 	int c;
@@ -270,7 +265,7 @@ filter(FILE *f)
 	free(obuf);
 }
 
-void
+static void
 flushln(struct CHAR *obuf, size_t obuf_size)
 {
 	int lastmode;
@@ -312,7 +307,7 @@ flushln(struct CHAR *obuf, size_t obuf_size)
  * For terminals that can overstrike, overstrike underlines and bolds.
  * We don't do anything with halfline ups and downs, or Greek.
  */
-void
+static void
 overstrike(struct CHAR *obuf)
 {
 	size_t i;
@@ -350,7 +345,7 @@ overstrike(struct CHAR *obuf)
 	}
 }
 
-void
+static void
 iattr(struct CHAR *obuf)
 {
 	size_t i;
@@ -374,7 +369,7 @@ iattr(struct CHAR *obuf)
 	putchar('\n');
 }
 
-void
+static void
 initbuf(struct CHAR *obuf, size_t obuf_size)
 {
 
@@ -390,7 +385,7 @@ set_mode(void)
 	mode &= ALTSET;
 }
 
-void
+static void
 fwd(struct CHAR *obuf, size_t obuf_size)
 {
 	int oldcol, oldmax;
@@ -402,7 +397,7 @@ fwd(struct CHAR *obuf, size_t obuf_size)
 	maxcol = oldmax;
 }
 
-void
+static void
 reverse(struct CHAR *obuf, size_t obuf_size)
 {
 	upln++;
@@ -412,7 +407,7 @@ reverse(struct CHAR *obuf, size_t obuf_size)
 	upln++;
 }
 
-int
+static int
 outchar(int c)
 {
 	return (putchar(c & 0177));
@@ -420,7 +415,7 @@ outchar(int c)
 
 static int curmode = 0;
 
-void
+static void
 outc(int c)
 {
 	putchar(c);
@@ -433,7 +428,7 @@ outc(int c)
 	}
 }
 
-void
+static void
 setulmode(int newmode)
 {
 	if (!iflag) {
