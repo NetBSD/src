@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.120 2016/06/22 20:13:00 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.121 2016/06/23 20:32:40 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,6 @@
 #include "opt_lockdebug.h"
 #endif
 
-#include <machine/bus_defs.h>
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
@@ -71,6 +70,7 @@
 #if defined(_KERNEL)
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
+#include <sparc64/bus_defs.h>
 #endif
 #ifdef SUN4V
 #include <machine/hypervisor.h>
@@ -342,12 +342,14 @@ struct clockframe {
  */
 void cpu_signotify(struct lwp *);
 
+
 /*
  * Interrupt handler chains.  Interrupt handlers should return 0 for
  * ``not me'' or 1 (``I took care of it'').  intr_establish() inserts a
  * handler into the list.  The handler is called with its (single)
  * argument, or with a pointer to a clockframe if ih_arg is NULL.
  */
+#if defined(_KERNEL)
 struct intrhand {
 	int			(*ih_fun)(void *);
 	void			*ih_arg;
@@ -368,6 +370,7 @@ struct intrhand {
 	uint32_t		ih_ivec;
 	char			ih_name[32];	/* name for the above */
 };
+#endif
 extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
