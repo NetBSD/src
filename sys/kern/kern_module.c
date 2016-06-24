@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.112 2016/06/23 04:41:03 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.113 2016/06/24 23:04:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.112 2016/06/23 04:41:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.113 2016/06/24 23:04:09 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -723,20 +723,17 @@ module_enqueue(module_t *mod)
 	KASSERT(kernconfig_is_held());
 
 	/*
-	 * If there are requisite modules, put at the head of the queue.
-	 * This is so that autounload can unload requisite modules with
-	 * only one pass through the queue.
+	 * Put new entry at the head of the queue so autounload can unload
+	 * requisite modules with only one pass through the queue.
 	 */
+	TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
 	if (mod->mod_nrequired) {
-		TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
 
 		/* Add references to the requisite modules. */
 		for (i = 0; i < mod->mod_nrequired; i++) {
 			KASSERT(mod->mod_required[i] != NULL);
 			mod->mod_required[i]->mod_refcnt++;
 		}
-	} else {
-		TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	}
 	module_count++;
 	module_gen++;
