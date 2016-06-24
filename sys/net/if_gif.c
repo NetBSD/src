@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.110 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.111 2016/06/24 04:38:12 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.110 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.111 2016/06/24 04:38:12 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,8 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.110 2016/06/10 13:27:16 ozaki-r Exp $")
 
 #include "ioconf.h"
 
-static void	gifintr(void *);
-
 /*
  * gif global variable definitions
  */
@@ -95,6 +93,7 @@ static LIST_HEAD(, gif_softc) gif_softc_list;
 static void	gifattach0(struct gif_softc *);
 static int	gif_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, const struct rtentry *);
+static void	gif_start(struct ifnet *);
 static int	gif_ioctl(struct ifnet *, u_long, void *);
 static int	gif_set_tunnel(struct ifnet *, struct sockaddr *,
 			       struct sockaddr *);
@@ -329,8 +328,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
-	    sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
-	    sc->gif_si == NULL) {
+	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
@@ -356,10 +354,9 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		splx(s);
 		goto end;
 	}
-
-	/* softint_schedule() must be called with kpreempt_disabled() */
-	softint_schedule(sc->gif_si);
 	splx(s);
+
+	gif_start(ifp);
 
 	error = 0;
 
@@ -370,27 +367,16 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 }
 
 static void
-gifintr(void *arg)
+gif_start(struct ifnet *ifp)
 {
 	struct gif_softc *sc;
-	struct ifnet *ifp;
 	struct mbuf *m;
 	int family;
 	int len;
 	int s;
 	int error;
 
-	sc = arg;
-	ifp = &sc->gif_if;
-
-	/*
-	 * other CPUs does {set,delete}_tunnel after curcpu have done
-	 * softint_schedule().
-	 */
-	if (sc->gif_pdst == NULL || sc->gif_psrc == NULL) {
-		IFQ_PURGE(&ifp->if_snd);
-		return;
-	}
+	sc = ifp->if_softc;
 
 	/* output processing */
 	while (1) {
@@ -418,16 +404,21 @@ gifintr(void *arg)
 		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
 		case AF_INET:
-			mutex_enter(softnet_lock);
+			/* XXX
+			 * To add mutex_enter(softnet_lock) or
+			 * KASSERT(mutex_owned(softnet_lock)) here, we shold
+			 * coordinate softnet_lock between in6_if_up() and
+			 * in6_purgeif().
+			 */
 			error = in_gif_output(ifp, family, m);
-			mutex_exit(softnet_lock);
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
-			mutex_enter(softnet_lock);
+			/* XXX
+			 * the same as in_gif_output()
+			 */
 			error = in6_gif_output(ifp, family, m);
-			mutex_exit(softnet_lock);
 			break;
 #endif
 		default:
@@ -790,7 +781,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	struct gif_softc *sc2;
 	struct sockaddr *osrc, *odst;
 	struct sockaddr *nsrc, *ndst;
-	void *osi;
 	int s;
 	int error;
 
@@ -823,33 +813,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 
 	/* Firstly, clear old configurations. */
-	if (sc->gif_si) {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
-		osi = sc->gif_si;
-		sc->gif_psrc = NULL;
-		sc->gif_pdst = NULL;
-		sc->gif_si = NULL;
-		/*
-		 * At this point, gif_output() does not softint_schedule()
-		 * any more. However, there are below 2 fears of other CPUs
-		 * which would cause panic because of the race between
-		 * softint_execute() and softint_disestablish().
-		 *     (a) gif_output() has done softint_schedule(), and softint
-		 *         (gifintr()) is waiting for execution
-		 *         => This pattern is avoided by waiting SOFTINT_PENDING
-		 *            CPUs in softint_disestablish()
-		 *     (b) gifintr() is already running
-		 *         => This pattern is avoided by waiting SOFTINT_ACTIVE
-		 *            CPUs in softint_disestablish()
-		 */
-
-		softint_disestablish(osi);
-		sc->gif_psrc = osrc;
-		sc->gif_pdst = odst;
-		osrc = NULL;
-		odst = NULL;
-	}
 	/* XXX we can detach from both, but be polite just in case */
 	if (sc->gif_psrc)
 		(void)gif_encap_detach(sc);
@@ -872,20 +835,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 			osrc = sc->gif_psrc;
 			odst = sc->gif_pdst;
 
-			continue;
-		}
-
-		sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
-		if (sc->gif_si == NULL) {
-			(void)gif_encap_detach(sc);
-
-			/* rollback to the last configuration. */
-			nsrc = osrc;
-			ndst = odst;
-			osrc = sc->gif_psrc;
-			odst = sc->gif_pdst;
-
-			error = ENOMEM;
 			continue;
 		}
 	} while (error != 0 && (nsrc != NULL && ndst != NULL));
@@ -915,25 +864,10 @@ static void
 gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
-	struct sockaddr *osrc, *odst;
-	void *osi;
 	int s;
 
 	s = splsoftnet();
 
-	if (sc->gif_si) {
-		osrc = sc->gif_psrc;
-		odst = sc->gif_pdst;
-		osi = sc->gif_si;
-
-		sc->gif_psrc = NULL;
-		sc->gif_pdst = NULL;
-		sc->gif_si = NULL;
-
-		softint_disestablish(osi);
-		sc->gif_psrc = osrc;
-		sc->gif_pdst = odst;
-	}
 	if (sc->gif_psrc) {
 		sockaddr_free(sc->gif_psrc);
 		sc->gif_psrc = NULL;
