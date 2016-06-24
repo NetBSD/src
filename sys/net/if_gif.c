@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.111 2016/06/24 04:38:12 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.112 2016/06/24 06:32:47 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.111 2016/06/24 04:38:12 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.112 2016/06/24 06:32:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,7 +191,8 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_dlt    = DLT_NULL;
 	sc->gif_if.if_softc  = sc;
 	IFQ_SET_READY(&sc->gif_if.if_snd);
-	if_attach(&sc->gif_if);
+	if_initialize(&sc->gif_if);
+	if_register(&sc->gif_if);
 	if_alloc_sadl(&sc->gif_if);
 	bpf_attach(&sc->gif_if, DLT_NULL, sizeof(u_int));
 }
