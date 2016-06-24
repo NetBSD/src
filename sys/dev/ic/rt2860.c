@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.16 2016/06/17 17:03:20 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.17 2016/06/24 16:08:54 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.16 2016/06/17 17:03:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.17 2016/06/24 16:08:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.16 2016/06/17 17:03:20 christos Exp $")
 #ifdef RAL_DEBUG
 #define DPRINTF(x)	do { if (rt2860_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (rt2860_debug >= (n)) printf x; } while (0)
-int rt2860_debug = 0;
+int rt2860_debug = 4;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
@@ -1776,6 +1776,8 @@ rt2860_start(struct ifnet *ifp)
 			continue;
 		}
 
+		bpf_mtap(ifp, m);
+
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
@@ -1783,8 +1785,6 @@ rt2860_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
-
-		bpf_mtap(ifp, m);
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
@@ -1859,6 +1859,22 @@ rt2860_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/* setup multicast filter, etc */
+			error = 0;
+		}
+		break;
+
+	case SIOCS80211CHANNEL:
+		/*
+		 * This allows for fast channel switching in monitor mode
+		 * (used by kismet). In IBSS mode, we must explicitly reset
+		 * the interface to generate a new beacon frame.
+		 */
+		error = ieee80211_ioctl(ic, cmd, data);
+		if (error == ENETRESET &&
+		    ic->ic_opmode == IEEE80211_M_MONITOR) {
+			if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
+			    (IFF_UP | IFF_RUNNING))
+				rt2860_switch_chan(sc, ic->ic_ibss_chan);
 			error = 0;
 		}
 		break;
@@ -2752,6 +2768,11 @@ rt2860_set_key(struct ieee80211com *ic, const struct ieee80211_key *ck,
 	uint32_t attr;
 	uint8_t mode, wcid, iv[8];
 	struct ieee80211_key *k = __UNCONST(ck); /* XXX */
+
+	/* defer setting of WEP keys until interface is brought up */
+	if ((ic->ic_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING))
+		return 0;
 
 	/* map net80211 cipher to RT2860 security mode */
 	switch (k->wk_cipher->ic_cipher) {
