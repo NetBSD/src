@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.41 2016/06/03 15:37:16 christos Exp $
+#	$NetBSD: files.ufs,v 1.42 2016/06/24 17:21:56 christos Exp $
 
 deffs					FFS
 deffs					EXT2FS
@@ -18,6 +18,8 @@ file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_bmap.c	ext2fs
 file	ufs/ext2fs/ext2fs_bswap.c	ext2fs
+file	ufs/ext2fs/ext2fs_hash.c	ext2fs
+file	ufs/ext2fs/ext2fs_htree.c	ext2fs
 file	ufs/ext2fs/ext2fs_extents.c	ext2fs
 file	ufs/ext2fs/ext2fs_inode.c	ext2fs
 file	ufs/ext2fs/ext2fs_lookup.c	ext2fs
