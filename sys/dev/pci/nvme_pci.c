@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.2 2016/05/11 13:55:28 nonaka Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.3 2016/06/24 15:25:43 nonaka Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2 2016/05/11 13:55:28 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.3 2016/06/24 15:25:43 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 intr_free:
-	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * sc->sc_nq);
+	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * nq);
 	sc->sc_nq = 0;
 intr_release:
 	pci_intr_release(pa->pa_pc, psc->psc_intrs, psc->psc_nintrs);
