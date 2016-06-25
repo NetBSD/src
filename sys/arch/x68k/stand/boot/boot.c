@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.27 2016/06/25 14:35:58 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.28 2016/06/25 16:05:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -157,15 +157,15 @@ doboot(const char *file, int flags)
 	printf("boot device = %x\n", bootdev);
 	if (file[0] == 'n') {
 		printf("if = %d, unit = %d\n",
-		       B_X68K_SCSI_IF(dev),
-		       B_X68K_SCSI_IF_UN(dev));
+		       B_X68K_SCSI_IF(bootdev),
+		       B_X68K_SCSI_IF_UN(bootdev));
 	} else {
 		printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
-		       B_X68K_SCSI_IF(dev),
-		       B_X68K_SCSI_IF_UN(dev),
-		       B_X68K_SCSI_ID(dev),
-		       B_X68K_SCSI_LUN(dev),
-		       B_X68K_SCSI_PART(dev) + 'a');
+		       B_X68K_SCSI_IF(bootdev),
+		       B_X68K_SCSI_IF_UN(bootdev),
+		       B_X68K_SCSI_ID(bootdev),
+		       B_X68K_SCSI_LUN(bootdev),
+		       B_X68K_SCSI_PART(bootdev) + 'a');
 	}
 #endif
 
