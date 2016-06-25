@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.26 2016/06/19 09:42:28 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.27 2016/06/25 14:35:58 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -32,9 +32,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 #include <lib/libsa/ufs.h>
-#ifdef NETBOOT
 #include <lib/libsa/dev_net.h>
-#endif
 #include <lib/libkern/libkern.h>
 
 #include "libx68k.h"
@@ -50,38 +48,32 @@
 #define SRAM_MEMSIZE	(*((long*) 0x00ed0008))
 
 char default_kernel[20] =
-#ifndef NETBOOT
-    "sd0a:netbsd";
-#else
+#if defined(NETBOOT)
     "nfs:netbsd";
+#else
+    "sd0a:netbsd";
 #endif
 int mpu;
-#ifndef NETBOOT
 int hostadaptor;
-#endif
 int console_device = -1;
 
 #ifdef DEBUG
-#ifdef NETBOOT
 int debug = 1;
-#endif
 #endif
 
 static void help(void);
-#ifndef NETBOOT
 static int get_scsi_host_adapter(void);
-#endif
 static void doboot(const char *, int);
 static void boot(char *);
-#ifndef NETBOOT
 static void cmd_ls(char *);
-#endif
 int bootmenu(void);
 void bootmain(int);
 extern int detectmpu(void);
 extern int badbaddr(void *);
 
-#ifndef NETBOOT
+extern struct fs_ops file_system_ustarfs[];
+extern struct fs_ops file_system_nfs[];
+
 /* from boot_ufs/bootmain.c */
 static int
 get_scsi_host_adapter(void)
@@ -104,25 +96,19 @@ get_scsi_host_adapter(void)
 
 	return ha;
 }
-#endif
 
 static void
 help(void)
 {
 	printf("Usage:\n");
 	printf("boot [dev:][file] -[flags]\n");
-#ifndef NETBOOT
 	printf(" dev:   sd<ID><PART>, ID=0-7, PART=a-p\n");
 	printf("        cd<ID>a, ID=0-7\n");
 	printf("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
-#else
-	printf(" dev:   nfs, first probed NE2000 is used.\n");
-#endif
+	printf("        nfs, first probed NE2000 is used.\n");
 	printf(" file:  netbsd, netbsd.gz, etc.\n");
 	printf(" flags: abdqsv\n");
-#ifndef NETBOOT
 	printf("ls [dev:][directory]\n");
-#endif
 	printf("switch [show | key=val]\n");
 	printf("halt\nreboot\n");
 }
@@ -139,6 +125,7 @@ doboot(const char *file, int flags)
 	char *name;
 	short *p;
 	int loadflag;
+	struct fs_ops *fs;
 
 	printf("Starting %s, flags 0x%x\n", file, flags);
 
@@ -147,17 +134,18 @@ doboot(const char *file, int flags)
 	}
 
 #ifdef DEBUG
-#ifndef NETBOOT
-	printf("dev = %x, unit = %d, part = %c, name = %s\n",
-	       dev, unit, part + 'a', name);
-#else
-	printf("dev = %x, unit = %d, name = %s\n",
-	       dev, unit, name);
-#endif
+	if (file[0] == 'n') {
+		printf("dev = %x, unit = %d, name = %s\n",
+		       dev, unit, name);
+	} else {
+		printf("dev = %x, unit = %d, part = %c, name = %s\n",
+		       dev, unit, part + 'a', name);
+	}
 #endif
 
-#ifndef NETBOOT
-	if (dev == 0) {		/* SCSI */
+	if (dev == 3) {		/* netboot */
+		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
+	} else if (dev == 0) {		/* SCSI */
 		bootdev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
 					   hostadaptor >> 4,
 					   hostadaptor & 15,
@@ -165,24 +153,39 @@ doboot(const char *file, int flags)
 	} else {
 		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
 	}
-#else
-	bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
-#endif
 #ifdef DEBUG
 	printf("boot device = %x\n", bootdev);
-#ifndef NETBOOT
-	printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
-	       B_X68K_SCSI_IF(bootdev),
-	       B_X68K_SCSI_IF_UN(bootdev),
-	       B_X68K_SCSI_ID(bootdev),
-	       B_X68K_SCSI_LUN(bootdev),
-	       B_X68K_SCSI_PART(bootdev) + 'a');
-#else
-	printf("if = %d, unit = %d\n",
-	       B_X68K_SCSI_IF(bootdev),
-	       B_X68K_SCSI_IF_UN(bootdev));
+	if (file[0] == 'n') {
+		printf("if = %d, unit = %d\n",
+		       B_X68K_SCSI_IF(dev),
+		       B_X68K_SCSI_IF_UN(dev));
+	} else {
+		printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
+		       B_X68K_SCSI_IF(dev),
+		       B_X68K_SCSI_IF_UN(dev),
+		       B_X68K_SCSI_ID(dev),
+		       B_X68K_SCSI_LUN(dev),
+		       B_X68K_SCSI_PART(dev) + 'a');
+	}
 #endif
-#endif
+
+	/*
+	 * Choose the last entry of file_system[] at runtime.
+	 *
+	 * file_system[] is checked in turn from the beginning at all cases.
+	 * Trying FS_OPS(ustarfs) for non-ustarfs displays "@" (as the
+	 * mark which read a cylinder?).  OTOH, trying FS_OPS(nfs) for
+	 * non-nfs displays "must mount first" error message.
+	 * It is better that neither is displayed and in other words you
+	 * should not put these two into file_system[] at the same time.
+	 * Therefore I choose one of these here.
+	 */
+	if (file[0] == 'n') {
+		fs = &file_system_nfs[0];
+	} else {
+		fs = &file_system_ustarfs[0];
+	}
+	memcpy(&file_system[nfsys - 1], fs, sizeof(*fs));
 
 	loadflag = LOAD_KERNEL;
 	if (file[0] == 'f')
@@ -254,7 +257,6 @@ boot(char *arg)
 	}
 }
 
-#ifndef NETBOOT
 static void
 cmd_ls(char *arg)
 {
@@ -275,7 +277,6 @@ cmd_ls(char *arg)
 	ls(filename);
 	devopen_open_dir = 0;
 }
-#endif
 
 int
 bootmenu(void)
@@ -325,10 +326,8 @@ bootmenu(void)
 			exit(0);
 		else if (strcmp("switch", p) == 0)
 			cmd_switch(options);
-#ifndef NETBOOT
 		else if (strcmp("ls", p) == 0)
 			cmd_ls(options);
-#endif
 		else
 			printf("Unknown command %s\n", p);
 	}
@@ -366,12 +365,9 @@ bootmain(int bootdev)
 	u_int sram_memsize;
 	u_int probed_memsize;
 
-#ifndef NETBOOT
 	hostadaptor = get_scsi_host_adapter();
-#else
 	rtc_offset = RTC_OFFSET;
 	try_bootp = 1;
-#endif
 	mpu = detectmpu();
 
 	if (mpu < 3) {		/* not tested on 68020 */
@@ -387,7 +383,7 @@ bootmain(int bootdev)
 	console_device = consio_init(console_device);
 	setheap(HEAP_START, HEAP_END);
 
-#ifndef NETBOOT
+#if !defined(NETBOOT)
 	switch (B_TYPE(bootdev)) {
 	case X68K_MAJOR_FD:
 		default_kernel[0] = 'f';
