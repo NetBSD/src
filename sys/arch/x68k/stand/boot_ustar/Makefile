@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/06/25 04:08:57 isaki Exp $
+#	$NetBSD: Makefile,v 1.23 2016/06/25 14:35:58 isaki Exp $
 
 NOMAN=		# defined
 
@@ -14,7 +14,7 @@ NEWVERSWHAT=	"${BOOT}"
 TEXT=		002000		# Primary (me)
 BOOT_TEXT=	006000		# Secondary (/boot)
 
-BOOT_MAXSIZE=	56832		# size enough to read /boot whole
+BOOT_MAXSIZE=	65536		# size enough to read /boot whole
 
 PROG=		fd$(BOOT)
 BINDIR=		/usr/mdec
