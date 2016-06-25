@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1527 2016/06/12 18:44:46 abhinav Exp $
+# $NetBSD: mi,v 1.1528 2016/06/25 18:05:57 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -82,7 +82,7 @@
 ./usr/share/man/cat1/bdes.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/bg.0			man-util-catman		.cat
 ./usr/share/man/cat1/biff.0			man-mail-catman		.cat
-./usr/share/man/cat1/bpm.0			man-pkgutil-catman	crypto,.cat
+./usr/share/man/cat1/bpm.0			man-obsolete		crypto,.cat,obsolete
 ./usr/share/man/cat1/bthset.0			man-util-catman		.cat
 ./usr/share/man/cat1/btkey.0			man-util-catman		.cat
 ./usr/share/man/cat1/btpin.0			man-util-catman		.cat
@@ -3241,7 +3241,7 @@
 ./usr/share/man/html1/bdes.html			man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/bg.html			man-util-htmlman	html
 ./usr/share/man/html1/biff.html			man-mail-htmlman	html
-./usr/share/man/html1/bpm.html			man-pkgutil-htmlman	crypto,html
+./usr/share/man/html1/bpm.html			man-obsolete		crypto,html,obsolete
 ./usr/share/man/html1/bthset.html		man-util-htmlman	html
 ./usr/share/man/html1/btkey.html		man-util-htmlman	html
 ./usr/share/man/html1/btpin.html		man-util-htmlman	html
@@ -6010,7 +6010,7 @@
 ./usr/share/man/man1/bdes.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/bg.1			man-util-man		.man
 ./usr/share/man/man1/biff.1			man-mail-man		.man
-./usr/share/man/man1/bpm.1			man-pkgutil-man		crypto,.man
+./usr/share/man/man1/bpm.1			man-obsolete		crypto,.man,obsolete
 ./usr/share/man/man1/bthset.1			man-util-man		.man
 ./usr/share/man/man1/btkey.1			man-util-man		.man
 ./usr/share/man/man1/btpin.1			man-util-man		.man
