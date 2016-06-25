@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.h,v 1.3 2003/08/07 09:37:05 agc Exp $	*/
+/*	$NetBSD: bog.h,v 1.4 2016/06/25 23:15:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -48,10 +48,10 @@
  * The theoretical maximum for MAXWORDLEN is ('a' - 1) == 96
  */
 #define MAXWORDLEN		40	/* Maximum word length */
-#define MAXPWORDS		200	/* Maximum number of player's words */
-#define MAXMWORDS		200	/* Maximum number of machine's words */
-#define MAXPSPACE		2000	/* Space for player's words */
-#define MAXMSPACE		4000	/* Space for machines's words */
+#define MAXPWORDS		400	/* Maximum number of player's words */
+#define MAXMWORDS		400	/* Maximum number of machine's words */
+#define MAXPSPACE		4000	/* Space for player's words */
+#define MAXMSPACE		8000	/* Space for machines's words */
 
 #define MAXCOLS			20
 
