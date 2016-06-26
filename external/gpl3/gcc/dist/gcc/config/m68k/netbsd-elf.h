@@ -101,7 +101,7 @@ do									\
     if (TARGET_COLDFIRE)						\
       {									\
         asm_fprintf (FILE, "\tmovea.l #%LLP%d-.,%Ra1\n", (LABELNO));	\
-        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n", (LABELNO));	\
+        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n");	\
       }									\
     else								\
       asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));	\
