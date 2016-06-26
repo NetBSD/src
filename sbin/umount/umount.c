@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.48 2015/06/27 08:29:56 manu Exp $	*/
+/*	$NetBSD: umount.c,v 1.49 2016/06/26 03:05:52 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.48 2015/06/27 08:29:56 manu Exp $");
+__RCSID("$NetBSD: umount.c,v 1.49 2016/06/26 03:05:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,7 +204,7 @@ umountfs(const char *name, const char **typelist, int raw)
 		}
 #ifdef SMALL
 		else {
- 			warn("%s", rname);
+ 			warn("%s", name);
  			return 1;
 		}
 #endif /* SMALL */
