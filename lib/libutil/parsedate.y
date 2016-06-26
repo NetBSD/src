@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.28 2016/05/03 18:14:54 kre Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.29 2016/06/26 07:09:24 kre Exp $");
 #endif
 
 #include <stdio.h>
@@ -587,10 +587,6 @@ static const TABLE TimeNames[] = {
     { "mn",		tTIME,		 0 },
     { "noon",		tTIME,		12 },
     { "midday",		tTIME,		12 },
-    { "dawn",		tTIME,		 6 },
-    { "sunup",		tTIME,		 6 },
-    { "sunset",		tTIME,		18 },
-    { "sundown",	tTIME,		18 },
     { NULL,		0,		 0 }
 };
 
