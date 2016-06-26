@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 2016/06/25 16:05:43 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.29 2016/06/26 04:17:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -78,13 +78,21 @@ extern struct fs_ops file_system_nfs[];
 static int
 get_scsi_host_adapter(void)
 {
+	uint32_t bootinf;
 	char *bootrom;
 	int ha;
 
-	bootrom = (char *) (IOCS_BOOTINF() & 0x00ffffe0);
+	bootinf = IOCS_BOOTINF();
+	if (bootinf < 0xa0) {
+		/* boot from FD */
+		return 0;
+	}
+
+	/* Or, bootinf indicates the boot address */
+	bootrom = (char *)(bootinf & 0x00ffffe0);
 	/*
-	 * bootrom+0x24	"SCSIIN" ... Internal SCSI (spc@0)
-	 *		"SCSIEX" ... External SCSI (spc@1 or mha@0)
+	 * bootrom+0x24	"SCSIIN" ... Internal SCSI (spc0@)
+	 *		"SCSIEX" ... External SCSI (spc1@ or mha0@)
 	 */
 	if (*(u_short *)(bootrom + 0x24 + 4) == 0x494e) {	/* "IN" */
 		ha = (X68K_BOOT_SCSIIF_SPC << 4) | 0;
@@ -101,7 +109,8 @@ static void
 help(void)
 {
 	printf("Usage:\n");
-	printf("boot [dev:][file] -[flags]\n");
+	printf("boot [ha@][dev:][file] -[flags]\n");
+	printf(" ha:    spc0, spc1, mha0\n");
 	printf(" dev:   sd<ID><PART>, ID=0-7, PART=a-p\n");
 	printf("        cd<ID>a, ID=0-7\n");
 	printf("        fd<UNIT>a, UNIT=0-3, format is detected.\n");
@@ -118,10 +127,12 @@ doboot(const char *file, int flags)
 {
 	u_long		marks[MARK_MAX];
 	int fd;
+	int ha;		/* host adaptor */
 	int dev;	/* device number in devspec[] */
 	int unit;
 	int part;
 	int bootdev;
+	int maj;
 	char *name;
 	short *p;
 	int loadflag;
@@ -129,7 +140,7 @@ doboot(const char *file, int flags)
 
 	printf("Starting %s, flags 0x%x\n", file, flags);
 
-	if (devparse(file, &dev, &unit, &part, &name) != 0) {
+	if (devparse(file, &ha, &dev, &unit, &part, &name) != 0) {
 		printf("XXX: unknown corruption in /boot.\n");
 	}
 
@@ -138,29 +149,40 @@ doboot(const char *file, int flags)
 		printf("dev = %x, unit = %d, name = %s\n",
 		       dev, unit, name);
 	} else {
-		printf("dev = %x, unit = %d, part = %c, name = %s\n",
-		       dev, unit, part + 'a', name);
+		printf("ha = 0x%x, dev = %x, unit = %d, part = %c, name = %s\n",
+		       ha, dev, unit, part + 'a', name);
 	}
 #endif
 
 	if (dev == 3) {		/* netboot */
 		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_NE, unit, 0);
-	} else if (dev == 0) {		/* SCSI */
-		bootdev = X68K_MAKESCSIBOOTDEV(X68K_MAJOR_SD,
-					   hostadaptor >> 4,
-					   hostadaptor & 15,
-					   unit & 7, 0, 0);
-	} else {
+	} else if (dev == 2) {		/* FD */
 		bootdev = X68K_MAKEBOOTDEV(X68K_MAJOR_FD, unit & 3, 0);
+	} else {		/* SCSI */
+		if (ha != 0) {
+			hostadaptor = ha;
+		}
+		if (hostadaptor == 0) {
+			printf("host adaptor must be specified.\n");
+			return;
+		}
+
+		maj = (dev == 0) ? X68K_MAJOR_SD : X68K_MAJOR_CD;
+		bootdev = X68K_MAKESCSIBOOTDEV(maj,
+		    hostadaptor >> 4,
+		    hostadaptor & 15,
+		    unit & 7, 0, 0);
 	}
 #ifdef DEBUG
 	printf("boot device = %x\n", bootdev);
 	if (file[0] == 'n') {
-		printf("if = %d, unit = %d\n",
+		printf("type = %x, if = %d, unit = %d\n",
+		       B_TYPE(bootdev),
 		       B_X68K_SCSI_IF(bootdev),
 		       B_X68K_SCSI_IF_UN(bootdev));
 	} else {
-		printf("if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
+		printf("type = %x, if = %d, unit = %d, id = %d, lun = %d, part = %c\n",
+		       B_TYPE(bootdev),
 		       B_X68K_SCSI_IF(bootdev),
 		       B_X68K_SCSI_IF_UN(bootdev),
 		       B_X68K_SCSI_ID(bootdev),
