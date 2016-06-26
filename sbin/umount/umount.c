@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.49 2016/06/26 03:05:52 dholland Exp $	*/
+/*	$NetBSD: umount.c,v 1.50 2016/06/26 03:40:39 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.49 2016/06/26 03:05:52 dholland Exp $");
+__RCSID("$NetBSD: umount.c,v 1.50 2016/06/26 03:40:39 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: umount.c,v 1.49 2016/06/26 03:05:52 dholland Exp $");
 #endif /* !SMALL */
 
 #include <err.h>
+#include <errno.h>
 #include <fstab.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -183,7 +184,7 @@ umountfs(const char *name, const char **typelist, int raw)
 	const char *proto = NULL;
 #endif /* !SMALL */
 	const char *mntpt;
-	char *type, rname[MAXPATHLEN];
+	char *type, rname[MAXPATHLEN], umountprog[MAXPATHLEN];
 	mntwhat what;
 	struct stat sb;
 
@@ -260,12 +261,48 @@ umountfs(const char *name, const char **typelist, int raw)
 #endif /* ! SMALL */
 	}
 
+	snprintf(umountprog, sizeof(umountprog), "umount_%s", type);
+
 #ifndef SMALL
-	if (verbose)
+	if (verbose) {
 		(void)printf("%s: unmount from %s\n", name, mntpt);
+		/* put this before the test of FAKE */ 
+		if (!raw) {
+			(void)printf("Trying unmount program %s\n",
+			    umountprog);
+		}
+	}
 	if (fake)
 		return 0;
 #endif /* ! SMALL */
+
+	if (!raw) {
+		/*
+		 * The only options that need to be passed on are -f
+		 * and -v.
+		 */
+		char *args[3];
+		unsigned nargs = 0;
+
+		args[nargs++] = umountprog;
+		if (fflag == MNT_FORCE) {
+			args[nargs++] = __UNCONST("-f");
+		}
+#ifndef SMALL
+		if (verbose) {
+			args[nargs++] = __UNCONST("-v");
+		}
+#endif
+		execvp(umountprog, args);
+		if (errno != ENOENT) {
+			warn("%s: execvp", umountprog);
+		}
+	}
+
+#ifndef SMALL
+	if (verbose)
+		(void)printf("(No separate unmount program.)\n");
+#endif
 
 	if (unmount(mntpt, fflag) == -1) {
 		warn("%s", mntpt);
