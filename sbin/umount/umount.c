@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.51 2016/06/26 03:51:28 dholland Exp $	*/
+/*	$NetBSD: umount.c,v 1.52 2016/06/26 04:01:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.51 2016/06/26 03:51:28 dholland Exp $");
+__RCSID("$NetBSD: umount.c,v 1.52 2016/06/26 04:01:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,9 @@ main(int argc, char *argv[])
 
 	if (nfshost != NULL) {
 		memset(&hints, 0, sizeof hints);
-		getaddrinfo(nfshost, NULL, &hints, &nfshost_ai);
+		if (getaddrinfo(nfshost, NULL, &hints, &nfshost_ai) != 0) {
+			nfshost_ai = NULL;
+		}
 	}
 		
 	errs = 0;
@@ -252,7 +254,8 @@ umountfs(const char *name, const char **typelist, int raw)
 				memcpy(hostp, name, len);
 				hostp[len] = 0;
 				name += len + 1;
-				getaddrinfo(hostp, NULL, &hints, &ai);
+				if (getaddrinfo(hostp, NULL, &hints, &ai) != 0)
+					ai = NULL;
 			}
 		}
 
