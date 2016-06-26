@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.6 2012/10/12 20:15:52 tsutsui Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.7 2016/06/26 04:17:17 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -64,7 +64,7 @@ int fdopen(struct open_file *, ...);
 int fdclose(struct open_file *);
 
 /* devopen.c */
-int devparse(const char *, int *, int *, int *, char **);
+int devparse(const char *, int *, int *, int *, int *, char **);
 extern int devopen_open_dir;
 
 /* chdsk.c */
