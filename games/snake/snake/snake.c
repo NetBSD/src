@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.28 2012/06/19 05:46:09 dholland Exp $	*/
+/*	$NetBSD: snake.c,v 1.29 2016/06/27 08:46:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.28 2012/06/19 05:46:09 dholland Exp $");
+__RCSID("$NetBSD: snake.c,v 1.29 2016/06/27 08:46:04 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -97,6 +97,7 @@ struct point {
 #endif
 
 #define pchar(point, c)	mvaddch((point)->line + 1, (point)->col + 1, (c))
+/* note t must be < 20 due to restrictions of usleep() */
 #define delay(t)	usleep(t * 50000);
 
 static struct point you;
@@ -892,7 +893,8 @@ pushsnake(void)
 			bonus = ((random() >> 8) & 0377) % 10;
 			mvprintw(lcnt + 1, 0, "%d\n", bonus);
 			refresh();
-			delay(30);
+			delay(15);
+			delay(15);
 			if (bonus == i) {
 				spacewarp(1);
 				logit("bonus");
