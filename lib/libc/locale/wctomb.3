@@ -1,4 +1,4 @@
-.\" $NetBSD: wctomb.3,v 1.5 2006/10/14 07:51:01 wiz Exp $
+.\" $NetBSD: wctomb.3,v 1.6 2016/06/27 08:18:34 abhinav Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft int
-.Fn wctomb "char * s" "const wchar_t wchar"
+.Fn wctomb "char * s" "wchar_t wchar"
 .Sh DESCRIPTION
 The
 .Fn wctomb
@@ -112,7 +112,7 @@ If
 .Fa s
 is equal to
 .Dv NULL ,
-.Fn mbtowc
+.Fn wctomb
 returns:
 .Bl -tag -width 0123456789
 .It 0
