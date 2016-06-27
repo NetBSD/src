@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.345 2016/06/22 10:44:32 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.346 2016/06/27 08:58:50 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.345 2016/06/22 10:44:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.346 2016/06/27 08:58:50 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -640,9 +640,12 @@ if_initialize(ifnet_t *ifp)
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
-	ifp->if_link_si = softint_establish(SOFTINT_NET, if_link_state_change_si, ifp);
-	if (ifp->if_link_si == NULL)
-		panic("%s: softint_establish() failed", __func__);
+	if (if_is_link_state_chageable(ifp)) {
+		ifp->if_link_si = softint_establish(SOFTINT_NET,
+		    if_link_state_change_si, ifp);
+		if (ifp->if_link_si == NULL)
+			panic("%s: softint_establish() failed", __func__);
+	}
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
@@ -1192,8 +1195,10 @@ again:
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
 
-	softint_disestablish(ifp->if_link_si);
-	ifp->if_link_si = NULL;
+	if (if_is_link_state_chageable(ifp)) {
+		softint_disestablish(ifp->if_link_si);
+		ifp->if_link_si = NULL;
+	}
 
 	/*
 	 * remove packets that came from ifp, from software interrupt queues.
@@ -1780,6 +1785,10 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s, idx;
+
+	KASSERTMSG(if_is_link_state_chageable(ifp),
+	    "%s: IFEF_NO_LINK_STATE_CHANGE must not be set, but if_extflags=0x%x",
+	    ifp->if_xname, ifp->if_extflags);
 
 	/* Ensure change is to a valid state */
 	switch (link_state) {
