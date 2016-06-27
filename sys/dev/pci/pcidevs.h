@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1244 2016/06/01 11:01:36 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1245 2016/06/27 12:01:03 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1251 2016/06/01 11:00:15 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1252 2016/06/27 11:59:39 pgoyette Exp
  */
 
 /*
@@ -1535,6 +1535,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_XT	0x94c1		/* Radeon HD2400 XT */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_PRO	0x94c3		/* Radeon HD2400 Pro */
 #define	PCI_PRODUCT_ATI_RADEON_HD2400_M72	0x94c9		/* Mobility Radeon HD 2400 */
+#define	PCI_PRODUCT_ATI_RADEON_HD2400	0x94cc		/* Radeon HD 2400 */
 #define	PCI_PRODUCT_ATI_RADEON_HD3870	0x9501		/* Radeon HD3870 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4350	0x954f		/* Radeon HD4350 */
 #define	PCI_PRODUCT_ATI_RADEON_HD4500_M93	0x9555		/* Mobility Radeon HD 4500 */
@@ -5935,6 +5936,7 @@
 #define	PCI_PRODUCT_TI_TSB43AA22	0x8021		/* TSB43AA22 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB43AA22A	0x8023		/* TSB43AA22/A IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB43AA23	0x8024		/* TSB43AA23 IEEE 1394 Host Controller */
+#define	PCI_PRODUCT_TI_TSB82AA2	0x8025		/* TSB82AA2 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_TSB43AB21	0x8026		/* TSB43AA21 IEEE 1394 Host Controller */
 #define	PCI_PRODUCT_TI_PCI4451LYNX	0x8027		/* PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI4510LYNX	0x8029		/* PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge */
