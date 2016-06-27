@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.346 2016/06/27 08:58:50 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.347 2016/06/27 10:09:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.346 2016/06/27 08:58:50 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.347 2016/06/27 10:09:02 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -640,7 +640,7 @@ if_initialize(ifnet_t *ifp)
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
-	if (if_is_link_state_chageable(ifp)) {
+	if (if_is_link_state_changeable(ifp)) {
 		ifp->if_link_si = softint_establish(SOFTINT_NET,
 		    if_link_state_change_si, ifp);
 		if (ifp->if_link_si == NULL)
@@ -1195,7 +1195,7 @@ again:
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
 
-	if (if_is_link_state_chageable(ifp)) {
+	if (if_is_link_state_changeable(ifp)) {
 		softint_disestablish(ifp->if_link_si);
 		ifp->if_link_si = NULL;
 	}
@@ -1786,7 +1786,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s, idx;
 
-	KASSERTMSG(if_is_link_state_chageable(ifp),
+	KASSERTMSG(if_is_link_state_changeable(ifp),
 	    "%s: IFEF_NO_LINK_STATE_CHANGE must not be set, but if_extflags=0x%x",
 	    ifp->if_xname, ifp->if_extflags);
 
