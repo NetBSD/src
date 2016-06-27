@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.112 2016/06/24 06:32:47 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.113 2016/06/27 09:06:56 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.112 2016/06/24 06:32:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.113 2016/06/27 09:06:56 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -185,6 +185,7 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_addrlen = 0;
 	sc->gif_if.if_mtu    = GIF_MTU;
 	sc->gif_if.if_flags  = IFF_POINTOPOINT | IFF_MULTICAST;
+	sc->gif_if.if_extflags  = IFEF_NO_LINK_STATE_CHANGE;
 	sc->gif_if.if_ioctl  = gif_ioctl;
 	sc->gif_if.if_output = gif_output;
 	sc->gif_if.if_type   = IFT_GIF;
