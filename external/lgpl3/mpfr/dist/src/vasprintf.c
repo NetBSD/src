@@ -1559,7 +1559,7 @@ partition_number (struct number_parts *np, mpfr_srcptr p,
             /* fractional part */
             {
               np->point = MPFR_DECIMAL_POINT;
-              np->fp_trailing_zeros = (spec.spec == 'g' && spec.spec == 'G') ?
+              np->fp_trailing_zeros = (spec.spec == 'g' || spec.spec == 'G') ?
                 spec.prec - 1 : spec.prec;
             }
           else if (spec.alt)
