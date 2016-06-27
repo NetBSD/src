@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.215 2016/06/22 10:44:32 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.216 2016/06/27 08:58:50 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -381,8 +381,9 @@ typedef struct ifnet {
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
 
-#define	IFEF_OUTPUT_MPSAFE	0x0001	/* if_output() can run parallel */
-#define	IFEF_START_MPSAFE	0x0002	/* if_start() can run parallel */
+#define	IFEF_OUTPUT_MPSAFE		__BIT(0)	/* if_output() can run parallel */
+#define	IFEF_START_MPSAFE		__BIT(1)	/* if_start() can run parallel */
+#define	IFEF_NO_LINK_STATE_CHANGE	__BIT(2)	/* doesn't use link state interrupts */
 
 #ifdef _KERNEL
 static inline bool
@@ -427,6 +428,13 @@ if_start_lock(struct ifnet *ifp)
 		(*ifp->if_start)(ifp);
 		KERNEL_UNLOCK_ONE(NULL);
 	}
+}
+
+static inline bool
+if_is_link_state_chageable(struct ifnet *ifp)
+{
+
+	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
 }
 #endif /* _KERNEL */
 
