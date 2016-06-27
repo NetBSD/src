@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.170 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.170 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ ip6_output(
 )
 {
 	struct ip6_hdr *ip6, *mhip6;
-	struct ifnet *ifp, *origifp = NULL;
+	struct ifnet *ifp = NULL, *origifp = NULL;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
 	bool tso;
@@ -491,7 +491,6 @@ ip6_output(
 	ip6 = mtod(m, struct ip6_hdr *);
 
 	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
-	ifp = NULL;
 	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
 	    &ifp, &psref, &rt, 0)) != 0) {
 		if (ifp != NULL)
