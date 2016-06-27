@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1251 2016/06/01 11:00:15 pgoyette Exp $
+$NetBSD: pcidevs,v 1.1252 2016/06/27 11:59:39 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1528,6 +1528,7 @@ product ATI RADEON_HD4650	0x9498  Radeon HD4650
 product ATI RADEON_HD2400_XT	0x94c1	Radeon HD2400 XT
 product ATI RADEON_HD2400_PRO	0x94c3	Radeon HD2400 Pro
 product ATI RADEON_HD2400_M72	0x94c9	Mobility Radeon HD 2400
+product ATI RADEON_HD2400	0x94cc	Radeon HD 2400
 product ATI RADEON_HD3870	0x9501	Radeon HD3870
 product ATI RADEON_HD4350	0x954f	Radeon HD4350
 product ATI RADEON_HD4500_M93	0x9555	Mobility Radeon HD 4500
@@ -5928,6 +5929,7 @@ product TI	TSB12LV26	0x8020	TSB12LV26 IEEE 1394 Host Controller
 product TI	TSB43AA22	0x8021	TSB43AA22 IEEE 1394 Host Controller
 product TI	TSB43AA22A	0x8023	TSB43AA22/A IEEE 1394 Host Controller
 product TI	TSB43AA23	0x8024	TSB43AA23 IEEE 1394 Host Controller
+product TI	TSB82AA2	0x8025	TSB82AA2 IEEE 1394 Host Controller
 product TI	TSB43AB21	0x8026	TSB43AA21 IEEE 1394 Host Controller
 product TI	PCI4451LYNX	0x8027	PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	PCI4510LYNX	0x8029	PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
