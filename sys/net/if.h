@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.216 2016/06/27 08:58:50 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.217 2016/06/27 10:09:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -431,7 +431,7 @@ if_start_lock(struct ifnet *ifp)
 }
 
 static inline bool
-if_is_link_state_chageable(struct ifnet *ifp)
+if_is_link_state_changeable(struct ifnet *ifp)
 {
 
 	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
