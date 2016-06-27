@@ -1,4 +1,4 @@
-# $NetBSD: t_factor.sh,v 1.8 2016/06/27 05:08:18 pgoyette Exp $
+# $NetBSD: t_factor.sh,v 1.9 2016/06/27 05:29:32 pgoyette Exp $
 #
 # Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,10 @@
 
 expect() {
 	echo "${2}" >expout
+	ncrypt=$( ldd /usr/games/factor | grep -c -- -lcrypt )
+	if [ "X$3" != "X" -a $ncrypt -eq 0 ] ; then 
+		atf_skip "crypto needed for huge non-prime factors - PR bin/23663"
+	fi
 	atf_check -s eq:0 -o file:expout -e empty /usr/games/factor ${1}
 }
 
@@ -65,11 +69,7 @@ loop2_head() {
 	atf_set "require.progs" "/usr/games/factor"
 }
 loop2_body() {
-	ncrypt=$( ldd /usr/games/factor | grep -c -- -lcrypt )
-	if [ $ncrypt -eq 0 ] ; then 
-		atf_skip "crypto needed for huge non-prime factors - PR bin/23663"
-	fi
-	expect '99999999999991' '99999999999991: 7 13 769231 1428571' ExFail
+	expect '99999999999991' '99999999999991: 7 13 769231 1428571' Need_Crypto
 }
 
 atf_init_test_cases()
