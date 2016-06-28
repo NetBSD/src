@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.15 2016/05/30 06:54:17 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.16 2016/06/28 11:47:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.15 2016/05/30 06:54:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.16 2016/06/28 11:47:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1492,6 +1492,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 		return;
 	}
 
+	ub->ub_data = usbd_get_buffer(xfer);
 	if (sc->sc_methods->ucom_read != NULL) {
 		sc->sc_methods->ucom_read(sc->sc_parent, sc->sc_portno,
 		    &cp, &cc);
