@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.27 2014/09/05 05:19:24 matt Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.28 2016/06/28 05:18:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,9 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/rbtree.h>
 #include <prop/prop_number.h>
 #include "prop_object_impl.h"
-#include "prop_rb_impl.h"
 
 #if defined(_KERNEL)
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ _prop_number_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_number_t pn = *obj;
 
-	_prop_rb_tree_remove_node(&_prop_number_tree, pn);
+	rb_tree_remove_node(&_prop_number_tree, pn);
 
 	_PROP_POOL_PUT(_prop_number_pool, pn);
 
@@ -171,7 +171,7 @@ _prop_number_init(void)
 {
 
 	_PROP_MUTEX_INIT(_prop_number_tree_mutex);
-	_prop_rb_tree_init(&_prop_number_tree, &_prop_number_rb_tree_ops);
+	rb_tree_init(&_prop_number_tree, &_prop_number_rb_tree_ops);
 	return 0;
 }
 
@@ -283,7 +283,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	opn = _prop_rb_tree_find(&_prop_number_tree, pnv);
+	opn = rb_tree_find(&_prop_number_tree, pnv);
 	if (opn != NULL) {
 		prop_object_retain(opn);
 		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
@@ -308,14 +308,14 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	opn = _prop_rb_tree_find(&_prop_number_tree, pnv);
+	opn = rb_tree_find_node(&_prop_number_tree, pnv);
 	if (opn != NULL) {
 		prop_object_retain(opn);
 		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 		_PROP_POOL_PUT(_prop_number_pool, pn);
 		return (opn);
 	}
-	rpn = _prop_rb_tree_insert_node(&_prop_number_tree, pn);
+	rpn = rb_tree_insert_node(&_prop_number_tree, pn);
 	_PROP_ASSERT(rpn == pn);
 	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 	return (rpn);
