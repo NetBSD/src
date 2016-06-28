@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.40 2016/06/28 05:18:11 pgoyette Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.41 2016/06/28 05:21:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find_node(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
@@ -329,7 +329,7 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find_node(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
