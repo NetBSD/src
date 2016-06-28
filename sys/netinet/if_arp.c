@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.212 2016/06/20 06:46:38 knakahara Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.213 2016/06/28 02:02:56 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.212 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.213 2016/06/28 02:02:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -981,6 +981,8 @@ in_arpinput(struct mbuf *m)
 	op = ntohs(ah->ar_op);
 
 	rcvif = ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(rcvif == NULL))
+		goto drop;
 	/*
 	 * Fix up ah->ar_hrd if necessary, before using ar_tha() or
 	 * ar_tpa().
