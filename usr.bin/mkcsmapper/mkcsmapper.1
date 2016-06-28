@@ -1,3 +1,5 @@
+.\" $NetBSD: mkcsmapper.1,v 1.2 2016/06/28 09:20:30 wiz Exp $
+.\"
 .\" Copyright (c) 2009 Gabor Kovesdan <gabor@FreeBSD.org>
 .\" All rights reserved.
 .\"
@@ -34,7 +36,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/mkcsmapper/mkcsmapper.1 276258 2014-12-26 21:56:23Z joel $
 .\"
-.Dd Sep 6, 2009
+.Dd September 6, 2009
 .Dt MKCSMAPPER 1
 .Os
 .Sh NAME
@@ -43,9 +45,8 @@
 .Xr iconv 3
 .Sh SYNOPSIS
 .Nm
-.Op Fl mpd
-.Fl o
-.Ar outfile
+.Op Fl dmp
+.Fl o Ar outfile
 .Ar infile
 .Sh DESCRIPTION
 The
@@ -82,7 +83,8 @@ Generate pivot data from
 .Sh HISTORY
 .Nm
 first appeared in
-.Nx 2.0 , and made its appearance in
+.Nx 2.0 ,
+and made its appearance in
 .Fx 9.0 .
 .Sh AUTHORS
 This manual page was written by
