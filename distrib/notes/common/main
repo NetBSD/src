@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.529 2016/05/18 16:36:53 abhinav Exp $
+.\"	$NetBSD: main,v 1.530 2016/06/28 16:45:06 maya Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1338,6 +1338,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Adrian Portelli Ta Mt adrianp@NetBSD.org
 .It Ta Pierre Pronchery Ta Mt khorben@NetBSD.org
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.org
+.It Ta Maya Rashish Ta Mt maya@NetBSD.org
 .It Ta Mindaugas Rasiukevicius Ta Mt rmind@NetBSD.org
 .It Ta Nils Ratusznik Ta Mt nils@NetBSD.org
 .It Ta Michael Rauch Ta Mt mrauch@NetBSD.org
