@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.221 2016/06/27 07:12:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.222 2016/06/28 09:31:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.221 2016/06/27 07:12:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222 2016/06/28 09:31:15 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2327,6 +2327,11 @@ pmap_page_remove(struct vm_page *pg)
 				    __func__, pv, pv->pv_pmap, pv->pv_va);
 			}
 #endif
+			KASSERT(pv->pv_pmap == pmap_kernel());
+
+			/* Assume no more - it'll get fixed if there are */
+			pv->pv_next = NULL;
+
 			/*
 			 * pvp is non-null when we already have a PV_KENTER
 			 * pv in pvh_first; otherwise we haven't seen a
@@ -2342,13 +2347,11 @@ pmap_page_remove(struct vm_page *pg)
 			} else {
 				pv_entry_t fpv = &md->pvh_first;
 				*fpv = *pv;
+				KASSERT(fpv->pv_pmap == pmap_kernel());
 			}
-			/* Assume no more - it'll get fixed if there are */
-			pv->pv_next = NULL;
 			pvp = pv;
 			continue;
 		}
-
 
 		const pmap_t pmap = pv->pv_pmap;
 		vaddr_t va = trunc_page(pv->pv_va);
@@ -2385,6 +2388,8 @@ pmap_page_remove(struct vm_page *pg)
 		 * free it.
 		 */
 		if (pvp) {
+			KASSERT(pvp->pv_pmap == pmap_kernel());
+			KASSERT(pvp->pv_next == NULL);
 			pmap_pv_free(pv);
 		} else {
 			pv->pv_pmap = NULL;
