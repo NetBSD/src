@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.28 2016/06/28 05:18:11 pgoyette Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.29 2016/06/28 05:21:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	opn = rb_tree_find(&_prop_number_tree, pnv);
+	opn = rb_tree_find_node(&_prop_number_tree, pnv);
 	if (opn != NULL) {
 		prop_object_retain(opn);
 		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
@@ -308,7 +308,7 @@ _prop_number_alloc(const struct _prop_number_value *pnv)
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
-	opn = rb_tree_find_node(&_prop_number_tree, pnv);
+	opn = rb_tree_find_node_node(&_prop_number_tree, pnv);
 	if (opn != NULL) {
 		prop_object_retain(opn);
 		_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
