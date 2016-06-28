@@ -34,7 +34,7 @@
 
 #if defined(__NetBSD__)
 __COPYRIGHT("@(#) Copyright (c) 2009 The NetBSD Foundation, Inc. All rights reserved.");
-__RCSID("$NetBSD: netpgp.c,v 1.97 2016/02/07 05:03:36 agc Exp $");
+__RCSID("$NetBSD: netpgp.c,v 1.98 2016/06/28 16:34:40 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1186,6 +1186,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	int             	 passc;
 	int             	 fd;
 	int             	 cc;
+	int			 rv = 0;
 
 	uid = NULL;
 	io = netpgp->io;
@@ -1212,13 +1213,13 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	netpgp_setvar(netpgp, "generated userid", &dir[cc - 16]);
 	if (mkdir(dir, 0700) < 0) {
 		(void) fprintf(io->errs, "can't mkdir '%s'\n", dir);
-		return 0;
+		goto out;
 	}
 	(void) fprintf(io->errs, "netpgp: generated keys in directory %s\n", dir);
 	(void) snprintf(ringfile = filename, sizeof(filename), "%s/pubring.gpg", dir);
 	if (!appendkey(io, key, ringfile)) {
 		(void) fprintf(io->errs, "Cannot write pubkey to '%s'\n", ringfile);
-		return 0;
+		goto out;
 	}
 	if (netpgp->pubring != NULL) {
 		pgp_keyring_free(netpgp->pubring);
@@ -1230,7 +1231,7 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	}
 	if (fd < 0) {
 		(void) fprintf(io->errs, "can't append secring '%s'\n", ringfile);
-		return 0;
+		goto out;
 	}
 	/* get the passphrase */
 	if ((numtries = netpgp_getvar(netpgp, "numtries")) == NULL ||
@@ -1242,15 +1243,18 @@ netpgp_generate_key(netpgp_t *netpgp, char *id, int numbits)
 	passc = find_passphrase(netpgp->passfp, &cp[ID_OFFSET], passphrase, sizeof(passphrase), attempts);
 	if (!pgp_write_xfer_seckey(create, key, (uint8_t *)passphrase, (const unsigned)passc, noarmor)) {
 		(void) fprintf(io->errs, "Cannot write seckey\n");
-		return 0;
+		goto out1;
 	}
+	rv = 1;
+out1:
 	pgp_teardown_file_write(create, fd);
 	if (netpgp->secring != NULL) {
 		pgp_keyring_free(netpgp->secring);
 	}
+out:
 	pgp_keydata_free(key);
 	free(cp);
-	return 1;
+	return rv;
 }
 
 /* encrypt a file */
