@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.39 2013/10/18 18:26:20 martin Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.40 2016/06/28 05:18:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,8 @@
 #include <prop/prop_array.h>
 #include <prop/prop_dictionary.h>
 #include <prop/prop_string.h>
-#include "prop_rb_impl.h"
+
+#include <sys/rbtree.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <errno.h>
@@ -210,7 +211,7 @@ _prop_dict_init(void)
 {
 
 	_PROP_MUTEX_INIT(_prop_dict_keysym_tree_mutex);
-	_prop_rb_tree_init(&_prop_dict_keysym_tree,
+	rb_tree_init(&_prop_dict_keysym_tree,
 			   &_prop_dict_keysym_rb_tree_ops);
 	return 0;
 }
@@ -235,7 +236,7 @@ _prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_keysym_t pdk = *obj;
 
-	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, pdk);
+	rb_tree_remove_node(&_prop_dict_keysym_tree, pdk);
 	_prop_dict_keysym_put(pdk);
 
 	return _PROP_OBJECT_FREE_DONE;
@@ -292,7 +293,7 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we just retain it and return it.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
@@ -328,14 +329,14 @@ _prop_dict_keysym_alloc(const char *key)
 	 * we have to check again if it is in the tree.
 	 */
 	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
-	opdk = _prop_rb_tree_find(&_prop_dict_keysym_tree, key);
+	opdk = rb_tree_find(&_prop_dict_keysym_tree, key);
 	if (opdk != NULL) {
 		prop_object_retain(opdk);
 		_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 		_prop_dict_keysym_put(pdk);
 		return (opdk);
 	}
-	rpdk = _prop_rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
+	rpdk = rb_tree_insert_node(&_prop_dict_keysym_tree, pdk);
 	_PROP_ASSERT(rpdk == pdk);
 	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 	return (rpdk);
