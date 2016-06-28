@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.347 2016/06/27 10:09:02 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.348 2016/06/28 02:36:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.347 2016/06/27 10:09:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.348 2016/06/28 02:36:54 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1006,6 +1006,13 @@ if_deactivate(struct ifnet *ifp)
 	splx(s);
 }
 
+bool
+if_is_deactivated(struct ifnet *ifp)
+{
+
+	return ifp->if_output == if_nulloutput;
+}
+
 void
 if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
 {
@@ -1515,7 +1522,7 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
@@ -1547,7 +1554,7 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			continue;
@@ -1582,7 +1589,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		sdl = satocsdl(addr);
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index] &&
-		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput) {
+		    !if_is_deactivated(ifindex2ifnet[sdl->sdl_index])) {
 			return ifindex2ifnet[sdl->sdl_index]->if_dl;
 		}
 	}
@@ -1592,7 +1599,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		sat = (const struct sockaddr_at *)addr;
 		s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifp) {
-			if (ifp->if_output == if_nulloutput)
+			if (if_is_deactivated(ifp))
 				continue;
 			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
 			if (ifa == NULL)
@@ -1611,7 +1618,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 #endif
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
 			const char *cp, *cp2, *cp3;
@@ -1666,7 +1673,7 @@ ifa_ifwithaf(int af)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == af)
@@ -1691,7 +1698,7 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
-	if (ifp->if_output == if_nulloutput)
+	if (if_is_deactivated(ifp))
 		return NULL;
 
 	if (af >= AF_MAX)
@@ -2128,7 +2135,7 @@ ifunit(const char *name)
 		if (unit >= if_indexlim)
 			return NULL;
 		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || ifp->if_output == if_nulloutput)
+		if (ifp == NULL || if_is_deactivated(ifp))
 			return NULL;
 		return ifp;
 	}
@@ -2136,7 +2143,7 @@ ifunit(const char *name)
 	ifp = NULL;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 	 	if (strcmp(ifp->if_xname, name) == 0)
 			goto out;
@@ -2174,7 +2181,7 @@ if_get(const char *name, struct psref *psref)
 		if (unit >= if_indexlim)
 			return NULL;
 		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || ifp->if_output == if_nulloutput)
+		if (ifp == NULL || if_is_deactivated(ifp))
 			return NULL;
 		return ifp;
 	}
@@ -2182,7 +2189,7 @@ if_get(const char *name, struct psref *psref)
 	ifp = NULL;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		if (strcmp(ifp->if_xname, name) == 0) {
 			psref_acquire(psref, &ifp->if_psref,
