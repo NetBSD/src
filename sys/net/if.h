@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.217 2016/06/27 10:09:02 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.218 2016/06/28 02:36:54 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -938,6 +938,7 @@ void	if_register(struct ifnet *);
 void	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
+bool	if_is_deactivated(struct ifnet *);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
