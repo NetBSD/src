@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.109 2016/06/20 06:46:37 knakahara Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.110 2016/06/28 02:02:56 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.109 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.110 2016/06/28 02:02:56 ozaki-r Exp $");
 
 #include "pppoe.h"
 
@@ -803,6 +803,8 @@ pppoe_data_input(struct mbuf *m)
 
 	session = ntohs(ph->session);
 	rcvif = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(rcvif == NULL))
+		goto drop;
 	sc = pppoe_find_softc_by_session(session, rcvif);
 	if (sc == NULL) {
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS

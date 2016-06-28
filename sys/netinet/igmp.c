@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.59 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.60 2016/06/28 02:02:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.59 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.60 2016/06/28 02:02:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -236,6 +236,9 @@ igmp_input(struct mbuf *m, ...)
 	m->m_len += iphlen;
 
 	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		goto drop;
+
 	switch (igmp->igmp_type) {
 
 	case IGMP_HOST_MEMBERSHIP_QUERY:

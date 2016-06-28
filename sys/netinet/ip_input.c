@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.329 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.330 2016/06/28 02:02:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.329 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.330 2016/06/28 02:02:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -383,6 +383,8 @@ ip_input(struct mbuf *m)
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		goto bad;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -1060,6 +1062,11 @@ ip_dooptions(struct mbuf *m)
 		}
 
 		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_false(rcvif == NULL)) {
+			type = ICMP_UNREACH;
+			code = ICMP_UNREACH_HOST;
+			goto bad;
+		}
 		ip_forward(m, 1, rcvif);
 		m_put_rcvif_psref(rcvif, &psref);
 		return true;
@@ -1387,6 +1394,9 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	struct psref psref;
 
 	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		return; /* XXX should report error? */
+
 	if (so->so_options & SO_TIMESTAMP
 #ifdef SO_OTIMESTAMP
 	    || so->so_options & SO_OTIMESTAMP
