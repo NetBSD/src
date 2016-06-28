@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.85 2016/06/20 14:18:30 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.86 2016/06/28 16:00:32 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.85 2016/06/20 14:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.86 2016/06/28 16:00:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -516,6 +516,8 @@ static void slhci_get_status(struct slhci_softc *, usb_port_status_t *);
 #define	SLHCIHIST_CALLED()	USBHIST_CALLED(slhcidebug)
 
 #ifdef SLHCI_DEBUG
+static int slhci_memtest(struct slhci_softc *);
+
 void slhci_log_buffer(struct usbd_xfer *);
 void slhci_log_req(usb_device_request_t *);
 void slhci_log_dumpreg(void);
@@ -1204,6 +1206,13 @@ slhci_attach(struct slhci_softc *sc)
 			printf("%s: Unknown chip revision!\n", SC_NAME(sc));
 		return -1;
 	}
+
+#ifdef SLHCI_DEBUG
+	if (slhci_memtest(sc)) {
+		printf("%s: memory/bus error!\n", SC_NAME(sc));
+		return -1;
+	}
+#endif
 
 	callout_init(&sc->sc_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timer, slhci_reset_entry, sc);
@@ -2884,6 +2893,88 @@ slhci_reset(struct slhci_softc *sc)
 	}
 	DLOG(D_MSG, "RESET done flags %#x", t->flags, 0,0,0);
 }
+
+
+#ifdef SLHCI_DEBUG
+static int
+slhci_memtest(struct slhci_softc *sc)
+{
+	enum { ASC, DESC, EITHER = ASC };	/* direction */
+	enum { READ, WRITE };			/* operation */
+	const char *ptr, *elem;
+	size_t i;
+	const int low = SL11_BUFFER_START, high = SL11_BUFFER_END;
+	int addr = 0, dir = ASC, op = READ;
+	/* Extended March C- test algorithm (SOFs also) */
+	const char test[] = "E(w0) A(r0w1r1) A(r1w0r0) D(r0w1) D(r1w0) E(r0)";
+	char c;
+	const uint8_t dbs[] = { 0x00, 0x0f, 0x33, 0x55 }; /* data backgrounds */
+	uint8_t db;
+
+	/* Perform memory test for all data backgrounds. */
+	for (i = 0; i < __arraycount(dbs); i++) {
+		ptr = test;
+		elem = ptr;
+		/* Walk test algorithm string. */
+		while ((c = *ptr++) != '\0')
+			switch (tolower((int)c)) {
+			case 'a':
+				/* Address sequence is in ascending order. */
+				dir = ASC;
+				break;
+			case 'd':
+				/* Address sequence is in descending order. */
+				dir = DESC;
+				break;
+			case 'e':
+				/* Address sequence is in either order. */
+				dir = EITHER;
+				break;
+			case '(':
+				/* Start of test element (sequence). */
+				elem = ptr;
+				addr = (dir == ASC) ? low : high;
+				break;
+			case 'r':
+				/* read operation */
+				op = READ;
+				break;
+			case 'w':
+				/* write operation */
+				op = WRITE;
+				break;
+			case '0':
+			case '1':
+				/*
+				 * Execute previously set-up operation by
+				 * reading/writing non-inverted ('0') or
+				 * inverted ('1') data background.
+				 */
+				db = (c - '0') ? ~dbs[i] : dbs[i];
+				if (op == READ) {
+					if (slhci_read(sc, addr) != db)
+						return -1;
+				} else
+					slhci_write(sc, addr, db);
+				break;
+			case ')':
+				/*
+				 * End of element: Repeat same element with next
+				 * address or continue to next element.
+				 */
+				addr = (dir == ASC) ? addr + 1 : addr - 1;
+				if (addr >= low && addr <= high)
+					ptr = elem;
+				break;
+			default:
+				/* Do nothing. */
+				break;
+			}
+	}
+
+	return 0;
+}
+#endif
 
 /* returns 1 if succeeded, 0 if failed, reserve == 0 is unreserve */
 static int
