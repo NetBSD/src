@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.10 2015/06/16 22:54:10 christos Exp $	*/
+/*	$NetBSD: yacc.y,v 1.11 2016/06/28 09:22:16 wiz Exp $	*/
 
 %{
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.10 2015/06/16 22:54:10 christos Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.11 2016/06/28 09:22:16 wiz Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -673,7 +673,7 @@ do_mkpv(FILE *in)
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-m|-p] [-d] [-o outfile] [infile]\n",
+	fprintf(stderr, "Usage: %s [-d] [-m|-p] [-o outfile] [infile]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
