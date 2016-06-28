@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.189 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.190 2016/06/28 02:02:56 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.189 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.190 2016/06/28 02:02:56 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -457,6 +457,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	struct psref psref;
 
 	rcvif = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(rcvif == NULL))
+		goto freeit;
+
 #define ICMP6_MAXLEN (sizeof(*nip6) + sizeof(*nicmp6) + 4)
 	KASSERT(ICMP6_MAXLEN < MCLBYTES);
 	icmp6_ifstat_inc(rcvif, ifs6_in_msg);
