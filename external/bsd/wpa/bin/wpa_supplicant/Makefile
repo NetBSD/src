@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2016/03/23 09:35:25 roy Exp $
+# $NetBSD: Makefile,v 1.8 2016/06/29 19:16:23 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -33,6 +33,7 @@ pmksa_cache.c \
 preauth.c \
 random.c \
 scan.c \
+sha1-prf.c \
 wmm_ac.c \
 wpa.c \
 wpa_common.c \
@@ -102,7 +103,6 @@ eap_ttls.c \
 ms_funcs.c \
 mschapv2.c \
 sha1-tlsprf.c \
-sha1-prf.c \
 tls_openssl.c
 
 SRCS+=aes-ctr.c \
@@ -119,7 +119,9 @@ LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1 -DCONFIG_NO_PBKDF2
 SRCS+= tls_none.c sha1-internal.c md5-internal.c aes-xinternal.c rc4.c
-SRCS+= aes-unwrap.c md5.c
+CPPFLAGS+= -DCONFIG_CRYPTO_INTERNAL
+#SRCS+= aes-unwrap.c md5.c
+SRCS+= sha1-pbkdf2.c sha1.c md5.c
 .endif
 
 .endif
