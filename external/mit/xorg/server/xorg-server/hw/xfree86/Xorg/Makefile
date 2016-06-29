@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/06/29 19:36:56 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -62,7 +62,6 @@ LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
 LDADD+=	-lpciaccess -ldrm
-LDADD+=	-lcrypto
 LDADD+=	-Wl,--no-whole-archive
 
 .if ${MACHINE_ARCH} == "i386"
@@ -119,8 +118,12 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/i2c} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
-	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
-	${LIBCRYPTO}
+	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS}
+
+.if ${MKCRYPTO:Uno} != "no"
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
+.endif
 
 SYMLINKS=	${X11BINDIR}/Xorg ${X11BINDIR}/X
 
