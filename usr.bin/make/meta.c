@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.62 2016/06/14 18:16:06 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.63 2016/06/29 22:10:08 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1543,6 +1543,7 @@ meta_compat_parent(void)
     while (fgets(buf, sizeof(buf), fp)) {
 	meta_job_output(NULL, buf, "");
 	printf("%s", buf);
+	fflush(stdout);
     }
     fclose(fp);
 }
