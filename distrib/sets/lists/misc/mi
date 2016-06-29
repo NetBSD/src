@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.197 2016/01/07 22:07:18 roy Exp $
+# $NetBSD: mi,v 1.198 2016/06/29 23:23:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1432,16 +1432,16 @@
 ./usr/share/examples/kyua-cli/Kyuafile.top	misc-kyua-examples	share,kyua
 ./usr/share/examples/kyua-cli/kyua.conf		misc-kyua-examples	share,kyua
 ./usr/share/examples/libsaslc			misc-libsaslc-examples
-./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/README		misc-libsaslc-examples	share,crypto
 ./usr/share/examples/libsaslc/mech		misc-libsaslc-examples
-./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/EXTERNAL.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share
-./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share
+./usr/share/examples/libsaslc/mech/ANONYMOUS.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/CRAM-MD5.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/DIGEST-MD5.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/EXTERNAL.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/GSSAPI.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/LOGIN.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/mech/PLAIN.conf	misc-libsaslc-examples	share,crypto
+./usr/share/examples/libsaslc/saslc.conf	misc-libsaslc-examples	share,crypto
 ./usr/share/examples/lutok			misc-lutok-examples
 ./usr/share/examples/lutok/bindings.cpp		misc-lutok-examples	share,kyua
 ./usr/share/examples/lutok/hello.cpp		misc-lutok-examples	share,kyua
