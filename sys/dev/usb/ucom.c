@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.16 2016/06/28 11:47:53 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.17 2016/06/29 06:38:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.16 2016/06/28 11:47:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.17 2016/06/29 06:38:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,8 +268,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_int32(device_properties(self), "port",
 	    ucaa->ucaa_portno);
 
-	KASSERT(ucaa->ucaa_bulkin != -1 || (ucaa->ucaa_ipipe && ucaa->ucaa_ixfer));
-	KASSERT(ucaa->ucaa_bulkout != -1 || (ucaa->ucaa_opipe && ucaa->ucaa_oxfer));
+	//KASSERT(ucaa->ucaa_bulkin != -1 || (ucaa->ucaa_ipipe && ucaa->ucaa_ixfer));
+	//KASSERT(ucaa->ucaa_bulkout != -1 || (ucaa->ucaa_opipe && ucaa->ucaa_oxfer));
 
 	sc->sc_dev = self;
 	sc->sc_udev = ucaa->ucaa_device;
