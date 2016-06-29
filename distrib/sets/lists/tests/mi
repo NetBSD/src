@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.675 2016/06/16 04:03:37 pgoyette Exp $
+# $NetBSD: mi,v 1.676 2016/06/29 23:23:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1284,7 +1284,7 @@
 ./usr/tests/crypto				tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/Atffile			tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/Kyuafile			tests-crypto-tests	compattestfile,atf,crypto,kyua
-./usr/tests/crypto/libcrypto			tests-crypto-tests	compattestfile,atf,crypto
+./usr/tests/crypto/libcrypto			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/Atffile		tests-crypto-tests	compattestfile,atf,crypto
 ./usr/tests/crypto/libcrypto/Kyuafile		tests-crypto-tests	compattestfile,atf,crypto,kyua
 ./usr/tests/crypto/libcrypto/d_client.pem	tests-crypto-tests	compattestfile,atf,crypto

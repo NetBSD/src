@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1129 2016/06/25 18:05:57 maya Exp $
+# $NetBSD: mi,v 1.1130 2016/06/29 23:23:05 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1758,7 +1758,7 @@
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
-./usr/sbin/ntp-keygen				base-ntp-bin		crypto
+./usr/sbin/ntp-keygen				base-ntp-bin
 ./usr/sbin/ntpd					base-ntp-bin
 ./usr/sbin/ntpdate				base-ntp-bin
 ./usr/sbin/ntpdc				base-ntp-bin
