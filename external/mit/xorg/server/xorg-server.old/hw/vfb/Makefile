@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/06/29 19:36:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -81,8 +81,7 @@ LDADD+=	${LDADD.dix} \
 	-lpixman-1 \
 	-lXdmcp \
 	-lz \
-	-lm \
-	-lcrypto
+	-lm
 
 DPADD+=	${DPADD.dix} \
 	${DPADD.fb} \
@@ -111,8 +110,12 @@ DPADD+=	${DPADD.dix} \
 	${LIBPIXMAN1} \
 	${LIBXDMCP} \
 	${LIBZ} \
-	${LIBM} \
-	${LIBCRYPTO}
+	${LIBM}
+
+.if ${MKCRYPTO:Uno} != "no"
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
+.endif
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
