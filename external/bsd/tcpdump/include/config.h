@@ -60,7 +60,8 @@
 /* #undef HAVE_LIBCAP_NG */
 
 /* Define to 1 if you have the `crypto' library (-lcrypto). */
-#define HAVE_LIBCRYPTO 1
+/* in the Makefile */
+/* #undef HAVE_LIBCRYPTO */
 
 /* Define to 1 if you have the `rpc' library (-lrpc). */
 /* #undef HAVE_LIBRPC */
@@ -87,7 +88,8 @@
 #define HAVE_OPENAT 1
 
 /* Define to 1 if you have the <openssl/evp.h> header file. */
-#define HAVE_OPENSSL_EVP_H 1
+/* in the Makefile */
+/* #undef HAVE_OPENSSL_EVP_H */
 
 /* if there's an os_proto.h for this platform, to use additional prototypes */
 /* #undef HAVE_OS_PROTO_H */
