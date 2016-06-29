@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.10 2016/05/01 23:32:01 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.11 2016/06/29 18:42:17 christos Exp $	*/
 
 #include <config.h>
 #include "crypto.h"
@@ -28,7 +28,9 @@ make_mac(
 
 	INIT_SSL();
 	key_type = keytype_from_text(cmp_key->type, NULL);
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(key_type));
+	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(key_type))) {
+		msyslog(LOG_DEBUG, "EVP_DigestInit failed");
+	}
 	EVP_DigestUpdate(&ctx, (const u_char *)cmp_key->key_seq, (u_int)cmp_key->key_len);
 	EVP_DigestUpdate(&ctx, pkt_data, (u_int)pkt_size);
 	EVP_DigestFinal(&ctx, digest, &len);
