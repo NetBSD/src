@@ -8,7 +8,8 @@
 /* #undef ADJTIME_IS_ACCURATE */
 
 /* Support NTP Autokey protocol? */
-#define AUTOKEY 1
+/* in the Makefile */
+/* #undef AUTOKEY */
 
 /* why not HAVE_P_S? */
 /* #undef CALL_PTHREAD_SETCONCURRENCY */
@@ -1611,7 +1612,8 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_FSETOWNCTTY */
 
 /* Use OpenSSL's crypto random functions */
-#define USE_OPENSSL_CRYPTO_RAND 1
+/* In Makefile */
+/* #undef USE_OPENSSL_CRYPTO_RAND */
 
 /* OK to use snprintb()? */
 #define USE_SNPRINTB 1
