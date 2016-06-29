@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/08/02 09:11:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/06/29 19:36:56 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -71,7 +71,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.glx} \
 	-lXfont -lXext -lfontenc \
 	-lpixman-1 -lX11 -lXau \
-	-lXdmcp -lfreetype -lm -lcrypto
+	-lXdmcp -lfreetype -lm
 
 DPADD+=	${LDADD.dix} \
 	${DPADD.fb} \
@@ -95,7 +95,12 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.glx} \
 	${LIBXFONT} ${LIBXEXT} ${LIBFONTENC} \
 	${LIBPIXMAN-1} ${LIBX11} ${LIBXAU} \
-	${LIBXDMCP} ${LIBFREETYPE} ${LIBM} ${LIBCRYPTO}
+	${LIBXDMCP} ${LIBFREETYPE} ${LIBM}
+
+.if ${MKCRYPTO:Uno} != "no"
+LDADD+=	-lcrypto
+DPADD+=	${LIBCRYPTO}
+.endif
 
 .if ${MACHINE_ARCH} == "i386"
 LDADD+=	-li386
