@@ -165,7 +165,8 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
 /* Use AES for Source Identity Token generation */
-#define AES_SIT 1
+/* In Makefile */
+/* #undef AES_SIT */
 
 /* Define to enable the "filter-aaaa-on-v4" and "filter-aaaa-on-v6" options.
    */
@@ -369,7 +370,8 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_OPENSSL_EVP_AES 1
 
 /* Define if your OpenSSL version supports GOST. */
-#define HAVE_OPENSSL_GOST 1
+/* In Makefile */
+/* #undef HAVE_OPENSSL_GOST */
 
 /* Define if your PKCS11 provider supports ECDSA. */
 /* #undef HAVE_PKCS11_ECDSA */
