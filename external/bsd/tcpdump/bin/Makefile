@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2015/03/31 21:59:35 christos Exp $	
+#	$NetBSD: Makefile,v 1.14 2016/06/29 19:45:14 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -183,7 +183,7 @@ CPPFLAGS+=-DINET6=1 -DHAVE_RES_USE_INET6=1
 .endif
 
 .if (${MKCRYPTO} != "no")
-CPPFLAGS+=-DHAVE_LIBCRYPTO=1 
+CPPFLAGS+=-DHAVE_LIBCRYPTO=1 -DHAVE_OPENSSL_EVP_H 
 LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
