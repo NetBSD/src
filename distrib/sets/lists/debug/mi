@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.156 2016/06/05 01:31:03 christos Exp $
+# $NetBSD: mi,v 1.157 2016/06/29 23:23:05 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -103,11 +103,11 @@
 ./usr/lib/libm_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmagic_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libmenu_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libmj_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libmj_g.a				comp-c-debuglib		debuglib,compatfile,crypto
 ./usr/lib/libmudflap_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
 ./usr/lib/libmudflapth_g.a			comp-c-debuglib		debuglib,compatfile,gcc=48
-./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile
+./usr/lib/libnetpgp_g.a				comp-c-debuglib		debuglib,compatfile,crypto
+./usr/lib/libnetpgpverify_g.a			comp-c-debuglib		debuglib,compatfile,crypto
 ./usr/lib/libnpf_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libnvpair_g.a				comp-c-debuglib		debuglib,zfs,compatfile
 ./usr/lib/libobjc_g.a				comp-c-debuglib		debuglib,gcccmds,compatfile
@@ -235,8 +235,8 @@
 ./usr/lib/libsl_g.a				comp-c-debuglib		debuglib,compatfile,kerberos
 ./usr/lib/libsqlite3_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libss_g.a				comp-c-debuglib		obsolete,compatfile
-./usr/lib/libssh_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libssl_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libssh_g.a				comp-c-debuglib		debuglib,compatfile,crypto
+./usr/lib/libssl_g.a				comp-c-debuglib		debuglib,compatfile,crypto
 ./usr/lib/libstdc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcccmds,libstdcxx
 ./usr/lib/libsupc++_g.a				comp-c-debuglib		debuglib,compatfile,cxx,gcccmds,libstdcxx
 ./usr/lib/libtddl_g.a				comp-c-debuglib		debuglib,compatfile,tpm
@@ -1147,7 +1147,7 @@
 ./usr/libdata/debug/usr/sbin/npfctl.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/npftest.debug	comp-npf-debug		npf,rump,debug,pic
 ./usr/libdata/debug/usr/sbin/nsec3hash.debug	comp-bind-debug		debug
-./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		crypto,debug
+./usr/libdata/debug/usr/sbin/ntp-keygen.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpd.debug		comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpdate.debug	comp-ntp-debug		debug
 ./usr/libdata/debug/usr/sbin/ntpdc.debug	comp-ntp-debug		debug

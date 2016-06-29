@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2044 2016/06/08 22:32:01 mrg Exp $
+#	$NetBSD: mi,v 1.2045 2016/06/29 23:23:05 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8357,6 +8357,8 @@
 ./usr/share/man/cat3/pthread_barrier_wait.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrierattr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_barrierattr_destroy.0	comp-c-catman		.cat
+#./usr/share/man/cat3/pthread_barrierattr_getpshared.0	comp-c-catman	.cat
+#./usr/share/man/cat3/pthread_barrierattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_barrierattr_init.0 comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cancel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_cleanup_pop.0	comp-c-catman		.cat
@@ -8370,8 +8372,11 @@
 ./usr/share/man/cat3/pthread_cond_wait.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_condattr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_condattr_destroy.0 comp-c-catman		.cat
+#./usr/share/man/cat3/pthread_condattr_getpshared.0	comp-c-catman	.cat
+#./usr/share/man/cat3/pthread_condattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_condattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_condattr_setclock.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_condattr_getclock.0	comp-c-catmat	.cat
 ./usr/share/man/cat3/pthread_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_curcpu_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_detach.0		comp-c-catman		.cat
@@ -8393,11 +8398,20 @@
 ./usr/share/man/cat3/pthread_mutex_lock.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_trylock.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_unlock.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_mutex_timedlock.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_mutex_getprioceiling.0	comp-c-catman	.cat
+./usr/share/man/cat3/pthread_mutex_setprioceiling.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_mutexattr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutexattr_destroy.0	comp-c-catman		.cat
+#./usr/share/man/cat3/pthread_mutexattr_getpshared.0	comp-c-catman	.cat
+#./usr/share/man/cat3/pthread_mutexattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_mutexattr_gettype.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutexattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutexattr_settype.0	comp-c-catman		.cat
+./usr/share/man/cat3/pthread_mutexattr_getprotocol.0	comp-c-catman	.cat
+./usr/share/man/cat3/pthread_mutexattr_setprotocol.0	comp-c-catman	.cat
+./usr/share/man/cat3/pthread_mutexattr_getprioceiling.0	comp-c-catman	.cat
+./usr/share/man/cat3/pthread_mutexattr_setprioceiling.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_resume_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlock.0		comp-c-catman		.cat
@@ -8412,6 +8426,8 @@
 ./usr/share/man/cat3/pthread_rwlock_wrlock.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlockattr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_rwlockattr_destroy.0	comp-c-catman		.cat
+#./usr/share/man/cat3/pthread_rwlockattr_getpshared.0	comp-c-catman	.cat
+#./usr/share/man/cat3/pthread_rwlockattr_setpshared.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pthread_rwlockattr_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_schedparam.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_self.0		comp-c-catman		.cat
@@ -15529,6 +15545,8 @@
 ./usr/share/man/html3/pthread_barrier_wait.html comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrierattr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_barrierattr_destroy.html	comp-c-htmlman		html
+#./usr/share/man/html3/pthread_barrierattr_getpshared.html	comp-c-htmlman	html
+#./usr/share/man/html3/pthread_barrierattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_barrierattr_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cancel.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_cleanup_pop.html	comp-c-htmlman		html
@@ -15542,8 +15560,11 @@
 ./usr/share/man/html3/pthread_cond_wait.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_condattr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_condattr_destroy.html	comp-c-htmlman		html
+#./usr/share/man/html3/pthread_condattr_getpshared.html	comp-c-htmlman	html
+#./usr/share/man/html3/pthread_condattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_condattr_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_condattr_setclock.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_condattr_getclock.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_curcpu_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_detach.html	comp-c-htmlman		html
@@ -15565,11 +15586,20 @@
 ./usr/share/man/html3/pthread_mutex_lock.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_trylock.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_unlock.html comp-c-htmlman		html
+./usr/share/man/html3/pthread_mutex_timedlock.html	comp-c-htmlman	html
+./usr/share/man/html3/pthread_mutex_getprioceiling.html	comp-c-htmlman	html
+./usr/share/man/html3/pthread_mutex_setprioceiling.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutexattr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutexattr_destroy.html	comp-c-htmlman		html
+#./usr/share/man/html3/pthread_mutexattr_getpshared.html	comp-c-htmlman	html
+#./usr/share/man/html3/pthread_mutexattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutexattr_gettype.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutexattr_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutexattr_settype.html	comp-c-htmlman		html
+./usr/share/man/html3/pthread_mutexattr_getprotocol.html	comp-c-htmlman	html
+./usr/share/man/html3/pthread_mutexattr_setprotocol.html	comp-c-htmlman	html
+./usr/share/man/html3/pthread_mutexattr_getprioceiling.html	comp-c-htmlman	html
+./usr/share/man/html3/pthread_mutexattr_setprioceiling.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_once.html		comp-c-htmlman		html
 ./usr/share/man/html3/pthread_resume_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlock.html	comp-c-htmlman		html
@@ -15584,6 +15614,8 @@
 ./usr/share/man/html3/pthread_rwlock_wrlock.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlockattr.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_rwlockattr_destroy.html	comp-c-htmlman		html
+#./usr/share/man/html3/pthread_rwlockattr_getpshared.html	comp-c-htmlman	html
+#./usr/share/man/html3/pthread_rwlockattr_setpshared.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_rwlockattr_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_schedparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_self.html		comp-c-htmlman		html
@@ -22694,6 +22726,8 @@
 ./usr/share/man/man3/pthread_barrier_wait.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrierattr.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_barrierattr_destroy.3	comp-c-man		.man
+#./usr/share/man/man3/pthread_barrierattr_getpshared.3	comp-c-man	.man
+#./usr/share/man/man3/pthread_barrierattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_barrierattr_init.3 comp-c-man		.man
 ./usr/share/man/man3/pthread_cancel.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_cleanup_pop.3	comp-c-man		.man
@@ -22707,8 +22741,11 @@
 ./usr/share/man/man3/pthread_cond_wait.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_condattr.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_condattr_destroy.3 comp-c-man		.man
+#./usr/share/man/man3/pthread_condattr_getpshared.3	comp-c-man	.man
+#./usr/share/man/man3/pthread_condattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_condattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_condattr_setclock.3	comp-c-man		.man
+./usr/share/man/man3/pthread_condattr_getclock.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_create.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_curcpu_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_detach.3		comp-c-man		.man
@@ -22730,11 +22767,20 @@
 ./usr/share/man/man3/pthread_mutex_lock.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_trylock.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_unlock.3	comp-c-man		.man
+./usr/share/man/man3/pthread_mutex_timedlock.3	comp-c-man		.man
+./usr/share/man/man3/pthread_mutex_getprioceiling.3	comp-c-man	.man
+./usr/share/man/man3/pthread_mutex_setprioceiling.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_mutexattr.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutexattr_destroy.3	comp-c-man		.man
+#./usr/share/man/man3/pthread_mutexattr_getpshared.3	comp-c-man	.man
+#./usr/share/man/man3/pthread_mutexattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_mutexattr_gettype.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutexattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutexattr_settype.3	comp-c-man		.man
+./usr/share/man/man3/pthread_mutexattr_getprotocol.3	comp-c-man	.man
+./usr/share/man/man3/pthread_mutexattr_setprotocol.3	comp-c-man	.man
+./usr/share/man/man3/pthread_mutexattr_getprioceiling.3	comp-c-man	.man
+./usr/share/man/man3/pthread_mutexattr_setprioceiling.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_once.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_resume_np.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlock.3		comp-c-man		.man
@@ -22749,6 +22795,8 @@
 ./usr/share/man/man3/pthread_rwlock_wrlock.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlockattr.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_rwlockattr_destroy.3	comp-c-man		.man
+#./usr/share/man/man3/pthread_rwlockattr_getpshared.3	comp-c-man	.man
+#./usr/share/man/man3/pthread_rwlockattr_setpshared.3	comp-c-man	.man
 ./usr/share/man/man3/pthread_rwlockattr_init.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_schedparam.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_self.3		comp-c-man		.man
