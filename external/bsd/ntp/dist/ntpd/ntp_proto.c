@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_proto.c,v 1.12 2016/06/03 20:39:02 christos Exp $	*/
+/*	$NetBSD: ntp_proto.c,v 1.13 2016/06/29 18:42:17 christos Exp $	*/
 
 /*
  * ntp_proto.c - NTP version 4 protocol machinery
@@ -3976,7 +3976,7 @@ peer_xmit(
 		    ntoa(&peer->srcadr), peer->hmode, xkeyid, sendlen,
 		    peer->keynumber));
 #else	/* !AUTOKEY follows */
-	DPRINTF(1, ("peer_xmit: at %ld %s->%s mode %d keyid %08x len %d\n",
+	DPRINTF(1, ("peer_xmit: at %ld %s->%s mode %d keyid %08x len %zu\n",
 		    current_time, peer->dstadr ?
 		    ntoa(&peer->dstadr->sin) : "-",
 		    ntoa(&peer->srcadr), peer->hmode, xkeyid, sendlen));
