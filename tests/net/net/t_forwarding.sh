@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.13 2016/06/21 05:04:16 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.14 2016/06/29 07:29:04 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -268,6 +268,19 @@ teardown_icmp_bmcastecho()
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.icmp.bmcastecho=0
 }
 
+teardown_interfaces()
+{
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
+
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 destroy
+
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 destroy
+}
+
 test_setup_forwarding()
 {
 	export RUMP_SERVER=$SOCKFWD
@@ -439,6 +452,8 @@ ipforwarding_v4_body()
 	teardown_forwarding
 	test_teardown_forwarding
 	test_ping_failure
+
+	teardown_interfaces
 }
 
 ipforwarding_v6_body()
@@ -454,6 +469,8 @@ ipforwarding_v6_body()
 	teardown_forwarding6
 	test_teardown_forwarding6
 	test_ping6_failure
+
+	teardown_interfaces
 }
 
 ipforwarding_fastforward_v4_body()
@@ -466,6 +483,8 @@ ipforwarding_fastforward_v4_body()
 
 	setup_bozo $IP4DST
 	test_http_get $IP4DST
+
+	teardown_interfaces
 }
 
 ipforwarding_fastforward_v6_body()
@@ -478,6 +497,8 @@ ipforwarding_fastforward_v6_body()
 
 	setup_bozo $IP6DST
 	test_http_get "[$IP6DST]"
+
+	teardown_interfaces
 }
 
 ipforwarding_misc_body()
@@ -495,6 +516,7 @@ ipforwarding_misc_body()
 	setup_bozo $IP4DST
 	test_sysctl_ttl $IP4DST
 
+	teardown_interfaces
 	return 0
 }
 
