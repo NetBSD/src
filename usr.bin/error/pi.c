@@ -1,4 +1,4 @@
-/*	$NetBSD: pi.c,v 1.18 2011/08/17 13:11:22 christos Exp $	*/
+/*	$NetBSD: pi.c,v 1.19 2016/06/30 15:34:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pi.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: pi.c,v 1.18 2011/08/17 13:11:22 christos Exp $");
+__RCSID("$NetBSD: pi.c,v 1.19 2016/06/30 15:34:30 dholland Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -218,12 +218,12 @@ piptr(const char *string)
 {
 	if (*string != '-')
 		return false;
-	while (*string && *string == '-')
+	while (*string == '-')
 		string++;
 	if (*string != '^')
 		return false;
 	string++;
-	while (*string && *string == '-')
+	while (*string == '-')
 		string++;
 	return (*string == '\0');
 }
