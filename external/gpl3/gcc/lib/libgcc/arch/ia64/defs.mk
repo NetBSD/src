@@ -3,7 +3,7 @@
 # Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp 
 #
 G_INCLUDES=-I. -I. -I../.././gcc -I${GNUHOSTDIST}/libgcc -I${GNUHOSTDIST}/libgcc/. -I${GNUHOSTDIST}/libgcc/../gcc -I${GNUHOSTDIST}/libgcc/../include 
-G_LIB2ADD= enable-execute-stack.c
+G_LIB2ADD= ${GNUHOSTDIST}/libgcc/config/ia64/tf-signs.c ${GNUHOSTDIST}/libgcc/config/ia64/sfp-exceptions.c  enable-execute-stack.c
 G_LIB2ADDEH=${GNUHOSTDIST}/libgcc/config/ia64/unwind-ia64.c ${GNUHOSTDIST}/libgcc/unwind-sjlj.c ${GNUHOSTDIST}/libgcc/unwind-c.c ${GNUHOSTDIST}/libgcc/emutls.c
 G_LIB2ADD_ST=
 G_LIB1ASMFUNCS=__divxf3 __divdf3 __divsf3 __divdi3 __moddi3 __udivdi3 __umoddi3 __divsi3 __modsi3 __udivsi3 __umodsi3 __save_stack_nonlocal __nonlocal_goto __restore_stack_nonlocal __trampoline _fixtfdi _fixunstfdi _floatditf
