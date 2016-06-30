@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.146 2016/06/18 14:39:15 kamil Exp $	*/
+/*	$NetBSD: unistd.h,v 1.147 2016/06/30 15:29:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -173,7 +173,6 @@ ssize_t	 readlink(const char * __restrict, char * __restrict, size_t);
  */
 #if (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600 || \
     defined(_NETBSD_SOURCE)
-int	 posix_fallocate(int, off_t, off_t);
 int	 setegid(gid_t);
 int	 seteuid(uid_t);
 #endif
