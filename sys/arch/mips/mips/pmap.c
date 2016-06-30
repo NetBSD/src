@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.222 2016/06/28 09:31:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.223 2016/06/30 12:57:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.222 2016/06/28 09:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.223 2016/06/30 12:57:35 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2168,12 +2168,12 @@ again:
 			 * be mapped with one index at any given time.
 			 */
 
-			if (mips_cache_badalias(pv->pv_va, va)) {
-				for (npv = pv; npv; npv = npv->pv_next) {
-					vaddr_t nva = trunc_page(npv->pv_va);
-					pmap_remove(npv->pv_pmap, nva,
-					    nva + PAGE_SIZE);
-					pmap_update(npv->pv_pmap);
+			for (npv = pv; npv; npv = npv->pv_next) {
+				vaddr_t nva = trunc_page(npv->pv_va);
+				pmap_t npm = npv->pv_pmap;
+				if (mips_cache_badalias(nva, va)) {
+					pmap_remove(npm, nva, nva + PAGE_SIZE);
+					pmap_update(npm);
 					goto again;
 				}
 			}
