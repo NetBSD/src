@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.331 2016/06/30 06:48:58 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.332 2016/06/30 06:56:27 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.331 2016/06/30 06:48:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.332 2016/06/30 06:56:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -384,7 +384,7 @@ ip_input(struct mbuf *m)
 
 	ifp = m_get_rcvif_psref(m, &psref);
 	if (__predict_false(ifp == NULL))
-		goto bad;
+		goto out;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
@@ -392,7 +392,7 @@ ip_input(struct mbuf *m)
 	 * Note: we pre-check without locks held.
 	 */
 	if (!TAILQ_FIRST(&in_ifaddrhead)) {
-		goto bad;
+		goto out;
 	}
 	IP_STATINC(IP_STAT_TOTAL);
 
@@ -418,12 +418,12 @@ ip_input(struct mbuf *m)
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
 		IP_STATINC(IP_STAT_BADVERS);
-		goto bad;
+		goto out;
 	}
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(struct ip)) {	/* minimum header length */
 		IP_STATINC(IP_STAT_BADHLEN);
-		goto bad;
+		goto out;
 	}
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
@@ -439,7 +439,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
 		IP_STATINC(IP_STAT_BADADDR);
-		goto bad;
+		goto out;
 	}
 
 	/* 127/8 must not appear on wire - RFC1122 */
@@ -447,7 +447,7 @@ ip_input(struct mbuf *m)
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
 		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			IP_STATINC(IP_STAT_BADADDR);
-			goto bad;
+			goto out;
 		}
 	}
 
@@ -456,7 +456,8 @@ ip_input(struct mbuf *m)
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
-		goto badcsum;
+		IP_STATINC(IP_STAT_BADSUM);
+		goto out;
 
 	case M_CSUM_IPv4:
 		/* Checksum was okay. */
@@ -471,8 +472,10 @@ ip_input(struct mbuf *m)
 		if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
 		    ip_do_loopback_cksum)) {
 			INET_CSUM_COUNTER_INCR(&ip_swcsum);
-			if (in_cksum(m, hlen) != 0)
-				goto badcsum;
+			if (in_cksum(m, hlen) != 0) {
+				IP_STATINC(IP_STAT_BADSUM);
+				goto out;
+			}
 		}
 		break;
 	}
@@ -485,7 +488,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (len < hlen) {
 		IP_STATINC(IP_STAT_BADLEN);
-		goto bad;
+		goto out;
 	}
 
 	/*
@@ -496,7 +499,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (m->m_pkthdr.len < len) {
 		IP_STATINC(IP_STAT_TOOSHORT);
-		goto bad;
+		goto out;
 	}
 	if (m->m_pkthdr.len > len) {
 		if (m->m_len == m->m_pkthdr.len) {
@@ -663,7 +666,7 @@ ip_input(struct mbuf *m)
 			if (ip_mforward(m, ifp) != 0) {
 				SOFTNET_UNLOCK();
 				IP_STATINC(IP_STAT_CANTFORWARD);
-				goto bad;
+				goto out;
 			}
 			SOFTNET_UNLOCK();
 
@@ -684,7 +687,7 @@ ip_input(struct mbuf *m)
 		 */
 		if (!in_multi_group(ip->ip_dst, ifp, 0)) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
-			goto bad;
+			goto out;
 		}
 		goto ours;
 	}
@@ -719,7 +722,7 @@ ip_input(struct mbuf *m)
 			if (ipsec4_input(m, IP_FORWARDING |
 			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
 				SOFTNET_UNLOCK();
-				goto bad;
+				goto out;
 			}
 			SOFTNET_UNLOCK();
 		}
@@ -742,11 +745,11 @@ ours:
 		 */
 		if (ip_reass_packet(&m, ip) != 0) {
 			/* Failed; invalid fragment(s) or packet. */
-			goto bad;
+			goto out;
 		}
 		if (m == NULL) {
 			/* More fragments should come; silently return. */
-			return;
+			goto out;
 		}
 		/*
 		 * Reassembly is done, we have the final packet.
@@ -767,7 +770,7 @@ ours:
 		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
 			SOFTNET_UNLOCK();
-			goto bad;
+			goto out;
 		}
 		SOFTNET_UNLOCK();
 	}
@@ -788,18 +791,11 @@ ours:
 	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
 	SOFTNET_UNLOCK();
 	return;
-bad:
-	m_put_rcvif_psref(ifp, &psref);
-	m_freem(m);
-	return;
 
-badcsum:
-	m_put_rcvif_psref(ifp, &psref);
-	IP_STATINC(IP_STAT_BADSUM);
-	m_freem(m);
-	return;
 out:
 	m_put_rcvif_psref(ifp, &psref);
+	if (m != NULL)
+		m_freem(m);
 }
 
 /*
