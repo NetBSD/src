@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $	*/
+/*	$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $");
+__RCSID("$NetBSD: suff.c,v 1.84 2016/06/30 05:34:04 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1217,7 +1217,7 @@ SuffAddSrc(void *sp, void *lsp)
 #ifdef DEBUG_SRC
 	s2->cp = Lst_Init(FALSE);
 	Lst_AtEnd(targ->cp, s2);
-	fprintf(debug_file, "1 add %x %x to %x:", targ, s2, ls->l);
+	fprintf(debug_file, "1 add %p %p to %p:", targ, s2, ls->l);
 	Lst_ForEach(ls->l, PrintAddr, NULL);
 	fprintf(debug_file, "\n");
 #endif
@@ -1235,7 +1235,7 @@ SuffAddSrc(void *sp, void *lsp)
 #ifdef DEBUG_SRC
     s2->cp = Lst_Init(FALSE);
     Lst_AtEnd(targ->cp, s2);
-    fprintf(debug_file, "2 add %x %x to %x:", targ, s2, ls->l);
+    fprintf(debug_file, "2 add %p %p to %p:", targ, s2, ls->l);
     Lst_ForEach(ls->l, PrintAddr, NULL);
     fprintf(debug_file, "\n");
 #endif
@@ -1307,14 +1307,14 @@ SuffRemoveSrc(Lst l)
 		free(s->pref);
 	    else {
 #ifdef DEBUG_SRC
-		LstNode ln = Lst_Member(s->parent->cp, s);
-		if (ln != NULL)
-		    Lst_Remove(s->parent->cp, ln);
+		LstNode ln2 = Lst_Member(s->parent->cp, s);
+		if (ln2 != NULL)
+		    Lst_Remove(s->parent->cp, ln2);
 #endif
 		--s->parent->children;
 	    }
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "free: [l=%x] p=%x %d\n", l, s, s->children);
+	    fprintf(debug_file, "free: [l=%p] p=%p %d\n", l, s, s->children);
 	    Lst_Destroy(s->cp, NULL);
 #endif
 	    Lst_Remove(l, ln);
@@ -1325,7 +1325,7 @@ SuffRemoveSrc(Lst l)
 	}
 #ifdef DEBUG_SRC
 	else {
-	    fprintf(debug_file, "keep: [l=%x] p=%x %d: ", l, s, s->children);
+	    fprintf(debug_file, "keep: [l=%p] p=%p %d: ", l, s, s->children);
 	    Lst_ForEach(s->cp, PrintAddr, NULL);
 	    fprintf(debug_file, "\n");
 	}
@@ -1374,7 +1374,7 @@ SuffFindThem(Lst srcs, Lst slst)
 	 */
 	if (Targ_FindNode(s->file, TARG_NOCREATE) != NULL) {
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %x from %x\n", s, srcs);
+	    fprintf(debug_file, "remove %p from %p\n", s, srcs);
 #endif
 	    rs = s;
 	    break;
@@ -1383,7 +1383,7 @@ SuffFindThem(Lst srcs, Lst slst)
 	if ((ptr = Dir_FindFile(s->file, s->suff->searchPath)) != NULL) {
 	    rs = s;
 #ifdef DEBUG_SRC
-	    fprintf(debug_file, "remove %x from %x\n", s, srcs);
+	    fprintf(debug_file, "remove %p from %p\n", s, srcs);
 #endif
 	    free(ptr);
 	    break;
@@ -1499,7 +1499,7 @@ SuffFindCmds(Src *targ, Lst slst)
     targ->children += 1;
 #ifdef DEBUG_SRC
     ret->cp = Lst_Init(FALSE);
-    fprintf(debug_file, "3 add %x %x\n", targ, ret);
+    fprintf(debug_file, "3 add %p %p\n", targ, ret);
     Lst_AtEnd(targ->cp, ret);
 #endif
     Lst_AtEnd(slst, ret);
