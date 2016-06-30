@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2006/09/23 17:39:34 cherry Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.3 2016/06/30 09:14:30 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,6 +33,10 @@
 #include "SYS.h"
 
 	.globl	_end
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
 
 	.data
 EXPORT(__curbrk)

@@ -1,3 +1,5 @@
-/* $NetBSD: shmat.S,v 1.1 2006/09/10 21:22:34 cherry Exp $ */
-	
-/* XXX:	 Stub */
+/*	$NetBSD: shmat.S,v 1.2 2016/06/30 09:14:30 mrg Exp $	*/
+
+#include "SYS.h"
+
+RSYSCALL(shmat)
