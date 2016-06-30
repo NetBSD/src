@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.82 2016/06/30 05:28:23 dholland Exp $	*/
+/*	$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.82 2016/06/30 05:28:23 dholland Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.82 2016/06/30 05:28:23 dholland Exp $");
+__RCSID("$NetBSD: suff.c,v 1.83 2016/06/30 05:31:00 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -766,6 +766,8 @@ Suff_EndTransform(void *gnp, void *dummy)
 {
     GNode *gn = (GNode *)gnp;
 
+    (void)dummy;
+
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *)Lst_Datum(Lst_Last(gn->cohorts));
     if ((gn->type & OP_TRANSFORM) && Lst_IsEmpty(gn->commands) &&
@@ -809,7 +811,7 @@ Suff_EndTransform(void *gnp, void *dummy)
 	fprintf(debug_file, "transformation %s complete\n", gn->name);
     }
 
-    return(dummy ? 0 : 0);
+    return 0;
 }
 
 /*-
@@ -2597,8 +2599,10 @@ Suff_End(void)
 
 static int SuffPrintName(void *s, void *dummy)
 {
+    (void)dummy;
+
     fprintf(debug_file, "%s ", ((Suff *)s)->name);
-    return (dummy ? 0 : 0);
+    return 0;
 }
 
 static int
@@ -2607,6 +2611,8 @@ SuffPrintSuff(void *sp, void *dummy)
     Suff    *s = (Suff *)sp;
     int	    flags;
     int	    flag;
+
+    (void)dummy;
 
     fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
 
@@ -2640,7 +2646,7 @@ SuffPrintSuff(void *sp, void *dummy)
     fprintf(debug_file, "#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
     fputc('\n', debug_file);
-    return (dummy ? 0 : 0);
+    return 0;
 }
 
 static int
@@ -2648,12 +2654,14 @@ SuffPrintTrans(void *tp, void *dummy)
 {
     GNode   *t = (GNode *)tp;
 
+    (void)dummy;
+
     fprintf(debug_file, "%-16s: ", t->name);
     Targ_PrintType(t->type);
     fputc('\n', debug_file);
     Lst_ForEach(t->commands, Targ_PrintCmd, NULL);
     fputc('\n', debug_file);
-    return(dummy ? 0 : 0);
+    return 0;
 }
 
 void
