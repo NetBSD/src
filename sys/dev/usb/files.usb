@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.140 2016/06/23 07:32:12 skrll Exp $
+#	$NetBSD: files.usb,v 1.141 2016/06/30 17:38:47 christos Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -536,7 +536,6 @@ file	dev/usb/if_run.c		run
 attach	athn at usbdevif with athn_usb: firmload
 file	dev/usb/if_athn_usb.c		athn_usb		needs-flag
 
-# XXX: ljt
 # Realtek RTL8188SU/RTL8191SU/RTL8192SU
 device	rsu: arp, ether, firmload, ifnet, wlan
 attach	rsu at usbdevif
