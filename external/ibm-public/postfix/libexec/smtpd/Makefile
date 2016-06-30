@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/06/29 20:07:52 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2016/06/30 03:05:45 christos Exp $
 
 NOMAN=	# defined
 
@@ -6,8 +6,9 @@ NOMAN=	# defined
 
 PROG=	smtpd
 
-DIST=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
-.PATH:	${DIST}/src/${PROG}
+TOP=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
+DIST=${TOP}/src/${PROG}
+.PATH:	${DIST}
 
 SRCS=	smtpd.c smtpd_token.c smtpd_check.c smtpd_chat.c smtpd_state.c \
 	smtpd_peer.c smtpd_sasl_proto.c smtpd_sasl_glue.c smtpd_proxy.c \
@@ -21,7 +22,7 @@ LDADD+= ${LIBPMASTER} ${LIBPMILTER} ${LIBPGLOBAL} ${LIBPDNS} ${LIBPXSASL}
 DPADD+=	${LIBPTLS} ${LIBSSL} ${LIBCRYPTO}
 LDADD+=	${LIBPTLS} -lssl -lcrypto
 .else
-.PATH:	${DIST}/src/tls
+.PATH:	${TOP}/src/tls
 SRCS+=	tls_level.c
 .endif
 
