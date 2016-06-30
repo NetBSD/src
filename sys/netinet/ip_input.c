@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.330 2016/06/28 02:02:56 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.331 2016/06/30 06:48:58 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.330 2016/06/28 02:02:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.331 2016/06/30 06:48:58 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -731,6 +731,7 @@ ip_input(struct mbuf *m)
 
 ours:
 	m_put_rcvif_psref(ifp, &psref);
+	ifp = NULL;
 
 	/*
 	 * If offset or IP_MF are set, must reassemble.
