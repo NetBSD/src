@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.218 2016/06/28 02:36:54 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.219 2016/06/30 09:44:58 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -994,7 +994,6 @@ struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
 					const struct sockaddr *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
-void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
