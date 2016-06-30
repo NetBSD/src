@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.86 2016/06/28 16:00:32 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.87 2016/06/30 16:34:56 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.86 2016/06/28 16:00:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.87 2016/06/30 16:34:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -2210,13 +2210,6 @@ status_setup:
 			LK_SLASSERT(xfer->ux_actlen <= xfer->ux_length, sc,
 			    spipe, xfer, return);
 			xfer->ux_status = USBD_NORMAL_COMPLETION;
-#if 0 /* usb_transfer_complete will do this */
-			if (xfer->ux_length == xfer->ux_actlen || xfer->ux_flags &
-			    USBD_SHORT_XFER_OK)
-				xfer->ux_status = USBD_NORMAL_COMPLETION;
-			else
-				xfer->ux_status = USBD_SHORT_XFER;
-#endif
 		}
 	}
 
