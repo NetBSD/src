@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/07/19 10:16:55 martin Exp $
+#	$NetBSD: Makefile,v 1.11 2016/06/30 12:56:27 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,9 @@ SUBDIR+=	.WAIT
 SUBDIR+=	instkernel
 .if ${MKKMOD} != "no"
 SUBDIR+=	kmod
+.if ${MKCRYPTO} != "no"
 SUBDIR+=	kmod-cgdroot
+.endif
 .endif
 SUBDIR+=	.WAIT
 SUBDIR+=	cdroms
