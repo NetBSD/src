@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.213 2016/06/28 02:02:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.214 2016/06/30 01:34:53 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.213 2016/06/28 02:02:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.214 2016/06/30 01:34:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -588,6 +588,20 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		/* There is little point in resolving the broadcast address */
 		if (rt->rt_flags & RTF_BROADCAST)
 			break;
+
+		/*
+		 * When called from rt_ifa_addlocal, we cannot depend on that
+		 * the address (rt_getkey(rt)) exits in the address list of the
+		 * interface. So check RTF_LOCAL instead.
+		 */
+		if (rt->rt_flags & RTF_LOCAL) {
+			rt->rt_expire = 0;
+			if (useloopback) {
+				rt->rt_ifp = lo0ifp;
+				rt->rt_rmx.rmx_mtu = 0;
+			}
+			break;
+		}
 
 		INADDR_TO_IA(satocsin(rt_getkey(rt))->sin_addr, ia);
 		while (ia && ia->ia_ifp != ifp)

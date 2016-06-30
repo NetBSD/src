@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.201 2016/06/28 02:36:54 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.202 2016/06/30 01:34:53 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.201 2016/06/28 02:36:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.202 2016/06/30 01:34:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -921,16 +921,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    (struct sockaddr *)&ia->ia_prefixmask;
 
 		ia->ia_ifp = ifp;
-		if ((oia = in6_ifaddr) != NULL) {
-			for ( ; oia->ia_next; oia = oia->ia_next)
-				continue;
-			oia->ia_next = ia;
-		} else
-			in6_ifaddr = ia;
-		/* gain a refcnt for the link from in6_ifaddr */
-		ifaref(&ia->ia_ifa);
-
-		ifa_insert(ifp, &ia->ia_ifa);
 	}
 
 	/* update timestamp */
@@ -950,7 +940,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			    " existing (%s) address should not be changed\n",
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			error = EINVAL;
-			goto unlink;
+			if (hostIsNew)
+				free(ia, M_IFADDR);
+			goto exit;
 		}
 		ia->ia_prefixmask = ifra->ifra_prefixmask;
 	}
@@ -1020,13 +1012,30 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	}
 
 	/* reset the interface and routing table appropriately. */
-	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
-		goto unlink;
+	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0) {
+		if (hostIsNew)
+			free(ia, M_IFADDR);
+		goto exit;
+	}
+
 	/*
 	 * We are done if we have simply modified an existing address.
 	 */
 	if (!hostIsNew)
 		return error;
+
+	/*
+	 * Insert ia to the global list and ifa to the interface's list.
+	 */
+	if ((oia = in6_ifaddr) != NULL) {
+		for ( ; oia->ia_next; oia = oia->ia_next)
+			continue;
+		oia->ia_next = ia;
+	} else
+		in6_ifaddr = ia;
+	/* gain a refcnt for the link from in6_ifaddr */
+	ifaref(&ia->ia_ifa);
+	ifa_insert(ifp, &ia->ia_ifa);
 
 	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
@@ -1271,13 +1280,13 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	return error;
 
-  unlink:
 	/*
 	 * XXX: if a change of an existing address failed, keep the entry
 	 * anyway.
 	 */
 	if (hostIsNew)
 		in6_unlink_ifa(ia, ifp);
+  exit:
 	return error;
 
   cleanup:
@@ -1695,7 +1704,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 
 	ia->ia_addr = *sin6;
 
-	if (ifacount <= 1 &&
+	if (ifacount <= 0 &&
 	    (error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0) {
 		splx(s);
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.168 2016/06/23 06:40:48 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.169 2016/06/30 01:34:53 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.168 2016/06/23 06:40:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.169 2016/06/30 01:34:53 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -359,6 +359,8 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct sockaddr_in oldaddr;
 	int error, hostIsNew, maskIsNew;
 	int newifaddr = 0;
+	bool run_hook = false;
+	bool need_reinsert = false;
 
 	switch (cmd) {
 	case SIOCALIFADDR:
@@ -440,9 +442,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			ia = malloc(sizeof(*ia), M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == NULL)
 				return (ENOBUFS);
-			TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
-			ifaref(&ia->ia_ifa);
-			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
@@ -460,6 +459,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			ia->ia_ifp = ifp;
 			ia->ia_idsalt = cprng_fast32() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
+
 			newifaddr = 1;
 		}
 		break;
@@ -533,18 +533,24 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 
 	case SIOCSIFADDR:
+		if (!newifaddr) {
+			LIST_REMOVE(ia, ia_hash);
+			need_reinsert = true;
+		}
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
 		    1, hostIsNew);
-		if (error == 0) {
-			(void)pfil_run_hooks(if_pfil,
-			    (struct mbuf **)SIOCSIFADDR, ifp, PFIL_IFADDR);
-		}
+
+		run_hook = true;
 		break;
 
 	case SIOCSIFNETMASK:
 		in_ifscrub(ifp, ia);
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
+		if (!newifaddr) {
+			LIST_REMOVE(ia, ia_hash);
+			need_reinsert = true;
+		}
 		error = in_ifinit(ifp, ia, NULL, 0, 0);
 		break;
 
@@ -570,15 +576,17 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		}
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
+			if (!newifaddr) {
+				LIST_REMOVE(ia, ia_hash);
+				need_reinsert = true;
+			}
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
 			    hostIsNew);
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
 			ia->ia_broadaddr = ifra->ifra_broadaddr;
-		if (error == 0)
-			(void)pfil_run_hooks(if_pfil,
-			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+		run_hook = true;
 		break;
 
 	case SIOCGIFALIAS:
@@ -600,8 +608,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	case SIOCDIFADDR:
 		in_purgeaddr(&ia->ia_ifa);
-		(void)pfil_run_hooks(if_pfil, (struct mbuf **)SIOCDIFADDR,
-		    ifp, PFIL_IFADDR);
+		run_hook = true;
 		break;
 
 #ifdef MROUTING
@@ -615,7 +622,26 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		return ENOTTY;
 	}
 
-	if (error != 0 && newifaddr) {
+	/*
+	 * XXX insert regardless of error to make in_purgeaddr below work.
+	 * Need to improve.
+	 */
+	if (newifaddr) {
+		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
+		ifaref(&ia->ia_ifa);
+		ifa_insert(ifp, &ia->ia_ifa);
+		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
+		    ia, ia_hash);
+	} else if (need_reinsert) {
+		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
+		    ia, ia_hash);
+	}
+
+	if (error == 0) {
+		if (run_hook)
+			(void)pfil_run_hooks(if_pfil,
+			    (struct mbuf **)cmd, ifp, PFIL_IFADDR);
+	} else if (newifaddr) {
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa);
 	}
@@ -908,10 +934,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * Set up new addresses.
 	 */
 	oldaddr = ia->ia_addr;
-	if (ia->ia_addr.sin_family == AF_INET)
-		LIST_REMOVE(ia, ia_hash);
 	ia->ia_addr = *sin;
-	LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr), ia, ia_hash);
 
 	/* Set IN_IFF flags early for if_addr_init() */
 	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
@@ -1002,11 +1025,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	return (error);
 bad:
 	splx(s);
-	LIST_REMOVE(ia, ia_hash);
 	ia->ia_addr = oldaddr;
-	if (ia->ia_addr.sin_family == AF_INET)
-		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
-		    ia, ia_hash);
 	return (error);
 }
 

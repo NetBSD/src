@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.197 2016/06/21 02:14:11 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.198 2016/06/30 01:34:53 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.197 2016/06/21 02:14:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.198 2016/06/30 01:34:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1448,6 +1448,17 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		}
 		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
+
+		/*
+		 * When called from rt_ifa_addlocal, we cannot depend on that
+		 * the address (rt_getkey(rt)) exits in the address list of the
+		 * interface. So check RTF_LOCAL instead.
+		 */
+		if (rt->rt_flags & RTF_LOCAL) {
+			if (nd6_useloopback)
+				rt->rt_ifp = lo0ifp;	/* XXX */
+			break;
+		}
 
 		/*
 		 * check if rt_getkey(rt) is an address assigned
