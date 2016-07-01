@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.102 2016/06/04 10:48:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.103 2016/07/01 13:11:21 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1072,7 +1072,7 @@ END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
- *			    bool returning)
+ *     bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -1091,18 +1091,19 @@ ENTRY(cpu_switchto)
 	movq	%rdi,%r13	/* oldlwp */
 	movq	%rsi,%r12	/* newlwp */
 
-	testq	%r13,%r13
-	jz	1f
+	testq	%r13,%r13	/* oldlwp = NULL ? */
+	jz	skip_save
 
 	/* Save old context. */
 	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
+skip_save:
 
 	/* Switch to newlwp's stack. */
-1:	movq	L_PCB(%r12),%r14
+	movq	L_PCB(%r12),%r14
 #ifdef XEN /* XXX debug code */
-	cmpq	$0, PCB_RSP(%r14)
+	cmpq	$0,PCB_RSP(%r14)
 	jne 999f
 	callq _C_LABEL(cpu_Debugger);
 999:
@@ -1118,21 +1119,21 @@ ENTRY(cpu_switchto)
 	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
-	testb	%dl,%dl
-	jnz	4f
+	testb	%dl,%dl		/* returning = true ? */
+	jnz	switch_return
 
 	/* Switch ring0 stack */
 #ifndef XEN
 	movq	PCB_RSP0(%r14),%rax
 	movq	%rax,CPUVAR(RSP0)
 #else
-	movq	%r14, %rdi
+	movq	%r14,%rdi
 	callq	_C_LABEL(x86_64_switch_context);
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
-	jnz	4f
+	jnz	switch_return
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
@@ -1154,65 +1155,68 @@ ENTRY(cpu_switchto)
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	cmpq	CPUVAR(FPCURLWP),%r12
-	je	3f
+	je	skip_TS
 	orq	$CR0_TS,%rcx
+skip_TS:
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
-3:	cmpq	%rdx,%rcx
-	je	6f
+	cmpq	%rdx,%rcx
+	je	skip_CR0
 	movq	%rcx,%cr0
+skip_CR0:
 
-6:	testl	$PCB_COMPAT32, PCB_FLAGS(%r14)
+	/* The 32bit LWPs are handled differently. */
+	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
 	jne	32f
 
 	/* Zero out %fs/%gs registers and GDT descriptors. */
-	xorq	%rax, %rax
-	movw	%ax, %fs
+	xorq	%rax,%rax
+	movw	%ax,%fs
 	CLI(cx)
 	SWAPGS
-	movw	%ax, %gs
+	movw	%ax,%gs
 	SWAPGS
 	STI(cx)
 
 	movq	CPUVAR(GDT),%rcx
-	movq	%rax, (GUFS_SEL*8)(%rcx)
-	movq	%rax, (GUGS_SEL*8)(%rcx)
+	movq	%rax,(GUFS_SEL*8)(%rcx)
+	movq	%rax,(GUGS_SEL*8)(%rcx)
 
 	/* Reload 64-bit %fs/%gs MSRs. */
-	movl	$MSR_FSBASE, %ecx
-	movl	PCB_FS(%r14), %eax
-	movl	4+PCB_FS(%r14), %edx
+	movl	$MSR_FSBASE,%ecx
+	movl	PCB_FS(%r14),%eax
+	movl	4+PCB_FS(%r14),%edx
 	wrmsr
-	movl	$MSR_KERNELGSBASE, %ecx
-	movl	PCB_GS(%r14), %eax
-	movl	4+PCB_GS(%r14), %edx
+	movl	$MSR_KERNELGSBASE,%ecx
+	movl	PCB_GS(%r14),%eax
+	movl	4+PCB_GS(%r14),%edx
 	wrmsr
-	jmp	4f
+	jmp	switch_return
 
 32:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
-	movq	PCB_FS(%r14), %rax
-	movq	%rax, (GUFS_SEL*8)(%rcx)
-	movq	PCB_GS(%r14), %rax
-	movq	%rax, (GUGS_SEL*8)(%rcx)
+	movq	PCB_FS(%r14),%rax
+	movq	%rax,(GUFS_SEL*8)(%rcx)
+	movq	PCB_GS(%r14),%rax
+	movq	%rax,(GUGS_SEL*8)(%rcx)
 
 	/* Reload %fs and %gs */
-	movq	L_MD_REGS(%r12), %rbx
-	movw	TF_FS(%rbx), %fs
+	movq	L_MD_REGS(%r12),%rbx
+	movw	TF_FS(%rbx),%fs
 	CLI(ax)
 	SWAPGS
-	movw	TF_GS(%rbx), %gs
+	movw	TF_GS(%rbx),%gs
 	SWAPGS
 	STI(ax)
-
 #else
 	movq	%r12,%rdi
 	callq	_C_LABEL(x86_64_tls_switch)
 #endif
 
+switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
-4:	movq	%r13,%rax
+	movq	%r13,%rax
 	popq	%r15
 	popq	%r14
 	popq	%r13
