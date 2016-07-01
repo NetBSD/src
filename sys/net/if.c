@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.349 2016/07/01 05:15:40 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.350 2016/07/01 05:22:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.349 2016/07/01 05:15:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.350 2016/07/01 05:22:33 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1117,7 +1117,7 @@ if_detach(struct ifnet *ifp)
 
 	sysctl_teardown(&ifp->if_sysctl_log);
 	mutex_enter(ifp->if_ioctl_lock);
-	ifp->if_ioctl = if_nullioctl;
+	if_deactivate(ifp);
 	mutex_exit(ifp->if_ioctl_lock);
 
 	IFNET_LOCK();
@@ -1130,7 +1130,7 @@ if_detach(struct ifnet *ifp)
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
 
-	if (ifp->if_slowtimo != NULL) {
+	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
 		callout_destroy(ifp->if_slowtimo_ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.167 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.168 2016/07/01 05:22:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.167 2016/04/28 00:16:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.168 2016/07/01 05:22:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -150,6 +150,7 @@ static void rt_maskedcopy(const struct sockaddr *,
     struct sockaddr *, const struct sockaddr *);
 
 static void rtcache_clear(struct route *);
+static void rtcache_clear_rtentry(int, struct rtentry *);
 static void rtcache_invalidate(struct dom_rtlist *);
 
 #ifdef DDB
@@ -794,6 +795,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			rt->rt_refcnt++;
 			rtfree(rt);
 		}
+		rtcache_clear_rtentry(dst->sa_family, rt);
 		break;
 
 	case RTM_ADD:
@@ -1384,6 +1386,21 @@ rtcache_invalidate(struct dom_rtlist *rtlist)
 		LIST_REMOVE(ro, ro_rtcache_next);
 		LIST_INSERT_HEAD(&invalid_routes, ro, ro_rtcache_next);
 		rtcache_invariants(ro);
+	}
+}
+
+static void
+rtcache_clear_rtentry(int family, struct rtentry *rt)
+{
+	struct domain *dom;
+	struct route *ro;
+
+	if ((dom = pffinddomain(family)) == NULL)
+		return;
+
+	LIST_FOREACH(ro, &dom->dom_rtcache, ro_rtcache_next) {
+		if (ro->_ro_rt == rt)
+			rtcache_clear(ro);
 	}
 }
 
