@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.91 2016/07/01 07:35:03 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.92 2016/07/01 08:42:21 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.91 2016/07/01 07:35:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.92 2016/07/01 08:42:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -2077,28 +2077,31 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 			slhci_halt(sc, spipe, xfer);
 			return;
 		} else if (__predict_false(sc->sc_bus.ub_usepolling)) {
-			if (status == SL11_EPSTAT_STALL)
+			head = Q_CALLBACKS;
+			if (status & SL11_EPSTAT_STALL)
 				xfer->ux_status = USBD_STALLED;
-			else if (status == SL11_EPSTAT_TIMEOUT)
+			else if (status & SL11_EPSTAT_TIMEOUT)
 				xfer->ux_status = USBD_TIMEOUT;
-			else if (status == SL11_EPSTAT_NAK)
-				xfer->ux_status = USBD_TIMEOUT; /*XXX*/
+			else if (status & SL11_EPSTAT_NAK)
+				head = Q_NEXT_CB;
 			else
 				xfer->ux_status = USBD_IOERROR;
-			head = Q_CALLBACKS;
-		} else if (status == SL11_EPSTAT_NAK) {
-			if (spipe->pipe.up_interval) {
-				spipe->lastframe = spipe->frame =
-				    t->frame + spipe->pipe.up_interval;
-				slhci_queue_timed(sc, spipe);
-				goto queued;
-			}
-			head = Q_NEXT_CB;
+		} else if (status & SL11_EPSTAT_NAK) {
+			int i = spipe->pipe.up_interval;
+			if (i == 0)
+				i = 1;
+			DDOLOG("xfer %p spipe %p NAK delay by %d", xfer, spipe,
+			    i, 0);
+			spipe->lastframe = spipe->frame = t->frame + i;
+			slhci_queue_timed(sc, spipe);
+			goto queued;
 		} else if (++spipe->nerrs > SLHCI_MAX_RETRIES ||
-		    status == SL11_EPSTAT_STALL) {
-			if (status == SL11_EPSTAT_STALL)
+		    (status & SL11_EPSTAT_STALL)) {
+			DDOLOG("xfer %p spipe %p nerrs %d", xfer, spipe,
+			    spipe->nerrs, 0);
+			if (status & SL11_EPSTAT_STALL)
 				xfer->ux_status = USBD_STALLED;
-			else if (status == SL11_EPSTAT_TIMEOUT)
+			else if (status & SL11_EPSTAT_TIMEOUT)
 				xfer->ux_status = USBD_TIMEOUT;
 			else
 				xfer->ux_status = USBD_IOERROR;
@@ -2108,7 +2111,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 			    0);
 			DDOLOGSTATUS(status);
 
-			if (status == SL11_EPSTAT_OVERFLOW &&
+			if (status & SL11_EPSTAT_OVERFLOW &&
 			    ratecheck(&sc->sc_overflow_warn_rate,
 			    &overflow_warn_rate)) {
 				printf("%s: Overflow condition: "
