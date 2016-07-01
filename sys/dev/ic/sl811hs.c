@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.87 2016/06/30 16:34:56 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.88 2016/07/01 05:39:24 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.87 2016/06/30 16:34:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.88 2016/07/01 05:39:24 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1778,8 +1778,7 @@ slhci_dointr(struct slhci_softc *sc)
 
 #ifdef SLHCI_DEBUG
 	if (slhcidebug & SLHCI_D_INTR && r & sc->sc_ier &&
-	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhcidebug &
-	    SLHCI_D_SOF)) {
+	    ((r & ~(SL11_ISR_SOF|SL11_ISR_DATA)) || slhcidebug & SLHCI_D_SOF)) {
 		uint8_t e, f;
 
 		e = slhci_read(sc, SL11_IER);
