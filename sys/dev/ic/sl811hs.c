@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.90 2016/07/01 07:33:33 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.91 2016/07/01 07:35:03 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.90 2016/07/01 07:33:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.91 2016/07/01 07:35:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -2104,7 +2104,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 				xfer->ux_status = USBD_IOERROR;
 
 			DLOG(D_ERR, "Max retries reached! status %#x "
-			    "xfer->ux_status %#x", status, xfer->ux_status, 0,
+			    "xfer->ux_status %d", status, xfer->ux_status, 0,
 			    0);
 			DDOLOGSTATUS(status);
 
