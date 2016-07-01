@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.201 2016/07/01 11:39:45 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202 2016/07/01 11:44:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2016/07/01 11:39:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2016/07/01 11:44:05 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1426,14 +1426,12 @@ pmap_bootstrap(vaddr_t kva_start)
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
 #endif /* __x86_64__ */
-	idt_vaddr = virtual_avail;                      /* don't need pte */
-	idt_paddr = avail_start;                        /* steal a page */
 	/*
-	 * Xen require one more page as we can't store
-	 * GDT and LDT on the same page
+	 * Xen requires one more page as we can't store GDT and LDT on the same
+	 * page.
 	 */
-	virtual_avail += 3 * PAGE_SIZE;
-	avail_start += 3 * PAGE_SIZE;
+	idt_vaddr = pmap_bootstrap_valloc(3);
+	idt_paddr = pmap_bootstrap_palloc(3);
 #else /* XEN */
 
 #if defined(__x86_64__)
