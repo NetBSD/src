@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2016/07/01 10:20:10 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.219 2016/07/01 12:41:28 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2016/07/01 10:20:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2016/07/01 12:41:28 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -361,7 +361,7 @@ cpu_startup(void)
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
 				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | UVM_PROT_WRITE, 0);
+				       VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
