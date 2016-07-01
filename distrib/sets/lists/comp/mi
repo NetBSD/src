@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2046 2016/06/30 04:12:36 pgoyette Exp $
+#	$NetBSD: mi,v 1.2047 2016/07/01 22:46:20 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6706,7 +6706,7 @@
 ./usr/share/man/cat3/history_wend.0		comp-c-catman		.cat
 ./usr/share/man/cat3/history_winit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hline.0			comp-c-catman		.cat
-./usr/share/man/cat3/hmac.0			comp-obsolete		obsolete
+./usr/share/man/cat3/hmac.0			comp-c-catman		.cat
 ./usr/share/man/cat3/hostalias.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hosts_access.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hosts_ctl.0		comp-c-catman		.cat
@@ -13933,6 +13933,7 @@
 ./usr/share/man/html3/history_wend.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_winit.html	comp-c-htmlman		html
 ./usr/share/man/html3/hline.html		comp-c-htmlman		html
+./usr/share/man/html3/hmac.html			comp-c-htmlman		html
 ./usr/share/man/html3/hostalias.html		comp-c-htmlman		html
 ./usr/share/man/html3/hosts_access.html		comp-c-htmlman		html
 ./usr/share/man/html3/hosts_ctl.html		comp-c-htmlman		html
@@ -21075,7 +21076,7 @@
 ./usr/share/man/man3/history_wend.3		comp-c-man		.man
 ./usr/share/man/man3/history_winit.3		comp-c-man		.man
 ./usr/share/man/man3/hline.3			comp-c-man		.man
-./usr/share/man/man3/hmac.3			comp-obsolete		obsolete
+./usr/share/man/man3/hmac.3			comp-c-man		.man
 ./usr/share/man/man3/hostalias.3		comp-c-man		.man
 ./usr/share/man/man3/hosts_access.3		comp-c-man		.man
 ./usr/share/man/man3/hosts_ctl.3		comp-c-man		.man
