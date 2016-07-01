@@ -1,11 +1,11 @@
-/*	$NetBSD: pmap.c,v 1.203 2016/07/01 11:57:10 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.204 2016/07/01 12:12:06 maxv Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran, and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2016/07/01 11:57:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2016/07/01 12:12:06 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -366,7 +366,7 @@ struct evcnt pmap_ldt_evcnt;
 static bool cpu_pat_enabled __read_mostly = false;
 
 /*
- * global data structures
+ * Global data structures
  */
 
 static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
@@ -388,7 +388,7 @@ pd_entry_t pmap_pg_g __read_mostly = 0;
  * pmap_largepages: if our processor supports PG_PS and we are
  * using it, this is set to true.
  */
-int pmap_largepages __read_mostly;
+int pmap_largepages __read_mostly = 0;
 
 /*
  * i386 physical memory comes in a big contig chunk with a small
@@ -466,48 +466,41 @@ pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
 }
 
 /*
- * other data structures
+ * Other data structures
  */
 
-static pt_entry_t protection_codes[8] __read_mostly; /* maps MI prot to i386
-							prot code */
+static pt_entry_t protection_codes[8] __read_mostly;
+
 static bool pmap_initialized __read_mostly = false; /* pmap_init done yet? */
 
 /*
- * the following two vaddr_t's are used during system startup
- * to keep track of how much of the kernel's VM space we have used.
- * once the system is started, the management of the remaining kernel
- * VM space is turned over to the kernel_map vm_map.
+ * The following two vaddr_t's are used during system startup to keep track of
+ * how much of the kernel's VM space we have used. Once the system is started,
+ * the management of the remaining kernel VM space is turned over to the
+ * kernel_map vm_map.
  */
-
 static vaddr_t virtual_avail __read_mostly;	/* VA of first free KVA */
 static vaddr_t virtual_end __read_mostly;	/* VA of last free KVA */
 
 /*
  * pool that pmap structures are allocated from
  */
-
 static struct pool_cache pmap_cache;
 
 /*
  * pv_entry cache
  */
-
 static struct pool_cache pmap_pv_cache;
 
 #ifdef __HAVE_DIRECT_MAP
-
 extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
-
 #else
-
 /*
- * MULTIPROCESSOR: special VA's/ PTE's are actually allocated inside a
- * maxcpus*NPTECL array of PTE's, to avoid cache line thrashing
- * due to false sharing.
+ * MULTIPROCESSOR: special VAs and PTEs are actually allocated inside a
+ * (maxcpus * NPTECL) array of PTE, to avoid cache line thrashing due to
+ * false sharing.
  */
-
 #ifdef MULTIPROCESSOR
 #define PTESLEW(pte, id) ((pte)+(id)*NPTECL)
 #define VASLEW(va,id) ((va)+(id)*NPTECL*PAGE_SIZE)
@@ -517,7 +510,7 @@ extern int mem_cluster_cnt;
 #endif
 
 /*
- * special VAs and the PTEs that map them
+ * Special VAs and the PTEs that map them
  */
 static pt_entry_t *csrc_pte, *cdst_pte, *zero_pte, *ptp_pte, *early_zero_pte;
 static char *csrcp, *cdstp, *zerop, *ptpp;
@@ -546,7 +539,7 @@ static struct pool_allocator pmap_pdp_allocator = {
 };
 #endif /* PAE */
 
-extern vaddr_t idt_vaddr;			/* we allocate IDT early */
+extern vaddr_t idt_vaddr;
 extern paddr_t idt_paddr;
 
 extern int end;
@@ -556,38 +549,32 @@ extern int end;
 extern vaddr_t pentium_idt_vaddr;
 #endif
 
-
 /*
- * local prototypes
+ * Local prototypes
  */
 
 #ifdef __HAVE_DIRECT_MAP
 static void pmap_init_directmap(struct pmap *);
 #endif
-
 #ifndef XEN
 static void pmap_remap_largepages(void);
 #endif
 
-static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t,
-				      pd_entry_t * const *);
-static struct vm_page	*pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
-static void		 pmap_freepage(struct pmap *, struct vm_page *, int);
-static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
-				       vaddr_t, pt_entry_t *,
-				       pd_entry_t * const *);
-static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
-					 pt_entry_t *, vaddr_t,
-					 struct pv_entry **);
-static void		 pmap_remove_ptes(struct pmap *, struct vm_page *,
-					  vaddr_t, vaddr_t, vaddr_t,
-					  struct pv_entry **);
+static struct vm_page *pmap_get_ptp(struct pmap *, vaddr_t,
+    pd_entry_t * const *);
+static struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
+static void pmap_freepage(struct pmap *, struct vm_page *, int);
+static void pmap_free_ptp(struct pmap *, struct vm_page *, vaddr_t,
+    pt_entry_t *, pd_entry_t * const *);
+static bool pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
+    vaddr_t, struct pv_entry **);
+static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
+    vaddr_t, struct pv_entry **);
 
-static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
-static void		 pmap_alloc_level(pd_entry_t * const *, vaddr_t, int,
-					  long *);
+static bool pmap_get_physpage(vaddr_t, int, paddr_t *);
+static void pmap_alloc_level(pd_entry_t * const *, vaddr_t, int, long *);
 
-static bool		 pmap_reactivate(struct pmap *);
+static bool pmap_reactivate(struct pmap *);
 
 /*
  * p m a p   h e l p e r   f u n c t i o n s
@@ -1008,7 +995,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	npte |= pmap_pat_flags(flags);
 	opte = pmap_pte_testset(pte, npte); /* zap! */
 #if defined(DIAGNOSTIC)
-	/* XXX For now... */
+	/*
+	 * XXX: make sure we are not dealing with a large page, since the only
+	 * large pages created are for the kernel image, and they should never
+	 * be kentered.
+	 */
 	if (opte & PG_PS)
 		panic("%s: PG_PS", __func__);
 #endif
@@ -1065,7 +1056,6 @@ pmap_emap_sync(bool canload)
 	} else {
 		tlbflush();
 	}
-
 }
 
 void
@@ -1186,7 +1176,7 @@ pmap_kremove_local(vaddr_t sva, vsize_t len)
  * pmap_bootstrap_valloc: allocate a virtual address in the bootstrap area.
  * This function is to be used before any VM system has been set up.
  *
- * The va is taken from virtual_avail. 
+ * The va is taken from virtual_avail.
  */
 static vaddr_t
 pmap_bootstrap_valloc(size_t npages)
@@ -1200,7 +1190,7 @@ pmap_bootstrap_valloc(size_t npages)
  * pmap_bootstrap_palloc: allocate a physical address in the bootstrap area.
  * This function is to be used before any VM system has been set up.
  *
- * The pa is taken from avail_start. 
+ * The pa is taken from avail_start.
  */
 static paddr_t
 pmap_bootstrap_palloc(size_t npages)
@@ -1211,13 +1201,12 @@ pmap_bootstrap_palloc(size_t npages)
 }
 
 /*
- * pmap_bootstrap: get the system in a state where it can run with VM
- *	properly enabled (called before main()).   the VM system is
- *      fully init'd later...
+ * pmap_bootstrap: get the system in a state where it can run with VM properly
+ * enabled (called before main()). The VM system is fully init'd later.
  *
- * => on i386, locore.s has already enabled the MMU by allocating
- *	a PDP for the kernel, and nkpde PTP's for the kernel.
- * => kva_start is the first free virtual address in kernel space
+ * => on i386, locore.S has already enabled the MMU by allocating a PDP for the
+ *    kernel, and nkpde PTP's for the kernel.
+ * => kva_start is the first free virtual address in kernel space.
  */
 void
 pmap_bootstrap(vaddr_t kva_start)
@@ -1233,40 +1222,36 @@ pmap_bootstrap(vaddr_t kva_start)
 	pmap_pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 	/*
-	 * set up our local static global vars that keep track of the
-	 * usage of KVM before kernel_map is set up
+	 * Set up our local static global vars that keep track of the usage of
+	 * KVM before kernel_map is set up.
 	 */
-
 	virtual_avail = kva_start;		/* first free KVA */
 	virtual_end = VM_MAX_KERNEL_ADDRESS;	/* last KVA */
 
 	/*
-	 * set up protection_codes: we need to be able to convert from
-	 * a MI protection code (some combo of VM_PROT...) to something
-	 * we can jam into a i386 PTE.
+	 * Set up protection_codes: we need to be able to convert from a MI
+	 * protection code (some combo of VM_PROT...) to something we can jam
+	 * into a x86 PTE.
 	 */
-
-	protection_codes[VM_PROT_NONE] = pmap_pg_nx;		/* --- */
-	protection_codes[VM_PROT_EXECUTE] = PG_RO | PG_X;	/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO | pmap_pg_nx;	/* -r- */
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO | PG_X;/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW | pmap_pg_nx;	/* w-- */
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW | PG_X;/* w-x */
+	protection_codes[VM_PROT_NONE] = pmap_pg_nx;
+	protection_codes[VM_PROT_EXECUTE] = PG_RO | PG_X;
+	protection_codes[VM_PROT_READ] = PG_RO | pmap_pg_nx;
+	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO | PG_X;
+	protection_codes[VM_PROT_WRITE] = PG_RW | pmap_pg_nx;
+	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW | PG_X;
 	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pmap_pg_nx;
-								/* wr- */
-	protection_codes[VM_PROT_ALL] = PG_RW | PG_X;		/* wrx */
+	protection_codes[VM_PROT_ALL] = PG_RW | PG_X;
 
 	/*
-	 * now we init the kernel's pmap
+	 * Now we init the kernel's pmap.
 	 *
-	 * the kernel pmap's pm_obj is not used for much.   however, in
-	 * user pmaps the pm_obj contains the list of active PTPs.
-	 * the pm_obj currently does not have a pager.   it might be possible
-	 * to add a pager that would allow a process to read-only mmap its
-	 * own page tables (fast user level vtophys?).   this may or may not
-	 * be useful.
+	 * The kernel pmap's pm_obj is not used for much. However, in user pmaps
+	 * the pm_obj contains the list of active PTPs.
+	 *
+	 * The pm_obj currently does not have a pager. It might be possible to
+	 * add a pager that would allow a process to read-only mmap its own page
+	 * tables (fast user-level vtophys?). This may or may not be useful.
 	 */
-
 	kpm = pmap_kernel();
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		mutex_init(&kpm->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
@@ -1359,8 +1344,8 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 
 	/*
-	 * now we allocate the "special" VAs which are used for tmp mappings
-	 * by the pmap (and other modules).    we allocate the VAs by advancing
+	 * Now we allocate the "special" VAs which are used for tmp mappings
+	 * by the pmap (and other modules). We allocate the VAs by advancing
 	 * virtual_avail (note that there are no pages mapped at these VAs).
 	 * we find the PTE that maps the allocated VA via the linear PTE
 	 * mapping.
@@ -1410,14 +1395,13 @@ pmap_bootstrap(vaddr_t kva_start)
 #ifdef XEN
 #ifdef __x86_64__
 	/*
-	 * We want a dummy page directory for Xen:
-	 * when deactivate a pmap, Xen will still consider it active.
-	 * So we set user PGD to this one to lift all protection on
-	 * the now inactive page tables set.
+	 * We want a dummy page directory for Xen: when deactivating a pmap, Xen
+	 * will still consider it active. So we set user PGD to this one to lift
+	 * all protection on the now inactive page tables set.
 	 */
 	xen_dummy_user_pgd = avail_start;
 	avail_start += PAGE_SIZE;
-	
+
 	/* Zero fill it, the less checks in Xen it requires the better */
 	memset((void *) (xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
 	/* Mark read-only */
@@ -1448,39 +1432,34 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif /* XEN */
 
 	/*
-	 * now we reserve some VM for mapping pages when doing a crash dump
+	 * Now we reserve some VM for mapping pages when doing a crash dump.
 	 */
-
 	virtual_avail = reserve_dumppages(virtual_avail);
 
 	/*
-	 * init the static-global locks and global lists.
+	 * Init the static-global locks and global lists.
 	 *
 	 * => pventry::pvh_lock (initialized elsewhere) must also be
 	 *      a spin lock, again at IPL_VM to prevent deadlock, and
 	 *	again is never taken from interrupt context.
 	 */
-
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&pmaps);
 
 	/*
-	 * ensure the TLB is sync'd with reality by flushing it...
+	 * Ensure the TLB is sync'd with reality by flushing it...
 	 */
-
 	tlbflushg();
 
 	/*
-	 * calculate pmap_maxkvaddr from nkptp[].
+	 * Calculate pmap_maxkvaddr from nkptp[].
 	 */
-
 	kva = VM_MIN_KERNEL_ADDRESS;
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
 		kva += nkptp[i] * nbpd[i];
 	}
 	pmap_maxkvaddr = kva;
 }
-
 
 #ifdef __HAVE_DIRECT_MAP
 /*
@@ -1523,6 +1502,7 @@ pmap_init_directmap(struct pmap *kpm)
 	/* Number of L3 entries. */
 	n_dm_pdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 
+	/* In locore.S, we allocated a tmp va. Use it now. */
 	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	pte = PTE_BASE + pl1_i(tmpva);
 	*pte = dm_pdp | pteflags;
@@ -1689,12 +1669,12 @@ pmap_prealloc_lowmem_ptps(void)
 			    pmap_pa2pte(newp) | pteflags);
 		}
 
-#endif /* XEN */			
+#endif /* XEN */
 		pmap_pte_set(&pdes[pl_i(0, level)],
 		    pmap_pa2pte(newp) | pteflags);
-			
+
 		pmap_pte_flush();
-		
+
 		level--;
 		if (level <= 1)
 			break;
@@ -1728,7 +1708,7 @@ pmap_init(void)
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
 
 #ifdef XEN
-	/* 
+	/*
 	 * pool_cache(9) should not touch cached objects, since they
 	 * are pinned on xen and R/O for the domU
 	 */
@@ -1810,7 +1790,7 @@ pmap_free_pvs(struct pv_entry *pve)
  *   pmap_enter_pv: enter a mapping onto a pv_head list
  *   pmap_remove_pv: remove a mapping from a pv_head list
  *
- * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock 
+ * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock
  *       the pvh before calling
  */
 
@@ -1997,7 +1977,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		if (level == PTP_LEVELS - 1) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
-			 * pmap is active on 
+			 * pmap is active on
 			 */
 			xen_kpm_sync(pmap, index);
 		}
@@ -2088,7 +2068,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 		if(i == PTP_LEVELS) {
 			/*
 			 * Update the per-cpu PD on all cpus the current
-			 * pmap is active on 
+			 * pmap is active on
 			 */
 			xen_kpm_sync(pmap, index);
 		}
@@ -2555,7 +2535,7 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 			mutex_exit(&cpu_lock);
 			goto retry;
 		}
-  
+
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2704,7 +2684,7 @@ pmap_reactivate(struct pmap *pmap)
 	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
-#elif !defined(XEN) 
+#elif !defined(XEN)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2764,7 +2744,7 @@ pmap_load(void)
 	ncsw = l->l_ncsw;
 
 	/* should be able to take ipis. */
-	KASSERT(ci->ci_ilevel < IPL_HIGH); 
+	KASSERT(ci->ci_ilevel < IPL_HIGH);
 #ifdef XEN
 	/* Check to see if interrupts are enabled (ie; no events are masked) */
 	KASSERT(x86_read_psl() == 0);
@@ -2922,7 +2902,7 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(pmap_pdirpa(pmap, 0) == ci->ci_xen_current_user_pgd);
 #elif defined(PAE)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(ci->ci_pae_l3_pdir[0]));
-#elif !defined(XEN) 
+#elif !defined(XEN)
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
@@ -3193,7 +3173,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	dpte = PTESLEW(cdst_pte,id);
 	csrcva = VASLEW(csrcp, id);
 	cdstva = VASLEW(cdstp, id);
-	
+
 	KASSERT(*spte == 0 && *dpte == 0);
 
 	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
@@ -3493,7 +3473,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			/*
 			 * skip a range corresponding to an invalid pde.
 			 */
-			blkendva = (va & ptp_masks[lvl - 1]) + nbpd[lvl - 1]; 
+			blkendva = (va & ptp_masks[lvl - 1]) + nbpd[lvl - 1];
  			continue;
 		}
 
