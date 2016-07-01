@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.37 2014/09/12 10:03:32 martin Exp $
+# $NetBSD: rescue.mi,v 1.38 2016/07/01 22:52:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,7 +11,7 @@
 ./rescue/bzip2					base-rescue-root
 ./rescue/cat					base-rescue-root
 ./rescue/ccdconfig				base-rescue-root
-./rescue/cgdconfig				base-rescue-root	crypto
+./rescue/cgdconfig				base-rescue-root
 ./rescue/chgrp					base-rescue-root
 ./rescue/chio					base-rescue-root
 ./rescue/chmod					base-rescue-root
