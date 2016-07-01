@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.94 2016/06/22 08:31:49 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.95 2016/07/01 07:50:06 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4832,4 +4832,87 @@ sys/dev/ic/ns16550reg.h				1.11
 	it has a specific register, HALT, to allow writing to the
 	LCR and divisor registers, and then commit the changes.
 	[bouyer, ticket #1178]
+
+doc/3RDPARTY					1.1277, 1.1331 via patch
+external/mit/lua/Makefile                       up to 1.4
+external/mit/lua/dist/Makefile                  up to 1.5
+external/mit/lua/dist/README                    up to 1.5
+external/mit/lua/dist/doc/index.css             up to 1.1.1.1
+external/mit/lua/dist/doc/lua.css               up to 1.5
+external/mit/lua/dist/doc/luac.1                up to 1.3
+external/mit/lua/dist/doc/manual.html           up to 1.5
+external/mit/lua/dist/src/lapi.c                up to 1.6
+external/mit/lua/dist/src/lauxlib.c             up to 1.6
+external/mit/lua/dist/src/lauxlib.h             up to 1.4
+external/mit/lua/dist/src/lbaselib.c            up to 1.6
+external/mit/lua/dist/src/lbitlib.c             up to 1.3
+external/mit/lua/dist/src/lcode.c               up to 1.5
+external/mit/lua/dist/src/lcode.h               up to 1.4
+external/mit/lua/dist/src/lcorolib.c            up to 1.3
+external/mit/lua/dist/src/lctype.c              up to 1.3
+external/mit/lua/dist/src/lctype.h              up to 1.3
+external/mit/lua/dist/src/ldblib.c              up to 1.7
+external/mit/lua/dist/src/ldebug.c              up to 1.6
+external/mit/lua/dist/src/ldo.c                 up to 1.5
+external/mit/lua/dist/src/ldo.h                 up to 1.5
+external/mit/lua/dist/src/ldump.c               up to 1.5
+external/mit/lua/dist/src/lfunc.c               up to 1.4
+external/mit/lua/dist/src/lgc.c                 up to 1.5
+external/mit/lua/dist/src/lgc.h                 up to 1.4
+external/mit/lua/dist/src/linit.c               up to 1.5
+external/mit/lua/dist/src/liolib.c              up to 1.5
+external/mit/lua/dist/src/llex.c                up to 1.7
+external/mit/lua/dist/src/llex.h                up to 1.4
+external/mit/lua/dist/src/llimits.h             up to 1.6
+external/mit/lua/dist/src/lmathlib.c            up to 1.5
+external/mit/lua/dist/src/lmem.c                up to 1.5
+external/mit/lua/dist/src/lmem.h                up to 1.4
+external/mit/lua/dist/src/loadlib.c             up to 1.5
+external/mit/lua/dist/src/lobject.c             up to 1.8
+external/mit/lua/dist/src/lobject.h             up to 1.6
+external/mit/lua/dist/src/lopcodes.c            up to 1.4
+external/mit/lua/dist/src/lopcodes.h            up to 1.4
+external/mit/lua/dist/src/loslib.c              up to 1.5
+external/mit/lua/dist/src/lparser.c             up to 1.5
+external/mit/lua/dist/src/lparser.h             up to 1.4
+external/mit/lua/dist/src/lprefix.h             up to 1.3
+external/mit/lua/dist/src/lstate.c              up to 1.5
+external/mit/lua/dist/src/lstate.h              up to 1.5
+external/mit/lua/dist/src/lstring.c             up to 1.5
+external/mit/lua/dist/src/lstring.h             up to 1.5
+external/mit/lua/dist/src/lstrlib.c             up to 1.12
+external/mit/lua/dist/src/ltable.c              up to 1.6
+external/mit/lua/dist/src/ltable.h              up to 1.4
+external/mit/lua/dist/src/ltablib.c             up to 1.5
+external/mit/lua/dist/src/ltm.c                 up to 1.5
+external/mit/lua/dist/src/ltm.h                 up to 1.4
+external/mit/lua/dist/src/lua.c                 up to 1.5
+external/mit/lua/dist/src/lua.h                 up to 1.6
+external/mit/lua/dist/src/luac.c                up to 1.6
+external/mit/lua/dist/src/luaconf.h             up to 1.16
+external/mit/lua/dist/src/lualib.h              up to 1.3
+external/mit/lua/dist/src/lundump.c             up to 1.4
+external/mit/lua/dist/src/lundump.h             up to 1.3
+external/mit/lua/dist/src/lutf8lib.c            up to 1.4
+external/mit/lua/dist/src/lvm.c                 up to 1.10
+external/mit/lua/dist/src/lvm.h                 up to 1.6
+external/mit/lua/dist/src/lzio.c                up to 1.4
+external/mit/lua/dist/src/lzio.h                up to 1.4
+external/mit/lua/lib/liblua/Makefile            up to 1.8
+
+	Update Lua to 5.3.2.
+	[salazar, ticket #1173]
+
+xsrc/external/mit/glu/dist/include/GL/glu.h		1.3
+
+	Changing GLU_TESS_MAX_COORD to DBL_MAX causes internal constants
+	derived from GLU_TESS_MAX_COORD used in libtess to be +/-inf,
+	leading to logic errors. See
+	http://mail-index.netbsd.org/tech-x11/2016/05/25/msg001733.html
+	and
+	http://willkamp.com/opencpn/flyspray/index.php?do=details&task_id=2076
+	for details.
+	Change back GLU_TESS_MAX_COORD to its upstream value if it fits
+	in a double, or 1e15 if DBL_MAX_10_EXP is not large enough.
+	[bouyer, ticket #1181]
 
