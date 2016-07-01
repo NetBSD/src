@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.348 2016/06/28 02:36:54 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.349 2016/07/01 05:15:40 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.348 2016/06/28 02:36:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.349 2016/07/01 05:15:40 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1025,6 +1025,65 @@ if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
 	}
 }
 
+#ifdef IFAREF_DEBUG
+static struct ifaddr **ifa_list;
+static int ifa_list_size;
+
+/* Depends on only one if_attach runs at once */
+static void
+if_build_ifa_list(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int i;
+
+	KASSERT(ifa_list == NULL);
+	KASSERT(ifa_list_size == 0);
+
+	IFADDR_FOREACH(ifa, ifp)
+		ifa_list_size++;
+
+	ifa_list = kmem_alloc(sizeof(*ifa) * ifa_list_size, KM_SLEEP);
+	if (ifa_list == NULL)
+		return;
+
+	i = 0;
+	IFADDR_FOREACH(ifa, ifp) {
+		ifa_list[i++] = ifa;
+		ifaref(ifa);
+	}
+}
+
+static void
+if_check_and_free_ifa_list(struct ifnet *ifp)
+{
+	int i;
+	struct ifaddr *ifa;
+
+	if (ifa_list == NULL)
+		return;
+
+	for (i = 0; i < ifa_list_size; i++) {
+		char buf[64];
+
+		ifa = ifa_list[i];
+		sockaddr_format(ifa->ifa_addr, buf, sizeof(buf));
+		if (ifa->ifa_refcnt > 1) {
+			log(LOG_WARNING,
+			    "ifa(%s) still referenced (refcnt=%d)\n",
+			    buf, ifa->ifa_refcnt - 1);
+		} else
+			log(LOG_DEBUG,
+			    "ifa(%s) not referenced (refcnt=%d)\n",
+			    buf, ifa->ifa_refcnt - 1);
+		ifafree(ifa);
+	}
+
+	kmem_free(ifa_list, sizeof(*ifa) * ifa_list_size);
+	ifa_list = NULL;
+	ifa_list_size = 0;
+}
+#endif
+
 /*
  * Detach an interface from the list of "active" interfaces,
  * freeing any resources as we go along.
@@ -1045,6 +1104,9 @@ if_detach(struct ifnet *ifp)
 	int s, i, family, purged;
 	uint64_t xc;
 
+#ifdef IFAREF_DEBUG
+	if_build_ifa_list(ifp);
+#endif
 	/*
 	 * XXX It's kind of lame that we have to have the
 	 * XXX socket structure...
@@ -1245,6 +1307,10 @@ again:
 	}
 
 	splx(s);
+
+#ifdef IFAREF_DEBUG
+	if_check_and_free_ifa_list(ifp);
+#endif
 }
 
 static void
