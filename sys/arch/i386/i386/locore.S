@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.131 2016/06/04 10:48:11 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.132 2016/07/01 13:11:21 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.131 2016/06/04 10:48:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.132 2016/07/01 13:11:21 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -1100,7 +1100,7 @@ END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
- *			    bool returning)
+ *     bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -1128,16 +1128,18 @@ ENTRY(cpu_switchto)
 	movl	16(%esp),%esi		/* oldlwp */
 	movl	20(%esp),%edi		/* newlwp */
 	movl	24(%esp),%edx		/* returning */
-	testl	%esi,%esi
-	jz	1f
+
+	testl	%esi,%esi		/* oldlwp = NULL ? */
+	jz	skip_save
 
 	/* Save old context. */
 	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
+skip_save:
 
 	/* Switch to newlwp's stack. */
-1:	movl	L_PCB(%edi),%ebx
+	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
@@ -1150,33 +1152,33 @@ ENTRY(cpu_switchto)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testl	%edx,%edx
-	jnz	4f
+	jnz	switch_return
 
+	/* Switch ring0 stack */
 #ifdef XEN
 	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
-#else /* !XEN */
-	/* Switch ring0 esp */
+#else
 	movl	PCB_ESP0(%ebx),%eax
 	movl	%eax,CPUVAR(ESP0)
-#endif /* !XEN */
+#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
-	jnz	4f
+	jnz	switch_return
 
 #ifndef XEN
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	CPUVAR(GDT),%ecx
-	movl	PCB_FSD(%ebx), %eax
-	movl	PCB_FSD+4(%ebx), %edx
-	movl	%eax, (GUFS_SEL*8)(%ecx)
-	movl	%edx, (GUFS_SEL*8+4)(%ecx)
-	movl	PCB_GSD(%ebx), %eax
-	movl	PCB_GSD+4(%ebx), %edx
-	movl	%eax, (GUGS_SEL*8)(%ecx)
-	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+	movl	PCB_FSD(%ebx),%eax
+	movl	PCB_FSD+4(%ebx),%edx
+	movl	%eax,(GUFS_SEL*8)(%ecx)
+	movl	%edx,(GUFS_SEL*8+4)(%ecx)
+	movl	PCB_GSD(%ebx),%eax
+	movl	PCB_GSD+4(%ebx),%edx
+	movl	%eax,(GUGS_SEL*8)(%ecx)
+	movl	%edx,(GUGS_SEL*8+4)(%ecx)
 #endif /* !XEN */
 
 	/* Switch I/O bitmap */
@@ -1211,17 +1213,19 @@ ENTRY(cpu_switchto)
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	cmpl	CPUVAR(FPCURLWP),%edi
-	je	3f
+	je	skip_TS
 	orl	$CR0_TS,%ecx
+skip_TS:
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
-3:	cmpl	%edx,%ecx
-	je	4f
+	cmpl	%edx,%ecx
+	je	switch_return
 	movl	%ecx,%cr0
 #endif /* !XEN */
 
+switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
-4:	movl	%esi,%eax
+	movl	%esi,%eax
 	popl	%edi
 	popl	%esi
 	popl	%ebx
