@@ -1,4 +1,4 @@
-/*	$NetBSD: lcode.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lcode.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: lcode.h,v 1.63 2013/12/30 20:47:58 roberto Exp 
@@ -31,7 +31,7 @@ typedef enum BinOpr {
   OPR_DIV,
 #else /* _KERNEL */
   OPR_ADD, OPR_SUB, OPR_MUL, OPR_MOD,
-#endif
+#endif /* _KERNEL */
   OPR_IDIV,
   OPR_BAND, OPR_BOR, OPR_BXOR,
   OPR_SHL, OPR_SHR,

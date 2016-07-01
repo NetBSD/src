@@ -1,4 +1,4 @@
-/*	$NetBSD: ltm.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: ltm.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: ltm.h,v 2.21 2014/10/25 11:50:46 roberto Exp 
@@ -31,7 +31,7 @@ typedef enum {
 #ifndef _KERNEL
   TM_POW,
   TM_DIV,
-#endif
+#endif /* _KERNEL */
   TM_IDIV,
   TM_BAND,
   TM_BOR,

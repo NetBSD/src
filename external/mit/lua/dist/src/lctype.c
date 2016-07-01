@@ -1,4 +1,4 @@
-/*	$NetBSD: lctype.c,v 1.1.4.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lctype.c,v 1.1.4.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: lctype.c,v 1.12 2014/11/02 19:19:04 roberto Exp 
@@ -18,7 +18,7 @@
 
 #ifndef _KERNEL
 #include <limits.h>
-#endif
+#endif /* _KERNEL */
 
 LUAI_DDEF const lu_byte luai_ctype_[UCHAR_MAX + 2] = {
   0x00,  /* EOZ */

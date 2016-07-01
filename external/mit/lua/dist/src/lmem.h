@@ -1,4 +1,4 @@
-/*	$NetBSD: lmem.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lmem.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: lmem.h,v 1.43 2014/12/19 17:26:14 roberto Exp 
@@ -12,7 +12,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "llimits.h"
 #include "lua.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: lctype.h,v 1.1.4.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lctype.h,v 1.1.4.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: lctype.h,v 1.12 2011/07/15 12:50:29 roberto Exp 
@@ -35,7 +35,7 @@
 
 #ifndef _KERNEL
 #include <limits.h>
-#endif
+#endif /* _KERNEL */
 
 #include "llimits.h"
 

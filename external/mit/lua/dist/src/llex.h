@@ -1,4 +1,4 @@
-/*	$NetBSD: llex.h,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: llex.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: llex.h,v 1.78 2014/10/29 15:38:24 roberto Exp 
@@ -39,7 +39,7 @@ enum RESERVED {
   TK_FLT, TK_INT, TK_NAME, TK_STRING
 #else /* _KERNEL */
   TK_INT, TK_NAME, TK_STRING
-#endif
+#endif /* _KERNEL */
 };
 
 /* number of reserved words */

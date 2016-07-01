@@ -1,7 +1,7 @@
-/*	$NetBSD: lparser.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lparser.c,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
-** Id: lparser.c,v 2.147 2014/12/27 20:31:43 roberto Exp 
+** Id: lparser.c,v 2.149 2015/11/02 16:09:30 roberto Exp 
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <string.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -764,7 +764,7 @@ static void parlist (LexState *ls) {
         }
         case TK_DOTS: {  /* param -> '...' */
           luaX_next(ls);
-          f->is_vararg = 1;
+          f->is_vararg = 2;  /* declared vararg */
           break;
         }
         default: luaX_syntaxerror(ls, "<name> or '...' expected");
@@ -936,7 +936,7 @@ static void simpleexp (LexState *ls, expdesc *v) {
       v->u.nval = ls->t.seminfo.r;
       break;
     }
-#endif
+#endif /* _KERNEL */
     case TK_INT: {
       init_exp(v, VKINT, 0);
       v->u.ival = ls->t.seminfo.i;
@@ -962,6 +962,7 @@ static void simpleexp (LexState *ls, expdesc *v) {
       FuncState *fs = ls->fs;
       check_condition(ls, fs->f->is_vararg,
                       "cannot use '...' outside a vararg function");
+      fs->f->is_vararg = 1;  /* function actually uses vararg */
       init_exp(v, VVARARG, luaK_codeABC(fs, OP_VARARG, 0, 1, 0));
       break;
     }
@@ -1003,9 +1004,9 @@ static BinOpr getbinopr (int op) {
 #ifndef _KERNEL
     case '^': return OPR_POW;
     case '/': return OPR_DIV;
-#else
+#else /* _KERNEL */
     case '/': return OPR_IDIV;
-#endif
+#endif /* _KERNEL */
     case TK_IDIV: return OPR_IDIV;
     case '&': return OPR_BAND;
     case '|': return OPR_BOR;
@@ -1032,8 +1033,12 @@ static const struct {
 } priority[] = {  /* ORDER OPR */
    {10, 10}, {10, 10},           /* '+' '-' */
    {11, 11}, {11, 11},           /* '*' '%' */
+#ifndef _KERNEL
    {14, 13},                  /* '^' (right associative) */
    {11, 11}, {11, 11},           /* '/' '//' */
+#else /* _KERNEL */
+   {11, 11},                  /* '//' */
+#endif /* _KERNEL */
    {6, 6}, {4, 4}, {5, 5},   /* '&' '|' '~' */
    {7, 7}, {7, 7},           /* '<<' '>>' */
    {9, 8},                   /* '..' (right associative) */
@@ -1235,7 +1240,7 @@ static void labelstat (LexState *ls, TString *label, int line) {
   checkrepeated(fs, ll, label);  /* check for repeated labels */
   checknext(ls, TK_DBCOLON);  /* skip double colon */
   /* create new entry for this label */
-  l = newlabelentry(ls, ll, label, line, fs->pc);
+  l = newlabelentry(ls, ll, label, line, luaK_getlabel(fs));
   skipnoopstat(ls);  /* skip other no-op statements */
   if (block_follow(ls, 0)) {  /* label is last no-op statement in the block? */
     /* assume that locals are already out of scope */
@@ -1620,7 +1625,7 @@ static void mainfunc (LexState *ls, FuncState *fs) {
   BlockCnt bl;
   expdesc v;
   open_func(ls, fs, &bl);
-  fs->f->is_vararg = 1;  /* main function is always vararg */
+  fs->f->is_vararg = 2;  /* main function is always declared vararg */
   init_exp(&v, VLOCAL, 0);  /* create and... */
   newupvalue(fs, ls->envn, &v);  /* ...set environment upvalue */
   luaX_next(ls);  /* read first token */
@@ -1636,10 +1641,10 @@ LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
   FuncState funcstate;
   LClosure *cl = luaF_newLclosure(L, 1);  /* create main closure */
   setclLvalue(L, L->top, cl);  /* anchor it (to avoid being collected) */
-  incr_top(L);
+  luaD_inctop(L);
   lexstate.h = luaH_new(L);  /* create table for scanner */
   sethvalue(L, L->top, lexstate.h);  /* anchor it */
-  incr_top(L);
+  luaD_inctop(L);
   funcstate.f = cl->p = luaF_newproto(L);
   funcstate.f->source = luaS_new(L, name);  /* create and anchor TString */
   lua_assert(iswhite(funcstate.f));  /* do not need barrier here */
