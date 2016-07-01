@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.88 2016/07/01 05:39:24 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.89 2016/07/01 07:15:37 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.88 2016/07/01 05:39:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.89 2016/07/01 07:15:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -940,15 +940,16 @@ slhci_start(struct usbd_xfer *xfer)
 		DLOGBUF(D_XFER, spipe->buffer, spipe->tregs[LEN]);
 		spipe->ptype = PT_CTRL_SETUP;
 		spipe->newpid &= ~SL11_PID_BITS;
-		if (xfer->ux_length == 0 || (xfer->ux_request.bmRequestType &
-		    UT_READ))
+		if (xfer->ux_length == 0 ||
+		    (xfer->ux_request.bmRequestType & UT_READ))
 			spipe->newpid |= SL11_PID_IN;
 		else
 			spipe->newpid |= SL11_PID_OUT;
 	}
 
-	if (xfer->ux_flags & USBD_FORCE_SHORT_XFER && spipe->tregs[LEN] ==
-	    max_packet && (spipe->newpid & SL11_PID_BITS) == SL11_PID_OUT)
+	if (xfer->ux_flags & USBD_FORCE_SHORT_XFER &&
+	    spipe->tregs[LEN] == max_packet &&
+	    (spipe->newpid & SL11_PID_BITS) == SL11_PID_OUT)
 		spipe->wantshort = 1;
 	else
 		spipe->wantshort = 0;
