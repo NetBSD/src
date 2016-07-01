@@ -1,4 +1,4 @@
-.\" $NetBSD: hmac.3,v 1.1 2016/07/01 22:41:39 christos Exp $
+.\" $NetBSD: hmac.3,v 1.2 2016/07/01 22:56:06 christos Exp $
 .\"
 .Dd July 1, 2016
 .Dt HMAC 3
@@ -29,13 +29,15 @@ sha256, sha384, sha512.
 .Sh RETURN VALUES
 The
 .Fn hmac
-return 
+returns
 .Dv -1
 if the
 .Fa hname
-is not found
-and the length of the digest string which is dependend on the hashing
-function.
+is not found.
+Otherwise the actual length of the digest string is returned (which could
+be bigger or smaller than
+.Fa dlen ) .
+This length depends on the hashing function selected.
 .Sh SEE ALSO
 .Xr md2 3 ,
 .Xr md4 3 ,
