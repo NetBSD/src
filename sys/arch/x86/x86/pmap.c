@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202 2016/07/01 11:44:05 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.203 2016/07/01 11:57:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202 2016/07/01 11:44:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.203 2016/07/01 11:57:10 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1507,6 +1507,14 @@ pmap_init_directmap(struct pmap *kpm)
 	for (i = 0; i < mem_cluster_cnt; i++) {
 		mc = &mem_clusters[i];
 		lastpa = MAX(lastpa, mc->start + mc->size);
+	}
+
+	/*
+	 * We allocate only one L4 entry for the direct map (PDIR_SLOT_DIRECT),
+	 * so we cannot map more than 512GB.
+	 */
+	if (lastpa > NBPD_L4) {
+		panic("RAM limit reached: > 512GB not supported");
 	}
 
 	/* Allocate L3. */
