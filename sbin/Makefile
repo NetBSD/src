@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2016/06/04 16:29:35 nonaka Exp $
+#	$NetBSD: Makefile,v 1.129 2016/07/01 22:50:50 christos Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,7 +6,7 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	amrctl apmlabel atactl badsect bioctl brconfig ccdconfig \
+SUBDIR=	amrctl apmlabel atactl badsect bioctl brconfig ccdconfig cgdconfig \
 	chown devpubd disklabel dkctl dkscan_bsdlabel dmesg dmctl \
 	drvctl fastboot fdisk fsck fsirand gpt ifconfig init ldconfig luactl \
 	mbrlabel mknod modload modstat modunload mount \
@@ -51,9 +51,6 @@ SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_v7fs
 
-.if (${MKCRYPTO} != "no")
-SUBDIR+= cgdconfig
-.endif
 
 .if (${USE_INET6} != "no")
 SUBDIR+= ping6
