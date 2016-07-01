@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.92 2016/07/01 08:42:21 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.93 2016/07/01 09:03:28 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.92 2016/07/01 08:42:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.93 2016/07/01 09:03:28 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1534,13 +1534,17 @@ slhci_intr(void *arg)
 {
 	SLHCIHIST_FUNC(); SLHCIHIST_CALLED();
 	struct slhci_softc *sc = arg;
-	int ret;
+	int ret = 0;
+	int irq;
 
 	start_cc_time(&t_hard_int, (unsigned int)arg);
 	mutex_enter(&sc->sc_intr_lock);
 
-	ret = slhci_dointr(sc);
-	slhci_main(sc);
+	do {
+		irq = slhci_dointr(sc);
+		ret |= irq;
+		slhci_main(sc);
+	} while (irq);
 	mutex_exit(&sc->sc_intr_lock);
 
 	stop_cc_time(&t_hard_int);
