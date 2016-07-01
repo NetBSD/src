@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199 2016/07/01 11:20:01 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.200 2016/07/01 11:28:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2016/07/01 11:20:01 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2016/07/01 11:28:18 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1179,6 +1179,34 @@ pmap_kremove_local(vaddr_t sva, vsize_t len)
  */
 
 /*
+ * pmap_bootstrap_valloc: allocate a virtual address in the bootstrap area.
+ * This function is to be used before any VM system has been set up.
+ *
+ * The va is taken from virtual_avail. 
+ */
+static vaddr_t
+pmap_bootstrap_valloc(size_t npages)
+{
+	vaddr_t va = virtual_avail;
+	virtual_avail += npages * PAGE_SIZE;
+	return va;
+}
+
+/*
+ * pmap_bootstrap_palloc: allocate a physical address in the bootstrap area.
+ * This function is to be used before any VM system has been set up.
+ *
+ * The pa is taken from avail_start. 
+ */
+static paddr_t
+pmap_bootstrap_palloc(size_t npages)
+{
+	paddr_t pa = avail_start;
+	avail_start += npages * PAGE_SIZE;
+	return pa;
+}
+
+/*
  * pmap_bootstrap: get the system in a state where it can run with VM
  *	properly enabled (called before main()).   the VM system is
  *      fully init'd later...
@@ -1187,7 +1215,6 @@ pmap_kremove_local(vaddr_t sva, vsize_t len)
  *	a PDP for the kernel, and nkpde PTP's for the kernel.
  * => kva_start is the first free virtual address in kernel space
  */
-
 void
 pmap_bootstrap(vaddr_t kva_start)
 {
@@ -1196,7 +1223,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	int i;
 	vaddr_t kva;
 #ifndef XEN
-	pd_entry_t *pde;
 	unsigned long p1i;
 	vaddr_t kva_end;
 #endif
@@ -1317,6 +1343,8 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif /* !XEN */
 
 #ifdef __HAVE_DIRECT_MAP
+
+	pd_entry_t *pde;
 
 	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
 	pte = PTE_BASE + pl1_i(tmpva);
@@ -1485,18 +1513,18 @@ pmap_bootstrap(vaddr_t kva_start)
 	virtual_avail += 3 * PAGE_SIZE;
 	avail_start += 3 * PAGE_SIZE;
 #else /* XEN */
-	idt_vaddr = virtual_avail;			/* don't need pte */
-	idt_paddr = avail_start;			/* steal a page */
+
 #if defined(__x86_64__)
-	virtual_avail += 2 * PAGE_SIZE;
-	avail_start += 2 * PAGE_SIZE;
-#else /* defined(__x86_64__) */
-	virtual_avail += PAGE_SIZE;
-	avail_start += PAGE_SIZE;
+	idt_vaddr = pmap_bootstrap_valloc(2);
+	idt_paddr = pmap_bootstrap_palloc(2);
+#else
+	idt_vaddr = pmap_bootstrap_valloc(1);
+	idt_paddr = pmap_bootstrap_palloc(1);
+
 	/* pentium f00f bug stuff */
-	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += PAGE_SIZE;
-#endif /* defined(__x86_64__) */
+	pentium_idt_vaddr = pmap_bootstrap_valloc(1);
+#endif
+
 #endif /* XEN */
 
 	/*
