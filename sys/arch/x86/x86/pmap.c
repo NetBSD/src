@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.204 2016/07/01 12:12:06 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.205 2016/07/01 12:18:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.204 2016/07/01 12:12:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2016/07/01 12:18:34 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1537,6 +1537,9 @@ pmap_init_directmap(struct pmap *kpm)
 			memset((void *)tmpva, 0, PAGE_SIZE);
 		}
 
+		KASSERT(pmap_largepages != 0);
+
+		/* Large pages are supported. Just create L2. */
 		for (i = 0; i < NPDPG * n_dm_pdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dm_pd)[i]);
 			*pte = (pdp & PG_FRAME) | pteflags;
