@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.197 2016/07/01 10:20:10 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.198 2016/07/01 11:10:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2016/07/01 10:20:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2016/07/01 11:10:48 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -373,17 +373,21 @@ static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
 struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 /*
+ * pmap_pg_nx: if our processor supports PG_NX in the PTE then we
+ * set pmap_pg_nx to PG_NX (otherwise it is zero).
+ */
+pd_entry_t pmap_pg_nx __read_mostly = 0;
+
+/*
  * pmap_pg_g: if our processor supports PG_G in the PTE then we
  * set pmap_pg_g to PG_G (otherwise it is zero).
  */
-
-int pmap_pg_g __read_mostly = 0;
+pd_entry_t pmap_pg_g __read_mostly = 0;
 
 /*
  * pmap_largepages: if our processor supports PG_PS and we are
  * using it, this is set to true.
  */
-
 int pmap_largepages __read_mostly;
 
 /*
@@ -1199,7 +1203,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	vaddr_t tmpva;
 #endif
 
-	pt_entry_t pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
+	pmap_pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
 
 	/*
 	 * set up our local static global vars that keep track of the
@@ -1215,13 +1219,13 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * we can jam into a i386 PTE.
 	 */
 
-	protection_codes[VM_PROT_NONE] = pg_nx;			/* --- */
+	protection_codes[VM_PROT_NONE] = pmap_pg_nx;		/* --- */
 	protection_codes[VM_PROT_EXECUTE] = PG_RO | PG_X;	/* --x */
-	protection_codes[VM_PROT_READ] = PG_RO | pg_nx;		/* -r- */
+	protection_codes[VM_PROT_READ] = PG_RO | pmap_pg_nx;	/* -r- */
 	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_RO | PG_X;/* -rx */
-	protection_codes[VM_PROT_WRITE] = PG_RW | pg_nx;	/* w-- */
+	protection_codes[VM_PROT_WRITE] = PG_RW | pmap_pg_nx;	/* w-- */
 	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PG_RW | PG_X;/* w-x */
-	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pg_nx;
+	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PG_RW | pmap_pg_nx;
 								/* wr- */
 	protection_codes[VM_PROT_ALL] = PG_RW | PG_X;		/* wrx */
 
@@ -1338,7 +1342,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
 		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KR | PG_V;
+			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KR | PG_V;
 			tlbflushg();
 		}
 
@@ -1349,7 +1353,7 @@ pmap_bootstrap(vaddr_t kva_start)
 		for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2,
 		    pa += NBPD_L2) {
 			pde = &L2_BASE[pl2_i(kva)];
-			*pde = pa | pmap_pg_g | PG_PS | pg_nx | PG_KW | PG_V;
+			*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;
 			tlbflushg();
 		}
 	}
@@ -1377,18 +1381,18 @@ pmap_bootstrap(vaddr_t kva_start)
 	ndmpdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
 	dmpdp = avail_start;	avail_start += PAGE_SIZE;
 
-	*pte = dmpdp | PG_V | PG_RW | pg_nx;
+	*pte = dmpdp | PG_V | PG_RW | pmap_pg_nx;
 	pmap_update_pg(tmpva);
 	memset((void *)tmpva, 0, PAGE_SIZE);
 
 	if (cpu_feature[2] & CPUID_P1GB) {
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L3_SHIFT) | PG_RW | pg_nx |
+			*pde = ((paddr_t)i << L3_SHIFT) | PG_RW | pmap_pg_nx |
 			    PG_V | PG_U | PG_PS | PG_G;
 		}
 	} else {
@@ -1396,32 +1400,32 @@ pmap_bootstrap(vaddr_t kva_start)
 
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = dmpd + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
 			pmap_update_pg(tmpva);
 
 			memset((void *)tmpva, 0, PAGE_SIZE);
 		}
 		for (i = 0; i < NPDPG * ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
 			pmap_update_pg(tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L2_SHIFT) | PG_RW | pg_nx |
+			*pde = ((paddr_t)i << L2_SHIFT) | PG_RW | pmap_pg_nx |
 			    PG_V | PG_U | PG_PS | PG_G;
 		}
 		for (i = 0; i < ndmpdp; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pg_nx;
+			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
 			pmap_update_pg((vaddr_t)tmpva);
 
 			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (dmpd + (i << PAGE_SHIFT)) | PG_RW | pg_nx |
+			*pde = (dmpd + (i << PAGE_SHIFT)) | PG_RW | pmap_pg_nx |
 			    PG_V | PG_U;
 		}
 	}
 
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | pg_nx | PG_V | PG_U;
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | pmap_pg_nx | PG_V | PG_U;
 
 	tlbflush();
 
