@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.121 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.121 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1074,7 +1074,7 @@ static void
 nd6_dad_stoptimer(struct dadq *dp)
 {
 
-	callout_stop(&dp->dad_timer_ch);
+	callout_halt(&dp->dad_timer_ch, NULL);
 }
 
 /*
