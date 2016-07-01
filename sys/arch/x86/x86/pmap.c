@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.196 2016/05/21 07:15:56 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.197 2016/07/01 10:20:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.196 2016/05/21 07:15:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.197 2016/07/01 10:20:10 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -544,11 +544,6 @@ static struct pool_allocator pmap_pdp_allocator = {
 
 extern vaddr_t idt_vaddr;			/* we allocate IDT early */
 extern paddr_t idt_paddr;
-
-#ifdef _LP64
-extern vaddr_t lo32_vaddr;
-extern vaddr_t lo32_paddr;
-#endif
 
 extern int end;
 
@@ -1542,17 +1537,6 @@ pmap_bootstrap(vaddr_t kva_start)
 	virtual_avail += PAGE_SIZE;
 #endif /* defined(__x86_64__) */
 #endif /* XEN */
-
-#ifdef _LP64
-	/*
-	 * Grab a page below 4G for things that need it (i.e.
-	 * having an initial %cr3 for the MP trampoline).
-	 */
-	lo32_vaddr = virtual_avail;
-	virtual_avail += PAGE_SIZE;
-	lo32_paddr = avail_start;
-	avail_start += PAGE_SIZE;
-#endif
 
 	/*
 	 * now we reserve some VM for mapping pages when doing a crash dump
