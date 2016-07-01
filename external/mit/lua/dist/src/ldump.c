@@ -1,7 +1,7 @@
-/*	$NetBSD: ldump.c,v 1.2.2.2 2015/11/16 11:14:48 msaitoh Exp $	*/
+/*	$NetBSD: ldump.c,v 1.2.2.3 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
-** Id: ldump.c,v 2.36 2015/03/30 15:43:51 roberto Exp 
+** Id: ldump.c,v 2.37 2015/10/08 15:53:49 roberto Exp 
 ** save precompiled Lua chunks
 ** See Copyright Notice in lua.h
 */
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
@@ -42,7 +42,7 @@ typedef struct {
 
 
 static void DumpBlock (const void *b, size_t size, DumpState *D) {
-  if (D->status == 0) {
+  if (D->status == 0 && size > 0) {
     lua_unlock(D->L);
     D->status = (*D->writer)(D->L, b, size, D->data);
     lua_lock(D->L);
@@ -116,7 +116,7 @@ static void DumpConstants (const Proto *f, DumpState *D) {
     case LUA_TNUMFLT:
       DumpNumber(fltvalue(o), D);
       break;
-#endif
+#endif /* _KERNEL */
     case LUA_TNUMINT:
       DumpInteger(ivalue(o), D);
       break;

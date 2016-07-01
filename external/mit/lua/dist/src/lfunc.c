@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $	*/
+/*	$NetBSD: lfunc.c,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
 
 /*
 ** Id: lfunc.c,v 2.45 2014/11/02 19:19:04 roberto Exp 
@@ -14,7 +14,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
-#endif
+#endif /* _KERNEL */
 
 #include "lua.h"
 
