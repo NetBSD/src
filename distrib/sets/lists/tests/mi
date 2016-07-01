@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.676 2016/06/29 23:23:05 christos Exp $
+# $NetBSD: mi,v 1.677 2016/07/01 22:46:20 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2463,6 +2463,7 @@
 ./usr/tests/lib/libc/hash/data/sha1test2-out	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/hash/h_hash		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/hash/t_hash		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/hash/t_hmac		tests-lib-tests		compattestfile,atf,crypto
 ./usr/tests/lib/libc/hash/t_sha2		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/ieeefp			tests-obsolete		obsolete
 ./usr/tests/lib/libc/ieeefp/Atffile		tests-obsolete		obsolete
