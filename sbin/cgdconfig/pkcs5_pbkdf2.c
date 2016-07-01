@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.15 2010/11/27 17:08:37 elric Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.16 2016/07/01 22:50:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.15 2010/11/27 17:08:37 elric Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.16 2016/07/01 22:50:09 christos Exp $");
 #endif
 
 #include <sys/resource.h>
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.15 2010/11/27 17:08:37 elric Exp $");
 #include <string.h>
 #include <err.h>
 #include <util.h>
-
-#include <openssl/hmac.h>
 
 #include "pkcs5_pbkdf2.h"
 #include "utils.h"
@@ -76,9 +74,9 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, size_t Plen,
 	int		 first_time = 1;
 	size_t		 i;
 	size_t		 datalen;
-	unsigned int	 tmplen;
+	ssize_t		 tmplen;
 	u_int8_t	*data;
-	u_int8_t	 tmp[EVP_MAX_MD_SIZE];
+	u_int8_t	 tmp[128];
 
 	data = emalloc(Slen + 4);
 	(void)memcpy(data, S, Slen);
@@ -86,7 +84,7 @@ prf_iterate(u_int8_t *r, const u_int8_t *P, size_t Plen,
 	datalen = Slen + 4;
 
 	for (i=0; i < c; i++) {
-		(void)HMAC(EVP_sha1(), P, Plen, data, datalen, tmp, &tmplen);
+		tmplen = hmac("sha1", P, Plen, data, datalen, tmp, sizeof(tmp));
 
 		assert(tmplen == PRF_BLOCKLEN);
 
