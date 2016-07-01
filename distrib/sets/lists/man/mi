@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1529 2016/06/29 23:23:05 christos Exp $
+# $NetBSD: mi,v 1.1530 2016/07/01 22:52:06 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2361,7 +2361,7 @@
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/cesfic/makedev.0		man-obsolete		obsolete
-./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman	crypto,.cat
+./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/chat.0			man-ppp-catman		.cat
 ./usr/share/man/cat8/chown.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman	.cat
@@ -5301,7 +5301,7 @@
 ./usr/share/man/html8/btpand.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/catman.html		man-man-htmlman		html
 ./usr/share/man/html8/ccdconfig.html		man-sysutil-htmlman	html
-./usr/share/man/html8/cgdconfig.html		man-sysutil-htmlman	crypto,html
+./usr/share/man/html8/cgdconfig.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/chat.html			man-ppp-htmlman		html
 ./usr/share/man/html8/chown.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/chroot.html		man-sysutil-htmlman	html
@@ -8288,7 +8288,7 @@
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/cesfic/makedev.8		man-obsolete		obsolete
-./usr/share/man/man8/cgdconfig.8		man-sysutil-man		crypto,.man
+./usr/share/man/man8/cgdconfig.8		man-sysutil-man		.man
 ./usr/share/man/man8/chat.8			man-ppp-man		.man
 ./usr/share/man/man8/chown.8			man-sysutil-man		.man
 ./usr/share/man/man8/chroot.8			man-sysutil-man		.man

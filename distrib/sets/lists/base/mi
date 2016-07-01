@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1130 2016/06/29 23:23:05 christos Exp $
+# $NetBSD: mi,v 1.1131 2016/07/01 22:52:06 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -435,7 +435,7 @@
 ./sbin/blacklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/ccdconfig				base-sysutil-root
-./sbin/cgdconfig				base-sysutil-root	crypto
+./sbin/cgdconfig				base-sysutil-root
 ./sbin/chown					base-sysutil-root
 ./sbin/clri					base-sysutil-root
 ./sbin/devpubd					base-sysutil-root
