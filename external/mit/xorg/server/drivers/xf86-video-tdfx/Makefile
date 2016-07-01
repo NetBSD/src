@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/20 05:32:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2016/07/01 23:29:17 macallan Exp $
 
 DRIVER=		xf86-video-tdfx
 DRIVER_NAME=	tdfx_drv
@@ -11,6 +11,8 @@ MAN=		tdfx.4
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DUSE_INT10
+.else
+CPPFLAGS+=	-DUSE_PCIVGAIO=0
 .endif
 CPPFLAGS+=	-DHAVE_XAA_H
 CPPFLAGS+=	-DTDFXDRI
