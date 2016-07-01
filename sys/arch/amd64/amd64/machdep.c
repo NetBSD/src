@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2016/05/15 10:35:54 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2016/07/01 10:20:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2016/05/15 10:35:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2016/07/01 10:20:10 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -266,9 +266,6 @@ unsigned int msgbuf_p_cnt = 0;
       
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
-
-vaddr_t lo32_vaddr;
-paddr_t lo32_paddr;
 
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
@@ -1657,7 +1654,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #endif
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
