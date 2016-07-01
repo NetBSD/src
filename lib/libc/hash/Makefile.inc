@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.12 2012/07/08 01:21:12 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2016/07/01 22:41:39 christos Exp $
 #	$OpenBSD: Makefile.inc,v 1.5 1997/07/17 06:02:42 millert Exp $
 
 # hash functions
 .PATH: ${ARCHDIR}/hash ${.CURDIR}/hash
+
+SRCS+= hmac.c
+MAN+= hmac.3
 
 .include "${.CURDIR}/hash/md2/Makefile.inc"
 .include "${.CURDIR}/hash/rmd160/Makefile.inc"
