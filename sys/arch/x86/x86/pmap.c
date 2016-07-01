@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.205 2016/07/01 12:18:34 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.206 2016/07/01 12:36:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.205 2016/07/01 12:18:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2016/07/01 12:36:43 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1642,7 +1642,8 @@ pmap_prealloc_lowmem_ptps(void)
 #ifdef __HAVE_DIRECT_MAP
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
 #else
-		pmap_pte_set(early_zero_pte, pmap_pa2pte(newp) | pteflags);
+		pmap_pte_set(early_zero_pte, pmap_pa2pte(newp) | pteflags |
+		    pmap_pg_nx);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
@@ -1671,8 +1672,8 @@ pmap_prealloc_lowmem_ptps(void)
 			pmap_pte_set(&kpm_pdir[pl_i(0, PTP_LEVELS)],
 			    pmap_pa2pte(newp) | pteflags);
 		}
-
 #endif /* XEN */
+
 		pmap_pte_set(&pdes[pl_i(0, level)],
 		    pmap_pa2pte(newp) | pteflags);
 
@@ -3081,6 +3082,9 @@ pmap_zero_page(paddr_t pa)
 	void *zerova;
 	int id;
 
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
+	    PG_k;
+
 	kpreempt_disable();
 	id = cpu_number();
 	zpte = PTESLEW(zero_pte, id);
@@ -3091,7 +3095,7 @@ pmap_zero_page(paddr_t pa)
 		panic("pmap_zero_page: lock botch");
 #endif
 
-	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
+	pmap_pte_set(zpte, pmap_pa2pte(pa) | pteflags);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
@@ -3101,6 +3105,7 @@ pmap_zero_page(paddr_t pa)
 	pmap_pte_set(zpte, 0);				/* zap ! */
 	pmap_pte_flush();
 #endif
+
 	kpreempt_enable();
 #endif /* defined(__HAVE_DIRECT_MAP) */
 }
@@ -3123,6 +3128,9 @@ pmap_pageidlezero(paddr_t pa)
 	bool rv;
 	int id;
 
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_M | PG_U |
+	    PG_k;
+
 	id = cpu_number();
 	zpte = PTESLEW(zero_pte, id);
 	zerova = VASLEW(zerop, id);
@@ -3130,7 +3138,7 @@ pmap_pageidlezero(paddr_t pa)
 	KASSERT(cpu_feature[0] & CPUID_SSE2);
 	KASSERT(*zpte == 0);
 
-	pmap_pte_set(zpte, pmap_pa2pte(pa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
+	pmap_pte_set(zpte, pmap_pa2pte(pa) | pteflags);
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
 
@@ -3170,6 +3178,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	void *cdstva;
 	int id;
 
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_k;
+
 	kpreempt_disable();
 	id = cpu_number();
 	spte = PTESLEW(csrc_pte,id);
@@ -3179,9 +3189,8 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 
 	KASSERT(*spte == 0 && *dpte == 0);
 
-	pmap_pte_set(spte, pmap_pa2pte(srcpa) | PG_V | PG_RW | PG_U | PG_k);
-	pmap_pte_set(dpte,
-	    pmap_pa2pte(dstpa) | PG_V | PG_RW | PG_M | PG_U | PG_k);
+	pmap_pte_set(spte, pmap_pa2pte(srcpa) | pteflags);
+	pmap_pte_set(dpte, pmap_pa2pte(dstpa) | pteflags | PG_M);
 	pmap_pte_flush();
 	pmap_update_2pg((vaddr_t)csrcva, (vaddr_t)cdstva);
 
@@ -3192,6 +3201,7 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	pmap_pte_set(dpte, 0);
 	pmap_pte_flush();
 #endif
+
 	kpreempt_enable();
 #endif /* defined(__HAVE_DIRECT_MAP) */
 }
@@ -3208,16 +3218,18 @@ pmap_map_ptp(struct vm_page *ptp)
 
 	KASSERT(kpreempt_disabled());
 
+#ifndef XEN
+	const pd_entry_t pteflags = PG_V | PG_RW | pmap_pg_nx | PG_U | PG_M |
+	    PG_k;
+#else
+	const pd_entry_t pteflags = PG_V | pmap_pg_nx | PG_U | PG_M | PG_k;
+#endif
+
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(ptpp, id);
-#if !defined(XEN)
-	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
-	    PG_RW | PG_U | PG_k);
-#else
-	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
-	    PG_U | PG_k);
-#endif
+	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | pteflags);
+
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)ptpva);
 
@@ -4252,8 +4264,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		}
 #endif
 		kpreempt_disable();
-		pmap_pte_set(early_zero_pte,
-		    pmap_pa2pte(*paddrp) | PG_V | PG_RW | PG_k);
+		pmap_pte_set(early_zero_pte, pmap_pa2pte(*paddrp) | PG_V |
+		    PG_RW | pmap_pg_nx | PG_k);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
 		memset(early_zerop, 0, PAGE_SIZE);
