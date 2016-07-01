@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.36 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.37 2016/07/01 12:16:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -29,9 +29,10 @@
  *     $FreeBSD: src/sys/dev/usb/umass.c,v 1.13 2000/03/26 01:39:12 n_hibma Exp $
  */
 
-#ifdef UMASS_DEBUG
-#define DIF(m, x)	if (umassdebug & (m)) do { x ; } while (0)
-#define DPRINTF(m, x)	if (umassdebug & (m)) printf x
+#define	DPRINTFM(M,FMT,A,B,C,D)	USBHIST_LOGM(umassdebug,M,FMT,A,B,C,D)
+#define	UMASSHIST_FUNC()	USBHIST_FUNC()
+#define	UMASSHIST_CALLED(name)	USBHIST_CALLED(umassdebug)
+
 #define UDMASS_UPPER	0x00008000	/* upper layer */
 #define UDMASS_GEN	0x00010000	/* general */
 #define UDMASS_SCSI	0x00020000	/* scsi */
@@ -45,10 +46,11 @@
 #define UDMASS_XFER	0x40000000	/* all transfers */
 #define UDMASS_CMD	0x80000000
 
+#ifdef UMASS_DEBUG
+#define DIF(m, x)	if (umassdebug & (m)) do { x ; } while (0)
 extern int umassdebug;
 #else
 #define DIF(m, x)	/* nop */
-#define DPRINTF(m, x)	/* nop */
 #endif
 
 /* Generic definitions */

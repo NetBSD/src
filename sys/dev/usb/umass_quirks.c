@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.98 2016/06/01 04:54:59 pgoyette Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.99 2016/07/01 12:16:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.98 2016/06/01 04:54:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.99 2016/07/01 12:16:35 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.98 2016/06/01 04:54:59 pgoyette E
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
@@ -363,13 +368,13 @@ umass_lookup(uint16_t vendor, uint16_t product)
 Static usbd_status
 umass_init_insystem(struct umass_softc *sc)
 {
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	usbd_status err;
 
 	err = usbd_set_interface(sc->sc_iface, 1);
 	if (err) {
-		DPRINTF(UDMASS_USB,
-			("%s: could not switch to Alt Interface 1\n",
-			device_xname(sc->sc_dev)));
+		DPRINTFM(UDMASS_USB, "sc %p: could not switch to Alt Interface 1",
+		    sc, 0, 0, 0);
 		return err;
 	}
 
