@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.200 2016/07/01 11:28:18 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.201 2016/07/01 11:39:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.200 2016/07/01 11:28:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.201 2016/07/01 11:39:45 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -560,6 +560,10 @@ extern vaddr_t pentium_idt_vaddr;
 /*
  * local prototypes
  */
+
+#ifdef __HAVE_DIRECT_MAP
+static void pmap_init_directmap(struct pmap *);
+#endif
 
 #ifndef XEN
 static void pmap_remap_largepages(void);
@@ -1219,18 +1223,11 @@ void
 pmap_bootstrap(vaddr_t kva_start)
 {
 	struct pmap *kpm;
-	pt_entry_t *pte;
 	int i;
 	vaddr_t kva;
 #ifndef XEN
 	unsigned long p1i;
 	vaddr_t kva_end;
-#endif
-#ifdef __HAVE_DIRECT_MAP
-	phys_ram_seg_t *mc;
-	long ndmpdp;
-	paddr_t lastpa, dmpd, dmpdp, pdp;
-	vaddr_t tmpva;
 #endif
 
 	pmap_pg_nx = (cpu_feature[2] & CPUID_NOX ? PG_NX : 0);
@@ -1343,77 +1340,7 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif /* !XEN */
 
 #ifdef __HAVE_DIRECT_MAP
-
-	pd_entry_t *pde;
-
-	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
-	pte = PTE_BASE + pl1_i(tmpva);
-
-	/*
-	 * Map the direct map RW.  Use 1GB pages if they are available,
-	 * otherwise use 2MB pages.  Note that the unused parts of
-	 * PTPs * must be zero outed, as they might be accessed due
-	 * to speculative execution.  Also, PG_G is not allowed on
-	 * non-leaf PTPs.
-	 */
-
-	lastpa = 0;
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		mc = &mem_clusters[i];
-		lastpa = MAX(lastpa, mc->start + mc->size);
-	}
-
-	ndmpdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
-	dmpdp = avail_start;	avail_start += PAGE_SIZE;
-
-	*pte = dmpdp | PG_V | PG_RW | pmap_pg_nx;
-	pmap_update_pg(tmpva);
-	memset((void *)tmpva, 0, PAGE_SIZE);
-
-	if (cpu_feature[2] & CPUID_P1GB) {
-		for (i = 0; i < ndmpdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
-			pmap_update_pg(tmpva);
-
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L3_SHIFT) | PG_RW | pmap_pg_nx |
-			    PG_V | PG_U | PG_PS | PG_G;
-		}
-	} else {
-		dmpd = avail_start;	avail_start += ndmpdp * PAGE_SIZE;
-
-		for (i = 0; i < ndmpdp; i++) {
-			pdp = dmpd + i * PAGE_SIZE;
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
-			pmap_update_pg(tmpva);
-
-			memset((void *)tmpva, 0, PAGE_SIZE);
-		}
-		for (i = 0; i < NPDPG * ndmpdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dmpd)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
-			pmap_update_pg(tmpva);
-
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = ((paddr_t)i << L2_SHIFT) | PG_RW | pmap_pg_nx |
-			    PG_V | PG_U | PG_PS | PG_G;
-		}
-		for (i = 0; i < ndmpdp; i++) {
-			pdp = (paddr_t)&(((pd_entry_t *)dmpdp)[i]);
-			*pte = (pdp & PG_FRAME) | PG_V | PG_RW | pmap_pg_nx;
-			pmap_update_pg((vaddr_t)tmpva);
-
-			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
-			*pde = (dmpd + (i << PAGE_SHIFT)) | PG_RW | pmap_pg_nx |
-			    PG_V | PG_U;
-		}
-	}
-
-	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dmpdp | PG_KW | pmap_pg_nx | PG_V | PG_U;
-
-	tlbflush();
-
+	pmap_init_directmap(kpm);
 #else
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		/*
@@ -1439,7 +1366,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * mapping.
 	 */
 
-	pte = PTE_BASE + pl1_i(virtual_avail);
+	pt_entry_t *pte = PTE_BASE + pl1_i(virtual_avail);
 
 #ifdef MULTIPROCESSOR
 	/*
@@ -1479,11 +1406,6 @@ pmap_bootstrap(vaddr_t kva_start)
 		early_zero_pte = zero_pte;
 	}
 #endif
-
-	/*
-	 * Nothing after this point actually needs pte.
-	 */
-	pte = (void *)0xdeadbeef;
 
 #ifdef XEN
 #ifdef __x86_64__
@@ -1560,6 +1482,101 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 	pmap_maxkvaddr = kva;
 }
+
+
+#ifdef __HAVE_DIRECT_MAP
+/*
+ * Create the amd64 direct map. Called only once at boot time.
+ */
+static void
+pmap_init_directmap(struct pmap *kpm)
+{
+	extern phys_ram_seg_t mem_clusters[];
+	extern int mem_cluster_cnt;
+
+	paddr_t lastpa, dm_pd, dm_pdp, pdp;
+	vaddr_t tmpva;
+	pt_entry_t *pte;
+	pd_entry_t *pde;
+	phys_ram_seg_t *mc;
+	long n_dm_pdp;
+	int i;
+
+	const pd_entry_t pteflags = PG_V | PG_KW | pmap_pg_nx;
+
+	/* Get the last physical address available */
+	lastpa = 0;
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		mc = &mem_clusters[i];
+		lastpa = MAX(lastpa, mc->start + mc->size);
+	}
+
+	/* Allocate L3. */
+	dm_pdp = pmap_bootstrap_palloc(1);
+
+	/* Number of L3 entries. */
+	n_dm_pdp = (lastpa + NBPD_L3 - 1) >> L3_SHIFT;
+
+	tmpva = (KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2);
+	pte = PTE_BASE + pl1_i(tmpva);
+	*pte = dm_pdp | pteflags;
+	pmap_update_pg(tmpva);
+	memset((void *)tmpva, 0, PAGE_SIZE);
+
+	/*
+	 * Map the direct map RW. Use super pages (1GB) or large pages (2MB) if
+	 * they are supported. Note: PG_G is not allowed on non-leaf PTPs.
+	 */
+	if (cpu_feature[2] & CPUID_P1GB) {
+		/* Super pages are supported. Just create L3. */
+		for (i = 0; i < n_dm_pdp; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)dm_pdp)[i]);
+			*pte = (pdp & PG_FRAME) | pteflags;
+			pmap_update_pg(tmpva);
+
+			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
+			*pde = ((paddr_t)i << L3_SHIFT) | pteflags | PG_U |
+			    PG_PS | PG_G;
+		}
+	} else {
+		/* Allocate L2. */
+		dm_pd = pmap_bootstrap_palloc(n_dm_pdp);
+
+		/* Zero out the L2 pages. */
+		for (i = 0; i < n_dm_pdp; i++) {
+			pdp = dm_pd + i * PAGE_SIZE;
+			*pte = (pdp & PG_FRAME) | pteflags;
+			pmap_update_pg(tmpva);
+
+			memset((void *)tmpva, 0, PAGE_SIZE);
+		}
+
+		for (i = 0; i < NPDPG * n_dm_pdp; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)dm_pd)[i]);
+			*pte = (pdp & PG_FRAME) | pteflags;
+			pmap_update_pg(tmpva);
+
+			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
+			*pde = ((paddr_t)i << L2_SHIFT) | pteflags |
+			    PG_U | PG_PS | PG_G;
+		}
+
+		/* Fill in the L3 entries, linked to L2. */
+		for (i = 0; i < n_dm_pdp; i++) {
+			pdp = (paddr_t)&(((pd_entry_t *)dm_pdp)[i]);
+			*pte = (pdp & PG_FRAME) | pteflags;
+			pmap_update_pg(tmpva);
+
+			pde = (pd_entry_t *)(tmpva + (pdp & ~PG_FRAME));
+			*pde = (dm_pd + (i << PAGE_SHIFT)) | pteflags | PG_U;
+		}
+	}
+
+	kpm->pm_pdir[PDIR_SLOT_DIRECT] = dm_pdp | pteflags | PG_U;
+
+	tlbflush();
+}
+#endif /* __HAVE_DIRECT_MAP */
 
 #ifndef XEN
 /*
