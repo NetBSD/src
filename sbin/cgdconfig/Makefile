@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2010/12/14 17:46:21 pooka Exp $
+# $NetBSD: Makefile,v 1.15 2016/07/01 22:50:09 christos Exp $
 
 RUMPPRG=cgdconfig
 MAN=	cgdconfig.8
@@ -14,7 +14,7 @@ CPPFLAGS+= -I${.CURDIR} -I. -DYY_NO_INPUT
 
 YHEADER=1
 
-DPADD=  ${LIBUTIL} ${LIBCRYPTO} ${LIBCRYPT} ${LIBY} ${LIBL}
-LDADD=  -lutil -lcrypto -lcrypt -ly -ll
+DPADD=  ${LIBUTIL} ${LIBCRYPT} ${LIBY} ${LIBL}
+LDADD=  -lutil -lcrypt -ly -ll
 
 .include <bsd.prog.mk>
