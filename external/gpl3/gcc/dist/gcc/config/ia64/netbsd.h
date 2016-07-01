@@ -49,8 +49,13 @@ Boston, MA 02111-1307, USA.  */
 #undef CPP_SPEC
 #define CPP_SPEC "%(netbsd_cpp_spec)"
 
+#undef TARGET_INIT_LIBFUNCS
+#define TARGET_INIT_LIBFUNCS ia64_soft_fp_init_libfuncs
 
 #if 0
 /* Attempt to enable execute permissions on the stack.  */
 #define TRANSFER_FROM_TRAMPOLINE NETBSD_ENABLE_EXECUTE_STACK
 #endif
+
+/* Don't have TFmode support (yet?). */
+#define IA64_NO_LIBGCC_TFMODE
