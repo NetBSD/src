@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.199 2016/07/02 18:29:59 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.200 2016/07/02 19:40:57 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -157,6 +157,7 @@ _C_LABEL(kernel_text):
 #endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 #ifdef _LP64
 	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #endif
