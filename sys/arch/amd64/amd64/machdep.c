@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.219 2016/07/01 12:41:28 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.220 2016/07/02 07:22:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2016/07/01 12:41:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2016/07/02 07:22:09 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -371,11 +371,22 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for physio
+	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
+	/*
+	 * Create the module map.
+	 *
+	 * XXX: the module map is taken as what is left of the bootstrap memory
+	 * created in locore.S, which is not big enough if we want to load many
+	 * modules dynamically. We really should be using kernel_map instead.
+	 *
+	 * But because of the R_X86_64_32 relocations that are usually present
+	 * in dynamic modules, the module map must be in low memory, and this
+	 * wouldn't been guaranteed if we were using kernel_map.
+	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
 	module_map = &module_map_store;
