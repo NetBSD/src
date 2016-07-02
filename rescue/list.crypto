@@ -1,6 +1,4 @@
-#	$NetBSD: list.crypto,v 1.9 2012/12/21 18:09:39 christos Exp $
-
-PROG	cgdconfig
+#	$NetBSD: list.crypto,v 1.10 2016/07/02 15:59:21 christos Exp $
 
 PROG	scp
 PROG	ssh		slogin
