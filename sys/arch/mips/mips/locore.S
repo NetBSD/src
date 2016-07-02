@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.198 2016/06/13 01:14:29 dholland Exp $	*/
+/*	$NetBSD: locore.S,v 1.199 2016/07/02 18:29:59 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,6 +85,7 @@ _C_LABEL(kernel_text):
 #if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 #if defined(emips)
 	and	v0, MIPS_SR_TS | MIPS3_SR_RE
 #else
