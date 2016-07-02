@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.159 2016/07/01 22:52:06 christos Exp $
+# $NetBSD: mi,v 1.160 2016/07/02 15:40:51 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -396,7 +396,7 @@
 ./usr/libdata/debug/sbin/route.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/routed.debug		comp-router-debug	debug
 ./usr/libdata/debug/sbin/rtsol.debug		comp-obsolete		obsolete
-./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug,rump
+./usr/libdata/debug/sbin/rump.cgdconfig.debug	comp-sysutil-debug	crypto,debug,rump,crypto
 ./usr/libdata/debug/sbin/rump.ifconfig.debug		comp-netutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.modload.debug		comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/sbin/rump.modstat.debug		comp-sysutil-debug	debug,rump
