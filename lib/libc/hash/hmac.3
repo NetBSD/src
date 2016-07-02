@@ -1,11 +1,11 @@
-.\" $NetBSD: hmac.3,v 1.2 2016/07/01 22:56:06 christos Exp $
+.\" $NetBSD: hmac.3,v 1.3 2016/07/02 08:49:19 wiz Exp $
 .\"
 .Dd July 1, 2016
 .Dt HMAC 3
 .Os
 .Sh NAME
-.Nm hmac ,
-.Nd Compute a key-Hash Message Authentication Code
+.Nm hmac
+.Nd compute a key-Hash Message Authentication Code
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -16,7 +16,7 @@
 The
 .Fn hmac
 function computes the key-Hash Message Authentication Code per
-.%R RFC 2104 
+.Tn RFC 2104
 and places the result in
 .Fa digest
 writing up to
@@ -25,12 +25,12 @@ bytes.
 The actual number of bytes that would be written is returned.
 .Pp
 The hash functions supported are: md2, md4, md5, rmd160, sha1, sha224,
-sha256, sha384, sha512.
+sha256, sha384, and sha512.
 .Sh RETURN VALUES
 The
 .Fn hmac
-returns
-.Dv -1
+function returns
+.Dv \-1
 if the
 .Fa hname
 is not found.
@@ -46,9 +46,11 @@ This length depends on the hashing function selected.
 .Xr sha1 3 ,
 .Xr sha2 3
 .Sh STANDARDS
+.Rs
 .%R RFC 2104
+.Re
 .Sh NOTES
-The maximum digest length has been extended from 
+The maximum digest length has been extended from
 .Dv 64
 to
 .Dv 128
@@ -57,4 +59,4 @@ bytes to handle SHA2.
 The
 .Fn hmac
 function appeared in
-.Nx 8
+.Nx 8 .
