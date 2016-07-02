@@ -1,10 +1,11 @@
-#	$NetBSD: list,v 1.46 2014/08/09 18:32:34 apb Exp $
+#	$NetBSD: list,v 1.47 2016/07/02 15:59:21 christos Exp $
 
 SRCDIRS	bin
 
 PROG	cat
 PROG	chio
 PROG	chmod
+PROG	cgdconfig
 PROG	cp
 PROG	csh
 PROG	date
