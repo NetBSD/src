@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.63 2014/01/31 20:44:01 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.64 2016/07/03 14:24:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.63 2014/01/31 20:44:01 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.64 2016/07/03 14:24:58 christos Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -370,6 +370,16 @@ pthread_condattr_setclock(pthread_condattr_t *attr, clockid_t clck)
 }
 
 int
+pthread_condattr_getclock(const pthread_condattr_t *__restrict attr,
+    clockid_t *__restrict clock_id)
+{
+	if (attr == NULL || attr->ptca_private == NULL)
+		return EINVAL;
+	*clock_id = *(clockid_t *)attr->ptca_private;
+	return 0;
+}
+
+int
 pthread_condattr_destroy(pthread_condattr_t *attr)
 {
 
@@ -381,6 +391,30 @@ pthread_condattr_destroy(pthread_condattr_t *attr)
 
 	return 0;
 }
+
+#ifdef _PTHREAD_PSHARED
+int
+pthread_condattr_getpshared(const pthread_condattr_t * __restrict attr,
+    int * __restrict pshared)
+{
+
+	*pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
+}
+
+int
+pthread_condattr_setpshared(pthread_condattr_t *attr, int pshared)
+{
+
+	switch(pshared) {
+	case PTHREAD_PROCESS_PRIVATE:
+		return 0;
+	case PTHREAD_PROCESS_SHARED:
+		return ENOSYS;
+	}
+	return EINVAL;
+}
+#endif
 
 /* Utility routine to hang out for a while if threads haven't started yet. */
 static int

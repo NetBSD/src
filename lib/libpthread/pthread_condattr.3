@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.9 2012/11/03 09:20:36 wiz Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.10 2016/07/03 14:24:58 christos Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,11 +50,15 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_condattr.3,v 1.10 2002/09/16 19:29:28 mini Exp $
-.Dd November 2, 2012
+.Dd June 12, 2016
 .Dt PTHREAD_CONDATTR 3
 .Os
 .Sh NAME
-.Nm pthread_condattr_init
+.Nm pthread_condattr_init, 
+.Nm pthread_condattr_getpshared,
+.Nm pthread_condattr_setpshared,
+.Nm pthread_condattr_getclock,
+.Nm pthread_condattr_setclock
 .Nd condition attribute operations
 .Sh LIBRARY
 .Lb libpthread
@@ -63,9 +67,16 @@
 .Ft int
 .Fn pthread_condattr_init "pthread_condattr_t *attr"
 .Ft int
+.Fn pthread_condattr_getclock "const pthread_condattr_t *__restrict attr" \
+"clockid_t * __restrict clock_id"
+.Ft int
 .Fn pthread_condattr_setclock "pthread_condattr_t *attr" "clockid_t clock"
 .Ft int
 .Fn pthread_condattr_destroy "pthread_condattr_t *attr"
+.Ft int
+.Fn pthread_condattr_getpshared "const pthread_condattr_t * __restrict attr" "int * __restrict pshared"
+.Ft int
+.Fn pshared_condattr_setpshared "pthread_condattr_t *attr" "int pshared"
 .Sh DESCRIPTION
 Condition attribute objects are used to specify parameters to the
 .Xr pthread_cond_init 3
@@ -77,6 +88,12 @@ and the
 .Fn pthread_condattr_destroy
 function destroys a condition attribute object.
 The
+.Fn pthread_condattr_getclock
+function shall obtain the value of the 
+.Fa clock
+attributes object referenced by
+.Fa attr.
+The
 .Fn pthread_condattr_setclock
 function sets the system clock to be used for time comparisons to
 the one specified in
@@ -86,6 +103,16 @@ Valid clock values are
 and
 .Dv CLOCK_REALTIME
 (the default).
+The
+.Fn pthread_condattr_getpshared
+function shall obtain the value of the process-shared attribute from the 
+attributes object referenced by
+.Fa attr.
+The
+.Fn pthread_condattr_setpshared
+function shall set the process-shared attribute in an initialized attributes 
+object referenced by 
+.Fa attr.
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -102,6 +129,28 @@ The value specified by
 .Fa attr
 is invalid.
 .El
+.Pp
+The
+.Fn pthread_condattr_getclock 
+and
+.Fn pthread_condattr_setclock
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value specified by
+.Fa attr is invalid.
+.El
+.Pp
+The
+.Fn pthread_condattr_getpshared
+and
+.Fn pthread_condattr_setpshared
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value specified by
+.Fa attr
+is invalid.
 .Sh SEE ALSO
 .Xr pthread_cond_init 3
 .Sh STANDARDS
@@ -115,3 +164,10 @@ These functions do not conform to the
 .St -p1003.1-2008
 revision of the standard, which mandates two additional attributes,
 the clock attribute and the process-shared attribute.
+.Sh BUGS
+The
+.Fn pthread_condattr_getpshared
+and
+.Fn pthread_condattr_setpshared
+functions are hidden by default since only thread shared attributes
+are supported.
