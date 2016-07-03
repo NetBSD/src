@@ -2,18 +2,26 @@
 .Dt SQLITE3_STATUS 3
 .Os
 .Sh NAME
-.Nm sqlite3_status
+.Nm sqlite3_status ,
+.Nm sqlite3_status64
 .Nd SQLite Runtime Status
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_status
 .Fa "int op"
 .Fa "int *pCurrent"
 .Fa "int *pHighwater"
 .Fa "int resetFlag"
 .Fc
+.Ft int SQLITE_STDCALL 
+.Fo sqlite3_status64
+.Fa "int op"
+.Fa "sqlite3_int64 *pCurrent"
+.Fa "sqlite3_int64 *pHighwater"
+.Fa "int resetFlag "
+.Fc
 .Sh DESCRIPTION
-This interface is used to retrieve runtime status information about
+These interfaces are used to retrieve runtime status information about
 the performance of SQLite, and optionally to reset various highwater
 marks.
 The first argument is an integer code for the specific parameter to
@@ -30,18 +38,13 @@ Other parameters record only the highwater mark and not the current
 value.
 For these latter parameters nothing is written into *pCurrent.
 .Pp
-The sqlite3_status() routine returns SQLITE_OK on success and a non-zero
-error code on failure.
+The sqlite3_status() and sqlite3_status64() routines return SQLITE_OK
+on success and a non-zero error code on failure.
 .Pp
-This routine is threadsafe but is not atomic.
-This routine can be called while other threads are running the same
-or different SQLite interfaces.
-However the values returned in *pCurrent and *pHighwater reflect the
-status of SQLite at different points in time and it is possible that
-another thread might change the parameter in between the times when
-*pCurrent and *pHighwater are written.
+If either the current value or the highwater mark is too large to be
+represented by a 32-bit integer, then the values returned by sqlite3_status()
+are undefined.
 .Pp
 .Sh SEE ALSO
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_db_status 3 ,
 .Xr SQLITE_STATUS_MEMORY_USED 3

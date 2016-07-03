@@ -5,7 +5,7 @@
 .Nm sqlite3_step
 .Nd Evaluate An SQL Statement
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_step
 .Fa "sqlite3_stmt*"
 .Fc
@@ -97,10 +97,7 @@ directly by sqlite3_step().
 The use of the "v2" interface is recommended.
 .Sh SEE ALSO
 .Xr sqlite3_column_blob 3 ,
-.Xr SQLITE_OK 3 ,
-.Xr SQLITE_IOERR_READ 3 ,
 .Xr sqlite3_stmt 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_errcode 3 ,
 .Xr sqlite3_finalize 3 ,
 .Xr sqlite3_prepare 3 ,
