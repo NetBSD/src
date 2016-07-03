@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2012/06/01 20:28:02 wiz Exp $
+# $NetBSD: Makefile.inc,v 1.6 2016/07/03 10:27:00 abhinav Exp $
 
 WARNS=		2
 
@@ -19,6 +19,7 @@ CPPFLAGS+=	\
 		-DSQLITE_ENABLE_FTS4 \
 		-DSQLITE_ENABLE_LOAD_EXTENSION \
 		-DSQLITE_ENABLE_UNLOCK_NOTIFY \
-		-DSQLITE_HAVE_ISNAN
+		-DSQLITE_HAVE_ISNAN \
+        -DSQLITE_MAX_WORKER_THREADS=0
 
 CWARNFLAGS+=	-Wno-shadow -Wno-unused
