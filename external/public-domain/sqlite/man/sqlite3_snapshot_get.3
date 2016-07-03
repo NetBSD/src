@@ -1,0 +1,36 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_SNAPSHOT_GET 3
+.Os
+.Sh NAME
+.Nm sqlite3_snapshot_get
+.Nd Record A Database Snapshot
+.Sh SYNOPSIS
+.Ft int SQLITE_STDCALL 
+.Fo sqlite3_snapshot_get
+.Fa "sqlite3 *db"
+.Fa "const char *zSchema"
+.Fa "sqlite3_snapshot **ppSnapshot "
+.Fc
+.Sh DESCRIPTION
+The sqlite3_snapshot_get(D,S,P) interface
+attempts to make a new sqlite3_snapshot object that
+records the current state of schema S in database connection D.
+On success, the sqlite3_snapshot_get(D,S,P)
+interface writes a pointer to the newly created sqlite3_snapshot
+object into *P and returns SQLITE_OK.
+If schema S of database connection D is not a WAL mode
+database that is in a read transaction, then sqlite3_snapshot_get(D,S,P)
+leaves the *P value unchanged and returns an appropriate error code.
+.Pp
+The sqlite3_snapshot object returned from a successful
+call to sqlite3_snapshot_get() must be freed
+using sqlite3_snapshot_free() to avoid a memory
+leak.
+.Pp
+The sqlite3_snapshot_get() interface is only
+available when the SQLITE_ENABLE_SNAPSHOT compile-time option is used.
+.Sh SEE ALSO
+.Xr sqlite3 3 ,
+.Xr sqlite3_snapshot 3 ,
+.Xr sqlite3_snapshot_free 3 ,
+.Xr sqlite3_snapshot_get 3
