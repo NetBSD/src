@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.62 2015/11/02 22:21:26 jmcneill Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.63 2016/07/03 11:25:27 kiyohara Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.62 2015/11/02 22:21:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.63 2016/07/03 11:25:27 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -421,6 +421,7 @@ beagle_db_trap(int where)
 }
 #endif
 
+#ifdef VERBOSE_INIT_ARM
 void beagle_putchar(char c);
 void
 beagle_putchar(char c)
@@ -442,6 +443,9 @@ beagle_putchar(char c)
 	}
 #endif
 }
+#else
+#define beagle_putchar(c)	((void)0)
+#endif
 
 /*
  * u_int initarm(...)
