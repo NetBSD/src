@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.230 2016/04/23 23:11:31 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.231 2016/07/03 14:24:58 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -173,7 +173,7 @@ WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
 	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
 	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
-	_sched_getaffinity.S sched_yield.S \
+	_sched_getaffinity.S sched_yield.S _sched_protect.S \
 	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	__wait450.S wait6.S write.S writev.S
 
