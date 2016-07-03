@@ -14,53 +14,53 @@
 .Nm sqlite3_value_text16be ,
 .Nm sqlite3_value_type ,
 .Nm sqlite3_value_numeric_type
-.Nd Obtaining SQL Function Parameter Values
+.Nd Obtaining SQL Values
 .Sh SYNOPSIS
-.Ft const void *
+.Ft const void *SQLITE_STDCALL 
 .Fo sqlite3_value_blob
 .Fa "sqlite3_value*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_value_bytes
 .Fa "sqlite3_value*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_value_bytes16
 .Fa "sqlite3_value*"
 .Fc
-.Ft double 
+.Ft double SQLITE_STDCALL 
 .Fo sqlite3_value_double
 .Fa "sqlite3_value*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_value_int
 .Fa "sqlite3_value*"
 .Fc
-.Ft sqlite3_int64 
+.Ft sqlite3_int64 SQLITE_STDCALL 
 .Fo sqlite3_value_int64
 .Fa "sqlite3_value*"
 .Fc
-.Ft const unsigned char *
+.Ft const unsigned char *SQLITE_STDCALL 
 .Fo sqlite3_value_text
 .Fa "sqlite3_value*"
 .Fc
-.Ft const void *
+.Ft const void *SQLITE_STDCALL 
 .Fo sqlite3_value_text16
 .Fa "sqlite3_value*"
 .Fc
-.Ft const void *
+.Ft const void *SQLITE_STDCALL 
 .Fo sqlite3_value_text16le
 .Fa "sqlite3_value*"
 .Fc
-.Ft const void *
+.Ft const void *SQLITE_STDCALL 
 .Fo sqlite3_value_text16be
 .Fa "sqlite3_value*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_value_type
 .Fa "sqlite3_value*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_value_numeric_type
 .Fa "sqlite3_value*"
 .Fc
@@ -85,7 +85,7 @@ Any attempt to use these routines on an unprotected sqlite3_value
 object results in undefined behavior.
 .Pp
 These routines work just like the corresponding column access functions
-except that  these routines take a single protected sqlite3_value
+except that these routines take a single protected sqlite3_value
 object pointer instead of a sqlite3_stmt* pointer and
 an integer column number.
 .Pp

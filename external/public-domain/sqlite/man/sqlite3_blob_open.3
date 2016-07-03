@@ -5,7 +5,7 @@
 .Nm sqlite3_blob_open
 .Nd Open A BLOB For Incremental I/O
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_blob_open
 .Fa "sqlite3*"
 .Fa "const char *zDb"
@@ -23,31 +23,52 @@ BLOB that would be selected by:
 SELECT zColumn FROM zDb.zTable WHERE rowid = iRow; 
 .Ed
 .Pp
-If the flags parameter is non-zero, then the BLOB is opened for read
-and write access.
-If it is zero, the BLOB is opened for read access.
-It is not possible to open a column that is part of an index or primary
-key for writing.
-If foreign key constraints are enabled, it is
-not possible to open a column that is part of a child key
-for writing.
-.Pp
-Note that the database name is not the filename that contains the database
-but rather the symbolic name of the database that appears after the
-AS keyword when the database is connected using ATTACH.
+Parameter zDb is not the filename that contains the database, but rather
+the symbolic name of the database.
+For attached databases, this is the name that appears after the AS
+keyword in the ATTACH statement.
 For the main database file, the database name is "main".
 For TEMP tables, the database name is "temp".
 .Pp
+If the flags parameter is non-zero, then the BLOB is opened for read
+and write access.
+If the flags parameter is zero, the BLOB is opened for read-only access.
+.Pp
 On success, SQLITE_OK is returned and the new BLOB handle
-is written to *ppBlob.
-Otherwise an error code is returned and *ppBlob is set to
-be a null pointer.
-This function sets the database connection error
-code and message accessible via sqlite3_errcode()
+is stored in *ppBlob.
+Otherwise an error code is returned and, unless the error
+code is SQLITE_MISUSE, *ppBlob is set to NULL.
+This means that, provided the API is not misused, it is always safe
+to call sqlite3_blob_close() on *ppBlob after this
+function it returns.
+.Pp
+This function fails with SQLITE_ERROR if any of the following are true:
+.Bl -bullet
+.It
+Database zDb does not exist  , 
+.It
+Table zTable does not exist within database zDb  , 
+.It
+Table zTable is a WITHOUT ROWID table  , 
+.It
+Column zColumn does not exist  , 
+.It
+Row iRow is not present in the table  , 
+.It
+The specified column of row iRow contains a value that is not a TEXT
+or BLOB value  , 
+.It
+Column zColumn is part of an index, PRIMARY KEY or UNIQUE constraint
+and the blob is being opened for read/write access  , 
+.It
+ Foreign key constraints are enabled, column
+zColumn is part of a child key definition and the blob is
+being opened for read/write access  .
+.El
+.Pp
+Unless it returns SQLITE_MISUSE, this function sets the database connection
+error code and message accessible via sqlite3_errcode()
 and sqlite3_errmsg() and related functions.
-Note that the *ppBlob variable is always initialized in a way that
-makes it safe to invoke sqlite3_blob_close() on
-*ppBlob regardless of the success or failure of this routine.
 .Pp
 If the row that a BLOB handle points to is modified by an UPDATE,
 DELETE, or by ON CONFLICT side-effects then the BLOB
@@ -66,26 +87,19 @@ the size of the opened blob.
 The size of a blob may not be changed by this interface.
 Use the UPDATE SQL command to change the size of a blob.
 .Pp
-The sqlite3_blob_open() interface will fail for
-a WITHOUT ROWID table.
-Incremental BLOB I/O is not possible on WITHOUT ROWID
-tables.
-.Pp
 The sqlite3_bind_zeroblob() and sqlite3_result_zeroblob()
-interfaces and the built-in zeroblob SQL function can be used,
-if desired, to create an empty, zero-filled blob in which to read or
-write using this interface.
+interfaces and the built-in zeroblob SQL function may be used
+to create a zero-filled blob to read or write using the incremental-blob
+interface.
 .Pp
 To avoid a resource leak, every open BLOB handle should
 eventually be released by a call to sqlite3_blob_close().
 .Sh SEE ALSO
 .Xr sqlite3_blob 3 ,
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_blob_bytes 3 ,
 .Xr sqlite3_blob_close 3 ,
-.Xr sqlite3_blob_open 3 ,
 .Xr sqlite3_blob_read 3 ,
 .Xr sqlite3_blob_write 3 ,
 .Xr sqlite3_errcode 3 ,

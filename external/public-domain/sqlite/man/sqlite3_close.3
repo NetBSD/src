@@ -6,26 +6,26 @@
 .Nm sqlite3_close_v2
 .Nd Closing A Database Connection
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_close
 .Fa "sqlite3*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_close_v2
 .Fa "sqlite3*"
 .Fc
 .Sh DESCRIPTION
 The sqlite3_close() and sqlite3_close_v2() routines are destructors
 for the sqlite3 object.
-Calls to sqlite3_close() and sqlite3_close_v2() return SQLITE_OK if
-the sqlite3 object is successfully destroyed and all associated
+Calls to sqlite3_close() and sqlite3_close_v2() return SQLITE_OK
+if the sqlite3 object is successfully destroyed and all associated
 resources are deallocated.
 .Pp
 If the database connection is associated with unfinalized prepared
 statements or unfinished sqlite3_backup objects then sqlite3_close()
 will leave the database connection open and return SQLITE_BUSY.
 If sqlite3_close_v2() is called with unfinalized prepared statements
-and unfinished sqlite3_backups, then the database connection becomes
+and/or unfinished sqlite3_backups, then the database connection becomes
 an unusable "zombie" which will automatically be deallocated when the
 last prepared statement is finalized or the last sqlite3_backup is
 finished.
@@ -40,8 +40,8 @@ to close the object.
 If sqlite3_close_v2() is called on a database connection
 that still has outstanding prepared statements,
 BLOB handles, and/or sqlite3_backup objects
-then it returns SQLITE_OK but the deallocation of resources is deferred
-until all prepared statements, BLOB handles,
+then it returns SQLITE_OK and the deallocation of resources
+is deferred until all prepared statements, BLOB handles,
 and sqlite3_backup objects are also destroyed.
 .Pp
 If an sqlite3 object is destroyed while a transaction is open,
