@@ -5,7 +5,7 @@
 .Nm sqlite3_bind_parameter_index
 .Nd Index Of A Parameter With A Given Name
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_bind_parameter_index
 .Fa "sqlite3_stmt*"
 .Fa "const char *zName"
@@ -21,5 +21,5 @@ was prepared from UTF-16 text using sqlite3_prepare16_v2().
 .Sh SEE ALSO
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_bind_parameter_count 3 ,
-.Xr sqlite3_bind_parameter_index 3 ,
+.Xr sqlite3_bind_parameter_name 3 ,
 .Xr sqlite3_prepare 3
