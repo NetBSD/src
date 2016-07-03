@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.153 2016/07/01 12:16:35 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.154 2016/07/03 07:24:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.153 2016/07/01 12:16:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.154 2016/07/03 07:24:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1983,7 +1983,7 @@ umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer, int buflen,
 	for (i = 0; i < buflen && i < printlen;) {
 		if (i + 3 < buflen && i + 3 < printlen) {
 			DPRINTFM(UDMASS_GEN, "   0x%02x%02x%02x%02x",
-			    buffer[i], buffer[i + 1], 
+			    buffer[i], buffer[i + 1],
 			    buffer[i + 2], buffer[i + 3]);
 			i += 4;
 		} else if (i + 2 < buflen && i + 2 < printlen) {
