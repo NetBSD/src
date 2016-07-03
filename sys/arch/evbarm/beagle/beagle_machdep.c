@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.63 2016/07/03 11:25:27 kiyohara Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.64 2016/07/03 11:40:58 kiyohara Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.63 2016/07/03 11:25:27 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.64 2016/07/03 11:40:58 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -141,6 +141,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.63 2016/07/03 11:25:27 kiyohara
 #include "sdhc.h"
 #include "ukbd.h"
 #include "arml2cc.h"
+#include "tps65217pmic.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1125,10 +1126,15 @@ beagle_device_register(device_t self, void *aux)
 int
 set_mpu_volt(int mvolt)
 {
+
+#if NTPS65217PMIC > 0
 	if (pmic_dev == NULL)
 		return ENODEV;
 
 	/* MPU voltage is on vdcd2 */
 	return tps65217pmic_set_volt(pmic_dev, "DCDC2", mvolt);
+#else
+	return -1;
+#endif
 }
 #endif
