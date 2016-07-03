@@ -8,19 +8,19 @@
 .Nm sqlite3_os_end
 .Nd Initialize The SQLite Library
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_initialize
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_shutdown
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_os_init
 .Fa "void"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_os_end
 .Fa "void"
 .Fc
@@ -101,7 +101,6 @@ must return SQLITE_OK on success and some other error code
 upon failure.
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_config 3 ,
 .Xr sqlite3_open 3 ,
 .Xr sqlite3_vfs 3 ,

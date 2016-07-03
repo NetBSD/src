@@ -18,6 +18,8 @@ Some interfaces require a protected sqlite3_value.
 Other interfaces will accept either a protected or an unprotected sqlite3_value.
 Every interface that accepts sqlite3_value arguments specifies whether
 or not it requires a protected sqlite3_value.
+The sqlite3_value_dup() interface can be used to
+construct a new protected sqlite3_value from an unprotected sqlite3_value.
 .Pp
 The terms "protected" and "unprotected" refer to whether or not a mutex
 is held.
@@ -49,4 +51,5 @@ require protected sqlite3_value objects.
 .Xr sqlite3_result_blob 3 ,
 .Xr sqlite3_threadsafe 3 ,
 .Xr sqlite3_value_blob 3 ,
+.Xr sqlite3_value_dup 3 ,
 .Xr SQLITE_CONFIG_SINGLETHREAD 3
