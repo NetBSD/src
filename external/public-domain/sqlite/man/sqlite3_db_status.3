@@ -5,7 +5,7 @@
 .Nm sqlite3_db_status
 .Nd Database Connection Status
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_db_status
 .Fa "sqlite3*"
 .Fa "int op"
@@ -32,7 +32,6 @@ non-zero error code on failure.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_status 3 ,
 .Xr sqlite3_stmt_status 3 ,
 .Xr SQLITE_DBSTATUS_LOOKASIDE_USED 3

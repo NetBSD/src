@@ -5,7 +5,7 @@
 .Nm sqlite3_enable_shared_cache
 .Nd Enable Or Disable Shared Pager Cache
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_enable_shared_cache
 .Fa "int"
 .Fc
@@ -35,11 +35,16 @@ Shared cache is disabled by default.
 But this might change in future releases of SQLite.
 Applications that care about shared cache setting should set it explicitly.
 .Pp
+Note: This method is disabled on MacOS X 10.7 and iOS version 5.0 and
+will always return SQLITE_MISUSE.
+On those systems, shared cache mode should be enabled per-database
+connection via sqlite3_open_v2() with SQLITE_OPEN_SHAREDCACHE.
+.Pp
 This interface is threadsafe on processors where writing a 32-bit integer
 is atomic.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_open 3 ,
-.Xr SQLITE_OK 3
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_OPEN_READONLY 3
