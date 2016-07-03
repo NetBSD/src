@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.93 2015/12/31 11:53:19 ryo Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.94 2016/07/03 11:55:27 kiyohara Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.93 2015/12/31 11:53:19 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.94 2016/07/03 11:55:27 kiyohara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1532,6 +1532,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	probing = (cmd->c_flags & SCF_TOUT_OK) != 0;
 	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT, probing)) {
 		DPRINTF(1,("%s: timeout for command\n", __func__));
+		sdmmc_delay(50);
 		cmd->c_error = ETIMEDOUT;
 		goto out;
 	}
