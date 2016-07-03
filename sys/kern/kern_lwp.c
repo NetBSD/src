@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.184 2016/04/04 23:07:06 christos Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.185 2016/07/03 14:24:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.184 2016/04/04 23:07:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.185 2016/07/03 14:24:58 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -829,6 +829,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_kpribase = PRI_KERNEL;
 	l2->l_priority = l1->l_priority;
 	l2->l_inheritedprio = -1;
+	l2->l_protectprio = -1;
+	l2->l_auxprio = -1;
 	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
