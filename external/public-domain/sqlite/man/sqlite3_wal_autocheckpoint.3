@@ -5,7 +5,7 @@
 .Nm sqlite3_wal_autocheckpoint
 .Nd Configure an auto-checkpoint
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_wal_autocheckpoint
 .Fa "sqlite3 *db"
 .Fa "int N"
@@ -27,6 +27,8 @@ disables the automatic checkpoint mechanism configured by this function.
 The wal_autocheckpoint pragma can be used
 to invoke this interface from SQL.
 .Pp
+Checkpoints initiated by this mechanism are PASSIVE.
+.Pp
 Every new database connection defaults to having
 the auto-checkpoint enabled with a threshold of 1000 or SQLITE_DEFAULT_WAL_AUTOCHECKPOINT
 pages.
@@ -34,4 +36,5 @@ The use of this interface is only necessary if the default setting
 is found to be suboptimal for a particular application.
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
+.Xr sqlite3_wal_checkpoint_v2 3 ,
 .Xr sqlite3_wal_hook 3

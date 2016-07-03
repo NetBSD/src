@@ -88,8 +88,10 @@ Only the value returned in the *pHighwater parameter to sqlite3_status()
 is of interest.
 The value written into the *pCurrent parameter is undefined.
 .It SQLITE_STATUS_PARSER_STACK
-This parameter records the deepest parser stack.
-It is only meaningful if SQLite is compiled with YYTRACKMAXSTACKDEPTH.
+The *pHighwater parameter records the deepest parser stack.
+The *pCurrent value is undefined.
+The *pHighwater value is only meaningful if SQLite is compiled with
+YYTRACKMAXSTACKDEPTH.
 .El
 .Pp
 New status parameters may be added from time to time.

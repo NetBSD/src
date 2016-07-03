@@ -3,21 +3,37 @@
 .Os
 .Sh NAME
 .Nm sqlite3_malloc ,
+.Nm sqlite3_malloc64 ,
 .Nm sqlite3_realloc ,
-.Nm sqlite3_free
+.Nm sqlite3_realloc64 ,
+.Nm sqlite3_free ,
+.Nm sqlite3_msize
 .Nd Memory Allocation Subsystem
 .Sh SYNOPSIS
-.Ft void *
+.Ft void *SQLITE_STDCALL 
 .Fo sqlite3_malloc
 .Fa "int"
 .Fc
-.Ft void *
+.Ft void *SQLITE_STDCALL 
+.Fo sqlite3_malloc64
+.Fa "sqlite3_uint64"
+.Fc
+.Ft void *SQLITE_STDCALL 
 .Fo sqlite3_realloc
 .Fa "void*"
 .Fa "int"
 .Fc
-.Ft void 
+.Ft void *SQLITE_STDCALL 
+.Fo sqlite3_realloc64
+.Fa "void*"
+.Fa "sqlite3_uint64"
+.Fc
+.Ft void SQLITE_STDCALL 
 .Fo sqlite3_free
+.Fa "void*"
+.Fc
+.Ft sqlite3_uint64 SQLITE_STDCALL 
+.Fo sqlite3_msize
 .Fa "void*"
 .Fc
 .Sh DESCRIPTION
@@ -34,6 +50,9 @@ returns a NULL pointer.
 If the parameter N to sqlite3_malloc() is zero or negative then sqlite3_malloc()
 returns a NULL pointer.
 .Pp
+The sqlite3_malloc64(N) routine works just like sqlite3_malloc(N) except
+that N is an unsigned 64-bit integer instead of a signed 32-bit integer.
+.Pp
 Calling sqlite3_free() with a pointer previously returned by sqlite3_malloc()
 or sqlite3_realloc() releases that memory so that it might be reused.
 The sqlite3_free() routine is a no-op if is called with a NULL pointer.
@@ -45,27 +64,39 @@ Memory corruption, a segmentation fault, or other severe error might
 result if sqlite3_free() is called with a non-NULL pointer that was
 not obtained from sqlite3_malloc() or sqlite3_realloc().
 .Pp
-The sqlite3_realloc() interface attempts to resize a prior memory allocation
-to be at least N bytes, where N is the second parameter.
-The memory allocation to be resized is the first parameter.
-If the first parameter to sqlite3_realloc() is a NULL pointer then
-its behavior is identical to calling sqlite3_malloc(N) where N is the
-second parameter to sqlite3_realloc().
-If the second parameter to sqlite3_realloc() is zero or negative then
-the behavior is exactly the same as calling sqlite3_free(P) where P
-is the first parameter to sqlite3_realloc().
-sqlite3_realloc() returns a pointer to a memory allocation of at least
-N bytes in size or NULL if sufficient memory is unavailable.
+The sqlite3_realloc(X,N) interface attempts to resize a prior memory
+allocation X to be at least N bytes.
+If the X parameter to sqlite3_realloc(X,N) is a NULL pointer then its
+behavior is identical to calling sqlite3_malloc(N).
+If the N parameter to sqlite3_realloc(X,N) is zero or negative then
+the behavior is exactly the same as calling sqlite3_free(X).
+sqlite3_realloc(X,N) returns a pointer to a memory allocation of at
+least N bytes in size or NULL if insufficient memory is available.
 If M is the size of the prior allocation, then min(N,M) bytes of the
 prior allocation are copied into the beginning of buffer returned by
-sqlite3_realloc() and the prior allocation is freed.
-If sqlite3_realloc() returns NULL, then the prior allocation is not
-freed.
+sqlite3_realloc(X,N) and the prior allocation is freed.
+If sqlite3_realloc(X,N) returns NULL and N is positive, then the prior
+allocation is not freed.
 .Pp
-The memory returned by sqlite3_malloc() and sqlite3_realloc() is always
-aligned to at least an 8 byte boundary, or to a 4 byte boundary if
-the SQLITE_4_BYTE_ALIGNED_MALLOC compile-time
-option is used.
+The sqlite3_realloc64(X,N) interfaces works the same as sqlite3_realloc(X,N)
+except that N is a 64-bit unsigned integer instead of a 32-bit signed
+integer.
+.Pp
+If X is a memory allocation previously obtained from sqlite3_malloc(),
+sqlite3_malloc64(), sqlite3_realloc(), or sqlite3_realloc64(), then
+sqlite3_msize(X) returns the size of that memory allocation in bytes.
+The value returned by sqlite3_msize(X) might be larger than the number
+of bytes requested when X was allocated.
+If X is a NULL pointer then sqlite3_msize(X) returns zero.
+If X points to something that is not the beginning of memory allocation,
+or if it points to a formerly valid memory allocation that has now
+been freed, then the behavior of sqlite3_msize(X) is undefined and
+possibly harmful.
+.Pp
+The memory returned by sqlite3_malloc(), sqlite3_realloc(), sqlite3_malloc64(),
+and sqlite3_realloc64() is always aligned to at least an 8 byte boundary,
+or to a 4 byte boundary if the SQLITE_4_BYTE_ALIGNED_MALLOC
+compile-time option is used.
 .Pp
 In SQLite version 3.5.0 and 3.5.1, it was possible to define the SQLITE_OMIT_MEMORY_ALLOCATION
 which would cause the built-in implementation of these routines to

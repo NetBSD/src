@@ -3,9 +3,9 @@
 .Os
 .Sh NAME
 .Nm SQLITE_FCNTL_LOCKSTATE ,
-.Nm SQLITE_GET_LOCKPROXYFILE ,
-.Nm SQLITE_SET_LOCKPROXYFILE ,
-.Nm SQLITE_LAST_ERRNO ,
+.Nm SQLITE_FCNTL_GET_LOCKPROXYFILE ,
+.Nm SQLITE_FCNTL_SET_LOCKPROXYFILE ,
+.Nm SQLITE_FCNTL_LAST_ERRNO ,
 .Nm SQLITE_FCNTL_SIZE_HINT ,
 .Nm SQLITE_FCNTL_CHUNK_SIZE ,
 .Nm SQLITE_FCNTL_FILE_POINTER ,
@@ -22,13 +22,19 @@
 .Nm SQLITE_FCNTL_TRACE ,
 .Nm SQLITE_FCNTL_HAS_MOVED ,
 .Nm SQLITE_FCNTL_SYNC ,
-.Nm SQLITE_FCNTL_COMMIT_PHASETWO
+.Nm SQLITE_FCNTL_COMMIT_PHASETWO ,
+.Nm SQLITE_FCNTL_WIN32_SET_HANDLE ,
+.Nm SQLITE_FCNTL_WAL_BLOCK ,
+.Nm SQLITE_FCNTL_ZIPVFS ,
+.Nm SQLITE_FCNTL_RBU ,
+.Nm SQLITE_FCNTL_VFS_POINTER ,
+.Nm SQLITE_FCNTL_JOURNAL_POINTER
 .Nd Standard File Control Opcodes
 .Sh SYNOPSIS
 .Fd #define SQLITE_FCNTL_LOCKSTATE
-.Fd #define SQLITE_GET_LOCKPROXYFILE
-.Fd #define SQLITE_SET_LOCKPROXYFILE
-.Fd #define SQLITE_LAST_ERRNO
+.Fd #define SQLITE_FCNTL_GET_LOCKPROXYFILE
+.Fd #define SQLITE_FCNTL_SET_LOCKPROXYFILE
+.Fd #define SQLITE_FCNTL_LAST_ERRNO
 .Fd #define SQLITE_FCNTL_SIZE_HINT
 .Fd #define SQLITE_FCNTL_CHUNK_SIZE
 .Fd #define SQLITE_FCNTL_FILE_POINTER
@@ -46,11 +52,18 @@
 .Fd #define SQLITE_FCNTL_HAS_MOVED
 .Fd #define SQLITE_FCNTL_SYNC
 .Fd #define SQLITE_FCNTL_COMMIT_PHASETWO
+.Fd #define SQLITE_FCNTL_WIN32_SET_HANDLE
+.Fd #define SQLITE_FCNTL_WAL_BLOCK
+.Fd #define SQLITE_FCNTL_ZIPVFS
+.Fd #define SQLITE_FCNTL_RBU
+.Fd #define SQLITE_FCNTL_VFS_POINTER
+.Fd #define SQLITE_FCNTL_JOURNAL_POINTER
 .Sh DESCRIPTION
 These integer constants are opcodes for the xFileControl method of
 the sqlite3_io_methods object and for the sqlite3_file_control()
 interface.
-.Pp
+.Bl -bullet
+.It
 The SQLITE_FCNTL_LOCKSTATE opcode is used for
 debugging.
 This opcode causes the xFileControl method to write the current state
@@ -58,9 +71,8 @@ of the lock (one of SQLITE_LOCK_NONE, SQLITE_LOCK_SHARED,
 SQLITE_LOCK_RESERVED, SQLITE_LOCK_PENDING,
 or SQLITE_LOCK_EXCLUSIVE) into an integer that
 the pArg argument points to.
-This capability is used during testing and only needs to be supported
-when SQLITE_TEST is defined.
-.Bl -bullet
+This capability is used during testing and is only available when the
+SQLITE_TEST compile-time option is used.
 .It
 The SQLITE_FCNTL_SIZE_HINT opcode is used by
 SQLite to give the VFS layer a hint of how large the database file
@@ -83,8 +95,13 @@ systems.
 The SQLITE_FCNTL_FILE_POINTER opcode is used
 to obtain a pointer to the sqlite3_file object associated
 with a particular database connection.
-See the sqlite3_file_control() documentation
-for additional information.
+See also SQLITE_FCNTL_JOURNAL_POINTER.
+.It
+The SQLITE_FCNTL_JOURNAL_POINTER opcode
+is used to obtain a pointer to the sqlite3_file object
+associated with the journal file (either the rollback journal
+or the write-ahead log) for a particular database connection.
+See also SQLITE_FCNTL_FILE_POINTER.
 .It
 No longer in use.
 .It
@@ -179,6 +196,14 @@ Callers should initialize the char* variable to a NULL pointer in case
 this file-control is not implemented.
 This file-control is intended for diagnostic use only.
 .It
+The SQLITE_FCNTL_VFS_POINTER opcode finds a
+pointer to the top-level VFSes currently in use.
+The argument X in sqlite3_file_control(db,SQLITE_FCNTL_VFS_POINTER,X)
+must be of type "sqlite3_vfs **".
+This opcodes will set *X to a pointer to the top-level VFS.
+When there are multiple VFS shims in the stack, this opcode finds the
+upper-most shim only.
+.It
 Whenever a PRAGMA statement is parsed, an SQLITE_FCNTL_PRAGMA
 file control is sent to the open sqlite3_file object corresponding
 to the database file to which the pragma statement refers.
@@ -196,7 +221,9 @@ SQLITE_NOTFOUND, then normal PRAGMA processing
 continues.
 If the SQLITE_FCNTL_PRAGMA file control returns
 SQLITE_OK, then the parser assumes that the VFS has handled
-the PRAGMA itself and the parser generates a no-op prepared statement.
+the PRAGMA itself and the parser generates a no-op prepared statement
+if result string is NULL, or that returns a copy of the result string
+if the string is non-NULL.
 If the SQLITE_FCNTL_PRAGMA file control returns
 any result code other than SQLITE_OK or SQLITE_NOTFOUND,
 that means that the VFS encountered an error while handling the PRAGMA
@@ -250,6 +277,28 @@ The SQLITE_FCNTL_HAS_MOVED file control interprets
 its argument as a pointer to an integer and it writes a boolean into
 that integer depending on whether or not the file has been renamed,
 moved, or deleted since it was first opened.
+.It
+The SQLITE_FCNTL_WIN32_SET_HANDLE opcode
+is used for debugging.
+This opcode causes the xFileControl method to swap the file handle
+with the one pointed to by the pArg argument.
+This capability is used during testing and only needs to be supported
+when SQLITE_TEST is defined.
+.It
+The SQLITE_FCNTL_WAL_BLOCK is a signal to the
+VFS layer that it might be advantageous to block on the next WAL lock
+if the lock is not immediately available.
+The WAL subsystem issues this signal during rare circumstances in order
+to fix a problem with priority inversion.
+Applications should <em>not</em> use this file-control.
+.It
+The SQLITE_FCNTL_ZIPVFS opcode is implemented by
+zipvfs only.
+All other VFS should return SQLITE_NOTFOUND for this opcode.
+.It
+The SQLITE_FCNTL_RBU opcode is implemented by the special
+VFS used by the RBU extension only.
+All other VFS should return SQLITE_NOTFOUND for this opcode.
 .El
 .Pp
 .Sh SEE ALSO
@@ -259,6 +308,7 @@ moved, or deleted since it was first opened.
 .Xr sqlite3_io_methods 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_mprintf 3 ,
+.Xr sqlite3_vfs 3 ,
 .Xr SQLITE_FCNTL_LOCKSTATE 3 ,
 .Xr SQLITE_IOCAP_ATOMIC 3 ,
 .Xr SQLITE_LOCK_NONE 3 ,

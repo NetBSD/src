@@ -7,17 +7,17 @@
 .Nm sqlite3_open_v2
 .Nd Opening A New Database Connection
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_open
 .Fa "const char *filename"
 .Fa "sqlite3 **ppDb          "
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_open16
 .Fa "const void *filename"
 .Fa "sqlite3 **ppDb          "
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_open_v2
 .Fa "const char *filename"
 .Fa "sqlite3 **ppDb"
@@ -41,9 +41,10 @@ The sqlite3_errmsg() or sqlite3_errmsg16()
 routines can be used to obtain an English language description of the
 error following a failure of any of the sqlite3_open() routines.
 .Pp
-The default encoding for the database will be UTF-8 if sqlite3_open()
-or sqlite3_open_v2() is called and UTF-16 in the native byte order
-if sqlite3_open16() is used.
+The default encoding will be UTF-8 for databases created using sqlite3_open()
+or sqlite3_open_v2().
+The default encoding for databases created using sqlite3_open16() will
+be UTF-16 in the native byte order.
 .Pp
 Whether or not an error occurs when it is opened, resources associated
 with the database connection handle should be released
@@ -145,7 +146,7 @@ On windows, the first component of an absolute path is a drive specification
 .Pp
 The query component of a URI may contain parameters that are interpreted
 either by SQLite itself, or by a  custom VFS implementation.
-SQLite interprets the following three query parameters: 
+SQLite and its built-in VFSes interpret the following query parameters:
 .Bl -bullet
 .It
 \fBvfs\fP:  The "vfs" parameter may be used to specify the name of a VFS
@@ -183,6 +184,26 @@ SQLITE_OPEN_PRIVATECACHE bit.
 If sqlite3_open_v2() is used and the "cache" parameter is present in
 a URI filename, its value overrides any behavior requested by setting
 SQLITE_OPEN_PRIVATECACHE or SQLITE_OPEN_SHAREDCACHE flag.
+.It
+\fBpsow\fP:  The psow parameter indicates whether or not the powersafe overwrite
+property does or does not apply to the storage media on which the database
+file resides.
+.It
+\fBnolock\fP:  The nolock parameter is a boolean query parameter which if
+set disables file locking in rollback journal modes.
+This is useful for accessing a database on a filesystem that does not
+support locking.
+Caution:  Database corruption might result if two or more processes
+write to the same database and any one of those processes uses nolock=1.
+.It
+\fBimmutable\fP:  The immutable parameter is a boolean query parameter that
+indicates that the database file is stored on read-only media.
+When immutable is set, SQLite assumes that the database file cannot
+be changed, even by a process with higher privilege, and so the database
+is opened read-only and all locking and change detection is disabled.
+Caution: Setting the immutable property on a database file that does
+in fact change can result in incorrect query results and/or SQLITE_CORRUPT
+errors.
 .El
 .Pp
 Specifying an unknown parameter in the query component of a URI is
@@ -208,8 +229,9 @@ Note that the %20 escaping in this example is not strictly necessary
 in the current directory for read-only access.
 Regardless of whether or not shared-cache mode is enabled by default,
 use a private cache.
-<tr><td> file:/home/fred/data.db?vfs=unix-nolock <td> Open file "/home/fred/data.db".
-Use the special VFS "unix-nolock".
+<tr><td> file:/home/fred/data.db?vfs=unix-dotfile <td> Open file "/home/fred/data.db".
+Use the special VFS "unix-dotfile" that uses dot-files in place of
+posix advisory locking.
 <tr><td> file:data.db?mode=readonly <td> An error.
 "readonly" is not a valid option for the "mode" parameter.
 </table> 
@@ -237,8 +259,6 @@ may fail.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
-.Xr sqlite3 3 ,
 .Xr sqlite3_close 3 ,
 .Xr sqlite3_config 3 ,
 .Xr sqlite3_enable_shared_cache 3 ,
@@ -246,5 +266,7 @@ may fail.
 .Xr sqlite3_temp_directory 3 ,
 .Xr sqlite3_vfs 3 ,
 .Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
+.Xr SQLITE_OK 3 ,
+.Xr SQLITE_IOCAP_ATOMIC 3 ,
 .Xr SQLITE_OK 3 ,
 .Xr SQLITE_OPEN_READONLY 3

@@ -9,23 +9,23 @@
 .Nm sqlite3_mutex_leave
 .Nd Mutexes
 .Sh SYNOPSIS
-.Ft sqlite3_mutex *
+.Ft sqlite3_mutex *SQLITE_STDCALL 
 .Fo sqlite3_mutex_alloc
 .Fa "int"
 .Fc
-.Ft void 
+.Ft void SQLITE_STDCALL 
 .Fo sqlite3_mutex_free
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void 
+.Ft void SQLITE_STDCALL 
 .Fo sqlite3_mutex_enter
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_mutex_try
 .Fa "sqlite3_mutex*"
 .Fc
-.Ft void 
+.Ft void SQLITE_STDCALL 
 .Fo sqlite3_mutex_leave
 .Fa "sqlite3_mutex*"
 .Fc
@@ -62,9 +62,9 @@ function that calls sqlite3_initialize().
 .Pp
 The sqlite3_mutex_alloc() routine allocates a new mutex and returns
 a pointer to it.
-If it returns NULL that means that a mutex could not be allocated.
-SQLite will unwind its stack and return an error.
-The argument to sqlite3_mutex_alloc() is one of these integer constants:
+The sqlite3_mutex_alloc() routine returns NULL if it is unable to allocate
+the requested mutex.
+The argument to sqlite3_mutex_alloc() must one of these integer constants:
 .Bl -bullet
 .It
 SQLITE_MUTEX_FAST 
@@ -75,13 +75,25 @@ SQLITE_MUTEX_STATIC_MASTER
 .It
 SQLITE_MUTEX_STATIC_MEM 
 .It
-SQLITE_MUTEX_STATIC_MEM2 
+SQLITE_MUTEX_STATIC_OPEN 
 .It
 SQLITE_MUTEX_STATIC_PRNG 
 .It
 SQLITE_MUTEX_STATIC_LRU 
 .It
-SQLITE_MUTEX_STATIC_LRU2 
+SQLITE_MUTEX_STATIC_PMEM 
+.It
+SQLITE_MUTEX_STATIC_APP1 
+.It
+SQLITE_MUTEX_STATIC_APP2 
+.It
+SQLITE_MUTEX_STATIC_APP3 
+.It
+SQLITE_MUTEX_STATIC_VFS1 
+.It
+SQLITE_MUTEX_STATIC_VFS2 
+.It
+SQLITE_MUTEX_STATIC_VFS3 
 .El
 .Pp
 The first two constants (SQLITE_MUTEX_FAST and SQLITE_MUTEX_RECURSIVE)
@@ -99,7 +111,7 @@ to SQLITE_MUTEX_FAST.
 The other allowed parameters to sqlite3_mutex_alloc() (anything other
 than SQLITE_MUTEX_FAST and SQLITE_MUTEX_RECURSIVE) each return a pointer
 to a static preexisting mutex.
-Six static mutexes are used by the current version of SQLite.
+Nine static mutexes are used by the current version of SQLite.
 Future versions of SQLite may add additional static mutexes.
 Static mutexes are for internal use by SQLite only.
 Applications that use SQLite mutexes should use only the dynamic mutexes
@@ -108,15 +120,12 @@ returned by SQLITE_MUTEX_FAST or SQLITE_MUTEX_RECURSIVE.
 Note that if one of the dynamic mutex parameters (SQLITE_MUTEX_FAST
 or SQLITE_MUTEX_RECURSIVE) is used then sqlite3_mutex_alloc() returns
 a different mutex on every call.
-But for the static mutex types, the same mutex is returned on every
-call that has the same type number.
+For the static mutex types, the same mutex is returned on every call
+that has the same type number.
 .Pp
 The sqlite3_mutex_free() routine deallocates a previously allocated
 dynamic mutex.
-SQLite is careful to deallocate every dynamic mutex that it allocates.
-The dynamic mutexes must not be in use when they are deallocated.
 Attempting to deallocate a static mutex results in undefined behavior.
-SQLite never deallocates a static mutex.
 .Pp
 The sqlite3_mutex_enter() and sqlite3_mutex_try() routines attempt
 to enter a mutex.
@@ -126,11 +135,10 @@ The sqlite3_mutex_try() interface returns SQLITE_OK upon successful
 entry.
 Mutexes created using SQLITE_MUTEX_RECURSIVE can be entered multiple
 times by the same thread.
-In such cases the, mutex must be exited an equal number of times before
+In such cases, the mutex must be exited an equal number of times before
 another thread can enter.
-If the same thread tries to enter any other kind of mutex more than
-once, the behavior is undefined.
-SQLite will never exhibit such behavior in its own use of mutexes.
+If the same thread tries to enter any mutex other than an SQLITE_MUTEX_RECURSIVE
+more than once, the behavior is undefined.
 .Pp
 Some systems (for example, Windows 95) do not support the operation
 implemented by sqlite3_mutex_try().
@@ -142,7 +150,6 @@ The sqlite3_mutex_leave() routine exits a mutex that was previously
 entered by the same thread.
 The behavior is undefined if the mutex is not currently entered by
 the calling thread or is not currently allocated.
-SQLite will never do either.
 .Pp
 If the argument to sqlite3_mutex_enter(), sqlite3_mutex_try(), or sqlite3_mutex_leave()
 is a NULL pointer, then all three routines behave as no-ops.

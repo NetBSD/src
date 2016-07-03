@@ -5,7 +5,7 @@
 .Nm sqlite3_extended_result_codes
 .Nd Enable Or Disable Extended Result Codes
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_extended_result_codes
 .Fa "sqlite3*"
 .Fa "int onoff"
@@ -14,5 +14,3 @@
 The sqlite3_extended_result_codes() routine enables or disables the
 extended result codes feature of SQLite.
 The extended result codes are disabled by default for historical compatibility.
-.Sh SEE ALSO
-.Xr SQLITE_IOERR_READ 3

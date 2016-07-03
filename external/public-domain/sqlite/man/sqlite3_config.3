@@ -5,7 +5,7 @@
 .Nm sqlite3_config
 .Nd Configuring The SQLite Library
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_CDECL 
 .Fo sqlite3_config
 .Fa "int"
 .Fa "..."
@@ -18,10 +18,11 @@ The default configuration is recommended for most applications and
 so this routine is usually not necessary.
 It is provided to support rare applications with unusual needs.
 .Pp
-The sqlite3_config() interface is not threadsafe.
-The application must insure that no other SQLite interfaces are invoked
-by other threads while sqlite3_config() is running.
-Furthermore, sqlite3_config() may only be invoked prior to library
+\fBThe sqlite3_config() interface is not threadsafe.
+The application must ensure that no other SQLite interfaces are invoked
+by other threads while sqlite3_config() is running.\fP 
+.Pp
+The sqlite3_config() interface may only be invoked prior to library
 initialization using sqlite3_initialize() or after
 shutdown by sqlite3_shutdown().
 If sqlite3_config() is called after sqlite3_initialize()
@@ -40,6 +41,5 @@ If the option is unknown or SQLite is unable to set the option then
 this routine returns a non-zero error code.
 .Sh SEE ALSO
 .Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_initialize 3 ,
 .Xr SQLITE_OK 3

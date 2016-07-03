@@ -5,7 +5,7 @@
 .Nm sqlite3_set_authorizer
 .Nd Compile-Time Authorization Callbacks
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_set_authorizer
 .Fa "sqlite3*"
 .Fa "int (*xAuth)(void*,int,const char*,const char*,const char*,const char*)"

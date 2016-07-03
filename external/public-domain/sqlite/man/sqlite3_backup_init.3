@@ -9,27 +9,27 @@
 .Nm sqlite3_backup_pagecount
 .Nd Online Backup API.
 .Sh SYNOPSIS
-.Ft sqlite3_backup *
+.Ft sqlite3_backup *SQLITE_STDCALL 
 .Fo sqlite3_backup_init
 .Fa "sqlite3 *pDest"
 .Fa "const char *zDestName"
 .Fa "sqlite3 *pSource"
 .Fa "const char *zSourceName                "
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_backup_step
 .Fa "sqlite3_backup *p"
 .Fa "int nPage"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_backup_finish
 .Fa "sqlite3_backup *p"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_backup_remaining
 .Fa "sqlite3_backup *p"
 .Fc
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_backup_pagecount
 .Fa "sqlite3_backup *p"
 .Fc
@@ -74,6 +74,10 @@ source database, respectively.
 The source and destination database connections
 (parameters S and D) must be different or else sqlite3_backup_init(D,N,S,M)
 will fail with an error.
+.Pp
+A call to sqlite3_backup_init() will fail, returning NULL, if there
+is already a read or read-write transaction open on the destination
+database.
 .Pp
 If an error occurs within sqlite3_backup_init(D,N,S,M), then NULL is
 returned and an error code and error message are stored in the destination
@@ -180,16 +184,15 @@ the return value of sqlite3_backup_finish().
 .Pp
 \fBsqlite3_backup_remaining() and sqlite3_backup_pagecount()\fP 
 .Pp
-Each call to sqlite3_backup_step() sets two values inside the sqlite3_backup
-object: the number of pages still to be backed up and the total number
-of pages in the source database file.
-The sqlite3_backup_remaining() and sqlite3_backup_pagecount() interfaces
-retrieve these two values, respectively.
-.Pp
+The sqlite3_backup_remaining() routine returns the number of pages
+still to be backed up at the conclusion of the most recent sqlite3_backup_step().
+The sqlite3_backup_pagecount() routine returns the total number of
+pages in the source database at the conclusion of the most recent sqlite3_backup_step().
 The values returned by these functions are only updated by sqlite3_backup_step().
-If the source database is modified during a backup operation, then
-the values are not updated to account for any extra pages that need
-to be updated or the size of the source database file changing.
+If the source database is modified in a way that changes the size of
+the source database or the number of pages remaining, those changes
+are not reflected in the output of sqlite3_backup_pagecount() and sqlite3_backup_remaining()
+until after the next sqlite3_backup_step().
 .Pp
 \fBConcurrent Usage of Database Handles\fP 
 .Pp
@@ -224,7 +227,6 @@ If they are invoked at the same time as another thread is invoking
 sqlite3_backup_step() it is possible that they return invalid values.
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_backup 3 ,
 .Xr sqlite3_busy_handler 3 ,
 .Xr sqlite3_errcode 3 ,

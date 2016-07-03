@@ -5,7 +5,7 @@
 .Nm sqlite3_load_extension
 .Nd Load An Extension
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_load_extension
 .Fa "sqlite3 *db"
 .Fa "const char *zFile"
@@ -38,12 +38,23 @@ in memory obtained from sqlite3_malloc().
 The calling function should free this memory by calling sqlite3_free().
 .Pp
 Extension loading must be enabled using sqlite3_enable_load_extension()
+or sqlite3_db_config(db,SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION,1,NULL)
 prior to calling this API, otherwise an error will be returned.
+.Pp
+\fBSecurity warning:\fP It is recommended that the SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION
+method be used to enable only this interface.
+The use of the sqlite3_enable_load_extension()
+interface should be avoided.
+This will keep the SQL function load_extension() disabled
+and prevent SQL injections from giving attackers access to extension
+loading capabilities.
 .Pp
 See also the load_extension() SQL function.
 .Sh SEE ALSO
+.Xr sqlite3_db_config 3 ,
 .Xr sqlite3_enable_load_extension 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_load_extension 3 ,
 .Xr sqlite3_malloc 3 ,
+.Xr SQLITE_DBCONFIG_LOOKASIDE 3 ,
 .Xr SQLITE_OK 3

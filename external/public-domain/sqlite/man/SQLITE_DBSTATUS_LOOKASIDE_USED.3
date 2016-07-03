@@ -61,12 +61,12 @@ already being in use.
 Only the high-water value is meaningful; the current value is always
 zero.
 .It SQLITE_DBSTATUS_CACHE_USED
-This parameter returns the approximate number of of bytes of heap memory
+This parameter returns the approximate number of bytes of heap memory
 used by all pager caches associated with the database connection.
 The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED is always
 0.
 .It SQLITE_DBSTATUS_SCHEMA_USED
-This parameter returns the approximate number of of bytes of heap memory
+This parameter returns the approximate number of bytes of heap memory
 used to store the schema for all databases associated with the connection
 - main, temp, and any ATTACH-ed databases.
 The full amount of memory used by the schemas is reported, even if
@@ -75,7 +75,7 @@ shared cache mode being enabled.
 The highwater mark associated with SQLITE_DBSTATUS_SCHEMA_USED is always
 0.
 .It SQLITE_DBSTATUS_STMT_USED
-This parameter returns the approximate number of of bytes of heap and
+This parameter returns the approximate number of bytes of heap and
 lookaside memory used by all prepared statements associated with the
 database connection.
 The highwater mark associated with SQLITE_DBSTATUS_STMT_USED is always
