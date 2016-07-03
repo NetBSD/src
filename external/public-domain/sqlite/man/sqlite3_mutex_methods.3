@@ -13,11 +13,11 @@ An instance of this structure defines the low-level routines used to
 allocate and use mutexes.
 .Pp
 Usually, the default mutex implementations provided by SQLite are sufficient,
-however the user has the option of substituting a custom implementation
+however the application has the option of substituting a custom implementation
 for specialized deployments or systems for which SQLite does not provide
 a suitable implementation.
-In this case, the user creates and populates an instance of this structure
-to pass to sqlite3_config() along with the SQLITE_CONFIG_MUTEX
+In this case, the application creates and populates an instance of
+this structure to pass to sqlite3_config() along with the SQLITE_CONFIG_MUTEX
 option.
 Additionally, an instance of this structure can be used as an output
 variable when querying the system for the current mutex implementation,

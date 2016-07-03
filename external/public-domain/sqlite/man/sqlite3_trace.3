@@ -6,13 +6,13 @@
 .Nm sqlite3_profile
 .Nd Tracing And Profiling Functions
 .Sh SYNOPSIS
-.Ft void *
+.Ft void *SQLITE_STDCALL 
 .Fo sqlite3_trace
 .Fa "sqlite3*"
 .Fa "void(*xTrace)(void*,const char*)"
 .Fa "void*"
 .Fc
-.Ft void *
+.Ft void *SQLITE_STDCALL 
 .Fo sqlite3_profile
 .Fa "sqlite3*"
 .Fa "void(*xProfile)(void*,const char*,sqlite3_uint64)"

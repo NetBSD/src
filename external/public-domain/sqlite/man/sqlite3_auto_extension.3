@@ -5,7 +5,7 @@
 .Nm sqlite3_auto_extension
 .Nd Automatically Load Statically Linked Extensions
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_auto_extension
 .Fa "void (*xEntryPoint)(void)"
 .Fc
@@ -45,7 +45,6 @@ that is opened.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3 3 ,
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_cancel_auto_extension 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_mprintf 3 ,

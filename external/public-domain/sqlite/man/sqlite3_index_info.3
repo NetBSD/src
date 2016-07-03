@@ -34,6 +34,17 @@ to the particular virtual table being queried.
 Information about the ORDER BY clause is stored in aOrderBy[].
 Each term of aOrderBy records a column of the ORDER BY clause.
 .Pp
+The colUsed field indicates which columns of the virtual table may
+be required by the current scan.
+Virtual table columns are numbered from zero in the order in which
+they appear within the CREATE TABLE statement passed to sqlite3_declare_vtab().
+For the first 63 columns (columns 0-62), the corresponding bit is set
+within the colUsed mask if the column may be required by SQLite.
+If the table has at least 64 columns and any column to the right of
+the first 63 is required, then bit 63 of colUsed is also set.
+In other words, column iCol may be required if the expression (colUsed
+& ((sqlite3_uint64)1 << (iCol>=63 ? 63 : iCol))) evaluates to non-zero.
+.Pp
 The xBestIndex method must fill aConstraintUsage[] with information
 about what parameters to pass to xFilter.
 If argvIndex>0 then the right-hand side of the corresponding aConstraint[]
@@ -62,6 +73,23 @@ with N rows.
 The estimatedRows value is an estimate of the number of rows that will
 be returned by the strategy.
 .Pp
+The xBestIndex method may optionally populate the idxFlags field with
+a mask of SQLITE_INDEX_SCAN_* flags.
+Currently there is only one such flag - SQLITE_INDEX_SCAN_UNIQUE.
+If the xBestIndex method sets this flag, SQLite assumes that the strategy
+may visit at most one row.
+.Pp
+Additionally, if xBestIndex sets the SQLITE_INDEX_SCAN_UNIQUE flag,
+then SQLite also assumes that if a call to the xUpdate() method is
+made as part of the same statement to delete or update a virtual table
+row and the implementation returns SQLITE_CONSTRAINT, then there is
+no need to rollback any database changes.
+In other words, if the xUpdate() returns SQLITE_CONSTRAINT, the database
+contents must be exactly as they were before xUpdate was called.
+By contrast, if SQLITE_INDEX_SCAN_UNIQUE is not set and xUpdate returns
+SQLITE_CONSTRAINT, any database changes made by the xUpdate method
+are automatically rolled back by SQLite.
+.Pp
 IMPORTANT: The estimatedRows field was added to the sqlite3_index_info
 structure for SQLite version 3.8.2.
 If a virtual table extension is used with an SQLite version earlier
@@ -69,6 +97,9 @@ than 3.8.2, the results of attempting to read or write the estimatedRows
 field are undefined (but are likely to included crashing the application).
 The estimatedRows field should therefore only be used if sqlite3_libversion_number()
 returns a value greater than or equal to 3008002.
+Similarly, the idxFlags field was added for version 3.9.0.
+It may therefore only be used if sqlite3_libversion_number() returns
+a value greater than or equal to 3009000.
 .Sh SEE ALSO
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_version 3 ,

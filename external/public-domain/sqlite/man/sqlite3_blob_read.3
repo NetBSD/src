@@ -5,7 +5,7 @@
 .Nm sqlite3_blob_read
 .Nd Read Data From A BLOB Incrementally
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_blob_read
 .Fa "sqlite3_blob *"
 .Fa "void *Z"
@@ -40,8 +40,6 @@ probably undesirable behavior.
 .Pp
 .Sh SEE ALSO
 .Xr sqlite3_blob 3 ,
-.Xr SQLITE_OK 3 ,
-.Xr SQLITE_IOERR_READ 3 ,
 .Xr sqlite3_blob_bytes 3 ,
 .Xr sqlite3_blob_close 3 ,
 .Xr sqlite3_blob_open 3 ,

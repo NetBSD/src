@@ -5,7 +5,7 @@
 .Nm sqlite3_reset
 .Nd Reset A Prepared Statement Object
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_reset
 .Fa "sqlite3_stmt *pStmt"
 .Fc
@@ -32,7 +32,6 @@ The sqlite3_reset(S) interface does not change the
 values of any bindings on the prepared statement
 S.
 .Sh SEE ALSO
-.Xr SQLITE_OK 3 ,
 .Xr sqlite3_stmt 3 ,
 .Xr sqlite3_bind_blob 3 ,
 .Xr sqlite3_clear_bindings 3 ,

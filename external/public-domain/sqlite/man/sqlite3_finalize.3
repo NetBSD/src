@@ -5,7 +5,7 @@
 .Nm sqlite3_finalize
 .Nd Destroy A Prepared Statement Object
 .Sh SYNOPSIS
-.Ft int 
+.Ft int SQLITE_STDCALL 
 .Fo sqlite3_finalize
 .Fa "sqlite3_stmt *pStmt"
 .Fc
@@ -32,8 +32,6 @@ statement after it has been finalized.
 Any use of a prepared statement after it has been finalized can result
 in undefined and undesirable behavior such as segfaults and heap corruption.
 .Sh SEE ALSO
-.Xr SQLITE_OK 3 ,
-.Xr SQLITE_IOERR_READ 3 ,
 .Xr sqlite3_stmt 3 ,
 .Xr sqlite3_reset 3 ,
 .Xr sqlite3_step 3
