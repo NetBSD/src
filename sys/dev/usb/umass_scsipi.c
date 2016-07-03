@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.52 2016/07/01 12:16:35 skrll Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.53 2016/07/03 07:27:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.52 2016/07/01 12:16:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.53 2016/07/03 07:27:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -403,10 +403,10 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 	u_int delta;
 	microtime(&tv);
 	delta = (tv.tv_sec - sc->tv.tv_sec) * 1000000 + tv.tv_usec - sc->tv.tv_usec;
-#endif
-
 	DPRINTFM(UDMASS_CMD, "delta=%u: xs=%p residue=%d status=%d", delta, xs,
 	    residue, status);
+#endif
+
 
 	xs->resid = residue;
 
