@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.17 2015/08/27 12:30:50 pooka Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.18 2016/07/03 14:24:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct	__pthread_mutex_st {
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad1[3];
 #endif
-	__pthread_spin_t ptm_interlock;	/* unused - backwards compat */
+	__pthread_spin_t ptm_ceiling;
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad2[3];
 #endif

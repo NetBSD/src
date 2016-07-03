@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.33 2013/03/21 16:49:12 christos Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.34 2016/07/03 14:24:58 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.33 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.34 2016/07/03 14:24:58 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -638,6 +638,29 @@ _pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
 	return (owner & (RW_THREAD | RW_WRITE_LOCKED)) ==
 	    ((uintptr_t)pthread__self() | RW_WRITE_LOCKED);
 }
+
+#ifdef _PTHREAD_PSHARED
+int
+pthread_rwlockattr_getpshared(const pthread_rwlockattr_t * __restrict attr,
+    int * __restrict pshared)
+{
+	*pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
+}
+
+int
+pthread_rwlockattr_setpshared(pthread_rwlockattr_t *attr, int pshared)
+{
+
+	switch(pshared) {
+	case PTHREAD_PROCESS_PRIVATE:
+		return 0;
+	case PTHREAD_PROCESS_SHARED:
+		return ENOSYS;
+	}
+	return EINVAL;
+}
+#endif
 
 int
 pthread_rwlockattr_init(pthread_rwlockattr_t *attr)

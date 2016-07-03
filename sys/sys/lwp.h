@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.171 2016/06/16 02:34:33 ozaki-r Exp $	*/
+/*	$NetBSD: lwp.h,v 1.172 2016/07/03 14:24:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -105,6 +105,9 @@ struct lwp {
 	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
+	pri_t		l_protectprio;	/* l: for PTHREAD_PRIO_PROTECT */
+	pri_t		l_auxprio;	/* l: max(inherit,protect) priority */
+	int		l_protectdepth;	/* l: for PTHREAD_PRIO_PROTECT */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
 	uint64_t	l_ncsw;		/* l: total context switches */
 	uint64_t	l_nivcsw;	/* l: involuntary context switches */
@@ -403,9 +406,6 @@ lwp_lendpri(lwp_t *l, pri_t pri)
 {
 	KASSERT(mutex_owned(l->l_mutex));
 
-	if (l->l_inheritedprio == pri)
-		return;
-
 	(*l->l_syncobj->sobj_lendpri)(l, pri);
 	KASSERT(l->l_inheritedprio == pri);
 }
@@ -418,7 +418,7 @@ lwp_eprio(lwp_t *l)
 	pri = l->l_priority;
 	if ((l->l_flag & LW_SYSTEM) == 0 && l->l_kpriority && pri < PRI_KERNEL)
 		pri = (pri >> 1) + l->l_kpribase;
-	return MAX(l->l_inheritedprio, pri);
+	return MAX(l->l_auxprio, pri);
 }
 
 int lwp_create(lwp_t *, struct proc *, vaddr_t, int,

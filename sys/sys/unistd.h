@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.58 2016/06/10 23:29:20 christos Exp $	*/
+/*	$NetBSD: unistd.h,v 1.59 2016/07/03 14:24:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,6 +146,8 @@
 					/* pthread_attr for stack address */
 #define	_POSIX_THREAD_ATTR_STACKADDR	200112L
 					/* _r functions */
+#define	_POSIX_THREAD_PRIO_PROTECT	200112L
+					/* PTHREAD_PRIO_PROTECT */
 #define	_POSIX_THREAD_SAFE_FUNCTIONS	200112L
 					/* timeouts */
 #undef	_POSIX_TIMEOUTS

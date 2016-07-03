@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.19 2009/01/29 21:19:35 ad Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.20 2016/07/03 14:24:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.19 2009/01/29 21:19:35 ad Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.20 2016/07/03 14:24:58 christos Exp $");
 
 #include <errno.h>
 
@@ -117,6 +117,29 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 	return 0;
 }
 
+#ifdef _PTHREAD_PSHARED
+int
+pthread_barrierattr_getpshared(const pthread_barrierattr_t * __restrict attr,
+    int * __restrict pshared)
+{
+
+	*pshared = PTHREAD_PROCESS_PRIVATE;
+	return 0;
+}
+
+int
+pthread_barrierattr_setpshared(pthread_barrierattr_t *attr, int pshared)
+{
+
+	switch(pshared) {
+	case PTHREAD_PROCESS_PRIVATE:
+		return 0;
+	case PTHREAD_PROCESS_SHARED:
+		return ENOSYS;
+	}
+	return EINVAL;
+}
+#endif
 
 int
 pthread_barrierattr_init(pthread_barrierattr_t *attr)
