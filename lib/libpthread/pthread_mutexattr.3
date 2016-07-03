@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutexattr.3,v 1.11 2010/07/08 22:46:34 jruoho Exp $
+.\" $NetBSD: pthread_mutexattr.3,v 1.12 2016/07/03 14:24:58 christos Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,18 +50,20 @@
 .\" EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_mutexattr.3,v 1.8 2002/09/16 19:29:29 mini Exp $
-.Dd July 9, 2010
+.Dd June 12, 2016
 .Dt PTHREAD_MUTEXATTR 3
 .Os
 .Sh NAME
 .Nm pthread_mutexattr_init ,
 .Nm pthread_mutexattr_destroy ,
-.\" .Nm pthread_mutexattr_setprioceiling ,
-.\" .Nm pthread_mutexattr_getprioceiling ,
-.\" .Nm pthread_mutexattr_setprotocol ,
-.\" .Nm pthread_mutexattr_getprotocol ,
+.Nm pthread_mutexattr_setprioceiling ,
+.Nm pthread_mutexattr_getprioceiling ,
+.Nm pthread_mutexattr_setprotocol ,
+.Nm pthread_mutexattr_getprotocol ,
 .Nm pthread_mutexattr_settype ,
-.Nm pthread_mutexattr_gettype
+.Nm pthread_mutexattr_gettype ,
+.Nm pthread_mutexattr_getpshared ,
+.Nm pthread_mutexattr_setpshared
 .Nd mutex attribute operations
 .Sh LIBRARY
 .Lb libpthread
@@ -71,23 +73,29 @@
 .Fn pthread_mutexattr_init "pthread_mutexattr_t *attr"
 .Ft int
 .Fn pthread_mutexattr_destroy "pthread_mutexattr_t *attr"
-.\" .Ft int
-.\" .Fn pthread_mutexattr_setprioceiling \
-.\" "pthread_mutexattr_t *attr" "int prioceiling"
-.\" .Ft int
-.\" .Fn pthread_mutexattr_getprioceiling \
-.\" "pthread_mutexattr_t *attr" "int *prioceiling"
-.\" .Ft int
-.\" .Fn pthread_mutexattr_setprotocol \
-.\" "pthread_mutexattr_t *attr" "int protocol"
-.\" .Ft int
-.\" .Fn pthread_mutexattr_getprotocol \
-.\" "pthread_mutexattr_t *attr" "int *protocol"
+.Ft int
+.Fn pthread_mutexattr_setprioceiling \
+"pthread_mutexattr_t *attr" "int prioceiling"
+.Ft int
+.Fn pthread_mutexattr_getprioceiling \
+"pthread_mutexattr_t *attr" "int *prioceiling"
+.Ft int
+.Fn pthread_mutexattr_setprotocol \
+"pthread_mutexattr_t *attr" "int protocol"
+.Ft int
+.Fn pthread_mutexattr_getprotocol \
+"pthread_mutexattr_t *attr" "int *protocol"
 .Ft int
 .Fn pthread_mutexattr_settype "pthread_mutexattr_t *attr" "int type"
 .Ft int
 .Fn pthread_mutexattr_gettype \
 "pthread_mutexattr_t * restrict attr" "int * restrict type"
+.Ft int
+.Fn pthread_mutexattr_getpshared \
+"const pthread_mutexattr_t * __restrict attr" "int * __restrict pshared"
+.Ft int
+.Fn pthread_mutexattr_setpshared \
+"pthread_mutexattr_t * attr" "int pshared"
 .Sh DESCRIPTION
 Mutex attributes are used to specify parameters to
 .Fn pthread_mutex_init .
@@ -172,6 +180,38 @@ The
 .Fn pthread_mutexattr_gettype
 functions copy the type value of the attribute to the location
 pointed to by the second parameter.
+.Pp
+The
+.Fn pthread_mutexattr_getpshared
+function obtains the value of the process-shared attribute from 
+the attributes object referenced by 
+.Fa attr.
+.Pp
+The 
+.Fn pthread_mutexattr_setpshared
+function is used to set the process-shared attribute in an initialised
+attributes object referenced by
+.Fa attr.
+.Pp
+The 
+.Fn pthread_mutexattr_getprotocol
+and
+.Fn pthread_mutexattr_setprotocol
+functions shall get and set the protocol attribute of a mutex attributes 
+object pointed to by
+.Fa attr 
+which was previously created by the function
+.Fn pthread_mutexattr_init .
+.Pp
+The 
+.Fn pthread_mutexattr_getprioceiling
+and
+.Fn pthread_mutexattr_setprioceiling
+functions, shall get and set the priority ceiling attribute of a mutex attributes
+object pointed to by 
+.Fa attr 
+which was previously created by the function
+.Fn pthread_mutexattr_init .
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -201,46 +241,63 @@ No error numbers are defined for the
 and
 .Fn pthread_mutexattr_gettype
 functions.
-.\"
-.\" .Pp
-.\" .Fn pthread_mutexattr_setprioceiling
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr ,
-.\" or invalid value for
-.\" .Fa prioceiling .
-.\" .El
-.\" .Pp
-.\" .Fn pthread_mutexattr_getprioceiling
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr .
-.\" .El
-.\" .Pp
-.\" .Fn pthread_mutexattr_setprotocol
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr ,
-.\" or invalid value for
-.\" .Fa protocol .
-.\" .El
-.\" .Pp
-.\" .Fn pthread_mutexattr_getprotocol
-.\" may fail if:
-.\" .Bl -tag -width Er
-.\" .It Bq Er EINVAL
-.\" Invalid value for
-.\" .Fa attr .
-.\" .El
-.\" .Pp
+.Pp
+.Fn pthread_mutexattr_setprioceiling
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr ,
+or invalid value for
+.Fa prioceiling .
+.El
+.Pp
+.Fn pthread_mutexattr_getprioceiling
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr .
+.El
+.Pp
+.Fn pthread_mutexattr_setprotocol
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr ,
+or invalid value for
+.Fa protocol .
+.El
+.Pp
+.Fn pthread_mutexattr_getprotocol
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+Invalid value for
+.Fa attr .
+.El
+.Pp
+.El
+.Pp
+.Fn pthread_mutexattr_getpshared
+and 
+.Fn pthread_mutexattr_setpshared
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+the value specified by 
+.Fa attr
+is invalid.
 .Sh SEE ALSO
 .Xr pthread_mutex_init 3
 .Sh STANDARDS
 These functions conform to
 .St -p1003.1-2001 .
+.Sh BUGS
+The
+.Fn pthread_mutexattr_getpshared
+and
+.Fn pthread_mutexattr_setpshared
+functions are hidden by default since only thread shared attributes
+are supported.

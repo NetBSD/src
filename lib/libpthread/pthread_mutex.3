@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.6 2012/11/12 23:11:05 uwe Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.7 2016/07/03 14:24:58 christos Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ----------------------------------------------------------------------------
-.Dd July 8, 2010
+.Dd June 12, 2016
 .Dt PTHREAD_MUTEX 3
 .Os
 .Sh NAME
@@ -75,6 +75,14 @@
 .Fn pthread_mutex_trylock "pthread_mutex_t *mutex"
 .Ft int
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
+.Ft int
+.Fn pthread_mutex_timedlock "pthread_mutex_t * mutex" "const struct timespec *__restrict timeout"
+.Ft int
+.Fn pthread_mutex_getprioceiling "const pthread_mutex_t * __restrict mutex" "int * __restrict prioceiling"
+.Ft int
+.Fn pthread_mutex_setprioceiling "pthread_mutex_t * __restrict mutex" \
+"int prioceiling" "int * __restrict old_ceiling"
+
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -135,7 +143,45 @@ When operating with the default mutex type,
 undefined behavior follows if a thread tries to unlock a mutex
 that has not been locked by it, or if a thread tries to release
 a mutex that is already unlocked.
+.Pp
+.\" -----
+The 
+.Fn pthread_mutex_timedlock
+function shall lock the mutex object referenced by
+.Fa mutex.
+If the mutex is already locked, the calling thread shall block until
+the mutex becomes available in the 
+.Fn pthread_mutex_lock
+function.
+If the mutex cannot be locked without waiting for another thread to
+unlock the mutex, this wait shall be terminated when the specified timeout
+expires.
+The timeout shall expire when the absolute time specified by 
+.Fa timeout
+passes, as measured by the clock on which timeouts are based.
+.Pp
+.\" -----
+The
+.Fn pthread_mutex_getprioceiling
+function shall return the current priority ceiling of the mutex.
+.Pp
+.\" -----
+The 
+.Fn pthread_mutex_setprioceiling
+function shall either lock the mutex if it is unlocked, or block until
+it can sucessfully lock the mutex, then it shall change the mutex's priority
+ceiling and release the mutex.
+When the change is successful, the previous value of the priority ceiling
+shall be returned
+in
+.Fa old_ceiling.
+The process of locking the mutex need not adhere to the priority
+protect protocol.
+If
+.Fn pthread_mutex_setprioceiling
+function fails, the mutex priority ceiling shall not be changed.
 .\" ----------------------------------------------------------------------------
+
 .Sh RETURN VALUES
 Upon success all described functions return zero.
 Otherwise, an error number will be returned to indicate the error.
@@ -203,7 +249,45 @@ is invalid.
 The current thread does not hold a lock on
 .Fa mutex .
 .El
+.Pp
+.\" -----
+.Fn pthread_mutex_timedlock
+may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The mutex was created with the protocol attribute having the value
+.Dv PTHREAD_PRIO_PROTECT
+and the calling thread's priority is higher than
+the mutex current priority ceiling.
+.It Bq Er EINVAL
+The process or thread would have blocked, and the
+.Fa timeout
+parameter specified a nanoseconds field value less than zero or greater
+than or equal to 1000 million.
+.It Bq Er ETIMEDOUT
+The mutex could not be locked before the specified timeout expired.
+.El
+.Pp
+.\" -----
+The
+.Fn pthread_mutex_getprioceiling
+and 
+.Fn pthread_mutex_setprioceiling
+functions may fail if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The priority requested by 
+.Fa prioceiling
+is out of range.
+.It Bq Er EINVAL
+The value specified by 
+.Fa mutex
+does not refer to a currently existing mutex.
+.It Bq Er EPERM
+The caller does not have the privilege to perform the operation.
+
 .\" ----------------------------------------------------------------------------
+
 .Sh SEE ALSO
 .Xr pthread 3 ,
 .Xr pthread_barrier 3 ,
