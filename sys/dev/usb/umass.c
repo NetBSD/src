@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.154 2016/07/03 07:24:56 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.155 2016/07/03 07:27:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.154 2016/07/03 07:24:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.155 2016/07/03 07:27:37 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -158,6 +158,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.154 2016/07/03 07:24:56 skrll Exp $");
 #include <dev/scsipi/scsipiconf.h>
 
 #ifdef USB_DEBUG
+#ifdef UMASS_DEBUG
 int umassdebug = 0;
 
 SYSCTL_SETUP(sysctl_hw_umass_setup, "sysctl hw.umass setup")
@@ -209,6 +210,7 @@ const char *states[TSTATE_STATES+1] = {
 	"CBI bulk-out clear stall",
 	NULL
 };
+#endif
 #endif
 
 /* USB device probe/attach/detach functions */
@@ -1614,8 +1616,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 	 * State handling for CBI transfers.
 	 */
 
-	DPRINTFM(UDMASS_CBI, "sc %p: Handling CBI state %d (%s), xfer=%p, ...",
-	    sc, sc->transfer_state, states[sc->transfer_state], xfer);
+	DPRINTFM(UDMASS_CBI, "sc %p: Handling CBI state %d, xfer=%p, ...",
+	    sc, sc->transfer_state, xfer, 0);
 	DPRINTFM(UDMASS_CBI, "... err %d", err, 0, 0, 0);
 
 	switch (sc->transfer_state) {
