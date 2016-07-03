@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_obiovar.h,v 1.4 2016/04/25 13:14:37 kiyohara Exp $ */
+/* $NetBSD: omap2_obiovar.h,v 1.5 2016/07/03 12:27:04 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -54,5 +54,6 @@ struct obio_softc {
 };
 
 uint32_t omap_chipid(void);
+uint32_t omap_devid(void);
 
 #endif /* _ARM_OMAP_OMAP2_OBIOVAR_H_ */
