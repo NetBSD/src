@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.71 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.72 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.71 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.72 2016/07/04 06:48:14 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -1827,7 +1827,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL;
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		int i;
 
 		for (i = 0; i < 4; i++) {
