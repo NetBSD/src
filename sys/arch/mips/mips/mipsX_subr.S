@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.66 2016/07/04 15:47:04 dholland Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.67 2016/07/04 15:52:31 dholland Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1457,8 +1457,13 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	move	s0, v0				# remember previous priority
 
 	/*
-	 * Now we can turn off the FPU, clear exception level, and enter
-	 * kernel mode since no interrupts can be delivered
+   	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, clear the
+	 * exception level bit. This will allow high-priority
+	 * interrupts to be delivered once a low-priority interrupt
+	 * handler lowers spl to execute.
+	 *
+	 * Also turn off the FPU and enter kernel mode.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 #ifdef NOFPU
