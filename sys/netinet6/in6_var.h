@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.78 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.79 2016/07/04 07:32:18 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -129,7 +129,9 @@ struct	in6_ifaddr {
 	/* multicast addresses joined from the kernel */
 	LIST_HEAD(, in6_multi_mship) ia6_memberships;
 
+#ifdef _KERNEL
 	struct pslist_entry	ia6_pslist_entry;
+#endif
 };
 
 /* control structure to manage address selection policy */
