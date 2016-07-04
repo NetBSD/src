@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.59 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.60 2016/07/04 04:38:14 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.59 2016/07/04 04:35:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.60 2016/07/04 04:38:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.59 2016/07/04 04:35:09 knakahara Exp 
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
-#include <sys/once.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/psref.h>
@@ -157,16 +156,17 @@ struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 static bool encap_head_updating = false;
 #endif
 
-static ONCE_DECL(encap_init_control);
-
-static int encap_init_once(void);
-
 /*
  * must be done before other encap interfaces initialization.
  */
 void
 encapinit(void)
 {
+
+	encaptab.psz = pserialize_create();
+	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
+	if (encaptab.elem_class == NULL)
+		panic("encaptab.elem_class cannot be allocated.\n");
 
 	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&encap_whole.cv, "ip_encap cv");
@@ -635,18 +635,6 @@ encap_afcheck(int af, const struct sockaddr *sp, const struct sockaddr *dp)
 	return 0;
 }
 
-static int
-encap_init_once(void)
-{
-
-	encaptab.psz = pserialize_create();
-	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
-	if (encaptab.elem_class == NULL)
-		panic("encaptab.elem_class cannot be allocated.\n");
-
-	return 0;
-}
-
 /*
  * sp (src ptr) is always my side, and dp (dst ptr) is always remote side.
  * length of mask (sm and dm) is assumed to be same as sp/dp.
@@ -666,8 +654,6 @@ encap_attach(int af, int proto,
 #ifdef INET6
 	struct ip_pack6 *pack6;
 #endif
-
-	RUN_ONCE(&encap_init_control, encap_init_once);
 
 	s = splsoftnet();
 	/* sanity check on args */
@@ -798,8 +784,6 @@ encap_attach_func(int af, int proto,
 	struct encaptab *ep;
 	int error;
 	int s;
-
-	RUN_ONCE(&encap_init_control, encap_init_once);
 
 	s = splsoftnet();
 	/* sanity check on args */
