@@ -142475,7 +142475,7 @@ static int fts3BestIndexMethod(sqlite3_vtab *pVTab, sqlite3_index_info *pInfo){
         ** function MATCH in the requested context" error. To discourage
         ** this, return a very high cost here.  */
         pInfo->idxNum = FTS3_FULLSCAN_SEARCH;
-        pInfo->estimatedCost = 1e50;
+        pInfo->estimatedCost = SQLITE_HUGE_COST;
         fts3SetEstimatedRows(pInfo, ((sqlite3_int64)1) << 50);
         return SQLITE_OK;
       }
@@ -190961,7 +190961,7 @@ static int fts5BestIndexMethod(sqlite3_vtab *pVTab, sqlite3_index_info *pInfo){
         }else if( j==0 ){
           /* As there exists an unusable MATCH constraint this is an 
           ** unusable plan. Set a prohibitively high cost. */
-          pInfo->estimatedCost = 1e50;
+          pInfo->estimatedCost = SQLITE_HUGE_COST;
           return SQLITE_OK;
         }
       }
