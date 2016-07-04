@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.53 2016/04/26 08:44:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.54 2016/07/04 04:17:25 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.53 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.54 2016/07/04 04:17:25 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.53 2016/04/26 08:44:44 ozaki-r Exp $"
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
+#include <sys/once.h>
+#include <sys/rwlock.h>
 
 #include <net/if.h>
 
@@ -123,6 +125,12 @@ static void encap_fillarg(struct mbuf *, const struct encaptab *);
 LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
 
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
+
+static ONCE_DECL(encap_init_control);
+
+static krwlock_t encap_whole_lock __cacheline_aligned;
+
+static int encap_init_once(void);
 
 void
 encap_init(void)
@@ -166,6 +174,7 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct radix_node *rn;
 
 	KASSERT(m->m_len >= sizeof(*ip));
+	KASSERT(rw_read_held(&encap_whole_lock));
 
 	ip = mtod(m, struct ip *);
 
@@ -246,6 +255,7 @@ encap4_input(struct mbuf *m, ...)
 	proto = va_arg(ap, int);
 	va_end(ap);
 
+	rw_enter(&encap_whole_lock, RW_READER);
 	match = encap4_lookup(m, off, proto, INBOUND);
 
 	if (match) {
@@ -253,11 +263,15 @@ encap4_input(struct mbuf *m, ...)
 		esw = match->esw;
 		if (esw && esw->encapsw4.pr_input) {
 			encap_fillarg(m, match);
+			rw_exit(&encap_whole_lock);
 			(*esw->encapsw4.pr_input)(m, off, proto);
-		} else
+		} else {
+			rw_exit(&encap_whole_lock);
 			m_freem(m);
+		}
 		return;
 	}
+	rw_exit(&encap_whole_lock);
 
 	/* last resort: inject to raw socket */
 	rip_input(m, off, proto);
@@ -276,6 +290,7 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	struct radix_node *rn;
 
 	KASSERT(m->m_len >= sizeof(*ip6));
+	KASSERT(rw_read_held(&encap_whole_lock));
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -330,6 +345,7 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 	const struct encapsw *esw;
 	struct encaptab *match;
 
+	rw_enter(&encap_whole_lock, RW_READER);
 	match = encap6_lookup(m, *offp, proto, INBOUND);
 
 	if (match) {
@@ -337,23 +353,32 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 		esw = match->esw;
 		if (esw && esw->encapsw6.pr_input) {
 			encap_fillarg(m, match);
+			rw_exit(&encap_whole_lock);
 			return (*esw->encapsw6.pr_input)(mp, offp, proto);
 		} else {
+			rw_exit(&encap_whole_lock);
 			m_freem(m);
 			return IPPROTO_DONE;
 		}
 	}
+	rw_exit(&encap_whole_lock);
 
 	/* last resort: inject to raw socket */
 	return rip6_input(mp, offp, proto);
 }
 #endif
 
+/*
+ * XXX
+ * The encaptab list and the rnh radix tree must be manipulated atomically.
+ */
 static int
 encap_add(struct encaptab *ep)
 {
 	struct radix_node_head *rnh = encap_rnh(ep->af);
 	int error = 0;
+
+	KASSERT(rw_write_held(&encap_whole_lock));
 
 	LIST_INSERT_HEAD(&encaptab, ep, chain);
 	if (!ep->func && rnh) {
@@ -370,11 +395,17 @@ encap_add(struct encaptab *ep)
 	return error;
 }
 
+/*
+ * XXX
+ * The encaptab list and the rnh radix tree must be manipulated atomically.
+ */
 static int
 encap_remove(struct encaptab *ep)
 {
 	struct radix_node_head *rnh = encap_rnh(ep->af);
 	int error = 0;
+
+	KASSERT(rw_write_held(&encap_whole_lock));
 
 	LIST_REMOVE(ep, chain);
 	if (!ep->func && rnh) {
@@ -420,6 +451,15 @@ encap_afcheck(int af, const struct sockaddr *sp, const struct sockaddr *dp)
 	return 0;
 }
 
+static int
+encap_init_once(void)
+{
+
+	rw_init(&encap_whole_lock);
+
+	return 0;
+}
+
 /*
  * sp (src ptr) is always my side, and dp (dst ptr) is always remote side.
  * length of mask (sm and dm) is assumed to be same as sp/dp.
@@ -439,6 +479,8 @@ encap_attach(int af, int proto,
 #ifdef INET6
 	struct ip_pack6 *pack6;
 #endif
+
+	RUN_ONCE(&encap_init_control, encap_init_once);
 
 	s = splsoftnet();
 	/* sanity check on args */
@@ -535,7 +577,9 @@ encap_attach(int af, int proto,
 	ep->esw = esw;
 	ep->arg = arg;
 
+	rw_enter(&encap_whole_lock, RW_WRITER);
 	error = encap_add(ep);
+	rw_exit(&encap_whole_lock);
 	if (error)
 		goto gc;
 
@@ -564,6 +608,8 @@ encap_attach_func(int af, int proto,
 	int error;
 	int s;
 
+	RUN_ONCE(&encap_init_control, encap_init_once);
+
 	s = splsoftnet();
 	/* sanity check on args */
 	if (!func) {
@@ -588,7 +634,9 @@ encap_attach_func(int af, int proto,
 	ep->esw = esw;
 	ep->arg = arg;
 
+	rw_enter(&encap_whole_lock, RW_WRITER);
 	error = encap_add(ep);
+	rw_exit(&encap_whole_lock);
 	if (error)
 		goto fail;
 
@@ -644,9 +692,11 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 			/*
 		 	* Check to see if we have a valid encap configuration.
 		 	*/
+			rw_enter(&encap_whole_lock, RW_READER);
 			match = encap6_lookup(m, off, nxt, OUTBOUND);
 			if (match)
 				valid++;
+			rw_exit(&encap_whole_lock);
 
 			/*
 		 	* Depending on the value of "valid" and routing table
@@ -664,6 +714,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	}
 
 	/* inform all listeners */
+	rw_enter(&encap_whole_lock, RW_READER);
 	LIST_FOREACH(ep, &encaptab, chain) {
 		if (ep->af != AF_INET6)
 			continue;
@@ -678,6 +729,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 			(*esw->encapsw6.pr_ctlinput)(cmd, sa, d, ep->arg);
 		}
 	}
+	rw_exit(&encap_whole_lock);
 
 	rip6_ctlinput(cmd, sa, d0);
 	return NULL;
@@ -691,11 +743,14 @@ encap_detach(const struct encaptab *cookie)
 	struct encaptab *p, *np;
 	int error;
 
+	rw_enter(&encap_whole_lock, RW_WRITER);
 	LIST_FOREACH_SAFE(p, &encaptab, chain, np) {
 		if (p == ep) {
 			error = encap_remove(p);
+			rw_exit(&encap_whole_lock);
 			if (error)
 				return error;
+
 			if (!ep->func) {
 				kmem_free(p->addrpack, ep->addrpack->sa_len);
 				kmem_free(p->maskpack, ep->maskpack->sa_len);
@@ -704,6 +759,7 @@ encap_detach(const struct encaptab *cookie)
 			return 0;
 		}
 	}
+	rw_exit(&encap_whole_lock);
 
 	return ENOENT;
 }
@@ -747,6 +803,8 @@ encap_fillarg(struct mbuf *m, const struct encaptab *ep)
 {
 	struct m_tag *mtag;
 
+	KASSERT(rw_read_held(&encap_whole_lock));
+
 	mtag = m_tag_get(PACKET_TAG_ENCAP, sizeof(void *), M_NOWAIT);
 	if (mtag) {
 		*(void **)(mtag + 1) = ep->arg;
@@ -767,4 +825,24 @@ encap_getarg(struct mbuf *m)
 		m_tag_delete(m, mtag);
 	}
 	return p;
+}
+
+void
+encap_lock_enter(void)
+{
+
+	/* XXX future work
+	 * change interruptable lock.
+	 */
+	KERNEL_LOCK(1, NULL);
+}
+
+void
+encap_lock_exit(void)
+{
+
+	/* XXX future work
+	 * change interruptable lock
+	 */
+	KERNEL_UNLOCK_ONE(NULL);
 }
