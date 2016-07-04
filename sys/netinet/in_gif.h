@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.h,v 1.15 2016/01/26 06:00:10 knakahara Exp $	*/
+/*	$NetBSD: in_gif.h,v 1.16 2016/07/04 04:22:47 knakahara Exp $	*/
 /*	$KAME: in_gif.h,v 1.6 2001/07/25 00:55:48 itojun Exp $	*/
 
 /*
@@ -45,5 +45,6 @@ int gif_encapcheck4(struct mbuf *, int, int, void *);
 #endif
 int in_gif_attach(struct gif_softc *);
 int in_gif_detach(struct gif_softc *);
+int in_gif_pause(struct gif_softc *);
 
 #endif /* !_NETINET_IN_GIF_H_ */

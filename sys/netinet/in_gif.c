@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.77 2016/07/04 04:14:47 knakahara Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.78 2016/07/04 04:22:47 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.77 2016/07/04 04:14:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.78 2016/07/04 04:22:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -390,11 +390,21 @@ in_gif_detach(struct gif_softc *sc)
 {
 	int error;
 
+	error = in_gif_pause(sc);
+
+	rtcache_free(&sc->gif_ro);
+
+	return error;
+}
+
+int
+in_gif_pause(struct gif_softc *sc)
+{
+	int error;
+
 	error = encap_detach(sc->encap_cookie4);
 	if (error == 0)
 		sc->encap_cookie4 = NULL;
-
-	rtcache_free(&sc->gif_ro);
 
 	return error;
 }
