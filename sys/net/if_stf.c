@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.91 2016/06/22 07:48:17 ozaki-r Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.92 2016/07/04 04:17:25 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.91 2016/06/22 07:48:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.92 2016/07/04 04:17:25 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -191,17 +191,20 @@ stf_clone_create(struct if_clone *ifc, int unit)
 {
 	struct stf_softc *sc;
 
+	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT|M_ZERO);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
+
+	encap_lock_enter();
 	if (LIST_FIRST(&stf_softc_list) != NULL) {
 		/* Only one stf interface is allowed. */
+		encap_lock_exit();
+		free(sc, M_DEVBUF);
 		return (EEXIST);
 	}
 
-	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT|M_ZERO);
-
-	if_initname(&sc->sc_if, ifc->ifc_name, unit);
-
 	sc->encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV6,
 	    stf_encapcheck, &in_stf_encapsw, sc);
+	encap_lock_exit();
 	if (sc->encap_cookie == NULL) {
 		printf("%s: unable to attach encap\n", if_name(&sc->sc_if));
 		free(sc, M_DEVBUF);
@@ -226,8 +229,10 @@ stf_clone_destroy(struct ifnet *ifp)
 {
 	struct stf_softc *sc = (void *) ifp;
 
+	encap_lock_enter();
 	LIST_REMOVE(sc, sc_list);
 	encap_detach(sc->encap_cookie);
+	encap_lock_exit();
 	bpf_detach(ifp);
 	if_detach(ifp);
 	rtcache_free(&sc->sc_ro);
