@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.113 2016/06/27 09:06:56 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.114 2016/07/04 04:14:47 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.113 2016/06/27 09:06:56 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.114 2016/07/04 04:14:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.113 2016/06/27 09:06:56 knakahara Exp $
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -107,6 +108,10 @@ static int	gif_check_nesting(struct ifnet *, struct mbuf *);
 
 static int	gif_encap_attach(struct gif_softc *);
 static int	gif_encap_detach(struct gif_softc *);
+static void	gif_encap_pause(struct gif_softc *);
+
+static void	gif_list_lock_enter(void);
+static void	gif_list_lock_exit(void);
 
 static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
@@ -226,7 +231,8 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 	if (sc == NULL)
 		return 0;
 
-	if ((sc->gif_if.if_flags & IFF_UP) == 0)
+	if ((sc->gif_if.if_flags & (IFF_UP|IFF_RUNNING))
+	    != (IFF_UP|IFF_RUNNING))
 		return 0;
 
 	/* no physical address */
@@ -329,7 +335,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
-	if (!(ifp->if_flags & IFF_UP) ||
+	if (((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) ||
 	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
 		m_freem(m);
 		error = ENETDOWN;
@@ -776,6 +782,25 @@ gif_encap_detach(struct gif_softc *sc)
 	return error;
 }
 
+static void
+gif_encap_pause(struct gif_softc *sc)
+{
+	struct ifnet *ifp = &sc->gif_if;
+	uint64_t where;
+
+	ifp->if_flags &= ~IFF_RUNNING;
+	/* membar_sync() is done in xc_broadcast(). */
+
+	/*
+	 * Wait for softint_execute()(ipintr() or ip6intr())
+	 * completion done by other CPUs which already run over if_flags
+	 * check in in_gif_input() or in6_gif_input().
+	 * Furthermore, wait for gif_output() completion too.
+	 */
+	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
+	xc_wait(where);
+}
+
 static int
 gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
@@ -787,6 +812,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	int error;
 
 	s = splsoftnet();
+	gif_list_lock_enter();
 
 	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
 		if (sc2 == sc)
@@ -797,6 +823,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
 		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
 			/* continue to use the old configureation. */
+			gif_list_lock_exit();
 			splx(s);
 			return EADDRNOTAVAIL;
 		}
@@ -805,14 +832,18 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 
 	if ((nsrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
+		gif_list_lock_exit();
 		splx(s);
 		return ENOMEM;
 	}
 	if ((ndst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
 		sockaddr_free(nsrc);
+		gif_list_lock_exit();
 		splx(s);
 		return ENOMEM;
 	}
+
+	gif_encap_pause(sc);
 
 	/* Firstly, clear old configurations. */
 	/* XXX we can detach from both, but be polite just in case */
@@ -858,6 +889,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	else
 		ifp->if_flags &= ~IFF_RUNNING;
 
+	gif_list_lock_exit();
 	splx(s);
 	return error;
 }
@@ -869,7 +901,9 @@ gif_delete_tunnel(struct ifnet *ifp)
 	int s;
 
 	s = splsoftnet();
+	gif_list_lock_enter();
 
+	gif_encap_pause(sc);
 	if (sc->gif_psrc) {
 		sockaddr_free(sc->gif_psrc);
 		sc->gif_psrc = NULL;
@@ -890,5 +924,27 @@ gif_delete_tunnel(struct ifnet *ifp)
 		ifp->if_flags |= IFF_RUNNING;
 	else
 		ifp->if_flags &= ~IFF_RUNNING;
+
+	gif_list_lock_exit();
 	splx(s);
+}
+
+static void
+gif_list_lock_enter(void)
+{
+
+	/* XXX future work
+	 * should change interruptable lock.
+	 */
+	KERNEL_LOCK(1, NULL);
+}
+
+static void
+gif_list_lock_exit(void)
+{
+
+	/* XXX future work
+	 * should change interruptable lock.
+	 */
+	KERNEL_UNLOCK_ONE(NULL);
 }

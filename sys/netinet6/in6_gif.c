@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.75 2016/06/28 02:02:56 ozaki-r Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.76 2016/07/04 04:14:47 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.75 2016/06/28 02:02:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.76 2016/07/04 04:14:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -215,7 +215,8 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
-	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
+	if (gifp == NULL || (gifp->if_flags & (IFF_UP|IFF_RUNNING))
+		!= (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
