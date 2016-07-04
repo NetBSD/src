@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.56 2016/07/04 04:29:11 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.57 2016/07/04 04:31:04 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.56 2016/07/04 04:29:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.57 2016/07/04 04:31:04 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -147,6 +147,7 @@ static struct {
 
 #ifdef USE_RADIX
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
+static bool encap_head_updating = false;
 #endif
 
 static ONCE_DECL(encap_init_control);
@@ -221,6 +222,14 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 
 	s = pserialize_read_enter();
 #ifdef USE_RADIX
+	if (encap_head_updating) {
+		/*
+		 * Update in progress. Do nothing.
+		 */
+		pserialize_read_exit(s);
+		return NULL;
+	}
+
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
 		struct encaptab *encapp = (struct encaptab *)rn;
@@ -381,6 +390,14 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir,
 
 	s = pserialize_read_enter();
 #ifdef USE_RADIX
+	if (encap_head_updating) {
+		/*
+		 * Update in progress. Do nothing.
+		 */
+		pserialize_read_exit(s);
+		return NULL;
+	}
+
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
 		struct encaptab *encapp = (struct encaptab *)rn;
@@ -498,13 +515,25 @@ encap_add(struct encaptab *ep)
 
 #ifdef USE_RADIX
 	if (!ep->func && rnh) {
+		/* Disable access to the radix tree for reader. */
+		encap_head_updating = true;
 		/* Wait for all readers to drain. */
 		pserialize_perform(encaptab.psz);
 
 		if (!rnh->rnh_addaddr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh, ep->nodes)) {
+			encap_head_updating = false;
 			return EEXIST;
 		}
+
+		/*
+		 * The ep added to the radix tree must be skipped while
+		 * encap[46]_lookup walks encaptab list. In other words,
+		 * encap_add() does not need to care whether the ep has
+		 * been added encaptab list or not yet.
+		 * So, we can re-enable access to the radix tree for now.
+		 */
+		encap_head_updating = false;
 	}
 #endif
 	PSLIST_WRITER_INSERT_HEAD(&encap_table, ep, chain);
@@ -528,12 +557,23 @@ encap_remove(struct encaptab *ep)
 
 #ifdef USE_RADIX
 	if (!ep->func && rnh) {
+		/* Disable access to the radix tree for reader. */
+		encap_head_updating = true;
 		/* Wait for all readers to drain. */
 		pserialize_perform(encaptab.psz);
 
 		if (!rnh->rnh_deladdr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh))
 			error = ESRCH;
+
+		/*
+		 * The ep added to the radix tree must be skipped while
+		 * encap[46]_lookup walks encaptab list. In other words,
+		 * encap_add() does not need to care whether the ep has
+		 * been added encaptab list or not yet.
+		 * So, we can re-enable access to the radix tree for now.
+		 */
+		encap_head_updating = false;
 	}
 #endif
 	PSLIST_WRITER_REMOVE(ep, chain);
