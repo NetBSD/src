@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.40 2016/07/04 04:17:25 knakahara Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.41 2016/07/04 04:35:09 knakahara Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.40 2016/07/04 04:17:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.41 2016/07/04 04:35:09 knakahara Exp $");
 
 /*
  * IP-inside-IP processing
@@ -725,7 +725,10 @@ ipe4_attach(void)
 	xform_register(&ipe4_xformsw);
 	/* attach to encapsulation framework */
 	/* XXX save return cookie for detach on module remove */
-	encap_lock_enter();
+
+	encapinit();
+	/* This function is called before ifinit(). Who else gets lock? */
+	(void)encap_lock_enter();
 	/* ipe4_encapsw and ipe4_encapsw must be added atomically */
 #ifdef INET
 	(void) encap_attach_func(AF_INET, -1,

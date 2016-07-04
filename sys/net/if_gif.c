@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.116 2016/07/04 04:22:47 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.117 2016/07/04 04:35:09 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.116 2016/07/04 04:22:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.117 2016/07/04 04:35:09 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -829,7 +829,11 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	int error;
 
 	s = splsoftnet();
-	encap_lock_enter();
+	error = encap_lock_enter();
+	if (error) {
+		splx(s);
+		return error;
+	}
 
 	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
 		if (sc2 == sc)
@@ -916,9 +920,14 @@ gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int s;
+	int error;
 
 	s = splsoftnet();
-	encap_lock_enter();
+	error = encap_lock_enter();
+	if (error) {
+		splx(s);
+		return;
+	}
 
 	gif_encap_pause(sc);
 	if (sc->gif_psrc) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.21 2016/07/04 04:29:11 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.22 2016/07/04 04:35:09 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -97,6 +97,8 @@ struct ip_pack6 {
 	struct sockaddr_in6 yours;
 };
 
+void	encapinit(void);
+
 void	encap_init(void);
 void	encap4_input(struct mbuf *, ...);
 int	encap6_input(struct mbuf **, int *, int);
@@ -110,7 +112,7 @@ void	*encap6_ctlinput(int, const struct sockaddr *, void *);
 int	encap_detach(const struct encaptab *);
 void	*encap_getarg(struct mbuf *);
 
-void	encap_lock_enter(void);
+int	encap_lock_enter(void);
 void	encap_lock_exit(void);
 bool	encap_lock_held(void);
 

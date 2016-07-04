@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.351 2016/07/04 01:36:06 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.352 2016/07/04 04:35:09 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,10 +90,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.351 2016/07/04 01:36:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.352 2016/07/04 04:35:09 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include "opt_atalk.h"
 #include "opt_natm.h"
@@ -137,6 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.351 2016/07/04 01:36:06 ozaki-r Exp $");
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifndef IPSEC
+#include <netinet/ip_encap.h>
+#endif
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -256,6 +260,10 @@ ifinit(void)
 #ifdef INET6
 	if (in6_present)
 		sysctl_net_pktq_setup(NULL, PF_INET6);
+#endif
+
+#ifndef IPSEC
+	encapinit();
 #endif
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
