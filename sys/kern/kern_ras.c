@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.37 2016/07/01 12:49:22 maxv Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.37 2016/07/01 12:49:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,8 @@ ras_install(void *addr, size_t len)
 	/* Do not warn about < NULL pointer comparison */
 	__WARNING_PUSH_LESS_NULL_PTR
 	if (addr < (void *)VM_MIN_ADDRESS || addr > (void *)VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (endaddr > (void *)VM_MAXUSER_ADDRESS)
 		return EINVAL;
 	if (endaddr < addr)
 		return EINVAL;

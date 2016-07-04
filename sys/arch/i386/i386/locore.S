@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.132 2016/07/01 13:11:21 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.133 2016/07/04 07:56:07 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.132 2016/07/01 13:11:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.133 2016/07/04 07:56:07 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -1191,14 +1191,25 @@ skip_save:
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
 	cmpl	$0,P_RASLIST(%eax)
-	jne	5f
+	je	no_RAS
+
+	/* Handle restartable atomic sequences (RAS). */
+	movl	L_MD_REGS(%edi),%ecx
+	pushl	TF_EIP(%ecx)
+	pushl	%eax
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	no_RAS
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
+no_RAS:
 
 	/*
 	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-2:
 #ifdef XEN
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
@@ -1230,18 +1241,6 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
-
-	/* Check for restartable atomic sequences (RAS). */
-5:	movl	L_MD_REGS(%edi),%ecx
-	pushl	TF_EIP(%ecx)
-	pushl	%eax
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	2b
-	movl	L_MD_REGS(%edi),%ecx
-	movl	%eax,TF_EIP(%ecx)
-	jmp	2b
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */
