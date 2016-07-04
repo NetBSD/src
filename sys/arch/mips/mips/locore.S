@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.200 2016/07/02 19:40:57 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.201 2016/07/04 15:20:16 maya Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -499,8 +499,8 @@ END(lwp_oncpu)
  * void savectx(struct pcb *)
  */
 LEAF(savectx)
-#ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+#ifdef PARANOIA
 	MFC0_HAZARD
 	and	t0, v0, MIPS_SR_INT_IE
 #if __mips >= 32
