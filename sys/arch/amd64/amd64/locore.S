@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.103 2016/07/01 13:11:21 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.104 2016/07/04 07:56:07 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1138,13 +1138,21 @@ skip_save:
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
 	cmpq	$0,P_RASLIST(%rdi)
-	jne	5f
+	je	no_RAS
+
+	/* Handle restartable atomic sequences (RAS). */
+	movq	L_MD_REGS(%r12),%rbx
+	movq	TF_RIP(%rbx),%rsi
+	call	_C_LABEL(ras_lookup)
+	cmpq	$-1,%rax
+	je	no_RAS
+	movq	%rax,TF_RIP(%rbx)
+no_RAS:
 
 	/*
 	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
 	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
 	 */
-2:
 #ifndef XEN
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
@@ -1223,15 +1231,6 @@ switch_return:
 	popq	%r12
 	popq	%rbx
 	ret
-
-	/* Check for restartable atomic sequences (RAS). */
-5:	movq	L_MD_REGS(%r12),%rbx
-	movq	TF_RIP(%rbx),%rsi
-	call	_C_LABEL(ras_lookup)
-	cmpq	$-1,%rax
-	je	2b
-	movq	%rax,TF_RIP(%rbx)
-	jmp	2b
 END(cpu_switchto)
 
 /*
