@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.118 2016/07/04 04:40:13 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.119 2016/07/04 04:43:46 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.118 2016/07/04 04:40:13 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.119 2016/07/04 04:43:46 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,6 +100,7 @@ static void	gifattach0(struct gif_softc *);
 static int	gif_output(struct ifnet *, struct mbuf *,
 			   const struct sockaddr *, const struct rtentry *);
 static void	gif_start(struct ifnet *);
+static int	gif_transmit(struct ifnet *, struct mbuf *);
 static int	gif_ioctl(struct ifnet *, u_long, void *);
 static int	gif_set_tunnel(struct ifnet *, struct sockaddr *,
 			       struct sockaddr *);
@@ -195,6 +196,8 @@ gifattach0(struct gif_softc *sc)
 	sc->gif_if.if_extflags  = IFEF_NO_LINK_STATE_CHANGE;
 	sc->gif_if.if_ioctl  = gif_ioctl;
 	sc->gif_if.if_output = gif_output;
+	sc->gif_if.if_start = gif_start;
+	sc->gif_if.if_transmit = gif_transmit;
 	sc->gif_if.if_type   = IFT_GIF;
 	sc->gif_if.if_dlt    = DLT_NULL;
 	sc->gif_if.if_softc  = sc;
@@ -327,9 +330,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
-#ifndef GIF_MPSAFE
-	int s;
-#endif
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
@@ -360,24 +360,7 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 
-#ifndef GIF_MPSAFE
-	s = splnet();
-#endif
-	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-	if (error) {
-#ifndef GIF_MPSAFE
-		splx(s);
-#endif
-		goto end;
-	}
-#ifndef GIF_MPSAFE
-	splx(s);
-#endif
-
-	gif_start(ifp);
-
-	error = 0;
-
+	error = if_transmit_lock(ifp, m);
   end:
 	if (error)
 		ifp->if_oerrors++;
@@ -458,6 +441,71 @@ gif_start(struct ifnet *ifp)
 			ifp->if_obytes += len;
 		}
 	}
+}
+
+static int
+gif_transmit(struct ifnet *ifp, struct mbuf *m)
+{
+	struct gif_softc *sc;
+	int family;
+	int len;
+	int error;
+
+	sc = ifp->if_softc;
+
+	/* output processing */
+	if (m == NULL)
+		return EINVAL;
+
+	/* grab and chop off inner af type */
+	if (sizeof(int) > m->m_len) {
+		m = m_pullup(m, sizeof(int));
+		if (!m) {
+			ifp->if_oerrors++;
+			return ENOBUFS;
+		}
+	}
+	family = *mtod(m, int *);
+	bpf_mtap(ifp, m);
+	m_adj(m, sizeof(int));
+
+	len = m->m_pkthdr.len;
+
+	/* dispatch to output logic based on outer AF */
+	switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		/* XXX
+		 * To add mutex_enter(softnet_lock) or
+		 * KASSERT(mutex_owned(softnet_lock)) here, we shold
+		 * coordinate softnet_lock between in6_if_up() and
+		 * in6_purgeif().
+		 */
+		error = in_gif_output(ifp, family, m);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		/* XXX
+		 * the same as in_gif_output()
+		 */
+		error = in6_gif_output(ifp, family, m);
+		break;
+#endif
+	default:
+		m_freem(m);
+		error = ENETDOWN;
+		break;
+	}
+
+	if (error)
+		ifp->if_oerrors++;
+	else {
+		ifp->if_opackets++;
+		ifp->if_obytes += len;
+	}
+
+	return error;
 }
 
 void
