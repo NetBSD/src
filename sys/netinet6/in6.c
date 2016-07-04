@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.203 2016/07/04 02:41:18 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.204 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.203 2016/07/04 02:41:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.204 2016/07/04 06:48:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,7 +209,7 @@ in6_ifremlocal(struct ifaddr *ifa)
 	 * XXX agree, especially now that I have fixed the dangling
 	 * XXX ifp-pointers bug.
 	 */
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (!IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ia->ia_addr.sin6_addr))
 			continue;
 		if (ia->ia_ifp != ifa->ifa_ifp)
@@ -758,7 +758,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
     struct in6_ifaddr *ia, int flags)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
-	struct in6_ifaddr *oia;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
@@ -921,6 +920,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    (struct sockaddr *)&ia->ia_prefixmask;
 
 		ia->ia_ifp = ifp;
+		IN6_ADDRLIST_ENTRY_INIT(ia);
 	}
 
 	/* update timestamp */
@@ -1027,12 +1027,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	/*
 	 * Insert ia to the global list and ifa to the interface's list.
 	 */
-	if ((oia = in6_ifaddr) != NULL) {
-		for ( ; oia->ia_next; oia = oia->ia_next)
-			continue;
-		oia->ia_next = ia;
-	} else
-		in6_ifaddr = ia;
+	IN6_ADDRLIST_WRITER_INSERT_TAIL(ia);
+
 	/* gain a refcnt for the link from in6_ifaddr */
 	ifaref(&ia->ia_ifa);
 	ifa_insert(ifp, &ia->ia_ifa);
@@ -1352,52 +1348,39 @@ in6_purgeaddr(struct ifaddr *ifa)
 static void
 in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
-	struct in6_ifaddr *oia;
 	int	s = splnet();
 
 	ifa_remove(ifp, &ia->ia_ifa);
 
-	oia = ia;
-	if (oia == (ia = in6_ifaddr))
-		in6_ifaddr = ia->ia_next;
-	else {
-		while (ia->ia_next && (ia->ia_next != oia))
-			ia = ia->ia_next;
-		if (ia->ia_next)
-			ia->ia_next = oia->ia_next;
-		else {
-			/* search failed */
-			printf("Couldn't unlink in6_ifaddr from in6_ifaddr\n");
-		}
-	}
+	IN6_ADDRLIST_WRITER_REMOVE(ia);
 
 	/*
 	 * XXX thorpej@NetBSD.org -- if the interface is going
 	 * XXX away, don't save the multicast entries, delete them!
 	 */
-	if (LIST_EMPTY(&oia->ia6_multiaddrs))
+	if (LIST_EMPTY(&ia->ia6_multiaddrs))
 		;
-	else if (if_is_deactivated(oia->ia_ifa.ifa_ifp)) {
+	else if (if_is_deactivated(ia->ia_ifa.ifa_ifp)) {
 		struct in6_multi *in6m, *next;
 
-		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs); in6m != NULL;
+		for (in6m = LIST_FIRST(&ia->ia6_multiaddrs); in6m != NULL;
 		     in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
 			in6_delmulti(in6m);
 		}
 	} else
-		in6_savemkludge(oia);
+		in6_savemkludge(ia);
 
 	/*
 	 * Release the reference to the base prefix.  There should be a
 	 * positive reference.
 	 */
-	if (oia->ia6_ndpr == NULL) {
+	if (ia->ia6_ndpr == NULL) {
 		nd6log(LOG_NOTICE, "autoconf'ed address %p has no prefix\n",
-		    oia);
+		    ia);
 	} else {
-		oia->ia6_ndpr->ndpr_refcnt--;
-		oia->ia6_ndpr = NULL;
+		ia->ia6_ndpr->ndpr_refcnt--;
+		ia->ia6_ndpr = NULL;
 	}
 
 	/*
@@ -1405,14 +1388,14 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * pfxlist_onlink_check() since the release might affect the status of
 	 * other (detached) addresses.
 	 */
-	if ((oia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
+	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
 		pfxlist_onlink_check();
 
 	/*
 	 * release another refcnt for the link from in6_ifaddr.
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
-	ifafree(&oia->ia_ifa);
+	ifafree(&ia->ia_ifa);
 
 	splx(s);
 }
@@ -1789,7 +1772,7 @@ in6ifa_ifwithaddr(const struct in6_addr *addr, uint32_t zoneid)
 	IN6_IFADDR_RLOCK();
 	LIST_FOREACH(ia, IN6ADDR_HASH(addr), ia6_hash) {
 #else
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 #endif
 		if (IN6_ARE_ADDR_EQUAL(IA6_IN6(ia), addr)) {
 			if (zoneid != 0 &&
@@ -1858,10 +1841,11 @@ in6_localaddr(const struct in6_addr *in6)
 	if (IN6_IS_ADDR_LOOPBACK(in6) || IN6_IS_ADDR_LINKLOCAL(in6))
 		return 1;
 
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next)
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_MASKED_ADDR_EQUAL(in6, &ia->ia_addr.sin6_addr,
 					      &ia->ia_prefixmask.sin6_addr))
 			return 1;
+	}
 
 	return 0;
 }
@@ -1871,7 +1855,7 @@ in6_is_addr_deprecated(struct sockaddr_in6 *sa6)
 {
 	struct in6_ifaddr *ia;
 
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &sa6->sin6_addr) &&
 #ifdef SCOPEDROUTING
