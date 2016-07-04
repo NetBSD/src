@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.112 2016/06/15 06:01:21 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.113 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.112 2016/06/15 06:01:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.113 2016/07/04 06:48:14 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1538,7 +1538,7 @@ pfxlist_onlink_check(void)
 	 * always be attached.
 	 * The precise detection logic is same as the one for prefixes.
 	 */
-	for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ifa) {
 		if (!(ifa->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
 
@@ -1555,7 +1555,7 @@ pfxlist_onlink_check(void)
 			break;
 	}
 	if (ifa) {
-		for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+		IN6_ADDRLIST_READER_FOREACH(ifa) {
 			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
@@ -1582,7 +1582,7 @@ pfxlist_onlink_check(void)
 		}
 	}
 	else {
-		for (ifa = in6_ifaddr; ifa; ifa = ifa->ia_next) {
+		IN6_ADDRLIST_READER_FOREACH(ifa) {
 			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
@@ -1937,7 +1937,7 @@ in6_tmpifadd(
 	 * there may be a time lag between generation of the ID and generation
 	 * of the address.  So, we'll do one more sanity check.
 	 */
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &ifra.ifra_addr.sin6_addr)) {
 			if (trylimit-- == 0) {

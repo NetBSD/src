@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.69 2016/06/22 07:48:17 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.70 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.69 2016/06/22 07:48:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.70 2016/07/04 06:48:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -742,7 +742,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * Delete all references of this multicasting group from
 		 * the membership arrays
 		 */
-		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+		IN6_ADDRLIST_READER_FOREACH(ia) {
 			struct in6_multi_mship *imm;
 			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
 				if (imm->i6mm_maddr == in6m)

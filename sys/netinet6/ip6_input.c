@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.161 2016/06/22 07:48:17 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.162 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.161 2016/06/22 07:48:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.162 2016/07/04 06:48:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.161 2016/06/22 07:48:17 ozaki-r Exp 
 extern struct domain inet6domain;
 
 u_char ip6_protox[IPPROTO_MAX];
-struct in6_ifaddr *in6_ifaddr;
+struct pslist_head		in6_ifaddr_list;
 pktqueue_t *ip6_pktq __read_mostly;
 
 int ip6_forward_srcrt;			/* XXX */
@@ -162,6 +162,8 @@ ip6_init(void)
 {
 	const struct ip6protosw *pr;
 	int i;
+
+	PSLIST_INIT(&in6_ifaddr_list);
 
 	sysctl_net_inet6_ip6_setup(NULL);
 	pr = (const struct ip6protosw *)pffindproto(PF_INET6, IPPROTO_RAW, SOCK_RAW);

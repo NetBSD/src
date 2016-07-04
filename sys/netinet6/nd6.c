@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.198 2016/06/30 01:34:53 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.199 2016/07/04 06:48:14 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.198 2016/06/30 01:34:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.199 2016/07/04 06:48:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -583,8 +583,8 @@ nd6_timer(void *ignored_arg)
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
   addrloop:
-	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
-		nia6 = ia6->ia_next;
+	for (ia6 = IN6_ADDRLIST_WRITER_FIRST(); ia6; ia6 = nia6) {
+		nia6 = IN6_ADDRLIST_WRITER_NEXT(ia6);
 		/* check address lifetime */
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
@@ -1781,9 +1781,10 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-			for (ia = in6_ifaddr; ia; ia = ia_next) {
+			for (ia = IN6_ADDRLIST_WRITER_FIRST(); ia;
+			     ia = ia_next) {
 				/* ia might be removed.  keep the next ptr. */
-				ia_next = ia->ia_next;
+				ia_next = IN6_ADDRLIST_WRITER_NEXT(ia);
 
 				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
