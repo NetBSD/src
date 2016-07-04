@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.63 2016/07/02 19:40:57 maya Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.64 2016/07/04 14:29:55 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1651,12 +1651,12 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	 * Turn off FPU and enter kernel mode
 	 */
 #ifdef NOFPU
+	and	t0, a1, MIPS_SR_KSU_MASK|MIPS_SR_EXL
+	xor	t0, a1				# clear the bits
+#else
 	lui	t0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	t0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	and	t0, a1
-#else
-	and	t0, a1, MIPS_SR_EXL|MIPS_SR_KSU_MASK
-	xor	t0, a1				# turns off the FPU & ints on
 #endif
 	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
 	COP0_SYNC
