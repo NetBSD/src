@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.86 2016/07/04 15:47:04 dholland Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.87 2016/07/04 15:52:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -495,7 +495,11 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
-	 * Now we can enable interrupts since no interrupts can be delivered
+	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, turn the
+	 * global interrupt enable bit on again. This will allow
+	 * high-priority interrupts to be delivered once a
+	 * low-priority interrupt handler lowers spl to execute.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 	nop
