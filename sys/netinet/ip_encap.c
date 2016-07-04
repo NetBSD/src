@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.58 2016/07/04 04:32:55 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.59 2016/07/04 04:35:09 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.58 2016/07/04 04:32:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.59 2016/07/04 04:35:09 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.58 2016/07/04 04:32:55 knakahara Exp 
 #include <sys/kmem.h>
 #include <sys/once.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/psref.h>
 #include <sys/pslist.h>
 
@@ -145,6 +146,12 @@ static struct {
 };
 #define encap_table encaptab.list
 
+static struct {
+	kmutex_t	lock;
+	kcondvar_t	cv;
+	struct lwp	*busy;
+} encap_whole __cacheline_aligned;
+
 #ifdef USE_RADIX
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
 static bool encap_head_updating = false;
@@ -153,6 +160,18 @@ static bool encap_head_updating = false;
 static ONCE_DECL(encap_init_control);
 
 static int encap_init_once(void);
+
+/*
+ * must be done before other encap interfaces initialization.
+ */
+void
+encapinit(void)
+{
+
+	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&encap_whole.cv, "ip_encap cv");
+	encap_whole.busy = NULL;
+}
 
 void
 encap_init(void)
@@ -1081,32 +1100,40 @@ encap_getarg(struct mbuf *m)
 	return p;
 }
 
-void
+int
 encap_lock_enter(void)
 {
+	int error;
 
-	/* XXX future work
-	 * change interruptable lock.
-	 */
-	KERNEL_LOCK(1, NULL);
+	mutex_enter(&encap_whole.lock);
+	while (encap_whole.busy != NULL) {
+		error = cv_wait_sig(&encap_whole.cv, &encap_whole.lock);
+		if (error) {
+			mutex_exit(&encap_whole.lock);
+			return error;
+		}
+	}
+	KASSERT(encap_whole.busy == NULL);
+	encap_whole.busy = curlwp;
+	mutex_exit(&encap_whole.lock);
+
+	return 0;
 }
 
 void
 encap_lock_exit(void)
 {
 
-	/* XXX future work
-	 * change interruptable lock
-	 */
-	KERNEL_UNLOCK_ONE(NULL);
+	mutex_enter(&encap_whole.lock);
+	KASSERT(encap_whole.busy == curlwp);
+	encap_whole.busy = NULL;
+	cv_broadcast(&encap_whole.cv);
+	mutex_exit(&encap_whole.lock);
 }
 
 bool
 encap_lock_held(void)
 {
 
-	/* XXX future work
-	 * should change interruptable lock.
-	 */
-	return KERNEL_LOCKED_P();
+	return (encap_whole.busy == curlwp);
 }
