@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.117 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.118 2016/07/04 04:40:13 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.117 2016/07/04 04:35:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.118 2016/07/04 04:40:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -85,6 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.117 2016/07/04 04:35:09 knakahara Exp $
 #include <net/net_osdep.h>
 
 #include "ioconf.h"
+
+#ifdef NET_MPSAFE
+#define GIF_MPSAFE	1
+#endif
 
 /*
  * gif global variable definitions
@@ -322,7 +327,9 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
+#ifndef GIF_MPSAFE
 	int s;
+#endif
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family);
 
@@ -353,13 +360,19 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	m->m_pkthdr.csum_flags = 0;
 	m->m_pkthdr.csum_data = 0;
 
+#ifndef GIF_MPSAFE
 	s = splnet();
+#endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error) {
+#ifndef GIF_MPSAFE
 		splx(s);
+#endif
 		goto end;
 	}
+#ifndef GIF_MPSAFE
 	splx(s);
+#endif
 
 	gif_start(ifp);
 
@@ -378,16 +391,22 @@ gif_start(struct ifnet *ifp)
 	struct mbuf *m;
 	int family;
 	int len;
+#ifndef GIF_MPSAFE
 	int s;
+#endif
 	int error;
 
 	sc = ifp->if_softc;
 
 	/* output processing */
 	while (1) {
+#ifndef GIF_MPSAFE
 		s = splnet();
+#endif
 		IFQ_DEQUEUE(&sc->gif_if.if_snd, m);
+#ifndef GIF_MPSAFE
 		splx(s);
+#endif
 		if (m == NULL)
 			break;
 
@@ -446,7 +465,9 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 {
 	pktqueue_t *pktq;
 	size_t pktlen;
+#ifndef GIF_MPSAFE
 	int s;
+#endif
 
 	if (ifp == NULL) {
 		/* just in case */
@@ -481,14 +502,18 @@ gif_input(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
+#ifndef GIF_MPSAFE
 	s = splnet();
+#endif
 	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
 		ifp->if_ibytes += pktlen;
 		ifp->if_ipackets++;
 	} else {
 		m_freem(m);
 	}
+#ifndef GIF_MPSAFE
 	splx(s);
+#endif
 }
 
 /* XXX how should we handle IPv6 scope on SIOC[GS]IFPHYADDR? */
@@ -825,13 +850,17 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	struct gif_softc *sc2;
 	struct sockaddr *osrc, *odst;
 	struct sockaddr *nsrc, *ndst;
-	int s;
 	int error;
+#ifndef GIF_MPSAFE
+	int s;
 
 	s = splsoftnet();
+#endif
 	error = encap_lock_enter();
 	if (error) {
+#ifndef GIF_MPSAFE
 		splx(s);
+#endif
 		return error;
 	}
 
@@ -844,24 +873,21 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
 		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
 			/* continue to use the old configureation. */
-			encap_lock_exit();
-			splx(s);
-			return EADDRNOTAVAIL;
+			error =  EADDRNOTAVAIL;
+			goto out;
 		}
 
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
 	if ((nsrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
-		encap_lock_exit();
-		splx(s);
-		return ENOMEM;
+		error =  ENOMEM;
+		goto out;
 	}
 	if ((ndst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
 		sockaddr_free(nsrc);
-		encap_lock_exit();
-		splx(s);
-		return ENOMEM;
+		error = ENOMEM;
+		goto out;
 	}
 
 	gif_encap_pause(sc);
@@ -910,8 +936,11 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	else
 		ifp->if_flags &= ~IFF_RUNNING;
 
+ out:
 	encap_lock_exit();
+#ifndef GIF_MPSAFE
 	splx(s);
+#endif
 	return error;
 }
 
@@ -919,13 +948,17 @@ static void
 gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
-	int s;
 	int error;
+#ifndef GIF_MPSAFE
+	int s;
 
 	s = splsoftnet();
+#endif
 	error = encap_lock_enter();
 	if (error) {
+#ifndef GIF_MPSAFE
 		splx(s);
+#endif
 		return;
 	}
 
@@ -952,5 +985,7 @@ gif_delete_tunnel(struct ifnet *ifp)
 		ifp->if_flags &= ~IFF_RUNNING;
 
 	encap_lock_exit();
+#ifndef GIF_MPSAFE
 	splx(s);
+#endif
 }

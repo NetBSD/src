@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.60 2016/07/04 04:38:14 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.61 2016/07/04 04:40:13 knakahara Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,11 +68,12 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.60 2016/07/04 04:38:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.61 2016/07/04 04:40:13 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -109,6 +110,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.60 2016/07/04 04:38:14 knakahara Exp 
 #endif
 
 #include <net/net_osdep.h>
+
+#ifdef NET_MPSAFE
+#define ENCAP_MPSAFE	1
+#endif
 
 enum direction { INBOUND, OUTBOUND };
 
@@ -648,14 +653,17 @@ encap_attach(int af, int proto,
 {
 	struct encaptab *ep;
 	int error;
-	int s, pss;
+	int pss;
 	size_t l;
 	struct ip_pack4 *pack4;
 #ifdef INET6
 	struct ip_pack6 *pack6;
 #endif
+#ifndef ENCAP_MPSAFE
+	int s;
 
 	s = splsoftnet();
+#endif
 	/* sanity check on args */
 	error = encap_afcheck(af, sp, dp);
 	if (error)
@@ -761,7 +769,9 @@ encap_attach(int af, int proto,
 		goto gc;
 
 	error = 0;
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return ep;
 
 gc:
@@ -772,7 +782,9 @@ gc:
 	if (ep)
 		kmem_free(ep, sizeof(*ep));
 fail:
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return NULL;
 }
 
@@ -783,9 +795,11 @@ encap_attach_func(int af, int proto,
 {
 	struct encaptab *ep;
 	int error;
+#ifndef ENCAP_MPSAFE
 	int s;
 
 	s = splsoftnet();
+#endif
 	/* sanity check on args */
 	if (!func) {
 		error = EINVAL;
@@ -815,11 +829,15 @@ encap_attach_func(int af, int proto,
 		goto fail;
 
 	error = 0;
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return ep;
 
 fail:
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return NULL;
 }
 
