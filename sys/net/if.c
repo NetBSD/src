@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.350 2016/07/01 05:22:33 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.351 2016/07/04 01:36:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.350 2016/07/01 05:22:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.351 2016/07/04 01:36:06 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2021,6 +2021,8 @@ p2p_rtrequest(int req, struct rtentry *rt,
 		if ((rt->rt_flags & RTF_LOCAL) == 0)
 			break;
 
+		rt->rt_ifp = lo0ifp;
+
 		IFADDR_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
 				break;
@@ -2038,8 +2040,6 @@ p2p_rtrequest(int req, struct rtentry *rt,
 		}
 		if (lo0ifa == NULL)
 			break;
-
-		rt->rt_ifp = lo0ifp;
 
 		/*
 		 * Make sure to set rt->rt_ifa to the interface
