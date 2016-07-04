@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.92 2016/07/04 04:17:25 knakahara Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.93 2016/07/04 04:35:09 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.92 2016/07/04 04:17:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.93 2016/07/04 04:35:09 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -190,11 +190,17 @@ static int
 stf_clone_create(struct if_clone *ifc, int unit)
 {
 	struct stf_softc *sc;
+	int error;
 
 	sc = malloc(sizeof(struct stf_softc), M_DEVBUF, M_WAIT|M_ZERO);
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 
-	encap_lock_enter();
+	error = encap_lock_enter();
+	if (error) {
+		free(sc, M_DEVBUF);
+		return error;
+	}
+
 	if (LIST_FIRST(&stf_softc_list) != NULL) {
 		/* Only one stf interface is allowed. */
 		encap_lock_exit();
