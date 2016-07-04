@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.332 2016/06/30 06:56:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.333 2016/07/04 08:10:50 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.332 2016/06/30 06:56:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.333 2016/07/04 08:10:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -289,6 +289,11 @@ static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
 
+static struct in_ifaddr	*ip_match_our_address(struct ifnet *, struct ip *,
+			    int *);
+static struct in_ifaddr	*ip_match_our_address_broadcast(struct ifnet *,
+			    struct ip *);
+
 /* XXX: Not yet enabled. */
 #define	SOFTNET_LOCK()		KASSERT(mutex_owned(softnet_lock))
 #define	SOFTNET_UNLOCK()	KASSERT(mutex_owned(softnet_lock))
@@ -342,6 +347,81 @@ ip_init(void)
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
 }
 
+static struct in_ifaddr *
+ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
+{
+	struct in_ifaddr *ia = NULL;
+	int checkif;
+
+	/*
+	 * Enable a consistency check between the destination address
+	 * and the arrival interface for a unicast packet (the RFC 1122
+	 * strong ES model) if IP forwarding is disabled and the packet
+	 * is not locally generated.
+	 *
+	 * XXX - Checking also should be disabled if the destination
+	 * address is ipnat'ed to a different interface.
+	 *
+	 * XXX - Checking is incompatible with IP aliases added
+	 * to the loopback interface instead of the interface where
+	 * the packets are received.
+	 *
+	 * XXX - We need to add a per ifaddr flag for this so that
+	 * we get finer grain control.
+	 */
+	checkif = ip_checkinterface && (ipforwarding == 0) &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0;
+
+	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
+		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
+			if (ia->ia4_flags & IN_IFF_NOTREADY)
+				continue;
+			if (checkif && ia->ia_ifp != ifp)
+				continue;
+			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
+				break;
+			else
+				downmatch++;
+		}
+	}
+
+	return ia;
+}
+
+static struct in_ifaddr *
+ip_match_our_address_broadcast(struct ifnet *ifp, struct ip *ip)
+{
+	struct in_ifaddr *ia = NULL;
+	struct ifaddr *ifa;
+
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ia = ifatoia(ifa);
+		if (ia->ia4_flags & IN_IFF_NOTREADY)
+			continue;
+		if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
+		    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
+		    /*
+		     * Look for all-0's host part (old broadcast addr),
+		     * either for subnet or net.
+		     */
+		    ip->ip_dst.s_addr == ia->ia_subnet ||
+		    ip->ip_dst.s_addr == ia->ia_net)
+			goto matched;
+		/*
+		 * An interface with IP address zero accepts
+		 * all packets that arrive on that interface.
+		 */
+		if (in_nullhost(ia->ia_addr.sin_addr))
+			goto matched;
+	}
+	ia = NULL;
+
+matched:
+	return ia;
+}
+
 /*
  * IP software interrupt routine.
  */
@@ -368,10 +448,8 @@ ip_input(struct mbuf *m)
 {
 	struct ip *ip = NULL;
 	struct in_ifaddr *ia;
-	struct ifaddr *ifa;
 	int hlen = 0, len;
 	int downmatch;
-	int checkif;
 	int srcrt = 0;
 	ifnet_t *ifp;
 	struct psref psref;
@@ -581,25 +659,6 @@ ip_input(struct mbuf *m)
 		goto out;
 
 	/*
-	 * Enable a consistency check between the destination address
-	 * and the arrival interface for a unicast packet (the RFC 1122
-	 * strong ES model) if IP forwarding is disabled and the packet
-	 * is not locally generated.
-	 *
-	 * XXX - Checking also should be disabled if the destination
-	 * address is ipnat'ed to a different interface.
-	 *
-	 * XXX - Checking is incompatible with IP aliases added
-	 * to the loopback interface instead of the interface where
-	 * the packets are received.
-	 *
-	 * XXX - We need to add a per ifaddr flag for this so that
-	 * we get finer grain control.
-	 */
-	checkif = ip_checkinterface && (ipforwarding == 0) &&
-	    (ifp->if_flags & IFF_LOOPBACK) == 0;
-
-	/*
 	 * Check our list of addresses, to see if the packet is for us.
 	 *
 	 * Traditional 4.4BSD did not consult IFF_UP at all.
@@ -607,44 +666,16 @@ ip_input(struct mbuf *m)
 	 * or IN_IFF_NOTREADY addresses as not mine.
 	 */
 	downmatch = 0;
-	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
-		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
-			if (ia->ia4_flags & IN_IFF_NOTREADY)
-				continue;
-			if (checkif && ia->ia_ifp != ifp)
-				continue;
-			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
-				break;
-			else
-				downmatch++;
-		}
-	}
+	ia = ip_match_our_address(ifp, ip, &downmatch);
 	if (ia != NULL)
 		goto ours;
+
 	if (ifp->if_flags & IFF_BROADCAST) {
-		IFADDR_FOREACH(ifa, ifp) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-			ia = ifatoia(ifa);
-			if (ia->ia4_flags & IN_IFF_NOTREADY)
-				continue;
-			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
-			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
-			    /*
-			     * Look for all-0's host part (old broadcast addr),
-			     * either for subnet or net.
-			     */
-			    ip->ip_dst.s_addr == ia->ia_subnet ||
-			    ip->ip_dst.s_addr == ia->ia_net)
-				goto ours;
-			/*
-			 * An interface with IP address zero accepts
-			 * all packets that arrive on that interface.
-			 */
-			if (in_nullhost(ia->ia_addr.sin_addr))
-				goto ours;
-		}
+		ia = ip_match_our_address_broadcast(ifp, ip);
+		if (ia != NULL)
+			goto ours;
 	}
+
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
