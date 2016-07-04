@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.141 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.142 2016/07/04 04:17:25 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.141 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.142 2016/07/04 04:17:25 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -832,8 +832,10 @@ add_vif(struct vifctl *vifcp)
 		 * this requires both radix tree lookup and then a
 		 * function to check, and this is not supported yet.
 		 */
+		encap_lock_enter();
 		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
 		    vif_encapcheck, &vif_encapsw, vifp);
+		encap_lock_exit();
 		if (!vifp->v_encap_cookie)
 			return (EINVAL);
 
@@ -929,7 +931,9 @@ reset_vif(struct vif *vifp)
 	callout_stop(&vifp->v_repq_ch);
 
 	/* detach this vif from decapsulator dispatch table */
+	encap_lock_enter();
 	encap_detach(vifp->v_encap_cookie);
+	encap_lock_exit();
 	vifp->v_encap_cookie = NULL;
 
 	/*
