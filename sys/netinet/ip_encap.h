@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.20 2016/07/04 04:17:25 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.21 2016/07/04 04:29:11 knakahara Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -39,6 +39,9 @@
 #include <net/radix.h>
 #endif
 
+#include <sys/pslist.h>
+#include <sys/psref.h>
+
 struct encapsw {
 	union {
 		struct encapsw4 {
@@ -61,7 +64,7 @@ struct encapsw {
 
 struct encaptab {
 	struct radix_node nodes[2];
-	LIST_ENTRY(encaptab) chain;
+	struct pslist_entry chain;
 	int af;
 	int proto;			/* -1: don't care, I'll check myself */
 	struct sockaddr *addrpack;	/* malloc'ed, for radix lookup */
@@ -73,6 +76,7 @@ struct encaptab {
 	int (*func) (struct mbuf *, int, int, void *);
 	const struct encapsw *esw;
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
+	struct psref_target	psref;
 };
 
 /* to lookup a pair of address using radix tree */
@@ -108,6 +112,7 @@ void	*encap_getarg(struct mbuf *);
 
 void	encap_lock_enter(void);
 void	encap_lock_exit(void);
+bool	encap_lock_held(void);
 
 #define	ENCAP_PR_WRAP_CTLINPUT(name)				\
 static void *							\
