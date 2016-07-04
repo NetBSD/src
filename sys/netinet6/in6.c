@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.202 2016/06/30 01:34:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.203 2016/07/04 02:41:18 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.202 2016/06/30 01:34:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.203 2016/07/04 02:41:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1420,7 +1420,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 void
 in6_purgeif(struct ifnet *ifp)
 {
-	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 
 	in6_ifdetach(ifp);
 }

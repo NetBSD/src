@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.98 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.99 2016/07/04 02:41:18 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.98 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.99 2016/07/04 02:41:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,11 +838,6 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 void
 in6_ifdetach(struct ifnet *ifp)
 {
-	struct in6_ifaddr *ia, *oia;
-	struct ifaddr *ifa, *next;
-	struct rtentry *rt;
-	short rtflags;
-	struct in6_multi_mship *imm;
 
 	/* remove ip6_mrouter stuff */
 	ip6_mrouter_detach(ifp);
@@ -850,63 +845,8 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove neighbor management table */
 	nd6_purge(ifp, NULL);
 
-	/* XXX this code is duplicated in in6_purgeif() --dyoung */
 	/* nuke any of IPv6 addresses we have */
 	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
-
-	/* XXX isn't this code is redundant, given the above? --dyoung */
-	/* XXX doesn't this code replicate code in in6_purgeaddr() ? --dyoung */
-	/* undo everything done by in6_ifattach(), just in case */
-	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = next) {
-		next = IFADDR_NEXT(ifa);
-
-		if (ifa->ifa_addr->sa_family != AF_INET6
-		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
-			continue;
-		}
-
-		ia = (struct in6_ifaddr *)ifa;
-
-		/*
-		 * leave from multicast groups we have joined for the interface
-		 */
-		while ((imm = LIST_FIRST(&ia->ia6_memberships)) != NULL) {
-			LIST_REMOVE(imm, i6mm_chain);
-			in6_leavegroup(imm);
-		}
-
-		/* remove from the routing table */
-		if ((ia->ia_flags & IFA_ROUTE) &&
-		    (rt = rtalloc1((struct sockaddr *)&ia->ia_addr, 0))) {
-			rtflags = rt->rt_flags;
-			rtfree(rt);
-			rtrequest(RTM_DELETE, (struct sockaddr *)&ia->ia_addr,
-			    (struct sockaddr *)&ia->ia_addr,
-			    (struct sockaddr *)&ia->ia_prefixmask,
-			    rtflags, NULL);
-		}
-
-		/* remove from the linked list */
-		ifa_remove(ifp, &ia->ia_ifa);
-
-		/* also remove from the IPv6 address chain(itojun&jinmei) */
-		oia = ia;
-		if (oia == (ia = in6_ifaddr))
-			in6_ifaddr = ia->ia_next;
-		else {
-			while (ia->ia_next && (ia->ia_next != oia))
-				ia = ia->ia_next;
-			if (ia->ia_next)
-				ia->ia_next = oia->ia_next;
-			else {
-				nd6log(LOG_ERR,
-				    "%s: didn't unlink in6ifaddr from list\n",
-				    if_name(ifp));
-			}
-		}
-
-		ifafree(&oia->ia_ifa);
-	}
 
 	/* cleanup multicast address kludge table, if there is any */
 	in6_purgemkludge(ifp);
