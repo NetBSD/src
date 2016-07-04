@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.65 2016/07/04 14:47:39 dholland Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.66 2016/07/04 15:47:04 dholland Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1083,7 +1083,11 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
-	 * Now we can clear exception level since no interrupts can be delivered
+   	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, clear the
+	 * exception level bit. This will allow high-priority
+	 * interrupts to be delivered once a low-priority interrupt
+	 * handler lowers spl to execute.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 	MFC0_HAZARD
