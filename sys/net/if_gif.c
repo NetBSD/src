@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.115 2016/07/04 04:17:25 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.116 2016/07/04 04:22:47 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.115 2016/07/04 04:17:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.116 2016/07/04 04:22:47 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -782,8 +782,28 @@ gif_encap_detach(struct gif_softc *sc)
 static void
 gif_encap_pause(struct gif_softc *sc)
 {
-	struct ifnet *ifp = &sc->gif_if;
+	struct ifnet *ifp;
 	uint64_t where;
+
+	if (sc == NULL || sc->gif_psrc == NULL)
+		return;
+
+	ifp = &sc->gif_if;
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
+	switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		(void)in_gif_pause(sc);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		(void)in6_gif_pause(sc);
+		break;
+#endif
+	}
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	/* membar_sync() is done in xc_broadcast(). */
