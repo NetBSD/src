@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.64 2016/07/04 14:29:55 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.65 2016/07/04 14:47:39 dholland Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -757,7 +757,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 
 	/*
 	 * Start of common kernel exception return code for both
-	 * mipxN_kern_gen_exception and mipsN_kern_intr.
+	 * mipsN_kern_gen_exception and mipsN_kern_intr.
 	 */
 MIPSX(kern_return):
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
