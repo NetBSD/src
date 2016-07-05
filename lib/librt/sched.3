@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.12 2016/02/20 16:00:10 riastradh Exp $
+.\"	$NetBSD: sched.3,v 1.13 2016/07/05 21:13:12 christos Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2011
+.Dd July 5, 2016
 .Dt SCHED 3
 .Os
 .Sh NAME
@@ -38,7 +38,8 @@
 .Nm sched_get_priority_max ,
 .Nm sched_get_priority_min ,
 .Nm sched_rr_get_interval ,
-.Nm sched_yield
+.Nm sched_yield ,
+.Nm sched_protect
 .Nd process scheduling
 .Sh LIBRARY
 .Lb librt
@@ -60,6 +61,8 @@
 .Fn sched_rr_get_interval "pid_t pid" "struct timespec *interval"
 .Ft int
 .Fn sched_yield "void"
+.Ft int
+.Fn sched_protect "int priority"
 .Sh DESCRIPTION
 This section describes the functions used to get scheduling information
 about processes, and control the scheduling of processes.
@@ -152,6 +155,10 @@ Get the affinity mask of the process specified by
 .Fa pid
 into the
 .Fa cpuset .
+.It Fn sched_protect priority
+Performs priority protection for PTHREAD_PRIO_PROTECT protocol.
+This function will increase the priority of the caller thread to
+.Fa priority.
 .El
 .Sh IMPLEMENTATION NOTES
 Setting CPU
@@ -170,6 +177,7 @@ and
 .Fn sched_getaffinity_np
 functions.
 .Sh RETURN VALUES
+.Fn sched_protect ,
 .Fn sched_setparam ,
 .Fn sched_getparam ,
 .Fn sched_rr_get_interval ,
