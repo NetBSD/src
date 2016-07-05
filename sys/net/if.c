@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.352 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.353 2016/07/05 07:42:51 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.352 2016/07/04 04:35:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.353 2016/07/05 07:42:51 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -262,7 +262,7 @@ ifinit(void)
 		sysctl_net_pktq_setup(NULL, PF_INET6);
 #endif
 
-#ifndef IPSEC
+#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
 	encapinit();
 #endif
 
