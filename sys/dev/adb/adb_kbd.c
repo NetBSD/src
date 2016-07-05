@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.22 2013/11/18 11:02:34 nisimura Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.22.4.1 2016/07/05 19:14:59 snj Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.22 2013/11/18 11:02:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.22.4.1 2016/07/05 19:14:59 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -190,6 +190,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 #if NWSMOUSE > 0
 	struct wsmousedev_attach_args am;
 #endif
+	uint8_t buffer[2];
 
 	sc->sc_dev = self;
 	sc->sc_ops = aaa->ops;
@@ -331,6 +332,27 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	default:
 		printf("mapped device (%d)\n", sc->sc_adbdev->handler_id);
 		break;
+	}
+
+	/*
+	 * try to switch to extended protocol
+	 * as in, tell the keyboard to distinguish between left and right
+	 * Shift, Control and Alt keys
+	 */
+	cmd = ADBLISTEN(sc->sc_adbdev->current_addr, 3);
+	buffer[0] = sc->sc_adbdev->current_addr;
+	buffer[1] = 3;
+	sc->sc_msg_len = 0;
+	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, 2, buffer);
+	adbkbd_wait(sc, 10);
+
+	cmd = ADBTALK(sc->sc_adbdev->current_addr, 3);
+	sc->sc_msg_len = 0;
+	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, 0, NULL);
+	adbkbd_wait(sc, 10);
+	if ((sc->sc_msg_len == 4) && (sc->sc_buffer[3] == 3)) {
+		printf("%s: extended protocol enabled\n",
+		    device_xname(sc->sc_dev));
 	}
 
 	if (adbkbd_is_console && (adbkbd_console_attached == 0)) {
