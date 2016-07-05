@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock.3,v 1.5 2012/11/12 23:34:50 uwe Exp $
+.\" $NetBSD: pthread_rwlock.3,v 1.6 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,7 +63,7 @@
 .Ft int
 .Fn pthread_rwlock_init "pthread_rwlock_t * restrict lock" \
 "const pthread_rwlockattr_t * restrict attr"
-.Vt pthread_rwlock_t lock No = Dv PTHREAD_RWLOCK_INITIALIZER;
+.Vt pthread_rwlock_t lock No = Dv PTHREAD_RWLOCK_INITIALIZER ;
 .Ft int
 .Fn pthread_rwlock_destroy "pthread_rwlock_t *lock"
 .Ft int

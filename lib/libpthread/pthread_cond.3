@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond.3,v 1.6 2012/11/12 23:11:05 uwe Exp $
+.\" $NetBSD: pthread_cond.3,v 1.7 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn pthread_cond_init "pthread_cond_t * restrict cond" \
 "const pthread_condattr_t * restrict attr"
-.Vt pthread_cond_t cond No = Dv PTHREAD_COND_INITIALIZER;
+.Vt pthread_cond_t cond No = Dv PTHREAD_COND_INITIALIZER ;
 .Ft int
 .Fn pthread_cond_destroy "pthread_cond_t *cond"
 .Ft int

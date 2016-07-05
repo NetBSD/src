@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread_attr_getstack.3,v 1.5 2010/07/09 17:15:59 jruoho Exp $
+.\"	$NetBSD: pthread_attr_getstack.3,v 1.6 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2010 Jukka Ruohonen <jruohonen@iki.fi>
 .\" All rights reserved.
@@ -38,10 +38,10 @@
 .Ft int
 .Fn pthread_attr_getstack \
 "const pthread_attr_t * restrict attr" \
-"void ** restrict stackaddr, size_t * restrict stacksize"
+"void ** restrict stackaddr" "size_t * restrict stacksize"
 .Ft int
 .Fn pthread_attr_setstack \
-"pthread_attr_t * restrict attr" "void *stackaddr, size_t stacksize"
+"pthread_attr_t * restrict attr" "void *stackaddr" "size_t stacksize"
 .Ft int
 .Fn pthread_attr_getstacksize \
 "const pthread_attr_t * restrict attr" "size_t * restrict stacksize"
