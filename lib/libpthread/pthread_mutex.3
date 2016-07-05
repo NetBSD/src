@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.7 2016/07/03 14:24:58 christos Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.8 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,7 @@
 .Ft int
 .Fn pthread_mutex_init "pthread_mutex_t * restrict mutex" \
 "const pthread_mutexattr_t * restrict attr"
-.Vt pthread_mutex_t mutex No = Dv PTHREAD_MUTEX_INITIALIZER;
+.Vt pthread_mutex_t mutex No = Dv PTHREAD_MUTEX_INITIALIZER ;
 .Ft int
 .Fn pthread_mutex_destroy "pthread_mutex_t *mutex"
 .Ft int
@@ -82,7 +82,6 @@
 .Ft int
 .Fn pthread_mutex_setprioceiling "pthread_mutex_t * __restrict mutex" \
 "int prioceiling" "int * __restrict old_ceiling"
-
 .\" ----------------------------------------------------------------------------
 .Sh DESCRIPTION
 The
@@ -145,18 +144,18 @@ that has not been locked by it, or if a thread tries to release
 a mutex that is already unlocked.
 .Pp
 .\" -----
-The 
+The
 .Fn pthread_mutex_timedlock
 function shall lock the mutex object referenced by
-.Fa mutex.
+.Fa mutex .
 If the mutex is already locked, the calling thread shall block until
-the mutex becomes available in the 
+the mutex becomes available in the
 .Fn pthread_mutex_lock
 function.
 If the mutex cannot be locked without waiting for another thread to
 unlock the mutex, this wait shall be terminated when the specified timeout
 expires.
-The timeout shall expire when the absolute time specified by 
+The timeout shall expire when the absolute time specified by
 .Fa timeout
 passes, as measured by the clock on which timeouts are based.
 .Pp
@@ -166,7 +165,7 @@ The
 function shall return the current priority ceiling of the mutex.
 .Pp
 .\" -----
-The 
+The
 .Fn pthread_mutex_setprioceiling
 function shall either lock the mutex if it is unlocked, or block until
 it can sucessfully lock the mutex, then it shall change the mutex's priority
@@ -174,14 +173,13 @@ ceiling and release the mutex.
 When the change is successful, the previous value of the priority ceiling
 shall be returned
 in
-.Fa old_ceiling.
+.Fa old_ceiling .
 The process of locking the mutex need not adhere to the priority
 protect protocol.
 If
 .Fn pthread_mutex_setprioceiling
 function fails, the mutex priority ceiling shall not be changed.
 .\" ----------------------------------------------------------------------------
-
 .Sh RETURN VALUES
 Upon success all described functions return zero.
 Otherwise, an error number will be returned to indicate the error.
@@ -258,9 +256,8 @@ may fail if:
 The mutex was created with the protocol attribute having the value
 .Dv PTHREAD_PRIO_PROTECT
 and the calling thread's priority is higher than
-the mutex current priority ceiling.
-.It Bq Er EINVAL
-The process or thread would have blocked, and the
+the mutex current priority ceiling; or
+the process or thread would have blocked, and the
 .Fa timeout
 parameter specified a nanoseconds field value less than zero or greater
 than or equal to 1000 million.
@@ -271,23 +268,21 @@ The mutex could not be locked before the specified timeout expired.
 .\" -----
 The
 .Fn pthread_mutex_getprioceiling
-and 
+and
 .Fn pthread_mutex_setprioceiling
 functions may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The priority requested by 
+The priority requested by
 .Fa prioceiling
-is out of range.
-.It Bq Er EINVAL
-The value specified by 
+is out of range; or
+the value specified by
 .Fa mutex
 does not refer to a currently existing mutex.
 .It Bq Er EPERM
 The caller does not have the privilege to perform the operation.
-
+.El
 .\" ----------------------------------------------------------------------------
-
 .Sh SEE ALSO
 .Xr pthread 3 ,
 .Xr pthread_barrier 3 ,
