@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584.2.3 2015/08/06 21:13:43 snj Exp $
+# $NetBSD: mi,v 1.584.2.4 2016/07/05 19:03:31 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -801,6 +801,8 @@
 ./usr/tests/bin/cat/Kyuafile			tests-bin-tests		atf,kyua
 ./usr/tests/bin/cat/d_align.in			tests-bin-tests		atf
 ./usr/tests/bin/cat/d_align.out			tests-bin-tests		atf
+./usr/tests/bin/cat/d_se_output.in		tests-bin-tests		atf
+./usr/tests/bin/cat/d_se_output.out		tests-bin-tests		atf
 ./usr/tests/bin/cat/t_cat			tests-bin-tests		atf
 ./usr/tests/bin/cp				tests-bin-tests
 ./usr/tests/bin/cp/Atffile			tests-bin-tests		atf
