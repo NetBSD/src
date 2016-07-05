@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.37 2016/04/13 11:48:29 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.38 2016/07/05 16:24:18 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.37 2016/04/13 11:48:29 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.38 2016/07/05 16:24:18 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -2103,7 +2103,7 @@ parse_escape(const char *str)
 		if (backslash[1] == '-' || backslash[1] == ' ') {
 			*iter++ = backslash[1];
 			last_backslash = backslash + 2;
-			backslash = strchr(backslash + 2, '\\');
+			backslash = strchr(last_backslash, '\\');
 		} else {
 			++backslash;
 			mandoc_escape(&backslash, NULL, NULL);
