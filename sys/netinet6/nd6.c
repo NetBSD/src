@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.200 2016/07/05 04:25:23 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.201 2016/07/05 06:32:18 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.200 2016/07/05 04:25:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.201 2016/07/05 06:32:18 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -109,7 +109,7 @@ int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
-static int regen_tmpaddr(struct in6_ifaddr *);
+static int regen_tmpaddr(const struct in6_ifaddr *);
 static void nd6_free(struct llentry *, int);
 static void nd6_llinfo_timer(void *);
 static void nd6_timer(void *);
@@ -680,7 +680,7 @@ nd6_timer(void *ignored_arg)
 
 /* ia6: deprecated/invalidated temporary address */
 static int
-regen_tmpaddr(struct in6_ifaddr *ia6)
+regen_tmpaddr(const struct in6_ifaddr *ia6)
 {
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
