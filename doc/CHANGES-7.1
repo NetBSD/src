@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.95 2016/07/01 07:50:06 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.96 2016/07/05 19:20:55 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4915,4 +4915,40 @@ xsrc/external/mit/glu/dist/include/GL/glu.h		1.3
 	Change back GLU_TESS_MAX_COORD to its upstream value if it fits
 	in a double, or 1e15 if DBL_MAX_10_EXP is not large enough.
 	[bouyer, ticket #1181]
+
+bin/cat/cat.c					1.57
+distrib/sets/lists/tests/mi			1.675 via patch
+tests/bin/cat/Makefile				1.2
+tests/bin/cat/d_se_output.in			1.1
+tests/bin/cat/d_se_output.out			1.1
+tests/bin/cat/t_cat.sh				1.3
+
+	When invoked with -se, print a '$' on blank lines
+	Obtained from OpenBSD r1.13 of src/bin/cat/cat.c
+	PR bin/51250
+	[sevan, ticket #1182]
+
+sys/kern/kern_subr.c				1.215
+
+	Don't crash if rootspec is invalid.
+	[mlelstv, ticket #1185]
+
+sys/dev/ata/wd.c				1.421
+sys/kern/subr_autoconf.c			1.242 via patch
+sys/sys/device.h				1.149
+
+	Add a new config_detach() flag, DETACH_POWEROFF, which is set
+	when detaching devices at shutdown time with RB_POWERDOWN.
+	When detaching wd(4), put the drive in standby before detach
+	for DETACH_POWEROFF.  Fix PR kern/51252
+	[bouyer, ticket #1186]
+
+sys/dev/adb/adb_kbd.c				1.23
+sys/dev/adb/adb_keymap.h			1.5, 1.6
+sys/dev/adb/adb_usb_map.c			1.2
+
+	ADB: ask the keyboard to distinguish between left and right
+	Control, Alt and Shift keys.  Add us.dvorak keymap variant.
+	PR port-macppc/51255.
+	[sevan, ticket #1187]
 
