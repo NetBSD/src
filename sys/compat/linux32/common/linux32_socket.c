@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.23 2016/06/16 02:38:40 ozaki-r Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.24 2016/07/05 08:48:51 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.23 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.24 2016/07/05 08:48:51 ozaki-r Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -450,8 +450,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp))
-			continue;
+
 		IFADDR_FOREACH(ifa, ifp) {
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
