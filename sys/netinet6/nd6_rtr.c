@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.113 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.114 2016/07/05 03:40:52 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.113 2016/07/04 06:48:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.114 2016/07/05 03:40:52 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1056,7 +1056,7 @@ prelist_update(struct nd_prefixctl *newprc,
 	struct mbuf *m, 
 	int mcast)
 {
-	struct in6_ifaddr *ia6 = NULL, *ia6_match = NULL;
+	struct in6_ifaddr *ia6_match = NULL;
 	struct ifaddr *ifa;
 	struct ifnet *ifp = newprc->ndprc_ifp;
 	struct nd_prefix *pr;
@@ -1187,18 +1187,18 @@ prelist_update(struct nd_prefixctl *newprc,
 	 * "address".
 	 */
 	IFADDR_FOREACH(ifa, ifp) {
-		struct in6_ifaddr *ifa6;
+		struct in6_ifaddr *ia6;
 		u_int32_t remaininglifetime;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 
-		ifa6 = (struct in6_ifaddr *)ifa;
+		ia6 = (struct in6_ifaddr *)ifa;
 
 		/*
 		 * We only consider autoconfigured addresses as per rfc2462bis.
 		 */
-		if (!(ifa6->ia6_flags & IN6_IFF_AUTOCONF))
+		if (!(ia6->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
 
 		/*
@@ -1206,7 +1206,7 @@ prelist_update(struct nd_prefixctl *newprc,
 		 * on unicast (i.e. not anycast) addresses.
 		 * XXX: other ia6_flags? detached or duplicated?
 		 */
-		if ((ifa6->ia6_flags & IN6_IFF_ANYCAST) != 0)
+		if ((ia6->ia6_flags & IN6_IFF_ANYCAST) != 0)
 			continue;
 
 		/*
@@ -1214,11 +1214,11 @@ prelist_update(struct nd_prefixctl *newprc,
 		 * or is associated with a prefix that is different from this
 		 * one.  (pr is never NULL here)
 		 */
-		if (ifa6->ia6_ndpr != pr)
+		if (ia6->ia6_ndpr != pr)
 			continue;
 
 		if (ia6_match == NULL) /* remember the first one */
-			ia6_match = ifa6;
+			ia6_match = ia6;
 
 		/*
 		 * An already autoconfigured address matched.  Now that we
@@ -1231,10 +1231,10 @@ prelist_update(struct nd_prefixctl *newprc,
 		 * - remove the dead code in the "two-hour" rule
 		 */
 #define TWOHOUR		(120*60)
-		lt6_tmp = ifa6->ia6_lifetime;
+		lt6_tmp = ia6->ia6_lifetime;
 		if (lt6_tmp.ia6t_vltime == ND6_INFINITE_LIFETIME)
 			remaininglifetime = ND6_INFINITE_LIFETIME;
-		else if (time_uptime - ifa6->ia6_updatetime >
+		else if (time_uptime - ia6->ia6_updatetime >
 			 lt6_tmp.ia6t_vltime) {
 			/*
 			 * The case of "invalid" address.  We should usually
@@ -1243,7 +1243,7 @@ prelist_update(struct nd_prefixctl *newprc,
 			remaininglifetime = 0;
 		} else
 			remaininglifetime = lt6_tmp.ia6t_vltime -
-			    (time_uptime - ifa6->ia6_updatetime);
+			    (time_uptime - ia6->ia6_updatetime);
 
 		/* when not updating, keep the current stored lifetime. */
 		lt6_tmp.ia6t_vltime = remaininglifetime;
@@ -1274,22 +1274,22 @@ prelist_update(struct nd_prefixctl *newprc,
 		 * we only update the lifetimes when they are in the maximum
 		 * intervals.
 		 */
-		if ((ifa6->ia6_flags & IN6_IFF_TEMPORARY) != 0) {
+		if ((ia6->ia6_flags & IN6_IFF_TEMPORARY) != 0) {
 			u_int32_t maxvltime, maxpltime;
 
 			if (ip6_temp_valid_lifetime >
-			    (u_int32_t)((time_uptime - ifa6->ia6_createtime) +
+			    (u_int32_t)((time_uptime - ia6->ia6_createtime) +
 			    ip6_desync_factor)) {
 				maxvltime = ip6_temp_valid_lifetime -
-				    (time_uptime - ifa6->ia6_createtime) -
+				    (time_uptime - ia6->ia6_createtime) -
 				    ip6_desync_factor;
 			} else
 				maxvltime = 0;
 			if (ip6_temp_preferred_lifetime >
-			    (u_int32_t)((time_uptime - ifa6->ia6_createtime) +
+			    (u_int32_t)((time_uptime - ia6->ia6_createtime) +
 			    ip6_desync_factor)) {
 				maxpltime = ip6_temp_preferred_lifetime -
-				    (time_uptime - ifa6->ia6_createtime) -
+				    (time_uptime - ia6->ia6_createtime) -
 				    ip6_desync_factor;
 			} else
 				maxpltime = 0;
@@ -1304,11 +1304,12 @@ prelist_update(struct nd_prefixctl *newprc,
 			}
 		}
 
-		ifa6->ia6_lifetime = lt6_tmp;
-		ifa6->ia6_updatetime = time_uptime;
+		ia6->ia6_lifetime = lt6_tmp;
+		ia6->ia6_updatetime = time_uptime;
 	}
 	if (ia6_match == NULL && newprc->ndprc_vltime) {
 		int ifidlen;
+		struct in6_ifaddr *ia6;
 
 		/*
 		 * 5.5.3 (d) (continued)
@@ -1421,7 +1422,7 @@ void
 pfxlist_onlink_check(void)
 {
 	struct nd_prefix *pr;
-	struct in6_ifaddr *ifa;
+	struct in6_ifaddr *ia;
 	struct nd_defrouter *dr;
 	struct nd_pfxrouter *pfxrtr = NULL;
 
@@ -1538,11 +1539,11 @@ pfxlist_onlink_check(void)
 	 * always be attached.
 	 * The precise detection logic is same as the one for prefixes.
 	 */
-	IN6_ADDRLIST_READER_FOREACH(ifa) {
-		if (!(ifa->ia6_flags & IN6_IFF_AUTOCONF))
+	IN6_ADDRLIST_READER_FOREACH(ia) {
+		if (!(ia->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
 
-		if (ifa->ia6_ndpr == NULL) {
+		if (ia->ia6_ndpr == NULL) {
 			/*
 			 * This can happen when we first configure the address
 			 * (i.e. the address exists, but the prefix does not).
@@ -1551,46 +1552,47 @@ pfxlist_onlink_check(void)
 			continue;
 		}
 
-		if (find_pfxlist_reachable_router(ifa->ia6_ndpr))
+		if (find_pfxlist_reachable_router(ia->ia6_ndpr))
 			break;
 	}
-	if (ifa) {
-		IN6_ADDRLIST_READER_FOREACH(ifa) {
-			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+
+	if (ia) {
+		IN6_ADDRLIST_READER_FOREACH(ia) {
+			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
-			if (ifa->ia6_ndpr == NULL) /* XXX: see above. */
+			if (ia->ia6_ndpr == NULL) /* XXX: see above. */
 				continue;
 
-			if (find_pfxlist_reachable_router(ifa->ia6_ndpr)) {
-				if (ifa->ia6_flags & IN6_IFF_DETACHED) {
-					ifa->ia6_flags &= ~IN6_IFF_DETACHED;
-					ifa->ia6_flags |= IN6_IFF_TENTATIVE;
-					nd6_dad_start((struct ifaddr *)ifa,
+			if (find_pfxlist_reachable_router(ia->ia6_ndpr)) {
+				if (ia->ia6_flags & IN6_IFF_DETACHED) {
+					ia->ia6_flags &= ~IN6_IFF_DETACHED;
+					ia->ia6_flags |= IN6_IFF_TENTATIVE;
+					nd6_dad_start((struct ifaddr *)ia,
 					    0);
 					/* We will notify the routing socket
 					 * of the DAD result, so no need to
 					 * here */
 				}
 			} else {
-				if ((ifa->ia6_flags & IN6_IFF_DETACHED) == 0) {
-					ifa->ia6_flags |= IN6_IFF_DETACHED;
+				if ((ia->ia6_flags & IN6_IFF_DETACHED) == 0) {
+					ia->ia6_flags |= IN6_IFF_DETACHED;
 					rt_newaddrmsg(RTM_NEWADDR,
-					    (struct ifaddr *)ifa, 0, NULL);
+					    (struct ifaddr *)ia, 0, NULL);
 				}
 			}
 		}
 	}
 	else {
-		IN6_ADDRLIST_READER_FOREACH(ifa) {
-			if ((ifa->ia6_flags & IN6_IFF_AUTOCONF) == 0)
+		IN6_ADDRLIST_READER_FOREACH(ia) {
+			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
-			if (ifa->ia6_flags & IN6_IFF_DETACHED) {
-				ifa->ia6_flags &= ~IN6_IFF_DETACHED;
-				ifa->ia6_flags |= IN6_IFF_TENTATIVE;
+			if (ia->ia6_flags & IN6_IFF_DETACHED) {
+				ia->ia6_flags &= ~IN6_IFF_DETACHED;
+				ia->ia6_flags |= IN6_IFF_TENTATIVE;
 				/* Do we need a delay in this case? */
-				nd6_dad_start((struct ifaddr *)ifa, 0);
+				nd6_dad_start((struct ifaddr *)ia, 0);
 			}
 		}
 	}
