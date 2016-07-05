@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.129 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.130 2016/07/05 07:55:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.129 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.130 2016/07/05 07:55:08 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1149,8 +1149,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp))
-			continue;
+
 		IFADDR_FOREACH(ifa, ifp) {
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
