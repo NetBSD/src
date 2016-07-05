@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier.3,v 1.5 2016/07/03 14:24:58 christos Exp $
+.\" $NetBSD: pthread_barrier.3,v 1.6 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,6 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ----------------------------------------------------------------------------
-
 .Dd June 12, 2016
 .Dt PTHREAD_BARRIER 3
 .Os
@@ -48,9 +47,8 @@
 "int * __restrict pshared"
 .Ft int
 .Fn pthread_barrierattr_setpshared "pthread_barrierattr_t * attr" \
-"int pshared" 
+"int pshared"
 .\" ----------------------------------------------------------------------------
-
 .Sh DESCRIPTION
 The
 .Fn pthread_barrier_init
@@ -98,15 +96,14 @@ calls and continue execution.
 .Pp
 .\" -----
 The
-.Fn pthread_barrierattr_getpshared 
+.Fn pthread_barrierattr_getpshared
 function shall obtain the value of the process-shared attribute from the
-attributes object referenced by attr. 
+attributes object referenced by attr.
 The
 .Fn pthread_barrierattr_setpshared
 function shall set the process-shared attribute in an initialized attributes
-object referenced by attr. 
+object referenced by attr.
 .\" ----------------------------------------------------------------------------
-
 .Sh RETURN VALUES
 If successful,
 .Fn pthread_barrier_init
@@ -136,7 +133,7 @@ In the case of failure, an error value will be returned.
 .\" -----
 If successful,
 .Fn pthread_barrierattr_getpshared
-shall return zero and store the value of the process-shared attribute of attr 
+shall return zero and store the value of the process-shared attribute of attr
 into the object referenced by the
 .Fa pshared
 parameter.
@@ -146,9 +143,8 @@ Otherwise, an error number shall be returned to indicate the error.
 If successful,
 .Fn pthread_barrierattr_setpshared
 shall return zero;
-Otherwise, an error number shall be returned to indicate the error. 
+Otherwise, an error number shall be returned to indicate the error.
 .\" ----------------------------------------------------------------------------
-
 .Sh ERRORS
 The
 .Fn pthread_barrier_init
@@ -189,9 +185,9 @@ is invalid.
 .El
 .Pp
 .\" -----
-The 
+The
 .Fn pthread_barrierattr_setpshared
-function and 
+function and
 the
 .Fn pthread_barrierattr_getpshared
 function may fail if:
@@ -200,7 +196,7 @@ function may fail if:
 The value specified by
 .Fa attr
 is invalid.
-
+.El
 .\" ---------------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr pthread_barrierattr 3 ,
