@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_condattr.3,v 1.10 2016/07/03 14:24:58 christos Exp $
+.\" $NetBSD: pthread_condattr.3,v 1.11 2016/07/05 10:04:17 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,10 +54,10 @@
 .Dt PTHREAD_CONDATTR 3
 .Os
 .Sh NAME
-.Nm pthread_condattr_init, 
-.Nm pthread_condattr_getpshared,
-.Nm pthread_condattr_setpshared,
-.Nm pthread_condattr_getclock,
+.Nm pthread_condattr_init ,
+.Nm pthread_condattr_getpshared ,
+.Nm pthread_condattr_setpshared ,
+.Nm pthread_condattr_getclock ,
 .Nm pthread_condattr_setclock
 .Nd condition attribute operations
 .Sh LIBRARY
@@ -89,10 +89,10 @@ and the
 function destroys a condition attribute object.
 The
 .Fn pthread_condattr_getclock
-function shall obtain the value of the 
+function shall obtain the value of the
 .Fa clock
 attributes object referenced by
-.Fa attr.
+.Fa attr .
 The
 .Fn pthread_condattr_setclock
 function sets the system clock to be used for time comparisons to
@@ -105,14 +105,14 @@ and
 (the default).
 The
 .Fn pthread_condattr_getpshared
-function shall obtain the value of the process-shared attribute from the 
+function shall obtain the value of the process-shared attribute from the
 attributes object referenced by
-.Fa attr.
+.Fa attr .
 The
 .Fn pthread_condattr_setpshared
-function shall set the process-shared attribute in an initialized attributes 
-object referenced by 
-.Fa attr.
+function shall set the process-shared attribute in an initialized attributes
+object referenced by
+.Fa attr .
 .Sh RETURN VALUES
 If successful, these functions return 0.
 Otherwise, an error number is returned to indicate the error.
@@ -131,14 +131,15 @@ is invalid.
 .El
 .Pp
 The
-.Fn pthread_condattr_getclock 
+.Fn pthread_condattr_getclock
 and
 .Fn pthread_condattr_setclock
 may fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The value specified by
-.Fa attr is invalid.
+.Fa attr
+is invalid.
 .El
 .Pp
 The
@@ -151,6 +152,7 @@ may fail if:
 The value specified by
 .Fa attr
 is invalid.
+.El
 .Sh SEE ALSO
 .Xr pthread_cond_init 3
 .Sh STANDARDS
