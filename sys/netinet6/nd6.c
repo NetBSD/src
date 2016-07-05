@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.199 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.200 2016/07/05 04:25:23 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.199 2016/07/04 06:48:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.200 2016/07/05 04:25:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -723,7 +723,7 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 		 * address with the prefix.
 		 */
 		if (!IFA6_IS_DEPRECATED(it6))
-		    public_ifa6 = it6;
+			public_ifa6 = it6;
 	}
 
 	if (public_ifa6 != NULL) {
