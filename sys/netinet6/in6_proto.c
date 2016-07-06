@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.112 2016/04/26 08:44:45 ozaki-r Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.113 2016/07/06 10:49:49 ozaki-r Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.112 2016/04/26 08:44:45 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.113 2016/07/06 10:49:49 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -421,7 +421,7 @@ static const struct sockaddr_in6 in6_any = {
 
 bool in6_present = false;
 static void
-in6_init(void)
+in6_dom_init(void)
 {
 
 	in6_present = true;
@@ -429,7 +429,7 @@ in6_init(void)
 
 struct domain inet6domain = {
 	.dom_family = AF_INET6, .dom_name = "internet6",
-	.dom_init = in6_init, .dom_externalize = NULL, .dom_dispose = NULL,
+	.dom_init = in6_dom_init, .dom_externalize = NULL, .dom_dispose = NULL,
 	.dom_protosw = (const struct protosw *)inet6sw,
 	.dom_protoswNPROTOSW = (const struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])],
 	.dom_rtattach = rt_inithead,
