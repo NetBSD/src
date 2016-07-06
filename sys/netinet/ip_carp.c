@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.72 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.73 2016/07/06 08:42:34 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.72 2016/07/04 06:48:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.73 2016/07/06 08:42:34 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -1735,9 +1735,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 
 	/* we have to do this by hand to ensure we don't match on ourselves */
 	ia_if = NULL;
-	for (ia = TAILQ_FIRST(&in_ifaddrhead); ia;
-	    ia = TAILQ_NEXT(ia, ia_list)) {
-
+	IN_ADDRLIST_READER_FOREACH(ia) {
 		/* and, yeah, we need a multicast-capable iface too */
 		if (ia->ia_ifp != &sc->sc_if &&
 		    ia->ia_ifp->if_type != IFT_CARP &&
