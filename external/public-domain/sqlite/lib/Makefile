@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2014/03/07 18:37:48 christos Exp $
+# $NetBSD: Makefile,v 1.7 2016/07/06 08:01:30 mrg Exp $
 
 LIB=		sqlite3
 INCS=		sqlite3.h sqlite3ext.h
@@ -15,6 +15,12 @@ FILESMODE_sqlite3.pc=	${NONBINMODE}
 FILESDIR_sqlite3.pc=	/usr/lib/pkgconfig
 
 CLEANFILES+=sqlite3.pc
+
+.include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "m68k"
+CWARNFLAGS+=	-Wa,--warn
+.endif
 
 .include <bsd.lib.mk>
 
