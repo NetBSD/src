@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.144 2016/06/30 01:34:53 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.145 2016/07/06 05:27:52 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.144 2016/06/30 01:34:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.145 2016/07/06 05:27:52 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4897,10 +4897,16 @@ found:
 				*dest = new_dst; /* fix dstaddr in place */
 			}
 		}
+
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, hostIsNew);
+
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+
 		if (debug && error)
 		{
 			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
@@ -4953,10 +4959,16 @@ found:
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+
 		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0);
+
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+
 		(void)pfil_run_hooks(if_pfil,
 		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
 	}
