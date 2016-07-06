@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1245 2016/06/27 12:01:03 pgoyette Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1246 2016/07/06 14:27:02 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1252 2016/06/27 11:59:39 pgoyette Exp
+ *	NetBSD: pcidevs,v 1.1253 2016/07/06 14:26:31 christos Exp
  */
 
 /*
@@ -580,6 +580,7 @@
 #define	PCI_VENDOR_SAMSUNGELEC3	0x144d		/* Samsung Electronics (3rd vendor ID) */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
+#define	PCI_VENDOR_MSI	0x1462		/* Micro-star International Co Ltd */
 #define	PCI_VENDOR_SYSTEMBASE	0x14a1		/* System Base */
 #define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
@@ -2155,6 +2156,8 @@
 
 /* Edimax products */
 #define	PCI_PRODUCT_EDIMAX_RT2860_1	0x7708		/* RT2860 */
+#define	PCI_PRODUCT_EDIMAX_RT3591_1	0x7711		/* RT3591 */
+#define	PCI_PRODUCT_EDIMAX_RT3591_2	0x7722		/* RT3591 */
 #define	PCI_PRODUCT_EDIMAX_RT2860_4	0x7727		/* RT2860 */
 #define	PCI_PRODUCT_EDIMAX_RT2860_2	0x7728		/* RT2860 */
 #define	PCI_PRODUCT_EDIMAX_RT2860_5	0x7738		/* RT2860 */
@@ -2417,6 +2420,9 @@
 #define	PCI_PRODUCT_MARVELL2_88SE9220	0x9220		/* 88SE9220 SATA */
 #define	PCI_PRODUCT_MARVELL2_88SE9230	0x9230		/* 88SE9230 SATA */
 #define	PCI_PRODUCT_MARVELL2_88SE9235	0x9235		/* 88SE9235 SATA */
+
+/* Micro-star International Co Ltd */
+#define	PCI_PRODUCT_MSI_RT3090	0x891a		/* MIS RT3090 */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */
@@ -5497,7 +5503,13 @@
 #define	PCI_PRODUCT_RALINK_RT3562	0x3562		/* RT3562 */
 #define	PCI_PRODUCT_RALINK_RT3592	0x3592		/* RT3592 */
 #define	PCI_PRODUCT_RALINK_RT3593	0x3593		/* RT3593 */
-#define	PCI_PRODUCT_RALINK_RT5390	0x5390		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5360	0x5360		/* RT5360 */
+#define	PCI_PRODUCT_RALINK_RT5362	0x5362		/* RT5362 */
+#define	PCI_PRODUCT_RALINK_RT5390_1	0x5390		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_2	0x5392		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_3	0x539a		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_4	0x539b		/* RT5390 */
+#define	PCI_PRODUCT_RALINK_RT5390_5	0x539f		/* RT5390 */
 	
 /* RATOC Systems products */
 #define	PCI_PRODUCT_RATOC_REXPCI31	0x0853		/* REX PCI-31/33 SCSI */
