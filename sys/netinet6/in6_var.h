@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.79 2016/07/04 07:32:18 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.80 2016/07/06 07:52:53 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -499,6 +499,8 @@ extern struct pslist_head in6_ifaddr_list;
 
 #define IN6_ADDRLIST_ENTRY_INIT(__ia) \
 	PSLIST_ENTRY_INIT((__ia), ia6_pslist_entry)
+#define IN6_ADDRLIST_ENTRY_DESTROY(__ia) \
+	PSLIST_ENTRY_DESTROY((__ia), ia6_pslist_entry)
 #define IN6_ADDRLIST_READER_EMPTY() \
 	(PSLIST_READER_FIRST(&in6_ifaddr_list, struct in6_ifaddr, \
 	                     ia6_pslist_entry) == NULL)
