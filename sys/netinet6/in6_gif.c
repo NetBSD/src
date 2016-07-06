@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.77 2016/07/04 04:22:47 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.78 2016/07/06 00:30:55 ozaki-r Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.77 2016/07/04 04:22:47 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.78 2016/07/06 00:30:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -349,15 +349,21 @@ gif_encapcheck6(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip6_hdr ip6;
 	struct gif_softc *sc;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
+	int r;
+	struct psref psref;
 
 	/* sanity check done in caller */
 	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip6), (void *)&ip6);
-	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m_get_rcvif_NOMPSAFE(m) : NULL;
+	if ((m->m_flags & M_PKTHDR) != 0)
+		ifp = m_get_rcvif_psref(m, &psref);
 
-	return gif_validate6(&ip6, sc, ifp);
+	r = gif_validate6(&ip6, sc, ifp);
+
+	m_put_rcvif_psref(ifp, &psref);
+	return r;
 }
 #endif
 
