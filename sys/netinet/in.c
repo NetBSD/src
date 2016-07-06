@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.169 2016/06/30 01:34:53 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.170 2016/07/06 05:27:52 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.169 2016/06/30 01:34:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.170 2016/07/06 05:27:52 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -185,9 +185,13 @@ static krwlock_t		in_multilock;
 #define IN_MULTI_HASH(x, ifp) \
     (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
 
+/* XXX DEPRECATED. Keep it to avoid breaking kvm(3) users. */
 struct in_ifaddrhashhead *	in_ifaddrhashtbl;
 u_long				in_ifaddrhash;
 struct in_ifaddrhead		in_ifaddrhead;
+
+struct pslist_head *		in_ifaddrhashtbl_pslist;
+u_long				in_ifaddrhash_pslist;
 
 void
 in_init(void)
@@ -198,6 +202,8 @@ in_init(void)
 
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
 	    &in_ifaddrhash);
+	in_ifaddrhashtbl_pslist = hashinit(IN_IFADDR_HASH_SIZE, HASH_PSLIST,
+	    true, &in_ifaddrhash_pslist);
 	in_multihashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
 	    &in_multihash);
 	rw_init(&in_multilock);
@@ -388,15 +394,15 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCDIFADDR:
 	case SIOCGIFALIAS:
 	case SIOCGIFAFLAG_IN:
-		if (ifra->ifra_addr.sin_family == AF_INET)
-			LIST_FOREACH(ia,
-			    &IN_IFADDR_HASH(ifra->ifra_addr.sin_addr.s_addr),
-			    ia_hash) {
+		if (ifra->ifra_addr.sin_family == AF_INET) {
+			IN_ADDRHASH_READER_FOREACH(ia,
+			    ifra->ifra_addr.sin_addr.s_addr) {
 				if (ia->ia_ifp == ifp &&
 				    in_hosteq(ia->ia_addr.sin_addr,
 				    ifra->ifra_addr.sin_addr))
 					break;
 			}
+		}
 		if ((cmd == SIOCDIFADDR ||
 		    cmd == SIOCGIFALIAS ||
 		    cmd == SIOCGIFAFLAG_IN) &&
@@ -459,6 +465,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			ia->ia_ifp = ifp;
 			ia->ia_idsalt = cprng_fast32() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
+			IN_ADDRHASH_ENTRY_INIT(ia);
 
 			newifaddr = 1;
 		}
@@ -535,6 +542,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCSIFADDR:
 		if (!newifaddr) {
 			LIST_REMOVE(ia, ia_hash);
+			IN_ADDRHASH_WRITER_REMOVE(ia);
 			need_reinsert = true;
 		}
 		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
@@ -549,6 +557,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		if (!newifaddr) {
 			LIST_REMOVE(ia, ia_hash);
+			IN_ADDRHASH_WRITER_REMOVE(ia);
 			need_reinsert = true;
 		}
 		error = in_ifinit(ifp, ia, NULL, 0, 0);
@@ -578,6 +587,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		    (hostIsNew || maskIsNew)) {
 			if (!newifaddr) {
 				LIST_REMOVE(ia, ia_hash);
+				IN_ADDRHASH_WRITER_REMOVE(ia);
 				need_reinsert = true;
 			}
 			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
@@ -632,9 +642,11 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		ifa_insert(ifp, &ia->ia_ifa);
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
 		    ia, ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
 	} else if (need_reinsert) {
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
 		    ia, ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
 	}
 
 	if (error == 0) {
@@ -706,6 +718,8 @@ in_purgeaddr(struct ifaddr *ifa)
 	in_ifscrub(ifp, ia);
 	in_ifremlocal(ifa);
 	LIST_REMOVE(ia, ia_hash);
+	IN_ADDRHASH_WRITER_REMOVE(ia);
+	IN_ADDRHASH_ENTRY_DESTROY(ia);
 	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
 	if (ia->ia_allhosts != NULL)
