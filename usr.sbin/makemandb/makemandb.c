@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.38 2016/07/05 16:24:18 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.39 2016/07/06 08:52:01 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.38 2016/07/05 16:24:18 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.39 2016/07/06 08:52:01 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1312,7 +1312,7 @@ pman_block(const struct man_node *n, mandb_rec *rec)
  *    (c) Move on to the one line description section, which is after the list
  *        of names in the NAME section.
  *  2. Otherwise, it will check the section name and call the man_parse_section
- *     function, passing the enum corresponding that section.
+ *     function, passing the enum corresponding to that section.
  */
 static void
 pman_sh(const struct man_node *n, mandb_rec *rec)
@@ -1391,7 +1391,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 		int has_alias = 0;	// Any more aliases left?
 		while (*name_desc) {
 			/* Remove any leading spaces or hyphens. */
-			if (name_desc[0] == ' ' || name_desc[0] =='-') {
+			if (name_desc[0] == ' ' || name_desc[0] == '-') {
 				name_desc++;
 				continue;
 			}
@@ -1401,9 +1401,11 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 			if (rec->name == NULL) {
 				if (name_desc[sz] == ',')
 					has_alias = 1;
-				name_desc[sz] = 0;
-				rec->name = emalloc(sz + 1);
-				memcpy(rec->name, name_desc, sz + 1);
+				rec->name = estrndup(name_desc, sz);
+				/* XXX This would only happen with a poorly
+				 * written man page, maybe warn? */
+				if (name_desc[sz] == '\0')
+					break;
 				name_desc += sz + 1;
 				continue;
 			}
@@ -1414,13 +1416,15 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 			 */
 			if (rec->name && has_alias) {
 				if (name_desc[sz] != ',') {
-					/* No more commas left -->
-					 * no more aliases to take out
-					 */
+					/* No more commas left --> no more
+					 * aliases to take out */
 					has_alias = 0;
 				}
-				name_desc[sz] = 0;
 				concat2(&rec->links, name_desc, sz);
+				/* XXX This would only happen with a poorly
+				 * written man page, maybe warn? */
+				if (name_desc[sz] == '\0')
+					break;
 				name_desc += sz + 1;
 				continue;
 			}
