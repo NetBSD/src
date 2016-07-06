@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.13 2016/07/05 21:13:12 christos Exp $
+.\"	$NetBSD: sched.3,v 1.14 2016/07/06 15:55:02 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -156,9 +156,11 @@ Get the affinity mask of the process specified by
 into the
 .Fa cpuset .
 .It Fn sched_protect priority
-Performs priority protection for PTHREAD_PRIO_PROTECT protocol.
+Performs priority protection for
+.Dv PTHREAD_PRIO_PROTECT
+protocol.
 This function will increase the priority of the caller thread to
-.Fa priority.
+.Fa priority .
 .El
 .Sh IMPLEMENTATION NOTES
 Setting CPU
