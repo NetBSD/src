@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.8 2016/07/03 14:24:59 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.9 2016/07/06 14:42:53 christos Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.8 2016/07/03 14:24:59 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.9 2016/07/06 14:42:53 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -346,6 +346,7 @@ ATF_TC_BODY(mutex5, tc)
 	max_fifo_prio = sched_get_priority_max(SCHED_FIFO);
 	printf("min prio for FIFO = %d\n", min_fifo_prio);
 	param.sched_priority = min_fifo_prio;
+
 	/* = 0 OTHER, 1 FIFO, 2 RR, -1 NONE */
 	res = sched_setscheduler(getpid(), SCHED_FIFO, &param);
 	printf("previous policy used = %d\n", res);
@@ -389,9 +390,8 @@ high_prio(void* arg)
 	ATF_REQUIRE_EQ(policy, 1);
 	printf("high prio = %d\n", param.sched_priority);
 	sleep(1);
-	int i;
 	long tmp = 0;
-	for (i = 0; i<20; i++) {
+	for (int i = 0; i < 20; i++) {
 		while (high_cnt < MAX_LOOP) {
 			tmp += (123456789 % 1234) * (987654321 % 54321);
 			high_cnt += 1;
@@ -422,9 +422,9 @@ low_prio(void* arg)
 	ATF_REQUIRE_EQ(policy, 1);
 	printf("low prio = %d\n", param.sched_priority);
 	sleep(1);
+	long tmp = 0;
 	for (int i = 0; i < 20; i++) {
 		while (low_cnt < MAX_LOOP) {
-			long tmp;
 			tmp += (123456789 % 1234) * (987654321 % 54321);
 			low_cnt += 1;
 		}
@@ -470,14 +470,16 @@ ATF_TC_HEAD(mutex6, tc)
  */
 ATF_TC_BODY(mutex6, tc)
 {
+	struct sched_param param;
 	int res;
 	pthread_t high, low;
+
 	min_fifo_prio = sched_get_priority_min(SCHED_FIFO);
 	max_fifo_prio = sched_get_priority_max(SCHED_FIFO);
 	PTHREAD_REQUIRE(pthread_mutex_init(&mutex, NULL));
 	printf("min_fifo_prio = %d, max_fifo_info = %d\n", min_fifo_prio,
 	    max_fifo_prio);
-	struct sched_param param;
+
 	param.sched_priority = min_fifo_prio;
 	res = sched_setscheduler(getpid(), SCHED_FIFO, &param);
 	printf("previous policy used = %d\n", res);
