@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.204 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.205 2016/07/06 07:52:53 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.204 2016/07/04 06:48:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.205 2016/07/06 07:52:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1353,6 +1353,8 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	ifa_remove(ifp, &ia->ia_ifa);
 
 	IN6_ADDRLIST_WRITER_REMOVE(ia);
+	/* TODO psref_target_destroy */
+	IN6_ADDRLIST_ENTRY_DESTROY(ia);
 
 	/*
 	 * XXX thorpej@NetBSD.org -- if the interface is going
