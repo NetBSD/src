@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.27 2016/07/06 06:57:40 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.28 2016/07/06 18:03:27 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.27 2016/07/06 06:57:40 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.28 2016/07/06 18:03:27 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -134,7 +134,7 @@ concat2(char **dst, const char *src, size_t srclen)
 
 	/* Now, copy src at the end of dst */
 	memcpy(*dst + dstlen, src, srclen);
-	(*dst)[dstlen + srclen + 1] = '\0';
+	(*dst)[dstlen + srclen] = '\0';
 }
 
 void
