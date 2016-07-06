@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.334 2016/07/06 05:27:52 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.335 2016/07/06 08:42:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.334 2016/07/06 05:27:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.335 2016/07/06 08:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -469,9 +469,8 @@ ip_input(struct mbuf *m)
 	 * are receiving, can't do anything with incoming packets yet.
 	 * Note: we pre-check without locks held.
 	 */
-	if (!TAILQ_FIRST(&in_ifaddrhead)) {
+	if (IN_ADDRLIST_READER_EMPTY())
 		goto out;
-	}
 	IP_STATINC(IP_STAT_TOTAL);
 
 	/*

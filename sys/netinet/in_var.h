@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.75 2016/07/06 05:27:52 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.76 2016/07/06 08:42:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct in_ifaddr {
 
 #ifdef _KERNEL
 	struct pslist_entry	ia_hash_pslist_entry;
+	struct pslist_entry	ia_pslist_entry;
 #endif
 };
 
@@ -148,6 +149,7 @@ extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
 extern struct pslist_head *in_ifaddrhashtbl_pslist;
 extern u_long in_ifaddrhash_pslist;
+extern struct pslist_head in_ifaddrhead_pslist;
 
 #define IN_IFADDR_HASH_PSLIST(x)					\
 	in_ifaddrhashtbl_pslist[(u_long)(x) % IN_IFADDR_HASH_SIZE]
@@ -165,6 +167,55 @@ extern u_long in_ifaddrhash_pslist;
 	PSLIST_ENTRY_INIT((__ia), ia_hash_pslist_entry);
 #define IN_ADDRHASH_ENTRY_DESTROY(__ia)					\
 	PSLIST_ENTRY_DESTROY((__ia), ia_hash_pslist_entry);
+
+#define IN_ADDRLIST_ENTRY_INIT(__ia)					\
+	PSLIST_ENTRY_INIT((__ia), ia_pslist_entry)
+#define IN_ADDRLIST_ENTRY_DESTROY(__ia)					\
+	PSLIST_ENTRY_DESTROY((__ia), ia_pslist_entry);
+#define IN_ADDRLIST_READER_EMPTY()					\
+	(PSLIST_READER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                     ia_pslist_entry) == NULL)
+#define IN_ADDRLIST_READER_FIRST()					\
+	PSLIST_READER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                    ia_pslist_entry)
+#define IN_ADDRLIST_READER_NEXT(__ia)					\
+	PSLIST_READER_NEXT((__ia), struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_READER_FOREACH(__ia)				\
+	PSLIST_READER_FOREACH((__ia), &in_ifaddrhead_pslist,		\
+	                      struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_INSERT_HEAD(__ia)				\
+	PSLIST_WRITER_INSERT_HEAD(&in_ifaddrhead_pslist, (__ia),	\
+	    ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_REMOVE(__ia)					\
+	PSLIST_WRITER_REMOVE((__ia), ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_FOREACH(__ia)				\
+	PSLIST_WRITER_FOREACH((__ia), &in_ifaddrhead_pslist,		\
+	                      struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_FIRST()					\
+	PSLIST_WRITER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                    ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_NEXT(__ia)					\
+	PSLIST_WRITER_NEXT((__ia), struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_INSERT_AFTER(__ia, __new)			\
+	PSLIST_WRITER_INSERT_AFTER((__ia), (__new), ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_EMPTY()					\
+	(PSLIST_WRITER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	    ia_pslist_entry) == NULL)
+#define IN_ADDRLIST_WRITER_INSERT_TAIL(__new)				\
+	do {								\
+		if (IN_ADDRLIST_WRITER_EMPTY()) {			\
+			IN_ADDRLIST_WRITER_INSERT_HEAD((__new));	\
+		} else {						\
+			struct in_ifaddr *__ia;				\
+			IN_ADDRLIST_WRITER_FOREACH(__ia) {		\
+				if (IN_ADDRLIST_WRITER_NEXT(__ia) == NULL) { \
+					IN_ADDRLIST_WRITER_INSERT_AFTER(__ia,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
 
 extern	const	int	inetctlerrmap[];
 
