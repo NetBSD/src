@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.205 2016/07/06 07:52:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.206 2016/07/06 10:49:49 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.205 2016/07/06 07:52:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.206 2016/07/06 10:49:49 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,11 +142,20 @@ const struct in6_addr in6mask128 = IN6MASK128;
 const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 				     0, 0, IN6ADDR_ANY_INIT, 0};
 
+struct pslist_head	in6_ifaddr_list;
+
 static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
+
+void
+in6_init(void)
+{
+
+	PSLIST_INIT(&in6_ifaddr_list);
+}
 
 /*
  * Add ownaddr as loopback rtentry.  We previously add the route only if
