@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.80 2016/07/06 07:52:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.81 2016/07/06 10:49:49 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -729,6 +729,8 @@ do {									\
 	(__imm) = in6_lookup_mship(&(__addr), (__ifp), (__imop));	\
 } while (/*CONSTCOND*/ 0)
 #endif
+
+void	in6_init(void);
 
 struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *,
 	int *, int);
