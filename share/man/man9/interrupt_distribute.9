@@ -1,4 +1,4 @@
-.\" $NetBSD: interrupt_distribute.9,v 1.1 2015/08/17 06:28:11 knakahara Exp $
+.\" $NetBSD: interrupt_distribute.9,v 1.2 2016/07/06 09:20:42 abhinav Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -29,6 +29,7 @@
 .Os
 .Sh NAME
 .Nm interrupt_distribute
+.Nd assign an interrupt to a CPU
 .Sh SYNOPSIS
 .In sys/interrupt.h
 .Ft int
@@ -40,7 +41,7 @@ The
 function exists to assign an interrupt to a CPU.
 .Pp
 If a driver (or the other kernel component) wishes to assign an
-interrupt to a CPU, it should pass a interrupt handler such as
+interrupt to a CPU, it should pass an interrupt handler such as
 the return value of
 .Fn pci_intr_establish
 as
