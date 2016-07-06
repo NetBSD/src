@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1342 2016/07/04 20:24:24 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1343 2016/07/06 11:37:58 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -424,7 +424,7 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	4.8.5
+Version:	4.8.5/5.4
 Current Vers:	4.8.5/5.4/6.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
@@ -442,7 +442,7 @@ migration from one version of gcc to another to happen for one port
 at a time, instead of for all ports simultaneously.
 When importing a new version of external/gpl3/gcc.old:
 	- copy the current version of external/gpl3/gcc
-	- import it to a "NETBSD" vendor branch in externalgpl3/gcc.old
+	- import it to a "NETBSD" vendor branch in external/gpl3/gcc.old
 Before importing a new version of external/gpl3/gcc:
 	- delete all .cvsignore and .gitignore files
 	- delete java ada fortran their libraries and testsuites
@@ -451,6 +451,8 @@ Before importing a new version of external/gpl3/gcc:
 	- use core/c++/objc/testsuite tarballs
 	- you can use the gcc2netbsd script for the above (except version)
 	- update tools/gcc/gcc-version.mk
+	- force generate and copy tools/gcc build version of these files
+	  into gcc/dist/gcc/doc: cpp.1 cpp.info gcc.1 gcc.info gcov.1
 
 Package:	gdb
 Version:	7.9.1
