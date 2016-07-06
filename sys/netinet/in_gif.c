@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.79 2016/07/06 00:30:55 ozaki-r Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.80 2016/07/06 01:10:07 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.79 2016/07/06 00:30:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.80 2016/07/06 01:10:07 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -199,8 +199,6 @@ in_gif_input(struct mbuf *m, int off, int proto)
 	const struct ip *ip;
 	int af;
 	u_int8_t otos;
-	struct ifnet *rcvif;
-	struct psref psref;
 
 	ip = mtod(m, const struct ip *);
 
@@ -221,6 +219,8 @@ in_gif_input(struct mbuf *m, int off, int proto)
 		return;
 	}
 
+	struct ifnet *rcvif;
+	struct psref psref;
 	rcvif = m_get_rcvif_psref(m, &psref);
 	if (!gif_validate4(ip, sc, rcvif)) {
 		m_put_rcvif_psref(rcvif, &psref);
