@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.93 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.94 2016/07/06 08:42:34 ozaki-r Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.93 2016/07/04 04:35:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.94 2016/07/06 08:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -488,8 +488,7 @@ stf_checkaddr4(struct stf_softc *sc, const struct in_addr *in,
 	/*
 	 * reject packets with broadcast
 	 */
-	TAILQ_FOREACH(ia4, &in_ifaddrhead, ia_list)
-	{
+	IN_ADDRLIST_READER_FOREACH(ia4) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (in->s_addr == ia4->ia_broadaddr.sin_addr.s_addr)

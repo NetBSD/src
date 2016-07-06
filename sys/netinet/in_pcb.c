@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.164 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.165 2016/07/06 08:42:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.164 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.165 2016/07/06 08:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -411,7 +411,7 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
+	if (IN_ADDRLIST_READER_EMPTY())
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
@@ -470,7 +470,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 	    inp->inp_socket->so_type == SOCK_STREAM)
 		return EADDRNOTAVAIL;
 
-	if (TAILQ_FIRST(&in_ifaddrhead) != 0) {
+	if (!IN_ADDRLIST_READER_EMPTY()) {
 		/*
 		 * If the destination address is INADDR_ANY,
 		 * use any local address (likely loopback).
@@ -480,10 +480,11 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 		 */
 
 		if (in_nullhost(sin->sin_addr)) {
+			/* XXX racy */
 			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddrhead)->ia_addr.sin_addr;
+			    IN_ADDRLIST_READER_FIRST()->ia_addr.sin_addr;
 		} else if (sin->sin_addr.s_addr == INADDR_BROADCAST) {
-			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+			IN_ADDRLIST_READER_FOREACH(ia) {
 				if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
 					sin->sin_addr =
 					    ia->ia_broadaddr.sin_addr;

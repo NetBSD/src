@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.170 2016/07/06 05:27:52 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.171 2016/07/06 08:42:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.170 2016/07/06 05:27:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.171 2016/07/06 08:42:34 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -185,13 +185,14 @@ static krwlock_t		in_multilock;
 #define IN_MULTI_HASH(x, ifp) \
     (in_multihashtbl[(u_long)((x) ^ (ifp->if_index)) % IN_MULTI_HASH_SIZE])
 
-/* XXX DEPRECATED. Keep it to avoid breaking kvm(3) users. */
+/* XXX DEPRECATED. Keep them to avoid breaking kvm(3) users. */
 struct in_ifaddrhashhead *	in_ifaddrhashtbl;
 u_long				in_ifaddrhash;
 struct in_ifaddrhead		in_ifaddrhead;
 
 struct pslist_head *		in_ifaddrhashtbl_pslist;
 u_long				in_ifaddrhash_pslist;
+struct pslist_head		in_ifaddrhead_pslist;
 
 void
 in_init(void)
@@ -199,6 +200,7 @@ in_init(void)
 	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
 	    NULL, IPL_SOFTNET);
 	TAILQ_INIT(&in_ifaddrhead);
+	PSLIST_INIT(&in_ifaddrhead_pslist);
 
 	in_ifaddrhashtbl = hashinit(IN_IFADDR_HASH_SIZE, HASH_LIST, true,
 	    &in_ifaddrhash);
@@ -223,13 +225,15 @@ in_localaddr(struct in_addr in)
 	struct in_ifaddr *ia;
 
 	if (subnetsarelocal) {
-		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
+		IN_ADDRLIST_READER_FOREACH(ia) {
 			if ((in.s_addr & ia->ia_netmask) == ia->ia_net)
 				return (1);
+		}
 	} else {
-		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list)
+		IN_ADDRLIST_READER_FOREACH(ia) {
 			if ((in.s_addr & ia->ia_subnetmask) == ia->ia_subnet)
 				return (1);
+		}
 	}
 	return (0);
 }
@@ -304,7 +308,7 @@ in_setmaxmtu(void)
 	struct ifnet *ifp;
 	unsigned long maxmtu = 0;
 
-	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+	IN_ADDRLIST_READER_FOREACH(ia) {
 		if ((ifp = ia->ia_ifp) == 0)
 			continue;
 		if ((ifp->if_flags & (IFF_UP|IFF_LOOPBACK)) != IFF_UP)
@@ -466,6 +470,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			ia->ia_idsalt = cprng_fast32() % 65535;
 			LIST_INIT(&ia->ia_multiaddrs);
 			IN_ADDRHASH_ENTRY_INIT(ia);
+			IN_ADDRLIST_ENTRY_INIT(ia);
 
 			newifaddr = 1;
 		}
@@ -640,6 +645,8 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		ifaref(&ia->ia_ifa);
 		ifa_insert(ifp, &ia->ia_ifa);
+		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
+		IN_ADDRLIST_WRITER_INSERT_TAIL(ia);
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
 		    ia, ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ia);
@@ -690,7 +697,7 @@ in_ifremlocal(struct ifaddr *ifa)
 	ia = (struct in_ifaddr *)ifa;
 	/* Delete the entry if exactly one ifaddr matches the
 	 * address, ifa->ifa_addr. */
-	TAILQ_FOREACH(p, &in_ifaddrhead, ia_list) {
+	IN_ADDRLIST_READER_FOREACH(p) {
 		if (!in_hosteq(p->ia_addr.sin_addr, ia->ia_addr.sin_addr))
 			continue;
 		if (p->ia_ifp != ia->ia_ifp)
@@ -722,6 +729,9 @@ in_purgeaddr(struct ifaddr *ifa)
 	IN_ADDRHASH_ENTRY_DESTROY(ia);
 	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&in_ifaddrhead, ia, ia_list);
+	IN_ADDRLIST_WRITER_REMOVE(ia);
+	IN_ADDRLIST_ENTRY_DESTROY(ia);
+
 	if (ia->ia_allhosts != NULL)
 		in_delmulti(ia->ia_allhosts);
 	ifafree(&ia->ia_ifa);
@@ -1066,7 +1076,7 @@ in_addprefix(struct in_ifaddr *target, int flags)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+	IN_ADDRLIST_READER_FOREACH(ia) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
@@ -1126,7 +1136,7 @@ in_scrubprefix(struct in_ifaddr *target)
 		prefix.s_addr &= mask.s_addr;
 	}
 
-	TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+	IN_ADDRLIST_READER_FOREACH(ia) {
 		if (rtinitflags(ia))
 			p = ia->ia_dstaddr.sin_addr;
 		else {
@@ -1524,7 +1534,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		sin->sin_port = fport;
 		if (ia == NULL) {
 			/* Find 1st non-loopback AF_INET address */
-			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+			IN_ADDRLIST_READER_FOREACH(ia) {
 				if (!(ia->ia_ifp->if_flags & IFF_LOOPBACK))
 					break;
 			}
