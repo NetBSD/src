@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.333 2016/07/04 08:10:50 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.334 2016/07/06 05:27:52 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.333 2016/07/04 08:10:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.334 2016/07/06 05:27:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -372,7 +372,7 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 	checkif = ip_checkinterface && (ipforwarding == 0) &&
 	    (ifp->if_flags & IFF_LOOPBACK) == 0;
 
-	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
+	IN_ADDRHASH_READER_FOREACH(ia, ip->ip_dst.s_addr) {
 		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
 			if (ia->ia4_flags & IN_IFF_NOTREADY)
 				continue;
