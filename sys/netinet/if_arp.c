@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.215 2016/07/01 05:22:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.216 2016/07/06 06:30:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.215 2016/07/01 05:22:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.216 2016/07/06 06:30:08 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1040,11 +1040,11 @@ in_arpinput(struct mbuf *m)
 			    carp_iamatch(ia, ar_sha(ah),
 			    &count, index)) {
 				break;
-				}
+			}
 		} else
 #endif
-			    if (ia->ia_ifp == rcvif)
-				break;
+		if (ia->ia_ifp == rcvif)
+			break;
 #if NBRIDGE > 0
 		/*
 		 * If the interface we received the packet on
