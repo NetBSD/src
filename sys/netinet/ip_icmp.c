@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.147 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.148 2016/07/06 08:42:34 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.147 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.148 2016/07/06 08:42:34 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -793,7 +793,7 @@ icmp_reflect(struct mbuf *m)
 	 * interface.
 	 */
 	if (sin == NULL)
-		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+		IN_ADDRLIST_READER_FOREACH(ia) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
 			sin = &ia->ia_addr;
