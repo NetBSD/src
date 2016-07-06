@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.1 2016/06/10 21:32:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2 2016/07/06 13:28:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,10 @@ static void	platinumfb_set_hardware(struct platinumfb_softc *);
 
 static inline void platinumfb_write_reg(struct platinumfb_softc *,
  					int, uint32_t);
+ 					
+#ifdef notyet
 static inline uint32_t platinumfb_read_reg(struct platinumfb_softc *, int);
+#endif
 static inline void platinumfb_write_cmap_reg(struct platinumfb_softc *, 
  					     int, uint8_t);
 static inline uint8_t platinumfb_read_cmap_reg(struct platinumfb_softc *, int);
@@ -277,11 +280,13 @@ platinumfb_write_reg(struct platinumfb_softc *sc, int reg, uint32_t val)
 	out32(sc->sc_reg + PLATINUM_REG_OFFSET_ADDR(reg), val);
 }
 
+#ifdef notyet
 static inline uint32_t
 platinumfb_read_reg(struct platinumfb_softc *sc, int reg)
 {
 	return in32(sc->sc_reg + PLATINUM_REG_OFFSET_ADDR(reg));
 }
+#endif
 
 static inline void
 platinumfb_write_cmap_reg(struct platinumfb_softc *sc, 
