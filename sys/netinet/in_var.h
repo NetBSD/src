@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.74 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.75 2016/07/06 05:27:52 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,10 @@ struct in_ifaddr {
 	int	ia4_flags;		/* address flags */
 	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
 	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
+
+#ifdef _KERNEL
+	struct pslist_entry	ia_hash_pslist_entry;
+#endif
 };
 
 struct	in_aliasreq {
@@ -141,6 +145,26 @@ TAILQ_HEAD(in_ifaddrhead, in_ifaddr);		/* Type of the list head */
 extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
+
+extern struct pslist_head *in_ifaddrhashtbl_pslist;
+extern u_long in_ifaddrhash_pslist;
+
+#define IN_IFADDR_HASH_PSLIST(x)					\
+	in_ifaddrhashtbl_pslist[(u_long)(x) % IN_IFADDR_HASH_SIZE]
+
+#define IN_ADDRHASH_READER_FOREACH(__ia, __addr)			\
+	PSLIST_READER_FOREACH((__ia), &IN_IFADDR_HASH_PSLIST(__addr),	\
+	    struct in_ifaddr, ia_hash_pslist_entry)
+#define IN_ADDRHASH_WRITER_INSERT_HEAD(__ia)				\
+	PSLIST_WRITER_INSERT_HEAD(					\
+	    &IN_IFADDR_HASH_PSLIST((__ia)->ia_addr.sin_addr.s_addr),	\
+	    (__ia), ia_hash_pslist_entry)
+#define IN_ADDRHASH_WRITER_REMOVE(__ia)					\
+	PSLIST_WRITER_REMOVE((__ia), ia_hash_pslist_entry)
+#define IN_ADDRHASH_ENTRY_INIT(__ia)					\
+	PSLIST_ENTRY_INIT((__ia), ia_hash_pslist_entry);
+#define IN_ADDRHASH_ENTRY_DESTROY(__ia)					\
+	PSLIST_ENTRY_DESTROY((__ia), ia_hash_pslist_entry);
 
 extern	const	int	inetctlerrmap[];
 
