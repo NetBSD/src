@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.58 2016/06/12 15:20:02 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.59 2016/07/07 10:53:03 maya Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.58 2016/06/12 15:20:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.59 2016/07/07 10:53:03 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2103,7 +2103,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		DPRINTFN(4, "device address %u", addr, 0, 0, 0);
 		/* XXX ensure we know when the hardware does something
 		   we can't yet cope with */
-		KASSERT(addr >= 1 && addr <= 127);
+		KASSERTMSG(addr >= 1 && addr <= 127, "addr %d", addr);
 		dev->ud_addr = addr;
 		/* XXX dev->ud_addr not necessarily unique on bus */
 		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
@@ -2208,13 +2208,13 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	KASSERT(ntrbs <= XHCI_XFER_NTRB);
+	KASSERTMSG(ntrbs <= XHCI_XFER_NTRB, "ntrbs %zu", ntrbs);
 	for (i = 0; i < ntrbs; i++) {
 		DPRINTFN(12, "xr %p trbs %p num %zu", xr, trbs, i, 0);
 		DPRINTFN(12, " %016"PRIx64" %08"PRIx32" %08"PRIx32,
 		    trbs[i].trb_0, trbs[i].trb_2, trbs[i].trb_3, 0);
-		KASSERT(XHCI_TRB_3_TYPE_GET(trbs[i].trb_3) !=
-		    XHCI_TRB_TYPE_LINK);
+		KASSERTMSG(XHCI_TRB_3_TYPE_GET(trbs[i].trb_3) !=
+		    XHCI_TRB_TYPE_LINK, "trb3 type %d", trbs[i].trb_3);
 	}
 
 	DPRINTFN(12, "%p xr_ep 0x%x xr_cs %u", xr, xr->xr_ep, xr->xr_cs, 0);
@@ -2529,7 +2529,7 @@ xhci_update_ep0_mps(struct xhci_softc * const sc,
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVALUATE_CTX);
 
 	err = xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
-	KASSERT(err == USBD_NORMAL_COMPLETION); /* XXX */
+	KASSERTMSG(err == USBD_NORMAL_COMPLETION, "err %d", err); /* XXX */
 	return err;
 }
 
@@ -3431,7 +3431,8 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	    UGETW(req->wIndex), UGETW(req->wLength));
 
 	/* we rely on the bottom bits for extra info */
-	KASSERT(((uintptr_t)xfer & 0x3) == 0x0);
+	KASSERTMSG(((uintptr_t)xfer & 0x3) == 0x0, "xfer %zx",
+	    (uintptr_t) xfer);
 
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) != 0);
 
@@ -3449,7 +3450,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	if (len != 0) {
 		/* data phase */
 		parameter = DMAADDR(dma, 0);
-		KASSERT(len <= 0x10000);
+		KASSERTMSG(len <= 0x10000, "len %d", len);
 		status = XHCI_TRB_2_IRQ_SET(0) |
 		    XHCI_TRB_2_TDSZ_SET(1) |
 		    XHCI_TRB_2_BYTES_SET(len);
@@ -3586,7 +3587,7 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	 * data block be sent.
 	 * The earlier documentation differs, I don't know how it behaves.
 	 */
-	KASSERT(len <= 0x10000);
+	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
 	    XHCI_TRB_2_TDSZ_SET(1) |
 	    XHCI_TRB_2_BYTES_SET(len);
@@ -3691,7 +3692,7 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	KASSERT((xfer->ux_rqflags & URQ_REQUEST) == 0);
 
 	parameter = DMAADDR(dma, 0);
-	KASSERT(len <= 0x10000);
+	KASSERTMSG(len <= 0x10000, "len %d", len);
 	status = XHCI_TRB_2_IRQ_SET(0) |
 	    XHCI_TRB_2_TDSZ_SET(1) |
 	    XHCI_TRB_2_BYTES_SET(len);
