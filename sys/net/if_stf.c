@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.94 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.95 2016/07/07 09:32:02 ozaki-r Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.94 2016/07/06 08:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.95 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -313,7 +313,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 	struct sockaddr_in6 *sin6;
 	struct in_addr in;
 
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 	{
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;

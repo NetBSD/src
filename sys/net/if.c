@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.353 2016/07/05 07:42:51 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.354 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.353 2016/07/05 07:42:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -496,8 +496,9 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
 	if_deactivate_sadl(ifp);
 
 	if_sadl_setrefs(ifp, ifa);
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		rtinit(ifa, RTM_LLINFO_UPD, 0);
+
 	splx(s);
 }
 
@@ -656,6 +657,7 @@ if_initialize(ifnet_t *ifp)
 	}
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
+	PSLIST_INIT(&ifp->if_addr_pslist);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
@@ -1026,7 +1028,8 @@ if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
 {
 	struct ifaddr *ifa, *nifa;
 
-	IFADDR_FOREACH_SAFE(ifa, ifp, nifa) {
+	for (ifa = IFADDR_READER_FIRST(ifp); ifa; ifa = nifa) {
+		nifa = IFADDR_READER_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != family)
 			continue;
 		(*purgeaddr)(ifa);
@@ -1047,7 +1050,7 @@ if_build_ifa_list(struct ifnet *ifp)
 	KASSERT(ifa_list == NULL);
 	KASSERT(ifa_list_size == 0);
 
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		ifa_list_size++;
 
 	ifa_list = kmem_alloc(sizeof(*ifa) * ifa_list_size, KM_SLEEP);
@@ -1055,7 +1058,7 @@ if_build_ifa_list(struct ifnet *ifp)
 		return;
 
 	i = 0;
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		ifa_list[i++] = ifa;
 		ifaref(ifa);
 	}
@@ -1180,7 +1183,7 @@ if_detach(struct ifnet *ifp)
 	 * least one ifaddr.
 	 */
 again:
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -1566,6 +1569,8 @@ ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	ifa->ifa_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	IFADDR_ENTRY_INIT(ifa);
+	IFADDR_WRITER_INSERT_TAIL(ifp, ifa);
 	ifaref(ifa);
 }
 
@@ -1574,6 +1579,9 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	KASSERT(ifa->ifa_ifp == ifp);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	IFADDR_WRITER_REMOVE(ifa);
+	/* TODO psref_target_destroy */
+	IFADDR_ENTRY_DESTROY(ifa);
 	ifafree(ifa);
 }
 
@@ -1598,7 +1606,7 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 			if (equal(addr, ifa->ifa_addr))
@@ -1632,7 +1640,7 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 			continue;
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
@@ -1694,7 +1702,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
@@ -1749,7 +1757,7 @@ ifa_ifwithaf(int af)
 	IFNET_READER_FOREACH(ifp) {
 		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == af)
 				goto out;
 		}
@@ -1778,7 +1786,7 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	if (af >= AF_MAX)
 		return NULL;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -2031,7 +2039,7 @@ p2p_rtrequest(int req, struct rtentry *rt,
 
 		rt->rt_ifp = lo0ifp;
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
 				break;
 		}
@@ -2041,7 +2049,7 @@ p2p_rtrequest(int req, struct rtentry *rt,
 		/*
 		 * Ensure lo0 has an address of the same family.
 		 */
-		IFADDR_FOREACH(lo0ifa, lo0ifp) {
+		IFADDR_READER_FOREACH(lo0ifa, lo0ifp) {
 			if (lo0ifa->ifa_addr->sa_family ==
 			    ifa->ifa_addr->sa_family)
 				break;
@@ -2076,7 +2084,7 @@ if_down(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_UP;
 	nanotime(&ifp->if_lastchange);
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0
@@ -2107,7 +2115,7 @@ if_up(struct ifnet *ifp)
 	nanotime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 #if NCARP > 0
@@ -2528,7 +2536,7 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	sockaddr_externalize(&v.sa, sizeof(v.ss), sa);
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != sa->sa_family)
 			continue;
 		sockaddr_externalize(&u.sa, sizeof(u.ss), ifa->ifa_addr);
@@ -2775,7 +2783,7 @@ ifconf(u_long cmd, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp)) {
+		if (IFADDR_READER_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (!docopy) {
@@ -2791,7 +2799,7 @@ ifconf(u_long cmd, void *data)
 			}
 		}
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 			/* all sockaddrs must fit in sockaddr_storage */
 			KASSERT(sa->sa_len <= sizeof(ifr.ifr_ifru));

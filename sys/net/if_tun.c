@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.126 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.127 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.126 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.127 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -361,7 +361,7 @@ tunclose(dev_t dev, int flag, int mode,
 		if (ifp->if_flags & IFF_RUNNING) {
 			/* find internet addresses and delete routes */
 			struct ifaddr *ifa;
-			IFADDR_FOREACH(ifa, ifp) {
+			IFADDR_READER_FOREACH(ifa, ifp) {
 #if defined(INET) || defined(INET6)
 				if (ifa->ifa_addr->sa_family == AF_INET ||
 				    ifa->ifa_addr->sa_family == AF_INET6) {
@@ -393,7 +393,7 @@ tuninit(struct tun_softc *tp)
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 #ifdef INET
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *sin;
