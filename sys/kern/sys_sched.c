@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.44 2016/07/03 14:24:59 christos Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.44 2016/07/03 14:24:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -394,7 +394,7 @@ sys__sched_setaffinity(struct lwp *l,
 		}
 		/* Empty set */
 		kcpuset_unuse(kcset, &kcpulst);
-		kcset = NULL; 
+		kcset = NULL;
 	}
 
 	if (SCARG(uap, pid) != 0) {
@@ -566,7 +566,7 @@ sys__sched_protect(struct lwp *l,
 			break;
 		default:
 			l->l_protectdepth--;
-			break;	
+			break;
 		}
 	} else if (pri < 0) {
 		/* Just retrieve the current value, for debugging */

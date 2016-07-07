@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.146 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.147 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.146 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.147 2016/07/07 06:55:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -499,8 +499,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "%d mixer controls\n",
 		    sc->sc_nctls);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTF("%s", "doing audio_attach_mi\n");
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, sc->sc_dev);
@@ -544,8 +543,7 @@ uaudio_detach(device_t self, int flags)
 	if (sc->sc_audiodev != NULL)
 		rv = config_detach(sc->sc_audiodev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	if (sc->sc_formats != NULL)
 		kmem_free(sc->sc_formats,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.52 2016/05/26 11:09:55 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.52 2016/05/26 11:09:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -755,7 +755,7 @@ vrelel(vnode_t *vp, int flags)
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
-				cv_signal(&vrele_cv); 
+				cv_signal(&vrele_cv);
 			mutex_exit(&vrele_lock);
 			mutex_exit(vp->v_interlock);
 			return;

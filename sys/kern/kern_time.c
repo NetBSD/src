@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.187 2016/06/10 23:29:20 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.188 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.187 2016/06/10 23:29:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.188 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -396,7 +396,7 @@ sys_clock_getcpuclockid2(struct lwp *l,
 
 	switch (SCARG(uap, idtype)) {
 	case P_PID:
-		pid = id == 0 ? l->l_proc->p_pid : id; 
+		pid = id == 0 ? l->l_proc->p_pid : id;
 		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
 		break;
 	case P_LWPID:
@@ -1092,7 +1092,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 		TIMESPEC_TO_TIMEVAL(&itvp->it_value, &its.it_value);
 		TIMESPEC_TO_TIMEVAL(&itvp->it_interval, &its.it_interval);
 	}
-	mutex_spin_exit(&timer_lock);	
+	mutex_spin_exit(&timer_lock);
 
 	return 0;
 }

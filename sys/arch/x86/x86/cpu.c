@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.119 2015/12/16 18:54:03 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.120 2016/07/07 06:55:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.119 2015/12/16 18:54:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.120 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -138,7 +138,7 @@ struct cpu_softc {
 };
 
 #ifdef MULTIPROCESSOR
-int mp_cpu_start(struct cpu_info *, paddr_t); 
+int mp_cpu_start(struct cpu_info *, paddr_t);
 void mp_cpu_start_cleanup(struct cpu_info *);
 const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };

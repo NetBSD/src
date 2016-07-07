@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.434 2016/06/20 19:14:35 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.435 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.434 2016/06/20 19:14:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.435 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -631,7 +631,7 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 	memmove(bp, path, len);
 	*(--bp) = '/';
 
-	cwdi = l->l_proc->p_cwdi; 
+	cwdi = l->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, MAXPATHLEN / 2,
 	    GETCWD_CHECK_ACCESS, l);

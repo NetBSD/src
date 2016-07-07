@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.14 2016/01/10 03:07:25 christos Exp $	*/
+/*	$NetBSD: virtio.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.14 2016/01/10 03:07:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,8 @@ error:
 }
 
 static int
-virtio_setup_intx_interrupt(struct virtio_softc *sc, struct pci_attach_args *pa)
+virtio_setup_intx_interrupt(struct virtio_softc *sc,
+    struct pci_attach_args *pa)
 {
 	device_t self = sc->sc_dev;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -478,7 +479,8 @@ virtio_reinit_start(struct virtio_softc *sc)
 	/* MSI-X should have more than one handles where INTx has just one */
 	if (sc->sc_ihs_num > 1) {
 		if (virtio_setup_msix_vectors(sc) != 0) {
-			aprint_error_dev(sc->sc_dev, "couldn't setup MSI-X vectors\n");
+			aprint_error_dev(sc->sc_dev,
+			    "couldn't setup MSI-X vectors\n");
 			return;
 		}
 	}
@@ -747,7 +749,8 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
  * Initialize vq structure.
  */
 static void
-virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, const bool reinit)
+virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
+    const bool reinit)
 {
 	int i, j;
 	int vq_size = vq->vq_num;
@@ -793,9 +796,8 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, const bool reinit)
  * Allocate/free a vq.
  */
 int
-virtio_alloc_vq(struct virtio_softc *sc,
-		struct virtqueue *vq, int index, int maxsegsize, int maxnsegs,
-		const char *name)
+virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
+    int maxsegsize, int maxnsegs, const char *name)
 {
 	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
 	int rsegs, r;

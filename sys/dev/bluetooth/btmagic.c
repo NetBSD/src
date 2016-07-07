@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.15 2015/12/13 21:13:00 plunky Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.16 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.15 2015/12/13 21:13:00 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.16 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -196,15 +196,15 @@ static int  btmagic_listen(struct btmagic_softc *);
 static int  btmagic_connect(struct btmagic_softc *);
 static int  btmagic_sysctl_resolution(SYSCTLFN_PROTO);
 static int  btmagic_sysctl_scale(SYSCTLFN_PROTO);
-static int btmagic_tap(struct btmagic_softc *, int);
+static int  btmagic_tap(struct btmagic_softc *, int);
 static int  btmagic_sysctl_taptimeout(SYSCTLFN_PROTO);
 
 CFATTACH_DECL_NEW(btmagic, sizeof(struct btmagic_softc),
     btmagic_match, btmagic_attach, btmagic_detach, NULL);
 
 /* wsmouse(4) accessops */
-static int btmagic_wsmouse_enable(void *);
-static int btmagic_wsmouse_ioctl(void *, unsigned long, void *, int, struct lwp *);
+static int  btmagic_wsmouse_enable(void *);
+static int  btmagic_wsmouse_ioctl(void *, unsigned long, void *, int, struct lwp *);
 static void btmagic_wsmouse_disable(void *);
 
 static const struct wsmouse_accessops btmagic_wsmouse_accessops = {

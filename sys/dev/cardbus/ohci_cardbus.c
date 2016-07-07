@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.41 2016/04/23 10:15:31 skrll Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.42 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.41 2016/04/23 10:15:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.42 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -83,7 +83,8 @@ struct ohci_cardbus_softc {
 };
 
 CFATTACH_DECL_NEW(ohci_cardbus, sizeof(struct ohci_cardbus_softc),
-    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate);
+    ohci_cardbus_match, ohci_cardbus_attach, ohci_cardbus_detach,
+    ohci_activate);
 
 int
 ohci_cardbus_match(device_t parent, cfdata_t match, void *aux)

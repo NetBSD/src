@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.10 2016/01/06 15:28:40 bouyer Exp $      */
+/*      $NetBSD: pciback.c,v 1.11 2016/07/07 06:55:40 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.10 2016/01/06 15:28:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.11 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -519,7 +519,7 @@ static int
 pciback_xenbus_destroy(void *arg)
 {
 	struct pb_xenbus_instance *pbxi = arg;
-	struct pciback_pci_dev *pbd; 
+	struct pciback_pci_dev *pbd;
 	struct gnttab_unmap_grant_ref op;
 	int err;
 
