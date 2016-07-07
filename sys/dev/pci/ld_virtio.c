@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.9 2015/10/27 16:03:04 christos Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.10 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.9 2015/10/27 16:03:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.10 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,8 +250,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 
 	if (vsc->sc_child != NULL) {
 		aprint_normal(": child already attached for %s; "
-			      "something wrong...\n",
-			      device_xname(parent));
+			      "something wrong...\n", device_xname(parent));
 		return;
 	}
 

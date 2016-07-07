@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.60 2015/08/24 22:50:33 pooka Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.61 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.60 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.61 2016/07/07 06:55:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -497,7 +497,8 @@ wsmux_do_ioctl(device_t dv, u_long cmd, void *data, int flag,
 	case WSKBDIO_SETVERSION:
 	case WSMOUSEIO_SETVERSION:
 	case WSDISPLAYIO_SETVERSION:
-		DPRINTF(("%s: WSxxxIO_SETVERSION\n", device_xname(sc->sc_base.me_dv)));
+		DPRINTF(("%s: WSxxxIO_SETVERSION\n",
+			device_xname(sc->sc_base.me_dv)));
 		evar = sc->sc_base.me_evp;
 		if (evar == NULL)
 			return (EINVAL);
@@ -659,14 +660,15 @@ wsmux_create(const char *name, int unit)
 	sc = malloc(sizeof *sc, M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (sc == NULL)
 		return (NULL);
-	sc->sc_base.me_dv = malloc(sizeof(struct device), M_DEVBUF, M_NOWAIT|M_ZERO);
+	sc->sc_base.me_dv = malloc(sizeof(struct device), M_DEVBUF,
+	    M_NOWAIT|M_ZERO);
 	if (sc->sc_base.me_dv == NULL) {
 		free(sc, M_DEVBUF);
 		return NULL;
 	}
 	TAILQ_INIT(&sc->sc_cld);
-	snprintf(sc->sc_base.me_dv->dv_xname, sizeof sc->sc_base.me_dv->dv_xname,
-		 "%s%d", name, unit);
+	snprintf(sc->sc_base.me_dv->dv_xname,
+	    sizeof sc->sc_base.me_dv->dv_xname, "%s%d", name, unit);
 	sc->sc_base.me_dv->dv_private = sc;
 	sc->sc_base.me_dv->dv_unit = unit;
 	sc->sc_base.me_ops = &wsmux_srcops;

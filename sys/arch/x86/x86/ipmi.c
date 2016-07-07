@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.63 2016/04/03 10:32:00 mlelstv Exp $ */
+/*	$NetBSD: ipmi.c,v 1.64 2016/07/07 06:55:40 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.63 2016/04/03 10:32:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.64 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1330,7 +1330,7 @@ static int64_t fixlog_a[] = {
 	0x0000000024924925ll /* 1.0/7.0 */,
 	0x0000000020000000ll /* -1.0/8.0 */,
 	0x000000001c71c71cll /* 1.0/9.0 */
-}; 
+};
 
 static int64_t fixexp_a[] = {
 	0x0000000100000000ll /* 1.0/1.0 */,
@@ -1342,13 +1342,13 @@ static int64_t fixexp_a[] = {
 	0x00000000005b05b0ll /* 1.0/720.0 */,
 	0x00000000000d00d0ll /* 1.0/5040.0 */,
 	0x000000000001a01all /* 1.0/40320.0 */
-};      
+};
 
 static int64_t
 fixmul(int64_t x, int64_t y)
 {
 	int64_t z;
-	int64_t a,b,c,d; 
+	int64_t a,b,c,d;
 	int neg;
 
 	neg = 0;
@@ -1388,7 +1388,7 @@ poly(int64_t x0, int64_t x, int64_t a[], int n)
 static int64_t
 logx(int64_t x, int64_t y)
 {
-	int64_t z; 
+	int64_t z;
 
 	if (x <= INT2FIX(0)) {
 		z = INT2FIX(-99999);

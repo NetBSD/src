@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.34 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.35 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.34 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.35 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,8 +289,7 @@ ustir_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("ustir_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = &ustir_methods;
@@ -366,8 +365,7 @@ ustir_detach(device_t self, int flags)
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	seldestroy(&sc->sc_rd_sel);
 	seldestroy(&sc->sc_wr_sel);

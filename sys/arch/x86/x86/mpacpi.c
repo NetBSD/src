@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.101 2015/07/17 06:41:18 msaitoh Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.102 2016/07/07 06:55:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.101 2015/07/17 06:41:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.102 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -495,8 +495,8 @@ mpacpi_pci_foundbus(struct acpi_devnode *ad)
 
 	rv = acpi_get(ad->ad_handle, &buf, AcpiGetIrqRoutingTable);
 	if (ACPI_FAILURE(rv)) {
-		buf.Length = 0; 
-		buf.Pointer = NULL; 
+		buf.Length = 0;
+		buf.Pointer = NULL;
 	}
 
 	mpr = kmem_zalloc(sizeof(struct mpacpi_pcibus), KM_SLEEP);

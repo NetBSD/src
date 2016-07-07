@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.133 2015/03/03 13:23:48 martin Exp $     */
+/*	$NetBSD: trap.c,v 1.134 2016/07/07 06:55:39 msaitoh Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.133 2015/03/03 13:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -111,7 +111,7 @@ trap(struct trapframe *tf)
 	if (usermode) {
 		type |= T_USER;
 		oticks = p->p_sticks;
-		l->l_md.md_utf = tf; 
+		l->l_md.md_utf = tf;
 		LWP_CACHE_CREDS(l, p);
 	}
 

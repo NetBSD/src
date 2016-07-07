@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.83 2015/12/27 20:52:25 gson Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.84 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.83 2015/12/27 20:52:25 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.84 2016/07/07 06:55:43 msaitoh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -183,7 +183,7 @@ findsym(const char *name, struct ksyms_symtab *table, int type)
 		mid = (low + high) >> 1;
 		cmp = sym[mid].st_name + str;
 		if (cmp[0] < name[0] || strcmp(cmp, name) < 0) {
-			low = mid + 1; 
+			low = mid + 1;
 		} else {
 			high = mid;
 		}

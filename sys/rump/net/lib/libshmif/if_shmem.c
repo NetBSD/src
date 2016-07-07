@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.69 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.68 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.69 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -230,7 +230,7 @@ initbackend(struct shmif_sc *sc, int memfd)
 	    && sc->sc_busmem->shm_magic != SHMIF_MAGIC) {
 		printf("bus is not magical");
 		rumpuser_unmap(sc->sc_busmem, BUSMEM_SIZE);
-		return ENOEXEC; 
+		return ENOEXEC;
 	}
 
 	/*

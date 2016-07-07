@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.155 2016/07/03 07:27:37 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.156 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.155 2016/07/03 07:27:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.156 2016/07/07 06:55:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -220,8 +220,8 @@ int umass_detach(device_t, int);
 static void umass_childdet(device_t, device_t);
 int umass_activate(device_t, enum devact);
 extern struct cfdriver umass_cd;
-CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match, umass_attach,
-    umass_detach, umass_activate, NULL, umass_childdet);
+CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match,
+    umass_attach, umass_detach, umass_activate, NULL, umass_childdet);
 
 Static void umass_disco(struct umass_softc *sc);
 
@@ -254,7 +254,8 @@ Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
 Static void umass_cbi_reset(struct umass_softc *, int);
 Static void umass_cbi_state(struct usbd_xfer *, void *, usbd_status);
 
-Static int umass_cbi_adsc(struct umass_softc *, char *, int, int, struct usbd_xfer *);
+Static int umass_cbi_adsc(struct umass_softc *, char *, int, int,
+    struct usbd_xfer *);
 
 const struct umass_wire_methods umass_bbb_methods = {
 	.wire_xfer = umass_bbb_transfer,
@@ -537,7 +538,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 	DPRINTFM(UDMASS_USB, "sc %p: opening iface %p epaddr %d for BULKIN",
 	    sc, sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN], 0);
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
-				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
+	    USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
 		aprint_error_dev(self, "could not open %u-in pipe (bulk)\n",
 		    sc->sc_epaddr[UMASS_BULKIN]);
@@ -557,7 +558,8 @@ umass_attach(device_t parent, device_t self, void *aux)
 	 * arriving concurrently.
 	 */
 	if (sc->sc_wire == UMASS_WPROTO_CBI_I) {
-		DPRINTFM(UDMASS_USB, "sc %p: opening iface %p epaddr %d for INTRIN",
+		DPRINTFM(UDMASS_USB,
+		    "sc %p: opening iface %p epaddr %d for INTRIN",
 		    sc, sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN], 0);
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
@@ -765,8 +767,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -828,8 +829,7 @@ umass_detach(device_t self, int flags)
 
 	umass_disco(sc);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_detach_cv);
@@ -1203,10 +1203,10 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		} else if (sc->transfer_dir == DIR_OUT) {
 			memcpy(sc->dataout_buffer, sc->transfer_data,
 			       sc->transfer_datalen);
-			if (umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
-					sc->dataout_buffer, sc->transfer_datalen,
-					0,/* fixed length transfer */
-					sc->transfer_xfer[XFER_BBB_DATAOUT]))
+			if (umass_setup_transfer(sc,
+			    sc->sc_pipe[UMASS_BULKOUT], sc->dataout_buffer,
+			    sc->transfer_datalen, 0,/* fixed length transfer */
+			    sc->transfer_xfer[XFER_BBB_DATAOUT]))
 				umass_bbb_reset(sc, STATUS_WIRE_FAILED);
 
 			return;
@@ -1301,8 +1301,8 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 	case TSTATE_BBB_STATUS2:	/* second attempt */
 		/* Status transfer, error handling */
 		if (err) {
-			DPRINTFM(UDMASS_BBB, "sc %p Failed to read CSW "
-			    "err %d (state %d)", sc, err, sc->transfer_state, 0);
+			DPRINTFM(UDMASS_BBB, "sc %p Failed to read CSW err %d "
+			    "(state %d)", sc, err, sc->transfer_state, 0);
 
 			/* If this was the first attempt at fetching the CSW
 			 * retry it, otherwise fail.
@@ -1594,7 +1594,8 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	sc->transfer_state = TSTATE_CBI_COMMAND;
 
 	/* Send the Command Block from host to device via control endpoint. */
-	if (umass_cbi_adsc(sc, cmd, cmdlen, flags, sc->transfer_xfer[XFER_CBI_CB]))
+	if (umass_cbi_adsc(sc, cmd, cmdlen, flags,
+	    sc->transfer_xfer[XFER_CBI_CB]))
 		umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 }
 
@@ -1809,7 +1810,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 
 				sc->transfer_state = TSTATE_IDLE;
 				sc->transfer_cb(sc, sc->transfer_priv,
-				    sc->transfer_datalen - sc->transfer_actlen, status);
+				    sc->transfer_datalen - sc->transfer_actlen,
+				    status);
 			}
 		}
 		return;

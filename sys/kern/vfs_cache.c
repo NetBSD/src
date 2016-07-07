@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.109 2015/12/05 05:23:35 dholland Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.109 2015/12/05 05:23:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.110 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -759,7 +759,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			}
 
 			mutex_enter(dvp->v_interlock);
-			mutex_exit(&ncp->nc_lock); 
+			mutex_exit(&ncp->nc_lock);
 			mutex_exit(namecache_lock);
 			error = vget(dvp, LK_NOWAIT, false /* !wait */);
 			if (error) {

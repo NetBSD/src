@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.85 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.86 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.85 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.86 2016/07/07 06:55:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -512,8 +512,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	sc->kue_attached = true;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
-			   sc->kue_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev, sc->kue_dev);
 
 	return;
 }

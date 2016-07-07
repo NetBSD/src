@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.110 2016/06/28 02:02:56 ozaki-r Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.110 2016/06/28 02:02:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include "pppoe.h"
 
@@ -213,7 +213,8 @@ pppoeattach(int count)
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
-	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler, NULL);
+	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
+	    NULL);
 }
 
 static int

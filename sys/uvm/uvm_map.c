@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.339 2016/06/18 14:56:03 martin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.340 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.339 2016/06/18 14:56:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.340 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -509,7 +509,7 @@ _uvm_map_sanity(struct vm_map *map)
 	const struct vm_map_entry *e;
 	struct vm_map_entry *hint = map->hint;
 
-	e = &map->header; 
+	e = &map->header;
 	for (;;) {
 		if (map->first_free == e) {
 			first_free_found = true;

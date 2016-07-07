@@ -1,4 +1,4 @@
-/*	$NetBSD: klock.c,v 1.9 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: klock.c,v 1.10 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.9 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: klock.c,v 1.10 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ rump_kernel_bigwrap(int *nlocks)
 {
 
 	KASSERT(giantcnt > 0 && curlwp == giantowner);
-	giantowner = NULL; 
+	giantowner = NULL;
 	*nlocks = giantcnt;
 	giantcnt = 0;
 }

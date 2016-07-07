@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.218 2015/10/23 19:40:10 maxv Exp $	*/
+/*	$NetBSD: mount.h,v 1.219 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -459,7 +459,7 @@ extern int	syncer_maxdelay;
 extern kmutex_t	syncer_mutex;
 extern time_t	syncdelay;
 extern time_t	filedelay;
-extern time_t	dirdelay; 
+extern time_t	dirdelay;
 extern time_t	metadelay;
 void	vfs_syncer_add_to_worklist(struct mount *);
 void	vfs_syncer_remove_from_worklist(struct mount *);

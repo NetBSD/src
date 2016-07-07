@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.63 2016/01/26 23:12:18 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.64 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.63 2016/01/26 23:12:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -211,7 +211,7 @@ rumpblk_init(void)
 			sectshift = tmp;
 		else
 			printf("RUMP_BLKSECTSHIFT must be least %d (now %d), ",
-			   DEV_BSHIFT, tmp); 
+			   DEV_BSHIFT, tmp);
 		printf("using %d for sector shift (size %d)\n",
 		    sectshift, 1<<sectshift);
 	}

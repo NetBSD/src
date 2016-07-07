@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.181 2015/11/01 17:23:36 christos Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.182 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.181 2015/11/01 17:23:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.182 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -273,7 +273,7 @@ sys_accept(struct lwp *l, const struct sys_accept_args *uap, register_t *retval)
 		syscallarg(unsigned int *)	anamelen;
 	} */
 	int error, fd;
-	struct sockaddr_big name; 
+	struct sockaddr_big name;
 
 	name.sb_len = UCHAR_MAX;
 	error = do_sys_accept(l, SCARG(uap, s), (struct sockaddr *)&name,

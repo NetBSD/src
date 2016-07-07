@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.27 2016/06/20 02:25:03 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.28 2016/07/07 06:55:44 msaitoh Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.40 2015/03/28 19:24:05 maxv Exp Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.5 2015/02/22 14:12:48 maxv Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.27 2016/06/20 02:25:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.28 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -1585,7 +1585,7 @@ lfs_quota2_mount(struct mount *mp)
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA)) &&
             fs->lfs_quotaino[ULFS_USRQUOTA] == 0) {
                 printf("%s: No user quota inode\n",
-		    mp->mnt_stat.f_mntonname); 
+		    mp->mnt_stat.f_mntonname);
                 error = EINVAL;
         }
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA)) &&

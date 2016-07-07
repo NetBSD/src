@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.48 2015/08/17 06:16:02 knakahara Exp $	*/
+/*	$NetBSD: intr.h,v 1.49 2016/07/07 06:55:39 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 struct intrstub {
 	void *ist_entry;
-	void *ist_recurse; 
+	void *ist_recurse;
 	void *ist_resume;
 };
 

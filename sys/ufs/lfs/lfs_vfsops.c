@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.350 2016/06/20 01:44:05 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.350 2016/06/20 01:44:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2439,7 +2439,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 	}
 
 	/* Register new ifile size */
-	ip->i_size += noff * lfs_sb_getbsize(fs); 
+	ip->i_size += noff * lfs_sb_getbsize(fs);
 	lfs_dino_setsize(fs, ip->i_din, ip->i_size);
 	uvm_vnp_setsize(ivp, ip->i_size);
 

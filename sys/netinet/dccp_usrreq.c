@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.8 2016/06/10 13:27:16 ozaki-r Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.9 2016/07/07 06:55:43 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.8 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.9 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -263,7 +263,7 @@ dccp_input(struct mbuf *m, ...)
 			return;
 		}
 	}
-	dlh = (struct dccplhdr*)dh;	
+	dlh = (struct dccplhdr*)dh;
 	is_shortseq = !dh->dh_x;
 	
 	if (!is_shortseq) {
@@ -405,7 +405,7 @@ dccp_input(struct mbuf *m, ...)
 		 * if (!isipv6) {
 		 *	*ip = save_ip;
 		 *	ip->ip_len += iphlen;
-		 *	icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0); 
+		 *	icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 		 * } 
 		 */
 
@@ -765,7 +765,7 @@ dccp_input(struct mbuf *m, ...)
 			if (dh->dh_type == DCCP_TYPE_DATAACK && dp->cc_in_use[1] > 0) {
 				if (!dp->ack_snd) dp->ack_snd = dp->seq_rcv;
 				DCCP_DEBUG((LOG_INFO, "Calling *cc_sw[%u].cc_recv_packet_recv!\n", dp->cc_in_use[1]));
-				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen); 
+				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen);
 			}
 			break;
 
@@ -810,7 +810,7 @@ dccp_input(struct mbuf *m, ...)
 				/* This is called so Acks on Acks can be handled */
 				if (!dp->ack_snd) dp->ack_snd = dp->seq_rcv;
 				DCCP_DEBUG((LOG_INFO, "Calling ACK *cc_sw[%u].cc_recv_packet_recv! %llx %llx\n", dp->cc_in_use[1], dp->ack_snd, dp->seq_rcv));
-				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen); 
+				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen);
 			}
 			break;
 	
@@ -827,7 +827,7 @@ dccp_input(struct mbuf *m, ...)
 			if (dp->cc_in_use[1] > 0) {
 				if (!dp->ack_snd) dp->ack_snd = dp->seq_rcv;
 				DCCP_DEBUG((LOG_INFO, "Calling *cc_sw[%u].cc_recv_packet_recv! %llx %llx\n", dp->cc_in_use[1], dp->ack_snd, dp->seq_rcv));
-				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen); 
+				(*cc_sw[dp->cc_in_use[1]].cc_recv_packet_recv)(dp->cc_state[1], options, optlen);
 			}
 			break;
 	
@@ -1004,7 +1004,7 @@ dccp_ctlinput(int cmd, const struct sockaddr *sa, void *vip)
 		dh = (struct dccphdr *)((vaddr_t)ip + (ip->ip_hl << 2));
 		INP_INFO_RLOCK(&dccpbinfo);
 		in_pcbnotify(&dccpbtable, faddr, dh->dh_dport,
-		    ip->ip_src, dh->dh_sport, inetctlerrmap[cmd], notify); 
+		    ip->ip_src, dh->dh_sport, inetctlerrmap[cmd], notify);
 		if (inp != NULL) {
 			INP_LOCK(inp);
 			if (inp->inp_socket != NULL) {
@@ -1259,7 +1259,7 @@ dccp_output(struct dccpcb *dp, u_int8_t extra)
 
 	if (pktlen) {
 		dp->pktcnt --;
-		dp->pktlenidx = (dp->pktlenidx +1) % DCCP_MAX_PKTS; 
+		dp->pktlenidx = (dp->pktlenidx +1) % DCCP_MAX_PKTS;
 	}
 
 again:
@@ -1284,17 +1284,17 @@ again:
 	if (extra == DCCP_TYPE_RESET + 2) {
 		DCCP_DEBUG((LOG_INFO, "Force sending of DCCP TYPE_RESET! seq=%llu\n", dp->seq_snd));
 		type = DCCP_TYPE_RESET;
-		extrah_len = 12; 
+		extrah_len = 12;
 	} else if (dp->state <= DCCPS_REQUEST && dp->who == DCCP_CLIENT) {
 		DCCP_DEBUG((LOG_INFO, "Sending DCCP TYPE_REQUEST!\n"));
 		type = DCCP_TYPE_REQUEST;
 		dp->state = DCCPS_REQUEST;
-		extrah_len = 4; 
+		extrah_len = 4;
 	} else if (dp->state == DCCPS_REQUEST && dp->who == DCCP_SERVER) {
 		DCCP_DEBUG((LOG_INFO, "Sending DCCP TYPE_RESPONSE!\n"));
 		type = DCCP_TYPE_RESPONSE;
 		dp->state = DCCPS_RESPOND;
-		extrah_len = 12; 
+		extrah_len = 12;
 	} else if (dp->state == DCCPS_RESPOND) {
 		DCCP_DEBUG((LOG_INFO, "Still in feature neg, sending DCCP TYPE_ACK!\n"));
 		type = DCCP_TYPE_ACK;
@@ -1506,9 +1506,9 @@ again:
 		drth->drth_dash.dah_res = 0;
 		DSEQ_TO_DAHDR(drth->drth_dash, dp->seq_rcv);
 		if (dp->state == DCCPS_SERVER_CLOSE) 
-			drth->drth_reason = 1; 
+			drth->drth_reason = 1;
 		else
-			drth->drth_reason = 2; 
+			drth->drth_reason = 2;
 		drth->drth_data1 = 0;
 		drth->drth_data2 = 0;
 		drth->drth_data3 = 0;
@@ -1528,7 +1528,7 @@ again:
 			if (dh->dh_type == DCCP_TYPE_RESPONSE) {
 				DCCP_DEBUG((LOG_INFO, "Sending dccp type response\n"));
 				drqh = (struct dccp_requesthdr *)(dalh + 1);
-				drqh->drqh_scode = dp->scode; 
+				drqh->drqh_scode = dp->scode;
 				optp = (u_char *)(drqh + 1);
 			} else 
 				optp = (u_char *)(dalh + 1);
@@ -1620,7 +1620,7 @@ again:
 		DCCP_DEBUG((LOG_INFO, "Calling ip_output, mbuf->m_len = %u, mbuf->m_pkthdr.len = %u\n", m->m_len, m->m_pkthdr.len));
 		error = ip_output(m, inp->inp_options, &inp->inp_route,
 		    (inp->inp_socket->so_options & SO_DONTROUTE), 0, 
-				  inp->inp_socket); 
+				  inp->inp_socket);
 	}
 
 	if (error) {
@@ -2188,7 +2188,7 @@ dccp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 	}
 
 	sbappend(&so->so_snd, m);
-	dp->pktlen[(dp->pktlenidx + dp->pktcnt) % DCCP_MAX_PKTS] = m->m_pkthdr.len; 
+	dp->pktlen[(dp->pktlenidx + dp->pktcnt) % DCCP_MAX_PKTS] = m->m_pkthdr.len;
 	dp->pktcnt ++;
 
 	if (addr && dp->state == DCCPS_CLOSED) {
@@ -2202,7 +2202,7 @@ dccp_send(struct socket *so, struct mbuf *m, struct sockaddr *addr,
 out:
 	INP_UNLOCK(inp);
 	INP_INFO_WUNLOCK(&dccpbinfo);
-	return error; 
+	return error;
 
 release:
 	INP_INFO_WUNLOCK(&dccpbinfo);
@@ -2330,7 +2330,7 @@ dccp_newdccpcb(int family, void *aux)
 		dp->cc_in_use[1] = -1;
 	} else {
 		/* for compatibility with linux */
-		dp->cc_in_use[0] = 4; 
+		dp->cc_in_use[0] = 4;
 		dp->cc_in_use[1] = 4;
 	}
 	dp->av_size = 0; /* no ack vector initially */

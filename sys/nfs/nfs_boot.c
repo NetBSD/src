@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.85 2015/05/21 02:04:22 rtr Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.86 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.85 2015/05/21 02:04:22 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.86 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -366,7 +366,7 @@ nfs_boot_deladdress(struct ifnet *ifp, struct lwp *lwp, uint32_t addr)
 	memcpy(ifr.ifr_name, ifp->if_xname, IFNAMSIZ);
 
 	sockaddr_in_init(&sin, &ia, 0);
-	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin)); 
+	ifreq_setaddr(SIOCDIFADDR, &ifr, sintocsa(&sin));
 
 	error = ifioctl(so, SIOCDIFADDR, &ifr, lwp);
 	if (error) {

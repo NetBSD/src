@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.52 2014/12/31 20:37:52 christos Exp $ */
+/*	$NetBSD: hp.c,v 1.53 2016/07/07 06:55:39 msaitoh Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.52 2014/12/31 20:37:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.53 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ hpioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	struct disklabel * const lp = sc->sc_disk.dk_label;
 	int	error;
 
-	error = disk_ioctl(&sc->sc_disk, dev, cmd, addr, flag, l); 
+	error = disk_ioctl(&sc->sc_disk, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

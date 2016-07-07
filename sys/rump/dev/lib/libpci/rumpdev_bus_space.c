@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdev_bus_space.c,v 1.7 2016/01/18 14:37:53 pooka Exp $	*/
+/*	$NetBSD: rumpdev_bus_space.c,v 1.8 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -76,7 +76,7 @@ bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh,
 	if (bst == 0) {
 #ifdef IOSPACE_SUPPORTED
 		unsigned short addr = bsh + offset;
-		__asm__ __volatile__("inb %1, %0" : "=a"(rv) : "d"(addr)); 
+		__asm__ __volatile__("inb %1, %0" : "=a"(rv) : "d"(addr));
 #else
 		panic("IO space not supported");
 #endif
@@ -96,7 +96,7 @@ bus_space_read_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	if (bst == 0) {
 #ifdef IOSPACE_SUPPORTED
 		unsigned short addr = bsh + offset;
-		__asm__ __volatile__("in %1, %0" : "=a"(rv) : "d"(addr)); 
+		__asm__ __volatile__("in %1, %0" : "=a"(rv) : "d"(addr));
 #else
 		panic("IO space not supported");
 #endif
@@ -116,7 +116,7 @@ bus_space_read_4(bus_space_tag_t bst, bus_space_handle_t bsh,
 	if (bst == 0) {
 #ifdef IOSPACE_SUPPORTED
 		unsigned short addr = bsh + offset;
-		__asm__ __volatile__("inl %1, %0" : "=a"(rv) : "d"(addr)); 
+		__asm__ __volatile__("inl %1, %0" : "=a"(rv) : "d"(addr));
 #else
 		panic("IO space not supported");
 #endif

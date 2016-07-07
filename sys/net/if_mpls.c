@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.25 2016/06/20 22:59:36 knakahara Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.26 2016/07/07 06:55:43 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.25 2016/06/20 22:59:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.26 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -642,7 +642,7 @@ mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 static struct mbuf *
 mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms) 
 {
-	union mpls_shim *shim; 
+	union mpls_shim *shim;
  
 	M_PREPEND(m, sizeof(*ms), M_DONTWAIT);
 	if (m == NULL)

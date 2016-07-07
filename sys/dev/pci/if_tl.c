@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.104 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.105 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.104 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.105 2016/07/07 06:55:41 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -392,7 +392,8 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	    sizeof(intrbuf));
 	sc->tl_if.if_softc = sc;
 	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 	    tl_intr, sc);
@@ -1015,8 +1016,8 @@ tl_intr(void *v)
 	if (int_type == 0)
 		return 0;
 #if defined(TLDEBUG_RX) || defined(TLDEBUG_TX)
-	printf("%s: interrupt type %x, intr_reg %x\n", device_xname(sc->sc_dev),
-	    int_type, int_reg);
+	printf("%s: interrupt type %x, intr_reg %x\n",
+	    device_xname(sc->sc_dev), int_type, int_reg);
 #endif
 	/* disable interrupts */
 	TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_IntOff);

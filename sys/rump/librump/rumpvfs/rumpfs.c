@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.140 2016/03/07 00:51:32 christos Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.141 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.140 2016/03/07 00:51:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.141 2016/07/07 06:55:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1278,7 +1278,7 @@ rump_vop_readdir(void *v)
 			break;
 		}
 
-		rv = uiomove(dentp, dentp->d_reclen, uio); 
+		rv = uiomove(dentp, dentp->d_reclen, uio);
 		if (rv) {
 			i--;
 			break;

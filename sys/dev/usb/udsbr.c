@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.23 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.24 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.23 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.24 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,7 @@ udsbr_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("udsbr_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, sc->sc_dev);
 
@@ -172,8 +171,7 @@ udsbr_detach(device_t self, int flags)
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

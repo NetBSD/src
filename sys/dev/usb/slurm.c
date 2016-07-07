@@ -1,4 +1,4 @@
-/*	$NetBSD: slurm.c,v 1.2 2016/04/23 10:15:32 skrll Exp $ */
+/*	$NetBSD: slurm.c,v 1.3 2016/07/07 06:55:42 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2012 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.2 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slurm.c,v 1.3 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -154,8 +154,7 @@ slurm_detach(device_t self, int flags)
 	if ((rv = config_detach_children(self, flags)) != 0)
 		return rv;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return (rv);
 }

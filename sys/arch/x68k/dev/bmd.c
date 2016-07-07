@@ -1,4 +1,4 @@
-/*	$NetBSD: bmd.c,v 1.24 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: bmd.c,v 1.25 2016/07/07 06:55:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.24 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmd.c,v 1.25 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,7 +356,7 @@ bmdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 
-	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
+	error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
 

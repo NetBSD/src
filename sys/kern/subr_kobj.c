@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.52 2016/05/31 03:57:04 pgoyette Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.52 2016/05/31 03:57:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -647,7 +647,7 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 	if (size != NULL) {
 		*size = ko->ko_size;
 	}
-	return 0; 
+	return 0;
 }
 
 /*

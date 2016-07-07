@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.39 2016/05/19 14:48:28 hannken Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.40 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.39 2016/05/19 14:48:28 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40 2016/07/07 06:55:43 msaitoh Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -339,7 +339,7 @@ vfs_unbusy(struct mount *mp, bool keepref, struct mount **nextp)
 
 struct vnode_iterator {
 	struct vnode vi_vnode;
-}; 
+};
 
 void
 vfs_vnode_iterator_init(struct mount *mp, struct vnode_iterator **vip)
