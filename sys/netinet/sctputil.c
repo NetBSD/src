@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.9 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.10 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.9 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.10 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3613,7 +3613,7 @@ sctp_find_ifa_by_addr(struct sockaddr *sa)
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifn) {
 		/* go through each interface addresses */
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			/* correct family? */
 			if (ifa->ifa_addr->sa_family != sa->sa_family)
 				continue;

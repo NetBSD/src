@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.219 2016/06/30 09:44:58 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.220 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -341,6 +341,7 @@ typedef struct ifnet {
 	uint16_t	if_link_queue;	/* masked link state change queue */
 	struct pslist_entry	if_pslist_entry;
 	struct psref_target     if_psref;
+	struct pslist_head	if_addr_pslist;
 #endif
 } ifnet_t;
  
@@ -598,6 +599,9 @@ struct ifaddr {
 			               const struct sockaddr *);
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
+#ifdef _KERNEL
+	struct pslist_entry     ifa_pslist_entry;
+#endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
@@ -1051,6 +1055,52 @@ __END_DECLS
 					    TAILQ_FOREACH_SAFE(__ifa, \
 					    &(__ifp)->if_addrlist, ifa_list, __nifa)
 #define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
+
+#define IFADDR_ENTRY_INIT(__ifa)					\
+	PSLIST_ENTRY_INIT((__ifa), ifa_pslist_entry)
+#define IFADDR_ENTRY_DESTROY(__ifa)					\
+	PSLIST_ENTRY_DESTROY((__ifa), ifa_pslist_entry)
+#define IFADDR_READER_EMPTY(__ifp)					\
+	(PSLIST_READER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                     ifa_pslist_entry) == NULL)
+#define IFADDR_READER_FIRST(__ifp)					\
+	PSLIST_READER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                    ifa_pslist_entry)
+#define IFADDR_READER_NEXT(__ifa)					\
+	PSLIST_READER_NEXT((__ifa), struct ifaddr, ifa_pslist_entry)
+#define IFADDR_READER_FOREACH(__ifa, __ifp)				\
+	PSLIST_READER_FOREACH((__ifa), &(__ifp)->if_addr_pslist, struct ifaddr,\
+	                      ifa_pslist_entry)
+#define IFADDR_WRITER_INSERT_HEAD(__ifp, __ifa)				\
+	PSLIST_WRITER_INSERT_HEAD(&(__ifp)->if_addr_pslist, (__ifa),	\
+	                          ifa_pslist_entry)
+#define IFADDR_WRITER_REMOVE(__ifa)					\
+	PSLIST_WRITER_REMOVE((__ifa), ifa_pslist_entry)
+#define IFADDR_WRITER_FOREACH(__ifa, __ifp)				\
+	PSLIST_WRITER_FOREACH((__ifa), &(__ifp)->if_addr_pslist, struct ifaddr,\
+	                      ifa_pslist_entry)
+#define IFADDR_WRITER_NEXT(__ifp)					\
+	PSLIST_WRITER_NEXT((__ifp), struct ifaddr, ifa_pslist_entry)
+#define IFADDR_WRITER_INSERT_AFTER(__ifp, __new)			\
+	PSLIST_WRITER_INSERT_AFTER((__ifp), (__new), ifa_pslist_entry)
+#define IFADDR_WRITER_EMPTY(__ifp)					\
+	(PSLIST_WRITER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                     ifa_pslist_entry) == NULL)
+#define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
+	do {								\
+		if (IFADDR_WRITER_EMPTY((__ifp))) {			\
+			IFADDR_WRITER_INSERT_HEAD((__ifp), (__new));	\
+		} else {						\
+			struct ifaddr *__ifa;				\
+			IFADDR_WRITER_FOREACH(__ifa, (__ifp)) {		\
+				if (IFADDR_WRITER_NEXT(__ifa) == NULL) {\
+					IFADDR_WRITER_INSERT_AFTER(__ifa,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
 
 #define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
 #define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)

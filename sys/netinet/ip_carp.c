@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.73 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.74 2016/07/07 09:32:02 ozaki-r Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.73 2016/07/06 08:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.74 2016/07/07 09:32:02 ozaki-r Exp $");
 
 /*
  * TODO:
@@ -284,7 +284,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 		found = 0;
 		last = cur;
 		cur.s_addr = 0xffffffff;
-		IFADDR_FOREACH(ifa, &sc->sc_if) {
+		IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 			in.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
 			if (ifa->ifa_addr->sa_family == AF_INET &&
 			    ntohl(in.s_addr) > ntohl(last.s_addr) &&
@@ -304,7 +304,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 		found = 0;
 		last6 = cur6;
 		memset(&cur6, 0xff, sizeof(cur6));
-		IFADDR_FOREACH(ifa, &sc->sc_if) {
+		IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&in6))
 				in6.s6_addr16[1] = 0;
@@ -363,7 +363,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 
 	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
-	IFADDR_FOREACH(ifa, &sc->sc_if) {
+	IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET: {
 			int count = 0;
@@ -1193,7 +1193,7 @@ carp_send_arp(struct carp_softc *sc)
 
 	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
-	IFADDR_FOREACH(ifa, &sc->sc_if) {
+	IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
@@ -1217,7 +1217,7 @@ carp_send_na(struct carp_softc *sc)
 	KERNEL_LOCK(1, NULL);
 	s = splsoftnet();
 
-	IFADDR_FOREACH(ifa, &sc->sc_if) {
+	IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -1279,7 +1279,7 @@ carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 		    (vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING)) ||
 		    (type == CARP_COUNT_MASTER && vh->sc_state == MASTER)) {
-			IFADDR_FOREACH(ifa, &vh->sc_if) {
+			IFADDR_READER_FOREACH(ifa, &vh->sc_if) {
 				if (ifa->ifa_addr->sa_family == AF_INET &&
 				    ia->ia_addr.sin_addr.s_addr ==
 				    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
@@ -1335,7 +1335,7 @@ carp_iamatch6(void *v, struct in6_addr *taddr)
 	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-		IFADDR_FOREACH(ifa, &vh->sc_if) {
+		IFADDR_READER_FOREACH(ifa, &vh->sc_if) {
 			if (IN6_ARE_ADDR_EQUAL(taddr,
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
 			    ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
@@ -1683,7 +1683,7 @@ carp_addr_updated(void *v)
 	struct ifaddr *ifa;
 	int new_naddrs = 0, new_naddrs6 = 0;
 
-	IFADDR_FOREACH(ifa, &sc->sc_if) {
+	IFADDR_READER_FOREACH(ifa, &sc->sc_if) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			new_naddrs++;
 		else if (ifa->ifa_addr->sa_family == AF_INET6)
