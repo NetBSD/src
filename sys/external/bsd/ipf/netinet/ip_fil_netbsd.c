@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.15 2016/06/20 06:46:37 knakahara Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.15 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16 2016/07/07 09:32:02 ozaki-r Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1545,7 +1545,7 @@ ipf_ifpaddr(ipf_main_softc_t *softc, int v, int atype, void *ifptr,
 		bzero((char *)inp, sizeof(*inp));
 #endif
 
-	ifa = IFADDR_FIRST(ifp);
+	ifa = IFADDR_READER_FIRST(ifp);
 	sock = ifa ? ifa->ifa_addr : NULL;
 	while (sock != NULL && ifa != NULL) {
 		sin = (struct sockaddr_in *)sock;
@@ -1559,7 +1559,7 @@ ipf_ifpaddr(ipf_main_softc_t *softc, int v, int atype, void *ifptr,
 				break;
 		}
 #endif
-		ifa = IFADDR_NEXT(ifa);
+		ifa = IFADDR_READER_NEXT(ifa);
 		if (ifa != NULL)
 			sock = ifa->ifa_addr;
 	}
