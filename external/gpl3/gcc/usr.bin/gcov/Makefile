@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/03/05 21:37:02 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2016/07/07 03:15:59 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,4 +29,4 @@ CFLAGS:=	${CXXFLAGS} -Wno-stack-protector
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}
 
-.PATH: ${DIST}/gcc
+.PATH: ${DIST}/gcc ${DIST}/gcc/doc
