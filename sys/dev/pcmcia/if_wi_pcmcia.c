@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.91 2016/06/01 23:37:33 pgoyette Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.92 2016/07/07 06:55:42 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.91 2016/06/01 23:37:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.92 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,10 @@ static int	wi_pcmcia_enable(device_t, int);
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 /* support to download firmware for symbol CF card */
-static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int, const void *, int);
-static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int, const void *, int);
+static int	wi_pcmcia_load_firm(struct wi_softc *, const void *, int,
+    const void *, int);
+static int	wi_pcmcia_write_firm(struct wi_softc *, const void *, int,
+ const void *, int);
 static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
 #endif
 
@@ -340,8 +342,7 @@ wi_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, wi_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 

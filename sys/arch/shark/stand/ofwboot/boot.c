@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.8 2016/06/11 06:41:55 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2016/07/07 06:55:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ chain(void (*entry)(int (*)(void *), void *, u_int), char *args, void *ssym,
 	l += sizeof(magic);
 	DPRINTF("ssym @ %p\n", args + l);
 	memcpy(args + l, &ssym, sizeof(ssym));
-	l += sizeof(ssym); 
+	l += sizeof(ssym);
 	DPRINTF("esym @ %p\n", args + l);
 	memcpy(args + l, &esym, sizeof(esym));
 	l += sizeof(esym);
