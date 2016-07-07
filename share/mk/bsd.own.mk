@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.937 2016/07/01 20:05:28 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.938 2016/07/07 07:52:24 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -74,6 +74,7 @@ HAVE_GCC?=	0
     ${MACHINE} == "ia64" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "powerpc" || \
     ${MACHINE_ARCH} == "vax"
@@ -151,6 +152,7 @@ USE_SSP?=	yes
     ${MACHINE} == "ia64" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "powerpc" || \
@@ -178,6 +180,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "ia64" || \
     ${MACHINE} == "playstation2" || \
     ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "powerpc"
