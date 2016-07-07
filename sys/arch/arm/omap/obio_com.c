@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.6 2016/07/07 15:20:58 kiyohara Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.7 2016/07/07 15:27:42 kiyohara Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.6 2016/07/07 15:20:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.7 2016/07/07 15:27:42 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -151,7 +151,7 @@ obiouart_attach(device_t parent, device_t self, void *aux)
 	iot = obio->obio_iot;
 	iobase = obio->obio_addr;
 	sc->sc_frequency = OMAP_COM_FREQ;
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_type = COM_TYPE_OMAP;
 
 	if (com_is_console(iot, iobase, &ioh) == 0 &&
 	    bus_space_map(iot, iobase, obio->obio_size, 0, &ioh)) {
