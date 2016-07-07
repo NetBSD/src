@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.27 2016/01/22 22:35:27 dholland Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.28 2016/07/07 06:55:43 msaitoh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -251,7 +251,7 @@ struct crypt_mop {
 struct crypt_sfop {
 	size_t		count;
 	u_int32_t	*sesid;
-}; 
+};
 
 struct crypt_sgop {
 	size_t		count;
@@ -317,7 +317,7 @@ struct crypt_result {
 struct cryptret {
 	size_t		count;		/* space for how many */
 	struct crypt_result *	results;	/* where to put them */
-}; 
+};
 
 
 /* Assymetric key operations */

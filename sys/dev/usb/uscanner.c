@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.76 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.77 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.76 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.77 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,8 +355,7 @@ uscanner_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bulkout = ed_bulkout->bEndpointAddress;
 
 	selinit(&sc->sc_selq);
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 }
@@ -636,8 +635,7 @@ uscanner_detach(device_t self, int flags)
 	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 	seldestroy(&sc->sc_selq);
 
 	return 0;

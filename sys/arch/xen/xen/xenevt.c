@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.44 2015/08/20 14:40:17 christos Exp $      */
+/*      $NetBSD: xenevt.c,v 1.45 2016/07/07 06:55:40 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.44 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.45 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -118,7 +118,7 @@ struct xenevt_d {
 	kcondvar_t cv;
 	STAILQ_ENTRY(xenevt_d) pendingq;
 	bool pending;
-	evtchn_port_t ring[2048]; 
+	evtchn_port_t ring[2048];
 	u_int ring_read; /* pointer of the reader */
 	u_int ring_write; /* pointer of the writer */
 	u_int flags;
