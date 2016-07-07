@@ -13,7 +13,7 @@
 
 void *rumpcomp_pci_map(unsigned long, unsigned long);
 int rumpcomp_pci_confread(unsigned, unsigned, unsigned, int, unsigned int *);
-int rumpcomp_pci_confwrite(unsigned, unsigned, unsigned, int, unsigned int); 
+int rumpcomp_pci_confwrite(unsigned, unsigned, unsigned, int, unsigned int);
 
 int rumpcomp_pci_irq_map(unsigned, unsigned, unsigned, int, unsigned);
 void *rumpcomp_pci_irq_establish(unsigned, int (*)(void *), void *);

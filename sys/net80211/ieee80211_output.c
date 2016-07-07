@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.56 2016/06/20 08:57:18 ozaki-r Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.57 2016/07/07 06:55:43 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.56 2016/06/20 08:57:18 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.57 2016/07/07 06:55:43 msaitoh Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1230,7 +1230,7 @@ ieee80211_add_wme_info(u_int8_t *frm, struct ieee80211_wme_state *wme)
 		.wme_info	= 0,
 	};
 	memcpy(frm, &info, sizeof(info));
-	return frm + sizeof(info); 
+	return frm + sizeof(info);
 }
 
 /*

@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.3 2016/04/26 08:44:44 ozaki-r Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.4 2016/07/07 06:55:43 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.3 2016/04/26 08:44:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.4 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -172,7 +172,7 @@ const struct timeval delta_half = {0, TFRC_OPSYS_TIME_GRAN / 2};
 		 } while (0)
 
 #ifdef TFRCDEBUG
-#define PRINTFLOAT(x) TFRC_DEBUG((LOG_INFO, "%lld/%lld", (x)->num, (x)->denom)); 
+#define PRINTFLOAT(x) TFRC_DEBUG((LOG_INFO, "%lld/%lld", (x)->num, (x)->denom));
 #endif
 
 const struct fixpoint tfrc_smallest_p = { 4LL, 1000000LL };
@@ -563,7 +563,7 @@ tfrc_send_free(void *ccb)
 	TFRC_DEBUG((LOG_INFO, "TFRC send free called!\n"));
 
 	if (ccb == 0)
-		return;	
+		return;
 
 	/* uninit sender */
 
@@ -684,7 +684,7 @@ tfrc_send_packet(void *ccb, long datasize)
 						uw_win_count = (t_temp.tv_sec * 1000000 + t_temp.tv_usec) 
 								/ cb->rtt / TFRC_WIN_COUNT_PER_RTT;
 					else 
-						uw_win_count = 0; 
+						uw_win_count = 0;
 				}
 				uw_win_count += cb->last_win_count;
 				win_count = uw_win_count % TFRC_WIN_COUNT_LIMIT;
@@ -880,7 +880,7 @@ tfrc_send_packet_recv(void *ccb, char *options, int optlen)
 		t_elapsed_l = ntohl(t_elapsed_l);
 	x_recv = ntohl(x_recv);
 	pinv = ntohl(pinv);
-	if (pinv == 0xFFFFFFFF) pinv = 0; 
+	if (pinv == 0xFFFFFFFF) pinv = 0;
 
 	if (t_elapsed)
 		TFRC_DEBUG((LOG_INFO, "TFRC - Receieved options on ack %llu: pinv=%u, t_elapsed=%u, x_recv=%u ! (tfrc_send_packet_recv)\n", cb->pcb->ack_rcv, pinv, t_elapsed, x_recv));
@@ -943,7 +943,7 @@ tfrc_send_packet_recv(void *ccb, char *options, int optlen)
 			cb->p.num = cb->p.denom = 0;
 		} else {
 			cb->p.num  = 1.0;
-			cb->p.denom = pinv;				
+			cb->p.denom = pinv;
 			if (fixpoint_cmp(&cb->p, &tfrc_smallest_p) <= 0) {
 				cb->p.num  = tfrc_smallest_p.num;
 				cb->p.denom  = tfrc_smallest_p.denom;
@@ -1099,7 +1099,7 @@ tfrc_calclmean(struct tfrc_recv_ccb * cb)
 		I_tot0 = I_tot0 + (elm->interval * tfrc_recv_w[i]);
 		W_tot = W_tot + tfrc_recv_w[i];
 */
-		tmp.num = elm->interval; 
+		tmp.num = elm->interval;
 		tmp.denom = 1;
 		fixpoint_mul(&tmp, &tmp, &tfrc_recv_w[i]);
 		fixpoint_add(&l_tot0, &l_tot0, &tmp);
@@ -1119,7 +1119,7 @@ tfrc_calclmean(struct tfrc_recv_ccb * cb)
 /* 
 		I_tot1 = I_tot1 + (elm->interval * tfrc_recv_w[i - 1]);
 */
-		tmp.num = elm->interval; 
+		tmp.num = elm->interval;
 		tmp.denom = 1;
 		fixpoint_mul(&tmp, &tmp, &tfrc_recv_w[i-1]);
 		fixpoint_add(&l_tot1, &l_tot1, &tmp);
@@ -1129,7 +1129,7 @@ tfrc_calclmean(struct tfrc_recv_ccb * cb)
 
 	/* I_tot = max(I_tot0, I_tot1) */
 	/*
-	I_tot = I_tot0;		
+	I_tot = I_tot0;
 	if (I_tot0 < I_tot1)
 		I_tot = I_tot1;
 
@@ -1285,7 +1285,7 @@ tfrc_recv_calcFirstLI(struct tfrc_recv_ccb * cb)
 		}
 	}
 	timersub(&t_temp, &elm2->t_recv, &t_temp);
-	t_rtt.num = t_temp.tv_sec * 1000000 + t_temp.tv_usec; 
+	t_rtt.num = t_temp.tv_sec * 1000000 + t_temp.tv_usec;
 	t_rtt.denom = 1000000;
 
 	if (t_rtt.num < 0 && t_rtt.denom < 0) {
@@ -1305,7 +1305,7 @@ tfrc_recv_calcFirstLI(struct tfrc_recv_ccb * cb)
 		x_recv = (((double) (cb->bytes_recv)) /
 	    (((double) t_temp.tv_sec) + ((double) t_temp.tv_usec) / 1000000.0));
 	*/
-	x_recv.num = cb->bytes_recv * 1000000; 
+	x_recv.num = cb->bytes_recv * 1000000;
 	x_recv.denom = t_temp.tv_sec * 1000000 + t_temp.tv_usec;
 
 	TFRC_DEBUG((LOG_INFO, "TFRC - Receive rate XXX"));
@@ -1758,7 +1758,7 @@ tfrc_recv_packet_recv(void *ccb, char *options, int optlen)
 
 				/* Calculate loss event rate */
 				if (!TAILQ_EMPTY(&(cb->li_hist))) {
-					cb->p.num = 1; 
+					cb->p.num = 1;
 					cb->p.denom = tfrc_calclmean(cb);
 				}
 				/* check send conditions then send */

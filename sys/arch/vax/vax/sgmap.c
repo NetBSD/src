@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.c,v 1.18 2015/07/05 02:03:36 matt Exp $ */
+/* $NetBSD: sgmap.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.18 2015/07/05 02:03:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap.c,v 1.19 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ vax_sgmap_free(bus_dmamap_t map, struct vax_sgmap *sgmap)
 int
 vax_sgmap_reserve(bus_addr_t ba, bus_size_t len, struct vax_sgmap *sgmap)
 {
-	return extent_alloc_region(sgmap->aps_ex, ba, len, EX_NOWAIT); 
+	return extent_alloc_region(sgmap->aps_ex, ba, len, EX_NOWAIT);
 }
 
 int
