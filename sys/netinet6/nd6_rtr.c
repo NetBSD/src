@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.114 2016/07/05 03:40:52 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.115 2016/07/07 09:32:03 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.114 2016/07/05 03:40:52 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.115 2016/07/07 09:32:03 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -913,7 +913,8 @@ purge_detached(struct ifnet *ifp)
 		    !LIST_EMPTY(&pr->ndpr_advrtrs)))
 			continue;
 
-		IFADDR_FOREACH_SAFE(ifa, ifp, ifa_next) {
+		for (ifa = IFADDR_READER_FIRST(ifp); ifa; ifa = ifa_next) {
+			ifa_next = IFADDR_READER_NEXT(ifa);
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ia = (struct in6_ifaddr *)ifa;
@@ -1186,7 +1187,7 @@ prelist_update(struct nd_prefixctl *newprc,
 	 * consider autoconfigured addresses while RFC2462 simply said
 	 * "address".
 	 */
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *ia6;
 		u_int32_t remaininglifetime;
 
@@ -1643,7 +1644,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
 	if (ifa == NULL) {
 		/* XXX: freebsd does not have ifa_ifwithaf */
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;
 		}

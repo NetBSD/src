@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.190 2016/06/16 02:38:40 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.191 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.190 2016/06/16 02:38:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1468,7 +1468,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	IFNET_READER_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		if (IFADDR_EMPTY(ifp))
+		if (IFADDR_READER_EMPTY(ifp))
 			continue;
 
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -1530,7 +1530,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				panic("sysctl_iflist(2)");
 			}
 		}
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;

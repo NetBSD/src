@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.335 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.336 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.335 2016/07/06 08:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.336 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -394,7 +394,7 @@ ip_match_our_address_broadcast(struct ifnet *ifp, struct ip *ip)
 	struct in_ifaddr *ia = NULL;
 	struct ifaddr *ifa;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		ia = ifatoia(ifa);
