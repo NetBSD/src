@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.6 2016/05/22 22:18:41 rjs Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.6 2016/05/22 22:18:41 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2342,7 +2342,7 @@ sctp_is_address_on_local_host(struct sockaddr *addr)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifn) {
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			if (addr->sa_family == ifa->ifa_addr->sa_family) {
 				/* same family */
 				if (addr->sa_family == AF_INET) {

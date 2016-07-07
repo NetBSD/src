@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.163 2016/07/06 10:49:49 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.163 2016/07/06 10:49:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -534,7 +534,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 * working right.
 	 */
 	struct ifaddr *ifa;
-	IFADDR_FOREACH(ifa, rcvif) {
+	IFADDR_READER_FOREACH(ifa, rcvif) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ip6->ip6_dst)) {

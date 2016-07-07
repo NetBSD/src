@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.6 2016/06/10 13:31:44 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.6 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.7 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -546,7 +546,7 @@ sctp_choose_v4_boundspecific_inp(struct sctp_inpcb *inp,
 	ifn = rt->rt_ifp;
 	if (ifn) {
 		/* is a prefered one on the interface we route out? */
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -555,7 +555,7 @@ sctp_choose_v4_boundspecific_inp(struct sctp_inpcb *inp,
 			}
 		}
 		/* is an acceptable one on the interface we route out? */
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -648,7 +648,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 		 */
 		if (ifn) {
 			/* first try for an prefered address on the ep */
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 					if (sin == NULL)
@@ -662,7 +662,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				}
 			}
 			/* next try for an acceptable address on the ep */
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 					if (sin == NULL)
@@ -762,7 +762,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				IFADDR_FOREACH(ifa, ifn) {
+				IFADDR_READER_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin = (struct sockaddr_in *)laddr->ifa->ifa_addr;
 						return (sin->sin_addr);
@@ -786,7 +786,7 @@ sctp_choose_v4_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				IFADDR_FOREACH(ifa, ifn) {
+				IFADDR_READER_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin = (struct sockaddr_in *)laddr->ifa->ifa_addr;
 						return (sin->sin_addr);
@@ -836,7 +836,7 @@ sctp_select_v4_nth_prefered_addr_from_ifn_boundall (struct ifnet *ifn, struct sc
 	struct sockaddr_in *sin;
 	uint8_t sin_loop, sin_local;
 	int num_eligible_addr = 0;
-	IFADDR_FOREACH(ifa, ifn) {
+	IFADDR_READER_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 		if (sin == NULL)
 			continue;
@@ -864,7 +864,7 @@ sctp_count_v4_num_prefered_boundall (struct ifnet *ifn, struct sctp_tcb *stcb, i
 	struct sockaddr_in *sin;
 	int num_eligible_addr = 0;
 
-	IFADDR_FOREACH(ifa, ifn) {
+	IFADDR_READER_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_prefered (ifa, loopscope, ipv4_scope, sin_loop, sin_local);
 		if (sin == NULL)
 			continue;
@@ -957,7 +957,7 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 	 *         and see if we can find an acceptable address.
 	 */
  bound_all_v4_plan_b:
-	IFADDR_FOREACH(ifa, ifn) {
+	IFADDR_READER_FOREACH(ifa, ifn) {
 		sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 		if (sin == NULL)
 			continue;
@@ -1037,7 +1037,7 @@ sctp_choose_v4_boundall(struct sctp_inpcb *inp,
 			/* already looked at this guy */
 			continue;
 
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			sin = sctp_is_v4_ifa_addr_acceptable (ifa, loopscope, ipv4_scope, &sin_loop, &sin_local);
 			if (sin == NULL)
 				continue;
@@ -1304,7 +1304,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 		 * in our list, if so, we want that one.
 		 */
 		if (ifn) {
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_addr_in_ep(inp, ifa)) {
 					sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 					if (sin6 == NULL)
@@ -1405,7 +1405,7 @@ sctp_choose_v6_boundspecific_stcb(struct sctp_inpcb *inp,
 				continue;
 			/* first question, is laddr->ifa an address associated with the emit interface */
 			if (ifn) {
-				IFADDR_FOREACH(ifa, ifn) {
+				IFADDR_READER_FOREACH(ifa, ifn) {
 					if (laddr->ifa == ifa) {
 						sin6 = (struct sockaddr_in6 *)laddr->ifa->ifa_addr;
 						return (sin6);
@@ -1484,7 +1484,7 @@ sctp_choose_v6_boundspecific_inp(struct sctp_inpcb *inp,
 
 	ifn = rt->rt_ifp;
 	if (ifn) {
-		IFADDR_FOREACH(ifa, ifn) {
+		IFADDR_READER_FOREACH(ifa, ifn) {
 			sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 			if (sin6 == NULL)
 				continue;
@@ -1554,7 +1554,7 @@ sctp_select_v6_nth_addr_from_ifn_boundall (struct ifnet *ifn, struct sctp_tcb *s
 	int sin_loop, sin_local;
 	int num_eligible_addr = 0;
 
-	IFADDR_FOREACH(ifa, ifn) {
+	IFADDR_READER_FOREACH(ifa, ifn) {
 		sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 		if (sin6 == NULL)
 			continue;
@@ -1602,7 +1602,7 @@ sctp_count_v6_num_eligible_boundall (struct ifnet *ifn, struct sctp_tcb *stcb,
 	int num_eligible_addr = 0;
 	int sin_loop, sin_local;
 
-	IFADDR_FOREACH(ifa, ifn) {
+	IFADDR_READER_FOREACH(ifa, ifn) {
 		sin6 = sctp_is_v6_ifa_addr_acceptable (ifa, loopscope, loc_scope, &sin_loop, &sin_local);
 		if (sin6 == NULL)
 			continue;
@@ -2737,7 +2737,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 				 */
 				continue;
 			}
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_address_in_scope(ifa,
 				    stcb->asoc.ipv4_addr_legal,
 				    stcb->asoc.ipv6_addr_legal,
@@ -2763,7 +2763,7 @@ sctp_send_initiate(struct sctp_inpcb *inp, struct sctp_tcb *stcb)
 					 */
 					continue;
 				}
-				IFADDR_FOREACH(ifa, ifn) {
+				IFADDR_READER_FOREACH(ifa, ifn) {
 					if (sctp_is_address_in_scope(ifa,
 					    stcb->asoc.ipv4_addr_legal,
 					    stcb->asoc.ipv6_addr_legal,
@@ -3688,7 +3688,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 				 */
 				continue;
 			}
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (sctp_is_address_in_scope(ifa,
 				    stc.ipv4_addr_legal, stc.ipv6_addr_legal,
 				    stc.loopback_scope, stc.ipv4_scope,
@@ -3711,7 +3711,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 					 */
 					continue;
 				}
-				IFADDR_FOREACH(ifa, ifn) {
+				IFADDR_READER_FOREACH(ifa, ifn) {
 					if (sctp_is_address_in_scope(ifa,
 					    stc.ipv4_addr_legal,
 					    stc.ipv6_addr_legal,
