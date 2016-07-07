@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860reg.h,v 1.3 2016/04/27 19:49:26 christos Exp $	*/
+/*	$NetBSD: rt2860reg.h,v 1.4 2016/07/07 01:24:16 christos Exp $	*/
 /*	$OpenBSD: rt2860reg.h,v 1.32 2014/05/24 10:10:17 stsp Exp $	*/
 
 /*-
@@ -760,6 +760,9 @@
 /* possible flags for RT5390 RF register 39. */
 #define RT5390_RX_LO2	(1 << 7)
 
+/* possible flags for RT5390 RF register 42 */
+#define RT5390_RX_CTB	(1 << 6)
+
 /* possible flags for RT3053 RF register 46 */
 #define RT3593_RX_CTB	(1 << 5)
 
@@ -922,9 +925,11 @@ struct rt2860_rxwi {
 #define RT3070_RF_3052	9	/* dual-band 2T2R */
 #define RT3070_RF_3320	11	/* 1T1R */
 #define RT3070_RF_3053	13	/* dual-band 3T3R */
+#define RT5390_RF_5390	15	/* b/g/n */
 #define RT5592_RF_5592	0x000f	/* dual-band 2T2R */
 #define RT5390_RF_5370	0x5370	/* 1T1R */
 #define RT5390_RF_5372	0x5372	/* 2T2R */
+
 
 /* USB commands for RT2870 only */
 #define RT2870_RESET		1
