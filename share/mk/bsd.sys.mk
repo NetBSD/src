@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.259 2016/06/14 13:26:45 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.260 2016/07/07 20:52:53 matt Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -159,6 +159,11 @@ COPTS+=		-mhard-float
 FOPTS+=		-mhard-float
 .endif
 
+#.if !empty(MACHINE_ARCH:Mearmv7*)
+#COPTS+=		-mthumb
+#FOPTS+=		-mthumb
+#.endif
+
 .if ${MKIEEEFP:Uno} != "no"
 .if ${MACHINE_ARCH} == "alpha"
 CFLAGS+=	-mieee
@@ -289,7 +294,7 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .if ${MACHINE_ARCH} == aarch64eb
 # AARCH64 big endian needs to preserve $x/$d symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][dx]' -K '[$$][dx]\.*'
-.elif !empty(MACHINE_ARCH:M*arm*eb)
+.elif ${MACHINE_CPU} == "arm"
 # ARM big endian needs to preserve $a/$d/$t symbols for the linker.
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][adt]' -K '[$$][adt]\.*'
 .endif
