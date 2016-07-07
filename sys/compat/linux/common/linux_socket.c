@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.130 2016/07/05 07:55:08 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.131 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.130 2016/07/05 07:55:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.131 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1150,7 +1150,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			goto release_exit;
 		}
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
 			    sa->sa_len > sizeof(*osa))
@@ -1239,12 +1239,12 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			continue;
 
 		found=1;
-		if (IFADDR_EMPTY(ifp)) {
+		if (IFADDR_READER_EMPTY(ifp)) {
 			pserialize_read_exit(s);
 			error = ENODEV;
 			goto out;
 		}
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sadl = satosdl(ifa->ifa_addr);
 			/* only return ethernet addresses */
 			/* XXX what about FDDI, etc. ? */
@@ -1282,7 +1282,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	IFNET_READER_FOREACH(ifp) {
 		memcpy(lreq.ifr_name, ifp->if_xname,
 		       MIN(LINUX_IFNAMSIZ, IFNAMSIZ));
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sadl = satosdl(ifa->ifa_addr);
 			/* only return ethernet addresses */
 			/* XXX what about FDDI, etc. ? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.29 2016/06/22 07:48:17 ozaki-r Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.30 2016/07/07 09:32:02 ozaki-r Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.29 2016/06/22 07:48:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.30 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -559,7 +559,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 
 	if (ifp == NULL)
 		return;
-	IFADDR_FOREACH(ia, ifp) {
+	IFADDR_READER_FOREACH(ia, ifp) {
 		af = ia->ifa_addr->sa_family;
 		if (af != AF_INET && af != AF_INET6)
 			continue;

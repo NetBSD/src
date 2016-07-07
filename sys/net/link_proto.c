@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.30 2016/01/21 15:41:29 riastradh Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.31 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.30 2016/01/21 15:41:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.31 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -170,7 +170,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 
 		s = splnet();
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (sockaddr_cmp(&u.sa, ifa->ifa_addr) == 0)
 				break;
 		}
@@ -178,7 +178,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 		switch (cmd) {
 		case SIOCGLIFADDR:
 			if ((iflr->flags & IFLR_PREFIX) == 0) {
-				IFADDR_FOREACH(ifa, ifp) {
+				IFADDR_READER_FOREACH(ifa, ifp) {
 					if (ifa->ifa_addr->sa_family == AF_LINK)
 						break;
 				}

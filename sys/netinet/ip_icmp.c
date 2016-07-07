@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.148 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.149 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.148 2016/07/06 08:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.149 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -721,7 +721,7 @@ icmp_reflect(struct mbuf *m)
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && rcvif &&
 	    (rcvif->if_flags & IFF_BROADCAST)) {
-		IFADDR_FOREACH(ifa, rcvif) {
+		IFADDR_READER_FOREACH(ifa, rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
@@ -776,7 +776,7 @@ icmp_reflect(struct mbuf *m)
 	 * when the incoming packet was encapsulated
 	 */
 	if (sin == NULL && rcvif) {
-		IFADDR_FOREACH(ifa, rcvif) {
+		IFADDR_READER_FOREACH(ifa, rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);

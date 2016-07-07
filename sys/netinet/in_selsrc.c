@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.16 2015/09/21 13:32:26 skrll Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.17 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.16 2015/09/21 13:32:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.17 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -326,7 +326,7 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 
 	/* Find out the index of this ifaddr. */
 	idx = 0;
-	IFADDR_FOREACH(alt_ifa, ifa->ifa_ifp) {
+	IFADDR_READER_FOREACH(alt_ifa, ifa->ifa_ifp) {
 		if (alt_ifa == best_ifa)
 			break;
 		idx++;
@@ -344,7 +344,7 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 #endif /* GETIFA_DEBUG */
 
 	idx = -1;
-	IFADDR_FOREACH(alt_ifa, ifa->ifa_ifp) {
+	IFADDR_READER_FOREACH(alt_ifa, ifa->ifa_ifp) {
 		++idx;
 		src = IA_SIN(alt_ifa);
 

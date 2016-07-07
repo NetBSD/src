@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.37 2016/06/20 06:46:38 knakahara Exp $	*/
+/*	$NetBSD: aarp.c,v 1.38 2016/07/07 09:32:02 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.37 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.38 2016/07/07 09:32:02 ozaki-r Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -135,7 +135,7 @@ at_ifawithnet(const struct sockaddr_at *sat, struct ifnet *ifp)
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 
@@ -367,7 +367,7 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 		 * Since we don't know the net, we just look for the first
 		 * phase 1 address on the interface.
 		 */
-		IFADDR_FOREACH(ia, ifp) {
+		IFADDR_READER_FOREACH(ia, ifp) {
 			aa = (struct at_ifaddr *)ia;
 			if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)
@@ -560,7 +560,7 @@ aarpprobe(void *arp)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
-	IFADDR_FOREACH(ia, ifp) {
+	IFADDR_READER_FOREACH(ia, ifp) {
 		aa = (struct at_ifaddr *)ia;
 		if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 		    (aa->aa_flags & AFA_PROBING))
