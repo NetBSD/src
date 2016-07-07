@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.68 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.68 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.69 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ Static struct ucom_methods umodem_methods = {
 	.ucom_write = NULL,
 };
 
-int             umodem_match(device_t, cfdata_t, void *);
-void            umodem_attach(device_t, device_t, void *);
-int             umodem_detach(device_t, int);
-int             umodem_activate(device_t, enum devact);
+int	umodem_match(device_t, cfdata_t, void *);
+void	umodem_attach(device_t, device_t, void *);
+int	umodem_detach(device_t, int);
+int	umodem_activate(device_t, enum devact);
 
 extern struct cfdriver umodem_cd;
 

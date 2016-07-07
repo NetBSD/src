@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.30 2016/04/06 03:51:26 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.31 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -187,7 +187,7 @@ struct wrusage;
 
 pid_t	wait(int *);
 pid_t	waitpid(pid_t, int *, int);
-int	waitid(idtype_t, id_t, siginfo_t *, int); 
+int	waitid(idtype_t, id_t, siginfo_t *, int);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #ifndef __LIBC12_SOURCE__
 pid_t	wait3(int *, int, struct rusage *) __RENAME(__wait350);

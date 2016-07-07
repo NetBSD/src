@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.106 2015/11/28 21:06:30 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.107 2016/07/07 06:55:40 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.106 2015/11/28 21:06:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.107 2016/07/07 06:55:40 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,7 +203,8 @@ cgd_attach(device_t parent, device_t self, void *aux)
 	disk_init(&sc->sc_dksc.sc_dkdev, sc->sc_dksc.sc_xname, &cgddkdriver);
 
 	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "unable to register power management hooks\n");
+		aprint_error_dev(self,
+		    "unable to register power management hooks\n");
 }
 
 
@@ -457,9 +458,9 @@ cgdiodone(struct buf *nbp)
 	DPRINTF_FOLLOW(("cgdiodone(%p)\n", nbp));
 	DPRINTF(CGDB_IO, ("cgdiodone: bp %p bcount %d resid %d\n",
 	    obp, obp->b_bcount, obp->b_resid));
-	DPRINTF(CGDB_IO, (" dev 0x%"PRIx64", nbp %p bn %" PRId64 " addr %p bcnt %d\n",
-	    nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
-	    nbp->b_bcount));
+	DPRINTF(CGDB_IO, (" dev 0x%"PRIx64", nbp %p bn %" PRId64
+	    " addr %p bcnt %d\n", nbp->b_dev, nbp, nbp->b_blkno, nbp->b_data,
+		nbp->b_bcount));
 	if (nbp->b_error != 0) {
 		obp->b_error = nbp->b_error;
 		DPRINTF(CGDB_IO, ("%s: error %d\n", dksc->sc_xname,

@@ -415,7 +415,7 @@ void sdt_probe_stub(uint32_t, uintptr_t, uintptr_t, uintptr_t, uintptr_t,
 
 SDT_PROVIDER_DECLARE(sdt);
 
-void sdt_init(void *); 
+void sdt_init(void *);
 void sdt_exit(void);
 
 

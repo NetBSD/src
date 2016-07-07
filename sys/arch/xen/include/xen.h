@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.36 2016/05/29 17:06:17 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.37 2016/07/07 06:55:40 msaitoh Exp $	*/
 
 /*
  *
@@ -234,9 +234,9 @@ xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval)
 static __inline void
 xen_atomic_setbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {  
 #ifdef __x86_64__
-	__asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits)); 
+	__asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits));
 #else
-	__asm volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits)); 
+	__asm volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits));
 #endif
 }
      

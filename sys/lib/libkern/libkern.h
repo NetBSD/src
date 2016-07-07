@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.123 2016/05/11 03:17:22 rtr Exp $	*/
+/*	$NetBSD: libkern.h,v 1.124 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -356,7 +356,7 @@ tolower(int ch)
 
 #define	MTPRNG_RLEN		624
 struct mtprng_state {
-	unsigned int mt_idx; 
+	unsigned int mt_idx;
 	uint32_t mt_elem[MTPRNG_RLEN];
 	uint32_t mt_count;
 	uint32_t mt_sparse[3];

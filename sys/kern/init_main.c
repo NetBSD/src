@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.481 2016/06/04 21:10:56 palle Exp $	*/
+/*	$NetBSD: init_main.c,v 1.482 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.481 2016/06/04 21:10:56 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -795,7 +795,7 @@ rootconf_handle_wedges(void)
 	struct vnode *vp;
 	daddr_t startblk;
 	uint64_t nblks;
-	device_t dev; 
+	device_t dev;
 	int error;
 
 	if (booted_nblks) {

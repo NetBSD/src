@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.136 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.136 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.137 2016/07/07 06:55:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -775,7 +775,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 		    "creating multicast configuration thread\n");
 		return;
 	}
-	sc->aue_flags = aue_lookup(uaa->uaa_vendor, uaa->uaa_product)->aue_flags;
+	sc->aue_flags = aue_lookup(uaa->uaa_vendor,
+	    uaa->uaa_product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;

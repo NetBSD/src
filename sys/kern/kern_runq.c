@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.44 2015/10/07 00:32:34 christos Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.44 2015/10/07 00:32:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include "opt_dtrace.h"
 
@@ -284,7 +284,7 @@ sched_dequeue(struct lwp *l)
 	ci_rq = spc->spc_sched_info;
 	KASSERT(lwp_locked(l, spc->spc_mutex));
 
-	KASSERT(eprio <= spc->spc_maxpriority); 
+	KASSERT(eprio <= spc->spc_maxpriority);
 	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
 	KASSERT(ci_rq->r_count > 0);
 

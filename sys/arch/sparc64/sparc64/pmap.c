@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.302 2016/04/17 14:32:03 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.303 2016/07/07 06:55:38 msaitoh Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2016/04/17 14:32:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2016/07/07 06:55:38 msaitoh Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -191,7 +191,7 @@ pmap_has_ctx(struct pmap *p)
 		if (p->pm_ctx[i] > 0)
 			return true;
 
-	return false;	
+	return false;
 }
 
 #ifdef MULTIPROCESSOR
@@ -1319,7 +1319,7 @@ cpu_pmap_init(struct cpu_info *ci)
 	 */
 	ci->ci_pmap_next_ctx = 1;
 	/* all SUN4U use 13 bit contexts - SUN4V use at least 13 bit contexts */
-	ci->ci_numctx = 0x2000; 
+	ci->ci_numctx = 0x2000;
 	ctxsize = sizeof(paddr_t)*ci->ci_numctx;
 	ci->ci_ctxbusy = (paddr_t *)kdata_alloc(ctxsize, sizeof(uint64_t));
 	memset(ci->ci_ctxbusy, 0, ctxsize);

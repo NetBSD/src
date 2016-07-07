@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.40 2013/06/28 14:48:17 christos Exp $	*/
+/*	$NetBSD: opl.c,v 1.41 2016/07/07 06:55:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.40 2013/06/28 14:48:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.41 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,8 @@ opl_attach(struct opl_softc *sc)
 
 	sc->syn.mets = &opl3_midi;
 	size_t len = strlen(sc->syn.name);
-	snprintf(sc->syn.name + len, sizeof(sc->syn.name) - len, "Yamaha OPL%d",
-	    sc->model);
+	snprintf(sc->syn.name + len, sizeof(sc->syn.name) - len,
+	    "Yamaha OPL%d", sc->model);
 	sc->syn.data = sc;
 	sc->syn.nvoice = sc->model == OPL_2 ? OPL2_NVOICE : OPL3_NVOICE;
 	sc->syn.lock = sc->lock;
