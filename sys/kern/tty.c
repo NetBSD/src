@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.270 2015/10/22 17:36:33 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.271 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.270 2015/10/22 17:36:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.271 2016/07/07 06:55:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1292,7 +1292,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		pid_t pgid = *(pid_t *)data;
 		struct pgrp *pgrp;
 
-		mutex_enter(proc_lock); 
+		mutex_enter(proc_lock);
 		if (tp->t_session != NULL && !isctty(p, tp)) {
 			mutex_exit(proc_lock);
 			return (ENOTTY);
@@ -1331,7 +1331,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		if (pgid == NO_PGID)
 			return EINVAL;
 
-		mutex_enter(proc_lock); 
+		mutex_enter(proc_lock);
 		if (!isctty(p, tp)) {
 			mutex_exit(proc_lock);
 			return (ENOTTY);

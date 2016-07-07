@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13 2015/11/05 00:12:28 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.14 2016/07/07 06:55:44 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2015/11/05 00:12:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.14 2016/07/07 06:55:44 msaitoh Exp $");
 
 /*
  *	Manages physical address maps.
@@ -357,7 +357,7 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	vaddr_t virtual_end = pmap_limits.virtual_end; 
+	vaddr_t virtual_end = pmap_limits.virtual_end;
 	maxkvaddr = pmap_round_seg(maxkvaddr) - 1;
 
 	/*

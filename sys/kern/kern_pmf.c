@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.38 2016/06/20 08:30:58 knakahara Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.38 2016/06/20 08:30:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.39 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -951,7 +951,7 @@ bool
 pmf_event_register(device_t dv, pmf_generic_event_t ev,
     void (*handler)(device_t), bool global)
 {
-	pmf_event_handler_t *event; 
+	pmf_event_handler_t *event;
 	
 	event = kmem_alloc(sizeof(*event), KM_SLEEP);
 	event->pmf_event = ev;

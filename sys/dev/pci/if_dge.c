@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.44 2016/06/10 13:27:14 ozaki-r Exp $ */
+/*	$NetBSD: if_dge.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.44 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.45 2016/07/07 06:55:41 msaitoh Exp $");
 
 
 
@@ -726,7 +726,8 @@ dge_attach(device_t parent, device_t self, void *aux)
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, DGE_PCI_BAR);
         if (pci_mapreg_map(pa, DGE_PCI_BAR, memtype, 0,
             &sc->sc_st, &sc->sc_sh, NULL, NULL)) {
-                aprint_error_dev(sc->sc_dev, "unable to map device registers\n");
+                aprint_error_dev(sc->sc_dev,
+		    "unable to map device registers\n");
                 return;
         }
 

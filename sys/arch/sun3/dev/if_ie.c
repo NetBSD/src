@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.58 2016/06/10 13:27:13 ozaki-r Exp $ */
+/*	$NetBSD: if_ie.c,v 1.59 2016/07/07 06:55:39 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.58 2016/06/10 13:27:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.59 2016/07/07 06:55:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -859,7 +859,7 @@ ieget(struct ie_softc *sc, int *to_bpf)
 			char *newdata = (char *)
 			    ALIGN(m->m_data + sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
-			len -= newdata - m->m_data; 
+			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.23 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.24 2016/07/07 06:55:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.23 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.24 2016/07/07 06:55:42 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +243,7 @@ umodem_common_attach(device_t self, struct umodem_softc *sc,
 	ucaa->ucaa_iface = sc->sc_data_iface;
 	ucaa->ucaa_arg = sc;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTF(("umodem_common_attach: sc=%p\n", sc));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, ucaa,
@@ -676,8 +675,7 @@ umodem_common_detach(struct umodem_softc *sc, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

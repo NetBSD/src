@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.94 2016/02/29 00:34:17 chs Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.95 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.94 2016/02/29 00:34:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.95 2016/07/07 06:55:43 msaitoh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -436,7 +436,7 @@ bt_lookupbusy(vmem_t *vm, vmem_addr_t addr)
 	struct vmem_hashlist *list;
 	bt_t *bt;
 
-	list = bt_hashhead(vm, addr); 
+	list = bt_hashhead(vm, addr);
 	LIST_FOREACH(bt, list, bt_hashlist) {
 		if (bt->bt_start == addr) {
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.168 2016/07/01 05:22:33 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.169 2016/07/07 06:55:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.168 2016/07/01 05:22:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.169 2016/07/07 06:55:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1501,7 +1501,7 @@ rt_settag(struct rtentry *rt, const struct sockaddr *tag)
 			sockaddr_free(rt->rt_tag);
 		rt->rt_tag = sockaddr_dup(tag, M_ZERO | M_NOWAIT);
 	}
-	return rt->rt_tag; 
+	return rt->rt_tag;
 }
 
 struct sockaddr *
