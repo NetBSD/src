@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.149 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.150 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.149 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.150 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -712,7 +712,7 @@ icmp_reflect(struct mbuf *m)
 	 */
 
 	/* Look for packet addressed to us */
-	INADDR_TO_IA(t, ia);
+	ia = in_get_ia(t);
 	if (ia && (ia->ia4_flags & IN_IFF_NOTREADY))
 		ia = NULL;
 
@@ -758,14 +758,9 @@ icmp_reflect(struct mbuf *m)
 		if (sin) {
 			t = sin->sin_addr;
 			sin = NULL;
-			INADDR_TO_IA(t, ia);
-			while (ia) {
-				if (ia->ia_ifp == rcvif) {
-					sin = &ia->ia_addr;
-					break;
-				}
-				NEXT_IA_WITH_SAME_ADDR(ia);
-			}
+			ia = in_get_ia_on_iface(t, rcvif);
+			if (ia != NULL)
+				sin = &ia->ia_addr;
 		}
 	}
 
