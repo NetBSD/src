@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.60 2016/06/28 02:02:56 ozaki-r Exp $	*/
+/*	$NetBSD: igmp.c,v 1.61 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.60 2016/06/28 02:02:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.61 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -361,7 +361,7 @@ igmp_input(struct mbuf *m, ...)
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
-			IFP_TO_IA(ifp, ia);		/* XXX */
+			ia = in_get_ia_from_ifp(ifp);		/* XXX */
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
 		}
@@ -401,7 +401,7 @@ igmp_input(struct mbuf *m, ...)
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
-		IFP_TO_IA(ifp, ia);			/* XXX */
+		ia = in_get_ia_from_ifp(ifp);			/* XXX */
 		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
 			break;
 #endif
@@ -428,7 +428,7 @@ igmp_input(struct mbuf *m, ...)
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
-			IFP_TO_IA(ifp, ia);		/* XXX */
+			ia = in_get_ia_from_ifp(ifp);		/* XXX */
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
