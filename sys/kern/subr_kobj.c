@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.54 2016/07/08 08:55:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.53 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.54 2016/07/08 08:55:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -392,14 +392,11 @@ kobj_load(kobj_t ko)
 	 * Size up code/data(progbits) and bss(nobits).
 	 */
 	alignmask = 0;
-	mapbase = 0;
 	mapsize = 0;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		switch (shdr[i].sh_type) {
 		case SHT_PROGBITS:
 		case SHT_NOBITS:
-			if (mapbase == 0)
-				mapbase = shdr[i].sh_offset;
 			alignmask = shdr[i].sh_addralign - 1;
 			mapsize += alignmask;
 			mapsize &= ~alignmask;
@@ -416,19 +413,17 @@ kobj_load(kobj_t ko)
 	if (mapsize == 0) {
 		kobj_error(ko, "no text/data/bss");
 		error = ENOEXEC;
+ 		goto out;
+ 	}
+
+	mapbase = uvm_km_alloc(module_map, round_page(mapsize),
+	    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
+	if (mapbase == 0) {
+		kobj_error(ko, "out of memory");
+		error = ENOMEM;
 		goto out;
 	}
-	if (ko->ko_type == KT_MEMORY) {
-		mapbase += (vaddr_t)ko->ko_source;
-	} else {
-		mapbase = uvm_km_alloc(module_map, round_page(mapsize),
-		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
-		if (mapbase == 0) {
-			kobj_error(ko, "out of memory");
-			error = ENOMEM;
-			goto out;
-		}
-	}
+
 	ko->ko_address = mapbase;
 	ko->ko_size = mapsize;
 
@@ -445,21 +440,11 @@ kobj_load(kobj_t ko)
 		case SHT_PROGBITS:
 		case SHT_NOBITS:
 			alignmask = shdr[i].sh_addralign - 1;
-			if (ko->ko_type == KT_MEMORY) {
-				addr = (void *)(shdr[i].sh_offset +
-				    (vaddr_t)ko->ko_source);
-				if (((vaddr_t)addr & alignmask) != 0) {
-					kobj_error(ko,
-					    "section %d not aligned", i);
-					error = ENOEXEC;
-					goto out;
-				}
-			} else {
-				mapbase += alignmask;
-				mapbase &= ~alignmask;
-				addr = (void *)mapbase;
-				mapbase += shdr[i].sh_size;
-			}
+			mapbase += alignmask;
+			mapbase &= ~alignmask;
+			addr = (void *)mapbase;
+			mapbase += shdr[i].sh_size;
+
 			ko->ko_progtab[pb].addr = addr;
 			if (shdr[i].sh_type == SHT_PROGBITS) {
 				ko->ko_progtab[pb].name = "<<PROGBITS>>";
@@ -469,16 +454,11 @@ kobj_load(kobj_t ko)
 					kobj_error(ko, "read failed %d", error);
 					goto out;
 				}
-			} else if (ko->ko_type == KT_MEMORY &&
-			    shdr[i].sh_size != 0) {
-				kobj_error(ko, "non-loadable BSS "
-				    "section in pre-loaded module");
-				error = ENOEXEC;
-				goto out;
-			} else {
+			} else { /* SHT_NOBITS */
 				ko->ko_progtab[pb].name = "<<NOBITS>>";
 				memset(addr, 0, shdr[i].sh_size);
 			}
+
 			ko->ko_progtab[pb].size = shdr[i].sh_size;
 			ko->ko_progtab[pb].sec = i;
 			if (ko->ko_shstrtab != NULL && shdr[i].sh_name != 0) {
@@ -555,7 +535,7 @@ kobj_load(kobj_t ko)
 		panic("%s:%d: %s: lost rela", __func__, __LINE__,
 		   ko->ko_name);
 	}
-	if (ko->ko_type != KT_MEMORY && mapbase != ko->ko_address + mapsize) {
+	if (mapbase != ko->ko_address + mapsize) {
 		panic("%s:%d: %s: "
 		    "mapbase 0x%lx != address %lx + mapsize %ld (0x%lx)\n",
 		    __func__, __LINE__, ko->ko_name,
@@ -606,7 +586,7 @@ kobj_unload(kobj_t ko)
 			kobj_error(ko, "machine dependent deinit failed %d",
 			    error);
 	}
-	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
+	if (ko->ko_address != 0) {
 		uvm_km_free(module_map, ko->ko_address, round_page(ko->ko_size),
 		    UVM_KMF_WIRED);
 	}
@@ -1023,21 +1003,27 @@ kobj_read_mem(kobj_t ko, void **basep, size_t size, off_t off,
 	void *base = *basep;
 	int error;
 
+	KASSERT(ko->ko_source != NULL);
+
 	if (ko->ko_memsize != -1 && off + size > ko->ko_memsize) {
 		kobj_error(ko, "preloaded object short");
 		error = EINVAL;
 		base = NULL;
 	} else if (allocate) {
-		base = (uint8_t *)ko->ko_source + off;
+		base = kmem_alloc(size, KM_SLEEP);
 		error = 0;
-	} else if ((uint8_t *)base != (uint8_t *)ko->ko_source + off) {
-		kobj_error(ko, "object not aligned");
-		kobj_error(ko, "source=%p base=%p off=%d "
-		    "size=%zu", ko->ko_source, base, (int)off, size);
-		error = EINVAL;
 	} else {
-		/* Nothing to do.  Loading in-situ. */
 		error = 0;
+	}
+
+	if (error == 0) {
+		/* Copy the section */
+		memcpy(base, (uint8_t *)ko->ko_source + off, size);
+	}
+
+	if (allocate && error != 0) {
+		kmem_free(base, size);
+		base = NULL;
 	}
 
 	if (allocate)
@@ -1055,8 +1041,7 @@ static void
 kobj_free(kobj_t ko, void *base, size_t size)
 {
 
-	if (ko->ko_type != KT_MEMORY)
-		kmem_free(base, size);
+	kmem_free(base, size);
 }
 
 extern char module_base[];
