@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.60 2016/07/08 05:36:51 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.61 2016/07/08 05:37:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.60 2016/07/08 05:36:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.61 2016/07/08 05:37:38 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2058,11 +2058,16 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		KASSERT(bus->ub_devices[dev->ud_addr] == NULL);
 		bus->ub_devices[dev->ud_addr] = dev;
 		err = usbd_get_initial_ddesc(dev, dd);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "get_initial_ddesc %u", err, 0, 0, 0);
 			goto bad;
+		}
+
 		err = usbd_reload_device_desc(dev);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "reload desc %u", err, 0, 0, 0);
 			goto bad;
+		}
 	} else {
 		uint8_t slot = 0;
 
@@ -2091,8 +2096,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 		/* 4.3.4 Address Assignment */
 		err = xhci_set_address(dev, slot, false);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "set address w/o bsr %u", err, 0, 0, 0);
 			goto bad;
+		}
 
 		/* Allow device time to set new address */
 		usbd_delay_ms(dev, USB_SET_ADDRESS_SETTLE);
@@ -2110,8 +2117,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		bus->ub_devices[dev->ud_addr] = dev;
 
 		err = usbd_get_initial_ddesc(dev, dd);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "get_initial_ddesc %u", err, 0, 0, 0);
 			goto bad;
+		}
 
 		/* 4.8.2.1 */
 		if (USB_IS_SS(speed)) {
@@ -2132,8 +2141,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		    UGETW(dev->ud_ep0desc.wMaxPacketSize));
 
 		err = usbd_reload_device_desc(dev);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "reload desc %u", err, 0, 0, 0);
 			goto bad;
+		}
 	}
 
 	DPRINTFN(1, "adding unit addr=%d, rev=%02x,",
