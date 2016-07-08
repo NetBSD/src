@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.82 2016/07/08 03:40:34 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.83 2016/07/08 04:33:30 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -562,7 +562,7 @@ extern callout_t in6_tmpaddrtimer_ch;
  * to a given interface (ifnet structure).
  */
 static inline struct in6_ifaddr *
-ifp_to_ia6(struct ifnet *ifp)
+in6_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
@@ -572,12 +572,6 @@ ifp_to_ia6(struct ifnet *ifp)
 	}
 	return (struct in6_ifaddr *)ifa;
 }
-
-#define	IFP_TO_IA6(__ifp, __ia)				\
-do {							\
-	(__ia) = ifp_to_ia6((__ifp));				\
-} while (/*CONSTCOND*/0)
-
 
 #endif /* _KERNEL */
 
@@ -630,7 +624,7 @@ in6_lookup_multi(struct in6_addr *addr, struct ifnet *ifp)
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
 
-	if ((ia = ifp_to_ia6(ifp)) == NULL)
+	if ((ia = in6_get_ia_from_ifp(ifp)) == NULL)
 	  	return NULL;
 	LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 		if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, addr))
