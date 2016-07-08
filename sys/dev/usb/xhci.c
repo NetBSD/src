@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.61 2016/07/08 05:37:38 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.62 2016/07/08 05:38:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.61 2016/07/08 05:37:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.62 2016/07/08 05:38:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2137,8 +2137,12 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 			USETW(dev->ud_ep0desc.wMaxPacketSize,
 			    dd->bMaxPacketSize);
 		DPRINTFN(4, "bMaxPacketSize %u", dd->bMaxPacketSize, 0, 0, 0);
-		xhci_update_ep0_mps(sc, xs,
+		err = xhci_update_ep0_mps(sc, xs,
 		    UGETW(dev->ud_ep0desc.wMaxPacketSize));
+		if (err) {
+			DPRINTFN(1, "update mps of ep0 %u", err, 0, 0, 0);
+			goto bad;
+		}
 
 		err = usbd_reload_device_desc(dev);
 		if (err) {
@@ -2540,7 +2544,6 @@ xhci_update_ep0_mps(struct xhci_softc * const sc,
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVALUATE_CTX);
 
 	err = xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
-	KASSERTMSG(err == USBD_NORMAL_COMPLETION, "err %d", err); /* XXX */
 	return err;
 }
 
