@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.216 2016/07/06 06:30:08 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.216 2016/07/06 06:30:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -555,9 +555,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		}
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE) {
-			INADDR_TO_IA(satocsin(rt_getkey(rt))->sin_addr, ia);
-			while (ia && ia->ia_ifp != ifp)
-				NEXT_IA_WITH_SAME_ADDR(ia);
+			ia = in_get_ia_on_iface(
+			    satocsin(rt_getkey(rt))->sin_addr, ifp);
 			if (ia == NULL ||
 			    ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
 				;
@@ -603,10 +602,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			break;
 		}
 
-		INADDR_TO_IA(satocsin(rt_getkey(rt))->sin_addr, ia);
-		while (ia && ia->ia_ifp != ifp)
-			NEXT_IA_WITH_SAME_ADDR(ia);
-
+		ia = in_get_ia_on_iface(satocsin(rt_getkey(rt))->sin_addr, ifp);
 		if (ia == NULL)
 			break;
 
@@ -1028,9 +1024,9 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function
 	 */
-	
-	INADDR_TO_IA(itaddr, ia);
-	while (ia != NULL) {
+	IN_ADDRHASH_READER_FOREACH(ia, itaddr.s_addr) {
+		if (!in_hosteq(ia->ia_addr.sin_addr, itaddr))
+			continue;
 #if NCARP > 0
 		if (ia->ia_ifp->if_type == IFT_CARP &&
 		    ((ia->ia_ifp->if_flags & (IFF_UP|IFF_RUNNING)) ==
@@ -1057,8 +1053,6 @@ in_arpinput(struct mbuf *m)
 		    rcvif->if_bridge == ia->ia_ifp->if_bridge)
 			bridge_ia = ia;
 #endif /* NBRIDGE > 0 */
-
-		NEXT_IA_WITH_SAME_ADDR(ia);
 	}
 
 #if NBRIDGE > 0
@@ -1072,12 +1066,9 @@ in_arpinput(struct mbuf *m)
 #endif
 
 	if (ia == NULL) {
-		INADDR_TO_IA(isaddr, ia);
-		while ((ia != NULL) && ia->ia_ifp != rcvif)
-			NEXT_IA_WITH_SAME_ADDR(ia);
-
+		ia = in_get_ia_on_iface(isaddr, rcvif);
 		if (ia == NULL) {
-			IFP_TO_IA(ifp, ia);
+			ia = in_get_ia_from_ifp(ifp);
 			if (ia == NULL) {
 				ARP_STATINC(ARP_STAT_RCVNOINT);
 				goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.77 2016/07/08 03:40:34 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.78 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,64 +222,55 @@ extern struct pslist_head in_ifaddrhead_pslist;
 extern	const	int	inetctlerrmap[];
 
 /*
- * Macro for finding whether an internet address (in_addr) belongs to one
+ * Find whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
  */
-#define INADDR_TO_IA(addr, ia) \
-	/* struct in_addr addr; */ \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) { \
-		if (in_hosteq(ia->ia_addr.sin_addr, (addr))) \
-			break; \
-	} \
+static inline struct in_ifaddr *
+in_get_ia(struct in_addr addr)
+{
+	struct in_ifaddr *ia;
+
+	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) {
+		if (in_hosteq(ia->ia_addr.sin_addr, addr))
+			break;
+	}
+
+	return ia;
 }
 
 /*
- * Macro for finding the next in_ifaddr structure with the same internet
- * address as ia. Call only with a valid ia pointer.
- * Will set ia to NULL if none found.
+ * Find whether an internet address (in_addr) belongs to a specified
+ * interface.  NULL if the address isn't ours.
  */
+static inline struct in_ifaddr *
+in_get_ia_on_iface(struct in_addr addr, struct ifnet *ifp)
+{
+	struct in_ifaddr *ia;
 
-#define NEXT_IA_WITH_SAME_ADDR(ia) \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	struct in_addr addr; \
-	addr = ia->ia_addr.sin_addr; \
-	do { \
-		ia = IN_ADDRHASH_READER_NEXT(ia); \
-	} while ((ia != NULL) && !in_hosteq(ia->ia_addr.sin_addr, addr)); \
+	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) {
+		if (in_hosteq(ia->ia_addr.sin_addr, addr) &&
+		    ia->ia_ifp == ifp)
+			break;
+	}
+
+	return ia;
 }
 
 /*
- * Macro for finding the interface (ifnet structure) corresponding to one
- * of our IP addresses.
- */
-#define INADDR_TO_IFP(addr, ifp) \
-	/* struct in_addr addr; */ \
-	/* struct ifnet *ifp; */ \
-{ \
-	struct in_ifaddr *ia; \
-\
-	INADDR_TO_IA(addr, ia); \
-	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
-}
-
-/*
- * Macro for finding an internet address structure (in_ifaddr) corresponding
+ * Find an internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-#define IFP_TO_IA(ifp, ia) \
-	/* struct ifnet *ifp; */ \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	struct ifaddr *ifa; \
-\
-	IFADDR_READER_FOREACH(ifa, ifp) { \
-		if (ifa->ifa_addr->sa_family == AF_INET) \
-			break; \
-	} \
-	(ia) = ifatoia(ifa); \
+static inline struct in_ifaddr *
+in_get_ia_from_ifp(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			break;
+	}
+
+	return ifatoia(ifa);
 }
 
 #include <netinet/in_selsrc.h>

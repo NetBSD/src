@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.95 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.96 2016/07/08 04:33:30 ozaki-r Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.95 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.96 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -322,7 +322,7 @@ stf_getsrcifa6(struct ifnet *ifp)
 			continue;
 
 		memcpy(&in, GET_V4(&sin6->sin6_addr), sizeof(in));
-		INADDR_TO_IA(in, ia4);
+		ia4 = in_get_ia(in);
 		if (ia4 == NULL)
 			continue;
 

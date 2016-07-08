@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.71 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.72 2016/07/08 04:33:30 ozaki-r Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.71 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.72 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -428,7 +428,7 @@ mld_input(struct mbuf *m, int off)
 		 */
 		timer = ntohs(mldh->mld_maxdelay);
 
-		IFP_TO_IA6(ifp, ia);
+		ia = in6_get_ia_from_ifp(ifp);
 		if (ia == NULL)
 			break;
 
@@ -664,7 +664,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 
-		IFP_TO_IA6(ifp, ia);
+		ia = in6_get_ia_from_ifp(ifp);
 		if (ia == NULL) {
 			callout_destroy(&in6m->in6m_timer_ch);
 			free(in6m, M_IPMADDR);
@@ -813,7 +813,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 	struct in6_ifaddr *ia;
 	struct in6_multi *in6m;
 
-	IFP_TO_IA6(oia->ia_ifp, ia);
+	ia = in6_get_ia_from_ifp(oia->ia_ifp);
 	if (ia) {	/* there is another address */
 		KASSERT(ia != oia);
 		while ((in6m = LIST_FIRST(&oia->ia6_multiaddrs)) != NULL) {

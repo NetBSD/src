@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.258 2016/06/21 03:28:27 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.259 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.258 2016/06/21 03:28:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.259 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -336,7 +336,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			goto bad;
 		}
 		mtu = ifp->if_mtu;
-		IFP_TO_IA(ifp, ia);
+		ia = in_get_ia_from_ifp(ifp);
 		isbroadcast = 0;
 	} else {
 		if (rt == NULL)
@@ -404,7 +404,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			struct in_ifaddr *xia;
 			struct ifaddr *xifa;
 
-			IFP_TO_IA(ifp, xia);
+			xia = in_get_ia_from_ifp(ifp);
 			if (!xia) {
 				error = EADDRNOTAVAIL;
 				goto bad;
@@ -583,7 +583,7 @@ sendit:
 	 * search for the source address structure to
 	 * maintain output statistics.
 	 */
-	INADDR_TO_IA(ip->ip_src, ia);
+	ia = in_get_ia(ip->ip_src);
 #endif
 
 	/* Maybe skip checksums on loopback interfaces. */
@@ -1734,7 +1734,7 @@ ip_getmoptions(struct ip_moptions *imo, struct sockopt *sopt)
 
 			ifp = if_byindex(imo->imo_multicast_if_index);
 			if (ifp != NULL) {
-				IFP_TO_IA(ifp, ia);
+				ia = in_get_ia_from_ifp(ifp);
 			}
 			addr = ia ? ia->ia_addr.sin_addr : zeroin_addr;
 			pserialize_read_exit(s);

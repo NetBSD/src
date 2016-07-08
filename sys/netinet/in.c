@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.172 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.173 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.172 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.173 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -390,7 +390,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp != NULL)
-		IFP_TO_IA(ifp, ia);
+		ia = in_get_ia_from_ifp(ifp);
 
 	hostIsNew = 1;		/* moved here to appease gcc */
 	switch (cmd) {
@@ -1559,7 +1559,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 
 			ifp = if_byindex(imo->imo_multicast_if_index);
 			if (ifp != NULL) {
-				IFP_TO_IA(ifp, ia);		/* XXX */
+				ia = in_get_ia_from_ifp(ifp);		/* XXX */
 			} else
 				ia = NULL;
 			if (ia == NULL || ia->ia4_flags & IN_IFF_NOTREADY) {
