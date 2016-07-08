@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.76 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.77 2016/07/08 03:40:34 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,6 +167,8 @@ extern struct pslist_head in_ifaddrhead_pslist;
 	PSLIST_ENTRY_INIT((__ia), ia_hash_pslist_entry);
 #define IN_ADDRHASH_ENTRY_DESTROY(__ia)					\
 	PSLIST_ENTRY_DESTROY((__ia), ia_hash_pslist_entry);
+#define IN_ADDRHASH_READER_NEXT(__ia)					\
+	PSLIST_READER_NEXT((__ia), struct in_ifaddr, ia_hash_pslist_entry)
 
 #define IN_ADDRLIST_ENTRY_INIT(__ia)					\
 	PSLIST_ENTRY_INIT((__ia), ia_pslist_entry)
@@ -227,7 +229,7 @@ extern	const	int	inetctlerrmap[];
 	/* struct in_addr addr; */ \
 	/* struct in_ifaddr *ia; */ \
 { \
-	LIST_FOREACH(ia, &IN_IFADDR_HASH((addr).s_addr), ia_hash) { \
+	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) { \
 		if (in_hosteq(ia->ia_addr.sin_addr, (addr))) \
 			break; \
 	} \
@@ -245,7 +247,7 @@ extern	const	int	inetctlerrmap[];
 	struct in_addr addr; \
 	addr = ia->ia_addr.sin_addr; \
 	do { \
-		ia = LIST_NEXT(ia, ia_hash); \
+		ia = IN_ADDRHASH_READER_NEXT(ia); \
 	} while ((ia != NULL) && !in_hosteq(ia->ia_addr.sin_addr, addr)); \
 }
 
@@ -273,7 +275,7 @@ extern	const	int	inetctlerrmap[];
 { \
 	struct ifaddr *ifa; \
 \
-	IFADDR_FOREACH(ifa, ifp) { \
+	IFADDR_READER_FOREACH(ifa, ifp) { \
 		if (ifa->ifa_addr->sa_family == AF_INET) \
 			break; \
 	} \
