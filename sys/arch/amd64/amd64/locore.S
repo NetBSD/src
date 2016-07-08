@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.104 2016/07/04 07:56:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.105 2016/07/08 09:15:38 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -703,13 +703,13 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* Map [SYMS]+[PRELOADED MODULES] RWX. */
+	/* Map [SYMS]+[PRELOADED MODULES] RW. */
 	movl	$RELOC(__kernel_end),%eax
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW),%eax
-	fillkpt
+	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
