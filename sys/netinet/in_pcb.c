@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.165 2016/07/06 08:42:34 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166 2016/07/08 04:33:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.165 2016/07/06 08:42:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166 2016/07/08 04:33:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -283,7 +283,7 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	} else if (!in_nullhost(sin->sin_addr)) {
 		struct in_ifaddr *ia = NULL;
 
-		INADDR_TO_IA(sin->sin_addr, ia);
+		ia = in_get_ia(sin->sin_addr);
 		/* check for broadcast addresses */
 		if (ia == NULL)
 			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
@@ -514,7 +514,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 				xerror = EADDRNOTAVAIL;
 			return xerror;
 		}
-		INADDR_TO_IA(ifaddr->sin_addr, ia);
+		ia = in_get_ia(ifaddr->sin_addr);
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
 	}
