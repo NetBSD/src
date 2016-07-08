@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.207 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.208 2016/07/08 06:18:29 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.207 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.208 2016/07/08 06:18:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1283,19 +1283,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
-	return error;
-
-	/*
-	 * XXX: if a change of an existing address failed, keep the entry
-	 * anyway.
-	 */
-	if (hostIsNew)
-		in6_unlink_ifa(ia, ifp);
-  exit:
-	return error;
+	return 0;
 
   cleanup:
 	in6_purgeaddr(&ia->ia_ifa);
+  exit:
 	return error;
 }
 
