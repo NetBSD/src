@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.59 2016/07/07 10:53:03 maya Exp $	*/
+/*	$NetBSD: xhci.c,v 1.60 2016/07/08 05:36:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.59 2016/07/07 10:53:03 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.60 2016/07/08 05:36:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2985,9 +2985,9 @@ xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
  no_cdcd:
 	/* 6.2.3.4,  4.8.2.4 */
 	if (USB_IS_SS(speed)) {
-		/* UBS 3.1  9.6.6 */
+		/* USB 3.1  9.6.6 */
 		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(mps);
-		/* UBS 3.1  9.6.7 */
+		/* USB 3.1  9.6.7 */
 		cp[1] |= XHCI_EPCTX_1_MAXB_SET(maxb);
 #ifdef notyet
 		if (xfertype == UE_ISOCHRONOUS) {
@@ -3004,7 +3004,7 @@ xhci_setup_maxburst(struct usbd_pipe *pipe, uint32_t *cp)
 		}
 #endif
 	} else {
-		/* UBS 2.0  9.6.6 */
+		/* USB 2.0  9.6.6 */
 		cp[1] |= XHCI_EPCTX_1_MAXP_SIZE_SET(UE_GET_SIZE(mps));
 
 		/* 6.2.3.4 */
