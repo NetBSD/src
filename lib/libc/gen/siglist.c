@@ -1,4 +1,4 @@
-/*	$NetBSD: siglist.c,v 1.17 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: siglist.c,v 1.18 2016/07/09 21:15:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)siglist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: siglist.c,v 1.17 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: siglist.c,v 1.18 2016/07/09 21:15:00 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,11 +65,11 @@ static const char *const __siglist14[] = {
 	"Stopped (tty input)",		/* 21 SIGTTIN */
 	"Stopped (tty output)",		/* 22 SIGTTOU */
 	"I/O possible",			/* 23 SIGIO */
-	"Cputime limit exceeded",	/* 24 SIGXCPU */
-	"Filesize limit exceeded",	/* 25 SIGXFSZ */
+	"CPU time limit exceeded",	/* 24 SIGXCPU */
+	"File size limit exceeded",	/* 25 SIGXFSZ */
 	"Virtual timer expired",	/* 26 SIGVTALRM */
 	"Profiling timer expired",	/* 27 SIGPROF */
-	"Window size changes",		/* 28 SIGWINCH */
+	"Window size changed",		/* 28 SIGWINCH */
 	"Information request",		/* 29 SIGINFO */
 	"User defined signal 1",	/* 30 SIGUSR1 */
 	"User defined signal 2",	/* 31 SIGUSR2 */
