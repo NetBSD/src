@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.16 2013/06/15 21:59:37 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.17 2016/07/09 15:04:06 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,22 +28,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.16 2013/06/15 21:59:37 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.17 2016/07/09 15:04:06 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
 #include "opt_omap.h"
- 
+
 #include <sys/param.h>
 #include <sys/evcnt.h>
 #include <sys/atomic.h>
- 
+
 #include <uvm/uvm_extern.h>
-  
+
 #include <machine/intr.h>
- 
+
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -175,7 +175,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	GPIO_WRITE(gpio, GPIO_IRQSTATUS1, irq_mask);
 
 	/*
-	 * Convert the type to a gpio type and figure out which bits in what 
+	 * Convert the type to a gpio type and figure out which bits in what
 	 * register we have to tweak.
 	 */
 	gpio->gpio_edge_rising_mask &= ~irq_mask;
@@ -209,7 +209,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	 */
 	v = GPIO_READ(gpio, GPIO_OE);
 	v |= irq_mask;
-	GPIO_WRITE(gpio, GPIO_OE, v); 
+	GPIO_WRITE(gpio, GPIO_OE, v);
 #if 0
 	for (i = 0, maybe_is = NULL; i < 32; i++) {
 		if ((is = pic->pic_sources[i]) != NULL) {
@@ -222,7 +222,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		KASSERT(is != NULL);
 		is->is_ipl = maybe_is->is_ipl;
 		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, is);
-	} 
+	}
 #endif
 }
 
@@ -253,7 +253,7 @@ omap2gpio_pin_write(void *arg, int pin, int value)
 
 	old = GPIO_READ(gpio, GPIO_DATAOUT);
 	if (value)
-		new = old | mask; 
+		new = old | mask;
 	else
 		new = old & ~mask;
 
@@ -438,7 +438,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 		pic_add(&gpio->gpio_pic, oa->obio_intrbase);
 		aprint_normal(": interrupts %d..%d",
 		    oa->obio_intrbase, oa->obio_intrbase + 31);
-		gpio->gpio_is = intr_establish(oa->obio_intr, 
+		gpio->gpio_is = intr_establish(oa->obio_intr,
 		    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
 		KASSERT(gpio->gpio_is != NULL);
 		aprint_normal(", intr %d", oa->obio_intr);
