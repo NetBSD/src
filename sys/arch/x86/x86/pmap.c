@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.208 2016/07/09 08:05:46 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.209 2016/07/09 09:25:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2016/07/09 08:05:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2016/07/09 09:25:44 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1399,8 +1399,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * will still consider it active. So we set user PGD to this one to lift
 	 * all protection on the now inactive page tables set.
 	 */
-	xen_dummy_user_pgd = avail_start;
-	avail_start += PAGE_SIZE;
+	xen_dummy_user_pgd = pmap_bootstrap_palloc(1);
 
 	/* Zero fill it, the less checks in Xen it requires the better */
 	memset((void *) (xen_dummy_user_pgd + KERNBASE), 0, PAGE_SIZE);
@@ -1637,8 +1636,8 @@ pmap_prealloc_lowmem_ptps(void)
 	pdes = pmap_kernel()->pm_pdir;
 	level = PTP_LEVELS;
 	for (;;) {
-		newp = avail_start;
-		avail_start += PAGE_SIZE;
+		newp = pmap_bootstrap_palloc(1);
+
 #ifdef __HAVE_DIRECT_MAP
 		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
 #else
