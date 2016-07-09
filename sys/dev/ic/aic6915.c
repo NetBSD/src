@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.30.14.1 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.30.14.2 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.30.14.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.30.14.2 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -154,9 +154,8 @@ sf_attach(struct sf_softc *sc)
 	else {
 		if ((error = bus_space_subregion(sc->sc_st, sc->sc_sh,
 		    SF_GENREG_OFFSET, SF_FUNCREG_SIZE, &sc->sc_sh_func)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to sub-region functional "
-			    "registers, error = %d\n",
-			    error);
+			aprint_error_dev(sc->sc_dev, "unable to sub-region "
+			    "functional registers, error = %d\n", error);
 			return;
 		}
 	}
@@ -176,16 +175,16 @@ sf_attach(struct sf_softc *sc)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct sf_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate control data, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct sf_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -193,16 +192,16 @@ sf_attach(struct sf_softc *sc)
 	    sizeof(struct sf_control_data), 1,
 	    sizeof(struct sf_control_data), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(sc->sc_dev, "unable to create control data "
+		    "DMA map, error = %d\n", error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct sf_control_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load control data DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev, "unable to load control data "
+		    "DMA map, error = %d\n", error);
 		goto fail_3;
 	}
 
@@ -213,8 +212,9 @@ sf_attach(struct sf_softc *sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    SF_NTXFRAGS, MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create tx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_4;
 		}
 	}
@@ -226,8 +226,9 @@ sf_attach(struct sf_softc *sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, BUS_DMA_NOWAIT,
 		    &sc->sc_rxsoft[i].ds_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create rx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_5;
 		}
 	}
@@ -247,7 +248,8 @@ sf_attach(struct sf_softc *sc)
 	    ether_sprintf(enaddr));
 
 	if (sf_funcreg_read(sc, SF_PciDeviceConfig) & PDC_System64)
-		printf("%s: 64-bit PCI slot detected\n", device_xname(sc->sc_dev));
+		printf("%s: 64-bit PCI slot detected\n",
+		    device_xname(sc->sc_dev));
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -395,14 +397,15 @@ sf_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
-				aprint_error_dev(sc->sc_dev, "unable to allocate Tx mbuf\n");
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate Tx mbuf\n");
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					aprint_error_dev(sc->sc_dev, "unable to allocate Tx "
-					    "cluster\n");
+					aprint_error_dev(sc->sc_dev,
+					    "unable to allocate Tx cluster\n");
 					m_freem(m);
 					break;
 				}
@@ -412,8 +415,9 @@ sf_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				aprint_error_dev(sc->sc_dev, "unable to load Tx buffer, "
-				    "error = %d\n", error);
+				aprint_error_dev(sc->sc_dev,
+				    "unable to load Tx buffer, error = %d\n",
+				    error);
 				break;
 			}
 		}
@@ -572,7 +576,8 @@ sf_intr(void *arg)
 			/* DMA errors. */
 			if (isr & IS_DmaErrInt) {
 				wantinit = 1;
-				aprint_error_dev(sc->sc_dev, "WARNING: DMA error\n");
+				aprint_error_dev(sc->sc_dev,
+				    "WARNING: DMA error\n");
 			}
 
 			/* Transmit FIFO underruns. */
@@ -638,8 +643,8 @@ sf_txintr(struct sf_softc *sc)
 		txidx = SF_TCD_INDEX_TO_HOST(TCD_INDEX(tcd));
 #ifdef DIAGNOSTIC
 		if ((tcd & TCD_PR) == 0)
-			aprint_error_dev(sc->sc_dev, "Tx queue mismatch, index %d\n",
-			    txidx);
+			aprint_error_dev(sc->sc_dev,
+			    "Tx queue mismatch, index %d\n", txidx);
 #endif
 		/*
 		 * NOTE: stats are updated later.  We're just
@@ -782,7 +787,7 @@ sf_rxintr(struct sf_softc *sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*
@@ -957,9 +962,9 @@ sf_init(struct ifnet *ifp)
 		ds = &sc->sc_rxsoft[i];
 		if (ds->ds_mbuf == NULL) {
 			if ((error = sf_add_rxbuf(sc, i)) != 0) {
-				aprint_error_dev(sc->sc_dev, "unable to allocate or map rx "
-				    "buffer %d, error = %d\n",
-				    i, error);
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate or map rx buffer %d, "
+				    "error = %d\n", i, error);
 				/*
 				 * XXX Should attempt to run with fewer receive
 				 * XXX buffers instead of just failing.
@@ -1211,8 +1216,8 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "can't load rx DMA map %d, error = %d\n",
-		    idx, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load rx DMA map %d, error = %d\n", idx, error);
 		panic("sf_add_rxbuf"); /* XXX */
 	}
 

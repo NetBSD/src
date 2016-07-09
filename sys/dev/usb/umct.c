@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.16 2016/06/09 05:06:20 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.17 2016/07/09 20:25:16 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.16 2016/06/09 05:06:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.17 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,8 +303,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 
 	umct_init(sc);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTF(("umct: in=0x%x out=0x%x intr=0x%x\n",
 	    ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
@@ -342,8 +341,7 @@ umct_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

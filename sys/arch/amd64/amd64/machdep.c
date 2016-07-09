@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.5 2016/05/29 08:44:15 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.6 2016/07/09 20:24:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.5 2016/05/29 08:44:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.6 2016/07/09 20:24:49 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -267,9 +267,6 @@ unsigned int msgbuf_p_cnt = 0;
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
 
-vaddr_t lo32_vaddr;
-paddr_t lo32_paddr;
-
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
 extern struct vm_map *module_map;
@@ -364,7 +361,7 @@ cpu_startup(void)
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
 				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | UVM_PROT_WRITE, 0);
+				       VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
@@ -374,11 +371,22 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for physio
+	 * Allocate a submap for physio.
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
+	/*
+	 * Create the module map.
+	 *
+	 * XXX: the module map is taken as what is left of the bootstrap memory
+	 * created in locore.S, which is not big enough if we want to load many
+	 * modules dynamically. We really should be using kernel_map instead.
+	 *
+	 * But because of the R_X86_64_32 relocations that are usually present
+	 * in dynamic modules, the module map must be in low memory, and this
+	 * wouldn't been guaranteed if we were using kernel_map.
+	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
 	module_map = &module_map_store;
@@ -1657,7 +1665,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE, 0);
 #endif
-	pmap_kenter_pa(lo32_vaddr, lo32_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 
 #ifndef XEN

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.3 2016/05/29 08:44:20 skrll Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.52.6.4 2016/07/09 20:25:00 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.3 2016/05/29 08:44:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.6.4 2016/07/09 20:25:00 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -888,7 +888,7 @@ so always copy for now.
 				continue;
 			}
 		}
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		ifp->if_ipackets++;
 		
 		bpf_mtap(ifp, m);

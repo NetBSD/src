@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.9 2016/03/20 09:15:07 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.10 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.9 2016/03/20 09:15:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.10 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -224,8 +224,7 @@ udsir_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("udsir_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = &udsir_methods;

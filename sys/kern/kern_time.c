@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179.10.4 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.10.5 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.4 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.5 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -97,6 +97,7 @@ CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
 
+#define	DELAYTIMER_MAX	32
 
 /*
  * Initialize timekeeping.
@@ -395,7 +396,7 @@ sys_clock_getcpuclockid2(struct lwp *l,
 
 	switch (SCARG(uap, idtype)) {
 	case P_PID:
-		pid = id == 0 ? l->l_proc->p_pid : id; 
+		pid = id == 0 ? l->l_proc->p_pid : id;
 		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
 		break;
 	case P_LWPID:
@@ -980,6 +981,8 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 		return (EINVAL);
 	}
 	*retval = pt->pt_poverruns;
+	if (*retval >= DELAYTIMER_MAX)
+		*retval = DELAYTIMER_MAX;
 	mutex_spin_exit(&timer_lock);
 
 	return (0);
@@ -1089,7 +1092,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 		TIMESPEC_TO_TIMEVAL(&itvp->it_value, &its.it_value);
 		TIMESPEC_TO_TIMEVAL(&itvp->it_interval, &its.it_interval);
 	}
-	mutex_spin_exit(&timer_lock);	
+	mutex_spin_exit(&timer_lock);
 
 	return 0;
 }

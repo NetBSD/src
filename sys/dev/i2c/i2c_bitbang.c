@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.13 2010/04/25 00:35:58 tsutsui Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.13.36.1 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,8 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.13 2010/04/25 00:35:58 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.13.36.1 2016/07/09 20:25:02 skrll Exp $");
 
+#include <sys/module.h>
 #include <sys/param.h>
 
 #include <dev/i2c/i2cvar.h>
@@ -260,4 +261,20 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags, i2c_bitbang_ops_t ops)
 		(void) i2c_bitbang_send_stop(v, flags, ops);
 
 	return error;
+}
+
+MODULE(MODULE_CLASS_MISC, i2c_bitbang, NULL);
+
+static int      
+i2c_bitbang_modcmd(modcmd_t cmd, void *opaque)
+{                       
+ 
+	switch (cmd) {  
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
 }

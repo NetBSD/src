@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.70.30.1 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: i82586.c,v 1.70.30.2 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.70.30.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.70.30.2 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -901,7 +901,7 @@ ieget(struct ie_softc *sc, int head, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m_set_rcvif(m0, &sc->sc_ethercom.ec_if);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

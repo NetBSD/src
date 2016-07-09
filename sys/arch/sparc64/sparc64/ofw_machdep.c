@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.43.2.2 2016/03/19 11:30:05 skrll Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.43.2.3 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.43.2.2 2016/03/19 11:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.43.2.3 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -126,7 +126,7 @@ prom_set_trap_table_sun4v(vaddr_t tba, paddr_t mmfsa)
 		cell_t nargs;
 		cell_t nreturns;
 		cell_t tba;
-		cell_t mmfsa; 
+		cell_t mmfsa;
 	} args;
 
 	args.name = ADR2CELL("SUNW,set-trap-table");
@@ -524,7 +524,7 @@ prom_get_msgbuf(int len, int align)
 	} else prom_printf("prom_get_msgbuf: test failed\n");
 	/* Allocate random memory -- page zero avail?*/
 	addr = prom_claim_phys(0x000, len);
-	prom_printf("prom_get_msgbuf: allocated new buf at %08x\n", (int)addr); 
+	prom_printf("prom_get_msgbuf: allocated new buf at %08x\n", (int)addr);
 	if (addr == -1) {
 		prom_printf("prom_get_msgbuf: cannot get allocate physmem\n");
 		return -1;

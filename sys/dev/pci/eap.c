@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.95 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.95.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.95 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.95.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -635,8 +635,8 @@ eap_attach(device_t parent, device_t self, void *aux)
 		ctl.dev = EAP_INPUT_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL |
-			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
-			1 << EAP_MIC_VOL;
+			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL |
+			1 << EAP_AUX_VOL | 1 << EAP_MIC_VOL;
 		eap_hw_if->set_port(&sc->sc_ei[EAP_I1], &ctl);
 
 		ctl.type = AUDIO_MIXER_VALUE;

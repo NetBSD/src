@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.39.4.3 2016/07/09 20:25:03 skrll Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.39.4.3 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2073,7 +2073,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			}
 			m = m0;
 		} else {
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 

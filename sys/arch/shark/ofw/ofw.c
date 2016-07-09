@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.63.6.1 2015/12/27 12:09:42 skrll Exp $	*/
+/*	$NetBSD: ofw.c,v 1.63.6.2 2016/07/09 20:24:56 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.1 2015/12/27 12:09:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63.6.2 2016/07/09 20:24:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ u_int free_pages;
 paddr_t msgbufphys;
 
 /* for storage allocation, used to be local to ofw_construct_proc0_addrspace */
-static vaddr_t  virt_freeptr;	    
+static vaddr_t  virt_freeptr;
 
 int ofw_callbacks = 0;		/* debugging counter */
 
@@ -705,7 +705,7 @@ ofw_configisadma(paddr_t *pdma)
 	shark_isa_dma_nranges = nOFdmaranges;
 #endif
 
-	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges; 
+	for (rangeidx = 0, dr = OFdmaranges; rangeidx < nOFdmaranges;
 	    ++rangeidx, ++dr) {
 		dr->start = of_decode_int((unsigned char *)&dr->start);
 		dr->size = of_decode_int((unsigned char *)&dr->size);
@@ -795,7 +795,7 @@ ofw_configmem(void)
 
 		/* physmem, physical_start, physical_end */
 		physmem = 0;
-		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem; 
+		for (totalcnt = 0, mp = OFphysmem; totalcnt < nOFphysmem;
 		    totalcnt++, mp++) {
 #ifdef	OLDPRINTFS
 			printf("physmem: %x, %x\n", mp->start, mp->size);
@@ -1828,7 +1828,7 @@ ofw_malloc(vsize_t size)
 			newSize = (*ppLeftover)->size - size; /* reduce size */
 			/* move pointer */
 			*ppLeftover = (PLEFTOVER)(((vaddr_t)*ppLeftover)
-			    + size); 
+			    + size);
 			(*ppLeftover)->pNext = pLeft;
 			(*ppLeftover)->size  = newSize;
 		}

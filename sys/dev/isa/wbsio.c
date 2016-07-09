@@ -1,4 +1,4 @@
-/*	$NetBSD: wbsio.c,v 1.9 2012/01/18 00:23:30 jakllsch Exp $	*/
+/*	$NetBSD: wbsio.c,v 1.9.24.1 2016/07/09 20:25:03 skrll Exp $	*/
 /*	$OpenBSD: wbsio.c,v 1.5 2009/03/29 21:53:52 sthen Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -53,6 +53,7 @@
 #define WBSIO_ID_W83637HF	0x70
 #define WBSIO_ID_W83667HG	0xa5
 #define WBSIO_ID_W83697HF	0x60
+#define WBSIO_ID_NCT6776F	0xc3
 
 /* Logical Device Number (LDN) Assignments */
 #define WBSIO_LDN_HM		0x0b
@@ -147,6 +148,7 @@ wbsio_probe(device_t parent, cfdata_t match, void *aux)
 	case WBSIO_ID_W83627DHG:
 	case WBSIO_ID_W83637HF:
 	case WBSIO_ID_W83697HF:
+	case WBSIO_ID_NCT6776F:
 		ia->ia_nio = 1;
 		ia->ia_io[0].ir_size = WBSIO_IOSIZE;
 		ia->ia_niomem = 0;
@@ -164,6 +166,7 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	struct wbsio_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	const char *desc = NULL;
+	const char *vendor = "Winbond";
 	uint8_t reg;
 
 	sc->sc_dev = self;
@@ -205,20 +208,22 @@ wbsio_attach(device_t parent, device_t self, void *aux)
 	case WBSIO_ID_W83697HF:
 		desc = "W83697HF";
 		break;
+	case WBSIO_ID_NCT6776F:
+		vendor = "Nuvoton";
+		desc = "NCT6776F";
+		break;
 	}
-
 	/* Read device revision */
 	reg = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_REV);
 
 	aprint_naive("\n");
-	aprint_normal(": Winbond LPC Super I/O %s rev 0x%02x\n", desc, reg);
+	aprint_normal(": %s LPC Super I/O %s rev 0x%02x\n", vendor, desc, reg);
 
 	/* Escape from configuration mode */
 	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
 	wbsio_rescan(self, "wbsio", NULL);
 }
 
@@ -258,7 +263,7 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 {
 	struct wbsio_softc *sc = device_private(parent);
 	uint16_t iobase;
-	uint8_t reg0, reg1;
+	uint8_t reg0, reg1, devid;
 
 	/* Enter configuration mode */
 	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
@@ -283,6 +288,13 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	if (iobase == 0)
 		return -1;
 
+	/* Enter configuration mode */
+	wbsio_conf_enable(sc->sc_iot, sc->sc_ioh);
+	/* Read device ID */
+	devid = wbsio_conf_read(sc->sc_iot, sc->sc_ioh, WBSIO_ID);
+	/* Escape from configuration mode */
+	wbsio_conf_disable(sc->sc_iot, sc->sc_ioh);
+
 	sc->sc_ia.ia_nio = 1;
 	sc->sc_ia.ia_io = &sc->sc_io;
 	sc->sc_ia.ia_io[0].ir_addr = iobase;
@@ -290,6 +302,8 @@ wbsio_search(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 	sc->sc_ia.ia_niomem = 0;
 	sc->sc_ia.ia_nirq = 0;
 	sc->sc_ia.ia_ndrq = 0;
+	/* Store device-id to ia_aux */
+	sc->sc_ia.ia_aux = (void *)(uintptr_t)devid;
 	sc->sc_lm_dev = config_attach(parent, cf, &sc->sc_ia, wbsio_print);
 
 	return 0;

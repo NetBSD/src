@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.232 2012/08/23 10:39:25 kiyohara Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.232.16.1 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.230 2012/08/23 10:37:56 kiyohara Exp
+ *	NetBSD: pcmciadevs,v 1.232 2016/06/01 23:31:53 pgoyette Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -151,6 +151,8 @@
 #define	PCMCIA_PRODUCT_3COM_3C589	0x0589
 #define	PCMCIA_CIS_3COM_3C574	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C574	0x0574
+#define	PCMCIA_CIS_3COM_3CRWE777A	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3CRWE777A	0x0777
 #define	PCMCIA_CIS_3COM_3C1	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C1	0x0cf1
 #define	PCMCIA_CIS_3COM_3CRWE62092A	{ NULL, NULL, NULL, NULL }

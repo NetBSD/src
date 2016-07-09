@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190.14.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.190.14.3 2016/07/09 20:24:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,12 @@
 #define	NOP_L		/* nothing */
 #endif
 
+#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
+#define MFC0_HAZARD	nop
+#else
+#define MFC0_HAZARD	/* nothing */
+#endif
+
 	.set	noreorder
 
 	.globl	start
@@ -79,6 +85,7 @@ _C_LABEL(kernel_text):
 #if (defined(MIPS3_PLUS) && !defined(MIPS1)) || defined(emips)
 	/* keep firmware exception handler until we hook. */
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 #if defined(emips)
 	and	v0, MIPS_SR_TS | MIPS3_SR_RE
 #else
@@ -150,6 +157,7 @@ _C_LABEL(kernel_text):
 #endif /* HPCMIPS_L1CACHE_DISABLE */
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 #ifdef _LP64
 	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #endif
@@ -187,6 +195,7 @@ _C_LABEL(kernel_text):
 	ei
 #else
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
 #endif
@@ -226,6 +235,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #endif
 
 	mfc0	t0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	t0, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	t0, 0
@@ -350,6 +360,7 @@ END(cpu_switchto)
 softint_cleanup:
 #ifdef PARANOIA
 	mfc0	t1, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	v0, 0
@@ -393,9 +404,11 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
  	 */
 	mfc0	t1, MIPS_COP_0_STATUS
 #if defined(PARANOIA) && __mips >= 32
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
 	teqi	v0, 0
 #elif defined(PARANOID_LOOP)
+	MFC0_HAZARD
 	and	v0, t1, MIPS_SR_INT_IE		# assert interrupts are on
 1:	beqz	v0, 1b
 	 nop
@@ -486,8 +499,9 @@ END(lwp_oncpu)
  * void savectx(struct pcb *)
  */
 LEAF(savectx)
-#ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+#ifdef PARANOIA
+	MFC0_HAZARD
 	and	t0, v0, MIPS_SR_INT_IE
 #if __mips >= 32
 	teqi	t0, 0

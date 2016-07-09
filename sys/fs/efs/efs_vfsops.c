@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.26 2014/08/07 08:24:23 hannken Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.26.4.1 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.26 2014/08/07 08:24:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.26.4.1 2016/07/09 20:25:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ efs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct efs_args *args = data;
 	struct pathbuf *pb;
 	struct nameidata devnd;
-	struct efs_mount *emp; 
+	struct efs_mount *emp;
 	struct vnode *devvp;
 	int err, mode;
 
@@ -498,7 +498,7 @@ efs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	}
 	*fh_size = sizeof(struct efs_fid);
 
-	eip = EFS_VTOI(vp); 
+	eip = EFS_VTOI(vp);
 	efp = (struct efs_fid *)fhp;
 
 	fhp->fid_len = sizeof(struct efs_fid);

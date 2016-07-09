@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.61 2014/11/15 19:18:19 christos Exp $	*/
+/*	$NetBSD: cz.c,v 1.61.2.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.61 2014/11/15 19:18:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cz.c,v 1.61.2.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,17 +354,16 @@ cz_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		/* We will fall-back on polling mode. */
 	} else
-		aprint_normal_dev(cz->cz_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(cz->cz_dev, "interrupting at %s\n", intrstr);
 
  polling_mode:
 	if (cz->cz_ih == NULL) {
 		callout_init(&cz->cz_callout, 0);
 		if (cz_timeout_ticks == 0)
 			cz_timeout_ticks = max(1, hz * CZ_POLL_MS / 1000);
-		aprint_normal_dev(cz->cz_dev, "polling mode, %d ms interval (%d tick%s)\n",
-		    CZ_POLL_MS, cz_timeout_ticks,
-		    cz_timeout_ticks == 1 ? "" : "s");
+		aprint_normal_dev(cz->cz_dev,
+		    "polling mode, %d ms interval (%d tick%s)\n", CZ_POLL_MS,
+		    cz_timeout_ticks, cz_timeout_ticks == 1 ? "" : "s");
 	}
 
 	/*

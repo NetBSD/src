@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.10 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.11 2016/07/09 20:25:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.10 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.11 2016/07/09 20:25:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,12 +194,13 @@ const struct cdevsw utoppy_cdevsw = {
 
 #define	UTOPPYUNIT(n)	(minor(n))
 
-int             utoppy_match(device_t, cfdata_t, void *);
-void            utoppy_attach(device_t, device_t, void *);
-int             utoppy_detach(device_t, int);
-int             utoppy_activate(device_t, enum devact);
+int	utoppy_match(device_t, cfdata_t, void *);
+void	utoppy_attach(device_t, device_t, void *);
+int	utoppy_detach(device_t, int);
+int	utoppy_activate(device_t, enum devact);
 extern struct cfdriver utoppy_cd;
-CFATTACH_DECL_NEW(utoppy, sizeof(struct utoppy_softc), utoppy_match, utoppy_attach, utoppy_detach, utoppy_activate);
+CFATTACH_DECL_NEW(utoppy, sizeof(struct utoppy_softc), utoppy_match,
+    utoppy_attach, utoppy_detach, utoppy_activate);
 
 int
 utoppy_match(device_t parent, cfdata_t match, void *aux)
@@ -321,8 +322,7 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_out_buf = usbd_get_buffer(sc->sc_out_xfer);
 	sc->sc_in_buf = usbd_get_buffer(sc->sc_in_xfer);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 
@@ -382,8 +382,7 @@ utoppy_detach(device_t self, int flags)
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }
@@ -577,7 +576,8 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 
 	if (len >= UTOPPY_BSIZE) {
 		DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: "
-		    "packet too big (%d)\n", device_xname(sc->sc_dev), (int)len));
+		    "packet too big (%d)\n", device_xname(sc->sc_dev),
+		    (int)len));
 		return EINVAL;
 	}
 
@@ -645,7 +645,8 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 	} while (err == 0 && len);
 
 	DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: "
-	    "usbd_bulk_transfer() returned %d.\n", device_xname(sc->sc_dev),err));
+	    "usbd_bulk_transfer() returned %d.\n",
+	    device_xname(sc->sc_dev),err));
 
 	return err ? utoppy_usbd_status2errno(err) : 0;
 }
@@ -1400,8 +1401,7 @@ utoppyopen(dev_t dev, int flag, int mode,
 }
 
 int
-utoppyclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+utoppyclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct utoppy_softc *sc;
 	usbd_status err;
@@ -1413,8 +1413,8 @@ utoppyclose(dev_t dev, int flag, int mode,
 
 	if (sc->sc_state < UTOPPY_STATE_IDLE) {
 		/* We are being forced to close before the open completed. */
-		DPRINTF(UTOPPY_DBG_CLOSE, ("%s: utoppyclose: not properly open:"
-		    " %s\n", device_xname(sc->sc_dev),
+		DPRINTF(UTOPPY_DBG_CLOSE, ("%s: utoppyclose: not properly "
+		    "open: %s\n", device_xname(sc->sc_dev),
 		    utoppy_state_string(sc->sc_state)));
 		return 0;
 	}
@@ -1560,8 +1560,8 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 	sc->sc_refcnt++;
 	err = 0;
 
-	DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: PRE-WRITEFILE: resid %ld, "
-	    "wr_size %lld, wr_offset %lld\n", device_xname(sc->sc_dev),
+	DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: PRE-WRITEFILE: resid "
+	    "%ld, wr_size %lld, wr_offset %lld\n", device_xname(sc->sc_dev),
 	    (u_long)uio->uio_resid, sc->sc_wr_size, sc->sc_wr_offset));
 
 	while (sc->sc_state == UTOPPY_STATE_WRITEFILE &&
@@ -1578,8 +1578,8 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 
 		err = uiomove(utoppy_current_ptr(sc->sc_out_data), len, uio);
 		if (err) {
-			DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: uiomove() "
-			    "returned %d\n", device_xname(sc->sc_dev), err));
+			DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: uiomove()"
+			    " returned %d\n", device_xname(sc->sc_dev), err));
 			break;
 		}
 
@@ -1607,9 +1607,10 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 		sc->sc_wr_size -= len;
 	}
 
-	DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: POST-WRITEFILE: resid %ld,"
-	    " wr_size %lld, wr_offset %lld, err %d\n", device_xname(sc->sc_dev),
-	    (u_long)uio->uio_resid, sc->sc_wr_size, sc->sc_wr_offset, err));
+	DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: POST-WRITEFILE: resid "
+	    "%ld, wr_size %lld, wr_offset %lld, err %d\n",
+	    device_xname(sc->sc_dev), (u_long)uio->uio_resid, sc->sc_wr_size,
+	    sc->sc_wr_offset, err));
 
 	if (err == 0 && sc->sc_wr_size == 0) {
 		DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: sending "
@@ -1627,7 +1628,8 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 
 		sc->sc_state = UTOPPY_STATE_IDLE;
 		DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: state %s\n",
-		    device_xname(sc->sc_dev), utoppy_state_string(sc->sc_state)));
+		    device_xname(sc->sc_dev),
+		    utoppy_state_string(sc->sc_state)));
 	}
 
 	if (--sc->sc_refcnt < 0)
@@ -1669,8 +1671,8 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		err = 0;
 		sc->sc_turbo_mode = *((int *)data) ? 1 : 0;
 		DPRINTF(UTOPPY_DBG_IOCTL, ("%s: utoppyioctl: UTOPPYIOTURBO: "
-		    "%s\n", device_xname(sc->sc_dev), sc->sc_turbo_mode ? "On" :
-		    "Off"));
+		    "%s\n", device_xname(sc->sc_dev),
+		    sc->sc_turbo_mode ? "On" : "Off"));
 		break;
 
 	case UTOPPYIOCANCEL:
@@ -1709,8 +1711,8 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if ((err = utoppy_add_path(sc, ur->ur_new_path, 1)) != 0)
 			break;
 
-		err = utoppy_command(sc, UTOPPY_CMD_RENAME, UTOPPY_LONG_TIMEOUT,
-		    &resp);
+		err = utoppy_command(sc, UTOPPY_CMD_RENAME,
+		    UTOPPY_LONG_TIMEOUT, &resp);
 		if (err)
 			break;
 
@@ -1785,8 +1787,8 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		urf = (struct utoppy_readfile *)data;
 
 		DPRINTF(UTOPPY_DBG_IOCTL,("%s: utoppyioctl: UTOPPYIOREADFILE "
-		    "%s, offset %lld\n", device_xname(sc->sc_dev), urf->ur_path,
-		    urf->ur_offset));
+		    "%s, offset %lld\n", device_xname(sc->sc_dev),
+		    urf->ur_path, urf->ur_offset));
 
 		if ((err = utoppy_turbo_mode(sc, sc->sc_turbo_mode)) != 0)
 			break;
@@ -1823,8 +1825,8 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		uwfp = utoppy_current_ptr(sc->sc_out_data);
 
 		if ((err = utoppy_add_path(sc, uw->uw_path, 1)) != 0) {
-			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: add_path() "
-			    "returned %d\n", device_xname(sc->sc_dev), err));
+			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: add_path()"
+			    " returned %d\n", device_xname(sc->sc_dev), err));
 			break;
 		}
 

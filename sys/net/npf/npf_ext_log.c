@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ext_log.c,v 1.8 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_ext_log.c,v 1.8.4.1 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010-2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.8 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_log.c,v 1.8.4.1 2016/07/09 20:25:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -85,6 +85,7 @@ npf_log(npf_cache_t *npc, void *meta, int *decision)
 	const npf_ext_log_t *log = meta;
 	ifnet_t *ifp;
 	int family;
+	struct psref psref;
 
 	/* Set the address family. */
 	if (npf_iscached(npc, NPC_IP4)) {
@@ -98,7 +99,7 @@ npf_log(npf_cache_t *npc, void *meta, int *decision)
 	KERNEL_LOCK(1, NULL);
 
 	/* Find a pseudo-interface to log. */
-	ifp = if_byindex(log->if_idx);
+	ifp = if_get_byindex(log->if_idx, &psref);
 	if (ifp == NULL) {
 		/* No interface. */
 		KERNEL_UNLOCK_ONE(NULL);
@@ -109,6 +110,7 @@ npf_log(npf_cache_t *npc, void *meta, int *decision)
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
 	bpf_mtap_af(ifp, family, m);
+	if_put(ifp, &psref);
 	KERNEL_UNLOCK_ONE(NULL);
 
 	return true;

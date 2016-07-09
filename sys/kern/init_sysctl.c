@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.204.4.3 2015/12/27 12:10:05 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.204.4.4 2016/07/09 20:25:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.3 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.4 2016/07/09 20:25:20 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.3 2015/12/27 12:10:05 skrll 
 #include <sys/filedesc.h>
 #include <sys/tty.h>
 #include <sys/kmem.h>
+#include <sys/reboot.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/exec.h>
@@ -110,6 +111,7 @@ dcopyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 static int sysctl_kern_trigger_panic(SYSCTLFN_PROTO);
 #endif
 static int sysctl_kern_maxvnodes(SYSCTLFN_PROTO);
+static int sysctl_kern_messages(SYSCTLFN_PROTO);
 static int sysctl_kern_rtc_offset(SYSCTLFN_PROTO);
 static int sysctl_kern_maxproc(SYSCTLFN_PROTO);
 static int sysctl_kern_hostid(SYSCTLFN_PROTO);
@@ -590,6 +592,12 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Information from build environment"),
 			NULL, 0, __UNCONST(buildinfo), 0,
 			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "messages",
+			SYSCTL_DESCR("Kernel message verbosity"),
+			sysctl_kern_messages, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_hw_misc_setup, "sysctl hw subtree misc setup")
@@ -755,6 +763,72 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 	}
 	vfs_reinit();
 	nchreinit();
+
+	return (0);
+}
+
+/*
+ * sysctl helper routine for kern.messages.
+ * Alters boothowto to display kernel messages in increasing verbosity
+ * from 0 to 4.
+ */
+
+#define MAXMESSAGES            4
+static int
+sysctl_kern_messages(SYSCTLFN_ARGS)
+{
+	int error, messageverbose, messagemask, newboothowto;
+	struct sysctlnode node;
+
+	messagemask = (AB_NORMAL|AB_QUIET|AB_SILENT|AB_VERBOSE|AB_DEBUG);
+	switch (boothowto & messagemask) {
+	case AB_SILENT:
+		messageverbose = 0;
+		break;
+	case AB_QUIET:
+		messageverbose = 1;
+		break;
+	case AB_VERBOSE:
+		messageverbose = 3;
+		break;
+	case AB_DEBUG:
+		messageverbose = 4;
+		break;
+	case AB_NORMAL:
+	default:
+		messageverbose = 2;
+}
+
+	node = *rnode;
+	node.sysctl_data = &messageverbose;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return (error);
+	if (messageverbose < 0 || messageverbose > MAXMESSAGES)
+		return EINVAL;
+
+	/* Set boothowto */
+	newboothowto = boothowto & ~messagemask;
+
+	switch (messageverbose) {
+	case 0:
+		newboothowto |= AB_SILENT;
+		break;
+	case 1:
+		newboothowto |= AB_QUIET;
+		break;
+	case 3:
+		newboothowto |= AB_VERBOSE;
+		break;
+	case 4:
+		newboothowto |= AB_DEBUG;
+		break;
+	case 2:
+	default:                /* Messages default to normal. */
+		break;
+	}
+
+	boothowto = newboothowto;
 
 	return (0);
 }

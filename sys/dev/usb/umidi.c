@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.11 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.12 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.11 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.12 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -397,8 +397,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	dump_sc(sc);
 #endif
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH,
-			   sc->sc_udev, sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 
@@ -467,8 +466,7 @@ umidi_detach(device_t self, int flags)
 	free_all_jacks(sc);
 	free_all_endpoints(sc);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_detach_cv);
@@ -696,7 +694,8 @@ alloc_pipe(struct umidi_endpoint *ep)
 	}
 	ep->buffer = usbd_get_buffer(ep->xfer);
 	ep->next_slot = ep->buffer;
-	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE, out_solicit, ep);
+	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE,
+	    out_solicit, ep);
 quit:
 	return err;
 }
@@ -800,8 +799,8 @@ alloc_all_endpoints_fixed_ep(struct umidi_softc *sc)
 		}
 		if (UE_GET_XFERTYPE(epd->bmAttributes)!=UE_BULK ||
 		    UE_GET_DIR(epd->bEndpointAddress)!=UE_DIR_OUT) {
-			aprint_error_dev(sc->sc_dev, "illegal endpoint(out:%d)\n",
-			    fp->out_ep[i].ep);
+			aprint_error_dev(sc->sc_dev,
+			    "illegal endpoint(out:%d)\n", fp->out_ep[i].ep);
 			err = USBD_INVAL;
 			goto error;
 		}
@@ -1084,8 +1083,9 @@ alloc_all_jacks(struct umidi_softc *sc)
 		cn_spec = NULL;
 
 	/* allocate/initialize structures */
-	sc->sc_jacks = kmem_zalloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+
-						      sc->sc_out_num_jacks), KM_SLEEP);
+	sc->sc_jacks =
+	    kmem_zalloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks
+		    + sc->sc_out_num_jacks), KM_SLEEP);
 	if (!sc->sc_jacks)
 		return USBD_NOMEM;
 	sc->sc_out_jacks =
@@ -1156,7 +1156,8 @@ free_all_jacks(struct umidi_softc *sc)
 
 	mutex_enter(&sc->sc_lock);
 	jacks = sc->sc_jacks;
-	len = sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks+sc->sc_out_num_jacks);
+	len = sizeof(*sc->sc_out_jacks)
+	    * (sc->sc_in_num_jacks + sc->sc_out_num_jacks);
 	sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	mutex_exit(&sc->sc_lock);
 
@@ -1737,9 +1738,9 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 	if (umididebug >= 100)
 		microtime(&umidi_tv);
 #endif
-	DPRINTFN(100, ("umidi out: %"PRIu64".%06"PRIu64"s ep=%p cn=%d len=%d cin=%#x\n",
-	    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec,
-	    ep, out_jack->cable_number, len, cin));
+	DPRINTFN(100, ("umidi out: %"PRIu64".%06"PRIu64
+	    "s ep=%p cn=%d len=%d cin=%#x\n", umidi_tv.tv_sec%100,
+	    (uint64_t)umidi_tv.tv_usec, ep, out_jack->cable_number, len, cin));
 
 	packet = *ep->next_slot++;
 	KASSERT(ep->buffer_size >=
@@ -1890,9 +1891,10 @@ out_intr(struct usbd_xfer *xfer, void *priv,
 #endif
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	if (0 == count % UMIDI_PACKET_SIZE) {
-		DPRINTFN(200,("%s: %"PRIu64".%06"PRIu64"s out ep %p xfer length %u\n",
-			     device_xname(ep->sc->sc_dev),
-			     umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec, ep, count));
+		DPRINTFN(200, ("%s: %"PRIu64".%06"PRIu64"s out ep %p xfer "
+		    "length %u\n", device_xname(ep->sc->sc_dev),
+		    umidi_tv.tv_sec%100, (uint64_t)umidi_tv.tv_usec, ep,
+		    count));
 	} else {
 		DPRINTF(("%s: output endpoint %p odd transfer length %u\n",
 			device_xname(ep->sc->sc_dev), ep, count));

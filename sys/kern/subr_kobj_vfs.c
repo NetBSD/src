@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.7.6.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.7.6.2 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.7.6.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.7.6.2 2016/07/09 20:25:20 skrll Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -104,9 +104,19 @@ kobj_read_vfs(kobj_t ko, void **basep, size_t size, off_t off,
 		base = kmem_alloc(size, KM_SLEEP);
 	} else {
 		base = *basep;
-		KASSERT((uintptr_t)base >= (uintptr_t)ko->ko_address);
-		KASSERT((uintptr_t)base + size <=
-		    (uintptr_t)ko->ko_address + ko->ko_size);
+#ifdef DIAGNOSTIC
+		bool ok = false;
+		if ((uintptr_t)base >= (uintptr_t)ko->ko_text_address &&
+		    (uintptr_t)base + size <=
+		    (uintptr_t)ko->ko_text_address + ko->ko_text_size)
+			ok = true;
+		if ((uintptr_t)base >= (uintptr_t)ko->ko_data_address &&
+		    (uintptr_t)base + size <=
+		    (uintptr_t)ko->ko_data_address + ko->ko_data_size)
+			ok = true;
+		if (!ok)
+			panic("kobj_read_vfs: not in a dedicated segment");
+#endif
 	}
 
 	error = vn_rdwr(UIO_READ, ko->ko_source, base, size, off,

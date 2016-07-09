@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.7 2016/06/16 05:33:24 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.8 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.7 2016/06/16 05:33:24 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.8 2016/07/09 20:25:02 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1199,7 +1199,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 
 		/* finalize mbuf */
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_flags |= M_HASFCS;
 
 		ifp->if_ipackets++;

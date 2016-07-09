@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.45 2013/03/26 20:52:29 martin Exp $ */
+/*	$NetBSD: ka750.c,v 1.45.12.1 2016/07/09 20:24:58 skrll Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.45 2013/03/26 20:52:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.45.12.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ ka750_mchk(void *cmcf)
 	int mcsr = mfpr(PR_MCSR);
 
 	printf("machine check %x: %s%s\n", type, mc750[type&0xf],
-	    (type&0xf0) ? " abort" : " fault"); 
+	    (type&0xf0) ? " abort" : " fault");
 	printf(
 "\tva %x errpc %x mdr %x smr %x rdtimo %x tbgpar %x cacherr %x\n",
 	    mcf->mc5_va, mcf->mc5_errpc, mcf->mc5_mdr, mcf->mc5_svmode,

@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.1.2.4 2016/05/29 08:44:38 skrll Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.1.2.5 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.1.2.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.1.2.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -683,7 +683,7 @@ tfrc_send_packet(void *ccb, long datasize)
 					if (cb->rtt)
 						uw_win_count = (t_temp.tv_sec * 1000000 + t_temp.tv_usec)
 								/ cb->rtt / TFRC_WIN_COUNT_PER_RTT;
-					else
+					else 
 						uw_win_count = 0;
 				}
 				uw_win_count += cb->last_win_count;

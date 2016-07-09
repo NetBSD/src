@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.16 2008/01/12 09:54:32 tsutsui Exp $ */
+/*	$NetBSD: boot.c,v 1.16.74.1 2016/07/09 20:24:54 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -66,7 +66,7 @@ main(void)
 	for (;;) {
 		if (ask) {
 			printf("boot: ");
-			gets(line);
+			kgets(line, sizeof(line));
 			if (line[0]) {
 				bugargs.arg_start = line;
 				cp = line;

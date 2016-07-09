@@ -1,4 +1,4 @@
-/* $NetBSD: if_veth.c,v 1.5.28.1 2016/03/19 11:30:06 skrll Exp $ */
+/* $NetBSD: if_veth.c,v 1.5.28.2 2016/07/09 20:24:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5.28.1 2016/03/19 11:30:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_veth.c,v 1.5.28.2 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -229,7 +229,7 @@ veth_softrx(void *priv)
 				continue;
 			}
 		}
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		memcpy(mtod(m, void *), sc->sc_rx_buf, len);
 		++ifp->if_ipackets;

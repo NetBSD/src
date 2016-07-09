@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.31.6.2 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.31.6.3 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.2 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.3 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,7 +134,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 	}
 
 	ifp->if_ipackets++;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 #define DNH_DEBUG
 #if NVLAN > 0
@@ -209,7 +209,7 @@ agr_xmit_frame(struct ifnet *ifp_port, struct mbuf *m)
 	m_copydata(m, 0, hdrlen, &dst->sa_data);
 	m_adj(m, hdrlen);
 
-	error = (*ifp_port->if_output)(ifp_port, m, dst, NULL);
+	error = if_output_lock(ifp_port, ifp_port, m, dst, NULL);
 
 	return error;
 }
@@ -591,7 +591,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
-	IFADDR_FOREACH(ifa, ifp_port) {
+	IFADDR_READER_FOREACH(ifa, ifp_port) {
 		if (ifa->ifa_addr->sa_family != AF_LINK) {
 			error = EBUSY;
 			goto out;

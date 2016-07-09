@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1121.2.8 2016/05/29 08:44:20 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.9 2016/07/09 20:25:01 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -192,6 +192,14 @@ include "crypto/cprng_fast/files.cprng_fast"
 defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
 defparam opt_kernhist.h			KERNHIST_DELAY
 file	kern/kern_history.c		kernhist
+
+#
+# These are here for the benefit of kern_history.c so that
+# UVMHIST can be built in kernels without usb.
+#
+# top level usb debug defines
+defflag	opt_usb.h			USB_DEBUG: KERNHIST
+defparam opt_usb.h			USBHIST_SIZE
 
 #
 # System monitoring framework

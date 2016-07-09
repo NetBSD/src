@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.96.2.2 2014/12/05 09:37:50 skrll Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.96.2.3 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.96.2.2 2014/12/05 09:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.96.2.3 2016/07/09 20:25:16 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.96.2.2 2014/12/05 09:37:50 skrll 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbhist.h>
 
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
@@ -270,6 +275,17 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	/*
+	 * SanDisk Cruzer rejects cache sync.
+	 */
+	{ { USB_VENDOR_SANDISK, USB_PRODUCT_SANDISK_CRUZER },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOSYNCCACHE,
+	  UMATCH_VENDOR_PRODUCT,
+	  NULL, NULL
+	},
+
+	/*
 	 * SanDisk Sansa Clip rejects cache sync in unconventional way.
 	 * However, unlike some other devices listed in this table,
 	 * this is does not cause the device firmware to stop responding.
@@ -352,13 +368,13 @@ umass_lookup(uint16_t vendor, uint16_t product)
 Static usbd_status
 umass_init_insystem(struct umass_softc *sc)
 {
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	usbd_status err;
 
 	err = usbd_set_interface(sc->sc_iface, 1);
 	if (err) {
-		DPRINTF(UDMASS_USB,
-			("%s: could not switch to Alt Interface 1\n",
-			device_xname(sc->sc_dev)));
+		DPRINTFM(UDMASS_USB, "sc %p: could not switch to Alt Interface 1",
+		    sc, 0, 0, 0);
 		return err;
 	}
 

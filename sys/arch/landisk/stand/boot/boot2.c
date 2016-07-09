@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.4 2014/03/26 17:47:10 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.4.6.1 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -410,7 +410,7 @@ bootmenu(void)
 
 		input[0] = '\0';
 		printf("> ");
-		gets(input);
+		kgets(input, sizeof(input));
 
 		/*
 		 * Skip leading whitespace.
@@ -442,7 +442,7 @@ gettrailer(char *arg)
 		*options++ = '\0';
 
 	/* trim leading blanks */
-	while (*options && *options == ' ')
+	while (*options == ' ')
 		options++;
 
 	return (options);

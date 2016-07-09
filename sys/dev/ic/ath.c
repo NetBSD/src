@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.117.2.2 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.117.2.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117.2.2 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.117.2.3 2016/07/09 20:25:02 skrll Exp $");
 #endif
 
 /*
@@ -3145,7 +3145,7 @@ rx_accept:
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
 		bf->bf_m = NULL;
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		len = ds->ds_rxstat.rs_datalen;
 		m->m_pkthdr.len = m->m_len = len;
 

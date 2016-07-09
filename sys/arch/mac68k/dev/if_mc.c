@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.40.6.1 2016/03/19 11:30:01 skrll Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.40.6.2 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.40.6.1 2016/03/19 11:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.40.6.2 2016/07/09 20:24:52 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -604,7 +604,7 @@ mace_get(struct mc_softc *sc, void *pkt, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;

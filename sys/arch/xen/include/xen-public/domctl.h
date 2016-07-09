@@ -1,4 +1,4 @@
-/* $NetBSD: domctl.h,v 1.1.1.2 2011/12/07 14:41:16 cegger Exp $ */
+/* $NetBSD: domctl.h,v 1.1.1.2.26.1 2016/07/09 20:24:59 skrll Exp $ */
 /******************************************************************************
  * domctl.h
  * 
@@ -783,7 +783,7 @@ struct xen_domctl_mem_sharing_op {
         struct mem_sharing_op_share {     /* OP_SHARE */
             uint64_aligned_t source_handle; /* IN: handle to the source page */
             uint64_aligned_t client_handle; /* IN: handle to the client page */
-        } share; 
+        } share;
         struct mem_sharing_op_debug {     /* OP_DEBUG_xxx */
             union {
                 uint64_aligned_t gfn;      /* IN: gfn to debug          */

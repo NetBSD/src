@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.154.2.7 2016/05/29 08:44:39 skrll Exp $	*/
+/*	$NetBSD: nd6.c,v 1.154.2.8 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.7 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.154.2.8 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -109,7 +109,7 @@ int nd6_recalc_reachtm_interval = ND6_RECALC_REACHTM_INTERVAL;
 
 static void nd6_setmtu0(struct ifnet *, struct nd_ifinfo *);
 static void nd6_slowtimo(void *);
-static int regen_tmpaddr(struct in6_ifaddr *);
+static int regen_tmpaddr(const struct in6_ifaddr *);
 static void nd6_free(struct llentry *, int);
 static void nd6_llinfo_timer(void *);
 static void nd6_timer(void *);
@@ -583,8 +583,8 @@ nd6_timer(void *ignored_arg)
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
   addrloop:
-	for (ia6 = in6_ifaddr; ia6; ia6 = nia6) {
-		nia6 = ia6->ia_next;
+	for (ia6 = IN6_ADDRLIST_WRITER_FIRST(); ia6; ia6 = nia6) {
+		nia6 = IN6_ADDRLIST_WRITER_NEXT(ia6);
 		/* check address lifetime */
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
@@ -680,14 +680,14 @@ nd6_timer(void *ignored_arg)
 
 /* ia6: deprecated/invalidated temporary address */
 static int
-regen_tmpaddr(struct in6_ifaddr *ia6)
+regen_tmpaddr(const struct in6_ifaddr *ia6)
 {
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct in6_ifaddr *public_ifa6 = NULL;
 
 	ifp = ia6->ia_ifa.ifa_ifp;
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *it6;
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -723,7 +723,7 @@ regen_tmpaddr(struct in6_ifaddr *ia6)
 		 * address with the prefix.
 		 */
 		if (!IFA6_IS_DEPRECATED(it6))
-		    public_ifa6 = it6;
+			public_ifa6 = it6;
 	}
 
 	if (public_ifa6 != NULL) {
@@ -1450,6 +1450,17 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 
 		/*
+		 * When called from rt_ifa_addlocal, we cannot depend on that
+		 * the address (rt_getkey(rt)) exits in the address list of the
+		 * interface. So check RTF_LOCAL instead.
+		 */
+		if (rt->rt_flags & RTF_LOCAL) {
+			if (nd6_useloopback)
+				rt->rt_ifp = lo0ifp;	/* XXX */
+			break;
+		}
+
+		/*
 		 * check if rt_getkey(rt) is an address assigned
 		 * to the interface.
 		 */
@@ -1681,7 +1692,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			 */
 			int duplicated_linklocal = 0;
 
-			IFADDR_FOREACH(ifa, ifp) {
+			IFADDR_READER_FOREACH(ifa, ifp) {
 				if (ifa->ifa_addr->sa_family != AF_INET6)
 					continue;
 				ia = (struct in6_ifaddr *)ifa;
@@ -1709,7 +1720,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			/* Mark all IPv6 addresses as tentative. */
 
 			ND_IFINFO(ifp)->flags |= ND6_IFF_IFDISABLED;
-			IFADDR_FOREACH(ifa, ifp) {
+			IFADDR_READER_FOREACH(ifa, ifp) {
 				if (ifa->ifa_addr->sa_family != AF_INET6)
 					continue;
 				nd6_dad_stop(ifa);
@@ -1735,7 +1746,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				 */
 				 int haslinklocal = 0;
 
-				 IFADDR_FOREACH(ifa, ifp) {
+				 IFADDR_READER_FOREACH(ifa, ifp) {
 					if (ifa->ifa_addr->sa_family !=AF_INET6)
 						continue;
 					ia = (struct in6_ifaddr *)ifa;
@@ -1770,9 +1781,10 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-			for (ia = in6_ifaddr; ia; ia = ia_next) {
+			for (ia = IN6_ADDRLIST_WRITER_FIRST(); ia;
+			     ia = ia_next) {
 				/* ia might be removed.  keep the next ptr. */
-				ia_next = ia->ia_next;
+				ia_next = IN6_ADDRLIST_WRITER_NEXT(ia);
 
 				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
@@ -2291,16 +2303,10 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 	if (ln != NULL)
 		LLE_WUNLOCK(ln);
 
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0)
-		error = (*ifp->if_output)(origifp, m, sin6tocsa(dst), rt);
+		error = if_output_lock(ifp, origifp, m, sin6tocsa(dst), rt);
 	else
-		error = (*ifp->if_output)(ifp, m, sin6tocsa(dst), rt);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
+		error = if_output_lock(ifp, ifp, m, sin6tocsa(dst), rt);
 	goto exit;
 
   bad:

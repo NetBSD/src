@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.93.24.1 2016/05/29 08:44:19 skrll Exp $ */
+/*	$NetBSD: sbus.c,v 1.93.24.2 2016/07/09 20:24:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.93.24.1 2016/05/29 08:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.93.24.2 2016/07/09 20:24:57 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -178,7 +178,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
-	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;		
+	sc->sc_ign = ma->ma_interrupts[0] & INTMAP_IGN;
 
 	/* XXXX Use sysio PROM mappings for interrupt vector regs. */
 	sparc_promaddr_to_handle(sc->sc_bustag,	ma->ma_address[0], &sc->sc_bh);
@@ -505,7 +505,7 @@ sbus_intr_establish(bus_space_tag_t t, int pri, int level,
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
 	int ipl;
-	long vec = pri; 
+	long vec = pri;
 
 	ih = intrhand_alloc();
 

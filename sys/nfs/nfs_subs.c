@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.227 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.227.4.1 2016/07/09 20:25:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.227 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.227.4.1 2016/07/09 20:25:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -724,7 +724,7 @@ nfsm_rpchead(kauth_cred_t cr, int nmflag, int procid,
 	}
 	mb->m_next = mrest;
 	mreq->m_pkthdr.len = authsiz + 10 * NFSX_UNSIGNED + mrest_len;
-	mreq->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(mreq);
 	*mbp = mb;
 	return (mreq);
 }

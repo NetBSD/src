@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.10 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.10 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,8 +274,7 @@ uirda_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTFN(10, ("uirda_attach: %p\n", sc->sc_udev));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
@@ -338,8 +337,7 @@ uirda_detach(device_t self, int flags)
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_wr_buf_lk);
 	mutex_destroy(&sc->sc_rd_buf_lk);

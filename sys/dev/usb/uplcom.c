@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.74.4.12 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.74.4.13 2016/07/09 20:25:16 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.12 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.74.4.13 2016/07/09 20:25:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -351,8 +351,8 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 		err = usbd_device2interface_handle(dev,
 				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
 		if (err) {
-			aprint_error("\n%s: failed to get second interface, err=%s\n",
-							devname, usbd_errstr(err));
+			aprint_error("\n%s: failed to get second interface, "
+			    "err=%s\n", devname, usbd_errstr(err));
 			sc->sc_dying = 1;
 			return;
 		}
@@ -414,8 +414,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
 			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
@@ -456,8 +455,7 @@ uplcom_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	if (rv == 0)
 		pmf_device_deregister(self);
@@ -759,7 +757,8 @@ uplcom_param(void *addr, int portno, struct termios *t)
 }
 
 Static usbd_status
-uplcom_vendor_control_write(struct usbd_device *dev, uint16_t value, uint16_t index)
+uplcom_vendor_control_write(struct usbd_device *dev, uint16_t value,
+    uint16_t index)
 {
 	usb_device_request_t req;
 	usbd_status err;
@@ -842,8 +841,7 @@ uplcom_close(void *addr, int portno)
 }
 
 void
-uplcom_intr(struct usbd_xfer *xfer, void *priv,
-    usbd_status status)
+uplcom_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct uplcom_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
@@ -862,7 +860,8 @@ uplcom_intr(struct usbd_xfer *xfer, void *priv,
 		return;
 	}
 
-	DPRINTF(("%s: uplcom status = %02x\n", device_xname(sc->sc_dev), buf[8]));
+	DPRINTF(("%s: uplcom status = %02x\n", device_xname(sc->sc_dev),
+	    buf[8]));
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	pstatus = buf[8];

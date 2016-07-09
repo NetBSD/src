@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.19 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.19.60.1 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.19 2008/07/06 13:29:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mbmem.c,v 1.19.60.1 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static struct sun68k_bus_space_tag mbmem_space_tag = {
 	NULL,				/* bus_intr_establish */
 	NULL,				/* bus_space_peek_N */
 	NULL				/* bus_space_poke_N */
-}; 
+};
 
 static struct sun68k_bus_dma_tag mbmem_dma_tag;
 

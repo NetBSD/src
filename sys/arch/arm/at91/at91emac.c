@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.13.14.3 2016/03/19 11:29:55 skrll Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.13.14.3 2016/03/19 11:29:55 skrll Exp $	*/
+/*	$Id: at91emac.c,v 1.13.14.4 2016/07/09 20:24:50 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.13.14.4 2016/07/09 20:24:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.3 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.4 2016/07/09 20:24:50 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -279,8 +279,8 @@ emac_intr(void *arg)
 						MCLBYTES, BUS_DMASYNC_POSTREAD);
 				bus_dmamap_unload(sc->sc_dmat,
 					sc->rxq[bi].m_dmamap);
-				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
-				sc->rxq[bi].m->m_pkthdr.len =
+				m_set_rcvif(sc->rxq[bi].m, ifp);
+				sc->rxq[bi].m->m_pkthdr.len = 
 					sc->rxq[bi].m->m_len = fl;
 				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));

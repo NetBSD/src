@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.h,v 1.4 2013/06/06 00:49:28 dholland Exp $	*/
+/*	$NetBSD: ulfs_quota1.h,v 1.4.14.1 2016/07/09 20:25:25 skrll Exp $	*/
 /*  from NetBSD: quota1.h,v 1.7 2012/08/26 02:32:14 dholland Exp  */
 
 /*
@@ -86,12 +86,12 @@
  * structure).
  */
 struct dqblk {
-	u_int32_t dqb_bhardlimit;	/* absolute limit on disk blks alloc */
-	u_int32_t dqb_bsoftlimit;	/* preferred limit on disk blks */
-	u_int32_t dqb_curblocks;	/* current block count */
-	u_int32_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
-	u_int32_t dqb_isoftlimit;	/* preferred inode limit */
-	u_int32_t dqb_curinodes;	/* current # allocated inodes */
+	uint32_t dqb_bhardlimit;	/* absolute limit on disk blks alloc */
+	uint32_t dqb_bsoftlimit;	/* preferred limit on disk blks */
+	uint32_t dqb_curblocks;		/* current block count */
+	uint32_t dqb_ihardlimit;	/* maximum # allocated inodes + 1 */
+	uint32_t dqb_isoftlimit;	/* preferred inode limit */
+	uint32_t dqb_curinodes;		/* current # allocated inodes */
 	int32_t	  dqb_btime;		/* time limit for excessive disk use */
 	int32_t	  dqb_itime;		/* time limit for excessive files */
 };

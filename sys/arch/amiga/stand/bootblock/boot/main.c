@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.29.6.1 2016/03/19 11:29:55 skrll Exp $
+ * $NetBSD: main.c,v 1.29.6.2 2016/07/09 20:24:49 skrll Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -164,7 +164,7 @@ again:
 	printf("\n");
 	printf("Boot: [%s] ", kernel_name);
 
-	gets(linebuf);
+	kgets(linebuf, sizeof(linebuf));
 
 	if (*linebuf == 'q')
 		return 1;

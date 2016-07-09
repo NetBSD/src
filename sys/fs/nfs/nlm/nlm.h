@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm.h,v 1.1.1.1 2013/09/30 07:19:46 dholland Exp $	*/
+/*	$NetBSD: nlm.h,v 1.1.1.1.12.1 2016/07/09 20:25:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/nlm/nlm.h 197840 2009-10-07 19:50:14Z zml 
- * $NetBSD: nlm.h,v 1.1.1.1 2013/09/30 07:19:46 dholland Exp $
+ * $NetBSD: nlm.h,v 1.1.1.1.12.1 2016/07/09 20:25:19 skrll Exp $
  */
 
 #ifndef _NLM_NLM_H_
@@ -168,7 +168,7 @@ extern int nlm_do_test(nlm4_testargs *argp, nlm4_testres *result,
  * otherwise.
  */
 extern int nlm_do_lock(nlm4_lockargs *argp, nlm4_res *result,
-    struct svc_req *rqstp, bool_t monitor, CLIENT **rpcp); 
+    struct svc_req *rqstp, bool_t monitor, CLIENT **rpcp);
 
 /*
  * Implementation for cancelling a pending lock request. If the

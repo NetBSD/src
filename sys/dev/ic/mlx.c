@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.62 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $");
 
 #include "ld.h"
 
@@ -282,26 +282,30 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	if ((rv = bus_dmamem_alloc(mlx->mlx_dmat, size, PAGE_SIZE, 0, &seg, 1,
 	    &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(mlx->mlx_dv, "unable to allocate sglists, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv,
+		    "unable to allocate sglists, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamem_map(mlx->mlx_dmat, &seg, rseg, size,
 	    (void **)&mlx->mlx_sgls,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(mlx->mlx_dv, "unable to map sglists, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv,
+		    "unable to map sglists, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_create(mlx->mlx_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &mlx->mlx_dmamap)) != 0) {
-		aprint_error_dev(mlx->mlx_dv, "unable to create sglist DMA map, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv,
+		    "unable to create sglist DMA map, rv = %d\n", rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_load(mlx->mlx_dmat, mlx->mlx_dmamap,
 	    mlx->mlx_sgls, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(mlx->mlx_dv, "unable to load sglist DMA map, rv = %d\n", rv);
+		aprint_error_dev(mlx->mlx_dv,
+		    "unable to load sglist DMA map, rv = %d\n", rv);
 		return;
 	}
 
@@ -334,7 +338,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 
 	/* If we've got a reset routine, then reset the controller now. */
 	if (mlx->mlx_reset != NULL) {
-		printf("%s: resetting controller...\n", device_xname(mlx->mlx_dv));
+		printf("%s: resetting controller...\n",
+		    device_xname(mlx->mlx_dv));
 		if ((*mlx->mlx_reset)(mlx) != 0) {
 			aprint_error_dev(mlx->mlx_dv, "reset failed\n");
 			return;
@@ -481,7 +486,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		printf("%s: WARNING: few CCBs available\n",
 		    device_xname(mlx->mlx_dv));
 	if (ci->ci_max_sg < MLX_MAX_SEGS) {
-		aprint_error_dev(mlx->mlx_dv, "oops, not enough S/G segments\n");
+		aprint_error_dev(mlx->mlx_dv,
+		    "oops, not enough S/G segments\n");
 		return;
 	}
 #endif
@@ -1179,8 +1185,8 @@ mlx_periodic_enquiry(struct mlx_ccb *mc)
 					break;
 				}
 
-				printf("%s: unit %d %s\n", device_xname(mlx->mlx_dv),
-				    i, statestr);
+				printf("%s: unit %d %s\n",
+				    device_xname(mlx->mlx_dv), i, statestr);
 
 				/* Save new state. */
 				dr->ms_state = mes[i].sd_state;
@@ -1298,7 +1304,8 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 					reason = "for unknown reason";
 
 				printf("%s: physical drive %d:%d killed %s\n",
-				    device_xname(mlx->mlx_dv), chan, targ, reason);
+				    device_xname(mlx->mlx_dv), chan, targ,
+				    reason);
 			}
 
 			/*
@@ -1317,8 +1324,8 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			    (el->el_asq == 0x01 || el->el_asq == 0x02)))) {
 				printf("%s: physical drive %d:%d error log: "
 				    "sense = %d asc = %x asq = %x\n",
-				    device_xname(mlx->mlx_dv), chan, targ, sensekey,
-				    el->el_asc, el->el_asq);
+				    device_xname(mlx->mlx_dv), chan, targ,
+				    sensekey, el->el_asc, el->el_asq);
 				printf("%s:   info = %d:%d:%d:%d "
 				    " csi = %d:%d:%d:%d\n",
 				    device_xname(mlx->mlx_dv),
@@ -1333,13 +1340,13 @@ mlx_periodic_eventlog_respond(struct mlx_ccb *mc)
 			break;
 
 		default:
-			aprint_error_dev(mlx->mlx_dv, "unknown log message type 0x%x\n",
-			    el->el_type);
+			aprint_error_dev(mlx->mlx_dv,
+			    "unknown log message type 0x%x\n", el->el_type);
 			break;
 		}
 	} else {
-		aprint_error_dev(mlx->mlx_dv, "error reading message log - %s\n",
-		    mlx_ccb_diagnose(mc));
+		aprint_error_dev(mlx->mlx_dv,
+		    "error reading message log - %s\n", mlx_ccb_diagnose(mc));
 
 		/*
 		 * Give up on all the outstanding messages, as we may have
@@ -1466,7 +1473,8 @@ mlx_pause_action(struct mlx_softc *mlx)
 	for (i = 0; i < mlx->mlx_ci.ci_nchan; i++) {
 		if ((1 << i) & mlx->mlx_pause.mp_which) {
 			if (mlx_ccb_alloc(mlx, &mc, 1) != 0) {
-				aprint_error_dev(mlx->mlx_dv, "%s failed for channel %d\n",
+				aprint_error_dev(mlx->mlx_dv,
+				    "%s failed for channel %d\n",
 				    cmd == MLX_CMD_STOPCHANNEL ?
 				    "pause" : "resume", i);
 				continue;
@@ -2104,14 +2112,16 @@ mlx_intr(void *cookie)
 		ident--;
 
 		if (ident >= MLX_MAX_QUEUECNT) {
-			aprint_error_dev(mlx->mlx_dv, "bad completion returned\n");
+			aprint_error_dev(mlx->mlx_dv,
+			    "bad completion returned\n");
 			continue;
 		}
 
 		mc = mlx->mlx_ccbs + ident;
 
 		if (mc->mc_status != MLX_STATUS_BUSY) {
-			aprint_error_dev(mlx->mlx_dv, "bad completion returned\n");
+			aprint_error_dev(mlx->mlx_dv,
+			    "bad completion returned\n");
 			continue;
 		}
 
@@ -2195,7 +2205,8 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 		return (1);
 
 	default:
-		aprint_error_dev(mlx->mlx_dv, "unknown firmware init error %02x:%02x:%02x\n",
+		aprint_error_dev(mlx->mlx_dv,
+		    "unknown firmware init error %02x:%02x:%02x\n",
 		    error, param1, param2);
 		return (0);
 	}

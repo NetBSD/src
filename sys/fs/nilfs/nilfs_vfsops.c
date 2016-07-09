@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.18.2.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.18.2.2 2016/07/09 20:25:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.18.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.18.2.2 2016/07/09 20:25:19 skrll Exp $");
 #endif /* not lint */
 
 
@@ -630,7 +630,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	}
 	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
-		return ENXIO; 
+		return ENXIO;
 	}
 
 	/*

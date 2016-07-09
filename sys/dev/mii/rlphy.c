@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.29 2014/06/16 16:48:16 msaitoh Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.29.4.1 2016/07/09 20:25:03 skrll Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.29 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.29.4.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,7 @@ rlphyattach(device_t parent, device_t self, void *aux)
 	PHY_RESET(sc);
 
 	aprint_normal_dev(self, "");
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");

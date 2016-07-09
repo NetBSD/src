@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.131.2.4 2016/05/29 08:44:38 skrll Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.131.2.5 2016/07/09 20:25:21 skrll Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.5 2016/07/09 20:25:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -832,7 +832,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * framing according to RFC 1333.
 		 */
 		if (!(ifp->if_flags & IFF_OACTIVE))
-			(*ifp->if_start)(ifp);
+			if_start_lock(ifp);
 		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 	}
 	splx(s);
@@ -1182,7 +1182,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	if (! m)
 		return;
 	m->m_pkthdr.len = m->m_len = PPP_HEADER_LEN + CISCO_PACKET_LEN;
-	m->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m);
 
 	h = mtod(m, struct ppp_header *);
 	h->address = CISCO_MULTICAST;
@@ -1214,7 +1214,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -1242,7 +1242,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	if (! m)
 		return;
 	m->m_pkthdr.len = m->m_len = pkthdrlen + LCP_HEADER_LEN + len;
-	m->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m);
 
 	if (sp->pp_flags & PP_NOFRAMING) {
 		*mtod(m, uint16_t *) = htons(proto);
@@ -1279,7 +1279,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
@@ -4656,7 +4656,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (! m)
 		return;
-	m->m_pkthdr.rcvif = 0;
+	m_reset_rcvif(m);
 
 	if (sp->pp_flags & PP_NOFRAMING) {
 		*mtod(m, uint16_t *) = htons(cp->proto);
@@ -4715,7 +4715,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	} else
 		IF_ENQUEUE(&sp->pp_cpq, m);
 	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	ifp->if_obytes += m->m_pkthdr.len + 3;
 }
 
@@ -4821,7 +4821,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			sm = (struct sockaddr_in *)ifa->ifa_netmask;
@@ -4861,7 +4861,7 @@ sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4897,7 +4897,16 @@ found:
 				*dest = new_dst; /* fix dstaddr in place */
 			}
 		}
+
+		LIST_REMOVE(ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+
 		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, hostIsNew);
+
+		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
+		    ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+
 		if (debug && error)
 		{
 			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
@@ -4931,7 +4940,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			dest = (struct sockaddr_in *)ifa->ifa_dstaddr;
@@ -4950,7 +4959,16 @@ found:
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 			/* replace peer addr in place */
 			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+
+		LIST_REMOVE(ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
+
 		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0);
+
+		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
+		    ifatoia(ifa), ia_hash);
+		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
+
 		(void)pfil_run_hooks(if_pfil,
 		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
 	}
@@ -4978,7 +4996,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			si = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -5031,7 +5049,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{

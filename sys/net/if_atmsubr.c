@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.52.4.5 2016/05/29 08:44:38 skrll Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.52.4.6 2016/07/09 20:25:21 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.5 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.6 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -214,7 +214,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 		splx(s);
 		isr = NETISR_NATM;
 		inq = &natmintrq;
-		m->m_pkthdr.rcvif = rxhand; /* XXX: overload */
+		m_set_rcvif(m, rxhand); /* XXX: overload */
 
 		s = splnet();
 		if (IF_QFULL(inq)) {

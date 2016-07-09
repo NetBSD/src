@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.90.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_el.c,v 1.90.4.3 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_el.c,v 1.90.4.3 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -611,7 +611,7 @@ elget(struct el_softc *sc, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

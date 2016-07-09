@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.164.2.7 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.164.2.8 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164.2.7 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.164.2.8 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1038,7 +1038,7 @@ COMPATNAME(rt_msg1)(int type, struct rt_addrinfo *rtinfo, void *data, int datale
 	} else {
 		m->m_pkthdr.len = m->m_len = len;
 	}
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m_copyback(m, 0, datalen, data);
 	if (len > datalen)
 		(void)memset(mtod(m, char *) + datalen, 0, len - datalen);
@@ -1460,16 +1460,15 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	int	len, error = 0;
 	int s;
 	struct psref psref;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound = curlwp_bind();
 
 	memset(&info, 0, sizeof(info));
 
-	curlwp->l_pflag |= LP_BOUND;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		if (IFADDR_EMPTY(ifp))
+		if (IFADDR_READER_EMPTY(ifp))
 			continue;
 
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -1531,7 +1530,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 				panic("sysctl_iflist(2)");
 			}
 		}
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
@@ -1560,13 +1559,13 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	return 0;
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 

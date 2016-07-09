@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.102.4.3 2016/05/29 08:44:21 skrll Exp $ */
+/*	$NetBSD: gem.c,v 1.102.4.4 2016/07/09 20:25:02 skrll Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.102.4.3 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.102.4.4 2016/07/09 20:25:02 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1848,7 +1848,7 @@ gem_rint(struct gem_softc *sc)
 		}
 		m->m_data += 2; /* We're already off by two */
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

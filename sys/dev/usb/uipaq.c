@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.19.14.7 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.19.14.8 2016/07/09 20:25:16 skrll Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.7 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.19.14.8 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,8 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 	/* Move the device into the configured state. */
 	err = usbd_set_config_no(dev, UIPAQ_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "failed to set configuration"
-		    ", err=%s\n", usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration, err=%s\n",
+		    usbd_errstr(err));
 		goto bad;
 	}
 
@@ -214,8 +214,7 @@ uipaq_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}*/
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 	for (i=0; i<id->bNumEndpoints; i++) {
@@ -269,7 +268,8 @@ uipaq_dtr(struct uipaq_softc* sc, int onoff)
 	/* Other parameters depend on reg */
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
-	sc->sc_lcr = onoff ? sc->sc_lcr | UCDC_LINE_DTR : sc->sc_lcr & ~UCDC_LINE_DTR;
+	sc->sc_lcr = onoff ? sc->sc_lcr | UCDC_LINE_DTR
+	    : sc->sc_lcr & ~UCDC_LINE_DTR;
 	USETW(req.wValue, sc->sc_lcr);
 	USETW(req.wIndex, 0x0);
 	USETW(req.wLength, 0);
@@ -299,7 +299,8 @@ uipaq_rts(struct uipaq_softc* sc, int onoff)
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SET_CONTROL_LINE_STATE;
-	sc->sc_lcr = onoff ? sc->sc_lcr | UCDC_LINE_RTS : sc->sc_lcr & ~UCDC_LINE_RTS;
+	sc->sc_lcr = onoff ? sc->sc_lcr | UCDC_LINE_RTS
+	    : sc->sc_lcr & ~UCDC_LINE_RTS;
 	USETW(req.wValue, sc->sc_lcr);
 	USETW(req.wIndex, 0x0);
 	USETW(req.wLength, 0);
@@ -320,7 +321,8 @@ uipaq_break(struct uipaq_softc* sc, int onoff)
 	usbd_status err;
 	int retries = 3;
 
-	DPRINTF(("%s: uipaq_break: onoff=%x\n", device_xname(sc->sc_dev), onoff));
+	DPRINTF(("%s: uipaq_break: onoff=%x\n", device_xname(sc->sc_dev),
+	    onoff));
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SEND_BREAK;
@@ -395,8 +397,7 @@ uipaq_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv |= config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

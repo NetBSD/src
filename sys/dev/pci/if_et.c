@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.8.6.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_et.c,v 1.8.6.3 2016/07/09 20:25:04 skrll Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8.6.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8.6.3 2016/07/09 20:25:04 skrll Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1754,7 +1754,7 @@ et_rxeof(struct et_softc *sc)
 			} else {
 				m->m_pkthdr.len = m->m_len = buflen -
 				    ETHER_CRC_LEN;
-				m->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(m, ifp);
 
 				bpf_mtap(ifp, m);
 

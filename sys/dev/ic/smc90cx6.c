@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.64.14.2 2016/03/19 11:30:09 skrll Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.64.14.3 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.64.14.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.64.14.3 2016/07/09 20:25:02 skrll Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -525,7 +525,7 @@ bah_srint(void *vsc)
 		goto cleanup;
 	}
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	/*
 	 * Align so that IP packet will be longword aligned. Here we

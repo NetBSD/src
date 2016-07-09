@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.41.2.3 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.41.2.4 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.41.2.3 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.41.2.4 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -410,7 +410,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 			/* dst->sa_len??? */
 			dst->sa_family = AF_UNSPEC;
 			memcpy(dst->sa_data, eh, ECO_HDR_LEN);
-			ifp->if_output(ifp, m, dst, NULL);
+			if_output_lock(ifp, ifp, m, dst, NULL);
 			return;
 		}
 		default:
@@ -782,7 +782,7 @@ eco_inputidle(struct ifnet *ifp)
 		break;
 	}
 	ec->ec_state = ECO_IDLE;
-	ifp->if_start(ifp);
+	if_start_lock(ifp);
 }
 
 /*

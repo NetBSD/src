@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.10 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.11 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.10 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.11 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1077,7 +1077,7 @@ axen_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 
 		/* skip pseudo header (2byte) */
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE

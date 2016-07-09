@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.9 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.10 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.9 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.10 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -512,8 +512,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	sc->kue_attached = true;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev,
-			   sc->kue_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->kue_udev, sc->kue_dev);
 
 	return;
 }
@@ -708,7 +707,7 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = pktlen;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

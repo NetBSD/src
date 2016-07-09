@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.29.4.1 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: mtd803.c,v 1.29.4.2 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.29.4.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.29.4.2 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -581,7 +581,7 @@ mtd_get(struct mtd_softc *sc, int index, int totlen)
 	if (m0 == NULL)
 		return NULL;
 
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	m = m0;
 	len = MHLEN;

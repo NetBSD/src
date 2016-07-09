@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.43.2.1 2016/03/19 11:30:03 skrll Exp $ */
+/* $NetBSD: sbmac.c,v 1.43.2.2 2016/07/09 20:24:54 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.1 2016/03/19 11:30:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.2 2016/07/09 20:24:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -918,7 +918,7 @@ sbdma_rx_process(struct sbmac_softc *sc, sbmacdma_t *d)
 			m->m_pkthdr.len = m->m_len = len;
 
 			ifp->if_ipackets++;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 
 
 			/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.9 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.9 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,20 +186,21 @@ Static const struct usb_devno ucycom_devs[] = {
 };
 #define ucycom_lookup(v, p) usb_lookup(ucycom_devs, v, p)
 
-int             ucycom_match(device_t, cfdata_t, void *);
-void            ucycom_attach(device_t, device_t, void *);
-int             ucycom_detach(device_t, int);
-int             ucycom_activate(device_t, enum devact);
+int	ucycom_match(device_t, cfdata_t, void *);
+void	ucycom_attach(device_t, device_t, void *);
+int	ucycom_detach(device_t, int);
+int	ucycom_activate(device_t, enum devact);
 extern struct cfdriver ucycom_cd;
-CFATTACH_DECL_NEW(ucycom, sizeof(struct ucycom_softc), ucycom_match, ucycom_attach, ucycom_detach, ucycom_activate);
+CFATTACH_DECL_NEW(ucycom, sizeof(struct ucycom_softc), ucycom_match,
+    ucycom_attach, ucycom_detach, ucycom_activate);
 
 int
 ucycom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	return ucycom_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) != NULL ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return ucycom_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product)
+	    != NULL ? UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -514,8 +515,8 @@ ucycomstart(struct tty *tp)
 		memcpy(sc->sc_obuf + 1, data, len);
 		sc->sc_obuf[0] = len | sc->sc_mcr;
 
-		DPRINTF(("ucycomstart(8): sc->sc_obuf[0] = %d | %d = %d\n", len,
-		    sc->sc_mcr, sc->sc_obuf[0]));
+		DPRINTF(("ucycomstart(8): sc->sc_obuf[0] = %d | %d = %d\n",
+		    len, sc->sc_mcr, sc->sc_obuf[0]));
 #ifdef UCYCOM_DEBUG
 		if (ucycomdebug > 10) {
 			uint32_t i;

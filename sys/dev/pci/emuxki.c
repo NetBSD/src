@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.63 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.63.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.63 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.63.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -456,9 +456,11 @@ emuxki_attach(device_t parent, device_t self, void *aux)
 		sc->sc_type = EMUXKI_AUDIGY;
 		if (PCI_REVISION(pa->pa_class) == 0x04) {
 			sc->sc_type |= EMUXKI_AUDIGY2;
-			strlcpy(sc->sc_audv.name, "Audigy2", sizeof sc->sc_audv.name);
+			strlcpy(sc->sc_audv.name, "Audigy2",
+			    sizeof sc->sc_audv.name);
 		} else {
-			strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
+			strlcpy(sc->sc_audv.name, "Audigy",
+			    sizeof sc->sc_audv.name);
 		}
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {

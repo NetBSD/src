@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.3.2.2 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.3.2.3 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.3.2.2 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.3.2.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,9 @@ struct fixedregulator_softc {
 
 	struct fdtbus_gpio_pin *sc_pin;
 	bool		sc_always_on;
+	bool		sc_boot_on;
 	bool		sc_enable_val;
+	uint32_t	sc_delay;
 };
 
 CFATTACH_DECL_NEW(fregulator, sizeof(struct fixedregulator_softc),
@@ -104,13 +106,24 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 		gpioflags |= GPIO_PIN_OPENDRAIN;
 
 	sc->sc_always_on = of_getprop_bool(phandle, "regulator-always-on");
+	sc->sc_boot_on = of_getprop_bool(phandle, "regulator-boot-on");
+	sc->sc_enable_val = of_getprop_bool(phandle, "enable-active-high");
+	if (of_getprop_uint32(phandle, "startup-delay-us", &sc->sc_delay) != 0)
+		sc->sc_delay = 0;
+
 	sc->sc_pin = fdtbus_gpio_acquire(phandle, "gpio", gpioflags);
 	if (sc->sc_pin == NULL)
 		sc->sc_always_on = true;
-	sc->sc_enable_val = of_getprop_bool(phandle, "enable-active-high");
 
 	fdtbus_register_regulator_controller(self, phandle,
 	    &fixedregulator_funcs);
+
+	/*
+	 * If the regulator is flagged as always on or enabled at boot,
+	 * ensure that it is enabled
+	 */
+	if (sc->sc_always_on || sc->sc_boot_on)
+		fixedregulator_enable(self, true);
 }
 
 static int
@@ -130,18 +143,14 @@ fixedregulator_enable(device_t dev, bool enable)
 	struct fixedregulator_softc * const sc = device_private(dev);
 
 	if (enable) {
-		if (sc->sc_always_on) {
-			return 0;
-		} else {
+		if (sc->sc_pin != NULL)
 			fdtbus_gpio_write_raw(sc->sc_pin, sc->sc_enable_val);
-			return 0;
-		}
+		if (sc->sc_delay > 0)
+			delay(sc->sc_delay);
 	} else {
-		if (sc->sc_always_on) {
+		if (sc->sc_always_on)
 			return EIO;
-		} else {
-			fdtbus_gpio_write_raw(sc->sc_pin, !sc->sc_enable_val);
-			return 0;
-		}
+		fdtbus_gpio_write_raw(sc->sc_pin, !sc->sc_enable_val);
 	}
+	return 0;
 }

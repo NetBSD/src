@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.55.6.1 2015/09/22 12:05:52 skrll Exp $	*/
+/*	$NetBSD: ffb.c,v 1.55.6.2 2016/07/09 20:24:57 skrll Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.55.6.1 2015/09/22 12:05:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.55.6.2 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -428,7 +428,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 		fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
 		fba->emu_types[1] = -1;
 #undef fba
-		break; 
+		break;
 
 	case FBIOGETCMAP:
 	case FBIOPUTCMAP:
@@ -466,7 +466,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 				sc->sc_mode = *(u_int *)data;
 				if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) &&
 				    (sc->sc_locked == 0)) {
-					ffb_ras_init(sc);		
+					ffb_ras_init(sc);
 					vcons_redraw_screen(ms);
 				}
 			}
@@ -554,7 +554,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 		if (ms != NULL) {
 			if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) && 
 			    (sc->sc_locked == 0)) {
-				ffb_ras_init(sc);		
+				ffb_ras_init(sc);
 				vcons_redraw_screen(ms);
 			}
 		}
@@ -885,7 +885,7 @@ ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 	if (ms != NULL) {
 		if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) &&
 		    (sc->sc_locked == 0)) {
-			ffb_ras_init(sc);		
+			ffb_ras_init(sc);
 			vcons_redraw_screen(ms);
 		}
 	}

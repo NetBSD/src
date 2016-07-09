@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_ioctl.c,v 1.6.14.2 2015/09/22 12:05:58 skrll Exp $	*/
+/*	$NetBSD: iscsi_ioctl.c,v 1.6.14.3 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -40,11 +40,28 @@
 #include <uvm/uvm_pmap.h>
 #endif
 
+static kmutex_t iscsi_cleanup_mtx;
+static kcondvar_t iscsi_cleanup_cv;
+static kcondvar_t iscsi_event_cv;
+static struct lwp *iscsi_cleanproc = NULL;
+
 static uint16_t current_id = 0;	/* Global session ID counter */
 
 /* list of event handlers */
 static event_handler_list_t event_handlers =
 	TAILQ_HEAD_INITIALIZER(event_handlers);
+
+static connection_list_t iscsi_timeout_conn_list =
+	TAILQ_HEAD_INITIALIZER(iscsi_timeout_conn_list);
+
+static ccb_list_t iscsi_timeout_ccb_list =
+	TAILQ_HEAD_INITIALIZER(iscsi_timeout_ccb_list);
+
+static session_list_t iscsi_cleanups_list =
+	TAILQ_HEAD_INITIALIZER(iscsi_cleanups_list);
+
+static connection_list_t iscsi_cleanupc_list =
+	TAILQ_HEAD_INITIALIZER(iscsi_cleanupc_list);
 
 static uint32_t handler_id = 0;	/* Handler ID counter */
 
@@ -64,10 +81,12 @@ static uint32_t handler_id = 0;	/* Handler ID counter */
  */
 
 
-STATIC event_handler_t *
+static event_handler_t *
 find_handler(uint32_t id)
 {
 	event_handler_t *curr;
+
+	KASSERT(mutex_owned(&iscsi_cleanup_mtx));
 
 	TAILQ_FOREACH(curr, &event_handlers, link)
 		if (curr->id == id)
@@ -85,12 +104,11 @@ find_handler(uint32_t id)
  *          par   The parameter.
  */
 
-STATIC void
+static void
 register_event(iscsi_register_event_parameters_t *par)
 {
 	event_handler_t *handler;
 	int was_empty;
-	int s;
 
 	handler = malloc(sizeof(event_handler_t), M_DEVBUF, M_WAITOK | M_ZERO);
 	if (handler == NULL) {
@@ -101,21 +119,19 @@ register_event(iscsi_register_event_parameters_t *par)
 
 	TAILQ_INIT(&handler->events);
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	/* create a unique ID */
-	s = splbio();
 	do {
 		++handler_id;
 	} while (!handler_id || find_handler(handler_id) != NULL);
 	par->event_id = handler->id = handler_id;
 
 	was_empty = TAILQ_FIRST(&event_handlers) == NULL;
-
 	TAILQ_INSERT_TAIL(&event_handlers, handler, link);
+	mutex_exit(&iscsi_cleanup_mtx);
 
-	if (was_empty) {
-		wakeup(&iscsi_cleanupc_list);
-	}
-	splx(s);
+	if (was_empty)
+		iscsi_notify_cleanup();
 
 	par->status = ISCSI_STATUS_SUCCESS;
 	DEB(5, ("Register Event OK, ID %d\n", par->event_id));
@@ -130,27 +146,27 @@ register_event(iscsi_register_event_parameters_t *par)
  *          par   The parameter.
  */
 
-STATIC void
+static void
 deregister_event(iscsi_register_event_parameters_t *par)
 {
 	event_handler_t *handler;
 	event_t *evt;
-	int s;
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	handler = find_handler(par->event_id);
 	if (handler == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEB(1, ("Deregister Event ID %d not found\n", par->event_id));
 		par->status = ISCSI_STATUS_INVALID_EVENT_ID;
 		return;
 	}
 
-	s = splbio();
 	TAILQ_REMOVE(&event_handlers, handler, link);
-	splx(s);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	if (handler->waiter != NULL) {
 		handler->waiter->status = ISCSI_STATUS_EVENT_DEREGISTERED;
-		wakeup(handler->waiter);
+		cv_broadcast(&iscsi_event_cv);
 	}
 
 	while ((evt = TAILQ_FIRST(&handler->events)) != NULL) {
@@ -173,19 +189,23 @@ deregister_event(iscsi_register_event_parameters_t *par)
  *          wait  Wait for event if true
  */
 
-STATIC void
+static void
 check_event(iscsi_wait_event_parameters_t *par, bool wait)
 {
 	event_handler_t *handler;
 	event_t *evt;
+	int rc;
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	handler = find_handler(par->event_id);
 	if (handler == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Wait Event ID %d not found\n", par->event_id));
 		par->status = ISCSI_STATUS_INVALID_EVENT_ID;
 		return;
 	}
 	if (handler->waiter != NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Wait Event ID %d already waiting\n", par->event_id));
 		par->status = ISCSI_STATUS_EVENT_WAITING;
 		return;
@@ -194,27 +214,27 @@ check_event(iscsi_wait_event_parameters_t *par, bool wait)
 	DEB(99, ("Wait Event ID %d\n", par->event_id));
 
 	do {
-		int s = splbio();
 		evt = TAILQ_FIRST(&handler->events);
 		if (evt != NULL) {
 			TAILQ_REMOVE(&handler->events, evt, link);
-			splx(s);
 		} else {
 			if (!wait) {
-				splx(s);
 				par->status = ISCSI_STATUS_LIST_EMPTY;
 				return;
 			}
 			if (par->status != ISCSI_STATUS_SUCCESS) {
-				splx(s);
 				return;
 			}
 			handler->waiter = par;
-			splx(s);
-			if (tsleep(par, PRIBIO | PCATCH, "iscsievtwait", 0))
+			rc = cv_wait_sig(&iscsi_event_cv, &iscsi_cleanup_mtx);
+			if (rc) {
+				mutex_exit(&iscsi_cleanup_mtx);
+				par->status = ISCSI_STATUS_LIST_EMPTY;
 				return;
+			}
 		}
 	} while (evt == NULL);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	par->connection_id = evt->connection_id;
 	par->session_id = evt->session_id;
@@ -242,16 +262,16 @@ add_event(iscsi_event_t kind, uint32_t sid, uint32_t cid, uint32_t reason)
 {
 	event_handler_t *curr;
 	event_t *evt;
-	int s;
 
 	DEB(9, ("Add_event kind %d, sid %d, cid %d, reason %d\n",
 		kind, sid, cid, reason));
 
-	s = splbio();
+	mutex_enter(&iscsi_cleanup_mtx);
 	TAILQ_FOREACH(curr, &event_handlers, link) {
-		evt = malloc(sizeof(*evt), M_TEMP, M_WAITOK);
+		evt = malloc(sizeof(*evt), M_TEMP, M_NOWAIT);
 		if (evt == NULL) {
-			panic("iSCSI: add_event failed to alloc memory");
+			DEBOUT(("Cannot allocate event\n"));
+			break;
 		}
 		evt->event_kind = kind;
 		evt->session_id = sid;
@@ -260,11 +280,11 @@ add_event(iscsi_event_t kind, uint32_t sid, uint32_t cid, uint32_t reason)
 
 		TAILQ_INSERT_TAIL(&curr->events, evt, link);
 		if (curr->waiter != NULL) {
-			wakeup(curr->waiter);
 			curr->waiter = NULL;
+			cv_broadcast(&iscsi_event_cv);
 		}
 	}
-	splx(s);
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 
@@ -280,14 +300,15 @@ add_event(iscsi_event_t kind, uint32_t sid, uint32_t cid, uint32_t reason)
  *    Note that this will not detect dead handlers if no events are pending,
  *    but we don't care as long as events don't accumulate in the list.
  *
- *    this function must be called at splbio
  */
 
-STATIC void
+static void
 check_event_handlers(void)
 {
 	event_handler_t *curr, *next;
 	event_t *evt;
+
+	KASSERT(mutex_owned(&iscsi_cleanup_mtx));
 
 	for (curr = TAILQ_FIRST(&event_handlers); curr != NULL; curr = next) {
 		next = TAILQ_NEXT(curr, link);
@@ -322,7 +343,7 @@ check_event_handlers(void)
  *
  */
 
-STATIC int
+static int
 get_socket(int fdes, struct file **fpp)
 {
 	struct file *fp;
@@ -352,7 +373,7 @@ get_socket(int fdes, struct file **fpp)
  *
  */
 
-STATIC void
+static void
 release_socket(struct file *fp)
 {
 	/* Add the reference */
@@ -375,14 +396,13 @@ session_t *
 find_session(uint32_t id)
 {
 	session_t *curr;
-	int s;
 
-	s = splbio();
+	KASSERT(mutex_owned(&iscsi_cleanup_mtx));
+
 	TAILQ_FOREACH(curr, &iscsi_sessions, sessions)
 		if (curr->id == id) {
 			break;
 		}
-	splx(s);
 	return curr;
 }
 
@@ -400,15 +420,58 @@ connection_t *
 find_connection(session_t *session, uint32_t id)
 {
 	connection_t *curr;
-	int s;
 
-	s = splbio();
+	KASSERT(mutex_owned(&iscsi_cleanup_mtx));
+
 	TAILQ_FOREACH(curr, &session->conn_list, connections)
 		if (curr->id == id) {
 			break;
 		}
-	splx(s);
 	return curr;
+}
+
+/*
+ * ref_session:
+ *    Reference a session
+ *
+ *    Session cannot be release until reference count reaches zero
+ *
+ *    Returns: 1 if reference counter would overflow
+ */
+
+int
+ref_session(session_t *session)
+{
+	int rc = 1;
+
+	mutex_enter(&iscsi_cleanup_mtx);
+	KASSERT(session != NULL);
+	if (session->refcount <= CCBS_PER_SESSION) {
+		session->refcount++;
+		rc = 0;
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+
+	return rc;
+}
+
+/*
+ * unref_session:
+ *    Unreference a session
+ *
+ *    Release session reference, trigger cleanup
+ */
+
+void
+unref_session(session_t *session)
+{
+
+	mutex_enter(&iscsi_cleanup_mtx);
+	KASSERT(session != NULL);
+	KASSERT(session->refcount > 0);
+	if (--session->refcount == 0)
+		cv_broadcast(&session->sess_cv);
+	mutex_exit(&iscsi_cleanup_mtx);
 }
 
 
@@ -427,12 +490,12 @@ void
 kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 {
 	session_t *sess = conn->session;
-	int s;
 
 	DEBC(conn, 1, ("Kill_connection: terminating=%d, status=%d, logout=%d, "
 			   "state=%d\n",
 			   conn->terminating, status, logout, conn->state));
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if (recover &&
 	    !conn->destroy &&
 	    conn->recover > MAX_RECOVERY_ATTEMPTS) {
@@ -443,13 +506,11 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 
 	if (!recover || conn->destroy) {
 
-		s = splbio();
 		if (conn->in_session) {
 			conn->in_session = FALSE;
 			TAILQ_REMOVE(&sess->conn_list, conn, connections);
 			sess->mru_connection = TAILQ_FIRST(&sess->conn_list);
 		}
-		splx(s);
 
 		if (!conn->destroy) {
 			DEBC(conn, 1, ("Kill_connection setting destroy flag\n"));
@@ -457,14 +518,17 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		}
 		/* in case it was already terminated earlier and rcv/send-threads */
 		/* are waiting */
-		wakeup(conn);
+		cv_broadcast(&conn->idle_cv);
 	}
 
 	/* Don't recurse */
 	if (conn->terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBC(conn, 1, ("Kill_connection exiting (already terminating)\n"));
 		return;
 	}
+	conn->terminating = status;
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	if (conn->state == ST_FULL_FEATURE) {
 		sess->active_connections--;
@@ -477,7 +541,7 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		/* of logging in */
 		if (logout >= 0) {
 			conn->state = ST_WINDING_DOWN;
-			callout_schedule(&conn->timeout, CONNECTION_TIMEOUT);
+			connection_timeout_start(conn, CONNECTION_TIMEOUT);
 
 			if (sess->ErrorRecoveryLevel < 2 &&
 			    logout == RECOVER_CONNECTION) {
@@ -488,6 +552,7 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 				logout = LOGOUT_SESSION;
 			}
 			if (!send_logout(conn, conn, logout, FALSE)) {
+				conn->terminating = ISCSI_STATUS_SUCCESS;
 				return;
 			}
 			/*
@@ -499,11 +564,10 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 		}
 	}
 
-	conn->terminating = status;
 	conn->state = ST_SETTLING;
 
 	/* let send thread take over next step of cleanup */
-	wakeup(&conn->pdus_to_send);
+	cv_broadcast(&conn->conn_cv);
 
 	DEBC(conn, 5, ("kill_connection returns\n"));
 }
@@ -523,23 +587,33 @@ kill_connection(connection_t *conn, uint32_t status, int logout, bool recover)
 void
 kill_session(session_t *session, uint32_t status, int logout, bool recover)
 {
-	connection_t *curr;
-	ccb_t *ccb;
-	int s;
+	connection_t *conn;
 
 	DEB(1, ("ISCSI: kill_session %d, status %d, logout %d, recover %d\n",
 			session->id, status, logout, recover));
+
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (session->terminating) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		DEB(5, ("Session is being killed with status %d\n",session->terminating));
+		return;
+	}
 
 	/*
 	 * don't do anything if session isn't established yet, termination will be
 	 * handled elsewhere
 	 */
-	if (session->sessions.tqe_next == NULL &&
-	    session->sessions.tqe_prev == NULL) {
+	if (session->sessions.tqe_next == NULL && session->sessions.tqe_prev == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		DEB(5, ("Session is being killed which is not yet established\n"));
 		return;
 	}
 
 	if (recover) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
 		/*
 		 * Only recover when there's just one active connection left.
 		 * Otherwise we get in all sorts of timing problems, and it doesn't
@@ -547,45 +621,32 @@ kill_session(session_t *session, uint32_t status, int logout, bool recover)
 		 * requested that we kill a multipathed session.
 		 */
 		if (session->active_connections == 1) {
-			curr = assign_connection(session, FALSE);
-			if (curr != NULL)
-				kill_connection(curr, status, logout, TRUE);
+			conn = assign_connection(session, FALSE);
+			if (conn != NULL)
+				kill_connection(conn, status, logout, TRUE);
 		}
-		/* don't allow the session to disappear when the target */
-		/* requested the logout */
 		return;
 	}
 
-	/* remove from session list */
-	s = splbio();
+	if (session->refcount > 0) {
+		mutex_exit(&iscsi_cleanup_mtx);
+
+		DEB(5, ("Session is being killed while in use (refcnt = %d)\n",
+			session->refcount));
+		return;
+	}
+
+	/* Remove session from global list */
+	session->terminating = status;
 	TAILQ_REMOVE(&iscsi_sessions, session, sessions);
-	splx(s);
 	session->sessions.tqe_next = NULL;
 	session->sessions.tqe_prev = NULL;
 
-	/* complete any throttled CCBs */
-	s = splbio();
-	while ((ccb = TAILQ_FIRST(&session->ccbs_throttled)) != NULL) {
-		throttle_ccb(ccb, FALSE);
-		splx(s);
-		wake_ccb(ccb, ISCSI_STATUS_LOGOUT);
-		s = splbio();
-	}
-	splx(s);
-
-	/*
-	 * unmap first to give the system an opportunity to flush its buffers,
-	 * but don't try to unmap if it's a forced termination (connection is dead)
-	 * to avoid waiting for pending commands that can't complete anyway.
-	 */
-	if (logout >= 0) {
-		unmap_session(session);
-		DEB(5, ("Unmap Returns\n"));
-	}
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	/* kill all connections */
-	while ((curr = TAILQ_FIRST(&session->conn_list)) != NULL) {
-		kill_connection(curr, status, logout, FALSE);
+	while ((conn = TAILQ_FIRST(&session->conn_list)) != NULL) {
+		kill_connection(conn, status, logout, FALSE);
 		logout = NO_LOGOUT;
 	}
 }
@@ -609,12 +670,12 @@ kill_session(session_t *session, uint32_t status, int logout, bool recover)
  *                <0 on failure, connection is still terminating
  */
 
-STATIC int
+static int
 create_connection(iscsi_login_parameters_t *par, session_t *session,
 				  struct lwp *l)
 {
 	connection_t *connection;
-	int rc, s;
+	int rc;
 
 	DEB(1, ("Create Connection for Session %d\n", session->id));
 
@@ -633,13 +694,14 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		return EIO;
 	}
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	/* create a unique ID */
 	do {
 		++session->conn_id;
 	} while (!session->conn_id ||
 		 find_connection(session, session->conn_id) != NULL);
-
 	par->connection_id = connection->id = session->conn_id;
+	mutex_exit(&iscsi_cleanup_mtx);
 	DEB(99, ("Connection ID = %d\n", connection->id));
 
 	connection->session = session;
@@ -648,8 +710,14 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	TAILQ_INIT(&connection->pdus_to_send);
 	TAILQ_INIT(&connection->pdu_pool);
 
-	callout_init(&connection->timeout, 0);
-	callout_setfunc(&connection->timeout, connection_timeout, connection);
+	mutex_init(&connection->lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&connection->conn_cv, "conn");
+	cv_init(&connection->pdu_cv, "pdupool");
+	cv_init(&connection->ccb_cv, "ccbwait");
+	cv_init(&connection->idle_cv, "idle");
+
+	callout_init(&connection->timeout, CALLOUT_MPSAFE);
+	callout_setfunc(&connection->timeout, connection_timeout_co, connection);
 	connection->idle_timeout_val = CONNECTION_IDLE_TIMEOUT;
 
 	init_sernum(&connection->StatSN_buf);
@@ -658,6 +726,11 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	if ((rc = get_socket(par->socket, &connection->sock)) != 0) {
 		DEBOUT(("Invalid socket %d\n", par->socket));
 
+		cv_destroy(&connection->idle_cv);
+		cv_destroy(&connection->ccb_cv);
+		cv_destroy(&connection->pdu_cv);
+		cv_destroy(&connection->conn_cv);
+		mutex_destroy(&connection->lock);
 		free(connection, M_DEVBUF);
 		par->status = ISCSI_STATUS_INVALID_SOCKET;
 		return rc;
@@ -671,19 +744,24 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 	connection->threadobj = l;
 	connection->login_par = par;
 
-	/*DEBOUT (("Creating receive thread\n")); */
-	if ((rc = kthread_create(PRI_NONE, 0, NULL, iscsi_rcv_thread,
+	DEB(5, ("Creating receive thread\n"));
+	if ((rc = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL, iscsi_rcv_thread,
 				connection, &connection->rcvproc,
 				"ConnRcv")) != 0) {
 		DEBOUT(("Can't create rcv thread (rc %d)\n", rc));
 
 		release_socket(connection->sock);
+		cv_destroy(&connection->idle_cv);
+		cv_destroy(&connection->ccb_cv);
+		cv_destroy(&connection->pdu_cv);
+		cv_destroy(&connection->conn_cv);
+		mutex_destroy(&connection->lock);
 		free(connection, M_DEVBUF);
 		par->status = ISCSI_STATUS_NO_RESOURCES;
 		return rc;
 	}
-	/*DEBOUT (("Creating send thread\n")); */
-	if ((rc = kthread_create(PRI_NONE, 0, NULL, iscsi_send_thread,
+	DEB(5, ("Creating send thread\n"));
+	if ((rc = kthread_create(PRI_BIO, KTHREAD_MPSAFE, NULL, iscsi_send_thread,
 				connection, &connection->sendproc,
 				"ConnSend")) != 0) {
 		DEBOUT(("Can't create send thread (rc %d)\n", rc));
@@ -702,9 +780,14 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		closef(connection->sock);
 
 		/* give receive thread time to exit */
-		tsleep(connection, PWAIT, "settle", 2 * hz);
+		kpause("settle", false, 2 * hz, NULL);
 
 		release_socket(connection->sock);
+		cv_destroy(&connection->idle_cv);
+		cv_destroy(&connection->ccb_cv);
+		cv_destroy(&connection->pdu_cv);
+		cv_destroy(&connection->conn_cv);
+		mutex_destroy(&connection->lock);
 		free(connection, M_DEVBUF);
 		par->status = ISCSI_STATUS_NO_RESOURCES;
 		return rc;
@@ -724,14 +807,21 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
 		return -1;
 	}
 
-	s = splbio();
+	mutex_enter(&session->lock);
+	if (session->terminating) {
+		DEBC(connection, 0, ("Session terminating\n"));
+		kill_connection(connection, rc, NO_LOGOUT, FALSE);
+		mutex_exit(&session->lock);
+		par->status = session->terminating;
+		return -1;
+	}
 	connection->state = ST_FULL_FEATURE;
 	TAILQ_INSERT_TAIL(&session->conn_list, connection, connections);
 	connection->in_session = TRUE;
 	session->total_connections++;
 	session->active_connections++;
 	session->mru_connection = connection;
-	splx(s);
+	mutex_exit(&session->lock);
 
 	DEBC(connection, 5, ("Connection created successfully!\n"));
 	return 0;
@@ -752,13 +842,15 @@ create_connection(iscsi_login_parameters_t *par, session_t *session,
  *                <0 on failure, connection is still terminating
  */
 
-STATIC int
+static int
 recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 					connection_t *connection, struct lwp *l)
 {
-	int rc, s;
+	int rc;
 	ccb_t *ccb;
 	ccb_list_t old_waiting;
+	pdu_t *pdu;
+	uint32_t sn;
 
 	DEB(1, ("ReCreate Connection %d for Session %d, ERL=%d\n",
 		connection->id, connection->session->id,
@@ -801,12 +893,16 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 	session->active_connections++;
 
 	TAILQ_INIT(&old_waiting);
-	s = splbio();
-	TAILQ_CONCAT(&old_waiting, &connection->ccbs_waiting, chain);
-	splx(s);
+
+	mutex_enter(&connection->lock);
+	while ((ccb = TAILQ_FIRST(&connection->ccbs_waiting)) != NULL) {
+		suspend_ccb(ccb, FALSE);
+		TAILQ_INSERT_TAIL(&old_waiting, ccb, chain);
+	}
+	mutex_exit(&connection->lock);
 
 	init_sernum(&connection->StatSN_buf);
-	wakeup(connection);
+	cv_broadcast(&connection->idle_cv);
 
 	if ((rc = send_login(connection)) != 0) {
 		DEBOUT(("Login failed (rc %d)\n", rc));
@@ -823,40 +919,44 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
 	DEBC(connection, 9, ("Re-Login successful\n"));
 	par->status = ISCSI_STATUS_SUCCESS;
 
-	s = splbio();
 	connection->state = ST_FULL_FEATURE;
 	session->mru_connection = connection;
-	splx(s);
 
 	while ((ccb = TAILQ_FIRST(&old_waiting)) != NULL) {
 		TAILQ_REMOVE(&old_waiting, ccb, chain);
-		s = splbio();
+		mutex_enter(&connection->lock);
 		suspend_ccb(ccb, TRUE);
-		splx(s);
+		mutex_exit(&connection->lock);
 
 		rc = send_task_management(connection, ccb, NULL, TASK_REASSIGN);
 		/* if we get an error on reassign, restart the original request */
 		if (rc && ccb->pdu_waiting != NULL) {
-			if (ccb->CmdSN < session->ExpCmdSN) {
-				pdu_t *pdu = ccb->pdu_waiting;
+			mutex_enter(&session->lock);
+			if (sn_a_lt_b(ccb->CmdSN, session->ExpCmdSN)) {
+				pdu = ccb->pdu_waiting;
+				sn = get_sernum(session, pdu);
 
 				/* update CmdSN */
-				DEBC(connection, 1, ("Resend Updating CmdSN - old %d, new %d\n",
-					   ccb->CmdSN, session->CmdSN));
-				ccb->CmdSN = session->CmdSN;
-				if (!(pdu->pdu.Opcode & OP_IMMEDIATE))
-					session->CmdSN++;
+				DEBC(connection, 0, ("Resend ccb %p (%d) - updating CmdSN old %u, new %u\n",
+					   ccb, rc, ccb->CmdSN, sn));
+				ccb->CmdSN = sn;
 				pdu->pdu.p.command.CmdSN = htonl(ccb->CmdSN);
+			} else {
+				DEBC(connection, 0, ("Resend ccb %p (%d) - CmdSN %u\n",
+					   ccb, rc, ccb->CmdSN));
 			}
+			mutex_exit(&session->lock);
 			resend_pdu(ccb);
 		} else {
-			callout_schedule(&ccb->timeout, COMMAND_TIMEOUT);
+			DEBC(connection, 0, ("Resend ccb %p (%d) CmdSN %u - reassigned\n",
+				ccb, rc, ccb->CmdSN));
+			ccb_timeout_start(ccb, COMMAND_TIMEOUT);
 		}
 	}
 
-	wakeup(session);
+	cv_broadcast(&session->sess_cv);
 
-	DEBC(connection, 5, ("Connection ReCreated successfully - status %d\n",
+	DEBC(connection, 0, ("Connection ReCreated successfully - status %d\n",
 						 par->status));
 
 	return 0;
@@ -875,7 +975,7 @@ recreate_connection(iscsi_login_parameters_t *par, session_t *session,
  *    Returns:    0 on success, else an error code.
  */
 
-STATIC int
+static int
 check_login_pars(iscsi_login_parameters_t *par)
 {
 	int i, n;
@@ -947,11 +1047,11 @@ check_login_pars(iscsi_login_parameters_t *par)
  *          l        IN: The lwp pointer of the caller
  */
 
-STATIC void
-login(iscsi_login_parameters_t *par, struct lwp *l)
+static void
+login(iscsi_login_parameters_t *par, struct lwp *l, device_t dev)
 {
 	session_t *session;
-	int rc, s;
+	int rc;
 
 	DEB(99, ("ISCSI: login\n"));
 
@@ -973,13 +1073,18 @@ login(iscsi_login_parameters_t *par, struct lwp *l)
 	}
 	TAILQ_INIT(&session->conn_list);
 	TAILQ_INIT(&session->ccb_pool);
-	TAILQ_INIT(&session->ccbs_throttled);
 
+	mutex_init(&session->lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&session->sess_cv, "session");
+	cv_init(&session->ccb_cv, "ccb");
+
+	mutex_enter(&iscsi_cleanup_mtx);
 	/* create a unique ID */
 	do {
 		++current_id;
 	} while (!current_id || find_session(current_id) != NULL);
 	par->session_id = session->id = current_id;
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	create_ccbs(session);
 	session->login_type = par->login_type;
@@ -987,20 +1092,25 @@ login(iscsi_login_parameters_t *par, struct lwp *l)
 
 	if ((rc = create_connection(par, session, l)) != 0) {
 		if (rc > 0) {
+			cv_destroy(&session->ccb_cv);
+			cv_destroy(&session->sess_cv);
+			mutex_destroy(&session->lock);
 			free(session, M_DEVBUF);
 		}
 		return;
 	}
 
-	s = splbio();
+	mutex_enter(&iscsi_cleanup_mtx);
 	TAILQ_INSERT_HEAD(&iscsi_sessions, session, sessions);
-	splx(s);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	/* Session established, map LUNs? */
 	if (par->login_type == ISCSI_LOGINTYPE_MAP) {
 		copyinstr(par->TargetName, session->tgtname,
 		    sizeof(session->tgtname), NULL);
-		if (!map_session(session)) {
+		DEB(1, ("Login: map session %d\n", session->id));
+		if (!map_session(session, dev)) {
+			DEB(1, ("Login: map session %d failed\n", session->id));
 			kill_session(session, ISCSI_STATUS_MAP_FAILED,
 					LOGOUT_SESSION, FALSE);
 			par->status = ISCSI_STATUS_MAP_FAILED;
@@ -1018,18 +1128,21 @@ login(iscsi_login_parameters_t *par, struct lwp *l)
  *          par      IN/OUT: The login parameters
  */
 
-STATIC void
+static void
 logout(iscsi_logout_parameters_t *par)
 {
 	session_t *session;
 
 	DEB(5, ("ISCSI: logout session %d\n", par->session_id));
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 	/* If the session exists, this always succeeds */
 	par->status = ISCSI_STATUS_SUCCESS;
 
@@ -1046,18 +1159,21 @@ logout(iscsi_logout_parameters_t *par)
  *          l        IN: The lwp pointer of the caller
  */
 
-STATIC void
+static void
 add_connection(iscsi_login_parameters_t *par, struct lwp *l)
 {
 	session_t *session;
 
 	DEB(5, ("ISCSI: add_connection to session %d\n", par->session_id));
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 	if ((par->status = check_login_pars(par)) == 0) {
 		create_connection(par, session, l);
 	}
@@ -1072,7 +1188,7 @@ add_connection(iscsi_login_parameters_t *par, struct lwp *l)
  *          par      IN/OUT: The remove parameters
  */
 
-STATIC void
+static void
 remove_connection(iscsi_remove_parameters_t *par)
 {
 	connection_t *conn;
@@ -1081,18 +1197,22 @@ remove_connection(iscsi_remove_parameters_t *par)
 	DEB(5, ("ISCSI: remove_connection %d from session %d\n",
 			par->connection_id, par->session_id));
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
 
 	if ((conn = find_connection(session, par->connection_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Connection %d not found in session %d\n",
 				par->connection_id, par->session_id));
 
 		par->status = ISCSI_STATUS_INVALID_CONNECTION_ID;
 	} else {
+		mutex_exit(&iscsi_cleanup_mtx);
 		kill_connection(conn, ISCSI_STATUS_LOGOUT, LOGOUT_CONNECTION,
 					FALSE);
 		par->status = ISCSI_STATUS_SUCCESS;
@@ -1109,7 +1229,7 @@ remove_connection(iscsi_remove_parameters_t *par)
  *          l        IN: The lwp pointer of the caller
  */
 
-STATIC void
+static void
 restore_connection(iscsi_login_parameters_t *par, struct lwp *l)
 {
 	session_t *session;
@@ -1118,18 +1238,22 @@ restore_connection(iscsi_login_parameters_t *par, struct lwp *l)
 	DEB(1, ("ISCSI: restore_connection %d of session %d\n",
 			par->connection_id, par->session_id));
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
 
 	if ((connection = find_connection(session, par->connection_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Connection %d not found in session %d\n",
 				par->connection_id, par->session_id));
 		par->status = ISCSI_STATUS_INVALID_CONNECTION_ID;
 		return;
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	if ((par->status = check_login_pars(par)) == 0) {
 		recreate_connection(par, session, connection, l);
@@ -1234,7 +1358,7 @@ unmap_databuf(struct proc *p, void *buf, uint32_t datalen)
  *          l        IN: The lwp pointer of the caller
  */
 
-STATIC void
+static void
 io_command(iscsi_iocommand_parameters_t *par, struct lwp *l)
 {
 	uint32_t datalen = par->req.datalen;
@@ -1242,11 +1366,14 @@ io_command(iscsi_iocommand_parameters_t *par, struct lwp *l)
 	session_t *session;
 
 	DEB(9, ("ISCSI: io_command, SID=%d, lun=%" PRIu64 "\n", par->session_id, par->lun));
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	par->req.senselen_used = 0;
 	par->req.datalen_used = 0;
@@ -1306,18 +1433,21 @@ io_command(iscsi_iocommand_parameters_t *par, struct lwp *l)
  *          par      IN/OUT: The send_targets parameters
  */
 
-STATIC void
+static void
 send_targets(iscsi_send_targets_parameters_t *par)
 {
 	int rc;
 	uint32_t rlen, cplen;
 	session_t *session;
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		DEBOUT(("Session %d not found\n", par->session_id));
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	DEB(9, ("ISCSI: send_targets, rsp_size=%d; Saved list: %p\n",
 			par->response_size, session->target_list));
@@ -1355,7 +1485,7 @@ send_targets(iscsi_send_targets_parameters_t *par)
  *          par      IN/OUT: The set_node_name parameters
  */
 
-STATIC void
+static void
 set_node_name(iscsi_set_node_name_parameters_t *par)
 {
 
@@ -1392,13 +1522,15 @@ set_node_name(iscsi_set_node_name_parameters_t *par)
  *          par      IN/OUT: The status parameters
  */
 
-STATIC void
+static void
 connection_status(iscsi_conn_status_parameters_t *par)
 {
 	connection_t *conn;
 	session_t *session;
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	if ((session = find_session(par->session_id)) == NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		par->status = ISCSI_STATUS_INVALID_SESSION_ID;
 		return;
 	}
@@ -1410,6 +1542,7 @@ connection_status(iscsi_conn_status_parameters_t *par)
 	}
 	par->status = (conn == NULL) ? ISCSI_STATUS_INVALID_CONNECTION_ID :
 					ISCSI_STATUS_SUCCESS;
+	mutex_exit(&iscsi_cleanup_mtx);
 	DEB(9, ("ISCSI: connection_status, session %d connection %d --> %d\n",
 			par->session_id, par->connection_id, par->status));
 }
@@ -1423,7 +1556,7 @@ connection_status(iscsi_conn_status_parameters_t *par)
  *          par      IN/OUT: The version parameters
  */
 
-STATIC void
+static void
 get_version(iscsi_get_version_parameters_t *par)
 {
 	par->status = ISCSI_STATUS_SUCCESS;
@@ -1442,15 +1575,26 @@ get_version(iscsi_get_version_parameters_t *par)
  *    Terminate all sessions (called when the driver unloads).
  */
 
-void
+int
 kill_all_sessions(void)
 {
 	session_t *sess;
+	int rc = 0;
 
+	mutex_enter(&iscsi_cleanup_mtx);
 	while ((sess = TAILQ_FIRST(&iscsi_sessions)) != NULL) {
+		mutex_exit(&iscsi_cleanup_mtx);
 		kill_session(sess, ISCSI_STATUS_DRIVER_UNLOAD, LOGOUT_SESSION,
 				FALSE);
+		mutex_enter(&iscsi_cleanup_mtx);
 	}
+	if (TAILQ_FIRST(&iscsi_sessions) != NULL) {
+		DEBOUT(("Failed to kill all sessions\n"));
+		rc = EBUSY;
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+
+	return rc;
 }
 
 /*
@@ -1479,102 +1623,280 @@ handle_connection_error(connection_t *conn, uint32_t status, int dologout)
 	}
 }
 
+/*
+ * add a connection to the cleanup list
+ */
+void
+add_connection_cleanup(connection_t *conn)
+{
+	mutex_enter(&iscsi_cleanup_mtx);
+	TAILQ_INSERT_TAIL(&iscsi_cleanupc_list, conn, connections);
+	mutex_exit(&iscsi_cleanup_mtx);
+	iscsi_notify_cleanup();
+}
+
+/*
+ * callout wrappers for timeouts, the work is done by the cleanup thread
+ */
+void
+connection_timeout_co(void *par)
+{
+	connection_t *conn = par;
+
+	mutex_enter(&iscsi_cleanup_mtx);
+	conn->timedout = TOUT_QUEUED;
+	TAILQ_INSERT_TAIL(&iscsi_timeout_conn_list, conn, tchain);
+	mutex_exit(&iscsi_cleanup_mtx);
+	iscsi_notify_cleanup();
+}
+
+void            
+connection_timeout_start(connection_t *conn, int ticks)
+{
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->timedout != TOUT_QUEUED) {
+		conn->timedout = TOUT_ARMED;
+		callout_schedule(&conn->timeout, ticks);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+}                           
+
+void                    
+connection_timeout_stop(connection_t *conn)
+{                                                
+	callout_halt(&conn->timeout, NULL);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (conn->timedout == TOUT_QUEUED) {
+		TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
+		conn->timedout = TOUT_NONE;
+	}               
+	if (curlwp != iscsi_cleanproc) {
+		while (conn->timedout == TOUT_BUSY)
+			kpause("connbusy", false, 1, &iscsi_cleanup_mtx);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+}                        
+
+void
+ccb_timeout_co(void *par)
+{
+	ccb_t *ccb = par;
+
+	mutex_enter(&iscsi_cleanup_mtx);
+	ccb->timedout = TOUT_QUEUED;
+	TAILQ_INSERT_TAIL(&iscsi_timeout_ccb_list, ccb, tchain);
+	mutex_exit(&iscsi_cleanup_mtx);
+	iscsi_notify_cleanup();
+}
+
+void    
+ccb_timeout_start(ccb_t *ccb, int ticks)
+{       
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (ccb->timedout != TOUT_QUEUED) {
+		ccb->timedout = TOUT_ARMED;
+		callout_schedule(&ccb->timeout, ticks);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+} 
+ 
+void
+ccb_timeout_stop(ccb_t *ccb)
+{
+	callout_halt(&ccb->timeout, NULL);
+	mutex_enter(&iscsi_cleanup_mtx);
+	if (ccb->timedout == TOUT_QUEUED) {
+		TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
+		ccb->timedout = TOUT_NONE;
+	} 
+	if (curlwp != iscsi_cleanproc) {
+		while (ccb->timedout == TOUT_BUSY)
+			kpause("ccbbusy", false, 1, &iscsi_cleanup_mtx);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+}
 
 /*
  * iscsi_cleanup_thread
  *    Global thread to handle connection and session cleanup after termination.
  */
 
-void
+static void
 iscsi_cleanup_thread(void *par)
 {
 	int s, rc;
-	connection_t *conn;
-	session_t *sess, *nxt;
-	uint32_t status;
+	session_t *sess, *nxts;
+	connection_t *conn, *nxtc;
+	ccb_t *ccb;
 
-	s = splbio();
-	while ((conn = TAILQ_FIRST(&iscsi_cleanupc_list)) != NULL ||
-		iscsi_num_send_threads ||
-		!iscsi_detaching) {
-		if (conn != NULL) {
+	mutex_enter(&iscsi_cleanup_mtx);
+	while (iscsi_num_send_threads || !iscsi_detaching ||
+	       !TAILQ_EMPTY(&iscsi_cleanupc_list) || !TAILQ_EMPTY(&iscsi_cleanups_list)) {
+		TAILQ_FOREACH_SAFE(conn, &iscsi_cleanupc_list, connections, nxtc) {
+
 			TAILQ_REMOVE(&iscsi_cleanupc_list, conn, connections);
-			splx(s);
+			mutex_exit(&iscsi_cleanup_mtx);
 
 			sess = conn->session;
-			status = conn->terminating;
 
+			/*
+			 * This implies that connection cleanup only runs when
+			 * the send/recv threads have been killed
+			 */
 			DEBC(conn, 5, ("Cleanup: Waiting for threads to exit\n"));
 			while (conn->sendproc || conn->rcvproc)
-				tsleep(conn, PWAIT, "termwait", hz);
+				kpause("threads", false, hz, NULL);
 
-			while (conn->usecount > 0)
-				tsleep(conn, PWAIT, "finalwait", hz);
+			for (s=1; conn->usecount > 0 && s < 3; ++s)
+				kpause("usecount", false, hz, NULL);
+
+			if (conn->usecount > 0) {
+				DEBC(conn, 5, ("Cleanup: %d CCBs busy\n", conn->usecount));
+				/* retry later */
+				mutex_enter(&iscsi_cleanup_mtx);
+				TAILQ_INSERT_HEAD(&iscsi_cleanupc_list, conn, connections);
+				continue;
+			}
+
+			KASSERT(!conn->in_session);
 
 			callout_halt(&conn->timeout, NULL);
 			closef(conn->sock);
+			cv_destroy(&conn->idle_cv);
+			cv_destroy(&conn->ccb_cv);
+			cv_destroy(&conn->pdu_cv);
+			cv_destroy(&conn->conn_cv);
+			mutex_destroy(&conn->lock);
 			free(conn, M_DEVBUF);
 
-			--sess->total_connections;
+			mutex_enter(&iscsi_cleanup_mtx);
 
-			s = splbio();
-			TAILQ_FOREACH_SAFE(sess, &iscsi_cleanups_list, sessions, nxt) {
-				if (sess->total_connections != 0)
-					continue;
-
-				TAILQ_REMOVE(&iscsi_cleanups_list, sess, sessions);
-				splx(s);
-
-				DEB(1, ("Cleanup: Unmap session %d\n", sess->id));
-
-				rc = unmap_session(sess);
-				if (rc == 0) {
-					DEB(1, ("Cleanup: Unmap session %d failed\n", sess->id));
-					s = splbio();
-					TAILQ_INSERT_HEAD(&iscsi_cleanups_list, sess, sessions);
-					splx(s);
-				}
-
-				if (sess->target_list != NULL)
-					free(sess->target_list, M_TEMP);
-				/* notify event handlers of session shutdown */
-				add_event(ISCSI_SESSION_TERMINATED, sess->id, 0, status);
-				DEB(1, ("Cleanup: session ended %d\n", sess->id));
-				free(sess, M_DEVBUF);
-
-				s = splbio();
+			if (--sess->total_connections == 0) {
+				DEB(1, ("Cleanup: session %d\n", sess->id));
+				KASSERT(sess->sessions.tqe_prev == NULL);
+				TAILQ_INSERT_HEAD(&iscsi_cleanups_list, sess, sessions);
 			}
-			splx(s);
-
-			DEB(5, ("Cleanup: Done\n"));
-
-			s = splbio();
-		} else {
-			/* Go to sleep, but wake up every 30 seconds to
-			 * check for dead event handlers */
-			splx(s);
-			rc = tsleep(&iscsi_cleanupc_list, PWAIT, "cleanup",
-				(TAILQ_FIRST(&event_handlers)) ? 30 * hz : 0);
-			s = splbio();
-			/* if timed out, not woken up */
-			if (rc == EWOULDBLOCK)
-				check_event_handlers();
 		}
+
+		TAILQ_FOREACH_SAFE(sess, &iscsi_cleanups_list, sessions, nxts) {
+			if (sess->refcount > 0)
+				continue;
+			TAILQ_REMOVE(&iscsi_cleanups_list, sess, sessions);
+			sess->sessions.tqe_next = NULL;
+			sess->sessions.tqe_prev = NULL;
+			mutex_exit(&iscsi_cleanup_mtx);
+
+			DEB(1, ("Cleanup: Unmap session %d\n", sess->id));
+			if (unmap_session(sess) == 0) {
+				DEB(1, ("Cleanup: Unmap session %d failed\n", sess->id));
+				mutex_enter(&iscsi_cleanup_mtx);
+				TAILQ_INSERT_HEAD(&iscsi_cleanups_list, sess, sessions);
+				continue;
+			}
+
+			if (sess->target_list != NULL)
+				free(sess->target_list, M_TEMP);
+
+			/* notify event handlers of session shutdown */
+			add_event(ISCSI_SESSION_TERMINATED, sess->id, 0, sess->terminating);
+			DEB(1, ("Cleanup: session ended %d\n", sess->id));
+
+			cv_destroy(&sess->ccb_cv);
+			cv_destroy(&sess->sess_cv);
+			mutex_destroy(&sess->lock);
+			free(sess, M_DEVBUF);
+
+			mutex_enter(&iscsi_cleanup_mtx);
+		}
+
+		/* handle ccb timeouts */
+		while ((ccb = TAILQ_FIRST(&iscsi_timeout_ccb_list)) != NULL) {
+			TAILQ_REMOVE(&iscsi_timeout_ccb_list, ccb, tchain);
+			KASSERT(ccb->timedout == TOUT_QUEUED);
+			ccb->timedout = TOUT_BUSY;
+			mutex_exit(&iscsi_cleanup_mtx);
+			ccb_timeout(ccb);
+			mutex_enter(&iscsi_cleanup_mtx);
+			if (ccb->timedout == TOUT_BUSY)
+				ccb->timedout = TOUT_NONE;
+		}
+
+		/* handle connection timeouts */
+		while ((conn = TAILQ_FIRST(&iscsi_timeout_conn_list)) != NULL) {
+			TAILQ_REMOVE(&iscsi_timeout_conn_list, conn, tchain);
+			KASSERT(conn->timedout == TOUT_QUEUED);
+			conn->timedout = TOUT_BUSY;
+			mutex_exit(&iscsi_cleanup_mtx);
+			connection_timeout(conn);
+			mutex_enter(&iscsi_cleanup_mtx);
+			if (conn->timedout == TOUT_BUSY)
+				conn->timedout = TOUT_NONE;
+		}
+
+		/* Go to sleep, but wake up every 30 seconds to
+		 * check for dead event handlers */
+		rc = cv_timedwait(&iscsi_cleanup_cv, &iscsi_cleanup_mtx,
+			(TAILQ_FIRST(&event_handlers)) ? 120 * hz : 0);
+
+		/* if timed out, not woken up */
+		if (rc == EWOULDBLOCK)
+			check_event_handlers();
 	}
-	splx(s);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	add_event(ISCSI_DRIVER_TERMINATING, 0, 0, ISCSI_STATUS_DRIVER_UNLOAD);
 
 	/*
-     * Wait for all event handlers to deregister, but don't wait more
-     * than 1 minute (assume registering app has died if it takes longer).
+	 * Wait for all event handlers to deregister, but don't wait more
+	 * than 1 minute (assume registering app has died if it takes longer).
 	 */
+	mutex_enter(&iscsi_cleanup_mtx);
 	for (s = 0; TAILQ_FIRST(&event_handlers) != NULL && s < 60; s++)
-		tsleep(&s, PWAIT, "waiteventclr", hz);
+		kpause("waiteventclr", true, hz, &iscsi_cleanup_mtx);
+	mutex_exit(&iscsi_cleanup_mtx);
 
 	iscsi_cleanproc = NULL;
 	DEB(5, ("Cleanup thread exits\n"));
 	kthread_exit(0);
+}
+
+void
+iscsi_init_cleanup(void)
+{
+
+	mutex_init(&iscsi_cleanup_mtx, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&iscsi_cleanup_cv, "cleanup");
+	cv_init(&iscsi_event_cv, "iscsievtwait");
+
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL, iscsi_cleanup_thread,
+	    NULL, &iscsi_cleanproc, "iscsi_cleanup") != 0) {
+		panic("Can't create cleanup thread!");
+	}
+}
+
+int
+iscsi_destroy_cleanup(void)
+{
+	
+	iscsi_detaching = true;
+	mutex_enter(&iscsi_cleanup_mtx);
+	while (iscsi_cleanproc != NULL) {
+		iscsi_notify_cleanup();
+		kpause("detach_wait", false, hz, &iscsi_cleanup_mtx);
+	}
+	mutex_exit(&iscsi_cleanup_mtx);
+
+	cv_destroy(&iscsi_event_cv);
+	cv_destroy(&iscsi_cleanup_cv);
+	mutex_destroy(&iscsi_cleanup_mtx);
+
+	return 0;
+}
+
+void
+iscsi_notify_cleanup(void)
+{
+	cv_signal(&iscsi_cleanup_cv);
 }
 
 
@@ -1585,7 +1907,7 @@ iscsi_cleanup_thread(void *par)
  *    Driver ioctl entry.
  *
  *    Parameter:
- *       dev      The device (ignored)
+ *       file     File structure
  *       cmd      The ioctl Command
  *       addr     IN/OUT: The command parameter
  *       flag     Flags (ignored)
@@ -1596,6 +1918,7 @@ int
 iscsiioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct lwp *l = curlwp;
+	struct iscsifd *d = fp->f_iscsi;
 
 	DEB(1, ("ISCSI Ioctl cmd = %x\n", (int) cmd));
 
@@ -1605,7 +1928,7 @@ iscsiioctl(struct file *fp, u_long cmd, void *addr)
 		break;
 
 	case ISCSI_LOGIN:
-		login((iscsi_login_parameters_t *) addr, l);
+		login((iscsi_login_parameters_t *) addr, l, d->dev);
 		break;
 
 	case ISCSI_ADD_CONNECTION:

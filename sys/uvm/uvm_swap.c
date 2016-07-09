@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.172.4.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.172.4.2 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.172.4.1 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.172.4.2 2016/07/09 20:25:25 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -933,7 +933,7 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		goto bad;
 	}
 
-	UVMHIST_LOG(pdhist, "  dev=%x: size=%d addr=%ld\n", dev, size, addr, 0);
+	UVMHIST_LOG(pdhist, "  dev=%x: size=%d addr=%ld", dev, size, addr, 0);
 
 	/*
 	 * now we need to allocate an extent to manage this swap device

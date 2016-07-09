@@ -1,4 +1,4 @@
-/*	$NetBSD: tda.c,v 1.9.6.1 2015/06/06 14:40:03 skrll Exp $	*/
+/*	$NetBSD: tda.c,v 1.9.6.2 2016/07/09 20:24:57 skrll Exp $	*/
 /*	$OpenBSD: tda.c,v 1.4 2008/02/27 17:25:00 robert Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.9.6.1 2015/06/06 14:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda.c,v 1.9.6.2 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ tda_setspeed(struct tda_softc *sc)
 	iic_release_bus(sc->sc_tag, 0);
 
 	aprint_debug_dev(sc->sc_dev, "changed fan speed to cpu=%d system=%d\n",
-		sc->sc_cfan_speed, sc->sc_sfan_speed); 
+		sc->sc_cfan_speed, sc->sc_sfan_speed);
 }
 
 static bool

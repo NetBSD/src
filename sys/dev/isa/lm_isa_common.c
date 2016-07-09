@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa_common.c,v 1.3 2012/01/18 00:11:43 jakllsch Exp $ */
+/*	$NetBSD: lm_isa_common.c,v 1.3.28.1 2016/07/09 20:25:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.3 2012/01/18 00:11:43 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa_common.c,v 1.3.28.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,8 @@ lm_isa_attach(device_t parent, device_t self, void *aux)
 	sc->lmsc.sc_dev = self;
 	sc->lmsc.lm_writereg = lm_isa_writereg;
 	sc->lmsc.lm_readreg = lm_isa_readreg;
+	/* pass wbsio Device ID */
+	sc->lmsc.sioid = (uint8_t)(uintptr_t)ia->ia_aux;
 
 	lm_attach(&sc->lmsc);
 }

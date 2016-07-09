@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.43.24.1 2016/03/19 11:30:06 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.43.24.2 2016/07/09 20:24:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.43.24.1 2016/03/19 11:30:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.43.24.2 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ intio_map_allocate_region(device_t parent, struct intio_attach_args *ia,
 #endif
 	if (r == 0) {
 		if (flag != INTIO_MAP_ALLOCATE)
-		extent_free(map, ia->ia_addr, ia->ia_size, 0);
+			extent_free(map, ia->ia_addr, ia->ia_size, 0);
 		return 0;
 	}
 

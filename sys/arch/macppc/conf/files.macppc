@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.101 2014/10/11 07:03:09 uebayasi Exp $
+#	$NetBSD: files.macppc,v 1.101.2.1 2016/07/09 20:24:53 skrll Exp $
 #
 # macppc-specific configuration info
 
@@ -307,3 +307,7 @@ device valkyriefb: wsemuldisplaydev, rasops8, vcons, videomode
 attach valkyriefb at mainbus
 file arch/macppc/dev/valkyriefb.c			valkyriefb
 defflag opt_valkyriefb.h VALKYRIEFB_DEBUG
+
+device platinumfb: wsemuldisplaydev, rasops8, vcons, videomode
+attach platinumfb at mainbus
+file arch/macppc/dev/platinumfb.c			platinumfb

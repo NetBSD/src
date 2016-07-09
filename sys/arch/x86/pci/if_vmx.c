@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.5.4.1 2016/03/19 11:30:07 skrll Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.5.4.2 2016/07/09 20:24:59 skrll Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5.4.1 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5.4.2 2016/07/09 20:24:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -756,7 +756,7 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		ifp->if_ibytes += len;
 
 		vmxnet3_rx_csum(rxcd, m);
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		if (le32toh(rxcd->rxc_word2 & VMXNET3_RXC_VLAN)) {
 			VLAN_INPUT_TAG(ifp, m,

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.41 2014/10/18 08:33:28 snj Exp $ */
+/* $NetBSD: auixp.c,v 1.41.2.1 2016/07/09 20:25:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.41 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.41.2.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1189,7 +1189,8 @@ auixp_attach(device_t parent, device_t self, void *aux)
 
 	/* init chip */
 	if (auixp_init(sc) == -1) {
-		aprint_error_dev(sc->sc_dev, "auixp_attach: unable to initialize the card\n");
+		aprint_error_dev(sc->sc_dev,
+		    "auixp_attach: unable to initialize the card\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.10 2016/05/29 08:44:31 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.11 2016/07/09 20:25:15 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.10 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.11 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -343,12 +343,13 @@ static const struct {
 	{ 161, 0x08808, 0x0242f, 0x00281 }
 };
 
-int             ural_match(device_t, cfdata_t, void *);
-void            ural_attach(device_t, device_t, void *);
-int             ural_detach(device_t, int);
-int             ural_activate(device_t, enum devact);
+int	ural_match(device_t, cfdata_t, void *);
+void	ural_attach(device_t, device_t, void *);
+int	ural_detach(device_t, int);
+int	ural_activate(device_t, enum devact);
 extern struct cfdriver ural_cd;
-CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach, ural_detach, ural_activate);
+CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach,
+    ural_detach, ural_activate);
 
 int
 ural_match(device_t parent, cfdata_t match, void *aux)
@@ -520,8 +521,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 
 	ieee80211_announce(ic);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -552,8 +552,7 @@ ural_detach(device_t self, int flags)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }
@@ -950,7 +949,7 @@ ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	data->buf = mtod(data->m, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = (le32toh(desc->flags) >> 16) & 0xfff;
 	m->m_flags |= M_HASFCS;	/* h/w leaves FCS */
 

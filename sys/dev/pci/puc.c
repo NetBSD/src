@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.37.6.1 2015/06/06 14:40:12 skrll Exp $	*/
+/*	$NetBSD: puc.c,v 1.37.6.2 2016/07/09 20:25:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.37.6.1 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.37.6.2 2016/07/09 20:25:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,16 +301,16 @@ puc_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_bar_mappings[barindex].s -
 		      sc->sc_desc->ports[i].offset,
 		    &subregion_handle) != 0) {
-			aprint_error_dev(self, "couldn't get subregion for port %d\n", i);
+			aprint_error_dev(self,
+			    "couldn't get subregion for port %d\n", i);
 			continue;
 		}
 		paa.h = subregion_handle;
 
 #if 0
 		printf("%s: port %d: %s @ (index %d) 0x%x (0x%lx, 0x%lx)\n",
-		    device_xname(self), paa.port,
-		    puc_port_type_name(paa.type), barindex, (int)paa.a,
-		    (long)paa.t, (long)paa.h);
+		    device_xname(self), paa.port, puc_port_type_name(paa.type),
+		    barindex, (int)paa.a, (long)paa.t, (long)paa.h);
 #endif
 
 		locs[PUCCF_PORT] = i;

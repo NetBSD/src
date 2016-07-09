@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.16.4.4 2016/05/29 08:44:38 skrll Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.16.4.5 2016/07/09 20:25:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.5 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -188,13 +188,13 @@ mplsintr(void)
 			return;
 
 		if (((m->m_flags & M_PKTHDR) == 0) ||
-		    (m->m_pkthdr.rcvif == 0))
+		    (m->m_pkthdr.rcvif_index == 0))
 			panic("mplsintr(): no pkthdr or rcvif");
 
 #ifdef MBUFTRACE
 		m_claimm(m, &mpls_owner);
 #endif
-		mpls_input(m->m_pkthdr.rcvif, m);
+		mpls_input(m_get_rcvif_NOMPSAFE(m), m);
 	}
 }
 
@@ -478,9 +478,7 @@ mpls_send_frame(struct mbuf *m, struct ifnet *ifp, const struct rtentry *rt)
 #ifdef INET
 		ret = ip_if_output(ifp, m, rt->rt_gateway, rt);
 #else
-		KERNEL_LOCK(1, NULL);
-		ret =  (*ifp->if_output)(ifp, m, rt->rt_gateway, rt);
-		KERNEL_UNLOCK_ONE(NULL);
+		ret = if_output_lock(ifp, ifp, m, rt->rt_gateway, rt);
 #endif
 		return ret;
 		break;
@@ -645,7 +643,7 @@ static struct mbuf *
 mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms)
 {
 	union mpls_shim *shim;
-
+ 
 	M_PREPEND(m, sizeof(*ms), M_DONTWAIT);
 	if (m == NULL)
 		return NULL;

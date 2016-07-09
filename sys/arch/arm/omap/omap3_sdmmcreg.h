@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.7 2013/07/27 17:10:28 jklos Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.7.6.1 2016/07/09 20:24:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,12 +45,14 @@
 #define SDMMC4_BASE_4430	0x480D1000	// same for omap5
 #define SDMMC5_BASE_4430	0x480D5000	// same for omap5
 
-#define	SDMMC1_BASE_TIAM335X	0x48060100
-#define	SDMMC2_BASE_TIAM335X	0x481d8100
-#define	SDMMC3_BASE_TIAM335X	0x47810100
+#define	SDMMC1_BASE_TIAM335X	0x48060000
+#define	SDMMC2_BASE_TIAM335X	0x481d8000
+#define	SDMMC3_BASE_TIAM335X	0x47810000
 
 #define	OMAP3_SDMMC_SDHC_OFFSET	0x100
 #define	OMAP3_SDMMC_SDHC_SIZE	0x100
+
+#define	OMAP4_SDMMC_HL_SIZE	0x100
 
 #define MMCHS_SYSCONFIG		0x010	/* System Configuration */
 #  define SYSCONFIG_CLOCKACTIVITY_MASK	(3 << 8)

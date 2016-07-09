@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.55.4.2 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: igmp.c,v 1.55.4.3 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.55.4.2 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.55.4.3 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -184,7 +184,7 @@ igmp_init(void)
 void
 igmp_input(struct mbuf *m, ...)
 {
-	ifnet_t *ifp = m->m_pkthdr.rcvif;
+	ifnet_t *ifp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct igmp *igmp;
 	u_int minlen, timer;
@@ -192,6 +192,7 @@ igmp_input(struct mbuf *m, ...)
 	struct in_ifaddr *ia;
 	int proto, ip_len, iphlen;
 	va_list ap;
+	struct psref psref;
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -234,6 +235,10 @@ igmp_input(struct mbuf *m, ...)
 	m->m_data -= iphlen;
 	m->m_len += iphlen;
 
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		goto drop;
+
 	switch (igmp->igmp_type) {
 
 	case IGMP_HOST_MEMBERSHIP_QUERY:
@@ -248,8 +253,7 @@ igmp_input(struct mbuf *m, ...)
 
 			if (ip->ip_dst.s_addr != INADDR_ALLHOSTS_GROUP) {
 				IGMP_STATINC(IGMP_STAT_RCV_BADQUERIES);
-				m_freem(m);
-				return;
+				goto drop;
 			}
 
 			in_multi_lock(RW_WRITER);
@@ -286,8 +290,7 @@ igmp_input(struct mbuf *m, ...)
 
 			if (!IN_MULTICAST(ip->ip_dst.s_addr)) {
 				IGMP_STATINC(IGMP_STAT_RCV_BADQUERIES);
-				m_freem(m);
-				return;
+				goto drop;
 			}
 
 			timer = igmp->igmp_code * PR_FASTHZ / IGMP_TIMER_SCALE;
@@ -345,8 +348,7 @@ igmp_input(struct mbuf *m, ...)
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			IGMP_STATINC(IGMP_STAT_RCV_BADREPORTS);
-			m_freem(m);
-			return;
+			goto drop;
 		}
 
 		/*
@@ -359,7 +361,7 @@ igmp_input(struct mbuf *m, ...)
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
-			IFP_TO_IA(ifp, ia);		/* XXX */
+			ia = in_get_ia_from_ifp(ifp);		/* XXX */
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
 		}
@@ -399,7 +401,7 @@ igmp_input(struct mbuf *m, ...)
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
-		IFP_TO_IA(ifp, ia);			/* XXX */
+		ia = in_get_ia_from_ifp(ifp);			/* XXX */
 		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
 			break;
 #endif
@@ -412,8 +414,7 @@ igmp_input(struct mbuf *m, ...)
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			IGMP_STATINC(IGMP_STAT_RCV_BADREPORTS);
-			m_freem(m);
-			return;
+			goto drop;
 		}
 
 		/*
@@ -427,7 +428,7 @@ igmp_input(struct mbuf *m, ...)
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
-			IFP_TO_IA(ifp, ia);		/* XXX */
+			ia = in_get_ia_from_ifp(ifp);		/* XXX */
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
@@ -458,12 +459,18 @@ igmp_input(struct mbuf *m, ...)
 		break;
 
 	}
+	m_put_rcvif_psref(ifp, &psref);
 
 	/*
 	 * Pass all valid IGMP packets up to any process(es) listening
 	 * on a raw IGMP socket.
 	 */
 	rip_input(m, iphlen, proto);
+	return;
+
+drop:
+	m_put_rcvif_psref(ifp, &psref);
+	m_freem(m);
 	return;
 }
 
@@ -614,7 +621,7 @@ igmp_sendpkt(struct in_multi *inm, int type)
 	m->m_data -= sizeof(struct ip);
 	m->m_len += sizeof(struct ip);
 
-	imo.imo_multicast_ifp = inm->inm_ifp;
+	imo.imo_multicast_if_index = if_get_index(inm->inm_ifp);
 	imo.imo_multicast_ttl = 1;
 #ifdef RSVP_ISI
 	imo.imo_multicast_vif = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.22.14.1 2016/03/19 11:30:01 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.22.14.2 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.22.14.1 2016/03/19 11:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.22.14.2 2016/07/09 20:24:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -784,7 +784,7 @@ netdock_get(struct netdock_softc *sc, int datalen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = datalen;
 	len = MHLEN;
 	top = NULL;

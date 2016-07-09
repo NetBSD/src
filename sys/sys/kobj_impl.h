@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_impl.h,v 1.3 2011/08/13 21:04:07 christos Exp $	*/
+/*	$NetBSD: kobj_impl.h,v 1.3.30.1 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -107,7 +107,8 @@ struct kobj {
 	kobjtype_t	ko_type;
 	void		*ko_source;
 	ssize_t		ko_memsize;
-	vaddr_t		ko_address;	/* Relocation address */
+	vaddr_t		ko_text_address;	/* Address of text segment */
+	vaddr_t		ko_data_address;	/* Address of data segment */
 	Elf_Shdr	*ko_shdr;
 	progent_t	*ko_progtab;
 	relaent_t	*ko_relatab;
@@ -115,7 +116,8 @@ struct kobj {
 	Elf_Sym		*ko_symtab;	/* Symbol table */
 	char		*ko_strtab;	/* String table */
 	char		*ko_shstrtab;	/* Section name string table */
-	size_t		ko_size;	/* Size of text/data/bss */
+	size_t		ko_text_size;	/* Size of text segment */
+	size_t		ko_data_size;	/* Size of data/bss/rodata segment */
 	size_t		ko_symcnt;	/* Number of symbols */
 	size_t		ko_strtabsz;	/* Number of bytes in string table */
 	size_t		ko_shstrtabsz;	/* Number of bytes in scn str table */

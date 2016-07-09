@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6.4.3 2016/03/19 11:29:56 skrll Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6.4.4 2016/07/09 20:24:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.4.3 2016/03/19 11:29:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.4.4 2016/07/09 20:24:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1162,7 +1162,7 @@ cpsw_rxintr(void *arg)
 		if (ISSET(dw[3], CPDMA_BD_PASSCRC))
 			len -= ETHER_CRC_LEN;
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		m->m_data += off;
 

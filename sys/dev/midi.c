@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.81.4.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: midi.c,v 1.81.4.2 2016/07/09 20:25:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.2 2016/07/09 20:25:01 skrll Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -317,7 +317,7 @@ midi_attach(struct midi_softc *sc)
 	aprint_normal(": %s\n", mi.name);
 
 	if (!pmf_device_register(sc->dev, NULL, NULL))
-		aprint_error_dev(sc->dev, "couldn't establish power handler\n"); 
+		aprint_error_dev(sc->dev, "couldn't establish power handler\n");
 }
 
 void

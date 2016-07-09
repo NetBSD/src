@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.9 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.10 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.9 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.10 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -86,12 +86,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.9 2016/03/19 11:30:19 skrll Exp $"
 
 
 /* Function declarations */
-int             url_match(device_t, cfdata_t, void *);
-void            url_attach(device_t, device_t, void *);
-int             url_detach(device_t, int);
-int             url_activate(device_t, enum devact);
+int	url_match(device_t, cfdata_t, void *);
+void	url_attach(device_t, device_t, void *);
+int	url_detach(device_t, int);
+int	url_activate(device_t, enum devact);
 extern struct cfdriver url_cd;
-CFATTACH_DECL_NEW(url, sizeof(struct url_softc), url_match, url_attach, url_detach, url_activate);
+CFATTACH_DECL_NEW(url, sizeof(struct url_softc), url_match, url_attach,
+    url_detach, url_activate);
 
 Static int url_openpipes(struct url_softc *);
 Static int url_rx_list_init(struct url_softc *);
@@ -380,8 +381,7 @@ url_detach(device_t self, int flags)
 	splx(s);
 
 	rw_destroy(&sc->sc_mii_rwlock);
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }
@@ -1039,7 +1039,7 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	m = c->url_mbuf;
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

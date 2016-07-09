@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.179.2.7 2016/05/29 08:44:39 skrll Exp $	*/
+/*	$NetBSD: in6.c,v 1.179.2.8 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.7 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.8 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -142,11 +142,20 @@ const struct in6_addr in6mask128 = IN6MASK128;
 const struct sockaddr_in6 sa6_any = {sizeof(sa6_any), AF_INET6,
 				     0, 0, IN6ADDR_ANY_INIT, 0};
 
+struct pslist_head	in6_ifaddr_list;
+
 static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
+
+void
+in6_init(void)
+{
+
+	PSLIST_INIT(&in6_ifaddr_list);
+}
 
 /*
  * Add ownaddr as loopback rtentry.  We previously add the route only if
@@ -209,7 +218,7 @@ in6_ifremlocal(struct ifaddr *ifa)
 	 * XXX agree, especially now that I have fixed the dangling
 	 * XXX ifp-pointers bug.
 	 */
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (!IN6_ARE_ADDR_EQUAL(IFA_IN6(ifa), &ia->ia_addr.sin6_addr))
 			continue;
 		if (ia->ia_ifp != ifa->ifa_ifp)
@@ -758,7 +767,6 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
     struct in6_ifaddr *ia, int flags)
 {
 	int error = 0, hostIsNew = 0, plen = -1;
-	struct in6_ifaddr *oia;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
 	struct in6_multi_mship *imm;
@@ -921,16 +929,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		    (struct sockaddr *)&ia->ia_prefixmask;
 
 		ia->ia_ifp = ifp;
-		if ((oia = in6_ifaddr) != NULL) {
-			for ( ; oia->ia_next; oia = oia->ia_next)
-				continue;
-			oia->ia_next = ia;
-		} else
-			in6_ifaddr = ia;
-		/* gain a refcnt for the link from in6_ifaddr */
-		ifaref(&ia->ia_ifa);
-
-		ifa_insert(ifp, &ia->ia_ifa);
+		IN6_ADDRLIST_ENTRY_INIT(ia);
 	}
 
 	/* update timestamp */
@@ -950,7 +949,9 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			    " existing (%s) address should not be changed\n",
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
 			error = EINVAL;
-			goto unlink;
+			if (hostIsNew)
+				free(ia, M_IFADDR);
+			goto exit;
 		}
 		ia->ia_prefixmask = ifra->ifra_prefixmask;
 	}
@@ -1020,13 +1021,26 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	}
 
 	/* reset the interface and routing table appropriately. */
-	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0)
-		goto unlink;
+	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0) {
+		if (hostIsNew)
+			free(ia, M_IFADDR);
+		goto exit;
+	}
+
 	/*
 	 * We are done if we have simply modified an existing address.
 	 */
 	if (!hostIsNew)
 		return error;
+
+	/*
+	 * Insert ia to the global list and ifa to the interface's list.
+	 */
+	IN6_ADDRLIST_WRITER_INSERT_TAIL(ia);
+
+	/* gain a refcnt for the link from in6_ifaddr */
+	ifaref(&ia->ia_ifa);
+	ifa_insert(ifp, &ia->ia_ifa);
 
 	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
@@ -1269,19 +1283,11 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		nd6_dad_start(&ia->ia_ifa, dad_delay + 1);
 	}
 
-	return error;
-
-  unlink:
-	/*
-	 * XXX: if a change of an existing address failed, keep the entry
-	 * anyway.
-	 */
-	if (hostIsNew)
-		in6_unlink_ifa(ia, ifp);
-	return error;
+	return 0;
 
   cleanup:
 	in6_purgeaddr(&ia->ia_ifa);
+  exit:
 	return error;
 }
 
@@ -1343,52 +1349,41 @@ in6_purgeaddr(struct ifaddr *ifa)
 static void
 in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 {
-	struct in6_ifaddr *oia;
 	int	s = splnet();
 
 	ifa_remove(ifp, &ia->ia_ifa);
 
-	oia = ia;
-	if (oia == (ia = in6_ifaddr))
-		in6_ifaddr = ia->ia_next;
-	else {
-		while (ia->ia_next && (ia->ia_next != oia))
-			ia = ia->ia_next;
-		if (ia->ia_next)
-			ia->ia_next = oia->ia_next;
-		else {
-			/* search failed */
-			printf("Couldn't unlink in6_ifaddr from in6_ifaddr\n");
-		}
-	}
+	IN6_ADDRLIST_WRITER_REMOVE(ia);
+	/* TODO psref_target_destroy */
+	IN6_ADDRLIST_ENTRY_DESTROY(ia);
 
 	/*
 	 * XXX thorpej@NetBSD.org -- if the interface is going
 	 * XXX away, don't save the multicast entries, delete them!
 	 */
-	if (LIST_EMPTY(&oia->ia6_multiaddrs))
+	if (LIST_EMPTY(&ia->ia6_multiaddrs))
 		;
-	else if (oia->ia_ifa.ifa_ifp->if_output == if_nulloutput) {
+	else if (if_is_deactivated(ia->ia_ifa.ifa_ifp)) {
 		struct in6_multi *in6m, *next;
 
-		for (in6m = LIST_FIRST(&oia->ia6_multiaddrs); in6m != NULL;
+		for (in6m = LIST_FIRST(&ia->ia6_multiaddrs); in6m != NULL;
 		     in6m = next) {
 			next = LIST_NEXT(in6m, in6m_entry);
 			in6_delmulti(in6m);
 		}
 	} else
-		in6_savemkludge(oia);
+		in6_savemkludge(ia);
 
 	/*
 	 * Release the reference to the base prefix.  There should be a
 	 * positive reference.
 	 */
-	if (oia->ia6_ndpr == NULL) {
+	if (ia->ia6_ndpr == NULL) {
 		nd6log(LOG_NOTICE, "autoconf'ed address %p has no prefix\n",
-		    oia);
+		    ia);
 	} else {
-		oia->ia6_ndpr->ndpr_refcnt--;
-		oia->ia6_ndpr = NULL;
+		ia->ia6_ndpr->ndpr_refcnt--;
+		ia->ia6_ndpr = NULL;
 	}
 
 	/*
@@ -1396,14 +1391,14 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 	 * pfxlist_onlink_check() since the release might affect the status of
 	 * other (detached) addresses.
 	 */
-	if ((oia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
+	if ((ia->ia6_flags & IN6_IFF_AUTOCONF) != 0)
 		pfxlist_onlink_check();
 
 	/*
 	 * release another refcnt for the link from in6_ifaddr.
 	 * Note that we should decrement the refcnt at least once for all *BSD.
 	 */
-	ifafree(&oia->ia_ifa);
+	ifafree(&ia->ia_ifa);
 
 	splx(s);
 }
@@ -1411,7 +1406,6 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 void
 in6_purgeif(struct ifnet *ifp)
 {
-	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 
 	in6_ifdetach(ifp);
 }
@@ -1591,7 +1585,7 @@ in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			}
 		}
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			if (!cmp)
@@ -1687,9 +1681,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ifacount++;
@@ -1697,7 +1689,7 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 
 	ia->ia_addr = *sin6;
 
-	if (ifacount <= 1 &&
+	if (ifacount <= 0 &&
 	    (error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0) {
 		splx(s);
 		return error;
@@ -1757,9 +1749,7 @@ in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 {
 	struct ifaddr *best_ifa = NULL, *ifa;
 
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (!IN6_IS_ADDR_LINKLOCAL(IFA_IN6(ifa)))
@@ -1785,7 +1775,7 @@ in6ifa_ifwithaddr(const struct in6_addr *addr, uint32_t zoneid)
 	IN6_IFADDR_RLOCK();
 	LIST_FOREACH(ia, IN6ADDR_HASH(addr), ia6_hash) {
 #else
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 #endif
 		if (IN6_ARE_ADDR_EQUAL(IA6_IN6(ia), addr)) {
 			if (zoneid != 0 &&
@@ -1809,9 +1799,7 @@ in6ifa_ifpwithaddr(const struct ifnet *ifp, const struct in6_addr *addr)
 {
 	struct ifaddr *best_ifa = NULL, *ifa;
 
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;	/* just for safety */
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		if (!IN6_ARE_ADDR_EQUAL(addr, IFA_IN6(ifa)))
@@ -1856,10 +1844,11 @@ in6_localaddr(const struct in6_addr *in6)
 	if (IN6_IS_ADDR_LOOPBACK(in6) || IN6_IS_ADDR_LINKLOCAL(in6))
 		return 1;
 
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next)
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_MASKED_ADDR_EQUAL(in6, &ia->ia_addr.sin6_addr,
 					      &ia->ia_prefixmask.sin6_addr))
 			return 1;
+	}
 
 	return 0;
 }
@@ -1869,7 +1858,7 @@ in6_is_addr_deprecated(struct sockaddr_in6 *sa6)
 {
 	struct in6_ifaddr *ia;
 
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &sa6->sin6_addr) &&
 #ifdef SCOPEDROUTING
@@ -1975,7 +1964,7 @@ in6_ifawithifp(struct ifnet *ifp, struct in6_addr *dst)
 	 * If two or more, return one which matches the dst longest.
 	 * If none, return one of global addresses assigned other ifs.
 	 */
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ia = (struct in6_ifaddr *)ifa;
@@ -2012,7 +2001,7 @@ in6_ifawithifp(struct ifnet *ifp, struct in6_addr *dst)
 	if (best_ia != NULL)
 		return best_ia;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ia = (struct in6_ifaddr *)ifa;
@@ -2057,7 +2046,7 @@ in6_if_link_up(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		return;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ia = (struct in6_ifaddr *)ifa;
@@ -2121,7 +2110,7 @@ in6_if_link_down(struct ifnet *ifp)
 	/* Any prefixes on this interface should be detached as well */
 	pfxlist_onlink_check();
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ia = (struct in6_ifaddr *)ifa;

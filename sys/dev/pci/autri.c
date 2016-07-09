@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.52 2014/08/01 16:41:58 joerg Exp $	*/
+/*	$NetBSD: autri.c,v 1.52.4.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.52 2014/08/01 16:41:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.52.4.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include "midi.h"
 
@@ -588,7 +588,8 @@ autri_attach(device_t parent, device_t self, void *aux)
 
 	r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
 	if (r != 0) {
-		aprint_error_dev(sc->sc_dev, "can't attach codec (error 0x%X)\n", r);
+		aprint_error_dev(sc->sc_dev,
+		    "can't attach codec (error 0x%X)\n", r);
 		return;
 	}
 

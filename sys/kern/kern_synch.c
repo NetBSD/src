@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.308.6.2 2016/04/22 15:44:16 skrll Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.308.6.3 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.308.6.2 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.308.6.3 2016/07/09 20:25:20 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1085,9 +1085,11 @@ sched_lendpri(struct lwp *l, pri_t pri)
 		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
 		sched_dequeue(l);
 		l->l_inheritedprio = pri;
+		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 		sched_enqueue(l, false);
 	} else {
 		l->l_inheritedprio = pri;
+		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 	}
 	resched_cpu(l);
 }

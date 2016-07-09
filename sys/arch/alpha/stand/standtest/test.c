@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.5.32.1 2015/12/27 12:09:28 skrll Exp $ */
+/* $NetBSD: test.c,v 1.5.32.2 2016/07/09 20:24:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -115,7 +115,7 @@ main(unsigned long pfn, unsigned long ptb, unsigned long bim, unsigned long bip,
 
 	do {
 		printf("test> ");
-		gets(input_buf);
+		kgets(input_buf, sizeof(input_buf));
 
 		dispatch_cmd(input_buf, toplevel_cmds);
 	} while (!done);

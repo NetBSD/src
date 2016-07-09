@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.142.4.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: i82557.c,v 1.142.4.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.142.4.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.142.4.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1448,7 +1448,7 @@ fxp_rxintr(struct fxp_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

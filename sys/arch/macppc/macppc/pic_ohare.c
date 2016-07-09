@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.12 2013/04/21 15:42:11 kiyohara Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.12.12.1 2016/07/09 20:24:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.12 2013/04/21 15:42:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.12.12.1 2016/07/09 20:24:53 skrll Exp $");
 
 #include "opt_interrupt.h"
 
@@ -68,8 +68,6 @@ static inline void ohare_read_events(struct ohare_ops *);
 #define INT_ENABLE_REG	((uint32_t)pic->pic_cookie + 0x24)
 #define INT_CLEAR_REG	((uint32_t)pic->pic_cookie + 0x28)
 #define INT_LEVEL_REG	((uint32_t)pic->pic_cookie + 0x2c)
-#define INT_LEVEL_MASK_OHARE	0x1ff00000
-#define INT_LEVEL_MASK_GC	0x3ff00000
 
 int init_ohare(void)
 {
@@ -135,12 +133,12 @@ setup_ohare(uint32_t addr, int is_gc)
 	if (is_gc) {
 	
 		strcpy(pic->pic_name, "gc");
-		ohare->level_mask = 0;
 	} else {
 
 		strcpy(pic->pic_name, "ohare");
-		ohare->level_mask = 0;
 	}
+	ohare->level_mask = 0;
+
 	for (i = 0; i < OHARE_NIRQ; i++)
 		ohare->priority_masks[i] = 0;
 	for (i = 0; i < NIPL; i++)

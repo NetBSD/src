@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_dinode.h,v 1.2 2007/06/30 15:56:16 rumble Exp $	*/
+/*	$NetBSD: efs_dinode.h,v 1.2.102.1 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -92,11 +92,11 @@ struct efs_dinode {
 		 * dev_t's are used, di_odev is set to 0xffff.
 		 */
 		struct {
-			uint16_t dev_old; 
+			uint16_t dev_old;
 			uint32_t dev_new;
 		} __packed dev;
 	} di_u;
-} __packed; 
+} __packed;
 
 #define di_extents	di_u.extents
 #define di_symlink	di_u.symlink

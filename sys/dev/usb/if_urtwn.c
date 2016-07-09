@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.13 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.14 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.13 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.14 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2265,7 +2265,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	}
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	wh = (struct ieee80211_frame *)((uint8_t *)&stat[1] + infosz);
 	memcpy(mtod(m, uint8_t *), wh, pktlen);
 	m->m_pkthdr.len = m->m_len = pktlen;

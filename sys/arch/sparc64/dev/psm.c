@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.10 2012/10/27 17:18:12 chs Exp $ */
+/* $NetBSD: psm.c,v 1.10.14.1 2016/07/09 20:24:57 skrll Exp $ */
 /*
  * Copyright (c) 2006 Itronix Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  * time with APM at this point, and some of sysmon seems "lacking".
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.10 2012/10/27 17:18:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psm.c,v 1.10.14.1 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ psm_ecmd_rd16(struct psm_softc *sc, uint16_t *data, uint8_t iar, uint8_t mode,
     uint8_t addr)
 {
 	uint8_t	cmr = PSM_CMR_DATA(mode, PSM_L_16, PSM_D_RD, addr);
-	int	x, rc, retr = CMD_RETRIES; 
+	int	x, rc, retr = CMD_RETRIES;
 
 	x = splhigh();
 
@@ -367,7 +367,7 @@ psm_ecmd_rd8(struct psm_softc *sc, uint8_t *data, uint8_t iar, uint8_t mode,
     uint8_t addr)
 {
 	uint8_t	cmr = PSM_CMR_DATA(mode, PSM_L_8, PSM_D_RD, addr);
-	int	x, rc, retr = CMD_RETRIES; 
+	int	x, rc, retr = CMD_RETRIES;
 
 	x = splhigh();
 

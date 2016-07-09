@@ -1,7 +1,7 @@
-/* $NetBSD: hytp14var.h,v 1.2.6.1 2015/09/22 12:05:58 skrll Exp $ */
+/* $NetBSD: hytp14var.h,v 1.2.6.2 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014,2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,18 +47,26 @@
 /* the default measurement interval is 50 seconds */
 #define HYTP14_MR_INTERVAL	50
 
+#define HYTP14_THR_INIT		0
+#define HYTP14_THR_RUN		1
+#define HYTP14_THR_STOP		2
+
 struct hytp14_sc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
-
+	
+	kmutex_t	sc_mutex;
+	kcondvar_t	sc_condvar;
+	struct lwp     *sc_thread;  /* measurement poll thread */
+	int		sc_state;   /* thread communication */
+	
 	int		sc_valid;   /* ENVSYS validity state for this sensor */
 	uint8_t		sc_data[4]; /* current sensor data */
 	uint8_t		sc_last[4]; /* last sensor data, before MR */
 
 	int		sc_numsensors;
 
-	callout_t	sc_mrcallout;
 	int32_t		sc_mrinterval;
 
 	struct sysmon_envsys *sc_sme;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.52.6.2 2016/03/19 11:29:55 skrll Exp $ */
+/*	$NetBSD: if_es.c,v 1.52.6.3 2016/07/09 20:24:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.2 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.52.6.3 2016/07/09 20:24:49 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -663,7 +663,7 @@ esrint(struct es_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
 	top = NULL;

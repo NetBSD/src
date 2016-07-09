@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.37.40.2 2015/06/06 14:40:26 skrll Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.37.40.3 2016/07/09 20:25:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37.40.2 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.37.40.3 2016/07/09 20:25:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,7 +309,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func, struct mbu
 		m = m->m_next;
 	}
 	mhead->m_pkthdr.len = len;
-	mhead->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(mhead);
 
 	error = nfs_boot_sendrecv(so, &sin, NULL, mhead, krpccheck, &m, &from,
 	    &xid, l);

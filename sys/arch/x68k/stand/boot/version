@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6.14.1 2016/03/19 11:30:06 skrll Exp $
+$NetBSD: version,v 1.6.14.2 2016/07/09 20:24:58 skrll Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -13,3 +13,4 @@ is taken as the current.
 1.5:	Make key interrupt to get boot menu works properly even after
 	non ASCII keys (CTRL, OPT.1 etc.) are pressed during boot.
 1.6:	Disable slow gunzip CRC32 calculation.
+1.7:	Integrate netboot.

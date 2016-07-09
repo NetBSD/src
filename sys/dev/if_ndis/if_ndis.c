@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.34.14.1 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.34.14.2 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.34.14.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.34.14.2 2016/07/09 20:25:03 skrll Exp $");
 #endif
 
 
@@ -1020,7 +1020,7 @@ ndis_rxeof(ndis_handle adapter, ndis_packet **packets, uint32_t pktcnt)
 					m0 = m;
 			} else
 				p->np_oob.npo_status = NDIS_STATUS_PENDING;
-			m0->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m0, ifp);
 			ifp->if_ipackets++;
 
 			/* Deal with checksum offload. */

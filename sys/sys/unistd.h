@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.55.6.1 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: unistd.h,v 1.55.6.2 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -146,6 +146,8 @@
 					/* pthread_attr for stack address */
 #define	_POSIX_THREAD_ATTR_STACKADDR	200112L
 					/* _r functions */
+#define	_POSIX_THREAD_PRIO_PROTECT	200112L
+					/* PTHREAD_PRIO_PROTECT */
 #define	_POSIX_THREAD_SAFE_FUNCTIONS	200112L
 					/* timeouts */
 #undef	_POSIX_TIMEOUTS
@@ -308,7 +310,10 @@
 #define	_SC_SHARED_MEMORY_OBJECTS	87
 
 #define	_SC_TIMER_MAX			88
-
+#define	_SC_SEM_NSEMS_MAX		89
+#define	_SC_CPUTIME			90
+#define	_SC_THREAD_CPUTIME		91
+#define	_SC_DELAYTIMER_MAX		92
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121

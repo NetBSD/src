@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.11 2013/11/10 20:09:52 christos Exp $	*/
+/*	$NetBSD: sii.c,v 1.11.6.1 2016/07/09 20:24:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.11 2013/11/10 20:09:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii.c,v 1.11.6.1 2016/07/09 20:24:55 skrll Exp $");
 
 #include "sii.h"
 /*
@@ -1759,11 +1759,8 @@ sii_CmdDone(struct siisoftc *sc, int target, int error)
 {
 	int i;
 
-#ifdef DIAGNOSTIC
-	ScsiCmd *scsicmd = sc->sc_cmd[target];
-	if (target < 0 || !scsicmd)
-		panic("sii_CmdDone");
-#endif
+	ScsiCmd *scsicmd __unused = sc->sc_cmd[target];
+	KASSERTMSG(target >= 0 && scsicmd, "sii_CmdDone");
 	sc->sc_cmd[target] = (ScsiCmd *)0;
 #ifdef DEBUG
 	if (sii_debug > 1) {

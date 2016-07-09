@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.84.16.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.84.16.2 2016/07/09 20:24:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -495,7 +495,11 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
-	 * Now we can enable interrupts since no interrupts can be delivered
+	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, turn the
+	 * global interrupt enable bit on again. This will allow
+	 * high-priority interrupts to be delivered once a
+	 * low-priority interrupt handler lowers spl to execute.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 	nop
@@ -771,8 +775,13 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	move	s0, v0				# remember previous priority
 
 	/*
-	 * Now that we are at IPL_HIGH, we can turn off FPU and turn on
-	 * interrupts since they all masked.
+	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, turn the
+	 * global interrupt enable bit on again. This will allow
+	 * high-priority interrupts to be delivered once a
+	 * low-priority interrupt handler lowers spl to execute.
+	 *
+	 * Also switch off the FPU.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 #ifndef NOFPU

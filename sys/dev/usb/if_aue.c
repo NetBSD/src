@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.11 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.12 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.11 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.12 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -775,7 +775,8 @@ aue_attach(device_t parent, device_t self, void *aux)
 		    "creating multicast configuration thread\n");
 		return;
 	}
-	sc->aue_flags = aue_lookup(uaa->uaa_vendor, uaa->uaa_product)->aue_flags;
+	sc->aue_flags = aue_lookup(uaa->uaa_vendor,
+	    uaa->uaa_product)->aue_flags;
 
 	sc->aue_udev = dev;
 	sc->aue_iface = iface;
@@ -1152,7 +1153,7 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	m->m_pkthdr.len = m->m_len = total_len;
 	ifp->if_ipackets++;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

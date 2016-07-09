@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.29 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.30 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.29 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.30 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_motg.h"
@@ -1230,10 +1230,10 @@ motg_setup_endpoint_rx(struct usbd_xfer *xfer)
 	    );
 	if (epnumber == 0) {
 		if (sc->sc_high_speed) {
-			UWRITE1(sc, MUSB2_REG_TXNAKLIMIT,
+			UWRITE1(sc, MUSB2_REG_RXNAKLIMIT,
 			    NAK_TO_CTRL_HIGH);
 		} else {
-			UWRITE1(sc, MUSB2_REG_TXNAKLIMIT, NAK_TO_CTRL);
+			UWRITE1(sc, MUSB2_REG_RXNAKLIMIT, NAK_TO_CTRL);
 		}
 	} else {
 		if ((xfer->ux_pipe->up_endpoint->ue_edesc->bmAttributes & UE_XFERTYPE)

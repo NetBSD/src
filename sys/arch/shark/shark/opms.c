@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.27 2014/10/18 08:33:26 snj Exp $        */
+/*      $NetBSD: opms.c,v 1.27.2.1 2016/07/09 20:24:56 skrll Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.27 2014/10/18 08:33:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.27.2.1 2016/07/09 20:24:56 skrll Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -220,7 +220,7 @@ const struct cdevsw opms_cdevsw = {
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 
 */
-int opmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR; 
+int opmsdebug = KERN_DEBUG_WARNING | KERN_DEBUG_ERROR;
 
 
 /*
@@ -263,8 +263,8 @@ opmsprobe(device_t parent, cfdata_t match, void *aux)
 {
     struct cfdata             *cf     = match;
     int                       probeOk = 0;    /* assume failure */
-    struct isa_attach_args    *ia = aux;                   
-    
+    struct isa_attach_args    *ia = aux;
+
     KERN_DEBUG(opmsdebug, KERN_DEBUG_INFO, ("opmsprobe: entered\n"));
     /*
     ** We only attach to the keyboard controller via
@@ -361,7 +361,7 @@ opmsattach(device_t parent, device_t self, void *aux)
 {
     struct opms_softc         *sc = device_private(self);
     int                       irq = device_cfdata(self)->cf_loc[SPCKBDCF_IRQ];
-    struct isa_attach_args    *ia = aux;                   
+    struct isa_attach_args    *ia = aux;
 
     printf(" irq %d\n", irq);
     /* 
@@ -443,13 +443,13 @@ opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
     } 
     sc->sc_state |= PMS_OPEN;
     sc->sc_status = 0;
-    sc->sc_x      = 0; 
+    sc->sc_x      = 0;
     sc->sc_y      = 0;
     /* Enable the device both in the mouse and in the keyboard after making
     ** sure there isn't any garbage in the input buffer.
     */
     i8042_flush(sc->sc_iot, sc->sc_ioh);
-    sc->sc_protocol_byte = PMS_RD_BYTE1; 
+    sc->sc_protocol_byte = PMS_RD_BYTE1;
     (void) i8042_cmd(sc->sc_iot, sc->sc_ioh, I8042_AUX_CMD, 
                          I8042_NO_RESPONSE, 0, PMS_MOUSE_ENABLE);
     (void) I8042_AUXENABLE(sc->sc_iot, sc->sc_ioh);
@@ -663,7 +663,7 @@ opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #else
         case MOUSEIOCREAD:
 #endif
-            oldIpl = spltty();  
+            oldIpl = spltty();
             info.status = sc->sc_status;
             if (sc->sc_x || sc->sc_y)
             {
@@ -766,8 +766,8 @@ opmsintr(void *arg)
     u_char               status;
     u_char               buffer[5];
     int                  handledInt;
-    bus_space_tag_t      iot;        
-    bus_space_handle_t   ioh;        
+    bus_space_tag_t      iot;
+    bus_space_handle_t   ioh;
     static signed char   dx;
     static signed char   dy;
     u_char               value = 0;	/* XXX */
@@ -907,7 +907,7 @@ opmsintr(void *arg)
 **
 **     This routine is used to poll the device for the presence of a set 
 **     of events (e.g. is there data to be read).  If any of the polled 
-**     for events are present on the device, then these events are returned; 
+**     for events are present on the device, then these events are returned;
 **     otherwise the process is marked as waiting for the set of events
 **
 **  FORMAL PARAMETERS:
@@ -938,7 +938,7 @@ opmspoll(dev_t dev, int events, struct lwp *l)
 {
     struct opms_softc     *sc     = device_lookup_private(&opms_cd, PMSUNIT(dev));
     int                  revents = 0;
-    int                  oldIpl; 
+    int                  oldIpl;
 
     oldIpl = spltty();
     
