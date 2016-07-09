@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.117.4.2 2016/05/29 08:44:19 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.117.4.3 2016/07/09 20:24:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.117.4.2 2016/05/29 08:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.117.4.3 2016/07/09 20:24:57 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -592,11 +592,11 @@ cpu_initclocks(void)
 	if (intrdebug)
 		/* Neglect to enable timer */
 		stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
-		     tmr_ustolim(statint)|TMR_LIM_RELOAD); 
+		     tmr_ustolim(statint)|TMR_LIM_RELOAD);
 	else
 #endif
 		stxa((vaddr_t)&timerreg_4u.t_timer[1].t_limit, ASI_NUCLEUS, 
-		     tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD); 
+		     tmr_ustolim(statint)|TMR_LIM_IEN|TMR_LIM_RELOAD);
 	stxa((vaddr_t)&timerreg_4u.t_mapintr[1], ASI_NUCLEUS, 
 	     timerreg_4u.t_mapintr[1]|INTMAP_V|(CPU_UPAID << INTMAP_TID_SHIFT));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.161.2.4 2016/05/29 08:44:38 skrll Exp $ */
+/*	$NetBSD: if_gre.c,v 1.161.2.5 2016/07/09 20:25:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161.2.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161.2.5 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -849,7 +849,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
 
 	bpf_mtap_af(&sc->sc_if, af, m);
 
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {

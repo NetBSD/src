@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.131.2.3 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.131.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.131.2.3 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.131.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -832,8 +832,12 @@ add_vif(struct vifctl *vifcp)
 		 * this requires both radix tree lookup and then a
 		 * function to check, and this is not supported yet.
 		 */
+		error = encap_lock_enter();
+		if (error)
+			return error;
 		vifp->v_encap_cookie = encap_attach_func(AF_INET, IPPROTO_IPV4,
 		    vif_encapcheck, &vif_encapsw, vifp);
+		encap_lock_exit();
 		if (!vifp->v_encap_cookie)
 			return (EINVAL);
 
@@ -929,7 +933,9 @@ reset_vif(struct vif *vifp)
 	callout_stop(&vifp->v_repq_ch);
 
 	/* detach this vif from decapsulator dispatch table */
+	encap_lock_enter();
 	encap_detach(vifp->v_encap_cookie);
+	encap_lock_exit();
 	vifp->v_encap_cookie = NULL;
 
 	/*
@@ -1881,7 +1887,7 @@ vif_input(struct mbuf *m, int off, int proto)
 	}
 
 	m_adj(m, off);
-	m->m_pkthdr.rcvif = vifp->v_ifp;
+	m_set_rcvif(m, vifp->v_ifp);
 
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
 		m_freem(m);
@@ -2104,7 +2110,7 @@ tbf_send_packet(struct vif *vifp, struct mbuf *m)
 		/* if physical interface option, extract the options and then send */
 		struct ip_moptions imo;
 
-		imo.imo_multicast_ifp = vifp->v_ifp;
+		imo.imo_multicast_if_index = if_get_index(vifp->v_ifp);
 		imo.imo_multicast_ttl = mtod(m, struct ip *)->ip_ttl - 1;
 		imo.imo_multicast_loop = 1;
 #ifdef RSVP_ISI

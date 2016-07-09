@@ -1,4 +1,4 @@
-/*	$NetBSD: zaudiovar.h,v 1.1 2014/09/23 14:49:46 nonaka Exp $	*/
+/*	$NetBSD: zaudiovar.h,v 1.1.2.1 2016/07/09 20:25:00 skrll Exp $	*/
 /*	$OpenBSD: zaurus_audio.c,v 1.8 2005/08/18 13:23:02 robert Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ struct zaudio_softc {
 	int			sc_jack;
 	int			sc_state;
 	int			sc_icount;
-	callout_t		sc_to; 
+	callout_t		sc_to;
 };
 
 #define UNMUTE(sc,op,val) sc->sc_unmute[op] = sc->sc_unmute_toggle[op] = val

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.114.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.114.4.3 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.114.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.114.4.3 2016/07/09 20:25:04 skrll Exp $");
+
 
 
 #include <sys/param.h>
@@ -568,8 +569,8 @@ vr_add_rxbuf(struct vr_softc *sc, int i)
 	    m_new->m_ext.ext_buf, m_new->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
-		aprint_error_dev(sc->vr_dev, "unable to load rx DMA map %d, error = %d\n",
-		    i, error);
+		aprint_error_dev(sc->vr_dev,
+		    "unable to load rx DMA map %d, error = %d\n", i, error);
 		panic("vr_add_rxbuf");		/* XXX */
 	}
 
@@ -777,7 +778,7 @@ vr_rxeof(struct vr_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet, but
@@ -1645,14 +1646,16 @@ vr_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->vr_dmat,
 	    sizeof(struct vr_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
-		aprint_error_dev(self, "unable to allocate control data, error = %d\n", error);
+		aprint_error_dev(self,
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
 	if ((error = bus_dmamem_map(sc->vr_dmat, &seg, rseg,
 	    sizeof(struct vr_control_data), (void **)&sc->vr_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(self, "unable to map control data, error = %d\n", error);
+		aprint_error_dev(self,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -1660,8 +1663,9 @@ vr_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct vr_control_data), 1,
 	    sizeof(struct vr_control_data), 0, 0,
 	    &sc->vr_cddmamap)) != 0) {
-		aprint_error_dev(self, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(self,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 

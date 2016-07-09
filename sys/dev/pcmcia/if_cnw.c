@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.56.14.1 2016/03/19 11:30:18 skrll Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.56.14.2 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.56.14.1 2016/03/19 11:30:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.56.14.2 2016/07/09 20:25:15 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -760,7 +760,7 @@ cnw_read(struct cnw_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m_set_rcvif(m, &sc->sc_ethercom.ec_if);
 	m->m_pkthdr.len = totbytes;
 	mbytes = MHLEN;
 	top = 0;

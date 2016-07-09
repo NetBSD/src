@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.7 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.8 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.7 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.8 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -204,9 +204,12 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
 
-#ifndef NET_MPSAFE
-	KASSERT(KERNEL_LOCKED_P());
-#endif
+	/*
+	 * some paths such as carp_output() call ethr_output() with "ifp"
+	 * argument as other than ether ifnet.
+	 */
+	KASSERT(ifp->if_output != ether_output
+	    || ifp->if_extflags & IFEF_OUTPUT_MPSAFE);
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -238,13 +241,17 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
+		KERNEL_LOCK(1, NULL);
 		if (m->m_flags & M_BCAST)
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
-		    sizeof(edst))) != 0)
+		    sizeof(edst))) != 0) {
+			KERNEL_UNLOCK_ONE(NULL);
 			return error == EWOULDBLOCK ? 0 : error;
+		}
+		KERNEL_UNLOCK_ONE(NULL);
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -292,10 +299,12 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 #ifdef NETATALK
     case AF_APPLETALK:
+		KERNEL_LOCK(1, NULL);
 		if (aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */
+			KERNEL_UNLOCK_ONE(NULL);
 			return (0);
 		}
 		/*
@@ -303,8 +312,10 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		 */
 		aa = (struct at_ifaddr *) at_ifawithnet(
 		    (const struct sockaddr_at *)dst, ifp);
-		if (aa == NULL)
+		if (aa == NULL) {
+		    KERNEL_UNLOCK_ONE(NULL);
 		    goto bad;
+		}
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
@@ -325,6 +336,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
+		KERNEL_UNLOCK_ONE(NULL);
 		break;
 #endif /* NETATALK */
 	case pseudo_AF_HDRCMPLT:
@@ -349,6 +361,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	}
 
 #ifdef MPLS
+	KERNEL_LOCK(1, NULL);
 	{
 		struct m_tag *mtag;
 		mtag = m_tag_find(m, PACKET_TAG_MPLS, NULL);
@@ -358,6 +371,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			m_tag_delete(m, mtag);
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 #endif
 
 	if (mcopy)
@@ -410,6 +424,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif /* NCARP > 0 */
 
 #ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the parent interface, do
 	 * classification; the queueing discipline might not
@@ -418,6 +433,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	 */
 	if (ALTQ_IS_ENABLED(&ifp->if_snd))
 		altq_etherclassify(&ifp->if_snd, m);
+	KERNEL_UNLOCK_ONE(NULL);
 #endif
 	return ifq_enqueue(ifp, m);
 
@@ -910,6 +926,7 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
+	ifp->if_extflags |= IFEF_OUTPUT_MPSAFE;
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
 	ifp->if_dlt = DLT_EN10MB;
@@ -1475,24 +1492,31 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 	struct ether_multi_sysctl addr;
 	struct ifnet *ifp;
 	struct ethercom *ec;
-	int error;
+	int error = 0;
 	size_t written;
+	struct psref psref;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
-		return ENODEV;
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		error = ENODEV;
+		goto out;
+	}
 	if (ifp->if_type != IFT_ETHER) {
+		if_put(ifp, &psref);
 		*oldlenp = 0;
-		return 0;
+		goto out;
 	}
 	ec = (struct ethercom *)ifp;
 
 	if (oldp == NULL) {
+		if_put(ifp, &psref);
 		*oldlenp = ec->ec_multicnt * sizeof(addr);
-		return 0;
+		goto out;
 	}
 
 	memset(&addr, 0, sizeof(addr));
@@ -1511,8 +1535,11 @@ ether_multicast_sysctl(SYSCTLFN_ARGS)
 		written += sizeof(addr);
 		oldp = (char *)oldp + sizeof(addr);
 	}
+	if_put(ifp, &psref);
 
 	*oldlenp = written;
+out:
+	curlwp_bindx(bound);
 	return error;
 }
 

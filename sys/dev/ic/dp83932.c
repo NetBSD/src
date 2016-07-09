@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.36.6.1 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.36.6.2 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.36.6.2 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -834,7 +834,7 @@ sonic_rxintr(struct sonic_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

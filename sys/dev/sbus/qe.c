@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.62.16.2 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: qe.c,v 1.62.16.3 2016/07/09 20:25:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62.16.2 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.62.16.3 2016/07/09 20:25:15 skrll Exp $");
 
 #define QEDEBUG
 
@@ -334,7 +334,7 @@ qe_get(struct qe_softc *sc, int idx, int totlen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (NULL);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
 	m->m_data += pad;

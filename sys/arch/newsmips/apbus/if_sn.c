@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.34.14.1 2016/03/19 11:30:03 skrll Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.34.14.2 2016/07/09 20:24:54 skrll Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34.14.1 2016/03/19 11:30:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.34.14.2 2016/07/09 20:24:54 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1075,7 +1075,7 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	m->m_pkthdr.len = datalen;
 	len = MHLEN;
 	top = 0;

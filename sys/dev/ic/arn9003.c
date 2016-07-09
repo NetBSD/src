@@ -1,4 +1,4 @@
-/*	$NetBSD: arn9003.c,v 1.6.8.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: arn9003.c,v 1.6.8.3 2016/07/09 20:25:02 skrll Exp $	*/
 /*	$OpenBSD: ar9003.c,v 1.25 2012/10/20 09:53:32 stsp Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.6.8.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arn9003.c,v 1.6.8.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -982,7 +982,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 
 			len = MS(ds->ds_status2, AR_RXS2_DATA_LEN);
 			m = bf->bf_m;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_data = (void *)&ds[1];
 			m->m_pkthdr.len = m->m_len = len;
 			wh = mtod(m, struct ieee80211_frame *);
@@ -1036,7 +1036,7 @@ ar9003_rx_process(struct athn_softc *sc, int qid)
 	bf->bf_m = m1;
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	/* Strip Rx status descriptor from head. */
 	m->m_data = (void *)&ds[1];
 	m->m_pkthdr.len = m->m_len = len;

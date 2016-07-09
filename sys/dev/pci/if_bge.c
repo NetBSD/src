@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.6 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.7 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.6 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.7 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4560,7 +4560,7 @@ bge_rxeof(struct bge_softc *sc)
 #endif
 
 		m->m_pkthdr.len = m->m_len = cur_rx->bge_len - ETHER_CRC_LEN;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/*
 		 * Handle BPF listeners. Let the BPF user see the packet.

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.54.2.5 2016/03/19 11:30:08 skrll Exp $ */
+/* $NetBSD: dksubr.c,v 1.54.2.6 2016/07/09 20:25:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.5 2016/03/19 11:30:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.54.2.6 2016/07/09 20:25:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,12 +658,15 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		struct disk_strategy *dks = (void *)data;
 
 		mutex_enter(&dksc->sc_iolock);
-		strlcpy(dks->dks_name, bufq_getstrategyname(dksc->sc_bufq),
-		    sizeof(dks->dks_name));
+		if (dksc->sc_bufq != NULL)
+			strlcpy(dks->dks_name,
+			    bufq_getstrategyname(dksc->sc_bufq),
+			    sizeof(dks->dks_name));
+		else
+			error = EINVAL;
 		mutex_exit(&dksc->sc_iolock);
 		dks->dks_paramlen = 0;
-
-		return 0;
+		break;
 	    }
 
 	case DIOCSSTRATEGY:
@@ -683,12 +686,13 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		}
 		mutex_enter(&dksc->sc_iolock);
 		old = dksc->sc_bufq;
-		bufq_move(new, old);
+		if (old)
+			bufq_move(new, old);
 		dksc->sc_bufq = new;
 		mutex_exit(&dksc->sc_iolock);
-		bufq_free(old);
-
-		return 0;
+		if (old)
+			bufq_free(old);
+		break;
 	    }
 
 	default:

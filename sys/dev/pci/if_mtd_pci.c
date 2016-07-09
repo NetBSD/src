@@ -1,4 +1,4 @@
-/* $NetBSD: if_mtd_pci.c,v 1.19 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: if_mtd_pci.c,v 1.19.6.1 2016/07/09 20:25:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* TODO: Check why in IO space, the MII won't work. Memory mapped works */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.19 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mtd_pci.c,v 1.19.6.1 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,8 +70,8 @@ static struct mtd_pci_device_id mtd_ids[] = {
 static int	mtd_pci_match(device_t, cfdata_t, void *);
 static void	mtd_pci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(mtd_pci, sizeof(struct mtd_softc), mtd_pci_match, mtd_pci_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(mtd_pci, sizeof(struct mtd_softc), mtd_pci_match,
+    mtd_pci_attach, NULL, NULL);
 
 static int
 mtd_pci_match(device_t parent, cfdata_t match, void *aux)
@@ -115,7 +115,8 @@ mtd_pci_attach(device_t parent, device_t self, void *aux)
 		sc->bus_tag = iot;
 		sc->bus_handle = ioh;
 	} else {
-		aprint_error_dev(sc->dev, "could not map memory or i/o space\n");
+		aprint_error_dev(sc->dev,
+		    "could not map memory or i/o space\n");
 		return;
 	}
 	sc->dma_tag = pa->pa_dmat;

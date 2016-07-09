@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.h,v 1.10 2005/07/22 09:31:14 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.h,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $ */
+/*	$NetBSD: dccp_tcplike.h,v 1.1.2.3 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -93,7 +93,7 @@ struct tcplike_send_ccb
  * args: pcb  - pointer to dccpcb of associated connection
  * returns: pointer to a tcplike_send_ccb struct on success, otherwise 0
  */ 
-void *tcplike_send_init(struct dccpcb *); 
+void *tcplike_send_init(struct dccpcb *);
 
 /*
  * Free the sender side
@@ -146,7 +146,7 @@ struct tcplike_recv_ccb {
  * args: pcb  -  pointer to dccpcb of associated connection
  * returns: pointer to a tcplike_recv_ccb struct on success, otherwise 0
  */ 
-void *tcplike_recv_init(struct dccpcb *); 
+void *tcplike_recv_init(struct dccpcb *);
 
 /*
  * Free the receiver side

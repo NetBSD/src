@@ -1,14 +1,14 @@
-#	$NetBSD: files.i2c,v 1.58.2.3 2015/12/27 12:09:49 skrll Exp $
+#	$NetBSD: files.i2c,v 1.58.2.4 2016/07/09 20:25:02 skrll Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { [addr = -1], [size = -1] }
+device	iic { [addr = -1], [size = -1] } : i2c_bitbang
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
-file	dev/i2c/i2c_subr.c			iic | i2cbus
+file	dev/i2c/i2c_subr.c			i2cbus
 defparam opt_i2c.h				I2C_MAX_ADDR
 
 # Common module for bit-bang'ing an I2C bus
@@ -204,7 +204,7 @@ file	dev/i2c/tps65950.c		tps65950pm
 # TI TPS65217
 device	tps65217pmic: sysmon_envsys
 attach	tps65217pmic at iic
-file	dev/i2c/tps65217pmic.c 		tps65217pmic
+file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
 
 # Microchip MCP980x
 device	mcp980x: sysmon_envsys

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.46.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.46.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -226,15 +226,19 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 		}
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
+			struct psref psref;
+
 			laddr = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions,
 			    &in6p->in6p_route,
-			    &in6p->in6p_laddr, &oifp, &error);
+			    &in6p->in6p_laddr, &oifp, &psref, &error);
 			if (oifp && scope_ambiguous &&
 			    (error = in6_setscope(&sin6->sin6_addr,
 			    oifp, NULL))) {
+				if_put(oifp, &psref);
 				goto release;
 			}
+			if_put(oifp, &psref);
 		} else {
 			/*
 			 * XXX: freebsd[34] does not have in_selectsrc, but

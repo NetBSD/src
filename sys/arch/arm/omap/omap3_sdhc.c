@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14.6.5 2016/05/29 08:44:16 skrll Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.6.6 2016/07/09 20:24:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.5 2016/05/29 08:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.6 2016/07/09 20:24:50 skrll Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -243,8 +243,13 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 
 	clksft = ffs(sc->sc.sc_clkmsk) - 1;
 
+#if defined(TI_AM335X)
+	error = bus_space_map(sc->sc_bst, oa->obio_addr + OMAP4_SDMMC_HL_SIZE,
+	    oa->obio_size - OMAP4_SDMMC_HL_SIZE, 0, &sc->sc_bsh);
+#else
 	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
 	    &sc->sc_bsh);
+#endif
 	if (error) {
 		aprint_error_dev(self,
 		    "can't map registers: %d\n", error);
@@ -261,7 +266,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 
 		cv_init(&sc->sc_edma_cv, "sdhcedma");
 		sc->sc_edma_fifo = oa->obio_addr +
-		    OMAP3_SDMMC_SDHC_OFFSET + SDHC_DATA;
+		    OMAP4_SDMMC_HL_SIZE + OMAP3_SDMMC_SDHC_OFFSET + SDHC_DATA;
 		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTDMA_DMAEN;

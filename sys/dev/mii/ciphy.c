@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.25 2014/06/16 16:48:16 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.25.4.1 2016/07/09 20:25:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.25 2014/06/16 16:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.25.4.1 2016/07/09 20:25:03 skrll Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -132,8 +132,7 @@ ciphyattach(device_t parent, device_t self, void *aux)
 
 	ciphy_reset(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	aprint_normal_dev(self, "");

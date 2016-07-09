@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.74.2.3 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.74.2.4 2016/07/09 20:25:04 skrll Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.3 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.4 2016/07/09 20:25:04 skrll Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -2075,7 +2075,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_data = head;
 	m->m_pkthdr.len = m->m_len = len;
 

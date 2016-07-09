@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.46 2014/11/19 16:26:47 manu Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.46.2.1 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.46 2014/11/19 16:26:47 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.46.2.1 2016/07/09 20:25:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -427,7 +427,7 @@ ufs_extattr_start(struct mount *mp, struct lwp *l)
 	ump = VFSTOUFS(mp);
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_INITIALIZED))
-		ufs_extattr_uepm_init(&ump->um_extattr); 
+		ufs_extattr_uepm_init(&ump->um_extattr);
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -1267,7 +1267,7 @@ ufs_extattr_list(struct vnode *vp, int attrnamespace,
 
 		error = ufs_extattr_get_header(vp, uele, &ueh, NULL);
 		if (error == ENODATA)
-			continue;	
+			continue;
 		if (error != 0)
 			return error;
 
@@ -1301,16 +1301,16 @@ ufs_extattr_list(struct vnode *vp, int attrnamespace,
 				/* Copy leading name length */
 				error = uiomove(&len, sizeof(len), uio);
 				if (error != 0)
-					break;	
+					break;
 			} else {
 				/* Include trailing NULL */
-				attrnamelen++; 
+				attrnamelen++;
 			}
 
 			error = uiomove(uele->uele_attrname, 
 					(size_t)attrnamelen, uio);
 			if (error != 0)
-				break;	
+				break;
 		}
 
 		if (uele->uele_backing_vnode != vp)
@@ -1345,7 +1345,7 @@ vop_deleteextattr {
 */
 {
 	struct mount *mp = ap->a_vp->v_mount;
-	struct ufsmount *ump = VFSTOUFS(mp); 
+	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))
@@ -1377,7 +1377,7 @@ vop_setextattr {
 */
 {
 	struct mount *mp = ap->a_vp->v_mount;
-	struct ufsmount *ump = VFSTOUFS(mp); 
+	struct ufsmount *ump = VFSTOUFS(mp);
 	int error;
 
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED))

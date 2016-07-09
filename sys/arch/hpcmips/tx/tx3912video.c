@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.43 2014/06/07 18:59:16 he Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.43.4.1 2016/07/09 20:24:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43 2014/06/07 18:59:16 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43.4.1 2016/07/09 20:24:52 skrll Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -39,11 +39,10 @@ __KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43 2014/06/07 18:59:16 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/extent.h>
-
 #include <sys/ioctl.h>
-#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.14.30.1 2016/07/09 20:25:00 skrll Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14.30.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.14 2011/09/20 00:12:24 jym Exp $"
 
 struct xenstore_domain_interface *xenstore_interface;
 
-extern int xenstored_ready; 
+extern int xenstored_ready;
 // static DECLARE_WORK(probe_work, xenbus_probe, NULL);
 
 static int wake_waiting(void *);
@@ -74,7 +74,7 @@ static int
 wake_waiting(void *arg)
 {
 	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
-		xenstored_ready = 1; 
+		xenstored_ready = 1;
 		wakeup(&xenstored_ready);
 	} 
 

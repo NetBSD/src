@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.30.6.1 2015/12/27 12:09:28 skrll Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.30.6.2 2016/07/09 20:24:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.30.6.1 2015/12/27 12:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.30.6.2 2016/07/09 20:24:49 skrll Exp $");
 
 #include "grfcv3d.h"
 #include "ite.h"
@@ -1490,7 +1490,6 @@ cv3d_load_mon(struct grf_softc *gp, struct grfcv3dtext_mode *md)
 		gp->g_fbkva = (volatile char *)cv3d_boardaddr + 0x04000000 +
 				(0x00400000 * fb_flag);
 	} else {
-		/* XXX This is totaly untested */
 		Select_Zorro2_FrameBuffer(fb_flag);
 	}
 

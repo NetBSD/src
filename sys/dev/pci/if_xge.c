@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.19.6.2 2016/03/19 11:30:11 skrll Exp $ */
+/*      $NetBSD: if_xge.c,v 1.19.6.3 2016/07/09 20:25:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.2 2016/03/19 11:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.3 2016/07/09 20:25:04 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -769,7 +769,7 @@ xge_intr(void *pv)
 		plen += m->m_next->m_next->m_next->m_next->m_len =
 		    RXD_CTL3_BUF4SIZ(rxd->rxd_control3);
 #endif
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = plen;
 
 		val = rxd->rxd_control1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.13.6.1 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.13.6.2 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.13.6.1 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.13.6.2 2016/07/09 20:25:04 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -993,7 +993,7 @@ lii_rxintr(struct lii_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		/* Copy the packet withhout the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);

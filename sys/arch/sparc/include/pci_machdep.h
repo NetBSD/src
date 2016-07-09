@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.11 2014/03/29 19:28:30 christos Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.11.6.1 2016/07/09 20:24:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 typedef u_int pci_intr_handle_t;
-typedef uint64_t pcitag_t; 
+typedef uint64_t pcitag_t;
 
 
 /*

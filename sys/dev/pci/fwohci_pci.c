@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.42 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.42.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.42 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.42.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,8 +69,7 @@ CFATTACH_DECL_NEW(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, fwohci_pci_detach, NULL);
 
 static int
-fwohci_pci_match(device_t parent, cfdata_t match,
-    void *aux)
+fwohci_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -82,7 +81,7 @@ fwohci_pci_match(device_t parent, cfdata_t match,
 	 */
 	if ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PBG3_FW))
-	    return 0;
+		return 0;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_SERIALBUS &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_SERIALBUS_FIREWIRE &&
 	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_OHCI)
@@ -112,8 +111,7 @@ fwohci_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM, 0,
-	    &psc->psc_sc.bst, &psc->psc_sc.bsh,
-	    NULL, &psc->psc_sc.bssize)) {
+	    &psc->psc_sc.bst, &psc->psc_sc.bsh, NULL, &psc->psc_sc.bssize)) {
 		aprint_error_dev(self, "can't map OHCI register space\n");
 		goto fail;
 	}

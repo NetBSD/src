@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.73 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.73.2.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.73 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.73.2.1 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ soo_ioctl(file_t *fp, u_long cmd, void *data)
 		if (*(int *)data)
 			so->so_state |= SS_NBIO;
 		else 
-			so->so_state &= ~SS_NBIO; 
+			so->so_state &= ~SS_NBIO;
 		sounlock(so);
 		break;
 

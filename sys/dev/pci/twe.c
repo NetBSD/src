@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.103 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: twe.c,v 1.103.4.1 2016/07/09 20:25:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.103 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.103.4.1 2016/07/09 20:25:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -359,8 +359,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (intrstr != NULL)
-		aprint_normal_dev(self, "interrupting at %s\n",
-			intrstr);
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	/*
 	 * Allocate and initialise the command blocks and CCBs.

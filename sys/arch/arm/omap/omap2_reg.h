@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.28.4.3 2016/05/29 08:44:16 skrll Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.28.4.4 2016/07/09 20:24:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -146,6 +146,22 @@
 #define CHIPID_OMAP3515		0x1c00
 #define CHIPID_OMAP3525		0x4c00
 #define CHIPID_OMAP3530		0x0c00
+
+#define DEVID_OMAP35X_ES10	0x0b6d602f
+#define DEVID_OMAP35X_ES20	0x1b7ae02f
+#define DEVID_OMAP35X_ES21	0x2b7ae02f
+#define DEVID_OMAP35X_ES30	0x3b7ae02f
+#define DEVID_OMAP35X_ES31	0x4b7ae02f
+#define DEVID_OMAP35X_ES312	0x7b7ae02f
+
+#define CHIPID_AM3703		0x5e00	/* or 0x5c00 */
+#define CHIPID_AM3715		0x1e00	/* or 0x1c00 */
+#define CHIPID_DM3725		0x4e00	/* or 0x4c00 */
+#define CHIPID_DM3730		0x0e00	/* or 0x0c00 */
+
+#define DEVID_AMDM37X_ES10	0x0b89102f
+#define DEVID_AMDM37X_ES11	0x1b89102f
+#define DEVID_AMDM37X_ES12	0x2b89102f
 
 /*
  * Clock Management registers base, offsets, and size

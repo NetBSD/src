@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.26.4.1 2016/05/29 08:44:32 skrll Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.26.4.2 2016/07/09 20:25:18 skrll Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.26.4.1 2016/05/29 08:44:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.26.4.2 2016/07/09 20:25:18 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -101,7 +101,7 @@ void
 pfi_initialize(void)
 {
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 
 	if (pfi_all != NULL)	/* already initialized */
 		return;
@@ -122,7 +122,7 @@ pfi_initialize(void)
 
 #ifdef __NetBSD__
 	ifnet_t *ifp;
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
@@ -136,7 +136,7 @@ pfi_initialize(void)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	pfil_add_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 	pfil_add_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
@@ -150,12 +150,12 @@ pfi_destroy(void)
 	struct pfi_kif *p;
 	ifnet_t *ifp;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 
 	pfil_remove_hook(pfil_ifaddr_wrapper, NULL, PFIL_IFADDR, if_pfil);
 	pfil_remove_hook(pfil_ifnet_wrapper, NULL, PFIL_IFNET, if_pfil);
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
@@ -169,7 +169,7 @@ pfi_destroy(void)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	while ((p = RB_MIN(pfi_ifhead, &pfi_ifs))) {
 		RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
@@ -559,9 +559,7 @@ pfi_instance_add(struct ifnet *ifp, int net, int flags)
 
 	if (ifp == NULL)
 		return;
-	IFADDR_FOREACH(ia, ifp) {
-		if (ia->ifa_addr == NULL)
-			continue;
+	IFADDR_READER_FOREACH(ia, ifp) {
 		af = ia->ifa_addr->sa_family;
 		if (af != AF_INET && af != AF_INET6)
 			continue;

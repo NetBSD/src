@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.143.2.3 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.143.2.4 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.3 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.4 2016/07/09 20:25:02 skrll Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1294,7 +1294,7 @@ re_rxeof(struct rtk_softc *sc)
 			    (total_len - ETHER_CRC_LEN);
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/* Do RX checksumming */
 		if ((sc->sc_quirk & RTKQ_DESCV2) == 0) {

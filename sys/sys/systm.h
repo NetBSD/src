@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.266.4.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: systm.h,v 1.266.4.5 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -177,7 +177,8 @@ int	eopnotsupp(void);
 enum hashtype {
 	HASH_LIST,
 	HASH_SLIST,
-	HASH_TAILQ
+	HASH_TAILQ,
+	HASH_PSLIST
 };
 
 #ifdef _KERNEL

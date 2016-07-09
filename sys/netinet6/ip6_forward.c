@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.74.2.2 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.2 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -133,6 +133,8 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct ifnet *origifp;	/* maybe unnecessary */
 	uint32_t inzone, outzone;
 	struct in6_addr src_in6, dst_in6;
+	struct ifnet *rcvif = NULL;
+	struct psref psref;
 #ifdef IPSEC
 	int needipsec = 0;
 	struct secpolicy *sp = NULL;
@@ -143,6 +145,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	m->m_pkthdr.csum_flags = 0;
 
+	rcvif = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(rcvif == NULL))
+		goto drop;
+
 	/*
 	 * Do not forward packets to multicast destination (should be handled
 	 * by ip6_mforward().
@@ -152,19 +158,18 @@ ip6_forward(struct mbuf *m, int srcrt)
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0 ||
 	    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
-		ip6_cantforward(ip6, m->m_pkthdr.rcvif, NULL,
+		ip6_cantforward(ip6, rcvif, NULL,
 		    ((m->m_flags & (M_BCAST|M_MCAST)) != 0) ? "bcast/mcast" :
 		    IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ? "mcast/dst" :
 		    "unspec/src");
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC) {
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
 		icmp6_error(m, ICMP6_TIME_EXCEEDED,
 				ICMP6_TIME_EXCEED_TRANSIT, 0);
-		return;
+		goto out;
 	}
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
 
@@ -212,8 +217,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
 			}
-			m_freem(m);
-			return;
+			goto drop;
 		}
 	} else if ((rt = rtcache_validate(&ip6_forward_rt)) == NULL &&
 	           (rt = rtcache_update(&ip6_forward_rt, 1)) == NULL) {
@@ -227,8 +231,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_NOROUTE, 0);
 		}
-		m_freem(m);
-		return;
+		goto drop;
 	}
 	dst = satocsin6(rtcache_getdst(&ip6_forward_rt));
 
@@ -244,16 +247,15 @@ ip6_forward(struct mbuf *m, int srcrt)
 	src_in6 = ip6->ip6_src;
 	inzone = outzone = ~0;
 	if (in6_setscope(&src_in6, rt->rt_ifp, &outzone) != 0 ||
-	    in6_setscope(&src_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
+	    in6_setscope(&src_in6, rcvif, &inzone) != 0 ||
 	    inzone != outzone) {
-		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
-		    "src[%s] inzone %d outzone %d",
+		ip6_cantforward(ip6, rcvif, rt->rt_ifp,
+		    "src[%s] inzone %d outzone %d", 
 		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 #ifdef IPSEC
@@ -279,17 +281,16 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	dst_in6 = ip6->ip6_dst;
 	inzone = outzone = ~0;
-	if (in6_setscope(&dst_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
+	if (in6_setscope(&dst_in6, rcvif, &inzone) != 0 ||
 	    in6_setscope(&dst_in6, rt->rt_ifp, &outzone) != 0 ||
 	    inzone != outzone) {
-		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
+		ip6_cantforward(ip6, rcvif, rt->rt_ifp,
 		    "dst[%s] inzone %d outzone %d",
 		    in6_getscopename(&ip6->ip6_dst), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_BEYONDSCOPE, 0);
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	if (m->m_pkthdr.len > IN6_LINKMTU(rt->rt_ifp)) {
@@ -300,8 +301,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			mtu = IN6_LINKMTU(rt->rt_ifp);
 			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, mtu);
 		}
-		m_freem(m);
-		return;
+		goto drop;
 	}
 
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -316,7 +316,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 * Also, don't send redirect if forwarding using a route
 	 * modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif && !srcrt && ip6_sendredirects &&
+	if (rt->rt_ifp == rcvif && !srcrt && ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
 		    nd6_is_addr_neighbor(
@@ -339,8 +339,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 			 */
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADDR, 0);
-			m_freem(m);
-			return;
+			goto drop;
 		}
 		type = ND_REDIRECT;
 	}
@@ -373,12 +372,12 @@ ip6_forward(struct mbuf *m, int srcrt)
 			       "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",
 			       ip6_sprintf(&ip6->ip6_src),
 			       ip6_sprintf(&ip6->ip6_dst),
-			       ip6->ip6_nxt, if_name(m->m_pkthdr.rcvif),
+			       ip6->ip6_nxt, if_name(rcvif),
 			       if_name(rt->rt_ifp));
 		}
 
 		/* we can just use rcvif in forwarding. */
-		origifp = m->m_pkthdr.rcvif;
+		origifp = rcvif;
 	}
 	else
 		origifp = rt->rt_ifp;
@@ -420,12 +419,12 @@ ip6_forward(struct mbuf *m, int srcrt)
 
  senderr:
 	if (mcopy == NULL)
-		return;
+		goto out;
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
-			return;
+			goto out;
 		}
 		goto freecopy;
 
@@ -447,9 +446,15 @@ ip6_forward(struct mbuf *m, int srcrt)
 		break;
 	}
 	icmp6_error(mcopy, type, code, 0);
-	return;
+	goto out;
 
  freecopy:
 	m_freem(mcopy);
+	goto out;
+ drop:
+ 	m_freem(m);
+ out:
+	if (rcvif != NULL)
+		m_put_rcvif_psref(rcvif, &psref);
 	return;
 }

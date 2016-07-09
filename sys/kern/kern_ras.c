@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.36 2013/09/14 20:46:27 martin Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.36.6.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.36 2013/09/14 20:46:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.36.6.1 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,17 +197,20 @@ ras_install(void *addr, size_t len)
 	int nras, error;
 	proc_t *p;
 
+	if (len == 0)
+		return EINVAL;
+
 	endaddr = (char *)addr + len;
 
-	/* do not warn about < NULL pointer comparision */
+	/* Do not warn about < NULL pointer comparison */
 	__WARNING_PUSH_LESS_NULL_PTR
-	if (addr < (void *)VM_MIN_ADDRESS ||
-	    endaddr > (void *)VM_MAXUSER_ADDRESS)
-		return (EINVAL);
+	if (addr < (void *)VM_MIN_ADDRESS || addr > (void *)VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (endaddr > (void *)VM_MAXUSER_ADDRESS)
+		return EINVAL;
+	if (endaddr < addr)
+		return EINVAL;
 	__WARNING_POP_LESS_NULL_PTR
-
-	if (len <= 0)
-		return (EINVAL);
 
 	newrp = kmem_alloc(sizeof(*newrp), KM_SLEEP);
 	newrp->ras_startaddr = addr;
@@ -278,7 +281,6 @@ ras_purge(void *addr, size_t len)
 int
 sys_rasctl(struct lwp *l, const struct sys_rasctl_args *uap, register_t *retval)
 {
-
 #if defined(__HAVE_RAS)
 	/* {
 		syscallarg(void *) addr;
@@ -317,11 +319,7 @@ sys_rasctl(struct lwp *l, const struct sys_rasctl_args *uap, register_t *retval)
 	}
 
 	return (error);
-
 #else
-
 	return (EOPNOTSUPP);
-
 #endif
-
 }

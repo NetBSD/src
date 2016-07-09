@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.50.4.2 2016/03/19 11:30:04 skrll Exp $ */
+/* $NetBSD: if_mec.c,v 1.50.4.3 2016/07/09 20:24:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.50.4.2 2016/03/19 11:30:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.50.4.3 2016/07/09 20:24:56 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1725,7 +1725,7 @@ mec_rxintr(struct mec_softc *sc)
 		MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
 		bus_space_write_8(st, sh, MEC_MCL_RX_FIFO, MEC_CDRXADDR(sc, i));
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		if ((ifp->if_csum_flags_rx & (M_CSUM_TCPv4|M_CSUM_UDPv4)) != 0)
 			mec_rxcsum(sc, m, RXSTAT_CKSUM(rxstat), crc);

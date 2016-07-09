@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.144.4.1 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: auich.c,v 1.144.4.2 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144.4.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.144.4.2 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,7 +626,8 @@ map_done:
 
 	/* setup audio_format */
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
-		memcpy(sc->sc_audio_formats, auich_audio_formats, sizeof(auich_audio_formats));
+		memcpy(sc->sc_audio_formats, auich_audio_formats,
+		    sizeof(auich_audio_formats));
 		if (!AC97_IS_4CH(sc->codec_if))
 			AUFMT_INVALIDATE(&sc->sc_audio_formats[AUICH_FORMATS_4CH]);
 		if (!AC97_IS_6CH(sc->codec_if))
@@ -638,17 +639,18 @@ map_done:
 			}
 		}
 		mutex_exit(&sc->sc_lock);
-		if (0 != auconv_create_encodings(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
-						 &sc->sc_encodings))
+		if (0 != auconv_create_encodings(sc->sc_audio_formats,
+			AUICH_AUDIO_NFORMATS, &sc->sc_encodings))
 			return;
-		if (0 != auconv_create_encodings(auich_spdif_formats, AUICH_SPDIF_NFORMATS,
-						 &sc->sc_spdif_encodings))
+		if (0 != auconv_create_encodings(auich_spdif_formats,
+			AUICH_SPDIF_NFORMATS, &sc->sc_spdif_encodings))
 			return;
 	} else {
 		mutex_exit(&sc->sc_lock);
-		memcpy(sc->sc_modem_formats, auich_modem_formats, sizeof(auich_modem_formats));
-		if (0 != auconv_create_encodings(sc->sc_modem_formats, AUICH_MODEM_NFORMATS,
-						 &sc->sc_encodings))
+		memcpy(sc->sc_modem_formats, auich_modem_formats,
+		    sizeof(auich_modem_formats));
+		if (0 != auconv_create_encodings(sc->sc_modem_formats,
+			AUICH_MODEM_NFORMATS, &sc->sc_encodings))
 			return;
 	}
 

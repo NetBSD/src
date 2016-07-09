@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.95.4.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.95.4.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.95.4.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.95.4.3 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1038,7 +1038,7 @@ rtk_rxeof(struct rtk_softc *sc)
 			}
 		}
 		m->m_data += RTK_ETHER_ALIGN;	/* for alignment */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = total_len;
 		dst = mtod(m, void *);
 

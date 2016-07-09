@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.53 2014/05/06 04:26:24 cherry Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.53.4.1 2016/07/09 20:25:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53 2014/05/06 04:26:24 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.53.4.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -613,6 +613,8 @@ xen_pmap_bootstrap(void)
 	int count, oldcount;
 	long mapsize;
 	vaddr_t bootstrap_tables, init_tables;
+
+	xen_init_features();
 
 	memset(xpq_idx_array, 0, sizeof xpq_idx_array);
 

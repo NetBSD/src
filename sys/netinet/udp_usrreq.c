@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217.4.5 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217.4.6 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.5 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.6 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -276,7 +276,7 @@ udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
 		return 0;
 
 	switch (m->m_pkthdr.csum_flags &
-	    ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_UDPv4) |
+	    ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_UDPv4) |
 	    M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
 	case M_CSUM_UDPv4|M_CSUM_TCP_UDP_BAD:
 		UDP_CSUM_COUNTER_INCR(&udp_hwcsum_bad);
@@ -309,7 +309,7 @@ udp4_input_checksum(struct mbuf *m, const struct udphdr *uh,
 		 * Need to compute it ourselves.  Maybe skip checksum
 		 * on loopback interfaces.
 		 */
-		if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+		if (__predict_true(!(m_get_rcvif_NOMPSAFE(m)->if_flags &
 				     IFF_LOOPBACK) ||
 				   udp_do_loopback_cksum)) {
 			UDP_CSUM_COUNTER_INCR(&udp_swcsum);
@@ -529,7 +529,7 @@ udp4_realinput(struct sockaddr_in *src, struct sockaddr_in *dst,
 	dport = &dst->sin_port;
 
 	if (IN_MULTICAST(dst4->s_addr) ||
-	    in_broadcast(*dst4, m->m_pkthdr.rcvif)) {
+	    in_broadcast(*dst4, m_get_rcvif_NOMPSAFE(m))) {
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match

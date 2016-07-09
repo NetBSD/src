@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.57.6.1 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.57.6.2 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.57.6.1 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.57.6.2 2016/07/09 20:25:04 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -431,8 +431,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self, NULL)) &&
 	    error != EOPNOTSUPP) {
-		aprint_error_dev(self, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 	/*
@@ -461,8 +460,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct stge_control_data), PAGE_SIZE, 0, &seg, 1, &rseg,
 	    0)) != 0) {
 		aprint_error_dev(self,
-		    "unable to allocate control data, error = %d\n",
-		    error);
+		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
 
@@ -470,8 +468,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct stge_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(self,
-		    "unable to map control data, error = %d\n",
-		    error);
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 
@@ -1348,7 +1345,7 @@ stge_rxintr(struct stge_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*

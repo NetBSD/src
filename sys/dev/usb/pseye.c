@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.9 2015/12/28 09:26:33 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.10 2016/07/09 20:25:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.10 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,8 +266,7 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    self);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, self);
 
 }
 
@@ -309,8 +308,7 @@ pseye_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_cv);
 	mutex_destroy(&sc->sc_mtx);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }

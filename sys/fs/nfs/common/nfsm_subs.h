@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.1.1.1.12.1 2016/07/09 20:25:19 skrll Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * FreeBSD: head/sys/fs/nfs/nfsm_subs.h 249592 2013-04-17 21:00:22Z ken 
- * $NetBSD: nfsm_subs.h,v 1.1.1.1 2013/09/30 07:19:40 dholland Exp $
+ * $NetBSD: nfsm_subs.h,v 1.1.1.1.12.1 2016/07/09 20:25:19 skrll Exp $
  */
 
 #ifndef _NFS_NFSM_SUBS_H_
@@ -94,15 +94,15 @@ nfsm_build(struct nfsrv_descript *nd, int siz)
 static __inline void *
 nfsm_dissect(struct nfsrv_descript *nd, int siz)
 {
-	int tt1; 
+	int tt1;
 	void *retp;
 
-	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos; 
+	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos;
 	if (tt1 >= siz) { 
-		retp = (void *)nd->nd_dpos; 
-		nd->nd_dpos += siz; 
+		retp = (void *)nd->nd_dpos;
+		nd->nd_dpos += siz;
 	} else { 
-		retp = nfsm_dissct(nd, siz, M_WAITOK); 
+		retp = nfsm_dissct(nd, siz, M_WAITOK);
 	}
 	return (retp);
 }
@@ -110,15 +110,15 @@ nfsm_dissect(struct nfsrv_descript *nd, int siz)
 static __inline void *
 nfsm_dissect_nonblock(struct nfsrv_descript *nd, int siz)
 {
-	int tt1; 
+	int tt1;
 	void *retp;
 
-	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos; 
+	tt1 = NFSMTOD(nd->nd_md, caddr_t) + nd->nd_md->m_len - nd->nd_dpos;
 	if (tt1 >= siz) { 
-		retp = (void *)nd->nd_dpos; 
-		nd->nd_dpos += siz; 
+		retp = (void *)nd->nd_dpos;
+		nd->nd_dpos += siz;
 	} else { 
-		retp = nfsm_dissct(nd, siz, M_NOWAIT); 
+		retp = nfsm_dissct(nd, siz, M_NOWAIT);
 	}
 	return (retp);
 }

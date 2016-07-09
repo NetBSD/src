@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.72 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: dpt.c,v 1.72.2.1 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.72 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.72.2.1 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,15 +447,15 @@ dpt_init(struct dpt_softc *sc, const char *intrstr)
 	aprint_normal("%s %s (%s)\n", vendor, dpt_cname[i + 1], model);
 
 	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	maxchannel = (ec->ec_feat3 & EC_F3_MAX_CHANNEL_MASK) >>
 	    EC_F3_MAX_CHANNEL_SHIFT;
 	maxtarget = (ec->ec_feat3 & EC_F3_MAX_TARGET_MASK) >>
 	    EC_F3_MAX_TARGET_SHIFT;
 
-	aprint_normal_dev(sc->sc_dev, "%d queued commands, %d channel(s), adapter on ID(s)",
+	aprint_normal_dev(sc->sc_dev,
+	    "%d queued commands, %d channel(s), adapter on ID(s)",
 	    sc->sc_nccbs, maxchannel + 1);
 
 	for (i = 0; i <= maxchannel; i++) {

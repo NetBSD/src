@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3dreg.h,v 1.12 2014/01/22 00:25:16 christos Exp $	*/
+/*	$NetBSD: grf_cv3dreg.h,v 1.12.6.1 2016/07/09 20:24:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -101,7 +101,6 @@ struct grfcv3dtext_mode {
 #define vgaw16(ba, reg, val) \
 	*((volatile unsigned short *) (((volatile char *)ba)+reg)) = val
 
-/* XXX This is totaly untested */
 #define	Select_Zorro2_FrameBuffer(flag) \
 	do { \
 		*(((volatile char *)cv3d_vcode_switch_base) + \

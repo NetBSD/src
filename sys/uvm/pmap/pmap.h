@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.6.1 2015/09/22 12:06:18 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.6.2 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,7 +155,7 @@ struct pmap_limits {
 /* 
  * The pools from which pmap structures and sub-structures are allocated.
  */
-extern struct pool pmap_pmap_pool; 
+extern struct pool pmap_pmap_pool;
 extern struct pool pmap_pv_pool;
 extern struct pool_allocator pmap_pv_page_allocator;
 

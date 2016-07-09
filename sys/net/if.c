@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.300.2.7 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.300.2.8 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,10 +90,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.7 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.8 2016/07/09 20:25:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include "opt_atalk.h"
 #include "opt_natm.h"
@@ -137,6 +138,9 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.300.2.7 2016/05/29 08:44:38 skrll Exp $");
 #include <net/pfil.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
+#ifndef IPSEC
+#include <netinet/ip_encap.h>
+#endif
 
 #ifdef INET6
 #include <netinet6/in6_var.h>
@@ -199,6 +203,7 @@ static void if_slowtimo(void *);
 static void if_free_sadl(struct ifnet *);
 static void if_attachdomain1(struct ifnet *);
 static int ifconf(u_long, void *);
+static int if_transmit(struct ifnet *, struct mbuf *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
 static void if_link_state_change_si(void *);
@@ -255,6 +260,10 @@ ifinit(void)
 #ifdef INET6
 	if (in6_present)
 		sysctl_net_pktq_setup(NULL, PF_INET6);
+#endif
+
+#if (defined(INET) || defined(INET6)) && !defined(IPSEC)
+	encapinit();
 #endif
 
 	if_listener = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
@@ -487,8 +496,9 @@ if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
 	if_deactivate_sadl(ifp);
 
 	if_sadl_setrefs(ifp, ifa);
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		rtinit(ifa, RTM_LLINFO_UPD, 0);
+
 	splx(s);
 }
 
@@ -639,11 +649,15 @@ if_initialize(ifnet_t *ifp)
 
 	IF_AFDATA_LOCK_INIT(ifp);
 
-	ifp->if_link_si = softint_establish(SOFTINT_NET, if_link_state_change_si, ifp);
-	if (ifp->if_link_si == NULL)
-		panic("%s: softint_establish() failed", __func__);
+	if (if_is_link_state_changeable(ifp)) {
+		ifp->if_link_si = softint_establish(SOFTINT_NET,
+		    if_link_state_change_si, ifp);
+		if (ifp->if_link_si == NULL)
+			panic("%s: softint_establish() failed", __func__);
+	}
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
+	PSLIST_INIT(&ifp->if_addr_pslist);
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
@@ -941,9 +955,8 @@ if_attachdomain(void)
 {
 	struct ifnet *ifp;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound = curlwp_bind();
 
-	curlwp->l_pflag |= LP_BOUND;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		struct psref psref;
@@ -954,7 +967,7 @@ if_attachdomain(void)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 }
 
 static void
@@ -1003,17 +1016,84 @@ if_deactivate(struct ifnet *ifp)
 	splx(s);
 }
 
+bool
+if_is_deactivated(struct ifnet *ifp)
+{
+
+	return ifp->if_output == if_nulloutput;
+}
+
 void
 if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
 {
 	struct ifaddr *ifa, *nifa;
 
-	IFADDR_FOREACH_SAFE(ifa, ifp, nifa) {
+	for (ifa = IFADDR_READER_FIRST(ifp); ifa; ifa = nifa) {
+		nifa = IFADDR_READER_NEXT(ifa);
 		if (ifa->ifa_addr->sa_family != family)
 			continue;
 		(*purgeaddr)(ifa);
 	}
 }
+
+#ifdef IFAREF_DEBUG
+static struct ifaddr **ifa_list;
+static int ifa_list_size;
+
+/* Depends on only one if_attach runs at once */
+static void
+if_build_ifa_list(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+	int i;
+
+	KASSERT(ifa_list == NULL);
+	KASSERT(ifa_list_size == 0);
+
+	IFADDR_READER_FOREACH(ifa, ifp)
+		ifa_list_size++;
+
+	ifa_list = kmem_alloc(sizeof(*ifa) * ifa_list_size, KM_SLEEP);
+	if (ifa_list == NULL)
+		return;
+
+	i = 0;
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		ifa_list[i++] = ifa;
+		ifaref(ifa);
+	}
+}
+
+static void
+if_check_and_free_ifa_list(struct ifnet *ifp)
+{
+	int i;
+	struct ifaddr *ifa;
+
+	if (ifa_list == NULL)
+		return;
+
+	for (i = 0; i < ifa_list_size; i++) {
+		char buf[64];
+
+		ifa = ifa_list[i];
+		sockaddr_format(ifa->ifa_addr, buf, sizeof(buf));
+		if (ifa->ifa_refcnt > 1) {
+			log(LOG_WARNING,
+			    "ifa(%s) still referenced (refcnt=%d)\n",
+			    buf, ifa->ifa_refcnt - 1);
+		} else
+			log(LOG_DEBUG,
+			    "ifa(%s) not referenced (refcnt=%d)\n",
+			    buf, ifa->ifa_refcnt - 1);
+		ifafree(ifa);
+	}
+
+	kmem_free(ifa_list, sizeof(*ifa) * ifa_list_size);
+	ifa_list = NULL;
+	ifa_list_size = 0;
+}
+#endif
 
 /*
  * Detach an interface from the list of "active" interfaces,
@@ -1035,6 +1115,9 @@ if_detach(struct ifnet *ifp)
 	int s, i, family, purged;
 	uint64_t xc;
 
+#ifdef IFAREF_DEBUG
+	if_build_ifa_list(ifp);
+#endif
 	/*
 	 * XXX It's kind of lame that we have to have the
 	 * XXX socket structure...
@@ -1045,7 +1128,7 @@ if_detach(struct ifnet *ifp)
 
 	sysctl_teardown(&ifp->if_sysctl_log);
 	mutex_enter(ifp->if_ioctl_lock);
-	ifp->if_ioctl = if_nullioctl;
+	if_deactivate(ifp);
 	mutex_exit(ifp->if_ioctl_lock);
 
 	IFNET_LOCK();
@@ -1055,14 +1138,10 @@ if_detach(struct ifnet *ifp)
 	pserialize_perform(ifnet_psz);
 	IFNET_UNLOCK();
 
-	/* Wait for all readers to drain before freeing.  */
-	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
-	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
-
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
 
-	if (ifp->if_slowtimo != NULL) {
+	if (ifp->if_slowtimo != NULL && ifp->if_slowtimo_ch != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
 		callout_destroy(ifp->if_slowtimo_ch);
@@ -1104,7 +1183,7 @@ if_detach(struct ifnet *ifp)
 	 * least one ifaddr.
 	 */
 again:
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -1196,8 +1275,10 @@ again:
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
 
-	softint_disestablish(ifp->if_link_si);
-	ifp->if_link_si = NULL;
+	if (if_is_link_state_changeable(ifp)) {
+		softint_disestablish(ifp->if_link_si);
+		ifp->if_link_si = NULL;
+	}
 
 	/*
 	 * remove packets that came from ifp, from software interrupt queues.
@@ -1227,12 +1308,20 @@ again:
 	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
 	xc_wait(xc);
 
+	/* Wait for all readers to drain before freeing.  */
+	psref_target_destroy(&ifp->if_psref, ifnet_psref_class);
+	PSLIST_ENTRY_DESTROY(ifp, if_pslist_entry);
+
 	if (ifp->if_percpuq != NULL) {
 		if_percpuq_destroy(ifp->if_percpuq);
 		ifp->if_percpuq = NULL;
 	}
 
 	splx(s);
+
+#ifdef IFAREF_DEBUG
+	if_check_and_free_ifa_list(ifp);
+#endif
 }
 
 static void
@@ -1245,7 +1334,7 @@ if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 		KASSERT((m->m_flags & M_PKTHDR) != 0);
 
 		next = m->m_nextpkt;
-		if (m->m_pkthdr.rcvif != ifp) {
+		if (m->m_pkthdr.rcvif_index != ifp->if_index) {
 			prev = m;
 			continue;
 		}
@@ -1480,6 +1569,8 @@ ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	ifa->ifa_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
+	IFADDR_ENTRY_INIT(ifa);
+	IFADDR_WRITER_INSERT_TAIL(ifp, ifa);
 	ifaref(ifa);
 }
 
@@ -1488,6 +1579,9 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 {
 	KASSERT(ifa->ifa_ifp == ifp);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+	IFADDR_WRITER_REMOVE(ifa);
+	/* TODO psref_target_destroy */
+	IFADDR_ENTRY_DESTROY(ifa);
 	ifafree(ifa);
 }
 
@@ -1510,9 +1604,9 @@ ifa_ifwithaddr(const struct sockaddr *addr)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family)
 				continue;
 			if (equal(addr, ifa->ifa_addr))
@@ -1542,11 +1636,11 @@ ifa_ifwithdstaddr(const struct sockaddr *addr)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != addr->sa_family ||
 			    ifa->ifa_dstaddr == NULL)
 				continue;
@@ -1577,7 +1671,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		sdl = satocsdl(addr);
 		if (sdl->sdl_index && sdl->sdl_index < if_indexlim &&
 		    ifindex2ifnet[sdl->sdl_index] &&
-		    ifindex2ifnet[sdl->sdl_index]->if_output != if_nulloutput) {
+		    !if_is_deactivated(ifindex2ifnet[sdl->sdl_index])) {
 			return ifindex2ifnet[sdl->sdl_index]->if_dl;
 		}
 	}
@@ -1587,7 +1681,7 @@ ifa_ifwithnet(const struct sockaddr *addr)
 		sat = (const struct sockaddr_at *)addr;
 		s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifp) {
-			if (ifp->if_output == if_nulloutput)
+			if (if_is_deactivated(ifp))
 				continue;
 			ifa = at_ifawithnet((const struct sockaddr_at *)addr, ifp);
 			if (ifa == NULL)
@@ -1606,9 +1700,9 @@ ifa_ifwithnet(const struct sockaddr *addr)
 #endif
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			const char *cp, *cp2, *cp3;
 
 			if (ifa->ifa_addr->sa_family != af ||
@@ -1661,9 +1755,9 @@ ifa_ifwithaf(int af)
 
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == af)
 				goto out;
 		}
@@ -1686,13 +1780,13 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
 	struct ifaddr *ifa_maybe = 0;
 	u_int af = addr->sa_family;
 
-	if (ifp->if_output == if_nulloutput)
+	if (if_is_deactivated(ifp))
 		return NULL;
 
 	if (af >= AF_MAX)
 		return NULL;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != af)
 			continue;
 		ifa_maybe = ifa;
@@ -1780,6 +1874,10 @@ void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
 	int s, idx;
+
+	KASSERTMSG(if_is_link_state_changeable(ifp),
+	    "%s: IFEF_NO_LINK_STATE_CHANGE must not be set, but if_extflags=0x%x",
+	    ifp->if_xname, ifp->if_extflags);
 
 	/* Ensure change is to a valid state */
 	switch (link_state) {
@@ -1939,7 +2037,9 @@ p2p_rtrequest(int req, struct rtentry *rt,
 		if ((rt->rt_flags & RTF_LOCAL) == 0)
 			break;
 
-		IFADDR_FOREACH(ifa, ifp) {
+		rt->rt_ifp = lo0ifp;
+
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (equal(rt_getkey(rt), ifa->ifa_addr))
 				break;
 		}
@@ -1949,15 +2049,13 @@ p2p_rtrequest(int req, struct rtentry *rt,
 		/*
 		 * Ensure lo0 has an address of the same family.
 		 */
-		IFADDR_FOREACH(lo0ifa, lo0ifp) {
+		IFADDR_READER_FOREACH(lo0ifa, lo0ifp) {
 			if (lo0ifa->ifa_addr->sa_family ==
 			    ifa->ifa_addr->sa_family)
 				break;
 		}
 		if (lo0ifa == NULL)
 			break;
-
-		rt->rt_ifp = lo0ifp;
 
 		/*
 		 * Make sure to set rt->rt_ifa to the interface
@@ -1986,7 +2084,7 @@ if_down(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_UP;
 	nanotime(&ifp->if_lastchange);
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0
@@ -2017,7 +2115,7 @@ if_up(struct ifnet *ifp)
 	nanotime(&ifp->if_lastchange);
 #ifdef notyet
 	/* this has no effect on IP, and will kill all ISO connections XXX */
-	IFADDR_FOREACH(ifa, ifp)
+	IFADDR_READER_FOREACH(ifa, ifp)
 		pfctlinput(PRC_IFUP, ifa->ifa_addr);
 #endif
 #if NCARP > 0
@@ -2119,7 +2217,7 @@ ifunit(const char *name)
 		if (unit >= if_indexlim)
 			return NULL;
 		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || ifp->if_output == if_nulloutput)
+		if (ifp == NULL || if_is_deactivated(ifp))
 			return NULL;
 		return ifp;
 	}
@@ -2127,7 +2225,7 @@ ifunit(const char *name)
 	ifp = NULL;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 	 	if (strcmp(ifp->if_xname, name) == 0)
 			goto out;
@@ -2165,7 +2263,7 @@ if_get(const char *name, struct psref *psref)
 		if (unit >= if_indexlim)
 			return NULL;
 		ifp = ifindex2ifnet[unit];
-		if (ifp == NULL || ifp->if_output == if_nulloutput)
+		if (ifp == NULL || if_is_deactivated(ifp))
 			return NULL;
 		return ifp;
 	}
@@ -2173,7 +2271,7 @@ if_get(const char *name, struct psref *psref)
 	ifp = NULL;
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
-		if (ifp->if_output == if_nulloutput)
+		if (if_is_deactivated(ifp))
 			continue;
 		if (strcmp(ifp->if_xname, name) == 0) {
 			psref_acquire(psref, &ifp->if_psref,
@@ -2193,6 +2291,9 @@ out:
 void
 if_put(const struct ifnet *ifp, struct psref *psref)
 {
+
+	if (ifp == NULL)
+		return;
 
 	psref_release(psref, &ifp->if_psref, ifnet_psref_class);
 }
@@ -2215,13 +2316,34 @@ if_get_byindex(u_int idx, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	ifp = (idx < if_indexlim) ? ifindex2ifnet[idx] : NULL;
-	if (ifp != NULL)
+	ifp = (__predict_true(idx < if_indexlim)) ? ifindex2ifnet[idx] : NULL;
+	if (__predict_true(ifp != NULL))
 		psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
 	pserialize_read_exit(s);
 
 	return ifp;
 }
+
+/*
+ * XXX it's safe only if the passed ifp is guaranteed to not be freed,
+ * for example the ifp is already held or some other object is held which
+ * guarantes the ifp to not be freed indirectly.
+ */
+void
+if_acquire_NOMPSAFE(struct ifnet *ifp, struct psref *psref)
+{
+
+	KASSERT(ifp->if_index != 0);
+	psref_acquire(psref, &ifp->if_psref, ifnet_psref_class);
+}
+
+bool
+if_held(struct ifnet *ifp)
+{
+
+	return psref_held(&ifp->if_psref, ifnet_psref_class);
+}
+
 
 /* common */
 int
@@ -2414,7 +2536,7 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	sockaddr_externalize(&v.sa, sizeof(v.ss), sa);
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != sa->sa_family)
 			continue;
 		sockaddr_externalize(&u.sa, sizeof(u.ss), ifa->ifa_addr);
@@ -2458,7 +2580,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 #endif
 	int r;
 	struct psref psref;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 
 	switch (cmd) {
 #ifdef COMPAT_OIFREQ
@@ -2490,7 +2612,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	switch (cmd) {
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
-		curlwp->l_pflag |= LP_BOUND;
+		bound = curlwp_bind();
 		if (l != NULL) {
 			ifp = if_get(ifr->ifr_name, &psref);
 			error = kauth_authorize_network(l->l_cred,
@@ -2500,7 +2622,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			if (ifp != NULL)
 				if_put(ifp, &psref);
 			if (error != 0) {
-				curlwp->l_pflag ^= bound ^ LP_BOUND;
+				curlwp_bindx(bound);
 				return error;
 			}
 		}
@@ -2509,7 +2631,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name);
 		mutex_exit(&if_clone_mtx);
-		curlwp->l_pflag ^= bound ^ LP_BOUND;
+		curlwp_bindx(bound);
 		return r;
 
 	case SIOCIFGCLONERS:
@@ -2520,10 +2642,10 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		}
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	ifp = if_get(ifr->ifr_name, &psref);
 	if (ifp == NULL) {
-		curlwp->l_pflag ^= bound ^ LP_BOUND;
+		curlwp_bindx(bound);
 		return ENXIO;
 	}
 
@@ -2597,7 +2719,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	mutex_exit(ifp->if_ioctl_lock);
 out:
 	if_put(ifp, &psref);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -2641,7 +2763,7 @@ ifconf(u_long cmd, void *data)
 	const int sz = (int)sizeof(struct ifreq);
 	const bool docopy = ifc->ifc_req != NULL;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 	struct psref psref;
 
 	if (docopy) {
@@ -2649,7 +2771,7 @@ ifconf(u_long cmd, void *data)
 		ifrp = ifc->ifc_req;
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -2661,7 +2783,7 @@ ifconf(u_long cmd, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp)) {
+		if (IFADDR_READER_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (!docopy) {
@@ -2677,7 +2799,7 @@ ifconf(u_long cmd, void *data)
 			}
 		}
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 			/* all sockaddrs must fit in sockaddr_storage */
 			KASSERT(sa->sa_len <= sizeof(ifr.ifr_ifru));
@@ -2699,7 +2821,7 @@ ifconf(u_long cmd, void *data)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	if (docopy) {
 		KASSERT(0 <= space && space <= ifc->ifc_len);
@@ -2712,7 +2834,7 @@ ifconf(u_long cmd, void *data)
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -2750,14 +2872,24 @@ ifreq_setaddr(u_long cmd, struct ifreq *ifr, const struct sockaddr *sa)
 /*
  * wrapper function for the drivers which doesn't have if_transmit().
  */
-int
+static int
 if_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	int s, error;
 
 	s = splnet();
 
+	/*
+	 * If NET_MPSAFE is not defined , IFQ_LOCK() is nop.
+	 * use KERNEL_LOCK instead of ifq_lock.
+	 */
+#ifndef NET_MPSAFE
+	KERNEL_LOCK(1, NULL);
+#endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
+#ifndef NET_MPSAFE
+	KERNEL_UNLOCK_ONE(NULL);
+#endif
 	if (error != 0) {
 		/* mbuf is already freed */
 		goto out;
@@ -2768,9 +2900,30 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		ifp->if_omcasts++;
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 out:
 	splx(s);
+
+	return error;
+}
+
+int
+if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
+{
+	int error;
+
+#ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
+	if (ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		error = if_transmit(ifp, m);
+		KERNEL_UNLOCK_ONE(NULL);
+	} else {
+		KERNEL_UNLOCK_ONE(NULL);
+		error = (*ifp->if_transmit)(ifp, m);
+	}
+#else /* !ALTQ */
+	error = (*ifp->if_transmit)(ifp, m);
+#endif /* !ALTQ */
 
 	return error;
 }
@@ -2783,7 +2936,7 @@ int
 ifq_enqueue(struct ifnet *ifp, struct mbuf *m)
 {
 
-	return (*ifp->if_transmit)(ifp, m);
+	return if_transmit_lock(ifp, m);
 }
 
 /*
@@ -3078,28 +3231,39 @@ if_sdl_sysctl(SYSCTLFN_ARGS)
 {
 	struct ifnet *ifp;
 	const struct sockaddr_dl *sdl;
+	struct psref psref;
+	int error = 0;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
-		return ENODEV;
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		error = ENODEV;
+		goto out0;
+	}
 
 	sdl = ifp->if_sadl;
 	if (sdl == NULL) {
 		*oldlenp = 0;
-		return 0;
+		goto out1;
 	}
 
 	if (oldp == NULL) {
 		*oldlenp = sdl->sdl_alen;
-		return 0;
+		goto out1;
 	}
 
 	if (*oldlenp >= sdl->sdl_alen)
 		*oldlenp = sdl->sdl_alen;
-	return sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+	error = sysctl_copyout(l, &sdl->sdl_data[sdl->sdl_nlen], oldp, *oldlenp);
+out1:
+	if_put(ifp, &psref);
+out0:
+	curlwp_bindx(bound);
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_net_sdl_setup, "sysctl net.sdl subtree setup")

@@ -1,8 +1,8 @@
-/*	$NetBSD: lfs_accessors.h,v 1.33.2.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.33.2.5 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
-/*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
-/*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
+/*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
+/*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -876,11 +876,11 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 		}						\
 	}							\
 
-LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, version);
+LFS_DEF_IF_ACCESSOR(uint32_t, uint32_t, version);
 LFS_DEF_IF_ACCESSOR(int64_t, int32_t, daddr);
-LFS_DEF_IF_ACCESSOR(u_int64_t, u_int32_t, nextfree);
-LFS_DEF_IF_ACCESSOR(u_int64_t, u_int32_t, atime_sec);
-LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
+LFS_DEF_IF_ACCESSOR(uint64_t, uint32_t, nextfree);
+LFS_DEF_IF_ACCESSOR(uint64_t, uint32_t, atime_sec);
+LFS_DEF_IF_ACCESSOR(uint32_t, uint32_t, atime_nsec);
 
 /*
  * Cleaner information structure.  This resides in the ifile and is used
@@ -915,13 +915,13 @@ LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
 		}						\
 	}							\
 
-LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, clean);
-LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, dirty);
+LFS_DEF_CI_ACCESSOR(uint32_t, uint32_t, clean);
+LFS_DEF_CI_ACCESSOR(uint32_t, uint32_t, dirty);
 LFS_DEF_CI_ACCESSOR(int64_t, int32_t, bfree);
 LFS_DEF_CI_ACCESSOR(int64_t, int32_t, avail);
-LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_head);
-LFS_DEF_CI_ACCESSOR(u_int64_t, u_int32_t, free_tail);
-LFS_DEF_CI_ACCESSOR(u_int32_t, u_int32_t, flags);
+LFS_DEF_CI_ACCESSOR(uint64_t, uint32_t, free_head);
+LFS_DEF_CI_ACCESSOR(uint64_t, uint32_t, free_tail);
+LFS_DEF_CI_ACCESSOR(uint32_t, uint32_t, flags);
 
 static __inline void
 lfs_ci_shiftcleantodirty(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
@@ -1174,63 +1174,63 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 		}						\
 	}
 
-LFS_DEF_SB_ACCESSOR(u_int32_t, version);
-LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, size);
-LFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
-LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, dsize);
-LFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
-LFS_DEF_SB_ACCESSOR(u_int32_t, fsize);
-LFS_DEF_SB_ACCESSOR(u_int32_t, frag);
+LFS_DEF_SB_ACCESSOR(uint32_t, version);
+LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, size);
+LFS_DEF_SB_ACCESSOR(uint32_t, ssize);
+LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, dsize);
+LFS_DEF_SB_ACCESSOR(uint32_t, bsize);
+LFS_DEF_SB_ACCESSOR(uint32_t, fsize);
+LFS_DEF_SB_ACCESSOR(uint32_t, frag);
 LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, freehd);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, bfree);
 LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, nfiles);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, avail);
 LFS_DEF_SB_ACCESSOR(int32_t, uinodes);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, idaddr);
-LFS_DEF_SB_ACCESSOR_32ONLY(u_int32_t, ifile, LFS_IFILE_INUM);
+LFS_DEF_SB_ACCESSOR_32ONLY(uint32_t, ifile, LFS_IFILE_INUM);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, lastseg);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, nextseg);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, curseg);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, offset);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, lastpseg);
-LFS_DEF_SB_ACCESSOR(u_int32_t, inopf);
-LFS_DEF_SB_ACCESSOR(u_int32_t, minfree);
+LFS_DEF_SB_ACCESSOR(uint32_t, inopf);
+LFS_DEF_SB_ACCESSOR(uint32_t, minfree);
 LFS_DEF_SB_ACCESSOR(uint64_t, maxfilesize);
-LFS_DEF_SB_ACCESSOR(u_int32_t, fsbpseg);
-LFS_DEF_SB_ACCESSOR(u_int32_t, inopb);
-LFS_DEF_SB_ACCESSOR(u_int32_t, ifpb);
-LFS_DEF_SB_ACCESSOR(u_int32_t, sepb);
-LFS_DEF_SB_ACCESSOR(u_int32_t, nindir);
-LFS_DEF_SB_ACCESSOR(u_int32_t, nseg);
-LFS_DEF_SB_ACCESSOR(u_int32_t, nspf);
-LFS_DEF_SB_ACCESSOR(u_int32_t, cleansz);
-LFS_DEF_SB_ACCESSOR(u_int32_t, segtabsz);
-LFS_DEF_SB_ACCESSOR_32ONLY(u_int32_t, segmask, 0);
-LFS_DEF_SB_ACCESSOR_32ONLY(u_int32_t, segshift, 0);
-LFS_DEF_SB_ACCESSOR(u_int64_t, bmask);
-LFS_DEF_SB_ACCESSOR(u_int32_t, bshift);
-LFS_DEF_SB_ACCESSOR(u_int64_t, ffmask);
-LFS_DEF_SB_ACCESSOR(u_int32_t, ffshift);
-LFS_DEF_SB_ACCESSOR(u_int64_t, fbmask);
-LFS_DEF_SB_ACCESSOR(u_int32_t, fbshift);
-LFS_DEF_SB_ACCESSOR(u_int32_t, blktodb);
-LFS_DEF_SB_ACCESSOR(u_int32_t, fsbtodb);
-LFS_DEF_SB_ACCESSOR(u_int32_t, sushift);
+LFS_DEF_SB_ACCESSOR(uint32_t, fsbpseg);
+LFS_DEF_SB_ACCESSOR(uint32_t, inopb);
+LFS_DEF_SB_ACCESSOR(uint32_t, ifpb);
+LFS_DEF_SB_ACCESSOR(uint32_t, sepb);
+LFS_DEF_SB_ACCESSOR(uint32_t, nindir);
+LFS_DEF_SB_ACCESSOR(uint32_t, nseg);
+LFS_DEF_SB_ACCESSOR(uint32_t, nspf);
+LFS_DEF_SB_ACCESSOR(uint32_t, cleansz);
+LFS_DEF_SB_ACCESSOR(uint32_t, segtabsz);
+LFS_DEF_SB_ACCESSOR_32ONLY(uint32_t, segmask, 0);
+LFS_DEF_SB_ACCESSOR_32ONLY(uint32_t, segshift, 0);
+LFS_DEF_SB_ACCESSOR(uint64_t, bmask);
+LFS_DEF_SB_ACCESSOR(uint32_t, bshift);
+LFS_DEF_SB_ACCESSOR(uint64_t, ffmask);
+LFS_DEF_SB_ACCESSOR(uint32_t, ffshift);
+LFS_DEF_SB_ACCESSOR(uint64_t, fbmask);
+LFS_DEF_SB_ACCESSOR(uint32_t, fbshift);
+LFS_DEF_SB_ACCESSOR(uint32_t, blktodb);
+LFS_DEF_SB_ACCESSOR(uint32_t, fsbtodb);
+LFS_DEF_SB_ACCESSOR(uint32_t, sushift);
 LFS_DEF_SB_ACCESSOR(int32_t, maxsymlinklen);
-LFS_DEF_SB_ACCESSOR(u_int32_t, cksum);
-LFS_DEF_SB_ACCESSOR(u_int16_t, pflags);
-LFS_DEF_SB_ACCESSOR(u_int32_t, nclean);
+LFS_DEF_SB_ACCESSOR(uint32_t, cksum);
+LFS_DEF_SB_ACCESSOR(uint16_t, pflags);
+LFS_DEF_SB_ACCESSOR(uint32_t, nclean);
 LFS_DEF_SB_ACCESSOR(int32_t, dmeta);
-LFS_DEF_SB_ACCESSOR(u_int32_t, minfreeseg);
-LFS_DEF_SB_ACCESSOR(u_int32_t, sumsize);
-LFS_DEF_SB_ACCESSOR(u_int64_t, serial);
-LFS_DEF_SB_ACCESSOR(u_int32_t, ibsize);
+LFS_DEF_SB_ACCESSOR(uint32_t, minfreeseg);
+LFS_DEF_SB_ACCESSOR(uint32_t, sumsize);
+LFS_DEF_SB_ACCESSOR(uint64_t, serial);
+LFS_DEF_SB_ACCESSOR(uint32_t, ibsize);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, s0addr);
-LFS_DEF_SB_ACCESSOR(u_int64_t, tstamp);
-LFS_DEF_SB_ACCESSOR(u_int32_t, inodefmt);
-LFS_DEF_SB_ACCESSOR(u_int32_t, interleave);
-LFS_DEF_SB_ACCESSOR(u_int32_t, ident);
-LFS_DEF_SB_ACCESSOR(u_int32_t, resvseg);
+LFS_DEF_SB_ACCESSOR(uint64_t, tstamp);
+LFS_DEF_SB_ACCESSOR(uint32_t, inodefmt);
+LFS_DEF_SB_ACCESSOR(uint32_t, interleave);
+LFS_DEF_SB_ACCESSOR(uint32_t, ident);
+LFS_DEF_SB_ACCESSOR(uint32_t, resvseg);
 
 /* special-case accessors */
 
@@ -1506,7 +1506,7 @@ lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
 
 /* Amount of non-meta space not available to mortal man */
 #define LFS_EST_RSVD(F) ((LFS_EST_NONMETA(F) *			     \
-				   (u_int64_t)lfs_sb_getminfree(F)) /	     \
+				   (uint64_t)lfs_sb_getminfree(F)) /	     \
 				  100)
 
 /* Can credential C write BB blocks? XXX: kauth_cred_geteuid is abusive */

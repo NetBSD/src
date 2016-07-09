@@ -1,6 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.9 2011/01/21 15:59:07 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.9.32.1 2016/07/09 20:24:53 skrll Exp $
 
-CFLAGS+=	-G 0 -ffixed-23
+CFLAGS+=	-G 0 -ffixed-24
 
 # this should really be !(RUMPKERNEL && target=PIC)
 .if !defined(RUMPKERNEL)

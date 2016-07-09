@@ -1,4 +1,4 @@
-/*	$NetBSD: xenio.h,v 1.9.36.1 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: xenio.h,v 1.9.36.2 2016/07/09 20:24:59 skrll Exp $	*/
 
 /******************************************************************************
  * privcmd.h
@@ -46,20 +46,20 @@ typedef struct privcmd_mmap_entry {
     unsigned long va;
     unsigned long mfn;
     unsigned long npages;
-} privcmd_mmap_entry_t; 
+} privcmd_mmap_entry_t;
 
 typedef struct privcmd_mmap {
     int num;
     domid_t dom; /* target domain */
     privcmd_mmap_entry_t *entry;
-} privcmd_mmap_t; 
+} privcmd_mmap_t;
 
 typedef struct privcmd_mmapbatch {
     int num;     /* number of pages to populate */
     domid_t dom; /* target domain */
     unsigned long addr;  /* virtual address */
     unsigned long *arr; /* array of mfns - top nibble set on err */
-} privcmd_mmapbatch_t; 
+} privcmd_mmapbatch_t;
 
 typedef struct privcmd_mmapbatch_v2 {
     int num;     /* number of pages to populate */
@@ -67,7 +67,7 @@ typedef struct privcmd_mmapbatch_v2 {
     uint64_t addr;  /* virtual address */
     const xen_pfn_t *arr; /* array of mfns */
     int *err; /* array of error codes */
-} privcmd_mmapbatch_v2_t; 
+} privcmd_mmapbatch_v2_t;
 
 typedef struct privcmd_blkmsg
 {

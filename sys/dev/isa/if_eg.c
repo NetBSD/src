@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.87.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.87.4.3 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.87.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eg.c,v 1.87.4.3 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -746,7 +746,7 @@ egget(struct eg_softc *sc, void *buf, int totlen)
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == 0)
 		return (0);
-	m0->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m0, ifp);
 	m0->m_pkthdr.len = totlen;
 	len = MHLEN;
 	m = m0;

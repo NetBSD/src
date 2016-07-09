@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.37 2014/07/24 21:35:13 riastradh Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.37.4.1 2016/07/09 20:25:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.37 2014/07/24 21:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.37.4.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,13 +138,16 @@ pci_genfb_attach(device_t parent, device_t self, void *aux)
 		    sc->sc_gen.sc_fbsize,
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
 		    &sc->sc_memh) != 0) {
-			aprint_error_dev(self, "unable to map the framebuffer\n");
+			aprint_error_dev(self,
+			    "unable to map the framebuffer\n");
 			return;
 		}
-		sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt, sc->sc_memh);
+		sc->sc_gen.sc_fbaddr = bus_space_vaddr(sc->sc_memt,
+		    sc->sc_memh);
 	} else
 		aprint_debug("%s: recycling existing fb mapping at %lx\n",
-		    device_xname(sc->sc_gen.sc_dev), (unsigned long)sc->sc_gen.sc_fbaddr);
+		    device_xname(sc->sc_gen.sc_dev),
+		    (unsigned long)sc->sc_gen.sc_fbaddr);
 
 	/* mmap()able bus ranges */
 	idx = 0;

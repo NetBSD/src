@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.61.2.1 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.61.2.2 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61.2.1 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.61.2.2 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -479,7 +479,7 @@ mutex_vector_enter(kmutex_t *mtx)
 			if (panicstr != NULL)
 				break;
 			while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
-				SPINLOCK_BACKOFF(count); 
+				SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
 				if (SPINLOCK_SPINOUT(spins))
 					MUTEX_ABORT(mtx, "spinout");
@@ -904,7 +904,7 @@ mutex_spin_retry(kmutex_t *mtx)
 		if (panicstr != NULL)
 			break;
 		while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
-			SPINLOCK_BACKOFF(count); 
+			SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins))
 				MUTEX_ABORT(mtx, "spinout");

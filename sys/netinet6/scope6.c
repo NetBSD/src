@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.10.2.2 2016/05/29 08:44:39 skrll Exp $	*/
+/*	$NetBSD: scope6.c,v 1.10.2.3 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.2 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.3 2016/07/09 20:25:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -120,6 +120,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 	for (i = 0; i < 16; i++) {
 		if (idlist->s6id_list[i] &&
 		    idlist->s6id_list[i] != sid->s6id_list[i]) {
+			int s;
 			/*
 			 * An interface zone ID must be the corresponding
 			 * interface index by definition.
@@ -128,6 +129,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 			    idlist->s6id_list[i] != ifp->if_index)
 				return (EINVAL);
 
+			s = pserialize_read_enter();
 			if (i == IPV6_ADDR_SCOPE_LINKLOCAL &&
 			    !if_byindex(idlist->s6id_list[i])) {
 				/*
@@ -136,8 +138,10 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 				 * IDs, but we check the consistency for
 				 * safety in later use.
 				 */
+				pserialize_read_exit(s);
 				return (EINVAL);
 			}
+			pserialize_read_exit(s);
 
 			/*
 			 * XXX: we must need lots of work in this case,
@@ -295,15 +299,20 @@ sa6_embedscope(struct sockaddr_in6 *sin6, int defaultok)
 	if (zoneid != 0 &&
 	    (IN6_IS_SCOPE_LINKLOCAL(&sin6->sin6_addr) ||
 	    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr))) {
+		int s;
 		/*
 		 * At this moment, we only check interface-local and
 		 * link-local scope IDs, and use interface indices as the
 		 * zone IDs assuming a one-to-one mapping between interfaces
 		 * and links.
 		 */
+		s = pserialize_read_enter();
 		ifp = if_byindex(zoneid);
-		if (ifp == NULL)
+		if (ifp == NULL) {
+			pserialize_read_exit(s);
 			return (ENXIO);
+		}
+		pserialize_read_exit(s);
 
 		/* XXX assignment to 16bit from 32bit variable */
 		sin6->sin6_addr.s6_addr16[1] = htons(zoneid & 0xffff);
@@ -349,8 +358,12 @@ sa6_recoverscope(struct sockaddr_in6 *sin6)
 		 */
 		zoneid = ntohs(sin6->sin6_addr.s6_addr16[1]);
 		if (zoneid) {
-			if (!if_byindex(zoneid))
+			int s = pserialize_read_enter();
+			if (!if_byindex(zoneid)) {
+				pserialize_read_exit(s);
 				return (ENXIO);
+			}
+			pserialize_read_exit(s);
 			sin6->sin6_addr.s6_addr16[1] = 0;
 			sin6->sin6_scope_id = zoneid;
 		}

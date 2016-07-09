@@ -1,5 +1,43 @@
 This file is the short summary of the API changes:
 
+29.02.2016 - Non-backward compatible
+    Several types and instructions are renamed to improve
+    readability. In general byte, half, and int are renamed
+    to 8, 16, and 32. Floating point types are also renamed
+    from d and s to f64 and f32.
+
+      [s|u]b -> [s|u]8    (8 bit values)
+      [s|u]h -> [s|u]16   (16 bit values)
+      [s|u]i -> [s|u]32   (32 bit values)
+      d -> f64            (64 bit floating point value)
+      s -> f32            (32 bit floating point value)
+
+18.05.2015 - Non-backward compatible
+    SLJIT_[I|]L[U|S]DIV is renamed to SLJIT_[I|][U|S]DIVMOD
+
+29.09.2014 - Non-backward compatible
+    The sljit_create_compiler, sljit_allocate_stack, and
+    sljit_free_stack functions have an allocator_data
+    argument now.
+
+19.09.2014 - Non-backward compatible
+    Using I, D, S prefixes in conditional and floating
+    point operations. And an L prefix to long multiplication
+    and division (op0 opcodes).
+
+11.08.2014 - Non-backward compatible
+    A currently unused options parameter is added to sljit_emit_enter
+    and sljit_set_context.
+
+06.07.2014 - Non-backward compatible
+    SCRATCH registers are renamed to Rx and SAVED registers
+    are renamed to Sx. See the explanation of these registers
+    in sljitLir.h.
+
+31.05.2014 - Non-backward compatible
+    SLJIT_TEMPORARY_EREGx registers were not renamed to
+    SLJIT_SCRATCH_EREGx when the change was done on 08.11.2012
+
 05.03.2014 - Backward compatible
     The sljit_set_target now supports those jumps, which
     does not created with SLJIT_REWRITABLE_JUMP flag.

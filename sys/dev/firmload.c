@@ -1,4 +1,4 @@
-/*	$NetBSD: firmload.c,v 1.19.6.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: firmload.c,v 1.19.6.2 2016/07/09 20:25:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.19.6.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firmload.c,v 1.19.6.2 2016/07/09 20:25:01 skrll Exp $");
 
 /*
  * The firmload API provides an interface for device drivers to access
@@ -142,8 +142,7 @@ firmware_path_next(const char *drvname, const char *imgname, char *pnbuf,
 	size_t maxprefix, i;
 
 	if (prefix == NULL		/* terminated early */
-	    || *prefix == '\0'		/* no more left */
-	    || *prefix != '/') {	/* not absolute */
+	    || *prefix != '/') {	/* empty or not absolute */
 		*prefixp = NULL;
 	    	return (NULL);
 	}

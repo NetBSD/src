@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35.14.1 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.35.14.2 2016/07/09 20:24:59 skrll Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -68,7 +68,7 @@ struct intrstub {
 #if 0
 	void *ist_entry;
 #endif
-	void *ist_recurse; 
+	void *ist_recurse;
 	void *ist_resume;
 };
 

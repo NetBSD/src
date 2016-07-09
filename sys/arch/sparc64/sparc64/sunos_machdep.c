@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.32.6.1 2015/12/27 12:09:44 skrll Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.32.6.2 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.32.6.1 2015/12/27 12:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.32.6.2 2016/07/09 20:24:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,7 +86,7 @@ sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct proc *p = l->l_proc;
 	register struct sunos_sigframe *fp;
 	register struct trapframe64 *tf;
-	register int addr, onstack; 
+	register int addr, onstack;
 	struct rwindow32 *oldsp, *newsp;
 	register32_t sp;
 	int sig = ksi->ksi_signo, error;

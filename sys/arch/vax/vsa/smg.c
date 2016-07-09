@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $ */
+/*	$NetBSD: smg.c,v 1.55.24.1 2016/07/09 20:24:58 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55.24.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.55 2012/01/11 21:26:13 macallan Exp $");
 #define	WRITECUR(addr, val)	*(volatile uint16_t *)(curaddr + (addr)) = (val)
 static	char *curaddr;
 static	uint16_t curcmd, curx, cury, hotX, hotY;
-static	int bgmask, fgmask; 
+static	int bgmask, fgmask;
 
 static	int smg_match(device_t, cfdata_t, void *);
 static	void smg_attach(device_t, device_t, void *);

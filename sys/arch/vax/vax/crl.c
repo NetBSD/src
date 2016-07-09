@@ -1,4 +1,4 @@
-/*	$NetBSD: crl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: crl.c,v 1.32.4.1 2016/07/09 20:24:58 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.32 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crl.c,v 1.32.4.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ crlrw(dev_t dev, struct uio *uio, int flag)
 			bp->b_flags &= ~(B_WRITE);
 			bp->b_flags |= B_READ;
 		}
-		s = splconsmedia(); 
+		s = splconsmedia();
 		crlstart();
                 while ((bp->b_oflags & BO_DONE) == 0)
                   (void) tsleep(bp, PRIBIO, "crlxfer", 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.39.14.2 2016/03/19 11:29:55 skrll Exp $ */
+/*	$NetBSD: if_qn.c,v 1.39.14.3 2016/07/09 20:24:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.39.14.2 2016/03/19 11:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.39.14.3 2016/07/09 20:24:49 skrll Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -540,7 +540,7 @@ qn_get_packet(struct qn_softc *sc, u_short len)
 	if (len & 1)
 		len++;
 
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m_set_rcvif(m, &sc->sc_ethercom.ec_if);
 	m->m_pkthdr.len = len;
 	m->m_len = 0;
 	head = m;

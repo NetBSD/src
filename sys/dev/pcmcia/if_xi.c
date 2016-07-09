@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.74.4.2 2016/03/19 11:30:18 skrll Exp $ */
+/*	$NetBSD: if_xi.c,v 1.74.4.3 2016/07/09 20:25:15 skrll Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.74.4.2 2016/03/19 11:30:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.74.4.3 2016/07/09 20:25:15 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -417,7 +417,7 @@ xi_get(struct xi_softc *sc)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (recvcount);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = pktlen;
 	len = MHLEN;
 	top = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.166 2014/11/21 09:40:10 ozaki-r Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.166.2.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166 2014/11/21 09:40:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166.2.1 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ struct ktrace_entry {
 	TAILQ_ENTRY(ktrace_entry) kte_list;
 	struct	ktr_header kte_kth;
 	void	*kte_buf;
-	size_t	kte_bufsz;	
+	size_t	kte_bufsz;
 #define	KTE_SPACE		32
 	uint8_t kte_space[KTE_SPACE] __aligned(sizeof(register_t));
 };
@@ -263,7 +263,7 @@ ktrinit(void)
 	    "ktrace", &pool_allocator_nointr, IPL_NONE, NULL, NULL, NULL);
 
 	ktrace_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
-	    ktrace_listener_cb, NULL); 
+	    ktrace_listener_cb, NULL);
 }
 
 /*
@@ -875,14 +875,14 @@ ktr_csw(int out, int user)
 			break;
 		case 1: 
 			kte->kte_kth.ktr_ots.tv_sec = ts->tv_sec;
-			kte->kte_kth.ktr_ots.tv_nsec = ts->tv_nsec;       
-			break; 
+			kte->kte_kth.ktr_ots.tv_nsec = ts->tv_nsec;
+			break;
 		case 2:
 			kte->kte_kth.ktr_ts.tv_sec = ts->tv_sec;
-			kte->kte_kth.ktr_ts.tv_nsec = ts->tv_nsec;       
-			break; 
+			kte->kte_kth.ktr_ts.tv_nsec = ts->tv_nsec;
+			break;
 		default:
-			break; 
+			break;
 		}
 
 		ktraddentry(l, kte, KTA_WAITOK);

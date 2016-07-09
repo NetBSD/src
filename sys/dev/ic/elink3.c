@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.135.4.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: elink3.c,v 1.135.4.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.135.4.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.135.4.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1565,7 +1565,7 @@ epget(struct ep_softc *sc, int totlen)
 		m->m_flags = M_PKTHDR;
 		memset(&m->m_pkthdr, 0, sizeof(m->m_pkthdr));
 	}
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 

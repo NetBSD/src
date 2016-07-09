@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.47 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.47.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.47 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.47.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -461,7 +461,7 @@ cmpci_attach(device_t parent, device_t self, void *aux)
 	cmpci_mixerreg_write(sc, CMPCI_SB16_MIXER_OUTMIX,
 	    CMPCI_SB16_SW_CD|CMPCI_SB16_SW_MIC | CMPCI_SB16_SW_LINE);
 	for (i = 0; i < CMPCI_NDEVS; i++) {
-		switch(i) {
+		switch (i) {
 		/*
 		 * CMI8738 defaults are
 		 *  master:	0xe0	(0x00 - 0xf8)

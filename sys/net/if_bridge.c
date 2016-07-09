@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.7 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.8 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.7 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.8 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -424,6 +424,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = sc;
+	ifp->if_extflags = IFEF_OUTPUT_MPSAFE;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = bridge_ioctl;
 	ifp->if_output = bridge_output;
@@ -1378,6 +1379,7 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	}
 
 #ifdef ALTQ
+	KERNEL_LOCK(1, NULL);
 	/*
 	 * If ALTQ is enabled on the member interface, do
 	 * classification; the queueing discipline might
@@ -1388,12 +1390,13 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 		/* XXX IFT_ETHER */
 		altq_etherclassify(&dst_ifp->if_snd, m);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 #endif /* ALTQ */
 
 	len = m->m_pkthdr.len;
 	mflags = m->m_flags;
 
-	error = (*dst_ifp->if_transmit)(dst_ifp, m);
+	error = if_transmit_lock(dst_ifp, m);
 	if (error) {
 		/* mbuf is already freed */
 		sc->sc_if.if_oerrors++;
@@ -1424,6 +1427,12 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	struct ifnet *dst_if;
 	struct bridge_softc *sc;
 	int s;
+
+	/*
+	 * bridge_output() is called from ether_output(), furthermore
+	 * ifp argument doesn't point to bridge(4). So, don't assert
+	 * IFEF_OUTPUT_MPSAFE here.
+	 */
 
 	if (m->m_len < ETHER_HDR_LEN) {
 		m = m_pullup(m, ETHER_HDR_LEN);
@@ -1535,7 +1544,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 					}
 				}
 
-				mc->m_pkthdr.rcvif = dst_if;
+				m_set_rcvif(mc, dst_if);
 				mc->m_flags &= ~M_PROMISC;
 
 #ifndef NET_MPSAFE
@@ -1610,12 +1619,18 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	struct ifnet *src_if, *dst_if;
 	struct ether_header *eh;
 	struct psref psref;
+	struct psref psref_src;
 	DECLARE_LOCK_VARIABLE;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
-	src_if = m->m_pkthdr.rcvif;
+	src_if = m_get_rcvif_psref(m, &psref_src);
+	if (src_if == NULL) {
+		/* Interface is being destroyed? */
+		m_freem(m);
+		goto out;
+	}
 
 	sc->sc_if.if_ipackets++;
 	sc->sc_if.if_ibytes += m->m_pkthdr.len;
@@ -1690,8 +1705,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		dst_if = NULL;
 	}
 
-	if (pfil_run_hooks(sc->sc_if.if_pfil, &m,
-	    m->m_pkthdr.rcvif, PFIL_IN) != 0) {
+	if (pfil_run_hooks(sc->sc_if.if_pfil, &m, src_if, PFIL_IN) != 0) {
 		if (m != NULL)
 			m_freem(m);
 		goto out;
@@ -1703,6 +1717,9 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		bridge_broadcast(sc, src_if, m);
 		goto out;
 	}
+
+	m_put_rcvif_psref(src_if, &psref_src);
+	src_if = NULL;
 
 	/*
 	 * At this point, we're dealing with a unicast frame
@@ -1736,7 +1753,8 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 	bridge_enqueue(sc, dst_if, m, 1);
 	RELEASE_GLOBAL_LOCKS();
 out:
-	/* XXX gcc */
+	if (src_if != NULL)
+		m_put_rcvif_psref(src_if, &psref_src);
 	return;
 }
 
@@ -1833,7 +1851,8 @@ bridge_input(struct ifnet *ifp, struct mbuf *m)
 				if (_bif->bif_flags & IFBIF_LEARNING)
 					(void) bridge_rtupdate(sc,
 					    eh->ether_shost, ifp, 0, IFBAF_DYNAMIC);
-				_ifp = m->m_pkthdr.rcvif = _bif->bif_ifp;
+				m_set_rcvif(m, _bif->bif_ifp);
+				_ifp = _bif->bif_ifp;
 				bridge_release_member(sc, _bif, &_psref);
 				goto out;
 			}
@@ -1944,7 +1963,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 				goto next;
 			}
 
-			mc->m_pkthdr.rcvif = dst_if;
+			m_set_rcvif(mc, dst_if);
 			mc->m_flags &= ~M_PROMISC;
 
 			ACQUIRE_GLOBAL_LOCKS();
@@ -2641,7 +2660,7 @@ bridge_ip_checkbasic(struct mbuf **mp)
 	}
 
         switch (m->m_pkthdr.csum_flags &
-                ((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
+                ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_IPv4) |
                  M_CSUM_IPv4_BAD)) {
         case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
                 /* INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad); */
@@ -2709,7 +2728,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
          * IPv6 header is in the first mbuf of the chain.
          */
         if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-                struct ifnet *inifp = m->m_pkthdr.rcvif;
+                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
                 if ((m = m_copyup(m, sizeof(struct ip6_hdr),
                                   (max_linkhdr + 3) & ~3)) == NULL) {
                         /* XXXJRT new stat, please */
@@ -2718,7 +2737,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
                         goto bad;
                 }
         } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-                struct ifnet *inifp = m->m_pkthdr.rcvif;
+                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
                 if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6_statinc(IP6_STAT_TOOSMALL);
                         in6_ifstat_inc(inifp, ifs6_in_hdrerr);
@@ -2730,7 +2749,7 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 
         if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		ip6_statinc(IP6_STAT_BADVERS);
-                in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_hdrerr);
+                in6_ifstat_inc(m_get_rcvif_NOMPSAFE(m), ifs6_in_hdrerr);
                 goto bad;
         }
 

@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.2.32.1 2016/03/19 11:30:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.2.32.2 2016/07/09 20:25:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2169,7 +2169,7 @@ t3_rx_eth(struct adapter *adap, struct sge_rspq *rq, struct mbuf *m, int ethpad)
     }
 #endif
 
-    m->m_pkthdr.rcvif = ifp;
+    m_set_rcvif(m, ifp);
     m_explode(m);
     /*
      * adjust after conversion to mbuf chain

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.13 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.14 2016/07/09 20:25:15 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.13 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.14 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -171,12 +171,13 @@ Static struct upl_type sc_devs[] = {
 	{ 0, 0 }
 };
 
-int             upl_match(device_t, cfdata_t, void *);
-void            upl_attach(device_t, device_t, void *);
-int             upl_detach(device_t, int);
-int             upl_activate(device_t, enum devact);
+int	upl_match(device_t, cfdata_t, void *);
+void	upl_attach(device_t, device_t, void *);
+int	upl_detach(device_t, int);
+int	upl_activate(device_t, enum devact);
 extern struct cfdriver upl_cd;
-CFATTACH_DECL_NEW(upl, sizeof(struct upl_softc), upl_match, upl_attach, upl_detach, upl_activate);
+CFATTACH_DECL_NEW(upl, sizeof(struct upl_softc), upl_match, upl_attach,
+    upl_detach, upl_activate);
 
 Static int upl_openpipes(struct upl_softc *);
 Static int upl_tx_list_init(struct upl_softc *);
@@ -316,8 +317,7 @@ upl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_attached = 1;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 }
@@ -357,8 +357,7 @@ upl_detach(device_t self, int flags)
 	sc->sc_attached = 0;
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }
@@ -519,7 +518,7 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	ifp->if_ipackets++;
 	m->m_pkthdr.len = m->m_len = total_len;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 
@@ -1003,7 +1002,7 @@ upl_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	error = (*ifp->if_transmit)(ifp, m);
+	error = if_transmit_lock(ifp, m);
 
 	return error;
 }

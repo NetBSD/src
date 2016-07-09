@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.1.2.3 2016/05/29 08:44:39 skrll Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.1.2.3 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -160,8 +160,8 @@ sctp6_input(struct mbuf **mp, int *offp, int proto)
 	if (sh->dest_port == 0)
 		goto bad;
 	if ((sctp_no_csum_on_loopback == 0) ||
-	   (m->m_pkthdr.rcvif == NULL) ||
-	   (m->m_pkthdr.rcvif->if_type != IFT_LOOP)) {
+	   (m_get_rcvif_NOMPSAFE(m) == NULL) ||
+	   (m_get_rcvif_NOMPSAFE(m)->if_type != IFT_LOOP)) {
 		/* we do NOT validate things from the loopback if the
 		 * sysctl is set to 1.
 		 */
@@ -1295,7 +1295,7 @@ static int
 sctp6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == PF_INET6) {
 			sctp_delete_ip_address(ifa);
 		}

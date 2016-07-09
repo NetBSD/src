@@ -1,4 +1,4 @@
-/*	$NetBSD: fhc.c,v 1.3.16.1 2016/05/29 08:44:19 skrll Exp $	*/
+/*	$NetBSD: fhc.c,v 1.3.16.2 2016/07/09 20:24:57 skrll Exp $	*/
 /*	$OpenBSD: fhc.c,v 1.17 2010/11/11 17:58:23 miod Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.3.16.1 2016/05/29 08:44:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fhc.c,v 1.3.16.2 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -201,7 +201,7 @@ _fhc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 
 		paddr = offset - sc->sc_range[i].coffset;
 		paddr += sc->sc_range[i].poffset;
-		paddr |= ((bus_addr_t)sc->sc_range[i].pspace << 32); 
+		paddr |= ((bus_addr_t)sc->sc_range[i].pspace << 32);
 
 		return bus_space_map(t->parent, paddr, size, flags, hp);
 	}

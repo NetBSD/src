@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.6.16.1 2016/03/19 11:30:02 skrll Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.6.16.2 2016/07/09 20:24:54 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6.16.1 2016/03/19 11:30:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.6.16.2 2016/07/09 20:24:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1458,7 +1458,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 
 		/* push it up the inteface */
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 #ifdef RALINK_ETH_DEBUG
  {

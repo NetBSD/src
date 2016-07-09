@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.11 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.12 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.11 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.12 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -3118,7 +3118,7 @@ urtw_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	data->buf = mtod(mnew, uint8_t *);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = flen - 4;
 
 	s = splnet();

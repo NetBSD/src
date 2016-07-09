@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.235.2.4 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235.2.5 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.4 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.5 2016/07/09 20:25:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -998,7 +998,7 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 					m = m_gethdr(M_WAIT, MT_DATA);
 					mlen = MHLEN;
 					m->m_pkthdr.len = 0;
-					m->m_pkthdr.rcvif = NULL;
+					m_reset_rcvif(m);
 				} else {
 					m = m_get(M_WAIT, MT_DATA);
 					mlen = MLEN;

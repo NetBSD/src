@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.28 2012/01/17 16:14:47 jakllsch Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.28.24.1 2016/07/09 20:25:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -144,6 +144,9 @@
 #define WB_CHIPID_W83627EHF	0xa1
 #define WB_CHIPID_W83627DHG	0xc1
 
+/* wbsio Device IDs */
+#define WBSIO_ID_NCT6776F	0xc3
+
 /* Config bits */
 #define WB_CONFIG_VMR9		0x01
 
@@ -170,6 +173,7 @@ struct lm_softc {
 	struct lm_sensor *lm_sensors;
 	uint8_t	chipid;
 	uint8_t	vrm9;
+	uint8_t sioid;
 };
 
 struct lm_sensor {

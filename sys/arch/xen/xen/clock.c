@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 2014/09/21 12:46:15 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.1 2016/07/09 20:25:00 skrll Exp $	*/
 
 /*
  *
@@ -29,7 +29,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.63.2.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,15 +471,27 @@ xen_initclocks(void)
 	KASSERT(err == 0);
 
 #ifdef DOM0OPS
+	const struct sysctlnode *node = NULL;
+
 	if (!tcdone) { /* Do this only once */
 
 		xen_timepush_ticks = 53 * hz + 3; /* avoid exact # of min/sec */
 		if (xendomain_is_privileged()) {
-			sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
-			    CTLTYPE_INT, "xen_timepush_ticks", SYSCTL_DESCR("How often"
-			     " to update the hypervisor's time-of-day; 0 to disable"),
-			     sysctl_xen_timepush, 0, &xen_timepush_ticks, 0, 
-			     CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+			sysctl_createv(NULL, 0, NULL, &node, 0,
+			    CTLTYPE_NODE, "xen",
+			    SYSCTL_DESCR("Xen top level node"),
+			    NULL, 0, NULL, 0,
+			    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+			if (node != NULL) {
+				sysctl_createv(NULL, 0, &node, NULL,
+				    CTLFLAG_READWRITE, CTLTYPE_INT,
+				    "timepush_ticks",
+				    SYSCTL_DESCR("How often to update the "
+				    "hypervisor's time-of-day; 0 to disable"),
+				    sysctl_xen_timepush, 0,
+				    &xen_timepush_ticks, 0, 
+				    CTL_CREATE, CTL_EOL);
+			}
 			callout_reset(&xen_timepush_co, xen_timepush_ticks,
 			     &xen_timepush, &xen_timepush_co);
 		}

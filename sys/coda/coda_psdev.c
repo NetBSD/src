@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.53.4.3 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.53.4.4 2016/07/09 20:25:00 skrll Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.53.4.3 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.53.4.4 2016/07/09 20:25:00 skrll Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -395,7 +395,7 @@ vc_nb_ioctl(dev_t dev, u_long cmd, void *addr, int flag,
 {
     ENTRY;
 
-    switch(cmd) {
+    switch (cmd) {
     case CODARESIZE: {
 	struct coda_resize *data = (struct coda_resize *)addr;
 	return(coda_nc_resize(data->hashsize, data->heapsize, IS_DOWNCALL));

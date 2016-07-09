@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec6.h,v 1.13 2011/06/09 19:54:18 drochner Exp $	*/
+/*	$NetBSD: ipsec6.h,v 1.13.30.1 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec6.h,v 1.1.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.44 2001/03/23 08:08:47 itojun Exp $	*/
 
@@ -99,7 +99,7 @@ int ipsec6_common_input_cb(struct mbuf *, struct secasvar *,
 void esp6_ctlinput(int, struct sockaddr *, void *);
 #endif /* __FreeBSD__ */
 
-int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *); 
+int ipsec6_process_packet (struct mbuf*,struct ipsecrequest *);
 #endif /*_KERNEL*/
 
 #endif /* !_NETIPSEC_IPSEC6_H_ */

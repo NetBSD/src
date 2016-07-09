@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.10.2.1 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.10.2.2 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -58,7 +58,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.10.2.1 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.10.2.2 2016/07/09 20:25:19 skrll Exp $");
 
 /*
  * System include files.
@@ -620,6 +620,8 @@ winChkName(const u_char *un, int unlen, struct winentry *wep, int chksum, int ut
 	ucs2pad(wn, len, WIN_MAXLEN);
 
 	if (i >= len + 1)
+		return -1;
+	if ((wep->weCnt & WIN_LAST) && (len - i > WIN_CHARS))
 		return -1;
 
 	/*

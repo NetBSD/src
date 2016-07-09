@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.122.2.4 2016/05/29 08:44:20 skrll Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.122.2.5 2016/07/09 20:25:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.4 2016/05/29 08:44:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.5 2016/07/09 20:25:00 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1092,16 +1092,21 @@ linux_getifname(struct lwp *l, register_t *retval, void *data)
 	struct ifnet *ifp;
 	struct linux_ifreq ifr;
 	int error;
+	int s;
 
 	error = copyin(data, &ifr, sizeof(ifr));
 	if (error)
 		return error;
 
+	s = pserialize_read_enter();
 	ifp = if_byindex(ifr.ifr_ifru.ifru_ifindex);
-	if (ifp == NULL)
+	if (ifp == NULL) {
+		pserialize_read_exit(s);
 		return ENODEV;
+	}
 
 	strncpy(ifr.ifr_name, ifp->if_xname, sizeof(ifr.ifr_name));
+	pserialize_read_exit(s);
 
 	return copyout(&ifr, data, sizeof(ifr));
 }
@@ -1119,7 +1124,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	const int sz = (int)sizeof(ifr);
 	bool docopy;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 	struct psref psref;
 
 	error = copyin(data, &ifc, sizeof(ifc));
@@ -1132,7 +1137,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		ifrp = ifc.ifc_req;
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -1144,9 +1149,8 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp))
-			continue;
-		IFADDR_FOREACH(ifa, ifp) {
+
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
 			    sa->sa_len > sizeof(*osa))
@@ -1167,7 +1171,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	if (docopy)
 		ifc.ifc_len -= space;
@@ -1178,7 +1182,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -1235,12 +1239,12 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 			continue;
 
 		found=1;
-		if (IFADDR_EMPTY(ifp)) {
+		if (IFADDR_READER_EMPTY(ifp)) {
 			pserialize_read_exit(s);
 			error = ENODEV;
 			goto out;
 		}
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sadl = satosdl(ifa->ifa_addr);
 			/* only return ethernet addresses */
 			/* XXX what about FDDI, etc. ? */
@@ -1278,7 +1282,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	IFNET_READER_FOREACH(ifp) {
 		memcpy(lreq.ifr_name, ifp->if_xname,
 		       MIN(LINUX_IFNAMSIZ, IFNAMSIZ));
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			sadl = satosdl(ifa->ifa_addr);
 			/* only return ethernet addresses */
 			/* XXX what about FDDI, etc. ? */

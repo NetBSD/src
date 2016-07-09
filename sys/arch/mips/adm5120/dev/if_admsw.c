@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.12.4.1 2016/03/19 11:30:02 skrll Exp $ */
+/* $NetBSD: if_admsw.c,v 1.12.4.2 2016/07/09 20:24:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.12.4.1 2016/03/19 11:30:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.12.4.2 2016/07/09 20:24:53 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -991,7 +991,7 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 			continue;
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		if ((stat & ADM5120_DMA_TYPE) == ADM5120_DMA_TYPE_IP) {
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;

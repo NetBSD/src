@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.39.4.3 2016/07/09 20:25:04 skrll Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.39.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.39.4.3 2016/07/09 20:25:04 skrll Exp $");
 
 #include "vlan.h"
 
@@ -804,7 +804,7 @@ bce_rxintr(struct bce_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 		ifp->if_ipackets++;
 

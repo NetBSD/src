@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.43.2.3 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.43.2.4 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.3 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.43.2.4 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -933,7 +933,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		m->m_data += 2;
 		m->m_len = 0;
 		m->m_pkthdr.len = 0;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		rxq->rxq_cmdsts = cmdsts;
 		--rxq->rxq_active;
 

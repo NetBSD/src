@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.11.6.5 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.11.6.6 2016/07/09 20:25:04 skrll Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2574,7 +2574,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 				}
 			} else
 				m->m_len = m->m_pkthdr.len;
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 #if NVLAN > 0
 			/*
 			 * Due to hardware bugs, Rx checksum offloading

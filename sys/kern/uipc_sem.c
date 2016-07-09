@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.42.2.2 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.42.2.3 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42.2.2 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42.2.3 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,6 +87,7 @@ MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
 #define	SEM_MAX_NAMELEN		14
 
+#define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
 
 static kmutex_t		ksem_lock	__cacheline_aligned;
@@ -333,6 +334,11 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
+	if (atomic_inc_uint_nv(&l->l_proc->p_nsems) > SEM_NSEMS_MAX) {
+               atomic_dec_uint(&l->l_proc->p_nsems);
+		return -1;
+       }
+
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ks->ks_cv, "psem");
@@ -366,6 +372,7 @@ ksem_free(ksem_t *ks)
 	kmem_free(ks, sizeof(ksem_t));
 
 	atomic_dec_uint(&nsems_total);
+ 	atomic_dec_uint(&curproc->p_nsems);	
 }
 
 int

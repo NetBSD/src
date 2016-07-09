@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.28.16.7 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.28.16.8 2016/07/09 20:25:17 skrll Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.7 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.28.16.8 2016/07/09 20:25:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,11 +355,10 @@ uvscom_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("uvscom: in = 0x%x out = 0x%x intr = 0x%x\n",
 		 ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number));
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTF(("uplcom: in=0x%x out=0x%x intr=0x%x\n",
-			ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
+		ucaa.ucaa_bulkin, ucaa.ucaa_bulkout, sc->sc_intr_number ));
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
@@ -396,8 +395,7 @@ uvscom_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

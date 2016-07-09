@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.10 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.10 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,8 +151,7 @@ int ulpt_do_read(struct ulpt_softc *, struct uio *, int);
 int ulpt_status(struct ulpt_softc *);
 void ulpt_reset(struct ulpt_softc *);
 int ulpt_statusmsg(u_char, struct ulpt_softc *);
-void ulpt_read_cb(struct usbd_xfer *, void *,
-		  usbd_status);
+void ulpt_read_cb(struct usbd_xfer *, void *, usbd_status);
 void ulpt_tick(void *xsc);
 
 #if 0
@@ -163,10 +162,10 @@ void ieee1284_print_id(char *);
 #define	ULPTFLAGS(s)	(minor(s) & 0xe0)
 
 
-int             ulpt_match(device_t, cfdata_t, void *);
-void            ulpt_attach(device_t, device_t, void *);
-int             ulpt_detach(device_t, int);
-int             ulpt_activate(device_t, enum devact);
+int ulpt_match(device_t, cfdata_t, void *);
+void ulpt_attach(device_t, device_t, void *);
+int ulpt_detach(device_t, int);
+int ulpt_activate(device_t, enum devact);
 
 extern struct cfdriver ulpt_cd;
 
@@ -318,8 +317,7 @@ ulpt_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTFN(1, ("ulpt_attach: sc=%p in=%d out=%d\n",
 		     sc, sc->sc_out, sc->sc_in));
@@ -372,8 +370,7 @@ ulpt_detach(device_t self, int flags)
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | ULPT_NOPRIME , mn | ULPT_NOPRIME, VCHR);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }

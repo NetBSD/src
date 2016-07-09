@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.71.2.5 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.71.2.6 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ struct	in6_ifaddr {
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
 	u_int32_t ia_plen;		/* prefix length */
+	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
 	struct	in6_ifaddr *ia_next;	/* next in6 list of IP6 addresses */
 	struct	in6_multihead ia6_multiaddrs;
 					/* list of multicast addresses */
@@ -127,6 +128,10 @@ struct	in6_ifaddr {
 
 	/* multicast addresses joined from the kernel */
 	LIST_HEAD(, in6_multi_mship) ia6_memberships;
+
+#ifdef _KERNEL
+	struct pslist_entry	ia6_pslist_entry;
+#endif
 };
 
 /* control structure to manage address selection policy */
@@ -490,7 +495,55 @@ extern pktqueue_t *ip6_pktq;
 
 MALLOC_DECLARE(M_IP6OPT);
 
-extern struct in6_ifaddr *in6_ifaddr;
+extern struct pslist_head in6_ifaddr_list;
+
+#define IN6_ADDRLIST_ENTRY_INIT(__ia) \
+	PSLIST_ENTRY_INIT((__ia), ia6_pslist_entry)
+#define IN6_ADDRLIST_ENTRY_DESTROY(__ia) \
+	PSLIST_ENTRY_DESTROY((__ia), ia6_pslist_entry)
+#define IN6_ADDRLIST_READER_EMPTY() \
+	(PSLIST_READER_FIRST(&in6_ifaddr_list, struct in6_ifaddr, \
+	                     ia6_pslist_entry) == NULL)
+#define IN6_ADDRLIST_READER_FIRST() \
+	PSLIST_READER_FIRST(&in6_ifaddr_list, struct in6_ifaddr, \
+	                    ia6_pslist_entry)
+#define IN6_ADDRLIST_READER_NEXT(__ia) \
+	PSLIST_READER_NEXT((__ia), struct in6_ifaddr, ia6_pslist_entry)
+#define IN6_ADDRLIST_READER_FOREACH(__ia) \
+	PSLIST_READER_FOREACH((__ia), &in6_ifaddr_list, \
+	                      struct in6_ifaddr, ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_INSERT_HEAD(__ia) \
+	PSLIST_WRITER_INSERT_HEAD(&in6_ifaddr_list, (__ia), ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_REMOVE(__ia) \
+	PSLIST_WRITER_REMOVE((__ia), ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_FOREACH(__ia) \
+	PSLIST_WRITER_FOREACH((__ia), &in6_ifaddr_list, struct in6_ifaddr, \
+	                      ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_FIRST() \
+	PSLIST_WRITER_FIRST(&in6_ifaddr_list, struct in6_ifaddr, \
+	                    ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_NEXT(__ia) \
+	PSLIST_WRITER_NEXT((__ia), struct in6_ifaddr, ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_INSERT_AFTER(__ia, __new) \
+	PSLIST_WRITER_INSERT_AFTER((__ia), (__new), ia6_pslist_entry)
+#define IN6_ADDRLIST_WRITER_EMPTY() \
+	(PSLIST_WRITER_FIRST(&in6_ifaddr_list, struct in6_ifaddr, \
+	    ia6_pslist_entry) == NULL)
+#define IN6_ADDRLIST_WRITER_INSERT_TAIL(__new)				\
+	do {								\
+		if (IN6_ADDRLIST_WRITER_EMPTY()) {			\
+			IN6_ADDRLIST_WRITER_INSERT_HEAD((__new));	\
+		} else {						\
+			struct in6_ifaddr *__ia;			\
+			IN6_ADDRLIST_WRITER_FOREACH(__ia) {		\
+				if (IN6_ADDRLIST_WRITER_NEXT(__ia) == NULL) { \
+					IN6_ADDRLIST_WRITER_INSERT_AFTER(__ia,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
 
 #define in6_ifstat_inc(ifp, tag) \
 do {								\
@@ -509,24 +562,16 @@ extern callout_t in6_tmpaddrtimer_ch;
  * to a given interface (ifnet structure).
  */
 static inline struct in6_ifaddr *
-ifp_to_ia6(struct ifnet *ifp)
+in6_get_ia_from_ifp(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 			break;
 	}
 	return (struct in6_ifaddr *)ifa;
 }
-
-#define	IFP_TO_IA6(__ifp, __ia)				\
-do {							\
-	(__ia) = ifp_to_ia6((__ifp));				\
-} while (/*CONSTCOND*/0)
-
 
 #endif /* _KERNEL */
 
@@ -579,7 +624,7 @@ in6_lookup_multi(struct in6_addr *addr, struct ifnet *ifp)
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
 
-	if ((ia = ifp_to_ia6(ifp)) == NULL)
+	if ((ia = in6_get_ia_from_ifp(ifp)) == NULL)
 	  	return NULL;
 	LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 		if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, addr))
@@ -614,7 +659,7 @@ in6_next_multi(struct in6_multistep *step)
 	}
 	while (step->i_ia != NULL) {
 		in6m = LIST_FIRST(&step->i_ia->ia6_multiaddrs);
-		step->i_ia = step->i_ia->ia_next;
+		step->i_ia = IN6_ADDRLIST_READER_NEXT(step->i_ia);
 		if (in6m != NULL) {
 			step->i_in6m = LIST_NEXT(in6m, in6m_entry);
 			break;
@@ -625,10 +670,11 @@ in6_next_multi(struct in6_multistep *step)
 
 static inline struct in6_multi *
 in6_first_multi(struct in6_multistep *step)
-{
-	step->i_ia = in6_ifaddr;
-	step->i_in6m = NULL;
-	return in6_next_multi(step);
+{						
+
+	step->i_ia = IN6_ADDRLIST_READER_FIRST();
+	step->i_in6m = NULL;			
+	return in6_next_multi(step);		
 }
 
 #define IN6_NEXT_MULTI(__step, __in6m)		\
@@ -677,6 +723,8 @@ do {									\
 	(__imm) = in6_lookup_mship(&(__addr), (__ifp), (__imop));	\
 } while (/*CONSTCOND*/ 0)
 #endif
+
+void	in6_init(void);
 
 struct	in6_multi *in6_addmulti(struct in6_addr *, struct ifnet *,
 	int *, int);

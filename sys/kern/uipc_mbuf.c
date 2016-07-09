@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.159.2.4 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.159.2.5 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.4 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.5 2016/07/09 20:25:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -558,8 +558,7 @@ m_reclaim(void *arg, int flags)
 	}
 	/* XXX we cannot use psref in H/W interrupt */
 	if (!cpu_intr_p()) {
-		int bound = curlwp->l_pflag & LP_BOUND;
-		curlwp->l_pflag |= LP_BOUND;
+		int bound = curlwp_bind();
 		IFNET_READER_FOREACH(ifp) {
 			struct psref psref;
 
@@ -572,7 +571,7 @@ m_reclaim(void *arg, int flags)
 			psref_release(&psref, &ifp->if_psref,
 			    ifnet_psref_class);
 		}
-		curlwp->l_pflag ^= bound ^ LP_BOUND;
+		curlwp_bindx(bound);
 	}
 	splx(s);
 	mbstat.m_drain++;
@@ -1171,7 +1170,7 @@ m_split0(struct mbuf *m0, int len0, int wait, int copyhdr)
 		if (n == NULL)
 			return NULL;
 		MCLAIM(n, m0->m_owner);
-		n->m_pkthdr.rcvif = m0->m_pkthdr.rcvif;
+		m_copy_rcvif(n, m0);
 		n->m_pkthdr.len = m0->m_pkthdr.len - len0;
 		len_save = m0->m_pkthdr.len;
 		m0->m_pkthdr.len = len0;
@@ -1240,7 +1239,7 @@ m_devget(char *buf, int totlen, int off0, struct ifnet *ifp,
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return NULL;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = totlen;
 	m->m_len = MHLEN;
 
@@ -1783,7 +1782,7 @@ nextchain:
 		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
 		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
-		    m->m_pkthdr.len, m->m_pkthdr.rcvif,
+		    m->m_pkthdr.len, m_get_rcvif_NOMPSAFE(m),
 		    buf, m->m_pkthdr.csum_data, m->m_pkthdr.segsz);
 	}
 	if ((m->m_flags & M_EXT)) {

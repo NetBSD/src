@@ -1,4 +1,4 @@
-/* $NetBSD: rockchip_emac.c,v 1.12.2.4 2016/04/22 15:44:09 skrll Exp $ */
+/* $NetBSD: rockchip_emac.c,v 1.12.2.5 2016/07/09 20:24:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_rkemac.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.12.2.4 2016/04/22 15:44:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_emac.c,v 1.12.2.5 2016/07/09 20:24:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -874,7 +874,7 @@ rkemac_rxintr(struct rkemac_softc *sc)
 		rx->rx_ptr = htole32(rd->rd_map->dm_segs[0].ds_addr);
 
 		m->m_pkthdr.len = m->m_len = len;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_flags |= M_HASFCS;
 
 		bpf_mtap(ifp, m);

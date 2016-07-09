@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.65 2014/02/01 20:07:07 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.65.6.1 2016/07/09 20:25:00 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,12 +53,13 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65 2014/02/01 20:07:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65.6.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sysctl.h>
 
 #include "xenbus.h"
 #include "xencons.h"
@@ -203,14 +204,51 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 #endif /* NPCI */
 	union hypervisor_attach_cookie hac;
 	char xen_extra_version[XEN_EXTRAVERSION_LEN];
+	static char xen_version_string[20];
+	int rc;
+	const struct sysctlnode *node = NULL;
 
 	xenkernfs_init();
 
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
 	memset(xen_extra_version, 0, sizeof(xen_extra_version));
 	HYPERVISOR_xen_version(XENVER_extraversion, xen_extra_version);
-	aprint_normal(": Xen version %d.%d%s\n", XEN_MAJOR(xen_version),
+	rc = snprintf(xen_version_string, 20, "%d.%d%s", XEN_MAJOR(xen_version),
 		XEN_MINOR(xen_version), xen_extra_version);
+	aprint_normal(": Xen version %s\n", xen_version_string);
+	if (rc >= 20)
+		aprint_debug(": xen_version_string truncated\n");
+
+	sysctl_createv(NULL, 0, NULL, &node, 0,
+	    CTLTYPE_NODE, "xen",
+	    SYSCTL_DESCR("Xen top level node"),
+	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+
+	if (node != NULL) {
+		sysctl_createv(NULL, 0, &node, NULL, CTLFLAG_READONLY,
+		    CTLTYPE_STRING, "version",
+		    SYSCTL_DESCR("Xen hypervisor version"),
+		    NULL, 0, xen_version_string, 0, CTL_CREATE, CTL_EOL);
+	}
+
+	aprint_verbose_dev(self, "features: ");
+#define XEN_TST_F(n) \
+	if (xen_feature(XENFEAT_##n)) \
+		aprint_verbose(" %s", #n);
+
+	XEN_TST_F(writable_page_tables);
+	XEN_TST_F(writable_descriptor_tables);
+	XEN_TST_F(auto_translated_physmap);
+	XEN_TST_F(supervisor_mode_kernel);
+	XEN_TST_F(pae_pgdir_above_4gb);
+	XEN_TST_F(mmu_pt_update_preserve_ad);
+	XEN_TST_F(highmem_assist);
+	XEN_TST_F(gnttab_map_avail_bits);
+	XEN_TST_F(hvm_callback_vector);
+	XEN_TST_F(hvm_safe_pvclock);
+	XEN_TST_F(hvm_pirqs);
+#undef XEN_TST_F
+	aprint_verbose("\n");
 
 	xengnt_init();
 	events_init();
@@ -269,6 +307,12 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 			PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY;
 		hac.hac_acpi.aa_ic = &x86_isa_chipset;
+		hac.hac_acpi.aa_dmat = &pci_bus_dma_tag;
+#ifdef _LP64
+		hac.hac_acpi.aa_dmat64 = &pci_bus_dma64_tag;
+#else
+		hac.hac_acpi.aa_dmat64 = NULL;
+#endif /* _LP64 */
 		config_found_ia(self, "acpibus", &hac.hac_acpi, 0);
 	}
 #endif /* NACPICA */

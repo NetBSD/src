@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.136.4.4 2016/05/29 08:44:39 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136.4.5 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.4 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.4.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -260,8 +260,11 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		if (proto == IPPROTO_NONE)
 			m_freem(m);
 		else {
+			int s;
+			struct ifnet *rcvif = m_get_rcvif(m, &s);
 			u_int8_t *prvnxtp = ip6_get_prevhdr(m, *offp); /* XXX */
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_protounknown);
+			in6_ifstat_inc(rcvif, ifs6_in_protounknown);
+			m_put_rcvif(rcvif, &s);
 			icmp6_error(m, ICMP6_PARAM_PROB,
 			    ICMP6_PARAMPROB_NEXTHEADER,
 			    prvnxtp - mtod(m, u_int8_t *));
@@ -384,6 +387,8 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	int type, code;		/* for ICMPv6 output statistics only */
 	int scope_ambiguous = 0;
 	struct in6_addr *in6a;
+	int bound = curlwp_bind();
+	struct psref psref;
 
 	in6p = sotoin6pcb(so);
 
@@ -444,8 +449,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	 * Source address selection.
 	 */
 	if ((in6a = in6_selectsrc(dstsock, optp, in6p->in6p_moptions,
-	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp,
-	    &error)) == 0) {
+	    &in6p->in6p_route, &in6p->in6p_laddr, &oifp, &psref, &error)) == 0) {
 		if (error == 0)
 			error = EADDRNOTAVAIL;
 		goto bad;
@@ -474,6 +478,9 @@ rip6_output(struct mbuf *m, struct socket * const so,
 	/* ip6_plen will be filled in ip6_output, so not fill it here. */
 	ip6->ip6_nxt   = in6p->in6p_ip6.ip6_nxt;
 	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
+
+	if_put(oifp, &psref);
+	oifp = NULL;
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
 	    in6p->in6p_cksum != -1) {
@@ -507,14 +514,18 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		}
 	}
 
-	error = ip6_output(m, optp, &in6p->in6p_route, 0,
-	    in6p->in6p_moptions, so, &oifp);
-	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
-		if (oifp)
-			icmp6_ifoutstat_inc(oifp, type, code);
-		ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
-	} else
-		RIP6_STATINC(RIP6_STAT_OPACKETS);
+	{
+		struct ifnet *ret_oifp = NULL;
+
+		error = ip6_output(m, optp, &in6p->in6p_route, 0,
+		    in6p->in6p_moptions, so, &ret_oifp);
+		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
+			if (ret_oifp)
+				icmp6_ifoutstat_inc(ret_oifp, type, code);
+			ICMP6_STATINC(ICMP6_STAT_OUTHIST + type);
+		} else
+			RIP6_STATINC(RIP6_STAT_OPACKETS);
+	}
 
 	goto freectl;
 
@@ -527,6 +538,8 @@ rip6_output(struct mbuf *m, struct socket * const so,
 		ip6_clearpktopts(&opt, -1);
 		m_freem(control);
 	}
+	if_put(oifp, &psref);
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -707,6 +720,8 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	struct ifnet *ifp = NULL;
 	int scope_ambiguous = 0;
 	int error = 0;
+	struct psref psref;
+	int bound;
 
 	KASSERT(solocked(so));
 	KASSERT(in6p != NULL);
@@ -730,23 +745,27 @@ rip6_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	if ((error = sa6_embedscope(addr, ip6_use_defzone)) != 0)
 		return error;
 
+	bound = curlwp_bind();
 	/* Source address selection. XXX: need pcblookup? */
 	in6a = in6_selectsrc(addr, in6p->in6p_outputopts,
 	    in6p->in6p_moptions, &in6p->in6p_route,
-	    &in6p->in6p_laddr, &ifp, &error);
+	    &in6p->in6p_laddr, &ifp, &psref, &error);
 	if (in6a == NULL) {
 		if (error == 0)
-			return EADDRNOTAVAIL;
-		return error;
+			error = EADDRNOTAVAIL;
+		goto out;
 	}
 	/* XXX: see above */
 	if (ifp && scope_ambiguous &&
 	    (error = in6_setscope(&addr->sin6_addr, ifp, NULL)) != 0) {
-		return error;
+		goto out;
 	}
 	in6p->in6p_laddr = *in6a;
 	in6p->in6p_faddr = addr->sin6_addr;
 	soisconnected(so);
+out:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 	return error;
 }
 

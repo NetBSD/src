@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.71 2014/05/26 19:16:39 dholland Exp $	*/
+/*	$NetBSD: inode.h,v 1.71.4.1 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -44,6 +44,7 @@
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
+#include <ufs/ext2fs/ext2fs_extents.h>
 #include <miscfs/genfs/genfs_node.h>
 
 /*
@@ -78,6 +79,7 @@ struct ffs_inode_ext {
 struct ext2fs_inode_ext {
 	daddr_t ext2fs_last_lblk;	/* last logical block allocated */
 	daddr_t ext2fs_last_blk;	/* last block allocated on disk */
+	struct ext4_extent_cache i_ext_cache; /* cache for ext4 extent */
 };
 
 struct lfs_inode_ext;
@@ -234,8 +236,7 @@ struct inode {
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime. */
-#define	IN_MODIFY	0x2000		/* Modification time update request. */
+#define	IN_UPDATE	0x0004		/* Inode written to; update mtime. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
 /* 	   unused	0x0020 */	/* was IN_RENAME */
@@ -244,8 +245,12 @@ struct inode {
 /*	   unused	0x0100 */	/* was LFS-only IN_CLEANING */
 /*	   unused	0x0200 */	/* was LFS-only IN_ADIROP */
 #define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+/*	   unused	0x0800 */	/* what was that? */
 /*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
+#define	IN_MODIFY	0x2000		/* Modification time update request. */
 /*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
+#define	IN_E4EXTENTS    0x8000		/* ext4 extents */
+
 #if defined(_KERNEL)
 
 /*

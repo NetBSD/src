@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.97.2.1 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.97.2.2 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97.2.1 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.97.2.2 2016/07/09 20:25:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -855,7 +855,7 @@ puffsop_expire(struct puffs_mount *pmp, puffs_cookie_t cookie)
 	 */
 	if (puffs_cookie2vnode(pmp, cookie, &vp) == 0) {
 		VPTOPP(vp)->pn_stat &= ~PNODE_SOPEXP;
-		vrele(vp); 
+		vrele(vp);
 	}
 
 	return;

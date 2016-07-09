@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.144.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_de.c,v 1.144.4.3 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.144.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.144.4.3 2016/07/09 20:25:04 skrll Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3748,7 +3748,7 @@ tulip_rx_intr(
 #endif
 #if !defined(TULIP_COPY_RXDATA)
 		ms->m_pkthdr.len = total_len;
-		ms->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(ms, ifp);
 #if defined(__NetBSD__)
 		if_percpuq_enqueue(ifp->if_percpuq, ms);
 #else
@@ -3762,7 +3762,7 @@ tulip_rx_intr(
 		m0->m_data += 2;	/* align data after header */
 		m_copydata(ms, 0, total_len, mtod(m0, void *));
 		m0->m_len = m0->m_pkthdr.len = total_len;
-		m0->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m0, ifp);
 #if defined(__NetBSD__)
 		if_percpuq_enqueue(ifp->if_percpuq, m0);
 #else

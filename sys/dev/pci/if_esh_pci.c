@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esh_pci.c,v 1.31 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_esh_pci.c,v 1.31.6.1 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.31 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_esh_pci.c,v 1.31.6.1 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,10 @@ esh_pci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": HIPPI controller\n");
 
 	if (pci_mapreg_map(pa, MEM_MAP_REG,
-			   PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-			   &sc->sc_iot, &sc->sc_ioh, NULL, NULL) != 0) {
-	    aprint_error(": unable to map memory device registers\n");
-	    return;
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_iot,
+	    &sc->sc_ioh, NULL, NULL) != 0) {
+		aprint_error(": unable to map memory device registers\n");
+		return;
 	}
 
 	sc->sc_dev = self;

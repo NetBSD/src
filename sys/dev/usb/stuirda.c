@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.7 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.8 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.7 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.8 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -96,12 +96,13 @@ struct irframe_methods stuirda_methods = {
 #define stuirda_activate uirda_activate
 #define stuirda_detach uirda_detach
 
-int             stuirda_match(device_t, cfdata_t, void *);
-void            stuirda_attach(device_t, device_t, void *);
-int             stuirda_detach(device_t, int);
-int             stuirda_activate(device_t, enum devact);
+int	stuirda_match(device_t, cfdata_t, void *);
+void	stuirda_attach(device_t, device_t, void *);
+int	stuirda_detach(device_t, int);
+int	stuirda_activate(device_t, enum devact);
 extern struct cfdriver stuirda_cd;
-CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match, stuirda_attach, stuirda_detach, stuirda_activate);
+CFATTACH_DECL_NEW(stuirda, sizeof(struct stuirda_softc), stuirda_match,
+    stuirda_attach, stuirda_detach, stuirda_activate);
 
 int
 stuirda_match(device_t parent, cfdata_t match, void *aux)
@@ -131,7 +132,8 @@ stuirda_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-stuirda_fwload(struct uirda_softc *sc) {
+stuirda_fwload(struct uirda_softc *sc)
+{
 
 
 	int rc;

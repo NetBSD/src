@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.4.2.5 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4.2.6 2016/07/09 20:25:21 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -592,14 +592,18 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 	struct llentry *lle;
 	u_int laflags;
 	int error;
+	struct psref psref;
+	int bound;
 
 	KASSERTMSG(dl != NULL && dl->sdl_family == AF_LINK, "invalid dl");
 
+	bound = curlwp_bind();
 	if (sdl_index != 0)
-		ifp = if_byindex(sdl_index);
+		ifp = if_get_byindex(sdl_index, &psref);
 	else
-		ifp = if_byindex(dl->sdl_index);
+		ifp = if_get_byindex(dl->sdl_index, &psref);
 	if (ifp == NULL) {
+		curlwp_bindx(bound);
 		log(LOG_INFO, "%s: invalid ifp (sdl_index %d)\n",
 		    __func__, sdl_index != 0 ? sdl_index : dl->sdl_index);
 		return EINVAL;
@@ -628,7 +632,8 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		    (lle->la_flags & LLE_STATIC || lle->la_expire == 0)) {
 			LLE_RUNLOCK(lle);
 			IF_AFDATA_WUNLOCK(ifp);
-			return EEXIST;
+			error = EEXIST;
+			goto out;
 		}
 		if (lle != NULL)
 			LLE_RUNLOCK(lle);
@@ -636,7 +641,8 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		lle = lla_create(llt, 0, dst);
 		if (lle == NULL) {
 			IF_AFDATA_WUNLOCK(ifp);
-			return (ENOMEM);
+			error = ENOMEM;
+			goto out;
 		}
 
 		KASSERT(ifp->if_addrlen <= sizeof(lle->ll_addr));
@@ -680,12 +686,16 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		IF_AFDATA_WLOCK(ifp);
 		error = lla_delete(llt, 0, dst);
 		IF_AFDATA_WUNLOCK(ifp);
-		return (error == 0 ? 0 : ENOENT);
+		error = (error == 0 ? 0 : ENOENT);
+		break;
 
 	default:
 		error = EINVAL;
 	}
 
+out:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 	return (error);
 }
 

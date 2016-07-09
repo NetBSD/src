@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 2014/03/24 19:52:27 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153.6.1 2016/07/09 20:24:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2014/03/24 19:52:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153.6.1 2016/07/09 20:24:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -308,6 +308,10 @@ mvme147_init(void)
 
 		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
 		/* retry! */
+	}
+	/* just in case */
+	if (delay_divisor == 0) {
+		delay_divisor = 1;
 	}
 
 	bus_space_unmap(bt, bh, PCCREG_SIZE);

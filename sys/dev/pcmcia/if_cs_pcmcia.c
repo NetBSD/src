@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.20.14.1 2015/06/06 14:40:12 skrll Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.20.14.2 2016/07/09 20:25:15 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.20.14.1 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.20.14.2 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,8 +108,7 @@ cs_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	error = pcmcia_function_configure(pa->pf, cs_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 
