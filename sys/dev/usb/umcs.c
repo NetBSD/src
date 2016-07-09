@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.6 2016/04/16 13:22:00 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.7 2016/07/09 20:25:16 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.6 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.7 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,8 +282,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	usb_init_task(&sc->sc_change_task, umcs7840_change_task, sc,
 	    USB_TASKQ_MPSAFE);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	memset(&ucaa, 0, sizeof(ucaa));
 	ucaa.ucaa_ibufsize = 256;
@@ -530,8 +529,7 @@ umcs7840_detach(device_t self, int flags)
 		}
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

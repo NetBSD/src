@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.58.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.58.4.3 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.58.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.58.4.3 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1544,7 +1544,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			}
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/* Pass this up to any BPF listeners. */

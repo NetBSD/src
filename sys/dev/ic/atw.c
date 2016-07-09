@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.156.6.2 2016/05/29 08:44:21 skrll Exp $  */
+/*	$NetBSD: atw.c,v 1.156.6.3 2016/07/09 20:25:02 skrll Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.156.6.2 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.156.6.3 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -3139,7 +3139,7 @@ atw_rxintr(struct atw_softc *sc)
 		}
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = MIN(m->m_ext.ext_size, len);
 
 		rate = (rate0 < __arraycount(rate_tbl)) ? rate_tbl[rate0] : 0;

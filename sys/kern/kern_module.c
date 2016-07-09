@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.101.2.4 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.101.2.5 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.4 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.5 2016/07/09 20:25:20 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -66,11 +66,11 @@ struct modlist        module_builtins = TAILQ_HEAD_INITIALIZER(module_builtins);
 static struct modlist module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
 
 static module_t	*module_active;
-static bool	module_verbose_on;
+bool		module_verbose_on;
 #ifdef MODULAR_DEFAULT_AUTOLOAD
-static bool	module_autoload_on = true;
+bool		module_autoload_on = true;
 #else
-static bool	module_autoload_on = false;
+bool		module_autoload_on = false;
 #endif
 u_int		module_count;
 u_int		module_builtinlist;
@@ -723,20 +723,17 @@ module_enqueue(module_t *mod)
 	KASSERT(kernconfig_is_held());
 
 	/*
-	 * If there are requisite modules, put at the head of the queue.
-	 * This is so that autounload can unload requisite modules with
-	 * only one pass through the queue.
+	 * Put new entry at the head of the queue so autounload can unload
+	 * requisite modules with only one pass through the queue.
 	 */
+	TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
 	if (mod->mod_nrequired) {
-		TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
 
 		/* Add references to the requisite modules. */
 		for (i = 0; i < mod->mod_nrequired; i++) {
 			KASSERT(mod->mod_required[i] != NULL);
 			mod->mod_required[i]->mod_refcnt++;
 		}
-	} else {
-		TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	}
 	module_count++;
 	module_gen++;
@@ -1235,8 +1232,32 @@ module_do_unload(const char *name, bool load_requires_force)
 int
 module_prime(const char *name, void *base, size_t size)
 {
+	__link_set_decl(modules, modinfo_t);
+	modinfo_t *const *mip;
 	module_t *mod;
 	int error;
+
+	/* Check for module name same as a built-in module */
+
+	__link_set_foreach(mip, modules) {
+		if (*mip == &module_dummy)
+			continue;
+		if (strcmp((*mip)->mi_name, name) == 0) {
+			module_error("module `%s' pushed by boot loader "
+			    "already exists", name);
+			return EEXIST;
+		}
+	}
+
+	/* Also eliminate duplicate boolist entries */
+
+	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
+			module_error("duplicate bootlist entry for module "
+			    "`%s'", name);
+			return EEXIST;
+		}
+	}
 
 	mod = module_newmodule(MODULE_SOURCE_BOOT);
 	if (mod == NULL) {
@@ -1254,8 +1275,8 @@ module_prime(const char *name, void *base, size_t size)
 	if (error != 0) {
 		kobj_unload(mod->mod_kobj);
 		kmem_free(mod, sizeof(*mod));
-		module_error("unable to load `%s' pushed by boot loader, "
-		    "error %d", name, error);
+		module_error("unable to fetch_info for `%s' pushed by boot "
+		    "loader, error %d", name, error);
 		return error;
 	}
 

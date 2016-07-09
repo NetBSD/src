@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.26 2011/08/31 18:31:03 plunky Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.26.30.1 2016/07/09 20:25:22 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.26 2011/08/31 18:31:03 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.26.30.1 2016/07/09 20:25:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ atintr(void)
 			break;
 
 		m_claimm(m, &atalk_rx_mowner);
-		ifp = m->m_pkthdr.rcvif;
+		ifp = m_get_rcvif_NOMPSAFE(m);
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp && (aa->aa_flags & AFA_PHASE2))
 				break;
@@ -103,7 +103,7 @@ atintr(void)
 			break;
 
 		m_claimm(m, &atalk_rx_mowner);
-		ifp = m->m_pkthdr.rcvif;
+		ifp = m_get_rcvif_NOMPSAFE(m);
 		for (aa = at_ifaddr.tqh_first; aa; aa = aa->aa_list.tqe_next) {
 			if (aa->aa_ifp == ifp &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)

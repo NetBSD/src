@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.22 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: cfl.c,v 1.22.4.1 2016/07/09 20:24:58 skrll Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.22 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfl.c,v 1.22.4.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ cflrw(dev_t dev, struct uio *uio, int flag)
 			bp->b_flags &= ~(B_WRITE);
 			bp->b_flags |= B_READ;
 		}
-		s = splconsmedia(); 
+		s = splconsmedia();
 		cflstart();
 		biowait(bp);
 		splx(s);

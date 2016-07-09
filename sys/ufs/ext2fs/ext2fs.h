@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.36 2013/06/23 07:28:37 dholland Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.36.10.1 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -86,6 +86,11 @@
 #define	BBLOCK		((daddr_t)(0))
 #define	SBLOCK		((daddr_t)(BBLOCK + BBSIZE / DEV_BSIZE))
 
+#define	fsbtodb(fs, b)  ((daddr_t)(b) << (fs)->e2fs_fsbtodb)
+/* calculates (loc / fs->fs_bsize) */
+#define	lblkno(fs, loc) ((loc) >> (fs->e2fs_bshift))
+#define	blksize(fs, ip, lbn) ((fs)->e2fs_bsize)
+
 /*
  * Addresses stored in inodes are capable of addressing blocks
  * XXX
@@ -132,7 +137,7 @@ struct ext2fs {
 	uint32_t  e2fs_fbcount;		/* free blocks count */
 	uint32_t  e2fs_ficount;		/* free inodes count */
 	uint32_t  e2fs_first_dblock;	/* first data block */
-	uint32_t  e2fs_log_bsize;	/* block size = 1024*(2^e2fs_log_bsize) */
+	uint32_t  e2fs_log_bsize;	/* bsize = 1024*(2^e2fs_log_bsize) */
 	uint32_t  e2fs_fsize;		/* fragment size */
 	uint32_t  e2fs_bpg;		/* blocks per group */
 	uint32_t  e2fs_fpg;		/* frags per group */
@@ -165,7 +170,62 @@ struct ext2fs {
 	uint8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	uint8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
 	uint16_t  e2fs_reserved_ngdb;	/* # of reserved gd blocks for resize */
-	uint32_t  reserved2[204];
+	
+	/* Additional fields */
+	char      e3fs_journal_uuid[16];/* uuid of journal superblock */
+	uint32_t  e3fs_journal_inum;	/* inode number of journal file */
+	uint32_t  e3fs_journal_dev;	/* device number of journal file */
+	uint32_t  e3fs_last_orphan;	/* start of list of inodes to delete */
+	uint32_t  e3fs_hash_seed[4];	/* HTREE hash seed */
+	char      e3fs_def_hash_version;/* Default hash version to use */
+	char      e3fs_jnl_backup_type;
+	uint16_t  e3fs_desc_size;	/* size of group descriptor */
+	uint32_t  e3fs_default_mount_opts;
+	uint32_t  e3fs_first_meta_bg;	/* First metablock block group */
+	uint32_t  e3fs_mkfs_time;	/* when the fs was created */
+	uint32_t  e3fs_jnl_blks[17];	/* backup of the journal inode */
+	uint32_t  e4fs_bcount_hi;	/* high bits of blocks count */
+	uint32_t  e4fs_rbcount_hi;	/* high bits of reserved blocks count */
+	uint32_t  e4fs_fbcount_hi;	/* high bits of free blocks count */
+	uint16_t  e4fs_min_extra_isize; /* all inodes have some bytes */
+	uint16_t  e4fs_want_extra_isize;/* inodes must reserve some bytes */
+	uint32_t  e4fs_flags;		/* miscellaneous flags */
+	uint16_t  e4fs_raid_stride;	/* RAID stride */
+	uint16_t  e4fs_mmpintv;		/* seconds to wait in MMP checking */
+	uint64_t  e4fs_mmpblk;		/* block for multi-mount protection */
+	uint32_t  e4fs_raid_stripe_wid; /* blocks on data disks (N * stride) */
+	uint8_t   e4fs_log_gpf;		/* FLEX_BG group size */
+	uint8_t   e4fs_chksum_type;	/* metadata checksum algorithm used */
+	uint8_t   e4fs_encrypt;		/* versioning level for encryption */
+	uint8_t   e4fs_reserved_pad;
+	uint64_t  e4fs_kbytes_written;	/* number of lifetime kilobytes */
+	uint32_t  e4fs_snapinum;	/* inode number of active snapshot */
+	uint32_t  e4fs_snapid;		/* sequential ID of active snapshot */
+	uint64_t  e4fs_snaprbcount;	/* rsvd blocks for active snapshot */
+	uint32_t  e4fs_snaplist;	/* inode number for on-disk snapshot */
+	uint32_t  e4fs_errcount;	/* number of file system errors */
+	uint32_t  e4fs_first_errtime;	/* first time an error happened */
+	uint32_t  e4fs_first_errino;	/* inode involved in first error */
+	uint64_t  e4fs_first_errblk;	/* block involved of first error */
+	uint8_t   e4fs_first_errfunc[32];/* function where error happened */
+	uint32_t  e4fs_first_errline;	/* line number where error happened */
+	uint32_t  e4fs_last_errtime;	/* most recent time of an error */
+	uint32_t  e4fs_last_errino;	/* inode involved in last error */
+	uint32_t  e4fs_last_errline;	/* line number where error happened */
+	uint64_t  e4fs_last_errblk;	/* block involved of last error */
+	uint8_t   e4fs_last_errfunc[32];/* function where error happened */
+	uint8_t   e4fs_mount_opts[64];
+	uint32_t  e4fs_usrquota_inum;	/* inode for tracking user quota */
+	uint32_t  e4fs_grpquota_inum;	/* inode for tracking group quota */
+	uint32_t  e4fs_overhead_clusters;/* overhead blocks/clusters */
+	uint32_t  e4fs_backup_bgs[2];	/* groups with sparse_super2 SBs */
+	uint8_t   e4fs_encrypt_algos[4];/* encryption algorithms in use */
+	uint8_t   e4fs_encrypt_pw_salt[16];/* salt used for string2key */
+	uint32_t  e4fs_lpf_ino;		/* location of the lost+found inode */
+	uint32_t  e4fs_proj_quota_inum;	/* inode for tracking project quota */
+	uint32_t  e4fs_chksum_seed;	/* checksum seed */
+	uint32_t  e4fs_reserved[98];	/* padding to the end of the block */
+	uint32_t  e4fs_sbchksum;	/* superblock checksum */
 };
 
 
@@ -175,6 +235,7 @@ struct m_ext2fs {
 	u_char	e2fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 	int8_t	e2fs_ronly;	/* mounted read-only flag */
 	int8_t	e2fs_fmod;	/* super block modified flag */
+	int8_t	e2fs_uhash;	/* 3 if hash should be signed, 0 if not */
 	int32_t	e2fs_bsize;	/* block size */
 	int32_t e2fs_bshift;	/* ``lblkno'' calc of logical blkno */
 	int32_t e2fs_bmask;	/* ``blkoff'' calc of blk offsets */
@@ -267,7 +328,14 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					 | EXT2F_ROCOMPAT_LARGEFILE \
 					 | EXT2F_ROCOMPAT_HUGE_FILE)
-#define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
+#define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
+					 | EXT2F_INCOMPAT_EXTENTS)
+
+/*
+ * Feature set definitions
+ */
+#define EXT2_HAS_COMPAT_FEATURE(sb, mask) \
+    ((sb)->e2fs.e2fs_features_compat & htole32(mask))
 
 /*
  * Definitions of behavior on errors

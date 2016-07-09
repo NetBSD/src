@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.1.2.3 2015/09/22 12:05:59 skrll Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.1.2.4 2016/07/09 20:25:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.1.2.3 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.1.2.4 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,17 +60,17 @@ struct hdaudio_pci_softc {
 	pcireg_t		sc_id;
 };
 
-static int		hdaudio_pci_match(device_t, cfdata_t, void *);
-static void		hdaudio_pci_attach(device_t, device_t, void *);
-static int		hdaudio_pci_detach(device_t, int);
-static int		hdaudio_pci_rescan(device_t, const char *, const int *);
-static void		hdaudio_pci_childdet(device_t, device_t);
+static int	hdaudio_pci_match(device_t, cfdata_t, void *);
+static void	hdaudio_pci_attach(device_t, device_t, void *);
+static int	hdaudio_pci_detach(device_t, int);
+static int	hdaudio_pci_rescan(device_t, const char *, const int *);
+static void	hdaudio_pci_childdet(device_t, device_t);
 
-static int		hdaudio_pci_intr(void *);
-static void		hdaudio_pci_reinit(struct hdaudio_pci_softc *);
+static int	hdaudio_pci_intr(void *);
+static void	hdaudio_pci_reinit(struct hdaudio_pci_softc *);
 
 /* power management */
-static bool		hdaudio_pci_resume(device_t, const pmf_qual_t *);
+static bool	hdaudio_pci_resume(device_t, const pmf_qual_t *);
 
 CFATTACH_DECL2_NEW(
     hdaudio_pci,

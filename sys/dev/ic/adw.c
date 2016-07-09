@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.52 2012/10/27 17:18:18 chs Exp $	 */
+/* $NetBSD: adw.c,v 1.52.14.1 2016/07/09 20:25:02 skrll Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.52 2012/10/27 17:18:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.52.14.1 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,11 +432,12 @@ adw_attach(ADW_SOFTC *sc)
 	 */
 	ncontrols = adw_create_ccbs(sc, sc->sc_control->ccbs, ADW_MAX_CCB);
 	if (ncontrols == 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create Control Blocks\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create Control Blocks\n");
 		return; /* (ENOMEM) */ ;
 	} else if (ncontrols != ADW_MAX_CCB) {
-		aprint_error_dev(sc->sc_dev, "WARNING: only %d of %d Control Blocks"
-		       " created\n",
+		aprint_error_dev(sc->sc_dev,
+		    "WARNING: only %d of %d Control Blocks created\n",
 		       ncontrols, ADW_MAX_CCB);
 	}
 

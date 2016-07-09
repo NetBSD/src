@@ -1,7 +1,36 @@
-/*	$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.113.2.3 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
+ */
+
+/*
+ * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009, 2016
+ * The NetBSD Foundation, Inc., All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum, by Andrew Doran and by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -65,35 +94,6 @@
  */
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2006, 2007, 2009 The NetBSD Foundation, Inc.
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum, and by Andrew Doran.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.3 2016/07/09 20:24:52 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -147,13 +147,14 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <machine/cputypes.h>
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 #include <machine/i82489reg.h>
 #include <machine/frameasm.h>
 #include <machine/i82489reg.h>
+#include <machine/cputypes.h>
+
 #ifndef XEN
 #include <machine/multiboot.h>
 #endif
@@ -218,6 +219,20 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $
 2:					;
 
 /*
+ * fillkpt_blank - Fill in a kernel page table with blank entries
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ */
+#define fillkpt_blank	\
+	cmpl	$0,%ecx			;	/* zero-sized? */	\
+	je 	2f			; \
+1:	movl	$0,(PDE_SIZE-4)(%ebx)	;	/* upper 32 bits: 0 */	\
+	movl	$0,(%ebx)		;	/* lower 32 bits: 0 */	\
+	addl	$PDE_SIZE,%ebx		;	/* next PTE/PDE */	\
+	loop	1b			; \
+2:					;
+
+/*
  * killkpt - Destroy a kernel page table
  *	ebx = page table address
  *	ecx = number of pages to destroy
@@ -255,16 +270,6 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $
  */
 	.data
 
-	.globl	_C_LABEL(nox_flag)
-	.globl	_C_LABEL(cputype)
-	.globl	_C_LABEL(cpuid_level)
-	.globl	_C_LABEL(esym)
-	.globl	_C_LABEL(eblob)
-	.globl	_C_LABEL(atdevbase)
-	.globl	_C_LABEL(lwp0uarea)
-	.globl	_C_LABEL(PDPpaddr)
-	.globl	_C_LABEL(gdt)
-	.globl	_C_LABEL(idt)
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
@@ -273,7 +278,9 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.2 2016/05/29 08:44:17 skrll Exp $
 #else
 	.align	12
 #endif
-	.globl _C_LABEL(local_apic), _C_LABEL(lapic_id)
+	.globl	_C_LABEL(local_apic)
+	.globl	_C_LABEL(lapic_id)
+
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
 	.space	LAPIC_ID
@@ -302,6 +309,21 @@ LABEL(lapic_tpr)
 END(lapic_tpr)
 #endif
 
+	.globl	_C_LABEL(tablesize)
+	.globl	_C_LABEL(nox_flag)
+	.globl	_C_LABEL(cputype)
+	.globl	_C_LABEL(cpuid_level)
+	.globl	_C_LABEL(esym)
+	.globl	_C_LABEL(eblob)
+	.globl	_C_LABEL(atdevbase)
+	.globl	_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(lwp0uarea)
+	.globl	_C_LABEL(gdt)
+	.globl	_C_LABEL(idt)
+
+	.type	_C_LABEL(tablesize), @object
+_C_LABEL(tablesize):	.long	0
+END(tablesize)
 	.type	_C_LABEL(nox_flag), @object
 LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
 END(nox_flag)
@@ -309,7 +331,7 @@ END(nox_flag)
 LABEL(cputype)		.long	0	/* are we 80486, Pentium, or.. */
 END(cputype)
 	.type	_C_LABEL(cpuid_level), @object
-LABEL(cpuid_level)	.long	0
+LABEL(cpuid_level)	.long	-1	/* max. level accepted by cpuid instr */
 END(cpuid_level)
 	.type	_C_LABEL(atdevbase), @object
 LABEL(atdevbase)	.long	0	/* location of start of iomem in virt */
@@ -320,9 +342,6 @@ END(lwp0uarea)
 	.type	_C_LABEL(PDPpaddr), @object
 LABEL(PDPpaddr)		.long	0	/* paddr of PDP, for libkvm */
 END(PDPpaddr)
-	.type	_C_LABEL(tablesize), @object
-_C_LABEL(tablesize):	.long	0
-END(tablesize)
 
 	/* Space for the temporary stack */
 	.size	tmpstk, tmpstk - .
@@ -397,8 +416,6 @@ _C_LABEL(Multiboot_Header):
 	xorl	%eax,%eax
 	movw	%ax,%fs
 	movw	%ax,%gs
-	decl	%eax
-	movl	%eax,RELOC(cpuid_level)
 
 	/* Find out our CPU type. */
 
@@ -610,9 +627,9 @@ no_NOX:
  * +------+--------+------+-----+--------+---------------------+-----------
  *                             (1)      (2)                   (3)
  *
- * -------+------------+
- * TABLES | ISA IO MEM |
- * -------+------------+
+ * -------+-------------+
+ * TABLES | ISA I/O MEM |
+ * -------+-------------+
  *       (4)
  *
  * PROC0 STK is obviously not linked as a page level. It just happens to be
@@ -693,15 +710,12 @@ no_NOX:
 	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
 	/* Skip the first MB. */
-	movl	$(KERNTEXTOFF - KERNBASE),%eax
-	movl	%eax,%ecx
-	shrl	$(PGSHIFT-2),%ecx	/* ((n >> PGSHIFT) << 2) for # PDEs */
-#ifdef PAE
-	shll	$1,%ecx			/* PDEs are twice larger with PAE */
-#endif
-	addl	%ecx,%ebx
+	movl	$(KERNTEXTOFF - KERNBASE),%ecx
+	shrl	$PGSHIFT,%ecx
+	fillkpt_blank
 
 	/* Map the kernel text RX. */
+	movl	$(KERNTEXTOFF - KERNBASE),%eax	/* start of TEXT */
 	movl	$RELOC(__rodata_start),%ecx
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
@@ -724,13 +738,13 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* Map [SYMS]+[PRELOADED MODULES] RWX. */
+	/* Map [SYMS]+[PRELOADED MODULES] RW. */
 	movl	$RELOC(__kernel_end),%eax
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
 	orl	$(PG_V|PG_KW),%eax
-	fillkpt
+	fillkpt_nox
 
 	/* Map the BOOTSTRAP TABLES RW. */
 	movl	%esi,%eax		/* start of BOOTSTRAP TABLES */
@@ -739,10 +753,12 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (4). Map ISA I/O mem (later atdevbase) RWX. */
-	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx
-	fillkpt
+	/* We are on (4). Map ISA I/O MEM RW. */
+	movl	$IOM_BEGIN,%eax
+	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	fillkpt_nox
 
 	/*
 	 * Build L2 for identity mapping. Linked to L1.
@@ -760,12 +776,12 @@ no_NOX:
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
-	/* Install a PDE recursively mapping page directory as a page table! */
+	/* Install recursive top level PDE */
 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$PDP_SIZE,%ecx
-	fillkpt
+	fillkpt_nox
 
 #ifdef PAE
 	/*
@@ -1084,7 +1100,7 @@ END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
- *			    bool returning)
+ *     bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -1112,16 +1128,18 @@ ENTRY(cpu_switchto)
 	movl	16(%esp),%esi		/* oldlwp */
 	movl	20(%esp),%edi		/* newlwp */
 	movl	24(%esp),%edx		/* returning */
-	testl	%esi,%esi
-	jz	1f
+
+	testl	%esi,%esi		/* oldlwp = NULL ? */
+	jz	skip_save
 
 	/* Save old context. */
 	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
+skip_save:
 
 	/* Switch to newlwp's stack. */
-1:	movl	L_PCB(%edi),%ebx
+	movl	L_PCB(%edi),%ebx
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
@@ -1134,33 +1152,33 @@ ENTRY(cpu_switchto)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testl	%edx,%edx
-	jnz	4f
+	jnz	switch_return
 
+	/* Switch ring0 stack */
 #ifdef XEN
 	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
-#else /* !XEN */
-	/* Switch ring0 esp */
+#else
 	movl	PCB_ESP0(%ebx),%eax
 	movl	%eax,CPUVAR(ESP0)
-#endif /* !XEN */
+#endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
-	jnz	4f
+	jnz	switch_return
 
 #ifndef XEN
 	/* Restore thread-private %fs/%gs descriptors. */
 	movl	CPUVAR(GDT),%ecx
-	movl	PCB_FSD(%ebx), %eax
-	movl	PCB_FSD+4(%ebx), %edx
-	movl	%eax, (GUFS_SEL*8)(%ecx)
-	movl	%edx, (GUFS_SEL*8+4)(%ecx)
-	movl	PCB_GSD(%ebx), %eax
-	movl	PCB_GSD+4(%ebx), %edx
-	movl	%eax, (GUGS_SEL*8)(%ecx)
-	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+	movl	PCB_FSD(%ebx),%eax
+	movl	PCB_FSD+4(%ebx),%edx
+	movl	%eax,(GUFS_SEL*8)(%ecx)
+	movl	%edx,(GUFS_SEL*8+4)(%ecx)
+	movl	PCB_GSD(%ebx),%eax
+	movl	PCB_GSD+4(%ebx),%edx
+	movl	%eax,(GUGS_SEL*8)(%ecx)
+	movl	%edx,(GUGS_SEL*8+4)(%ecx)
 #endif /* !XEN */
 
 	/* Switch I/O bitmap */
@@ -1173,14 +1191,25 @@ ENTRY(cpu_switchto)
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
 	cmpl	$0,P_RASLIST(%eax)
-	jne	5f
+	je	no_RAS
+
+	/* Handle restartable atomic sequences (RAS). */
+	movl	L_MD_REGS(%edi),%ecx
+	pushl	TF_EIP(%ecx)
+	pushl	%eax
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	no_RAS
+	movl	L_MD_REGS(%edi),%ecx
+	movl	%eax,TF_EIP(%ecx)
+no_RAS:
 
 	/*
 	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
 	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
 	 * is deferred until mi_switch(), when cpu_switchto() returns.
 	 */
-2:
 #ifdef XEN
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
@@ -1195,33 +1224,23 @@ ENTRY(cpu_switchto)
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	cmpl	CPUVAR(FPCURLWP),%edi
-	je	3f
+	je	skip_TS
 	orl	$CR0_TS,%ecx
+skip_TS:
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
-3:	cmpl	%edx,%ecx
-	je	4f
+	cmpl	%edx,%ecx
+	je	switch_return
 	movl	%ecx,%cr0
 #endif /* !XEN */
 
+switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %eax. */
-4:	movl	%esi,%eax
+	movl	%esi,%eax
 	popl	%edi
 	popl	%esi
 	popl	%ebx
 	ret
-
-	/* Check for restartable atomic sequences (RAS). */
-5:	movl	L_MD_REGS(%edi),%ecx
-	pushl	TF_EIP(%ecx)
-	pushl	%eax
-	call	_C_LABEL(ras_lookup)
-	addl	$8,%esp
-	cmpl	$-1,%eax
-	je	2b
-	movl	L_MD_REGS(%edi),%ecx
-	movl	%eax,TF_EIP(%ecx)
-	jmp	2b
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */

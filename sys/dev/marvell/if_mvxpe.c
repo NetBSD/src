@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.2.2.3 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.2.2.4 2016/07/09 20:25:03 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.2.2.3 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.2.2.4 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -2459,7 +2459,7 @@ mvxpe_rx_queue(struct mvxpe_softc *sc, int q, int npkt)
 			goto rx_done;
 		}
 		m = chunk->m;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = r->bytecnt - ETHER_CRC_LEN;
 		m_adj(m, MVXPE_HWHEADER_SIZE); /* strip MH */
 		mvxpe_rx_set_csumflag(ifp, r, m);

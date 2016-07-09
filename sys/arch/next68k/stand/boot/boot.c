@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2014/03/25 19:43:48 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.6.1 2016/07/09 20:24:54 skrll Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -122,7 +122,7 @@ main(char *boot_arg)
 
 		printf("load of %s: %s\n", kernel, strerror(errno));
 		printf("boot: ");
-		gets(kernel);
+		kgets(kernel, sizeof(kernel));
 		if (kernel[0] == '\0')
 			return 0;
 

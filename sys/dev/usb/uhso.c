@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.10 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.11 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.10 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.11 2016/07/09 20:25:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -342,7 +342,8 @@ CFATTACH_DECL_NEW(uhso, sizeof(struct uhso_softc), uhso_match, uhso_attach,
 
 Static int uhso_switch_mode(struct usbd_device *);
 Static int uhso_get_iface_spec(struct usb_attach_arg *, uint8_t, uint8_t *);
-Static usb_endpoint_descriptor_t *uhso_get_endpoint(struct usbd_interface *, int, int);
+Static usb_endpoint_descriptor_t *uhso_get_endpoint(struct usbd_interface *,
+    int, int);
 
 Static void uhso_mux_attach(struct uhso_softc *, struct usbd_interface *, int);
 Static int  uhso_mux_abort(struct uhso_port *);
@@ -410,7 +411,8 @@ Static int  uhso_tty_control(struct uhso_port *, u_long, int);
 #define UHSODIALOUT(x)	TTDIALOUT(x)
 #define UHSOMINOR(u, p)	((((u) << 4) & UHSO_UNIT_MASK) | ((p) & UHSO_UNIT_MASK))
 
-Static void uhso_ifnet_attach(struct uhso_softc *, struct usbd_interface *, int);
+Static void uhso_ifnet_attach(struct uhso_softc *, struct usbd_interface *,
+    int);
 Static int  uhso_ifnet_abort(struct uhso_port *);
 Static int  uhso_ifnet_detach(struct uhso_port *);
 Static void uhso_ifnet_read_cb(struct usbd_xfer *, void *, usbd_status);
@@ -481,7 +483,8 @@ uhso_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (uaa->uaa_class != UDCLASS_VENDOR) {
-		aprint_verbose_dev(self, "Switching device into modem mode..\n");
+		aprint_verbose_dev(self,
+		    "Switching device into modem mode..\n");
 		if (uhso_switch_mode(uaa->uaa_device) != 0)
 			aprint_error_dev(self, "modem switch failed\n");
 
@@ -776,8 +779,8 @@ uhso_mux_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 	    sc, buf, size, uhso_mux_intr, USBD_DEFAULT_INTERVAL);
 
 	if (status != USBD_NORMAL_COMPLETION) {
-		aprint_error_dev(sc->sc_dev, "failed to open interrupt pipe: %s",
-		    usbd_errstr(status));
+		aprint_error_dev(sc->sc_dev,
+		    "failed to open interrupt pipe: %s", usbd_errstr(status));
 
 		kmem_free(buf, size);
 		return;
@@ -915,7 +918,8 @@ uhso_mux_write(struct uhso_port *hp)
 	usb_device_request_t req;
 	usbd_status status;
 
-	DPRINTF(5, "hp=%p, index=%d, wlen=%zd\n", hp, hp->hp_index, hp->hp_wlen);
+	DPRINTF(5, "hp=%p, index=%d, wlen=%zd\n", hp, hp->hp_index,
+	    hp->hp_wlen);
 
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = UCDC_SEND_ENCAPSULATED_COMMAND;
@@ -1054,7 +1058,8 @@ uhso_bulk_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 
 	id = usbd_get_interface_descriptor(ifh);
 	if (id == NULL) {
-		aprint_error_dev(sc->sc_dev, "interface descriptor not found\n");
+		aprint_error_dev(sc->sc_dev,
+		    "interface descriptor not found\n");
 		return;
 	}
 
@@ -1758,7 +1763,8 @@ void
 uhso_tty_stop(struct tty *tp, int flag)
 {
 #if 0
-	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(tp->t_dev));
+	struct uhso_softc *sc = device_lookup_private(&uhso_cd,
+	    UHSOUNIT(tp->t_dev));
 	struct uhso_port *hp = sc->sc_port[UHSOPORT(tp->t_dev)];
 #endif
 }
@@ -1796,7 +1802,8 @@ uhso_tty_poll(dev_t dev, int events, struct lwp *l)
 Static int
 uhso_tty_param(struct tty *tp, struct termios *t)
 {
-	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(tp->t_dev));
+	struct uhso_softc *sc = device_lookup_private(&uhso_cd,
+	    UHSOUNIT(tp->t_dev));
 	struct uhso_port *hp = sc->sc_port[UHSOPORT(tp->t_dev)];
 
 	if (!device_is_active(sc->sc_dev))
@@ -1834,7 +1841,8 @@ uhso_tty_param(struct tty *tp, struct termios *t)
 Static void
 uhso_tty_start(struct tty *tp)
 {
-	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(tp->t_dev));
+	struct uhso_softc *sc = device_lookup_private(&uhso_cd,
+	    UHSOUNIT(tp->t_dev));
 	struct uhso_port *hp = sc->sc_port[UHSOPORT(tp->t_dev)];
 	int s;
 
@@ -2112,7 +2120,8 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 		want = mtod(m, struct ip *)->ip_hl << 2;
 		if (mtod(m, struct ip *)->ip_v != 4
 		    || want != sizeof(struct ip)) {
-			aprint_error_ifnet(ifp, "bad IP header (v=%d, hl=%zd)\n",
+			aprint_error_ifnet(ifp,
+			    "bad IP header (v=%d, hl=%zd)\n",
 			    mtod(m, struct ip *)->ip_v, want);
 
 			ifp->if_ierrors++;
@@ -2164,7 +2173,7 @@ uhso_ifnet_input(struct ifnet *ifp, struct mbuf **mb, uint8_t *cp, size_t cc)
 			break;
 		}
 
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = got;
 
 		s = splnet();
@@ -2203,7 +2212,8 @@ uhso_ifnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				}
 
 				SET(ifp->if_flags, IFF_RUNNING);
-				DPRINTF(1, "hp=%p, ifp=%p INITIFADDR\n", hp, ifp);
+				DPRINTF(1, "hp=%p, ifp=%p INITIFADDR\n", hp,
+				    ifp);
 				break;
 			}
 
@@ -2339,8 +2349,8 @@ uhso_ifnet_start(struct ifnet *ifp)
 }
 
 Static int
-uhso_ifnet_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
-    const struct rtentry *rt0)
+uhso_ifnet_output(struct ifnet *ifp, struct mbuf *m,
+    const struct sockaddr *dst, const struct rtentry *rt0)
 {
 	int error;
 

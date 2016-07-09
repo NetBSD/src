@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.6 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.7 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.6 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.7 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,12 +96,13 @@ Static struct ucom_methods ukyopon_methods = {
 	.ucom_write = NULL,
 };
 
-int             ukyopon_match(device_t, cfdata_t, void *);
-void            ukyopon_attach(device_t, device_t, void *);
-int             ukyopon_detach(device_t, int);
-int             ukyopon_activate(device_t, enum devact);
+int		ukyopon_match(device_t, cfdata_t, void *);
+void		ukyopon_attach(device_t, device_t, void *);
+int		ukyopon_detach(device_t, int);
+int		ukyopon_activate(device_t, enum devact);
 extern struct cfdriver ukyopon_cd;
-CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match, ukyopon_attach, ukyopon_detach, ukyopon_activate);
+CFATTACH_DECL_NEW(ukyopon, sizeof(struct ukyopon_softc), ukyopon_match,
+    ukyopon_attach, ukyopon_detach, ukyopon_activate);
 
 int
 ukyopon_match(device_t parent, cfdata_t match, void *aux)

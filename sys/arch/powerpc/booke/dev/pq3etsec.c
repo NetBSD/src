@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.16.16.2 2016/03/19 11:30:04 skrll Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.16.16.3 2016/07/09 20:24:55 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16.16.2 2016/03/19 11:30:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.16.16.3 2016/07/09 20:24:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1567,7 +1567,7 @@ pq3etsec_rx_input(
 	if (rxbd_flags & RXBD_MC)
 		m->m_flags |= M_MCAST;
 	m->m_flags |= M_HASFCS;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 
 	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_pkthdr.len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.18 2009/12/14 00:46:11 matt Exp $	*/
+/*	$NetBSD: callvec.c,v 1.18.40.1 2016/07/09 20:24:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@ struct callback callvec = {
 	._strcpy	= (void *)DEC_PROM_STRCPY,
 	._strlen	= (void *)DEC_PROM_STRLEN,
 	._getchar	= (void *)DEC_PROM_GETCHAR,
-	._gets		= (void *)DEC_PROM_GETS,
+	._unsafe_gets	= (void *)DEC_PROM_GETS,
 	._puts		= (void *)DEC_PROM_PUTS,
 	._printf	= (void *)DEC_PROM_PRINTF,
 	._setenv	= (void *)DEC_PROM_SETENV2,

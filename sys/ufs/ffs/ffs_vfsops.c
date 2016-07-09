@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.302.2.4 2015/12/27 12:10:18 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.302.2.5 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.4 2015/12/27 12:10:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.5 2016/07/09 20:25:24 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -765,7 +765,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 	error = vinvalbuf(devvp, 0, cred, l, 0, 0);
 	VOP_UNLOCK(devvp);
 	if (error)
-		panic("ffs_reload: dirty1");
+		panic("%s: dirty1", __func__);
 
 	/*
 	 * Step 2: re-read superblock from disk. XXX: We don't handle
@@ -922,7 +922,7 @@ ffs_reload(struct mount *mp, kauth_cred_t cred, struct lwp *l)
 			continue;
 		}
 		if (vinvalbuf(vp, 0, cred, l, 0, 0))
-			panic("ffs_reload: dirty2");
+			panic("%s: dirty2", __func__);
 		/*
 		 * Step 6: re-read inode data for all active vnodes.
 		 */
@@ -1902,8 +1902,7 @@ ffs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	fs = ump->um_fs;
 	if (fs->fs_fmod != 0 && fs->fs_ronly != 0) {		/* XXX */
-		printf("fs = %s\n", fs->fs_fsmnt);
-		panic("update: rofs mod");
+		panic("%s: rofs mod, fs=%s", __func__, fs->fs_fsmnt);
 	}
 
 	fstrans_start(mp, FSTRANS_SHARED);
@@ -2141,14 +2140,22 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	}
 
 	ip = VTOI(vp);
-	if (ip->i_mode || DIP(ip, size) || DIP(ip, blocks)) {
-		printf("free ino %" PRId64 " on %s:\n", ino, fs->fs_fsmnt);
-		printf("dmode %x mode %x dgen %x gen %x\n",
-		    DIP(ip, mode), ip->i_mode,
-		    DIP(ip, gen), ip->i_gen);
-		printf("size %" PRIx64 " blocks %" PRIx64 "\n",
-		    DIP(ip, size), DIP(ip, blocks));
-		panic("ffs_init_vnode: dup alloc");
+	if (ip->i_mode) {
+		panic("%s: dup alloc ino=%" PRId64 " on %s: mode %x/%x "
+		    "gen %x/%x size %" PRIx64 " blocks %" PRIx64,
+		    __func__, ino, fs->fs_fsmnt, DIP(ip, mode), ip->i_mode,
+		    DIP(ip, gen), ip->i_gen, DIP(ip, size), DIP(ip, blocks));
+	}
+	if (DIP(ip, size) || DIP(ip, blocks)) {
+		printf("%s: ino=%" PRId64 " on %s: "
+		    "gen %x/%x has non zero blocks %" PRIx64 " or size %"
+		    PRIx64 "\n",
+		    __func__, ino, fs->fs_fsmnt, DIP(ip, gen), ip->i_gen,
+		    DIP(ip, blocks), DIP(ip, size));
+		if ((ip)->i_ump->um_fstype == UFS1)
+			panic("%s: dirty filesystem?", __func__);
+		DIP_ASSIGN(ip, blocks, 0);
+		DIP_ASSIGN(ip, size, 0);
 	}
 
 	/* Set uid / gid. */

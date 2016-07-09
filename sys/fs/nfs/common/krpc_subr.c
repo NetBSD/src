@@ -1,4 +1,4 @@
-/*	NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp 	*/
+/*	$NetBSD: krpc_subr.c,v 1.1.1.1.12.2 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nfs/krpc_subr.c 248207 2013-03-12 13:42:47Z glebius "); */
-__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.12.1 2015/04/06 15:18:19 skrll Exp $");
+__RCSID("$NetBSD: krpc_subr.c,v 1.1.1.1.12.2 2016/07/09 20:25:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,7 +302,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	 * Setup packet header
 	 */
 	m_fixhdr(mhead);
-	mhead->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(mhead);
 
 	/*
 	 * Send it, repeatedly, until a reply is received,

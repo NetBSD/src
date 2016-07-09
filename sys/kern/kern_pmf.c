@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.36.14.1 2015/04/06 15:18:20 skrll Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.36.14.2 2016/07/09 20:25:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.36.14.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.36.14.2 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -911,7 +911,7 @@ pmf_class_network_resume(device_t dev, const pmf_qual_t *qual)
 		ifp->if_flags &= ~IFF_RUNNING;
 		if ((*ifp->if_init)(ifp) != 0)
 			aprint_normal_ifnet(ifp, "resume failed\n");
-		(*ifp->if_start)(ifp);
+		if_start_lock(ifp);
 	}
 	splx(s);
 
@@ -951,7 +951,7 @@ bool
 pmf_event_register(device_t dv, pmf_generic_event_t ev,
     void (*handler)(device_t), bool global)
 {
-	pmf_event_handler_t *event; 
+	pmf_event_handler_t *event;
 	
 	event = kmem_alloc(sizeof(*event), KM_SLEEP);
 	event->pmf_event = ev;

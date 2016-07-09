@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2014/04/08 21:51:06 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.7.4.1 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -318,7 +318,7 @@ getrootmount(char *rootdev)
 	while ((*cp != 0) && isspace(*cp))
 	    cp++;
 	/* must have /<space> to be root */
-	if ((*cp == 0) || (*cp != '/') || !isspace(*(cp + 1)))
+	if ((*cp != '/') || !isspace(*(cp + 1)))
 	    continue;
 	/* skip whitespace up to fstype */
 	cp += 2;

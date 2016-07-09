@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2011/10/03 22:27:23 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3.30.1 2016/07/09 20:25:21 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -6,6 +6,6 @@
 
 KMOD=   	iic
 IOCONF=		iic.ioconf
-SRCS=		i2c.c i2c_bitbang.c i2c_subr.c
+SRCS=		i2c.c
 
 .include <bsd.kmodule.mk>

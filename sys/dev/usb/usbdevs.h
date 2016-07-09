@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.676.2.6 2016/04/22 15:44:14 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.676.2.7 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.684.2.6 2016/04/22 13:43:55 skrll Exp
+ *	NetBSD: usbdevs,v 1.715 2016/06/01 04:47:02 pgoyette Exp
  */
 
 /*
@@ -2834,6 +2834,7 @@
 #define	USB_PRODUCT_SANDISK_SDDR09	0x0200		/* ImageMate SDDR-09 */
 #define	USB_PRODUCT_SANDISK_SDDR86	0x0621		/* ImageMate SDDR-86 */
 #define	USB_PRODUCT_SANDISK_SDDR75	0x0810		/* ImageMate SDDR-75 */
+#define	USB_PRODUCT_SANDISK_CRUZER	0x5530		/* Cruzer */
 #define	USB_PRODUCT_SANDISK_SANSA_CLIP	0x7433		/* Sansa Clip */
 
 /* Sanwa Supply products */

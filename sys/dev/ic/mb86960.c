@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.80.4.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.80.4.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.80.4.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.80.4.3 2016/07/09 20:25:02 skrll Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1286,7 +1286,7 @@ mb86960_get_packet(struct mb86960_softc *sc, u_int len)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return 0;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = len;
 
 	/* The following silliness is to make NFS happy. */

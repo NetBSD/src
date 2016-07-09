@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.78.4.2 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.78.4.3 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.2 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -2340,7 +2340,7 @@ esh_read_snap_ring(struct esh_softc *sc, u_int16_t consumer, int error)
 			}
 			recv->ec_cur_pkt = recv->ec_cur_mbuf = m;
 			/* allocated buffers all have pkthdrs... */
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len;
 		} else {
 			if (!recv->ec_cur_pkt)

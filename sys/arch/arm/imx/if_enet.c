@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.4 2016/05/29 08:44:16 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.5 2016/07/09 20:24:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.4 2016/05/29 08:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.5 2016/07/09 20:24:50 skrll Exp $");
 
 #include "vlan.h"
 
@@ -641,7 +641,7 @@ enet_rx_intr(void *arg)
 			} else {
 				/* packet receive ok */
 				ifp->if_ipackets++;
-				m0->m_pkthdr.rcvif = ifp;
+				m_set_rcvif(m0, ifp);
 				m0->m_pkthdr.len = amount;
 
 				bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
@@ -1744,9 +1744,10 @@ enet_encap_txring(struct enet_softc *sc, struct mbuf **mp)
 		sc->sc_txdesc_ring[idx].tx_databuf = map->dm_segs[i].ds_addr;
 		sc->sc_txdesc_ring[idx].tx_flags2 = flags2;
 		sc->sc_txdesc_ring[idx].tx_flags3 = 0;
+		TXDESC_WRITEOUT(idx);
+
 		sc->sc_txdesc_ring[idx].tx_flags1_len =
 		    flags1 | TXFLAGS1_LEN(map->dm_segs[i].ds_len);
-
 		TXDESC_WRITEOUT(idx);
 
 		idx = ENET_TX_NEXTIDX(idx);

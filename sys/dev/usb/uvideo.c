@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.11 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.12 2016/07/09 20:25:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.11 2016/03/20 08:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.12 2016/07/09 20:25:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -608,8 +608,7 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 	}
 
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -692,8 +691,7 @@ uvideo_detach(device_t self, int flags)
 	if (sc->sc_videodev != NULL)
 		rv = config_detach(sc->sc_videodev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	usbd_devinfo_free(sc->sc_devname);
 

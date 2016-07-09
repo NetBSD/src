@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.5 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.6 2016/07/09 20:25:16 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -183,8 +183,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 	ucaa.ucaa_arg = sc;
 	ucaa.ucaa_info = NULL;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
@@ -204,8 +203,7 @@ uark_detach(device_t self, int flags)
 		sc->sc_subdev = NULL;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }

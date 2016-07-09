@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2011/07/17 23:29:10 dyoung Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.2.30.1 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ enum bus_type {
 	PCI_IO_BUS_SPACE,
 	PCI_MEMORY_BUS_SPACE,
 	LAST_BUS_SPACE
-}; 
+};
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 

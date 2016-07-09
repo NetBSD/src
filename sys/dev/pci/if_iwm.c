@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29.2.7 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.29.2.8 2016/07/09 20:25:04 skrll Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.7 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.8 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -3206,7 +3206,7 @@ iwm_mvm_rx_rx_mpdu(struct iwm_softc *sc,
 	if (iwm_rx_addbuf(sc, IWM_RBUF_SIZE, sc->rxq.cur) != 0)
 		return;
 
-	m->m_pkthdr.rcvif = IC2IFP(ic);
+	m_set_rcvif(m, IC2IFP(ic));
 
 	if (sc->sc_scanband == IEEE80211_CHAN_5GHZ) {
 		if (le32toh(phy_info->channel) < __arraycount(ic->ic_channels))

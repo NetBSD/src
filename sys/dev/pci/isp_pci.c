@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.117 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: isp_pci.c,v 1.117.6.1 2016/07/09 20:25:04 skrll Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.117 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.117.6.1 2016/07/09 20:25:04 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -497,8 +497,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 
 	isp->isp_osinfo.dev = self;
 
-	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG,
-	    PCI_MAPREG_TYPE_IO, 0,
+	ioh_valid = (pci_mapreg_map(pa, IO_MAP_REG, PCI_MAPREG_TYPE_IO, 0,
 	    &iot, &ioh, NULL, NULL) == 0);
 
 	mem_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MEM_MAP_REG);
@@ -1375,10 +1374,13 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 			flag = BUS_DMA_WRITE;
 			ddir = ISP_TO_DEVICE;
 		}
-		error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data, xs->datalen,
-		    NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK) | BUS_DMA_STREAMING | flag);
+		error = bus_dmamap_load(isp->isp_dmatag, dmap, xs->data,
+		    xs->datalen, NULL, ((xs->xs_control & XS_CTL_NOSLEEP) ?
+			BUS_DMA_NOWAIT :
+			BUS_DMA_WAITOK) | BUS_DMA_STREAMING | flag);
 		if (error) {
-			isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)", error);
+			isp_prt(isp, ISP_LOGWARN, "unable to load DMA (%d)",
+			    error);
 			XS_SETERR(xs, HBA_BOTCH);
 			if (error == EAGAIN || error == ENOMEM) {
 				return (CMD_EAGAIN);
@@ -1388,10 +1390,12 @@ isp_pci_dmasetup(struct ispsoftc *isp, struct scsipi_xfer *xs, void *arg)
 		}
 		dm_segs = dmap->dm_segs;
 		nsegs = dmap->dm_nsegs;
-		bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize, flg2);
+		bus_dmamap_sync(isp->isp_dmatag, dmap, 0, dmap->dm_mapsize,
+		    flg2);
 	}
 
-	if (isp_send_cmd(isp, rq, dm_segs, nsegs, xs->datalen, ddir) != CMD_QUEUED) {
+	if (isp_send_cmd(isp, rq, dm_segs, nsegs, xs->datalen, ddir)
+	    != CMD_QUEUED) {
 		return (CMD_EAGAIN);
 	} else {
 		return (CMD_QUEUED);

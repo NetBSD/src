@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_dev.c,v 1.9 2011/09/22 23:02:35 jym Exp $ */
+/* $NetBSD: xenbus_dev.c,v 1.9.30.1 2016/07/09 20:25:00 skrll Exp $ */
 /*
  * xenbus_dev.c
  * 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.9 2011/09/22 23:02:35 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_dev.c,v 1.9.30.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -266,7 +266,7 @@ xenbus_dev_open(void *v)
 		int a_mode;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
 	struct xenbus_dev_data *u;
 
@@ -293,7 +293,7 @@ xenbus_dev_close(void *v)
 		int a_fflag;
 		struct ucred *a_cred;
 	} */ *ap = v;
-	struct kernfs_node *kfs = VTOKERN(ap->a_vp);    
+	struct kernfs_node *kfs = VTOKERN(ap->a_vp);
 
 	struct xenbus_dev_data *u = kfs->kfs_v;
 	struct xenbus_dev_transaction *trans;
@@ -324,7 +324,7 @@ xsd_port_read(void *v)
 	} */ *ap = v;
 	struct uio *uio = ap->a_uio;
 	int off, error;
-	size_t len; 
+	size_t len;
 	char strbuf[LD_STRLEN], *bf;
 
 	off = (int)uio->uio_offset;

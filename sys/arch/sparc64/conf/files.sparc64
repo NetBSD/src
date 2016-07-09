@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.145.6.2 2015/12/27 12:09:43 skrll Exp $
+#	$NetBSD: files.sparc64,v 1.145.6.3 2016/07/09 20:24:57 skrll Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -68,6 +68,14 @@ attach ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 attach ebus at mainbus with ebus_mainbus
 file	arch/sparc64/dev/ebus_mainbus.c		ebus_mainbus
+
+device	vbus {}
+attach	vbus at mainbus
+file	arch/sparc64/dev/vbus.c			vbus
+
+device	cbus {}
+attach	cbus at vbus
+file	arch/sparc64/dev/cbus.c			cbus
 
 device clock: mk48txx
 attach clock at sbus with mkclock_sbus
@@ -312,3 +320,8 @@ include "arch/sparc64/conf/majors.sparc64"
 
 # OpenFirmware convenience stuff
 file  dev/ofw/ofw_subr.c
+
+# Virtual rtc
+device	vrtc
+attach	vrtc at vbus
+file	arch/sparc64/dev/vrtc.c			vrtc

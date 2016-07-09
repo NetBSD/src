@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.16.1 2015/12/27 12:10:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.16.2 2016/07/09 20:25:23 skrll Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ext2fs
@@ -7,7 +7,8 @@ LIB=	rumpfs_ext2fs
 COMMENT=Linux Ext2
 
 SRCS=	ext2fs_alloc.c ext2fs_balloc.c ext2fs_bmap.c ext2fs_bswap.c	\
-	ext2fs_inode.c ext2fs_lookup.c ext2fs_readwrite.c		\
+	ext2fs_hash.c ext2fs_htree.c \
+	ext2fs_extents.c ext2fs_inode.c ext2fs_lookup.c ext2fs_readwrite.c \
 	ext2fs_rename.c ext2fs_subr.c ext2fs_vfsops.c ext2fs_vnops.c
 
 .include <bsd.lib.mk>

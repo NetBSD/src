@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.26.4.1 2015/12/27 12:09:41 skrll Exp $ */
+/* $NetBSD: main.c,v 1.26.4.2 2016/07/09 20:24:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -643,7 +643,7 @@ static int input_cmdline(char **argv, int maxargc)
 
 	printf("\nbootargs> ");
 	cmdline = alloc(256);
-	gets(cmdline);
+	kgets(cmdline, 256);
 
 	return parse_cmdline(argv, maxargc, cmdline,
 	    cmdline + strlen(cmdline));
@@ -686,7 +686,7 @@ findflash(void)
 
 	for (;;) {
 		printf("\nfind> ");
-		gets(buf);
+		kgets(buf, sizeof(buf));
 		if (tolower((unsigned)buf[0]) == 'x')
 			break;
 		for (i = 0, n = 0, c = 0; buf[i]; i++) {
@@ -744,7 +744,7 @@ sat_test(void)
 		}
 
 		printf("controller> ");
-		gets(buf);
+		kgets(buf, sizeof(buf));
 		if (buf[0] == '*' && buf[1] == 'X')
 			break;
 

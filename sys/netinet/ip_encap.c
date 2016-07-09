@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.39.30.5 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.39.30.6 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -58,20 +58,22 @@
 /* XXX is M_NETADDR correct? */
 
 /*
- * The code will use radix table for tunnel lookup, for
+ * With USE_RADIX the code will use radix table for tunnel lookup, for
  * tunnels registered with encap_attach() with a addr/mask pair.
  * Faster on machines with thousands of tunnel registerations (= interfaces).
  *
  * The code assumes that radix table code can handle non-continuous netmask,
  * as it will pass radix table memory region with (src + dst) sockaddr pair.
  */
+#define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.5 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.6 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -82,6 +84,10 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.5 2016/05/29 08:44:38 skrll Exp
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+#include <sys/psref.h>
+#include <sys/pslist.h>
 
 #include <net/if.h>
 
@@ -105,24 +111,72 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.5 2016/05/29 08:44:38 skrll Exp
 
 #include <net/net_osdep.h>
 
+#ifdef NET_MPSAFE
+#define ENCAP_MPSAFE	1
+#endif
+
 enum direction { INBOUND, OUTBOUND };
 
 #ifdef INET
-static struct encaptab *encap4_lookup(struct mbuf *, int, int, enum direction);
+static struct encaptab *encap4_lookup(struct mbuf *, int, int, enum direction,
+    struct psref *);
 #endif
 #ifdef INET6
-static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction);
+static struct encaptab *encap6_lookup(struct mbuf *, int, int, enum direction,
+    struct psref *);
 #endif
 static int encap_add(struct encaptab *);
 static int encap_remove(struct encaptab *);
 static int encap_afcheck(int, const struct sockaddr *, const struct sockaddr *);
+#ifdef USE_RADIX
 static struct radix_node_head *encap_rnh(int);
 static int mask_matchlen(const struct sockaddr *);
+#else
+static int mask_match(const struct encaptab *, const struct sockaddr *,
+		const struct sockaddr *);
+#endif
 static void encap_fillarg(struct mbuf *, const struct encaptab *);
 
-LIST_HEAD(, encaptab) encaptab = LIST_HEAD_INITIALIZER(&encaptab);
+/*
+ * In encap[46]_lookup(), ep->func can sleep(e.g. rtalloc1) while walking
+ * encap_table. So, it cannot use pserialize_read_enter()
+ */
+static struct {
+	struct pslist_head	list;
+	pserialize_t		psz;
+	struct psref_class	*elem_class; /* for the element of et_list */
+} encaptab  __cacheline_aligned = {
+	.list = PSLIST_INITIALIZER,
+};
+#define encap_table encaptab.list
 
+static struct {
+	kmutex_t	lock;
+	kcondvar_t	cv;
+	struct lwp	*busy;
+} encap_whole __cacheline_aligned;
+
+#ifdef USE_RADIX
 struct radix_node_head *encap_head[2];	/* 0 for AF_INET, 1 for AF_INET6 */
+static bool encap_head_updating = false;
+#endif
+
+/*
+ * must be done before other encap interfaces initialization.
+ */
+void
+encapinit(void)
+{
+
+	encaptab.psz = pserialize_create();
+	encaptab.elem_class = psref_class_create("encapelem", IPL_SOFTNET);
+	if (encaptab.elem_class == NULL)
+		panic("encaptab.elem_class cannot be allocated.\n");
+
+	mutex_init(&encap_whole.lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&encap_whole.cv, "ip_encap cv");
+	encap_whole.busy = NULL;
+}
 
 void
 encap_init(void)
@@ -140,9 +194,10 @@ encap_init(void)
 	 * initialization - using LIST_INIT() here can nuke encap_attach()
 	 * from drivers.
 	 */
-	LIST_INIT(&encaptab);
+	PSLIST_INIT(&encap_table);
 #endif
 
+#ifdef USE_RADIX
 	/*
 	 * initialize radix lookup table when the radix subsystem is inited.
 	 */
@@ -152,18 +207,23 @@ encap_init(void)
 	rn_delayedinit((void *)&encap_head[1],
 	    sizeof(struct sockaddr_pack) << 3);
 #endif
+#endif
 }
 
 #ifdef INET
 static struct encaptab *
-encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
+encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir,
+    struct psref *match_psref)
 {
 	struct ip *ip;
 	struct ip_pack4 pack;
 	struct encaptab *ep, *match;
 	int prio, matchprio;
+	int s;
+#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(AF_INET);
 	struct radix_node *rn;
+#endif
 
 	KASSERT(m->m_len >= sizeof(*ip));
 
@@ -184,22 +244,54 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	match = NULL;
 	matchprio = 0;
 
+	s = pserialize_read_enter();
+#ifdef USE_RADIX
+	if (encap_head_updating) {
+		/*
+		 * Update in progress. Do nothing.
+		 */
+		pserialize_read_exit(s);
+		return NULL;
+	}
+
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
-		match = (struct encaptab *)rn;
+		struct encaptab *encapp = (struct encaptab *)rn;
+
+		psref_acquire(match_psref, &encapp->psref,
+		    encaptab.elem_class);
+		match = encapp;
 		matchprio = mask_matchlen(match->srcmask) +
 		    mask_matchlen(match->dstmask);
 	}
+#endif
+	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
+		struct psref elem_psref;
 
-	LIST_FOREACH(ep, &encaptab, chain) {
+		membar_datadep_consumer();
+
 		if (ep->af != AF_INET)
 			continue;
 		if (ep->proto >= 0 && ep->proto != proto)
 			continue;
-		if (ep->func)
+
+		psref_acquire(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
+		if (ep->func) {
+			pserialize_read_exit(s);
+			/* ep->func is sleepable. e.g. rtalloc1 */
 			prio = (*ep->func)(m, off, proto, ep->arg);
-		else
+			s = pserialize_read_enter();
+		} else {
+#ifdef USE_RADIX
+			psref_release(&elem_psref, &ep->psref,
+			    encaptab.elem_class);
 			continue;
+#else
+			prio = mask_match(ep, (struct sockaddr *)&pack.mine,
+			    (struct sockaddr *)&pack.yours);
+#endif
+		}
 
 		/*
 		 * We prioritize the matches by using bit length of the
@@ -222,13 +314,30 @@ encap4_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 		 * For radix-based lookup, I guess source takes precedence.
 		 * See rn_{refines,lexobetter} for the correct answer.
 		 */
-		if (prio <= 0)
+		if (prio <= 0) {
+			psref_release(&elem_psref, &ep->psref,
+			    encaptab.elem_class);
 			continue;
+		}
 		if (prio > matchprio) {
+			/* release last matched ep */
+			if (match != NULL)
+				psref_release(match_psref, &match->psref,
+				    encaptab.elem_class);
+
+			psref_copy(match_psref, &elem_psref,
+			    encaptab.elem_class);
 			matchprio = prio;
 			match = ep;
 		}
+		KASSERTMSG((match == NULL) || psref_held(&match->psref,
+			encaptab.elem_class),
+		    "current match = %p, but not hold its psref", match);
+
+		psref_release(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
 	}
+	pserialize_read_exit(s);
 
 	return match;
 }
@@ -240,22 +349,27 @@ encap4_input(struct mbuf *m, ...)
 	va_list ap;
 	const struct encapsw *esw;
 	struct encaptab *match;
+	struct psref match_psref;
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
 	proto = va_arg(ap, int);
 	va_end(ap);
 
-	match = encap4_lookup(m, off, proto, INBOUND);
-
+	match = encap4_lookup(m, off, proto, INBOUND, &match_psref);
 	if (match) {
 		/* found a match, "match" has the best one */
 		esw = match->esw;
 		if (esw && esw->encapsw4.pr_input) {
 			encap_fillarg(m, match);
 			(*esw->encapsw4.pr_input)(m, off, proto);
-		} else
+			psref_release(&match_psref, &match->psref,
+			    encaptab.elem_class);
+		} else {
+			psref_release(&match_psref, &match->psref,
+			    encaptab.elem_class);
 			m_freem(m);
+		}
 		return;
 	}
 
@@ -266,14 +380,18 @@ encap4_input(struct mbuf *m, ...)
 
 #ifdef INET6
 static struct encaptab *
-encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
+encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir,
+    struct psref *match_psref)
 {
 	struct ip6_hdr *ip6;
 	struct ip_pack6 pack;
 	int prio, matchprio;
+	int s;
 	struct encaptab *ep, *match;
+#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(AF_INET6);
 	struct radix_node *rn;
+#endif
 
 	KASSERT(m->m_len >= sizeof(*ip6));
 
@@ -294,31 +412,81 @@ encap6_lookup(struct mbuf *m, int off, int proto, enum direction dir)
 	match = NULL;
 	matchprio = 0;
 
+	s = pserialize_read_enter();
+#ifdef USE_RADIX
+	if (encap_head_updating) {
+		/*
+		 * Update in progress. Do nothing.
+		 */
+		pserialize_read_exit(s);
+		return NULL;
+	}
+
 	rn = rnh->rnh_matchaddr((void *)&pack, rnh);
 	if (rn && (rn->rn_flags & RNF_ROOT) == 0) {
-		match = (struct encaptab *)rn;
+		struct encaptab *encapp = (struct encaptab *)rn;
+
+		psref_acquire(match_psref, &encapp->psref,
+		    encaptab.elem_class);
+		match = encapp;
 		matchprio = mask_matchlen(match->srcmask) +
 		    mask_matchlen(match->dstmask);
 	}
+#endif
+	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
+		struct psref elem_psref;
 
-	LIST_FOREACH(ep, &encaptab, chain) {
+		membar_datadep_consumer();
+
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != proto)
 			continue;
-		if (ep->func)
+
+		psref_acquire(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
+
+		if (ep->func) {
+			pserialize_read_exit(s);
+			/* ep->func is sleepable. e.g. rtalloc1 */
 			prio = (*ep->func)(m, off, proto, ep->arg);
-		else
+			s = pserialize_read_enter();
+		} else {
+#ifdef USE_RADIX
+			psref_release(&elem_psref, &ep->psref,
+			    encaptab.elem_class);
 			continue;
+#else
+			prio = mask_match(ep, (struct sockaddr *)&pack.mine,
+			    (struct sockaddr *)&pack.yours);
+#endif
+		}
 
 		/* see encap4_lookup() for issues here */
-		if (prio <= 0)
+		if (prio <= 0) {
+			psref_release(&elem_psref, &ep->psref,
+			    encaptab.elem_class);
 			continue;
+		}
 		if (prio > matchprio) {
+			/* release last matched ep */
+			if (match != NULL)
+				psref_release(match_psref, &match->psref,
+				    encaptab.elem_class);
+
+			psref_copy(match_psref, &elem_psref,
+			    encaptab.elem_class);
 			matchprio = prio;
 			match = ep;
 		}
+		KASSERTMSG((match == NULL) || psref_held(&match->psref,
+			encaptab.elem_class),
+		    "current match = %p, but not hold its psref", match);
+
+		psref_release(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
 	}
+	pserialize_read_exit(s);
 
 	return match;
 }
@@ -329,16 +497,23 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 	struct mbuf *m = *mp;
 	const struct encapsw *esw;
 	struct encaptab *match;
+	struct psref match_psref;
 
-	match = encap6_lookup(m, *offp, proto, INBOUND);
+	match = encap6_lookup(m, *offp, proto, INBOUND, &match_psref);
 
 	if (match) {
 		/* found a match */
 		esw = match->esw;
 		if (esw && esw->encapsw6.pr_input) {
+			int ret;
 			encap_fillarg(m, match);
-			return (*esw->encapsw6.pr_input)(mp, offp, proto);
+			ret = (*esw->encapsw6.pr_input)(mp, offp, proto);
+			psref_release(&match_psref, &match->psref,
+			    encaptab.elem_class);
+			return ret;
 		} else {
+			psref_release(&match_psref, &match->psref,
+			    encaptab.elem_class);
 			m_freem(m);
 			return IPPROTO_DONE;
 		}
@@ -349,39 +524,84 @@ encap6_input(struct mbuf **mp, int *offp, int proto)
 }
 #endif
 
+/*
+ * XXX
+ * The encaptab list and the rnh radix tree must be manipulated atomically.
+ */
 static int
 encap_add(struct encaptab *ep)
 {
+#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
-	int error = 0;
+#endif
 
-	LIST_INSERT_HEAD(&encaptab, ep, chain);
+	KASSERT(encap_lock_held());
+
+#ifdef USE_RADIX
 	if (!ep->func && rnh) {
+		/* Disable access to the radix tree for reader. */
+		encap_head_updating = true;
+		/* Wait for all readers to drain. */
+		pserialize_perform(encaptab.psz);
+
 		if (!rnh->rnh_addaddr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh, ep->nodes)) {
-			error = EEXIST;
-			goto fail;
+			encap_head_updating = false;
+			return EEXIST;
 		}
-	}
-	return error;
 
- fail:
-	LIST_REMOVE(ep, chain);
-	return error;
+		/*
+		 * The ep added to the radix tree must be skipped while
+		 * encap[46]_lookup walks encaptab list. In other words,
+		 * encap_add() does not need to care whether the ep has
+		 * been added encaptab list or not yet.
+		 * So, we can re-enable access to the radix tree for now.
+		 */
+		encap_head_updating = false;
+	}
+#endif
+	PSLIST_WRITER_INSERT_HEAD(&encap_table, ep, chain);
+
+	return 0;
 }
 
+/*
+ * XXX
+ * The encaptab list and the rnh radix tree must be manipulated atomically.
+ */
 static int
 encap_remove(struct encaptab *ep)
 {
+#ifdef USE_RADIX
 	struct radix_node_head *rnh = encap_rnh(ep->af);
+#endif
 	int error = 0;
 
-	LIST_REMOVE(ep, chain);
+	KASSERT(encap_lock_held());
+
+#ifdef USE_RADIX
 	if (!ep->func && rnh) {
+		/* Disable access to the radix tree for reader. */
+		encap_head_updating = true;
+		/* Wait for all readers to drain. */
+		pserialize_perform(encaptab.psz);
+
 		if (!rnh->rnh_deladdr((void *)ep->addrpack,
 		    (void *)ep->maskpack, rnh))
 			error = ESRCH;
+
+		/*
+		 * The ep added to the radix tree must be skipped while
+		 * encap[46]_lookup walks encaptab list. In other words,
+		 * encap_add() does not need to care whether the ep has
+		 * been added encaptab list or not yet.
+		 * So, we can re-enable access to the radix tree for now.
+		 */
+		encap_head_updating = false;
 	}
+#endif
+	PSLIST_WRITER_REMOVE(ep, chain);
+
 	return error;
 }
 
@@ -433,21 +653,27 @@ encap_attach(int af, int proto,
 {
 	struct encaptab *ep;
 	int error;
-	int s;
+	int pss;
 	size_t l;
 	struct ip_pack4 *pack4;
 #ifdef INET6
 	struct ip_pack6 *pack6;
 #endif
+#ifndef ENCAP_MPSAFE
+	int s;
 
 	s = splsoftnet();
+#endif
 	/* sanity check on args */
 	error = encap_afcheck(af, sp, dp);
 	if (error)
 		goto fail;
 
 	/* check if anyone have already attached with exactly same config */
-	LIST_FOREACH(ep, &encaptab, chain) {
+	pss = pserialize_read_enter();
+	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
+		membar_datadep_consumer();
+
 		if (ep->af != af)
 			continue;
 		if (ep->proto != proto)
@@ -470,8 +696,10 @@ encap_attach(int af, int proto,
 			continue;
 
 		error = EEXIST;
+		pserialize_read_exit(pss);
 		goto fail;
 	}
+	pserialize_read_exit(pss);
 
 	switch (af) {
 	case AF_INET:
@@ -534,13 +762,16 @@ encap_attach(int af, int proto,
 	memcpy(ep->dstmask, dm, dp->sa_len);
 	ep->esw = esw;
 	ep->arg = arg;
+	psref_target_init(&ep->psref, encaptab.elem_class);
 
 	error = encap_add(ep);
 	if (error)
 		goto gc;
 
 	error = 0;
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return ep;
 
 gc:
@@ -551,7 +782,9 @@ gc:
 	if (ep)
 		kmem_free(ep, sizeof(*ep));
 fail:
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return NULL;
 }
 
@@ -562,9 +795,11 @@ encap_attach_func(int af, int proto,
 {
 	struct encaptab *ep;
 	int error;
+#ifndef ENCAP_MPSAFE
 	int s;
 
 	s = splsoftnet();
+#endif
 	/* sanity check on args */
 	if (!func) {
 		error = EINVAL;
@@ -587,17 +822,22 @@ encap_attach_func(int af, int proto,
 	ep->func = func;
 	ep->esw = esw;
 	ep->arg = arg;
+	psref_target_init(&ep->psref, encaptab.elem_class);
 
 	error = encap_add(ep);
 	if (error)
 		goto fail;
 
 	error = 0;
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return ep;
 
 fail:
+#ifndef ENCAP_MPSAFE
 	splx(s);
+#endif
 	return NULL;
 }
 
@@ -613,6 +853,7 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	int off;
 	struct ip6ctlparam *ip6cp = NULL;
 	int nxt;
+	int s;
 	struct encaptab *ep;
 	const struct encapsw *esw;
 
@@ -640,13 +881,17 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 		if (ip6 && cmd == PRC_MSGSIZE) {
 			int valid = 0;
 			struct encaptab *match;
+			struct psref elem_psref;
 
 			/*
 		 	* Check to see if we have a valid encap configuration.
 		 	*/
-			match = encap6_lookup(m, off, nxt, OUTBOUND);
+			match = encap6_lookup(m, off, nxt, OUTBOUND,
+			    &elem_psref);
 			if (match)
 				valid++;
+			psref_release(&elem_psref, &match->psref,
+			    encaptab.elem_class);
 
 			/*
 		 	* Depending on the value of "valid" and routing table
@@ -664,7 +909,13 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 	}
 
 	/* inform all listeners */
-	LIST_FOREACH(ep, &encaptab, chain) {
+
+	s = pserialize_read_enter();
+	PSLIST_READER_FOREACH(ep, &encap_table, struct encaptab, chain) {
+		struct psref elem_psref;
+
+		membar_datadep_consumer();
+
 		if (ep->af != AF_INET6)
 			continue;
 		if (ep->proto >= 0 && ep->proto != nxt)
@@ -673,11 +924,19 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 		/* should optimize by looking at address pairs */
 
 		/* XXX need to pass ep->arg or ep itself to listeners */
+		psref_acquire(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
 		esw = ep->esw;
 		if (esw && esw->encapsw6.pr_ctlinput) {
+			pserialize_read_exit(s);
+			/* pr_ctlinput is sleepable. e.g. rtcache_free */
 			(*esw->encapsw6.pr_ctlinput)(cmd, sa, d, ep->arg);
+			s = pserialize_read_enter();
 		}
+		psref_release(&elem_psref, &ep->psref,
+		    encaptab.elem_class);
 	}
+	pserialize_read_exit(s);
 
 	rip6_ctlinput(cmd, sa, d0);
 	return NULL;
@@ -688,26 +947,43 @@ int
 encap_detach(const struct encaptab *cookie)
 {
 	const struct encaptab *ep = cookie;
-	struct encaptab *p, *np;
+	struct encaptab *p;
 	int error;
 
-	LIST_FOREACH_SAFE(p, &encaptab, chain, np) {
+	KASSERT(encap_lock_held());
+
+	PSLIST_WRITER_FOREACH(p, &encap_table, struct encaptab, chain) {
+		membar_datadep_consumer();
+
 		if (p == ep) {
 			error = encap_remove(p);
 			if (error)
 				return error;
-			if (!ep->func) {
-				kmem_free(p->addrpack, ep->addrpack->sa_len);
-				kmem_free(p->maskpack, ep->maskpack->sa_len);
-			}
-			kmem_free(p, sizeof(*p));	/*XXX*/
-			return 0;
+			else
+				break;
 		}
 	}
+	if (p == NULL)
+		return ENOENT;
 
-	return ENOENT;
+#ifndef USE_RADIX
+	/*
+	 * pserialize_perform(encaptab.psz) is already done in encap_remove().
+	 */
+	pserialize_perform(encaptab.psz);
+#endif
+	psref_target_destroy(&p->psref,
+	    encaptab.elem_class);
+	if (!ep->func) {
+		kmem_free(p->addrpack, ep->addrpack->sa_len);
+		kmem_free(p->maskpack, ep->maskpack->sa_len);
+	}
+	kmem_free(p, sizeof(*p));
+
+	return 0;
 }
 
+#ifdef USE_RADIX
 static struct radix_node_head *
 encap_rnh(int af)
 {
@@ -741,6 +1017,63 @@ mask_matchlen(const struct sockaddr *sa)
 	}
 	return l;
 }
+#endif
+
+#ifndef USE_RADIX
+static int
+mask_match(const struct encaptab *ep,
+	   const struct sockaddr *sp,
+	   const struct sockaddr *dp)
+{
+	struct sockaddr_storage s;
+	struct sockaddr_storage d;
+	int i;
+	const u_int8_t *p, *q;
+	u_int8_t *r;
+	int matchlen;
+
+	KASSERTMSG(ep->func == NULL, "wrong encaptab passed to mask_match");
+
+	if (sp->sa_len > sizeof(s) || dp->sa_len > sizeof(d))
+		return 0;
+	if (sp->sa_family != ep->af || dp->sa_family != ep->af)
+		return 0;
+	if (sp->sa_len != ep->src->sa_len || dp->sa_len != ep->dst->sa_len)
+		return 0;
+
+	matchlen = 0;
+
+	p = (const u_int8_t *)sp;
+	q = (const u_int8_t *)ep->srcmask;
+	r = (u_int8_t *)&s;
+	for (i = 0 ; i < sp->sa_len; i++) {
+		r[i] = p[i] & q[i];
+		/* XXX estimate */
+		matchlen += (q[i] ? 8 : 0);
+	}
+
+	p = (const u_int8_t *)dp;
+	q = (const u_int8_t *)ep->dstmask;
+	r = (u_int8_t *)&d;
+	for (i = 0 ; i < dp->sa_len; i++) {
+		r[i] = p[i] & q[i];
+		/* XXX rough estimate */
+		matchlen += (q[i] ? 8 : 0);
+	}
+
+	/* need to overwrite len/family portion as we don't compare them */
+	s.ss_len = sp->sa_len;
+	s.ss_family = sp->sa_family;
+	d.ss_len = dp->sa_len;
+	d.ss_family = dp->sa_family;
+
+	if (memcmp(&s, ep->src, ep->src->sa_len) == 0 &&
+	    memcmp(&d, ep->dst, ep->dst->sa_len) == 0) {
+		return matchlen;
+	} else
+		return 0;
+}
+#endif
 
 static void
 encap_fillarg(struct mbuf *m, const struct encaptab *ep)
@@ -767,4 +1100,42 @@ encap_getarg(struct mbuf *m)
 		m_tag_delete(m, mtag);
 	}
 	return p;
+}
+
+int
+encap_lock_enter(void)
+{
+	int error;
+
+	mutex_enter(&encap_whole.lock);
+	while (encap_whole.busy != NULL) {
+		error = cv_wait_sig(&encap_whole.cv, &encap_whole.lock);
+		if (error) {
+			mutex_exit(&encap_whole.lock);
+			return error;
+		}
+	}
+	KASSERT(encap_whole.busy == NULL);
+	encap_whole.busy = curlwp;
+	mutex_exit(&encap_whole.lock);
+
+	return 0;
+}
+
+void
+encap_lock_exit(void)
+{
+
+	mutex_enter(&encap_whole.lock);
+	KASSERT(encap_whole.busy == curlwp);
+	encap_whole.busy = NULL;
+	cv_broadcast(&encap_whole.cv);
+	mutex_exit(&encap_whole.lock);
+}
+
+bool
+encap_lock_held(void)
+{
+
+	return (encap_whole.busy == curlwp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.59 2014/04/06 19:18:00 jakllsch Exp $	 */
+/*	$NetBSD: exec.c,v 1.59.4.1 2016/07/09 20:24:52 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -356,7 +356,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	       file ? file : "NULL", loadaddr);
 #endif
 
-	BI_ALLOC(32); /* ??? */
+	BI_ALLOC(BTINFO_MAX);
 
 	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
 
@@ -411,7 +411,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 out:
 	BI_FREE();
-	bootinfo = 0;
+	bootinfo = NULL;
 	return -1;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.32.6.1 2015/06/06 14:40:04 skrll Exp $ */
+/* $NetBSD: coretemp.c,v 1.32.6.2 2016/07/09 20:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.32.6.1 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.32.6.2 2016/07/09 20:24:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,7 +138,7 @@ coretemp_match(device_t parent, cfdata_t cf, void *aux)
 	 * Only attach on the first SMT ID.
 	 */
 	if (ci->ci_smt_id != 0)
-		return 0 ;
+		return 0;
 
 	/*
 	 * CPUID 0x06 returns 1 if the processor

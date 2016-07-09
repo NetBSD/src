@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.25.4.2 2016/03/19 11:30:02 skrll Exp $ */
+/* $Id: if_ae.c,v 1.25.4.3 2016/07/09 20:24:53 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.25.4.2 2016/03/19 11:30:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.25.4.3 2016/07/09 20:24:53 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1129,7 +1129,7 @@ ae_rxintr(struct ae_softc *sc)
 #endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
 
 		/*

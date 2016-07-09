@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.5 2016/05/29 08:44:18 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.6 2016/07/09 20:24:57 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.5 $"
+#ident 		"GENERIC-$Revision: 1.177.2.6 $"
 
 maxusers	64
 
@@ -247,6 +247,8 @@ ebus*	at mainbus0				# ebus devices
 ebus*	at pci?					# ebus devices
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?		# PCI "universal" comm. cards
+vbus0	at mainbus0
+cbus*	at vbus?
 
 #### Standard system devices -- all required for a given architecture
 
@@ -272,6 +274,9 @@ rtc*	at ebus?
 
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
+
+# Virtual devices for sun4v systems.
+vrtc0	at vbus?
 
 #### Serial port configuration
 

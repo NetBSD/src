@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.97.4.3 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.97.4.4 2016/07/09 20:25:21 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.3 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.4 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -929,7 +929,7 @@ strip_btom(struct strip_softc *sc, int len)
 	m->m_data = sc->sc_pktstart;
 
 	m->m_pkthdr.len = m->m_len = len;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	return (m);
 }
 

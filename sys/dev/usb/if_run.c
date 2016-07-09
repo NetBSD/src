@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.9 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.10 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.9 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.10 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2068,7 +2068,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 		}
 	}
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	memcpy(mtod(m, void *), wh, len);
 	m->m_pkthdr.len = m->m_len = len;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.7 2014/03/20 20:43:12 christos Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.7.6.1 2016/07/09 20:25:18 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -837,7 +837,13 @@ typedef unsigned int    u_32_t;
 #  if (__NetBSD_Version__ < 399001400)
 #   include "opt_ipfilter_log.h"
 #  else
-#   include "opt_ipfilter.h"
+#   if (__NetBSD_Version__ >= 799003000)
+#    if defined(_KERNEL_OPT)
+#     include "opt_ipfilter.h"
+#    endif
+#   else
+#    include "opt_ipfilter.h"
+#   endif
 #  endif
 # endif
 # if defined(_KERNEL)
@@ -857,7 +863,13 @@ typedef unsigned int    u_32_t;
 #    include "bpfilter.h"
 #  endif
 #  if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 104110000)
-#   include "opt_inet.h"
+#   if (__NetBSD_Version__ >= 799003000)
+#    if defined(_KERNEL_OPT)
+#     include "opt_inet.h"
+#    endif
+#   else
+#    include "opt_inet.h"
+#   endif
 #  endif
 #  ifdef INET6
 #   define USE_INET6
@@ -1952,8 +1964,7 @@ MALLOC_DECLARE(M_IPFILTER);
 						if (_o->m_flags & M_PKTHDR) { \
 							(m)->m_pkthdr.len += \
 							    _o->m_pkthdr.len; \
-							(m)->m_pkthdr.rcvif = \
-							  _o->m_pkthdr.rcvif; \
+							m_copy_rcvif((m), _o); \
 						} \
 					} while (0)
 # endif

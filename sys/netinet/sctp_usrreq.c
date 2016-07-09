@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2.2.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -950,7 +950,7 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 				/* Skip loopback if loopback_scope not set */
 				continue;
 			}
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				if (stcb) {
 				/*
 				 * For the BOUND-ALL case, the list
@@ -1103,7 +1103,7 @@ sctp_count_max_addresses(struct sctp_inpcb *inp)
 
 		s = pserialize_read_enter();
 		IFNET_READER_FOREACH(ifn) {
-			IFADDR_FOREACH(ifa, ifn) {
+			IFADDR_READER_FOREACH(ifa, ifn) {
 				/* Count them if they are the right type */
 				if (ifa->ifa_addr->sa_family == AF_INET) {
 					if (inp->sctp_flags & SCTP_PCB_FLAGS_NEEDS_MAPPED_V4)
@@ -3850,7 +3850,7 @@ static int
 sctp_purgeif(struct socket *so, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == PF_INET) {
 			sctp_delete_ip_address(ifa);
 		}

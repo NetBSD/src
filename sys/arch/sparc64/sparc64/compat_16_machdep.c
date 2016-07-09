@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.15.40.1 2016/03/19 11:30:05 skrll Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.15.40.2 2016/07/09 20:24:57 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15.40.1 2016/03/19 11:30:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.15.40.2 2016/07/09 20:24:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -87,7 +87,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct sigacts *ps = p->p_sigacts;
-	const void *addr; 
+	const void *addr;
 	struct rwindow *newsp;
 #ifdef NOT_DEBUG
 	struct rwindow tmpwin;

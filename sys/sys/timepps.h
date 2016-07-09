@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.21 2013/05/26 18:07:42 kardel Exp $	*/
+/*	$NetBSD: timepps.h,v 1.21.10.1 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -157,7 +157,7 @@ struct pps_state {
 	int		kcmode;
 	int		ppscap;
 	struct timecounter *ppstc;
-	u_int64_t	ppscount[3]; 
+	u_int64_t	ppscount[3];
 };
 
 void pps_capture(struct pps_state *);

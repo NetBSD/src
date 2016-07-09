@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.8.2.1 2016/05/29 08:44:20 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.8.2.2 2016/07/09 20:25:00 skrll Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.8.2.1 2016/05/29 08:44:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.8.2.2 2016/07/09 20:25:00 skrll Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -40,7 +40,7 @@ compat_ifconf(u_long cmd, void *data)
 	const int sz = (int)sizeof(ifr);
 	const bool docopy = ifc->ifc_req != NULL;
 	int s;
-	int bound = curlwp->l_pflag & LP_BOUND;
+	int bound;
 	struct psref psref;
 
 	if (docopy) {
@@ -48,7 +48,7 @@ compat_ifconf(u_long cmd, void *data)
 		ifrp = ifc->ifc_req;
 	}
 
-	curlwp->l_pflag |= LP_BOUND;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
@@ -60,7 +60,7 @@ compat_ifconf(u_long cmd, void *data)
 			error = ENAMETOOLONG;
 			goto release_exit;
 		}
-		if (IFADDR_EMPTY(ifp)) {
+		if (IFADDR_READER_EMPTY(ifp)) {
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
@@ -72,7 +72,7 @@ compat_ifconf(u_long cmd, void *data)
 			continue;
 		}
 
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
 #ifdef COMPAT_OSOCK
 			if (cmd == OOSIOCGIFCONF) {
@@ -121,7 +121,7 @@ compat_ifconf(u_long cmd, void *data)
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 
 	if (docopy)
 		ifc->ifc_len -= space;
@@ -131,7 +131,7 @@ compat_ifconf(u_long cmd, void *data)
 
 release_exit:
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
-	curlwp->l_pflag ^= bound ^ LP_BOUND;
+	curlwp_bindx(bound);
 	return error;
 }
 #endif

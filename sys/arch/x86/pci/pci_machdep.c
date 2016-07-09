@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.69.2.2 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.69.2.3 2016/07/09 20:24:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.2 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.3 2016/07/09 20:24:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -512,10 +512,12 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	 * If that device has a HyperTransport capability, bus 0 must
 	 * be a HyperTransport bus and we disable MSI.
 	 */
-	tag = pci_make_tag(pc, 0, 24, 0);
-	if (pci_get_capability(pc, tag, PCI_CAP_LDT, NULL, NULL)) {
-		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
-		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+	if (24 < pci_bus_maxdevs(pc, 0)) {
+		tag = pci_make_tag(pc, 0, 24, 0);
+		if (pci_get_capability(pc, tag, PCI_CAP_LDT, NULL, NULL)) {
+			pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+			pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		}
 	}
 #endif /* __HAVE_PCI_MSI_MSIX */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.41 2013/08/18 07:01:45 matt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.41.6.1 2016/07/09 20:24:56 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.41 2013/08/18 07:01:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.41.6.1 2016/07/09 20:24:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -398,7 +398,7 @@ ofw_device_register(device_t dev, void *aux)
 			*cp++ = '\0';
 			if (cp[0] == '\\')
 				cp++;
-			booted_kernel = cp; 
+			booted_kernel = cp;
 
 			/* Zap ".aout" suffix, arm32 libkvm now requires ELF */
 			cplen = strlen(cp);

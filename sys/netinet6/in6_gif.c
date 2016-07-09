@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.60.4.4 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.60.4.5 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.4 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -215,7 +215,8 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
-	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
+	if (gifp == NULL || (gifp->if_flags & (IFF_UP|IFF_RUNNING))
+		!= (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
@@ -229,11 +230,15 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 
-	if (!gif_validate6(ip6, sc, m->m_pkthdr.rcvif)) {
+	struct psref psref;
+	struct ifnet *rcvif = m_get_rcvif_psref(m, &psref);
+	if (rcvif == NULL || !gif_validate6(ip6, sc, rcvif)) {
+		m_put_rcvif_psref(rcvif, &psref);
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
 	}
+	m_put_rcvif_psref(rcvif, &psref);
 #endif
 
 	otos = ip6->ip6_flow;
@@ -344,15 +349,21 @@ gif_encapcheck6(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip6_hdr ip6;
 	struct gif_softc *sc;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
+	int r;
+	struct psref psref;
 
 	/* sanity check done in caller */
 	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip6), (void *)&ip6);
-	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
+	if ((m->m_flags & M_PKTHDR) != 0)
+		ifp = m_get_rcvif_psref(m, &psref);
 
-	return gif_validate6(&ip6, sc, ifp);
+	r = gif_validate6(&ip6, sc, ifp);
+
+	m_put_rcvif_psref(ifp, &psref);
+	return r;
 }
 #endif
 
@@ -386,11 +397,21 @@ in6_gif_detach(struct gif_softc *sc)
 {
 	int error;
 
+	error = in6_gif_pause(sc);
+
+	rtcache_free(&sc->gif_ro);
+
+	return error;
+}
+
+int
+in6_gif_pause(struct gif_softc *sc)
+{
+	int error;
+
 	error = encap_detach(sc->encap_cookie6);
 	if (error == 0)
 		sc->encap_cookie6 = NULL;
-
-	rtcache_free(&sc->gif_ro);
 
 	return error;
 }

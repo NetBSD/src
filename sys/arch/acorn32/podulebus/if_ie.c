@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.34.2.2 2016/03/19 11:29:54 skrll Exp $ */
+/* $NetBSD: if_ie.c,v 1.34.2.3 2016/07/09 20:24:48 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.34.2.2 2016/03/19 11:29:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.34.2.3 2016/07/09 20:24:48 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1102,7 +1102,7 @@ ieget(struct ie_softc *sc, int *to_bpf )
     if ( m==0 )
 	return 0;
 
-    m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+    m_set_rcvif(m, &sc->sc_ethercom.ec_if);
     m->m_pkthdr.len = totlen;
     len = MHLEN;
     top = 0;

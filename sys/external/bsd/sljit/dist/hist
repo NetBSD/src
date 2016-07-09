@@ -1,0 +1,60 @@
+Import the latest version of sljit @ r313.
+
+Changes since the last import:
+
+r313 Fix a racing condition reported by Mozilla.
+r312 Support Android ARM64 cacheflush. Patch by Tavian Barnes.
+r311 Update opcode dump.
+r310 Better type specification for integer operations and conditional types.
+r309 Better type specification for long mul and divide operators.
+r308 Better type specification for floating point operations.
+r307 Change d and s postfixes to f64 and f32.
+r306 Change b,h,i postifxes to 8,16,32.
+r305 Fix a wrong immediate number. Reported by Michael McConville.
+r304 Make file patch by Michael McConville.
+r303 Landed changes created by Michael McConville.
+r302 Add support for cmov on x86.
+r301 Tile-Gx fixes by Walter Lee
+r300 Add WinCE support.
+r299 Add a tutorial for SLJIT. Contributed by Wen Xichang.
+r298 Improve integer division.
+r297 Start reworking the integer division.
+r296 Add an overview for SLJIT.
+r295 Small optimizations for x86 and ARM64.
+r294 Fix ARM64 SP alignment.
+r293 Add a new sljit_set_compiler_memory_error function.
+r292 Add missing argument on ARM32.
+r291 Minor fixes and NOINLINE support.
+r290 Support custom memory allocators.
+r289 Add SLJIT_DOUBLE_ALIGNMENT support and emit_op_custom size check.
+r288 Add suport for SLJIT_ARGUMENT_CHECKS on all architectures.
+r287 Add SLJIT_ARGUMENT_CHECKS compiler option and lots of cleanups.
+r286 Support the new naming on PPC and MIPS.
+r285 Support the new naming on ARM and SPARC.
+r284 Move the type letter to the beggining of the floating point opcodes.
+r283 Add i_ s_ d_ froms to compare types.
+r282 Fix an incorrect form of mul on x86-64.
+r281 Refactoring sljitConfigInternal.h header.
+r280 Remove variable locals offset.
+r279 Test skips are not reported if verbose is disabled.
+r278 Add options to sljit_emit_enter and sljit_set_context.
+r277 Reindexing opX opcodes.
+r276 Some comments are fixed and minor refactors were done.
+r275 Minor optimizations.
+r274 Extend the register set on ARM.
+r273 Extend the register set on PPC, MIPS, SPARC.
+r272 Allow remapping of any registers: not just scratch->saved, but saved->scratch as well.
+r271 Renaming floating point registers to support more of them.
+r270 Extend the register set on x86.
+r269 Renaming integer registers for preparing the support of any all machine registers.
+r268 Refactor a macro to work when debug is disabled.
+r267 Introduce architecture macros without 32/64 bit postfix.
+r266 The floating point conversion operators are finished on PPC, and they are supported on all architectures now.
+r265 FPU operations support locals access now. CONW is supported on PPC now.
+r264 Continue code refactoring, MOVS/MOVD are optimized on all architectures.
+r263 SPARC implementation of floating point operators.
+r262 Small refactorings.
+r261 MIPS implementation of floating point conversion operators.
+r260 ARM implementation of floating point operators.
+r259 x86 implementation of floating point conversion operators.
+r258 Refactoring sljit_emit_fop1 opcodes, inserting placeholders for new ones.

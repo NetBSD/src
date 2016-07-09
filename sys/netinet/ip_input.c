@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.319.4.5 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.319.4.6 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.5 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.6 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -284,10 +284,15 @@ struct mowner ip_tx_mowner = MOWNER_INIT("internet", "tx");
 
 static void		ipintr(void *);
 static void		ip_input(struct mbuf *);
-static void		ip_forward(struct mbuf *, int);
+static void		ip_forward(struct mbuf *, int, struct ifnet *);
 static bool		ip_dooptions(struct mbuf *);
 static struct in_ifaddr *ip_rtaddr(struct in_addr);
 static void		sysctl_net_inet_ip_setup(struct sysctllog **);
+
+static struct in_ifaddr	*ip_match_our_address(struct ifnet *, struct ip *,
+			    int *);
+static struct in_ifaddr	*ip_match_our_address_broadcast(struct ifnet *,
+			    struct ip *);
 
 /* XXX: Not yet enabled. */
 #define	SOFTNET_LOCK()		KASSERT(mutex_owned(softnet_lock))
@@ -342,6 +347,81 @@ ip_init(void)
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
 }
 
+static struct in_ifaddr *
+ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
+{
+	struct in_ifaddr *ia = NULL;
+	int checkif;
+
+	/*
+	 * Enable a consistency check between the destination address
+	 * and the arrival interface for a unicast packet (the RFC 1122
+	 * strong ES model) if IP forwarding is disabled and the packet
+	 * is not locally generated.
+	 *
+	 * XXX - Checking also should be disabled if the destination
+	 * address is ipnat'ed to a different interface.
+	 *
+	 * XXX - Checking is incompatible with IP aliases added
+	 * to the loopback interface instead of the interface where
+	 * the packets are received.
+	 *
+	 * XXX - We need to add a per ifaddr flag for this so that
+	 * we get finer grain control.
+	 */
+	checkif = ip_checkinterface && (ipforwarding == 0) &&
+	    (ifp->if_flags & IFF_LOOPBACK) == 0;
+
+	IN_ADDRHASH_READER_FOREACH(ia, ip->ip_dst.s_addr) {
+		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
+			if (ia->ia4_flags & IN_IFF_NOTREADY)
+				continue;
+			if (checkif && ia->ia_ifp != ifp)
+				continue;
+			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
+				break;
+			else
+				downmatch++;
+		}
+	}
+
+	return ia;
+}
+
+static struct in_ifaddr *
+ip_match_our_address_broadcast(struct ifnet *ifp, struct ip *ip)
+{
+	struct in_ifaddr *ia = NULL;
+	struct ifaddr *ifa;
+
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ia = ifatoia(ifa);
+		if (ia->ia4_flags & IN_IFF_NOTREADY)
+			continue;
+		if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
+		    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
+		    /*
+		     * Look for all-0's host part (old broadcast addr),
+		     * either for subnet or net.
+		     */
+		    ip->ip_dst.s_addr == ia->ia_subnet ||
+		    ip->ip_dst.s_addr == ia->ia_net)
+			goto matched;
+		/*
+		 * An interface with IP address zero accepts
+		 * all packets that arrive on that interface.
+		 */
+		if (in_nullhost(ia->ia_addr.sin_addr))
+			goto matched;
+	}
+	ia = NULL;
+
+matched:
+	return ia;
+}
+
 /*
  * IP software interrupt routine.
  */
@@ -368,28 +448,29 @@ ip_input(struct mbuf *m)
 {
 	struct ip *ip = NULL;
 	struct in_ifaddr *ia;
-	struct ifaddr *ifa;
 	int hlen = 0, len;
 	int downmatch;
-	int checkif;
 	int srcrt = 0;
 	ifnet_t *ifp;
+	struct psref psref;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_input: not in the software "
 	    "interrupt handler; synchronization assumptions violated");
 
 	MCLAIM(m, &ip_rx_mowner);
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
-	ifp = m->m_pkthdr.rcvif;
+
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		goto out;
 
 	/*
 	 * If no IP addresses have been set yet but the interfaces
 	 * are receiving, can't do anything with incoming packets yet.
 	 * Note: we pre-check without locks held.
 	 */
-	if (!TAILQ_FIRST(&in_ifaddrhead)) {
-		goto bad;
-	}
+	if (IN_ADDRLIST_READER_EMPTY())
+		goto out;
 	IP_STATINC(IP_STAT_TOTAL);
 
 	/*
@@ -403,28 +484,28 @@ ip_input(struct mbuf *m)
 				  (max_linkhdr + 3) & ~3)) == NULL) {
 			/* XXXJRT new stat, please */
 			IP_STATINC(IP_STAT_TOOSMALL);
-			return;
+			goto out;
 		}
 	} else if (__predict_false(m->m_len < sizeof (struct ip))) {
 		if ((m = m_pullup(m, sizeof (struct ip))) == NULL) {
 			IP_STATINC(IP_STAT_TOOSMALL);
-			return;
+			goto out;
 		}
 	}
 	ip = mtod(m, struct ip *);
 	if (ip->ip_v != IPVERSION) {
 		IP_STATINC(IP_STAT_BADVERS);
-		goto bad;
+		goto out;
 	}
 	hlen = ip->ip_hl << 2;
 	if (hlen < sizeof(struct ip)) {	/* minimum header length */
 		IP_STATINC(IP_STAT_BADHLEN);
-		goto bad;
+		goto out;
 	}
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == NULL) {
 			IP_STATINC(IP_STAT_BADHLEN);
-			return;
+			goto out;
 		}
 		ip = mtod(m, struct ip *);
 	}
@@ -435,7 +516,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
 		IP_STATINC(IP_STAT_BADADDR);
-		goto bad;
+		goto out;
 	}
 
 	/* 127/8 must not appear on wire - RFC1122 */
@@ -443,7 +524,7 @@ ip_input(struct mbuf *m)
 	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
 		if ((ifp->if_flags & IFF_LOOPBACK) == 0) {
 			IP_STATINC(IP_STAT_BADADDR);
-			goto bad;
+			goto out;
 		}
 	}
 
@@ -452,7 +533,8 @@ ip_input(struct mbuf *m)
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
 		INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad);
-		goto badcsum;
+		IP_STATINC(IP_STAT_BADSUM);
+		goto out;
 
 	case M_CSUM_IPv4:
 		/* Checksum was okay. */
@@ -467,8 +549,10 @@ ip_input(struct mbuf *m)
 		if (__predict_true(!(ifp->if_flags & IFF_LOOPBACK) ||
 		    ip_do_loopback_cksum)) {
 			INET_CSUM_COUNTER_INCR(&ip_swcsum);
-			if (in_cksum(m, hlen) != 0)
-				goto badcsum;
+			if (in_cksum(m, hlen) != 0) {
+				IP_STATINC(IP_STAT_BADSUM);
+				goto out;
+			}
 		}
 		break;
 	}
@@ -481,7 +565,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (len < hlen) {
 		IP_STATINC(IP_STAT_BADLEN);
-		goto bad;
+		goto out;
 	}
 
 	/*
@@ -492,7 +576,7 @@ ip_input(struct mbuf *m)
 	 */
 	if (m->m_pkthdr.len < len) {
 		IP_STATINC(IP_STAT_TOOSHORT);
-		goto bad;
+		goto out;
 	}
 	if (m->m_pkthdr.len > len) {
 		if (m->m_len == m->m_pkthdr.len) {
@@ -528,7 +612,7 @@ ip_input(struct mbuf *m)
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
 		SOFTNET_UNLOCK();
 		if (freed || m == NULL) {
-			return;
+			goto out;
 		}
 		ip = mtod(m, struct ip *);
 		hlen = ip->ip_hl << 2;
@@ -557,7 +641,7 @@ ip_input(struct mbuf *m)
 		if ((*altq_input)(m, AF_INET) == 0) {
 			/* Packet dropped by traffic conditioner. */
 			SOFTNET_UNLOCK();
-			return;
+			goto out;
 		}
 		SOFTNET_UNLOCK();
 	}
@@ -571,26 +655,7 @@ ip_input(struct mbuf *m)
 	 */
 	ip_nhops = 0;		/* for source routed packets */
 	if (hlen > sizeof (struct ip) && ip_dooptions(m))
-		return;
-
-	/*
-	 * Enable a consistency check between the destination address
-	 * and the arrival interface for a unicast packet (the RFC 1122
-	 * strong ES model) if IP forwarding is disabled and the packet
-	 * is not locally generated.
-	 *
-	 * XXX - Checking also should be disabled if the destination
-	 * address is ipnat'ed to a different interface.
-	 *
-	 * XXX - Checking is incompatible with IP aliases added
-	 * to the loopback interface instead of the interface where
-	 * the packets are received.
-	 *
-	 * XXX - We need to add a per ifaddr flag for this so that
-	 * we get finer grain control.
-	 */
-	checkif = ip_checkinterface && (ipforwarding == 0) &&
-	    (ifp->if_flags & IFF_LOOPBACK) == 0;
+		goto out;
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -600,44 +665,16 @@ ip_input(struct mbuf *m)
 	 * or IN_IFF_NOTREADY addresses as not mine.
 	 */
 	downmatch = 0;
-	LIST_FOREACH(ia, &IN_IFADDR_HASH(ip->ip_dst.s_addr), ia_hash) {
-		if (in_hosteq(ia->ia_addr.sin_addr, ip->ip_dst)) {
-			if (ia->ia4_flags & IN_IFF_NOTREADY)
-				continue;
-			if (checkif && ia->ia_ifp != ifp)
-				continue;
-			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
-				break;
-			else
-				downmatch++;
-		}
-	}
+	ia = ip_match_our_address(ifp, ip, &downmatch);
 	if (ia != NULL)
 		goto ours;
+
 	if (ifp->if_flags & IFF_BROADCAST) {
-		IFADDR_FOREACH(ifa, ifp) {
-			if (ifa->ifa_addr->sa_family != AF_INET)
-				continue;
-			ia = ifatoia(ifa);
-			if (ia->ia4_flags & IN_IFF_NOTREADY)
-				continue;
-			if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
-			    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
-			    /*
-			     * Look for all-0's host part (old broadcast addr),
-			     * either for subnet or net.
-			     */
-			    ip->ip_dst.s_addr == ia->ia_subnet ||
-			    ip->ip_dst.s_addr == ia->ia_net)
-				goto ours;
-			/*
-			 * An interface with IP address zero accepts
-			 * all packets that arrive on that interface.
-			 */
-			if (in_nullhost(ia->ia_addr.sin_addr))
-				goto ours;
-		}
+		ia = ip_match_our_address_broadcast(ifp, ip);
+		if (ia != NULL)
+			goto ours;
 	}
+
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
@@ -659,8 +696,7 @@ ip_input(struct mbuf *m)
 			if (ip_mforward(m, ifp) != 0) {
 				SOFTNET_UNLOCK();
 				IP_STATINC(IP_STAT_CANTFORWARD);
-				m_freem(m);
-				return;
+				goto out;
 			}
 			SOFTNET_UNLOCK();
 
@@ -681,8 +717,7 @@ ip_input(struct mbuf *m)
 		 */
 		if (!in_multi_group(ip->ip_dst, ifp, 0)) {
 			IP_STATINC(IP_STAT_CANTFORWARD);
-			m_freem(m);
-			return;
+			goto out;
 		}
 		goto ours;
 	}
@@ -694,6 +729,7 @@ ip_input(struct mbuf *m)
 	 * Not for us; forward if possible and desirable.
 	 */
 	if (ipforwarding == 0) {
+		m_put_rcvif_psref(ifp, &psref);
 		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
 	} else {
@@ -704,6 +740,7 @@ ip_input(struct mbuf *m)
 		 * forwarding loop till TTL goes to 0.
 		 */
 		if (downmatch) {
+			m_put_rcvif_psref(ifp, &psref);
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
 			IP_STATINC(IP_STAT_CANTFORWARD);
 			return;
@@ -715,16 +752,20 @@ ip_input(struct mbuf *m)
 			if (ipsec4_input(m, IP_FORWARDING |
 			    (ip_directedbcast ? IP_ALLOWBROADCAST : 0)) != 0) {
 				SOFTNET_UNLOCK();
-				goto bad;
+				goto out;
 			}
 			SOFTNET_UNLOCK();
 		}
 #endif
-		ip_forward(m, srcrt);
+		ip_forward(m, srcrt, ifp);
+		m_put_rcvif_psref(ifp, &psref);
 	}
 	return;
 
 ours:
+	m_put_rcvif_psref(ifp, &psref);
+	ifp = NULL;
+
 	/*
 	 * If offset or IP_MF are set, must reassemble.
 	 */
@@ -734,11 +775,11 @@ ours:
 		 */
 		if (ip_reass_packet(&m, ip) != 0) {
 			/* Failed; invalid fragment(s) or packet. */
-			goto bad;
+			goto out;
 		}
 		if (m == NULL) {
 			/* More fragments should come; silently return. */
-			return;
+			goto out;
 		}
 		/*
 		 * Reassembly is done, we have the final packet.
@@ -759,7 +800,7 @@ ours:
 		SOFTNET_LOCK();
 		if (ipsec4_input(m, 0) != 0) {
 			SOFTNET_UNLOCK();
-			goto bad;
+			goto out;
 		}
 		SOFTNET_UNLOCK();
 	}
@@ -780,13 +821,11 @@ ours:
 	(*inetsw[ip_protox[nh]].pr_input)(m, off, nh);
 	SOFTNET_UNLOCK();
 	return;
-bad:
-	m_freem(m);
-	return;
 
-badcsum:
-	IP_STATINC(IP_STAT_BADSUM);
-	m_freem(m);
+out:
+	m_put_rcvif_psref(ifp, &psref);
+	if (m != NULL)
+		m_freem(m);
 }
 
 /*
@@ -988,7 +1027,10 @@ ip_dooptions(struct mbuf *m)
 			case IPOPT_TS_TSONLY:
 				break;
 
-			case IPOPT_TS_TSANDADDR:
+			case IPOPT_TS_TSANDADDR: {
+				struct ifnet *rcvif;
+				int s;
+
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
 					code = (u_char *)&ipt->ipt_ptr -
@@ -996,14 +1038,17 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				}
 				ipaddr.sin_addr = dst;
+				rcvif = m_get_rcvif(m, &s);
 				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
-				    m->m_pkthdr.rcvif));
+				    rcvif));
+				m_put_rcvif(rcvif, &s);
 				if (ia == 0)
 					continue;
 				bcopy(&ia->ia_addr.sin_addr,
 				    cp0, sizeof(struct in_addr));
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
+			}
 
 			case IPOPT_TS_PRESPEC:
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
@@ -1034,12 +1079,23 @@ ip_dooptions(struct mbuf *m)
 		}
 	}
 	if (forward) {
+		struct ifnet *rcvif;
+		struct psref psref;
+
 		if (ip_forwsrcrt == 0) {
 			type = ICMP_UNREACH;
 			code = ICMP_UNREACH_SRCFAIL;
 			goto bad;
 		}
-		ip_forward(m, 1);
+
+		rcvif = m_get_rcvif_psref(m, &psref);
+		if (__predict_false(rcvif == NULL)) {
+			type = ICMP_UNREACH;
+			code = ICMP_UNREACH_HOST;
+			goto bad;
+		}
+		ip_forward(m, 1, rcvif);
+		m_put_rcvif_psref(rcvif, &psref);
 		return true;
 	}
 	return false;
@@ -1186,7 +1242,7 @@ ip_drainstub(void)
  * via a source route.
  */
 static void
-ip_forward(struct mbuf *m, int srcrt)
+ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 {
 	struct ip *ip = mtod(m, struct ip *);
 	struct rtentry *rt;
@@ -1254,7 +1310,7 @@ ip_forward(struct mbuf *m, int srcrt)
 	 * Also, don't send redirect if forwarding using a default route
 	 * or a route modified by a redirect.
 	 */
-	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
+	if (rt->rt_ifp == rcvif &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr) &&
 	    ipsendredirects && !srcrt) {
@@ -1360,8 +1416,13 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
     struct mbuf *m)
 {
 	struct socket *so = inp->inp_socket;
-	ifnet_t *ifp = m->m_pkthdr.rcvif;
+	ifnet_t *ifp;
 	int inpflags = inp->inp_flags;
+	struct psref psref;
+
+	ifp = m_get_rcvif_psref(m, &psref);
+	if (__predict_false(ifp == NULL))
+		return; /* XXX should report error? */
 
 	if (so->so_options & SO_TIMESTAMP
 #ifdef SO_OTIMESTAMP
@@ -1411,8 +1472,8 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 	if (inpflags & INP_RECVIF) {
 		struct sockaddr_dl sdl;
 
-		sockaddr_dl_init(&sdl, sizeof(sdl), ifp ?
-		    ifp->if_index : 0, 0, NULL, 0, NULL, 0);
+		sockaddr_dl_init(&sdl, sizeof(sdl), ifp->if_index, 0, NULL, 0,
+		    NULL, 0);
 		*mp = sbcreatecontrol(&sdl, sdl.sdl_len, IP_RECVIF, IPPROTO_IP);
 		if (*mp)
 			mp = &(*mp)->m_next;
@@ -1423,6 +1484,7 @@ ip_savecontrol(struct inpcb *inp, struct mbuf **mp, struct ip *ip,
 		if (*mp)
 			mp = &(*mp)->m_next;
 	}
+	m_put_rcvif_psref(ifp, &psref);
 }
 
 /*

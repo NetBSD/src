@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.146.4.4 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.146.4.5 2016/07/09 20:25:21 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.5 2016/07/09 20:25:21 skrll Exp $");
 
 #include "ppp.h"
 
@@ -1600,7 +1600,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		}
 	}
 	m->m_pkthdr.len = ilen;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	if ((proto & 0x8000) == 0) {
 #ifdef PPP_FILTER

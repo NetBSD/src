@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.57.4.1 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.57.4.2 2016/07/09 20:25:04 skrll Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.85 2009/11/09 14:32:41 dlg Exp $ */
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.57.4.1 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.57.4.2 2016/07/09 20:25:04 skrll Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4577,7 +4577,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			m->m_pkthdr.len = m->m_len = len;
 
 			/* Send the packet to the appropriate interface. */
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 
 			DBRUN(BNX_VERBOSE_RECV,
 			    struct ether_header *eh;

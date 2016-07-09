@@ -1,4 +1,4 @@
-/*	$NetBSD: qvaux.c,v 1.1.2.2 2015/09/22 12:05:53 skrll Exp $	*/
+/*	$NetBSD: qvaux.c,v 1.1.2.3 2016/07/09 20:24:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -261,38 +261,38 @@ qvaux_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* set floating DUART vector and enable interrupts */
-        qv_ic_setvec(ua, QVA_QVIC, QV_DUART_VEC, ua->ua_cvec); 
+        qv_ic_setvec(ua, QVA_QVIC, QV_DUART_VEC, ua->ua_cvec);
         qv_ic_arm(ua, QVA_QVIC, QV_IC_ENA);
 	bus_space_write_2(ua->ua_iot, ua->ua_ioh, QVA_QVCSR,
-	    bus_space_read_2(ua->ua_iot, ua->ua_ioh, QVA_QVCSR) | (1 << 6));  
+	    bus_space_read_2(ua->ua_iot, ua->ua_ioh, QVA_QVCSR) | (1 << 6));
 
 	sc->sc_dev = self;
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 
         /* device register access structure */
-        sc->sc_qr.qr_ipcr = DU_IPCR;        
-        sc->sc_qr.qr_acr = DU_ACR;        
-        sc->sc_qr.qr_isr = DU_ISR;        
-        sc->sc_qr. qr_imr = DU_IMR;        
-        sc->sc_qr.qr_ctur = DU_CTUR;        
-        sc->sc_qr.qr_ctlr = DU_CTLR;        
-        sc->sc_qr.qr_ip = DU_IP;        
-        sc->sc_qr.qr_opcr = DU_OPCR;        
-        sc->sc_qr.qr_cstrt = DU_IMR;        
-        sc->sc_qr.qr_opset = DU_OPSET;        
-        sc->sc_qr.qr_cstop = DU_CSTOP;        
-        sc->sc_qr.qr_opclr = DU_OPCLR;        
+        sc->sc_qr.qr_ipcr = DU_IPCR;
+        sc->sc_qr.qr_acr = DU_ACR;
+        sc->sc_qr.qr_isr = DU_ISR;
+        sc->sc_qr. qr_imr = DU_IMR;
+        sc->sc_qr.qr_ctur = DU_CTUR;
+        sc->sc_qr.qr_ctlr = DU_CTLR;
+        sc->sc_qr.qr_ip = DU_IP;
+        sc->sc_qr.qr_opcr = DU_OPCR;
+        sc->sc_qr.qr_cstrt = DU_IMR;
+        sc->sc_qr.qr_opset = DU_OPSET;
+        sc->sc_qr.qr_cstop = DU_CSTOP;
+        sc->sc_qr.qr_opclr = DU_OPCLR;
         sc->sc_qr.qr_ch_regs[0].qr_mr = CH_MR(0);
-        sc->sc_qr.qr_ch_regs[0].qr_sr = CH_SR(0);        
-        sc->sc_qr.qr_ch_regs[0].qr_csr = CH_CSR(0);        
-        sc->sc_qr.qr_ch_regs[0].qr_cr = CH_CR(0);        
-        sc->sc_qr.qr_ch_regs[0].qr_dat = CH_DAT(0);                
+        sc->sc_qr.qr_ch_regs[0].qr_sr = CH_SR(0);
+        sc->sc_qr.qr_ch_regs[0].qr_csr = CH_CSR(0);
+        sc->sc_qr.qr_ch_regs[0].qr_cr = CH_CR(0);
+        sc->sc_qr.qr_ch_regs[0].qr_dat = CH_DAT(0);
         sc->sc_qr.qr_ch_regs[1].qr_mr = CH_MR(1);
-        sc->sc_qr.qr_ch_regs[1].qr_sr = CH_SR(1);        
-        sc->sc_qr.qr_ch_regs[1].qr_csr = CH_CSR(1);        
-        sc->sc_qr.qr_ch_regs[1].qr_cr = CH_CR(1);        
-        sc->sc_qr.qr_ch_regs[1].qr_dat = CH_DAT(1);                
+        sc->sc_qr.qr_ch_regs[1].qr_sr = CH_SR(1);
+        sc->sc_qr.qr_ch_regs[1].qr_csr = CH_CSR(1);
+        sc->sc_qr.qr_ch_regs[1].qr_cr = CH_CR(1);
+        sc->sc_qr.qr_ch_regs[1].qr_dat = CH_DAT(1);
 
 	sc->sc_qr.qr_firstreg = QVA_FIRSTREG;
 	sc->sc_qr.qr_winsize = QVA_WINSIZE;

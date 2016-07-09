@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.23 2014/04/22 19:01:47 maxv Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.23.4.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.23 2014/04/22 19:01:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.23.4.1 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -333,5 +333,5 @@ coredump_write(struct coredump_iostate *io, enum uio_seg segflg,
 off_t
 coredump_offset(struct coredump_iostate *io)
 {
-	return io->io_offset; 
+	return io->io_offset;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.179.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -135,7 +135,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.179.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1302,7 +1302,7 @@ send:
 		m->m_data += max_linkhdr;
 		m->m_len = hdrlen;
 	}
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	switch (af) {
 #ifdef INET
 	case AF_INET:

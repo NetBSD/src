@@ -1,4 +1,4 @@
-/*	$NetBSD: pslist.h,v 1.2.2.2 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: pslist.h,v 1.2.2.3 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -178,14 +178,14 @@ pslist_writer_remove(struct pslist_entry *entry)
 }
 
 static inline struct pslist_entry *
-pslist_writer_first(struct pslist_head *head)
+pslist_writer_first(const struct pslist_head *head)
 {
 
 	return head->plh_first;
 }
 
 static inline struct pslist_entry *
-pslist_writer_next(struct pslist_entry *entry)
+pslist_writer_next(const struct pslist_entry *entry)
 {
 
 	_PSLIST_ASSERT(entry->ple_next != _PSLIST_POISON);
@@ -193,7 +193,8 @@ pslist_writer_next(struct pslist_entry *entry)
 }
 
 static inline void *
-_pslist_writer_first_container(struct pslist_head *head, ptrdiff_t offset)
+_pslist_writer_first_container(const struct pslist_head *head,
+    const ptrdiff_t offset)
 {
 	struct pslist_entry *first = head->plh_first;
 
@@ -201,7 +202,8 @@ _pslist_writer_first_container(struct pslist_head *head, ptrdiff_t offset)
 }
 
 static inline void *
-_pslist_writer_next_container(struct pslist_entry *entry, ptrdiff_t offset)
+_pslist_writer_next_container(const struct pslist_entry *entry,
+    const ptrdiff_t offset)
 {
 	struct pslist_entry *next = entry->ple_next;
 
@@ -217,7 +219,7 @@ _pslist_writer_next_container(struct pslist_entry *entry, ptrdiff_t offset)
  */
 
 static inline struct pslist_entry *
-pslist_reader_first(struct pslist_head *head)
+pslist_reader_first(const struct pslist_head *head)
 {
 	struct pslist_entry *first = head->plh_first;
 
@@ -228,7 +230,7 @@ pslist_reader_first(struct pslist_head *head)
 }
 
 static inline struct pslist_entry *
-pslist_reader_next(struct pslist_entry *entry)
+pslist_reader_next(const struct pslist_entry *entry)
 {
 	struct pslist_entry *next = entry->ple_next;
 
@@ -240,7 +242,8 @@ pslist_reader_next(struct pslist_entry *entry)
 }
 
 static inline void *
-_pslist_reader_first_container(struct pslist_head *head, ptrdiff_t offset)
+_pslist_reader_first_container(const struct pslist_head *head,
+    const ptrdiff_t offset)
 {
 	struct pslist_entry *first = head->plh_first;
 
@@ -252,7 +255,8 @@ _pslist_reader_first_container(struct pslist_head *head, ptrdiff_t offset)
 }
 
 static inline void *
-_pslist_reader_next_container(struct pslist_entry *entry, ptrdiff_t offset)
+_pslist_reader_next_container(const struct pslist_entry *entry,
+    const ptrdiff_t offset)
 {
 	struct pslist_entry *next = entry->ple_next;
 

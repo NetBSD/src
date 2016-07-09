@@ -1,4 +1,4 @@
-/* $NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $ */
+/* $NetBSD: balloon.c,v 1.16.16.1 2016/07/09 20:25:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define BALLOONDEBUG 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16 2012/06/30 23:36:20 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: balloon.c,v 1.16.16.1 2016/07/09 20:25:00 skrll Exp $");
 
 #include <sys/inttypes.h>
 #include <sys/device.h>
@@ -438,7 +438,7 @@ balloon_inflate(struct balloon_xenbus_softc *sc, size_t tpages)
 static size_t
 balloon_deflate(struct balloon_xenbus_softc *sc, size_t tpages)
 {
-	int rpages, s, ret; 
+	int rpages, s, ret;
 	paddr_t pa;
 	struct balloon_page_entry *bpg_entry;
 	xen_pfn_t *mfn_list = sc->sc_mfn_list;

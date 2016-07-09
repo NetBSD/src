@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.91.4.1 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: key.c,v 1.91.4.2 2016/07/09 20:25:23 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91.4.1 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91.4.2 2016/07/09 20:25:23 skrll Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4127,9 +4127,7 @@ key_ismyaddr(const struct sockaddr *sa)
 #ifdef INET
 	case AF_INET:
 		sin = (const struct sockaddr_in *)sa;
-		for (ia = in_ifaddrhead.tqh_first; ia;
-		     ia = ia->ia_link.tqe_next)
-		{
+		IN_ADDRLIST_READER_FOREACH(ia) {
 			if (sin->sin_family == ia->ia_addr.sin_family &&
 			    sin->sin_len == ia->ia_addr.sin_len &&
 			    sin->sin_addr.s_addr == ia->ia_addr.sin_addr.s_addr)
@@ -4160,10 +4158,10 @@ key_ismyaddr(const struct sockaddr *sa)
 static int
 key_ismyaddr6(const struct sockaddr_in6 *sin6)
 {
-	const struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia;
 	const struct in6_multi *in6m;
 
-	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (key_sockaddrcmp((const struct sockaddr *)&sin6,
 		    (const struct sockaddr *)&ia->ia_addr, 0) == 0)
 			return 1;

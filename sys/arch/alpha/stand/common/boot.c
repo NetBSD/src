@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.32 2011/01/22 19:19:15 joerg Exp $ */
+/* $NetBSD: boot.c,v 1.32.32.1 2016/07/09 20:24:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,7 +118,7 @@ main(long fd)
 
 	if (strchr(boot_flags, 'i') || strchr(boot_flags, 'I')) {
 		printf("Boot file: ");
-		gets(boot_file);
+		kgets(boot_file, sizeof(boot_file));
 	}
 
 #ifdef NO_LOAD_BACKWARDS

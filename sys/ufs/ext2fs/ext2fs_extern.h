@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.47.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.47.4.2 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -78,6 +78,7 @@ struct vnode;
 struct mbuf;
 struct componentname;
 struct ufs_lookup_results;
+struct ext2fs_searchslot;
 
 extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 extern struct pool ext2fs_dinode_pool;		/* memory pool for dinodes */
@@ -120,6 +121,9 @@ int ext2fs_inactive(void *);
 /* ext2fs_lookup.c */
 int ext2fs_readdir(void *);
 int ext2fs_lookup(void *);
+int ext2fs_search_dirblock(struct inode *, void *, int *,
+    const char *, int , int *, doff_t *, doff_t *, doff_t *,
+    struct ext2fs_searchslot *);
 int ext2fs_direnter(struct inode *, struct vnode *,
 			 const struct ufs_lookup_results *,
 			 struct componentname *);
@@ -171,6 +175,15 @@ int ext2fs_vinit(struct mount *, int (**specops)(void *),
 int ext2fs_makeinode(int, struct vnode *, struct vnode **,
 			  struct componentname *cnp);
 int ext2fs_reclaim(void *);
+
+/* ext2fs_hash.c */
+int ext2fs_htree_hash(const char *, int, uint32_t *, int, uint32_t *,
+    uint32_t *);
+       
+/* ext2fs_htree.c */        
+int ext2fs_htree_has_idx(struct inode *);
+int ext2fs_htree_lookup(struct inode *, const char *, int, struct buf **,
+    int *, doff_t *, doff_t *, doff_t *, struct ext2fs_searchslot *);
 
 __END_DECLS
 

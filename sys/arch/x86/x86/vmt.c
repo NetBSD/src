@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.10.4.2 2016/05/29 08:44:19 skrll Exp $ */
+/* $NetBSD: vmt.c,v 1.10.4.3 2016/07/09 20:24:59 skrll Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -817,7 +817,7 @@ vmt_tclo_tick(void *xarg)
 				continue;
 			}
 
-			IFADDR_FOREACH(iface_addr, iface) {
+			IFADDR_READER_FOREACH(iface_addr, iface) {
 				if (iface_addr->ifa_addr->sa_family != AF_INET) {
 					continue;
 				}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860var.h,v 1.2.2.2 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: rt2860var.h,v 1.2.2.3 2016/07/09 20:25:02 skrll Exp $	*/
 /*	$OpenBSD: rt2860var.h,v 1.23 2016/03/21 21:16:30 stsp Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ struct rt2860_rx_radiotap_header {
 	uint8_t		wr_dbm_antsignal;
 	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
-} __packed;
+} __packed __aligned(8);
 
 #define RT2860_RX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -59,7 +59,7 @@ struct rt2860_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_hwqueue;
-} __packed;
+} __packed __aligned(8);
 
 #define RT2860_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -131,6 +131,7 @@ struct rt2860_softc {
 #define RT2860_ENABLED		(1 << 0)
 #define RT2860_ADVANCED_PS	(1 << 1)
 #define RT2860_PCIE		(1 << 2)
+#define	RT2860_RUNNING		(1 << 3)
 
 	struct ieee80211_amrr		amrr;
 
@@ -156,7 +157,7 @@ struct rt2860_softc {
 
 	uint16_t			mac_ver;
 	uint16_t			mac_rev;
-	uint8_t				rf_rev;
+	uint32_t			rf_rev;
 	uint8_t				freq;
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;

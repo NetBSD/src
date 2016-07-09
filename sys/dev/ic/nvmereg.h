@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.1.2.2 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.1.2.3 2016/07/09 20:25:02 skrll Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef	__NVMEREG_H__
+#define	__NVMEREG_H__
 
 #define NVME_CAP	0x0000	/* Controller Capabilities */
 #define  NVME_CAP_MPSMAX(_r)	(12 + (((_r) >> 52) & 0xf)) /* shift */
@@ -208,12 +211,15 @@ struct nvme_cqe {
 	uint16_t	flags;
 #define NVME_CQE_DNR		__BIT(15)
 #define NVME_CQE_M		__BIT(14)
+#define NVME_CQE_SCT_MASK	__BITS(8, 10)
 #define NVME_CQE_SCT(_f)	((_f) & (0x07 << 8))
 #define  NVME_CQE_SCT_GENERIC		(0x00 << 8)
 #define  NVME_CQE_SCT_COMMAND		(0x01 << 8)
 #define  NVME_CQE_SCT_MEDIAERR		(0x02 << 8)
 #define  NVME_CQE_SCT_VENDOR		(0x07 << 8)
+#define NVME_CQE_SC_MASK	__BITS(1, 7)
 #define NVME_CQE_SC(_f)		((_f) & (0x7f << 1))
+/* generic command status codes */
 #define  NVME_CQE_SC_SUCCESS		(0x00 << 1)
 #define  NVME_CQE_SC_INVALID_OPCODE	(0x01 << 1)
 #define  NVME_CQE_SC_INVALID_FIELD	(0x02 << 1)
@@ -234,8 +240,36 @@ struct nvme_cqe {
 #define  NVME_CQE_SC_SGL_TYPE_INVALID	(0x11 << 1)
 #define  NVME_CQE_SC_LBA_RANGE		(0x80 << 1)
 #define  NVME_CQE_SC_CAP_EXCEEDED	(0x81 << 1)
-#define  NVME_CQE_NS_NOT_RDY		(0x82 << 1)
-#define  NVME_CQE_RSV_CONFLICT		(0x83 << 1)
+#define  NVME_CQE_SC_NS_NOT_RDY		(0x82 << 1)
+#define  NVME_CQE_SC_RSV_CONFLICT	(0x83 << 1)
+/* command specific status codes */
+#define  NVME_CQE_SC_CQE_INVALID	(0x00 << 1)
+#define  NVME_CQE_SC_INVALID_QID	(0x01 << 1)
+#define  NVME_CQE_SC_MAX_Q_SIZE		(0x02 << 1)
+#define  NVME_CQE_SC_ABORT_LIMIT	(0x03 << 1)
+#define  NVME_CQE_SC_ASYNC_EV_REQ_LIMIT	(0x05 << 1)
+#define  NVME_CQE_SC_INVALID_FW_SLOT	(0x06 << 1)
+#define  NVME_CQE_SC_INVALID_FW_IMAGE	(0x07 << 1)
+#define  NVME_CQE_SC_INVALID_INT_VEC	(0x08 << 1)
+#define  NVME_CQE_SC_INVALID_LOG_PAGE	(0x09 << 1)
+#define  NVME_CQE_SC_INVALID_FORMAT	(0x0a << 1)
+#define  NVME_CQE_SC_FW_REQ_CNV_RESET	(0x0b << 1)
+#define  NVME_CQE_SC_FW_REQ_NVM_RESET	(0x10 << 1)
+#define  NVME_CQE_SC_FW_REQ_RESET	(0x11 << 1)
+#define  NVME_CQE_SC_FW_MAX_TIME_VIO	(0x12 << 1)
+#define  NVME_CQE_SC_FW_PROHIBIT	(0x13 << 1)
+#define  NVME_CQE_SC_OVERLAP_RANGE	(0x14 << 1)
+#define  NVME_CQE_SC_CONFLICT_ATTRS	(0x80 << 1)
+#define  NVME_CQE_SC_INVALID_PROT_INFO	(0x81 << 1)
+#define  NVME_CQE_SC_ATT_WR_TO_RO_PAGE	(0x82 << 1)
+/* media error status codes */
+#define  NVME_CQE_SC_WRITE_FAULTS	(0x80 << 1)
+#define  NVME_CQE_SC_UNRECV_READ_ERR	(0x81 << 1)
+#define  NVME_CQE_SC_GUARD_CHECK_ERR	(0x82 << 1)
+#define  NVME_CQE_SC_APPL_TAG_CHECK_ERR	(0x83 << 1)
+#define  NVME_CQE_SC_REF_TAG_CHECK_ERR	(0x84 << 1)
+#define  NVME_CQE_SC_CMP_FAIL		(0x85 << 1)
+#define  NVME_CQE_SC_ACCESS_DENIED	(0x86 << 1)
 #define NVME_CQE_PHASE		__BIT(0)
 } __packed __aligned(8);
 
@@ -249,7 +283,7 @@ struct nvme_cqe {
 #define NVM_ADMIN_SET_FEATURES	0x09 /* Set Features */
 #define NVM_ADMIN_GET_FEATURES	0x0a /* Get Features */
 #define NVM_ADMIN_ASYNC_EV_REQ	0x0c /* Asynchronous Event Request */
-#define NVM_ADMIN_FW_ACTIVATE	0x10 /* Firmware Activate */
+#define NVM_ADMIN_FW_COMMIT	0x10 /* Firmware Commit */
 #define NVM_ADMIN_FW_DOWNLOAD	0x11 /* Firmware Image Download */
 
 #define NVM_CMD_FLUSH		0x00 /* Flush */
@@ -262,18 +296,34 @@ struct nvme_cqe {
 /* Power State Descriptor Data */
 struct nvm_identify_psd {
 	uint16_t	mp;		/* Max Power */
-	uint16_t	flags;
+	uint8_t		_reserved1;
+	uint8_t		flags;
+#define	NVME_PSD_NOPS		__BIT(1)
+#define	NVME_PSD_MPS		__BIT(0)
 
 	uint32_t	enlat;		/* Entry Latency */
 
 	uint32_t	exlat;		/* Exit Latency */
 
 	uint8_t		rrt;		/* Relative Read Throughput */
+#define	NVME_PSD_RRT_MASK	__BITS(0, 4)
 	uint8_t		rrl;		/* Relative Read Latency */
+#define	NVME_PSD_RRL_MASK	__BITS(0, 4)
 	uint8_t		rwt;		/* Relative Write Throughput */
+#define	NVME_PSD_RWT_MASK	__BITS(0, 4)
 	uint8_t		rwl;		/* Relative Write Latency */
+#define	NVME_PSD_RWL_MASK	__BITS(0, 4)
 
-	uint8_t		_reserved[16];
+	uint16_t	idlp;		/* Idle Power */
+	uint8_t		ips;		/* Idle Power Scale */
+#define	NVME_PSD_IPS_MASK	__BITS(0, 1)
+	uint8_t		_reserved2;
+	uint16_t	actp;		/* Active Power */
+	uint16_t	ap;		/* Active Power Workload/Scale */
+#define	NVME_PSD_APW_MASK	__BITS(0, 2)
+#define	NVME_PSD_APS_MASK	__BITS(6, 7)
+
+	uint8_t		_reserved[8];
 } __packed __aligned(8);
 
 struct nvm_identify_controller {
@@ -299,11 +349,20 @@ struct nvm_identify_controller {
 	/* Admin Command Set Attributes & Optional Controller Capabilities */
 
 	uint16_t	oacs;		/* Optional Admin Command Support */
+#define	NVME_ID_CTRLR_OACS_NS		__BIT(3)
+#define	NVME_ID_CTRLR_OACS_FW		__BIT(2)
+#define	NVME_ID_CTRLR_OACS_FORMAT	__BIT(1)
+#define	NVME_ID_CTRLR_OACS_SECURITY	__BIT(0)
 	uint8_t		acl;		/* Abort Command Limit */
 	uint8_t		aerl;		/* Asynchronous Event Request Limit */
 
 	uint8_t		frmw;		/* Firmware Updates */
+#define	NVME_ID_CTRLR_FRMW_NOREQ_RESET	__BIT(4)
+#define	NVME_ID_CTRLR_FRMW_NSLOT	__BITS(1, 3)
+#define	NVME_ID_CTRLR_FRMW_SLOT1_RO	__BIT(0)
 	uint8_t		lpa;		/* Log Page Attributes */
+#define	NVME_ID_CTRLR_LPA_CMD_EFFECT	__BIT(1)
+#define	NVME_ID_CTRLR_LPA_NS_SMART	__BIT(0)
 	uint8_t		elpe;		/* Error Log Page Entries */
 	uint8_t		npss;		/* Number of Power States Support */
 
@@ -317,16 +376,27 @@ struct nvm_identify_controller {
 	/* NVM Command Set Attributes */
 
 	uint8_t		sqes;		/* Submission Queue Entry Size */
+#define	NVME_ID_CTRLR_SQES_MAX		__BITS(4, 7)
+#define	NVME_ID_CTRLR_SQES_MIN		__BITS(0, 3)
 	uint8_t		cqes;		/* Completion Queue Entry Size */
+#define	NVME_ID_CTRLR_CQES_MAX		__BITS(4, 7)
+#define	NVME_ID_CTRLR_CQES_MIN		__BITS(0, 3)
 	uint8_t		_reserved3[2];
 
 	uint32_t	nn;		/* Number of Namespaces */
 
 	uint16_t	oncs;		/* Optional NVM Command Support */
+#define	NVME_ID_CTRLR_ONCS_RESERVATION	__BIT(5)
+#define	NVME_ID_CTRLR_ONCS_SET_FEATURES	__BIT(4)
+#define	NVME_ID_CTRLR_ONCS_WRITE_ZERO	__BIT(3)
+#define	NVME_ID_CTRLR_ONCS_DSM		__BIT(2)
+#define	NVME_ID_CTRLR_ONCS_WRITE_UNC	__BIT(1)
+#define	NVME_ID_CTRLR_ONCS_COMPARE	__BIT(0)
 	uint16_t	fuses;		/* Fused Operation Support */
 
 	uint8_t		fna;		/* Format NVM Attributes */
 	uint8_t		vwc;		/* Volatile Write Cache */
+#define	NVME_ID_CTRLR_VWC_PRESENT	__BIT(0)
 	uint16_t	awun;		/* Atomic Write Unit Normal */
 
 	uint16_t	awupf;		/* Atomic Write Unit Power Fail */
@@ -367,6 +437,9 @@ struct nvm_identify_namespace {
 	uint64_t	nuse;		/* Namespace Utilization */
 
 	uint8_t		nsfeat;		/* Namespace Features */
+#define	NVME_ID_NS_NSFEAT_LOGICAL_BLK_ERR	__BIT(2)
+#define	NVME_ID_NS_NSFEAT_NS			__BIT(1)
+#define	NVME_ID_NS_NSFEAT_THIN_PROV		__BIT(0)
 	uint8_t		nlbaf;		/* Number of LBA Formats */
 	uint8_t		flbas;		/* Formatted LBA Size */
 #define NVME_ID_NS_FLBAS(_f)			((_f) & 0x0f)
@@ -385,3 +458,5 @@ struct nvm_identify_namespace {
 
 	uint8_t		vs[3712];
 } __packed __aligned(8);
+
+#endif	/* __NVMEREG_H__ */

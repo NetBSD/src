@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.7 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.8 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -231,6 +231,8 @@ struct callout;
 struct krwlock;
 struct if_percpuq;
 
+typedef unsigned short if_index_t;
+
 typedef struct ifnet {
 	void	*if_softc;		/* lower-level data for this if */
 	/* DEPRECATED. Keep it to avoid breaking kvm(3) users */
@@ -239,10 +241,10 @@ typedef struct ifnet {
 	char	if_xname[IFNAMSIZ];	/* external name (name + unit) */
 	int	if_pcount;		/* number of promiscuous listeners */
 	struct bpf_if *if_bpf;		/* packet filter structure */
-	u_short	if_index;		/* numeric abbreviation for this if */
+	if_index_t	if_index;	/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
 	short	if_flags;		/* up/down, broadcast, etc. */
-	short	if__pad1;		/* be nice to m68k ports */
+	short	if_extflags;		/* if_output MP-safe, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
@@ -255,7 +257,7 @@ typedef struct ifnet {
 		    (struct ifnet *, struct mbuf *);
 	void	(*if_start)		/* initiate output routine */
 		    (struct ifnet *);
-	int	(*if_transmit)		/* output routine (direct) */
+	int	(*if_transmit)		/* output routine, must be MP-safe */
 		    (struct ifnet *, struct mbuf *);
 	int	(*if_ioctl)		/* ioctl routine */
 		    (struct ifnet *, u_long, void *);
@@ -339,6 +341,7 @@ typedef struct ifnet {
 	uint16_t	if_link_queue;	/* masked link state change queue */
 	struct pslist_entry	if_pslist_entry;
 	struct psref_target     if_psref;
+	struct pslist_head	if_addr_pslist;
 #endif
 } ifnet_t;
 
@@ -378,6 +381,63 @@ typedef struct ifnet {
 #define	IFF_LINK1	0x2000		/* per link layer defined bit */
 #define	IFF_LINK2	0x4000		/* per link layer defined bit */
 #define	IFF_MULTICAST	0x8000		/* supports multicast */
+
+#define	IFEF_OUTPUT_MPSAFE		__BIT(0)	/* if_output() can run parallel */
+#define	IFEF_START_MPSAFE		__BIT(1)	/* if_start() can run parallel */
+#define	IFEF_NO_LINK_STATE_CHANGE	__BIT(2)	/* doesn't use link state interrupts */
+
+#ifdef _KERNEL
+static inline bool
+if_output_is_mpsafe(struct ifnet *ifp)
+{
+
+	return ((ifp->if_extflags & IFEF_OUTPUT_MPSAFE) != 0);
+}
+
+static inline int
+if_output_lock(struct ifnet *cifp, struct ifnet *ifp, struct mbuf *m,
+    const struct sockaddr *dst, const struct rtentry *rt)
+{
+
+	if (if_output_is_mpsafe(cifp)) {
+		return (*cifp->if_output)(ifp, m, dst, rt);
+	} else {
+		int ret;
+
+		KERNEL_LOCK(1, NULL);
+		ret = (*cifp->if_output)(ifp, m, dst, rt);
+		KERNEL_UNLOCK_ONE(NULL);
+		return ret;
+	}
+}
+
+static inline bool
+if_start_is_mpsafe(struct ifnet *ifp)
+{
+
+	return ((ifp->if_extflags & IFEF_START_MPSAFE) != 0);
+}
+
+static inline void
+if_start_lock(struct ifnet *ifp)
+{
+
+	if (if_start_is_mpsafe(ifp)) {
+		(*ifp->if_start)(ifp);
+	} else {
+		KERNEL_LOCK(1, NULL);
+		(*ifp->if_start)(ifp);
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+}
+
+static inline bool
+if_is_link_state_changeable(struct ifnet *ifp)
+{
+
+	return ((ifp->if_extflags & IFEF_NO_LINK_STATE_CHANGE) == 0);
+}
+#endif /* _KERNEL */
 
 #define	IFFBITS \
     "\020\1UP\2BROADCAST\3DEBUG\4LOOPBACK\5POINTOPOINT\6NOTRAILERS" \
@@ -539,6 +599,9 @@ struct ifaddr {
 			               const struct sockaddr *);
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
+#ifdef _KERNEL
+	struct pslist_entry     ifa_pslist_entry;
+#endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
@@ -879,6 +942,7 @@ void	if_register(struct ifnet *);
 void	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register */
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
+bool	if_is_deactivated(struct ifnet *);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
@@ -890,16 +954,27 @@ int	ifaddrpref_ioctl(struct socket *, u_long, void *, struct ifnet *);
 extern int (*ifioctl)(struct socket *, u_long, void *, struct lwp *);
 int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
-struct	ifnet *ifunit(const char *);
-struct	ifnet *if_get(const char *, struct psref *);
-ifnet_t *if_byindex(u_int);
-ifnet_t *if_get_byindex(u_int, struct psref *);
-void	if_put(const struct ifnet *, struct psref *);
 int	if_addr_init(ifnet_t *, struct ifaddr *, bool);
 int	if_do_dad(struct ifnet *);
 int	if_mcast_op(ifnet_t *, const unsigned long, const struct sockaddr *);
 int	if_flags_set(struct ifnet *, const short);
 int	if_clone_list(int, char *, int *);
+
+struct	ifnet *ifunit(const char *);
+struct	ifnet *if_get(const char *, struct psref *);
+ifnet_t *if_byindex(u_int);
+ifnet_t *if_get_byindex(u_int, struct psref *);
+void	if_put(const struct ifnet *, struct psref *);
+void	if_acquire_NOMPSAFE(struct ifnet *, struct psref *);
+
+static inline if_index_t
+if_get_index(const struct ifnet *ifp)
+{
+
+	return ifp != NULL ? ifp->if_index : 0;
+}
+
+bool	if_held(struct ifnet *);
 
 void	if_input(struct ifnet *, struct mbuf *);
 
@@ -923,14 +998,13 @@ struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
 struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
 					const struct sockaddr *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
-void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
 
-int	if_transmit(struct ifnet *, struct mbuf *);
+int	if_transmit_lock(struct ifnet *, struct mbuf *);
 
 int	ifq_enqueue(struct ifnet *, struct mbuf *);
 int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
@@ -981,6 +1055,52 @@ __END_DECLS
 					    TAILQ_FOREACH_SAFE(__ifa, \
 					    &(__ifp)->if_addrlist, ifa_list, __nifa)
 #define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
+
+#define IFADDR_ENTRY_INIT(__ifa)					\
+	PSLIST_ENTRY_INIT((__ifa), ifa_pslist_entry)
+#define IFADDR_ENTRY_DESTROY(__ifa)					\
+	PSLIST_ENTRY_DESTROY((__ifa), ifa_pslist_entry)
+#define IFADDR_READER_EMPTY(__ifp)					\
+	(PSLIST_READER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                     ifa_pslist_entry) == NULL)
+#define IFADDR_READER_FIRST(__ifp)					\
+	PSLIST_READER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                    ifa_pslist_entry)
+#define IFADDR_READER_NEXT(__ifa)					\
+	PSLIST_READER_NEXT((__ifa), struct ifaddr, ifa_pslist_entry)
+#define IFADDR_READER_FOREACH(__ifa, __ifp)				\
+	PSLIST_READER_FOREACH((__ifa), &(__ifp)->if_addr_pslist, struct ifaddr,\
+	                      ifa_pslist_entry)
+#define IFADDR_WRITER_INSERT_HEAD(__ifp, __ifa)				\
+	PSLIST_WRITER_INSERT_HEAD(&(__ifp)->if_addr_pslist, (__ifa),	\
+	                          ifa_pslist_entry)
+#define IFADDR_WRITER_REMOVE(__ifa)					\
+	PSLIST_WRITER_REMOVE((__ifa), ifa_pslist_entry)
+#define IFADDR_WRITER_FOREACH(__ifa, __ifp)				\
+	PSLIST_WRITER_FOREACH((__ifa), &(__ifp)->if_addr_pslist, struct ifaddr,\
+	                      ifa_pslist_entry)
+#define IFADDR_WRITER_NEXT(__ifp)					\
+	PSLIST_WRITER_NEXT((__ifp), struct ifaddr, ifa_pslist_entry)
+#define IFADDR_WRITER_INSERT_AFTER(__ifp, __new)			\
+	PSLIST_WRITER_INSERT_AFTER((__ifp), (__new), ifa_pslist_entry)
+#define IFADDR_WRITER_EMPTY(__ifp)					\
+	(PSLIST_WRITER_FIRST(&(__ifp)->if_addr_pslist, struct ifaddr,	\
+	                     ifa_pslist_entry) == NULL)
+#define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
+	do {								\
+		if (IFADDR_WRITER_EMPTY((__ifp))) {			\
+			IFADDR_WRITER_INSERT_HEAD((__ifp), (__new));	\
+		} else {						\
+			struct ifaddr *__ifa;				\
+			IFADDR_WRITER_FOREACH(__ifa, (__ifp)) {		\
+				if (IFADDR_WRITER_NEXT(__ifa) == NULL) {\
+					IFADDR_WRITER_INSERT_AFTER(__ifa,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
 
 #define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
 #define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)

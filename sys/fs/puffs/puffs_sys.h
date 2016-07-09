@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.88.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.88.2.2 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -284,7 +284,7 @@ void	puffs_parkdone_poll(struct puffs_mount *, struct puffs_req *, void *);
 void	puffs_mp_reference(struct puffs_mount *);
 void	puffs_mp_release(struct puffs_mount *);
 
-void	puffs_gop_size(struct vnode *, off_t, off_t *, int); 
+void	puffs_gop_size(struct vnode *, off_t, off_t *, int);
 void	puffs_gop_markupdate(struct vnode *, int);
 
 void	puffs_senderr(struct puffs_mount *, int, int, const char *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.101.6.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.101.6.4 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -271,10 +271,10 @@ extern const struct genfs_ops lfs_genfsops;
 #endif /* defined(_KERNEL) */
 
 /* lfs_cksum.c */
-u_int32_t cksum(void *, size_t);
-u_int32_t lfs_cksum_part(void *, size_t, u_int32_t);
+uint32_t cksum(void *, size_t);
+uint32_t lfs_cksum_part(void *, size_t, uint32_t);
 #define lfs_cksum_fold(sum)	(sum)
-u_int32_t lfs_sb_cksum(struct lfs *);
+uint32_t lfs_sb_cksum(struct lfs *);
 
 __END_DECLS
 

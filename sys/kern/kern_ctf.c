@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.5 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.5.2.1 2016/07/09 20:25:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ int
 mod_ctf_get(struct module *mod, mod_ctf_t *mc)
 {
 	mod_ctf_t *cmc;
-	struct ksyms_symtab *st; 
+	struct ksyms_symtab *st;
 	void * ctftab = NULL;
 	size_t sz;
 	int error = 0;

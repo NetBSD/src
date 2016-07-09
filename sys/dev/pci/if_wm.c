@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.308.2.6 2016/05/29 08:44:22 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.308.2.7 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.308.2.6 2016/05/29 08:44:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.308.2.7 2016/07/09 20:25:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -470,13 +470,6 @@ struct wm_softc {
 	struct if_percpuq *sc_ipq;	/* softint-based input queues */
 };
 
-#define WM_TX_LOCK(_txq)	if ((_txq)->txq_lock) mutex_enter((_txq)->txq_lock)
-#define WM_TX_TRYLOCK(_txq)	((_txq)->txq_lock == NULL || mutex_tryenter((_txq)->txq_lock))
-#define WM_TX_UNLOCK(_txq)	if ((_txq)->txq_lock) mutex_exit((_txq)->txq_lock)
-#define WM_TX_LOCKED(_txq)	(!(_txq)->txq_lock || mutex_owned((_txq)->txq_lock))
-#define WM_RX_LOCK(_rxq)	if ((_rxq)->rxq_lock) mutex_enter((_rxq)->rxq_lock)
-#define WM_RX_UNLOCK(_rxq)	if ((_rxq)->rxq_lock) mutex_exit((_rxq)->rxq_lock)
-#define WM_RX_LOCKED(_rxq)	(!(_rxq)->rxq_lock || mutex_owned((_rxq)->rxq_lock))
 #define WM_CORE_LOCK(_sc)	if ((_sc)->sc_core_lock) mutex_enter((_sc)->sc_core_lock)
 #define WM_CORE_UNLOCK(_sc)	if ((_sc)->sc_core_lock) mutex_exit((_sc)->sc_core_lock)
 #define WM_CORE_LOCKED(_sc)	(!(_sc)->sc_core_lock || mutex_owned((_sc)->sc_core_lock))
@@ -2414,6 +2407,7 @@ alloc_retry:
 	strlcpy(ifp->if_xname, xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_ioctl = wm_ioctl;
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		ifp->if_start = wm_nq_start;
@@ -2603,22 +2597,12 @@ wm_detach(device_t self, int flags __unused)
 	struct wm_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
-#ifndef WM_MPSAFE
-	int s;
-#endif
 
 	if ((sc->sc_flags & WM_F_ATTACHED) == 0)
 		return 0;
 
-#ifndef WM_MPSAFE
-	s = splnet();
-#endif
 	/* Stop the interface. Callouts are stopped in it. */
 	wm_stop(ifp, 1);
-
-#ifndef WM_MPSAFE
-	splx(s);
-#endif
 
 	pmf_device_deregister(self);
 
@@ -2640,9 +2624,9 @@ wm_detach(device_t self, int flags __unused)
 	/* Unload RX dmamaps and free mbufs */
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
-		WM_RX_LOCK(rxq);
+		mutex_enter(rxq->rxq_lock);
 		wm_rxdrain(rxq);
-		WM_RX_UNLOCK(rxq);
+		mutex_exit(rxq->rxq_lock);
 	}
 	/* Must unlock here */
 
@@ -2738,9 +2722,9 @@ wm_watchdog_txq(struct ifnet *ifp, struct wm_txqueue *txq)
 	 * Since we're using delayed interrupts, sweep up
 	 * before we report an error.
 	 */
-	WM_TX_LOCK(txq);
+	mutex_enter(txq->txq_lock);
 	wm_txeof(sc, txq);
-	WM_TX_UNLOCK(txq);
+	mutex_exit(txq->txq_lock);
 
 	if (txq->txq_free != WM_NTXDESC(txq)) {
 #ifdef WM_DEBUG
@@ -2785,9 +2769,7 @@ wm_tick(void *arg)
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #ifndef WM_MPSAFE
-	int s;
-
-	s = splnet();
+	int s = splnet();
 #endif
 
 	WM_CORE_LOCK(sc);
@@ -4081,7 +4063,7 @@ wm_add_rxbuf(struct wm_rxqueue *rxq, int idx)
 	struct mbuf *m;
 	int error;
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
@@ -4133,7 +4115,7 @@ wm_rxdrain(struct wm_rxqueue *rxq)
 	struct wm_rxsoft *rxs;
 	int i;
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &rxq->rxq_soft[i];
@@ -5011,9 +4993,9 @@ wm_init_locked(struct ifnet *ifp)
 		for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 			struct wm_rxqueue *rxq = &sc->sc_queue[qidx].wmq_rxq;
 			for (i = 0; i < WM_NRXDESC; i++) {
-				WM_RX_LOCK(rxq);
+				mutex_enter(rxq->rxq_lock);
 				wm_init_rxdesc(rxq, i);
-				WM_RX_UNLOCK(rxq);
+				mutex_exit(rxq->rxq_lock);
 
 			}
 		}
@@ -5106,7 +5088,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	for (qidx = 0; qidx < sc->sc_nqueues; qidx++) {
 		struct wm_queue *wmq = &sc->sc_queue[qidx];
 		struct wm_txqueue *txq = &wmq->wmq_txq;
-		WM_TX_LOCK(txq);
+		mutex_enter(txq->txq_lock);
 		for (i = 0; i < WM_TXQUEUELEN(txq); i++) {
 			txs = &txq->txq_soft[i];
 			if (txs->txs_mbuf != NULL) {
@@ -5158,7 +5140,7 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 				printf("XXX need RX flush\n");
 			}
 		}
-		WM_TX_UNLOCK(txq);
+		mutex_exit(txq->txq_lock);
 	}
 
 	/* Mark the interface as down and cancel the watchdog timer. */
@@ -5168,9 +5150,9 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 	if (disable) {
 		for (i = 0; i < sc->sc_nqueues; i++) {
 			struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
-			WM_RX_LOCK(rxq);
+			mutex_enter(rxq->rxq_lock);
 			wm_rxdrain(rxq);
-			WM_RX_UNLOCK(rxq);
+			mutex_exit(rxq->rxq_lock);
 		}
 	}
 
@@ -5206,12 +5188,8 @@ wm_82547_txfifo_stall(void *arg)
 {
 	struct wm_softc *sc = arg;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
-#ifndef WM_MPSAFE
-	int s;
 
-	s = splnet();
-#endif
-	WM_TX_LOCK(txq);
+	mutex_enter(txq->txq_lock);
 
 	if (sc->sc_stopping)
 		goto out;
@@ -5247,10 +5225,7 @@ wm_82547_txfifo_stall(void *arg)
 	}
 
 out:
-	WM_TX_UNLOCK(txq);
-#ifndef WM_MPSAFE
-	splx(s);
-#endif
+	mutex_exit(txq->txq_lock);
 }
 
 /*
@@ -5588,11 +5563,8 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
 		rxq->rxq_sc = sc;
-#ifdef WM_MPSAFE
 		rxq->rxq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-		rxq->rxq_lock = NULL;
-#endif
+
 		error = wm_alloc_rx_descs(sc, rxq);
 		if (error)
 			break;
@@ -5666,7 +5638,7 @@ static void
 wm_init_tx_descs(struct wm_softc *sc __unused, struct wm_txqueue *txq)
 {
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	/* Initialize the transmit descriptor ring. */
 	memset(txq->txq_descs, 0, WM_TXDESCS_SIZE(txq));
@@ -5681,7 +5653,7 @@ wm_init_tx_regs(struct wm_softc *sc, struct wm_queue *wmq,
     struct wm_txqueue *txq)
 {
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(txq, 0));
@@ -5726,7 +5698,7 @@ wm_init_tx_buffer(struct wm_softc *sc __unused, struct wm_txqueue *txq)
 {
 	int i;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	/* Initialize the transmit job descriptors. */
 	for (i = 0; i < WM_TXQUEUELEN(txq); i++)
@@ -5741,7 +5713,7 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
     struct wm_txqueue *txq)
 {
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	/*
 	 * Set up some register offsets that are different between
@@ -5762,7 +5734,7 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_queue *wmq,
     struct wm_rxqueue *rxq)
 {
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	/*
 	 * Initialize the receive descriptor and receive job
@@ -5819,7 +5791,7 @@ wm_init_rx_buffer(struct wm_softc *sc, struct wm_rxqueue *rxq)
 	struct wm_rxsoft *rxs;
 	int error, i;
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &rxq->rxq_soft[i];
@@ -5857,7 +5829,7 @@ wm_init_rx_queue(struct wm_softc *sc, struct wm_queue *wmq,
     struct wm_rxqueue *rxq)
 {
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	/*
 	 * Set up some register offsets that are different between
@@ -5888,13 +5860,13 @@ wm_init_txrx_queues(struct wm_softc *sc)
 		struct wm_txqueue *txq = &wmq->wmq_txq;
 		struct wm_rxqueue *rxq = &wmq->wmq_rxq;
 
-		WM_TX_LOCK(txq);
+		mutex_enter(txq->txq_lock);
 		wm_init_tx_queue(sc, wmq, txq);
-		WM_TX_UNLOCK(txq);
+		mutex_exit(txq->txq_lock);
 
-		WM_RX_LOCK(rxq);
+		mutex_enter(rxq->rxq_lock);
 		error = wm_init_rx_queue(sc, wmq, rxq);
-		WM_RX_UNLOCK(rxq);
+		mutex_exit(rxq->rxq_lock);
 		if (error)
 			break;
 	}
@@ -6109,10 +6081,12 @@ wm_start(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
-	WM_TX_LOCK(txq);
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
+	mutex_enter(txq->txq_lock);
 	if (!sc->sc_stopping)
 		wm_start_locked(ifp);
-	WM_TX_UNLOCK(txq);
+	mutex_exit(txq->txq_lock);
 }
 
 static void
@@ -6130,7 +6104,7 @@ wm_start_locked(struct ifnet *ifp)
 	uint32_t cksumcmd;
 	uint8_t cksumfields;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -6626,10 +6600,12 @@ wm_nq_start(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct wm_txqueue *txq = &sc->sc_queue[0].wmq_txq;
 
-	WM_TX_LOCK(txq);
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
+	mutex_enter(txq->txq_lock);
 	if (!sc->sc_stopping)
 		wm_nq_start_locked(ifp);
-	WM_TX_UNLOCK(txq);
+	mutex_exit(txq->txq_lock);
 }
 
 static void
@@ -6671,7 +6647,7 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	if (WM_TX_TRYLOCK(txq)) {
+	if (mutex_tryenter(txq->txq_lock)) {
 		/* XXXX should be per TX queue */
 		ifp->if_obytes += m->m_pkthdr.len;
 		if (m->m_flags & M_MCAST)
@@ -6679,7 +6655,7 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 
 		if (!sc->sc_stopping)
 			wm_nq_transmit_locked(ifp, txq);
-		WM_TX_UNLOCK(txq);
+		mutex_exit(txq->txq_lock);
 	}
 
 	return 0;
@@ -6704,7 +6680,7 @@ wm_nq_send_common_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 	int error, nexttx, lasttx = -1, seg, segs_needed;
 	bool do_csum, sent;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -6988,7 +6964,7 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 	int i;
 	uint8_t status;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(mutex_owned(txq->txq_lock));
 
 	if (sc->sc_stopping)
 		return 0;
@@ -6996,7 +6972,7 @@ wm_txeof(struct wm_softc *sc, struct wm_txqueue *txq)
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 		txq->txq_flags &= ~WM_TXQ_NO_SPACE;
 	else
-		sc->sc_flags &= ~IFF_OACTIVE;
+		ifp->if_flags &= ~IFF_OACTIVE;
 
 	/*
 	 * Go through the Tx list and free mbufs for those
@@ -7094,7 +7070,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 	uint8_t status, errors;
 	uint16_t vlantag;
 
-	KASSERT(WM_RX_LOCKED(rxq));
+	KASSERT(mutex_owned(rxq->rxq_lock));
 
 	for (i = rxq->rxq_ptr;; i = WM_NEXTRX(i)) {
 		rxs = &rxq->rxq_soft[i];
@@ -7229,7 +7205,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		}
 
 		/* No errors.  Receive the packet. */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = len;
 
 		/*
@@ -7268,7 +7244,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 
 		ifp->if_ipackets++;
 
-		WM_RX_UNLOCK(rxq);
+		mutex_exit(rxq->rxq_lock);
 
 		/* Pass this up to any BPF listeners. */
 		bpf_mtap(ifp, m);
@@ -7276,7 +7252,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 		/* Pass it on. */
 		if_percpuq_enqueue(sc->sc_ipq, m);
 
-		WM_RX_LOCK(rxq);
+		mutex_enter(rxq->rxq_lock);
 
 		if (sc->sc_stopping)
 			break;
@@ -7548,10 +7524,10 @@ wm_intr_legacy(void *arg)
 		if (rndval == 0)
 			rndval = icr;
 
-		WM_RX_LOCK(rxq);
+		mutex_enter(rxq->rxq_lock);
 
 		if (sc->sc_stopping) {
-			WM_RX_UNLOCK(rxq);
+			mutex_exit(rxq->rxq_lock);
 			break;
 		}
 
@@ -7568,8 +7544,8 @@ wm_intr_legacy(void *arg)
 #endif
 		wm_rxeof(rxq);
 
-		WM_RX_UNLOCK(rxq);
-		WM_TX_LOCK(txq);
+		mutex_exit(rxq->rxq_lock);
+		mutex_enter(txq->txq_lock);
 
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
 		if (icr & ICR_TXDW) {
@@ -7581,7 +7557,7 @@ wm_intr_legacy(void *arg)
 #endif
 		wm_txeof(sc, txq);
 
-		WM_TX_UNLOCK(txq);
+		mutex_exit(txq->txq_lock);
 		WM_CORE_LOCK(sc);
 
 		if (icr & (ICR_LSC | ICR_RXSEQ)) {
@@ -7631,7 +7607,7 @@ wm_txrxintr_msix(void *arg)
 		CSR_WRITE(sc, WMREG_EIMC, 1 << wmq->wmq_intr_idx);
 
 	if (!sc->sc_stopping) {
-		WM_TX_LOCK(txq);
+		mutex_enter(txq->txq_lock);
 
 		WM_EVCNT_INCR(&sc->sc_ev_txdw);
 		wm_txeof(sc, txq);
@@ -7647,17 +7623,17 @@ wm_txrxintr_msix(void *arg)
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				wm_nq_start_locked(ifp);
 		}
-		WM_TX_UNLOCK(txq);
+		mutex_exit(txq->txq_lock);
 	}
 
 	DPRINTF(WM_DEBUG_RX,
 	    ("%s: RX: got Rx intr\n", device_xname(sc->sc_dev)));
 
 	if (!sc->sc_stopping) {
-		WM_RX_LOCK(rxq);
+		mutex_enter(rxq->rxq_lock);
 		WM_EVCNT_INCR(&sc->sc_ev_rxintr);
 		wm_rxeof(rxq);
-		WM_RX_UNLOCK(rxq);
+		mutex_exit(rxq->rxq_lock);
 	}
 
 	if (sc->sc_type == WM_T_82574)

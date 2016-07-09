@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.7 2014/10/21 08:49:55 macallan Exp $
+# $NetBSD: GENERIC_601,v 1.7.2.1 2016/07/09 20:24:53 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.7 $"
+ident 		"GENERIC-$Revision: 1.7.2.1 $"
 
 maxusers	32
 
@@ -216,11 +216,15 @@ ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 # Display devices
 #
-# The 7200's onboard video is unsupported ( by OF no less ) so we need either a
+# The 7200's onboard video is unsupported by OF so we need either a
 # graphics card that works as OF console or a serial console.
 # The only cards known to work ( so far ) are PCI Voodoo3s flashed with the
 # official Macintosh firmware from 3Dfx. The others should work but are
 # untested with OF 1.0.5
+
+# this will take over the console if output-device is set to 'screen' or
+# 'platinum'. It will provide a NetBSD console, but still won't work with OF
+platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 #machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro

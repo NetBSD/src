@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_ranges.c,v 1.4.14.1 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: pci_ranges.c,v 1.4.14.2 2016/07/09 20:24:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.4.14.1 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_ranges.c,v 1.4.14.2 2016/07/09 20:24:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -895,11 +895,11 @@ pci_ranges_infer(pci_chipset_tag_t pc, int minbus, int maxbus,
 	aprint_verbose("%s: inferred %" PRIuMAX
 	    " bytes of memory-mapped PCI space at 0x%" PRIxMAX "\n", __func__,
 	    (uintmax_t)(ric.ric_mmio_top - ric.ric_mmio_bottom),
-	    (uintmax_t)ric.ric_mmio_bottom); 
+	    (uintmax_t)ric.ric_mmio_bottom);
 	aprint_verbose("%s: inferred %" PRIuMAX
 	    " bytes of PCI I/O space at 0x%" PRIxMAX "\n", __func__,
 	    (uintmax_t)(ric.ric_io_top - ric.ric_io_bottom),
-	    (uintmax_t)ric.ric_io_bottom); 
+	    (uintmax_t)ric.ric_io_bottom);
 	TAILQ_FOREACH(pal, &ric.ric_pals, pal_link)
 		pci_alloc_print(pc, pal);
 

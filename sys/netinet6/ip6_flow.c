@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.23.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.23.4.2 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.23.4.2 2016/07/09 20:25:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,14 @@ LIST_HEAD(ip6flowhead, ip6flow);
 #define	IP6FLOW_TIMER		(5 * PR_SLOWHZ)
 #define	IP6FLOW_DEFAULT_HASHSIZE	(1 << IP6FLOW_HASHBITS) 
 
+/*
+ * ip6_flow.c internal lock.
+ * If we use softnet_lock, it would cause recursive lock.
+ *
+ * This is a tentative workaround.
+ * We should make it scalable somehow in the future.
+ */
+static kmutex_t ip6flow_lock;
 static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
 static int ip6flow_inuse;
@@ -149,6 +157,8 @@ ip6flow_lookup(const struct ip6_hdr *ip6)
 	size_t hash;
 	struct ip6flow *ip6f;
 
+	KASSERT(mutex_owned(&ip6flow_lock));
+
 	hash = ip6flow_hash(ip6);
 
 	LIST_FOREACH(ip6f, &ip6flowtable[hash], ip6f_hash) {
@@ -177,11 +187,13 @@ ip6flow_poolinit(void)
  * If a newly sized table cannot be malloc'ed we just continue
  * to use the old one.
  */
-int
-ip6flow_init(int table_size)
+static int
+ip6flow_init_locked(int table_size)
 {
 	struct ip6flowhead *new_table;
 	size_t i;
+
+	KASSERT(mutex_owned(&ip6flow_lock));
 
 	new_table = (struct ip6flowhead *)malloc(sizeof(struct ip6flowhead) *
 	    table_size, M_RTABLE, M_NOWAIT);
@@ -202,6 +214,20 @@ ip6flow_init(int table_size)
 	return 0;
 }
 
+int
+ip6flow_init(int table_size)
+{
+	int ret;
+
+	mutex_init(&ip6flow_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	mutex_enter(&ip6flow_lock);
+	ret = ip6flow_init_locked(table_size);
+	mutex_exit(&ip6flow_lock);
+
+	return ret;
+}
+
 /*
  * IPv6 Fast Forward routine. Attempt to forward the packet -
  * if any problems are found return to the main IPv6 input 
@@ -216,35 +242,38 @@ ip6flow_fastforward(struct mbuf **mp)
 	struct mbuf *m;
 	const struct sockaddr *dst;
 	int error;
+	int ret = 0;
+
+	mutex_enter(&ip6flow_lock);
 
 	/*
 	 * Are we forwarding packets and have flows?
 	 */
 	if (!ip6_forwarding || ip6flow_inuse == 0)
-		return 0;
+		goto out;
 
 	m = *mp;
 	/*
 	 * At least size of IPv6 Header?
 	 */
 	if (m->m_len < sizeof(struct ip6_hdr))
-		return 0;	
+		goto out;
 	/*
 	 * Was packet received as a link-level multicast or broadcast?
 	 * If so, don't try to fast forward.
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
-		return 0;
+		goto out;
 
 	if (IP6_HDR_ALIGNED_P(mtod(m, const void *)) == 0) {
 		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
 				(max_linkhdr + 3) & ~3)) == NULL) {
-			return 0;
+			goto out;
 		}
 		*mp = m;
 	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
 		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
-			return 0;
+			goto out;
 		}
 		*mp = m;
 	}
@@ -253,7 +282,7 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		/* Bad version. */
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -261,14 +290,14 @@ ip6flow_fastforward(struct mbuf **mp)
 	 * We just leave this up to ip6_input to deal with. 
 	 */
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS)
-		return 0;
+		goto out;
 
 	/*
 	 * Attempt to find a flow.
 	 */
 	if ((ip6f = ip6flow_lookup(ip6)) == NULL) {
 		/* No flow found. */
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -277,14 +306,14 @@ ip6flow_fastforward(struct mbuf **mp)
 	if ((rt = rtcache_validate(&ip6f->ip6f_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
 	    (rt->rt_flags & RTF_BLACKHOLE) != 0)
-		return 0;
+		goto out;
 
 	/*
 	 * Packet size greater than MTU?
 	 */
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu) {
 		/* Return to main IPv6 input function. */
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -293,7 +322,7 @@ ip6flow_fastforward(struct mbuf **mp)
 	m->m_pkthdr.csum_flags = 0;
 
 	if (ip6->ip6_hlim <= IPV6_HLIMDEC)
-		return 0;
+		goto out;
 
 	/* Decrement hop limit (same as TTL) */
 	ip6->ip6_hlim -= IPV6_HLIMDEC;
@@ -307,15 +336,16 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	ip6f->ip6f_uses++;
 
-	KERNEL_LOCK(1, NULL);
 	/* Send on its way - straight to the interface output routine. */
-	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
+	if ((error = if_output_lock(rt->rt_ifp, rt->rt_ifp, m, dst, rt)) != 0) {
 		ip6f->ip6f_dropped++;
 	} else {
 		ip6f->ip6f_forwarded++;
 	}
-	KERNEL_UNLOCK_ONE(NULL);
-	return 1;
+	ret = 1;
+ out:
+	mutex_exit(&ip6flow_lock);
+	return ret;
 }
 
 /*
@@ -345,32 +375,30 @@ ip6flow_addstats(const struct ip6flow *ip6f)
 static void
 ip6flow_free(struct ip6flow *ip6f)
 {
-	int s;
+
+	KASSERT(mutex_owned(&ip6flow_lock));
 
 	/*
 	 * Remove the flow from the hash table (at elevated IPL).
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	s = splnet();
 	IP6FLOW_REMOVE(ip6f);
-	splx(s);
+
 	ip6flow_inuse--;
 	ip6flow_addstats(ip6f);
 	rtcache_free(&ip6f->ip6f_ro);
 	pool_put(&ip6flow_pool, ip6f);
 }
 
-/*
- * Reap one or more flows - ip6flow_reap may remove
- * multiple flows if net.inet6.ip6.maxflows is reduced. 
- */
-struct ip6flow *
-ip6flow_reap(int just_one)
+static struct ip6flow *
+ip6flow_reap_locked(int just_one)
 {
+
+	KASSERT(mutex_owned(&ip6flow_lock));
+
 	while (just_one || ip6flow_inuse > ip6_maxflows) {
 		struct ip6flow *ip6f, *maybe_ip6f = NULL;
-		int s;
 
 		ip6f = LIST_FIRST(&ip6flowlist);
 		while (ip6f != NULL) {
@@ -399,9 +427,8 @@ ip6flow_reap(int just_one)
 		/*
 		 * Remove the entry from the flow table
 		 */
-		s = splnet();
 		IP6FLOW_REMOVE(ip6f);
-		splx(s);
+
 		rtcache_free(&ip6f->ip6f_ro);
 		if (just_one) {
 			ip6flow_addstats(ip6f);
@@ -414,12 +441,28 @@ ip6flow_reap(int just_one)
 	return NULL;
 }
 
+/*
+ * Reap one or more flows - ip6flow_reap may remove
+ * multiple flows if net.inet6.ip6.maxflows is reduced. 
+ */
+struct ip6flow *
+ip6flow_reap(int just_one)
+{
+	struct ip6flow *ip6f;
+
+	mutex_enter(&ip6flow_lock);
+	ip6f = ip6flow_reap_locked(just_one);
+	mutex_exit(&ip6flow_lock);
+	return ip6f;
+}
+
 void
 ip6flow_slowtimo(void)
 {
 	struct ip6flow *ip6f, *next_ip6f;
 
 	mutex_enter(softnet_lock);
+	mutex_enter(&ip6flow_lock);
 	KERNEL_LOCK(1, NULL);
 
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
@@ -437,6 +480,7 @@ ip6flow_slowtimo(void)
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(&ip6flow_lock);
 	mutex_exit(softnet_lock);
 }
 
@@ -450,7 +494,8 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	const struct ip6_hdr *ip6;
 	struct ip6flow *ip6f;
 	size_t hash;
-	int s;
+
+	mutex_enter(&ip6flow_lock);
 
 	ip6 = mtod(m, const struct ip6_hdr *);
 
@@ -460,8 +505,10 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	 *
 	 * Don't create a flow for ICMPv6 messages.
 	 */
-	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP)
+	if (ip6_maxflows == 0 || ip6->ip6_nxt == IPPROTO_IPV6_ICMP) {
+		mutex_exit(&ip6flow_lock);
 		return;
+	}
 
 	KERNEL_LOCK(1, NULL);
 
@@ -479,7 +526,7 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	ip6f = ip6flow_lookup(ip6);
 	if (ip6f == NULL) {
 		if (ip6flow_inuse >= ip6_maxflows) {
-			ip6f = ip6flow_reap(1);
+			ip6f = ip6flow_reap_locked(1);
 		} else {
 			ip6f = pool_get(&ip6flow_pool, PR_NOWAIT);
 			if (ip6f == NULL)
@@ -488,9 +535,8 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 		}
 		memset(ip6f, 0, sizeof(*ip6f));
 	} else {
-		s = splnet();
 		IP6FLOW_REMOVE(ip6f);
-		splx(s);
+
 		ip6flow_addstats(ip6f);
 		rtcache_free(&ip6f->ip6f_ro);
 		ip6f->ip6f_uses = 0;
@@ -512,12 +558,11 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ip6flow_hash(ip6);
-	s = splnet();
 	IP6FLOW_INSERT(&ip6flowtable[hash], ip6f);
-	splx(s);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(&ip6flow_lock);
 }
 
 /*
@@ -528,18 +573,21 @@ int
 ip6flow_invalidate_all(int new_size)
 {
 	struct ip6flow *ip6f, *next_ip6f;
-	int s, error;
+	int error;
 
 	error = 0;
-	s = splnet();
+
+	mutex_enter(&ip6flow_lock);
+
 	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
 		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
 		ip6flow_free(ip6f);
 	}
 
 	if (new_size) 
-		error = ip6flow_init(new_size);
-	splx(s);
+		error = ip6flow_init_locked(new_size);
+
+	mutex_exit(&ip6flow_lock);
 
 	return error;
 }

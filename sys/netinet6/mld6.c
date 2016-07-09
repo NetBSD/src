@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.61.2.3 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: mld6.c,v 1.61.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.3 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -336,16 +336,18 @@ mld_input(struct mbuf *m, int off)
 {
 	struct ip6_hdr *ip6;
 	struct mld_hdr *mldh;
-	struct ifnet *ifp = m->m_pkthdr.rcvif;
+	struct ifnet *ifp;
 	struct in6_multi *in6m = NULL;
 	struct in6_addr mld_addr, all_in6;
 	struct in6_ifaddr *ia;
 	u_long timer = 0;	/* timer value in the MLD query header */
+	int s;
 
+	ifp = m_get_rcvif(m, &s);
 	IP6_EXTHDR_GET(mldh, struct mld_hdr *, m, off, sizeof(*mldh));
 	if (mldh == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
-		return;
+		goto out_nodrop;
 	}
 
 	/* source address validation */
@@ -375,8 +377,7 @@ mld_input(struct mbuf *m, int off)
 		    "mld_input: src %s is not link-local (grp=%s)\n",
 		    ip6_sprintf(&ip6->ip6_src), ip6_sprintf(&mldh->mld_addr));
 #endif
-		m_freem(m);
-		return;
+		goto out;
 	}
 
 	/*
@@ -385,8 +386,7 @@ mld_input(struct mbuf *m, int off)
 	mld_addr = mldh->mld_addr;
 	if (in6_setscope(&mld_addr, ifp, NULL)) {
 		/* XXX: this should not happen! */
-		m_free(m);
-		return;
+		goto out;
 	}
 
 	/*
@@ -428,7 +428,7 @@ mld_input(struct mbuf *m, int off)
 		 */
 		timer = ntohs(mldh->mld_maxdelay);
 
-		IFP_TO_IA6(ifp, ia);
+		ia = in6_get_ia_from_ifp(ifp);
 		if (ia == NULL)
 			break;
 
@@ -497,7 +497,10 @@ mld_input(struct mbuf *m, int off)
 		break;
 	}
 
+out:
 	m_freem(m);
+out_nodrop:
+	m_put_rcvif(ifp, &s);
 }
 
 static void
@@ -541,7 +544,7 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 
 	/* construct multicast option */
 	memset(&im6o, 0, sizeof(im6o));
-	im6o.im6o_multicast_ifp = ifp;
+	im6o.im6o_multicast_if_index = if_get_index(ifp);
 	im6o.im6o_multicast_hlim = 1;
 
 	/*
@@ -594,7 +597,7 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
 	(*mh)->m_next = md;
 	md->m_next = NULL;
 
-	(*mh)->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif((*mh));
 	(*mh)->m_pkthdr.len = sizeof(struct ip6_hdr) + len;
 	(*mh)->m_len = sizeof(struct ip6_hdr);
 	MH_ALIGN(*mh, sizeof(struct ip6_hdr));
@@ -661,7 +664,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 
-		IFP_TO_IA6(ifp, ia);
+		ia = in6_get_ia_from_ifp(ifp);
 		if (ia == NULL) {
 			callout_destroy(&in6m->in6m_timer_ch);
 			free(in6m, M_IPMADDR);
@@ -739,7 +742,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * Delete all references of this multicasting group from
 		 * the membership arrays
 		 */
-		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+		IN6_ADDRLIST_READER_FOREACH(ia) {
 			struct in6_multi_mship *imm;
 			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
 				if (imm->i6mm_maddr == in6m)
@@ -810,7 +813,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 	struct in6_ifaddr *ia;
 	struct in6_multi *in6m;
 
-	IFP_TO_IA6(oia->ia_ifp, ia);
+	ia = in6_get_ia_from_ifp(oia->ia_ifp);
 	if (ia) {	/* there is another address */
 		KASSERT(ia != oia);
 		while ((in6m = LIST_FIRST(&oia->ia6_multiaddrs)) != NULL) {
@@ -979,19 +982,22 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 	uint32_t tmp;
 	int error;
 	size_t written;
+	struct psref psref;
+	int bound;
 
 	if (namelen != 1)
 		return EINVAL;
 
-	ifp = if_byindex(name[0]);
-	if (ifp == NULL)
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		curlwp_bindx(bound);
 		return ENODEV;
+	}
 
 	if (oldp == NULL) {
 		*oldlenp = 0;
-		IFADDR_FOREACH(ifa, ifp) {
-			if (ifa->ifa_addr == NULL)
-				continue;
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ifa6 = (struct in6_ifaddr *)ifa;
@@ -1000,14 +1006,14 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 				    sizeof(uint32_t);
 			}
 		}
+		if_put(ifp, &psref);
+		curlwp_bindx(bound);
 		return 0;
 	}
 
 	error = 0;
 	written = 0;
-	IFADDR_FOREACH(ifa, ifp) {
-		if (ifa->ifa_addr == NULL)
-			continue;
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		ifa6 = (struct in6_ifaddr *)ifa;
@@ -1036,6 +1042,8 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 		}
 	}
 done:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 	*oldlenp = written;
 	return error;
 }

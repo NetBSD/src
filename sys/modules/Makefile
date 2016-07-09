@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142.2.4 2015/12/27 12:10:05 skrll Exp $
+#	$NetBSD: Makefile,v 1.142.2.5 2016/07/09 20:25:20 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
+SUBDIR+=	bpf_filter
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
@@ -43,11 +44,13 @@ SUBDIR+=	gpiosim
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	i2cexec
+SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
 SUBDIR+=	if_smsc
 SUBDIR+=	iic
+SUBDIR+=	ipl
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
 SUBDIR+=	lfs

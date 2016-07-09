@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.59.6.9 2016/04/16 13:22:00 skrll Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.59.6.10 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.9 2016/04/16 13:22:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.59.6.10 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,7 @@ uftdi_attach(device_t parent, device_t self, void *aux)
 		    &ucaa, ucomprint, ucomsubmatch);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	return;
 
@@ -387,8 +386,7 @@ uftdi_detach(device_t self, int flags)
 			config_detach(sc->sc_subdev[i], flags);
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return 0;
 }

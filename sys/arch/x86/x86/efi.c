@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.2.2.2 2016/03/19 11:30:07 skrll Exp $	*/
+/*	$NetBSD: efi.c,v 1.2.2.3 2016/07/09 20:24:59 skrll Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2.2.2 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2.2.3 2016/07/09 20:24:59 skrll Exp $");
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,11 +275,11 @@ bool
 efi_probe(void)
 {
 	if (efi_getsystbl() == 0) {
-		aprint_debug("efi: missing or invalid systbl");
+		aprint_debug("efi: missing or invalid systbl\n");
 		return false;
 	}
 	if (efi_getcfgtblhead() == 0) {
-		aprint_debug("efi: missing or invalid cfgtbl");
+		aprint_debug("efi: missing or invalid cfgtbl\n");
 		efi_relva((vaddr_t) efi_systbl_va);
 		return false;
 	}

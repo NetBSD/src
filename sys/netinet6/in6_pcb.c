@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.134.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.134.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -438,6 +438,8 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 #endif
 	struct sockaddr_in6 tmp;
 	struct vestigial_inpcb vestige;
+	struct psref psref;
+	int bound;
 
 	(void)&in6a;				/* XXX fool gcc */
 
@@ -478,6 +480,7 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	tmp = *sin6;
 	sin6 = &tmp;
 
+	bound = curlwp_bind();
 	/* Source address selection. */
 	if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
 	    in6p->in6p_laddr.s6_addr32[3] == 0) {
@@ -512,23 +515,29 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 		in6a = in6_selectsrc(sin6, in6p->in6p_outputopts,
 				     in6p->in6p_moptions,
 				     &in6p->in6p_route,
-				     &in6p->in6p_laddr, &ifp, &error);
+				     &in6p->in6p_laddr, &ifp, &psref, &error);
 		if (ifp && scope_ambiguous &&
 		    (error = in6_setscope(&sin6->sin6_addr, ifp, NULL)) != 0) {
+			if_put(ifp, &psref);
+			curlwp_bindx(bound);
 			return(error);
 		}
 
 		if (in6a == NULL) {
+			if_put(ifp, &psref);
+			curlwp_bindx(bound);
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			return (error);
 		}
 	}
 
-	if (ifp != NULL)
+	if (ifp != NULL) {
 		in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
-	else
+		if_put(ifp, &psref);
+	} else
 		in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim_rt(in6p);
+	curlwp_bindx(bound);
 
 	if (in6_pcblookup_connect(in6p->in6p_table, &sin6->sin6_addr,
 	    sin6->sin6_port,
@@ -812,6 +821,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 	struct ip6_moptions *im6o;
 	struct in6_multi_mship *imm, *nimm;
 
+	KASSERT(ifp != NULL);
+
 	TAILQ_FOREACH_SAFE(inph, &table->inpt_queue, inph_queue, ninph) {
 		struct in6pcb *in6p = (struct in6pcb *)inph;
 		if (in6p->in6p_af != AF_INET6)
@@ -823,8 +834,8 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 			 * Unselect the outgoing interface if it is being
 			 * detached.
 			 */
-			if (im6o->im6o_multicast_ifp == ifp)
-				im6o->im6o_multicast_ifp = NULL;
+			if (im6o->im6o_multicast_if_index == ifp->if_index)
+				im6o->im6o_multicast_if_index = 0;
 
 			/*
 			 * Drop multicast group membership if we joined

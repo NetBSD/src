@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.27 2014/03/29 19:28:30 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.27.6.1 2016/07/09 20:24:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -54,7 +54,7 @@ struct pci_attach_args;
 #define	PCITAG_FUN(t)		((PCITAG_OFFSET(t)>>8)&0x7)
 #define	PCITAG_CREATE(n,b,d,f)	(((uint64_t)(n)<<32)|((b)<<16)|((d)<<11)|((f)<<8))
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
-typedef uint64_t pcitag_t; 
+typedef uint64_t pcitag_t;
 
 typedef struct sparc_pci_chipset *pci_chipset_tag_t;
 typedef u_int pci_intr_handle_t;

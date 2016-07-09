@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.5.14.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ulfs_dirhash.h,v 1.5.14.2 2016/07/09 20:25:25 skrll Exp $	*/
 /*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
 
 /*
@@ -91,7 +91,7 @@ struct dirhash {
 	int	dh_hlen;	/* total slots in the 2-level hash array */
 	int	dh_hused;	/* entries in use */
 
-	u_int8_t *dh_blkfree;	/* free DIRALIGN words in each dir block */
+	uint8_t *dh_blkfree;	/* free DIRALIGN words in each dir block */
 	size_t	dh_blkfreesz;
 	int	dh_nblk;	/* size of dh_blkfree array */
 	int	dh_dirblks;	/* number of DIRBLKSIZ blocks in dir */

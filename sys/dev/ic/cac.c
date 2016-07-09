@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.54.14.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: cac.c,v 1.54.14.2 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.54.14.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.54.14.2 2016/07/09 20:25:02 skrll Exp $");
 
 #include "bio.h"
 
@@ -107,8 +107,7 @@ cac_init(struct cac_softc *sc, const char *intrstr, int startfw)
 	char firm[8];
 
 	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);

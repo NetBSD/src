@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.415.2.2 2015/06/06 14:40:06 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.415.2.3 2016/07/09 20:25:01 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.2 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.3 2016/07/09 20:25:01 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -467,6 +467,8 @@ wddetach(device_t self, int flags)
 
 	bufq_free(sc->sc_q);
 	sc->atabus->ata_killpending(sc->drvp);
+	if (flags & DETACH_POWEROFF)
+		wd_standby(sc, AT_POLL);
 
 	splx(s);
 

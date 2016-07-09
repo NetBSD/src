@@ -1,4 +1,4 @@
-/*	$NetBSD: malo.c,v 1.3.18.2 2016/05/29 08:44:21 skrll Exp $ */
+/*	$NetBSD: malo.c,v 1.3.18.3 2016/07/09 20:25:02 skrll Exp $ */
 /*	$OpenBSD: malo.c,v 1.92 2010/08/27 17:08:00 jsg Exp $ */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3.18.2 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malo.c,v 1.3.18.3 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1564,7 +1564,7 @@ malo_rx_intr(struct malo_softc *sc)
 		desc->physdata = htole32(data->map->dm_segs->ds_addr);
 
 		/* finalize mbuf */
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = le16toh(desc->len);
 
 		/*

@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.h,v 1.10 2005/10/26 11:36:49 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.h,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $ */
+/*	$NetBSD: dccp_tfrc.h,v 1.1.2.3 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson 
@@ -60,7 +60,7 @@
 #define TFRC_SEND_WAIT_TERM     20
 
 /* Packet history */
-TAILQ_HEAD(s_hist_head,s_hist_entry); 
+TAILQ_HEAD(s_hist_head,s_hist_entry);
 
 struct fixpoint {
 	long long num;
@@ -114,7 +114,7 @@ struct tfrc_send_ccb {
  * args: pcb  - pointer to dccpcb of associated connection
  * returns: pointer to a tfrc_send_ccb struct on success, otherwise 0
  */ 
-void *tfrc_send_init(struct dccpcb *); 
+void *tfrc_send_init(struct dccpcb *);
 
 /*
  * Free the sender side
@@ -172,7 +172,7 @@ void tfrc_send_packet_recv(void *, char *, int);
 #define TFRC_RECV_IVAL_F_LENGTH  8
 
 /* Packet history */
-TAILQ_HEAD(r_hist_head,r_hist_entry); 
+TAILQ_HEAD(r_hist_head,r_hist_entry);
  
 struct r_hist_entry {
 	TAILQ_ENTRY(r_hist_entry) linfo;	/* Tail queue. */
@@ -184,7 +184,7 @@ struct r_hist_entry {
 };
 
 /* Loss interval history */
-TAILQ_HEAD(li_hist_head,li_hist_entry); 
+TAILQ_HEAD(li_hist_head,li_hist_entry);
  
 struct li_hist_entry {
 	TAILQ_ENTRY(li_hist_entry) linfo;	/* Tail queue. */
@@ -228,7 +228,7 @@ struct tfrc_recv_ccb {
  * args: pcb  -  pointer to dccpcb of associated connection
  * returns: pointer to a tfrc_recv_ccb struct on success, otherwise 0
  */ 
-void *tfrc_recv_init(struct dccpcb *); 
+void *tfrc_recv_init(struct dccpcb *);
 
 /* Free the receiver side
  * args: ccb - ccb of recevier

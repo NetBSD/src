@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.73.2.1 2016/03/19 11:30:18 skrll Exp $ */
+/*      $NetBSD: if_qe.c,v 1.73.2.2 2016/07/09 20:25:15 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.73.2.1 2016/03/19 11:30:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.73.2.2 2016/07/09 20:25:15 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -591,7 +591,7 @@ qeintr(void *arg)
 			len = ((status1 & QE_RBL_HI) |
 			    (status2 & QE_RBL_LO)) + 60;
 			qe_add_rxbuf(sc, sc->sc_nextrx);
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;

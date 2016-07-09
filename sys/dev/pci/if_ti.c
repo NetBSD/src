@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.93.6.3 2016/03/19 11:30:10 skrll Exp $ */
+/* $NetBSD: if_ti.c,v 1.93.6.4 2016/07/09 20:25:04 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.3 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.93.6.4 2016/07/09 20:25:04 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1685,7 +1685,8 @@ ti_attach(device_t parent, device_t self, void *aux)
 		sc->sc_tx_encap = ti_encap_tigon1;
 		sc->sc_tx_eof = ti_txeof_tigon1;
 		if (nolinear == 1)
-			aprint_error_dev(self, "memory space not mapped linear\n");
+			aprint_error_dev(self,
+			    "memory space not mapped linear\n");
 		break;
 
 	case TI_HWREV_TIGON_II:
@@ -1733,16 +1734,16 @@ ti_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct ti_ring_data), PAGE_SIZE, 0, &dmaseg, 1, &dmanseg,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't allocate ring buffer, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't allocate ring buffer, error = %d\n", error);
 		goto fail2;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &dmaseg, dmanseg,
 	    sizeof(struct ti_ring_data), (void **)&sc->ti_rdata,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map ring buffer, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't map ring buffer, error = %d\n", error);
 		goto fail2;
 	}
 
@@ -1750,16 +1751,16 @@ ti_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct ti_ring_data), 1,
 	    sizeof(struct ti_ring_data), 0, BUS_DMA_NOWAIT,
 	    &sc->info_dmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't create ring buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't create ring buffer DMA map, error = %d\n", error);
 		goto fail2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->info_dmamap,
 	    sc->ti_rdata, sizeof(struct ti_ring_data), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "can't load ring buffer DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load ring buffer DMA map, error = %d\n", error);
 		goto fail2;
 	}
 
@@ -1966,7 +1967,7 @@ ti_rxeof(struct ti_softc *sc)
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 
 		/*
 	 	 * Handle BPF listeners. Let the BPF user see the packet, but

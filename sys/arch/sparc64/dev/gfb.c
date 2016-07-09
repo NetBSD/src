@@ -1,4 +1,4 @@
-/*	$NetBSD: gfb.c,v 1.7 2012/04/12 19:11:49 macallan Exp $	*/
+/*	$NetBSD: gfb.c,v 1.7.16.1 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.7 2012/04/12 19:11:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfb.c,v 1.7.16.1 2016/07/09 20:24:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +245,7 @@ gfb_attach(device_t parent, device_t self, void *aux)
 				printf(" %08x", bus_space_read_4(sc->sc_memt,
 				    regh, i + j));
 			}
-			printf("\n"); 
+			printf("\n");
 		}
 		bus_space_unmap(sc->sc_memt, regh, 0x2000);
 	}

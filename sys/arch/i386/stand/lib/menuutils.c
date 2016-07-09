@@ -1,4 +1,4 @@
-/*	$NetBSD: menuutils.c,v 1.4 2014/04/06 19:11:26 jakllsch Exp $	*/
+/*	$NetBSD: menuutils.c,v 1.4.4.1 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -71,7 +71,7 @@ bootmenu(void)
 
 		input[0] = '\0';
 		printf("> ");
-		gets(input);
+		kgets(input, sizeof(input));
 
 		/*
 		 * Skip leading whitespace.

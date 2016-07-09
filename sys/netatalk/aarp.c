@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.36 2012/01/31 09:53:44 hauke Exp $	*/
+/*	$NetBSD: aarp.c,v 1.36.24.1 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.36 2012/01/31 09:53:44 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.36.24.1 2016/07/09 20:25:21 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -135,7 +135,7 @@ at_ifawithnet(const struct sockaddr_at *sat, struct ifnet *ifp)
 	struct sockaddr_at *sat2;
 	struct netrange *nr;
 
-	IFADDR_FOREACH(ifa, ifp) {
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_APPLETALK)
 			continue;
 
@@ -238,7 +238,7 @@ aarpwhohas(struct ifnet *ifp, const struct sockaddr_at *sat)
 
 	sa.sa_len = sizeof(struct sockaddr);
 	sa.sa_family = AF_UNSPEC;
-	(*ifp->if_output) (ifp, m, &sa, NULL);	/* XXX NULL should be routing */
+	if_output_lock(ifp, ifp, m, &sa, NULL);	/* XXX NULL should be routing */
 						/* information */
 }
 
@@ -367,7 +367,7 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 		 * Since we don't know the net, we just look for the first
 		 * phase 1 address on the interface.
 		 */
-		IFADDR_FOREACH(ia, ifp) {
+		IFADDR_READER_FOREACH(ia, ifp) {
 			aa = (struct at_ifaddr *)ia;
 			if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 			    (aa->aa_flags & AFA_PHASE2) == 0)
@@ -429,7 +429,7 @@ at_aarpinput(struct ifnet *ifp, struct mbuf *m)
 			sat.sat_len = sizeof(struct sockaddr_at);
 			sat.sat_family = AF_APPLETALK;
 			sat.sat_addr = spa;
-			(*ifp->if_output)(ifp, aat->aat_hold,
+			if_output_lock(ifp, ifp, aat->aat_hold,
 			    (struct sockaddr *) & sat, NULL);	/* XXX */
 			aat->aat_hold = 0;
 		}
@@ -560,7 +560,7 @@ aarpprobe(void *arp)
          * interface with the same address as we're looking for. If the
          * net is phase 2, generate an 802.2 and SNAP header.
          */
-	IFADDR_FOREACH(ia, ifp) {
+	IFADDR_READER_FOREACH(ia, ifp) {
 		aa = (struct at_ifaddr *)ia;
 		if (AA_SAT(aa)->sat_family == AF_APPLETALK &&
 		    (aa->aa_flags & AFA_PROBING))

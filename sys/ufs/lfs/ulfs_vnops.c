@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.21.6.4 2015/12/27 12:10:19 skrll Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.21.6.5 2016/07/09 20:25:25 skrll Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.21.6.4 2015/12/27 12:10:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.21.6.5 2016/07/09 20:25:25 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -282,7 +282,8 @@ ulfs_setattr(void *v)
 			action |= KAUTH_VNODE_HAS_SYSFLAGS;
 		}
 
-		if ((vap->va_flags & SF_SETTABLE) != (ip->i_flags & SF_SETTABLE)) {
+		if ((vap->va_flags & SF_SETTABLE) !=
+		    (ip->i_flags & SF_SETTABLE)) {
 			action |= KAUTH_VNODE_WRITE_SYSFLAGS;
 			changing_sysflags = true;
 		}
@@ -911,6 +912,12 @@ ulfs_readlink(void *v)
 	struct lfs *fs = ump->um_lfs;
 	int		isize;
 
+	/*
+	 * The test against um_maxsymlinklen is off by one; it should
+	 * theoretically be <=, not <. However, it cannot be changed
+	 * as that would break compatibility with existing fs images.
+	 */
+
 	isize = ip->i_size;
 	if (isize < fs->um_maxsymlinklen ||
 	    (fs->um_maxsymlinklen == 0 && DIP(ip, blocks) == 0)) {
@@ -1149,75 +1156,6 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	ip->i_modrev = (uint64_t)(uint)tv.tv_sec << 32
 			| tv.tv_usec * 4294u;
 	*vpp = vp;
-}
-
-/*
- * Allocate a new inode.
- */
-int
-ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
-	const struct ulfs_lookup_results *ulr,
-	struct vnode **vpp, struct componentname *cnp)
-{
-	struct inode	*ip;
-	struct vnode	*tvp;
-	int		error;
-
-	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
-	if (error)
-		return error;
-	error = vn_lock(tvp, LK_EXCLUSIVE);
-	if (error) {
-		vrele(tvp);
-		return error;
-	}
-	lfs_mark_vnode(tvp);
-	*vpp = tvp;
-	ip = VTOI(tvp);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_nlink = 1;
-	DIP_ASSIGN(ip, nlink, 1);
-
-	/* Authorize setting SGID if needed. */
-	if (ip->i_mode & ISGID) {
-		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
-		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
-		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
-		if (error) {
-			ip->i_mode &= ~ISGID;
-			DIP_ASSIGN(ip, mode, ip->i_mode);
-		}
-	}
-
-	if (cnp->cn_flags & ISWHITEOUT) {
-		ip->i_flags |= UF_OPAQUE;
-		DIP_ASSIGN(ip, flags, ip->i_flags);
-	}
-
-	/*
-	 * Make sure inode goes to disk before directory entry.
-	 */
-	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
-		goto bad;
-	error = ulfs_direnter(dvp, ulr, tvp,
-			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
-	if (error)
-		goto bad;
-	*vpp = tvp;
-	return (0);
-
- bad:
-	/*
-	 * Write error occurred trying to update the inode
-	 * or the directory so must deallocate the inode.
-	 */
-	ip->i_nlink = 0;
-	DIP_ASSIGN(ip, nlink, 0);
-	ip->i_flag |= IN_CHANGE;
-	/* If IN_ADIROP, account for it */
-	lfs_unmark_vnode(tvp);
-	vput(tvp);
-	return (error);
 }
 
 /*

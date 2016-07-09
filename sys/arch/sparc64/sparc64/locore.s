@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.377.2.4 2016/05/29 08:44:19 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.377.2.5 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -150,6 +150,34 @@
 3:
 	.endm
 
+	.macro	GET_MMU_CONTEXTID_SUN4U ctxid,ctx
+	ldxa	[\ctx] ASI_DMMU, \ctxid
+	.endm
+
+#ifdef SUN4V
+	.macro	GET_MMU_CONTEXTID_SUN4V ctxid,ctx
+	ldxa	[\ctx] ASI_MMU_CONTEXTID, \ctxid
+	.endm
+#endif	
+		
+	.macro	GET_MMU_CONTEXTID ctxid,ctx,scratch
+#ifdef SUN4V
+	sethi	%hi(cputyp), \scratch
+	ld	[\scratch + %lo(cputyp)], \scratch
+	cmp	\scratch, CPU_SUN4V
+	bne,pt	%icc, 2f
+	 nop
+	/* sun4v */
+	GET_MMU_CONTEXTID_SUN4V \ctxid,\ctx
+	ba	3f
+	 nop
+2:		
+#endif	
+	/* sun4u */
+	GET_MMU_CONTEXTID_SUN4U \ctxid,\ctx
+3:
+	.endm
+	
 #ifdef SUN4V
 	.macro	NORMAL_GLOBALS_SUN4V
 	 wrpr	%g0, 0, %gl				! Set globals to level 0
@@ -4619,12 +4647,14 @@ badregs:
 	andn	%g1, CWP, %g1			! Clear it from %tstate
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
 
-	wr	%g0, ASI_DMMU, %asi		! restore the user context
-	ldxa	[CTX_SECONDARY] %asi, %g4
+	mov	CTX_SECONDARY, %g1		! Restore the user context
+	GET_MMU_CONTEXTID %g4, %g1, %g3
+	mov	CTX_PRIMARY, %g2
+	SET_MMU_CONTEXTID %g4, %g2, %g3
 	sethi	%hi(KERNBASE), %g7		! Should not be needed due to retry
-	stxa	%g4, [CTX_PRIMARY] %asi
 	membar	#Sync				! Should not be needed due to retry
 	flush	%g7				! Should not be needed due to retry
+
 	CLRTT
 #ifdef TRAPSTATS
 	set	_C_LABEL(rftudone), %g1

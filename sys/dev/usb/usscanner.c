@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.12 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.13 2016/07/09 20:25:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.12 2016/03/20 08:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.13 2016/07/09 20:25:17 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -198,8 +198,8 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 
 	err = usbd_set_config_no(dev, USSCANNER_CONFIG_NO, 1);
 	if (err) {
-		aprint_error_dev(self, "failed to set configuration"
-		    ", err=%s\n", usbd_errstr(err));
+		aprint_error_dev(self, "failed to set configuration, err=%s\n",
+		    usbd_errstr(err));
 		return;
 	}
 
@@ -326,8 +326,7 @@ usscanner_attach(device_t parent, device_t self, void *aux)
 	sc->sc_channel.chan_nluns = 1;
 	sc->sc_channel.chan_id = USSCANNER_SCSIID_HOST;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	sc->sc_child = config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 
@@ -385,8 +384,7 @@ usscanner_detach(device_t self, int flags)
 	else
 		rv = 0;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
@@ -471,8 +469,7 @@ usscanner_sense(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_intr_cb(struct usbd_xfer *xfer, void *priv,
-		 usbd_status status)
+usscanner_intr_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	int s;
@@ -484,7 +481,8 @@ usscanner_intr_cb(struct usbd_xfer *xfer, void *priv,
 		printf("%s: !UAS_STATUS\n", device_xname(sc->sc_dev));
 	}
 	if (sc->sc_status != 0) {
-		printf("%s: status byte=0x%02x\n", device_xname(sc->sc_dev), sc->sc_status);
+		printf("%s: status byte=0x%02x\n", device_xname(sc->sc_dev),
+		    sc->sc_status);
 	}
 #endif
 	/* XXX what should we do on non-0 status */
@@ -499,8 +497,7 @@ usscanner_intr_cb(struct usbd_xfer *xfer, void *priv,
 }
 
 Static void
-usscanner_data_cb(struct usbd_xfer *xfer, void *priv,
-		 usbd_status status)
+usscanner_data_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -539,8 +536,7 @@ usscanner_data_cb(struct usbd_xfer *xfer, void *priv,
 }
 
 Static void
-usscanner_sensedata_cb(struct usbd_xfer *xfer, void *priv,
-		       usbd_status status)
+usscanner_sensedata_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -593,8 +589,7 @@ usscanner_done(struct usscanner_softc *sc)
 }
 
 Static void
-usscanner_sensecmd_cb(struct usbd_xfer *xfer, void *priv,
-		      usbd_status status)
+usscanner_sensecmd_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -637,8 +632,7 @@ usscanner_sensecmd_cb(struct usbd_xfer *xfer, void *priv,
 }
 
 Static void
-usscanner_cmd_cb(struct usbd_xfer *xfer, void *priv,
-		 usbd_status status)
+usscanner_cmd_cb(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct usscanner_softc *sc = priv;
 	struct scsipi_xfer *xs = sc->sc_xs;
@@ -699,7 +693,8 @@ usscanner_cmd_cb(struct usbd_xfer *xfer, void *priv,
 }
 
 Static void
-usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+usscanner_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct usscanner_softc *sc =

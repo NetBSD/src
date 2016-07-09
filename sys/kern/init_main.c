@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461.2.6 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461.2.7 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.6 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.7 2016/07/09 20:25:20 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1044,7 +1044,7 @@ start_init(void *arg)
 			goto copyerr;
 
 		/*
-		 * Now try to exec the program.  If can't for any reason
+		 * Now try to exec the program.  If it can't for any reason
 		 * other than it doesn't exist, complain.
 		 */
 		error = sys_execve(l, &args, retval);

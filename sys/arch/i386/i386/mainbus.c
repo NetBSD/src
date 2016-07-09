@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.98.6.2 2015/09/22 12:05:44 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.98.6.3 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98.6.2 2015/09/22 12:05:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.98.6.3 2016/07/09 20:24:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,8 @@ mainbus_rescan(device_t self, const char *ifattr, const int *locators)
 		    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY |
 		    PCI_FLAGS_MWI_OKAY;
 		mba.mba_acpi.aa_ic = &x86_isa_chipset;
+		mba.mba_acpi.aa_dmat = &pci_bus_dma_tag;
+		mba.mba_acpi.aa_dmat64 = NULL;
 		sc->sc_acpi =
 		    config_found_ia(self, "acpibus", &mba.mba_acpi, 0);
 #if 0 /* XXXJRT not yet */

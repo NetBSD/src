@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.22 2014/09/21 16:40:10 christos Exp $	*/
+/*	$NetBSD: bus.c,v 1.22.2.1 2016/07/09 20:24:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22 2014/09/21 16:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22.2.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,7 +626,7 @@ sun68k_bus_peek(bus_space_tag_t tag, bus_space_handle_t handle,
 	if (vp == NULL)
 		vp = &junk;
 
-	nofault = &faultbuf; 
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf))
 		result = -1;
 	else {
@@ -660,7 +660,7 @@ sun68k_bus_poke(bus_space_tag_t tag, bus_space_handle_t handle,
 	int result;
 	label_t	faultbuf;
 	
-	nofault = &faultbuf; 
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf))
 		result = -1;
 	else {

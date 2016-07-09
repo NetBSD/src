@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.82.2.2 2015/09/22 12:06:12 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.82.2.3 2016/07/09 20:25:23 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82.2.2 2015/09/22 12:06:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82.2.3 2016/07/09 20:25:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1945,7 +1945,7 @@ cryptodev_getstatus (struct fcrypt *fcr, struct crypt_result *crypt_res)
         int i, size, req = 0;
 
 	mutex_enter(&crypto_mtx);
-	/* Here we dont know for which request the user is requesting the
+	/* Here we dont know for which request the user is requesting the 
 	 * response so checking in both the queues */
 	TAILQ_FOREACH_SAFE(crp, &fcr->crp_ret_mq, crp_next, cnext) {
 		if(crp && (crp->crp_reqid == crypt_res->reqid)) {

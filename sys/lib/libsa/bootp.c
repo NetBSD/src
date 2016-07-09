@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.c,v 1.39.6.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: bootp.c,v 1.39.6.2 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -307,9 +307,9 @@ bootprecv(struct iodesc *d, void *pkt, size_t len, saseconds_t tleft)
 	ssize_t n;
 	struct bootp *bp;
 
-#ifdef BOOTP_DEBUGx
+#ifdef BOOTP_DEBUG
 	if (debug)
-		printf("bootp_recvoffer: called\n");
+		printf("bootprecv: called\n");
 #endif
 
 	n = readudp(d, pkt, len, tleft);

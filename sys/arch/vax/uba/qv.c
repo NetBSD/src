@@ -1,4 +1,4 @@
-/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.1 2015/09/22 12:05:53 skrll Exp $*/
+/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.2 2016/07/09 20:24:58 skrll Exp $*/
 /*
  * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
  * Derived from smg.c
@@ -35,7 +35,7 @@
 /*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.1 2015/09/22 12:05:53 skrll Exp $");
+__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.2 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ __KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.1 2015/0
 #define CUR_LO          15
 
 //static	uint16_t curcmd, curx, cury, hotX, hotY;
-static	int     bgmask, fgmask; 
+static	int     bgmask, fgmask;
 
 static	int     qv_match(device_t, cfdata_t, void *);
 static	void    qv_attach(device_t, device_t, void *);
@@ -236,7 +236,8 @@ CFATTACH_DECL_NEW(qv, sizeof(struct qv_softc),
 #if 0
 static int	genfb_match_qv(device_t, cfdata_t, void *);
 static void	genfb_attach_qv(device_t, device_t, void *);
-static int	genfb_ioctl_qv(void *, void *, u_long, void *, int, struct lwp*);
+static int	genfb_ioctl_qv(void *, void *, u_long, void *, int,
+    struct lwp*);
 static paddr_t	genfb_mmap_qv(void *, void *, off_t, int);
 static int      genfb_borrow_qv(void *, bus_addr_t, bus_space_handle_t *);
 
@@ -281,14 +282,14 @@ qv_match(device_t parent, cfdata_t match, void *aux)
 static inline void
 qv_reg_wr(struct qv_softc *sc, uint16_t addr, uint16_t data)
 {
-        bus_space_write_2(sc->sc_iot, sc->sc_ioh, addr, data);       
+        bus_space_write_2(sc->sc_iot, sc->sc_ioh, addr, data);
 }
 
 /* controller register read helper function */
 static inline uint16_t
 qv_reg_rd(struct qv_softc *sc, uint16_t addr)
 {
-        return bus_space_read_2(sc->sc_iot, sc->sc_ioh, addr);       
+        return bus_space_read_2(sc->sc_iot, sc->sc_ioh, addr);
 }
 
 /*
@@ -298,7 +299,7 @@ static  void
 qv_crtc_wr(struct qv_softc *sc, uint16_t addr, uint16_t data)
 {
         qv_reg_wr(sc, QV_CRTC_AR, addr);
-        qv_reg_wr(sc, QV_CRTC_DR, data);        
+        qv_reg_wr(sc, QV_CRTC_DR, data);
 }
 
 /*
@@ -327,16 +328,16 @@ qv_ic_init(struct uba_attach_args *ua, bus_size_t offs)
         
         if (!initted) {
 		/* init the interrupt controller */
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RESET);  
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RESET);
 		/* reset irr			 */
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CLRIRR); 
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CLRIRR);
 		/* specify individual vectors	 */
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_MODE);   
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_MODE);
 		/* preset autoclear data	 */
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ACREG);  
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ACREG);
 		/* all setup as autoclear	 */
-	        qv_ic_write(ua, QV_IC_DR + offs, 0xff);         
-        
+	        qv_ic_write(ua, QV_IC_DR + offs, 0xff);
+
 		/* clear all vector addresses */
                 for (i = 0; i < 8; i++)                         
                         qv_ic_setvec(ua, offs, i, 0);
@@ -346,23 +347,26 @@ qv_ic_init(struct uba_attach_args *ua, bus_size_t offs)
 }
 
 void
-qv_ic_setvec(struct uba_attach_args *ua, bus_size_t offs, int ic_vec, int vecnum)
+qv_ic_setvec(struct uba_attach_args *ua, bus_size_t offs, int ic_vec,
+    int vecnum)
 {
 	/* preset vector address	*/
-	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RMEM | RMEM_BC_1 | ic_vec);      
+	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RMEM | RMEM_BC_1 | ic_vec);
+
 	/* give it the vector number	*/
-	qv_ic_write(ua, QV_IC_DR + offs, vecnum);	                        
+	qv_ic_write(ua, QV_IC_DR + offs, vecnum);
 }
 
 void
-qv_ic_enable(struct uba_attach_args *ua, bus_size_t offs, int ic_vec, int enable)
+qv_ic_enable(struct uba_attach_args *ua, bus_size_t offs, int ic_vec,
+    int enable)
 {
         if (enable)
 		/* enable the interrupt */        
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CIMR | ic_vec);          
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CIMR | ic_vec);
         else
-		/* disable the interrupt */        
-	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIMR | ic_vec);          
+		/* disable the interrupt */
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIMR | ic_vec);
 }
 
 void
@@ -370,17 +374,17 @@ qv_ic_arm(struct uba_attach_args *ua, bus_size_t offs, int arm)
 {
         if (arm) 
 		/* arm the interrupt ctrl	*/
-                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ARM);	                
+                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ARM);
         else
 		/* disarm the interrupt ctrl	*/
-                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_DISARM);	                
+                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_DISARM);
 }
 
 void
 qv_ic_force(struct uba_attach_args *ua, bus_size_t offs, int ic_vec)
 {
 	/* force an interrupt	*/
-	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIRR | ic_vec);	                
+	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIRR | ic_vec);
 }
 
 /*
@@ -527,7 +531,7 @@ qv_font(struct qv_softc *sc, int c, int line)
                 c -= 32;
         
         /* return pointer line in font glyph */        
-        return &sc->sc_font[c*QV_CHEIGHT + line];        
+        return &sc->sc_font[c*QV_CHEIGHT + line];
 }
 
 /*
@@ -705,10 +709,10 @@ qv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	    		    qv_fbp(ss->ss_sc, dstrow + n, 0, 0), QV_NEXTROW);
 	else if (ol < 0) {
 	 	for (n = 0; n < nrows; n++) {
-			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];  
+			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];
 			sp = &ss->ss_sc->sc_scanmap[(srcrow + n)*QV_CHEIGHT];
 			for (line = 0; line < QV_CHEIGHT; line++) {
-				tmp = *dp; 
+				tmp = *dp;
 				*dp = *sp;
 				*sp = tmp;
 				dp++;
@@ -720,10 +724,10 @@ qv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	}
 	else {
 	 	for (n = nrows - 1; n >= 0; n--) {
-			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];  
+			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];
 			sp = &ss->ss_sc->sc_scanmap[(srcrow + n)*QV_CHEIGHT];
 			for (line = 0; line < QV_CHEIGHT; line++) {
-				tmp = *dp; 
+				tmp = *dp;
 				*dp = *sp;
 				*sp = tmp;
 				dp++;
@@ -856,7 +860,7 @@ qv_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
                 qv_crtc_wr(sc, CUR_HI, sc->sc_cury >> 4);
                 qv_reg_wr(sc, QV_CUR_X, sc->sc_curx);
                 qv_crtc_wr(sc, CUR_START, 
-                    sc->sc_curon | (sc->sc_cury & 0x0f));		
+                    sc->sc_curon | (sc->sc_cury & 0x0f));
 		break;
 
 	case WSDISPLAYIO_GCURPOS:

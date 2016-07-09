@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.26 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.26.6.1 2016/07/09 20:25:02 skrll Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.26 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.26.6.1 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -786,7 +786,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 		 * Trim off the GASP header
 		 */
 		m_adj(m, 3*sizeof(uint32_t));
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		ieee1394_input(ifp, m, src);
 		ifp->if_ipackets++;
 	}
@@ -891,7 +891,7 @@ fwip_unicast_input(struct fw_xfer *xfer)
 	 * argument to facilitate link-level fragment reassembly.
 	 */
 	m->m_len = m->m_pkthdr.len = fp->mode.wreqb.len;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	ieee1394_input(ifp, m, fp->mode.wreqb.src);
 	ifp->if_ipackets++;
 }

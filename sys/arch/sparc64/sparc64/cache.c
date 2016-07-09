@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.8.32.1 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.8.32.2 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.8.32.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.8.32.2 2016/07/09 20:24:57 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -135,7 +135,7 @@ cache_setup_funcs(void)
 	if (CPU_ISSUN4V) {
 		sp_tlb_flush_pte = sp_tlb_flush_pte_sun4v;
 		sp_tlb_flush_all = sp_tlb_flush_all_sun4v;
-		cache_flush_phys = cache_flush_phys_sun4v; 
+		cache_flush_phys = cache_flush_phys_sun4v;
 	} else {
 		if (CPU_IS_USIII_UP() || CPU_IS_SPARC64_V_UP()) {
 			sp_tlb_flush_pte = sp_tlb_flush_pte_usiii;

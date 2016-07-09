@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.23 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.23.6.1 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.23 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.23.6.1 2016/07/09 20:25:04 skrll Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -212,15 +212,15 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(mpt->sc_dev, "interrupting at %s\n",
-	    intrstr);
+	aprint_normal_dev(mpt->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* Disable interrupts on the part. */
 	mpt_disable_ints(mpt);
 
 	/* Allocate DMA memory. */
 	if (mpt_dma_mem_alloc(mpt) != 0) {
-		aprint_error_dev(mpt->sc_dev, "unable to allocate DMA memory\n");
+		aprint_error_dev(mpt->sc_dev,
+		    "unable to allocate DMA memory\n");
 		return;
 	}
 

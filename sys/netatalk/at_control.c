@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.37 2014/10/18 08:33:29 snj Exp $	 */
+/*	$NetBSD: at_control.c,v 1.37.2.1 2016/07/09 20:25:21 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.37 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.37.2.1 2016/07/09 20:25:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -830,7 +830,7 @@ aa_clean(void)
 		TAILQ_REMOVE(&at_ifaddr, aa, aa_list);
 		ifp = aa->aa_ifp;
 		at_scrub(ifp, aa);
-		IFADDR_FOREACH(ifa, ifp) {
+		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa == &aa->aa_ifa)
 				break;
 		}

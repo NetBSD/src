@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.12 2016/05/29 08:44:31 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.13 2016/07/09 20:25:15 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.12 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.13 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1692,7 +1692,7 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	m = c->atu_mbuf;
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = len;
 
 	wh = mtod(m, struct ieee80211_frame_min *);

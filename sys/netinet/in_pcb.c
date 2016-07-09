@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.155.2.4 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.155.2.5 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.4 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.155.2.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -283,7 +283,7 @@ in_pcbbind_addr(struct inpcb *inp, struct sockaddr_in *sin, kauth_cred_t cred)
 	} else if (!in_nullhost(sin->sin_addr)) {
 		struct in_ifaddr *ia = NULL;
 
-		INADDR_TO_IA(sin->sin_addr, ia);
+		ia = in_get_ia(sin->sin_addr);
 		/* check for broadcast addresses */
 		if (ia == NULL)
 			ia = ifatoia(ifa_ifwithaddr(sintosa(sin)));
@@ -411,7 +411,7 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (TAILQ_FIRST(&in_ifaddrhead) == 0)
+	if (IN_ADDRLIST_READER_EMPTY())
 		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
@@ -470,7 +470,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 	    inp->inp_socket->so_type == SOCK_STREAM)
 		return EADDRNOTAVAIL;
 
-	if (TAILQ_FIRST(&in_ifaddrhead) != 0) {
+	if (!IN_ADDRLIST_READER_EMPTY()) {
 		/*
 		 * If the destination address is INADDR_ANY,
 		 * use any local address (likely loopback).
@@ -480,10 +480,11 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 		 */
 
 		if (in_nullhost(sin->sin_addr)) {
+			/* XXX racy */
 			sin->sin_addr =
-			    TAILQ_FIRST(&in_ifaddrhead)->ia_addr.sin_addr;
+			    IN_ADDRLIST_READER_FIRST()->ia_addr.sin_addr;
 		} else if (sin->sin_addr.s_addr == INADDR_BROADCAST) {
-			TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
+			IN_ADDRLIST_READER_FOREACH(ia) {
 				if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
 					sin->sin_addr =
 					    ia->ia_broadaddr.sin_addr;
@@ -513,7 +514,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 				xerror = EADDRNOTAVAIL;
 			return xerror;
 		}
-		INADDR_TO_IA(ifaddr->sin_addr, ia);
+		ia = in_get_ia(ifaddr->sin_addr);
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
 	}
@@ -694,6 +695,8 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 {
 	int i, gap;
 
+	KASSERT(ifp != NULL);
+
 	if (imo == NULL)
 		return;
 
@@ -701,8 +704,8 @@ in_purgeifmcast(struct ip_moptions *imo, struct ifnet *ifp)
 	 * Unselect the outgoing interface if it is being
 	 * detached.
 	 */
-	if (imo->imo_multicast_ifp == ifp)
-		imo->imo_multicast_ifp = NULL;
+	if (imo->imo_multicast_if_index == ifp->if_index)
+		imo->imo_multicast_if_index = 0;
 
 	/*
 	 * Drop multicast group membership if we joined

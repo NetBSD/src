@@ -1,4 +1,4 @@
-/*	$NetBSD: spx.c,v 1.8 2014/03/28 13:26:24 ozaki-r Exp $ */
+/*	$NetBSD: spx.c,v 1.8.6.1 2016/07/09 20:24:58 skrll Exp $ */
 /*
  * SPX/LCSPX/SPXg/SPXgt accelerated framebuffer driver for NetBSD/VAX
  * Copyright (c) 2005 Blaz Antonic
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.8 2014/03/28 13:26:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spx.c,v 1.8.6.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,7 +622,7 @@ spx_match(device_t parent, cfdata_t match, void *aux)
 #endif
 
 	sc->sc_mask = 0x04; /* XXX - should be generated */
-	scb_fake(0x14c, 0x15);	
+	scb_fake(0x14c, 0x15);
 
 	return 20;
 }
@@ -748,7 +748,7 @@ SPX_putchar(int row, int col, u_int c, char dot_fg, char dot_bg)
 	SPX_REG(SPX_FG) = COLOR(dot_fg);
 	SPX_REG(SPX_BG) = COLOR(dot_bg);
 	SPX_REG(SPX_MAIN3) = 0x01010101;
-	SPX_REG(SPX_COMMAND) = 0x84884648; 
+	SPX_REG(SPX_COMMAND) = 0x84884648;
 	SPX_REG(SPX_XSTART) = (col * spx_font.fontwidth) << 16;
 	SPX_REG(SPX_YSTART) = (row * spx_font.fontheight) << 16;
 	SPX_REG(SPX_XEND) = ((col + 1) * spx_font.fontwidth) << 16;

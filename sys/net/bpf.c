@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.189.2.4 2016/03/19 11:30:32 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.189.2.5 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.4 2016/03/19 11:30:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.189.2.5 2016/07/09 20:25:21 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -300,7 +300,7 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 		return (EIO);
 
 	m = m_gethdr(M_WAIT, MT_DATA);
-	m->m_pkthdr.rcvif = NULL;
+	m_reset_rcvif(m);
 	m->m_pkthdr.len = (int)(len - hlen);
 	if (len + align > MHLEN) {
 		m_clget(m, M_WAIT);
@@ -715,7 +715,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 	if (d->bd_feedback) {
 		mc = m_dup(m, 0, M_COPYALL, M_NOWAIT);
 		if (mc != NULL)
-			mc->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(mc, ifp);
 		/* Set M_PROMISC for outgoing packets to be discarded. */
 		if (1 /*d->bd_direction == BPF_D_INOUT*/)
 			m->m_flags |= M_PROMISC;
@@ -723,7 +723,7 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		mc = NULL;
 
 	s = splsoftnet();
-	error = (*ifp->if_output)(ifp, m, (struct sockaddr *) &dst, NULL);
+	error = if_output_lock(ifp, ifp, m, (struct sockaddr *) &dst, NULL);
 
 	if (mc != NULL) {
 		if (error == 0)
@@ -1469,7 +1469,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	struct mbuf mb;
 
 	/* Skip outgoing duplicate packets. */
-	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif_index == 0) {
 		m->m_flags &= ~M_PROMISC;
 		return;
 	}
@@ -1486,7 +1486,7 @@ _bpf_mtap2(struct bpf_if *bp, void *data, u_int dlen, struct mbuf *m)
 	mb.m_data = data;
 	mb.m_len = dlen;
 
-	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif != NULL);
+	bpf_deliver(bp, bpf_mcpy, &mb, pktlen, 0, m->m_pkthdr.rcvif_index != 0);
 }
 
 /*
@@ -1500,7 +1500,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 	void *marg;
 
 	/* Skip outgoing duplicate packets. */
-	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif == NULL) {
+	if ((m->m_flags & M_PROMISC) != 0 && m->m_pkthdr.rcvif_index == 0) {
 		m->m_flags &= ~M_PROMISC;
 		return;
 	}
@@ -1517,7 +1517,7 @@ _bpf_mtap(struct bpf_if *bp, struct mbuf *m)
 		buflen = 0;
 	}
 
-	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif != NULL);
+	bpf_deliver(bp, cpfn, marg, pktlen, buflen, m->m_pkthdr.rcvif_index != 0);
 }
 
 /*
@@ -2107,7 +2107,7 @@ struct bpf_ops bpf_ops_kernel = {
 	.bpf_mtap_sl_out =	_bpf_mtap_sl_out,
 };
 
-MODULE(MODULE_CLASS_DRIVER, bpf, NULL);
+MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");
 
 static int
 bpf_modcmd(modcmd_t cmd, void *arg)

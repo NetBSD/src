@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_htable.c,v 1.6 2014/03/20 20:43:12 christos Exp $	*/
+/*	$NetBSD: ip_htable.c,v 1.6.6.1 2016/07/09 20:25:18 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -14,7 +14,13 @@
 #include <sys/param.h>
 #if defined(__NetBSD__)
 # if (NetBSD >= 199905) && !defined(IPFILTER_LKM) && defined(_KERNEL)
-#  include "opt_ipfilter.h"
+#  if (__NetBSD_Version__ >= 799003000)
+#   if defined(_KERNEL_OPT)
+#    include "opt_ipfilter.h"
+#   endif
+#  else
+#   include "opt_ipfilter.h"
+#  endif
 # endif
 #endif
 #include <sys/types.h>
@@ -60,7 +66,7 @@ struct file;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.6 2014/03/20 20:43:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_htable.c,v 1.6.6.1 2016/07/09 20:25:18 skrll Exp $");
 #else
 static const char rcsid[] = "@(#)Id: ip_htable.c,v 1.1.1.2 2012/07/22 13:45:19 darrenr Exp";
 #endif

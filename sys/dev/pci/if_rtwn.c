@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.1.2.5 2016/05/29 08:44:21 skrll Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.1.2.6 2016/07/09 20:25:04 skrll Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.5 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.6 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1748,7 +1748,7 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc *rx_desc,
 	m = rx_data->m;
 	rx_data->m = m1;
 	m->m_pkthdr.len = m->m_len = totlen;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	bus_dmamap_sync(sc->sc_dmat, rx_data->map, 0, MCLBYTES,
 	    BUS_DMASYNC_PREREAD);

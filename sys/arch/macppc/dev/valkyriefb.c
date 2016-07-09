@@ -1,4 +1,4 @@
-/*	$NetBSD: valkyriefb.c,v 1.3 2014/02/19 12:28:38 macallan Exp $	*/
+/*	$NetBSD: valkyriefb.c,v 1.3.6.1 2016/07/09 20:24:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.3 2014/02/19 12:28:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valkyriefb.c,v 1.3.6.1 2016/07/09 20:24:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,11 +161,13 @@ valkyriefb_write_reg(struct valkyriefb_softc *sc, int reg, uint8_t val)
 	__asm("eieio; sync;");
 }
 
+#ifdef VALKYRIEFB_DEBUG
 static inline uint8_t
 valkyriefb_read_reg(struct valkyriefb_softc *sc, int reg)
 {
 	return *(sc->sc_base + VAL_REGS_OFFSET + reg);
 }
+#endif
 
 static void
 valkyriefb_write_cmap(struct valkyriefb_softc *sc,

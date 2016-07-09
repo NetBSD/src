@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.14 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.15 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.14 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.15 2016/07/09 20:25:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -181,12 +181,13 @@ Static void ugen_clear_endpoints(struct ugen_softc *);
 #define UGENENDPOINT(n) (minor(n) & 0xf)
 #define UGENDEV(u, e) (makedev(0, ((u) << 4) | (e)))
 
-int             ugen_match(device_t, cfdata_t, void *);
-void            ugen_attach(device_t, device_t, void *);
-int             ugen_detach(device_t, int);
-int             ugen_activate(device_t, enum devact);
+int	ugen_match(device_t, cfdata_t, void *);
+void	ugen_attach(device_t, device_t, void *);
+int	ugen_detach(device_t, int);
+int	ugen_activate(device_t, enum devact);
 extern struct cfdriver ugen_cd;
-CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match, ugen_attach, ugen_detach, ugen_activate);
+CFATTACH_DECL_NEW(ugen, sizeof(struct ugen_softc), ugen_match, ugen_attach,
+    ugen_detach, ugen_activate);
 
 /* toggle to control attach priority. -1 means "let autoconf decide" */
 int ugen_override = -1;
@@ -262,8 +263,7 @@ ugen_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -1064,8 +1064,7 @@ ugen_detach(device_t self, int flags)
 	mn = device_unit(self) * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {

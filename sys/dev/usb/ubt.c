@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.10 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.11 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.10 2016/03/20 08:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.11 2016/07/09 20:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -285,12 +285,13 @@ static const struct hci_if ubt_hci = {
  *
  */
 
-int             ubt_match(device_t, cfdata_t, void *);
-void            ubt_attach(device_t, device_t, void *);
-int             ubt_detach(device_t, int);
-int             ubt_activate(device_t, enum devact);
+int	ubt_match(device_t, cfdata_t, void *);
+void	ubt_attach(device_t, device_t, void *);
+int	ubt_detach(device_t, int);
+int	ubt_activate(device_t, enum devact);
 extern struct cfdriver ubt_cd;
-CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach, ubt_detach, ubt_activate);
+CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach,
+    ubt_detach, ubt_activate);
 
 static int ubt_set_isoc_config(struct ubt_softc *);
 static int ubt_sysctl_config(SYSCTLFN_PROTO);
@@ -601,8 +602,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	/* Attach HCI */
 	sc->sc_unit = hci_attach_pcb(&ubt_hci, sc->sc_dev, 0);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
 	/* sysctl set-up for alternate configs */
 	sysctl_createv(&sc->sc_log, 0, NULL, &node,
@@ -700,8 +700,7 @@ ubt_detach(device_t self, int flags)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	DPRINTFN(1, "driver detached\n");
 

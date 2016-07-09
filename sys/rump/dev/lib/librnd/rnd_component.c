@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_component.c,v 1.1.12.3 2016/05/29 08:44:39 skrll Exp $	*/
+/*	$NetBSD: rnd_component.c,v 1.1.12.4 2016/07/09 20:25:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.1.12.3 2016/05/29 08:44:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.1.12.4 2016/07/09 20:25:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,6 +64,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	rnd_init();
 }
 
+#if 0
 /*
  * XXX: the following hack works around PR kern/51135 and should ASAP be
  * nuked to and then from orbit.
@@ -90,3 +91,4 @@ RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 			panic("rnd_system_ioctl failed"); /* XXX */
 	}
 }
+#endif

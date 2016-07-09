@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.77.4.3 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.77.4.4 2016/07/09 20:24:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.3 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.4 2016/07/09 20:24:59 skrll Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -609,6 +609,11 @@ intr_free_io_intrsource(const char *intrid)
 		return;
 
 	if ((isp = intr_get_io_intrsource(intrid)) == NULL) {
+		return;
+	}
+
+	/* If the interrupt uses shared IRQ, don't free yet. */
+	if (isp->is_handlers != NULL) {
 		return;
 	}
 

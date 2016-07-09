@@ -1,8 +1,0 @@
-$NetBSD: version,v 1.1.18.1 2016/03/19 11:30:06 skrll Exp $
-
-NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
-file is important - make sure the entries are appended on end, last item
-is taken as the current.
-
-0.1:	Initial netboot
-0.2:	Disable slow gunzip CRC32 calculation.

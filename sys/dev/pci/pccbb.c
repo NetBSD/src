@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.207.2.2 2016/03/19 11:30:11 skrll Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.207.2.3 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.207.2.2 2016/03/19 11:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.207.2.3 2016/07/09 20:25:04 skrll Exp $");
 
 /*
 #define CBB_DEBUG
@@ -425,7 +425,8 @@ pccbbattach(device_t parent, device_t self, void *aux)
 	    PCI_MAPREG_MEM_ADDR(sock_base) != 0xfffffff0) {
 		/* The address must be valid. */
 		if (pci_mapreg_map(pa, PCI_SOCKBASE, PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase, &sc->sc_base_size)) {
+		    &sc->sc_base_memt, &sc->sc_base_memh, &sockbase,
+		    &sc->sc_base_size)) {
 			aprint_error_dev(self,
 			    "can't map socket base address 0x%lx\n",
 			    (unsigned long)sock_base);
@@ -1445,7 +1446,8 @@ cb_reset(struct pccbb_softc *sc)
 	 */
 	int reset_duration =
 	    (sc->sc_chipset == CB_RX5C47X ? 400 : 50);
-	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
+	u_int32_t bcr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PCI_BRIDGE_CONTROL_REG);
 	aprint_debug("%s: enter bcr %" PRIx32 "\n", __func__, bcr);
 
 	/* Reset bit Assert (bit 6 at 0x3E) */
@@ -1800,9 +1802,11 @@ pccbb_intr_disestablish(struct pccbb_softc *sc, void *ih)
 		DPRINTF(("pccbb_intr_disestablish: no interrupt handler\n"));
 
 		/* stop routing PCI intr */
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG);
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PCI_BRIDGE_CONTROL_REG);
 		reg |= CB_BCR_INTR_IREQ_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG, reg);
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BRIDGE_CONTROL_REG,
+		    reg);
 
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
@@ -2243,7 +2247,8 @@ pccbb_pcmcia_wait_ready(struct pccbb_softc *sc)
 		pccbb_pcmcia_delay(sc, 100, "pccwr1");
 	}
 
-	printf("pccbb_pcmcia_wait_ready: ready never happened, status=%02x\n", stat);
+	printf("pccbb_pcmcia_wait_ready: ready never happened, status=%02x\n",
+	    stat);
 	return (EWOULDBLOCK);
 }
 
@@ -2344,7 +2349,8 @@ pccbb_pcmcia_socket_enable(pcmcia_chipset_handle_t pch)
 #ifdef DIAGNOSTIC
 	reg = Pcic_read(sc, PCIC_IF_STATUS);
 	if ((reg & PCIC_IF_STATUS_POWERACTIVE) == 0)
-		printf("pccbb_pcmcia_socket_enable: no power, status=%x\n", reg);
+		printf("pccbb_pcmcia_socket_enable: no power, status=%x\n",
+		    reg);
 #endif
 
 	/* wait for the chip to finish initializing */

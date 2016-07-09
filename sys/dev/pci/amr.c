@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.58.4.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: amr.c,v 1.58.4.2 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.58.4.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.58.4.2 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,9 +603,9 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		if (intrstr != NULL)
 			aprint_normal_dev(amr->amr_dv, "interrupting at %s\n",
 			    intrstr);
-		aprint_normal_dev(amr->amr_dv, "firmware %.16s, BIOS %.16s, %dMB RAM\n",
-		    ap->ap_firmware, ap->ap_bios,
-		    le16toh(ap->ap_memsize));
+		aprint_normal_dev(amr->amr_dv,
+		    "firmware %.16s, BIOS %.16s, %dMB RAM\n",
+		    ap->ap_firmware, ap->ap_bios, le16toh(ap->ap_memsize));
 
 		amr->amr_maxqueuecnt = ap->ap_maxio;
 
@@ -620,17 +620,16 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		}
 
 		if (aex->ae_numldrives > __arraycount(aex->ae_drivestate)) {
-			aprint_error_dev(amr->amr_dv, "Inquiry returned more drives (%d)"
-			   " than the array can handle (%zu)\n",
-			   aex->ae_numldrives,
-			   __arraycount(aex->ae_drivestate));
+			aprint_error_dev(amr->amr_dv, "Inquiry returned more "
+			    "drives (%d) than the array can handle (%zu)\n",
+			    aex->ae_numldrives,
+			    __arraycount(aex->ae_drivestate));
 			aex->ae_numldrives = __arraycount(aex->ae_drivestate);
 		}
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
 			aprint_error_dev(amr->amr_dv,
-			    "adjust AMR_MAX_UNITS to %d (currently %d)"
-			    "\n", AMR_MAX_UNITS,
-			    amr->amr_numdrives);
+			    "adjust AMR_MAX_UNITS to %d (currently %d)\n",
+			    AMR_MAX_UNITS, amr->amr_numdrives);
 			amr->amr_numdrives = AMR_MAX_UNITS;
 		} else
 			amr->amr_numdrives = aex->ae_numldrives;
@@ -668,7 +667,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	} else {
 		ae = amr_enquire(amr, AMR_CMD_ENQUIRY, 0, 0, amr->amr_enqbuf);
 		if (ae == NULL) {
-			aprint_error_dev(amr->amr_dv, "unsupported controller\n");
+			aprint_error_dev(amr->amr_dv,
+			    "unsupported controller\n");
 			return (-1);
 		}
 
@@ -680,7 +680,8 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			prodstr = "Series 434";
 			break;
 		default:
-			snprintf(sbuf, sizeof(sbuf), "unknown PCI dev (0x%04x)",
+			snprintf(sbuf, sizeof(sbuf),
+			    "unknown PCI dev (0x%04x)",
 			    PCI_PRODUCT(pa->pa_id));
 			prodstr = sbuf;
 			break;
@@ -713,13 +714,13 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		    intrstr);
 
 	if (ishp)
-		aprint_normal_dev(amr->amr_dv, "firmware <%c.%02d.%02d>, BIOS <%c.%02d.%02d>"
-		    ", %dMB RAM\n", aa->aa_firmware[2],
+		aprint_normal_dev(amr->amr_dv, "firmware <%c.%02d.%02d>, "
+		    "BIOS <%c.%02d.%02d>, %dMB RAM\n", aa->aa_firmware[2],
 		     aa->aa_firmware[1], aa->aa_firmware[0], aa->aa_bios[2],
 		     aa->aa_bios[1], aa->aa_bios[0], aa->aa_memorysize);
 	else
-		aprint_normal_dev(amr->amr_dv, "firmware <%.4s>, BIOS <%.4s>, %dMB RAM\n",
-		    aa->aa_firmware, aa->aa_bios,
+		aprint_normal_dev(amr->amr_dv, "firmware <%.4s>, BIOS <%.4s>, "
+		    "%dMB RAM\n", aa->aa_firmware, aa->aa_bios,
 		    aa->aa_memorysize);
 
 	amr->amr_maxqueuecnt = aa->aa_maxio;
@@ -728,16 +729,16 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	 * Record state of logical drives.
 	 */
 	if (ae->ae_ldrv.al_numdrives > __arraycount(ae->ae_ldrv.al_size)) {
-		aprint_error_dev(amr->amr_dv, "Inquiry returned more drives (%d)"
-		   " than the array can handle (%zu)\n",
-		   ae->ae_ldrv.al_numdrives,
-		   __arraycount(ae->ae_ldrv.al_size));
+		aprint_error_dev(amr->amr_dv, "Inquiry returned more drives "
+		    "(%d) than the array can handle (%zu)\n",
+		    ae->ae_ldrv.al_numdrives,
+		    __arraycount(ae->ae_ldrv.al_size));
 		ae->ae_ldrv.al_numdrives = __arraycount(ae->ae_ldrv.al_size);
 	}
 	if (ae->ae_ldrv.al_numdrives > AMR_MAX_UNITS) {
-		aprint_error_dev(amr->amr_dv, "adjust AMR_MAX_UNITS to %d (currently %d)\n",
-		    ae->ae_ldrv.al_numdrives,
-		    AMR_MAX_UNITS);
+		aprint_error_dev(amr->amr_dv,
+		    "adjust AMR_MAX_UNITS to %d (currently %d)\n",
+		    ae->ae_ldrv.al_numdrives, AMR_MAX_UNITS);
 		amr->amr_numdrives = AMR_MAX_UNITS;
 	} else
 		amr->amr_numdrives = ae->ae_ldrv.al_numdrives;
@@ -773,7 +774,8 @@ amr_shutdown(void *cookie)
 			amr_ccb_free(amr, ac);
 		}
 		if (rv != 0)
-			aprint_error_dev(amr->amr_dv, "unable to flush cache (%d)\n", rv);
+			aprint_error_dev(amr->amr_dv,
+			    "unable to flush cache (%d)\n", rv);
 	}
 }
 
@@ -949,8 +951,8 @@ amr_std_thread(void *cookie)
 		rv = amr_ccb_wait(amr, ac);
 		amr_ccb_unmap(amr, ac);
 		if (rv != 0) {
-			aprint_error_dev(amr->amr_dv, "enquiry failed (st=%d)\n",
- 			    ac->ac_status);
+			aprint_error_dev(amr->amr_dv,
+			    "enquiry failed (st=%d)\n", ac->ac_status);
 			continue;
 		}
 		amr_ccb_free(amr, ac);
@@ -1079,8 +1081,10 @@ amr_ccb_enqueue(struct amr_softc *amr, struct amr_ccb *ac)
 				mutex_spin_exit(&amr->amr_mutex);
 				break;
 			}
-			SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue, ac_chain.simpleq);
-			TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac, ac_chain.tailq);
+			SIMPLEQ_REMOVE_HEAD(&amr->amr_ccb_queue,
+			    ac_chain.simpleq);
+			TAILQ_INSERT_TAIL(&amr->amr_ccb_active, ac,
+			    ac_chain.tailq);
 		}
 		mutex_spin_exit(&amr->amr_mutex);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.25.6.7 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.25.6.8 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.7 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.25.6.8 2016/07/09 20:25:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1774,7 +1774,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 		}
 	}
 	/* Finalize mbuf. */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_data += align;
 	memcpy(mtod(m, void *), wh, mlen);
 	m->m_pkthdr.len = m->m_len = mlen;

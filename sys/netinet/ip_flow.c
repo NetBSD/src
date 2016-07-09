@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.65.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.65.2.2 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.65.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.65.2.2 2016/07/09 20:25:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,14 @@ LIST_HEAD(ipflowhead, ipflow);
 #define	IPFLOW_TIMER		(5 * PR_SLOWHZ)
 #define	IPFLOW_DEFAULT_HASHSIZE	(1 << IPFLOW_HASHBITS)
 
+/*
+ * ip_flow.c internal lock.
+ * If we use softnet_lock, it would cause recursive lock.
+ *
+ * This is a tentative workaround.
+ * We should make it scalable somehow in the future.
+ */
+static kmutex_t ipflow_lock;
 static struct ipflowhead *ipflowtable = NULL;
 static struct ipflowhead ipflowlist;
 static int ipflow_inuse;
@@ -94,6 +102,7 @@ do { \
 static int ip_maxflows = IPFLOW_MAX;
 static int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
+static struct ipflow *ipflow_reap(bool);
 static void ipflow_sysctl_init(struct sysctllog **);
 
 static size_t 
@@ -115,6 +124,8 @@ ipflow_lookup(const struct ip *ip)
 {
 	size_t hash;
 	struct ipflow *ipf;
+
+	KASSERT(mutex_owned(&ipflow_lock));
 
 	hash = ipflow_hash(ip);
 
@@ -141,6 +152,8 @@ ipflow_reinit(int table_size)
 	struct ipflowhead *new_table;
 	size_t i;
 
+	KASSERT(mutex_owned(&ipflow_lock));
+
 	new_table = (struct ipflowhead *)malloc(sizeof(struct ipflowhead) *
 	    table_size, M_RTABLE, M_NOWAIT);
 
@@ -163,7 +176,12 @@ ipflow_reinit(int table_size)
 void
 ipflow_init(void)
 {
+
+	mutex_init(&ipflow_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	mutex_enter(&ipflow_lock);
 	(void)ipflow_reinit(ip_hashsize);
+	mutex_exit(&ipflow_lock);
 	ipflow_sysctl_init(NULL);
 }
 
@@ -177,19 +195,23 @@ ipflow_fastforward(struct mbuf *m)
 	const struct sockaddr *dst;
 	int error;
 	int iplen;
+	struct ifnet *ifp;
+	int s;
+	int ret = 0;
 
+	mutex_enter(&ipflow_lock);
 	/*
 	 * Are we forwarding packets?  Big enough for an IP packet?
 	 */
 	if (!ipforwarding || ipflow_inuse == 0 || m->m_len < sizeof(struct ip))
-		return 0;
+		goto out;
 
 	/*
 	 * Was packet received as a link-level multicast or broadcast?
 	 * If so, don't try to fast forward..
 	 */
 	if ((m->m_flags & (M_BCAST|M_MCAST)) != 0)
-		return 0;
+		goto out;
 
 	/*
 	 * IP header with no option and valid version and length
@@ -203,21 +225,23 @@ ipflow_fastforward(struct mbuf *m)
 	iplen = ntohs(ip->ip_len);
 	if (ip->ip_v != IPVERSION || ip->ip_hl != (sizeof(struct ip) >> 2) ||
 	    iplen < sizeof(struct ip) || iplen > m->m_pkthdr.len)
-		return 0;
+		goto out;
 	/*
 	 * Find a flow.
 	 */
 	if ((ipf = ipflow_lookup(ip)) == NULL)
-		return 0;
+		goto out;
 
+	ifp = m_get_rcvif(m, &s);
 	/*
 	 * Verify the IP header checksum.
 	 */
 	switch (m->m_pkthdr.csum_flags &
-		((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_IPv4) |
+		((ifp->if_csum_flags_rx & M_CSUM_IPv4) |
 		 M_CSUM_IPv4_BAD)) {
 	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
-		return (0);
+		m_put_rcvif(ifp, &s);
+		goto out;
 
 	case M_CSUM_IPv4:
 		/* Checksum was okay. */
@@ -225,10 +249,13 @@ ipflow_fastforward(struct mbuf *m)
 
 	default:
 		/* Must compute it ourselves. */
-		if (in_cksum(m, sizeof(struct ip)) != 0)
-			return (0);
+		if (in_cksum(m, sizeof(struct ip)) != 0) {
+			m_put_rcvif(ifp, &s);
+			goto out;
+		}
 		break;
 	}
+	m_put_rcvif(ifp, &s);
 
 	/*
 	 * Route and interface still up?
@@ -236,13 +263,13 @@ ipflow_fastforward(struct mbuf *m)
 	if ((rt = rtcache_validate(&ipf->ipf_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0 ||
 	    (rt->rt_flags & (RTF_BLACKHOLE | RTF_BROADCAST)) != 0)
-		return 0;
+		goto out;
 
 	/*
 	 * Packet size OK?  TTL?
 	 */
 	if (m->m_pkthdr.len > rt->rt_ifp->if_mtu || ip->ip_ttl <= IPTTLDEC)
-		return 0;
+		goto out;
 
 	/*
 	 * Clear any in-bound checksum flags for this packet.
@@ -296,15 +323,16 @@ ipflow_fastforward(struct mbuf *m)
 	else
 		dst = rtcache_getdst(&ipf->ipf_ro);
 
-	KERNEL_LOCK(1, NULL);
-	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, dst, rt)) != 0) {
+	if ((error = if_output_lock(rt->rt_ifp, rt->rt_ifp, m, dst, rt)) != 0) {
 		if (error == ENOBUFS)
 			ipf->ipf_dropped++;
 		else
 			ipf->ipf_errors++;
 	}
-	KERNEL_UNLOCK_ONE(NULL);
-	return 1;
+	ret = 1;
+ out:
+	mutex_exit(&ipflow_lock);
+	return ret;
 }
 
 static void
@@ -327,29 +355,30 @@ ipflow_addstats(struct ipflow *ipf)
 static void
 ipflow_free(struct ipflow *ipf)
 {
-	int s;
+
+	KASSERT(mutex_owned(&ipflow_lock));
+
 	/*
 	 * Remove the flow from the hash table (at elevated IPL).
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	s = splnet();
 	IPFLOW_REMOVE(ipf);
-	splx(s);
+
 	ipflow_addstats(ipf);
 	rtcache_free(&ipf->ipf_ro);
 	ipflow_inuse--;
-	s = splnet();
 	pool_put(&ipflow_pool, ipf);
-	splx(s);
 }
 
-struct ipflow *
+static struct ipflow *
 ipflow_reap(bool just_one)
 {
+
+	KASSERT(mutex_owned(&ipflow_lock));
+
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
-		int s;
 
 		ipf = LIST_FIRST(&ipflowlist);
 		while (ipf != NULL) {
@@ -378,9 +407,8 @@ ipflow_reap(bool just_one)
 		/*
 		 * Remove the entry from the flow table.
 		 */
-		s = splnet();
 		IPFLOW_REMOVE(ipf);
-		splx(s);
+
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
 		if (just_one)
@@ -399,6 +427,7 @@ ipflow_slowtimo(void)
 	uint64_t *ips;
 
 	mutex_enter(softnet_lock);
+	mutex_enter(&ipflow_lock);
 	KERNEL_LOCK(1, NULL);
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
@@ -417,6 +446,7 @@ ipflow_slowtimo(void)
 		}
 	}
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(&ipflow_lock);
 	mutex_exit(softnet_lock);
 }
 
@@ -426,13 +456,16 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	const struct ip *const ip = mtod(m, const struct ip *);
 	struct ipflow *ipf;
 	size_t hash;
-	int s;
+
+	mutex_enter(&ipflow_lock);
 
 	/*
 	 * Don't create cache entries for ICMP messages.
 	 */
-	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP)
+	if (ip_maxflows == 0 || ip->ip_p == IPPROTO_ICMP) {
+		mutex_exit(&ipflow_lock);
 		return;
+	}
 
 	KERNEL_LOCK(1, NULL);
 
@@ -446,18 +479,15 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		if (ipflow_inuse >= ip_maxflows) {
 			ipf = ipflow_reap(true);
 		} else {
-			s = splnet();
 			ipf = pool_get(&ipflow_pool, PR_NOWAIT);
-			splx(s);
 			if (ipf == NULL)
 				goto out;
 			ipflow_inuse++;
 		}
 		memset(ipf, 0, sizeof(*ipf));
 	} else {
-		s = splnet();
 		IPFLOW_REMOVE(ipf);
-		splx(s);
+
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
 		ipf->ipf_uses = ipf->ipf_last_uses = 0;
@@ -477,22 +507,23 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip);
-	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
-	splx(s);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(&ipflow_lock);
 }
 
 int
 ipflow_invalidate_all(int new_size)
 {
 	struct ipflow *ipf, *next_ipf;
-	int s, error;
+	int error;
 
 	error = 0;
-	s = splnet();
+
+	mutex_enter(&ipflow_lock);
+
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		ipflow_free(ipf);
@@ -500,7 +531,8 @@ ipflow_invalidate_all(int new_size)
 
 	if (new_size)
 		error = ipflow_reinit(new_size);
-	splx(s);
+
+	mutex_exit(&ipflow_lock);
 
 	return error;
 }
@@ -519,11 +551,13 @@ sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 		return (error);
 
 	mutex_enter(softnet_lock);
+	mutex_enter(&ipflow_lock);
 	KERNEL_LOCK(1, NULL);
 
 	ipflow_reap(false);
 
 	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(&ipflow_lock);
 	mutex_exit(softnet_lock);
 
 	return (0);

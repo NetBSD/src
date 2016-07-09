@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_dir.h,v 1.1 2007/06/29 23:30:27 rumble Exp $	*/
+/*	$NetBSD: efs_dir.h,v 1.1.102.1 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -117,7 +117,7 @@ struct efs_dirblk {
 	 * suspect.
 	 */
 	uint8_t		db_space[EFS_DIRBLK_SPACE_SIZE];
-} __packed; 
+} __packed;
 
 /*
  * 'db_slots' (directory entry offset array size) can be no larger
@@ -153,7 +153,7 @@ struct efs_dirent {
 	 */
 	uint8_t		de_namelen;
 	char		de_name[1];	/* variably sized */
-} __packed; 
+} __packed;
 
 #define de_inumber	de_u.l
 

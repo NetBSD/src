@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_netbsd.c,v 1.37 2014/05/30 01:39:03 christos Exp $	*/
+/*	$NetBSD: ipsec_netbsd.c,v 1.37.4.1 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 /*	$KAME: ah_input.c,v 1.64 2001/09/04 08:43:19 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.37 2014/05/30 01:39:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_netbsd.c,v 1.37.4.1 2016/07/09 20:25:22 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -95,7 +95,7 @@ ah4_ctlinput(int cmd, const struct sockaddr *sa, void *v)
 
 	if (sa->sa_family != AF_INET ||
 		sa->sa_len != sizeof(struct sockaddr_in))
-		return NULL; 
+		return NULL;
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 
@@ -415,7 +415,7 @@ sysctl_ipsec_test(SYSCTLFN_ARGS)
 	int t, error;
 	struct sysctlnode node;
 
-	node = *rnode; 
+	node = *rnode;
 	t = *(int*)rnode->sysctl_data;
 	node.sysctl_data = &t;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.32.6.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.32.6.2 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32.6.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.32.6.2 2016/07/09 20:25:22 skrll Exp $");
 
 /*
  * IPsec input processing.
@@ -769,7 +769,8 @@ ipsec6_common_input_cb(struct mbuf *m, struct secasvar *sav, int skip, int proto
 		 */
 		if (m->m_pkthdr.len < skip) {
 			IP6_STATINC(IP6_STAT_TOOSHORT);
-			in6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_truncated);
+			in6_ifstat_inc(m_get_rcvif_NOMPSAFE(m),
+				       ifs6_in_truncated);
 			error = EINVAL;
 			goto bad;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.5 2016/05/29 08:44:40 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.6 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ struct vattr {
 	dev_t		va_rdev;	/* device the special file represents */
 	u_quad_t	va_bytes;	/* bytes of disk space held by file */
 	u_quad_t	va_filerev;	/* file modification number */
-	u_int		va_vaflags;	/* operations flags, see below */
+	unsigned int	va_vaflags;	/* operations flags, see below */
 	long		va_spare;	/* remain quad aligned */
 };
 
@@ -375,7 +375,7 @@ VN_KNOTE(struct vnode *vp, long hint)
  */
 extern struct vnode	*rootvnode;	/* root (i.e. "/") vnode */
 extern int		desiredvnodes;	/* number of vnodes desired */
-extern u_int		numvnodes;	/* current number of vnodes */
+extern unsigned int	numvnodes;	/* current number of vnodes */
 
 #endif /* _KERNEL */
 
@@ -555,8 +555,8 @@ int	vn_marktext(struct vnode *);
 int 	vn_open(struct nameidata *, int, int);
 int 	vn_rdwr(enum uio_rw, struct vnode *, void *, int, off_t, enum uio_seg,
     int, kauth_cred_t, size_t *, struct lwp *);
-int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
-    off_t **, int *);
+int	vn_readdir(struct file *, char *, int, unsigned int, int *,
+    struct lwp *, off_t **, int *);
 int	vn_stat(struct vnode *, struct stat *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);

@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_quota2.c,v 1.4.30.1 2015/04/06 15:18:32 skrll Exp $ */
+/* $NetBSD: ffs_quota2.c,v 1.4.30.2 2016/07/09 20:25:24 skrll Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.4.30.1 2015/04/06 15:18:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.4.30.2 2016/07/09 20:25:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,7 +66,7 @@ ffs_quota2_mount(struct mount *mp)
 	if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA)) &&
 	    fs->fs_quotafile[USRQUOTA] == 0) {
 		printf("%s: no user quota inode\n",
-		    mp->mnt_stat.f_mntonname); 
+		    mp->mnt_stat.f_mntonname);
 		return EINVAL;
 	}
 	if ((fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA)) &&

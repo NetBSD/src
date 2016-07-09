@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754.h,v 1.15 2014/02/01 16:39:52 matt Exp $	*/
+/*	$NetBSD: ieee754.h,v 1.15.6.1 2016/07/09 20:25:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,13 +90,13 @@
 
 struct ieee_single {
 #if _BYTE_ORDER == _BIG_ENDIAN
-	u_int	sng_sign:1;
-	u_int	sng_exp:SNG_EXPBITS;
-	u_int	sng_frac:SNG_FRACBITS;
+	unsigned int	sng_sign:1;
+	unsigned int	sng_exp:SNG_EXPBITS;
+	unsigned int	sng_frac:SNG_FRACBITS;
 #else
-	u_int	sng_frac:SNG_FRACBITS;
-	u_int	sng_exp:SNG_EXPBITS;
-	u_int	sng_sign:1;
+	unsigned int	sng_frac:SNG_FRACBITS;
+	unsigned int	sng_exp:SNG_EXPBITS;
+	unsigned int	sng_sign:1;
 #endif
 };
 
@@ -107,15 +107,15 @@ struct ieee_single {
 
 struct ieee_double {
 #if _BYTE_ORDER == _BIG_ENDIAN
-	u_int	dbl_sign:1;
-	u_int	dbl_exp:DBL_EXPBITS;
-	u_int	dbl_frach:DBL_FRACHBITS;
-	u_int	dbl_fracl:DBL_FRACLBITS;
+	unsigned int	dbl_sign:1;
+	unsigned int	dbl_exp:DBL_EXPBITS;
+	unsigned int	dbl_frach:DBL_FRACHBITS;
+	unsigned int	dbl_fracl:DBL_FRACLBITS;
 #else
-	u_int	dbl_fracl:DBL_FRACLBITS;
-	u_int	dbl_frach:DBL_FRACHBITS;
-	u_int	dbl_exp:DBL_EXPBITS;
-	u_int	dbl_sign:1;
+	unsigned int	dbl_fracl:DBL_FRACLBITS;
+	unsigned int	dbl_frach:DBL_FRACHBITS;
+	unsigned int	dbl_exp:DBL_EXPBITS;
+	unsigned int	dbl_sign:1;
 #endif
 };
 

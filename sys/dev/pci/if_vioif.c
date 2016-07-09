@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.11.2.5 2016/05/29 08:44:22 skrll Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.11.2.6 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.5 2016/05/29 08:44:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.11.2.6 2016/07/09 20:25:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1032,7 +1032,7 @@ vioif_rx_deq_locked(struct vioif_softc *sc)
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_rx_dmamaps[slot]);
 		sc->sc_rx_mbufs[slot] = 0;
 		virtio_dequeue_commit(vsc, vq, slot);
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_len = m->m_pkthdr.len = len;
 		ifp->if_ipackets++;
 		bpf_mtap(ifp, m);

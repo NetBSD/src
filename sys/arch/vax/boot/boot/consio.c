@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.15 2009/03/14 14:46:07 dsl Exp $ */
+/*	$NetBSD: consio.c,v 1.15.40.1 2016/07/09 20:24:58 skrll Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -62,7 +62,7 @@ int rom_putc;		/* ROM-address of put-routine */
 int rom_getc;		/* ROM-address of get-routine */
 
 /* Pointer to KA630 console page, initialized by ka630_consinit */
-unsigned char  *ka630_conspage; 
+unsigned char  *ka630_conspage;
 
 /* Function that initializes things for KA630 ROM console I/O */
 void ka630_consinit(void);

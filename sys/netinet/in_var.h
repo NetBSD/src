@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.70.4.2 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in_var.h,v 1.70.4.3 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,11 @@ struct in_ifaddr {
 	int	ia4_flags;		/* address flags */
 	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
 	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
+
+#ifdef _KERNEL
+	struct pslist_entry	ia_hash_pslist_entry;
+	struct pslist_entry	ia_pslist_entry;
+#endif
 };
 
 struct	in_aliasreq {
@@ -142,67 +147,130 @@ extern	u_long in_ifaddrhash;			/* size of hash table - 1 */
 extern  struct in_ifaddrhashhead *in_ifaddrhashtbl;	/* Hash table head */
 extern  struct in_ifaddrhead in_ifaddrhead;		/* List head (in ip_input) */
 
+extern struct pslist_head *in_ifaddrhashtbl_pslist;
+extern u_long in_ifaddrhash_pslist;
+extern struct pslist_head in_ifaddrhead_pslist;
+
+#define IN_IFADDR_HASH_PSLIST(x)					\
+	in_ifaddrhashtbl_pslist[(u_long)(x) % IN_IFADDR_HASH_SIZE]
+
+#define IN_ADDRHASH_READER_FOREACH(__ia, __addr)			\
+	PSLIST_READER_FOREACH((__ia), &IN_IFADDR_HASH_PSLIST(__addr),	\
+	    struct in_ifaddr, ia_hash_pslist_entry)
+#define IN_ADDRHASH_WRITER_INSERT_HEAD(__ia)				\
+	PSLIST_WRITER_INSERT_HEAD(					\
+	    &IN_IFADDR_HASH_PSLIST((__ia)->ia_addr.sin_addr.s_addr),	\
+	    (__ia), ia_hash_pslist_entry)
+#define IN_ADDRHASH_WRITER_REMOVE(__ia)					\
+	PSLIST_WRITER_REMOVE((__ia), ia_hash_pslist_entry)
+#define IN_ADDRHASH_ENTRY_INIT(__ia)					\
+	PSLIST_ENTRY_INIT((__ia), ia_hash_pslist_entry);
+#define IN_ADDRHASH_ENTRY_DESTROY(__ia)					\
+	PSLIST_ENTRY_DESTROY((__ia), ia_hash_pslist_entry);
+#define IN_ADDRHASH_READER_NEXT(__ia)					\
+	PSLIST_READER_NEXT((__ia), struct in_ifaddr, ia_hash_pslist_entry)
+
+#define IN_ADDRLIST_ENTRY_INIT(__ia)					\
+	PSLIST_ENTRY_INIT((__ia), ia_pslist_entry)
+#define IN_ADDRLIST_ENTRY_DESTROY(__ia)					\
+	PSLIST_ENTRY_DESTROY((__ia), ia_pslist_entry);
+#define IN_ADDRLIST_READER_EMPTY()					\
+	(PSLIST_READER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                     ia_pslist_entry) == NULL)
+#define IN_ADDRLIST_READER_FIRST()					\
+	PSLIST_READER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                    ia_pslist_entry)
+#define IN_ADDRLIST_READER_NEXT(__ia)					\
+	PSLIST_READER_NEXT((__ia), struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_READER_FOREACH(__ia)				\
+	PSLIST_READER_FOREACH((__ia), &in_ifaddrhead_pslist,		\
+	                      struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_INSERT_HEAD(__ia)				\
+	PSLIST_WRITER_INSERT_HEAD(&in_ifaddrhead_pslist, (__ia),	\
+	    ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_REMOVE(__ia)					\
+	PSLIST_WRITER_REMOVE((__ia), ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_FOREACH(__ia)				\
+	PSLIST_WRITER_FOREACH((__ia), &in_ifaddrhead_pslist,		\
+	                      struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_FIRST()					\
+	PSLIST_WRITER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	                    ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_NEXT(__ia)					\
+	PSLIST_WRITER_NEXT((__ia), struct in_ifaddr, ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_INSERT_AFTER(__ia, __new)			\
+	PSLIST_WRITER_INSERT_AFTER((__ia), (__new), ia_pslist_entry)
+#define IN_ADDRLIST_WRITER_EMPTY()					\
+	(PSLIST_WRITER_FIRST(&in_ifaddrhead_pslist, struct in_ifaddr,	\
+	    ia_pslist_entry) == NULL)
+#define IN_ADDRLIST_WRITER_INSERT_TAIL(__new)				\
+	do {								\
+		if (IN_ADDRLIST_WRITER_EMPTY()) {			\
+			IN_ADDRLIST_WRITER_INSERT_HEAD((__new));	\
+		} else {						\
+			struct in_ifaddr *__ia;				\
+			IN_ADDRLIST_WRITER_FOREACH(__ia) {		\
+				if (IN_ADDRLIST_WRITER_NEXT(__ia) == NULL) { \
+					IN_ADDRLIST_WRITER_INSERT_AFTER(__ia,\
+					    (__new));			\
+					break;				\
+				}					\
+			}						\
+		}							\
+	} while (0)
+
 extern	const	int	inetctlerrmap[];
 
 /*
- * Macro for finding whether an internet address (in_addr) belongs to one
+ * Find whether an internet address (in_addr) belongs to one
  * of our interfaces (in_ifaddr).  NULL if the address isn't ours.
  */
-#define INADDR_TO_IA(addr, ia) \
-	/* struct in_addr addr; */ \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	LIST_FOREACH(ia, &IN_IFADDR_HASH((addr).s_addr), ia_hash) { \
-		if (in_hosteq(ia->ia_addr.sin_addr, (addr))) \
-			break; \
-	} \
+static inline struct in_ifaddr *
+in_get_ia(struct in_addr addr)
+{
+	struct in_ifaddr *ia;
+
+	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) {
+		if (in_hosteq(ia->ia_addr.sin_addr, addr))
+			break;
+	}
+
+	return ia;
 }
 
 /*
- * Macro for finding the next in_ifaddr structure with the same internet
- * address as ia. Call only with a valid ia pointer.
- * Will set ia to NULL if none found.
+ * Find whether an internet address (in_addr) belongs to a specified
+ * interface.  NULL if the address isn't ours.
  */
+static inline struct in_ifaddr *
+in_get_ia_on_iface(struct in_addr addr, struct ifnet *ifp)
+{
+	struct in_ifaddr *ia;
 
-#define NEXT_IA_WITH_SAME_ADDR(ia) \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	struct in_addr addr; \
-	addr = ia->ia_addr.sin_addr; \
-	do { \
-		ia = LIST_NEXT(ia, ia_hash); \
-	} while ((ia != NULL) && !in_hosteq(ia->ia_addr.sin_addr, addr)); \
+	IN_ADDRHASH_READER_FOREACH(ia, addr.s_addr) {
+		if (in_hosteq(ia->ia_addr.sin_addr, addr) &&
+		    ia->ia_ifp == ifp)
+			break;
+	}
+
+	return ia;
 }
 
 /*
- * Macro for finding the interface (ifnet structure) corresponding to one
- * of our IP addresses.
- */
-#define INADDR_TO_IFP(addr, ifp) \
-	/* struct in_addr addr; */ \
-	/* struct ifnet *ifp; */ \
-{ \
-	struct in_ifaddr *ia; \
-\
-	INADDR_TO_IA(addr, ia); \
-	(ifp) = (ia == NULL) ? NULL : ia->ia_ifp; \
-}
-
-/*
- * Macro for finding an internet address structure (in_ifaddr) corresponding
+ * Find an internet address structure (in_ifaddr) corresponding
  * to a given interface (ifnet structure).
  */
-#define IFP_TO_IA(ifp, ia) \
-	/* struct ifnet *ifp; */ \
-	/* struct in_ifaddr *ia; */ \
-{ \
-	struct ifaddr *ifa; \
-\
-	IFADDR_FOREACH(ifa, ifp) { \
-		if (ifa->ifa_addr->sa_family == AF_INET) \
-			break; \
-	} \
-	(ia) = ifatoia(ifa); \
+static inline struct in_ifaddr *
+in_get_ia_from_ifp(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	IFADDR_READER_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			break;
+	}
+
+	return ifatoia(ifa);
 }
 
 #include <netinet/in_selsrc.h>

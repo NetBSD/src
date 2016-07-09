@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.11.4.2 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.11.4.3 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11.4.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.11.4.3 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1128,7 +1128,7 @@ vte_rxeof(struct vte_softc *sc)
 		 * It seems there is no way to strip FCS bytes.
 		 */
 		m->m_pkthdr.len = m->m_len = total_len - ETHER_CRC_LEN;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		ifp->if_ipackets++;
 		bpf_mtap(ifp, m);
 		if_percpuq_enqueue(ifp->if_percpuq, m);

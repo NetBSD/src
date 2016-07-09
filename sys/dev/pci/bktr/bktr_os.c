@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.65 2014/07/25 08:10:38 dholland Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.65.4.1 2016/07/09 20:25:14 skrll Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.65 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.65.4.1 2016/07/09 20:25:14 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1516,8 +1516,7 @@ bktr_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", bktr_name(bktr),
-		       intrstr);
+		printf("%s: interrupting at %s\n", bktr_name(bktr), intrstr);
 	selinit(&bktr->vbi_select);
 #endif /* __NetBSD__ */
 

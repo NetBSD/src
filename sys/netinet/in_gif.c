@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.64.4.3 2016/03/19 11:30:33 skrll Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.64.4.4 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.3 2016/03/19 11:30:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -204,7 +204,8 @@ in_gif_input(struct mbuf *m, int off, int proto)
 
 	gifp = (struct ifnet *)encap_getarg(m);
 
-	if (gifp == NULL || (gifp->if_flags & IFF_UP) == 0) {
+	if (gifp == NULL || (gifp->if_flags & (IFF_UP|IFF_RUNNING))
+		!= (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
@@ -218,11 +219,16 @@ in_gif_input(struct mbuf *m, int off, int proto)
 		return;
 	}
 
-	if (!gif_validate4(ip, sc, m->m_pkthdr.rcvif)) {
+	struct ifnet *rcvif;
+	struct psref psref;
+	rcvif = m_get_rcvif_psref(m, &psref);
+	if (!gif_validate4(ip, sc, rcvif)) {
+		m_put_rcvif_psref(rcvif, &psref);
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
+	m_put_rcvif_psref(rcvif, &psref);
 #endif
 	otos = ip->ip_tos;
 	m_adj(m, off);
@@ -300,7 +306,7 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-	TAILQ_FOREACH(ia4, &in_ifaddrhead, ia_list) {
+	IN_ADDRLIST_READER_FOREACH(ia4) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
@@ -343,15 +349,21 @@ gif_encapcheck4(struct mbuf *m, int off, int proto, void *arg)
 {
 	struct ip ip;
 	struct gif_softc *sc;
-	struct ifnet *ifp;
+	struct ifnet *ifp = NULL;
+	int r;
+	struct psref psref;
 
 	/* sanity check done in caller */
 	sc = arg;
 
 	m_copydata(m, 0, sizeof(ip), &ip);
-	ifp = ((m->m_flags & M_PKTHDR) != 0) ? m->m_pkthdr.rcvif : NULL;
+	if ((m->m_flags & M_PKTHDR) != 0)
+		ifp = m_get_rcvif_psref(m, &psref);
 
-	return gif_validate4(&ip, sc, ifp);
+	r = gif_validate4(&ip, sc, ifp);
+
+	m_put_rcvif_psref(ifp, &psref);
+	return r;
 }
 #endif
 
@@ -384,11 +396,21 @@ in_gif_detach(struct gif_softc *sc)
 {
 	int error;
 
+	error = in_gif_pause(sc);
+
+	rtcache_free(&sc->gif_ro);
+
+	return error;
+}
+
+int
+in_gif_pause(struct gif_softc *sc)
+{
+	int error;
+
 	error = encap_detach(sc->encap_cookie4);
 	if (error == 0)
 		sc->encap_cookie4 = NULL;
-
-	rtcache_free(&sc->gif_ro);
 
 	return error;
 }

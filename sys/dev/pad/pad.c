@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.22.2.2 2016/03/19 11:30:10 skrll Exp $ */
+/* $NetBSD: pad.c,v 1.22.2.3 2016/07/09 20:25:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.22.2.2 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.22.2.3 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,8 +122,8 @@ static const struct audio_format pad_formats[PAD_NFORMATS] = {
 
 extern void	padattach(int);
 
-static int		pad_add_block(pad_softc_t *, uint8_t *, int);
-static int		pad_get_block(pad_softc_t *, pad_block_t *, int);
+static int	pad_add_block(pad_softc_t *, uint8_t *, int);
+static int	pad_get_block(pad_softc_t *, pad_block_t *, int);
 
 dev_type_open(pad_open);
 dev_type_close(pad_close);
@@ -760,7 +760,8 @@ pad_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor, &pad_cdevsw, &cmajor);
+		error = devsw_attach(pad_cd.cd_name, NULL, &bmajor,
+		    &pad_cdevsw, &cmajor);
 		if (error) {
 			error = config_cfdata_detach(pad_cfdata);
 			if (error) {

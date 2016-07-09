@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.57.6.2 2015/12/27 12:09:50 skrll Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.57.6.3 2016/07/09 20:25:04 skrll Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57.6.2 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57.6.3 2016/07/09 20:25:04 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1054,7 +1054,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	sbd->bd->physaddr = htole32(sbuf->map->dm_segs[0].ds_addr);
 
 	/* finalize mbuf */
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = m->m_len = le32toh(status->len);
 
 	if (sc->sc_drvbpf != NULL) {

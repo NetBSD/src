@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss_pci.c,v 1.11 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ciss_pci.c,v 1.11.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 /*	$OpenBSD: ciss_pci.c,v 1.9 2005/12/13 15:56:01 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.11 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss_pci.c,v 1.11.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,13 +283,13 @@ ciss_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_dmat = pa->pa_dmat;
 
-	sc->iem = CISS_READYENA;
+	sc->iem = CISS_INTR_OPQ_SA5;
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
 	if (PCI_VENDOR(reg) == PCI_VENDOR_COMPAQ &&
 	    (PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5i ||
 	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA532 ||
 	     PCI_PRODUCT(reg) == PCI_PRODUCT_COMPAQ_CSA5312))
-		sc->iem = CISS_READYENAB;
+		sc->iem = CISS_INTR_OPQ_SA5B;
 
 	cfg_bar = bus_space_read_2(sc->sc_iot, sc->sc_ioh, CISS_CFG_BAR);
 	sc->cfgoff = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CISS_CFG_OFF);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.9 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.10 2016/07/09 20:25:15 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.9 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.10 2016/07/09 20:25:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,12 +85,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.9 2016/03/19 11:30:19 skrll Exp $
 
 
 /* Function declarations */
-int             udav_match(device_t, cfdata_t, void *);
-void            udav_attach(device_t, device_t, void *);
-int             udav_detach(device_t, int);
-int             udav_activate(device_t, enum devact);
+int	udav_match(device_t, cfdata_t, void *);
+void	udav_attach(device_t, device_t, void *);
+int	udav_detach(device_t, int);
+int	udav_activate(device_t, enum devact);
 extern struct cfdriver udav_cd;
-CFATTACH_DECL_NEW(udav, sizeof(struct udav_softc), udav_match, udav_attach, udav_detach, udav_activate);
+CFATTACH_DECL_NEW(udav, sizeof(struct udav_softc), udav_match, udav_attach,
+    udav_detach, udav_activate);
 
 Static int udav_openpipes(struct udav_softc *);
 Static int udav_rx_list_init(struct udav_softc *);
@@ -217,7 +218,8 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	usb_init_task(&sc->sc_tick_task, udav_tick_task, sc, 0);
 	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
-	usb_init_task(&sc->sc_stop_task, (void (*)(void *))udav_stop_task, sc, 0);
+	usb_init_task(&sc->sc_stop_task, (void (*)(void *))udav_stop_task, sc,
+	    0);
 
 	/* get control interface */
 	err = usbd_device2interface_handle(dev, UDAV_IFACE_INDEX, &iface);
@@ -229,7 +231,8 @@ udav_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_udev = dev;
 	sc->sc_ctl_iface = iface;
-	sc->sc_flags = udav_lookup(uaa->uaa_vendor, uaa->uaa_product)->udav_flags;
+	sc->sc_flags = udav_lookup(uaa->uaa_vendor,
+	    uaa->uaa_product)->udav_flags;
 
 	/* get interface descriptor */
 	id = usbd_get_interface_descriptor(sc->sc_ctl_iface);
@@ -381,8 +384,7 @@ udav_detach(device_t self, int flags)
 
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	mutex_destroy(&sc->sc_mii_lock);
 
@@ -937,8 +939,8 @@ udav_rx_list_init(struct udav_softc *sc)
 		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->udav_xfer == NULL) {
-			int error = usbd_create_xfer(sc->sc_pipe_rx, UDAV_BUFSZ,
-			    USBD_SHORT_XFER_OK, 0, &c->udav_xfer);
+			int error = usbd_create_xfer(sc->sc_pipe_rx,
+			    UDAV_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->udav_xfer);
 			if (error)
 				return error;
 			c->udav_buf = usbd_get_buffer(c->udav_xfer);
@@ -1177,7 +1179,7 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	total_len -= ETHER_CRC_LEN;
 
 	m->m_pkthdr.len = m->m_len = total_len;
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 
 	s = splnet();
 

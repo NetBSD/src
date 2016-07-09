@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.78.4.3 2016/03/19 11:30:10 skrll Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.78.4.4 2016/07/09 20:25:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.3 2016/03/19 11:30:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.78.4.4 2016/07/09 20:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2109,7 +2109,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			m_adj(m0, ETHER_ALIGN);
 			m = m0;
 		} else {
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = total_len;
 		}
 

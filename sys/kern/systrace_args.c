@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.2.2.6 2016/05/29 08:44:37 skrll Exp $ */
+/* $NetBSD: systrace_args.c,v 1.2.2.7 2016/07/09 20:25:20 skrll Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2517,6 +2517,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	/* sys_sched_yield */
 	case 350: {
 		*n_args = 0;
+		break;
+	}
+	/* sys__sched_protect */
+	case 351: {
+		struct sys__sched_protect_args *p = params;
+		iarg[0] = SCARG(p, priority); /* int */
+		*n_args = 1;
 		break;
 	}
 	/* sys_fsync_range */
@@ -7802,6 +7809,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* sys_sched_yield */
 	case 350:
 		break;
+	/* sys__sched_protect */
+	case 351:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* sys_fsync_range */
 	case 354:
 		switch(ndx) {
@@ -11373,6 +11390,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* sys_sched_yield */
 	case 350:
+	/* sys__sched_protect */
+	case 351:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* sys_fsync_range */
 	case 354:
 		if (ndx == 0 || ndx == 1)

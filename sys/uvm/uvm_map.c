@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.331.2.4 2016/05/29 08:44:40 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.331.2.5 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.4 2016/05/29 08:44:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.5 2016/07/09 20:25:25 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2110,8 +2110,10 @@ nextgap:
 	SAVE_HINT(map, map->hint, entry);
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=%#lx)", hint, 0,0,0);
-	KASSERT( topdown || hint >= orig_hint);
-	KASSERT(!topdown || hint <= orig_hint);
+	KASSERTMSG( topdown || hint >= orig_hint, "hint: %jx, orig_hint: %jx",
+	    (uintmax_t)hint, (uintmax_t)orig_hint);
+	KASSERTMSG(!topdown || hint <= orig_hint, "hint: %jx, orig_hint: %jx",
+	    (uintmax_t)hint, (uintmax_t)orig_hint);
 	KASSERT(entry->end <= hint);
 	KASSERT(hint + length <= entry->next->start);
 	return (entry);
@@ -4877,14 +4879,18 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 {
 	int error;
 	struct proc *p;
-	struct kinfo_vmentry vme;
+	struct kinfo_vmentry *vme;
 	struct vmspace *vm;
 	struct vm_map *map;
 	struct vm_map_entry *entry;
 	char *dp;
-	size_t count;
+	size_t count, vmesize;
 
+	vme = NULL;
+	vmesize = *oldlenp;
 	count = 0;
+	if (oldp && *oldlenp > 1024 * 1024)
+		return E2BIG;
 
 	if ((error = proc_find_locked(l, &p, pid)) != 0)
 		return error;
@@ -4896,31 +4902,44 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 	vm_map_lock_read(map);
 
 	dp = oldp;
+	if (oldp)
+		vme = kmem_alloc(vmesize, KM_SLEEP);
 	for (entry = map->header.next; entry != &map->header;
 	    entry = entry->next) {
 		if (oldp && (dp - (char *)oldp) < *oldlenp + elem_size) {
-			error = fill_vmentry(l, p, &vme, map, entry);
+			error = fill_vmentry(l, p, &vme[count], map, entry);
 			if (error)
-				break;
-			error = sysctl_copyout(l, &vme, dp,
-			    min(elem_size, sizeof(vme)));
-			if (error)
-				break;
+				goto out;
 			dp += elem_size;
 		}
 		count++;
 	}
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);
+
 out:
 	if (pid != -1)
 		mutex_exit(p->p_lock);
 	if (error == 0) {
+		const u_int esize = min(sizeof(*vme), elem_size);
+		dp = oldp;
+		for (size_t i = 0; i < count; i++) {
+			if (oldp && (dp - (char *)oldp) < *oldlenp + elem_size)
+			{
+				error = sysctl_copyout(l, &vme[i], dp, esize);
+				if (error)
+					break;
+				dp += elem_size;
+			} else
+				break;
+		}
 		count *= elem_size;
 		if (oldp != NULL && *oldlenp < count)
 			error = ENOSPC;
 		*oldlenp = count;
 	}
+	if (vme)
+		kmem_free(vme, vmesize);
 	return error;
 }
 

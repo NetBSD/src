@@ -1,5 +1,5 @@
-/*	$NetBSD: ulfs_quota.c,v 1.12 2014/06/28 22:27:51 dholland Exp $	*/
-/*  from NetBSD: ufs_quota.c,v 1.115 2013/11/16 17:04:53 dholland Exp  */
+/*	$NetBSD: ulfs_quota.c,v 1.12.4.1 2016/07/09 20:25:25 skrll Exp $	*/
+/*  from NetBSD: ufs_quota.c,v 1.117 2014/06/28 22:27:51 dholland Exp  */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.12 2014/06/28 22:27:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota.c,v 1.12.4.1 2016/07/09 20:25:25 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"

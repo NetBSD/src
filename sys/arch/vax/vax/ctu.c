@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.34 2014/07/25 08:10:35 dholland Exp $ */
+/*	$NetBSD: ctu.c,v 1.34.4.1 2016/07/09 20:24:58 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.34 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.34.4.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,7 +382,7 @@ cturintr(void *arg)
 #ifdef TUDEBUG
 		printf("Writing byte %d\n", tu_sc.sc_xbytes);
 #endif
-		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD); 
+		WAIT; mtpr(RSP_TYP_DATA, PR_CSTD);
 		WAIT; mtpr(128, PR_CSTD);
 		for (i = 0; i < 128; i++) {
 			WAIT;

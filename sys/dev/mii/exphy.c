@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.53 2013/06/09 09:15:51 msaitoh Exp $	*/
+/*	$NetBSD: exphy.c,v 1.53.10.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.53 2013/06/09 09:15:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.53.10.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,8 +139,7 @@ exphyattach(device_t parent, device_t self, void *aux)
 
 	PHY_RESET(sc);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		aprint_error_dev(self, "no media present\n");
 	else {

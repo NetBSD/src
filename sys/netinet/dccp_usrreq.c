@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.2.2.4 2015/09/22 12:06:11 skrll Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.2.2.4 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.2.2.5 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -406,7 +406,7 @@ dccp_input(struct mbuf *m, ...)
 		 *	*ip = save_ip;
 		 *	ip->ip_len += iphlen;
 		 *	icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
-		 * }
+		 * } 
 		 */
 
 		INP_INFO_WUNLOCK(&dccpbinfo);
@@ -1427,7 +1427,7 @@ again:
 		dp->ndp++;
 	}
 
-	m->m_pkthdr.rcvif = (struct ifnet *)0;
+	m_reset_rcvif(m);
 
 	if (!isipv6 && (len + hdrlen) > IP_MAXPACKET) {
 		error = EMSGSIZE;
@@ -1505,7 +1505,7 @@ again:
 		drth = (struct dccp_resethdr *)(dlh + 1);
 		drth->drth_dash.dah_res = 0;
 		DSEQ_TO_DAHDR(drth->drth_dash, dp->seq_rcv);
-		if (dp->state == DCCPS_SERVER_CLOSE)
+		if (dp->state == DCCPS_SERVER_CLOSE) 
 			drth->drth_reason = 1;
 		else
 			drth->drth_reason = 2;
@@ -1619,7 +1619,7 @@ again:
 	{
 		DCCP_DEBUG((LOG_INFO, "Calling ip_output, mbuf->m_len = %u, mbuf->m_pkthdr.len = %u\n", m->m_len, m->m_pkthdr.len));
 		error = ip_output(m, inp->inp_options, &inp->inp_route,
-		    (inp->inp_socket->so_options & SO_DONTROUTE), 0,
+		    (inp->inp_socket->so_options & SO_DONTROUTE), 0, 
 				  inp->inp_socket);
 	}
 

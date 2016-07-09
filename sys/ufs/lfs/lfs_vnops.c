@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.269.4.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.269.4.4 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  *	@(#)lfs_vnops.c	8.13 (Berkeley) 6/10/95
  */
 
-/*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
+/*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.4.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.4.4 2016/07/09 20:25:25 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,6 +177,10 @@ static int lfs_getextattr(void *v);
 static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
+
+static int lfs_makeinode(struct vattr *vap, struct vnode *,
+		      const struct ulfs_lookup_results *,
+		      struct vnode **, struct componentname *);
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -350,6 +354,75 @@ const struct vnodeopv_desc lfs_fifoop_opv_desc =
 #define	LFS_READWRITE
 #include <ufs/lfs/ulfs_readwrite.c>
 #undef	LFS_READWRITE
+
+/*
+ * Allocate a new inode.
+ */
+static int
+lfs_makeinode(struct vattr *vap, struct vnode *dvp,
+	const struct ulfs_lookup_results *ulr,
+	struct vnode **vpp, struct componentname *cnp)
+{
+	struct inode	*ip;
+	struct vnode	*tvp;
+	int		error;
+
+	error = vcache_new(dvp->v_mount, dvp, vap, cnp->cn_cred, &tvp);
+	if (error)
+		return error;
+	error = vn_lock(tvp, LK_EXCLUSIVE);
+	if (error) {
+		vrele(tvp);
+		return error;
+	}
+	lfs_mark_vnode(tvp);
+	*vpp = tvp;
+	ip = VTOI(tvp);
+	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
+	ip->i_nlink = 1;
+	DIP_ASSIGN(ip, nlink, 1);
+
+	/* Authorize setting SGID if needed. */
+	if (ip->i_mode & ISGID) {
+		error = kauth_authorize_vnode(cnp->cn_cred, KAUTH_VNODE_WRITE_SECURITY,
+		    tvp, NULL, genfs_can_chmod(tvp->v_type, cnp->cn_cred, ip->i_uid,
+		    ip->i_gid, MAKEIMODE(vap->va_type, vap->va_mode)));
+		if (error) {
+			ip->i_mode &= ~ISGID;
+			DIP_ASSIGN(ip, mode, ip->i_mode);
+		}
+	}
+
+	if (cnp->cn_flags & ISWHITEOUT) {
+		ip->i_flags |= UF_OPAQUE;
+		DIP_ASSIGN(ip, flags, ip->i_flags);
+	}
+
+	/*
+	 * Make sure inode goes to disk before directory entry.
+	 */
+	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
+		goto bad;
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
+	if (error)
+		goto bad;
+	*vpp = tvp;
+	return (0);
+
+ bad:
+	/*
+	 * Write error occurred trying to update the inode
+	 * or the directory so must deallocate the inode.
+	 */
+	ip->i_nlink = 0;
+	DIP_ASSIGN(ip, nlink, 0);
+	ip->i_flag |= IN_CHANGE;
+	/* If IN_ADIROP, account for it */
+	lfs_unmark_vnode(tvp);
+	vput(tvp);
+	return (error);
+}
 
 /*
  * Synch an open file.
@@ -646,7 +719,7 @@ lfs_symlink(void *v)
 		return error;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(ap->a_vap, dvp, ulr, vpp, ap->a_cnp);
+	error = lfs_makeinode(ap->a_vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
 		goto out;
 	}
@@ -654,6 +727,13 @@ lfs_symlink(void *v)
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 
+	/*
+	 * This test is off by one. um_maxsymlinklen contains the
+	 * number of bytes available, and we aren't storing a \0, so
+	 * the test should properly be <=. However, it cannot be
+	 * changed as this would break compatibility with existing fs
+	 * images -- see the way ulfs_readlink() works.
+	 */
 	len = strlen(ap->a_target);
 	if (len < ip->i_lfs->um_maxsymlinklen) {
 		memcpy((char *)SHORTLINK(ip), ap->a_target, len);
@@ -726,22 +806,17 @@ lfs_mknod(void *v)
 	if (error)
 		return error;
 
-	fstrans_start(ap->a_dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
+	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
+	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 
 	/* Either way we're done with the dirop at this point */
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
 	lfs_unset_dirop(fs, dvp, "mknod");
-	/*
-	 * XXX this is where this used to be (though inside some evil
-	 * macros) but it clearly should be moved further down.
-	 * - dholland 20140515
-	 */
-	vrele(dvp);
 
 	if (error) {
-		fstrans_done(ap->a_dvp->v_mount);
+		fstrans_done(dvp->v_mount);
+		vrele(dvp);
 		*vpp = NULL;
 		return (error);
 	}
@@ -765,7 +840,8 @@ lfs_mknod(void *v)
 		/* return (error); */
 	}
 
-	fstrans_done(ap->a_dvp->v_mount);
+	fstrans_done(dvp->v_mount);
+	vrele(dvp);
 	KASSERT(error == 0);
 	VOP_UNLOCK(*vpp);
 	return (0);
@@ -811,7 +887,7 @@ lfs_create(void *v)
 		return error;
 
 	fstrans_start(dvp->v_mount, FSTRANS_SHARED);
-	error = ulfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
+	error = lfs_makeinode(vap, dvp, ulr, vpp, ap->a_cnp);
 	if (error) {
 		fstrans_done(dvp->v_mount);
 		goto out;
@@ -891,7 +967,7 @@ lfs_mkdir(void *v)
 	}
 
 	/*
-	 * Must simulate part of ulfs_makeinode here to acquire the inode,
+	 * Must simulate part of lfs_makeinode here to acquire the inode,
 	 * but not have it entered in the parent directory. The entry is
 	 * made later after writing "." and ".." entries.
 	 */
@@ -2290,3 +2366,4 @@ lfs_deleteextattr(void *v)
 	/* XXX Not implemented for ULFS2 file systems. */
 	return (EOPNOTSUPP);
 }
+

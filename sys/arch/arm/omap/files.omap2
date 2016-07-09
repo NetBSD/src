@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.29.2.3 2015/12/27 12:09:31 skrll Exp $
+#	$NetBSD: files.omap2,v 1.29.2.4 2016/07/09 20:24:50 skrll Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -122,6 +122,17 @@ device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
 
+device	edma
+attach	edma at mainbus
+file	arch/arm/omap/omap_edma.c		edma needs-flag
+
+# TI OTG controller
+define  tiotg_port {[port = -1], [mode = -1]}
+device	tiotg: tiotg_port
+attach	tiotg at mainbus
+file	arch/arm/omap/tiotg.c			tiotg
+attach  motg at tiotg_port
+
 # SDMMC controller
 attach	sdhc at obio with obiosdhc
 file	arch/arm/omap/omap3_sdhc.c		obiosdhc
@@ -144,13 +155,6 @@ file	arch/arm/omap/obio_ohci.c		obioohci
 attach	ehci at obio with omap3_ehci
 file	arch/arm/omap/omap3_ehci.c		omap3_ehci
 
-# TI OTG controller
-define  tiotg_port {[port = -1], [mode = -1]}
-device	tiotg: tiotg_port
-attach	tiotg at obio
-file	arch/arm/omap/tiotg.c			tiotg
-attach  motg at tiotg_port
-
 attach	ahcisata at obio with omap5_ahcisata
 file	arch/arm/omap/omap5_ahcisata.c		omap5_ahcisata
 
@@ -170,10 +174,6 @@ file	arch/arm/omap/if_cpsw.c			cpsw
 device 	omapdma
 attach 	omapdma at obio
 file	arch/arm/omap/omap3_sdma.c		omapdma needs-flag
-
-device	edma
-attach	edma at obio
-file	arch/arm/omap/omap_edma.c		edma needs-flag
 
 device	trng
 attach	trng at obio

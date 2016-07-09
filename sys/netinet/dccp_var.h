@@ -1,5 +1,5 @@
 /*	$KAME: dccp_var.h,v 1.29 2005/11/03 14:59:28 nishida Exp $	*/
-/*	$NetBSD: dccp_var.h,v 1.1.2.3 2015/06/06 14:40:25 skrll Exp $ */
+/*	$NetBSD: dccp_var.h,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson
@@ -299,7 +299,8 @@ void	dccp_input(struct mbuf *, ...);
 void*	dccp_ctlinput(int, const struct sockaddr *, void *);
 int	dccp_ctloutput(int , struct socket *, struct sockopt *);
 int	dccp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
-int	dccp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+int	dccp_usrreq(struct socket *, int, struct mbuf *, struct mbuf *,
+    struct mbuf *, struct lwp *);
 
 void	dccp_notify(struct inpcb *, int);
 struct dccpcb *
@@ -308,7 +309,8 @@ int	dccp_shutdown(struct socket *);
 int	dccp_output(struct dccpcb *, u_int8_t);
 int	dccp_doconnect(struct socket *, struct sockaddr *, struct lwp *, int);
 int	dccp_add_option(struct dccpcb *, u_int8_t, char *, u_int8_t);
-int	dccp_add_feature(struct dccpcb *, u_int8_t, u_int8_t,  char *, u_int8_t);
+int	dccp_add_feature(struct dccpcb *, u_int8_t, u_int8_t,  char *,
+    u_int8_t);
 int	dccp_detach(struct socket *);
 int	dccp_attach(struct socket *, int);
 int	dccp_abort(struct socket *);

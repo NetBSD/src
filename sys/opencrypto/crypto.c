@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.45.6.1 2015/12/27 12:10:08 skrll Exp $ */
+/*	$NetBSD: crypto.c,v 1.45.6.2 2016/07/09 20:25:23 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.45.6.1 2015/12/27 12:10:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.45.6.2 2016/07/09 20:25:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -260,7 +260,7 @@ crypto_init0(void)
 	mutex_init(&crypto_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 	cv_init(&cryptoret_cv, "crypto_w");
 	pool_init(&cryptop_pool, sizeof(struct cryptop), 0, 0,  
-		  0, "cryptop", NULL, IPL_NET); 
+		  0, "cryptop", NULL, IPL_NET);
 	pool_init(&cryptodesc_pool, sizeof(struct cryptodesc), 0, 0,
 		  0, "cryptodesc", NULL, IPL_NET);
 	pool_init(&cryptkop_pool, sizeof(struct cryptkop), 0, 0,
@@ -1270,7 +1270,7 @@ cryptointr(void)
 			result = crypto_invoke(submit, hint);
 			/* we must take here as the TAILQ op or kinvoke
 			   may need this mutex below.  sigh. */
-			mutex_spin_enter(&crypto_q_mtx);	
+			mutex_spin_enter(&crypto_q_mtx);
 			if (result == ERESTART) {
 				/*
 				 * The driver ran out of resources, mark the

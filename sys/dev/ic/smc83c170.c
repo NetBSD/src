@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.81.16.1 2016/03/19 11:30:09 skrll Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.81.16.2 2016/07/09 20:25:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.81.16.1 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.81.16.2 2016/07/09 20:25:02 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -704,7 +704,7 @@ epic_intr(void *arg)
 				}
 			}
 
-			m->m_pkthdr.rcvif = ifp;
+			m_set_rcvif(m, ifp);
 			m->m_pkthdr.len = m->m_len = len;
 
 			/*

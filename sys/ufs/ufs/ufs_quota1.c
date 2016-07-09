@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.21 2014/11/25 19:48:24 christos Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.21.2.1 2016/07/09 20:25:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.21 2014/11/25 19:48:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.21.2.1 2016/07/09 20:25:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -806,7 +806,7 @@ dq1get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
 	aiov.iov_base = (void *)&dq->dq_un.dq1_dqb;
 	aiov.iov_len = sizeof (struct dqblk);
 	auio.uio_resid = sizeof (struct dqblk);
-	auio.uio_offset = (off_t)(id * sizeof (struct dqblk));
+	auio.uio_offset = (off_t)id * sizeof (struct dqblk);
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 	error = VOP_READ(dqvp, &auio, 0, ump->um_cred[type]);

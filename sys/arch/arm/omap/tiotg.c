@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.8.4 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.5 2016/07/09 20:24:50 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.4 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.5 2016/07/09 20:24:50 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -38,7 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.4 2015/03/19 17:26:42 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <arm/omap/omap2_obiovar.h>
+#include <arm/mainbus/mainbus.h>
+#include <arm/omap/omap_var.h>
 
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/tiotgreg.h>
@@ -127,10 +128,11 @@ CFATTACH_DECL2_NEW(motg, sizeof(struct ti_motg_softc),
 static int
 tiotg_match(device_t parent, cfdata_t match, void *aux)
 {
-        struct obio_attach_args *obio = aux;
+	struct mainbus_attach_args *mb = aux;
 
-        if ((obio->obio_addr == -1) || (obio->obio_size == 0) ||
-	    (obio->obio_intrbase == -1))
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT ||
+	    mb->mb_iosize == MAINBUSCF_SIZE_DEFAULT ||
+	    mb->mb_intrbase == MAINBUSCF_INTRBASE_DEFAULT)
                 return 0;
         return 1;
 }
@@ -139,21 +141,21 @@ static void
 tiotg_attach(device_t parent, device_t self, void *aux)
 {
 	struct tiotg_softc       *sc = device_private(self);
-	struct obio_attach_args *obio = aux;
+	struct mainbus_attach_args *mb = aux;
 	uint32_t val;
 
-	sc->sc_iot = obio->obio_iot;
-	sc->sc_dmat = obio->obio_dmat;
+	sc->sc_iot = &omap_bs_tag;
+	sc->sc_dmat = &omap_bus_dma_tag;
 	sc->sc_dev = self;
 
-	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
+	if (bus_space_map(sc->sc_iot, mb->mb_iobase, mb->mb_iosize, 0,
 	    &sc->sc_ioh)) {
 		aprint_error(": couldn't map register space\n");
 		return;
 	}
 
-	sc->sc_intrbase = obio->obio_intrbase;
-	sc->sc_ih = intr_establish(obio->obio_intrbase, IPL_USB, IST_LEVEL,
+	sc->sc_intrbase = mb->mb_intrbase;
+	sc->sc_ih = intr_establish(mb->mb_intrbase, IPL_USB, IST_LEVEL,
 	    tiotg_intr, sc);
         KASSERT(sc->sc_ih != NULL);
 	aprint_normal(": TI dual-port USB controller");

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.45.6.1 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.45.6.2 2016/07/09 20:25:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,10 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.45.6.1 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.45.6.2 2016/07/09 20:25:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
+#include "opt_compat_netbsd32.h"
 #endif
 
 #ifndef ELFSIZE
@@ -405,7 +406,6 @@ coredump_note_auxv(struct lwp *l, struct note_state *ns)
 	struct ps_strings pss;
 	int error;
 	struct proc *p = l->l_proc;
-	struct vmspace *vm;
 	void *uauxv, *kauxv;
 	size_t len;
 
@@ -415,16 +415,21 @@ coredump_note_auxv(struct lwp *l, struct note_state *ns)
 	if (pss.ps_envstr == NULL)
 		return EIO;
 
-        vm = p->p_vmspace;
-	uvmspace_addref(vm);
+	len = p->p_execsw->es_arglen;
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & PK_32) {
+		uauxv = (void *)((char *)pss.ps_envstr
+		    + (pss.ps_nenvstr + 1) * sizeof(int32_t));
+		len *= sizeof(int32_t);
+	} else
+#endif
+	{
+		uauxv = (void *)(pss.ps_envstr + pss.ps_nenvstr + 1);
+		len *= sizeof(char *);
+	}
 
-	len = p->p_execsw->es_arglen * sizeof(char *);
-	uauxv = (void *)(pss.ps_envstr + pss.ps_nenvstr + 1);
 	kauxv = kmem_alloc(len, KM_SLEEP);
-	error = copyin_vmspace(vm, uauxv, kauxv, len);
-
-	uvmspace_free(vm);
-
+	error = copyin_proc(p, uauxv, kauxv, len);
 	if (error == 0) {
 		ELFNAMEEND(coredump_savenote)(ns, ELF_NOTE_NETBSD_CORE_AUXV,
 		    ELF_NOTE_NETBSD_CORE_NAME, kauxv, len);

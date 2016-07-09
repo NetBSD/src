@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.3 2014/09/26 08:05:00 ryo Exp $	*/
+/*	$NetBSD: micphy.c,v 1.3.2.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.3 2014/09/26 08:05:00 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.3.2.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include "opt_mii.h"
 
@@ -136,8 +136,7 @@ micphyattach(device_t parent, device_t self, void *aux)
 
 	micphy_fixup(sc, model, rev, parent);
 
-	sc->mii_capabilities =
-	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	sc->mii_capabilities = PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
 	aprint_normal_dev(self, "");

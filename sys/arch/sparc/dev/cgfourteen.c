@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.79.4.1 2016/05/29 08:44:18 skrll Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.79.4.2 2016/07/09 20:24:56 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -775,7 +775,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 			sc->sc_fb.fb_type.fb_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
-			defattr);
+			DEFATTR);
 	}
 
 	cg14_init_cmap(sc);

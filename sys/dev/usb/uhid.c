@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.9 2016/05/29 08:44:31 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.10 2016/07/09 20:25:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.9 2016/05/29 08:44:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.10 2016/07/09 20:25:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -138,12 +138,13 @@ Static int uhid_do_read(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 
-int             uhid_match(device_t, cfdata_t, void *);
-void            uhid_attach(device_t, device_t, void *);
-int             uhid_detach(device_t, int);
-int             uhid_activate(device_t, enum devact);
+int	uhid_match(device_t, cfdata_t, void *);
+void	uhid_attach(device_t, device_t, void *);
+int	uhid_detach(device_t, int);
+int	uhid_activate(device_t, enum devact);
 extern struct cfdriver uhid_cd;
-CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach, uhid_detach, uhid_activate);
+CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach,
+    uhid_detach, uhid_activate);
 
 int
 uhid_match(device_t parent, cfdata_t match, void *aux)
@@ -173,8 +174,7 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
-	sc->sc_sih = softint_establish(SOFTINT_CLOCK,
-	    uhid_softintr, sc);
+	sc->sc_sih = softint_establish(SOFTINT_CLOCK, uhid_softintr, sc);
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
@@ -244,8 +244,7 @@ uhid_detach(device_t self, int flags)
 
 #if 0
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH,
-			   sc->sc_hdev.sc_parent->sc_udev,
-			   sc->sc_hdev.sc_dev);
+	    sc->sc_hdev.sc_parent->sc_udev, sc->sc_hdev.sc_dev);
 #endif
 	cv_destroy(&sc->sc_cv);
 	cv_destroy(&sc->sc_detach_cv);

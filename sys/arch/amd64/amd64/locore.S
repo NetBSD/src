@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77.2.3 2016/05/29 08:44:15 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.4 2016/07/09 20:24:49 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -9,7 +9,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum and Maxime Villard.
+ * by Charles M. Hannum and by Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -203,11 +203,12 @@
 #endif
 
 #define PROC0_PML4_OFF	0
-#define PROC0_PTP3_OFF	(PROC0_PML4_OFF + 1 * PAGE_SIZE)
+#define PROC0_STK_OFF	(PROC0_PML4_OFF + 1 * PAGE_SIZE)
+#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
 #define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
 #define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
 #define TABLESIZE \
-  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1) \
+  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
 
 /*
@@ -270,21 +271,41 @@
 
 
 #ifdef XEN
+#define __ASSEMBLY__
+#include <xen/xen-public/elfnote.h>
+#include <xen/xen-public/xen.h>
+#define ELFNOTE(name, type, desctype, descdata...) \
+.pushsection .note.name			;	\
+  .align 4				;	\
+  .long 2f - 1f		/* namesz */	;	\
+  .long 4f - 3f		/* descsz */	;	\
+  .long type				;	\
+1:.asciz #name				;	\
+2:.align 4				;	\
+3:desctype descdata			;	\
+4:.align 4				;	\
+.popsection
+
 /*
  * Xen guest identifier and loader selection
  */
 .section __xen_guest
-	.ascii	"GUEST_OS=NetBSD,GUEST_VER=4.99"
-	.ascii	",XEN_VER=xen-3.0"
-	.ascii	",LOADER=generic"
-	.ascii	",VIRT_BASE=0xffffffff80000000"
-	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
-	.ascii	",VIRT_ENTRY=0xffffffff80100000"
-	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_OS,       .asciz, "NetBSD")
+	ELFNOTE(Xen, XEN_ELFNOTE_GUEST_VERSION,  .asciz, "4.99")
+	ELFNOTE(Xen, XEN_ELFNOTE_XEN_VERSION,    .asciz, "xen-3.0")
+	ELFNOTE(Xen, XEN_ELFNOTE_VIRT_BASE,      .quad,  KERNBASE)
+	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,   .quad,  KERNBASE)
+	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,          .quad,  start)
+	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE, .quad,  hypercall_page)
+	ELFNOTE(Xen, XEN_ELFNOTE_HV_START_LOW,   .quad,  HYPERVISOR_VIRT_START)
+	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "")
+	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
+	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PG_V, PG_V)\
+	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
+	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
-	.ascii	",BSD_SYMTAB=yes"
+	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
 #endif
-	.byte	0
 #endif	/* XEN */
 
 /*
@@ -321,23 +342,23 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif /* NLAPIC > 0 */
 
-	.globl	_C_LABEL(proc0stack)
+	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
+	.globl	_C_LABEL(cputype)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
-	.globl	_C_LABEL(boothowto)
-	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(atdevbase)
 	.globl	_C_LABEL(PDPpaddr)
+	.globl	_C_LABEL(boothowto)
+	.globl	_C_LABEL(bootinfo)
 	.globl	_C_LABEL(biosbasemem)
 	.globl	_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdtstore)
-	.globl	_C_LABEL(cputype)
 
-	.type	_C_LABEL(proc0stack), @object
-LABEL(proc0stack)	.quad	0	/* physical address of proc0's stack */
-END(proc0stack)
+	.type	_C_LABEL(tablesize), @object
+_C_LABEL(tablesize):	.long	TABLESIZE
+END(tablesize)
 	.type	_C_LABEL(nox_flag), @object
 LABEL(nox_flag)		.long	0	/* 32bit NOX flag, set if supported */
 END(nox_flag)
@@ -564,7 +585,7 @@ biosbasemem_finished:
 	 * The boot program should check:
 	 *	text+data <= &stack_variable - more_space_for_stack
 	 *	text+data+bss+pad+space_for_page_tables <= end_of_memory
-	 * 
+	 *
 	 * XXX: the gdt is in the carcass of the boot program so clearing
 	 * the rest of memory is still not possible.
 	 */
@@ -585,17 +606,20 @@ no_NOX:
  * be referred to as: L4 -> L3 -> L2 -> L1.
  *
  * Virtual address space of the kernel:
- * +------+--------+------+-----+--------+---------------------+-----------+-
- * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | PROC0 STK |
- * +------+--------+------+-----+--------+---------------------+-----------+-
- *                             (1)      (2)                   (3)         (4)
+ * +------+--------+------+-----+--------+---------------------+----------
+ * | TEXT | RODATA | DATA | BSS | [SYMS] | [PRELOADED MODULES] | L4 ->
+ * +------+--------+------+-----+--------+---------------------+----------
+ *                             (1)      (2)                   (3)
  *
- * -----+-----+-----+----+------------+
- *  L4 -> L3 -> L2 -> L1 | ISA IO MEM |
- * -----+-----+-----+----+------------+
- *                      (5)
+ * --------------+-----+-----+----+-------------+
+ * -> PROC0 STK -> L3 -> L2 -> L1 | ISA I/O MEM |
+ * --------------+-----+-----+----+-------------+
+ *                               (4)
  *
- * (L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
+ * PROC0 STK is obviously not linked as a page level. It just happens to be
+ * caught between L4 and L3.
+ *
+ * (PROC0 STK + L4 + L3 + L2 + L1) is later referred to as BOOTSTRAP TABLES.
  *
  * Important note: the kernel segments are properly 4k-aligned
  * (see kern.ldscript), so there's no need to enforce alignment.
@@ -621,16 +645,10 @@ no_NOX:
 	movl	%eax,%edi
 1:
 
-	/* We are on (3). Align up for PROC0 STK. */
+	/* We are on (3). Align up for BOOTSTRAP TABLES. */
 	movl	%edi,%esi
 	addl	$PGOFSET,%esi
 	andl	$~PGOFSET,%esi
-
-	/* Save proc0's stack pa, and allocate it. Brings us on (4). */
-	movl	$RELOC(proc0stack),%ebp
-	movl	%esi,(%ebp)
-	movl	$0,4(%ebp)
-	addl	$USPACE,%esi
 
 	/* We are on the BOOTSTRAP TABLES. Save L4's physical address. */
 	movl	$RELOC(PDPpaddr),%ebp
@@ -685,16 +703,8 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* Map [SYMS]+[PRELOADED MODULES] RWX. */
+	/* Map [SYMS]+[PRELOADED MODULES] RW. */
 	movl	$RELOC(__kernel_end),%eax
-	movl	RELOC(proc0stack),%ecx	/* start of PROC0 STK */
-	subl	%eax,%ecx
-	shrl	$PGSHIFT,%ecx
-	orl	$(PG_V|PG_KW),%eax
-	fillkpt
-
-	/* Map PROC0 STK RW. */
-	movl	RELOC(proc0stack),%eax	/* start of PROC0 STK */
 	movl	%esi,%ecx		/* start of BOOTSTRAP TABLES */
 	subl	%eax,%ecx
 	shrl	$PGSHIFT,%ecx
@@ -708,10 +718,12 @@ no_NOX:
 	orl	$(PG_V|PG_KW),%eax
 	fillkpt_nox
 
-	/* We are on (5). Map ISA I/O mem (later atdevbase) RWX. */
-	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx
-	fillkpt
+	/* We are on (4). Map ISA I/O MEM RW. */
+	movl	$IOM_BEGIN,%eax
+	movl	$IOM_SIZE,%ecx	/* size of ISA I/O MEM */
+	shrl	$PGSHIFT,%ecx
+	orl	$(PG_V|PG_KW/*|PG_N*/),%eax
+	fillkpt_nox
 
 	/*
 	 * Build L2. Linked to L1.
@@ -765,12 +777,12 @@ no_NOX:
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
-	/* Install recursive top level PDE */
+	/* Install recursive top level PDE (one entry) */
 	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
-	movl	%eax,(%ebx)
-	movl	$0,(PDE_SIZE-4)(%ebx)
+	movl	$1,%ecx
+	fillkpt_nox
 
 	/*
 	 * Startup checklist:
@@ -870,7 +882,7 @@ longmode_hi:
 	movq	%rdx,_C_LABEL(atdevbase)(%rip)
 
 	/* Set up bootstrap stack. */
-	movq	_C_LABEL(proc0stack),%rax
+	leaq	(PROC0_STK_OFF)(%rsi),%rax
 	addq	%r8,%rax
 	movq	%rax,(_C_LABEL(lwp0)+L_PCB)(%rip) /* XXX L_PCB != uarea */
 	leaq	(USPACE-FRAMESIZE)(%rax),%rsp
@@ -1060,7 +1072,7 @@ END(dumpsys)
 
 /*
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
- *			    bool returning)
+ *     bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -1079,18 +1091,19 @@ ENTRY(cpu_switchto)
 	movq	%rdi,%r13	/* oldlwp */
 	movq	%rsi,%r12	/* newlwp */
 
-	testq	%r13,%r13
-	jz	1f
+	testq	%r13,%r13	/* oldlwp = NULL ? */
+	jz	skip_save
 
 	/* Save old context. */
 	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
+skip_save:
 
 	/* Switch to newlwp's stack. */
-1:	movq	L_PCB(%r12),%r14
+	movq	L_PCB(%r12),%r14
 #ifdef XEN /* XXX debug code */
-	cmpq	$0, PCB_RSP(%r14)
+	cmpq	$0,PCB_RSP(%r14)
 	jne 999f
 	callq _C_LABEL(cpu_Debugger);
 999:
@@ -1106,32 +1119,40 @@ ENTRY(cpu_switchto)
 	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
-	testb	%dl,%dl
-	jnz	4f
+	testb	%dl,%dl		/* returning = true ? */
+	jnz	switch_return
 
 	/* Switch ring0 stack */
 #ifndef XEN
 	movq	PCB_RSP0(%r14),%rax
 	movq	%rax,CPUVAR(RSP0)
 #else
-	movq	%r14, %rdi
+	movq	%r14,%rdi
 	callq	_C_LABEL(x86_64_switch_context);
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
-	jnz	4f
+	jnz	switch_return
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
 	cmpq	$0,P_RASLIST(%rdi)
-	jne	5f
+	je	no_RAS
+
+	/* Handle restartable atomic sequences (RAS). */
+	movq	L_MD_REGS(%r12),%rbx
+	movq	TF_RIP(%rbx),%rsi
+	call	_C_LABEL(ras_lookup)
+	cmpq	$-1,%rax
+	je	no_RAS
+	movq	%rax,TF_RIP(%rbx)
+no_RAS:
 
 	/*
 	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
 	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
 	 */
-2:
 #ifndef XEN
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
 	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
@@ -1142,80 +1163,74 @@ ENTRY(cpu_switchto)
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
 	cmpq	CPUVAR(FPCURLWP),%r12
-	je	3f
+	je	skip_TS
 	orq	$CR0_TS,%rcx
+skip_TS:
 
 	/* Reloading CR0 is very expensive - avoid if possible. */
-3:	cmpq	%rdx,%rcx
-	je	6f
+	cmpq	%rdx,%rcx
+	je	skip_CR0
 	movq	%rcx,%cr0
+skip_CR0:
 
-6:	testl	$PCB_COMPAT32, PCB_FLAGS(%r14)
+	/* The 32bit LWPs are handled differently. */
+	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
 	jne	32f
 
 	/* Zero out %fs/%gs registers and GDT descriptors. */
-	xorq	%rax, %rax
-	movw	%ax, %fs
+	xorq	%rax,%rax
+	movw	%ax,%fs
 	CLI(cx)
 	SWAPGS
-	movw	%ax, %gs
+	movw	%ax,%gs
 	SWAPGS
 	STI(cx)
 
 	movq	CPUVAR(GDT),%rcx
-	movq	%rax, (GUFS_SEL*8)(%rcx)
-	movq	%rax, (GUGS_SEL*8)(%rcx)
+	movq	%rax,(GUFS_SEL*8)(%rcx)
+	movq	%rax,(GUGS_SEL*8)(%rcx)
 
 	/* Reload 64-bit %fs/%gs MSRs. */
-	movl	$MSR_FSBASE, %ecx
-	movl	PCB_FS(%r14), %eax
-	movl	4+PCB_FS(%r14), %edx
+	movl	$MSR_FSBASE,%ecx
+	movl	PCB_FS(%r14),%eax
+	movl	4+PCB_FS(%r14),%edx
 	wrmsr
-	movl	$MSR_KERNELGSBASE, %ecx
-	movl	PCB_GS(%r14), %eax
-	movl	4+PCB_GS(%r14), %edx
+	movl	$MSR_KERNELGSBASE,%ecx
+	movl	PCB_GS(%r14),%eax
+	movl	4+PCB_GS(%r14),%edx
 	wrmsr
-	jmp	4f
+	jmp	switch_return
 
 32:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
-	movq	PCB_FS(%r14), %rax
-	movq	%rax, (GUFS_SEL*8)(%rcx)
-	movq	PCB_GS(%r14), %rax
-	movq	%rax, (GUGS_SEL*8)(%rcx)
+	movq	PCB_FS(%r14),%rax
+	movq	%rax,(GUFS_SEL*8)(%rcx)
+	movq	PCB_GS(%r14),%rax
+	movq	%rax,(GUGS_SEL*8)(%rcx)
 
 	/* Reload %fs and %gs */
-	movq	L_MD_REGS(%r12), %rbx
-	movw	TF_FS(%rbx), %fs
+	movq	L_MD_REGS(%r12),%rbx
+	movw	TF_FS(%rbx),%fs
 	CLI(ax)
 	SWAPGS
-	movw	TF_GS(%rbx), %gs
+	movw	TF_GS(%rbx),%gs
 	SWAPGS
 	STI(ax)
-
 #else
 	movq	%r12,%rdi
 	callq	_C_LABEL(x86_64_tls_switch)
 #endif
 
+switch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
-4:	movq	%r13,%rax
+	movq	%r13,%rax
 	popq	%r15
 	popq	%r14
 	popq	%r13
 	popq	%r12
 	popq	%rbx
 	ret
-
-	/* Check for restartable atomic sequences (RAS). */
-5:	movq	L_MD_REGS(%r12),%rbx
-	movq	TF_RIP(%rbx),%rsi
-	call	_C_LABEL(ras_lookup)
-	cmpq	$-1,%rax
-	je	2b
-	movq	%rax,TF_RIP(%rbx)
-	jmp	2b
 END(cpu_switchto)
 
 /*

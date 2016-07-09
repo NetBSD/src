@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.100.2.2 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.100.2.3 2016/07/09 20:24:59 skrll Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100.2.2 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.100.2.3 2016/07/09 20:24:59 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -762,7 +762,7 @@ extern vector Xsyscall, Xsyscall32;
 static void
 gdt_prepframes(paddr_t *frames, vaddr_t base, uint32_t entries)
 {
-	int i;	
+	int i;
 	for (i = 0; i < roundup(entries, PAGE_SIZE) >> PAGE_SHIFT; i++) {
 
 		frames[i] = ((paddr_t) xpmap_ptetomach(
@@ -800,7 +800,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci,
 
 	memset(initctx, 0, sizeof *initctx);
 
-	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT; 
+	gdt_ents = roundup(gdt_size, PAGE_SIZE) >> PAGE_SHIFT;
 	KASSERT(gdt_ents <= 16);
 
 	gdt_prepframes(frames, (vaddr_t) ci->ci_gdt, gdt_ents);

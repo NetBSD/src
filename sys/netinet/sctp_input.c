@@ -1,5 +1,5 @@
 /*	$KAME: sctp_input.c,v 1.28 2005/04/21 18:36:21 nishida Exp $	*/
-/*	$NetBSD: sctp_input.c,v 1.1.2.3 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: sctp_input.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002, 2003, 2004 Cisco Systems Inc,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.3 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_input.c,v 1.1.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4121,7 +4121,7 @@ sctp_input(struct mbuf *m, ...)
 		sctp_pegs[SCTP_IN_MCAST]++;
 		goto bad;
 	}
-	if (in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
+	if (in_broadcast(ip->ip_dst, m_get_rcvif_NOMPSAFE(m))) {
 		sctp_pegs[SCTP_IN_MCAST]++;
 		goto bad;
 	}
@@ -4134,8 +4134,8 @@ sctp_input(struct mbuf *m, ...)
 
 	/* validate SCTP checksum */
 	if ((sctp_no_csum_on_loopback == 0) ||
-	    (m->m_pkthdr.rcvif == NULL) ||
-	    (m->m_pkthdr.rcvif->if_type != IFT_LOOP)) {
+	    (m_get_rcvif_NOMPSAFE(m) == NULL) ||
+	    (m_get_rcvif_NOMPSAFE(m)->if_type != IFT_LOOP)) {
 		/* we do NOT validate things from the loopback if the
 		 * sysctl is set to 1.
 		 */

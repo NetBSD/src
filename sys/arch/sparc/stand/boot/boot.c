@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28.16.1 2015/12/27 12:09:43 skrll Exp $ */
+/*	$NetBSD: boot.c,v 1.28.16.2 2016/07/09 20:24:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -285,13 +285,13 @@ main(void)
 		if (boothowto & RB_ASKNAME) {
 			printf("device[%s] (\"halt\" to halt): ",
 					prom_bootdevice);
-			gets(dbuf);
+			kgets(dbuf, sizeof(dbuf));
 			if (strcmp(dbuf, "halt") == 0)
 				_rtt();
 			if (dbuf[0])
 				strcpy(prom_bootdevice, dbuf);
 			printf("boot (press RETURN to try default list): ");
-			gets(fbuf);
+			kgets(fbuf, sizeof(fbuf));
 			if (fbuf[0])
 				strcpy(kernel, fbuf);
 			else {

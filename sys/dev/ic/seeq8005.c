@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.52.4.3 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: seeq8005.c,v 1.52.4.4 2016/07/09 20:25:02 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.3 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.4 2016/07/09 20:25:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1274,7 +1274,7 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
         MGETHDR(m, M_DONTWAIT, MT_DATA);
         if (m == NULL)
                 return NULL;
-        m->m_pkthdr.rcvif = ifp;
+        m_set_rcvif(m, ifp);
         m->m_pkthdr.len = totlen;
         m->m_len = MHLEN;
         top = NULL;

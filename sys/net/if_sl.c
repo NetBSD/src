@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.119.4.3 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.119.4.4 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119.4.3 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119.4.4 2016/07/09 20:25:21 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -565,7 +565,7 @@ sl_btom(struct sl_softc *sc, int len)
 	m->m_data = sc->sc_pktstart;
 
 	m->m_pkthdr.len = m->m_len = len;
-	m->m_pkthdr.rcvif = &sc->sc_if;
+	m_set_rcvif(m, &sc->sc_if);
 	return m;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.40 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.40.2.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.40 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.40.2.1 2016/07/09 20:25:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -430,7 +430,7 @@ aio_process(struct aio_job *a_job)
 		struct vnode *vp;
 
 		if ((error = fd_getvnode(fd, &fp)) != 0)
-			goto done; 
+			goto done;
 
 		if ((fp->f_flag & FWRITE) == 0) {
 			fd_putfile(fd);

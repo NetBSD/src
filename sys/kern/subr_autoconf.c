@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.233.2.5 2016/04/22 15:44:16 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.233.2.6 2016/07/09 20:25:20 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.5 2016/04/22 15:44:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.6 2016/07/09 20:25:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1876,14 +1876,20 @@ config_detach_all(int how)
 	static struct shutdown_state s;
 	device_t curdev;
 	bool progress = false;
+	int flags;
 
 	if ((how & (RB_NOSYNC|RB_DUMP)) != 0)
 		return false;
 
+	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
+		flags = DETACH_SHUTDOWN | DETACH_POWEROFF;
+	else
+		flags = DETACH_SHUTDOWN;
+
 	for (curdev = shutdown_first(&s); curdev != NULL;
 	     curdev = shutdown_next(&s)) {
 		aprint_debug(" detaching %s, ", device_xname(curdev));
-		if (config_detach(curdev, DETACH_SHUTDOWN) == 0) {
+		if (config_detach(curdev, flags) == 0) {
 			progress = true;
 			aprint_debug("success.");
 		} else

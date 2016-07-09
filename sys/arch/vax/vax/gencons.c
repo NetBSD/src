@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.54 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: gencons.c,v 1.54.4.1 2016/07/09 20:24:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.54 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.54.4.1 2016/07/09 20:24:58 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -313,7 +313,7 @@ gencninit(struct consdev *cndev)
 	}
 #if 0
 	mtpr(0, PR_RXCS);
-	mtpr(0, PR_TXCS); 
+	mtpr(0, PR_TXCS);
 	mtpr(0, PR_TBIA); /* ??? */
 #endif
 }
@@ -371,7 +371,7 @@ gencnpollc(dev_t dev, int pollflag)
 {
 	if (pollflag)  {
 		mtpr(0, PR_RXCS);
-		mtpr(0, PR_TXCS); 
+		mtpr(0, PR_TXCS);
 	} else {
 		mtpr(GC_RIE, PR_RXCS);
 		mtpr(GC_TIE, PR_TXCS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.1.36.2 2016/04/06 22:00:03 skrll Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.1.36.3 2016/07/09 20:25:20 skrll Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,23 +33,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.1.36.2 2016/04/06 22:00:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.1.36.3 2016/07/09 20:25:20 skrll Exp $");
 
-#include "opt_kernhist.h"
 #include "opt_ddb.h"
-#include "opt_uvmhist.h"
-#include "opt_usb.h"
+#include "opt_kernhist.h"
 #include "opt_syscall_debug.h"
+#include "opt_usb.h"
+#include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/kernhist.h>
-
-#include "usb.h"
-#if NUSB == 0
-#undef USB_DEBUG
-#endif
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>

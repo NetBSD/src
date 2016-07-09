@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.50 2014/09/05 05:57:21 matt Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.50.2.1 2016/07/09 20:25:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.50 2014/09/05 05:57:21 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.50.2.1 2016/07/09 20:25:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -479,5 +479,6 @@ sleepq_lendpri(lwp_t *l, pri_t pri)
 	KASSERT(lwp_locked(l, NULL));
 
 	l->l_inheritedprio = pri;
+	l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 	sleepq_reinsert(sq, l);
 }

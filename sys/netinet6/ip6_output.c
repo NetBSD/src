@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.160.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.160.2.4 2016/07/09 20:25:22 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.4 2016/07/09 20:25:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -163,7 +163,7 @@ ip6_output(
 )
 {
 	struct ip6_hdr *ip6, *mhip6;
-	struct ifnet *ifp, *origifp;
+	struct ifnet *ifp = NULL, *origifp = NULL;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
 	bool tso;
@@ -185,6 +185,9 @@ ip6_output(
 #ifdef IPSEC
 	struct secpolicy *sp = NULL;
 #endif
+	struct psref psref, psref_ia;
+	int bound = curlwp_bind();
+	bool release_psref_ia = false;
 
 	memset(&ip6route, 0, sizeof(ip6route));
 
@@ -489,7 +492,7 @@ ip6_output(
 
 	sockaddr_in6_init(&dst_sa, &ip6->ip6_dst, 0, 0, 0);
 	if ((error = in6_selectroute(&dst_sa, opt, im6o, ro,
-	    &ifp, &rt, 0)) != 0) {
+	    &ifp, &psref, &rt, 0)) != 0) {
 		if (ifp != NULL)
 			in6_ifstat_inc(ifp, ifs6_out_discard);
 		goto bad;
@@ -522,9 +525,11 @@ ip6_output(
 	 * destination addresses.  We should use ia_ifp to support the
 	 * case of sending packets to an address of our own.
 	 */
-	if (ia != NULL && ia->ia_ifp)
+	if (ia != NULL && ia->ia_ifp) {
 		origifp = ia->ia_ifp;
-	else
+		if_acquire_NOMPSAFE(origifp, &psref_ia);
+		release_psref_ia = true;
+	} else
 		origifp = ifp;
 
 	src0 = ip6->ip6_src;
@@ -892,7 +897,7 @@ ip6_output(
 				IP6_STATINC(IP6_STAT_ODROPPED);
 				goto sendorfree;
 			}
-			m->m_pkthdr.rcvif = NULL;
+			m_reset_rcvif(m);
 			m->m_flags = m0->m_flags & M_COPYFLAGS;
 			*mnext = m;
 			mnext = &m->m_nextpkt;
@@ -926,7 +931,7 @@ ip6_output(
 				;
 			mlast->m_next = m_frgpart;
 			m->m_pkthdr.len = len + hlen + sizeof(*ip6f);
-			m->m_pkthdr.rcvif = NULL;
+			m_reset_rcvif(m);
 			ip6f->ip6f_reserved = 0;
 			ip6f->ip6f_ident = id;
 			ip6f->ip6f_nxt = nextproto;
@@ -976,6 +981,10 @@ done:
 		KEY_FREESP(&sp);
 #endif /* IPSEC */
 
+	if_put(ifp, &psref);
+	if (release_psref_ia)
+		if_put(origifp, &psref_ia);
+	curlwp_bindx(bound);
 
 	return (error);
 
@@ -2377,7 +2386,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 		if (im6o == NULL)
 			return (ENOBUFS);
 		in6p->in6p_moptions = im6o;
-		im6o->im6o_multicast_ifp = NULL;
+		im6o->im6o_multicast_if_index = 0;
 		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
 		im6o->im6o_multicast_loop = IPV6_DEFAULT_MULTICAST_LOOP;
 		LIST_INIT(&im6o->im6o_memberships);
@@ -2404,7 +2413,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 			}
 		} else
 			ifp = NULL;
-		im6o->im6o_multicast_ifp = ifp;
+		im6o->im6o_multicast_if_index = if_get_index(ifp);
 		break;
 
 	case IPV6_MULTICAST_HOPS:
@@ -2585,7 +2594,7 @@ ip6_setmoptions(const struct sockopt *sopt, struct in6pcb *in6p)
 	/*
 	 * If all options have default values, no need to keep the mbuf.
 	 */
-	if (im6o->im6o_multicast_ifp == NULL &&
+	if (im6o->im6o_multicast_if_index == 0 &&
 	    im6o->im6o_multicast_hlim == ip6_defmcasthlim &&
 	    im6o->im6o_multicast_loop == IPV6_DEFAULT_MULTICAST_LOOP &&
 	    im6o->im6o_memberships.lh_first == NULL) {
@@ -2608,10 +2617,10 @@ ip6_getmoptions(struct sockopt *sopt, struct in6pcb *in6p)
 
 	switch (sopt->sopt_name) {
 	case IPV6_MULTICAST_IF:
-		if (im6o == NULL || im6o->im6o_multicast_ifp == NULL)
+		if (im6o == NULL || im6o->im6o_multicast_if_index == 0)
 			optval = 0;
 		else
-			optval = im6o->im6o_multicast_ifp->if_index;
+			optval = im6o->im6o_multicast_if_index;
 
 		error = sockopt_set(sopt, &optval, sizeof(optval));
 		break;
@@ -2782,7 +2791,6 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 #endif
 	case IPV6_PKTINFO:
 	{
-		struct ifnet *ifp = NULL;
 		struct in6_pktinfo *pktinfo;
 
 		if (len != sizeof(struct in6_pktinfo))
@@ -2810,9 +2818,14 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 
 		/* Validate the interface index if specified. */
 		if (pktinfo->ipi6_ifindex) {
+			struct ifnet *ifp;
+			int s = pserialize_read_enter();
 			ifp = if_byindex(pktinfo->ipi6_ifindex);
-			if (ifp == NULL)
-				return (ENXIO);
+			if (ifp == NULL) {
+				pserialize_read_exit(s);
+				return ENXIO;
+			}
+			pserialize_read_exit(s);
 		}
 
 		/*

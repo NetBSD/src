@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.9.16.1 2016/03/19 11:29:59 skrll Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.9.16.2 2016/07/09 20:24:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.9.16.1 2016/03/19 11:29:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.9.16.2 2016/07/09 20:24:51 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -1190,7 +1190,7 @@ temac_rxreap(struct temac_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 
 		m = sc->sc_rxsoft[sc->sc_rxreap].rxs_mbuf;
-		m->m_pkthdr.rcvif = ifp;
+		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = rxsize;
 
  badframe:

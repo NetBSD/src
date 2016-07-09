@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.19 2014/04/07 00:07:40 pooka Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.19.4.1 2016/07/09 20:25:21 skrll Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.19 2014/04/07 00:07:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.19.4.1 2016/07/09 20:25:21 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -245,7 +245,7 @@ out:
 void
 ieee80211_rssadapt_updatestats(struct ieee80211_rssadapt *ra)
 {
-	long interval; 
+	long interval;
 
 	ra->ra_pktrate =
 	    (ra->ra_pktrate + 10 * (ra->ra_nfail + ra->ra_nok)) / 2;

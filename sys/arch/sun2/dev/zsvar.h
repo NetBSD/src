@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.7 2008/03/29 19:15:35 tsutsui Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.7.68.1 2016/07/09 20:24:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@ struct zsc_softc {
 };
 
 /* MI function to attach a zs. */
-void zs_attach(struct zsc_softc *, struct zsdevice *, int); 
+void zs_attach(struct zsc_softc *, struct zsdevice *, int);
 
 /* MD function to get any console flags for a zs. */
 int zs_console_flags(int, int, int);

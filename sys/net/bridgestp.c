@@ -1,4 +1,4 @@
-/*	$NetBSD: bridgestp.c,v 1.17.4.3 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: bridgestp.c,v 1.17.4.4 2016/07/09 20:25:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.17.4.3 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bridgestp.c,v 1.17.4.4 2016/07/09 20:25:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ bstp_send_config_bpdu(struct bridge_softc *sc, struct bridge_iflist *bif,
 
 	eh = mtod(m, struct ether_header *);
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = sizeof(*eh) + sizeof(bpdu);
 	m->m_len = m->m_pkthdr.len;
 
@@ -378,7 +378,7 @@ bstp_transmit_tcn(struct bridge_softc *sc)
 	if (m == NULL)
 		return;
 
-	m->m_pkthdr.rcvif = ifp;
+	m_set_rcvif(m, ifp);
 	m->m_pkthdr.len = sizeof(*eh) + sizeof(bpdu);
 	m->m_len = m->m_pkthdr.len;
 

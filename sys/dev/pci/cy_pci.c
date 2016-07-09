@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.24 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.24.6.1 2016/07/09 20:25:03 skrll Exp $	*/
 
 /*
  * cy_pci.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.24 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.24.6.1 2016/07/09 20:25:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ cy_pci_attach(device_t parent, device_t self, void *aux)
 
 	if (pci_mapreg_map(pa, 0x18, cp->cp_memtype, 0,
 	    &sc->sc_memt, &sc->sc_bsh, NULL, NULL) != 0) {
-		aprint_error_dev(sc->sc_dev,"unable to map device registers\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map device registers\n");
 		return;
 	}
 

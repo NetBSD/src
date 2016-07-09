@@ -1,4 +1,4 @@
-/* $NetBSD: awin_otgreg.h,v 1.4 2014/10/20 21:18:00 jmcneill Exp $ */
+/* $NetBSD: awin_otgreg.h,v 1.4.4.1 2016/07/09 20:24:49 skrll Exp $ */
 /* FreeBSD: head/sys/dev/usb/controller/musb_otg.h 267122 2014-06-05 18:23:51Z hselasky */
 /*-
  * Copyright (c) 2008 Hans Petter Selasky. All rights reserved.
@@ -187,7 +187,7 @@
 #define	MUSB2_MASK_TI_EP_NUM 0x0F
 
 #define	MUSB2_REG_TXNAKLIMIT (0x000D /* EPN=0 */ + MUSB2_REG_INDEXED_CSR)
-#define	MUSB2_REG_RXNAKLIMIT (0x000D /* EPN=0 */ + MUSB2_REG_INDEXED_CSR)
+#define	MUSB2_REG_RXNAKLIMIT (0x000F /* EPN=0 */ + MUSB2_REG_INDEXED_CSR)
 #define	MUSB2_MASK_NAKLIMIT 0xFF
 
 #define MUSB2_REG_FSIZE (0x0010 + MUSB2_REG_INDEXED_CSR)

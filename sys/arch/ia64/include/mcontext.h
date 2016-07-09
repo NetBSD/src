@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2012/12/26 19:43:10 martin Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3.14.1 2016/07/09 20:24:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,9 +91,8 @@ typedef struct __mcontext {
 	struct _high_fp		mc_high_fp;
 } mcontext_t;
 
-#ifndef _UC_MACHINE_SP
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.mc_special.sp)
-#endif
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.mc_special.rp)
 
 static __inline void *
 __lwp_getprivate_fast(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.13 2014/10/26 15:38:28 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.13.2.1 2016/07/09 20:24:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13 2014/10/26 15:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.13.2.1 2016/07/09 20:24:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ child_return(void *arg)
 		mutex_enter(proc_lock);
                 KSI_INIT_EMPTY(&ksi);
                 ksi.ksi_signo = SIGTRAP;
-                ksi.ksi_lid = l->l_lid; 
+                ksi.ksi_lid = l->l_lid;
                 kpsignal(p, &ksi, NULL);
 		mutex_exit(proc_lock);
 	}

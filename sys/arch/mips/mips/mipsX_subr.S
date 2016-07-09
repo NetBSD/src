@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.56.16.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.56.16.3 2016/07/09 20:24:54 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -133,6 +133,12 @@
 #include <mips/trap.h>
 
 #include "assym.h"
+
+#if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
+#define MFC0_HAZARD	nop
+#else
+#define MFC0_HAZARD	/* nothing */
+#endif
 
 #ifdef _LP64
 #define	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(reg) \
@@ -751,7 +757,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 
 	/*
 	 * Start of common kernel exception return code for both
-	 * mipxN_kern_gen_exception and mipsN_kern_intr.
+	 * mipsN_kern_gen_exception and mipsN_kern_intr.
 	 */
 MIPSX(kern_return):
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
@@ -1077,9 +1083,14 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		#   store new interrupt depth
 
 	/*
-	 * Now we can clear exception level since no interrupts can be delivered
+   	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, clear the
+	 * exception level bit. This will allow high-priority
+	 * interrupts to be delivered once a low-priority interrupt
+	 * handler lowers spl to execute.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	v0, v1, MIPS_SR_EXL		# grab exception level bit
 	xor	v0, v1				# clear it
 	mtc0	v0, MIPS_COP_0_STATUS		# write new status
@@ -1098,6 +1109,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 
 #if defined(PARANOIA)
 	mfc0	t0, MIPS_COP_0_STATUS		# verify INT_IE is still set
+	MFC0_HAZARD
 	and	t0, MIPS_SR_INT_IE
 #if defined(MIPS32) || defined(MIPS32R2) || defined(MIPS64) || defined(MIPS64R2)
 	teqi	t0, 0
@@ -1112,6 +1124,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	beqz	a0, 4f				#   nope
 	 nop
 	mfc0	v0, MIPS_COP_0_CAUSE		# grab the pending softints
+	MFC0_HAZARD
 	and	a0, v0				# are softints pending
 	beqz	a0, 4f				#   nope
 	 nop
@@ -1146,6 +1159,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	di	v0				# disable interrupts
 #else
 	mfc0	v0, MIPS_COP_0_STATUS		# read it
+	MFC0_HAZARD
 	xor	v0, MIPS_SR_INT_IE		# disable interrupts
 	mtc0	v0, MIPS_COP_0_STATUS		# write it
 #endif
@@ -1175,6 +1189,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 
 #ifdef PARANOIA
 	mfc0	v0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	or	v0, MIPS_SR_INT_IE
 5:	bne	v0, s1, 5b
 	 nop
@@ -1220,6 +1235,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 
 	/* If this was in a branch delay slot, take the slow path. */
 	mfc0	v0, MIPS_COP_0_CAUSE
+	MFC0_HAZARD
 	bltz	v0, MIPSX(user_gen_exception_common)
 	 nop
 
@@ -1228,6 +1244,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 * this since the instruction actually got read.
 	 */
 	_MFC0	v0, MIPS_COP_0_EXC_PC
+	MFC0_HAZARD
 	INT_L	AT, 0(v0)
 
 	/*
@@ -1242,6 +1259,7 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 * Advance the PC (don't want to restart at the rdhwr).
 	 */
 	_MFC0	v0, MIPS_COP_0_EXC_PC
+	MFC0_HAZARD
 	PTR_ADDIU v0, 4
 	_MTC0	v0, MIPS_COP_0_EXC_PC
 	COP0_SYNC
@@ -1439,11 +1457,17 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	move	s0, v0				# remember previous priority
 
 	/*
-	 * Now we can turn off the FPU, clear exception level, and enter
-	 * kernel mode since no interrupts can be delivered
+   	 * Now that we're at splhigh so all interrupts are masked
+	 * individually and we won't get interrupted here, clear the
+	 * exception level bit. This will allow high-priority
+	 * interrupts to be delivered once a low-priority interrupt
+	 * handler lowers spl to execute.
+	 *
+	 * Also turn off the FPU and enter kernel mode.
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 #ifdef NOFPU
+	MFC0_HAZARD
 	and	v0, v1, MIPS_SR_KSU_MASK|MIPS_SR_EXL
 	xor	v0, v1				# clear the bits
 #else
@@ -1487,6 +1511,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	 nop
 #endif
 	mfc0	a0, MIPS_COP_0_CAUSE		# grab the pending softints
+	MFC0_HAZARD
 	and	a0, MIPS_SOFT_INT_MASK		# are there softints pending
 	beqz	a0, 4f				#   nope
 	 nop
@@ -1501,6 +1526,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	di					# disable interrupts
 #else
 	mfc0	v1, MIPS_COP_0_STATUS
+	MFC0_HAZARD
 	and	v0, v1, MIPS_SR_INT_IE		# clear interrupt enable
 	xor	v0, v1
 	mtc0	v0, MIPS_COP_0_STATUS		# interrupts are disabled
@@ -1539,6 +1565,7 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	ei					# enable interrupts
 #else
 	mfc0	t0, MIPS_COP_0_STATUS		#
+	MFC0_HAZARD
 	or	t0, MIPS_SR_INT_IE 		# enable interrupts
 	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
@@ -1633,12 +1660,12 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 	 * Turn off FPU and enter kernel mode
 	 */
 #ifdef NOFPU
+	and	t0, a1, MIPS_SR_KSU_MASK|MIPS_SR_EXL
+	xor	t0, a1				# clear the bits
+#else
 	lui	t0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	t0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	and	t0, a1
-#else
-	and	t0, a1, MIPS_SR_EXL|MIPS_SR_KSU_MASK
-	xor	t0, a1				# turns off the FPU & ints on
 #endif
 	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
 	COP0_SYNC
@@ -1838,9 +1865,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalid_exception))
 	COP0_SYNC
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
-#ifdef MIPS3
-	nop
-#endif
+	MFC0_HAZARD
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception)) # ASSERT(TLB entry exists)
 	 nop					# - delay slot -
 
@@ -2124,6 +2149,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbp					# probe the entry in question
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
+	MFC0_HAZARD
 	bltz	v0, 1f				# index < 0 then skip
 	 li	t1, MIPS_KSEG0_START		# invalid address
 	PTR_SLL	v0, PGSHIFT + 1			# PAGE_SHIFT + 1
@@ -2183,10 +2209,12 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_asids))
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
+	MFC0_HAZARD
 	and	a0, MIPS3_PG_G			# check to see it has G bit
 	bnez	a0, 2f				# yep, skip this one.
 	 nop
 	_MFC0	a0, MIPS_COP_0_TLB_HI		# get VA and ASID
+	MFC0_HAZARD
 	and	a0, MIPS3_PG_ASID		# focus on ASID
 	sltu	a3, a0, a1			# asid < base?
 	bnez	a3, 2f				# yes, skip this entry.
@@ -2246,6 +2274,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_globals))
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
+	MFC0_HAZARD
 	and	a0, MIPS3_PG_G			# check to see it has G bit
 	beqz	a0, 2f				# no, skip this entry
 	 nop
@@ -2359,11 +2388,13 @@ LEAF_NOPROFILE(MIPSX(tlb_record_asids))
 	tlbr					# obtain an entry
 	COP0_SYNC
 	_MFC0	t0, MIPS_COP_0_TLB_LO1
+	MFC0_HAZARD
 	and	t0, MIPS3_PG_G			# check to see it has G bit
 	bnez	t0, 4f				# yep, skip this one.
 	 nop
 
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# get VA and ASID
+	MFC0_HAZARD
 	and	t0, a1				# focus on ASID
 
 	srl	a2, t0, 3 + LONG_SCALESHIFT	# drop low 5 or 6 bits
@@ -2422,6 +2453,7 @@ LEAF(MIPSX(tlb_enter))
 	COP0_SYNC
 
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# was it in the TLB?
+	MFC0_HAZARD
 	bltz	v0, 1f				# nope
 	 nop
 
