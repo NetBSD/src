@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.209 2016/07/09 09:25:44 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.210 2016/07/09 09:33:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.209 2016/07/09 09:25:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2016/07/09 09:33:21 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -571,7 +571,7 @@ static bool pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
 static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
     vaddr_t, struct pv_entry **);
 
-static bool pmap_get_physpage(vaddr_t, int, paddr_t *);
+static paddr_t pmap_get_physpage(void);
 static void pmap_alloc_level(pd_entry_t * const *, vaddr_t, int, long *);
 
 static bool pmap_reactivate(struct pmap *);
@@ -4241,33 +4241,33 @@ out2:
 	return error;
 }
 
-static bool
-pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
+static paddr_t
+pmap_get_physpage(void)
 {
 	struct vm_page *ptp;
 	struct pmap *kpm = pmap_kernel();
+	paddr_t pa;
 
 	if (!uvm.page_init_done) {
-
 		/*
-		 * we're growing the kernel pmap early (from
-		 * uvm_pageboot_alloc()).  this case must be
+		 * We're growing the kernel pmap early (from
+		 * uvm_pageboot_alloc()). This case must be
 		 * handled a little differently.
 		 */
 
-		if (!uvm_page_physget(paddrp))
+		if (!uvm_page_physget(&pa))
 			panic("pmap_get_physpage: out of memory");
 #if defined(__HAVE_DIRECT_MAP)
-		pagezero(PMAP_DIRECT_MAP(*paddrp));
+		pagezero(PMAP_DIRECT_MAP(pa));
 #else
 #if defined(XEN)
 		if (XEN_VERSION_SUPPORTED(3, 4)) {
-			xen_pagezero(*paddrp);
-			return true;
+			xen_pagezero(pa);
+			return pa;
 		}
 #endif
 		kpreempt_disable();
-		pmap_pte_set(early_zero_pte, pmap_pa2pte(*paddrp) | PG_V |
+		pmap_pte_set(early_zero_pte, pmap_pa2pte(pa) | PG_V |
 		    PG_RW | pmap_pg_nx | PG_k);
 		pmap_pte_flush();
 		pmap_update_pg((vaddr_t)early_zerop);
@@ -4286,10 +4286,11 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 			panic("pmap_get_physpage: out of memory");
 		ptp->flags &= ~PG_BUSY;
 		ptp->wire_count = 1;
-		*paddrp = VM_PAGE_TO_PHYS(ptp);
+		pa = VM_PAGE_TO_PHYS(ptp);
 	}
 	pmap_stats_update(kpm, 1, 0);
-	return true;
+
+	return pa;
 }
 
 /*
@@ -4327,7 +4328,7 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pt_entry_t pte;
 
 			KASSERT(!pmap_valid_entry(pdep[i]));
-			pmap_get_physpage(va, level - 1, &pa);
+			pa = pmap_get_physpage();
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
 #ifdef XEN
 			pmap_pte_set(&pdep[i], pte);
