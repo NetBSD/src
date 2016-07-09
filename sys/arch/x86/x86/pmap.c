@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.207 2016/07/09 07:47:25 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.208 2016/07/09 08:05:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2016/07/09 07:47:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.208 2016/07/09 08:05:46 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2164,7 +2164,8 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		(void)pmap_extract(pmap_kernel(), object, &pdirpa);
 
 		/* Put in recursive PDE to map the PTEs */
-		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V;
+		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V |
+		    pmap_pg_nx;
 #ifndef XEN
 		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
 #endif
