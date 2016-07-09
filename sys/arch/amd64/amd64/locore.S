@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.105 2016/07/08 09:15:38 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.106 2016/07/09 06:58:06 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -777,12 +777,12 @@ no_NOX:
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
-	/* Install recursive top level PDE */
+	/* Install recursive top level PDE (one entry) */
 	leal	(PROC0_PML4_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
-	movl	%eax,(%ebx)
-	movl	$0,(PDE_SIZE-4)(%ebx)
+	movl	$1,%ecx
+	fillkpt_nox
 
 	/*
 	 * Startup checklist:
