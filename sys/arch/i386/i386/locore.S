@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.134 2016/07/08 09:15:38 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.135 2016/07/09 06:58:06 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.134 2016/07/08 09:15:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.135 2016/07/09 06:58:06 maxv Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -776,12 +776,12 @@ no_NOX:
 	movl	RELOC(nkptp)+1*4,%ecx
 	fillkpt
 
-	/* Install a PDE recursively mapping page directory as a page table! */
+	/* Install recursive top level PDE */
 	leal	(PROC0_PDIR_OFF + PDIR_SLOT_PTE * PDE_SIZE)(%esi),%ebx
 	leal	(PROC0_PDIR_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$PDP_SIZE,%ecx
-	fillkpt
+	fillkpt_nox
 
 #ifdef PAE
 	/*
