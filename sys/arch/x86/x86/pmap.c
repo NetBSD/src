@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.206 2016/07/01 12:36:43 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.207 2016/07/09 07:47:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.206 2016/07/01 12:36:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.207 2016/07/09 07:47:25 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2107,7 +2107,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 }
 
 /*
- * p m a p  l i f e c y c l e   f u n c t i o n s
+ * p m a p   l i f e c y c l e   f u n c t i o n s
  */
 
 /*
@@ -2117,7 +2117,7 @@ static int
 pmap_pdp_ctor(void *arg, void *v, int flags)
 {
 	pd_entry_t *pdir = v;
-	paddr_t pdirpa = 0;	/* XXX: GCC */
+	paddr_t pdirpa = 0;
 	vaddr_t object;
 	int i;
 
@@ -2133,60 +2133,63 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	 */
 
 #if defined(XEN) && defined(__x86_64__)
-	/* fetch the physical address of the page directory. */
-	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
+	/* Fetch the physical address of the page directory */
+	(void)pmap_extract(pmap_kernel(), (vaddr_t)pdir, &pdirpa);
 
-	/* zero init area */
-	memset (pdir, 0, PAGE_SIZE); /* Xen wants a clean page */
+	/* Zero the area */
+	memset(pdir, 0, PAGE_SIZE); /* Xen wants a clean page */
+
 	/*
-	 * this pdir will NEVER be active in kernel mode
-	 * so mark recursive entry invalid
+	 * This pdir will NEVER be active in kernel mode, so mark
+	 * recursive entry invalid.
 	 */
 	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_u;
+
 	/*
-	 * PDP constructed this way won't be for kernel,
-	 * hence we don't put kernel mappings on Xen.
-	 * But we need to make pmap_create() happy, so put a dummy (without
-	 * PG_V) value at the right place.
+	 * PDP constructed this way won't be for the kernel, hence we
+	 * don't put kernel mappings on Xen.
+	 *
+	 * But we need to make pmap_create() happy, so put a dummy
+	 * (without PG_V) value at the right place.
 	 */
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
 	     (pd_entry_t)-1 & PG_FRAME;
 #else /* XEN && __x86_64__*/
-	/* zero init area */
+	/* Zero the area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
 	object = (vaddr_t)v;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		/* fetch the physical address of the page directory. */
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* put in recursive PDE to map the PTEs */
+		/* Fetch the physical address of the page directory */
+		(void)pmap_extract(pmap_kernel(), object, &pdirpa);
+
+		/* Put in recursive PDE to map the PTEs */
 		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V;
 #ifndef XEN
 		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
 #endif
 	}
 
-	/* copy kernel's PDE */
+	/* Copy the kernel's top level PDE */
 	npde = nkptp[PTP_LEVELS - 1];
 
 	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
 	    npde * sizeof(pd_entry_t));
 
-	/* zero the rest */
+	/* Zero the rest */
 	memset(&pdir[PDIR_SLOT_KERN + npde], 0, (PAGE_SIZE * PDP_SIZE) -
 	    (PDIR_SLOT_KERN + npde) * sizeof(pd_entry_t));
 
 	if (VM_MIN_KERNEL_ADDRESS != KERNBASE) {
 		int idx = pl_i(KERNBASE, PTP_LEVELS);
-
 		pdir[idx] = PDP_BASE[idx];
 	}
 
 #ifdef __HAVE_DIRECT_MAP
 	pdir[PDIR_SLOT_DIRECT] = PDP_BASE[PDIR_SLOT_DIRECT];
 #endif
-
 #endif /* XEN  && __x86_64__*/
+
 #ifdef XEN
 	s = splvm();
 	object = (vaddr_t)v;
