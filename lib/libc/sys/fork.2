@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork.2,v 1.22 2004/06/25 15:29:25 wiz Exp $
+.\"	$NetBSD: fork.2,v 1.23 2016/07/09 23:10:05 dholland Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)fork.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 10, 2004
+.Dd July 9, 2016
 .Dt FORK 2
 .Os
 .Sh NAME
@@ -90,8 +90,10 @@ is still running in the child processes.
 .Pp
 Child processes of a threaded program have additional restrictions,
 a child must only call functions that are async-signal-safe.
-Very few functions are asynchronously safe and applications should
-make sure they call
+Very few functions are asynchronously safe
+(the list may be found in
+.Xr sigaction 2 )
+and applications should make sure they call
 .Xr exec 3
 as soon as possible.
 .Sh RETURN VALUES
