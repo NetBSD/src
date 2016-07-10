@@ -609,7 +609,6 @@ static struct ttm_tt *radeon_ttm_tt_create(struct ttm_bo_device *bdev,
 
 static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 {
-	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 #ifndef __NetBSD__
 	unsigned i;
@@ -631,8 +630,8 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #endif
 	}
 
-	rdev = radeon_get_rdev(ttm->bdev);
 #if __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	if (rdev->flags & RADEON_IS_AGP) {
 		return ttm_agp_tt_populate(ttm);
 	}
@@ -644,6 +643,9 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 #else
 
 #ifdef CONFIG_SWIOTLB
+#if ! __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
+#endif
 	if (swiotlb_nr_tbl()) {
 		return ttm_dma_populate(&gtt->ttm, rdev->dev);
 	}
@@ -674,7 +676,6 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 
 static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 {
-	struct radeon_device *rdev;
 	struct radeon_ttm_tt *gtt = (void *)ttm;
 #ifndef __NetBSD__
 	unsigned i;
@@ -684,8 +685,8 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (slave)
 		return;
 
-	rdev = radeon_get_rdev(ttm->bdev);
 #if __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	if (rdev->flags & RADEON_IS_AGP) {
 		ttm_agp_tt_unpopulate(ttm);
 		return;
@@ -698,6 +699,9 @@ static void radeon_ttm_tt_unpopulate(struct ttm_tt *ttm)
 #else
 
 #ifdef CONFIG_SWIOTLB
+#if ! __OS_HAS_AGP
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
+#endif
 	if (swiotlb_nr_tbl()) {
 		ttm_dma_unpopulate(&gtt->ttm, rdev->dev);
 		return;
