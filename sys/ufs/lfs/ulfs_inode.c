@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.9 2013/07/28 00:37:07 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.9.6.1 2016/07/10 09:49:41 martin Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9 2013/07/28 00:37:07 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.9.6.1 2016/07/10 09:49:41 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -226,6 +226,7 @@ ulfs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	    VM_PROT_WRITE, 0, PGO_SYNCIO | PGO_PASTEOF | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP | PGO_GLOCKHELD);
 	if (error) {
+		genfs_node_unlock(vp);
 		goto out;
 	}
 
