@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.47 2015/12/10 05:29:41 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.48 2016/07/10 04:44:47 pgoyette Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.47 2015/12/10 05:29:41 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.48 2016/07/10 04:44:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,11 @@ piixpm_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_HT1000SB:
 			return 1;
 		}
+	case PCI_VENDOR_AMD:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_AMD_HUDSON_SMB:
+			return 1;
+		}
 	}
 
 	return 0;
@@ -205,7 +210,15 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 nopowermanagement:
 
-	/* SB800 rev 0x40+ needs special initialization */
+	/* SB800 rev 0x40+ and AMD HUDSON need special initialization */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_HUDSON_SMB) {
+		if (piixpm_sb800_init(sc) == 0) {
+			goto attach_i2c;
+		}
+		aprint_normal_dev(self, "SMBus initialization failed\n");
+		return;
+	}
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ATI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_SB600_SMB &&
 	    PCI_REVISION(pa->pa_class) >= 0x40) {
@@ -213,7 +226,7 @@ nopowermanagement:
 			sc->sc_numbusses = 4;
 			goto attach_i2c;
 		}
-		aprint_normal_dev(self, "SMBus disabled\n");
+		aprint_normal_dev(self, "SMBus initialization failed\n");
 		return;
 	}
 
