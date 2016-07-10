@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.3 2016/06/22 08:31:21 snj Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.4 2016/07/10 08:44:55 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -25,4 +25,17 @@ sys/arch/i386/stand/misc/rawr32.exe.uue		up to 1.6
 	- added support for .xz images
 	- minor bugfixes
 	[martin, ticket #1172]
+
+sys/nfs/nfs_clntsocket.c			1.5
+sys/nfs/nfs_socket.c				1.198
+
+	Serialize all access to the NFS request queue via splsoftnet().
+	Fixes random crashes.
+	[christos, ticket #1184]
+
+sys/arch/mips/mips/pmap.c			1.221-1.223
+
+	Various fixes to MIPS pmap.
+	[skrll, ticket #1200]
+
 
