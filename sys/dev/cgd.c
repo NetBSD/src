@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.107 2016/07/07 06:55:40 msaitoh Exp $ */
+/* $NetBSD: cgd.c,v 1.108 2016/07/10 17:40:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.107 2016/07/07 06:55:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108 2016/07/10 17:40:23 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,6 +106,7 @@ static int cgd_destroy(device_t);
 
 static int	cgd_diskstart(device_t, struct buf *);
 static void	cgdiodone(struct buf *);
+static int	cgd_dumpblocks(device_t, void *, daddr_t, int);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
 static int	cgd_ioctl_clr(struct cgd_softc *, struct lwp *);
@@ -122,7 +123,7 @@ static struct dkdriver cgddkdriver = {
         .d_strategy = cgdstrategy,
         .d_iosize = NULL,
         .d_diskstart = cgd_diskstart,
-        .d_dumpblocks = NULL,
+        .d_dumpblocks = cgd_dumpblocks,
         .d_lastclose = NULL
 };
 
@@ -492,6 +493,52 @@ cgdiodone(struct buf *nbp)
 
 	dk_done(dksc, obp);
 	dk_start(dksc, NULL);
+}
+
+static int
+cgd_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
+{
+	struct cgd_softc *sc = device_private(dev);
+	struct dk_softc *dksc = &sc->sc_dksc;
+	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
+	size_t nbytes, blksize;
+	void *buf;
+	int error;
+
+	/*
+	 * dk_dump gives us units of disklabel sectors.  Everything
+	 * else in cgd uses units of diskgeom sectors.  These had
+	 * better agree; otherwise we need to figure out how to convert
+	 * between them.
+	 */
+	KASSERTMSG((dg->dg_secsize == dksc->sc_dkdev.dk_label->d_secsize),
+	    "diskgeom secsize %"PRIu32" != disklabel secsize %"PRIu32,
+	    dg->dg_secsize, dksc->sc_dkdev.dk_label->d_secsize);
+	blksize = dg->dg_secsize;
+
+	/*
+	 * Compute the number of bytes in this request, which dk_dump
+	 * has `helpfully' converted to a number of blocks for us.
+	 */
+	nbytes = nblk*blksize;
+
+	/* Try to acquire a buffer to store the ciphertext.  */
+	buf = cgd_getdata(dksc, nbytes);
+	if (buf == NULL)
+		/* Out of memory: give up.  */
+		return ENOMEM;
+
+	/* Encrypt the caller's data into the temporary buffer.  */
+	cgd_cipher(sc, buf, va, nbytes, blkno, blksize, CGD_CIPHER_ENCRYPT);
+
+	/* Pass it on to the underlying disk device.  */
+	error = bdev_dump(sc->sc_tdev, blkno, buf, nbytes);
+
+	/* Release the buffer.  */
+	cgd_putdata(dksc, buf);
+
+	/* Return any error from the underlying disk device.  */
+	return error;
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
