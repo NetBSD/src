@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.96 2016/07/05 19:20:55 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.97 2016/07/10 10:42:26 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4951,4 +4951,37 @@ sys/dev/adb/adb_usb_map.c			1.2
 	Control, Alt and Shift keys.  Add us.dvorak keymap variant.
 	PR port-macppc/51255.
 	[sevan, ticket #1187]
+
+sys/kern/kern_module.c				1.111
+
+	Check for duplicate module names before loading modules that were
+	"pushed" by the boot loader. Addresses PR kern/50357.
+	[pgoyette, ticket #1183]
+
+sys/nfs/nfs_clntsocket.c			1.5
+sys/nfs/nfs_socket.c				1.198
+
+	Serialize all access to the NFS request queue via splsoftnet().
+	Fixes random crashes.
+	[christos, ticket #1184]
+
+sys/ufs/lfs/ulfs_inode.c			1.14
+
+	Merge ufs_inode.c 1.93: missing unlock on error path.
+	[dholland, ticket #1188]
+
+external/cddl/osnet/dev/dtrace/amd64/dtrace_asm.S 1.6
+external/cddl/osnet/dev/dtrace/dtrace_hacks.c	1.5
+external/cddl/osnet/dist/uts/common/dtrace/dtrace.c 1.32
+external/cddl/osnet/sys/kern/string.c		1.3
+
+	Fix DTrace's panic() action.
+	Do not redefine strpbrk(), we have it in libkern.
+	Fixes PR-51265.
+	[pgoyette, ticket #1189]
+
+sys/arch/mips/mips/pmap.c			1.221-1.223
+
+	Various fixes to MIPS pmap.
+	[skrll, ticket #1200]
 
