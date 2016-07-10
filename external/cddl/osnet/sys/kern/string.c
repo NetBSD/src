@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.2 2010/12/14 01:01:40 haad Exp $	*/
+/*	$NetBSD: string.c,v 1.2.24.1 2016/07/10 10:00:20 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -33,6 +33,7 @@
 #define	IS_ALPHA(c)	\
 	(((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z'))
 
+#ifndef __NetBSD__
 char *
 strpbrk(const char *s, const char *b)
 {
@@ -47,6 +48,7 @@ strpbrk(const char *s, const char *b)
 
 	return (NULL);
 }
+#endif
 
 /*
  * Convert a string into a valid C identifier by replacing invalid
