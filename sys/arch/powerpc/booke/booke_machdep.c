@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.23 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.24 2016/07/11 16:06:52 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.23 2015/01/23 07:27:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.24 2016/07/11 16:06:52 matt Exp $");
 
 #include "opt_modular.h"
 
@@ -130,6 +130,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #ifdef MULTIPROCESSOR
 	[CPU_MAXNUM-1] = {
@@ -138,6 +139,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #endif
 };

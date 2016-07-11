@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.17 2015/02/19 08:59:56 nonaka Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.18 2016/07/11 16:06:52 matt Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.17 2015/02/19 08:59:56 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.18 2016/07/11 16:06:52 matt Exp $");
 
 #include <sys/param.h>
 
@@ -465,7 +465,7 @@ e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 }
 
 static u_int
-e500_tlb_record_asids(u_long *bitmap)
+e500_tlb_record_asids(u_long *bitmap, tlb_asid_t asid_max)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -554,7 +554,8 @@ e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 #endif
 			return false;
 		}
-		mtspr(SPR_MAS1, hwtlb.hwtlb_mas1);
+		mas1 = hwtlb.hwtlb_mas1 | MAS1_V;
+		mtspr(SPR_MAS1, mas1);
 	}
 	mtspr(SPR_MAS2, hwtlb.hwtlb_mas2);
 	mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
