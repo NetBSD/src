@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.7 2015/08/13 05:01:04 msaitoh Exp $
+.\" $NetBSD: pci_msi.9,v 1.8 2016/07/11 06:14:51 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -75,7 +75,8 @@
 .Fn pci_intr_release "pci_chipset_tag_t pc" \
 "pci_intr_handle_t *pih" "int count"
 .Ft pci_intr_type_t
-.Fn pci_intr_type "pci_intr_handle_t ih"
+.Fn pci_intr_type "pci_chipset_tag_t pc" \
+"pci_intr_handle_t ih"
 .Sh DESCRIPTION
 The
 .Nm
