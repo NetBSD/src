@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.7 2015/06/10 22:31:00 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.8 2016/07/11 14:27:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.7 2015/06/10 22:31:00 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.8 2016/07/11 14:27:03 skrll Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -143,7 +143,7 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	beqz	a0, 3b			# loop until not NULL
 	 nop
 	jal	_C_LABEL(kcpuset_atomic_set)
-	 move	a1, s1			# pass it our cpu number
+	 move	a1, s0			# pass it our cpu number
 
 	// Wait until cpuid_infos[cpunum] is not NULL.
 	PTR_LA	a1, _C_LABEL(cpuid_infos)
