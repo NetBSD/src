@@ -453,7 +453,7 @@ wdog_cpunode_attach(device_t parent, device_t self, void *aux)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 	}
 
-        aprint_normal(": default period is %u seconds%s\n",
+        aprint_normal(": default period is %u second%s\n",
             sc->sc_wdog_period, sc->sc_wdog_period == 1 ? "" : "s");
 
 	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
