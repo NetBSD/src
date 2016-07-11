@@ -1,4 +1,4 @@
-/* $NetBSD: xs_bee3.c,v 1.4 2014/03/24 20:06:31 christos Exp $ */
+/* $NetBSD: xs_bee3.c,v 1.5 2016/07/11 16:18:56 matt Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.4 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xs_bee3.c,v 1.5 2016/07/11 16:18:56 matt Exp $");
 
 #define __INTR_PRIVATE
 
@@ -119,7 +119,7 @@ xs_bee3_cons_init(void)
 
 	tlb.tlb_hi = USART_DEFAULT_ADDRESS;
 	tlb.tlb_lo0 = USART_DEFAULT_ADDRESS | 0xf02;
-	tlb_write_indexed(3, &tlb);
+	tlb_write_entry(3, &tlb);
 #endif
 
 	dz_ebus_cnsetup(USART_DEFAULT_ADDRESS);
