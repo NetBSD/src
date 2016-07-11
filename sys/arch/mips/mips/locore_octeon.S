@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.8 2016/07/11 14:27:03 skrll Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.9 2016/07/11 16:15:36 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.8 2016/07/11 14:27:03 skrll Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.9 2016/07/11 16:15:36 matt Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -181,11 +181,11 @@ NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
 #else
 	PTR_LA	k0, _C_LABEL(cpu_info_store) # get cpu_info
 #endif
-	PTR_LA	k1, CIU_BASE		# CIU base
 	j	_C_LABEL(mips64r2_kern_nonmaskable_intr)
 	 sd	zero, CIU_NMI_OFFSET(k1)# clear NMI
 1:
-	PTR_LA	k1, CIU_BASE		# CIU base
+	li	k1, ((MIPS_XKPHYS_START|CIU_BASE) >> 32)	# CIU base (MSW)
+	dsll	k1, 32			# shift it place
 	ld	k0, CIU_FUSE_OFFSET(k1)	# get mask of CPUs
 	sd	k0, CIU_SOFT_RST_OFFSET(k1)	# reset them
 	ld	v0, CIU_SOFT_RST_OFFSET(k1)	# force a load
