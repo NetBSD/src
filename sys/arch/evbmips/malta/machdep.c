@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2016/07/11 16:18:56 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2016/07/11 16:18:56 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -278,7 +278,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 		Debugger();
 #endif
 
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) && 0
 	/*
 	 * We can never be running on more than one processor but we can dream.
 	 */
