@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.69 2016/07/11 18:07:33 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.70 2016/07/11 19:00:04 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -361,7 +361,7 @@
  * Loongson2 processors don't have separate tlbmiss and xtlbmiss handlers;
  * so we have to check for useg addresses in tlb_miss. The good news is that
  * we can use 64 intructions form tlbmiss instead of 32.
- * 
+ *
  *----------------------------------------------------------------------------
  */
 #ifdef MIPS3_LOONGSON2
@@ -1020,7 +1020,7 @@ NESTED_NOPROFILE(MIPSX(kern_nonmaskable_intr), KERNFRAME_SIZ, ra)
 	 * Clear exception level.
 	 */
 	li	v0, ~(MIPS_SR_EXL|MIPS3_SR_NMI)
-	and	v0, a0				# zero NMI/EXL bits 
+	and	v0, a0				# zero NMI/EXL bits
 	mtc0	v0, MIPS_COP_0_STATUS		# update.
 	COP0_SYNC
 #ifdef MIPS3
@@ -1858,7 +1858,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 	PTR_LA	k1, _C_LABEL(pmap_limits)
 	PTR_L	k1, PMAP_LIMITS_VIRTUAL_END(k1)
 	PTR_SUBU k1, k0
-	blez	k1, _C_LABEL(MIPSX(kern_gen_exception)) # full trap processing 
+	blez	k1, _C_LABEL(MIPSX(kern_gen_exception)) # full trap processing
 	 nop
 	PTR_LA	k1, _C_LABEL(pmap_kern_segtab)
 #ifdef _LP64
@@ -1872,7 +1872,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 #endif
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
 	PTR_L	k1, (k1)			# load segtab address
-	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception)) 
+	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception))
 	 nop
 #endif
 #ifdef MIPSNNR2
@@ -1885,7 +1885,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 #endif
 	_MFC0	k0, MIPS_COP_0_BAD_VADDR	# get the fault address (again)
 	PTR_L	k1, (k1)			# load page table address
-	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception)) 
+	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception))
 	 nop
 #ifdef MIPSNNR2
 	_EXT	k0, k0, PGSHIFT, PTPLENGTH
@@ -2084,7 +2084,7 @@ END(MIPSX(tlb_set_asid))
  */
 LEAF(MIPSX(tlb_update_addr))
 #ifdef MIPSNNR2
-	di	ta0			# Disable interrupts 
+	di	ta0			# Disable interrupts
 #else
 	mfc0	ta0, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
@@ -2710,7 +2710,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #if !defined(ENABLE_MIPS_16KB_PAGE) && !defined(ENABLE_MIPS_8KB_PAGE)
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 #if (PGSHIFT & 1)
-	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half 
+	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half
 #else
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
 #endif
