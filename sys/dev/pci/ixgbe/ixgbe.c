@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.38 2016/06/10 13:27:14 ozaki-r Exp $*/
+/*$NetBSD: ixgbe.c,v 1.39 2016/07/11 06:14:51 knakahara Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2536,7 +2536,8 @@ alloc_retry:
 	adapter->osdep.ihs[0] = pci_intr_establish(adapter->osdep.pc,
 	    adapter->osdep.intrs[0], IPL_NET, ixgbe_legacy_irq, que);
 	if (adapter->osdep.ihs[0] == NULL) {
-		intr_type = pci_intr_type(adapter->osdep.intrs[0]);
+		intr_type = pci_intr_type(adapter->osdep.pc,
+		    adapter->osdep.intrs[0]);
 		aprint_error_dev(dev,"unable to establish %s\n",
 		    (intr_type == PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 		pci_intr_release(adapter->osdep.pc, adapter->osdep.intrs, 1);

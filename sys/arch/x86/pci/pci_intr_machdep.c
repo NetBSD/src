@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.37 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.38 2016/07/11 06:14:51 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2009 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.37 2015/08/17 06:16:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.38 2016/07/11 06:14:51 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -352,7 +352,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 #if NIOAPIC > 0
 pci_intr_type_t
-pci_intr_type(pci_intr_handle_t ih)
+pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	if (INT_VIA_MSI(ih)) {
