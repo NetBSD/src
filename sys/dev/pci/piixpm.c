@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.48 2016/07/10 04:44:47 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.49 2016/07/11 11:31:51 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.48 2016/07/10 04:44:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49 2016/07/11 11:31:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,8 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
 	if (bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
-		aprint_error_dev(self, "can't map power management I/O space\n");
+		aprint_error_dev(self,
+		    "can't map power management I/O space\n");
 		goto nopowermanagement;
 	}
 
@@ -251,9 +252,10 @@ nopowermanagement:
 	} else if ((conf & PIIX_SMB_HOSTC_INTMASK) == PIIX_SMB_HOSTC_IRQ) {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
-			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));
-			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-			    piixpm_intr, sc);
+			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
+			    sizeof(intrbuf));
+			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih,
+			    IPL_BIO, piixpm_intr, sc);
 			if (sc->sc_smb_ih != NULL) {
 				aprint_normal("interrupting at %s", intrstr);
 				sc->sc_poll = 0;
@@ -380,7 +382,8 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
 
-	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX, SB800_PM_SMBUS0SELEN);
+	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_INDEX,
+	    SB800_PM_SMBUS0SELEN);
 	bus_space_write_1(iot, ioh, PIIXPM_INDIRECTIO_DATA, 1); /* SMBUS0SEL */
 
 	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
@@ -471,8 +474,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 
-	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR | 
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
+	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR |
 	    PIIX_SMB_HS_BUSERR | PIIX_SMB_HS_FAILED);
 	bus_space_barrier(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 1,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
@@ -583,7 +586,8 @@ timeout:
 	DELAY(PIIXPM_DELAY);
 	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
-		aprint_error_dev(sc->sc_dev, "transaction abort failed, status 0x%x\n", st);
+		aprint_error_dev(sc->sc_dev,
+		    "transaction abort failed, status 0x%x\n", st);
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 	/*
 	 * CSB5 needs hard reset to unlock the smbus after timeout.

@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.32 2010/07/22 16:35:24 pgoyette Exp $ */
+/* $NetBSD: com_acpi.c,v 1.33 2016/07/11 11:31:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.32 2010/07/22 16:35:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.33 2016/07/11 11:31:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -120,8 +120,8 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 			base = mem->ar_base;
 			size = mem->ar_length;
 		} else {
-			aprint_error_dev(self,
-			    "unable to find i/o register and memory resource\n");
+			aprint_error_dev(self, "unable to find i/o register "
+			    "and memory resource\n");
 			goto out;
 		}
 	}

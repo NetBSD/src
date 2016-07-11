@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.64 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.65 2016/07/11 11:31:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.64 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.65 2016/07/11 11:31:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,8 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.64 2015/04/26 15:15:20 mlelstv Exp $");
 
 #define	EDLABELDEV(dev) (MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART))
 
-static int     ed_mca_probe  (device_t, cfdata_t, void *);
-static void    ed_mca_attach (device_t, device_t, void *);
+static int	ed_mca_probe  (device_t, cfdata_t, void *);
+static void	ed_mca_attach (device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ed_mca, sizeof(struct ed_softc),
     ed_mca_probe, ed_mca_attach, NULL, NULL);
