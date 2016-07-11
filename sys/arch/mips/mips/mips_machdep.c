@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.269 2015/06/11 15:48:57 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.270 2016/07/11 01:50:17 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.269 2015/06/11 15:48:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.270 2016/07/11 01:50:17 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1719,6 +1719,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, MIPS_HAS_LMMI, NULL, 0,
 		       CTL_MACHDEP, CPU_LMMI, CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+                       CTLTYPE_INT, "fpu_present", NULL,
+                       NULL,
+#ifdef NOFPU
+		       0,
+#else
+		       1,
+#endif
+		       NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 /*
