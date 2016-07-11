@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.44 2016/07/09 06:49:03 skrll Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.45 2016/07/11 16:18:56 matt Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.44 2016/07/09 06:49:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.45 2016/07/11 16:18:56 matt Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.44 2016/07/09 06:49:03 skrll Exp $
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
+
+#include <mips/locore.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>
