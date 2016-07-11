@@ -87,6 +87,9 @@ cpunode_mainbus_print(void *aux, const char *pnp)
 {
 	struct cpunode_attach_args * const cnaa = aux;
 
+	if (pnp)
+		aprint_normal("%s", pnp);
+
 	if (cnaa->cnaa_cpunum != CPUNODECF_CORE_DEFAULT)
 		aprint_normal(" core %d", cnaa->cnaa_cpunum);
 
@@ -162,7 +165,7 @@ octeon_fixup_cpu_info_references(int32_t load_addr, uint32_t new_insns[2],
 {
 	struct cpu_info * const ci = arg;
 
-	atomic_or_64(&curcpu()->ci_flags, CPUF_PRESENT);
+	atomic_or_ulong(&curcpu()->ci_flags, CPUF_PRESENT);
 
 	KASSERT(MIPS_KSEG0_P(load_addr));
 #ifdef MULTIPROCESSOR
@@ -248,9 +251,9 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	void **nmi_vector = (void *)MIPS_PHYS_TO_KSEG0(0x800 + 32*ci->ci_cpuid);
 	*nmi_vector = octeon_reset_vector;
 
-	struct vm_page * const pg = mips_pmap_alloc_poolpage(UVM_PGA_ZERO);
+	struct vm_page * const pg = PMAP_ALLOC_POOLPAGE(UVM_PGA_ZERO);
 	KASSERT(pg != NULL);
-	const vaddr_t kva = mips_pmap_map_poolpage(VM_PAGE_TO_PHYS(pg));
+	const vaddr_t kva = PMAP_MAP_POOLPAGE(VM_PAGE_TO_PHYS(pg));
 	KASSERT(kva != 0);
 	ci->ci_nmi_stack = (void *)(kva + PAGE_SIZE - sizeof(struct kernframe));
 #endif
@@ -310,10 +313,10 @@ cpu_cpunode_attach(device_t parent, device_t self, void *aux)
 	}
 	if (!kcpuset_isset(cpus_hatched, cpunum)) {
 #ifdef DDB
-		aprint_verbose_dev(self, "hatch failed ci=%p flags=%#"PRIx64"\n", ci, ci->ci_flags);
+		aprint_verbose_dev(self, "hatch failed ci=%p flags=%#lx\n", ci, ci->ci_flags);
 		cpu_Debugger();
 #endif
-		panic("%s failed to hatch: ci=%p flags=%#"PRIx64,
+		panic("%s failed to hatch: ci=%p flags=%#lx",
 		    cpu_name(ci), ci, ci->ci_flags);
 	}
 #else
@@ -351,14 +354,14 @@ wdog_cpunode_setmode(struct sysmon_wdog *smw)
 			struct cpu_info *ci;
 			for (CPU_INFO_FOREACH(cii, ci)) {
 				struct cpu_softc * const cpu = ci->ci_softc;
-				uint64_t wdog = mips64_ld_a64(cpu->cpu_wdog);
+				uint64_t wdog = mips3_ld(cpu->cpu_wdog);
 				wdog &= ~CIU_WDOGX_MODE;
-				mips64_sd_a64(cpu->cpu_pp_poke, wdog);
+				mips3_sd(cpu->cpu_pp_poke, wdog);
 				aprint_verbose_dev(sc->sc_dev,
 				    "%s: disable wdog=%#"PRIx64"\n",
 				    cpu_name(ci), wdog);
-				mips64_sd_a64(cpu->cpu_wdog, wdog);
-				mips64_sd_a64(cpu->cpu_pp_poke, wdog);
+				mips3_sd(cpu->cpu_wdog, wdog);
+				mips3_sd(cpu->cpu_pp_poke, wdog);
 			}
 			sc->sc_wdog_armed = false;
 		}
@@ -382,14 +385,14 @@ wdog_cpunode_setmode(struct sysmon_wdog *smw)
 		CPU_INFO_ITERATOR cii;
 		for (CPU_INFO_FOREACH(cii, ci)) {
 			struct cpu_softc * const cpu = ci->ci_softc;
-			uint64_t wdog = mips64_ld_a64(cpu->cpu_wdog);
+			uint64_t wdog = mips3_ld(cpu->cpu_wdog);
 			wdog &= ~(CIU_WDOGX_MODE|CIU_WDOGX_LEN);
 			wdog |= __SHIFTIN(3, CIU_WDOGX_MODE);
 			wdog |= __SHIFTIN(wdog_len >> 16, CIU_WDOGX_LEN);
 			aprint_verbose_dev(sc->sc_dev,
 			    "%s: enable wdog=%#"PRIx64" (%#"PRIx64")\n",
 			    cpu_name(ci), wdog, wdog_len);
-			mips64_sd_a64(cpu->cpu_wdog, wdog);
+			mips3_sd(cpu->cpu_wdog, wdog);
 		}
 		sc->sc_wdog_armed = true;
 		kpreempt_enable();
@@ -401,7 +404,7 @@ static void
 wdog_cpunode_poke(void *arg)
 {
 	struct cpu_softc *cpu = arg;
-	mips64_sd_a64(cpu->cpu_pp_poke, 0);
+	mips3_sd(cpu->cpu_pp_poke, 0);
 }
 
 static int
