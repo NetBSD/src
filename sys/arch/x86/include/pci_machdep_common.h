@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.22 2015/10/22 09:45:32 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.23 2016/07/11 06:14:51 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -127,7 +127,7 @@ typedef enum {
 	PCI_INTR_TYPE_SIZE,
 } pci_intr_type_t;
 
-pci_intr_type_t	pci_intr_type(pci_intr_handle_t);
+pci_intr_type_t	pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
 /*
  * Wrapper function for generally unitied allocation to fallback MSI-X/MSI/INTx
  * automatically.

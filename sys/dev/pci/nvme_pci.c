@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.3 2016/06/24 15:25:43 nonaka Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.4 2016/07/11 06:14:51 knakahara Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.3 2016/06/24 15:25:43 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.4 2016/07/11 06:14:51 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,8 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 			    device_xname(sc->sc_dev), qid);
 		}
 		ih_arg = q;
-		if (pci_intr_type(psc->psc_intrs[qid]) == PCI_INTR_TYPE_MSIX)
+		if (pci_intr_type(psc->psc_pc, psc->psc_intrs[qid])
+		    == PCI_INTR_TYPE_MSIX)
 			ih_func = nvme_mq_msix_intr;
 		else
 			ih_func = nvme_mq_msi_intr;
@@ -399,7 +400,7 @@ retry:
 		return error;
 	}
 
-	intr_type = pci_intr_type(ihps[0]);
+	intr_type = pci_intr_type(pa->pa_pc, ihps[0]);
 	if (alloced_counts[intr_type] < counts[intr_type]) {
 		if (intr_type != PCI_INTR_TYPE_INTX) {
 			pci_intr_release(pa->pa_pc, ihps,
