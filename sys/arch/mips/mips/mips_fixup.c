@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.14 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.15 2016/07/11 19:17:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.14 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.15 2016/07/11 19:17:23 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -151,7 +151,7 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	if (fixed)
 		mips_icache_sync_range((vaddr_t)start,
 		   sizeof(start[0]) * (end - start));
-		
+
 	return fixed;
 }
 
@@ -287,8 +287,8 @@ mips_fixup_addr(const uint32_t *stubp)
 	 * This is basically a small MIPS emulator for those instructions
 	 * that might in a stub routine.
 	 */
-	for (n = 0; n < 16; n++) { 
-		const InstFmt insn = { .word = stubp[n] }; 
+	for (n = 0; n < 16; n++) {
+		const InstFmt insn = { .word = stubp[n] };
 		switch (insn.IType.op) {
 		case OP_LUI:
 			regs[insn.IType.rt] = (int16_t)insn.IType.imm << 16;
@@ -534,7 +534,7 @@ tlb_get_asid(void)
 void
 tlb_set_asid(uint32_t asid)
 {
-	(*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);  
+	(*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);
 }
 
 void
