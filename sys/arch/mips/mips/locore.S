@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.201 2016/07/04 15:20:16 maya Exp $	*/
+/*	$NetBSD: locore.S,v 1.202 2016/07/11 16:15:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,7 +139,9 @@ _C_LABEL(kernel_text):
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 #if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
-#ifdef _LP64
+#ifdef __mips_n32
+	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
+#elif defined(_LP64)
 	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
@@ -158,7 +160,7 @@ _C_LABEL(kernel_text):
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
-#ifdef _LP64
+#if defined(_LP64) || defined(__mips_n32)
 	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #endif
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
@@ -880,6 +882,14 @@ XNESTED(logstacktrace)
 END(stacktrace)
 #endif	/* DEBUG || DDB */
 #endif	/* DDB_TRACE */
+
+	.section .stub, "ax"
+NESTED_NOPROFILE(tlb_update_addr, 0, ra)
+	lui	v0,%hi(_C_LABEL(mips_locore_jumpvec)+LJV_TLB_UPDATE_ADDR)
+	PTR_L	t9,%lo(_C_LABEL(mips_locore_jumpvec)+LJV_TLB_UPDATE_ADDR)(v0)
+	jr	t9
+	 nop
+END(tlb_update_addr)
 
 	.sdata
 	.globl	_C_LABEL(esym)
