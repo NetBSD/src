@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.118 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.119 2016/07/11 19:05:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,8 +36,6 @@
 
 #ifndef _CPU_H_
 #define _CPU_H_
-
-//#include <mips/cpuregs.h>
 
 /*
  * Exported definitions unique to NetBSD/mips cpu support.
