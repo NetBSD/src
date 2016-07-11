@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.4 2016/07/04 15:35:55 kiyohara Exp $ */
+/* $NetBSD: tiotg.c,v 1.5 2016/07/11 14:46:33 kiyohara Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.4 2016/07/04 15:35:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.5 2016/07/11 14:46:33 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -133,14 +133,14 @@ tiotg_match(device_t parent, cfdata_t match, void *aux)
 	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT ||
 	    mb->mb_iosize == MAINBUSCF_SIZE_DEFAULT ||
 	    mb->mb_intrbase == MAINBUSCF_INTRBASE_DEFAULT)
-                return 0;
-        return 1;
+		return 0;
+	return 1;
 }
 
 static void
 tiotg_attach(device_t parent, device_t self, void *aux)
 {
-	struct tiotg_softc       *sc = device_private(self);
+	struct tiotg_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = aux;
 	uint32_t val;
 
@@ -157,7 +157,7 @@ tiotg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intrbase = mb->mb_intrbase;
 	sc->sc_ih = intr_establish(mb->mb_intrbase, IPL_USB, IST_LEVEL,
 	    tiotg_intr, sc);
-        KASSERT(sc->sc_ih != NULL);
+	KASSERT(sc->sc_ih != NULL);
 	aprint_normal(": TI dual-port USB controller");
 	/* XXX this looks wrong */
 	prcm_write_4(AM335X_PRCM_CM_WKUP, CM_WKUP_CM_CLKDCOLDO_DPLL_PER,
