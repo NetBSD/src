@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.74 2016/07/11 16:15:35 matt Exp $
+#	$NetBSD: files.mips,v 1.75 2016/07/11 23:06:53 matt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
@@ -77,12 +77,12 @@ file	arch/mips/mips/cache_octeon.c		mips64_octeon
 file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2
 file	arch/mips/mips/cache_r4k_pcache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
 file	arch/mips/mips/cache_r4k_pcache32.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
-file	arch/mips/mips/cache_r4k_pcache64.S	mips32|mips32r2|mips64|mips64r2
-file	arch/mips/mips/cache_r4k_pcache128.S	mips32|mips32r2|mips64|mips64r2
-#file	arch/mips/mips/cache_r4k_scache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
-#file	arch/mips/mips/cache_r4k_scache32.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
-#file	arch/mips/mips/cache_r4k_scache64.S	mips32|mips32r2|mips64|mips64r2
-#file	arch/mips/mips/cache_r4k_scache128.S	mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache64.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache128.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache32.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache64.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache128.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
 
 file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul
 file	arch/mips/mips/mips_emul.c

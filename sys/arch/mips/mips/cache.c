@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.51 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.52 2016/07/11 23:06:54 matt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.51 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.52 2016/07/11 23:06:54 matt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -416,23 +416,20 @@ mips_config_cache_prehistoric(void)
 		if (mci->mci_pdcache_size > PAGE_SIZE)
 			mci->mci_cache_virtual_alias = true;
 
+		mco->mco_icache_sync_all = r4k_icache_sync_all_generic;
 		switch (mci->mci_picache_line_size) {
 		case 16:
-			mco->mco_icache_sync_all =
-			    r4k_icache_sync_all_16;
 			mco->mco_icache_sync_range =
-			    r4k_icache_sync_range_16;
+			    cache_r4k_icache_hit_inv_16;
 			mco->mco_icache_sync_range_index =
-			    r4k_icache_sync_range_index_16;
+			    cache_r4k_icache_index_inv_16;
 			break;
 
 		case 32:
-			mco->mco_icache_sync_all =
-			    r4k_icache_sync_all_32;
 			mco->mco_icache_sync_range =
-			    r4k_icache_sync_range_32;
+			    cache_r4k_icache_hit_inv_32;
 			mco->mco_icache_sync_range_index =
-			    r4k_icache_sync_range_index_32;
+			    cache_r4k_icache_index_inv_32;
 			break;
 
 		default:
@@ -440,31 +437,28 @@ mips_config_cache_prehistoric(void)
 			    mci->mci_picache_line_size);
 		}
 
+		mco->mco_pdcache_wbinv_all = r4k_pdcache_wbinv_all_generic;
 		switch (mci->mci_pdcache_line_size) {
 		case 16:
-			mco->mco_pdcache_wbinv_all =
-			    r4k_pdcache_wbinv_all_16;
 			mco->mco_pdcache_wbinv_range =
-			    r4k_pdcache_wbinv_range_16;
+			    cache_r4k_pdcache_hit_wb_inv_16;
 			mco->mco_pdcache_wbinv_range_index =
-			    r4k_pdcache_wbinv_range_index_16;
+			    cache_r4k_pdcache_index_wb_inv_16;
 			mco->mco_pdcache_inv_range =
-			    r4k_pdcache_inv_range_16;
+			    cache_r4k_pdcache_hit_inv_16;
 			mco->mco_pdcache_wb_range =
-			    r4k_pdcache_wb_range_16;
+			    cache_r4k_pdcache_hit_wb_16;
 			break;
 
 		case 32:
-			mco->mco_pdcache_wbinv_all =
-			    r4k_pdcache_wbinv_all_32;
 			mco->mco_pdcache_wbinv_range =
-			    r4k_pdcache_wbinv_range_32;
+			    cache_r4k_pdcache_hit_wb_inv_32;
 			mco->mco_pdcache_wbinv_range_index =
-			    r4k_pdcache_wbinv_range_index_32;
+			    cache_r4k_pdcache_index_wb_inv_32;
 			mco->mco_pdcache_inv_range =
-			    r4k_pdcache_inv_range_32;
+			    cache_r4k_pdcache_hit_inv_32;
 			mco->mco_pdcache_wb_range =
-			    r4k_pdcache_wb_range_32;
+			    cache_r4k_pdcache_hit_wb_32;
 			break;
 
 		default:
@@ -730,45 +724,51 @@ primary_cache_is_2way:
 #endif
 		switch (mci->mci_sdcache_ways) {
 		case 1:
+			mco->mco_sdcache_wbinv_all =
+			    r4k_sdcache_wbinv_all_generic;
 			switch (mci->mci_sdcache_line_size) {
-			case 32:
-				mco->mco_sdcache_wbinv_all =
-				    r4k_sdcache_wbinv_all_32;
+			case 16:
 				mco->mco_sdcache_wbinv_range =
-				    r4k_sdcache_wbinv_range_32;
+				    cache_r4k_sdcache_hit_wb_inv_16;
 				mco->mco_sdcache_wbinv_range_index =
-				    r4k_sdcache_wbinv_range_index_32;
+				    cache_r4k_sdcache_index_wb_inv_16;
 				mco->mco_sdcache_inv_range =
-				    r4k_sdcache_inv_range_32;
+				    cache_r4k_sdcache_hit_inv_16;
 				mco->mco_sdcache_wb_range =
-				    r4k_sdcache_wb_range_32;
+				    cache_r4k_sdcache_hit_wb_16;
 				break;
 
-			case 16:
-			case 64:
-				mco->mco_sdcache_wbinv_all =
-				    r4k_sdcache_wbinv_all_generic;
+			case 32:
 				mco->mco_sdcache_wbinv_range =
-				    r4k_sdcache_wbinv_range_generic;
+				    cache_r4k_sdcache_hit_wb_inv_32;
 				mco->mco_sdcache_wbinv_range_index =
-				    r4k_sdcache_wbinv_range_index_generic;
+				    cache_r4k_sdcache_index_wb_inv_32;
 				mco->mco_sdcache_inv_range =
-				    r4k_sdcache_inv_range_generic;
+				    cache_r4k_sdcache_hit_inv_32;
 				mco->mco_sdcache_wb_range =
-				    r4k_sdcache_wb_range_generic;
+				    cache_r4k_sdcache_hit_wb_32;
+				break;
+
+			case 64:
+				mco->mco_sdcache_wbinv_range =
+				    cache_r4k_sdcache_hit_wb_inv_64;
+				mco->mco_sdcache_wbinv_range_index =
+				    cache_r4k_sdcache_index_wb_inv_64;
+				mco->mco_sdcache_inv_range =
+				    cache_r4k_sdcache_hit_inv_64;
+				mco->mco_sdcache_wb_range =
+				    cache_r4k_sdcache_hit_wb_64;
 				break;
 
 			case 128:
-				mco->mco_sdcache_wbinv_all =
-				    r4k_sdcache_wbinv_all_128;
 				mco->mco_sdcache_wbinv_range =
-				    r4k_sdcache_wbinv_range_128;
+				    cache_r4k_sdcache_hit_wb_inv_128;
 				mco->mco_sdcache_wbinv_range_index =
-				    r4k_sdcache_wbinv_range_index_128;
+				    cache_r4k_sdcache_index_wb_inv_128;
 				mco->mco_sdcache_inv_range =
-				    r4k_sdcache_inv_range_128;
+				    cache_r4k_sdcache_hit_inv_128;
 				mco->mco_sdcache_wb_range =
-				    r4k_sdcache_wb_range_128;
+				    cache_r4k_sdcache_hit_wb_128;
 				break;
 
 			default:
