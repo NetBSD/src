@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.25 2016/07/11 16:15:36 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.26 2016/07/11 19:05:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.25 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.26 2016/07/11 19:05:02 skrll Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.25 2016/07/11 16
 #define	CHIP_SWAP16(x)	be16toh(x)
 #define	CHIP_SWAP32(x)	be32toh(x)
 #define	CHIP_SWAP64(x)	be64toh(x)
-#define	CHIP_NEED_STREAM	1	
+#define	CHIP_NEED_STREAM	1
 #else
 #define	CHIP_SWAP16(x)	(x)
 #define	CHIP_SWAP32(x)	(x)
@@ -542,7 +542,7 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 #ifdef EXTENT_DEBUG
 		extent_print(CHIP_EXTENT(v));
 #endif
-	}	
+	}
 #endif /* CHIP_EXTENT */
 #if !defined(_LP64) || defined(CHIP_EXTENT)
 	__USE(addr);
@@ -680,7 +680,7 @@ __BS(mmap)(void *v, bus_addr_t addr, off_t off, int prot, int flags)
 	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
 		ret |= PGC_PREFETCH;
 	}
-#endif	
+#endif
 
 	return (mips_btop(ret));
 #else
@@ -1178,37 +1178,37 @@ __BS(init)(bus_space_tag_t t, void *v)
 
 	/* barrier */
 	t->bs_barrier =		__BS(barrier);
-	
+
 	/* read (single) */
 	t->bs_r_1 =		__BS(read_1);
 	t->bs_r_2 =		__BS(read_2);
 	t->bs_r_4 =		__BS(read_4);
 	t->bs_r_8 =		__BS(read_8);
-	
+
 	/* read multiple */
 	t->bs_rm_1 =		__BS(read_multi_1);
 	t->bs_rm_2 =		__BS(read_multi_2);
 	t->bs_rm_4 =		__BS(read_multi_4);
 	t->bs_rm_8 =		__BS(read_multi_8);
-	
+
 	/* read region */
 	t->bs_rr_1 =		__BS(read_region_1);
 	t->bs_rr_2 =		__BS(read_region_2);
 	t->bs_rr_4 =		__BS(read_region_4);
 	t->bs_rr_8 =		__BS(read_region_8);
-	
+
 	/* write (single) */
 	t->bs_w_1 =		__BS(write_1);
 	t->bs_w_2 =		__BS(write_2);
 	t->bs_w_4 =		__BS(write_4);
 	t->bs_w_8 =		__BS(write_8);
-	
+
 	/* write multiple */
 	t->bs_wm_1 =		__BS(write_multi_1);
 	t->bs_wm_2 =		__BS(write_multi_2);
 	t->bs_wm_4 =		__BS(write_multi_4);
 	t->bs_wm_8 =		__BS(write_multi_8);
-	
+
 	/* write region */
 	t->bs_wr_1 =		__BS(write_region_1);
 	t->bs_wr_2 =		__BS(write_region_2);
@@ -1220,7 +1220,7 @@ __BS(init)(bus_space_tag_t t, void *v)
 	t->bs_sm_2 =		__BS(set_multi_2);
 	t->bs_sm_4 =		__BS(set_multi_4);
 	t->bs_sm_8 =		__BS(set_multi_8);
-	
+
 	/* set region */
 	t->bs_sr_1 =		__BS(set_region_1);
 	t->bs_sr_2 =		__BS(set_region_2);
@@ -1239,31 +1239,31 @@ __BS(init)(bus_space_tag_t t, void *v)
 	t->bs_rs_2 =		__BS(read_stream_2);
 	t->bs_rs_4 =		__BS(read_stream_4);
 	t->bs_rs_8 =		__BS(read_stream_8);
-	
+
 	/* read multiple, stream */
 	t->bs_rms_1 =		__BS(read_multi_stream_1);
 	t->bs_rms_2 =		__BS(read_multi_stream_2);
 	t->bs_rms_4 =		__BS(read_multi_stream_4);
 	t->bs_rms_8 =		__BS(read_multi_stream_8);
-	
+
 	/* read region, stream */
 	t->bs_rrs_1 =		__BS(read_region_stream_1);
 	t->bs_rrs_2 =		__BS(read_region_stream_2);
 	t->bs_rrs_4 =		__BS(read_region_stream_4);
 	t->bs_rrs_8 =		__BS(read_region_stream_8);
-	
+
 	/* write (single), stream */
 	t->bs_ws_1 =		__BS(write_stream_1);
 	t->bs_ws_2 =		__BS(write_stream_2);
 	t->bs_ws_4 =		__BS(write_stream_4);
 	t->bs_ws_8 =		__BS(write_stream_8);
-	
+
 	/* write multiple, stream */
 	t->bs_wms_1 =		__BS(write_multi_stream_1);
 	t->bs_wms_2 =		__BS(write_multi_stream_2);
 	t->bs_wms_4 =		__BS(write_multi_stream_4);
 	t->bs_wms_8 =		__BS(write_multi_stream_8);
-	
+
 	/* write region, stream */
 	t->bs_wrs_1 =		__BS(write_region_stream_1);
 	t->bs_wrs_2 =		__BS(write_region_stream_2);
@@ -1277,31 +1277,31 @@ __BS(init)(bus_space_tag_t t, void *v)
 	t->bs_rs_2 =		__BS(read_2);
 	t->bs_rs_4 =		__BS(read_4);
 	t->bs_rs_8 =		__BS(read_8);
-	
+
 	/* read multiple, stream */
 	t->bs_rms_1 =		__BS(read_multi_1);
 	t->bs_rms_2 =		__BS(read_multi_2);
 	t->bs_rms_4 =		__BS(read_multi_4);
 	t->bs_rms_8 =		__BS(read_multi_8);
-	
+
 	/* read region, stream */
 	t->bs_rrs_1 =		__BS(read_region_1);
 	t->bs_rrs_2 =		__BS(read_region_2);
 	t->bs_rrs_4 =		__BS(read_region_4);
 	t->bs_rrs_8 =		__BS(read_region_8);
-	
+
 	/* write (single), stream */
 	t->bs_ws_1 =		__BS(write_1);
 	t->bs_ws_2 =		__BS(write_2);
 	t->bs_ws_4 =		__BS(write_4);
 	t->bs_ws_8 =		__BS(write_8);
-	
+
 	/* write multiple, stream */
 	t->bs_wms_1 =		__BS(write_multi_1);
 	t->bs_wms_2 =		__BS(write_multi_2);
 	t->bs_wms_4 =		__BS(write_multi_4);
 	t->bs_wms_8 =		__BS(write_multi_8);
-	
+
 	/* write region, stream */
 	t->bs_wrs_1 =		__BS(write_region_1);
 	t->bs_wrs_2 =		__BS(write_region_2);
@@ -1311,7 +1311,7 @@ __BS(init)(bus_space_tag_t t, void *v)
 
 #ifdef CHIP_EXTENT
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
-	ex = extent_create(__S(__BS(bus)), 0x0UL, ~0UL, 
+	ex = extent_create(__S(__BS(bus)), 0x0UL, ~0UL,
 	    (void *)CHIP_EX_STORE(v), CHIP_EX_STORE_SIZE(v), EX_NOWAIT);
 	extent_alloc_region(ex, 0, ~0UL, EX_NOWAIT);
 
