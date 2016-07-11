@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.16 2016/07/11 06:14:51 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.15 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.16 2016/07/11 06:14:51 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -265,7 +265,7 @@ virtio_setup_interrupts(struct virtio_softc *sc, struct pci_attach_args *pa)
 		return -1;
 	}
 
-	if (pci_intr_type(sc->sc_ihp[0]) == PCI_INTR_TYPE_MSIX) {
+	if (pci_intr_type(pc, sc->sc_ihp[0]) == PCI_INTR_TYPE_MSIX) {
 		sc->sc_ihs = kmem_alloc(sizeof(*sc->sc_ihs) * 2,
 		    KM_SLEEP);
 		if (sc->sc_ihs == NULL) {
@@ -290,7 +290,7 @@ virtio_setup_interrupts(struct virtio_softc *sc, struct pci_attach_args *pa)
 
 		sc->sc_ihs_num = 2;
 		sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
-	} else if (pci_intr_type(sc->sc_ihp[0]) == PCI_INTR_TYPE_INTX) {
+	} else if (pci_intr_type(pc, sc->sc_ihp[0]) == PCI_INTR_TYPE_INTX) {
 		sc->sc_ihs = kmem_alloc(sizeof(*sc->sc_ihs) * 1,
 		    KM_SLEEP);
 		if (sc->sc_ihs == NULL) {
