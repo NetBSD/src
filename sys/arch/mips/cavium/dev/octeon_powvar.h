@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powvar.h,v 1.1 2015/04/29 08:32:01 hikaru Exp $	*/
+/*	$NetBSD: octeon_powvar.h,v 1.2 2016/07/11 16:15:35 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -457,10 +457,17 @@ octeon_pow_work_response_async(uint64_t scraddr)
 	OCTEON_SYNCIOBDMA;
 	result = octeon_cvmseg_read_8(scraddr);
 
-	return (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK) ?
-	    NULL :
-	    (uint64_t *)MIPS_PHYS_TO_XKPHYS_CACHED(
-		result & POW_IOBDMA_GET_WORK_RESULT_ADDR);
+	paddr_t addr = result & POW_IOBDMA_GET_WORK_RESULT_ADDR;
+
+	if (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK)
+	    return NULL;
+#ifdef __mips_n32
+	KASSERT(addr < MIPS_PHYS_MASK);
+	//if (addr < MIPS_PHYS_MASK)
+		return (uint64_t *)MIPS_PHYS_TO_KSEG0(addr);
+#else
+	return (uint64_t *)MIPS_PHYS_TO_XKPHYS_CACHED(addr);
+#endif
 }
 
 static inline void
