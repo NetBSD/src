@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.271 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.272 2016/07/11 18:56:41 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.271 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.272 2016/07/11 18:56:41 skrll Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -365,7 +365,7 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_TX3900, MIPS_REV_TX3927, -1,	CPU_ARCH_MIPS1, 64,
 	  CPU_MIPS_NO_LLSC, 0, 0,		"Toshiba TX3927 CPU"	},
 	{ 0, MIPS_R5000, -1, -1,		CPU_ARCH_MIPS4, 48,
-	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT, 0, 0,			
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT, 0, 0,
 						"MIPS R5000 CPU"	},
 	{ 0, MIPS_RM5200, -1, -1,		CPU_ARCH_MIPS4, 48,
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
@@ -380,7 +380,7 @@ static const struct pridtab cputab[] = {
 	  MIPS_NOT_SUPP | CPU_MIPS_CAUSE_IV | CPU_MIPS_DOUBLE_COUNT |
 	  CPU_MIPS_USE_WAIT, 0, 0,		"QED RM7000 CPU"	},
 
-	/* 
+	/*
 	 * IDT RC32300 core is a 32 bit MIPS2 processor with
 	 * MIPS3/MIPS4 extensions. It has an R4000-style TLB,
 	 * while all registers are 32 bits and any 64 bit
@@ -415,7 +415,7 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT, 0, 0,
 						"Toshiba TX4900 CPU"	},
 
-	/* 
+	/*
 	 * ICT Loongson2 is a MIPS64 CPU with a few quirks.  For some reason
 	 * the virtual aliases present with 4KB pages make the caches misbehave
 	 * so we make all accesses uncached.  With 16KB pages, no virtual
@@ -1318,7 +1318,7 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		mips3_vector_init(splsw);
 		mips_locoresw = mips3_locoresw;
 		break;
-	
+
 #endif /* MIPS3 */
 #if defined(MIPS32)
 	case CPU_ARCH_MIPS32:
@@ -1528,7 +1528,7 @@ cpu_identify(device_t dev)
 			    mci->mci_picache_line_size, waynames[mci->mci_picache_ways],
 			    opts->mips_num_tlb_entries);
 		else
-			aprint_normal_dev(dev, "%d TLB entries\n", 
+			aprint_normal_dev(dev, "%d TLB entries\n",
 			    opts->mips_num_tlb_entries);
 		if (mci->mci_pdcache_size)
 			aprint_normal_dev(dev, "%dKB/%dB %s %s Data cache\n",
@@ -2140,7 +2140,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 				/*
 				 * If this segment doesn't overlap the freelist
 				 * at all, skip it.
-				 */ 
+				 */
 				if (segstart >= flp[i].fl_end
 				    || segend <= flp[i].fl_start)
 					continue;
@@ -2218,12 +2218,12 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 					break;
 				}
 			}
-			
+
 			/*
 			 * Now we give this segment to uvm.
 			 */
 			printf("adding %#"PRIxPADDR" @ %#"PRIxPADDR" to freelist %d\n",
-			
+
 			    segend - segstart, segstart, freelist);
 			paddr_t first = atop(segstart);
 			paddr_t last = atop(segend);
@@ -2237,7 +2237,7 @@ mips_page_physload(vaddr_t vkernstart, vaddr_t vkernend,
 	}
 }
 
-/* 
+/*
  * Start a new LWP
  */
 void
@@ -2255,7 +2255,7 @@ startlwp(void *arg)
 }
 
 #ifdef COMPAT_NETBSD32
-/* 
+/*
  * Start a new LWP
  */
 void

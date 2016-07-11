@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.240 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.241 2016/07/11 18:54:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.240 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2016/07/11 18:54:32 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -190,24 +190,24 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		int n, sz = sizeof(strbuf);
 
 		n = snprintf(str, sz, "pid %d(%s): ", p->p_pid, p->p_comm);
-		sz -= n; 
+		sz -= n;
 		str += n;
 		n = snprintf(str, sz, "trap: cpu%d, %s in %s mode\n",
 			cpu_number(), trap_names[TRAPTYPE(cause)],
 			USERMODE(status) ? "user" : "kernel");
-		sz -= n; 
+		sz -= n;
 		str += n;
 		n = snprintf(str, sz, "status=%#x, cause=%#x, epc=%#"
 			PRIxVADDR ", vaddr=%#" PRIxVADDR "\n",
 			status, cause, pc, vaddr);
-		sz -= n; 
+		sz -= n;
 		str += n;
 		if (USERMODE(status)) {
 			KASSERT(tf == utf);
 			n = snprintf(str, sz, "frame=%p usp=%#" PRIxREGISTER
 			    " ra=%#" PRIxREGISTER "\n",
 			    tf, tf->tf_regs[_R_SP], tf->tf_regs[_R_RA]);
-			sz -= n; 
+			sz -= n;
 			str += n;
 		} else {
 			n = snprintf(str, sz, "tf=%p ksp=%p ra=%#"
@@ -216,7 +216,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 				? (void*)(uintptr_t)tf->tf_regs[_R_SP]
 				: tf+1,
 			    tf->tf_regs[_R_RA], tf->tf_ppl);
-			sz -= n; 
+			sz -= n;
 			str += n;
 		}
 		printf("%s", strbuf);
@@ -261,7 +261,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		kpreempt_disable();
 
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, vaddr);
-		if (!ptep) 
+		if (!ptep)
 			panic("%ctlbmod: %#"PRIxVADDR": no pte",
 			    user_p ? 'u' : 'k', vaddr);
 		pt_entry_t pte = *ptep;
@@ -922,7 +922,7 @@ loop:
 	/*
 	 * Find the beginning of the current subroutine by scanning backwards
 	 * from the current PC for the end of the previous subroutine.
-	 * 
+	 *
 	 * XXX This won't work well because nowadays gcc is so aggressive
 	 *     as to reorder instruction blocks for branch-predict.
 	 *     (i.e. 'jr ra' wouldn't indicate the end of subroutine)
@@ -1079,7 +1079,7 @@ done:
 		}
 	} else {
 finish:
-		(*printfn)("User-level: pid %d.%d\n", 
+		(*printfn)("User-level: pid %d.%d\n",
 		    curlwp->l_proc->p_pid, curlwp->l_lid);
 	}
 }
