@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $ */
+/*	$NetBSD: rd.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.40 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.41 2016/07/11 11:31:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,8 @@ rdattach(device_t parent, device_t self, void *aux)
 
 	if (cs80describe(parent, sc->sc_slave, sc->sc_punit, &csd)) {
 		aprint_normal("\n");
-		aprint_error_dev(sc->sc_dev, "didn't respond to describe command\n");
+		aprint_error_dev(sc->sc_dev,
+		    "didn't respond to describe command\n");
 		return;
 	}
 	memset(name, 0, sizeof(name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.62 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: ahb.c,v 1.63 2016/07/11 11:31:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.62 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.63 2016/07/11 11:31:50 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -164,8 +164,8 @@ ahbmatch(device_t parent, cfdata_t match,
 		return (0);
 
 	if (bus_space_map(iot,
-	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET, AHB_EISA_IOSIZE,
-	    0, &ioh))
+	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET,
+	    AHB_EISA_IOSIZE, 0, &ioh))
 		return (0);
 
 	rv = !ahb_find(iot, ioh, NULL);
@@ -208,8 +208,8 @@ ahbattach(device_t parent, device_t self, void *aux)
 	printf(": %s\n", model);
 
 	if (bus_space_map(iot,
-	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET, AHB_EISA_IOSIZE,
-	    0, &ioh))
+	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET,
+	    AHB_EISA_IOSIZE, 0, &ioh))
 		panic("ahbattach: could not map I/O addresses");
 
 	sc->sc_iot = iot;
@@ -263,8 +263,7 @@ ahbattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (intrstr != NULL)
-		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-		    intrstr);
+		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -380,8 +379,9 @@ ahbintr(void *arg)
 		case AHB_ECB_ERR:
 			ecb = ahb_ecb_phys_kv(sc, mboxval);
 			if (!ecb) {
-				aprint_error_dev(sc->sc_dev, "BAD ECB RETURNED!\n");
-				goto next;	/* whatever it was, it'll timeout */
+				aprint_error_dev(sc->sc_dev,
+				    "BAD ECB RETURNED!\n");
+				goto next; /* whatever it was, it'll timeout */
 			}
 			break;
 
@@ -397,8 +397,8 @@ ahbintr(void *arg)
 			break;
 
 		default:
-			aprint_error_dev(sc->sc_dev, "unexpected interrupt %x\n",
-			    ahbstat);
+			aprint_error_dev(sc->sc_dev,
+			    "unexpected interrupt %x\n", ahbstat);
 			goto next;
 		}
 
@@ -475,8 +475,8 @@ ahb_create_ecbs(struct ahb_softc *sc, struct ahb_ecb *ecbstore, int count)
 	for (i = 0; i < count; i++) {
 		ecb = &ecbstore[i];
 		if ((error = ahb_init_ecb(sc, ecb)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to initialize ecb, error = %d\n",
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to initialize ecb, error = %d\n", error);
 			goto out;
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ecb, ecb, chain);
@@ -605,7 +605,8 @@ done:
  * Start the board, ready for normal operation
  */
 static int
-ahb_find(bus_space_tag_t iot, bus_space_handle_t ioh, struct ahb_probe_data *sc)
+ahb_find(bus_space_tag_t iot, bus_space_handle_t ioh,
+    struct ahb_probe_data *sc)
 {
 	u_char intdef;
 	int i, irq, busid;
@@ -712,8 +713,8 @@ ahb_init(struct ahb_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    ECBSIZE, (void **)&sc->sc_ecbs,
 	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map ecbs, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map ecbs, error = %d\n", error);
 		return (error);
 	}
 
@@ -722,14 +723,14 @@ ahb_init(struct ahb_softc *sc)
 	 */
 	if ((error = bus_dmamap_create(sc->sc_dmat, ECBSIZE,
 	    1, ECBSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_dmamap_ecb)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create ecb DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create ecb DMA map, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_ecb,
 	    sc->sc_ecbs, ECBSIZE, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load ecb DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load ecb DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -836,8 +837,8 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		 * Put all the arguments for the xfer in the ecb
 		 */
 		if (xs->cmdlen > sizeof(ecb->scsi_cmd)) {
-			aprint_error_dev(sc->sc_dev, "cmdlen %d too large for ECB\n",
-			    xs->cmdlen);
+			aprint_error_dev(sc->sc_dev,
+			    "cmdlen %d too large for ECB\n", xs->cmdlen);
 			xs->error = XS_DRIVER_STUFFUP;
 			goto out_bad;
 		}
@@ -882,8 +883,8 @@ ahb_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 			default:
 				xs->error = XS_DRIVER_STUFFUP;
-				aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
-				    error);
+				aprint_error_dev(sc->sc_dev,
+				    "error %d loading DMA map\n", error);
  out_bad:
 				ahb_free_ecb(sc, ecb);
 				scsipi_done(xs);
