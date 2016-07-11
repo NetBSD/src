@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.45 2016/07/11 11:31:50 msaitoh Exp $ */
+/*	$NetBSD: dbcool.c,v 1.46 2016/07/11 14:44:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.45 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.46 2016/07/11 14:44:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.45 2016/07/11 11:31:50 msaitoh Exp $");
 
 /* Config interface */
 static int dbcool_match(device_t, cfdata_t, void *);
-static int dbcool_attach(device_t, device_t, void *);
+static void dbcool_attach(device_t, device_t, void *);
 static int dbcool_detach(device_t, int);
 
 /* Device attributes */
