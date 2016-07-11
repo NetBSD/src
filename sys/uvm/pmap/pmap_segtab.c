@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.2 2015/06/11 08:04:44 matt Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.3 2016/07/11 16:06:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.2 2015/06/11 08:04:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.3 2016/07/11 16:06:09 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -346,16 +346,17 @@ void
 pmap_segtab_activate(struct pmap *pm, struct lwp *l)
 {
 	if (l == curlwp) {
+		struct cpu_info * const ci = l->l_cpu;
 		KASSERT(pm == l->l_proc->p_vmspace->vm_map.pmap);
 		if (pm == pmap_kernel()) {
-			l->l_cpu->ci_pmap_user_segtab = (void*)0xdeadbabe;
+			ci->ci_pmap_user_segtab = PMAP_INVALID_SEGTAB_ADDRESS;
 #ifdef _LP64
-			l->l_cpu->ci_pmap_user_seg0tab = (void*)0xdeadbabe;
+			ci->ci_pmap_user_seg0tab = PMAP_INVALID_SEGTAB_ADDRESS;
 #endif
 		} else {
-			l->l_cpu->ci_pmap_user_segtab = pm->pm_segtab;
+			ci->ci_pmap_user_segtab = pm->pm_segtab;
 #ifdef _LP64
-			l->l_cpu->ci_pmap_user_seg0tab = pm->pm_segtab->seg_seg[0];
+			ci->ci_pmap_user_seg0tab = pm->pm_segtab->seg_seg[0];
 #endif
 		}
 	}
