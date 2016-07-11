@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.210 2016/07/09 09:33:21 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211 2016/07/11 14:18:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210 2016/07/09 09:33:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2016/07/11 14:18:16 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1655,7 +1655,6 @@ pmap_prealloc_lowmem_ptps(void)
 		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-
 
 		if (level == PTP_LEVELS) { /* Top level pde is per-cpu */
 			pd_entry_t *kpm_pdir;
@@ -4305,7 +4304,6 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
     long *needed_ptps)
 {
 	unsigned long i;
-	vaddr_t va;
 	paddr_t pa;
 	unsigned long index, endindex;
 	int level;
@@ -4319,10 +4317,8 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			pdep = pmap_kernel()->pm_pdir;
 		else
 			pdep = pdes[level - 2];
-		va = kva;
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
-
 
 		for (i = index; i <= endindex; i++) {
 			pt_entry_t pte;
@@ -4330,9 +4326,9 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pa = pmap_get_physpage();
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
-#ifdef XEN
 			pmap_pte_set(&pdep[i], pte);
-#if defined(PAE) || defined(__x86_64__)
+
+#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
 				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
@@ -4354,14 +4350,11 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 					pmap_pte_set(cpu_pdep, pte);
 				}
 			}
-#endif /* PAE || __x86_64__ */
-#else /* XEN */
-			pdep[i] = pte;
-#endif /* XEN */
+#endif /* XEN && (PAE || __x86_64__) */
+
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
 			nkptp[level - 1]++;
-			va += nbpd[level - 1];
 		}
 		pmap_pte_flush();
 	}
@@ -4403,16 +4396,11 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	old = nkptp[PTP_LEVELS - 1];
 #endif
 
-	/*
-	 * This loop could be optimized more, but pmap_growkernel()
-	 * is called infrequently.
-	 */
+	/* Initialize needed_kptp. */
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
 		target_nptp = pl_i_roundup(maxkvaddr, i + 1) -
 		    pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1);
-		/*
-		 * XXX only need to check toplevel.
-		 */
+
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
 		KASSERT(target_nptp >= nkptp[i]);
@@ -4422,8 +4410,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS, needed_kptp);
 
 	/*
-	 * If the number of top level entries changed, update all
-	 * pmaps.
+	 * If the number of top level entries changed, update all pmaps.
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
 #ifdef XEN
@@ -4433,7 +4420,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			int pdkidx;
-			for (pdkidx =  PDIR_SLOT_KERN + old;
+			for (pdkidx = PDIR_SLOT_KERN + old;
 			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
 			    pdkidx++) {
 				pmap_pte_set(&pm->pm_pdir[pdkidx],
@@ -4449,8 +4436,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
-			       &kpm->pm_pdir[PDIR_SLOT_KERN + old],
-			       newpdes * sizeof (pd_entry_t));
+			    &kpm->pm_pdir[PDIR_SLOT_KERN + old],
+			    newpdes * sizeof (pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
 #endif
