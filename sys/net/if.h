@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.220 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.221 2016/07/11 02:14:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -599,9 +599,7 @@ struct ifaddr {
 			               const struct sockaddr *);
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
-#ifdef _KERNEL
-	struct pslist_entry     ifa_pslist_entry;
-#endif
+	/* XXX adding variables here breaks kvm(3) users of struct *_ifaddr */
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
@@ -1056,6 +1054,7 @@ __END_DECLS
 					    &(__ifp)->if_addrlist, ifa_list, __nifa)
 #define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
 
+#ifdef notyet
 #define IFADDR_ENTRY_INIT(__ifa)					\
 	PSLIST_ENTRY_INIT((__ifa), ifa_pslist_entry)
 #define IFADDR_ENTRY_DESTROY(__ifa)					\
@@ -1101,6 +1100,34 @@ __END_DECLS
 			}						\
 		}							\
 	} while (0)
+#else
+#define IFADDR_ENTRY_INIT(__ifa)					\
+	do {} while (0)
+#define IFADDR_ENTRY_DESTROY(__ifa)					\
+	do {} while (0)
+#define IFADDR_READER_EMPTY(__ifp)					\
+	IFADDR_EMPTY(__ifp)
+#define IFADDR_READER_FIRST(__ifp)					\
+	IFADDR_FIRST(__ifp)
+#define IFADDR_READER_NEXT(__ifa)					\
+	IFADDR_NEXT(__ifa)
+#define IFADDR_READER_FOREACH(__ifa, __ifp)				\
+	IFADDR_FOREACH(__ifa, __ifp)
+#define IFADDR_WRITER_INSERT_HEAD(__ifp, __ifa)				\
+	do {} while (0)
+#define IFADDR_WRITER_REMOVE(__ifa)					\
+	do {} while (0)
+#define IFADDR_WRITER_FOREACH(__ifa, __ifp)				\
+	IFADDR_FOREACH(__ifa, __ifp)
+#define IFADDR_WRITER_NEXT(__ifp)					\
+	IFADDR_NEXT(__ifa)
+#define IFADDR_WRITER_INSERT_AFTER(__ifp, __new)			\
+	do {} while (0)
+#define IFADDR_WRITER_EMPTY(__ifp)					\
+	IFADDR_EMPTY(__ifp)
+#define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
+	do {} while (0)
+#endif /* notyet */
 
 #define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
 #define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)
