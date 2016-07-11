@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.50 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.50 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	 * utility uses only valid addresses.
 	 */
 	if (drq == 2 || drq >= 8) {
-		aprint_error_dev(sc->sc_dev, "invalid DMA Arbitration Level %d\n", drq);
+		aprint_error_dev(sc->sc_dev,
+		    "invalid DMA Arbitration Level %d\n", drq);
 		return;
 	}
 #endif
@@ -238,7 +239,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_BIO, edc_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 
@@ -247,7 +249,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	if ((error = mca_dmamap_create(sc->sc_dmat, MAXPHYS,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | MCABUS_DMA_16BIT,
 	    &sc->sc_dmamap_xfer, drq)) != 0){
-		aprint_error_dev(sc->sc_dev, "couldn't create DMA map - error %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't create DMA map - error %d\n", error);
 		return;
 	}
 
@@ -332,7 +335,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	config_pending_incr(self);
 	if ((error = kthread_create(PRI_NONE, 0, NULL, edcworker, sc, NULL,
 	    "%s", device_xname(sc->sc_dev)))) {
-		aprint_error_dev(sc->sc_dev, "cannot spawn worker thread: errno=%d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "cannot spawn worker thread: errno=%d\n", error);
 		panic("edc_mca_attach");
 	}
 }
@@ -349,7 +353,7 @@ edc_intr(void *arg)
 	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
 	u_int16_t sifr;
-	int cmd=-1, devno;
+	int cmd = -1, devno;
 
 	/*
 	 * Check if the interrupt was for us.
@@ -516,8 +520,9 @@ edc_do_attn(struct edc_mca_softc *sc, int attn_type, int devno, int intr_id)
 		}
 
 		if (tries == EDC_ATTN_MAXTRIES) {
-			printf("%s: edc_do_attn: timeout waiting for attachment to become available\n",
-					device_xname(sc->sc_ed[devno]->sc_dev));
+			printf("%s: edc_do_attn: timeout waiting for "
+			    "attachment to become available\n",
+			    device_xname(sc->sc_ed[devno]->sc_dev));
 			return (EIO);
 		}
 	}
@@ -619,7 +624,8 @@ edc_run_cmd(struct edc_mca_softc *sc, int cmd, int devno,
 		if (tries == 10000
 		    && bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
 		       & BSR_CIFR_FULL) {
-			aprint_error_dev(sc->sc_dev, "device too slow to accept command %d\n", cmd);
+			aprint_error_dev(sc->sc_dev,
+			    "device too slow to accept command %d\n", cmd);
 			return (EIO);
 		}
 	}
