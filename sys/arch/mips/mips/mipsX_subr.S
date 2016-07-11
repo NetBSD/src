@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.68 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.69 2016/07/11 18:07:33 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2008,7 +2008,6 @@ END(MIPSX(kern_tlb_invalid_exception))
 
 	.globl	_C_LABEL(MIPSX(exceptionentry_end))
 _C_LABEL(MIPSX(exceptionentry_end)):
-#endif /* (PGSHIFT & 1) == 0 */
 
 	.set	at
 
