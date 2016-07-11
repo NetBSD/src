@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.88 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.89 2016/07/11 19:01:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1104,7 +1104,7 @@ _C_LABEL(MIPSX(exceptionentry_end)):
  *--------------------------------------------------------------------------
  */
 LEAF(MIPSX(tlb_get_asid))
-	mfc0	v0, MIPS_COP_0_TLB_HI		# Write the hi reg value
+	mfc0	v0, MIPS_COP_0_TLB_HI		# Read the hi reg value
 	nop
 	and	v0, MIPS1_TLB_PID		# mask out only the PID
 	j	ra
