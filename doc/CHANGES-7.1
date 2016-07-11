@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.97 2016/07/10 10:42:26 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.98 2016/07/11 10:40:40 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -4984,4 +4984,23 @@ sys/arch/mips/mips/pmap.c			1.221-1.223
 
 	Various fixes to MIPS pmap.
 	[skrll, ticket #1200]
+
+external/mit/xf86-video-siliconmotion/dist/src/smi_driver.c 1.5
+external/mit/xorg-server.old/dist/hw/xfree86/vgahw/vgaHW.h 1.2
+
+	Avoid legacy VGA I/O port access on MIPS.
+	This fixes Xorg on the Lemote YeeLoong netbook.
+	[jmcneill, ticket #1201]
+
+sys/arch/evbmips/loongson/yeeloong_machdep.c	1.8
+
+	The version of PMON on my 8089B (LM8089-1.4.9a) configures OHCI
+	but doesn't enable memory space access. Enable it before the ohci
+	driver attaches to allow low- and full-speed devices to work.
+	[jmcneill, ticket #1202]
+
+sys/dev/pci/lynxfb.c				1.5
+
+	fix inverted screen blanking logic
+	[jmcneill, ticket #1203]
 
