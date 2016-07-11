@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.48 2014/09/17 16:49:20 joerg Exp $	*/
+/*	$NetBSD: asm.h,v 1.49 2016/07/11 16:15:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -327,7 +327,7 @@ _C_LABEL(x):
  * assembler to prevent the assembler from generating 64-bit style
  * ABI calls.
  */
-#if _MIPS_SZPTR == 32
+#ifdef __mips_o32
 #define	PTR_ADD		add
 #define	PTR_ADDI	addi
 #define	PTR_ADDU	addu
@@ -358,19 +358,28 @@ _C_LABEL(x):
 #define	PTR_SUBI	dsubi
 #define	PTR_SUBU	dsubu
 #define	PTR_SUBIU	dsubu
+#ifdef __mips_n32
+#define	PTR_L		lw
+#define	PTR_LL		ll
+#define	PTR_SC		sc
+#define	PTR_S		sw
+#define	PTR_SCALESHIFT	2
+#define	PTR_WORD	.word
+#else
 #define	PTR_L		ld
-#define	PTR_LA		dla
+#define	PTR_LL		lld
+#define	PTR_SC		scd
 #define	PTR_S		sd
+#define	PTR_SCALESHIFT	3
+#define	PTR_WORD	.dword
+#endif
+#define	PTR_LA		dla
 #define	PTR_SLL		dsll
 #define	PTR_SLLV	dsllv
 #define	PTR_SRL		dsrl
 #define	PTR_SRLV	dsrlv
 #define	PTR_SRA		dsra
 #define	PTR_SRAV	dsrav
-#define	PTR_LL		lld
-#define	PTR_SC		scd
-#define	PTR_WORD	.dword
-#define	PTR_SCALESHIFT	3
 #endif /* _MIPS_SZPTR == 64 */
 
 #if _MIPS_SZINT == 32

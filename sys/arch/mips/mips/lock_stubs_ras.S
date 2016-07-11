@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.5 2015/06/07 06:07:49 matt Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.6 2016/07/11 16:15:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  *   into each other.  Use objdump -d to check alignment after making
  *   changes.
  */
-#ifdef _LP64
+#ifndef __mips_o32
 	.set	mips3
 #else
 	.set	mips1

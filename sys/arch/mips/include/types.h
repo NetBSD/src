@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.63 2016/01/24 16:08:05 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.64 2016/07/11 16:15:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -147,9 +147,7 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE_CPU_LWP_SETPRIVATE
 #define	__HAVE_CPU_DATA_FIRST
 #define	__HAVE_MD_CPU_OFFLINE
-#ifdef MIPS3_PLUS	/* XXX bogus! */
 #define	__HAVE_CPU_COUNTER
-#endif
 #define	__HAVE_CPU_UAREA_ROUTINES
 #define	__HAVE_COMMON___TLS_GET_ADDR
 #define	__HAVE___LWP_GETTCB_FAST

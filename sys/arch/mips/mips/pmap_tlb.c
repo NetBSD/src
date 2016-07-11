@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.10 2015/06/11 15:15:27 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.11 2016/07/11 16:15:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10 2015/06/11 15:15:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.11 2016/07/11 16:15:36 matt Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -635,7 +635,7 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, uint32_t pt_entry, bool need_ipi)
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		va |= pai->pai_asid << MIPS_TLB_PID_SHIFT;
 		pmap_tlb_asid_check();
-		rv = tlb_update(va, pt_entry);
+		rv = tlb_update_addr(va, pai->pai_asid, pt_entry, false);
 		pmap_tlb_asid_check();
 	}
 #ifdef MULTIPROCESSOR
@@ -858,6 +858,8 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 			KASSERT(ti->ti_victim != pm);
 			pmap_pai_reset(ti, pai, pm);
 			TLBINFO_UNLOCK(ti);
+		} else {
+			KASSERT(PMAP_PAI(pm, ti)->pai_link.le_prev == NULL);
 		}
 	}
 #else

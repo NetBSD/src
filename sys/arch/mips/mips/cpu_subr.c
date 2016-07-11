@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.26 2015/06/11 15:50:17 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.26 2015/06/11 15:50:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $");
 
-#include "opt_cputype.h"
 #include "opt_ddb.h"
+#include "opt_cputype.h"
+#include "opt_modular.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.26 2015/06/11 15:50:17 matt Exp $");
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ras.h>
+#include <sys/module.h>
 #include <sys/bitops.h>
 #include <sys/idle.h>
 #include <sys/xcall.h>
@@ -80,9 +82,10 @@ struct cpu_info cpu_info_store
     = {
 	.ci_curlwp = &lwp0,
 	.ci_tlb_info = &pmap_tlb0_info,
-	.ci_pmap_user_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_kern_segtab = &pmap_kern_segtab,
+	.ci_pmap_user_segtab = NULL,
 #ifdef _LP64
-	.ci_pmap_user_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
+	.ci_pmap_user_seg0tab = NULL,
 #endif
 	.ci_cpl = IPL_HIGH,
 	.ci_tlb_slot = -1,
@@ -188,21 +191,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
         ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
-#ifndef _LP64
-	/*
-	 * If we have more memory than can be mapped by KSEG0, we need to
-	 * allocate enough VA so we can map pages with the right color
-	 * (to avoid cache alias problems).
-	 */
-	if (pmap_limits.avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
-		ci->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
-		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
-		KASSERT(ci->ci_pmap_dstbase);
-		ci->ci_pmap_srcbase = uvm_km_alloc(kernel_map,
-		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
-		KASSERT(ci->ci_pmap_srcbase);
-	}
-#endif
+	pmap_md_alloc_ephemeral_address_space(ci); 
 
 	mi_cpu_attach(ci);
 
@@ -346,6 +335,10 @@ cpu_startup_common(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
+
+#if defined(__mips_n32)
+	module_machine = "mips-n32";
+#endif
 }
 
 void
@@ -539,6 +532,12 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		cpu_send_ipi(ci, IPI_AST);
 	} 
 #endif
+}
+
+uint32_t
+cpu_clkf_usermode_mask(void)
+{
+	return CPUISMIPS3 ? MIPS_SR_KSU_USER : MIPS_SR_KU_PREV;
 }
 
 void
@@ -912,8 +911,20 @@ cpu_hatch(struct cpu_info *ci)
 	if (ci->ci_tlb_slot >= 0) {
 		const uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V
 		    | mips3_paddr_to_tlbpfn((vaddr_t)ci);
+		const struct tlbmask tlbmask = {
+			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
+#if (PGSHIFT & 1)
+			.tlb_lo0 = tlb_lo,
+			.tlb_lo1 = tlb_lo + MIPS3_PG_NEXT,
+#else
+			.tlb_lo0 = 0,
+			.tlb_lo1 = tlb_lo,
+#endif
+			.tlb_mask = -1,
+		};
 
-		tlb_enter(ci->ci_tlb_slot, -PAGE_SIZE, tlb_lo);
+		tlb_invalidate_addr(tlbmask.tlb_hi, KERNEL_PID);
+		tlb_write_entry(ci->ci_tlb_slot, &tlbmask);
 	}
 
 	/*

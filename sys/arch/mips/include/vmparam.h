@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.54 2015/06/30 04:20:19 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.55 2016/07/11 16:15:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,10 +61,11 @@
  */
 #ifdef ENABLE_MIPS_16KB_PAGE
 #define	PAGE_SHIFT	14
-#elif defined(ENABLE_MIPS_4KB_PAGE) || 1
+#elif defined(ENABLE_MIPS_8KB_PAGE) \
+    || (!defined(ENABLE_MIPS_4KB_PAGE) && __mips >= 3)
+#define	PAGE_SHIFT	13
+#else /* defined(ENABLE_MIPS_4KB_PAGE) */
 #define	PAGE_SHIFT	12
-#else
-#error ENABLE_MIPS_xKB_PAGE not defined
 #endif
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)

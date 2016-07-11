@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.c,v 1.6 2015/06/09 17:53:25 macallan Exp $	*/
+/*	$NetBSD: cache_r10k.c,v 1.7 2016/07/11 16:15:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 Takao Shinohara.
@@ -98,7 +98,7 @@ r10k_icache_sync_all(void)
 }
 
 void
-r10k_icache_sync_range(vaddr_t va, vsize_t size)
+r10k_icache_sync_range(register_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
 
@@ -168,7 +168,7 @@ r10k_pdcache_wbinv_all(void)
 }
 
 void
-r10k_pdcache_wbinv_range(vaddr_t va, vsize_t size)
+r10k_pdcache_wbinv_range(register_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
 
@@ -205,7 +205,7 @@ r10k_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_pdcache_inv_range(vaddr_t va, vsize_t size)
+r10k_pdcache_inv_range(register_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
 
@@ -218,7 +218,7 @@ r10k_pdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_pdcache_wb_range(vaddr_t va, vsize_t size)
+r10k_pdcache_wb_range(register_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
 
@@ -253,7 +253,7 @@ r10k_sdcache_wbinv_all(void)
 }
 
 void
-r10k_sdcache_wbinv_range(vaddr_t va, vsize_t size)
+r10k_sdcache_wbinv_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
 	vaddr_t eva = round_line(va + size);
@@ -293,7 +293,7 @@ r10k_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_sdcache_inv_range(vaddr_t va, vsize_t size)
+r10k_sdcache_inv_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
 	vaddr_t eva = round_line(va + size);
@@ -308,7 +308,7 @@ r10k_sdcache_inv_range(vaddr_t va, vsize_t size)
 }
 
 void
-r10k_sdcache_wb_range(vaddr_t va, vsize_t size)
+r10k_sdcache_wb_range(register_t va, vsize_t size)
 {
 	const struct mips_cache_info * const mci = &mips_cache_info;
 	vaddr_t eva = round_line(va + size);
