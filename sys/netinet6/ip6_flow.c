@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.27 2016/06/20 06:46:38 knakahara Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.28 2016/07/11 07:37:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.27 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28 2016/07/11 07:37:00 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.27 2016/06/20 06:46:38 knakahara Exp 
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -99,6 +100,10 @@ static kmutex_t ip6flow_lock;
 static struct ip6flowhead *ip6flowtable = NULL;
 static struct ip6flowhead ip6flowlist;
 static int ip6flow_inuse;
+
+static void ip6flow_slowtimo_work(struct work *, void *);
+static struct workqueue	*ip6flow_slowtimo_wq;
+static struct work	ip6flow_slowtimo_wk;
 
 /*
  * Insert an ip6flow into the list.
@@ -217,7 +222,12 @@ ip6flow_init_locked(int table_size)
 int
 ip6flow_init(int table_size)
 {
-	int ret;
+	int ret, error;
+
+	error = workqueue_create(&ip6flow_slowtimo_wq, "ip6flow_slowtimo",
+	    ip6flow_slowtimo_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	mutex_init(&ip6flow_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -456,8 +466,10 @@ ip6flow_reap(int just_one)
 	return ip6f;
 }
 
+static bool ip6flow_work_enqueued = false;
+
 void
-ip6flow_slowtimo(void)
+ip6flow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct ip6flow *ip6f, *next_ip6f;
 
@@ -478,10 +490,27 @@ ip6flow_slowtimo(void)
 			ip6f->ip6f_forwarded = 0;
 		}
 	}
+	ip6flow_work_enqueued = false;
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ip6flow_lock);
 	mutex_exit(softnet_lock);
+}
+
+void
+ip6flow_slowtimo(void)
+{
+
+	/* Avoid enqueuing another work when one is already enqueued */
+	mutex_enter(&ip6flow_lock);
+	if (ip6flow_work_enqueued) {
+		mutex_exit(&ip6flow_lock);
+		return;
+	}
+	ip6flow_work_enqueued = true;
+	mutex_exit(&ip6flow_lock);
+
+	workqueue_enqueue(ip6flow_slowtimo_wq, &ip6flow_slowtimo_wk, NULL);
 }
 
 /*
