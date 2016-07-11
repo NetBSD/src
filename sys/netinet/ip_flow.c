@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.72 2016/06/20 06:46:38 knakahara Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.73 2016/07/11 07:37:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.72 2016/06/20 06:46:38 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.73 2016/07/11 07:37:00 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.72 2016/06/20 06:46:38 knakahara Exp $
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -104,6 +105,10 @@ static int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
 static struct ipflow *ipflow_reap(bool);
 static void ipflow_sysctl_init(struct sysctllog **);
+
+static void ipflow_slowtimo_work(struct work *, void *);
+static struct workqueue	*ipflow_slowtimo_wq;
+static struct work	ipflow_slowtimo_wk;
 
 static size_t 
 ipflow_hash(const struct ip *ip)
@@ -176,6 +181,12 @@ ipflow_reinit(int table_size)
 void
 ipflow_init(void)
 {
+	int error;
+
+	error = workqueue_create(&ipflow_slowtimo_wq, "ipflow_slowtimo",
+	    ipflow_slowtimo_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error != 0)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
 	mutex_init(&ipflow_lock, MUTEX_DEFAULT, IPL_NONE);
 
@@ -419,8 +430,10 @@ ipflow_reap(bool just_one)
 	return NULL;
 }
 
-void
-ipflow_slowtimo(void)
+static bool ipflow_work_enqueued = false;
+
+static void
+ipflow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
@@ -445,9 +458,26 @@ ipflow_slowtimo(void)
 			ipf->ipf_uses = 0;
 		}
 	}
+	ipflow_work_enqueued = false;
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ipflow_lock);
 	mutex_exit(softnet_lock);
+}
+
+void
+ipflow_slowtimo(void)
+{
+
+	/* Avoid enqueuing another work when one is already enqueued */
+	mutex_enter(&ipflow_lock);
+	if (ipflow_work_enqueued) {
+		mutex_exit(&ipflow_lock);
+		return;
+	}
+	ipflow_work_enqueued = true;
+	mutex_exit(&ipflow_lock);
+
+	workqueue_enqueue(ipflow_slowtimo_wq, &ipflow_slowtimo_wk, NULL);
 }
 
 void
