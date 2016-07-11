@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.15 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.16 2016/07/11 19:16:03 maya Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.15 2016/07/11 16:06:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2016/07/11 19:16:03 maya Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1187,7 +1187,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 "(RX)\0 " \
 	 "(WX)\0 " \
 	 "(RWX)\0"[UVM_PROTECTION(prot)*6]
- 	UVMHIST_LOG(*histp, "(pmap=%p, va=%#"PRIxVADDR", pa=%#"PRIxPADDR,
 	UVMHIST_LOG(*histp, "(pmap=%p, va=%#"PRIxVADDR", pa=%#"PRIxPADDR,
 	    pmap, va, pa, 0);
 	UVMHIST_LOG(*histp, "prot=%#x%s flags=%#x%s)",
