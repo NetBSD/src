@@ -389,5 +389,5 @@ void	cache_r4k_sdcache_index_wb_inv_128(vaddr_t, vsize_t);
 void	cache_r4k_sdcache_hit_inv_128(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_inv_128(register_t, vsize_t);
 void	cache_r4k_sdcache_hit_wb_128(register_t, vsize_t);
-
+ 
 #endif /* !_LOCORE */
