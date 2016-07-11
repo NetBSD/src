@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.106 2016/07/09 06:58:06 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.107 2016/07/11 14:52:54 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -985,10 +985,9 @@ longmode_hi:
 	movq	%rsi,%rdi
 	addq	$USPACE,%rdi
 	subq	$KERNBASE,%rdi	/* init_x86_64 wants a physical address */
-
 #endif	/* XEN */
-	call	_C_LABEL(init_x86_64)
 
+	call	_C_LABEL(init_x86_64)
 	call 	_C_LABEL(main)
 END(start)
 
@@ -1175,9 +1174,10 @@ skip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
-	jne	32f
+	jne	lwp_64bit
 
-	/* Zero out %fs/%gs registers and GDT descriptors. */
+lwp_32bit:
+	/* Zero out %fs/%gs registers. */
 	xorq	%rax,%rax
 	movw	%ax,%fs
 	CLI(cx)
@@ -1186,6 +1186,7 @@ skip_CR0:
 	SWAPGS
 	STI(cx)
 
+	/* Zero out GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
 	movq	%rax,(GUFS_SEL*8)(%rcx)
 	movq	%rax,(GUGS_SEL*8)(%rcx)
@@ -1199,9 +1200,10 @@ skip_CR0:
 	movl	PCB_GS(%r14),%eax
 	movl	4+PCB_GS(%r14),%edx
 	wrmsr
+
 	jmp	switch_return
 
-32:
+lwp_64bit:
 	/* Reload %fs/%gs GDT descriptors. */
 	movq	CPUVAR(GDT),%rcx
 	movq	PCB_FS(%r14),%rax
@@ -1259,14 +1261,16 @@ IDTVEC_END(syscall32)
 IDTVEC(syscall)
 #ifndef XEN
 	/*
-	 * The user %rip is in %rcx and the user %flags in %r11.
-	 * The kernel %cs and %ss are loaded, but nothing else is.
-	 * The 'swapgs' gives us access to cpu-specific memory where
-	 * we can save a user register and then read the lwps
-	 * kernel stack pointer,
-	 * This code doesn't seem to set %ds, this may not matter since it
-	 * is ignored in 64bit mode, OTOH the syscall instruction sets %ss
-	 * and that is ignored as well.
+	 * The user %rip is in %rcx and the user %flags in %r11. The kernel %cs
+	 * and %ss are loaded, but nothing else is.
+	 *
+	 * The 'swapgs' instruction gives us access to cpu-specific memory where
+	 * we can save a user register and then read the LWP's kernel stack
+	 * pointer.
+	 *
+	 * This code doesn't seem to set %ds, this may not matter since it is
+	 * ignored in 64bit mode, OTOH the syscall instruction sets %ss and that
+	 * is ignored as well.
 	 */
 	swapgs
 	movq	%r15,CPUVAR(SCRATCH)
@@ -1276,19 +1280,19 @@ IDTVEC(syscall)
 
 	/* Make stack look like an 'int nn' frame */
 #define SP(x)	(x)-(TF_SS+8)(%r15)
-	movq	$(LSEL(LUDATA_SEL, SEL_UPL)), SP(TF_SS) /* user %ss */
-	movq	%rsp, SP(TF_RSP) 	/* User space rsp */
+	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS) /* user %ss */
+	movq	%rsp,SP(TF_RSP)		/* User space rsp */
 
-	movq	%r11, SP(TF_RFLAGS)	/* old rflags from syscall insn */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), SP(TF_CS)
-	movq	%rcx, SP(TF_RIP)	/* syscall saves rip in rcx */
+	movq	%r11,SP(TF_RFLAGS)	/* old rflags from syscall insn */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS)
+	movq	%rcx,SP(TF_RIP)		/* syscall saves rip in rcx */
 
 	leaq	SP(0),%rsp		/* %rsp now valid after frame */
 	movq	CPUVAR(SCRATCH),%r15
 #undef SP
 
 	movq	$2,TF_ERR(%rsp)		/* syscall instruction size */
-	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
+	movq	$T_ASTFLT,TF_TRAPNO(%rsp)
 
 	movw	%es,TF_ES(%rsp)
 	sti
@@ -1328,27 +1332,29 @@ do_syscall:
 	 */
 	CLI(si)
 	/* Check for ASTs on exit to user mode. */
-	movl	L_MD_ASTPENDING(%r14), %eax
-	orl	CPUVAR(WANT_PMAPLOAD), %eax
+	movl	L_MD_ASTPENDING(%r14),%eax
+	orl	CPUVAR(WANT_PMAPLOAD),%eax
 	jnz	9f
+
 #ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
-	jne	3f
+	jne	spl_error
 #endif
-	testl	$(MDL_IRET | MDL_COMPAT32), L_MD_FLAGS(%r14)
+
+	testl	$(MDL_IRET|MDL_COMPAT32),L_MD_FLAGS(%r14)
 	INTR_RESTORE_GPRS
 	movw	TF_ES(%rsp),%es
 	SWAPGS
 	jnz	2f
 #ifndef XEN
-	movq	TF_RIP(%rsp), %rcx	/* %rip for sysret */
-	movq	TF_RFLAGS(%rsp), %r11	/* %flags for sysret */
-	movw	TF_DS(%rsp), %ds
-	movq	TF_RSP(%rsp), %rsp
+	movq	TF_RIP(%rsp),%rcx	/* %rip for sysret */
+	movq	TF_RFLAGS(%rsp),%r11	/* %flags for sysret */
+	movw	TF_DS(%rsp),%ds
+	movq	TF_RSP(%rsp),%rsp
 	sysretq
 #else
-	movw	TF_DS(%rsp), %ds
-	addq	$TF_RIP, %rsp
+	movw	TF_DS(%rsp),%ds
+	addq	$TF_RIP,%rsp
 	pushq	$256	/* VGCF_IN_SYSCALL */
 	jmp	HYPERVISOR_iret
 #endif
@@ -1360,13 +1366,14 @@ do_syscall:
  * then a SIGSEGV will be signalled.
  */
 2:
-	movw	TF_DS(%rsp), %ds
-	addq	$TF_RIP, %rsp
+	movw	TF_DS(%rsp),%ds
+	addq	$TF_RIP,%rsp
 	iretq
 
-/* Report SPL error */
 #ifdef DIAGNOSTIC
-3:	movabsq	$4f, %rdi
+	/* Report SPL error */
+spl_error:
+	movabsq	$4f,%rdi
 	movl	TF_RAX(%rsp),%esi
 	movl	TF_RDI(%rsp),%edx
 	movl	%ebx,%ecx
@@ -1381,7 +1388,7 @@ do_syscall:
 
 /* AST pending or pmap load needed */
 9:
-	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
+	cmpl	$0,CPUVAR(WANT_PMAPLOAD)
 	jz	10f
 	STI(si)
 	call	_C_LABEL(do_pmap_load)
