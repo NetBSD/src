@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.415 2016/06/20 08:34:59 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.416 2016/07/11 06:14:51 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.415 2016/06/20 08:34:59 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.416 2016/07/11 06:14:51 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1681,7 +1681,7 @@ alloc_retry:
 		return;
 	}
 
-	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSIX) {
+	if (pci_intr_type(pc, sc->sc_intrs[0]) == PCI_INTR_TYPE_MSIX) {
 		error = wm_setup_msix(sc);
 		if (error) {
 			pci_intr_release(pc, sc->sc_intrs,
@@ -1693,7 +1693,7 @@ alloc_retry:
 			counts[PCI_INTR_TYPE_INTX] = 1;
 			goto alloc_retry;
 		}
-	} else 	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI) {
+	} else 	if (pci_intr_type(pc, sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI) {
 		wm_adjust_qnum(sc, 0);	/* must not use multiqueue */
 		error = wm_setup_legacy(sc);
 		if (error) {
@@ -4334,7 +4334,7 @@ wm_setup_legacy(struct wm_softc *sc)
 	    IPL_NET, wm_intr_legacy, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[0] == NULL) {
 		aprint_error_dev(sc->sc_dev,"unable to establish %s\n",
-		    (pci_intr_type(sc->sc_intrs[0])
+		    (pci_intr_type(pc, sc->sc_intrs[0])
 			== PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 		return ENOMEM;
 	}
