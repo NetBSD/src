@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r4k.h,v 1.15 2016/07/12 14:24:13 skrll Exp $	*/
+/*	$NetBSD: cache_r4k.h,v 1.16 2016/07/12 15:56:23 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -63,18 +63,16 @@
  *
  *	Perform the specified cache operation on a single line.
  */
-static inline void
-cache_op_r4k_line(register_t va, u_int op)
-{
-	__CTASSERT(__builtin_constant_p(op));
-	__asm volatile(
-		".set push"		"\n\t"
-		".set noreorder"	"\n\t"
-		"cache %[op], 0(%[va])"	"\n\t"
-		".set pop"
-	    :
-	    : [op] "n" (op), [va] "r" (va)
-	    : "memory");
+#define cache_op_r4k_line(va, op)				\
+{								\
+	__asm volatile(						\
+		".set push"		"\n\t"			\
+		".set noreorder"	"\n\t"			\
+		"cache %0, 0(%[va])"	"\n\t"			\
+		".set pop"					\
+	    :							\
+	    : "i" (op), [va] "r" (va)				\
+	    : "memory");					\
 }
 
 /*
@@ -122,50 +120,47 @@ cache_r4k_op_8lines_NN(size_t n, register_t va, u_int op)
  *
  *	Perform the specified cache operation on 32 n-byte cache lines.
  */
-static inline void
-cache_r4k_op_32lines_NN(size_t n, register_t va, u_int op)
-{
-	__CTASSERT(__builtin_constant_p(n));
-	__CTASSERT(__builtin_constant_p(op));
-	__asm volatile(
-		".set push"			"\n\t"
-		".set noreorder"		"\n\t"
-		"cache %[op], (0*%[n])(%[va])"	"\n\t"
-		"cache %[op], (1*%[n])(%[va])"	"\n\t"
-		"cache %[op], (2*%[n])(%[va])"	"\n\t"
-		"cache %[op], (3*%[n])(%[va])"	"\n\t"
-		"cache %[op], (4*%[n])(%[va])"	"\n\t"
-		"cache %[op], (5*%[n])(%[va])"	"\n\t"
-		"cache %[op], (6*%[n])(%[va])"	"\n\t"
-		"cache %[op], (7*%[n])(%[va])"	"\n\t"
-		"cache %[op], (8*%[n])(%[va])"	"\n\t"
-		"cache %[op], (9*%[n])(%[va])"	"\n\t"
-		"cache %[op], (10*%[n])(%[va])"	"\n\t"
-		"cache %[op], (11*%[n])(%[va])"	"\n\t"
-		"cache %[op], (12*%[n])(%[va])"	"\n\t"
-		"cache %[op], (13*%[n])(%[va])"	"\n\t"
-		"cache %[op], (14*%[n])(%[va])"	"\n\t"
-		"cache %[op], (15*%[n])(%[va])"	"\n\t"
-		"cache %[op], (16*%[n])(%[va])"	"\n\t"
-		"cache %[op], (17*%[n])(%[va])"	"\n\t"
-		"cache %[op], (18*%[n])(%[va])"	"\n\t"
-		"cache %[op], (19*%[n])(%[va])"	"\n\t"
-		"cache %[op], (20*%[n])(%[va])"	"\n\t"
-		"cache %[op], (21*%[n])(%[va])"	"\n\t"
-		"cache %[op], (22*%[n])(%[va])"	"\n\t"
-		"cache %[op], (23*%[n])(%[va])"	"\n\t"
-		"cache %[op], (24*%[n])(%[va])"	"\n\t"
-		"cache %[op], (25*%[n])(%[va])"	"\n\t"
-		"cache %[op], (26*%[n])(%[va])"	"\n\t"
-		"cache %[op], (27*%[n])(%[va])"	"\n\t"
-		"cache %[op], (28*%[n])(%[va])"	"\n\t"
-		"cache %[op], (29*%[n])(%[va])"	"\n\t"
-		"cache %[op], (30*%[n])(%[va])"	"\n\t"
-		"cache %[op], (31*%[n])(%[va])"	"\n\t"
-		".set pop"
-	    :
-	    :	[n] "n" ((uint8_t)n), [va] "r" (va), [op] "i" ((uint8_t)op)
-	    :	"memory");
+#define cache_r4k_op_32lines_NN(n, va, op)				\
+{									\
+	__asm volatile(							\
+		".set push"			"\n\t"			\
+		".set noreorder"		"\n\t"			\
+		"cache %2, (0*%0)(%[va])"	"\n\t"			\
+		"cache %2, (1*%0)(%[va])"	"\n\t"			\
+		"cache %2, (2*%0)(%[va])"	"\n\t"			\
+		"cache %2, (3*%0)(%[va])"	"\n\t"			\
+		"cache %2, (4*%0)(%[va])"	"\n\t"			\
+		"cache %2, (5*%0)(%[va])"	"\n\t"			\
+		"cache %2, (6*%0)(%[va])"	"\n\t"			\
+		"cache %2, (7*%0)(%[va])"	"\n\t"			\
+		"cache %2, (8*%0)(%[va])"	"\n\t"			\
+		"cache %2, (9*%0)(%[va])"	"\n\t"			\
+		"cache %2, (10*%0)(%[va])"	"\n\t"			\
+		"cache %2, (11*%0)(%[va])"	"\n\t"			\
+		"cache %2, (12*%0)(%[va])"	"\n\t"			\
+		"cache %2, (13*%0)(%[va])"	"\n\t"			\
+		"cache %2, (14*%0)(%[va])"	"\n\t"			\
+		"cache %2, (15*%0)(%[va])"	"\n\t"			\
+		"cache %2, (16*%0)(%[va])"	"\n\t"			\
+		"cache %2, (17*%0)(%[va])"	"\n\t"			\
+		"cache %2, (18*%0)(%[va])"	"\n\t"			\
+		"cache %2, (19*%0)(%[va])"	"\n\t"			\
+		"cache %2, (20*%0)(%[va])"	"\n\t"			\
+		"cache %2, (21*%0)(%[va])"	"\n\t"			\
+		"cache %2, (22*%0)(%[va])"	"\n\t"			\
+		"cache %2, (23*%0)(%[va])"	"\n\t"			\
+		"cache %2, (24*%0)(%[va])"	"\n\t"			\
+		"cache %2, (25*%0)(%[va])"	"\n\t"			\
+		"cache %2, (26*%0)(%[va])"	"\n\t"			\
+		"cache %2, (27*%0)(%[va])"	"\n\t"			\
+		"cache %2, (28*%0)(%[va])"	"\n\t"			\
+		"cache %2, (29*%0)(%[va])"	"\n\t"			\
+		"cache %2, (30*%0)(%[va])"	"\n\t"			\
+		"cache %2, (31*%0)(%[va])"	"\n\t"			\
+		".set pop"						\
+	    :								\
+	    :	"i" (n), [va] "r" (va), "i" (op)			\
+	    :	"memory");						\
 }
 
 /*
@@ -174,13 +169,13 @@ cache_r4k_op_32lines_NN(size_t n, register_t va, u_int op)
  *	Perform the specified cache operation on 32 16-byte cache lines.
  */
 #define	cache_r4k_op_32lines_16(va, op)	\
-	    cache_r4k_op_32lines_NN(16, (va), (op))
+	    cache_r4k_op_32lines_NN(16, va, op)
 #define	cache_r4k_op_32lines_32(va, op)	\
-	    cache_r4k_op_32lines_NN(32, (va), (op))
+	    cache_r4k_op_32lines_NN(32, va, op)
 #define	cache_r4k_op_32lines_64(va, op) \
-	    cache_r4k_op_32lines_NN(64, (va), (op))
+	    cache_r4k_op_32lines_NN(64, va, op)
 #define	cache_r4k_op_32lines_128(va, op) \
-	    cache_r4k_op_32lines_NN(128, (va), (op))
+	    cache_r4k_op_32lines_NN(128, va, op)
 
 /*
  * cache_r4k_op_16lines_16_2way:
