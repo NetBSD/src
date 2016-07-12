@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.1 2016/07/04 15:53:25 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.2 2016/07/12 13:16:50 kiyohara Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -266,7 +266,7 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # Ethernet
-cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 93
+cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
 ukphy*		at mii?
 
 # On-board USB. Experimental
