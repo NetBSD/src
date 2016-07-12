@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork.2,v 1.23 2016/07/09 23:10:05 dholland Exp $
+.\"	$NetBSD: fork.2,v 1.24 2016/07/12 12:24:40 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,13 +109,12 @@ is set to indicate the error.
 .Sh ERRORS
 .Fn fork
 will fail and no child process will be created if:
-.Bl -tag -width [EAGAIN]
+.Bl -tag -width XEAGAINXX
 .It Bq Er EAGAIN
 The system-imposed limit on the total
 number of processes under execution would be exceeded.
-This limit is configuration-dependent.
-.It Bq Er EAGAIN
-The limit
+This limit is configuration-dependent; or
+the limit
 .Dv RLIMIT_NPROC
 on the total number of
 processes under execution by this user id would be exceeded.
