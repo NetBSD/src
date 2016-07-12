@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.23 2015/10/13 09:21:56 msaitoh Exp $
+.\" $NetBSD: pci_intr.9,v 1.24 2016/07/12 03:39:55 knakahara Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 13, 2015
+.Dd July 12, 2016
 .Dt PCI_INTR 9
 .Os
 .Sh NAME
@@ -36,7 +36,9 @@
 .Nm pci_intr_string ,
 .Nm pci_intr_evcnt ,
 .Nm pci_intr_establish ,
+.Nm pci_intr_establish_xname ,
 .Nm pci_intr_disestablish ,
+.Nm pci_intr_type ,
 .Nm pci_intr_setattr
 .Nd PCI bus interrupt manipulation functions
 .Sh SYNOPSIS
@@ -50,6 +52,9 @@
 .Ft void *
 .Fn pci_intr_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
 "int ipl" "int (*intrhand)(void *)" "void *intrarg"
+.Ft void *
+.Fn pci_intr_establish_xname "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
+"int ipl" "int (*intrhand)(void *)" "void *intrarg" "const char *xname"
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
 .Ft int
@@ -112,6 +117,15 @@ may be saved and passed to
 .Fn pci_intr_disestablish
 to disable the interrupt handler
 when the driver is no longer interested in interrupts from the device.
+.Pp
+.Fn pci_intr_establish_xname
+is almost the same as
+.Fn pci_intr_establish .
+The difference is only
+.Fa xname
+which is used by
+.Xr intrctl 8
+to show the device name(s) of the interrupt id.
 .Pp
 The
 .Fn pci_intr_setattr
@@ -186,4 +200,5 @@ contains the PCI tag of the device itself, and
 contains the PCI tag of the uppermost bridge device.
 .Sh SEE ALSO
 .Xr evcnt 9 ,
-.Xr pci 9
+.Xr pci 9 ,
+.Xr pci_msi 9

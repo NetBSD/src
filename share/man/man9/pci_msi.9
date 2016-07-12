@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.9 2016/07/11 10:47:52 wiz Exp $
+.\" $NetBSD: pci_msi.9,v 1.10 2016/07/12 03:39:55 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 11, 2016
+.Dd July 12, 2016
 .Dt PCI_MSI 9
 .Os
 .Sh NAME
@@ -47,28 +47,28 @@
 .Fn pci_msi_count "pci_chipset_tag_t pc" \
 "pcitag_t tag"
 .Ft int
-.Fn pci_msi_alloc  "struct pci_attach_args *pa" \
+.Fn pci_msi_alloc  "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "int *count"
 .Ft int
-.Fn pci_msi_alloc_exect "struct pci_attach_args *pa" \
+.Fn pci_msi_alloc_exect "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "int count"
 .Ft int
 .Fn pci_msix_count "pci_chipset_tag_t pc" \
 "pcitag_t tag"
 .Ft int
-.Fn pci_msix_alloc  "struct pci_attach_args *pa" \
+.Fn pci_msix_alloc  "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "int *count"
 .Ft int
-.Fn pci_msix_alloc_exect "struct pci_attach_args *pa" \
+.Fn pci_msix_alloc_exect "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "int count"
 .Ft int
-.Fn pci_msix_alloc_map "struct pci_attach_args *pa" \
+.Fn pci_msix_alloc_map "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihps" "u_int *table_indexes" "int count"
 .Ft int
-.Fn pci_intx_alloc  "struct pci_attach_args *pa" \
+.Fn pci_intx_alloc  "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihp"
 .Ft int
-.Fn pci_intr_alloc  "struct pci_attach_args *pa" \
+.Fn pci_intr_alloc  "const struct pci_attach_args *pa" \
 "pci_intr_handle_t **ihp" "int *counts" \
 "pci_intr_type_t max_type"
 .Ft void
