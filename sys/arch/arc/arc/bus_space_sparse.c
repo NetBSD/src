@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.19 2016/07/11 16:18:55 matt Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.20 2016/07/12 23:53:18 matt Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.19 2016/07/11 16:18:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.20 2016/07/12 23:53:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,9 +75,8 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 	 * Since all buses can be linearly mappable, we don't have to check
 	 * BUS_SPACE_MAP_LINEAR and BUS_SPACE_MAP_PREFETCHABLE.
 	 */
-	const u_int pmap_flags = (flags & BUS_SPACE_MAP_CACHEABLE)
-	    ? PMAP_WRITE_BACK
-	    : 0;
+	const bool cacheable = (flags & BUS_SPACE_MAP_CACHEABLE) != 0;
+	const u_int pmap_flags = cacheable ? PMAP_WRITE_BACK : 0;
 
 	/*
 	 * XXX - `bst->bs_pbase' must be page aligned,
