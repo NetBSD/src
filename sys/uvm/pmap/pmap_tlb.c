@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.13 2016/07/11 16:06:09 matt Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.14 2016/07/12 15:30:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.13 2016/07/11 16:06:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.14 2016/07/12 15:30:46 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -521,7 +521,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 }
 
 #if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
-#if PMAP_MAX_TLB == 1
+#if PMAP_TLB_MAX == 1
 #error shootdown not required for single TLB systems
 #endif
 void
