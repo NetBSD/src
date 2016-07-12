@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.2 2015/10/11 21:49:22 christos Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.3 2016/07/12 09:29:32 hannken Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.2 2015/10/11 21:49:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.3 2016/07/12 09:29:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -526,6 +526,9 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 	struct mcfg_bus *mb;
 	bus_space_handle_t bsh;
 	bus_addr_t baddr;
+	pcitag_t tag;
+	pcireg_t reg;
+	bool is_e7520_mch;
 	int boff;
 	int last_dev, last_func;
 	int i, j;
@@ -569,7 +572,28 @@ acpimcfg_map_bus(device_t self, pci_chipset_tag_t pc, int bus)
 	mb->valid_ndevs = 0;
 	mb->last_probed = pci_make_tag(pc, bus, 0, 0);
 
+	/*
+	 * On an Intel E7520 we have to temporarily disable
+	 * Enhanced Config Access error detection and reporting
+	 * by setting the appropriate error mask in HI_ERRMASK register.
+	 *
+	 * See "Intel E7520 Memory Controller Hub (MCH) Datasheet",
+	 * Document 303006-002, pg. 82
+	 */
+	tag = pci_make_tag(pc, 0, 0, 1);
+	reg = pci_conf_read(pc, tag, PCI_ID_REG);
+	is_e7520_mch = (reg ==
+	    PCI_ID_CODE(PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCHER));
+	if (is_e7520_mch) {
+		reg = pci_conf_read(pc, tag, 0x54);
+		pci_conf_write(pc, tag, 0x54, reg | 0x20);
+	}
+
 	acpimcfg_scan_bus(sc, pc, bus);
+
+	if (is_e7520_mch) {
+		pci_conf_write(pc, tag, 0x54, reg);
+	}
 
 	/* Unmap extended configration space of all dev/func. */
 	bus_space_unmap(seg->ms_bst, bsh, ACPIMCFG_SIZE_PER_BUS);
