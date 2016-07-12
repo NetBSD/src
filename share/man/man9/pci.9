@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.43 2015/10/04 12:10:51 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.44 2016/07/12 03:39:55 knakahara Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 2, 2015
+.Dd July 12, 2016
 .Dt PCI 9
 .Os
 .Sh NAME
@@ -52,7 +52,10 @@
 .Nm pci_intr_string ,
 .Nm pci_intr_evcnt ,
 .Nm pci_intr_establish ,
+.Nm pci_intr_establish_xname ,
 .Nm pci_intr_disestablish ,
+.Nm pci_intr_type ,
+.Nm pci_intr_setattr ,
 .Nm pci_get_powerstate ,
 .Nm pci_set_powerstate ,
 .Nm pci_vpd_read ,
@@ -129,8 +132,15 @@
 .Ft void *
 .Fn pci_intr_establish "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
 "int level" "int (*handler)(void *)" "void *arg"
+.Ft void *
+.Fn pci_intr_establish_xname "pci_chipset_tag_t pc" "pci_intr_handle_t ih" \
+"int level" "int (*handler)(void *)" "void *arg" "const char *xname"
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
+.Ft pci_intr_type_t
+.Fn pci_intr_type "pci_chipset_tag_t pc" "pci_intr_handle_t ih"
+.Ft int
+.Fn pci_intr_setattr "pci_chipset_tag_t pc" "pci_intr_handle_t *ih" "int attr" "uint64_t data"
 .Ft int
 .Fn pci_set_powerstate "pci_chipset_tag_t pc" "pcitag_t tag" \
 "pcireg_t newstate"
@@ -670,7 +680,16 @@ See
 .It Fn pci_intr_establish "pc" "ih" "level" "handler" "arg"
 See
 .Xr pci_intr 9 .
+.It Fn pci_intr_establish_xname "pc" "ih" "level" "handler" "arg" "xname"
+See
+.Xr pci_intr 9 .
 .It Fn pci_intr_disestablish "pc" "ih"
+See
+.Xr pci_msi 9 .
+.It Fn pci_intr_type "pc" "ih"
+See
+.Xr pci_intr 9 .
+.It Fn pci_intr_setattr "pc" "ih" "attr" "data"
 See
 .Xr pci_intr 9 .
 .It Fn pci_set_powerstate "pc" "tag" "newstate"
@@ -841,6 +860,7 @@ The database can be regenerated using the Makefile
 .Xr driver 9 ,
 .Xr pci_configure_bus 9 ,
 .Xr pci_intr 9 ,
+.Xr pci_msi 9 ,
 .Xr pmf 9
 .Sh HISTORY
 The machine-independent PCI subsystem appeared in
