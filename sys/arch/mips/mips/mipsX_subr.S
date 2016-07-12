@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.70 2016/07/11 19:00:04 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.71 2016/07/12 03:34:50 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1874,7 +1874,7 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 	PTR_L	k1, (k1)			# load segtab address
 	beqz	k1, _C_LABEL(MIPSX(kern_gen_exception))
 	 nop
-#endif
+#endif /* _LP64 */
 #ifdef MIPSNNR2
 	_EXT	k0, k0, SEGSHIFT, SEGLENGTH
 	_INS	k1, k0, PTR_SCALESHIFT, SEGLENGTH
@@ -1900,7 +1900,6 @@ LEAF_NOPROFILE(MIPSX(kern_tlb_invalid_exception))
 
 	mfc0	k0, MIPS_COP_0_TLB_INDEX
 	MFC0_HAZARD
-#endif
 	bltz	k0, _C_LABEL(MIPSX(kern_gen_exception)) # ASSERT(TLB entry exists)
 	 nop					# - delay slot -
 
@@ -2000,6 +1999,7 @@ MIPSX(kern_tlbi_odd):
 #endif
 	eret
 END(MIPSX(kern_tlb_invalid_exception))
+#endif /* (PGSHIFT & 1) == 0 */
 
 /*
  * Mark where code entered from exception hander jumptable
