@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.332 2015/12/14 09:48:40 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.333 2016/07/12 15:40:53 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.332 2015/12/14 09:48:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.333 2016/07/12 15:40:53 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5035,7 +5035,7 @@ pmap_update(pmap_t pm)
 	armreg_bpiall_write(0);
 #endif
 
-#if defined(MULTIPROCESSOR) && PMAP_MAX_TLB > 1
+#if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
 	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
 	if (pending && pmap_tlb_shootdown_bystanders(pmap)) {
 		PMAP_COUNT(shootdown_ipis);
