@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.26 2016/07/11 19:05:02 skrll Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.27 2016/07/12 03:49:32 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.26 2016/07/11 19:05:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.27 2016/07/12 03:49:32 matt Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -727,7 +727,7 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
 	const int shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
 	h &= ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1));
 #if CHIP_ACCESS_SIZE == 8
-	const CHIP_TYPE val = mips_ld(h);
+	const CHIP_TYPE val = mips3_ld(h);
 #elif CHIP_ACCESS_SIZE == 4
 	const CHIP_TYPE val = mips_lwu(h);
 #else
