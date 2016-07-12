@@ -1,4 +1,4 @@
-/*	cache_r4k.h,v 1.11.96.3 2012/01/19 08:28:48 matt Exp	*/
+/*	$NetBSD: cache_r4k.h,v 1.15 2016/07/12 14:24:13 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
