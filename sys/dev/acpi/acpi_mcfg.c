@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.3 2016/07/12 09:29:32 hannken Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.3 2016/07/12 09:29:32 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.4 2016/07/12 09:45:34 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -490,7 +490,7 @@ acpimcfg_device_probe(const struct pci_attach_args *pa)
 
 	/* Probe extended configuration space. */
 	if (((reg = pci_conf_read(pc, tag, PCI_CONF_SIZE)) == (pcireg_t)-1) ||
-	    (alias = acpimcfg_ext_conf_is_aliased(pc, tag))) {
+	    (reg == 0) || (alias = acpimcfg_ext_conf_is_aliased(pc, tag))) {
 		aprint_debug_dev(acpi_sc->sc_dev,
 		    "MCFG: %03d:%02d:%d: invalid config space "
 		    "(cfg[0x%03x]=0x%08x, alias=%s)\n", bus, dev, func,
