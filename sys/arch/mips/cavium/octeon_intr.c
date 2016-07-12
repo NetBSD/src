@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.5 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.6 2016/07/12 06:13:39 skrll Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -39,11 +39,13 @@
  */
 
 #include "opt_octeon.h"
+#include "opt_multiprocessor.h"
+
 #include "cpunode.h"
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.5 2016/07/11 16:15:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.6 2016/07/12 06:13:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
