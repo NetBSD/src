@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 2012/01/18 09:35:48 skrll Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.12.2.1 2016/07/13 08:25:44 snj Exp $	*/
 
 /*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
 
@@ -115,7 +115,8 @@ static __inline int inst_return(u_int ins) {
 	       (ins & 0xfc000000) == 0xe0000000;
 }
 static __inline int inst_trap_return(u_int ins)	{
-	return (ins & 0xfc001fc0) == 0x00000ca0;
+	return (ins & 0xfc001fe0) == 0x00000c00 ||
+	       (ins & 0xfc001fe0) == 0x00000ca0;
 }
 
 #define db_clear_single_step(r)	((r)->tf_ipsw &= ~PSW_R)
