@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.22 2015/06/30 03:55:23 macallan Exp $	*/
+/*	$NetBSD: mace.c,v 1.23 2016/07/13 21:33:28 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.22 2015/06/30 03:55:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.23 2016/07/13 21:33:28 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ mace_intr(int irqs)
 
 	/* irq 4 is the ISA cascade interrupt.  Must handle with care. */
 	if (irqs & (1 << 4)) {
-		isa_irq = mips3_ld((volatile uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		isa_irq = mips3_ld(MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_STATUS));
 		for (i = 0; i < MACE_NINTR; i++) {
 			if ((maceintrtab[i].irq == (1 << 4)) &&
