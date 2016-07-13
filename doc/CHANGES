@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2172 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2173 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -154,6 +154,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		Add DMA support to the sdhc controllers on AM335x SoC.
 		Enable DMA for sdhc0 and sdhc1 on BEAGLEBONE [bouyer 20150414]
 	xz(1): Import of XZ 5.2.1. [christos 20150417]
+	x86: Support MSI/MSI-X. [knakahara 20150427]
 	libc: Update to tzcode2015d. [christos 20150428]
 	openresolv(8): Import openresolv-3.7.0 [roy 20150501]
 	netinet: Added IN_IFF_TENTATIVE, IN_IFF_DUPLICATED and IN_IFF_DETACHED.
@@ -187,6 +188,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	zoneinfo: Import tzdata2015f. [apb 20150811]
 	OpenSSH: Imported 7.0. [christos 20150813]
 	libc: Update to tzcode2015f. [christos 20150813]
+	intrctl(8): Add interrupt distribution control utility.
+		[knakahara 20150817]
 	gdb(1): Updated to 7.9.1.  [christos 20150818]
 	acpi(4): Updated ACPICA to 20150717. [christos 20150818]
 	mcp3kadc(4): Driver for Microchip 3x0x SAR ADC chips. [phx 20150818]
@@ -208,6 +211,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[nonaka 20151002]
 	lua: Updated to Lua 5.3.1 [mbalmer 20151008]
 	libc: Update to tzcode2015g. [christos 20151009]
+	wm(4): Support RX multiqueue. [knakahara,msaitoh 20151013]
 	ntp: Import ntp 4.2.8p4. [christos 20151023]
 	vioscsi(4): Add driver for virtio SCSI devices [christos 20151030]
 	omapgpio(4): Add support for TI AM335x GPIO. [jmcneill 20151101]
@@ -227,6 +231,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[ozaki-r 20151125]
 	dhcpcd: Import dhcpcd 6.9.4. [roy 20151130]
 	openssl: Import openssl 1.0.1q [christos 20151206]
+	network: Packet input processing (except for bpf) never runs in
+		hardware interrupt. [ozaki-r 20160209]
 	ip6addrctl: Import from FreeBSD [christos 20151212]
 	adm1026hm(4): Add driver for ADM1026 i2c hardware monitor
 		[jdc 20151216]
@@ -279,10 +285,12 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[ozaki-r 20160404]
 	route(8): route show doesn't contain nexthop caches [ozaki-r 20160404]
 	netstat(1): netstat -r doesn't contain nexthop caches [ozaki-r 20160404]
+	network: Separate nexthop caches from routing table. [ozaki-r 20160404]
 	libutil: added pidfile_lock, pidfile_read, pidfile_read [roy 20160410]
 	dhcpcd(8): Import dhcpcd-6.10.2 [roy 20160410]
 	openresolv(8): Import openresolv-3.8.0 [roy 20160411]
 	ddb(4): rename show arptab to show routes [ozaki-r 20160413]
+	bridge(4): Device is now MP-safe. [ozaki-r 20150108]
 	dhcpcd(8): Import dhcpcd-6.10.3 [roy 20160420]
 	usb(4) subsystem: Merge nick-nhusb [skrll 20160423]
 		- API / infra changes to support memory management changes.
@@ -309,6 +317,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	x86: Use processor-specific features to optimize memory access time to
 		the kernel image on amd64 and i386. [maxv 20160515]
 	arm: Add support for i.MX7 SoC. [ryo 20160517]
+	wm(4): Support TX multiqueue. [knakahara 20160519]
 	bind: Import version 9.10.4-P1. [christos 20160526]
 	network: Change hostzerobroadcast default to "no". This has has been
 		the default for many years (broadcast to all ones instead to
