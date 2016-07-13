@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.170 2016/07/11 07:37:00 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.171 2016/07/13 09:56:20 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.170 2016/07/11 07:37:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171 2016/07/13 09:56:20 hannken Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1410,12 +1410,12 @@ static void
 rtcache_clear_rtentry(int family, struct rtentry *rt)
 {
 	struct domain *dom;
-	struct route *ro;
+	struct route *ro, *nro;
 
 	if ((dom = pffinddomain(family)) == NULL)
 		return;
 
-	LIST_FOREACH(ro, &dom->dom_rtcache, ro_rtcache_next) {
+	LIST_FOREACH_SAFE(ro, &dom->dom_rtcache, ro_rtcache_next, nro) {
 		if (ro->_ro_rt == rt)
 			rtcache_clear(ro);
 	}
