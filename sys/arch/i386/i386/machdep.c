@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.756 2016/07/13 15:35:56 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.757 2016/07/13 15:39:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.756 2016/07/13 15:35:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.757 2016/07/13 15:39:33 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -433,7 +433,6 @@ cpu_startup(void)
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
-	/* msgbuf_paddr was init'd in pmap */
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
