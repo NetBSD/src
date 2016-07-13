@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.218.8.3 2014/12/07 15:09:31 martin Exp $	*/
+/*	$NetBSD: ohci.c,v 1.218.8.4 2016/07/13 08:14:08 snj Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.8.3 2014/12/07 15:09:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.218.8.4 2016/07/13 08:14:08 snj Exp $");
 
 #include "opt_usb.h"
 
@@ -3107,7 +3107,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = HTOO32(
-		isread ? OHCI_TD_IN : OHCI_TD_OUT |
+		(isread ? OHCI_TD_IN : OHCI_TD_OUT) |
 		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
