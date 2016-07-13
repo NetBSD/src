@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 2016/07/13 15:35:56 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222 2016/07/13 15:39:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2016/07/13 15:35:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2016/07/13 15:39:33 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -253,7 +253,6 @@ size_t dump_header_size;
 size_t dump_totalbytesleft;
 
 vaddr_t msgbuf_vaddr;
-paddr_t msgbuf_paddr;
 
 struct {
 	paddr_t paddr;
@@ -352,7 +351,6 @@ cpu_startup(void)
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
-	/* msgbuf_paddr was init'd in pmap */
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
