@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.303 2016/06/20 03:55:34 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.304 2016/07/13 16:26:26 maya Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.303 2016/06/20 03:55:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.304 2016/07/13 16:26:26 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -593,8 +593,10 @@ lfs_set_dirop(struct vnode *dvp, struct vnode *vp)
 		if ((error = mtsleep(&lfs_dirvcount,
 		    PCATCH | PUSER | PNORELOCK, "lfs_maxdirop", 0,
 		    &lfs_lock)) != 0) {
+			mutex_exit(&lfs_lock);
 			goto unreserve;
 		}
+		mutex_exit(&lfs_lock);
 		goto restart;
 	}
 
