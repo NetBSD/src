@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.44.4.2 2014/12/22 08:24:54 msaitoh Exp $
+# $NetBSD: shl.mi,v 1.44.4.3 2016/07/13 19:34:23 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -302,10 +302,10 @@
 ./usr/X11R7/lib/libXxf86vm.so.2.0		-unknown-		xorg
 ./usr/X11R7/lib/libdrm.so			-unknown-		xorg
 ./usr/X11R7/lib/libdrm.so.3			-unknown-		xorg
-./usr/X11R7/lib/libdrm.so.3.2			-unknown-		xorg
+./usr/X11R7/lib/libdrm.so.3.3			-unknown-		xorg
 ./usr/X11R7/lib/libdrm_radeon.so		-unknown-		xorg
 ./usr/X11R7/lib/libdrm_radeon.so.0		-unknown-		xorg
-./usr/X11R7/lib/libdrm_radeon.so.0.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm_radeon.so.0.1		-unknown-		xorg
 ./usr/X11R7/lib/libexpat.so			-obsolete-		obsolete
 ./usr/X11R7/lib/libexpat.so.2			-obsolete-		obsolete
 ./usr/X11R7/lib/libexpat.so.2.0			-obsolete-		obsolete
