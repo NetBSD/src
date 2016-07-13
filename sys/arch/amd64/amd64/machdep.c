@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2016/07/13 15:39:33 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223 2016/07/13 15:53:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2016/07/13 15:39:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2016/07/13 15:53:26 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1543,8 +1543,6 @@ init_x86_64(paddr_t first_avail)
 #endif
 #endif /* !XEN */
 
-	cpu_probe(&cpu_info_primary);
-
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
@@ -1552,6 +1550,7 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 #endif /* XEN */
 
+	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	use_pae = 1; /* PAE always enabled in long mode */
