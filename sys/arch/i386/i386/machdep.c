@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.755 2016/05/15 10:35:54 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.756 2016/07/13 15:35:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.755 2016/05/15 10:35:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.756 2016/07/13 15:35:56 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -215,42 +215,39 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.755 2016/05/15 10:35:54 maxv Exp $");
 char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
-extern struct bi_devmatch *x86_alldisks;
-extern int x86_ndisks;
-
 #ifdef CPURESET_DELAY
-int	cpureset_delay = CPURESET_DELAY;
+int cpureset_delay = CPURESET_DELAY;
 #else
-int     cpureset_delay = 2000; /* default to 2s */
+int cpureset_delay = 2000; /* default to 2s */
 #endif
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-int	cpu_class;
-int	use_pae;
-int	i386_fpu_present = 1;
-int	i386_fpu_fdivbug;
+int cpu_class;
+int use_pae;
+int i386_fpu_present = 1;
+int i386_fpu_fdivbug;
 
-int	i386_use_fxsave;
-int	i386_has_sse;
-int	i386_has_sse2;
+int i386_use_fxsave;
+int i386_has_sse;
+int i386_has_sse2;
 
-vaddr_t	msgbuf_vaddr;
+vaddr_t msgbuf_vaddr;
 struct {
 	paddr_t paddr;
 	psize_t sz;
 } msgbuf_p_seg[VM_PHYSSEG_MAX];
 unsigned int msgbuf_p_cnt = 0;
 
-vaddr_t	idt_vaddr;
-paddr_t	idt_paddr;
-vaddr_t	pentium_idt_vaddr;
+vaddr_t idt_vaddr;
+paddr_t idt_paddr;
+vaddr_t pentium_idt_vaddr;
 
 struct vm_map *phys_map = NULL;
 
-extern	paddr_t avail_start, avail_end;
+extern paddr_t avail_start, avail_end;
 #ifdef XEN
 extern paddr_t pmap_pa_start, pmap_pa_end;
 void hypervisor_callback(void);
@@ -270,10 +267,10 @@ void (*initclock_func)(void) = i8254_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt = 0;
+int mem_cluster_cnt = 0;
 
-void	init386(paddr_t);
-void	initgdt(union descriptor *);
+void init386(paddr_t);
+void initgdt(union descriptor *);
 
 extern int time_adjusted;
 
@@ -285,30 +282,32 @@ extern int boothowto;
 
 /* Base memory reported by BIOS. */
 #ifndef REALBASEMEM
-int	biosbasemem = 0;
+int biosbasemem = 0;
 #else
-int	biosbasemem = REALBASEMEM;
+int biosbasemem = REALBASEMEM;
 #endif
 
 /* Extended memory reported by BIOS. */
 #ifndef REALEXTMEM
-int	biosextmem = 0;
+int biosextmem = 0;
 #else
-int	biosextmem = REALEXTMEM;
+int biosextmem = REALEXTMEM;
 #endif
 
 /* Set if any boot-loader set biosbasemem/biosextmem. */
-int	biosmem_implicit;
+int biosmem_implicit;
 
-/* Representation of the bootinfo structure constructed by a NetBSD native
- * boot loader.  Only be used by native_loader(). */
+/*
+ * Representation of the bootinfo structure constructed by a NetBSD native
+ * boot loader.  Only be used by native_loader().
+ */
 struct bootinfo_source {
 	uint32_t bs_naddrs;
 	void *bs_addrs[1]; /* Actually longer. */
 };
 
-/* Only called by locore.h; no need to be in a header file. */
-void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
+/* Only called by locore.S; no need to be in a header file. */
+void native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
 
 /*
  * Called as one of the very first things during system startup (just after
@@ -429,6 +428,7 @@ cpu_startup(void)
 		panic("msgbuf paddr map has not been set up");
 	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
 		continue;
+
 	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
@@ -440,6 +440,7 @@ cpu_startup(void)
 			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
 			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
+
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((void *)msgbuf_vaddr, sz);
@@ -466,7 +467,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/* Say hello. */
 	banner();
@@ -1144,6 +1145,7 @@ init386(paddr_t first_avail)
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
+
 	cpu_probe(&cpu_info_primary);
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
@@ -1247,8 +1249,8 @@ init386(paddr_t first_avail)
 
 #ifndef XEN
 	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
+	 * Check to see if we have a memory map from the BIOS (passed to us by
+	 * the boot program).
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
@@ -1256,7 +1258,7 @@ init386(paddr_t first_avail)
 		initx86_parse_memmap(bim, iomem_ex);
 
 	/*
-	 * If the loop above didn't find any valid segment, fall back to
+	 * If initx86_parse_memmap didn't find any valid segment, fall back to
 	 * former code.
 	 */
 	if (mem_cluster_cnt == 0)
@@ -1304,9 +1306,8 @@ init386(paddr_t first_avail)
 
 #if NBIOSCALL > 0
 	KASSERT(biostramp_image_size <= PAGE_SIZE);
-	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
-		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL, 0);		/* protection */
+	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE, (paddr_t)BIOSTRAMP_BASE,
+	    VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 
@@ -1330,10 +1331,10 @@ init386(paddr_t first_avail)
 
 	tgdt = gdt;
 	gdt = (union descriptor *)
-		    ((char *)idt + NIDT * sizeof (struct gate_descriptor));
+		    ((char *)idt + NIDT * sizeof(struct gate_descriptor));
 	ldt = gdt + NGDT;
 
-	memcpy(gdt, tgdt, NGDT*sizeof(*gdt));
+	memcpy(gdt, tgdt, NGDT * sizeof(*gdt));
 
 	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
 	    SDT_SYSLDT, SEL_KPL, 0, 0);
