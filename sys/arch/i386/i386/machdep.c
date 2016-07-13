@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.757 2016/07/13 15:39:33 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.758 2016/07/13 15:53:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.757 2016/07/13 15:39:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758 2016/07/13 15:53:27 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1145,10 +1145,9 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
 
-	cpu_probe(&cpu_info_primary);
-
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
+	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
 
 #ifdef PAE
@@ -1177,10 +1176,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-#ifdef XEN
-	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
-#endif
-
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
@@ -1205,10 +1200,14 @@ init386(paddr_t first_avail)
 	 */
 	avail_start = 6 * PAGE_SIZE;
 #else /* !XEN */
-	/* steal one page for gdt */
+	/* Parse Xen command line (replace bootinfo) */
+	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
+
+	/* Steal one page for gdt */
 	gdt = (void *)((u_long)first_avail + KERNBASE);
 	first_avail += PAGE_SIZE;
-	/* Make sure the end of the space used by the kernel is rounded. */
+
+	/* Determine physical address space */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
 	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
@@ -1219,12 +1218,12 @@ init386(paddr_t first_avail)
 	mem_cluster_cnt++;
 	physmem += xen_start_info.nr_pages;
 	uvmexp.wired += atop(avail_start);
+
 	/*
 	 * initgdt() has to be done before consinit(), so that %fs is properly
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-
 	initgdt(gdt);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
