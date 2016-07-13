@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.83 2016/02/29 18:21:15 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.84 2016/07/13 22:01:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.83 2016/02/29 18:21:15 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.84 2016/07/13 22:01:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,7 @@ intpr_sysctl(void)
 	struct sockaddr_dl *sdl;
 	uint64_t total = 0;
 	size_t len;
+	int did = 1, rtax = 0, n;
 	char name[IFNAMSIZ + 1];	/* + 1 for `*' */
 
 	if (prog_sysctl(mib, 6, NULL, &len, NULL, 0) == -1)
@@ -233,11 +234,13 @@ intpr_sysctl(void)
 				if (total == 0)
 					continue;
 			}
-
-			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
-			print_addr(rti_info[RTAX_IFP], rti_info, ifd, NULL);
+			/* Skip the first one */
+			if (did) {
+				did = 0;
+				continue;
+			}
+			rtax = RTAX_IFP;
 			break;
-
 		case RTM_NEWADDR:
 			if (qflag && total == 0)
 				continue;
@@ -251,11 +254,19 @@ intpr_sysctl(void)
 			sa = (struct sockaddr *)(ifam + 1);
 
 			get_rtaddrs(ifam->ifam_addrs, sa, rti_info);
-
-			printf("%-5s %-5" PRIu64, name, ifd->ifi_mtu);
-			print_addr(rti_info[RTAX_IFA], rti_info, ifd, NULL);
+			rtax = RTAX_IFA;
+			did = 1;
 			break;
+		default:
+			continue;
 		}
+		if (vflag)
+			n = strlen(name) < 5 ? 5 : strlen(name);
+		else
+			n = 5;
+
+		printf("%-*.*s %-5" PRIu64 " ", n, n, name, ifd->ifi_mtu);
+		print_addr(rti_info[rtax], rti_info, ifd, NULL);
 	}
 }
 
@@ -345,6 +356,29 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 }
 
 static void
+ia6_print(struct in6_addr *ia)
+{
+	struct sockaddr_in6 as6;
+	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
+	int n;
+
+	memset(&as6, 0, sizeof(as6));
+	as6.sin6_len = sizeof(struct sockaddr_in6);
+	as6.sin6_family = AF_INET6;
+	as6.sin6_addr = *ia;
+	inet6_getscopeid(&as6, INET6_IS_ADDR_MC_LINKLOCAL);
+	if (getnameinfo((struct sockaddr *)&as6, as6.sin6_len, hbuf,
+	    sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0) {
+		strlcpy(hbuf, "??", sizeof(hbuf));
+	}
+	if (vflag)
+		n = strlen(hbuf) < 17 ? 17 : strlen(hbuf);
+	else
+		n = 17;
+	printf("\n%25s %-*.*s ", "", n, n, hbuf);
+}
+
+static void
 print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
     struct ifnet *ifnet)
 {
@@ -386,7 +420,9 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-		if (aflag && ifnet) {
+		if (!aflag)
+			break;
+		if (ifnet) {
 			u_long multiaddr;
 			struct in_multi inm;
 			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
@@ -402,6 +438,8 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 				multiaddr =
 				   (u_long)inm.inm_list.le_next;
 			}
+		} else {
+			// XXX: Sysctl/ioctl to get multicast addresses
 		}
 		break;
 #ifdef INET6
@@ -439,41 +477,21 @@ print_addr(struct sockaddr *sa, struct sockaddr **rtinfo, struct if_data *ifd,
 			n = 17;
 		printf("%-*.*s ", n, n, cp);
 
-		if (aflag && ifnet) {
+		if (!aflag) 
+			break;
+		if (ifnet) {
 			u_long multiaddr;
 			struct in6_multi inm;
-			struct sockaddr_in6 as6;
 			union ifaddr_u *ifaddr = (union ifaddr_u *)rtinfo;
 		
-			multiaddr = (u_long)
-			    ifaddr->in6.ia6_multiaddrs.lh_first;
+			multiaddr = (u_long)ifaddr->in6.ia6_multiaddrs.lh_first;
 			while (multiaddr != 0) {
-				kread(multiaddr, (char *)&inm,
-				   sizeof inm);
-				memset(&as6, 0, sizeof(as6));
-				as6.sin6_len = sizeof(struct sockaddr_in6);
-				as6.sin6_family = AF_INET6;
-				as6.sin6_addr = inm.in6m_addr;
-				inet6_getscopeid(&as6,
-				    INET6_IS_ADDR_MC_LINKLOCAL);
-				if (getnameinfo((struct sockaddr *)&as6,
-				    as6.sin6_len, hbuf,
-				    sizeof(hbuf), NULL, 0,
-				    niflag) != 0) {
-					strlcpy(hbuf, "??",
-					    sizeof(hbuf));
-				}
-				cp = hbuf;
-				if (vflag)
-				    n = strlen(cp) < 17
-					? 17 : strlen(cp);
-				else
-				    n = 17;
-				printf("\n%25s %-*.*s ", "",
-				    n, n, cp);
-				multiaddr =
-				   (u_long)inm.in6m_entry.le_next;
+				kread(multiaddr, (char *)&inm, sizeof inm);
+				ia6_print(&inm.in6m_addr);
+				multiaddr = (u_long)inm.in6m_entry.le_next;
 			}
+		} else {
+			// XXX: Sysctl/ioctl to get multicast addresses
 		}
 		break;
 #endif /*INET6*/
