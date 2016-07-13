@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.27 2016/07/12 03:49:32 matt Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.28 2016/07/13 15:12:20 maya Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.27 2016/07/12 03:49:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.28 2016/07/13 15:12:20 maya Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -1015,8 +1015,6 @@ static uint64_t
 __BS(read_stream_8)(void *v, bus_space_handle_t h, bus_size_t off)
 {
 #ifdef MIPS3_64BIT
-	volatile uint64_t *ptr;
-
 	h += CHIP_OFF64(off);
 	return mips3_ld(h);
 #else
