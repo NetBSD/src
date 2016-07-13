@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2009/04/14 22:15:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2016/07/13 13:10:55 shm Exp $
 #
 
 .include <bsd.own.mk>
 
+USE_FORT?= yes	# setuid
 PROG=	newgrp
 SRCS=	newgrp.c grutil.c
 BINOWN=	root
