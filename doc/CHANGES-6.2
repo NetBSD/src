@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.252 2016/06/21 19:49:14 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.253 2016/07/13 08:44:39 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14383,4 +14383,21 @@ src/lib/libc/net/gethnamaddr.c			patch
 
 	Fix parsing of /etc/hosts.  PR lib/48926.
 	[buhrow, ticket #1085]
+
+sys/dev/usb/ohci.c				1.257
+
+	Properly parenthesize.
+	[skrll, ticket #1350]
+
+sys/arch/arm/arm/cpufunc.c			1.159
+
+	Fix condition which broke ARM1136 function selection when
+	ARM1176 support was added.  PR port-arm/50512.
+	[skrll, ticket #1354]
+
+sys/arch/hppa/include/db_machdep.h		1.13
+
+	Correct the test for rfir and add one for rfi.
+	PR port-hppa/50642.
+	[skrll, ticket #1360]
 
