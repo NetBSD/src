@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 2016/07/02 07:22:09 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 2016/07/13 15:35:56 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2016/07/02 07:22:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2016/07/13 15:35:56 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -217,25 +217,22 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2016/07/02 07:22:09 maxv Exp $");
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
-extern struct bi_devmatch *x86_alldisks;
-extern int x86_ndisks;
-
 #ifdef CPURESET_DELAY
-int	cpureset_delay = CPURESET_DELAY;
+int cpureset_delay = CPURESET_DELAY;
 #else
-int     cpureset_delay = 2000; /* default to 2s */
+int cpureset_delay = 2000; /* default to 2s */
 #endif
 
-int	cpu_class = CPUCLASS_686;
+int cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-uint64_t	dumpmem_low;
-uint64_t	dumpmem_high;
-int	cpu_class;
-int	use_pae;
+uint64_t dumpmem_low;
+uint64_t dumpmem_high;
+int cpu_class;
+int use_pae;
 
 #ifndef NO_SPARSE_DUMP
 int sparse_dump = 1;
@@ -255,7 +252,7 @@ size_t dump_npages;
 size_t dump_header_size;
 size_t dump_totalbytesleft;
 
-vaddr_t	msgbuf_vaddr;
+vaddr_t msgbuf_vaddr;
 paddr_t msgbuf_paddr;
 
 struct {
@@ -263,9 +260,9 @@ struct {
 	psize_t sz;
 } msgbuf_p_seg[VM_PHYSSEG_MAX];
 unsigned int msgbuf_p_cnt = 0;
-      
-vaddr_t	idt_vaddr;
-paddr_t	idt_paddr;
+
+vaddr_t idt_vaddr;
+paddr_t idt_paddr;
 
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
@@ -274,9 +271,9 @@ vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
 
-extern	paddr_t avail_start, avail_end;
+extern paddr_t avail_start, avail_end;
 #ifdef XEN
-extern  paddr_t pmap_pa_start, pmap_pa_end;
+extern paddr_t pmap_pa_start, pmap_pa_end;
 #endif
 
 #ifndef XEN
@@ -292,15 +289,15 @@ void (*initclock_func)(void) = xen_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
+int mem_cluster_cnt;
 
-char	x86_64_doubleflt_stack[4096];
+char x86_64_doubleflt_stack[4096];
 
-int	cpu_dump(void);
-int	cpu_dumpsize(void);
-u_long	cpu_dump_mempagecnt(void);
-void	dodumpsys(void);
-void	dumpsys(void);
+int cpu_dump(void);
+int cpu_dumpsize(void);
+u_long cpu_dump_mempagecnt(void);
+void dodumpsys(void);
+void dumpsys(void);
 
 extern int time_adjusted;	/* XXX no common header */
 
@@ -323,7 +320,7 @@ int dump_header_finish(void);
 int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
-void	init_x86_64(paddr_t);
+void init_x86_64(paddr_t);
 
 static int valid_user_selector(struct lwp *, uint64_t);
 
@@ -351,8 +348,7 @@ cpu_startup(void)
 	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
 		continue;
 
-	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0,
-	    UVM_KMF_VAONLY);
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
@@ -360,8 +356,8 @@ cpu_startup(void)
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
-				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | VM_PROT_WRITE, 0);
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
@@ -1598,8 +1594,8 @@ init_x86_64(paddr_t first_avail)
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
+	 * Check to see if we have a memory map from the BIOS (passed to us by
+	 * the boot program).
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0)
@@ -1607,14 +1603,14 @@ init_x86_64(paddr_t first_avail)
 #endif	/* ! REALBASEMEM && ! REALEXTMEM */
 
 	/*
-	 * If the loop above didn't find any valid segment, fall back to
+	 * If initx86_parse_memmap didn't find any valid segment, fall back to
 	 * former code.
 	 */
 	if (mem_cluster_cnt == 0)
 		initx86_fake_memmap(iomem_ex);
 
 #else	/* XEN */
-	/* Parse Xen command line (replace bootinfo */
+	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
 	/* Determine physical address space */
@@ -1651,6 +1647,7 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
+
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
