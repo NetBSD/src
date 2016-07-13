@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.173 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.174 2016/07/13 03:19:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.173 2016/07/08 04:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.174 2016/07/13 03:19:29 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -645,7 +645,6 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		ifaref(&ia->ia_ifa);
 		ifa_insert(ifp, &ia->ia_ifa);
-		TAILQ_INSERT_TAIL(&in_ifaddrhead, ia, ia_list);
 		IN_ADDRLIST_WRITER_INSERT_TAIL(ia);
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ia->ia_addr.sin_addr.s_addr),
 		    ia, ia_hash);
