@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.53 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.54 2016/07/13 11:11:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -604,3 +604,22 @@ typedef struct netbsd32_npf_ioctl_table {
 #define IOC_NPF_STATS32         _IOW('N', 104, netbsd32_voidp)
 #define IOC_NPF_SAVE32          _IOR('N', 105, struct netbsd32_plistref)
 #define IOC_NPF_RULE32          _IOWR('N', 107, struct netbsd32_plistref)
+
+/* From sys/drvctlio.h */
+struct netbsd32_devlistargs {
+	char			l_devname[16];
+	netbsd32_charpp		l_childname;
+	netbsd32_size_t		l_children;
+};
+
+struct netbsd32_devrescanargs {
+	char			busname[16];
+	char			ifattr[16];
+	unsigned int		numlocators;
+	netbsd32_intp		locators;
+};
+
+#define	DRVRESCANBUS32		_IOW('D', 124, struct netbsd32_devrescanargs)
+#define DRVCTLCOMMAND32		_IOWR('D', 125, struct netbsd32_plistref)
+#define	DRVLISTDEV32		_IOWR('D', 127, struct netbsd32_devlistargs)
+#define DRVGETEVENT32		_IOR('D', 128, struct netbsd32_plistref)
