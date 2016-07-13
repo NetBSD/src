@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.133.4.2 2014/12/22 08:24:54 msaitoh Exp $
+#	 $NetBSD: mi,v 1.133.4.3 2016/07/13 19:34:23 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5780,13 +5780,17 @@
 ./usr/X11R7/include/ft2build.h				-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_mode.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/drm_fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_sarea.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/i915_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/intel_bufmgr.h		-unknown-	xorg
+./usr/X11R7/include/libdrm/intel_aub.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/intel_debug.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/mach64_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/mga_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/nouveau_drm.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/r128_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/r600_pci_ids.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/radeon_bo.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/radeon_bo_gem.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/radeon_bo_int.h		-unknown-	xorg
@@ -5794,6 +5798,7 @@
 ./usr/X11R7/include/libdrm/radeon_cs_gem.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/radeon_cs_int.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/radeon_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/radeon_surface.h		-unknown-	xorg
 ./usr/X11R7/include/libdrm/savage_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/sis_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/via_drm.h			-unknown-	xorg
