@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.253 2016/07/13 08:44:39 snj Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.254 2016/07/13 19:40:20 snj Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14400,4 +14400,159 @@ sys/arch/hppa/include/db_machdep.h		1.13
 	Correct the test for rfir and add one for rfi.
 	PR port-hppa/50642.
 	[skrll, ticket #1360]
+
+distrib/sets/lists/xbase/shl.mi			patch
+distrib/sets/lists/xcomp/mi			patch
+distrib/sets/lists/xcomp/shl.mi			patch
+external/mit/xorg/lib/libdrm/Makefile.defines	patch
+external/mit/xorg/lib/libdrm/Makefile		patch
+external/mit/xorg/lib/libdrm/shlib_version	patch
+external/mit/xorg/lib/libdrm/drm/Makefile	patch
+external/mit/xorg/lib/libdrm_intel/Makefile	patch
+external/mit/xorg/lib/libdrm_radeon/Makefile	patch
+external/mit/xorg/lib/libdrm_radeon/shlib_version patch
+external/mit/xorg/server/drivers/xf86-video-ati/Makefile patch
+external/mit/xorg/server/drivers/xf86-video-radeon/Makefile 1.15
+xsrc/external/mit/libdrm/dist/Makefile.am	patch
+xsrc/external/mit/libdrm/dist/Makefile.in	patch
+xsrc/external/mit/libdrm/dist/aclocal.m4	patch
+xsrc/external/mit/libdrm/dist/config.guess	patch
+xsrc/external/mit/libdrm/dist/config.h.in	patch
+xsrc/external/mit/libdrm/dist/config.sub	patch
+xsrc/external/mit/libdrm/dist/configure		patch
+xsrc/external/mit/libdrm/dist/configure.ac	patch
+xsrc/external/mit/libdrm/dist/depcomp		patch
+xsrc/external/mit/libdrm/dist/install-sh	patch
+xsrc/external/mit/libdrm/dist/libdrm_lists.h	patch
+xsrc/external/mit/libdrm/dist/ltmain.sh		patch
+xsrc/external/mit/libdrm/dist/missing		patch
+xsrc/external/mit/libdrm/dist/xf86drm.c		patch
+xsrc/external/mit/libdrm/dist/xf86drm.h		patch
+xsrc/external/mit/libdrm/dist/xf86drmMode.c	patch
+xsrc/external/mit/libdrm/dist/xf86drmMode.h	patch
+xsrc/external/mit/libdrm/dist/build-aux/config.guess patch
+xsrc/external/mit/libdrm/dist/build-aux/config.sub patch
+xsrc/external/mit/libdrm/dist/build-aux/depcomp	patch
+xsrc/external/mit/libdrm/dist/build-aux/install-sh patch
+xsrc/external/mit/libdrm/dist/build-aux/ltmain.sh patch
+xsrc/external/mit/libdrm/dist/build-aux/missing	patch
+xsrc/external/mit/libdrm/dist/exynos/Makefile.am patch
+xsrc/external/mit/libdrm/dist/exynos/Makefile.in patch
+xsrc/external/mit/libdrm/dist/exynos/exynos_drm.c patch
+xsrc/external/mit/libdrm/dist/exynos/exynos_drm.h patch
+xsrc/external/mit/libdrm/dist/exynos/exynos_drmif.h patch
+xsrc/external/mit/libdrm/dist/exynos/libdrm_exynos.pc.in patch
+xsrc/external/mit/libdrm/dist/include/Makefile.in patch
+xsrc/external/mit/libdrm/dist/include/drm/Makefile patch
+xsrc/external/mit/libdrm/dist/include/drm/Makefile.am patch
+xsrc/external/mit/libdrm/dist/include/drm/Makefile.in patch
+xsrc/external/mit/libdrm/dist/include/drm/drm.h	patch
+xsrc/external/mit/libdrm/dist/include/drm/drm_fourcc.h patch
+xsrc/external/mit/libdrm/dist/include/drm/drm_mode.h patch
+xsrc/external/mit/libdrm/dist/include/drm/i915_drm.h patch
+xsrc/external/mit/libdrm/dist/include/drm/radeon_drm.h patch
+xsrc/external/mit/libdrm/dist/intel/Makefile.am	patch
+xsrc/external/mit/libdrm/dist/intel/Makefile.in	patch
+xsrc/external/mit/libdrm/dist/intel/intel_aub.h	patch
+xsrc/external/mit/libdrm/dist/intel/intel_bufmgr.c patch
+xsrc/external/mit/libdrm/dist/intel/intel_bufmgr.h patch
+xsrc/external/mit/libdrm/dist/intel/intel_bufmgr_gem.c patch
+xsrc/external/mit/libdrm/dist/intel/intel_bufmgr_priv.h patch
+xsrc/external/mit/libdrm/dist/intel/intel_chipset.h patch
+xsrc/external/mit/libdrm/dist/intel/intel_debug.h patch
+xsrc/external/mit/libdrm/dist/intel/intel_decode.c patch
+xsrc/external/mit/libdrm/dist/intel/test_decode.c patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen4-3d.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen4-3d.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen5-3d.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen5-3d.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen6-3d.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen6-3d.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen7-2d-copy.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen7-2d-copy.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen7-3d.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gen7-3d.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/gm45-3d.batch-ref.txt patch
+xsrc/external/mit/libdrm/dist/intel/tests/gm45-3d.batch.sh patch
+xsrc/external/mit/libdrm/dist/intel/tests/test-batch.sh patch
+xsrc/external/mit/libdrm/dist/libkms/Makefile.am patch
+xsrc/external/mit/libdrm/dist/libkms/Makefile.in patch
+xsrc/external/mit/libdrm/dist/libkms/dumb.c	patch
+xsrc/external/mit/libdrm/dist/libkms/internal.h	patch
+xsrc/external/mit/libdrm/dist/libkms/linux.c	patch
+xsrc/external/mit/libdrm/dist/libkms/radeon.c	patch
+xsrc/external/mit/libdrm/dist/m4/libtool.m4	patch
+xsrc/external/mit/libdrm/dist/m4/ltoptions.m4	patch
+xsrc/external/mit/libdrm/dist/m4/ltsugar.m4	patch
+xsrc/external/mit/libdrm/dist/m4/ltversion.m4	patch
+xsrc/external/mit/libdrm/dist/m4/lt~obsolete.m4	patch
+xsrc/external/mit/libdrm/dist/nouveau/Makefile.am patch
+xsrc/external/mit/libdrm/dist/nouveau/Makefile.in patch
+xsrc/external/mit/libdrm/dist/nouveau/abi16.c	patch
+xsrc/external/mit/libdrm/dist/nouveau/bufctx.c	patch
+xsrc/external/mit/libdrm/dist/nouveau/libdrm_nouveau.pc.in patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau.c	patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau.h	patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_bo.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_bo.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_channel.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_channel.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_device.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_device.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_drmif.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_grobj.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_grobj.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_notifier.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_notifier.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_private.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_pushbuf.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_pushbuf.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_reloc.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_reloc.h patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_resource.c patch
+xsrc/external/mit/libdrm/dist/nouveau/nouveau_resource.h patch
+xsrc/external/mit/libdrm/dist/nouveau/private.h	patch
+xsrc/external/mit/libdrm/dist/nouveau/pushbuf.c	patch
+xsrc/external/mit/libdrm/dist/omap/Makefile.am	patch
+xsrc/external/mit/libdrm/dist/omap/Makefile.in	patch
+xsrc/external/mit/libdrm/dist/omap/libdrm_omap.pc.in patch
+xsrc/external/mit/libdrm/dist/omap/omap_drm.c	patch
+xsrc/external/mit/libdrm/dist/omap/omap_drm.h	patch
+xsrc/external/mit/libdrm/dist/omap/omap_drmif.h	patch
+xsrc/external/mit/libdrm/dist/radeon/Makefile.am patch
+xsrc/external/mit/libdrm/dist/radeon/Makefile.in patch
+xsrc/external/mit/libdrm/dist/radeon/r600_pci_ids.h patch
+xsrc/external/mit/libdrm/dist/radeon/radeon_cs_space.c patch
+xsrc/external/mit/libdrm/dist/radeon/radeon_surface.c patch
+xsrc/external/mit/libdrm/dist/radeon/radeon_surface.h patch
+xsrc/external/mit/libdrm/dist/tests/Makefile.am	patch
+xsrc/external/mit/libdrm/dist/tests/Makefile.in	patch
+xsrc/external/mit/libdrm/dist/tests/drmtest.c	patch
+xsrc/external/mit/libdrm/dist/tests/gem_flink.c	patch
+xsrc/external/mit/libdrm/dist/tests/kmstest/Makefile.in patch
+xsrc/external/mit/libdrm/dist/tests/modeprint/Makefile.am patch
+xsrc/external/mit/libdrm/dist/tests/modeprint/Makefile.in patch
+xsrc/external/mit/libdrm/dist/tests/modeprint/modeprint.c patch
+xsrc/external/mit/libdrm/dist/tests/modetest/Makefile.am patch
+xsrc/external/mit/libdrm/dist/tests/modetest/Makefile.in patch
+xsrc/external/mit/libdrm/dist/tests/modetest/modetest.c patch
+xsrc/external/mit/libdrm/dist/tests/radeon/Makefile.am patch
+xsrc/external/mit/libdrm/dist/tests/radeon/Makefile.in patch
+xsrc/external/mit/libdrm/dist/tests/radeon/list.h patch
+xsrc/external/mit/libdrm/dist/tests/radeon/radeon_ttm.c patch
+xsrc/external/mit/libdrm/dist/tests/radeon/rbo.c patch
+xsrc/external/mit/libdrm/dist/tests/radeon/rbo.h patch
+xsrc/external/mit/libdrm/dist/tests/vbltest/Makefile.in patch
+xsrc/external/mit/libdrm/dist/tests/vbltest/vbltest.c patch
+xsrc/external/mit/xf86-video-ati/dist/src/r600_exa.c 1.6
+xsrc/external/mit/xf86-video-ati/dist/src/r600_textured_videofuncs.c 1.2
+xsrc/external/mit/xf86-video-ati/dist/src/r6xx_accel.c 1.7
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa.c 1.2
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_exa_funcs.c 1.10
+xsrc/external/mit/xf86-video-ati/dist/src/radeon_textured_video.c 1.5
+
+	Update libdrm to 2.4.36.
+	Enable radeon KMS support in xf86-video-ati so that a netbsd-6
+	userland will work with a more recent (netbsd-7 and up) kernel.
+	[mrg, ticket #1326]
 
