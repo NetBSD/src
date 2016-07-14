@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.97 2016/07/14 18:19:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.98 2016/07/14 19:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.97 2016/07/14 18:19:11 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.98 2016/07/14 19:39:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,13 +184,13 @@ struct protox {
 	u_char	pr_sindex;		/* index into nlist of stat block */
 	u_char	pr_wanted;		/* 1 if wanted, 0 otherwise */
 	void	(*pr_cblocks)		/* control blocks printing routine */
-			__P((u_long, const char *));
+			(u_long, const char *);
 	void	(*pr_stats)		/* statistics printing routine */
-			__P((u_long, const char *));
+			(u_long, const char *);
 	void	(*pr_istats)
-			__P((const char *));	/* per/if statistics printing routine */
+			(const char *);	/* per/if statistics printing routine */
 	void	(*pr_dump)		/* PCB state dump routine */
-			__P((u_long, const char *, u_long));
+			(u_long, const char *, u_long);
 	const char *pr_name;		/* well-known name */
 } protox[] = {
 	{ N_TCBTABLE,	N_TCPSTAT,	1,	protopr,
@@ -301,12 +301,11 @@ const struct softintrq {
 	{ NULL, -1 },
 };
 
-int main __P((int, char *[]));
-static void printproto __P((struct protox *, const char *));
-static void print_softintrq __P((void));
+static void printproto(struct protox *, const char *);
+static void print_softintrq(void);
 __dead static void usage(void);
-static struct protox *name2protox __P((const char *));
-static struct protox *knownname __P((const char *));
+static struct protox *name2protox(const char *);
+static struct protox *knownname(const char *);
 static void prepare(const char *, const char *, struct protox *tp);
 static kvm_t *prepare_kvmd(const char *, const char *, char *);
 
@@ -723,7 +722,7 @@ main(int argc, char *argv[])
 static void
 printproto(struct protox *tp, const char *name)
 {
-	void (*pr) __P((u_long, const char *));
+	void (*pr)(u_long, const char *);
 	u_long off;
 
 	if (sflag) {
