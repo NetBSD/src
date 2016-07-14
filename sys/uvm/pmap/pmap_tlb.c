@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.16 2016/07/14 15:49:43 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.17 2016/07/14 15:50:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.16 2016/07/14 15:49:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.17 2016/07/14 15:50:31 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -978,7 +978,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 		kcpuset_atomic_clear(pm->pm_onproc, cpu_index(ci));
 	}
 #endif
-	curcpu()->ci_pmap_asid_cur = 0;
+	curcpu()->ci_pmap_asid_cur = KERNEL_PID;
 	UVMHIST_LOG(maphist, " <-- done (pm=%p)", pm, 0, 0, 0);
 	tlb_set_asid(KERNEL_PID);
 	pmap_tlb_pai_check(cpu_tlb_info(curcpu()));
