@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.63 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: mlx.c,v 1.64 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.63 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.64 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include "ld.h"
 
@@ -508,7 +508,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		rv = kthread_create(PRI_NONE, 0, NULL, mlx_periodic_thread,
 		    NULL, &mlx_periodic_lwp, "mlxtask");
 		if (rv != 0)
-			printf("mlx_init: unable to create thread (%d)\n", rv);
+			aprint_error_dev(mlx->mlx_dv,
+			    "mlx_init: unable to create thread (%d)\n", rv);
 	}
 }
 
@@ -713,8 +714,7 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -727,8 +727,7 @@ mlxclose(dev_t dev, int flag, int mode,
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
+mlxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
