@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86 2016/07/14 18:58:26 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.87 2016/07/14 19:39:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.86 2016/07/14 18:58:26 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.87 2016/07/14 19:39:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ static void iftot_banner(struct iftot *);
 static void iftot_print_sum(struct iftot *, struct iftot *);
 static void iftot_print(struct iftot *, struct iftot *);
 
-static void catchalarm __P((int));
+static void catchalarm(int);
 static void get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 static void fetchifs(void);
 
