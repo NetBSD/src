@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.86 2016/04/04 20:47:57 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.87 2016/07/14 06:22:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.86 2016/04/04 20:47:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.87 2016/07/14 06:22:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -935,6 +935,9 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	/* search if knote already exists */
 	if (kfilter->filtops->f_isfd) {
 		/* monitoring a file descriptor */
+		/* validate descriptor */
+		if (kev->ident > INT_MAX)
+			return EBADF;
 		fd = kev->ident;
 		if ((fp = fd_getfile(fd)) == NULL) {
 			rw_exit(&kqueue_filter_lock);
