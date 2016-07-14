@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.87 2016/07/14 19:39:41 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.88 2016/07/14 20:34:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.87 2016/07/14 19:39:41 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.88 2016/07/14 20:34:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -227,10 +227,8 @@ intpr_sysctl(void)
 				    ifd->ifi_ipackets + ifd->ifi_ierrors +
 				    ifd->ifi_opackets + ifd->ifi_oerrors +
 				    ifd->ifi_collisions;
-				if (tflag)
-					total += 0; // XXX-elad ifnet.if_timer;
 				if (dflag)
-					total += 0; // XXX-elad ifnet.if_snd.ifq_drops;
+					total += ifd->ifi_iqdrops;
 				if (total == 0)
 					continue;
 			}
@@ -624,7 +622,9 @@ print_addr(const char *name, struct sockaddr *sa, struct sockaddr **rtinfo,
 	if (tflag)
 		printf(" %4d", ifnet ? ifnet->if_timer : 0);
 	if (dflag)
-		printf(" %5d", ifnet ? ifnet->if_snd.ifq_drops : 0);
+		printf(" %5lld", ifnet ?
+		    (unsigned long long)ifnet->if_snd.ifq_drops :
+		    ifd->ifi_iqdrops);
 	putchar('\n');
 }
 
@@ -687,9 +687,7 @@ iftot_print(struct iftot *cur, struct iftot *old)
 		    cur->ift_oe - old->ift_oe,
 		    cur->ift_co - old->ift_co);
 	if (dflag)
-		printf(" %5llu",
-		    /* XXX ifnet.if_snd.ifq_drops - ip->ift_dr); */
-		    0LL);
+		printf(" %5u", cur->ift_dr - old->ift_dr);
 }
 
 static void
@@ -708,7 +706,7 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 		    cur->ift_co - old->ift_co);
 
 	if (dflag)
-		printf(" %5llu", (unsigned long long)(cur->ift_dr - old->ift_dr));
+		printf(" %5u", cur->ift_dr - old->ift_dr);
 }
 
 __dead static void
