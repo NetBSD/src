@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.98 2016/07/14 19:39:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.98 2016/07/14 19:39:41 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.99 2016/07/14 20:13:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,35 +146,23 @@ struct nlist nl[] = {
 	{ "_rip6stat", 0, 0, 0, 0 },	/* not available via kvm */
 #define	N_ARPINTRQ	38
 	{ "_arpintrq", 0, 0, 0, 0 },
-#define	N_IPINTRQ	39
-	{ "_ipintrq", 0, 0, 0, 0 },
-#define	N_IP6INTRQ	40
-	{ "_ip6intrq", 0, 0, 0, 0 },
-#define	N_ATINTRQ1	41
+#define	N_ATINTRQ1	39
 	{ "_atintrq1", 0, 0, 0, 0 },
-#define	N_ATINTRQ2	42
+#define	N_ATINTRQ2	40
 	{ "_atintrq2", 0, 0, 0, 0 },
-#define	N_NSINTRQ	43
-	{ "_nsintrq", 0, 0, 0, 0 },
-#define	N_LLCINTRQ	44
-	{ "_llcintrq", 0, 0, 0, 0 },
-#define	N_HDINTRQ	45
-	{ "_hdintrq", 0, 0, 0, 0 },
-#define	N_NATMINTRQ	46
+#define	N_NATMINTRQ	41
 	{ "_natmintrq", 0, 0, 0, 0 },
-#define	N_PPPOEDISCINQ	47
+#define	N_PPPOEDISCINQ	42
 	{ "_ppoediscinq", 0, 0, 0, 0 },
-#define	N_PPPOEINQ	48
+#define	N_PPPOEINQ	43
 	{ "_ppoeinq", 0, 0, 0, 0 },
-#define	N_PKINTRQ	49
-	{ "_pkintrq", 0, 0, 0, 0 },
-#define	N_HARDCLOCK_TICKS 50
+#define	N_HARDCLOCK_TICKS 44
 	{ "_hardclock_ticks", 0, 0, 0, 0 },
-#define N_PIMSTAT	51
+#define N_PIMSTAT	45
 	{ "_pimstat", 0, 0, 0, 0 },
-#define N_CARPSTAT	52
+#define N_CARPSTAT	46
 	{ "_carpstats", 0, 0, 0, 0 },	/* not available via kvm */
-#define N_PFSYNCSTAT	53
+#define N_PFSYNCSTAT	47
 	{ "_pfsyncstats", 0, 0, 0, 0},  /* not available via kvm */
 	{ "", 0, 0, 0, 0 },
 };
@@ -288,16 +276,11 @@ const struct softintrq {
 	int siq_index;
 } softintrq[] = {
 	{ "arpintrq", N_ARPINTRQ },
-	{ "ipintrq", N_IPINTRQ },
-	{ "ip6intrq", N_IP6INTRQ },
 	{ "atintrq1", N_ATINTRQ1 },
 	{ "atintrq2", N_ATINTRQ2 },
-	{ "llcintrq", N_LLCINTRQ },
-	{ "hdintrq", N_HDINTRQ },
 	{ "natmintrq", N_NATMINTRQ },
 	{ "ppoediscinq", N_PPPOEDISCINQ },
 	{ "ppoeinq", N_PPPOEINQ },
-	{ "pkintrq", N_PKINTRQ },
 	{ NULL, -1 },
 };
 
