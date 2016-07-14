@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.59 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.60 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.59 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.60 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,14 +151,15 @@ rtfpsattach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase, irq;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_io[0].ir_addr;
 	irq = ia->ia_irq[0].ir_irq;
 
 	if (irq >= 16 || irqport[irq] == -1) {
-		printf("%s: invalid irq\n", device_xname(self));
+		aprint_error_dev(self, "invalid irq\n");
 		return;
 	}
 	sc->sc_irqport = irqport[irq];
