@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2010/08/28 15:42:46 kardel Exp $
+#	$NetBSD: Makefile,v 1.2.34.1 2016/07/14 18:26:51 martin Exp $
 
 SUBDIR= ntp-keygen ntpd ntpdate ntpdc ntpq ntptime ntptrace sntp 
 
 .if ("${MKCRYPTO}" != "no")
-SUBDIR+= ntp-keygen
 CPPFLAGS+=-DOPENSSL
 .endif
 

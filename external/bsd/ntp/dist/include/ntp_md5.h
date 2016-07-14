@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_md5.h,v 1.1.1.3.4.2 2015/04/23 18:53:01 snj Exp $	*/
+/*	$NetBSD: ntp_md5.h,v 1.1.1.3.4.2.2.1 2016/07/14 18:27:00 martin Exp $	*/
 
 /*
  * ntp_md5.h: deal with md5.h headers
@@ -25,12 +25,12 @@
 # endif
 
   typedef MD5_CTX			EVP_MD_CTX;
-# define EVP_get_digestbynid(t)		NULL
+# define EVP_get_digestbynid(t)		((t) ? NULL : NULL)
 # define EVP_md5()			NULL
 # define EVP_MD_CTX_init(c)
 # define EVP_MD_CTX_set_flags(c, f)
-# define EVP_DigestInit(c, dt)		(MD5Init(c), 1)
-# define EVP_DigestInit_ex(c, dt, i)	(MD5Init(c), 1)
+# define EVP_DigestInit(c, dt)		(MD5Init(c), (dt ? 1 : 1))
+# define EVP_DigestInit_ex(c, dt, i)	(MD5Init(c), (dt ? 1 : 1))
 # define EVP_DigestUpdate(c, p, s)	MD5Update(c, (const void *)(p), \
 						  s)
 # define EVP_DigestFinal(c, d, pdl)	\

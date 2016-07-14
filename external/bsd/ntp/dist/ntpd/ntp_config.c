@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.8.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.8.4.2.2.3 2016/07/14 18:27:00 martin Exp $	*/
 
 /* ntp_config.c
  *
@@ -2973,12 +2973,16 @@ apply_enable_disable(
 			proto_config(PROTO_MONITOR, enable, 0., NULL);
 			break;
 
+		case T_Mode7:
+			proto_config(PROTO_MODE7, enable, 0., NULL);
+			break;
+
 		case T_Ntp:
 			proto_config(PROTO_NTP, enable, 0., NULL);
 			break;
 
-		case T_Mode7:
-			proto_config(PROTO_MODE7, enable, 0., NULL);
+		case T_PCEdigest:
+			proto_config(PROTO_PCEDIGEST, enable, 0., NULL);
 			break;
 
 		case T_Stats:

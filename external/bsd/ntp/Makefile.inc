@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14.2.1.2.2 2016/05/11 10:02:29 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.14.2.1.2.3 2016/07/14 18:26:51 martin Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -59,7 +59,7 @@ version.c: ${LIBNTP}/libntp.a ${.CURDIR}/../../scripts/mkver ${.CURDIR}/../../im
 .endif # defined(PROG)
 
 .if ${MKCRYPTO:Uno} != "no"
-CPPFLAGS+=-DOPENSSL
+CPPFLAGS+=-DOPENSSL -DAUTOKEY -DUSE_OPENSSL_CRYPTO_RAND
 .endif
 
 .if ${MKINET6:Uno} != "no"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.7.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.7.4.2.2.3 2016/07/14 18:27:00 martin Exp $	*/
 
 /* ntp_parser.y
  *
@@ -192,6 +192,7 @@
 %token	<Integer>	T_NtpSignDsocket
 %token	<Integer>	T_Orphan
 %token	<Integer>	T_Orphanwait
+%token	<Integer>	T_PCEdigest
 %token	<Integer>	T_Panic
 %token	<Integer>	T_Peer
 %token	<Integer>	T_Peerstats
@@ -1087,6 +1088,7 @@ system_option_flag_keyword
 
 system_option_local_flag_keyword
 	:	T_Mode7
+	|	T_PCEdigest
 	|	T_Stats
 	|	T_UEcrypto
 	|	T_UEcryptonak
