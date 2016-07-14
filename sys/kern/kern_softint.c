@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.38.8.1 2013/02/08 19:32:07 riz Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.38.8.1.2.1 2016/07/14 06:44:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.8.1 2013/02/08 19:32:07 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.38.8.1.2.1 2016/07/14 06:44:50 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -424,8 +424,8 @@ softint_disestablish(void *arg)
 			KASSERT(sh->sh_func != NULL);
 			flags |= sh->sh_flags;
 		}
-		/* Inactive on all CPUs? */
-		if ((flags & SOFTINT_ACTIVE) == 0) {
+		/* Neither pending nor active on all CPUs? */
+		if ((flags & (SOFTINT_PENDING | SOFTINT_ACTIVE)) == 0) {
 			break;
 		}
 		/* Oops, still active.  Wait for it to clear. */
