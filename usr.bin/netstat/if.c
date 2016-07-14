@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.85 2016/07/14 18:19:11 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.86 2016/07/14 18:58:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.85 2016/07/14 18:19:11 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.86 2016/07/14 18:58:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -357,7 +357,52 @@ intpr_kvm(u_long ifnetaddr, void (*pfunc)(const char *))
 }
 
 static void
-ia6_print(struct in6_addr *ia)
+mc_print(const char *ifname, const size_t ias, const char *oid, int *mcast_oids,
+    void (*pr)(const void *))
+{
+	uint8_t *mcast_addrs, *p;
+	const size_t incr = 2 * ias + sizeof(uint32_t);
+	size_t len;
+	int ifindex;
+
+	if ((ifindex = if_nametoindex(ifname)) == 0)
+		warn("Interface %s not found", ifname);
+
+	if (mcast_oids[0] == 0) {
+		size_t oidlen = 4;
+		if (sysctlnametomib(oid, mcast_oids, &oidlen) == -1) {
+			warnx("'%s' not found", oid);
+			return;
+		}
+		if (oidlen != 3) {
+			warnx("Wrong OID path for '%s'", oid);
+			return;
+		}
+	}
+
+	if (mcast_oids[3] == ifindex)
+		return;
+	mcast_oids[3] = ifindex;
+
+	mcast_addrs = asysctl(mcast_oids, 4, &len);
+	if (mcast_addrs == NULL && len != 0) {
+		warn("failed to read '%s'", oid);
+		return;
+	}
+	if (len) {
+		p = mcast_addrs;
+		while (len >= incr) {
+			(*pr)((p + ias));
+			p += incr;
+			len -= incr;
+		}
+	}
+	free(mcast_addrs);
+}
+
+#ifdef INET6
+static void
+ia6_print(const struct in6_addr *ia)
 {
 	struct sockaddr_in6 as6;
 	char hbuf[NI_MAXHOST];		/* for getnameinfo() */
@@ -382,50 +427,12 @@ ia6_print(struct in6_addr *ia)
 static void
 mc6_print(const char *ifname)
 {
-	static const size_t incr =
-	    2 * sizeof(struct in6_addr) + sizeof(uint32_t);
 	static int mcast_oids[4];
-	static int oifindex = -1;
-	uint8_t *mcast_addrs, *p;
-	size_t len;
-	int ifindex;
 
-	if ((ifindex = if_nametoindex(ifname)) == 0)
-		warn("Interface %s not found", ifname);
-
-	if (ifindex == oifindex)
-		return;
-	oifindex = ifindex;
-
-	if (mcast_oids[0] == 0) {
-		size_t oidlen = __arraycount(mcast_oids);
-		if (sysctlnametomib("net.inet6.multicast", mcast_oids,
-		    &oidlen) == -1) {
-			warnx("net.inet6.multicast not found");
-			return;
-		}
-		if (oidlen != 3) {
-			warnx("Wrong OID path for net.inet6.multicast");
-			return;
-		}
-	}
-	mcast_oids[3] = ifindex;
-
-	mcast_addrs = asysctl(mcast_oids, 4, &len);
-	if (mcast_addrs == NULL && len != 0) {
-		warn("failed to read net.inet6.multicast");
-		return;
-	}
-	if (len) {
-		p = mcast_addrs;
-		while (len >= incr) {
-			ia6_print((void *)(p + sizeof(struct in6_addr)));
-			p += incr;
-			len -= incr;
-		}
-	}
-	free(mcast_addrs);
+	mc_print(ifname, sizeof(struct in6_addr), "net.inet6.multicast",
+	    mcast_oids, (void (*)(const void *))ia6_print);
 }
+#endif
 
 static void
 ia4_print(const struct in_addr *ia)
@@ -436,49 +443,10 @@ ia4_print(const struct in_addr *ia)
 static void
 mc4_print(const char *ifname)
 {
-	static const size_t incr =
-	    2 * sizeof(struct in_addr) + sizeof(uint32_t);
 	static int mcast_oids[4];
-	static int oifindex = -1;
-	uint8_t *mcast_addrs, *p;
-	size_t len;
-	int ifindex;
 
-	if ((ifindex = if_nametoindex(ifname)) == 0)
-		warn("Interface %s not found", ifname);
-
-	if (ifindex == oifindex)
-		return;
-	oifindex = ifindex;
-
-	if (mcast_oids[0] == 0) {
-		size_t oidlen = __arraycount(mcast_oids);
-		if (sysctlnametomib("net.inet.multicast", mcast_oids,
-		    &oidlen) == -1) {
-			warnx("net.inet.multicast not found");
-			return;
-		}
-		if (oidlen != 3) {
-			warnx("Wrong OID path for net.inet.multicast");
-			return;
-		}
-	}
-	mcast_oids[3] = ifindex;
-
-	mcast_addrs = asysctl(mcast_oids, 4, &len);
-	if (mcast_addrs == NULL && len != 0) {
-		warn("failed to read net.inet6.multicast");
-		return;
-	}
-	if (len) {
-		p = mcast_addrs;
-		while (len >= incr) {
-			ia4_print((void *)(p + sizeof(struct in_addr)));
-			p += incr;
-			len -= incr;
-		}
-	}
-	free(mcast_addrs);
+	mc_print(ifname, sizeof(struct in_addr), "net.inet.multicast",
+	    mcast_oids, (void (*)(const void *))ia4_print);
 }
 
 static void
