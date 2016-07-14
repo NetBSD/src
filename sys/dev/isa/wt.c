@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.87 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: wt.c,v 1.88 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.87 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.88 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +286,7 @@ wtattach(device_t parent, device_t self, void *aux)
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, AV_NPORT, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -300,7 +300,7 @@ wtattach(device_t parent, device_t self, void *aux)
 	if (wtreset(iot, ioh, &wtregs)) {
 		sc->type = WANGTEK;
 		memcpy(&sc->regs, &wtregs, sizeof(sc->regs));
-		printf(": type <Wangtek>\n");
+		aprint_normal(": type <Wangtek>\n");
 		goto ok;
 	}
 
@@ -308,7 +308,7 @@ wtattach(device_t parent, device_t self, void *aux)
 	if (wtreset(iot, ioh, &avregs)) {
 		sc->type = ARCHIVE;
 		memcpy(&sc->regs, &avregs, sizeof(sc->regs));
-		printf(": type <Archive>\n");
+		aprint_normal(": type <Archive>\n");
 		/* Reset DMA. */
 		bus_space_write_1(iot, ioh, sc->regs.RDMAPORT, 0);
 		goto ok;
