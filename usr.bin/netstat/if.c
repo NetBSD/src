@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.88 2016/07/14 20:34:36 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.89 2016/07/14 20:38:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.88 2016/07/14 20:34:36 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.89 2016/07/14 20:38:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ struct	iftot {
 	u_quad_t ift_ob;		/* output bytes */
 	u_quad_t ift_oe;		/* output errors */
 	u_quad_t ift_co;		/* collisions */
-	int ift_dr;			/* drops */
+	u_quad_t ift_dr;		/* drops */
 };
 
 static void set_lines(void);
@@ -687,7 +687,7 @@ iftot_print(struct iftot *cur, struct iftot *old)
 		    cur->ift_oe - old->ift_oe,
 		    cur->ift_co - old->ift_co);
 	if (dflag)
-		printf(" %5u", cur->ift_dr - old->ift_dr);
+		printf(" %5" PRIu64, cur->ift_dr - old->ift_dr);
 }
 
 static void
@@ -706,7 +706,7 @@ iftot_print_sum(struct iftot *cur, struct iftot *old)
 		    cur->ift_co - old->ift_co);
 
 	if (dflag)
-		printf(" %5u", cur->ift_dr - old->ift_dr);
+		printf(" %5" PRIu64, cur->ift_dr - old->ift_dr);
 }
 
 __dead static void
@@ -917,9 +917,8 @@ loop:
 					(ifnet.if_collisions - ip->ift_co));
 			}
 			if (dflag)
-				printf(" %5llu",
-				    (unsigned long long)
-					(ifnet.if_snd.ifq_drops - ip->ift_dr));
+				printf(" %5" PRIu64,
+					ifnet.if_snd.ifq_drops - ip->ift_dr);
 		}
 		ip->ift_ip = ifnet.if_ipackets;
 		ip->ift_ib = ifnet.if_ibytes;
@@ -1088,8 +1087,7 @@ fetchifs(void)
 				ip_cur.ift_ob = ifd->ifi_obytes;
 				ip_cur.ift_oe = ifd->ifi_oerrors;
 				ip_cur.ift_co = ifd->ifi_collisions;
-				ip_cur.ift_dr = 0;
-				    /* XXX-elad ifnet.if_snd.ifq_drops */
+				ip_cur.ift_dr = ifd->ifi_iqdrops;
 			}
 
 			sum_cur.ift_ip += ifd->ifi_ipackets;
@@ -1099,7 +1097,7 @@ fetchifs(void)
 			sum_cur.ift_ob += ifd->ifi_obytes;
 			sum_cur.ift_oe += ifd->ifi_oerrors;
 			sum_cur.ift_co += ifd->ifi_collisions;
-			sum_cur.ift_dr += 0; /* XXX-elad ifnet.if_snd.ifq_drops */
+			sum_cur.ift_dr += ifd->ifi_iqdrops;
 			break;
 		}
 	}
@@ -1113,7 +1111,6 @@ fetchifs(void)
 		ip_cur.ift_ob = ifd->ifi_obytes;
 		ip_cur.ift_oe = ifd->ifi_oerrors;
 		ip_cur.ift_co = ifd->ifi_collisions;
-		ip_cur.ift_dr = 0;
-		    /* XXX-elad ifnet.if_snd.ifq_drops */
+		ip_cur.ift_dr = ifd->ifi_iqdrops;
 	}
 }
