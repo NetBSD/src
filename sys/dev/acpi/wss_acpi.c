@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.30 2016/01/15 15:42:57 joerg Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.31 2016/07/14 04:19:26 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.30 2016/01/15 15:42:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.31 2016/07/14 04:19:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -132,7 +132,8 @@ wss_acpi_attach(device_t parent, device_t self, void *aux)
 	dspio = acpi_res_io(&res, wah->io_region_idx_ad1848);
 	oplio = acpi_res_io(&res, wah->io_region_idx_opl);
 	if (dspio == NULL || oplio == NULL) {
-		aprint_error_dev(self, "unable to find i/o registers resource\n");
+		aprint_error_dev(self,
+		    "unable to find i/o registers resource\n");
 		goto out;
 	}
 	if (bus_space_map(sc->sc_iot, dspio->ar_base, dspio->ar_length,

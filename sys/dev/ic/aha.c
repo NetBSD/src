@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.62 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: aha.c,v 1.63 2016/07/14 04:19:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.62 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.63 2016/07/14 04:19:27 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -965,16 +965,14 @@ aha_init(struct aha_softc *sc)
 	    1, sizeof(struct aha_control), 0, BUS_DMA_NOWAIT,
 	    &sc->sc_dmamap_control)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create control DMA map, error = %d\n",
-		    error);
+		    "unable to create control DMA map, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
 	    sc->sc_control, sizeof(struct aha_control), NULL,
 	    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to load control DMA map, error = %d\n",
-		    error);
+		    "unable to load control DMA map, error = %d\n", error);
 		return (error);
 	}
 
