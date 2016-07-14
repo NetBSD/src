@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.96 2016/07/13 21:57:01 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.97 2016/07/14 18:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.96 2016/07/13 21:57:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.97 2016/07/14 18:19:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,7 +358,6 @@ prepare(const char *nf, const char *mf, struct protox *tp)
 		 */
 		use_sysctl = 0;
 	} else if (qflag ||
-		   (iflag && aflag) ||	/* For multicast */
 #ifndef SMALL
 		   gflag ||
 #endif
