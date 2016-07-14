@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 2016/07/14 04:51:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 2016/07/14 05:00:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2016/07/14 04:51:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2016/07/14 05:00:51 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -845,7 +845,7 @@ pmap_update(struct pmap *pmap)
 	PMAP_COUNT(update);
 
 	kpreempt_disable();
-#if defined(MULTIPROCESSOR) && defined(PMAP_NEED_TLB_SHOOTDOWN)
+#if defined(MULTIPROCESSOR) && defined(PMAP_TLB_NEED_SHOOTDOWN)
 	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
 	if (pending && pmap_tlb_shootdown_bystanders(pmap))
 		PMAP_COUNT(shootdown_ipis);
