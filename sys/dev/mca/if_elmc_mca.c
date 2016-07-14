@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.31 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.32 2016/07/14 04:00:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.31 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.32 2016/07/14 04:00:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,15 +140,15 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 	case 8: irq = 9; break;
 	case 1: irq = 12; break;
 	default:
-		printf(": cannot determine irq\n");
+		aprint_error(": cannot determine irq\n");
 		return;
 	}
 
 	sc->sc_dev = self;
 	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 0x18) >> 3) * 0x8000);
 
-	printf(" slot %d irq %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
-		ma->ma_slot + 1, irq);
+	aprint_normal(" slot %d irq %d: 3Com EtherLink/MC Ethernet Adapter "
+	    "(3C523)\n", ma->ma_slot + 1, irq);
 
 	/* map the pio registers */
 	if (bus_space_map(ma->ma_iot, iobase, ELMC_IOADDR_SIZE, 0, &ioh)) {
@@ -249,11 +249,12 @@ elmc_mca_attach(device_t parent, device_t self, void *aux)
 				ELMC_REVISION) & ELMC_REVISION_MASK;
 
 	/* dump known info */
-	printf("%s: rev %d, i/o %#04x-%#04x, mem %#06x-%#06x, %sternal xcvr\n",
-		device_xname(self), revision,
-		iobase, iobase + ELMC_IOADDR_SIZE - 1,
-		pbram_addr, pbram_addr + ELMC_MADDR_SIZE - 1,
-		(pos2 & 0x20) ? "ex" : "in");
+	aprint_normal("%s: rev %d, i/o %#04x-%#04x, mem %#06x-%#06x, "
+	    "%sternal xcvr\n",
+	    device_xname(self), revision,
+	    iobase, iobase + ELMC_IOADDR_SIZE - 1,
+	    pbram_addr, pbram_addr + ELMC_MADDR_SIZE - 1,
+	    (pos2 & 0x20) ? "ex" : "in");
 
 	/*
 	 * Hardware ethernet address is stored in the first six bytes
