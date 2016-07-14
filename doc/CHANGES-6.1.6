@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.66 2016/05/18 10:48:51 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.67 2016/07/14 07:21:08 snj Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -8360,4 +8360,41 @@ external/mit/expat/lib/libexpat/shlib_version	up to 1.3
 
 	Update expat to 2.1.1.  Apply fixes for CVE-2016-0718.
 	[spz, ticket #1383]
+
+sys/kern/kern_softint.c				1.42
+
+	Between softint_schedule() and softint_execute(), other CPU's
+	softint_disestablish causes panic.  Fix.
+	[knakahara, ticket #1356]
+
+sys/arch/x86/include/cpufunc.h			1.19
+sys/arch/x86/x86/errata.c			1.23
+
+	Adapt prototypes and usage of rdmsr_locked() and wrmsr_locked()
+	to their implementation.  Both functions don't take the passcode
+	as argument.
+	[hannken, ticket #1361]
+
+sys/nfs/nfs_vnops.c				1.309
+
+	Return an error if NFSPROC_LOOKUP returns the file handle of
+	the current directory.  Treating it as DOT lookup would put
+	garbage into the name cache and could panic on future lookups.
+	PR kern/50664.
+	[hannken, ticket #1363]
+
+external/gpl2/xcvs/dist/src/import.c		1.4
+
+	Remove trailing whitespace from imported messages when adding
+	new files.
+	[christos, ticket #1364]
+
+sys/arch/x86/x86/pmap.c				1.190
+
+	Operation pmap_pp_clear_attrs() may remove the "used" attribute
+	from a page that is still cached in the TLB of other CPUs.
+
+	Call pmap_tlb_shootnow() here before enabling preemption to
+	clear the TLB entries on other CPUs.
+	[hannken, ticket #1365]
 
