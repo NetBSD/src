@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: amr.c,v 1.61 2016/07/14 04:19:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.60 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.61 2016/07/14 04:19:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ const struct cdevsw amr_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
-};      
+};
 
 extern struct   cfdriver amr_cd;
 
@@ -364,8 +364,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, 0,
 	    &amr->amr_dmaseg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(amr->amr_dv, "unable to allocate buffer, rv = %d\n",
-		    rv);
+		aprint_error_dev(amr->amr_dv,
+		    "unable to allocate buffer, rv = %d\n", rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -383,8 +383,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	if ((rv = bus_dmamap_create(amr->amr_dmat, size, 1, size, 0,
 	    BUS_DMA_NOWAIT, &amr->amr_dmamap)) != 0) {
-		aprint_error_dev(amr->amr_dv, "unable to create buffer DMA map, rv = %d\n",
-		    rv);
+		aprint_error_dev(amr->amr_dv,
+		    "unable to create buffer DMA map, rv = %d\n", rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -392,8 +392,8 @@ amr_attach(device_t parent, device_t self, void *aux)
 
 	if ((rv = bus_dmamap_load(amr->amr_dmat, amr->amr_dmamap,
 	    amr->amr_mbox, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(amr->amr_dv, "unable to load buffer DMA map, rv = %d\n",
-		    rv);
+		aprint_error_dev(amr->amr_dv,
+		    "unable to load buffer DMA map, rv = %d\n", rv);
 		amr_teardown(amr);
 		return;
 	}
@@ -1415,12 +1415,12 @@ static int
 amropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct amr_softc *amr;
-	 
+
 	if ((amr = device_lookup_private(&amr_cd, minor(dev))) == NULL)
 		return (ENXIO);
 	if ((amr->amr_flags & AMRF_OPEN) != 0)
 		return (EBUSY);
-							  
+
 	amr->amr_flags |= AMRF_OPEN;
 	return (0);
 }

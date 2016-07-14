@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_cardbus.c,v 1.35 2012/08/04 03:55:43 riastradh Exp $	*/
+/*	$NetBSD: fwohci_cardbus.c,v 1.36 2016/07/14 04:19:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.35 2012/08/04 03:55:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.36 2016/07/14 04:19:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,8 @@ fwohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	fwohci_init(&sc->sc_sc);
 
 	/* Map I/O registers */
-	if (Cardbus_mapreg_map(ct, PCI_OHCI_MAP_REGISTER,
-	      PCI_MAPREG_TYPE_MEM, 0,
-	      &sc->sc_sc.bst, &sc->sc_sc.bsh,
-	      NULL, &sc->sc_sc.bssize)) {
+	if (Cardbus_mapreg_map(ct, PCI_OHCI_MAP_REGISTER, PCI_MAPREG_TYPE_MEM,
+	    0, &sc->sc_sc.bst, &sc->sc_sc.bsh, NULL, &sc->sc_sc.bssize)) {
 		aprint_error_dev(self, "can't map OHCI register space\n");
 		return;
 	}
