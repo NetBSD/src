@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.42 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.43 2016/07/14 09:27:14 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -202,6 +202,7 @@ isic_pcmcia_attach(device_t parent, device_t self, void *aux)
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 	psc->sc_ih = NULL;
 
+	aprint_naive("\n");
 	/* Which card is it? */
 	cde = find_matching_card(pa);
 	if (cde == NULL) {
@@ -209,7 +210,7 @@ isic_pcmcia_attach(device_t parent, device_t self, void *aux)
 		    "attach failed, couldn't find matching card\n");
 		return;
 	}
-	printf("%s: %s\n", cde->name, device_xname(self));
+	aprint_normal_dev(self, "%s\n", cde->name);
 
 	/* Enable the card */
 	pcmcia_function_init(pa->pf, cfe);
