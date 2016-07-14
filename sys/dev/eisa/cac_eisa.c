@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.23 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.23 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.24 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,7 @@ static struct cac_eisa_type {
 };
 
 static int
-cac_eisa_match(device_t parent, cfdata_t match,
-    void *aux)
+cac_eisa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea;
 	int i;
@@ -148,7 +147,7 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    CAC_EISA_SLOT_OFFSET, CAC_EISA_IOSIZE, 0, &ioh)) {
-		printf("can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -174,22 +173,22 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 		irq = 15;
 		break;
 	default:
-		printf("controller on invalid IRQ\n");
+		aprint_error(": controller on invalid IRQ\n");
 		return;
 	}
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("can't map interrupt (%d)\n", irq);
+		aprint_error(": can't map interrupt (%d)\n", irq);
 		return;
 	}
 
 	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));
 	if ((sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    cac_intr, sc)) == NULL) {
-		printf("can't establish interrupt");
+		aprint_error(": can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
@@ -200,7 +199,7 @@ cac_eisa_attach(device_t parent, device_t self, void *aux)
 		if (strcmp(ea->ea_idstring, cac_eisa_type[i].ct_prodstr) == 0)
 			break;
 
-	printf(": Compaq %s\n", cac_eisa_type[i].ct_typestr);
+	aprint_normal(": Compaq %s\n", cac_eisa_type[i].ct_typestr);
 	memcpy(&sc->sc_cl, cac_eisa_type[i].ct_linkage, sizeof(sc->sc_cl));
 	cac_init(sc, intrstr, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.73 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.73 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.74 2016/07/14 10:19:06 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -273,7 +273,7 @@ i82586_attach(struct ie_softc *sc, const char *name, u_int8_t *etheraddr,
 	if_attach(ifp);
 	ether_ifattach(ifp, etheraddr);
 
-	printf(" address %s, type %s\n", ether_sprintf(etheraddr), name);
+	aprint_normal(" address %s, type %s\n", ether_sprintf(etheraddr),name);
 }
 
 
@@ -1716,9 +1716,7 @@ i82586_start_transceiver(struct ie_softc *sc)
 }
 
 void
-i82586_stop(
-    struct ifnet *ifp,
-    int disable)
+i82586_stop(struct ifnet *ifp, int disable)
 {
 	struct ie_softc *sc = ifp->if_softc;
 

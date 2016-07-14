@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_eisa.c,v 1.24 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.24 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_eisa.c,v 1.25 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot) +
 	    MLX_EISA_SLOT_OFFSET, MLX_EISA_IOSIZE, 0, &ioh)) {
-		printf("can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -155,12 +155,12 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 		irq = 15;
 		break;
 	default:
-		printf("controller on invalid IRQ\n");
+		aprint_error(": controller on invalid IRQ\n");
 		return;
 	}
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("can't map interrupt (%d)\n", irq);
+		aprint_error(": can't map interrupt (%d)\n", irq);
 		return;
 	}
 
@@ -169,10 +169,10 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 	    ((icfg & 0x08) != 0 ? IST_LEVEL : IST_EDGE),
 	    IPL_BIO, mlx_intr, mlx);
 	if (mlx->mlx_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error(": can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
@@ -191,7 +191,7 @@ mlx_eisa_attach(device_t parent, device_t self, void *aux)
 	mlx->mlx_reset = mlx_v1_reset;
 #endif
 
-	printf(": Mylex RAID\n");
+	aprint_normal(": Mylex RAID\n");
 	mlx_init(mlx, intrstr);
 }
 

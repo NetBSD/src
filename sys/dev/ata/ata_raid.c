@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.36 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.37 2016/07/14 10:19:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.36 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.37 2016/07/14 10:19:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,7 +99,8 @@ ataraidattach(int count)
 	 * the logical disks configured by ataraid.
 	 */
 	if (config_finalize_register(NULL, ata_raid_finalize) != 0)
-		printf("WARNING: unable to register ATA RAID finalizer\n");
+		aprint_normal("WARNING: "
+		    "unable to register ATA RAID finalizer\n");
 }
 
 /*

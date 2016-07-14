@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.44 2016/07/14 04:00:46 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.44 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -255,8 +255,8 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_ih == NULL) {
 		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 	aprint_error(": interrupting at %s\n", intrstr);

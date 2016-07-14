@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.26 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.27 2016/07/14 10:19:06 msaitoh Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.26 2016/07/11 11:31:50 msaitoh Exp $
+ * $Id: if_ntwoc_isa.c,v 1.27 2016/07/14 10:19:06 msaitoh Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.26 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.27 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,8 +569,9 @@ ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 
 	/* make sure we have 2 pages for each port */
 	if (pgs < 2 * sca->sc_numports) {
-		printf("%s: %d less than required pages of memory of %d\n",
-		    device_xname(sc->sc_dev), pgs, 2 * sca->sc_numports);
+		aprint_error_dev(self,
+		    "%d less than required pages of memory of %d\n",
+		    pgs, 2 * sca->sc_numports);
 		return;
 	}
 

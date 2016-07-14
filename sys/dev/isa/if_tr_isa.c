@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.25 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.26 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.25 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.26 2016/07/14 10:19:06 msaitoh Exp $");
 
 #undef TRISADEBUG
 
@@ -205,12 +205,12 @@ tr_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh)) {
-		printf("tr_isa_attach: IO space vanished\n");
+		aprint_error("tr_isa_attach: IO space vanished\n");
 		return;
 	}
 	if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,
 	    ia->ia_iomem[0].ir_size, 0, &sc->sc_sramh)) {
-		printf("tr_isa_attach: shared ram space vanished\n");
+		aprint_error("tr_isa_attach: shared ram space vanished\n");
 		return;
 	}
 	/* set ACA offset */

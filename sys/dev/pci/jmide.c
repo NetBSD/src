@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.20 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: jmide.c,v 1.21 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.20 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.21 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,11 +161,12 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	int ahci_used = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
 
+	aprint_naive("\n");
 	sc->sc_pciide.sc_wdcdev.sc_atac.atac_dev = self;
 
 	jp = jmide_lookup(pa->pa_id);
 	if (jp == NULL) {
-		printf("jmide_attach: WTF?\n");
+		aprint_error_dev(self, "jmide_attach: WTF?\n");
 		return;
 	}
 	sc->sc_npata = jp->jm_npata;
