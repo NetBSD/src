@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.333 2016/07/12 15:40:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334 2016/07/14 05:00:51 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.333 2016/07/12 15:40:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334 2016/07/14 05:00:51 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7857,7 +7857,7 @@ pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 int
 pic_ipi_shootdown(void *arg)
 {
-#if PMAP_NEED_TLB_SHOOTDOWN
+#if PMAP_TLB_NEED_SHOOTDOWN
 	pmap_tlb_shootdown_process();
 #endif
 	return 1;
