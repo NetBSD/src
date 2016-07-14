@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.14 2016/07/12 15:30:46 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.15 2016/07/14 04:51:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.14 2016/07/12 15:30:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.15 2016/07/14 04:51:47 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -775,7 +775,7 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		pmap_tlb_asid_check();
-		UVMHIST_LOG(maphist, " invalidating %#"PRIxVADDR" asid %#x", 
+		UVMHIST_LOG(maphist, " invalidating %#"PRIxVADDR" asid %#x",
 		    va, pai->pai_asid, 0, 0);
 		tlb_invalidate_addr(va, pai->pai_asid);
 		pmap_tlb_asid_check();
