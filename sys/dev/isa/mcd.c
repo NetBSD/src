@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.115 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.115 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,9 +262,11 @@ mcdattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	struct mcd_mbox mbx;
 
+	aprint_naive("\n");
+
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, MCD_NPORT, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
@@ -277,7 +279,7 @@ mcdattach(device_t parent, device_t self, void *aux)
 	sc->debug = 0;
 
 	if (!mcd_find(iot, ioh, sc)) {
-		printf(": mcd_find failed\n");
+		aprint_error(": mcd_find failed\n");
 		return;
 	}
 
@@ -290,7 +292,7 @@ mcdattach(device_t parent, device_t self, void *aux)
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), &mcddkdriver);
 	disk_attach(&sc->sc_dk);
 
-	printf(": model %s\n", sc->type != 0 ? sc->type : "unknown");
+	aprint_normal(": model %s\n", sc->type != 0 ? sc->type : "unknown");
 
 	(void) mcd_setlock(sc, MCD_LK_UNLOCK);
 
@@ -410,7 +412,7 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
 	struct mcd_softc *sc = device_lookup_private(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
-	
+
 	MCD_TRACE("close: partition=%d\n", part);
 
 	mutex_enter(&sc->sc_lock);
@@ -575,7 +577,7 @@ mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
-	
+
 	MCD_TRACE("ioctl: cmd=0x%lx\n", cmd);
 
 	if ((sc->flags & MCDF_LOADED) == 0)
@@ -1005,7 +1007,8 @@ mcd_getresult(struct mcd_softc *sc, struct mcd_result *res)
 		if (sc->debug)
 			printf(" timeout\n");
 		else if (!sc->probe)
-			printf("%s: timeout in getresult\n", device_xname(sc->sc_dev));
+			printf("%s: timeout in getresult\n",
+			    device_xname(sc->sc_dev));
 		return EIO;
 	}
 	if (sc->debug)
@@ -1021,7 +1024,8 @@ mcd_getresult(struct mcd_softc *sc, struct mcd_result *res)
 			if (sc->debug)
 				printf(" timeout\n");
 			else
-				printf("%s: timeout in getresult\n", device_xname(sc->sc_dev));
+				printf("%s: timeout in getresult\n",
+				    device_xname(sc->sc_dev));
 			return EIO;
 		}
 		if (sc->debug)
@@ -1088,7 +1092,8 @@ mcd_send(struct mcd_softc *sc, struct mcd_mbox *mbx, int diskin)
 	for (retry = MCD_RETRIES; retry; retry--) {
 		bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->cmd.opcode);
 		for (i = 0; i < mbx->cmd.length; i++)
-			bus_space_write_1(iot, ioh, MCD_COMMAND, mbx->cmd.data.raw.data[i]);
+			bus_space_write_1(iot, ioh, MCD_COMMAND,
+			    mbx->cmd.data.raw.data[i]);
 		if ((error = mcd_getresult(sc, &mbx->res)) == 0)
 			break;
 		if (error == EINVAL)
@@ -1207,7 +1212,7 @@ mcdintr(void *arg)
 		sc->lastmode = mbx->mode;
 
 	firstblock:
-		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n", 
+		MCD_TRACE("doread: read blkno=%d for bp=0x%p\n",
 		    (int) mbx->blkno, bp);
 
 		/* Build parameter block. */
@@ -1459,7 +1464,8 @@ mcd_read_toc(struct mcd_softc *sc)
 }
 
 int
-mcd_toc_entries(struct mcd_softc *sc, struct ioc_read_toc_entry *te, struct cd_toc_entry *entries, int *count)
+mcd_toc_entries(struct mcd_softc *sc, struct ioc_read_toc_entry *te,
+    struct cd_toc_entry *entries, int *count)
 {
 	int len = te->data_len;
 	struct ioc_toc_header header;
@@ -1568,7 +1574,8 @@ mcd_getqchan(struct mcd_softc *sc, union mcd_qchninfo *q, int qchn)
 }
 
 int
-mcd_read_subchannel(struct mcd_softc *sc, struct ioc_read_subchannel *ch, struct cd_sub_channel_info *info)
+mcd_read_subchannel(struct mcd_softc *sc, struct ioc_read_subchannel *ch,
+    struct cd_sub_channel_info *info)
 {
 	int len = ch->data_len;
 	union mcd_qchninfo q;

@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.11 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.12 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.11 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.12 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ njs_pci_attach(device_t parent, device_t self, void *aux)
 		    str_at, str_intr);
 		return;
 	}
-	printf("%s: interrupting%s%s\n", device_xname(self), str_at, str_intr);
+	aprint_normal_dev(self, "interrupting%s%s\n", str_at, str_intr);
 
 	/* attach */
 	njsc32_attach(sc);

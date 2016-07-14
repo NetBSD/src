@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.52 2016/07/14 10:19:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.51 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.52 2016/07/14 10:19:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	iobase = (pos2 & IO_IS_ALT) ? ESDIC_IOALT : ESDIC_IOPRM;
 	drq = (pos2 & DRQ_MASK) >> 2;
 
-	printf(" slot %d irq %d drq %d: %s\n", ma->ma_slot+1,
+	aprint_naive("\n");
+	aprint_normal(": slot %d irq %d drq %d: %s\n", ma->ma_slot+1,
 		irq, drq, typestr);
 
 #ifdef DIAGNOSTIC
@@ -215,8 +216,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	printf("%s: Fairness %s, Release %s, ",
-		device_xname(sc->sc_dev),
+	aprint_normal_dev(self, "Fairness %s, Release %s, ",
 		(pos2 & FAIRNESS_ENABLE) ? "On" : "Off",
 		(pos4 & RELEASE_1) ? "6ms"
 				: ((pos4 & RELEASE_2) ? "3ms" : "Immediate")
@@ -224,10 +224,10 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	if ((pos4 & PACING_CTRL_DISABLE) == 0) {
 		static const char * const pacint[] =
 			{ "disabled", "16ms", "24ms", "31ms"};
-		printf("DMA burst pacing interval %s\n",
+		aprint_normal("DMA burst pacing interval %s\n",
 			pacint[(pos3 & PACING_INT_MASK) >> 4]);
 	} else
-		printf("DMA pacing control disabled\n");
+		aprint_normal("DMA pacing control disabled\n");
 
 	sc->sc_iot = ma->ma_iot;
 
@@ -271,8 +271,8 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	/* Do a reset to ensure sane state after warm boot. */
 	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
 		/* hard reset */
-		printf("%s: controller busy, performing hardware reset ...\n",
-			device_xname(sc->sc_dev));
+		aprint_normal_dev(self, "controller busy, "
+		    "performing hardware reset ...\n");
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
 			BCR_INT_ENABLE|BCR_RESET);
 	} else {
@@ -323,7 +323,7 @@ edc_mca_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (devno == sc->sc_maxdevs) {
-		printf("%s: disabling controller (no drives attached)\n",
+		aprint_error("%s: disabling controller (no drives attached)\n",
 			device_xname(sc->sc_dev));
 		mca_intr_disestablish(ma->ma_mc, sc->sc_ih);
 		return;
