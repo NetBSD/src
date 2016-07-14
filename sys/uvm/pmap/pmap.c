@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.16 2016/07/11 19:16:03 maya Exp $	*/
+/*	$NetBSD: pmap.c,v 1.17 2016/07/14 04:51:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.16 2016/07/11 19:16:03 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.17 2016/07/14 04:51:47 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -491,7 +491,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 		 * amount of space left.
 		 */
 #define VM_PHYSMEM_SPACE(s)	((s)->avail_end - (s)->avail_start)
-		if (maybe_seg == NULL 
+		if (maybe_seg == NULL
 		    || VM_PHYSMEM_SPACE(seg) < VM_PHYSMEM_SPACE(maybe_seg)) {
 			maybe_seg = seg;
 			maybe_bank = bank;
