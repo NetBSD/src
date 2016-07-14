@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.23 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.24 2016/07/14 04:00:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.23 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.24 2016/07/14 04:00:45 msaitoh Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -89,8 +89,7 @@ uhci_cardbus_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static void
-uhci_cardbus_attach(device_t parent, device_t self,
-    void *aux)
+uhci_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhci_cardbus_softc *sc = device_private(self);
 	struct cardbus_attach_args *ca = (struct cardbus_attach_args *)aux;
@@ -111,7 +110,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map i/o space\n", devname);
+		aprint_error("%s: can't map i/o space\n", devname);
 		return;
 	}
 
@@ -132,7 +131,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 	/* Map and establish the interrupt. */
 	sc->sc_ih = Cardbus_intr_establish(ct, IPL_USB, uhci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		aprint_error("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
 
@@ -161,7 +160,7 @@ uhci_cardbus_attach(device_t parent, device_t self,
 
 	int err = uhci_init(&sc->sc);
 	if (err) {
-		printf("%s: init failed, error=%d\n", devname, err);
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);

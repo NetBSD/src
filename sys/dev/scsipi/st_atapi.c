@@ -1,4 +1,4 @@
-/*	$NetBSD: st_atapi.c,v 1.30 2015/08/24 23:13:15 pooka Exp $ */
+/*	$NetBSD: st_atapi.c,v 1.31 2016/07/14 04:00:46 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.30 2015/08/24 23:13:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_atapi.c,v 1.31 2016/07/14 04:00:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -94,7 +94,8 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 		    sizeof(identify), XS_CTL_DISCOVERY,
 		    ST_RETRIES, ST_CTL_TIME);
 		if (error) {
-			printf("onstream get identify: error %d\n", error);
+			aprint_error_dev(self,
+			    "onstream get identify: error %d\n", error);
 			return;
 		}
 		strncpy(identify.ident, "NBSD", 4);
@@ -102,7 +103,8 @@ st_atapibus_attach(device_t parent, device_t self, void *aux)
 		    &identify.header, sizeof(identify),
 		    XS_CTL_DISCOVERY, ST_RETRIES, ST_CTL_TIME);
 		if (error) {
-			printf("onstream set identify: error %d\n", error);
+			aprint_error_dev(self,
+			    "onstream set identify: error %d\n", error);
 			return;
 		}
 	}
