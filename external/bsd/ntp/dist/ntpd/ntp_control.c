@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.8.4.2.2.2 2016/05/11 10:02:39 martin Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.8.4.2.2.3 2016/07/14 18:27:00 martin Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -1653,6 +1653,7 @@ ctl_putuint(
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
 }
 
+#ifdef AUTOKEY
 /*
  * ctl_putcal - write a decoded calendar data into the response
  */
@@ -1679,6 +1680,7 @@ ctl_putcal(
 
 	return;
 }
+#endif
 
 /*
  * ctl_putfs - write a decoded filestamp into the response
@@ -3662,7 +3664,9 @@ static u_int32 derive_nonce(
 		last_salt_update = current_time;
 	}
 
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(NID_md5));
+	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(NID_md5))) {
+		msyslog(LOG_NOTICE, "Error in EVP_DigestInit");
+	}
 	EVP_DigestUpdate(&ctx, salt, sizeof(salt));
 	EVP_DigestUpdate(&ctx, &ts_i, sizeof(ts_i));
 	EVP_DigestUpdate(&ctx, &ts_f, sizeof(ts_f));

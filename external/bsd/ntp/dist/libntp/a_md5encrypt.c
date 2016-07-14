@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.1.1.3.4.1.2.1 2016/05/11 10:02:38 martin Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.3.4.1.2.2 2016/07/14 18:27:00 martin Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -36,15 +36,11 @@ MD5authencrypt(
 	 * was creaded.
 	 */
 	INIT_SSL();
-#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
 	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
 		msyslog(LOG_ERR,
 		    "MAC encrypt: digest init failed");
 		return (0);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-#endif
 	EVP_DigestUpdate(&ctx, key, cache_secretsize);
 	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
 	EVP_DigestFinal(&ctx, digest, &len);
@@ -77,15 +73,11 @@ MD5authdecrypt(
 	 * was created.
 	 */
 	INIT_SSL();
-#if defined(OPENSSL) && OPENSSL_VERSION_NUMBER >= 0x0090700fL
 	if (!EVP_DigestInit(&ctx, EVP_get_digestbynid(type))) {
 		msyslog(LOG_ERR,
 		    "MAC decrypt: digest init failed");
 		return (0);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
-#endif
 	EVP_DigestUpdate(&ctx, key, cache_secretsize);
 	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
 	EVP_DigestFinal(&ctx, digest, &len);
@@ -122,14 +114,12 @@ addr2refid(sockaddr_u *addr)
 	/* MD5 is not used as a crypto hash here. */
 	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 #endif
-	if (!EVP_DigestInit_ex(&ctx, EVP_md5(), NULL)) {
+#endif
+	if (!EVP_DigestInit(&ctx, EVP_md5())) {
 		msyslog(LOG_ERR,
 		    "MD5 init failed");
 		exit(1);
 	}
-#else
-	EVP_DigestInit(&ctx, EVP_md5());
-#endif
 
 	EVP_DigestUpdate(&ctx, (u_char *)PSOCK_ADDR6(addr),
 	    sizeof(struct in6_addr));
