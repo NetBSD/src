@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strcmp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: strcmp.3,v 1.13 2006/10/16 08:48:45 wiz Exp $
+.\"	$NetBSD: strcmp.3,v 1.14 2016/07/14 17:09:03 abhinav Exp $
 .\"
 .Dd June 4, 1993
 .Dt STRCMP 3
@@ -62,7 +62,7 @@ The
 .Fn strcmp
 and
 .Fn strncmp
-return an integer greater than, equal to, or less than 0, according
+functions return an integer greater than, equal to, or less than 0, according
 to whether the string
 .Fa s1
 is greater than, equal to, or less than the string
@@ -74,7 +74,7 @@ is greater than
 .Pp
 The
 .Fn strncmp
-compares not more than
+function compares not more than
 .Fa len
 characters.
 .Sh SEE ALSO
@@ -94,6 +94,6 @@ conform to
 .Sh NOTES
 If
 .Fa len
-is zero
+is 0,
 .Fn strncmp
-returns always 0.
+always returns 0.
