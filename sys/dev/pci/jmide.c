@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.19 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: jmide.c,v 1.20 2016/07/14 04:19:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.19 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.20 2016/07/14 04:19:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,8 @@ static int  jmide_match(device_t, cfdata_t, void *);
 static void jmide_attach(device_t, device_t, void *);
 static int  jmide_intr(void *);
 
-static void jmpata_chip_map(struct pciide_softc*, const struct pci_attach_args*);
+static void jmpata_chip_map(struct pciide_softc*,
+    const struct pci_attach_args*);
 static void jmpata_setup_channel(struct ata_channel*);
 
 static int  jmahci_print(void *, const char *);
@@ -185,7 +186,8 @@ jmide_attach(device_t parent, device_t self, void *aux)
                 aprint_error("%s: couldn't map interrupt\n", JM_NAME(sc));
                 return;
         }
-        intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
+        intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	    sizeof(intrbuf));
         sc->sc_pciide.sc_pci_ih = pci_intr_establish(pa->pa_pc, intrhandle,
 	    IPL_BIO, jmide_intr, sc);
         if (sc->sc_pciide.sc_pci_ih == NULL) {
@@ -286,7 +288,6 @@ jmide_attach(device_t parent, device_t self, void *aux)
 	pp->ide_name = NULL;
 	pp->chip_map = jmpata_chip_map;
 	pciide_common_attach(&sc->sc_pciide, pa, pp);
-	
 }
 
 static int
