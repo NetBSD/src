@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.174 2016/07/13 03:19:29 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.175 2016/07/14 18:18:16 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.174 2016/07/13 03:19:29 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.175 2016/07/14 18:18:16 christos Exp $");
 
 #include "arp.h"
 
@@ -1921,6 +1921,82 @@ in_lltable_dump_entry(struct lltable *llt, struct llentry *lle,
 
 #endif /* NARP > 0 */
 
+static int
+in_multicast_sysctl(SYSCTLFN_ARGS)
+{
+	struct ifnet *ifp;
+	struct ifaddr *ifa;
+	struct in_ifaddr *ifa4;
+	struct in_multi *inm;
+	uint32_t tmp;
+	int error;
+	size_t written;
+	struct psref psref;
+	int bound;
+
+	if (namelen != 1)
+		return EINVAL;
+
+	bound = curlwp_bind();
+	ifp = if_get_byindex(name[0], &psref);
+	if (ifp == NULL) {
+		curlwp_bindx(bound);
+		return ENODEV;
+	}
+
+	if (oldp == NULL) {
+		*oldlenp = 0;
+		IFADDR_FOREACH(ifa, ifp) {
+			if (ifa->ifa_addr->sa_family != AF_INET)
+				continue;
+			ifa4 = (void *)ifa;
+			LIST_FOREACH(inm, &ifa4->ia_multiaddrs, inm_list) {
+				*oldlenp += 2 * sizeof(struct in_addr) +
+				    sizeof(uint32_t);
+			}
+		}
+		if_put(ifp, &psref);
+		curlwp_bindx(bound);
+		return 0;
+	}
+
+	error = 0;
+	written = 0;
+	IFADDR_FOREACH(ifa, ifp) {
+		if (ifa->ifa_addr->sa_family != AF_INET)
+			continue;
+		ifa4 = (void *)ifa;
+		LIST_FOREACH(inm, &ifa4->ia_multiaddrs, inm_list) {
+			if (written + 2 * sizeof(struct in_addr) +
+			    sizeof(uint32_t) > *oldlenp)
+				goto done;
+			error = sysctl_copyout(l, &ifa4->ia_addr.sin_addr,
+			    oldp, sizeof(struct in_addr));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(struct in_addr);
+			written += sizeof(struct in_addr);
+			error = sysctl_copyout(l, &inm->inm_addr,
+			    oldp, sizeof(struct in_addr));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(struct in_addr);
+			written += sizeof(struct in_addr);
+			tmp = inm->inm_refcount;
+			error = sysctl_copyout(l, &tmp, oldp, sizeof(tmp));
+			if (error)
+				goto done;
+			oldp = (char *)oldp + sizeof(tmp);
+			written += sizeof(tmp);
+		}
+	}
+done:
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
+	*oldlenp = written;
+	return error;
+}
+
 static void
 in_sysctl_init(struct sysctllog **clog)
 {
@@ -1930,6 +2006,12 @@ in_sysctl_init(struct sysctllog **clog)
 		       SYSCTL_DESCR("PF_INET related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "multicast",
+		       SYSCTL_DESCR("Multicast information"),
+		       in_multicast_sysctl, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "ip",
