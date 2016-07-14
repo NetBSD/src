@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.99 2016/07/14 18:38:51 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.100 2016/07/14 18:47:11 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5166,4 +5166,9 @@ external/bsd/ntp/scripts/mkver                  up to 1.11
 
 	Update ntp to 4.2.8p8.
 	[snj, ticket #1204]
+
+sys/ufs/lfs/lfs_vnops.c				1.304
+
+	Fix a deadlock
+	[dholland, ticket #1205]
 
