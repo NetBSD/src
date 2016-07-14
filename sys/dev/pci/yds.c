@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.56 2014/08/17 08:54:44 tsutsui Exp $	*/
+/*	$NetBSD: yds.c,v 1.57 2016/07/14 04:19:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.56 2014/08/17 08:54:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.57 2016/07/14 04:19:27 msaitoh Exp $");
 
 #include "mpu.h"
 
@@ -918,7 +918,8 @@ detected:
 
 		r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
 		if (r != 0) {
-			aprint_error_dev(self, "can't attach codec (error 0x%X)\n", r);
+			aprint_error_dev(self,
+			    "can't attach codec (error 0x%X)\n", r);
 			mutex_destroy(&sc->sc_lock);
 			mutex_destroy(&sc->sc_intr_lock);
 			return;
