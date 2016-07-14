@@ -1,4 +1,4 @@
-/*	$NetBSD: perftest.c,v 1.1 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: perftest.c,v 1.2 2016/07/14 10:02:43 nonaka Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: perftest.c,v 1.2 2016/07/14 10:02:43 nonaka Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/perftest.c 257531 2013-11-01 22:05:29Z jimharris $");
 #endif
