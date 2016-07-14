@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.143 2015/11/11 17:54:17 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.144 2016/07/14 05:00:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #define PMAP_TLB_MAX			1
 #define PMAP_TLB_HWPAGEWALKER		1
 #if PMAP_TLB_MAX > 1
-#define PMAP_NEED_TLB_SHOOTDOWN		1
+#define PMAP_TLB_NEED_SHOOTDOWN		1
 #endif
 #define PMAP_TLB_FLUSH_ASID_ON_RESET	(arm_has_tlbiasid_p)
 #define PMAP_TLB_NUM_PIDS		256
