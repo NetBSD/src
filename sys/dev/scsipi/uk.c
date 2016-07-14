@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.62 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: uk.c,v 1.63 2016/07/14 04:00:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.62 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.63 2016/07/14 04:00:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ ukattach(device_t parent, device_t self, void *aux)
 	uk->sc_periph = periph;
 	periph->periph_dev = uk->sc_dev;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 }
 
 static int

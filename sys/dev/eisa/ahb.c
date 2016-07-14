@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.63 2016/07/11 11:31:50 msaitoh Exp $	*/
+/*	$NetBSD: ahb.c,v 1.64 2016/07/14 04:00:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.63 2016/07/11 11:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.64 2016/07/14 04:00:45 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -148,8 +148,7 @@ CFATTACH_DECL_NEW(ahb, sizeof(struct ahb_softc),
  * the actual probe routine to check it out.
  */
 static int
-ahbmatch(device_t parent, cfdata_t match,
-    void *aux)
+ahbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct eisa_attach_args *ea = aux;
 	bus_space_tag_t iot = ea->ea_iot;
@@ -205,7 +204,8 @@ ahbattach(device_t parent, device_t self, void *aux)
 		model = EISA_PRODUCT_ADP0400;
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	aprint_naive("\n");
+	aprint_normal(": %s\n", model);
 
 	if (bus_space_map(iot,
 	    EISA_SLOT_ADDR(ea->ea_slot) + AHB_EISA_SLOT_OFFSET,
@@ -574,7 +574,8 @@ ahb_done(struct ahb_softc *sc, struct ahb_ecb *ecb)
 				break;
 			default:	/* Other scsi protocol messes */
 				printf("%s: host_stat %x\n",
-				    device_xname(sc->sc_dev), ecb->ecb_status.host_stat);
+				    device_xname(sc->sc_dev),
+				    ecb->ecb_status.host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else if (ecb->ecb_status.target_stat != SCSI_OK) {
@@ -590,7 +591,8 @@ ahb_done(struct ahb_softc *sc, struct ahb_ecb *ecb)
 				break;
 			default:
 				printf("%s: target_stat %x\n",
-				    device_xname(sc->sc_dev), ecb->ecb_status.target_stat);
+				    device_xname(sc->sc_dev),
+				    ecb->ecb_status.target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 			}
 		} else
@@ -706,8 +708,8 @@ ahb_init(struct ahb_softc *sc)
 	 */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, ECBSIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate ecbs, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate ecbs, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
