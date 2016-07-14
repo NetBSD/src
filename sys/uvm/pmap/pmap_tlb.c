@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.15 2016/07/14 04:51:47 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.16 2016/07/14 15:49:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.15 2016/07/14 04:51:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.16 2016/07/14 15:49:43 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -628,7 +628,7 @@ bool
 pmap_tlb_shootdown_bystanders(pmap_t pm)
 {
 	/*
-	 * We don't need to deal our own TLB.
+	 * We don't need to deal with our own TLB.
 	 */
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
@@ -1030,7 +1030,7 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 #endif
 #else
 	/*
-	 * Handle the case of an UP kernel which only has, at most, one ASID.
+	 * Handle the case of an UP kernel which only has, at most, one TLB.
 	 * If the pmap has an ASID allocated, free it.
 	 */
 	struct pmap_tlb_info * const ti = &pmap_tlb0_info;
