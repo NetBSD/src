@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.18 2015/08/20 14:40:18 christos Exp $ */
+/* $NetBSD: gpiosim.c,v 1.19 2016/07/14 04:00:45 msaitoh Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             CTL_HW, CTL_CREATE, CTL_EOL);
 
         if (node == NULL) {
-		printf(": can't create sysctl node\n");
+		aprint_error(": can't create sysctl node\n");
                 return;
 	}
 
@@ -142,7 +142,7 @@ gpiosim_attach(device_t parent, device_t self, void *aux)
             gpiosim_sysctl, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
-	printf(": simulating %d pins\n", GPIOSIM_NPINS);
+	aprint_normal(": simulating %d pins\n", GPIOSIM_NPINS);
 	sc->sc_gdev = config_found_ia(self, "gpiobus", &gba, gpiobus_print);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.65 2016/07/11 11:31:51 msaitoh Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.66 2016/07/14 04:00:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.65 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.66 2016/07/14 04:00:45 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,25 +166,24 @@ ed_mca_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&ed->sc_q_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (ed_get_params(ed, &drv_flags)) {
-		printf(": IDENTIFY failed, no disk found\n");
+		aprint_error(": IDENTIFY failed, no disk found\n");
 		return;
 	}
 
 	format_bytes(pbuf, sizeof(pbuf),
 		(u_int64_t) ed->sc_capacity * DEV_BSIZE);
-	printf(": %s, %u cyl, %u head, %u sec, 512 bytes/sect x %u sectors\n",
-		pbuf,
-		ed->cyl, ed->heads, ed->sectors,
-		ed->sc_capacity);
+	aprint_normal(": %s, %u cyl, %u head, %u sec, 512 bytes/sect x "
+	    "%u sectors\n", pbuf,
+	    ed->cyl, ed->heads, ed->sectors,
+	    ed->sc_capacity);
 
-	printf("%s: %u spares/cyl, %s, %s, %s, %s, %s\n",
-		device_xname(ed->sc_dev), ed->spares,
-		(drv_flags & (1 << 0)) ? "NoRetries" : "Retries",
-		(drv_flags & (1 << 1)) ? "Removable" : "Fixed",
-		(drv_flags & (1 << 2)) ? "SkewedFormat" : "NoSkew",
-		(drv_flags & (1 << 3)) ? "ZeroDefect" : "Defects",
-		(drv_flags & (1 << 4)) ? "InvalidSecondary" : "SecondaryOK"
-		);
+	aprint_normal("%s: %u spares/cyl, %s, %s, %s, %s, %s\n",
+	    device_xname(ed->sc_dev), ed->spares,
+	    (drv_flags & (1 << 0)) ? "NoRetries" : "Retries",
+	    (drv_flags & (1 << 1)) ? "Removable" : "Fixed",
+	    (drv_flags & (1 << 2)) ? "SkewedFormat" : "NoSkew",
+	    (drv_flags & (1 << 3)) ? "ZeroDefect" : "Defects",
+	    (drv_flags & (1 << 4)) ? "InvalidSecondary" : "SecondaryOK");
 
 	/*
 	 * Initialize and attach the disk structure.
