@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.19 2014/11/17 18:41:29 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.20 2016/07/15 15:23:43 riastradh Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ The
 functions provide the following security properties against three
 different classes of attackers, assuming enough entropy is provided by
 the operating system:
-.Bl -bullet -offset abcd
+.Bl -enum -offset abcd
 .It
 An attacker who has seen some outputs of any of the
 .Nm
@@ -131,6 +131,12 @@ One
 means the result of any single request to an
 .Nm
 function, no matter how short it is.
+.Pp
+The second property is sometimes called
+.Sq forward secrecy ,
+.Sq backtracking resistance ,
+or
+.Sq key erasure after each output .
 .Sh IMPLEMENTATION NOTES
 The
 .Nm
