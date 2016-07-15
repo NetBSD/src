@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.20 2016/07/15 15:23:43 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.21 2016/07/15 21:19:19 wiz Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -165,7 +165,7 @@ function
 computes the 64-byte quantity
 .Fa x
 =
-.Pf ChaCha20_ Fa s Ns (0),
+.Pf ChaCha20_ Fa s Ns Pq 0 ,
 .It
 splits
 .Fa x
@@ -196,9 +196,9 @@ as output directly, or, for longer
 requests, uses
 .Fa k
 as a ChaCha20 key and yields the concatenation
-.Pf ChaCha20_ Fa k Ns (0)
+.Pf ChaCha20_ Fa k Ns Pq 0
 ||
-.Pf ChaCha20_ Fa k Ns (1)
+.Pf ChaCha20_ Fa k Ns Pq 1
 || ... as output.
 .Fn arc4random_uniform
 repeats
