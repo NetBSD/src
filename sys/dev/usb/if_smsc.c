@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.12 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.13 2016/07/15 08:50:59 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -161,9 +161,12 @@ int		 smsc_detach(device_t, int);
 int		 smsc_activate(device_t, enum devact);
 
 int		 smsc_init(struct ifnet *);
+int		 smsc_init_locked(struct ifnet *);
 void		 smsc_start(struct ifnet *);
+void		 smsc_start_locked(struct ifnet *);
 int		 smsc_ioctl(struct ifnet *, u_long, void *);
 void		 smsc_stop(struct ifnet *, int);
+void		 smsc_stop_locked(struct ifnet *, int);
 
 void		 smsc_reset(struct smsc_softc *);
 struct mbuf	*smsc_newbuf(void);
@@ -179,7 +182,9 @@ void		 smsc_lock_mii(struct smsc_softc *);
 void		 smsc_unlock_mii(struct smsc_softc *);
 
 int		 smsc_tx_list_init(struct smsc_softc *);
+void		 smsc_tx_list_free(struct smsc_softc *);
 int		 smsc_rx_list_init(struct smsc_softc *);
+void		 smsc_rx_list_free(struct smsc_softc *);
 int		 smsc_encap(struct smsc_softc *, struct mbuf *, int);
 void		 smsc_rxeof(struct usbd_xfer *, void *, usbd_status);
 void		 smsc_txeof(struct usbd_xfer *, void *, usbd_status);
@@ -543,19 +548,27 @@ smsc_reset(struct smsc_softc *sc)
 int
 smsc_init(struct ifnet *ifp)
 {
-	struct smsc_softc	*sc = ifp->if_softc;
-	struct smsc_chain	*c;
-	usbd_status		 err;
-	int			 s, i;
+	struct smsc_softc *sc = ifp->if_softc;
+
+	mutex_enter(&sc->sc_lock);
+	int ret = smsc_init_locked(ifp);
+	mutex_exit(&sc->sc_lock);
+
+	return ret;
+}
+
+
+int
+smsc_init_locked(struct ifnet *ifp)
+{
+	struct smsc_softc * const sc = ifp->if_softc;
+	usbd_status err;
 
 	if (sc->sc_dying)
 		return EIO;
 
-	s = splnet();
-
 	/* Cancel pending I/O */
-	if (ifp->if_flags & IFF_RUNNING)
-		smsc_stop(ifp, 1);
+	smsc_stop_locked(ifp, 1);
 
 	/* Reset the ethernet interface. */
 	smsc_reset(sc);
@@ -572,8 +585,7 @@ smsc_init(struct ifnet *ifp)
 	if (err) {
 		printf("%s: open rx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-		splx(s);
-		return EIO;
+		goto fail;
 	}
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[SMSC_ENDPT_TX],
@@ -581,27 +593,24 @@ smsc_init(struct ifnet *ifp)
 	if (err) {
 		printf("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->sc_dev), usbd_errstr(err));
-		splx(s);
-		return EIO;
+		goto fail1;
 	}
 
 	/* Init RX ring. */
 	if (smsc_rx_list_init(sc)) {
 		aprint_error_dev(sc->sc_dev, "rx list init failed\n");
-		splx(s);
-		return EIO;
+		goto fail2;
 	}
 
 	/* Init TX ring. */
 	if (smsc_tx_list_init(sc)) {
 		aprint_error_dev(sc->sc_dev, "tx list init failed\n");
-		splx(s);
-		return EIO;
+		goto fail3;
 	}
 
 	/* Start up the receive pipe. */
-	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.rx_chain[i];
+	for (size_t i = 0; i < SMSC_RX_LIST_CNT; i++) {
+		struct smsc_chain *c = &sc->sc_cdata.rx_chain[i];
 		usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, sc->sc_bufsz,
 		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, smsc_rxeof);
 		usbd_transfer(c->sc_xfer);
@@ -611,18 +620,38 @@ smsc_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_reset(&sc->sc_stat_ch, hz, smsc_tick, sc);
 
 	return 0;
+
+fail3:
+	smsc_tx_list_free(sc);
+fail2:
+	smsc_rx_list_free(sc);
+
+	usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_TX]);
+fail1:
+	usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_RX]);
+fail:
+	return EIO;
 }
 
 void
 smsc_start(struct ifnet *ifp)
 {
-	struct smsc_softc	*sc = ifp->if_softc;
-	struct mbuf		*m_head = NULL;
+	struct smsc_softc * const sc = ifp->if_softc;
+	KASSERT(ifp->if_extflags & IFEF_START_MPSAFE);
+
+	mutex_enter(&sc->sc_txlock);
+	smsc_start_locked(ifp);
+	mutex_exit(&sc->sc_txlock);
+}
+
+void
+smsc_start_locked(struct ifnet *ifp)
+{
+	struct smsc_softc * const sc = ifp->if_softc;
+	struct mbuf *m_head = NULL;
 
 	/* Don't send anything if there is no link or controller is busy. */
 	if ((sc->sc_flags & SMSC_FLAG_LINK) == 0) {
@@ -637,7 +666,6 @@ smsc_start(struct ifnet *ifp)
 		return;
 
 	if (smsc_encap(sc, m_head, 0)) {
-		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
 	IFQ_DEQUEUE(&ifp->if_snd, m_head);
@@ -669,15 +697,20 @@ smsc_tick(void *xsc)
 void
 smsc_stop(struct ifnet *ifp, int disable)
 {
-	usbd_status		err;
-	struct smsc_softc	*sc = ifp->if_softc;
-	int			i;
+	struct smsc_softc * const sc = ifp->if_softc;
 
-	smsc_reset(sc);
+	mutex_enter(&sc->sc_lock);
+	smsc_stop_locked(ifp, disable);
+	mutex_exit(&sc->sc_lock);
+}
 
-	ifp = &sc->sc_ec.ec_if;
-	ifp->if_timer = 0;
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+void
+smsc_stop_locked(struct ifnet *ifp, int disable)
+{
+	struct smsc_softc * const sc = ifp->if_softc;
+	usbd_status err;
+
+//	smsc_reset(sc);
 
 	callout_stop(&sc->sc_stat_ch);
 
@@ -706,29 +739,10 @@ smsc_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	/* Free RX resources. */
-	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
-		if (sc->sc_cdata.rx_chain[i].sc_mbuf != NULL) {
-			m_freem(sc->sc_cdata.rx_chain[i].sc_mbuf);
-			sc->sc_cdata.rx_chain[i].sc_mbuf = NULL;
-		}
-		if (sc->sc_cdata.rx_chain[i].sc_xfer != NULL) {
-			usbd_destroy_xfer(sc->sc_cdata.rx_chain[i].sc_xfer);
-			sc->sc_cdata.rx_chain[i].sc_xfer = NULL;
-		}
-	}
+	smsc_rx_list_free(sc);
 
-	/* Free TX resources. */
-	for (i = 0; i < SMSC_TX_LIST_CNT; i++) {
-		if (sc->sc_cdata.tx_chain[i].sc_mbuf != NULL) {
-			m_freem(sc->sc_cdata.tx_chain[i].sc_mbuf);
-			sc->sc_cdata.tx_chain[i].sc_mbuf = NULL;
-		}
-		if (sc->sc_cdata.tx_chain[i].sc_xfer != NULL) {
-			usbd_destroy_xfer(sc->sc_cdata.tx_chain[i].sc_xfer);
-			sc->sc_cdata.tx_chain[i].sc_xfer = NULL;
-		}
-	}
+	smsc_tx_list_free(sc);
+
 	/* Close pipes */
 	if (sc->sc_ep[SMSC_ENDPT_RX] != NULL) {
 		err = usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_RX]);
@@ -755,6 +769,13 @@ smsc_stop(struct ifnet *ifp, int disable)
 			    device_xname(sc->sc_dev), usbd_errstr(err));
 		}
 		sc->sc_ep[SMSC_ENDPT_INTR] = NULL;
+	}
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	if (disable) {
+		/* drain */
 	}
 }
 
@@ -787,7 +808,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	usbd_delay_ms(sc->sc_udev, 40);
 
 	/* Set the mac address */
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	const char *eaddr = CLLADDR(ifp->if_sadl);
 	if ((err = smsc_setmacaddress(sc, eaddr)) != 0) {
 		smsc_warn_printf(sc, "failed to set the MAC address\n");
@@ -906,68 +927,65 @@ init_failed:
 	return err;
 }
 
+static int
+smsc_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct smsc_softc *sc = ifp->if_softc;
+	int rc = 0;
+
+	mutex_enter(&sc->sc_lock);
+
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		rc = ENETRESET;
+		goto out;
+	}
+
+	if ((change & IFF_PROMISC) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			sc->sc_mac_csr |= SMSC_MAC_CSR_PRMS;
+			smsc_write_reg(sc, SMSC_MAC_CSR, sc->sc_mac_csr);
+		} else if (!(ifp->if_flags & IFF_PROMISC)) {
+			sc->sc_mac_csr &= ~SMSC_MAC_CSR_PRMS;
+			smsc_write_reg(sc, SMSC_MAC_CSR, sc->sc_mac_csr);
+		}
+		smsc_setmulti(sc);
+	}
+
+out:
+	mutex_exit(&sc->sc_lock);
+
+	return rc;
+}
+
+
 int
 smsc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct smsc_softc	*sc = ifp->if_softc;
-	struct ifreq /*const*/	*ifr = data;
+// 	struct ifreq /*const*/	*ifr = data;
 	int			s, error = 0;
 
 	if (sc->sc_dying)
 		return EIO;
 
 	s = splnet();
-
-	switch(cmd) {
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-
-		switch (ifp->if_flags & (IFF_UP | IFF_RUNNING)) {
-		case IFF_RUNNING:
-			smsc_stop(ifp, 1);
-			break;
-		case IFF_UP:
-			smsc_init(ifp);
-			break;
-		case IFF_UP | IFF_RUNNING:
-			if (ifp->if_flags & IFF_PROMISC &&
-			    !(sc->sc_if_flags & IFF_PROMISC)) {
-				sc->sc_mac_csr |= SMSC_MAC_CSR_PRMS;
-				smsc_write_reg(sc, SMSC_MAC_CSR,
-				    sc->sc_mac_csr);
-				smsc_setmulti(sc);
-			} else if (!(ifp->if_flags & IFF_PROMISC) &&
-			    sc->sc_if_flags & IFF_PROMISC) {
-				sc->sc_mac_csr &= ~SMSC_MAC_CSR_PRMS;
-				smsc_write_reg(sc, SMSC_MAC_CSR,
-				    sc->sc_mac_csr);
-				smsc_setmulti(sc);
-			} else {
-				smsc_init(ifp);
-			}
-			break;
-		}
-		sc->sc_if_flags = ifp->if_flags;
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
-
-		error = 0;
-
-		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI)
-			smsc_setmulti(sc);
-
-	}
+	error = ether_ioctl(ifp, cmd, data);
 	splx(s);
 
+	if (error == ENETRESET) {
+		error = 0;
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			mutex_enter(&sc->sc_lock);
+			smsc_setmulti(sc);
+			mutex_exit(&sc->sc_lock);
+		}
+	}
 	return error;
 }
 
@@ -991,7 +1009,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	char *devinfop;
 	struct mii_data *mii;
 	struct ifnet *ifp;
-	int err, s, i;
+	int err, i;
 	uint32_t mac_h, mac_l;
 
 	sc->sc_dev = self;
@@ -1013,6 +1031,10 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	/* Setup the endpoints for the SMSC LAN95xx device(s) */
 	usb_init_task(&sc->sc_tick_task, smsc_tick_task, sc, 0);
 	usb_init_task(&sc->sc_stop_task, (void (*)(void *))smsc_stop, sc, 0);
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_txlock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	mutex_init(&sc->sc_rxlock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_mii_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	err = usbd_device2interface_handle(dev, SMSC_IFACE_IDX, &sc->sc_iface);
@@ -1047,12 +1069,11 @@ smsc_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	s = splnet();
-
 	ifp = &sc->sc_ec.ec_if;
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_extflags = IFEF_START_MPSAFE;
 	ifp->if_init = smsc_init;
 	ifp->if_ioctl = smsc_ioctl;
 	ifp->if_start = smsc_start;
@@ -1120,15 +1141,16 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	} else
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 
-	if_attach(ifp);
+	if_initialize(ifp);
+	sc->sc_ipq = if_percpuq_create(&sc->sc_ec.ec_if);
 	ether_ifattach(ifp, sc->sc_enaddr);
+	if_register(ifp);
+	ether_set_ifflags_cb(&sc->sc_ec, smsc_ifflags_cb);
 
 	rnd_attach_source(&sc->sc_rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_stat_ch, 0);
-
-	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 }
@@ -1500,6 +1522,22 @@ smsc_tx_list_init(struct smsc_softc *sc)
 	return 0;
 }
 
+void
+smsc_tx_list_free(struct smsc_softc *sc)
+{
+	/* Free TX resources. */
+	for (size_t i = 0; i < SMSC_TX_LIST_CNT; i++) {
+		if (sc->sc_cdata.tx_chain[i].sc_mbuf != NULL) {
+			m_freem(sc->sc_cdata.tx_chain[i].sc_mbuf);
+			sc->sc_cdata.tx_chain[i].sc_mbuf = NULL;
+		}
+		if (sc->sc_cdata.tx_chain[i].sc_xfer != NULL) {
+			usbd_destroy_xfer(sc->sc_cdata.tx_chain[i].sc_xfer);
+			sc->sc_cdata.tx_chain[i].sc_xfer = NULL;
+		}
+	}
+}
+
 int
 smsc_rx_list_init(struct smsc_softc *sc)
 {
@@ -1525,6 +1563,22 @@ smsc_rx_list_init(struct smsc_softc *sc)
 	return 0;
 }
 
+void
+smsc_rx_list_free(struct smsc_softc *sc)
+{
+	/* Free RX resources. */
+	for (size_t i = 0; i < SMSC_RX_LIST_CNT; i++) {
+		if (sc->sc_cdata.rx_chain[i].sc_mbuf != NULL) {
+			m_freem(sc->sc_cdata.rx_chain[i].sc_mbuf);
+			sc->sc_cdata.rx_chain[i].sc_mbuf = NULL;
+		}
+		if (sc->sc_cdata.rx_chain[i].sc_xfer != NULL) {
+			usbd_destroy_xfer(sc->sc_cdata.rx_chain[i].sc_xfer);
+			sc->sc_cdata.rx_chain[i].sc_xfer = NULL;
+		}
+	}
+}
+
 struct mbuf *
 smsc_newbuf(void)
 {
@@ -1546,13 +1600,10 @@ smsc_newbuf(void)
 int
 smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 {
-	struct ifnet		*ifp = &sc->sc_ec.ec_if;
-	struct smsc_chain	*c;
-	usbd_status		 err;
-	uint32_t		 txhdr;
-	uint32_t		 frm_len = 0;
-
-	c = &sc->sc_cdata.tx_chain[idx];
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct smsc_chain * const c = &sc->sc_cdata.tx_chain[idx];
+	uint32_t txhdr;
+	uint32_t frm_len = 0;
 
 	/*
 	 * Each frame is prefixed with two 32-bit values describing the
@@ -1578,7 +1629,7 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, frm_len,
 	    USBD_FORCE_SHORT_XFER, 10000, smsc_txeof);
 
-	err = usbd_transfer(c->sc_xfer);
+	usbd_status err = usbd_transfer(c->sc_xfer);
 	/* XXXNH get task to stop interface */
 	if (err != USBD_IN_PROGRESS) {
 		smsc_stop(ifp, 0);
