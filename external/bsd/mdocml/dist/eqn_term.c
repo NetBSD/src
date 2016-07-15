@@ -1,4 +1,4 @@
-/*	$Id: eqn_term.c,v 1.1.1.3 2015/12/17 21:58:48 christos Exp $ */
+/*	Id: eqn_term.c,v 1.8 2015/01/01 15:36:08 schwarze Exp  */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
