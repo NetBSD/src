@@ -1,4 +1,4 @@
-/*	$Id: eqn_html.c,v 1.1.1.3 2015/12/17 21:58:48 christos Exp $ */
+/*	Id: eqn_html.c,v 1.10 2014/10/12 19:31:41 schwarze Exp  */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
