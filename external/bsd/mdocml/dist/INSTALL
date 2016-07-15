@@ -1,4 +1,4 @@
-$Id: INSTALL,v 1.1.1.1 2015/12/17 21:58:47 christos Exp $
+Id: INSTALL,v 1.15 2016/07/14 11:09:06 schwarze Exp 
 
 About mdocml, the portable mandoc distribution
 ----------------------------------------------
@@ -16,7 +16,7 @@ tech@ mailing list, too.
 
 Enjoy using the mandoc toolset!
 
-Ingo Schwarze, Karlsruhe, March 2015
+Ingo Schwarze, Karlsruhe, July 2016
 
 
 Installation
@@ -42,6 +42,8 @@ generates.  If anything looks wrong or different from what you
 wish, read the file "configure.local.example", create and edit
 a file "configure.local", and re-run "./configure" until the
 result seems right to you.
+On Solaris 10 and earlier, you may have to run "ksh ./configure"
+because the native /bin/sh lacks some POSIX features.
 
 3. Run "make".
 Any POSIX-compatible make, in particular both BSD make and GNU make,
@@ -50,7 +52,7 @@ and go back to step 2.
 
 4. Run "make -n install" and check whether everything will be
 installed to the intended places.  Otherwise, put some *DIR or *NM*
-variables into "configure.local" and go back to step 2.
+variables into "configure.local" and go back to step 2.
 
 5. Run "sudo make install".  If you intend to build a binary
 package using some kind of fake root mechanism, you may need a
@@ -61,7 +63,7 @@ in the "Makefile" to understand how DESTDIR is used.
 manpath(1), make sure it is configured correctly, in particular,
 it returns all directory trees where manual pages are installed.
 Otherwise, if your system uses man.conf(5), make sure it contains
-a "_whatdb" line for each directory tree, and the order of these
+a "manpath" line for each directory tree, and the order of these
 lines meets your wishes.
 
 7. If you compiled with database support, run the command "sudo
@@ -82,9 +84,10 @@ manual page source.
 
 Understanding mandoc dependencies
 ---------------------------------
-The mandoc(1), man(1), and demandoc(1) utilities have no external
-dependencies, but makewhatis(8) and apropos(1) depend on the
-following software:
+The mandoc(1), man(1), and demandoc(1) utilities only depend
+on the zlib library for decompressing gzipped manual pages,
+but makewhatis(8) and apropos(1) depend on the following
+additional software:
 
 1. The SQLite database system, see <http://sqlite.org/>.
 The recommended version of SQLite is 3.8.4.3 or newer.  The mandoc
@@ -106,6 +109,11 @@ If you run into that problem, set "HAVE_FTS=0" in configure.local.
 3. Marc Espie's ohash(3) library.
 If your system does not have it, the bundled compatibility version
 will be used, so you probably need not worry about it.
+
+One of the chief design goals of the mandoc toolbox is to make
+sure that nothing related to documentation requires C++.
+Consequently, linking mandoc against any kind of C++ program
+would defeat the purpose and is not supported.
 
 
 Checking autoconfiguration quality

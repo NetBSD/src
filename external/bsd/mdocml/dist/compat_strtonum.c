@@ -6,7 +6,7 @@ int dummy;
 
 #else
 
-/*	$Id: compat_strtonum.c,v 1.1.1.1 2015/12/17 21:58:48 christos Exp $	*/
+/*	Id: compat_strtonum.c,v 1.1 2015/02/16 14:56:22 schwarze Exp 	*/
 /*	$OpenBSD: strtonum.c,v 1.7 2013/04/17 18:40:58 tedu Exp $	*/
 
 /*
