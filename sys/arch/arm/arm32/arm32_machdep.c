@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.110 2016/04/30 19:20:47 ryo Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.111 2016/07/15 05:59:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.110 2016/04/30 19:20:47 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.111 2016/07/15 05:59:46 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_md.h"
@@ -746,3 +746,11 @@ mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 	return rv;
 }
 #endif
+
+bool
+mm_md_page_color(paddr_t pa, int *colorp)
+{
+	*colorp = atop(pa & arm_cache_prefer_mask);
+
+	return arm_cache_prefer_mask ? false : true;
+}
