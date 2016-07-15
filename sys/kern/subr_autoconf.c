@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.245 2016/07/15 01:13:10 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246 2016/07/15 01:17:47 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.245 2016/07/15 01:13:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246 2016/07/15 01:17:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1372,7 +1372,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	/* get memory for all device vars */
 	KASSERTMSG((ca->ca_flags & DVF_PRIV_ALLOC)
 	    || ca->ca_devsize >= sizeof(struct device),
-	    "config_devalloc: %s (%zu < %zu)", cf->cf_atname, ca->ca_devsize,
+	    "%s: %s (%zu < %zu)", __func__, cf->cf_atname, ca->ca_devsize,
 	    sizeof(struct device));
 	if (ca->ca_devsize > 0) {
 		dev_private = kmem_zalloc(ca->ca_devsize, KM_SLEEP);
