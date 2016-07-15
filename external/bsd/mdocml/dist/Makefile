@@ -1,7 +1,7 @@
-# $Id: Makefile,v 1.2 2015/12/17 22:31:12 christos Exp $
+# Id: Makefile,v 1.488 2016/07/12 05:18:38 kristaps Exp 
 #
 # Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
-# Copyright (c) 2011, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2011, 2013-2016 Ingo Schwarze <schwarze@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -15,41 +15,57 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-VERSION = 1.13.3
+VERSION = 1.13.4
 
 # === LIST OF FILES ====================================================
 
 TESTSRCS	 = test-dirent-namlen.c \
-		   test-fgetln.c \
+		   test-err.c \
 		   test-fts.c \
+		   test-getline.c \
 		   test-getsubopt.c \
+		   test-isblank.c \
+		   test-mkdtemp.c \
 		   test-mmap.c \
 		   test-ohash.c \
+		   test-pledge.c \
+		   test-progname.c \
 		   test-reallocarray.c \
+		   test-rewb-bsd.c \
+		   test-rewb-sysv.c \
+		   test-sandbox_init.c \
 		   test-sqlite3.c \
 		   test-sqlite3_errstr.c \
 		   test-strcasestr.c \
+		   test-stringlist.c \
 		   test-strlcat.c \
 		   test-strlcpy.c \
 		   test-strptime.c \
 		   test-strsep.c \
 		   test-strtonum.c \
+		   test-vasprintf.c \
 		   test-wchar.c
 
 SRCS		 = att.c \
 		   cgi.c \
 		   chars.c \
-		   compat_fgetln.c \
+		   compat_err.c \
 		   compat_fts.c \
+		   compat_getline.c \
 		   compat_getsubopt.c \
+		   compat_isblank.c \
+		   compat_mkdtemp.c \
 		   compat_ohash.c \
+		   compat_progname.c \
 		   compat_reallocarray.c \
 		   compat_sqlite3_errstr.c \
 		   compat_strcasestr.c \
+		   compat_stringlist.c \
 		   compat_strlcat.c \
 		   compat_strlcpy.c \
 		   compat_strsep.c \
 		   compat_strtonum.c \
+		   compat_vasprintf.c \
 		   demandoc.c \
 		   eqn.c \
 		   eqn_html.c \
@@ -65,6 +81,7 @@ SRCS		 = att.c \
 		   man_validate.c \
 		   mandoc.c \
 		   mandoc_aux.c \
+		   mandoc_ohash.c \
 		   mandocdb.c \
 		   manpage.c \
 		   manpath.c \
@@ -76,6 +93,7 @@ SRCS		 = att.c \
 		   mdoc_html.c \
 		   mdoc_macro.c \
 		   mdoc_man.c \
+		   mdoc_state.c \
 		   mdoc_term.c \
 		   mdoc_validate.c \
 		   msec.c \
@@ -83,7 +101,9 @@ SRCS		 = att.c \
 		   preconv.c \
 		   read.c \
 		   roff.c \
+		   soelim.c \
 		   st.c \
+		   tag.c \
 		   tbl.c \
 		   tbl_data.c \
 		   tbl_html.c \
@@ -93,8 +113,7 @@ SRCS		 = att.c \
 		   term.c \
 		   term_ascii.c \
 		   term_ps.c \
-		   tree.c \
-		   $(TESTSRCS)
+		   tree.c
 
 DISTFILES	 = INSTALL \
 		   LICENSE \
@@ -104,14 +123,13 @@ DISTFILES	 = INSTALL \
 		   TODO \
 		   apropos.1 \
 		   cgi.h.example \
-		   chars.in \
 		   compat_fts.h \
 		   compat_ohash.h \
+		   compat_stringlist.h \
 		   configure \
 		   configure.local.example \
 		   demandoc.1 \
 		   eqn.7 \
-		   example.style.css \
 		   gmdiff \
 		   html.h \
 		   lib.in \
@@ -121,13 +139,16 @@ DISTFILES	 = INSTALL \
 		   libroff.h \
 		   main.h \
 		   makewhatis.8 \
-		   man-cgi.css \
 		   man.1 \
 		   man.7 \
+		   man.cgi.3 \
 		   man.cgi.8 \
+		   man.conf.5 \
 		   man.h \
+		   manconf.h \
 		   mandoc.1 \
 		   mandoc.3 \
+		   mandoc.css \
 		   mandoc.db.5 \
 		   mandoc.h \
 		   mandoc_aux.h \
@@ -136,7 +157,7 @@ DISTFILES	 = INSTALL \
 		   mandoc_headers.3 \
 		   mandoc_html.3 \
 		   mandoc_malloc.3 \
-		   manpath.h \
+		   mandoc_ohash.h \
 		   mansearch.3 \
 		   mansearch.h \
 		   mchars_alloc.3 \
@@ -146,12 +167,16 @@ DISTFILES	 = INSTALL \
 		   out.h \
 		   predefs.in \
 		   roff.7 \
+		   roff.h \
+		   roff_int.h \
+		   soelim.1 \
 		   st.in \
-		   style.css \
+		   tag.h \
 		   tbl.3 \
 		   tbl.7 \
 		   term.h \
-		   $(SRCS)
+		   $(SRCS) \
+		   $(TESTSRCS)
 
 LIBMAN_OBJS	 = man.o \
 		   man_hash.o \
@@ -164,6 +189,7 @@ LIBMDOC_OBJS	 = att.o \
 		   mdoc_argv.o \
 		   mdoc_hash.o \
 		   mdoc_macro.o \
+		   mdoc_state.o \
 		   mdoc_validate.o \
 		   st.o
 
@@ -180,21 +206,27 @@ LIBMANDOC_OBJS	 = $(LIBMAN_OBJS) \
 		   chars.o \
 		   mandoc.o \
 		   mandoc_aux.o \
+		   mandoc_ohash.o \
 		   msec.o \
 		   preconv.o \
 		   read.o
 
-COMPAT_OBJS	 = compat_fgetln.o \
+COMPAT_OBJS	 = compat_err.o \
 		   compat_fts.o \
+		   compat_getline.o \
 		   compat_getsubopt.o \
+		   compat_isblank.o \
+		   compat_mkdtemp.o \
 		   compat_ohash.o \
+		   compat_progname.o \
 		   compat_reallocarray.o \
 		   compat_sqlite3_errstr.o \
 		   compat_strcasestr.o \
 		   compat_strlcat.o \
 		   compat_strlcpy.o \
 		   compat_strsep.o \
-		   compat_strtonum.o
+		   compat_strtonum.o \
+		   compat_vasprintf.o
 
 MANDOC_HTML_OBJS = eqn_html.o \
 		   html.o \
@@ -218,6 +250,7 @@ BASE_OBJS	 = $(MANDOC_HTML_OBJS) \
 		   main.o \
 		   manpath.o \
 		   out.o \
+		   tag.o \
 		   tree.o
 
 MAIN_OBJS	 = $(BASE_OBJS)
@@ -236,10 +269,18 @@ MANPAGE_OBJS	 = manpage.o mansearch.o mansearch_const.o manpath.o
 
 DEMANDOC_OBJS	 = demandoc.o
 
+SOELIM_OBJS	 = soelim.o \
+		   compat_err.o \
+		   compat_getline.o \
+		   compat_progname.o \
+		   compat_reallocarray.o \
+		   compat_stringlist.o
+
 WWW_MANS	 = apropos.1.html \
 		   demandoc.1.html \
 		   man.1.html \
 		   mandoc.1.html \
+		   soelim.1.html \
 		   mandoc.3.html \
 		   mandoc_escape.3.html \
 		   mandoc_headers.3.html \
@@ -248,6 +289,7 @@ WWW_MANS	 = apropos.1.html \
 		   mansearch.3.html \
 		   mchars_alloc.3.html \
 		   tbl.3.html \
+		   man.conf.5.html \
 		   mandoc.db.5.html \
 		   eqn.7.html \
 		   man.7.html \
@@ -256,13 +298,15 @@ WWW_MANS	 = apropos.1.html \
 		   roff.7.html \
 		   tbl.7.html \
 		   makewhatis.8.html \
+		   man.cgi.3.html \
 		   man.cgi.8.html \
 		   man.h.html \
+		   manconf.h.html \
 		   mandoc.h.html \
 		   mandoc_aux.h.html \
-		   manpath.h.html \
 		   mansearch.h.html \
-		   mdoc.h.html
+		   mdoc.h.html \
+		   roff.h.html
 
 WWW_OBJS	 = mdocml.tar.gz \
 		   mdocml.sha256
@@ -275,7 +319,7 @@ WWW_OBJS	 = mdocml.tar.gz \
 
 all: base-build $(BUILD_TARGETS) Makefile.local
 
-base-build: mandoc demandoc
+base-build: mandoc demandoc soelim
 
 cgi-build: man.cgi
 
@@ -301,33 +345,36 @@ clean:
 	rm -f man.cgi $(CGI_OBJS)
 	rm -f manpage $(MANPAGE_OBJS)
 	rm -f demandoc $(DEMANDOC_OBJS)
+	rm -f soelim $(SOELIM_OBJS)
 	rm -f $(WWW_MANS) $(WWW_OBJS)
 	rm -rf *.dSYM
 
 base-install: base-build
 	mkdir -p $(DESTDIR)$(BINDIR)
-	mkdir -p $(DESTDIR)$(EXAMPLEDIR)
 	mkdir -p $(DESTDIR)$(LIBDIR)
 	mkdir -p $(DESTDIR)$(INCLUDEDIR)
 	mkdir -p $(DESTDIR)$(MANDIR)/man1
 	mkdir -p $(DESTDIR)$(MANDIR)/man3
+	mkdir -p $(DESTDIR)$(MANDIR)/man5
 	mkdir -p $(DESTDIR)$(MANDIR)/man7
 	$(INSTALL_PROGRAM) mandoc demandoc $(DESTDIR)$(BINDIR)
+	$(INSTALL_PROGRAM) soelim $(DESTDIR)$(BINDIR)/$(BINM_SOELIM)
 	ln -f $(DESTDIR)$(BINDIR)/mandoc $(DESTDIR)$(BINDIR)/$(BINM_MAN)
 	$(INSTALL_LIB) libmandoc.a $(DESTDIR)$(LIBDIR)
-	$(INSTALL_LIB) man.h mandoc.h mandoc_aux.h mdoc.h \
+	$(INSTALL_LIB) man.h mandoc.h mandoc_aux.h mdoc.h roff.h \
 		$(DESTDIR)$(INCLUDEDIR)
 	$(INSTALL_MAN) mandoc.1 demandoc.1 $(DESTDIR)$(MANDIR)/man1
+	$(INSTALL_MAN) soelim.1 $(DESTDIR)$(MANDIR)/man1/$(BINM_SOELIM).1
 	$(INSTALL_MAN) man.1 $(DESTDIR)$(MANDIR)/man1/$(BINM_MAN).1
 	$(INSTALL_MAN) mandoc.3 mandoc_escape.3 mandoc_malloc.3 \
 		mchars_alloc.3 tbl.3 $(DESTDIR)$(MANDIR)/man3
+	$(INSTALL_MAN) man.conf.5 $(DESTDIR)$(MANDIR)/man5/${MANM_MANCONF}.5
 	$(INSTALL_MAN) man.7 $(DESTDIR)$(MANDIR)/man7/${MANM_MAN}.7
 	$(INSTALL_MAN) mdoc.7 $(DESTDIR)$(MANDIR)/man7/${MANM_MDOC}.7
 	$(INSTALL_MAN) roff.7 $(DESTDIR)$(MANDIR)/man7/${MANM_ROFF}.7
 	$(INSTALL_MAN) eqn.7 $(DESTDIR)$(MANDIR)/man7/${MANM_EQN}.7
 	$(INSTALL_MAN) tbl.7 $(DESTDIR)$(MANDIR)/man7/${MANM_TBL}.7
 	$(INSTALL_MAN) mandoc_char.7 $(DESTDIR)$(MANDIR)/man7
-	$(INSTALL_DATA) example.style.css $(DESTDIR)$(EXAMPLEDIR)
 
 db-install: base-build
 	mkdir -p $(DESTDIR)$(BINDIR)
@@ -351,38 +398,36 @@ db-install: base-build
 cgi-install: cgi-build
 	mkdir -p $(DESTDIR)$(CGIBINDIR)
 	mkdir -p $(DESTDIR)$(HTDOCDIR)
-	mkdir -p $(DESTDIR)$(WWWPREFIX)/man/mandoc/man1
-	mkdir -p $(DESTDIR)$(WWWPREFIX)/man/mandoc/man8
 	$(INSTALL_PROGRAM) man.cgi $(DESTDIR)$(CGIBINDIR)
-	$(INSTALL_DATA) example.style.css $(DESTDIR)$(HTDOCDIR)/man.css
-	$(INSTALL_DATA) man-cgi.css $(DESTDIR)$(HTDOCDIR)
-	$(INSTALL_MAN) apropos.1 $(DESTDIR)$(WWWPREFIX)/man/mandoc/man1/
-	$(INSTALL_MAN) man.cgi.8 $(DESTDIR)$(WWWPREFIX)/man/mandoc/man8/
+	$(INSTALL_DATA) mandoc.css $(DESTDIR)$(HTDOCDIR)
 
 Makefile.local config.h: configure ${TESTSRCS}
 	@echo "$@ is out of date; please run ./configure"
 	@exit 1
 
 libmandoc.a: $(COMPAT_OBJS) $(LIBMANDOC_OBJS)
-	$(AR) rs $@ $(COMPAT_OBJS) $(LIBMANDOC_OBJS)
+	ar rs $@ $(COMPAT_OBJS) $(LIBMANDOC_OBJS)
 
 mandoc: $(MAIN_OBJS) libmandoc.a
-	$(CC) $(LDFLAGS) -o $@ $(MAIN_OBJS) libmandoc.a $(DBLIB)
+	$(CC) -o $@ $(LDFLAGS) $(MAIN_OBJS) libmandoc.a $(LDADD)
 
 manpage: $(MANPAGE_OBJS) libmandoc.a
-	$(CC) $(LDFLAGS) -o $@ $(MANPAGE_OBJS) libmandoc.a $(DBLIB)
+	$(CC) -o $@ $(LDFLAGS) $(MANPAGE_OBJS) libmandoc.a $(LDADD)
 
 man.cgi: $(CGI_OBJS) libmandoc.a
-	$(CC) $(LDFLAGS) $(STATIC) -o $@ $(CGI_OBJS) libmandoc.a $(DBLIB)
+	$(CC) $(STATIC) -o $@ $(LDFLAGS) $(CGI_OBJS) libmandoc.a $(LDADD)
 
 demandoc: $(DEMANDOC_OBJS) libmandoc.a
-	$(CC) $(LDFLAGS) -o $@ $(DEMANDOC_OBJS) libmandoc.a
+	$(CC) -o $@ $(LDFLAGS) $(DEMANDOC_OBJS) libmandoc.a $(LDADD)
+
+soelim: $(SOELIM_OBJS)
+	$(CC) -o $@ $(LDFLAGS) $(SOELIM_OBJS)
 
 # --- maintainer targets ---
 
 www-install: www
 	mkdir -p $(HTDOCDIR)/snapshots
-	$(INSTALL_DATA) $(WWW_MANS) style.css $(HTDOCDIR)
+	$(INSTALL_DATA) $(WWW_MANS) mandoc.css $(HTDOCDIR)
 	$(INSTALL_DATA) $(WWW_OBJS) $(HTDOCDIR)/snapshots
 	$(INSTALL_DATA) mdocml.tar.gz \
 		$(HTDOCDIR)/snapshots/mdocml-$(VERSION).tar.gz
@@ -395,6 +440,8 @@ depend: config.h
 		s|\\\n||g; s|  +| |g; s| $$||mg; print;' \
 		Makefile.depend > Makefile.tmp
 	mv Makefile.tmp Makefile.depend
+
+dist: mdocml.sha256
 
 mdocml.sha256: mdocml.tar.gz
 	sha256 mdocml.tar.gz > $@
@@ -416,4 +463,4 @@ mdocml.tar.gz: $(DISTFILES)
 
 .1.1.html .3.3.html .5.5.html .7.7.html .8.8.html: mandoc
 	./mandoc -Thtml -Wall,stop \
-		-Ostyle=style.css,man=%N.%S.html,includes=%I.html $< > $@
+		-Ostyle=mandoc.css,man=%N.%S.html,includes=%I.html $< > $@
