@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.11 2016/04/09 06:21:16 riastradh Exp $
+#	$NetBSD: files.kern,v 1.11.2.1 2016/07/15 02:29:19 pgoyette Exp $
 
 #
 # kernel sources
@@ -113,6 +113,7 @@ file	kern/subr_kcpuset.c		kern
 file	kern/subr_kmem.c		kern
 file	kern/subr_kobj.c		kern
 file	kern/subr_kobj_vfs.c		kern
+file	kern/subr_localcount.c		kern
 file	kern/subr_lockdebug.c		kern
 file	kern/subr_log.c			kern
 file	kern/subr_lwp_specificdata.c	kern
