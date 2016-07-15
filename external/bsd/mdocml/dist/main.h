@@ -51,3 +51,5 @@ void		  pspdf_free(void *);
 void		  terminal_mdoc(void *, const struct roff_man *);
 void		  terminal_man(void *, const struct roff_man *);
 void		  terminal_sepline(void *);
+
+int		  mandocdb(int, char *[]);
