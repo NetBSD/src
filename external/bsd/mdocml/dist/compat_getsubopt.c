@@ -6,7 +6,7 @@ int dummy;
 
 #else
 
-/*	$Id: compat_getsubopt.c,v 1.1.1.3 2015/12/17 21:58:48 christos Exp $	*/
+/*	Id: compat_getsubopt.c,v 1.5 2014/08/17 20:53:50 schwarze Exp 	*/
 /*	$OpenBSD: getsubopt.c,v 1.4 2005/08/08 08:05:36 espie Exp $	*/
 
 /*-
