@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.115 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.116 2016/07/15 07:40:09 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.115 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.116 2016/07/15 07:40:09 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1683,8 +1683,8 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		 */
 		rtflags &= ~RTF_CONNECTED;
 	}
-	error = rtrequest_newmsg(RTM_ADD, (struct sockaddr *)&pr->ndpr_prefix,
-	    ifa->ifa_addr, (struct sockaddr *)&mask6, rtflags);
+	error = rtrequest_newmsg(RTM_ADD, sin6tosa(&pr->ndpr_prefix),
+	    ifa->ifa_addr, sin6tosa(&mask6), rtflags);
 	if (error == 0) {
 		nd6_numroutes++;
 		pr->ndpr_stateflags |= NDPRF_ONLINK;
@@ -1718,8 +1718,8 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 
 	sockaddr_in6_init(&sa6, &pr->ndpr_prefix.sin6_addr, 0, 0, 0);
 	sockaddr_in6_init(&mask6, &pr->ndpr_mask, 0, 0, 0);
-	error = rtrequest_newmsg(RTM_DELETE, (struct sockaddr *)&sa6, NULL,
-	    (struct sockaddr *)&mask6, 0);
+	error = rtrequest_newmsg(RTM_DELETE, sin6tosa(&sa6), NULL,
+	    sin6tosa(&mask6), 0);
 	if (error == 0) {
 		pr->ndpr_stateflags &= ~NDPRF_ONLINK;
 		nd6_numroutes--;

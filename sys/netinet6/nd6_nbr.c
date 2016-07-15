@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.123 2016/07/15 07:40:09 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.123 2016/07/15 07:40:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,7 +233,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 		sockaddr_in6_init(&tsin6, &taddr6, 0, 0, 0);
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0);
+		rt = rtalloc1(sin6tosa(&tsin6), 0);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*
