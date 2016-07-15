@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.192 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.193 2016/07/15 07:33:41 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.192 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.193 2016/07/15 07:33:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2071,7 +2071,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 
 		sockaddr_in6_init(&u.sin6, &origdst, 0, 0, 0);
 
-		ia = (struct in6_ifaddr *)ifa_ifwithaddr(&u.sa);
+		ia = ifatoia6(ifa_ifwithaddr(&u.sa));
 
 		if (ia == NULL)
 			;
