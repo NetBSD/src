@@ -27,6 +27,7 @@
 #include "roff.h"
 #include "man.h"
 #include "libman.h"
+#include "libmandoc.h"
 
 #define	HASH_DEPTH	 6
 

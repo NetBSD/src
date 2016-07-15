@@ -51,6 +51,7 @@
 #include "mandoc.h"
 #include "roff.h"
 #include "mdoc.h"
+#include "main.h"
 #include "man.h"
 #include "manconf.h"
 #include "mansearch.h"
@@ -598,9 +599,9 @@ treescan(void)
 	const char	*argv[2];
 
 	argv[0] = ".";
-	argv[1] = (char *)NULL;
+	argv[1] = NULL;
 
-	f = fts_open((char * const *)argv,
+	f = fts_open((void *)argv,
 	    FTS_PHYSICAL | FTS_NOCHDIR, NULL);
 	if (f == NULL) {
 		exitcode = (int)MANDOCLEVEL_SYSERR;
