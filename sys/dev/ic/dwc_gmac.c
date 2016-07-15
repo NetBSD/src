@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.9 2016/07/15 06:35:27 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.10 2016/07/15 06:36:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.9 2016/07/15 06:35:27 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.10 2016/07/15 06:36:21 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -997,16 +997,23 @@ dwc_gmac_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct dwc_gmac_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
+	int ret = 0;
 
-	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
-		return ENETRESET;
-	if ((change & IFF_PROMISC) != 0) {
-		mutex_enter(sc->sc_lock);
-		dwc_gmac_setmulti(sc);
-		mutex_exit(sc->sc_lock);
+	mutex_enter(sc->sc_lock);
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+		goto out;
 	}
-	return 0;
+	if ((change & IFF_PROMISC) != 0) {
+		dwc_gmac_setmulti(sc);
+	}
+out:
+	mutex_exit(sc->sc_lock);
+
+	return ret;
 }
 
 static int
