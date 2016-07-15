@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.145 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.146 2016/07/15 07:33:41 ozaki-r Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.145 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.146 2016/07/15 07:33:41 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -257,7 +257,7 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		 * deprecated addresses (default: forbid bind(2)).
 		 */
 		if (ia &&
-		    ((struct in6_ifaddr *)ia)->ia6_flags &
+		    ifatoia6(ia)->ia6_flags &
 		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
 			return (EADDRNOTAVAIL);
 	}
