@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.71 2016/07/16 14:51:45 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.72 2016/07/16 17:02:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.71 2016/07/16 14:51:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.72 2016/07/16 17:02:34 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -588,7 +588,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	return seg_cluster_cnt;
 }
 
-int
+static int
 initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 {
 	uint64_t seg_start, seg_end;
@@ -663,7 +663,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 	return 0;
 }
 
-int
+static int
 initx86_fake_memmap(struct extent *iomem_ex)
 {
 	phys_ram_seg_t *cluster;
@@ -816,8 +816,51 @@ x86_load_region(uint64_t seg_start, uint64_t seg_end)
 	}
 }
 
+/*
+ * init_x86_clusters: retrieve the memory clusters provided by the BIOS, and
+ * initialize mem_clusters.
+ */
+void
+init_x86_clusters(void)
+{
+	extern struct extent *iomem_ex;
+	struct btinfo_memmap *bim;
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed to us by
+	 * the boot program).
+	 */
+#ifdef i386
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
+	    bim != NULL && bim->num > 0)
+		initx86_parse_memmap(bim, iomem_ex);
+#else
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim != NULL && bim->num > 0)
+		initx86_parse_memmap(bim, iomem_ex);
+#else
+	(void)bim, (void)iomem_ex;
+#endif
+#endif
+
+	if (mem_cluster_cnt == 0) {
+		/*
+		 * If initx86_parse_memmap didn't find any valid segment, create
+		 * fake clusters.
+		 */
+		initx86_fake_memmap(iomem_ex);
+	}
+}
+
+/*
+ * init_x86_vm: initialize the VM system on x86. We basically internalize as
+ * many physical pages as we can, starting at avail_start, but we don't
+ * internalize the kernel physical pages (from IOM_END to first_avail).
+ */
 int
-initx86_load_memmap(paddr_t first_avail)
+init_x86_vm(paddr_t first_avail)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
