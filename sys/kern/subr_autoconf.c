@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246 2016/07/15 01:17:47 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.1 2016/07/16 02:13:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246 2016/07/15 01:17:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.1 2016/07/16 02:13:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246 2016/07/15 01:17:47 pgoyette
 #include <sys/devmon.h>
 #include <sys/cpu.h>
 #include <sys/sysctl.h>
+#include <sys/localcount.h>
 
 #include <sys/disk.h>
 
@@ -227,6 +228,7 @@ static volatile int alldevs_nwrite = 0;
 static int config_pending;		/* semaphore for mountroot */
 static kmutex_t config_misc_lock;
 static kcondvar_t config_misc_cv;
+static kcondvar_t config_drain_cv;
 
 static bool detachall = false;
 
@@ -345,6 +347,7 @@ config_init(void)
 
 	mutex_init(&config_misc_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&config_misc_cv, "cfgmisc");
+	cv_init(&config_drain_cv, "cfgdrain");
 
 	callout_init(&config_twiddle_ch, CALLOUT_MPSAFE);
 
@@ -567,7 +570,6 @@ config_cfdriver_attach(struct cfdriver *cd)
 		if (STREQ(lcd->cd_name, cd->cd_name))
 			return EEXIST;
 	}
-
 	LIST_INIT(&cd->cd_attach);
 	LIST_INSERT_HEAD(&allcfdrivers, cd, cd_list);
 
@@ -592,7 +594,6 @@ config_cfdriver_detach(struct cfdriver *cd)
 		}
 	}
 	config_alldevs_exit(&af);
-
 	if (rc != 0)
 		return rc;
 
@@ -1236,6 +1237,8 @@ config_devfree(device_t dev)
 {
 	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
 
+	if (dev->dv_localcnt != NULL)
+		localcount_fini(dev->dv_localcnt);
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
 	if (priv)
@@ -1253,6 +1256,9 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 	int i;
 
 	KASSERT(mutex_owned(&alldevs_mtx));
+
+	localcount_drain(dev->dv_localcnt, &config_drain_cv,
+	    &alldevs_mtx);
 
  	/* Unlink from device list.  Link to garbage list. */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
@@ -1392,8 +1398,8 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		printf("%s has not been converted to device_t\n", cd->cd_name);
 #endif
 	}
-	if (dev == NULL)
-		panic("config_devalloc: memory allocation for device_t failed");
+	KASSERTMSG(dev, "%s: memory allocation for %s device_t failed",
+	    __func__, cd->cd_name);
 
 	dev->dv_class = cd->cd_class;
 	dev->dv_cfdata = cf;
@@ -1403,6 +1409,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	dev->dv_activity_handlers = NULL;
 	dev->dv_private = dev_private;
 	dev->dv_flags = ca->ca_flags;	/* inherit flags from class */
+	dev->dv_localcnt = kmem_alloc(sizeof(*dev->dv_localcnt), KM_SLEEP);
+	KASSERTMSG(dev->dv_localcnt, "%s: unable to allocate localcnt for %s",
+	    __func__, cd->cd_name);
+	localcount_init(dev->dv_localcnt);
 
 	myunit = config_unit_alloc(dev, cd, cf);
 	if (myunit == -1) {
@@ -2245,6 +2255,37 @@ device_lookup(cfdriver_t cd, int unit)
 }
 
 /*
+ * device_lookup_accquire:
+ *
+ *	Look up a device instance for a given driver and
+ *	hold a reference to the device.
+ */
+device_t
+device_lookup_acquire(cfdriver_t cd, int unit)
+{
+	device_t dv;
+
+	dv = device_lookup(cd, unit);
+	if (dv != NULL)
+		localcount_acquire(dv->dv_localcnt);
+	return dv;
+}
+
+/*
+ * device_release:
+ *
+ *	Release the reference that was created by an earlier call to
+ *	device_lookup_acquire().
+ */
+void
+device_release(device_t dv)
+{
+
+	localcount_release(dv->dv_localcnt, &config_drain_cv,
+	    &alldevs_mtx);
+}
+
+/*
  * device_lookup_private:
  *
  *	Look up a softc instance for a given driver.
@@ -2253,7 +2294,7 @@ void *
 device_lookup_private(cfdriver_t cd, int unit)
 {
 
-	return device_private(device_lookup(cd, unit));
+	return device_private(device_lookup_acquire(cd, unit));
 }
 
 /*
@@ -2289,7 +2330,7 @@ device_find_by_driver_unit(const char *name, int unit)
 
 	if ((cd = config_cfdriver_lookup(name)) == NULL)
 		return NULL;
-	return device_lookup(cd, unit);
+	return device_lookup_acquire(cd, unit);
 }
 
 /*
