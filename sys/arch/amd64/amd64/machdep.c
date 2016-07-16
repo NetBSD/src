@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2016/07/13 15:53:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224 2016/07/16 17:02:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2016/07/13 15:53:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2016/07/16 17:02:34 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1537,10 +1537,6 @@ init_x86_64(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	int ist;
-	extern struct extent *iomem_ex;
-#if !defined(REALEXTMEM) && !defined(REALBASEMEM)
-	struct btinfo_memmap *bim;
-#endif
 #endif /* !XEN */
 
 #ifdef XEN
@@ -1589,23 +1585,8 @@ init_x86_64(paddr_t first_avail)
 	 */
 	avail_start = 8 * PAGE_SIZE;
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed to us by
-	 * the boot program).
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If initx86_parse_memmap didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
+	/* Initialize the memory clusters (needed in pmap_boostrap). */
+	init_x86_clusters();
 #else	/* XEN */
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1629,7 +1610,8 @@ init_x86_64(paddr_t first_avail)
 		pmap_prealloc_lowmem_ptps();
 
 #ifndef XEN
-	initx86_load_memmap(first_avail);
+	/* Internalize the physical pages into the VM system. */
+	init_x86_vm(first_avail);
 #else	/* XEN */
 	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;
