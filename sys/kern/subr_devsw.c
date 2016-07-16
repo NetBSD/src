@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.1 2016/07/16 07:54:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.1 2016/07/16 07:54:13 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34 2016/02/01 05:05:43 riz Exp $");
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/sdt.h>
+#include <sys/condvar.h>
+#include <sys/localcount.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -107,7 +109,8 @@ static int bdevsw_attach(const struct bdevsw *, devmajor_t *);
 static int cdevsw_attach(const struct cdevsw *, devmajor_t *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
-kmutex_t device_lock;
+kmutex_t	device_lock;
+kcondvar_t	device_cv;
 
 void (*biodone_vfs)(buf_t *) = (void *)nullop;
 
@@ -118,6 +121,7 @@ devsw_init(void)
 	KASSERT(sys_bdevsws < MAXDEVSW - 1);
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&device_cv, "devsw");
 }
 
 int
@@ -160,8 +164,13 @@ devsw_attach(const char *devname,
 			goto fail;
 		}
 
-		if (bdev != NULL)
+		if (bdev != NULL) {
+			KASSERT(bdev->d_localcount != NULL);
+			localcount_init(bdev->d_localcount);
 			bdevsw[*bmajor] = bdev;
+		}
+		KASSERT(cdev->d_localcount != NULL);
+		localcount_init(cdev->d_localcount);
 		cdevsw[*cmajor] = cdev;
 
 		mutex_exit(&device_lock);
@@ -270,6 +279,8 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 		return (EEXIST);
 
 	bdevsw[*devmajor] = devsw;
+	KASSERT(devsw->d_localcount != NULL);
+	localcount_init(devsw->d_localcount);
 
 	return (0);
 }
@@ -317,32 +328,65 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 		return (EEXIST);
 
 	cdevsw[*devmajor] = devsw;
+	KASSERT(devsw->d_localcount != NULL);
+	localcount_init(devsw->d_localcount);
 
 	return (0);
 }
 
+/*
+ * First, look up both bdev and cdev indices, and confirm that the
+ * localcount pointer(s) exist.  Then drain any existing references,
+ * deactivate the localcount(s).  Finally, remove the {b,c}devsw[]
+ * entries.
+ */
+
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int i;
+	int i, j;
 
 	KASSERT(mutex_owned(&device_lock));
 
+	i = max_bdevsws;
 	if (bdev != NULL) {
 		for (i = 0 ; i < max_bdevsws ; i++) {
 			if (bdevsw[i] != bdev)
 				continue;
-			bdevsw[i] = NULL;
+
+			KASSERTMSG(bdev->d_localcount != NULL,
+			    "%s: no bdev localcount", __func__);
 			break;
 		}
 	}
+	j = max_cdevsws;
 	if (cdev != NULL) {
-		for (i = 0 ; i < max_cdevsws ; i++) {
-			if (cdevsw[i] != cdev)
+		for (j = 0 ; j < max_cdevsws ; j++) {
+			if (cdevsw[j] != cdev)
 				continue;
-			cdevsw[i] = NULL;
+
+			KASSERTMSG(cdev->d_localcount != NULL,
+			    "%s: no cdev localcount", __func__);
 			break;
 		}
+	}
+	if (i < max_bdevsws) {
+		localcount_drain(bdev->d_localcount, &device_cv, &device_lock);
+		localcount_fini(bdev->d_localcount);
+		bdevsw[i] = NULL;
+	}
+	if (j < max_cdevsws ) {
+		/*
+		 * Take care not to drain/fini the d_localcount if the same
+		 * one was used for both cdev and bdev!
+		 */
+		if (i >= max_bdevsws ||
+		    bdev->d_localcount != cdev->d_localcount) {
+			localcount_drain(cdev->d_localcount, &device_cv,
+			    &device_lock);
+			localcount_fini(cdev->d_localcount);
+		}
+		cdevsw[j] = NULL;
 	}
 }
 
@@ -375,6 +419,35 @@ bdevsw_lookup(dev_t dev)
 	return (bdevsw[bmajor]);
 }
 
+const struct bdevsw *
+bdevsw_lookup_acquire(dev_t dev)
+{
+	devmajor_t bmajor;
+
+	if (dev == NODEV)
+		return (NULL);
+	bmajor = major(dev);
+	if (bmajor < 0 || bmajor >= max_bdevsws)
+		return (NULL);
+
+	if (bdevsw[bmajor]->d_localcount != NULL)
+		localcount_acquire(bdevsw[bmajor]->d_localcount);
+
+	return (bdevsw[bmajor]);
+}
+
+void
+bdevsw_release(const struct bdevsw *bd)
+{
+	devmajor_t bmaj;
+
+	bmaj = bdevsw_lookup_major(bd);
+
+	KASSERTMSG(bmaj != NODEVMAJOR, "%s: no bmajor to release!", __func__);
+	if (bd->d_localcount != NULL)
+		localcount_release(bd->d_localcount, &device_cv, &device_lock);
+}
+
 /*
  * Look up a character device by number.
  *
@@ -392,6 +465,35 @@ cdevsw_lookup(dev_t dev)
 		return (NULL);
 
 	return (cdevsw[cmajor]);
+}
+
+const struct cdevsw *
+cdevsw_lookup_acquire(dev_t dev)
+{
+	devmajor_t cmajor;
+
+	if (dev == NODEV)
+		return (NULL);
+	cmajor = major(dev);
+	if (cmajor < 0 || cmajor >= max_cdevsws)
+		return (NULL);
+
+	if (cdevsw[cmajor]->d_localcount != NULL)
+		localcount_acquire(cdevsw[cmajor]->d_localcount);
+
+	return (cdevsw[cmajor]);
+}
+
+void
+cdevsw_release(const struct cdevsw *cd)
+{
+	devmajor_t cmaj;
+
+	cmaj = cdevsw_lookup_major(cd);
+
+	KASSERTMSG(cmaj != NODEVMAJOR, "%s: no cmajor to release!", __func__);
+	if (cd->d_localcount != NULL)
+		localcount_release(cd->d_localcount, &device_cv, &device_lock);
 }
 
 /*
