@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.396.2.1 2016/07/16 09:36:57 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.396.2.2 2016/07/16 09:49:24 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -455,6 +455,11 @@ MLINKS+=kthread.9 kthread_exit.9 \
 MLINKS+=linedisc.9 ttyldisc_add.9 \
 	linedisc.9 ttyldisc_lookup.9 \
 	linedisc.9 ttyldisc_remove.9
+MLINKS+=localcount.9 localcount_init.9 \
+	localcount.9 localcount_fini.9 \
+	localcount.9 localcount_acquire.9 \
+	localcount.9 localcount_release.9 \
+	localcount.9 localcount_drain.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \

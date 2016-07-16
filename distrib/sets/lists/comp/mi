@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2051.2.1 2016/07/16 09:41:07 pgoyette Exp $
+#	$NetBSD: mi,v 1.2051.2.2 2016/07/16 09:49:24 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10462,6 +10462,11 @@
 ./usr/share/man/cat9/le64toh.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/linedisc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/localcount.0		comp-sys-catman		.cat
+./usr/share/man/cat9/localcount_init.0		comp-sys-catman		.cat
+./usr/share/man/cat9/localcount_fini.0		comp-sys-catman		.cat
+./usr/share/man/cat9/localcount_acquire.0	comp-sys-catman		.cat
+./usr/share/man/cat9/localcount_release.0	comp-sys-catman		.cat
+./usr/share/man/cat9/localcount_drain.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/lock.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/lockmgr.0			comp-sys-catman		.cat
@@ -17616,6 +17621,11 @@
 ./usr/share/man/html9/le64toh.html		comp-sys-htmlman	html
 ./usr/share/man/html9/linedisc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/localcount.html		comp-sys-htmlman	html
+./usr/share/man/html9/localcount_init.html	comp-sys-htmlman	html
+./usr/share/man/html9/localcount_fini.html	comp-sys-htmlman	html
+./usr/share/man/html9/localcount_acquire.html	comp-sys-htmlman	html
+./usr/share/man/html9/localcount_release.html	comp-sys-htmlman	html
+./usr/share/man/html9/localcount_drain.html	comp-sys-htmlman	html
 ./usr/share/man/html9/lock.html			comp-sys-htmlman	html
 ./usr/share/man/html9/lockinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/lockmgr.html		comp-sys-htmlman	html
@@ -24924,6 +24934,11 @@
 ./usr/share/man/man9/le64toh.9			comp-sys-man		.man
 ./usr/share/man/man9/linedisc.9			comp-sys-man		.man
 ./usr/share/man/man9/localcount.9		comp-sys-man		.man
+./usr/share/man/man9/localcount_init.9		comp-sys-man		.man
+./usr/share/man/man9/localcount_fini.9		comp-sys-man		.man
+./usr/share/man/man9/localcount_acquire.9	comp-sys-man		.man
+./usr/share/man/man9/localcount_release.9	comp-sys-man		.man
+./usr/share/man/man9/localcount_drain.9		comp-sys-man		.man
 ./usr/share/man/man9/lock.9			comp-sys-man		.man
 ./usr/share/man/man9/lockinit.9			comp-sys-man		.man
 ./usr/share/man/man9/lockmgr.9			comp-sys-man		.man
