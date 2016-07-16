@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.1 2016/07/16 02:13:07 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.2 2016/07/16 22:06:42 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.1 2016/07/16 02:13:07 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.2 2016/07/16 22:06:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1257,15 +1257,16 @@ config_devunlink(device_t dev, struct devicelist *garbage)
 
 	KASSERT(mutex_owned(&alldevs_mtx));
 
-	localcount_drain(dev->dv_localcnt, &config_drain_cv,
-	    &alldevs_mtx);
-
  	/* Unlink from device list.  Link to garbage list. */
 	TAILQ_REMOVE(&alldevs, dev, dv_list);
 	TAILQ_INSERT_TAIL(garbage, dev, dv_list);
 
 	/* Remove from cfdriver's array. */
 	cd->cd_devs[dev->dv_unit] = NULL;
+
+	/* Now wait for references to drain - no new refs are possible */
+	localcount_drain(dev->dv_localcnt, &config_drain_cv,
+	    &alldevs_mtx);
 
 	/*
 	 * If the device now has no units in use, unlink its softc array.
@@ -2265,9 +2266,15 @@ device_lookup_acquire(cfdriver_t cd, int unit)
 {
 	device_t dv;
 
-	dv = device_lookup(cd, unit);
-	if (dv != NULL)
+	mutex_enter(&alldevs_mtx);
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		dv = NULL;
+	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
+		dv = NULL;
+	else
 		localcount_acquire(dv->dv_localcnt);
+	mutex_exit(&alldevs_mtx);
+
 	return dv;
 }
 
@@ -2292,6 +2299,19 @@ device_release(device_t dv)
  */
 void *
 device_lookup_private(cfdriver_t cd, int unit)
+{
+
+	return device_private(device_lookup(cd, unit));
+}
+
+/*
+ * device_lookup_private_acquire:
+ *
+ *	Look up the softc and acquire a reference to the device
+ *	so it won't disappear.
+ */
+void *
+device_lookup_private_acquire(cfdriver_t cd, int unit)
 {
 
 	return device_private(device_lookup_acquire(cd, unit));
@@ -2325,6 +2345,23 @@ device_find_by_xname(const char *name)
  */
 device_t
 device_find_by_driver_unit(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup(cd, unit);
+}
+
+/*
+ * device_find_by_driver_unit_acquire:
+ *
+ *	Returns the device of the given driver name and unit or
+ *	NULL if it doesn't exist.  If driver is found, it's
+ *	reference count is incremented so it won't go away.
+ */
+device_t
+device_find_by_driver_unit_acquire(const char *name, int unit)
 {
 	struct cfdriver *cd;
 
