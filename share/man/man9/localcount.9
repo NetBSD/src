@@ -1,0 +1,158 @@
+.\"	$NetBSD: localcount.9,v 1.1.2.1 2016/07/16 09:36:57 pgoyette Exp $
+.\"
+.\" Copyright (c) 2016
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Taylor R. Campbell.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July xx, 2016
+.Dt LOCALCOUNT 9
+.Os
+.Sh NAME
+.Nm localcount ,
+.Nm localcount_init ,
+.Nm localcount_fini ,
+.Nm localcount_acquire ,
+.Nm localcount_release ,
+.Nm localcount_drain ,
+.Sh SYNOPSIS
+.In sys/localcount.h
+.Ft int
+.Fn localcount_init "struct localcount *lc"
+.Ft void
+.Fn localcount_fini "struct localcount *lc"
+.Ft void
+.Fn localcount_acquire "struct localcount *lc"
+.Ft void
+.Fn localcount_release "struct localcount *lc" "struct kcondvar *cv" \
+"struct kmutex *mtx"
+.Ft void
+.Fn localcount_drain "struct localcount *lc" "struct kcondvar *cv" \
+"struct kmutex *mtx"
+.Sh DESCRIPTION
+Localcounts are used in the kernel to implement a medium-weight reference
+counting mechanism.
+During normal operations, localcounts do not need the interprocessor
+synchronization associated with
+.Xr atomic_ops 3
+atomic memory operations, and (unlike
+.Xr psref 9 )
+.Nm
+references can be held across sleeps and can migrate between CPUs.
+Draining a
+.Nm localcount
+requires more expensive interprocessor synchronization than
+.Xr atomic_ops 3
+(similar to
+.Xr psref 9 ) .
+And
+.Nm
+references require eight bytes of memory per object per-CPU, significantly
+more than
+.Xr atomic_ops 3
+and almost always more than
+.Xr psref 9 .
+.Sh FUNCTIONS
+.Bl -tag -width abcd
+.It Fn localcount_init "lc"
+.Pp
+Dynamically initialize a localcount for use.
+.Pp
+No other operations can be performed on a localcount until it has been
+initialized.
+.It Fn localcount_fini "lc"
+.Pp
+Release resources used by a localcount.
+The caller must have already called
+.fn localcount_drain .
+The localcount may not be used after
+.Fn localcount_fini
+has been called until it has been re-initialized by
+.Fn localcount_init .
+.It Fn localcount_acquire "lc"
+.Pp
+Acquire a reference to the localcount.
+.It Fn localcount_release "lc" "cv" "mtx"
+.Pp
+Release a reference to the localcount.
+Must be called with the mutex
+.Ar mtx
+locked.
+If the localcount is being drained, and the reference count goes to zero,
+.Fn localcout_release
+will broadcast availability of the condvar
+.Ar cv .
+.It Fn localcount_drain "lc" "cv" "mtx"
+.Pp
+Wait for all references to the
+.Nm
+to be released.
+The caller must hold the mutex
+.Ar mtx ;
+the mutex will be released during inter-CPU cross-calls (see
+.Xr xcall 9 ) and while waiting on the condvar
+.Ar cv .
+The same
+.Ar cv
+and
+.Ar mtx
+must be used with
+.Fn localcount_release .
+.Pp
+The caller must guarantee that no new references can be acquired with
+localcount_acquire before calling
+.Fn localcount_drain .
+For example, any object that may be found in a list and acquired must be
+removed from the list before calling
+.Fn localcount_drain .
+Once the localcount object
+.Ar lc
+is passed to
+.Fn localcount_drain ,
+it must be passed to
+.Fn localcount_fini
+before any other re-use.
+.Sh CODE REFERENCES
+The core of the localcount implementation is in
+.Pa sys/kern/subr_localcount.c .
+.Pp
+The header file
+.Pa sys/sys/localcount.h
+describes the public interface, and interfaces that machine-dependent
+code must provide to support localcounts.
+.Sh SEE ALSO
+.Xr atomic_ops 3 ,
+.Xr condvar 9 ,
+.Xr mutex 9 ,
+and
+.Xr psref 9
+.Sh HISTORY
+The localcount primitives first appeared in
+.Nx 8.0 .
+.Sh AUTHORS
+This implementation of
+.Nm
+was written by
+.An Taylor R. Campbell .
