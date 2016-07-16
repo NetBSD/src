@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.149 2016/06/19 09:35:06 bouyer Exp $ */
+/* $NetBSD: device.h,v 1.149.2.1 2016/07/16 02:13:08 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -188,6 +188,7 @@ struct device {
 	    *dv_driver_suspensors[DEVICE_SUSPENSORS_MAX],
 	    *dv_class_suspensors[DEVICE_SUSPENSORS_MAX];
 	struct device_garbage dv_garbage;
+	struct localcount *dv_localcnt;	/* reference counter */
 };
 
 /* dv_flags */
@@ -489,6 +490,8 @@ void	config_twiddle_fn(void *);
 void	null_childdetached(device_t, device_t);
 
 device_t	device_lookup(cfdriver_t, int);
+device_t	device_lookup_acquire(cfdriver_t, int);
+void		device_release(device_t);
 void		*device_lookup_private(cfdriver_t, int);
 void		device_register(device_t, void *);
 void		device_register_post_config(device_t, void *);
