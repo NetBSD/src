@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.60 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.61 2016/07/16 12:58:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.60 2016/07/03 14:24:58 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.61 2016/07/16 12:58:11 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -794,7 +794,7 @@ pthread__mutex_deferwake(pthread_t self, pthread_mutex_t *ptm)
 }
 
 int
-pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int*ceil) 
+pthread_mutex_getprioceiling(const pthread_mutex_t *ptm, int *ceil) 
 {
 	*ceil = (unsigned int)ptm->ptm_ceiling;
 	return 0;
