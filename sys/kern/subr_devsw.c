@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.1 2016/07/16 07:54:13 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.2 2016/07/16 22:35:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.1 2016/07/16 07:54:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.2 2016/07/16 22:35:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -85,8 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.1 2016/07/16 07:54:13 pgoyette
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/sdt.h>
+#include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/localcount.h>
+#include <sys/pserialize.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -139,6 +141,13 @@ devsw_attach(const char *devname,
 
 	mutex_enter(&device_lock);
 
+	if (bdev != NULL) {
+		KASSERT(bdev->d_localcount != NULL);
+		KASSERT(bdev->d_localcount != cdev->d_localcount);
+	}
+	if (cdev != NULL)
+		KASSERT(cdev->d_localcount != NULL);
+
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
 		if (conv->d_name == NULL || strcmp(devname, conv->d_name) != 0)
@@ -164,13 +173,14 @@ devsw_attach(const char *devname,
 			goto fail;
 		}
 
+		/* use membar_producer() to ensure visibility of the xdevsw */
 		if (bdev != NULL) {
-			KASSERT(bdev->d_localcount != NULL);
 			localcount_init(bdev->d_localcount);
+			membar_producer();
 			bdevsw[*bmajor] = bdev;
 		}
-		KASSERT(cdev->d_localcount != NULL);
 		localcount_init(cdev->d_localcount);
+		membar_producer();
 		cdevsw[*cmajor] = cdev;
 
 		mutex_exit(&device_lock);
@@ -278,6 +288,9 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	if (bdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	/* ensure visibility of the bdevsw */
+	membar_producer();
+
 	bdevsw[*devmajor] = devsw;
 	KASSERT(devsw->d_localcount != NULL);
 	localcount_init(devsw->d_localcount);
@@ -327,6 +340,9 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
+	/* ensure visibility of the bdevsw */
+	membar_producer();
+
 	cdevsw[*devmajor] = devsw;
 	KASSERT(devsw->d_localcount != NULL);
 	localcount_init(devsw->d_localcount);
@@ -335,16 +351,15 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 }
 
 /*
- * First, look up both bdev and cdev indices, and confirm that the
- * localcount pointer(s) exist.  Then drain any existing references,
- * deactivate the localcount(s).  Finally, remove the {b,c}devsw[]
- * entries.
+ * First, look up both bdev and cdev indices, and remove the
+ * {b,c]devsw[] entries so no new references can be taken.  Then
+ * drain any existing references.
  */
 
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int i, j;
+	int i, j, s;
 
 	KASSERT(mutex_owned(&device_lock));
 
@@ -370,24 +385,21 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 			break;
 		}
 	}
-	if (i < max_bdevsws) {
+	if (i < max_bdevsws)
+		bdevsw[i] = NULL;
+	if (j < max_cdevsws )
+		cdevsw[j] = NULL;
+
+	s = pserialize_read_enter();
+	if (i < max_bdevsws && bdev->d_localcount != NULL) {
 		localcount_drain(bdev->d_localcount, &device_cv, &device_lock);
 		localcount_fini(bdev->d_localcount);
-		bdevsw[i] = NULL;
 	}
-	if (j < max_cdevsws ) {
-		/*
-		 * Take care not to drain/fini the d_localcount if the same
-		 * one was used for both cdev and bdev!
-		 */
-		if (i >= max_bdevsws ||
-		    bdev->d_localcount != cdev->d_localcount) {
-			localcount_drain(cdev->d_localcount, &device_cv,
-			    &device_lock);
-			localcount_fini(cdev->d_localcount);
-		}
-		cdevsw[j] = NULL;
+	if (j < max_cdevsws && cdev->d_localcount != NULL ) {
+		localcount_drain(cdev->d_localcount, &device_cv, &device_lock);
+		localcount_fini(cdev->d_localcount);
 	}
+	pserialize_read_exit(s);
 }
 
 int
@@ -423,6 +435,8 @@ const struct bdevsw *
 bdevsw_lookup_acquire(dev_t dev)
 {
 	devmajor_t bmajor;
+	const struct bdevsw *bdev = NULL;
+	int s;
 
 	if (dev == NODEV)
 		return (NULL);
@@ -430,20 +444,35 @@ bdevsw_lookup_acquire(dev_t dev)
 	if (bmajor < 0 || bmajor >= max_bdevsws)
 		return (NULL);
 
+	/* Prevent any concurrent attempts to detach the device */
+	mutex_enter(&device_lock);
+
+	/* Start a read transaction to block localcount_drain() */
+	s = pserialize_read_enter();
+
+	/* Get the struct bdevsw pointer */
+	bdev = bdevsw[bmajor];
+	if (bdev == NULL)
+		goto out;
+
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
+	/* If the devsw is not statically linked, acquire a reference */
 	if (bdevsw[bmajor]->d_localcount != NULL)
 		localcount_acquire(bdevsw[bmajor]->d_localcount);
 
-	return (bdevsw[bmajor]);
+out:	pserialize_read_exit(s);
+	mutex_exit(&device_lock);
+
+	return bdev;
 }
 
 void
 bdevsw_release(const struct bdevsw *bd)
 {
-	devmajor_t bmaj;
 
-	bmaj = bdevsw_lookup_major(bd);
-
-	KASSERTMSG(bmaj != NODEVMAJOR, "%s: no bmajor to release!", __func__);
+	KASSERT(bd != NULL);
 	if (bd->d_localcount != NULL)
 		localcount_release(bd->d_localcount, &device_cv, &device_lock);
 }
@@ -471,6 +500,8 @@ const struct cdevsw *
 cdevsw_lookup_acquire(dev_t dev)
 {
 	devmajor_t cmajor;
+	const struct cdevsw *cdev = NULL;
+	int s;
 
 	if (dev == NODEV)
 		return (NULL);
@@ -478,20 +509,35 @@ cdevsw_lookup_acquire(dev_t dev)
 	if (cmajor < 0 || cmajor >= max_cdevsws)
 		return (NULL);
 
+	/* Prevent any concurrent attempts to detach the device */
+	mutex_enter(&device_lock);
+
+	/* Start a read transaction to block localcount_drain() */
+	s = pserialize_read_enter();
+
+	/* Get the struct bdevsw pointer */
+	cdev = cdevsw[cmajor];
+	if (cdev == NULL)
+		goto out;
+
+	/* Wait for the content of the struct bdevsw to become visible */
+	membar_datadep_consumer();
+
+	/* If the devsw is not statically linked, acquire a reference */
 	if (cdevsw[cmajor]->d_localcount != NULL)
 		localcount_acquire(cdevsw[cmajor]->d_localcount);
 
-	return (cdevsw[cmajor]);
+out:	pserialize_read_exit(s);
+	mutex_exit(&device_lock);
+
+	return cdev;
 }
 
 void
 cdevsw_release(const struct cdevsw *cd)
 {
-	devmajor_t cmaj;
 
-	cmaj = cdevsw_lookup_major(cd);
-
-	KASSERTMSG(cmaj != NODEVMAJOR, "%s: no cmajor to release!", __func__);
+	KASSERT(cd != NULL);
 	if (cd->d_localcount != NULL)
 		localcount_release(cd->d_localcount, &device_cv, &device_lock);
 }
