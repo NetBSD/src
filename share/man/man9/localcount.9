@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.1.2.2 2016/07/16 23:13:59 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.1.2.3 2016/07/16 23:28:37 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016
 .\" All rights reserved.
@@ -86,36 +86,42 @@ xyzioctl(IOC_READ_A_CPU_REG).
 .Bl -tag -width abcd
 .It Fn localcount_init "lc"
 .Pp
-Dynamically initialize a localcount for use.
+Dynamically initialize localcount
+.Ar lc
+for use.
 .Pp
 No other operations can be performed on a localcount until it has been
 initialized.
 .It Fn localcount_fini "lc"
 .Pp
-Release resources used by a localcount.
+Release resources used by localcount
+.Ar lc .
 The caller must have already called
-.fn localcount_drain .
+.Fn localcount_drain .
 The localcount may not be used after
 .Fn localcount_fini
 has been called until it has been re-initialized by
 .Fn localcount_init .
 .It Fn localcount_acquire "lc"
 .Pp
-Acquire a reference to the localcount.
+Acquire a reference to the localcount
+.Ar lc .
 .It Fn localcount_release "lc" "cv" "mtx"
 .Pp
-Release a reference to the localcount.
-Must be called with the mutex
+Release a reference to the localcount
+.Ar lc .
+If the localcount is currently being drained, the mutex
 .Ar mtx
-locked.
-If the localcount is being drained, and the reference count goes to zero,
-.Fn localcout_release
+will be used to synchronize updates to the global reference count (i.e.
+the total across all CPUs).
+If the reference count goes to zero,
+.Fn localcount_release
 will broadcast availability of the condvar
 .Ar cv .
 .It Fn localcount_drain "lc" "cv" "mtx"
 .Pp
-Wait for all references to the
-.Nm
+Wait for all references to the localcount
+.Ar lc
 to be released.
 The caller must hold the mutex
 .Ar mtx ;
