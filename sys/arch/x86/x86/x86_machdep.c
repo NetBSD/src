@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.72 2016/07/16 17:02:34 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.73 2016/07/16 17:13:25 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.72 2016/07/16 17:02:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.73 2016/07/16 17:13:25 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -459,12 +459,51 @@ x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 #define KBTOB(x)	((size_t)(x) * 1024UL)
 #define MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
+static struct {
+	int freelist;
+	uint64_t limit;
+} x86_freelists[VM_NFREELIST] = {
+	{ VM_FREELIST_DEFAULT, 0 },
+#ifdef VM_FREELIST_FIRST1T
+	/* 40-bit addresses needed for modern graphics. */
+	{ VM_FREELIST_FIRST1T,	1ULL * 1024 * 1024 * 1024 * 1024 },
+#endif
+#ifdef VM_FREELIST_FIRST64G
+	/* 36-bit addresses needed for oldish graphics. */
+	{ VM_FREELIST_FIRST64G, 64ULL * 1024 * 1024 * 1024 },
+#endif
+#ifdef VM_FREELIST_FIRST4G
+	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics. */
+	{ VM_FREELIST_FIRST4G,  4ULL * 1024 * 1024 * 1024 },
+#endif
+	/* 30-bit addresses needed for ancient graphics. */
+	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
+	/* 24-bit addresses needed for ISA DMA. */
+	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
+};
+
 extern paddr_t avail_start, avail_end;
 
+int
+x86_select_freelist(uint64_t maxaddr)
+{
+	unsigned int i;
+
+	if (avail_end <= maxaddr)
+		return VM_NFREELIST;
+
+	for (i = 0; i < __arraycount(x86_freelists); i++) {
+		if ((x86_freelists[i].limit - 1) <= maxaddr)
+			return x86_freelists[i].freelist;
+	}
+
+	panic("no freelist for maximum address %"PRIx64, maxaddr);
+}
+
 static int
-add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
-	struct extent *iomem_ex,
-	uint64_t seg_start, uint64_t seg_end, uint32_t type)
+x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
+    struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
+    uint32_t type)
 {
 	uint64_t new_physmem = 0;
 	phys_ram_seg_t *cluster;
@@ -483,15 +522,12 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	if (seg_end > TOPLIMIT) {
 		aprint_verbose("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
-		    seg_start,
-		    (seg_end - seg_start),
-		    type);
+		    seg_start, (seg_end - seg_start), type);
 		return seg_cluster_cnt;
 	}
 
 	/*
-	 * XXX Chop the last page off the size so that
-	 * XXX it can fit in avail_end.
+	 * XXX: Chop the last page off the size so that it can fit in avail_end.
 	 */
 	if (seg_end == TOPLIMIT)
 		seg_end -= PAGE_SIZE;
@@ -501,9 +537,8 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 
 	for (i = 0; i < seg_cluster_cnt; i++) {
 		cluster = &seg_clusters[i];
-		if ((cluster->start == round_page(seg_start))
-		    && (cluster->size == trunc_page(seg_end) - cluster->start))
-		{
+		if ((cluster->start == round_page(seg_start)) &&
+		    (cluster->size == trunc_page(seg_end) - cluster->start)) {
 #ifdef DEBUG_MEMLOAD
 			printf("WARNING: skipping duplicate segment entry\n");
 #endif
@@ -512,9 +547,8 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	}
 
 	/*
-	 * Allocate the physical addresses used by RAM
-	 * from the iomem extent map.  This is done before
-	 * the addresses are page rounded just to make
+	 * Allocate the physical addresses used by RAM from the iomem extent
+	 * map. This is done before the addresses are page rounded just to make
 	 * sure we get them all.
 	 */
 	if (seg_start < 0x100000000ULL) {
@@ -589,7 +623,7 @@ add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 }
 
 static int
-initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
+x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
@@ -602,6 +636,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 #ifdef DEBUG_MEMLOAD
 	printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
+
 	for (x = 0; x < bim->num; x++) {
 		addr = bim->entry[x].addr;
 		size = bim->entry[x].size;
@@ -611,9 +646,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 			addr, size, type);
 #endif
 
-		/*
-		 * If the segment is not memory, skip it.
-		 */
+		/* If the segment is not memory, skip it. */
 		switch (type) {
 		case BIM_Memory:
 		case BIM_ACPI:
@@ -623,60 +656,58 @@ initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 			continue;
 		}
 
-		/*
-		 * If the segment is smaller than a page, skip it.
-		 */
-		if (size < NBPG)
+		/* If the segment is smaller than a page, skip it. */
+		if (size < PAGE_SIZE)
 			continue;
 
 		seg_start = addr;
 		seg_end = addr + size;
 
 		/*
-		 *   Avoid Compatibility Holes.
-		 * XXX Holes within memory space that allow access
-		 * XXX to be directed to the PC-compatible frame buffer
-		 * XXX (0xa0000-0xbffff), to adapter ROM space
-		 * XXX (0xc0000-0xdffff), and to system BIOS space
-		 * XXX (0xe0000-0xfffff).
-		 * XXX Some laptop(for example,Toshiba Satellite2550X)
-		 * XXX report this area and occurred problems,
-		 * XXX so we avoid this area.
+		 * XXX XXX: Avoid compatibility holes.
+		 *
+		 * Holes within memory space that allow access to be directed
+		 * to the PC-compatible frame buffer (0xa0000-0xbffff), to
+		 * adapter ROM space (0xc0000-0xdffff), and to system BIOS
+		 * space (0xe0000-0xfffff).
+		 * 
+		 * Some laptop (for example, Toshiba Satellite2550X) report
+		 * this area and occurred problems, so we avoid this area.
 		 */
 		if (seg_start < 0x100000 && seg_end > 0xa0000) {
 			printf("WARNING: memory map entry overlaps "
 			    "with ``Compatibility Holes'': "
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				seg_start, 0xa0000, type);
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				0x100000, seg_end, type);
-		} else
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				seg_start, seg_end, type);
+
+			mem_cluster_cnt = x86_add_cluster(mem_clusters,
+			    mem_cluster_cnt, iomem_ex, seg_start, 0xa0000,
+			    type);
+			mem_cluster_cnt = x86_add_cluster(mem_clusters,
+			    mem_cluster_cnt, iomem_ex, 0x100000, seg_end,
+			    type);
+		} else {
+			mem_cluster_cnt = x86_add_cluster(mem_clusters,
+			    mem_cluster_cnt, iomem_ex, seg_start, seg_end,
+			    type);
+		}
 	}
 
 	return 0;
 }
 
 static int
-initx86_fake_memmap(struct extent *iomem_ex)
+x86_fake_clusters(struct extent *iomem_ex)
 {
 	phys_ram_seg_t *cluster;
 	KASSERT(mem_cluster_cnt == 0);
 
 	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map. This is done before the addresses are
-	 * page rounded just to make sure we get them all.
+	 * Allocate the physical addresses used by RAM from the iomem extent
+	 * map. This is done before the addresses are page rounded just to make
+	 * sure we get them all.
 	 */
-	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
-	    EX_NOWAIT))
-	{
+	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem), EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
 		    "IOMEM EXTENT MAP!\n");
@@ -688,8 +719,7 @@ initx86_fake_memmap(struct extent *iomem_ex)
 	physmem += atop(cluster->size);
 
 	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-	    EX_NOWAIT))
-	{
+	    EX_NOWAIT)) {
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
 		    "IOMEM EXTENT MAP!\n");
@@ -710,13 +740,12 @@ initx86_fake_memmap(struct extent *iomem_ex)
 	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
 		char pbuf[9];
 
-		format_bytes(pbuf, sizeof(pbuf),
-		    biosextmem - (15*1024));
-		printf("Warning: ignoring %s of remapped memory\n",
-		    pbuf);
+		format_bytes(pbuf, sizeof(pbuf), biosextmem - (15*1024));
+		printf("Warning: ignoring %s of remapped memory\n", pbuf);
 		biosextmem = (15*1024);
 	}
 #endif
+
 	cluster = &mem_clusters[1];
 	cluster->start = IOM_END;
 	cluster->size = trunc_page(KBTOB(biosextmem));
@@ -729,53 +758,9 @@ initx86_fake_memmap(struct extent *iomem_ex)
 	return 0;
 }
 
-#ifdef amd64
-extern vaddr_t kern_end;
-extern vaddr_t module_start, module_end;
-#endif
-
-static struct {
-	int freelist;
-	uint64_t limit;
-} x86_freelists[VM_NFREELIST] = {
-	{ VM_FREELIST_DEFAULT, 0 },
-#ifdef VM_FREELIST_FIRST1T
-	/* 40-bit addresses needed for modern graphics. */
-	{ VM_FREELIST_FIRST1T,	1ULL * 1024 * 1024 * 1024 * 1024 },
-#endif
-#ifdef VM_FREELIST_FIRST64G
-	/* 36-bit addresses needed for oldish graphics. */
-	{ VM_FREELIST_FIRST64G, 64ULL * 1024 * 1024 * 1024 },
-#endif
-#ifdef VM_FREELIST_FIRST4G
-	/* 32-bit addresses needed for PCI 32-bit DMA and old graphics. */
-	{ VM_FREELIST_FIRST4G,  4ULL * 1024 * 1024 * 1024 },
-#endif
-	/* 30-bit addresses needed for ancient graphics. */
-	{ VM_FREELIST_FIRST1G,	1ULL * 1024 * 1024 * 1024 },
-	/* 24-bit addresses needed for ISA DMA. */
-	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
-};
-
-int
-x86_select_freelist(uint64_t maxaddr)
-{
-	unsigned int i;
-
-	if (avail_end <= maxaddr)
-		return VM_NFREELIST;
-
-	for (i = 0; i < __arraycount(x86_freelists); i++) {
-		if ((x86_freelists[i].limit - 1) <= maxaddr)
-			return x86_freelists[i].freelist;
-	}
-
-	panic("no freelist for maximum address %"PRIx64, maxaddr);
-}
-
 /*
- * Load the physical memory region from seg_start to seg_end into the VM
- * system.
+ * x86_load_region: load the physical memory region from seg_start to seg_end
+ * into the VM system.
  */
 static void
 x86_load_region(uint64_t seg_start, uint64_t seg_end)
@@ -831,15 +816,16 @@ init_x86_clusters(void)
 	 * the boot program).
 	 */
 #ifdef i386
+	extern int biosmem_implicit;
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
 	    bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
+		x86_parse_clusters(bim, iomem_ex);
 #else
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
+		x86_parse_clusters(bim, iomem_ex);
 #else
 	(void)bim, (void)iomem_ex;
 #endif
@@ -847,20 +833,20 @@ init_x86_clusters(void)
 
 	if (mem_cluster_cnt == 0) {
 		/*
-		 * If initx86_parse_memmap didn't find any valid segment, create
+		 * If x86_parse_clusters didn't find any valid segment, create
 		 * fake clusters.
 		 */
-		initx86_fake_memmap(iomem_ex);
+		x86_fake_clusters(iomem_ex);
 	}
 }
 
 /*
  * init_x86_vm: initialize the VM system on x86. We basically internalize as
  * many physical pages as we can, starting at avail_start, but we don't
- * internalize the kernel physical pages (from IOM_END to first_avail).
+ * internalize the kernel physical pages (from IOM_END to pa_kend).
  */
 int
-init_x86_vm(paddr_t first_avail)
+init_x86_vm(paddr_t pa_kend)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
@@ -873,10 +859,13 @@ init_x86_vm(paddr_t first_avail)
 	}
 
 	/* Make sure the end of the space used by the kernel is rounded. */
-	first_avail = round_page(first_avail);
+	pa_kend = round_page(pa_kend);
 
 #ifdef amd64
-	kern_end = KERNBASE + first_avail;
+	extern vaddr_t kern_end;
+	extern vaddr_t module_start, module_end;
+
+	kern_end = KERNBASE + pa_kend;
 	module_start = kern_end;
 	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 #endif
@@ -912,8 +901,8 @@ init_x86_vm(paddr_t first_avail)
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
 		 */
-		if (seg_start <= IOM_END && first_avail <= seg_end) {
-			seg_start1 = first_avail;
+		if (seg_start <= IOM_END && pa_kend <= seg_end) {
+			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
 			seg_end = IOM_END;
 			KASSERT(seg_end < seg_end1);
