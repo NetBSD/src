@@ -1,4 +1,4 @@
-.\"	$NetBSD: localcount.9,v 1.1.2.1 2016/07/16 09:36:57 pgoyette Exp $
+.\"	$NetBSD: localcount.9,v 1.1.2.2 2016/07/16 23:13:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 2016
 .\" All rights reserved.
@@ -74,6 +74,14 @@ more than
 .Xr atomic_ops 3
 and almost always more than
 .Xr psref 9 .
+.Pp
+As a rough heuristic,
+.Nm
+should be used for classes of objects of which there are maybe a few dozen
+instances but not a few thousand instances (e.g. autoconf devices, but not
+network flows) and on which there may be a mixture of long-term I/O waits,
+such as xyzread for a device xyz(4), and short-term fast operations, such as
+xyzioctl(IOC_READ_A_CPU_REG).
 .Sh FUNCTIONS
 .Bl -tag -width abcd
 .It Fn localcount_init "lc"
