@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.146 2016/01/17 23:16:46 christos Exp $	*/
+/*	$NetBSD: conf.h,v 1.146.2.1 2016/07/16 07:54:13 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,6 +67,8 @@ struct vnode;
 /*
  * Block device switch table
  */
+struct localcount;
+
 struct bdevsw {
 	int		(*d_open)(dev_t, int, int, struct lwp *);
 	int		(*d_close)(dev_t, int, int, struct lwp *);
@@ -76,6 +78,7 @@ struct bdevsw {
 	int		(*d_psize)(dev_t);
 	int		(*d_discard)(dev_t, off_t, off_t);
 	int		d_flag;
+	struct localcount *d_localcount;
 };
 
 /*
@@ -94,6 +97,7 @@ struct cdevsw {
 	int		(*d_kqfilter)(dev_t, struct knote *);
 	int		(*d_discard)(dev_t, off_t, off_t);
 	int		d_flag;
+	struct localcount *d_localcount;
 };
 
 #ifdef _KERNEL
@@ -106,6 +110,11 @@ int devsw_attach(const char *, const struct bdevsw *, devmajor_t *,
 int devsw_detach(const struct bdevsw *, const struct cdevsw *);
 const struct bdevsw *bdevsw_lookup(dev_t);
 const struct cdevsw *cdevsw_lookup(dev_t);
+const struct bdevsw *bdevsw_lookup_acquire(dev_t);
+const struct cdevsw *cdevsw_lookup_acquire(dev_t);
+void bdevsw_release(const struct bdevsw *);
+void cdevsw_release(const struct cdevsw *);
+
 devmajor_t bdevsw_lookup_major(const struct bdevsw *);
 devmajor_t cdevsw_lookup_major(const struct cdevsw *);
 
