@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.70 2016/01/28 06:52:55 jnemeth Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.71 2016/07/16 14:51:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70 2016/01/28 06:52:55 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.71 2016/07/16 14:51:45 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -773,6 +773,49 @@ x86_select_freelist(uint64_t maxaddr)
 	panic("no freelist for maximum address %"PRIx64, maxaddr);
 }
 
+/*
+ * Load the physical memory region from seg_start to seg_end into the VM
+ * system.
+ */
+static void
+x86_load_region(uint64_t seg_start, uint64_t seg_end)
+{
+	unsigned int i;
+	uint64_t tmp;
+
+	i = __arraycount(x86_freelists);
+	while (i--) {
+		if (x86_freelists[i].limit <= seg_start)
+			continue;
+		if (x86_freelists[i].freelist == VM_FREELIST_DEFAULT)
+			continue;
+		tmp = MIN(x86_freelists[i].limit, seg_end);
+		if (tmp == seg_start)
+			continue;
+
+#ifdef DEBUG_MEMLOAD
+		printf("loading freelist %d 0x%"PRIx64"-0x%"PRIx64
+		    " (0x%"PRIx64"-0x%"PRIx64")\n", x86_freelists[i].freelist,
+		    seg_start, tmp, (uint64_t)atop(seg_start),
+		    (uint64_t)atop(tmp));
+#endif
+
+		uvm_page_physload(atop(seg_start), atop(tmp), atop(seg_start),
+		    atop(tmp), x86_freelists[i].freelist);
+		seg_start = tmp;
+	}
+
+	if (seg_start != seg_end) {
+#ifdef DEBUG_MEMLOAD
+		printf("loading default 0x%"PRIx64"-0x%"PRIx64
+		    " (0x%"PRIx64"-0x%"PRIx64")\n", seg_start, seg_end,
+		    (uint64_t)atop(seg_start), (uint64_t)atop(seg_end));
+#endif
+		uvm_page_physload(atop(seg_start), atop(seg_end),
+		    atop(seg_start), atop(seg_end), VM_FREELIST_DEFAULT);
+	}
+}
+
 int
 initx86_load_memmap(paddr_t first_avail)
 {
@@ -796,11 +839,11 @@ initx86_load_memmap(paddr_t first_avail)
 #endif
 
 	/*
-	 * Now, load the memory clusters (which have already been
-	 * rounded and truncated) into the VM system.
+	 * Now, load the memory clusters (which have already been rounded and
+	 * truncated) into the VM system.
 	 *
-	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
-	 * IS LOADED AT IOM_END (1M).
+	 * NOTE: we assume that memory starts at 0 and that the kernel is
+	 * loaded at IOM_END (1MB).
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		const phys_ram_seg_t *cluster = &mem_clusters[x];
@@ -810,13 +853,11 @@ initx86_load_memmap(paddr_t first_avail)
 		seg_start1 = 0;
 		seg_end1 = 0;
 
-		/*
-		 * Skip memory before our available starting point.
-		 */
+		/* Skip memory before our available starting point. */
 		if (seg_end <= avail_start)
 			continue;
 
-		if (avail_start >= seg_start && avail_start < seg_end) {
+		if (seg_start <= avail_start && avail_start < seg_end) {
 			if (seg_start != 0)
 				panic("init_x86_64: memory doesn't start at 0");
 			seg_start = avail_start;
@@ -825,8 +866,8 @@ initx86_load_memmap(paddr_t first_avail)
 		}
 
 		/*
-		 * If this segment contains the kernel, split it
-		 * in two, around the kernel.
+		 * If this segment contains the kernel, split it in two, around
+		 * the kernel.
 		 */
 		if (seg_start <= IOM_END && first_avail <= seg_end) {
 			seg_start1 = first_avail;
@@ -837,92 +878,19 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			i = __arraycount(x86_freelists);
-			while (i--) {
-				uint64_t tmp;
-
-				if (x86_freelists[i].limit <= seg_start)
-					continue;
-				if (x86_freelists[i].freelist ==
-				    VM_FREELIST_DEFAULT)
-					continue;
-				tmp = MIN(x86_freelists[i].limit, seg_end);
-				if (tmp == seg_start)
-					continue;
-#ifdef DEBUG_MEMLOAD
-				printf("loading freelist %d"
-				    " 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    x86_freelists[i].freelist, seg_start, tmp,
-				    (uint64_t)atop(seg_start),
-				    (uint64_t)atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start), atop(tmp),
-				    atop(seg_start), atop(tmp),
-				    x86_freelists[i].freelist);
-				seg_start = tmp;
-			}
-
-			if (seg_start != seg_end) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    seg_start, seg_end,
-				    (uint64_t)atop(seg_start),
-				    (uint64_t)atop(seg_end));
-#endif
-				uvm_page_physload(atop(seg_start),
-				    atop(seg_end), atop(seg_start),
-				    atop(seg_end), VM_FREELIST_DEFAULT);
-			}
+			x86_load_region(seg_start, seg_end);
 		}
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			i = __arraycount(x86_freelists);
-			while (i--) {
-				uint64_t tmp;
-
-				if (x86_freelists[i].limit <= seg_start1)
-					continue;
-				if (x86_freelists[i].freelist ==
-				    VM_FREELIST_DEFAULT)
-					continue;
-				tmp = MIN(x86_freelists[i].limit, seg_end1);
-				if (tmp == seg_start1)
-					continue;
-#ifdef DEBUG_MEMLOAD
-				printf("loading freelist %u"
-				    " 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    x86_freelists[i].freelist, seg_start1, tmp,
-				    (uint64_t)atop(seg_start1),
-				    (uint64_t)atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start1), atop(tmp),
-				    atop(seg_start1), atop(tmp),
-				    x86_freelists[i].freelist);
-				seg_start1 = tmp;
-			}
-
-			if (seg_start1 != seg_end1) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    seg_start1, seg_end1,
-				    (uint64_t)atop(seg_start1),
-				    (uint64_t)atop(seg_end1));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(seg_end1), atop(seg_start1),
-				    atop(seg_end1), VM_FREELIST_DEFAULT);
-			}
+			x86_load_region(seg_start1, seg_end1);
 		}
 	}
 
 	return 0;
 }
-#endif
+
+#endif /* !XEN */
 
 void
 x86_reset(void)
