@@ -134,6 +134,7 @@
 #include <sys/vmem.h>
 #include <sys/module.h>
 #include <sys/cpu.h>
+#include <sys/localcount.h>
 #include <netinet/in.h>
 #include "dtrace_cddl.h"
 #include "dtrace_debug.c"
@@ -15337,10 +15338,23 @@ static dev_type_open(dtrace_open);
 
 /* Pseudo Device Entry points */
 /* Just opens, clones to the fileops below */
+
+struct localcount dtrace_localcount;
+
 const struct cdevsw dtrace_cdevsw = {
-	dtrace_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
-	D_OTHER | D_MPSAFE, NULL
+	.d_open		= dtrace_open,
+	.d_close	= noclose,
+	.d_read		= noread,
+	.d_write	= nowrite,
+	.d_ioctl	= noioctl,
+	.d_stop		= nostop,
+	.d_tty		= notty,
+	.d_poll		= nopoll,
+	.d_mmap		= nommap,
+	.d_kqfilter	= nokqfilter,
+	.d_discard	= nodiscard,
+	.d_localcount	= dtrace_localcount,
+	.d_flag		= D_OTHER | D_MPSAFE
 };
 
 static int dtrace_ioctl(struct file *fp, u_long cmd, void *data);

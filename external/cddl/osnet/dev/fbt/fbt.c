@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.18.2.1 2016/07/16 11:27:12 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18.2.2 2016/07/17 05:18:11 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -56,6 +56,7 @@
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <sys/unistd.h>
+#include <sys/localcount.h>
 
 #include <machine/cpu.h>
 #if defined(__i386__) || defined(__amd64__)
@@ -151,10 +152,22 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 #define	FBT_ADDR2NDX(addr)	((((uintptr_t)(addr)) >> 4) & fbt_probetab_mask)
 #define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
+struct localcount fbt_localcount;
+
 static const struct cdevsw fbt_cdevsw = {
-	fbt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
-	D_OTHER, NULL
+	.d_open		= fbt_open,
+	.d_close	= noclose,
+	.d_read		= noread,
+	.d_write	= nowrite,
+	.d_ioctl	= noioctl,
+	.d_stop		= nostop,
+	.d_tty		= notty,
+	.d_poll		= nopoll,
+	.d_mmap		= nommap,
+	.d_kqfilter	= nokqfilter,
+	.d_discard	= nodiscard,
+	.d_localcount	= fbt_localcount,
+	.d_flag		= D_OTHER
 };
 
 static dtrace_pattr_t fbt_attr = {
