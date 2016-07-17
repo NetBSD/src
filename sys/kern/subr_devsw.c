@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.3 2016/07/17 02:37:54 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.4 2016/07/17 05:02:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.3 2016/07/17 02:37:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.4 2016/07/17 05:02:19 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -113,7 +113,7 @@ static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
 kmutex_t	device_lock;
 kcondvar_t	device_cv;
-pserialize_t	device_psz;
+pserialize_t	device_psz = NULL;
 
 void (*biodone_vfs)(buf_t *) = (void *)nullop;
 
@@ -125,7 +125,6 @@ devsw_init(void)
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&device_cv, "devsw");
-	device_psz = pserialize_init();
 }
 
 int
@@ -392,7 +391,12 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	if (j < max_cdevsws )
 		cdevsw[j] = NULL;
 
-	/* We need to wait for all current readers to finish. */
+	/*
+	 * If we haven't already done so, create the serialization
+	 * stucture.  Then wait for all current readers to finish.
+	 */
+	if(__predict_false(device_psz == NULL))
+		device_psz = pserialize_create();
 	pserialize_perform(device_psz);
 
 	/*
@@ -469,6 +473,8 @@ bdevsw_lookup_acquire(dev_t dev)
 		localcount_acquire(bdevsw[bmajor]->d_localcount);
 
 out:	pserialize_read_exit(s);
+
+	return bdev;
 }
 
 void
@@ -512,9 +518,6 @@ cdevsw_lookup_acquire(dev_t dev)
 	if (cmajor < 0 || cmajor >= max_cdevsws)
 		return (NULL);
 
-	/* Prevent any concurrent attempts to detach the device */
-	mutex_enter(&device_lock);
-
 	/* Start a read transaction to block localcount_drain() */
 	s = pserialize_read_enter();
 
@@ -523,7 +526,7 @@ cdevsw_lookup_acquire(dev_t dev)
 	if (cdev == NULL)
 		goto out;
 
-	/* Wait for the content of the struct bdevsw to become visible */
+	/* Wait for the content of the struct cdevsw to become visible */
 	membar_datadep_consumer();
 
 	/* If the devsw is not statically linked, acquire a reference */
