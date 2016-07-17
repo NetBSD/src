@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16.2.1 2016/07/16 11:27:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16.2.2 2016/07/17 05:18:11 pgoyette Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16.2.1 2016/07/16 11:27:12 pgoyette Exp $"
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
+#include <sys/localcount.h>
 #define KDTRACE_HOOKS
 #include <sys/sdt.h>
 
@@ -118,13 +119,25 @@ sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 	return (0);
 }
 
+struct localcount sdt_localcount;
+
 static const struct cdevsw sdt_cdevsw = {
-	sdt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
-	D_OTHER, NULL
+	.d_open		= sdt_open,
+	.d_close	= noclose,
+	.d_read		= noread,
+	.d_write	= nowrite,
+	.d_ioctl	= noioctl,
+	.d_stop		= nostop,
+	.d_tty		= notty,
+	.d_poll		= nopoll,
+	.d_mmap		= nommap,
+	.d_kqfilter	= nokqfilter,
+	.d_discard	= nodiscard,
+	.d_localcount	= sdt_localcount,
+	.d_flag		= D_OTHER
 };
 #endif
-
+ 
 static TAILQ_HEAD(, sdt_provider) sdt_prov_list;
 
 #ifdef __FreeBSD__
