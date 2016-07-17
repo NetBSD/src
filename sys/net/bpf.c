@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $	*/
+/*	$NetBSD: bpf.c,v 1.200 2016/07/17 01:03:46 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.200 2016/07/17 01:03:46 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2112,7 +2112,9 @@ MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");
 static int
 bpf_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t bmajor, cmajor;
+#endif
 	int error;
 
 	bmajor = cmajor = NODEVMAJOR;
@@ -2120,10 +2122,12 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		bpfilterattach(0);
+#ifdef _MODULE
 		error = devsw_attach("bpf", NULL, &bmajor,
 		    &bpf_cdevsw, &cmajor);
 		if (error == EEXIST)
 			error = 0; /* maybe built-in ... improve eventually */
+#endif
 		if (error)
 			break;
 
