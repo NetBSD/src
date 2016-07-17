@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.73 2016/07/16 17:13:25 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.74 2016/07/17 10:46:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.73 2016/07/16 17:13:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.74 2016/07/17 10:46:43 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -501,8 +501,7 @@ x86_select_freelist(uint64_t maxaddr)
 }
 
 static int
-x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
-    struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
+x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
     uint32_t type)
 {
 	uint64_t new_physmem = 0;
@@ -523,7 +522,7 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 		aprint_verbose("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start, (seg_end - seg_start), type);
-		return seg_cluster_cnt;
+		return 0;
 	}
 
 	/*
@@ -533,16 +532,16 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 		seg_end -= PAGE_SIZE;
 
 	if (seg_end <= seg_start)
-		return seg_cluster_cnt;
+		return 0;
 
-	for (i = 0; i < seg_cluster_cnt; i++) {
-		cluster = &seg_clusters[i];
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		cluster = &mem_clusters[i];
 		if ((cluster->start == round_page(seg_start)) &&
 		    (cluster->size == trunc_page(seg_end) - cluster->start)) {
 #ifdef DEBUG_MEMLOAD
 			printf("WARNING: skipping duplicate segment entry\n");
 #endif
-			return seg_cluster_cnt;
+			return 0;
 		}
 	}
 
@@ -566,24 +565,22 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 			    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
 			    "IOMEM EXTENT MAP!\n",
 			    seg_start, seg_end - seg_start, type);
-			return seg_cluster_cnt;
+			return 0;
 		}
 	}
 
-	/*
-	 * If it's not free memory, skip it.
-	 */
+	/* If it's not free memory, skip it. */
 	if (type != BIM_Memory)
-		return seg_cluster_cnt;
+		return 0;
 
-	/* XXX XXX XXX */
-	if (seg_cluster_cnt >= VM_PHYSSEG_MAX)
+	if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
 		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
 			__func__);
+	}
 
 #ifdef PHYSMEM_MAX_ADDR
 	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
-		return seg_cluster_cnt;
+		return 0;
 	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
 		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
 #endif
@@ -592,9 +589,9 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 	seg_end = trunc_page(seg_end);
 
 	if (seg_start == seg_end)
-		return seg_cluster_cnt;
+		return 0;
 
-	cluster = &seg_clusters[seg_cluster_cnt];
+	cluster = &mem_clusters[mem_cluster_cnt];
 	cluster->start = seg_start;
 	if (iomem_ex != NULL)
 		new_physmem = physmem + atop(seg_end - seg_start);
@@ -602,7 +599,7 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 #ifdef PHYSMEM_MAX_SIZE
 	if (iomem_ex != NULL) {
 		if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
-			return seg_cluster_cnt;
+			return 0;
 		if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
 			seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
 			new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
@@ -617,9 +614,9 @@ x86_add_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
 			avail_end = seg_end;
 		physmem = new_physmem;
 	}
-	seg_cluster_cnt++;
+	mem_cluster_cnt++;
 
-	return seg_cluster_cnt;
+	return 0;
 }
 
 static int
@@ -680,16 +677,10 @@ x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
 
-			mem_cluster_cnt = x86_add_cluster(mem_clusters,
-			    mem_cluster_cnt, iomem_ex, seg_start, 0xa0000,
-			    type);
-			mem_cluster_cnt = x86_add_cluster(mem_clusters,
-			    mem_cluster_cnt, iomem_ex, 0x100000, seg_end,
-			    type);
+			x86_add_cluster(iomem_ex, seg_start, 0xa0000, type);
+			x86_add_cluster(iomem_ex, 0x100000, seg_end, type);
 		} else {
-			mem_cluster_cnt = x86_add_cluster(mem_clusters,
-			    mem_cluster_cnt, iomem_ex, seg_start, seg_end,
-			    type);
+			x86_add_cluster(iomem_ex, seg_start, seg_end, type);
 		}
 	}
 
