@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.146.2.1 2016/07/16 07:54:13 pgoyette Exp $	*/
+/*	$NetBSD: conf.h,v 1.146.2.2 2016/07/17 21:39:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -270,6 +270,7 @@ struct devsw_conv {
 };
 
 void devsw_init(void);
+void devsw_detach_init(void);
 const char *devsw_blk2name(devmajor_t);
 const char *cdevsw_getname(devmajor_t);
 const char *bdevsw_getname(devmajor_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.5 2016/07/17 12:09:21 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.6 2016/07/17 21:39:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.5 2016/07/17 12:09:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.6 2016/07/17 21:39:17 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -125,6 +125,13 @@ devsw_init(void)
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&device_cv, "devsw");
+}
+
+void
+devsw_detach_init(void)
+{
+
+	device_psz = pserialize_create();
 }
 
 int
@@ -397,12 +404,7 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	if (j < max_cdevsws )
 		cdevsw[j] = NULL;
 
-	/*
-	 * If we haven't already done so, create the serialization
-	 * stucture.  Then wait for all current readers to finish.
-	 */
-	if(__predict_false(device_psz == NULL))
-		device_psz = pserialize_create();
+	/* Wait for all current readers to finish with the devsw */
 	pserialize_perform(device_psz);
 
 	/*

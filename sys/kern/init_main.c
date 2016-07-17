@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.482 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.482.2.1 2016/07/17 21:39:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.482.2.1 2016/07/17 21:39:17 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -310,6 +310,9 @@ main(void)
 
 	/* Passive serialization. */
 	pserialize_init();
+
+	/* Init the detach capability in devsw */
+	devsw_detach_init();
 
 	/* Initialize the extent manager. */
 	extent_init();
