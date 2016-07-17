@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.200 2016/07/17 01:03:46 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.201 2016/07/17 01:16:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.200 2016/07/17 01:03:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.201 2016/07/17 01:16:30 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2117,12 +2117,12 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 #endif
 	int error;
 
-	bmajor = cmajor = NODEVMAJOR;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		bpfilterattach(0);
 #ifdef _MODULE
+		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach("bpf", NULL, &bmajor,
 		    &bpf_cdevsw, &cmajor);
 		if (error == EEXIST)
