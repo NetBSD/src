@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.46 2016/07/17 00:27:03 pgoyette Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.47 2016/07/17 00:33:28 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.46 2016/07/17 00:27:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.47 2016/07/17 00:33:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,7 +86,6 @@ dev_type_open(nsmb_dev_open);
 dev_type_close(nsmb_dev_close);
 dev_type_ioctl(nsmb_dev_ioctl);
 
-#ifdef _MODULE
 const struct cdevsw nsmb_cdevsw = {
 	.d_open = nsmb_dev_open,
 	.d_close = nsmb_dev_close,
@@ -101,7 +100,7 @@ const struct cdevsw nsmb_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER,
 };
-#endif
+
 
 static bool nsmb_inited = false;
 
