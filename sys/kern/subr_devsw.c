@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.2 2016/07/16 22:35:34 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.3 2016/07/17 02:37:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.2 2016/07/16 22:35:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.3 2016/07/17 02:37:54 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -113,6 +113,7 @@ static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
 kmutex_t	device_lock;
 kcondvar_t	device_cv;
+pserialize_t	device_psz;
 
 void (*biodone_vfs)(buf_t *) = (void *)nullop;
 
@@ -124,6 +125,7 @@ devsw_init(void)
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 	mutex_init(&device_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&device_cv, "devsw");
+	device_psz = pserialize_init();
 }
 
 int
@@ -359,7 +361,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 static void
 devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 {
-	int i, j, s;
+	int i, j;
 
 	KASSERT(mutex_owned(&device_lock));
 
@@ -390,7 +392,15 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	if (j < max_cdevsws )
 		cdevsw[j] = NULL;
 
-	s = pserialize_read_enter();
+	/* We need to wait for all current readers to finish. */
+	pserialize_perform(device_psz);
+
+	/*
+	 * Here, no new readers can reach the bdev and cdev via the
+	 * {b,c}devsw[] arrays.  Wait for existing references to
+	 * drain, and then destroy.
+	 */
+
 	if (i < max_bdevsws && bdev->d_localcount != NULL) {
 		localcount_drain(bdev->d_localcount, &device_cv, &device_lock);
 		localcount_fini(bdev->d_localcount);
@@ -399,7 +409,6 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 		localcount_drain(cdev->d_localcount, &device_cv, &device_lock);
 		localcount_fini(cdev->d_localcount);
 	}
-	pserialize_read_exit(s);
 }
 
 int
@@ -444,9 +453,6 @@ bdevsw_lookup_acquire(dev_t dev)
 	if (bmajor < 0 || bmajor >= max_bdevsws)
 		return (NULL);
 
-	/* Prevent any concurrent attempts to detach the device */
-	mutex_enter(&device_lock);
-
 	/* Start a read transaction to block localcount_drain() */
 	s = pserialize_read_enter();
 
@@ -463,9 +469,6 @@ bdevsw_lookup_acquire(dev_t dev)
 		localcount_acquire(bdevsw[bmajor]->d_localcount);
 
 out:	pserialize_read_exit(s);
-	mutex_exit(&device_lock);
-
-	return bdev;
 }
 
 void
