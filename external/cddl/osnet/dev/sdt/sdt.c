@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16 2016/06/16 06:08:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.17 2016/07/17 02:09:10 pgoyette Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -119,9 +119,18 @@ sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 static const struct cdevsw sdt_cdevsw = {
-	sdt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
-	D_OTHER
+	.d_open		= sdt_open,
+	.d_close	= noclose,
+	.d_read		= noread,
+	.d_write	= nowrite,
+	.d_ioctl	= noioctl,
+	.d_stop		= nostop,
+	.d_tty		= notty,
+	.d_poll		= nopoll,
+	.d_mmap		= nommap,
+	.d_kqfilter	= nokqfilter,
+	.d_discard	= nodiscard,
+	.d_flag		= D_OTHER
 };
 #endif
 
