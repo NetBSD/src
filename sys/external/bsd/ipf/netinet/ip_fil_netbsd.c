@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.16 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.1 2016/07/17 05:05:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.1 2016/07/17 05:05:10 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -56,6 +56,9 @@ static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:
 #if (__NetBSD_Version__ >= 799003000)
 #include <sys/module.h>
 #include <sys/mutex.h>
+#endif
+#if (__NetBSD_Version__ >= 799003300)
+#include <sys/localcount.h>
 #endif
 
 #include <net/if.h>
@@ -137,6 +140,10 @@ static  int     ipfwrite(dev_t, struct uio *, int ioflag);
 static  int     ipfpoll(dev_t, int events, PROC_T *);
 static	void	ipf_timer_func(void *ptr);
 
+#if	defined(_MODULE) && (__NetBSD_Version__ >= 799003300)
+struct localcount ipl_localcount;
+#endif
+
 const struct cdevsw ipl_cdevsw = {
 	.d_open = ipfopen,
 	.d_close = ipfclose,
@@ -150,6 +157,10 @@ const struct cdevsw ipl_cdevsw = {
 #if  (__NetBSD_Version__ >= 200000000)
 	.d_kqfilter = nokqfilter,
 #endif
+#ifdef _MODULE
+	.d_localcount = &ipl_localcount,
+#endif
+
 	.d_discard = nodiscard,
 #ifdef D_OTHER
 	.d_flag = D_OTHER
@@ -2162,7 +2173,9 @@ static int ipl_init(void *);
 static int ipl_fini(void *);
 static int ipl_modcmd(modcmd_t, void *);
 
+#ifdef _MODULE
 static devmajor_t ipl_cmaj = -1, ipl_bmaj = -1;
+#endif
 
 static int
 ipl_modcmd(modcmd_t cmd, void *opaque)
@@ -2198,6 +2211,7 @@ ipl_init(void *opaque)
 	mutex_init(&ipf_ref_mutex, MUTEX_DEFAULT, IPL_NONE);
 	ipf_active = 0;
 
+#ifdef _MODULE
 	/*
 	 * Insert ourself into the cdevsw list.  It's OK if we are
 	 * already there, since this will happen when our module is
@@ -2209,6 +2223,7 @@ ipl_init(void *opaque)
 	error = devsw_attach("ipl", NULL, &ipl_bmaj, &ipl_cdevsw, &ipl_cmaj);
 	if (error == EEXIST)
 		error = 0;
+#endif
 
 	if (error)
 		ipl_fini(opaque);
@@ -2220,7 +2235,9 @@ static int
 ipl_fini(void *opaque)
 {
 
+#ifdef _MODULE
 	(void)devsw_detach(NULL, &ipl_cdevsw);
+#endif
 
 	/*
 	 * Grab the mutex, verify that there are no references
@@ -2230,8 +2247,10 @@ ipl_fini(void *opaque)
 	 */
 	mutex_enter(&ipf_ref_mutex);
 	if (ipf_active != 0 || ipfmain.ipf_running > 0) {
+#ifdef _MODULE
 		(void)devsw_attach("ipl", NULL, &ipl_bmaj,
 		    &ipl_cdevsw, &ipl_cmaj);
+#endif
 		mutex_exit(&ipf_ref_mutex);
 		return EBUSY;
 	}
