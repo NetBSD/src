@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.72 2016/07/17 12:56:12 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.73 2016/07/17 16:44:39 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -372,10 +372,10 @@ VECTOR(MIPSX(tlb_miss), unknown)
 #ifdef _LP64
 	nop					#01: nop
 	PTR_SRL k1, k0, 31			#02: clear useg bits
-	beqz	k1, 1f				#03: k1==0 -> useg address
-	 PTR_SRL k1,k0,2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)+PGSHIFT #04: clear valid bits
+	beqz	k1, 2f				#03: k1==0 -> useg address
+	 PTR_SRL k1,k0,XSEGSHIFT+XSEGLENGTH+2	#04: clear valid bits
 	bnez	k1, MIPSX(nopagetable)		#05: not legal address
-	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #06: k0=seg offset (almost)
+	 PTR_SRL k0, XSEGSHIFT - PTR_SCALESHIFT #06: k0=seg offset (almost)
 	bgez	k0, 1f				#07: k0<0 -> kernel fault
 	 lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#08: k1=hi of segtab
 	PTR_ADDI k1,  1 << PTR_SCALESHIFT	#09: kernel segtab entry
@@ -386,9 +386,13 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0d: k0=bad address (again)
 	PTR_L	k1, 0(k1)			#0e: k1=seg entry
 	b	MIPSX(tlb_miss_common)		#0f
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #10: k0=seg offset (almost)
+#ifdef MIPSNNR2
+	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f: k0=seg index
+#else
+	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f: k0=seg offset (almost)
+#endif
 #endif /* LP64 */
-1: /* handle useg addresses */
+2: /* handle useg addresses */
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#11: k1=hi of seg0tab
 	dsrl	k0, 31				#12: clear low 31 bits
 	bnez	k0, MIPSX(nopagetable)		#13: not legal address
