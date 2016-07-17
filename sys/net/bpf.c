@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $	*/
+/*	$NetBSD: bpf.c,v 1.199.2.1 2016/07/17 05:05:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.1 2016/07/17 05:05:10 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199 2016/06/20 06:46:37 knakahara Exp $");
 #include <sys/module.h>
 #include <sys/once.h>
 #include <sys/atomic.h>
+#include <sys/localcount.h>
 
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -180,6 +181,10 @@ static const struct fileops bpf_fileops = {
 
 dev_type_open(bpfopen);
 
+#ifdef _MODULE
+struct localcount bpf_localcount;
+#endif
+
 const struct cdevsw bpf_cdevsw = {
 	.d_open = bpfopen,
 	.d_close = noclose,
@@ -192,6 +197,9 @@ const struct cdevsw bpf_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &bpf_localcount,
+#endif
 	.d_flag = D_OTHER
 };
 
@@ -2112,18 +2120,19 @@ MODULE(MODULE_CLASS_DRIVER, bpf, "bpf_filter");
 static int
 bpf_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t bmajor, cmajor;
-	int error;
-
-	bmajor = cmajor = NODEVMAJOR;
+#endif
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		bpfilterattach(0);
+#ifdef _MODULE
+		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach("bpf", NULL, &bmajor,
 		    &bpf_cdevsw, &cmajor);
-		if (error == EEXIST)
-			error = 0; /* maybe built-in ... improve eventually */
+#endif
 		if (error)
 			break;
 
