@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.4 2016/07/17 05:02:19 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.5 2016/07/17 12:09:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.4 2016/07/17 05:02:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.5 2016/07/17 12:09:21 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -143,11 +143,15 @@ devsw_attach(const char *devname,
 	mutex_enter(&device_lock);
 
 	if (bdev != NULL) {
-		KASSERT(bdev->d_localcount != NULL);
-		KASSERT(bdev->d_localcount != cdev->d_localcount);
+		KASSERTMSG(bdev->d_localcount != NULL,
+		    "%s: bdev %s has no d_localcount", __func__, devname);
+		KASSERTMSG(bdev->d_localcount != cdev->d_localcount,
+		    "%s: bdev and cdev for %s have same d_localcount",
+		    __func__, devname);
 	}
 	if (cdev != NULL)
-		KASSERT(cdev->d_localcount != NULL);
+		KASSERTMGS(cdev->d_localcount != NULL,
+		    "%s: cdev %s has no d_localcount", __func__, devname);
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
 		conv = &devsw_conv[i];
@@ -272,7 +276,7 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("bdevsw_attach: block majors exhausted");
+		printf("%s: block majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -293,7 +297,8 @@ bdevsw_attach(const struct bdevsw *devsw, devmajor_t *devmajor)
 	membar_producer();
 
 	bdevsw[*devmajor] = devsw;
-	KASSERT(devsw->d_localcount != NULL);
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: bdev for major %d has "
+	    "no localcount", __func__, *devmajor);
 	localcount_init(devsw->d_localcount);
 
 	return (0);
@@ -324,7 +329,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	}
 
 	if (*devmajor >= MAXDEVSW) {
-		printf("cdevsw_attach: character majors exhausted");
+		printf("%s: character majors exhausted", __func__);
 		return (ENOMEM);
 	}
 
@@ -345,7 +350,8 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	membar_producer();
 
 	cdevsw[*devmajor] = devsw;
-	KASSERT(devsw->d_localcount != NULL);
+	KASSERTMSG(devsw->d_localcount != NULL, "%s: cdev for major %d has "
+	    "no localcount", __func__, *devmajor);
 	localcount_init(devsw->d_localcount);
 
 	return (0);
@@ -371,7 +377,7 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 				continue;
 
 			KASSERTMSG(bdev->d_localcount != NULL,
-			    "%s: no bdev localcount", __func__);
+			    "%s: no bdev localcount for major %d", __func__, i);
 			break;
 		}
 	}
@@ -382,7 +388,7 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 				continue;
 
 			KASSERTMSG(cdev->d_localcount != NULL,
-			    "%s: no cdev localcount", __func__);
+			    "%s: no cdev localcount for major %d", __func__, j);
 			break;
 		}
 	}
@@ -400,7 +406,7 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	pserialize_perform(device_psz);
 
 	/*
-	 * Here, no new readers can reach the bdev and cdev via the
+	 * No new readers can reach the bdev and cdev via the
 	 * {b,c}devsw[] arrays.  Wait for existing references to
 	 * drain, and then destroy.
 	 */
