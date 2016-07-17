@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.18 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.19 2016/07/17 13:49:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,10 @@ struct	__pthread_mutex_st {
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad1[3];
 #endif
-	__pthread_spin_t ptm_ceiling;
+	union {
+		unsigned char ptm_ceiling;
+		__pthread_spin_t ptm_unused;
+	};
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad2[3];
 #endif
@@ -131,13 +134,13 @@ struct	__pthread_mutex_st {
 #ifdef __CPU_SIMPLE_LOCK_PAD
 #define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
 				    __SIMPLELOCK_UNLOCKED, { 0, 0, 0 },	\
-				    __SIMPLELOCK_UNLOCKED, { 0, 0, 0 },	\
+				    { 0 }, { 0, 0, 0 },			\
 				    NULL, NULL, 0, NULL			\
 				  }
 #else
 #define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
 				    __SIMPLELOCK_UNLOCKED,		\
-				    __SIMPLELOCK_UNLOCKED,		\
+				    { 0 } ,				\
 				    NULL, NULL, 0, NULL			\
 				  }
 #endif /* __CPU_SIMPLE_LOCK_PAD */
