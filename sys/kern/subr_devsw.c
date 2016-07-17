@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.6 2016/07/17 21:39:17 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.7 2016/07/17 21:40:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.6 2016/07/17 21:39:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.7 2016/07/17 21:40:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -157,7 +157,7 @@ devsw_attach(const char *devname,
 		    __func__, devname);
 	}
 	if (cdev != NULL)
-		KASSERTMGS(cdev->d_localcount != NULL,
+		KASSERTMSG(cdev->d_localcount != NULL,
 		    "%s: cdev %s has no d_localcount", __func__, devname);
 
 	for (i = 0 ; i < max_devsw_convs ; i++) {
