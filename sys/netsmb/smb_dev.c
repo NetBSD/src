@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.44 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.44.2.1 2016/07/17 05:05:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.44 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.44.2.1 2016/07/17 05:05:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.44 2015/08/20 14:40:19 christos Exp $"
 #include <sys/sysctl.h>
 #include <sys/uio.h>
 #include <sys/vnode.h>
+#include <sys/localcount.h>
 
 #include <miscfs/specfs/specdev.h> /* XXX */
 
@@ -86,6 +87,10 @@ dev_type_open(nsmb_dev_open);
 dev_type_close(nsmb_dev_close);
 dev_type_ioctl(nsmb_dev_ioctl);
 
+#ifdef _MODULE
+struct localcount nsmb_localcount;
+#endif
+
 const struct cdevsw nsmb_cdevsw = {
 	.d_open = nsmb_dev_open,
 	.d_close = nsmb_dev_close,
@@ -98,6 +103,9 @@ const struct cdevsw nsmb_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &nsmb_localcount,
+#endif
 	.d_flag = D_OTHER,
 };
 
@@ -372,25 +380,29 @@ MODULE(MODULE_CLASS_DRIVER, nsmb, NULL);
 static int
 nsmb_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+#endif
 	int error = 0;
 
 	switch (cmd) {
 	    case MODULE_CMD_INIT:
 		nsmbattach(1);
+#ifdef _MODULE
 		error =
 		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
-		if (error == EEXIST) /* builtin */
-			error = 0;
+#endif
 		if (error) {
 			nsmbdetach();
 		}
 
 		break;
 	    case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = devsw_detach(NULL, &nsmb_cdevsw);
 		if (error)
 			break;
+#endif
 		nsmbdetach();
 		break;
 	    default:
