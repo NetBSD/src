@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.44 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.45 2016/07/17 00:17:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.44 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.45 2016/07/17 00:17:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -378,19 +378,23 @@ nsmb_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	    case MODULE_CMD_INIT:
 		nsmbattach(1);
+#ifdef _MODULE
 		error =
 		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
 		if (error == EEXIST) /* builtin */
 			error = 0;
+#endif
 		if (error) {
 			nsmbdetach();
 		}
 
 		break;
 	    case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = devsw_detach(NULL, &nsmb_cdevsw);
 		if (error)
 			break;
+#endif
 		nsmbdetach();
 		break;
 	    default:
