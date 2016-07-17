@@ -1,4 +1,4 @@
-.\"	$NetBSD: devsw_attach.9,v 1.2 2015/05/14 13:59:15 wiz Exp $
+.\"	$NetBSD: devsw_attach.9,v 1.2.2.1 2016/07/17 05:48:28 pgoyette Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,16 +27,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 13, 2015
+.Dd July 17, 2016
 .Dt DEVSW_ATTACH 9
 .Os
 .Sh NAME
 .Nm devsw_attach ,
 .Nm devsw_detach ,
 .Nm bdevsw_lookup ,
+.Nm bdevsw_lookup_acquire ,
 .Nm cdevsw_lookup ,
+.Nm cdevsw_lookup_acquire ,
 .Nm bdevsw_lookup_major ,
-.Nm cdevsw_lookup_major
+.Nm cdevsw_lookup_major,
+.Nm bdevsw_release ,
+.Nm cdevsw_release
 .Nd character and block device switch functions
 .Sh SYNOPSIS
 .In sys/conf.h
@@ -57,9 +61,25 @@
 .Fo bdevsw_lookup
 .Fa "dev_t dev"
 .Fc
+.Ft "const struct bdevsw *"
+.Fo bdevsw_lookup_acquire
+.Fa "dev_t dev"
+.Fc
+.Ft "void"
+.Fo bdevsw_release
+.Fa "const struct bdevsw *bdev"
+.Fc
 .Ft "const struct cdevsw *"
 .Fo cdevsw_lookup
 .Fa "dev_t dev"
+.Fc
+.Ft "const struct cdevsw *"
+.Fo cdevsw_lookup_acquire
+.Fa "dev_t dev"
+.Fc
+.Ft "void"
+.Fo cdevsw_release
+.Fa "const struct cdevsw *cdev"
 .Fc
 .Ft devmajor_t
 .Fo bdevsw_lookup_major
@@ -129,17 +149,38 @@ and
 structures.
 .Fn devsw_detach
 should be called before a loaded device driver is unloaded.
+For loadable drivers,
+.Fn devsw_detach
+will wait until the device's reference count is zero (see
+.Fn bdevsw_release
+and
+.Fn cdevsw_release
+below) before returning.
 .Pp
 The
-.Fn bdevsw_lookup
+.Fn bdevsw_lookup ,
+.Fn bdevsw_lookup_acquire ,
+.Fn cdevsw_lookup ,
 and
-.Fn cdevsw_lookup
+.Fn cdevsw_lookup_acquire
 functions return
 .Em "const struct bdevsw *"
 and
 .Em "const struct cdevsw *"
 for the given
 .Em dev .
+The
+.Fn bdevsw_lookup_acquire
+and
+.Fn cdevsw_lookup_acquire
+functions will additionally increment a reference count for loadable
+drivers.
+Callers must invoke
+.Fn bdevsw_release
+or
+.Fn cdevsw_release
+to decrement the reference counter when access to the device is no longer
+needed.
 .Pp
 The
 .Fn bdevsw_lookup_major
@@ -160,9 +201,11 @@ return 0.
 Otherwise they return an error value.
 .Pp
 In case of failure,
-.Fn bdevsw_lookup
+.Fn bdevsw_lookup ,
+.Fn bdevsw_lookup_acquire ,
+.Fn cdevsw_lookup ,
 and
-.Fn cdevsw_lookup
+.Fn cdevsw_lookup_acquire
 return the
 .Dv NULL
 value.
