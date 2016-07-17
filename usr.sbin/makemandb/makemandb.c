@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.40 2016/07/15 19:41:33 christos Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.41 2016/07/17 12:18:12 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.40 2016/07/15 19:41:33 christos Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.41 2016/07/17 12:18:12 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -928,16 +928,18 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 		return;
 	}
 
-	set_machine(roff, rec);
-	set_section(roff, rec);
 	if (roff->macroset == MACROSET_MDOC) {
+		mdoc_validate(roff);
 		rec->page_type = MDOC;
 		proff_node(roff->first->child, rec, mdocs);
 	} else if (roff->macroset == MACROSET_MAN) {
+		man_validate(roff);
 		rec->page_type = MAN;
 		proff_node(roff->first->child, rec, mans);
 	} else
 		warnx("Unknown macroset %d", roff->macroset);
+	set_machine(roff, rec);
+	set_section(roff, rec);
 }
 
 /*
@@ -967,8 +969,8 @@ set_machine(const struct roff_man *rm, mandb_rec *rec)
 	if (rm == NULL)
 		return;
 	const struct roff_meta *rm_meta = &rm->meta;
-	const char *a = rm_meta->arch == NULL ? "?" : rm_meta->arch;
-	rec->machine = estrdup(a);
+	if (rm_meta->arch)
+		rec->machine = estrdup(rm_meta->arch);
 }
 
 /*
