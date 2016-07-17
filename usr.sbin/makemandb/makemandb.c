@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.41 2016/07/17 12:18:12 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.42 2016/07/17 15:56:14 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.41 2016/07/17 12:18:12 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.42 2016/07/17 15:56:14 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -999,41 +999,9 @@ pmdoc_Nm(const struct roff_node *n, mandb_rec *rec)
 static void
 pmdoc_Nd(const struct roff_node *n, mandb_rec *rec)
 {
-	char *buf = NULL;
-	char *name;
-	char *nd_text;
+	if (n->type == ROFFT_BODY)
+		deroff(&rec->name_desc, n);
 
-	if (n == NULL || (n->type != ROFFT_TEXT && n->tok == MDOC_MAX))
-		return;
-
-	if (n->type == ROFFT_TEXT) {
-		if (rec->xr_found && n->next) {
-			/*
-			 * An Xr macro was seen previously, so parse this
-			 * and the next node, as "Name(Section)".
-			 */
-			name = n->string;
-			n = n->next;
-			assert(n->type == ROFFT_TEXT);
-			easprintf(&buf, "%s(%s)", name, n->string);
-			concat(&rec->name_desc, buf);
-			free(buf);
-		} else {
-			nd_text = parse_escape(n->string);
-			concat(&rec->name_desc, nd_text);
-			free(nd_text);
-		}
-		rec->xr_found = 0;
-	} else if (mdocs[n->tok] == pmdoc_Xr) {
-		/* Remember that we have encountered an Xr macro */
-		rec->xr_found = 1;
-	}
-
-	if (n->child)
-		pmdoc_Nd(n->child, rec);
-
-	if(n->next)
-		pmdoc_Nd(n->next, rec);
 }
 
 /*
