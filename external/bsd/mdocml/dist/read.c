@@ -688,12 +688,14 @@ mparse_end(struct mparse *curp)
 	if (curp->man == NULL && curp->sodest == NULL)
 		curp->man = roff_man_alloc(curp->roff, curp, curp->defos,
 		    curp->options & MPARSE_QUICK ? 1 : 0);
-	if (curp->man->macroset == MACROSET_NONE)
-		curp->man->macroset = MACROSET_MAN;
-	if (curp->man->macroset == MACROSET_MDOC)
-		mdoc_endparse(curp->man);
-	else
-		man_endparse(curp->man);
+	if (curp->man != NULL) {
+		if (curp->man->macroset == MACROSET_NONE)
+			curp->man->macroset = MACROSET_MAN;
+		if (curp->man->macroset == MACROSET_MDOC)
+			mdoc_endparse(curp->man);
+		else
+			man_endparse(curp->man);
+	}
 	roff_endparse(curp->roff);
 }
 
