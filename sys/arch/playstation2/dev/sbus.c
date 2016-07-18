@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.14 2016/07/18 22:05:53 maya Exp $	*/
+/*	$NetBSD: sbus.c,v 1.15 2016/07/18 22:07:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.14 2016/07/18 22:05:53 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.15 2016/07/18 22:07:38 maya Exp $");
 
 #include <sys/device.h>
 #include <sys/param.h>
@@ -247,7 +247,7 @@ sbus_spurious_intr(void *arg)
 
 /* SCPH-18000 */
 void
-sbus_type2_pcmcia_intr_clear()
+sbus_type2_pcmcia_intr_clear(void)
 {
 
 	if (_reg_read_2(SBUS_PCMCIA_CSC1_REG16) & 0x080)
@@ -255,21 +255,21 @@ sbus_type2_pcmcia_intr_clear()
 }
 
 void
-sbus_type2_pcmcia_intr_enable()
+sbus_type2_pcmcia_intr_enable(void)
 {
 
 	_reg_write_2(SBUS_PCMCIA_TIMR_REG16, 0);
 }
 
 void
-sbus_type2_pcmcia_intr_disable()
+sbus_type2_pcmcia_intr_disable(void)
 {
 
 	_reg_write_2(SBUS_PCMCIA_TIMR_REG16, 1);
 }
 
 void
-sbus_type2_pcmcia_intr_reinstall()
+sbus_type2_pcmcia_intr_reinstall(void)
 {
 	u_int16_t r = _reg_read_2(SBUS_PCMCIA_TIMR_REG16);
 
@@ -279,27 +279,27 @@ sbus_type2_pcmcia_intr_reinstall()
 
 /* SCPH-30000/35000 */
 void
-sbus_type3_pcmcia_intr_clear()
+sbus_type3_pcmcia_intr_clear(void)
 {
 	/* nothing */
 }
 
 void
-sbus_type3_pcmcia_intr_enable()
+sbus_type3_pcmcia_intr_enable(void)
 {
 
 	_reg_write_2(SBUS_PCMCIA3_TIMR_REG16, 0);
 }
 
 void
-sbus_type3_pcmcia_intr_disable()
+sbus_type3_pcmcia_intr_disable(void)
 {
 
 	_reg_write_2(SBUS_PCMCIA3_TIMR_REG16, 1);
 }
 
 void
-sbus_type3_pcmcia_intr_reinstall()
+sbus_type3_pcmcia_intr_reinstall(void)
 {
 	u_int16_t r = _reg_read_2(SBUS_PCMCIA3_TIMR_REG16);
 
