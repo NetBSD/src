@@ -264,7 +264,7 @@ static void
 rew_last(struct roff_man *mdoc, const struct roff_node *to)
 {
 
-	if (to->flags & MDOC_VALID)
+	if (to == NULL || to->flags & MDOC_VALID)
 		return;
 
 	while (mdoc->last != to) {
