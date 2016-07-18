@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.25 2016/07/07 06:55:41 msaitoh Exp $ */
+/* $NetBSD: pad.c,v 1.25.2.1 2016/07/18 11:12:11 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.1 2016/07/18 11:12:11 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25 2016/07/07 06:55:41 msaitoh Exp $");
 #include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/localcount.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -129,6 +130,10 @@ dev_type_open(pad_open);
 dev_type_close(pad_close);
 dev_type_read(pad_read);
 
+#ifdef _MODULE
+struct localcount pad_localcount;
+#endif
+
 const struct cdevsw pad_cdevsw = {
 	.d_open = pad_open,
 	.d_close = pad_close,
@@ -141,6 +146,9 @@ const struct cdevsw pad_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &pad_cdevsw,
+#endif
 	.d_flag = D_OTHER | D_MPSAFE,
 };
 
