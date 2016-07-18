@@ -52,6 +52,7 @@ tag_init(void)
 {
 	struct sigaction	 sa;
 	int			 ofd;
+	mode_t			 omask;
 
 	ofd = -1;
 	tag_files.tfd = -1;
@@ -86,10 +87,12 @@ tag_init(void)
 	    sizeof(tag_files.ofn));
 	(void)strlcpy(tag_files.tfn, "/tmp/man.XXXXXXXXXX",
 	    sizeof(tag_files.tfn));
+	omask = umask(077);
 	if ((ofd = mkstemp(tag_files.ofn)) == -1)
-		goto fail;
+		goto fail1;
 	if ((tag_files.tfd = mkstemp(tag_files.tfn)) == -1)
-		goto fail;
+		goto fail1;
+	(void)umask(omask);
 	if (dup2(ofd, STDOUT_FILENO) == -1)
 		goto fail;
 	close(ofd);
@@ -101,7 +104,8 @@ tag_init(void)
 
 	mandoc_ohash_init(&tag_data, 4, offsetof(struct tag_entry, s));
 	return &tag_files;
-
+fail1:
+	(void)umask(omask);
 fail:
 	tag_unlink();
 	if (ofd != -1)
