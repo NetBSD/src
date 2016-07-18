@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.7 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.7.2.1 2016/07/18 21:55:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.2.1 2016/07/18 21:55:44 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7 2015/12/08 20:36:15 christos Exp $")
 #include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/socketvar.h>
+#include <sys/localcount.h>
 
 #include <dev/pud/pud_sys.h>
 
@@ -98,6 +99,10 @@ static dev_type_dump(pud_bdev_dump);
 static dev_type_size(pud_bdev_size);
 #endif
 
+#ifdef _MODULE
+struct localcount pud_b_localcount, pud_c_localcount;
+#endif
+
 struct bdevsw pud_bdevsw = {
 	.d_open		= pud_bdev_open,
 	.d_close	= pud_bdev_close,
@@ -106,6 +111,9 @@ struct bdevsw pud_bdevsw = {
 #if 0
 	.d_dump		= pud_bdev_dump,
 	.d_psize	= pud_bdev_size,
+#endif
+#ifdef _MODULE
+	.d_localcount	= pud_b_localcount,
 #endif
 };
 
@@ -210,6 +218,9 @@ struct cdevsw pud_cdevsw = {
 	.d_poll		= pud_cdev_poll,
 	.d_mmap		= pud_cdev_mmap,
 	.d_kqfilter	= pud_cdev_kqfilter,
+#ifdef _MODULE
+	.d_localcount	= pud_b_localcount,
+#endif
 	.d_flag		= D_OTHER,
 };
 
