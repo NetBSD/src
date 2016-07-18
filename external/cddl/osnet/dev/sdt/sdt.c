@@ -39,7 +39,7 @@
  * unloaded; in particular, probes may not span multiple kernel modules.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16.2.2 2016/07/17 05:18:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdt.c,v 1.16.2.3 2016/07/18 03:50:58 pgoyette Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -133,7 +133,7 @@ static const struct cdevsw sdt_cdevsw = {
 	.d_mmap		= nommap,
 	.d_kqfilter	= nokqfilter,
 	.d_discard	= nodiscard,
-	.d_localcount	= sdt_localcount,
+	.d_localcount	= &sdt_localcount,
 	.d_flag		= D_OTHER
 };
 #endif

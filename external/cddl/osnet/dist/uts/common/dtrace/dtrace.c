@@ -15353,7 +15353,7 @@ const struct cdevsw dtrace_cdevsw = {
 	.d_mmap		= nommap,
 	.d_kqfilter	= nokqfilter,
 	.d_discard	= nodiscard,
-	.d_localcount	= dtrace_localcount,
+	.d_localcount	= &dtrace_localcount,
 	.d_flag		= D_OTHER | D_MPSAFE
 };
 

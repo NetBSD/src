@@ -66,6 +66,7 @@
 #include <sys/dmu_objset.h>
 #include <sys/callb.h>
 #include <sys/taskq.h>
+#include <sys/localcount.h>
 
 #include "zfs_namecheck.h"
 #include "zfs_prop.h"
@@ -4562,6 +4563,10 @@ nb_zfsdev_ioctl(dev_t dev, u_long cmd, void *argp, int flag, lwp_t *l)
 	    &rval);
 }
 
+#ifdef _MODULE
+struct localcount zfs_b_localcount, zfs_c_localcount;
+#endif
+
 const struct bdevsw zfs_bdevsw = {
 	.d_open = nb_zvol_bopen,
 	.d_close = nb_zvol_bclose,
@@ -4569,6 +4574,9 @@ const struct bdevsw zfs_bdevsw = {
 	.d_ioctl = nb_zfsdev_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
+#ifdef _MODULE
+	.d_localcount = &zfs_b_localcount,
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -4583,6 +4591,9 @@ const struct cdevsw zfs_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
+#ifdef _MODULE
+	.d_localcount = &zfs_c_localcount,
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
