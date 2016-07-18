@@ -17,6 +17,7 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <signal.h>
 #include <stddef.h>
