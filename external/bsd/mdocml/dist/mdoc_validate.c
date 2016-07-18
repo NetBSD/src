@@ -813,8 +813,8 @@ post_fo(POST_ARGS)
 		while (n->child != n->last)
 			roff_node_delete(mdoc, n->last);
 		while (n->child != n->last) {
-			struct mdoc_node *p = n->last;
-			mdoc_node_delete(mdoc, p);
+			struct roff_node *p = n->last;
+			roff_node_delete(mdoc, p);
 		}
 
 	}
