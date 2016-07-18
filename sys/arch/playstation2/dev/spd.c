@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.9 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: spd.c,v 1.10 2016/07/18 21:54:12 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.9 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.10 2016/07/18 21:54:12 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.9 2014/03/31 11:25:49 martin Exp $");
 #define STATIC static
 #endif
 
-STATIC int spd_match(struct device *, struct cfdata *, void *);
+STATIC int spd_match(struct device *, cfdata_t, void *);
 STATIC void spd_attach(struct device *, struct device *, void *);
 STATIC int spd_print(void *, const char *);
 STATIC int spd_intr(void *);
@@ -70,7 +70,7 @@ CFATTACH_DECL(spd, sizeof(struct device),
 #endif
 
 int
-spd_match(struct device *parent, struct cfdata *cf, void *aux)
+spd_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	
 	return ((BOOTINFO_REF(BOOTINFO_DEVCONF) ==

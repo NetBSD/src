@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.12 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: sbus.c,v 1.13 2016/07/18 21:54:12 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.12 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.13 2016/07/18 21:54:12 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,9 @@ STATIC void *sbus_usb_context;
 STATIC void sbus_init(int);
 STATIC int sbus_intr(void *);
 
-STATIC int sbus_match(struct device *, struct cfdata *, void *);
+STATIC int sbus_match(struct device *, cfdata_t, void *);
 STATIC void sbus_attach(struct device *, struct device *, void *);
-STATIC int sbus_search(struct device *, struct cfdata *,
+STATIC int sbus_search(struct device *, cfdata_t,
 		       const int *, void *);
 STATIC int sbus_print(void *, const char *);
 
@@ -91,7 +91,7 @@ extern struct cfdriver sbus_cd;
 STATIC int __sbus_attached;
 
 int
-sbus_match(struct device *parent, struct cfdata *cf, void *aux)
+sbus_match(struct device *parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -115,7 +115,7 @@ sbus_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-sbus_search(struct device *parent, struct cfdata *cf,
+sbus_search(struct device *parent, cfdata_t cf,
 	    const int *ldesc, void *aux)
 {
 	struct sbus_attach_args sa;
