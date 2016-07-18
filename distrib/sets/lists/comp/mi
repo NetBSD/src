@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2051.2.2 2016/07/16 09:49:24 pgoyette Exp $
+#	$NetBSD: mi,v 1.2051.2.3 2016/07/18 03:39:13 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9865,7 +9865,9 @@
 ./usr/share/man/cat9/bcmp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevsw_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bdevsw_lookup_acquire.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevsw_lookup_major.0	comp-sys-catman		.cat
+./usr/share/man/cat9/bdevsw_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/be16dec.0			comp-sys-catman		.cat
@@ -10006,7 +10008,9 @@
 ./usr/share/man/cat9/cardbus_mapreg_map.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cardbus_mapreg_unmap.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevsw_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cdevsw_lookup_acquire.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevsw_lookup_major.0	comp-sys-catman		.cat
+./usr/share/man/cat9/cdevsw_release.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/checkalias.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/child_return.0		comp-sys-catman		.cat
@@ -17049,7 +17053,9 @@
 ./usr/share/man/html9/bcmp.html			comp-sys-htmlman	html
 ./usr/share/man/html9/bcopy.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdevsw_lookup.html	comp-sys-htmlman	html
+./usr/share/man/html9/bdevsw_lookup_acquire.html comp-sys-htmlman	html
 ./usr/share/man/html9/bdevsw_lookup_major.html	comp-sys-htmlman	html
+./usr/share/man/html9/bdevsw_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/bdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdwrite.html		comp-sys-htmlman	html
 ./usr/share/man/html9/be16dec.html		comp-sys-htmlman	html
@@ -17188,7 +17194,9 @@
 ./usr/share/man/html9/cardbus_mapreg_map.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cardbus_mapreg_unmap.html comp-sys-htmlman	html
 ./usr/share/man/html9/cdevsw_lookup.html	comp-sys-htmlman	html
+./usr/share/man/html9/cdevsw_lookup_acquire.html comp-sys-htmlman	html
 ./usr/share/man/html9/cdevsw_lookup_major.html	comp-sys-htmlman	html
+./usr/share/man/html9/cdevsw_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/checkalias.html		comp-obsolete	obsolete
 ./usr/share/man/html9/child_return.html		comp-sys-htmlman	html
@@ -24337,7 +24345,9 @@
 ./usr/share/man/man9/bcmp.9			comp-sys-man		.man
 ./usr/share/man/man9/bcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/bdevsw_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/bdevsw_lookup_acquire.9	comp-sys-man		.man
 ./usr/share/man/man9/bdevsw_lookup_major.9	comp-sys-man		.man
+./usr/share/man/man9/bdevsw_release.9		comp-sys-man		.man
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
 ./usr/share/man/man9/be16dec.9			comp-sys-man		.man
@@ -24478,7 +24488,9 @@
 ./usr/share/man/man9/cardbus_mapreg_map.9	comp-sys-man		.man
 ./usr/share/man/man9/cardbus_mapreg_unmap.9	comp-sys-man		.man
 ./usr/share/man/man9/cdevsw_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/cdevsw_lookup_acquire.9	comp-sys-man		.man
 ./usr/share/man/man9/cdevsw_lookup_major.9	comp-sys-man		.man
+./usr/share/man/man9/cdevsw_release.9		comp-sys-man		.man
 ./usr/share/man/man9/cdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/checkalias.9		comp-obsolete		obsolete
 ./usr/share/man/man9/child_return.9		comp-sys-man		.man
