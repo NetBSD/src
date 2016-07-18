@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.94 2016/02/27 08:54:49 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.94.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94 2016/02/27 08:54:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94 2016/02/27 08:54:49 mlelstv Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
+#include <sys/localcount.h>
 
 #include <dev/ldvar.h>
 
@@ -83,6 +84,10 @@ static dev_type_dump(lddump);
 static dev_type_size(ldsize);
 static dev_type_discard(lddiscard);
 
+#ifdef _MODULE
+struct localcount ld_b_localcount, ld_c_localcount;
+#endif
+
 const struct bdevsw ld_bdevsw = {
 	.d_open = ldopen,
 	.d_close = ldclose,
@@ -91,6 +96,9 @@ const struct bdevsw ld_bdevsw = {
 	.d_dump = lddump,
 	.d_psize = ldsize,
 	.d_discard = lddiscard,
+#ifdef _MODULE
+	.d_localcount = &ld_b_localcount;
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -106,6 +114,9 @@ const struct cdevsw ld_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = lddiscard,
+#ifdef _MODULE
+	.d_localcount = &ld_c_localcount;
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 

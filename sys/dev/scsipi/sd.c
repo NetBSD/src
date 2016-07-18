@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $	*/
+/*	$NetBSD: sd.c,v 1.317.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/rndsource.h>
+#include <sys/localcount.h>
 
 #include <dev/scsipi/scsi_spc.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -157,6 +158,10 @@ static dev_type_strategy(sdstrategy);
 static dev_type_dump(sddump);
 static dev_type_size(sdsize);
 
+#ifdef _MODULE
+struct localcount sd_b_localcount, sd_c_localcount;
+#endif
+
 const struct bdevsw sd_bdevsw = {
 	.d_open = sdopen,
 	.d_close = sdclose,
@@ -165,6 +170,9 @@ const struct bdevsw sd_bdevsw = {
 	.d_dump = sddump,
 	.d_psize = sdsize,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &sd_b_localcount,
+#endif
 	.d_flag = D_DISK
 };
 
@@ -180,6 +188,9 @@ const struct cdevsw sd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &sd_c_localcount,
+#endif
 	.d_flag = D_DISK
 };
 

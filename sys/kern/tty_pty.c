@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.1 2016/07/18 03:50:00 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142 2015/08/20 09:45:45 christos Exp $
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include "ioconf.h"
 
@@ -111,6 +112,10 @@ dev_type_poll(ptspoll);
 dev_type_ioctl(ptyioctl);
 dev_type_tty(ptytty);
 
+#ifdef _MODULE
+struct localcount ptc_localcount, pts_localcount;
+#endif
+
 const struct cdevsw ptc_cdevsw = {
 	.d_open = ptcopen,
 	.d_close = ptcclose,
@@ -123,6 +128,9 @@ const struct cdevsw ptc_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = ptckqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &ptc_localcount,
+#endif
 	.d_flag = D_TTY
 };
 
@@ -138,6 +146,9 @@ const struct cdevsw pts_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &pts_localcount,
+#endif
 	.d_flag = D_TTY
 };
 
