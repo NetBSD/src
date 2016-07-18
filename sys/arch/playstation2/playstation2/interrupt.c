@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 2016/07/18 22:13:22 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2016/07/18 22:13:22 maya Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -102,9 +102,6 @@ interrupt_init_bootstrap(void)
 void
 interrupt_init(void)
 {
-	struct playstation2_soft_intr *asi;
-	int i;
-
 	evcnt_attach_static(&_playstation2_evcnt.clock);
 	evcnt_attach_static(&_playstation2_evcnt.sbus);
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
