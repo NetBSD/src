@@ -812,6 +812,11 @@ post_fo(POST_ARGS)
 		    "Fo ... %s", n->child->next->string);
 		while (n->child != n->last)
 			roff_node_delete(mdoc, n->last);
+		while (n->child != n->last) {
+			struct mdoc_node *p = n->last;
+			mdoc_node_delete(mdoc, p);
+		}
+
 	}
 
 	post_fname(mdoc);
