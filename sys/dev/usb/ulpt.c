@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.97 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.97.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.97 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.97.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.97 2016/07/07 06:55:42 msaitoh Exp $");
 #include <sys/conf.h>
 #include <sys/vnode.h>
 #include <sys/syslog.h>
+#include <sys/localcount.h>
 
 #include <machine/vmparam.h>	/* PAGE_SIZE */
 
@@ -129,6 +130,10 @@ dev_type_write(ulptwrite);
 dev_type_read(ulptread);
 dev_type_ioctl(ulptioctl);
 
+#ifdef _MODULE
+struct localcount ulpt_localcount;
+#endif
+
 const struct cdevsw ulpt_cdevsw = {
 	.d_open = ulptopen,
 	.d_close = ulptclose,
@@ -141,6 +146,9 @@ const struct cdevsw ulpt_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &ulpt_localcount,
+#endif
 	.d_flag = D_OTHER
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.2.1 2016/07/18 03:50:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -68,6 +69,10 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 #define DPRINTF(a)
 #endif
 
+#ifdef _MODULE
+struct localcount ptm_localcount;
+#endif
+
 #ifdef NO_DEV_PTM
 const struct cdevsw ptm_cdevsw = {
 	.d_open = noopen,
@@ -81,9 +86,12 @@ const struct cdevsw ptm_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = ptm_localcount,
+#endif
 	.d_flag = D_TTY
 };
-#else
+#else	/* NO_DEV_PTM */
 
 static struct ptm_pty *ptm;
 int pts_major, ptc_major;
@@ -438,6 +446,9 @@ const struct cdevsw ptm_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &ptm_localcount,
+#endif
 	.d_flag = D_TTY
 };
 #endif
