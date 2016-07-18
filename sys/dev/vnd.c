@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.2 2016/07/18 21:18:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.1 2016/07/18 03:49:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.2 2016/07/18 21:18:49 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -228,7 +228,7 @@ const struct cdevsw vnd_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 #ifdef _MODULE
-	.d_localcount = &vnd_b_localcount,
+	.d_localcount = &vnd_c_localcount,
 #endif
 	.d_flag = D_DISK
 };
