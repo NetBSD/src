@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.396.2.2 2016/07/16 09:49:24 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.396.2.3 2016/07/18 03:38:09 pgoyette Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -281,8 +281,12 @@ MLINKS+=delay.9 DELAY.9
 MLINKS+=devsw_attach.9 devsw_detach.9 \
 	devsw_attach.9 bdevsw_lookup.9 \
 	devsw_attach.9 cdevsw_lookup.9 \
+	devsw_attach.9 bdevsw_lookup_acquire.9 \
+	devsw_attach.9 cdevsw_lookup_acquire.9 \
 	devsw_attach.9 bdevsw_lookup_major.9 \
-	devsw_attach.9 cdevsw_lookup_major.9
+	devsw_attach.9 cdevsw_lookup_major.9 \
+	devsw_attach.9 bdevsw_release.9 \
+	devsw_attach.9 cdevsw_release.9
 MLINKS+=disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_busy.9 disk.9 disk_unbusy.9 disk.9 disk_find.9 \
 	disk.9 disk_init.9 disk.9 disk_destroy.9 disk.9 disk_begindetach.9
