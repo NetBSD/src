@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.18.2.2 2016/07/17 05:18:11 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18.2.3 2016/07/18 03:50:58 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -166,7 +166,7 @@ static const struct cdevsw fbt_cdevsw = {
 	.d_mmap		= nommap,
 	.d_kqfilter	= nokqfilter,
 	.d_discard	= nodiscard,
-	.d_localcount	= fbt_localcount,
+	.d_localcount	= &fbt_localcount,
 	.d_flag		= D_OTHER
 };
 
