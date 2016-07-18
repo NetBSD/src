@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.64 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.64.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.2.1 2016/07/18 03:50:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64 2016/07/07 06:55:44 msaitoh Exp $")
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/cprng.h>
+#include <sys/localcount.h>
 
 #include <rump-sys/kern.h>
 #include <rump-sys/vfs.h>
@@ -94,6 +95,10 @@ dev_type_strategy(rumpblk_strategy_fail);
 dev_type_dump(rumpblk_dump);
 dev_type_size(rumpblk_size);
 
+#ifdef _MODULE
+struct localcount rumpblk_b_localcount, rumpblk_c_localcount;
+#endif
+
 static const struct bdevsw rumpblk_bdevsw = {
 	.d_open = rumpblk_open,
 	.d_close = rumpblk_close,
@@ -102,6 +107,9 @@ static const struct bdevsw rumpblk_bdevsw = {
 	.d_dump = nodump,
 	.d_psize = nosize,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &rumpblk_b_localcount,
+#endif
 	.d_flag = D_DISK
 };
 
@@ -113,6 +121,9 @@ static const struct bdevsw rumpblk_bdevsw_fail = {
 	.d_dump = nodump,
 	.d_psize = nosize,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &rumpblk_b_localcount,
+#endif
 	.d_flag = D_DISK
 };
 
@@ -128,6 +139,9 @@ static const struct cdevsw rumpblk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &rumpblk_c_localcount,
+#endif
 	.d_flag = D_DISK
 };
 

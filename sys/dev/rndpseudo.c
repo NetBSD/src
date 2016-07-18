@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.35 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.35.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35 2015/08/20 14:40:17 christos Exp 
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/localcount.h>
 
 #include <dev/rnd_private.h>
 
@@ -109,6 +110,10 @@ static percpu_t *percpu_urandom_cprng __read_mostly;
 
 dev_type_open(rndopen);
 
+#ifdef _MODULE
+struct localcount rnd_localcount;
+#endif
+
 const struct cdevsw rnd_cdevsw = {
 	.d_open = rndopen,
 	.d_close = noclose,
@@ -121,6 +126,9 @@ const struct cdevsw rnd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &rnd_localcount,
+#endif
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

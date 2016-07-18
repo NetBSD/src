@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.113 2016/05/14 10:52:29 mlelstv Exp $	*/
+/*	$NetBSD: ucom.c,v 1.113.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113 2016/05/14 10:52:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113 2016/05/14 10:52:29 mlelstv Exp $");
 #include <sys/sysctl.h>
 #include <sys/timepps.h>
 #include <sys/rndsource.h>
+#include <sys/localcount.h>
 
 #include <dev/usb/usb.h>
 
@@ -196,6 +197,10 @@ dev_type_stop(ucomstop);
 dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
 
+#ifdef _MODULE
+struct localcount ucom_localcount;
+#endif
+
 const struct cdevsw ucom_cdevsw = {
 	.d_open = ucomopen,
 	.d_close = ucomclose,
@@ -208,6 +213,9 @@ const struct cdevsw ucom_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = ttykqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &ucom_localcount,
+#endif
 	.d_flag = D_TTY | D_MPSAFE
 };
 

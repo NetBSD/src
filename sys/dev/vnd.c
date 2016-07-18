@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256 2015/12/08 20:36:14 christos Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include <net/zlib.h>
 
@@ -196,6 +197,10 @@ static dev_type_strategy(vndstrategy);
 static dev_type_dump(vnddump);
 static dev_type_size(vndsize);
 
+#ifdef _MODULE
+struct localcount vnd_b_localcount, vnd_c_localcount;
+#endif
+
 const struct bdevsw vnd_bdevsw = {
 	.d_open = vndopen,
 	.d_close = vndclose,
@@ -204,6 +209,9 @@ const struct bdevsw vnd_bdevsw = {
 	.d_dump = vnddump,
 	.d_psize = vndsize,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &vnd_b_localcount,
+#endif
 	.d_flag = D_DISK
 };
 
@@ -219,6 +227,9 @@ const struct cdevsw vnd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &vnd_b_localcount,
+#endif
 	.d_flag = D_DISK
 };
 

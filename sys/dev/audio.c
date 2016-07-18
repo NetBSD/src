@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.268 2016/07/14 10:19:05 msaitoh Exp $	*/
+/*	$NetBSD: audio.c,v 1.268.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268 2016/07/14 10:19:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268.2.1 2016/07/18 03:49:59 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -178,6 +178,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268 2016/07/14 10:19:05 msaitoh Exp $");
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/localcount.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -346,6 +347,10 @@ dev_type_poll(audiopoll);
 dev_type_mmap(audiommap);
 dev_type_kqfilter(audiokqfilter);
 
+#ifdef _MODULE
+struct localcount audio_localcount;
+#endif
+
 const struct cdevsw audio_cdevsw = {
 	.d_open = audioopen,
 	.d_close = audioclose,
@@ -358,6 +363,9 @@ const struct cdevsw audio_cdevsw = {
 	.d_mmap = audiommap,
 	.d_kqfilter = audiokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &audio_localcount,
+#endif
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

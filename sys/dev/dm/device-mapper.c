@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.38 2016/07/11 11:31:50 msaitoh Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.38.2.1 2016/07/18 03:49:59 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/kauth.h>
+#include <sys/localcount.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -77,6 +78,11 @@ static void dm_attach(device_t, device_t, void *);
 static int dm_match(device_t, cfdata_t, void *);
 
 /* ***Variable-definitions*** */
+
+#ifdef _MODULE
+struct localcount dm_b_localcount, dm_c_localcount;
+#endif
+
 const struct bdevsw dm_bdevsw = {
 	.d_open = dmopen,
 	.d_close = dmclose,
@@ -85,6 +91,9 @@ const struct bdevsw dm_bdevsw = {
 	.d_dump = nodump,
 	.d_psize = dmsize,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &dm_b_localcount,
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -100,6 +109,9 @@ const struct cdevsw dm_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
+#ifdef _MODULE
+	.d_localcount = &dm_c_localcount,
+#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
