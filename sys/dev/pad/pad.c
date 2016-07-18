@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.25.2.1 2016/07/18 11:12:11 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.25.2.2 2016/07/18 11:25:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.1 2016/07/18 11:12:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.2 2016/07/18 11:25:07 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -147,7 +147,7 @@ const struct cdevsw pad_cdevsw = {
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 #ifdef _MODULE
-	.d_localcount = &pad_cdevsw,
+	.d_localcount = &pad_localcount,
 #endif
 	.d_flag = D_OTHER | D_MPSAFE,
 };
