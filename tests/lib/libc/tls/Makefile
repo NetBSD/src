@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.5 2016/06/18 12:12:09 joerg Exp $
+# $NetBSD: Makefile,v 1.6 2016/07/18 12:17:39 christos Exp $
 
+NOPIE=yes
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/tls
