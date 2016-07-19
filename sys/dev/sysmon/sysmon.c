@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.28.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.28.2.2 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.2.1 2016/07/18 03:49:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.28.2.2 2016/07/19 06:26:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,11 +64,8 @@ dev_type_read(sysmonread);
 dev_type_poll(sysmonpoll);
 dev_type_kqfilter(sysmonkqfilter);
 
-#ifdef _MODULE
-struct localcount sysmon_localcount;
-#endif
-
 const struct cdevsw sysmon_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = sysmonopen,
 	.d_close = sysmonclose,
 	.d_read = sysmonread,
@@ -80,9 +77,6 @@ const struct cdevsw sysmon_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = sysmonkqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &sysmon_localcount,
-#endif
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

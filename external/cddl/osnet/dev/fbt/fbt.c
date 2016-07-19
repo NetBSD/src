@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.18.2.3 2016/07/18 03:50:58 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18.2.4 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -152,9 +152,8 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 #define	FBT_ADDR2NDX(addr)	((((uintptr_t)(addr)) >> 4) & fbt_probetab_mask)
 #define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
-struct localcount fbt_localcount;
-
 static const struct cdevsw fbt_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open		= fbt_open,
 	.d_close	= noclose,
 	.d_read		= noread,
@@ -166,7 +165,6 @@ static const struct cdevsw fbt_cdevsw = {
 	.d_mmap		= nommap,
 	.d_kqfilter	= nokqfilter,
 	.d_discard	= nodiscard,
-	.d_localcount	= &fbt_localcount,
 	.d_flag		= D_OTHER
 };
 

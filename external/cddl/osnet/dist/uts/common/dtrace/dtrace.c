@@ -15339,9 +15339,8 @@ static dev_type_open(dtrace_open);
 /* Pseudo Device Entry points */
 /* Just opens, clones to the fileops below */
 
-struct localcount dtrace_localcount;
-
 const struct cdevsw dtrace_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open		= dtrace_open,
 	.d_close	= noclose,
 	.d_read		= noread,
@@ -15353,7 +15352,6 @@ const struct cdevsw dtrace_cdevsw = {
 	.d_mmap		= nommap,
 	.d_kqfilter	= nokqfilter,
 	.d_discard	= nodiscard,
-	.d_localcount	= &dtrace_localcount,
 	.d_flag		= D_OTHER | D_MPSAFE
 };
 

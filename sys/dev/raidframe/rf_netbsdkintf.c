@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.3 2016/07/18 11:13:23 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.4 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.3 2016/07/18 11:13:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.4 2016/07/19 06:26:59 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -217,11 +217,8 @@ static dev_type_strategy(raidstrategy);
 static dev_type_dump(raiddump);
 static dev_type_size(raidsize);
 
-#ifdef _MODULE
-struct localcount raid_localcount_bdev, raid_localcount_cdev;
-#endif
-
 const struct bdevsw raid_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_strategy = raidstrategy,
@@ -229,13 +226,11 @@ const struct bdevsw raid_bdevsw = {
 	.d_dump = raiddump,
 	.d_psize = raidsize,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &raid_localcount_bdev,
-#endif
 	.d_flag = D_DISK
 };
 
 const struct cdevsw raid_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_read = raidread,
@@ -247,9 +242,6 @@ const struct cdevsw raid_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &raid_localcount_cdev,
-#endif
 	.d_flag = D_DISK
 };
 

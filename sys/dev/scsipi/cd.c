@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.331.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
+/*	$NetBSD: cd.c,v 1.331.2.2 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.331.2.1 2016/07/18 03:49:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.331.2.2 2016/07/19 06:26:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,11 +204,8 @@ static dev_type_strategy(cdstrategy);
 static dev_type_dump(cddump);
 static dev_type_size(cdsize);
 
-#ifdef _MODULE
-struct localcount cd_b_localcount, cd_c_localcount;
-#endif
-
 const struct bdevsw cd_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = cdopen,
 	.d_close = cdclose,
 	.d_strategy = cdstrategy,
@@ -216,13 +213,11 @@ const struct bdevsw cd_bdevsw = {
 	.d_dump = cddump,
 	.d_psize = cdsize,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &cd_b_localcount,
-#endif
 	.d_flag = D_DISK
 };
 
 const struct cdevsw cd_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = cdopen,
 	.d_close = cdclose,
 	.d_read = cdread,
@@ -234,9 +229,6 @@ const struct cdevsw cd_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &cd_c_localcount,
-#endif
 	.d_flag = D_DISK
 };
 

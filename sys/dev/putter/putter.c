@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.35.8.1 2016/07/18 06:25:40 pgoyette Exp $	*/
+/*	$NetBSD: putter.c,v 1.35.8.2 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35.8.1 2016/07/18 06:25:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.35.8.2 2016/07/19 06:26:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,9 @@ dev_type_close(puttercdclose);
 dev_type_ioctl(puttercdioctl);
 
 /* dev */
-#ifdef _MODULE
-struct localcount putter_localcount;
-#endif
 
 const struct cdevsw putter_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = puttercdopen,
 	.d_close = puttercdclose,
 	.d_read = noread,
@@ -78,9 +76,6 @@ const struct cdevsw putter_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &putter_localcount,
-#endif
 	.d_flag = D_OTHER
 };
 

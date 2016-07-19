@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.199.2.1 2016/07/17 05:05:10 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.199.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.1 2016/07/17 05:05:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.1 2016/07/17 05:05:10 pgoyette Exp $
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/module.h>
-#include <sys/once.h>
 #include <sys/atomic.h>
 #include <sys/localcount.h>
 
@@ -181,11 +180,8 @@ static const struct fileops bpf_fileops = {
 
 dev_type_open(bpfopen);
 
-#ifdef _MODULE
-struct localcount bpf_localcount;
-#endif
-
 const struct cdevsw bpf_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = bpfopen,
 	.d_close = noclose,
 	.d_read = noread,
@@ -197,9 +193,6 @@ const struct cdevsw bpf_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &bpf_localcount,
-#endif
 	.d_flag = D_OTHER
 };
 
@@ -410,8 +403,8 @@ bpf_detachd(struct bpf_d *d)
 	d->bd_bif = NULL;
 }
 
-static int
-doinit(void)
+static void
+bpf_init(void)
 {
 
 	mutex_init(&bpf_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -422,19 +415,18 @@ doinit(void)
 	bpf_gstats.bs_drop = 0;
 	bpf_gstats.bs_capt = 0;
 
-	return 0;
+	return;
 }
 
 /*
- * bpfilterattach() is called at boot time.
+ * bpfilterattach() is called at boot time.  We don't need to do anything
+ * here, since any initialization will happen as part of module init code.
  */
 /* ARGSUSED */
 void
 bpfilterattach(int n)
 {
-	static ONCE_DECL(control);
 
-	RUN_ONCE(&control, doinit);
 }
 
 /*
@@ -2127,14 +2119,14 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		bpfilterattach(0);
+		bpf_init();
 #ifdef _MODULE
 		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach("bpf", NULL, &bmajor,
 		    &bpf_cdevsw, &cmajor);
-#endif
 		if (error)
 			break;
+#endif
 
 		bpf_ops_handover_enter(&bpf_ops_kernel);
 		atomic_swap_ptr(&bpf_ops, &bpf_ops_kernel);

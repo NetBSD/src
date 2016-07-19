@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.83 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: ser.c,v 1.83.8.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.83 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.83.8.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +283,7 @@ serattach(device_t parent, device_t self, void *aux)
 int
 seropen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	device_t self;
 	struct ser_softc *sc;
 	struct tty *tp;
 	int unit, error, s, s2;
@@ -290,9 +291,14 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = 0;
 	unit = SERUNIT(dev);
 
-	sc = device_lookup_private(&ser_cd, unit);
-	if (sc == NULL)
+	self = device_lookup_acquire(&ser_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
 		return (ENXIO);
+	}
 
 	/* XXX com.c: insert KGDB check here */
 
@@ -300,8 +306,10 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->ser_tty;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		device_release(self);
 		return (EBUSY);
+	}
 
 	s = spltty();
 
@@ -361,6 +369,7 @@ seropen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error)
 		goto bad;
 
+	device_release(self);
 	return (0);
 
 bad:
@@ -368,6 +377,7 @@ bad:
 		ser_shutdown(sc);
 	}
 
+	device_release(self);
 	return (error);
 }
 
@@ -375,15 +385,25 @@ bad:
 int
 serclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	device_t self;
 	struct ser_softc *sc;
 	struct tty *tp;
 
-	sc = device_lookup_private(&ser_cd, SERUNIT(dev));
+	self = device_lookup_acquire(&ser_cd, SERUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 	tp = ser_tty;
 
 	/* XXX This is for cons.c, according to com.c */
-	if (!(tp->t_state & TS_ISOPEN))
+	if (!(tp->t_state & TS_ISOPEN)) {
+		device_release(self);
 		return (0);
+	}
 
 	tp->t_linesw->l_close(tp, flag);
 	ttyclose(tp);
@@ -391,6 +411,7 @@ serclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if (!(tp->t_state & TS_ISOPEN) && tp->t_wopen == 0) {
 		ser_shutdown(sc);
 	}
+	device_release(self);
 	return (0);
 }
 

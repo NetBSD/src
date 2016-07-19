@@ -1,4 +1,4 @@
-/*	$NetBSD: devnull.c,v 1.7.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
+/*	$NetBSD: devnull.c,v 1.7.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7.2.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,11 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: devnull.c,v 1.7.2.1 2016/07/18 03:50:00 pgoyette Exp
 static dev_type_open(rump_devnullopen);
 static dev_type_read(rump_devnullrw);
 
-#ifdef _MODULE
-struct localcount null_localcount;
-#endif
-
 static struct cdevsw null_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = rump_devnullopen,
 	.d_close = nullclose,
 	.d_read = rump_devnullrw,
@@ -62,9 +59,6 @@ static struct cdevsw null_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &null_localcount,
-#endif
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
