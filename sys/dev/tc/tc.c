@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.52 2016/07/19 16:58:05 christos Exp $	*/
+/*	$NetBSD: tc.c,v 1.53 2016/07/19 18:27:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.52 2016/07/19 16:58:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.53 2016/07/19 18:27:27 christos Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -212,7 +212,7 @@ tc_check_romp(const struct tc_rommap *romp)
 	if (romp->tcr_stride.v != 4)
 		return 0;
 
-	for (size_t j = 0; j < 4; j++) {
+	for (size_t j = 0; j < romp->tcr_width.v; j++) {
 		if (romp->tcr_test[j + 0 * romp->tcr_stride.v] != 0x55 ||
 		    romp->tcr_test[j + 1 * romp->tcr_stride.v] != 0x00 ||
 		    romp->tcr_test[j + 2 * romp->tcr_stride.v] != 0xaa ||
