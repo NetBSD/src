@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.5 2016/07/14 18:30:20 martin Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.6 2016/07/19 14:16:49 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -200,4 +200,9 @@ external/bsd/ntp/scripts/mkver                  up to 1.11
 
 	Update ntp to 4.2.8p8.
 	[snj, ticket #1204]
+
+libexec/mail.local/mail.local.c			1.27
+
+	Fix race condition in deliver(), fix resource leak.
+	[shm, ticket #1206]
 
