@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.62 2014/10/18 08:33:24 snj Exp $	*/
+/*	$NetBSD: pccons.c,v 1.62.4.1 2016/07/19 06:26:58 pgoyette Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.62 2014/10/18 08:33:24 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.62.4.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -602,12 +602,19 @@ void pccons_common_attach(struct pc_softc *sc, bus_space_tag_t crt_iot,
 int
 pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	device_t self;
 	struct pc_softc *sc;
 	struct tty *tp;
+	int val;
 
-	sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	if (sc == NULL)
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
 		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 
 	if (!sc->sc_tty) {
 		tp = sc->sc_tty = tty_alloc();
@@ -636,57 +643,123 @@ pcopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp->t_state |= TS_CARR_ON;
 
-	return (*tp->t_linesw->l_open)(dev, tp);
+	val = (*tp->t_linesw->l_open)(dev, tp);
+
+	device_release(self);
+	return val;
 }
 
 int
 pcclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct pc_softc *sc;
+	struct tty *tp;
 
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	tp = sc->sc_tty;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef notyet /* XXX */
 	tty_free(tp);
 #endif
+	device_release(self);
 	return 0;
 }
 
 int
 pcread(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	int val;
+	device_t self;
+	struct pc_softc *sc;
+	struct tty *tp;
 
-	return (*tp->t_linesw->l_read)(tp, uio, flag);
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	tp = sc->sc_tty;
+
+	val = (*tp->t_linesw->l_read)(tp, uio, flag);
+	device_release(self);
+	return val;
 }
 
 int
 pcwrite(dev_t dev, struct uio *uio, int flag)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	int val;
+	device_t self;
+	struct pc_softc *sc
+	struct tty *tp;
 
-	return (*tp->t_linesw->l_write)(tp, uio, flag);
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	tp = sc->sc_tty;
+	val = (*tp->t_linesw->l_write)(tp, uio, flag);
+
+	device_release(self);
+	return val;
 }
 
 int
 pcpoll(dev_t dev, int events, struct lwp *l)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	int val;
+	device_t self;
+	struct pc_softc *sc
+	struct tty *tp;
 
-	return (*tp->t_linesw->l_poll)(tp, events, l);
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	tp = sc->sc_tty;
+
+	val = (*tp->t_linesw->l_poll)(tp, events, l);
+	device_release(self);
+	return val;
 }
 
 struct tty *
 pctty(dev_t dev)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct pc_softc *sc;
+	struct tty *tp;
 
-	return tp;
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return NULL;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return NULL;
+	}
+	device_release(self);
+	return sc->sc_tty;
 }
 
 /*
@@ -720,23 +793,38 @@ pcintr(void *arg)
 int
 pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct pc_softc *sc = device_lookup_private(&pc_cd, PCUNIT(dev));
+	device_t self;
+	struct pc_softc *sc;
 	struct tty *tp = sc->sc_tty;
 	int error;
 
+	self = device_lookup_acquire(&pc_cd, PCUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return error;
+	}
 	error = ttioctl(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return error;
+	}
 
 	switch (cmd) {
 	case CONSOLE_X_MODE_ON:
 		pc_xmode_on();
+		device_release(self);
 		return 0;
 	case CONSOLE_X_MODE_OFF:
 		pc_xmode_off();
+		device_release(self);
 		return 0;
 	case CONSOLE_X_BELL:
 		/*
@@ -749,6 +837,7 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				(((int*)data)[1] * hz) / 1000);
 		else
 			sysbeep(BEEP_FREQ, BEEP_TIME);
+		device_release(self);
 		return 0;
 	case CONSOLE_SET_TYPEMATIC_RATE: {
  		u_char	rate;
@@ -764,6 +853,7 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return EINVAL;
 		typematic_rate = rate;
 		async_update();
+		device_release(self);
 		return 0;
  	}
 	case CONSOLE_SET_KEYMAP: {
@@ -781,15 +871,18 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				return EINVAL;
 
 		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		device_release(self);
 		return 0;
 	}
 	case CONSOLE_GET_KEYMAP:
 		if (!data)
 			return EINVAL;
 		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		device_release(self);
 		return 0;
 
 	default:
+		device_release(self);
 		return EPASSTHROUGH;
 	}
 
@@ -893,6 +986,7 @@ pccnpollc(dev_t dev, int on)
 
 	polling = on;
 	if (!on) {
+		device_t self;
 		int unit;
 		struct pc_softc *sc;
 		int s;
@@ -905,12 +999,16 @@ pccnpollc(dev_t dev, int on)
 		 */
 		unit = PCUNIT(dev);
 		if (pc_cd.cd_ndevs > unit) {
-			sc = device_lookup_private(&pc_cd, unit);
+			self = device_lookup_acquire(&pc_cd, unit);
+			if (self == NULL)
+				continue;
+			sc = device_private(self);
 			if (sc != NULL) {
 				s = spltty();
 				pcintr(sc);
 				splx(s);
 			}
+			device_release(self);
 		}
 	}
 }

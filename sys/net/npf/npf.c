@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.31.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
+/*	$NetBSD: npf.c,v 1.31.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.31.2.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.31.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -88,11 +88,8 @@ static int	npfctl_stats(void *);
 static percpu_t *		npf_stats_percpu	__read_mostly;
 static struct sysctllog *	npf_sysctl		__read_mostly;
 
-#ifdef _MODULE
-struct localcount npf_localcount;
-#endif
-
 const struct cdevsw npf_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = npf_dev_open,
 	.d_close = npf_dev_close,
 	.d_read = npf_dev_read,
@@ -104,9 +101,6 @@ const struct cdevsw npf_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef	_MODULE
-	.d_localcount = &npf_localcount,
-#endif
 	.d_flag = D_OTHER | D_MPSAFE
 };
 

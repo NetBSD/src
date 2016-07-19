@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.21 2014/07/25 08:10:31 dholland Exp $	*/
+/*	$NetBSD: opms.c,v 1.21.8.1 2016/07/19 06:26:58 pgoyette Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.21.8.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,17 +217,27 @@ opms_common_attach(struct opms_softc *sc, bus_space_tag_t opms_iot,
 int
 opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	device_t self;
 	struct opms_softc *sc;
 
-	sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
-	if (!sc)
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return EXNIO;
+	sc = device_private(self);
+	if (!sc) {
+		device_release(self);
 		return ENXIO;
+	}
 
-	if (sc->sc_state & PMS_OPEN)
+	if (sc->sc_state & PMS_OPEN) {
+		device_release(self);
 		return EBUSY;
+	}
 
-	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1)
+	if (clalloc(&sc->sc_q, PMS_BSIZE, 0) == -1) {
+		device_release(self);
 		return ENOMEM;
+	}
 
 	sc->sc_state |= PMS_OPEN;
 	sc->sc_status = 0;
@@ -246,13 +256,24 @@ opmsopen(dev_t dev, int flag, int mode, struct lwp *l)
 #endif
 	pms_pit_cmd(PMS_INT_ENABLE);
 
+	device_release(self);
 	return 0;
 }
 
 int
 opmsclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
+	device_t self;
+	struct opms_softc *sc;
+
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
@@ -263,17 +284,28 @@ opmsclose(dev_t dev, int flag, int mode, struct lwp *l)
 
 	clfree(&sc->sc_q);
 
+	device_release(self);
 	return 0;
 }
 
 int
 opmsread(dev_t dev, struct uio *uio, int flag)
 {
-	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
+	device_t self;
+	struct opms_softc *sc;
 	int s;
 	int error = 0;
 	size_t length;
 	u_char buffer[PMS_CHUNK];
+
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 
 	/* Block until mouse activity occurred. */
 
@@ -281,6 +313,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 	while (sc->sc_q.c_cc == 0) {
 		if (flag & IO_NDELAY) {
 			splx(s);
+			device_release(self);
 			return EWOULDBLOCK;
 		}
 		sc->sc_state |= PMS_ASLP;
@@ -288,6 +321,7 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 		if (error) {
 			sc->sc_state &= ~PMS_ASLP;
 			splx(s);
+			device_release(self);
 			return error;
 		}
 	}
@@ -309,17 +343,27 @@ opmsread(dev_t dev, struct uio *uio, int flag)
 			break;
 	}
 
+	device_release(self);
 	return error;
 }
 
 int
 opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
+	device_t self;
+	struct opms_softc *sc;
 	struct mouseinfo info;
 	int s;
 	int error;
 
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 	switch (cmd) {
 	case MOUSEIOCREAD:
 		s = spltty();
@@ -356,6 +400,7 @@ opmsioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		break;
 	}
 
+	device_release(self);
 	return error;
 }
 
@@ -437,10 +482,20 @@ opmsintr(void *arg)
 int
 opmspoll(dev_t dev, int events, struct lwp *l)
 {
-	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
+	device_t self;
+	struct opms_softc *sc;
 	int revents = 0;
 	int s = spltty();
 
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return 0;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return 0;
+	}
+	
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (sc->sc_q.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -449,6 +504,7 @@ opmspoll(dev_t dev, int events, struct lwp *l)
 	}
 
 	splx(s);
+	device_release(self);
 	return revents;
 }
 
@@ -478,9 +534,19 @@ static const struct filterops opmsread_filtops =
 int
 opmskqfilter(dev_t dev, struct knote *kn)
 {
-	struct opms_softc *sc = device_lookup_private(&opms_cd, PMSUNIT(dev));
+	device_t self;
+	struct opms_softc *sc;
 	struct klist *klist;
 	int s;
+
+	self = device_lookup_acquire(&opms_cd, PMSUNIT(dev));
+	if (self == NULL)
+		return 1;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return 1;
+	}
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -489,6 +555,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
+		device_release(self);
 		return 1;
 	}
 
@@ -498,5 +565,6 @@ opmskqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
+	device_release(self);
 	return 0;
 }

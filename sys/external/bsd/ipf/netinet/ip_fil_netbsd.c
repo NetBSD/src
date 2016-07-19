@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.1 2016/07/17 05:05:10 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.2 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.1 2016/07/17 05:05:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.2 2016/07/19 06:26:59 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -140,11 +140,10 @@ static  int     ipfwrite(dev_t, struct uio *, int ioflag);
 static  int     ipfpoll(dev_t, int events, PROC_T *);
 static	void	ipf_timer_func(void *ptr);
 
-#if	defined(_MODULE) && (__NetBSD_Version__ >= 799003300)
-struct localcount ipl_localcount;
-#endif
-
 const struct cdevsw ipl_cdevsw = {
+#if	(__NetBSD_Version__ >= 799003300)
+	LOCALCOUNT_INITIALIZER
+#endif
 	.d_open = ipfopen,
 	.d_close = ipfclose,
 	.d_read = ipfread,
@@ -157,10 +156,6 @@ const struct cdevsw ipl_cdevsw = {
 #if  (__NetBSD_Version__ >= 200000000)
 	.d_kqfilter = nokqfilter,
 #endif
-#ifdef _MODULE
-	.d_localcount = &ipl_localcount,
-#endif
-
 	.d_discard = nodiscard,
 #ifdef D_OTHER
 	.d_flag = D_OTHER

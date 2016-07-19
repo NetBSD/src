@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.14 2012/10/27 17:17:26 chs Exp $	*/
+/*	$NetBSD: device.h,v 1.14.18.1 2016/07/19 06:26:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,8 +45,5 @@ int matchname(const char *, const char *);
  * false when initing for the console.
  */
 extern int amiga_realconfig;
-
-
-#define getsoftc(cdnam, unit)	device_lookup_private(&(cdnam), (unit))
 
 #endif /* _AMIGA_DEVICE_H_ */

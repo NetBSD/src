@@ -4563,24 +4563,19 @@ nb_zfsdev_ioctl(dev_t dev, u_long cmd, void *argp, int flag, lwp_t *l)
 	    &rval);
 }
 
-#ifdef _MODULE
-struct localcount zfs_b_localcount, zfs_c_localcount;
-#endif
-
 const struct bdevsw zfs_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = nb_zvol_bopen,
 	.d_close = nb_zvol_bclose,
 	.d_strategy = zvol_strategy,
 	.d_ioctl = nb_zfsdev_ioctl,
 	.d_dump = nodump,
 	.d_psize = nosize,
-#ifdef _MODULE
-	.d_localcount = &zfs_b_localcount,
-#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw zfs_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = nb_zvol_copen,
 	.d_close = nb_zvol_cclose,
 	.d_read = nb_zvol_read,
@@ -4591,9 +4586,6 @@ const struct cdevsw zfs_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-#ifdef _MODULE
-	.d_localcount = &zfs_c_localcount,
-#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 

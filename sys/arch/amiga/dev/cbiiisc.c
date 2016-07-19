@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiiisc.c,v 1.21 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: cbiiisc.c,v 1.21.18.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.21 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbiiisc.c,v 1.21.18.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,14 +199,19 @@ cbiiisc_dmaintr(void *arg)
 void
 cbiiisc_dump(void)
 {
+	device_t self;
 	extern struct cfdriver cbiiisc_cd;
 	struct siop_softc *sc;
 	int i;
 
 	for (i = 0; i < cbiiisc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&cbiiisc_cd, i);
+		self = device_lookup_acquire(&cbiiisc_cd, i);
+		if (self == NULL)
+			continue;
+		sc = device_private(&cbiiisc_cd, i);
 		if (sc != NULL)
 			siopng_dump(sc);
+		device_release(self);
 	}
 }
 #endif

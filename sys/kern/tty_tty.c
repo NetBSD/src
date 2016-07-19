@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.40.8.1 2016/07/18 03:50:00 pgoyette Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.40.8.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.40.8.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_tty.c,v 1.40.8.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,11 +157,8 @@ cttykqfilter(dev_t dev, struct knote *kn)
 	return (VOP_KQFILTER(ttyvp, kn));
 }
 
-#ifdef _MODULE
-struct localcount ctty_localcount;
-#endif
-
 const struct cdevsw ctty_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = cttyopen,
 	.d_close = nullclose,
 	.d_read = cttyread,
@@ -173,8 +170,5 @@ const struct cdevsw ctty_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = cttykqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &ctty_localcount,
-#endif
 	.d_flag = D_TTY
 };

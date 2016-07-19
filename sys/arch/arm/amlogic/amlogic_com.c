@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_com.c,v 1.5 2015/04/03 15:50:15 jmcneill Exp $ */
+/* $NetBSD: amlogic_com.c,v 1.5.4.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.5 2015/04/03 15:50:15 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: amlogic_com.c,v 1.5.4.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -284,13 +284,22 @@ amlogic_com_is_console(bus_addr_t iobase)
 static int
 amlogic_com_open(dev_t dev, int flag, int mode, lwp_t *l)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	device_t self;
+	struct amlogic_com_softc *sc;
 	struct tty *tp = sc->sc_tty;
+	int val;
 
 	if (kauth_authorize_device_tty(l->l_cred,
 	    KAUTH_DEVICE_TTY_OPEN, tp) != 0) {
 		return EBUSY;
+	}
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
 	}
 
 	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0) {
@@ -305,74 +314,151 @@ amlogic_com_open(dev_t dev, int flag, int mode, lwp_t *l)
 	}
 	tp->t_state |= TS_CARR_ON;
 
-	return tp->t_linesw->l_open(dev, tp);
+	val = tp->t_linesw->l_open(dev, tp);
+
+	device_release(self);
+	return val;
 }
 
 static int
 amlogic_com_close(dev_t dev, int flag, int mode, lwp_t *l)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	device_t self;
+	struct amlogic_com_softc *sc;
 	struct tty *tp = sc->sc_tty;
 
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 	tp->t_linesw->l_close(tp, flag);
 	ttyclose(tp);
 
+	device_release(self);
 	return 0;
 }
 
 static int
 amlogic_com_read(dev_t dev, struct uio *uio, int flag)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct amlogic_com_softc *sc;
+	struct tty *tp;
+	int val;
 
-	return tp->t_linesw->l_read(tp, uio, flag);
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+
+	tp = sc->sc_tty;
+	val = tp->t_linesw->l_read(tp, uio, flag);
+
+	device_release(self);
+	return val;
 }
 
 static int
 amlogic_com_write(dev_t dev, struct uio *uio, int flag)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct amlogic_com_softc *sc;
+	struct tty *tp;
+	int val;
 
-	return tp->t_linesw->l_write(tp, uio, flag);
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+
+	tp = sc->sc_tty;
+	val = tp->t_linesw->l_write(tp, uio, flag);
+
+	device_release(self);
+	return val;
 }
 
 static int
 amlogic_com_poll(dev_t dev, int events, lwp_t *l)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct amlogic_com_softc *sc;
+	struct tty *tp;
+	int val;
 
-	return tp->t_linesw->l_poll(tp, events, l);
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+
+	tp = sc->sc_tty;
+	val = tp->t_linesw->l_poll(tp, events, l);
+
+	device_release(self);
+	return val;
 }
 
 static int
 amlogic_com_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct amlogic_com_softc *sc;
+	struct tty *tp;
 	int error;
 
-	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return error;
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 
-	return ttioctl(tp, cmd, data, flag, l);
+	tp = sc->sc_tty;
+	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, l);
+	if (error != EPASSTHROUGH) {
+		device_release(self);
+		return error;
+	}
+	error = ttioctl(tp, cmd, data, flag, l);
+
+	device_release(self);
+	return error;
 }
 
 static struct tty *
 amlogic_com_tty(dev_t dev)
 {
-	struct amlogic_com_softc *sc =
-	    device_lookup_private(&amlogiccom_cd, minor(dev));
+	device_t self;
+	struct amlogic_com_softc *sc;
+	struct tty *tty;
 
-	return sc->sc_tty;
+	self = device_lookup_acquire(&amlogiccom_cd, minor(dev));
+	if (self == NULL)
+		return NULL;
+
+	sc = device_private(self);
+	tty = sc->sc_tty;
+
+	device_release(self);
+	return tty;
 }
 
 static void

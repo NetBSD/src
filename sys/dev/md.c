@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.76.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.1 2016/07/18 03:49:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.2 2016/07/19 06:26:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -106,11 +106,8 @@ static dev_type_ioctl(mdioctl);
 static dev_type_strategy(mdstrategy);
 static dev_type_size(mdsize);
 
-#ifdef _MODULE
-struct localcount md_b_localcount, md_c_localcount;
-#endif
-
 const struct bdevsw md_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = mdopen,
 	.d_close = mdclose,
 	.d_strategy = mdstrategy,
@@ -118,13 +115,11 @@ const struct bdevsw md_bdevsw = {
 	.d_dump = nodump,
 	.d_psize = mdsize,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &md_b_localcount,
-#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw md_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = mdopen,
 	.d_close = mdclose,
 	.d_read = mdread,
@@ -136,9 +131,6 @@ const struct cdevsw md_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &md_c_localcount,
-#endif
 	.d_flag = D_DISK
 };
 

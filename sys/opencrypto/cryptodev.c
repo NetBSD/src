@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.85.2.1 2016/07/18 03:50:00 pgoyette Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.85.2.2 2016/07/19 06:27:00 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.85.2.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.85.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1110,12 +1110,9 @@ cryptoselect(dev_t dev, int rw, struct lwp *l)
 	return 0;
 }
 
-#ifdef _MODULE
-struct localcount crypto_localcount;
-#endif
-
 /*static*/
 struct cdevsw crypto_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = cryptoopen,
 	.d_close = noclose,
 	.d_read = cryptoread,
@@ -1127,9 +1124,6 @@ struct cdevsw crypto_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &crypto_localcount,
-#endif
 	.d_flag = D_OTHER
 };
 
