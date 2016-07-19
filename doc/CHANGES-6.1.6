@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.67 2016/07/14 07:21:08 snj Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.68 2016/07/19 14:22:41 martin Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -8397,4 +8397,9 @@ sys/arch/x86/x86/pmap.c				1.190
 	Call pmap_tlb_shootnow() here before enabling preemption to
 	clear the TLB entries on other CPUs.
 	[hannken, ticket #1365]
+
+libexec/mail.local/mail.local.c			1.27
+
+	Fix race condition in deliver(), fix resource leak.
+	[shm, ticket #1391]
 
