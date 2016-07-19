@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.14 2016/07/19 13:58:09 maya Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.15 2016/07/19 16:39:54 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2016/07/19 13:58:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.15 2016/07/19 16:39:54 maya Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -71,8 +71,6 @@ STATIC struct {
 } _sif_call_env;
 
 struct clockframe playstation2_clockframe;
-struct playstation2_soft_intr playstation2_soft_intrs[_IPL_NSOFT];
-struct playstation2_soft_intrhand *softnet_intrhand;
 
 u_int32_t __icu_mask[_IPL_N];	/* interrupt mask of DMAC/INTC */
 volatile u_int32_t md_imask;
