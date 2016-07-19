@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.12 2016/07/19 13:48:51 maya Exp $	*/
+/*	$NetBSD: spd.c,v 1.13 2016/07/19 17:04:25 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.12 2016/07/19 13:48:51 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.13 2016/07/19 17:04:25 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.12 2016/07/19 13:48:51 maya Exp $");
 #define STATIC static
 #endif
 
-STATIC int spd_match(struct device *, cfdata_t, void *);
-STATIC void spd_attach(struct device *, struct device *, void *);
+STATIC int spd_match(device_t, cfdata_t, void *);
+STATIC void spd_attach(device_t, device_t, void *);
 STATIC int spd_print(void *, const char *);
 STATIC int spd_intr(void *);
 STATIC void __spd_eeprom_out(u_int8_t *, int);
@@ -63,7 +63,7 @@ STATIC struct {
 	const char *name;
 } __spd_table[2];
 
-CFATTACH_DECL(spd, sizeof(struct device),
+CFATTACH_DECL_NEW(spd, sizeof(struct device),
     spd_match, spd_attach, NULL, NULL);
 
 #ifdef DEBUG
@@ -71,7 +71,7 @@ CFATTACH_DECL(spd, sizeof(struct device),
 #endif
 
 int
-spd_match(struct device *parent, cfdata_t cf, void *aux)
+spd_match(device_t parent, cfdata_t cf, void *aux)
 {
 	
 	return ((BOOTINFO_REF(BOOTINFO_DEVCONF) ==
@@ -79,7 +79,7 @@ spd_match(struct device *parent, cfdata_t cf, void *aux)
 }
 
 void
-spd_attach(struct device *parent, struct device *self, void *aux)
+spd_attach(device_t parent, device_t self, void *aux)
 {
 	struct spd_attach_args spa;
 
