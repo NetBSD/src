@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.12 2016/07/18 22:13:22 maya Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.13 2016/07/19 13:50:02 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12 2016/07/18 22:13:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2016/07/19 13:50:02 maya Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -209,7 +209,7 @@ splset(int npl)
 }
 
 void
-spl0()
+spl0(void)
 {
 
 	splset(0);
