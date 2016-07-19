@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.100 2016/07/14 18:47:11 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.101 2016/07/19 14:10:15 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5171,4 +5171,9 @@ sys/ufs/lfs/lfs_vnops.c				1.304
 
 	Fix a deadlock
 	[dholland, ticket #1205]
+
+libexec/mail.local/mail.local.c			1.27
+
+	Fix race condition in deliver(), fix resource leak.
+	[shm, ticket #1206]
 
