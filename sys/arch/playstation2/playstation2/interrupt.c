@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.13 2016/07/19 13:50:02 maya Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.14 2016/07/19 13:58:09 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.13 2016/07/19 13:50:02 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14 2016/07/19 13:58:09 maya Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -122,31 +122,35 @@ interrupt_init(void)
  *  Hardware interrupt support
  */
 void
-cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	struct cpu_info *ci;
-
+	uint32_t ipending;
+	int ipl;
 #if 0
 	_debug_print_intr(__func__);
 #endif
 
 	ci = curcpu();
 	ci->ci_idepth++;
-	uvmexp.intrs++;
+	ci->ci_data.cpu_nintr++;
 
-	playstation2_clockframe.ppl = md_imask;
+	playstation2_clockframe.intr = (curcpu()->ci_idepth > 1);
 	playstation2_clockframe.sr = status;
 	playstation2_clockframe.pc = pc;
 
-	if (ipending & MIPS_INT_MASK_0) {
-		intc_intr(md_imask);
+	while (ppl < (ipl = splintr(&ipending))) {
+		splx(ipl);
+		if (ipending & MIPS_INT_MASK_0) {
+			intc_intr(md_imask);
+		}
+
+		if (ipending & MIPS_INT_MASK_1) {
+			_playstation2_evcnt.dmac.ev_count++;
+			dmac_intr(md_imask);
+		}
+		(void)splhigh();
 	}
-	
-	if (ipending & MIPS_INT_MASK_1) {
-		_playstation2_evcnt.dmac.ev_count++;
-		dmac_intr(md_imask);
-	}
-	ci->ci_idepth--;
 }
 void
 setsoft(int ipl)
