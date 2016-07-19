@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.11 2016/07/18 22:05:53 maya Exp $	*/
+/*	$NetBSD: spd.c,v 1.12 2016/07/19 13:48:51 maya Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.11 2016/07/18 22:05:53 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spd.c,v 1.12 2016/07/19 13:48:51 maya Exp $");
 
-#include <sys/device.h>
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/systm.h>
 
 #include <machine/bootinfo.h>
