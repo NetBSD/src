@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.26 2011/08/27 15:40:31 joerg Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.26.22.1 2016/07/19 14:12:10 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.26 2011/08/27 15:40:31 joerg Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.26.22.1 2016/07/19 14:12:10 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,8 @@ store(const char *from)
 	(void)fflush(fp);
 	if (ferror(fp))
 		logerr(EX_OSERR, "temporary file write error");
-	fd = dup(fd);
+	if ((fd = dup(fd)) == -1) 
+		logerr(EX_OSERR, "dup failed");
 	(void)fclose(fp);
 	return(fd);
 }
@@ -177,10 +178,10 @@ store(const char *from)
 static int
 deliver(int fd, char *name, int lockfile)
 {
-	struct stat sb;
+	struct stat sb, nsb;
 	struct passwd pwres, *pw;
 	char pwbuf[1024];
-	int created, mbfd, nr, nw, off, rval=EX_OK, lfd=-1;
+	int created = 0, mbfd, nr, nw, off, rval=EX_OK, lfd = -1;
 	char biffmsg[100], buf[8*1024], path[MAXPATHLEN], lpath[MAXPATHLEN];
 	off_t curoff;
 
@@ -210,22 +211,42 @@ deliver(int fd, char *name, int lockfile)
 		}
 	}
 
-	if (!(created = lstat(path, &sb)) &&
+	if ((lstat(path, &sb) != -1) &&
 	    (sb.st_nlink != 1 || S_ISLNK(sb.st_mode))) {
 		logwarn("%s: linked file", path);
 		return(EX_OSERR);
 	}
 	
 	if ((mbfd = open(path, O_APPEND|O_WRONLY|O_EXLOCK,
-	    S_IRUSR|S_IWUSR)) < 0) {
+	    S_IRUSR|S_IWUSR)) != -1) {
+		/* create file */
 		if ((mbfd = open(path, O_APPEND|O_CREAT|O_WRONLY|O_EXLOCK,
-		    S_IRUSR|S_IWUSR)) < 0) {
+		    S_IRUSR|S_IWUSR)) != -1) {
 			logwarn("%s: %s", path, strerror(errno));
-			return(EX_OSERR);
+			rval = EX_OSERR;
+			goto bad;
+		}
+		created = 1;
+	} else {
+		/* opened existing file, check for TOCTTOU */
+		if (fstat(mbfd, &nsb) == -1) {
+			rval = EX_OSERR;
+			goto bad;
+		}
+
+		/* file is not what we expected */
+		if (nsb.st_ino != sb.st_ino || nsb.st_dev != sb.st_dev) {
+			rval = EX_OSERR;
+			goto bad;
 		}
 	}
 
-	curoff = lseek(mbfd, 0, SEEK_END);
+	if ((curoff = lseek(mbfd, 0, SEEK_END)) == (off_t)-1) {
+		logwarn("%s: %s", path, strerror(errno));
+		rval = EX_OSERR;
+		goto bad;
+	}
+
 	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%lld\n", name,
 	    (long long)curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
@@ -259,11 +280,14 @@ bad:
 			close(lfd);
 		}
 	}
-	if (created) 
-		(void)fchown(mbfd, pw->pw_uid, pw->pw_gid);
 
-	(void)fsync(mbfd);		/* Don't wait for update. */
-	(void)close(mbfd);		/* Implicit unlock. */
+	if (mbfd >= 0) {
+		if (created) 
+			(void)fchown(mbfd, pw->pw_uid, pw->pw_gid);
+
+		(void)fsync(mbfd);		/* Don't wait for update. */
+		(void)close(mbfd);		/* Implicit unlock. */
+	}
 
 	if (rval == EX_OK)
 		notifybiff(biffmsg);
