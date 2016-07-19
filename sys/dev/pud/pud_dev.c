@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.7.2.2 2016/07/18 22:00:05 pgoyette Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.7.2.3 2016/07/19 06:26:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.2.2 2016/07/18 22:00:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.2.3 2016/07/19 06:26:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -99,11 +99,8 @@ static dev_type_dump(pud_bdev_dump);
 static dev_type_size(pud_bdev_size);
 #endif
 
-#ifdef _MODULE
-struct localcount pud_b_localcount, pud_c_localcount;
-#endif
-
 struct bdevsw pud_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open		= pud_bdev_open,
 	.d_close	= pud_bdev_close,
 	.d_strategy	= pud_bdev_strategy,
@@ -111,9 +108,6 @@ struct bdevsw pud_bdevsw = {
 #if 0
 	.d_dump		= pud_bdev_dump,
 	.d_psize	= pud_bdev_size,
-#endif
-#ifdef _MODULE
-	.d_localcount	= &pud_b_localcount,
 #endif
 };
 
@@ -206,6 +200,7 @@ static dev_type_mmap(pud_cdev_mmap);
 static dev_type_kqfilter(pud_cdev_kqfilter);
 
 struct cdevsw pud_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open		= pud_cdev_open,
 	.d_close	= pud_cdev_close,
 	.d_read		= pud_cdev_read,
@@ -218,9 +213,6 @@ struct cdevsw pud_cdevsw = {
 	.d_poll		= pud_cdev_poll,
 	.d_mmap		= pud_cdev_mmap,
 	.d_kqfilter	= pud_cdev_kqfilter,
-#ifdef _MODULE
-	.d_localcount	= &pud_b_localcount,
-#endif
 	.d_flag		= D_OTHER,
 };
 

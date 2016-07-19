@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93.2.1 2016/07/18 03:49:59 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.93.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.1 2016/07/18 03:49:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.2 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,8 @@ static struct vfs_hooks fss_vfs_hooks = {
 	.vh_unmount = fss_unmount_hook
 };
 
-#ifdef _MODULE
-struct localcount fss_b_localcount, fss_c_localcount;
-#endif
-
 const struct bdevsw fss_bdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = fss_open,
 	.d_close = fss_close,
 	.d_strategy = fss_strategy,
@@ -111,13 +108,11 @@ const struct bdevsw fss_bdevsw = {
 	.d_dump = fss_dump,
 	.d_psize = fss_size,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &fss_b_localcount,
-#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw fss_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = fss_open,
 	.d_close = fss_close,
 	.d_read = fss_read,
@@ -129,9 +124,6 @@ const struct cdevsw fss_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &fss_c_localcount,
-#endif
 	.d_flag = D_DISK | D_MPSAFE
 };
 

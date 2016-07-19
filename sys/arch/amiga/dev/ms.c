@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.39 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: ms.c,v 1.39.8.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*
  * based on:
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.39 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.39.8.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 /*
  * Mouse driver.
@@ -148,13 +148,6 @@ const struct cdevsw ms_cdevsw = {
 #define	MS_UNIT(d)	((minor(d) & ~0x1) >> 1)
 #define	MS_PORT(d)	(minor(d) & 0x1)
 
-/*
- * Given a dev_t, return a pointer to the port's hardware state.
- * Assumes the unit to be valid, so do *not* use this in msopen().
- */
-#define	MS_DEV2MSPORT(d) \
-    (&(((struct ms_softc *)getsoftc(ms_cd, MS_UNIT(d)))->sc_ports[MS_PORT(d)]))
-
 #if NWSMOUSE > 0
 /*
  * Callbacks for wscons.
@@ -169,6 +162,30 @@ static struct wsmouse_accessops ms_wscons_accessops = {
 	ms_wscons_disable
 };
 #endif
+
+/*
+ * Given a dev_t, return a pointer to the port's hardware state.
+ * Assumes the unit to be valid, so do *not* use this in msopen().
+ */
+static struct ms_port *
+ms_dev2msport(dev_t dev)
+{
+	device_t self;
+	struct ms_softc *sc;
+	struct ms_port *msp;
+
+	msp = NULL;
+
+	self = device_lookup_acquire(&ms_cd, MS_UNIT(dev));
+	if (self == NULL)
+		return msp;;
+	sc = device_private(self);
+	if (sc != NULL)
+		msp = sc->sc_ports[MS_PORT(dev)];
+
+	device_release(self);
+	return msp;
+}
 
 int
 msmatch(device_t parent, cfdata_t cf, void *aux)
@@ -434,26 +451,36 @@ out:
 int
 msopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	device_t self;
 	struct ms_softc *sc;
 	struct ms_port *ms;
 	int unit, port;
 
 	unit = MS_UNIT(dev);
-	sc = (struct ms_softc *)getsoftc(ms_cd, unit);
 
-	if (sc == NULL)
+	self = device_lookup_acquire(&ms_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
 		return(EXDEV);
+	}
 
 	port = MS_PORT(dev);
 	ms = &sc->sc_ports[port];
 
-	if (ms->ms_events.ev_io)
+	if (ms->ms_events.ev_io) {
+		device_release(self);
 		return(EBUSY);
+	}
 
 #if NWSMOUSE > 0
 	/* don't allow opening when sending events to wsmouse */
-	if (ms->ms_wsenabled)
+	if (ms->ms_wsenabled) {
+		device_release(self);
 		return EBUSY;
+	}
 #endif
 	/* initialize potgo bits for mouse mode */
 	custom.potgo = custom.potgor | (0xf00 << (port * 4));
@@ -461,6 +488,8 @@ msopen(dev_t dev, int flags, int mode, struct lwp *l)
 	ms->ms_events.ev_io = l->l_proc;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 	ms_enable(ms);
+
+	device_release(self);
 	return(0);
 }
 
@@ -469,7 +498,7 @@ msclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = ms_dev2msport(dev);
 
 	ms_disable(ms);
 	ev_fini(&ms->ms_events);
@@ -482,7 +511,7 @@ msread(dev_t dev, struct uio *uio, int flags)
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = ms_dev2msport(dev);
 
 	return(ev_read(&ms->ms_events, uio, flags));
 }
@@ -493,7 +522,7 @@ msioctl(dev_t dev, u_long cmd, register void *data, int flag,
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = ms_dev2msport(dev);
 
 	switch (cmd) {
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -526,7 +555,7 @@ mspoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = ms_dev2msport(dev);
 
 	return(ev_poll(&ms->ms_events, events, l));
 }
@@ -536,7 +565,7 @@ mskqfilter(dev_t dev, struct knote *kn)
 {
 	struct ms_port *ms;
 
-	ms = MS_DEV2MSPORT(dev);
+	ms = ms_dev2msport(dev);
 
 	return (ev_kqfilter(&ms->ms_events, kn));
 }

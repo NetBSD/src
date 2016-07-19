@@ -1,4 +1,4 @@
-/*	$NetBSD: localcount.h,v 1.1.2.1 2016/07/15 02:29:19 pgoyette Exp $	*/
+/*	$NetBSD: localcount.h,v 1.1.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -54,5 +54,12 @@ void	localcount_fini(struct localcount *);
 void	localcount_acquire(struct localcount *);
 void	localcount_release(struct localcount *, struct kcondvar *,
 	    struct kmutex *);
+
+#ifdef	_MODULE	
+#define LOCALCOUNT_INITIALIZER	\
+	.d_localcount = &(struct localcount){NULL, NULL},
+#else
+#define	LOCALCOUNT_INITIALIZER
+#endif
 
 #endif	/* _SYS_LOCALCOUNT_H */

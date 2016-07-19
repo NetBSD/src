@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.117.4.1 2016/07/19 06:26:58 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117 2014/08/24 12:18:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.117.4.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,6 +373,7 @@ struct cfdriver *genericconf[] = {
 void
 findroot(void)
 {
+	device_t self;
 	struct disk *dkp;
 	struct partition *pp;
 	device_t *devs;
@@ -393,7 +394,7 @@ findroot(void)
 #ifdef DEBUG_KERNEL_START
 			printf("probing for sd%d\n", unit);
 #endif
-			if (device_lookup(&sd_cd,unit) == NULL)
+			if ((self = device_lookup_acquire(&sd_cd,unit)) == NULL)
 				continue;
 
 			/*
@@ -401,17 +402,22 @@ findroot(void)
 			 * device.
 			 */
 			devs = sd_cd.cd_devs;
-			if ((dkp = disk_find(device_xname(device_lookup(&sd_cd, unit)))) == NULL)
+			if ((dkp = disk_find(device_xname(self))) == NULL) {
+				device_release(self);
 				continue;
-
+			}
 			if (dkp->dk_driver == NULL ||
-			    dkp->dk_driver->d_strategy == NULL)
+			    dkp->dk_driver->d_strategy == NULL) {
+				device_release(self);
 				continue;
+			}
 			bdp = &sd_bdevsw;
 			maj = bdevsw_lookup_major(bdp);
 			if ((*bdp->d_open)(MAKEDISKDEV(maj, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curlwp))
+			    FREAD | FNONBLOCK, 0, curlwp)) {
+				device_release(self);
 				continue;
+			}
 			(*bdp->d_close)(MAKEDISKDEV(maj, unit, RAW_PART),
 			    FREAD | FNONBLOCK, 0, curlwp);
 			pp = &dkp->dk_label->d_partitions[0];
@@ -424,8 +430,10 @@ findroot(void)
 #endif
 				if (pp->p_size == 0 ||
 				    (pp->p_fstype != FS_BSDFFS &&
-				    pp->p_fstype != FS_SWAP))
+				    pp->p_fstype != FS_SWAP)) {
+					device_release(self);
 					continue;
+				}
 				if (pp->p_offset == boot_partition) {
 					if (booted_device == NULL) {
 						booted_device = devs[unit];
@@ -434,6 +442,7 @@ findroot(void)
 						printf("Ambiguous boot device\n");
 				}
 			}
+			device_release(self);
 		}
 	}
 	if (booted_device != NULL)

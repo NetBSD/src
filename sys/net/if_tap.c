@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.84.2.1 2016/07/18 03:50:00 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.84.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84.2.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -173,11 +173,8 @@ static int	tap_cdev_ioctl(dev_t, u_long, void *, int, struct lwp *);
 static int	tap_cdev_poll(dev_t, int, struct lwp *);
 static int	tap_cdev_kqfilter(dev_t, struct knote *);
 
-#ifdef _MODULE
-struct localcount tap_localcount;
-#endif
-
 const struct cdevsw tap_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = tap_cdev_open,
 	.d_close = tap_cdev_close,
 	.d_read = tap_cdev_read,
@@ -189,9 +186,6 @@ const struct cdevsw tap_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = tap_cdev_kqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &tap_localcount,
-#endif
 	.d_flag = D_OTHER
 };
 

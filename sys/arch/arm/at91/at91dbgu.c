@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $ */
+/*	$Id: at91dbgu.c,v 1.15.2.1 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.15.2.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.15.2.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,15 +303,28 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 static int
 at91dbgu_param(struct tty *tp, struct termios *t)
 {
+	device_t self;
 	struct at91dbgu_softc *sc
-		= device_lookup_private(&at91dbgu_cd, COMUNIT(tp->t_dev));
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
-		return (EIO);
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(tp->t_dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
 
-	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
+		return (EIO);
+	}
+
+	if (t->c_ispeed && t->c_ispeed != t->c_ospeed) {
+		device_release(self);
 		return (EINVAL);
+	}
 
 	/*
 	 * For the console, always force CLOCAL and !HUPCL, so that the port
@@ -329,8 +342,10 @@ at91dbgu_param(struct tty *tp, struct termios *t)
 	 * VMIN and VTIME.
 	 */
 	if (tp->t_ospeed == t->c_ospeed &&
-	    tp->t_cflag == t->c_cflag)
+	    tp->t_cflag == t->c_cflag) {
+		device_release(self);
 		return (0);
+	}
 
 	s = splserial();
 
@@ -362,6 +377,7 @@ at91dbgu_param(struct tty *tp, struct termios *t)
 		}
 	}
 
+	device_release(self);
 	return (0);
 }
 
@@ -394,12 +410,22 @@ at91dbgu_filltx(struct at91dbgu_softc *sc)
 static void
 at91dbgu_start(struct tty *tp)
 {
+	device_t self;
 	struct at91dbgu_softc *sc
-		= device_lookup_private(&at91dbgu_cd, COMUNIT(tp->t_dev));
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(tp->t_dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return;
+	}
 
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
@@ -434,6 +460,7 @@ at91dbgu_start(struct tty *tp)
 
 out:
 	splx(s);
+	device_release(self);
 	return;
 }
 
@@ -472,31 +499,43 @@ at91dbgu_shutdown(struct at91dbgu_softc *sc)
 int
 at91dbgu_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	device_t self;
 	struct at91dbgu_softc *sc;
 	struct tty *tp;
 	int s, s2;
 	int error;
 
-	sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
-		sc->sc_rbuf == NULL)
+	    sc->sc_rbuf == NULL) {
+		device_release(self);
 		return (ENXIO);
+	}
 
-	if (!device_is_active(sc->sc_dev))
+	if (!device_is_active(sc->sc_dev)) {
+		device_release(self);
 		return (ENXIO);
+	}
 
 #ifdef KGDB
 	/*
 	 * If this is the kgdb port, no other use is permitted.
 	 */
-	if (ISSET(sc->sc_hwflags, COM_HW_KGDB))
+	if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
+		device_release(self);
 		return (EBUSY);
+	}
 #endif
 
 	tp = sc->sc_tty;
 
-	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
+	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
+		device_release(self);
 		return (EBUSY);
+	}
 
 	s = spltty();
 
@@ -593,6 +632,7 @@ at91dbgu_open(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error)
 		goto bad;
 
+	device_release(self);
 	return (0);
 
 bad:
@@ -604,24 +644,39 @@ bad:
 		at91dbgu_shutdown(sc);
 	}
 
+	device_release(self);
 	return (error);
 }
 
 int
 at91dbgu_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
+	device_t self;
+	struct at91dbgu_softc *sc;
 	struct tty *tp = sc->sc_tty;
 
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+
 	/* XXX This is for cons.c. */
-	if (!ISSET(tp->t_state, TS_ISOPEN))
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		device_release(self);
 		return (0);
+	}
 
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
-	if (COM_ISALIVE(sc) == 0)
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return (0);
+	}
 
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		/*
@@ -632,72 +687,146 @@ at91dbgu_close(dev_t dev, int flag, int mode, struct lwp *l)
 		at91dbgu_shutdown(sc);
 	}
 
+	device_release(self);
 	return (0);
 }
 
 int
 at91dbgu_read(dev_t dev, struct uio *uio, int flag)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct at91dbgu_softc *sc;
+	struct tty *tp;
+	int val;
 
-	if (COM_ISALIVE(sc) == 0)
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return (EIO);
- 
-	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+ 	}
+
+	tp = sc->sc_tty;
+	val = ((*tp->t_linesw->l_read)(tp, uio, flag));
+
+	device_release(self);
+	return val;
 }
 
 int
 at91dbgu_write(dev_t dev, struct uio *uio, int flag)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct at91dbgu_softc *sc;
+	struct tty *tp;
+	int val;
 
-	if (COM_ISALIVE(sc) == 0)
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return (EIO);
- 
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+ 	}
+
+	tp = sc->sc_tty;
+	val = ((*tp->t_linesw->l_write)(tp, uio, flag));
+
+	device_release(self);
+	return val;
 }
 
 int
 at91dbgu_poll(dev_t dev, int events, struct lwp *l)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct at91dbgu_softc *sc;
+	struct tty *tp;
 
-	if (COM_ISALIVE(sc) == 0)
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return ENXIO;
+	}
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return (EIO);
- 
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+ 	}
+
+	tp = sc->sc_tty;
+	val = ((*tp->t_linesw->l_poll)(tp, events, l));
+
+	device_release(self);
+	return val;
 }
 
 struct tty *
 at91dbgu_tty(dev_t dev)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct at91dbgu_softc *sc;
+	struct tty *tp;
 
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return NULL;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return NULL;
+	}
+	tp = sc->sc_tty;
+
+	device_release(self);
 	return (tp);
 }
 
 int
 at91dbgu_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct at91dbgu_softc *sc = device_lookup_private(&at91dbgu_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	device_t self;
+	struct at91dbgu_softc *sc;
+	struct tty *tp;
 	int error;
 	int s;
 
-	if (COM_ISALIVE(sc) == 0)
+	self = device_lookup_acquire(&at91dbgu_cd, COMUNIT(dev));
+	if (self == NULL)
+		return NULL;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return NULL;
+	}
+	if (COM_ISALIVE(sc) == 0) {
+		device_release(self);
 		return (EIO);
+	}
 
+	tp = sc->sc_tty;
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return (error);
+	}
 
 	error = ttioctl(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return (error);
+	}
 
 	error = 0;
 
@@ -731,6 +860,7 @@ at91dbgu_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	splx(s);
 
+	device_release(self);
 	return (error);
 }
 
@@ -740,10 +870,18 @@ at91dbgu_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 at91dbgu_stop(struct tty *tp, int flag)
 {
-	struct at91dbgu_softc *sc
-		= device_lookup_private(&at91dbgu_cd, COMUNIT(tp->t_dev));
+	device_t self;
+	struct at91dbgu_softc *sc;
 	int s;
 
+	self = device_lookup_private(&at91dbgu_cd, COMUNIT(tp->t_dev));
+	if (self == NULL)
+		return;
+	sc = device_private(self);
+	if (sc == NULL) {
+		device_release(self);
+		return;
+	}
 	s = splserial();
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
@@ -752,6 +890,7 @@ at91dbgu_stop(struct tty *tp, int flag)
 			SET(tp->t_state, TS_FLUSH);
 	}
 	splx(s);
+	device_release(self);
 }
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.41 2012/10/27 17:17:29 chs Exp $ */
+/*	$NetBSD: gtsc.c,v 1.41.18.1 2016/07/19 06:26:58 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.41 2012/10/27 17:17:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.41.18.1 2016/07/19 06:26:58 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,14 +401,19 @@ gtsc_dmanext(struct sbic_softc *dev)
 void
 gtsc_dump(void)
 {
+	device_t self;
 	extern struct cfdriver gtsc_cd;
 	struct sbic_softc *sc;
 	int i;
 
 	for (i = 0; i < gtsc_cd.cd_ndevs; ++i) {
-		sc = device_lookup_private(&gtsc_cd, i);
+		self = device_lookup_acquire(&gtsc_cd, i);
+		if (self == NULL)
+			continue;
+		sc = device_private(self);
 		if (sc != NULL)
 			sbic_dump(sc);
+		device_release(self);
 	}
 }
 #endif

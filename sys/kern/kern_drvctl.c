@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.41.2.1 2016/07/18 03:50:00 pgoyette Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.41.2.2 2016/07/19 06:27:00 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.2.1 2016/07/18 03:50:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41.2.2 2016/07/19 06:27:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,11 +69,8 @@ static struct selinfo		drvctl_rdsel;
 
 dev_type_open(drvctlopen);
 
-#ifdef _MODULE
-struct localcount drvctl_localcount;
-#endif
-
 const struct cdevsw drvctl_cdevsw = {
+	LOCALCOUNT_INITIALIZER
 	.d_open = drvctlopen,
 	.d_close = nullclose,
 	.d_read = nullread,
@@ -85,9 +82,6 @@ const struct cdevsw drvctl_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-#ifdef _MODULE
-	.d_localcount = &drvctl_localcount,
-#endif
 	.d_flag = D_OTHER
 };
 
