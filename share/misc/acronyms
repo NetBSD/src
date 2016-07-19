@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.246 2016/05/15 23:40:46 jnemeth Exp $
+$NetBSD: acronyms,v 1.247 2016/07/19 07:06:32 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -413,6 +413,8 @@ PPL	people
 PPL	pretty please
 PPP	petty pet peeve
 PR	public relations
+PTO	{paid,personal} time off
+PTO	power takeoff
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 QFT	quoted for truth
