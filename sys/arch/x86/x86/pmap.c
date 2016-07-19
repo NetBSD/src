@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2016/07/11 14:18:16 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212 2016/07/19 18:54:45 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2016/07/11 14:18:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2016/07/19 18:54:45 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3910,7 +3910,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
-	for (va = sva ; va < eva ; va = blockend) {
+	for (va = sva ; va < eva; va = blockend) {
 		pt_entry_t *spte, *epte;
 		int i;
 
@@ -3926,8 +3926,8 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * with APTE).  then we can set VM_MAXUSER_ADDRESS to
 		 * be VM_MAX_ADDRESS.
 		 */
-
 		/* XXXCDC: ugly hack to avoid freeing PDP here */
+		/* XXX: this loop makes no sense at all */
 		for (i = 0; i < PDP_SIZE; i++) {
 			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
 				continue;
@@ -3942,7 +3942,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		spte = &ptes[pl1_i(va)];
 		epte = &ptes[pl1_i(blockend)];
 
-		for (/*null */; spte < epte ; spte++) {
+		for (/* */; spte < epte; spte++) {
 			pt_entry_t opte, npte;
 
 			do {
