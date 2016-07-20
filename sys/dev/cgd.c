@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.3 2016/07/20 04:33:53 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.4 2016/07/20 06:51:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.3 2016/07/20 04:33:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.4 2016/07/20 06:51:13 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -176,6 +176,17 @@ static void	hexprint(const char *, void *, int);
 
 /* The code */
 
+static void
+cgd_release(dev_t dev)
+{
+	int unit = CGDUNIT(dev);
+	device_t self;
+
+	self = device_lookup_acquire(&cgd_cd, unit);
+	if (self != NULL)
+		device_release(self);
+}
+
 static struct cgd_softc *
 getcgd_softc(dev_t dev)
 {
@@ -247,6 +258,7 @@ cgdattach(int num)
 static struct cgd_softc *
 cgd_spawn(int unit)
 {
+	device_t self;
 	cfdata_t cf;
 
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
@@ -255,7 +267,17 @@ cgd_spawn(int unit)
 	cf->cf_unit = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
-	return device_private(config_attach_pseudo(cf));
+	if (config_attach_pseudo(cf) == NULL)
+		return NULL;
+
+	self = device_lookup_acquire(&cgd_cd, unit);
+	if (self == NULL)
+		return NULL;
+	else
+		/*
+		 * Note that we return with a reference to the device!
+		 */
+		return device_private(self);
 }
 
 static int
@@ -326,23 +348,30 @@ cgdstrategy(struct buf *bp)
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
+		cgd_release(bp->b_dev);
 		return;
 	}
 
 	/* XXXrcd: Should we test for (cs != NULL)? */
 	dk_strategy(&cs->sc_dksc, bp);
+	cgd_release(bp->b_dev);
 	return;
 }
 
 static int
 cgdsize(dev_t dev)
 {
+	int retval;
 	struct cgd_softc *cs = getcgd_softc(dev);
 
 	DPRINTF_FOLLOW(("cgdsize(0x%"PRIx64")\n", dev));
 	if (!cs)
-		return -1;
-	return dk_size(&cs->sc_dksc, dev);
+		retval = -1;
+	else
+		retval = dk_size(&cs->sc_dksc, dev);
+
+	cgd_release(dev);
+	return retval;
 }
 
 /*
@@ -451,6 +480,7 @@ cgd_diskstart(device_t dev, struct buf *bp)
 static void
 cgdiodone(struct buf *nbp)
 {
+	dev_t dev;
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
@@ -494,7 +524,14 @@ cgdiodone(struct buf *nbp)
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
 
+	/*
+	 * copy the dev_t, finish the disk operation, and release the
+	 * reference we're holding on to (from cgd_getsoftc() earlier)
+	 */
+	dev = obp->b_dev;
 	dk_done(dksc, obp);
+	cgd_release(dev);
+
 	dk_start(dksc, NULL);
 }
 
@@ -817,8 +854,10 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 	if (cgu->cgu_unit == -1)
 		cgu->cgu_unit = unit;
 
-	if (cgu->cgu_unit < 0)
+	if (cgu->cgu_unit < 0) {
+		cgd_release(dev);
 		return EINVAL;	/* XXX: should this be ENXIO? */
+	}
 
 	cs = device_lookup_private(&cgd_cd, unit);
 	if (cs == NULL || !DK_ATTACHED(dksc)) {
@@ -836,6 +875,7 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 		cgu->cgu_mode = cs->sc_cdata.cf_mode;
 		cgu->cgu_keylen = cs->sc_cdata.cf_keylen;
 	}
+	cgd_release(dev);
 	return 0;
 }
 
@@ -1030,7 +1070,7 @@ hexprint(const char *start, void *buf, int len)
 MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
-CFDRIVER_DECL(cgd, DV_DISK, NULL);
+#include "ioconf.c"
 #endif
 
 static int
@@ -1051,8 +1091,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		error = config_init_component(cfdriver_ioconf_cgd,
                     cfattach_ioconf_cgd, cfdata_ioconf_cgd);
 		if (error) {
-			aprint_error("%s: unable to init component",
-			    cgd_cd.cd_name);
+			aprint_error("%s: unable to init component"
+			    ", error %d", cgd_cd.cd_name, error);
 			break;
 		}
 
@@ -1068,8 +1108,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			config_fini_component(cfdriver_ioconf_cgd,
 			    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
-			aprint_error("%s: unable to attach devsw",
-				    cgd_cd.cd_name);
+			aprint_error("%s: unable to attach devsw"
+				    ", error %d", cgd_cd.cd_name, error);
 		}
 #endif
 		break;
@@ -1090,9 +1130,12 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		/*
 		 * If removal fails, re-attach our {b,c}devsw's
 		 */
-		if (error)
+		if (error) {
+			aprint_error("%s: failed to remove from autoconf"
+			    ", error %d", cgd_cd.cd_name, error);
 			devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 			    &cgd_cdevsw, &cmajor);
+		}
 #endif
 		break;
 
