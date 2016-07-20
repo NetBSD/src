@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.21 2016/07/20 20:06:04 christos Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.22 2016/07/20 21:02:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -140,15 +140,17 @@ struct	__pthread_mutex_st {
 
 #ifdef __cplusplus
 #define _PTHREAD_MUTEX_INI(a, b) b
+#define _PTHREAD_MUTEX_UNI(a) { 0 }
 #else
 #define _PTHREAD_MUTEX_INI(a, b) .a = b
+#define _PTHREAD_MUTEX_UNI(a) .a = 0
 #endif
 
 #define _PTHREAD_MUTEX_INITIALIZER {					\
 	_PTHREAD_MUTEX_INI(ptm_magic, _PT_MUTEX_MAGIC), 		\
 	_PTHREAD_MUTEX_INI(ptm_errorcheck, __SIMPLELOCK_UNLOCKED),	\
 	_PTHREAD_MUTEX_PAD(ptm_pad1)					\
-	_PTHREAD_MUTEX_INI(ptm_ceiling, 0),				\
+	_PTHREAD_MUTEX_UNI(ptm_ceiling),				\
 	_PTHREAD_MUTEX_PAD(ptm_pad2)					\
 	_PTHREAD_MUTEX_INI(ptm_owner, NULL),				\
 	_PTHREAD_MUTEX_INI(ptm_waiters, NULL),				\
