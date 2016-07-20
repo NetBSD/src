@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.272 2016/07/11 18:56:41 skrll Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.272.2.1 2016/07/20 23:50:55 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.272 2016/07/11 18:56:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.272.2.1 2016/07/20 23:50:55 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -1791,9 +1791,9 @@ cpu_dump(void)
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
 	const struct bdevsw *bdev;
-	int i;
+	int i, err;
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
 
@@ -1836,7 +1836,9 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size;
 	}
 
-	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
+	err = (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
+	bdevsw_release(bdev);
+	return err;
 }
 
 /*
@@ -1900,9 +1902,13 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -1911,6 +1917,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
 		    minor(dumpdev));
 		return;
@@ -1921,6 +1928,7 @@ dumpsys(void)
 	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -1998,6 +2006,7 @@ dumpsys(void)
 		printf("error %d\n", error);
 		break;
 	}
+	bdevsw_release(bdev);
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.24 2012/11/12 18:00:35 skrll Exp $	*/
+/*	$NetBSD: stubs.c,v 1.24.18.1 2016/07/20 23:50:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.24 2012/11/12 18:00:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.24.18.1 2016/07/20 23:50:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +126,9 @@ cpu_dump(void)
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
 	const struct bdevsw *bdev;
-	int i;
+	int i, err;
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
 	dump = bdev->d_dump;
@@ -162,7 +162,9 @@ cpu_dump(void)
 		memsegp[i].size = bootconfig.dram[i].pages * PAGE_SIZE;
 	}
 
-	return (dump(dumpdev, dumplo, bf, dbtob(1)));
+	err = (dump(dumpdev, dumplo, bf, dbtob(1)));
+	bdevsw_release(bdev);
+	return err;
 }
 
 /*
@@ -238,13 +240,17 @@ dodumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n",
 	    major(dumpdev), minor(dumpdev), dumplo);
 
-
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -276,6 +282,7 @@ dodumpsys(void)
 		}
 	}
 err:
+	bdevsw_release(bdev);
 	switch (error) {
 	case ENXIO:
 		printf("device bad\n");

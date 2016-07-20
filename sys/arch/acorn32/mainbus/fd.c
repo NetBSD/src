@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58.2.2 2016/07/20 02:06:15 pgoyette Exp $	*/
+/*	$NetBSD: fd.c,v 1.58.2.3 2016/07/20 23:50:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.2 2016/07/20 02:06:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.3 2016/07/20 23:50:53 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -1543,18 +1543,24 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	int s;
 	int type;
 	int floppysize;
+	const struct bdevsw *bdev;
 
-	if (bdevsw_lookup(dev) != &fd_bdevsw)
+	if ((bdev = bdevsw_lookup_acquire(dev)) != &fd_bdevsw) {
+		bdevsw_release(bdev);
 		return(EINVAL);
+	}
 
-	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0)
+	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0) {
+		bdevsw_release(bdev);
 		return(EBUSY);
+	}
 
 	type = FDTYPE(dev) - 1;
 	if (type < 0) type = 0;
 	floppysize = fd_types[type].size << (fd_types[type].secsize + 7);
         
 	if (md->md_size < floppysize) {
+		bdevsw_release(bdev);
 		printf("Memory disc is not big enough for floppy image\n");
 		return(EINVAL);
 	}
@@ -1575,8 +1581,9 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 
 	if (fdopen(bp->b_dev, 0, 0, curlwp) != 0) {
 		brelse(bp, 0);		
+		bdevsw_release(bdev);
 		printf("Cannot open floppy device\n");
-			return(EINVAL);
+		return(EINVAL);
 	}
 
 	for (loop = 0;
@@ -1606,5 +1613,6 @@ load_memory_disc_from_floppy(struct md_conf *md, dev_t dev)
 	brelse(bp, 0);
 
 	splx(s);
+	bdevsw_release(bdev);
 	return(0);
 }

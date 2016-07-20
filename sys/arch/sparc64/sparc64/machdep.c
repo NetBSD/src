@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.285 2016/07/07 06:55:38 msaitoh Exp $ */
+/*	$NetBSD: machdep.c,v 1.285.2.1 2016/07/20 23:50:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285.2.1 2016/07/20 23:50:55 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -707,9 +707,13 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -718,10 +722,12 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (!dumpspace) {
+		bdevsw_release(bdev);
 		printf("\nno address space available, dump not possible\n");
 		return;
 	}
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %" PRId32 ",%" PRId32 " not possible ("
 		    "partition too small?)\n", major(dumpdev), minor(dumpdev));
 		return;
@@ -731,6 +737,7 @@ dumpsys(void)
 
 	psize = bdev_size(dumpdev);
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("dump area unavailable\n");
 		return;
 	}
@@ -798,6 +805,7 @@ dumpsys(void)
 		printf("- error %d\n", error);
 		break;
 	}
+	bdevsw_release(bdev);
 }
 
 void trapdump(struct trapframe64*);

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $ */
+/* $NetBSD: machdep.c,v 1.346.4.1 2016/07/20 23:50:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346.4.1 2016/07/20 23:50:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1116,9 +1116,9 @@ cpu_dump(void)
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
 	const struct bdevsw *bdev;
-	int i;
+	int i, error;
 
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return (ENXIO);
 	dump = bdev->d_dump;
@@ -1150,7 +1150,9 @@ cpu_dump(void)
 		memsegp[i].size = mem_clusters[i].size & ~PAGE_MASK;
 	}
 
-	return (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
+	error = (dump(dumpdev, dumplo, (void *)buf, dbtob(1)));
+	bdevsw_release(bdev);
+	return error;
 }
 
 /*
@@ -1213,9 +1215,13 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -1224,6 +1230,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -1234,6 +1241,7 @@ dumpsys(void)
 	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -1276,6 +1284,7 @@ dumpsys(void)
 	}
 
 err:
+	bdevsw_release(bdev);
 	switch (error) {
 
 	case ENXIO:
