@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.13.2.1 2016/07/19 06:26:58 pgoyette Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.13.2.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$Id: at91usart.c,v 1.13.2.2 2016/07/20 02:06:16 pgoyette Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.13.2.2 2016/07/20 02:06:16 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.13.2.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.13.2.2 2016/07/20 02:06:16 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -328,25 +328,17 @@ at91usart_attach_subr(struct at91usart_softc *sc, struct at91bus_attach_args *sa
 static int
 at91usart_param(struct tty *tp, struct termios *t)
 {
-	device_t self;
-	struct at91usart_softc *sc;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(tp->t_dev));
 	int s;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(tp->t_dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (EIO);
 	}
 
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (EINVAL);
 	}
 
@@ -367,7 +359,7 @@ at91usart_param(struct tty *tp, struct termios *t)
 	 */
 	if (tp->t_ospeed == t->c_ospeed &&
 	    tp->t_cflag == t->c_cflag) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (0);
 	}
 
@@ -398,7 +390,7 @@ at91usart_param(struct tty *tp, struct termios *t)
 	if (sc->hwflow)
 		(*sc->hwflow)(sc, t->c_cflag);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (0);
 }
 
@@ -492,21 +484,13 @@ at91usart_filltx(struct at91usart_softc *sc)
 static void
 at91usart_start(struct tty *tp)
 {
-	device_t self;
-	struct at91usart_softc *sc;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(tp->t_dev));
 	int s;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(tp->t_dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	if (COM_ISALIVE(sc) == 0) {
 		DPRINTFN(5, ("%s: %s / COM_ISALIVE == 0\n", device_xname(sc->sc_dev), __FUNCTION__));
-		device_release(self);
+		device_release(sc->sc_dev);
 		return;
 	}
 
@@ -541,7 +525,7 @@ at91usart_start(struct tty *tp)
 out:
 	splx(s);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return;
 }
 
@@ -586,23 +570,19 @@ at91usart_shutdown(struct at91usart_softc *sc)
 int
 at91usart_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	device_t self;
 	struct at91usart_softc *sc;
 	struct tty *tp;
 	int s;
 	int error;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
+	sc = device_lookup_private_acquire(&at91usart_cd, COMUNIT(dev));
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK)) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (ENXIO);
 	}
 
 	if (!device_is_active(sc->sc_dev)) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (ENXIO);
 	}
 
@@ -611,7 +591,7 @@ at91usart_open(dev_t dev, int flag, int mode, struct lwp *l)
 	 * If this is the kgdb port, no other use is permitted.
 	 */
 	if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (EBUSY);
 	}
 #endif
@@ -619,7 +599,7 @@ at91usart_open(dev_t dev, int flag, int mode, struct lwp *l)
 	tp = sc->sc_tty;
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (EBUSY);
 	}
 
@@ -638,7 +618,6 @@ at91usart_open(dev_t dev, int flag, int mode, struct lwp *l)
 				splx(s);
 				printf("%s: device enable failed\n",
 				       device_xname(sc->sc_dev));
-				device_release(self);
 				return (EIO);
 			}
 			sc->enabled = 1;
@@ -710,7 +689,7 @@ at91usart_open(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error)
 		goto bad;
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (0);
 
 bad:
@@ -722,37 +701,28 @@ bad:
 		at91usart_shutdown(sc);
 	}
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (error);
 }
 
 int
 at91usart_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	device_t self;
-	struct at91usart_softc *sc;
-	struct tty *tp;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (0);
 	}
 
-	tp = sc->sc_tty;
 	(*tp->t_linesw->l_close)(tp, flag);
 	ttyclose(tp);
 
 	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (0);
 	}
 
@@ -765,147 +735,96 @@ at91usart_close(dev_t dev, int flag, int mode, struct lwp *l)
 		at91usart_shutdown(sc);
 	}
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (0);
 }
 
 int
 at91usart_read(dev_t dev, struct uio *uio, int flag)
 {
-	device_t self;
-	struct at91usart_softc *sc;
-	struct tty *tp;
-	int val;
+	int error;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
-	self = device_lookup_private(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
-		return (EIO);
-	}
- 
-	tp = sc->sc_tty;
-	val = ((*tp->t_linesw->l_read)(tp, uio, flag));
+		error = EIO;
+	else
+		error =(*tp->t_linesw->l_read)(tp, uio, flag);
 
-	device_release(self);
-	return val;
+	device_release(sc->sc_dev);
+	return error;
 }
 
 int
 at91usart_write(dev_t dev, struct uio *uio, int flag)
 {
-	device_t self;
-	struct at91usart_softc *sc;
-	struct tty *tp;
-	int val;
+	int error;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
-	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
-		return (EIO);
-	}
- 
-	tp = sc->sc_tty;
-	val = ((*tp->t_linesw->l_write)(tp, uio, flag));
+	if (COM_ISALIVE(sc) == 0)
+		error = EIO;
+	else
+		error = (*tp->t_linesw->l_write)(tp, uio, flag);
 
-	device_release(self);
-	return val;
+	device_release(sc->sc_dev);
+	return error;
 }
 
 int
 at91usart_poll(dev_t dev, int events, struct lwp *l)
 {
-	device_t self;
-	struct at91usart_softc *sc;
-	struct tty *tp;
-	int val;
+	int error;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
-	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
-		return (EIO);
-	}
- 
-	tp = sc->sc_tty;
-	val = ((*tp->t_linesw->l_poll)(tp, events, l));
+	if (COM_ISALIVE(sc) == 0)
+		error = EIO;
+	else
+		error = (*tp->t_linesw->l_poll)(tp, events, l);
 
-	device_release(self);
-	return val;
+	device_release(sc->sc_dev);
+	return error;
 }
 
 struct tty *
 at91usart_tty(dev_t dev)
 {
-	device_t self;
-	struct at91usart_softc *sc;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
 	struct tty *tp;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return NULL;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return NULL;
-	}
 	tp = sc->sc_tty;
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (tp);
 }
 
 int
 at91usart_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct at91usart_softc *sc;
-	struct tty *tp;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	if (COM_ISALIVE(sc) == 0) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (EIO);
 	}
 
-	tp = sc->sc_tty;
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	if (error == EPASSTHROUGH)
+		error = ttioctl(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return (error);
 	}
-	error = ttioctl(tp, cmd, data, flag, l);
-	if (error != EPASSTHROUGH) {
-		device_release(self);
-		return (error);
-	}
+
 	error = 0;
 
 	s = spltty();
@@ -938,7 +857,7 @@ at91usart_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	splx(s);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return (error);
 }
 
@@ -948,18 +867,9 @@ at91usart_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 at91usart_stop(struct tty *tp, int flag)
 {
-	device_t self;
-	struct at91usart_softc *sc;
-	int s;
+	struct at91usart_softc *sc = device_lookup_private_acquire(
+					&at91usart_cd, COMUNIT(tp->t_dev));
 
-	self = device_lookup_acquire(&at91usart_cd, COMUNIT(tp->t_dev));
-	if (self == NULL)
-		return;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return;
-	}
 	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
@@ -968,7 +878,7 @@ at91usart_stop(struct tty *tp, int flag)
 			SET(tp->t_state, TS_FLUSH);
 	}
 	splx(s);
-	device_release(self);
+	device_release(sc->sc_dev);
 }
 
 #if 0

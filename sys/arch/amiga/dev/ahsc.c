@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.38.18.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$NetBSD: ahsc.c,v 1.38.18.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.38.18.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.38.18.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,19 +375,16 @@ ahsc_dmanext(struct sbic_softc *dev)
 void
 ahsc_dump(void)
 {
-	device_t self;
 	extern struct cfdriver ahsc_cd;
 	struct sbic_softc *sc;
 	int i;
 
 	for (i = 0; i < ahsc_cd.cd_ndevs; ++i) {
-		self = device_lookup_acquire(&ahsc_cd, i);
-		if (self == NULL)
-			continue;
-		sc = device_private(self);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&ahsc_cd, i);
+		if (sc != NULL) {
 			sbic_dump(sc);
-		device_release(self);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 #endif

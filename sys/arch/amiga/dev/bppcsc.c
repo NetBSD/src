@@ -1,4 +1,4 @@
-/*	$NetBSD: bppcsc.c,v 1.3.18.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$NetBSD: bppcsc.c,v 1.3.18.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.3.18.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bppcsc.c,v 1.3.18.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,19 +203,16 @@ bppcsc_dmaintr(void *arg)
 void
 bppcsc_dump(void)
 {
-	device_t self;
 	extern struct cfdriver bppcsc_cd;
 	struct siop_softc *sc;
 	int i;
 
 	for (i = 0; i < bppcsc_cd.cd_ndevs; ++i) {
-		self = device_lookup_acquire(&bppcsc_cd, i);
-		if (self == NULL)
-			continue;
-		sc = device_private(self);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&bppcsc_cd, i);
+		if (sc != NULL) {
 			siop_dump(sc);
-		device_release(self);
+			device_release(sc->sc_dev);
+		}
 	}
 }
 #endif

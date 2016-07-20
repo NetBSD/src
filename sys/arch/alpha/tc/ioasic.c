@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.46.10.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/* $NetBSD: ioasic.c,v 1.46.10.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46.10.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.46.10.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,18 +215,8 @@ void
 ioasic_intr_establish(device_t ioa, void *cookie, tc_intrlevel_t level,
 		int (*func)(void *), void *arg)
 {
-	device_t self;
-	struct ioasic_softc *sc;
+	struct ioasic_softc *sc = device_lookup_private_acquire(&ioasic_cd,0);
 	u_long dev, i, imsk;
-
-	self = device_lookup_acquire(&ioasic_cd, 0);
-	if (self == NULL)
-		return;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return;
-	}
 
 	dev = (u_long)cookie;
 #ifdef DIAGNOSTIC
@@ -249,25 +239,14 @@ ioasic_intr_establish(device_t ioa, void *cookie, tc_intrlevel_t level,
 	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	imsk |= ioasic_devs[i].iad_intrbits;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
-
-	device_release(self);
+	device_release(sc->sc_dev;
 }
 
 void
 ioasic_intr_disestablish(device_t ioa, void *cookie)
 {
-	device_t self;
-	struct ioasic_softc *sc;
+	struct ioasic_softc *sc = device_lookup_private_acquire(&ioasic_cd,0);
 	u_long dev, i, imsk;
-
-	self = device_lookup_acquire(&ioasic_cd, 0);
-	if (self == NULL)
-		return;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return;
-	}
 
 	dev = (u_long)cookie;
 #ifdef DIAGNOSTIC
@@ -290,8 +269,7 @@ ioasic_intr_disestablish(device_t ioa, void *cookie)
 
 	ioasicintrs[dev].iai_func = ioasic_intrnull;
 	ioasicintrs[dev].iai_arg = (void *)dev;
-
-	device_release(self);
+	device_release(sc->sc_dev);
 }
 
 int

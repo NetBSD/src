@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.15.2.1 2016/07/19 06:26:57 pgoyette Exp $ */
+/* $NetBSD: arcpp.c,v 1.15.2.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.15.2.1 2016/07/19 06:26:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.15.2.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -191,16 +191,10 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int error, s;
-	device_t self;
 
-	self = device_lookup_acquire(&arcpp_cd, minor(dev));
-	if (self == NULL)
+	sc = device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		error = ENXIO;
-		goto out;
-	}
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
@@ -208,10 +202,8 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 		    sc->sc_state);
 #endif
 
-	if (sc->sc_state) {
-		error = EBUSY;
-		goto out;
-	}
+	if (sc->sc_state)
+		return EBUSY;
 
 	sc->sc_state = ARCPP_INIT;
 	sc->sc_flags = flags;
@@ -226,13 +218,14 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error == EWOULDBLOCK) {
 		sc->sc_state = 0;
 		splx(s);
-		error = EBUSY;
-		goto out;
+		device_release(sc->sc_dev);
+		return EBUSY;
 	}
 	if (error) {
 		sc->sc_state = 0;
 		splx(s);
-		goto out;
+		device_release(sc->sc_dev);
+		return error;
 	}
 
 	sc->sc_inbuf = malloc(ARCPP_BSIZE, M_DEVBUF, M_WAITOK);
@@ -243,10 +236,8 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	arcppintr(sc);
 	splx(s);
 
+	device_release(sc->sc_dev);
 	return 0;
-
- out:	device_release(self);
-	return error;
 }
 
 /*
@@ -255,17 +246,9 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	device_t self;
-	struct arcpp_softc *sc;
+	struct arcpp_softc *sc =
+	    device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
 
-	self = device_lookup_acquire(&arcpp_cd, minor(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(&arcpp_cd, ARCPPUNIT(dev));
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	if (sc->sc_count)
 		(void) arcpppushbytes(sc);
 
@@ -274,7 +257,7 @@ arcppclose(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_state = 0;
 	free(sc->sc_inbuf, M_DEVBUF);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return 0;
 }
 
@@ -301,19 +284,11 @@ arcpppushbytes(struct arcpp_softc *sc)
 int
 arcppwrite(dev_t dev, struct uio *uio, int flags)
 {
-	device_t self;
-	struct arcpp_softc *sc;
+	struct arcpp_softc *sc =
+	    device_lookup_private_acquire(&arcpp_cd, ARCPPUNIT(dev));
 	size_t n;
 	int error = 0;
 
-	self = device_lookup_acquire(&arcpp_cd, minor(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(&arcpp_cd, ARCPPUNIT(dev));
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	while ((n = min(ARCPP_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf, n, uio);
 		sc->sc_count = n;
@@ -325,11 +300,11 @@ arcppwrite(dev_t dev, struct uio *uio, int flags)
 			 */
 			uio->uio_resid += sc->sc_count;
 			sc->sc_count = 0;
-			device_release(self);
+			device_release(sc->sc_dev);
 			return error;
 		}
 	}
-	device_release(self);
+	device_release(sc->sc_dev);
 	return 0;
 }
 
