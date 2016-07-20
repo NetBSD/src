@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2016/07/16 17:02:34 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225 2016/07/20 13:49:17 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2016/07/16 17:02:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2016/07/20 13:49:17 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -377,9 +377,8 @@ cpu_startup(void)
 	 * created in locore.S, which is not big enough if we want to load many
 	 * modules dynamically. We really should be using kernel_map instead.
 	 *
-	 * But because of the R_X86_64_32 relocations that are usually present
-	 * in dynamic modules, the module map must be in low memory, and this
-	 * wouldn't been guaranteed if we were using kernel_map.
+	 * But the modules must be located above the kernel image, and that
+	 * wouldn't be guaranteed if we were using kernel_map.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
