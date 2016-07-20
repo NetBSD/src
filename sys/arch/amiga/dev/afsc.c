@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.44.18.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$NetBSD: afsc.c,v 1.44.18.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.44.18.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.44.18.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,19 +221,15 @@ afsc_dmaintr(void *arg)
 void
 afsc_dump(void)
 {
-	device_t self;
 	extern struct cfdriver afsc_cd;
 	struct siop_softc *sc;
 	int i;
 
 	for (i = 0; i < afsc_cd.cd_ndevs; ++i) {
-		self = device_lookup_acquire(&afsc_cd, i);
-		if (self == NULL)
-			continue;
-		sc = device_private(self);
-		if (sc != NULL)
+		sc = device_lookup_private_acquire(&afsc_cd, i);
+		if (sc != NULL) {
 			siop_dump(sc);
-		device_release(self);
+			device_release(sc->sc_dev);
 	}
 }
 #endif
