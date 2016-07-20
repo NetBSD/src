@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.73 2016/07/07 06:55:43 msaitoh Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.73.2.1 2016/07/20 23:47:57 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.73.2.1 2016/07/20 23:47:57 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -310,6 +310,7 @@ udf_mount(struct mount *mp, const char *path,
 	struct udf_mount *ump;
 	struct vnode *devvp;
 	int openflags, accessmode, error;
+	const struct bdevsw *bdev;
 
 	DPRINTF(CALL, ("udf_mount called\n"));
 
@@ -359,7 +360,7 @@ udf_mount(struct mount *mp, const char *path,
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}
@@ -377,6 +378,7 @@ udf_mount(struct mount *mp, const char *path,
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
+		bdevsw_release(bdev);
 		return error;
 	}
 
@@ -407,6 +409,7 @@ udf_mount(struct mount *mp, const char *path,
 	if (error) {
 		/* devvp is still locked */
 		vrele(devvp);
+		bdevsw_release(bdev);
 		return error;
 	}
 
@@ -418,8 +421,10 @@ udf_mount(struct mount *mp, const char *path,
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 			mp->mnt_op->vfs_name, mp, l);
-	if (error)
+	if (error) {
+		bdevsw_release(bdev);
 		return error;
+	}
 
 	/* If we're not opened read-only, open its logical volume */
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
@@ -428,10 +433,12 @@ udf_mount(struct mount *mp, const char *path,
 				"writing, downgrading access to read-only\n");
 			mp->mnt_flag |= MNT_RDONLY;
 			/* FIXME we can't return error now on open failure */
+			bdevsw_release(bdev);
 			return 0;
 		}
 	}
 
+	bdevsw_release(bdev);
 	return 0;
 }
 

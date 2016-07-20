@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.118 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.118.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.118.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -282,6 +282,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct msdosfsmount *pmp = NULL;
 	int error, flags;
 	mode_t accessmode;
+	const struct bdevsw *bdev;
 
 	if (args == NULL)
 		return EINVAL;
@@ -384,7 +385,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		DPRINTF("no block switch");
 		vrele(devvp);
 		return (ENXIO);
@@ -402,6 +403,7 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	VOP_UNLOCK(devvp);
 	if (error) {
 		DPRINTF("KAUTH_REQ_SYSTEM_MOUNT_DEVICE %d", error);
+		bdevsw_release(bdev);
 		vrele(devvp);
 		return (error);
 	}
@@ -434,22 +436,27 @@ msdosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		vrele(devvp);
 		if (devvp != pmp->pm_devvp) {
 			DPRINTF("devvp %p pmp %p", devvp, pmp->pm_devvp);
+			bdevsw_release(bdev);
 			return (EINVAL);	/* needs translation */
 		}
 	}
 	if ((error = update_mp(mp, args)) != 0) {
 		msdosfs_unmount(mp, MNT_FORCE);
 		DPRINTF("update_mp %d", error);
+		bdevsw_release(bdev);
 		return error;
 	}
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
-
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	bdevsw_release(bdev);
+	return error;
+	
 fail:
+	bdevsw_release(bdev);
 	vrele(devvp);
 	return (error);
 }

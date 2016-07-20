@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.15 2015/01/11 17:29:57 hannken Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.15.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -121,6 +121,7 @@ chfs_mount(struct mount *mp,
 	struct chfs_mount *chmp;
 	int err = 0;
 	int xflags;
+	const struct bdevsw *bdev = NULL;
 
 	dbg("mount()\n");
 
@@ -162,7 +163,7 @@ chfs_mount(struct mount *mp,
 		/* Be sure this is a valid block device */
 		if (devvp->v_type != VBLK)
 			err = ENOTBLK;
-		else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+		else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL)
 			err = ENXIO;
 	}
 
@@ -195,12 +196,17 @@ chfs_mount(struct mount *mp,
 	vfs_getnewfsid(mp);
 	chmp->chm_fsmp = mp;
 
-	return set_statvfs_info(path,
+	err = set_statvfs_info(path,
 	    UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
+	return (err);
 
 fail:
 	vrele(devvp);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return (err);
 }
 
@@ -216,6 +222,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	struct chfs_mount* chmp;
 	struct vnode *vp;
 	int err = 0;
+	const struct bdevsw *bdev;
 
 	dbg("mountfs()\n");
 
@@ -234,11 +241,12 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 
 	if (devvp->v_type != VBLK)
 		err = ENOTBLK;
-	else if (bdevsw_lookup(dev) == NULL)
+	else if ((bdev = bdevsw_lookup_acquire(dev)) == NULL)
 		err = ENXIO;
 	else if (major(dev) != flash_major) {
 		dbg("major(dev): %d, flash_major: %d\n",
 		    major(dev), flash_major);
+		bdevsw_release(bdev);
 		err = ENODEV;
 	}
 	if (err) {
@@ -346,6 +354,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	err = VFS_VGET(mp, CHFS_ROOTINO, &vp);
 	if (err) {
 		dbg("error: %d while allocating root node\n", err);
+		bdevsw_release(bdev);
 		return err;
 	}
 	vput(vp);
@@ -357,12 +366,14 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	mutex_exit(&chmp->chm_lock_mountfields);
 
 	spec_node_setmountedfs(devvp, mp);
+	bdevsw_release(bdev);
 	return 0;
 
 fail:
 	kmem_free(chmp->chm_ebh, sizeof(struct chfs_ebh));
 	kmem_free(chmp, sizeof(struct chfs_mount));
 	kmem_free(ump, sizeof(struct ufsmount));
+	bdevsw_release(bdev);
 	return err;
 }
 

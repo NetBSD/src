@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.48.10.1 2016/07/20 23:47:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48 2014/02/19 20:50:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.48.10.1 2016/07/20 23:47:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -268,26 +268,30 @@ linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *v, register_
 dev_t
 linux_fakedev(dev_t dev, int raw)
 {
+	dev_t ret;
+	extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
+	const struct cdevsw *cd = cdevsw_lookup_acquire(dev);
 
-       extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
-       const struct cdevsw *cd = cdevsw_lookup(dev);
-
-       if (raw) {
+	if (raw) {
 #if (NWSDISPLAY > 0)
-	       extern const struct cdevsw wsdisplay_cdevsw;
-	       if (cd == &wsdisplay_cdevsw)
-		       return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+		extern const struct cdevsw wsdisplay_cdevsw;
+		if (cd == &wsdisplay_cdevsw) {
+			cdevsw_release(cd);
+			return makedev(LINUX_CONS_MAJOR, (minor(dev) + 1));
+		}
 #endif
-       }
+	}
 
-       if (cd == &ptc_cdevsw)
-	       return makedev(LINUX_PTC_MAJOR, minor(dev));
-       if (cd == &pts_cdevsw)
-	       return makedev(LINUX_PTS_MAJOR, minor(dev));
-
-	return ((minor(dev) & 0xff) | ((major(dev) & 0xfff) << 8)
+	if (cd == &ptc_cdevsw)
+		ret = makedev(LINUX_PTC_MAJOR, minor(dev));
+	else if (cd == &pts_cdevsw)
+		ret = makedev(LINUX_PTS_MAJOR, minor(dev));
+	else ret = ((minor(dev) & 0xff) | ((major(dev) & 0xfff) << 8)
 	    | (((unsigned long long int) (minor(dev) & ~0xff)) << 12)
 	    | (((unsigned long long int) (major(dev) & ~0xfff)) << 32));
+
+	cdevsw_release(cd);
+	return ret;
 }
 
 int

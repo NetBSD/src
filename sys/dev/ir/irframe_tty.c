@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.61 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.61.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.61 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.61.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -918,7 +918,7 @@ irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 	dev_t dev;
 
 	dev = tp->t_dev;
-	cdev = cdevsw_lookup(dev);
+	cdev = cdevsw_lookup_acquire(dev);
 	if (cdev != NULL)
 		error = (*cdev->d_ioctl)(dev, cmd, arg, 0, curlwp);
 	else
@@ -927,6 +927,8 @@ irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 	if (error)
 		printf("irt_ioctl: cmd=0x%08lx error=%d\n", cmd, error);
 #endif
+	if (cdev != NULL)
+		cdevsw_release(cdev);
 }
 
 void

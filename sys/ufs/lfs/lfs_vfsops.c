@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.351.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.351.2.1 2016/07/20 23:47:57 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -633,6 +633,7 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct lfs *fs = NULL;				/* LFS */
 	int error = 0, update;
 	mode_t accessmode;
+	const struct bdevsw *bdev = NULL;
 
 	if (args == NULL)
 		return EINVAL;
@@ -666,7 +667,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+			else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev))
+						== NULL)
 				error = ENXIO;
 		} else {
 			/*
@@ -722,10 +724,8 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		VOP_UNLOCK(devvp);
 	}
 
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
+	if (error)
+		goto fail;
 
 	if (!update) {
 		int flags;
@@ -822,9 +822,13 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
 	if (error == 0)
 		lfs_sb_setfsmnt(fs, mp->mnt_stat.f_mntonname);
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return error;
 
 fail:
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	vrele(devvp);
 	return (error);
 }
