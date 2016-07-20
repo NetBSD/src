@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.7 2016/07/17 21:40:47 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.8 2016/07/20 07:07:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.7 2016/07/17 21:40:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.8 2016/07/20 07:07:04 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -404,13 +404,14 @@ devsw_detach_locked(const struct bdevsw *bdev, const struct cdevsw *cdev)
 	if (j < max_cdevsws )
 		cdevsw[j] = NULL;
 
-	/* Wait for all current readers to finish with the devsw */
+	/* Wait for all current readers to finish with the devsw's */
 	pserialize_perform(device_psz);
 
 	/*
-	 * No new readers can reach the bdev and cdev via the
-	 * {b,c}devsw[] arrays.  Wait for existing references to
-	 * drain, and then destroy.
+	 * No new accessors can reach the bdev and cdev via the
+	 * {b,c}devsw[] arrays, so no new references can be
+	 * acquired.  Wait for all existing references to drain,
+	 * and then destroy.
 	 */
 
 	if (i < max_bdevsws && bdev->d_localcount != NULL) {
