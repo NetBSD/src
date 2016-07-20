@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9 2012/08/10 14:52:26 tsutsui Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9.20.1 2016/07/20 23:50:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matthew Fredette
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9 2012/08/10 14:52:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.9.20.1 2016/07/20 23:50:55 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -282,8 +282,14 @@ consinit(void)
 #ifdef	KGDB
 	/* Set up KGDB */
 #if NZS > 0
-	if (cdevsw_lookup(kgdb_dev) == &zstty_cdevsw)
+	{
+	  const struct cdevsw *cdev = cdevsw_lookup_acquire(kgdb_dev);
+
+	  if (cdev == &zstty_cdevsw)
 		zs_kgdb_init();
+	  if (cdev !\ NULL)
+		cdevsw_release(cdev);
+	}
 #endif	/* NZS > 0 */
 #endif	/* KGDB */
 }

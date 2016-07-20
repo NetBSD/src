@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.349 2015/08/30 01:46:03 uebayasi Exp $	*/
+/*	$NetBSD: machdep.c,v 1.349.2.1 2016/07/20 23:50:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349 2015/08/30 01:46:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.349.2.1 2016/07/20 23:50:54 pgoyette Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -687,15 +687,18 @@ dumpsys(void)
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return;
 	if (dumpsize == 0) {
 		cpu_dumpconf();
-		if (dumpsize == 0)
+		if (dumpsize == 0) {
+			bdevsw_release(bdev);
 			return;
+		}
 	}
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -742,29 +745,36 @@ dumpsys(void)
 
 		case ENXIO:
 			printf("device bad\n");
+			bdevsw_release(bdev);
 			return;
 
 		case EFAULT:
 			printf("device not ready\n");
+			bdevsw_release(bdev);
 			return;
 
 		case EINVAL:
 			printf("area improper\n");
+			bdevsw_release(bdev);
 			return;
 
 		case EIO:
 			printf("i/o error\n");
+			bdevsw_release(bdev);
 			return;
 
 		case EINTR:
 			printf("aborted from console\n");
+			bdevsw_release(bdev);
 			return;
 
 		default:
 			printf("error %d\n", error);
+			bdevsw_release(bdev);
 			return;
 		}
 	}
+	bdevsw_release(bdev);
 	printf("succeeded\n");
 }
 

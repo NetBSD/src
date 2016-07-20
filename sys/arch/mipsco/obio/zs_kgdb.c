@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.10 2009/03/18 10:22:32 cegger Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.10.44.1 2016/07/20 23:50:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10 2009/03/18 10:22:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.10.44.1 2016/07/20 23:50:55 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +130,13 @@ zs_kgdb_init(void)
 	struct zschan *zc;
 	int channel, unit;
 	extern const struct cdevsw zstty_cdevsw;
+	const struct cdevsw *cdev;
 
-	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
+	if ((cdev = cdevsw_lookup_acquire(kgdb_dev)) != &zstty_cdevsw) {
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 		return;
+	}
 
 	unit = (kgdb_dev & 2) ? 2 : 0;
 	channel = kgdb_dev & 1;
@@ -143,6 +147,8 @@ zs_kgdb_init(void)
 
 	/* Attach KGDB comms functions to this device */
 	kgdb_attach(zs_getc, zs_putc, (void *)zc);
+	if (cdev != NULL)
+		cdevsw_release(cdev);
 }
 
 /*

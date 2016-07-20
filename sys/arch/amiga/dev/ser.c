@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.83.8.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$NetBSD: ser.c,v 1.83.8.2 2016/07/20 23:50:53 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.83.8.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.83.8.2 2016/07/20 23:50:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1078,6 +1078,7 @@ sercnprobe(struct consdev *cp)
 	int maj, unit;
 #ifdef KGDB
 	extern const struct cdevsw ctty_cdevsw;
+	const struct cdevsw *cdev;
 #endif
 
 	/* locate the major number */
@@ -1096,8 +1097,11 @@ sercnprobe(struct consdev *cp)
 		cp->cn_pri = CN_NORMAL;
 #ifdef KGDB
 	/* XXX */
-	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
+	cdev = cdevsw_lookup_acquire(kgdb_dev);
+	if (cdev == &ctty_cdevsw)
 		kgdb_dev = makedev(maj, minor(kgdb_dev));
+	if (cdev != NULL)
+		cdevsw_release(cdev);
 #endif
 }
 

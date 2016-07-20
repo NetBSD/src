@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.327 2014/09/21 16:36:32 christos Exp $ */
+/*	$NetBSD: machdep.c,v 1.327.4.1 2016/07/20 23:50:55 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327 2014/09/21 16:36:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.327.4.1 2016/07/20 23:50:55 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -974,9 +974,13 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
+	bdev = bdevsw_lookup_acquire(dumpdev);
+	if (bdev == NULL)
 		return;
+	if (bdev->d_psize == NULL) {
+		bdevsw_release(bdev);
+		return;
+	}
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -985,6 +989,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(bdev);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -995,6 +1000,7 @@ dumpsys(void)
 	psize = bdev_size(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
+		bdevsw_release(bdev);
 		printf("area unavailable\n");
 		return;
 	}
@@ -1063,6 +1069,7 @@ dumpsys(void)
 		printf("error %d\n", error);
 		break;
 	}
+	bdevsw_release(bdev);
 }
 
 /*

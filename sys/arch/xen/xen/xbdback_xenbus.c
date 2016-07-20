@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.62 2016/01/06 15:28:40 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.62.2.1 2016/07/20 23:50:56 pgoyette Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.62 2016/01/06 15:28:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.62.2.1 2016/07/20 23:50:56 pgoyette Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -739,6 +739,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	struct xenbus_transaction *xbt;
 	const char *devname;
 	int major;
+	const struct bdevsw *bdev;
 
 	err = xenbus_read_ul(NULL, xbusd->xbusd_path, "physical-device",
 	    &dev, 10);
@@ -781,7 +782,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		    xbusd->xbusd_path, xbdi->xbdi_dev);
 		return;
 	}
-	xbdi->xbdi_bdevsw = bdevsw_lookup(xbdi->xbdi_dev);
+	bdev = xbdi->xbdi_bdevsw = bdevsw_lookup_acquire(xbdi->xbdi_dev);
 	if (xbdi->xbdi_bdevsw == NULL) {
 		printf("xbdback %s: no bdevsw for device 0x%"PRIx64"\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev);
@@ -791,6 +792,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	if (err) {
 		printf("xbdback %s: can't open device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+		bdevsw_release(bdev);
 		return;
 	}
 	err = vn_lock(xbdi->xbdi_vp, LK_EXCLUSIVE | LK_RETRY);
@@ -798,6 +800,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		printf("xbdback %s: can't vn_lock device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vrele(xbdi->xbdi_vp);
+		bdevsw_release(bdev);
 		return;
 	}
 	err  = VOP_OPEN(xbdi->xbdi_vp, FREAD, NOCRED);
@@ -805,6 +808,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		printf("xbdback %s: can't VOP_OPEN device 0x%"PRIx64": %d\n",
 		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 		vput(xbdi->xbdi_vp);
+		bdevsw_release(bdev);
 		return;
 	}
 	VOP_UNLOCK(xbdi->xbdi_vp);
@@ -824,6 +828,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		xbdi->xbdi_size = xbdi->xbdi_dev = 0;
 		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 		xbdi->xbdi_vp = NULL;
+		bdevsw_release(bdev);
 		return;
 	}
 again:
@@ -831,7 +836,8 @@ again:
 	if (xbt == NULL) {
 		printf("xbdback %s: can't start transaction\n",
 		    xbusd->xbusd_path);
-		    return;
+		bdevsw_release(bdev);
+		return;
 	}
 	err = xenbus_printf(xbt, xbusd->xbusd_path, "sectors", "%" PRIu64 ,
 	    xbdi->xbdi_size);
@@ -873,9 +879,11 @@ again:
 		printf("xbdback %s: can't switch state: %d\n",
 		    xbusd->xbusd_path, err);
 	}
+	bdevsw_release(bdev);
 	return;
 abort:
 	xenbus_transaction_end(xbt, 1);
+	bdevsw_release(bdev);
 }
 
 /*

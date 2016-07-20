@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.26 2012/10/13 06:35:54 tsutsui Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.26.18.1 2016/07/20 23:50:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.26 2012/10/13 06:35:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.26.18.1 2016/07/20 23:50:56 pgoyette Exp $");
 
 #include "opt_kgdb.h"
 
@@ -134,10 +134,14 @@ zs_kgdb_init(void)
 	struct zschan *zc;
 	int channel, zsc_unit;
 	extern const struct cdevsw zstty_cdevsw;
+	const struct cdevsw *cdev;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
-	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
+	if ((cdev = cdevsw_lookup_acquire(kgdb_dev)) != &zstty_cdevsw) {
+		if (cdev != NULL)
+			cdevsw_release(cdev);
 		return;
+	}
 
 	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
 	zsc_unit = (kgdb_dev & 2) ? 0 : 1;
@@ -149,6 +153,7 @@ zs_kgdb_init(void)
 	memset((void *)&cs, 0, sizeof(cs));
 	zc = zs_get_chan_addr(zsc_unit, channel);
 	if (zc == NULL) {
+		cdevsw_release(cdev);
 		printf("zs_kgdb_init: zs not mapped.\n");
 		kgdb_dev = -1;
 		return;
@@ -164,6 +169,7 @@ zs_kgdb_init(void)
 
 	/* Store the getc/putc functions and arg. */
 	kgdb_attach(zs_getc, zs_putc, __UNVOLATILE(zc));
+	cdevsw_release(cdev);
 }
 
 /*

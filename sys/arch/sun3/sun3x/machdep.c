@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135.10.1 2016/07/20 23:50:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2014/03/24 20:06:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135.10.1 2016/07/20 23:50:56 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -522,9 +522,13 @@ dumpsys(void)
 
 	if (dumpdev == NODEV)
 		return;
-	dsw = bdevsw_lookup(dumpdev);
-	if (dsw == NULL || dsw->d_psize == NULL)
+	dsw = bdevsw_lookup_acquire(dumpdev);
+	if (dsw == NULL)
 		return;
+	if (dsw->d_psize == NULL) {
+		bdevsw_release(dsw);
+		return;
+	}
 
 	/*
 	 * For dumps during autoconfiguration,
@@ -533,6 +537,7 @@ dumpsys(void)
 	if (dumpsize == 0)
 		cpu_dumpconf();
 	if (dumplo <= 0) {
+		bdevsw_release(dsw);
 		printf("\ndump to dev %u,%u not possible\n",
 		    major(dumpdev), minor(dumpdev));
 		return;
@@ -541,6 +546,7 @@ dumpsys(void)
 
 	psize = bdev_size(dumpdev);
 	if (psize == -1) {
+		bdevsw_release(dsw);
 		printf("dump area unavailable\n");
 		return;
 	}
@@ -612,9 +618,11 @@ dumpsys(void)
 			todo--;
 		}
 	}
+	bdevsw_release(dsw);
 	printf("\rdump succeeded\n");
 	return;
 fail:
+	bdevsw_release(dsw);
 	printf(" dump error=%d\n", error);
 }
 
