@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.175 2016/07/14 18:18:16 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.176 2016/07/20 03:36:51 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.175 2016/07/14 18:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.176 2016/07/20 03:36:51 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1581,7 +1581,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	else
 		printf("%s: missing ifa_getifa\n", __func__);
 #endif
-	return satosin(&ia->ia_addr);
+	return &ia->ia_addr;
 }
 
 #if NARP > 0
