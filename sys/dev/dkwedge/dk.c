@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.91.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.91 2016/05/29 13:11:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.91.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1590,8 +1590,9 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		goto out;
 	}
 
-	bdev = bdevsw_lookup(sc->sc_pdev);
+	bdev = bdevsw_lookup_acquire(sc->sc_pdev);
 	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + sc->sc_offset, va, size);
+	bdevsw_release(bdev);
 
 out:
 	mutex_exit(&sc->sc_parent->dk_rawlock);
