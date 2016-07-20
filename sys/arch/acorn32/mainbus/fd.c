@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.58.2.1 2016/07/19 06:26:57 pgoyette Exp $	*/
+/*	$NetBSD: fd.c,v 1.58.2.2 2016/07/20 02:06:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.1 2016/07/19 06:26:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.58.2.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -567,19 +567,10 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 void
 fdstrategy(struct buf *bp)
 {
-	device_t self;
-	struct fd_softc *fd
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd,FDUNIT(bp->b_dev));
 	int sz;
  	int s;
-
-	self = device_lookup_acquire(&fd_cd, FDUNIT(bp->b_dev);
-	if (self == NULL)
-		return;
-	fd = device_private(self);
-	if (fd == NULL) {
-		bp->b_error = ENXIO;
-		return;
-	}
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -635,14 +626,14 @@ fdstrategy(struct buf *bp)
 	}
 #endif
 	splx(s);
-	device_release(self);
+	device_release(sc->sc_dev);
 	return;
 
 done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-	device_release(self);
+	device_release(sc->sc_dev);
 }
 
 void
@@ -794,56 +785,40 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x)
 int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	device_t self;
 	struct fd_softc *fd;
 	struct fd_type *type;
-	int error = 0;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
+	fd = device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
+	if (fd == NULL)
 		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		error = ENXIO;
-		goto out;
-	}
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL) {
-		error = ENXIO;
-		goto out;
+		device_release(fd->sc_dev);
+		return ENXIO;
 	}
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
 	    memcmp(fd->sc_type, type, sizeof(*type))) {
-		error = EBUSY;
-		goto out;
+		device_release(fd->sc_dev);
+		return EBUSY;
 	}
 	fd->sc_type_copy = *type;
 	fd->sc_type = &fd->sc_type_copy;
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
- out:
-	device_release(self);
-	return error;
+	device_release(fd->sc_dev);
+	return 0;
 }
 
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	device_t self;
-	struct fd_softc *fd;
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
-	device_release(self);
+	device_release(fd->sc_dev);
 	return 0;
 }
 
@@ -1305,7 +1280,8 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct fd_softc *fd;
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1315,14 +1291,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int il[FD_MAX_NSEC + 1];
 	register int i, j;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		memset(&buffer, 0, sizeof(buffer));
@@ -1335,26 +1304,24 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
-		device_release(self);
-		return 0;
+		break;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		/* XXX do something */
-		device_release(self);
-		return 0;
+		break;
 
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
 		error = setdisklabel(&buffer, (struct disklabel *)addr, 0, NULL);
-		if (error == 0)
-			error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		if (error)
+			break;
 
-		device_release(self);
-		return error;
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		break;
 
 	case FDIOCGETFORMAT:
 		form_parms = (struct fdformat_parms *)addr;
@@ -1378,23 +1345,28 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			form_parms->xfer_rate = 250 * 1024;
 			break;
 		default:
-			return EINVAL;
+			error = EINVAL;
 		}
-		device_release(self);
-		return 0;
+		break;
 
 	case FDIOCSETFORMAT:
-		if((flag & FWRITE) == 0)
-			return EBADF;	/* must be opened for writing */
+		if((flag & FWRITE) == 0) {
+			error = EBADF;	/* must be opened for writing */
+			break;
+		}
 		form_parms = (struct fdformat_parms *)addr;
-		if (form_parms->fdformat_version != FDFORMAT_VERSION)
-			return EINVAL;	/* wrong version of formatting prog */
+		if (form_parms->fdformat_version != FDFORMAT_VERSION) {
+			error = EINVAL;	/* wrong version of formatting prog */
+			break;
+		}
 
 		scratch = form_parms->nbps >> 7;
 		if ((form_parms->nbps & 0x7f) || ffs(scratch) == 0 ||
-		    scratch & ~(1 << (ffs(scratch)-1)))
+		    scratch & ~(1 << (ffs(scratch)-1))) {
 			/* not a power-of-two multiple of 128 */
-			return EINVAL;
+			error = EINVAL;
+			break;
+		}
 
 		switch (form_parms->xfer_rate) {
 		case 500 * 1024:
@@ -1407,17 +1379,22 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			fd->sc_type->rate = FDC_250KBPS;
 			break;
 		default:
-			device_release(self);
-			return EINVAL;
+			error = EINVAL;
 		}
+		if (error)
+			break;
 
 		if (form_parms->nspt > FD_MAX_NSEC ||
 		    form_parms->fillbyte > 0xff ||
-		    form_parms->interleave > 0xff)
-			return EINVAL;
+		    form_parms->interleave > 0xff) {
+			error = EINVAL;
+			break;
+		}
 		fd->sc_type->sectrac = form_parms->nspt;
-		if (form_parms->ntrk != 2 && form_parms->ntrk != 1)
-			return EINVAL;
+		if (form_parms->ntrk != 2 && form_parms->ntrk != 1) {
+			error = EINVAL;
+			break;
+		}
 		fd->sc_type->heads = form_parms->ntrk;
 		fd->sc_type->seccyl = form_parms->nspt * form_parms->ntrk;
 		fd->sc_type->secsize = ffs(scratch)-1;
@@ -1428,29 +1405,30 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		fd->sc_type->step = form_parms->stepspercyl;
 		fd->sc_type->fillbyte = form_parms->fillbyte;
 		fd->sc_type->interleave = form_parms->interleave;
-
-		device_release(self);
-		return 0;
+		break;
 
 	case FDIOCFORMAT_TRACK:
-		if((flag & FWRITE) == 0)
-			return EBADF;	/* must be opened for writing */
+		if((flag & FWRITE) == 0) {
+			error = EBADF;	/* must be opened for writing */
+			break;
+		}
 		form_cmd = (struct fdformat_cmd *)addr;
 		if (form_cmd->formatcmd_version != FDFORMAT_VERSION) {
-			device_release(self);
-			return EINVAL;	/* wrong version of formatting prog */
+			error = EINVAL;	/* wrong version of formatting prog */
+			break;
 		}
+
 		if (form_cmd->head >= fd->sc_type->heads ||
 		    form_cmd->cylinder >= fd->sc_type->cyls) {
-			device_release(self);
-			return EINVAL;
+			error = EINVAL;
+			break;
 		}
 
 		fd_formb = malloc(sizeof(struct ne7_fd_formb), 
 		    M_TEMP, M_NOWAIT);
 		if(fd_formb == 0) {
-			device_release(self);
-			return ENOMEM;
+			error = ENOMEM;
+			break;
 		}
 
 		fd_formb->head = form_cmd->head;
@@ -1477,54 +1455,38 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 		error = fdformat(dev, fd_formb, l);
 		free(fd_formb, M_TEMP);
-
-		device_release(self);
-		return error;
+		break;
 
 	case FDIOCGETOPTS:		/* get drive options */
 		*(int *)addr = fd->sc_opts;
-		device_release(self);
-		return 0;
+		break;
 
 	case FDIOCSETOPTS:		/* set drive options */
 		fd->sc_opts = *(int *)addr;
-		device_release(self);
-		return 0;
+		break;
 
 	default:
-		device_release(self);
-		return ENOTTY;
+		error = ENOTTY;
 	}
+	device_release(fd->sc_dev);
+	return error;
 
-#ifdef DIAGNOSTIC
-	panic("fdioctl: impossible");
-#endif
 }
 
 int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 {
 	int rv = 0;
-	device_t self;
-	struct fd_softc *fd;
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd,FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
-
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 
 	/* set up a buffer header for fdstrategy() */
 	bp = getiobuf(NULL, false);
 	if(bp == 0) {
-		device_release(self);
+		device_release(fd->sc_dev);
 		return ENOBUFS;
-	}
 	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_cflags |= BC_BUSY;
 	bp->b_proc = l->l_proc;
@@ -1565,7 +1527,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 	} else if (bp->b_error != 0)
 		rv = bp->b_error;
 	putiobuf(bp);
-	device_release(self);
+	device_release(fd->sc_dev);
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47.2.1 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: fd.c,v 1.47.2.2 2016/07/20 02:06:15 pgoyette Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.2.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,12 +432,11 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 void
 fdstrategy(struct buf *bp)
 {
-	device_t self;
-	struct fd_softc *fd;
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
 	int s;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(bp->b_dev));
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % FDC_BSIZE) != 0) {
@@ -493,14 +492,13 @@ fdstrategy(struct buf *bp)
 	}
 #endif
 	splx(s);
-	device_release(self);
+	device_release(fd->sc_dev);
 	return;
 
  done:
 	/* Toss transfer; we're done early. */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-	device_release(self);
 }
 
 void
@@ -652,28 +650,22 @@ out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, uint8_t x)
 int
 fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	device_t self;
 	struct fd_softc *fd;
 	const struct fd_type *type;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
+	fd = device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
+	if (fd == NULL)
 		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
 
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL) {
-		device_release(self);
+		device_release(fd->sc_dev);
 		return ENXIO;
 	}
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
 	    memcmp(fd->sc_type, type, sizeof(*type))) {
-		device_release(self);
+		device_release(fd->sc_dev);
 		return EBUSY;
 	}
 
@@ -682,28 +674,18 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	fd->sc_cylin = -1;
 	fd->sc_flags |= FD_OPEN;
 
-	device_release(self);
+	device_release(fd->sc_dev);
 	return 0;
 }
 
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	device_t self;
-	struct fd_softc *fd;
-
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
-
-	device_release(self);
+	device_release(fd->sc_dev);
 	return 0;
 }
 
@@ -1105,19 +1087,12 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	device_t self;
-	struct fd_softc *fd;
+	struct fd_softc *fd =
+	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev));
 	struct disklabel buffer;
 	int error;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	fd = device_private(self);
-	if (fd == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
+	error = 0;
 	switch (cmd) {
 	case DIOCGDINFO:
 		memset(&buffer, 0, sizeof(buffer));
@@ -1130,15 +1105,13 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;
-		device_release(self);
-		return 0;
+		break;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		/* XXX do something */
-		device_release(self);
-		return 0;
+		break;
 
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
@@ -1146,19 +1119,18 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 		error = setdisklabel(&buffer, (struct disklabel *)addr,
 		    0, NULL);
-		if (error == 0))
-			error = writedisklabel(dev, fdstrategy, &buffer, NULL);
-		device_release(self);
-		return error;
+		if (error)
+			break;
+
+		error = writedisklabel(dev, fdstrategy, &buffer, NULL);
+		break;
 
 	default:
-		device_release(self);
-		return ENOTTY;
+		error = ENOTTY;
 	}
 
-#ifdef DIAGNOSTIC
-	panic("%s: impossible", __func__);
-#endif
+	device_release(fd->sc_dev;
+	return error;
 }
 
 /*

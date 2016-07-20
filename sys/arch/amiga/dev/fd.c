@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.96.2.1 2016/07/19 06:26:58 pgoyette Exp $ */
+/*	$NetBSD: fd.c,v 1.96.2.2 2016/07/20 02:06:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96.2.1 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.96.2.2 2016/07/20 02:06:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,7 +470,6 @@ fdattach(device_t parent, device_t self, void *aux)
 int
 fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 {
-	device_t self;
 	struct fd_softc *sc;
 	int wasopen, fwork, error, s;
 
@@ -479,15 +478,12 @@ fdopen(dev_t dev, int flags, int devtype, struct lwp *l)
 	if (FDPART(dev) >= FDMAXPARTS)
 		return(ENXIO);
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	if ((sc = device_private(self)) == NULL) {
-		device_release(self);
+	if ((sc = getsoftc(fd_cd, FDUNIT(dev))) == NULL) {
+		device_release(sc->sc_dev);
 		return(ENXIO);
 	}
 	if (sc->flags & FDF_NOTRACK0) {
-		device_release(self);
+		device_release(sc->sc_dev)
 		return(ENXIO);
 	}
 	if (sc->cachep == NULL)
@@ -546,8 +542,7 @@ done:
 	 */
 	if (error && wasopen == 0)
 		sc->openpart = -1;
-
-	device_release(self);
+	device_release(sc->sc_dev);
 	return(error);
 }
 
@@ -555,21 +550,13 @@ done:
 int
 fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 {
-	device_t self;
 	struct fd_softc *sc;
 	int s;
 
 #ifdef FDDEBUG
 	printf("fdclose()\n");
 #endif
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
+	sc = getsoftc(fd_cd, FDUNIT(dev));
 	s = splbio();
 	if (sc->flags & FDF_MOTORON) {
 		sc->flags |= FDF_WMOTOROFF;
@@ -579,83 +566,78 @@ fdclose(dev_t dev, int flags, int devtype, struct lwp *l)
 	}
 	sc->openpart = -1;
 	splx(s);
-
-	device_release(self);
+	device_release(sc->sc_dev);
 	return(0);
 }
 
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	device_t self;
 	struct fd_softc *sc;
 	int error, wlab;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
-	if (self == NULL)
-		return ENXIO;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return ENXIO;
-	}
+	sc = getsoftc(fd_cd, FDUNIT(dev));
+
 	if ((sc->flags & FDF_HAVELABEL) == 0) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return(EBADF);
 	}
 	error = disk_ioctl(&sc->dkdev, dev, cmd, addr, flag, l);
 	if (error != EPASSTHROUGH) {
-		device_release(self);
+		device_release(sc->sc_dev);
 		return error;
 	}
+	error = 0;
 	switch (cmd) {
 	case DIOCSBAD:
-		device_release(self);
-		return(EINVAL);
+		error = EINVAL;
+		break;
 	case DIOCSRETRIES:
 		if (*(int *)addr < 0)
-			return(EINVAL);
-		sc->retries = *(int *)addr;
-		device_release(self);
-		return(0);
+			error = EINVAL;
+		else
+			sc->retries = *(int *)addr;
+		break;
 	case DIOCSSTEP:
-		if (*(int *)addr < FDSTEPDELAY)
-			return(EINVAL);
-		sc->dkdev.dk_label->d_trkseek = sc->stepdelay = *(int *)addr;
-		device_release(self);
-		return(0);
+		if (*(int *)addr < FDSTEPDELAY) {
+			error = EINVAL;
+		else
+			sc->dkdev.dk_label->d_trkseek = sc->stepdelay =
+			    *(int *)addr;
+		break;
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		error = fdsetdisklabel(sc, (struct disklabel *)addr);
-		device_release(self);
-		return error;
+			error = EBADF;
+		else
+			error = fdsetdisklabel(sc, (struct disklabel *)addr);
+		break;
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		if ((error = fdsetdisklabel(sc, (struct disklabel *)addr)) != 0)
-			return(error);
-		wlab = sc->wlabel;
-		sc->wlabel = 1;
-		error = fdputdisklabel(sc, dev);
-		sc->wlabel = wlab;
-		device_release(self);
-		return(error);
+			error = EBADF;
+		else {
+			error = fdsetdisklabel(sc, (struct disklabel *)addr));
+			if (error == 0) {
+				wlab = sc->wlabel;
+				sc->wlabel = 1;
+				error = fdputdisklabel(sc, dev);
+				sc->wlabel = wlab;
+			}
+		}
+		break;
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			return(EBADF);
-		sc->wlabel = *(int *)addr;
-		device_release(self);
-		device_release(self);
-		return(0);
+			error = EBADF;
+		else
+			sc->wlabel = *(int *)addr;
+		break;
 	case DIOCGDEFLABEL:
 		fdgetdefaultlabel(sc, (struct disklabel *)addr, FDPART(dev));
-		device_release(self);
-		return(0);
+		break;
 	default:
-		device_release(self);
-		return(ENOTTY);
+		error = ENOTTY;
 	}
+	device_release(sc->sc_dev);
+	return error;
 }
 
 int
@@ -698,20 +680,11 @@ fdidxintr(void)
 void
 fdstrategy(struct buf *bp)
 {
-	device_t self;
 	struct fd_softc *sc;
 	int unit, s;
 
 	unit = FDUNIT(bp->b_dev);
-
-	self = device_lookup_acquire(&fd_cd, unit);
-	if (self == NULL)
-		return;
-	sc = device_private(self);
-	if (sc == NULL) {
-		device_release(self);
-		return;
-	}
+	sc = getsoftc(fd_cd, unit);
 
 #ifdef FDDEBUG
 	printf("fdstrategy: %p\n", bp);
@@ -742,12 +715,12 @@ fdstrategy(struct buf *bp)
 	bufq_put(sc->bufq, bp);
 	fdstart(sc);
 	splx(s);
-	device_release(self);
+	device_release(sc->sc_dev);
 	return;
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
-	device_release(self);
+	device_release(sc->sc_dev);
 }
 
 /*
@@ -1648,7 +1621,6 @@ nobuf:
 void
 fdfindwork(int unit)
 {
-	device_t self;
 	struct fd_softc *ssc, *sc;
 	int i, last;
 
@@ -1674,13 +1646,9 @@ fdfindwork(int unit)
 			i = -1;
 			continue;
 		}
-		self = device_lookup_acquire(&fd_cd, i);
-		if (self == NULL)
+		if ((sc = device_lookup_private_acquire(&fd_cd, i)) == NULL)
 			continue;
-		if ((sc = device_private(self)) == NULL) {
-			device_release(self);
-			continue;
-		}
+
 		/*
 		 * if unit has requested to be turned off
 		 * and it has no buf's queued do it now
@@ -1700,7 +1668,7 @@ fdfindwork(int unit)
 			 * flushing, quit
 			 */
 			if (fdc_indma) {
-				device_release(self);
+				device_release(sc->sc_dev);
 				return;
 			}
 		}
@@ -1710,11 +1678,13 @@ fdfindwork(int unit)
 		 */
 		if (ssc == NULL && bufq_peek(sc->bufq) != NULL)
 			ssc = sc;
+		else
+			device_release(sc->sc_dev);
 	}
-	if (ssc)
+	if (ssc) {
 		fdstart(ssc);
-
-	device_release(self);
+		device_release(ssc->sc_dev);
+	}
 }
 
 /*
@@ -1723,15 +1693,10 @@ fdfindwork(int unit)
 void
 fdminphys(struct buf *bp)
 {
-	device_t self;
 	struct fd_softc *sc;
 	int sec, toff, tsz;
 
-	self = device_lookup_acquire(&fd_cd, FDUNIT(bp->b_dev));
-	if (self == NULL)
-		panic("fdminphys: no device_t");
-	sc = device_private(self);
-	if (sc == NULL)
+	if ((sc = getsoftc(fd_cd, FDUNIT(bp->b_dev))) == NULL)
 		panic("fdminphys: couldn't get softc");
 
 	sec = bp->b_blkno % sc->nsectors;
@@ -1746,7 +1711,7 @@ fdminphys(struct buf *bp)
 	printf(" after %ld\n", bp->b_bcount);
 #endif
 	minphys(bp);
-	device_release(self);
+	device_release(sc->sc_dev);
 }
 
 /*
