@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.210 2016/07/20 07:37:51 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.211 2016/07/20 07:56:10 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.210 2016/07/20 07:37:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.211 2016/07/20 07:56:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2325,7 +2325,6 @@ in6_lltable_rtcheck(struct ifnet *ifp,
 		/* XXX ifaof_ifpforaddr should take a const param */
 		ifa = ifaof_ifpforaddr(l3addr, ifp);
 		if (ifa != NULL) {
-			ifafree(ifa);
 			if (rt != NULL)
 				rtfree(rt);
 			return 0;
