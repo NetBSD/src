@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.77 2016/07/20 17:42:14 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.78 2016/07/20 18:14:12 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.77 2016/07/20 17:42:14 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.78 2016/07/20 18:14:12 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1020,7 +1020,10 @@ param_decl:
 	;
 
 direct_param_decl:
-	  identifier {
+	  identifier type_attribute {
+		$$ = dname(getsym($1));
+	  }
+	| identifier {
 		$$ = dname(getsym($1));
 	  }
 	| T_LPARN notype_param_decl T_RPARN {
