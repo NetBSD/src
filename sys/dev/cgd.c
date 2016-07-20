@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.2 2016/07/19 06:26:58 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.3 2016/07/20 04:33:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.2 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.3 2016/07/20 04:33:53 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1045,35 +1045,54 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		error = config_cfdriver_attach(&cgd_cd);
-		if (error)
-			break;
-
-		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
-	        if (error) {
-			config_cfdriver_detach(&cgd_cd);
-			aprint_error("%s: unable to register cfattach\n",
+		/*
+		 * Insert the driver into the autoconf database
+		 */
+		error = config_init_component(cfdriver_ioconf_cgd,
+                    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
+		if (error) {
+			aprint_error("%s: unable to init component",
 			    cgd_cd.cd_name);
 			break;
 		}
 
+		/*
+		 * Attach the {b,c}devsw's
+		 */
 		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 		    &cgd_cdevsw, &cmajor);
+
+		/*
+		 * If devsw_attach fails, remove from autoconf database
+		 */
 		if (error) {
-			config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
-			config_cfdriver_detach(&cgd_cd);
-			break;
+			config_fini_component(cfdriver_ioconf_cgd,
+			    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
+			aprint_error("%s: unable to attach devsw",
+				    cgd_cd.cd_name);
 		}
 #endif
 		break;
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&cgd_cd);
+		/*
+		 * Remove {b,c}devsw's
+		 */
 		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+
+		/*
+		 * Now remove device from autoconf database
+		 */
+		error = config_fini_component(cfdriver_ioconf_cgd,
+		    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
+
+		/*
+		 * If removal fails, re-attach our {b,c}devsw's
+		 */
+		if (error)
+			devsw_attach("cgd", &cgd_bdevsw, &bmajor,
+			    &cgd_cdevsw, &cmajor);
 #endif
 		break;
 
