@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.19 2016/07/17 13:49:43 skrll Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.20 2016/07/20 19:26:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
@@ -114,6 +114,9 @@ struct	__pthread_mutex_st {
 	__pthread_spin_t ptm_errorcheck;
 #ifdef __CPU_SIMPLE_LOCK_PAD
 	uint8_t		ptm_pad1[3];
+#define _PTHREAD_MUTEX_PAD(a)	.a = { 0, 0, 0 },
+#else
+#define _PTHREAD_MUTEX_PAD(a)
 #endif
 	union {
 		unsigned char ptm_ceiling;
@@ -131,20 +134,17 @@ struct	__pthread_mutex_st {
 #define	_PT_MUTEX_MAGIC	0x33330003
 #define	_PT_MUTEX_DEAD	0xDEAD0003
 
-#ifdef __CPU_SIMPLE_LOCK_PAD
-#define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
-				    __SIMPLELOCK_UNLOCKED, { 0, 0, 0 },	\
-				    { 0 }, { 0, 0, 0 },			\
-				    NULL, NULL, 0, NULL			\
-				  }
-#else
-#define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
-				    __SIMPLELOCK_UNLOCKED,		\
-				    { 0 } ,				\
-				    NULL, NULL, 0, NULL			\
-				  }
-#endif /* __CPU_SIMPLE_LOCK_PAD */
-	
+#define _PTHREAD_MUTEX_INITIALIZER {			\
+	.ptm_magic = _PT_MUTEX_MAGIC, 			\
+	.ptm_errorcheck = __SIMPLELOCK_UNLOCKED,	\
+	_PTHREAD_MUTEX_PAD(ptm_pad1)			\
+	.ptm_ceiling = 0,				\
+	_PTHREAD_MUTEX_PAD(ptm_pad2)			\
+	.ptm_owner = NULL,				\
+	.ptm_waiters = NULL,				\
+	.ptm_recursed = 0,				\
+	.ptm_spare2 = NULL,				\
+}
 
 struct	__pthread_mutexattr_st {
 	unsigned int	ptma_magic;
