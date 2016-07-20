@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.116 2016/07/15 07:40:09 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.117 2016/07/20 07:37:51 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.116 2016/07/15 07:40:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.117 2016/07/20 07:37:51 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1911,6 +1911,7 @@ in6_tmpifadd(
 	int updateflags;
 	u_int32_t randid[2];
 	u_int32_t vltime0, pltime0;
+	int s;
 
 	memset(&ifra, 0, sizeof(ifra));
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
@@ -1940,9 +1941,11 @@ in6_tmpifadd(
 	 * there may be a time lag between generation of the ID and generation
 	 * of the address.  So, we'll do one more sanity check.
 	 */
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &ifra.ifra_addr.sin6_addr)) {
+			pserialize_read_exit(s);
 			if (trylimit-- == 0) {
 				/*
 				 * Give up.  Something strange should have
@@ -1956,6 +1959,7 @@ in6_tmpifadd(
 			goto again;
 		}
 	}
+	pserialize_read_exit(s);
 
 	/*
 	 * The Valid Lifetime is the lower of the Valid Lifetime of the

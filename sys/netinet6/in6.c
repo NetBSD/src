@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.209 2016/07/15 07:40:09 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.210 2016/07/20 07:37:51 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.209 2016/07/15 07:40:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.210 2016/07/20 07:37:51 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1832,15 +1832,20 @@ int
 in6_localaddr(const struct in6_addr *in6)
 {
 	struct in6_ifaddr *ia;
+	int s;
 
 	if (IN6_IS_ADDR_LOOPBACK(in6) || IN6_IS_ADDR_LINKLOCAL(in6))
 		return 1;
 
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_MASKED_ADDR_EQUAL(in6, &ia->ia_addr.sin6_addr,
-					      &ia->ia_prefixmask.sin6_addr))
+					      &ia->ia_prefixmask.sin6_addr)) {
+			pserialize_read_exit(s);
 			return 1;
+		}
 	}
+	pserialize_read_exit(s);
 
 	return 0;
 }
@@ -1849,18 +1854,23 @@ int
 in6_is_addr_deprecated(struct sockaddr_in6 *sa6)
 {
 	struct in6_ifaddr *ia;
+	int s;
 
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (IN6_ARE_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
 		    &sa6->sin6_addr) &&
 #ifdef SCOPEDROUTING
 		    ia->ia_addr.sin6_scope_id == sa6->sin6_scope_id &&
 #endif
-		    (ia->ia6_flags & IN6_IFF_DEPRECATED) != 0)
+		    (ia->ia6_flags & IN6_IFF_DEPRECATED) != 0) {
+			pserialize_read_exit(s);
 			return 1; /* true */
+		}
 
 		/* XXX: do we still have to go thru the rest of the list? */
 	}
+	pserialize_read_exit(s);
 
 	return 0;		/* false */
 }
