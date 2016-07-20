@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.46.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.46.2.1 2016/07/20 23:47:57 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct vnode *devvp = NULL;
 	int error = 0;
 	bool update;
+	const struct bdevsw *bdev = NULL;
 
 	DPRINTF("%s: mnt_flag=%x\n", __func__, mp->mnt_flag);
 
@@ -111,7 +112,8 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+			else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev))
+						== NULL)
 				error = ENXIO;
 		} else {
 			/*
@@ -146,20 +148,26 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	if (error) {
 		vrele(devvp);
+		bdevsw_release(bdev);
 		return error;
 	}
 
 	if (!update) {
 		if ((error = sysvbfs_mountfs(devvp, mp, l)) != 0) {
 			vrele(devvp);
+			bdevsw_release(bdev);
 			return error;
 		}
 	} else 	if (mp->mnt_flag & MNT_RDONLY) {
 		/* XXX: r/w -> read only */
 	}
 
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+
+	if (bdev != NULL)
+		bdevsw_release(bdev);
+	return error;
 }
 
 int

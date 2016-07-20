@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.4 2016/07/19 06:26:59 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.5 2016/07/20 23:47:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.4 2016/07/19 06:26:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.5 2016/07/20 23:47:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -753,7 +753,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		goto out;
 	}
 
-	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+	bdev = bdevsw_lookup_acquire(raidPtr->Disks[dumpto].dev);
 	if (bdev == NULL) {
 		error = ENXIO;
 		goto out;
@@ -761,7 +761,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 
 	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
 				blkno, va, nblk * raidPtr->bytesPerSector);
-	
+	bdevsw_release(bdev);
 out:
 	raidunlock(rs);
 		

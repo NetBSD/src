@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.193 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.193.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.193 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.193.2.1 2016/07/20 23:47:57 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -304,6 +304,7 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	size_t size;
 	int error = 0, flags, update;
 	mode_t accessmode;
+	const struct bdevsw *bdev = NULL;
 
 	if (args == NULL)
 		return EINVAL;
@@ -338,7 +339,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
+			else if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev))
+						== NULL)
 				error = ENXIO;
 		} else {
 		        /*
@@ -388,10 +390,8 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		VOP_UNLOCK(devvp);
 	}
 
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
+	if (error)
+		goto fail;
 
 	if (!update) {
 		int xflags;
@@ -489,9 +489,13 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				mp->mnt_stat.f_mntfromname);
 		(void) ext2fs_cgupdate(ump, MNT_WAIT);
 	}
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return (error);
 
 fail:
+	if (args->fspec != NULL && !update)
+		bdevsw_release(bdev);
 	vrele(devvp);
 	return (error);
 }

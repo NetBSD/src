@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.75 2015/11/18 22:06:25 phx Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.75.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.75 2015/11/18 22:06:25 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.75.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -89,6 +89,7 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct adosfsmount *amp;
 	int error;
 	mode_t accessmode;
+	const struct bdevsw *bdev;
 
 	if (args == NULL)
 		return EINVAL;
@@ -126,7 +127,7 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}
@@ -142,11 +143,13 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	    KAUTH_REQ_SYSTEM_MOUNT_DEVICE, mp, devvp, KAUTH_ARG(accessmode));
 	VOP_UNLOCK(devvp);
 	if (error) {
+		bdevsw_release(bdev);
 		vrele(devvp);
 		return (error);
 	}
 /* MNT_UPDATE? */
 	if ((error = adosfs_mountfs(devvp, mp, l)) != 0) {
+		bdevsw_release(bdev);
 		vrele(devvp);
 		return (error);
 	}

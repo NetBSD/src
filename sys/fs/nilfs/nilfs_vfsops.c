@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.22 2016/07/07 06:55:42 msaitoh Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.22.2.1 2016/07/20 23:47:56 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.22 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.22.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 #endif /* not lint */
 
 
@@ -602,6 +602,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	struct nilfs_device *nilfsdev;
 	struct lwp *l = curlwp;
 	int openflags, accessmode, error;
+	const struct bdevsw *bdev;
 
 	DPRINTF(VOLUMES, ("Mounting NILFS device\n"));
 
@@ -628,7 +629,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 		vrele(devvp);
 		return ENOTBLK;
 	}
-	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+	if ((bdev = bdevsw_lookup_acquire(devvp->v_rdev)) == NULL) {
 		vrele(devvp);
 		return ENXIO;
 	}
@@ -646,6 +647,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
+		bdevsw_release(bdev);
 		return error;
 	}
 
@@ -658,6 +660,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	VOP_UNLOCK(devvp);
 	if (error) {
 		vrele(devvp);
+		bdevsw_release(bdev);
 		return error;
 	}
 
@@ -679,6 +682,7 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	if (error) {
 		/* remove all our information */
 		nilfs_unmount_device(nilfsdev);
+		bdevsw_release(bdev);
 		return EINVAL;
 	}
 
@@ -689,12 +693,14 @@ nilfs_mount_device(struct vnode *devvp, struct mount *mp, struct nilfs_args *arg
 	if (error) {
 		/* remove all our information */
 		nilfs_unmount_device(nilfsdev);
+		bdevsw_release(bdev);
 		return EINVAL;
 	}
 
 	*nilfsdev_p = nilfsdev;
 	DPRINTF(VOLUMES, ("NILFS device mounted ok\n"));
 
+	bdevsw_release(bdev);
 	return 0;
 }
 

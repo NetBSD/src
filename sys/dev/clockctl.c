@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $ */
+/*      $NetBSD: clockctl.c,v 1.34.2.1 2016/07/20 23:47:56 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.34.2.1 2016/07/20 23:47:56 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -279,10 +279,13 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
 	int error = 0;
-	const struct cdevsw *cd = cdevsw_lookup(dev);
+	const struct cdevsw *cd = cdevsw_lookup_acquire(dev);
 
-	if (cd == NULL || cd->d_ioctl == NULL)
+	if (cd == NULL || cd->d_ioctl == NULL) {
+		if (cd != NULL)
+			cdevsw_release(cd);
 		return ENXIO;
+	}
 
 	switch (cmd) {
 	case CLOCKCTL_OSETTIMEOFDAY: {
@@ -292,7 +295,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 
 		error = copyin(args->tv, &tv50, sizeof(tv50));
 		if (error)
-			return (error);
+			break;
 		timeval50_to_timeval(&tv50, &tv);
 		error = settimeofday1(&tv, false, args->tzp, l, false);
 		break;
@@ -305,7 +308,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 		if (args->delta) {
 			error = copyin(args->delta, &atv50, sizeof(atv50));
 			if (error)
-				return (error);
+				break;
 			timeval50_to_timeval(&atv50, &atv);
 		}
 		adjtime1(args->delta ? &atv : NULL,
@@ -323,7 +326,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 
 		error = copyin(args->tp, &tp50, sizeof(tp50));
 		if (error)
-			return (error);
+			break;
 		timespec50_to_timespec(&tp50, &tp);
 		error = clock_settime1(l->l_proc, args->clock_id, &tp, true);
 		break;
@@ -337,6 +340,7 @@ compat50_clockctlioctl(dev_t dev, u_long cmd, void *data, int flags,
 		error = EINVAL;
 	}
 
+	cdevsw_release(cd);
 	return (error);
 }
 #endif

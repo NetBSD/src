@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.339 2016/06/19 22:41:31 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.339.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339 2016/06/19 22:41:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.1 2016/07/20 23:47:57 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -409,6 +409,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct fs *fs;
 	int error = 0, flags, update;
 	mode_t accessmode;
+	const struct bdevsw *bdev = NULL;
 
 	if (args == NULL) {
 		DPRINTF("NULL args");
@@ -451,7 +452,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (devvp->v_type != VBLK) {
 				DPRINTF("non block device %d", devvp->v_type);
 				error = ENOTBLK;
-			} else if (bdevsw_lookup(devvp->v_rdev) == NULL) {
+			} else if (bdevsw_lookup_acquire(devvp->v_rdev) == NULL) {
 				DPRINTF("can't find block device 0x%jx",
 				    devvp->v_rdev);
 				error = ENXIO;
@@ -512,10 +513,8 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		VOP_UNLOCK(devvp);
 	}
 
-	if (error) {
-		vrele(devvp);
-		return (error);
-	}
+	if (error)
+		goto fail;
 
 #ifdef WAPBL
 	/* WAPBL can only be enabled on a r/w mount. */
@@ -718,9 +717,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		mp->mnt_flag &= ~MNT_SOFTDEP;
 	}
 
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	return (error);
 
 fail:
+	if (bdev != NULL)
+		bdevsw_release(bdev);
 	vrele(devvp);
 	return (error);
 }
