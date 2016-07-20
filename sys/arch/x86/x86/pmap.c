@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2016/07/19 18:54:45 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.213 2016/07/20 12:33:59 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2016/07/19 18:54:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2016/07/20 12:33:59 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3896,12 +3896,21 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+	pt_entry_t bit_rem, bit_put;
 	pt_entry_t *ptes;
 	pt_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blockend, va;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+
+	bit_rem = 0;
+	if (!(prot & VM_PROT_WRITE))
+		bit_rem = PG_RW;
+
+	bit_put = 0;
+	if (!(prot & VM_PROT_EXECUTE))
+		bit_put = pmap_pg_nx;
 
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
@@ -3947,10 +3956,10 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 			do {
 				opte = *spte;
-				if ((~opte & (PG_RW | PG_V)) != 0) {
+				if (!pmap_valid_entry(opte)) {
 					goto next;
 				}
-				npte = opte & ~PG_RW;
+				npte = (opte & ~bit_rem) | bit_put;
 			} while (pmap_pte_cas(spte, opte, npte) != opte);
 
 			if ((opte & PG_M) != 0) {
