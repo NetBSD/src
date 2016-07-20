@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177.10.1 2016/07/20 23:50:54 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2014/03/26 18:04:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.10.1 2016/07/20 23:50:54 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -434,7 +434,7 @@ dumpsys(void)
 	error = segnum = 0;
 	if (dumpdev == NODEV)
 		return;
-	bdev = bdevsw_lookup(dumpdev);
+	bdev = bdevsw_lookup_acquire(dumpdev);
 	if (bdev == NULL)
 		return;
 	/*
@@ -457,6 +457,7 @@ dumpsys(void)
 	switch (i) {
 	case 'n':
 	case 'N':
+		bdevsw_release(bdev);
 		return;
 	case '\n':
 		break;
@@ -514,6 +515,8 @@ dumpsys(void)
 			blkno += btodb(n);
 		}
 	}
+	bdevsw_release(bdev);
+
 	switch (error) {
 
 	case ENXIO:
