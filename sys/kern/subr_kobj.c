@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.55 2016/07/09 07:25:00 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.56 2016/07/20 13:11:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.55 2016/07/09 07:25:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.56 2016/07/20 13:11:58 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -705,6 +705,10 @@ kobj_affix(kobj_t ko, const char *name)
 
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
+
+	/* Change the memory protections, when needed. */
+	uvm_km_protect(module_map, ko->ko_text_address, ko->ko_text_size,
+	    VM_PROT_READ|VM_PROT_EXECUTE);
 
 	/*
 	 * Notify MD code that a module has been loaded.
