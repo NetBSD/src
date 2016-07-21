@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.8 2016/07/20 07:07:04 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.9 2016/07/21 06:22:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.8 2016/07/20 07:07:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.9 2016/07/21 06:22:31 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -543,7 +543,6 @@ cdevsw_lookup_acquire(dev_t dev)
 		localcount_acquire(cdevsw[cmajor]->d_localcount);
 
 out:	pserialize_read_exit(s);
-	mutex_exit(&device_lock);
 
 	return cdev;
 }
