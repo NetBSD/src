@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.5 2016/07/21 01:56:27 ozaki-r Exp $
+#	$NetBSD: t_change.sh,v 1.6 2016/07/21 01:56:54 ozaki-r Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ route_change_reject2blackhole_body()
 	atf_check -s exit:0 -o ignore \
 	    rump.route change 207.46.197.32 127.0.0.1 -blackhole
 	atf_check -s exit:0 -o match:' UGHBS ' -e ignore -x \
-	    "rump.netstat -rn -f inet | grep ^207.46| grep ^207.46"
+	    "rump.netstat -rn -f inet | grep ^207.46"
 }
 
 route_change_reject2blackhole_cleanup()
