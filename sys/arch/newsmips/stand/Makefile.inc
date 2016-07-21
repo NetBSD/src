@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.8 2014/01/12 15:26:30 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2016/07/21 18:50:21 christos Exp $
 
 BINDIR= /usr/mdec
+NOPIE=yes
 
 # if there is a 'version' file, add rule for vers.c and add it to SRCS
 # and CLEANFILES
