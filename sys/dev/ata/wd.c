@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.422 2016/07/21 18:54:13 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.423 2016/07/21 19:05:03 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.422 2016/07/21 18:54:13 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.423 2016/07/21 19:05:03 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -194,6 +194,7 @@ void  wdstart(void *);
 void  wdstart1(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
+static void wd_params_to_properties(struct wd_softc *);
 int   wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
 int   wd_trim(struct wd_softc *, int, daddr_t, long);
@@ -411,6 +412,7 @@ out:
 	disk_init(&wd->sc_dk, device_xname(wd->sc_dev), &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
+	wd_params_to_properties(wd);
 	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
 			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
@@ -1774,7 +1776,6 @@ wd_get_params(struct wd_softc *wd, uint8_t flags, struct ataparams *params)
 		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
 		/* FALLTHROUGH */
 	case CMD_OK:
-		wd_params_to_properties(wd);
 		return 0;
 	default:
 		panic("wd_get_params: bad return code from ata_get_params");
