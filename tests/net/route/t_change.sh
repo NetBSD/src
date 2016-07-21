@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.4 2013/02/19 21:08:25 joerg Exp $
+#	$NetBSD: t_change.sh,v 1.5 2016/07/21 01:56:27 ozaki-r Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,15 +29,15 @@ netserver=\
 "rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
 export RUMP_SERVER=unix://commsock
 
-atf_test_case reject2blackhole cleanup
-reject2blackhole_head()
+atf_test_case route_change_reject2blackhole cleanup
+route_change_reject2blackhole_head()
 {
 
 	atf_set "descr" "Change a reject route to blackhole"
 	atf_set "require.progs" "rump_server"
 }
 
-reject2blackhole_body()
+route_change_reject2blackhole_body()
 {
 
 	atf_check -s exit:0 ${netserver} ${RUMP_SERVER}
@@ -52,7 +52,7 @@ reject2blackhole_body()
 	    "rump.netstat -rn -f inet | grep ^207.46| grep ^207.46"
 }
 
-reject2blackhole_cleanup()
+route_change_reject2blackhole_cleanup()
 {
 
 	env RUMP_SERVER=unix://commsock rump.halt
@@ -61,5 +61,5 @@ reject2blackhole_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case reject2blackhole
+	atf_add_test_case route_change_reject2blackhole
 }
