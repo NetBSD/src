@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.101 2016/07/19 14:10:15 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.102 2016/07/21 12:54:44 martin Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5176,4 +5176,9 @@ libexec/mail.local/mail.local.c			1.27
 
 	Fix race condition in deliver(), fix resource leak.
 	[shm, ticket #1206]
+
+libexec/mail.local/mail.local.c			1.28
+
+	Fix error checks in open(2) calls.
+	[shm, ticket #1207]
 
