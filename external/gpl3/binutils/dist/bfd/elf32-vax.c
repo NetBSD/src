@@ -782,7 +782,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 			if (info->warn_shared_textrel)
 			  (*_bfd_error_handler)
 			    (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
-			     h->root.root.string, sec->name);
+			     h ? h->root.root.string : "?", sec->name);
 			info->flags |= DF_TEXTREL;
 		    }
 		}
