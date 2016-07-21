@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.339.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.339.2.2 2016/07/21 10:37:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.1 2016/07/20 23:47:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.339.2.2 2016/07/21 10:37:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -452,10 +452,13 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			if (devvp->v_type != VBLK) {
 				DPRINTF("non block device %d", devvp->v_type);
 				error = ENOTBLK;
-			} else if (bdevsw_lookup_acquire(devvp->v_rdev) == NULL) {
-				DPRINTF("can't find block device 0x%jx",
-				    devvp->v_rdev);
-				error = ENXIO;
+			} else {
+				bdev = bdevsw_lookup_acquire(devvp->v_rdev);
+				if (bdev == NULL) {
+					DPRINTF("can't find block device 0x%jx",
+					    devvp->v_rdev);
+					error = ENXIO;
+				}
 			}
 		} else {
 			/*
