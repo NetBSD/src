@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.58.10.1 2016/07/20 23:47:55 pgoyette Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.58.10.2 2016/07/21 10:34:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.58.10.1 2016/07/20 23:47:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.58.10.2 2016/07/21 10:34:11 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -168,10 +168,11 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(vp, &va, l->l_cred);
 			VOP_UNLOCK(vp);
-			if (error == 0 &&
-			    (cdev = cdevsw_lookup_acquire(va.va_rdev)) ==
-					&sequencer_cdevsw)
-				is_sequencer = true;
+			if (error == 0) {
+				cdev = cdevsw_lookup_acquire(va.va_rdev);
+				if (cdev == &sequencer_cdevsw)
+					is_sequencer = true;
+			}
 		}
 		if (is_sequencer) {
 			error = oss_ioctl_sequencer(l,
