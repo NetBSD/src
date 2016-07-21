@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.73 2016/07/17 16:44:39 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.74 2016/07/21 12:17:07 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1227,7 +1227,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 li	a0, -2
 #endif /* __HAVE_PREEMPTION */
 4:
-#endif /* __HAVE_FAST_SOFTINT */
+#endif /* __HAVE_FAST_SOFTINTS */
 	/*
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable
