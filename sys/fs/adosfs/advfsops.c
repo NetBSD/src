@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.75.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.75.2.2 2016/07/21 11:02:56 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.75.2.1 2016/07/20 23:47:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.75.2.2 2016/07/21 11:02:56 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -157,8 +157,10 @@ adosfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	amp->uid = args->uid;
 	amp->gid = args->gid;
 	amp->mask = args->mask;
-	return set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
-	    mp->mnt_op->vfs_name, mp, l);
+	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
+	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
+	bdevsw_release(bdev);
+	return error
 }
 
 int
