@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.421 2016/06/19 09:35:06 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.422 2016/07/21 18:54:13 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.421 2016/06/19 09:35:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.422 2016/07/21 18:54:13 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -1728,7 +1728,7 @@ bad144intern(struct wd_softc *wd)
 #endif
 
 static void
-wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
+wd_params_to_properties(struct wd_softc *wd)
 {
 	struct disk_geom *dg = &wd->sc_dk.dk_geom;
 
@@ -1774,7 +1774,7 @@ wd_get_params(struct wd_softc *wd, uint8_t flags, struct ataparams *params)
 		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
 		/* FALLTHROUGH */
 	case CMD_OK:
-		wd_params_to_properties(wd, params);
+		wd_params_to_properties(wd);
 		return 0;
 	default:
 		panic("wd_get_params: bad return code from ata_get_params");
