@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.162.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.162.2.2 2016/07/21 13:09:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.1 2016/07/20 23:47:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.2 2016/07/21 13:09:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -654,14 +654,14 @@ spec_open(void *v)
 	mutex_exit(&device_lock);
 
 	if (cdev_type(dev) != D_DISK || error != 0)
-		return error;
+		goto out;
 
-	
 	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
 	error = (*ioctl)(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, curlwp);
 	if (error == 0)
 		uvm_vnp_setsize(vp, (voff_t)pi.pi_secsize * pi.pi_size);
 
+ out:
 	if (cdev != NULL)
 		cdevsw_release(cdev);
 	if (bdev != NULL)
