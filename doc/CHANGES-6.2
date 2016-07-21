@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.256 2016/07/19 14:19:27 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.257 2016/07/21 12:58:24 martin Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14597,4 +14597,9 @@ libexec/mail.local/mail.local.c			1.27
 
 	Fix race condition in deliver(), fix resource leak.
 	[shm, ticket #1391]
+
+libexec/mail.local/mail.local.c			1.28
+
+	Fix error checks in open(2) calls.
+	[shm, ticket #1392]
 
