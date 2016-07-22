@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.162.2.2 2016/07/21 13:09:47 pgoyette Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.162.2.3 2016/07/22 01:50:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.2 2016/07/21 13:09:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.3 2016/07/22 01:50:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -667,7 +667,7 @@ spec_open(void *v)
 	if (bdev != NULL)
 		bdevsw_release(bdev);
 
-	return 0;
+	return error;
 }
 
 /*
