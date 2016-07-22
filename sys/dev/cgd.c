@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.5 2016/07/22 03:39:43 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.6 2016/07/22 03:40:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.5 2016/07/22 03:39:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.6 2016/07/22 03:40:51 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,7 +102,7 @@ const struct cdevsw cgd_cdevsw = {
 static int cgd_match(device_t, cfdata_t, void *);
 static void cgd_attach(device_t, device_t, void *);
 static int cgd_detach(device_t, int);
-static struct cgd_softc	*cgd_spawn(int, *device_t);
+static struct cgd_softc	*cgd_spawn(int, device_t *);
 static int cgd_destroy(device_t);
 
 /* Internal Functions */
