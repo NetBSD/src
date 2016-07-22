@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.424 2016/07/22 04:08:10 jakllsch Exp $ */
+/*	$NetBSD: wd.c,v 1.425 2016/07/22 12:55:34 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.424 2016/07/22 04:08:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.425 2016/07/22 12:55:34 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -245,7 +245,7 @@ static const struct wd_quirk {
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST360015AS",	
+	{ "ST360015AS",
 	  WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ NULL,
 	  0 }
@@ -847,7 +847,7 @@ retry2:
 		 */
 		if ((bp->b_flags & B_READ) &&
 		    ((wd->drvp->ata_vers >= 4 && wd->sc_wdc_bio.r_error & 64) ||
-	     	     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192))) {
+		     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192))) {
 			struct disk_badsectors *dbs;
 
 			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
@@ -1029,7 +1029,7 @@ wdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	return error;
 }
 
-/* 
+/*
  * Caller must hold wd->sc_dk.dk_openlock.
  */
 static int
@@ -1494,7 +1494,7 @@ wdioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 
 		return 0;
 	    }
-	
+
 	case DIOCSSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)addr;
@@ -1704,7 +1704,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		err = 0;
 		break;
 	default:
-		panic("wddump: unknown error type %d", err); 
+		panic("wddump: unknown error type %d", err);
 	}
 	if (err != 0) {
 		printf("\n");
