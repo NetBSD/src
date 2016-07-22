@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.4 2016/07/22 02:05:39 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.5 2016/07/22 12:03:15 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.4 2016/07/22 02:05:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.5 2016/07/22 12:03:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2273,7 +2273,7 @@ device_lookup_acquire(cfdriver_t cd, int unit)
 		dv = NULL;
 	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
 		dv = NULL;
-	else
+	if (dv != NULL)
 		localcount_acquire(dv->dv_localcnt);
 	mutex_exit(&alldevs_mtx);
 
