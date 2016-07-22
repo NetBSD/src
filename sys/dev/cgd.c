@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.6 2016/07/22 03:40:51 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.7 2016/07/22 03:44:36 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.6 2016/07/22 03:40:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.7 2016/07/22 03:44:36 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,7 +202,7 @@ getcgd_softc(dev_t dev, device_t *self)
 	
 	sc = device_private(*self);
 	if (sc == NULL)
-		sc = cgd_spawn(unit, *self);
+		sc = cgd_spawn(unit, self);
 	return sc;
 }
 
