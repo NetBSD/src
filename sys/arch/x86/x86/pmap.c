@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.215 2016/07/22 13:01:43 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.216 2016/07/22 14:08:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2016/07/22 13:01:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2016/07/22 14:08:33 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1615,72 +1615,6 @@ pmap_remap_largepages(void)
 	}
 }
 #endif /* !XEN */
-
-#if defined(__x86_64__)
-/*
- * Pre-allocate PTPs for low memory, so that 1:1 mappings for various
- * trampoline code can be entered.
- */
-void
-pmap_prealloc_lowmem_ptps(void)
-{
-	int level;
-	paddr_t newp;
-	pd_entry_t *pdes;
-
-	const pd_entry_t pteflags = PG_k | PG_V | PG_RW;
-
-	pdes = pmap_kernel()->pm_pdir;
-	level = PTP_LEVELS;
-	for (;;) {
-		newp = pmap_bootstrap_palloc(1);
-
-#ifdef __HAVE_DIRECT_MAP
-		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
-#else
-		pmap_pte_set(early_zero_pte, pmap_pa2pte(newp) | pteflags |
-		    pmap_pg_nx);
-		pmap_pte_flush();
-		pmap_update_pg((vaddr_t)early_zerop);
-		memset(early_zerop, 0, PAGE_SIZE);
-#endif
-
-#ifdef XEN
-		/* Mark R/O before installing */
-		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
-		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
-			HYPERVISOR_update_va_mapping (newp + KERNBASE,
-			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-
-		if (level == PTP_LEVELS) { /* Top level pde is per-cpu */
-			pd_entry_t *kpm_pdir;
-			/* Reach it via recursive mapping */
-			kpm_pdir = normal_pdes[PTP_LEVELS - 2];
-
-			/* Set it as usual. We can't defer this
-			 * outside the loop since recursive
-			 * pte entries won't be accessible during
-			 * further iterations at lower levels
-			 * otherwise.
-			 */
-			pmap_pte_set(&kpm_pdir[pl_i(0, PTP_LEVELS)],
-			    pmap_pa2pte(newp) | pteflags);
-		}
-#endif /* XEN */
-
-		pmap_pte_set(&pdes[pl_i(0, level)],
-		    pmap_pa2pte(newp) | pteflags);
-
-		pmap_pte_flush();
-
-		level--;
-		if (level <= 1)
-			break;
-		pdes = normal_pdes[level - 2];
-	}
-}
-#endif /* defined(__x86_64__) */
 
 /*
  * pmap_init: called from uvm_init, our job is to get the pmap
