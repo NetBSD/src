@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.35 2016/07/16 21:33:46 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.36 2016/07/22 19:50:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.35 2016/07/16 21:33:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.36 2016/07/22 19:50:44 matt Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -1115,7 +1115,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
+		for (addr = trunc_page(segs[curseg].ds_addr);
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
