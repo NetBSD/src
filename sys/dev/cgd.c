@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.7 2016/07/22 03:44:36 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.8 2016/07/22 05:49:53 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.7 2016/07/22 03:44:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.8 2016/07/22 05:49:53 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -194,15 +194,19 @@ getcgd_softc(dev_t dev, device_t *self)
 	int	unit = CGDUNIT(dev);
 	struct cgd_softc *sc;
 
+printf("%s: unit %d\n", __func__, unit);
 	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
 
 	*self = device_lookup_acquire(&cgd_cd, unit);
+printf("%s: *self %p\n", __func__, *self);
+
 	if (*self == NULL)
-		return NULL;
-	
-	sc = device_private(*self);
-	if (sc == NULL)
 		sc = cgd_spawn(unit, self);
+printf("%s: return sc %p\n", __func__, sc);
+	else
+		sc = device_private(*self);
+printf("%s: sc %p\n", __func__, sc);
+
 	return sc;
 }
 
@@ -272,9 +276,12 @@ cgd_spawn(int unit, device_t *self)
 	cf->cf_fstate = FSTATE_STAR;
 
 	if (config_attach_pseudo(cf) == NULL)
+{ printf("%s: config_attach_pseudo() failed\n", __func__);
 		return NULL;
+}
 
 	*self = device_lookup_acquire(&cgd_cd, unit);
+printf("%s: self %p\n", __func__, *self);
 	if (self == NULL)
 		return NULL;
 	else
@@ -307,9 +314,12 @@ cgdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct	cgd_softc *cs;
 
 	DPRINTF_FOLLOW(("cgdopen(0x%"PRIx64", %d)\n", dev, flags));
+printf("%s: dev %lx\n", __func__, (long unsigned int)dev);
 	GETCGD_SOFTC(cs, dev, self);
+printf("%s: cs %p, self %p\n", __func__, cs, self);
 	error = dk_open(&cs->sc_dksc, dev, flags, fmt, l);
 	device_release(self);
+printf("%s: return %d\n", __func__, error);
 	return error;
 }
 
@@ -546,7 +556,7 @@ cgdiodone(struct buf *nbp)
 
 	/*
 	 * copy the dev_t, finish the disk operation, and release the
-	 * reference we're holding on to (from cgd_getsoftc() earlier)
+	 * reference we're holding on to (from getcgd_softc() earlier)
 	 */
 	dev = obp->b_dev;
 	dk_done(dksc, obp);
