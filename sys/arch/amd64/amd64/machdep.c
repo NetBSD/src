@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2016/07/20 13:49:17 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.226 2016/07/22 14:08:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2016/07/20 13:49:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2016/07/22 14:08:33 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1604,9 +1604,6 @@ init_x86_64(paddr_t first_avail)
 	 * We must do this before loading pages into the VM system.
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
-
-	if (avail_start != PAGE_SIZE)
-		pmap_prealloc_lowmem_ptps();
 
 #ifndef XEN
 	/* Internalize the physical pages into the VM system. */
