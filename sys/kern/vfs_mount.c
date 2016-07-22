@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.40.2.1 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.40.2.2 2016/07/22 03:55:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40.2.1 2016/07/20 23:47:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.40.2.2 2016/07/22 03:55:12 pgoyette Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1316,7 +1316,7 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 {
 	vnode_t *bvp;
 	dev_t dev;
-	int d_type, busy;
+	int d_type, ret;
 	const struct cdevsw *cdev = NULL;
 	const struct bdevsw *bdev = NULL;
 
@@ -1359,8 +1359,10 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 		break;
 	}
 
-	if (d_type != D_DISK)
-		return EINVAL;
+	if (d_type != D_DISK) {
+		ret = EINVAL;
+		goto out;
+	}
 
 	if (bvpp != NULL)
 		*bvpp = bvp;
@@ -1370,16 +1372,18 @@ rawdev_mounted(vnode_t *vp, vnode_t **bvpp)
 	 * XXX: not only if this specific slice is mounted, but
 	 * XXX: if it's on a disk with any other mounted slice.
 	 */
-	busy =vfs_mountedon(bvp);
+	if (vfs_mountedon(bvp) != 0)
+		ret = EBUSY;
+	else
+		ret = 0;
 
+ out:
 	if (bdev != NULL)
 		bdevsw_release(bdev);
 	if (cdev != NULL)
 		cdevsw_release(cdev);
 
-	if (busy)
-		return EBUSY;
-	return 0;
+	return ret;
 }
 
 /*
