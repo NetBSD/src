@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2016/07/22 12:36:03 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.215 2016/07/22 13:01:43 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2016/07/22 12:36:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.215 2016/07/22 13:01:43 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -569,7 +569,7 @@ static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
     vaddr_t, struct pv_entry **);
 
 static paddr_t pmap_get_physpage(void);
-static void pmap_alloc_level(pd_entry_t * const *, vaddr_t, int, long *);
+static void pmap_alloc_level(vaddr_t, long *);
 
 static bool pmap_reactivate(struct pmap *);
 
@@ -4299,15 +4299,15 @@ pmap_get_physpage(void)
 }
 
 /*
- * Allocate the amount of specified ptps for a ptp level, and populate
- * all levels below accordingly, mapping virtual addresses starting at
- * kva.
+ * Expand the page tree with the specified amount of PTPs, mapping virtual
+ * addresses starting at kva. We populate all the levels but the last one
+ * (L1). The nodes of the tree are created as RWX, but the pages covered
+ * will be kentered in L1, with proper permissions.
  *
- * Used by pmap_growkernel.
+ * Used only by pmap_growkernel.
  */
 static void
-pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
-    long *needed_ptps)
+pmap_alloc_level(vaddr_t kva, long *needed_ptps)
 {
 	unsigned long i;
 	paddr_t pa;
@@ -4318,11 +4318,11 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 	int s = splvm(); /* protect xpq_* */
 #endif
 
-	for (level = lvl; level > 1; level--) {
+	for (level = PTP_LEVELS; level > 1; level--) {
 		if (level == PTP_LEVELS)
 			pdep = pmap_kernel()->pm_pdir;
 		else
-			pdep = pdes[level - 2];
+			pdep = normal_pdes[level - 2];
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
 
@@ -4370,10 +4370,10 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 }
 
 /*
- * pmap_growkernel: increase usage of KVM space
+ * pmap_growkernel: increase usage of KVM space.
  *
  * => we allocate new PTPs for the kernel and install them in all
- *	the pmaps on the system.
+ *    the pmaps on the system.
  */
 
 vaddr_t
@@ -4413,7 +4413,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS, needed_kptp);
+	pmap_alloc_level(pmap_maxkvaddr, needed_kptp);
 
 	/*
 	 * If the number of top level entries changed, update all pmaps.
