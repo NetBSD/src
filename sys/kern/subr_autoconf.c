@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.2 2016/07/16 22:06:42 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.3 2016/07/22 02:02:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.2 2016/07/16 22:06:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.3 2016/07/22 02:02:24 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1237,8 +1237,10 @@ config_devfree(device_t dev)
 {
 	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
 
-	if (dev->dv_localcnt != NULL)
+	if (dev->dv_localcnt != NULL) {
 		localcount_fini(dev->dv_localcnt);
+		kmem_free(dev->dv_localcnt, sizeof(*dev->dv_localcnt));
+	}
 	if (dev->dv_cfattach->ca_devsize > 0)
 		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
 	if (priv)
@@ -2256,7 +2258,7 @@ device_lookup(cfdriver_t cd, int unit)
 }
 
 /*
- * device_lookup_accquire:
+ * device_lookup_acquire:
  *
  *	Look up a device instance for a given driver and
  *	hold a reference to the device.
@@ -2307,14 +2309,27 @@ device_lookup_private(cfdriver_t cd, int unit)
 /*
  * device_lookup_private_acquire:
  *
- *	Look up the softc and acquire a reference to the device
- *	so it won't disappear.
+ *	Look up the softc and acquire a reference to the device so it
+ *	won't disappear.  Note that the caller must ensure that it is
+ *	capable of calling device_release() at some later point in
+ *	time, thus the returned private data must contain some data
+ *	to locate the original device.  Thus the private data must be
+ *	present, not NULL!  If this cannot be guaranteed, the caller
+ *	should use device_lookup_acquire() in order to retain the
+ *	device_t pointer.
  */
 void *
 device_lookup_private_acquire(cfdriver_t cd, int unit)
 {
+	device_t dv;
+	void *p;
 
-	return device_private(device_lookup_acquire(cd, unit));
+	dv = device_lookup_acquire(cd, unit);
+	p = device_private(dv);
+	KASSERTMSG(p != NULL || dv == NULL,
+	    "%s: device %s has no private data", __func__, cd->cd_name);
+unit, dv, p); */
+	return p;
 }
 
 /*
