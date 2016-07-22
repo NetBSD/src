@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.213 2016/07/20 12:33:59 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214 2016/07/22 12:36:03 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2016/07/20 12:33:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2016/07/22 12:36:03 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -492,10 +492,7 @@ static struct pool_cache pmap_cache;
  */
 static struct pool_cache pmap_pv_cache;
 
-#ifdef __HAVE_DIRECT_MAP
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
-#else
+#ifndef __HAVE_DIRECT_MAP
 /*
  * MULTIPROCESSOR: special VAs and PTEs are actually allocated inside a
  * (maxcpus * NPTECL) array of PTE, to avoid cache line thrashing due to
