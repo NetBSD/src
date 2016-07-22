@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.355 2016/07/22 07:09:40 knakahara Exp $	*/
+/*	$NetBSD: if.c,v 1.356 2016/07/22 07:13:56 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.355 2016/07/22 07:09:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.356 2016/07/22 07:13:56 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2874,17 +2874,7 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	s = splnet();
 
-	/*
-	 * If NET_MPSAFE is not defined , IFQ_LOCK() is nop.
-	 * use KERNEL_LOCK instead of ifq_lock.
-	 */
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
 	if (error != 0) {
 		/* mbuf is already freed */
 		goto out;
