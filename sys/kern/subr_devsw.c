@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.11 2016/07/22 23:02:55 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.12 2016/07/22 23:04:01 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.11 2016/07/22 23:02:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.12 2016/07/22 23:04:01 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -479,7 +479,7 @@ bdevsw_lookup_acquire(dev_t dev)
 
 	/* If the devsw is not statically linked, acquire a reference */
 	if (bdev->d_localcount != NULL)
-		localcount_acquire(bdevsw[bmajor]->d_localcount);
+		localcount_acquire(bdev->d_localcount);
 
  out:	pserialize_read_exit(s);
 
@@ -540,7 +540,7 @@ cdevsw_lookup_acquire(dev_t dev)
 
 	/* If the devsw is not statically linked, acquire a reference */
 	if (cdev->d_localcount != NULL)
-		localcount_acquire(cdevsw[cmajor]->d_localcount);
+		localcount_acquire(cdev->d_localcount);
 
  out:	pserialize_read_exit(s);
 
