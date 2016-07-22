@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.34.2.12 2016/07/22 23:04:01 pgoyette Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.34.2.13 2016/07/22 23:16:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.12 2016/07/22 23:04:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.34.2.13 2016/07/22 23:16:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -353,7 +353,7 @@ cdevsw_attach(const struct cdevsw *devsw, devmajor_t *devmajor)
 	if (cdevsw[*devmajor] != NULL)
 		return (EEXIST);
 
-	/* ensure visibility of the bdevsw */
+	/* ensure visibility of the cdevsw */
 	membar_producer();
 
 	cdevsw[*devmajor] = devsw;
