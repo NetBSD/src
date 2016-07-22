@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.3 2016/07/22 02:02:24 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.4 2016/07/22 02:05:39 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.3 2016/07/22 02:02:24 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.4 2016/07/22 02:05:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2328,7 +2328,6 @@ device_lookup_private_acquire(cfdriver_t cd, int unit)
 	p = device_private(dv);
 	KASSERTMSG(p != NULL || dv == NULL,
 	    "%s: device %s has no private data", __func__, cd->cd_name);
-unit, dv, p); */
 	return p;
 }
 
