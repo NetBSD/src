@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.53 2016/07/23 17:42:37 jakllsch Exp $	*/
+/*	$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.53 2016/07/23 17:42:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.54 2016/07/23 18:00:01 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 			if (prop_dictionary_get_uint32(dev, "size", &size))
 				loc[IICCF_SIZE] = size;
 			else
-				loc[IICCF_SIZE] = -1;
+				size = loc[IICCF_SIZE] = IICCF_SIZE_DEFAULT;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
