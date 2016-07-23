@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.9 2016/07/22 06:32:54 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.10 2016/07/23 02:36:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.9 2016/07/22 06:32:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.10 2016/07/23 02:36:51 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,8 +172,12 @@ static void	hexprint(const char *, void *, int);
 /* Utility Functions */
 
 #define CGDUNIT(x)		DISKUNIT(x)
-#define GETCGD_SOFTC(_cs, x, _dv)				\
-	if (!((_cs) = getcgd_softc(x, &_dv))) return ENXIO;
+#define GETCGD_SOFTC(_cs, x, _dv)			\
+	printf("%s: GETCGD_SOFTC\n", __func__);		\
+	if (!((_cs) = getcgd_softc(x, &_dv))) {		\
+		printf("%s: cs NULL\n", __func__);	\
+		return ENXIO;				\
+	}
 
 /* The code */
 
@@ -196,13 +200,16 @@ getcgd_softc(dev_t dev, device_t *self)
 
 	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
 
+printf("%s: unit %d\n", __func__, unit);
 	*self = device_lookup_acquire(&cgd_cd, unit);
+printf("%s: *self %p\n", __func__, *self);
 
 	if (*self == NULL) {
 		sc = cgd_spawn(unit, self);
 	} else {
 		sc = device_private(*self);
 	}
+printf("%s: return, sc %p\n", __func__, sc);
 
 	return sc;
 }
@@ -253,12 +260,18 @@ cgd_detach(device_t self, int flags)
 void
 cgdattach(int num)
 {
+/*
+ * We don't need to do anything here - the config database is updated
+ * in module initialization code.
+
 	int error;
 
 	error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
 	if (error != 0)
 		aprint_error("%s: unable to register cfattach\n",
 		    cgd_cd.cd_name);
+ *
+ */
 }
 
 static struct cgd_softc *
@@ -273,11 +286,13 @@ cgd_spawn(int unit, device_t *self)
 	cf->cf_fstate = FSTATE_STAR;
 
 	if (config_attach_pseudo(cf) == NULL)
-{ printf("%s: config_attach_pseudo() failed\n", __func__);
+{
+printf("%s: config_attach_pseudo() failed\n", __func__);
 		return NULL;
 }
 
 	*self = device_lookup_acquire(&cgd_cd, unit);
+printf("%s: pseudo added, *self %p\n", __func__, *self);
 	if (self == NULL)
 		return NULL;
 	else
@@ -659,6 +674,7 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF_FOLLOW(("cgdioctl(0x%"PRIx64", %ld, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 
+printf("%s: dev %lx cmd %lx\n", __func__, (long unsigned int)dev, cmd);
 	switch (cmd) {
 	case CGDIOCGET:
 		return cgd_ioctl_get(dev, data, l);
@@ -672,21 +688,25 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		dksc = &cs->sc_dksc;
 		break;
 	}
+printf("%s: softc %p, self %p\n", __func__, cs, self);
 
 	switch (cmd) {
 	case CGDIOCSET:
+printf("%s: case CGDIOCSET\n", __func__);
 		if (DK_ATTACHED(dksc))
 			error = EBUSY;
 		else
-			cgd_ioctl_set(cs, data, l);
+			error = cgd_ioctl_set(cs, data, l);
 		break;
 	case CGDIOCCLR:
+printf("%s: case CGDIOCCLR\n", __func__);
 		if (DK_BUSY(&cs->sc_dksc, pmask))
 			error = EBUSY;
 		else
-			cgd_ioctl_clr(cs, l);
+			error = cgd_ioctl_clr(cs, l);
 		break;
 	case DIOCCACHESYNC:
+printf("%s: case CGDIOCCACHESYNC\n", __func__);
 		/*
 		 * XXX Do we really need to care about having a writable
 		 * file descriptor here?
@@ -703,18 +723,24 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	case DIOCGSTRATEGY:
 	case DIOCSSTRATEGY:
-		if (!DK_ATTACHED(dksc))
+printf("%s: case CGDIOCxSTRATEGY\n", __func__);
+		if (!DK_ATTACHED(dksc)) {
 			error = ENOENT;
+			break;
+		}
 		/*FALLTHROUGH*/
 	default:
-		 if (error == 0)
-			error = dk_ioctl(dksc, dev, cmd, data, flag, l);
+printf("%s: case default\n", __func__);
+		error = dk_ioctl(dksc, dev, cmd, data, flag, l);
 		break;
 	case CGDIOCGET:
+printf("%s: case CGDIOCGET\n", __func__);
 		KASSERT(0);
 		error = EINVAL;
+		break;
 	}
 	device_release(self);
+printf("%s: return value %d\n", __func__, error);
 	return error;
 }
 
@@ -1139,14 +1165,15 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		/*
-		 * Insert the driver into the autoconf database
-		 */
-		error = config_init_component(cfdriver_ioconf_cgd,
-                    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
-		if (error) {
-			aprint_error("%s: unable to init component"
-			    ", error %d", cgd_cd.cd_name, error);
+		error = config_cfdriver_attach(&cgd_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+	        if (error) {
+			config_cfdriver_detach(&cgd_cd);
+			aprint_error("%s: unable to register cfattach for ",
+			    "%s, error %d", __func__, cgd_cd.cd_name, error);
 			break;
 		}
 
@@ -1160,10 +1187,10 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		 * If devsw_attach fails, remove from autoconf database
 		 */
 		if (error) {
-			config_fini_component(cfdriver_ioconf_cgd,
-			    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
-			aprint_error("%s: unable to attach devsw"
-				    ", error %d", cgd_cd.cd_name, error);
+			config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+			config_cfdriver_detach(&cgd_cd);
+			aprint_error("%s: unable to attach %s devsw, "
+			    "error %d", __func__, cgd_cd.cd_name, error);
 		}
 #endif
 		break;
@@ -1178,17 +1205,22 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		/*
 		 * Now remove device from autoconf database
 		 */
-		error = config_fini_component(cfdriver_ioconf_cgd,
-		    cfattach_ioconf_cgd, cfdata_ioconf_cgd);
-
-		/*
-		 * If removal fails, re-attach our {b,c}devsw's
-		 */
+		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 		if (error) {
-			aprint_error("%s: failed to remove from autoconf"
-			    ", error %d", cgd_cd.cd_name, error);
+			error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
+			    &cgd_cdevsw, &cmajor);
+			aprint_error("%s: failed to detach %s cfattach, "
+			    "error %d\n", __func__, cgd_cd.cd_name, error);
+			break;
+		}
+		error = config_cfdriver_detach(&cgd_cd);
+		if (error) {
+			config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
 			devsw_attach("cgd", &cgd_bdevsw, &bmajor,
 			    &cgd_cdevsw, &cmajor);
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, cgd_cd.cd_name, error);
+			break;
 		}
 #endif
 		break;
