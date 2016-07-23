@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.90.2.1 2016/07/20 23:47:56 pgoyette Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.90.2.2 2016/07/23 00:44:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.90.2.1 2016/07/20 23:47:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.90.2.2 2016/07/23 00:44:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -292,8 +292,8 @@ cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 fail:
 	VOP_UNLOCK(devvp);
-	bdevsw_release(bdev);
 	vrele(devvp);
+	bdevsw_release(bdev);
 	return (error);
 }
 
