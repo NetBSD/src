@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.162.2.4 2016/07/23 05:01:09 pgoyette Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.162.2.5 2016/07/23 21:54:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.4 2016/07/23 05:01:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.162.2.5 2016/07/23 21:54:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -661,12 +661,7 @@ spec_open(void *v)
 	if (error == 0)
 		uvm_vnp_setsize(vp, (voff_t)pi.pi_secsize * pi.pi_size);
 
-	if (cdev != NULL)
-		cdevsw_release(cdev);
-	if (bdev != NULL)
-		bdevsw_release(bdev);
-
-	return 0;
+	error = 0;
 
  out:
 	if (cdev != NULL)
