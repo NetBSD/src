@@ -1,4 +1,4 @@
-/*	$NetBSD: cgd_component.c,v 1.2.2.1 2016/07/23 05:05:47 pgoyette Exp $	*/
+/*	$NetBSD: cgd_component.c,v 1.2.2.2 2016/07/23 07:41:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_component.c,v 1.2.2.1 2016/07/23 05:05:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_component.c,v 1.2.2.2 2016/07/23 07:41:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -56,5 +56,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rcgd0", 'a',
 	    cmaj, 0, 7)) != 0)
 		panic("cannot create raw cgd dev nodes: %d", error);
-	cdevsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+	devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
 }
