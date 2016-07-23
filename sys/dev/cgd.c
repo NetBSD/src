@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.10 2016/07/23 02:36:51 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.11 2016/07/23 03:20:37 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.10 2016/07/23 02:36:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.11 2016/07/23 03:20:37 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -200,16 +200,13 @@ getcgd_softc(dev_t dev, device_t *self)
 
 	DPRINTF_FOLLOW(("getcgd_softc(0x%"PRIx64"): unit = %d\n", dev, unit));
 
-printf("%s: unit %d\n", __func__, unit);
 	*self = device_lookup_acquire(&cgd_cd, unit);
-printf("%s: *self %p\n", __func__, *self);
 
 	if (*self == NULL) {
 		sc = cgd_spawn(unit, self);
 	} else {
 		sc = device_private(*self);
 	}
-printf("%s: return, sc %p\n", __func__, sc);
 
 	return sc;
 }
@@ -286,13 +283,9 @@ cgd_spawn(int unit, device_t *self)
 	cf->cf_fstate = FSTATE_STAR;
 
 	if (config_attach_pseudo(cf) == NULL)
-{
-printf("%s: config_attach_pseudo() failed\n", __func__);
 		return NULL;
-}
 
 	*self = device_lookup_acquire(&cgd_cd, unit);
-printf("%s: pseudo added, *self %p\n", __func__, *self);
 	if (self == NULL)
 		return NULL;
 	else
@@ -674,7 +667,6 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	DPRINTF_FOLLOW(("cgdioctl(0x%"PRIx64", %ld, %p, %d, %p)\n",
 	    dev, cmd, data, flag, l));
 
-printf("%s: dev %lx cmd %lx\n", __func__, (long unsigned int)dev, cmd);
 	switch (cmd) {
 	case CGDIOCGET:
 		return cgd_ioctl_get(dev, data, l);
@@ -688,25 +680,21 @@ printf("%s: dev %lx cmd %lx\n", __func__, (long unsigned int)dev, cmd);
 		dksc = &cs->sc_dksc;
 		break;
 	}
-printf("%s: softc %p, self %p\n", __func__, cs, self);
 
 	switch (cmd) {
 	case CGDIOCSET:
-printf("%s: case CGDIOCSET\n", __func__);
 		if (DK_ATTACHED(dksc))
 			error = EBUSY;
 		else
 			error = cgd_ioctl_set(cs, data, l);
 		break;
 	case CGDIOCCLR:
-printf("%s: case CGDIOCCLR\n", __func__);
 		if (DK_BUSY(&cs->sc_dksc, pmask))
 			error = EBUSY;
 		else
 			error = cgd_ioctl_clr(cs, l);
 		break;
 	case DIOCCACHESYNC:
-printf("%s: case CGDIOCCACHESYNC\n", __func__);
 		/*
 		 * XXX Do we really need to care about having a writable
 		 * file descriptor here?
@@ -723,24 +711,20 @@ printf("%s: case CGDIOCCACHESYNC\n", __func__);
 		break;
 	case DIOCGSTRATEGY:
 	case DIOCSSTRATEGY:
-printf("%s: case CGDIOCxSTRATEGY\n", __func__);
 		if (!DK_ATTACHED(dksc)) {
 			error = ENOENT;
 			break;
 		}
 		/*FALLTHROUGH*/
 	default:
-printf("%s: case default\n", __func__);
 		error = dk_ioctl(dksc, dev, cmd, data, flag, l);
 		break;
 	case CGDIOCGET:
-printf("%s: case CGDIOCGET\n", __func__);
 		KASSERT(0);
 		error = EINVAL;
 		break;
 	}
 	device_release(self);
-printf("%s: return value %d\n", __func__, error);
 	return error;
 }
 
@@ -1150,7 +1134,7 @@ hexprint(const char *start, void *buf, int len)
 MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
-#include "ioconf.c"
+CFDRIVER_DECL(cgd, DV_DISK, NULL);
 #endif
 
 static int
@@ -1172,7 +1156,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
 	        if (error) {
 			config_cfdriver_detach(&cgd_cd);
-			aprint_error("%s: unable to register cfattach for ",
+			aprint_error("%s: unable to register cfattach for "
 			    "%s, error %d", __func__, cgd_cd.cd_name, error);
 			break;
 		}
