@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.74 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.75 2016/07/23 12:19:07 is Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.74 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.75 2016/07/23 12:19:07 is Exp $");
 
 /*
  * TODO:
@@ -1086,7 +1086,7 @@ carp_send_ad(void *v)
 		}
 	}
 #endif /* INET */
-#ifdef INET6
+#ifdef INET6_notyet
 	if (sc->sc_naddrs6) {
 		struct ip6_hdr *ip6;
 
@@ -1494,7 +1494,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 			callout_schedule(&sc->sc_md_tmo, tvtohz(&tv));
 			break;
 #endif /* INET */
-#ifdef INET6
+#ifdef INET6_notyet
 		case AF_INET6:
 			callout_schedule(&sc->sc_md6_tmo, tvtohz(&tv));
 			break;
@@ -1502,8 +1502,10 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		default:
 			if (sc->sc_naddrs)
 				callout_schedule(&sc->sc_md_tmo, tvtohz(&tv));
+#ifdef INET6_notyet
 			if (sc->sc_naddrs6)
 				callout_schedule(&sc->sc_md6_tmo, tvtohz(&tv));
+#endif /* INET6 */
 			break;
 		}
 		break;
