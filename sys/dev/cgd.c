@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.11 2016/07/23 03:20:37 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.12 2016/07/24 00:14:08 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.11 2016/07/23 03:20:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.12 2016/07/24 00:14:08 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,24 +173,11 @@ static void	hexprint(const char *, void *, int);
 
 #define CGDUNIT(x)		DISKUNIT(x)
 #define GETCGD_SOFTC(_cs, x, _dv)			\
-	printf("%s: GETCGD_SOFTC\n", __func__);		\
-	if (!((_cs) = getcgd_softc(x, &_dv))) {		\
-		printf("%s: cs NULL\n", __func__);	\
+	if (((_cs) = getcgd_softc(x, &_dv)) == NULL) {	\
 		return ENXIO;				\
 	}
 
 /* The code */
-
-static void
-cgd_release(dev_t dev)
-{
-	int unit = CGDUNIT(dev);
-	device_t self;
-
-	self = device_lookup_acquire(&cgd_cd, unit);
-	if (self != NULL)
-		device_release(self);
-}
 
 static struct cgd_softc *
 getcgd_softc(dev_t dev, device_t *self)
@@ -257,18 +244,12 @@ cgd_detach(device_t self, int flags)
 void
 cgdattach(int num)
 {
-/*
- * We don't need to do anything here - the config database is updated
- * in module initialization code.
-
 	int error;
 
 	error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
 	if (error != 0)
 		aprint_error("%s: unable to register cfattach\n",
 		    cgd_cd.cd_name);
- *
- */
 }
 
 static struct cgd_softc *
@@ -349,7 +330,7 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		}
 	}
 	device_release(self);
-	return error;
+	return 0;
 }
 
 static void
@@ -374,14 +355,12 @@ cgdstrategy(struct buf *bp)
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
-		cgd_release(bp->b_dev);
 		device_release(self);
 		return;
 	}
 
 	/* XXXrcd: Should we test for (cs != NULL)? */
 	dk_strategy(&cs->sc_dksc, bp);
-	cgd_release(bp->b_dev);
 	device_release(self);
 	return;
 }
@@ -399,7 +378,6 @@ cgdsize(dev_t dev)
 	else
 		retval = dk_size(&cs->sc_dksc, dev);
 
-	cgd_release(dev);
 	device_release(self);
 	return retval;
 }
@@ -510,7 +488,6 @@ cgd_diskstart(device_t dev, struct buf *bp)
 static void
 cgdiodone(struct buf *nbp)
 {
-	dev_t dev;
 	device_t self;
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev, &self);
@@ -555,13 +532,7 @@ cgdiodone(struct buf *nbp)
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
 
-	/*
-	 * copy the dev_t, finish the disk operation, and release the
-	 * reference we're holding on to (from getcgd_softc() earlier)
-	 */
-	dev = obp->b_dev;
 	dk_done(dksc, obp);
-	cgd_release(dev);
 	device_release(self);
 
 	dk_start(dksc, NULL);
@@ -917,7 +888,6 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 		cgu->cgu_unit = unit;
 
 	if (cgu->cgu_unit < 0) {
-		cgd_release(dev);
 		device_release(self);
 		return EINVAL;	/* XXX: should this be ENXIO? */
 	}
@@ -938,7 +908,6 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 		cgu->cgu_mode = cs->sc_cdata.cf_mode;
 		cgu->cgu_keylen = cs->sc_cdata.cf_keylen;
 	}
-	cgd_release(dev);
 	device_release(self);
 	return 0;
 }
@@ -1175,6 +1144,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&cgd_cd);
 			aprint_error("%s: unable to attach %s devsw, "
 			    "error %d", __func__, cgd_cd.cd_name, error);
+			break;
 		}
 #endif
 		break;
