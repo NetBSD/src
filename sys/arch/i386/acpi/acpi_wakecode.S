@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.17 2016/07/24 13:04:58 maxv Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.18 2016/07/24 14:09:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -159,6 +159,13 @@ wakeup_32:
 	movl	WAKEUP_r_cr4 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr4
 
+	/*
+	 * Load the correct MSR EFER value now to not depend on the
+	 * data segment register. After this point, no instruction is
+	 * allowed to clobber %ebx until wrmsr.
+	 */
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%ebx
+
 	/* Load temporary page table, we will switch to full page table later */
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
@@ -174,6 +181,15 @@ wakeup_32:
 1:
 
 	nop
+
+	/*
+	 * Load the normal system value of MSR EFER.  This includes
+	 * enabling NXE (if supported).
+	 */
+	movl	%ebx,%eax
+	movl	$0,%edx
+	movl	$MSR_EFER,%ecx
+	wrmsr
 
 	/* Restore registers */
 	movl	WAKEUP_curcpu + ACPI_WAKEUP_ADDR,%edx
@@ -209,6 +225,8 @@ WAKEUP_r_cr4:		.long 0
 WAKEUP_curcpu:		.long 0
 	.global WAKEUP_restorecpu
 WAKEUP_restorecpu:	.long 0
+	.global WAKEUP_efer
+WAKEUP_efer:		.long 0
 
 	.global WAKEUP_vbios_reset
 WAKEUP_vbios_reset:	.byte 0
