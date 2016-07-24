@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.12 2016/07/24 00:14:08 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.13 2016/07/24 10:44:57 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.12 2016/07/24 00:14:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.13 2016/07/24 10:44:57 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,6 +179,13 @@ static void	hexprint(const char *, void *, int);
 
 /* The code */
 
+/*
+ * Lookup the device and return it's softc.  If the device doesn't
+ * exist, spawn it.
+ *
+ * In either case, the device is "acquired", and must be "released"
+ * by the caller after it is finished with the softc.
+ */
 static struct cgd_softc *
 getcgd_softc(dev_t dev, device_t *self)
 {
@@ -208,7 +215,9 @@ cgd_match(device_t self, cfdata_t cfdata, void *aux)
 static void
 cgd_attach(device_t parent, device_t self, void *aux)
 {
-	struct cgd_softc *sc = device_private(self);
+	struct cgd_softc *sc;
+
+	sc = device_private(self);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_BIO);
 	dk_init(&sc->sc_dksc, self, DKTYPE_CGD);
@@ -220,6 +229,10 @@ cgd_attach(device_t parent, device_t self, void *aux)
 }
 
 
+/*
+ * The caller must hold a reference to the device's localcount.  the
+ * reference is released if the device is available for detach.
+ */
 static int
 cgd_detach(device_t self, int flags)
 {
@@ -238,6 +251,7 @@ cgd_detach(device_t self, int flags)
 	disk_destroy(&dksc->sc_dkdev);
 	mutex_destroy(&sc->sc_lock);
 
+	device_release(self);
 	return 0;
 }
 
@@ -256,6 +270,7 @@ static struct cgd_softc *
 cgd_spawn(int unit, device_t *self)
 {
 	cfdata_t cf;
+	struct cgd_softc *sc;
 
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 	cf->cf_name = cgd_cd.cd_name;
@@ -269,12 +284,14 @@ cgd_spawn(int unit, device_t *self)
 	*self = device_lookup_acquire(&cgd_cd, unit);
 	if (self == NULL)
 		return NULL;
-	else
+	else {
 		/*
 		 * Note that we return while still holding a reference
 		 * to the device!
 		 */
-		return device_private(*self);
+		sc = device_private(*self);
+		return sc;
+	}
 }
 
 static int
@@ -285,10 +302,10 @@ cgd_destroy(device_t dev)
 
 	cf = device_cfdata(dev);
 	error = config_detach(dev, DETACH_QUIET);
-	if (error)
-		return error;
-	free(cf, M_DEVBUF);
-	return 0;
+	if (error == 0)
+		free(cf, M_DEVBUF);
+
+	return error;
 }
 
 static int
@@ -325,11 +342,10 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		if ((error = cgd_destroy(cs->sc_dksc.sc_dev)) != 0) {
 			aprint_error_dev(dksc->sc_dev,
 			    "unable to detach instance\n");
-			device_release(self);
 			return error;
 		}
-	}
-	device_release(self);
+	} else
+		device_release(self);
 	return 0;
 }
 
@@ -597,8 +613,10 @@ cgdread(dev_t dev, struct uio *uio, int flags)
 	    (unsigned long long)dev, uio, flags));
 	GETCGD_SOFTC(cs, dev, self);
 	dksc = &cs->sc_dksc;
-	if (!DK_ATTACHED(dksc))
+	if (!DK_ATTACHED(dksc)) {
+		device_release(self);
 		return ENXIO;
+	}
 	error = physio(cgdstrategy, NULL, dev, B_READ, minphys, uio);
 	device_release(self);
 	return error;
@@ -1104,16 +1122,14 @@ MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
+
+devmajor_t cgd_bmajor = -1, cgd_cmajor = -1;
 #endif
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
-
-#ifdef _MODULE
-	devmajor_t bmajor = -1, cmajor = -1;
-#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -1133,8 +1149,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		/*
 		 * Attach the {b,c}devsw's
 		 */
-		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
-		    &cgd_cdevsw, &cmajor);
+		error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+		    &cgd_cdevsw, &cgd_cmajor);
 
 		/*
 		 * If devsw_attach fails, remove from autoconf database
@@ -1161,8 +1177,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		 */
 		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 		if (error) {
-			error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
-			    &cgd_cdevsw, &cmajor);
+			error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			    &cgd_cdevsw, &cgd_cmajor);
 			aprint_error("%s: failed to detach %s cfattach, "
 			    "error %d\n", __func__, cgd_cd.cd_name, error);
 			break;
@@ -1170,8 +1186,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfdriver_detach(&cgd_cd);
 		if (error) {
 			config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
-			devsw_attach("cgd", &cgd_bdevsw, &bmajor,
-			    &cgd_cdevsw, &cmajor);
+			devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			    &cgd_cdevsw, &cgd_cmajor);
 			aprint_error("%s: failed to detach %s cfdriver, "
 			    "error %d\n", __func__, cgd_cd.cd_name, error);
 			break;
