@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.6 2016/07/24 13:04:58 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.7 2016/07/24 14:09:22 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -29,10 +29,11 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.6 2016/07/24 13:04:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.7 2016/07/24 14:09:22 maxv Exp $");
 
 #include "assym.h"
 #include <machine/segments.h>
+#include <machine/specialreg.h>
 
 	.text
 	.p2align 2, 0x90
@@ -50,6 +51,13 @@ acpi_md_sleep_exit:
 	movw	%ax,%fs
 	movw	ACPI_SUSPEND_GS(%edx),%ax
 	movw	%ax,%gs
+
+	movl	$MSR_EFER,%ecx
+	movl	ACPI_SUSPEND_EFER(%edx),%eax
+	movl	%edx,%esi
+	movl	$0,%edx
+	wrmsr
+	movl	%esi,%edx
 
 	movl	ACPI_SUSPEND_CR2(%edx),%eax
 	movl	%eax,%cr2
@@ -95,6 +103,11 @@ acpi_md_sleep_prepare:
 	movl	%edi,ACPI_SUSPEND_REG+(2*4)(%edx)
 	movl	%ebp,ACPI_SUSPEND_REG+(3*4)(%edx)
 	movl	%esp,ACPI_SUSPEND_REG+(4*4)(%edx)
+
+	movl	$MSR_EFER,%ecx
+	rdmsr
+	movl	CPUVAR(SELF),%edx
+	movl	%eax,ACPI_SUSPEND_EFER(%edx)
 
 	movl	%cr0,%eax
 	movl	%eax,ACPI_SUSPEND_CR0(%edx)
