@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.149.2.2 2016/07/16 22:06:42 pgoyette Exp $ */
+/* $NetBSD: device.h,v 1.149.2.3 2016/07/24 05:39:28 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -491,6 +491,7 @@ void	null_childdetached(device_t, device_t);
 
 device_t	device_lookup(cfdriver_t, int);
 device_t	device_lookup_acquire(cfdriver_t, int);
+void		device_acquire(device_t);
 void		device_release(device_t);
 void		*device_lookup_private(cfdriver_t, int);
 void		*device_lookup_private_acquire(cfdriver_t, int);
