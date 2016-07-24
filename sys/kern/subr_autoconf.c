@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.5 2016/07/22 12:03:15 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.6 2016/07/24 05:39:29 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.5 2016/07/22 12:03:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.6 2016/07/24 05:39:29 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2238,6 +2238,19 @@ config_alldevs_exit(struct alldevs_foray *af)
 }
 
 /*
+ * device_acquire:
+ *
+ *	Acquire a reference to the device.
+ */
+void
+device_acquire(device_t dv)
+{
+
+	if (dv->dv_localcnt != NULL)
+		localcount_acquire(dv->dv_localcnt);
+}
+
+/*
  * device_lookup:
  *
  *	Look up a device instance for a given driver.
@@ -2274,7 +2287,7 @@ device_lookup_acquire(cfdriver_t cd, int unit)
 	else if ((dv = cd->cd_devs[unit]) != NULL && dv->dv_del_gen != 0)
 		dv = NULL;
 	if (dv != NULL)
-		localcount_acquire(dv->dv_localcnt);
+		device_acquire(dv);
 	mutex_exit(&alldevs_mtx);
 
 	return dv;
@@ -2284,7 +2297,7 @@ device_lookup_acquire(cfdriver_t cd, int unit)
  * device_release:
  *
  *	Release the reference that was created by an earlier call to
- *	device_lookup_acquire().
+ *	device_acquire() or device_lookup_acquire().
  */
 void
 device_release(device_t dv)
