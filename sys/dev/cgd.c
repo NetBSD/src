@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.13 2016/07/24 10:44:57 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.14 2016/07/25 03:40:52 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.13 2016/07/24 10:44:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.14 2016/07/25 03:40:52 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -910,6 +910,11 @@ cgd_ioctl_get(dev_t dev, void *data, struct lwp *l)
 		return EINVAL;	/* XXX: should this be ENXIO? */
 	}
 
+	/*
+	 * XXX This appears to be redundant, given the initialization
+	 * XXX when it was declared.  Leave it for now, but don't
+	 * XXX take an extra reference to the device!
+	 */
 	cs = device_lookup_private(&cgd_cd, unit);
 	if (cs == NULL || !DK_ATTACHED(dksc)) {
 		cgu->cgu_dev = 0;
