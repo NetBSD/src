@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108 2016/07/10 17:40:23 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.109 2016/07/25 12:45:13 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108 2016/07/10 17:40:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.109 2016/07/25 12:45:13 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1028,16 +1028,14 @@ MODULE(MODULE_CLASS_DRIVER, cgd, "dk_subr");
 
 #ifdef _MODULE
 CFDRIVER_DECL(cgd, DV_DISK, NULL);
+
+devmajor_t cgd_bmajor = -1, cgd_cmajor = -1;
 #endif
 
 static int
 cgd_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
-
-#ifdef _MODULE
-	devmajor_t bmajor = -1, cmajor = -1;
-#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -1049,16 +1047,24 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
 	        if (error) {
 			config_cfdriver_detach(&cgd_cd);
-			aprint_error("%s: unable to register cfattach\n",
-			    cgd_cd.cd_name);
+			aprint_error("%s: unable to register cfattach for"
+			    "%s, error %d\n", __func__, cgd_cd.cd_name, error);
 			break;
 		}
+		/*
+		 * Attach the {b,c}devsw's
+		 */
+		error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+		    &cgd_cdevsw, &cgd_cmajor);
 
-		error = devsw_attach("cgd", &cgd_bdevsw, &bmajor,
-		    &cgd_cdevsw, &cmajor);
+		/*
+		 * If devsw_attach fails, remove from autoconf database
+		 */
 		if (error) {
 			config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 			config_cfdriver_detach(&cgd_cd);
+			aprint_error("%s: unable to attach %s devsw, "
+			    "error %d", __func__, cgd_cd.cd_name, error);
 			break;
 		}
 #endif
@@ -1066,19 +1072,40 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&cgd_cd);
+		/*
+		 * Remove {b,c}devsw's
+		 */
 		devsw_detach(&cgd_bdevsw, &cgd_cdevsw);
+
+		/*
+		 * Now remove device from autoconf database
+		 */
+		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
+		if (error) {
+			error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			    &cgd_cdevsw, &cgd_cmajor);
+			aprint_error("%s: failed to detach %s cfattach, "
+			    "error %d\n", __func__, cgd_cd.cd_name, error);
+ 			break;
+		}
+		error = config_cfdriver_detach(&cgd_cd);
+		if (error) {
+			config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+			devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			    &cgd_cdevsw, &cgd_cmajor);
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, cgd_cd.cd_name, error);
+			break;
+		}
 #endif
 		break;
 
 	case MODULE_CMD_STAT:
-		return ENOTTY;
-
+		error = ENOTTY;
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
 
 	return error;
