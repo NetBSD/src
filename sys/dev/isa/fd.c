@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.110.2.1 2016/07/25 03:30:51 pgoyette Exp $	*/
+/*	$NetBSD: fd.c,v 1.110.2.2 2016/07/25 23:40:33 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.110.2.1 2016/07/25 03:30:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.110.2.2 2016/07/25 23:40:33 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -695,9 +695,8 @@ fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 void
 fdstrategy(struct buf *bp)
 {
-	device_t self;
-	struct fd_softc *fd =
-	    device_lookup_private_acquire(&fd_cd, FDUNIT(bp->b_dev), &self);
+	device_t self = device_lookup_acquire(&fd_cd, FDUNIT(bp->b_dev));
+	struct fd_softc *fd = device_private(self);
 	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
 	int sz;
 
@@ -925,12 +924,10 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fd_softc *fd;
 	const struct fd_type *type;
 
-	fd = device_lookup_private_acquire(&fd_cd, FDUNIT(dev), &self);
-	if (fd == NULL) {
-		if (self != NULL)
-			device_release(self);
-		return (ENXIO);
-	}
+	self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
+	if (self == NULL)
+		return ENXIO;
+	fd = device_private(self);
 
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL) {
@@ -958,9 +955,8 @@ fdopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 fdclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	device_t self;
-	struct fd_softc *fd =
-	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev), &self);
+	device_t self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = device_private(self);
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1411,9 +1407,8 @@ fdcretry(struct fdc_softc *fdc)
 int
 fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	device_t self;
-	struct fd_softc *fd =
-	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev), &self);
+	device_t self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
+	struct fd_softc *fd = device_private(self);
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb *fd_formb;
@@ -1642,10 +1637,9 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 int
 fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct lwp *l)
 {
-	device_t self;
+	device_t self = device_lookup_acquire(&fd_cd, FDUNIT(dev));
 	int rv = 0;
-	struct fd_softc *fd = 
-	    device_lookup_private_acquire(&fd_cd, FDUNIT(dev), &self);
+	struct fd_softc *fd = device_private(self);
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
