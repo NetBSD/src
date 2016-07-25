@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.116.2.1 2016/07/25 03:30:52 pgoyette Exp $	*/
+/*	$NetBSD: mcd.c,v 1.116.2.2 2016/07/25 23:40:33 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116.2.1 2016/07/25 03:30:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116.2.2 2016/07/25 23:40:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,16 +312,14 @@ mcdattach(device_t parent, device_t self, void *aux)
 int
 mcdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	device_t self;
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
 	int error, part;
 	struct mcd_softc *sc;
 
-	sc = device_lookup_private_acquire(&mcd_cd, MCDUNIT(dev), &self);
-	if (sc == NULL) {
-		if (self != NULL)
-			device_release(self);
+	if (self == NULL)
 		return ENXIO;
-	}
+
+	sc = device_private(self);
 
 	mutex_enter(&sc->sc_lock);
 
@@ -416,13 +414,16 @@ bad3:
 int
 mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	device_t self;
-	struct mcd_softc *sc =
-	    device_lookup_private_acquire(&mcd_cd, MCDUNIT(dev), &self);
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc;
 	int part = MCDPART(dev);
 
 	MCD_TRACE("close: partition=%d\n", part);
 
+	if (self == NULL)
+		return ENXIO;
+
+	sc = device_private(self);
 	mutex_enter(&sc->sc_lock);
 
 	switch (fmt) {
@@ -452,13 +453,13 @@ mcdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 void
 mcdstrategy(struct buf *bp)
 {
-	device_t self;
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
 	struct mcd_softc *sc;
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s;
 
-	sc = device_lookup_private_acquire(&mcd_cd, MCDUNIT(bp->b_dev), self);
+	sc = device_private(self);
 	lp = sc->sc_dk.dk_label;
 
 	/* Test validity. */
@@ -583,9 +584,8 @@ mcdwrite(dev_t dev, struct uio *uio, int flags)
 int
 mcdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	device_t self;
-	struct mcd_softc *sc =
-	    device_lookup_private_acquire(&mcd_cd, MCDUNIT(dev), &self);
+	device_t self = device_lookup_acquire(&mcd_cd, MCDUNIT(dev));
+	struct mcd_softc *sc = device_private(self);
 	int error;
 	int part;
 #ifdef __HAVE_OLD_DISKLABEL
