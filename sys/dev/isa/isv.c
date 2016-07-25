@@ -1,4 +1,4 @@
-/*	$NetBSD: isv.c,v 1.7 2014/07/25 08:10:37 dholland Exp $ */
+/*	$NetBSD: isv.c,v 1.7.8.1 2016/07/25 03:30:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.7 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isv.c,v 1.7.8.1 2016/07/25 03:30:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,20 +259,29 @@ isv_attach(device_t parent, device_t self, void *aux)
 int
 isv_open(dev_t dev, int flag, int devtype, lwp_t *l)
 {
+	device_t self;
 	vaddr_t va;
-	struct isv_softc *sc = device_lookup_private(&isv_cd, minor(dev));
+	struct isv_softc *sc =
+	    device_lookup_private_acquire(&isv_cd, minor(dev), &self);
 
-	if (sc == NULL)
+	if (sc == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return ENXIO;
-
-	if (sc->sc_frame != NULL)
+	}
+	if (sc->sc_frame != NULL) {
+		device_release(self);
 		return 0;
+	}
 
 	if ((va = uvm_km_alloc(kernel_map, ISV_WIDTH * ISV_LINES, PAGE_SIZE,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_CANFAIL|UVM_KMF_WAITVA)) == 0)
+	    UVM_KMF_WIRED|UVM_KMF_ZERO|UVM_KMF_CANFAIL|UVM_KMF_WAITVA)) == 0) {
+		device_release(self);
 		return ENOMEM;
+	}
 
 	sc->sc_frame = (uint16_t *)(void *)va;
+	device_release(self);
 	return 0;
 }
 
@@ -403,41 +412,60 @@ isv_capture(struct isv_softc *sc)
 int
 isv_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 {
+	device_t self;
 	struct isv_cmd ic;
-	struct isv_softc *sc = device_lookup_private(&isv_cd, minor(dev));
+	struct isv_softc *sc =
+	    device_lookup_private_acquire(&isv_cd, minor(dev), &self);
+	int error;
 
-	if (cmd != ISV_CMD)
+	if (cmd != ISV_CMD) {
+		if (self != NULL)
+			device_release(self);
 		return ENOTTY;
+	}
 
 	memcpy(&ic, data, sizeof(ic));
 
-	if (ic.c_cmd != ISV_CMD_READ)
+	if (ic.c_cmd != ISV_CMD_READ) {
+		if (self != NULL)
+			device_release(self);
 		return EINVAL;
+	}
 
 	ic.c_frameno = 0;
 
-	return isv_capture(sc);
+	error = isv_capture(sc);
+	device_release(self);
+	return error;
 }
 
 paddr_t
 isv_mmap(dev_t dev, off_t offset, int prot)
 {
-	struct isv_softc *sc = device_lookup_private(&isv_cd, minor(dev));
-	paddr_t pa;
+	device_t self;
+	struct isv_softc *sc =
+	    device_lookup_private_acquire(&isv_cd, minor(dev), &self);
+	paddr_t pa, rpa;
 
-	if ((prot & ~(VM_PROT_READ)) != 0)
+	if ((prot & ~(VM_PROT_READ)) != 0) {
+		device_release(self);
 		return -1;
-
-	if (sc->sc_frame == NULL)
+	}
+	if (sc->sc_frame == NULL) {
+		device_release(self);
 		return -1;
-
-	if (offset >= ISV_WIDTH * ISV_LINES)
+	}
+	if (offset >= ISV_WIDTH * ISV_LINES) {
+		device_release(self);
 		return -1;
-
-	if (!pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_frame[offset/2], &pa))
+	}
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)&sc->sc_frame[offset/2], &pa)) {
+		device_release(self);
 		return -1;
-
-	return atop(pa);
+	}
+	rpa = atop(pa);
+	device_release(self);
+	return rpa;
 }
 
 static int
