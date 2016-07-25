@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.218 2016/07/25 01:52:21 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.218 2016/07/25 01:52:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1560,8 +1560,7 @@ arp_dad_start(struct ifaddr *ifa)
 		    CLLADDR(ifa->ifa_ifp->if_sadl));
 		return;
 	}
-	if (ifa->ifa_ifp == NULL)
-		panic("arp_dad_start: ifa->ifa_ifp == NULL");
+	KASSERT(ifa->ifa_ifp != NULL);
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
 	if (arp_dad_find(ifa) != NULL) {
