@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.216 2016/07/22 14:08:33 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217 2016/07/25 12:11:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.216 2016/07/22 14:08:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217 2016/07/25 12:11:40 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1573,7 +1573,9 @@ pmap_remap_largepages(void)
 {
 	extern char __rodata_start;
 	extern char __data_start;
+#if 0
 	extern char __kernel_end;
+#endif
 	pd_entry_t *pde;
 	vaddr_t kva, kva_end;
 	paddr_t pa;
@@ -1604,6 +1606,7 @@ pmap_remap_largepages(void)
 		tlbflushg();
 	}
 
+#if 0
 	/* Remap the kernel data+bss using large pages. */
 	kva = roundup((vaddr_t)&__data_start, NBPD_L2);
 	kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
@@ -1613,6 +1616,7 @@ pmap_remap_largepages(void)
 		*pde = pa | pmap_pg_g | PG_PS | pmap_pg_nx | PG_KW | PG_V;
 		tlbflushg();
 	}
+#endif
 }
 #endif /* !XEN */
 
