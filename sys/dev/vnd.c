@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.3 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.4 2016/07/25 22:06:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.3 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.4 2016/07/25 22:06:09 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -324,6 +324,7 @@ vnd_destroy(device_t dev)
 static int
 vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	device_t self;
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 	int error = 0, part, pmask;
@@ -333,7 +334,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup_private(&vnd_cd, unit);
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
 	if (sc == NULL) {
 		sc = vnd_spawn(unit);
 		if (sc == NULL)
@@ -410,12 +411,14 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
  done:
 	mutex_exit(&sc->sc_dkdev.dk_openlock);
 	vndunlock(sc);
+	device_release(self);
 	return error;
 }
 
 static int
 vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	device_t self;
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 	int error = 0, part;
@@ -424,12 +427,17 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup_private(&vnd_cd, unit);
-	if (sc == NULL)
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
+	if (sc == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return ENXIO;
+	}
 
-	if ((error = vndlock(sc)) != 0)
+	if ((error = vndlock(sc)) != 0) {
+		device_release(self);
 		return error;
+	}
 
 	mutex_enter(&sc->sc_dkdev.dk_openlock);
 
@@ -462,10 +470,12 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		if ((error = vnd_destroy(sc->sc_dev)) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to detach instance\n");
+			device_release(self);
 			return error;
 		}
 	}
 
+	device_release(self);
 	return 0;
 }
 
@@ -475,9 +485,10 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 static void
 vndstrategy(struct buf *bp)
 {
+	device_t self;
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    device_lookup_private(&vnd_cd, unit);
+	    device_lookup_private_acquire(&vnd_cd, unit, &self);
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s = splbio();
@@ -561,12 +572,15 @@ vndstrategy(struct buf *bp)
 	bufq_put(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
 	splx(s);
+	device_release(self);
 	return;
 
 done:
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 	splx(s);
+	if (self != NULL)
+		device_release(self);
 }
 
 static bool
@@ -981,6 +995,8 @@ vndiodone(struct buf *bp)
 static int
 vndread(dev_t dev, struct uio *uio, int flags)
 {
+	device_t self;
+	int error;
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 
@@ -989,20 +1005,29 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		printf("vndread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup_private(&vnd_cd, unit);
-	if (sc == NULL)
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
+	if (sc == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return ENXIO;
+	}
 
-	if ((sc->sc_flags & VNF_INITED) == 0)
+	if ((sc->sc_flags & VNF_INITED) == 0) {
+		device_release(self);
 		return ENXIO;
+	}
 
-	return physio(vndstrategy, NULL, dev, B_READ, minphys, uio);
+	error = physio(vndstrategy, NULL, dev, B_READ, minphys, uio);
+	device_release(self);
+	return error;
 }
 
 /* ARGSUSED */
 static int
 vndwrite(dev_t dev, struct uio *uio, int flags)
 {
+	device_t self;
+	int error;
 	int unit = vndunit(dev);
 	struct vnd_softc *sc;
 
@@ -1011,19 +1036,27 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		printf("vndwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup_private(&vnd_cd, unit);
-	if (sc == NULL)
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
+	if (sc == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return ENXIO;
+	}
 
-	if ((sc->sc_flags & VNF_INITED) == 0)
+	if ((sc->sc_flags & VNF_INITED) == 0) {
+		device_release(self);
 		return ENXIO;
+	}
 
-	return physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio);
+	error = physio(vndstrategy, NULL, dev, B_WRITE, minphys, uio);
+	device_release(self);
+	return error;
 }
 
 static int
 vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 {
+	device_t self;
 	int error;
 	struct vnd_softc *vnd;
 
@@ -1032,16 +1065,22 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if (*un < 0)
 		return EINVAL;
 
-	vnd = device_lookup_private(&vnd_cd, *un);
-	if (vnd == NULL)
+	vnd = device_lookup_private_acquire(&vnd_cd, *un, &self);
+	if (vnd == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return -1;
+	}
 
-	if ((vnd->sc_flags & VNF_INITED) == 0)
+	if ((vnd->sc_flags & VNF_INITED) == 0) {
+		device_release(self);
 		return -1;
+	}
 
 	vn_lock(vnd->sc_vp, LK_SHARED | LK_RETRY);
 	error = VOP_GETATTR(vnd->sc_vp, va, l->l_cred);
 	VOP_UNLOCK(vnd->sc_vp);
+	device_release(self);
 	return error;
 }
 
@@ -1117,6 +1156,7 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 static int
 vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	device_t self;
 	bool force;
 	int unit = vndunit(dev);
 	struct vnd_softc *vnd;
@@ -1175,8 +1215,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	vnd = device_lookup_private(&vnd_cd, unit);
-	if (vnd == NULL)
+	if (vnd == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return ENXIO;
+	}
 	vio = (struct vnd_ioctl *)data;
 
 	/* Must be open for writes for these commands... */
@@ -1195,8 +1238,10 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 	case DIOCKLABEL:
 	case DIOCWLABEL:
-		if ((flag & FWRITE) == 0)
+		if ((flag & FWRITE) == 0) {
+			device_release(self);
 			return EBADF;
+		}
 	}
 
 	/* Must be initialized for these... */
@@ -1219,25 +1264,31 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ODIOCWDINFO:
 	case ODIOCGDEFLABEL:
 #endif
-		if ((vnd->sc_flags & VNF_INITED) == 0)
+		if ((vnd->sc_flags & VNF_INITED) == 0) {
+			device_release(self);
 			return ENXIO;
+		}
 	}
 
 	error = disk_ioctl(&vnd->sc_dkdev, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return error;
-
+	}
 
 	switch (cmd) {
 #ifdef VNDIOCSET50
 	case VNDIOCSET50:
 #endif
 	case VNDIOCSET:
-		if (vnd->sc_flags & VNF_INITED)
+		if (vnd->sc_flags & VNF_INITED) {
+			device_release(self);
 			return EBUSY;
-
-		if ((error = vndlock(vnd)) != 0)
+		}
+		if ((error = vndlock(vnd)) != 0) {
+			device_release(self);
 			return error;
+		}
 
 		fflags = FREAD;
 		if ((vio->vnd_flags & VNDIOF_READONLY) == 0)
@@ -1499,6 +1550,7 @@ unlock_and_exit:
 		}
 #endif /* VND_COMPRESSION */
 		vndunlock(vnd);
+		device_release(self);
 		return error;
 
 #ifdef VNDIOCCLR50
@@ -1509,8 +1561,10 @@ unlock_and_exit:
 		pmask = (1 << part);
 		force = (vio->vnd_flags & VNDIOF_FORCE) != 0;
 
-		if ((error = vnddoclear(vnd, pmask, minor(dev), force)) != 0)
+		if ((error = vnddoclear(vnd, pmask, minor(dev), force)) != 0) {
+			device_release(self);
 			return error;
+		}
 
 		break;
 
@@ -1524,8 +1578,10 @@ unlock_and_exit:
 	{
 		struct disklabel *lp;
 
-		if ((error = vndlock(vnd)) != 0)
+		if ((error = vndlock(vnd)) != 0) {
+			device_release(self);
 			return error;
+		}
 
 		vnd->sc_flags |= VNF_LABELLING;
 
@@ -1555,8 +1611,10 @@ unlock_and_exit:
 
 		vndunlock(vnd);
 
-		if (error)
+		if (error) {
+			device_release(self);
 			return error;
+		}
 		break;
 	}
 
@@ -1581,8 +1639,10 @@ unlock_and_exit:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDEFLABEL:
 		vndgetdefaultlabel(vnd, &newlabel);
-		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
+		if (newlabel.d_npartitions > OLDMAXPARTITIONS) {
+			device_release(self);
 			return ENOTTY;
+		}
 		memcpy(data, &newlabel, sizeof (struct olddisklabel));
 		break;
 #endif
@@ -1591,13 +1651,17 @@ unlock_and_exit:
 		vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_FSYNC(vnd->sc_vp, vnd->sc_cred,
 		    FSYNC_WAIT | FSYNC_DATAONLY | FSYNC_CACHE, 0, 0);
-		VOP_UNLOCK(vnd->sc_vp);
+		VOP_UNLOCK(vnd->sc_vp); {
+		device_release(self);
 		return error;
+		}
 
 	default:
+		device_release(self);
 		return ENOTTY;
 	}
 
+	device_release(self);
 	return 0;
 }
 
@@ -1742,25 +1806,33 @@ vndclear(struct vnd_softc *vnd, int myminor)
 static int
 vndsize(dev_t dev)
 {
+	device_t self;
 	struct vnd_softc *sc;
 	struct disklabel *lp;
 	int part, unit, omask;
 	int size;
 
 	unit = vndunit(dev);
-	sc = device_lookup_private(&vnd_cd, unit);
-	if (sc == NULL)
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
+	if (sc == NULL) {
+		if (self != NULL)
+			device_release(self);
 		return -1;
+	}
 
-	if ((sc->sc_flags & VNF_INITED) == 0)
+	if ((sc->sc_flags & VNF_INITED) == 0) {
+		device_release(self);
 		return -1;
+	}
 
 	part = DISKPART(dev);
 	omask = sc->sc_dkdev.dk_openmask & (1 << part);
 	lp = sc->sc_dkdev.dk_label;
 
-	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curlwp))	/* XXX */
+	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curlwp)) {	/* XXX */
+		device_release(self);
 		return -1;
+	}
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
@@ -1768,9 +1840,12 @@ vndsize(dev_t dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curlwp))	/* XXX */
+	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curlwp)) {	/* XXX */
+		device_release(self);
 		return -1;
+	}
 
+	device_release(self);
 	return size;
 }
 
@@ -1912,10 +1987,11 @@ vndunlock(struct vnd_softc *sc)
 static void
 compstrategy(struct buf *bp, off_t bn)
 {
+	device_t self;
 	int error;
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    device_lookup_private(&vnd_cd, unit);
+	    device_lookup_private_acquire(&vnd_cd, unit, &self);
 	u_int32_t comp_block;
 	struct uio auio;
 	char *addr;
@@ -1942,6 +2018,7 @@ compstrategy(struct buf *bp, off_t bn)
 		if (comp_block >= vnd->sc_comp_numoffs) {
 			bp->b_error = EINVAL;
 			splx(s);
+			device_release(self);
 			return;
 		}
 
@@ -1958,6 +2035,7 @@ compstrategy(struct buf *bp, off_t bn)
 				bp->b_error = error;
 				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
+				device_release(self);
 				return;
 			}
 			/* uncompress the buffer */
@@ -1975,6 +2053,7 @@ compstrategy(struct buf *bp, off_t bn)
 				bp->b_error = EBADMSG;
 				VOP_UNLOCK(vnd->sc_vp);
 				splx(s);
+				device_release(self);
 				return;
 			}
 			vnd->sc_comp_buffblk = comp_block;
@@ -1997,6 +2076,7 @@ compstrategy(struct buf *bp, off_t bn)
 		if (error) {
 			bp->b_error = error;
 			splx(s);
+			device_release(self);
 			return;
 		}
 
@@ -2004,6 +2084,7 @@ compstrategy(struct buf *bp, off_t bn)
 		addr += length_in_buffer;
 		bp->b_resid -= length_in_buffer;
 	}
+	device_release(self);
 	splx(s);
 }
 
