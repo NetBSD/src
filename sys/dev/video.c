@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.32.8.1 2016/07/26 03:24:20 pgoyette Exp $ */
+/* $NetBSD: video.c,v 1.32.8.2 2016/07/26 07:44:44 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.32.8.1 2016/07/26 03:24:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.32.8.2 2016/07/26 07:44:44 pgoyette Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1630,7 +1630,7 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 		 flags, sc, sc->hw_dev));
 
 	hw = sc->hw_if;
-	if (hw == NULL) [
+	if (hw == NULL) {
 		device_release(sc->sc_dev);
 		return ENXIO;
 	}
