@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.272.2.1 2016/07/20 23:50:55 pgoyette Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.272.2.2 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.272.2.1 2016/07/20 23:50:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.272.2.2 2016/07/26 03:24:17 pgoyette Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -660,7 +660,8 @@ static const struct pridtab cputab[] = {
 
 	/* Ingenic XBurst */
 	{ MIPS_PRID_CID_INGENIC, MIPS_XBURST,  -1, -1,	-1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT, 0, 0, "XBurst"		},
+	  MIPS32_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_DOUBLE_COUNT,
+	  0, 0, "XBurst"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}

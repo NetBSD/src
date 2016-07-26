@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.335 2015/11/11 06:53:36 snj Exp $
+#	$NetBSD: BRANCHES,v 1.335.2.1 2016/07/26 03:24:13 pgoyette Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -863,6 +863,18 @@ Base Tag:	bouyer-quota2-base
 Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		src/
 Notes:
+
+Branch:		pgoyette-localcount
+Description:	Implement localcount reference counting as proposed by
+		riastradh@
+Status:		Active
+Start Date:	Fri Jul 15 2016
+End Date:
+Base Tag:	pgoyette-localcount-base
+Maintainer:	pgoyette
+Scope:		src/sys/
+Notes:
+
 
 ########################################################################
 # Individual developers' branches (Terminated):

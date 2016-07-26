@@ -1,4 +1,4 @@
-.\"	$NetBSD: arc4random.3,v 1.19 2014/11/17 18:41:29 riastradh Exp $
+.\"	$NetBSD: arc4random.3,v 1.19.2.1 2016/07/26 03:24:15 pgoyette Exp $
 .\"
 .\" Copyright (c) 2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@ The
 functions provide the following security properties against three
 different classes of attackers, assuming enough entropy is provided by
 the operating system:
-.Bl -bullet -offset abcd
+.Bl -enum -offset abcd
 .It
 An attacker who has seen some outputs of any of the
 .Nm
@@ -131,6 +131,12 @@ One
 means the result of any single request to an
 .Nm
 function, no matter how short it is.
+.Pp
+The second property is sometimes called
+.Sq forward secrecy ,
+.Sq backtracking resistance ,
+or
+.Sq key erasure after each output .
 .Sh IMPLEMENTATION NOTES
 The
 .Nm
@@ -159,7 +165,7 @@ function
 computes the 64-byte quantity
 .Fa x
 =
-.Pf ChaCha20_ Fa s Ns (0),
+.Pf ChaCha20_ Fa s Ns Pq 0 ,
 .It
 splits
 .Fa x
@@ -190,9 +196,9 @@ as output directly, or, for longer
 requests, uses
 .Fa k
 as a ChaCha20 key and yields the concatenation
-.Pf ChaCha20_ Fa k Ns (0)
+.Pf ChaCha20_ Fa k Ns Pq 0
 ||
-.Pf ChaCha20_ Fa k Ns (1)
+.Pf ChaCha20_ Fa k Ns Pq 1
 || ... as output.
 .Fn arc4random_uniform
 repeats

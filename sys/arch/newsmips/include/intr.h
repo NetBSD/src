@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2011/02/20 07:56:31 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.25.36.1 2016/07/26 03:24:18 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,6 @@
 #ifdef __INTR_PRIVATE
 
 #include <sys/evcnt.h>
-#include <mips/locore.h>
 
 extern const struct ipl_sr_map newmips_ipl_sr_map;
 

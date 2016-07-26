@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1344 2016/07/14 22:39:40 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1344.2.1 2016/07/26 03:24:13 pgoyette Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -40,8 +40,8 @@
 #
 
 Package:	acpica
-Version:	20160422
-Current Vers:	20160422
+Version:	20160527
+Current Vers:	20160527
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
@@ -115,7 +115,7 @@ bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
 Version:	9.10.4-P1
-Current Vers:	9.10.4-P1
+Current Vers:	9.10.4-P2
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -833,7 +833,7 @@ Location:	external/apache2/mDNSResponder/dist
 Notes:
 
 Package:	mdocml
-Version:	1.13.3
+Version:	1.13.4
 Current Vers:	1.13.4
 Maintainer:	Kristaps Džonsons
 Archive Site:	http://mdocml.bsd.lv/snapshots/

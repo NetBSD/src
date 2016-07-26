@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.204 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.204.2.1 2016/07/26 03:24:22 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.204 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.204.2.1 2016/07/26 03:24:22 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1147,7 +1147,7 @@ puffs_vnop_getattr(void *v)
 static void
 zerofill_lastpage(struct vnode *vp, voff_t off)
 {
-	char zbuf[PAGE_SIZE];
+	char zbuf[16384];
 	struct iovec iov;
 	struct uio uio;
 	vsize_t len;
@@ -1160,6 +1160,7 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 		return;
 
 	len = round_page(off) - off;
+	KASSERT(len < sizeof(zbuf));
 	memset(zbuf, 0, len);
 
 	iov.iov_base = zbuf;

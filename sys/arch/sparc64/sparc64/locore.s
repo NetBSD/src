@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.398 2016/06/04 21:24:41 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.398.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -3826,9 +3826,9 @@ sun4v_dev_mondo:
 	stxa	%g2, [%g1] ASI_QUEUE		 ! ajust head index value
 	membar	#Sync
 
-	cmp	%g5, MAXINTNUM			! out of bounds?
-	bgeu,pn	%xcc, 2f
-	 nop					! no just continue
+	cmp	%g5, MAXINTNUM			! Handle both sun4v legacy (sysino) and cookies.
+	bgeu,pn	%xcc, 1f			! See UltraSPARC Virtual Machine Specification
+	 nop					! version 3 chapter 6 (Interrupt model)
 
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	sllx	%g5, PTRSHFT, %g5	! Calculate entry number
@@ -3840,8 +3840,7 @@ sun4v_dev_mondo:
 
 	ba,a	3b			! log if invalid handle
 	 nop
-2:
-	sir				! out of bounds - crash
+
 /*
  * Ultra1 and Ultra2 CPUs use soft interrupts for everything.  What we do
  * on a soft interrupt, is we should check which bits in SOFTINT(%asr22)
@@ -4646,7 +4645,6 @@ badregs:
 	rdpr	%cwp, %g7			! Find our cur window
 	andn	%g1, CWP, %g1			! Clear it from %tstate
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
-
 	mov	CTX_SECONDARY, %g1		! Restore the user context
 	GET_MMU_CONTEXTID %g4, %g1, %g3
 	mov	CTX_PRIMARY, %g2

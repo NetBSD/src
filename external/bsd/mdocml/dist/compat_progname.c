@@ -1,7 +1,14 @@
-/*	$Id: manpath.h,v 1.1.1.3 2015/12/17 21:58:48 christos Exp $ */
+#include "config.h"
+
+#if HAVE_PROGNAME
+
+int dummy;
+
+#else
+
+/*	Id: compat_progname.c,v 1.1 2015/11/06 16:30:33 schwarze Exp 	*/
 /*
- * Copyright (c) 2011 Ingo Schwarze <schwarze@openbsd.org>
- * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2015 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,19 +23,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/*
- * Unsorted list of unique, absolute paths to be searched for manual
- * databases.
- */
-struct	manpaths {
-	size_t	  sz;
-	char	**paths;
-};
+static const char *progname;
 
-__BEGIN_DECLS
+void
+setprogname(const char *name)
+{
 
-void	 manpath_manconf(struct manpaths *, const char *);
-void	 manpath_parse(struct manpaths *, const char *, char *, char *);
-void	 manpath_free(struct manpaths *);
+	progname = name;
+}
 
-__END_DECLS
+const char *
+getprogname(void)
+{
+
+	return progname;
+}
+
+#endif

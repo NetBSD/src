@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.68 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: hpc.c,v 1.68.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.68 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.68.2.1 2016/07/26 03:24:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -527,7 +527,9 @@ hpc_attach(device_t parent, device_t self, void *aux)
 
 		/* XXX This is disgusting. */
 		ha.ha_st = normal_memt;
-		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+		if (bus_space_map(normal_memt, sc->sc_base, 0,
+		    BUS_SPACE_MAP_LINEAR, &ha.ha_sh) != 0)
+		    	continue;
 		ha.ha_dmat = &sgimips_default_bus_dma_tag;
 		if (hpctype == 3)
 			ha.hpc_regs = &hpc3_values;

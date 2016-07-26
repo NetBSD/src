@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.246.2.6 2016/07/24 05:39:29 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.246.2.7 2016/07/26 03:24:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.6 2016/07/24 05:39:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.246.2.7 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2192,11 +2192,11 @@ config_finalize(void)
 			printf_nolog(" done.\n");
 		}
 		mutex_exit(&config_misc_lock);
-		if (errcnt != 0) {
-			printf("WARNING: %d error%s while detecting hardware; "
-			    "check system log.\n", errcnt,
-			    errcnt == 1 ? "" : "s");
-		}
+	}
+	if (errcnt != 0) {
+		printf("WARNING: %d error%s while detecting hardware; "
+		    "check system log.\n", errcnt,
+		    errcnt == 1 ? "" : "s");
 	}
 }
 

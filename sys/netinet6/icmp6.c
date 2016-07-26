@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.192 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.192.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.192 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.192.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1080,7 +1080,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		ctlfunc = (void (*)(int, struct sockaddr *, void *))
 			(inet6sw[ip6_protox[nxt]].pr_ctlinput);
 		if (ctlfunc) {
-			(void) (*ctlfunc)(code, (struct sockaddr *)&icmp6dst,
+			(void) (*ctlfunc)(code, sin6tosa(&icmp6dst),
 					  &ip6cp);
 		}
 	}
@@ -1150,7 +1150,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	}
 	m_put_rcvif(rcvif, &s);
 
-	rt = icmp6_mtudisc_clone((struct sockaddr *)&sin6);
+	rt = icmp6_mtudisc_clone(sin6tosa(&sin6));
 
 	if (rt && (rt->rt_flags & RTF_HOST) &&
 	    !(rt->rt_rmx.rmx_locks & RTV_MTU) &&
@@ -1220,7 +1220,7 @@ ni6_input(struct mbuf *m, int off)
 	 */
 	sockaddr_in6_init(&sin6, &ip6->ip6_dst, 0, 0, 0);
 	/* XXX scopeid */
-	if (ifa_ifwithaddr((struct sockaddr *)&sin6))
+	if (ifa_ifwithaddr(sin6tosa(&sin6)))
 		; /* unicast/anycast, fine */
 	else if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr))
 		; /* link-local multicast, fine */
@@ -1935,8 +1935,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 				/* strip intermediate headers */
 				m_adj(n, off);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
-						 (struct sockaddr *)&rip6src,
-						 n, opts) == 0) {
+				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
 					if (opts)
@@ -1954,7 +1953,7 @@ icmp6_rip6_input(struct mbuf **mp, int off)
 		/* strip intermediate headers */
 		m_adj(m, off);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
-				(struct sockaddr *)&rip6src, m, opts) == 0) {
+		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
@@ -2071,7 +2070,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 
 		sockaddr_in6_init(&u.sin6, &origdst, 0, 0, 0);
 
-		ia = (struct in6_ifaddr *)ifa_ifwithaddr(&u.sa);
+		ia = ifatoia6(ifa_ifwithaddr(&u.sa));
 
 		if (ia == NULL)
 			;
@@ -2220,7 +2219,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 	struct in6_addr *gw6;
 
 	sockaddr_in6_init(&sin6, &reddst6, 0, 0, 0);
-	rt = rtalloc1((struct sockaddr *)&sin6, 0);
+	rt = rtalloc1(sin6tosa(&sin6), 0);
 	if (rt) {
 		if (rt->rt_gateway == NULL ||
 		    rt->rt_gateway->sa_family != AF_INET6) {
@@ -2335,9 +2334,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		bcopy(&redtgt6, &sgw.sin6_addr, sizeof(struct in6_addr));
 		bcopy(&reddst6, &sdst.sin6_addr, sizeof(struct in6_addr));
 		bcopy(&src6, &ssrc.sin6_addr, sizeof(struct in6_addr));
-		rtredirect((struct sockaddr *)&sdst, (struct sockaddr *)&sgw,
-			   NULL, RTF_GATEWAY | RTF_HOST,
-			   (struct sockaddr *)&ssrc,
+		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), NULL,
+		           RTF_GATEWAY | RTF_HOST, sin6tosa(&ssrc),
 			   &newrt);
 
 		if (newrt) {
@@ -2351,10 +2349,10 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		struct sockaddr_in6 sdst;
 
 		sockaddr_in6_init(&sdst, &reddst6, 0, 0, 0);
-		pfctlinput(PRC_REDIRECT_HOST, (struct sockaddr *)&sdst);
+		pfctlinput(PRC_REDIRECT_HOST, sin6tosa(&sdst));
 #if defined(IPSEC)
 		if (ipsec_used)
-			key_sa_routechange((struct sockaddr *)&sdst);
+			key_sa_routechange(sin6tosa(&sdst));
 #endif
 	}
 

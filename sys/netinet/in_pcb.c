@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.166 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.166.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166 2016/07/08 04:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.166.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -451,10 +451,9 @@ int
 in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 {
 	struct inpcb *inp = v;
-	struct in_ifaddr *ia = NULL;
-	struct sockaddr_in *ifaddr = NULL;
 	vestigial_inpcb_t vestige;
 	int error;
+	struct in_addr laddr;
 
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
@@ -484,6 +483,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 			sin->sin_addr =
 			    IN_ADDRLIST_READER_FIRST()->ia_addr.sin_addr;
 		} else if (sin->sin_addr.s_addr == INADDR_BROADCAST) {
+			struct in_ifaddr *ia;
 			IN_ADDRLIST_READER_FOREACH(ia) {
 				if (ia->ia_ifp->if_flags & IFF_BROADCAST) {
 					sin->sin_addr =
@@ -507,6 +507,9 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 	 */
 	if (in_nullhost(inp->inp_laddr)) {
 		int xerror;
+		struct sockaddr_in *ifaddr;
+		struct in_ifaddr *ia;
+
 		ifaddr = in_selectsrc(sin, &inp->inp_route,
 		    inp->inp_socket->so_options, inp->inp_moptions, &xerror);
 		if (ifaddr == NULL) {
@@ -517,10 +520,11 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 		ia = in_get_ia(ifaddr->sin_addr);
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
-	}
+		laddr = ifaddr->sin_addr;
+	} else
+		laddr = inp->inp_laddr;
 	if (in_pcblookup_connect(inp->inp_table, sin->sin_addr, sin->sin_port,
-	    !in_nullhost(inp->inp_laddr) ? inp->inp_laddr : ifaddr->sin_addr,
-				 inp->inp_lport, &vestige) != 0
+	                         laddr, inp->inp_lport, &vestige) != 0
 	    || vestige.valid)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
@@ -535,7 +539,7 @@ in_pcbconnect(void *v, struct sockaddr_in *sin, struct lwp *l)
 			if (error != 0)
 				return (error);
 		}
-		inp->inp_laddr = ifaddr->sin_addr;
+		inp->inp_laddr = laddr;
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;

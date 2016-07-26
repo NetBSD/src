@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2015/06/30 02:39:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117.2.1 2016/07/26 03:24:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2015/06/30 02:39:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117.2.1 2016/07/26 03:24:18 pgoyette Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2015/06/30 02:39:03 matt Exp $");
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
+#include <mips/cache.h>
+#include <mips/locore.h>
+
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -83,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2015/06/30 02:39:03 matt Exp $");
 #include <machine/apbus.h>
 #include <machine/apcall.h>
 
-#include <mips/cache.h>
-#include <mips/locore.h>
 
 #define	_NEWSMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
