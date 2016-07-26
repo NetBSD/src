@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.28 2016/07/11 07:37:00 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.29 2016/07/26 05:53:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28 2016/07/11 07:37:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.29 2016/07/26 05:53:30 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.28 2016/07/11 07:37:00 ozaki-r Exp $"
 #include <sys/pool.h>
 #include <sys/sysctl.h>
 #include <sys/workqueue.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -466,12 +467,15 @@ ip6flow_reap(int just_one)
 	return ip6f;
 }
 
-static bool ip6flow_work_enqueued = false;
+static unsigned int ip6flow_work_enqueued = 0;
 
 void
 ip6flow_slowtimo_work(struct work *wk, void *arg)
 {
 	struct ip6flow *ip6f, *next_ip6f;
+
+	/* We can allow enqueuing another work at this point */
+	atomic_swap_uint(&ip6flow_work_enqueued, 0);
 
 	mutex_enter(softnet_lock);
 	mutex_enter(&ip6flow_lock);
@@ -490,7 +494,6 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 			ip6f->ip6f_forwarded = 0;
 		}
 	}
-	ip6flow_work_enqueued = false;
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(&ip6flow_lock);
@@ -502,13 +505,8 @@ ip6flow_slowtimo(void)
 {
 
 	/* Avoid enqueuing another work when one is already enqueued */
-	mutex_enter(&ip6flow_lock);
-	if (ip6flow_work_enqueued) {
-		mutex_exit(&ip6flow_lock);
+	if (atomic_swap_uint(&ip6flow_work_enqueued, 1) == 1)
 		return;
-	}
-	ip6flow_work_enqueued = true;
-	mutex_exit(&ip6flow_lock);
 
 	workqueue_enqueue(ip6flow_slowtimo_wq, &ip6flow_slowtimo_wk, NULL);
 }
