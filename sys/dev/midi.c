@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.85.2.1 2016/07/26 03:24:20 pgoyette Exp $	*/
+/*	$NetBSD: midi.c,v 1.85.2.2 2016/07/26 07:42:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.85.2.1 2016/07/26 03:24:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.85.2.2 2016/07/26 07:42:39 pgoyette Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -1598,9 +1598,8 @@ out:
 int
 midi_writebytes(int unit, u_char *bf, int cc)
 {
-	device_t self = device_lookup_acquire(&midi_cd, MIDIUNIT(dev));
+	device_t self = device_lookup_acquire(&midi_cd, unit);
 	struct midi_softc *sc;
-	    device_lookup_private_acquire(&midi_cd, unit, &self);
 	int error;
 
 	if (self == NULL)
