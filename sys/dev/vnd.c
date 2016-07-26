@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.5 2016/07/26 03:24:20 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.6 2016/07/26 04:30:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.5 2016/07/26 03:24:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.6 2016/07/26 04:30:50 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -312,7 +312,7 @@ vnd_spawn(int unit)
 	if (config_attach_pseudo(cf) == NULL)
 		return NULL;
 
-	*self = device_lookup_acquire(&cgd_cd, unit);
+	self = device_lookup_acquire(&vnd_cd, unit);
 	if (self == NULL)
 		return NULL;
 	else {  
@@ -320,7 +320,7 @@ vnd_spawn(int unit)
 		 * Note that we return while still holding a reference
 		 * to the device!
 		 */
-		return device_private(*self);
+		return device_private(self);
 	}
 }
 
@@ -353,7 +353,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 #endif
 	self = device_lookup_acquire(&vnd_cd, unit);
 	if (self != NULL)
-		sc = device-private(self);
+		sc = device_private(self);
 	else {
 		sc = vnd_spawn(unit);
 		if (sc == NULL)
@@ -1055,7 +1055,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 	self = device_lookup_acquire(&vnd_cd, unit);
 	if (self == NULL)
 		return ENXIO;
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
+	sc = device_private(self);
 
 	if ((sc->sc_flags & VNF_INITED) == 0) {
 		device_release(self);
@@ -1079,7 +1079,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if (*un < 0)
 		return EINVAL;
 
-	self - device_lookup_acquire(&vnd_cd, unit);
+	self = device_lookup_acquire(&vnd_cd, unit);
 	if (self == NULL)
 		return -1;
 	vnd = device_private(self);
@@ -1226,12 +1226,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	vnd = device_lookup_private(&vnd_cd, unit);
-	if (vnd == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self != NULL)
 		return ENXIO;
-	}
+	vnd = device_private(self);
+
 	vio = (struct vnd_ioctl *)data;
 
 	/* Must be open for writes for these commands... */
