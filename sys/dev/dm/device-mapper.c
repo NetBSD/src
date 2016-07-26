@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.38.2.2 2016/07/19 06:26:59 pgoyette Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.38.2.3 2016/07/26 05:54:39 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ static int dm_match(device_t, cfdata_t, void *);
 /* ***Variable-definitions*** */
 
 const struct bdevsw dm_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = dmopen,
 	.d_close = dmclose,
 	.d_strategy = dmstrategy,
@@ -92,7 +92,7 @@ const struct bdevsw dm_bdevsw = {
 };
 
 const struct cdevsw dm_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = dmopen,
 	.d_close = dmclose,
 	.d_read = dmread,

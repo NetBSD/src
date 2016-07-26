@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.64.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.64.2.3 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.2.2 2016/07/19 06:27:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.64.2.3 2016/07/26 05:54:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -96,7 +96,7 @@ dev_type_dump(rumpblk_dump);
 dev_type_size(rumpblk_size);
 
 static const struct bdevsw rumpblk_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = rumpblk_open,
 	.d_close = rumpblk_close,
 	.d_strategy = rumpblk_strategy,
@@ -108,7 +108,7 @@ static const struct bdevsw rumpblk_bdevsw = {
 };
 
 static const struct bdevsw rumpblk_bdevsw_fail = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = rumpblk_open,
 	.d_close = rumpblk_close,
 	.d_strategy = rumpblk_strategy_fail,
@@ -120,7 +120,7 @@ static const struct bdevsw rumpblk_bdevsw_fail = {
 };
 
 static const struct cdevsw rumpblk_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = rumpblk_open,
 	.d_close = rumpblk_close,
 	.d_read = rumpblk_read,

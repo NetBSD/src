@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.3 2016/07/26 03:24:22 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.4 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.3 2016/07/26 03:24:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.4 2016/07/26 05:54:40 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -142,7 +142,7 @@ static	void	ipf_timer_func(void *ptr);
 
 const struct cdevsw ipl_cdevsw = {
 #if	(__NetBSD_Version__ >= 799003300)
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 #endif
 	.d_open = ipfopen,
 	.d_close = ipfclose,

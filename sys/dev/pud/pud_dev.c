@@ -1,4 +1,4 @@
-/*	$NetBSD: pud_dev.c,v 1.7.2.3 2016/07/19 06:26:59 pgoyette Exp $	*/
+/*	$NetBSD: pud_dev.c,v 1.7.2.4 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.2.3 2016/07/19 06:26:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pud_dev.c,v 1.7.2.4 2016/07/26 05:54:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -100,7 +100,7 @@ static dev_type_size(pud_bdev_size);
 #endif
 
 struct bdevsw pud_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open		= pud_bdev_open,
 	.d_close	= pud_bdev_close,
 	.d_strategy	= pud_bdev_strategy,
@@ -200,7 +200,7 @@ static dev_type_mmap(pud_cdev_mmap);
 static dev_type_kqfilter(pud_cdev_kqfilter);
 
 struct cdevsw pud_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open		= pud_cdev_open,
 	.d_close	= pud_cdev_close,
 	.d_read		= pud_cdev_read,

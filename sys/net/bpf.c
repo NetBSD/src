@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.199.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
+/*	$NetBSD: bpf.c,v 1.199.2.3 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.2 2016/07/19 06:27:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.199.2.3 2016/07/26 05:54:40 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -181,7 +181,7 @@ static const struct fileops bpf_fileops = {
 dev_type_open(bpfopen);
 
 const struct cdevsw bpf_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = bpfopen,
 	.d_close = noclose,
 	.d_read = noread,
