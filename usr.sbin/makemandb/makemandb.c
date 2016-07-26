@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.39 2016/07/06 08:52:01 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.39.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.39 2016/07/06 08:52:01 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.39.2.1 2016/07/26 03:24:24 pgoyette Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: makemandb.c,v 1.39 2016/07/06 08:52:01 abhinav Exp $");
 #include "dist/man.h"
 #include "dist/mandoc.h"
 #include "dist/mdoc.h"
+#include "dist/roff.h"
 
 #define BUFLEN 1024
 #define MDOC 0	//If the page is of mdoc(7) type
@@ -59,7 +60,7 @@ typedef struct makemandb_flags {
 	int verbosity;	// 0: quiet, 1: default, 2: verbose
 } makemandb_flags;
 
-typedef struct mandb_rec {
+typedef struct roff_mandb_rec {
 	/* Fields for mandb table */
 	char *name;	// for storing the name of the man page
 	char *name_desc; // for storing the one line description (.Nd)
@@ -90,32 +91,32 @@ typedef struct mandb_rec {
 	int page_type; //Indicates the type of page: mdoc or man
 } mandb_rec;
 
+typedef	void (*proff_nf)(const struct roff_node *n, mandb_rec *);
+
 static void append(secbuff *sbuff, const char *src);
 static void init_secbuffs(mandb_rec *);
 static void free_secbuffs(mandb_rec *);
 static int check_md5(const char *, sqlite3 *, const char *, char **, void *, size_t);
 static void cleanup(mandb_rec *);
-static void set_section(const struct mdoc *, const struct man *, mandb_rec *);
-static void set_machine(const struct mdoc *, mandb_rec *);
+static void set_section(const struct roff_man *, mandb_rec *);
+static void set_machine(const struct roff_man *, mandb_rec *);
 static int insert_into_db(sqlite3 *, mandb_rec *);
 static	void begin_parse(const char *, struct mparse *, mandb_rec *,
 			 const void *, size_t len);
-static void pmdoc_node(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_Nm(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_Nd(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_Sh(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_Xr(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_Pp(const struct mdoc_node *, mandb_rec *);
-static void pmdoc_macro_handler(const struct mdoc_node *, mandb_rec *,
-				enum mdoct);
-static void pman_node(const struct man_node *n, mandb_rec *);
-static void pman_parse_node(const struct man_node *, secbuff *);
-static void pman_parse_name(const struct man_node *, mandb_rec *);
-static void pman_sh(const struct man_node *, mandb_rec *);
-static void pman_block(const struct man_node *, mandb_rec *);
+static void proff_node(const struct roff_node *, mandb_rec *, const proff_nf *);
+static void pmdoc_Nm(const struct roff_node *, mandb_rec *);
+static void pmdoc_Nd(const struct roff_node *, mandb_rec *);
+static void pmdoc_Sh(const struct roff_node *, mandb_rec *);
+static void pmdoc_Xr(const struct roff_node *, mandb_rec *);
+static void pmdoc_Pp(const struct roff_node *, mandb_rec *);
+static void pmdoc_macro_handler(const struct roff_node *, mandb_rec *, int);
+static void pman_parse_node(const struct roff_node *, secbuff *);
+static void pman_parse_name(const struct roff_node *, mandb_rec *);
+static void pman_sh(const struct roff_node *, mandb_rec *);
+static void pman_block(const struct roff_node *, mandb_rec *);
 static void traversedir(const char *, const char *, sqlite3 *, struct mparse *);
-static void mdoc_parse_section(enum mdoc_sec, const char *, mandb_rec *);
-static void man_parse_section(enum man_sec, const struct man_node *, mandb_rec *);
+static void mdoc_parse_section(enum roff_sec, const char *, mandb_rec *);
+static void man_parse_section(enum man_sec, const struct roff_node *, mandb_rec *);
 static void build_file_cache(sqlite3 *, const char *, const char *,
 			     struct stat *);
 static void update_db(sqlite3 *, struct mparse *, mandb_rec *);
@@ -125,9 +126,7 @@ static char *parse_escape(const char *);
 static void replace_hyph(char *);
 static makemandb_flags mflags = { .verbosity = 1 };
 
-typedef	void (*pman_nf)(const struct man_node *n, mandb_rec *);
-typedef	void (*pmdoc_nf)(const struct mdoc_node *n, mandb_rec *);
-static	const pmdoc_nf mdocs[MDOC_MAX + 1] = {
+static	const proff_nf mdocs[MDOC_MAX + 1] = {
 	NULL, /* Ap */
 	NULL, /* Dd */
 	NULL, /* Dt */
@@ -284,7 +283,7 @@ static	const pmdoc_nf mdocs[MDOC_MAX + 1] = {
 	NULL, /* text */
 };
 
-static	const pman_nf mans[MAN_MAX] = {
+static	const proff_nf mans[MAN_MAX] = {
 	NULL,	//br
 	NULL,	//TH
 	pman_sh, //SH
@@ -330,7 +329,6 @@ int
 main(int argc, char *argv[])
 {
 	FILE *file;
-	struct mchars *mchars;
 	const char *sqlstr, *manconf = NULL;
 	char *line, *command, *parent;
 	char *errmsg;
@@ -339,7 +337,7 @@ main(int argc, char *argv[])
 	sqlite3 *db;
 	ssize_t len;
 	size_t linesize;
-	struct mandb_rec rec;
+	struct roff_mandb_rec rec;
 
 	while ((ch = getopt(argc, argv, "C:floQqv")) != -1) {
 		switch (ch) {
@@ -372,10 +370,8 @@ main(int argc, char *argv[])
 	memset(&rec, 0, sizeof(rec));
 
 	init_secbuffs(&rec);
-	mchars = mchars_alloc();
-	if (mchars == NULL)
-		errx(EXIT_FAILURE, "Can't allocate mchars");
-	mp = mparse_alloc(0, MANDOCLEVEL_BADARG, NULL, mchars, NULL);
+	mchars_alloc();
+	mp = mparse_alloc(0, MANDOCLEVEL_BADARG, NULL, NULL);
 
 	if (manconf) {
 		char *arg;
@@ -473,7 +469,7 @@ main(int argc, char *argv[])
 		printf("Performing index update\n");
 	update_db(db, mp, &rec);
 	mparse_free(mp);
-	mchars_free(mchars);
+	mchars_free();
 	free_secbuffs(&rec);
 
 	/* Commit the transaction */
@@ -910,8 +906,7 @@ static void
 begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
     const void *buf, size_t len)
 {
-	struct mdoc *mdoc;
-	struct man *man;
+	struct roff_man *roff;
 	mparse_reset(mp);
 
 	rec->xr_found = 0;
@@ -926,22 +921,25 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 		return;
 	}
 
-	mparse_result(mp, &mdoc, &man, NULL);
-	if (mdoc == NULL && man == NULL) {
+	mparse_result(mp, &roff, NULL);
+	if (roff == NULL) {
 		if (mflags.verbosity == 2)
-			warnx("Not a man(7) or mdoc(7) page");
+			warnx("Not a roff(7) page");
 		return;
 	}
 
-	set_machine(mdoc, rec);
-	set_section(mdoc, man, rec);
-	if (mdoc) {
+	if (roff->macroset == MACROSET_MDOC) {
+		mdoc_validate(roff);
 		rec->page_type = MDOC;
-		pmdoc_node(mdoc_node(mdoc), rec);
-	} else {
+		proff_node(roff->first->child, rec, mdocs);
+	} else if (roff->macroset == MACROSET_MAN) {
+		man_validate(roff);
 		rec->page_type = MAN;
-		pman_node(man_node(man), rec);
-	}
+		proff_node(roff->first->child, rec, mans);
+	} else
+		warnx("Unknown macroset %d", roff->macroset);
+	set_machine(roff, rec);
+	set_section(roff, rec);
 }
 
 /*
@@ -950,23 +948,13 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
  *  (Which should be the first character of the string).
  */
 static void
-set_section(const struct mdoc *md, const struct man *m, mandb_rec *rec)
+set_section(const struct roff_man *rm, mandb_rec *rec)
 {
-	if (md) {
-		const struct mdoc_meta *md_meta = mdoc_meta(md);
-		if (md_meta->msec == NULL) {
-			easprintf(&rec->section, "%s", "?");
-		} else
-			rec->section = estrdup(md_meta->msec);
-	} else if (m) {
-		const struct man_meta *m_meta = man_meta(m);
-		if (m_meta->msec == NULL)
-			easprintf(&rec->section, "%s", "?");
-		else
-			rec->section = estrdup(m_meta->msec);
-	} else
+	if (!rm)
 		return;
-
+	const struct roff_meta *rm_meta = &rm->meta;
+	const char *s = rm_meta->msec == NULL ? "?" : rm_meta->msec;
+	easprintf(&rec->section, "%s", s);
 	if (rec->section[0] == '?' && mflags.verbosity == 2)
 		warnx("%s: Missing section number", rec->file_path);
 }
@@ -976,38 +964,13 @@ set_section(const struct mdoc *md, const struct man *m, mandb_rec *rec)
  *  Extracts the machine architecture information if available.
  */
 static void
-set_machine(const struct mdoc *md, mandb_rec *rec)
+set_machine(const struct roff_man *rm, mandb_rec *rec)
 {
-	if (md == NULL)
+	if (rm == NULL)
 		return;
-	const struct mdoc_meta *md_meta = mdoc_meta(md);
-	if (md_meta->arch)
-		rec->machine = estrdup(md_meta->arch);
-}
-
-static void
-pmdoc_node(const struct mdoc_node *n, mandb_rec *rec)
-{
-
-	if (n == NULL)
-		return;
-
-	switch (n->type) {
-	case (MDOC_BODY):
-		/* FALLTHROUGH */
-	case (MDOC_TAIL):
-		/* FALLTHROUGH */
-	case (MDOC_ELEM):
-		if (mdocs[n->tok] == NULL)
-			break;
-		(*mdocs[n->tok])(n, rec);
-		break;
-	default:
-		break;
-	}
-
-	pmdoc_node(n->child, rec);
-	pmdoc_node(n->next, rec);
+	const struct roff_meta *rm_meta = &rm->meta;
+	if (rm_meta->arch)
+		rec->machine = estrdup(rm_meta->arch);
 }
 
 /*
@@ -1015,13 +978,13 @@ pmdoc_node(const struct mdoc_node *n, mandb_rec *rec)
  *  Extracts the Name of the manual page from the .Nm macro
  */
 static void
-pmdoc_Nm(const struct mdoc_node *n, mandb_rec *rec)
+pmdoc_Nm(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n->sec != SEC_NAME)
 		return;
 
 	for (n = n->child; n; n = n->next) {
-		if (n->type == MDOC_TEXT) {
+		if (n->type == ROFFT_TEXT) {
 			char *escaped_name = parse_escape(n->string);
 			concat(&rec->name, escaped_name);
 			free(escaped_name);
@@ -1034,43 +997,11 @@ pmdoc_Nm(const struct mdoc_node *n, mandb_rec *rec)
  *  Extracts the one line description of the man page from the .Nd macro
  */
 static void
-pmdoc_Nd(const struct mdoc_node *n, mandb_rec *rec)
+pmdoc_Nd(const struct roff_node *n, mandb_rec *rec)
 {
-	char *buf = NULL;
-	char *name;
-	char *nd_text;
+	if (n->type == ROFFT_BODY)
+		deroff(&rec->name_desc, n);
 
-	if (n == NULL || (n->type != MDOC_TEXT && n->tok == MDOC_MAX))
-		return;
-
-	if (n->type == MDOC_TEXT) {
-		if (rec->xr_found && n->next) {
-			/*
-			 * An Xr macro was seen previously, so parse this
-			 * and the next node, as "Name(Section)".
-			 */
-			name = n->string;
-			n = n->next;
-			assert(n->type == MDOC_TEXT);
-			easprintf(&buf, "%s(%s)", name, n->string);
-			concat(&rec->name_desc, buf);
-			free(buf);
-		} else {
-			nd_text = parse_escape(n->string);
-			concat(&rec->name_desc, nd_text);
-			free(nd_text);
-		}
-		rec->xr_found = 0;
-	} else if (mdocs[n->tok] == pmdoc_Xr) {
-		/* Remember that we have encountered an Xr macro */
-		rec->xr_found = 1;
-	}
-
-	if (n->child)
-		pmdoc_Nd(n->child, rec);
-
-	if(n->next)
-		pmdoc_Nd(n->next, rec);
 }
 
 /*
@@ -1081,9 +1012,9 @@ pmdoc_Nd(const struct mdoc_node *n, mandb_rec *rec)
  *  for adding a new line whenever we encounter it.
  */
 static void
-pmdoc_macro_handler(const struct mdoc_node *n, mandb_rec *rec, enum mdoct doct)
+pmdoc_macro_handler(const struct roff_node *n, mandb_rec *rec, int doct)
 {
-	const struct mdoc_node *sn;
+	const struct roff_node *sn;
 	assert(n);
 
 	switch (doct) {
@@ -1097,19 +1028,19 @@ pmdoc_macro_handler(const struct mdoc_node *n, mandb_rec *rec, enum mdoct doct)
 	 */
 	case MDOC_Xr:
 		n = n->child;
-		while (n->type != MDOC_TEXT && n->next)
+		while (n->type != ROFFT_TEXT && n->next)
 			n = n->next;
 
-		if (n && n->type != MDOC_TEXT)
+		if (n && n->type != ROFFT_TEXT)
 			return;
 		sn = n;
 		if (n->next)
 			n = n->next;
 
-		while (n->type != MDOC_TEXT && n->next)
+		while (n->type != ROFFT_TEXT && n->next)
 			n = n->next;
 
-		if (n && n->type == MDOC_TEXT) {
+		if (n && n->type == ROFFT_TEXT) {
 			char *buf;
 			easprintf(&buf, "%s(%s)", sn->string, n->string);
 			mdoc_parse_section(n->sec, buf, rec);
@@ -1120,7 +1051,7 @@ pmdoc_macro_handler(const struct mdoc_node *n, mandb_rec *rec, enum mdoct doct)
 
 	/* Parse the .Pp macro to add a new line */
 	case MDOC_Pp:
-		if (n->type == MDOC_TEXT)
+		if (n->type == ROFFT_TEXT)
 			mdoc_parse_section(n->sec, "\n", rec);
 		break;
 	default:
@@ -1138,12 +1069,12 @@ pmdoc_macro_handler(const struct mdoc_node *n, mandb_rec *rec, enum mdoct doct)
  *  (See if else blocks in pmdoc_Sh.)
  */
 static void
-pmdoc_Xr(const struct mdoc_node *n, mandb_rec *rec)
+pmdoc_Xr(const struct roff_node *n, mandb_rec *rec)
 {
 }
 
 static void
-pmdoc_Pp(const struct mdoc_node *n, mandb_rec *rec)
+pmdoc_Pp(const struct roff_node *n, mandb_rec *rec)
 {
 }
 
@@ -1155,13 +1086,13 @@ pmdoc_Pp(const struct mdoc_node *n, mandb_rec *rec)
  *  they need special handling, thus the separate if branches for them.
  */
 static void
-pmdoc_Sh(const struct mdoc_node *n, mandb_rec *rec)
+pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 {
-	if (n == NULL || (n->type != MDOC_TEXT && n->tok == MDOC_MAX))
+	if (n == NULL || (n->type != ROFFT_TEXT && n->tok == MDOC_MAX))
 		return;
 	int xr_found = 0;
 
-	if (n->type == MDOC_TEXT) {
+	if (n->type == ROFFT_TEXT) {
 		mdoc_parse_section(n->sec, n->string, rec);
 	} else if (mdocs[n->tok] == pmdoc_Nm && rec->name != NULL) {
 		/*
@@ -1199,7 +1130,7 @@ pmdoc_Sh(const struct mdoc_node *n, mandb_rec *rec)
  *  The function appends string to the global section buffer and returns.
  */
 static void
-mdoc_parse_section(enum mdoc_sec sec, const char *string, mandb_rec *rec)
+mdoc_parse_section(enum roff_sec sec, const char *string, mandb_rec *rec)
 {
 	/*
 	 * If the user specified the 'l' flag, then parse and store only the
@@ -1245,26 +1176,26 @@ mdoc_parse_section(enum mdoc_sec sec, const char *string, mandb_rec *rec)
 }
 
 static void
-pman_node(const struct man_node *n, mandb_rec *rec)
+proff_node(const struct roff_node *n, mandb_rec *rec, const proff_nf *func)
 {
 	if (n == NULL)
 		return;
 
 	switch (n->type) {
-	case (MAN_BODY):
+	case (ROFFT_BODY):
 		/* FALLTHROUGH */
-	case (MAN_BLOCK):
+	case (ROFFT_BLOCK):
 		/* FALLTHROUGH */
-	case (MAN_ELEM):
-		if (mans[n->tok] != NULL)
-			(*mans[n->tok])(n, rec);
+	case (ROFFT_ELEM):
+		if (func[n->tok] != NULL)
+			(*func[n->tok])(n, rec);
 		break;
 	default:
 		break;
 	}
 
-	pman_node(n->child, rec);
-	pman_node(n->next, rec);
+	proff_node(n->child, rec, func);
+	proff_node(n->next, rec, func);
 }
 
 /*
@@ -1273,12 +1204,12 @@ pman_node(const struct man_node *n, mandb_rec *rec)
  *  variable.
  */
 static void
-pman_parse_name(const struct man_node *n, mandb_rec *rec)
+pman_parse_name(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n == NULL)
 		return;
 
-	if (n->type == MAN_TEXT) {
+	if (n->type == ROFFT_TEXT) {
 		char *tmp = parse_escape(n->string);
 		concat(&rec->name_desc, tmp);
 		free(tmp);
@@ -1296,7 +1227,7 @@ pman_parse_name(const struct man_node *n, mandb_rec *rec)
  * a section.
  */
 static void
-pman_block(const struct man_node *n, mandb_rec *rec)
+pman_block(const struct roff_node *n, mandb_rec *rec)
 {
 }
 
@@ -1315,7 +1246,7 @@ pman_block(const struct man_node *n, mandb_rec *rec)
  *     function, passing the enum corresponding to that section.
  */
 static void
-pman_sh(const struct man_node *n, mandb_rec *rec)
+pman_sh(const struct roff_node *n, mandb_rec *rec)
 {
 	static const struct {
 		enum man_sec section;
@@ -1337,13 +1268,13 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 	    { MANSEC_AUTHORS, "AUTHORS" },
 	    { MANSEC_COPYRIGHT, "COPYRIGHT" },
 	};
-	const struct man_node *head;
+	const struct roff_node *head;
 	char *name_desc;
 	size_t sz;
 	size_t i;
 
 	if ((head = n->parent->head) == NULL || (head = head->child) == NULL ||
-	    head->type != MAN_TEXT)
+	    head->type != ROFFT_TEXT)
 		return;
 
 	/*
@@ -1443,7 +1374,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 
 	/* The RETURN VALUE section might be specified in multiple ways */
 	if (strcmp(head->string, "RETURN") == 0 &&
-	    head->next != NULL && head->next->type == MAN_TEXT &&
+	    head->next != NULL && head->next->type == ROFFT_TEXT &&
 	    (strcmp(head->next->string, "VALUE") == 0 ||
 	    strcmp(head->next->string, "VALUES") == 0)) {
 		man_parse_section(MANSEC_RETURN_VALUES, n, rec);
@@ -1455,7 +1386,7 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
 	 * separate lines.
 	 */
 	if (strcmp(head->string, "EXIT") == 0 &&
-	    head->next != NULL && head->next->type == MAN_TEXT &&
+	    head->next != NULL && head->next->type == ROFFT_TEXT &&
 	    strcmp(head->next->string, "STATUS") == 0) {
 		man_parse_section(MANSEC_EXIT_STATUS, n, rec);
 		return;
@@ -1471,12 +1402,12 @@ pman_sh(const struct man_node *n, mandb_rec *rec)
  *  man_parse_section to parse a particular section of the man page.
  */
 static void
-pman_parse_node(const struct man_node *n, secbuff *s)
+pman_parse_node(const struct roff_node *n, secbuff *s)
 {
 	if (n == NULL)
 		return;
 
-	if (n->type == MAN_TEXT)
+	if (n->type == ROFFT_TEXT)
 		append(s, n->string);
 
 	pman_parse_node(n->child, s);
@@ -1492,7 +1423,7 @@ pman_parse_node(const struct man_node *n, secbuff *s)
  * concatenate the content from that section into the buffer for that section.
  */
 static void
-man_parse_section(enum man_sec sec, const struct man_node *n, mandb_rec *rec)
+man_parse_section(enum man_sec sec, const struct roff_node *n, mandb_rec *rec)
 {
 	/*
 	 * If the user sepecified the 'l' flag then just parse

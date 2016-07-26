@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.122.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122 2016/07/01 05:22:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -233,7 +233,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 
 		sockaddr_in6_init(&tsin6, &taddr6, 0, 0, 0);
 
-		rt = rtalloc1((struct sockaddr *)&tsin6, 0);
+		rt = rtalloc1(sin6tosa(&tsin6), 0);
 		if (rt && (rt->rt_flags & RTF_ANNOUNCE) != 0 &&
 		    rt->rt_gateway->sa_family == AF_LINK) {
 			/*
@@ -1049,11 +1049,14 @@ struct dadq {
 
 static struct dadq_head dadq;
 static int dad_init = 0;
+static kmutex_t nd6_dad_lock;
 
 static struct dadq *
 nd6_dad_find(struct ifaddr *ifa)
 {
 	struct dadq *dp;
+
+	KASSERT(mutex_owned(&nd6_dad_lock));
 
 	TAILQ_FOREACH(dp, &dadq, dad_list) {
 		if (dp->dad_ifa == ifa)
@@ -1092,6 +1095,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 
 	if (!dad_init) {
 		TAILQ_INIT(&dadq);
+		mutex_init(&nd6_dad_lock, MUTEX_DEFAULT, IPL_NONE);
 		dad_init++;
 	}
 
@@ -1114,17 +1118,20 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		return;
 	}
-	if (ifa->ifa_ifp == NULL)
-		panic("nd6_dad_start: ifa->ifa_ifp == NULL");
+	KASSERT(ifa->ifa_ifp != NULL);
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
+
+	mutex_enter(&nd6_dad_lock);
 	if (nd6_dad_find(ifa) != NULL) {
+		mutex_exit(&nd6_dad_lock);
 		/* DAD already in progress */
 		return;
 	}
 
 	dp = malloc(sizeof(*dp), M_IP6NDP, M_NOWAIT);
 	if (dp == NULL) {
+		mutex_exit(&nd6_dad_lock);
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
 			ip6_sprintf(&ia->ia_addr.sin6_addr),
@@ -1133,10 +1140,6 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	}
 	memset(dp, 0, sizeof(*dp));
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
-	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
-
-	nd6log(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
-	    ip6_sprintf(&ia->ia_addr.sin6_addr));
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
@@ -1149,12 +1152,18 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	dp->dad_count = ip6_dad_count;
 	dp->dad_ns_icount = dp->dad_na_icount = 0;
 	dp->dad_ns_ocount = dp->dad_ns_tcount = 0;
+	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
+
+	nd6log(LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	    ip6_sprintf(&ia->ia_addr.sin6_addr));
+
 	if (xtick == 0) {
 		nd6_dad_ns_output(dp, ifa);
 		nd6_dad_starttimer(dp,
 		    (long)ND_IFINFO(ifa->ifa_ifp)->retrans * hz / 1000);
 	} else
 		nd6_dad_starttimer(dp, xtick);
+	mutex_exit(&nd6_dad_lock);
 }
 
 /*
@@ -1167,15 +1176,21 @@ nd6_dad_stop(struct ifaddr *ifa)
 
 	if (!dad_init)
 		return;
+
+	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
+		mutex_exit(&nd6_dad_lock);
 		/* DAD wasn't started yet */
 		return;
 	}
 
+	/* Prevent the timer from running anymore. */
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	mutex_exit(&nd6_dad_lock);
+
 	nd6_dad_stoptimer(dp);
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	ifafree(ifa);
@@ -1189,6 +1204,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+	mutex_enter(&nd6_dad_lock);
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1197,7 +1213,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 	}
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "nd6_dad_timer: DAD structure not found\n");
+		/* DAD seems to be stopping, so do nothing. */
 		goto done;
 	}
 	if (ia->ia6_flags & IN6_IFF_DUPLICATED) {
@@ -1282,6 +1298,7 @@ nd6_dad_timer(struct ifaddr *ifa)
 	}
 
 done:
+	mutex_exit(&nd6_dad_lock);
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
@@ -1293,9 +1310,11 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	struct ifnet *ifp;
 	struct dadq *dp;
 
+	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "nd6_dad_duplicated: DAD structure not found\n");
+		mutex_exit(&nd6_dad_lock);
+		/* DAD seems to be stopping, so do nothing. */
 		return;
 	}
 
@@ -1354,6 +1373,8 @@ nd6_dad_duplicated(struct ifaddr *ifa)
 	}
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
+	mutex_exit(&nd6_dad_lock);
+
 	free(dp, M_IP6NDP);
 	dp = NULL;
 	ifafree(ifa);
@@ -1398,6 +1419,8 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 	ia = (struct in6_ifaddr *)ifa;
 	taddr6 = &ia->ia_addr.sin6_addr;
 	duplicate = 0;
+
+	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
 
 	/* Quickhack - completely ignore DAD NS packets */
@@ -1419,6 +1442,7 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 
 	if (duplicate) {
 		dp = NULL;	/* will be freed in nd6_dad_duplicated() */
+		mutex_exit(&nd6_dad_lock);
 		nd6_dad_duplicated(ifa);
 	} else {
 		/*
@@ -1427,6 +1451,7 @@ nd6_dad_ns_input(struct ifaddr *ifa)
 		 */
 		if (dp)
 			dp->dad_ns_icount++;
+		mutex_exit(&nd6_dad_lock);
 	}
 }
 
@@ -1438,9 +1463,11 @@ nd6_dad_na_input(struct ifaddr *ifa)
 	if (ifa == NULL)
 		panic("ifa == NULL in nd6_dad_na_input");
 
+	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
 	if (dp)
 		dp->dad_na_icount++;
+	mutex_exit(&nd6_dad_lock);
 
 	/* remove the address. */
 	nd6_dad_duplicated(ifa);

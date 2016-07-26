@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.268.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.268.2.3 2016/07/26 03:24:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268.2.2 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268.2.3 2016/07/26 03:24:20 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1182,15 +1182,18 @@ stream_filter_list_prepend(stream_filter_list_t *list,
 static int
 audio_enter(dev_t dev, krw_t rw, struct audio_softc **scp)
 {
+	device_t self;
 	struct audio_softc *sc;
 
 	/* First, find the device and take sc_lock. */
-	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
+	self = device_lookup_acquire(&audio_cd, ADUIOUNIT(dev));
+	if (self == NULL)
 		return ENXIO;
+	sc = device_private(self);
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
+		device_release(self);
 		return EIO;
 	}
 
@@ -1213,6 +1216,7 @@ audio_enter(dev_t dev, krw_t rw, struct audio_softc **scp)
 	}
 
 	*scp = sc;
+	device_release(self);
 	return 0;
 }
 
@@ -1434,16 +1438,19 @@ audioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 int
 audiopoll(dev_t dev, int events, struct lwp *l)
 {
+	device_t self;
 	struct audio_softc *sc;
 	int revents;
 
 	/* Don't bother with device level lock here. */
-	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
+	self = device_lookup_acquire(&audio_cd, AUDIOUNIT(dev));
+	if (self == NULL)
 		return ENXIO;
+	sc = device_private(self);
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
+		device_release(self);
 		return EIO;
 	}
 	switch (AUDIODEV(dev)) {
@@ -1461,22 +1468,26 @@ audiopoll(dev_t dev, int events, struct lwp *l)
 	}
 	mutex_exit(sc->sc_lock);
 
+	device_release(self);
 	return revents;
 }
 
 int
 audiokqfilter(dev_t dev, struct knote *kn)
 {
+	device_t self;
 	struct audio_softc *sc;
 	int rv;
 
 	/* Don't bother with device level lock here. */
-	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
-	if (sc == NULL)
+	self = device_lookup_acquire(&audio_cd, AUDIOUNIT(dev));
+	if (self == NULL)
 		return ENXIO;
+	sc = device_private(self);
 	mutex_enter(sc->sc_lock);
 	if (sc->sc_dying) {
 		mutex_exit(sc->sc_lock);
+		device_release(self);
 		return EIO;
 	}
 	switch (AUDIODEV(dev)) {
@@ -1493,6 +1504,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	}
 	mutex_exit(sc->sc_lock);
 
+	device_release(self);
 	return rv;
 }
 

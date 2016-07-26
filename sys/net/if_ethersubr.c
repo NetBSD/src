@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.225 2016/06/21 03:54:04 knakahara Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.225.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225 2016/06/21 03:54:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -300,7 +300,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #ifdef NETATALK
     case AF_APPLETALK:
 		KERNEL_LOCK(1, NULL);
-		if (aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
+		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */

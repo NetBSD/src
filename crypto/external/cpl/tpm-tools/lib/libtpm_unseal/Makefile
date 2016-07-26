@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/11/04 19:45:58 christos Exp $
+# $NetBSD: Makefile,v 1.2.14.1 2016/07/26 03:24:13 pgoyette Exp $
 .include "../Makefile.inc"
 
 .PATH.c: ${DIST}/lib
@@ -11,5 +11,6 @@ SHLIB_MAJOR=1
 SHLIB_MINOR=0
 
 LIBDPLIBS+=tspi ${.CURDIR}/../../../trousers/lib/libtspi
+COPTS.tpm_unseal.c+=-Wno-stack-protector
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223.2.1 2016/07/20 23:50:53 pgoyette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223.2.2 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.1 2016/07/20 23:50:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223.2.2 2016/07/26 03:24:16 pgoyette Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -377,9 +377,8 @@ cpu_startup(void)
 	 * created in locore.S, which is not big enough if we want to load many
 	 * modules dynamically. We really should be using kernel_map instead.
 	 *
-	 * But because of the R_X86_64_32 relocations that are usually present
-	 * in dynamic modules, the module map must be in low memory, and this
-	 * wouldn't been guaranteed if we were using kernel_map.
+	 * But the modules must be located above the kernel image, and that
+	 * wouldn't be guaranteed if we were using kernel_map.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
@@ -1553,10 +1552,6 @@ init_x86_64(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	int ist;
-	extern struct extent *iomem_ex;
-#if !defined(REALEXTMEM) && !defined(REALBASEMEM)
-	struct btinfo_memmap *bim;
-#endif
 #endif /* !XEN */
 
 #ifdef XEN
@@ -1605,23 +1600,8 @@ init_x86_64(paddr_t first_avail)
 	 */
 	avail_start = 8 * PAGE_SIZE;
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed to us by
-	 * the boot program).
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If initx86_parse_memmap didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
+	/* Initialize the memory clusters (needed in pmap_boostrap). */
+	init_x86_clusters();
 #else	/* XEN */
 	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
@@ -1641,11 +1621,9 @@ init_x86_64(paddr_t first_avail)
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
-	if (avail_start != PAGE_SIZE)
-		pmap_prealloc_lowmem_ptps();
-
 #ifndef XEN
-	initx86_load_memmap(first_avail);
+	/* Internalize the physical pages into the VM system. */
+	init_x86_vm(first_avail);
 #else	/* XEN */
 	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;

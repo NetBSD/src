@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.4 2016/07/25 22:06:09 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.5 2016/07/26 03:24:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.4 2016/07/25 22:06:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.5 2016/07/26 03:24:20 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.4 2016/07/25 22:06:09 pgoyette Exp $
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #include <sys/localcount.h>
 
 #include <net/zlib.h>
@@ -296,6 +297,7 @@ vnd_detach(device_t self, int flags)
 static struct vnd_softc *
 vnd_spawn(int unit)
 {
+	device_t self;
 	cfdata_t cf;
 
 	cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
@@ -304,7 +306,22 @@ vnd_spawn(int unit)
 	cf->cf_unit = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
+	self = config_attach_pseudo(cf);
 	return device_private(config_attach_pseudo(cf));
+
+	if (config_attach_pseudo(cf) == NULL)
+		return NULL;
+
+	*self = device_lookup_acquire(&cgd_cd, unit);
+	if (self == NULL)
+		return NULL;
+	else {  
+		/*
+		 * Note that we return while still holding a reference
+		 * to the device!
+		 */
+		return device_private(*self);
+	}
 }
 
 int
@@ -334,8 +351,10 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
-	if (sc == NULL) {
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self != NULL)
+		sc = device-private(self);
+	else {
 		sc = vnd_spawn(unit);
 		if (sc == NULL)
 			return ENOMEM;
@@ -427,12 +446,10 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%"PRIx64", 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
-	if (sc == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
 		return ENXIO;
-	}
+	sc = device_private(self);
 
 	if ((error = vndlock(sc)) != 0) {
 		device_release(self);
@@ -487,16 +504,17 @@ vndstrategy(struct buf *bp)
 {
 	device_t self;
 	int unit = vndunit(bp->b_dev);
-	struct vnd_softc *vnd =
-	    device_lookup_private_acquire(&vnd_cd, unit, &self);
+	struct vnd_softc *vnd;
 	struct disklabel *lp;
 	daddr_t blkno;
 	int s = splbio();
 
-	if (vnd == NULL) {
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
+	vnd = device_private(self);
 	lp = vnd->sc_dkdev.dk_label;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
@@ -1005,12 +1023,10 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		printf("vndread(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
-	if (sc == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
 		return ENXIO;
-	}
+	sc = device_private(self);
 
 	if ((sc->sc_flags & VNF_INITED) == 0) {
 		device_release(self);
@@ -1036,12 +1052,10 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		printf("vndwrite(0x%"PRIx64", %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
-	if (sc == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
 		return ENXIO;
-	}
+	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
 
 	if ((sc->sc_flags & VNF_INITED) == 0) {
 		device_release(self);
@@ -1065,12 +1079,10 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if (*un < 0)
 		return EINVAL;
 
-	vnd = device_lookup_private_acquire(&vnd_cd, *un, &self);
-	if (vnd == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self - device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
 		return -1;
-	}
+	vnd = device_private(self);
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		device_release(self);
@@ -1813,12 +1825,10 @@ vndsize(dev_t dev)
 	int size;
 
 	unit = vndunit(dev);
-	sc = device_lookup_private_acquire(&vnd_cd, unit, &self);
-	if (sc == NULL) {
-		if (self != NULL)
-			device_release(self);
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
 		return -1;
-	}
+	sc = device_private(self);
 
 	if ((sc->sc_flags & VNF_INITED) == 0) {
 		device_release(self);
@@ -1990,12 +2000,17 @@ compstrategy(struct buf *bp, off_t bn)
 	device_t self;
 	int error;
 	int unit = vndunit(bp->b_dev);
-	struct vnd_softc *vnd =
-	    device_lookup_private_acquire(&vnd_cd, unit, &self);
+	struct vnd_softc *vnd;
 	u_int32_t comp_block;
 	struct uio auio;
 	char *addr;
 	int s;
+
+	self = device_lookup_acquire(&vnd_cd, unit);
+	if (self == NULL)
+		return;
+
+	vnd = device_private(self);
 
 	/* set up constants for data move */
 	auio.uio_rw = UIO_READ;
@@ -2125,10 +2140,6 @@ vnd_set_geometry(struct vnd_softc *vnd)
 	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
-#ifdef _MODULE
-
-#include <sys/module.h>
-
 #ifdef VND_COMPRESSION
 #define VND_DEPENDS "zlib"
 #else
@@ -2136,15 +2147,21 @@ vnd_set_geometry(struct vnd_softc *vnd)
 #endif
 
 MODULE(MODULE_CLASS_DRIVER, vnd, VND_DEPENDS);
+
+#ifdef _MODULE
+int vnd_bmajor = -1, vnd_cmajor = -1;
+
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
+#endif
 
 static int
 vnd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&vnd_cd);
 		if (error)
 			break;
@@ -2152,27 +2169,57 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	        if (error) {
 			config_cfdriver_detach(&vnd_cd);
-			aprint_error("%s: unable to register cfattach\n",
-			    vnd_cd.cd_name);
+			aprint_error("%s: unable to register cfattach for \n"
+			    "%s, error %d", __func__, vnd_cd.cd_name, error);
 			break;
 		}
 
-		error = devsw_attach("vnd", &vnd_bdevsw, &bmajor,
-		    &vnd_cdevsw, &cmajor);
+                /*
+                 * Attach the {b,c}devsw's
+                 */
+		error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+		    &vnd_cdevsw, &vnd_cmajor);
+                /*
+                 * If devsw_attach fails, remove from autoconf database
+                 */
 		if (error) {
 			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
 			config_cfdriver_detach(&vnd_cd);
+                        aprint_error("%s: unable to attach %s devsw, "
+                            "error %d", __func__, vnd_cd.cd_name, error);
 			break;
 		}
-
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
-		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&vnd_cd);
+#ifdef _MODULE
+                /*
+                 * Remove {b,c}devsw's
+                 */
 		devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+
+                /*
+                 * Now remove device from autoconf database
+                 */
+		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
+                if (error) { 
+                        error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                            &vnd_cdevsw, &vnd_cmajor);
+                        aprint_error("%s: failed to detach %s cfattach, "
+                            "error %d\n", __func__, vnd_cd.cd_name, error);
+                        break;
+                }
+                error = config_cfdriver_detach(&vnd_cd);
+                if (error) {
+                        config_cfattach_attach(vnd_cd.cd_name, &vnd_ca); 
+                        devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                            &vnd_cdevsw, &vnd_cmajor);
+                        aprint_error("%s: failed to detach %s cfdriver, "
+                            "error %d\n", __func__, vnd_cd.cd_name, error);
+                        break;
+                }
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -2184,5 +2231,3 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-
-#endif

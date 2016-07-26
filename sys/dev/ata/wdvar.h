@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.42 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.42.2.1 2016/07/26 03:24:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -60,7 +60,9 @@ struct wd_softc {
 #define WDF_KLABEL	0x080 /* retain label after 'full' close */
 #define WDF_LBA48	0x100 /* using 48-bit LBA mode */
 	uint64_t sc_capacity; /* full capacity of the device */
+	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
 	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */
+	uint32_t sc_blksize; /* logical block size, in bytes */
 
 	int retries; /* number of xfer retry */
 

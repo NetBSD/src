@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.146 2016/06/21 10:25:27 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.146.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146 2016/06/21 10:25:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -213,7 +213,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 				/* strip intermediate headers */
 				m_adj(n, *offp);
 				if (sbappendaddr(&last->in6p_socket->so_rcv,
-				    (struct sockaddr *)&rip6src, n, opts) == 0) {
+				    sin6tosa(&rip6src), n, opts) == 0) {
 					/* should notify about lost packet */
 					m_freem(n);
 					if (opts)
@@ -246,7 +246,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 		/* strip intermediate headers */
 		m_adj(m, *offp);
 		if (sbappendaddr(&last->in6p_socket->so_rcv,
-		    (struct sockaddr *)&rip6src, m, opts) == 0) {
+		    sin6tosa(&rip6src), m, opts) == 0) {
 			m_freem(m);
 			if (opts)
 				m_freem(opts);
@@ -365,7 +365,7 @@ rip6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 	}
 
 	(void) in6_pcbnotify(&raw6cbtable, sa, 0,
-	    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+	    sin6tocsa(sa6_src), 0, cmd, cmdarg, notify);
 	return NULL;
 }
 
@@ -693,9 +693,9 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	if (IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr))
 		return EADDRNOTAVAIL;
 	if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
-	    (ia = ifa_ifwithaddr((struct sockaddr *)addr)) == 0)
+	    (ia = ifa_ifwithaddr(sin6tosa(addr))) == 0)
 		return EADDRNOTAVAIL;
-	if (ia && ((struct in6_ifaddr *)ia)->ia6_flags &
+	if (ia && ifatoia6(ia)->ia6_flags &
 	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
 	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED))
 		return EADDRNOTAVAIL;

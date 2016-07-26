@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz_pci.c,v 1.6 2015/10/02 05:22:51 msaitoh Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.6.2.1 2016/07/26 03:24:17 pgoyette Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.6 2015/10/02 05:22:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.6.2.1 2016/07/26 03:24:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ sbbrz_pci_bus_maxdevs(void *cpv, int busno)
 		return 32;
 
 	/* If the PCI on the 1250, 32 devices if host mode, otherwise only 2. */
-	regval = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
+	regval = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
 	host = (regval & M_SYS_PCI_HOST) != 0;
 
 	return (host ? 32 : 2);
@@ -192,7 +192,7 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 	if (badaddr64(addr, 4) != 0)
 		return 0xffffffff;
 
-	return mips3_lw_a64(addr);
+	return mips3_ld(addr);
 }
 
 void
@@ -211,7 +211,7 @@ sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
 
-	return mips3_sw_a64(addr, data);
+	return mips3_sd(addr, data);
 }
 
 int

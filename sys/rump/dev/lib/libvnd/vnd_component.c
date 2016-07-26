@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd_component.c,v 1.2 2016/01/26 23:12:16 pooka Exp $	*/
+/*	$NetBSD: vnd_component.c,v 1.2.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd_component.c,v 1.2 2016/01/26 23:12:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd_component.c,v 1.2.2.1 2016/07/26 03:24:24 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,20 +40,21 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw vnd_bdevsw;
 	extern const struct cdevsw vnd_cdevsw;
-	devmajor_t bmaj, cmaj;
+	extern devmajor_t vnd_bmajor, vnd_cmajor;
 	int error;
 
 	/* go, mydevfs */
-	bmaj = cmaj = -1;
 
-	if ((error = devsw_attach("/dev/vnd0", &vnd_bdevsw, &bmaj,
-	    &vnd_cdevsw, &cmaj)) != 0)
+	if ((error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+	    &vnd_cdevsw, &vnd_cmajor)) != 0)
 		panic("cannot attach vnd: %d", error);
 
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/vnd0", 'a',
-	    bmaj, 0, 7)) != 0)
+	    vnd_bmajor, 0, 7)) != 0)
 		panic("cannot create cooked vnd dev nodes: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/rvnd0", 'a',
-	    cmaj, 0, 7)) != 0)
+	    vnd_cmajor, 0, 7)) != 0)
 		panic("cannot create raw vnd dev nodes: %d", error);
+
+	devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
 }

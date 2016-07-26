@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.37 2016/05/21 07:00:18 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37.2.1 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -323,7 +323,6 @@ pmap_pte_flush(void)
 }
 #endif
 
-void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 #include <x86/pmap_pv.h>

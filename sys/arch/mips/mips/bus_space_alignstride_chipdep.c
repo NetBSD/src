@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.28 2016/07/13 15:12:20 maya Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.28.2.1 2016/07/26 03:24:17 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.28 2016/07/13 15:12:20 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.28.2.1 2016/07/26 03:24:17 pgoyette Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -371,7 +371,7 @@ __BS(map)(void *v, bus_addr_t addr, bus_size_t size, int flags,
 
 	addr = mbst.mbst_sys_start + (addr - mbst.mbst_bus_start);
 
-#if defined(__mip_n32) || defined(_LP64)
+#if defined(__mips_n32) || defined(_LP64)
 	if (flags & BUS_SPACE_MAP_CACHEABLE) {
 #ifdef __mips_n32
 		if (((addr + size) & ~MIPS_PHYS_MASK) == 0)

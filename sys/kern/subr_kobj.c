@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.55 2016/07/09 07:25:00 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.55.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.55 2016/07/09 07:25:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.55.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -162,8 +162,10 @@ kobj_load(kobj_t ko)
 	Elf_Sym *es;
 	vaddr_t map_text_base;
 	vaddr_t map_data_base;
+	vaddr_t map_rodata_base;
 	size_t map_text_size;
 	size_t map_data_size;
+	size_t map_rodata_size;
 	int error;
 	int symtabindex;
 	int symstrindex;
@@ -396,6 +398,7 @@ kobj_load(kobj_t ko)
 	alignmask = 0;
 	map_text_size = 0;
 	map_data_size = 0;
+	map_rodata_size = 0;
 	for (i = 0; i < hdr->e_shnum; i++) {
 		if (shdr[i].sh_type != SHT_PROGBITS &&
 		    shdr[i].sh_type != SHT_NOBITS)
@@ -405,6 +408,10 @@ kobj_load(kobj_t ko)
 			map_text_size += alignmask;
 			map_text_size &= ~alignmask;
 			map_text_size += shdr[i].sh_size;
+		} else if (!(shdr[i].sh_flags & SHF_WRITE)) {
+			map_rodata_size += alignmask;
+			map_rodata_size &= ~alignmask;
+			map_rodata_size += shdr[i].sh_size;
 		} else {
 			map_data_size += alignmask;
 			map_data_size &= ~alignmask;
@@ -419,6 +426,11 @@ kobj_load(kobj_t ko)
  	}
 	if (map_data_size == 0) {
 		kobj_error(ko, "no data/bss");
+		error = ENOEXEC;
+ 		goto out;
+ 	}
+	if (map_rodata_size == 0) {
+		kobj_error(ko, "no rodata");
 		error = ENOEXEC;
  		goto out;
  	}
@@ -443,6 +455,16 @@ kobj_load(kobj_t ko)
 	ko->ko_data_address = map_data_base;
 	ko->ko_data_size = map_data_size;
 
+	map_rodata_base = uvm_km_alloc(module_map, round_page(map_rodata_size),
+	    0, UVM_KMF_WIRED);
+	if (map_rodata_base == 0) {
+		kobj_error(ko, "out of memory");
+		error = ENOMEM;
+		goto out;
+	}
+	ko->ko_rodata_address = map_rodata_base;
+	ko->ko_rodata_size = map_rodata_size;
+
 	/*
 	 * Now load code/data(progbits), zero bss(nobits), allocate space
 	 * for and load relocs
@@ -461,6 +483,11 @@ kobj_load(kobj_t ko)
 				map_text_base &= ~alignmask;
 				addr = (void *)map_text_base;
 				map_text_base += shdr[i].sh_size;
+			} else if (!(shdr[i].sh_flags & SHF_WRITE)) {
+				map_rodata_base += alignmask;
+				map_rodata_base &= ~alignmask;
+				addr = (void *)map_rodata_base;
+				map_rodata_base += shdr[i].sh_size;
  			} else {
 				map_data_base += alignmask;
 				map_data_base &= ~alignmask;
@@ -572,6 +599,13 @@ kobj_load(kobj_t ko)
 		    (long)ko->ko_data_address, (long)map_data_size,
 		    (long)ko->ko_data_address + map_data_size);
 	}
+	if (map_rodata_base != ko->ko_rodata_address + map_rodata_size) {
+		panic("%s:%d: %s: map_rodata_base 0x%lx != address %lx "
+		    "+ map_rodata_size %ld (0x%lx)\n",
+		    __func__, __LINE__, ko->ko_name, (long)map_rodata_base,
+		    (long)ko->ko_rodata_address, (long)map_rodata_size,
+		    (long)ko->ko_rodata_address + map_rodata_size);
+	}
 
 	/*
 	 * Perform local relocations only.  Relocations relating to global
@@ -620,6 +654,11 @@ kobj_unload(kobj_t ko)
  		if (error != 0)
 			kobj_error(ko, "machine dependent deinit failed (data) %d",
  			    error);
+		error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
+		    ko->ko_rodata_size, false);
+ 		if (error != 0)
+			kobj_error(ko, "machine dependent deinit failed (rodata) %d",
+ 			    error);
 	}
 	if (ko->ko_text_address != 0) {
 		uvm_km_free(module_map, ko->ko_text_address,
@@ -628,6 +667,10 @@ kobj_unload(kobj_t ko)
 	if (ko->ko_data_address != 0) {
 		uvm_km_free(module_map, ko->ko_data_address,
 		    round_page(ko->ko_data_size), UVM_KMF_WIRED);
+ 	}
+	if (ko->ko_rodata_address != 0) {
+		uvm_km_free(module_map, ko->ko_rodata_address,
+		    round_page(ko->ko_rodata_size), UVM_KMF_WIRED);
  	}
 	if (ko->ko_ksyms == true) {
 		ksyms_modunload(ko->ko_name);
@@ -706,6 +749,12 @@ kobj_affix(kobj_t ko, const char *name)
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
 
+	/* Change the memory protections, when needed. */
+	uvm_km_protect(module_map, ko->ko_text_address, ko->ko_text_size,
+	    VM_PROT_READ|VM_PROT_EXECUTE);
+	uvm_km_protect(module_map, ko->ko_rodata_address, ko->ko_rodata_size,
+	    VM_PROT_READ);
+
 	/*
 	 * Notify MD code that a module has been loaded.
 	 *
@@ -721,6 +770,11 @@ kobj_affix(kobj_t ko, const char *name)
 		    ko->ko_data_size, true);
 		if (error != 0)
 			kobj_error(ko, "machine dependent init failed (data) %d",
+			    error);
+		error = kobj_machdep(ko, (void *)ko->ko_rodata_address,
+		    ko->ko_rodata_size, true);
+		if (error != 0)
+			kobj_error(ko, "machine dependent init failed (rodata) %d",
 			    error);
 		ko->ko_loaded = true;
 	}

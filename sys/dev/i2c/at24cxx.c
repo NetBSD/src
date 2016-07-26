@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.21 2015/12/13 17:15:06 jmcneill Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.21.2.1 2016/07/26 03:24:21 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.21 2015/12/13 17:15:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.21.2.1 2016/07/26 03:24:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->sc_size = ia->ia_size;
 
-	if (sc->sc_size == 0 && ia->ia_ncompat > 0) {
+	if (sc->sc_size <= 0 && ia->ia_ncompat > 0) {
 		for (n = 0; n < __arraycount(seeprom_sizes); n++) {
 			if (!strcmp(seeprom_sizes[n].name, ia->ia_compat[n])) {
 				sc->sc_size = seeprom_sizes[n].size;

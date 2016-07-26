@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2016/07/11 19:05:57 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.119.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -164,23 +164,6 @@ struct cpu_info {
     ci = &cpu_info_store; ci != NULL; ci = NULL
 #endif
 
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define CPU_ROOT_DEVICE		3	/* string: root device name */
-#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
-#define CPU_LMMI		5	/* Loongson multimedia instructions */
-
-/*
- * Platform can override, but note this breaks userland compatibility
- * with other mips platforms.
- */
-#ifndef CPU_MAXID
-#define CPU_MAXID		5	/* number of valid machdep ids */
-#endif
-
 /* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
 //	MIPS_CURLWP moved to <mips/regdef.h>
 #define MIPS_CURLWP_QUOTED	"$24"
@@ -290,4 +273,22 @@ void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
 #endif
 
 #endif /* _KERNEL */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define CPU_ROOT_DEVICE		3	/* string: root device name */
+#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
+#define CPU_LMMI		5	/* Loongson multimedia instructions */
+
+/*
+ * Platform can override, but note this breaks userland compatibility
+ * with other mips platforms.
+ */
+#ifndef CPU_MAXID
+#define CPU_MAXID		5	/* number of valid machdep ids */
+#endif
+
 #endif /* _CPU_H_ */

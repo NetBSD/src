@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.71 2016/07/12 03:34:50 matt Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.71.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -372,31 +372,35 @@ VECTOR(MIPSX(tlb_miss), unknown)
 #ifdef _LP64
 	nop					#01: nop
 	PTR_SRL k1, k0, 31			#02: clear useg bits
-	beqz	k1, 1f				#03: k1==0 -> useg address
-	 PTR_SRL k1,k0,2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2)+PGSHIFT #05: clear valid bits
-	bnez	k1, MIPSX(nopagetable)		#04: not legal address
-	 PTR_SRL k0, 2*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #05: k0=seg offset (almost)
-	bgez	k0, 1f				#05: k0<0 -> kernel fault
-	 lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#06: k1=hi of segtab
-	PTR_ADDI k1,  1 << PTR_SCALESHIFT	#07: kernel segtab entry
+	beqz	k1, 2f				#03: k1==0 -> useg address
+	 PTR_SRL k1,k0,XSEGSHIFT+XSEGLENGTH+2	#04: clear valid bits
+	bnez	k1, MIPSX(nopagetable)		#05: not legal address
+	 PTR_SRL k0, XSEGSHIFT - PTR_SCALESHIFT #06: k0=seg offset (almost)
+	bgez	k0, 1f				#07: k0<0 -> kernel fault
+	 lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#08: k1=hi of segtab
+	PTR_ADDI k1,  1 << PTR_SCALESHIFT	#09: kernel segtab entry
 1:
-	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#08: k0=seg offset (mask 0x3)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#09: k1=segment tab
-	PTR_ADDU k1, k0				#0a: k1=seg entry address
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0b: k0=bad address (again)
-	PTR_L	k1, 0(k1)			#0c: k1=seg entry
-	b	MIPSX(tlb_miss_common)		#0d
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #0e: k0=seg offset (almost)
+	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#0a: k0=seg offset (mask 0x3)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#0b: k1=segment tab
+	PTR_ADDU k1, k0				#0c: k1=seg entry address
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0d: k0=bad address (again)
+	PTR_L	k1, 0(k1)			#0e: k1=seg entry
+	b	MIPSX(tlb_miss_common)		#0f
+#ifdef MIPSNNR2
+	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f: k0=seg index
+#else
+	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f: k0=seg offset (almost)
+#endif
 #endif /* LP64 */
-1: /* handle useg addresses */
-	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#0f: k1=hi of seg0tab
-	dsrl	k0, 31				#11: clear low 31 bits
-	bnez	k0, MIPSX(nopagetable)		#12: not legal address
-	 PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#13: k1=segment tab base
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#14: k0=bad address (again)
-	nop					#15
-	b	MIPSX(tlb_miss_common)		#16
-	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #17: k0=seg offset (almost)
+2: /* handle useg addresses */
+	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#11: k1=hi of seg0tab
+	dsrl	k0, 31				#12: clear low 31 bits
+	bnez	k0, MIPSX(nopagetable)		#13: not legal address
+	 PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#14: k1=segment tab base
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#15: k0=bad address (again)
+	nop					#16
+	b	MIPSX(tlb_miss_common)		#17
+	 PTR_SRL k0, 1*(PGSHIFT-PTR_SCALESHIFT)+(PGSHIFT-2) #18: k0=seg offset (almost)
 _VECTOR_END(MIPSX(tlb_miss))
 /* dummy xtlb_miss (also a placeholder for tlb_miss_common) */
 VECTOR(MIPSX(xtlb_miss), unknown)
@@ -431,75 +435,75 @@ VECTOR(MIPSX(tlb_miss), unknown)
 #endif /* !MIPS3_LOONGSON2 */
 MIPSX(tlb_miss_common):
 #ifdef _LP64
-	beqz	k1, MIPSX(nopagetable)		#05: is there a pagetable?
+	beqz	k1, MIPSX(nopagetable)		#06: is there a pagetable?
 #endif
 	/* the next instruction might be in a delay slot */
 #ifdef MIPSNNR2
-	_INS	k1, k0, PTR_SCALESHIFT, SEGLENGTH #06: k1=seg entry address
+	_INS	k1, k0, PTR_SCALESHIFT, SEGLENGTH #07: k1=seg entry address
 #else
-	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#06: k0=seg offset (mask 0x3)
-	PTR_ADDU k1, k0				#07: k1=seg entry address
+	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#07: k0=seg offset (mask 0x3)
+	PTR_ADDU k1, k0				#08: k1=seg entry address
 #endif
-	PTR_L	k1, 0(k1)			#08: k1=seg entry
-	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#09: k0=bad address (again)
-	beqz	k1, MIPSX(nopagetable)		#0a: ==0 -- no page table
+	PTR_L	k1, 0(k1)			#09: k1=seg entry
+	_MFC0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
+	beqz	k1, MIPSX(nopagetable)		#0b: ==0 -- no page table
 	 # delay slot varies
 #if (PGSHIFT & 1)
 #ifdef MIPSNNR2
-	 _EXT	k0, k0, PGSHIFT, PTPLENGTH	#0b: delay slot: page index
-	_INS	k1, k0, PTPSHIFT, PTPLENGTH	#0c: k1=pte address
+	 _EXT	k0, k0, PGSHIFT, PTPLENGTH	#0c: delay slot: page index
+	_INS	k1, k0, PTPSHIFT, PTPLENGTH	#0d: k1=pte address
 #else
-	 PTR_SRL k0, PGSHIFT - PTPSHIFT		#0b: k0=VPN (aka va>>10)
-	andi	k0, (NPTEPG-1) << PTPSHIFT	#0c: k0=page table offset
-	PTR_ADDU k1, k0				#0d: k1=pte address
+	 PTR_SRL k0, PGSHIFT - PTPSHIFT		#0c: k0=VPN (aka va>>10)
+	andi	k0, (NPTEPG-1) << PTPSHIFT	#0d: k0=page table offset
+	PTR_ADDU k1, k0				#0e: k1=pte address
 #endif
-	INT_L	k0, 0(k1)			#0e: k0=lo0 pte
+	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
 #ifdef MIPSNNR2
-	_EXT	k0, k0, 0, WIRED_POS		#0f: chop top 2 bits
+	_EXT	k0, k0, 0, WIRED_POS		#10: chop top 2 bits
 #else
-	_SLL	k0, WIRED_SHIFT			#0f: chop top 2 bits (part 1a)
-	_SRL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1b)
-#endif
-	INT_ADDU k1, k0, MIPS3_PG_NEXT		#11: k1=lo1 pte
-#else /* (PGSHIFT & 1) == 0 */
-	 PTR_SRL k0, PGSHIFT - PTPSHIFT		#0b: k0=VPN (aka va>>10) --ds--
-	andi	k0, (NPTEPG/2-1) << (PTPSHIFT+1)#0c: k0=page table offset
-	PTR_ADDU k1, k0				#0d: k1=pte address
-#ifdef USE_64BIT_CP0_FUNCTIONS
-	ld	k0, 0(k1)			#0e: load both ptes
-#ifdef MIPSNNR2
-	_EXT	k1, k0, 32*_QUAD_HIGHWORD, WIRED_POS	#0f: get lo1 pte
-	_EXT	k0, k0, 32*_QUAD_LOWWORD, WIRED_POS	#10: get lo0 pte
-#else
-	_SLL	k1, k0, WIRED_SHIFT - 32*_QUAD_HIGHWORD	#0f: get lo1 pte (1a)
-	_SLL	k0, k0, WIRED_SHIFT - 32*_QUAD_LOWWORD	#10: get lo0 pte (2a)
-	_SRL	k0, WIRED_SHIFT			#11: chopped top 2 bits (1b)
-	_SRL	k1, WIRED_SHIFT			#12: chopped top 2 bits (2b)
-#endif
-#else
-	INT_L	k0, 0(k1)			#0e: k0=lo0 pte
-	INT_L	k1, 4(k1)			#0f: k1=lo1 pte
 	_SLL	k0, WIRED_SHIFT			#10: chop top 2 bits (part 1a)
-	_SLL	k1, WIRED_SHIFT			#11: chop top 2 bits (part 2a)
-	_SRL	k0, WIRED_SHIFT			#12: chop top 2 bits (part 1b)
-	_SRL	k1, WIRED_SHIFT			#13: chop top 2 bits (part 2b)
+	_SRL	k0, WIRED_SHIFT			#11: chop top 2 bits (part 1b)
+#endif
+	INT_ADDU k1, k0, MIPS3_PG_NEXT		#12: k1=lo1 pte
+#else /* (PGSHIFT & 1) == 0 */
+	 PTR_SRL k0, PGSHIFT - PTPSHIFT		#0c: k0=VPN (aka va>>10) --ds--
+	andi	k0, (NPTEPG/2-1) << (PTPSHIFT+1)#0d: k0=page table offset
+	PTR_ADDU k1, k0				#0e: k1=pte address
+#ifdef USE_64BIT_CP0_FUNCTIONS
+	ld	k0, 0(k1)			#0f: load both ptes
+#ifdef MIPSNNR2
+	_EXT	k1, k0, 32*_QUAD_HIGHWORD, WIRED_POS	#10: get lo1 pte
+	_EXT	k0, k0, 32*_QUAD_LOWWORD, WIRED_POS	#11: get lo0 pte
+#else
+	_SLL	k1, k0, WIRED_SHIFT - 32*_QUAD_HIGHWORD	#10: get lo1 pte (1a)
+	_SLL	k0, k0, WIRED_SHIFT - 32*_QUAD_LOWWORD	#11: get lo0 pte (2a)
+	_SRL	k0, WIRED_SHIFT			#12: chopped top 2 bits (1b)
+	_SRL	k1, WIRED_SHIFT			#13: chopped top 2 bits (2b)
+#endif
+#else
+	INT_L	k0, 0(k1)			#0f: k0=lo0 pte
+	INT_L	k1, 4(k1)			#10: k1=lo1 pte
+	_SLL	k0, WIRED_SHIFT			#11: chop top 2 bits (part 1a)
+	_SLL	k1, WIRED_SHIFT			#12: chop top 2 bits (part 2a)
+	_SRL	k0, WIRED_SHIFT			#13: chop top 2 bits (part 1b)
+	_SRL	k1, WIRED_SHIFT			#14: chop top 2 bits (part 2b)
 #endif
 #endif /* PGSHIFT & 1 */
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		#14: lo0 is loaded
-	_MTC0	k1, MIPS_COP_0_TLB_LO1		#15: lo1 is loaded
-	sll	$0, $0, 3			#16: standard nop (ehb)
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		#15: lo0 is loaded
+	_MTC0	k1, MIPS_COP_0_TLB_LO1		#16: lo1 is loaded
+	sll	$0, $0, 3			#17: standard nop (ehb)
 #ifdef MIPS3
-	nop					#17: extra nop for QED5230
+	nop					#18: extra nop for QED5230
 #endif
-	tlbwr					#18: write to tlb
-	sll	$0, $0, 3			#19: standard nop (ehb)
+	tlbwr					#19: write to tlb
+	sll	$0, $0, 3			#1a: standard nop (ehb)
 #if (MIPS3 + MIPS64 + MIPS64R2) > 0
-	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#1a: k1=hi of tlbmisses
-	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1b
-	REG_ADDU k0, 1				#1c
-	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1d
+	lui	k1, %hi(CPUVAR(EV_TLBMISSES))	#1b: k1=hi of tlbmisses
+	REG_L	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1c
+	REG_ADDU k0, 1				#1d
+	REG_S	k0, %lo(CPUVAR(EV_TLBMISSES))(k1) #1e
 #endif
-	eret					#1e: return from exception
+	eret					#1f: return from exception
 	.set	at
 #ifdef MIPS3_LOONGSON2
 _VECTOR_END(MIPSX(xtlb_miss))
@@ -549,20 +553,20 @@ VECTOR(MIPSX(xtlb_miss), unknown)
 	lui	k1, %hi(CPUVAR(PMAP_SEG0TAB))	#02: k1=hi of seg0tab
 	bgez	k0, 1f				#03: k0<0 -> kernel access
 	 dsra	k0, 31				#04: clear low 31 bits
-	PTR_ADDU k1, 1 << PTR_SCALESHIFT
+	PTR_ADDU k1, 1 << PTR_SCALESHIFT	#05
 1:
-	PTR_ADDU k0, 1
-	sltiu	k0, k0, 2
-	beqz	k0, MIPSX(nopagetable)		#04: not legal address
-	 nop
-	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#05: k0=bad address (again)
-	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#06: k1=segment tab base
+	PTR_ADDU k0, 1				#06
+	sltiu	k0, k0, 2			#07
+	beqz	k0, MIPSX(nopagetable)		#08: not legal address
+	 nop					#09
+	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0a: k0=bad address (again)
+	PTR_L	k1, %lo(CPUVAR(PMAP_SEG0TAB))(k1)#0b: k1=segment tab base
 #endif /* _LP64 */
-	b	MIPSX(tlb_miss_common)		#0e
+	b	MIPSX(tlb_miss_common)		#0e/0c
 #ifdef MIPSNNR2
-	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f: k0=seg index
+	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f/0d: k0=seg index
 #else
-	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f: k0=seg offset (almost)
+	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f/0d: k0=seg offset (almost)
 #endif
 	.set	at
 _VECTOR_END(MIPSX(xtlb_miss))
@@ -576,13 +580,13 @@ _VECTOR_END(MIPSX(xtlb_miss))
  */
 VECTOR(MIPSX(cache), unknown)
 	PTR_LA	k0, _C_LABEL(MIPSX(cache_exception))	#00
-	li	k1, MIPS_PHYS_MASK			#02
-	and	k0, k1					#03
-	li	k1, MIPS_KSEG1_START			#04
-	or	k0, k1					#05
-	lui	k1, %hi(CPUVAR(CURLWP))			#06: k1=hi of curlwp
-	jr	k0					#07
-	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)		#08: k1=lo of curlwp
+	li	k1, MIPS_PHYS_MASK			#01
+	and	k0, k1					#02
+	li	k1, MIPS_KSEG1_START			#03
+	or	k0, k1					#04
+	lui	k1, %hi(CPUVAR(CURLWP))			#05: k1=hi of curlwp
+	jr	k0					#06
+	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)		#07: k1=lo of curlwp
 _VECTOR_END(MIPSX(cache))
 
 /*
@@ -647,13 +651,13 @@ VECTOR(MIPSX(intr), unknown)
 	MFC0_HAZARD				#01: stall
 	and	k1, k1, MIPS3_SR_KSU_USER	#02: test for user mode
 	PTR_LA	k0, MIPSX(user_intr)		#03: assume user mode
-	bnez	k1, 1f				#05: yep, do it
-	 nop					#06:  branch deay
-	PTR_LA	k0, MIPSX(kern_intr)		#07: nope, kernel intr
+	bnez	k1, 1f				#04: yep, do it
+	 nop					#05:  branch deay
+	PTR_LA	k0, MIPSX(kern_intr)		#06: nope, kernel intr
 1:
-	lui	k1, %hi(CPUVAR(CURLWP))		#09: k1=hi of curlwp
-	jr	k0				#0a: jump to the function
-	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#0b: k1=lo of curlwp
+	lui	k1, %hi(CPUVAR(CURLWP))		#07: k1=hi of curlwp
+	jr	k0				#08: jump to the function
+	 PTR_L	k1, %lo(CPUVAR(CURLWP))(k1)	#09: k1=lo of curlwp
 	.set	at
 _VECTOR_END(MIPSX(intr))
 
@@ -1223,7 +1227,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 li	a0, -2
 #endif /* __HAVE_PREEMPTION */
 4:
-#endif /* __HAVE_FAST_SOFTINT */
+#endif /* __HAVE_FAST_SOFTINTS */
 	/*
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable

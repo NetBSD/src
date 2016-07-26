@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.101 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.101.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,7 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 		badid = 1;
 	else {
 		struct in6_ifaddr *ia;
+		int s = pserialize_read_enter();
 
 		IN6_ADDRLIST_READER_FOREACH(ia) {
 			if (!memcmp(&ia->ia_addr.sin6_addr.s6_addr[8], 
@@ -252,6 +253,7 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 				break;
 			}
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*

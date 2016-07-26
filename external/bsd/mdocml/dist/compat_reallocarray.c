@@ -6,7 +6,7 @@ int dummy;
 
 #else
 
-/*	$Id: compat_reallocarray.c,v 1.1.1.1 2015/12/17 21:58:48 christos Exp $	*/
+/*	Id: compat_reallocarray.c,v 1.4 2014/12/11 09:05:01 schwarze Exp 	*/
 /*	$OpenBSD: reallocarray.c,v 1.2 2014/12/08 03:45:00 bcook Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>

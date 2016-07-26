@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.27 2011/07/23 16:04:35 jym Exp $
+.\"     $NetBSD: driver.9,v 1.27.24.1 2016/07/26 03:24:16 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 23, 2011
+.Dd July 19, 2016
 .Dt DRIVER 9
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ For example, the interface to driver
 is defined with:
 .Pp
 .Bd -literal
-CFATTACH_DECL(foo, 			/* driver name */
+CFATTACH_DECL_NEW(foo, 			/* driver name */
 	sizeof(struct foo_softc),	/* size of instance data */
 	foo_match,			/* match/probe function */
 	foo_attach,			/* attach function */

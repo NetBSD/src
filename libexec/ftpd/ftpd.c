@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.202 2015/08/10 07:32:49 shm Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.202.2.1 2016/07/26 03:24:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.202 2015/08/10 07:32:49 shm Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.202.2.1 2016/07/26 03:24:15 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1967,7 +1967,8 @@ getdatasock(const char *fmode)
 	t = errno;
 	if (! dropprivs)
 		(void) seteuid((uid_t)pw->pw_uid);
-	(void) close(s);
+	if (s >= 0)
+		(void) close(s);
 	errno = t;
 	return (NULL);
 }

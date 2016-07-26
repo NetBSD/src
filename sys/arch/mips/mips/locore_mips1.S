@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.89 2016/07/11 19:01:55 skrll Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.89.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -553,7 +553,7 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	 PTR_L	a0, TF_BASE+TF_REG_EPC(sp)
 #endif /* __HAVE_PREEMPTION */
 4:
-#endif /* __HAVE_FAST_SOFTINT */
+#endif /* __HAVE_FAST_SOFTINTS */
 	/*
 	 * Interrupts handled, restore registers and return from the interrupt.
 	 * First, clear interrupt enable

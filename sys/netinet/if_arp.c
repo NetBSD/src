@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.217.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217 2016/07/08 04:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1477,11 +1477,14 @@ MALLOC_JUSTDEFINE(M_IPARP, "ARP DAD", "ARP DAD Structure");
 static struct dadq_head dadq;
 static int dad_init = 0;
 static int dad_maxtry = 15;     /* max # of *tries* to transmit DAD packet */
+static kmutex_t arp_dad_lock;
 
 static struct dadq *
 arp_dad_find(struct ifaddr *ifa)
 {
 	struct dadq *dp;
+
+	KASSERT(mutex_owned(&arp_dad_lock));
 
 	TAILQ_FOREACH(dp, &dadq, dad_list) {
 		if (dp->dad_ifa == ifa)
@@ -1537,6 +1540,7 @@ arp_dad_start(struct ifaddr *ifa)
 
 	if (!dad_init) {
 		TAILQ_INIT(&dadq);
+		mutex_init(&arp_dad_lock, MUTEX_DEFAULT, IPL_NONE);
 		dad_init++;
 	}
 
@@ -1560,17 +1564,20 @@ arp_dad_start(struct ifaddr *ifa)
 		    CLLADDR(ifa->ifa_ifp->if_sadl));
 		return;
 	}
-	if (ifa->ifa_ifp == NULL)
-		panic("arp_dad_start: ifa->ifa_ifp == NULL");
+	KASSERT(ifa->ifa_ifp != NULL);
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
+
+	mutex_enter(&arp_dad_lock);
 	if (arp_dad_find(ifa) != NULL) {
+		mutex_exit(&arp_dad_lock);
 		/* DAD already in progress */
 		return;
 	}
 
 	dp = malloc(sizeof(*dp), M_IPARP, M_NOWAIT);
 	if (dp == NULL) {
+		mutex_exit(&arp_dad_lock);
 		log(LOG_ERR, "%s: memory allocation failed for %s(%s)\n",
 		    __func__, in_fmtaddr(ia->ia_addr.sin_addr),
 		    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
@@ -1578,10 +1585,6 @@ arp_dad_start(struct ifaddr *ifa)
 	}
 	memset(dp, 0, sizeof(*dp));
 	callout_init(&dp->dad_timer_ch, CALLOUT_MPSAFE);
-	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
-
-	arplog((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
-	    in_fmtaddr(ia->ia_addr.sin_addr)));
 
 	/*
 	 * Send ARP packet for DAD, ip_dad_count times.
@@ -1592,8 +1595,14 @@ arp_dad_start(struct ifaddr *ifa)
 	dp->dad_count = ip_dad_count;
 	dp->dad_arp_announce = 0; /* Will be set when starting to announce */
 	dp->dad_arp_acount = dp->dad_arp_ocount = dp->dad_arp_tcount = 0;
+	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
+
+	arplog((LOG_DEBUG, "%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
+	    in_fmtaddr(ia->ia_addr.sin_addr)));
 
 	arp_dad_starttimer(dp, cprng_fast32() % (PROBE_WAIT * hz));
+
+	mutex_exit(&arp_dad_lock);
 }
 
 /*
@@ -1606,15 +1615,21 @@ arp_dad_stop(struct ifaddr *ifa)
 
 	if (!dad_init)
 		return;
+
+	mutex_enter(&arp_dad_lock);
 	dp = arp_dad_find(ifa);
 	if (dp == NULL) {
+		mutex_exit(&arp_dad_lock);
 		/* DAD wasn't started yet */
 		return;
 	}
 
+	/* Prevent the timer from running anymore. */
+	TAILQ_REMOVE(&dadq, dp, dad_list);
+	mutex_exit(&arp_dad_lock);
+
 	arp_dad_stoptimer(dp);
 
-	TAILQ_REMOVE(&dadq, dp, dad_list);
 	free(dp, M_IPARP);
 	dp = NULL;
 	ifafree(ifa);
@@ -1629,6 +1644,7 @@ arp_dad_timer(struct ifaddr *ifa)
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+	mutex_enter(&arp_dad_lock);
 
 	/* Sanity check */
 	if (ia == NULL) {
@@ -1637,7 +1653,7 @@ arp_dad_timer(struct ifaddr *ifa)
 	}
 	dp = arp_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
+		/* DAD seems to be stopping, so do nothing. */
 		goto done;
 	}
 	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
@@ -1720,6 +1736,7 @@ announce:
 	ifafree(ifa);
 
 done:
+	mutex_exit(&arp_dad_lock);
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
@@ -1731,9 +1748,11 @@ arp_dad_duplicated(struct ifaddr *ifa)
 	struct ifnet *ifp;
 	struct dadq *dp;
 
+	mutex_enter(&arp_dad_lock);
 	dp = arp_dad_find(ifa);
 	if (dp == NULL) {
-		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
+		mutex_exit(&arp_dad_lock);
+		/* DAD seems to be stopping, so do nothing. */
 		return;
 	}
 
@@ -1753,6 +1772,8 @@ arp_dad_duplicated(struct ifaddr *ifa)
 	rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 
 	TAILQ_REMOVE(&dadq, dp, dad_list);
+	mutex_exit(&arp_dad_lock);
+
 	free(dp, M_IPARP);
 	dp = NULL;
 	ifafree(ifa);

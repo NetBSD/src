@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $	*/
+/*	$NetBSD: awacs.c,v 1.43.18.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.43.18.1 2016/07/26 03:24:17 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -345,8 +345,8 @@ awacs_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
-	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
-	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
+	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command), NULL);
+	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command), NULL);
 
 	if (strcmp(ca->ca_name, "i2s") == 0) {
 		int node, intr[6];

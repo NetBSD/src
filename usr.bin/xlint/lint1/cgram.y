@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.76 2016/02/27 21:37:14 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.76.2.1 2016/07/26 03:24:24 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.76 2016/02/27 21:37:14 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.76.2.1 2016/07/26 03:24:24 pgoyette Exp $");
 #endif
 
 #include <stdlib.h>
@@ -117,7 +117,7 @@ anonymize(sym_t *s)
 }
 %}
 
-%expect 80
+%expect 88
 
 %union {
 	int	y_int;
@@ -200,6 +200,7 @@ anonymize(sym_t *s)
 %token <y_type>		T_AT_ALIGNED
 %token <y_type>		T_AT_DEPRECATED
 %token <y_type>		T_AT_NORETURN
+%token <y_type>		T_AT_GNU_INLINE
 %token <y_type>		T_AT_MAY_ALIAS
 %token <y_type>		T_AT_PACKED
 %token <y_type>		T_AT_PURE
@@ -510,6 +511,7 @@ type_attribute_spec:
 	}
 	| T_AT_PURE
 	| T_AT_TUNION
+	| T_AT_GNU_INLINE
 	| T_AT_FORMAT T_LPARN type_attribute_format_type T_COMMA
 	    constant T_COMMA constant T_RPARN
 	| T_AT_UNUSED
@@ -552,7 +554,6 @@ declspecs:
 		addtype($2);
 	  }
 	| type_attribute declspecs
-	| declspecs type_attribute
 	| declspecs declmod
 	| declspecs notype_typespec {
 		addtype($2);
@@ -576,6 +577,7 @@ declmod:
 	| T_SCLASS {
 		addscl($1);
 	  }
+	| type_attribute
 	;
 
 clrtyp_typespec:
@@ -1018,7 +1020,10 @@ param_decl:
 	;
 
 direct_param_decl:
-	  identifier {
+	  identifier type_attribute {
+		$$ = dname(getsym($1));
+	  }
+	| identifier {
 		$$ = dname(getsym($1));
 	  }
 	| T_LPARN notype_param_decl T_RPARN {

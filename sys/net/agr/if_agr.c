@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.37 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.37.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.37 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.37.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -567,6 +567,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
+	int s;
 
 	if (ifp_port->if_ioctl == NULL) {
 		error = EOPNOTSUPP;
@@ -591,12 +592,15 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp_port) {
 		if (ifa->ifa_addr->sa_family != AF_LINK) {
+			pserialize_read_exit(s);
 			error = EBUSY;
 			goto out;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (sc->sc_nports == 0) {
 		switch (ifp_port->if_type) {

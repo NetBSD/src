@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.1 2016/06/22 20:13:51 palle Exp $	*/
+/*	$NetBSD: cbus.c,v 1.1.4.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -34,7 +34,7 @@
 #ifdef DEBUG
 #define CBUSDB_AC               0x01
 #define CBUSDB_INTR             0x02
-int cbus_debug = 0x00|CBUSDB_INTR;
+int cbus_debug = 0x00;
 #define DPRINTF(l, s)   do { if (cbus_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)

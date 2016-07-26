@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.87 2016/04/27 08:51:32 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.87.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -81,6 +81,7 @@
 #define CR4_PCE		0x00000100 /* enable RDPMC instruction for all cpls */
 #define CR4_OSFXSR	0x00000200 /* enable fxsave/fxrestor and SSE */
 #define CR4_OSXMMEXCPT	0x00000400 /* enable unmasked SSE exceptions */
+#define CR4_UMIP	0x00000800 /* user-mode instruction prevention */
 #define CR4_VMXE	0x00002000 /* enable VMX operations */
 #define CR4_SMXE	0x00004000 /* enable SMX operations */
 #define CR4_FSGSBASE	0x00010000 /* enable *FSBASE and *GSBASE instructions */
@@ -88,6 +89,7 @@
 #define CR4_OSXSAVE	0x00040000 /* enable xsave and xrestore */
 #define CR4_SMEP	0x00100000 /* enable SMEP support */
 #define CR4_SMAP	0x00200000 /* enable SMAP support */
+#define CR4_PKE		0x00400000 /* protection key enable */
 
 /*
  * Extended Control Register XCR0

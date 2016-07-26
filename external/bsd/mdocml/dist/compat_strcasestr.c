@@ -6,8 +6,8 @@ int dummy;
 
 #else
 
-/*	$Id: compat_strcasestr.c,v 1.1.1.2 2015/12/17 21:58:48 christos Exp $	*/
-/*	$NetBSD: compat_strcasestr.c,v 1.1.1.2 2015/12/17 21:58:48 christos Exp $	*/
+/*	Id: compat_strcasestr.c,v 1.4 2014/12/11 09:19:32 schwarze Exp 	*/
+/*	NetBSD: strcasestr.c,v 1.3 2005/11/29 03:12:00 christos Exp 	*/
 
 /*-
  * Copyright (c) 1990, 1993

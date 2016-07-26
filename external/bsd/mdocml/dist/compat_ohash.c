@@ -30,6 +30,7 @@ int dummy;
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include "main.h"
 #include "compat_ohash.h"
 
 struct _ohash_record {
@@ -127,7 +128,7 @@ ohash_resize(struct ohash *h)
 void *
 ohash_remove(struct ohash *h, unsigned int i)
 {
-	void		*result = (void *)h->t[i].p;
+	void		*result = UNCONST(h->t[i].p);
 
 	if (result == NULL || result == DELETED)
 		return NULL;
@@ -148,7 +149,7 @@ ohash_find(struct ohash *h, unsigned int i)
 	if (h->t[i].p == DELETED)
 		return NULL;
 	else
-		return (void *)h->t[i].p;
+		return UNCONST(h->t[i].p);
 }
 
 void *
@@ -187,7 +188,7 @@ ohash_next(struct ohash *h, unsigned int *pos)
 {
 	for (; *pos < h->size; (*pos)++)
 		if (h->t[*pos].p != DELETED && h->t[*pos].p != NULL)
-			return (void *)h->t[(*pos)++].p;
+			return UNCONST(h->t[(*pos)++].p);
 	return NULL;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.171 2016/07/13 09:56:20 hannken Exp $	*/
+/*	$NetBSD: route.c,v 1.171.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171 2016/07/13 09:56:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.171.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1160,12 +1160,12 @@ rt_timer_init(void)
 	assert(rt_init_done == 0);
 
 	LIST_INIT(&rttimer_queue_head);
-	callout_init(&rt_timer_ch, 0);
-	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
+	callout_init(&rt_timer_ch, CALLOUT_MPSAFE);
 	error = workqueue_create(&rt_timer_wq, "rt_timer",
 	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
+	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 	rt_init_done = 1;
 }
 

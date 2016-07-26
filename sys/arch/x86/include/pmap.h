@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58 2016/07/01 11:10:48 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.58.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -209,6 +209,7 @@ struct pmap {
 extern u_long PDPpaddr;
 
 extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
+extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
 extern long nkptp[PTP_LEVELS];
 
 /*

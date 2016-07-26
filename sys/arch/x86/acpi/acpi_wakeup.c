@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.39 2015/08/18 10:42:41 christos Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39 2015/08/18 10:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39 2015/08/18 10:42:41 christos Ex
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39 2015/08/18 10:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,10 +165,8 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, ci->ci_suspend_cr4);
-#else
-	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 #endif
-
+	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 	WAKECODE_FIXUP(WAKEUP_curcpu, void *, ci);
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);

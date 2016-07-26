@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.2 2016/07/19 06:26:59 pgoyette Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.16.2.3 2016/07/26 03:24:22 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.2 2016/07/19 06:26:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.16.2.3 2016/07/26 03:24:22 pgoyette Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -2208,20 +2208,12 @@ ipl_init(void *opaque)
 
 #ifdef _MODULE
 	/*
-	 * Insert ourself into the cdevsw list.  It's OK if we are
-	 * already there, since this will happen when our module is
-	 * built-in to the kernel.  (We could skip the insert in
-	 * that case, but that would break the possibility of a
-	 * unload/re-load sequence for the built-in module, which
-	 * corresponds to disable/re-enable.)
+	 * Insert ourself into the cdevsw list.
 	 */
 	error = devsw_attach("ipl", NULL, &ipl_bmaj, &ipl_cdevsw, &ipl_cmaj);
-	if (error == EEXIST)
-		error = 0;
-#endif
-
 	if (error)
 		ipl_fini(opaque);
+#endif
 
 	return error;
 }

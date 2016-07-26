@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.22 2016/05/12 09:40:23 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.22.2.1 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -116,7 +116,6 @@
 	.global _C_LABEL(cpu_spinup_trampoline_end)
 	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
-	.global _C_LABEL(local_apic)
 
 	.text
 	.align 4,0x0
