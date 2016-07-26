@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.28 2016/07/26 07:30:16 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.29 2016/07/26 08:13:57 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.28 2016/07/26 07:30:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.29 2016/07/26 08:13:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,35 +607,6 @@ sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	return (error == 0);
 }
 
-MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec,sysmon_envsys");
-
-#ifdef _MODULE
-#include "ioconf.c"
-#endif
-
-static int
-sdtemp_modcmd(modcmd_t cmd, void *opaque)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_init_component(cfdriver_ioconf_sdtemp,
-		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
-#endif
-		return error;
-	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		error = config_fini_component(cfdriver_ioconf_sdtemp,
-		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
-#endif
-		return error;
-	default:
-		return ENOTTY;
-	}
-}
-
 /* Device dependent config functions */
 
 static void
@@ -692,4 +663,33 @@ sdtemp_config_idt(struct sdtemp_softc *sc)
 	else
 		aprint_error("%s: error %d writing resolution register\n",
 		    device_xname(sc->sc_dev), rv);
+}
+
+MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec,sysmon_envsys");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+sdtemp_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_init_component(cfdriver_ioconf_sdtemp,
+		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_sdtemp,
+		    cfattach_ioconf_sdtemp, cfdata_ioconf_sdtemp);
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
