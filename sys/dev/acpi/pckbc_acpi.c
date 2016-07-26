@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.34.10.1 2016/07/26 03:24:20 pgoyette Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.34.10.2 2016/07/26 07:44:21 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.34.10.1 2016/07/26 03:24:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.34.10.2 2016/07/26 07:44:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -234,7 +234,7 @@ out:
 static void
 pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
-	device_t self;
+	device_t self = NULL;
 	struct pckbc_acpi_softc *psc;
 	isa_chipset_tag_t ic = NULL;
 	void *rv = NULL;
@@ -245,7 +245,11 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	 * Note we're always called with sc == first.
 	 */
 	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
-		psc = device_lookup_private_acquire(&pckbc_cd, i, &self);
+		self = device_lookup_acquire(&pckbc_cd, i);
+		if (self == NULL)
+			psc = NULL;
+		else
+			psc = device_private(self);
 		if (psc && psc->sc_slot == slot) {
 			irq = psc->sc_irq;
 			ist = psc->sc_ist;
@@ -263,7 +267,8 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 		aprint_normal_dev(sc->sc_dv, "using irq %d for %s slot\n",
 		    irq, pckbc_slot_names[slot]);
 	}
-	device_release(self);
+	if (self != NULL)
+		device_release(self);
 }
 
 static void
