@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.113.2.2 2016/07/19 06:26:59 pgoyette Exp $	*/
+/*	$NetBSD: ucom.c,v 1.113.2.3 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113.2.2 2016/07/19 06:26:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113.2.3 2016/07/26 05:54:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ dev_type_tty(ucomtty);
 dev_type_poll(ucompoll);
 
 const struct cdevsw ucom_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = ucomopen,
 	.d_close = ucomclose,
 	.d_read = ucomread,

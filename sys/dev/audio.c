@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.268.2.4 2016/07/26 03:52:14 pgoyette Exp $	*/
+/*	$NetBSD: audio.c,v 1.268.2.5 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268.2.4 2016/07/26 03:52:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.268.2.5 2016/07/26 05:54:39 pgoyette Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -348,7 +348,7 @@ dev_type_mmap(audiommap);
 dev_type_kqfilter(audiokqfilter);
 
 const struct cdevsw audio_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = audioopen,
 	.d_close = audioclose,
 	.d_read = audioread,

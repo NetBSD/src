@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.76.2.3 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.2 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.3 2016/07/26 05:54:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -107,7 +107,7 @@ static dev_type_strategy(mdstrategy);
 static dev_type_size(mdsize);
 
 const struct bdevsw md_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = mdopen,
 	.d_close = mdclose,
 	.d_strategy = mdstrategy,
@@ -119,7 +119,7 @@ const struct bdevsw md_bdevsw = {
 };
 
 const struct cdevsw md_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = mdopen,
 	.d_close = mdclose,
 	.d_read = mdread,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.37.2.2 2016/07/19 06:27:00 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37.2.3 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.2.2 2016/07/19 06:27:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.2.3 2016/07/26 05:54:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37.2.2 2016/07/19 06:27:00 pgoyette Ex
 
 #ifdef NO_DEV_PTM
 const struct cdevsw ptm_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = noopen,
 	.d_close = noclose,
 	.d_read = noread,
@@ -429,7 +429,7 @@ bad2:
 }
 
 const struct cdevsw ptm_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = ptmopen,
 	.d_close = ptmclose,
 	.d_read = noread,

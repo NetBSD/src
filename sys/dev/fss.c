@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.93.2.3 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.2 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.3 2016/07/26 05:54:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static struct vfs_hooks fss_vfs_hooks = {
 };
 
 const struct bdevsw fss_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = fss_open,
 	.d_close = fss_close,
 	.d_strategy = fss_strategy,
@@ -112,7 +112,7 @@ const struct bdevsw fss_bdevsw = {
 };
 
 const struct cdevsw fss_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = fss_open,
 	.d_close = fss_close,
 	.d_read = fss_read,

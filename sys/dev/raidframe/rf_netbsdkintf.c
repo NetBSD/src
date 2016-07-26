@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.5 2016/07/20 23:47:56 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.345.2.6 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.5 2016/07/20 23:47:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.345.2.6 2016/07/26 05:54:39 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -218,7 +218,7 @@ static dev_type_dump(raiddump);
 static dev_type_size(raidsize);
 
 const struct bdevsw raid_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_strategy = raidstrategy,
@@ -230,7 +230,7 @@ const struct bdevsw raid_bdevsw = {
 };
 
 const struct cdevsw raid_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = raidopen,
 	.d_close = raidclose,
 	.d_read = raidread,
