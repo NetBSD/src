@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142.2.3 2016/07/20 23:47:57 pgoyette Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.2.4 2016/07/26 05:54:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.3 2016/07/20 23:47:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.4 2016/07/26 05:54:40 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -113,7 +113,7 @@ dev_type_ioctl(ptyioctl);
 dev_type_tty(ptytty);
 
 const struct cdevsw ptc_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = ptcopen,
 	.d_close = ptcclose,
 	.d_read = ptcread,
@@ -129,7 +129,7 @@ const struct cdevsw ptc_cdevsw = {
 };
 
 const struct cdevsw pts_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = ptsopen,
 	.d_close = ptsclose,
 	.d_read = ptsread,

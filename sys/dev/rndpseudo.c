@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.35.2.2 2016/07/19 06:26:58 pgoyette Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.35.2.3 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.2.2 2016/07/19 06:26:58 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35.2.3 2016/07/26 05:54:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -111,7 +111,7 @@ static percpu_t *percpu_urandom_cprng __read_mostly;
 dev_type_open(rndopen);
 
 const struct cdevsw rnd_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = rndopen,
 	.d_close = noclose,
 	.d_read = noread,

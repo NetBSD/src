@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.25.2.3 2016/07/19 06:26:59 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.25.2.4 2016/07/26 05:54:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.3 2016/07/19 06:26:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25.2.4 2016/07/26 05:54:39 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,7 @@ dev_type_close(pad_close);
 dev_type_read(pad_read);
 
 const struct cdevsw pad_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = pad_open,
 	.d_close = pad_close,
 	.d_read = pad_read,

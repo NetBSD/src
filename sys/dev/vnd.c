@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.6 2016/07/26 04:30:50 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.7 2016/07/26 05:54:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.6 2016/07/26 04:30:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.7 2016/07/26 05:54:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -199,7 +199,7 @@ static dev_type_dump(vnddump);
 static dev_type_size(vndsize);
 
 const struct bdevsw vnd_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = vndopen,
 	.d_close = vndclose,
 	.d_strategy = vndstrategy,
@@ -211,7 +211,7 @@ const struct bdevsw vnd_bdevsw = {
 };
 
 const struct cdevsw vnd_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = vndopen,
 	.d_close = vndclose,
 	.d_read = vndread,

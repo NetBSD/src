@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.15 2016/07/26 03:24:20 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.16 2016/07/26 05:54:39 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.15 2016/07/26 03:24:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.16 2016/07/26 05:54:39 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,7 +72,7 @@ static dev_type_dump(cgddump);
 static dev_type_size(cgdsize);
 
 const struct bdevsw cgd_bdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = cgdopen,
 	.d_close = cgdclose,
 	.d_strategy = cgdstrategy,
@@ -84,7 +84,7 @@ const struct bdevsw cgd_bdevsw = {
 };
 
 const struct cdevsw cgd_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open = cgdopen,
 	.d_close = cgdclose,
 	.d_read = cgdread,
