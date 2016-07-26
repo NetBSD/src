@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.337 2016/07/08 06:15:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.338 2016/07/26 08:34:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337 2016/07/08 06:15:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.338 2016/07/26 08:34:55 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,7 +381,7 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
 			else
-				downmatch++;
+				(*downmatch)++;
 		}
 	}
 
