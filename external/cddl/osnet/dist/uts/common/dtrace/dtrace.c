@@ -15340,7 +15340,7 @@ static dev_type_open(dtrace_open);
 /* Just opens, clones to the fileops below */
 
 const struct cdevsw dtrace_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open		= dtrace_open,
 	.d_close	= noclose,
 	.d_read		= noread,

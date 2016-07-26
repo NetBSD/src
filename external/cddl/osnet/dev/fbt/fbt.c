@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt.c,v 1.18.2.4 2016/07/19 06:27:00 pgoyette Exp $	*/
+/*	$NetBSD: fbt.c,v 1.18.2.5 2016/07/26 06:17:26 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -153,7 +153,7 @@ static void	fbt_resume(void *, dtrace_id_t, void *);
 #define	FBT_PROBETAB_SIZE	0x8000		/* 32k entries -- 128K total */
 
 static const struct cdevsw fbt_cdevsw = {
-	LOCALCOUNT_INITIALIZER
+	DEVSW_MODULE_INIT
 	.d_open		= fbt_open,
 	.d_close	= noclose,
 	.d_read		= noread,
