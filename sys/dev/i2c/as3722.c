@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.4 2015/12/13 17:15:06 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.4.4.1 2016/07/26 03:24:21 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.4 2015/12/13 17:15:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.4.4.1 2016/07/26 03:24:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ as3722_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = ia->ia_addr;
 
 	aprint_naive("\n");
-	aprint_normal(": AMS AS3822\n");
+	aprint_normal(": AMS AS3722\n");
 
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	error = as3722_write(sc, AS3722_GPIO0_CTRL_REG,

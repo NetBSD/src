@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.17 2016/07/14 15:50:31 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.17.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.17 2016/07/14 15:50:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.17.2.1 2016/07/26 03:24:24 pgoyette Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -204,10 +204,12 @@ pmap_tlb_intersecting_onproc_p(pmap_t pm, struct pmap_tlb_info *ti)
 #endif
 
 static void
-pmap_tlb_pai_check(struct pmap_tlb_info *ti)
+pmap_tlb_pai_check(struct pmap_tlb_info *ti, bool locked_p)
 {
 #ifdef DIAGNOSTIC
 	struct pmap_asid_info *pai;
+	if (!locked_p)
+		TLBINFO_LOCK(ti);
 	LIST_FOREACH(pai, &ti->ti_pais, pai_link) {
 		KASSERT(pai != NULL);
 		KASSERT(PAI_PMAP(pai, ti) != pmap_kernel());
@@ -220,6 +222,8 @@ pmap_tlb_pai_check(struct pmap_tlb_info *ti)
 		KASSERT(pmap_tlb_intersecting_active_p(PAI_PMAP(pai, ti), ti));
 #endif
 	}
+	if (!locked_p)
+		TLBINFO_UNLOCK(ti);
 #endif
 }
 
@@ -412,7 +416,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist, "(ti=%p, op=%u)", ti, op, 0, 0);
 
-	pmap_tlb_pai_check(ti);
+	pmap_tlb_pai_check(ti, true);
 
 	ti->ti_evcnt_asid_reinits.ev_count++;
 
@@ -907,7 +911,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 	TLBINFO_LOCK(ti);
 	KASSERT(pai->pai_asid <= KERNEL_PID || pai->pai_link.le_prev != NULL);
 	KASSERT(pai->pai_asid > KERNEL_PID || pai->pai_link.le_prev == NULL);
-	pmap_tlb_pai_check(ti);
+	pmap_tlb_pai_check(ti, true);
 	if (__predict_false(!PMAP_PAI_ASIDVALID_P(pai, ti))) {
 		/*
 		 * If we've run out ASIDs, reinitialize the ASID space.
@@ -925,7 +929,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		pmap_tlb_asid_alloc(ti, pm, pai);
 		UVMHIST_LOG(maphist, "allocated asid %#x", pai->pai_asid, 0, 0, 0);
 	}
-	pmap_tlb_pai_check(ti);
+	pmap_tlb_pai_check(ti, true);
 #if defined(MULTIPROCESSOR)
 	KASSERT(kcpuset_isset(pm->pm_active, cpu_index(ci)));
 #endif
@@ -981,7 +985,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 	curcpu()->ci_pmap_asid_cur = KERNEL_PID;
 	UVMHIST_LOG(maphist, " <-- done (pm=%p)", pm, 0, 0, 0);
 	tlb_set_asid(KERNEL_PID);
-	pmap_tlb_pai_check(cpu_tlb_info(curcpu()));
+	pmap_tlb_pai_check(cpu_tlb_info(curcpu()), false);
 #if defined(DEBUG)
 	pmap_tlb_asid_check();
 #endif

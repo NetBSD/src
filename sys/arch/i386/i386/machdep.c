@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.758 2016/07/13 15:53:27 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.758.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758 2016/07/13 15:53:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.758.2.1 2016/07/26 03:24:17 pgoyette Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1129,9 +1129,7 @@ init386(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
-	extern struct extent *iomem_ex;
 	struct region_descriptor region;
-	struct btinfo_memmap *bim;
 #endif
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -1246,24 +1244,11 @@ init386(paddr_t first_avail)
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
 #ifndef XEN
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed to us by
-	 * the boot program).
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
+	/* Initialize the memory clusters. */
+	init_x86_clusters();
 
-	/*
-	 * If initx86_parse_memmap didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
-	initx86_load_memmap(first_avail);
-
+	/* Internalize the physical pages into the VM system. */
+	init_x86_vm(first_avail);
 #else /* !XEN */
 	XENPRINTK(("load the memory cluster 0x%" PRIx64 " (%" PRId64 ") - "
 	    "0x%" PRIx64 " (%" PRId64 ")\n",

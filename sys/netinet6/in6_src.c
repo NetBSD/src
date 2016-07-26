@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.63 2016/07/04 06:48:14 ozaki-r Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.63.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.63 2016/07/04 06:48:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.63.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -240,7 +240,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				goto exit;
 		}
 
-		ia6 = (struct in6_ifaddr *)ifa_ifwithaddr((struct sockaddr *)(&srcsock));
+		ia6 = ifatoia6(ifa_ifwithaddr(sin6tosa(&srcsock)));
 		if (ia6 == NULL ||
 		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY))) {
 			*errorp = EADDRNOTAVAIL;

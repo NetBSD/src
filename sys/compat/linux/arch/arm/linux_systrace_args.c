@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.1 2015/03/23 07:54:44 ozaki-r Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.1.4.1 2016/07/26 03:24:20 pgoyette Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -5227,7 +5227,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* sys_readlink */
 	case 85:
 		if (ndx == 0 || ndx == 1)
-			p = "int";
+			p = "ssize_t";
 		break;
 #ifdef EXEC_AOUT
 	/* linux_sys_uselib */
@@ -5937,7 +5937,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* sys_readlinkat */
 	case 332:
 		if (ndx == 0 || ndx == 1)
-			p = "int";
+			p = "ssize_t";
 		break;
 	/* linux_sys_fchmodat */
 	case 333:

@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.38 2016/06/10 23:29:20 christos Exp $	*/
+/*	$NetBSD: limits.h,v 1.38.2.1 2016/07/26 03:24:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -94,8 +94,6 @@
 
 #define	_POSIX_TIMER_MAX	32
 #define	_POSIX_SEM_NSEMS_MAX	256
-#define	_POSIX_CPUTIME		200112L
-#define	_POSIX_THREAD_CPUTIME	200112L
 #define	_POSIX_DELAYTIMER_MAX	32
 #define	_POSIX_TTY_NAME_MAX	9
 #define	_POSIX_TZNAME_MAX	6

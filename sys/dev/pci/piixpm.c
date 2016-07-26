@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.49 2016/07/11 11:31:51 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.49.2.1 2016/07/26 03:24:21 pgoyette Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49 2016/07/11 11:31:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.49.2.1 2016/07/26 03:24:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,11 +144,13 @@ piixpm_match(device_t parent, cfdata_t match, void *aux)
 		case PCI_PRODUCT_SERVERWORKS_HT1000SB:
 			return 1;
 		}
+		break;
 	case PCI_VENDOR_AMD:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_AMD_HUDSON_SMB:
 			return 1;
 		}
+		break;
 	}
 
 	return 0;

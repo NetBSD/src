@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.5 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.5.46.1 2016/07/26 03:24:15 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.5 2008/04/28 20:22:55 martin Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.5.46.1 2016/07/26 03:24:15 pgoyette Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -66,7 +66,6 @@ ENTRY(__setjmp14,0)
 	stw	%r1, 28(%arg0)		; sc.sc_pcsqh = %sr0
 	ldo	4(%rp), %r1
 	stw	%r1, 32(%arg0)		; sc.sc_pcoqt = %rp + 4
-#define PSW_MBS (PSW_C|PSW_Q|PSW_P|PSW_D|PSW_I)
 	ldil	L%PSW_MBS, %r1
 	ldo	R%PSW_MBS(%r1), %r1
 	stw	%r1, 36(%arg0)		; set sc.sc_ps

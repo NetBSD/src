@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpd.c,v 1.44 2015/05/05 05:50:31 buhrow Exp $	*/
+/*	$NetBSD: tftpd.c,v 1.44.2.1 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tftpd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tftpd.c,v 1.44 2015/05/05 05:50:31 buhrow Exp $");
+__RCSID("$NetBSD: tftpd.c,v 1.44.2.1 2016/07/26 03:24:16 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1018,6 +1018,7 @@ send_data:
 				(void) synchnet(peer, tftp_blksize);
 				if (ap->th_block == (u_short)(block - 1))
 					goto send_data;
+				/* FALLTHROUGH */
 			default:
 				syslog(LOG_INFO, "Received %s in sendfile\n",
 				    opcode(dp->th_opcode));

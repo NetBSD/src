@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2011/10/11 19:20:14 joerg Exp $
+# $NetBSD: Makefile,v 1.7.26.1 2016/07/26 03:24:15 pgoyette Exp $
 
 MAN=	mandoc_man.7 mandoc_char.7 mandoc_eqn.7 mandoc_mdoc.7 \
 	mandoc_roff.7 mandoc_tbl.7
@@ -34,7 +34,7 @@ CLEANFILES+=	mandoc_eqn.7 mandoc_man.7 mandoc_mdoc.7 \
 		mandoc_roff.7 mandoc_tbl.7
 
 .if (${MKHTML} != "no") && (${MKMAN} != "no")
-FILES=		${DISTDIR}/example.style.css
+FILES=		${DISTDIR}/mandoc.css
 FILESDIR=	/usr/share/man
 FILESNAME=	style.css
 .endif

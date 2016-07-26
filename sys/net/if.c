@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.354 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.354.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.354.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -637,11 +637,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-#ifdef NET_MPSAFE
 	ifp->if_snd.ifq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
-#else
-	ifp->if_snd.ifq_lock = NULL;
-#endif
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	(void)pfil_run_hooks(if_pfil,
@@ -1160,8 +1156,7 @@ if_detach(struct ifnet *ifp)
 		altq_detach(&ifp->if_snd);
 #endif
 
-	if (ifp->if_snd.ifq_lock)
-		mutex_obj_free(ifp->if_snd.ifq_lock);
+	mutex_obj_free(ifp->if_snd.ifq_lock);
 
 #if NCARP > 0
 	/* Remove the interface from any carp group it is a part of.  */
@@ -2879,17 +2874,7 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 
 	s = splnet();
 
-	/*
-	 * If NET_MPSAFE is not defined , IFQ_LOCK() is nop.
-	 * use KERNEL_LOCK instead of ifq_lock.
-	 */
-#ifndef NET_MPSAFE
-	KERNEL_LOCK(1, NULL);
-#endif
 	IFQ_ENQUEUE(&ifp->if_snd, m, error);
-#ifndef NET_MPSAFE
-	KERNEL_UNLOCK_ONE(NULL);
-#endif
 	if (error != 0) {
 		/* mbuf is already freed */
 		goto out;

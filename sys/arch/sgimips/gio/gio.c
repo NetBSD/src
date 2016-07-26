@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.34 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: gio.c,v 1.34.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.34 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.34.2.1 2016/07/26 03:24:19 pgoyette Exp $");
 
 #include "opt_ddb.h"
 
@@ -207,14 +207,17 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
+			continue;
 		ga.ga_iot = normal_memt;
-		/* XXX bus_space_map() */
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
 
-		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
-			continue;
 		
 		if (config_found_sm_loc(self, "gio", NULL, &ga, gio_print,
 		    gio_submatch)) {
@@ -252,12 +255,15 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = slot_bases[i].slot;
 		ga.ga_addr = slot_bases[i].base;
-		ga.ga_iot = normal_memt;
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
-		ga.ga_dmat = &sgimips_default_bus_dma_tag;
-
-		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
 			continue;
+		ga.ga_iot = normal_memt;
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
+		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 
 		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
 
@@ -366,14 +372,17 @@ gio_cnattach(void)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
+			continue;
 		ga.ga_iot = normal_memt;
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
 		
-		if (platform.badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
-			continue;
-
 #if (NGRTWO > 0)
 		if (grtwo_cnattach(&ga) == 0)
 			return 0;

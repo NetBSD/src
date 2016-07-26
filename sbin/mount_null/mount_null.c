@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.19 2011/08/29 14:35:02 joerg Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.19.24.1 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_null.c,v 1.19 2011/08/29 14:35:02 joerg Exp $");
+__RCSID("$NetBSD: mount_null.c,v 1.19.24.1 2016/07/26 03:24:16 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,6 @@ static const struct mntopt mopts[] = {
 };
 
 int	mount_null(int argc, char **argv);
-static int	subdir(const char *, const char *);
 __dead static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
@@ -117,8 +116,8 @@ mount_null(int argc, char *argv[])
 		warnx("using \"%s\" instead.", canon_dir);
 	}
 
-	if (subdir(target, canon_dir) || subdir(canon_dir, target))
-		errx(1, "%s (%s) and %s (%s) are not distinct paths",
+	if (strcmp(target, canon_dir) == 0)
+		errx(1, "%s (%s) and %s (%s) are identical paths",
 		    argv[0], target, argv[1], canon_dir);
 
 	args.la.target = target;
@@ -126,21 +125,6 @@ mount_null(int argc, char *argv[])
 	if (mount(MOUNT_NULL, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(1, "%s on %s", target, canon_dir);
 	exit(0);
-}
-
-static int
-subdir(const char *p, const char *dir)
-{
-	int l;
-
-	l = strlen(dir);
-	if (l <= 1)
-		return (1);
-
-	if ((strncmp(p, dir, l) == 0) && (p[l] == '/' || p[l] == '\0'))
-		return (1);
-
-	return (0);
 }
 
 static void

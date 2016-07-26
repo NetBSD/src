@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.191 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.191.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -539,6 +539,53 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 	return 0;
 }
 
+static struct ifaddr *
+route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
+    struct ifnet **ifp)
+{
+	struct ifaddr *ifa = NULL;
+
+	*ifp = NULL;
+	if (info.rti_info[RTAX_IFP] != NULL) {
+		ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP]);
+		if (ifa == NULL)
+			goto next;
+		*ifp = ifa->ifa_ifp;
+		if (info.rti_info[RTAX_IFA] == NULL &&
+		    info.rti_info[RTAX_GATEWAY] == NULL)
+			goto next;
+		if (info.rti_info[RTAX_IFA] == NULL) {
+			/* route change <dst> <gw> -ifp <if> */
+			ifa = ifaof_ifpforaddr(info.rti_info[RTAX_GATEWAY],
+			    *ifp);
+		} else {
+			/* route change <dst> -ifp <if> -ifa <addr> */
+			ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]);
+			if (ifa != NULL)
+				goto out;
+			ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA],
+			    *ifp);
+		}
+		goto out;
+	}
+next:
+	if (info.rti_info[RTAX_IFA] != NULL) {
+		/* route change <dst> <gw> -ifa <addr> */
+		ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]);
+		if (ifa != NULL)
+			goto out;
+	}
+	if (info.rti_info[RTAX_GATEWAY] != NULL) {
+		/* route change <dst> <gw> */
+		ifa = ifa_ifwithroute(rt->rt_flags, rt_getkey(rt),
+		    info.rti_info[RTAX_GATEWAY]);
+	}
+out:
+	if (ifa != NULL && *ifp == NULL)
+		*ifp = ifa->ifa_ifp;
+	return ifa;
+}
+
 /*ARGSUSED*/
 int
 COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
@@ -783,24 +830,7 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			/* new gateway could require new ifaddr, ifp;
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
-			if (info.rti_info[RTAX_IFP] &&
-			    (ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP])) &&
-			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] ||
-			    info.rti_info[RTAX_GATEWAY])) {
-				if (info.rti_info[RTAX_IFA] == NULL ||
-				    (ifa = ifa_ifwithaddr(
-				    info.rti_info[RTAX_IFA])) == NULL)
-					ifa = ifaof_ifpforaddr(
-					    info.rti_info[RTAX_IFA] ?
-					    info.rti_info[RTAX_IFA] :
-					    info.rti_info[RTAX_GATEWAY], ifp);
-			} else if ((info.rti_info[RTAX_IFA] &&
-			    (ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]))) ||
-			    (info.rti_info[RTAX_GATEWAY] &&
-			    (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY])))) {
-				ifp = ifa->ifa_ifp;
-			}
+			ifa = route_output_get_ifa(info, rt, &ifp);
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {

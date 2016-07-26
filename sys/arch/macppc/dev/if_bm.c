@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.48 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.48.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.48 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.48.2.1 2016/07/26 03:24:17 pgoyette Exp $");
 
 #include "opt_inet.h"
 
@@ -214,8 +214,9 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_txdma = mapiodev(ca->ca_reg[2], PAGE_SIZE, false);
 	sc->sc_rxdma = mapiodev(ca->ca_reg[4], PAGE_SIZE, false);
-	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t));
-	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t));
+	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t), NULL);
+	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t),
+	    NULL);
 	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
 	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||

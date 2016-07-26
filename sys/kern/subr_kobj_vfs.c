@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj_vfs.c,v 1.9 2016/07/09 07:25:00 maxv Exp $	*/
+/*	$NetBSD: subr_kobj_vfs.c,v 1.9.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include <sys/vnode.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.9 2016/07/09 07:25:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj_vfs.c,v 1.9.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 static void
 kobj_close_vfs(kobj_t ko)
@@ -113,6 +113,10 @@ kobj_read_vfs(kobj_t ko, void **basep, size_t size, off_t off,
 		if ((uintptr_t)base >= (uintptr_t)ko->ko_data_address &&
 		    (uintptr_t)base + size <=
 		    (uintptr_t)ko->ko_data_address + ko->ko_data_size)
+			ok = true;
+		if ((uintptr_t)base >= (uintptr_t)ko->ko_rodata_address &&
+		    (uintptr_t)base + size <=
+		    (uintptr_t)ko->ko_rodata_address + ko->ko_rodata_size)
 			ok = true;
 		if (!ok)
 			panic("kobj_read_vfs: not in a dedicated segment");

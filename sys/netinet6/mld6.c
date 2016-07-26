@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.72 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: mld6.c,v 1.72.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.72 2016/07/08 04:33:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.72.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -723,6 +723,8 @@ in6_delmulti(struct in6_multi *in6m)
 	mld_stoptimer(in6m);
 
 	if (--in6m->in6m_refcount == 0) {
+		int _s;
+
 		/*
 		 * No remaining claims to this record; let MLD6 know
 		 * that we are leaving the multicast group.
@@ -742,6 +744,7 @@ in6_delmulti(struct in6_multi *in6m)
 		 * Delete all references of this multicasting group from
 		 * the membership arrays
 		 */
+		_s = pserialize_read_enter();
 		IN6_ADDRLIST_READER_FOREACH(ia) {
 			struct in6_multi_mship *imm;
 			LIST_FOREACH(imm, &ia->ia6_memberships, i6mm_chain) {
@@ -749,6 +752,7 @@ in6_delmulti(struct in6_multi *in6m)
 					imm->i6mm_maddr = NULL;
 			}
 		}
+		pserialize_read_exit(_s);
 
 		/*
 		 * Notify the network driver to update its multicast

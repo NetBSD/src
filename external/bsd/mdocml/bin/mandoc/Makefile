@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2015/12/18 14:33:54 christos Exp $
+# $NetBSD: Makefile,v 1.10.2.1 2016/07/26 03:24:14 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -11,8 +11,8 @@ SRCS=		main.c out.c tree.c \
 		term_ps.c tbl_term.c
 
 .ifndef HOSTPROG
-DPADD+= 	${MDOCMLLIB.mandoc}
-LDADD+= 	-L${MDOCMLOBJDIR.mandoc} -lmandoc
+DPADD+= 	${MDOCMLLIB.mandoc} ${LIBZ}
+LDADD+= 	-L${MDOCMLOBJDIR.mandoc} -lmandoc -lz
 CPPFLAGS+=	-DUSE_WCHAR
 .else
 SRCS.libmandoc!=cd ${.PARSEDIR}/../../lib/libmandoc && ${MAKE} -V '$${SRCS}'

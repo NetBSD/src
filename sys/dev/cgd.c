@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.14 2016/07/25 03:40:52 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.15 2016/07/26 03:24:20 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.14 2016/07/25 03:40:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.15 2016/07/26 03:24:20 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1147,9 +1147,14 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 	        if (error) {
 			config_cfdriver_detach(&cgd_cd);
 			aprint_error("%s: unable to register cfattach for "
-			    "%s, error %d", __func__, cgd_cd.cd_name, error);
+			    "%s, error %d\n", __func__, cgd_cd.cd_name, error);
 			break;
 		}
+		/*
+		 * Attach the {b,c}devsw's
+		 */
+		error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+		    &cgd_cdevsw, &cgd_cmajor);
 
 		/*
 		 * Attach the {b,c}devsw's

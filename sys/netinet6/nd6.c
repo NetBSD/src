@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.203 2016/07/11 07:37:00 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.203.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.203 2016/07/11 07:37:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.203.2.1 2016/07/26 03:24:23 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -951,7 +951,7 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 		if (!(pr->ndpr_stateflags & NDPRF_ONLINK)) {
 			struct rtentry *rt;
 
-			rt = rtalloc1((struct sockaddr *)&pr->ndpr_prefix, 0);
+			rt = rtalloc1(sin6tosa(&pr->ndpr_prefix), 0);
 			if (rt == NULL)
 				continue;
 			/*
@@ -979,7 +979,7 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address is assigned on the node of the other side of
 	 * a p2p interface, the address should be a neighbor.
 	 */
-	dstaddr = ifa_ifwithdstaddr((const struct sockaddr *)addr);
+	dstaddr = ifa_ifwithdstaddr(sin6tocsa(addr));
 	if (dstaddr != NULL) {
 		if (dstaddr->ifa_ifp == ifp) {
 #ifdef __FreeBSD__
@@ -2387,7 +2387,7 @@ nd6_add_ifa_lle(struct in6_ifaddr *ia)
 
 	IF_AFDATA_WLOCK(ifp);
 	ln = lla_create(LLTABLE6(ifp), LLE_IFADDR | LLE_EXCLUSIVE,
-	    (struct sockaddr *)&ia->ia_addr);
+	    sin6tosa(&ia->ia_addr));
 	IF_AFDATA_WUNLOCK(ifp);
 	if (ln == NULL)
 		return ENOBUFS;
@@ -2413,8 +2413,8 @@ nd6_rem_ifa_lle(struct in6_ifaddr *ia)
 
 	memcpy(&addr, &ia->ia_addr, sizeof(ia->ia_addr));
 	memcpy(&mask, &ia->ia_prefixmask, sizeof(ia->ia_prefixmask));
-	lltable_prefix_free(AF_INET6, (struct sockaddr *)&addr,
-	    (struct sockaddr *)&mask, LLE_STATIC);
+	lltable_prefix_free(AF_INET6, sin6tosa(&addr), sin6tosa(&mask),
+	    LLE_STATIC);
 }
 
 int

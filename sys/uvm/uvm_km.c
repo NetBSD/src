@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.139 2015/02/06 18:19:22 maxv Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.139.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.139 2015/02/06 18:19:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.139.2.1 2016/07/26 03:24:24 pgoyette Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -705,6 +705,16 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 
 	UVMHIST_LOG(maphist,"<- done (kva=0x%x)", kva,0,0,0);
 	return(kva);
+}
+
+/*
+ * uvm_km_protect: change the protection of an allocated area
+ */
+
+int
+uvm_km_protect(struct vm_map *map, vaddr_t addr, vsize_t size, vm_prot_t prot)
+{
+	return uvm_map_protect(map, addr, addr + round_page(size), prot, false);
 }
 
 /*

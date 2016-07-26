@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.27 2016/06/10 13:27:12 ozaki-r Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.27.2.1 2016/07/26 03:24:18 pgoyette Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.27 2016/06/10 13:27:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.27.2.1 2016/07/26 03:24:18 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -791,14 +791,14 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = pq3etsec_ifstop;
 	IFQ_SET_READY(&ifp->if_snd);
 
-	pq3etsec_ifstop(ifp, true);
-
 	/*
 	 * Attach the interface.
 	 */
 	if_initialize(ifp);
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
+
+	pq3etsec_ifstop(ifp, true);
 
 	evcnt_attach_dynamic(&sc->sc_ev_rx_stall, EVCNT_TYPE_MISC,
 	    NULL, xname, "rx stall");

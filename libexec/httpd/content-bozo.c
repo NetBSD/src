@@ -1,4 +1,4 @@
-/*	$NetBSD: content-bozo.c,v 1.13 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: content-bozo.c,v 1.13.2.1 2016/07/26 03:24:16 pgoyette Exp $	*/
 
 /*	$eterna: content-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -62,16 +62,16 @@ static bozo_content_map_t static_content_map[] = {
 	{ ".pac",	"application/x-ns-proxy-autoconfig", "",	"", NULL },
 	{ ".pa",	"application/x-ns-proxy-autoconfig", "",	"", NULL },
 	{ ".tar",	"multipart/x-tar",		"",		"", NULL },
-	{ ".gtar",	"multipart/x-gtar",		"",		"", NULL },
-	{ ".tar.Z",	"multipart/x-tar",		"x-compress",	"compress", NULL },
-	{ ".tar.gz",	"multipart/x-tar",		"x-gzip",	"gzip", NULL },
-	{ ".taz",	"multipart/x-tar",		"x-gzip",	"gzip", NULL },
-	{ ".tgz",	"multipart/x-tar",		"x-gzip",	"gzip", NULL },
-	{ ".tar.z",	"multipart/x-tar",		"x-pack",	"x-pack", NULL },
-	{ ".Z",		"application/x-compress",	"x-compress",	"compress", NULL },
-	{ ".gz",	"application/x-gzip",		"x-gzip",	"gzip", NULL },
-	{ ".z",		"unknown",			"x-pack",	"x-pack", NULL },
-	{ ".bz2",	"application/x-bzip2",		"x-bzip2",	"x-bzip2", NULL },
+	{ ".gtar",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.Z",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.gz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".taz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tgz",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".tar.z",	"application/x-gtar-compressed", "",		"", NULL },
+	{ ".Z",		"application/x-compress",	"",		"", NULL },
+	{ ".gz",	"application/x-gzip",		"",		"", NULL },
+	{ ".z",		"unknown",			"",		"", NULL },
+	{ ".bz2",	"application/x-bzip2",		"",		"", NULL },
 	{ ".ogg",	"application/x-ogg",		"",		"", NULL },
 	{ ".mkv",	"video/x-matroska",		"",		"", NULL },
 	{ ".xbel",	"text/xml",			"",		"", NULL },

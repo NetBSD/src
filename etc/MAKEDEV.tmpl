@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.181 2016/06/16 15:33:38 kre Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.181.2.1 2016/07/26 03:24:13 pgoyette Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -588,8 +588,8 @@ setup()
 	esac
 
 	# If we are using mknod, then decide what options to pass it.
+	MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
 	if $do_mknod; then
-		MKNOD="${TOOL_MKNOD:-mknod} -F netbsd"
 		if $do_force; then
 			MKNOD="${MKNOD} -R"
 		else

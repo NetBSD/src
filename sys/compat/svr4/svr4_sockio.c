@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.38 2016/07/07 09:32:02 ozaki-r Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.38.2.1 2016/07/26 03:24:20 pgoyette Exp $	 */
 
 /*-
  * Copyright (c) 1995, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.38 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sockio.c,v 1.38.2.1 2016/07/26 03:24:20 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -87,10 +87,12 @@ svr4_count_ifnum(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	int ifnum = 0;
+	int s = pserialize_read_enter();
 
 	IFADDR_READER_FOREACH(ifa, ifp)
 		ifnum++;
 
+	pserialize_read_exit(s);
 	return MAX(1, ifnum);
 }
 
