@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76 2016/01/04 16:24:52 hannken Exp $	*/
+/*	$NetBSD: md.c,v 1.77 2016/07/27 01:09:44 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76 2016/01/04 16:24:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.77 2016/07/27 01:09:44 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -414,12 +414,12 @@ mdstrategy(struct buf *bp)
 
 	sc = device_lookup_private(&md_cd, MD_UNIT(bp->b_dev));
 
-	mutex_enter(&sc->sc_lock);
-
 	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
+
+	mutex_enter(&sc->sc_lock);
 
 	switch (sc->sc_type) {
 #if MEMORY_DISK_SERVER
