@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.8 2016/07/27 11:23:32 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.9 2016/07/27 11:51:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.8 2016/07/27 11:23:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.9 2016/07/27 11:51:57 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -275,6 +275,10 @@ vnd_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
+/*
+ * The caller must hold a reference to the device's localcount.  the
+ * reference is released if the device is available for detach.
+ */
 static int
 vnd_detach(device_t self, int flags)
 {
@@ -291,6 +295,7 @@ vnd_detach(device_t self, int flags)
 	bufq_free(sc->sc_tab);
 	disk_destroy(&sc->sc_dkdev);
 
+	device_release(self);
 	return 0;
 }
 
