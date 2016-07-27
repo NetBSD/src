@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.9 2016/07/27 11:51:57 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.10 2016/07/27 23:17:31 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.9 2016/07/27 11:51:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.10 2016/07/27 23:17:31 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1241,7 +1241,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	self = device_lookup_acquire(&vnd_cd, unit);
-	if (self != NULL)
+	if (self == NULL)
 		return ENXIO;
 	vnd = device_private(self);
 
