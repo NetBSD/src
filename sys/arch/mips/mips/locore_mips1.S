@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.90 2016/07/21 12:17:07 skrll Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.91 2016/07/27 09:32:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+RCSID("$NetBSD: locore_mips1.S,v 1.91 2016/07/27 09:32:35 skrll Exp $")
 
 #include "assym.h"
 
