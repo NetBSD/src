@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.29 2016/07/26 08:13:57 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.30 2016/07/27 09:11:44 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.29 2016/07/26 08:13:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.30 2016/07/27 09:11:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,8 +213,8 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 
 	i = sdtemp_lookup(mfgid, devid);
 	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
-		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%04x "
-		    "rev 0x%02x at address 0x%02x\n", mfgid, devid,
+		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%02x "
+		    "rev 0x%02x at address 0x%02x\n", mfgid, devid >> 8,
 		    devid & 0xff, sc.sc_address);
 		return 0;
 	}
@@ -251,8 +251,8 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 
 	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0)
 		aprint_debug_dev(self,
-		    "mfg 0x%04x dev 0x%04x rev 0x%02x at addr 0x%02x\n",
-		    mfgid, devid, devid & 0xff, ia->ia_addr);
+		    "mfg 0x%04x dev 0x%02x rev 0x%02x at addr 0x%02x\n",
+		    mfgid, devid >> 8, devid & 0xff, ia->ia_addr);
 
 	error = sdtemp_read_16(sc, SDTEMP_REG_CAPABILITY, &sc->sc_capability);
 	aprint_debug_dev(self, "capability reg = %04x\n", sc->sc_capability);
