@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.77 2016/07/27 01:09:44 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.78 2016/07/27 05:14:40 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.77 2016/07/27 01:09:44 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.78 2016/07/27 05:14:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -463,9 +463,9 @@ mdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		break;
 	}
+	mutex_exit(&sc->sc_lock);
 
  done:
-	mutex_exit(&sc->sc_lock);
 
 	biodone(bp);
 }
