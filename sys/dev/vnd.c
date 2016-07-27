@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.7 2016/07/26 05:54:39 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.8 2016/07/27 11:23:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.7 2016/07/26 05:54:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.8 2016/07/27 11:23:32 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -359,12 +359,21 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 		if (sc == NULL)
 			return ENOMEM;
 
+		/*
+		 * get a pointer to the new device_t;  we don't need
+		 * need to _acquire() it, since vnd_spawn() will
+		 * already have taken a reference.
+		 */
+		self = device_lookup(&vnd_cd, unit);
+
 		/* compatibility, keep disklabel after close */
 		sc->sc_flags = VNF_KLABEL;
 	}
 
-	if ((error = vndlock(sc)) != 0)
+	if ((error = vndlock(sc)) != 0) {
+		device_release(self);
 		return error;
+	}
 
 	mutex_enter(&sc->sc_dkdev.dk_openlock);
 
