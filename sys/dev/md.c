@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76.2.4 2016/07/27 01:13:50 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.76.2.5 2016/07/27 03:25:00 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.4 2016/07/27 01:13:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.5 2016/07/27 03:25:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -291,7 +291,7 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		cf->cf_atname = md_cd.cd_name;
 		cf->cf_unit = unit;
 		cf->cf_fstate = FSTATE_STAR;
-		self = config_attach_pseudo(cf));
+		self = config_attach_pseudo(cf);
 		if (self != NULL) {
 			device_acquire(self);
 			sc = device_private(self);
@@ -465,7 +465,7 @@ mdstrategy(struct buf *bp)
 	}
 
 	sc = device_private(self);
-	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
+	if (sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -515,11 +515,11 @@ mdstrategy(struct buf *bp)
 		break;
 	}
 
- done:
 	mutex_exit(&sc->sc_lock);
-
+ done:
 	biodone(bp);
-	device_release(self);
+	if (self != NULL)
+		device_release(self);
 }
 
 static int
