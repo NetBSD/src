@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.74 2016/07/26 05:53:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.75 2016/07/27 04:23:42 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.74 2016/07/26 05:53:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.75 2016/07/27 04:23:42 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -565,7 +565,6 @@ ipflow_invalidate_all(int new_size)
 	return error;
 }
 
-#ifdef GATEWAY
 /*
  * sysctl helper routine for net.inet.ip.maxflows.
  */
@@ -625,7 +624,6 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 
 	return error;
 }
-#endif /* GATEWAY */
 
 static void
 ipflow_sysctl_init(struct sysctllog **clog)
@@ -643,7 +641,6 @@ ipflow_sysctl_init(struct sysctllog **clog)
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
 
-#ifdef GATEWAY
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "maxflows",
@@ -658,5 +655,4 @@ ipflow_sysctl_init(struct sysctllog **clog)
 			sysctl_net_inet_ip_hashsize, 0, &ip_hashsize, 0,
 			CTL_NET, PF_INET, IPPROTO_IP,
 			CTL_CREATE, CTL_EOL);
-#endif /* GATEWAY */
 }
