@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93.2.3 2016/07/26 05:54:39 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.93.2.4 2016/07/27 01:13:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.3 2016/07/26 05:54:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.4 2016/07/27 01:13:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,10 @@ fss_attach(device_t parent, device_t self, void *aux)
 		vfs_hooks_attach(&fss_vfs_hooks);
 }
 
+/*
+ * Caller must hold a reference to the device's localcount.  The
+ * reference is released upon successful exit.
+ */
 static int
 fss_detach(device_t self, int flags)
 {
@@ -193,12 +197,14 @@ fss_detach(device_t self, int flags)
 	disk_destroy(sc->sc_dkdev);
 	free(sc->sc_dkdev, M_DEVBUF);
 
+	device_release(self);
 	return 0;
 }
 
 int
 fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	device_t self;
 	int mflag;
 	cfdata_t cf;
 	struct fss_softc *sc;
@@ -207,15 +213,23 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 
 	mutex_enter(&fss_device_lock);
 
-	sc = device_lookup_private(&fss_cd, minor(dev));
+	self = device_lookup_acquire(&fss_cd, minor(dev));
+	if (self == NULL)
+		sc = NULL;
+	else
+		sc = device_private(self);
+
 	if (sc == NULL) {
 		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 		cf->cf_name = fss_cd.cd_name;
 		cf->cf_atname = fss_cd.cd_name;
 		cf->cf_unit = minor(dev);
 		cf->cf_fstate = FSTATE_STAR;
-		sc = device_private(config_attach_pseudo(cf));
+		self = config_attach_pseudo(cf));
+		device_acquire(self);
+		sc = device_private(self);
 		if (sc == NULL) {
+			device_release(self);
 			mutex_exit(&fss_device_lock);
 			return ENOMEM;
 		}
@@ -228,15 +242,17 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 	mutex_exit(&sc->sc_slock);
 	mutex_exit(&fss_device_lock);
 
+	device_release(sc);
 	return 0;
 }
 
 int
 fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	device_t self = device_lookup_acquire(&fss_cd, minor(dev));
 	int mflag, error;
 	cfdata_t cf;
-	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
+	struct fss_softc *sc = device_private(self);
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 	error = 0;
@@ -248,6 +264,7 @@ restart:
 		sc->sc_flags &= ~mflag;
 		mutex_exit(&sc->sc_slock);
 		mutex_exit(&fss_device_lock);
+		device_release(self);
 		return 0;
 	}
 	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
@@ -260,6 +277,7 @@ restart:
 	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
 		mutex_exit(&sc->sc_slock);
 		mutex_exit(&fss_device_lock);
+		device_release(self);
 		return error;
 	}
 
@@ -272,14 +290,16 @@ restart:
 		free(cf, M_DEVBUF);
 	mutex_exit(&fss_device_lock);
 
+	/* device_release() was called by fss_detach() from config_detach() */
 	return error;
 }
 
 void
 fss_strategy(struct buf *bp)
 {
+	device_t self = device_lookup_acquire(&fss_cd, minor(bp->b_dev));;
 	const bool write = ((bp->b_flags & B_READ) != B_READ);
-	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(bp->b_dev));
+	struct fss_softc *sc = device_private(self);
 
 	mutex_enter(&sc->sc_slock);
 
@@ -290,6 +310,7 @@ fss_strategy(struct buf *bp)
 		bp->b_error = (write ? EROFS : ENXIO);
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
+		device_release(self);
 		return;
 	}
 
@@ -298,6 +319,7 @@ fss_strategy(struct buf *bp)
 	cv_signal(&sc->sc_work_cv);
 
 	mutex_exit(&sc->sc_slock);
+	device_release(self);
 }
 
 int
@@ -315,8 +337,9 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 int
 fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+	device_t self = device_lookup_acquire(&fss_cd, minor(dev));
 	int error;
-	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
+	struct fss_softc *sc = device_private(self);
 	struct fss_set _fss;
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_set50 *fss50 = (struct fss_set50 *)data;
@@ -430,6 +453,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
+	device_release(self);
 	return error;
 }
 
@@ -570,18 +594,22 @@ fss_softc_free(struct fss_softc *sc)
 static void
 fss_unmount_hook(struct mount *mp)
 {
+	device_t self;
 	int i;
 	struct fss_softc *sc;
 
 	mutex_enter(&fss_device_lock);
 	for (i = 0; i < fss_cd.cd_ndevs; i++) {
-		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
+		self = device_lookup_acquire(&fss_cd, i);
+		if (self == NULL)
 			continue;
+		sc = device_private(self);
 		mutex_enter(&sc->sc_slock);
 		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
 		    sc->sc_mount == mp)
 			fss_error(sc, "forced unmount");
 		mutex_exit(&sc->sc_slock);
+		device_release(self);
 	}
 	mutex_exit(&fss_device_lock);
 }

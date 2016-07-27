@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.94.2.3 2016/07/26 05:54:39 pgoyette Exp $	*/
+/*	$NetBSD: ld.c,v 1.94.2.4 2016/07/27 01:13:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.3 2016/07/26 05:54:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.4 2016/07/27 01:13:50 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,16 +290,22 @@ ld_shutdown(device_t dev, int flags)
 static int
 ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
+	int error;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
-		return (ENXIO);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
-	return dk_open(dksc, dev, flags, fmt, l);
+	error = dk_open(dksc, dev, flags, fmt, l);
+	device_release(self);
+	return error;
 }
 
 static int
@@ -317,15 +323,22 @@ ld_lastclose(device_t self)
 static int
 ldclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
+	int error;
 
 	unit = DISKUNIT(dev);
-	sc = device_lookup_private(&ld_cd, unit);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
-	return dk_close(dksc, dev, flags, fmt, l);
+	error = dk_close(dksc, dev, flags, fmt, l);
+	device_release(self);
+	return error;
 }
 
 /* ARGSUSED */
@@ -348,17 +361,23 @@ ldwrite(dev_t dev, struct uio *uio, int ioflag)
 static int
 ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit, error;
 
 	unit = DISKUNIT(dev);
-	sc = device_lookup_private(&ld_cd, unit);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
 	error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
+	if (error != EPASSTHROUGH) {
+		device_release(self);
 		return (error);
+	}
 
 	error = 0;
 
@@ -380,31 +399,41 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		break;
 	}
 
+	device_release(self);
 	return (error);
 }
 
 static void
 ldstrategy(struct buf *bp)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
 
 	unit = DISKUNIT(bp->b_dev);
-	sc = device_lookup_private(&ld_cd, unit);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
 	dk_strategy(dksc, bp);
+	device_release(self);
 }
 
 static int
 ld_diskstart(device_t dev, struct buf *bp)
 {
-	struct ld_softc *sc = device_private(dev);
+	struct ld_softc *sc;
 	int error;
 
-	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
+	device_acquire(dev);
+	sc = device_private(dev);
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt) {
+		device_release(dev);
 		return EAGAIN;
+	}
 
 	mutex_enter(&sc->sc_mutex);
 
@@ -418,6 +447,7 @@ ld_diskstart(device_t dev, struct buf *bp)
 
 	mutex_exit(&sc->sc_mutex);
 
+	device_release(dev);
 	return error;
 }
 
@@ -443,19 +473,26 @@ lddone(struct ld_softc *sc, struct buf *bp)
 static int
 ldsize(dev_t dev)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
+	int error;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
-		return (ENODEV);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENODEV;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
-		return (ENODEV);
+		error = (ENODEV);
+	else
+		error = dk_size(dksc, dev);
 
-	return dk_size(dksc, dev);
+	device_release(self);
+	return error;
 }
 
 /*
@@ -464,30 +501,43 @@ ldsize(dev_t dev)
 static int
 lddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
+	int error;
 
 	unit = DISKUNIT(dev);
-	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
-		return (ENXIO);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
-		return (ENODEV);
+		error = (ENODEV);
+	else
+		error = dk_dump(dksc, dev, blkno, va, size);
 
-	return dk_dump(dksc, dev, blkno, va, size);
+	device_release(self);
+	return error;
 }
 
 static int
 ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 {
-	struct ld_softc *sc = device_private(dev);
+	struct ld_softc *sc;
+	int error;
 
+	device_acquire(dev);
+	sc = device_private(dev);
 	if (sc->sc_dump == NULL)
-		return (ENODEV);
+		error = ENODEV;
+	else
+		error = (*sc->sc_dump)(sc, va, blkno, nblk);
 
-	return (*sc->sc_dump)(sc, va, blkno, nblk);
+	device_release(dev);
+	return error;
 }
 
 /*
@@ -496,23 +546,33 @@ ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 static void
 ldminphys(struct buf *bp)
 {
+	device_t self;
 	int unit;
 	struct ld_softc *sc;
 
 	unit = DISKUNIT(bp->b_dev);
-	sc = device_lookup_private(&ld_cd, unit);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return;
+	sc = device_private(self);
 
 	ld_iosize(sc->sc_dv, &bp->b_bcount);
 	minphys(bp);
+	device_release(self);
 }
 
 static void
 ld_iosize(device_t d, int *countp)
 {
-	struct ld_softc *sc = device_private(d);
+	struct ld_softc *sc;
+
+	device_acquire(d);
+	sc = device_private(d);
 
 	if (*countp > sc->sc_maxxfer)
 		*countp = sc->sc_maxxfer;
+
+	device_release(d);
 }
 
 static void
@@ -566,21 +626,29 @@ ld_set_geometry(struct ld_softc *sc)
 static void
 ld_config_interrupts(device_t d)
 {
-	struct ld_softc *sc = device_private(d);
+	struct ld_softc *sc;
 	struct dk_softc *dksc = &sc->sc_dksc;
 
+	device_acquire(d);
+	sc = device_private(d);
 	dkwedge_discover(&dksc->sc_dkdev);
+	device_release(d);
 }
 
 static int
 ld_discard(device_t dev, off_t pos, off_t len)
 {
-	struct ld_softc *sc = device_private(dev);
+	struct ld_softc *sc;
+	int error;
 
+	device_acquire(dev);
+	sc = device_private(dev);
 	if (sc->sc_discard == NULL)
-		return (ENODEV);
-
-	return (*sc->sc_discard)(sc, pos, len);
+		error = (ENODEV);
+	else
+		error = (*sc->sc_discard)(sc, pos, len);
+	device_release(dev);
+	return error;
 }
 
 static int
@@ -589,10 +657,16 @@ lddiscard(dev_t dev, off_t pos, off_t len)
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
+	int error;
 
 	unit = DISKUNIT(dev);
-	sc = device_lookup_private(&ld_cd, unit);
+	self = device_lookup_acquire(&ld_cd, unit);
+	if (self == NULL)
+		return ENXIO;
+	sc = device_private(self);
 	dksc = &sc->sc_dksc;
 
-	return dk_discard(dksc, dev, pos, len);
+	error = dk_discard(dksc, dev, pos, len);
+	device_release(self);
+	return error;
 }
