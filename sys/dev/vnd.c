@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.10 2016/07/27 23:17:31 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.11 2016/07/28 01:07:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.10 2016/07/27 23:17:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.11 2016/07/28 01:07:20 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -311,12 +311,10 @@ vnd_spawn(int unit)
 	cf->cf_unit = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
+	/* Attach a new unit */
 	self = config_attach_pseudo(cf);
-	return device_private(config_attach_pseudo(cf));
 
-	if (config_attach_pseudo(cf) == NULL)
-		return NULL;
-
+	/* And acquire a reference to it */
 	self = device_lookup_acquire(&vnd_cd, unit);
 	if (self == NULL)
 		return NULL;
