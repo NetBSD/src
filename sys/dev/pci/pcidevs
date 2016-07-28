@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1254 2016/07/28 03:05:31 nonaka Exp $
+$NetBSD: pcidevs,v 1.1255 2016/07/28 03:08:39 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -597,6 +597,7 @@ vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
 vendor MELLANOX		0x15b3	Mellanox Technologies
 vendor AGILENT		0x15bc	Agilent Technologies
+vendor SUPERMICRO	0x15d9	Super Micro Computer Inc
 vendor NDC		0x15e8	National Datacomm
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
