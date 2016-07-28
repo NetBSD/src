@@ -79,6 +79,14 @@ dsym1:
 	sync    1
 	ptesync
 	sync    2
+	lwarx   20,0,6
+	lwarx   20,1,6
+	ldarx   21,0,7
+	ldarx   21,1,7
+	stwcx.  22,0,8
+	stwcx.  22,1,8
+	stdcx.  23,0,9
+	stdcx.  23,1,9
 
 	.section	".data"
 usym0:	.llong	0xcafebabe

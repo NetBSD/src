@@ -1747,6 +1747,7 @@ md_parse_option (int c, char *arg ATTRIBUTE_UNUSED)
     case OPTION_RTSC:
     case OPTION_FPUDA:
       /* Dummy options.  */
+      break;
 
     default:
       return 0;
