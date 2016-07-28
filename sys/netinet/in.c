@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.176 2016/07/20 03:36:51 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.177 2016/07/28 09:03:50 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.176 2016/07/20 03:36:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.177 2016/07/28 09:03:50 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -360,8 +360,8 @@ in_len2mask(struct in_addr *mask, u_int len)
  * Ifp is 0 if not an interface-specific ioctl.
  */
 /* ARGSUSED */
-int
-in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
+static int
+in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = NULL;
@@ -663,6 +663,18 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		KASSERT(ia != NULL);
 		in_purgeaddr(&ia->ia_ifa);
 	}
+
+	return error;
+}
+
+int
+in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
+{
+	int error;
+
+	mutex_enter(softnet_lock);
+	error = in_control0(so, cmd, data, ifp);
+	mutex_exit(softnet_lock);
 
 	return error;
 }

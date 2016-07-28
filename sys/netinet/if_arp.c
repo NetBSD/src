@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.219 2016/07/25 04:21:19 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.220 2016/07/28 09:03:50 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.219 2016/07/25 04:21:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.220 2016/07/28 09:03:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1505,7 +1505,7 @@ static void
 arp_dad_stoptimer(struct dadq *dp)
 {
 
-	callout_halt(&dp->dad_timer_ch, NULL);
+	callout_halt(&dp->dad_timer_ch, softnet_lock);
 }
 
 static void
