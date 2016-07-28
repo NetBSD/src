@@ -107,22 +107,28 @@ mmo_place_orphan (asection *s,
       return os;
     }
 
+  flags = s->flags;
+  if (!bfd_link_relocatable (&link_info))
+    {
+      nexts = s;
+      while ((nexts = bfd_get_next_section_by_name (nexts->owner, nexts))
+	     != NULL)
+	if (nexts->output_section == NULL
+	    && (nexts->flags & SEC_EXCLUDE) == 0
+	    && ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
+	    && (nexts->owner->flags & DYNAMIC) == 0
+	    && nexts->owner->usrdata != NULL
+	    && !(((lang_input_statement_type *) nexts->owner->usrdata)
+		 ->flags.just_syms))
+	  flags = (((flags ^ SEC_READONLY) | (nexts->flags ^ SEC_READONLY))
+		   ^ SEC_READONLY);
+    }
+
   /* Check for matching section type flags for sections we care about.
      A section without contents can have SEC_LOAD == 0, but we still
      want it attached to a sane section so the symbols appear as
      expected.  */
-  flags = s->flags;
-  nexts = s;
-  while ((nexts = bfd_get_next_section_by_name (nexts->owner, nexts)) != NULL)
-    if (nexts->output_section == NULL
-	&& (nexts->flags & SEC_EXCLUDE) == 0
-	&& ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
-	&& (nexts->owner->flags & DYNAMIC) == 0
-	&& nexts->owner->usrdata != NULL
-	&& !(((lang_input_statement_type *) nexts->owner->usrdata)
-	     ->flags.just_syms))
-      flags = (((flags ^ SEC_READONLY) | (nexts->flags ^ SEC_READONLY))
-	       ^ SEC_READONLY);
+
   if ((flags & (SEC_ALLOC | SEC_READONLY)) != SEC_READONLY)
     for (i = 0; i < sizeof (holds) / sizeof (holds[0]); i++)
       if ((flags & holds[i].nonzero_flags) != 0)

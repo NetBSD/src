@@ -815,7 +815,7 @@ bfd_generic_openr_next_archived_file (bfd *archive, bfd *last_file)
 	     Note that last_file->origin can be odd in the case of
 	     BSD-4.4-style element with a long odd size.  */
 	  filestart += filestart % 2;
-	  if (filestart <= last_file->proxy_origin)
+	  if (filestart < last_file->proxy_origin)
 	    {
 	      /* Prevent looping.  See PR19256.  */
 	      bfd_set_error (bfd_error_malformed_archive);

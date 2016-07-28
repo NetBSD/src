@@ -1,3 +1,191 @@
+2016-06-29  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-06-29  Maciej W. Rozycki  <macro@imgtec.com>
+
+	Backport from master
+	2016-04-22  Maciej W. Rozycki  <macro@imgtec.com>
+
+	* config/tc-mips.c (code_option_type): New enum.
+	(parse_code_option): Return status indicating option type.
+	(s_mipsset): Update `parse_code_option' call site accordingly.
+	Always set register sizes from the ISA with ISA overrides.
+	(s_module): Update `parse_code_option' call site.
+	* testsuite/gas/mips/isa-override-1.d: New test.
+	* testsuite/gas/mips/micromips@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips1@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips2@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips32@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips32r2@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips32r3@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips32r5@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips32r6@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips64r2@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips64r3@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips64r5@isa-override-1.d: New test.
+	* testsuite/gas/mips/mips64r6@isa-override-1.d: New test.
+	* testsuite/gas/mips/r3000@isa-override-1.d: New test.
+	* testsuite/gas/mips/r3900@isa-override-1.d: New test.
+	* testsuite/gas/mips/r5900@isa-override-1.d: New test.
+	* testsuite/gas/mips/octeon@isa-override-1.d: New test.
+	* testsuite/gas/mips/octeon3@isa-override-1.d: New test.
+	* testsuite/gas/mips/isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips1@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips2@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips32@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips32r2@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips32r3@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips32r5@isa-override-2.l: New list test.
+	* testsuite/gas/mips/mips32r6@isa-override-2.l: New list test.
+	* testsuite/gas/mips/r3000@isa-override-2.l: New list test.
+	* testsuite/gas/mips/r3900@isa-override-2.l: New list test.
+	* testsuite/gas/mips/octeon3@isa-override-2.l: New list test.
+	* testsuite/gas/mips/octeon3@isa-override-1.l: New stderr
+	output.
+	* testsuite/gas/mips/isa-override-1.s: New test source.
+	* testsuite/gas/mips/r5900@isa-override-1.s: New test source.
+	* testsuite/gas/mips/isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips1@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips2@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips32@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips32r2@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips32r3@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips32r5@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips32r6@isa-override-2.s: New test source.
+	* testsuite/gas/mips/r3000@isa-override-2.s: New test source.
+	* testsuite/gas/mips/r3900@isa-override-2.s: New test source.
+	* testsuite/gas/mips/octeon3@isa-override-2.s: New test source.
+	* testsuite/gas/mips/mips.exp: Run the new tests.
+
+2016-06-29  Maciej W. Rozycki  <macro@imgtec.com>
+
+	Backport from master
+	2016-06-29  Maciej W. Rozycki  <macro@imgtec.com>
+
+	* write.c: Remove "libbfd.h" inclusion.
+
+2016-06-23  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Apply from master.
+	2016-06-22  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* testsuite/gas/ppc/power9.d <brd, brh, brw, mffs, mffs., mffsce,
+	mffscdrn, mffscdrni, mffscrn, mffscrni, mffsl, nandxor, rldixor,
+	setbool, xor3>: New tests.
+	* testsuite/gas/ppc/power9.s: Likewise.
+
+2016-06-03  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from master
+	2016-06-03  Peter Bergner  <bergner@vnet.ibm.com>
+
+	PR binutils/20196
+	* gas/testsuite/gas/ppc/e6500.s <lbarx, lharx, lwarx, ldarx,
+	stbcx., sthcx., stwcx., stdcx.>: Add tests.
+	* gas/testsuite/gas/ppc/e6500.d: Likewise.
+	* gas/testsuite/gas/ppc/power8.s: Likewise.
+	* gas/testsuite/gas/ppc/power8.d: Likewise.
+	* gas/testsuite/gas/ppc/power4.s <lwarx, ldarx, stwcx.,
+	stdcx.>: Add tests.
+	* gas/testsuite/gas/ppc/power4.d: Likewise.
+
+2016-06-01  Peter Bergner  <bergner@vnet.ibm.com>
+
+	Backport from master
+	2016-05-26  Peter Bergner  <bergner@vnet.ibm.com>
+
+	* testsuite/gas/ppc/altivec3.d <vmsumudm>: Add test.
+	* testsuite/gas/ppc/altivec3.s: Likewise.
+	* testsuite/gas/ppc/power9.d <addex[.], lwzmx, vmsumudm>: Add tests.
+	* testsuite/gas/ppc/power9.s: Likewise.
+
+2016-05-11  Nick Clifton  <nickc@redhat.com>
+
+	PR gas/20047
+	* config/tc-arc.c (md_parse_option): Return 1 for recognised dummy
+	options.
+
+2016-04-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-04-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/19909
+	* config/tc-i386.c (check_VecOperands): Try vec_disp8 encoding
+	only if i.disp_encoding != disp_encoding_32bit.
+	* gas/testsuite/gas/i386/disp32.s: Add tests for vmovdqu64.d32.
+	* gas/testsuite/gas/i386/x86-64-disp32.s: Likewise.
+	* gas/testsuite/gas/i386/disp32.d: Updated.
+	* gas/testsuite/gas/i386/x86-64-disp32.d: Likewise.
+
+2016-02-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* config/tc-i386.c (register_number): Check RegVRex.
+	* testsuite/gas/i386/x86-64-avx512f.s: Add a test for vgatherqpd
+	with %zmm19 and %zmm3.
+	* testsuite/gas/i386/x86-64-avx512f-intel.d: Updated.
+	* testsuite/gas/i386/x86-64-avx512f.d: Likewise.
+
+2016-02-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/19520
+	* NEWS: Mention new command line option -mrelax-relocations and
+	new configure option --enable-x86-relax-relocations for x86
+	target.
+	* config.in: Regenerated.
+	* configure.ac: Add --enable-x86-relax-relocations.
+	(ac_default_x86_relax_relocations): New.  Default to 1 except
+	for x86 Solaris targets older than Solaris 12.
+	(DEFAULT_GENERATE_X86_RELAX_RELOCATIONS): Define.
+	* configure: Likewise.
+	* config/tc-i386.c (generate_relax_relocations): New.
+	(OPTION_MRELAX_RELOCATIONS): Likewise.
+	(output_disp): Don't generate relax relocations if
+	generate_relax_relocations is 0.
+	(md_longopts): Add -mrelax-relocations.
+	(md_show_usage): Likewise.
+	(md_parse_option): Handle OPTION_MRELAX_RELOCATIONS.
+	* doc/c-i386.texi: Document -mrelax-relocations=.
+	* testsuite/gas/i386/got-no-relax.d: New file.
+	* testsuite/gas/i386/x86-64-gotpcrel-no-relax.d: Likewise.
+	* testsuite/gas/i386/got.d: Pass -mrelax-relocations=yes to as.
+	* testsuite/gas/i386/localpic.d: Likewise.
+	* testsuite/gas/i386/mixed-mode-reloc32.d: Likewise.
+	* testsuite/gas/i386/reloc32.d: Likewise.
+	* testsuite/gas/i386/x86-64-gotpcrel.d: Likewise.
+	* testsuite/gas/i386/x86-64-localpic.d: Likewise.
+	* testsuite/gas/i386/ilp32/x86-64-gotpcrel.d: Likewise.
+	* testsuite/gas/i386/ilp32/x86-64-localpic.d: Likewise.
+	* testsuite/gas/i386/i386.exp: Run got-no-relax and
+	x86-64-gotpcrel-no-relax.
+
+2016-02-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-03  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* NEWS: Remove duplicated marker for 2.26.
+
+2016-01-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-01-29  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR gas/19532
+	* configure.ac (compressed_debug_sections): Replace == with =.
+	* configure: Regenerated.
+
+2016-01-25  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
 2016-01-25  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
@@ -8,12 +196,8 @@
 
 2015-12-17  Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
 
-	* gas/config/tc-arm.c (aeabi_set_public_attributes): Adjust
+	* config/tc-arm.c (aeabi_set_public_attributes): Adjust
 	TAG_ARCH_profile for armv8-a.
-	* gas/testsuite/gas/arm/armv8a-automatic-hlt.d: New test.
-	* gas/testsuite/gas/arm/armv8a-automatic-hlt.s: New test.
-	* gas/testsuite/gas/arm/armv8a-automatic-lda.d: New test.
-	* gas/testsuite/gas/arm/armv8a-automatic-lda.s: New test.
 
 2015-12-15  Nick Clifton  <nickc@redhat.com>
 
@@ -320,10 +504,10 @@
 
 2015-10-07  Claudiu Zissulescu  <claziss@synopsys.com>
 
-        * config/tc-arc.c: Revamped file for ARC support.
-        * config/tc-arc.h: Likewise.
-        * doc/as.texinfo: Add new ARC options.
-        * doc/c-arc.texi: Likewise.
+	* config/tc-arc.c: Revamped file for ARC support.
+	* config/tc-arc.h: Likewise.
+	* doc/as.texinfo: Add new ARC options.
+	* doc/c-arc.texi: Likewise.
 
 2015-10-02  Renlin Li <renlin.li@arm.com>
 
@@ -572,9 +756,9 @@
 
 2015-08-17  Alan Modra  <amodra@gmail.com>
 
-	* gas/config/tc-arm.c (s_align): Delete.
+	* config/tc-arm.c (s_align): Delete.
 	(md_pseudo_table): Use s_align_ptwo for "align".
-	* gas/config/tc-arm.h (TC_ALIGN_ZERO_IS_DEFAULT): Define.
+	* config/tc-arm.h (TC_ALIGN_ZERO_IS_DEFAULT): Define.
 	* read.c (s_align): Modify for TC_ALIGN_ZERO_IS_DEFAULT.
 
 2015-08-13  Alan Modra  <amodra@gmail.com>
@@ -952,7 +1136,7 @@
 2015-06-11  John David Anglin  <danglin@gcc.gnu.org>
 
 	PR gas/18427
-	* gas/config/tc-hppa.c (last_label_symbol): Declare.
+	* config/tc-hppa.c (last_label_symbol): Declare.
 	(pa_get_label): Return last label in current space/segment or NULL.
 	(pa_define_label): Record last label and add to root.
 	(pa_undefine_label): Remove last label from root.
@@ -1028,7 +1212,6 @@
 	    Bernd Schmidt <bernds@codesourcery.com>
 	    Paul Brook <paul@codesourcery.com>
 
-	gas/
 	* config/tc-alpha.c (all_cfi_sections): Declare.
 	(s_alpha_ent): Initialize all_cfi_sections.
 	(alpha_elf_md_end): Invoke cfi_set_sections.
@@ -1796,7 +1979,7 @@
 
 2015-01-12  Jan Beulich  <jbeulich@suse.com>
 
-	* gas/dw2gencfi.c (cfi_add_label, dot_cfi_label): New.
+	* dw2gencfi.c (cfi_add_label, dot_cfi_label): New.
 	(cfi_pseudo_table): Add "cfi_label".
 	(output_cfi_insn): Handle CFI_label.
 	(select_cie_for_fde): Als terminate CIE when encountering
@@ -1809,7 +1992,7 @@
 
 2015-01-12  Jan Beulich  <jbeulich@suse.com>
 
-	* gas/config/tc-arm.c (do_neon_shl_imm): Check immediate range.
+	* config/tc-arm.c (do_neon_shl_imm): Check immediate range.
 	(do_neon_qshl_imm): Likewise.
 
 2015-01-12  Alan Modra  <amodra@gmail.com>

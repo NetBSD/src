@@ -1627,7 +1627,7 @@ the `--reverse-bytes' option.)
 `--compress-debug-sections=zlib-gabi'
      For ELF files, these options control how DWARF debug sections are
      compressed.  `--compress-debug-sections=none' is equivalent to
-     `--nocompress-debug-sections'.  `--compress-debug-sections=zlib'
+     `--decompress-debug-sections'.  `--compress-debug-sections=zlib'
      and `--compress-debug-sections=zlib-gabi' are equivalent to
      `--compress-debug-sections'.  `--compress-debug-sections=zlib-gnu'
      compresses DWARF debug sections using zlib.  The debug sections
