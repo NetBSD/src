@@ -15626,10 +15626,29 @@ struct mips_option_stack
 
 static struct mips_option_stack *mips_opts_stack;
 
-static bfd_boolean
+/* Return status for .set/.module option handling.  */
+
+enum code_option_type
+{
+  /* Unrecognized option.  */
+  OPTION_TYPE_BAD = -1,
+
+  /* Ordinary option.  */
+  OPTION_TYPE_NORMAL,
+
+  /* ISA changing option.  */
+  OPTION_TYPE_ISA
+};
+
+/* Handle common .set/.module options.  Return status indicating option
+   type.  */
+
+static enum code_option_type
 parse_code_option (char * name)
 {
+  bfd_boolean isa_set = FALSE;
   const struct mips_ase *ase;
+
   if (strncmp (name, "at=", 3) == 0)
     {
       char *s = name + 3;
@@ -15702,6 +15721,7 @@ parse_code_option (char * name)
 	    {
 	      mips_opts.arch = p->cpu;
 	      mips_opts.isa = p->isa;
+	      isa_set = TRUE;
 	    }
 	}
       else if (strncmp (name, "mips", 4) == 0)
@@ -15715,6 +15735,7 @@ parse_code_option (char * name)
 	    {
 	      mips_opts.arch = p->cpu;
 	      mips_opts.isa = p->isa;
+	      isa_set = TRUE;
 	    }
 	}
       else
@@ -15733,8 +15754,9 @@ parse_code_option (char * name)
   else if (strcmp (name, "nosym32") == 0)
     mips_opts.sym32 = FALSE;
   else
-    return FALSE;
-  return TRUE;
+    return OPTION_TYPE_BAD;
+
+  return isa_set ? OPTION_TYPE_ISA : OPTION_TYPE_NORMAL;
 }
 
 /* Handle the .set pseudo-op.  */
@@ -15742,8 +15764,8 @@ parse_code_option (char * name)
 static void
 s_mipsset (int x ATTRIBUTE_UNUSED)
 {
+  enum code_option_type type = OPTION_TYPE_NORMAL;
   char *name = input_line_pointer, ch;
-  int prev_isa = mips_opts.isa;
 
   file_mips_check_options ();
 
@@ -15820,12 +15842,16 @@ s_mipsset (int x ATTRIBUTE_UNUSED)
 	  free (s);
 	}
     }
-  else if (!parse_code_option (name))
-    as_warn (_("tried to set unrecognized symbol: %s\n"), name);
+  else
+    {
+      type = parse_code_option (name);
+      if (type == OPTION_TYPE_BAD)
+	as_warn (_("tried to set unrecognized symbol: %s\n"), name);
+    }
 
   /* The use of .set [arch|cpu]= historically 'fixes' the width of gp and fp
      registers based on what is supported by the arch/cpu.  */
-  if (mips_opts.isa != prev_isa)
+  if (type == OPTION_TYPE_ISA)
     {
       switch (mips_opts.isa)
 	{
@@ -15892,7 +15918,7 @@ s_module (int ignore ATTRIBUTE_UNUSED)
 
   if (!file_mips_opts_checked)
     {
-      if (!parse_code_option (name))
+      if (parse_code_option (name) == OPTION_TYPE_BAD)
 	as_bad (_(".module used with unrecognized symbol: %s\n"), name);
 
       /* Update module level settings from mips_opts.  */

@@ -4100,6 +4100,7 @@ copy_main (int argc, char *argv[])
 	      }
 
 	    t = strchr (t + 1, ',');
+	    newsym->othersym = NULL;
 	    if (t)
 	      newsym->flags = parse_symflags (t+1, &newsym->othersym);
 	    else

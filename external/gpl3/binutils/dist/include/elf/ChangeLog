@@ -58,6 +58,18 @@
 
 	* aarch64.h (R_AARCH64_P32_TLSLD_ADR_PAGE21): Define.
 
+2015-07-16  Jiong Wang  <jiong.wang@arm.com>
+
+	* aarch64.h (R_AARCH64_P32_TLSLD_ADR_PREL21): New enumeration.
+
+2015-07-09  Catherine Moore  <clm@codesourcery.com>
+
+	* mips.h (Val_GNU_MIPS_ABI_FP_NAN2008): New.
+
+2015-07-08  Pitchumani Sivanupandi <pitchumani.s@atmel.com>
+
+	* avr.h: Add new 32 bit PC relative relocation.
+
 2015-07-01  Sandra Loosemore  <sandra@codesourcery.com>
 	    Cesar Philippidis  <cesar@codesourcery.com>
 
@@ -81,10 +93,18 @@
 
 	* nios2.h (EF_NIOS2_ARCH_R1, EF_NIOS2_ARCH_R2): Define.
 
+2015-06-26  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h (DT_MIPS_RLD_MAP_REL): New macro.
+
 2015-05-29  Roland McGrath  <mcgrathr@google.com>
 
 	* common.h (GNU_ABI_TAG_SYLLABLE): New macro.
 	(GNU_ABI_TAG_NACL): New macro.
+
+2015-05-12  Jiong Wang  <jiong.wang@arm.com>
+
+	* aarch64.h (R_AARCH64_P32_LD32_GOTPAGE_LO14): New enumeration.
 
 2015-05-11  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -132,6 +152,11 @@
 	* rl78.h (E_FLAG_RL78_G10): Redefine.
 	(E_FLAG_RL78_CPU_MASK, E_FLAG_RL78_ANY_CPU, E_FLAG_RL78_G13
 	E_FLAG_RL78_G14): New flags.
+
+2015-03-10  Matthew Wahab  <matthew.wahab@arm.com>
+
+	PR ld/16572
+	* arm.h (EF_ARM_HASENTRY): Remove.
 
 2015-02-19  Marcus Shawcroft  <marcus.shawcroft@arm.com>
 
@@ -188,6 +213,15 @@
 
 	* x86-64.h (R_X86_64_GOTPLT64): Mark it obsolete.
 
+2014-10-30  Andrew Pinski  <apinski@cavium.com>
+
+	* mips.h (AFL_EXT_OCTEON3): Define.
+	(INSN_OCTEON3, CPU_OCTEON3): Define.
+
+2014-10-22  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h (AFL_ASE_MASK): Define.
+
 2014-10-17  Jose E. Marchesi  <jose.marchesi@oracle.com>
 
 	* sparc.h (ELF_SPARC_HWCAP2_VIS3B): Documentation improved.
@@ -227,6 +261,28 @@
 
 	* rl78.h (RL78_RELAXA_MASK): New.  Relax types are enums, not bits
 
+2014-07-29  Matthew Fortune  <matthew.fortune@imgtec.com>
+
+	* mips.h (PT_MIPS_ABIFLAGS, SHT_MIPS_ABIFLAGS): Define.
+	(Val_GNU_MIPS_ABI_FP_OLD_64): Rename from Val_GNU_MIPS_ABI_FP_64.
+	(Val_GNU_MIPS_ABI_FP_64): Redefine.
+	(Val_GNU_MIPS_ABI_FP_XX): Define.
+	(Elf_External_ABIFlags_v0, Elf_Internal_ABIFlags_v0): New structures.
+	(AFL_REG_NONE, AFL_REG_32, AFL_REG_64, AFL_REG_128): Define.
+	(AFL_ASE_DSP, AFL_ASE_DSPR2, AFL_ASE_EVA, AFL_ASE_MCU): Likewise.
+	(AFL_ASE_MDMX, AFL_ASE_MIPS3D, AFL_ASE_MT, AFL_ASE_SMARTMIPS): Likewise.
+	(AFL_ASE_VIRT, AFL_ASE_MSA, AFL_ASE_MIPS16): Likewise.
+	(AFL_ASE_MICROMIPS, AFL_ASE_XPA): Likewise.
+	(AFL_EXT_XLR, AFL_EXT_OCTEON2, AFL_EXT_OCTEONP): Likewise.
+	(AFL_EXT_LOONGSON_3A, AFL_EXT_OCTEON, AFL_EXT_5900): Likewise.
+	(AFL_EXT_4650, AFL_EXT_4010, AFL_EXT_4100, AFL_EXT_3900): Likewise.
+	(AFL_EXT_10000, AFL_EXT_SB1, AFL_EXT_4111, AFL_EXT_4120): Likewise.
+	(AFL_EXT_5400, AFL_EXT_5500, AFL_EXT_LOONGSON_2E): Likewise.
+	(AFL_EXT_LOONGSON_2F): Likewise.
+	(bfd_mips_elf_swap_abiflags_v0_in): Prototype.
+	(bfd_mips_elf_swap_abiflags_v0_out): Likewise.
+	(bfd_mips_isa_ext): Likewise.
+
 2014-07-07  Barney Stratford  <barney_stratford@fastmail.fm>
 
 	* avr.h: Add R_AVR_PORT5 and R_AVR_PORT6.
@@ -251,6 +307,10 @@
 	* or1k.h: New file.
 	* openrisc.h: Delete.
 	* or32.h: Delete.
+
+2014-04-10  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	* avr.h: Add new DIFF relocs.
 
 2014-03-05  Alan Modra  <amodra@gmail.com>
 
@@ -395,6 +455,10 @@
 	(EM_INTEL208): Likewise.
 	(EM_INTEL209): Likewise.
 
+2013-05-06  Paul Brook  <paul@codesourcery.com>
+
+	* mips.h (R_MIPS_PC32): Update comment.
+
 2013-05-02  Nick Clifton  <nickc@redhat.com>
 
 	* msp430.h: Add MSP430X relocs.
@@ -443,6 +507,10 @@
 	* mips.h: Add MIPS machine variant number for r5900 which is
 	compatible with old Playstation 2 software.
 
+2012-12-11  Edgar E. Iglesias <edgar.iglesias@gmail.com>
+
+	* microblaze.h: Add TLS relocs to START_RELOC_NUMBERS
+
 2012-11-16  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* common.h (DF_1_CONLFAT): Renamed to ...
@@ -477,12 +545,16 @@
 
 2012-10-30  Steve McIntyre  <steve.mcintyre@linaro.org>
 
-	* elf/arm.h (EF_ARM_ABI_FLOAT_SOFT): New define.
+	* arm.h (EF_ARM_ABI_FLOAT_SOFT): New define.
 	(EF_ARM_ABI_FLOAT_HARD): Likewise.
 
 2012-10-23  Tom Tromey  <tromey@redhat.com>
 
 	* common.h (NT_SIGINFO, NT_FILE): New defines.
+
+2012-09-12  Chris Schlumberger-Socha  <chris.schlumberger-socha@arm.com>
+
+	* aarch64.h (R_AARCH64_GOT_LD_PREL19): New reloc.
 
 2012-08-27  Walter Lee  <walt@tilera.com>
 
@@ -501,6 +573,11 @@
 	(R_TILEGX_IMM16_X0_HW2_LAST_PLT_PCREL	): Ditto.
 	(R_TILEGX_IMM16_X1_HW2_LAST_PLT_PCREL): Ditto.
 
+2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (TAG_CPU_ARCH_V8): New define.
+	(MAX_TAG_CPU_ARCH): Update.
+
 2012-08-13  Ian Bolton  <ian.bolton@arm.com>
 	    Laurent Desnogues  <laurent.desnogues@arm.com>
 	    Jim MacArthur  <jim.macarthur@arm.com>
@@ -515,6 +592,14 @@
 	* aarch64.h: New file.
 	* common.h (EM_res183): Rename to EM_AARCH64.
 	(EM_res184): Rename to EM_ARM184.
+
+2012-08-02  Sean Keys  <skeys@ipdatasys.com>
+
+	* m68hc11.h: #define E_M68HC11_NO_BANK_WARNING 0x000000200
+
+2012-07-13  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h (START_RELOC_NUMBERS): Define R_390_IRELATIVE reloc.
 
 2012-06-28  Iain Sandoe  <iain@codesourcery.com>
 
@@ -565,7 +650,7 @@
 2012-05-11  Georg-Johann Lay  <avr@gjlay.de
 
 	PR target/13503
-	* elf/avr.h (RELOC_NUMBERS): Add values for R_AVR_8_LO8,
+	* avr.h (RELOC_NUMBERS): Add values for R_AVR_8_LO8,
 	R_AVR_8_HI8, R_AVR_8_HHI8.
 
 2012-05-03  Sean Keys  <skeys@ipdatasys.com>
@@ -576,6 +661,10 @@
 
 	* sparc.h: Add new ELF_SPARC_HWCAP_* defines for crypto,
 	pause, and compare-and-branch instructions.
+
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h (R_SPARC_WDISP10): New reloc.
 
 2012-03-07  Nick Clifton  <nickc@redhat.com>
 
@@ -1096,13 +1185,13 @@
 
 2009-08-09  Michael Eager <eager@eagercon.com>
 
-	* elf/common.h: Define EM_resnnn reserved values. Add EM_AVR32,
+	* common.h: Define EM_resnnn reserved values. Add EM_AVR32,
 	EM_STM8, EM_TILE64, EM_TILEPRO.  Change EM_MICROBLAZE.
 
 2009-08-06  Michael Eager <eager@eagercon.com>
 
-	* elf/common.h: Define EM_MICROBLAZE & EM_MICROBLAZE_OLD.
-	* elf/microblaze.h: New reloc definitions.
+	* common.h: Define EM_MICROBLAZE & EM_MICROBLAZE_OLD.
+	* microblaze.h: New reloc definitions.
 
 2009-07-30  Alan Modra  <amodra@bigpond.net.au>
 
@@ -1171,7 +1260,7 @@
 
 2009-04-24  Cary Coutant  <ccoutant@google.com>
 
-	 * dwarf2.h (DW_LNE_set_discriminator): New enum value.
+	* dwarf2.h (DW_LNE_set_discriminator): New enum value.
 
 2009-04-15  Anthony Green  <green@moxielogic.com>
 
@@ -1303,11 +1392,21 @@
 	(R_CRIS_32_GOT_TPREL, R_CRIS_16_GOT_TPREL, R_CRIS_32_TPREL)
 	(R_CRIS_16_TPREL): New relocations.
 
+2008-09-24  Richard Henderson  <rth@redhat.com>
+
+	* dwarf2.h (DW_OP_GNU_encoded_addr): New.
+
 2008-08-20  Bob Wilson  <bob.wilson@acm.org>
 
 	* xtensa.h (R_XTENSA_TLSDESC_FN, R_XTENSA_TLSDESC_ARG)
 	(R_XTENSA_TLS_DTPOFF, R_XTENSA_TLS_TPOFF, R_XTENSA_TLS_FUNC)
 	(R_XTENSA_TLS_ARG, R_XTENSA_TLS_CALL): New.
+
+2008-08-08  Anatoly Sokolov  <aesok@post.ru>
+
+	* avr.h (E_AVR_MACH_AVR25, E_AVR_MACH_AVR31,
+	E_AVR_MACH_AVR35, E_AVR_MACH_AVR51): Define.
+	(EF_AVR_MACH): Redefine to 0x7F.
 
 2008-08-08  Richard Sandiford  <rdsandiford@googlemail.com>
 	    Daniel Jacobowitz  <dan@codesourcery.com>
@@ -1328,6 +1427,18 @@
 2008-07-21  Luis Machado  <luisgpm@br.ibm.com>
 
 	* common.h: Define NT_PPC_VSX.
+
+2008-07-12  Jie Zhang  <jie.zhang@analog.com>
+
+	Revert
+	2008-07-12  Jie Zhang  <jie.zhang@analog.com>
+	* bfin.h (EF_BFIN_CODE_IN_L1): Define.
+	(EF_BFIN_DATA_IN_L1): Define.
+
+2008-07-12  Jie Zhang  <jie.zhang@analog.com>
+
+	* bfin.h (EF_BFIN_CODE_IN_L1): Define.
+	(EF_BFIN_DATA_IN_L1): Define.
 
 2008-07-10  Richard Sandiford  <rdsandiford@googlemail.com>
 
@@ -1366,7 +1477,7 @@
 
 2008-04-16  David S. Miller  <davem@davemloft.net>
 
-	* elf/sparc.h (R_SPARC_GOTDATA_HIX22,
+	* sparc.h (R_SPARC_GOTDATA_HIX22,
 	R_SPARC_GOTDATA_LOX10, R_SPARC_GOTDATA_OP_HIX22,
 	R_SPARC_GOTDATA_OP_LOX10, R_SPARC_GOTDATA_OP,
 	R_SPARC_H34, R_SPARC_SIZE32, R_SPARC_SIZE64): New relocs.
@@ -1689,6 +1800,7 @@
 
 2006-05-24  Carlos O'Donell  <carlos@systemhalted.org>
 	    Randolph Chung  <randolph@tausq.org>
+
 	* hppa.h (R_PARISC_TLS_GD21L, R_PARISC_TLS_GD14R, R_PARISC_TLS_GDCALL,
 	R_PARISC_TLS_LDM21L, R_PARISC_TLS_LDM14R, R_PARISC_TLS_LDMCALL,
 	R_PARISC_TLS_LDO21L, R_PARISC_TLS_LDO14R, R_PARISC_TLS_DTPMOD32,

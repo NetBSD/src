@@ -1872,7 +1872,7 @@ ELF ABI.  Note - if compression would actually make a section
 @itemx --compress-debug-sections=zlib-gabi
 For ELF files, these options control how DWARF debug sections are
 compressed.  @option{--compress-debug-sections=none} is equivalent
-to @option{--nocompress-debug-sections}.
+to @option{--decompress-debug-sections}.
 @option{--compress-debug-sections=zlib} and
 @option{--compress-debug-sections=zlib-gabi} are equivalent to
 @option{--compress-debug-sections}.
