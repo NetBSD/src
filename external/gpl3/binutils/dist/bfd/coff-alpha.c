@@ -2210,7 +2210,7 @@ alpha_ecoff_openr_next_archived_file (bfd *archive, bfd *last_file)
 	 BSD-4.4-style element with a long odd size.  */
       filestart = last_file->proxy_origin + size;
       filestart += filestart % 2;
-      if (filestart <= last_file->proxy_origin)
+      if (filestart < last_file->proxy_origin)
 	{
 	  /* Prevent looping.  See PR19256.  */
 	  bfd_set_error (bfd_error_malformed_archive);

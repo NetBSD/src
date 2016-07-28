@@ -1,3 +1,301 @@
+2016-06-29  Tristan Gingold  <gingold@adacore.com>
+
+	* version.m4: Bump version to 2.26.1
+	* configure: Regenerate.
+
+2016-06-29  Tristan Gingold  <gingold@adacore.com>
+
+	* development.sh: Set development to false.
+
+2016-06-28  Alan Modra  <amodra@gmail.com>
+
+	Apply from master
+	2016-05-19  Alan Modra  <amodra@gmail.com>
+	* elf64-ppc.c (ppc64_elf_branch_reloc): Check for NULL owner
+	before dereferencing.
+
+2016-06-28  Alan Modra  <amodra@gmail.com>
+
+	PR ld/19264
+	* elf64-ppc.c (STUB_SHRINK_ITER): Define.
+	(ppc64_elf_size_stubs): Exit stub sizing loop past STUB_SHRINK_ITER
+	if shrinking stubs.
+	(ppc64_elf_size_stubs): Adjust to suit.
+
+2016-06-14  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	Backport from master
+	2016-06-14  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	PR ld/20254
+	* elf32-avr.c (elf32_avr_relax_delete_bytes): Adjust reloc
+	offsets until reloc_toaddr.
+
+2016-06-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-06-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/20244
+	* elf32-i386.c (elf_i386_relocate_section): Add the .got.plt
+	section address for R_386_GOT32/R_386_GOT32X relocations against
+	IFUNC symbols if there is no base register and return error for
+	PIC.
+
+	2016-06-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_relocate_section): Simplify IFUNC
+	GOT32 adjustment for static executables.
+
+2016-06-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-06-11  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/20244
+	* elf32-i386.c (elf_i386_relocate_section): When relocating
+	R_386_GOT32, return error without a base register for PIC and
+	subtract the .got.plt section address only with a base register.
+
+2016-06-13  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	Backport from master
+	2016-06-08  Senthil Kumar Selvaraj  <senthil_kumar.selvaraj@atmel.com>
+
+	PR ld/20221
+	* elf32-avr.c (elf32_avr_relax_delete_bytes): Adjust syms
+	and relocs only if shrinking occurred.
+
+2016-06-09  Alan Modra  <amodra@gmail.com>
+
+	PR ld/20159
+	PR ld/16467
+	* elflink.c (_bfd_elf_merge_symbol): Revert PR16467 change.
+	(_bfd_elf_add_default_symbol): Don't indirect to/from defined
+	symbol given a version by a script different to the version
+	of the symbol being added.
+	(elf_link_add_object_symbols): Use _bfd_elf_strtab_save and
+	_bfd_elf_strtab_restore.  Don't fudge dynstr references.
+	* elf-strtab.c (_bfd_elf_strtab_restore_size): Delete.
+	(struct strtab_save): New.
+	(_bfd_elf_strtab_save, _bfd_elf_strtab_restore): New functions.
+	* elf-bfd.h (_bfd_elf_strtab_restore_size): Delete.
+	(_bfd_elf_strtab_save, _bfd_elf_strtab_restore): Declare.
+
+2016-05-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-05-20  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_check_relocs): Don't check R_386_GOT32
+	when setting need_convert_load.
+
+	2016-05-19  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/20117
+	* elf32-i386.c (elf_i386_convert_load): Don't convert
+	R_386_GOT32.
+
+2016-05-18  Christophe Monat  <christophe.monat@st.com>
+
+	Backport from master
+	2016-05-09  Christophe Monat  <christophe.monat@st.com>
+
+	PR ld/20030
+	* elf32-arm.c (is_thumb2_vldm): Account for T1 (DP) encoding.
+	(stm32l4xx_need_create_replacing_stub): Rename ambiguous nb_regs
+	to nb_words.
+	(create_instruction_vldmia): Add is_dp to disambiguate SP/DP
+	encoding.
+	(create_instruction_vldmdb): Likewise.
+	(stm32l4xx_create_replacing_stub_vldm): is_dp detects DP encoding,
+	uses it to re-encode.
+
+2016-05-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-05-13  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/20093
+	* elf64-x86-64.c (elf_x86_64_convert_load_reloc): Don't convert
+	GOTPCREL relocation against large section.
+
+	* elflink.c (bfd_elf_final_link): Likewise.
+
+2016-05-11  Alan Modra  <amodra@gmail.com>
+
+	PR 20060
+	* elf64-ppc.c (ppc64_elf_tls_setup): Clear forced_local.
+	* elf32-ppc.c (ppc_elf_tls_setup): Likewise.
+
+2016-04-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-04-27  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/20006
+	* elf64-x86-64.c (elf_x86_64_convert_load): Skip debug sections
+	when estimating distances between output sections.
+
+2016-03-29  Toni Spets  <toni.spets@iki.fi>
+
+	PR 19878
+	* coffcode.h (coff_write_object_contents): Revert accidental
+	2014-11-10 change.
+
+2016-03-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19827
+	* elf32-i386.c (elf_i386_check_relocs): Bind defined symbol
+	locally in PIE.
+	(elf_i386_relocate_section): Likewise.
+	* elf64-x86-64.c (elf_x86_64_check_relocs): Likewise.
+	(elf_x86_64_relocate_section): Likewise.
+
+2016-03-15  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-01-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19539
+	* elf32-i386.c (elf_i386_reloc_type_class): Check relocation
+	against STT_GNU_IFUNC symbol only with dynamic symbols.
+	* elf64-x86-64.c (elf_x86_64_reloc_type_class): Likewise.
+
+2016-03-15  Nick Clifton  <nickc@redhat.com>
+
+	Backport from master:
+	2016-03-09  Leon Winter  <winter-gcc@bfw-online.de>
+
+	PR ld/19623
+	* cofflink.c (_bfd_coff_generic_relocate_section): Do not apply
+	relocations against absolute symbols.
+
+2016-03-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-01-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/19523
+	* dwarf2.c (_bfd_dwarf2_slurp_debug_info): Set BFD_DECOMPRESS to
+	decompress debug sections.
+
+2016-03-09  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19579
+	Backport from master
+	2016-03-08  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (_bfd_elf_merge_symbol): Group common symbol checking
+	together.
+
+	2016-03-04  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elflink.c (_bfd_elf_merge_symbol): Treat common symbol in
+	executable as definition if the new definition comes from a
+	shared library.
+
+2016-03-09  Nick Clifton  <nickc@redhat.com>
+	    Alan Modra  <amodra@gmail.com>
+
+	PR binutils/19775
+	* archive.c (bfd_generic_openr_next_archived_file): Allow zero
+	length elements in the archive.
+	* coff-alpha.c (alpha_ecoff_openr_next_archived_file): Likewise.
+
+2016-03-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19752
+	Backport from master
+	2015-12-18  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* coff-x86_64.c (coff_amd64_reloc): Fix formatting.
+
+	2015-12-18  Nick Clifton  <nickc@redhat.com>
+
+	* coff-i386.c (coff_i386_reloc): Fix formatting.
+
+2016-02-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19698
+	* elflink.c (bfd_elf_record_link_assignment): Set versioned if
+	symbol version is unknown.
+
+2016-02-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19553
+	* elflink.c (elf_link_add_object_symbols): Don't add DT_NEEDED
+	if a symbol from a library loaded via DT_NEEDED doesn't match
+	the symbol referenced by regular object.
+
+2016-02-26  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-24  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* elf32-i386.c (elf_i386_allocate_dynrelocs): Set plt_got.offset
+	to (bfd_vma) -1 when setting needs_plt to 0.
+	* elf64-x86-64.c (elf_x86_64_allocate_dynrelocs): Likewise.
+
+2016-02-26  Alan Modra  <amodra@gmail.com>
+
+	* elf64-ppc.c (create_linkage_sections): Create sfpr when
+	save_restore_funcs, rest of sections when not relocatable.
+	(ppc64_elf_init_stub_bfd): Always call create_linkage_sections.
+	(sfpr_define): Define all symbols on emitted code.
+	(ppc64_elf_func_desc_adjust): Adjust for sfpr now being created
+	when relocatable.  Move sfpr_define loop earlier.
+
+2016-02-25  Jiong Wang  <jiong.wang@arm.com>
+
+	Backport from master
+	2016-01-21  Jiong Wang  <jiong.wang@arm.com>
+
+	* elfnn-aarch64.c (aarch64_type_of_stub): Allow insert long branch
+	veneer for sym_sec != input_sec.
+	(elfNN_aarch64_size_stub): Support STT_SECTION symbol.
+	(elfNN_aarch64_final_link_relocate): Take rela addend into account when
+	calculation destination.
+
+2016-02-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-10  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19601
+	* elf32-i386.c (elf_i386_relocate_section): Mask off the least
+	significant bit in GOT offset for R_386_GOT32X.
+
+2016-02-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-02  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/19542
+	* elf64-x86-64.c (elf_x86_64_convert_load): Store the estimated
+	distances in the compressed_size field of the output section.
+
+2016-02-01  John David Anglin  <danglin@gcc.gnu.org>
+
+	PR ld/19526
+	* elf32-hppa.c (elf32_hppa_final_link): Don't sort non-regular output
+	files.
+	* elf64-hppa.c (elf32_hppa_final_link): Likewise.  Remove retval.
+
+2016-01-25  Tristan Gingold  <gingold@adacore.com>
+
+	* version.m4: Bump version to 2.26.0
+	* configure: Regenerate.
+
 2016-01-25  Tristan Gingold  <gingold@adacore.com>
 
 	* version.m4: Bump version to 2.26
@@ -119,7 +417,7 @@
 	* configure: Regenerate.
 
 2015-11-11  Alan Modra  <amodra@gmail.com>
-            Peter Bergner <bergner@vnet.ibm.com>
+	    Peter Bergner <bergner@vnet.ibm.com>
 
 	* elf32-ppc.c (ppc_elf_howto_raw): Add R_PPC_REL16DX_HA.
 	(ppc_elf_reloc_type_lookup): Handle R_PPC_REL16DX_HA.
@@ -179,8 +477,8 @@
 
 2015-10-29  Catherine Moore  <clm@codesourcery.com>
 
-    	* elfxx-mips.c (mips_elf_check_mips16_stubs): Set a stub's output
-    	section to bfd_abs_section_ptr if the stub is discarded.
+	* elfxx-mips.c (mips_elf_check_mips16_stubs): Set a stub's output
+	section to bfd_abs_section_ptr if the stub is discarded.
 
 2015-10-29  Ed Schouten  <ed@nuxi.nl>
 
@@ -232,7 +530,7 @@
 	* bfd-in2.h: Regenerate.
 
 2015-10-27  Laurent Alfonsi <laurent.alfonsi@st.com>
-            Christophe Monat <christophe.monat@st.com>
+	    Christophe Monat <christophe.monat@st.com>
 
 	* bfd-in2.h: Regenerate.
 	* bfd-in.h (bfd_arm_stm32l4xx_fix): New enum. Specify how
@@ -1225,115 +1523,115 @@
 
 2015-08-18  H.J. Lu  <hongjiu.lu@intel.com>
 
-	* bfd/aoutx.h: Replace shared, executable, relocatable and pie
+	* aoutx.h: Replace shared, executable, relocatable and pie
 	fields with bfd_link_executable, bfd_link_dll,
 	bfd_link_relocatable, bfd_link_pic and bfd_link_pie.
-	* bfd/bout.c: Likewise.
-	* bfd/coff-alpha.c: Likewise.
-	* bfd/coff-arm.c: Likewise.
-	* bfd/coff-i386.c: Likewise.
-	* bfd/coff-i960.c: Likewise.
-	* bfd/coff-m68k.c: Likewise.
-	* bfd/coff-mcore.c: Likewise.
-	* bfd/coff-mips.c: Likewise.
-	* bfd/coff-ppc.c: Likewise.
-	* bfd/coff-rs6000.c: Likewise.
-	* bfd/coff-sh.c: Likewise.
-	* bfd/coff-tic80.c: Likewise.
-	* bfd/coff-x86_64.c: Likewise.
-	* bfd/coff64-rs6000.c: Likewise.
-	* bfd/coffgen.c: Likewise.
-	* bfd/cofflink.c: Likewise.
-	* bfd/ecoff.c: Likewise.
-	* bfd/ecofflink.c: Likewise.
-	* bfd/elf-bfd.h: Likewise.
-	* bfd/elf-eh-frame.c: Likewise.
-	* bfd/elf-ifunc.c: Likewise.
-	* bfd/elf-m10200.c: Likewise.
-	* bfd/elf-m10300.c: Likewise.
-	* bfd/elf-s390-common.c: Likewise.
-	* bfd/elf-vxworks.c: Likewise.
-	* bfd/elf.c: Likewise.
-	* bfd/elf32-arm.c: Likewise.
-	* bfd/elf32-avr.c: Likewise.
-	* bfd/elf32-bfin.c: Likewise.
-	* bfd/elf32-cr16.c: Likewise.
-	* bfd/elf32-cr16c.c: Likewise.
-	* bfd/elf32-cris.c: Likewise.
-	* bfd/elf32-crx.c: Likewise.
-	* bfd/elf32-d10v.c: Likewise.
-	* bfd/elf32-dlx.c: Likewise.
-	* bfd/elf32-epiphany.c: Likewise.
-	* bfd/elf32-fr30.c: Likewise.
-	* bfd/elf32-frv.c: Likewise.
-	* bfd/elf32-ft32.c: Likewise.
-	* bfd/elf32-h8300.c: Likewise.
-	* bfd/elf32-hppa.c: Likewise.
-	* bfd/elf32-i370.c: Likewise.
-	* bfd/elf32-i386.c: Likewise.
-	* bfd/elf32-i860.c: Likewise.
-	* bfd/elf32-ip2k.c: Likewise.
-	* bfd/elf32-iq2000.c: Likewise.
-	* bfd/elf32-lm32.c: Likewise.
-	* bfd/elf32-m32c.c: Likewise.
-	* bfd/elf32-m32r.c: Likewise.
-	* bfd/elf32-m68hc11.c: Likewise.
-	* bfd/elf32-m68hc1x.c: Likewise.
-	* bfd/elf32-m68k.c: Likewise.
-	* bfd/elf32-mcore.c: Likewise.
-	* bfd/elf32-mep.c: Likewise.
-	* bfd/elf32-metag.c: Likewise.
-	* bfd/elf32-microblaze.c: Likewise.
-	* bfd/elf32-moxie.c: Likewise.
-	* bfd/elf32-msp430.c: Likewise.
-	* bfd/elf32-mt.c: Likewise.
-	* bfd/elf32-nds32.c: Likewise.
-	* bfd/elf32-nios2.c: Likewise.
-	* bfd/elf32-or1k.c: Likewise.
-	* bfd/elf32-ppc.c: Likewise.
-	* bfd/elf32-rl78.c: Likewise.
-	* bfd/elf32-rx.c: Likewise.
-	* bfd/elf32-s390.c: Likewise.
-	* bfd/elf32-score.c: Likewise.
-	* bfd/elf32-score7.c: Likewise.
-	* bfd/elf32-sh-symbian.c: Likewise.
-	* bfd/elf32-sh.c: Likewise.
-	* bfd/elf32-sh64.c: Likewise.
-	* bfd/elf32-spu.c: Likewise.
-	* bfd/elf32-tic6x.c: Likewise.
-	* bfd/elf32-tilepro.c: Likewise.
-	* bfd/elf32-v850.c: Likewise.
-	* bfd/elf32-vax.c: Likewise.
-	* bfd/elf32-visium.c: Likewise.
-	* bfd/elf32-xc16x.c: Likewise.
-	* bfd/elf32-xstormy16.c: Likewise.
-	* bfd/elf32-xtensa.c: Likewise.
-	* bfd/elf64-alpha.c: Likewise.
-	* bfd/elf64-hppa.c: Likewise.
-	* bfd/elf64-ia64-vms.c: Likewise.
-	* bfd/elf64-mmix.c: Likewise.
-	* bfd/elf64-ppc.c: Likewise.
-	* bfd/elf64-s390.c: Likewise.
-	* bfd/elf64-sh64.c: Likewise.
-	* bfd/elf64-x86-64.c: Likewise.
-	* bfd/elflink.c: Likewise.
-	* bfd/elfnn-aarch64.c: Likewise.
-	* bfd/elfnn-ia64.c: Likewise.
-	* bfd/elfxx-mips.c: Likewise.
-	* bfd/elfxx-sparc.c: Likewise.
-	* bfd/elfxx-tilegx.c: Likewise.
-	* bfd/i386linux.c: Likewise.
-	* bfd/linker.c: Likewise.
-	* bfd/m68klinux.c: Likewise.
-	* bfd/pdp11.c: Likewise.
-	* bfd/pe-mips.c: Likewise.
-	* bfd/peXXigen.c: Likewise.
-	* bfd/reloc.c: Likewise.
-	* bfd/reloc16.c: Likewise.
-	* bfd/sparclinux.c: Likewise.
-	* bfd/sunos.c: Likewise.
-	* bfd/vms-alpha.c: Likewise.
-	* bfd/xcofflink.c: Likewise.
+	* bout.c: Likewise.
+	* coff-alpha.c: Likewise.
+	* coff-arm.c: Likewise.
+	* coff-i386.c: Likewise.
+	* coff-i960.c: Likewise.
+	* coff-m68k.c: Likewise.
+	* coff-mcore.c: Likewise.
+	* coff-mips.c: Likewise.
+	* coff-ppc.c: Likewise.
+	* coff-rs6000.c: Likewise.
+	* coff-sh.c: Likewise.
+	* coff-tic80.c: Likewise.
+	* coff-x86_64.c: Likewise.
+	* coff64-rs6000.c: Likewise.
+	* coffgen.c: Likewise.
+	* cofflink.c: Likewise.
+	* ecoff.c: Likewise.
+	* ecofflink.c: Likewise.
+	* elf-bfd.h: Likewise.
+	* elf-eh-frame.c: Likewise.
+	* elf-ifunc.c: Likewise.
+	* elf-m10200.c: Likewise.
+	* elf-m10300.c: Likewise.
+	* elf-s390-common.c: Likewise.
+	* elf-vxworks.c: Likewise.
+	* elf.c: Likewise.
+	* elf32-arm.c: Likewise.
+	* elf32-avr.c: Likewise.
+	* elf32-bfin.c: Likewise.
+	* elf32-cr16.c: Likewise.
+	* elf32-cr16c.c: Likewise.
+	* elf32-cris.c: Likewise.
+	* elf32-crx.c: Likewise.
+	* elf32-d10v.c: Likewise.
+	* elf32-dlx.c: Likewise.
+	* elf32-epiphany.c: Likewise.
+	* elf32-fr30.c: Likewise.
+	* elf32-frv.c: Likewise.
+	* elf32-ft32.c: Likewise.
+	* elf32-h8300.c: Likewise.
+	* elf32-hppa.c: Likewise.
+	* elf32-i370.c: Likewise.
+	* elf32-i386.c: Likewise.
+	* elf32-i860.c: Likewise.
+	* elf32-ip2k.c: Likewise.
+	* elf32-iq2000.c: Likewise.
+	* elf32-lm32.c: Likewise.
+	* elf32-m32c.c: Likewise.
+	* elf32-m32r.c: Likewise.
+	* elf32-m68hc11.c: Likewise.
+	* elf32-m68hc1x.c: Likewise.
+	* elf32-m68k.c: Likewise.
+	* elf32-mcore.c: Likewise.
+	* elf32-mep.c: Likewise.
+	* elf32-metag.c: Likewise.
+	* elf32-microblaze.c: Likewise.
+	* elf32-moxie.c: Likewise.
+	* elf32-msp430.c: Likewise.
+	* elf32-mt.c: Likewise.
+	* elf32-nds32.c: Likewise.
+	* elf32-nios2.c: Likewise.
+	* elf32-or1k.c: Likewise.
+	* elf32-ppc.c: Likewise.
+	* elf32-rl78.c: Likewise.
+	* elf32-rx.c: Likewise.
+	* elf32-s390.c: Likewise.
+	* elf32-score.c: Likewise.
+	* elf32-score7.c: Likewise.
+	* elf32-sh-symbian.c: Likewise.
+	* elf32-sh.c: Likewise.
+	* elf32-sh64.c: Likewise.
+	* elf32-spu.c: Likewise.
+	* elf32-tic6x.c: Likewise.
+	* elf32-tilepro.c: Likewise.
+	* elf32-v850.c: Likewise.
+	* elf32-vax.c: Likewise.
+	* elf32-visium.c: Likewise.
+	* elf32-xc16x.c: Likewise.
+	* elf32-xstormy16.c: Likewise.
+	* elf32-xtensa.c: Likewise.
+	* elf64-alpha.c: Likewise.
+	* elf64-hppa.c: Likewise.
+	* elf64-ia64-vms.c: Likewise.
+	* elf64-mmix.c: Likewise.
+	* elf64-ppc.c: Likewise.
+	* elf64-s390.c: Likewise.
+	* elf64-sh64.c: Likewise.
+	* elf64-x86-64.c: Likewise.
+	* elflink.c: Likewise.
+	* elfnn-aarch64.c: Likewise.
+	* elfnn-ia64.c: Likewise.
+	* elfxx-mips.c: Likewise.
+	* elfxx-sparc.c: Likewise.
+	* elfxx-tilegx.c: Likewise.
+	* i386linux.c: Likewise.
+	* linker.c: Likewise.
+	* m68klinux.c: Likewise.
+	* pdp11.c: Likewise.
+	* pe-mips.c: Likewise.
+	* peXXigen.c: Likewise.
+	* reloc.c: Likewise.
+	* reloc16.c: Likewise.
+	* sparclinux.c: Likewise.
+	* sunos.c: Likewise.
+	* vms-alpha.c: Likewise.
+	* xcofflink.c: Likewise.
 
 2015-08-18  Alan Modra  <amodra@gmail.com>
 
@@ -1387,7 +1685,7 @@
 
 2015-08-11  Jiong Wang  <jiong.wang@arm.com>
 
-	* bfd/elfnn-aarch64.c (aarch64_type_of_stub): New parameter "sym_sec".
+	* elfnn-aarch64.c (aarch64_type_of_stub): New parameter "sym_sec".
 	Loose the check for symbol from ABS section.
 	(elfNN_aarch64_size_stubs): Pass sym_sec.
 
@@ -1688,10 +1986,10 @@
 
 2015-07-10  H.J. Lu  <hongjiu.lu@intel.com>
 
-	 PR binutils/18656
-	 * bfd.c (bfd_convert_section_size): New function.
-	 (bfd_convert_section_contents): Likewise.
-	 * bfd-in2.h: Regenerated.
+	PR binutils/18656
+	* bfd.c (bfd_convert_section_size): New function.
+	(bfd_convert_section_contents): Likewise.
+	* bfd-in2.h: Regenerated.
 
 2015-07-09  Catherine Moore  <clm@codesourcery.com>
 
@@ -2004,7 +2302,6 @@
 	    Bernd Schmidt <bernds@codesourcery.com>
 	    Paul Brook <paul@codesourcery.com>
 
-	bfd/
 	* bfd-in2.h: Regenerated.
 	* elf-bfd.h (DWARF2_EH_HDR, COMPACT_EH_HDR): Define.
 	(COMPACT_EH_CANT_UNWIND_OPCODE): Define.
@@ -2913,7 +3210,7 @@
 2015-03-18  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* compress.c (bfd_compress_section_contents): Make it static.
-	* bfd/bfd-in2.h: Regenerated.
+	* bfd-in2.h: Regenerated.
 
 2015-03-18  Eric Youngdale  <eyoungdale@ptc.com>
 
@@ -3062,8 +3359,8 @@
 
 2015-02-27  Marcus Shawcroft  <marcus.shawcroft@arm.com>
 
-	* bfd/bfd-in2.h: Regenerate.
-	* bfd/libbfd.h: Regenerate.
+	* bfd-in2.h: Regenerate.
+	* libbfd.h: Regenerate.
 
 2015-02-26  Marcus Shawcroft  <marcus.shawcroft@arm.com>
 
@@ -3534,7 +3831,7 @@
 	is weak or pointer_equality_needed is FALSE.
 
 	* elf32-arm.c (elf32_arm_finish_dynamic_symbol): Improve
-	  comment discussing why we clear st_value for some symbols.
+	comment discussing why we clear st_value for some symbols.
 
 2015-02-02  Kuan-Lin Chen  <kuanlinchentw@gmail.com>
 

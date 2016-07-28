@@ -138,6 +138,11 @@ set ppcelftests {
     {"TLS32 opt 4" "-melf32ppc" "" "-a32"  {tlsopt4_32.s tlslib32.s}
      {{objdump -dr tlsopt4_32.d}}
       "tlsopt4_32"}
+    {"TLS32 DLL" "-shared -melf32ppc --version-script tlsdll.ver" "" "-a32" {tlsdll_32.s}
+     {} "tlsdll32.so"}
+    {"TLS32 opt 5" "-melf32ppc --gc-sections --secure-plt tmpdir/tlsdll32.so" "" "-a32"  {tlsopt5_32.s}
+     {{objdump -dr tlsopt5_32.d}}
+      "tlsopt5_32"}
     {"Shared library with global symbol" "-shared -melf32ppc" "" "-a32" {sdalib.s}
      {} "sdalib.so"}
     {"Dynamic application with SDA" "-melf32ppc tmpdir/sdalib.so" "" "-a32" {sdadyn.s}
@@ -203,6 +208,11 @@ set ppc64elftests {
     {"TLS opt 4" "-melf64ppc" "" "-a64"  {tlsopt4.s tlslib.s}
      {{objdump -dr tlsopt4.d}}
       "tlsopt4"}
+    {"TLS DLL" "-shared -melf64ppc --version-script tlsdll.ver" "" "-a64" {tlsdll.s}
+     {} "tlsdll.so"}
+    {"TLS opt 5" "-melf64ppc --gc-sections tmpdir/tlsdll.so" "" "-a64"  {tlsopt5.s}
+     {{objdump -dr tlsopt5.d}}
+      "tlsopt5"}
     {"sym@tocbase" "-shared -melf64ppc" "" "-a64" {symtocbase-1.s symtocbase-2.s}
 	{{objdump -dj.data symtocbase.d}} "symtocbase.so"}
     {"TOC opt" "-melf64ppc" "" "-a64"  {tocopt.s}
