@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1131 2016/07/01 22:52:06 christos Exp $
+# $NetBSD: mi,v 1.1132 2016/07/28 19:24:08 nakayama Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5520,7 +5520,7 @@
 ./usr/share/zoneinfo/Asia/Thimbu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Thimphu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Tokyo			base-sys-share		share
-./usr/share/zoneinfo/Asia/Tomsk			base-obsolete		obsolete
+./usr/share/zoneinfo/Asia/Tomsk			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ujung_Pandang		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulaanbaatar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulan_Bator		base-sys-share		share
