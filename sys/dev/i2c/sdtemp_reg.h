@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.9 2016/07/26 07:30:16 msaitoh Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.10 2016/07/28 09:11:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -94,6 +94,12 @@
 /*
  * Devices known to conform to JEDEC JC42.4
  */
+
+/* TSE2004av definitions (JEDEC Standard No. 21-C Page 4.1.6) */
+#define TSE2004AV_ID			0x2200
+#define TSE2004AV_MASK			0xff00	/* ID is upper 8bits */
+#define TSE2004AV_REV			0x00ff	/* Revision is lower 8bits */
+#define SDTEMP_IS_TSE2004AV(dev)	(((dev) & TSE2004AV_MASK) == TSE2004AV_ID)
 
 /* Atmel */
 #define	AT_MANUFACTURER_ID		0x001f
