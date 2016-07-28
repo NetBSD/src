@@ -1,3 +1,4 @@
+#as: -mrelax-relocations=yes
 #readelf: -rsW
 #name: x86-64 local PIC
 
