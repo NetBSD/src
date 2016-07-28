@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.192 2016/07/21 03:45:56 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.193 2016/07/28 07:54:31 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.192 2016/07/21 03:45:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.193 2016/07/28 07:54:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -971,9 +971,9 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	 */
 	if (rtmtype == RTM_GET) {
 		if (((rtinfo->rti_addrs &
-		    (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0 << i)) != 0)
+		    (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0U << i)) != 0)
 			return 1;
-	} else if ((rtinfo->rti_addrs & (~0 << i)) != 0)
+	} else if ((rtinfo->rti_addrs & (~0U << i)) != 0)
 		return 1;
 	/* Check for bad data length.  */
 	if (cp != cplim) {
