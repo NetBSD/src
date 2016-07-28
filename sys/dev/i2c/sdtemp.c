@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.30 2016/07/27 09:11:44 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.31 2016/07/28 09:11:13 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.30 2016/07/27 09:11:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.31 2016/07/28 09:11:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,12 @@ sdtemp_dev_table[] = {
 	"Integrated Device Technology TS3000GB2" },
     { IDT_MANUFACTURER_ID,  IDT_TS3001GB2_DEVICE_ID, IDT_TS3001GB2_MASK,  CIDT,
 	"Integrated Device Technology TS3001GB2" },
+    /*
+     * Don't change the location of the following two entries. Device specific
+     * entry must be located at above.
+     */
+    { 0,		    TSE2004AV_ID,	     TSE2004AV_MASK,	  NULL,
+	"TSE2004av compliant device (generic driver)" },
     { 0, 0, 0, NULL, "Unknown" }
 };
 
@@ -184,6 +190,10 @@ sdtemp_lookup(uint16_t mfg, uint16_t devrev)
 		    sdtemp_dev_table[i].sdtemp_devrev)
 			break;
 	}
+	/* Check TSE2004av */
+	if ((sdtemp_dev_table[i].sdtemp_mfg_id == 0)
+	    && (SDTEMP_IS_TSE2004AV(devrev) == 0))
+			i++; /* Unknown */
 
 	return i;
 }
@@ -192,7 +202,7 @@ static int
 sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	uint16_t mfgid, devid;
+	uint16_t mfgid, devid, cap;
 	struct sdtemp_softc sc;
 	int i, error;
 
@@ -202,22 +212,31 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if ((ia->ia_addr & SDTEMP_ADDRMASK) != SDTEMP_ADDR)
 		return 0;
 
-	/* Verify that we can read the manufacturer ID  & Device ID */
+	/* Verify that we can read the manufacturer ID, Device ID and the capability */
 	iic_acquire_bus(sc.sc_tag, 0);
 	error = sdtemp_read_16(&sc, SDTEMP_REG_MFG_ID,  &mfgid) |
-		sdtemp_read_16(&sc, SDTEMP_REG_DEV_REV, &devid);
+		sdtemp_read_16(&sc, SDTEMP_REG_DEV_REV, &devid) |
+		sdtemp_read_16(&sc, SDTEMP_REG_CAPABILITY, &cap);
 	iic_release_bus(sc.sc_tag, 0);
 
 	if (error)
 		return 0;
 
 	i = sdtemp_lookup(mfgid, devid);
-	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
+	if ((sdtemp_dev_table[i].sdtemp_mfg_id == 0) &&
+	    (sdtemp_dev_table[i].sdtemp_devrev == 0)) {
 		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%02x "
 		    "rev 0x%02x at address 0x%02x\n", mfgid, devid >> 8,
 		    devid & 0xff, sc.sc_address);
 		return 0;
 	}
+
+	/*
+	 * Check by SDTEMP_IS_TSE2004AV() might not be enough, so check the alarm
+	 * capability, too.
+	 */
+	if ((cap & SDTEMP_CAP_HAS_ALARM) == 0)
+		return 0;
 
 	return 1;
 }
@@ -249,10 +268,21 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": Temp Sensor\n");
 	aprint_normal(": %s Temp Sensor\n", sdtemp_dev_table[i].sdtemp_desc);
 
-	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0)
-		aprint_debug_dev(self,
-		    "mfg 0x%04x dev 0x%02x rev 0x%02x at addr 0x%02x\n",
-		    mfgid, devid >> 8, devid & 0xff, ia->ia_addr);
+	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
+		if (SDTEMP_IS_TSE2004AV(devid))
+			aprint_normal_dev(self, "TSE2004av compliant. "
+			    "Manufacturer ID 0x%04hx, Device revision 0x%02x\n",
+			    mfgid, devid & TSE2004AV_REV);
+		else {
+			aprint_error_dev(self,
+			    "mfg 0x%04x dev 0x%02x rev 0x%02x at addr 0x%02x\n",
+			    mfgid, devid >> 8, devid & 0xff, ia->ia_addr);
+			iic_release_bus(sc->sc_tag, 0);
+			aprint_error_dev(self, "It should no happen. "
+			    "Why attach() found me?\n");
+			return;
+		}
+	}
 
 	error = sdtemp_read_16(sc, SDTEMP_REG_CAPABILITY, &sc->sc_capability);
 	aprint_debug_dev(self, "capability reg = %04x\n", sc->sc_capability);
