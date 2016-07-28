@@ -76,4 +76,5 @@ Disassembly of section \.text:
 .*:	(12 b5 17 44|44 17 b5 12) 	vslv    v21,v21,v2
 .*:	(11 e9 0f 4d|4d 0f e9 11) 	vextuhrx r15,r9,v1
 .*:	(12 b1 87 8d|8d 87 b1 12) 	vextuwrx r21,r17,v16
+.*:	(12 95 b5 e3|e3 b5 95 12) 	vmsumudm v20,v21,v22,v23
 #pass

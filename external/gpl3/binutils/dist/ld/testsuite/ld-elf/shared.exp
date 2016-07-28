@@ -524,6 +524,21 @@ if { [istarget *-*-linux*]
 	    {} \
 	    "libpr2404b.a" \
 	] \
+	[list \
+	    "Build pr19579a.o" \
+	    "" "-fPIE" \
+	    {pr19579a.c} \
+	    {} \
+	    "libpr19579a.a" \
+	] \
+	[list \
+	    "Build libpr19579.so" \
+	    "-shared" \
+	    "-fPIC" \
+	    {pr19579b.c} \
+	    {} \
+	    "libpr19579.so" \
+	] \
     ]
     run_ld_link_exec_tests [] [list \
 	[list \
@@ -579,6 +594,15 @@ if { [istarget *-*-linux*]
 	    "pr18718pic2" \
 	    "pass.out" \
 	    "-O2 -fPIC -I../bfd" \
+	] \
+	[list \
+	    "Run pr19579" \
+	    "-pie -z text tmpdir/pr19579a.o tmpdir/libpr19579.so" \
+	    "" \
+	    {dummy.c} \
+	    "pr19579" \
+	    "pass.out" \
+	    "-fPIE" \
 	] \
     ]
 }

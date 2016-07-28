@@ -21,6 +21,7 @@ _start:
         @ Explicit VPOP test
         vpop {s1-s9}
 
+        @ VLDM CASE #3
         @ vldmd rx!, {...}
         @ -> vldmb rx!, {8_words_or_less} for each needed 8_word
         vldmdb r11!, {s1-s31}

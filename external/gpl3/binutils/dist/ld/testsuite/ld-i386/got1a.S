@@ -12,10 +12,19 @@ main:
 	call	*%eax
 	movl	plt@GOT, %eax
 	call	*%eax
-	movl	foo@GOT(%ebx), %ecx
+	call	__x86.get_pc_thunk.cx
+	addl	$_GLOBAL_OFFSET_TABLE_, %ecx
+	movl	foo@GOT(%ecx), %ecx
 	call	*%ecx
 	subl	$12, %esp
 	pushl	$0
 	pushl	$0	# Push a dummy return address onto stack.
 	jmp	*myexit@GOT
 	.size	main, .-main
+	.section	.text.__x86.get_pc_thunk.cx,"axG",@progbits,__x86.get_pc_thunk.cx,comdat
+	.globl	__x86.get_pc_thunk.cx
+	.hidden	__x86.get_pc_thunk.cx
+	.type	__x86.get_pc_thunk.cx, @function
+__x86.get_pc_thunk.cx:
+	movl	(%esp), %ecx
+	ret

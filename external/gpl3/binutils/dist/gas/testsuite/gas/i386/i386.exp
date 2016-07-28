@@ -406,6 +406,7 @@ if [expr ([istarget "i*86-*-*"] ||  [istarget "x86_64-*-*"]) && [gas_32_check]] 
 	run_dump_test "relax-4"
 
 	run_dump_test "got"
+	run_dump_test "got-no-relax"
 
 	if {![istarget "*-*-nacl*"]} then {
 	    run_dump_test "iamcu-1"
@@ -784,6 +785,7 @@ if [expr ([istarget "i*86-*-*"] || [istarget "x86_64-*-*"]) && [gas_64_check]] t
 	run_list_test "x86-64-branch-3" "-al -mintel64"
 
 	run_dump_test "x86-64-gotpcrel"
+	run_dump_test "x86-64-gotpcrel-no-relax"
     }
 
     set ASFLAGS "$old_ASFLAGS"

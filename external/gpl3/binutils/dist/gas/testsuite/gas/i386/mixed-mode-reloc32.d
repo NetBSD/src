@@ -1,3 +1,4 @@
+#as: -mrelax-relocations=yes
 #objdump: -r
 #source: mixed-mode-reloc.s
 #name: x86 mixed mode relocs (32-bit object)

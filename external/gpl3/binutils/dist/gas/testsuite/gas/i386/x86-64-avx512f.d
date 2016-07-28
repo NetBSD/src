@@ -3665,6 +3665,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	62 02 fd 41 93 b4 fe 7b 00 00 00 	vgatherqpd 0x7b\(%r14,%zmm31,8\),%zmm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 fd 41 93 74 39 20 	vgatherqpd 0x100\(%r9,%zmm31,1\),%zmm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 22 fd 41 93 b4 b9 00 04 00 00 	vgatherqpd 0x400\(%rcx,%zmm31,4\),%zmm30\{%k1\}
+[ 	]*[a-f0-9]+:	62 d2 fd 41 93 9c de 7b 00 00 00 	vgatherqpd 0x7b\(%r14,%zmm19,8\),%zmm3\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 b4 fe 7b 00 00 00 	vgatherqps 0x7b\(%r14,%zmm31,8\),%ymm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 b4 fe 7b 00 00 00 	vgatherqps 0x7b\(%r14,%zmm31,8\),%ymm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 74 39 40 	vgatherqps 0x100\(%r9,%zmm31,1\),%ymm30\{%k1\}
@@ -10685,6 +10686,7 @@ Disassembly of section .text:
 [ 	]*[a-f0-9]+:	62 02 fd 41 93 b4 fe 85 ff ff ff 	vgatherqpd -0x7b\(%r14,%zmm31,8\),%zmm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 fd 41 93 74 39 20 	vgatherqpd 0x100\(%r9,%zmm31,1\),%zmm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 22 fd 41 93 b4 b9 00 04 00 00 	vgatherqpd 0x400\(%rcx,%zmm31,4\),%zmm30\{%k1\}
+[ 	]*[a-f0-9]+:	62 d2 fd 41 93 9c de 7b 00 00 00 	vgatherqpd 0x7b\(%r14,%zmm19,8\),%zmm3\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 b4 fe 85 ff ff ff 	vgatherqps -0x7b\(%r14,%zmm31,8\),%ymm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 b4 fe 85 ff ff ff 	vgatherqps -0x7b\(%r14,%zmm31,8\),%ymm30\{%k1\}
 [ 	]*[a-f0-9]+:	62 02 7d 41 93 74 39 40 	vgatherqps 0x100\(%r9,%zmm31,1\),%ymm30\{%k1\}

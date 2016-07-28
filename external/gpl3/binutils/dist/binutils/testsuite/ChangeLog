@@ -90,7 +90,7 @@
 
 	* binutils-all/localize-hidden-1.d: Allow for extra symbols in the
 	output.
-        * binutils-all/strip-11.d: Skip for the RL78.
+	* binutils-all/strip-11.d: Skip for the RL78.
 
 2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -98,9 +98,9 @@
 
 2015-07-10  H.J. Lu  <hongjiu.lu@intel.com>
 
-	 PR binutils/18656
-	 * binutils-all/compress.exp (convert_test): New proc.
-	 Run conversion tests between x86-64 and x32.
+	PR binutils/18656
+	* binutils-all/compress.exp (convert_test): New proc.
+	Run conversion tests between x86-64 and x32.
 
 2015-07-10  H.J. Lu  <hongjiu.lu@intel.com>
 

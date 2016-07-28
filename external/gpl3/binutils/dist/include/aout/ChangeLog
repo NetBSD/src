@@ -6,6 +6,10 @@
 
 	Update copyright years.
 
+2012-12-17  Nick Clifton  <nickc@redhat.com>
+
+	* hppa.h: Add copyright notice.
+
 2010-04-15  Nick Clifton  <nickc@redhat.com>
 
 	* adobe.h: Update copyright notice to use GPLv3.

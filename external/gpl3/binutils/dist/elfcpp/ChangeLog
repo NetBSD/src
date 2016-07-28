@@ -339,11 +339,11 @@
 
 2009-10-16  Doug Kwan  <dougkwan@google.com>
 
-	* elfcpp/elfcpp.h (DT_PREINIT_ARRAY): Correct enum value.
+	* elfcpp.h (DT_PREINIT_ARRAY): Correct enum value.
 
 2009-10-09  Andrew Pinski  <andrew_pinski@playstation.sony.com>
 
-	* elfcpp/elfcpp_file.h (Elf_file::section_name): Change shstr_size
+	* elfcpp_file.h (Elf_file::section_name): Change shstr_size
 	to Elf_WXword.
 
 2009-10-09  Mikolaj Zalewski  <mikolajz@google.com>

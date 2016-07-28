@@ -167,10 +167,14 @@ set armelftests_common {
      "-EL --fix-stm32l4xx-629360 -Ttext=0x8000" "" "-EL -mcpu=cortex-m4 -mfpu=fpv4-sp-d16" {stm32l4xx-fix-vldm.s}
      {{objdump -dr stm32l4xx-fix-vldm.d}}
      "stm32l4xx-fix-vldm"}
+    {"STM32L4XX erratum fix VLDM, DP registers"
+     "-EL --fix-stm32l4xx-629360 -Ttext=0x8000" "" "-EL -mcpu=cortex-m4 -mfpu=fpv4-sp-d16" {stm32l4xx-fix-vldm-dp.s}
+     {{objdump -dr stm32l4xx-fix-vldm-dp.d}}
+     "stm32l4xx-fix-vldm-dp"}
     {"STM32L4XX erratum fix ALL"
      "-EL --fix-stm32l4xx-629360=all -Ttext=0x8000" "" "-EL -mcpu=cortex-m4 -mfpu=fpv4-sp-d16" {stm32l4xx-fix-all.s}
      {{objdump -dr stm32l4xx-fix-all.d}}
-     "stm32l4xx-fix-vldm-all"}
+     "stm32l4xx-fix-all"}
     {"STM32L4XX erratum fix in IT context"
      "-EL --fix-stm32l4xx-629360 -Ttext=0x8000" "" "-EL -mcpu=cortex-m4 -mfpu=fpv4-sp-d16" {stm32l4xx-fix-it-block.s}
      {{objdump -dr stm32l4xx-fix-it-block.d}}
