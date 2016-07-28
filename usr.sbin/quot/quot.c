@@ -1,4 +1,4 @@
-/*	$NetBSD: quot.c,v 1.33 2013/10/19 17:16:38 christos Exp $	*/
+/*	$NetBSD: quot.c,v 1.34 2016/07/28 08:24:58 martin Exp $	*/
 
 /*
  * Copyright (C) 1991, 1994 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: quot.c,v 1.33 2013/10/19 17:16:38 christos Exp $");
+__RCSID("$NetBSD: quot.c,v 1.34 2016/07/28 08:24:58 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -521,7 +521,8 @@ ffs_oldfscompat(struct fs *fs)
 {
 	int i;
 
-	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
+	if (fs->fs_magic == FS_UFS1_MAGIC &&
+	    fs->fs_old_inodefmt < FS_44INODEFMT) {
 		quad_t sizepb = fs->fs_bsize;
 
 		fs->fs_maxfilesize = fs->fs_bsize * UFS_NDADDR - 1;
