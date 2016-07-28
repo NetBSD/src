@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.211 2016/07/20 07:56:10 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.212 2016/07/28 09:03:50 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.211 2016/07/20 07:56:10 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.212 2016/07/28 09:03:50 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -751,7 +751,9 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 
 	s = splnet();
+	mutex_enter(softnet_lock);
 	error = in6_control1(so , cmd, data, ifp);
+	mutex_exit(softnet_lock);
 	splx(s);
 	return error;
 }
