@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76.2.5 2016/07/27 03:25:00 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.76.2.6 2016/07/28 23:59:15 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.5 2016/07/27 03:25:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.6 2016/07/28 23:59:15 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -243,14 +243,12 @@ static int	md_ioctl_kalloc(struct md_softc *sc, struct md_conf *umd,
 static int
 mdsize(dev_t dev)
 {
-	device_t self;
 	struct md_softc *sc;
 	int res;
 
-	self = device_lookup_acquire(&md_cd, MD_UNIT(dev));
-	if (self == NULL)
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(dev));
+	if (sc == NULL)
 		return 0;
-	sc = device_private(self);
 
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type == MD_UNCONFIGURED)
@@ -259,14 +257,14 @@ mdsize(dev_t dev)
 		res = sc->sc_size >> DEV_BSHIFT;
 	mutex_exit(&sc->sc_lock);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return res;
 }
 
 static int
 mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	device_t self;
+	device_t self, new_self;
 	int unit;
 	int part = DISKPART(dev);
 	int pmask = 1 << part;
@@ -279,9 +277,8 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 	mutex_enter(&md_device_lock);
 	unit = MD_UNIT(dev);
-	sc = NULL;
-	self = device_lookup_acquire(&md_cd, unit);
-	if (self == NULL) {
+	sc = device_lookup_private_acquire(&md_cd, unit);
+	if (sc == NULL) {
 		if (part != RAW_PART) {
 			mutex_exit(&md_device_lock);
 			return ENXIO;
@@ -291,19 +288,16 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		cf->cf_atname = md_cd.cd_name;
 		cf->cf_unit = unit;
 		cf->cf_fstate = FSTATE_STAR;
-		self = config_attach_pseudo(cf);
-		if (self != NULL) {
-			device_acquire(self);
-			sc = device_private(self);
-		}
+		new_self = config_attach_pseudo(cf);
+		self = device_lookup_acquire(&md_cd, unit);
+		KASSERT(self == new_self);
+		sc = device_private(self);
 		if (sc == NULL) {
 			mutex_exit(&md_device_lock);
-			device_release(self);
+			device_release(sc->sc_dev);
 			return ENOMEM;
 		}
 	}
-	else
-		sc = device_private(self);
 
 	dk = &sc->sc_dkdev;
 
@@ -328,11 +322,11 @@ mdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 	 */
 	if (sc->sc_type == MD_UNCONFIGURED) {
 		mutex_exit(&md_device_lock);
-		device_release(self);
+		device_release(sc->sc_dev);
 		return ENXIO;
 	}
 
-ok:
+ ok:
 	/* XXX duplicates code in dk_open().  Call dk_open(), instead? */
 	mutex_enter(&dk->dk_openlock);
 	/* Mark our unit as open. */
@@ -349,14 +343,13 @@ ok:
 
 	mutex_exit(&dk->dk_openlock);
 	mutex_exit(&md_device_lock);
-	device_release(self);
+	device_release(sc->sc_dev);
 	return 0;
 }
 
 static int
 mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	device_t self;
 	int part = DISKPART(dev);
 	int pmask = 1 << part;
 	int error;
@@ -364,10 +357,9 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	struct md_softc *sc;
 	struct disk *dk;
 
-	self = device_lookup_acquire(&md_cd, MD_UNIT(dev));
-	if (self == NULL)
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
-	sc = device_private(self);
 
 	dk = &sc->sc_dkdev;
 
@@ -384,7 +376,7 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	dk->dk_openmask = dk->dk_copenmask | dk->dk_bopenmask;
 	if (dk->dk_openmask != 0) {
 		mutex_exit(&dk->dk_openlock);
-		device_release(self);
+		device_release(sc->sc_dev);
 		return 0;
 	}
 
@@ -396,52 +388,48 @@ mdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 	if (! error)
 		free(cf, M_DEVBUF);
 	mutex_exit(&md_device_lock);
-	device_release(self);
+	if (error)
+		device_release(sc->sc_dev);
 	return error;
 }
 
 static int
 mdread(dev_t dev, struct uio *uio, int flags)
 {
-	device_t self;
 	struct md_softc *sc;
 	int error;
 
-	self = device_lookup_acquire(&md_cd, MD_UNIT(dev));
-	if (self == NULL)
-		return ENXIO;
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(dev));
 
-	sc = device_private(self);
 	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
-		device_release(self);
+		if (sc != NULL)
+			device_release(sc->sc_dev);
 		return ENXIO;
 	}
 
 	error = (physio(mdstrategy, NULL, dev, B_READ, minphys, uio));
-	device_release(self);
+	device_release(sc->sc_dev);
 	return error;
 }
 
 static int
 mdwrite(dev_t dev, struct uio *uio, int flags)
 {
-	device_t self;
 	struct md_softc *sc;
 	int error;
 
-	self = device_lookup_acquire(&md_cd, MD_UNIT(dev));
-	if (self == NULL)
-		return ENXIO;
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(dev));
 
-	sc = device_private(self);
 	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
-		device_release(self);
+		if (sc != NULL) {
+			device_release(sc->sc_dev);
+		}
 		return ENXIO;
 	}
 
-	error = (physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	error = physio(mdstrategy, NULL, dev, B_WRITE, minphys, uio);
 
-	device_release(self);
+	device_release(sc->sc_dev);
 	return error;
 }
 
@@ -452,20 +440,13 @@ mdwrite(dev_t dev, struct uio *uio, int flags)
 static void
 mdstrategy(struct buf *bp)
 {
-	device_t self;
 	struct md_softc	*sc;
 	void *	addr;
 	size_t off, xfer;
 	bool is_read;
 
-	self = device_lookup_acquire(&md_cd, MD_UNIT(bp->b_dev));
-	if (self == NULL) {
-		bp->b_error = ENXIO;
-		goto done;
-	}
-
-	sc = device_private(self);
-	if (sc->sc_type == MD_UNCONFIGURED) {
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(bp->b_dev));
+	if (sc == NULL || sc->sc_type == MD_UNCONFIGURED) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -480,7 +461,7 @@ mdstrategy(struct buf *bp)
 		mutex_exit(&sc->sc_lock);
 		/* see md_server_loop() */
 		/* no biodone in this case */
-		device_release(self);
+		device_release(sc->sc_dev);
 		return;
 #endif	/* MEMORY_DISK_SERVER */
 
@@ -518,29 +499,27 @@ mdstrategy(struct buf *bp)
 	mutex_exit(&sc->sc_lock);
  done:
 	biodone(bp);
-	if (self != NULL)
-		device_release(self);
+	if (sc != NULL)
+		device_release(sc->sc_dev);
 }
 
 static int
 mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	device_t self;
 	struct md_softc *sc;
 	struct md_conf *umd;
 	int error;
 
-	self = device_lookup_private(&md_cd, MD_UNIT(dev));
-	if (self == NULL)
+	sc = device_lookup_private_acquire(&md_cd, MD_UNIT(dev));
+	if (sc == NULL)
 		return ENXIO;
 
-	sc = device_private(self);
 	mutex_enter(&sc->sc_lock);
 	if (sc->sc_type != MD_UNCONFIGURED) {
 		error = disk_ioctl(&sc->sc_dkdev, dev, cmd, data, flag, l); 
 		if (error != EPASSTHROUGH) {
 			mutex_exit(&sc->sc_lock);
-			device_release(self);
+			device_release(sc->sc_dev);
 			return 0;
 		}
 	}
@@ -548,7 +527,7 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/* If this is not the raw partition, punt! */
 	if (DISKPART(dev) != RAW_PART) {
 		mutex_exit(&sc->sc_lock);
-		device_release(self);
+		device_release(sc->sc_dev);
 		return ENOTTY;
 	}
 
@@ -579,7 +558,7 @@ mdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 	mutex_exit(&sc->sc_lock);
-	device_release(self);
+	device_release(sc->sc_dev);
 	return error;
 }
 
