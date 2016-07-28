@@ -555,6 +555,45 @@ proc move_an_element { } {
     pass $testname
 }
 
+# PR 19775: Test creating and listing archives with an empty element.
+
+proc empty_archive { } {
+    global AR
+    global srcdir
+    global subdir
+
+    set testname "archive with empty element"
+
+    # FIXME: There ought to be a way to dynamically create an empty file.
+    set empty $srcdir/$subdir/empty
+    
+    if [is_remote host] {
+	set archive artest.a
+	set objfile [remote_download host $empty]
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/artest.a
+	set objfile $empty
+    }
+
+    remote_file build delete tmpdir/artest.a
+
+    set got [binutils_run $AR "-r -c $archive ${objfile}"]
+    if ![string match "" $got] {
+	fail $testname
+	return
+    }
+
+    # This commmand used to fail with: "Malformed archive".
+    set got [binutils_run $AR "-t $archive"]
+    if ![string match "empty" $got] {
+	fail $testname
+	return
+    }
+
+    pass $testname
+}
+
 # Run the tests.
 
 # Only run the bfdtest checks if the programs exist.  Since these
@@ -574,6 +613,7 @@ argument_parsing
 deterministic_archive
 delete_an_element
 move_an_element
+empty_archive
 
 if { [is_elf_format]
      && ![istarget "*-*-hpux*"]

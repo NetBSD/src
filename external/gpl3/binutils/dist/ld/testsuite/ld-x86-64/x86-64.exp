@@ -148,6 +148,14 @@ set x86_64tests {
      "--64" {pr17709a.s} {} "libpr17709.so"}
     {"PR ld/17709 (2)" "-melf_x86_64 tmpdir/libpr17709.so" ""
      "--64" {pr17709b.s} {{readelf -rW pr17709.rd}} "pr17709"}
+    {"Build pr19827a.o" "" ""
+     "--64" { pr19827a.S }}
+    {"Build pr19827b.so" "-melf_x86_64 -shared" ""
+     "--64" { pr19827b.S } {} "pr19827b.so"}
+    {"Build pr19827" "-melf_x86_64 -pie tmpdir/pr19827a.o tmpdir/pr19827b.so" ""
+     "--64" { dummy.s } {{readelf {-rW} pr19827.rd}} "pr19827"}
+    {"Build pr19827.so" "-melf_x86_64 -shared -Bsymbolic" ""
+     "--64" { pr19827a.S }  {{readelf {-rW} pr19827.rd}} "pr19827.so"}
 }
 
 # So as to avoid rewriting every last test case here in a nacl variant,
@@ -239,6 +247,8 @@ run_dump_test "pr14215"
 run_dump_test "pr14207"
 run_dump_test "gotplt1"
 run_dump_test "pie1"
+run_dump_test "pr20093-1"
+run_dump_test "pr20093-2"
 
 if { ![istarget "x86_64-*-linux*"] && ![istarget "x86_64-*-nacl*"]} {
     return
@@ -353,6 +363,8 @@ run_dump_test "pr19013-x32"
 run_dump_test "pr19013-nacl"
 run_dump_test "pr19162"
 run_dump_test "pr19175"
+run_dump_test "pr18591"
+run_dump_test "pr19615"
 
 # Add $PLT_CFLAGS if PLT is expected.
 global PLT_CFLAGS
@@ -391,7 +403,7 @@ if { [isnative] && [which $CC] != 0 } {
 	[list \
 	    "Build libplt-main1.a" \
 	    "" \
-	    "-fPIC" \
+	    "-fPIC -Wa,-mrelax-relocations=yes" \
 	    { plt-main1.c } \
 	    {{readelf {-Wr} plt-main1.rd}} \
 	    "libplt-main1.a" \
@@ -399,7 +411,7 @@ if { [isnative] && [which $CC] != 0 } {
 	[list \
 	    "Build libplt-main2.a" \
 	    "" \
-	    "-fPIC" \
+	    "-fPIC -Wa,-mrelax-relocations=yes" \
 	    { plt-main2.c } \
 	    {{readelf {-Wr} plt-main2.rd}} \
 	    "libplt-main2.a" \
@@ -407,7 +419,7 @@ if { [isnative] && [which $CC] != 0 } {
 	[list \
 	    "Build libplt-main3.a" \
 	    "" \
-	    "-fPIC $PLT_CFLAGS" \
+	    "-fPIC -Wa,-mrelax-relocations=yes $PLT_CFLAGS" \
 	    { plt-main3.c } \
 	    {{readelf {-Wr} plt-main3.rd}} \
 	    "libplt-main3.a" \
@@ -415,7 +427,7 @@ if { [isnative] && [which $CC] != 0 } {
 	[list \
 	    "Build libplt-main4.a" \
 	    "" \
-	    "-fPIC $PLT_CFLAGS" \
+	    "-fPIC -Wa,-mrelax-relocations=yes $PLT_CFLAGS" \
 	    { plt-main4.c } \
 	    {{readelf {-Wr} plt-main4.rd}} \
 	    "libplt-main4.a" \
@@ -447,18 +459,26 @@ if { [isnative] && [which $CC] != 0 } {
 	    "copyreloc-lib.so" \
 	] \
 	[list \
-	    "Build copyreloc-main with PIE without -fPIE (1)" \
-	    "tmpdir/copyreloc-lib.so -pie" \
+	    "Build libcopyreloc-main.a" \
+	    "" \
 	    "" \
 	    { copyreloc-main.S } \
+	    {} \
+	    "libcopyreloc-main.a" \
+	] \
+	[list \
+	    "Build copyreloc-main with PIE without -fPIE (1)" \
+	    "tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
+	    "" \
+	    { dummy.s } \
 	    {{readelf {-Wr} copyreloc-main1.rd}} \
 	    "copyreloc-main" \
 	] \
 	[list \
 	    "Build copyreloc-main with PIE without -fPIE (2)" \
-	    "tmpdir/copyreloc-lib.so -pie" \
+	    "tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
 	    "" \
-	    { copyreloc-main.S } \
+	    { dummy.s } \
 	    {{readelf {-Wr} copyreloc-main2.rd}} \
 	    "copyreloc-main" \
 	] \
@@ -479,26 +499,33 @@ if { [isnative] && [which $CC] != 0 } {
 	    "pr17689now.so" \
 	] \
 	[list \
-	    "Build pr17689 with PIE without -fPIE" \
-	    "tmpdir/pr17689.so -pie" \
+	    "Build pr17689b.o" \
+	    "" \
 	    "" \
 	    { pr17689b.S } \
+	    {} \
+	] \
+	[list \
+	    "Build pr17689 with PIE without -fPIE" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
+	    "" \
+	    { dummy.s } \
 	    {{readelf {-Wr} pr17689.rd}} \
 	    "pr17689" \
 	] \
 	[list \
 	    "Build pr17689 with PIE -z now without -fPIE" \
-	    "tmpdir/pr17689.so -pie -Wl,-z,now" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie -Wl,-z,now" \
 	    "" \
-	    { pr17689b.S } \
+	    { dummy.s } \
 	    {{readelf {-Wr} pr17689now.rd}} \
 	    "pr17689now" \
 	] \
 	[list \
 	    "Build pr17827 with PIE without -fPIE" \
-	    "tmpdir/pr17689.so -pie" \
+	    "-Wl,--as-needed tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
 	    "" \
-	    { pr17689b.S } \
+	    { dummy.s } \
 	    {{readelf {-Wr} pr17827.rd}} \
 	    "pr17827" \
 	] \
@@ -511,18 +538,26 @@ if { [isnative] && [which $CC] != 0 } {
 	    "pr18900.so" \
 	] \
 	[list \
-	    "Build pr18900a" \
-	    "tmpdir/pr18900.so" \
+	    "Build pr18900.o" \
+	    "-r -nostdlib" \
 	    "" \
 	    { pr18900b.c pr18900c.c } \
+	    "" \
+	    "pr18900.o" \
+	] \
+	[list \
+	    "Build pr18900a" \
+	    "tmpdir/pr18900.o tmpdir/pr18900.so" \
+	    "" \
+	    { dummy.s } \
 	    {{readelf {-Wrd} pr18900a.rd}} \
 	    "pr18900a" \
 	] \
 	[list \
 	    "Build pr18900b" \
-	    "tmpdir/pr18900.so" \
+	    "-Wl,--as-needed tmpdir/pr18900.o tmpdir/pr18900.so" \
 	    "" \
-	    { pr18900b.c pr18900c.c } \
+	    { dummy.s } \
 	    {{readelf {-Wrd} pr18900b.rd}} \
 	    "pr18900b" \
 	] \
@@ -543,10 +578,18 @@ if { [isnative] && [which $CC] != 0 } {
 	    "gotpcrel1d.so" \
 	] \
 	[list \
-	    "Build gotpcrel1" \
-	    "tmpdir/gotpcrel1d.so" \
+	    "Build libgotpcrel1.a" \
+	    "" \
 	    "" \
 	    { gotpcrel1a.S gotpcrel1b.c gotpcrel1c.c } \
+	    "" \
+	    "libgotpcrel1.a" \
+	] \
+	[list \
+	    "Build gotpcrel1" \
+	    "-Wl,--as-needed tmpdir/gotpcrel1a.o tmpdir/gotpcrel1b.o tmpdir/gotpcrel1c.o tmpdir/gotpcrel1d.so" \
+	    "-Wa,-mrelax-relocations=yes" \
+	    { dummy.s } \
 	    {{objdump {-dw} gotpcrel1.dd}} \
 	    "gotpcrel1" \
 	] \
@@ -590,33 +633,33 @@ if { [isnative] && [which $CC] != 0 } {
 	] \
 	[list \
 	    "Run copyreloc-main with PIE without -fPIE" \
-	    "tmpdir/copyreloc-lib.so -pie" \
+	    "--as-needed tmpdir/copyreloc-main.o tmpdir/copyreloc-lib.so -pie" \
 	    "" \
-	    { copyreloc-main.S } \
+	    { dummy.s } \
 	    "copyreloc-main" \
 	    "copyreloc-main.out" \
 	] \
 	[list \
 	    "Run pr17689 with PIE without -fPIE" \
-	    "tmpdir/pr17689.so -pie" \
+	    "tmpdir/pr17689b.o tmpdir/pr17689.so -pie" \
 	    "" \
-	    { pr17689b.S } \
+	    { dummy.s } \
 	    "pr17689" \
 	    "pr17689.out" \
 	] \
 	[list \
 	    "Run pr17689 with PIE -z now without -fPIE" \
-	    "tmpdir/pr17689.so -pie -z now" \
+	    "--as-needed tmpdir/pr17689b.o tmpdir/pr17689.so -pie -z now" \
 	    "" \
-	    { pr17689b.S } \
+	    { dummy.s } \
 	    "pr17689now" \
 	    "pr17689.out" \
 	] \
 	[list \
 	    "Run pr18900" \
-	    "tmpdir/pr18900.so" \
+	    "tmpdir/pr18900.o tmpdir/pr18900.so" \
 	    "" \
-	    { pr18900b.c pr18900c.c } \
+	    { dummy.s } \
 	    "pr18900" \
 	    "pr18900.out" \
 	] \

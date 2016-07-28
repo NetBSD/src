@@ -1826,12 +1826,13 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
   Elf_Internal_Rela *irel, *irelend;
   Elf_Internal_Sym *isym;
   Elf_Internal_Sym *isymbuf = NULL;
-  bfd_vma toaddr;
+  bfd_vma toaddr, reloc_toaddr;
   struct elf_link_hash_entry **sym_hashes;
   struct elf_link_hash_entry **end_hashes;
   unsigned int symcount;
   struct avr_relax_info *relax_info;
   struct avr_property_record *prop_record = NULL;
+  bfd_boolean did_shrink = FALSE;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   sec_shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
@@ -1862,15 +1863,32 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
         }
     }
 
+  /* We need to look at all relocs with offsets less than toaddr. prop
+     records handling adjusts toaddr downwards to avoid moving syms at the
+     address of the property record, but all relocs with offsets between addr
+     and the current value of toaddr need to have their offsets adjusted.
+     Assume addr = 0, toaddr = 4 and count = 2. After prop records handling,
+     toaddr becomes 2, but relocs with offsets 2 and 3 still need to be
+     adjusted (to 0 and 1 respectively), as the first 2 bytes are now gone.
+     So record the current value of toaddr here, and use it when adjusting
+     reloc offsets. */
+  reloc_toaddr = toaddr;
+
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
 
   /* Actually delete the bytes.  */
   if (toaddr - addr - count > 0)
-    memmove (contents + addr, contents + addr + count,
-             (size_t) (toaddr - addr - count));
+    {
+      memmove (contents + addr, contents + addr + count,
+               (size_t) (toaddr - addr - count));
+      did_shrink = TRUE;
+    }
   if (prop_record == NULL)
-    sec->size -= count;
+    {
+      sec->size -= count;
+      did_shrink = TRUE;
+    }
   else
     {
       /* Use the property record to fill in the bytes we've opened up.  */
@@ -1889,12 +1907,20 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
           prop_record->data.align.preceding_deleted += count;
           break;
         };
+      /* If toaddr == (addr + count), then we didn't delete anything, yet
+         we fill count bytes backwards from toaddr. This is still ok - we
+         end up overwriting the bytes we would have deleted. We just need
+         to remember we didn't delete anything i.e. don't set did_shrink,
+         so that we don't corrupt reloc offsets or symbol values.*/
       memset (contents + toaddr - count, fill, count);
 
       /* Adjust the TOADDR to avoid moving symbols located at the address
          of the property record, which has not moved.  */
       toaddr -= count;
     }
+
+  if (!did_shrink)
+    return TRUE;
 
   /* Adjust all the reloc addresses.  */
   for (irel = elf_section_data (sec)->relocs; irel < irelend; irel++)
@@ -1906,7 +1932,7 @@ elf32_avr_relax_delete_bytes (bfd *abfd,
 
       /* Get the new reloc address.  */
       if ((irel->r_offset > addr
-           && irel->r_offset < toaddr))
+           && irel->r_offset < reloc_toaddr))
         {
           if (debug_relax)
             printf ("Relocation at address 0x%x needs to be moved.\n"

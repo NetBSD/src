@@ -7374,18 +7374,21 @@ is_thumb2_vldm (const insn32 insn)
 {
   /* A6.5 Extension register load or store instruction
      A7.7.229
-     We look only for the 32-bit registers case since the DP (64-bit
-     registers) are not supported for STM32L4XX
+     We look for SP 32-bit and DP 64-bit registers.
+     Encoding T1 VLDM{mode}<c> <Rn>{!}, <list>
+     <list> is consecutive 64-bit registers
+     1110 - 110P - UDW1 - rrrr - vvvv - 1011 - iiii - iiii
      Encoding T2 VLDM{mode}<c> <Rn>{!}, <list>
      <list> is consecutive 32-bit registers
      1110 - 110P - UDW1 - rrrr - vvvv - 1010 - iiii - iiii
      if P==0 && U==1 && W==1 && Rn=1101 VPOP
      if PUW=010 || PUW=011 || PUW=101 VLDM.  */
   return
-    ((insn & 0xfe100f00) == 0xec100a00)
+    (((insn & 0xfe100f00) == 0xec100b00) ||
+     ((insn & 0xfe100f00) == 0xec100a00))
     && /* (IA without !).  */
     (((((insn << 7) >> 28) & 0xd) == 0x4)
-     /* (IA with !), includes VPOP (when reg number is SP).  */     
+     /* (IA with !), includes VPOP (when reg number is SP).  */
      || ((((insn << 7) >> 28) & 0xd) == 0x5)
      /* (DB with !).  */
      || ((((insn << 7) >> 28) & 0xd) == 0x9));
@@ -7402,19 +7405,19 @@ static bfd_boolean
 stm32l4xx_need_create_replacing_stub (const insn32 insn,
 				      bfd_arm_stm32l4xx_fix stm32l4xx_fix)
 {
-  int nb_regs = 0;
+  int nb_words = 0;
 
   /* The field encoding the register list is the same for both LDMIA
      and LDMDB encodings.  */
   if (is_thumb2_ldmia (insn) || is_thumb2_ldmdb (insn))
-    nb_regs = popcount (insn & 0x0000ffff);
+    nb_words = popcount (insn & 0x0000ffff);
   else if (is_thumb2_vldm (insn))
-   nb_regs = (insn & 0xff);
+   nb_words = (insn & 0xff);
 
   /* DEFAULT mode accounts for the real bug condition situation,
      ALL mode inserts stubs for each LDM/VLDM instruction (testing).  */
   return
-    (stm32l4xx_fix == BFD_ARM_STM32L4XX_FIX_DEFAULT) ? nb_regs > 8 :
+    (stm32l4xx_fix == BFD_ARM_STM32L4XX_FIX_DEFAULT) ? nb_words > 8 :
     (stm32l4xx_fix == BFD_ARM_STM32L4XX_FIX_ALL) ? TRUE : FALSE;
 }
 
@@ -16242,30 +16245,31 @@ create_instruction_sub (int target_reg, int source_reg, int value)
 }
 
 static inline bfd_vma
-create_instruction_vldmia (int base_reg, int wback, int num_regs,
+create_instruction_vldmia (int base_reg, int is_dp, int wback, int num_words,
 			   int first_reg)
 {
   /* A8.8.332 VLDM (A8-922)
-     VLMD{MODE} Rn{!}, {list} (Encoding T2).  */
-  bfd_vma patched_inst = 0xec900a00
+     VLMD{MODE} Rn{!}, {list} (Encoding T1 or T2).  */
+  bfd_vma patched_inst = (is_dp ? 0xec900b00 : 0xec900a00)
     | (/*W=*/wback << 21)
     | (base_reg << 16)
-    | (num_regs & 0x000000ff)
-    | (((unsigned)first_reg>>1) & 0x0000000f) << 12
+    | (num_words & 0x000000ff)
+    | (((unsigned)first_reg >> 1) & 0x0000000f) << 12
     | (first_reg & 0x00000001) << 22;
 
   return patched_inst;
 }
 
 static inline bfd_vma
-create_instruction_vldmdb (int base_reg, int num_regs, int first_reg)
+create_instruction_vldmdb (int base_reg, int is_dp, int num_words,
+			   int first_reg)
 {
   /* A8.8.332 VLDM (A8-922)
-     VLMD{MODE} Rn!, {} (Encoding T2).  */
-  bfd_vma patched_inst = 0xed300a00
+     VLMD{MODE} Rn!, {} (Encoding T1 or T2).  */
+  bfd_vma patched_inst = (is_dp ? 0xed300b00 : 0xed300a00)
     | (base_reg << 16)
-    | (num_regs & 0x000000ff)
-    | (((unsigned)first_reg>>1) & 0x0000000f) << 12
+    | (num_words & 0x000000ff)
+    | (((unsigned)first_reg >>1 ) & 0x0000000f) << 12
     | (first_reg & 0x00000001) << 22;
 
   return patched_inst;
@@ -16745,15 +16749,15 @@ stm32l4xx_create_replacing_stub_vldm (struct elf32_arm_link_hash_table * htab,
 				      const bfd_byte *const initial_insn_addr,
 				      bfd_byte *const base_stub_contents)
 {
-  int num_regs = ((unsigned int)initial_insn << 24) >> 24;
+  int num_words = ((unsigned int) initial_insn << 24) >> 24;
   bfd_byte *current_stub_contents = base_stub_contents;
 
   BFD_ASSERT (is_thumb2_vldm (initial_insn));
 
   /* In BFD_ARM_STM32L4XX_FIX_ALL mode we may have to deal with
-     smaller than 8 registers load sequences that do not cause the
+     smaller than 8 words load sequences that do not cause the
      hardware issue.  */
-  if (num_regs <= 8)
+  if (num_words <= 8)
     {
       /* Untouched instruction.  */
       current_stub_contents =
@@ -16768,28 +16772,30 @@ stm32l4xx_create_replacing_stub_vldm (struct elf32_arm_link_hash_table * htab,
     }
   else
     {
+      bfd_boolean is_dp = /* DP encoding. */
+	(initial_insn & 0xfe100f00) == 0xec100b00;
       bfd_boolean is_ia_nobang = /* (IA without !).  */
 	(((initial_insn << 7) >> 28) & 0xd) == 0x4;
       bfd_boolean is_ia_bang = /* (IA with !) - includes VPOP.  */
 	(((initial_insn << 7) >> 28) & 0xd) == 0x5;
       bfd_boolean is_db_bang = /* (DB with !).  */
 	(((initial_insn << 7) >> 28) & 0xd) == 0x9;
-      int base_reg = ((unsigned int)initial_insn << 12) >> 28;
+      int base_reg = ((unsigned int) initial_insn << 12) >> 28;
       /* d = UInt (Vd:D);.  */
-      int first_reg = ((((unsigned int)initial_insn << 16) >> 28) << 1)
+      int first_reg = ((((unsigned int) initial_insn << 16) >> 28) << 1)
 	| (((unsigned int)initial_insn << 9) >> 31);
 
-      /* Compute the number of 8-register chunks needed to split.  */
-      int chunks = (num_regs%8) ? (num_regs/8 + 1) : (num_regs/8);
+      /* Compute the number of 8-words chunks needed to split.  */
+      int chunks = (num_words % 8) ? (num_words / 8 + 1) : (num_words / 8);
       int chunk;
 
       /* The test coverage has been done assuming the following
 	 hypothesis that exactly one of the previous is_ predicates is
 	 true.  */
-      BFD_ASSERT ((is_ia_nobang ^ is_ia_bang ^ is_db_bang) &&
-		  !(is_ia_nobang & is_ia_bang & is_db_bang));
+      BFD_ASSERT (    (is_ia_nobang ^ is_ia_bang ^ is_db_bang)
+		  && !(is_ia_nobang & is_ia_bang & is_db_bang));
 
-      /* We treat the cutting of the register in one pass for all
+      /* We treat the cutting of the words in one pass for all
 	 cases, then we emit the adjustments:
 
 	 vldm rx, {...}
@@ -16802,29 +16808,34 @@ stm32l4xx_create_replacing_stub_vldm (struct elf32_arm_link_hash_table * htab,
 
 	 vldmd rx!, {...}
 	 -> vldmb rx!, {8_words_or_less} for each needed 8_word.  */
-      for (chunk = 0; chunk<chunks; ++chunk)
+      for (chunk = 0; chunk < chunks; ++chunk)
 	{
+	  bfd_vma new_insn = 0;
+
 	  if (is_ia_nobang || is_ia_bang)
 	    {
-	      current_stub_contents =
-		push_thumb2_insn32 (htab, output_bfd, current_stub_contents,
-				    create_instruction_vldmia
-				    (base_reg,
-				     /*wback= .  */1,
-				     chunks - (chunk + 1) ?
-				     8 : num_regs - chunk * 8,
-				     first_reg + chunk * 8));
+	      new_insn = create_instruction_vldmia
+		(base_reg,
+		 is_dp,
+		 /*wback= .  */1,
+		 chunks - (chunk + 1) ?
+		 8 : num_words - chunk * 8,
+		 first_reg + chunk * 8);
 	    }
 	  else if (is_db_bang)
 	    {
-	      current_stub_contents =
-		push_thumb2_insn32 (htab, output_bfd, current_stub_contents,
-				    create_instruction_vldmdb
-				    (base_reg,
-				     chunks - (chunk + 1) ?
-				     8 : num_regs - chunk * 8,
-				     first_reg + chunk * 8));
+	      new_insn = create_instruction_vldmdb
+		(base_reg,
+		 is_dp,
+		 chunks - (chunk + 1) ?
+		 8 : num_words - chunk * 8,
+		 first_reg + chunk * 8);
 	    }
+
+	  if (new_insn)
+	    current_stub_contents =
+	      push_thumb2_insn32 (htab, output_bfd, current_stub_contents,
+				  new_insn);
 	}
 
       /* Only this case requires the base register compensation
@@ -16834,7 +16845,7 @@ stm32l4xx_create_replacing_stub_vldm (struct elf32_arm_link_hash_table * htab,
 	  current_stub_contents =
 	    push_thumb2_insn32 (htab, output_bfd, current_stub_contents,
 				create_instruction_sub
-				(base_reg, base_reg, 4*num_regs));
+				(base_reg, base_reg, 4*num_words));
 	}
 
       /* B initial_insn_addr+4.  */

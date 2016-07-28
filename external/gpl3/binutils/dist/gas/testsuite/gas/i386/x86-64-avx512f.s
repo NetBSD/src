@@ -3973,6 +3973,7 @@ _start:
 	vgatherqpd	123(%r14,%zmm31,8), %zmm30{%k1}	 # AVX512F
 	vgatherqpd	256(%r9,%zmm31), %zmm30{%k1}	 # AVX512F
 	vgatherqpd	1024(%rcx,%zmm31,4), %zmm30{%k1}	 # AVX512F
+	vgatherqpd	123(%r14,%zmm19,8), %zmm3{%k1}	 # AVX512F
 
 	vgatherqps	123(%r14,%zmm31,8), %ymm30{%k1}	 # AVX512F
 	vgatherqps	123(%r14,%zmm31,8), %ymm30{%k1}	 # AVX512F
@@ -11630,6 +11631,7 @@ _start:
 	vgatherqpd	zmm30{k1}, ZMMWORD PTR [r14+zmm31*8-123]	 # AVX512F
 	vgatherqpd	zmm30{k1}, ZMMWORD PTR [r9+zmm31+256]	 # AVX512F
 	vgatherqpd	zmm30{k1}, ZMMWORD PTR [rcx+zmm31*4+1024]	 # AVX512F
+	vgatherqpd	zmm3{k1}, ZMMWORD PTR [r14+zmm19*8+123]	 # AVX512F
 
 	vgatherqps	ymm30{k1}, YMMWORD PTR [r14+zmm31*8-123]	 # AVX512F
 	vgatherqps	ymm30{k1}, YMMWORD PTR [r14+zmm31*8-123]	 # AVX512F

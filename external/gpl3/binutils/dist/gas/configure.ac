@@ -77,6 +77,17 @@ AC_ARG_ENABLE(compressed_debug_sections,
   *)   ac_default_compressed_debug_sections=unset ;;
 esac])dnl
 
+# PR gas/19520
+# Decide if x86 assembler should generate relax relocations.
+ac_default_x86_relax_relocations=unset
+# Provide a configure time option to override our default.
+AC_ARG_ENABLE(x86_relax_relocations,
+	      AS_HELP_STRING([--enable-x86-relax-relocations],
+	      [generate x86 relax relocations by default]),
+[case "${enableval}" in
+  no)  ac_default_x86_relax_relocations=0 ;;
+esac])dnl
+
 using_cgen=no
 
 AM_BINUTILS_WARNINGS
@@ -166,6 +177,17 @@ for this_target in $target $canon_targets ; do
       | i386-*-go32* \
       | i386-go32-rtems*)
 	AC_DEFINE(STRICTCOFF, 1, [Using strict COFF?])
+	;;
+
+      i386-*-solaris2 \
+      | x86_64-*-solaris2 \
+      | i386-*-solaris2.[[0-9]] \
+      | i386-*-solaris2.1[[01]] \
+      | x86_64-*-solaris2.1[[01]])
+	if test ${this_target} = $target \
+	   && test ${ac_default_x86_relax_relocations} = unset; then
+	  ac_default_x86_relax_relocations=0
+	fi
 	;;
 
       i860-*-*)
@@ -549,7 +571,14 @@ changequote([,])dnl
 
 done
 
-if test x$ac_default_compressed_debug_sections == xyes ; then
+if test ${ac_default_x86_relax_relocations} = unset; then
+  ac_default_x86_relax_relocations=1
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_X86_RELAX_RELOCATIONS,
+  $ac_default_x86_relax_relocations,
+  [Define to 1 if you want to generate x86 relax relocations by default.])
+
+if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])
 fi
 

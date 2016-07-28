@@ -384,7 +384,7 @@ do
   fi
 done
 
-if test x$ac_default_compressed_debug_sections == xyes ; then
+if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])
 fi
 
