@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.16 2016/07/26 05:54:39 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.17 2016/07/28 06:45:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.16 2016/07/26 05:54:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.17 2016/07/28 06:45:32 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1150,12 +1150,6 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 			    "%s, error %d\n", __func__, cgd_cd.cd_name, error);
 			break;
 		}
-		/*
-		 * Attach the {b,c}devsw's
-		 */
-		error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
-		    &cgd_cdevsw, &cgd_cmajor);
-
 		/*
 		 * Attach the {b,c}devsw's
 		 */
