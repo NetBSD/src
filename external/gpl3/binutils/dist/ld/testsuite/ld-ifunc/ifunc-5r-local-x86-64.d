@@ -1,5 +1,5 @@
 #source: ifunc-5-local-x86-64.s
-#as: --64
+#as: --64 -mrelax-relocations=yes
 #ld: -r -melf_x86_64
 #readelf: -r --wide
 #target: x86_64-*-*

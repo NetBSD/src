@@ -2655,7 +2655,7 @@ aarch64_type_of_stub (struct bfd_link_info *info,
   bfd_boolean via_plt_p;
 
   if (st_type != STT_FUNC
-      && (sym_sec != bfd_abs_section_ptr))
+      && (sym_sec == input_sec))
     return stub_type;
 
   globals = elf_aarch64_hash_table (info);
@@ -4174,7 +4174,7 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
 		      goto error_ret_free_internal;
 		    }
 
-		  stub_entry->target_value = sym_value;
+		  stub_entry->target_value = sym_value + irela->r_addend;
 		  stub_entry->target_section = sym_sec;
 		  stub_entry->stub_type = stub_type;
 		  stub_entry->h = hash;
@@ -5280,15 +5280,28 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 	/* Check if a stub has to be inserted because the destination
 	   is too far away.  */
 	struct elf_aarch64_stub_hash_entry *stub_entry = NULL;
-	if (! aarch64_valid_branch_p (value, place))
+
+	/* If the branch destination is directed to plt stub, "value" will be
+	   the final destination, otherwise we should plus signed_addend, it may
+	   contain non-zero value, for example call to local function symbol
+	   which are turned into "sec_sym + sec_off", and sec_off is kept in
+	   signed_addend.  */
+	if (! aarch64_valid_branch_p (via_plt_p ? value : value + signed_addend,
+				      place))
 	  /* The target is out of reach, so redirect the branch to
 	     the local stub for this function.  */
 	stub_entry = elfNN_aarch64_get_stub_entry (input_section, sym_sec, h,
 						   rel, globals);
 	if (stub_entry != NULL)
-	  value = (stub_entry->stub_offset
-		   + stub_entry->stub_sec->output_offset
-		   + stub_entry->stub_sec->output_section->vma);
+	  {
+	    value = (stub_entry->stub_offset
+		     + stub_entry->stub_sec->output_offset
+		     + stub_entry->stub_sec->output_section->vma);
+
+	    /* We have redirected the destination to stub entry address,
+	       so ignore any addend record in the original rela entry.  */
+	    signed_addend = 0;
+	  }
       }
       value = _bfd_aarch64_elf_resolve_relocation (bfd_r_type, place, value,
 						   signed_addend, weak_undef_p);

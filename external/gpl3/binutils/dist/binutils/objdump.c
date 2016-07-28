@@ -809,7 +809,8 @@ objdump_print_symname (bfd *abfd, struct disassemble_info *inf,
 	name = alloc;
     }
 
-  version_string = bfd_get_symbol_version_string (abfd, sym, &hidden);
+  if ((sym->flags & BSF_SYNTHETIC) == 0)
+    version_string = bfd_get_symbol_version_string (abfd, sym, &hidden);
 
   if (bfd_is_und_section (bfd_get_section (sym)))
     hidden = TRUE;
