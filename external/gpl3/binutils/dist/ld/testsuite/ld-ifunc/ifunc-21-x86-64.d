@@ -1,4 +1,4 @@
-#as: --64
+#as: --64 -mrelax-relocations=yes
 #ld: -melf_x86_64
 #objdump: -dw
 #target: x86_64-*-*

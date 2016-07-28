@@ -1,5 +1,5 @@
 #source: call3.s
-#as: --32
+#as: --32 -mrelax-relocations=yes
 #ld: -melf_i386
 #objdump: -dw
 

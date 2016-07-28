@@ -1,3 +1,4 @@
+#as: -mrelax-relocations=yes
 #readelf: -rs
 #name: i386 local PIC
 
