@@ -95,10 +95,10 @@
 	* aarch64.h [__cplusplus]: Wrap in extern "C".
 
 2015-10-07  Claudiu Zissulescu  <claziss@synopsys.com>
-            Cupertino Miranda  <cmiranda@synopsys.com>
+	    Cupertino Miranda  <cmiranda@synopsys.com>
 
-        * arc-func.h: New file.
-        * arc.h: Likewise.
+	* arc-func.h: New file.
+	* arc.h: Likewise.
 
 2015-10-02  Yao Qi  <yao.qi@linaro.org>
 
@@ -114,6 +114,10 @@
 	* s390.h (S390_INSTR_FLAG_HTM): New flag.
 	(S390_INSTR_FLAG_VX): New flag.
 	(S390_INSTR_FLAG_FACILITY_MASK): New flag mask.
+
+2015-09-26  James Bowman  <james.bowman@ftdichip.com>
+
+	* ft32.h: Add instruction macros FT32_*()
 
 2015-09-23  Nick Clifton  <nickc@redhat.com>
 
@@ -258,6 +262,14 @@
 	(NIOS2_INSN_ORI, NIOS2_INSN_XORI): Delete.
 	(NIOS2_INSN_OPTARG): Renumber.
 
+2014-11-21  Terry Guo  <terry.guo@arm.com>
+
+	* arm.h (FPU_VFP_EXT_ARMV8xD): New macro.
+	(FPU_VFP_V5D16): Likewise.
+	(FPU_VFP_V5_SP_D16): Likewise.
+	(FPU_ARCH_VFP_V5D16): Likewise.
+	(FPU_ARCH_VFP_V5_SP_D16): Likewise.
+
 2014-11-06  Sandra Loosemore  <sandra@codesourcery.com>
 
 	* nios2.h (nios2_find_opcode_hash): Add mach parameter to
@@ -347,7 +359,7 @@
 	* mips.h (mips_operand_type): Add new entries: OP_SAME_RS_RT,
 	OP_CHECK_PREV and OP_NON_ZERO_REG.  Add descriptions for the MIPS R6
 	instruction arguments: -a, -b, -d, -s, -t, -u, -v, -w, -x, -y, -A, -B,
-	 +I, +O, +R, +:, +\, +", +;
+	+I, +O, +R, +:, +\, +", +;
 	(mips_check_prev_operand): New struct.
 	(INSN2_FORBIDDEN_SLOT): New define.
 	(INSN_ISA32R6): New define.
@@ -425,6 +437,10 @@
 
 	* mips.h (mips_isa_table): Avoid hard-coding INSN_ISA* values.
 
+2014-04-23  Andrew Bennett  <andrew.bennett@imgtec.com>
+
+	* mips.h (ASE_XPA): New define.
+
 2014-04-22  Christian Svensson  <blue@cmd.nu>
 
 	* or32.h: Delete.
@@ -472,6 +488,11 @@
 	* aarch64.h (aarch64_sys_reg_readonly_p): New declaration.
 	(aarch64_sys_reg_writeonly_p): Ditto.
 
+2013-11-11  Catherine Moore  <clm@codesourcery.com>
+
+	* mips.h (INSN_LOAD_MEMORY_DELAY): Rename to...
+	(INSN_LOAD_MEMORY): ...this.
+
 2013-11-05  Yufeng Zhang  <yufeng.zhang@arm.com>
 
 	* aarch64.h (aarch64_sys_reg): New typedef.
@@ -513,6 +534,11 @@
 
 	* mips.h (OP_OPTIONAL_REG): New mips_operand_type.
 	(mips_optional_operand_p): New function.
+
+2013-08-05  Eric Botcazou  <ebotcazou@adacore.com>
+	    Konrad Eisele  <konrad@gaisler.com>
+
+	* sparc.h (sparc_opcode_arch_val): Add SPARC_OPCODE_ARCH_LEON.
 
 2013-08-04  Jürgen Urban  <JuergenUrban@gmx.de>
 	    Richard Sandiford  <rdsandiford@googlemail.com>
@@ -677,6 +703,21 @@
 
 	* nios2.h (OP_MATCH_ERET): Correct eret encoding.
 
+2013-06-08  Catherine Moore  <clm@codesourcery.com>
+
+	* mips.h (mips_opcode): Add ase field.
+	(INSN_ASE_MASK): Delete.
+	(INSN_DSP): Rename to ASE_DSP.  Provide new value.
+	(INSN_DSPR2): Rename to ASE_DSPR2.  Provide new value.
+	(INSN_MCU): Rename to ASE_MCU.  Provide new value.
+	(INSN_MDMX): Rename to ASE_MDMX.  Provide new value.
+	(INSN_MIPS3d): Rename to ASE_MIPS3D.  Provide new value.
+	(INSN_MT): Rename to ASE_MT.  Provide new value.
+	(INSN_SMARTMIPS): Rename to ASE_SMARTMIPS.  Provide new value.
+	(INSN_VIRT): Rename to ASE_VIRT.  Provide new value.
+	(INSN_VIRT64): Rename to ASE_VIRT64.  Provide new value.
+	(opcode_is_member): Add ase argument.  Check ase.
+
 2013-05-22  Jürgen Urban  <JuergenUrban@gmx.de>
 
 	* mips.h (M_LQC2_AB, M_SQC2_AB): New macros.
@@ -741,6 +782,20 @@
 	* tic6x-opcode-table.h: Modify absdp, dpint, dpsp, dptrunc, rcpdp
 	and rsqrdp opcodes to use the new field coding types.
 
+2013-03-12  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* nios2.h: Edit comment.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* nios2.h (OPX_WRPRS): New define.
+	(OP_MATCH_WRPRS): Likewise.
+
+2013-03-11  Sebastian Huber <sebastian.huber@embedded-brains.de>
+
+	* nios2.h (OP_RDPRS): New define.
+	(OP_MATCH_RDPRS): Likewise.
+
 2013-03-11  Kyrylo Tkachov  <kyrylo.tkachov@arm.com>
 
 	* arm.h (CRC_EXT_ARMV8): New constant.
@@ -798,6 +853,10 @@
 	(make_instruction,match_opcode): Added function prototypes.
 	(cr16_words,cr16_allWords,cr16_currInsn): Declare as extern.
 
+2012-12-17  Nick Clifton  <nickc@redhat.com>
+
+	* tahoe.h: Add copyright notice.
+
 2012-11-23  Alan Modra  <amodra@gmail.com>
 
 	* ppc.h (ppc_parse_cpu): Update prototype.
@@ -811,9 +870,35 @@
 
 	* s390.h (s390_opcode_cpu_val): Add S390_OPCODE_ZEC12.
 
+2012-09-27  Anthony Green  <green@moxielogic.com>
+
+	* moxie.h (MOXIE_BAD): New define.
+
 2012-09-04  Sergey A. Guriev <sergey.a.guriev@intel.com>
 
 	* ia64.h (ia64_opnd): Add new operand types.
+
+2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (ARM_CPU_IS_ANY): New define.
+
+2012-08-24  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
+
+	* arm.h (ARM_EXT_V8): New define.
+	(FPU_VFP_EXT_ARMV8): Likewise.
+	(FPU_NEON_EXT_ARMV8): Likewise.
+	(FPU_CRYPTO_EXT_ARMV8): Likewise.
+	(ARM_AEXT_V8A): Likewise.
+	(FPU_VFP_ARMV8): Likwise.
+	(FPU_NEON_ARMV8): Likewise.
+	(FPU_CRYPTO_ARMV8): Likewise.
+	(FPU_ARCH_VFP_ARMV8): Likewise.
+	(FPU_ARCH_NEON_VFP_ARMV8): Likewise.
+	(FPU_ARCH_CRYPTO_NEON_VFP_ARMV8): Likewise.
+	(ARM_ARCH_V8A): Likwise.
+	(ARM_ARCH_V8A_FP): Likewise.
+	(ARM_ARCH_V8A_SIMD): Likewise.
+	(ARM_ARCH_V8A_CRYPTO): Likewise.
 
 2012-08-21  David S. Miller  <davem@davemloft.net>
 
@@ -858,6 +943,10 @@
 2012-07-06  Maciej W. Rozycki  <macro@codesourcery.com>
 
 	* mips.h: Fix a typo in description.
+
+2012-07-05  Sean Keys  <skeys@ipdatasys.com>
+
+	* xgate.h: Changed the format string for mode XGATE_OP_DYA_MON.
 
 2012-06-07  Georg-Johann Lay  <avr@gjlay.de>
 
@@ -905,6 +994,10 @@
 	HWCAP_KASUMI, HWCAP_CAMELLIA, HWCAP_MD5, HWCAP_SHA1,
 	HWCAP_SHA256, HWCAP_SHA512, HWCAP_MPMUL, HWCAP_MONT, HWCAP_PAUSE,
 	HWCAP_CBCOND, HWCAP_CRC32): New defines.
+
+2012-04-12  David S. Miller  <davem@davemloft.net>
+
+	* sparc.h: Define '=' as generating R_SPARC_WDISP10.
 
 2012-03-10  Edmar Wienskoski  <edmar@freescale.com>
 
@@ -1275,6 +1368,14 @@
 	* cgen.h (CGEN_ATTR, CGEN_ATTR_TYPE): Rename bool attribute to bool_.
 	(CGEN_ATTR_BOOLS, CGEN_ATTR_CGEN_INSN_ALIAS_VALUE): Likewise.
 
+2010-09-29  Bernd Schmidt  <bernds@codesourcery.com>
+
+	* tic6x-control-registers.h (tscl): Now read_write.
+
+2010-09-27  Andreas Krebbel  <Andreas.Krebbel@de.ibm.com>
+
+	* s390.h: Add S390_OPCODE_Z196 to enum s390_opcode_cpu_val.
+
 2010-09-23  Matthew Gretton-Dann  <matthew.gretton-dann@arm.com>
 
 	* arm.h (ARM_EXT_VIRT): New define.
@@ -1305,6 +1406,16 @@
 2010-09-21  Mike Frysinger  <vapier@gentoo.org>
 
 	* bfin.h: Strip trailing whitespace.
+
+2009-09-04  Jie Zhang  <jie.zhang@analog.com>
+
+	* bfin.h (PseudoDbg_Assert): Add bits_grp and mask_grp.
+	(PseudoDbg_Assert_grp_bits, PseudoDbg_Assert_grp_mask): Define.
+	(PseudoDbg_Assert_dbgop_bits, PseudoDbg_Assert_dbgop_mask,
+	PseudoDbg_Assert_dontcare_bits, PseudoDbg_Assert_dontcare_mask):
+	Adjust accordingly.
+	(init_PseudoDbg_Assert): Add PseudoDbg_Assert_grp_bits and
+	PseudoDbg_Assert_grp_mask.
 
 2010-07-29  DJ Delorie  <dj@redhat.com>
 
@@ -1358,7 +1469,7 @@
 
 2010-05-26  Catherine Moore  <clm@codesourcery.com>
 
-	* opcode/mips.h (INSN_MIPS16): Remove.
+	* mips.h (INSN_MIPS16): Remove.
 
 2010-04-21  Joseph Myers  <joseph@codesourcery.com>
 
@@ -1428,7 +1539,7 @@
 
 2010-02-08  Philipp Tomsich  <philipp.tomsich@theobroma-systems.com>
 
-	* opcode/ppc.h (PPC_OPCODE_TITAN): Define.
+	* ppc.h (PPC_OPCODE_TITAN): Define.
 
 2010-01-14  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -1552,7 +1663,7 @@
 
 2009-01-28  Doug Evans  <dje@google.com>
 
-	* opcode/i386.h: Add multiple inclusion protection.
+	* i386.h: Add multiple inclusion protection.
 	(EAX_REG_NUM,ECX_REG_NUM,EDX_REGNUM,EBX_REG_NUM,ESI_REG_NUM)
 	(EDI_REG_NUM): New macros.
 	(MODRM_MOD_FIELD,MODRM_REG_FIELD,MODRM_RM_FIELD): New macros.
@@ -1582,6 +1693,14 @@
 
 	* ia64.h (ia64_resource_specifier): Add IA64_RS_CR_IIB.  Update
 	IA64_RS_CR.
+
+2008-08-08  Anatoly Sokolov  <aesok@post.ru>
+
+	* avr.h (AVR_ISA_TINY3, AVR_ISA_ALL, AVR_ISA_USB162): Remove.
+	(AVR_ISA_AVR3): Redefine.
+	(AVR_ISA_AVR1, AVR_ISA_AVR2, AVR_ISA_AVR31, AVR_ISA_AVR35,
+	AVR_ISA_AVR3_ALL, AVR_ISA_AVR4, AVR_ISA_AVR5, AVR_ISA_AVR51,
+	AVR_ISA_AVR6): Define.
 
 2008-08-01  Peter Bergner  <bergner@vnet.ibm.com>
 
@@ -2039,7 +2158,7 @@
 2005-07-28  John David Anglin  <dave.anglin@nrc-cnrc.gc.ca>
 
 	PR gas/336
- 	* hppa.h (pa_opcodes): Allow 0 immediates in PA 2.0 variants of pdtlb
+	* hppa.h (pa_opcodes): Allow 0 immediates in PA 2.0 variants of pdtlb
 	and pitlb.
 
 2005-07-27  Jan Beulich  <jbeulich@novell.com>
