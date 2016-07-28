@@ -188,7 +188,7 @@
 #define HAVE_MEMSET 1
 
 /* Define to 1 if you have the `mkstemps' function. */
-#define HAVE_MKSTEMPS 1
+/* #undef HAVE_MKSTEMPS */
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
