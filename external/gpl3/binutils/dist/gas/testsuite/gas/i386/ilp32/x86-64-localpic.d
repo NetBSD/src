@@ -1,4 +1,5 @@
 #source: ../x86-64-localpic.s
+#as: --x32 -mrelax-relocations=yes
 #readelf: -rsW
 #name: x86-64 (ILP32) local PIC
 

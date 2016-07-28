@@ -67,3 +67,4 @@ start:
 	vslv         21,21,2
 	vextuhrx     15,9,1
 	vextuwrx     21,17,16
+	vmsumudm     20,21,22,23
