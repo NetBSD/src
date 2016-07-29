@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.335 2016/07/14 15:51:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.336 2016/07/29 09:47:09 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335 2016/07/14 15:51:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.336 2016/07/29 09:47:09 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -818,12 +818,10 @@ pmap_tlb_flush_SE(pmap_t pm, vaddr_t va, u_int flags)
 #endif /* ARM_MMU_EXTENDED */
 }
 
+#ifndef ARM_MMU_EXTENDED
 static inline void
 pmap_tlb_flushID(pmap_t pm)
 {
-#ifdef ARM_MMU_EXTENDED
-	pmap_tlb_asid_release_all(pm);
-#else
 	if (pm->pm_cstate.cs_tlb_id) {
 		cpu_tlb_flushID();
 #if ARM_MMU_V7 == 0
@@ -837,10 +835,8 @@ pmap_tlb_flushID(pmap_t pm)
 		pm->pm_cstate.cs_tlb = 0;
 #endif /* ARM_MMU_V7 */
 	}
-#endif /* ARM_MMU_EXTENDED */
 }
 
-#ifndef ARM_MMU_EXTENDED
 static inline void
 pmap_tlb_flushD(pmap_t pm)
 {
@@ -5125,7 +5121,11 @@ pmap_destroy(pmap_t pm)
 		return;
 
 	if (pm->pm_remove_all) {
+#ifdef ARM_MMU_EXTENDED
+		pmap_tlb_asid_release_all(pm);
+#else
 		pmap_tlb_flushID(pm);
+#endif
 		pm->pm_remove_all = false;
 	}
 
