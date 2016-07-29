@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142.2.5 2016/07/29 01:49:39 pgoyette Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.2.6 2016/07/29 02:19:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.5 2016/07/29 01:49:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.6 2016/07/29 02:19:52 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -1046,6 +1046,12 @@ ptytty(dev_t dev)
 int
 ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
+/*
+ * XXX	We really should use device_lookup_acquire(...) to lock the
+ * XXX	device before fetching its softc pointer. Acquiring the
+ * XXX	cdevsw prevents the driver from being detached, but doesn't
+ * XXX	prevent the specific instance/unit from disappearing.
+ */
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 	const struct cdevsw *cdev;
