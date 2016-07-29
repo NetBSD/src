@@ -75,11 +75,8 @@ struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
 	char name[IF_NAMESIZE];
-#ifdef __linux__
-	char alias[IF_NAMESIZE];
-#endif
 	unsigned int index;
-	int active;
+	unsigned int active;
 	unsigned int flags;
 	sa_family_t family;
 	unsigned char hwaddr[HWADDR_LEN];
