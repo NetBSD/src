@@ -244,7 +244,6 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 	ifp = astate->iface;
 	state = IPV4LL_STATE(ifp);
 	assert(state != NULL);
-	assert(state->addr != NULL);
 
 	fail = 0;
 	/* RFC 3927 2.2.1, Probe Conflict Detection */
@@ -254,7 +253,8 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 		fail = astate->addr.s_addr;
 
 	/* RFC 3927 2.5, Conflict Defense */
-	if (IN_LINKLOCAL(ntohl(state->addr->addr.s_addr)) &&
+	if (state->addr != NULL &&
+	    IN_LINKLOCAL(ntohl(state->addr->addr.s_addr)) &&
 	    amsg && amsg->sip.s_addr == state->addr->addr.s_addr)
 		fail = state->addr->addr.s_addr;
 
@@ -264,7 +264,9 @@ ipv4ll_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 	astate->failed.s_addr = fail;
 	arp_report_conflicted(astate, amsg);
 
-	if (astate->failed.s_addr == state->addr->addr.s_addr) {
+	if (state->addr != NULL &&
+	    astate->failed.s_addr == state->addr->addr.s_addr)
+	{
 		struct timespec now, defend;
 
 		/* RFC 3927 Section 2.5 says a defence should
@@ -380,12 +382,14 @@ ipv4ll_start(void *arg)
 
 	/* Find an existing IPv4LL address and ensure we can work with it. */
 	ia = ipv4_iffindlladdr(ifp);
+
 #ifdef IN_IFF_TENTATIVE
 	if (ia != NULL && ia->addr_flags & IN_IFF_DUPLICATED) {
 		ipv4_deladdr(ia, 0);
 		ia = NULL;
 	}
 #endif
+
 	if (ia != NULL) {
 		astate->addr = ia->addr;
 #ifdef IN_IFF_TENTATIVE

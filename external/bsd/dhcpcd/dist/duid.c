@@ -119,7 +119,7 @@ duid_get(uint8_t **d, const struct interface *ifp)
 	/* No file? OK, lets make one based on our interface */
 	if (ifp->family == ARPHRD_NETROM) {
 		logger(ifp->ctx, LOG_WARNING,
-		    "%s: is a NET/ROM psuedo interface", ifp->name);
+		    "%s: is a NET/ROM pseudo interface", ifp->name);
 		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 			if (ifp2->family != ARPHRD_NETROM)
 				break;

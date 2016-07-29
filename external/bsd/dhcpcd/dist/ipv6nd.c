@@ -1306,17 +1306,19 @@ ipv6nd_env(char **env, const char *prefix, const struct interface *ifp)
 }
 
 void
-ipv6nd_handleifa(struct dhcpcd_ctx *ctx, int cmd, const char *ifname,
-    const struct in6_addr *addr, int flags)
+ipv6nd_handleifa(int cmd, struct ipv6_addr *addr)
 {
 	struct ra *rap;
 
-	if (ctx->ipv6 == NULL)
+	/* IPv6 init may not have happened yet if we are learning
+	 * existing addresses when dhcpcd starts. */
+	if (addr->iface->ctx->ipv6 == NULL)
 		return;
-	TAILQ_FOREACH(rap, ctx->ipv6->ra_routers, next) {
-		if (strcmp(rap->iface->name, ifname))
+
+	TAILQ_FOREACH(rap, addr->iface->ctx->ipv6->ra_routers, next) {
+		if (rap->iface != addr->iface)
 			continue;
-		ipv6_handleifa_addrs(cmd, &rap->addrs, addr, flags);
+		ipv6_handleifa_addrs(cmd, &rap->addrs, addr);
 	}
 }
 

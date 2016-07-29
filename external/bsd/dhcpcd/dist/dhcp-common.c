@@ -170,7 +170,7 @@ dhcp_vendor(char *str, size_t len)
 	char *p;
 	int l;
 
-	if (uname(&utn) != 0)
+	if (uname(&utn) == -1)
 		return (ssize_t)snprintf(str, len, "%s-%s",
 		    PACKAGE, VERSION);
 	p = str;

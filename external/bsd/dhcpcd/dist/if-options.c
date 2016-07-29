@@ -101,6 +101,7 @@
 #define O_NODELAY		O_BASE + 44
 #define O_INFORM6		O_BASE + 45
 #define O_LASTLEASE_EXTEND	O_BASE + 46
+#define O_INACTIVE		O_BASE + 47
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -200,6 +201,7 @@ const struct option cf_options[] = {
 	{"nodelay",         no_argument,       NULL, O_NODELAY},
 	{"noup",            no_argument,       NULL, O_NOUP},
 	{"lastleaseextend", no_argument,       NULL, O_LASTLEASE_EXTEND},
+	{"inactive",        no_argument,       NULL, O_INACTIVE},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -1176,8 +1178,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			}
 			nconf = realloc(ifo->config, sizeof(char *) * (dl + 2));
 			if (nconf == NULL) {
-				free(p);
 				logger(ctx, LOG_ERR, "%s: %m", __func__);
+				free(p);
 				return -1;
 			}
 			ifo->config = nconf;
@@ -2133,6 +2135,9 @@ err_sla:
 	case O_LASTLEASE_EXTEND:
 		ifo->options |= DHCPCD_LASTLEASE | DHCPCD_LASTLEASE_EXTEND;
 		break;
+	case O_INACTIVE:
+		ifo->options |= DHCPCD_INACTIVE;
+		break;
 	default:
 		return 0;
 	}
@@ -2340,19 +2345,25 @@ read_config(struct dhcpcd_ctx *ctx,
 		buf = malloc(buflen);
 		if (buf == NULL) {
 			logger(ctx, LOG_ERR, "%s: %m", __func__);
+			free_options(ifo);
 			return NULL;
 		}
 		ldop = edop = NULL;
 		for (e = dhcpcd_embedded_conf; *e; e++) {
 			ol = strlen(*e) + 1;
 			if (ol > buflen) {
+				char *nbuf;
+
 				buflen = ol;
-				buf = realloc(buf, buflen);
-				if (buf == NULL) {
-					logger(ctx, LOG_ERR, "%s: %m", __func__);
+				nbuf = realloc(buf, buflen);
+				if (nbuf == NULL) {
+					logger(ctx, LOG_ERR,
+					    "%s: %m", __func__);
 					free(buf);
+					free_options(ifo);
 					return NULL;
 				}
+				buf = nbuf;
 			}
 			memcpy(buf, *e, ol);
 			line = buf;
