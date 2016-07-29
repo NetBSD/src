@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.128 2016/07/29 09:52:46 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.129 2016/07/29 10:09:38 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -187,6 +187,7 @@
 ./usr/tests/dev
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
+./usr/tests/dev/fss
 ./usr/tests/dev/md
 ./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
