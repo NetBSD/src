@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142.2.4 2016/07/26 05:54:40 pgoyette Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.2.5 2016/07/29 01:49:39 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.4 2016/07/26 05:54:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.5 2016/07/29 01:49:39 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -1093,13 +1093,13 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	cdev = cdevsw_lookup_acquire(dev);
 	if (cdev != NULL && cdev->d_open == ptcopen) {
-		error = 0;
 		switch (cmd) {
 #ifndef NO_DEV_PTM
 		case TIOCGRANTPT:
 			if ((error = pty_getmp(l, &mp)) == 0)
 				error = pty_grant_slave(l, dev, mp);
-			break;
+			cdevsw_release(cdev);
+			return error;
 #endif
 
 		case TIOCGPGRP:
@@ -1108,7 +1108,8 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			 * in that case, tp must be the controlling terminal.
 			 */
 			*(int *)data = tp->t_pgrp ? tp->t_pgrp->pg_id : 0;
-			break;
+			cdevsw_release(cdev);
+			return 0;
 
 		case TIOCPKT:
 			if (*(int *)data) {
@@ -1117,7 +1118,8 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pti->pt_flags |= PF_PKT;
 			} else
 				pti->pt_flags &= ~PF_PKT;
-			break;
+			cdevsw_release(cdev);
+			return 0;
 
 		case TIOCUCNTL:
 			if (*(int *)data) {
@@ -1126,7 +1128,8 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				pti->pt_flags |= PF_UCNTL;
 			} else
 				pti->pt_flags &= ~PF_UCNTL;
-			break;
+			cdevsw_release(cdev);
+			return 0;
 
 		case TIOCREMOTE:
 			if (*(int *)data)
@@ -1136,7 +1139,8 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_spin_enter(&tty_lock);
 			ttyflush(tp, FREAD|FWRITE);
 			mutex_spin_exit(&tty_lock);
-			break;
+			cdevsw_release(cdev);
+			return 0;
 
 		case TIOCSETP:
 		case TIOCSETN:
@@ -1147,7 +1151,6 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_spin_enter(&tty_lock);
 			ndflush(&tp->t_outq, tp->t_outq.c_cc);
 			mutex_spin_exit(&tty_lock);
-			error = -1;
 			break;
 
 		case TIOCSIG:
@@ -1160,17 +1163,16 @@ ptyioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			tp->t_state |= TS_SIGINFO;
 			ttysig(tp, TTYSIG_PG1, sig);
 			mutex_spin_exit(&tty_lock);
-			break;
+			error = 0;
+			cdevsw_release(cdev);
+			return 0;
 
 		case FIONREAD:
 			mutex_spin_enter(&tty_lock);
 			*(int *)data = tp->t_outq.c_cc;
 			mutex_spin_exit(&tty_lock);
-			break;
-		}
-		if (error >= 0 ) {
 			cdevsw_release(cdev);
-			return error;
+			return 0;
 		}
 	}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
