@@ -1,4 +1,4 @@
-# $NetBSD: t_fss.sh,v 1.1 2016/07/29 06:13:39 pgoyette Exp $
+# $NetBSD: t_fss.sh,v 1.2 2016/07/29 20:27:37 pgoyette Exp $
 #
 # Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,7 +52,7 @@ basic_body() {
 # configure and mount a snapshot of the file system
 
 	fssconfig -c fss0 ./m1 ./backup
-	mount /dev/fss0 ./m2
+	mount -o rdonly /dev/fss0 ./m2
 
 # Modify the data on the underlying file system
 
@@ -65,15 +65,17 @@ basic_body() {
 
 # Unmount our temporary stuff
 
-	umount /dev/vnd0a	|| true
 	umount /dev/fss0	|| true
+	fssconfig -u fss0	|| true
+	umount /dev/vnd0a	|| true
+	vndconfig -u vnd0	|| true
 }
 
 basic_cleanup() {
 	umount /dev/vnd0a	|| true
+	fssconfig -u fss0	|| true
 	umount /dev/fss0	|| true
 	vndconfig -u vnd0	|| true
-	fssconfig -u fss0	|| true
 }
 
 atf_init_test_cases()
