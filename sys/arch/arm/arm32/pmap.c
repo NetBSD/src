@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.336 2016/07/29 09:47:09 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.337 2016/07/29 15:38:05 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.336 2016/07/29 09:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2016/07/29 15:38:05 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5000,6 +5000,11 @@ void
 pmap_update(pmap_t pm)
 {
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
+	    0);
+
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
 		KASSERT(pm != pmap_kernel());
@@ -5090,6 +5095,7 @@ pmap_update(pmap_t pm)
 	 * make sure TLB/cache operations have completed.
 	 */
 	cpu_cpwait();
+	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
 void
@@ -5115,10 +5121,15 @@ pmap_remove_all(pmap_t pm)
 void
 pmap_destroy(pmap_t pm)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
 	u_int count;
 
 	if (pm == NULL)
 		return;
+
+	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
+	    0);
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
@@ -5176,6 +5187,7 @@ pmap_destroy(pmap_t pm)
 	uvm_obj_destroy(&pm->pm_obj, false);
 	mutex_destroy(&pm->pm_obj_lock);
 	pool_cache_put(&pmap_cache, pm);
+	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
 
