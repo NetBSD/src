@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.172 2016/07/29 06:02:03 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.172 2016/07/29 06:02:03 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -188,8 +188,6 @@ ip6_output(
 	struct psref psref, psref_ia;
 	int bound = curlwp_bind();
 	bool release_psref_ia = false;
-
-	memset(&ip6route, 0, sizeof(ip6route));
 
 #ifdef  DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -437,6 +435,7 @@ ip6_output(
 	 */
 	/* initialize cached route */
 	if (ro == NULL) {
+		memset(&ip6route, 0, sizeof(ip6route));
 		ro = &ip6route;
 	}
 	ro_pmtu = ro;
@@ -974,7 +973,8 @@ sendorfree:
 		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
-	rtcache_free(&ip6route);
+	if (ro == &ip6route)
+		rtcache_free(&ip6route);
 
 #ifdef IPSEC
 	if (sp != NULL)
