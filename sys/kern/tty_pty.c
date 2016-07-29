@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.142.2.6 2016/07/29 02:19:52 pgoyette Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.142.2.7 2016/07/29 02:28:38 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.6 2016/07/29 02:19:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.142.2.7 2016/07/29 02:28:38 pgoyette Exp $");
 
 #include "opt_ptm.h"
 
@@ -151,6 +151,7 @@ const struct cdevsw pts_cdevsw = {
  */
 
 const struct cdevsw ptc_ultrix_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptcopen,
 	.d_close = ptcclose,
 	.d_read = ptcread,
@@ -166,6 +167,7 @@ const struct cdevsw ptc_ultrix_cdevsw = {
 };
 
 const struct cdevsw pts_ultrix_cdevsw = {
+	DEVSW_MODULE_INIT
 	.d_open = ptsopen,
 	.d_close = ptsclose,
 	.d_read = ptsread,
