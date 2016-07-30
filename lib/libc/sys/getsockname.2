@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.25 2016/07/30 11:10:40 njoly Exp $
+.\"	$NetBSD: getsockname.2,v 1.26 2016/07/30 11:31:00 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,20 +126,20 @@ The call succeeds unless:
 The argument
 .Fa s
 is not a valid descriptor.
-.It Bq Er ENOTSOCK
-The argument
-.Fa s
-is a file, not a socket.
+.It Bq Er EFAULT
+The
+.Fa name
+parameter points to memory not in a valid part of the process address space.
 .It Bq Er EINVAL
 The socket has been shut down.
 .It Bq Er ENOBUFS
 Insufficient resources were available in the system to perform the operation.
 .It Bq Er ENOTCONN
 The socket is not connected.
-.It Bq Er EFAULT
-The
-.Fa name
-parameter points to memory not in a valid part of the process address space.
+.It Bq Er ENOTSOCK
+The argument
+.Fa s
+is a file, not a socket.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
