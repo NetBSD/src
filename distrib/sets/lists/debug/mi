@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.160 2016/07/02 15:40:51 christos Exp $
+# $NetBSD: mi,v 1.161 2016/07/30 11:03:54 njoly Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2007,6 +2007,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getpid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getrusage.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsid.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_getsockname.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_gettimeofday.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_issetugid.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_kevent.debug		tests-lib-debug		debug,atf,compattestfile
