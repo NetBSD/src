@@ -1,4 +1,4 @@
-/*	$NetBSD: fssconfig.c,v 1.10 2012/11/04 22:21:11 christos Exp $	*/
+/*	$NetBSD: fssconfig.c,v 1.11 2016/07/30 12:33:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -60,18 +60,27 @@ main(int argc, char **argv)
 	int ch;
 	void (*action)(int, char **);
 
-	action = config;
+	action = NULL;
 
 	while ((ch = getopt(argc, argv, "cluvx")) != -1) {
 		switch (ch) {
 		case 'c':
-			action = config;
+			if (action)
+				usage();
+			else
+				action = config;
 			break;
 		case 'l':
-			action = list;
+			if (action)
+				usage();
+			else
+				action = list;
 			break;
 		case 'u':
-			action = unconfig;
+			if (action)
+				usage();
+			else
+				action = unconfig;
 			break;
 		case 'v':
 			vflag++;
@@ -85,6 +94,8 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 		}
 	}
+	if (action == NULL)
+		action = config;
 
 	argc -= optind;
 	argv += optind;
@@ -189,7 +200,7 @@ unconfig(int argc, char **argv)
 	int fd;
 	char full[64];
 
-	if (argc != 1)
+	if (argc != 1 || xflag)
 		usage();
 
 	if (vflag)
@@ -211,7 +222,7 @@ list(int argc, char **argv)
 	time_t t;
 	struct fss_get fsg;
 
-	if (argc > 1)
+	if (argc > 1 || xflag)
 		usage();
 
 	if (argc > 0) 
