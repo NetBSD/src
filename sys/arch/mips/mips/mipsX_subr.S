@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.74 2016/07/21 12:17:07 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.75 2016/07/30 07:09:03 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -706,7 +706,7 @@ MIPSX(slowfault):
 NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#if defined(PARANOIA) || 1
+#if defined(PARANOIA)
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
 	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b			# loop forever if false
