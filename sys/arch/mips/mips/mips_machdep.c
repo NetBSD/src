@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.273 2016/07/25 22:10:03 macallan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.274 2016/07/30 05:55:34 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.273 2016/07/25 22:10:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.274 2016/07/30 05:55:34 matt Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2069,9 +2069,9 @@ mips_init_lwp0_uarea(void)
 
 	pcb->pcb_context.val[_L_SR] = MIPS_SR_INT_IE
 	    | (ipl_sr_map.sr_bits[IPL_SCHED] ^ MIPS_INT_MASK);
-#ifdef _mips_n32
-	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX | MIPS_SR_UX;
-	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX | MIPS_SR_UX;
+#ifdef __mips_n32
+	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX;
+	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
 #endif
 #ifdef _LP64
 	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX | MIPS_SR_UX;
