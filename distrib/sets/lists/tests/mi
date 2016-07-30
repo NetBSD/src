@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.679 2016/07/29 07:02:24 pgoyette Exp $
+# $NetBSD: mi,v 1.680 2016/07/30 11:03:54 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2682,6 +2682,7 @@
 ./usr/tests/lib/libc/sys/t_getpid		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getrusage		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_getsid		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_getsockname		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_gettimeofday		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_issetugid		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_kevent		tests-lib-tests		compattestfile,atf
