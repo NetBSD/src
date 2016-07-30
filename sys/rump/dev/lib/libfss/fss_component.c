@@ -1,4 +1,4 @@
-/*	$NetBSD: fss_component.c,v 1.3 2016/07/30 22:36:14 pgoyette Exp $	*/
+/*	$NetBSD: fss_component.c,v 1.4 2016/07/30 23:07:23 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss_component.c,v 1.3 2016/07/30 22:36:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss_component.c,v 1.4 2016/07/30 23:07:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,7 +40,7 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 	extern const struct bdevsw fss_bdevsw;
 	extern const struct cdevsw fss_cdevsw;
-	extern devmajor_t fss_bmaj, fss_cmaj;
+	extern devmajor_t fss_bmajor, fss_cmajor;
 	int error;
 
 	fss_bmajor = bdevsw_lookup_major(&fss_bdevsw);
