@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: fss.c,v 1.94 2016/07/30 22:36:14 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.94 2016/07/30 22:36:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1290,10 +1290,11 @@ fss_bs_thread(void *arg)
 MODULE(MODULE_CLASS_DRIVER, fss, NULL);
 CFDRIVER_DECL(fss, DV_DISK, NULL);
 
+devmajor_t fss_bmajor = -1, fss_cmajor = -1;
+
 static int
 fss_modcmd(modcmd_t cmd, void *arg)
 {
-	devmajor_t bmajor = -1, cmajor = -1;
 	int error = 0;
 
 	switch (cmd) {
@@ -1311,9 +1312,8 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		error = devsw_attach(fss_cd.cd_name,
-		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
-		if (error == EEXIST)
-			error = 0;
+		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
+
 		if (error) {
 			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 			config_cfdriver_detach(&fss_cd);
@@ -1323,11 +1323,14 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
-		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&fss_cd);
 		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+		if (error) {
+			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
+			    &fss_cdevsw, &fss_cmajor);
+			break;
+		}
+		config_cfdriver_detach(&fss_cd);
 		mutex_destroy(&fss_device_lock);
 		break;
 
