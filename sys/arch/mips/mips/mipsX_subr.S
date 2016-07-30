@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.75 2016/07/30 07:09:03 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.76 2016/07/30 07:10:42 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2694,7 +2694,7 @@ MIPSX(user_intr_return):
 	REG_L	t9, CALLFRAME_SIZ+TF_REG_T9(k1)		# $25
 	REG_L	k0, CALLFRAME_SIZ+TF_REG_SR(k1)		# status register
 	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
-	REG_L	gp, CALLFRAME_SIZ+TF_REG_GP(k1)		# $29
+	REG_L	gp, CALLFRAME_SIZ+TF_REG_GP(k1)		# $28
 	REG_L	sp, CALLFRAME_SIZ+TF_REG_SP(k1)		# $29
 	REG_L	ra, CALLFRAME_SIZ+TF_REG_RA(k1)		# $31
 	mtc0	k0, MIPS_COP_0_STATUS
