@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.147 2016/07/14 04:49:55 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.148 2016/07/30 05:58:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.147 2016/07/14 04:49:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.148 2016/07/30 05:58:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -143,7 +143,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb2->pcb_context.val[_L_RA] =
 	   mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
-#ifdef _LP64
+#if defined(_LP64) || defined(__mips_n32)
 	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
 	KASSERTMSG(pcb2->pcb_context.val[_L_SR] & MIPS_SR_INT_IE,
