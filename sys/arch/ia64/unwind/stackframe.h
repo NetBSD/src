@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.h,v 1.2 2010/02/28 15:52:16 snj Exp $	*/
+/*	$NetBSD: stackframe.h,v 1.3 2016/07/31 19:22:25 dholland Exp $	*/
 
 /* 
  * Contributed to the NetBSD foundation by Cherry G. Mathew
@@ -87,16 +87,12 @@ void dump_staterecord(struct staterecord *);
 void clonerecordstack(u_int);
 void switchrecordstack(u_int);
 
-struct uwtable_ent *
-get_unwind_table_entry(uint64_t);
-void 
-patchunwindframe(struct unwind_frame *, uint64_t, uint64_t);
-void
-updateregs(struct unwind_frame *uwf, struct staterecord *, uint64_t) ;
+struct uwtable_ent *get_unwind_table_entry(uint64_t);
+void patchunwindframe(struct unwind_frame *, uint64_t, uint64_t);
+void updateregs(struct unwind_frame *uwf, struct staterecord *, uint64_t);
 struct uwtable_ent * get_unwind_table_entry(uint64_t ip);
 
-struct staterecord *
-buildrecordstack(struct recordchain *, uint64_t);
+struct staterecord *buildrecordstack(struct recordchain *, uint64_t);
 void dump_recordchain(struct recordchain *);
 
 /* Convenience macros to decompose CFM & ar.pfs. */
