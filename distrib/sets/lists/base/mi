@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1131 2016/07/01 22:52:06 christos Exp $
+# $NetBSD: mi,v 1.1131.2.1 2016/07/31 02:11:41 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1838,6 +1838,7 @@
 ./usr/sbin/rtsold				base-obsolete		obsolete
 ./usr/sbin/rump.arp				base-netutil-bin	rump
 ./usr/sbin/rump.envstat				base-sysutil-bin	rump
+./usr/sbin/rump.fssconfig			base-sysutil-root	rump
 ./usr/sbin/rump.ndp				base-netutil-bin	inet6,rump
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
 ./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
