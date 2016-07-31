@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.110 2016/07/31 17:59:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.110 2016/07/31 17:59:08 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -1401,13 +1401,13 @@ prtsig(int dummy)
  * On the first SIGINT, allow any outstanding packets to dribble in
  */
 static void
-prefinish(int dummy)
+prefinish(int sig)
 {
 	if (lastrcvd			/* quit now if caught up */
 	    || nreceived == 0)		/* or if remote is dead */
 		finish(0);
 
-	(void)signal(dummy, finish);	/* do this only the 1st time */
+	(void)signal(sig, finish);	/* do this only the 1st time */
 
 	if (npackets > ntransmitted)	/* let the normal limit work */
 		npackets = ntransmitted;
