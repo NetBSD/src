@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.6 2016/07/31 19:10:54 dholland Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.7 2016/07/31 19:12:41 dholland Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -946,8 +946,8 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 		switch (rchain[i].type) {
 		case R1:
 			rlen = rchain[i].udesc.R1.rlen;
+			if (procoffset < roffset) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = rchain[i].udesc.R1.r;
 			if (!rtype) {
@@ -957,8 +957,8 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 
 		case R3:
 			rlen = rchain[i].udesc.R3.rlen;
+			if (procoffset < roffset) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = rchain[i].udesc.R3.r;
 			if (!rtype) {
@@ -968,8 +968,8 @@ struct staterecord *buildrecordstack(struct recordchain *rchain, uint64_t procof
 
 		case R2:
 			rlen = rchain[i].udesc.R2.rlen;
+			if (procoffset < roffset) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			rdepth = procoffset - roffset;
-			if (rdepth < 0) goto out; /* Overshot Region containing procoffset. Bailout. */ 
 			roffset += rlen;
 			rtype = false; /* prologue region */
 			pushrecord(&current_state);
