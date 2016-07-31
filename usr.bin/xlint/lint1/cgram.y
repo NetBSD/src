@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.78 2016/07/20 18:14:12 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.79 2016/07/31 22:38:04 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.78 2016/07/20 18:14:12 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.79 2016/07/31 22:38:04 dholland Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1233,14 +1233,17 @@ opt_asm_or_symbolrename:		/* expect only one */
 	;
 
 initializer:
-	  init_expr
+	  init_assign_expr
 	;
 
-init_expr:
-	| expr				%prec T_COMMA {
+init_assign_expr:
+	| init_by_name init_base_expr	%prec T_COMMA
+	| init_base_expr
+
+init_base_expr:
+	  expr				%prec T_COMMA {
 		mkinit($1);
 	  }
-	| init_by_name init_expr	%prec T_COMMA
 	| init_lbrace init_rbrace
 	| init_lbrace init_expr_list init_rbrace
 	| init_lbrace init_expr_list T_COMMA init_rbrace
@@ -1248,8 +1251,8 @@ init_expr:
 	;
 
 init_expr_list:
-	  init_expr			%prec T_COMMA
-	| init_expr_list T_COMMA init_expr
+	  init_assign_expr		%prec T_COMMA
+	| init_expr_list T_COMMA init_assign_expr
 	;
 
 lorange: 
