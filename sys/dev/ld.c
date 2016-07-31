@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.94.2.4 2016/07/27 01:13:50 pgoyette Exp $	*/
+/*	$NetBSD: ld.c,v 1.94.2.5 2016/07/31 01:32:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.4 2016/07/27 01:13:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94.2.5 2016/07/31 01:32:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,10 +627,11 @@ static void
 ld_config_interrupts(device_t d)
 {
 	struct ld_softc *sc;
-	struct dk_softc *dksc = &sc->sc_dksc;
+	struct dk_softc *dksc;
 
 	device_acquire(d);
 	sc = device_private(d);
+	dksc = &sc->sc_dksc;
 	dkwedge_discover(&dksc->sc_dkdev);
 	device_release(d);
 }
@@ -654,6 +655,7 @@ ld_discard(device_t dev, off_t pos, off_t len)
 static int
 lddiscard(dev_t dev, off_t pos, off_t len)
 {
+	device_t self;
 	struct ld_softc *sc;
 	struct dk_softc *dksc;
 	int unit;
