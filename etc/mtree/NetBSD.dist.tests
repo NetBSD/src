@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.127 2016/04/15 01:38:17 ozaki-r Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.127.2.1 2016/07/31 01:28:52 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -17,6 +17,7 @@
 ./usr/libdata/debug/usr/tests/dev
 ./usr/libdata/debug/usr/tests/dev/audio
 ./usr/libdata/debug/usr/tests/dev/cgd
+./usr/libdata/debug/usr/tests/dev/fss
 ./usr/libdata/debug/usr/tests/dev/md
 ./usr/libdata/debug/usr/tests/dev/scsipi
 ./usr/libdata/debug/usr/tests/dev/sysmon
@@ -186,6 +187,7 @@
 ./usr/tests/dev
 ./usr/tests/dev/audio
 ./usr/tests/dev/cgd
+./usr/tests/dev/fss
 ./usr/tests/dev/md
 ./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
