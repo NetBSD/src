@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.5 2014/03/10 13:47:16 martin Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.6 2016/07/31 19:10:54 dholland Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -1169,10 +1169,12 @@ patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 	struct uwtable_ent *uwt;
 	uint64_t infoptr, procoffset, slotoffset;
 
+#if 0 /* does not work - moved to assertion at the call site */
 	if (iprel < 0) {
 		panic("unwind ip out of range!!! \n");
 		return;
 	}
+#endif
 
 
 	uwt = get_unwind_table_entry(iprel);
