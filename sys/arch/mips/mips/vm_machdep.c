@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.149 2016/07/30 06:20:54 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.150 2016/07/31 15:33:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.149 2016/07/30 06:20:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.150 2016/07/31 15:33:42 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -115,7 +115,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_regs[_R_SP] = (intptr_t)stack + stacksize;
 
 	l2->l_md.md_utf = tf;
-#if (USPACE > PAGE_SIZE) || !defined(_LP64)
+#if (USPACE > PAGE_SIZE)
 	if (!pmap_md_direct_mapped_vaddr_p(ua2)) {
 		__CTASSERT((PGSHIFT & 1) || UPAGES % 2 == 0);
 		pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), ua2);
