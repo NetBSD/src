@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/10 11:40:12 hannken Exp $
+#	$NetBSD: Makefile,v 1.1.78.1 2016/07/31 02:02:20 pgoyette Exp $
 
-PROG=		fssconfig
+RUMPPRG=	fssconfig
 MAN=		fssconfig.8
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
