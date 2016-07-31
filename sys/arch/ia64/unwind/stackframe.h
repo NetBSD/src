@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.h,v 1.3 2016/07/31 19:22:25 dholland Exp $	*/
+/*	$NetBSD: stackframe.h,v 1.4 2016/07/31 19:33:18 dholland Exp $	*/
 
 /* 
  * Contributed to the NetBSD foundation by Cherry G. Mathew
@@ -20,18 +20,28 @@ struct uwtable_ent {
 
 
 enum regrecord_type{
-	UNSAVED,	/* Register contents live ( and therefore untouched ). */
-	IMMED,		/* .offset field is the saved content. */
-	BRREL,		/* Register saved in one of the Branch Registers. */
-	GRREL,		/* Register saved in one of the Stacked GRs 
-			 * regstate.offset contains GR number (usually >= 32)
-			 */
-	SPREL,		/* Register saved on the memory stack frame. 
-			 * regstate.offset is in words; ie; location == (sp + 4 * spoff). 
-			 */
-	PSPREL		/* Register saved on the memory stack frame but offseted via psp 
-			 * regstate.offset is in words; ie; location == (psp + 16 Å‚Äì 4 * pspoff) 
-			 */
+	/* Register contents live ( and therefore untouched ). */
+	UNSAVED,
+	/* .offset field is the saved content. */
+	IMMED,
+	/* Register saved in one of the Branch Registers. */
+	BRREL,
+	/*
+	 * Register saved in one of the Stacked GRs 
+	 * regstate.offset contains GR number (usually >= 32)
+	 */
+	GRREL,
+	/*
+	 * Register saved on the memory stack frame.
+	 * regstate.offset is in words; ie; location == (sp + 4 * spoff).
+	 */
+	SPREL,
+	/*
+	 * Register saved on the memory stack frame but offseted via psp 
+	 * regstate.offset is in words; ie, 
+	 * location == (psp + 16 Å‚Äì 4 * pspoff) 
+	 */
+	PSPREL
 }; 
 
 
@@ -68,7 +78,8 @@ struct staterecord {
  */
    
 struct unwind_frame {
-	uint64_t		bsp;	/* Base of the RSE. !!! XXX: Stack Frame discontinuities */
+	uint64_t		bsp;	/* Base of the RSE. */
+				    /* !!! XXX: Stack Frame discontinuities */
 	uint64_t		psp;	/* Mem stack (variable size) base. */
 	uint64_t		rp;	/* Return Pointer */
 	uint64_t		pfs;	/* Previous Frame size info */

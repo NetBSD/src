@@ -1,4 +1,4 @@
-/*	$NetBSD: stackframe.c,v 1.8 2016/07/31 19:22:25 dholland Exp $	*/
+/*	$NetBSD: stackframe.c,v 1.9 2016/07/31 19:33:18 dholland Exp $	*/
 
 /* Contributed to the NetBSD foundation by Cherry G. Mathew <cherry@mahiti.org>
  * This file contains routines to use decoded unwind descriptor entries
@@ -64,9 +64,11 @@ buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 	/* XXX: Ignore zero length records. */
 
 
-	for(rec_cnt = 0; rec_cnt < MAXSTATERECS && (uint64_t)recptr < unwindend;
+	for (rec_cnt = 0;
+	    rec_cnt < MAXSTATERECS && (uint64_t)recptr < unwindend;
 	    rec_cnt++) {
-		if ((nextrecp = unwind_decode_R1(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R1(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R1.rlen;
 			region_type = strc[rec_cnt].udesc.R1.r;
 			strc[rec_cnt].type = R1;
@@ -74,7 +76,8 @@ buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if ((nextrecp = unwind_decode_R2(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R2(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R2.rlen;
 			/* R2 regions are prologue regions */
 			region_type = false;
@@ -83,7 +86,8 @@ buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if ((nextrecp = unwind_decode_R3(recptr, &strc[rec_cnt].udesc))){
+		nextrecp = unwind_decode_R3(recptr, &strc[rec_cnt].udesc);
+		if (nextrecp) {
 			region_len = strc[rec_cnt].udesc.R3.rlen;
 			region_type = strc[rec_cnt].udesc.R3.r;
 			strc[rec_cnt].type = R3;
@@ -91,119 +95,152 @@ buildrecordchain(uint64_t unwind_infop, struct recordchain *xxx)
 			continue;
 		}
 
-		if(region_type == false) {
+		if (region_type == false) {
 			/* Prologue Region */
-			if ((nextrecp = unwind_decode_P1(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P2;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P3;
 				recptr = nextrecp;
 				continue;
 			}
 
-
-			if ((nextrecp = unwind_decode_P4(recptr, &strc[rec_cnt].udesc, region_len))){
+			nextrecp = unwind_decode_P4(recptr,
+						    &strc[rec_cnt].udesc,
+						    region_len);
+			if (nextrecp) {
 				strc[rec_cnt].type = P4;
 				recptr = nextrecp;
 				break;
 			}
 		
-
-			if ((nextrecp = unwind_decode_P5(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P5(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P5;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P6(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P6(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P6;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P7(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P7(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P7;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P8(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P8(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P8;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P9(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P9(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P9;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_P10(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_P10(recptr,
+						     &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = P10;
 				recptr = nextrecp;
 				continue;
 			}
 
 			printf("Skipping prologue desc slot :: %d \n", rec_cnt);
-		}
+		} else {
 
-		else {
-			
-			if ((nextrecp = unwind_decode_B1(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B2;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B3;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_B4(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_B4(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = B4;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X1(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X1(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X1;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X2(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X2(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X2;
 				recptr = nextrecp;
 				continue;
 			}
 
 
-			if ((nextrecp = unwind_decode_X3(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X3(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X3;
 				recptr = nextrecp;
 				continue;
 			}
 
-			if ((nextrecp = unwind_decode_X4(recptr, &strc[rec_cnt].udesc))){
+			nextrecp = unwind_decode_X4(recptr,
+						    &strc[rec_cnt].udesc);
+			if (nextrecp) {
 				strc[rec_cnt].type = X4;
 				recptr = nextrecp;
 				continue;
@@ -701,11 +738,14 @@ modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 		switch (rchain->udesc.P7.r) {
 
 		case 0: /* mem_stack_f */
-			if (srec->psp.offset != INVALID) printf("!!!saw mem_stack_f more than once. \n");
+			if (srec->psp.offset != INVALID) {
+				printf("!!!saw mem_stack_f more than once. \n");
+			}
 			srec->psp.when = rchain->udesc.P7.t;
 			if (srec->psp.when < regionoffset) {
 				srec->psp.where = IMMED;
-				srec->psp.offset = rchain->udesc.P7.size; /* spsz.offset is "overloaded" */
+				/* spsz.offset is "overloaded" */
+				srec->psp.offset = rchain->udesc.P7.size;
 			}
 			break;
 
@@ -726,9 +766,11 @@ modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 			
 		case 4: /* rp_when */
 			srec->rp.when = rchain->udesc.P7.t;
-			/* XXX: Need to set to prologue_gr(grno) for the orphan case 
-			 *	ie; _gr/_psprel/_sprel not set and therefore default
-			 *	to begin from the gr specified in prologue_gr.
+			/*
+			 * XXX: Need to set to prologue_gr(grno) for
+			 *	the orphan case ie; _gr/_psprel/_sprel
+			 *	not set and therefore default to begin
+			 *	from the gr specified in prologue_gr.
 			 */
 			break;
 
@@ -741,9 +783,11 @@ modifyrecord(struct staterecord *srec, struct recordchain *rchain,
 
 		case 6: /* pfs_when */
 			srec->pfs.when = rchain->udesc.P7.t;
-			/* XXX: Need to set to prologue_gr(grno) for the orphan case 
-			 *	ie; _gr/_psprel/_sprel not set and therefore default
-			 *	to begin from the gr specified in prologue_gr.
+			/*
+			 * XXX: Need to set to prologue_gr(grno) for
+			 *	the orphan case ie; _gr/_psprel/_sprel
+			 *	not set and therefore default to begin
+			 *	from the gr specified in prologue_gr.
 			 */
 			break;
 
@@ -937,15 +981,20 @@ switchrecordstack(u_int label)
  * or cloning/destroying stacks of staterecords as required.
  * Parameters are:
  *	rchain: pointer to recordchain array.
- *	procoffset: offset of point of interest, in slots, within procedure starting from slot 0
+ *	procoffset: offset of point of interest, in slots, within procedure
+ *                  starting from slot 0
  * This routine obeys [1]
  */
 struct staterecord *
 buildrecordstack(struct recordchain *rchain, uint64_t procoffset)
 {
-	uint64_t rlen = 0;		/* Current region length, defaults to zero, if not specified */
-	uint64_t roffset = 0;		/* Accumulated region length */
-	uint64_t rdepth = 0;		/* Offset within current region */
+	/* Current region length, defaults to zero if not specified */
+	uint64_t rlen = 0;
+	/* Accumulated region length */
+	uint64_t roffset = 0;
+	/* Offset within current region */
+	uint64_t rdepth = 0;
+
 	bool rtype;
 	int i;
 
@@ -1024,7 +1073,8 @@ buildrecordstack(struct recordchain *rchain, uint64_t procoffset)
 		case B2:
 		case B3:
 		case B4:
-			modifyrecord(&current_state, &rchain[i], rlen - 1 - rdepth); 
+			modifyrecord(&current_state, &rchain[i],
+				     rlen - 1 - rdepth); 
 			break;
 
 		case X1:
@@ -1049,7 +1099,8 @@ out:
 }
 
 void
-updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t procoffset) 
+updateregs(struct unwind_frame *uwf, struct staterecord *srec,
+	uint64_t procoffset) 
 {
 	/* XXX: Update uwf for regs other than rp and pfs*/
 	uint64_t roffset = 0;
@@ -1087,7 +1138,8 @@ updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t procoffs
 
 
 			if (roffset < 32) {
-				printf("GR%ld: static register save ??? \n", roffset);
+				printf("GR%ld: static register save ??? \n",
+				       roffset);
 				break;
 			}
 
@@ -1101,14 +1153,16 @@ updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t procoffs
 
 			/* Check if frame has been setup. */
 			if (srec->psp.offset == INVALID) {
-				printf("sprel used without setting up stackframe!!! \n");
+				printf("sprel used without setting up "
+				       "stackframe!!! \n");
 				break;
 			}
 
 			roffset = stptr[i].offset;
 
 			/* Fetch from sp + offset */
-			memcpy(&gr[i], (char *) uwf->sp + roffset * 4, sizeof(uint64_t));
+			memcpy(&gr[i], (char *) uwf->sp + roffset * 4,
+			       sizeof(uint64_t));
 			break;
 
 
@@ -1117,14 +1171,16 @@ updateregs(struct unwind_frame *uwf, struct staterecord *srec, uint64_t procoffs
 
 			/* Check if frame has been setup. */
 			if (srec->psp.offset == INVALID) {
-				printf("psprel used without setting up stackframe!!! \n");
+				printf("psprel used without setting up "
+				       "stackframe!!! \n");
 				break;
 			}
 
 			roffset = stptr[i].offset;
 
 			/* Fetch from sp + offset */
-			memcpy(&gr[i], (char *) uwf->psp + 16 - (roffset * 4), sizeof(uint64_t));
+			memcpy(&gr[i], (char *) uwf->psp + 16 - (roffset * 4),
+			       sizeof(uint64_t));
 			break;
 
 		case UNSAVED:
@@ -1189,7 +1245,7 @@ get_unwind_table_entry(uint64_t iprel)
  * Reads unwind table info and updates register values.
  */
 void 
-patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset) 
+patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 {
 
 	extern struct recordchain strc[];
@@ -1220,7 +1276,8 @@ patchunwindframe(struct unwind_frame *uwf, uint64_t iprel, uint64_t relocoffset)
 
 	/* procoffset in Number of _slots_ , _not_ a byte offset. */
 
-	procoffset = (((iprel - slotoffset) - (uwt->start)) / 0x10 * 3) + slotoffset; 
+	procoffset = (((iprel - slotoffset) - (uwt->start)) / 0x10 * 3)
+		+ slotoffset; 
 	srec = buildrecordstack(strc, procoffset);
 
 	updateregs(uwf, srec, procoffset);
