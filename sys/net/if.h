@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.223 2016/08/01 02:50:03 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.224 2016/08/01 03:15:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -598,6 +598,7 @@ struct ifaddr {
 	int16_t	ifa_preference;	/* preference level for this address */
 #ifdef _KERNEL
 	struct pslist_entry     ifa_pslist_entry;
+	struct psref_target	ifa_psref;
 #endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
@@ -984,17 +985,29 @@ void
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
 
+void	ifa_psref_init(struct ifaddr *);
+void	ifa_acquire(struct ifaddr *, struct psref *);
+void	ifa_release(struct ifaddr *, struct psref *);
+bool	ifa_held(struct ifaddr *);
+
 void	ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithaddr_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithaf(int);
 struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithdstaddr_psref(const struct sockaddr *,
+	    struct psref *);
 struct	ifaddr *ifa_ifwithnet(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithnet_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
-struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
-					const struct sockaddr *);
+struct	ifaddr *ifa_ifwithladdr_psref(const struct sockaddr *, struct psref *);
+struct	ifaddr *ifa_ifwithroute_psref(int, const struct sockaddr *,
+	    const struct sockaddr *, struct psref *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
+struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
+	    struct psref *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
