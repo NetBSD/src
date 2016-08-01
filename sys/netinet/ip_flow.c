@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.75 2016/07/27 04:23:42 knakahara Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.76 2016/08/01 10:22:53 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.75 2016/07/27 04:23:42 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.76 2016/08/01 10:22:53 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.75 2016/07/27 04:23:42 knakahara Exp $
 
 static struct pool ipflow_pool;
 
-LIST_HEAD(ipflowhead, ipflow);
+TAILQ_HEAD(ipflowhead, ipflow);
 
 #define	IPFLOW_TIMER		(5 * PR_SLOWHZ)
 #define	IPFLOW_DEFAULT_HASHSIZE	(1 << IPFLOW_HASHBITS)
@@ -86,16 +86,17 @@ static struct ipflowhead *ipflowtable = NULL;
 static struct ipflowhead ipflowlist;
 static int ipflow_inuse;
 
-#define	IPFLOW_INSERT(bucket, ipf) \
+#define	IPFLOW_INSERT(hashidx, ipf) \
 do { \
-	LIST_INSERT_HEAD((bucket), (ipf), ipf_hash); \
-	LIST_INSERT_HEAD(&ipflowlist, (ipf), ipf_list); \
+	(ipf)->ipf_hashidx = (hashidx); \
+	TAILQ_INSERT_HEAD(&ipflowtable[(hashidx)], (ipf), ipf_hash); \
+	TAILQ_INSERT_HEAD(&ipflowlist, (ipf), ipf_list); \
 } while (/*CONSTCOND*/ 0)
 
-#define	IPFLOW_REMOVE(ipf) \
+#define	IPFLOW_REMOVE(hashidx, ipf) \
 do { \
-	LIST_REMOVE((ipf), ipf_hash); \
-	LIST_REMOVE((ipf), ipf_list); \
+	TAILQ_REMOVE(&ipflowtable[(hashidx)], (ipf), ipf_hash); \
+	TAILQ_REMOVE(&ipflowlist, (ipf), ipf_list); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef IPFLOW_MAX
@@ -135,7 +136,7 @@ ipflow_lookup(const struct ip *ip)
 
 	hash = ipflow_hash(ip);
 
-	LIST_FOREACH(ipf, &ipflowtable[hash], ipf_hash) {
+	TAILQ_FOREACH(ipf, &ipflowtable[hash], ipf_hash) {
 		if (ip->ip_dst.s_addr == ipf->ipf_dst.s_addr
 		    && ip->ip_src.s_addr == ipf->ipf_src.s_addr
 		    && ip->ip_tos == ipf->ipf_tos)
@@ -172,9 +173,9 @@ ipflow_reinit(int table_size)
 	ipflowtable = new_table;
 	ip_hashsize = table_size;
 
-	LIST_INIT(&ipflowlist);
+	TAILQ_INIT(&ipflowlist);
 	for (i = 0; i < ip_hashsize; i++)
-		LIST_INIT(&ipflowtable[i]);
+		TAILQ_INIT(&ipflowtable[i]);
 
 	return 0;
 }
@@ -328,6 +329,18 @@ ipflow_fastforward(struct mbuf *m)
 	 * Send the packet on its way.  All we can get back is ENOBUFS
 	 */
 	ipf->ipf_uses++;
+
+#if 0
+	/*
+	 * Sorting list is too heavy for fast path(packet processing path).
+	 * It degrades about 10% performance. So, we does not sort ipflowtable,
+	 * and then we use FIFO cache replacement instead fo LRU.
+	 */
+	/* move to head (LRU) for ipflowlist. ipflowtable ooes not care LRU. */
+	TAILQ_REMOVE(&ipflowlist, ipf, ipf_list);
+	TAILQ_INSERT_HEAD(&ipflowlist, ipf, ipf_list);
+#endif
+
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
 
 	if (rt->rt_flags & RTF_GATEWAY)
@@ -375,7 +388,7 @@ ipflow_free(struct ipflow *ipf)
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	IPFLOW_REMOVE(ipf);
+	IPFLOW_REMOVE(ipf->ipf_hashidx, ipf);
 
 	ipflow_addstats(ipf);
 	rtcache_free(&ipf->ipf_ro);
@@ -386,14 +399,34 @@ ipflow_free(struct ipflow *ipf)
 static struct ipflow *
 ipflow_reap(bool just_one)
 {
+	struct ipflow *ipf;
 
 	KASSERT(mutex_owned(&ipflow_lock));
 
-	while (just_one || ipflow_inuse > ip_maxflows) {
-		struct ipflow *ipf, *maybe_ipf = NULL;
+	/*
+	 * This case must remove one ipflow. Furthermore, this case is used in
+	 * fast path(packet processing path). So, simply remove TAILQ_LAST one.
+	 */
+	if (just_one) {
+		ipf = TAILQ_LAST(&ipflowlist, ipflowhead);
+		KASSERT(ipf != NULL);
 
-		ipf = LIST_FIRST(&ipflowlist);
-		while (ipf != NULL) {
+		IPFLOW_REMOVE(ipf->ipf_hashidx, ipf);
+
+		ipflow_addstats(ipf);
+		rtcache_free(&ipf->ipf_ro);
+		return ipf;
+	}
+
+	/*
+	 * This case is used in slow path(sysctl).
+	 * At first, remove invalid rtcache ipflow, and then remove TAILQ_LAST
+	 * ipflow if it is ensured least recently used by comparing last_uses.
+	 */
+	while (ipflow_inuse > ip_maxflows) {
+		struct ipflow *maybe_ipf = TAILQ_LAST(&ipflowlist, ipflowhead);
+
+		TAILQ_FOREACH(ipf, &ipflowlist, ipf_list) {
 			/*
 			 * If this no longer points to a valid route
 			 * reclaim it.
@@ -405,26 +438,21 @@ ipflow_reap(bool just_one)
 			 * used or has had the least uses in the
 			 * last 1.5 intervals.
 			 */
-			if (maybe_ipf == NULL ||
-			    ipf->ipf_timer < maybe_ipf->ipf_timer ||
-			    (ipf->ipf_timer == maybe_ipf->ipf_timer &&
-			     ipf->ipf_last_uses + ipf->ipf_uses <
-			         maybe_ipf->ipf_last_uses +
-			         maybe_ipf->ipf_uses))
+			if (ipf->ipf_timer < maybe_ipf->ipf_timer
+			    || ((ipf->ipf_timer == maybe_ipf->ipf_timer)
+				&& (ipf->ipf_last_uses + ipf->ipf_uses
+				    < maybe_ipf->ipf_last_uses + maybe_ipf->ipf_uses)))
 				maybe_ipf = ipf;
-			ipf = LIST_NEXT(ipf, ipf_list);
 		}
 		ipf = maybe_ipf;
 	    done:
 		/*
 		 * Remove the entry from the flow table.
 		 */
-		IPFLOW_REMOVE(ipf);
+		IPFLOW_REMOVE(ipf->ipf_hashidx, ipf);
 
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
-		if (just_one)
-			return ipf;
 		pool_put(&ipflow_pool, ipf);
 		ipflow_inuse--;
 	}
@@ -446,8 +474,8 @@ ipflow_slowtimo_work(struct work *wk, void *arg)
 	mutex_enter(softnet_lock);
 	mutex_enter(&ipflow_lock);
 	KERNEL_LOCK(1, NULL);
-	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
-		next_ipf = LIST_NEXT(ipf, ipf_list);
+	for (ipf = TAILQ_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
+		next_ipf = TAILQ_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
 		    (rt = rtcache_validate(&ipf->ipf_ro)) == NULL) {
 			ipflow_free(ipf);
@@ -514,7 +542,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 		}
 		memset(ipf, 0, sizeof(*ipf));
 	} else {
-		IPFLOW_REMOVE(ipf);
+		IPFLOW_REMOVE(ipf->ipf_hashidx, ipf);
 
 		ipflow_addstats(ipf);
 		rtcache_free(&ipf->ipf_ro);
@@ -535,7 +563,7 @@ ipflow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip);
-	IPFLOW_INSERT(&ipflowtable[hash], ipf);
+	IPFLOW_INSERT(hash, ipf);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
@@ -552,8 +580,8 @@ ipflow_invalidate_all(int new_size)
 
 	mutex_enter(&ipflow_lock);
 
-	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
-		next_ipf = LIST_NEXT(ipf, ipf_list);
+	for (ipf = TAILQ_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
+		next_ipf = TAILQ_NEXT(ipf, ipf_list);
 		ipflow_free(ipf);
 	}
 
