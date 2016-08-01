@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.337 2016/07/29 15:38:05 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.338 2016/08/01 18:28:38 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2016/07/29 15:38:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2016/08/01 18:28:38 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4996,6 +4996,45 @@ pmap_deactivate(struct lwp *l)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
+#ifdef ARM_MMU_EXTENDED
+static inline void
+pmap_remove_all_complete(pmap_t pm)
+{
+	KASSERT(pm != pmap_kernel());
+
+	KASSERTMSG(curcpu()->ci_pmap_cur != pm
+	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
+	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
+	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
+	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
+
+	/*
+	 * Finish up the pmap_remove_all() optimisation by flushing
+	 * all our ASIDs.
+	 */
+#ifdef MULTIPROCESSOR
+	// This should be the last CPU with this pmap onproc
+	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
+	if (kcpuset_isset(pm->pm_onproc, cpu_index(curcpu()))) {
+		struct cpu_info * const ci = curcpu();
+		KASSERT(!cpu_intr_p());
+		/*
+		 * The bits in pm_onproc that belong to this
+		 * TLB can be changed while this TLBs lock is
+		 * not held as long as we use atomic ops.
+		 */
+		kcpuset_atomic_clear(pm->pm_onproc, cpu_index(ci));
+	}
+	KASSERT(kcpuset_iszero(pm->pm_onproc));
+#endif /* MULTIPROCESSOR */
+
+	struct pmap_asid_info * const pai =
+	    PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+}
+#endif
+
 void
 pmap_update(pmap_t pm)
 {
@@ -5007,41 +5046,7 @@ pmap_update(pmap_t pm)
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
-		KASSERT(pm != pmap_kernel());
-
-		KASSERTMSG(curcpu()->ci_pmap_cur != pm
-		    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
-		    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
-		    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
-		    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
-
-#ifdef MULTIPROCESSOR
-		/*
-		 * Finish up the pmap_remove_all() optimisation by flushing
-		 * all our ASIDs.
-		 */
-		// This should be the last CPU with this pmap onproc
-		KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
-		if (kcpuset_isset(pm->pm_onproc, cpu_index(curcpu()))) {
-			if (pm != pmap_kernel()) {
-				struct cpu_info * const ci = curcpu();
-				KASSERT(!cpu_intr_p());
-				/*
-				 * The bits in pm_onproc that belong to this
-				 * TLB can be changed while this TLBs lock is
-				 * not held as long as we use atomic ops.
-				 */
-				kcpuset_atomic_clear(pm->pm_onproc,
-				    cpu_index(ci));
-			}
-		}
-		KASSERT(kcpuset_iszero(pm->pm_onproc));
-#endif
-		struct pmap_asid_info * const pai =
-		    PMAP_PAI(pm, cpu_tlb_info(ci));
-
-		tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
-
+		pmap_remove_all_complete(pm);
 #else
 		/*
 		 * Finish up the pmap_remove_all() optimisation by flushing
@@ -5133,7 +5138,8 @@ pmap_destroy(pmap_t pm)
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
-		pmap_tlb_asid_release_all(pm);
+		pmap_remove_all_complete(pm);
+ 		pmap_tlb_asid_release_all(pm);
 #else
 		pmap_tlb_flushID(pm);
 #endif
