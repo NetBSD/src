@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.165 2016/08/01 03:15:31 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.165 2016/08/01 03:15:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -565,8 +565,10 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 */
 	if (deliverifp && ip6_getdstifaddr(m) == NULL) {
 		struct in6_ifaddr *ia6;
+		int s = pserialize_read_enter();
 
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
+		/* Depends on ip6_setdstifaddr never sleep */
 		if (ia6 != NULL && ip6_setdstifaddr(m, ia6) == NULL) {
 			/*
 			 * XXX maybe we should drop the packet here,
@@ -574,6 +576,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			 * to the upper layers.
 			 */
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*
@@ -701,9 +704,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 #ifdef IFA_STATS
 	if (deliverifp != NULL) {
 		struct in6_ifaddr *ia6;
+		int s = pserialize_read_enter();
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
 		if (ia6)
 			ia6->ia_ifa.ifa_data.ifad_inbytes += m->m_pkthdr.len;
+		pserialize_read_exit(s);
 	}
 #endif
 	IP6_STATINC(IP6_STAT_DELIVERED);
