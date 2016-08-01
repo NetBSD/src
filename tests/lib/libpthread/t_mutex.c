@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.9 2016/07/06 14:42:53 christos Exp $ */
+/* $NetBSD: t_mutex.c,v 1.9.2.1 2016/08/01 07:39:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.9 2016/07/06 14:42:53 christos Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.9.2.1 2016/08/01 07:39:23 pgoyette Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -318,7 +318,7 @@ child_func(void* arg)
 
 	printf("child is waiting\n");
 	res = _sched_protect(-2);
-	ATF_REQUIRE_EQ(res, -1);
+	ATF_REQUIRE_EQ_MSG(res, -1, "sched_protect returned %d", res);
 	ATF_REQUIRE_EQ(errno, ENOENT);
 	PTHREAD_REQUIRE(pthread_mutex_lock(&mutex5));
 	printf("child is owning resource\n");
@@ -334,6 +334,7 @@ ATF_TC(mutex5);
 ATF_TC_HEAD(mutex5, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks mutexes for priority setting");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 ATF_TC_BODY(mutex5, tc)
@@ -352,7 +353,8 @@ ATF_TC_BODY(mutex5, tc)
 	printf("previous policy used = %d\n", res);
 
 	res = sched_getscheduler(getpid());
-	ATF_REQUIRE_EQ(res, 1);
+	ATF_REQUIRE_EQ_MSG(res, SCHED_FIFO, "sched %d != FIFO %d", res, 
+	    SCHED_FIFO);
 
 	PTHREAD_REQUIRE(pthread_mutexattr_init(&attr5));
 	PTHREAD_REQUIRE(pthread_mutexattr_setprotocol(&attr5,
@@ -444,6 +446,7 @@ ATF_TC_HEAD(mutex6, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Checks scheduling for priority ceiling");
+	atf_tc_set_md_var(tc, "require.user", "root");
 }
 
 /*
