@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.103 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.104 2016/08/01 04:37:53 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.103 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.104 2016/08/01 04:37:53 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,8 +321,8 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
 	const struct sockaddr_dl *sdl = NULL;
-	const char *addr;
-	size_t addrlen;
+	const char *addr = NULL; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
+	size_t addrlen = 0; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };

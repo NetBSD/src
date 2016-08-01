@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.213 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.214 2016/08/01 04:37:53 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.213 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.214 2016/08/01 04:37:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1486,7 +1486,7 @@ static int
 in6_lifaddr_ioctl(struct socket *so, u_long cmd, void *data, 
 	struct ifnet *ifp)
 {
-	struct in6_ifaddr *ia;
+	struct in6_ifaddr *ia = NULL; /* XXX gcc 4.8 maybe-uninitialized */
 	struct if_laddrreq *iflr = (struct if_laddrreq *)data;
 	struct ifaddr *ifa;
 	struct sockaddr *sa;
