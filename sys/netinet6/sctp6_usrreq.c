@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.7 2016/07/15 07:40:09 ozaki-r Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.8 2016/08/01 03:15:31 ozaki-r Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.7 2016/07/15 07:40:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.8 2016/08/01 03:15:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1294,6 +1294,7 @@ static int
 sctp6_purgeif(struct socket *so, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
+	/* FIXME NOMPSAFE */
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == PF_INET6) {
 			sctp_delete_ip_address(ifa);
