@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.26 2013/01/22 09:39:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.27 2016/08/02 17:36:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -118,14 +118,15 @@ struct ext2fs_dinode {
 	uint32_t	e2di_blocks[EXT2FS_NDADDR+EXT2FS_NIADDR];
 					/* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
-	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) */
-	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) */
-	uint32_t	e2di_faddr;	/* 112: fragment address */
-	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 */
-	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 */
-	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
-	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
-	uint32_t	e2di_linux_reserved3; /* 124 */
+	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) (ext3) */
+	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) (ext3) */
+	uint32_t	e2di_obso_faddr;/* 112: obsolete fragment address (ext2) */
+	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 (ext4) */
+	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4) */
+	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits (ext4) */
+	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits (ext4) */
+	uint16_t	e2di_extra_isize; /* 124: inode extra size (over 128) actually used (ext4) */
+	uint16_t	e2di_checksum_high; /* 126: crc (not implemented) (ext4) */
 };
 
 
