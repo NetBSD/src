@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.56 2016/08/02 13:29:35 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.57 2016/08/02 14:21:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.56 2016/08/02 13:29:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.57 2016/08/02 14:21:53 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -730,15 +730,24 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 	pd_entry_t *pdtpe, *pde, *pte;
 	pd_entry_t *bt_pgd;
 	paddr_t addr;
-	vaddr_t page, avail, text_end, map_end;
+	vaddr_t page, avail, map_end;
 	int i;
+	extern char __rodata_start;
 	extern char __data_start;
+	extern char __kernel_end;
 	extern char *early_zerop; /* from pmap.c */
+	pt_entry_t pg_nx;
+	u_int descs[4];
 
 	__PRINTK(("xen_bootstrap_tables(%#" PRIxVADDR ", %#" PRIxVADDR ","
 	    " %d, %d)\n",
 	    old_pgd, new_pgd, old_count, new_count));
-	text_end = ((vaddr_t)&__data_start) & ~PAGE_MASK;
+
+	/*
+	 * Set the NX/XD bit, if available. descs[3] = %edx.
+	 */
+	x86_cpuid(0x80000001, descs);
+	pg_nx = (descs[3] & CPUID_NOX) ? PG_NX : 0;
 
 	/*
 	 * size of R/W area after kernel text:
@@ -776,8 +785,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 	}
 #endif /* DOM0OPS */
 
-	__PRINTK(("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n",
-	    text_end, map_end));
+	__PRINTK(("xen_bootstrap_tables map_end 0x%lx\n", map_end));
 	__PRINTK(("console %#lx ", xen_start_info.console_mfn));
 	__PRINTK(("xenstore %#" PRIx32 "\n", xen_start_info.store_mfn));
 
@@ -907,10 +915,19 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 				    IOM_BEGIN + (page - (vaddr_t)atdevbase);
 			}
 #endif
+
 			pte[pl1_pi(page)] |= PG_k | PG_V;
-			if (page < text_end) {
-				/* map kernel text RO */
+			if (page < (vaddr_t)&__rodata_start) {
+				/* Map kernel text RX. */
 				pte[pl1_pi(page)] |= PG_RO;
+			} else if (page >= (vaddr_t)&__rodata_start &&
+			    page < (vaddr_t)&__data_start) {
+				/* Map the kernel rodata R. */
+				pte[pl1_pi(page)] |= PG_RO | pg_nx;
+			} else if (page >= (vaddr_t)&__data_start &&
+			    page < (vaddr_t)&__kernel_end) {
+				/* Map the kernel data+bss RW. */
+				pte[pl1_pi(page)] |= PG_RW | pg_nx;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* map old page tables RO */
