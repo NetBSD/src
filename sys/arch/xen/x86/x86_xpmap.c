@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.54 2016/05/29 17:06:17 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.55 2016/08/02 13:25:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.54 2016/05/29 17:06:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.55 2016/08/02 13:25:56 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -571,8 +571,8 @@ xpq_debug_dump(void)
 extern volatile struct xencons_interface *xencons_interface; /* XXX */
 extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
-static void xen_bt_set_readonly (vaddr_t);
-static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int, int);
+static void xen_bt_set_readonly(vaddr_t);
+static void xen_bootstrap_tables(vaddr_t, vaddr_t, int, int, int);
 
 /* How many PDEs ? */
 #if L2_SLOT_KERNBASE > 0
@@ -587,7 +587,7 @@ static void xen_bootstrap_tables (vaddr_t, vaddr_t, int, int, int);
  * we get rid of Xen pagetables
  */
 
-vaddr_t xen_pmap_bootstrap (void);
+vaddr_t xen_pmap_bootstrap(void);
 
 /*
  * Function to get rid of Xen bootstrap tables
@@ -616,7 +616,7 @@ xen_pmap_bootstrap(void)
 
 	xen_init_features();
 
-	memset(xpq_idx_array, 0, sizeof xpq_idx_array);
+	memset(xpq_idx_array, 0, sizeof(xpq_idx_array));
 
 	xpmap_phys_to_machine_mapping =
 	    (unsigned long *)xen_start_info.mfn_list;
@@ -639,12 +639,12 @@ xen_pmap_bootstrap(void)
 	 *  - early_zerop
 	 *  - ISA I/O mem (if needed)
 	 */
-	mapsize += UPAGES * NBPG;
+	mapsize += UPAGES * PAGE_SIZE;
 #ifdef __x86_64__
-	mapsize += NBPG;
+	mapsize += PAGE_SIZE;
 #endif
-	mapsize += NBPG;
-	mapsize += NBPG;
+	mapsize += PAGE_SIZE;
+	mapsize += PAGE_SIZE;
 
 #ifdef DOM0OPS
 	if (xendomain_is_dom0()) {
@@ -652,7 +652,7 @@ xen_pmap_bootstrap(void)
 		mapsize += IOM_SIZE;
 	}
 #endif
-	/* at this point mapsize doens't include the table size */
+	/* at this point mapsize doesn't include the table size */
 
 #ifdef __x86_64__
 	count = TABLE_L2_ENTRIES;
@@ -709,7 +709,7 @@ bootstrap_again:
 
 	/* zero out free space after tables */
 	memset((void *)(init_tables + ((count + l2_4_count) * PAGE_SIZE)), 0,
-	    (UPAGES + 1) * NBPG);
+	    (UPAGES + 1) * PAGE_SIZE);
 
 	/* Finally, flush TLB. */
 	xpq_queue_tlb_flush();
@@ -718,14 +718,14 @@ bootstrap_again:
 }
 
 /*
- * Build a new table and switch to it
- * old_count is # of old tables (including PGD, PDTPE and PDE)
- * new_count is # of new tables (PTE only)
- * we assume areas don't overlap
+ * Build a new table and switch to it.
+ * old_count is # of old tables (including PGD, PDTPE and PDE).
+ * new_count is # of new tables (PTE only).
+ * We assume the areas don't overlap.
  */
 static void
-xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
-	int old_count, int new_count, int final)
+xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
+    int old_count, int new_count, int final)
 {
 	pd_entry_t *pdtpe, *pde, *pte;
 	pd_entry_t *bt_pgd;
@@ -739,26 +739,28 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    " %d, %d)\n",
 	    old_pgd, new_pgd, old_count, new_count));
 	text_end = ((vaddr_t)&__data_start) & ~PAGE_MASK;
+
 	/*
 	 * size of R/W area after kernel text:
-	 *  xencons_interface (if present)
-	 *  xenstore_interface (if present)
-	 *  table pages (new_count + l2_4_count entries)
+	 *     xencons_interface (if present)
+	 *     xenstore_interface (if present)
+	 *     table pages (new_count + l2_4_count entries)
 	 * extra mappings (only when final is true):
-	 *  UAREA
-	 *  dummy user PGD (x86_64 only)/gdt page (i386 only)
-	 *  HYPERVISOR_shared_info
-	 *  early_zerop
-	 *  ISA I/O mem (if needed)
+	 *     UAREA
+	 *     dummy user PGD (x86_64 only)/gdt page (i386 only)
+	 *     HYPERVISOR_shared_info
+	 *     early_zerop
+	 *     ISA I/O mem (if needed)
 	 */
-	map_end = new_pgd + ((new_count + l2_4_count) * NBPG);
+	map_end = new_pgd + ((new_count + l2_4_count) * PAGE_SIZE);
 	if (final) {
-		map_end += (UPAGES + 1) * NBPG;
+		map_end += (UPAGES + 1) * PAGE_SIZE;
 		HYPERVISOR_shared_info = (shared_info_t *)map_end;
-		map_end += NBPG;
+		map_end += PAGE_SIZE;
 		early_zerop = (char *)map_end;
-		map_end += NBPG;
+		map_end += PAGE_SIZE;
 	}
+
 	/*
 	 * we always set atdevbase, as it's used by init386 to find the first
 	 * available VA. map_end is updated only if we are dom0, so
@@ -780,31 +782,31 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	__PRINTK(("xenstore %#" PRIx32 "\n", xen_start_info.store_mfn));
 
 	/* 
-	 * Create bootstrap page tables
-	 * What we need:
+	 * Create bootstrap page tables. What we need:
 	 * - a PGD (level 4)
 	 * - a PDTPE (level 3)
-	 * - a PDE (level2)
+	 * - a PDE (level 2)
 	 * - some PTEs (level 1)
 	 */
 	
-	bt_pgd = (pd_entry_t *) new_pgd;
-	memset (bt_pgd, 0, PAGE_SIZE);
+	bt_pgd = (pd_entry_t *)new_pgd;
+	memset(bt_pgd, 0, PAGE_SIZE);
 	avail = new_pgd + PAGE_SIZE;
+
 #if PTP_LEVELS > 3
 	/* per-cpu L4 PD */
 	pd_entry_t *bt_cpu_pgd = bt_pgd;
 	/* pmap_kernel() "shadow" L4 PD */
-	bt_pgd = (pd_entry_t *) avail;
+	bt_pgd = (pd_entry_t *)avail;
 	memset(bt_pgd, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
 	/* Install level 3 */
-	pdtpe = (pd_entry_t *) avail;
-	memset (pdtpe, 0, PAGE_SIZE);
+	pdtpe = (pd_entry_t *)avail;
+	memset(pdtpe, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
-	addr = ((u_long) pdtpe) - KERNBASE;
+	addr = ((u_long)pdtpe) - KERNBASE;
 	bt_pgd[pl4_pi(KERNTEXTOFF)] = bt_cpu_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
 
@@ -817,11 +819,11 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 #if PTP_LEVELS > 2
 	/* Level 2 */
-	pde = (pd_entry_t *) avail;
+	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
-	addr = ((u_long) pde) - KERNBASE;
+	addr = ((u_long)pde) - KERNBASE;
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
 	__PRINTK(("L2 va %#lx pa %#" PRIxPADDR " entry %#" PRIxPADDR
@@ -829,10 +831,10 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    pde, addr, pdtpe[pl3_pi(KERNTEXTOFF)], pl3_pi(KERNTEXTOFF)));
 #elif defined(PAE)
 	/* our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
-	pde = (pd_entry_t *) avail;
+	pde = (pd_entry_t *)avail;
 	memset(pde, 0, PAGE_SIZE * 5);
 	avail += PAGE_SIZE * 5;
-	addr = ((u_long) pde) - KERNBASE;
+	addr = ((u_long)pde) - KERNBASE;
 	/*
 	 * enter L2 pages in the L3.
 	 * The real L2 kernel PD will be the last one (so that
@@ -853,7 +855,6 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	__PRINTK(("L2 va %#lx pa %#" PRIxPADDR " entry %#" PRIxPADDR
 	    " -> L3[%#x]\n",
 	    (vaddr_t)pde + PAGE_SIZE * 4, addr, pdtpe[3], 3));
-
 #else /* PAE */
 	pde = bt_pgd;
 #endif /* PTP_LEVELS > 2 */
@@ -863,11 +864,11 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	for (i = 0; i < new_count; i ++) {
 		vaddr_t cur_page = page;
 
-		pte = (pd_entry_t *) avail;
+		pte = (pd_entry_t *)avail;
 		avail += PAGE_SIZE;
 
 		memset(pte, 0, PAGE_SIZE);
-		while (pl2_pi(page) == pl2_pi (cur_page)) {
+		while (pl2_pi(page) == pl2_pi(cur_page)) {
 			if (page >= map_end) {
 				/* not mapped at all */
 				pte[pl1_pi(page)] = 0;
@@ -910,8 +911,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 			if (page < text_end) {
 				/* map kernel text RO */
 				pte[pl1_pi(page)] |= 0;
-			} else if (page >= old_pgd
-			    && page < old_pgd + (old_count * PAGE_SIZE)) {
+			} else if (page >= old_pgd &&
+			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* map old page tables RO */
 				pte[pl1_pi(page)] |= 0;
 			} else if (page >= new_pgd &&
@@ -1094,8 +1095,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 		xpq_queue_pte_update(addr, *pte | PG_RW);
 		page += PAGE_SIZE;
 		/* 
-		 * Our ptes are contiguous
-		 * so it's safe to just "++" here
+		 * Our PTEs are contiguous so it's safe to just "++" here.
 		 */
 		pte++;
 	}
