@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.58 2016/08/01 15:41:05 maxv Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.59 2016/08/02 12:23:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.58 2016/08/01 15:41:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.59 2016/08/02 12:23:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -757,15 +757,6 @@ kobj_affix(kobj_t ko, const char *name)
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
 
-	/* Change the memory protections, when needed. */
-	uvm_km_protect(module_map, ko->ko_text_address, ko->ko_text_size,
-	    VM_PROT_READ|VM_PROT_EXECUTE);
-	if (ko->ko_rodata_address != 0) {
-		uvm_km_protect(module_map, ko->ko_rodata_address,
-		    ko->ko_rodata_size, VM_PROT_READ);
-	}
-
-
 	/*
 	 * Notify MD code that a module has been loaded.
 	 *
@@ -797,8 +788,16 @@ kobj_affix(kobj_t ko, const char *name)
 		ko->ko_loaded = true;
 	}
 
-	/* If there was an error, destroy the whole object. */
-	if (error != 0) {
+	if (error == 0) {
+		/* Change the memory protections, when needed. */
+		uvm_km_protect(module_map, ko->ko_text_address,
+		     ko->ko_text_size, VM_PROT_READ|VM_PROT_EXECUTE);
+		if (ko->ko_rodata_address != 0) {
+			uvm_km_protect(module_map, ko->ko_rodata_address,
+			    ko->ko_rodata_size, VM_PROT_READ);
+		}
+	} else {
+		/* If there was an error, destroy the whole object. */
 		kobj_unload(ko);
 	}
 
