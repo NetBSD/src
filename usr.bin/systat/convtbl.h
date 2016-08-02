@@ -1,3 +1,5 @@
+/*	$NetBSD: convtbl.h,v 1.2 2016/08/02 17:53:46 scole Exp $	*/
+
 /*
  * Copyright (c) 2003, Trent Nelson, <trent@arpa.com>.
  * All rights reserved.
