@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.8 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.72 2015/03/01 15:44:40 millert Exp $ */
+/*	$NetBSD: canohost.c,v 1.9 2016/08/02 13:45:12 christos Exp $	*/
+/* $OpenBSD: canohost.c,v 1.73 2016/03/07 19:02:43 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.8 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.9 2016/08/02 13:45:12 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: canohost.c,v 1.8 2015/04/03 23:58:19 christos Exp $");
 #include "canohost.h"
 #include "misc.h"
 
+#if removeme
 static void check_ip_options(int, char *);
 static char *canonical_host_ip = NULL;
 static int cached_port = -1;
@@ -201,7 +202,7 @@ get_canonical_hostname(int use_dns)
 		remote_ip = host;
 	return host;
 }
-
+#endif
 /*
  * Returns the local/remote IP-address/hostname of socket as a string.
  * The returned string must be freed.
@@ -219,12 +220,10 @@ get_socket_address(int sock, int remote, int flags)
 	memset(&addr, 0, sizeof(addr));
 
 	if (remote) {
-		if (getpeername(sock, (struct sockaddr *)&addr, &addrlen)
-		    < 0)
+		if (getpeername(sock, (struct sockaddr *)&addr, &addrlen) != 0)
 			return NULL;
 	} else {
-		if (getsockname(sock, (struct sockaddr *)&addr, &addrlen)
-		    < 0)
+		if (getsockname(sock, (struct sockaddr *)&addr, &addrlen) != 0)
 			return NULL;
 	}
 
@@ -234,7 +233,7 @@ get_socket_address(int sock, int remote, int flags)
 		/* Get the address in ascii. */
 		if ((r = getnameinfo((struct sockaddr *)&addr, addrlen, ntop,
 		    sizeof(ntop), NULL, 0, flags)) != 0) {
-			error("get_socket_address: getnameinfo %d failed: %s",
+			error("%s: getnameinfo %d failed: %s", __func__,
 			    flags, ssh_gai_strerror(r));
 			return NULL;
 		}
@@ -279,7 +278,8 @@ get_local_name(int fd)
 
 	/* Handle the case where we were passed a pipe */
 	if (gethostname(myname, sizeof(myname)) == -1) {
-		verbose("get_local_name: gethostname: %s", strerror(errno));
+		verbose("%s: gethostname: %s", __func__, strerror(errno));
+		host = xstrdup("UNKNOWN");
 	} else {
 		host = xstrdup(myname);
 	}
@@ -287,51 +287,9 @@ get_local_name(int fd)
 	return host;
 }
 
-void
-clear_cached_addr(void)
-{
-	free(canonical_host_ip);
-	canonical_host_ip = NULL;
-	cached_port = -1;
-}
-
-/*
- * Returns the IP-address of the remote host as a string.  The returned
- * string must not be freed.
- */
-
-const char *
-get_remote_ipaddr(void)
-{
-	/* Check whether we have cached the ipaddr. */
-	if (canonical_host_ip == NULL) {
-		if (packet_connection_is_on_socket()) {
-			canonical_host_ip =
-			    get_peer_ipaddr(packet_get_connection_in());
-			if (canonical_host_ip == NULL)
-				cleanup_exit(255);
-		} else {
-			/* If not on socket, return UNKNOWN. */
-			canonical_host_ip = xstrdup("UNKNOWN");
-		}
-	}
-	return canonical_host_ip;
-}
-
-const char *
-get_remote_name_or_ip(u_int utmp_len, int use_dns)
-{
-	static const char *remote = "";
-	if (utmp_len > 0)
-		remote = get_canonical_hostname(use_dns);
-	if (utmp_len == 0 || strlen(remote) > utmp_len)
-		remote = get_remote_ipaddr();
-	return remote;
-}
-
 /* Returns the local/remote port for the socket. */
 
-int
+static int
 get_sock_port(int sock, int local)
 {
 	struct sockaddr_storage from;
@@ -361,25 +319,9 @@ get_sock_port(int sock, int local)
 	/* Return port number. */
 	if ((r = getnameinfo((struct sockaddr *)&from, fromlen, NULL, 0,
 	    strport, sizeof(strport), NI_NUMERICSERV)) != 0)
-		fatal("get_sock_port: getnameinfo NI_NUMERICSERV failed: %s",
+		fatal("%s: getnameinfo NI_NUMERICSERV failed: %s", __func__,
 		    ssh_gai_strerror(r));
 	return atoi(strport);
-}
-
-/* Returns remote/local port number for the current connection. */
-
-static int
-get_port(int local)
-{
-	/*
-	 * If the connection is not a socket, return 65535.  This is
-	 * intentionally chosen to be an unprivileged port number.
-	 */
-	if (!packet_connection_is_on_socket())
-		return 65535;
-
-	/* Get socket and return the port number. */
-	return get_sock_port(packet_get_connection_in(), local);
 }
 
 int
@@ -389,17 +331,7 @@ get_peer_port(int sock)
 }
 
 int
-get_remote_port(void)
+get_local_port(int sock)
 {
-	/* Cache to avoid getpeername() on a dead connection */
-	if (cached_port == -1)
-		cached_port = get_port(0);
-
-	return cached_port;
-}
-
-int
-get_local_port(void)
-{
-	return get_port(1);
+	return get_sock_port(sock, 1);
 }
