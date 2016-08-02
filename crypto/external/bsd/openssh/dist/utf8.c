@@ -1,3 +1,4 @@
+/*	$NetBSD: utf8.c,v 1.2 2016/08/02 13:45:12 christos Exp $	*/
 /* $OpenBSD: utf8.c,v 1.3 2016/05/30 12:57:21 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,6 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "includes.h"
+__RCSID("$NetBSD: utf8.c,v 1.2 2016/08/02 13:45:12 christos Exp $");
 /*
  * Utility functions for multibyte-character handling,
  * in particular to sanitize untrusted strings for terminal output.
@@ -176,6 +179,9 @@ vasnmprintf(char **str, size_t maxsz, int *wp, const char *fmt, va_list ap)
 					ret = -1;
 					break;
 				}
+#ifndef VIS_ALL
+#define VIS_ALL VIS_WHITE	/* XXX */
+#endif
 				tp = vis(dp, *sp, VIS_OCTAL | VIS_ALL, 0);
 				width = tp - dp;
 				total_width += width;
