@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.55 2016/08/02 13:25:56 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.56 2016/08/02 13:29:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.55 2016/08/02 13:25:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.56 2016/08/02 13:29:35 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -910,15 +910,15 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 			pte[pl1_pi(page)] |= PG_k | PG_V;
 			if (page < text_end) {
 				/* map kernel text RO */
-				pte[pl1_pi(page)] |= 0;
+				pte[pl1_pi(page)] |= PG_RO;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
 				/* map old page tables RO */
-				pte[pl1_pi(page)] |= 0;
+				pte[pl1_pi(page)] |= PG_RO;
 			} else if (page >= new_pgd &&
 			    page < new_pgd + ((new_count + l2_4_count) * PAGE_SIZE)) {
 				/* map new page tables RO */
-				pte[pl1_pi(page)] |= 0;
+				pte[pl1_pi(page)] |= PG_RO;
 #ifdef i386
 			} else if (page == (vaddr_t)tmpgdt) {
 				/*
