@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.338 2016/08/01 18:28:38 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.339 2016/08/03 15:59:58 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2016/08/01 18:28:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2016/08/03 15:59:58 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5014,24 +5014,45 @@ pmap_remove_all_complete(pmap_t pm)
 	 */
 #ifdef MULTIPROCESSOR
 	// This should be the last CPU with this pmap onproc
-	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
-	if (kcpuset_isset(pm->pm_onproc, cpu_index(curcpu()))) {
-		struct cpu_info * const ci = curcpu();
-		KASSERT(!cpu_intr_p());
-		/*
-		 * The bits in pm_onproc that belong to this
-		 * TLB can be changed while this TLBs lock is
-		 * not held as long as we use atomic ops.
-		 */
-		kcpuset_atomic_clear(pm->pm_onproc, cpu_index(ci));
+//	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
+#if PMAP_TLB_MAX > 1
+	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
+		KASSERT(i < pmap_ntlbs);
+		struct pmap_tlb_info * const ti = pmap_tlbs[i];
+#else
+		struct pmap_tlb_info * const ti = &pmap_tlb0_info;
+#endif
+		TLBINFO_LOCK(ti);
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+		if (PMAP_PAI_ASIDVALID_P(pai, ti)) {
+			if (kcpuset_isset(pm->pm_onproc, cpu_index(curcpu()))) {
+#if PMAP_TLB_MAX == 1
+				    KASSERT(cpu_tlb_info(ci) == ti);
+
+				    tlb_invalidate_asids(pai->pai_asid,
+					pai->pai_asid);
+#else
+				    if (cpu_tlb_info(ci) == ti) {
+					    tlb_invalidate_asids(pai->pai_asid,
+						pai->pai_asid);
+				    } else {
+					    pm->pm_shootdown_needed = 1;
+				    }
+#endif
+			}
+		}
+		TLBINFO_UNLOCK(ti);
+
+#if PMAP_TLB_MAX > 1
 	}
-	KASSERT(kcpuset_iszero(pm->pm_onproc));
-#endif /* MULTIPROCESSOR */
+#endif
+#else /* MULTIPROCESSOR */
 
 	struct pmap_asid_info * const pai =
 	    PMAP_PAI(pm, cpu_tlb_info(ci));
 
 	tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+#endif /* MULTIPROCESSOR */
 }
 #endif
 
