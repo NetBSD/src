@@ -19,6 +19,7 @@ int	 mprintf(const char *, ...)
 	     __attribute__((format(printf, 1, 2)));
 int	 fmprintf(FILE *, const char *, ...)
 	     __attribute__((format(printf, 2, 3)));
-int	 vfmprintf(FILE *, const char *, va_list);
+int	 vfmprintf(FILE *, const char *, va_list)
+	     __attribute__((format(printf, 2, 0)));
 int	 snmprintf(char *, size_t, int *, const char *, ...)
 	     __attribute__((format(printf, 4, 5)));

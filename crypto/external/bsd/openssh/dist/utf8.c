@@ -1,4 +1,4 @@
-/*	$NetBSD: utf8.c,v 1.2 2016/08/02 13:45:12 christos Exp $	*/
+/*	$NetBSD: utf8.c,v 1.3 2016/08/03 15:24:28 jakllsch Exp $	*/
 /* $OpenBSD: utf8.c,v 1.3 2016/05/30 12:57:21 schwarze Exp $ */
 /*
  * Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: utf8.c,v 1.2 2016/08/02 13:45:12 christos Exp $");
+__RCSID("$NetBSD: utf8.c,v 1.3 2016/08/03 15:24:28 jakllsch Exp $");
 /*
  * Utility functions for multibyte-character handling,
  * in particular to sanitize untrusted strings for terminal output.
@@ -37,7 +37,8 @@ __RCSID("$NetBSD: utf8.c,v 1.2 2016/08/02 13:45:12 christos Exp $");
 
 static int	 dangerous_locale(void);
 static int	 grow_dst(char **, size_t *, size_t, char **, size_t);
-static int	 vasnmprintf(char **, size_t, int *, const char *, va_list);
+static int	 vasnmprintf(char **, size_t, int *, const char *, va_list)
+		     __attribute__((format(printf, 4, 0)));
 
 
 /*
