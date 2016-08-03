@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.36 2016/07/26 03:09:55 christos Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.37 2016/08/03 17:16:07 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.36 2016/07/26 03:09:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.37 2016/08/03 17:16:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ tc_mem_map(void *v, bus_addr_t memaddr, bus_size_t memsize, int flags, bus_space
 		return (EOPNOTSUPP);
 
 	if (memaddr & 0x7)
-		panic("tc_mem_map needs 8 byte alignment");
+		panic("%s: need 8 byte alignment", __func__);
 	if (cacheable)
 		*memhp = ALPHA_PHYS_TO_K0SEG(memaddr);
 	else
@@ -314,7 +314,7 @@ tc_mem_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size, bus_s
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
-	panic("tc_mem_alloc unimplemented");
+	panic("%s: unimplemented", __func__);
 }
 
 void
@@ -322,7 +322,7 @@ tc_mem_free(void *v, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* XXX XXX XXX XXX XXX XXX */
-	panic("tc_mem_free unimplemented");
+	panic("%s: unimplemented", __func__);
 }
 
 void *
@@ -334,7 +334,7 @@ tc_mem_vaddr(void *v, bus_space_handle_t bsh)
 		 * tc_mem_map() catches linear && !cacheable,
 		 * so we shouldn't come here
 		 */
-		panic("tc_mem_vaddr");
+		panic("%s: can't do sparse", __func__);
 	}
 #endif
 	return ((void *)bsh);
@@ -369,7 +369,7 @@ tc_mem_barrier(void *v, bus_space_handle_t h, bus_size_t o, bus_size_t l, int f)
  * http://h20565.www2.hpe.com/hpsc/doc/public/display?docId=emr_na-c04623255
  */
 #define TC_SPARSE_PTR(memh, off) \
-    ((void *)((memh)+ ((off & ((bus_size_t)-1 << 2)) << 1)))
+    ((void *)((memh) + ((off & ((bus_size_t)-1 << 2)) << 1)))
 
 static inline uint8_t
 tc_mem_read_1(void *v, bus_space_handle_t memh, bus_size_t off)
@@ -381,7 +381,7 @@ tc_mem_read_1(void *v, bus_space_handle_t memh, bus_size_t off)
 		volatile uint32_t *p;
 
 		p = TC_SPARSE_PTR(memh, off);
-		return ((*p >> ((off & 3) * 8)) & 0xff);
+		return ((*p >> ((off & 3) << 3)) & 0xff);
 	} else {
 		volatile uint8_t *p;
 
@@ -400,7 +400,7 @@ tc_mem_read_2(void *v, bus_space_handle_t memh, bus_size_t off)
 		volatile uint32_t *p;
 
 		p = TC_SPARSE_PTR(memh, off);
-		return ((*p >> ((off & 2) * 8)) & 0xffff);
+		return ((*p >> ((off & 2) << 3)) & 0xffff);
 	} else {
 		volatile uint16_t *p;
 
@@ -420,6 +420,12 @@ tc_mem_read_4(void *v, bus_space_handle_t memh, bus_size_t off)
 		/* Nothing special to do for 4-byte sparse space accesses */
 		p = (uint32_t *)(memh + (off << 1));
 	else
+		/*
+		 * LDL to a dense space address always results in two
+		 * TURBOchannel I/O read transactions to consecutive longword
+		 * addresses. Use caution in dense space if the option has
+		 * registers with read side effects.
+		 */
 		p = (uint32_t *)(memh + off);
 	return (*p);
 }
@@ -432,7 +438,7 @@ tc_mem_read_8(void *v, bus_space_handle_t memh, bus_size_t off)
 	alpha_mb();		/* XXX XXX XXX */
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
-		panic("tc_mem_read_8 not implemented for sparse space");
+		panic("%s: not implemented for sparse space", __func__);
 
 	p = (uint64_t *)(memh + off);
 	return (*p);
@@ -478,18 +484,20 @@ tc_mem_read_region_N(2,uint16_t)
 tc_mem_read_region_N(4,uint32_t)
 tc_mem_read_region_N(8,uint64_t)
 
+#define TC_SPARSE_WR_PVAL(msk, b, v) \
+    ((UINT64_C(msk) << (32 + (b))) | ((uint64_t)(v) << ((b) << 3)))
+
 static inline void
 tc_mem_write_1(void *v, bus_space_handle_t memh, bus_size_t off, uint8_t val)
 {
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
 		volatile uint64_t *p;
-		uint64_t mask = UINT64_C(0x1) << (32 + (off & 3));
 
 		p = TC_SPARSE_PTR(memh, off);
-		*p = mask | ((uint64_t)val << ((off & 3) * 8));
+		*p = TC_SPARSE_WR_PVAL(0x1, off & 3, val);
 	} else
-		panic("tc_mem_write_1 not implemented for dense space");
+		panic("%s: not implemented for dense space", __func__);
 
 	alpha_mb();		/* XXX XXX XXX */
 }
@@ -500,12 +508,11 @@ tc_mem_write_2(void *v, bus_space_handle_t memh, bus_size_t off, uint16_t val)
 
 	if ((memh & TC_SPACE_SPARSE) != 0) {
 		volatile uint64_t *p;
-		uint64_t mask = UINT64_C(0x3) << (32 + (off & 2));
 
 		p = TC_SPARSE_PTR(memh, off);
-		*p = mask | ((uint64_t)val << ((off & 2) * 8));
+		*p = TC_SPARSE_WR_PVAL(0x3, off & 2, val);
 	} else
-		panic("tc_mem_write_2 not implemented for dense space");
+		panic("%s: not implemented for dense space", __func__);
 
 	alpha_mb();		/* XXX XXX XXX */
 }
@@ -531,7 +538,7 @@ tc_mem_write_8(void *v, bus_space_handle_t memh, bus_size_t off, uint64_t val)
 	volatile uint64_t *p;
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
-		panic("tc_mem_read_8 not implemented for sparse space");
+		panic("%s: not implemented for sparse space", __func__);
 
 	p = (uint64_t *)(memh + off);
 	*p = val;
