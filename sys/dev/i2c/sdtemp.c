@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.31 2016/07/28 09:11:13 msaitoh Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.32 2016/08/03 03:35:24 msaitoh Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.31 2016/07/28 09:11:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.32 2016/08/03 03:35:24 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,6 @@ sdtemp_dev_table[] = {
 	"Catalyst CAT34TS02C" },
     { CAT_MANUFACTURER_ID,  CAT_34TS04_DEVICE_ID,    CAT_34TS04_MASK,	  NULL,
 	"Catalyst CAT34TS04" },
-    { IDT_MANUFACTURER_ID,  IDT_TSE2002GB2_DEVICE_ID,IDT_TSE2002GB2_MASK, CIDT,
-	"Integrated Device Technology TSE2002GB2" },
     { IDT_MANUFACTURER_ID,  IDT_TSE2004GB2_DEVICE_ID,IDT_TSE2004GB2_MASK, NULL,
 	"Integrated Device Technology TSE2004GB2" },
     { IDT_MANUFACTURER_ID,  IDT_TS3000B3_DEVICE_ID,  IDT_TS3000B3_MASK,	  CIDT,
