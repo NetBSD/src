@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.28 2016/08/03 21:53:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.29 2016/08/03 23:29:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -186,6 +186,52 @@ struct ext2fs_dinode {
 #define EXT2_DINODE_FITS(dinode, field, isize) (\
 	(isize > EXT2_REV0_DINODE_SIZE) \
 	&& ((EXT2_REV0_DINODE_SIZE + (dinode)->e2di_extra_isize)  >= offsetof(struct ext2fs_dinode, field) + sizeof((dinode)->field)) \
+	)
+
+/*
+ * Time encoding
+ * Lower two bits of extra field are extra high bits for epoch; unfortunately still, Linux kernels treat 11 there as 00 for compatibility
+ * Rest of extra fields are nanoseconds
+ */
+static __inline void
+ext2fs_dinode_time_get(struct timespec *ts, uint32_t epoch, uint32_t extra)
+{
+	ts->tv_sec = (signed) epoch;
+
+	if (extra) {
+		uint64_t epoch_bits = extra & 0x3;
+		/* XXX compatibility with linux kernel < 4.20 */
+		if (epoch_bits == 3 && ts->tv_sec < 0)
+			epoch_bits = 0;
+
+		ts->tv_sec |= epoch_bits << 32;
+
+		ts->tv_nsec = extra >> 2;
+	} else {
+		ts->tv_nsec = 0;
+	}
+}
+#define EXT2_DINODE_TIME_GET(ts, dinode, field, isize) \
+	ext2fs_dinode_time_get(ts, (dinode)->field, \
+		EXT2_DINODE_FITS(dinode, field ## _extra, isize) \
+			? (dinode)->field ## _extra : 0 \
+	)
+
+static __inline void
+ext2fs_dinode_time_set(const struct timespec *ts, uint32_t *epoch, uint32_t *extra)
+{
+	*epoch = (int32_t) ts->tv_sec;
+
+	if (extra) {
+		uint32_t epoch_bits = (ts->tv_sec >> 32) & 0x3;
+
+		*extra = (ts->tv_nsec << 2) | epoch_bits;
+	}
+}
+#define EXT2_DINODE_TIME_SET(ts, dinode, field, isize) \
+	ext2fs_dinode_time_set(ts, &(dinode)->field, \
+		EXT2_DINODE_FITS(dinode, field ## _extra, isize) \
+			? &(dinode)->field ## _extra : NULL \
 	)
 
 /*

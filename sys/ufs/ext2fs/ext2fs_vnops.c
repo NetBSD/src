@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.118 2016/08/03 21:53:03 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.119 2016/08/03 23:29:05 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.118 2016/08/03 21:53:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.119 2016/08/03 23:29:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,12 +305,12 @@ ext2fs_getattr(void *v)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)fs2h32(ip->i_din.e2fs_din->e2di_rdev);
 	vap->va_size = vp->v_size;
-	vap->va_atime.tv_sec = ip->i_e2fs_atime;
-	vap->va_atime.tv_nsec = 0;
-	vap->va_mtime.tv_sec = ip->i_e2fs_mtime;
-	vap->va_mtime.tv_nsec = 0;
-	vap->va_ctime.tv_sec = ip->i_e2fs_ctime;
-	vap->va_ctime.tv_nsec = 0;
+	EXT2_DINODE_TIME_GET(&vap->va_atime, ip->i_din.e2fs_din, e2di_atime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	EXT2_DINODE_TIME_GET(&vap->va_mtime, ip->i_din.e2fs_din, e2di_mtime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	EXT2_DINODE_TIME_GET(&vap->va_ctime, ip->i_din.e2fs_din, e2di_ctime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	if (EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
+		EXT2_DINODE_TIME_GET(&vap->va_birthtime, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	}
 #ifdef EXT2FS_SYSTEM_FLAGS
 	vap->va_flags = (ip->i_e2fs_flags & EXT2_APPEND) ? SF_APPEND : 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? SF_IMMUTABLE : 0;
@@ -439,7 +439,7 @@ ext2fs_setattr(void *v)
 			return (error);
 	}
 	ip = VTOI(vp);
-	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
+	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL || vap->va_birthtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		error = kauth_authorize_vnode(cred, KAUTH_VNODE_WRITE_TIMES, vp,
@@ -454,6 +454,11 @@ ext2fs_setattr(void *v)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
 				ip->i_flag |= IN_ACCESS;
+		}
+		if (vap->va_birthtime.tv_sec != VNOVAL &&
+		    EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
+
+			EXT2_DINODE_TIME_SET(&vap->va_birthtime, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
 		}
 		error = ext2fs_update(vp, &vap->va_atime, &vap->va_mtime,
 			UPDATE_WAIT);
