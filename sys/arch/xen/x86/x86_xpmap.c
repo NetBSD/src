@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.57 2016/08/02 14:21:53 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.58 2016/08/03 11:51:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.57 2016/08/02 14:21:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.58 2016/08/03 11:51:18 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -918,7 +918,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 
 			pte[pl1_pi(page)] |= PG_k | PG_V;
 			if (page < (vaddr_t)&__rodata_start) {
-				/* Map kernel text RX. */
+				/* Map the kernel text RX. */
 				pte[pl1_pi(page)] |= PG_RO;
 			} else if (page >= (vaddr_t)&__rodata_start &&
 			    page < (vaddr_t)&__data_start) {
@@ -930,12 +930,12 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 				pte[pl1_pi(page)] |= PG_RW | pg_nx;
 			} else if (page >= old_pgd &&
 			    page < old_pgd + (old_count * PAGE_SIZE)) {
-				/* map old page tables RO */
-				pte[pl1_pi(page)] |= PG_RO;
+				/* Map the old page tables R. */
+				pte[pl1_pi(page)] |= PG_RO | pg_nx;
 			} else if (page >= new_pgd &&
 			    page < new_pgd + ((new_count + l2_4_count) * PAGE_SIZE)) {
-				/* map new page tables RO */
-				pte[pl1_pi(page)] |= PG_RO;
+				/* Map the new page tables R. */
+				pte[pl1_pi(page)] |= PG_RO | pg_nx;
 #ifdef i386
 			} else if (page == (vaddr_t)tmpgdt) {
 				/*
@@ -1028,15 +1028,19 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 	xpq_queue_pin_l2_table(xpmap_ptom_masked(addr));
 #endif
 #else /* PAE */
-	/* recursive entry in higher-level per-cpu PD and pmap_kernel() */
-	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE) | PG_k | PG_V;
+
+	/* Recursive entry in pmap_kernel(). */
+	bt_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_pgd - KERNBASE)
+	    | PG_k | PG_RO | PG_V | pg_nx;
 #ifdef __x86_64__
-	   bt_cpu_pgd[PDIR_SLOT_PTE] =
-		   xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE) | PG_k | PG_V;
-#endif /* __x86_64__ */
+	/* Recursive entry in higher-level per-cpu PD. */
+	bt_cpu_pgd[PDIR_SLOT_PTE] = xpmap_ptom_masked((paddr_t)bt_cpu_pgd - KERNBASE)
+	    | PG_k | PG_RO | PG_V | pg_nx;
+#endif
 	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va %#" PRIxVADDR " pa %#" PRIxPADDR
 	    " entry %#" PRIxPADDR "\n", new_pgd, (paddr_t)new_pgd - KERNBASE,
 	    bt_pgd[PDIR_SLOT_PTE]));
+
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t) pde);
 #endif
@@ -1046,6 +1050,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 #if PTP_LEVELS > 3
 	xen_bt_set_readonly(new_pgd);
 #endif
+
 	/* Pin the PGD */
 	__PRINTK(("pin PGD: %"PRIxVADDR"\n", new_pgd - KERNBASE));
 #ifdef __x86_64__
