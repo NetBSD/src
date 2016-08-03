@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.27 2016/08/02 17:36:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.28 2016/08/03 21:53:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -125,10 +125,18 @@ struct ext2fs_dinode {
 	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4) */
 	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits (ext4) */
 	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits (ext4) */
-	uint16_t	e2di_extra_isize; /* 124: inode extra size (over 128) actually used (ext4) */
-	uint16_t	e2di_checksum_high; /* 126: crc (not implemented) (ext4) */
+	uint16_t 	e2di_checksum_low;  /* 124: crc LE (not implemented) (ext4) */
+	uint16_t 	e2di_reserved;      /* 126: reserved */
+	uint16_t	e2di_extra_isize;   /* 128: inode extra size (over 128) actually used (ext4) */
+	uint16_t	e2di_checksum_high; /* 130: crc BE (not implemented) (ext4) */
+	uint32_t	e2di_ctime_extra;   /* 132: ctime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_mtime_extra;   /* 136: mtime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_atime_extra;   /* 140: atime (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_crtime;        /* 144: creation time (epoch) (ext4) */
+	uint32_t	e2di_crtime_extra;  /* 148: creation time (nsec << 2 | high epoch) (ext4) */
+	uint32_t	e2di_version_high;  /* 152: version high (ext4) */
+	uint32_t	e2di_projid;        /* 156: project id (not implemented) (ext4) */
 };
-
 
 /* XXX how does this differ from EXT2_MAXSYMLINKLEN above? */
 #define	E2MAXSYMLINKLEN	((EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t))
@@ -171,10 +179,14 @@ struct ext2fs_dinode {
 #define EXT2_EOFBLOCKS		0x00400000 /* Blocks allocated beyond EOF */
 
 /* Size of on-disk inode. */
-#define EXT2_REV0_DINODE_SIZE	sizeof(struct ext2fs_dinode)
+#define EXT2_REV0_DINODE_SIZE	128
 #define EXT2_DINODE_SIZE(fs)	((fs)->e2fs.e2fs_rev > E2FS_REV0 ?	\
 				    (fs)->e2fs.e2fs_inode_size :	\
 				    EXT2_REV0_DINODE_SIZE)
+#define EXT2_DINODE_FITS(dinode, field, isize) (\
+	(isize > EXT2_REV0_DINODE_SIZE) \
+	&& ((EXT2_REV0_DINODE_SIZE + (dinode)->e2di_extra_isize)  >= offsetof(struct ext2fs_dinode, field) + sizeof((dinode)->field)) \
+	)
 
 /*
  * The e2di_blocks fields may be overlaid with other information for
@@ -189,14 +201,14 @@ struct ext2fs_dinode {
 
 /* e2fs needs byte swapping on big-endian systems */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#	define e2fs_iload(old, new)	\
-		memcpy((new),(old),sizeof(struct ext2fs_dinode))
-#	define e2fs_isave(old, new)	\
-		memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_iload(old, new, isize)	\
+		memcpy((new),(old),(isize))
+#	define e2fs_isave(old, new, isize)	\
+		memcpy((new),(old),(isize))
 #else
-void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *);
-#	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))
-#	define e2fs_isave(old, new) e2fs_i_bswap((old), (new))
+void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *, size_t);
+#	define e2fs_iload(old, new, isize) e2fs_i_bswap((old), (new))
+#	define e2fs_isave(old, new, isize) e2fs_i_bswap((old), (new))
 #endif
 
 #endif /* !_UFS_EXT2FS_EXT2FS_DINODE_H_ */

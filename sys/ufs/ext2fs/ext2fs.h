@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.38 2016/06/24 17:21:30 christos Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.39 2016/08/03 21:53:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -327,7 +327,8 @@ struct m_ext2fs {
 #define EXT2F_COMPAT_SUPP		0x0000
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					 | EXT2F_ROCOMPAT_LARGEFILE \
-					 | EXT2F_ROCOMPAT_HUGE_FILE)
+					 | EXT2F_ROCOMPAT_HUGE_FILE \
+					 | EXT2F_ROCOMPAT_EXTRA_ISIZE)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
 					 | EXT2F_INCOMPAT_EXTENTS)
 
