@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.195 2016/08/03 23:28:01 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.196 2016/08/03 23:33:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.195 2016/08/03 23:28:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.196 2016/08/03 23:33:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -510,7 +510,7 @@ ext2fs_loadvnode_content(struct m_ext2fs *fs, ino_t ino, struct buf *bp, struct 
 	if (EXT2_DINODE_FITS(din, e2di_extra_isize, EXT2_DINODE_SIZE(fs))
 	    && (EXT2_DINODE_SIZE(fs) - EXT2_REV0_DINODE_SIZE) < din->e2di_extra_isize)
 	{
-		printf("ext2fs: inode %"PRId64" bad extra_isize %u",
+		printf("ext2fs: inode %"PRIu64" bad extra_isize %u",
 			ino, din->e2di_extra_isize);
 		error = EINVAL;
 		goto bad;
