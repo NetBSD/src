@@ -1,4 +1,4 @@
-/*	$NetBSD: sdtemp_reg.h,v 1.10 2016/07/28 09:11:13 msaitoh Exp $	*/
+/*	$NetBSD: sdtemp_reg.h,v 1.11 2016/08/03 03:35:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -159,12 +159,10 @@
 #define	IDT_TS3000B3_MASK		0xFFFF
 #define	IDT_TS3000GB0_DEVICE_ID		0x2913
 #define	IDT_TS3000GB0_MASK		0xFFFF
-#define	IDT_TS3000GB2_DEVICE_ID		0x2912
+#define	IDT_TS3000GB2_DEVICE_ID		0x2912	/* Also matched TSE2002GB2 */
 #define	IDT_TS3000GB2_MASK		0xFFFF
 #define	IDT_TS3001GB2_DEVICE_ID		0x3001
 #define	IDT_TS3001GB2_MASK		0xFFFF
-#define	IDT_TSE2002GB2_DEVICE_ID	0x2912
-#define	IDT_TSE2002GB2_MASK		0xFFFF
 #define	IDT_TSE2004GB2_DEVICE_ID	0x2214
 #define	IDT_TSE2004GB2_MASK		0xFFFF
 
