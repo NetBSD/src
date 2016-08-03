@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.117 2015/04/20 23:03:09 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.118 2016/08/03 21:53:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.117 2015/04/20 23:03:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.118 2016/08/03 21:53:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1119,7 +1119,7 @@ ext2fs_reclaim(void *v)
 	if ((error = ufs_reclaim(vp)) != 0)
 		return (error);
 	if (ip->i_din.e2fs_din != NULL)
-		pool_put(&ext2fs_dinode_pool, ip->i_din.e2fs_din);
+		kmem_free(ip->i_din.e2fs_din, EXT2_DINODE_SIZE(ip->i_e2fs));
 	genfs_node_destroy(vp);
 	pool_put(&ext2fs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
