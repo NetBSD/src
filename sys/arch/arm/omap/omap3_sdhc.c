@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.22 2016/08/04 07:14:50 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.23 2016/08/04 20:07:18 jakllsch Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.22 2016/08/04 07:14:50 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.23 2016/08/04 20:07:18 jakllsch Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -225,7 +225,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
 	if (support8bit)
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
-#if defined(OMAP_3430)
+#if defined(OMAP_3430) || /* XXX until TI_DM37XX has working omap_devid() */ defined(TI_DM37XX)
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
 #elif defined(OMAP_3530) || defined(TI_DM37XX)
 	/*
