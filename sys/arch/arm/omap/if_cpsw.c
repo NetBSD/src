@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.14 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.15 2016/08/04 14:05:20 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.14 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.15 2016/08/04 14:05:20 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -403,7 +403,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	aprint_normal(": TI CPSW Ethernet\n");
+	aprint_normal(": TI Layer 2 3-Port Switch\n");
 	aprint_naive("\n");
 
 	callout_init(&sc->sc_tick_ch, 0);
