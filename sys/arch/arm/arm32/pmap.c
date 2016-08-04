@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.339 2016/08/03 15:59:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.340 2016/08/04 08:46:06 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2016/08/03 15:59:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.340 2016/08/04 08:46:06 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5022,10 +5022,11 @@ pmap_remove_all_complete(pmap_t pm)
 #else
 		struct pmap_tlb_info * const ti = &pmap_tlb0_info;
 #endif
+		struct cpu_info * const ci = curcpu();
 		TLBINFO_LOCK(ti);
 		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 		if (PMAP_PAI_ASIDVALID_P(pai, ti)) {
-			if (kcpuset_isset(pm->pm_onproc, cpu_index(curcpu()))) {
+			if (kcpuset_isset(pm->pm_onproc, cpu_index(ci))) {
 #if PMAP_TLB_MAX == 1
 				    KASSERT(cpu_tlb_info(ci) == ti);
 
