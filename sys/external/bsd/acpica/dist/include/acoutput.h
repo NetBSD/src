@@ -357,7 +357,7 @@
 
 #define ACPI_TRACE_ENTRY(Name, Function, Type, Param) \
     ACPI_FUNCTION_NAME (Name) \
-    Function (ACPI_DEBUG_PARAMETERS, (const Type) (Param))
+    Function (ACPI_DEBUG_PARAMETERS, (Type) (Param))
 
 /* The actual entry trace macros */
 
@@ -366,10 +366,10 @@
     AcpiUtTrace (ACPI_DEBUG_PARAMETERS)
 
 #define ACPI_FUNCTION_TRACE_PTR(Name, Pointer) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTracePtr, void *, Pointer)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTracePtr, const void *, Pointer)
 
 #define ACPI_FUNCTION_TRACE_U32(Name, Value) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTraceU32, UINT32, Value)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTraceU32, const UINT32, Value)
 
 #define ACPI_FUNCTION_TRACE_STR(Name, String) \
     ACPI_TRACE_ENTRY (Name, AcpiUtTraceStr, const char *, String)
