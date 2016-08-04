@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.23 2016/08/04 06:58:41 nonaka Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.24 2016/08/04 21:39:20 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -960,7 +960,7 @@ void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new,
 	new->e2di_version	=	bswap32(old->e2di_version);
 	new->e2di_gen		=	bswap32(old->e2di_gen);
 	new->e2di_facl		=	bswap32(old->e2di_facl);
-	new->e2di_dacl		=	bswap32(old->e2di_dacl);
+	new->e2di_size_high	=	bswap32(old->e2di_size_high);
 	new->e2di_nblock_high	=	bswap16(old->e2di_nblock_high);
 	new->e2di_facl_high	=	bswap16(old->e2di_facl_high);
 	new->e2di_uid_high	=	bswap16(old->e2di_uid_high);
