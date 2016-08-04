@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.39 2016/08/03 21:53:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.40 2016/08/04 17:43:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -318,7 +318,7 @@ struct m_ext2fs {
  * - EXT2F_ROCOMPAT_SPARSESUPER
  *    superblock backups stored only in cg_has_sb(bno) groups
  * - EXT2F_ROCOMPAT_LARGEFILE
- *    use e2di_dacl in struct ext2fs_dinode to store 
+ *    use e2di_size_high in struct ext2fs_dinode to store 
  *    upper 32bit of size for >2GB files
  * - EXT2F_INCOMPAT_FTYPE
  *    store file type to e2d_type in struct ext2fs_direct

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.83 2016/08/03 21:53:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.84 2016/08/04 17:43:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.83 2016/08/03 21:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.84 2016/08/04 17:43:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ ext2fs_size(struct inode *ip)
 	uint64_t size = ip->i_e2fs_size;
 
 	if ((ip->i_e2fs_mode & IFMT) == IFREG)
-		size |= (uint64_t)ip->i_e2fs_dacl << 32;
+		size |= (uint64_t)ip->i_din.e2fs_din->e2di_size_high << 32;
 	return size;
 }
 
@@ -113,7 +113,7 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 {
 	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
 	    ip->i_e2fs_mode == 0) {
-		ip->i_e2fs_dacl = size >> 32;
+		ip->i_din.e2fs_din->e2di_size_high = size >> 32;
 		if (size >= 0x80000000U) {
 			struct m_ext2fs *fs = ip->i_e2fs;
 
