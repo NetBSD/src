@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp $	*/
+/*	$NetBSD: inode.h,v 1.73 2016/08/04 17:43:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -226,8 +226,6 @@ struct inode {
 #define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
 #define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
 #define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
-#define	i_e2fs_dacl		i_din.e2fs_din->e2di_dacl
-#define	i_e2fs_faddr		i_din.e2fs_din->e2di_faddr
 #define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
 #define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
 #define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high

@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.23 2016/08/04 03:01:38 nonaka Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.24 2016/08/04 17:43:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.23 2016/08/04 03:01:38 nonaka Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.24 2016/08/04 17:43:47 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -1133,9 +1133,9 @@ init_resizeino(const struct timeval *tv)
 		    "required to enable resize feature for this filesystem",
 		    __func__);
 	}
-	/* upper 32bit is stored into e2di_dacl on REV1 feature */
-	node.e2di_size = isize & UINT32_MAX;
-	node.e2di_dacl = isize >> 32;
+	/* upper 32bit is stored into e2di_size_high on REV1 feature */
+	node.e2di_size 	    = isize & UINT32_MAX;
+	node.e2di_size_high = isize >> 32;
 
 #define SINGLE	0	/* index of single indirect block */
 #define DOUBLE	1	/* index of double indirect block */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.21 2016/08/03 21:53:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.21 2016/08/03 21:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.22 2016/08/04 17:43:48 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -117,7 +117,7 @@ e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new, size_t isize)
 	new->e2di_version	=	bswap32(old->e2di_version);
 	new->e2di_gen		=	bswap32(old->e2di_gen);
 	new->e2di_facl		=	bswap32(old->e2di_facl);
-	new->e2di_dacl		=	bswap32(old->e2di_dacl);
+	new->e2di_size_high	=	bswap32(old->e2di_size_high);
 	new->e2di_nblock_high	=	bswap16(old->e2di_nblock_high);
 	new->e2di_facl_high	=	bswap16(old->e2di_facl_high);
 	new->e2di_uid_high	=	bswap16(old->e2di_uid_high);
