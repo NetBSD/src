@@ -1,7 +1,8 @@
-/*	$NetBSD: efilib.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: efilib.h,v 1.1 2016/08/04 18:07:43 scole Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
+ * Copyright (c) 2006 Marcel Moolenaar
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,9 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: src/sys/boot/efi/include/efilib.h,v 1.3 2002/12/10 20:11:19 marcel Exp $
+ * $FreeBSD: releng/10.1/sys/boot/efi/include/efilib.h 271135 2014-09-04 21:01:10Z emaste $
  */
-
 extern EFI_HANDLE		IH;
 extern EFI_SYSTEM_TABLE		*ST;
 extern EFI_BOOT_SERVICES	*BS;
