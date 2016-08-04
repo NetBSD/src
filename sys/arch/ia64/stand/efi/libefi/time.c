@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.3 2009/03/18 10:22:31 cegger Exp $	*/
+/*	$NetBSD: time.c,v 1.4 2016/08/04 18:07:43 scole Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -47,6 +47,8 @@
 #include <efilib.h>
 
 #include <sys/time.h>
+
+#include <machine/efilib.h>
 
 /*
 // Accurate only for the past couple of centuries;
