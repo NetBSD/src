@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.29 2016/08/03 23:29:05 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.30 2016/08/04 02:49:50 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -253,8 +253,8 @@ ext2fs_dinode_time_set(const struct timespec *ts, uint32_t *epoch, uint32_t *ext
 		memcpy((new),(old),(isize))
 #else
 void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *, size_t);
-#	define e2fs_iload(old, new, isize) e2fs_i_bswap((old), (new))
-#	define e2fs_isave(old, new, isize) e2fs_i_bswap((old), (new))
+#	define e2fs_iload(old, new, isize) e2fs_i_bswap((old), (new), (isize))
+#	define e2fs_isave(old, new, isize) e2fs_i_bswap((old), (new), (isize))
 #endif
 
 #endif /* !_UFS_EXT2FS_EXT2FS_DINODE_H_ */
