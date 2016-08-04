@@ -1,7 +1,7 @@
 #
-#	$NetBSD: VTC100,v 1.6 2016/08/04 06:53:10 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.7 2016/08/04 06:54:47 kiyohara Exp $
 #
-#	BEAGLEBONE -- TI AM335x board Kernel
+#	VTC100 -- NEXCOM VTC100 Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
