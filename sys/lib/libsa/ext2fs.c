@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.21 2016/08/03 09:11:18 rjs Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.22 2016/08/04 03:16:00 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -187,7 +187,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 
 	dip = (struct ext2fs_dinode *)(buf +
 	    EXT2_DINODE_SIZE(fs) * ino_to_fsbo(fs, inumber));
-	e2fs_iload(dip, &fp->f_di);
+	e2fs_iload(dip, &fp->f_di, EXT2_DINODE_SIZE(fs));
 
 	/*
 	 * Clear out the old buffers
