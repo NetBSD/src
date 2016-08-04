@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2014/03/25 18:35:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2016/08/04 16:22:40 scole Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -123,8 +123,8 @@ main(int argc, CHAR16 *argv[])
 	find_pal_proc();
 
 	efifs_dev_init();
-	
-        /*	efinet_init_driver(); XXX enable net boot. */
+
+	efinet_init_driver();
 
 	/* Get our loaded image protocol interface structure. */
 	BS->HandleProtocol(IH, &imgid, (VOID**)&img);
@@ -147,6 +147,8 @@ main(int argc, CHAR16 *argv[])
 		currdev.d_kind.netif.unit = 0;		/* XXX */
 		currdev.d_type = DEVT_NET;
 
+		/* XXX overwrite disk ops with nfs ops */
+		memcpy(&file_system[0], &file_system[1], sizeof(struct fs_ops));
 	}
 
 
