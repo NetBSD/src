@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.47 2016/07/02 15:59:21 christos Exp $
+#	$NetBSD: list,v 1.48 2016/08/04 03:50:55 pgoyette Exp $
 
 SRCDIRS	bin
 
@@ -144,7 +144,7 @@ PROG	chroot
 PROG	dumpfs
 PROG	dumplfs
 PROG	installboot
-PROG	vnconfig
+PROG	vnconfig	vndconfig
 
 SRCDIRS	games
 
