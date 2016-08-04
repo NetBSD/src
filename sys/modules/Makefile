@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167 2016/06/09 04:44:18 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.168 2016/08/04 23:53:47 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,7 @@ SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	skipjack
+SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
 SUBDIR+=	sysmon
