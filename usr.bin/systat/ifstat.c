@@ -1,4 +1,4 @@
-/*	$NetBSD: ifstat.c,v 1.2 2016/08/02 17:53:46 scole Exp $	*/
+/*	$NetBSD: ifstat.c,v 1.3 2016/08/04 12:56:31 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003, Trent Nelson, <trent@arpa.com>.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ifstat.c,v 1.2 2016/08/02 17:53:46 scole Exp $");
+__RCSID("$NetBSD: ifstat.c,v 1.3 2016/08/04 12:56:31 jakllsch Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -60,12 +60,9 @@ __RCSID("$NetBSD: ifstat.c,v 1.2 2016/08/02 17:53:46 scole Exp $");
 #define C4	60		/* 60-80 */
 #define C5	80		/* Used for label positioning. */
 
-static const int col0 = 0;
-static const int col1 = C1;
 static const int col2 = C2;
 static const int col3 = C3;
 static const int col4 = C4;
-static const int col5 = C5;
 
 SLIST_HEAD(, if_stat)		curlist;
 
@@ -356,7 +353,7 @@ right_align_string(struct if_stat *ifp)
 	int	 str_len = 0, pad_len = 0;
 	char	*newstr = NULL, *ptr = NULL;
 
-	if (ifp == NULL || ifp->if_mib.ifdr_name == NULL)
+	if (ifp == NULL || ifp->if_mib.ifdr_name[0] == '\0')
 		return;
 	else {
 		/* string length + '\0' */
