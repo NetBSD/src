@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.30 2016/08/04 02:49:50 nonaka Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.31 2016/08/04 04:05:14 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -66,6 +66,10 @@
 
 #ifndef _UFS_EXT2FS_EXT2FS_DINODE_H_
 #define _UFS_EXT2FS_EXT2FS_DINODE_H_
+
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h> /* for offsetof */
+#endif
 
 #include <sys/stat.h>
 
