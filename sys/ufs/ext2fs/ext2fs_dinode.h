@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.31 2016/08/04 04:05:14 nonaka Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.32 2016/08/04 17:43:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -123,7 +123,7 @@ struct ext2fs_dinode {
 					/* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
 	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) (ext3) */
-	uint32_t	e2di_dacl;	/* 108: dir ACL (not implemented) (ext3) */
+	uint32_t	e2di_size_high;	/* 108: Size (in bytes) high */
 	uint32_t	e2di_obso_faddr;/* 112: obsolete fragment address (ext2) */
 	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 (ext4) */
 	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4) */
