@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2016/08/04 16:22:40 scole Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2016/08/04 18:07:43 scole Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -40,6 +40,8 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efifsdev.h>
+
+#include <machine/efilib.h>
 
 #include "bootstrap.h"
 #include "efiboot.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.7 2016/08/04 16:22:40 scole Exp $
+#	$NetBSD: Makefile.booters,v 1.8 2016/08/04 18:07:43 scole Exp $
 
 .include <bsd.own.mk>
 .include <bsd.klinks.mk>
@@ -15,10 +15,12 @@ LIBC=		# nothing
 COPTS=	-Os -ffreestanding
 
 IA64_STAND_DIR?= $S/arch/ia64/stand
+IA64_EFI_DIR=	 $S/external/bsd/gnu-efi/dist
 
 .PATH: ${IA64_STAND_DIR}/efi
 
-CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR} -I${IA64_STAND_DIR}/efi/include
+CPPFLAGS += -nostdlib -nostdinc -I${.OBJDIR} -I${IA64_STAND_DIR}
+CPPFLAGS += -I${IA64_EFI_DIR}/inc -I${IA64_EFI_DIR}/inc/ia64
 
 # Options used when building standalone components
 CFLAGS+=	-ffreestanding -fshort-wchar -Wformat -D_STANDALONE
