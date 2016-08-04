@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.1 2016/08/04 10:45:52 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.2 2016/08/04 22:12:31 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -51,3 +51,28 @@ christos and pgoyette.
 	mechanism for identifying and loading drivers based on what
 	devices might be found.
 
+8. Even for existing modules, there are "surprise" dependencies with
+   code that has not yet been modularized.
+
+	For example, even though the bpf code has been modularized,
+	there is some shared code in bpf_filter.c which is needed by
+	both ipfilter and ppp.  ipf is already modularized, but ppp
+	is not.  Thus, even though bpf_filter is modular, it MUST be
+	included as a built-in module if you also have ppp in your
+	configuration.
+
+	Another example is sysmon_taskq module.  It is required by
+	other parts of the sysmon subsystem, including the
+	"sysmon_power" module.  Unfortunately, even though the
+	sysmon_power code is modularized, it is referenced by the
+	acpi code which has not been modularized.  Therefore, if your
+	configuration has acpi, then you must include the "sysmon_power"
+	module built-in the kernel.  And therefore your also need to
+	have "sysmon_taskq" and "sysmon" built-in since "sysmon_power"
+	rerefences them.
+
+9. As a corollary to #8 above, having dependencies on modules from code
+   which has not been modularized makes it extremely difficult to test
+   the module code adequately.  Testing of module code should include
+   both testing-as-a-built-in module and testing-as-a-loaded-module, and
+   all dependencies need to be identified.
