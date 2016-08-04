@@ -1,4 +1,4 @@
-/* $NetBSD: h_macros.h,v 1.11 2015/01/14 22:57:27 christos Exp $ */
+/* $NetBSD: h_macros.h,v 1.12 2016/08/04 11:49:07 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ do {									\
 	ATF_REQUIRE_MSG(RZ_rv == 0, "%s: %s", #x, strerror(RZ_rv));	\
 } while (/*CONSTCOND*/0)
 
-static __inline __printflike(1, 2) void
+__dead static __inline __printflike(1, 2) void
 atf_tc_fail_errno(const char *fmt, ...)
 {
 	va_list ap;
