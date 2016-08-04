@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.4 2016/07/21 09:10:55 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.5 2016/08/04 06:50:27 kiyohara Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -145,10 +145,8 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
-options USB_DEBUG
-options EHCI_DEBUG
-options OHCI_DEBUG
-options UHUB_DEBUG
+#options 	USB_DEBUG
+#options 	MOTG_DEBUG
 
 
 # Valid options for BOOT_ARGS:
