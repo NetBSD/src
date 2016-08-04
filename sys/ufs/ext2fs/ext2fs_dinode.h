@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.33 2016/08/04 17:47:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.34 2016/08/04 17:50:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -105,6 +105,7 @@
 #define	EXT2FS_NIADDR	3		/* Indirect addresses in inode. */
 
 #define EXT2_MAXSYMLINKLEN ((EXT2FS_NDADDR+EXT2FS_NIADDR) * sizeof (uint32_t))
+#define E2MAXSYMLINKLEN	EXT2_MAXSYMLINKLEN
 
 struct ext2fs_dinode {
 	uint16_t	e2di_mode;	/*   0: IFMT, permissions; see below. */
@@ -141,9 +142,6 @@ struct ext2fs_dinode {
 	uint32_t	e2di_version_high;  /* 152: version high (ext4) */
 	uint32_t	e2di_projid;        /* 156: project id (not implemented) (ext4) */
 };
-
-/* XXX how does this differ from EXT2_MAXSYMLINKLEN above? */
-#define	E2MAXSYMLINKLEN	((EXT2FS_NDADDR + EXT2FS_NIADDR) * sizeof(uint32_t))
 
 #define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
 #define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
