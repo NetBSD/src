@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.173 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.174 2016/08/05 00:52:02 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.173 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.174 2016/08/05 00:52:02 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -757,7 +757,7 @@ rt_getifp(struct rt_addrinfo *info, struct psref *psref)
 struct ifaddr *
 rt_getifa(struct rt_addrinfo *info, struct psref *psref)
 {
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
 	const struct sockaddr *ifaaddr = info->rti_info[RTAX_IFA];
