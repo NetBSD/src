@@ -1,4 +1,4 @@
-/*	$NetBSD: ifstat.c,v 1.3 2016/08/04 12:56:31 jakllsch Exp $	*/
+/*	$NetBSD: ifstat.c,v 1.4 2016/08/05 07:22:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, Trent Nelson, <trent@arpa.com>.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ifstat.c,v 1.3 2016/08/04 12:56:31 jakllsch Exp $");
+__RCSID("$NetBSD: ifstat.c,v 1.4 2016/08/05 07:22:17 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -350,24 +350,11 @@ fetchifstat(void)
 static void
 right_align_string(struct if_stat *ifp)
 {
-	int	 str_len = 0, pad_len = 0;
-	char	*newstr = NULL, *ptr = NULL;
-
 	if (ifp == NULL || ifp->if_mib.ifdr_name[0] == '\0')
 		return;
-	else {
-		/* string length + '\0' */
-		str_len = strlen(ifp->if_mib.ifdr_name)+1;
-		pad_len = IF_NAMESIZE-(str_len);
 
-		newstr = ifp->if_name;
-		ptr = newstr + pad_len;
-		(void)memset((void *)newstr, (int)' ', IF_NAMESIZE);
-		(void)strncpy(ptr, (const char *)&ifp->if_mib.ifdr_name,
-			      str_len);
-	}
-
-	return;
+	snprintf(ifp->if_name, IF_NAMESIZE, "%*s", IF_NAMESIZE - 1,
+	    ifp->if_mib.ifdr_name);
 }
 
 static int
