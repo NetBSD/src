@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.119 2016/08/03 23:29:05 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.119 2016/08/03 23:29:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,13 +311,17 @@ ext2fs_getattr(void *v)
 	if (EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
 		EXT2_DINODE_TIME_GET(&vap->va_birthtime, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
 	}
+
+	vap->va_flags = 0;
+	vap->va_flags |= (ip->i_e2fs_flags & EXT2_NODUMP) ? UF_NODUMP : 0;
 #ifdef EXT2FS_SYSTEM_FLAGS
-	vap->va_flags = (ip->i_e2fs_flags & EXT2_APPEND) ? SF_APPEND : 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? SF_IMMUTABLE : 0;
+	vap->va_flags |= (ip->i_e2fs_flags & EXT2_APPEND) ? SF_APPEND : 0;
 #else
-	vap->va_flags = (ip->i_e2fs_flags & EXT2_APPEND) ? UF_APPEND : 0;
 	vap->va_flags |= (ip->i_e2fs_flags & EXT2_IMMUTABLE) ? UF_IMMUTABLE : 0;
+	vap->va_flags |= (ip->i_e2fs_flags & EXT2_APPEND) ? UF_APPEND : 0;
 #endif
+
 	vap->va_gen = ip->i_e2fs_gen;
 	/* this doesn't belong here */
 	if (vp->v_type == VBLK)
@@ -391,17 +395,18 @@ ext2fs_setattr(void *v)
 		if (error)
 			return (error);
 
+		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE | EXT2_NODUMP);
 #ifdef EXT2FS_SYSTEM_FLAGS
-		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 		ip->i_e2fs_flags |=
 		    (vap->va_flags & SF_APPEND) ?  EXT2_APPEND : 0 |
 		    (vap->va_flags & SF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #else
-		ip->i_e2fs_flags &= ~(EXT2_APPEND | EXT2_IMMUTABLE);
 		ip->i_e2fs_flags |=
 		    (vap->va_flags & UF_APPEND) ? EXT2_APPEND : 0 |
 		    (vap->va_flags & UF_IMMUTABLE) ? EXT2_IMMUTABLE : 0;
 #endif
+		ip->i_e2fs_flags |=
+		    (vap->va_flags & UF_NODUMP) ? EXT2_NODUMP : 0;   
 		ip->i_flag |= IN_CHANGE;
 		if (vap->va_flags & (IMMUTABLE | APPEND))
 			return (0);
