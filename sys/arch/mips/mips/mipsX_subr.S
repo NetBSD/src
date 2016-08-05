@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.76 2016/07/30 07:10:42 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.77 2016/08/05 10:39:49 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2305,7 +2305,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 #endif
 	and	a2, t0				# a2=valid entryLo0 afterwards
 	and	a3, t1				# a3=valid entryLo1 afterwards
-	or	v0, a2, a3			# will one be value?
+	or	v0, a2, a3			# will one be valid?
 #ifdef MIPSNN
 	movz	t0, zero, a2			# zero lo0 if V would not be set
 	movz	t1, zero, a3			# zero lo1 if V would not be set
@@ -2318,7 +2318,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	_SLL	a3, a3, PG_V_LSHIFT		# move V to MSB
 	_SRA	a3, a3, PG_V_RSHIFT		# fill with MSB
 	and	t1, t1, a3			# zero lo1 if V would not be set
-	move	t2, a0				# we need entryHi to be value
+	move	t2, a0				# we need entryHi to be valid
 1:
 #endif /* MIPSNN */
 #endif /* (PGSHIFT & 1) == 0 */
