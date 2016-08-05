@@ -27,7 +27,8 @@
  *
  * $FreeBSD: src/sys/ia64/include/elf.h,v 1.11 2003/09/25 01:10:24 peter Exp $
  */
-
+#ifndef _IA64_ELF_MACHDEP_H
+#define _IA64_ELF_MACHDEP_H
 
 #define	ELF32_MACHDEP_ENDIANNESS	XXX	/* break compilation */
 #define	ELF32_MACHDEP_ID_CASES						\
@@ -145,6 +146,8 @@
 #define SHF_IA_64_NORECOV 0x20000000	/* section contains code that uses speculative instructions without
 					 * recovery code
 					 */
+/* XXX fix these for ld.elf_so */
+#define R_IA64_COPY (0)
+#define R_TYPE(name)    __CONCAT(R_IA64_,name)
 
-
-
+#endif /* _IA64_ELF_MACHDEP_H */
