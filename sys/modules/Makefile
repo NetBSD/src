@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2016/08/04 23:53:47 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.169 2016/08/05 17:12:13 scole Exp $
 
 .include <bsd.own.mk>
 
@@ -133,12 +133,15 @@ SUBDIR+=	xldscripts
 SUBDIR+=	exec_aout
 .endif
 
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "aarch64"
+.if ${MACHINE_ARCH} != "alpha" && \
+    ${MACHINE_CPU} != "aarch64" && \
+    ${MACHINE_ARCH} != "ia64"
 SUBDIR+=	exec_elf32
 .endif
 
 .if ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	exec_elf64
