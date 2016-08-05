@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.779 2016/08/02 14:54:03 jakllsch Exp $
+# $NetBSD: shl.mi,v 1.780 2016/08/05 16:21:09 scole Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -88,15 +88,15 @@
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
-./lib/npf/ext_log.so				base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_log.so.0				base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_log.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
+./lib/npf/ext_log.so				base-npf-shlib		compatfile,npf
+./lib/npf/ext_log.so.0				base-npf-shlib		compatfile,npf
+./lib/npf/ext_log.so.0.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so.0.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		compatfile,npf
 ./libexec/ld.elf_so				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib		compatfile
@@ -870,4 +870,4 @@
 ./usr/lib/security/pam_skey.so.4		base-sys-shlib		compatfile,skey,pam
 ./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,crypto,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
-./usr/libexec/ld.elf_so				base-sys-shlib
+./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot
