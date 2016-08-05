@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.196 2016/08/03 23:33:59 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.197 2016/08/05 20:06:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.196 2016/08/03 23:33:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.197 2016/08/05 20:06:55 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1238,14 +1238,18 @@ ext2fs_sbfill(struct m_ext2fs *m_fs, int ronly)
 		if (u32) {
 			snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported incompat features: %s\n", buf);
+#ifndef EXT2_IGNORE_INCOMPAT_FEATURES
 			return EINVAL;
+#endif
 		}
 		u32 = fs->e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP;
 		if (!ronly && u32) {
 			snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS, u32);
 			printf("ext2fs: unsupported ro-incompat features: %s\n",
 			    buf);
+#ifndef EXT2_IGNORE_ROCOMPAT_FEATURES
 			return EROFS;
+#endif
 		}
 		if (fs->e2fs_inode_size == 0 || !powerof2(fs->e2fs_inode_size) || fs->e2fs_inode_size > m_fs->e2fs_bsize) {
 			printf("ext2fs: bad inode size\n");
