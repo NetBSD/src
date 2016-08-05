@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl_io.c,v 1.2 2016/08/03 08:28:09 knakahara Exp $	*/
+/*	$NetBSD: intrctl_io.c,v 1.3 2016/08/05 06:58:55 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl_io.c,v 1.2 2016/08/03 08:28:09 knakahara Exp $");
+__RCSID("$NetBSD: intrctl_io.c,v 1.3 2016/08/05 06:58:55 knakahara Exp $");
 
 #include <sys/sysctl.h>
 #include <sys/intrio.h>
@@ -47,16 +47,16 @@ intrctl_io_alloc(int retry)
 {
 	size_t buf_size;
 	int i, error;
-	void *buf;
+	void *buf = NULL;
 
 	error = sysctlbyname("kern.intr.list", NULL, &buf_size, NULL, 0);
 	if (error < 0) {
-		return NULL;
+		goto error;
 	}
 
 	buf = malloc(buf_size);
 	if (buf == NULL) {
-		return NULL;
+		goto error;
 	}
 
 	for (i = 0; i < retry; i++) {
@@ -68,15 +68,16 @@ intrctl_io_alloc(int retry)
 
 			temp = realloc(buf, buf_size);
 			if (temp == NULL) {
-				free(buf);
-				return NULL;
+				goto error;
 			}
 			buf = temp;
 		} else {
-			free(buf);
-			return NULL;
+			goto error;
 		}
 	}
+error:
+	if (buf != NULL)
+		free(buf);
 	return NULL;
 }
 
