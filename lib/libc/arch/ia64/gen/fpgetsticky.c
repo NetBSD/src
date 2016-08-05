@@ -1,7 +1,7 @@
-/* $NetBSD: __clone.S,v 1.2 2016/08/05 16:40:47 scole Exp $ */
+/*	$NetBSD: fpgetsticky.c,v 1.1 2016/08/05 16:40:47 scole Exp $	*/
 
 /*-
- * Copyright (c) 2006,2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX:	 Stub */
-#include <sys/errno.h>
+#include <sys/cdefs.h>
 
-#include "SYS.h"
+#include <sys/types.h>
+#include <ieeefp.h>
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(clone, __clone)
-#endif
+fp_except_t
+fpgetsticky(void)
+{
+  /* XXX implement, pause in ski */
+  __asm __volatile("break.i 0");
 
-ENTRY(__clone,4)
-	/* XXX implement, break in ski*/
-	break.i 0
-	
-END(__clone)
+  return (fp_except_t)0;
+}

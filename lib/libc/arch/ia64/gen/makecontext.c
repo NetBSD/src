@@ -1,7 +1,7 @@
-/* $NetBSD: __clone.S,v 1.2 2016/08/05 16:40:47 scole Exp $ */
+/*	$NetBSD: makecontext.c,v 1.1 2016/08/05 16:40:47 scole Exp $	*/
 
 /*-
- * Copyright (c) 2006,2016 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,17 +26,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX:	 Stub */
-#include <sys/errno.h>
+#include <inttypes.h>
+#include <stddef.h>
+#include <ucontext.h>
+#include "extern.h"
 
-#include "SYS.h"
-
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(clone, __clone)
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
 #endif
 
-ENTRY(__clone,4)
-	/* XXX implement, break in ski*/
-	break.i 0
-	
-END(__clone)
+void
+makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
+{
+  /* XXX implement, halt in ski */
+  __asm __volatile("break.i 0");
+}
