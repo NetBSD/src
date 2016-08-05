@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.77 2016/08/05 10:39:49 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.78 2016/08/05 15:33:28 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2088,14 +2088,14 @@ END(MIPSX(tlb_set_asid))
  */
 LEAF(MIPSX(tlb_update_addr))
 #ifdef MIPSNNR2
-	di	ta0			# Disable interrupts
+	di	ta0				# Disable interrupts
 #else
-	mfc0	ta0, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
+	mfc0	ta0, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 #endif
 	COP0_SYNC
 #if (PGSHIFT & 1) == 0
-	and	t1, a0, MIPS3_PG_ODDPG	# t1 = Even/Odd flag
+	and	t1, a0, MIPS3_PG_ODDPG		# t1 = Even/Odd flag
 #endif
 	and	a1, a1, MIPS3_PG_ASID
 #ifdef MIPSNNR2
