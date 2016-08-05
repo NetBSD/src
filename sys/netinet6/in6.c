@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.214 2016/08/01 04:37:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.215 2016/08/05 00:51:14 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.214 2016/08/01 04:37:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.215 2016/08/05 00:51:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -485,8 +485,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	case SIOCGIFADDR_IN6:
 		ifr->ifr_addr = ia->ia_addr;
-		if ((error = sa6_recoverscope(&ifr->ifr_addr)) != 0)
-			break;
+		error = sa6_recoverscope(&ifr->ifr_addr);
 		break;
 
 	case SIOCGIFDSTADDR_IN6:
@@ -499,8 +498,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		 * an error?
 		 */
 		ifr->ifr_dstaddr = ia->ia_dstaddr;
-		if ((error = sa6_recoverscope(&ifr->ifr_dstaddr)) != 0)
-			break;
+		error = sa6_recoverscope(&ifr->ifr_dstaddr);
 		break;
 
 	case SIOCGIFNETMASK_IN6:
