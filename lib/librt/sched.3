@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.15 2016/08/04 07:09:15 christos Exp $
+.\"	$NetBSD: sched.3,v 1.16 2016/08/05 08:55:28 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,12 +160,12 @@ Performs priority protection using the
 .Dv PTHREAD_PRIO_PROTECT
 protocol.
 This function will increase the protected priority of the caller thread to
-.Fa priority 
+.Fa priority
 if the current thread's protected priority is smaller than
 .Fa priority .
 Multiple calls to
 .Fn sched_protect
-with a positive priority will 
+with a positive priority will
 .Dq push
 a priority level to the current thread, whereas calling
 .Fn sched_protect
@@ -177,7 +177,7 @@ will
 .Dq pop
 a priority level.
 When the level reaches
-.Dv 0 
+.Dv 0
 (the same number of
 .Dq pushes
 and
