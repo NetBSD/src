@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.78 2016/08/05 15:33:28 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.79 2016/08/05 15:35:32 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2162,7 +2162,7 @@ LEAF(MIPSX(tlb_update_addr))
 	 li	v0, 0				# assume failure
 	bnez	t1, 4f				# Decide even odd
 	 nop
-	move	t3, a2				# swap a1 & t0
+	move	t3, a2				# swap a2 and t0
 	move	a2, t0				#
 	move	t0, a3				#
 4:
