@@ -6,6 +6,7 @@ VERSIONFILE= ${.CURDIR}/version
 
 PROG=		skiload
 MAN=#
+BINDIR?=	/usr/mdec
 
 STRIP=		# We must not strip skiload at install time.
 
@@ -16,8 +17,6 @@ SRCS=		conf.c copy.c delay.c devicename.c efi_stub.c exit.c \
 CPPFLAGS+=	-DLOADER -DSKIFS
 CPPFLAGS+=	-I${S}
 CPPFLAGS+=	-I${IA64_STAND_DIR}/common
-CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include
-CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include/${MACHINE_ARCH}
 
 CPPFLAGS+= 	-DLIBKERN_OPTIMISE_SPACE \
 		-DHEAP_VARIABLE
