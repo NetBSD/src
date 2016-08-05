@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.3 2016/08/05 02:27:14 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.4 2016/08/05 04:21:01 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -77,12 +77,3 @@ christos and pgoyette.
    both testing-as-a-built-in module and testing-as-a-loaded-module, and
    all dependencies need to be identified.
 
-10.Work is currently under way on creating a ppp module.  Once this is
-   complete, it will require additional work to possibly auto-load the
-   compression routines.  Until then, users would need to manually load
-   the ppp_deflate and ppp_bsdcompress modules.
-
-	Currently the compressors are separate modules which reside
-	on-top-of ppp, and which call back to ppp for "registration";
-	thus, ppp itself cannot list the compressors as dependencies.
-	See #1 above!
