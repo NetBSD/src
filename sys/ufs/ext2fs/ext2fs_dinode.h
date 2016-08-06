@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.34 2016/08/04 17:50:51 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.35 2016/08/06 09:29:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -199,7 +199,10 @@ struct ext2fs_dinode {
 #define EXT2_TOPDIR		0x00020000 /* Top of directory hierarchies*/
 #define EXT2_HUGE_FILE		0x00040000 /* Set to each huge file */
 #define EXT2_EXTENTS		0x00080000 /* Inode uses extents */
+#define EXT2_EA_INODE		0x00200000 /* Inode used for large EA */
 #define EXT2_EOFBLOCKS		0x00400000 /* Blocks allocated beyond EOF */
+#define EXT2_INLINE_DATA	0x10000000 /* Inode has inline data */
+#define EXT2_PROJINHERIT	0x20000000 /* Children inherit project ID */
 
 /* Size of on-disk inode. */
 #define EXT2_REV0_DINODE_SIZE	128
