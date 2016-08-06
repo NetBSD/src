@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172 2016/08/06 12:44:03 christos Exp $
+#	$NetBSD: Makefile,v 1.173 2016/08/06 22:03:45 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,7 @@ SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
+SUBDIR+=	sppp_subr
 SUBDIR+=	sysmon
 SUBDIR+=	sysmon_envsys
 SUBDIR+=	sysmon_power
