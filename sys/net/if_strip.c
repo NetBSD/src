@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.104 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.105 2016/08/06 12:48:23 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.104 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.105 2016/08/06 12:48:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.104 2016/06/10 13:27:16 ozaki-r Exp $
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -222,7 +224,7 @@ struct if_clone strip_cloner =
 
 static void	stripintr(void *);
 
-static int	stripinit(struct strip_softc *);
+static int	stripcreate(struct strip_softc *);
 static struct mbuf *strip_btom(struct strip_softc *, int);
 
 /*
@@ -353,10 +355,34 @@ static struct linesw strip_disc = {
 void
 stripattach(void)
 {
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in slinit() below).
+	 */
+}
+
+static void
+stripinit(void)
+{
+
 	if (ttyldisc_attach(&strip_disc) != 0)
-		panic("stripattach");
+		panic("%s", __func__);
 	LIST_INIT(&strip_softc_list);
 	if_clone_attach(&strip_cloner);
+}
+
+static int
+stripdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&strip_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&strip_disc);
+
+	return error;
 }
 
 static int
@@ -407,7 +433,7 @@ strip_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-stripinit(struct strip_softc *sc)
+stripcreate(struct strip_softc *sc)
 {
 	u_char *p;
 
@@ -483,7 +509,7 @@ stripopen(dev_t dev, struct tty *tp)
 		if (sc->sc_ttyp == NULL) {
 			sc->sc_si = softint_establish(SOFTINT_NET,
 			    stripintr, sc);
-			if (stripinit(sc) == 0) {
+			if (stripcreate(sc) == 0) {
 				softint_disestablish(sc->sc_si);
 				return (ENOBUFS);
 			}
@@ -1972,4 +1998,65 @@ RecvErr_Message(struct strip_softc *strip_info, u_char *sendername,
 		addlog("failed to parse ]%3s[\n", msg);
 		RecvErr("unparsed radio error message:", strip_info);
 	}
+}
+
+/*
+ * Module infrastructure
+ */
+
+MODULE(MODULE_CLASS_DRIVER, if_strip, "slcompress");
+
+#ifdef _MODULE
+CFDRIVER_DECL(strip, DV_IFNET, NULL);
+#endif
+
+static int
+if_strip_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_cfdriver_attach(&strip_cd);
+		if (error) {
+			aprint_error("%s: unable to register cfdriver for"
+			    "%s, error %d\n", __func__, strip_cd.cd_name,
+			    error);
+			break;
+		}
+
+#endif
+		/* Init the unit list and line discipline stuff */
+		stripinit();
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * Make sure it's ok to detach - no units left, and
+		 * line discipline is removed
+		 */
+		error = stripdetach();
+		if (error != 0)
+			break;
+#ifdef _MODULE
+		/* Remove device from autoconf database */
+		error = config_cfdriver_detach(&strip_cd);
+		if (error) {
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, strip_cd.cd_name, error);
+			break;
+		}
+#endif
+		break;
+
+	case MODULE_CMD_STAT:
+		error = ENOTTY;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
 }
