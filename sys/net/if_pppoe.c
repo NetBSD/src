@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.112 2016/08/06 23:46:30 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $");
-
-#include "pppoe.h"
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.112 2016/08/06 23:46:30 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "pppoe.h"
 #include "opt_pppoe.h"
 #endif
 
@@ -50,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.111 2016/07/07 06:55:43 msaitoh Exp $
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -210,11 +211,32 @@ static struct if_clone pppoe_cloner =
 void
 pppoeattach(int count)
 {
+
+	/*
+	 * Nothing to do here - all initialization happens as part
+	 * of module init.
+	 */
+}
+
+static void
+pppoeinit(void)
+{
+
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
+}
+
+static int
+pppoedetach(void)
+{
+
+	softint_disestablish(pppoe_softintr);
+	if_clone_detach(&pppoe_cloner);
+
+	return 0;
 }
 
 static int
@@ -1622,3 +1644,61 @@ pppoedisc_input(struct ifnet *ifp, struct mbuf *m)
 	pppoe_enqueue(&ppoediscinq, m);
 	return;
 }
+
+/*
+ * Module glue
+ */
+MODULE(MODULE_CLASS_DRIVER, if_pppoe, "sppp_subr");
+
+#ifdef _MODULE  
+CFDRIVER_DECL(pppoe, DV_IFNET, NULL);
+#endif
+ 
+static int
+if_pppoe_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_cfdriver_attach(&pppoe_cd);
+		if (error) {
+			aprint_error("%s: unable to register cfdriver for"
+			    "%s, error %d\n", __func__, pppoe_cd.cd_name,
+			    error);
+			break;
+		}
+#endif  
+		/* Init the cloner etc. */
+		pppoeinit();
+		break;
+
+        case MODULE_CMD_FINI:
+		/*
+		 * Make sure it's ok to detach - no units left, and
+		 * line discipline is removed
+		 */
+		if (!LIST_EMPTY(&pppoe_softc_list)) {
+			error = EBUSY;
+			break;
+		}
+		if ((error = pppoedetach()) != 0)
+			break;
+#ifdef _MODULE
+		/* Remove device from autoconf database */
+		if ((error = config_cfdriver_detach(&pppoe_cd)) != 0) {
+			aprint_error("%s: failed to detach %s cfdriver, error "
+			    "%d\n", __func__, pppoe_cd.cd_name, error);
+			break;
+		}
+#endif
+		break;
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		error = ENOTTY;
+	}
+	return error;
+}
+
