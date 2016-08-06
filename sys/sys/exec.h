@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.150 2016/01/23 14:03:48 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.151 2016/08/06 15:13:14 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -250,6 +250,7 @@ struct exec_vmcmd {
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.
  */
+vaddr_t	exec_vm_minaddr		(vaddr_t);
 void	kill_vmcmd		(struct exec_vmcmd **);
 int	exec_makecmds		(struct lwp *, struct exec_package *);
 int	exec_runcmds		(struct lwp *, struct exec_package *);
