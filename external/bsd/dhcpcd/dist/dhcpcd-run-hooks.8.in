@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.15 2015/07/09 10:15:34 roy Exp $
+.\"     $NetBSD: dhcpcd-run-hooks.8.in,v 1.15.2.1 2016/08/06 00:18:41 pgoyette Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 29, 2015
+.Dd June 27, 2016
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ This should be treated as EXPIRE.
 .It Dv RECONFIGURE
 dhcpcd has been instructed to reconfigure an interface.
 .It Dv ROUTERADVERT
-dhcpcd has received an IPv6 Router Advertisment, or one has expired.
+dhcpcd has received an IPv6 Router Advertisement, or one has expired.
 .It Dv STOP | Dv STOP6
 dhcpcd stopped running on the interface.
 .It Dv STOPPED

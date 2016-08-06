@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.167 2016/06/09 04:44:18 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.167.2.1 2016/08/06 00:19:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,7 @@ SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	skipjack
+SUBDIR+=	slcompress
 SUBDIR+=	smbfs
 SUBDIR+=	spdmem
 SUBDIR+=	sysmon
@@ -132,12 +133,15 @@ SUBDIR+=	xldscripts
 SUBDIR+=	exec_aout
 .endif
 
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_CPU} != "aarch64"
+.if ${MACHINE_ARCH} != "alpha" && \
+    ${MACHINE_CPU} != "aarch64" && \
+    ${MACHINE_ARCH} != "ia64"
 SUBDIR+=	exec_elf32
 .endif
 
 .if ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "ia64" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	exec_elf64

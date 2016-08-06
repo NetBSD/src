@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.19 2016/06/17 19:42:32 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.19.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -34,6 +34,7 @@
 #include <netinet/in.h>
 
 #include "config.h"
+#include "if.h"
 
 #ifndef __linux__
 #  if !defined(__QNX__) && !defined(__sun)
@@ -137,6 +138,16 @@
 #  define IN6_IFF_DETACHED	0
 #endif
 
+#ifdef __sun
+   /* Solaris lacks these defines.
+    * While it supports DaD, to seems to only expose IFF_DUPLICATE
+    * so we have no way of knowing if it's tentative or not.
+    * I don't even know if Solaris has any special treatment for tentative. */
+#  define IN6_IFF_TENTATIVE	0
+#  define IN6_IFF_DUPLICATED	0x04
+#  define IN6_IFF_DETACHED	0
+#endif
+
 #define IN6_IFF_NOTUSEABLE \
 	(IN6_IFF_TENTATIVE | IN6_IFF_DUPLICATED | IN6_IFF_DETACHED)
 
@@ -169,6 +180,10 @@ struct ipv6_addr {
 	uint8_t *ns;
 	size_t nslen;
 	int nsprobes;
+
+#ifdef ALIAS_ADDR
+	char alias[IF_NAMESIZE];
+#endif
 };
 
 #define	IPV6_AF_ONLINK		0x0001
@@ -194,6 +209,7 @@ struct rt6 {
 	struct in6_addr mask;
 	struct in6_addr gate;
 	const struct interface *iface;
+	struct in6_addr src;
 	unsigned int flags;
 #ifdef HAVE_ROUTE_METRIC
 	unsigned int metric;
@@ -286,9 +302,8 @@ ssize_t ipv6_addaddrs(struct ipv6_addrhead *addrs);
 void ipv6_freedrop_addrs(struct ipv6_addrhead *, int,
     const struct interface *);
 void ipv6_handleifa(struct dhcpcd_ctx *ctx, int, struct if_head *,
-    const char *, const struct in6_addr *, uint8_t, int);
-int ipv6_handleifa_addrs(int, struct ipv6_addrhead *,
-    const struct in6_addr *, int);
+    const char *, const struct in6_addr *, uint8_t);
+int ipv6_handleifa_addrs(int, struct ipv6_addrhead *, const struct ipv6_addr *);
 struct ipv6_addr *ipv6_iffindaddr(struct interface *,
     const struct in6_addr *, int);
 int ipv6_hasaddr(const struct interface *);

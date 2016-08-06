@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.16 2016/03/11 01:55:00 christos Exp $
-#	$OpenBSD: sshd_config,v 1.98 2016/02/17 05:29:04 djm Exp $
+#	$NetBSD: sshd_config,v 1.16.2.1 2016/08/06 00:18:39 pgoyette Exp $
+#	$OpenBSD: sshd_config,v 1.99 2016/07/11 03:19:44 tedu Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -33,7 +33,6 @@
 #RekeyLimit default none
 
 # Logging
-# obsoletes QuietMode and FascistLogging
 #SyslogFacility AUTH
 #LogLevel INFO
 

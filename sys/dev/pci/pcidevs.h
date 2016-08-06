@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1246 2016/07/06 14:27:02 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1246.2.1 2016/08/06 00:19:07 pgoyette Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1253 2016/07/06 14:26:31 christos Exp
+ *	NetBSD: pcidevs,v 1.1256 2016/07/29 07:28:19 nonaka Exp
  */
 
 /*
@@ -536,10 +536,9 @@
 #define	PCI_VENDOR_ESSTECH2	0x1285		/* ESS Technology */
 #define	PCI_VENDOR_TRITECH	0x1292		/* TriTech Microelectronics */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
-#define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
+#define	PCI_VENDOR_ALTEON	0x12ae		/* Alteon */
 #define	PCI_VENDOR_USR	0x12b9		/* US Robotics (3Com) */
-#define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia & SGS-Thomson Microelectronics */
 #define	PCI_VENDOR_PERICOM	0x12d8		/* Pericom Semiconductors */
@@ -582,7 +581,6 @@
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_MSI	0x1462		/* Micro-star International Co Ltd */
 #define	PCI_VENDOR_SYSTEMBASE	0x14a1		/* System Base */
-#define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
 #define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics */
 #define	PCI_VENDOR_MYRICOM	0x14c1		/* Myricom */
@@ -593,6 +591,7 @@
 #define	PCI_VENDOR_PLANEX	0x14ea		/* Planex Communications */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
+#define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
 #define	PCI_VENDOR_ENE	0x1524		/* ENE Technology */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_PERLE	0x155f		/* Perle Systems */
@@ -603,18 +602,19 @@
 #define	PCI_VENDOR_GEOCAST	0x15a1		/* Geocast Network Systems */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
+#define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
 #define	PCI_VENDOR_AGILENT	0x15bc		/* Agilent Technologies */
+#define	PCI_VENDOR_SUPERMICRO	0x15d9		/* Super Micro Computer Inc */
+#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
-#define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
-#define	PCI_VENDOR_MYSON	0x1516		/* Myson-Century Technology */
-#define	PCI_VENDOR_MELLANOX	0x15b3		/* Mellanox Technologies */
-#define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm */
 #define	PCI_VENDOR_ACTIONTEC	0x1668		/* Action Tec Electronics */
+#define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom (SiByte) */
 #define	PCI_VENDOR_ATHEROS	0x168c		/* Atheros Communications */
 #define	PCI_VENDOR_GLOBALSUN	0x16ab		/* Global Sun Tech */
 #define	PCI_VENDOR_SAFENET	0x16ae		/* SafeNet */
 #define	PCI_VENDOR_MICREL	0x16c6		/* Micrel */
+#define	PCI_VENDOR_USR2	0x16ec		/* US Robotics */
 #define	PCI_VENDOR_NETOCTAVE	0x170b		/* Netoctave */
 #define	PCI_VENDOR_LINKSYS	0x1737		/* Linksys */
 #define	PCI_VENDOR_ALTIMA	0x173b		/* Altima */
@@ -646,6 +646,7 @@
 #define	PCI_VENDOR_QUMRANET	0x1af4		/* Qumranet */
 #define	PCI_VENDOR_ASMEDIA	0x1b21		/* ASMedia */
 #define	PCI_VENDOR_REDHAT	0x1b36		/* Red Hat */
+#define	PCI_VENDOR_MARVELL2	0x1b4b		/* Marvell */
 #define	PCI_VENDOR_FRESCO	0x1b73		/* Fresco Logic */
 #define	PCI_VENDOR_QINHENG2	0x1c00		/* Nanjing QinHeng Electronics (PCIe) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
@@ -4722,6 +4723,7 @@
 #define	PCI_PRODUCT_SYMBIOS_SAS1064A	0x005C		/* SAS1064A */
 #define	PCI_PRODUCT_SYMBIOS_MEGARAID_3108	0x005d		/* MegaRAID SAS3108 */
 #define	PCI_PRODUCT_SYMBIOS_SAS1066	0x005E		/* SAS1066 */
+#define	PCI_PRODUCT_SYMBIOS_MEGARAID_3008	0x005f		/* MegaRAID SAS3008 */
 #define	PCI_PRODUCT_SYMBIOS_SAS1078	0x0060		/* SAS1078 PCI */
 #define	PCI_PRODUCT_SYMBIOS_SAS1078_PCIE	0x0062		/* SAS1078 PCI Express */
 #define	PCI_PRODUCT_SYMBIOS_SAS2116_1	0x0064		/* SAS2116 */

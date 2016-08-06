@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.c,v 1.4 2009/10/26 19:16:56 cegger Exp $	*/
+/*	$NetBSD: copy.c,v 1.4.44.1 2016/08/06 00:19:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -35,6 +35,7 @@
 #include <efilib.h>
 #include <lib/libsa/stand.h>
 
+#include <machine/efilib.h>
 
 int
 efi_copyin(void *src, vaddr_t va, size_t len)

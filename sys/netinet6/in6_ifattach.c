@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.101.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.101.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.101.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,30 +320,34 @@ int
 in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
-	const struct sockaddr_dl *sdl = NULL, *tsdl;
-	const char *addr;
-	size_t addrlen;
+	const struct sockaddr_dl *sdl = NULL;
+	const char *addr = NULL; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
+	size_t addrlen = 0; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	int s;
 
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
+		const struct sockaddr_dl *tsdl;
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		tsdl = satocsdl(ifa->ifa_addr);
 		if (tsdl == NULL || tsdl->sdl_alen == 0)
 			continue;
-		if (sdl == NULL || ifa == ifp->if_dl || ifa == ifp->if_hwdl)
+		if (sdl == NULL || ifa == ifp->if_dl || ifa == ifp->if_hwdl) {
 			sdl = tsdl;
+			addr = CLLADDR(sdl);
+			addrlen = sdl->sdl_alen;
+		}
 		if (ifa == ifp->if_hwdl)
 			break;
 	}
+	pserialize_read_exit(s);
 
 	if (sdl == NULL)
 		return -1;
-
-	addr = CLLADDR(sdl);
-	addrlen = sdl->sdl_alen;
 
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
@@ -532,7 +536,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	struct in6_ifaddr *ia __diagused;
 	struct in6_aliasreq ifra;
 	struct nd_prefixctl prc0;
-	int i, error;
+	int i, error, s;
 
 	/*
 	 * configure link-local address.
@@ -589,8 +593,10 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 		return -1;
 	}
 
+	s = pserialize_read_enter();
 	ia = in6ifa_ifpforlinklocal(ifp, 0); /* ia must not be NULL */
 	KASSERTMSG(ia, "ia == NULL in in6_ifattach_linklocal");
+	pserialize_read_exit(s);
 
 	/*
 	 * Make the link-local prefix (fe80::/64%link) as on-link.
@@ -811,24 +817,29 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	 * XXX multiple loopback interface case.
 	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+		int s = pserialize_read_enter();
 		in6 = in6addr_loopback;
 		if (in6ifa_ifpwithaddr(ifp, &in6) == NULL) {
-			if (in6_ifattach_loopback(ifp) != 0)
+			if (in6_ifattach_loopback(ifp) != 0) {
+				pserialize_read_exit(s);
 				return;
+			}
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*
 	 * assign a link-local address, if there's none.
 	 */
 	if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
-	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL)
-	{
+	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL) {
+		int s = pserialize_read_enter();
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
 		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
 			printf("%s: cannot assign link-local address\n",
 			    ifp->if_xname);
 		}
+		pserialize_read_exit(s);
 	}
 }
 

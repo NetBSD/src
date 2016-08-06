@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.17 2016/06/17 19:42:32 roy Exp $ */
+/* $NetBSD: if.h,v 1.17.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -53,6 +53,21 @@
 #  endif
 #endif
 
+/*
+ * Systems which handle 1 address per alias.
+ * Currenly this is just Solaris.
+ * While Linux can do aliased addresses, it is only useful for their
+ * legacy ifconfig(8) tool which cannot display >1 IPv4 address
+ * (it can display many IPv6 addresses which makes the limitation odd).
+ * Linux has ip(8) which is a more feature rich tool, without the above
+ * restriction.
+ */
+#ifndef ALIAS_ADDR
+#  ifdef __sun
+#    define ALIAS_ADDR
+#  endif
+#endif
+
 #include "config.h"
 #include "dhcpcd.h"
 #include "ipv4.h"
@@ -82,16 +97,19 @@
 	    ((addr & IN_CLASSB_NET) == 0xc0a80000))
 #endif
 
-#define RAW_PARTIALCSUM		1 << 0
+#define RAW_EOF			1 << 0
+#define RAW_PARTIALCSUM		2 << 0
 
 #ifdef __sun
+/* Solaris stupidly defines this for compat with BSD
+ * but then ignores it. */
+#undef RTF_CLONING
+
 /* Solaris getifaddrs is very un-suitable for dhcpcd.
  * See if-sun.c for details why. */
 struct ifaddrs;
 int if_getifaddrs(struct ifaddrs **);
 #define	getifaddrs	if_getifaddrs
-#else
-#define GETIFADDRS_AFLINK
 #endif
 
 int if_setflag(struct interface *ifp, short flag);
@@ -105,6 +123,20 @@ int if_domtu(const struct interface *, short int);
 #define if_getmtu(ifp) if_domtu((ifp), 0)
 #define if_setmtu(ifp, mtu) if_domtu((ifp), (mtu))
 int if_carrier(struct interface *);
+
+/*
+ * Helper to decode an interface name of bge0:1 to
+ * devname = bge0, drvname = bge0, ppa = 0, lun = 1.
+ * If ppa or lun are invalid they are set to -1.
+ */
+struct if_spec {
+	char ifname[IF_NAMESIZE];
+	char devname[IF_NAMESIZE];
+	char drvname[IF_NAMESIZE];
+	int ppa;
+	int lun;
+};
+int if_nametospec(const char *, struct if_spec *);
 
 /* The below functions are provided by if-KERNEL.c */
 int if_conf(struct interface *);
@@ -149,7 +181,7 @@ ssize_t if_readraw(struct interface *, int, void *, size_t, int *);
 void if_closeraw(struct interface *, int);
 
 int if_address(unsigned char, const struct ipv4_addr *);
-int if_addrflags(const struct in_addr *, const struct interface *);
+int if_addrflags(const struct ipv4_addr *);
 
 int if_route(unsigned char, const struct rt *rt);
 int if_initrt(struct dhcpcd_ctx *);
@@ -166,7 +198,7 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #endif
 
 int if_address6(unsigned char, const struct ipv6_addr *);
-int if_addrflags6(const struct in6_addr *, const struct interface *);
+int if_addrflags6(const struct ipv6_addr *);
 int if_getlifetime6(struct ipv6_addr *);
 
 int if_route6(unsigned char, const struct rt6 *rt);

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.23 2016/06/17 19:42:32 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.23.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -56,8 +56,9 @@
 #include "script.h"
 
 #define IPV4_LOOPBACK_ROUTE
-#if defined(__linux__) || (defined(BSD) && defined(RTF_LOCAL))
-/* Linux has had loopback routes in the local table since 2.2 */
+#if defined(__linux__) || defined(__sun) || (defined(BSD) && defined(RTF_LOCAL))
+/* Linux has had loopback routes in the local table since 2.2
+ * Solaris does not seem to support loopback routes. */
 #undef IPV4_LOOPBACK_ROUTE
 #endif
 
@@ -191,53 +192,6 @@ ipv4_findmaskaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 			return ap;
 	}
 	return NULL;
-}
-
-int
-ipv4_srcaddr(const struct rt *rt, struct in_addr *addr)
-{
-	const struct dhcp_state *dstate;
-	const struct ipv4ll_state *istate;
-
-	if (rt->iface == NULL) {
-		errno = ENOENT;
-		return -1;
-	}
-
-	/* Prefer DHCP source address if matching */
-	dstate = D_CSTATE(rt->iface);
-	if (dstate && dstate->addr &&
-	    rt->mask.s_addr == dstate->addr->mask.s_addr &&
-	    rt->dest.s_addr ==
-	    (dstate->addr->addr.s_addr & dstate->addr->mask.s_addr))
-	{
-		*addr = dstate->addr->addr;
-		return 1;
-	}
-
-	/* Then IPv4LL source address if matching */
-	istate = IPV4LL_CSTATE(rt->iface);
-	if (istate && istate->addr &&
-	    rt->mask.s_addr == istate->addr->mask.s_addr &&
-	    rt->dest.s_addr ==
-	    (istate->addr->addr.s_addr & istate->addr->mask.s_addr))
-	{
-		*addr = istate->addr->addr;
-		return 1;
-	}
-
-	/* If neither match, return DHCP then IPv4LL */
-	if (dstate && dstate->addr) {
-		*addr = dstate->addr->addr;
-		return 0;
-	}
-	if (istate && istate->addr) {
-		*addr = istate->addr->addr;
-		return 0;
-	}
-
-	errno = ESRCH;
-	return -1;
 }
 
 int
@@ -773,8 +727,8 @@ ipv4_doroute(struct rt *rt, struct rt_head *nrs)
 #ifdef HAVE_ROUTE_METRIC
 		    or->metric != rt->metric ||
 #endif
-		    or->src.s_addr != rt->src.s_addr ||
 		    or->gate.s_addr != rt->gate.s_addr ||
+		    or->src.s_addr != rt->src.s_addr ||
 		    or->mtu != rt->mtu)
 		{
 			if (c_route(or, rt) != 0)
@@ -975,12 +929,62 @@ ipv4_getstate(struct interface *ifp)
 	return state;
 }
 
+#ifdef ALIAS_ADDR
+/* Find the next logical aliase address we can use. */
+static int
+ipv4_aliasaddr(struct ipv4_addr *ia, struct ipv4_addr **repl)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *iap;
+	unsigned int lun;
+	char alias[IF_NAMESIZE];
+
+	if (ia->alias[0] != '\0')
+		return 0;
+
+	lun = 0;
+	state = IPV4_STATE(ia->iface);
+find_lun:
+	if (lun == 0)
+		strlcpy(alias, ia->iface->name, sizeof(alias));
+	else
+		snprintf(alias, sizeof(alias), "%s:%u", ia->iface->name, lun);
+	TAILQ_FOREACH(iap, &state->addrs, next) {
+		if (iap->alias[0] != '\0' && iap->addr.s_addr == INADDR_ANY) {
+			/* No address assigned? Lets use it. */
+			strlcpy(ia->alias, iap->alias, sizeof(ia->alias));
+			if (repl)
+				*repl = iap;
+			return 1;
+		}
+		if (strcmp(iap->alias, alias) == 0)
+			break;
+	}
+
+	if (iap != NULL) {
+		if (lun == UINT_MAX) {
+			errno = ERANGE;
+			return -1;
+		}
+		lun++;
+		goto find_lun;
+	}
+
+	strlcpy(ia->alias, alias, sizeof(ia->alias));
+	return 0;
+}
+#endif
+
 struct ipv4_addr *
 ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
     const struct in_addr *mask, const struct in_addr *bcast)
 {
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
+#ifdef ALIAS_ADDR
+	int replaced, blank;
+	struct ipv4_addr *replaced_ia;
+#endif
 
 	if ((state = ipv4_getstate(ifp)) == NULL) {
 		logger(ifp->ctx, LOG_ERR, "%s: ipv4_getstate: %m", __func__);
@@ -1009,6 +1013,19 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 #endif
 	snprintf(ia->saddr, sizeof(ia->saddr), "%s/%d",
 	    inet_ntoa(*addr), inet_ntocidr(*mask));
+
+#ifdef ALIAS_ADDR
+	blank = (ia->alias[0] == '\0');
+	if ((replaced = ipv4_aliasaddr(ia, &replaced_ia)) == -1) {
+		logger(ifp->ctx, LOG_ERR, "%s: ipv4_aliasaddr: %m", ifp->name);
+		free(ia);
+		return NULL;
+	}
+	if (blank)
+		logger(ia->iface->ctx, LOG_DEBUG, "%s: aliased %s",
+		    ia->alias, ia->saddr);
+#endif
+
 	logger(ifp->ctx, LOG_DEBUG, "%s: adding IP address %s broadcast %s",
 	    ifp->name, ia->saddr, inet_ntoa(*bcast));
 	if (if_address(RTM_NEWADDR, ia) == -1) {
@@ -1018,6 +1035,13 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 		free(ia);
 		return NULL;
 	}
+
+#ifdef ALIAS_ADDR
+	if (replaced) {
+		TAILQ_REMOVE(&state->addrs, replaced_ia, next);
+		free(replaced_ia);
+	}
+#endif
 
 	TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 	return ia;
@@ -1211,11 +1235,12 @@ void
 ipv4_handleifa(struct dhcpcd_ctx *ctx,
     int cmd, struct if_head *ifs, const char *ifname,
     const struct in_addr *addr, const struct in_addr *mask,
-    const struct in_addr *brd, int flags)
+    const struct in_addr *brd)
 {
 	struct interface *ifp;
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
+	int flags;
 
 	if (ifs == NULL)
 		ifs = ctx->ifaces;
@@ -1240,6 +1265,9 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 			}
 			ia->iface = ifp;
 			ia->addr = *addr;
+#ifdef ALIAS_ADDR
+			strlcpy(ia->alias, ifname, sizeof(ia->alias));
+#endif
 			TAILQ_INSERT_TAIL(&state->addrs, ia, next);
 		}
 		/* Mask could have changed */
@@ -1250,6 +1278,14 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 			ia->brd = *brd;
 		else
 			ia->brd.s_addr = INADDR_ANY;
+
+		flags = if_addrflags(ia);
+		if (flags == -1) {
+			logger(ia->iface->ctx, LOG_ERR,
+			    "%s: %s: if_addrflags: %m",
+			    ia->iface->name, ia->saddr);
+			return;
+		}
 		ia->addr_flags = flags;
 		break;
 	case RTM_DELADDR:

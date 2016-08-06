@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.82.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.82.2.1 2016/08/06 00:19:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ ext2fs_size(struct inode *ip)
 	uint64_t size = ip->i_e2fs_size;
 
 	if ((ip->i_e2fs_mode & IFMT) == IFREG)
-		size |= (uint64_t)ip->i_e2fs_dacl << 32;
+		size |= (uint64_t)ip->i_din.e2fs_din->e2di_size_high << 32;
 	return size;
 }
 
@@ -113,7 +113,7 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 {
 	if ((ip->i_e2fs_mode & IFMT) == IFREG ||
 	    ip->i_e2fs_mode == 0) {
-		ip->i_e2fs_dacl = size >> 32;
+		ip->i_din.e2fs_din->e2di_size_high = size >> 32;
 		if (size >= 0x80000000U) {
 			struct m_ext2fs *fs = ip->i_e2fs;
 
@@ -269,7 +269,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (char *)bp->b_data +
 	    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE(fs));
-	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp);
+	e2fs_isave(ip->i_din.e2fs_din, (struct ext2fs_dinode *)cp, EXT2_DINODE_SIZE(fs));
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
 	    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0)

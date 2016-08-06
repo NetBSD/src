@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.131 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.131.2.1 2016/08/06 00:19:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.131 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.131.2.1 2016/08/06 00:19:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1117,7 +1117,6 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	struct linux_ifreq ifr, *ifrp = NULL;
 	struct linux_ifconf ifc;
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
 	struct sockaddr *sa;
 	struct osockaddr *osa;
 	int space = 0, error;
@@ -1140,8 +1139,8 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		struct ifaddr *ifa;
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
-		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -1151,23 +1150,32 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		}
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
+			struct psref psref_ifa;
+			ifa_acquire(ifa, &psref_ifa);
+			pserialize_read_exit(s);
+
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
 			    sa->sa_len > sizeof(*osa))
-				continue;
+				goto next;
 			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 			osa = (struct osockaddr *)&ifr.ifr_addr;
 			osa->sa_family = sa->sa_family;
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
-				if (error != 0)
+				if (error != 0) {
+					s = pserialize_read_enter();
+					ifa_release(ifa, &psref_ifa);
 					goto release_exit;
+				}
 				ifrp++;
 			}
 			space -= sz;
+		next:
+			s = pserialize_read_enter();
+			ifa_release(ifa, &psref_ifa);
 		}
 
-		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
@@ -1181,6 +1189,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	return copyout(&ifc, data, sizeof(ifc));
 
 release_exit:
+	pserialize_read_exit(s);
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	curlwp_bindx(bound);
 	return error;

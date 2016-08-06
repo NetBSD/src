@@ -1,6 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.12 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.70 2015/12/10 17:08:40 mmcc Exp $ */
-
+/*	$NetBSD: auth-options.c,v 1.12.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.71 2016/03/07 19:02:43 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +12,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.12 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.12.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -31,6 +30,7 @@ __RCSID("$NetBSD: auth-options.c,v 1.12 2016/03/11 01:55:00 christos Exp $");
 #include "ssherr.h"
 #include "log.h"
 #include "canohost.h"
+#include "packet.h"
 #include "sshbuf.h"
 #include "misc.h"
 #include "channels.h"
@@ -123,6 +123,7 @@ int
 auth_parse_options(struct passwd *pw, const char *opts, const char *file,
     u_long linenum)
 {
+	struct ssh *ssh = active_state;		/* XXX */
 	const char *cp;
 	int i, r;
 
@@ -276,9 +277,9 @@ auth_parse_options(struct passwd *pw, const char *opts, const char *file,
 		}
 		cp = "from=\"";
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
-			const char *remote_ip = get_remote_ipaddr();
-			const char *remote_host = get_canonical_hostname(
-			    options.use_dns);
+			const char *remote_ip = ssh_remote_ipaddr(ssh);
+			const char *remote_host = auth_get_canonical_hostname(
+			    ssh, options.use_dns);
 			char *patterns = xmalloc(strlen(opts) + 1);
 
 			opts += strlen(cp);
@@ -460,6 +461,7 @@ parse_option_list(struct sshbuf *oblob, struct passwd *pw,
     char **cert_forced_command,
     int *cert_source_address_done)
 {
+	struct ssh *ssh = active_state;		/* XXX */
 	char *command, *allowed;
 	const char *remote_ip;
 	char *name = NULL;
@@ -533,7 +535,7 @@ parse_option_list(struct sshbuf *oblob, struct passwd *pw,
 					free(allowed);
 					goto out;
 				}
-				remote_ip = get_remote_ipaddr();
+				remote_ip = ssh_remote_ipaddr(ssh);
 				result = addr_match_cidr_list(remote_ip,
 				    allowed);
 				free(allowed);

@@ -192,6 +192,7 @@ check-DEJAGNU: site.exp
 	EXPECT=$(EXPECT); export EXPECT; \
 	runtest=$(RUNTEST); \
 	if $(SHELL) -c "$$runtest --version" > /dev/null 2>&1; then \
+	  CC="$(CC)" CC_FOR_BUILD="$(CC_FOR_BUILD)" \
 	  CC_FOR_TARGET="$(CC_FOR_TARGET)" CFLAGS_FOR_TARGET="$(CFLAGS)" \
 		$$runtest --tool $(DEJATOOL) --srcdir $${srcdir}/testsuite \
 			$(RUNTESTFLAGS); \

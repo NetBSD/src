@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.35 2016/06/17 19:42:31 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.35.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -400,6 +400,8 @@ stop_interface(struct interface *ifp)
 	/* De-activate the interface */
 	ifp->active = IF_INACTIVE;
 	ifp->options->options &= ~DHCPCD_STOPPING;
+	/* Set the link state to unknown as we're no longer tracking it. */
+	ifp->carrier = LINK_UNKNOWN;
 
 stop:
 	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_TEST)))
@@ -585,8 +587,11 @@ dhcpcd_selectprofile(struct interface *ifp, const char *profile)
 
 	free_options(ifp->options);
 	ifp->options = ifo;
-	if (profile)
+	if (profile) {
+		add_options(ifp->ctx, ifp->name, ifp->options,
+		    ifp->ctx->argc, ifp->ctx->argv);
 		configure_interface1(ifp);
+	}
 	return 1;
 }
 
@@ -1043,12 +1048,14 @@ dhcpcd_handleinterface(void *arg, int action, const char *ifname)
 			continue;
 
 		/* If running off an interface list, check it's in it. */
-		if (ctx->ifc) {
+		if (ctx->ifc || ctx->options & DHCPCD_INACTIVE) {
 			for (i = 0; i < ctx->ifc; i++)
 				if (strcmp(ctx->ifv[i], ifname) == 0)
 					break;
-			if (i >= ctx->ifc)
+			if (i >= ctx->ifc) {
 				ifp->active = IF_INACTIVE;
+				ifp->carrier = LINK_UNKNOWN;
+			}
 		}
 
 		i = 0;
@@ -1860,7 +1867,9 @@ printpidfile:
 	}
 	if (ifp == NULL) {
 		if (ctx.ifc == 0)
-			logger(&ctx, LOG_ERR, "no valid interfaces found");
+			logger(&ctx,
+			    ctx.options & DHCPCD_INACTIVE ? LOG_DEBUG : LOG_ERR,
+			    "no valid interfaces found");
 		else
 			goto exit_failure;
 		if (!(ctx.options & DHCPCD_LINK)) {
@@ -1904,7 +1913,9 @@ printpidfile:
 		    ctx.options & DHCPCD_LINK &&
 		    !(ctx.options & DHCPCD_WAITIP))
 		{
-			logger(&ctx, LOG_WARNING,
+			logger(&ctx,
+			    ctx.options & DHCPCD_INACTIVE ?
+			    LOG_DEBUG : LOG_WARNING,
 			    "no interfaces have a carrier");
 			if (dhcpcd_daemonise(&ctx))
 				goto exit_success;

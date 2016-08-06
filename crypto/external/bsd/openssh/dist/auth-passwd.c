@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-passwd.c,v 1.4 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth-passwd.c,v 1.44 2014/07/15 15:54:14 millert Exp $ */
+/*	$NetBSD: auth-passwd.c,v 1.4.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: auth-passwd.c,v 1.45 2016/07/21 01:39:35 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.4 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.4.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -69,6 +69,8 @@ extern login_cap_t *lc;
 #define DAY		(24L * 60 * 60) /* 1 day in seconds */
 #define TWO_WEEKS	(2L * 7 * DAY)	/* 2 weeks in seconds */
 
+#define MAX_PASSWORD_LEN	1024
+
 #if defined(BSD_AUTH) || defined(USE_PAM)
 void
 disable_forwarding(void)
@@ -88,6 +90,9 @@ auth_password(Authctxt *authctxt, const char *password)
 {
 	struct passwd * pw = authctxt->pw;
 	int ok = authctxt->valid;
+
+	if (strlen(password) > MAX_PASSWORD_LEN)
+		return 0;
 
 	if (pw->pw_uid == 0 && options.permit_root_login != PERMIT_YES)
 		ok = 0;

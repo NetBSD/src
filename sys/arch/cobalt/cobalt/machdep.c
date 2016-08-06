@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2015/06/29 17:52:53 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117.2.1 2016/08/06 00:19:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2015/06/29 17:52:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117.2.1 2016/08/06 00:19:04 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -274,15 +274,6 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 	KASSERT(&lwp0 == curlwp);
-#ifdef DDB
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-
 	/*
 	 * Load the rest of the available pages into the VM system.
 	 */
@@ -302,6 +293,16 @@ mach_init(int32_t memsize32, u_int bim, int32_t bip32)
 	 * Allocate space for proc0's USPACE.
 	 */
 	mips_init_lwp0_uarea();
+
+#ifdef DDB
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
+
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.421.2.1 2016/07/26 03:24:21 pgoyette Exp $ */
+/*	$NetBSD: wd.c,v 1.421.2.2 2016/08/06 00:19:07 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.421.2.1 2016/07/26 03:24:21 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.421.2.2 2016/08/06 00:19:07 pgoyette Exp $");
 
 #include "opt_ata.h"
 
@@ -394,8 +394,8 @@ wdattach(device_t parent, device_t self, void *aux)
 	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
 	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LLS) != 0)) {
 		wd->sc_blksize = 2ULL *
-		    (wd->sc_params.atap_lls_secsz[1] << 16 |
-		     wd->sc_params.atap_lls_secsz[0] <<  0);
+		    ((uint32_t)((wd->sc_params.atap_lls_secsz[1] << 16) |
+		    wd->sc_params.atap_lls_secsz[0]));
 	} else {
 		wd->sc_blksize = 512;
 	}

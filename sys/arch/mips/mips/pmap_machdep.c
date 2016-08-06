@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.1 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.1.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.1 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.1.2.1 2016/08/06 00:19:06 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -181,7 +181,7 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 	KASSERT(!locked_p || VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 
 	if (!MIPS_CACHE_VIRTUAL_ALIAS || !mips_cache_badalias(pv->pv_va, pa)) {
-#ifndef __mips_o32
+#ifdef _LP64
 		va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
 #else
 		if (pa < MIPS_PHYS_MASK) {
@@ -198,13 +198,14 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 		struct cpu_info * const ci = curcpu();
 		KASSERT(ci->ci_pmap_dstbase != 0);
 
-		va = (prot & VM_PROT_WRITE
+		vaddr_t nva = (prot & VM_PROT_WRITE
 			? ci->ci_pmap_dstbase
 			: ci->ci_pmap_srcbase)
 		    + mips_cache_indexof(MIPS_CACHE_VIRTUAL_ALIAS
 			? pv->pv_va
 			: pa);
 
+		va = (intptr_t)nva;
 		/*
 		 * Now to make and write the new PTE to map the PA.
 		 */
@@ -229,8 +230,8 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 			(void)VM_PAGEMD_PVLIST_READLOCK(mdpg);
 		if (VM_PAGEMD_CACHED_P(mdpg)
 		    && mips_cache_badalias(pv->pv_va, va)) {
-			mips_dcache_wbinv_range_index(trunc_page(pv->pv_va),
-			    PAGE_SIZE);
+			register_t ova = (intptr_t)trunc_page(pv->pv_va);
+			mips_dcache_wbinv_range_index(ova, PAGE_SIZE);
 			/*
 			 * If there is no active mapping, remember this new one.
 			 */

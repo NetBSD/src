@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 2016/07/14 05:00:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18 2016/07/14 05:00:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.18.2.1 2016/08/06 00:19:11 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -276,10 +276,10 @@ kmutex_t pmap_pvlist_mutex	__cacheline_aligned;
  * Debug functions.
  */
 
+#ifdef DEBUG
 static inline void
 pmap_asid_check(pmap_t pm, const char *func)
 {
-#ifdef DEBUG
 	if (!PMAP_IS_ACTIVE(pm))
 		return;
 
@@ -288,8 +288,8 @@ pmap_asid_check(pmap_t pm, const char *func)
 	if (asid != pai->pai_asid)
 		panic("%s: inconsistency for active TLB update: %u <-> %u",
 		    func, asid, pai->pai_asid);
-#endif
 }
+#endif
 
 static void
 pmap_addr_range_check(pmap_t pmap, vaddr_t sva, vaddr_t eva, const char *func)

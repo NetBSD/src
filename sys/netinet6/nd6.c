@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.203.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6.c,v 1.203.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.203.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.203.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -571,6 +571,8 @@ nd6_timer_work(struct work *wk, void *arg)
 	struct nd_defrouter *next_dr, *dr;
 	struct nd_prefix *next_pr, *pr;
 	struct in6_ifaddr *ia6, *nia6;
+	int s, bound;
+	struct psref psref;
 
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
@@ -592,9 +594,15 @@ nd6_timer_work(struct work *wk, void *arg)
 	 * However, from a stricter speci-confrmance standpoint, we should
 	 * rather separate address lifetimes and prefix lifetimes.
 	 */
+	bound = curlwp_bind();
   addrloop:
-	for (ia6 = IN6_ADDRLIST_WRITER_FIRST(); ia6; ia6 = nia6) {
-		nia6 = IN6_ADDRLIST_WRITER_NEXT(ia6);
+	s = pserialize_read_enter();
+	for (ia6 = IN6_ADDRLIST_READER_FIRST(); ia6; ia6 = nia6) {
+		nia6 = IN6_ADDRLIST_READER_NEXT(ia6);
+
+		ia6_acquire(ia6, &psref);
+		pserialize_read_exit(s);
+
 		/* check address lifetime */
 		if (IFA6_IS_INVALID(ia6)) {
 			int regen = 0;
@@ -615,7 +623,9 @@ nd6_timer_work(struct work *wk, void *arg)
 					regen = 1;
 			}
 
+			ia6_release(ia6, &psref);
  			in6_purgeaddr(&ia6->ia_ifa);
+			ia6 = NULL;
 
 			if (regen)
 				goto addrloop; /* XXX: see below */
@@ -649,6 +659,7 @@ nd6_timer_work(struct work *wk, void *arg)
 					 * loop just for safety.  Or does this
 					 * significantly reduce performance??
 					 */
+					ia6_release(ia6, &psref);
 					goto addrloop;
 				}
 			}
@@ -663,7 +674,11 @@ nd6_timer_work(struct work *wk, void *arg)
 				    (struct ifaddr *)ia6, 0, NULL);
 			}
 		}
+		s = pserialize_read_enter();
+		ia6_release(ia6, &psref);
 	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
 
 	/* expire prefix list */
 	LIST_FOREACH_SAFE(pr, &nd_prefix, ndpr_entry, next_pr) {
@@ -702,8 +717,10 @@ regen_tmpaddr(const struct in6_ifaddr *ia6)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct in6_ifaddr *public_ifa6 = NULL;
+	int s;
 
 	ifp = ia6->ia_ifa.ifa_ifp;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *it6;
 
@@ -745,18 +762,24 @@ regen_tmpaddr(const struct in6_ifaddr *ia6)
 
 	if (public_ifa6 != NULL) {
 		int e;
+		struct psref psref;
 
+		ia6_acquire(public_ifa6, &psref);
+		pserialize_read_exit(s);
 		/*
 		 * Random factor is introduced in the preferred lifetime, so
 		 * we do not need additional delay (3rd arg to in6_tmpifadd).
 		 */
 		if ((e = in6_tmpifadd(public_ifa6, 0, 0)) != 0) {
+			ia6_release(public_ifa6, &psref);
 			log(LOG_NOTICE, "regen_tmpaddr: failed to create a new"
 			    " tmp addr, errno=%d\n", e);
 			return -1;
 		}
+		ia6_release(public_ifa6, &psref);
 		return 0;
 	}
+		pserialize_read_exit(s);
 
 	return -1;
 }
@@ -914,6 +937,7 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 {
 	struct nd_prefix *pr;
 	struct ifaddr *dstaddr;
+	int s;
 
 	/*
 	 * A link-local address is always a neighbor.
@@ -979,20 +1003,15 @@ nd6_is_new_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 	 * If the address is assigned on the node of the other side of
 	 * a p2p interface, the address should be a neighbor.
 	 */
+	s = pserialize_read_enter();
 	dstaddr = ifa_ifwithdstaddr(sin6tocsa(addr));
 	if (dstaddr != NULL) {
 		if (dstaddr->ifa_ifp == ifp) {
-#ifdef __FreeBSD__
-			/* XXX we need to ifaref in ifa_ifwithdstaddr as well */
-			ifafree(dstaddr);
-#endif
+			pserialize_read_exit(s);
 			return 1;
 		}
-#ifdef __FreeBSD__
-		/* XXX we need to ifaref in ifa_ifwithdstaddr as well */
-		ifafree(dstaddr);
-#endif
 	}
+	pserialize_read_exit(s);
 
 	/*
 	 * If the default router list is empty, all addresses are regarded
@@ -1374,7 +1393,9 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	}
 
 	switch (req) {
-	case RTM_ADD:
+	case RTM_ADD: {
+		int s;
+
 		RT_DPRINTF("rt_getkey(rt) = %p\n", rt_getkey(rt));
 		/*
 		 * There is no backward compatibility :)
@@ -1481,6 +1502,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * check if rt_getkey(rt) is an address assigned
 		 * to the interface.
 		 */
+		s = pserialize_read_enter();
 		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp,
 		    &satocsin6(rt_getkey(rt))->sin6_addr);
 		if (ifa != NULL) {
@@ -1517,8 +1539,8 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				}
 			}
 		}
-
 	out:
+		pserialize_read_exit(s);
 		/*
 		 * If we have too many cache entries, initiate immediate
 		 * purging for some entries.
@@ -1526,6 +1548,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		if (rt->rt_ifp != NULL)
 			nd6_gc_neighbors(LLTABLE6(rt->rt_ifp));
 		break;
+	    }
 
 	case RTM_DELETE:
 		/* leave from solicited node multicast for proxy ND */
@@ -1709,6 +1732,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 			 */
 			int duplicated_linklocal = 0;
 
+			s = pserialize_read_enter();
 			IFADDR_READER_FOREACH(ifa, ifp) {
 				if (ifa->ifa_addr->sa_family != AF_INET6)
 					continue;
@@ -1720,6 +1744,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 					break;
 				}
 			}
+			pserialize_read_exit(s);
 
 			if (duplicated_linklocal) {
 				ND.flags |= ND6_IFF_IFDISABLED;
@@ -1732,18 +1757,29 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 					in6_if_up(ifp);
 			}
 		} else if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
-		    (ND.flags & ND6_IFF_IFDISABLED))
-		{
+		    (ND.flags & ND6_IFF_IFDISABLED)) {
+			int bound = curlwp_bind(); 
 			/* Mark all IPv6 addresses as tentative. */
 
 			ND_IFINFO(ifp)->flags |= ND6_IFF_IFDISABLED;
+			s = pserialize_read_enter();
 			IFADDR_READER_FOREACH(ifa, ifp) {
+				struct psref psref;
 				if (ifa->ifa_addr->sa_family != AF_INET6)
 					continue;
+				ifa_acquire(ifa, &psref);
+				pserialize_read_exit(s);
+
 				nd6_dad_stop(ifa);
+
 				ia = (struct in6_ifaddr *)ifa;
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
+
+				s = pserialize_read_enter();
+				ifa_release(ifa, &psref);
 			}
+			pserialize_read_exit(s);
+			curlwp_bindx(bound);
 		}
 
 		if (ND.flags & ND6_IFF_AUTO_LINKLOCAL) {
@@ -1761,9 +1797,10 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 				 * address is assigned, and IFF_UP, try to
 				 * assign one.
 				 */
-				 int haslinklocal = 0;
+				int haslinklocal = 0;
 
-				 IFADDR_READER_FOREACH(ifa, ifp) {
+				s = pserialize_read_enter();
+				IFADDR_READER_FOREACH(ifa, ifp) {
 					if (ifa->ifa_addr->sa_family !=AF_INET6)
 						continue;
 					ia = (struct in6_ifaddr *)ifa;
@@ -1771,8 +1808,9 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 						haslinklocal = 1;
 						break;
 					}
-				 }
-				 if (!haslinklocal)
+				}
+				pserialize_read_exit(s);
+				if (!haslinklocal)
 					in6_ifattach(ifp, NULL);
 			}
 		}
@@ -1793,22 +1831,30 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 		s = splsoftnet();
 		LIST_FOREACH_SAFE(pfx, &nd_prefix, ndpr_entry, next) {
 			struct in6_ifaddr *ia, *ia_next;
+			int _s;
 
 			if (IN6_IS_ADDR_LINKLOCAL(&pfx->ndpr_prefix.sin6_addr))
 				continue; /* XXX */
 
 			/* do we really have to remove addresses as well? */
-			for (ia = IN6_ADDRLIST_WRITER_FIRST(); ia;
+		restart:
+			_s = pserialize_read_enter();
+			for (ia = IN6_ADDRLIST_READER_FIRST(); ia;
 			     ia = ia_next) {
 				/* ia might be removed.  keep the next ptr. */
-				ia_next = IN6_ADDRLIST_WRITER_NEXT(ia);
+				ia_next = IN6_ADDRLIST_READER_NEXT(ia);
 
 				if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 					continue;
 
-				if (ia->ia6_ndpr == pfx)
+				if (ia->ia6_ndpr == pfx) {
+					pserialize_read_exit(_s);
+					/* XXX NOMPSAFE? */
 					in6_purgeaddr(&ia->ia_ifa);
+					goto restart;
+				}
 			}
+			pserialize_read_exit(_s);
 			prelist_remove(pfx);
 		}
 		splx(s);
@@ -2172,6 +2218,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 
 	if (rt != NULL && (rt->rt_flags & RTF_GATEWAY) != 0) {
 		struct sockaddr_in6 *gw6 = satosin6(rt->rt_gateway);
+		int s;
 
 		/* XXX remain the check to keep the original behavior. */
 		/*
@@ -2182,6 +2229,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 		 * if the gateway is our own address, which is
 		 * sometimes used to install a route to a p2p link.
 		 */
+		s = pserialize_read_enter();
 		if (!nd6_is_addr_neighbor(gw6, ifp) ||
 		    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
 			/*
@@ -2192,8 +2240,10 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 			if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 				senderr(EHOSTUNREACH);
 
+			pserialize_read_exit(s);
 			goto sendpkt;
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*

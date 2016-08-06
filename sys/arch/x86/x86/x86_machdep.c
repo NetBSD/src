@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.70.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.70.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.1 2016/07/26 03:24:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.70.2.2 2016/08/06 00:19:06 pgoyette Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -881,8 +881,6 @@ init_x86_vm(paddr_t pa_kend)
 			continue;
 
 		if (seg_start <= avail_start && avail_start < seg_end) {
-			if (seg_start != 0)
-				panic("init_x86_64: memory doesn't start at 0");
 			seg_start = avail_start;
 			if (seg_start == seg_end)
 				continue;

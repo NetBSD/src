@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect1.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: sshconnect1.c,v 1.7.2.1 2016/08/06 00:18:39 pgoyette Exp $	*/
 /* $OpenBSD: sshconnect1.c,v 1.78 2015/11/15 22:26:49 jcs Exp $ */
 
 /*
@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect1.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sshconnect1.c,v 1.7.2.1 2016/08/06 00:18:39 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -240,17 +240,19 @@ try_krb4_authentication(void)
 	MSG_DAT msg_data;
 	struct sockaddr_in local, foreign;
 	struct stat st;
+	struct ssh *ssh = active_state;	/* XXX */
 
 	/* Don't do anything if we don't have any tickets. */
 	if (stat(tkt_string(), &st) < 0)
 		return 0;
 
-	strlcpy(inst, (char *)krb_get_phost(get_canonical_hostname(1)),
-	    INST_SZ);
+	strlcpy(inst, (char *)krb_get_phost(auth_get_canonical_hostname(ssh,
+	    1)), INST_SZ);
 
-	realm = (char *)krb_realmofhost(get_canonical_hostname(1));
+	realm = (char *)krb_realmofhost(auth_get_canonical_hostname(ssh, 1));
 	if (!realm) {
-		debug("Kerberos v4: no realm for %s", get_canonical_hostname(1));
+		debug("Kerberos v4: no realm for %s",
+		auth_get_canonical_hostname(ssh, 1));
 		return 0;
 	}
 	/* This can really be anything. */
@@ -487,6 +489,7 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 	krb5_ap_rep_enc_part *reply = NULL;
 	int ret;
 	const char *errtxt;
+	struct ssh *ssh = active_state;	/* XXX */
 
 	memset(&ap, 0, sizeof(ap));
 
@@ -521,7 +524,7 @@ try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
 		goto out;
 	}
 
-	remotehost = get_canonical_hostname(1);
+	remotehost = auth_get_canonical_hostname(ssh, 1);
 
 	problem = krb5_mk_req(*context, auth_context, AP_OPTS_MUTUAL_REQUIRED,
 	    "host", remotehost, NULL, ccache, &ap);
@@ -598,6 +601,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 	krb5_kdc_flags flags;
 	const char *remotehost;
 	const char *errtxt;
+	struct ssh *ssh = active_state;	/* XXX */
 
 	memset(&creds, 0, sizeof(creds));
 	memset(&outbuf, 0, sizeof(outbuf));
@@ -629,7 +633,7 @@ send_krb5_tgt(krb5_context context, krb5_auth_context auth_context)
 	flags.b.forwardable = krb5_config_get_bool(context,  NULL,
 	    "libdefaults", "forwardable", NULL);
 
-	remotehost = get_canonical_hostname(1);
+	remotehost = auth_get_canonical_hostname(ssh, 1);
 
 	problem = krb5_get_forwarded_creds(context, auth_context,
 	    ccache, flags.i, remotehost, &creds, &outbuf);

@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.17 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.212 2016/02/15 09:47:49 dtucker Exp $ */
-
+/*	$NetBSD: ssh-agent.c,v 1.17.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.213 2016/05/02 08:49:03 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.17 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.17.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -132,8 +131,8 @@ char socket_dir[PATH_MAX];
 #define LOCK_SALT_SIZE	16
 #define LOCK_ROUNDS	1
 int locked = 0;
-char lock_passwd[LOCK_SIZE];
-char lock_salt[LOCK_SALT_SIZE];
+u_char lock_pwhash[LOCK_SIZE];
+u_char lock_salt[LOCK_SALT_SIZE];
 
 extern char *__progname;
 
@@ -664,7 +663,8 @@ static void
 process_lock_agent(SocketEntry *e, int lock)
 {
 	int r, success = 0, delay;
-	char *passwd, passwdhash[LOCK_SIZE];
+	char *passwd;
+	u_char passwdhash[LOCK_SIZE];
 	static u_int fail_count = 0;
 	size_t pwlen;
 
@@ -676,11 +676,11 @@ process_lock_agent(SocketEntry *e, int lock)
 		if (bcrypt_pbkdf(passwd, pwlen, (uint8_t *)lock_salt, sizeof(lock_salt),
 		    (uint8_t *)passwdhash, sizeof(passwdhash), LOCK_ROUNDS) < 0)
 			fatal("bcrypt_pbkdf");
-		if (timingsafe_bcmp(passwdhash, lock_passwd, LOCK_SIZE) == 0) {
+		if (timingsafe_bcmp(passwdhash, lock_pwhash, LOCK_SIZE) == 0) {
 			debug("agent unlocked");
 			locked = 0;
 			fail_count = 0;
-			explicit_bzero(lock_passwd, sizeof(lock_passwd));
+			explicit_bzero(lock_pwhash, sizeof(lock_pwhash));
 			success = 1;
 		} else {
 			/* delay in 0.1s increments up to 10s */
@@ -696,9 +696,8 @@ process_lock_agent(SocketEntry *e, int lock)
 		debug("agent locked");
 		locked = 1;
 		arc4random_buf(lock_salt, sizeof(lock_salt));
-		if (bcrypt_pbkdf(passwd, pwlen, (uint8_t *)lock_salt, sizeof(lock_salt),
-		    (uint8_t *)lock_passwd, sizeof(lock_passwd),
-		    LOCK_ROUNDS) < 0)
+		if (bcrypt_pbkdf(passwd, pwlen, lock_salt, sizeof(lock_salt),
+		    lock_pwhash, sizeof(lock_pwhash), LOCK_ROUNDS) < 0)
 			fatal("bcrypt_pbkdf");
 		success = 1;
 	}

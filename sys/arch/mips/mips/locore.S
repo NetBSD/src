@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.202 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.202.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,8 @@
 #include <mips/cpuregs.h>
 #include <mips/trap.h>
 
+RCSID("$NetBSD: locore.S,v 1.202.2.1 2016/08/06 00:19:06 pgoyette Exp $")
+
 #include "assym.h"
 
 #if defined(MIPS1) || defined(MIPS2)
@@ -97,6 +99,8 @@ _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #endif
+	mtc0	zero, MIPS_COP_0_CAUSE
+	COP0_SYNC
 #ifdef MIPS64_OCTEON
 	//
 	// U-boot on the erlite starts all cpus at the kernel entry point.

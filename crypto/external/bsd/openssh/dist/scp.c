@@ -1,6 +1,5 @@
-/*	$NetBSD: scp.c,v 1.13 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.184 2015/11/27 00:49:31 deraadt Exp $ */
-
+/*	$NetBSD: scp.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: scp.c,v 1.186 2016/05/25 23:48:45 schwarze Exp $ */
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -74,7 +73,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.13 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -87,6 +86,7 @@ __RCSID("$NetBSD: scp.c,v 1.13 2016/03/11 01:55:00 christos Exp $");
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <locale.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -104,6 +104,7 @@ __RCSID("$NetBSD: scp.c,v 1.13 2016/03/11 01:55:00 christos Exp $");
 #include "log.h"
 #include "misc.h"
 #include "progressmeter.h"
+#include "utf8.h"
 
 #define COPY_BUFLEN	16384
 
@@ -186,7 +187,7 @@ do_local_cmd(arglist *a)
 	if (verbose_mode) {
 		fprintf(stderr, "Executing:");
 		for (i = 0; i < a->num; i++)
-			fprintf(stderr, " %s", a->list[i]);
+			fmprintf(stderr, " %s", a->list[i]);
 		fprintf(stderr, "\n");
 	}
 	if ((pid = fork()) == -1)
@@ -227,7 +228,7 @@ do_cmd(char *host, char *remuser, char *cmd, int *fdin, int *fdout)
 	int pin[2], pout[2], reserved[2];
 
 	if (verbose_mode)
-		fprintf(stderr,
+		fmprintf(stderr,
 		    "Executing: program %s host %s, user %s, command %s\n",
 		    ssh_program, host,
 		    remuser ? remuser : "(unspecified)", cmd);
@@ -302,7 +303,7 @@ do_cmd2(char *host, char *remuser, char *cmd, int fdin, int fdout)
 	int status;
 
 	if (verbose_mode)
-		fprintf(stderr,
+		fmprintf(stderr,
 		    "Executing: 2nd program %s host %s, user %s, command %s\n",
 		    ssh_program, host,
 		    remuser ? remuser : "(unspecified)", cmd);
@@ -372,6 +373,8 @@ main(int argc, char **argv)
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
+
+	setlocale(LC_CTYPE, "");
 
 	/* Copy argv, because we modify it */
 	newargv = xcalloc(MAX(argc + 1, 1), sizeof(*newargv));
@@ -803,9 +806,8 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 		snprintf(buf, sizeof buf, "C%04o %lld %s\n",
 		    (u_int) (stb.st_mode & FILEMODEMASK),
 		    (long long)stb.st_size, last);
-		if (verbose_mode) {
-			fprintf(stderr, "Sending file modes: %s", buf);
-		}
+		if (verbose_mode)
+			fmprintf(stderr, "Sending file modes: %s", buf);
 		(void) atomicio(vwrite, remout, buf, strlen(buf));
 		if (response() < 0)
 			goto next;
@@ -841,8 +843,6 @@ next:			if (fd != -1) {
 				haderr = errno;
 		}
 		unset_nonblock(remout);
-		if (showprogress)
-			stop_progress_meter();
 
 		if (fd != -1) {
 			if (close(fd) < 0 && !haderr)
@@ -854,6 +854,8 @@ next:			if (fd != -1) {
 		else
 			run_err("%s: %s", name, strerror(haderr));
 		(void) response();
+		if (showprogress)
+			stop_progress_meter();
 	}
 }
 
@@ -882,7 +884,7 @@ rsource(char *name, struct stat *statp)
 	(void) snprintf(path, sizeof path, "D%04o %d %.1024s\n",
 	    (u_int) (statp->st_mode & FILEMODEMASK), 0, last);
 	if (verbose_mode)
-		fprintf(stderr, "Entering directory: %s", path);
+		fmprintf(stderr, "Entering directory: %s", path);
 	(void) atomicio(vwrite, remout, path, strlen(path));
 	if (response() < 0) {
 		closedir(dirp);
@@ -922,7 +924,7 @@ sink(int argc, char **argv)
 	off_t size, statbytes;
 	unsigned long long ull;
 	int setimes, targisdir, wrerrno = 0;
-	char ch, *cp, *np, *targ, *vect[1], buf[16384];
+	char ch, *cp, *np, *targ, *vect[1], buf[2048], visbuf[2048];
 	const char *why;
 	struct timeval tv[2];
 
@@ -958,12 +960,15 @@ sink(int argc, char **argv)
 		} while (cp < &buf[sizeof(buf) - 1] && ch != '\n');
 		*cp = 0;
 		if (verbose_mode)
-			fprintf(stderr, "Sink: %s", buf);
+			fmprintf(stderr, "Sink: %s", buf);
 
 		if (buf[0] == '\01' || buf[0] == '\02') {
-			if (iamremote == 0)
+			if (iamremote == 0) {
+				(void) snmprintf(visbuf, sizeof(visbuf),
+				    NULL, "%s", buf + 1);
 				(void) atomicio(vwrite, STDERR_FILENO,
-				    buf + 1, strlen(buf + 1));
+				    visbuf, strlen(visbuf));
+			}
 			if (buf[0] == '\02')
 				exit(1);
 			++errs;
@@ -1139,8 +1144,6 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			}
 		}
 		unset_nonblock(remin);
-		if (showprogress)
-			stop_progress_meter();
 		if (count != 0 && wrerr == NO &&
 		    atomicio(vwrite, ofd, bp->buf, count) != count) {
 			wrerr = YES;
@@ -1171,6 +1174,8 @@ bad:			run_err("%s: %s", np, strerror(errno));
 			wrerrno = errno;
 		}
 		(void) response();
+		if (showprogress)
+			stop_progress_meter();
 		if (setimes && wrerr == NO) {
 			setimes = 0;
 			if (utimes(np, tv) < 0) {
@@ -1198,7 +1203,7 @@ screwup:
 int
 response(void)
 {
-	char ch, *cp, resp, rbuf[2048];
+	char ch, *cp, resp, rbuf[2048], visbuf[2048];
 
 	if (atomicio(read, remin, &resp, sizeof(resp)) != sizeof(resp))
 		lostconn(0);
@@ -1218,8 +1223,13 @@ response(void)
 			*cp++ = ch;
 		} while (cp < &rbuf[sizeof(rbuf) - 1] && ch != '\n');
 
-		if (!iamremote)
-			(void) atomicio(vwrite, STDERR_FILENO, rbuf, cp - rbuf);
+		if (!iamremote) {
+			cp[-1] = '\0';
+			(void) snmprintf(visbuf, sizeof(visbuf),
+			    NULL, "%s\n", rbuf);
+			(void) atomicio(vwrite, STDERR_FILENO,
+			    visbuf, strlen(visbuf));
+		}
 		++errs;
 		if (resp == 1)
 			return (-1);
@@ -1257,7 +1267,7 @@ run_err(const char *fmt,...)
 
 	if (!iamremote) {
 		va_start(ap, fmt);
-		vfprintf(stderr, fmt, ap);
+		vfmprintf(stderr, fmt, ap);
 		va_end(ap);
 		fprintf(stderr, "\n");
 	}
@@ -1303,7 +1313,7 @@ okname(char *cp0)
 	} while (*++cp);
 	return (1);
 
-bad:	fprintf(stderr, "%s: invalid user name\n", cp0);
+bad:	fmprintf(stderr, "%s: invalid user name\n", cp0);
 	return (0);
 }
 

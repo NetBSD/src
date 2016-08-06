@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.93.2.7 2016/07/31 13:12:59 pgoyette Exp $	*/
+/*	$NetBSD: fss.c,v 1.93.2.8 2016/08/06 00:19:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.7 2016/07/31 13:12:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.93.2.8 2016/08/06 00:19:07 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,6 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.18 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.284 2016/02/08 10:57:07 djm Exp $ */
-
+/*	$NetBSD: clientloop.c,v 1.18.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.286 2016/07/23 02:54:08 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -62,7 +61,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.18.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -119,6 +118,9 @@ extern int stdin_null_flag;
 
 /* Flag indicating that no shell has been requested */
 extern int no_shell_flag;
+
+/* Flag indicating that ssh should daemonise after authentication is complete */
+extern int fork_after_authentication_flag;
 
 /* Control socket */
 extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
@@ -1508,9 +1510,9 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 #ifdef __OpenBSD__
 	if (options.control_master &&
-	    ! option_clear_or_none(options.control_path)) {
+	    !option_clear_or_none(options.control_path)) {
 		debug("pledge: id");
-		if (pledge("stdio rpath wpath cpath unix inet dns proc exec id tty",
+		if (pledge("stdio rpath wpath cpath unix inet dns recvfd proc exec id tty",
 		    NULL) == -1)
 			fatal("%s pledge(): %s", __func__, strerror(errno));
 
@@ -1526,7 +1528,8 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		    NULL) == -1)
 			fatal("%s pledge(): %s", __func__, strerror(errno));
 
-	} else if (! option_clear_or_none(options.proxy_command)) {
+	} else if (!option_clear_or_none(options.proxy_command) ||
+	    fork_after_authentication_flag) {
 		debug("pledge: proc");
 		if (pledge("stdio cpath unix inet dns proc tty", NULL) == -1)
 			fatal("%s pledge(): %s", __func__, strerror(errno));

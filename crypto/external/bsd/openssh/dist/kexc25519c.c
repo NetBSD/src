@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexc25519c.c,v 1.3 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: kexc25519c.c,v 1.3.4.1 2016/08/06 00:18:38 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -132,8 +132,8 @@ input_kex_c25519_reply(int type, u_int32_t seq, void *ctxt)
 	    kex->hash_alg,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    (const char *)sshbuf_ptr(kex->my), sshbuf_len(kex->my),
-	    (const char *)sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
+	    sshbuf_ptr(kex->my), sshbuf_len(kex->my),
+	    sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
 	    server_host_key_blob, sbloblen,
 	    kex->c25519_client_pubkey,
 	    server_pubkey,

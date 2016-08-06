@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.122.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.122.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.122.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,7 +104,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	struct in6_addr taddr6;
 	struct in6_addr myaddr6;
 	char *lladdr = NULL;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
 	int lladdrlen = 0;
 	int anycast = 0, proxy = 0, tentative = 0;
 	int router = ip6_forwarding;
@@ -112,6 +112,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	const struct sockaddr_dl *proxydl = NULL;
 	struct psref psref;
+	struct psref psref_ia;
 
 	ifp = m_get_rcvif_psref(m, &psref);
 	if (ifp == NULL)
@@ -216,14 +217,20 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	/* (1) and (3) check. */
 #if NCARP > 0
-	if (ifp->if_carp && ifp->if_type != IFT_CARP)
+	if (ifp->if_carp && ifp->if_type != IFT_CARP) {
+		int s = pserialize_read_enter();
 		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
-	else
+		if (ifa != NULL)
+			ifa_acquire(ifa, &psref_ia);
+		pserialize_read_exit(s);
+	} else
 		ifa = NULL;
 	if (!ifa)
-		ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+		ifa = (struct ifaddr *)in6ifa_ifpwithaddr_psref(ifp, &taddr6,
+		    &psref_ia);
 #else
-	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+	ifa = (struct ifaddr *)in6ifa_ifpwithaddr_psref(ifp, &taddr6,
+	    &psref_ia);
 #endif
 
 	/* (2) check. */
@@ -239,8 +246,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			/*
 			 * proxy NDP for single entry
 			 */
-			ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp,
-				IN6_IFF_NOTREADY|IN6_IFF_ANYCAST);
+			ifa = (struct ifaddr *)in6ifa_ifpforlinklocal_psref(ifp,
+				IN6_IFF_NOTREADY|IN6_IFF_ANYCAST, &psref_ia);
 			if (ifa) {
 				proxy = 1;
 				proxydl = satocsdl(rt->rt_gateway);
@@ -299,9 +306,13 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		 */
 		if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 			nd6_dad_ns_input(ifa);
+		ifa_release(ifa, &psref_ia);
+		ifa = NULL;
 
 		goto freeit;
 	}
+	ifa_release(ifa, &psref_ia);
+	ifa = NULL;
 
 	/*
 	 * If the source address is unspecified address, entries must not
@@ -331,6 +342,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	    (router ? ND_NA_FLAG_ROUTER : 0) | ND_NA_FLAG_SOLICITED,
 	    tlladdr, (const struct sockaddr *)proxydl);
  freeit:
+	ifa_release(ifa, &psref_ia);
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 	return;
@@ -340,6 +352,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	nd6log(LOG_ERR, "dst=%s\n", ip6_sprintf(&daddr6));
 	nd6log(LOG_ERR, "tgt=%s\n", ip6_sprintf(&taddr6));
 	ICMP6_STATINC(ICMP6_STAT_BADNS);
+	ifa_release(ifa, &psref_ia);
 	m_put_rcvif_psref(ifp, &psref);
 	m_freem(m);
 }
@@ -430,6 +443,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 			goto bad;
 	}
 	if (!dad) {
+		int s;
 		/*
 		 * RFC2461 7.2.2:
 		 * "If the source address of the packet prompting the
@@ -445,6 +459,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * - hsrc belongs to the outgoing interface.
 		 * Otherwise, we perform the source address selection as usual.
 		 */
+		s = pserialize_read_enter();
 		if (hsrc && in6ifa_ifpwithaddr(ifp, hsrc))
 			src = hsrc;
 		else {
@@ -459,9 +474,11 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 				nd6log(LOG_DEBUG, "source can't be "
 				    "determined: dst=%s, error=%d\n",
 				    ip6_sprintf(&dst_sa.sin6_addr), error);
+				pserialize_read_exit(s);
 				goto bad;
 			}
 		}
+		pserialize_read_exit(s);
 	} else {
 		/*
 		 * Source address for DAD packet must always be IPv6
@@ -559,6 +576,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	int rt_announce;
 	bool checklink = false;
 	struct psref psref;
+	struct psref psref_ia;
 
 	ifp = m_get_rcvif_psref(m, &psref);
 	if (ifp == NULL)
@@ -613,7 +631,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		lladdrlen = ndopts.nd_opts_tgt_lladdr->nd_opt_len << 3;
 	}
 
-	ifa = (struct ifaddr *)in6ifa_ifpwithaddr(ifp, &taddr6);
+	ifa = (struct ifaddr *)in6ifa_ifpwithaddr_psref(ifp, &taddr6, &psref_ia);
 
 	/*
 	 * Target address matches one of my interface address.
@@ -627,6 +645,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	if (ifa
 	 && (((struct in6_ifaddr *)ifa)->ia6_flags & IN6_IFF_TENTATIVE)) {
 		nd6_dad_na_input(ifa);
+		ifa_release(ifa, &psref_ia);
+		ifa = NULL;
 		goto freeit;
 	}
 
@@ -635,6 +655,8 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		log(LOG_ERR,
 		    "nd6_na_input: duplicate IP6 address %s\n",
 		    ip6_sprintf(&taddr6));
+		ifa_release(ifa, &psref_ia);
+		ifa = NULL;
 		goto freeit;
 	}
 
@@ -1077,7 +1099,7 @@ static void
 nd6_dad_stoptimer(struct dadq *dp)
 {
 
-	callout_halt(&dp->dad_timer_ch, NULL);
+	callout_halt(&dp->dad_timer_ch, softnet_lock);
 }
 
 /*

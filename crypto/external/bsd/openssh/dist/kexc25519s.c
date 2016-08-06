@@ -1,4 +1,4 @@
-/*	$NetBSD: kexc25519s.c,v 1.5 2016/03/11 01:55:00 christos Exp $	*/
+/*	$NetBSD: kexc25519s.c,v 1.5.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
 /* $OpenBSD: kexc25519s.c,v 1.10 2015/12/04 16:41:28 markus Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexc25519s.c,v 1.5 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: kexc25519s.c,v 1.5.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -115,8 +115,8 @@ input_kex_c25519_init(int type, u_int32_t seq, void *ctxt)
 	    kex->hash_alg,
 	    kex->client_version_string,
 	    kex->server_version_string,
-	    (const char *)sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
-	    (const char *)sshbuf_ptr(kex->my), sshbuf_len(kex->my),
+	    sshbuf_ptr(kex->peer), sshbuf_len(kex->peer),
+	    sshbuf_ptr(kex->my), sshbuf_len(kex->my),
 	    server_host_key_blob, sbloblen,
 	    client_pubkey,
 	    server_pubkey,

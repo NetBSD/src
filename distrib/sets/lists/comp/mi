@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2051.2.3 2016/07/18 03:39:13 pgoyette Exp $
+#	$NetBSD: mi,v 1.2051.2.4 2016/08/06 00:18:39 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8682,10 +8682,12 @@
 ./usr/share/man/cat3/sched.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_min.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_getaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_protect.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sched_rr_get_interval.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_setaffinity_np.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
@@ -15924,10 +15926,12 @@
 ./usr/share/man/html3/sched.html		comp-c-htmlman		html
 ./usr/share/man/html3/sched_get_priority_max.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_get_priority_min.html	comp-c-htmlman		html
+./usr/share/man/html3/sched_getaffinity_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_getparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_getscheduler.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_protect.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_rr_get_interval.html	comp-c-htmlman		html
+./usr/share/man/html3/sched_affinity_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_setparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_setscheduler.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_yield.html		comp-c-htmlman		html
@@ -23167,10 +23171,12 @@
 ./usr/share/man/man3/sched.3			comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_min.3	comp-c-man		.man
+./usr/share/man/man3/sched_getaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
 ./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_protect.3		comp-c-man		.man
 ./usr/share/man/man3/sched_rr_get_interval.3	comp-c-man		.man
+./usr/share/man/man3/sched_setaffinity_np.3	comp-c-man		.man
 ./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
 ./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
 ./usr/share/man/man3/sched_yield.3		comp-c-man		.man

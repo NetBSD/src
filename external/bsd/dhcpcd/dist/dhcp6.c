@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.22 2016/06/17 19:42:31 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.22.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -591,7 +591,8 @@ dhcp6_makemessage(struct interface *ifp)
 	len += sizeof(*state->send);
 	len += sizeof(*o) + ifp->ctx->duid_len;
 	len += sizeof(*o) + sizeof(uint16_t); /* elapsed */
-	len += sizeof(*o) + dhcp6_makevendor(NULL, ifp);
+	if (!has_option_mask(ifo->nomask6, D6_OPTION_VENDOR_CLASS))
+		len += sizeof(*o) + dhcp6_makevendor(NULL, ifp);
 
 	/* IA */
 	m = NULL;
@@ -740,8 +741,10 @@ dhcp6_makemessage(struct interface *ifp)
 	p = D6_OPTION_DATA(o);
 	memset(p, 0, sizeof(uint16_t));
 
-	o = D6_NEXT_OPTION(o);
-	dhcp6_makevendor(o, ifp);
+	if (!has_option_mask(ifo->nomask6, D6_OPTION_VENDOR_CLASS)) {
+		o = D6_NEXT_OPTION(o);
+		dhcp6_makevendor(o, ifp);
+	}
 
 	if (state->state == DH6S_DISCOVER &&
 	    !(ifp->ctx->options & DHCPCD_TEST) &&
@@ -3467,22 +3470,12 @@ void dhcp6_dropnondelegates(struct interface *ifp)
 }
 
 void
-dhcp6_handleifa(struct dhcpcd_ctx *ctx, int cmd, const char *ifname,
-    const struct in6_addr *addr, int flags)
+dhcp6_handleifa(int cmd, struct ipv6_addr *ia)
 {
-	struct interface *ifp;
 	struct dhcp6_state *state;
 
-	if (ctx->ifaces == NULL)
-		return;
-
-	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
-		state = D6_STATE(ifp);
-		if (state == NULL || strcmp(ifp->name, ifname))
-			continue;
-		ipv6_handleifa_addrs(cmd, &state->addrs, addr, flags);
-	}
-
+	if ((state = D6_STATE(ia->iface)) != NULL)
+		ipv6_handleifa_addrs(cmd, &state->addrs, ia);
 }
 
 ssize_t

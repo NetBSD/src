@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.13 2015/08/21 08:20:59 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.97 2015/08/19 23:21:42 djm Exp $ */
+/*	$NetBSD: compat.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: compat.c,v 1.99 2016/05/24 02:31:57 dtucker Exp $ */
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.13 2015/08/21 08:20:59 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>

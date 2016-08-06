@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.109.2.1 2016/08/06 00:19:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.109 2014/11/29 14:48:42 christos Exp $");
+__RCSID("$NetBSD: ping.c,v 1.109.2.1 2016/08/06 00:19:03 pgoyette Exp $");
 #endif
 
 #include <stdio.h>
@@ -160,6 +160,8 @@ static struct sockaddr_in loc_addr;		/* 127.1 */
 static int datalen;				/* How much data */
 static int phdrlen;
 
+static sigset_t blockmask, enablemask;		/* signal masks */
+
 #ifndef __NetBSD__
 static char *progname;
 #define	getprogname()		(progname)
@@ -210,6 +212,8 @@ __dead static void doit(void);
 static void prefinish(int);
 static void prtsig(int);
 __dead static void finish(int);
+static void blocksignals(void);
+static void enablesignals(void);
 static void summary(int);
 static void pinger(void);
 static void fill(void);
@@ -669,6 +673,21 @@ main(int argc, char *argv[])
 
 	(void)signal(SIGINT, prefinish);
 
+	/*
+	 * Set up two signal masks:
+	 *    - blockmask blocks the signals we catch
+	 *    - enablemask does not
+	 */
+
+	sigemptyset(&enablemask);
+	sigemptyset(&blockmask);
+	sigaddset(&blockmask, SIGINT);
+#ifdef SIGINFO
+	sigaddset(&blockmask, SIGINFO);
+#else
+	sigaddset(&blockmask, SIGQUIT);
+#endif
+
 #ifdef SIGINFO
 	sa.sa_handler = prtsig;
 	sa.sa_flags = SA_NOKERNINFO;
@@ -679,6 +698,8 @@ main(int argc, char *argv[])
 #endif
 	(void)signal(SIGCONT, prtsig);
 
+	blocksignals();
+
 	/* fire off them quickies */
 	for (i = 0; i < preload; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &now);
@@ -688,7 +709,6 @@ main(int argc, char *argv[])
 	doit();
 	return 0;
 }
-
 
 static void
 doit(void)
@@ -740,9 +760,14 @@ doit(void)
 				break;
 		}
 
+
 		fdmaskp[0].fd = s;
 		fdmaskp[0].events = POLLIN;
+
+		enablesignals();
 		cc = prog_poll(fdmaskp, 1, (int)(sec * 1000));
+		blocksignals();
+
 		if (cc <= 0) {
 			if (cc < 0) {
 				if (errno == EINTR)
@@ -1401,13 +1426,13 @@ prtsig(int dummy)
  * On the first SIGINT, allow any outstanding packets to dribble in
  */
 static void
-prefinish(int dummy)
+prefinish(int sig)
 {
 	if (lastrcvd			/* quit now if caught up */
 	    || nreceived == 0)		/* or if remote is dead */
 		finish(0);
 
-	(void)signal(dummy, finish);	/* do this only the 1st time */
+	(void)signal(sig, finish);	/* do this only the 1st time */
 
 	if (npackets > ntransmitted)	/* let the normal limit work */
 		npackets = ntransmitted;
@@ -1428,6 +1453,22 @@ finish(int dummy)
 
 	summary(1);
 	exit(nreceived > 0 ? 0 : 2);
+}
+
+static void
+blocksignals(void)
+{
+	if (sigprocmask(SIG_SETMASK, &blockmask, NULL) == -1) {
+		err(EXIT_FAILURE, "blocksignals: sigprocmask");
+	}
+}
+
+static void
+enablesignals(void)
+{
+	if (sigprocmask(SIG_SETMASK, &enablemask, NULL) == -1) {
+		err(EXIT_FAILURE, "enablesignals: sigprocmask");
+	}
 }
 
 

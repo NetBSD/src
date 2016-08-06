@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.83 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.83.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -133,6 +133,25 @@ struct	in6_ifaddr {
 	struct pslist_entry	ia6_pslist_entry;
 #endif
 };
+
+#ifdef _KERNEL
+static inline void
+ia6_acquire(struct in6_ifaddr *ia, struct psref *psref)
+{
+
+	KASSERT(ia != NULL);
+	ifa_acquire(&ia->ia_ifa, psref);
+}
+
+static inline void
+ia6_release(struct in6_ifaddr *ia, struct psref *psref)
+{
+
+	if (ia == NULL)
+		return;
+	ifa_release(&ia->ia_ifa, psref);
+}
+#endif
 
 /* control structure to manage address selection policy */
 struct in6_addrpolicy {
@@ -489,13 +508,17 @@ struct	in6_rrenumreq {
 
 #ifdef _KERNEL
 
+#include <sys/mutex.h>
+#include <sys/pserialize.h>
+
 #include <net/pktqueue.h>
 
 extern pktqueue_t *ip6_pktq;
 
 MALLOC_DECLARE(M_IP6OPT);
 
-extern struct pslist_head in6_ifaddr_list;
+extern struct pslist_head	in6_ifaddr_list;
+extern kmutex_t			in6_ifaddr_lock;
 
 #define IN6_ADDRLIST_ENTRY_INIT(__ia) \
 	PSLIST_ENTRY_INIT((__ia), ia6_pslist_entry)
@@ -573,6 +596,20 @@ in6_get_ia_from_ifp(struct ifnet *ifp)
 	return (struct in6_ifaddr *)ifa;
 }
 
+static inline struct in6_ifaddr *
+in6_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
+{
+	struct in6_ifaddr *ia;
+	int s;
+
+	s = pserialize_read_enter();
+	ia = in6_get_ia_from_ifp(ifp);
+	if (ia != NULL)
+		ia6_acquire(ia, psref);
+	pserialize_read_exit(s);
+
+	return ia;
+}
 #endif /* _KERNEL */
 
 /*
@@ -623,13 +660,18 @@ in6_lookup_multi(struct in6_addr *addr, struct ifnet *ifp)
 {
 	struct in6_multi *in6m;
 	struct in6_ifaddr *ia;
+	int s;
 
-	if ((ia = in6_get_ia_from_ifp(ifp)) == NULL)
+	s = pserialize_read_enter();
+	if ((ia = in6_get_ia_from_ifp(ifp)) == NULL) {
+		pserialize_read_exit(s);
 	  	return NULL;
+	}
 	LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 		if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, addr))
 			break;
 	}
+	pserialize_read_exit(s);
 	return in6m;
 }
 
@@ -659,6 +701,7 @@ in6_next_multi(struct in6_multistep *step)
 	}
 	while (step->i_ia != NULL) {
 		in6m = LIST_FIRST(&step->i_ia->ia6_multiaddrs);
+		/* FIXME NOMPSAFE */
 		step->i_ia = IN6_ADDRLIST_READER_NEXT(step->i_ia);
 		if (in6m != NULL) {
 			step->i_in6m = LIST_NEXT(in6m, in6m_entry);
@@ -672,6 +715,7 @@ static inline struct in6_multi *
 in6_first_multi(struct in6_multistep *step)
 {						
 
+	/* FIXME NOMPSAFE */
 	step->i_ia = IN6_ADDRLIST_READER_FIRST();
 	step->i_in6m = NULL;			
 	return in6_next_multi(step);		
@@ -748,9 +792,15 @@ void	in6_ifremlocal(struct ifaddr *);
 void	in6_ifaddlocal(struct ifaddr *);
 void	in6_createmkludge(struct ifnet *);
 void	in6_purgemkludge(struct ifnet *);
-struct in6_ifaddr *in6ifa_ifpforlinklocal(const struct ifnet *, int);
-struct in6_ifaddr *in6ifa_ifpwithaddr(const struct ifnet *,
-    const struct in6_addr *);
+struct in6_ifaddr *
+	in6ifa_ifpforlinklocal(const struct ifnet *, int);
+struct in6_ifaddr *
+	in6ifa_ifpforlinklocal_psref(const struct ifnet *, int, struct psref *);
+struct in6_ifaddr *
+	in6ifa_ifpwithaddr(const struct ifnet *, const struct in6_addr *);
+struct in6_ifaddr *
+	in6ifa_ifpwithaddr_psref(const struct ifnet *, const struct in6_addr *,
+	    struct psref *);
 struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
 char	*ip6_sprintf(const struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);

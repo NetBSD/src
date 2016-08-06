@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.89.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.89.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,6 +56,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+RCSID("$NetBSD: locore_mips1.S,v 1.89.2.2 2016/08/06 00:19:06 pgoyette Exp $")
 
 #include "assym.h"
 

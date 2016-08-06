@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.43 2016/06/17 19:42:31 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.43.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1101,7 +1101,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 	return (ssize_t)len;
 
 toobig:
-	logger(ifp->ctx, LOG_ERR, "%s: DHCP messge too big", ifp->name);
+	logger(ifp->ctx, LOG_ERR, "%s: DHCP message too big", ifp->name);
 	free(bootp);
 	return -1;
 }
@@ -2728,7 +2728,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		type = 0;
 	else if (ifo->options & DHCPCD_BOOTP) {
 		logger(ifp->ctx, LOG_DEBUG,
-		    "%s: ignoring DHCP reply (excpecting BOOTP)",
+		    "%s: ignoring DHCP reply (expecting BOOTP)",
 		    ifp->name);
 		return;
 	}
@@ -3096,7 +3096,7 @@ valid_udp_packet(uint8_t *data, size_t data_len, struct in_addr *from,
 	}
 
 	bytes = ntohs(p->ip.ip_len);
-	if (data_len < bytes) {
+	if (bytes > data_len) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -3128,27 +3128,15 @@ valid_udp_packet(uint8_t *data, size_t data_len, struct in_addr *from,
 }
 
 static void
-dhcp_handlepacket(void *arg)
+dhcp_handlepacket(struct interface *ifp, uint8_t *data, size_t len, int flags)
 {
-	struct interface *ifp = arg;
-	uint8_t *bootp, buf[MTU_MAX];
-	size_t bytes;
+	uint8_t *bootp;
 	struct in_addr from;
-	int i, flags;
+	int i;
+	size_t udp_len;
 	const struct dhcp_state *state = D_CSTATE(ifp);
 
-	/* Need this API due to BPF */
-	flags = 0;
-	bootp = NULL;
-	bytes = (size_t)if_readraw(ifp, state->raw_fd,buf, sizeof(buf), &flags);
-	if ((ssize_t)bytes == -1) {
-		logger(ifp->ctx, LOG_ERR,
-		    "%s: dhcp if_readrawpacket: %m", ifp->name);
-		dhcp_close(ifp);
-		arp_close(ifp);
-		return;
-	}
-	if (valid_udp_packet(buf, bytes, &from, flags & RAW_PARTIALCSUM) == -1)
+	if (valid_udp_packet(data, len, &from, flags & RAW_PARTIALCSUM) == -1)
 	{
 		logger(ifp->ctx, LOG_ERR, "%s: invalid UDP packet from %s",
 		    ifp->name, inet_ntoa(from));
@@ -3173,6 +3161,7 @@ dhcp_handlepacket(void *arg)
 		    "%s: server %s is not destination",
 		    ifp->name, inet_ntoa(from));
 	}
+
 	/*
 	 * DHCP has a variable option area rather than a fixed vendor area.
 	 * Because DHCP uses the BOOTP protocol it should still send BOOTP
@@ -3180,19 +3169,47 @@ dhcp_handlepacket(void *arg)
 	 * However some servers send a truncated vendor area.
 	 * dhcpcd can work fine without the vendor area being sent.
 	 */
-	bytes = get_udp_data(&bootp, buf);
-	if (bytes < offsetof(struct bootp, vend)) {
+	udp_len = get_udp_data(&bootp, data);
+	/* udp_len must be correct because the values are checked in
+	 * valid_udp_packet(). */
+	if (udp_len < offsetof(struct bootp, vend)) {
 		logger(ifp->ctx, LOG_ERR,
 		    "%s: truncated packet (%zu) from %s",
-		    ifp->name, bytes, inet_ntoa(from));
+		    ifp->name, udp_len, inet_ntoa(from));
 		return;
 	}
-	/* But to make our IS_DHCP macro easy, ensure the vendor
+	/* To make our IS_DHCP macro easy, ensure the vendor
 	 * area has at least 4 octets. */
-	while (bytes < offsetof(struct bootp, vend) + 4)
-		bootp[bytes++] = '\0';
+	while (udp_len < offsetof(struct bootp, vend) + 4)
+		bootp[udp_len++] = '\0';
 
-	dhcp_handledhcp(ifp, (struct bootp *)bootp, bytes, &from);
+	dhcp_handledhcp(ifp, (struct bootp *)bootp, udp_len, &from);
+}
+
+static void
+dhcp_readpacket(void *arg)
+{
+	struct interface *ifp = arg;
+	uint8_t buf[MTU_MAX];
+	ssize_t bytes;
+	int flags;
+	const struct dhcp_state *state = D_CSTATE(ifp);
+
+	/* Some RAW mechanisms are generic file descriptors, not sockets.
+	 * This means we have no kernel call to just get one packet,
+	 * so we have to process the entire buffer. */
+	flags = 0;
+	while (!(flags & RAW_EOF)) {
+		bytes = if_readraw(ifp, state->raw_fd, buf,sizeof(buf), &flags);
+		if (bytes == -1) {
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: dhcp if_readrawpacket: %m", ifp->name);
+			dhcp_close(ifp);
+			arp_close(ifp);
+			return;
+		}
+		dhcp_handlepacket(ifp, buf, (size_t)bytes, flags);
+	}
 }
 
 static void
@@ -3234,7 +3251,7 @@ dhcp_open(struct interface *ifp)
 			return -1;
 		}
 		eloop_event_add(ifp->ctx->eloop,
-		    state->raw_fd, dhcp_handlepacket, ifp);
+		    state->raw_fd, dhcp_readpacket, ifp);
 	}
 	return 0;
 }

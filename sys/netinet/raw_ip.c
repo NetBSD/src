@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.158 2016/05/12 02:24:17 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.158.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.158 2016/05/12 02:24:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.158.2.1 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -554,8 +554,8 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	struct inpcb *inp = sotoinpcb(so);
 	struct sockaddr_in *addr = (struct sockaddr_in *)nam;
 	int error = 0;
-	int s;
-	struct ifaddr *ia;
+	int s, ss;
+	struct ifaddr *ifa;
 
 	KASSERT(solocked(so));
 	KASSERT(inp != NULL);
@@ -573,18 +573,22 @@ rip_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		error = EAFNOSUPPORT;
 		goto release;
 	}
-	if ((ia = ifa_ifwithaddr(sintosa(addr))) == 0 &&
+	ss = pserialize_read_enter();
+	if ((ifa = ifa_ifwithaddr(sintosa(addr))) == NULL &&
 	    !in_nullhost(addr->sin_addr))
 	{
+		pserialize_read_exit(ss);
 		error = EADDRNOTAVAIL;
 		goto release;
 	}
-        if (ia && ((struct in_ifaddr *)ia)->ia4_flags &
+        if (ifa && (ifatoia(ifa))->ia4_flags &
 	            (IN6_IFF_NOTREADY | IN_IFF_DETACHED))
 	{
+		pserialize_read_exit(ss);
 		error = EADDRNOTAVAIL;
 		goto release;
 	}
+	pserialize_read_exit(ss);
 
 	inp->inp_laddr = addr->sin_addr;
 

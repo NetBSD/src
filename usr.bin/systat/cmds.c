@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.28 2004/11/04 07:18:47 dsl Exp $	*/
+/*	$NetBSD: cmds.c,v 1.28.74.1 2016/08/06 00:19:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.28 2004/11/04 07:18:47 dsl Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.28.74.1 2016/08/06 00:19:12 pgoyette Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -151,4 +151,16 @@ void
 status(void)
 {
 	error("Showing %s, refresh every %d seconds.", curmode->c_name, naptime);
+}
+
+int
+prefix(const char *s1, const char *s2)
+{
+
+	while (*s1 == *s2) {
+		if (*s1 == '\0')
+			return (1);
+		s1++, s2++;
+	}
+	return (*s1 == '\0');
 }

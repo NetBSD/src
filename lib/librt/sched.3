@@ -1,6 +1,6 @@
-.\"	$NetBSD: sched.3,v 1.14 2016/07/06 15:55:02 wiz Exp $
+.\"	$NetBSD: sched.3,v 1.14.2.1 2016/08/06 00:19:02 pgoyette Exp $
 .\"
-.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2008, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 5, 2016
+.Dd August 5, 2016
 .Dt SCHED 3
 .Os
 .Sh NAME
@@ -39,7 +39,9 @@
 .Nm sched_get_priority_min ,
 .Nm sched_rr_get_interval ,
 .Nm sched_yield ,
-.Nm sched_protect
+.Nm sched_protect ,
+.Nm sched_setaffinity_np ,
+.Nm sched_getaffinity_np
 .Nd process scheduling
 .Sh LIBRARY
 .Lb librt
@@ -61,6 +63,10 @@
 .Fn sched_rr_get_interval "pid_t pid" "struct timespec *interval"
 .Ft int
 .Fn sched_yield "void"
+.Ft int
+.fn sched_setaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
+.Ft int
+.fn sched_getaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
 .Ft int
 .Fn sched_protect "int priority"
 .Sh DESCRIPTION
@@ -156,11 +162,33 @@ Get the affinity mask of the process specified by
 into the
 .Fa cpuset .
 .It Fn sched_protect priority
-Performs priority protection for
+Performs priority protection using the
 .Dv PTHREAD_PRIO_PROTECT
 protocol.
-This function will increase the priority of the caller thread to
+This function will increase the protected priority of the caller thread to
+.Fa priority
+if the current thread's protected priority is smaller than
 .Fa priority .
+Multiple calls to
+.Fn sched_protect
+with a positive priority will
+.Dq push
+a priority level to the current thread, whereas calling
+.Fn sched_protect
+with a
+.Fa priority
+level of
+.Dv \-1
+will
+.Dq pop
+a priority level.
+When the level reaches
+.Dv 0
+(the same number of
+.Dq pushes
+and
+.Dq pops
+have been issued) the original thread priority will be restored.
 .El
 .Sh IMPLEMENTATION NOTES
 Setting CPU
@@ -273,6 +301,21 @@ No process can be found corresponding to that specified by
 and the value of
 .Fa pid
 is not zero.
+.El
+.Pp
+The
+.Fn sched_protect
+function fails if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The thread was not priority protected.
+.It Bq Er EPERM
+The
+.Fa priority
+parameter was out of range (not in the range between
+.Dv SCHED_PRIO_MIN
+and
+.Dv SCHED_PRIO_MAX ) .
 .El
 .Sh SEE ALSO
 .Xr affinity 3 ,

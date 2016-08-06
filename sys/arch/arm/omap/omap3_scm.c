@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_scm.c,v 1.5 2016/07/03 12:27:04 kiyohara Exp $ */
+/* $NetBSD: omap3_scm.c,v 1.5.2.1 2016/08/06 00:19:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.5 2016/07/03 12:27:04 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.5.2.1 2016/08/06 00:19:04 pgoyette Exp $");
 
 #include "opt_omap.h"
 
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_scm.c,v 1.5 2016/07/03 12:27:04 kiyohara Exp $
 #define SCM_OFFSET_INTERFACE_3530	0
 #define SCM_OFFSET_GENERAL_3530		0x270
 
-#if defined(OMAP_3430) || defined(OMAP_3530)
+#if defined(OMAP_3430) || defined(OMAP_3530) || defined(TI_DM37XX)
 #define SCM_BASE		SCM_BASE_3530
 #define SCM_SIZE		SCM_SIZE_3530
 #define SCM_CONTROL_IDCODE	SCM_CONTROL_IDCODE_3530
