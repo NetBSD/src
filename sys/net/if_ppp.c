@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.153 2016/08/06 02:35:06 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.154 2016/08/06 12:42:40 pgoyette Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.153 2016/08/06 02:35:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.154 2016/08/06 12:42:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1947,14 +1947,14 @@ ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 #define PPP_DEP
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, ppp, PPP_DEP "slcompress");
+MODULE(MODULE_CLASS_DRIVER, if_ppp, PPP_DEP "slcompress");
 
 #ifdef _MODULE
 CFDRIVER_DECL(ppp, DV_IFNET, NULL);
 #endif
 
 static int
-ppp_modcmd(modcmd_t cmd, void *arg)
+if_ppp_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 
