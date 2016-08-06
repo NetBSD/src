@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.h,v 1.3 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: ebh.h,v 1.4 2016/08/06 20:42:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -105,7 +105,7 @@ enum {
 struct chfs_ebh;
 
 /**
- * struct chfs_ltree_entry - an netry in the lock tree
+ * struct chfs_ltree_entry - an entry in the lock tree
  * @rb: RB-node of the tree
  * @lnr: logical eraseblock number
  * @users: counts the tasks that are using or want to use the eraseblock
