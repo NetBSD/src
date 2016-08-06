@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2016/08/05 17:04:16 scole Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2016/08/06 21:13:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,8 +36,6 @@
 
 #ifndef _VMPARAM_H_
 #define _VMPARAM_H_
-
-#include <sys/tree.h>
 
 #define	USRSTACK	VM_MAX_ADDRESS /* XXX: Revisit vm address space. */
 
