@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.80 2016/06/24 17:21:30 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.81 2016/08/06 21:39:48 jdolecek Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.80 2016/06/24 17:21:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.81 2016/08/06 21:39:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,8 @@ ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
 	ffsdir->d_namlen = e2dir->e2d_namlen;
 
-	ffsdir->d_type = DT_UNKNOWN;		/* don't know more here */
+	ffsdir->d_type = ext2dt2dt(e2dir->e2d_type);
+
 #ifdef DIAGNOSTIC
 #if MAXNAMLEN < E2FS_MAXNAMLEN
 	/*
