@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.152 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.153 2016/08/06 02:35:06 pgoyette Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,11 +102,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.152 2016/06/10 13:27:16 ozaki-r Exp $");
-
-#include "ppp.h"
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.153 2016/08/06 02:35:06 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
+#include "ppp.h"
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_ppp.h"
@@ -133,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.152 2016/06/10 13:27:16 ozaki-r Exp $")
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -181,6 +182,8 @@ static void	ppp_ifstart(struct ifnet *ifp);
 
 static void	pppintr(void *);
 
+extern struct linesw ppp_disc;
+
 /*
  * Some useful mbuf macros not in mbuf.h.
  */
@@ -214,11 +217,11 @@ struct if_clone ppp_cloner =
     IF_CLONE_INITIALIZER("ppp", ppp_clone_create, ppp_clone_destroy);
 
 #ifdef PPP_COMPRESS
-ONCE_DECL(ppp_compressor_mtx_init);
 static LIST_HEAD(, compressor) ppp_compressors = { NULL };
 static kmutex_t ppp_compressors_mtx;
 
 static int ppp_compressor_init(void);
+static int ppp_compressor_destroy(void);
 static struct compressor *ppp_get_compressor(uint8_t);
 static void ppp_compressor_rele(struct compressor *);
 #endif /* PPP_COMPRESS */
@@ -230,7 +233,16 @@ static void ppp_compressor_rele(struct compressor *);
 void
 pppattach(int n __unused)
 {
-	extern struct linesw ppp_disc;
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in pppinit() below).
+	 */
+}
+
+static void
+pppinit(void)
+{
 
 	if (ttyldisc_attach(&ppp_disc) != 0)
 		panic("pppattach");
@@ -238,7 +250,18 @@ pppattach(int n __unused)
 	mutex_init(&ppp_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ppp_softc_list);
 	if_clone_attach(&ppp_cloner);
-	RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
+}
+
+static int
+pppdetach(void)
+{
+	int error;
+
+	if (!LIST_EMPTY(&ppp_softc_list))
+		error = EBUSY;
+	if (error == 0)
+		error = ttyldisc_detach(&ppp_disc);
+	return error;
 }
 
 static struct ppp_softc *
@@ -1798,6 +1821,14 @@ ppp_compressor_init(void)
 	return 0;
 }
 
+static int
+ppp_compressor_destroy(void)
+{
+
+	mutex_destroy(&ppp_compressors_mtx);
+	return 0;
+}
+
 static void
 ppp_compressor_rele(struct compressor *cp)
 {
@@ -1865,8 +1896,6 @@ ppp_register_compressor(struct compressor *pc, size_t ncomp)
 	int error = 0;
 	size_t i;
 
-	RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
-
 	mutex_enter(&ppp_compressors_mtx);
 	for (i = 0; i < ncomp; i++) {
 		if (ppp_get_compressor_noload(pc[i].compress_proto,
@@ -1904,6 +1933,77 @@ ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 		}
 	}
 	mutex_exit(&ppp_compressors_mtx);
+
+	return error;
+}
+
+/*
+ * Module infrastructure
+ */
+
+#ifdef PPP_FILTER
+#define PPP_DEP "bpf_filter,"
+#else
+#define PPP_DEP
+#endif
+
+MODULE(MODULE_CLASS_DRIVER, ppp, PPP_DEP "slcompress");
+
+#ifdef _MODULE
+CFDRIVER_DECL(ppp, DV_IFNET, NULL);
+#endif
+
+static int
+ppp_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		/* Init the compressor sub-sub-system */
+		ppp_compressor_init();
+
+#ifdef _MODULE
+		error = config_cfdriver_attach(&ppp_cd);
+		if (error) {
+			aprint_error("%s: unable to register cfdriver for"
+			    "%s, error %d\n", __func__, ppp_cd.cd_name, error);
+			ppp_compressor_destroy();
+			break;
+		}
+
+#endif
+		/* Init the unit list and line discipline stuff */
+		pppinit();
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * Make sure it's ok to detach - no units left, and
+		 * line discipline is removed
+		 */
+		error = pppdetach();
+		if (error != 0)
+			break;
+#ifdef _MODULE
+		/* Remove device from autoconf database */
+		error = config_cfdriver_detach(&ppp_cd);
+		if (error) {
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, ppp_cd.cd_name, error);
+			break;
+		}
+#endif
+		ppp_compressor_destroy();
+		break;
+
+	case MODULE_CMD_STAT:
+		error = ENOTTY;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
 
 	return error;
 }
