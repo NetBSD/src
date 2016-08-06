@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.211.2.3 2016/08/06 10:45:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,11 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< pmap.c
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.2 2016/08/06 00:19:06 pgoyette Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.2 2016/08/06 00:19:06 pgoyette Exp $");
->>>>>>> 1.218
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211.2.3 2016/08/06 10:45:22 pgoyette Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
