@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.125 2016/08/06 12:48:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.125 2016/08/06 12:48:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.124 2016/06/10 13:27:16 ozaki-r Exp $");
 #endif
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -190,7 +192,7 @@ struct if_clone sl_cloner =
 
 static void	slintr(void *);
 
-static int	slinit(struct sl_softc *);
+static int	slcreate(struct sl_softc *);
 static struct mbuf *sl_btom(struct sl_softc *, int);
 
 static int	slclose(struct tty *, int);
@@ -219,10 +221,34 @@ void
 slattach(int n __unused)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in slinit() below).
+	 */
+}
+
+static void
+slinit(void)
+{
+
 	if (ttyldisc_attach(&slip_disc) != 0)
-		panic("slattach");
+		panic("%s", __func__);
 	LIST_INIT(&sl_softc_list);
 	if_clone_attach(&sl_cloner);
+}
+
+static int
+sldetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&sl_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&slip_disc);
+
+	return error;
 }
 
 static int
@@ -267,7 +293,7 @@ sl_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-slinit(struct sl_softc *sc)
+slcreate(struct sl_softc *sc)
 {
 
 	if (sc->sc_mbuf == NULL) {
@@ -312,7 +338,7 @@ slopen(dev_t dev, struct tty *tp)
 			    slintr, sc);
 			if (sc->sc_si == NULL)
 				return ENOMEM;
-			if (slinit(sc) == 0) {
+			if (slcreate(sc) == 0) {
 				softint_disestablish(sc->sc_si);
 				return ENOBUFS;
 			}
@@ -1034,5 +1060,66 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	}
 	splx(s);
+	return error;
+}
+
+
+/*
+ * Module infrastructure
+ */
+
+MODULE(MODULE_CLASS_DRIVER, if_sl, "slcompress");
+
+#ifdef _MODULE
+CFDRIVER_DECL(sl, DV_IFNET, NULL);
+#endif
+
+static int
+if_sl_modcmd(modcmd_t cmd, void *arg)
+{
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_cfdriver_attach(&sl_cd);
+		if (error) {
+			aprint_error("%s: unable to register cfdriver for"
+			    "%s, error %d\n", __func__, sl_cd.cd_name, error);
+			break;
+		}
+
+#endif
+		/* Init the unit list and line discipline stuff */
+		slinit();
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * Make sure it's ok to detach - no units left, and
+		 * line discipline is removed
+		 */
+		error = sldetach();
+		if (error != 0)
+			break;
+#ifdef _MODULE
+		/* Remove device from autoconf database */
+		error = config_cfdriver_detach(&sl_cd);
+		if (error) {
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, sl_cd.cd_name, error);
+			break;
+		}
+#endif
+		break;
+
+	case MODULE_CMD_STAT:
+		error = ENOTTY;
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
 	return error;
 }

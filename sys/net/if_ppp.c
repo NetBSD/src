@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.154 2016/08/06 12:42:40 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.155 2016/08/06 12:48:23 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.154 2016/08/06 12:42:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.155 2016/08/06 12:48:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -245,7 +245,7 @@ pppinit(void)
 {
 
 	if (ttyldisc_attach(&ppp_disc) != 0)
-		panic("pppattach");
+		panic("%s", __func__);
 
 	mutex_init(&ppp_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ppp_softc_list);
@@ -255,12 +255,14 @@ pppinit(void)
 static int
 pppdetach(void)
 {
-	int error;
+	int error = 0;
 
 	if (!LIST_EMPTY(&ppp_softc_list))
 		error = EBUSY;
+
 	if (error == 0)
 		error = ttyldisc_detach(&ppp_disc);
+
 	return error;
 }
 
