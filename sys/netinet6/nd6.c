@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.205 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.206 2016/08/06 20:00:14 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.205 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.206 2016/08/06 20:00:14 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2433,7 +2433,7 @@ nd6_add_ifa_lle(struct in6_ifaddr *ia)
 	if (nd6_need_cache(ifp) == 0)
 		return 0;
 	ia->ia_ifa.ifa_rtrequest = nd6_rtrequest;
-	ia->ia_ifa.ifa_flags = RTF_CONNECTED;
+	ia->ia_ifa.ifa_flags |= RTF_CONNECTED;
 
 	IF_AFDATA_WLOCK(ifp);
 	ln = lla_create(LLTABLE6(ifp), LLE_IFADDR | LLE_EXCLUSIVE,
