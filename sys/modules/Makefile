@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.169 2016/08/05 17:12:13 scole Exp $
+#	$NetBSD: Makefile,v 1.170 2016/08/06 02:35:05 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -79,6 +79,7 @@ SUBDIR+=	opencrypto
 SUBDIR+=	overlay
 SUBDIR+=	pciverbose
 SUBDIR+=	pf
+SUBDIR+=	ppp
 SUBDIR+=	ppp_bsdcomp
 SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
