@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.91 2016/08/06 22:03:45 pgoyette Exp $
+# $NetBSD: mi,v 1.92 2016/08/06 23:46:30 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -128,6 +128,8 @@
 ./@MODULEDIR@/if_npflog/if_npflog.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_ppp				base-kernel-modules	kmod
 ./@MODULEDIR@/if_ppp/if_ppp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_pppoe				base-kernel-modules	kmod
+./@MODULEDIR@/if_pppoe/if_pppoe.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_sl				base-kernel-modules	kmod
 ./@MODULEDIR@/if_sl/if_sl.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/if_smsc				base-kernel-modules	kmod
