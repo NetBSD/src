@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh 
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/vnode_if.h>
+#include <sys/dirent.h>
 
 #include <miscfs/genfs/genfs.h>
 
