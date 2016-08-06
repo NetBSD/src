@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.171 2016/08/06 06:06:54 christos Exp $
+#	$NetBSD: Makefile,v 1.172 2016/08/06 12:44:03 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -49,7 +49,9 @@ SUBDIR+=	if_axe
 SUBDIR+=	if_axen
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
+SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
+SUBDIR+=	if_strip
 SUBDIR+=	iic
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
