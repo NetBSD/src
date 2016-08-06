@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.87 2016/08/04 23:54:45 pgoyette Exp $
+# $NetBSD: mi,v 1.88 2016/08/06 02:35:05 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -198,6 +198,8 @@
 ./@MODULEDIR@/pf/pf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/portal				base-obsolete		obsolete
 ./@MODULEDIR@/portal/portal.kmod		base-obsolete		obsolete
+./@MODULEDIR@/ppp				base-kernel-modules	kmod
+./@MODULEDIR@/ppp/ppp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/ppp_bsdcomp			base-kernel-modules	kmod
 ./@MODULEDIR@/ppp_bsdcomp/ppp_bsdcomp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/ppp_deflate			base-kernel-modules	kmod
