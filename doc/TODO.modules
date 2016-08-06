@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.4 2016/08/05 04:21:01 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.5 2016/08/06 00:30:57 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -16,7 +16,14 @@ christos and pgoyette.
 
 	There are ways around this (such as, having the parent
 	module's initialization command recursively call the module
-	load code), but they're gross hacks.
+	load code), but they're often gross hacks.
+
+	Another alternative (which is used by ppp) is to provide a
+	"registration" mechanism for the "child" modules, and then when
+	the need for a specific child module is encountered, use
+	module_autoload() to load the child module.  Of course, this
+	requires that the parent module know about all potentially
+	loadable children.
 
 2. Currently, config(1) has no way to "no define" drivers
 
