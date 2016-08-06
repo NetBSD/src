@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.155 2016/08/06 12:48:23 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.156 2016/08/06 22:54:34 pgoyette Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.155 2016/08/06 12:48:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.156 2016/08/06 22:54:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -262,6 +262,8 @@ pppdetach(void)
 
 	if (error == 0)
 		error = ttyldisc_detach(&ppp_disc);
+
+	mutex_destroy(&ppp_list_lock);
 
 	return error;
 }
