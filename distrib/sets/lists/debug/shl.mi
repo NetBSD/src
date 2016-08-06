@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.139 2016/08/02 14:54:03 jakllsch Exp $
+# $NetBSD: shl.mi,v 1.140 2016/08/06 20:08:00 martin Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.203.debug			comp-sys-debug	debug,dynamicroot
@@ -286,7 +286,7 @@
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
-./usr/libdata/debug/usr/libexec/ld.elf_so.debug			comp-sys-debug	debug
+./usr/libdata/debug/usr/libexec/ld.elf_so.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/usr/libexec/liblto_plugin.so.0.0.debug	comp-sys-debug	debug,gcc
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3_dso.so.1.debug	tests-lib-debug		debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/csu/libh_initfini3_dso.so.1.debug	tests-obsolete		debug,compattestfile,atf,obsolete
