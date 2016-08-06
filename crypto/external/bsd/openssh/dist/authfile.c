@@ -1,6 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.13 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: authfile.c,v 1.120 2015/12/11 04:21:11 mmcc Exp $ */
-
+/*	$NetBSD: authfile.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: authfile.c,v 1.121 2016/04/09 12:39:30 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.13 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.13.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -148,7 +147,8 @@ sshkey_load_public_rsa1(int fd, struct sshkey **keyp, char **commentp)
 	struct sshbuf *b = NULL;
 	int r;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;
 
@@ -198,7 +198,8 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
 {
 	int fd, r;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;
 
@@ -229,6 +230,8 @@ sshkey_load_private_type_fd(int fd, int type, const char *passphrase,
 	struct sshbuf *buffer = NULL;
 	int r;
 
+	if (keyp != NULL)
+		*keyp = NULL;
 	if ((buffer = sshbuf_new()) == NULL) {
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
@@ -253,7 +256,8 @@ sshkey_load_private(const char *filename, const char *passphrase,
 	struct sshbuf *buffer = NULL;
 	int r, fd;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;
 
@@ -406,7 +410,8 @@ sshkey_load_cert(const char *filename, struct sshkey **keyp)
 	char *file = NULL;
 	int r = SSH_ERR_INTERNAL_ERROR;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 
 	if (asprintf(&file, "%s-cert.pub", filename) == -1)
 		return SSH_ERR_ALLOC_FAIL;
@@ -416,11 +421,12 @@ sshkey_load_cert(const char *filename, struct sshkey **keyp)
 	}
 	if ((r = sshkey_try_load_public(pub, file, NULL)) != 0)
 		goto out;
-
-	*keyp = pub;
-	pub = NULL;
+	/* success */
+	if (keyp != NULL) {
+		*keyp = pub;
+		pub = NULL;
+	}
 	r = 0;
-
  out:
 	free(file);
 	sshkey_free(pub);
@@ -435,7 +441,8 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 	struct sshkey *key = NULL, *cert = NULL;
 	int r;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 
 	switch (type) {
 #ifdef WITH_OPENSSL
@@ -465,8 +472,10 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 	    (r = sshkey_cert_copy(cert, key)) != 0)
 		goto out;
 	r = 0;
-	*keyp = key;
-	key = NULL;
+	if (keyp != NULL) {
+		*keyp = key;
+		key = NULL;
+	}
  out:
 	sshkey_free(key);
 	sshkey_free(cert);

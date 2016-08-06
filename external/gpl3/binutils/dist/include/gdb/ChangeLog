@@ -51,9 +51,13 @@
 
 	* section-scripts.h: New file.
 
+2013-10-22  Sterling Augustine  <saugustine@google.com>
+
+	* gdb-index.h: Merge from gdb tree.
+
 2013-03-15  Steve Ellcey  <sellcey@mips.com>
 
-	* gdb/remote-sim.h (sim_command_completer): Make char arguments const.
+	* remote-sim.h (sim_command_completer): Make char arguments const.
 
 2013-01-01  Joel Brobecker  <brobecker@adacore.com>
 
@@ -218,7 +222,7 @@
 
 2003-06-10  Corinna Vinschen  <vinschen@redhat.com>
 
-	* gdb/fileio.h: New file.
+	* fileio.h: New file.
 
 2003-05-07  Andrew Cagney  <cagney@redhat.com>
 
@@ -256,7 +260,7 @@
 2002-07-29  Andrey Volkov  <avolkov@transas.com>
 
 	* sim-h8300.h: Rename all enums from H8300_ to SIM_H8300_
-	 prefix.
+	prefix.
 
 2002-07-23  Andrey Volkov  <avolkov@transas.com>
 

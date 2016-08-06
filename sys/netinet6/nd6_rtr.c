@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.115.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.115.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.115.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.115.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ static int rtpref(struct nd_defrouter *);
 static struct nd_defrouter *defrtrlist_update(struct nd_defrouter *);
 static int prelist_update(struct nd_prefixctl *, struct nd_defrouter *,
     struct mbuf *, int);
-static struct in6_ifaddr *in6_ifadd(struct nd_prefixctl *, int);
+static struct in6_ifaddr *in6_ifadd(struct nd_prefixctl *, int, struct psref *);
 static struct nd_pfxrouter *pfxrtr_lookup(struct nd_prefix *,
 	struct nd_defrouter *);
 static void pfxrtr_add(struct nd_prefix *, struct nd_defrouter *);
@@ -898,6 +898,7 @@ purge_detached(struct ifnet *ifp)
 	struct ifaddr *ifa, *ifa_next;
 
 	for (pr = nd_prefix.lh_first; pr; pr = pr_next) {
+		int s;
 		pr_next = pr->ndpr_next;
 
 		/*
@@ -913,6 +914,8 @@ purge_detached(struct ifnet *ifp)
 		    !LIST_EMPTY(&pr->ndpr_advrtrs)))
 			continue;
 
+	restart:
+		s = pserialize_read_enter();
 		for (ifa = IFADDR_READER_FIRST(ifp); ifa; ifa = ifa_next) {
 			ifa_next = IFADDR_READER_NEXT(ifa);
 			if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -920,9 +923,13 @@ purge_detached(struct ifnet *ifp)
 			ia = (struct in6_ifaddr *)ifa;
 			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) ==
 			    IN6_IFF_AUTOCONF && ia->ia6_ndpr == pr) {
+				pserialize_read_exit(s);
 				in6_purgeaddr(ifa);
+				goto restart;
 			}
 		}
+		pserialize_read_exit(s);
+
 		if (pr->ndpr_refcnt == 0)
 			prelist_remove(pr);
 	}
@@ -1065,6 +1072,7 @@ prelist_update(struct nd_prefixctl *newprc,
 	int error = 0;
 	int auth;
 	struct in6_addrlifetime lt6_tmp;
+	int ss;
 
 	auth = 0;
 	if (m) {
@@ -1187,6 +1195,7 @@ prelist_update(struct nd_prefixctl *newprc,
 	 * consider autoconfigured addresses while RFC2462 simply said
 	 * "address".
 	 */
+	ss = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		struct in6_ifaddr *ia6;
 		u_int32_t remaininglifetime;
@@ -1308,9 +1317,12 @@ prelist_update(struct nd_prefixctl *newprc,
 		ia6->ia6_lifetime = lt6_tmp;
 		ia6->ia6_updatetime = time_uptime;
 	}
+	pserialize_read_exit(ss);
+
 	if (ia6_match == NULL && newprc->ndprc_vltime) {
 		int ifidlen;
 		struct in6_ifaddr *ia6;
+		struct psref psref;
 
 		/*
 		 * 5.5.3 (d) (continued)
@@ -1340,7 +1352,7 @@ prelist_update(struct nd_prefixctl *newprc,
 			goto end;
 		}
 
-		if ((ia6 = in6_ifadd(newprc, mcast)) != NULL) {
+		if ((ia6 = in6_ifadd(newprc, mcast, &psref)) != NULL) {
 			/*
 			 * note that we should use pr (not newprc) for reference.
 			 */
@@ -1367,6 +1379,7 @@ prelist_update(struct nd_prefixctl *newprc,
 					    "address, errno=%d\n", e);
 				}
 			}
+			ia6_release(ia6, &psref);
 
 			/*
 			 * A newly added address might affect the status
@@ -1426,6 +1439,7 @@ pfxlist_onlink_check(void)
 	struct in6_ifaddr *ia;
 	struct nd_defrouter *dr;
 	struct nd_pfxrouter *pfxrtr = NULL;
+	int s;
 
 	/*
 	 * Check if there is a prefix that has a reachable advertising
@@ -1540,6 +1554,7 @@ pfxlist_onlink_check(void)
 	 * always be attached.
 	 * The precise detection logic is same as the one for prefixes.
 	 */
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (!(ia->ia6_flags & IN6_IFF_AUTOCONF))
 			continue;
@@ -1556,20 +1571,30 @@ pfxlist_onlink_check(void)
 		if (find_pfxlist_reachable_router(ia->ia6_ndpr))
 			break;
 	}
+	pserialize_read_exit(s);
 
 	if (ia) {
+		int bound = curlwp_bind();
+
+		s = pserialize_read_enter();
 		IN6_ADDRLIST_READER_FOREACH(ia) {
+			struct ifaddr *ifa = (struct ifaddr *)ia;
+			struct psref psref;
+
 			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
 			if (ia->ia6_ndpr == NULL) /* XXX: see above. */
 				continue;
 
+			ia6_acquire(ia, &psref);
+			pserialize_read_exit(s);
+
 			if (find_pfxlist_reachable_router(ia->ia6_ndpr)) {
 				if (ia->ia6_flags & IN6_IFF_DETACHED) {
 					ia->ia6_flags &= ~IN6_IFF_DETACHED;
 					ia->ia6_flags |= IN6_IFF_TENTATIVE;
-					nd6_dad_start((struct ifaddr *)ia,
+					nd6_dad_start(ifa,
 					    0);
 					/* We will notify the routing socket
 					 * of the DAD result, so no need to
@@ -1579,23 +1604,43 @@ pfxlist_onlink_check(void)
 				if ((ia->ia6_flags & IN6_IFF_DETACHED) == 0) {
 					ia->ia6_flags |= IN6_IFF_DETACHED;
 					rt_newaddrmsg(RTM_NEWADDR,
-					    (struct ifaddr *)ia, 0, NULL);
+					    ifa, 0, NULL);
 				}
 			}
+
+			s = pserialize_read_enter();
+			ia6_release(ia, &psref);
 		}
+		pserialize_read_exit(s);
+		curlwp_bindx(bound);
 	}
 	else {
+		int bound = curlwp_bind();
+
+		s = pserialize_read_enter();
 		IN6_ADDRLIST_READER_FOREACH(ia) {
 			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) == 0)
 				continue;
 
 			if (ia->ia6_flags & IN6_IFF_DETACHED) {
+				struct ifaddr *ifa = (struct ifaddr *)ia;
+				struct psref psref;
+
 				ia->ia6_flags &= ~IN6_IFF_DETACHED;
 				ia->ia6_flags |= IN6_IFF_TENTATIVE;
+
+				ia6_acquire(ia, &psref);
+				pserialize_read_exit(s);
+
 				/* Do we need a delay in this case? */
-				nd6_dad_start((struct ifaddr *)ia, 0);
+				nd6_dad_start(ifa, 0);
+
+				s = pserialize_read_enter();
+				ia6_release(ia, &psref);
 			}
 		}
+		pserialize_read_exit(s);
+		curlwp_bindx(bound);
 	}
 }
 
@@ -1608,6 +1653,8 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	struct nd_prefix *opr;
 	u_long rtflags;
 	int error = 0;
+	struct psref psref;
+	int bound;
 
 	/* sanity check */
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0) {
@@ -1640,14 +1687,18 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 	 * We prefer link-local addresses as the associated interface address.
 	 */
 	/* search for a link-local addr */
-	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp,
-	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST);
+	bound = curlwp_bind();
+	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal_psref(ifp,
+	    IN6_IFF_NOTREADY | IN6_IFF_ANYCAST, &psref);
 	if (ifa == NULL) {
-		/* XXX: freebsd does not have ifa_ifwithaf */
+		int s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family == AF_INET6)
 				break;
 		}
+		if (ifa != NULL)
+			ifa_acquire(ifa, &psref);
+		pserialize_read_exit(s);
 		/* should we care about ia6_flags? */
 	}
 	if (ifa == NULL) {
@@ -1661,6 +1712,7 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		    " to add route for a prefix(%s/%d) on %s\n",
 		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr),
 		    pr->ndpr_plen, if_name(ifp));
+		curlwp_bindx(bound);
 		return (0);
 	}
 
@@ -1697,6 +1749,8 @@ nd6_prefix_onlink(struct nd_prefix *pr)
 		    ip6_sprintf(&((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr),
 		    ip6_sprintf(&mask6.sin6_addr), rtflags, error);
 	}
+	ifa_release(ifa, &psref);
+	curlwp_bindx(bound);
 
 	return (error);
 }
@@ -1772,7 +1826,7 @@ nd6_prefix_offlink(struct nd_prefix *pr)
 }
 
 static struct in6_ifaddr *
-in6_ifadd(struct nd_prefixctl *prc, int mcast)
+in6_ifadd(struct nd_prefixctl *prc, int mcast, struct psref *psref)
 {
 	struct ifnet *ifp = prc->ndprc_ifp;
 	struct ifaddr *ifa;
@@ -1782,6 +1836,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 	struct in6_addr mask;
 	int prefixlen = prc->ndprc_plen;
 	int updateflags;
+	int s;
 
 	in6_prefixlen2mask(&mask, prefixlen);
 
@@ -1805,11 +1860,14 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 	 * with the same interface identifier, than to have multiple addresses
 	 * with different interface identifiers.
 	 */
+	s = pserialize_read_enter();
 	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp, 0); /* 0 is OK? */
 	if (ifa)
 		ib = (struct in6_ifaddr *)ifa;
-	else
+	else {
+		pserialize_read_exit(s);
 		return NULL;
+	}
 
 #if 0 /* don't care link local addr state, and always do DAD */
 	/* if link-local address is not eligible, do not autoconfigure. */
@@ -1825,6 +1883,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 		nd6log(LOG_INFO, "wrong prefixlen for %s "
 		    "(prefix=%d ifid=%d)\n",
 		    if_name(ifp), prefixlen, 128 - plen0);
+		pserialize_read_exit(s);
 		return NULL;
 	}
 
@@ -1852,6 +1911,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 	    (ib->ia_addr.sin6_addr.s6_addr32[2] & ~mask.s6_addr32[2]);
 	ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
 	    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
+	pserialize_read_exit(s);
 
 	/* new prefix mask. */
 	sockaddr_in6_init(&ifra.ifra_prefixmask, &mask, 0, 0, 0);
@@ -1869,12 +1929,15 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 	 * usually not happen, but we can still see this case, e.g., if we
 	 * have manually configured the exact address to be configured.
 	 */
+	s = pserialize_read_enter();
 	if (in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr) != NULL) {
 		/* this should be rare enough to make an explicit log */
 		log(LOG_INFO, "in6_ifadd: %s is already configured\n",
 		    ip6_sprintf(&ifra.ifra_addr.sin6_addr));
+		pserialize_read_exit(s);
 		return (NULL);
 	}
+	pserialize_read_exit(s);
 
 	/*
 	 * Allocate ifaddr structure, link into chain, etc.
@@ -1892,7 +1955,7 @@ in6_ifadd(struct nd_prefixctl *prc, int mcast)
 		return (NULL);	/* ifaddr must not have been allocated. */
 	}
 
-	ia = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
+	ia = in6ifa_ifpwithaddr_psref(ifp, &ifra.ifra_addr.sin6_addr, psref);
 
 	return (ia);		/* this is always non-NULL */
 }
@@ -2007,14 +2070,17 @@ in6_tmpifadd(
 	if ((error = in6_update_ifa(ifp, &ifra, NULL, updateflags)) != 0)
 		return (error);
 
+	s = pserialize_read_enter();
 	newia = in6ifa_ifpwithaddr(ifp, &ifra.ifra_addr.sin6_addr);
 	if (newia == NULL) {	/* XXX: can it happen? */
+		pserialize_read_exit(s);
 		nd6log(LOG_ERR,
 		    "ifa update succeeded, but we got no ifaddr\n");
 		return (EINVAL); /* XXX */
 	}
 	newia->ia6_ndpr = ia0->ia6_ndpr;
 	newia->ia6_ndpr->ndpr_refcnt++;
+	pserialize_read_exit(s);
 
 	/*
 	 * A newly added address might affect the status of other addresses.

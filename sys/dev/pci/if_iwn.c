@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.78 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.78.2.1 2016/08/06 00:19:07 pgoyette Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.78 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.78.2.1 2016/08/06 00:19:07 pgoyette Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -1858,7 +1858,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* XXX Do not abort a running scan. */
 		if (sc->sc_flags & IWN_FLAG_SCANNING) {
 			if (ic->ic_state != nstate)
-				aprint_error_dev(sc->sc_dev, "scan request(%d) "
+				aprint_debug_dev(sc->sc_dev, "scan request(%d) "
 				    "while scanning(%d) ignored\n", nstate,
 				    ic->ic_state);
 			break;

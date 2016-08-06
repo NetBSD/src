@@ -1,6 +1,5 @@
-/*	$NetBSD: monitor.c,v 1.18 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: monitor.c,v 1.157 2016/02/15 23:32:37 djm Exp $ */
-
+/*	$NetBSD: monitor.c,v 1.18.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: monitor.c,v 1.161 2016/07/22 03:39:13 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -28,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.18.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -41,6 +40,7 @@ __RCSID("$NetBSD: monitor.c,v 1.18 2016/03/11 01:55:00 christos Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <paths.h>
 #include <poll.h>
 #include <pwd.h>
@@ -669,7 +669,7 @@ mm_answer_sign(int sock, Buffer *m)
 	char *alg = NULL;
 	size_t datlen, siglen, alglen;
 	int r, is_proof = 0;
-	uint32_t keyid;
+	u_int keyid;
 	const char proof_req[] = "hostkeys-prove-00@openssh.com";
 
 	debug3("%s", __func__);
@@ -678,6 +678,8 @@ mm_answer_sign(int sock, Buffer *m)
 	    (r = sshbuf_get_string(m, &p, &datlen)) != 0 ||
 	    (r = sshbuf_get_cstring(m, &alg, &alglen)) != 0)
 		fatal("%s: buffer error: %s", __func__, ssh_err(r));
+	if (keyid > INT_MAX)
+		fatal("%s: invalid key ID", __func__);
 
 	/*
 	 * Supported KEX types use SHA1 (20 bytes), SHA256 (32 bytes),
@@ -1225,6 +1227,7 @@ mm_answer_keyallowed(int sock, Buffer *m)
 			break;
 		}
 	}
+
 	debug3("%s: key %p is %s",
 	    __func__, key, allowed ? "allowed" : "not allowed");
 
@@ -1265,7 +1268,8 @@ static int
 monitor_valid_userblob(u_char *data, u_int datalen)
 {
 	Buffer b;
-	char *p, *userstyle;
+	u_char *p;
+	char *userstyle, *cp;
 	u_int len;
 	int fail = 0;
 
@@ -1273,7 +1277,7 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 	buffer_append(&b, data, datalen);
 
 	if (datafellows & SSH_OLD_SESSIONID) {
-		p = (char *)buffer_ptr(&b);
+		p = buffer_ptr(&b);
 		len = buffer_len(&b);
 		if ((session_id2 == NULL) ||
 		    (len < session_id2_len) ||
@@ -1290,26 +1294,26 @@ monitor_valid_userblob(u_char *data, u_int datalen)
 	}
 	if (buffer_get_char(&b) != SSH2_MSG_USERAUTH_REQUEST)
 		fail++;
-	p = buffer_get_cstring(&b, NULL);
+	cp = buffer_get_cstring(&b, NULL);
 	xasprintf(&userstyle, "%s%s%s", authctxt->user,
 	    authctxt->style ? ":" : "",
 	    authctxt->style ? authctxt->style : "");
-	if (strcmp(userstyle, p) != 0) {
-		logit("wrong user name passed to monitor: expected %s != %.100s",
-		    userstyle, p);
+	if (strcmp(userstyle, cp) != 0) {
+		logit("wrong user name passed to monitor: "
+		    "expected %s != %.100s", userstyle, cp);
 		fail++;
 	}
 	free(userstyle);
-	free(p);
+	free(cp);
 	buffer_skip_string(&b);
 	if (datafellows & SSH_BUG_PKAUTH) {
 		if (!buffer_get_char(&b))
 			fail++;
 	} else {
-		p = buffer_get_cstring(&b, NULL);
-		if (strcmp("publickey", p) != 0)
+		cp = buffer_get_cstring(&b, NULL);
+		if (strcmp("publickey", cp) != 0)
 			fail++;
-		free(p);
+		free(cp);
 		if (!buffer_get_char(&b))
 			fail++;
 		buffer_skip_string(&b);
@@ -1445,6 +1449,7 @@ mm_answer_keyverify(int sock, Buffer *m)
 static void
 mm_record_login(Session *s, struct passwd *pw)
 {
+	struct ssh *ssh = active_state;	/* XXX */
 	socklen_t fromlen;
 	struct sockaddr_storage from;
 
@@ -1466,7 +1471,7 @@ mm_record_login(Session *s, struct passwd *pw)
 	}
 	/* Record that there was a login on that tty from the remote host. */
 	record_login(s->pid, s->tty, pw->pw_name, pw->pw_uid,
-	    get_remote_name_or_ip(utmp_len, options.use_dns),
+	    session_get_remote_name_or_ip(ssh, utmp_len, options.use_dns),
 	    (struct sockaddr *)&from, fromlen);
 }
 
@@ -1868,6 +1873,9 @@ monitor_apply_keystate(struct monitor *pmonitor)
 #ifdef WITH_OPENSSL
 		kex->kex[KEX_DH_GRP1_SHA1] = kexdh_server;
 		kex->kex[KEX_DH_GRP14_SHA1] = kexdh_server;
+		kex->kex[KEX_DH_GRP14_SHA256] = kexdh_server;
+		kex->kex[KEX_DH_GRP16_SHA512] = kexdh_server;
+		kex->kex[KEX_DH_GRP18_SHA512] = kexdh_server;
 		kex->kex[KEX_DH_GEX_SHA1] = kexgex_server;
 		kex->kex[KEX_DH_GEX_SHA256] = kexgex_server;
 		kex->kex[KEX_ECDH_SHA2] = kexecdh_server;

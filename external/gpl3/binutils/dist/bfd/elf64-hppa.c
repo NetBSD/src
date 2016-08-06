@@ -2945,7 +2945,7 @@ elf_hppa_record_segment_addrs (bfd *abfd,
 static bfd_boolean
 elf_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
 {
-  bfd_boolean retval;
+  struct stat buf;
   struct elf64_hppa_link_hash_table *hppa_info = hppa_link_hash_table (info);
 
   if (hppa_info == NULL)
@@ -3029,7 +3029,8 @@ elf_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
 			  info);
 
   /* Invoke the regular ELF backend linker to do all the work.  */
-  retval = bfd_elf_final_link (abfd, info);
+  if (!bfd_elf_final_link (abfd, info))
+    return FALSE;
 
   elf_link_hash_traverse (elf_hash_table (info),
 			  elf_hppa_remark_useless_dynamic_symbols,
@@ -3037,10 +3038,17 @@ elf_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
 
   /* If we're producing a final executable, sort the contents of the
      unwind section. */
-  if (retval && !bfd_link_relocatable (info))
-    retval = elf_hppa_sort_unwind (abfd);
+  if (bfd_link_relocatable (info))
+    return TRUE;
 
-  return retval;
+  /* Do not attempt to sort non-regular files.  This is here
+     especially for configure scripts and kernel builds which run
+     tests with "ld [...] -o /dev/null".  */
+  if (stat (abfd->filename, &buf) != 0
+      || !S_ISREG(buf.st_mode))
+    return TRUE;
+
+  return elf_hppa_sort_unwind (abfd);
 }
 
 /* Relocate the given INSN.  VALUE should be the actual value we want

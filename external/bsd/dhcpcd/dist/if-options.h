@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.19 2016/05/09 10:15:59 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.19.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -117,6 +117,7 @@
 #define DHCPCD_INITIAL_DELAY		(1ULL << 58)
 #define DHCPCD_PRINT_PIDFILE		(1ULL << 59)
 #define DHCPCD_ONESHOT			(1ULL << 60)
+#define DHCPCD_INACTIVE			(1ULL << 61)
 
 #define DHCPCD_NODROP	(DHCPCD_EXITING | DHCPCD_PERSISTENT)
 

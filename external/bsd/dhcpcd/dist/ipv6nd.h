@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6nd.h,v 1.14 2016/04/10 21:00:53 roy Exp $ */
+/* $NetBSD: ipv6nd.h,v 1.14.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -111,8 +111,7 @@ ssize_t ipv6nd_free(struct interface *);
 void ipv6nd_expirera(void *arg);
 int ipv6nd_hasra(const struct interface *);
 int ipv6nd_hasradhcp(const struct interface *);
-void ipv6nd_handleifa(struct dhcpcd_ctx *, int,
-    const char *, const struct in6_addr *, int);
+void ipv6nd_handleifa(int, struct ipv6_addr *);
 int ipv6nd_dadcompleted(const struct interface *);
 void ipv6nd_expire(struct interface *, uint32_t);
 void ipv6nd_drop(struct interface *);

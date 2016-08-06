@@ -1,4 +1,4 @@
-/* $NetBSD: t_mutex.c,v 1.9.2.1 2016/08/01 07:39:23 pgoyette Exp $ */
+/* $NetBSD: t_mutex.c,v 1.9.2.2 2016/08/06 00:19:12 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mutex.c,v 1.9.2.1 2016/08/01 07:39:23 pgoyette Exp $");
+__RCSID("$NetBSD: t_mutex.c,v 1.9.2.2 2016/08/06 00:19:12 pgoyette Exp $");
 
 #include <pthread.h>
 #include <stdio.h>

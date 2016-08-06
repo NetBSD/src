@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.h,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: dev_net.h,v 1.2.142.1 2016/08/06 00:19:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson <dfr@freebsd.org>
@@ -28,5 +28,7 @@
  * $FreeBSD: src/sys/boot/common/dev_net.h,v 1.2 1999/08/28 00:39:46 peter Exp $
  */
 
-extern struct devsw netdev;
-
+int	net_open(struct open_file *, ...);
+int	net_close(struct open_file *);
+int	net_ioctl(struct open_file *, u_long, void *);
+int	net_strategy(void *, int , daddr_t , size_t, void *, size_t *);

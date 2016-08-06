@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.72.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: mld6.c,v 1.72.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.72.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.72.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -402,7 +402,9 @@ mld_input(struct mbuf *m, int off)
 	 * if we sent the last report.
 	 */
 	switch (mldh->mld_type) {
-	case MLD_LISTENER_QUERY:
+	case MLD_LISTENER_QUERY: {
+		struct psref psref;
+
 		if (ifp->if_flags & IFF_LOOPBACK)
 			break;
 
@@ -428,9 +430,13 @@ mld_input(struct mbuf *m, int off)
 		 */
 		timer = ntohs(mldh->mld_maxdelay);
 
-		ia = in6_get_ia_from_ifp(ifp);
+		ia = in6_get_ia_from_ifp_psref(ifp, &psref);
 		if (ia == NULL)
 			break;
+
+		/* The following operations may sleep */
+		m_put_rcvif(ifp, &s);
+		ifp = NULL;
 
 		LIST_FOREACH(in6m, &ia->ia6_multiaddrs, in6m_entry) {
 			if (IN6_ARE_ADDR_EQUAL(&in6m->in6m_addr, &all_in6) ||
@@ -457,7 +463,9 @@ mld_input(struct mbuf *m, int off)
 				mld_starttimer(in6m);
 			}
 		}
+		ia6_release(ia, &psref);
 		break;
+	    }
 
 	case MLD_LISTENER_REPORT:
 		/*
@@ -514,6 +522,8 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	struct in6_ifaddr *ia = NULL;
 	struct ifnet *ifp = in6m->in6m_ifp;
 	int ignflags;
+	struct psref psref;
+	int bound;
 
 	/*
 	 * At first, find a link local address on the outgoing interface
@@ -522,20 +532,31 @@ mld_sendpkt(struct in6_multi *in6m, int type,
 	 * the case where we first join a link-local address.
 	 */
 	ignflags = (IN6_IFF_NOTREADY|IN6_IFF_ANYCAST) & ~IN6_IFF_TENTATIVE;
-	if ((ia = in6ifa_ifpforlinklocal(ifp, ignflags)) == NULL)
+	bound = curlwp_bind();
+	ia = in6ifa_ifpforlinklocal_psref(ifp, ignflags, &psref);
+	if (ia == NULL) {
+		curlwp_bindx(bound);
 		return;
-	if ((ia->ia6_flags & IN6_IFF_TENTATIVE))
+	}
+	if ((ia->ia6_flags & IN6_IFF_TENTATIVE)) {
+		ia6_release(ia, &psref);
 		ia = NULL;
+	}
 
 	/* Allocate two mbufs to store IPv6 header and MLD header */
 	mldh = mld_allocbuf(&mh, sizeof(struct mld_hdr), in6m, type);
-	if (mldh == NULL)
+	if (mldh == NULL) {
+		ia6_release(ia, &psref);
+		curlwp_bindx(bound);
 		return;
+	}
 
 	/* fill src/dst here */
  	ip6 = mtod(mh, struct ip6_hdr *);
  	ip6->ip6_src = ia ? ia->ia_addr.sin6_addr : in6addr_any;
  	ip6->ip6_dst = dst ? *dst : in6m->in6m_addr;
+	ia6_release(ia, &psref);
+	curlwp_bindx(bound);
 
 	mldh->mld_addr = in6m->in6m_addr;
 	in6_clearscope(&mldh->mld_addr); /* XXX */
@@ -645,6 +666,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 */
 		in6m->in6m_refcount++;
 	} else {
+		int _s;
 		/*
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
@@ -664,8 +686,10 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
 		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 
+		_s = pserialize_read_enter();
 		ia = in6_get_ia_from_ifp(ifp);
 		if (ia == NULL) {
+			pserialize_read_exit(_s);
 			callout_destroy(&in6m->in6m_timer_ch);
 			free(in6m, M_IPMADDR);
 			splx(s);
@@ -674,7 +698,9 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		}
 		in6m->in6m_ia = ia;
 		ifaref(&ia->ia_ifa); /* gain a reference */
+		/* FIXME NOMPSAFE: need to lock */
 		LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
+		pserialize_read_exit(_s);
 
 		/*
 		 * Ask the network driver to update its multicast reception
@@ -816,7 +842,9 @@ in6_savemkludge(struct in6_ifaddr *oia)
 {
 	struct in6_ifaddr *ia;
 	struct in6_multi *in6m;
+	int s;
 
+	s = pserialize_read_enter();
 	ia = in6_get_ia_from_ifp(oia->ia_ifp);
 	if (ia) {	/* there is another address */
 		KASSERT(ia != oia);
@@ -825,6 +853,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 			ifaref(&ia->ia_ifa);
 			ifafree(&in6m->in6m_ia->ia_ifa);
 			in6m->in6m_ia = ia;
+			/* FIXME NOMPSAFE: need to lock */
 			LIST_INSERT_HEAD(&ia->ia6_multiaddrs, in6m, in6m_entry);
 		}
 	} else {	/* last address on this if deleted, save */
@@ -844,6 +873,7 @@ in6_savemkludge(struct in6_ifaddr *oia)
 			LIST_INSERT_HEAD(&mk->mk_head, in6m, in6m_entry);
 		}
 	}
+	pserialize_read_exit(s);
 }
 
 /*
@@ -986,8 +1016,8 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 	uint32_t tmp;
 	int error;
 	size_t written;
-	struct psref psref;
-	int bound;
+	struct psref psref, psref_ia;
+	int bound, s;
 
 	if (namelen != 1)
 		return EINVAL;
@@ -1001,6 +1031,7 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 
 	if (oldp == NULL) {
 		*oldlenp = 0;
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
@@ -1010,6 +1041,7 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 				    sizeof(uint32_t);
 			}
 		}
+		pserialize_read_exit(s);
 		if_put(ifp, &psref);
 		curlwp_bindx(bound);
 		return 0;
@@ -1017,9 +1049,14 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 
 	error = 0;
 	written = 0;
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
+
+		ifa_acquire(ifa, &psref_ia);
+		pserialize_read_exit(s);
+
 		ifa6 = (struct in6_ifaddr *)ifa;
 		LIST_FOREACH(in6m, &ifa6->ia6_multiaddrs, in6m_entry) {
 			if (written + 2 * sizeof(struct in6_addr) +
@@ -1044,8 +1081,13 @@ in6_multicast_sysctl(SYSCTLFN_ARGS)
 			oldp = (char *)oldp + sizeof(tmp);
 			written += sizeof(tmp);
 		}
+
+		s = pserialize_read_enter();
+		ifa_release(ifa, &psref_ia);
 	}
+	pserialize_read_exit(s);
 done:
+	ifa_release(ifa, &psref_ia);
 	if_put(ifp, &psref);
 	curlwp_bindx(bound);
 	*oldlenp = written;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.46.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.46 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.46.2.1 2016/08/06 00:19:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 		panic("ext2fs_valloc: dup alloc");
 	}
 
-	memset(ip->i_din.e2fs_din, 0, sizeof(struct ext2fs_dinode));
+	memset(ip->i_din.e2fs_din, 0, EXT2_DINODE_SIZE(fs));
 
 	/*
 	 * Set up a new generation number for this inode.

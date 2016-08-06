@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.76.2.6 2016/07/28 23:59:15 pgoyette Exp $	*/
+/*	$NetBSD: md.c,v 1.76.2.7 2016/08/06 00:19:07 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.6 2016/07/28 23:59:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.76.2.7 2016/08/06 00:19:07 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -452,6 +452,8 @@ mdstrategy(struct buf *bp)
 	}
 	mutex_enter(&sc->sc_lock);
 
+	mutex_enter(&sc->sc_lock);
+
 	switch (sc->sc_type) {
 #if MEMORY_DISK_SERVER
 	case MD_UMEM_SERVER:
@@ -495,8 +497,10 @@ mdstrategy(struct buf *bp)
 		bp->b_error = EIO;
 		break;
 	}
+	mutex_exit(&sc->sc_lock);
 
 	mutex_exit(&sc->sc_lock);
+
  done:
 	biodone(bp);
 	if (sc != NULL)

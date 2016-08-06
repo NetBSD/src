@@ -1,3 +1,4 @@
+#as: -mrelax-relocations=yes
 #objdump: -dwr
 
 .*: +file format .*

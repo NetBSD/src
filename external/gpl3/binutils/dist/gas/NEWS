@@ -1,5 +1,12 @@
 -*- text -*-
 
+* Add a configure option --enable-x86-relax-relocations to decide whether
+  x86 assembler should generate relax relocations by default.  Default to
+  yes, except for x86 Solaris targets older than Solaris 12.
+
+* New command line option -mrelax-relocations= for x86 target to control
+  whether to generate relax relocations.
+
 Changes in 2.26:
 
 * Add a configure option --enable-compressed-debug-sections={all,gas} to
@@ -7,8 +14,6 @@ Changes in 2.26:
 
 * Add support for the ARC EM/HS, and ARC600/700 architectures.  Remove
   assembler support for Argonaut RISC architectures.
-
-Changes in 2.26:
 
 * Symbol and label names can now be enclosed in double quotes (") which allows
   them to contain characters that are not part of valid symbol names in high

@@ -1,3 +1,11 @@
+2016-02-05  Sriraman Tallam  <tmsriram@google.com>
+
+	PR gold/19047
+	* icf.cc (get_rel_addend): New function.
+	(get_section_contents):  Move merge section addend computation to a
+	new function.  Ignore negative values for SHT_REL and SHT_RELA addends.
+	Fix bug to not read past the length of the section.
+
 2015-12-16  Roland McGrath  <mcgrathr@google.com>
 
 	PR ld/17473
@@ -33,7 +41,7 @@
 2015-11-11  Alan Modra  <amodra@gmail.com>
 	    Peter Bergner <bergner@vnet.ibm.com>
 
-	* gold/powerpc.cc (Powerpc_relocate_functions::addr16_dq): New function.
+	* powerpc.cc (Powerpc_relocate_functions::addr16_dq): New function.
 	(Powerpc_relocate_functions::addr16dx_ha): Likewise.
 	(Target_powerpc::Scan::local): Handle R_POWERPC_REL16DX_HA.
 	(Target_powerpc::Scan::global): Likewise.
@@ -339,7 +347,7 @@
 2015-07-26  Doug Kwan  <dougkwan@google.com>
 
 	* testsuite/arm_unaligned_reloc.{s,sh}: Make test less sensitive to
-	  disassembler output format.
+	disassembler output format.
 
 2015-07-23  Ian Coolidge  <icoolidge@google.com>
 	Plumb --pic-veneer option for gold.
@@ -566,7 +574,7 @@
 2015-06-29  Doug Kwan  <dougkwan@google.com>
 
 	* testsuite/arm_bl_out_of_range.s: Align stub table so that it appears
-	  at address expected by test.
+	at address expected by test.
 	* testsuite/arm_cortex_a8_b.s: Ditto.
 	* testsuite/arm_cortex_a8_b_cond.s: Ditto.
 	* testsuite/arm_cortex_a8_bl.s: Ditto.
@@ -940,7 +948,6 @@
 2015-04-07  HC Yen <hc.yen@mediatek.com>
 
 	Add AArch32 support for gold linker.
-	gold/
 	* arm.cc: Add V8 arch combine table.
 
 2015-04-06  Rafael Ávila de Espíndola <rafael.espindola@gmail.com>
@@ -1455,7 +1462,6 @@
 	(Output_data_plt_arm::entry_count): Modified.
 	(Output_data_plt_arm::address_for_global): New method.
 	(Output_data_plt_arm::address_for_local): New method.
-gold/
 	(Output_data_plt_arm::set_final_data_size): Add irelative_count_.
 	(Output_data_plt_arm::insert_irelative_data): New method.
 	(Output_data_plt_arm::irelative_rel_): New member.
@@ -2490,7 +2496,7 @@ gold/
 
 	Add .gdb_index version 7 support.
 
-	* gold/dwarf_reader.cc: include <utility> (for make_pair).
+	* dwarf_reader.cc: include <utility> (for make_pair).
 	(Dwarf_abbrev_table::do_read_abbrevs): Check for compressed
 	debug sections.
 	(Dwarf_ranges_table::read_ranges_table): Likewise.
@@ -2501,21 +2507,21 @@ gold/
 	for end of list by offset, not by offset == 0.
 	(Dwarf_info_reader::do_read_string_table): Check for compressed
 	debug sections.
-	* gold/dwarf_reader.h (Dwarf_pubnames_table::Dwarf_pubnames_table):
+	* dwarf_reader.h (Dwarf_pubnames_table::Dwarf_pubnames_table):
 	Initialize new data members.
 	(Dwarf_pubnames_table::next_name): return flag_byte.
 	(Dwarf_pubnames_table::end_of_table_): New data member.
 	(Dwarf_pubnames_table::is_gnu_style_): New data member.
-	* gold/gdb-index.cc (gdb_index_version): Update to version 7.
+	* gdb-index.cc (gdb_index_version): Update to version 7.
 	(Gdb_index_info_reader::read_pubtable): Read flag_byte.
 	(Gdb_index_info_reader::read_pubnames_and_pubtypes): Don't
 	read skeleton type unit DIEs.
 	(Gdb_index::add_symbol): Add flag_byte; adjust all callers.
 	(Gdb_index::do_write): Write flag_byte.
-	* gold/gdb-index.h (Gdb_index::add_symbol): Add flags parameter.
+	* gdb-index.h (Gdb_index::add_symbol): Add flags parameter.
 	(Gdb_index::Cu_vector): Store flags along with cu indexes.
-	* gold/testsuite/gdb_index_test_3.sh: Allow versions 4-7.
-	* gold/testsuite/gdb_index_test_comm.sh: Likewise.
+	* testsuite/gdb_index_test_3.sh: Allow versions 4-7.
+	* testsuite/gdb_index_test_comm.sh: Likewise.
 
 2014-01-08  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -5554,15 +5560,15 @@ gold/
 
 2012-01-03  Cary Coutant  <ccoutant@google.com>
 
-	* gold/incremental.cc (Sized_incremental_binary::do_process_got_plt):
+	* incremental.cc (Sized_incremental_binary::do_process_got_plt):
 	Use abstract base class for GOT.
-	* gold/output.h (class Output_data_got_base): New abstract base class.
+	* output.h (class Output_data_got_base): New abstract base class.
 	(class Output_data_got): Derive from new base class, adjust ctors.
 	(Output_data_got::reserve_slot): Make virtual; rename to
 	do_reserve_slot; Adjust callers.
-	* gold/target.h (Sized_target::init_got_plt_for_update): Return
+	* target.h (Sized_target::init_got_plt_for_update): Return
 	pointer to abstract base class.
-	* gold/x86_64.cc (Target_x86_64::init_got_plt_for_update): Likewise.
+	* x86_64.cc (Target_x86_64::init_got_plt_for_update): Likewise.
 
 2011-12-18  Ian Lance Taylor  <iant@google.com>
 
@@ -6073,10 +6079,10 @@ gold/
 
 2011-08-01  Cary Coutant  <ccoutant@google.com>
 
-	* gold/testsuite/Makefile.am (justsyms_exec): New testcase.
-	* gold/testsuite/Makefile.in: Regenerate.
-	* gold/testsuite/justsyms_exec.c: New source file.
-	* gold/testsuite/justsyms_lib.c: New source file.
+	* testsuite/Makefile.am (justsyms_exec): New testcase.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/justsyms_exec.c: New source file.
+	* testsuite/justsyms_lib.c: New source file.
 
 2011-08-01  Cary Coutant  <ccoutant@google.com>
 
@@ -6402,7 +6408,7 @@ gold/
 
 2011-07-06  Cary Coutant  <ccoutant@google.com>
 
-	* gold/incremental.cc
+	* incremental.cc
 	(Output_section_incremental_inputs::write_info_blocks): Check for
 	hidden and internal symbols.
 
@@ -6943,9 +6949,9 @@ gold/
 2011-06-09  Cary Coutant  <ccoutant@google.com>
 
 	PR gold/12804
-	* gold/gold.cc (queue_initial_tasks): Warn if --incremental is
+	* gold.cc (queue_initial_tasks): Warn if --incremental is
 	used with --compress-debug-sections.
-	* gold/object.cc (Sized_relobj_file::do_layout): Report
+	* object.cc (Sized_relobj_file::do_layout): Report
 	uncompressed size of compressed input sections.
 
 2011-06-08  Cary Coutant  <ccoutant@google.com>
@@ -7073,10 +7079,10 @@ gold/
 2011-06-02  Cary Coutant  <ccoutant@google.com>
 
 	PR gold/12163
-	* gold/archive.cc (Archive::Archive): Initialize new data member.
+	* archive.cc (Archive::Archive): Initialize new data member.
 	(Archive::include_all_members): Return if archive has already been
 	included.
-	* gold/archive.h (Archive::include_all_members_): New data member.
+	* archive.h (Archive::include_all_members_): New data member.
 
 2011-06-02  Nick Clifton  <nickc@redhat.com>
 
@@ -7593,9 +7599,9 @@ gold/
 
 2011-04-14 Cary Coutant  <ccoutant@google.com>
 
-	* gold/layout.cc (Layout::symtab_section_offset): New function.
-	* gold/layout.h (Layout::symtab_section_offset): New function.
-	* gold/reloc.cc (Sized_relobj::do_relocate): Call it.
+	* layout.cc (Layout::symtab_section_offset): New function.
+	* layout.h (Layout::symtab_section_offset): New function.
+	* reloc.cc (Sized_relobj::do_relocate): Call it.
 
 2011-04-12  Ian Lance Taylor  <iant@google.com>
 
@@ -8706,7 +8712,7 @@ gold/
 
 2010-10-17  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (Target_arm::got_section): Use correct order and set
+	* arm.cc (Target_arm::got_section): Use correct order and set
 	GOT output section to be writable.
 
 2010-10-14  Cary Coutant  <ccoutant@google.com>
@@ -8858,7 +8864,7 @@ gold/
 
 2010-09-30  Doug Kwan  <dougkwan@google.com>
 
-	* gold/testsuite/arm_branch_out_of_range.sh: Fix broken tests.
+	* testsuite/arm_branch_out_of_range.sh: Fix broken tests.
 
 2010-09-28  Sriraman Tallam  <tmsriram@google.com>
 
@@ -8902,13 +8908,13 @@ gold/
 
 2010-09-15  Doug Kwan  <dougkwan@google.com>
 
-	* gold/testsuite/script_test_3.t: Add ARM special sections.
-	* gold/testsuite/script_test_4.t: Same.
-	* gold/testsuite/script_test_5.t: Same.
-	* gold/testsuite/script_test_6.t: Same.
-	* gold/testsuite/script_test_7.t: Same.
-	* gold/testsuite/script_test_7.t: Same.
-	* gold/testsuite/thumb_blx_out_of_range.s: Fix instruction alignment.
+	* testsuite/script_test_3.t: Add ARM special sections.
+	* testsuite/script_test_4.t: Same.
+	* testsuite/script_test_5.t: Same.
+	* testsuite/script_test_6.t: Same.
+	* testsuite/script_test_7.t: Same.
+	* testsuite/script_test_7.t: Same.
+	* testsuite/thumb_blx_out_of_range.s: Fix instruction alignment.
 
 2010-09-14  Cary Coutant  <ccoutant@google.com>
 
@@ -9041,7 +9047,7 @@ gold/
 
 2010-08-27  Doug Kwan  <dougkwan@google.com>
 
-	* gold/resolve.cc (Symbol_table::should_override): Let a weak
+	* resolve.cc (Symbol_table::should_override): Let a weak
 	reference override an existing dynamic weak reference.
 	* testsuite/Makefile.am: Add new test dyn_weak_ref.
 	* testsuite/Makefile.in: Regenerate.
@@ -9133,11 +9139,11 @@ gold/
 2010-08-19  Neil Vachharajani  <nvachhar@google.com>
 	    Cary Coutant  <ccoutant@google.com>
 
-	* gold/archive.h (Add_lib_group_symbols): Add readsyms_blocker_, adjust
+	* archive.h (Add_lib_group_symbols): Add readsyms_blocker_, adjust
 	constructor, and set_blocker.
-	* gold/archive.cc (Add_lib_group_symbols::is_runnable): Also check
+	* archive.cc (Add_lib_group_symbols::is_runnable): Also check
 	readsyms_blocker_.
-	* gold/readsyms.cc (Read_symbols::do_lib_group): Also pass
+	* readsyms.cc (Read_symbols::do_lib_group): Also pass
 	this->this_blocker_ to Add_lib_group_symbols::set_blocker.
 	* testsuite/Makefile.am (start_lib_test): New test case.
 	* testsuite/Makefile.in: Regenerate.
@@ -9740,9 +9746,9 @@ gold/
 2010-07-27  Jeffrey Yasskin  <jyasskin@google.com>
 
 	* testsuite/debug_msg.sh: Test mixed weak/strong symbol behavior.
-	* gold/testsuite/debug_msg.cc: Likewise.
-	* gold/testsuite/odr_violation1.cc
-	* gold/testsuite/odr_violation2.cc
+	* testsuite/debug_msg.cc: Likewise.
+	* testsuite/odr_violation1.cc
+	* testsuite/odr_violation2.cc
 
 2010-07-21  Cary Coutant  <ccoutant@google.com>
 
@@ -10087,13 +10093,13 @@ gold/
 2010-05-26  Rafael Espindola  <espindola@google.com>
 
 	PR 11604
-	* gold/object.cc(Sized_relobj::do_layout_deferred_sections): Avoid
+	* object.cc(Sized_relobj::do_layout_deferred_sections): Avoid
 	adding sections the garbage collector removed.
-	* gold/testsuite/Makefile.am: Add test.
-	* gold/testsuite/Makefile.in: Regenerate.
-	* gold/testsuite/plugin_test_7.sh: New.
-	* gold/testsuite/plugin_test_7_1.c: New.
-	* gold/testsuite/plugin_test_7_2.c: New.
+	* testsuite/Makefile.am: Add test.
+	* testsuite/Makefile.in: Regenerate.
+	* testsuite/plugin_test_7.sh: New.
+	* testsuite/plugin_test_7_1.c: New.
+	* testsuite/plugin_test_7_2.c: New.
 
 2010-05-26  Rafael Espindola  <espindola@google.com>
 
@@ -10577,7 +10583,7 @@ gold/
 
 2010-03-25  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (Arm_exidx_fixup::update_offset_map): Rearrange code
+	* arm.cc (Arm_exidx_fixup::update_offset_map): Rearrange code
 	to avoid a conversion warning on a 32-bit host.
 
 2010-03-24  Ian Lance Taylor  <iant@google.com>
@@ -10781,7 +10787,7 @@ gold/
 
 2010-03-08  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (Arm_exidx_fixup::update_offset_map): Fix build breakage
+	* arm.cc (Arm_exidx_fixup::update_offset_map): Fix build breakage
 	due to a conversion warning.
 	(Arm_relobj::update_output_local_symbol_count): Check for local
 	symbol with unset output index.
@@ -11403,7 +11409,7 @@ gold/
 
 2010-01-29  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
 
-	* gold/arm.cc: Added support for the ARM relocations: R_ARM_THM_PC8,
+	* arm.cc: Added support for the ARM relocations: R_ARM_THM_PC8,
 	R_ARM_THM_PC12, R_ARM_THM_ALU_PREL_11_0.
 	(Arm_relocate_functions::thm_alu11): New Method.
 	(Arm_relocate_functions::thm_pc8): New Method.
@@ -11553,12 +11559,12 @@ gold/
 
 2010-01-22  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
 
-	* gold/arm.cc (Target_arm): Updated fix_v4bx method and usage of
+	* arm.cc (Target_arm): Updated fix_v4bx method and usage of
 	Fix_v4bx enum values .
-	* gold/options.h (General_options): New option definitions.
+	* options.h (General_options): New option definitions.
 	(General_options::fix_v4bx): New method.
 	(General_options::Fix_v4bx): New enum.
-	* gold/options.cc (General_options::parse_fix_v4bx): New method.
+	* options.cc (General_options::parse_fix_v4bx): New method.
 	(General_options::parse_fix_v4bx_interworking): New method.
 
 2010-01-22  Doug Kwan  <dougkwan@google.com>
@@ -11618,7 +11624,7 @@ gold/
 
 2010-01-20  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
 
-	* gold/arm.cc: Added support for R_ARM_V4BX relocation
+	* arm.cc: Added support for R_ARM_V4BX relocation
 	(class Arm_v4bx_stub): New class.
 	(DEF_STUBS): Updated definition to support v4_veneer_bx.
 	(Stub_factory::make_arm_v4bx_stub): New method.
@@ -12675,7 +12681,7 @@ gold/
 	attributes_section and attributes_vendor.
 	* i386.cc (Target_i386::i386_info): Same.
 	* object.cc (Sized_relobj::do_layout): Skip attribute section.
-	* gold/powerpc.cc (Target_powerpc::powerpc_info): Initialize new
+	* powerpc.cc (Target_powerpc::powerpc_info): Initialize new
 	fields attributes_section and attributes_vendor.
 	* sparc.cc (Target_sparc::sparc_info): Same.
 	* target.h (Target::attributes_section, Target::attributes_vendor,
@@ -13322,7 +13328,7 @@ gold/
 	(Segment_start_expression::value): New method definition.
 	(script_exp_function_segment_start): Return a new
 	Segment_start_expression.
-	* gold/script-c.h (script_saw_segment_start_expression): New function
+	* script-c.h (script_saw_segment_start_expression): New function
 	prototype.
 	* script-sections.cc (Script_sections::Script_sections): Initialize
 	SAW_SEGMENT_START_EXPRESSION_ to false.
@@ -14113,9 +14119,9 @@ gold/
 	(Script_sections::attach_sections_using_phdrs_clause): Do not modify
 	segment list.
 	(Script_sections::release_segments): New method definition.
-	* gold/script-sections.h (Script_sections::release_segments): New
+	* script-sections.h (Script_sections::release_segments): New
 	method declaration.
-	* gold/target.h (Target::may_relax, Target::relax,
+	* target.h (Target::may_relax, Target::relax,
 	Target::do_may_relax, Target::do_relax): New method definitions.
 
 2009-09-17  Viktor Kutuzov  <vkutuzov@accesssoftek.com>
@@ -14689,7 +14695,7 @@ gold/
 
 2009-06-03  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (namespace utils): New.
+	* arm.cc (namespace utils): New.
 	(Target_arm::reloc_is_non_pic): Define new method.
 	(class Arm_relocate_functions): New.
 	(Target_arm::Relocate::relocate): Handle relocation types used by
@@ -14701,7 +14707,7 @@ gold/
 
 2009-06-02  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (Target_arm::Scan::Scan):  Initialize
+	* arm.cc (Target_arm::Scan::Scan):  Initialize
 	issued_non_pic_error_.
 	(class Target_arm::Scan): Declare new method check_non_pic.
 	Define new method symbol_needs_plt_entry.
@@ -14722,7 +14728,7 @@ gold/
 
 2009-05-29  Doug Kwan  <dougkwan@google.com>
 
-	* gold/arm.cc (Output_data_plt_arm): Forward declaration for new
+	* arm.cc (Output_data_plt_arm): Forward declaration for new
 	template class.
 	(class Target_arm): Update comment.
 	(Target_arm::Target_arm): Initialize new data members GOT_,

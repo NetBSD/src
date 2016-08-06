@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.164.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164 2016/07/07 09:32:03 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.164.2.1 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -565,8 +565,10 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	 */
 	if (deliverifp && ip6_getdstifaddr(m) == NULL) {
 		struct in6_ifaddr *ia6;
+		int s = pserialize_read_enter();
 
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
+		/* Depends on ip6_setdstifaddr never sleep */
 		if (ia6 != NULL && ip6_setdstifaddr(m, ia6) == NULL) {
 			/*
 			 * XXX maybe we should drop the packet here,
@@ -574,6 +576,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 			 * to the upper layers.
 			 */
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*
@@ -701,9 +704,11 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 #ifdef IFA_STATS
 	if (deliverifp != NULL) {
 		struct in6_ifaddr *ia6;
+		int s = pserialize_read_enter();
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
 		if (ia6)
 			ia6->ia_ifa.ifa_data.ifad_inbytes += m->m_pkthdr.len;
+		pserialize_read_exit(s);
 	}
 #endif
 	IP6_STATINC(IP6_STAT_DELIVERED);
@@ -1525,66 +1530,6 @@ ip6_delaux(struct mbuf *m)
 		m_tag_delete(m, mtag);
 }
 
-#ifdef GATEWAY
-/* 
- * sysctl helper routine for net.inet.ip6.maxflows. Since
- * we could reduce this value, call ip6flow_reap();
- */
-static int
-sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
-{  
-	int error;
-  
-	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (error || newp == NULL)
-		return (error);
- 
-	mutex_enter(softnet_lock);
-	KERNEL_LOCK(1, NULL);
-
-	ip6flow_reap(0);
-
-	KERNEL_UNLOCK_ONE(NULL);
-	mutex_exit(softnet_lock);
- 
-	return (0);
-}
-
-static int
-sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
-{  
-	int error, tmp;
-	struct sysctlnode node;
-
-	node = *rnode;
-	tmp = ip6_hashsize;
-	node.sysctl_data = &tmp;
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if ((tmp & (tmp - 1)) == 0 && tmp != 0) {
-		/*
-		 * Can only fail due to malloc()
-		 */
-		mutex_enter(softnet_lock);
-		KERNEL_LOCK(1, NULL);
-
-		error = ip6flow_invalidate_all(tmp);
-
-		KERNEL_UNLOCK_ONE(NULL);
-		mutex_exit(softnet_lock);
-	} else {
-		/*
-		 * EINVAL if not a power of 2
-		 */
-		error = EINVAL;
-	}	
-
-	return error;
-}
-#endif /* GATEWAY */
-
 /*
  * System control for IP6
  */
@@ -1903,22 +1848,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_mcast_pmtu, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
-#ifdef GATEWAY 
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "maxflows",
-			SYSCTL_DESCR("Number of flows for fast forwarding (IPv6)"),
-			sysctl_net_inet6_ip6_maxflows, 0, &ip6_maxflows, 0,
-			CTL_NET, PF_INET6, IPPROTO_IPV6,
-			CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "hashsize",
-			SYSCTL_DESCR("Size of hash table for fast forwarding (IPv6)"),
-			sysctl_net_inet6_ip6_hashsize, 0, &ip6_hashsize, 0,
-			CTL_NET, PF_INET6, IPPROTO_IPV6,
-			CTL_CREATE, CTL_EOL);
-#endif
 	/* anonportalgo RFC6056 subtree */
 	const struct sysctlnode *portalgo_node;
 	sysctl_createv(clog, 0, NULL, &portalgo_node,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.27 2016/06/01 08:17:47 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.27.2.1 2016/08/06 00:19:03 pgoyette Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -339,7 +339,7 @@ This request is called from the kernel completion thread.
 .Fa arg
 must be ignored.
 .It Dv ADAPTER_REQ_SET_XFER_MODE
-set the xfer mode for a for I_T Nexus.
+set the xfer mode for a I_T Nexus.
 This will be called once all LUNs of a target have been probed.
 .Fa arg
 points to a

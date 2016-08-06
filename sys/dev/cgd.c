@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.108.2.17 2016/07/28 06:45:32 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.108.2.18 2016/08/06 00:19:07 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.17 2016/07/28 06:45:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.108.2.18 2016/08/06 00:19:07 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1181,7 +1181,7 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		 */
 		error = config_cfattach_detach(cgd_cd.cd_name, &cgd_ca);
 		if (error) {
-			error = devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			(void)devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
 			    &cgd_cdevsw, &cgd_cmajor);
 			aprint_error("%s: failed to detach %s cfattach, "
 			    "error %d\n", __func__, cgd_cd.cd_name, error);
@@ -1189,8 +1189,8 @@ cgd_modcmd(modcmd_t cmd, void *arg)
 		}
 		error = config_cfdriver_detach(&cgd_cd);
 		if (error) {
-			config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
-			devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
+			(void)config_cfattach_attach(cgd_cd.cd_name, &cgd_ca);
+			(void)devsw_attach("cgd", &cgd_bdevsw, &cgd_bmajor,
 			    &cgd_cdevsw, &cgd_cmajor);
 			aprint_error("%s: failed to detach %s cfdriver, "
 			    "error %d\n", __func__, cgd_cd.cd_name, error);

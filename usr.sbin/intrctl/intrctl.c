@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.1 2015/08/17 06:42:46 knakahara Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.1.2.1 2016/08/06 00:19:12 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.1 2015/08/17 06:42:46 knakahara Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.1.2.1 2016/08/06 00:19:12 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -115,29 +115,40 @@ intrctl_list(int argc, char **argv)
 	struct intrio_list_line *illine;
 	int i, ncpus;
 	void *handle;
+	size_t intridlen;
 
 	handle = intrctl_io_alloc(intrctl_io_alloc_retry_count);
 	if (handle == NULL)
 		err(EXIT_FAILURE, "intrctl_io_alloc");
 
-	/* header */
+	/* calc columns */
 	ncpus = intrctl_io_ncpus(handle);
-	printf("interrupt id\t");
-	for (i = 0; i < ncpus; i++) {
-		printf("  CPU#%02u\t", i);
+	intridlen = strlen("interrupt id");
+	illine = intrctl_io_firstline(handle);
+	for (; illine != NULL; illine = intrctl_io_nextline(handle, illine)) {
+		size_t len = strlen(illine->ill_intrid);
+		if (intridlen < len)
+			intridlen = len;
 	}
-	printf("device name(s)\n");
+
+	/* header */
+	printf("%-*s", (int)intridlen, "interrupt id");
+	for (i = 0; i < ncpus; i++) {
+		char buf[64];
+		snprintf(buf, sizeof(buf), "CPU%u", i);
+		printf(" %20s ", buf);
+	}
+	printf(" device name(s)\n");
 
 	/* body */
 	illine = intrctl_io_firstline(handle);
 	for (; illine != NULL; illine = intrctl_io_nextline(handle, illine)) {
-		printf("%s\t", illine->ill_intrid);
+		printf("%-*s ", (int)intridlen, illine->ill_intrid);
 		for (i = 0; i < ncpus; i++) {
 			struct intrio_list_line_cpu *illc = &illine->ill_cpu[i];
-			printf("%8" PRIu64 "%c\t", illc->illc_count,
+			printf("%20" PRIu64 "%c ", illc->illc_count,
 			    illc->illc_assigned ? '*' : ' ');
 		}
-
 		printf("%s\n", illine->ill_xname);
 	}
 

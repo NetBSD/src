@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.147 2016/07/14 04:49:55 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.147.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.147 2016/07/14 04:49:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.147.2.1 2016/08/06 00:19:06 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -115,7 +115,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		tf->tf_regs[_R_SP] = (intptr_t)stack + stacksize;
 
 	l2->l_md.md_utf = tf;
-#if (USPACE > PAGE_SIZE) || !defined(_LP64)
+#if (USPACE > PAGE_SIZE)
 	if (!pmap_md_direct_mapped_vaddr_p(ua2)) {
 		__CTASSERT((PGSHIFT & 1) || UPAGES % 2 == 0);
 		pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), ua2);
@@ -143,7 +143,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2->pcb_context.val[_L_SP] = (intptr_t)tf;			/* SP */
 	pcb2->pcb_context.val[_L_RA] =
 	   mips_locore_jumpvec.ljv_lwp_trampoline;			/* RA */
-#ifdef _LP64
+#if defined(_LP64) || defined(__mips_n32)
+	KASSERT(tf->tf_regs[_R_SR] & MIPS_SR_KX);
 	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
 	KASSERTMSG(pcb2->pcb_context.val[_L_SR] & MIPS_SR_INT_IE,

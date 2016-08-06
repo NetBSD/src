@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.337 2016/07/08 06:15:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.337.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337 2016/07/08 06:15:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.337.2.1 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,7 +381,7 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
 				break;
 			else
-				downmatch++;
+				(*downmatch)++;
 		}
 	}
 
@@ -447,12 +447,13 @@ static void
 ip_input(struct mbuf *m)
 {
 	struct ip *ip = NULL;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 	int hlen = 0, len;
 	int downmatch;
 	int srcrt = 0;
 	ifnet_t *ifp;
 	struct psref psref;
+	int s;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_input: not in the software "
 	    "interrupt handler; synchronization assumptions violated");
@@ -665,15 +666,21 @@ ip_input(struct mbuf *m)
 	 * or IN_IFF_NOTREADY addresses as not mine.
 	 */
 	downmatch = 0;
+	s = pserialize_read_enter();
 	ia = ip_match_our_address(ifp, ip, &downmatch);
-	if (ia != NULL)
+	if (ia != NULL) {
+		pserialize_read_exit(s);
 		goto ours;
+	}
 
 	if (ifp->if_flags & IFF_BROADCAST) {
 		ia = ip_match_our_address_broadcast(ifp, ip);
-		if (ia != NULL)
+		if (ia != NULL) {
+			pserialize_read_exit(s);
 			goto ours;
+		}
 	}
+	pserialize_read_exit(s);
 
 	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 #ifdef MROUTING
@@ -810,8 +817,17 @@ ours:
 	 * Switch out to protocol's input routine.
 	 */
 #if IFA_STATS
-	if (ia && ip)
-		ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
+	if (ia && ip) {
+		struct in_ifaddr *_ia;
+		/*
+		 * Keep a reference from ip_match_our_address with psref
+		 * is expensive, so explore ia here again.
+		 */
+		s = pserialize_read_enter();
+		_ia = in_get_ia(ip->ip_dst.s_addr);
+		_ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
+		pserialize_read_exit(s);
+	}
 #endif
 	IP_STATINC(IP_STAT_DELIVERED);
 
@@ -873,6 +889,8 @@ ip_dooptions(struct mbuf *m)
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr dst;
 	n_time ntime;
+	struct ifaddr *ifa;
+	int s;
 
 	dst = ip->ip_dst;
 	cp = (u_char *)(ip + 1);
@@ -924,8 +942,11 @@ ip_dooptions(struct mbuf *m)
 				goto bad;
 			}
 			ipaddr.sin_addr = ip->ip_dst;
-			ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)));
-			if (ia == 0) {
+
+			s = pserialize_read_enter();
+			ifa = ifa_ifwithaddr(sintosa(&ipaddr));
+			if (ifa == NULL) {
+				pserialize_read_exit(s);
 				if (opt == IPOPT_SSRR) {
 					type = ICMP_UNREACH;
 					code = ICMP_UNREACH_SRCFAIL;
@@ -937,6 +958,8 @@ ip_dooptions(struct mbuf *m)
 				 */
 				break;
 			}
+			pserialize_read_exit(s);
+
 			off--;			/* 0 origin */
 			if ((off + sizeof(struct in_addr)) > optlen) {
 				/*
@@ -950,18 +973,26 @@ ip_dooptions(struct mbuf *m)
 			 */
 			memcpy((void *)&ipaddr.sin_addr, (void *)(cp + off),
 			    sizeof(ipaddr.sin_addr));
-			if (opt == IPOPT_SSRR)
-				ia = ifatoia(ifa_ifwithladdr(sintosa(&ipaddr)));
-			else
+			s = pserialize_read_enter();
+			if (opt == IPOPT_SSRR) {
+				ifa = ifa_ifwithladdr(sintosa(&ipaddr));
+				if (ifa != NULL)
+					ia = ifatoia(ifa);
+				else
+					ia = NULL;
+			} else {
 				ia = ip_rtaddr(ipaddr.sin_addr);
-			if (ia == 0) {
+			}
+			if (ia == NULL) {
 				type = ICMP_UNREACH;
 				code = ICMP_UNREACH_SRCFAIL;
+				pserialize_read_exit(s);
 				goto bad;
 			}
 			ip->ip_dst = ipaddr.sin_addr;
 			bcopy((void *)&ia->ia_addr.sin_addr,
 			    (void *)(cp + off), sizeof(struct in_addr));
+			pserialize_read_exit(s);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
@@ -990,15 +1021,22 @@ ip_dooptions(struct mbuf *m)
 			 * locate outgoing interface; if we're the destination,
 			 * use the incoming interface (should be same).
 			 */
-			if ((ia = ifatoia(ifa_ifwithaddr(sintosa(&ipaddr))))
-			    == NULL &&
-			    (ia = ip_rtaddr(ipaddr.sin_addr)) == NULL) {
-				type = ICMP_UNREACH;
-				code = ICMP_UNREACH_HOST;
-				goto bad;
+			s = pserialize_read_enter();
+			ifa = ifa_ifwithaddr(sintosa(&ipaddr));
+			if (ifa == NULL) {
+				ia = ip_rtaddr(ipaddr.sin_addr);
+				if (ia == NULL) {
+					pserialize_read_exit(s);
+					type = ICMP_UNREACH;
+					code = ICMP_UNREACH_HOST;
+					goto bad;
+				}
+			} else {
+				ia = ifatoia(ifa);
 			}
 			bcopy((void *)&ia->ia_addr.sin_addr,
 			    (void *)(cp + off), sizeof(struct in_addr));
+			pserialize_read_exit(s);
 			cp[IPOPT_OFFSET] += sizeof(struct in_addr);
 			break;
 
@@ -1029,7 +1067,7 @@ ip_dooptions(struct mbuf *m)
 
 			case IPOPT_TS_TSANDADDR: {
 				struct ifnet *rcvif;
-				int s;
+				int _s, _ss;
 
 				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
 				    sizeof(struct in_addr) > ipt->ipt_len) {
@@ -1038,14 +1076,18 @@ ip_dooptions(struct mbuf *m)
 					goto bad;
 				}
 				ipaddr.sin_addr = dst;
-				rcvif = m_get_rcvif(m, &s);
-				ia = ifatoia(ifaof_ifpforaddr(sintosa(&ipaddr),
-				    rcvif));
-				m_put_rcvif(rcvif, &s);
-				if (ia == 0)
-					continue;
+				_ss = pserialize_read_enter();
+				rcvif = m_get_rcvif(m, &_s);
+				ifa = ifaof_ifpforaddr(sintosa(&ipaddr), rcvif);
+				m_put_rcvif(rcvif, &_s);
+				if (ifa == NULL) {
+					pserialize_read_exit(_ss);
+					break;
+				}
+				ia = ifatoia(ifa);
 				bcopy(&ia->ia_addr.sin_addr,
 				    cp0, sizeof(struct in_addr));
+				pserialize_read_exit(_ss);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 			}
@@ -1059,9 +1101,13 @@ ip_dooptions(struct mbuf *m)
 				}
 				memcpy(&ipaddr.sin_addr, cp0,
 				    sizeof(struct in_addr));
-				if (ifatoia(ifa_ifwithaddr(sintosa(&ipaddr)))
-				    == NULL)
+				s = pserialize_read_enter();
+				ifa = ifa_ifwithaddr(sintosa(&ipaddr));
+				if (ifa == NULL) {
+					pserialize_read_exit(s);
 					continue;
+				}
+				pserialize_read_exit(s);
 				ipt->ipt_ptr += sizeof(struct in_addr);
 				break;
 
@@ -1080,7 +1126,7 @@ ip_dooptions(struct mbuf *m)
 	}
 	if (forward) {
 		struct ifnet *rcvif;
-		struct psref psref;
+		struct psref _psref;
 
 		if (ip_forwsrcrt == 0) {
 			type = ICMP_UNREACH;
@@ -1088,14 +1134,14 @@ ip_dooptions(struct mbuf *m)
 			goto bad;
 		}
 
-		rcvif = m_get_rcvif_psref(m, &psref);
+		rcvif = m_get_rcvif_psref(m, &_psref);
 		if (__predict_false(rcvif == NULL)) {
 			type = ICMP_UNREACH;
 			code = ICMP_UNREACH_HOST;
 			goto bad;
 		}
 		ip_forward(m, 1, rcvif);
-		m_put_rcvif_psref(rcvif, &psref);
+		m_put_rcvif_psref(rcvif, &_psref);
 		return true;
 	}
 	return false;

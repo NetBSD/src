@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2012/12/27 15:58:55 martin Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.18.1 2016/08/06 00:19:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: releng/10.1/sys/ia64/include/pte.h 137978 2004-11-21 21:40:08Z marcel $
  */
 
 #ifndef _MACHINE_PTE_H_
@@ -45,7 +45,6 @@
 #define	PTE_PL_KERN	0x0000000000000000
 #define	PTE_PL_USER	0x0000000000000180
 #define	PTE_AR_MASK	0x0000000000000E00
-
 #define	PTE_AR_R	0x0000000000000000
 #define	PTE_AR_RX	0x0000000000000200
 #define	PTE_AR_RW	0x0000000000000400
@@ -94,7 +93,6 @@ struct ia64_lpte {
         uint64_t        tag;            /* includes ti */
         uint64_t        chain;          /* pa of collision chain */
 };
-
 
 /*
  * Layout of rr[x].

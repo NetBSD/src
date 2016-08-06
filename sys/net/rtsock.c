@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.191.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.191.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.191.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -541,13 +541,13 @@ route_output_report(struct rtentry *rt, struct rt_addrinfo *info,
 
 static struct ifaddr *
 route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
-    struct ifnet **ifp)
+    struct ifnet **ifp, struct psref *psref)
 {
 	struct ifaddr *ifa = NULL;
 
 	*ifp = NULL;
 	if (info.rti_info[RTAX_IFP] != NULL) {
-		ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP]);
+		ifa = ifa_ifwithnet_psref(info.rti_info[RTAX_IFP], psref);
 		if (ifa == NULL)
 			goto next;
 		*ifp = ifa->ifa_ifp;
@@ -556,29 +556,29 @@ route_output_get_ifa(const struct rt_addrinfo info, const struct rtentry *rt,
 			goto next;
 		if (info.rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
-			ifa = ifaof_ifpforaddr(info.rti_info[RTAX_GATEWAY],
-			    *ifp);
+			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_GATEWAY],
+			    *ifp, psref);
 		} else {
 			/* route change <dst> -ifp <if> -ifa <addr> */
-			ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]);
+			ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
 			if (ifa != NULL)
 				goto out;
-			ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA],
-			    *ifp);
+			ifa = ifaof_ifpforaddr_psref(info.rti_info[RTAX_IFA],
+			    *ifp, psref);
 		}
 		goto out;
 	}
 next:
 	if (info.rti_info[RTAX_IFA] != NULL) {
 		/* route change <dst> <gw> -ifa <addr> */
-		ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]);
+		ifa = ifa_ifwithaddr_psref(info.rti_info[RTAX_IFA], psref);
 		if (ifa != NULL)
 			goto out;
 	}
 	if (info.rti_info[RTAX_GATEWAY] != NULL) {
 		/* route change <dst> <gw> */
-		ifa = ifa_ifwithroute(rt->rt_flags, rt_getkey(rt),
-		    info.rti_info[RTAX_GATEWAY]);
+		ifa = ifa_ifwithroute_psref(rt->rt_flags, rt_getkey(rt),
+		    info.rti_info[RTAX_GATEWAY], psref);
 	}
 out:
 	if (ifa != NULL && *ifp == NULL)
@@ -601,11 +601,15 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	struct ifaddr *ifa = NULL;
 	sa_family_t family;
 	struct sockaddr_dl sdl;
+	struct psref psref;
+	int bound = curlwp_bind();
 
 #define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == NULL || ((m->m_len < sizeof(int32_t)) &&
-	   (m = m_pullup(m, sizeof(int32_t))) == NULL))
-		return ENOBUFS;
+	   (m = m_pullup(m, sizeof(int32_t))) == NULL)) {
+		error = ENOBUFS;
+		goto out;
+	}
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("%s", __func__);
 	len = m->m_pkthdr.len;
@@ -807,30 +811,45 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 			}
 			break;
 
-		case RTM_CHANGE:
+		case RTM_CHANGE: {
+			struct ifnet *_ifp;
+			struct ifaddr *_ifa;
+			struct psref _psref, psref_ifp;
 			/*
 			 * new gateway could require new ifaddr, ifp;
 			 * flags may also be different; ifp may be specified
 			 * by ll sockaddr when protocol address is ambiguous
 			 */
-			if ((error = rt_getifa(&info)) != 0)
-				senderr(error);
+			_ifp = rt_getifp(&info, &psref_ifp);
+			ifa = rt_getifa(&info, &psref);
+			if (ifa == NULL) {
+				if_put(_ifp, &psref_ifp);
+				senderr(ENETUNREACH);
+			}
 			if (info.rti_info[RTAX_GATEWAY]) {
 				error = rt_setgate(rt,
 				    info.rti_info[RTAX_GATEWAY]);
-				if (error != 0)
+				if (error != 0) {
+					if_put(_ifp, &psref_ifp);
 					senderr(error);
+				}
 			}
 			if (info.rti_info[RTAX_TAG]) {
 				const struct sockaddr *tag;
 				tag = rt_settag(rt, info.rti_info[RTAX_TAG]);
-				if (tag == NULL)
+				if (tag == NULL) {
+					if_put(_ifp, &psref_ifp);
 					senderr(ENOBUFS);
+				}
 			}
 			/* new gateway could require new ifaddr, ifp;
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
-			ifa = route_output_get_ifa(info, rt, &ifp);
+			_ifa = route_output_get_ifa(info, rt, &ifp, &_psref);
+			if (_ifa != NULL) {
+				ifa_release(ifa, &psref);
+				ifa = _ifa;
+			}
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
@@ -841,7 +860,10 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 					rt_replace_ifa(rt, ifa);
 					rt->rt_ifp = ifp;
 				}
+				if (_ifa == NULL)
+					ifa_release(ifa, &psref);
 			}
+			ifa_release(_ifa, &_psref);
 			if (ifp && rt->rt_ifp != ifp)
 				rt->rt_ifp = ifp;
 			rt_setmetrics(rtm->rtm_inits, rtm, rt);
@@ -850,7 +872,9 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 				    | (rt->rt_flags & PRESERVED_RTF);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
+			if_put(_ifp, &psref_ifp);
 			/*FALLTHROUGH*/
+		    }
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
@@ -890,7 +914,7 @@ flush:
 			if (rtm)
 				Free(rtm);
 			m_freem(m);
-			return error;
+			goto out;
 		}
 		/* There is another listener, so construct message */
 		rp = sotorawcb(so);
@@ -914,6 +938,8 @@ flush:
 	if (rp)
 		rp->rcb_proto.sp_family = PF_XROUTE;
     }
+out:
+	curlwp_bindx(bound);
 	return error;
 }
 
@@ -971,9 +997,9 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	 */
 	if (rtmtype == RTM_GET) {
 		if (((rtinfo->rti_addrs &
-		    (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0 << i)) != 0)
+		    (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0U << i)) != 0)
 			return 1;
-	} else if ((rtinfo->rti_addrs & (~0 << i)) != 0)
+	} else if ((rtinfo->rti_addrs & (~0U << i)) != 0)
 		return 1;
 	/* Check for bad data length.  */
 	if (cp != cplim) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.78 2016/07/08 04:33:30 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.78.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,25 @@ struct in_ifaddr {
 #endif
 };
 
+#ifdef _KERNEL
+static inline void
+ia4_acquire(struct in_ifaddr *ia, struct psref *psref)
+{
+
+	KASSERT(ia != NULL);
+	ifa_acquire(&ia->ia_ifa, psref);
+}
+
+static inline void
+ia4_release(struct in_ifaddr *ia, struct psref *psref)
+{
+
+	if (ia == NULL)
+		return;
+	ifa_release(&ia->ia_ifa, psref);
+}
+#endif
+
 struct	in_aliasreq {
 	char	ifra_name[IFNAMSIZ];		/* if name, e.g. "en0" */
 	struct	sockaddr_in ifra_addr;
@@ -124,6 +143,8 @@ struct	in_aliasreq {
  * return a pointer to the addr as a sockaddr_in.
  */
 #define	IA_SIN(ia) (&(((struct in_ifaddr *)(ia))->ia_addr))
+
+#define iatoifa(ia)	(struct ifaddr *)(ia)
 
 #ifdef _KERNEL
 
@@ -238,6 +259,21 @@ in_get_ia(struct in_addr addr)
 	return ia;
 }
 
+static inline struct in_ifaddr *
+in_get_ia_psref(struct in_addr addr, struct psref *psref)
+{
+	struct in_ifaddr *ia;
+	int s;
+
+	s = pserialize_read_enter();
+	ia = in_get_ia(addr);
+	if (ia != NULL)
+		ia4_acquire(ia, psref);
+	pserialize_read_exit(s);
+
+	return ia;
+}
+
 /*
  * Find whether an internet address (in_addr) belongs to a specified
  * interface.  NULL if the address isn't ours.
@@ -252,6 +288,21 @@ in_get_ia_on_iface(struct in_addr addr, struct ifnet *ifp)
 		    ia->ia_ifp == ifp)
 			break;
 	}
+
+	return ia;
+}
+
+static inline struct in_ifaddr *
+in_get_ia_on_iface_psref(struct in_addr addr, struct ifnet *ifp, struct psref *psref)
+{
+	struct in_ifaddr *ia;
+	int s;
+
+	s = pserialize_read_enter();
+	ia = in_get_ia_on_iface(addr, ifp);
+	if (ia != NULL)
+		ia4_acquire(ia, psref);
+	pserialize_read_exit(s);
 
 	return ia;
 }
@@ -271,6 +322,21 @@ in_get_ia_from_ifp(struct ifnet *ifp)
 	}
 
 	return ifatoia(ifa);
+}
+
+static inline struct in_ifaddr *
+in_get_ia_from_ifp_psref(struct ifnet *ifp, struct psref *psref)
+{
+	struct in_ifaddr *ia;
+	int s;
+
+	s = pserialize_read_enter();
+	ia = in_get_ia_from_ifp(ifp);
+	if (ia != NULL)
+		ia4_acquire(ia, psref);
+	pserialize_read_exit(s);
+
+	return ia;
 }
 
 #include <netinet/in_selsrc.h>

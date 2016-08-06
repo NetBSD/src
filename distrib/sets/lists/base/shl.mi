@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.778 2016/07/02 15:40:51 christos Exp $
+# $NetBSD: shl.mi,v 1.778.2.1 2016/08/06 00:18:39 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -88,15 +88,15 @@
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
-./lib/npf/ext_log.so				base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_log.so.0				base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_log.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_normalize.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so.0			base-npf-shlib		dynamicroot,compatfile,npf
-./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		dynamicroot,compatfile,npf
+./lib/npf/ext_log.so				base-npf-shlib		compatfile,npf
+./lib/npf/ext_log.so.0				base-npf-shlib		compatfile,npf
+./lib/npf/ext_log.so.0.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_normalize.so.0.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		compatfile,npf
 ./libexec/ld.elf_so				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib		compatfile
@@ -769,8 +769,8 @@
 ./usr/lib/libsqlite3.so.1.2			base-sys-shlib		compatfile
 ./usr/lib/libss.so				base-obsolete		obsolete
 ./usr/lib/libssh.so				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.27				base-secsh-shlib	compatfile,crypto
-./usr/lib/libssh.so.27.0			base-secsh-shlib	compatfile,crypto
+./usr/lib/libssh.so.28				base-secsh-shlib	compatfile,crypto
+./usr/lib/libssh.so.28.0			base-secsh-shlib	compatfile,crypto
 ./usr/lib/libssl.so				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libssl.so.11				base-crypto-shlib	compatfile,crypto
 ./usr/lib/libssl.so.11.0			base-crypto-shlib	compatfile,crypto
@@ -870,4 +870,4 @@
 ./usr/lib/security/pam_skey.so.4		base-sys-shlib		compatfile,skey,pam
 ./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,crypto,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
-./usr/libexec/ld.elf_so				base-sys-shlib
+./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot

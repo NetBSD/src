@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2015/10/05 17:49:10 christos Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2016/08/06 00:18:41 pgoyette Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
 WARNS=1
-.include <bsd.own.mk>
-
-.include	"../../Makefile.inc"
+.include <bsd.init.mk>
 
 LIB=		dtrace
 

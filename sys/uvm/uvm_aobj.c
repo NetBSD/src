@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.123 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.123.2.1 2016/08/06 00:19:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.123 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.123.2.1 2016/08/06 00:19:11 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -929,7 +929,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				    (flags & PGO_ALLPAGES) != 0)
 					/* need to do a wait or I/O! */
 					done = false;
-					continue;
+				continue;
 			}
 
 			/*

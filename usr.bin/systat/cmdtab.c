@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.24 2012/01/06 14:08:08 drochner Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.24.22.1 2016/08/06 00:19:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.24 2012/01/06 14:08:08 drochner Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.24.22.1 2016/08/06 00:19:12 pgoyette Exp $");
 #endif /* not lint */
 
 #include "systat.h"
@@ -66,6 +66,13 @@ struct command	icmp_commands[] = {
 	{ "run",	icmp_run,	"show running total stats"},
 	{ "time",	icmp_time,	"show stats for each sample time"},
 	{ "zero",	icmp_zero,	"re-zero running totals"},
+	{ .c_name = NULL }
+};
+
+struct command ifstat_commands[] = {
+	{ "scale",	ifstat_scale,	"modify scale of display"},
+	{ "pps",	ifstat_pps, 	"toggle packets per second display"},
+	{ "match",	ifstat_match,   "display matching interfaces"},
 	{ .c_name = NULL }
 };
 
@@ -158,6 +165,9 @@ struct mode modes[] = {
 	  CF_LOADAV },
 	{ "df",         showdf,  	fetchdf,	labeldf,
 	  initdf,	opendf,		closedf,	df_commands,
+	  CF_LOADAV },
+	{ "ifstat",	showifstat,	fetchifstat,	labelifstat,
+	  initifstat,	openifstat,	closeifstat,	ifstat_commands,
 	  CF_LOADAV },
 	{ "inet.icmp",	showicmp,	fetchicmp,	labelicmp,
 	  initicmp,	openicmp,	closeicmp,	icmp_commands,

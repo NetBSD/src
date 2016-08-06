@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.20 2016/06/17 19:42:31 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.20.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -122,32 +122,19 @@ arp_report_conflicted(const struct arp_state *astate,
 }
 
 static void
-arp_packet(void *arg)
+arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 {
-	struct interface *ifp = arg;
 	const struct interface *ifn;
-	uint8_t buf[ARP_LEN];
 	struct arphdr ar;
 	struct arp_msg arm;
-	ssize_t bytes;
-	struct iarp_state *state;
+	const struct iarp_state *state;
 	struct arp_state *astate, *astaten;
-	unsigned char *hw_s, *hw_t;
-	int flags;
+	uint8_t *hw_s, *hw_t;
 
-	state = ARP_STATE(ifp);
-	flags = 0;
-	bytes = if_readraw(ifp, state->fd, buf, sizeof(buf), &flags);
-	if (bytes == -1) {
-		logger(ifp->ctx, LOG_ERR,
-		    "%s: arp if_readrawpacket: %m", ifp->name);
-		arp_close(ifp);
-		return;
-	}
 	/* We must have a full ARP header */
-	if ((size_t)bytes < sizeof(ar))
+	if (len < sizeof(ar))
 		return;
-	memcpy(&ar, buf, sizeof(ar));
+	memcpy(&ar, data, sizeof(ar));
 	/* Families must match */
 	if (ar.ar_hrd != htons(ifp->family))
 		return;
@@ -165,10 +152,10 @@ arp_packet(void *arg)
 		return;
 
 	/* Get pointers to the hardware addreses */
-	hw_s = buf + sizeof(ar);
+	hw_s = data + sizeof(ar);
 	hw_t = hw_s + ar.ar_hln + ar.ar_pln;
 	/* Ensure we got all the data */
-	if ((hw_t + ar.ar_hln + ar.ar_pln) - buf > bytes)
+	if ((size_t)((hw_t + ar.ar_hln + ar.ar_pln) - data) > len)
 		return;
 	/* Ignore messages from ourself */
 	TAILQ_FOREACH(ifn, ifp->ctx->ifaces, next) {
@@ -190,9 +177,36 @@ arp_packet(void *arg)
 	memcpy(&arm.tip.s_addr, hw_t + ar.ar_hln, ar.ar_pln);
 
 	/* Run the conflicts */
+	state = ARP_CSTATE(ifp);
 	TAILQ_FOREACH_SAFE(astate, &state->arp_states, next, astaten) {
 		if (astate->conflicted_cb)
 			astate->conflicted_cb(astate, &arm);
+	}
+}
+
+static void
+arp_read(void *arg)
+{
+	struct interface *ifp = arg;
+	const struct iarp_state *state;
+	uint8_t buf[ARP_LEN];
+	int flags;
+	ssize_t bytes;
+
+	/* Some RAW mechanisms are generic file descriptors, not sockets.
+	 * This means we have no kernel call to just get one packet,
+	 * so we have to process the entire buffer. */
+	state = ARP_CSTATE(ifp);
+	flags = 0;
+	while (!(flags & RAW_EOF)) {
+		bytes = if_readraw(ifp, state->fd, buf, sizeof(buf), &flags);
+		if (bytes == -1) {
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: arp if_readrawpacket: %m", ifp->name);
+			arp_close(ifp);
+			return;
+		}
+		arp_packet(ifp, buf, (size_t)bytes);
 	}
 }
 
@@ -209,7 +223,7 @@ arp_open(struct interface *ifp)
 			    __func__, ifp->name);
 			return -1;
 		}
-		eloop_event_add(ifp->ctx->eloop, state->fd, arp_packet, ifp);
+		eloop_event_add(ifp->ctx->eloop, state->fd, arp_read, ifp);
 	}
 	return state->fd;
 }

@@ -16,4 +16,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Controls whether to enable development-mode features by default.
-development=true
+development=false

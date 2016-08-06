@@ -1,5 +1,5 @@
 #source: load1.s
-#as: --64
+#as: --64 -mrelax-relocations=yes
 #ld: -melf_x86_64
 #objdump: -dw --sym
 #notarget: x86_64-*-nacl*

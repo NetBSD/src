@@ -2040,9 +2040,11 @@ extern void _bfd_elf_strtab_delref
 extern unsigned int _bfd_elf_strtab_refcount
   (struct elf_strtab_hash *, bfd_size_type);
 extern void _bfd_elf_strtab_clear_all_refs
-  (struct elf_strtab_hash *tab);
-extern void _bfd_elf_strtab_restore_size
-  (struct elf_strtab_hash *, bfd_size_type);
+  (struct elf_strtab_hash *);
+extern void *_bfd_elf_strtab_save
+  (struct elf_strtab_hash *);
+extern void _bfd_elf_strtab_restore
+  (struct elf_strtab_hash *, void *);
 extern bfd_size_type _bfd_elf_strtab_size
   (struct elf_strtab_hash *);
 extern bfd_size_type _bfd_elf_strtab_offset

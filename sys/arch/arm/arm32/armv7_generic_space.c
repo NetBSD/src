@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.2 2015/10/18 00:37:56 jmcneill Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.2.2.1 2016/08/06 00:19:04 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.2 2015/10/18 00:37:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.2.2.1 2016/08/06 00:19:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct bus_space armv7_generic_bs_tag = {
 	/* set region */
 	generic_bs_sr_1,
 	NSWAP(generic_armv4_bs_sr_2),
-	bs_notimpl_bs_sr_4,
+	NSWAP(generic_bs_sr_4),
 	bs_notimpl_bs_sr_8,
 
 	/* copy */

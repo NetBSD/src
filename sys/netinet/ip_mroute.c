@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.143 2016/07/04 04:35:09 knakahara Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.143.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.143 2016/07/04 04:35:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.143.2.1 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -785,7 +785,6 @@ static int
 add_vif(struct vifctl *vifcp)
 {
 	struct vif *vifp;
-	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	int error, s;
 	struct sockaddr_in sin;
@@ -811,11 +810,18 @@ add_vif(struct vifctl *vifcp)
 	} else
 #endif
 	{
+		struct ifaddr *ifa;
+
 		sockaddr_in_init(&sin, &vifcp->vifc_lcl_addr, 0);
+		s = pserialize_read_enter();
 		ifa = ifa_ifwithaddr(sintosa(&sin));
-		if (ifa == NULL)
-			return (EADDRNOTAVAIL);
+		if (ifa == NULL) {
+			pserialize_read_exit(s);
+			return EADDRNOTAVAIL;
+		}
 		ifp = ifa->ifa_ifp;
+		/* FIXME NOMPSAFE */
+		pserialize_read_exit(s);
 	}
 
 	if (vifcp->vifc_flags & VIFF_TUNNEL) {

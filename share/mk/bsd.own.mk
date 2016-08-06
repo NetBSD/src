@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.938 2016/07/07 07:52:24 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.938.2.1 2016/08/06 00:19:03 pgoyette Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -636,7 +636,7 @@ MACHINES.x86_64=	amd64
 # for crunchide & ldd, define the OBJECT_FMTS used by a MACHINE_ARCH
 #
 OBJECT_FMTS=
-.if	${MACHINE_ARCH} != "alpha" 
+.if	${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "ia64"
 OBJECT_FMTS+=	elf32
 .endif
 .if	${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH:M*64*} != ""
@@ -702,6 +702,11 @@ check_RELEASEDIR: .PHONY .NOTMAIN
 # and /sbin).  See <bsd.shlib.mk>.
 #
 MKDYNAMICROOT?=	yes
+
+# For ia64, ld.elf_so not yet implemented
+.if ${MACHINE_ARCH} == "ia64"
+MKDYNAMICROOT=	no
+.endif
 
 #
 # Where the system object and source trees are kept; can be configurable
@@ -1124,6 +1129,11 @@ MKGCCCMDS?=	${MKGCC}
 #
 .if ${MACHINE} == "acorn26"	# page size is prohibitive
 MKKMOD=		no
+.endif
+
+# Rump doesn't work yet on ia64
+.if ${MACHINE} == "ia64"
+MKRUMP=		no
 .endif
 
 #

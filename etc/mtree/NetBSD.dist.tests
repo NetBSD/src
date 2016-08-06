@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.127.2.1 2016/07/31 01:28:52 pgoyette Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.127.2.2 2016/08/06 00:18:40 pgoyette Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf

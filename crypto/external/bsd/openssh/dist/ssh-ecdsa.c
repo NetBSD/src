@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.12 2015/12/11 04:21:12 mmcc Exp $ */
-
+/*	$NetBSD: ssh-ecdsa.c,v 1.7.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.13 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -27,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.7.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -121,7 +120,8 @@ ssh_ecdsa_verify(const struct sshkey *key,
 	char *ktype = NULL;
 
 	if (key == NULL || key->ecdsa == NULL ||
-	    sshkey_type_plain(key->type) != KEY_ECDSA)
+	    sshkey_type_plain(key->type) != KEY_ECDSA ||
+	    signature == NULL || signaturelen == 0)
 		return SSH_ERR_INVALID_ARGUMENT;
 
 	if ((hash_alg = sshkey_ec_nid_to_hash_alg(key->ecdsa_nid)) == -1 ||

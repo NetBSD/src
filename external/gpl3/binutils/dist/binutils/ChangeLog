@@ -1,3 +1,48 @@
+2016-06-29  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
+2016-06-28  Alan Modra  <amodra@gmail.com>
+
+	PR 20304
+	* objdump.c (objdump_print_symname): Don't attempt to retrieve
+	version info from synthetic symbols.
+
+2016-06-13  Alan Modra  <amodra@gmail.com>
+
+	* objcopy.c (copy_main): Init newsym->othersym.
+
+2016-03-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-01-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR binutils/19523
+	* Makefile.am (check-DEJAGNU): Pass CC and CC_FOR_BUILD to
+	runtest.
+	* Makefile.in: Regenerated.
+	* testsuite/binutils-all/compress.exp (test_gnu_debuglink): New
+	proc.
+	Run test_gnu_debuglink for native ELF build.
+
+2016-03-09  Nick Clifton  <nickc@redhat.com>
+
+	PR binutils/19775
+	* testsuite/binutils-all/ar.exp (proc empty_archive): New proc.
+	Run the new proc.
+	* testsuite/binutils-all/empty: New, empty, file.
+
+2016-02-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Backport from master
+	2016-02-12  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* doc/binutils.texi: Fix a typo.
+
+2016-01-25  Tristan Gingold  <gingold@adacore.com>
+
+	* configure: Regenerate.
+
 2016-01-25  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
@@ -238,12 +283,12 @@
 
 2015-07-10  H.J. Lu  <hongjiu.lu@intel.com>
 
-	 PR binutils/18656
-	 * objcopy.c (setup_section): Call bfd_convert_section_size
-	 to get the output section size.
-	 (copy_section): Get the section size from the output section
-	 and call bfd_get_full_section_contents to convert section
-	 contents for output.
+	PR binutils/18656
+	* objcopy.c (setup_section): Call bfd_convert_section_size
+	to get the output section size.
+	(copy_section): Get the section size from the output section
+	and call bfd_get_full_section_contents to convert section
+	contents for output.
 
 2015-07-10  H.J. Lu  <hongjiu.lu@intel.com>
 

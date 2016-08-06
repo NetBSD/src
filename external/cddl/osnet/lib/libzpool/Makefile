@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.10 2015/04/10 22:36:50 riastradh Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2016/08/06 00:18:42 pgoyette Exp $
+
+.include <bsd.init.mk>
 
 .include "${.CURDIR}/../../dist/uts/common/Makefile.files"
 .include "../../Makefile.zfs"

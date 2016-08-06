@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1253 2016/07/06 14:26:31 christos Exp $
+$NetBSD: pcidevs,v 1.1253.2.1 2016/08/06 00:19:07 pgoyette Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -529,10 +529,9 @@ vendor ITE		0x1283	Integrated Technology Express
 vendor ESSTECH2		0x1285	ESS Technology
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
-vendor ALTEON		0x12ae	Alteon
 vendor RISCOM		0x12aa	RISCom
+vendor ALTEON		0x12ae	Alteon
 vendor USR		0x12b9	US Robotics (3Com)
-vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia & SGS-Thomson Microelectronics
 vendor PERICOM		0x12d8	Pericom Semiconductors
@@ -575,7 +574,6 @@ vendor ASKEY		0x144f	Askey Computer
 vendor AVERMEDIA	0x1461	Avermedia Technologies
 vendor MSI		0x1462 	Micro-star International Co Ltd
 vendor SYSTEMBASE	0x14a1	System Base
-vendor MARVELL2		0x1b4b	Marvell
 vendor AIRONET		0x14b9	Aironet Wireless Communications
 vendor COMPAL		0x14c0	COMPAL Electronics
 vendor MYRICOM		0x14c1	Myricom
@@ -586,6 +584,7 @@ vendor BROADCOM		0x14e4	Broadcom
 vendor PLANEX		0x14ea	Planex Communications
 vendor CONEXANT		0x14f1	Conexant Systems
 vendor DELTA		0x1500	Delta Electronics
+vendor MYSON		0x1516	Myson-Century Technology
 vendor ENE		0x1524	ENE Technology
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor PERLE		0x155f	Perle Systems
@@ -596,18 +595,19 @@ vendor FARADAY		0x159b	Faraday Technology
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
 vendor VMWARE		0x15ad	VMware
+vendor MELLANOX		0x15b3	Mellanox Technologies
 vendor AGILENT		0x15bc	Agilent Technologies
+vendor SUPERMICRO	0x15d9	Super Micro Computer Inc
+vendor NDC		0x15e8	National Datacomm
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
-vendor SIBYTE		0x166d	Broadcom (SiByte)
-vendor MYSON		0x1516	Myson-Century Technology
-vendor MELLANOX		0x15b3	Mellanox Technologies
-vendor NDC		0x15e8	National Datacomm
 vendor ACTIONTEC	0x1668	Action Tec Electronics
+vendor SIBYTE		0x166d	Broadcom (SiByte)
 vendor ATHEROS		0x168c	Atheros Communications
 vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor SAFENET		0x16ae	SafeNet
 vendor MICREL		0x16c6	Micrel
+vendor USR2		0x16ec	US Robotics
 vendor NETOCTAVE	0x170b	Netoctave
 vendor LINKSYS		0x1737	Linksys
 vendor ALTIMA		0x173b	Altima
@@ -639,6 +639,7 @@ vendor FUSIONIO		0x1aed	Fusion-io
 vendor QUMRANET		0x1af4	Qumranet
 vendor ASMEDIA		0x1b21  ASMedia
 vendor REDHAT		0x1b36	Red Hat
+vendor MARVELL2		0x1b4b	Marvell
 vendor FRESCO		0x1b73	Fresco Logic
 vendor QINHENG2		0x1c00	Nanjing QinHeng Electronics (PCIe)
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
@@ -4715,6 +4716,7 @@ product SYMBIOS MEGARAID_2208		0x005B	MegaRAID SAS2208
 product SYMBIOS SAS1064A		0x005C	SAS1064A
 product SYMBIOS MEGARAID_3108		0x005d	MegaRAID SAS3108
 product SYMBIOS SAS1066			0x005E	SAS1066
+product SYMBIOS MEGARAID_3008		0x005f	MegaRAID SAS3008
 product SYMBIOS SAS1078			0x0060	SAS1078 PCI
 product SYMBIOS SAS1078_PCIE		0x0062	SAS1078 PCI Express
 product SYMBIOS SAS2116_1		0x0064	SAS2116

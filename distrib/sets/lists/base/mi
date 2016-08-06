@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1131.2.1 2016/07/31 02:11:41 pgoyette Exp $
+# $NetBSD: mi,v 1.1131.2.2 2016/08/06 00:18:39 pgoyette Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5521,7 +5521,7 @@
 ./usr/share/zoneinfo/Asia/Thimbu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Thimphu		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Tokyo			base-sys-share		share
-./usr/share/zoneinfo/Asia/Tomsk			base-obsolete		obsolete
+./usr/share/zoneinfo/Asia/Tomsk			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ujung_Pandang		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulaanbaatar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Ulan_Bator		base-sys-share		share

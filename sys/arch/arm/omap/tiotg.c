@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.5 2016/07/11 14:46:33 kiyohara Exp $ */
+/* $NetBSD: tiotg.c,v 1.5.2.1 2016/08/06 00:19:04 pgoyette Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.5 2016/07/11 14:46:33 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.5.2.1 2016/08/06 00:19:04 pgoyette Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -335,10 +335,18 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	DPRINTF("now val 0x%x", val, 0, 0, 0);
 #endif
 	/* XXX configure mode */
+#if 0
 	if (sc->sc_ctrlport == 0)
 		sc->sc_motg.sc_mode = MOTG_MODE_DEVICE;
 	else
 		sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#else
+	/* XXXXX
+	 * Both ports always the host mode only.
+	 * And motg(4) doesn't supports device and OTG modes.
+	 */
+	sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#endif
 	if (sc->sc_motg.sc_mode == MOTG_MODE_HOST) {
 		val = TIOTG_USBC_READ4(sc, USBCTRL_MODE);
 		val |= USBCTRL_MODE_IDDIGMUX;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.530 2016/06/28 16:45:06 maya Exp $
+.\"	$NetBSD: main,v 1.530.2.1 2016/08/06 00:18:39 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1144,6 +1144,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Mihai Chelaru Ta Mt kefren@NetBSD.org
 .It Ta Aleksey Cheusov Ta Mt cheusov@NetBSD.org
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.org
+.It Ta Sean Cole Ta Mt scole@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Marcus Comstedt Ta Mt marcus@NetBSD.org
 .It Ta Jeremy Cooper Ta Mt jeremy@NetBSD.org

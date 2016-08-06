@@ -117,12 +117,12 @@
 	* ld-x86-64/plt-main3.rd: Also check GOTPCRELX.
 
 2015-10-29  Catherine Moore  <clm@codesourcery.com>
-    
-    	* ld-mips-elf/mips16-fp-stub-1.s: New.
-    	* ld-mips-elf/mips16-fp-stub-2.s: New.
-    	* ld-mips-elf/mips16-fp-stub.d: New.
-    	* ld-mips-elf/mips-elf.exp: Run new tests.
-    	* ld-mips-elf/mips16-intermix.d: Update expected output.
+
+	* ld-mips-elf/mips16-fp-stub-1.s: New.
+	* ld-mips-elf/mips16-fp-stub-2.s: New.
+	* ld-mips-elf/mips16-fp-stub.d: New.
+	* ld-mips-elf/mips-elf.exp: Run new tests.
+	* ld-mips-elf/mips16-intermix.d: Update expected output.
 
 2015-10-28  H.J. Lu  <hongjiu.lu@intel.com>
 
@@ -133,7 +133,7 @@
 	* ld-x86-64/pr19162b.s: Likewise.
 
 2015-10-27  Laurent Alfonsi <laurent.alfonsi@st.com>
-            Christophe Monat <christophe.monat@st.com>
+	    Christophe Monat <christophe.monat@st.com>
 
 	* ld-arm/arm-elf.exp (armelftests_common): Add STM32L4XX
 	tests.
@@ -1069,7 +1069,6 @@
 
 2015-05-28  Catherine Moore  <clm@codesourcery.com>
 
-	ld/testsuite/
 	* ld-mips-elf/compact-eh.ld: New linker script.
 	* ld-mips-elf/compact-eh1.d: New.
 	* ld-mips-elf/compact-eh1.s: New.

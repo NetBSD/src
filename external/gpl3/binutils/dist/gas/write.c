@@ -25,7 +25,6 @@
 #include "obstack.h"
 #include "output-file.h"
 #include "dwarf2dbg.h"
-#include "libbfd.h"
 #include "compress-debug.h"
 
 #ifndef TC_FORCE_RELOCATION

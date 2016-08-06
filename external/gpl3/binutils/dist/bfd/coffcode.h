@@ -4076,6 +4076,8 @@ coff_write_object_contents (bfd * abfd)
     internal_f.f_flags |= F_DYNLOAD;
 #endif
 
+  memset (&internal_a, 0, sizeof internal_a);
+
   /* Set up architecture-dependent stuff.  */
   {
     unsigned int magic = 0;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.78.1 2016/07/31 02:02:20 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.78.2 2016/08/06 00:19:12 pgoyette Exp $
 
 RUMPPRG=	fssconfig
 MAN=		fssconfig.8

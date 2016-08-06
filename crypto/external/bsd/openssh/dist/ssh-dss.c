@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-dss.c,v 1.8 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: ssh-dss.c,v 1.34 2015/12/11 04:21:12 mmcc Exp $ */
-
+/*	$NetBSD: ssh-dss.c,v 1.8.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: ssh-dss.c,v 1.35 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-dss.c,v 1.8 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-dss.c,v 1.8.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -137,7 +136,8 @@ ssh_dss_verify(const struct sshkey *key,
 	char *ktype = NULL;
 
 	if (key == NULL || key->dsa == NULL ||
-	    sshkey_type_plain(key->type) != KEY_DSA)
+	    sshkey_type_plain(key->type) != KEY_DSA ||
+	    signature == NULL || signaturelen == 0)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (dlen == 0)
 		return SSH_ERR_INTERNAL_ERROR;

@@ -269,6 +269,14 @@ power9:
 	cmprb       7,1,8,9
 	setb        15,0
 	setb        15,7
+	setbool     16,0
+	setbool     16,1
+	setbool     16,2
+	setbool     16,3
+	setbool     16,28
+	setbool     16,29
+	setbool     16,30
+	setbool     16,31
 	lxvl        26,0,10
 	lxvl        56,20,10
 	stxvl       27,0,11
@@ -354,6 +362,8 @@ power9:
 	rmieg       30
 	ldmx        10,0,15
 	ldmx        10,3,15
+	lwzmx       11,0,16
+	lwzmx       11,3,16
 	stop
 	wait
 	wait        0
@@ -372,3 +382,28 @@ power9:
 	xsmaxcdp    35,45,55
 	xsminjdp    36,46,56
 	xsmaxjdp    37,47,57
+	vmsumudm    20,21,22,23
+	addex       11,12,13,0
+	addex       11,12,13,1
+	addex       11,12,13,2
+	addex.      21,22,23,0
+	addex.      21,22,23,1
+	addex.      21,22,23,2
+	mffs        25
+	mffs.       25
+	mffsce      26
+	mffscdrn    27,20
+	mffscdrni   28,0
+	mffscdrni   28,7
+	mffscrn     29,21
+	mffscrni    30,0
+	mffscrni    30,3
+	mffsl       31
+	brd         10,20
+	brh         11,21
+	brw         12,22
+	nandxor     10,11,12,13
+	xor3        20,21,22,23
+	rldixor     10,11,0,12
+	rldixor     10,11,27,12
+	rldixor     10,11,63,12

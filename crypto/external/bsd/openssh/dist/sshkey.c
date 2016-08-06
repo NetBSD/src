@@ -1,6 +1,5 @@
-/*	$NetBSD: sshkey.c,v 1.7 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: sshkey.c,v 1.31 2015/12/11 04:21:12 mmcc Exp $ */
-
+/*	$NetBSD: sshkey.c,v 1.7.2.1 2016/08/06 00:18:39 pgoyette Exp $	*/
+/* $OpenBSD: sshkey.c,v 1.35 2016/06/19 07:48:02 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -27,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.7 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.7.2.1 2016/08/06 00:18:39 pgoyette Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -1934,7 +1933,8 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 #ifdef DEBUG_PK /* XXX */
 	sshbuf_dump(b, stderr);
 #endif
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if ((copy = sshbuf_fromb(b)) == NULL) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto out;
@@ -2087,8 +2087,10 @@ sshkey_from_blob_internal(struct sshbuf *b, struct sshkey **keyp,
 		goto out;
 	}
 	ret = 0;
-	*keyp = key;
-	key = NULL;
+	if (keyp != NULL) {
+		*keyp = key;
+		key = NULL;
+	}
  out:
 	sshbuf_free(copy);
 	sshkey_free(key);
@@ -2327,7 +2329,7 @@ sshkey_drop_cert(struct sshkey *k)
 
 /* Sign a certified key, (re-)generating the signed certblob. */
 int
-sshkey_certify(struct sshkey *k, struct sshkey *ca)
+sshkey_certify(struct sshkey *k, struct sshkey *ca, const char *alg)
 {
 	struct sshbuf *principals = NULL;
 	u_char *ca_blob = NULL, *sig_blob = NULL, nonce[32];
@@ -2415,7 +2417,7 @@ sshkey_certify(struct sshkey *k, struct sshkey *ca)
 
 	/* Sign the whole mess */
 	if ((ret = sshkey_sign(ca, &sig_blob, &sig_len, sshbuf_ptr(cert),
-	    sshbuf_len(cert), NULL, 0)) != 0)
+	    sshbuf_len(cert), alg, 0)) != 0)
 		goto out;
 
 	/* Append signature and we are done */
@@ -3579,12 +3581,10 @@ sshkey_parse_public_rsa1_fileblob(struct sshbuf *blob,
 	/* The encrypted private part is not parsed by this function. */
 
 	r = 0;
-	if (keyp != NULL)
+	if (keyp != NULL) {
 		*keyp = pub;
-	else
-		sshkey_free(pub);
-	pub = NULL;
-
+		pub = NULL;
+	}
  out:
 	sshbuf_free(copy);
 	sshkey_free(pub);
@@ -3605,7 +3605,8 @@ sshkey_parse_private_rsa1(struct sshbuf *blob, const char *passphrase,
 	const struct sshcipher *cipher;
 	struct sshkey *prv = NULL;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;
 
@@ -3691,8 +3692,10 @@ sshkey_parse_private_rsa1(struct sshbuf *blob, const char *passphrase,
 		goto out;
 	}
 	r = 0;
-	*keyp = prv;
-	prv = NULL;
+	if (keyp != NULL) {
+		*keyp = prv;
+		prv = NULL;
+	}
 	if (commentp != NULL) {
 		*commentp = comment;
 		comment = NULL;
@@ -3717,7 +3720,8 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 	BIO *bio = NULL;
 	int r;
 
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 
 	if ((bio = BIO_new(BIO_s_mem())) == NULL || sshbuf_len(blob) > INT_MAX)
 		return SSH_ERR_ALLOC_FAIL;
@@ -3784,8 +3788,10 @@ sshkey_parse_private_pem_fileblob(struct sshbuf *blob, int type,
 		goto out;
 	}
 	r = 0;
-	*keyp = prv;
-	prv = NULL;
+	if (keyp != NULL) {
+		*keyp = prv;
+		prv = NULL;
+	}
  out:
 	BIO_free(bio);
 	if (pk != NULL)
@@ -3799,7 +3805,8 @@ int
 sshkey_parse_private_fileblob_type(struct sshbuf *blob, int type,
     const char *passphrase, struct sshkey **keyp, char **commentp)
 {
-	*keyp = NULL;
+	if (keyp != NULL)
+		*keyp = NULL;
 	if (commentp != NULL)
 		*commentp = NULL;
 

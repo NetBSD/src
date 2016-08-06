@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.7 2016/06/30 09:14:30 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.7.2.1 2016/08/06 00:19:02 pgoyette Exp $
 
 SRCS+=	_lwp.c
 SRCS+=	bswap16.c bswap32.c bswap64.c
 SRCS+=	setjmp.S _setjmp.S sigsetjmp.S
 SRCS+=	flt_rounds.c fpgetround.c fpsetround.c fpgetmask.c fpsetmask.c
+
+SRCS+=	fpgetsticky.c fpsetsticky.c
+SRCS+=	getcontext.S makecontext.c swapcontext.S
 
 # Common ieee754 constants and functions
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c

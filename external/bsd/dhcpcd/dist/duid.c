@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: duid.c,v 1.12 2016/05/09 10:15:59 roy Exp $");
+ __RCSID("$NetBSD: duid.c,v 1.12.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -122,7 +122,7 @@ duid_get(uint8_t **d, const struct interface *ifp)
 	/* No file? OK, lets make one based on our interface */
 	if (ifp->family == ARPHRD_NETROM) {
 		logger(ifp->ctx, LOG_WARNING,
-		    "%s: is a NET/ROM psuedo interface", ifp->name);
+		    "%s: is a NET/ROM pseudo interface", ifp->name);
 		TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 			if (ifp2->family != ARPHRD_NETROM)
 				break;

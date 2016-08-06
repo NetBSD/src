@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.63 2016/07/14 04:00:46 msaitoh Exp $	*/
+/*	$NetBSD: uk.c,v 1.63.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.63 2016/07/14 04:00:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.63.2.1 2016/08/06 00:19:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,9 @@ ukattach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

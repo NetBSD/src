@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.217.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.217.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.217.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -446,6 +446,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct in_ifaddr *ia;
 	struct ifaddr *ifa;
 	struct ifnet *ifp = rt->rt_ifp;
+	int bound;
+	int s;
 
 	if (req == RTM_LLINFO_UPD) {
 		struct in_addr *in;
@@ -553,10 +555,13 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			if (rt->rt_flags & RTF_CONNECTED)
 				break;
 		}
+
+		bound = curlwp_bind();
 		/* Announce a new entry if requested. */
 		if (rt->rt_flags & RTF_ANNOUNCE) {
-			ia = in_get_ia_on_iface(
-			    satocsin(rt_getkey(rt))->sin_addr, ifp);
+			struct psref psref;
+			ia = in_get_ia_on_iface_psref(
+			    satocsin(rt_getkey(rt))->sin_addr, ifp, &psref);
 			if (ia == NULL ||
 			    ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
 				;
@@ -565,12 +570,14 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				    &satocsin(rt_getkey(rt))->sin_addr,
 				    &satocsin(rt_getkey(rt))->sin_addr,
 				    CLLADDR(satocsdl(gate)));
+			if (ia != NULL)
+				ia4_release(ia, &psref);
 		}
 
 		if (gate->sa_family != AF_LINK ||
 		    gate->sa_len < sockaddr_dl_measure(0, ifp->if_addrlen)) {
 			log(LOG_DEBUG, "%s: bad gateway value\n", __func__);
-			break;
+			goto out;
 		}
 
 		satosdl(gate)->sdl_type = ifp->if_type;
@@ -586,7 +593,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			rt->rt_flags |= RTF_BROADCAST;
 		/* There is little point in resolving the broadcast address */
 		if (rt->rt_flags & RTF_BROADCAST)
-			break;
+			goto out;
 
 		/*
 		 * When called from rt_ifa_addlocal, we cannot depend on that
@@ -599,12 +606,15 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				rt->rt_ifp = lo0ifp;
 				rt->rt_rmx.rmx_mtu = 0;
 			}
-			break;
+			goto out;
 		}
 
+		s = pserialize_read_enter();
 		ia = in_get_ia_on_iface(satocsin(rt_getkey(rt))->sin_addr, ifp);
-		if (ia == NULL)
-			break;
+		if (ia == NULL) {
+			pserialize_read_exit(s);
+			goto out;
+		}
 
 		rt->rt_expire = 0;
 		if (useloopback) {
@@ -619,7 +629,11 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 */
 		ifa = &ia->ia_ifa;
 		if (ifa != rt->rt_ifa)
+			/* Assume it doesn't sleep */
 			rt_replace_ifa(rt, ifa);
+		pserialize_read_exit(s);
+	out:
+		curlwp_bindx(bound);
 		break;
 	}
 }
@@ -971,7 +985,7 @@ in_arpinput(struct mbuf *m)
 	struct arphdr *ah;
 	struct ifnet *ifp, *rcvif = NULL;
 	struct llentry *la = NULL;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 #if NBRIDGE > 0
 	struct in_ifaddr *bridge_ia = NULL;
 #endif
@@ -983,7 +997,8 @@ in_arpinput(struct mbuf *m)
 	int op;
 	void *tha;
 	uint64_t *arps;
-	struct psref psref;
+	struct psref psref, psref_ia;
+	int s;
 
 	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
 		goto out;
@@ -1024,6 +1039,7 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function
 	 */
+	s = pserialize_read_enter();
 	IN_ADDRHASH_READER_FOREACH(ia, itaddr.s_addr) {
 		if (!in_hosteq(ia->ia_addr.sin_addr, itaddr))
 			continue;
@@ -1064,11 +1080,14 @@ in_arpinput(struct mbuf *m)
 		ifp = bridge_ia->ia_ifp;
 	}
 #endif
+	if (ia != NULL)
+		ia4_acquire(ia, &psref_ia);
+	pserialize_read_exit(s);
 
 	if (ia == NULL) {
-		ia = in_get_ia_on_iface(isaddr, rcvif);
+		ia = in_get_ia_on_iface_psref(isaddr, rcvif, &psref_ia);
 		if (ia == NULL) {
-			ia = in_get_ia_from_ifp(ifp);
+			ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
 			if (ia == NULL) {
 				ARP_STATINC(ARP_STAT_RCVNOINT);
 				goto out;
@@ -1289,7 +1308,6 @@ reply:
 		struct llentry *lle = NULL;
 		struct sockaddr_in sin;
 #if NCARP > 0
-		int s;
 		struct ifnet *_rcvif = m_get_rcvif(m, &s);
 		if (ifp->if_type == IFT_CARP && _rcvif->if_type != IFT_CARP)
 			goto out;
@@ -1314,6 +1332,7 @@ reply:
 			goto drop;
 		}
 	}
+	ia4_release(ia, &psref_ia);
 
 	memcpy(ar_tpa(ah), ar_spa(ah), ah->ar_pln);
 	memcpy(ar_spa(ah), &itaddr, ah->ar_pln);
@@ -1350,6 +1369,8 @@ out:
 	if (la != NULL)
 		LLE_WUNLOCK(la);
 drop:
+	if (ia != NULL)
+		ia4_release(ia, &psref_ia);
 	if (rcvif != NULL)
 		m_put_rcvif_psref(rcvif, &psref);
 	m_freem(m);
@@ -1505,7 +1526,7 @@ static void
 arp_dad_stoptimer(struct dadq *dp)
 {
 
-	callout_halt(&dp->dad_timer_ch, NULL);
+	callout_halt(&dp->dad_timer_ch, softnet_lock);
 }
 
 static void

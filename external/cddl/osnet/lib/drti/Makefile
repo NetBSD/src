@@ -1,6 +1,5 @@
-# $NetBSD: Makefile,v 1.5 2016/03/11 05:02:32 joerg Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2016/08/06 00:18:41 pgoyette Exp $
 .include	<bsd.init.mk>
-.include	"../../Makefile.inc"
 
 #.if ${MKPIC} == "yes"
 CFLAGS+=-fPIC

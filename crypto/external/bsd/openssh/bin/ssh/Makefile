@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/01/14 22:30:04 christos Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2016/08/06 00:18:38 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -6,8 +6,9 @@ BINDIR = /usr/bin
 
 PROG=	ssh
 SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
-	sshconnect.c sshconnect1.c sshconnect2.c mux.c
+	sshconnect.c sshconnect1.c sshconnect2.c mux.c auth.c
 
+COPTS.auth.c=	-DHOST_ONLY
 COPTS.sshconnect1.c=	-fno-strict-aliasing
 COPTS.mux.c=		-Wno-pointer-sign
 COPTS.sshconnect2.c=	-Wno-pointer-sign

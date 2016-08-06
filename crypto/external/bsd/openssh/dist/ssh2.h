@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh2.h,v 1.8 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: ssh2.h,v 1.17 2016/01/14 16:17:40 markus Exp $ */
+/*	$NetBSD: ssh2.h,v 1.8.2.1 2016/08/06 00:18:39 pgoyette Exp $	*/
+/* $OpenBSD: ssh2.h,v 1.18 2016/05/04 14:22:33 markus Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -55,6 +55,10 @@
  *
  *     192-255  Local extensions
  */
+
+/* special marker for no message */
+
+#define SSH_MSG_NONE					0
 
 /* ranges */
 

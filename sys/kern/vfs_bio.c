@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.259 2016/02/01 05:05:43 riz Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.259.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.259 2016/02/01 05:05:43 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.259.2.1 2016/08/06 00:19:09 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -800,6 +800,14 @@ bwrite(buf_t *bp)
 	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vp = bp->b_vp;
+
+	/*
+	 * dholland 20160728 AFAICT vp==NULL must be impossible as it
+	 * will crash upon reaching VOP_STRATEGY below... see further
+	 * analysis on tech-kern.
+	 */
+	KASSERTMSG(vp != NULL, "bwrite given buffer with null vnode");
+
 	if (vp != NULL) {
 		KASSERT(bp->b_objlock == vp->v_interlock);
 		if (vp->v_type == VBLK)

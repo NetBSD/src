@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.18 2016/06/17 19:42:31 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.18.2.1 2016/08/06 00:18:41 pgoyette Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -173,7 +173,7 @@ dhcp_vendor(char *str, size_t len)
 	char *p;
 	int l;
 
-	if (uname(&utn) != 0)
+	if (uname(&utn) == -1)
 		return (ssize_t)snprintf(str, len, "%s-%s",
 		    PACKAGE, VERSION);
 	p = str;

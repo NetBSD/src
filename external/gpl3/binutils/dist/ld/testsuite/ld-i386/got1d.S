@@ -19,7 +19,6 @@ plt:
 	pushl	%esi
 	pushl	%ebx
 	call	__x86.get_pc_thunk.bx
-1:
 	addl	$_GLOBAL_OFFSET_TABLE_, %ebx
 	subl	$20, %esp
 	leal	__FUNCTION__.1866@GOTOFF(%ebx), %esi

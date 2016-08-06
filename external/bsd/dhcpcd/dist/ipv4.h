@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.18 2016/06/17 19:42:32 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.18.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -32,14 +32,21 @@
 
 #include "dhcpcd.h"
 
-#ifdef IN_IFF_TENTATIVE
-#define IN_IFF_NOTUSEABLE \
-        (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED | IN_IFF_DETACHED)
-#endif
-
 /* Prefer our macro */
 #ifdef HTONL
 #undef HTONL
+#endif
+
+#ifndef BYTE_ORDER
+#define	BIG_ENDIAN	1234
+#define	LITTLE_ENDIAN	4321
+#if defined(_BIG_ENDIAN)
+#define	BYTE_ORDER	BIG_ENDIAN
+#elif defined(_LITTLE_ENDIAN)
+#define	BYTE_ORDER	LITTLE_ENDIAN
+#else
+#error Endian unknown
+#endif
 #endif
 
 #if BYTE_ORDER == BIG_ENDIAN
@@ -50,9 +57,22 @@
     (((uint32_t)(A) & 0x00ff0000) >> 8) | \
     (((uint32_t)(A) & 0x0000ff00) << 8) | \
     (((uint32_t)(A) & 0x000000ff) << 24))
-#else
-#error Endian unknown
 #endif /* BYTE_ORDER */
+
+#ifdef __sun
+   /* Solaris lacks these defines.
+    * While it supports DaD, to seems to only expose IFF_DUPLICATE
+    * so we have no way of knowing if it's tentative or not.
+    * I don't even know if Solaris has any special treatment for tentative. */
+#  define IN_IFF_TENTATIVE	0
+#  define IN_IFF_DUPLICATED	0x02
+#  define IN_IFF_DETACHED	0
+#endif
+
+#ifdef IN_IFF_TENTATIVE
+#define IN_IFF_NOTUSEABLE \
+        (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED | IN_IFF_DETACHED)
+#endif
 
 struct rt {
 	TAILQ_ENTRY(rt) next;
@@ -78,6 +98,9 @@ struct ipv4_addr {
 	struct interface *iface;
 	int addr_flags;
 	char saddr[INET_ADDRSTRLEN + 3];
+#ifdef ALIAS_ADDR
+	char alias[IF_NAMESIZE];
+#endif
 };
 TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
 
@@ -130,10 +153,8 @@ struct ipv4_addr *ipv4_iffindlladdr(struct interface *);
 struct ipv4_addr *ipv4_findaddr(struct dhcpcd_ctx *, const struct in_addr *);
 struct ipv4_addr *ipv4_findmaskaddr(struct dhcpcd_ctx *,
     const struct in_addr *);
-int ipv4_srcaddr(const struct rt *, struct in_addr *);
 void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *,
-    int);
+    const struct in_addr *, const struct in_addr *, const struct in_addr *);
 
 void ipv4_freeroutes(struct rt_head *);
 

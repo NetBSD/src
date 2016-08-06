@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "AS 1"
-.TH AS 1 "2016-01-25" "binutils-2.26" "GNU Development Tools"
+.TH AS 1 "2016-06-29" "binutils-2.26.1" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -1274,6 +1274,19 @@ single-thread computers
 \&\fB\-momit\-lock\-prefix=\fR\fIyes\fR will omit all lock prefixes.
 \&\fB\-momit\-lock\-prefix=\fR\fIno\fR will encode lock prefix as usual,
 which is the default.
+.IP "\fB\-mrelax\-relocations=\fR\fIno\fR" 4
+.IX Item "-mrelax-relocations=no"
+.PD 0
+.IP "\fB\-mrelax\-relocations=\fR\fIyes\fR" 4
+.IX Item "-mrelax-relocations=yes"
+.PD
+These options control whether the assembler should generate relax
+relocations, R_386_GOT32X, in 32\-bit mode, or R_X86_64_GOTPCRELX and
+R_X86_64_REX_GOTPCRELX, in 64\-bit mode.
+\&\fB\-mrelax\-relocations=\fR\fIyes\fR will generate relax relocations.
+\&\fB\-mrelax\-relocations=\fR\fIno\fR will not generate relax
+relocations.  The default can be controlled by a configure option
+\&\fB\-\-enable\-x86\-relax\-relocations\fR.
 .IP "\fB\-mevexrcig=\fR\fIrne\fR" 4
 .IX Item "-mevexrcig=rne"
 .PD 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.112 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.112.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -91,6 +91,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+RCSID("$NetBSD: locore_mips3.S,v 1.112.2.1 2016/08/06 00:19:06 pgoyette Exp $")
 
 #include "assym.h"
 

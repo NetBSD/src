@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.171.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171 2016/06/27 18:35:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.171.2.1 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -188,8 +188,6 @@ ip6_output(
 	struct psref psref, psref_ia;
 	int bound = curlwp_bind();
 	bool release_psref_ia = false;
-
-	memset(&ip6route, 0, sizeof(ip6route));
 
 #ifdef  DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -437,6 +435,7 @@ ip6_output(
 	 */
 	/* initialize cached route */
 	if (ro == NULL) {
+		memset(&ip6route, 0, sizeof(ip6route));
 		ro = &ip6route;
 	}
 	ro_pmtu = ro;
@@ -527,6 +526,8 @@ ip6_output(
 	 */
 	if (ia != NULL && ia->ia_ifp) {
 		origifp = ia->ia_ifp;
+		if (if_is_deactivated(origifp))
+			goto bad;
 		if_acquire_NOMPSAFE(origifp, &psref_ia);
 		release_psref_ia = true;
 	} else
@@ -762,13 +763,16 @@ ip6_output(
 		/* case 1-a and 2-a */
 		struct in6_ifaddr *ia6;
 		int sw_csum;
+		int s;
 
 		ip6 = mtod(m, struct ip6_hdr *);
+		s = pserialize_read_enter();
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 		if (ia6) {
 			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;
 		}
+		pserialize_read_exit(s);
 
 		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
@@ -954,7 +958,9 @@ sendorfree:
 		m->m_nextpkt = 0;
 		if (error == 0) {
 			struct in6_ifaddr *ia6;
+			int s;
 			ip6 = mtod(m, struct ip6_hdr *);
+			s = pserialize_read_enter();
 			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 			if (ia6) {
 				/*
@@ -964,6 +970,7 @@ sendorfree:
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				    m->m_pkthdr.len;
 			}
+			pserialize_read_exit(s);
 			KASSERT(dst != NULL);
 			error = nd6_output(ifp, origifp, m, dst, rt);
 		} else
@@ -974,7 +981,8 @@ sendorfree:
 		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
-	rtcache_free(&ip6route);
+	if (ro == &ip6route)
+		rtcache_free(&ip6route);
 
 #ifdef IPSEC
 	if (sp != NULL)

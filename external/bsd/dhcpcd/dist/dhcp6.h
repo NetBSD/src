@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.14 2016/06/17 19:42:31 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.14.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -246,8 +246,7 @@ void dhcp6_renew(struct interface *);
 ssize_t dhcp6_env(char **, const char *, const struct interface *,
     const struct dhcp6_message *, size_t);
 void dhcp6_free(struct interface *);
-void dhcp6_handleifa(struct dhcpcd_ctx *, int, const char *,
-    const struct in6_addr *addr, int);
+void dhcp6_handleifa(int, struct ipv6_addr *);
 int dhcp6_dadcompleted(const struct interface *);
 void dhcp6_drop(struct interface *, const char *);
 void dhcp6_dropnondelegates(struct interface *ifp);

@@ -1,6 +1,5 @@
-/*	$NetBSD: ssh-rsa.c,v 1.9 2016/03/11 01:55:00 christos Exp $	*/
-/* $OpenBSD: ssh-rsa.c,v 1.58 2015/12/11 04:21:12 mmcc Exp $ */
-
+/*	$NetBSD: ssh-rsa.c,v 1.9.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: ssh-rsa.c,v 1.59 2016/04/21 06:08:02 djm Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -18,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-rsa.c,v 1.9 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: ssh-rsa.c,v 1.9.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
@@ -171,7 +170,8 @@ ssh_rsa_verify(const struct sshkey *key,
 
 	if (key == NULL || key->rsa == NULL ||
 	    sshkey_type_plain(key->type) != KEY_RSA ||
-	    BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE)
+	    BN_num_bits(key->rsa->n) < SSH_RSA_MINIMUM_MODULUS_SIZE ||
+	    sig == NULL || siglen == 0)
 		return SSH_ERR_INVALID_ARGUMENT;
 
 	if ((b = sshbuf_from(sig, siglen)) == NULL)

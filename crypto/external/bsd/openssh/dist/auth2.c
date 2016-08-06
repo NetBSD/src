@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.11 2015/04/03 23:58:19 christos Exp $	*/
-/* $OpenBSD: auth2.c,v 1.135 2015/01/19 20:07:45 markus Exp $ */
+/*	$NetBSD: auth2.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: auth2.c,v 1.136 2016/05/02 08:49:03 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.11 2015/04/03 23:58:19 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.11.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -228,6 +228,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	Authmethod *m = NULL;
 	char *user, *service, *method, *style = NULL;
 	int authenticated = 0;
+	struct ssh *ssh = active_state; /* XXX */
 
 	if (authctxt == NULL)
 		fatal("input_userauth_request: no authctxt");
@@ -238,7 +239,7 @@ input_userauth_request(int type, u_int32_t seq, void *ctxt)
 	debug("userauth-request for user %s service %s method %s", user, service, method);
 	if (!log_flag) {
 		logit("SSH: Server;Ltype: Authname;Remote: %s-%d;Name: %s", 
-		      get_remote_ipaddr(), get_remote_port(), user);
+		      ssh_remote_ipaddr(ssh), ssh_remote_port(ssh), user);
 		log_flag = 1;
 	}
 	debug("attempt %d failures %d", authctxt->attempt, authctxt->failures);
@@ -427,8 +428,8 @@ authmethods_get(Authctxt *authctxt)
 		buffer_append(&b, authmethods[i]->name,
 		    strlen(authmethods[i]->name));
 	}
-	buffer_append(&b, "\0", 1);
-	list = xstrdup((const char *)buffer_ptr(&b));
+	if ((list = sshbuf_dup_string(&b)) == NULL)
+		fatal("%s: sshbuf_dup_string failed", __func__);
 	buffer_free(&b);
 	return list;
 }

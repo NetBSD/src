@@ -8,6 +8,7 @@
 
 	mov.d32 (%rax),%ebx
 	mov.d32 3(%rax),%ebx
+	vmovdqu64.d32 -0x40(%rax),%xmm3
 
 	jmp foo
 	jmp.d8 foo
@@ -24,3 +25,5 @@ foo:
 
 	mov.d32 DWORD PTR [rax], ebx
 	mov.d32 DWORD PTR [rax+3], ebx
+
+	vmovdqu64.d32 xmm3,XMMWORD PTR [rax-0x40]

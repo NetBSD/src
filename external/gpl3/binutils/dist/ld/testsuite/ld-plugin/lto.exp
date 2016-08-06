@@ -400,9 +400,20 @@ if { [at_least_gcc_version 4 7] } {
 	   || [istarget "x86_64-*-linux*"]
 	   || [istarget "amd64-*-linux*"]) } {
 	set testname "PR ld/12365"
-	set exec_output [run_host_cmd "$CC" "-O2 -flto -flto-partition=none -fuse-linker-plugin tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
+	set exec_output [run_host_cmd "$CC" "-O2 -flto -flto-partition=none -fuse-linker-plugin -o tmpdir/pr12365 tmpdir/pr12365a.o tmpdir/pr12365b.o tmpdir/pr12365c.o"]
 	if { [ regexp "undefined reference to `my_bcopy'" $exec_output ] } {
+	    # Linker should catch the reference to undefined `my_bcopy'
+	    # error caused by a GCC bug.
 	    pass $testname
+	} elseif { [ string match "" $exec_output ] } {
+	    global READELF
+	    set exec_output [run_host_cmd "$READELF" "-s -W tmpdir/pr12365"]
+	    if { [ regexp "my_bcopy" $exec_output ] } {
+		# Verify that there is no `my_bcopy' symbol in executable.
+		fail $testname
+	    } {
+		pass $testname
+	    }
 	} {
 	    fail $testname
 	}

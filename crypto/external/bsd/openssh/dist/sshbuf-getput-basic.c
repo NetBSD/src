@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-getput-basic.c,v 1.5 2015/10/20 23:24:25 mmcc Exp $	*/
+/*	$OpenBSD: sshbuf-getput-basic.c,v 1.6 2016/06/16 11:00:17 dtucker Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,9 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-getput-basic.c,v 1.4 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sshbuf-getput-basic.c,v 1.4.2.1 2016/08/06 00:18:39 pgoyette Exp $");
 
 #include <sys/types.h>
+
+#include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -1,6 +1,5 @@
-/*	$NetBSD: kex.c,v 1.15 2016/03/16 21:06:06 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.117 2016/02/08 10:57:07 djm Exp $ */
-
+/*	$NetBSD: kex.c,v 1.15.2.1 2016/08/06 00:18:38 pgoyette Exp $	*/
+/* $OpenBSD: kex.c,v 1.118 2016/05/02 10:26:04 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.15 2016/03/16 21:06:06 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.15.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #include <sys/param.h>	/* MAX roundup */
 
 #include <signal.h>
@@ -49,6 +48,7 @@ __RCSID("$NetBSD: kex.c,v 1.15 2016/03/16 21:06:06 christos Exp $");
 #include "match.h"
 #include "misc.h"
 #include "dispatch.h"
+#include "packet.h"
 #include "monitor.h"
 #include "canohost.h"
 
@@ -82,7 +82,10 @@ struct kexalg {
 static const struct kexalg kexalgs[] = {
 #ifdef WITH_OPENSSL
 	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, SSH_DIGEST_SHA1 },
-	{ KEX_DH14, KEX_DH_GRP14_SHA1, 0, SSH_DIGEST_SHA1 },
+	{ KEX_DH14_SHA1, KEX_DH_GRP14_SHA1, 0, SSH_DIGEST_SHA1 },
+	{ KEX_DH14_SHA256, KEX_DH_GRP14_SHA256, 0, SSH_DIGEST_SHA256 },
+	{ KEX_DH16_SHA512, KEX_DH_GRP16_SHA512, 0, SSH_DIGEST_SHA512 },
+	{ KEX_DH18_SHA512, KEX_DH_GRP18_SHA512, 0, SSH_DIGEST_SHA512 },
 	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, SSH_DIGEST_SHA1 },
 	{ KEX_DHGEX_SHA256, KEX_DH_GEX_SHA256, 0, SSH_DIGEST_SHA256 },
 	{ KEX_ECDH_SHA2_NISTP256, KEX_ECDH_SHA2,
@@ -836,8 +839,8 @@ kex_choose_conf(struct ssh *ssh)
 		/* -cjr*/
 		if (ctos && !log_flag) {
 			logit("SSH: Server;Ltype: Kex;Remote: %s-%d;Enc: %s;MAC: %s;Comp: %s",
-			      get_remote_ipaddr(),
-			      get_remote_port(),
+			      ssh_remote_ipaddr(ssh),
+			      ssh_remote_port(ssh),
 			      newkeys->enc.name,
 			      newkeys->mac.name,
 			      newkeys->comp.name);

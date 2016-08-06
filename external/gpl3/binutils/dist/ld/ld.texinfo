@@ -1325,15 +1325,21 @@ libraries.
 When creating a shared library, bind references to global symbols to the
 definition within the shared library, if any.  Normally, it is possible
 for a program linked against a shared library to override the definition
-within the shared library.  This option is only meaningful on ELF
-platforms which support shared libraries.
+within the shared library.  This option can also be used with the
+@option{--export-dynamic} option, when creating a position independent
+executable, to bind references to global symbols to the definition within
+the executable.  This option is only meaningful on ELF platforms which
+support shared libraries and position independent executables.
 
 @kindex -Bsymbolic-functions
 @item -Bsymbolic-functions
 When creating a shared library, bind references to global function
 symbols to the definition within the shared library, if any.
+This option can also be used with the @option{--export-dynamic} option,
+when creating a position independent executable, to bind references
+to global function symbols to the definition within the executable.
 This option is only meaningful on ELF platforms which support shared
-libraries.
+libraries and position independent executables.
 
 @kindex --dynamic-list=@var{dynamic-list-file}
 @item --dynamic-list=@var{dynamic-list-file}

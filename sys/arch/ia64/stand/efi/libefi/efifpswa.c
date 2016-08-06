@@ -1,4 +1,4 @@
-/*	$NetBSD: efifpswa.c,v 1.4 2011/07/17 20:54:42 joerg Exp $	*/
+/*	$NetBSD: efifpswa.c,v 1.4.34.1 2016/08/06 00:19:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001 Peter Wemm <peter@FreeBSD.org>
@@ -36,6 +36,7 @@
 
 #include <efi.h>
 #include <efilib.h>
+#include <efifpswa.h>
 
 #include <bootstrap.h>
 #include "efiboot.h"

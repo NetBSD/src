@@ -3249,6 +3249,8 @@ tpoff (struct bfd_link_info *info, bfd_vma address)
 static bfd_boolean
 elf32_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
 {
+  struct stat buf;
+
   /* Invoke the regular ELF linker to do all the work.  */
   if (!bfd_elf_final_link (abfd, info))
     return FALSE;
@@ -3256,6 +3258,13 @@ elf32_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
   /* If we're producing a final executable, sort the contents of the
      unwind section.  */
   if (bfd_link_relocatable (info))
+    return TRUE;
+
+  /* Do not attempt to sort non-regular files.  This is here
+     especially for configure scripts and kernel builds which run
+     tests with "ld [...] -o /dev/null".  */
+  if (stat (abfd->filename, &buf) != 0
+      || !S_ISREG(buf.st_mode))
     return TRUE;
 
   return elf_hppa_sort_unwind (abfd);

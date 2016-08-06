@@ -4,9 +4,9 @@
 #
 G_DEFS=-DHAVE_CONFIG_H
 G_EMUL=elf64ppc
-G_EMULATION_OFILES=eelf64ppc.o eelf32ppc.o eelf32ppclinux.o eelf32ppcsim.o
+G_EMULATION_OFILES=eelf64ppc.o eelf32ppc.o eelf32ppc_nbsd.o eelf32ppcsim.o
 G_INCLUDES=
-G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf64ppc.o eelf32ppc.o eelf32ppclinux.o eelf32ppcsim.o   ldbuildid.o
+G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plugin.o  ldwrite.o ldexp.o  ldemul.o ldver.o ldmisc.o  ldfile.o ldcref.o eelf64ppc.o eelf32ppc.o eelf32ppc_nbsd.o eelf32ppcsim.o   ldbuildid.o
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texinfo
 G_target_alias=powerpc64--netbsd

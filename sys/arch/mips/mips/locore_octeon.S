@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.9 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.9.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.9 2016/07/11 16:15:36 matt Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.9.2.1 2016/08/06 00:19:06 pgoyette Exp $")
 
 #include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
@@ -36,6 +36,8 @@ RCSID("$NetBSD: locore_octeon.S,v 1.9 2016/07/11 16:15:36 matt Exp $")
 
 #include <mips/cpuregs.h>
 #include <arch/mips/cavium/dev/octeon_corereg.h>
+
+RCSID("$NetBSD: locore_octeon.S,v 1.9.2.1 2016/08/06 00:19:06 pgoyette Exp $")
 
 #include "assym.h"
 

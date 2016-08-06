@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.45 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.45.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.45 2015/10/02 16:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.45.2.1 2016/08/06 00:19:09 pgoyette Exp $");
 
 #include "opt_dtrace.h"
 
@@ -258,7 +258,7 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(ksi->ksi_signo),
 		    NULL, NULL);
 		if (!error && ksi->ksi_signo) {
-			kpsignal2(p, ksi);
+			error = kpsignal2(p, ksi);
 		}
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);

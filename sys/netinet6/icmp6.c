@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.192.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.192.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.192.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.192.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -160,7 +160,7 @@ static struct mbuf *ni6_input(struct mbuf *, int);
 static struct mbuf *ni6_nametodns(const char *, int, int);
 static int ni6_dnsmatch(const char *, int, const char *, int);
 static int ni6_addrs(struct icmp6_nodeinfo *, struct mbuf *,
-			  struct ifnet **, char *);
+			  struct ifnet **, char *, struct psref *);
 static int ni6_store_addrs(struct icmp6_nodeinfo *, struct icmp6_nodeinfo *,
 				struct ifnet *, int);
 static int icmp6_notify_error(struct mbuf *, int, int, int);
@@ -1200,8 +1200,10 @@ ni6_input(struct mbuf *m, int off)
 	struct ip6_hdr *ip6;
 	int oldfqdn = 0;	/* if 1, return pascal string (03 draft) */
 	char *subj = NULL;
-	int s;
 	struct ifnet *rcvif;
+	int s, ss;
+	struct ifaddr *ifa;
+	struct psref psref;
 
 	ip6 = mtod(m, struct ip6_hdr *);
 	IP6_EXTHDR_GET(ni6, struct icmp6_nodeinfo *, m, off, sizeof(*ni6));
@@ -1220,12 +1222,17 @@ ni6_input(struct mbuf *m, int off)
 	 */
 	sockaddr_in6_init(&sin6, &ip6->ip6_dst, 0, 0, 0);
 	/* XXX scopeid */
-	if (ifa_ifwithaddr(sin6tosa(&sin6)))
+	ss = pserialize_read_enter();
+	ifa = ifa_ifwithaddr(sin6tosa(&sin6));
+	if (ifa != NULL)
 		; /* unicast/anycast, fine */
 	else if (IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr))
 		; /* link-local multicast, fine */
-	else
+	else {
+		pserialize_read_exit(ss);
 		goto bad;
+	}
+	pserialize_read_exit(ss);
 
 	/* validate query Subject field. */
 	qtype = ntohs(ni6->ni_qtype);
@@ -1359,7 +1366,7 @@ ni6_input(struct mbuf *m, int off)
 		replylen += offsetof(struct ni_reply_fqdn, ni_fqdn_namelen);
 		break;
 	case NI_QTYPE_NODEADDR:
-		addrs = ni6_addrs(ni6, m, &ifp, subj);
+		addrs = ni6_addrs(ni6, m, &ifp, subj, &psref);
 		if ((replylen += addrs * (sizeof(struct in6_addr) +
 					  sizeof(u_int32_t))) > MCLBYTES)
 			replylen = MCLBYTES; /* XXX: will truncate pkt later */
@@ -1387,6 +1394,7 @@ ni6_input(struct mbuf *m, int off)
 	/* allocate an mbuf to reply. */
 	MGETHDR(n, M_DONTWAIT, m->m_type);
 	if (n == NULL) {
+		if_put(ifp, &psref);
 		m_freem(m);
 		return (NULL);
 	}
@@ -1454,6 +1462,8 @@ ni6_input(struct mbuf *m, int off)
 		    sizeof(struct ip6_hdr) + sizeof(struct icmp6_nodeinfo);
 		lenlim = M_TRAILINGSPACE(n);
 		copied = ni6_store_addrs(ni6, nni6, ifp, lenlim);
+		if_put(ifp, &psref);
+		ifp = NULL;
 		/* XXX: reset mbuf length */
 		n->m_pkthdr.len = n->m_len = sizeof(struct ip6_hdr) +
 			sizeof(struct icmp6_nodeinfo) + copied;
@@ -1468,6 +1478,7 @@ ni6_input(struct mbuf *m, int off)
 	return (n);
 
   bad:
+	if_put(ifp, &psref);
 	m_freem(m);
 	if (n)
 		m_freem(n);
@@ -1657,7 +1668,7 @@ ni6_dnsmatch(const char *a, int alen, const char *b, int blen)
  */
 static int
 ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
-    struct ifnet **ifpp, char *subj)
+    struct ifnet **ifpp, char *subj, struct psref *psref)
 {
 	struct ifnet *ifp;
 	struct in6_ifaddr *ia6;
@@ -1665,6 +1676,7 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 	struct sockaddr_in6 *subj_ip6 = NULL; /* XXX pedant */
 	int addrs = 0, addrsofif, iffound = 0;
 	int niflags = ni6->ni_flags;
+	int s;
 
 	if ((niflags & NI_NODEADDR_FLAG_ALL) == 0) {
 		switch (ni6->ni_code) {
@@ -1682,6 +1694,7 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 		}
 	}
 
+	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
 		addrsofif = 0;
 		IFADDR_READER_FOREACH(ifa, ifp) {
@@ -1733,12 +1746,15 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 			addrsofif++; /* count the address */
 		}
 		if (iffound) {
+			if_acquire_NOMPSAFE(ifp, psref);
+			pserialize_read_exit(s);
 			*ifpp = ifp;
 			return (addrsofif);
 		}
 
 		addrs += addrsofif;
 	}
+	pserialize_read_exit(s);
 
 	return (addrs);
 }
@@ -1748,7 +1764,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 	struct icmp6_nodeinfo *nni6, struct ifnet *ifp0,
 	int resid)
 {
-	struct ifnet *ifp = ifp0 ? ifp0 : IFNET_READER_FIRST();
+	struct ifnet *ifp;
 	struct in6_ifaddr *ia6;
 	struct ifaddr *ifa;
 	struct ifnet *ifp_dep = NULL;
@@ -1756,10 +1772,13 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 	u_char *cp = (u_char *)(nni6 + 1);
 	int niflags = ni6->ni_flags;
 	u_int32_t ltime;
+	int s;
 
 	if (ifp0 == NULL && !(niflags & NI_NODEADDR_FLAG_ALL))
 		return (0);	/* needless to copy */
 
+	s = pserialize_read_enter();
+	ifp = ifp0 ? ifp0 : IFNET_READER_FIRST();
   again:
 
 	for (; ifp; ifp = IFNET_READER_NEXT(ifp))
@@ -1820,7 +1839,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 				 * Set the truncate flag and return.
 				 */
 				nni6->ni_flags |= NI_NODEADDR_FLAG_TRUNCATE;
-				return (copied);
+				goto out;
 			}
 
 			/*
@@ -1876,7 +1895,8 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 
 		goto again;
 	}
-
+out:
+	pserialize_read_exit(s);
 	return (copied);
 }
 
@@ -2067,16 +2087,21 @@ icmp6_reflect(struct mbuf *m, size_t off)
 			struct sockaddr_in6 sin6;
 			struct sockaddr sa;
 		} u;
+		int _s;
+		struct ifaddr *ifa;
 
 		sockaddr_in6_init(&u.sin6, &origdst, 0, 0, 0);
 
-		ia = ifatoia6(ifa_ifwithaddr(&u.sa));
+		_s = pserialize_read_enter();
+		ifa = ifa_ifwithaddr(&u.sa);
 
-		if (ia == NULL)
-			;
-		else if ((ia->ia6_flags &
-			 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
-			src = &ia->ia_addr.sin6_addr;
+		if (ifa != NULL) {
+			ia = ifatoia6(ifa);
+			if ((ia->ia6_flags &
+				 (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
+				src = &ia->ia_addr.sin6_addr;
+		}
+		pserialize_read_exit(_s);
 	}
 
 	if (src == NULL) {
@@ -2438,11 +2463,15 @@ icmp6_redirect_output(struct mbuf *m0, struct rtentry *rt)
 	{
 		/* get ip6 linklocal address for ifp(my outgoing interface). */
 		struct in6_ifaddr *ia;
+		int s = pserialize_read_enter();
 		if ((ia = in6ifa_ifpforlinklocal(ifp,
 						 IN6_IFF_NOTREADY|
-						 IN6_IFF_ANYCAST)) == NULL)
+						 IN6_IFF_ANYCAST)) == NULL) {
+			pserialize_read_exit(s);
 			goto fail;
+		}
 		ifp_ll6 = &ia->ia_addr.sin6_addr;
+		pserialize_read_exit(s);
 	}
 
 	/* get ip6 linklocal address for the router. */

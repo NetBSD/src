@@ -20,3 +20,6 @@ _start:
         vldm r9, {s1-s8}
         vldm r6!, {s9-s16}
         vpop {s1-s8}
+        vldm r9, {d1-d4}
+        vldm r6!, {d8-d11}
+        vpop {d1-d4}

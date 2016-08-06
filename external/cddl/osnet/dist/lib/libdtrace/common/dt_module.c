@@ -1180,8 +1180,9 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	size_t len;
 
 	if (strcmp("netbsd", name) == 0) {
-		/* want the kernel */
-		dt_bootfile(fname, sizeof(fname));
+		/* want the kernel, but it is not absolute */
+		dt_bootfile(machine, sizeof(machine));
+		snprintf(fname, sizeof(fname), "/%s", machine);
 	} else {
 
 		/* build stand module path from system */

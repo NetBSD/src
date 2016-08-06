@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.5 2016/03/11 01:55:00 christos Exp $");
+__RCSID("$NetBSD: sshbuf-getput-crypto.c,v 1.5.2.1 2016/08/06 00:18:39 pgoyette Exp $");
 
 #include <sys/types.h>
 #include <stdlib.h>

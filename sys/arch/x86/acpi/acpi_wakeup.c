@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.39.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.2 2016/08/06 00:19:06 pgoyette Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyett
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.1 2016/07/26 03:24:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.39.2.2 2016/08/06 00:19:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,10 +262,9 @@ acpi_cpu_sleep(struct cpu_info *ci)
 		return;
 
 	/* Execute Wakeup */
-#ifndef __i386__
 	cpu_init_msrs(ci, false);
-#endif
 	fpuinit(ci);
+
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();

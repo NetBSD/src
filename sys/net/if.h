@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.221.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: if.h,v 1.221.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -596,7 +596,10 @@ struct ifaddr {
 			               const struct sockaddr *);
 	uint32_t	*ifa_seqno;
 	int16_t	ifa_preference;	/* preference level for this address */
-	/* XXX adding variables here breaks kvm(3) users of struct *_ifaddr */
+#ifdef _KERNEL
+	struct pslist_entry     ifa_pslist_entry;
+	struct psref_target	ifa_psref;
+#endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
 
@@ -982,17 +985,29 @@ void
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
 
+void	ifa_psref_init(struct ifaddr *);
+void	ifa_acquire(struct ifaddr *, struct psref *);
+void	ifa_release(struct ifaddr *, struct psref *);
+bool	ifa_held(struct ifaddr *);
+
 void	ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithaddr_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithaf(int);
 struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithdstaddr_psref(const struct sockaddr *,
+	    struct psref *);
 struct	ifaddr *ifa_ifwithnet(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithnet_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
-struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
-					const struct sockaddr *);
+struct	ifaddr *ifa_ifwithladdr_psref(const struct sockaddr *, struct psref *);
+struct	ifaddr *ifa_ifwithroute_psref(int, const struct sockaddr *,
+	    const struct sockaddr *, struct psref *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
+struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
+	    struct psref *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
@@ -1051,7 +1066,6 @@ __END_DECLS
 					    &(__ifp)->if_addrlist, ifa_list, __nifa)
 #define	IFADDR_EMPTY(__ifp)		TAILQ_EMPTY(&(__ifp)->if_addrlist)
 
-#ifdef notyet
 #define IFADDR_ENTRY_INIT(__ifa)					\
 	PSLIST_ENTRY_INIT((__ifa), ifa_pslist_entry)
 #define IFADDR_ENTRY_DESTROY(__ifa)					\
@@ -1097,34 +1111,6 @@ __END_DECLS
 			}						\
 		}							\
 	} while (0)
-#else
-#define IFADDR_ENTRY_INIT(__ifa)					\
-	do {} while (0)
-#define IFADDR_ENTRY_DESTROY(__ifa)					\
-	do {} while (0)
-#define IFADDR_READER_EMPTY(__ifp)					\
-	IFADDR_EMPTY(__ifp)
-#define IFADDR_READER_FIRST(__ifp)					\
-	IFADDR_FIRST(__ifp)
-#define IFADDR_READER_NEXT(__ifa)					\
-	IFADDR_NEXT(__ifa)
-#define IFADDR_READER_FOREACH(__ifa, __ifp)				\
-	IFADDR_FOREACH(__ifa, __ifp)
-#define IFADDR_WRITER_INSERT_HEAD(__ifp, __ifa)				\
-	do {} while (0)
-#define IFADDR_WRITER_REMOVE(__ifa)					\
-	do {} while (0)
-#define IFADDR_WRITER_FOREACH(__ifa, __ifp)				\
-	IFADDR_FOREACH(__ifa, __ifp)
-#define IFADDR_WRITER_NEXT(__ifp)					\
-	IFADDR_NEXT(__ifa)
-#define IFADDR_WRITER_INSERT_AFTER(__ifp, __new)			\
-	do {} while (0)
-#define IFADDR_WRITER_EMPTY(__ifp)					\
-	IFADDR_EMPTY(__ifp)
-#define IFADDR_WRITER_INSERT_TAIL(__ifp, __new)				\
-	do {} while (0)
-#endif /* notyet */
 
 #define	IFNET_LOCK()			mutex_enter(&ifnet_mtx)
 #define	IFNET_UNLOCK()			mutex_exit(&ifnet_mtx)
