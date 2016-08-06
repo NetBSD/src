@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.146 2016/07/07 09:32:02 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.147 2016/08/06 22:03:45 pgoyette Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.146 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.147 2016/08/06 22:03:45 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.146 2016/07/07 09:32:02 ozaki-r Ex
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -5592,3 +5593,23 @@ sppp_null(struct sppp *unused)
  * hilit-auto-highlight-maxout: 120000
  * End:
  */
+
+/*
+ * Module glue
+ */
+MODULE(MODULE_CLASS_MISC, sppp_subr, NULL);
+ 
+static int
+sppp_subr_modcmd(modcmd_t cmd, void *arg)
+{
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+        case MODULE_CMD_FINI:
+                return 0;
+        case MODULE_CMD_STAT:
+        case MODULE_CMD_AUTOUNLOAD:
+        default:
+                return ENOTTY;
+        }
+}
+
