@@ -339,58 +339,37 @@ sys_check_options(void)
 
 /*
  * ppp_available - check whether the system has any ppp interfaces
- * (in fact we check whether we can do an ioctl on ppp0).
+ * (in fact we check whether we can create one)
  */
 int
 ppp_available(void)
 {
-    struct if_clonereq ifcr;
-    char *cp, *buf;
-    int idx, s;
+    int s;
     extern char *no_ppp_msg;
+    struct ifreq ifr;
 
-    (void)memset(&ifcr, 0, sizeof(ifcr));
 
     if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
 	fatal("%s: socket: %m", __func__);
 
-    if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
-	fatal("%s: ioctl(get cloners): %m", __func__);
-
-    buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
-    if (buf == NULL)
-	fatal("%s: Unable to allocate cloner name buffer: %m", __func__);
-
-    ifcr.ifcr_count = ifcr.ifcr_total;
-    ifcr.ifcr_buffer = buf;
-
-    if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
-	fatal("%s: ioctl(get cloners): %m", __func__);
-    (void)close(s);
-
-    /*
-     * In case some disappeared in the mean time, clamp it down.
-     */
-    if (ifcr.ifcr_count > ifcr.ifcr_total)
-	ifcr.ifcr_count = ifcr.ifcr_total;
-
-    for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
-	if (strcmp(cp, "ppp") == 0)
-	    break;
+    (void)memset(&ifr, 0, sizeof(ifr));
+    strlcpy(ifr.ifr_name, "ppp0", sizeof(ifr.ifr_name));
+    if (ioctl(s, SIOCIFCREATE, &ifr) == -1) {
+	int notmine = errno == EEXIST;
+	(void)close(s);
+	if (notmine)
+	    return 1;
+	goto out;
     }
-    free(buf);
+    (void)ioctl(s, SIOCIFDESTROY, &ifr);
+    (void)close(s);
+    return 1;
 
-#ifdef __NetBSD__
+out:
     no_ppp_msg = "\
 This system lacks kernel support for PPP.  To include PPP support\n\
 in the kernel, please read the ppp(4) manual page.\n";
-#else
-    no_ppp_msg = "\
-This system lacks kernel support for PPP.  To include PPP support\n\
-in the kernel, please follow the steps detailed in the README.bsd\n\
-file in the ppp-2.2 distribution.\n";
-#endif
-    return idx != ifcr.ifcr_count;
+    return 0;
 }
 
 /*
