@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.5 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.5.2.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
+
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.5.2.1 2016/08/06 00:19:06 pgoyette Exp $")
 
 #include "assym.h"
 

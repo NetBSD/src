@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.71.2.1 2016/07/26 03:24:17 pgoyette Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.71.2.2 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -706,7 +706,7 @@ MIPSX(slowfault):
 NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#if defined(PARANOIA) || 1
+#if defined(PARANOIA)
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
 	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b			# loop forever if false
@@ -2088,14 +2088,14 @@ END(MIPSX(tlb_set_asid))
  */
 LEAF(MIPSX(tlb_update_addr))
 #ifdef MIPSNNR2
-	di	ta0			# Disable interrupts
+	di	ta0				# Disable interrupts
 #else
-	mfc0	ta0, MIPS_COP_0_STATUS	# Save the status register.
-	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
+	mfc0	ta0, MIPS_COP_0_STATUS		# Save the status register.
+	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 #endif
 	COP0_SYNC
 #if (PGSHIFT & 1) == 0
-	and	t1, a0, MIPS3_PG_ODDPG	# t1 = Even/Odd flag
+	and	t1, a0, MIPS3_PG_ODDPG		# t1 = Even/Odd flag
 #endif
 	and	a1, a1, MIPS3_PG_ASID
 #ifdef MIPSNNR2
@@ -2162,9 +2162,9 @@ LEAF(MIPSX(tlb_update_addr))
 	 li	v0, 0				# assume failure
 	bnez	t1, 4f				# Decide even odd
 	 nop
-	move	t3, a2				# swap a1 & t0
+	move	t3, a2				# swap a2 and t0
 	move	a2, t0				#
-	move	t0, a3				#
+	move	t0, t3				#
 4:
 	_MTC0	t0, MIPS_COP_0_TLB_LO0		# init low reg0.
 	_MTC0	a2, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -2305,7 +2305,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 #endif
 	and	a2, t0				# a2=valid entryLo0 afterwards
 	and	a3, t1				# a3=valid entryLo1 afterwards
-	or	v0, a2, a3			# will one be value?
+	or	v0, a2, a3			# will one be valid?
 #ifdef MIPSNN
 	movz	t0, zero, a2			# zero lo0 if V would not be set
 	movz	t1, zero, a3			# zero lo1 if V would not be set
@@ -2318,7 +2318,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	_SLL	a3, a3, PG_V_LSHIFT		# move V to MSB
 	_SRA	a3, a3, PG_V_RSHIFT		# fill with MSB
 	and	t1, t1, a3			# zero lo1 if V would not be set
-	move	t2, a0				# we need entryHi to be value
+	move	t2, a0				# we need entryHi to be valid
 1:
 #endif /* MIPSNN */
 #endif /* (PGSHIFT & 1) == 0 */
@@ -2694,7 +2694,7 @@ MIPSX(user_intr_return):
 	REG_L	t9, CALLFRAME_SIZ+TF_REG_T9(k1)		# $25
 	REG_L	k0, CALLFRAME_SIZ+TF_REG_SR(k1)		# status register
 	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
-	REG_L	gp, CALLFRAME_SIZ+TF_REG_GP(k1)		# $29
+	REG_L	gp, CALLFRAME_SIZ+TF_REG_GP(k1)		# $28
 	REG_L	sp, CALLFRAME_SIZ+TF_REG_SP(k1)		# $29
 	REG_L	ra, CALLFRAME_SIZ+TF_REG_RA(k1)		# $31
 	mtc0	k0, MIPS_COP_0_STATUS

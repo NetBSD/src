@@ -1588,15 +1588,14 @@ parse_args (unsigned argc, char **argv)
   /* We may have -Bsymbolic, -Bsymbolic-functions, --dynamic-list-data,
      --dynamic-list-cpp-new, --dynamic-list-cpp-typeinfo and
      --dynamic-list FILE.  -Bsymbolic and -Bsymbolic-functions are
-     for shared libraries.  -Bsymbolic overrides all others and vice
-     versa.  */
+     for PIC outputs.  -Bsymbolic overrides all others and vice versa.  */
   switch (command_line.symbolic)
     {
     case symbolic_unset:
       break;
     case symbolic:
-      /* -Bsymbolic is for shared library only.  */
-      if (bfd_link_dll (&link_info))
+      /* -Bsymbolic is for PIC output only.  */
+      if (bfd_link_pic (&link_info))
 	{
 	  link_info.symbolic = TRUE;
 	  /* Should we free the unused memory?  */
@@ -1605,8 +1604,8 @@ parse_args (unsigned argc, char **argv)
 	}
       break;
     case symbolic_functions:
-      /* -Bsymbolic-functions is for shared library only.  */
-      if (bfd_link_dll (&link_info))
+      /* -Bsymbolic-functions is for PIC output only.  */
+      if (bfd_link_pic (&link_info))
 	command_line.dynamic_list = dynamic_list_data;
       break;
     }

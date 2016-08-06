@@ -2570,6 +2570,7 @@ ppc64_elf_branch_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
       elf_symbol_type *elfsym = (elf_symbol_type *) symbol;
 
       if (symbol->section->owner != abfd
+	  && symbol->section->owner != NULL
 	  && abiversion (symbol->section->owner) >= 2)
 	{
 	  unsigned int i;
@@ -4344,14 +4345,20 @@ create_linkage_sections (bfd *dynobj, struct bfd_link_info *info)
 
   htab = ppc_hash_table (info);
 
-  /* Create .sfpr for code to save and restore fp regs.  */
   flags = (SEC_ALLOC | SEC_LOAD | SEC_CODE | SEC_READONLY
 	   | SEC_HAS_CONTENTS | SEC_IN_MEMORY | SEC_LINKER_CREATED);
-  htab->sfpr = bfd_make_section_anyway_with_flags (dynobj, ".sfpr",
-						   flags);
-  if (htab->sfpr == NULL
-      || ! bfd_set_section_alignment (dynobj, htab->sfpr, 2))
-    return FALSE;
+  if (htab->params->save_restore_funcs)
+    {
+      /* Create .sfpr for code to save and restore fp regs.  */
+      htab->sfpr = bfd_make_section_anyway_with_flags (dynobj, ".sfpr",
+						       flags);
+      if (htab->sfpr == NULL
+	  || ! bfd_set_section_alignment (dynobj, htab->sfpr, 2))
+	return FALSE;
+    }
+
+  if (bfd_link_relocatable (info))
+    return TRUE;
 
   /* Create .glink for lazy dynamic linking support.  */
   htab->glink = bfd_make_section_anyway_with_flags (dynobj, ".glink",
@@ -4428,9 +4435,6 @@ ppc64_elf_init_stub_bfd (struct bfd_link_info *info,
     return FALSE;
   htab->elf.dynobj = params->stub_bfd;
   htab->params = params;
-
-  if (bfd_link_relocatable (info))
-    return TRUE;
 
   return create_linkage_sections (htab->elf.dynobj, info);
 }
@@ -6665,7 +6669,7 @@ sfpr_define (struct bfd_link_info *info,
       sym[len + 0] = i / 10 + '0';
       sym[len + 1] = i % 10 + '0';
       h = (struct ppc_link_hash_entry *)
-	elf_link_hash_lookup (&htab->elf, sym, FALSE, FALSE, TRUE);
+	elf_link_hash_lookup (&htab->elf, sym, writing, TRUE, TRUE);
       if (stub_sec != NULL)
 	{
 	  if (h != NULL
@@ -6706,6 +6710,7 @@ sfpr_define (struct bfd_link_info *info,
 	      h->elf.root.u.def.value = htab->sfpr->size;
 	      h->elf.type = STT_FUNC;
 	      h->elf.def_regular = 1;
+	      h->elf.non_elf = 0;
 	      _bfd_elf_link_hash_hide_symbol (info, &h->elf, TRUE);
 	      writing = TRUE;
 	      if (htab->sfpr->contents == NULL)
@@ -7050,14 +7055,28 @@ ppc64_elf_func_desc_adjust (bfd *obfd ATTRIBUTE_UNUSED,
 			    struct bfd_link_info *info)
 {
   struct ppc_link_hash_table *htab;
-  unsigned int i;
 
   htab = ppc_hash_table (info);
   if (htab == NULL)
     return FALSE;
 
-  if (!bfd_link_relocatable (info)
-      && htab->elf.hgot != NULL)
+  /* Provide any missing _save* and _rest* functions.  */
+  if (htab->sfpr != NULL)
+    {
+      unsigned int i;
+
+      htab->sfpr->size = 0;
+      for (i = 0; i < ARRAY_SIZE (save_res_funcs); i++)
+	if (!sfpr_define (info, &save_res_funcs[i], NULL))
+	  return FALSE;
+      if (htab->sfpr->size == 0)
+	htab->sfpr->flags |= SEC_EXCLUDE;
+    }
+
+  if (bfd_link_relocatable (info))
+    return TRUE;
+
+  if (htab->elf.hgot != NULL)
     {
       _bfd_elf_link_hash_hide_symbol (info, htab->elf.hgot, TRUE);
       /* Make .TOC. defined so as to prevent it being made dynamic.
@@ -7076,21 +7095,7 @@ ppc64_elf_func_desc_adjust (bfd *obfd ATTRIBUTE_UNUSED,
 			       | STV_HIDDEN);
     }
 
-  if (htab->sfpr == NULL)
-    /* We don't have any relocs.  */
-    return TRUE;
-
-  /* Provide any missing _save* and _rest* functions.  */
-  htab->sfpr->size = 0;
-  if (htab->params->save_restore_funcs)
-    for (i = 0; i < ARRAY_SIZE (save_res_funcs); i++)
-      if (!sfpr_define (info, &save_res_funcs[i], NULL))
-	return FALSE;
-
   elf_link_hash_traverse (&htab->elf, func_desc_adjust, info);
-
-  if (htab->sfpr->size == 0)
-    htab->sfpr->flags |= SEC_EXCLUDE;
 
   return TRUE;
 }
@@ -8224,6 +8229,7 @@ ppc64_elf_tls_setup (struct bfd_link_info *info)
 		  tga_fd->root.type = bfd_link_hash_indirect;
 		  tga_fd->root.u.i.link = &opt_fd->root;
 		  ppc64_elf_copy_indirect_symbol (info, opt_fd, tga_fd);
+		  opt_fd->forced_local = 0;
 		  if (opt_fd->dynindx != -1)
 		    {
 		      /* Use __tls_get_addr_opt in dynamic relocations.  */
@@ -8240,6 +8246,7 @@ ppc64_elf_tls_setup (struct bfd_link_info *info)
 		      tga->root.type = bfd_link_hash_indirect;
 		      tga->root.u.i.link = &opt->root;
 		      ppc64_elf_copy_indirect_symbol (info, opt, tga);
+		      opt->forced_local = 0;
 		      _bfd_elf_link_hash_hide_symbol (info, opt,
 						      tga->forced_local);
 		      htab->tls_get_addr = (struct ppc_link_hash_entry *) opt;
@@ -12183,6 +12190,13 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
   if (!group_sections (info, stub_group_size, stubs_always_before_branch))
     return FALSE;
 
+#define STUB_SHRINK_ITER 20
+  /* Loop until no stubs added.  After iteration 20 of this loop we may
+     exit on a stub section shrinking.  This is to break out of a
+     pathological case where adding stubs on one iteration decreases
+     section gaps (perhaps due to alignment), which then requires
+     fewer or smaller stubs on the next iteration.  */
+
   while (1)
     {
       bfd *input_bfd;
@@ -12564,11 +12578,11 @@ ppc64_elf_size_stubs (struct bfd_link_info *info)
 	   stub_sec != NULL;
 	   stub_sec = stub_sec->next)
 	if ((stub_sec->flags & SEC_LINKER_CREATED) == 0
-	    && stub_sec->rawsize != stub_sec->size)
+	    && stub_sec->rawsize != stub_sec->size
+	    && (htab->stub_iteration <= STUB_SHRINK_ITER
+		|| stub_sec->rawsize < stub_sec->size))
 	  break;
 
-      /* Exit from this loop when no stubs have been added, and no stubs
-	 have changed size.  */
       if (stub_sec == NULL
 	  && (htab->glink_eh_frame == NULL
 	      || htab->glink_eh_frame->rawsize == htab->glink_eh_frame->size))
@@ -12899,9 +12913,6 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
 	stub_sec->contents = bfd_zalloc (htab->params->stub_bfd, stub_sec->size);
 	if (stub_sec->contents == NULL)
 	  return FALSE;
-	/* We want to check that built size is the same as calculated
-	   size.  rawsize is a convenient location to use.  */
-	stub_sec->rawsize = stub_sec->size;
 	stub_sec->size = 0;
       }
 
@@ -13090,7 +13101,9 @@ ppc64_elf_build_stubs (struct bfd_link_info *info,
     if ((stub_sec->flags & SEC_LINKER_CREATED) == 0)
       {
 	stub_sec_count += 1;
-	if (stub_sec->rawsize != stub_sec->size)
+	if (stub_sec->rawsize != stub_sec->size
+	    && (htab->stub_iteration <= STUB_SHRINK_ITER
+		|| stub_sec->rawsize < stub_sec->size))
 	  break;
       }
 

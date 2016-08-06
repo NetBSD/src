@@ -50,7 +50,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.8 2016/01/23 00:03:30 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.8.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
 #define HAVE_PAM_GETENVLIST
@@ -108,6 +108,8 @@ void sshpam_password_change_required(int);
 #include "packet.h"
 #include "misc.h"
 #include "servconf.h"
+#include "channels.h"
+#include "session.h"
 #include "ssh2.h"
 #include "auth-options.h"
 #ifdef GSSAPI
@@ -640,6 +642,7 @@ sshpam_init(Authctxt *authctxt)
 {
 	const char *pam_rhost, *pam_user, *user = authctxt->user;
 	const char **ptr_pam_user = &pam_user;
+	struct ssh *ssh = active_state; /* XXX */
 
 	if (sshpam_handle != NULL) {
 		/* We already have a PAM context; check if the user matches */
@@ -660,7 +663,7 @@ sshpam_init(Authctxt *authctxt)
 		sshpam_handle = NULL;
 		return (-1);
 	}
-	pam_rhost = get_remote_name_or_ip(utmp_len, options.use_dns);
+	pam_rhost = session_get_remote_name_or_ip(ssh, utmp_len, options.use_dns);
 	debug("PAM: setting PAM_RHOST to \"%s\"", pam_rhost);
 	sshpam_err = pam_set_item(sshpam_handle, PAM_RHOST, pam_rhost);
 	if (sshpam_err != PAM_SUCCESS) {
@@ -737,6 +740,7 @@ sshpam_query(void *ctx, char **name, char **info,
 	u_char type;
 	char *msg;
 	size_t len, mlen;
+	struct ssh *ssh = active_state; /* XXX */
 
 	debug3("PAM: %s entering", __func__);
 	buffer_init(&buffer);
@@ -814,7 +818,8 @@ sshpam_query(void *ctx, char **name, char **info,
 			error("PAM: %s for %s%.100s from %.100s", msg,
 			    sshpam_authctxt->valid ? "" : "illegal user ",
 			    sshpam_authctxt->user,
-			    get_remote_name_or_ip(utmp_len, options.use_dns));
+			    session_get_remote_name_or_ip(ssh, utmp_len,
+				options.use_dns));
 			/* FALLTHROUGH */
 		default:
 			*num = 0;

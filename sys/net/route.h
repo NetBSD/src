@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.101 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.101.2.1 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -396,7 +396,10 @@ int	rt_ifa_addlocal(struct ifaddr *);
 int	rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
 struct ifaddr *
 	rt_get_ifa(struct rtentry *);
-int	rt_getifa(struct rt_addrinfo *);
+struct ifaddr *
+	rt_getifa(struct rt_addrinfo *, struct psref *);
+struct ifnet *
+	rt_getifp(struct rt_addrinfo *, struct psref *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 int	rt_setgate(struct rtentry *, const struct sockaddr *);
 

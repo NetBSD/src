@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.22.2.1 2016/08/06 00:19:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.22 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.22.2.1 2016/08/06 00:19:03 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -1133,9 +1133,9 @@ init_resizeino(const struct timeval *tv)
 		    "required to enable resize feature for this filesystem",
 		    __func__);
 	}
-	/* upper 32bit is stored into e2di_dacl on REV1 feature */
-	node.e2di_size = isize & UINT32_MAX;
-	node.e2di_dacl = isize >> 32;
+	/* upper 32bit is stored into e2di_size_high on REV1 feature */
+	node.e2di_size 	    = isize & UINT32_MAX;
+	node.e2di_size_high = isize >> 32;
 
 #define SINGLE	0	/* index of single indirect block */
 #define DOUBLE	1	/* index of double indirect block */
@@ -1367,7 +1367,7 @@ iput(struct ext2fs_dinode *ip, ino_t ino)
 
 	dp = (struct ext2fs_dinode *)(bp +
 	    inodesize * ino_to_fsbo(&sblock, ino));
-	e2fs_isave(ip, dp);
+	e2fs_isave(ip, dp, EXT2_DINODE_SIZE(&sblock));
 	/* e2fs_i_bswap() doesn't swap e2di_blocks addrs */
 	if ((ip->e2di_mode & EXT2_IFMT) != EXT2_IFLNK) {
 		for (i = 0; i < EXT2FS_NDADDR + EXT2FS_NIADDR; i++)

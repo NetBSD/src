@@ -62,6 +62,7 @@ if ![isnative] then {return}
 set tmpdir tmpdir
 set SHCFLAG ""
 set shared_needs_pic "no"
+set COMPRESS_LDFLAG "-Wl,--compress-debug-sections=zlib-gabi"
 
 if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 
@@ -228,6 +229,7 @@ proc visibility_run {visibility} {
     global support_protected
     global shared_needs_pic
     global PLT_CFLAGS
+    global COMPRESS_LDFLAG
 
     if [ string match $visibility "hidden" ] {
 	set VSBCFLAG "-DHIDDEN_TEST"
@@ -384,7 +386,7 @@ proc visibility_run {visibility} {
 	    } else { if { [istarget rs6000*-*-aix*] || [istarget powerpc*-*-aix*] } {
 		visibility_test $visibility vp "visibility ($visibility)" mainnp.o sh1p.o sh2p.o xcoff
 	    } else {
-		visibility_test $visibility vp "visibility ($visibility)" mainnp.o sh1p.o sh2p.o elfvsb
+		visibility_test $visibility vp "visibility ($visibility)" mainnp.o sh1p.o sh2p.o elfvsb $COMPRESS_LDFLAG
 	    } }
 	}
     }}

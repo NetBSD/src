@@ -1996,21 +1996,27 @@ gld_${EMULATION_NAME}_place_orphan (asection *s,
 	  orphan_init_done = 1;
 	}
 
+      flags = s->flags;
+      if (!bfd_link_relocatable (&link_info))
+	{
+	  nexts = s;
+	  while ((nexts = bfd_get_next_section_by_name (nexts->owner,
+							nexts)))
+	    if (nexts->output_section == NULL
+		&& (nexts->flags & SEC_EXCLUDE) == 0
+		&& ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
+		&& (nexts->owner->flags & DYNAMIC) == 0
+		&& nexts->owner->usrdata != NULL
+		&& !(((lang_input_statement_type *) nexts->owner->usrdata)
+		     ->flags.just_syms))
+	      flags = (((flags ^ SEC_READONLY)
+			| (nexts->flags ^ SEC_READONLY))
+		       ^ SEC_READONLY);
+	}
+
       /* Try to put the new output section in a reasonable place based
 	 on the section name and section flags.  */
 
-      flags = s->flags;
-      nexts = s;
-      while ((nexts = bfd_get_next_section_by_name (nexts->owner, nexts)))
-	if (nexts->output_section == NULL
-	    && (nexts->flags & SEC_EXCLUDE) == 0
-	    && ((nexts->flags ^ flags) & (SEC_LOAD | SEC_ALLOC)) == 0
-	    && (nexts->owner->flags & DYNAMIC) == 0
-	    && nexts->owner->usrdata != NULL
-	    && !(((lang_input_statement_type *) nexts->owner->usrdata)
-		 ->flags.just_syms))
-	  flags = (((flags ^ SEC_READONLY) | (nexts->flags ^ SEC_READONLY))
-		   ^ SEC_READONLY);
       place = NULL;
       if ((flags & SEC_ALLOC) == 0)
 	;

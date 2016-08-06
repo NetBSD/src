@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.45.2.1 2016/08/06 00:19:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.45 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.45.2.1 2016/08/06 00:19:09 pgoyette Exp $");
 
 #include <sys/param.h>
 
@@ -570,7 +570,7 @@ sys__sched_protect(struct lwp *l,
 		}
 	} else if (pri < 0) {
 		/* Just retrieve the current value, for debugging */
-		if (l->l_protectprio != -1)
+		if (l->l_protectprio == -1)
 			error = ENOENT;
 		else
 			*retval = l->l_protectprio - PRI_USER_RT;

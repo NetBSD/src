@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.4 2016/01/23 21:22:45 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.1 2016/08/06 00:18:41 pgoyette Exp $
 
-MKLINT=no
-MKLINTLIB=no
+NOLINT=
+.include "../Makefile.inc"
 CPPFLAGS+=	-D_KERNTYPES

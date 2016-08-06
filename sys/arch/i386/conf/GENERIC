@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1137 2016/06/21 11:37:25 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1137.2.1 2016/08/06 00:19:04 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1137 $"
+#ident 		"GENERIC-$Revision: 1.1137.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -719,6 +719,14 @@ nsclpcsio*	at isa?
 #spdmem* at iic? addr 0x55
 #spdmem* at iic? addr 0x56
 #spdmem* at iic? addr 0x57
+#sdtemp* at iic? addr 0x18
+#sdtemp* at iic? addr 0x19
+#sdtemp* at iic? addr 0x1a
+#sdtemp* at iic? addr 0x1b
+#sdtemp* at iic? addr 0x1c
+#sdtemp* at iic? addr 0x1d
+#sdtemp* at iic? addr 0x1e
+#sdtemp* at iic? addr 0x1f
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor

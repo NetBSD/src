@@ -1,4 +1,4 @@
-/* $OpenBSD: kexc25519.c,v 1.9 2015/03/26 07:00:04 djm Exp $ */
+/* $OpenBSD: kexc25519.c,v 1.10 2016/05/02 08:49:03 djm Exp $ */
 /*
  * Copyright (c) 2001, 2013 Markus Friedl.  All rights reserved.
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -25,7 +25,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: kexc25519.c,v 1.4 2015/07/03 01:00:00 christos Exp $");
+__RCSID("$NetBSD: kexc25519.c,v 1.4.2.1 2016/08/06 00:18:38 pgoyette Exp $");
 
 #include <sys/types.h>
 
@@ -86,8 +86,8 @@ kex_c25519_hash(
     int hash_alg,
     const char *client_version_string,
     const char *server_version_string,
-    const char *ckexinit, size_t ckexinitlen,
-    const char *skexinit, size_t skexinitlen,
+    const u_char *ckexinit, size_t ckexinitlen,
+    const u_char *skexinit, size_t skexinitlen,
     const u_char *serverhostkeyblob, size_t sbloblen,
     const u_char client_dh_pub[CURVE25519_SIZE],
     const u_char server_dh_pub[CURVE25519_SIZE],

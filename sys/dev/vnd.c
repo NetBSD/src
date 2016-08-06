@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.256.2.12 2016/07/28 01:44:55 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.256.2.13 2016/08/06 00:19:07 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.12 2016/07/28 01:44:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.256.2.13 2016/08/06 00:19:07 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -2215,7 +2215,7 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                  */
 		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
                 if (error) { 
-                        error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
                         aprint_error("%s: failed to detach %s cfattach, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);
@@ -2223,8 +2223,8 @@ vnd_modcmd(modcmd_t cmd, void *arg)
                 }
                 error = config_cfdriver_detach(&vnd_cd);
                 if (error) {
-                        config_cfattach_attach(vnd_cd.cd_name, &vnd_ca); 
-                        devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                        (void)config_cfattach_attach(vnd_cd.cd_name, &vnd_ca); 
+                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
                             &vnd_cdevsw, &vnd_cmajor);
                         aprint_error("%s: failed to detach %s cfdriver, "
                             "error %d\n", __func__, vnd_cd.cd_name, error);

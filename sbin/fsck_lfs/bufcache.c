@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.15 2015/03/29 19:35:58 chopps Exp $ */
+/* $NetBSD: bufcache.c,v 1.15.2.1 2016/08/06 00:19:03 pgoyette Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -101,17 +101,19 @@ bufinit(int max)
 /* Widen the hash table. */
 void bufrehash(int max)
 {
-	int i, newhashmax, newhashmask;
+	int i, newhashmax;
 	struct ubuf *bp, *nbp;
 	struct bufhash_struct *np;
 
-	if (max < 0 || max < hashmax)
+	if (max < 0 || max <= hashmax)
 		return;
 
 	/* Round up to a power of two */
 	for (newhashmax = 1; newhashmax < max; newhashmax <<= 1)
 		;
-	newhashmask = newhashmax - 1;
+
+	/* update the mask right away so vl_hash() uses it */
+	hashmask = newhashmax - 1;
 
 	/* Allocate new empty hash table, if we can */
 	np = emalloc(newhashmax * sizeof(*bufhash));
@@ -134,7 +136,6 @@ void bufrehash(int max)
 	free(bufhash);
 	bufhash = np;
 	hashmax = newhashmax;
-	hashmask = newhashmask;
 }
 
 /* Print statistics of buffer cache usage */

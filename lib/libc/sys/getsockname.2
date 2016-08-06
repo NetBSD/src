@@ -1,4 +1,4 @@
-.\"	$NetBSD: getsockname.2,v 1.24 2012/07/09 21:22:21 jdf Exp $
+.\"	$NetBSD: getsockname.2,v 1.24.14.1 2016/08/06 00:19:02 pgoyette Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)getsockname.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd July 9, 2012
+.Dd July 30, 2016
 .Dt GETSOCKNAME 2
 .Os
 .Sh NAME
@@ -126,20 +126,20 @@ The call succeeds unless:
 The argument
 .Fa s
 is not a valid descriptor.
-.It Bq Er ENOTSOCK
-The argument
-.Fa s
-is a file, not a socket.
+.It Bq Er EFAULT
+The
+.Fa name
+parameter points to memory not in a valid part of the process address space.
 .It Bq Er EINVAL
 The socket has been shut down.
 .It Bq Er ENOBUFS
 Insufficient resources were available in the system to perform the operation.
 .It Bq Er ENOTCONN
 The socket is not connected.
-.It Bq Er EFAULT
-The
-.Fa name
-parameter points to memory not in a valid part of the process address space.
+.It Bq Er ENOTSOCK
+The argument
+.Fa s
+is a file, not a socket.
 .El
 .Sh SEE ALSO
 .Xr bind 2 ,
@@ -149,9 +149,3 @@ The
 .Fn getsockname
 function call appeared in
 .Bx 4.2 .
-.Sh BUGS
-Names bound to sockets in the
-.Ux
-domain are inaccessible;
-.Fn getsockname
-returns a zero length name.

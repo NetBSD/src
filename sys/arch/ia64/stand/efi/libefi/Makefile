@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/03/22 08:25:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2016/08/06 00:19:05 pgoyette Exp $
 
 S?=	${.CURDIR}/../../../../../
 
@@ -8,8 +8,6 @@ LIB= efi
 NOPROFILE=# defined
 INTERNALLIB=#	defined
 
-EFI_INCLUDE_NET?= no
-
 CPPFLAGS= -I${EFICPPFLAGS} ${EFIMISCCPPFLAGS}
 CPPFLAGS+= -I${.CURDIR}/../include
 CPPFLAGS+= -I${.CURDIR}/../include/${MACHINE_ARCH}
@@ -18,14 +16,10 @@ CPPFLAGS+= -I${.CURDIR}/../include/${MACHINE_ARCH}
 CPPFLAGS+= -I${.CURDIR}/../../common
 
 SRCS=  copy.c delay.c efi.c efi_console.c devicename.c bootinfo.c
-SRCS+= time.c efifs.c efi_console.c module.c exec.c #efinet.c
+SRCS+= time.c efifs.c efi_console.c module.c exec.c efinet.c
 
 .if ${MACHINE_ARCH} == "ia64"
 SRCS+=	efifpswa.c pal.S
-.endif
-
-.if (${EFI_INCLUDE_NET} == "yes")
-SRCS+= efinet.c #etc.
 .endif
 
 .include <bsd.own.mk>

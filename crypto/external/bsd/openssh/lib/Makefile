@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2016/01/14 22:30:04 christos Exp $
+#	$NetBSD: Makefile,v 1.18.2.1 2016/08/06 00:18:39 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -75,6 +75,7 @@ ttymodes.c \
 uidswap.c \
 umac.c \
 umac128.c \
+utf8.c \
 uuencode.c \
 verify.c \
 xmalloc.c

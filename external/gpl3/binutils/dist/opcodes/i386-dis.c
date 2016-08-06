@@ -13644,7 +13644,7 @@ print_insn (bfd_vma pc, disassemble_info *info)
     if (op_index[i] != -1 && op_riprel[i])
       {
 	(*info->fprintf_func) (info->stream, "        # ");
-	(*info->print_address_func) ((bfd_vma) (start_pc + codep - start_codep
+	(*info->print_address_func) ((bfd_vma) (start_pc + (codep - start_codep)
 						+ op_address[op_index[i]]), info);
 	break;
       }
@@ -16158,7 +16158,7 @@ OP_J (int bytemode, int sizeflag)
 	     the displacement is added!  */
 	  mask = 0xffff;
 	  if ((prefixes & PREFIX_DATA) == 0)
-	    segment = ((start_pc + codep - start_codep)
+	    segment = ((start_pc + (codep - start_codep))
 		       & ~((bfd_vma) 0xffff));
 	}
       if (address_mode != mode_64bit

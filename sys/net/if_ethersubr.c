@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.225.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.225.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.225.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -218,12 +218,17 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
 		struct ifaddr *ifa;
+		int s = pserialize_read_enter();
 
 		/* loop back if this is going to the carp interface */
 		if (dst != NULL && ifp0->if_link_state == LINK_STATE_UP &&
-		    (ifa = ifa_ifwithaddr(dst)) != NULL &&
-		    ifa->ifa_ifp == ifp0)
-			return looutput(ifp0, m, dst, rt);
+		    (ifa = ifa_ifwithaddr(dst)) != NULL) {
+			if (ifa->ifa_ifp == ifp0) {
+				pserialize_read_exit(s);
+				return looutput(ifp0, m, dst, rt);
+			}
+		}
+		pserialize_read_exit(s);
 
 		ifp = ifp->if_carpdev;
 		/* ac = (struct arpcom *)ifp; */
@@ -298,7 +303,10 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		break;
 #endif
 #ifdef NETATALK
-    case AF_APPLETALK:
+    case AF_APPLETALK: {
+		struct ifaddr *ifa;
+		int s;
+
 		KERNEL_LOCK(1, NULL);
 		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
@@ -310,12 +318,14 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		/*
 		 * ifaddr is the first thing in at_ifaddr
 		 */
-		aa = (struct at_ifaddr *) at_ifawithnet(
-		    (const struct sockaddr_at *)dst, ifp);
-		if (aa == NULL) {
-		    KERNEL_UNLOCK_ONE(NULL);
-		    goto bad;
+		s = pserialize_read_enter();
+		ifa = at_ifawithnet((const struct sockaddr_at *)dst, ifp);
+		if (ifa == NULL) {
+			pserialize_read_exit(s);
+			KERNEL_UNLOCK_ONE(NULL);
+			goto bad;
 		}
+		aa = (struct at_ifaddr *)ifa;
 
 		/*
 		 * In the phase 2 case, we need to prepend an mbuf for the
@@ -336,8 +346,10 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		} else {
 			etype = htons(ETHERTYPE_ATALK);
 		}
+		pserialize_read_exit(s);
 		KERNEL_UNLOCK_ONE(NULL);
 		break;
+	    }
 #endif /* NETATALK */
 	case pseudo_AF_HDRCMPLT:
 		hdrcmplt = 1;

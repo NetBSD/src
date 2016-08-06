@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.223 2016/04/04 23:59:41 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.223.2.1 2016/08/06 00:19:12 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.223 2016/04/04 23:59:41 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.223.2.1 2016/08/06 00:19:12 pgoyette Exp $");
 #endif /* not lint */
 
 /*
@@ -1899,7 +1899,8 @@ fetch_ftp(const char *url)
 	    STRorNULL(ui.path), STRorNULL(dir), STRorNULL(file));
 
 	dirhasglob = filehasglob = 0;
-	if (doglob && ui.utype == CLASSIC_URL_T) {
+	if (doglob &&
+	    (ui.utype == CLASSIC_URL_T || ui.utype == FTP_URL_T)) {
 		if (! EMPTYSTRING(dir) && strpbrk(dir, "*?[]{}") != NULL)
 			dirhasglob = 1;
 		if (! EMPTYSTRING(file) && strpbrk(file, "*?[]{}") != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.59.2.1 2016/07/26 03:24:24 pgoyette Exp $	*/
+/*	$NetBSD: unistd.h,v 1.59.2.2 2016/08/06 00:19:11 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -318,6 +318,8 @@
 #define	_SC_CPUTIME			90
 #define	_SC_THREAD_CPUTIME		91
 #define	_SC_DELAYTIMER_MAX		92
+#define	_SC_SIGQUEUE_MAX		93
+#define	_SC_REALTIME_SIGNALS		94
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121

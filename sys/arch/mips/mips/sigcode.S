@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.4 2011/04/26 16:36:41 joerg Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.4.36.1 2016/08/06 00:19:06 pgoyette Exp $	*/
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -14,6 +14,9 @@
 #endif
 
 #include <mips/asm.h>
+
+RCSID("$NetBSD: sigcode.S,v 1.4.36.1 2016/08/06 00:19:06 pgoyette Exp $")
+
 #include "assym.h"
 
 	.set	noreorder

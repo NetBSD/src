@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86 2016/06/09 04:46:08 pgoyette Exp $
+# $NetBSD: mi,v 1.86.2.1 2016/08/06 00:18:40 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -230,6 +230,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack				base-kernel-modules	kmod
 ./@MODULEDIR@/skipjack/skipjack.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/slcompress			base-kernel-modules     kmod
+./@MODULEDIR@/slcompress/slcompress.kmod	base-kernel-modules     kmod
 ./@MODULEDIR@/smbfs				base-kernel-modules	kmod
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/solaris				base-kernel-modules     kmod,solaris

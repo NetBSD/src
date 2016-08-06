@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.63.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.63.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.63.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.63.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -192,6 +192,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	struct in6_addr *ret_ia = NULL;
 	int bound = curlwp_bind();
 #define PSREF (psref == NULL) ? &local_psref : psref
+	int s;
 
 	KASSERT((ifpp != NULL && psref != NULL) ||
 	        (ifpp == NULL && psref == NULL));
@@ -222,6 +223,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	    !IN6_IS_ADDR_UNSPECIFIED(&pi->ipi6_addr)) {
 		struct sockaddr_in6 srcsock;
 		struct in6_ifaddr *ia6;
+		int _s;
+		struct ifaddr *ifa;
 
 		/*
 		 * Determine the appropriate zone id of the source based on
@@ -240,9 +243,16 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				goto exit;
 		}
 
-		ia6 = ifatoia6(ifa_ifwithaddr(sin6tosa(&srcsock)));
-		if (ia6 == NULL ||
-		    (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY))) {
+		_s = pserialize_read_enter();
+		ifa = ifa_ifwithaddr(sin6tosa(&srcsock));
+		if (ifa == NULL) {
+			pserialize_read_exit(_s);
+			*errorp = EADDRNOTAVAIL;
+			goto exit;
+		}
+		ia6 = ifatoia6(ifa);
+		if (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
+			pserialize_read_exit(_s);
 			*errorp = EADDRNOTAVAIL;
 			goto exit;
 		}
@@ -250,6 +260,8 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if (ifpp)
 			*ifpp = ifp;
 		ret_ia = &ia6->ia_addr.sin6_addr;
+		pserialize_read_exit(_s);
+		/* XXX don't return pointer */
 		goto exit;
 	}
 
@@ -293,6 +305,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	if (*errorp != 0)
 		goto exit;
 
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		int new_scope = -1, new_matchlen = -1;
 		struct in6_addrpolicy *new_policy = NULL;
@@ -551,6 +564,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	  out:
 		break;
 	}
+	pserialize_read_exit(s);
 
 	if ((ia = ia_best) == NULL) {
 		*errorp = EADDRNOTAVAIL;
@@ -659,8 +673,12 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			goto done;
 		}
 		ifp = rt->rt_ifp;
-		if (ifp != NULL)
-			if_acquire_NOMPSAFE(ifp, PSREF);
+		if (ifp != NULL) {
+			if (!if_is_deactivated(ifp))
+				if_acquire_NOMPSAFE(ifp, PSREF);
+			else
+				ifp = NULL;
+		}
 
 		/*
 		 * When cloning is required, try to allocate a route to the
@@ -699,8 +717,12 @@ selectroute(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		else {
 			if_put(ifp, PSREF);
 			ifp = rt->rt_ifp;
-			if (ifp != NULL)
-				if_acquire_NOMPSAFE(ifp, PSREF);
+			if (ifp != NULL) {
+				if (!if_is_deactivated(ifp))
+					if_acquire_NOMPSAFE(ifp, PSREF);
+				else
+					ifp = NULL;
+			}
 		}
 
 		/*
@@ -788,7 +810,8 @@ in6_selectif(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * addresses.)
 	 */
 	if (rt && rt->rt_ifa && rt->rt_ifa->ifa_ifp &&
-	    rt->rt_ifa->ifa_ifp != *retifp) {
+	    rt->rt_ifa->ifa_ifp != *retifp &&
+	    !if_is_deactivated(rt->rt_ifa->ifa_ifp)) {
 		if_put(*retifp, psref);
 		*retifp = rt->rt_ifa->ifa_ifp;
 		if_acquire_NOMPSAFE(*retifp, psref);

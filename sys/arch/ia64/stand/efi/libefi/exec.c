@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.6 2012/12/27 20:21:51 martin Exp $ */
+/* $NetBSD: exec.c,v 1.6.18.1 2016/08/06 00:19:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@
 #include <efi.h>
 #include <efilib.h>
 #include <efiboot.h>
+
+#include <machine/efilib.h>
 
 #include "bootstrap.h"
 

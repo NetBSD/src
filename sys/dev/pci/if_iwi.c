@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.99 2016/06/10 13:27:14 ozaki-r Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.99.2.1 2016/08/06 00:19:07 pgoyette Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.99 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.99.2.1 2016/08/06 00:19:07 pgoyette Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1282,6 +1282,14 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 			break;
 
 		case IWI_AUTH_FAIL:
+			break;
+
+		case IWI_AUTH_SENT_1:
+		case IWI_AUTH_RECV_2:
+		case IWI_AUTH_SEQ1_PASS:
+			break;
+
+		case IWI_AUTH_SEQ1_FAIL:
 			break;
 
 		default:

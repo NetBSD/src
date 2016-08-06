@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2016/04/06 00:45:53 christos Exp $
+# $NetBSD: Makefile,v 1.42.2.1 2016/08/06 00:19:12 pgoyette Exp $
 
 MKMAN=	no
 
@@ -23,6 +23,7 @@ TESTS_C+=		t_getlogin
 TESTS_C+=		t_getpid
 TESTS_C+=		t_getrusage
 TESTS_C+=		t_getsid
+TESTS_C+=		t_getsockname
 TESTS_C+=		t_gettimeofday
 TESTS_C+=		t_issetugid
 TESTS_C+=		t_kevent

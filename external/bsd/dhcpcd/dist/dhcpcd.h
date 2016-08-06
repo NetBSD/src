@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.18 2016/06/17 19:42:31 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.18.2.1 2016/08/06 00:18:41 pgoyette Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -77,11 +77,8 @@ struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
 	char name[IF_NAMESIZE];
-#ifdef __linux__
-	char alias[IF_NAMESIZE];
-#endif
 	unsigned int index;
-	int active;
+	unsigned int active;
 	unsigned int flags;
 	sa_family_t family;
 	unsigned char hwaddr[HWADDR_LEN];

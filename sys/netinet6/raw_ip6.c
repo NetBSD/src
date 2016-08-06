@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.146.2.1 2016/07/26 03:24:23 pgoyette Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.146.2.2 2016/08/06 00:19:10 pgoyette Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.1 2016/07/26 03:24:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.146.2.2 2016/08/06 00:19:10 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -671,8 +671,9 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
 	struct sockaddr_in6 *addr = (struct sockaddr_in6 *)nam;
-	struct ifaddr *ia = NULL;
+	struct ifaddr *ifa = NULL;
 	int error = 0;
+	int s;
 
 	KASSERT(solocked(so));
 	KASSERT(in6p != NULL);
@@ -692,15 +693,24 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&addr->sin6_addr))
 		return EADDRNOTAVAIL;
+	s = pserialize_read_enter();
 	if (!IN6_IS_ADDR_UNSPECIFIED(&addr->sin6_addr) &&
-	    (ia = ifa_ifwithaddr(sin6tosa(addr))) == 0)
-		return EADDRNOTAVAIL;
-	if (ia && ifatoia6(ia)->ia6_flags &
+	    (ifa = ifa_ifwithaddr(sin6tosa(addr))) == NULL) {
+		error = EADDRNOTAVAIL;
+		goto out;
+	}
+	if (ifa && (ifatoia6(ifa))->ia6_flags &
 	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED))
-		return EADDRNOTAVAIL;
+	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
+		error = EADDRNOTAVAIL;
+		goto out;
+	}
+
 	in6p->in6p_laddr = addr->sin6_addr;
-	return 0;
+	error = 0;
+out:
+	pserialize_read_exit(s);
+	return error;
 }
 
 static int
