@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.3 2016/08/07 11:33:38 christos Exp $
+# $NetBSD: MODULAR,v 1.4 2016/08/07 14:28:55 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -74,11 +74,15 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options	NFSSERVER
 
 -no axe*	at uhub?
+-no axen*	at uhub?
 -no rum*	at uhub?
 -no urtwn*	at uhub?
 -no urtw*	at uhub?
 -no run*	at uhub?
 -no athn*	at uhub?
+
+-no alc*	at pci?
+-no ath*	at pci?
 
 -no pseudo-device 	crypto			# /dev/crypto device
 -no pseudo-device	swcrypto		# software crypto implementation
