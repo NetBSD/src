@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.95 2016/03/18 15:05:49 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.96 2016/08/07 10:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -569,9 +569,9 @@ void	deffilesystem(struct nvlist *, struct nvlist *);
 void	defoption(const char *, struct defoptlist *, struct nvlist *);
 void	defflag(const char *, struct defoptlist *, struct nvlist *, int);
 void	defparam(const char *, struct defoptlist *, struct nvlist *, int);
-void	deloption(const char *);
-void	delfsoption(const char *);
-void	delmkoption(const char *);
+void	deloption(const char *, int);
+void	delfsoption(const char *, int);
+void	delmkoption(const char *, int);
 int	devbase_has_instances(struct devbase *, int);
 int	is_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);

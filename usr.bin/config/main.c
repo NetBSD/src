@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.89 2015/09/04 06:01:40 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.90 2016/08/07 10:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.89 2015/09/04 06:01:40 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.90 2016/08/07 10:37:24 christos Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -119,7 +119,7 @@ static	int	do_option(struct hashtab *, struct nvlist **,
 		    struct nvlist ***, const char *, const char *,
 		    const char *, struct hashtab *);
 static	int	undo_option(struct hashtab *, struct nvlist **,
-		    struct nvlist ***, const char *, const char *);
+		    struct nvlist ***, const char *, const char *, int);
 static	int	crosscheck(void);
 static	int	badstar(void);
 	int	main(int, char **);
@@ -1082,13 +1082,13 @@ addoption(const char *name, const char *value)
 }
 
 void
-deloption(const char *name)
+deloption(const char *name, int nowarn)
 {
 
 	CFGDBG(4, "deselecting opt `%s'", name);
-	if (undo_option(opttab, &options, &nextopt, name, "options"))
+	if (undo_option(opttab, &options, &nextopt, name, "options", nowarn))
 		return;
-	if (undo_option(selecttab, NULL, NULL, strtolower(name), "options"))
+	if (undo_option(selecttab, NULL, NULL, strtolower(name), "options", nowarn))
 		return;
 }
 
@@ -1131,15 +1131,15 @@ addfsoption(const char *name)
 }
 
 void
-delfsoption(const char *name)
+delfsoption(const char *name, int nowarn)
 {
 	const char *n;
 
 	CFGDBG(4, "deselecting fs `%s'", name);
 	n = strtolower(name);
-	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system"))
+	if (undo_option(fsopttab, &fsoptions, &nextfsopt, name, "file-system", nowarn))
 		return;
-	if (undo_option(selecttab, NULL, NULL, n, "file-system"))
+	if (undo_option(selecttab, NULL, NULL, n, "file-system", nowarn))
 		return;
 }
 
@@ -1155,12 +1155,12 @@ addmkoption(const char *name, const char *value)
 }
 
 void
-delmkoption(const char *name)
+delmkoption(const char *name, int nowarn)
 {
 
 	CFGDBG(4, "deselecting mkopt `%s'", name);
 	(void)undo_option(mkopttab, &mkoptions, &nextmkopt, name,
-	    "makeoptions");
+	    "makeoptions", nowarn);
 }
 
 /*
@@ -1243,10 +1243,10 @@ do_option(struct hashtab *ht, struct nvlist **npp, struct nvlist ***next,
 		else
 			cfgwarn("already have %s `%s'", type, name);
 
-		if (undo_option(ht, npp, next, name, type))
+		if (undo_option(ht, npp, next, name, type, 0))
 			panic("do_option 2");
 		if (stab != NULL &&
-		    undo_option(stab, NULL, NULL, strtolower(name), type))
+		    undo_option(stab, NULL, NULL, strtolower(name), type, 0))
 			panic("do_option 3");
 
 		/* now try adding it again */
@@ -1267,7 +1267,7 @@ do_option(struct hashtab *ht, struct nvlist **npp, struct nvlist ***next,
  */
 static int
 undo_option(struct hashtab *ht, struct nvlist **npp,
-    struct nvlist ***next, const char *name, const char *type)
+    struct nvlist ***next, const char *name, const char *type, int nowarn)
 {
 	struct nvlist *nv;
 	
@@ -1275,7 +1275,7 @@ undo_option(struct hashtab *ht, struct nvlist **npp,
 		/*
 		 * -U command line option removals are always silent
 		 */
-		if (!handling_cmdlineopts)
+		if (!handling_cmdlineopts && !nowarn)
 			cfgwarn("%s `%s' is not defined", type, name);
 		return (1);
 	}
@@ -2018,7 +2018,7 @@ handle_cmdline_makeoptions(void)
 	handling_cmdlineopts = 1;
 	for (p = cmdlineundefs; p; p = n) {
 		n = p->nv_next;
-		delmkoption(intern(p->nv_name));
+		delmkoption(intern(p->nv_name), 0);
 		free(__UNCONST(p->nv_name));
 		nvfree(p);
 	}
@@ -2026,7 +2026,7 @@ handle_cmdline_makeoptions(void)
 		const char *name = intern(p->nv_name);
 
 		n = p->nv_next;
-		delmkoption(name);
+		delmkoption(name, 0);
 		addmkoption(name, intern(p->nv_str));
 		free(__UNCONST(p->nv_name));
 		free(__UNCONST(p->nv_str));
