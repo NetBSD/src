@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.25 2015/09/04 10:16:35 uebayasi Exp $	*/
+/*	$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.25 2015/09/04 10:16:35 uebayasi Exp $");
+__RCSID("$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -159,6 +159,7 @@ minor		return MINOR;
 needs-count	return NEEDS_COUNT;
 needs-flag	return NEEDS_FLAG;
 no		return NO;
+-no		return CNO;
 object		return XOBJECT;
 obsolete	return OBSOLETE;
 on		return ON;
