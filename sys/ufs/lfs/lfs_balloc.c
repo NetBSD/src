@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.88 2015/10/10 22:33:31 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.89 2016/08/07 00:25:22 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.88 2015/10/10 22:33:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.89 2016/08/07 00:25:22 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -91,7 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.88 2015/10/10 22:33:31 dholland Exp
 
 #include <uvm/uvm.h>
 
-int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **, kauth_cred_t);
+static int lfs_fragextend(struct vnode *, int, int, daddr_t, struct buf **,
+			  kauth_cred_t);
 
 u_int64_t locked_fakequeue_count;
 
@@ -365,9 +366,9 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 }
 
 /* VOP_BWRITE 1 time */
-int
-lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn, struct buf **bpp,
-    kauth_cred_t cred)
+static int
+lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
+    struct buf **bpp, kauth_cred_t cred)
 {
 	struct inode *ip;
 	struct lfs *fs;
