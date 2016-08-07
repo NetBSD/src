@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.38 2016/07/20 07:37:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.39 2016/08/07 17:38:34 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.38 2016/07/20 07:37:51 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.39 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.38 2016/07/20 07:37:51 ozaki-r Exp $");
 #include <sys/proc.h>	/* XXX for curproc */
 #include <sys/kauth.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -96,6 +99,8 @@ static void agr_ports_exit(struct agr_softc *);
 static struct if_clone agr_cloner =
     IF_CLONE_INITIALIZER("agr", agr_clone_create, agr_clone_destroy);
 
+static u_int agr_count;
+
 /*
  * EXPORTED FUNCTIONS
  */
@@ -108,7 +113,30 @@ void
 agrattach(int count)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in agrinit() below).
+	 */
+}
+
+static void
+agrinit(void)
+{
 	if_clone_attach(&agr_cloner);
+}
+
+static int
+agrdetach(void)
+{
+	int error = 0;
+
+	if (agr_count != 0)
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&agr_cloner);
+
+	return error;
 }
 
 /*
@@ -338,7 +366,7 @@ agr_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 
 	agr_reset_iftype(ifp);
-
+	atomic_inc_uint(&agr_count);
 	return 0;
 }
 
@@ -375,6 +403,7 @@ agr_clone_destroy(struct ifnet *ifp)
 	cv_destroy(&sc->sc_ports_cv);
 	agr_free_softc(sc);
 
+	atomic_dec_uint(&agr_count);
 	return 0;
 }
 
@@ -1191,3 +1220,10 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include <net/if_module.h>
+
+IF_MODULE(MODULE_CLASS_DRIVER, agr, "")

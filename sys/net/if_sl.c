@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.125 2016/08/06 12:48:23 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.126 2016/08/07 17:38:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.125 2016/08/06 12:48:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.126 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -247,6 +247,9 @@ sldetach(void)
 
 	if (error == 0)
 		error = ttyldisc_detach(&slip_disc);
+
+	if (error == 0)
+		if_clone_detach(&sl_cloner);
 
 	return error;
 }
@@ -1068,58 +1071,6 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
  * Module infrastructure
  */
 
-MODULE(MODULE_CLASS_DRIVER, if_sl, "slcompress");
+#include "if_module.h"
 
-#ifdef _MODULE
-CFDRIVER_DECL(sl, DV_IFNET, NULL);
-#endif
-
-static int
-if_sl_modcmd(modcmd_t cmd, void *arg)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_cfdriver_attach(&sl_cd);
-		if (error) {
-			aprint_error("%s: unable to register cfdriver for"
-			    "%s, error %d\n", __func__, sl_cd.cd_name, error);
-			break;
-		}
-
-#endif
-		/* Init the unit list and line discipline stuff */
-		slinit();
-		break;
-
-	case MODULE_CMD_FINI:
-		/*
-		 * Make sure it's ok to detach - no units left, and
-		 * line discipline is removed
-		 */
-		error = sldetach();
-		if (error != 0)
-			break;
-#ifdef _MODULE
-		/* Remove device from autoconf database */
-		error = config_cfdriver_detach(&sl_cd);
-		if (error) {
-			aprint_error("%s: failed to detach %s cfdriver, "
-			    "error %d\n", __func__, sl_cd.cd_name, error);
-			break;
-		}
-#endif
-		break;
-
-	case MODULE_CMD_STAT:
-		error = ENOTTY;
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-
-	return error;
-}
+IF_MODULE(MODULE_CLASS_DRIVER, sl, "slcompress");

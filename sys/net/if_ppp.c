@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.156 2016/08/06 22:54:34 pgoyette Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.157 2016/08/07 17:38:34 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.156 2016/08/06 22:54:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.157 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -243,6 +243,8 @@ pppattach(int n __unused)
 static void
 pppinit(void)
 {
+	/* Init the compressor sub-sub-system */
+	ppp_compressor_init();
 
 	if (ttyldisc_attach(&ppp_disc) != 0)
 		panic("%s", __func__);
@@ -263,7 +265,11 @@ pppdetach(void)
 	if (error == 0)
 		error = ttyldisc_detach(&ppp_disc);
 
-	mutex_destroy(&ppp_list_lock);
+	if (error == 0) {
+		mutex_destroy(&ppp_list_lock);
+		if_clone_detach(&ppp_cloner);
+		ppp_compressor_destroy();
+	}
 
 	return error;
 }
@@ -1944,6 +1950,7 @@ ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 /*
  * Module infrastructure
  */
+#include "if_module.h"
 
 #ifdef PPP_FILTER
 #define PPP_DEP "bpf_filter,"
@@ -1951,63 +1958,4 @@ ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 #define PPP_DEP
 #endif
 
-MODULE(MODULE_CLASS_DRIVER, if_ppp, PPP_DEP "slcompress");
-
-#ifdef _MODULE
-CFDRIVER_DECL(ppp, DV_IFNET, NULL);
-#endif
-
-static int
-if_ppp_modcmd(modcmd_t cmd, void *arg)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		/* Init the compressor sub-sub-system */
-		ppp_compressor_init();
-
-#ifdef _MODULE
-		error = config_cfdriver_attach(&ppp_cd);
-		if (error) {
-			aprint_error("%s: unable to register cfdriver for"
-			    "%s, error %d\n", __func__, ppp_cd.cd_name, error);
-			ppp_compressor_destroy();
-			break;
-		}
-
-#endif
-		/* Init the unit list and line discipline stuff */
-		pppinit();
-		break;
-
-	case MODULE_CMD_FINI:
-		/*
-		 * Make sure it's ok to detach - no units left, and
-		 * line discipline is removed
-		 */
-		error = pppdetach();
-		if (error != 0)
-			break;
-#ifdef _MODULE
-		/* Remove device from autoconf database */
-		error = config_cfdriver_detach(&ppp_cd);
-		if (error) {
-			aprint_error("%s: failed to detach %s cfdriver, "
-			    "error %d\n", __func__, ppp_cd.cd_name, error);
-			break;
-		}
-#endif
-		ppp_compressor_destroy();
-		break;
-
-	case MODULE_CMD_STAT:
-		error = ENOTTY;
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-
-	return error;
-}
+IF_MODULE(MODULE_CLASS_DRIVER, ppp, PPP_DEP "slcompress")

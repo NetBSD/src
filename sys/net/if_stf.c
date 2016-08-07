@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.97 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,10 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.97 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "stf.h"
+#include "gif.h"	/*XXX*/
 #endif
 
 #ifndef INET6
@@ -95,6 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.97 2016/08/01 03:15:30 ozaki-r Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <sys/cpu.h>
 
@@ -119,9 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.97 2016/08/01 03:15:30 ozaki-r Exp $");
 #include <netinet/ip_encap.h>
 
 #include <net/net_osdep.h>
-
-#include "stf.h"
-#include "gif.h"	/*XXX*/
 
 #include <net/bpf.h>
 
@@ -182,8 +183,32 @@ void
 stfattach(int count)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in stfinit() below).
+	 */
+}
+
+static void
+stfinit(void)
+{
+
 	LIST_INIT(&stf_softc_list);
 	if_clone_attach(&stf_cloner);
+}
+
+static int
+stfdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&stf_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&stf_cloner);
+
+	return error;
 }
 
 static int
@@ -714,3 +739,10 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, stf, "")

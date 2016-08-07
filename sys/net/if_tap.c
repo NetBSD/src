@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.84 2016/06/10 13:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.85 2016/08/07 17:38:34 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.85 2016/08/07 17:38:34 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -61,6 +61,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.84 2016/06/10 13:27:16 ozaki-r Exp $");
 #include <sys/mutex.h>
 #include <sys/intr.h>
 #include <sys/stat.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -234,20 +237,36 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
+static u_int tap_count;
+
 void
 tapattach(int n)
 {
-	int error;
 
-	error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
-	if (error) {
-		aprint_error("%s: unable to register cfattach\n",
-		    tap_cd.cd_name);
-		(void)config_cfdriver_detach(&tap_cd);
-		return;
-	}
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in tapinit() below).
+	 */
+}
 
+static void
+tapinit(void)
+{
 	if_clone_attach(&tap_cloners);
+}
+
+static int
+tapdetach(void)
+{
+	int error = 0;
+
+	if (tap_count != 0)
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&tap_cloners);
+
+	return error;
 }
 
 /* Pretty much useless for a pseudo-device */
@@ -629,7 +648,7 @@ tap_clone_create(struct if_clone *ifc, int unit)
                     tap_cd.cd_name, unit);
 		return (ENXIO);
 	}
-
+	atomic_inc_uint(&tap_count);
 	return (0);
 }
 
@@ -669,8 +688,11 @@ static int
 tap_clone_destroy(struct ifnet *ifp)
 {
 	struct tap_softc *sc = ifp->if_softc;
+	int error = tap_clone_destroyer(sc->sc_dev);
 
-	return tap_clone_destroyer(sc->sc_dev);
+	if (error == 0)
+		atomic_inc_uint(&tap_count);
+	return error;
 }
 
 int
@@ -1400,3 +1422,10 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	return (error);
 }
 #endif
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, tap, "")

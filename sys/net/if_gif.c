@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.119 2016/07/04 04:43:46 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.120 2016/08/07 17:38:33 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.119 2016/07/04 04:43:46 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.120 2016/08/07 17:38:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.119 2016/07/04 04:43:46 knakahara Exp $
 #include <sys/kmem.h>
 #include <sys/sysctl.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -106,8 +108,6 @@ static int	gif_set_tunnel(struct ifnet *, struct sockaddr *,
 			       struct sockaddr *);
 static void	gif_delete_tunnel(struct ifnet *);
 
-static void	gif_sysctl_setup(struct sysctllog **);
-
 static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
 static int	gif_check_nesting(struct ifnet *, struct mbuf *);
@@ -132,12 +132,15 @@ static struct if_clone gif_cloner =
 #endif
 static int max_gif_nesting = MAX_GIF_NEST;
 
+static struct sysctllog *gif_sysctl;
+
 static void
-gif_sysctl_setup(struct sysctllog **clog)
+gif_sysctl_setup(void)
 {
+	gif_sysctl = NULL;
 
 #ifdef INET
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifttl",
 		       SYSCTL_DESCR("Default TTL for a gif tunnel datagram"),
@@ -146,7 +149,7 @@ gif_sysctl_setup(struct sysctllog **clog)
 		       IPCTL_GIF_TTL, CTL_EOL);
 #endif
 #ifdef INET6
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifhlim",
 		       SYSCTL_DESCR("Default hop limit for a gif tunnel datagram"),
@@ -160,11 +163,36 @@ gif_sysctl_setup(struct sysctllog **clog)
 void
 gifattach(int count)
 {
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in gifinit() below).
+	 */
+}
+
+static void
+gifinit(void)
+{
 
 	LIST_INIT(&gif_softc_list);
 	if_clone_attach(&gif_cloner);
 
-	gif_sysctl_setup(NULL);
+	gif_sysctl_setup();
+}
+
+static int
+gifdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&gif_softc_list))
+		error = EBUSY;
+
+	if (error == 0) {
+		if_clone_detach(&gif_cloner);
+		sysctl_teardown(&gif_sysctl);
+	}
+
+	return error;
 }
 
 static int
@@ -1037,3 +1065,10 @@ gif_delete_tunnel(struct ifnet *ifp)
 	splx(s);
 #endif
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, gif, "")

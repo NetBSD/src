@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.113 2016/08/07 01:59:43 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.114 2016/08/07 17:38:34 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.113 2016/08/07 01:59:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.114 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -224,8 +224,8 @@ pppoeattach(int count)
 {
 
 	/*
-	 * Nothing to do here - all initialization happens as part
-	 * of module init.
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in pppoeinit() below).
 	 */
 }
 
@@ -238,16 +238,25 @@ pppoeinit(void)
 
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
+	sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
 }
 
 static int
 pppoedetach(void)
 {
+	int error = 0;
 
-	softint_disestablish(pppoe_softintr);
-	if_clone_detach(&pppoe_cloner);
+	if (!LIST_EMPTY(&pppoe_softc_list))
+		error = EBUSY;
 
-	return 0;
+	if (error == 0) {
+		if_clone_detach(&pppoe_cloner);
+		softint_disestablish(pppoe_softintr);
+		/* Remove our sysctl sub-tree */
+		sysctl_teardown(&pppoe_sysctl_clog);
+	}
+
+	return error;
 }
 
 static int
@@ -1658,71 +1667,6 @@ pppoedisc_input(struct ifnet *ifp, struct mbuf *m)
 	return;
 }
 
-/*
- * Module glue
- */
-MODULE(MODULE_CLASS_DRIVER, if_pppoe, "sppp_subr");
-
-#ifdef _MODULE  
-CFDRIVER_DECL(pppoe, DV_IFNET, NULL);
-#endif
- 
-static int
-if_pppoe_modcmd(modcmd_t cmd, void *arg)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_cfdriver_attach(&pppoe_cd);
-		if (error) {
-			aprint_error("%s: unable to register cfdriver for"
-			    "%s, error %d\n", __func__, pppoe_cd.cd_name,
-			    error);
-			break;
-		}
-#endif  
-		/* Init the cloner etc. */
-		pppoeinit();
-
-#ifdef _MODULE
-		/* Create our sysctl subtree */
-		sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
-#endif
-		break;
-
-        case MODULE_CMD_FINI:
-		/*
-		 * Make sure it's ok to detach - no units left, and
-		 * line discipline is removed
-		 */
-		if (!LIST_EMPTY(&pppoe_softc_list)) {
-			error = EBUSY;
-			break;
-		}
-		if ((error = pppoedetach()) != 0)
-			break;
-#ifdef _MODULE
-		/* Remove device from autoconf database */
-		if ((error = config_cfdriver_detach(&pppoe_cd)) != 0) {
-			aprint_error("%s: failed to detach %s cfdriver, error "
-			    "%d\n", __func__, pppoe_cd.cd_name, error);
-			break;
-		}
-		/* Remove our sysctl sub-tree */
-		sysctl_teardown(&pppoe_sysctl_clog);
-#endif
-
-		break;
-	case MODULE_CMD_STAT:
-	case MODULE_CMD_AUTOUNLOAD:
-	default:
-		error = ENOTTY;
-	}
-	return error;
-}
-
 SYSCTL_SETUP(sysctl_net_pppoe_setup, "sysctl net.pppoe subtree setup")
 {
 	const struct sysctlnode *node = NULL;
@@ -1746,3 +1690,10 @@ SYSCTL_SETUP(sysctl_net_pppoe_setup, "sysctl net.pppoe subtree setup")
 	    CTL_CREATE, CTL_EOL);
 #endif
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, pppoe, "sppp_subr")

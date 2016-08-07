@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.105 2016/08/06 12:48:23 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.106 2016/08/07 17:38:34 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.105 2016/08/06 12:48:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.106 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,6 +381,9 @@ stripdetach(void)
 
 	if (error == 0)
 		error = ttyldisc_detach(&strip_disc);
+
+	if (error == 0)
+		if_clone_detach(&strip_cloner);
 
 	return error;
 }
@@ -2003,60 +2006,6 @@ RecvErr_Message(struct strip_softc *strip_info, u_char *sendername,
 /*
  * Module infrastructure
  */
+#include "if_module.h"
 
-MODULE(MODULE_CLASS_DRIVER, if_strip, "slcompress");
-
-#ifdef _MODULE
-CFDRIVER_DECL(strip, DV_IFNET, NULL);
-#endif
-
-static int
-if_strip_modcmd(modcmd_t cmd, void *arg)
-{
-	int error = 0;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		error = config_cfdriver_attach(&strip_cd);
-		if (error) {
-			aprint_error("%s: unable to register cfdriver for"
-			    "%s, error %d\n", __func__, strip_cd.cd_name,
-			    error);
-			break;
-		}
-
-#endif
-		/* Init the unit list and line discipline stuff */
-		stripinit();
-		break;
-
-	case MODULE_CMD_FINI:
-		/*
-		 * Make sure it's ok to detach - no units left, and
-		 * line discipline is removed
-		 */
-		error = stripdetach();
-		if (error != 0)
-			break;
-#ifdef _MODULE
-		/* Remove device from autoconf database */
-		error = config_cfdriver_detach(&strip_cd);
-		if (error) {
-			aprint_error("%s: failed to detach %s cfdriver, "
-			    "error %d\n", __func__, strip_cd.cd_name, error);
-			break;
-		}
-#endif
-		break;
-
-	case MODULE_CMD_STAT:
-		error = ENOTTY;
-		break;
-	default:
-		error = ENOTTY;
-		break;
-	}
-
-	return error;
-}
+IF_MODULE(MODULE_CLASS_DRIVER, strip, "slcompress");

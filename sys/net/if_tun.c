@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.127 2016/07/07 09:32:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.128 2016/08/07 17:38:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.127 2016/07/07 09:32:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.128 2016/08/07 17:38:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.127 2016/07/07 09:32:02 ozaki-r Exp $")
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -81,7 +83,7 @@ static struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
 static void tunattach0(struct tun_softc *);
-static void tuninit(struct tun_softc *);
+static void tuncreate(struct tun_softc *);
 static void tun_i_softintr(void *);
 static void tun_o_softintr(void *);
 #ifdef ALTQ
@@ -117,10 +119,36 @@ void
 tunattach(int unused)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in pppinit() below).
+	 */
+}
+
+static void
+tuninit(void)
+{
+
 	mutex_init(&tun_softc_lock, MUTEX_DEFAULT, IPL_NET);
 	LIST_INIT(&tun_softc_list);
 	LIST_INIT(&tunz_softc_list);
 	if_clone_attach(&tun_cloner);
+}
+
+static int
+tundetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&tun_softc_list) || !LIST_EMPTY(&tunz_softc_list))
+		error = EBUSY;
+
+	if (error == 0) {
+		if_clone_detach(&tun_cloner);
+		mutex_destroy(&tun_softc_lock);
+	}
+
+	return error;
 }
 
 /*
@@ -382,12 +410,12 @@ out_nolock:
  * Call at splnet().
  */
 static void
-tuninit(struct tun_softc *tp)
+tuncreate(struct tun_softc *tp)
 {
 	struct ifnet	*ifp = &tp->tun_if;
 	struct ifaddr	*ifa;
 
-	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
+	TUNDEBUG("%s: %s\n", __func__, ifp->if_xname);
 
 	mutex_enter(&tp->tun_lock);
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
@@ -445,7 +473,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		tuninit(tp);
+		tuncreate(tp);
 		ifa->ifa_rtrequest = p2p_rtrequest;
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
 		break;
@@ -1113,3 +1141,10 @@ out_nolock:
 	splx(s);
 	return (rv);
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, tun, "")
