@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.2 2016/08/07 10:39:59 christos Exp $
+# $NetBSD: MODULAR,v 1.3 2016/08/07 11:33:38 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -95,7 +95,8 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 # network pseudo-devices
 -no pseudo-device	bpfilter		# Berkeley packet filter
 -no pseudo-device	ipfilter		# IP filter (firewall) and NAT
--no pseudo-device	loop			# network loopback
+# Loopback is hardcoded (looutput) everywhere!
+#no pseudo-device	loop			# network loopback
 -no pseudo-device	mpls			# MPLS pseudo-interface
 -no pseudo-device	ppp			# Point-to-Point Protocol
 -no pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
