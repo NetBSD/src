@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.90 2016/08/07 02:31:03 dholland Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.91 2016/08/07 02:42:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.90 2016/08/07 02:31:03 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.91 2016/08/07 02:42:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -502,14 +502,14 @@ lfs_fragextend(struct vnode *vp, int osize, int nsize, daddr_t lbn,
 	/* (XXX: except it's not clear what purpose it serves) */
 	extern long locked_queue_bytes;
 
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+
 	/*
 	 * XXX: is there some reason we know more about the seglock
 	 * state here than at the top of lfs_balloc?
 	 */
 	ASSERT_NO_SEGLOCK(fs);
-
-	ip = VTOI(vp);
-	fs = ip->i_lfs;
 
 	/* number of frags we're adding */
 	frags = (long)lfs_numfrags(fs, nsize - osize);
