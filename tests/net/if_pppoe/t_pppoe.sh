@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.1 2016/04/15 01:38:17 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.2 2016/08/07 23:34:31 pgoyette Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,8 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet \
-		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpnet_pppoe"
+server="rump_server -lrump -lrumpnet -lrumpnet_net -lrumpnet_netinet	\
+		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev	\
+		    -lrumpnet_pppoe"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so"
 
 SERVER=unix://commsock1
