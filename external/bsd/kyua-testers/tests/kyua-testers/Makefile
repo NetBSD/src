@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2013/02/19 06:04:44 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2016/08/07 20:23:09 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -12,11 +12,12 @@ CPPFLAGS+=	-DTESTERSDIR=\"/usr/libexec\"
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libtester
 CPPFLAGS+=	-I${SRCDIR}
 
-PRIVATELIBDIR!=	cd ${.CURDIR}/../../lib; ${PRINTOBJDIR}
-.for lib in atf_tester tester
-LDADD+=		${PRIVATELIBDIR}/lib${lib}/lib${lib}.a
-DPADD+=		${PRIVATELIBDIR}/lib${lib}/lib${lib}.a
-.endfor
+ATFTESTER_LIBDIR!=	cd ${.CURDIR}/../../lib/libatf_tester; ${PRINTOBJDIR}
+TESTER_LIBDIR!=		cd ${.CURDIR}/../../lib/libtester; ${PRINTOBJDIR}
+LDADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
+DPADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
+LDADD+=		${TESTER_LIBDIR}/libtester/libtester.a
+DPADD+=		${TESTER_LIBDIR}/libtester/libtester.a
 
 TESTS_C=	atf_list_test
 TESTS_C+=	atf_result_test
