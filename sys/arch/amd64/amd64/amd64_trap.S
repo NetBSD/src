@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.3 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.4 2016/08/07 09:04:55 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.3 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_trap.S,v 1.4 2016/08/07 09:04:55 maxv Exp $");
 #endif
 
 /*
@@ -229,28 +229,36 @@ IDTVEC_END(trap0a)
 IDTVEC(trap0b)		/* #NP() Segment not present */
 	TRAP_NJ(T_SEGNPFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0b)		/* #NP() Segment not present */
+IDTVEC_END(trap0b)
 
 IDTVEC(trap0c)		/* #SS() Stack exception */
 	TRAP_NJ(T_STKFLT)
 	jmp	check_swapgs
-IDTVEC_END(trap0c)		/* #SS() Stack exception */
+IDTVEC_END(trap0c)
 
 IDTVEC(trap0d)		/* #GP() General protection */
 	TRAP_NJ(T_PROTFLT)
 #ifdef check_swapgs
 	jmp	check_swapgs
 #else
-/* We need to worry about traps while the kernel %gs_base isn't loaded.
- * These are either loads to %gs (only 32bit) or faults on iret during
- * return to user. */
+/*
+ * We need to worry about traps in kernel mode while the kernel %gs isn't
+ * loaded. These are either faults on iretq during return to user or loads to
+ * %gs.
+ *
+ * When such traps happen, we have CPL=0 and %gs=userland, and we must perform
+ * an additional swapgs to get %gs=kernel.
+ */
 check_swapgs:
 	INTRENTRY_L(3f,1:)
-2:	sti
+2:
+	sti
 	jmp	calltrap
 3:
-	/* Trap in kernel mode. */
-	/* If faulting instruction is 'iret' we may need to do a 'swapgs'. */
+	/*
+	 * Trap in kernel mode.
+	 */
+	/* Case 1: fault on iretq? */
 	movq	TF_RIP(%rsp),%rax
 	cmpw	$0xcf48,(%rax)		/* Faulting instruction is iretq ? */
 	jne	5f			/* Jump if not */
@@ -259,7 +267,8 @@ check_swapgs:
 	je	2b			/* jump if iret was to kernel  */
 	jmp	1b			/* to user - must restore %gs */
 5:
-	/* Not 'iret', all moves to %gs also need a swapgs */
+
+	/* Case 2: move to %gs? */
 	movw	(%rax),%ax
 	andb	$070,%ah		/* mask mod/rm from mod/reg/rm */
 	cmpw	$0x8e+050*256,%ax	/* Any move to %gs (reg 5) */
