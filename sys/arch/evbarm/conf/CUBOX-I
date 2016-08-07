@@ -1,4 +1,4 @@
-# $NetBSD: CUBOX-I,v 1.5 2015/12/31 11:53:18 ryo Exp $
+# $NetBSD: CUBOX-I,v 1.6 2016/08/07 10:44:05 christos Exp $
 #
 # CuBox-i
 # - http://www.solid-run.com/products/cubox-i-mini-computer/
@@ -145,7 +145,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPv6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
+#options 	MPLS		# MultiProtocol Label Switching (needs mpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
@@ -366,7 +366,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 #pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ifmpls			# MPLS pseudo-interface
+#pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
