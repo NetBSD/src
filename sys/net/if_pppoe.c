@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.112 2016/08/06 23:46:30 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.113 2016/08/07 01:59:43 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.112 2016/08/06 23:46:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.113 2016/08/07 01:59:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.112 2016/08/06 23:46:30 pgoyette Exp 
 #include <sys/socketvar.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -203,6 +204,16 @@ static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 
 static int	pppoe_clone_create(struct if_clone *, int);
 static int	pppoe_clone_destroy(struct ifnet *);
+
+#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
+static bool	pppoe_term_unknown = false;
+#endif
+
+#ifdef _MODULE
+static struct sysctllog	*pppoe_sysctl_clog;
+#endif
+
+SYSCTL_SETUP_PROTO(sysctl_net_pppoe_setup);
 
 static struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
@@ -831,9 +842,11 @@ pppoe_data_input(struct mbuf *m)
 	sc = pppoe_find_softc_by_session(session, rcvif);
 	if (sc == NULL) {
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-		printf("pppoe: input for unknown session 0x%x, sending PADT\n",
-		    session);
-		pppoe_send_padt(rcvif, session, shost);
+		if (pppoe_term_unknown) {
+			printf("pppoe: input for unknown session 0x%x, "
+			    "sending PADT\n", session);
+			pppoe_send_padt(rcvif, session, shost);
+		}
 #endif
 		m_put_rcvif_psref(rcvif, &psref);
 		goto drop;
@@ -1672,6 +1685,11 @@ if_pppoe_modcmd(modcmd_t cmd, void *arg)
 #endif  
 		/* Init the cloner etc. */
 		pppoeinit();
+
+#ifdef _MODULE
+		/* Create our sysctl subtree */
+		sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
+#endif
 		break;
 
         case MODULE_CMD_FINI:
@@ -1692,7 +1710,10 @@ if_pppoe_modcmd(modcmd_t cmd, void *arg)
 			    "%d\n", __func__, pppoe_cd.cd_name, error);
 			break;
 		}
+		/* Remove our sysctl sub-tree */
+		sysctl_teardown(&pppoe_sysctl_clog);
 #endif
+
 		break;
 	case MODULE_CMD_STAT:
 	case MODULE_CMD_AUTOUNLOAD:
@@ -1702,3 +1723,26 @@ if_pppoe_modcmd(modcmd_t cmd, void *arg)
 	return error;
 }
 
+SYSCTL_SETUP(sysctl_net_pppoe_setup, "sysctl net.pppoe subtree setup")
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "pppoe",
+	    SYSCTL_DESCR("PPPOE protocol"),
+	    NULL, 0, NULL, 0,
+	    CTL_NET, CTL_CREATE, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLTYPE_BOOL, "term_unknown",
+	    SYSCTL_DESCR("Terminate unknown sessions"),
+	    NULL, 0, &pppoe_term_unknown, sizeof(pppoe_term_unknown),
+	    CTL_CREATE, CTL_EOL);
+#endif
+}
