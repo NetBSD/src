@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.81 2016/08/07 06:12:24 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.82 2016/08/07 06:15:49 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2289,6 +2289,7 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	tlbp					# probe the entry in question
 	COP0_SYNC
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
+	MFC0_HAZARD
 	bltz	v0, 2f				# index < 0 then skip
 	 li	t2, MIPS_KSEG0_START		# invalid address
 	PTR_SLL	v0, PGSHIFT | 1			# PAGE_SHIFT | 1
