@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2016/08/06 23:46:30 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.175 2016/08/07 14:27:38 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -45,14 +45,24 @@ SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	i2cexec
 SUBDIR+=	i2c_bitbang
+SUBDIR+=	if_agr
 SUBDIR+=	if_axe
 SUBDIR+=	if_axen
+SUBDIR+=	if_faith
+SUBDIR+=	if_gif
+SUBDIR+=	if_gre
+SUBDIR+=	if_loop
+SUBDIR+=	if_mpls
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
 SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
+SUBDIR+=	if_srt
+SUBDIR+=	if_stf
 SUBDIR+=	if_strip
+SUBDIR+=	if_tun
+SUBDIR+=	if_vlan
 SUBDIR+=	iic
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
