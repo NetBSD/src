@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.19 2014/11/21 20:46:56 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.20 2016/08/07 10:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,21 +61,21 @@ struct attr    *refattr(const char *);
 int		getrefattr(const char *, struct attr **);
 void		expandattr(struct attr *, void (*)(struct attr *));
 void		addattr(const char *);
-void		delattr(const char *);
+void		delattr(const char *, int);
 void		selectattr(struct attr *);
 void		deselectattr(struct attr *);
 void		dependattrs(void);
 void		setmajor(struct devbase *, int);
 void		addconf(struct config *);
 void		setconf(struct nvlist **, const char *, struct nvlist *);
-void		delconf(const char *);
+void		delconf(const char *, int);
 void		setfstype(const char **, const char *);
 void		adddev(const char *, const char *, struct loclist *, int);
-void		deldevi(const char *, const char *);
-void		deldeva(const char *);
-void		deldev(const char *);
+void		deldevi(const char *, const char *, int);
+void		deldeva(const char *, int);
+void		deldev(const char *, int);
 void		addpseudo(const char *, int);
-void		delpseudo(const char *);
+void		delpseudo(const char *, int);
 void		addpseudoroot(const char *);
 void		adddevm(const char *, devmajor_t, devmajor_t,
 			struct condexpr *, struct nvlist *);
