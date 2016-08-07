@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $ */
+/*	$NetBSD: if_gre.c,v 1.170 2016/08/07 17:38:33 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.170 2016/08/07 17:38:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $")
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <sys/kernel.h>
 #include <sys/mutex.h>
@@ -84,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.169 2016/06/10 13:27:16 ozaki-r Exp $")
 #include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -141,6 +146,8 @@ int gre_debug = 0;
 #endif /* GRE_DEBUG */
 
 int ip_gre_ttl = GRE_TTL;
+
+static u_int gre_count;
 
 static int gre_clone_create(struct if_clone *, int);
 static int gre_clone_destroy(struct ifnet *);
@@ -317,6 +324,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 	bpf_attach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
+	atomic_inc_uint(&gre_count);
 	return 0;
 
 fail1:	cv_destroy(&sc->sc_fp_condvar);
@@ -358,6 +366,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	gre_evcnt_detach(sc);
 	free(sc, M_DEVBUF);
 
+	atomic_dec_uint(&gre_count);
 	return 0;
 }
 
@@ -1434,5 +1443,36 @@ out:
 void
 greattach(int count)
 {
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in greinit() below).
+	 */
+}
+
+static void
+greinit(void)
+{
 	if_clone_attach(&gre_cloner);
 }
+
+static int
+gredetach(void)
+{
+	int error = 0;
+
+	if (gre_count != 0)
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&gre_cloner);
+
+	return error;
+}
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, gre, "")
