@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.82 2016/08/07 06:15:49 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.83 2016/08/07 07:13:57 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2307,18 +2307,21 @@ LEAF_NOPROFILE(MIPSX(tlb_invalidate_addr))
 	and	a2, t0				# a2=valid entryLo0 afterwards
 	and	a3, t1				# a3=valid entryLo1 afterwards
 	or	v0, a2, a3			# will one be valid?
-#ifdef MIPSNN
+#ifdef MIPSNNX
+#error Global bit is lost here when V==0 and it needs to be preserved
 	movz	t0, zero, a2			# zero lo0 if V would not be set
 	movz	t1, zero, a3			# zero lo1 if V would not be set
 	movn	t2, a0, v0			# yes, keep VA the same
 #else
-	beqz	v0, 1f				# no valid entry
-	 _SLL	a2, a2, PG_V_LSHIFT		# move V to MSB
+	_SLL	a2, a2, PG_V_LSHIFT		# move V to MSB
 	_SRA	a2, a2, PG_V_RSHIFT		# fill with MSB
+	or	a2, MIPS3_PG_G			# mask needs to preserve G
 	and	t0, t0, a2			# zero lo0 if V would not be set
 	_SLL	a3, a3, PG_V_LSHIFT		# move V to MSB
 	_SRA	a3, a3, PG_V_RSHIFT		# fill with MSB
-	and	t1, t1, a3			# zero lo1 if V would not be set
+	or	a3, MIPS3_PG_G			# mask needs to preserve G
+	beqz	v0, 1f				# no valid entry
+	 and	t1, t1, a3			# zero lo1 if V would not be set
 	move	t2, a0				# we need entryHi to be valid
 1:
 #endif /* MIPSNN */
