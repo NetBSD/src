@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.159 2016/06/01 12:14:08 pgoyette Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.160 2016/08/07 09:55:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.159 2016/06/01 12:14:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.160 2016/08/07 09:55:18 maxv Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -489,7 +489,7 @@ sys___msync13(struct lwp *l, const struct sys___msync13_args *uap,
 
 	error = range_test(map, addr, size, false);
 	if (error)
-		return error;
+		return ENOMEM;
 
 	/*
 	 * XXXCDC: do we really need this semantic?
@@ -571,7 +571,7 @@ sys_munmap(struct lwp *l, const struct sys_munmap_args *uap, register_t *retval)
 
 	error = range_test(map, addr, size, false);
 	if (error)
-		return error;
+		return EINVAL;
 
 	/*
 	 * interesting system call semantic: make sure entire range is
@@ -630,7 +630,7 @@ sys_mprotect(struct lwp *l, const struct sys_mprotect_args *uap,
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
-		return error;
+		return EINVAL;
 
 	error = uvm_map_protect(&p->p_vmspace->vm_map, addr, addr + size, prot,
 				false);
@@ -671,7 +671,7 @@ sys_minherit(struct lwp *l, const struct sys_minherit_args *uap,
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
-		return error;
+		return EINVAL;
 
 	error = uvm_map_inherit(&p->p_vmspace->vm_map, addr, addr + size,
 				inherit);
@@ -712,7 +712,7 @@ sys_madvise(struct lwp *l, const struct sys_madvise_args *uap,
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
-		return error;
+		return EINVAL;
 
 	switch (advice) {
 	case MADV_NORMAL:
@@ -812,7 +812,7 @@ sys_mlock(struct lwp *l, const struct sys_mlock_args *uap, register_t *retval)
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
-		return error;
+		return ENOMEM;
 
 	if (atop(size) + uvmexp.wired > uvmexp.wiredmax)
 		return (EAGAIN);
@@ -863,7 +863,7 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 
 	error = range_test(&p->p_vmspace->vm_map, addr, size, false);
 	if (error)
-		return error;
+		return ENOMEM;
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);
