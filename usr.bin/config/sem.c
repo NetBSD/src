@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.74 2016/04/29 18:18:22 mlelstv Exp $	*/
+/*	$NetBSD: sem.c,v 1.75 2016/08/07 10:37:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.74 2016/04/29 18:18:22 mlelstv Exp $");
+__RCSID("$NetBSD: sem.c,v 1.75 2016/08/07 10:37:24 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -1051,13 +1051,14 @@ setconf(struct nvlist **npp, const char *what, struct nvlist *v)
 }
 
 void
-delconf(const char *name)
+delconf(const char *name, int nowarn)
 {
 	struct config *cf;
 
 	CFGDBG(5, "deselecting config `%s'", name);
 	if (ht_lookup(cfhashtab, name) == NULL) {
-		cfgerror("configuration `%s' undefined", name);
+		if (!nowarn)
+			cfgerror("configuration `%s' undefined", name);
 		return;
 	}
 	(void)ht_remove(cfhashtab, name);
@@ -1266,7 +1267,7 @@ adddev(const char *name, const char *at, struct loclist *loclist, int flags)
 }
 
 void
-deldevi(const char *name, const char *at)
+deldevi(const char *name, const char *at, int nowarn)
 {
 	struct devi *firsti, *i;
 	struct devbase *d;
@@ -1275,12 +1276,15 @@ deldevi(const char *name, const char *at)
 
 	CFGDBG(5, "deselecting devi `%s'", name);
 	if (split(name, strlen(name), base, sizeof base, &unit)) {
-		cfgerror("invalid device name `%s'", name);
-		return;
+		if (!nowarn) {
+			cfgerror("invalid device name `%s'", name);
+			return;
+		}
 	}
 	d = ht_lookup(devbasetab, intern(base));
 	if (d == NULL) {
-		cfgerror("%s: unknown device `%s'", name, base);
+		if (!nowarn)
+			cfgerror("%s: unknown device `%s'", name, base);
 		return;
 	}
 	if (d->d_ispseudo) {
@@ -1466,7 +1470,7 @@ remove_devi(struct devi *i)
 }
 
 void
-deldeva(const char *at)
+deldeva(const char *at, int nowarn)
 {
 	int unit;
 	const char *cp;
@@ -1565,7 +1569,7 @@ out:
 }
 
 void
-deldev(const char *name)
+deldev(const char *name, int nowarn)
 {
 	size_t l;
 	struct devi *firsti, *i;
@@ -1581,7 +1585,8 @@ deldev(const char *name)
 		firsti = ht_lookup(devitab, name);
 		if (firsti == NULL) {
 out:
-			cfgerror("unknown instance %s", name);
+			if (!nowarn)
+				cfgerror("unknown instance %s", name);
 			return;
 		}
 		for (i = firsti; i != NULL; i = i->i_alias)
@@ -1721,7 +1726,7 @@ addpseudo(const char *name, int number)
 }
 
 void
-delpseudo(const char *name)
+delpseudo(const char *name, int nowarn)
 {
 	struct devbase *d;
 	struct devi *i;
@@ -1729,7 +1734,8 @@ delpseudo(const char *name)
 	CFGDBG(5, "deselecting pseudo `%s'", name);
 	d = ht_lookup(devbasetab, name);
 	if (d == NULL) {
-		cfgerror("undefined pseudo-device %s", name);
+		if (!nowarn)
+			cfgerror("undefined pseudo-device %s", name);
 		return;
 	}
 	if (!d->d_ispseudo) {
@@ -1737,7 +1743,8 @@ delpseudo(const char *name)
 		return;
 	}
 	if ((i = ht_lookup(devitab, name)) == NULL) {
-		cfgerror("`%s' not defined", name);
+		if (!nowarn)
+			cfgerror("`%s' not defined", name);
 		return;
 	}
 	d->d_umax = 0;		/* clear neads-count entries */
@@ -1969,7 +1976,7 @@ addattr(const char *name)
 }
 
 void
-delattr(const char *name)
+delattr(const char *name, int nowarn)
 {
 	struct attr *a;
 
@@ -1999,7 +2006,7 @@ deselectattrcb2(const char *name1, const char *name2, void *v, void *arg)
 	const char *name = arg;
 
 	if (strcmp(name, name2) == 0)
-		delattr(name1);
+		delattr(name1, 0);
 	return 0;
 }
 
