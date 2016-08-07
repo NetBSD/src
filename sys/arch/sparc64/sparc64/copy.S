@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.6 2015/11/22 10:18:14 martin Exp $	*/
+/*	$NetBSD: copy.S,v 1.7 2016/08/07 19:35:43 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -432,7 +432,7 @@ Lcopyout_start:
 	 .empty
 0:
 	inc	%o0
-	ldsb	[%o0 - 1], %o4!	(++dst)[-1] = *src++;
+	ldsb	[%o0 - 1], %o4	! (++dst)[-1] = *src++;
 	stba	%o4, [%o1] %asi
 	deccc	%o2
 	bge	0b
