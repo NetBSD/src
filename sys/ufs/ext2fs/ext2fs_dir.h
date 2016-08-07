@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.21 2016/08/06 21:39:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.22 2016/08/07 01:47:11 kre Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,6 +67,7 @@
 #ifndef _UFS_EXT2FS_EXT2FS_DIR_H_
 #define	_UFS_EXT2FS_EXT2FS_DIR_H_
 
+#include <sys/dirent.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
 /*
