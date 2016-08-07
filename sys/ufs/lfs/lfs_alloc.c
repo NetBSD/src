@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.132 2016/08/07 00:12:48 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.133 2016/08/07 05:09:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.132 2016/08/07 00:12:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.133 2016/08/07 05:09:12 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.132 2016/08/07 00:12:48 dholland Exp
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
-#include <sys/tree.h>
 #include <sys/kauth.h>
 
 #include <ufs/lfs/ulfs_quotacommon.h>
