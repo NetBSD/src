@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.87 2016/08/08 09:23:13 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.88 2016/08/08 09:42:33 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.87 2016/08/08 09:23:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.88 2016/08/08 09:42:33 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -272,17 +272,16 @@ tapdetach(void)
 	int error = 0;
 
 	if (tap_count != 0)
-		error = EBUSY;
+		return EBUSY;
 
+#ifdef _MODULE
+	error = devsw_detach(NULL, &tap_cdevsw);
 	if (error == 0)
-		devsw_detach(NULL, &tap_cdevsw);
-
+		sysctl_teardown(&tap_sysctl_clog);
+#endif
 	if (error == 0)
 		if_clone_detach(&tap_cloners);
 
-#ifdef _MODULE
-	sysctl_teardown(&tap_sysctl_clog);
-#endif
 	return error;
 }
 
