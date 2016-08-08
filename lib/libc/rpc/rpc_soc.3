@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc_soc.3,v 1.14 2013/03/04 17:29:03 christos Exp $
+.\"	$NetBSD: rpc_soc.3,v 1.15 2016/08/08 04:16:45 dholland Exp $
 .\" Converted to mdoc by Thomas Klausner <wiz@NetBSD.org>
 .\"
 .Dd December 12, 2008
@@ -986,8 +986,8 @@ This allows the user to specify the maximum packet size for sending and
 receiving UDP-based RPC messages.
 .It Fn svcudp_create
 This acts as
-.Fn svcudp_bufcreate with
-predefined sizes for the maximum packet sizes.
+.Fn svcudp_bufcreate
+with predefined sizes for the maximum packet sizes.
 .It Fn xdr_accepted_reply
 Used for encoding RPC reply messages.
 This routine is useful for users who wish to generate RPC-style
