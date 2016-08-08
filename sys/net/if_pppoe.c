@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.114 2016/08/07 17:38:34 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.115 2016/08/08 02:50:05 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.114 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.115 2016/08/08 02:50:05 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -238,7 +238,9 @@ pppoeinit(void)
 
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
+#ifdef _MODULE
 	sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
+#endif
 }
 
 static int
