@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.88 2016/08/08 09:42:33 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.89 2016/08/08 09:51:39 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.88 2016/08/08 09:42:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.89 2016/08/08 09:51:39 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -262,7 +262,7 @@ tapinit(void)
 	if_clone_attach(&tap_cloners);
 #ifdef _MODULE
 	sysctl_tap_setup(&tap_sysctl_clog);
-	devsw_attach("tap", NULL, &tap_bmajor, tap_cdevsw, &tap_cmajor);
+	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
 #endif
 }
 
