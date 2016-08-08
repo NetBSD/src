@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.115 2016/08/08 02:50:05 pgoyette Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.116 2016/08/08 07:23:27 roy Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.115 2016/08/08 02:50:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.116 2016/08/08 07:23:27 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -255,7 +255,9 @@ pppoedetach(void)
 		if_clone_detach(&pppoe_cloner);
 		softint_disestablish(pppoe_softintr);
 		/* Remove our sysctl sub-tree */
+#ifdef _MODULE
 		sysctl_teardown(&pppoe_sysctl_clog);
+#endif
 	}
 
 	return error;
