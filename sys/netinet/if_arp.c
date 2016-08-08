@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.221 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.222 2016/08/08 06:28:09 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.221 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.222 2016/08/08 06:28:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -357,6 +357,7 @@ arptimer(void *arg)
 		LLE_REMREF(lle);
 		pkts_dropped = llentry_free(lle);
 		ARP_STATADD(ARP_STAT_DFRDROPPED, pkts_dropped);
+		ARP_STATADD(ARP_STAT_DFRTOTAL, pkts_dropped);
 	} else {
 		LLE_FREE_LOCKED(lle);
 	}
@@ -833,6 +834,7 @@ notfound:
 			la->la_hold = next;
 			la->la_numheld--;
 			ARP_STATINC(ARP_STAT_DFRDROPPED);
+			ARP_STATINC(ARP_STAT_DFRTOTAL);
 		}
 	}
 	if (la->la_hold != NULL) {
@@ -1274,6 +1276,7 @@ in_arpinput(struct mbuf *m)
 		 */
 		LLE_WUNLOCK(la);
 		ARP_STATADD(ARP_STAT_DFRSENT, n);
+		ARP_STATADD(ARP_STAT_DFRTOTAL, n);
 		for (; m_hold != NULL; m_hold = m_hold_next) {
 			m_hold_next = m_hold->m_nextpkt;
 			m_hold->m_nextpkt = NULL;
