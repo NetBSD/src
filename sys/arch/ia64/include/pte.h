@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 2016/08/05 17:02:59 scole Exp $	*/
+/*	$NetBSD: pte.h,v 1.4 2016/08/08 17:20:17 scole Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -70,28 +70,14 @@
 
 typedef uint64_t pt_entry_t;
 
-#ifdef _KERNEL
-static __inline pt_entry_t
-pte_atomic_clear(pt_entry_t *ptep, uint64_t val)
-{
-	return (atomic_clear_64(ptep, val));
-}
-
-static __inline pt_entry_t
-pte_atomic_set(pt_entry_t *ptep, uint64_t val)
-{
-	return (atomic_set_64(ptep, val));
-}
-#endif
-
 /*
  * A long-format VHPT entry.
  */
 struct ia64_lpte {
-        pt_entry_t      pte;
-        uint64_t        itir;
-        uint64_t        tag;            /* includes ti */
-        uint64_t        chain;          /* pa of collision chain */
+	pt_entry_t	pte;
+	uint64_t	itir;
+	uint64_t	tag;		/* includes ti */
+	uint64_t	chain;		/* pa of collision chain */
 };
 
 /*
