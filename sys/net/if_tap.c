@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.85 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.86 2016/08/08 07:35:12 pgoyette Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.85 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.86 2016/08/08 07:35:12 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -237,6 +237,10 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
+#ifdef _MODULE
+static struct sysctllog *tap_sysctl_clog;
+#endif
+
 static u_int tap_count;
 
 void
@@ -253,6 +257,9 @@ static void
 tapinit(void)
 {
 	if_clone_attach(&tap_cloners);
+#ifdef _MODULE
+	sysctl_tap_setup(&tap_sysctl_clog);
+#endif
 }
 
 static int
@@ -266,6 +273,9 @@ tapdetach(void)
 	if (error == 0)
 		if_clone_detach(&tap_cloners);
 
+#ifdef _MODULE
+	sysctl_teardown(&tap_sysctl_clog);
+#endif
 	return error;
 }
 
