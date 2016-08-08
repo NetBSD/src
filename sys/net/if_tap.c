@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.89 2016/08/08 09:51:39 pgoyette Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.89 2016/08/08 09:51:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -707,7 +707,7 @@ tap_clone_destroy(struct ifnet *ifp)
 	int error = tap_clone_destroyer(sc->sc_dev);
 
 	if (error == 0)
-		atomic_inc_uint(&tap_count);
+		atomic_dec_uint(&tap_count);
 	return error;
 }
 
