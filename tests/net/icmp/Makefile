@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2016/08/08 14:46:35 pgoyette Exp $
+# $NetBSD: Makefile,v 1.8 2016/08/08 14:49:35 pgoyette Exp $
 #
 
 .include <bsd.own.mk>
@@ -11,6 +11,6 @@ TESTS_C+=	t_ping
 TESTS_SH=	t_ping2 t_icmp_redirect t_icmp6_redirect
 
 LDADD+=		-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-LDADD+=		-lrump -lrumpuser -lrump -lpthread -lrumpdev
+LDADD+=		-lrump -lrumpuser -lrump -lpthread -lrumpdev -lrumpvfs
 
 .include <bsd.test.mk>
