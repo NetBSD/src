@@ -1,4 +1,4 @@
-.\"	$NetBSD: pppoe.4,v 1.37 2016/08/07 01:59:43 pgoyette Exp $
+.\"	$NetBSD: pppoe.4,v 1.38 2016/08/08 07:28:54 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,7 +265,9 @@ To do this, add the following to your kernel config file:
 .Pp
 and set the value of
 .Xr sysctl 7
-variable net.pppoe.term_unknown to true.
+variable
+.Dv net.pppoe.term_unknown
+to true.
 .Pp
 Note that this will break all userland
 .Nm PPPoE
