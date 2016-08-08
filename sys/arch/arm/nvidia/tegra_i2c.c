@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.14 2016/08/08 14:36:56 jakllsch Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.15 2016/08/08 14:40:57 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.14 2016/08/08 14:36:56 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.15 2016/08/08 14:40:57 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -314,7 +314,7 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 
 	if (cmdlen > 0) {
 		error = tegra_i2c_write(sc, addr, cmdbuf, cmdlen, flags,
-		    I2C_OP_READ_P(op) ? true : false);
+		    buflen > 0 ? true : false);
 		if (error) {
 			goto done;
 		}
