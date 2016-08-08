@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.13 2016/02/14 19:54:20 chs Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.14 2016/08/08 14:36:56 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.13 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.14 2016/08/08 14:36:56 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -432,8 +432,8 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 			data |= (uint32_t)p[n] << (n * 8);
 		}
 		I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG, data);
-		resid -= min(resid, 4);
 		p += min(resid, 4);
+		resid -= min(resid, 4);
 	}
 
 	return tegra_i2c_wait(sc, flags);
@@ -488,8 +488,8 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 		for (n = 0; n < min(resid, 4); n++) {
 			p[n] = (data >> (n * 8)) & 0xff;
 		}
-		resid -= min(resid, 4);
 		p += min(resid, 4);
+		resid -= min(resid, 4);
 	}
 
 	return tegra_i2c_wait(sc, flags);
