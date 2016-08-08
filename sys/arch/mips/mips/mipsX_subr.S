@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.83 2016/08/07 07:13:57 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.84 2016/08/08 10:21:34 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2755,9 +2755,7 @@ MIPSX(entry0):
 	tlbp					# probe VPN
 	COP0_SYNC
 	mfc0	t0, MIPS_COP_0_TLB_INDEX
-#ifdef MIPS3
-	nop
-#endif
+	MFC0_HAZARD
 	bltz	t0, MIPSX(entry0set)
 	 sll	t0, t0, PGSHIFT | 1		# PAGE_SHIFT | 1
 	PTR_LA	t0, MIPS_KSEG0_START(t0)
