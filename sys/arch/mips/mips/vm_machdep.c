@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.151 2016/08/09 08:59:08 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.152 2016/08/09 09:02:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.151 2016/08/09 08:59:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.152 2016/08/09 09:02:10 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -116,6 +116,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	l2->l_md.md_utf = tf;
 #if (USPACE > PAGE_SIZE) || !defined(_LP64)
+	CTASSERT(__arraycount(l2->l_md.md_upte) >= UPAGES);
+	for (u_int i = 0; i < __arraycount(l2->l_md.md_upte); i++) {
+		l2->l_md.md_upte[i] = 0;
+	}
 	if (!pmap_md_direct_mapped_vaddr_p(ua2)) {
 		CTASSERT((PGSHIFT == 12) == (UPAGES == 2));
 		pt_entry_t * const pte = pmap_pte_lookup(pmap_kernel(), ua2);
@@ -128,6 +132,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 			l2->l_md.md_upte[i] = pte[i] & ~x;
 		}
 	}
+#else
+	KASSERT(pmap_md_direct_mapped_vaddr_p(ua2));
 #endif
 	/*
 	 * Rig kernel stack so that it would start out in lwp_trampoline()
