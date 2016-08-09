@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.85 2016/08/09 08:56:23 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.86 2016/08/09 08:59:08 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2715,7 +2715,7 @@ END(MIPSX(lwp_trampoline))
  * sure TBIS(it) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
-#if !defined(ENABLE_MIPS_16KB_PAGE) && !defined(ENABLE_MIPS_8KB_PAGE)
+#if (USPACE > PAGE_SIZE) || !defined(_LP64)
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 #if (PGSHIFT & 1)
 	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half
@@ -2785,7 +2785,7 @@ MIPSX(entry0set):
 	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore TLB_HI
 	COP0_SYNC
 MIPSX(resume):
-#endif /* !ENABLE_MIPS_16KB_PAGE */
+#endif /* (USPACE > PAGE_SIZE) || !defined(_LP64) */
 #ifdef MIPSNNR2
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
 	_MTC0	v0, MIPS_COP_0_USERLOCAL	# make available for rdhwr
