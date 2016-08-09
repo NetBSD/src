@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.161 2016/08/07 10:07:58 maxv Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.162 2016/08/09 12:17:04 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.161 2016/08/07 10:07:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.162 2016/08/09 12:17:04 kre Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -862,9 +862,10 @@ sys_munlock(struct lwp *l, const struct sys_munlock_args *uap,
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, true,
 	    0);
-	if (error == EFAULT)
-		error = ENOMEM;
-	return error;
+	if (error)
+		return ENOMEM;
+
+	return 0;
 }
 
 /*
