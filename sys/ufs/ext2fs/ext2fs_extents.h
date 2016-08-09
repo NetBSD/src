@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extents.h,v 1.2 2016/06/10 06:30:58 dholland Exp $	*/
+/*	$NetBSD: ext2fs_extents.h,v 1.3 2016/08/09 07:15:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2010 Zheng Liu <lz@freebsd.org>
@@ -32,10 +32,6 @@
 #define	_UFS_EXT2FS_EXT2FS_EXTENTS_H_
 
 #include <sys/types.h>
-#ifndef _KERNEL
-#include <stdbool.h>
-#endif
-
 #include <ufs/ufs/inode.h>
 #define	EXT4_EXT_MAGIC  0xf30a
 
