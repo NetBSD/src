@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.81 2016/08/06 21:39:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.82 2016/08/09 20:18:08 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.81 2016/08/06 21:39:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.82 2016/08/09 20:18:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,33 +816,35 @@ ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
 	struct ufsmount *ump = VFSTOUFS(dp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
-		const char *error_msg = NULL;
-		int reclen = fs2h16(de->e2d_reclen);
-		int namlen = de->e2d_namlen;
+	const char *error_msg = NULL;
+	int reclen = fs2h16(de->e2d_reclen);
+	int namlen = de->e2d_namlen;
 
-		if (reclen < EXT2FS_DIRSIZ(1)) /* e2d_namlen = 1 */
-			error_msg = "rec_len is smaller than minimal";
-		else if (reclen % 4 != 0)
-			error_msg = "rec_len % 4 != 0";
-		else if (namlen > EXT2FS_MAXNAMLEN)
-			error_msg = "namlen > EXT2FS_MAXNAMLEN";
-		else if (reclen < EXT2FS_DIRSIZ(namlen))
-			error_msg = "reclen is too small for name_len";
-		else if (entryoffsetinblock + reclen > dirblksiz)
-			error_msg = "directory entry across blocks";
-		else if (fs2h32(de->e2d_ino) >
-		    VTOI(dp)->i_e2fs->e2fs.e2fs_icount)
-			error_msg = "inode out of bounds";
+	if (reclen < EXT2FS_DIRSIZ(1)) /* e2d_namlen = 1 */
+		error_msg = "rec_len is smaller than minimal";
+#if 0
+	else if (reclen % 4 != 0)
+		error_msg = "rec_len % 4 != 0";
+#endif
+	else if (namlen > EXT2FS_MAXNAMLEN)
+		error_msg = "namlen > EXT2FS_MAXNAMLEN";
+	else if (reclen < EXT2FS_DIRSIZ(namlen))
+		error_msg = "reclen is too small for name_len";
+	else if (entryoffsetinblock + reclen > dirblksiz)
+		error_msg = "directory entry across blocks";
+	else if (fs2h32(de->e2d_ino) >
+	    VTOI(dp)->i_e2fs->e2fs.e2fs_icount)
+		error_msg = "inode out of bounds";
 
-		if (error_msg != NULL) {
-			printf( "bad directory entry: %s\n"
-			    "offset=%d, inode=%lu, rec_len=%d, name_len=%d \n",
-			    error_msg, entryoffsetinblock,
-			    (unsigned long) fs2h32(de->e2d_ino),
-			    reclen, namlen);
-			panic("ext2fs_dirbadentry");
-		}
-		return error_msg == NULL ? 0 : 1;
+	if (error_msg != NULL) {
+		printf( "bad directory entry: %s\n"
+		    "offset=%d, inode=%lu, rec_len=%d, name_len=%d \n",
+		    error_msg, entryoffsetinblock,
+		    (unsigned long) fs2h32(de->e2d_ino),
+		    reclen, namlen);
+		panic("ext2fs_dirbadentry");
+	}
+	return error_msg == NULL ? 0 : 1;
 }
 
 /*
@@ -855,18 +857,13 @@ ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
  */
 int
 ext2fs_direnter(struct inode *ip, struct vnode *dvp,
-		const struct ufs_lookup_results *ulr,
-		struct componentname *cnp)
+    const struct ufs_lookup_results *ulr, struct componentname *cnp)
 {
-	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
-	struct buf *bp;
 	struct ext2fs_direct newdir;
 	struct iovec aiov;
 	struct uio auio;
-	u_int dsize;
-	int error, loc, newentrysize, spacefree;
-	char *dirbuf;
+	int error, newentrysize;
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
 
@@ -882,6 +879,20 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	}
 	memcpy(newdir.e2d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(cnp->cn_namelen);
+	
+	if (ext2fs_htree_has_idx(dp)) {
+		error = ext2fs_htree_add_entry(dvp, &newdir, cnp);
+		if (error) {
+			dp->i_e2fs_flags&= ~EXT2_INDEX;
+			dp->i_flag |= IN_CHANGE | IN_UPDATE;
+		}
+		return error;
+	}
+	
+	/*
+	 * TODO check if Htree index is not created for the directory then
+	 * create one if directory entries get overflew the first dir-block
+	 */
 	if (ulr->ulr_count == 0) {
 		/*
 		 * If ulr_count is 0, then namei could find no
@@ -912,8 +923,34 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 			dp->i_flag |= IN_CHANGE;
 			uvm_vnp_setsize(dvp, ext2fs_size(dp));
 		}
-		return (error);
+		return error;
 	}
+
+	error = ext2fs_add_entry(dvp, &newdir,ulr);
+	
+	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
+		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
+		    cnp->cn_cred);
+	return error;
+}
+
+/*
+ * Insert an entry into the directory block.
+ * Compact the contents.
+ */
+
+int
+ext2fs_add_entry (struct vnode* dvp, struct ext2fs_direct *entry,
+    const struct ufs_lookup_results *ulr) 
+{	
+	struct ext2fs_direct *ep, *nep;
+	struct inode *dp;
+	struct buf *bp;
+	u_int dsize;
+	int error, loc, newentrysize, spacefree;
+	char *dirbuf;
+
+	dp = VTOI(dvp);
 
 	/*
 	 * If ulr_count is non-zero, then namei found space
@@ -937,7 +974,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	 * space.
 	 */
 	ep = (struct ext2fs_direct *)dirbuf;
-	dsize = EXT2FS_DIRSIZ(ep->e2d_namlen);
+	newentrysize = dsize = EXT2FS_DIRSIZ(ep->e2d_namlen);
 	spacefree = fs2h16(ep->e2d_reclen) - dsize;
 	for (loc = fs2h16(ep->e2d_reclen); loc < ulr->ulr_count; ) {
 		nep = (struct ext2fs_direct *)(dirbuf + loc);
@@ -963,7 +1000,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		if (spacefree + dsize < newentrysize)
 			panic("ext2fs_direnter: compact1");
 #endif
-		newdir.e2d_reclen = h2fs16(spacefree + dsize);
+		entry->e2d_reclen = h2fs16(spacefree + dsize);
 	} else {
 #ifdef DIAGNOSTIC
 		if (spacefree < newentrysize) {
@@ -972,17 +1009,14 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 			panic("ext2fs_direnter: compact2");
 		}
 #endif
-		newdir.e2d_reclen = h2fs16(spacefree);
+		entry->e2d_reclen = h2fs16(spacefree);
 		ep->e2d_reclen = h2fs16(dsize);
 		ep = (struct ext2fs_direct *)((char *)ep + dsize);
 	}
-	memcpy((void *)ep, (void *)&newdir, (u_int)newentrysize);
+	memcpy(ep, entry, (u_int)newentrysize);
 	error = VOP_BWRITE(bp->b_vp, bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
-		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
-		    cnp->cn_cred);
-	return (error);
+	return error;
 }
 
 /*
