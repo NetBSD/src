@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.2 2016/08/08 17:44:24 scole Exp $	*/
+/*	$NetBSD: atomic.h,v 1.3 2016/08/09 13:45:45 scole Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -28,14 +28,8 @@
  * $FreeBSD: releng/10.1/sys/ia64/include/atomic.h 262004 2014-02-16 23:08:21Z marcel $
  */
 
-#ifndef _MACHINE_ATOMIC_H_
-#define	_MACHINE_ATOMIC_H_
-
-/* XXX need these?
-#define	mb()	__asm __volatile("mf")
-#define	wmb()	mb()
-#define	rmb()	mb()
-*/
+#ifndef _IA64_ATOMIC_H_
+#define	_IA64_ATOMIC_H_
 
 /*
  * Various simple arithmetic on memory which is atomic in the presence
@@ -391,20 +385,11 @@ atomic_fetchadd_long(volatile u_long *p, u_long v)
 }
 
 /*
- * XXX already defined in
- * src/common/lib/libc/arch/ia64/atomic/atomic.S.  Need to sort out
- * what to do with this file and atomic.S.  atomic.S version comments
- * (from 2008) say it is not tested at all, but if it works we may not
- * need anything in this file?
- */
-#if 0
-
-/*
  * <type> atomic_swap_<type>(volatile <type> *p, <type> v);
  */
 
 static __inline uint32_t
-atomic_swap_32(volatile uint32_t *p, uint32_t v)
+ia64_atomic_swap_32(volatile uint32_t *p, uint32_t v)
 {
 	uint32_t r;
 
@@ -414,7 +399,7 @@ atomic_swap_32(volatile uint32_t *p, uint32_t v)
 }
 
 static __inline uint64_t
-atomic_swap_64(volatile uint64_t *p, uint64_t v)
+ia64_atomic_swap_64(volatile uint64_t *p, uint64_t v)
 {
 	uint64_t r;
 
@@ -422,10 +407,9 @@ atomic_swap_64(volatile uint64_t *p, uint64_t v)
 	    "r"(v), "m"(*p) : "memory");
 	return (r);
 }
-#endif
 
-#define	atomic_swap_int		atomic_swap_32
-#define	atomic_swap_long	atomic_swap_64
-#define	atomic_swap_ptr		atomic_swap_64
+#define	ia64_atomic_swap_int	ia64_atomic_swap_32
+#define	ia64_atomic_swap_long	ia64_atomic_swap_64
+#define	ia64_atomic_swap_ptr	ia64_atomic_swap_64
 
-#endif /* ! _MACHINE_ATOMIC_H_ */
+#endif /* ! _IA64_ATOMIC_H_ */
