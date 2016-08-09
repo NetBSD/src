@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.84 2016/08/08 10:21:34 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.85 2016/08/09 08:56:23 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2728,7 +2728,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 	blt	v0, t0, MIPSX(resume)
 	 nop
 #else
-	li	t0, MIPS_KSEG0_START		# above XKSEG?
+	li	t0, MIPS_KSEG0_START		# below KSEG0?
 	blt	t0, v0, MIPSX(resume)
 	 nop
 	li	t0, VM_MIN_KERNEL_ADDRESS>>32	# below XKSEG?
