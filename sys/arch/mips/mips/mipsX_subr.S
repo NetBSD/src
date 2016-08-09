@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.86 2016/08/09 08:59:08 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.87 2016/08/09 09:06:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2713,15 +2713,28 @@ END(MIPSX(lwp_trampoline))
  * Wiredown the USPACE of newproc in TLB entry#0.  Check whether target
  * USPACE is already in another place of TLB before that, and make
  * sure TBIS(it) in the case.
+ *
+ * Disable the optimisation for PGSHIFT == 14 (aka ENABLE_MIPS_16KB_PAGE)
+ * as the code needs fixing for this case
+ *
+ * _LP64 with UPAGES == 1 is always direct mappable; everything else can have
+ * non-direct mappable USPACE.
  */
+
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
+#if (PGSHIFT < 14)
 #if (USPACE > PAGE_SIZE) || !defined(_LP64)
 	INT_L	a1, L_MD_UPTE_0(a0)		# a1 = upte[0]
 #if (PGSHIFT & 1)
+#if (USPACE > PAGE_SIZE)
+#error Unsupported
+#else
+	/* even/odd are contiguaous */
 	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half
+#endif
 #else
 	INT_L	a2, L_MD_UPTE_1(a0)		# a2 = upte[1]
-#endif
+#endif /* (PGSHIFT & 1) */
 	PTR_L	v0, L_PCB(a0)			# va = l->l_addr
 #if VM_MIN_KERNEL_ADDRESS == MIPS_KSEG2_START
 	li	t0, VM_MIN_KERNEL_ADDRESS	# compute index
@@ -2750,7 +2763,7 @@ MIPSX(entry0):
 #endif /* (PGSHIFT & 1) == 0 */
 	_MFC0	ta1, MIPS_COP_0_TLB_HI		# save TLB_HI
 	_MTC0	v0, MIPS_COP_0_TLB_HI		# VPN = va
-#if (PGSHIFT & 1) == 0
+
 	COP0_SYNC
 	tlbp					# probe VPN
 	COP0_SYNC
@@ -2768,7 +2781,7 @@ MIPSX(entry0):
 	_MTC0	v0, MIPS_COP_0_TLB_HI		# set VPN again
 	COP0_SYNC
 MIPSX(entry0set):
-#endif /* (PGSHIFT & 1) == 0 */
+
 #ifdef MULTIPROCESSOR
 	PTR_L	t0, L_CPU(a0)			# get cpu_info
 	INT_L	t1, CPU_INFO_KSP_TLB_SLOT(t0)	# get TLB# for KSP
@@ -2786,6 +2799,7 @@ MIPSX(entry0set):
 	COP0_SYNC
 MIPSX(resume):
 #endif /* (USPACE > PAGE_SIZE) || !defined(_LP64) */
+#endif /* PGSHIFT < 14 */
 #ifdef MIPSNNR2
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
 	_MTC0	v0, MIPS_COP_0_USERLOCAL	# make available for rdhwr
