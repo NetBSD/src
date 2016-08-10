@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.63 2016/06/29 22:10:08 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.64 2016/08/10 18:25:00 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -865,6 +865,7 @@ fgetLine(char **bufp, size_t *szp, int o, FILE *fp)
     return 0;
 }
 
+/* Lst_ForEach wants 1 to stop search */
 static int
 prefix_match(void *p, void *q)
 {
@@ -875,6 +876,32 @@ prefix_match(void *p, void *q)
     return (0 == strncmp(path, prefix, n));
 }
 
+/*
+ * looking for exact or prefix/ match to
+ * Lst_Find wants 0 to stop search
+ */
+static int
+path_match(const void *p, const void *q)
+{
+    const char *prefix = q;
+    const char *path = p;
+    size_t n = strlen(prefix);
+    int rc;
+
+    if ((rc = strncmp(path, prefix, n)) == 0) {
+	switch (path[n]) {
+	case '\0':
+	case '/':
+	    break;
+	default:
+	    rc = 1;
+	    break;
+	}
+    }
+    return rc;
+}
+
+/* Lst_Find wants 0 to stop search */
 static int
 string_match(const void *p, const void *q)
 {
@@ -1166,12 +1193,17 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    /* FALLTHROUGH */
 		case 'D':		/* unlink */
 		    if (*p == '/' && !Lst_IsEmpty(missingFiles)) {
-			/* remove p from the missingFiles list if present */
-			if ((ln = Lst_Find(missingFiles, p, string_match)) != NULL) {
-			    char *tp = Lst_Datum(ln);
-			    Lst_Remove(missingFiles, ln);
-			    free(tp);
-			    ln = NULL;	/* we're done with it */
+			/* remove any missingFiles entries that match p */
+			if ((ln = Lst_Find(missingFiles, p,
+					   path_match)) != NULL) {
+			    char *tp;
+
+			    do {
+				tp = Lst_Datum(ln);
+				Lst_Remove(missingFiles, ln);
+				free(tp);
+			    } while ((ln = Lst_Find(missingFiles, p,
+						    path_match)) != NULL);
 			}
 		    }
 		    if (buf[0] == 'M') {
