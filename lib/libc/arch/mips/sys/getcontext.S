@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.4 2009/12/14 01:07:42 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.5 2016/08/10 16:45:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include <machine/mcontext.h>
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.4 2009/12/14 01:07:42 matt Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.5 2016/08/10 16:45:24 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
@@ -48,6 +48,10 @@ LEAF(_getcontext)
 	bne		a3, zero, 1f
 	REG_PROLOGUE
 	REG_S		zero, (_OFFSETOF_UC_GREGS + _REG_V0 * SZREG)(a0)
+#if !defined(__mips_o32)
+	/* PIC_PROLOGUE saved gp in t3 */
+	REG_S		t3, (_OFFSETOF_UC_GREGS + _REG_GP * SZREG)(a0)
+#endif
 	REG_S		ra, (_OFFSETOF_UC_GREGS + _REG_EPC * SZREG)(a0)
 	REG_EPILOGUE
 	PIC_RETURN()
