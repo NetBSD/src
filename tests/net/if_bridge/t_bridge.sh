@@ -1,4 +1,4 @@
-#	$NetBSD: t_bridge.sh,v 1.12 2016/06/21 05:04:16 ozaki-r Exp $
+#	$NetBSD: t_bridge.sh,v 1.13 2016/08/10 22:37:07 kre Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,8 +25,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_bridge -lrumpnet_shmif"
-inet6server="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_bridge -lrumpnet_shmif"
+libs1="-lrumpnet -lrumpnet_net -lrumpnet_netinet"
+libs2="-lrumpnet_bridge -lrumpnet_shmif -lrumpdev"
+libs6="-lrumpnet_netinet6"
+
+inetserver="rump_server ${libs1} ${libs2}"
+inet6server="rump_server ${libs1} ${libs6} ${libs2}"
 
 SOCK1=unix://commsock1
 SOCK2=unix://commsock2
