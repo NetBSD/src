@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.4 2015/12/16 03:24:29 knakahara Exp $
+#	$NetBSD: t_gif.sh,v 1.5 2016/08/10 08:29:20 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-server="rump_server -v -lrumpnet -lrumpnet_net -lrumpnet_netinet \
+server="rump_server -v -lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet \
 		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpnet_gif"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
