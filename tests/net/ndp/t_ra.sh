@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.2 2015/11/12 05:01:28 ozaki-r Exp $
+#	$NetBSD: t_ra.sh,v 1.3 2016/08/10 23:07:57 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 #
 
 RUMPFLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
-RUMPFLAGS="${RUMPFLAGS} -lrumpnet_shmif"
+RUMPFLAGS="${RUMPFLAGS} -lrumpnet_shmif -lrumpdev"
 RUMPFLAGS="${RUMPFLAGS} -lrumpvfs -lrumpfs_ffs"
 
 RUMPSRV=unix://r1
