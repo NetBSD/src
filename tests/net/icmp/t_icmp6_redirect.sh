@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.1 2015/09/14 05:22:56 ozaki-r Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.2 2016/08/10 22:17:44 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 netserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_shmif"
-netserver="${netserver} -lrumpnet_netinet -lrumpnet_netinet6"
+netserver="${netserver} -lrumpnet_netinet -lrumpnet_netinet6 -lrumpdev"
 
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
