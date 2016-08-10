@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.6 2015/08/25 02:24:34 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.7 2016/08/10 22:05:07 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,6 +26,7 @@
 #
 
 inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+inetserver="${inetserver} -lrumpdev"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCKLOCAL=unix://commsock1
