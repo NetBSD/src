@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.9 2016/04/05 22:51:01 pgoyette Exp $
+#	$NetBSD: files.net,v 1.10 2016/08/10 05:56:30 knakahara Exp $
 
 # XXX CLEANUP
 define	net
@@ -25,7 +25,7 @@ file	net/if_ieee1394subr.c		ieee1394
 file	net/if_llatbl.c			inet | inet6
 file	net/if_loop.c			loop
 file	net/if_media.c			net
-file	net/if_mpls.c			ifmpls			needs-flag
+file	net/if_mpls.c			mpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
