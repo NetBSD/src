@@ -1,4 +1,4 @@
-# $NetBSD: t_mpls_fw64.sh,v 1.2 2015/08/07 00:50:12 ozaki-r Exp $
+# $NetBSD: t_mpls_fw64.sh,v 1.3 2016/08/10 07:50:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -47,8 +47,8 @@ RUMP_SERVER2=unix://./r2
 RUMP_SERVER3=unix://./r3
 RUMP_SERVER4=unix://./r4
 
-RUMP_FLAGS6=\
-"-lrumpnet -lrumpnet_net -lrumpnet_netmpls -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
+RUMP_FLAGS6="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
+             -lrumpdev -lrumpnet_shmif -lrumpnet_netmpls"
 
 startservers()
 {

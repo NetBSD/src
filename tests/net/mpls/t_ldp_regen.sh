@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.6 2015/05/13 12:01:24 martin Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.7 2016/08/10 07:50:37 ozaki-r Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -41,7 +41,8 @@ RUMP_SERVER2=unix://./r2
 RUMP_SERVER3=unix://./r3
 RUMP_SERVER4=unix://./r4
 
-RUMP_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netmpls -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
+RUMP_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 \
+           -lrumpdev -lrumpnet_netmpls -lrumpnet_shmif"
 LDP_FLAGS=""
 
 atf_test_case ldp_regen cleanup
