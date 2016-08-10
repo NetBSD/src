@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.64 2016/08/10 18:25:00 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.65 2016/08/10 18:49:40 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1196,14 +1196,16 @@ meta_oodate(GNode *gn, Boolean oodate)
 			/* remove any missingFiles entries that match p */
 			if ((ln = Lst_Find(missingFiles, p,
 					   path_match)) != NULL) {
+			    LstNode nln;
 			    char *tp;
 
 			    do {
+				nln = Lst_FindFrom(missingFiles, Lst_Succ(ln),
+						   p, path_match);
 				tp = Lst_Datum(ln);
 				Lst_Remove(missingFiles, ln);
 				free(tp);
-			    } while ((ln = Lst_Find(missingFiles, p,
-						    path_match)) != NULL);
+			    } while ((ln = nln) != NULL);
 			}
 		    }
 		    if (buf[0] == 'M') {
