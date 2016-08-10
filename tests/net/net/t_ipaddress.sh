@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.2 2016/04/04 07:37:08 ozaki-r Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.3 2016/08/10 21:33:52 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
 SERVER6="$SERVER -lrumpnet_netinet6"
 SOCK_LOCAL=unix://commsock1
 BUS=bus

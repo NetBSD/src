@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.1 2015/08/06 08:23:14 ozaki-r Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.2 2016/08/10 21:33:52 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-INET6SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
+INET6SERVER="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpdev"
 INET6SERVER="$INET6SERVER -lrumpnet_netinet6 -lrumpnet_shmif"
 
 SOCK=unix://sock
