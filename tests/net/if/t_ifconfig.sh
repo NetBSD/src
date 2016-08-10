@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.10 2016/06/21 05:04:16 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.11 2016/08/10 22:30:02 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,7 @@ RUMP_SERVER2=unix://./r2
 
 RUMP_FLAGS=\
 "-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
+RUMP_FLAGS="${RUMP_FLAGS} -lrumpdev"
 
 TIMEOUT=3
 
