@@ -1,4 +1,4 @@
-#	$NetBSD: t_route.sh,v 1.6 2016/06/21 10:18:27 ozaki-r Exp $
+#	$NetBSD: t_route.sh,v 1.7 2016/08/10 23:00:39 roy Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RUMP_LIBS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+RUMP_LIBS="-lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
 RUMP_LIBS_IPV6="$RUMP_LIBS -lrumpnet_netinet6"
 
 # non_subnet_gateway
