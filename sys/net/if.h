@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.224 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.225 2016/08/10 10:09:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -1021,6 +1021,7 @@ int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
 int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
+void	loopinit(void);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
 void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);
