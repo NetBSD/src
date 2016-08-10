@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.248 2016/06/07 03:04:45 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.248 2016/06/07 03:04:45 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.248 2016/06/07 03:04:45 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1889,6 +1889,12 @@ PrintAddr(void *a, void *b)
 }
 
 
+static int
+addErrorCMD(void *cmdp, void *gnp)
+{
+    Var_Append(".ERROR_CMD", cmdp, VAR_GLOBAL);
+    return 0;
+}
 
 void
 PrintOnError(GNode *gn, const char *s)
@@ -1909,6 +1915,8 @@ PrintOnError(GNode *gn, const char *s)
 	 * We can print this even if there is no .ERROR target.
 	 */
 	Var_Set(".ERROR_TARGET", gn->name, VAR_GLOBAL, 0);
+	Var_Delete(".ERROR_CMD", VAR_GLOBAL);
+	Lst_ForEach(gn->commands, addErrorCMD, gn);
     }
     strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
 	    sizeof(tmp) - 1);
