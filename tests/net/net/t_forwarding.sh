@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.14 2016/06/29 07:29:04 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.15 2016/08/10 21:33:52 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
-inet6server="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
+inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
+inet6server="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif -lrumpdev"
 
 SOCKSRC=unix://commsock1
 SOCKFWD=unix://commsock2
