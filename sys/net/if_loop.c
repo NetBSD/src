@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.90 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.91 2016/08/10 10:09:42 kre Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.90 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.91 2016/08/10 10:09:42 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -150,7 +150,7 @@ loopattach(int n)
 	 */
 }
 
-static void
+void
 loopinit(void)
 {
 
