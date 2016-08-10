@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp_redirect.sh,v 1.2 2015/12/25 08:22:28 ozaki-r Exp $
+#	$NetBSD: t_icmp_redirect.sh,v 1.3 2016/08/10 22:17:44 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # Most codes are derived from tests/net/route/t_flags.sh
 
 netserver=\
-"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpdev"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
 SOCK_GW=unix://commsock3
