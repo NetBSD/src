@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.12 2016/06/21 05:04:16 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.13 2016/08/10 23:07:57 kre Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,7 @@
 
 inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet"
 inetserver="$inetserver -lrumpnet_netinet6 -lrumpnet_shmif"
+inetserver="$inetserver -lrumpdev"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCKSRC=unix://commsock1
