@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags.sh,v 1.10 2016/07/08 08:27:07 ozaki-r Exp $
+#	$NetBSD: t_flags.sh,v 1.11 2016/08/10 23:00:39 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,8 @@
 #
 
 netserver=\
-"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+"rump_server -lrumpdev -lrumpnet -lrumpnet_net -lrumpnet_netinet \
+	-lrumpnet_shmif"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
 SOCK_GW=unix://commsock3

@@ -1,4 +1,4 @@
-#	$NetBSD: t_change.sh,v 1.7 2016/07/21 02:02:30 ozaki-r Exp $
+#	$NetBSD: t_change.sh,v 1.8 2016/08/10 23:00:39 roy Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,8 @@
 #
 
 netserver=\
-"rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
+"rump_server -lrumpdev -lrumpnet -lrumpnet_net \
+	-lrumpnet_netinet -lrumpnet_shmif"
 export RUMP_SERVER=unix://commsock
 
 DEBUG=false

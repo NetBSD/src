@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.6 2016/07/08 08:27:07 ozaki-r Exp $
+#	$NetBSD: t_flags6.sh,v 1.7 2016/08/10 23:00:39 roy Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -25,7 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-RUMP_OPTS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
+RUMP_OPTS="-lrumpdev -lrumpnet -lrumpnet_net"
+RUMP_OPTS="$RUMP_OPTS -lrumpnet_netinet -lrumpnet_netinet6"
 RUMP_OPTS="$RUMP_OPTS -lrumpnet_shmif"
 SOCK_LOCAL=unix://commsock1
 SOCK_PEER=unix://commsock2
