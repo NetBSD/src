@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.7 2011/09/20 08:42:29 joerg Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.8 2016/08/10 16:40:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.7 2011/09/20 08:42:29 joerg Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.8 2016/08/10 16:40:24 skrll Exp $");
 #endif
 
 #include <inttypes.h>
@@ -85,9 +85,8 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	for (i = 0; i < argc && i < 8; i++)
 		/* LINTED __greg_t is safe */
 		gr[_REG_A0 + i] = va_arg(ap, __greg_t);
-	/* Pass remaining arguments on the stack above the $a0-3 gap. */
+	/* Pass remaining arguments on the stack */
 #endif
-	/* Pass remaining arguments on the stack above the $a0-3 gap. */
 	for (; i < argc; i++)
 		/* LINTED uintptr_t is safe */
 		*sp++ = va_arg(ap, __greg_t);
