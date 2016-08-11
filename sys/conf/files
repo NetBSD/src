@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1161 2016/08/07 10:44:04 christos Exp $
+#	$NetBSD: files,v 1.1162 2016/08/11 15:16:54 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -246,7 +246,7 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# Include deflate or bsd
 						# compression, enable pppd
 						# packet filtering support
-defflag opt_pppoe.h		PPPOE_SERVER PPPOE_TERM_UNKNOWN_SESSIONS
+defflag opt_pppoe.h		PPPOE_SERVER PPPOE_DEBUG
 
 # networking options
 #
