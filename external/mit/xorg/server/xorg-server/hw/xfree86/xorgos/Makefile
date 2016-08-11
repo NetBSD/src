@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2016/02/28 15:15:42 joerg Exp $
+#	$NetBSD: Makefile,v 1.42 2016/08/11 08:32:43 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -150,7 +150,7 @@ SRCS.misc+=     SlowBcopy.c
 #		IODelay.c CIODelay.c \
 #		SlowBcopy.c CSlowBcopy.c
 
-SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc} xorgos.c
+SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \

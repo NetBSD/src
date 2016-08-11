@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2014/01/16 01:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/11 08:32:43 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/xorg \
                 -I${X11SRCDIR.xorg-server}/Xi \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86 \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/parser \
