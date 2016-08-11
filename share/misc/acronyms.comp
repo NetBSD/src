@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.166 2016/05/31 23:15:05 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.167 2016/08/11 02:42:28 ginsbach Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -131,6 +131,7 @@ BOM	byte order mark
 BP	base pointer
 BP	boot processor
 BPB	BIOS parameter block
+BPDU	bridge protocol data unit
 BPF	Berkeley Packet Filter
 BPI	bits per inch
 BPM	business process modelling
@@ -180,6 +181,7 @@ CD	cache disable
 CD	compact disc
 CDDA	compact disc digital audio
 CDMA	code division multiple access
+CDP	Cisco Discovery Protocol
 CDRAM	cache dynamic random access memory
 CER	canonical encoding rules
 CF	compact flash
@@ -349,6 +351,7 @@ DRM	digital rights management
 DRRS	display refresh rate switching
 DS	debug store
 DSA	digital signature algorithm
+DSAP	destination service access point
 DSB	double-sideband modulation
 DSDT	differentiated system descriptor table
 DSL	digital subscriber line
@@ -787,6 +790,7 @@ MSI	message signaled interrupt
 MSI	modified, shared, invalid
 MSR	machine state register
 MSS	maximum segment size
+MSTP	Multiple Spanning Tree Protocol
 MT	machine translation
 MTA	mail transfer agent
 MTBF	mean time between failures
@@ -994,6 +998,7 @@ PUN	physical unit number
 PV	physical volume
 PVG	physical volume group
 PVI	protected-mode virtual interrupt
+PVST	Per-VLAN Spanning Tree
 PWM	pulse width modulation
 PXE	preboot execution environment
 QA	quality assurance
@@ -1059,6 +1064,7 @@ RPKI	resource PKI
 RPL	requested privilege level
 RPM	revolutions per minute
 RPN	reverse Polish notation
+RPVST	Rapid Per-VLAN Spanning Tree
 RR	random replacement
 RR	round robin
 RS	relay station
@@ -1067,6 +1073,7 @@ RSIP	Realm Specific IP
 RSN	Robust Secure Network
 RSS	really simple syndication
 RSS	residual sum of squares
+RSTP	Rapid Spanning Tree Protocol
 RT	real time
 RTC	real time clock
 RTC	real time computing
@@ -1092,6 +1099,7 @@ SAL	system abstraction layer
 SAM	serial access memory
 SAM	sum addressed memory
 SAN	storage area network
+SAP	service access point
 SAPIC	streamlined advanced programmable interrupt controller
 SASD	structured analysis, structured design
 SASI	Shugart Associates System Interface
@@ -1157,6 +1165,7 @@ SMP	symmetric multiprocessing
 SMT	simultaneous multithreading
 SMTP	Simple Mail Transfer Protocol
 SMU	system management unit
+SNAP	Sub-Network Access Protocol
 SNMP	Simple Network Management Protocol
 SNR	signal-to-noise ratio
 SOA	service oriented architecture
@@ -1184,6 +1193,7 @@ SRAM	static random access memory
 SRC	sample rate conversion
 SS	self-snoop
 SS	stack segment
+SSAP	source service access point
 SSB	single-sideband modulation
 SSD	solid state drive
 SSE	streaming SIMD extensions
@@ -1351,6 +1361,8 @@ VR	virtual reality
 VRAM	video random access memory
 VRM	voltage regulator module
 VRRP	Virtual Router Redundancy Protocol
+VSTP	VLAN Spanning Tree Protocol
+VTP	VLAN Trunking Protocol
 W	watt
 W3C	World Wide Web Consortium
 WAN	wide area network
