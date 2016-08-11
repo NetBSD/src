@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.28 2016/08/11 01:14:01 sevan Exp $
+.\"	$NetBSD: dd.1,v 1.29 2016/08/11 01:20:51 sevan Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -486,7 +486,6 @@ To print summary information in human-readable form:
 .Pp
 To customize the information summary output and print it through
 .Xr unvis 3 :
-.Pp
 .Bd -literal -offset indent
 dd if=/dev/zero of=/dev/null count=1 \e
      msgfmt='speed:%E, in %s seconds\en' 2\*[Gt]\*[Am]1 | unvis
