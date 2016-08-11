@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.sync,v 1.1 2011/08/02 07:41:02 mrg Exp $
+#	$NetBSD: Makefile.sync,v 1.2 2016/08/11 08:32:44 mrg Exp $
 
 .PATH:          ${X11SRCDIR.xorg-server}/miext/sync
-SRCS.sync=	misync.c
+SRCS.sync=	misync.c misyncfd.c misyncshm.c
 
 CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
