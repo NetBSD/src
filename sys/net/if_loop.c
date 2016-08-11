@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.91 2016/08/10 10:09:42 kre Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.92 2016/08/11 13:57:02 kre Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.91 2016/08/10 10:09:42 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.92 2016/08/11 13:57:02 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,6 +153,9 @@ loopattach(int n)
 void
 loopinit(void)
 {
+
+	if (lo0ifp != NULL)	/* can happen in rump kernel */
+		return;
 
 	(void)loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
 	if_clone_attach(&loop_cloner);
