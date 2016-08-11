@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.276 2015/12/16 18:54:03 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.277 2016/08/11 14:58:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276 2015/12/16 18:54:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.277 2016/08/11 14:58:29 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.276 2015/12/16 18:54:03 maxv Exp $");
 #include <sys/dtrace_bsd.h>
 
 /*
- * This is a hook which is initialised by the dtrace module
+ * This is a hook which is initialized by the dtrace module
  * to handle traps which might occur during DTrace probe
  * execution.
  */
@@ -291,8 +291,7 @@ trap(struct trapframe *frame)
 		trap_print(frame, l);
 	}
 #endif
-	if (type != T_NMI &&
-	    !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
+	if (type != T_NMI && !KERNELMODE(frame->tf_cs, frame->tf_eflags)) {
 		type |= T_USER;
 		l->l_md.md_regs = frame;
 		pcb->pcb_cr2 = 0;
@@ -321,9 +320,6 @@ trap(struct trapframe *frame)
 #endif
 
 	switch (type) {
-
-	case T_ASTFLT:
-		/*FALLTHROUGH*/
 
 	default:
 	we_re_toast:
@@ -409,7 +405,7 @@ kernelfault:
 				goto we_re_toast;
 			}
 			/*
-			 * We faulted loading one if the user segment registers.
+			 * We faulted loading one of the user segment registers.
 			 * The stack frame containing the user registers is
 			 * still valid and is just below the %eip:%cs:%fl of
 			 * the kernel fault frame.
