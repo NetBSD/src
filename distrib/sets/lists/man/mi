@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1530 2016/07/01 22:52:06 christos Exp $
+# $NetBSD: mi,v 1.1531 2016/08/11 09:06:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1764,6 +1764,7 @@
 ./usr/share/man/cat4/tcic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tcom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tcp.0			man-sys-catman		.cat
+./usr/share/man/cat4/tcu.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tdfxdrm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/tdvfb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/termios.0			man-sys-catman		.cat
@@ -4768,6 +4769,7 @@
 ./usr/share/man/html4/tcic.html			man-sys-htmlman		html
 ./usr/share/man/html4/tcom.html			man-sys-htmlman		html
 ./usr/share/man/html4/tcp.html			man-sys-htmlman		html
+./usr/share/man/html4/tcu.html			man-sys-htmlman		html
 ./usr/share/man/html4/tdfxdrm.html		man-sys-htmlman		html
 ./usr/share/man/html4/tdvfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/termios.html		man-sys-htmlman		html
@@ -7692,6 +7694,7 @@
 ./usr/share/man/man4/tcic.4			man-sys-man		.man
 ./usr/share/man/man4/tcom.4			man-sys-man		.man
 ./usr/share/man/man4/tcp.4			man-sys-man		.man
+./usr/share/man/man4/tcu.4			man-sys-man		.man
 ./usr/share/man/man4/tdfxdrm.4			man-sys-man		.man
 ./usr/share/man/man4/tdvfb.4			man-sys-man		.man
 ./usr/share/man/man4/termios.4			man-sys-man		.man
