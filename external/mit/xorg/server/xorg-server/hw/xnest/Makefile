@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/06/29 19:36:56 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2016/08/11 08:32:44 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -60,7 +60,6 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.render} \
 	${LDADD.damageext} \
 	${LDADD.miext/damage} \
-	${LDADD.cw/cw} \
 	${LDADD.miext/shadow} \
 	${LDADD.miext/sync} \
 	${LDADD.Xi} \
@@ -85,7 +84,6 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.randr} \
 	${DPADD.damageext} \
 	${DPADD.miext/damage} \
-	${DPADD.cw/cw} \
 	${DPADD.miext/shadow} \
 	${DPADD.miext/sync} \
 	${DPADD.Xi} \
