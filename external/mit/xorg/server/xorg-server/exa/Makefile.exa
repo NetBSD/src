@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.exa,v 1.5 2011/01/15 13:54:53 jmcneill Exp $
+#	$NetBSD: Makefile.exa,v 1.6 2016/08/11 08:32:42 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/exa
 
@@ -19,7 +19,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/exa \
 		-I${X11SRCDIR.xorg-server}/fb \
-		-I${X11SRCDIR.xorg-server}/miext/cw \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
