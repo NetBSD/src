@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.2 2016/06/22 05:39:49 nonaka Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.3 2016/08/11 01:54:30 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.2 2016/06/22 05:39:49 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.3 2016/08/11 01:54:30 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,6 +137,9 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "couldn't alloc memory\n");
 		goto cleanup;
 	}
+
+	/* Enable DMA transfer */
+	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 
 	if (sdhc_host_found(&sc->sc, aa->aa_memt, memh, mem->ar_length) != 0) {
 		aprint_error_dev(self, "couldn't initialize host\n");
