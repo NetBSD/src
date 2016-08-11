@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/08/24 13:47:05 rtr Exp $
+# $NetBSD: Makefile,v 1.4 2016/08/11 08:32:43 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -66,9 +66,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/mfb \
                 -I${DESTDIR}${X11INCDIR}/X11 \
                 -I${DESTDIR}${X11INCDIR}/pixman-1 \
                 -I${DESTDIR}${X11INCDIR}/xorg
-
-# XXX for ../../../../ files
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod
 
 COPTS.mfbclip.c=	-Wno-error
 COPTS.mfbfont.c=	-Wno-error

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rootless,v 1.2 2008/08/24 13:40:13 rtr Exp $
+#	$NetBSD: Makefile.rootless,v 1.3 2016/08/11 08:32:44 mrg Exp $
 
 .PATH:          ${X11SRCDIR.xorg-server}/miext/rootless
 SRCS.rootless+=	rootlessCommon.c rootlessGC.c rootlessScreen.c \
@@ -8,7 +8,6 @@ CPPFLAGS+=	${X11FLAGS.PERVASIVE_EXTENSION} \
 		${X11FLAGS.DIX} ${X11INCS.DIX}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
-		-I${X11SRCDIR.xorg-server}/miext/cw \
 		-I${DESTDIR}${X11INCDIR}/pixman-1
 
 .include <bsd.x11.mk>

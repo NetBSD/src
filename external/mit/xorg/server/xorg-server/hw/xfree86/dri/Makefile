@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2015/07/18 08:56:06 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2016/08/11 08:32:43 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 XMODULEDIRANDSTATIC=	# define
@@ -9,7 +9,7 @@ XMODULEDIRANDSTATIC=	# define
 LIB=	dri
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
-SRCS=	dri.c drimodule.c xf86dri.c
+SRCS=	dri.c xf86dri.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/include \

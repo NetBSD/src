@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2014/03/23 20:39:40 tron Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/11 08:32:43 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -7,7 +7,7 @@ LIB=	loader
 LOADERDIR=	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
 .PATH:	${LOADERDIR}
 
-SRCS=	loader.c loadext.c loadmod.c os.c sdksyms.c
+SRCS=	loader.c loadmod.c os.c sdksyms.c
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 #SRCS+=	SparcMulDiv.S
@@ -15,9 +15,7 @@ SRCS=	loader.c loadext.c loadmod.c os.c sdksyms.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/parser \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/vbe \
-		-I${X11SRCDIR.xorg-server}/miext/cw \
 		-I${X11SRCDIR.xorg-server}/miext/sync \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/int10 \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \

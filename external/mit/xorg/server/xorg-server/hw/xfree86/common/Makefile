@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/01/16 01:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2016/08/11 08:32:42 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ SRCS.xv=	xf86xv.c xf86xvmc.c
 SRCS.bus=	xf86pciBus.c xf86fbBus.c xf86noBus.c
 SRCS.randr=	xf86RandR.c
 
-SRCS=	xf86Configure.c xf86ShowOpts.c xf86Bus.c xf86Config.c \
+SRCS=	xf86Configure.c xf86Bus.c xf86Config.c \
 	xf86Cursor.c xf86DGA.c xf86DPMS.c \
 	xf86Events.c xf86Globals.c xf86AutoConfig.c \
 	xf86Option.c \
@@ -21,7 +21,9 @@ SRCS=	xf86Configure.c xf86ShowOpts.c xf86Bus.c xf86Config.c \
 	xf86Mode.c xorgHelper.c \
 	${SRCS.xv} ${SRCS.bus} ${SRCS.randr} \
 	xf86DefModeSet.c \
-	xf86VGAarbiter.c
+	xf86VGAarbiter.c \
+	xf86Extensions.c \
+	xf86platformBus.c
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
 SRCS.bus+=	xf86sbusBus.c
@@ -62,7 +64,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/xorg \
                 -I${X11SRCDIR.xorg-server}/Xi \
                 -I${X11SRCDIR.xorg-server}/hw/xfree86/ddc \
-		-I${X11SRCDIR.xorg-server}/hw/xfree86/dixmods/extmod \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/modes \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86 \

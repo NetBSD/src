@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/11/05 14:30:00 prlw1 Exp $
+#	$NetBSD: Makefile,v 1.13 2016/08/11 08:32:44 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,9 +6,9 @@ XORGSRC=	${X11SRCDIR.xorg-server}
 
 XORGINC_SUBDIR=	Xext composite dbe exa fb include mi \
 		miext/damage miext/shadow randr render xkb record
-XF86_SUBDIR=	common ddc dixmods/extmod dri fbdevhw i2c int10 modes \
+XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
-		vbe vgahw xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp dri2
+		vbe vgahw xf1bpp xf4bpp xf8_16bpp xf8_32bpp dri2
 
 .for _dir in ${XORGINC_SUBDIR}
 .PATH: ${XORGSRC}/${_dir}
@@ -42,7 +42,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	shadow.h shadowfb.h shmint.h site.h swaprep.h swapreq.h \
 	tda8425.h tda9850.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
-	window.h windowstr.h xaa.h xaalocal.h xaarop.h \
+	window.h windowstr.h \
 	xkbDflts.h xkb.h set.h \
 	xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
 	xf86Modes.h xf86Module.h \

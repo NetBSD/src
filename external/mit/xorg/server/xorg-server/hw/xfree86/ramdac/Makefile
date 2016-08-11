@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2010/11/23 08:22:33 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2016/08/11 08:32:43 mrg Exp $
 
 #XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -9,8 +9,7 @@ LIB=	ramdac
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
 SRCS=	xf86RamDac.c xf86RamDacCmap.c \
-	xf86Cursor.c xf86HWCurs.c IBM.c BT.c TI.c \
-	xf86BitOrder.c
+	xf86Cursor.c xf86HWCurs.c IBM.c BT.c TI.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/Xext \

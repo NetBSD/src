@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2010/11/23 08:22:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2016/08/11 08:32:44 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -9,8 +9,7 @@ LIB=		xkb
 .PATH:		${X11SRCDIR.X11}/src
 .PATH:		${X11SRCDIR.xkbfile}/src
 DDXSRCS=	ddxBeep.c ddxCtrls.c \
-		ddxLEDs.c ddxLoad.c \
-		ddxList.c
+		ddxLEDs.c ddxLoad.c
 DIXSRCS=	xkb.c xkbUtils.c xkbEvents.c xkbAccessX.c xkbSwap.c \
 		xkbLEDs.c xkbInit.c xkbActions.c xkbPrKeyEv.c
 XKBFILESRCS=	maprules.c xkmread.c xkbtext.c xkbfmisc.c \
@@ -24,7 +23,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/Xext \
-		-I${X11SRCDIR.xorg-server}/Xext/extmod \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/Xi \
 		-I${X11SRCDIR.xorg-server}/${LIB} \

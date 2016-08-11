@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/06/29 19:36:56 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2016/08/11 08:32:42 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ PROG=		Xorg
 BINMODE=	4711
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86
-SRCS=		xorg.c libxorg.c
+SRCS=		xorg-wrapper.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/fb \
@@ -50,7 +50,6 @@ LDADD+=	${LDADD.randr}
 LDADD+=	${LDADD.damageext}
 LDADD+=	${LDADD.miext/damage}
 LDADD+=	${LDADD.miext/shadow}
-LDADD+=	${LDADD.miext/cw}
 LDADD+=	${LDADD.miext/sync}
 LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
@@ -96,7 +95,6 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.damageext} \
 	${DPADD.miext/damage} \
 	${DPADD.miext/shadow} \
-	${DPADD.miext/cw} \
 	${DPADD.miext/sync} \
 	${DPADD.Xi} \
 	${DPADD.xkb} \

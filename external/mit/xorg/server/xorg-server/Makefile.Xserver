@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.14 2016/06/10 03:37:34 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.15 2016/08/11 08:32:42 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -14,7 +14,6 @@
 	damageext \
 	miext/damage \
 	miext/shadow \
-	miext/cw \
 	miext/sync \
 	Xi \
 	xkb \
@@ -30,7 +29,6 @@
 	hw/xfree86/ddc \
 	hw/xfree86/dixmods \
 	hw/xfree86/dixmods/dbe \
-	hw/xfree86/dixmods/extmod \
 	hw/xfree86/dixmods/fb \
 	hw/xfree86/dixmods/freetype \
 	hw/xfree86/dixmods/record \
@@ -56,7 +54,6 @@
 	hw/xfree86/vbe \
 	hw/xfree86/vgahw \
 	hw/xfree86/x86emu \
-	hw/xfree86/xaa \
 	hw/xfree86/xf8_16bpp \
 	hw/xfree86/xf8_32bpp \
 	hw/xfree86/xf86config \
