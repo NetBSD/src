@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.249 2016/08/10 23:49:12 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1892,6 +1892,8 @@ PrintAddr(void *a, void *b)
 static int
 addErrorCMD(void *cmdp, void *gnp)
 {
+    if (cmdp == NULL)
+	return 1;			/* stop */
     Var_Append(".ERROR_CMD", cmdp, VAR_GLOBAL);
     return 0;
 }
