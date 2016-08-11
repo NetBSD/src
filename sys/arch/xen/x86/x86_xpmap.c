@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.58 2016/08/03 11:51:18 maxv Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.59 2016/08/11 15:35:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -69,7 +69,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.58 2016/08/03 11:51:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.59 2016/08/11 15:35:10 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -913,6 +913,7 @@ xen_bootstrap_tables(vaddr_t old_pgd, vaddr_t new_pgd,
 			    page < (vaddr_t)atdevbase + IOM_SIZE) {
 				pte[pl1_pi(page)] =
 				    IOM_BEGIN + (page - (vaddr_t)atdevbase);
+				pte[pl1_pi(page)] |= pg_nx;
 			}
 #endif
 
