@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.120 2016/08/11 09:48:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.120 2016/08/11 09:48:57 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1064,6 +1064,10 @@ dodup(int oldd, int minfd)
 			minfd -= hijack_fdoff;
 		isrump = 1;
 	} else {
+		if (minfd >= hijack_fdoff) {
+			errno = EINVAL;
+			return -1;
+		}
 		op_fcntl = GETSYSCALL(host, FCNTL);
 		isrump = 0;
 	}
