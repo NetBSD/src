@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.277 2016/08/11 14:58:29 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.278 2016/08/11 15:03:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.277 2016/08/11 14:58:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.278 2016/08/11 15:03:23 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -582,7 +582,7 @@ faultcommon:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (type == T_PAGEFLT && va >= KERNBASE)
+		if (type == T_PAGEFLT && va >= VM_MIN_KERNEL_ADDRESS)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
