@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.16 2015/12/29 07:17:19 pgoyette Exp $
+#       $NetBSD: t_tcpip.sh,v 1.17 2016/08/11 21:29:44 kre Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-rumpnetsrv='rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet'
+rumpnetsrv='rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpdev'
 export RUMP_SERVER=unix://csock
 
 atf_test_case http cleanup
@@ -205,7 +205,7 @@ test_nfs()
 	unset LD_PRELOAD
 
 	# at least the kernel server is easier
-	atf_check -s exit:0 rump_server -lrumpvfs -lrumpnet		\
+	atf_check -s exit:0 rump_server -lrumpvfs -lrumpnet -lrumpdev	\
 	    -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif -lrumpfs_nfs\
 	    ${RUMP_SERVER}
 
@@ -232,7 +232,7 @@ nfs_head()
 nfs_body()
 {
 	test_nfs -lrumpvfs -lrumpdev -lrumpnet -lrumpnet_net		\
-	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif		\
+	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif -lrumpdev	\
 	    -lrumpdev_disk -lrumpfs_ffs -lrumpfs_nfs -lrumpfs_nfsserver	\
 	    -d key=/dk,hostpath=ffs.img,size=host
 }
@@ -254,7 +254,7 @@ nfs_autoload_body()
 {
 	[ `uname -m` = "i386" ] || atf_skip "test currently valid only on i386"
 	test_nfs -lrumpvfs -lrumpdev -lrumpnet -lrumpnet_net		\
-	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif		\
+	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif -lrumpdev	\
 	    -lrumpdev_disk -d key=/dk,hostpath=ffs.img,size=host
 }
 
