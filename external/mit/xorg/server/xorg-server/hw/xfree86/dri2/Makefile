@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2015/07/18 08:56:06 mrg Exp $
+# $NetBSD: Makefile,v 1.9 2016/08/11 08:32:43 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 XMODULEDIRANDSTATIC=	# defined
@@ -14,6 +14,7 @@ SRCS=	dri2.c dri2ext.c
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2/pci_ids \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
 		-I${X11SRCDIR.xorg-server}/xfixes \

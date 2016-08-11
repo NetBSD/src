@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/10 06:43:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2016/08/11 08:32:43 mrg Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 
@@ -8,7 +8,7 @@ XMODULEDIR=     ${X11USRLIBDIR}/modules/extensions
 LIB=	record
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
-SRCS=	${SRCS.record} recordmod.c
+SRCS=	${SRCS.record}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common
 
