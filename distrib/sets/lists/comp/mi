@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2055 2016/08/06 00:02:33 jakllsch Exp $
+#	$NetBSD: mi,v 1.2056 2016/08/11 14:48:47 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3667,7 +3667,7 @@
 ./usr/libdata/lint/llib-lcrypto_idea.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_mdc2.ln		comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcrypto_rc5.ln		comp-c-lintlib		lint,crypto_rc5
-./usr/libdata/lint/llib-lctf.ln			comp-c-lintlib		lint,ctf
+./usr/libdata/lint/llib-lctf.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lcurses.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ldes.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-ldm.ln			comp-c-lintlib		lint
