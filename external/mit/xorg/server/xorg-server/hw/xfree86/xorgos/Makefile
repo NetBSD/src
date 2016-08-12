@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2016/08/11 08:32:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2016/08/12 01:15:51 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -141,6 +141,9 @@ SRCS.bus+=	Pci.c
 	${MACHINE} == "bebox" || ${MACHINE} == "ibmnws"
 #SRCS.misc+=     CBUSmemcpy.c CIODelay.c CSlowBcopy.c
 .endif
+
+# All platforms get this.
+SRCS.bus+=	nobus.c
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86/os-support/misc
 SRCS.misc+=     SlowBcopy.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2011/08/11 23:15:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/08/12 01:15:51 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -9,7 +9,7 @@ LIB=	xf86config
 SRCS=	DRI.c Device.c Extensions.c Files.c Flags.c Input.c Layout.c \
 	Module.c Monitor.c Pointer.c Screen.c Vendor.c Video.c read.c \
 	scan.c write.c \
-	InputClass.c
+	InputClass.c OutputClass.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
                 -I${X11SRCDIR.xorg-server}/include \
