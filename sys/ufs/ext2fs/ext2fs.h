@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.41 2016/08/05 21:22:06 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.42 2016/08/12 19:04:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -340,6 +340,14 @@ struct m_ext2fs {
 	"\03INCOMPAT_REPLAY_JOURNAL" \
 	"\02INCOMPAT_FTYPE" \
 	"\01INCOMPAT_COMP"
+
+#define EXT2F_HAS_COMPAT_FEATURE(ip, feature) \
+	(ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((ip)->i_e2fs->e2fs.e2fs_features_compat & (feature)) != 0
+
+#define EXT2F_HAS_INCOMPAT_FEATURE(ip, feature) \
+	(ip)->i_e2fs->e2fs.e2fs_rev >= E2FS_REV1 && \
+	((ip)->i_e2fs->e2fs.e2fs_features_incompat & (feature)) != 0
 
 /*
  * Features supported in this implementation

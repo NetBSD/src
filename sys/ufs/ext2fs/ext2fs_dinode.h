@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.35 2016/08/06 09:29:28 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.36 2016/08/12 19:04:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -123,11 +123,11 @@ struct ext2fs_dinode {
 	uint32_t	e2di_blocks[EXT2FS_NDADDR+EXT2FS_NIADDR];
 					/* 40: disk blocks */
 	uint32_t	e2di_gen;	/* 100: generation number */
-	uint32_t	e2di_facl;	/* 104: file ACL (not implemented) (ext3) */
+	uint32_t	e2di_facl;	/* 104: file ACL (ext3) */
 	uint32_t	e2di_size_high;	/* 108: Size (in bytes) high */
 	uint32_t	e2di_obso_faddr;/* 112: obsolete fragment address (ext2) */
 	uint16_t	e2di_nblock_high; /* 116: Blocks count bits 47:32 (ext4) */
-	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4) */
+	uint16_t	e2di_facl_high; /* 118: file ACL bits 47:32 (ext4/64bit) */
 	uint16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits (ext4) */
 	uint16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits (ext4) */
 	uint16_t 	e2di_checksum_low;  /* 124: crc LE (not implemented) (ext4) */
