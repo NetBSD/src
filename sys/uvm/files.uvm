@@ -1,9 +1,10 @@
-#	$NetBSD: files.uvm,v 1.25 2015/07/27 09:24:28 maxv Exp $
+#	$NetBSD: files.uvm,v 1.26 2016/08/12 13:40:21 skrll Exp $
 
 #
 # UVM options
 # 
-defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT: KERNHIST
+defflag opt_uvmhist.h		UVMHIST: KERNHIST
+defflag opt_uvmhist.h		UVMHIST_PRINT: KERNHIST_PRINT
 defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
 defparam opt_uvm.h		UVM_RESERVED_PAGES_PER_CPU
 defflag opt_vmswap.h		VMSWAP
