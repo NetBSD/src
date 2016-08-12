@@ -1,5 +1,5 @@
 /*	$KAME: sctp_crc32.c,v 1.12 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_crc32.c,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_crc32.c,v 1.2 2016/08/12 19:08:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.2 2016/08/12 19:08:54 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sctp.h"
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: sctp_crc32.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
 /* IEEE Transactions on Communications, Vol.41, No.6, June 1993  */
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-unsigned long  sctp_crc_c[256] = {
+const unsigned long  sctp_crc_c[256] = {
 	0x00000000L, 0xF26B8303L, 0xE13B70F7L, 0x1350F3F4L,
 	0xC79A971FL, 0x35F1141CL, 0x26A1E7E8L, 0xD4CA64EBL,
 	0x8AD958CFL, 0x78B2DBCCL, 0x6BE22838L, 0x9989AB3BL,
