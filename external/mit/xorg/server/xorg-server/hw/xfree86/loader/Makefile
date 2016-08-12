@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.14 2016/08/11 08:32:43 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/08/12 01:15:51 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
 
+TOP=	${X11SRCDIR.xorg-server}
+XFTOP=	${TOP}/hw/xfree86
+
 LIB=	loader
-LOADERDIR=	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
+LOADERDIR=	${XFTOP}/${LIB}
 .PATH:	${LOADERDIR}
 
 SRCS=	loader.c loadmod.c os.c sdksyms.c
@@ -22,6 +25,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/i2c \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/modes \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/ramdac \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/dri \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2 \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus \
 		-I${X11SRCDIR.xorg-server}/os \
@@ -47,7 +52,7 @@ CPPFLAGS.sdksyms.c=	${X11FLAGS.EXTENSION}
 COPTS.loadmod.c=		-Wno-error
 
 sdksyms.c: sdksyms.sh
-	CPP=${CPP:Q} AWK=${TOOL_AWK:Q} ${HOST_SH} $(LOADERDIR)/sdksyms.sh $(X11SRCDIR.xorg-server) ${CFLAGS} ${CPPFLAGS}
+	CPP=${CPP:Q} AWK=${TOOL_AWK:Q} ${HOST_SH} ${XFTOP}/sdksyms.sh ${TOP} ${CFLAGS} ${CPPFLAGS}
 sdksyms.d: sdksyms.c
 CLEANFILES+=	sdksyms.c sdksyms.dep
 
