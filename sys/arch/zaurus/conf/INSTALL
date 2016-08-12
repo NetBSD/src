@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2016/02/16 05:14:31 nonaka Exp $
+# $NetBSD: INSTALL,v 1.28 2016/08/12 09:26:35 nonaka Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -82,6 +82,16 @@ no wsmouse* at ums?
 no ugen*
 
 no uk* at scsibus?
+
+no acphy*
+no amhphy*
+no bmtphy*
+no glxtphy*
+no gphyter*
+no makphy*
+no tlphy*
+no tqphy*
+no urlphy*
 
 no pseudo-device	vnd
 no options 		VND_COMPRESSION
