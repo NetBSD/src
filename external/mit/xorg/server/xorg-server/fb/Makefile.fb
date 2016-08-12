@@ -1,13 +1,34 @@
-#	$NetBSD: Makefile.fb,v 1.9 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile.fb,v 1.10 2016/08/12 01:15:49 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/fb
-SRCS.fb=	fb24_32.c fballpriv.c fbarc.c fbbits.c fbblt.c \
-		fbbltone.c fbcopy.c \
-		fbfill.c fbfillrect.c fbfillsp.c fbgc.c fbgetsp.c \
-		fbglyph.c fbimage.c fbline.c fboverlay.c \
-		fbpict.c fbpixmap.c fbpoint.c fbpush.c fbscreen.c \
-		fbseg.c fbsetsp.c fbsolid.c \
-		fbtrap.c fbutil.c fbwindow.c
+SRCS.fb=	fb24_32.c       \
+		fballpriv.c     \
+		fbarc.c         \
+		fbbits.c        \
+		fbblt.c         \
+		fbbltone.c      \
+		fbcmap_mi.c     \
+		fbcopy.c        \
+		fbfill.c        \
+		fbfillrect.c    \
+		fbfillsp.c      \
+		fbgc.c          \
+		fbgetsp.c       \
+		fbglyph.c       \
+		fbimage.c       \
+		fbline.c        \
+		fboverlay.c     \
+		fbpict.c        \
+		fbpixmap.c      \
+		fbpoint.c       \
+		fbpush.c        \
+		fbscreen.c      \
+		fbseg.c         \
+		fbsetsp.c       \
+		fbsolid.c       \
+		fbtrap.c        \
+		fbutil.c        \
+		fbwindow.c
 
 CPPFLAGS+=	${X11FLAGS.DIX} ${X11INCS.DIX} -DHAVE_DIX_CONFIG_H
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/12 01:15:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,7 @@ LDADD+=	${LDADD.mi}
 LDADD+=	${LDADD.xfixes}
 LDADD+=	${LDADD.Xext/Xextbuiltin}
 LDADD+=	${LDADD.render}
-LDADD+=	${LDADD.randr}
+eDADD+=	${LDADD.randr}
 LDADD+=	${LDADD.damageext}
 LDADD+=	${LDADD.miext/damage}
 LDADD+=	${LDADD.miext/shadow}
@@ -57,6 +57,10 @@ LDADD+=	${LDADD.os}
 LDADD+=	${LDADD.glx}
 LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dri2}
+# XXX
+.if ${HAVE_DRI3:Uno} != "no"
+LDADD+=	${LDADD.dri3}
+.endif
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	${LDADD.hw/xfree86/dixmods/xorgxkb}
 LDADD+=	-lpixman-1 -lXfont -lfreetype -lXau -lfontenc -lXdmcp
@@ -117,6 +121,11 @@ DPADD+=	${DPADD.dix} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS}
+
+# XXX
+.if ${HAVE_DRI3:Uno} != "no"
+DPADD+=	${DPADD.dri3}
+.endif
 
 .if ${MKCRYPTO:Uno} != "no"
 LDADD+=	-lcrypto

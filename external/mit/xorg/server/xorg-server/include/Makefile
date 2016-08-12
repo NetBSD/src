@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/11 08:32:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/12 01:15:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,23 +23,28 @@ XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 INCSDIR=${X11INCDIR}/xorg
 INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	bt829.h \
-	callback.h closestr.h closure.h colormap.h \
+	callback.h client.h closestr.h closure.h colormap.h \
 	colormapst.h compiler.h compositeext.h cursor.h cursorstr.h \
 	damage.h damagestr.h \
-	dbestruct.h dgaproc.h dix.h dixevents.h dixfont.h dixfontstr.h \
-	dixgrabs.h dixstruct.h dri.h dristruct.h edid.h exa.h exevents.h \
+	dbestruct.h dgaproc.h displaymode.h \
+	dix.h dixevents.h dixfont.h dixfontstr.h \
+	dixgrabs.h dixstruct.h dri.h dristruct.h \
+	dri3.h \
+	edid.h exa.h exevents.h \
 	eventconvert.h events.h eventstr.h list.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
 	fbpict.h fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
-	glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
-	mi.h mibstore.h micmap.h micoord.h mifillarc.h mifpoly.h \
+	glx_extinit.h glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
+	mi.h micmap.h micoord.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
-	mispans.h mistruct.h miwideline.h mizerarc.h msp3430.h opaque.h \
-	os.h picture.h picturestr.h pixmap.h pixmapstr.h property.h \
-	protocol-versions.h \
+	mistruct.h mizerarc.h msp3430.h opaque.h \
+	nonsdk_extinit.h optionstr.h \
+	os.h picture.h picturestr.h pixmap.h pixmapstr.h \
+	present.h presentext.h \
+	property.h protocol-versions.h \
 	propertyst.h randrstr.h region.h regionstr.h resource.h \
 	rgb.h sarea.h screenint.h scrnintstr.h selection.h servermd.h \
-	shadow.h shadowfb.h shmint.h site.h swaprep.h swapreq.h \
+	shadow.h shadowfb.h shmint.h site.h \
 	tda8425.h tda9850.h \
 	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
 	window.h windowstr.h \
