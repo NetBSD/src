@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.glx,v 1.11 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile.glx,v 1.12 2016/08/12 01:15:49 mrg Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/glx
 .PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
@@ -48,6 +48,7 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/Xext \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/dri2 \
+	-I${X11SRCDIR.xorg-server}/present \
 	-I${X11SRCDIR.MesaLib}/include \
 	-I${X11SRCDIR.MesaLib}/src/glx \
 	-I${X11SRCDIR.MesaLib}/src/mesa \

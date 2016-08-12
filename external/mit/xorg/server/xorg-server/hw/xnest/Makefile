@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2016/08/11 08:32:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2016/08/12 01:15:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -33,7 +33,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
 		${X11FLAGS.EXTENSION} \
 		${X11FLAGS.DIX} \
-		-DNO_HW_ONLY_EXTS -UXFree86LOADER -UMITSHM \
+		-UXFree86LOADER -UMITSHM \
 		-D__XKBDEFRULES__='"xorg"'
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \

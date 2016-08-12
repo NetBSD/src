@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/07/18 08:56:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2016/08/12 01:15:50 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 XMODULEDIRANDSTATIC=	# defined
@@ -9,6 +9,6 @@ XMODULEDIRANDSTATIC=	# defined
 LIB=	fb
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/dixmods
-SRCS=	${SRCS.fb} fbmodule.c fbcmap_mi.c
+SRCS=	${SRCS.fb} fbmodule.c
 
 .include "../../../../fb/Makefile.fb"
