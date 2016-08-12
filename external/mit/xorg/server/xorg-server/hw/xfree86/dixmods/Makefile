@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2016/08/12 01:15:49 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -22,10 +22,8 @@ CPPFLAGS+= \
 	-DXFree86LOADER
 
 SUBDIR = \
-	dbe \
 	fb \
 	glx \
-	record \
 	shadow \
 	wfb \
 	xorgxkb

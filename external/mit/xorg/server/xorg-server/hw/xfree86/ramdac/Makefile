@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2016/08/11 08:32:43 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2016/08/12 01:15:51 mrg Exp $
 
 #XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -20,8 +20,6 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX}
-
-CPPFLAGS.xf86BitOrder.c=	-DRAMDAC_MODULE
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
