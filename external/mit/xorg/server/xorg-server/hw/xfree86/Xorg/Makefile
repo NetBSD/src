@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/08/12 01:15:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2016/08/12 20:45:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,7 @@ LDADD+=	${LDADD.mi}
 LDADD+=	${LDADD.xfixes}
 LDADD+=	${LDADD.Xext/Xextbuiltin}
 LDADD+=	${LDADD.render}
-eDADD+=	${LDADD.randr}
+LDADD+=	${LDADD.randr}
 LDADD+=	${LDADD.damageext}
 LDADD+=	${LDADD.miext/damage}
 LDADD+=	${LDADD.miext/shadow}
