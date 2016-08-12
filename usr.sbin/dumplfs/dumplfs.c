@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.62 2016/06/15 14:07:54 riastradh Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.63 2016/08/12 08:22:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.62 2016/06/15 14:07:54 riastradh Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.63 2016/08/12 08:22:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -336,10 +336,17 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		err(1, "malloc");
 	get(fd, fsbtobyte(lfsp, addr), dpage, psize);
 
+	dip = NULL;
 	for (i = LFS_INOPB(lfsp); i-- > 0; ) {
 		dip = DINO_IN_BLOCK(lfsp, dpage, i);
 		if (lfs_dino_getinumber(lfsp, dip) == LFS_IFILE_INUM)
 			break;
+	}
+
+	/* just in case */
+	if (dip == NULL) {
+		warnx("this volume apparently has zero inodes per block");
+		return;
 	}
 
 	if (lfs_dino_getinumber(lfsp, dip) != LFS_IFILE_INUM) {
