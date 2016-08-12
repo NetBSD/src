@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.14 2016/06/15 06:01:21 ozaki-r Exp $	*/
+/*	$NetBSD: scope6.c,v 1.15 2016/08/12 11:44:24 christos Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.14 2016/06/15 06:01:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.15 2016/08/12 11:44:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -56,7 +56,8 @@ int ip6_use_defzone = 0;
 
 static struct scope6_id sid_default;
 #define SID(ifp) \
-	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
+    ((ifp)->if_afdata[AF_INET6] == NULL ? NULL : \
+	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
 
 void
 scope6_init(void)
@@ -100,9 +101,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 {
 	int i;
 	int error = 0;
-	struct scope6_id *sid = NULL;
-
-	sid = SID(ifp);
+	struct scope6_id *sid = SID(ifp);
 
 	if (!sid)	/* paranoid? */
 		return (EINVAL);
@@ -393,7 +392,8 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	uint32_t zoneid = 0;
 	const struct scope6_id *sid = SID(ifp);
 
-	KASSERT(sid != NULL);
+	if (sid == NULL)
+		return EINVAL;
 
 	/*
 	 * special case: the loopback address can only belong to a loopback
