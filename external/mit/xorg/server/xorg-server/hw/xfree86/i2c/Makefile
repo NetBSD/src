@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/07/18 08:56:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2016/08/12 01:15:50 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -6,7 +6,7 @@
 LIB=	i2c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/${LIB}
-SRCS=	xf86i2c.c # xf86i2cmodule.c
+SRCS=	xf86i2c.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2016/08/11 08:32:43 mrg Exp $
+# $NetBSD: Makefile,v 1.13 2016/08/12 01:15:50 mrg Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
 XMODULEDIRANDSTATIC=	# define
@@ -35,9 +35,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 CPPFLAGS+=	-DXF86DRI \
 		${X11FLAGS.DIX}
 
-CPPFLAGS.dri.c=		-Wno-error
-CPPFLAGS.drimodule.c=	-Wno-error	# XXX xf86dristr.h
-CPPFLAGS.xf86dri.c=	-Wno-error	# XXX xf86dristr.h
+CPPFLAGS.dri.c=		#-Wno-error
+CPPFLAGS.xf86dri.c=	#-Wno-error	# XXX xf86dristr.h
 
 LIBDPLIBS=	drm ${.CURDIR}/../../../../../lib/libdrm
 
