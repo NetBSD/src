@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.121 2016/08/12 19:04:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.121 2016/08/12 19:04:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.120 2016/08/05 20:15:41 jdolecek 
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 #include <ufs/ext2fs/ext2fs_dir.h>
+#include <ufs/ext2fs/ext2fs_xattr.h>
 
 extern int prtactive;
 
@@ -1182,6 +1183,10 @@ const struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
 	{ &vop_putpages_desc, genfs_putpages },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
@@ -1232,6 +1237,10 @@ const struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_getpages_desc, spec_getpages },		/* getpages */
 	{ &vop_putpages_desc, spec_putpages },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_specop_opv_desc =
@@ -1281,6 +1290,10 @@ const struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_advlock_desc, vn_fifo_bypass },		/* advlock */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_putpages_desc, vn_fifo_bypass },		/* putpages */
+	{ &vop_getextattr_desc, ext2fs_getextattr },	/* getextattr */
+	{ &vop_setextattr_desc, ext2fs_setextattr },	/* setextattr */
+	{ &vop_listextattr_desc, ext2fs_listextattr },	/* listextattr */
+	{ &vop_deleteextattr_desc, ext2fs_deleteextattr },/* deleteextattr */
 	{ NULL, NULL }
 };
 const struct vnodeopv_desc ext2fs_fifoop_opv_desc =
