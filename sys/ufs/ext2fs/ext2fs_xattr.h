@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.h,v 1.1 2016/08/12 19:04:03 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_xattr.h,v 1.2 2016/08/12 20:30:15 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _UFS_EXT2FS_EXT2FS_XATTR_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.h,v 1.1 2016/08/12 19:04:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.h,v 1.2 2016/08/12 20:30:15 macallan Exp $");
 
 #ifdef _KERNEL
 
@@ -79,7 +79,7 @@ struct ext2fs_xattr_entry {
  * doesn't overflow past end.
  */
 #define EXT2FS_XATTR_IS_LAST_ENTRY(entry, end) \
-	*((uint32_t *)(entry)) == 0 || EXT2FS_XATTR_NEXT(entry) > end
+	(*((uint32_t *)(entry)) == 0 || (uintptr_t)EXT2FS_XATTR_NEXT(entry) > (uintptr_t)end)
 
 /*
  * Each ext2fs_xattr_entry starts on next 4-byte boundary, pad if necessary.
