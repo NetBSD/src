@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/08/11 08:32:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2016/08/12 01:15:51 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -11,7 +11,7 @@ SRCS=		miarc.c mibitblt.c micopy.c \
 		miexpose.c mifillarc.c mifillrct.c \
 		migc.c miglblt.c mioverlay.c mipointer.c mipoly.c \
 		mipolypnt.c mipolyrect.c \
-		mipolyseg.c mipolytext.c mipolyutil.c mipushpxl.c \
+		mipolyseg.c mipolytext.c mipushpxl.c \
 		miscrinit.c misprite.c \
 		mivaltree.c miwideline.c miwindow.c mizerarc.c \
 		mizerclip.c mizerline.c

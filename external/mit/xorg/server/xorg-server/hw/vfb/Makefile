@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/06/29 19:36:56 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2016/08/12 01:15:49 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,9 @@ PROG=		Xvfb
 .PATH:		${X11SRCDIR.xorg-server}/mi
 SRCS=		InitInput.c InitOutput.c dpmsstubs.c miinitext.c stubs.c
 
-.PATH:		${X11SRCDIR.xorg-server}/fb
-SRCS+=		fbcmap_mi.c
+# XXX should not be needed now
+#.PATH:		${X11SRCDIR.xorg-server}/fb
+#SRCS+=		fbcmap_mi.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/fb \
@@ -28,8 +29,6 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xorg-server}/render \
 		-DHAVE_DIX_CONFIG_H \
-		-DNO_HW_ONLY_EXTS \
-		-DNO_MODULE_EXTS \
 		-UGLXEXT
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} ${X11FLAGS.DIX} \
@@ -44,7 +43,6 @@ CPPFLAGS+=	-UDDXTIME
 CPPFLAGS.InitInput.c=	${X11FLAGS.EXTENSION} \
 			-UGLXEXT
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION} \
-			-DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS \
 			-UXFree86LOADER \
 			-UGLXEXT
 CPPFLAGS.dpmsstubs.c=	${X11FLAGS.EXTENSION} \
