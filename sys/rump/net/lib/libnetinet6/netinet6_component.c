@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet6_component.c,v 1.4 2016/01/26 23:12:19 pooka Exp $	*/
+/*	$NetBSD: netinet6_component.c,v 1.5 2016/08/12 11:43:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2013 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.4 2016/01/26 23:12:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet6_component.c,v 1.5 2016/08/12 11:43:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -48,6 +48,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 	extern struct domain inet6domain;
 
 	domain_attach(&inet6domain);
+
+	loopinit();
 }
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
