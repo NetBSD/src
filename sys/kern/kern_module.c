@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.116 2016/08/04 06:13:15 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.117 2016/08/13 12:05:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.116 2016/08/04 06:13:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.117 2016/08/13 12:05:49 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -271,7 +271,8 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 			    modp[i]->mod_info->mi_name, NULL, NULL);
 			/* throw in the towel, recovery hard & not worth it */
 			if (rv)
-				panic("builtin module \"%s\" init failed: %d",
+				panic("%s: builtin module \"%s\" init failed:"
+				    " %d", __func__,
 				    modp[i]->mod_info->mi_name, rv);
 		}
 	}
@@ -389,7 +390,7 @@ module_start_unload_thread(void)
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, module_thread,
 	    NULL, NULL, "modunload");
 	if (error != 0)
-		panic("module_init: %d", error);
+		panic("%s: %d", __func__, error);
 }
 
 /*
@@ -706,7 +707,7 @@ module_rele(const char *name)
 	mod = module_lookup(name);
 	if (mod == NULL) {
 		kernconfig_unlock();
-		panic("module_rele: gone");
+		panic("%s: gone", __func__);
 	}
 	mod->mod_refcnt--;
 	kernconfig_unlock();
@@ -1173,7 +1174,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(name != NULL);
 
 	module_print("unload requested for '%s' (%s)", name,
-	    load_requires_force?"TRUE":"FALSE");
+	    load_requires_force ? "TRUE" : "FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
 		module_error("module `%s' not found", name);
