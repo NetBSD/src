@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.c,v 1.1 2016/08/12 19:04:03 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_xattr.c,v 1.2 2016/08/13 07:40:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.1 2016/08/12 19:04:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.2 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 
 		/* make sure the value offset are sane */
 		if (&value[value_len] > end)
-			return (EINVAL);
+			return EINVAL;
 
 		if (uio != NULL) {
 			/*
@@ -124,10 +124,10 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 	}
 
 	/* requested attribute not found */
-	return (ENODATA);
+	return ENODATA;
 
     found:
-	return (0);
+	return 0;
 }
 
 static int
@@ -142,7 +142,7 @@ ext2fs_get_inode_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
 	end   = &((uint8_t *)di)[EXT2_DINODE_SIZE(ip->i_e2fs)];
 
 	if (end <= start || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
-		return (ENODATA);
+		return ENODATA;
 
 	return ext2fs_find_xattr(EXT2FS_XATTR_IFIRST(h), start, end, attrnamespace, uio, size, name_index, name);
 }
@@ -163,7 +163,7 @@ ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
 
 	/* don't do anything if no attr block was allocated */
 	if (xblk == 0)
-		return (0);
+		return 0;
 
 	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk), (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
 	if (error)
@@ -181,7 +181,7 @@ ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
     out:
 	if (bp)
 		brelse(bp, 0);
-	return (error);
+	return error;
 }
 int
 ext2fs_getextattr(void *v)
@@ -210,7 +210,7 @@ ext2fs_getextattr(void *v)
 
         error = extattr_check_cred(ap->a_vp, namebuf, ap->a_cred, VREAD);
         if (error)
-                return (error);
+                return error;
 
         /*
          * Allow only offsets of zero to encourage the read/replace
@@ -218,7 +218,7 @@ ext2fs_getextattr(void *v)
          * atomicity, as we don't provide locks for extended attributes.
          */
         if (ap->a_uio != NULL && ap->a_uio->uio_offset != 0)
-                return (ENXIO);
+                return ENXIO;
 
 	/* figure out the name index */
 	name = ap->a_name;
@@ -246,7 +246,7 @@ ext2fs_getextattr(void *v)
 	if (ap->a_size != NULL)
 		*ap->a_size = valuesize;
 
-	return (error);
+	return error;
 }
 
 int
@@ -266,7 +266,7 @@ ext2fs_setextattr(void *v)
 #endif
 
 	/* XXX Not implemented */
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 static int
@@ -317,7 +317,7 @@ ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end, int attrnamespace,
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -332,7 +332,7 @@ ext2fs_list_inode_xattr(struct inode *ip, int attrnamespace, int flags, struct u
 	end   = &((uint8_t *)di)[EXT2_DINODE_SIZE(ip->i_e2fs)];
 
 	if (end <= start || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
-		return (0);
+		return 0;
 
 	return ext2fs_list_xattr(EXT2FS_XATTR_IFIRST(h), end, attrnamespace, flags, uio, size);
 }
@@ -353,7 +353,7 @@ ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags, struct u
 
 	/* don't do anything if no attr block was allocated */
 	if (xblk == 0)
-		return (0);
+		return 0;
 
 	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk), (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
 	if (error)
@@ -370,7 +370,7 @@ ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags, struct u
     out:
 	if (bp)
 		brelse(bp, 0);
-	return (error);
+	return error;
 }
 
 int
@@ -405,7 +405,7 @@ ext2fs_listextattr(void *v)
 		prefix = xattr_prefix_index[EXT2FS_XATTR_PREFIX_SYSTEM];
         error = extattr_check_cred(ap->a_vp, prefix, ap->a_cred, VREAD);
         if (error)
-                return (error);
+                return error;
 
         /*
          * Allow only offsets of zero to encourage the read/replace
@@ -414,22 +414,22 @@ ext2fs_listextattr(void *v)
 	 * XXX revisit - vnode lock enough?
          */
         if (ap->a_uio != NULL && ap->a_uio->uio_offset != 0)
-                return (ENXIO);
+                return ENXIO;
 
 	/* fetch inode xattrs */
 	error = ext2fs_list_inode_xattr(ip, ap->a_attrnamespace, ap->a_flag, ap->a_uio, &listsize);
 	if (error)
-		return (error);
+		return error;
 
 	error = ext2fs_list_block_xattr(ip, ap->a_attrnamespace, ap->a_flag, ap->a_uio, &listsize);
 	if (error)
-		return (error);
+		return error;
 
     out:
 	if (ap->a_size != NULL)
 		*ap->a_size = listsize;
 
-	return (0);
+	return 0;
 }
 
 int
@@ -446,5 +446,5 @@ ext2fs_deleteextattr(void *v)
 #endif
 
 	/* XXX Not implemented */
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
