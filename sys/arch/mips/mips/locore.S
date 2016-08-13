@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.204 2016/07/27 09:32:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.205 2016/08/13 08:08:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,15 +62,9 @@
 #include <mips/cpuregs.h>
 #include <mips/trap.h>
 
-RCSID("$NetBSD: locore.S,v 1.204 2016/07/27 09:32:35 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.205 2016/08/13 08:08:11 skrll Exp $")
 
 #include "assym.h"
-
-#if defined(MIPS1) || defined(MIPS2)
-#define	NOP_L		nop
-#else
-#define	NOP_L		/* nothing */
-#endif
 
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
 #define MFC0_HAZARD	nop
