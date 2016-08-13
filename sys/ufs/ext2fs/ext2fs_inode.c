@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.84 2016/08/04 17:43:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.85 2016/08/13 07:40:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.84 2016/08/04 17:43:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.85 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ out:
 	 */
 	*ap->a_recycle = (ip->i_e2fs_dtime != 0);
 	VOP_UNLOCK(vp);
-	return (error);
+	return error;
 }
 
 
@@ -249,7 +249,7 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	int flags;
 
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
-		return (0);
+		return 0;
 	ip = VTOI(vp);
 	EXT2FS_ITIMES(ip, acc, mod, NULL);
 	if (updflags & UPDATE_CLOSE)
@@ -257,14 +257,14 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	else
 		flags = ip->i_flag & IN_MODIFIED;
 	if (flags == 0)
-		return (0);
+		return 0;
 	fs = ip->i_e2fs;
 
 	error = bread(ip->i_devvp,
 			  EXT2_FSBTODB(fs, ino_to_fsba(fs, ip->i_number)),
 			  (int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (error);
+		return error;
 	}
 	ip->i_flag &= ~(IN_MODIFIED | IN_ACCESSED);
 	cp = (char *)bp->b_data +
@@ -273,10 +273,10 @@ ext2fs_update(struct vnode *vp, const struct timespec *acc,
 	if ((updflags & (UPDATE_WAIT|UPDATE_DIROP)) != 0 &&
 	    (flags & IN_MODIFIED) != 0 &&
 	    (vp->v_mount->mnt_flag & MNT_ASYNC) == 0)
-		return (bwrite(bp));
+		return bwrite(bp);
 	else {
 		bdwrite(bp);
-		return (0);
+		return 0;
 	}
 }
 
@@ -311,7 +311,7 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 	}
 
 	if (length < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	if (ovp->v_type == VLNK &&
 	    (ext2fs_size(oip) < ump->um_maxsymlinklen ||
@@ -320,18 +320,16 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		memset((char *)&oip->i_din.e2fs_din->e2di_shortlink, 0,
 			(u_int)ext2fs_size(oip));
 		(void)ext2fs_setsize(oip, 0);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	if (ext2fs_size(oip) == length) {
 		/* still do a uvm_vnp_setsize() as writesize may be larger */
 		uvm_vnp_setsize(ovp, length);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	fs = oip->i_e2fs;
 	if (length > ump->um_maxfilesize)
-		return (EFBIG);
+		return EFBIG;
 
 	osize = ext2fs_size(oip);
 
@@ -347,12 +345,11 @@ ext2fs_truncate(struct vnode *ovp, off_t length, int ioflag,
 		if (error) {
 			(void) ext2fs_truncate(ovp, osize, ioflag & IO_SYNC,
 			    cred);
-			return (error);
+			return error;
 		}
 		uvm_vnp_setsize(ovp, length);
-		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		KASSERT(error  || ovp->v_size == ext2fs_size(oip));
-		return (ext2fs_update(ovp, NULL, NULL, 0));
+		goto update;
 	}
 	/*
 	 * Shorten the size of the file. If the file is not being
@@ -485,7 +482,10 @@ done:
 		allerror = error;
 	oip->i_flag |= IN_CHANGE;
 	KASSERT(ovp->v_type != VREG || ovp->v_size == ext2fs_size(oip));
-	return (allerror);
+	return allerror;
+update:
+	oip->i_flag |= IN_CHANGE | IN_UPDATE;
+	return ext2fs_update(ovp, NULL, NULL, 0);
 }
 
 /*
@@ -550,7 +550,7 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	if (error) {
 		brelse(bp, 0);
 		*countp = 0;
-		return (error);
+		return error;
 	}
 
 	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
@@ -611,5 +611,5 @@ ext2fs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn, daddr_t lastbn,
 	}
 
 	*countp = blocksreleased;
-	return (allerror);
+	return allerror;
 }
