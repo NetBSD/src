@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extents.c,v 1.2 2016/08/09 06:40:24 christos Exp $	*/
+/*	$NetBSD: ext2fs_extents.c,v 1.3 2016/08/13 07:40:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.2 2016/08/09 06:40:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.3 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ ext4_ext_in_cache(struct inode *ip, daddr_t lbn, struct ext4_extent *ep)
 
 	/* cache is invalid */
 	if (ecp->ec_type == EXT4_EXT_CACHE_NO)
-		return (ret);
+		return ret;
 
 	if (lbn >= ecp->ec_blk && lbn < ecp->ec_blk + ecp->ec_len) {
 		ep->e_blk = ecp->ec_blk;
