@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.49 2016/07/11 16:15:35 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.50 2016/08/13 07:52:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 	lw	t9,4(sp);					\
 	addiu	sp,sp,8;					\
 	addiu	t9,t9,40;					\
-	.set	pop;					
+	.set	pop;
 
 #ifdef GPROF
 #define	MCOUNT _KERN_MCOUNT
