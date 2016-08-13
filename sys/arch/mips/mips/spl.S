@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.11 2016/07/24 18:04:04 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.12 2016/08/13 08:08:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,15 +38,9 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.11 2016/07/24 18:04:04 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.12 2016/08/13 08:08:11 skrll Exp $")
 
 #include "assym.h"
-
-#if (MIPS1 + MIPS2) > 0
-#define	NOP_L	nop
-#else
-#define	NOP_L	/* nothing */
-#endif
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
