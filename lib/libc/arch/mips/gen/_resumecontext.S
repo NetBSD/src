@@ -1,4 +1,4 @@
-/*	$NetBSD: _resumecontext.S,v 1.8 2016/08/12 15:21:25 skrll Exp $	*/
+/*	$NetBSD: _resumecontext.S,v 1.9 2016/08/13 07:49:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: _resumecontext.S,v 1.8 2016/08/12 15:21:25 skrll Exp $")
+	RCSID("$NetBSD: _resumecontext.S,v 1.9 2016/08/13 07:49:32 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
@@ -53,7 +53,7 @@ LEAF_NOPROFILE(__resumecontext)
 	PTR_L		a0, _OFFSETOF_UC_LINK(a0)	# linked context?
 	beq		a0, zero, 1f			#   nope, exit process
 	nop
-	PIC_TAILCALL(setcontext)			#   yes, become it.
+	SYSTRAP(setcontext)				#   yes, become it.
 	/* NOTREACHED (in theory) */
 	li		a0, -1				# failure,
 1:
