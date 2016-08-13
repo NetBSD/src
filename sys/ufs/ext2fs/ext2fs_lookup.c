@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.82 2016/08/09 20:18:08 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.83 2016/08/13 07:25:29 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.82 2016/08/09 20:18:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.83 2016/08/13 07:25:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,7 +389,7 @@ ext2fs_lookup(void *v)
 	 * If we got an error or we want to find '.' or '..' entry,
 	 * we will fall back to linear search.
 	 */
-	if (ext2fs_htree_has_idx(dp) && ext2fs_is_dot_entry(cnp)) {
+	if (!ext2fs_is_dot_entry(cnp) && ext2fs_htree_has_idx(dp)) {
 		numdirpasses = 1;
 		entryoffsetinblock = 0;
 		
@@ -707,6 +707,37 @@ found:
 	cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen, cnp->cn_flags);
 	return 0;
 }
+static void
+ext2fs_accumulatespace (struct ext2fs_searchslot *ssp, struct ext2fs_direct *ep,
+    doff_t *offp) 
+{
+	int size = ep->e2d_reclen;
+
+	if (ep->e2d_ino != 0)
+		size -= EXT2_DIR_REC_LEN(ep->e2d_namlen);
+
+	if (size <= 0)
+		return;
+
+	if (size >= ssp->slotneeded) {
+		ssp->slotstatus = FOUND;
+		ssp->slotoffset = *offp;
+		ssp->slotsize = ep->e2d_reclen;
+		return;
+	}
+
+	if (ssp->slotstatus != NONE)
+		return;
+
+	ssp->slotfreespace += size;
+	if (ssp->slotoffset == -1)
+		ssp->slotoffset = *offp;
+
+	if (ssp->slotfreespace >= ssp->slotneeded) {
+		ssp->slotstatus = COMPACT;
+		ssp->slotsize = *offp + ep->e2d_reclen - ssp->slotoffset;
+	}
+}
 
 int
 ext2fs_search_dirblock(struct inode *ip, void *data, int *foundp,
@@ -746,26 +777,8 @@ ext2fs_search_dirblock(struct inode *ip, void *data, int *foundp,
 		 * in the current block so that we can determine if
 		 * compaction is viable.
 		 */
-		if (ssp->slotstatus != FOUND) {
-			int size = ep->e2d_reclen;
-
-			if (ep->e2d_ino != 0)
-				size -= EXT2_DIR_REC_LEN(ep->e2d_namlen);
-			if (size >= ssp->slotneeded) {
-				ssp->slotstatus = FOUND;
-				ssp->slotoffset = *offp;
-				ssp->slotsize = ep->e2d_reclen;
-			} else if (size > 0 && ssp->slotstatus == NONE) {
-				ssp->slotfreespace += size;
-				if (ssp->slotoffset == -1)
-					ssp->slotoffset = *offp;
-				if (ssp->slotfreespace >= ssp->slotneeded) {
-					ssp->slotstatus = COMPACT;
-					ssp->slotsize = *offp + ep->e2d_reclen -
-					    ssp->slotoffset;
-				}
-			}
-		}
+		if (ssp->slotstatus != FOUND)
+			ext2fs_accumulatespace(ssp, ep, offp);
 
 		/*
 		 * Check for a name match.
