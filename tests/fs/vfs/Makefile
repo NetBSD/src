@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2015/01/07 22:24:03 pooka Exp $
+#	$NetBSD: Makefile,v 1.21 2016/08/13 11:21:06 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -16,6 +16,8 @@ TESTS_C+=	t_unpriv
 TESTS_C+=	t_vfsops
 TESTS_C+=	t_vnops
 
+LDADD+=-lrumpnet_shmif -lrumpnet -lrumpnet_net -lrumpnet_netinet# TCP/IP
+LDADD+=-lrumpfs_nfs						# NFS
 LDADD+=-lrumpfs_ext2fs						# ext2fs
 LDADD+=-lrumpfs_ffs						# ffs
 LDADD+=-lrumpfs_lfs						# lfs
@@ -33,8 +35,6 @@ LDADD+=-lrumpdev_disk -lrumpdev					# disk device
 VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
 
-LDADD+=-lrumpfs_nfs						# NFS
-LDADD+=-lrumpnet_shmif -lrumpnet_netinet -lrumpnet_net -lrumpnet
 LDADD+=-lrumpvfs -lrumpkern_sysproxy -lrump -lrumpuser		# base
 LDADD+=-lpthread
 
