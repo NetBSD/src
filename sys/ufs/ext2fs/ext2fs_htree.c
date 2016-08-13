@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.5 2016/08/13 07:40:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.4 2016/08/09 21:08:02 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.5 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,7 +344,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
 	/* Shrink directory entries in block 1. */
 	last = (struct ext2fs_direct *)block1;
 	entry_len = 0;
-	for (offset = 0; offset < blksize; ) {
+	for (offset = 0; offset < blksize;) {
 		ep = (struct ext2fs_direct *)(block1 + offset);
 		offset += ep->e2d_reclen;
 		if (ep->e2d_ino) {
@@ -508,7 +508,7 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	blksize = m_fs->e2fs_bsize;
 
 	if (ip->i_crap.ulr_count != 0) 
-		return ext2fs_add_entry(dvp, entry, &(ip->i_crap) );
+		return ext2fs_add_entry(dvp, entry, &(ip->i_crap));
 	/* Target directory block is full, split it */
 	memset(&info, 0, sizeof(info));
 	error = ext2fs_htree_find_leaf(ip, entry->e2d_name, entry->e2d_namlen,
@@ -779,7 +779,7 @@ ext2fs_htree_find_leaf(struct inode *ip, const char *name, int namelen,
 		level_info->h_entries = entp;
 		level_info->h_entry = found;
 		if (levels == 0)
-			return (0);
+			return 0;
 		levels--;
 		if (ext2fs_blkatoff(vp,
 		    ext2fs_htree_get_block(found) * m_fs->e2fs_bsize,
@@ -859,7 +859,7 @@ ext2fs_htree_lookup(struct inode *ip, const char *name, int namelen,
 			return 0;
 		}
 
-		brelse(bp,0);
+		brelse(bp, 0);
 		search_next = ext2fs_htree_check_next(ip, dirhash, name, &info);
 	} while (search_next);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.47 2016/08/03 21:53:02 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.48 2016/08/13 07:40:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.47 2016/08/03 21:53:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.48 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,12 +138,12 @@ ext2fs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref,
 		ext2fs_setnblock(ip, ext2fs_nblock(ip) + btodb(fs->e2fs_bsize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bnp = bno;
-		return (0);
+		return 0;
 	}
 nospace:
 	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->e2fs_fsmnt);
-	return (ENOSPC);
+	return ENOSPC;
 }
 
 /*
@@ -188,7 +188,7 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	error = VFS_VGET(pvp->v_mount, ino, vpp);
 	if (error) {
 		ext2fs_vfree(pvp, ino, mode);
-		return (error);
+		return error;
 	}
 	ip = VTOI(*vpp);
 	if (ip->i_e2fs_mode && ip->i_e2fs_nlink != 0) {
@@ -206,11 +206,11 @@ ext2fs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
 	if (++ext2gennumber < time_second)
 		ext2gennumber = time_second;
 	ip->i_e2fs_gen = ext2gennumber;
-	return (0);
+	return 0;
 noinodes:
 	ext2fs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->e2fs_fsmnt);
-	return (ENOSPC);
+	return ENOSPC;
 }
 
 /*
@@ -307,7 +307,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 	 */
 	result = (*allocator)(ip, cg, pref, size);
 	if (result)
-		return (result);
+		return result;
 	/*
 	 * 2: quadratic rehash
 	 */
@@ -317,7 +317,7 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 			cg -= fs->e2fs_ncg;
 		result = (*allocator)(ip, cg, 0, size);
 		if (result)
-			return (result);
+			return result;
 	}
 	/*
 	 * 3: brute force search
@@ -328,12 +328,12 @@ ext2fs_hashalloc(struct inode *ip, int cg, long pref, int size,
 	for (i = 2; i < fs->e2fs_ncg; i++) {
 		result = (*allocator)(ip, cg, 0, size);
 		if (result)
-			return (result);
+			return result;
 		cg++;
 		if (cg == fs->e2fs_ncg)
 			cg = 0;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -354,12 +354,12 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nbfree == 0)
-		return (0);
+		return 0;
 	error = bread(ip->i_devvp, EXT2_FSBTODB(fs,
 		fs->e2fs_gd[cg].ext2bgd_b_bitmap),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	bbp = (char *)bp->b_data;
 
@@ -401,7 +401,7 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
 	if (bno < 0)
-		return (0);
+		return 0;
 gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, (daddr_t)bno)) {
@@ -415,7 +415,7 @@ gotit:
 	fs->e2fs_gd[cg].ext2bgd_nbfree--;
 	fs->e2fs_fmod = 1;
 	bdwrite(bp);
-	return (cg * fs->e2fs.e2fs_fpg + fs->e2fs.e2fs_first_dblock + bno);
+	return cg * fs->e2fs.e2fs_fpg + fs->e2fs.e2fs_first_dblock + bno;
 }
 
 /*
@@ -440,12 +440,12 @@ ext2fs_nodealloccg(struct inode *ip, int cg, daddr_t ipref, int mode)
 		ipref = 0;
 	fs = ip->i_e2fs;
 	if (fs->e2fs_gd[cg].ext2bgd_nifree == 0)
-		return (0);
+		return 0;
 	error = bread(ip->i_devvp, EXT2_FSBTODB(fs,
 		fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	ibp = (char *)bp->b_data;
 	if (ipref) {
@@ -483,7 +483,7 @@ gotit:
 		fs->e2fs_gd[cg].ext2bgd_ndirs++;
 	}
 	bdwrite(bp);
-	return (cg * fs->e2fs.e2fs_ipg + ipref +1);
+	return cg * fs->e2fs.e2fs_ipg + ipref + 1;
 }
 
 /*
@@ -555,7 +555,7 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 		EXT2_FSBTODB(fs, fs->e2fs_gd[cg].ext2bgd_i_bitmap),
 		(int)fs->e2fs_bsize, B_MODIFY, &bp);
 	if (error) {
-		return (0);
+		return 0;
 	}
 	ibp = (char *)bp->b_data;
 	ino = (ino - 1) % fs->e2fs.e2fs_ipg;
@@ -574,7 +574,7 @@ ext2fs_vfree(struct vnode *pvp, ino_t ino, int mode)
 	}
 	fs->e2fs_fmod = 1;
 	bdwrite(bp);
-	return (0);
+	return 0;
 }
 
 /*

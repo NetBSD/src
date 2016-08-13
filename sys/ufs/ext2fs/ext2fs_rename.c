@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.10 2016/08/13 07:40:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.9 2016/08/06 21:39:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.10 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -781,7 +781,7 @@ ext2fs_rmdired_p(struct vnode *vp)
 	KASSERT(vp->v_type == VDIR);
 
 	/* XXX Is this correct?  */
-	return (ext2fs_size(VTOI(vp)) == 0);
+	return ext2fs_size(VTOI(vp)) == 0;
 }
 
 /*

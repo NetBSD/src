@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_hash.c,v 1.1 2016/06/24 17:21:30 christos Exp $	*/
+/*	$NetBSD: ext2fs_hash.c,v 1.2 2016/08/13 07:40:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2013 Zheng Liu <lz@freebsd.org>
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.1 2016/06/24 17:21:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_hash.c,v 1.2 2016/08/13 07:40:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ ext2fs_htree_hash(const char *name, int len,
 	int unsigned_char = 0;
 
 	if (!name || !hash_major)
-		return (-1);
+		return -1;
 
 	if (len < 1 || len > 255)
 		goto error;
