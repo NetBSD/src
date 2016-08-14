@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/08/12 20:45:05 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2016/08/14 03:43:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ BINMODE=	4711
 
 .PATH:		${X11SRCDIR.xorg-server}/hw/xfree86
 SRCS=		xorg-wrapper.c
+SRCS=		dummy.c
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/fb \
@@ -17,6 +18,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/os \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
+		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${X11SRCDIR.xorg-server}/render \
@@ -31,6 +33,8 @@ LDADD+=	-Wl,--whole-archive
 LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.hw/xfree86/init}
 LDADD+=	${LDADD.config}
+LDADD+=	${LDADD.dbe}
+LDADD+=	${LDADD.record}
 LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
 LDADD+=	${LDADD.hw/xfree86/xorgos}
@@ -44,7 +48,7 @@ LDADD+=	${LDADD.hw/xfree86/i2c}
 LDADD+=	${LDADD.composite}
 LDADD+=	${LDADD.mi}
 LDADD+=	${LDADD.xfixes}
-LDADD+=	${LDADD.Xext/Xextbuiltin}
+LDADD+=	${LDADD.Xext}
 LDADD+=	${LDADD.render}
 LDADD+=	${LDADD.randr}
 LDADD+=	${LDADD.damageext}
@@ -55,6 +59,7 @@ LDADD+=	${LDADD.Xi}
 LDADD+=	${LDADD.xkb}
 LDADD+=	${LDADD.os}
 LDADD+=	${LDADD.glx}
+LDADD+=	${LDADD.present}
 LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dri2}
 # XXX
@@ -78,13 +83,13 @@ LDADD+=	-lalpha
 DPADD+=	${LIBALPHA}
 .endif
 
+LDADD+=	-lm -lGL -lXv -lxshmfence
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 # Needed by current xf86-video-intel for SNA.
 LDADD+=	-lpthread
 DPADD+=	${LIBPTHREAD}
 .endif
-
-LDADD+=	-lm
 
 DPADD+=	${DPADD.dix} \
 	${DPADD.fb} \
@@ -105,6 +110,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.composite} \
 	${DPADD.os} \
 	${DPADD.glx} \
+	${DPADD.present} \
 	${DPADD.hw/xfree86/dri} \
 	${DPADD.hw/xfree86/dri2} \
 	${DPADD.hw/xfree86/dixmods/fb} \
@@ -120,7 +126,8 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.hw/xfree86/i2c} \
 	${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
-	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS}
+	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
+	${LIBGL} ${LIBXV} ${LIBXSHMFENCE}
 
 # XXX
 .if ${HAVE_DRI3:Uno} != "no"
@@ -141,6 +148,10 @@ FILES=		xorg-server.m4
 FILESDIR=	${X11ROOTDIR}/share/aclocal
 
 .PATH:		${X11SRCDIR.xorg-server}
+
+dummy.c:
+	echo > dummy.c
+CLEANFILES=+ dummy.c
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

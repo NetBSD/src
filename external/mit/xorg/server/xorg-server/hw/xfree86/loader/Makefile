@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2016/08/12 01:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2016/08/14 03:43:04 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -33,11 +33,17 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/xfixes \
+		-I${X11SRCDIR.xorg-server}/Xi \
+		-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/../include \
 		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11/dri \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg
+		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} -DDLOPEN_SUPPORT -DHAS_SHM \
+		-DHAVE_XORG_CONFIG_H -DHAVE_DIX_CONFIG_H \
 		-DIN_LOADER \
 		${x11FLAGS.DIX}
 
@@ -51,8 +57,11 @@ CPPFLAGS.sdksyms.c=	${X11FLAGS.EXTENSION}
 #COPTS.sdksyms.c=		-Wno-error
 COPTS.loadmod.c=		-Wno-error
 
-sdksyms.c: sdksyms.sh
-	CPP=${CPP:Q} AWK=${TOOL_AWK:Q} ${HOST_SH} ${XFTOP}/sdksyms.sh ${TOP} ${CFLAGS} ${CPPFLAGS}
+SDKSYMS_CFLAGS=${CFLAGS} ${CPPFLAGS}
+# Ugh, pid_t in the header trips the script.
+SDKSYMS_CFLAGS+= -Dpid_t=unsigned
+sdksyms.c: ${XFTOP}/sdksyms.sh
+	CPP=${CPP:Q} AWK=${TOOL_AWK:Q} ${HOST_SH} ${XFTOP}/sdksyms.sh ${TOP} ${SDKSYMS_CFLAGS}
 sdksyms.d: sdksyms.c
 CLEANFILES+=	sdksyms.c sdksyms.dep
 
