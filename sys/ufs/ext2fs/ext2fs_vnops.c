@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.122 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.123 2016/08/14 11:44:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.122 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.123 2016/08/14 11:44:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,16 +724,14 @@ ext2fs_mkdir(void *v)
 	dirtemplate.dot_ino = h2fs32(ip->i_number);
 	dirtemplate.dot_reclen = h2fs16(12);
 	dirtemplate.dot_namlen = 1;
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+	if (EXT2F_HAS_INCOMPAT_FEATURE(dp->i_e2fs, EXT2F_INCOMPAT_FTYPE)) {
 		dirtemplate.dot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dot_name[0] = '.';
 	dirtemplate.dotdot_ino = h2fs32(dp->i_number);
-    dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
+	dirtemplate.dotdot_reclen = h2fs16(VTOI(dvp)->i_e2fs->e2fs_bsize - 12);
 	dirtemplate.dotdot_namlen = 2;
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+	if (EXT2F_HAS_INCOMPAT_FEATURE(dp->i_e2fs, EXT2F_INCOMPAT_FTYPE)) {
 		dirtemplate.dotdot_type = EXT2_FT_DIR;
 	}
 	dirtemplate.dotdot_name[0] = dirtemplate.dotdot_name[1] = '.';
