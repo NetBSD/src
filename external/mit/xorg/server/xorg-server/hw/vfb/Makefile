@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/08/14 00:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/08/14 03:43:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -72,6 +72,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.composite} \
 	${LDADD.os} \
 	${LDADD.glx} \
+	${LDADD.present} \
 	-lXfont \
 	-lfreetype \
 	-lXau \
@@ -103,6 +104,7 @@ DPADD+=	${DPADD.dix} \
 	${DPADD.composite} \
 	${DPADD.os} \
 	${DPADD.glx} \
+	${DPADD.present} \
 	${LIBXFONT} \
 	${LIBFREETYPE} \
 	${LIBXAU} \

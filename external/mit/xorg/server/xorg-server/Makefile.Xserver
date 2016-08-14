@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.16 2016/08/12 01:15:49 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.17 2016/08/14 03:43:03 mrg Exp $
 
 .for _SL in \
 	mi \
@@ -6,7 +6,6 @@
 	fb \
 	xfixes \
 	Xext \
-	Xext/Xextbuiltin \
 	dbe \
 	present \
 	pseudoramiX \
