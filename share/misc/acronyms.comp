@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.167 2016/08/11 02:42:28 ginsbach Exp $
+$NetBSD: acronyms.comp,v 1.168 2016/08/14 23:07:04 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -157,7 +157,7 @@ BT	bit test
 BTC	bit test [and] complement
 BTR	bit test [and] reset
 BTS	bit test [and] set
-BTS	bits per second
+BTS	bug tracking system
 BW	bandwidth
 BWM	block-write mode
 CA	certificate authority
