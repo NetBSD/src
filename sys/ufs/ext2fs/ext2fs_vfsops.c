@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.198 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.199 2016/08/14 11:44:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.198 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.199 2016/08/14 11:44:54 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -834,8 +834,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 	    fs->e2fs_itpg;
 	overhead = fs->e2fs.e2fs_first_dblock +
 	    fs->e2fs_ncg * overhead_per_group;
-	if (fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_SPARSESUPER) {
+	if (EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_SPARSESUPER)) {
 		for (i = 0, ngroups = 0; i < fs->e2fs_ncg; i++) {
 			if (cg_has_sb(i))
 				ngroups++;
@@ -844,8 +843,7 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 		ngroups = fs->e2fs_ncg;
 	}
 	ngdb = fs->e2fs_ngdb;
-	if (fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    fs->e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE)
+	if (EXT2F_HAS_COMPAT_FEATURE(fs, EXT2F_COMPAT_RESIZE))
 		ngdb += fs->e2fs.e2fs_reserved_ngdb;
 	overhead += ngroups * (1 /* superblock */ + ngdb);
 

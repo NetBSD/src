@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.84 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.85 2016/08/14 11:44:54 jdolecek Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.84 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.85 2016/08/14 11:44:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -884,8 +884,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 
 	newdir.e2d_ino = h2fs32(ip->i_number);
 	newdir.e2d_namlen = cnp->cn_namelen;
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+	if (EXT2F_HAS_INCOMPAT_FEATURE(ip->i_e2fs, EXT2F_INCOMPAT_FTYPE)) {
 		newdir.e2d_type = inot2ext2dt(IFTODT(ip->i_e2fs_mode));
 	} else {
 		newdir.e2d_type = 0;
@@ -1099,8 +1098,7 @@ ext2fs_dirrewrite(struct inode *dp, const struct ufs_lookup_results *ulr,
 	if (error != 0)
 		return error;
 	ep->e2d_ino = h2fs32(ip->i_number);
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0 &&
-	    (ip->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE)) {
+	if (EXT2F_HAS_INCOMPAT_FEATURE(dp->i_e2fs, EXT2F_INCOMPAT_FTYPE)) {
 		ep->e2d_type = inot2ext2dt(IFTODT(ip->i_e2fs_mode));
 	} else {
 		ep->e2d_type = 0;
