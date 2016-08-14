@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2016/08/12 01:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/08/14 00:03:58 mrg Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
-XORGINC_SUBDIR=	Xext composite dbe exa fb include mi \
-		miext/damage miext/shadow randr render xkb record
+XORGINC_SUBDIR=	Xext composite dbe dri3 exa fb include mi \
+		miext/damage miext/shadow present randr render xkb record
 XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
 		vbe vgahw xf1bpp xf4bpp xf8_16bpp xf8_32bpp dri2
@@ -22,7 +22,6 @@ XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 
 INCSDIR=${X11INCDIR}/xorg
 INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
-	bt829.h \
 	callback.h client.h closestr.h closure.h colormap.h \
 	colormapst.h compiler.h compositeext.h cursor.h cursorstr.h \
 	damage.h damagestr.h \
@@ -33,27 +32,29 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	edid.h exa.h exevents.h \
 	eventconvert.h events.h eventstr.h list.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
-	fbpict.h fbrop.h fi1236.h fourcc.h gc.h gcstruct.h geext.h globals.h \
+	fbpict.h fbrop.h fourcc.h gc.h gcstruct.h geext.h globals.h \
 	glx_extinit.h glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
 	mi.h micmap.h micoord.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
-	mistruct.h mizerarc.h msp3430.h opaque.h \
+	mistruct.h mizerarc.h opaque.h \
 	nonsdk_extinit.h optionstr.h \
 	os.h picture.h picturestr.h pixmap.h pixmapstr.h \
 	present.h presentext.h \
 	property.h protocol-versions.h \
 	propertyst.h randrstr.h region.h regionstr.h resource.h \
-	rgb.h sarea.h screenint.h scrnintstr.h selection.h servermd.h \
+	rgb.h sarea.h screenint.h scrnintstr.h \
+	securitysrv.h selection.h servermd.h \
 	shadow.h shadowfb.h shmint.h site.h \
-	tda8425.h tda9850.h \
-	tda9885.h uda1380.h validate.h vbe.h vbeModes.h vgaHW.h \
+	validate.h vbe.h vbeModes.h vgaHW.h \
 	window.h windowstr.h \
+	xaarop.h \
 	xkbDflts.h xkb.h set.h \
-	xf86.h xf86Crtc.h xf86Cursor.h xf86DDC.h \
-	xf86Modes.h xf86Module.h \
-	xf86Opt.h xf86Optrec.h xf86Parser.h xf86Pci.h xf86PciInfo.h \
+	xf86.h xf86platformBus.h \
+	xf86Crtc.h xf86Cursor.h xf86DDC.h \
+	xf86Modes.h xf86Module.h xf86Optionstr.h xf86Opt.h xf86Optrec.h \
+	xf86Parser.h xf86Pci.h xf86PciInfo.h \
 	xf86Priv.h xf86Privstr.h xf86RamDac.h xf86RandR12.h \
-	xf86Rename.h xf86Xinput.h xf86_OSlib.h \
+	xf86Xinput.h xf86_OSlib.h \
 	xf86_OSproc.h xf86cmap.h xf86fbman.h \
 	xf86i2c.h xf86int10.h xf86sbusBus.h xf86str.h xf86xv.h \
 	xkbstr.h xkbrules.h xserver-properties.h \

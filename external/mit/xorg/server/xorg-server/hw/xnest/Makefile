@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/08/12 01:15:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2016/08/14 00:03:58 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/os \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include \

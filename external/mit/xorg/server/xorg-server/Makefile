@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2016/08/12 01:15:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2016/08/14 00:03:57 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SUBDIR.xfont=
 SUBDIR=		doc include .WAIT
 SUBDIR+=	glx
 SUBDIR+=	dix fb mi Xext miext os randr render 
-SUBDIR+=	present dri3 pseudoramiX
+SUBDIR+=	present pseudoramiX
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
 SUBDIR+=	damageext composite config .WAIT
 SUBDIR+=	hw
