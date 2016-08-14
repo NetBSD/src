@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2016/08/14 03:43:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -114,8 +114,7 @@ CPPFLAGS.xf86Init.c=		-DOSNAME='"NetBSD/${MACHINE} ${OS_RELEASE} -"' \
 				-DXORG_RELEASE='"Release 1.4.2"' \
 				-DBUILDERADDR='"xorg@xorg.org"' \
 				-DOSVENDOR='" The NetBSD Foundation, Inc."'
-CPPFLAGS.xf86Globals.c=		-DDEFAULT_LOGPREFIX='"/var/log/Xorg."' \
-				-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"'
+CPPFLAGS.xf86Globals.c=		-DDEFAULT_MODULE_PATH='"${X11USRLIBDIR}/modules"'
 CPPFLAGS.xf86Configure.c=	-DXF86CONFIGFILE='"xorg.conf"'
 CPPFLAGS.xf86Config.c=		-DDRIVERS='"${DRIVERS}"' \
 				-DIDRIVERS='"${IDRIVERS}"' \
