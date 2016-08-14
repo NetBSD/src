@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.85 2016/08/14 11:44:54 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.86 2016/08/14 11:46:05 jdolecek Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.85 2016/08/14 11:44:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.86 2016/08/14 11:46:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.85 2016/08/14 11:44:54 jdolecek 
 
 extern	int dirchk;
 
-static void	ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir,
+static void	ext2fs_dirconv2ffs(struct m_ext2fs *fs,
+					  struct ext2fs_direct *e2dir,
 					  struct dirent *ffsdir);
 static int	ext2fs_dirbadentry(struct vnode *dp,
 					  struct ext2fs_direct *de,
@@ -93,13 +94,16 @@ static int	ext2fs_dirbadentry(struct vnode *dp,
  * have worked w/o changes (except for the difference in DIRBLKSIZ)
  */
 static void
-ext2fs_dirconv2ffs(struct ext2fs_direct *e2dir, struct dirent *ffsdir)
+ext2fs_dirconv2ffs(struct m_ext2fs *fs, struct ext2fs_direct *e2dir, struct dirent *ffsdir)
 {
 	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
 	ffsdir->d_namlen = e2dir->e2d_namlen;
 
-	ffsdir->d_type = ext2dt2dt(e2dir->e2d_type);
+	if (EXT2F_HAS_INCOMPAT_FEATURE(fs, EXT2F_INCOMPAT_FTYPE))
+		ffsdir->d_type = ext2dt2dt(e2dir->e2d_type);
+	else
+		ffsdir->d_type = DT_UNKNOWN;
 
 #ifdef DIAGNOSTIC
 #if MAXNAMLEN < E2FS_MAXNAMLEN
@@ -199,7 +203,7 @@ ext2fs_readdir(void *v)
 				error = EIO;
 				break;
 			}
-			ext2fs_dirconv2ffs(dp, dstd);
+			ext2fs_dirconv2ffs(fs, dp, dstd);
 			if(dstd->d_reclen > uio->uio_resid) {
 				break;
 			}
