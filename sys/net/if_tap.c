@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.91 2016/08/14 11:03:21 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.91 2016/08/14 11:03:21 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $");
 
 #include "ioconf.h"
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl node management
  *
@@ -91,10 +90,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.90 2016/08/08 16:40:39 kre Exp $");
  * tap_log allows the module to log creations of nodes and
  * destroy them all at once using sysctl_teardown.
  */
-static int tap_node;
+static int	tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
-SYSCTL_SETUP_PROTO(sysctl_tap_setup);
-#endif
+static void	sysctl_tap_setup(struct sysctllog **);
 
 /*
  * Since we're an Ethernet device, we need the 2 following
@@ -237,11 +235,10 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
-#ifdef _MODULE
 static struct sysctllog *tap_sysctl_clog;
 
+#ifdef _MODULE
 devmajor_t tap_bmajor = -1, tap_cmajor = -1;
-
 #endif
 
 static u_int tap_count;
@@ -259,9 +256,17 @@ tapattach(int n)
 static void
 tapinit(void)
 {
+        int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
+        if (error) {
+                aprint_error("%s: unable to register cfattach\n",
+                    tap_cd.cd_name);
+                (void)config_cfdriver_detach(&tap_cd);
+                return;
+        }
+ 
 	if_clone_attach(&tap_cloners);
-#ifdef _MODULE
 	sysctl_tap_setup(&tap_sysctl_clog);
+#ifdef _MODULE
 	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
 #endif
 }
@@ -275,12 +280,16 @@ tapdetach(void)
 		return EBUSY;
 
 #ifdef _MODULE
-	error = devsw_detach(NULL, &tap_cdevsw);
 	if (error == 0)
-		sysctl_teardown(&tap_sysctl_clog);
+		error = devsw_detach(NULL, &tap_cdevsw);
 #endif
 	if (error == 0)
+		sysctl_teardown(&tap_sysctl_clog);
+	if (error == 0)
 		if_clone_detach(&tap_cloners);
+
+	if (error == 0)
+		error = config_cfattach_detach(tap_cd.cd_name, &tap_ca);
 
 	return error;
 }
@@ -1313,7 +1322,6 @@ tap_kqread(struct knote *kn, long hint)
 	return rv;
 }
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl management routines
  * You can set the address of an interface through:
@@ -1342,7 +1350,8 @@ tap_kqread(struct knote *kn, long hint)
  * full path starting from the root for later calls to sysctl_createv
  * and sysctl_destroyv.
  */
-SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
+static void
+sysctl_tap_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 	int error = 0;
@@ -1437,7 +1446,6 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);
 }
-#endif
 
 /*
  * Module infrastructure
