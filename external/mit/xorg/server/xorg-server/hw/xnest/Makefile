@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2016/08/14 00:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2016/08/14 03:43:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xnest \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/os \
+		-I${X11SRCDIR.xorg-server}/present \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
@@ -69,6 +70,7 @@ LDADD+=	${LDADD.dix} \
 	${LDADD.composite} \
 	${LDADD.os} \
 	${LDADD.glx} \
+	${LDADD.present} \
 	-lXfont -lXext -lfontenc \
 	-lpixman-1 -lX11 -lXau \
 	-lXdmcp -lfreetype -lm
@@ -92,6 +94,7 @@ DPADD+=	${LDADD.dix} \
 	${DPADD.composite} \
 	${DPADD.os} \
 	${DPADD.glx} \
+	${DPADD.present} \
 	${LIBXFONT} ${LIBXEXT} ${LIBFONTENC} \
 	${LIBPIXMAN-1} ${LIBX11} ${LIBXAU} \
 	${LIBXDMCP} ${LIBFREETYPE} ${LIBM}

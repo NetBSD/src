@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/14 00:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/14 03:43:05 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -9,7 +9,7 @@ LIB=	os
 SRCS=	WaitFor.c access.c auth.c backtrace.c client.c connection.c \
 	io.c mitauth.c \
 	oscolor.c osinit.c utils.c xdmauth.c \
-	xstrans.c xprintf.c log.c xdmcp.c \
+	xstrans.c xprintf.c log.c xdmcp.c busfault.c \
 	rpcauth.c xsha1.c \
 	reallocarray.c
 
@@ -19,7 +19,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/Xext \
 		-I${X11SRCDIR.xorg-server}/render \
-		-I${X11SRCDIR.xorg-server}/lbx \
+		-I${X11SRCDIR.xorg-server}/present \
 		-I${X11SRCDIR.xorg-server}/../include
 
 CPPFLAGS+=	${X11FLAGS.DIX} \
@@ -29,10 +29,15 @@ CPPFLAGS+=	${X11FLAGS.DIX} \
 		${X11FLAGS.OS_DEFINES} \
 		-DUSE_RGB_TXT \
 		-UDDXTIME \
+		-DHAVE_XORG_CONFIG_H
+
+.if 0
 		-DHAVE_SHA1_IN_LIBC \
 		-DHAVE_STRCASECMP -DHAVE_STRNCASECMP \
 		-DHAVE_STRCASESTR \
+		-DHAVE_REALLOCARRAY \
 		-DMONOTONIC_CLOCK
+.endif
 
 .include "../Makefile.common"
 
