@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.680 2016/07/30 11:03:54 njoly Exp $
+# $NetBSD: mi,v 1.681 2016/08/14 14:55:42 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -25,6 +25,7 @@
 ./usr/libdata/debug/usr/tests/dev					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/audio					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/cgd					tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/dev/clock_subr				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/fss					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd				tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/dev/md					tests-fs-debug		compattestfile,atf
@@ -1365,6 +1366,10 @@
 ./usr/tests/dev/cgd/h_img2cgd/h_img2cgd		tests-obsolete		obsolete
 ./usr/tests/dev/cgd/paramsfile			tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/cgd/t_cgd			tests-fs-tests		compattestfile,atf
+./usr/tests/dev/clock_subr			tests-fs-tests		compattestfile,atf
+./usr/tests/dev/clock_subr/Atffile		tests-fs-tests		compattestfile,atf
+./usr/tests/dev/clock_subr/Kyuafile		tests-fs-tests		compattestfile,atf,kyua
+./usr/tests/dev/clock_subr/t_clock_subr		tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/fss				tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/fss/Atffile			tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/fss/Kyuafile			tests-fs-tests		compattestfile,atf,kyua
