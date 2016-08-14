@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.28 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.29 2016/08/14 11:25:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.28 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.29 2016/08/14 11:25:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ ext2fs_bmap(void *v)
 		return 0;
 	
 	
-	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & IN_E4EXTENTS)
+	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & EXT2_EXTENTS)
 		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
 		    ap->a_runp, NULL);
 	else
