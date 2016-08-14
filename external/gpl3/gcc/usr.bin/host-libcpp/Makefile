@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/03/15 19:14:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/14 16:04:50 tls Exp $
 
 libcpp/libcpp.a:
 	[ ! -d libcpp ] && mkdir libcpp || true
@@ -7,7 +7,7 @@ libcpp/libcpp.a:
 		CFLAGS=${HOST_CFLAGS:Q} \
 		MAKE=${TOOL_GMAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
-		${HOST_SH} ${DIST}/libcpp/configure \
+		${HOST_SH} ${DIST}/libcpp/configure -v am_cv_func_iconv=no \
 		&& CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} ${TOOL_GMAKE})
 
 cleandir:
