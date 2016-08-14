@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.5 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.6 2016/08/14 11:42:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.5 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.6 2016/08/14 11:42:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,7 @@ static int ext2fs_htree_find_leaf(struct inode *, const char *, int ,
 int
 ext2fs_htree_has_idx(struct inode *ip)
 {
-	/* XXX ip->i_flags should have got checked here for IN_E3INDEX */
-	return EXT2_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
+	return EXT2F_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_DIRHASHINDEX)
 	    && (ip->i_din.e2fs_din->e2di_flags & EXT2_INDEX);
 }
 
