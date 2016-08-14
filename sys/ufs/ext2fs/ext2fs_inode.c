@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.85 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.86 2016/08/14 11:44:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.85 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.86 2016/08/14 11:44:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,8 +121,8 @@ ext2fs_setsize(struct inode *ip, uint64_t size)
 				/* Linux automagically upgrades to REV1 here! */
 				return EFBIG;
 			}
-			if (!(fs->e2fs.e2fs_features_rocompat
-			    & EXT2F_ROCOMPAT_LARGEFILE)) {
+			if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs,
+			    EXT2F_ROCOMPAT_LARGEFILE)) {
 				fs->e2fs.e2fs_features_rocompat |=
 				    EXT2F_ROCOMPAT_LARGEFILE;
 				fs->e2fs_fmod = 1;
@@ -142,7 +142,7 @@ ext2fs_nblock(struct inode *ip)
 	uint64_t nblock = ip->i_e2fs_nblock;
 	struct m_ext2fs * const fs = ip->i_e2fs;
 
-	if (fs->e2fs.e2fs_features_rocompat & EXT2F_ROCOMPAT_HUGE_FILE) {
+	if (EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE)) {
 		nblock |= (uint64_t)ip->i_e2fs_nblock_high << 32;
 
 		if ((ip->i_e2fs_flags & EXT2_HUGE_FILE)) {
@@ -164,7 +164,7 @@ ext2fs_setnblock(struct inode *ip, uint64_t nblock)
 		return 0;
 	}
 
-	if (!ISSET(fs->e2fs.e2fs_features_rocompat, EXT2F_ROCOMPAT_HUGE_FILE)) 
+	if (!EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_HUGE_FILE)) 
 		return EFBIG;
 
 	if (nblock <= 0xffffffffffffULL) {
