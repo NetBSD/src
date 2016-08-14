@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.74 2016/08/04 17:47:47 jdolecek Exp $	*/
+/*	$NetBSD: inode.h,v 1.75 2016/08/14 11:31:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -226,7 +226,6 @@ struct inode {
 /*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 /*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
-#define	IN_E4EXTENTS    0x8000		/* ext4 extents */
 
 #if defined(_KERNEL)
 
