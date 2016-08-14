@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.44 2016/08/14 11:40:31 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.45 2016/08/14 11:42:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -365,8 +365,6 @@ struct m_ext2fs {
 /*
  * Feature set definitions
  */
-#define EXT2_HAS_COMPAT_FEATURE(sb, mask) \
-    ((sb)->e2fs.e2fs_features_compat & htole32(mask))
 #define EXT2F_HAS_COMPAT_FEATURE(fs, feature) \
 	((fs)->e2fs.e2fs_rev >= E2FS_REV1 && \
 	((fs)->e2fs.e2fs_features_compat & (feature)) != 0)
