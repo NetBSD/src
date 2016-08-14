@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.c,v 1.2 2016/08/13 07:40:10 christos Exp $	*/
+/*	$NetBSD: ext2fs_xattr.c,v 1.3 2016/08/14 11:40:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.2 2016/08/13 07:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.3 2016/08/14 11:40:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
 	daddr_t xblk;
 
 	xblk = di->e2di_facl;
-	if (EXT2F_HAS_INCOMPAT_FEATURE(ip, EXT2F_INCOMPAT_64BIT))
+	if (EXT2F_HAS_INCOMPAT_FEATURE(ip->i_e2fs, EXT2F_INCOMPAT_64BIT))
 		xblk |= (((daddr_t)di->e2di_facl_high) << 32);
 
 	/* don't do anything if no attr block was allocated */
@@ -348,7 +348,7 @@ ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags, struct u
 	daddr_t xblk;
 
 	xblk = di->e2di_facl;
-	if (EXT2F_HAS_INCOMPAT_FEATURE(ip, EXT2F_INCOMPAT_64BIT))
+	if (EXT2F_HAS_INCOMPAT_FEATURE(ip->i_e2fs, EXT2F_INCOMPAT_64BIT))
 		xblk |= (((daddr_t)di->e2di_facl_high) << 32);
 
 	/* don't do anything if no attr block was allocated */
@@ -390,7 +390,7 @@ ext2fs_listextattr(void *v)
 	const char *prefix;
 	size_t listsize = 0;
 
-	if (!EXT2F_HAS_COMPAT_FEATURE(ip, EXT2F_COMPAT_EXTATTR)) {
+	if (!EXT2F_HAS_COMPAT_FEATURE(ip->i_e2fs, EXT2F_COMPAT_EXTATTR)) {
 		/* no EA on the filesystem */
 		goto out;
 	}
