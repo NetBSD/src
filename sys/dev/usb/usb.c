@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.163 2016/04/26 12:58:48 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.164 2016/08/14 14:42:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.163 2016/04/26 12:58:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.164 2016/08/14 14:42:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -254,7 +254,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	/* XXX we should have our own level */
-	sc->sc_bus->ub_soft = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	sc->sc_bus->ub_soft = softint_establish(SOFTINT_USB | SOFTINT_MPSAFE,
 	    usb_soft_intr, sc->sc_bus);
 	if (sc->sc_bus->ub_soft == NULL) {
 		aprint_error("%s: can't register softintr\n",
