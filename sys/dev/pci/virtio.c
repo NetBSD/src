@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.16 2016/07/11 06:14:51 knakahara Exp $	*/
+/*	$NetBSD: virtio.c,v 1.17 2016/08/14 07:47:15 tron Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.16 2016/07/11 06:14:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.17 2016/08/14 07:47:15 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,8 @@ virtio_detach(device_t self, int flags)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[i]);
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_ihp, sc->sc_ihs_num);
-	kmem_free(sc->sc_ihs, sizeof(*sc->sc_ihs) * sc->sc_ihs_num);
+	if (sc->sc_ihs != NULL)
+		kmem_free(sc->sc_ihs, sizeof(*sc->sc_ihs) * sc->sc_ihs_num);
 	sc->sc_ihs_num = 0;
 	if (sc->sc_iosize)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
