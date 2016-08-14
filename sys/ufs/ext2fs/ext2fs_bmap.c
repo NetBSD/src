@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.29 2016/08/14 11:25:36 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.29 2016/08/14 11:25:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.30 2016/08/14 11:26:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ ext2fs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
+
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -114,16 +115,13 @@ ext2fs_bmap(void *v)
 		*ap->a_vpp = VTOI(ap->a_vp)->i_devvp;
 	if (ap->a_bnp == NULL)
 		return 0;
-	
-	
+
 	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & EXT2_EXTENTS)
 		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
 		    ap->a_runp, NULL);
 	else
 		return ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL,
 		    NULL, ap->a_runp);
-	
-		
 }
 
 /*
