@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/12 01:15:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/14 00:03:58 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/os \
 		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
@@ -79,7 +80,8 @@ LDADD+=	${LDADD.dix} \
 	-lpixman-1 \
 	-lXdmcp \
 	-lz \
-	-lm
+	-lm \
+	-lGL
 
 DPADD+=	${DPADD.dix} \
 	${DPADD.fb} \
@@ -108,7 +110,8 @@ DPADD+=	${DPADD.dix} \
 	${LIBPIXMAN1} \
 	${LIBXDMCP} \
 	${LIBZ} \
-	${LIBM}
+	${LIBM} \
+	${LIBGL}
 
 .if ${MKCRYPTO:Uno} != "no"
 LDADD+=	-lcrypto

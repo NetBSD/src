@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2016/08/14 00:03:58 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -33,7 +33,10 @@ SRCS=		allowev.c chgdctl.c chgfctl.c chgkbd.c chgkmap.c chgprop.c \
 
 CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${DESTDIR}${X11INCDIR}/xorg \
+		-I${DESTDIR}${X11INCDIR}/miext/damage \
 		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${X11SRCDIR.xorg-server}/xfixes \
+		-I${X11SRCDIR.xorg-server}/Xi \
 		-I${X11SRCDIR.xorg-server}/../include
 CPPFLAGS+=      ${X11FLAGS.DIX}
 
