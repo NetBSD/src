@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.939 2016/08/05 16:44:31 scole Exp $
+#	$NetBSD: bsd.own.mk,v 1.940 2016/08/15 21:52:46 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1375,7 +1375,7 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
 	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb \
+	fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb xshmfence \
 	pthread-stubs
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
