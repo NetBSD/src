@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.91 2016/08/14 11:03:21 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.92 2016/08/15 05:10:33 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.91 2016/08/14 11:03:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.92 2016/08/15 05:10:33 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -54,9 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.91 2016/08/14 11:03:21 christos Exp $")
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/sockio.h>
-#if defined(COMPAT_40) || defined(MODULAR)
 #include <sys/sysctl.h>
-#endif
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/intr.h>
@@ -213,9 +211,7 @@ static int	tap_init(struct ifnet *);
 static int	tap_ioctl(struct ifnet *, u_long, void *);
 
 /* Internal functions */
-#if defined(COMPAT_40) || defined(MODULAR)
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
-#endif
 static void	tap_softintr(void *);
 
 /*
@@ -307,10 +303,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp;
-#if defined(COMPAT_40) || defined(MODULAR)
 	const struct sysctlnode *node;
 	int error;
-#endif
 	uint8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
@@ -390,7 +384,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
-#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Add a sysctl node for that interface.
 	 *
@@ -413,7 +406,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	    CTL_EOL)) != 0)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
 		    error);
-#endif
 }
 
 /*
@@ -425,9 +417,7 @@ tap_detach(device_t self, int flags)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#if defined(COMPAT_40) || defined(MODULAR)
 	int error;
-#endif
 	int s;
 
 	sc->sc_flags |= TAP_GOING;
@@ -441,7 +431,6 @@ tap_detach(device_t self, int flags)
 		sc->sc_sih = NULL;
 	}
 
-#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
@@ -451,7 +440,6 @@ tap_detach(device_t self, int flags)
 	    device_unit(sc->sc_dev), CTL_EOL)) != 0)
 		aprint_error_dev(self,
 		    "sysctl_destroyv returned %d, ignoring\n", error);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
@@ -587,11 +575,9 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
 		break;
-#if defined(COMPAT_40) || defined(MODULAR)
 	case SIOCSIFPHYADDR:
 		error = tap_lifaddr(ifp, cmd, (struct ifaliasreq *)data);
 		break;
-#endif
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET)
@@ -604,7 +590,6 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * Helper function to set Ethernet address.  This has been replaced by
  * the generic SIOCALIFADDR ioctl on a PF_LINK socket.
@@ -621,7 +606,6 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 
 	return (0);
 }
-#endif
 
 /*
  * _init() would typically be called when an interface goes up,
