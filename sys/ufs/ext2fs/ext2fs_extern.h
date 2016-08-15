@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.52 2016/08/09 21:08:02 kre Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.53 2016/08/15 18:29:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -176,7 +176,7 @@ int ext2fs_fsync(void *);
 int ext2fs_vinit(struct mount *, int (**specops)(void *),
 		      int (**fifoops)(void *), struct vnode **);
 int ext2fs_makeinode(int, struct vnode *, struct vnode **,
-			  struct componentname *cnp);
+			  struct componentname *cnp, int);
 int ext2fs_reclaim(void *);
 
 /* ext2fs_hash.c */
