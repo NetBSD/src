@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.26 2014/12/22 18:09:20 christos Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.27 2016/08/15 15:51:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.26 2014/12/22 18:09:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.27 2016/08/15 15:51:39 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock_subr.c,v 1.26 2014/12/22 18:09:20 christos Exp
 #define FEBRUARY	2
 
 /* for easier alignment:
- * time from the epoch to 2000 (there were 7 leap years): */
-#define	DAYSTO2000	(365*30+7)
+ * time from the epoch to 2001 (there were 8 leap years): */
+#define	DAYSTO2001	(365*31+8)
 
 /* 4 year intervals include 1 leap year */
 #define	DAYS4YEARS	(365*4+1)
@@ -96,14 +96,14 @@ clock_ymdhms_to_secs(struct clock_ymdhms *dt)
 	if (is_leap_year(year) && dt->dt_mon > FEBRUARY)
 		days++;
 
-	if (year < 2000) {
+	if (year < 2001) {
 		/* simple way for early years */
 		for (i = POSIX_BASE_YEAR; i < year; i++)
 			days += days_per_year(i);
 	} else {
 		/* years are properly aligned */
-		days += DAYSTO2000;
-		year -= 2000;
+		days += DAYSTO2001;
+		year -= 2001;
 
 		i = year / 400;
 		days += i * DAYS400YEARS;
@@ -155,9 +155,9 @@ clock_secs_to_ymdhms(time_t secs, struct clock_ymdhms *dt)
 	/* Day of week (Note: 1/1/1970 was a Thursday) */
 	dt->dt_wday = (days + 4) % 7;
 
-	if (days >= DAYSTO2000) {
-		days -= DAYSTO2000;
-		dt->dt_year = 2000;
+	if (days >= DAYSTO2001) {
+		days -= DAYSTO2001;
+		dt->dt_year = 2001;
 
 		i = days / DAYS400YEARS;
 		days -= i*DAYS400YEARS;
