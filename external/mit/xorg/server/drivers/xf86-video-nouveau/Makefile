@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2015/10/13 04:33:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/15 17:01:25 mrg Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -10,7 +10,6 @@ SRCS=		nouveau_copy.c \
 		nouveau_exa.c \
 		nouveau_xv.c \
 		nouveau_dri2.c \
-		nouveau_glamor.c \
 		nouveau_present.c \
 		nouveau_sync.c \
 		nouveau_wfb.c \
@@ -39,7 +38,6 @@ LIBDPLIBS+=	drm_nouveau ${.CURDIR}/../../../lib/libdrm_nouveau
 
 MAN=		nouveau.4
 
-CPPFLAGS+=	-DHAVE_XAA_H
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 CPPFLAGS+=	-DNV_MAJOR_VERSION=${PACKAGE_MAJOR}
@@ -47,7 +45,15 @@ CPPFLAGS+=	-DNV_MINOR_VERSION=${PACKAGE_MINOR}
 CPPFLAGS+=	-DNV_PATCHLEVEL=${PACKAGE_PATCH}
 CPPFLAGS+=	-DNV_DRIVER_DATE=${DRIVER_DATE}
 
+# XXX
+COPTS.nouveau_xv.c+=	-Wno-error=discarded-qualifiers
+
 .include "../Makefile.xf86-driver"
+
+.if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
+CPPFLAGS+=	-DHAVE_XORG_LIST
+CPPFLAGS+=	-DHAVE_XAA_H
+.endif
 
 # from pkgsrc/x11/xf86-video-nouveau/patches/patch-configure
 DRIVER_DATE!=awk '/^Date:/{print "\"" $0 "\"";exit}' ${X11SRCDIR.${DRIVER}}/ChangeLog
