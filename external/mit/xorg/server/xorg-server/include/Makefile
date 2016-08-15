@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.15 2016/08/14 00:03:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2016/08/15 22:01:44 mrg Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
 XORGINC_SUBDIR=	Xext composite dbe dri3 exa fb include mi \
-		miext/damage miext/shadow present randr render xkb record
+		miext/damage miext/shadow miext/sync \
+		present randr render xkb record
 XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
 		os-support os-support/bus parser rac ramdac shadowfb \
 		vbe vgahw xf1bpp xf4bpp xf8_16bpp xf8_32bpp dri2
@@ -37,6 +38,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	mi.h micmap.h micoord.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
 	mistruct.h mizerarc.h opaque.h \
+	misync.h misyncstr.h misyncshm.h misyncfd.h \
 	nonsdk_extinit.h optionstr.h \
 	os.h picture.h picturestr.h pixmap.h pixmapstr.h \
 	present.h presentext.h \
