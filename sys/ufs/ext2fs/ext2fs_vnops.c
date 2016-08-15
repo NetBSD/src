@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.124 2016/08/15 18:29:34 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.125 2016/08/15 18:38:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.124 2016/08/15 18:29:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.125 2016/08/15 18:38:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,7 +626,7 @@ ext2fs_link(void *v)
 		goto out2;
 	}
 	ip = VTOI(vp);
-	if ((nlink_t)ip->i_e2fs_nlink >= LINK_MAX) {
+	if ((nlink_t)ip->i_e2fs_nlink >= EXT2FS_LINK_MAX) {
 		VOP_ABORTOP(dvp, cnp);
 		error = EMLINK;
 		goto out1;
@@ -677,11 +677,6 @@ ext2fs_mkdir(void *v)
 	ulr = &VTOI(dvp)->i_crap;
 	UFS_CHECK_CRAPCOUNTER(VTOI(dvp));
 
-	if ((nlink_t)dp->i_e2fs_nlink >= LINK_MAX) {
-		error = EMLINK;
-		goto out;
-	}
-
 	/*
 	 * Acquire the inode, but don't sync/direnter it just yet
 	 */
@@ -700,7 +695,24 @@ ext2fs_mkdir(void *v)
 	 * be done before reference is created
 	 * so reparation is possible if we crash.
 	 */
-	dp->i_e2fs_nlink++;
+	if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
+		dp->i_e2fs_nlink++;
+
+	/*
+	 * If we hit the link limit, for directories just set the nlink
+	 * to special value 1, which means the link count is bigger
+	 * than EXT2FS_LINK_MAX.
+	 */
+	if ((nlink_t)dp->i_e2fs_nlink >= EXT2FS_LINK_MAX) {
+		dp->i_e2fs_nlink = EXT2FS_LINK_INF;
+
+		/* set the feature flag DIR_NLINK if not set already */
+		if (!EXT2F_HAS_ROCOMPAT_FEATURE(dp->i_e2fs, EXT2F_ROCOMPAT_DIR_NLINK)) {
+                	dp->i_e2fs->e2fs.e2fs_features_rocompat |= EXT2F_ROCOMPAT_DIR_NLINK;
+                	dp->i_e2fs->e2fs_fmod = 1;
+		}
+	}
+
 	dp->i_flag |= IN_CHANGE;
 	if ((error = ext2fs_update(dvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
@@ -725,7 +737,8 @@ ext2fs_mkdir(void *v)
 	    sizeof (dirtemplate), (off_t)0, IO_NODELOCKED|IO_SYNC,
 	    cnp->cn_cred, (size_t *)0, NULL);
 	if (error) {
-		dp->i_e2fs_nlink--;
+		if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
+			dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
 		goto bad;
 	}
@@ -734,7 +747,8 @@ ext2fs_mkdir(void *v)
 	else {
 		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
 		if (error) {
-			dp->i_e2fs_nlink--;
+			if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
+				dp->i_e2fs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 			goto bad;
 		}
@@ -745,7 +759,8 @@ ext2fs_mkdir(void *v)
 	/* Directory set up, now install its entry in the parent directory. */
 	error = ext2fs_direnter(ip, dvp, ulr, cnp);
 	if (error != 0) {
-		dp->i_e2fs_nlink--;
+		if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
+			dp->i_e2fs_nlink--;
 		dp->i_flag |= IN_CHANGE;
 	}
 bad:
@@ -807,7 +822,7 @@ ext2fs_rmdir(void *v)
 	 *  non-empty.)
 	 */
 	error = 0;
-	if (ip->i_e2fs_nlink != 2 ||
+	if ((ip->i_e2fs_nlink != 2 && ip->i_e2fs_nlink != EXT2FS_LINK_INF) ||
 	    !ext2fs_dirempty(ip, dp->i_number, cnp->cn_cred)) {
 		error = ENOTEMPTY;
 		goto out;
@@ -825,7 +840,8 @@ ext2fs_rmdir(void *v)
 	error = ext2fs_dirremove(dvp, ulr, cnp);
 	if (error != 0)
 		goto out;
-	dp->i_e2fs_nlink--;
+	if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
+		dp->i_e2fs_nlink--;
 	dp->i_flag |= IN_CHANGE;
 	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);

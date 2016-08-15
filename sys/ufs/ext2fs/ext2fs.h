@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.45 2016/08/14 11:42:50 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.46 2016/08/15 18:38:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -126,6 +126,13 @@
  * problem, so we choose to optimize for time.
  */
 #define MINFREE		5
+
+/*
+ * This is maximum amount of links allowed for files. For directories,
+ * going over this means setting DIR_NLINK feature.
+ */
+#define EXT2FS_LINK_MAX		65000
+#define EXT2FS_LINK_INF		1		/* link count unknown */
 
 /*
  * Super block for an ext2fs file system.
@@ -358,7 +365,8 @@ struct m_ext2fs {
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					 | EXT2F_ROCOMPAT_LARGEFILE \
 					 | EXT2F_ROCOMPAT_HUGE_FILE \
-					 | EXT2F_ROCOMPAT_EXTRA_ISIZE)
+					 | EXT2F_ROCOMPAT_EXTRA_ISIZE \
+					 | EXT2F_ROCOMPAT_DIR_NLINK)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
 					 | EXT2F_INCOMPAT_EXTENTS)
 
