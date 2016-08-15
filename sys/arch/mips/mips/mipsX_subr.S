@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.87 2016/08/09 09:06:31 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.88 2016/08/15 14:26:48 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -387,9 +387,9 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	PTR_L	k1, 0(k1)			#0e: k1=seg entry
 	b	MIPSX(tlb_miss_common)		#0f
 #ifdef MIPSNNR2
-	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#0f: k0=seg index
+	 _EXT	k0, k0, SEGSHIFT, SEGLENGTH	#10: k0=seg index
 #else
-	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#0f: k0=seg offset (almost)
+	 PTR_SRL k0, SEGSHIFT - PTR_SCALESHIFT	#10: k0=seg offset (almost)
 #endif
 #endif /* LP64 */
 2: /* handle useg addresses */
