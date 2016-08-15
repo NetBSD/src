@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.65 2016/08/10 18:49:40 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.66 2016/08/15 19:20:17 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -65,6 +65,9 @@ static char *metaIgnorePathsStr;	/* string storage for the list */
 #ifndef MAKE_META_IGNORE_PATTERNS
 #define MAKE_META_IGNORE_PATTERNS ".MAKE.META.IGNORE_PATTERNS"
 #endif
+#ifndef MAKE_META_IGNORE_FILTER
+#define MAKE_META_IGNORE_FILTER ".MAKE.META.IGNORE_FILTER"
+#endif
 
 Boolean useMeta = FALSE;
 static Boolean useFilemon = FALSE;
@@ -75,6 +78,7 @@ static Boolean metaEnv = FALSE;		/* don't save env unless asked */
 static Boolean metaVerbose = FALSE;
 static Boolean metaIgnoreCMDs = FALSE;	/* ignore CMDs in .meta files */
 static Boolean metaIgnorePatterns = FALSE; /* do we need to do pattern matches */
+static Boolean metaIgnoreFilter = FALSE;   /* do we have more complex filtering? */
 static Boolean metaCurdirOk = FALSE;	/* write .meta in .CURDIR Ok? */
 static Boolean metaSilent = FALSE;	/* if we have a .meta be SILENT */
 
@@ -639,6 +643,11 @@ meta_mode_init(const char *make_mode)
     cp = NULL;
     if (Var_Value(MAKE_META_IGNORE_PATTERNS, VAR_GLOBAL, &cp)) {
 	metaIgnorePatterns = TRUE;
+	free(cp);
+    }
+    cp = NULL;
+    if (Var_Value(MAKE_META_IGNORE_FILTER, VAR_GLOBAL, &cp)) {
+	metaIgnoreFilter = TRUE;
 	free(cp);
     }
 }
@@ -1320,6 +1329,26 @@ meta_oodate(GNode *gn, Boolean oodate)
 			free(pm);
 		    }
 
+		    if (metaIgnoreFilter) {
+			char *fm;
+
+			/* skip if filter result is empty */
+			snprintf(fname1, sizeof(fname1),
+				 "${%s:L:${%s:ts:}}",
+				 p, MAKE_META_IGNORE_FILTER);
+			fm = Var_Subst(NULL, fname1, gn, VARF_WANTRES);
+			if (*fm == '\0') {
+#ifdef DEBUG_META_MODE
+			    if (DEBUG(META))
+				fprintf(debug_file, "meta_oodate: ignoring filtered: %s\n",
+					p);
+#endif
+			    free(fm);
+			    break;
+			}
+			free(fm);
+		    }
+		    
 		    /*
 		     * The rest of the record is the file name.
 		     * Check if it's not an absolute path.
