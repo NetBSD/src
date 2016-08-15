@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.34 2016/08/15 18:57:06 jdolecek Exp $	*/
+/*	$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.34 2016/08/15 18:57:06 jdolecek Exp $");
+__RCSID("$NetBSD: setup.c,v 1.35 2016/08/15 19:13:24 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,8 @@ __RCSID("$NetBSD: setup.c,v 1.34 2016/08/15 18:57:06 jdolecek Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
+#include <util.h>
 
 #include "fsck.h"
 #include "extern.h"
@@ -385,6 +387,21 @@ readsb(int listerr)
 			    sblock.e2fs.e2fs_features_compat,
 			    sblock.e2fs.e2fs_features_incompat,
 			    sblock.e2fs.e2fs_features_rocompat);
+
+			if ((sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK)) {
+				char buf[512];
+
+				snprintb(buf, sizeof(buf), EXT2F_ROCOMPAT_BITS,
+					sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK);
+				printf("unsupported rocompat features: %s\n", buf);
+			}
+			if ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK)) {
+				char buf[512];
+
+				snprintb(buf, sizeof(buf), EXT2F_INCOMPAT_BITS,
+					sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK);
+				printf("unsupported incompat features: %s\n", buf);
+			}
 		}
 		badsb(listerr, "INCOMPATIBLE FEATURE BITS IN SUPER BLOCK");
 		return 0;
