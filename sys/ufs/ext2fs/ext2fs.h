@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.46 2016/08/15 18:38:10 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.47 2016/08/15 18:46:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -368,7 +368,8 @@ struct m_ext2fs {
 					 | EXT2F_ROCOMPAT_EXTRA_ISIZE \
 					 | EXT2F_ROCOMPAT_DIR_NLINK)
 #define EXT2F_INCOMPAT_SUPP		(EXT2F_INCOMPAT_FTYPE \
-					 | EXT2F_INCOMPAT_EXTENTS)
+					 | EXT2F_INCOMPAT_EXTENTS \
+					 | EXT2F_INCOMPAT_FLEX_BG)
 
 /*
  * Feature set definitions
