@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.88 2016/08/15 14:26:48 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.89 2016/08/15 14:44:44 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -360,7 +360,7 @@
  *
  * Loongson2 processors don't have separate tlbmiss and xtlbmiss handlers;
  * so we have to check for useg addresses in tlb_miss. The good news is that
- * we can use 64 intructions form tlbmiss instead of 32.
+ * we can use 64 intructions from tlbmiss instead of 32.
  *
  *----------------------------------------------------------------------------
  */
