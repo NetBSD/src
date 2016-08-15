@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.123 2016/08/14 11:44:54 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.124 2016/08/15 18:29:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.123 2016/08/14 11:44:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.124 2016/08/15 18:29:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ ext2fs_create(void *v)
 
 	error =
 	    ext2fs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
-			     ap->a_dvp, ap->a_vpp, ap->a_cnp);
+			     ap->a_dvp, ap->a_vpp, ap->a_cnp, 1);
 
 	if (error)
 		return error;
@@ -166,7 +166,7 @@ ext2fs_mknod(void *v)
 	ino_t		ino;
 
 	if ((error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
-		    ap->a_dvp, vpp, ap->a_cnp)) != 0)
+		    ap->a_dvp, vpp, ap->a_cnp, 1)) != 0)
 		return error;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
@@ -666,12 +666,11 @@ ext2fs_mkdir(void *v)
 		struct vattr *a_vap;
 	} */ *ap = v;
 	struct vnode		*dvp = ap->a_dvp;
-	struct vattr		*vap = ap->a_vap;
 	struct componentname	*cnp = ap->a_cnp;
 	struct inode		*ip, *dp = VTOI(dvp);
 	struct vnode		*tvp;
 	struct ext2fs_dirtemplate dirtemplate;
-	int			error, dmode;
+	int			error;
 	struct ufs_lookup_results *ulr;
 
 	/* XXX should handle this material another way */
@@ -682,30 +681,17 @@ ext2fs_mkdir(void *v)
 		error = EMLINK;
 		goto out;
 	}
-	dmode = vap->va_mode & ACCESSPERMS;
-	dmode |= IFDIR;
+
 	/*
-	 * Must simulate part of ext2fs_makeinode here to acquire the inode,
-	 * but not have it entered in the parent directory. The entry is
-	 * made later after writing "." and ".." entries.
+	 * Acquire the inode, but don't sync/direnter it just yet
 	 */
-	if ((error = ext2fs_valloc(dvp, dmode, cnp->cn_cred, &tvp)) != 0)
+	error = ext2fs_makeinode(IFDIR | ap->a_vap->va_mode, ap->a_dvp,
+			      &tvp, ap->a_cnp, 0);
+	if (error)
 		goto out;
+
+	/* the link count is going to be 2 when all is done */
 	ip = VTOI(tvp);
-	ip->i_uid = kauth_cred_geteuid(cnp->cn_cred);
-	ip->i_e2fs_uid = ip->i_uid & 0xffff;
-	ip->i_e2fs_gid = dp->i_e2fs_gid;
-	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0) {
-		ip->i_e2fs_uid_high = (ip->i_uid >> 16) & 0xffff;
-		ip->i_e2fs_gid_high = dp->i_e2fs_gid_high;
-	} else {
-		ip->i_e2fs_uid_high = 0;
-		ip->i_e2fs_gid_high = 0;
-	}
-	ip->i_gid = ip->i_e2fs_gid | (ip->i_e2fs_gid_high << 16);
-	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
-	ip->i_e2fs_mode = dmode;
-	tvp->v_type = VDIR;	/* Rest init'd in getnewvnode(). */
 	ip->i_e2fs_nlink = 2;
 
 	/*
@@ -886,7 +872,7 @@ ext2fs_symlink(void *v)
 
 	vpp = ap->a_vpp;
 	error = ext2fs_makeinode(IFLNK | ap->a_vap->va_mode, ap->a_dvp,
-			      vpp, ap->a_cnp);
+			      vpp, ap->a_cnp, 1);
 	if (error)
 		return error;
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -1036,7 +1022,7 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
  */
 int
 ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
-		struct componentname *cnp)
+		struct componentname *cnp, int do_direnter)
 {
 	struct inode *ip, *pdir;
 	struct vnode *tvp;
@@ -1082,14 +1068,30 @@ ext2fs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 			ip->i_e2fs_mode &= ~ISGID;
 	}
 
-	/*
-	 * Make sure inode goes to disk before directory entry.
-	 */
-	if ((error = ext2fs_update(tvp, NULL, NULL, UPDATE_WAIT)) != 0)
-		goto bad;
-	error = ext2fs_direnter(ip, dvp, ulr, cnp);
-	if (error != 0)
-		goto bad;
+	/* Initialize extra_isize according to what is set in superblock */
+	if (EXT2F_HAS_ROCOMPAT_FEATURE(ip->i_e2fs, EXT2F_ROCOMPAT_EXTRA_ISIZE)
+	    && EXT2_DINODE_SIZE(ip->i_e2fs) > EXT2_REV0_DINODE_SIZE) {
+		ip->i_din.e2fs_din->e2di_extra_isize = ip->i_e2fs->e2fs.e4fs_want_extra_isize;
+	}
+
+	/* Set create time if possible */
+	if (EXT2_DINODE_FITS(ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs))) {
+		struct timespec now;
+		vfs_timestamp(&now);
+		EXT2_DINODE_TIME_SET(&now, ip->i_din.e2fs_din, e2di_crtime, EXT2_DINODE_SIZE(ip->i_e2fs));
+	}
+
+	if (do_direnter) {
+		/*
+		 * Make sure inode goes to disk before directory entry.
+		 */
+		if ((error = ext2fs_update(tvp, NULL, NULL, UPDATE_WAIT)) != 0)
+			goto bad;
+		error = ext2fs_direnter(ip, dvp, ulr, cnp);
+		if (error != 0)
+			goto bad;
+	}
+
 	*vpp = tvp;
 	return 0;
 
