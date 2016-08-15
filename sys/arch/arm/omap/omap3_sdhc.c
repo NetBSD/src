@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.23 2016/08/04 20:07:18 jakllsch Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.24 2016/08/15 13:02:07 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.23 2016/08/04 20:07:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.24 2016/08/15 13:02:07 mlelstv Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -399,7 +399,7 @@ no_dma:
 	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
 	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
 
-	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
+	sc->sc_ih = intr_establish(oa->obio_intr, IPL_SDMMC, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
