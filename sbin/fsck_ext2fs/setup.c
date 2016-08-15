@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.33 2016/08/15 18:42:15 jdolecek Exp $	*/
+/*	$NetBSD: setup.c,v 1.34 2016/08/15 18:57:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.33 2016/08/15 18:42:15 jdolecek Exp $");
+__RCSID("$NetBSD: setup.c,v 1.34 2016/08/15 18:57:06 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ readsb(int listerr)
 	}
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    (!powerof2(sblock.e2fs.e2fs_inode_size) ||
-	     sblock.e2fs.e2fs_inode_size < sizeof(struct ext2fs_dinode) ||
+	     sblock.e2fs.e2fs_inode_size < EXT2_REV0_DINODE_SIZE ||
 	     sblock.e2fs.e2fs_inode_size >
 	      (1024 << sblock.e2fs.e2fs_log_bsize))) {
 		badsb(listerr, "BAD INODE_SIZE");
