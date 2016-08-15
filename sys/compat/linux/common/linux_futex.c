@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.34 2016/05/20 13:54:34 chs Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.35 2016/08/15 09:20:11 maxv Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.34 2016/05/20 13:54:34 chs Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.35 2016/08/15 09:20:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -769,6 +769,7 @@ release_futexes(struct lwp *l)
 			return;
 
 		head.futex_offset = (unsigned long)u32;
+		futex_offset = head.futex_offset;
 	} else
 #endif
 	if (copyin(&head.futex_offset, &futex_offset, sizeof(unsigned long)))
