@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.48 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.49 2016/08/15 09:30:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.48 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.49 2016/08/15 09:30:22 maxv Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -1016,7 +1016,7 @@ cmpci_alloc_dmamem(struct cmpci_softc *sc, size_t size, void **r_addr)
 	struct cmpci_dmanode *n;
 
 	error = 0;
-	n = kmem_alloc(sizeof(struct cmpci_dmanode), KM_SLEEP);
+	n = kmem_alloc(sizeof(*n), KM_SLEEP);
 	if (n == NULL) {
 		error = ENOMEM;
 		goto quit;
