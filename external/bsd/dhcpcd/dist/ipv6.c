@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.20 2016/07/29 10:07:58 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.21 2016/08/15 11:04:53 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -2182,7 +2182,7 @@ ipv6_handlert(struct dhcpcd_ctx *ctx, int cmd, const struct rt6 *rt)
 		}
 		/* If we manage the route, remove it */
 		if ((f = find_route6(ctx->ipv6->routes, rt))) {
-			desc_route("removing", f);
+			desc_route("deleted", f);
 			TAILQ_REMOVE(ctx->ipv6->routes, f, next);
 			free(f);
 		}
@@ -2407,6 +2407,8 @@ ipv6_build_ra_routes(struct ipv6_ctx *ctx, struct rt6_head *dnr, int expired)
 			continue;
 		if (rap->iface->options->options & DHCPCD_IPV6RA_OWN) {
 			TAILQ_FOREACH(addr, &rap->addrs, next) {
+				if (addr->prefix_vltime == 0)
+					continue;
 				rt = make_prefix(rap->iface, rap, addr);
 				if (rt)
 					TAILQ_INSERT_TAIL(dnr, rt, next);
