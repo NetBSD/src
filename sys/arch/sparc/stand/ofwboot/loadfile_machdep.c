@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.14 2015/06/14 16:20:44 martin Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.15 2016/08/15 08:29:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -216,6 +216,7 @@ tlb_init_sun4u(void)
 	phandle_t child;
 	phandle_t root;
 	char buf[128];
+	bool foundcpu = false;
 	u_int bootcpu;
 	u_int cpu;
 
@@ -236,10 +237,13 @@ tlb_init_sun4u(void)
 			    sizeof(cpu)) == -1 && _prom_getprop(child, "portid",
 			    &cpu, sizeof(cpu)) == -1)
 				panic("tlb_init: prom_getprop");
+			foundcpu = true;
 			if (cpu == bootcpu)
 				break;
 		}
 	}
+	if (!foundcpu)
+		panic("tlb_init: no cpu found!");
 	if (cpu != bootcpu)
 		panic("tlb_init: no node for bootcpu?!?!");
 	if (_prom_getprop(child, "#dtlb-entries", &dtlb_slot_max,
