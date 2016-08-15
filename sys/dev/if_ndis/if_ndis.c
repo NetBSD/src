@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ndis.c,v 1.36 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_ndis.c,v 1.37 2016/08/15 08:12:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2003
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.36 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.37 2016/08/15 08:12:32 maxv Exp $");
 #endif
 
 
@@ -1967,7 +1967,7 @@ ndis_getstate_80211(struct ndis_softc *sc)
 			break;
 		default:
 			aprint_error_dev(sc->ndis_dev, "unknown nettype %d\n", 
-				     arg);
+				(int)bs->nwbx_nettype);
 			break;
 		}
 		free(bs, M_TEMP);
