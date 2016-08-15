@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.56 2016/06/22 10:44:32 knakahara Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.57 2016/08/15 09:14:12 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.56 2016/06/22 10:44:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.57 2016/08/15 09:14:12 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -288,8 +288,10 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 		ifh->ifh_dgl = htons(ic->ic_dgl);
 		ifh->ifh_reserved = 0;
 		m->m_next = m_copy(m0, sizeof(*ifh) + off, fraglen);
-		if (m->m_next == NULL)
+		if (m->m_next == NULL) {
+			m_freem(m);
 			goto bad;
+		}
 		m->m_pkthdr.len = sizeof(*ifh) + fraglen;
 		off += fraglen;
 		*mp = m;
