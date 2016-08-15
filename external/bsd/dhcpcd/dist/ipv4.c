@@ -382,7 +382,7 @@ ipv4_handlert(struct dhcpcd_ctx *ctx, int cmd, const struct rt *rt, int flags)
 
 		/* If we manage the route, remove it */
 		if ((f = find_route(ctx->ipv4_routes, rt, NULL))) {
-			desc_route("removing", f);
+			desc_route("deleted", f);
 			TAILQ_REMOVE(ctx->ipv4_routes, f, next);
 			free(f);
 		}

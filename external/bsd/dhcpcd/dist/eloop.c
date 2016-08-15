@@ -744,20 +744,20 @@ int
 eloop_signal_mask(struct eloop *eloop, sigset_t *oldset)
 {
 	sigset_t newset;
-#ifndef HAVE_KQUEUE
 	size_t i;
+#ifndef HAVE_KQUEUE
 	struct sigaction sa;
 #endif
 
 	assert(eloop != NULL);
 
-	sigfillset(&newset);
+	sigemptyset(&newset);
+	for (i = 0; i < eloop->signals_len; i++)
+		sigaddset(&newset, eloop->signals[i]);
 	if (sigprocmask(SIG_SETMASK, &newset, oldset) == -1)
 		return -1;
 
-#ifdef HAVE_KQUEUE
-	UNUSED(eloop);
-#else
+#ifndef HAVE_KQUEUE
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_sigaction = eloop_signal3;
 	sa.sa_flags = SA_SIGINFO;

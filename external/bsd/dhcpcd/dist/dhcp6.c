@@ -3174,6 +3174,22 @@ dhcp6_open(struct dhcpcd_ctx *dctx)
 		logger(dctx, LOG_WARNING, "setsockopt: SO_REUSEPORT: %m");
 #endif
 
+	if (!(dctx->options & DHCPCD_MASTER)) {
+		/* Bind to the link-local address to allow more than one
+		 * DHCPv6 client to work. */
+		struct interface *ifp;
+		struct ipv6_addr *ia;
+
+		TAILQ_FOREACH(ifp, dctx->ifaces, next) {
+			if (ifp->active)
+				break;
+		}
+		if (ifp != NULL && (ia = ipv6_linklocal(ifp)) != NULL) {
+			memcpy(&sa.sin6_addr, &ia->addr, sizeof(sa.sin6_addr));
+			sa.sin6_scope_id = ifp->index;
+		}
+	}
+
 	if (bind(ctx->dhcp_fd, (struct sockaddr *)&sa, sizeof(sa)) == -1)
 		goto errexit;
 
@@ -3229,6 +3245,9 @@ dhcp6_start1(void *arg)
 	struct dhcp6_state *state;
 	size_t i;
 	const struct dhcp_compat *dhc;
+
+	if (ifp->ctx->ipv6->dhcp_fd == -1 && dhcp6_open(ifp->ctx) == -1)
+		return;
 
 	state = D6_STATE(ifp);
 	/* If no DHCPv6 options are configured,
@@ -3293,9 +3312,6 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 
 	if (!(ifp->options->options & DHCPCD_DHCP6))
 		return 0;
-
-	if (ifp->ctx->ipv6->dhcp_fd == -1 && dhcp6_open(ifp->ctx) == -1)
-		return -1;
 
 	ifp->if_data[IF_DATA_DHCP6] = calloc(1, sizeof(*state));
 	state = D6_STATE(ifp);

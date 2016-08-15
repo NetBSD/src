@@ -1329,6 +1329,7 @@ ipv6nd_expirera(void *arg)
 	struct ra *rap, *ran;
 	struct timespec now, lt, expire, next;
 	uint8_t expired, valid, validone;
+	struct ipv6_addr *ia;
 
 	ifp = arg;
 	clock_gettime(CLOCK_MONOTONIC, &now);
@@ -1355,6 +1356,39 @@ ipv6nd_expirera(void *arg)
 				}
 			} else {
 				valid = 1;
+				timespecsub(&expire, &now, &lt);
+				if (!timespecisset(&next) ||
+				    timespeccmp(&next, &lt, >))
+					next = lt;
+			}
+		}
+
+		/* Not every prefix is tied to an address which
+		 * the kernel can expire, so we need to handle it ourself.
+		 * Also, some OS don't support address lifetimes (Solaris). */
+		TAILQ_FOREACH(ia, &rap->addrs, next) {
+			if (ia->prefix_vltime == ND6_INFINITE_LIFETIME ||
+			    ia->prefix_vltime == 0)
+				continue;
+			lt.tv_sec = (time_t)ia->prefix_vltime;
+			lt.tv_nsec = 0;
+			timespecadd(&ia->acquired, &lt, &expire);
+			if (timespeccmp(&now, &expire, >)) {
+				if (ia->flags & IPV6_AF_ADDED) {
+					logger(ia->iface->ctx, LOG_WARNING,
+					    "%s: expired address %s",
+					    ia->iface->name, ia->saddr);
+					if (if_address6(RTM_DELADDR, ia)== -1 &&
+					    errno != EADDRNOTAVAIL &&
+					    errno != ENXIO)
+						logger(ia->iface->ctx, LOG_ERR,
+						    "if_address6: %m");
+				}
+				ia->prefix_vltime = ia->prefix_pltime = 0;
+				ia->flags &=
+				    ~(IPV6_AF_ADDED | IPV6_AF_DADCOMPLETED);
+				expired = 1;
+			} else {
 				timespecsub(&expire, &now, &lt);
 				if (!timespecisset(&next) ||
 				    timespeccmp(&next, &lt, >))

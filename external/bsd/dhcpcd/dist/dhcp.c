@@ -1538,7 +1538,6 @@ dhcp_openudp(struct interface *ifp)
 	struct dhcp_state *state;
 #ifdef SO_BINDTODEVICE
 	struct ifreq ifr;
-	char *p;
 #endif
 
 	if ((s = xsocket(PF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP)) == -1)
@@ -1551,10 +1550,6 @@ dhcp_openudp(struct interface *ifp)
 	if (ifp) {
 		memset(&ifr, 0, sizeof(ifr));
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-		/* We can only bind to the real device */
-		p = strchr(ifr.ifr_name, ':');
-		if (p)
-			*p = '\0';
 		if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr,
 		    sizeof(ifr)) == -1)
 		        goto eexit;
@@ -2398,6 +2393,7 @@ dhcp_inform(struct interface *ifp)
 	state->state = DHS_INFORM;
 	free(state->offer);
 	state->offer = NULL;
+	state->offer_len = 0;
 
 	if (ifo->req_addr.s_addr == INADDR_ANY) {
 		ia = ipv4_iffindaddr(ifp, NULL, NULL);
@@ -2973,8 +2969,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 				return;
 			}
 		}
-		memcpy(state->offer, bootp, bootp_len);
 		state->offer_len = bootp_len;
+		memcpy(state->offer, bootp, bootp_len);
 		bootp_copied = true;
 		if (ifp->ctx->options & DHCPCD_TEST) {
 			free(state->old);
@@ -3051,8 +3047,8 @@ rapidcommit:
 				return;
 			}
 		}
-		memcpy(state->offer, bootp, bootp_len);
 		state->offer_len = bootp_len;
+		memcpy(state->offer, bootp, bootp_len);
 	}
 
 	lease->frominfo = 0;
@@ -3436,6 +3432,7 @@ dhcp_start1(void *arg)
 	clock_gettime(CLOCK_MONOTONIC, &state->started);
 	free(state->offer);
 	state->offer = NULL;
+	state->offer_len = 0;
 
 	if (state->arping_index < ifo->arping_len) {
 		struct arp_state *astate;
@@ -3492,6 +3489,7 @@ dhcp_start1(void *arg)
 			{
 				free(state->offer);
 				state->offer = NULL;
+				state->offer_len = 0;
 			}
 		}
 	}
@@ -3657,7 +3655,7 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia)
 	if (cmd == RTM_DELADDR) {
 		if (IPV4_BRD_EQ(state->addr, ia)) {
 			logger(ifp->ctx, LOG_INFO,
-			    "%s: removing IP address %s", ifp->name, ia->saddr);
+			    "%s: deleted IP address %s", ifp->name, ia->saddr);
 			dhcp_drop(ifp, "EXPIRE");
 		}
 		return;
