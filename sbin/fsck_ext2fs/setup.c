@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.32 2014/12/04 01:41:37 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.33 2016/08/15 18:42:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -58,7 +58,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.32 2014/12/04 01:41:37 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.33 2016/08/15 18:42:15 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,8 +377,8 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_features_rocompat |=
 	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
-	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
-	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {
+	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP_FSCK) ||
+	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP_FSCK))) {
 		if (debug) {
 			printf("compat 0x%08x, incompat 0x%08x, compat_ro "
 			    "0x%08x\n",
