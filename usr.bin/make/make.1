@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.260 2016/08/10 23:49:12 sjg Exp $
+.\"	$NetBSD: make.1,v 1.261 2016/08/15 19:20:17 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 10, 2016
+.Dd August 15, 2016
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -927,6 +927,9 @@ The default list includes:
 .It Va .MAKE.META.IGNORE_PATTERNS
 Provides a list of patterns to match against pathnames.
 Ignore any that match.
+.It Va .MAKE.META.IGNORE_FILTER
+Provides a list of variable modifiers to apply to each pathname.
+Ignore if the expansion is an empty string.
 .It Va .MAKE.META.PREFIX
 Defines the message printed for each meta file updated in "meta verbose" mode.
 The default value is:
