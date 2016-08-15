@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.89 2016/08/15 14:44:44 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.90 2016/08/15 14:45:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -373,7 +373,7 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	nop					#01: nop
 	PTR_SRL k1, k0, 31			#02: clear useg bits
 	beqz	k1, 2f				#03: k1==0 -> useg address
-	 PTR_SRL k1,k0,XSEGSHIFT+XSEGLENGTH+2	#04: clear valid bits
+	 PTR_SRL k1,k0,XSEGSHIFT+XSEGLENGTH	#04: clear valid bits
 	bnez	k1, MIPSX(nopagetable)		#05: not legal address
 	 PTR_SRL k0, XSEGSHIFT - PTR_SCALESHIFT #06: k0=seg offset (almost)
 	bgez	k0, 1f				#07: k0<0 -> kernel fault
