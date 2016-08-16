@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.89 2016/08/16 01:10:19 mrg Exp $
+# $NetBSD: md.amd64,v 1.90 2016/08/16 19:04:41 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -439,10 +439,10 @@
 ./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/nouveau_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/nouveau_drv.so.1	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
