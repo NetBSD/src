@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.90 2016/08/15 14:45:31 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.91 2016/08/16 09:55:14 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -380,7 +380,7 @@ VECTOR(MIPSX(tlb_miss), unknown)
 	 lui	k1, %hi(CPUVAR(PMAP_SEGTAB))	#08: k1=hi of segtab
 	PTR_ADDI k1,  1 << PTR_SCALESHIFT	#09: kernel segtab entry
 1:
-	andi	k0, NBPG-(1<<PTR_SCALESHIFT)	#0a: k0=seg offset (mask 0x3)
+	andi	k0, (NSEGPG-1)<<PTR_SCALESHIFT	#0a: k0=seg offset (mask 0x3)
 	PTR_L	k1, %lo(CPUVAR(PMAP_SEGTAB))(k1)#0b: k1=segment tab
 	PTR_ADDU k1, k0				#0c: k1=seg entry address
 	dmfc0	k0, MIPS_COP_0_BAD_VADDR	#0d: k0=bad address (again)
