@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/22 09:49:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/08/16 06:53:01 mrg Exp $
 
 WARNS?=		2
 
@@ -8,7 +8,7 @@ DRIVER_NAME=	mouse_drv
 SRCS=		mouse.c pnp.c bsd_mouse.c
 MAN=		mousedrv.4
 
-CPPFLAGS+=	-DHAVE_XORG_CONFIG_H -DHAVE_ASPRINTF
+CPPFLAGS+=	-DHAVE_ASPRINTF
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/include
 
 INCSDIR=	${X11INCDIR}/xorg
