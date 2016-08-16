@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.104 2016/08/01 04:37:53 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.105 2016/08/16 10:31:57 roy Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.104 2016/08/01 04:37:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.105 2016/08/16 10:31:57 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -533,10 +533,8 @@ success:
 static int
 in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 {
-	struct in6_ifaddr *ia __diagused;
 	struct in6_aliasreq ifra;
-	struct nd_prefixctl prc0;
-	int i, error, s;
+	int error;
 
 	/*
 	 * configure link-local address.
@@ -591,48 +589,6 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 			    "(errno=%d)\n",
 			    if_name(ifp), error);
 		return -1;
-	}
-
-	s = pserialize_read_enter();
-	ia = in6ifa_ifpforlinklocal(ifp, 0); /* ia must not be NULL */
-	KASSERTMSG(ia, "ia == NULL in in6_ifattach_linklocal");
-	pserialize_read_exit(s);
-
-	/*
-	 * Make the link-local prefix (fe80::/64%link) as on-link.
-	 * Since we'd like to manage prefixes separately from addresses,
-	 * we make an ND6 prefix structure for the link-local prefix,
-	 * and add it to the prefix list as a never-expire prefix.
-	 * XXX: this change might affect some existing code base...
-	 */
-	memset(&prc0, 0, sizeof(prc0));
-	prc0.ndprc_ifp = ifp;
-	/* this should be 64 at this moment. */
-	prc0.ndprc_plen = in6_mask2len(&ifra.ifra_prefixmask.sin6_addr, NULL);
-	prc0.ndprc_prefix = ifra.ifra_addr;
-	/* apply the mask for safety. (nd6_prelist_add will apply it again) */
-	for (i = 0; i < 4; i++) {
-		prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
-		    in6mask64.s6_addr32[i];
-	}
-	/*
-	 * Initialize parameters.  The link-local prefix must always be
-	 * on-link, and its lifetimes never expire.
-	 */
-	prc0.ndprc_raf_onlink = 1;
-	prc0.ndprc_raf_auto = 1;	/* probably meaningless */
-	prc0.ndprc_vltime = ND6_INFINITE_LIFETIME;
-	prc0.ndprc_pltime = ND6_INFINITE_LIFETIME;
-	/*
-	 * Since there is no other link-local addresses, nd6_prefix_lookup()
-	 * probably returns NULL.  However, we cannot always expect the result.
-	 * For example, if we first remove the (only) existing link-local
-	 * address, and then reconfigure another one, the prefix is still
-	 * valid with referring to the old link-local address.
-	 */
-	if (nd6_prefix_lookup(&prc0) == NULL) {
-		if ((error = nd6_prelist_add(&prc0, NULL, NULL)) != 0)
-			return error;
 	}
 
 	return 0;

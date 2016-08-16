@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.118 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.119 2016/08/16 10:31:57 roy Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.118 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.119 2016/08/16 10:31:57 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1358,6 +1358,11 @@ prelist_update(struct nd_prefixctl *newprc,
 			 */
 			pr->ndpr_refcnt++;
 			ia6->ia6_ndpr = pr;
+
+			/* toggle onlink state if the address was assigned
+			 * a prefix route. */
+			if (ia6->ia_flags & IFA_ROUTE)
+				pr->ndpr_stateflags |= NDPRF_ONLINK;
 
 			/*
 			 * draft-ietf-ipngwg-temp-addresses-v2-00 3.3 (2).
