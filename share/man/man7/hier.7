@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.118 2016/08/16 01:41:18 dholland Exp $
+.\"	$NetBSD: hier.7,v 1.119 2016/08/16 01:46:51 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -209,6 +209,9 @@ see
 Local time zone;
 see
 .Xr ctime 3 .
+.It Sy login.conf
+Configuration of user classes and limits; see
+.Xr login.conf 5 .
 .It Sy mail/
 Configuration files for
 .Xr sendmail 1 .
@@ -272,6 +275,9 @@ Printer configuration for
 .Xr lpr 1 ;
 see
 .Xr printcap 5 .
+.It Sy profile
+System-wide scripts for
+.Xr sh 1 .
 .It Sy protocols
 Protocol name database; see
 .Xr protocols 5 .
@@ -326,6 +332,11 @@ Database form of master.passwd file; see
 .Xr syslogd 8
 Configuration file; see
 .Xr syslog.conf 5 .
+.It Sy ttyaction
+Login hooks for specific ttys, typically used to chown console
+devices.
+See
+.Xr ttyaction 5 .
 .It Sy ttys
 Terminal initialization information; see
 .Xr ttys 5 .
