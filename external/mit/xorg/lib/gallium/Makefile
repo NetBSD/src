@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2016/02/28 22:55:21 joerg Exp $
+# $NetBSD: Makefile,v 1.15 2016/08/16 21:05:14 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -13,20 +13,8 @@ LIB=		gallium_dri
 DRIDIR=		${X11USRLIBDIR}/modules/dri
 DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
-DRIVERS=	kms_swrast swrast
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-DRIVERS+=	r600
-.endif
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
-DRIVERS+=	nouveau
-.endif
-
 CXXFLAGS+=	-std=c++11
-CPPFLAGS+= \
-	-I${DESTDIR}${X11INCDIR}/libdrm
-
-# cargo culted.
-#CPPFLAGS+= -D_NETBSD_SOURCE -DPTHREADS
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
@@ -48,21 +36,44 @@ GALLIUM_SUBDIRS= \
 	drivers/noop \
 	drivers/trace \
 	drivers/rbug \
+	drivers/softpipe \
+	winsys/sw/null \
+	winsys/sw/dri \
+	winsys/sw/kms-dri \
+	state_trackers/dri
+
+GALLIUM_SUBDIRS_ATI= \
 	drivers/radeon \
 	drivers/r600 \
 	drivers/r600/sb \
+	winsys/radeon/drm
+
+GALLIUM_SUBDIRS_NOUVEAU= \
 	drivers/nouveau \
 	drivers/nouveau/nv30 \
 	drivers/nouveau/nv50 \
 	drivers/nouveau/codegen \
 	drivers/nouveau/nvc0 \
-	drivers/softpipe \
-	winsys/radeon/drm \
-	winsys/nouveau/drm \
-	winsys/sw/null \
-	winsys/sw/dri \
-	winsys/sw/kms-dri \
-	state_trackers/dri
+	winsys/nouveau/drm
+
+BUILD_RADEON=0
+BUILD_NOUVEAU=0
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+BUILD_RADEON=1
+.endif
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
+BUILD_NOUVEAU=1
+.endif
+
+DRIVERS=		kms_swrast swrast
+.if ${BUILD_RADEON} == 1
+DRIVERS+=		r600
+GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_ATI}
+.endif
+.if ${BUILD_NOUVEAU} == 1
+DRIVERS+=		nouveau
+GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_NOUVEAU}
+.endif
 
 GALLIUM_SOURCES.auxiliary/cso_cache= \
 	cso_cache.c \
@@ -537,12 +548,17 @@ SRCS+=	${GALLIUM_SOURCES.${_d}}
 
 .include "../libloader.mk"
 
+
 LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
+.if ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
+.if ${BUILD_RADEON} == 1
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
+.endif	# ${BUILD_RADEON} == 1
+.if ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
-.endif
+.endif	# ${BUILD_NOUVEAU} == 1
+.endif	# ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 
@@ -580,13 +596,21 @@ CPPFLAGS.target.c += \
 	-DGALLIUM_NOOP \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE \
-	-DGALLIUM_R200 \
-	-DGALLIUM_R600 \
-	-DGALLIUM_NOUVEAU \
 	-DGALLIUM_SOFTPIPE \
 	-I${X11SRCDIR.MesaLib}/src/gallium/state_trackers/dri \
 	-I${X11SRCDIR.MesaLib}/src/loader \
 	-I${X11SRCDIR.MesaLib}/src/gallium/winsys
+
+.if ${BUILD_RADEON} == 1
+CPPFLAGS.target.c += \
+	-DGALLIUM_R200 \
+	-DGALLIUM_R600
+.endif	# ${BUILD_RADEON} == 1
+
+.if ${BUILD_NOUVEAU} == 1
+CPPFLAGS.target.c += \
+	-DGALLIUM_NOUVEAU
+.endif	# ${BUILD_NOUVEAU} == 1
 
 CWARNFLAGS.clang+=	-Wno-error=constant-conversion \
 			-Wno-error=tautological-constant-out-of-range-compare \
