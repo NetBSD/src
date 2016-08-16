@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.116 2016/08/16 00:47:19 dholland Exp $
+.\"	$NetBSD: hier.7,v 1.117 2016/08/16 01:39:40 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -507,7 +507,7 @@ Package system utilities.
 .It Sy pkgsrc/
 Build descriptions (packaging) for the
 .Nx
-packages system.
+package system.
 .Pp
 .Bl -tag -width "distfilesX" -compact
 .It Sy distfiles/
@@ -539,7 +539,7 @@ and
 .It Sy words
 Common words.
 .It Sy web2
-Words of Webster's 2nd International.
+Words from Webster's Second International Dictionary.
 .It Sy papers/
 Reference databases;
 see
@@ -606,7 +606,7 @@ see
 .El
 .It Sy tests/
 Test programs; see
-.Xr atf-run 1
+.Xr tests 7
 for information on how to run them.
 .El
 .Pp
@@ -828,7 +828,8 @@ Digital MIPS-based DECstations and DECsystems.
 .It Sy powerpc/
 PowerPC processor general support.
 .It Sy prep/
-PReP (PowerPC Reference Platform) and CHRP machines
+PReP (PowerPC Reference Platform) and CHRP (Common Hardware Reference
+Platform) machines.
 .It Sy sandpoint/
 Motorola Sandpoint reference platform.
 .It Sy sbmips/
@@ -913,7 +914,7 @@ Support for
 .Tn ULTRIX
 binaries.
 .It Sy vax1k/
-Support for older VAX binaries that started on a 1 KB boundary
+Support for older VAX binaries that started on a 1 KB boundary.
 .El
 .Pp
 .It Sy conf/
@@ -1035,7 +1036,7 @@ Still more file systems.
 .Bl -tag -width "ffs/" -compact
 .It Sy chfs/
 A FFS-based file system for use on raw flash.
-.It Sy chfs/
+.It Sy ext2fs/
 The Linux ext2 file system.
 .It Sy ffs/
 The Berkeley Fast File System.
@@ -1139,6 +1140,9 @@ Printer daemon error logs; see
 .Xr lpd 8 .
 .It Sy maillog.*
 .Xr sendmail 1
+and
+.Xr postfix 1
+(and other mail-related)
 log files.
 .It Sy messages.*
 General system information log.
