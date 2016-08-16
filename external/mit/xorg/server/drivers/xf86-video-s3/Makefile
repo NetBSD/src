@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2013/06/03 08:51:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2016/08/16 06:24:02 mrg Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
@@ -20,7 +20,6 @@ CPPFLAGS.s3_accel_newmmio.c+=	-DS3_NEWMMIO=1 \
 CPPFLAGS.s3_video.c+=		-DS3_NEWMMIO=1 \
 
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
-CPPFLAGS+=	-DHAVE_XAA_H
 
 CWARNFLAGS.clang+=	-Wno-parentheses
 

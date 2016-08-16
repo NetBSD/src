@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2013/06/02 08:57:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2016/08/16 06:24:02 mrg Exp $
 
 DRIVER=		xf86-video-neomagic
 DRIVER_NAME=	neomagic_drv
@@ -9,7 +9,5 @@ SRCS+=		neo_shadow.c neo_video.c
 MAN=		neomagic.4
 
 COPTS.neo_driver.c=	-Wno-error	# XXX xf86dgastr.h
-
-CPPFLAGS+=	-DHAVE_XAA_H
 
 .include "../Makefile.xf86-driver"
