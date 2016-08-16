@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2011/08/11 23:15:40 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2016/08/16 07:10:01 mrg Exp $
 
 DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
@@ -11,13 +11,16 @@ SRCS+=		sis_vga.c sis_video.c
 MAN=		sis.4
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${X11SRCDIR.${DRIVER}}/../include
+CPPFLAGS+=	-DSIS_USE_EXA
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
 
 # XXX
-COPTS.sis_driver.c=	-Wno-error
+COPTS.sis_driver.c+=	-Wno-error=discarded-qualifiers
+COPTS.sis_utility.c+=	-Wno-error=discarded-qualifiers
+COPTS.initextx.c+=	-Wno-error=discarded-qualifiers
 
 X11MANCPP=		yes
 
