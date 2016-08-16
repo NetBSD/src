@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.69 2016/05/16 22:20:10 christos Exp $
+# $NetBSD: shl.mi,v 1.70 2016/08/16 00:55:09 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -447,3 +447,6 @@
 ./usr/X11R7/lib/libxkbui.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxkbui.so.2			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libxkbui.so.2.0			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxshmfence.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxshmfence.so.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libxshmfence.so.1.0		-unknown-		xorg,compatx11file
