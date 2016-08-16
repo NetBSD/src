@@ -1,4 +1,4 @@
-# $NetBSD: mkvars.mk,v 1.28 2016/05/25 00:14:47 christos Exp $
+# $NetBSD: mkvars.mk,v 1.29 2016/08/16 01:05:19 mrg Exp $
 
 MKEXTRAVARS= \
 	MACHINE \
@@ -6,6 +6,7 @@ MKEXTRAVARS= \
 	MACHINE_CPU \
 	HAVE_GCC \
 	HAVE_GDB \
+	HAVE_XORG_SERVER_VER \
 	HAVE_BINUTILS \
 	HAVE_LIBGCC_EH \
 	HAVE_SSP \
