@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.177 2016/05/16 22:20:10 christos Exp $
+#	 $NetBSD: mi,v 1.178 2016/08/16 00:55:09 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5611,6 +5611,7 @@
 ./usr/X11R7/include/X11/extensions/xtraplib.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xtraplibp.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xtrapproto.h		-unknown-	xorg
+./usr/X11R7/include/X11/xshmfence.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FS.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FSlib.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FSproto.h			-unknown-	xorg
@@ -6360,6 +6361,8 @@
 ./usr/X11R7/lib/libxkbfile_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libxkbui.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libxkbui_p.a				-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libxshmfence.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libxshmfence_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/pkgconfig/bigreqsproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/compositeproto.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/damageproto.pc		-unknown-	xorg
@@ -6479,6 +6482,7 @@
 ./usr/X11R7/lib/pkgconfig/xrender.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xres.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xscrnsaver.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/xshmfence.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xt.pc				-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xtrans.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xtrap.pc			-unknown-	xorg
