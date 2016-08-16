@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2015/05/28 14:36:45 rjs Exp $
+#	$NetBSD: Makefile,v 1.20 2016/08/16 07:08:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,11 @@ SRCS.ATOMBIOS= \
 .if ${X11DRI} != "no"
 SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
+
+# XXX
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+CPPFLAGS+=	-DUSE_XAA
 .endif
 
 .if ${X11DRI} != "no"
@@ -54,7 +59,14 @@ CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/src/AtomBios/includes \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/X11/dri \
 		-I${DESTDIR}${X11INCDIR}/libdrm \
-		-I${X11SRCDIR.${DRIVER}}/../include
+		-I${X11SRCDIR.${DRIVER}}/../include \
+		-I${X11SRCDIR.${DRIVER}}/../xorg-server-copy
+.if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
+CPPFLAGS+=	-DHAVE_XORG_LIST
+# XXX These have been copied from xorg-server 1.10.6.
+SRCS+=		fi1236.c msp3430.c tda9885.c uda1380.c
+.PATH:		${X11SRCDIR.${DRIVER}}/../xorg-server-copy
+.endif
 
 # XXX
 COPTS+=	-Wno-error
