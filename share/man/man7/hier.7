@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.120 2016/08/16 02:29:43 dholland Exp $
+.\"	$NetBSD: hier.7,v 1.121 2016/08/16 07:52:05 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,9 +34,9 @@
 .Os
 .Sh NAME
 .Nm hier
-.Nd layout of filesystems
+.Nd layout of file systems
 .Sh DESCRIPTION
-An outline of the filesystem hierarchy.
+An outline of the file system hierarchy.
 .Pp
 Naming is very important.
 The
@@ -56,9 +56,9 @@ System copyright notice, most often put on
 .Tn CD-ROM
 distributions.
 .It Sy "/[a-z]/"
-User filesystems.
+User file systems.
 .It Sy /altroot/
-Alternate root filesystem, in case of disaster.
+Alternate root file system, in case of disaster.
 .\" .It Sy /amd/
 .\" Home directories mount point; see
 .\" .Xr amd 8 .
@@ -166,7 +166,7 @@ Dungeon master configuration; see
 Dump history; see
 .Xr dump 8 .
 .It Sy exports
-Filesystem export information; see
+File system export information; see
 .Xr mountd 8 .
 .It Sy fstab
 File system mounting table; see
@@ -498,7 +498,7 @@ Boot blocks, etc.
 .It Sy obj/
 Architecture-specific target tree produced by building the
 .Pa /usr/src
-tree; often a symbolic link or mounted filesystem.
+tree; often a symbolic link or mounted file system.
 .It Sy pkg/
 Installed third-party software packages.
 .Pp
@@ -947,23 +947,23 @@ and
 AmigaDOS file-system support; see
 .Xr mount_ados 8 .
 .It Sy cd9660/
-Support for the ISO-9660 filesystem; see
+Support for the ISO-9660 file system; see
 .Xr mount_cd9660 8 .
 .It Sy filecorefs/
-Support for the Acorn RISC OS filecore filesystem; see
+Support for the Acorn RISC OS filecore file system; see
 .Xr mount_filecore 8 .
 .It Sy msdosfs/
 .Tn MS-DOS
 file system; see
 .Xr mount_msdos 8 .
 .It Sy ntfs/
-NTFS filesystem support; see
+NTFS file system support; see
 .Xr mount_ntfs 8 .
 .It Sy ptyfs/
-Pseudo-terminal device filesystem; see
+Pseudo-terminal device file system; see
 .Xr mount_ptyfs 8 .
 .It Sy smbfs/
-SMB/CIFS filesystem support; see
+SMB/CIFS file system support; see
 .Xr mount_smbfs 8 .
 .It Sy union/
 Union file system; see
@@ -1194,7 +1194,7 @@ Temporary home of files preserved after an accidental death of
 or
 .Xr vi 1 .
 .It Sy quotas/
-Filesystem quota information.
+File system quota information.
 (Legacy.)
 .It Sy run/
 System information files, rebuilt after each reboot.
