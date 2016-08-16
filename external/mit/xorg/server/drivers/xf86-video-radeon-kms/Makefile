@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/09/19 23:00:44 wiz Exp $
+#	$NetBSD: Makefile,v 1.3 2016/08/16 06:24:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,12 @@ SRCS.ATOMBIOS= \
 .if ${X11DRI} != "no"
 SRCS.DRI=	radeon_dri.c
 CPPFLAGS+=	${X11FLAGS.DRI}
+.endif
+
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+CPPFLAGS+=	-DUSE_XAA
+.else
+CPPFLAGS+=	-DHAS_DIRTYTRACKING2 -DHAVE_XORG_LIST
 .endif
 
 .if ${X11DRI} != "no"

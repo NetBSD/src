@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/07/20 03:00:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/08/16 06:24:03 mrg Exp $
 
 DRIVER=		xf86-video-trident
 DRIVER_NAME=	trident_drv
@@ -10,8 +10,6 @@ SRCS+=		trident_i2c.c trident_shadow.c
 SRCS+=		trident_tv.c trident_video.c tvga_dac.c xp_accel.c
 SRCS+=		xp4_accel.c xp4_accel_exa.c
 MAN=		trident.4
-
-CPPFLAGS+=	-DHAVE_XAA_H
 
 COPTS.trident_driver.c=	-Wno-error	# XXX xf86dgastr.h
 

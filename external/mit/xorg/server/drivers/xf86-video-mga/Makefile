@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/03/20 05:32:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2016/08/16 06:24:02 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -20,11 +20,6 @@ SRCS+=		mga_exa.c
 CPPFLAGS+=	-DUSE_EXA
 #endif
 
-#if USE_XAA
-SRCS+=		mga_arc.c
-CPPFLAGS+=	-DUSE_XAA -DHAVE_XAA_H
-#endif
-
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 #CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/dri
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm
@@ -35,3 +30,9 @@ CPPFLAGS.mga_dacG.c=	-Wno-error	# XXX fix me please
 CWARNFLAGS.clang+=	-Wno-conversion -Wno-format -Wno-empty-body
 
 .include "../Makefile.xf86-driver"
+
+# XXX
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+SRCS+=		mga_arc.c
+CPPFLAGS+=	-DUSE_XAA
+.endif
