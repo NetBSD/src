@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2016/08/16 07:20:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.77 2016/08/16 19:45:33 mrg Exp $
 
 # xf86-input drivers
 
@@ -262,9 +262,13 @@ SUBDIR+= \
 
 .if ${MACHINE} == "shark"
 SUBDIR+= \
-	xf86-video-chips \
-        xf86-video-igs \
         xf86-video-wsfb
+# needs porting for xorg-server 1.18
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+SUBDIR+= \
+	xf86-video-chips \
+        xf86-video-igs
+.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "shark"
 
 .if ${MACHINE} == "sparc" || \
