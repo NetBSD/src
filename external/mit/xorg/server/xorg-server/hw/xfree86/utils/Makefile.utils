@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.utils,v 1.6 2016/06/10 03:37:34 mrg Exp $
+#	$NetBSD: Makefile.utils,v 1.7 2016/08/16 07:56:47 mrg Exp $
 
 .include <bsd.own.mk>
 
 DUMMYOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/hw/xfree86/dummy && ${PRINTOBJDIR}
-SCANPCIOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/hw/xfree86/scanpci && ${PRINTOBJDIR}
 XORGOSOBJDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/${XORG_SERVER_SUBDIR}/hw/xfree86/xorgos && ${PRINTOBJDIR}
 
 LIBDUMMY=	${DUMMYOBJDIR}/libdummy.a
 LIBXORGOS=	${XORGOSOBJDIR}/libxorgos.a
-LIBSCANPCI=	${SCANPCIOBJDIR}/libscanpci.a
