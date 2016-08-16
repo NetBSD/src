@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.43 2015/07/23 05:46:39 mrg Exp $
+#	$NetBSD: shl.mi,v 1.44 2016/08/16 00:55:09 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -144,3 +144,4 @@
 ./usr/X11R7/lib/libxcb_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxkbfile_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libxkbui_pic.a				-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libxshmfence_pic.a			-unknown-	xorg,picinstall,compatx11file
