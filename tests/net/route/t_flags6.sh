@@ -1,4 +1,4 @@
-#	$NetBSD: t_flags6.sh,v 1.7 2016/08/10 23:00:39 roy Exp $
+#	$NetBSD: t_flags6.sh,v 1.8 2016/08/16 10:34:12 roy Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -104,8 +104,8 @@ test_lo6()
 	# Up, Host, local
 	check_entry_flags fe80::1 UHl
 
-	# Up, Host
-	check_entry_flags ::1 UH
+	# Up, Host, local
+	check_entry_flags ::1 UHl
 }
 
 test_connected6()
