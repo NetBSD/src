@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2013/06/05 08:42:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/16 07:10:01 mrg Exp $
 
 DRIVER=		xf86-video-vmware
 DRIVER_NAME=	vmware_drv
@@ -19,5 +19,9 @@ MAN=	vmware.4
 CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/../include -DHAVE_CONFIG_H \
 		-I${DESTDIR}${X11INCDIR}/libdrm
+
+# XXX
+COPTS.vmware.c+= 	-Wno-error
+COPTS.vmwaremodes.c+=	-Wno-error
 
 .include "../Makefile.xf86-driver"
