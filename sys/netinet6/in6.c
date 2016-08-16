@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.215 2016/08/05 00:51:14 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.216 2016/08/16 10:31:57 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.215 2016/08/05 00:51:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.216 2016/08/16 10:31:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -147,6 +147,8 @@ kmutex_t		in6_ifaddr_lock;
 
 static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
+static int in6_ifaddprefix(struct in6_ifaddr *);
+static int in6_ifremprefix(struct in6_ifaddr *);
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	const struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
@@ -242,6 +244,91 @@ in6_ifremlocal(struct ifaddr *ifa)
 
 	if (ia_count > 1 && alt_ifa != NULL)
 		ifa_release(alt_ifa, &psref);
+}
+
+/* Add prefix route for the network. */
+static int
+in6_ifaddprefix(struct in6_ifaddr *ia)
+{
+	int error, flags = 0;
+
+	if (in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) == 128) {
+		if (ia->ia_dstaddr.sin6_family != AF_INET6)
+			/* We don't need to install a host route. */
+			return 0;
+		flags |= RTF_HOST;
+	} else if (ia->ia_ifp->if_flags & IFF_LOOPBACK) {
+		/* Loopback prefix routes are always host routes. */
+		flags |= RTF_HOST;
+	}
+
+	/* Is this a connected route for neighbour discovery? */
+	if (nd6_need_cache(ia->ia_ifp))
+		flags |= RTF_CONNECTED;
+
+	if ((error = rtinit(&ia->ia_ifa, RTM_ADD, RTF_UP | flags)) == 0)
+		ia->ia_flags |= IFA_ROUTE;
+	else if (error == EEXIST)
+		/* Existance of the route is not an error. */
+		error = 0;
+
+	return error;
+}
+
+/* Delete network prefix route if present.
+ * Re-add it to another address if the prefix matches. */
+static int
+in6_ifremprefix(struct in6_ifaddr *target)
+{
+	int error, s;
+	struct in6_ifaddr *ia;
+
+	if ((target->ia_flags & IFA_ROUTE) == 0)
+		return 0;
+
+	s = pserialize_read_enter();
+	IN6_ADDRLIST_READER_FOREACH(ia) {
+		if (target->ia_dstaddr.sin6_len) {
+			if (ia->ia_dstaddr.sin6_len == 0 ||
+			    !IN6_ARE_ADDR_EQUAL(&ia->ia_dstaddr.sin6_addr,
+			    &target->ia_dstaddr.sin6_addr))
+				continue;
+		} else {
+			if (!IN6_ARE_MASKED_ADDR_EQUAL(&ia->ia_addr.sin6_addr,
+			    &target->ia_addr.sin6_addr,
+			    &target->ia_prefixmask.sin6_addr))
+				continue;
+		}
+
+		/*
+		 * if we got a matching prefix route, move IFA_ROUTE to him
+		 */
+		if ((ia->ia_flags & IFA_ROUTE) == 0) {
+			struct psref psref;
+			int bound = curlwp_bind();
+
+			ia6_acquire(ia, &psref);
+			pserialize_read_exit(s);
+
+			rtinit(&target->ia_ifa, RTM_DELETE, 0);
+			target->ia_flags &= ~IFA_ROUTE;
+
+			error = in6_ifaddprefix(ia);
+
+			ia6_release(ia, &psref);
+			curlwp_bindx(bound);
+
+			return error;
+		}
+	}
+	pserialize_read_exit(s);
+
+	/*
+	 * noone seem to have prefix route.  remove it.
+	 */
+	rtinit(&target->ia_ifa, RTM_DELETE, 0);
+	target->ia_flags &= ~IFA_ROUTE;
+	return 0;
 }
 
 int
@@ -592,12 +679,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 #endif
 	case SIOCAIFADDR_IN6:
 	{
-		int i;
-		struct nd_prefixctl prc0;
-		struct nd_prefix *pr;
 		struct in6_addrlifetime *lt;
-		struct in6_ifaddr *_ia;
-		int s;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -619,112 +701,11 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			lt->ia6t_preferred =
 			    time_wall_to_mono(lt->ia6t_preferred);
 		/*
-		 * first, make (ia == NULL) or update (ia != NULL) the interface
+		 * make (ia == NULL) or update (ia != NULL) the interface
 		 * address structure, and link it to the list.
 		 */
 		if ((error = in6_update_ifa(ifp, ifra, ia, 0)) != 0)
 			break;
-		s = pserialize_read_enter();
-		_ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-		if (_ia == NULL) {
-			pserialize_read_exit(s);
-		    	/*
-			 * this can happen when the user specify the 0 valid
-			 * lifetime.
-			 */
-			break;
-		}
-		/*
-		 * If ia == NULL, _ia has been created and we need to acquire
-		 * a reference. Otherwise, a reference is already taken.
-		 */
-		if (ia == NULL) {
-			ia6_acquire(_ia, &psref);
-			ia = _ia;
-		} else
-			KASSERT(_ia == ia);
-		pserialize_read_exit(s);
-
-		/*
-		 * then, make the prefix on-link on the interface.
-		 * XXX: we'd rather create the prefix before the address, but
-		 * we need at least one address to install the corresponding
-		 * interface route, so we configure the address first.
-		 */
-
-		/*
-		 * convert mask to prefix length (prefixmask has already
-		 * been validated in in6_update_ifa().
-		 */
-		memset(&prc0, 0, sizeof(prc0));
-		prc0.ndprc_ifp = ifp;
-		prc0.ndprc_plen = in6_mask2len(&ifra->ifra_prefixmask.sin6_addr,
-		    NULL);
-		if (prc0.ndprc_plen == 128) {
-			break;	/* we don't need to install a host route. */
-		}
-		prc0.ndprc_prefix = ifra->ifra_addr;
-		/* apply the mask for safety. */
-		for (i = 0; i < 4; i++) {
-			prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
-			    ifra->ifra_prefixmask.sin6_addr.s6_addr32[i];
-		}
-		/*
-		 * XXX: since we don't have an API to set prefix (not address)
-		 * lifetimes, we just use the same lifetimes as addresses.
-		 * The (temporarily) installed lifetimes can be overridden by
-		 * later advertised RAs (when accept_rtadv is non 0), which is
-		 * an intended behavior.
-		 */
-		prc0.ndprc_raf_onlink = 1; /* should be configurable? */
-		prc0.ndprc_raf_auto =
-		    ((ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0);
-		prc0.ndprc_vltime = ifra->ifra_lifetime.ia6t_vltime;
-		prc0.ndprc_pltime = ifra->ifra_lifetime.ia6t_pltime;
-
-		/* add the prefix if not yet. */
-		if ((pr = nd6_prefix_lookup(&prc0)) == NULL) {
-			/*
-			 * nd6_prelist_add will install the corresponding
-			 * interface route.
-			 */
-			if ((error = nd6_prelist_add(&prc0, NULL, &pr)) != 0)
-				break;
-			if (pr == NULL) {
-				log(LOG_ERR, "nd6_prelist_add succeeded but "
-				    "no prefix\n");
-				error = EINVAL; /* XXX panic here? */
-				break;
-			}
-		}
-
-		/* relate the address to the prefix */
-		if (ia->ia6_ndpr == NULL) {
-			ia->ia6_ndpr = pr;
-			pr->ndpr_refcnt++;
-
-			/*
-			 * If this is the first autoconf address from the
-			 * prefix, create a temporary address as well
-			 * (when required).
-			 */
-			if ((ia->ia6_flags & IN6_IFF_AUTOCONF) &&
-			    ip6_use_tempaddr && pr->ndpr_refcnt == 1) {
-				int e;
-				if ((e = in6_tmpifadd(ia, 1, 0)) != 0) {
-					log(LOG_NOTICE, "in6_control: failed "
-					    "to create a temporary address, "
-					    "errno=%d\n", e);
-				}
-			}
-		}
-
-		/*
-		 * this might affect the status of autoconfigured addresses,
-		 * that is, this address might make other addresses detached.
-		 */
-		pfxlist_onlink_check();
-
 		run_hooks = true;
 		break;
 	}
@@ -736,11 +717,6 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		/*
 		 * If the address being deleted is the only one that owns
 		 * the corresponding prefix, expire the prefix as well.
-		 * XXX: theoretically, we don't have to worry about such
-		 * relationship, since we separate the address management
-		 * and the prefix management.  We do this, however, to provide
-		 * as much backward compatibility as possible in terms of
-		 * the ioctl operation.
 		 * Note that in6_purgeaddr() will decrement ndpr_refcnt.
 		 */
 		pr = ia->ia6_ndpr;
@@ -987,40 +963,38 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 
 	/* set prefix mask */
 	if (ifra->ifra_prefixmask.sin6_len) {
-		/*
-		 * We prohibit changing the prefix length of an existing
-		 * address, because
-		 * + such an operation should be rare in IPv6, and
-		 * + the operation would confuse prefix management.
-		 */
-		if (ia->ia_prefixmask.sin6_len &&
-		    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) != plen) {
-			nd6log(LOG_INFO, "the prefix length of an"
-			    " existing (%s) address should not be changed\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr));
-			error = EINVAL;
-			if (hostIsNew)
-				free(ia, M_IFADDR);
-			goto exit;
+		if (ia->ia_prefixmask.sin6_len) {
+			/*
+			 * We prohibit changing the prefix length of an
+			 * existing autoconf address, because the operation
+			 * would confuse prefix management.
+			 */
+			if (ia->ia6_ndpr != NULL &&
+			    in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL) !=
+			    plen)
+			{
+				nd6log(LOG_INFO, "the prefix length of an"
+				    " existing (%s) autoconf address should"
+				    " not be changed\n",
+				    ip6_sprintf(&ia->ia_addr.sin6_addr));
+				error = EINVAL;
+				if (hostIsNew)
+					free(ia, M_IFADDR);
+				goto exit;
+			}
+
+			if (!IN6_ARE_ADDR_EQUAL(&ia->ia_prefixmask.sin6_addr,
+			    &ifra->ifra_prefixmask.sin6_addr))
+				in6_ifremprefix(ia);
 		}
 		ia->ia_prefixmask = ifra->ifra_prefixmask;
 	}
 
-	/*
-	 * If a new destination address is specified, scrub the old one and
-	 * install the new destination.  Note that the interface must be
-	 * p2p or loopback (see the check above.)
-	 */
-	if (dst6.sin6_family == AF_INET6 &&
-	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
-		if ((ia->ia_flags & IFA_ROUTE) != 0 &&
-		    rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST) != 0) {
-			nd6log(LOG_ERR, "failed to remove "
-			    "a route to the old destination: %s\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr));
-			/* proceed anyway... */
-		} else
-			ia->ia_flags &= ~IFA_ROUTE;
+	/* Set destination address. */
+	if (dst6.sin6_family == AF_INET6) {
+		if (!IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr,
+		    &ia->ia_dstaddr.sin6_addr))
+			in6_ifremprefix(ia);
 		ia->ia_dstaddr = dst6;
 	}
 
@@ -1071,7 +1045,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	}
 
 	/* reset the interface and routing table appropriately. */
-	if ((error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew)) != 0) {
+	error = in6_ifinit(ifp, ia, &ifra->ifra_addr, hostIsNew);
+	if (error != 0) {
 		if (hostIsNew)
 			free(ia, M_IFADDR);
 		goto exit;
@@ -1359,24 +1334,8 @@ in6_purgeaddr(struct ifaddr *ifa)
 	/* stop DAD processing */
 	nd6_dad_stop(ifa);
 
-	/*
-	 * delete route to the destination of the address being purged.
-	 * The interface must be p2p or loopback in this case.
-	 */
-	if ((ia->ia_flags & IFA_ROUTE) != 0 && ia->ia_dstaddr.sin6_len != 0) {
-		int e;
-
-		if ((e = rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST))
-		    != 0) {
-			log(LOG_ERR, "in6_purgeaddr: failed to remove "
-			    "a route to the p2p destination: %s on %s, "
-			    "errno=%d\n",
-			    ip6_sprintf(&ia->ia_addr.sin6_addr), if_name(ifp),
-			    e);
-			/* proceed anyway... */
-		} else
-			ia->ia_flags &= ~IFA_ROUTE;
-	}
+	/* Delete any network route. */
+	in6_ifremprefix(ia);
 
 	/* Remove ownaddr's loopback rtentry, if it exists. */
 	in6_ifremlocal(&(ia->ia_ifa));
@@ -1740,7 +1699,7 @@ static int
 in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia, 
 	const struct sockaddr_in6 *sin6, int newhost)
 {
-	int	error = 0, plen, ifacount = 0;
+	int	error = 0, ifacount = 0;
 	int	s = splnet();
 	struct ifaddr *ifa;
 
@@ -1768,20 +1727,6 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 
 	/* we could do in(6)_socktrim here, but just omit it at this moment. */
 
-	/*
-	 * Special case:
-	 * If the destination address is specified for a point-to-point
-	 * interface, install a route to the destination as an interface
-	 * direct route.
-	 */
-	plen = in6_mask2len(&ia->ia_prefixmask.sin6_addr, NULL); /* XXX */
-	if (plen == 128 && ia->ia_dstaddr.sin6_family == AF_INET6) {
-		if ((error = rtinit(&ia->ia_ifa, RTM_ADD,
-				    RTF_UP | RTF_HOST)) != 0)
-			return error;
-		ia->ia_flags |= IFA_ROUTE;
-	}
-
 	/* Add ownaddr as loopback rtentry, if necessary (ex. on p2p link). */
 	if (newhost) {
 		/* set the rtrequest function to create llinfo */
@@ -1793,6 +1738,15 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	} else {
 		/* Inform the routing socket of new flags/timings */
 		rt_newaddrmsg(RTM_NEWADDR, &ia->ia_ifa, 0, NULL);
+	}
+
+	/* Add the network prefix route. */
+	if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
+		ia->ia_ifa.ifa_dstaddr = ia->ia_ifa.ifa_addr;
+	if ((error = in6_ifaddprefix(ia)) != 0) {
+		if (newhost)
+			in6_ifremlocal(&ia->ia_ifa);
+		return error;
 	}
 
 	if (ifp->if_flags & IFF_MULTICAST)
