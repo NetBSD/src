@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/08/16 06:24:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2016/08/17 00:10:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,34 +11,30 @@ SRCS.ATOMBIOS= \
         Decoder.c \
         hwserv_drv.c
 
-.if ${X11DRI} != "no"
-SRCS.DRI=	radeon_dri.c
-CPPFLAGS+=	${X11FLAGS.DRI}
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
 .endif
 
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 CPPFLAGS+=	-DUSE_XAA
 .else
-CPPFLAGS+=	-DHAS_DIRTYTRACKING2 -DHAVE_XORG_LIST
-.endif
-
-.if ${X11DRI} != "no"
-# XXX
-. if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-SRCS.KMS=	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
-CPPFLAGS+=	-DXF86DRM_MODE
-LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
-. endif
+CPPFLAGS+=	-DHAS_DIRTYTRACKING2 \
+		-DHAVE_XORG_LIST \
+		-DHAVE_XF86_CURSOR_RESET_CURSOR \
+		-DHAVE_DRI3_H \
+		-DHAVE_MISYNCSHM_H \
+		-DHAVE_PRESENT_H
 .endif
 
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
 		r600_textured_videofuncs.c r600_shader.c radeon_exa_shared.c \
 		evergreen_exa.c evergreen_accel.c evergreen_shader.c \
 		evergreen_textured_videofuncs.c cayman_accel.c cayman_shader.c
-SRCS.KMS=	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c \
-		radeon_bo_helper.c
+SRCS.KMS=	radeon_dri2.c radeon_dri3.c radeon_drm_queue.c radeon_kms.c \
+		radeon_present.c radeon_sync.c radeon_vbo.c radeon_bo_helper.c \
+		drmmode_display.c
 # XXX not yet
-SRCS.GLAMOR=	radeon_glamor.c
+SRCS.GLAMOR=	radeon_glamor.c radeon_glamor_wrappers.c
 
 SRCS=		radeon_accel.c radeon_video.c \
 		radeon_misc.c radeon_probe.c \
