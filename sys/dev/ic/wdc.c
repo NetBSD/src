@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.281 2016/05/06 04:46:17 msaitoh Exp $ */
+/*	$NetBSD: wdc.c,v 1.282 2016/08/17 22:03:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.281 2016/05/06 04:46:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.282 2016/08/17 22:03:02 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -360,7 +360,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	for (i = 0; i < chp->ch_ndrives; i++) {
 #if NATA_DMA
 		/*
-		 * Init error counter so that an error withing the first xfers
+		 * Init error counter so that an error within the first xfers
 		 * will trigger a downgrade
 		 */
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
