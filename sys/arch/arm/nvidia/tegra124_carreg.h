@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_carreg.h,v 1.1 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra124_carreg.h,v 1.2 2016/08/17 19:08:18 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -172,6 +172,22 @@
 #define CAR_CLKSRC_I2C_SRC_PLLM_OUT0	4
 #define CAR_CLKSRC_I2C_SRC_CLK_M	6
 #define CAR_CLKSRC_I2C_DIV		__BITS(15,0)
+
+#define CAR_CLKSRC_SPI1_REG		0x134
+#define CAR_CLKSRC_SPI2_REG		0x118
+#define CAR_CLKSRC_SPI3_REG		0x11c
+#define CAR_CLKSRC_SPI4_REG		0x1b4
+#define CAR_CLKSRC_SPI5_REG		0x3c8
+#define CAR_CLKSRC_SPI6_REG		0x3cc
+
+#define CAR_CLKSRC_SPI_SRC		__BITS(31,29)
+#define CAR_CLKSRC_SPI_SRC_PLLP_OUT0	0
+#define CAR_CLKSRC_SPI_SRC_PLLC2_OUT0	1
+#define CAR_CLKSRC_SPI_SRC_PLLC_OUT0	2
+#define CAR_CLKSRC_SPI_SRC_PLLC3_OUT0	3
+#define CAR_CLKSRC_SPI_SRC_PLLM_OUT0	4
+#define CAR_CLKSRC_SPI_SRC_CLK_M	6
+#define CAR_CLKSRC_SPI_DIV		__BITS(7,0)
 
 #define CAR_CLKSRC_UARTA_REG		0x178
 #define CAR_CLKSRC_UARTB_REG		0x17c

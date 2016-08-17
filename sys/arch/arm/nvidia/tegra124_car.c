@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.3 2016/08/17 00:09:19 jakllsch Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.4 2016/08/17 19:08:18 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.3 2016/08/17 00:09:19 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.4 2016/08/17 19:08:18 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,10 +86,10 @@ static struct tegra124_car_clock_id {
 	{ 34, "apbdma" },
 	{ 36, "kbc" },
 	{ 40, "kfuse" },
-	{ 41, "sbc1" },
+	{ 41, "spi1" },
 	{ 42, "nor" },
-	{ 44, "sbc2" },
-	{ 46, "sbc3" },
+	{ 44, "spi2" },
+	{ 46, "spi3" },
 	{ 47, "i2c5" },
 	{ 48, "dsia" },
 	{ 50, "mipi" },
@@ -106,7 +106,7 @@ static struct tegra124_car_clock_id {
 	{ 63, "bsev" },
 	{ 65, "uartd" },
 	{ 67, "i2c3" },
-	{ 68, "sbc4" },
+	{ 68, "spi4" },
 	{ 69, "sdmmc3" },
 	{ 70, "pcie" },
 	{ 71, "owr" },
@@ -127,8 +127,8 @@ static struct tegra124_car_clock_id {
 	{ 101, "i2s3" },
 	{ 102, "i2s4" },
 	{ 103, "i2c4" },
-	{ 104, "sbc5" },
-	{ 105, "sbc6" },
+	{ 104, "spi5" },
+	{ 105, "spi6" },
 	{ 106, "d_audio" },
 	{ 107, "apbif" },
 	{ 108, "dam0" },
@@ -394,6 +394,9 @@ static const char *mux_sdmmc_p[] =
 static const char *mux_i2c_p[] =
 	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
 	  "pll_m_out0", NULL, "clk_m" };
+static const char *mux_spi_p[] =
+	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
+	  "pll_m_out0", NULL, "clk_m" };
 static const char *mux_sata_p[] =
 	{ "pll_p_out0", NULL, "pll_c_out0", NULL, "pll_m_out0", NULL, "clk_m" };
 static const char *mux_hda_p[] =
@@ -464,6 +467,12 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_MUX("mux_i2c4", CAR_CLKSRC_I2C4_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("mux_i2c5", CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("mux_i2c6", CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
+	CLK_MUX("mux_spi1", CAR_CLKSRC_SPI1_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi2", CAR_CLKSRC_SPI2_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi3", CAR_CLKSRC_SPI3_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi4", CAR_CLKSRC_SPI4_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi5", CAR_CLKSRC_SPI5_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi6", CAR_CLKSRC_SPI6_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
 	CLK_MUX("mux_sata_oob",
 		CAR_CLKSRC_SATA_OOB_REG, CAR_CLKSRC_SATA_OOB_SRC, mux_sata_p),
 	CLK_MUX("mux_sata",
@@ -520,6 +529,18 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_DIV),
 	CLK_DIV("div_i2c6", "mux_i2c6", 
 		CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_DIV),
+	CLK_DIV("div_spi1", "mux_spi1",
+		CAR_CLKSRC_SPI1_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi2", "mux_spi2",
+		CAR_CLKSRC_SPI2_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi3", "mux_spi3",
+		CAR_CLKSRC_SPI3_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi4", "mux_spi4",
+		CAR_CLKSRC_SPI4_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi5", "mux_spi5",
+		CAR_CLKSRC_SPI5_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi6", "mux_spi6",
+		CAR_CLKSRC_SPI6_REG, CAR_CLKSRC_SPI_DIV),
 	CLK_DIV("div_sata_oob", "mux_sata_oob",
 		CAR_CLKSRC_SATA_OOB_REG, CAR_CLKSRC_SATA_OOB_DIV),
 	CLK_DIV("div_sata", "mux_sata",
@@ -553,6 +574,12 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_V("i2c4", "div_i2c4", CAR_DEV_V_I2C4),
 	CLK_GATE_H("i2c5", "div_i2c5", CAR_DEV_H_I2C5),
 	CLK_GATE_X("i2c6", "div_i2c6", CAR_DEV_X_I2C6),
+	CLK_GATE_H("spi1", "div_spi1", CAR_DEV_H_SPI1),
+	CLK_GATE_H("spi2", "div_spi2", CAR_DEV_H_SPI2),
+	CLK_GATE_H("spi3", "div_spi3", CAR_DEV_H_SPI3),
+	CLK_GATE_U("spi4", "div_spi4", CAR_DEV_U_SPI4),
+	CLK_GATE_V("spi5", "div_spi5", CAR_DEV_V_SPI5),
+	CLK_GATE_V("spi6", "div_spi6", CAR_DEV_V_SPI6),
 	CLK_GATE_L("usbd", "pll_u_480", CAR_DEV_L_USBD),
 	CLK_GATE_H("usb2", "pll_u_480", CAR_DEV_H_USB2),
 	CLK_GATE_H("usb3", "pll_u_480", CAR_DEV_H_USB3),
