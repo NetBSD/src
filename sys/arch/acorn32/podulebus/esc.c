@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.30 2015/12/13 19:53:02 christos Exp $	*/
+/*	$NetBSD: esc.c,v 1.31 2016/08/17 22:03:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.30 2015/12/13 19:53:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.31 2016/08/17 22:03:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1491,7 +1491,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 					 * Make sure that the specs are within
 					 * chip limits. Note that if we
 					 * initiated the negotiation the specs
-					 * WILL be withing chip limits. If it
+					 * WILL be within chip limits. If it
 					 * was the scsi unit that initiated
 					 * the negotiation, the specs may be
 					 * to high.
