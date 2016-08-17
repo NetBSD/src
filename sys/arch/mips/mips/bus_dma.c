@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.37 2016/07/30 06:29:28 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38 2016/08/17 22:02:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2016/07/30 06:29:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2016/08/17 22:02:19 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -843,7 +843,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	bus_dma_segment_t *seg = map->dm_segs;
 	bus_dma_segment_t * const lastseg = seg + map->dm_nsegs;
 	/*
-	 * Skip segments until offset are withing a segment.
+	 * Skip segments until offset are within a segment.
 	 */
 	for (; offset >= seg->ds_len; seg++) {
 		offset -= seg->ds_len;
