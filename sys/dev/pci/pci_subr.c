@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.148 2016/06/20 10:02:43 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.149 2016/08/17 06:32:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.148 2016/06/20 10:02:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.149 2016/08/17 06:32:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2993,7 +2993,70 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 
 /* XXX pci_conf_print_amd_cap */
 /* XXX pci_conf_print_resiz_bar_cap */
-/* XXX pci_conf_print_dpa_cap */
+
+static void
+pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t reg;
+	unsigned int substmax, i;
+
+	printf("\n  Dynamic Power Allocation\n");
+
+	reg = regs[o2i(extcapoff + PCI_DPA_CAP)];
+	printf("    Capability register: 0x%08x\n", reg);
+	substmax = __SHIFTOUT(reg, PCI_DPA_CAP_SUBSTMAX);
+	printf("      Substate Max: %u\n", substmax);
+	printf("      Transition Latency Unit: ");
+	switch (__SHIFTOUT(reg, PCI_DPA_CAP_TLUINT)) {
+	case 0:
+		printf("1ms\n");
+		break;
+	case 1:
+		printf("10ms\n");
+		break;
+	case 2:
+		printf("100ms\n");
+		break;
+	default:
+		printf("reserved\n");
+		break;
+	}
+	printf("      Power Allocation Scale: ");
+	switch (__SHIFTOUT(reg, PCI_DPA_CAP_PAS)) {
+	case 0:
+		printf("10.0x\n");
+		break;
+	case 1:
+		printf("1.0x\n");
+		break;
+	case 2:
+		printf("0.1x\n");
+		break;
+	case 3:
+		printf("0.01x\n");
+		break;
+	}
+	printf("      Transition Latency Value 0: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CAP_XLCY0));
+	printf("      Transition Latency Value 1: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CAP_XLCY1));
+
+	reg = regs[o2i(extcapoff + PCI_DPA_LATIND)];
+	printf("    Latency Indicatior register: 0x%08x\n", reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPA_CS)];
+	printf("    Status register: 0x%04x\n", reg & 0xffff);
+	printf("      Substate Status: %02x\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CS_SUBSTSTAT));
+	onoff("Substate Control Enabled", reg, PCI_DPA_CS_SUBSTCTLEN);
+	printf("    Control register: 0x%04x\n", reg >> 16);
+	printf("      Substate Control: %02x\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CS_SUBSTCTL));
+
+	for (i = 0; i <= substmax; i++)
+		printf("    Substate Power Allocation register %d: 0x%02x\n",
+		    i, (regs[PCI_DPA_PWRALLOC + (i / 4)] >> (i % 4) & 0xff));
+}
 
 static const char *
 pci_conf_print_tph_req_cap_sttabloc(unsigned char val)
@@ -3338,7 +3401,7 @@ static struct {
 	{ PCI_EXTCAP_RESIZ_BAR,	"Resizable BAR",
 	  NULL },
 	{ PCI_EXTCAP_DPA,	"Dynamic Power Allocation",
-	  NULL },
+	  pci_conf_print_dpa_cap },
 	{ PCI_EXTCAP_TPH_REQ,	"TPH Requester",
 	  pci_conf_print_tph_req_cap },
 	{ PCI_EXTCAP_LTR,	"Latency Tolerance Reporting",
