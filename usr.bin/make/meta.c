@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.66 2016/08/15 19:20:17 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.67 2016/08/17 15:52:42 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -921,6 +921,67 @@ string_match(const void *p, const void *q)
 }
 
 
+static int
+meta_ignore(GNode *gn, const char *p)
+{
+    char fname[MAXPATHLEN];
+
+    if (p == NULL)
+	return TRUE;
+
+    if (*p == '/') {
+	cached_realpath(p, fname); /* clean it up */
+	if (Lst_ForEach(metaIgnorePaths, prefix_match, fname)) {
+#ifdef DEBUG_META_MODE
+	    if (DEBUG(META))
+		fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
+			p);
+#endif
+	    return TRUE;
+	}
+    }
+
+    if (metaIgnorePatterns) {
+	char *pm;
+
+	snprintf(fname, sizeof(fname),
+		 "${%s:@m@${%s:L:M$m}@}",
+		 MAKE_META_IGNORE_PATTERNS, p);
+	pm = Var_Subst(NULL, fname, gn, VARF_WANTRES);
+	if (*pm) {
+#ifdef DEBUG_META_MODE
+	    if (DEBUG(META))
+		fprintf(debug_file, "meta_oodate: ignoring pattern: %s\n",
+			p);
+#endif
+	    free(pm);
+	    return TRUE;
+	}
+	free(pm);
+    }
+
+    if (metaIgnoreFilter) {
+	char *fm;
+
+	/* skip if filter result is empty */
+	snprintf(fname, sizeof(fname),
+		 "${%s:L:${%s:ts:}}",
+		 p, MAKE_META_IGNORE_FILTER);
+	fm = Var_Subst(NULL, fname, gn, VARF_WANTRES);
+	if (*fm == '\0') {
+#ifdef DEBUG_META_MODE
+	    if (DEBUG(META))
+		fprintf(debug_file, "meta_oodate: ignoring filtered: %s\n",
+			p);
+#endif
+	    free(fm);
+	    return TRUE;
+	}
+	free(fm);
+    }
+    return FALSE;
+}
+
 /*
  * When running with 'meta' functionality, a target can be out-of-date
  * if any of the references in its meta data file is more recent.
@@ -1279,8 +1340,10 @@ meta_oodate(GNode *gn, Boolean oodate)
 
 		    if ((link_src != NULL && cached_lstat(p, &fs) < 0) ||
 			(link_src == NULL && cached_stat(p, &fs) < 0)) {
-			if (Lst_Find(missingFiles, p, string_match) == NULL)
+			if (!meta_ignore(gn, p)) {
+			    if (Lst_Find(missingFiles, p, string_match) == NULL)
 				Lst_AtEnd(missingFiles, bmake_strdup(p));
+			}
 		    }
 		    break;
 		check_link_src:
@@ -1298,56 +1361,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		     * be part of the dependencies because
 		     * they are _expected_ to change.
 		     */
-		    if (*p == '/') {
-			cached_realpath(p, fname1); /* clean it up */
-			if (Lst_ForEach(metaIgnorePaths, prefix_match, fname1)) {
-#ifdef DEBUG_META_MODE
-			    if (DEBUG(META))
-				fprintf(debug_file, "meta_oodate: ignoring path: %s\n",
-					p);
-#endif
-			    break;
-			}
-		    }
-
-		    if (metaIgnorePatterns) {
-			char *pm;
-
-			snprintf(fname1, sizeof(fname1),
-				 "${%s:@m@${%s:L:M$m}@}",
-				 MAKE_META_IGNORE_PATTERNS, p);
-			pm = Var_Subst(NULL, fname1, gn, VARF_WANTRES);
-			if (*pm) {
-#ifdef DEBUG_META_MODE
-			    if (DEBUG(META))
-				fprintf(debug_file, "meta_oodate: ignoring pattern: %s\n",
-					p);
-#endif
-			    free(pm);
-			    break;
-			}
-			free(pm);
-		    }
-
-		    if (metaIgnoreFilter) {
-			char *fm;
-
-			/* skip if filter result is empty */
-			snprintf(fname1, sizeof(fname1),
-				 "${%s:L:${%s:ts:}}",
-				 p, MAKE_META_IGNORE_FILTER);
-			fm = Var_Subst(NULL, fname1, gn, VARF_WANTRES);
-			if (*fm == '\0') {
-#ifdef DEBUG_META_MODE
-			    if (DEBUG(META))
-				fprintf(debug_file, "meta_oodate: ignoring filtered: %s\n",
-					p);
-#endif
-			    free(fm);
-			    break;
-			}
-			free(fm);
-		    }
+		    if (meta_ignore(gn, p))
+			break;
 		    
 		    /*
 		     * The rest of the record is the file name.
