@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/03/21 18:14:20 riastradh Exp $
+#	$NetBSD: Makefile,v 1.11 2016/08/17 03:10:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,11 @@ SUBDIR=	drm kms
 PKGCONFIG=	libdrm
 PKGDIST=	${LIB}
 
+COPTS.xf86drm.c+=	-Wno-error=cpp	# #warnings needing porting
+
 CWARNFLAGS.clang+=	-Wno-conversion -Wno-tautological-compare
+
+LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
 .if 0
 MAN=		drm.7 \

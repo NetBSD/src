@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.46 2016/01/26 21:18:43 christos Exp $
+# $NetBSD: md.amd64,v 1.47 2016/08/17 03:10:22 mrg Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -83,12 +83,16 @@
 ./usr/X11R7/lib/libchromeXvMCPro_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libchromeXvMC_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMC_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu_p.a			-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libdrm_intel.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel_pic.a			-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau.a			-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_pic.a			-unknown-	xorg,picinstall,compatx11file
+./usr/X11R7/lib/pkgconfig/libdrm_amdgpu.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_intel.pc		-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/libdrm_nouveau.pc		-unknown-	xorg
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg

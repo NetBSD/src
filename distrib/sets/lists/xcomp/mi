@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.179 2016/08/16 01:10:19 mrg Exp $
+#	 $NetBSD: mi,v 1.180 2016/08/17 03:10:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5796,6 +5796,8 @@
 ./usr/X11R7/include/freetype2/ttunpat.h			-unknown-	obsolete
 ./usr/X11R7/include/ft2build.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/gbm.h				-unknown-	xorg
+./usr/X11R7/include/libdrm/amdgpu.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/amdgpu_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_fourcc.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/drm_mode.h			-unknown-	xorg
@@ -5822,6 +5824,7 @@
 ./usr/X11R7/include/libdrm/savage_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/sis_drm.h			-unknown-	xorg
 ./usr/X11R7/include/libdrm/via_drm.h			-unknown-	xorg
+./usr/X11R7/include/libdrm/virtgpu_drm.h		-unknown-	xorg
 ./usr/X11R7/include/libkms/libkms.h			-unknown-	xorg
 ./usr/X11R7/include/pciaccess.h				-unknown-	xorg
 ./usr/X11R7/include/pixman-1/pixman-version.h		-unknown-	xorg

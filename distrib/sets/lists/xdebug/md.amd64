@@ -1,8 +1,9 @@
-# $NetBSD: md.amd64,v 1.25 2016/01/27 11:54:07 wiz Exp $
+# $NetBSD: md.amd64,v 1.26 2016/08/17 03:10:23 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
+./usr/X11R7/lib/libdrm_amdgpu_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	xorg,debuglib,obsolete
@@ -46,7 +47,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/libIntelXvMC.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libchromeXvMC.so.1.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libchromeXvMCPro.so.1.0.debug	-unknown-		xorg,debug,compatx11file
-./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.1.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.0.debug	-unknown-		xorg,debug,compatx11file
+./usr/libdata/debug/usr/X11R7/lib/libdrm_intel.so.0.2.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.2.0.debug	-unknown-		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i810_dri.so.0.debug	-unknown-		obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/i915_dri.so.0.debug	-unknown-		xorg,debug
