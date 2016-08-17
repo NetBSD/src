@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_subr.c,v 1.1 2016/08/14 14:55:42 jakllsch Exp $ */
+/* $NetBSD: t_clock_subr.c,v 1.2 2016/08/17 12:06:49 jakllsch Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2016\
  Jonathan A. Kollasch. All rights reserved.");
-__RCSID("$NetBSD: t_clock_subr.c,v 1.1 2016/08/14 14:55:42 jakllsch Exp $");
+__RCSID("$NetBSD: t_clock_subr.c,v 1.2 2016/08/17 12:06:49 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <dev/clock_subr.h>
@@ -262,8 +262,6 @@ ATF_TC_BODY(ymdhms_to_secs, tc)
 	time_t secs;
 	size_t i;
 
-	atf_tc_expect_fail("bad leap year handling");
-
 	for (i = 0; i < __arraycount(clock_tests); i++) {
 		secs = clock_ymdhms_to_secs(__UNCONST(&clock_tests[i].clock));
 		ATF_CHECK_EQ_MSG(clock_tests[i].time, secs, "%jd != %jd",
@@ -281,8 +279,6 @@ ATF_TC_BODY(secs_to_ymdhms, tc)
 {
 	struct clock_ymdhms ymdhms;
 	size_t i;
-
-	atf_tc_expect_fail("bad leap year handling");
 
 #define CHECK_FIELD(f) \
 	ATF_CHECK_EQ_MSG(ymdhms.dt_##f, clock_tests[i].clock.dt_##f, \
