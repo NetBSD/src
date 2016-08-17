@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.2 2015/12/23 12:43:25 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.3 2016/08/17 00:09:19 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2 2015/12/23 12:43:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.3 2016/08/17 00:09:19 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1076,7 +1076,7 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct clk *clk_parent;
-	u_int div;
+	u_int rate;
 
 	KASSERT(tclk->type == TEGRA_CLK_DIV);
 
@@ -1087,22 +1087,30 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	const u_int raw_div = __SHIFTOUT(v, tdiv->bits);
 
 	switch (tdiv->reg) {
+	case CAR_CLKSRC_I2C1_REG:
+	case CAR_CLKSRC_I2C2_REG:
+	case CAR_CLKSRC_I2C3_REG:
+	case CAR_CLKSRC_I2C4_REG:
+	case CAR_CLKSRC_I2C5_REG:
+	case CAR_CLKSRC_I2C6_REG:
+		rate = parent_rate * 1 / (raw_div + 1);
+		break;
 	case CAR_CLKSRC_UARTA_REG:
 	case CAR_CLKSRC_UARTB_REG:
 	case CAR_CLKSRC_UARTC_REG:
 	case CAR_CLKSRC_UARTD_REG:
 		if (v & CAR_CLKSRC_UART_DIV_ENB) {
-			div = raw_div * 2;
+			rate = parent_rate * 2 / (raw_div + 2);
 		} else {
-			div = 2;
+			rate = parent_rate;
 		}
 		break;
 	default:
-		div = raw_div * 2;
+		rate = parent_rate * 2 / (raw_div + 2);
 		break;
 	}
 
-	return (parent_rate * 2) / div;
+	return rate;
 }
 
 static int
@@ -1125,6 +1133,8 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 
 	v = bus_space_read_4(bst, bsh, tdiv->reg);
 
+	raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+
 	switch (tdiv->reg) {
 	case CAR_CLKSRC_UARTA_REG:
 	case CAR_CLKSRC_UARTB_REG:
@@ -1134,6 +1144,7 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			v &= ~CAR_CLKSRC_UART_DIV_ENB;
 		} else {
 			v |= CAR_CLKSRC_UART_DIV_ENB;
+			raw_div = (parent_rate * 2) / rate - 2;
 		}
 		break;
 	case CAR_CLKSRC_SATA_REG:
@@ -1141,16 +1152,24 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
 			    0, CAR_SATA_PLL_CFG0_PADPLL_RESET_SWCTL);
 			v |= CAR_CLKSRC_SATA_AUX_CLK_ENB;
+			raw_div = (parent_rate * 2) / rate - 2;
 		} else {
 			v &= ~CAR_CLKSRC_SATA_AUX_CLK_ENB;
 		}
 		break;
-	}
-
-	if (rate) {
-		raw_div = (parent_rate * 2) / rate - 2;
-	} else {
-		raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+	case CAR_CLKSRC_I2C1_REG:
+	case CAR_CLKSRC_I2C2_REG:
+	case CAR_CLKSRC_I2C3_REG:
+	case CAR_CLKSRC_I2C4_REG:
+	case CAR_CLKSRC_I2C5_REG:
+	case CAR_CLKSRC_I2C6_REG:
+		if (rate)
+			raw_div = parent_rate / rate - 1;
+		break;
+	default:
+		if (rate)
+			raw_div = (parent_rate * 2) / rate - 2;
+		break;
 	}
 
 	v &= ~tdiv->bits;
