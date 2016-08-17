@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1250 2016/08/17 06:45:09 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1251 2016/08/17 07:55:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1258 2016/08/17 06:44:45 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1259 2016/08/17 07:55:12 msaitoh Exp
  */
 
 /*
@@ -3055,20 +3055,29 @@
 #define	PCI_PRODUCT_INTEL_CORE6G_PCIE_X8	0x1905		/* Core 6G PCIe x8 */
 #define	PCI_PRODUCT_INTEL_CORE6G_PEN_GTX_2	0x1906		/* HD Graphics 510 */
 #define	PCI_PRODUCT_INTEL_CORE6G_PCIE_X4	0x1909		/* Core 6G PCIe x4 */
-#define	PCI_PRODUCT_INTEL_CORE6G_S_HB	0x190f		/* Core 6G Host and DRAM (S, Dual Core) */
+#define	PCI_PRODUCT_INTEL_CORE6G_H_GT1	0x190b		/* HD Graphics (GT1) */
 #define	PCI_PRODUCT_INTEL_CORE6G_Y_HB	0x190c		/* Core 6G Host and DRAM (Y) */
+#define	PCI_PRODUCT_INTEL_CORE6G_Y_GT1	0x190e		/* HD Graphics (GT1) */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_HB	0x190f		/* Core 6G Host and DRAM (S, Dual Core) */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_HB_2	0x1910		/* Core 6G Host and DRAM (H, Quad Core) */
 #define	PCI_PRODUCT_INTEL_CORE6G_GMM	0x1911		/* Core 6G Gaussian Mixture Model */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_GT2	0x1912		/* HD Graphics 530 (GT2) */
 #define	PCI_PRODUCT_INTEL_CORE6G_U_GT2	0x1916		/* HD Graphics 520 (GT2) */
+#define	PCI_PRODUCT_INTEL_CORE6G_H_HB_3	0x1918		/* Core 6G Host and DRAM (H/S, Quad Core) */
 #define	PCI_PRODUCT_INTEL_CORE6G_IU	0x1919		/* Core 6G Image Unit */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_GT2	0x191b		/* HD Graphics 530 (GT2) */
 #define	PCI_PRODUCT_INTEL_CORE6G_XEON_GTX	0x191d		/* HD Graphics P530 */
 #define	PCI_PRODUCT_INTEL_CORE6G_Y_GT2	0x191e		/* HD Graphics 515 (GT2) */
 #define	PCI_PRODUCT_INTEL_CORE6G_S_HB_2	0x191f		/* Core 6G Host and DRAM (S, Quad Core) */
-#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3	0x1926		/* Iris Graphics 550 (GT3) */
-#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4	0x1932		/* Iris Pro Graphics 62xx (GT4) */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT3	0x1922		/* Iris Graphics (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3	0x1923		/* Iris Graphics (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3E_1	0x1926		/* Iris Graphics 550 (GT3e) */
+#define	PCI_PRODUCT_INTEL_CORE6G_U_GT3E_2	0x1927		/* Iris Graphics (GT3e) */
+#define	PCI_PRODUCT_INTEL_CORE6G_H_GT3	0x192b		/* Iris Graphics (GT3) */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4_1	0x1932		/* Iris Pro Graphics 62xx (GT4) */
+#define	PCI_PRODUCT_INTEL_CORE6G_HS_GT4	0x193a		/* Iris Pro Graphics (GT4) */
 #define	PCI_PRODUCT_INTEL_CORE6G_H_GT4	0x193b		/* Iris Pro Graphics 62xx (GT4) */
+#define	PCI_PRODUCT_INTEL_CORE6G_S_GT4_2	0x193d		/* Iris Pro Graphics (GT4) */
 #define	PCI_PRODUCT_INTEL_80960_RP	0x1960		/* ROB-in i960RP Microprocessor */
 #define	PCI_PRODUCT_INTEL_80960RM_2	0x1962		/* i960 RM PCI-PCI */
 #define	PCI_PRODUCT_INTEL_82840_HB	0x1a21		/* 82840 Host */
