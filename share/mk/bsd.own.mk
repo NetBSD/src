@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.941 2016/08/16 01:03:07 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.942 2016/08/18 08:06:53 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1375,7 +1375,7 @@ X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
 	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
 	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xpresent Xpm \
 	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
-	fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb xshmfence \
+	epoxy fontenc xkbfile xkbui Xaw Xfontcache pciaccess xcb xshmfence \
 	pthread-stubs
 X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
 .endfor
@@ -1435,11 +1435,11 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
 .for _v in \
-	ag10e apm ark ast ati ati-kms chips cirrus crime \
+	ag10e amdgpu apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old \
 	modesetting mach64 mga \
 	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
-	r128 radeonhd rendition \
+	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
 	suncg6 sunffb sunleo suntcx \
 	tdfx tga trident tseng vesa vga vmware wsfb xgi
