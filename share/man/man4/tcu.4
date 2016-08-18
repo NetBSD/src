@@ -1,4 +1,4 @@
-.\"     $NetBSD: tcu.4,v 1.1 2016/08/11 09:06:20 christos Exp $
+.\"     $NetBSD: tcu.4,v 1.2 2016/08/18 19:22:45 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,10 +44,11 @@
 The
 .Nm
 driver provides support for the flxd TC-USB TURBOchannel USB host options based
-upon a Cypress SL811HST USB 1.1 host controller and a glue logic CPLD. USB is
-handled by the
+upon a Cypress SL811HST USB 1.1 host controller and a glue logic CPLD.
+USB is handled by the
 .Xr slhci 4
-driver. Eight GPIO pins provided by the CPLD can be accessed through the
+driver.
+Eight GPIO pins provided by the CPLD can be accessed through the
 .Xr gpio 4
 driver.
 .Sh SEE ALSO
