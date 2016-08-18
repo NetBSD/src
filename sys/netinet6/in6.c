@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.216 2016/08/16 10:31:57 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.217 2016/08/18 09:34:43 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.216 2016/08/16 10:31:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.217 2016/08/18 09:34:43 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -256,9 +256,6 @@ in6_ifaddprefix(struct in6_ifaddr *ia)
 		if (ia->ia_dstaddr.sin6_family != AF_INET6)
 			/* We don't need to install a host route. */
 			return 0;
-		flags |= RTF_HOST;
-	} else if (ia->ia_ifp->if_flags & IFF_LOOPBACK) {
-		/* Loopback prefix routes are always host routes. */
 		flags |= RTF_HOST;
 	}
 
@@ -1741,8 +1738,6 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 	}
 
 	/* Add the network prefix route. */
-	if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
-		ia->ia_ifa.ifa_dstaddr = ia->ia_ifa.ifa_addr;
 	if ((error = in6_ifaddprefix(ia)) != 0) {
 		if (newhost)
 			in6_ifremlocal(&ia->ia_ifa);
