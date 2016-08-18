@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.82 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.83 2016/08/18 11:34:09 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.82 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.83 2016/08/18 11:34:09 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -65,18 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.82 2016/08/01 03:15:30 ozaki-r Exp $");
 
 #include <net/if_gif.h>
 
-#include "gif.h"
-
 #include <net/net_osdep.h>
 
 static int gif_validate4(const struct ip *, struct gif_softc *,
 	struct ifnet *);
 
-#if NGIF > 0
 int ip_gif_ttl = GIF_TTL;
-#else
-int ip_gif_ttl = 0;
-#endif
 
 static const struct encapsw in_gif_encapsw = {
 	.encapsw4 = {
