@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2016/08/14 03:43:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2016/08/18 18:40:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -126,6 +126,7 @@ CPPFLAGS.xf86AutoConfig.c=	-DPROJECTROOT='"${X11ROOTDIR}"' \
 
 COPTS.xf86AutoConfig.c=		-Wno-error
 COPTS.xf86Config.c=		-Wno-error
+COPTS.xf86Configure.c=		-Wno-error
 COPTS.xf86Cursor.c=		-Wno-error
 COPTS.xf86RandR.c=		-Wno-error
 COPTS.xf86Helper.c=		-Wno-error
