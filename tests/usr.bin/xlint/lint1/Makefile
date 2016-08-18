@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2015/10/14 16:32:55 christos Exp $
+# $NetBSD: Makefile,v 1.12 2016/08/18 14:45:56 christos Exp $
 
 NOMAN=		# defined
 
@@ -11,6 +11,7 @@ TESTS_SH=	t_integration
 FILESDIR=	${TESTSDIR}
 FILES+=		d_alignof.c
 FILES+=		d_c99_anon_struct.c
+FILES+=		d_c99_anon_union.c
 FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_complex_split.c
 FILES+=		d_c99_compound_literal_comma.c
