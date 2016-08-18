@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.h,v 1.6 2016/01/28 00:28:11 knakahara Exp $	*/
+/*	$NetBSD: if_stf.h,v 1.7 2016/08/18 11:38:58 knakahara Exp $	*/
 /*	$KAME: if_stf.h,v 1.3 2000/03/25 07:23:33 sumikawa Exp $	*/
 
 /*
@@ -32,6 +32,8 @@
 
 #ifndef _NET_IF_STF_H_
 #define _NET_IF_STF_H_
+
+#define STF_TTL		40
 
 #define STF_MTU		(1280)	/* Default MTU */
 #define	STF_MTU_MIN	(1280)	/* Minimum MTU */
