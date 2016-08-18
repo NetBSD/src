@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.49 2015/10/14 18:31:52 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.50 2016/08/18 14:42:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.49 2015/10/14 18:31:52 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.50 2016/08/18 14:42:48 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -108,7 +108,7 @@ const	char *msgs[] = {
 	"(%s) tag redeclared",					      /* 46 */
 	"zero sized %s is a C9X feature",			      /* 47 */
 	"overflow in enumeration values: %s",			      /* 48 */
-	"struct or union member must be named",			      /* 49 */
+	"anonymous struct/union members is a C9X feature",	      /* 49 */
 	"a function is declared as an argument: %s",		      /* 50 */
 	"parameter mismatch: %d declared, %d defined",		      /* 51 */
 	"cannot initialize parameter: %s",			      /* 52 */
