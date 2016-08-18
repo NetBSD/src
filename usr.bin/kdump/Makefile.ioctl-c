@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.32 2016/04/01 07:23:15 knakahara Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.33 2016/08/18 08:02:58 mrg Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -44,8 +44,8 @@ CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
 .if ${MKDTRACE} != "no"
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
 CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
-CPPFLAGS+=	-D_DEV_IC_BT8XX_H_
 .endif
+CPPFLAGS+=	-D_DEV_IC_BT8XX_H_
 CPPFLAGS+=	-D_ALTQ_ALTQ_JOBS_H_	# redefinition of inline
 # De-select one, dup ioctls
 CPPFLAGS+=	-D_VIA_DRM_H_		# Missing header
