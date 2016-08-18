@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.180 2016/08/17 03:10:22 mrg Exp $
+#	 $NetBSD: mi,v 1.181 2016/08/18 08:11:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5659,6 +5659,12 @@
 ./usr/X11R7/include/drm/xgi_drm.h			-unknown-	obsolete
 ./usr/X11R7/include/expat.h				-unknown-	obsolete
 ./usr/X11R7/include/expat_external.h			-unknown-	obsolete
+./usr/X11R7/include/epoxy/egl.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/gl_generated.h		-unknown-	xorg
+./usr/X11R7/include/epoxy/gl.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/glx_generated.h		-unknown-	xorg
+./usr/X11R7/include/epoxy/glx.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/egl_generated.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcfreetype.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcprivate.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fontconfig.h		-unknown-	xorg
@@ -6283,6 +6289,8 @@
 ./usr/X11R7/lib/libdrm_radeon_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libexpat.a				-unknown-	obsolete,compatx11file
 ./usr/X11R7/lib/libexpat_p.a				-unknown-	obsolete,compatx11file
+./usr/X11R7/lib/libepoxy.a				-unknown-	xorg,compatx11file
+./usr/X11R7/lib/libepoxy_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libfontenc.a				-unknown-	xorg,compatx11file
@@ -6387,6 +6395,7 @@
 ./usr/X11R7/lib/pkgconfig/dri.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/dri2proto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/dri3proto.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/epoxy.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/evieproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fixesproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/fontcacheproto.pc		-unknown-	xorg
