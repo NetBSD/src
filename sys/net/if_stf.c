@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.99 2016/08/18 11:38:58 knakahara Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,12 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.99 2016/08/18 11:38:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "stf.h"
-#include "gif.h"	/*XXX*/
 #endif
 
 #ifndef INET6
@@ -116,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $")
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip_ecn.h>
 
@@ -125,10 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.98 2016/08/07 17:38:34 christos Exp $")
 #include <net/net_osdep.h>
 
 #include <net/bpf.h>
-
-#if NGIF > 0
-#include <net/if_gif.h>
-#endif
 
 #include "ioconf.h"
 
@@ -150,11 +144,7 @@ static int	stf_clone_destroy(struct ifnet *);
 struct if_clone stf_cloner =
     IF_CLONE_INITIALIZER("stf", stf_clone_create, stf_clone_destroy);
 
-#if NGIF > 0
-extern int ip_gif_ttl;	/*XXX*/
-#else
-static int ip_gif_ttl = 40;	/*XXX*/
-#endif
+static int ip_stf_ttl = STF_TTL;
 
 extern struct domain inetdomain;
 
@@ -440,7 +430,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	    &ip->ip_src, sizeof(ip->ip_src));
 	memcpy(&ip->ip_dst, in4, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
-	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
+	ip->ip_ttl = ip_stf_ttl;
 	ip->ip_len = htons(m->m_pkthdr.len);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
