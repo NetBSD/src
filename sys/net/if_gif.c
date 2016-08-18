@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.120 2016/08/07 17:38:33 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.121 2016/08/18 11:44:22 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.120 2016/08/07 17:38:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.121 2016/08/18 11:44:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -140,6 +140,22 @@ gif_sysctl_setup(void)
 	gif_sysctl = NULL;
 
 #ifdef INET
+	/*
+	 * Previously create "net.inet.ip" entry to avoid sysctl_createv error.
+	 */
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet",
+		       SYSCTL_DESCR("PF_INET related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip",
+		       SYSCTL_DESCR("IPv4 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
+
 	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifttl",
@@ -149,6 +165,22 @@ gif_sysctl_setup(void)
 		       IPCTL_GIF_TTL, CTL_EOL);
 #endif
 #ifdef INET6
+	/*
+	 * Previously create "net.inet6.ip6" entry to avoid sysctl_createv error.
+	 */
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6",
+		       SYSCTL_DESCR("PF_INET6 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip6",
+		       SYSCTL_DESCR("IPv6 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_EOL);
+
 	sysctl_createv(&gif_sysctl, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "gifhlim",
