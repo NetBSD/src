@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.64 2016/08/18 07:08:32 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.65 2016/08/18 07:18:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.64 2016/08/18 07:08:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.65 2016/08/18 07:18:52 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2374,58 +2374,63 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	 * The code should write the 'cycle' bit on the link trb AFTER
 	 * adding the other trb.
 	 */
-	if (ri + ntrbs >= (xr->xr_ntrb - 1)) {
-		parameter = xhci_ring_trbp(xr, 0);
-		status = 0;
-		control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_LINK) |
-		    XHCI_TRB_3_TC_BIT | (cs ? XHCI_TRB_3_CYCLE_BIT : 0);
-		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
-		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
-		    BUS_DMASYNC_PREWRITE);
-		xr->xr_cookies[ri] = NULL;
-		xr->xr_ep = 0;
-		xr->xr_cs ^= 1;
-		ri = xr->xr_ep;
-		cs = xr->xr_cs;
-	}
+	u_int firstep = xr->xr_ep;
+	u_int firstcs = xr->xr_cs;
 
-	ri++;
+	for (i = 0; i < ntrbs; ) {
+		u_int oldri = ri;
+		u_int oldcs = cs;
 
-	/* Write any subsequent TRB first */
-	for (i = 1; i < ntrbs; i++) {
-		parameter = trbs[i].trb_0;
-		status = trbs[i].trb_2;
-		control = trbs[i].trb_3;
-
-		if (cs) {
-			control |= XHCI_TRB_3_CYCLE_BIT;
+		if (ri >= (xr->xr_ntrb - 1)) {
+			/* Put Link TD at the end of ring */
+			parameter = xhci_ring_trbp(xr, 0);
+			status = 0;
+			control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_LINK) |
+			    XHCI_TRB_3_TC_BIT;
+			xr->xr_cookies[ri] = NULL;
+			xr->xr_ep = 0;
+			xr->xr_cs ^= 1;
+			ri = xr->xr_ep;
+			cs = xr->xr_cs;
 		} else {
-			control &= ~XHCI_TRB_3_CYCLE_BIT;
+			parameter = trbs[i].trb_0;
+			status = trbs[i].trb_2;
+			control = trbs[i].trb_3;
+
+			xr->xr_cookies[ri] = cookie;
+			ri++;
+			i++;
 		}
-
-		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
-		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
-		    BUS_DMASYNC_PREWRITE);
-		xr->xr_cookies[ri] = cookie;
-		ri++;
+		/*
+		 * If this is a first TRB, mark it invalid to prevent
+		 * xHC from running it immediately.
+		 */
+		if (oldri == firstep) {
+			if (oldcs) {
+				control &= ~XHCI_TRB_3_CYCLE_BIT;
+			} else {
+				control |= XHCI_TRB_3_CYCLE_BIT;
+			}
+		} else {
+			if (oldcs) {
+				control |= XHCI_TRB_3_CYCLE_BIT;
+			} else {
+				control &= ~XHCI_TRB_3_CYCLE_BIT;
+			}
+		}
+		xhci_trb_put(&xr->xr_trb[oldri], parameter, status, control);
+		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * oldri,
+		    XHCI_TRB_SIZE * 1, BUS_DMASYNC_PREWRITE);
 	}
 
-	/* Write the first TRB last */
-	i = 0;
-	parameter = trbs[i].trb_0;
-	status = trbs[i].trb_2;
-	control = trbs[i].trb_3;
-
-	if (xr->xr_cs) {
-		control |= XHCI_TRB_3_CYCLE_BIT;
+	/* Now invert cycle bit of first TRB */
+	if (firstcs) {
+		xr->xr_trb[firstep].trb_3 |= htole32(XHCI_TRB_3_CYCLE_BIT);
 	} else {
-		control &= ~XHCI_TRB_3_CYCLE_BIT;
+		xr->xr_trb[firstep].trb_3 &= ~htole32(XHCI_TRB_3_CYCLE_BIT);
 	}
-
-	xhci_trb_put(&xr->xr_trb[xr->xr_ep], parameter, status, control);
-	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * xr->xr_ep, XHCI_TRB_SIZE * 1,
-	    BUS_DMASYNC_PREWRITE);
-	xr->xr_cookies[xr->xr_ep] = cookie;
+	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * firstep,
+	    XHCI_TRB_SIZE * 1, BUS_DMASYNC_PREWRITE);
 
 	xr->xr_ep = ri;
 	xr->xr_cs = cs;
