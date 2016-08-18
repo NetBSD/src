@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.16 2016/08/15 22:01:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2016/08/18 18:42:09 mrg Exp $
 
 .include <bsd.own.mk>
 
 XORGSRC=	${X11SRCDIR.xorg-server}
 
-XORGINC_SUBDIR=	Xext composite dbe dri3 exa fb include mi \
+XORGINC_SUBDIR=	Xext composite dbe dri3 exa fb glamor include mi \
 		miext/damage miext/shadow miext/sync \
 		present randr render xkb record
 XF86_SUBDIR=	common ddc dri fbdevhw i2c int10 modes \
@@ -33,7 +33,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	edid.h exa.h exevents.h \
 	eventconvert.h events.h eventstr.h list.h \
 	extension.h extinit.h extnsionst.h fb.h fbdevhw.h fboverlay.h \
-	fbpict.h fbrop.h fourcc.h gc.h gcstruct.h geext.h globals.h \
+	fbpict.h fbrop.h fourcc.h gc.h gcstruct.h geext.h glamor.h globals.h \
 	glx_extinit.h glyphstr.h i2c_def.h input.h inputstr.h inpututils.h \
 	mi.h micmap.h micoord.h \
 	migc.h miline.h mipict.h mipointer.h mipointrst.h misc.h miscstruct.h \
