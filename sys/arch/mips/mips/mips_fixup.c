@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.17 2016/08/18 19:24:31 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.18 2016/08/18 19:25:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.17 2016/08/18 19:24:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.18 2016/08/18 19:25:34 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -536,7 +536,7 @@ mips_cpu_switch_resume(struct lwp *l)
 tlb_asid_t
 tlb_get_asid(void)
 {
-	return (*mips_locore_jumpvec.ljv_tlb_get_asid)();  
+	return (*mips_locore_jumpvec.ljv_tlb_get_asid)();
 }
 
 void
