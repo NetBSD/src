@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2016/08/05 20:54:28 jakllsch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.20 2016/08/18 21:42:27 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.19 2016/08/05 20:54:28 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2016/08/18 21:42:27 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1358,7 +1358,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * No need to track non-managed pages or PMAP_KMPAGEs pages for aliases
 	 */
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
-	if (pg != NULL && (flags & PMAP_KMPAGE) == 0) {
+	if (pg != NULL && (flags & PMAP_KMPAGE) == 0
+	    && pmap_md_virtual_cache_aliasing_p()) {
 		pmap_enter_pv(pmap, va, pg, &npte, PV_KENTER);
 	}
 #endif
@@ -1411,9 +1412,11 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 
 		PMAP_COUNT(kremove_pages);
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
-		if (pg != NULL) {
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+		if (pg != NULL && pmap_md_virtual_cache_aliasing_p()) {
 			pmap_remove_pv(pmap, sva, pg, !pte_readonly_p(pte));
 		}
+#endif
 
 		pmap_md_tlb_miss_lock_enter();
 		*ptep = new_pte;
