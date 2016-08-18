@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.17 2016/08/18 08:04:28 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.18 2016/08/18 08:08:02 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -230,7 +230,6 @@ getblk(struct uvnode * vp, daddr_t lbn, int size)
 	 * the buffer, its contents are invalid; but shrinking is okay.
 	 */
 	if ((bp = incore(vp, lbn)) != NULL) {
-		assert(!(bp->b_flags & B_NEEDCOMMIT));
 		assert(!(bp->b_flags & B_BUSY));
 		bp->b_flags |= B_BUSY;
 		bremfree(bp);
@@ -308,7 +307,6 @@ brelse(struct ubuf * bp, int set)
 {
 	int age;
 
-	assert(!(bp->b_flags & B_NEEDCOMMIT));
 	assert(bp->b_flags & B_BUSY);
 
 	bp->b_flags |= set;
