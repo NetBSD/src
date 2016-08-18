@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.h,v 1.12 2015/03/29 19:35:58 chopps Exp $	*/
+/*	$NetBSD: bufcache.h,v 1.13 2016/08/18 08:08:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ struct ubuf {
  * These flags are kept in b_flags.
  */
 #define	B_AGE		0x00000001	/* Move to age queue when I/O done. */
-#define	B_NEEDCOMMIT	0x00000002	/* Needs committing to stable storage */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DONE		0x00000200	/* I/O completed. */
