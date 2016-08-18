@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/08/18 07:48:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/18 18:42:09 mrg Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -51,9 +51,6 @@ CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
 CPPFLAGS+=      ${X11FLAGS.DIX}
-
-INCSDIR=	${X11INCDIR}/xorg
-INCS=		glamor.h
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
