@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.16 2016/07/31 18:27:26 dholland Exp $ */
+/* $NetBSD: bufcache.c,v 1.17 2016/08/18 08:04:28 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -155,7 +155,6 @@ bufstats(void)
 void
 buf_destroy(struct ubuf * bp)
 {
-	bp->b_flags |= B_NEEDCOMMIT;
 	LIST_REMOVE(bp, b_vnbufs);
 	LIST_REMOVE(bp, b_hash);
 	if (!(bp->b_flags & B_DONTFREE))
