@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.28 2016/08/18 14:39:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.27 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28 2016/08/18 14:39:04 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -181,6 +181,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 
 	KASSERT(cpu_id != 0);
 	ci->ci_cpuid = cpu_id;
+	ci->ci_pmap_kern_segtab = &pmap_kern_segtab,
 	ci->ci_data.cpu_package_id = cpu_package_id;
 	ci->ci_data.cpu_core_id = cpu_core_id;
 	ci->ci_data.cpu_smt_id = cpu_smt_id;
