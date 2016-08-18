@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2016/08/17 03:10:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.40 2016/08/18 08:11:22 mrg Exp $
 
 # build libraries for xorg
 
@@ -24,7 +24,7 @@ SUBDIR+=dri7 dri gallium
 SUBDIR+=fontconfig libSM libX11 \
 	.WAIT \
 	libXcomposite libXdamage libXext libXfixes libXt \
-	libxkbfile \
+	libxkbfile libepoxy \
 	.WAIT \
 	libXi libXxf86vm \
 	.WAIT \

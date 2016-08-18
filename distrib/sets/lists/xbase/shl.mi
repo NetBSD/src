@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.71 2016/08/17 03:10:22 mrg Exp $
+# $NetBSD: shl.mi,v 1.72 2016/08/18 08:11:22 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -315,6 +315,9 @@
 ./usr/X11R7/lib/libdrm_radeon.so		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.so.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.so.0.0		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libepoxy.so			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libepoxy.so.0			-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libepoxy.so.0.0			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libexpat.so			-obsolete-		obsolete
 ./usr/X11R7/lib/libexpat.so.2			-obsolete-		obsolete
 ./usr/X11R7/lib/libexpat.so.2.0			-obsolete-		obsolete
