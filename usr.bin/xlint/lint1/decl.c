@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.62 2016/07/31 22:36:53 dholland Exp $ */
+/* $NetBSD: decl.c,v 1.63 2016/08/18 14:43:31 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.62 2016/07/31 22:36:53 dholland Exp $");
+__RCSID("$NetBSD: decl.c,v 1.63 2016/08/18 14:43:31 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1772,23 +1772,27 @@ compltag(type_t *tp, sym_t *fmem)
 			setpackedsize(tp);
 		else
 			sp->size = dcs->d_offset;
+
 		if (sp->size == 0) {
 			/* zero sized %s */
 			(void)c99ism(47, ttab[t].tt_name);
-		} else {
-			n = 0;
-			for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
-				/* bind anonymous members to the structure */
-				if (mem->s_styp == NULL)
-					mem->s_styp = sp;
-				if (mem->s_name != unnamed)
-					n++;
+		}
+
+		n = 0;
+		for (mem = fmem; mem != NULL; mem = mem->s_nxt) {
+			/* bind anonymous members to the structure */
+			if (mem->s_styp == NULL) {
+				mem->s_styp = sp;
+				sp->size += tsize(mem->s_type);
 			}
-			if (n == 0) {
-				/* %s has no named members */
-				warning(65,
-					t == STRUCT ? "structure" : "union");
-			}
+			if (mem->s_name != unnamed)
+				n++;
+		}
+
+		if (n == 0) {
+			/* %s has no named members */
+			warning(65,
+				t == STRUCT ? "structure" : "union");
 		}
 	} else {
 		tp->t_enum->elem = fmem;
