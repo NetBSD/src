@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/08/14 03:43:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2016/08/18 18:11:03 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,9 @@ CPPFLAGS+=	-DSHMDIR=\"/var/shm\"
 CPPFLAGS+=	-DHAVE_SEMAPHORE
 # XXX
 CPPFLAGS+=	-DLIBXSHM_PAGESIZE=4096
+
+LDADD+=	-lrt
+DPADD+=	${LIBRT}
 
 NOMAN=	# defined
 
