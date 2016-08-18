@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2014/11/27 14:22:09 uebayasi Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11 2016/08/18 12:36:35 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2014/11/27 14:22:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2016/08/18 12:36:35 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -550,7 +550,6 @@ fpu_save_area_clear(struct lwp *lwp, unsigned int x87_cw)
 	union savefpu *fpu_save;
 
 	fpusave_lwp(lwp, false);
-
 	fpu_save = process_fpframe(lwp);
 
 	if (i386_use_fxsave) {
@@ -645,29 +644,32 @@ process_write_fpregs_s87(struct lwp *lwp, const struct save87 *fpregs)
 void
 process_read_fpregs_xmm(struct lwp *lwp, struct fxsave *fpregs)
 {
+	union savefpu *fpu_save;
+
 	fpusave_lwp(lwp, true);
+	fpu_save = process_fpframe(lwp);
 
 	if (i386_use_fxsave) {
-		memcpy(fpregs, &process_fpframe(lwp)->sv_xmm,
-		    sizeof process_fpframe(lwp)->sv_xmm);
+		memcpy(fpregs, &fpu_save->sv_xmm, sizeof(fpu_save->sv_xmm));
 	} else {
 		/* This usually gets copied to userspace */
-		memset(fpregs, 0, sizeof *fpregs);
-		process_s87_to_xmm(&process_fpframe(lwp)->sv_87, fpregs);
-
+		memset(fpregs, 0, sizeof(*fpregs));
+		process_s87_to_xmm(&fpu_save->sv_87, fpregs);
 	}
 }
 
 void
 process_read_fpregs_s87(struct lwp *lwp, struct save87 *fpregs)
 {
+	union savefpu *fpu_save;
+
 	fpusave_lwp(lwp, true);
+	fpu_save = process_fpframe(lwp);
 
 	if (i386_use_fxsave) {
 		memset(fpregs, 0, 12);
-		process_xmm_to_s87(&process_fpframe(lwp)->sv_xmm, fpregs);
+		process_xmm_to_s87(&fpu_save->sv_xmm, fpregs);
 	} else {
-		memcpy(fpregs, &process_fpframe(lwp)->sv_87,
-		    sizeof process_fpframe(lwp)->sv_87);
+		memcpy(fpregs, &fpu_save->sv_87, sizeof(fpu_save->sv_87));
 	}
 }
