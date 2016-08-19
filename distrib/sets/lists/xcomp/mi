@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.183 2016/08/19 20:51:58 christos Exp $
+#	 $NetBSD: mi,v 1.184 2016/08/19 22:34:51 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5910,7 +5910,7 @@
 ./usr/X11R7/include/xorg/dbestruct.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dgaproc.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/displaymode.h			-unknown-	xorg,xorg_server_ver=118
-./usr/X11R7/include/xorg/dix-config.h			-unknown-	xorg
+./usr/X11R7/include/xorg/dix-config.h			-unknown-	xorg,obsolete
 ./usr/X11R7/include/xorg/dix.h				-unknown-	xorg
 ./usr/X11R7/include/xorg/dixaccess.h			-unknown-	xorg
 ./usr/X11R7/include/xorg/dixevents.h			-unknown-	xorg
