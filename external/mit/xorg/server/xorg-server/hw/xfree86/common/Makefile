@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2016/08/18 18:40:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2016/08/19 19:10:54 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -124,15 +124,7 @@ CPPFLAGS.xf86AutoConfig.c=	-DPROJECTROOT='"${X11ROOTDIR}"' \
 				-DDRIVERS='"${DRIVERS}"' \
 				-DIDRIVERS='"${IDRIVERS}"'
 
-COPTS.xf86AutoConfig.c=		-Wno-error
-COPTS.xf86Config.c=		-Wno-error
-COPTS.xf86Configure.c=		-Wno-error
-COPTS.xf86Cursor.c=		-Wno-error
-COPTS.xf86RandR.c=		-Wno-error
-COPTS.xf86Helper.c=		-Wno-error
-COPTS.xf86cmap.c=		-Wno-error
-COPTS.xf86Cursor.c=		-Wno-error	# XXX xf86dgastr.h
-COPTS.xf86DGA.c=		-Wno-error	# XXX xf86dgastr.h
+COPTS.xf86sbusBus.c=		-Wno-error=incompatible-pointer-types
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
