@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.151 2016/06/22 20:12:59 palle Exp $
+#	$NetBSD: files.sparc64,v 1.152 2016/08/19 19:02:07 palle Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -325,3 +325,11 @@ file  dev/ofw/ofw_subr.c
 device	vrtc
 attach	vrtc at vbus
 file	arch/sparc64/dev/vrtc.c			vrtc
+
+define	ldc
+file	arch/sparc64/dev/ldc.c			ldc
+
+# Virtual disk
+device	vdsk: ldc, scsi
+attach	vdsk at cbus
+file	arch/sparc64/dev/vdsk.c			vdsk
