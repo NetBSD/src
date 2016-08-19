@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/08/14 03:43:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2016/08/19 03:59:31 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,13 @@ LDADD+=	${LDADD.dix}
 LDADD+=	${LDADD.hw/xfree86/init}
 LDADD+=	${LDADD.config}
 LDADD+=	${LDADD.dbe}
+.if ${HAVE_XORG_GLAMOR} != "no"  
+LDADD+=	${LDADD.glamor}
+.endif
 LDADD+=	${LDADD.record}
 LDADD+=	${LDADD.hw/xfree86/loader}
 LDADD+=	${LDADD.hw/xfree86/common}
 LDADD+=	${LDADD.hw/xfree86/xorgos}
-#LDADD+=	${LDADD.osandcommon}
 LDADD+=	${LDADD.hw/xfree86/xf86config}
 LDADD+=	${LDADD.hw/xfree86/dixmods}
 LDADD+=	${LDADD.hw/xfree86/xf86modes}
@@ -84,6 +86,9 @@ DPADD+=	${LIBALPHA}
 .endif
 
 LDADD+=	-lm -lGL -lXv -lxshmfence
+.if ${HAVE_XORG_GLAMOR} != "no"  
+LDADD+=	-lepoxy
+.endif
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 # Needed by current xf86-video-intel for SNA.
@@ -91,7 +96,8 @@ LDADD+=	-lpthread
 DPADD+=	${LIBPTHREAD}
 .endif
 
-DPADD+=	${DPADD.dix} \
+DPADD+=	\
+	${DPADD.dix} \
 	${DPADD.fb} \
 	${DPADD.mi} \
 	${DPADD.xfixes} \
@@ -128,6 +134,12 @@ DPADD+=	${DPADD.dix} \
 	${LIBXFONT} ${LIBFREETYPE} ${LIBXAU} ${LIBFONTENC} \
 	${LIBPIXMAN1} ${LIBXDMCP} ${LIBZ} ${LIBM} ${LIBPCIACCESS} \
 	${LIBGL} ${LIBXV} ${LIBXSHMFENCE}
+
+.if ${HAVE_XORG_GLAMOR} != "no"  
+DPADD+= \
+	${DPADD.glamor} \
+	${LIBEPOXY}
+.endif
 
 # XXX
 .if ${HAVE_DRI3:Uno} != "no"

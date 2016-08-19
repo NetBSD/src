@@ -1,14 +1,8 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/19 03:59:31 mrg Exp $
 
 .include <bsd.own.mk>
 
 .include "Makefile.common"
-
-.if ${XSERVER_NEEDS_XFONT} != "no"
-SUBDIR.xfont=Xfont fontbase
-.else
-SUBDIR.xfont=
-.endif
 
 SUBDIR=		doc include .WAIT
 SUBDIR+=	glx
