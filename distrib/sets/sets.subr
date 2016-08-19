@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.177 2016/08/16 01:05:19 mrg Exp $
+#	$NetBSD: sets.subr,v 1.178 2016/08/19 10:23:26 mrg Exp $
 #
 
 #
@@ -179,7 +179,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.177 2016/08/16 01:05:19 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.178 2016/08/19 10:23:26 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -349,10 +349,8 @@ list_set_files()
 				if ("gdb" in wanted)
 					wanted["gdb=" "'"${HAVE_GDB}"'"] = 1
 			}
-			if ("'"${MKXORG_SERVER}"'" != "no") {
-				if ("xorg_server_ver" in wanted) {
-					wanted["xorg_server_ver=" "'"${HAVE_XORG_SERVER_VER}"'"] = 1
-				}
+			if ("xorg_server_ver" in wanted) {
+				wanted["xorg_server_ver=" "'"${HAVE_XORG_SERVER_VER}"'"] = 1
 			}
 			if (("man" in wanted) && ("catpages" in wanted))
 				wanted[".cat"] = 1
