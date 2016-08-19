@@ -1,13 +1,4 @@
-# $NetBSD: md.amiga,v 1.23 2016/08/19 19:12:03 mrg Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xamiga					-unknown-	x11
-./usr/X11R6/lib/modules/libafb.a			-obsolete-	obsolete
-./usr/X11R6/man/cat1/Xamiga.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/Xamiga24.0				-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xamiga.html			-unknown-	html,x11
-./usr/X11R6/man/html1/Xamiga24.html			-unknown-	html,x11
-./usr/X11R6/man/man1/Xamiga.1				-unknown-	.man,x11
-./usr/X11R6/man/man1/Xamiga24.1				-unknown-	.man,x11
+# $NetBSD: md.amiga,v 1.24 2016/08/19 22:37:04 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
