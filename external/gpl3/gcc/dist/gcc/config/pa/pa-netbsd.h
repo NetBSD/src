@@ -35,8 +35,8 @@ along with GCC; see the file COPYING3.  If not see
   "%{v:-V} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
 
 #undef EXTRA_SPECS
-#define EXTRA_SPECS \
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
+#define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
+#undef SUBTARGET_EXTRA_SPECS
 
 #define NETBSD_ENTRY_POINT "__start"
 

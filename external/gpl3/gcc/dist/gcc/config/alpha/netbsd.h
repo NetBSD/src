@@ -41,11 +41,8 @@ along with GCC; see the file COPYING3.  If not see
 #define CPP_SPEC NETBSD_CPP_SPEC
 
 #undef EXTRA_SPECS
-#define EXTRA_SPECS			\
-  { "netbsd_link_spec", NETBSD_LINK_SPEC_ELF },	\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },	\
-  { "netbsd_endfile_spec", NETBSD_ENDFILE_SPEC },
-
+#define EXTRA_SPECS NETBSD_SUBTARGET_EXTRA_SPECS
+#undef SUBTARGET_EXTRA_SPECS
 
 /* Provide a LINK_SPEC appropriate for a NetBSD/alpha ELF target.  */
 

@@ -90,6 +90,17 @@ along with GCC; see the file COPYING3.  If not see
      %{%:sanitize(address): -lasan } \
      %{%:sanitize(undefined): -lubsan}}}"
 
+/* Provide the standard list of subtarget extra specs for NetBSD targets.  */
+#define NETBSD_SUBTARGET_EXTRA_SPECS \
+  { "netbsd_cpp_spec",          NETBSD_CPP_SPEC }, \
+  { "netbsd_link_spec",         NETBSD_LINK_SPEC_ELF }, \
+  { "netbsd_entry_point",       NETBSD_ENTRY_POINT }, \
+  { "netbsd_endfile_spec",      NETBSD_ENDFILE_SPEC },
+
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS   NETBSD_SUBTARGET_EXTRA_SPECS
+
+
 /* Use --as-needed -lgcc_s for eh support.  */
 #ifdef HAVE_LD_AS_NEEDED
 #define USE_LD_AS_NEEDED 1

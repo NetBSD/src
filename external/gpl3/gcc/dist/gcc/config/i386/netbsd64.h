@@ -27,15 +27,6 @@ along with GCC; see the file COPYING3.  If not see
   while (0)
 
 
-/* Extra specs needed for NetBSD/x86-64 ELF.  */
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS			\
-  { "netbsd_cpp_spec", NETBSD_CPP_SPEC },	\
-  { "netbsd_link_spec", NETBSD_LINK_SPEC_ELF },	\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
-
-
 /* Provide a LINK_SPEC appropriate for a NetBSD/x86-64 ELF target.  */
 
 #undef LINK_SPEC

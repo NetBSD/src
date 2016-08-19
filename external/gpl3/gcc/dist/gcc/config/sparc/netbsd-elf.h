@@ -209,9 +209,7 @@ along with GCC; see the file COPYING3.  If not see
   { "link_arch64",		LINK_ARCH64_SPEC }, \
   { "link_arch_default",	LINK_ARCH_DEFAULT_SPEC }, \
   { "link_arch",		LINK_ARCH_SPEC }, \
-  { "netbsd_cpp_spec",		NETBSD_CPP_SPEC }, \
-  { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF }, \
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
+  NETBSD_SUBTARGET_EXTRA_SPECS
 
 
 /* Build a compiler that supports -m32 and -m64?  */

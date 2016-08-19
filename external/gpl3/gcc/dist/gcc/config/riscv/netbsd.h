@@ -63,12 +63,6 @@ Boston, MA 02111-1307, USA.  */
 #undef NETBSD_ENTRY_POINT
 #define NETBSD_ENTRY_POINT	"_start"
 
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS					\
-  { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },		\
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },		\
-  { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
-
 #define SIG_ATOMIC_TYPE   "int"
 
 #define INT8_TYPE "signed char"

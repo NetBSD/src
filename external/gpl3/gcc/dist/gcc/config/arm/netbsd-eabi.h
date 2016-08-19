@@ -93,14 +93,13 @@
 #define SUBTARGET_EXTRA_SPECS				\
   { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC }, \
   { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC }, \
-  { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },	\
   { "linker_eabi_suffix",	TARGET_LINKER_EABI_SUFFIX }, \
   { "linker_emulation",		TARGET_LINKER_EMULATION }, \
   { "linker_big_emulation",	TARGET_LINKER_BIG_EMULATION }, \
   { "linker_little_emulation",	TARGET_LINKER_LITTLE_EMULATION }, \
   { "be8_link_spec",		BE8_LINK_SPEC }, \
   { "target_fix_v4bx_spec",	TARGET_FIX_V4BX_SPEC }, \
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },
+  NETBSD_SUBTARGET_EXTRA_SPECS
 
 #define NETBSD_ENTRY_POINT "__start"
 
