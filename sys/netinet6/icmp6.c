@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.195 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.196 2016/08/19 12:26:01 roy Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.195 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.196 2016/08/19 12:26:01 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -452,7 +452,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	struct icmp6_hdr *icmp6, *nicmp6;
 	int off = *offp;
 	int icmp6len = m->m_pkthdr.len - *offp;
-	int code, sum, noff, i;
+	int code, sum, noff;
 	struct ifnet *rcvif;
 	struct psref psref;
 
@@ -475,29 +475,18 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 		goto freeit;
 	}
 
-	i = off + sizeof(*icmp6);
-	if ((m->m_len < i || M_READONLY(m)) && (m = m_pullup(m, i)) == 0) {
+	ip6 = mtod(m, struct ip6_hdr *);
+	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
+	if (icmp6 == NULL) {
 		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
-#if 0 /* m is 0 here */
 		icmp6_ifstat_inc(rcvif, ifs6_in_error);
-#endif
 		goto freeit;
 	}
-	ip6 = mtod(m, struct ip6_hdr *);
+	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
+
 	/*
 	 * calculate the checksum
 	 */
-	IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, off, sizeof(*icmp6));
-	if (icmp6 == NULL) {
-		m_put_rcvif_psref(rcvif, &psref);
-		ICMP6_STATINC(ICMP6_STAT_TOOSHORT);
-		/* m is invalid */
-		/*icmp6_ifstat_inc(rcvif, ifs6_in_error);*/
-		return IPPROTO_DONE;
-	}
-	KASSERT(IP6_HDR_ALIGNED_P(icmp6));
-	code = icmp6->icmp6_code;
-
 	if ((sum = in6_cksum(m, IPPROTO_ICMPV6, off, icmp6len)) != 0) {
 		nd6log(LOG_ERR, "ICMP6 checksum error(%d|%x) %s\n",
 		    icmp6->icmp6_type, sum, ip6_sprintf(&ip6->ip6_src));
@@ -524,6 +513,7 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	}
 #endif
 
+	code = icmp6->icmp6_code;
 	ICMP6_STATINC(ICMP6_STAT_INHIST + icmp6->icmp6_type);
 
 	switch (icmp6->icmp6_type) {
