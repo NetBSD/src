@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.53 2016/08/15 18:29:34 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.54 2016/08/19 00:05:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -134,7 +134,7 @@ int ext2fs_dirrewrite(struct inode *, const struct ufs_lookup_results *,
 			   struct inode *, struct componentname *);
 int ext2fs_dirempty(struct inode *, ino_t, kauth_cred_t);
 int ext2fs_add_entry(struct vnode *, struct ext2fs_direct *,
-    const struct ufs_lookup_results *); 
+    const struct ufs_lookup_results *, size_t); 
 
 /* ext2fs_subr.c */
 int ext2fs_blkatoff(struct vnode *, off_t, char **, struct buf **);
@@ -190,7 +190,7 @@ int ext2fs_htree_lookup(struct inode *, const char *, int, struct buf **,
 int ext2fs_htree_create_index(struct vnode *, struct componentname *,
     struct ext2fs_direct *);
 int ext2fs_htree_add_entry(struct vnode *, struct ext2fs_direct *,
-    struct componentname *);
+    struct componentname *, size_t);
 
 __END_DECLS
 
