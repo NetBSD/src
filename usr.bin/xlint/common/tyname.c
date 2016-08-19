@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.11 2012/06/20 18:50:11 christos Exp $	*/
+/*	$NetBSD: tyname.c,v 1.12 2016/08/19 10:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.11 2012/06/20 18:50:11 christos Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.12 2016/08/19 10:18:11 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -88,8 +88,68 @@ basictyname(tspec_t t)
 	}
 }
 
+int
+sametype(const type_t *t1, const type_t *t2)
+{
+	tspec_t	t;
+
+	if (t1->t_tspec != t2->t_tspec)
+		return 0;
+
+	/* Ignore const/void */
+
+	switch (t = t1->t_tspec) {
+	case BOOL:
+	case CHAR:
+	case UCHAR:
+	case SCHAR:
+	case SHORT:
+	case USHORT:
+	case INT:
+	case UINT:
+	case LONG:
+	case ULONG:
+	case QUAD:
+	case UQUAD:
+	case FLOAT:
+	case DOUBLE:
+	case LDOUBLE:
+	case VOID:
+	case FUNC:
+	case COMPLEX:
+	case FCOMPLEX:
+	case DCOMPLEX:
+	case LCOMPLEX:
+		return 1;
+	case ARRAY:
+		if (t1->t_dim != t2->t_dim)
+			return 0;
+		/*FALLTHROUGH*/
+	case PTR:
+		return sametype(t1->t_subt, t2->t_subt);
+	case ENUM:
+#ifdef t_enum
+		return strcmp(t1->t_enum->etag->s_name,
+		    t2->t_enum->etag->s_name) == 0;
+#else
+		return 1;
+#endif
+	case STRUCT:
+	case UNION:
+#ifdef t_str
+		return strcmp(t1->t_str->stag->s_name,
+		    t2->t_str->stag->s_name) == 0;
+#else
+		return 1;
+#endif
+	default:
+		LERROR("tyname(%d)", t);
+		return 0;
+	}
+}
+
 const char *
-tyname(char *buf, size_t bufsiz, type_t *tp)
+tyname(char *buf, size_t bufsiz, const type_t *tp)
 {
 	tspec_t	t;
 	const	char *s;
