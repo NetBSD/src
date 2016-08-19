@@ -82,6 +82,8 @@ kcpuset_t *cpus_booted;
 
 void octeon_reset_vector(void);
 
+static void wdog_cpunode_poke(void *arg);
+
 static int
 cpunode_mainbus_print(void *aux, const char *pnp)
 {
@@ -258,7 +260,7 @@ cpu_cpunode_attach_common(device_t self, struct cpu_info *ci)
 	ci->ci_nmi_stack = (void *)(kva + PAGE_SIZE - sizeof(struct kernframe));
 #endif
 
-#ifdef WDOG
+#if NWDOG > 0
 	cpu->cpu_wdog_sih = softint_establish(SOFTINT_CLOCK|SOFTINT_MPSAFE,
 	    wdog_cpunode_poke, cpu);
 	KASSERT(cpu->cpu_wdog_sih != NULL);
