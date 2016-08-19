@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.25 2013/04/19 17:43:05 christos Exp $	*/
+/*	$NetBSD: func.c,v 1.26 2016/08/19 10:58:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.25 2013/04/19 17:43:05 christos Exp $");
+__RCSID("$NetBSD: func.c,v 1.26 2016/08/19 10:58:15 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -538,7 +538,7 @@ if1(tnode_t *tn)
 		tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, 0, tn);
-	expr(tn, 0, 1, 1);
+	expr(tn, 0, 1, 0);
 	pushctrl(T_IF);
 }
 
