@@ -112,9 +112,7 @@
 #undef  SUBTARGET_EXTRA_SPECS
 #define SUBTARGET_EXTRA_SPECS					\
   { "cc1_secure_plt_default",	CC1_SECURE_PLT_DEFAULT_SPEC },	\
-  { "netbsd_link_spec",		NETBSD_LINK_SPEC_ELF },		\
-  { "netbsd_entry_point",	NETBSD_ENTRY_POINT },		\
-  { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
+  NETBSD_SUBTARGET_EXTRA_SPECS
 
 /*
  * Add NetBSD specific defaults: -mstrict-align
