@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.140 2016/08/06 20:08:00 martin Exp $
+# $NetBSD: shl.mi,v 1.141 2016/08/19 22:37:03 mrg Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.203.debug			comp-sys-debug	debug,dynamicroot
@@ -152,7 +152,7 @@
 ./usr/libdata/debug/usr/lib/libpam.so.4.0.debug			comp-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/libpanel.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpcap.so.5.1.debug		comp-net-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libpci.so.2.1.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libpci.so.2.2.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug		comp-perfuse-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile

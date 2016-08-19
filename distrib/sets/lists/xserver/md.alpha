@@ -1,7 +1,4 @@
-# $NetBSD: md.alpha,v 1.42 2016/08/19 19:12:03 mrg Exp $
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/XalphaNetBSD				-unknown-	x11
-./usr/X11R6/bin/XdecNetBSD				-unknown-	x11
+# $NetBSD: md.alpha,v 1.43 2016/08/19 22:37:04 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg

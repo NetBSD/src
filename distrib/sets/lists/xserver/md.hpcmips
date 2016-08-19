@@ -1,15 +1,10 @@
-# $NetBSD: md.hpcmips,v 1.26 2016/08/19 19:12:04 mrg Exp $
+# $NetBSD: md.hpcmips,v 1.27 2016/08/19 22:37:04 mrg Exp $
 ./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x240-us				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
 ./etc/X11/xorg.conf.640x480-us				-unknown	xorg
 ./etc/X11/xorg.conf.800x600-jp				-unknown	xorg
 ./etc/X11/xorg.conf.800x600-us				-unknown	xorg
-./usr/X11R6/bin/X					-unknown-	x11
-./usr/X11R6/bin/Xhpc					-unknown-	x11
-./usr/X11R6/man/cat1/Xhpc.0				-unknown-	.cat,x11
-./usr/X11R6/man/html1/Xhpc.html				-unknown-	html,x11
-./usr/X11R6/man/man1/Xhpc.1				-unknown-	.man,x11
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg

@@ -1,6 +1,4 @@
-# $NetBSD: md.amiga,v 1.6 2016/08/19 19:12:03 mrg Exp $
-./usr/libdata/debug/usr/X11R6/bin/Xamiga.debug		-unknown-	x11,debug
-./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	x11,debug
+# $NetBSD: md.amiga,v 1.7 2016/08/19 22:37:03 mrg Exp $
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	debug,xorg
