@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.182 2016/08/18 18:42:09 mrg Exp $
+#	 $NetBSD: mi,v 1.183 2016/08/19 20:51:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5611,7 +5611,6 @@
 ./usr/X11R7/include/X11/extensions/xtraplib.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xtraplibp.h		-unknown-	xorg
 ./usr/X11R7/include/X11/extensions/xtrapproto.h		-unknown-	xorg
-./usr/X11R7/include/X11/xshmfence.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FS.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FSlib.h			-unknown-	xorg
 ./usr/X11R7/include/X11/fonts/FSproto.h			-unknown-	xorg
@@ -5642,6 +5641,7 @@
 ./usr/X11R7/include/X11/xf86drmMode.h			-unknown-	obsolete
 ./usr/X11R7/include/X11/xf86mm.h			-obsolete-	obsolete
 ./usr/X11R7/include/X11/xpm.h				-unknown-	xorg
+./usr/X11R7/include/X11/xshmfence.h			-unknown-	xorg
 ./usr/X11R7/include/drm/drm.h				-unknown-	obsolete
 ./usr/X11R7/include/drm/drm_mode.h			-unknown-	obsolete
 ./usr/X11R7/include/drm/drm_sarea.h			-unknown-	obsolete
@@ -5657,14 +5657,14 @@
 ./usr/X11R7/include/drm/via_3d_reg.h			-unknown-	obsolete
 ./usr/X11R7/include/drm/via_drm.h			-unknown-	obsolete
 ./usr/X11R7/include/drm/xgi_drm.h			-unknown-	obsolete
+./usr/X11R7/include/epoxy/egl.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/egl_generated.h		-unknown-	xorg
+./usr/X11R7/include/epoxy/gl.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/gl_generated.h		-unknown-	xorg
+./usr/X11R7/include/epoxy/glx.h				-unknown-	xorg
+./usr/X11R7/include/epoxy/glx_generated.h		-unknown-	xorg
 ./usr/X11R7/include/expat.h				-unknown-	obsolete
 ./usr/X11R7/include/expat_external.h			-unknown-	obsolete
-./usr/X11R7/include/epoxy/egl.h				-unknown-	xorg
-./usr/X11R7/include/epoxy/gl_generated.h		-unknown-	xorg
-./usr/X11R7/include/epoxy/gl.h				-unknown-	xorg
-./usr/X11R7/include/epoxy/glx_generated.h		-unknown-	xorg
-./usr/X11R7/include/epoxy/glx.h				-unknown-	xorg
-./usr/X11R7/include/epoxy/egl_generated.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcfreetype.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fcprivate.h		-unknown-	xorg
 ./usr/X11R7/include/fontconfig/fontconfig.h		-unknown-	xorg
@@ -5690,9 +5690,9 @@
 ./usr/X11R7/include/freetype2/freetype/ftcffdrv.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftfntfmt.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftfntfmt.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftgasp.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftglyph.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftgxval.h	-unknown-	xorg
@@ -6288,10 +6288,10 @@
 ./usr/X11R7/lib/libdrm_p.a				-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libdrm_radeon_p.a			-unknown-	profile,xorg,compatx11file
-./usr/X11R7/lib/libexpat.a				-unknown-	obsolete,compatx11file
-./usr/X11R7/lib/libexpat_p.a				-unknown-	obsolete,compatx11file
 ./usr/X11R7/lib/libepoxy.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libepoxy_p.a				-unknown-	profile,xorg,compatx11file
+./usr/X11R7/lib/libexpat.a				-unknown-	obsolete,compatx11file
+./usr/X11R7/lib/libexpat_p.a				-unknown-	obsolete,compatx11file
 ./usr/X11R7/lib/libfontconfig.a				-unknown-	xorg,compatx11file
 ./usr/X11R7/lib/libfontconfig_p.a			-unknown-	profile,xorg,compatx11file
 ./usr/X11R7/lib/libfontenc.a				-unknown-	xorg,compatx11file
@@ -9365,6 +9365,7 @@
 ./usr/libdata/lint/llib-ldpstk.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-ldrm.ln				-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_radeon.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lepoxy.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfntstubs.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lfontconfig.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lfontconfig.ln			-unknown-	lint,xorg
@@ -9411,4 +9412,5 @@
 ./usr/libdata/lint/llib-lxkbfile.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxkbui.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lxkbui.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxshmfence.ln			-unknown-	lint,xorg
 ./var/db/obsolete/xcomp					xbase-sys-root	xorg
