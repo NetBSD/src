@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.46 2016/08/07 10:17:32 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.47 2016/08/19 19:04:57 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -108,13 +108,6 @@
  * decide the ipending case with less overhead, e.g., by avoiding loading the
  * segment registers.
  */
-
-/* XXX See comment in locore.s */
-#ifdef __ELF__
-#define	XINTR(name,num)		Xintr_ ## name ## num
-#else
-#define	XINTR(name,num)		_Xintr_ ## name ## num
-#endif
 
 #if NLAPIC > 0
 #ifdef MULTIPROCESSOR
