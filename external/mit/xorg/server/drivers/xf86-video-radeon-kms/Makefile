@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/19 03:59:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2016/08/19 16:33:23 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -29,12 +29,12 @@ SRCS.KMS=	radeon_dri2.c radeon_dri3.c radeon_drm_queue.c radeon_kms.c \
 		drmmode_display.c
 
 .if ${HAVE_XORG_GLAMOR} != "no"
-SRCS.GLAMOR=
-.else
 SRCS.GLAMOR=	radeon_glamor.c radeon_glamor_wrappers.c
 CPPFLAGS+= \
 		-DHAVE_GLAMOR_H \
 		-DUSE_GLAMOR
+.else
+SRCS.GLAMOR=
 .endif
 
 SRCS=		radeon_accel.c radeon_video.c \
