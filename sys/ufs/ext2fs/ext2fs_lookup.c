@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.86 2016/08/14 11:46:05 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.87 2016/08/19 00:05:43 jdolecek Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.86 2016/08/14 11:46:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.87 2016/08/19 00:05:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -839,10 +839,8 @@ ext2fs_dirbadentry(struct vnode *dp, struct ext2fs_direct *de,
 
 	if (reclen < EXT2FS_DIRSIZ(1)) /* e2d_namlen = 1 */
 		error_msg = "rec_len is smaller than minimal";
-#if 0
 	else if (reclen % 4 != 0)
 		error_msg = "rec_len % 4 != 0";
-#endif
 	else if (namlen > EXT2FS_MAXNAMLEN)
 		error_msg = "namlen > EXT2FS_MAXNAMLEN";
 	else if (reclen < EXT2FS_DIRSIZ(namlen))
@@ -880,9 +878,10 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	struct ext2fs_direct newdir;
 	struct iovec aiov;
 	struct uio auio;
-	int error, newentrysize;
+	int error;
 	struct ufsmount *ump = VFSTOUFS(dvp->v_mount);
 	int dirblksiz = ump->um_dirblksiz;
+	size_t newentrysize;
 
 	dp = VTOI(dvp);
 
@@ -895,11 +894,11 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 	}
 	memcpy(newdir.e2d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(cnp->cn_namelen);
-	
+
 	if (ext2fs_htree_has_idx(dp)) {
-		error = ext2fs_htree_add_entry(dvp, &newdir, cnp);
+		error = ext2fs_htree_add_entry(dvp, &newdir, cnp, newentrysize);
 		if (error) {
-			dp->i_e2fs_flags&= ~EXT2_INDEX;
+			dp->i_e2fs_flags &= ~EXT2_INDEX;
 			dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		}
 		return error;
@@ -942,7 +941,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
 		return error;
 	}
 
-	error = ext2fs_add_entry(dvp, &newdir, ulr);
+	error = ext2fs_add_entry(dvp, &newdir, ulr, newentrysize);
 	
 	if (!error && ulr->ulr_endoff && ulr->ulr_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC,
@@ -956,14 +955,14 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp,
  */
 
 int
-ext2fs_add_entry (struct vnode* dvp, struct ext2fs_direct *entry,
-    const struct ufs_lookup_results *ulr) 
+ext2fs_add_entry(struct vnode* dvp, struct ext2fs_direct *entry,
+    const struct ufs_lookup_results *ulr, size_t newentrysize) 
 {	
 	struct ext2fs_direct *ep, *nep;
 	struct inode *dp;
 	struct buf *bp;
 	u_int dsize;
-	int error, loc, newentrysize, spacefree;
+	int error, loc, spacefree;
 	char *dirbuf;
 
 	dp = VTOI(dvp);
@@ -990,7 +989,7 @@ ext2fs_add_entry (struct vnode* dvp, struct ext2fs_direct *entry,
 	 * space.
 	 */
 	ep = (struct ext2fs_direct *)dirbuf;
-	newentrysize = dsize = EXT2FS_DIRSIZ(ep->e2d_namlen);
+	dsize = EXT2FS_DIRSIZ(ep->e2d_namlen);
 	spacefree = fs2h16(ep->e2d_reclen) - dsize;
 	for (loc = fs2h16(ep->e2d_reclen); loc < ulr->ulr_count;) {
 		nep = (struct ext2fs_direct *)(dirbuf + loc);
