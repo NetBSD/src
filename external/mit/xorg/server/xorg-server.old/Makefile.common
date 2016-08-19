@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1.1.1 2016/06/10 03:42:13 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.2 2016/08/19 03:59:31 mrg Exp $
 
 # These define parts of the Xserver tree that are to be
 # conditionally compiled for different platforms.  See
@@ -7,9 +7,7 @@
 .include <bsd.own.mk>
 
 
-# XFree86 servers all need XFONT as well.
 .if ${MKXORG_SERVER} != "no"
-XSERVER_NEEDS_XFONT=	yes
 XSERVER_XFREE86=	yes
 .endif
 
@@ -58,9 +56,6 @@ XSERVER_XSUNMONO=	yes
 XSERVER_X68K=		yes
 .endif
 
-
-# Does this server need Xfont/fontbase libraries?
-XSERVER_NEEDS_XFONT?=	no
 
 # Does this platform build XFree86 X server?
 XSERVER_XFREE86?=	no
