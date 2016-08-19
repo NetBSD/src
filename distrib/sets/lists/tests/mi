@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.682 2016/08/18 14:47:02 christos Exp $
+# $NetBSD: mi,v 1.683 2016/08/19 10:22:42 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3835,6 +3835,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_struct_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init1.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_union_cast.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init2.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init3.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init4.c		tests-usr.bin-tests	compattestfile,atf
