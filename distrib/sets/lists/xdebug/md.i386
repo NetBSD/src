@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.24 2016/08/19 03:59:30 mrg Exp $
+# $NetBSD: md.i386,v 1.25 2016/08/19 19:12:03 mrg Exp $
 ./usr/X11R6/lib/modules/extensions/libGLcore_g.a	-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,x11
 ./usr/X11R6/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,x11
@@ -225,12 +225,12 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/xgi_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libglx.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-		xorg,debug
@@ -239,5 +239,5 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libshadowfb.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxf8_16bpp.so.0.debug	-unknown-	obsolete
