@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.82 2015/10/14 18:31:52 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.83 2016/08/19 10:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.82 2015/10/14 18:31:52 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.83 2016/08/19 10:19:45 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3143,7 +3143,28 @@ cast(tnode_t *tn, type_t *tp)
 		 * XXX ANSI C requires scalar types or void (Plauger&Brodie).
 		 * But this seams really questionable.
 		 */
-	} else if (nt == STRUCT || nt == UNION || nt == ARRAY || nt == FUNC) {
+	} else if (nt == UNION) {
+		char buf[256], buf1[256];
+		sym_t *m;
+		str_t *str = tp->t_str;
+		if (!Sflag) {
+			error(328);
+			return NULL;
+		}
+		for (m = str->memb; m != NULL; m = m->s_nxt) {
+			if (sametype(m->s_type, tn->tn_type)) {
+				tn = getnode();
+				tn->tn_op = CVT;
+				tn->tn_type = tp;
+				tn->tn_cast = 1;
+				tn->tn_right = NULL;
+				return tn;
+			}
+		}
+		error(329, tyname(buf, sizeof(buf), tn->tn_type),
+		    tyname(buf1, sizeof(buf1), tp));
+		return NULL;
+	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		/* invalid cast expression */
 		error(147);
 		return (NULL);

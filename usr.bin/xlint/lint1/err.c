@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.50 2016/08/18 14:42:48 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.51 2016/08/19 10:19:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.50 2016/08/18 14:42:48 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.51 2016/08/19 10:19:45 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -387,6 +387,8 @@ const	char *msgs[] = {
 	"variable declaration in for loop", 			      /* 325 */
 	"%s attribute ignored for %s",				      /* 326 */
 	"declarations after statements is a C9X feature",	      /* 327 */
+	"union cast is a C9X feature",				      /* 328 */
+	"type '%s' is not a member of '%s'",			      /* 329 */
 };
 
 /*
