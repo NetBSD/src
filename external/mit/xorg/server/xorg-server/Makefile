@@ -1,14 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2016/08/18 18:42:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2016/08/19 03:59:30 mrg Exp $
 
 .include <bsd.own.mk>
 
 .include "Makefile.common"
-
-.if ${XSERVER_NEEDS_XFONT} != "no"
-SUBDIR.xfont=Xfont fontbase
-.else
-SUBDIR.xfont=
-.endif
 
 SUBDIR=		doc include .WAIT
 SUBDIR+=	glx
@@ -23,7 +17,7 @@ SUBDIR+=	hw
 SUBDIR+=	dri3
 .endif
 
-.if ${XORG_XSERVER_GLAMOR} != "no"
+.if ${HAVE_XORG_GLAMOR} != "no"
 SUBDIR+=	glamor
 .endif
 
