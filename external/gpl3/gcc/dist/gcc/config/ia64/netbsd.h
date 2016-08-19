@@ -27,15 +27,6 @@ Boston, MA 02111-1307, USA.  */
   while (0)
 
 
-/* Extra specs needed for NetBSD/ia-64 ELF.  */
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS			\
-  { "netbsd_cpp_spec", NETBSD_CPP_SPEC },	\
-  { "netbsd_link_spec", NETBSD_LINK_SPEC_ELF },	\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
-
-
 /* Provide a LINK_SPEC appropriate for a NetBSD/ia64 ELF target.  */
 
 #undef LINK_SPEC
