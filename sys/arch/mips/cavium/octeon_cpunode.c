@@ -191,11 +191,11 @@ octeon_fixup_cpu_info_references(int32_t load_addr, uint32_t new_insns[2],
 	new_insns[1] |= (uint16_t)load_addr;
 #ifdef DEBUG_VERBOSE
 	printf("%s: %08x: insn#1 %08x: lui r%u, %d\n",
-	    __func__, (int32_t)load_addr, new_insns[0],
+	    __func__, load_addr, new_insns[0],
 	    (new_insns[0] >> 16) & 31,
 	    (int16_t)new_insns[0]);
 	printf("%s: %08x: insn#2 %08x: %c%c r%u, %d(r%u)\n",
-	    __func__, (int32_t)load_addr, new_insns[0],
+	    __func__, load_addr, new_insns[0],
 	    INSN_LOAD_P(new_insns[1]) ? 'l' : 's',
 	    INSN_LW_P(new_insns[1]) ? 'w' : 'd',
 	    (new_insns[0] >> 16) & 31,
