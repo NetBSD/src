@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.205 2016/08/13 08:08:11 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.206 2016/08/19 10:05:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
 #include <mips/cpuregs.h>
 #include <mips/trap.h>
 
-RCSID("$NetBSD: locore.S,v 1.205 2016/08/13 08:08:11 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.206 2016/08/19 10:05:35 skrll Exp $")
 
 #include "assym.h"
 
@@ -493,7 +493,7 @@ LEAF(lwp_oncpu)
 	jr	ra				# and return.
 	 nop
 END(lwp_oncpu)
-	
+
 
 /*
  * void savectx(struct pcb *)
@@ -821,7 +821,7 @@ END(mips_pagezero)
 
 
 #ifndef DDB_TRACE
-
+
 #if defined(DEBUG) || defined(DDB) || defined(KGDB) || defined(geo)
 /*
  * Stacktrace support hooks which use type punnign to access
