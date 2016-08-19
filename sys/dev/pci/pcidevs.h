@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1251 2016/08/17 07:55:36 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1252 2016/08/19 10:22:49 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1259 2016/08/17 07:55:12 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1260 2016/08/19 10:22:27 msaitoh Exp
  */
 
 /*
@@ -3038,6 +3038,13 @@
 #define	PCI_PRODUCT_INTEL_I218_V2	0x15a1		/* I218-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_LM3	0x15a2		/* I218-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I218_V3	0x15a3		/* I218-V Ethernet Connection */
+#define	PCI_PRODUCT_INTEL_X552_VF	0x15a8		/* X552 VF */
+#define	PCI_PRODUCT_INTEL_X552_VF_HV	0x15a9		/* X552 VF */
+#define	PCI_PRODUCT_INTEL_X552_KX4	0x15aa		/* X552 KX4 */
+#define	PCI_PRODUCT_INTEL_X552_KR	0x15ab		/* X552 KR */
+#define	PCI_PRODUCT_INTEL_X552_SFP	0x15ac		/* X552 SFP+ */
+#define	PCI_PRODUCT_INTEL_X557_AT2	0x15ad		/* X557-AT2 */
+#define	PCI_PRODUCT_INTEL_X552_1G_T	0x15ae		/* X552 1000Base-T */
 #define	PCI_PRODUCT_INTEL_I219_LM2	0x15b7		/* I219-LM Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_V2	0x15b8		/* I219-V Ethernet Connection */
 #define	PCI_PRODUCT_INTEL_I219_LM3	0x15b9		/* I219-LM Ethernet Connection */
@@ -3999,6 +4006,7 @@
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_1	0x6f02		/* Xeon-D PCIe Root Port (x8 or x4 max) */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_2	0x6f03		/* Xeon-D PCIe Root Port (x8 or x4 max) */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_3	0x6f04		/* Xeon-D PCIe Root Port */
+#define	PCI_PRODUCT_INTEL_XEOND_PCIE_5	0x6f06		/* Xeon-D PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_7	0x6f08		/* Xeon-D PCIe Root Port (x16, x8 or x4 max) */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_8	0x6f09		/* Xeon-D PCIe Root Port (x16, x8 or x4 max) */
 #define	PCI_PRODUCT_INTEL_XEOND_PCIE_9	0x6f0a		/* Xeon-D PCIe Root Port (x16, x8 or x4 max) */
@@ -4022,10 +4030,13 @@
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_0	0x6f1e		/* Xeon-D Ubox */
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_1	0x6f1f		/* Xeon-D Ubox */
 #define	PCI_PRODUCT_INTEL_XEOND_ADDRMAP	0x6f28		/* Xeon-D IIO Address Map, VTD_Misc, System Management */
+#define	PCI_PRODUCT_INTEL_XEOND_HOTPLUG	0x6f29		/* Xeon-D IIO Hot Plug */
 #define	PCI_PRODUCT_INTEL_XEOND_RAS	0x6f2a		/* Xeon-D IIO RAS, Control Status, Global Errors */
 #define	PCI_PRODUCT_INTEL_XEOND_IOAPIC_2	0x6f2c		/* Xeon-D I/O APIC */
 #define	PCI_PRODUCT_INTEL_XEOND_HA0_0	0x6f30		/* Xeon-D Home Agent 0 */
 #define	PCI_PRODUCT_INTEL_XEOND_R2_1	0x6f34		/* Xeon-D R2 PCIe Agent */
+#define	PCI_PRODUCT_INTEL_XEOND_QPI_0	0x6f36		/* Xeon-D QPI */
+#define	PCI_PRODUCT_INTEL_XEOND_QPI_1	0x6f37		/* Xeon-D QPI */
 #define	PCI_PRODUCT_INTEL_XEOND_IO_PMON	0x6f39		/* Xeon-D IO Pmon */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_1	0x6f50		/* Xeon-D QuickData DMA Channel 0 */
 #define	PCI_PRODUCT_INTEL_XEOND_QD_2	0x6f51		/* Xeon-D QuickData DMA Channel 1 */
@@ -4033,7 +4044,9 @@
 #define	PCI_PRODUCT_INTEL_XEOND_QD_4	0x6f53		/* Xeon-D QuickData DMA Channel 3 */
 #define	PCI_PRODUCT_INTEL_XEOND_HA0_DEBUG	0x6f70		/* Xeon-D Home Agent 0 Debug */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_0_TTR_0	0x6f71		/* Xeon-D Memory Controller (Target Address, Thermal, RAS) */
+#define	PCI_PRODUCT_INTEL_XEOND_QPI_2	0x6f76		/* Xeon-D QPI */
 #define	PCI_PRODUCT_INTEL_XEOND_UBOX_2	0x6f7d		/* Xeon-D Ubox */
+#define	PCI_PRODUCT_INTEL_XEOND_QPI_3	0x6f81		/* Xeon-D QPI */
 #define	PCI_PRODUCT_INTEL_XEOND_PCU_0	0x6f88		/* Xeon-D PCU */
 #define	PCI_PRODUCT_INTEL_XEOND_PCU_1	0x6f8a		/* Xeon-D PCU */
 #define	PCI_PRODUCT_INTEL_XEOND_PCU_2	0x6f98		/* Xeon-D PCU */
@@ -4052,6 +4065,10 @@
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_0_TH_1	0x6fb1		/* Xeon-D Memory Controller (Thermal) */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_0_ERR_0	0x6fb2		/* Xeon-D Memory Controller (Error) */
 #define	PCI_PRODUCT_INTEL_XEOND_MEM_0_ERR_1	0x6fb3		/* Xeon-D Memory Controller (Error) */
+#define	PCI_PRODUCT_INTEL_XEOND_MEM_0_UNK_0	0x6fb4		/* Xeon-D Memory Controller */
+#define	PCI_PRODUCT_INTEL_XEOND_MEM_0_UNK_1	0x6fb5		/* Xeon-D Memory Controller */
+#define	PCI_PRODUCT_INTEL_XEOND_MEM_0_UNK_2	0x6fb6		/* Xeon-D Memory Controller */
+#define	PCI_PRODUCT_INTEL_XEOND_MEM_0_UNK_3	0x6fb7		/* Xeon-D Memory Controller */
 #define	PCI_PRODUCT_INTEL_XEOND_DDR_CH_IF_0	0x6fbc		/* Xeon-D DDR Channel 0/1 Interface */
 #define	PCI_PRODUCT_INTEL_XEOND_DDR_CH_IF_1	0x6fbd		/* Xeon-D DDR Channel 0/1 Interface */
 #define	PCI_PRODUCT_INTEL_XEOND_DDR_CH_IF_2	0x6fbe		/* Xeon-D DDR Channel 0/1 Interface */
@@ -4065,6 +4082,7 @@
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_UNI_5	0x6fe5		/* Xeon-D Caching Agent (Cbo Unicast) */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_UNI_6	0x6fe6		/* Xeon-D Caching Agent (Cbo Unicast) */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_UNI_7	0x6fe7		/* Xeon-D Caching Agent (Cbo Unicast) */
+#define	PCI_PRODUCT_INTEL_XEOND_CACHE_UNK_0	0x6ff8		/* Xeon-D Caching Agent */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_BRO_0	0x6ffc		/* Xeon-D Caching Agent (Cbo Broadcast) */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_BRO_1	0x6ffd		/* Xeon-D Caching Agent (Cbo Broadcast) */
 #define	PCI_PRODUCT_INTEL_XEOND_CACHE_BRO_2	0x6ffe		/* Xeon-D Caching Agent (Cbo Broadcast) */
