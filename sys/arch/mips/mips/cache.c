@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.52 2016/07/11 23:06:54 matt Exp $	*/
+/*	$NetBSD: cache.c,v 1.53 2016/08/19 10:05:35 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.52 2016/07/11 23:06:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.53 2016/08/19 10:05:35 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -191,7 +191,7 @@ mips_config_cache(void)
 	struct mips_cache_ops * const mco = &mips_cache_ops;
 #endif
 	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
-	
+
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_prehistoric();
@@ -1008,7 +1008,7 @@ mips3_get_cache_config(int csizebase)
 		break;
 	}
 
-	/* 
+	/*
  	 * If CPU has a software-enabled L2 cache, check both if it's
 	 * present and if it's enabled before making assumptions the
 	 * L2 is usable.  If the L2 is disabled, we treat it the same
@@ -1017,7 +1017,7 @@ mips3_get_cache_config(int csizebase)
 	if ((config & MIPS3_CONFIG_SC) == 0) {
 		if (has_sdcache_enable == 0 ||
 		    (has_sdcache_enable && (config & MIPS3_CONFIG_SE))) {
-			mci->mci_sdcache_line_size = 
+			mci->mci_sdcache_line_size =
 				MIPS3_CONFIG_CACHE_L2_LSIZE(config);
 			if ((config & MIPS3_CONFIG_SS) == 0)
 				mci->mci_scache_unified = true;
@@ -1382,12 +1382,12 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 	}
 
-        /*      
+        /*
          * calculate the alias masks and from them set to virtual alias flags.
-         */             
+         */
 	mci->mci_cache_alias_mask = mci->mci_pdcache_way_mask & -PAGE_SIZE;
 	mci->mci_cache_virtual_alias = (mci->mci_cache_alias_mask != 0);
-                        
+
 	mci->mci_icache_alias_mask = mci->mci_picache_way_mask & -PAGE_SIZE;
 	mci->mci_icache_virtual_alias = (mci->mci_icache_alias_mask != 0);
 
@@ -1410,7 +1410,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 	} else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MTI) {
 		/*
-		 * All MTI cores share a (mostly) common config7 defintion. 
+		 * All MTI cores share a (mostly) common config7 defintion.
 		 * Use it to determine if the caches have virtual aliases.
 		 * If the core doesn't have a config7 register, its caches
 		 * are too small or have too many ways to have aliases.
