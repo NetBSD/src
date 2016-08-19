@@ -53,11 +53,6 @@ along with GCC; see the file COPYING3.  If not see
       } \
   }
 
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS \
-  { "netbsd_cpp_spec",      NETBSD_CPP_SPEC }, \
-  { "netbsd_entry_point",   NETBSD_ENTRY_POINT },
-
 
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
    deal with the GCC option '-posix', as well as an indication as to
