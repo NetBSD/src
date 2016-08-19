@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.218 2016/07/27 12:08:46 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.219 2016/08/19 18:04:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.218 2016/07/27 12:08:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.219 2016/08/19 18:04:39 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1757,14 +1757,12 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
  * pmap_enter_pv: enter a mapping onto a pv_head lst
  *
  * => caller should adjust ptp's wire_count before calling
+ * => caller has preallocated pve and *sparepve for us
  */
 
 static struct pv_entry *
-pmap_enter_pv(struct pmap_page *pp,
-	      struct pv_entry *pve,	/* preallocated pve for us to use */
-	      struct pv_entry **sparepve,
-	      struct vm_page *ptp,
-	      vaddr_t va)
+pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
+    struct pv_entry **sparepve, struct vm_page *ptp, vaddr_t va)
 {
 
 	KASSERT(ptp == NULL || ptp->wire_count >= 2);
@@ -3989,7 +3987,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	struct pmap_page *new_pp, *old_pp;
 	struct pv_entry *old_pve = NULL;
 	struct pv_entry *new_pve;
-	struct pv_entry *new_pve2;
+	struct pv_entry *new_sparepve;
 	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
@@ -4046,8 +4044,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 	/* get pves. */
 	new_pve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	new_pve2 = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	if (new_pve == NULL || new_pve2 == NULL) {
+	new_sparepve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
+	if (new_pve == NULL || new_sparepve == NULL) {
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
 			goto out2;
@@ -4153,7 +4151,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 
 	if (new_pp) {
-		new_pve = pmap_enter_pv(new_pp, new_pve, &new_pve2, ptp, va);
+		new_pve = pmap_enter_pv(new_pp, new_pve, &new_sparepve, ptp, va);
 	}
 
 same_pa:
@@ -4178,8 +4176,8 @@ out2:
 	if (new_pve != NULL) {
 		pool_cache_put(&pmap_pv_cache, new_pve);
 	}
-	if (new_pve2 != NULL) {
-		pool_cache_put(&pmap_pv_cache, new_pve2);
+	if (new_sparepve != NULL) {
+		pool_cache_put(&pmap_pv_cache, new_sparepve);
 	}
 
 	return error;
