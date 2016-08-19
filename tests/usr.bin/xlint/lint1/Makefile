@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2016/08/18 14:45:56 christos Exp $
+# $NetBSD: Makefile,v 1.13 2016/08/19 10:21:50 christos Exp $
 
 NOMAN=		# defined
 
@@ -24,6 +24,7 @@ FILES+=		d_c99_func.c
 FILES+=		d_c99_recursive_init.c
 FILES+=		d_c99_struct_init.c
 FILES+=		d_c99_nested_struct.c
+FILES+=		d_c99_union_cast.c
 FILES+=		d_c99_union_init1.c
 FILES+=		d_c99_union_init2.c
 FILES+=		d_c99_union_init3.c
