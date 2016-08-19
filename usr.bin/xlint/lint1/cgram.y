@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.79 2016/07/31 22:38:04 dholland Exp $ */
+/* $NetBSD: cgram.y,v 1.80 2016/08/19 10:58:15 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.79 2016/07/31 22:38:04 dholland Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.80 2016/08/19 10:58:15 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1458,7 +1458,7 @@ stmnt_list:
 
 expr_stmnt:
 	  expr T_SEMI {
-		expr($1, 0, 0, 1);
+		expr($1, 0, 0, 0);
 		ftflg = 0;
 	  }
 	| T_SEMI {
