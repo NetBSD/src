@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.6 2016/08/14 11:42:50 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.7 2016/08/19 00:05:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.6 2016/08/14 11:42:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.7 2016/08/19 00:05:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,7 +480,7 @@ out1:
  */
 int
 ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
-    struct componentname *cnp)
+    struct componentname *cnp, size_t newentrysize)
 {
 	struct ext2fs_htree_entry *entries, *leaf_node;
 	struct ext2fs_htree_lookup_info info;
@@ -507,7 +507,8 @@ ext2fs_htree_add_entry(struct vnode *dvp, struct ext2fs_direct *entry,
 	blksize = m_fs->e2fs_bsize;
 
 	if (ip->i_crap.ulr_count != 0) 
-		return ext2fs_add_entry(dvp, entry, &(ip->i_crap));
+		return ext2fs_add_entry(dvp, entry, &(ip->i_crap), newentrysize);
+
 	/* Target directory block is full, split it */
 	memset(&info, 0, sizeof(info));
 	error = ext2fs_htree_find_leaf(ip, entry->e2d_name, entry->e2d_namlen,
