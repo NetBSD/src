@@ -1,29 +1,23 @@
-#	$NetBSD: Makefile,v 1.4 2016/08/17 00:10:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/08/19 03:59:30 mrg Exp $
 
 .include <bsd.own.mk>
 
 DRIVER=		xf86-video-ati-kms
 DRIVER_NAME=	radeon_drv
 
-.PATH:  ${X11SRCDIR.${DRIVER}}/src/AtomBios
-SRCS.ATOMBIOS= \
-        CD_Operations.c \
-        Decoder.c \
-        hwserv_drv.c
-
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon
-.endif
 
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 CPPFLAGS+=	-DUSE_XAA
 .else
-CPPFLAGS+=	-DHAS_DIRTYTRACKING2 \
+CPPFLAGS+= \
+		-DHAS_DIRTYTRACKING2 \
 		-DHAVE_XORG_LIST \
 		-DHAVE_XF86_CURSOR_RESET_CURSOR \
 		-DHAVE_DRI3_H \
 		-DHAVE_MISYNCSHM_H \
-		-DHAVE_PRESENT_H
+		-DHAVE_PRESENT_H \
+		-DHAVE_XF86_CURSOR_RESET_CURSOR
 .endif
 
 SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
@@ -33,14 +27,22 @@ SRCS.EXA=	radeon_exa.c r600_exa.c r6xx_accel.c \
 SRCS.KMS=	radeon_dri2.c radeon_dri3.c radeon_drm_queue.c radeon_kms.c \
 		radeon_present.c radeon_sync.c radeon_vbo.c radeon_bo_helper.c \
 		drmmode_display.c
-# XXX not yet
+
+.if ${HAVE_XORG_GLAMOR} != "no"
+SRCS.GLAMOR=
+.else
 SRCS.GLAMOR=	radeon_glamor.c radeon_glamor_wrappers.c
+CPPFLAGS+= \
+		-DHAVE_GLAMOR_H \
+		-DUSE_GLAMOR
+.endif
 
 SRCS=		radeon_accel.c radeon_video.c \
 		radeon_misc.c radeon_probe.c \
 		radeon_textured_video.c radeon_xvmc.c \
 		$(SRCS.EXA) \
-		$(SRCS.KMS)
+		$(SRCS.KMS) \
+		$(SRCS.GLAMOR)
 
 MAN=		radeon.4
 MANSUBDIR=	/x86

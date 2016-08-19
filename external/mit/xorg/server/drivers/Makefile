@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.77 2016/08/16 19:45:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.78 2016/08/19 03:59:30 mrg Exp $
 
 # xf86-input drivers
 
@@ -69,8 +69,12 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-tseng \
 	xf86-video-xgi
-
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+
+.if ${XORG_SERVER_SUBDIR} == "xorg-server"
+SUBDIR+= \
+	xf86-video-amdgpu
+.endif  # ${XORG_SERVER_SUBDIR} == "xorg-server"
 
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+= \
