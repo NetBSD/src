@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.63 2016/08/18 14:43:31 christos Exp $ */
+/* $NetBSD: decl.c,v 1.64 2016/08/19 11:51:27 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.63 2016/08/18 14:43:31 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.64 2016/08/19 11:51:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1789,10 +1789,9 @@ compltag(type_t *tp, sym_t *fmem)
 				n++;
 		}
 
-		if (n == 0) {
+		if (n == 0 && sp->size != 0) {
 			/* %s has no named members */
-			warning(65,
-				t == STRUCT ? "structure" : "union");
+			warning(65, t == STRUCT ? "structure" : "union");
 		}
 	} else {
 		tp->t_enum->elem = fmem;
