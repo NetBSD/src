@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.2 2016/07/29 15:43:02 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.3 2016/08/19 10:05:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.2 2016/07/29 15:43:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.3 2016/08/19 10:05:35 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -163,7 +163,7 @@ CTASSERT(VM_MIN_KERNEL_ADDRESS % NBSEG == 0);
 PMAP_COUNTER(zeroed_pages, "pages zeroed");
 PMAP_COUNTER(copied_pages, "pages copied");
 extern struct evcnt pmap_evcnt_page_cache_evictions;
- 
+
 static register_t
 pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
     pt_entry_t *old_pte_p)
@@ -420,7 +420,7 @@ pmap_bootstrap(void)
 
 	vaddr_t va = VM_MIN_KERNEL_ADDRESS;
 #ifdef _LP64
-	/* 
+	/*
 	 * Do we need more than one XSEG's worth virtual address space?
 	 * If so, we have to allocate the additional pmap_segtab_t's for them
 	 * and insert them into the kernel's top level segtab.
@@ -830,13 +830,13 @@ pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 	} else {
 		xpte &= ~(MIPS1_PG_WIRED|MIPS1_PG_RO);
 	}
-    
+
         KASSERTMSG(pte == xpte,
             "pmap=%p va=%#"PRIxVADDR" asid=%u: TLB pte (%#"PRIxPTE
 	    ") != real pte (%#"PRIxPTE"/%#"PRIxPTE") @ %p",
             pm, va, asid, pte_value(pte), pte_value(xpte), pte_value(opte),
 	    ptep);
-  
+
         return true;
 }
 
