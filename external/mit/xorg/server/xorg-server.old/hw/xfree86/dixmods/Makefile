@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/19 22:33:34 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -20,6 +20,8 @@ CPPFLAGS+= \
 	${X11FLAGS.EXTENSION} \
 	-DHAVE_DIX_CONFIG_H \
 	-DXFree86LOADER
+CPPFLAGS+= \
+	-I${X11SRCDIR.xorg-server}/../include ${X11FLAGS.DIX}
 
 SUBDIR = \
 	dbe \
