@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xext,v 1.1.1.1 2016/06/10 03:42:13 mrg Exp $
+#	$NetBSD: Makefile.Xext,v 1.2 2016/08/19 22:33:34 mrg Exp $
 
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 
@@ -12,7 +12,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/xfixes
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/miext/sync
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/composite
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/damageext
-CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/../include ${X11FLAGS.DIX}
 
 COPTS.panoramiX.c+=		-Wno-error
 COPTS.panoramiXprocs.c+=	-Wno-error

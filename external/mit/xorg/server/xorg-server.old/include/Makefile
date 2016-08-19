@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2016/06/10 03:42:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/19 22:33:34 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,7 @@ INCS=	BT.h IBM.h TI.h XIstubs.h Xprintf.h \
 	xkbstr.h xkbrules.h xserver-properties.h \
 	dixaccess.h privates.h ptrveloc.h registry.h xkbfile.h \
 	xf86xvmc.h xf86xvpriv.h xisb.h xorg-server.h xorgVersion.h xvdix.h \
-	xvmcext.h hotplug.h xkbsrv.h dix-config.h dri2.h rrtransform.h \
+	xvmcext.h hotplug.h xkbsrv.h dri2.h rrtransform.h \
 	xsha1.h version-config.h
 
 .include <bsd.x11.mk>
