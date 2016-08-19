@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78 2016/08/19 03:59:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.79 2016/08/19 19:10:54 mrg Exp $
 
 # xf86-input drivers
 
@@ -278,17 +278,20 @@ SUBDIR+= \
 .if ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64"
 SUBDIR+= \
-	xf86-video-ag10e \
 	xf86-video-ati \
-	xf86-video-glint \
 	xf86-video-mach64 \
-	xf86-video-mga \
 	xf86-video-r128 \
 	xf86-video-radeon \
 	xf86-video-suncg6 \
-	xf86-video-sunffb \
-	xf86-video-sunleo \
 	xf86-video-wsfb
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+SUBDIR+= \
+	xf86-video-ag10e \
+	xf86-video-glint \
+	xf86-video-mga \
+	xf86-video-sunffb \
+	xf86-video-sunleo
+.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .if ${MACHINE} == "sparc"
 SUBDIR+= \
 	xf86-video-pnozz \
