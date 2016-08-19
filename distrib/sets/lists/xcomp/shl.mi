@@ -1,52 +1,7 @@
-#	$NetBSD: shl.mi,v 1.45 2016/08/18 08:11:22 mrg Exp $
+#	$NetBSD: shl.mi,v 1.46 2016/08/19 22:37:03 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./usr/X11R6/lib/libFS_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libGLU_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libGL_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libGLw_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libICE_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libOSMesa_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libSM_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libX11_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXRes_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXTrap_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXau_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXaw_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXcursor_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXdmcp_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXext_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXfont_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXfontcache_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXft_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXi_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXinerama_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXmu_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXmuu_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXp_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXpm_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXrandr_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXrender_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXss_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXt_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXtst_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXvMC_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXv_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libXxf86dga_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXxf86misc_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libXxf86vm_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libdmx_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libdps_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libdpstk_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libexpat_pic.a				-obsolete-	obsolete
-./usr/X11R6/lib/libfontconfig_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libfontenc_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libfreetype_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/liboldX_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libpsres_pic.a				-unknown-	x11,picinstall
-./usr/X11R6/lib/libxkbfile_pic.a			-unknown-	x11,picinstall
-./usr/X11R6/lib/libxkbui_pic.a				-unknown-	x11,picinstall
 ./usr/X11R7/lib/libFS_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGLU_pic.a				-unknown-	xorg,picinstall,compatx11file
 ./usr/X11R7/lib/libGL_pic.a				-unknown-	xorg,picinstall,compatx11file
