@@ -20,13 +20,6 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Run-time Target Specification.  */
 
-/* Extra specs needed for NetBSD SuperH ELF targets.  */
-
-#undef SUBTARGET_EXTRA_SPECS
-#define SUBTARGET_EXTRA_SPECS						\
-  { "netbsd_entry_point", NETBSD_ENTRY_POINT },
-
-
 #define TARGET_OS_CPP_BUILTINS()					\
   do									\
     {									\
