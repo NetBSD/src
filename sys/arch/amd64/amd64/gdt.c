@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.27 2016/08/20 16:05:48 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.27 2016/08/20 16:05:48 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -64,9 +64,9 @@ int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 void gdt_init(void);
-void gdt_grow(void);
-int gdt_get_slot(void);
-void gdt_put_slot(int);
+static void gdt_grow(void);
+static int gdt_get_slot(void);
+static void gdt_put_slot(int);
 
 void
 update_descriptor(void *tp, void *ep)
@@ -88,8 +88,7 @@ update_descriptor(void *tp, void *ep)
 }
 
 void
-set_sys_gdt(int slot, void *base, size_t limit,
-	    int type, int dpl, int gran)
+set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 {
 	union {
 		struct sys_segment_descriptor sd;
@@ -208,11 +207,10 @@ gdt_reload_cpu(struct cpu_info *ci)
 }
 #endif
 
-
 /*
  * Grow or shrink the GDT.
  */
-void
+static void
 gdt_grow(void)
 {
 	size_t old_len, new_len;
@@ -223,7 +221,7 @@ gdt_grow(void)
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
+	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
 	for (va = (vaddr_t)gdtstore + old_len; va < (vaddr_t)gdtstore + new_len;
 	    va += PAGE_SIZE) {
@@ -245,7 +243,7 @@ gdt_grow(void)
  * 3) As a last resort, we increase the size of the GDT, and sweep through
  *    the new slots.
  */
-int
+static int
 gdt_get_slot(void)
 {
 	int slot;
@@ -280,7 +278,7 @@ gdt_get_slot(void)
 /*
  * Deallocate a GDT slot, putting it on the free list.
  */
-void
+static void
 gdt_put_slot(int slot)
 {
 	struct sys_segment_descriptor *gdt;
