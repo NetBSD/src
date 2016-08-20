@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.118 2014/05/30 08:47:45 hannken Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.119 2016/08/20 12:37:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.118 2014/05/30 08:47:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.119 2016/08/20 12:37:09 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -226,8 +226,6 @@ nfs_reclaim(void *v)
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("nfs_reclaim: pushing active", vp);
-
-	vcache_remove(vp->v_mount, np->n_fhp, np->n_fhsize);
 
 	/*
 	 * Free up any directory cookie structures and
