@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.54 2016/08/20 12:31:37 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.55 2016/08/20 12:33:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.54 2016/08/20 12:31:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.55 2016/08/20 12:33:57 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1495,6 +1495,10 @@ static void
 vcache_reclaim(vnode_t *vp)
 {
 	lwp_t *l = curlwp;
+	struct vcache_node *node = VP_TO_VN(vp);
+	uint32_t hash;
+	uint8_t temp_buf[64], *temp_key;
+	size_t temp_key_len;
 	bool recycle, active;
 	int error;
 
@@ -1504,6 +1508,7 @@ vcache_reclaim(vnode_t *vp)
 	KASSERT(vp->v_usecount != 0);
 
 	active = (vp->v_usecount > 1);
+	temp_key_len = node->vn_key.vk_key_len;
 	/*
 	 * Prevent the vnode from being recycled or brought into use
 	 * while we clean it out.
@@ -1515,6 +1520,17 @@ vcache_reclaim(vnode_t *vp)
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 	mutex_exit(vp->v_interlock);
+
+	/* Replace the vnode key with a temporary copy. */
+	if (node->vn_key.vk_key_len > sizeof(temp_buf)) {
+		temp_key = kmem_alloc(temp_key_len, KM_SLEEP);
+	} else {
+		temp_key = temp_buf;
+	}
+	mutex_enter(&vcache.lock);
+	memcpy(temp_key, node->vn_key.vk_key, temp_key_len);
+	node->vn_key.vk_key = temp_key;
+	mutex_exit(&vcache.lock);
 
 	/*
 	 * Clean out any cached data associated with the vnode.
@@ -1564,6 +1580,16 @@ vcache_reclaim(vnode_t *vp)
 	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
 	vfs_insmntque(vp, dead_rootmount);
 
+	/* Remove from vnode cache. */
+	hash = vcache_hash(&node->vn_key);
+	mutex_enter(&vcache.lock);
+	KASSERT(node == vcache_hash_lookup(&node->vn_key, hash));
+	SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
+	    node, vcache_node, vn_hash);
+	mutex_exit(&vcache.lock);
+	if (temp_key != temp_buf)
+		kmem_free(temp_key, temp_key_len);
+
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
@@ -1581,6 +1607,7 @@ vcache_reclaim(vnode_t *vp)
 void
 vcache_remove(struct mount *mp, const void *key, size_t key_len)
 {
+#ifdef DIAGNOSTIC
 	uint32_t hash;
 	struct vcache_key vcache_key;
 	struct vcache_node *node;
@@ -1593,9 +1620,8 @@ vcache_remove(struct mount *mp, const void *key, size_t key_len)
 	mutex_enter(&vcache.lock);
 	node = vcache_hash_lookup(&vcache_key, hash);
 	KASSERT(node != NULL);
-	SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
-	    node, vcache_node, vn_hash);
 	mutex_exit(&vcache.lock);
+#endif
 }
 
 /*
