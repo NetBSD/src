@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2016/08/20 06:51:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.86 2016/08/20 23:56:20 mrg Exp $
 
 # xf86-input drivers
 
@@ -28,6 +28,7 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ast \
 	xf86-video-ati \
+	xf86-video-chips \
 	xf86-video-cirrus \
 	xf86-video-cirrus_alpine \
 	xf86-video-cirrus_laguna \
@@ -65,7 +66,6 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
-	xf86-video-chips \
 	xf86-video-glint \
 	xf86-video-intel-old \
 	xf86-video-xgi
@@ -210,6 +210,7 @@ SUBDIR+= \
 .if ${MACHINE} == "macppc"
 SUBDIR+= \
 	xf86-video-ati \
+	xf86-video-chips \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -218,10 +219,6 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 #	xf86-video-imstt
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SUBDIR+= \
-	xf86-video-chips
-.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "macppc"
 
 .if ${MACHINE} == "netwinder"
@@ -238,6 +235,7 @@ SUBDIR+= \
 .if ${MACHINE} == "ofppc"
 SUBDIR+= \
 	xf86-video-ati \
+	xf86-video-chips \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -245,10 +243,6 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SUBDIR+= \
-	xf86-video-chips
-.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "ofppc"
 
 .if ${MACHINE} == "prep"
@@ -272,11 +266,11 @@ SUBDIR+= \
 
 .if ${MACHINE} == "shark"
 SUBDIR+= \
+	xf86-video-chips \
         xf86-video-wsfb
 # needs porting for xorg-server 1.18
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
-	xf86-video-chips \
         xf86-video-igs
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "shark"
