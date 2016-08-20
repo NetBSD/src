@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.1 2016/08/19 19:02:07 palle Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.2 2016/08/20 18:21:18 nakayama Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -542,7 +542,7 @@ vdsk_rx_intr(void *arg)
 	if (rx_head == rx_tail)
 		return (0);
 
-	lp = (struct ldc_pkt *)(lc->lc_rxq->lq_va + rx_head);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_rxq->lq_va + rx_head);
 	switch (lp->type) {
 		case LDC_CTRL:
 			ldc_rx_ctrl(lc, lp);
