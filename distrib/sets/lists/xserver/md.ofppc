@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.24 2016/08/20 03:26:56 mrg Exp $
+# $NetBSD: md.ofppc,v 1.25 2016/08/20 23:56:19 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -25,8 +25,8 @@
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so		-unknown-	xorg
@@ -115,7 +115,7 @@
 ./usr/X11R7/man/cat1/cvt.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg,xorg_server_ver=110
+./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
@@ -131,7 +131,7 @@
 ./usr/X11R7/man/html1/cvt.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/gtf.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg,xorg_server_ver=110
+./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
@@ -147,7 +147,7 @@
 ./usr/X11R7/man/man1/cvt.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
