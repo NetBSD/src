@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.200 2016/08/20 19:47:44 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.201 2016/08/20 20:05:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.200 2016/08/20 19:47:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.201 2016/08/20 20:05:28 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -493,22 +493,19 @@ fail:
 }
 
 /*
- *
+ * Sanity check the disk vnode content, and copy it over to inode structure.
  */
 static int
 ext2fs_loadvnode_content(struct m_ext2fs *fs, ino_t ino, struct buf *bp, struct inode *ip)
 {
 	struct ext2fs_dinode *din;
-	void *cp;
 	int error = 0;
 
-	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE(fs));
-	din = kmem_alloc(EXT2_DINODE_SIZE(fs), KM_SLEEP);
-	e2fs_iload((struct ext2fs_dinode *)cp, din, EXT2_DINODE_SIZE(fs));
+	din = (struct ext2fs_dinode *)((char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE(fs)));
 
-	/* sanity checks */
+	/* sanity checks - inode data NOT byteswapped at this point */
 	if (EXT2_DINODE_FITS(din, e2di_extra_isize, EXT2_DINODE_SIZE(fs))
-	    && (EXT2_DINODE_SIZE(fs) - EXT2_REV0_DINODE_SIZE) < din->e2di_extra_isize)
+	    && (EXT2_DINODE_SIZE(fs) - EXT2_REV0_DINODE_SIZE) < fs2h16(din->e2di_extra_isize))
 	{
 		printf("ext2fs: inode %"PRIu64" bad extra_isize %u",
 			ino, din->e2di_extra_isize);
@@ -516,16 +513,15 @@ ext2fs_loadvnode_content(struct m_ext2fs *fs, ino_t ino, struct buf *bp, struct 
 		goto bad;
 	}
 
-	/* replace old dinode; assumes new dinode size is same as old one */
-	if (ip->i_din.e2fs_din)
-		kmem_free(ip->i_din.e2fs_din, EXT2_DINODE_SIZE(fs));
-	ip->i_din.e2fs_din = din;
+	/* everything allright, proceed with copy */
+	if (ip->i_din.e2fs_din == NULL)
+		ip->i_din.e2fs_din = kmem_alloc(EXT2_DINODE_SIZE(fs), KM_SLEEP);
+
+	e2fs_iload(din, ip->i_din.e2fs_din, EXT2_DINODE_SIZE(fs));
 
 	ext2fs_set_inode_guid(ip);
-	return error;
 
     bad:
-	kmem_free(din, EXT2_DINODE_SIZE(fs));
 	return error;
 }
 
