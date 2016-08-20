@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/14 03:43:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2016/08/20 01:03:34 mrg Exp $
 
 LIBISPRIVATE=	yes
 LIB=		Xext
@@ -28,24 +28,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/xfixes
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/miext/sync
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/composite
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/damageext
-CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
-
-.if 0
-COPTS.panoramiX.c+=		-Wno-error
-COPTS.panoramiXprocs.c+=	-Wno-error
-COPTS.saver.c+=			-Wno-error
-COPTS.security.c+=		-Wno-error
-COPTS.shape.c+=			-Wno-error
-COPTS.shm.c+=			-Wno-error
-COPTS.sync.c+=			-Wno-error
-COPTS.xf86bigfont.c+=		-Wno-error
-COPTS.xres.c=			-Wno-error
-COPTS.xvdisp.c+=		-Wno-error
-COPTS.xvmain.c+=		-Wno-error
-COPTS.xvmc.c+=			-Wno-error
-COPTS.bigreq.c+=		-Wno-error	# XXX bigreqstr.h
-COPTS.xcmisc.c+=		-Wno-error	# XXX xcmiscstr.h
-.endif
+#CPPFLAGS+=	-DHAVE_DIX_CONFIG_H
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/../include ${X11FLAGS.DIX}
 
 .PATH:		${X11SRCDIR.xorg-server}/Xext
 
