@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.95 2016/08/20 05:02:58 mrg Exp $
+# $NetBSD: md.amd64,v 1.96 2016/08/20 23:56:19 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -61,8 +61,8 @@
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	-obsolete-	obsolete
@@ -278,7 +278,7 @@
 ./usr/X11R7/man/cat4/amdgpu.0				-unknown-	.cat,xorg,xorg_server_ver=118
 ./usr/X11R7/man/cat4/apm.0				-unknown-	.cat,xorg,xorg_server_ver=110
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg,xorg_server_ver=110
+./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
@@ -327,7 +327,7 @@
 ./usr/X11R7/man/html4/amdgpu.html			-unknown-	html,xorg,xorg_server_ver=118
 ./usr/X11R7/man/html4/apm.html				-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg,xorg_server_ver=110
+./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
@@ -376,7 +376,7 @@
 ./usr/X11R7/man/man4/amdgpu.4				-unknown-	.man,xorg,xorg_server_ver=118
 ./usr/X11R7/man/man4/apm.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg

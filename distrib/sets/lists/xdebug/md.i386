@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.29 2016/08/20 05:02:58 mrg Exp $
+# $NetBSD: md.i386,v 1.30 2016/08/20 23:56:19 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg
@@ -89,7 +89,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	-unknown-	xorg,debug
