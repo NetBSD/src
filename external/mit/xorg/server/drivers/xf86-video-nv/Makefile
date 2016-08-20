@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/08/20 05:44:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/20 06:49:21 mrg Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
@@ -26,9 +26,7 @@ CPPFLAGS+= -DAVOID_VGAHW
 .endif
 
 # XXX
-.if ${ACTIVE_CC} == "gcc"
-COPTS+=	-Wno-error=cpp
-.endif
+COPTS+=		${${ACTIVE_CC} == "gcc":? -Wno-error=cpp :}
 
 .include "../Makefile.xf86-driver"
 
