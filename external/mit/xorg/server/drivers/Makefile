@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.80 2016/08/20 01:08:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.81 2016/08/20 03:26:56 mrg Exp $
 
 # xf86-input drivers
 
@@ -235,7 +235,6 @@ SUBDIR+= \
 .if ${MACHINE} == "ofppc"
 SUBDIR+= \
 	xf86-video-ati \
-	xf86-video-chips \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -243,6 +242,10 @@ SUBDIR+= \
 	xf86-video-r128 \
 	xf86-video-tdfx \
 	xf86-video-wsfb
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+SUBDIR+= \
+	xf86-video-chips
+.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "ofppc"
 
 .if ${MACHINE} == "prep"
