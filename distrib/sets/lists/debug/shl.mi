@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.142 2016/08/20 01:50:30 jakllsch Exp $
+# $NetBSD: shl.mi,v 1.143 2016/08/20 11:34:49 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.203.debug			comp-sys-debug	debug,dynamicroot
@@ -61,8 +61,8 @@
 ./usr/libdata/debug/usr/lib/libatf-c++.so.1.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libbfd.so.14.0.debug		comp-sys-debug	debug,compatfile,binutils=226
 ./usr/libdata/debug/usr/lib/libbfd.so.13.0.debug		comp-sys-debug	debug,compatfile,binutils=223
+./usr/libdata/debug/usr/lib/libbfd.so.14.0.debug		comp-sys-debug	debug,compatfile,binutils=226
 ./usr/libdata/debug/usr/lib/libbind9.so.8.4.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
@@ -245,8 +245,8 @@
 ./usr/libdata/debug/usr/lib/librumpnet_netinet.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netinet6.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_netmpls.so.0.0.debug	comp-rump-debug	debug,rump
-./usr/libdata/debug/usr/lib/librumpnet_pppoe.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_npf.so.0.0.debug		comp-rump-debug	debug,npf,rump
+./usr/libdata/debug/usr/lib/librumpnet_pppoe.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_shmif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_tap.so.0.0.debug		comp-rump-debug	debug,rump
@@ -271,9 +271,10 @@
 ./usr/libdata/debug/usr/lib/libubsan.so.0.0.debug		comp-sys-debug	debug,compatfile,gcc=53
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
+./usr/libdata/debug/usr/lib/libunbound.so.6.1.debug 		comp-net-debug	debug,compatfile,crypto,unbound
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libutil.so.7.23.debug		comp-sys-debug	debug,compatfile,obsolete,compatfile
+./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.0.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile
