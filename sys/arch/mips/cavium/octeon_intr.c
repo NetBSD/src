@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.6 2016/07/12 06:13:39 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.7 2016/08/20 06:31:15 skrll Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.6 2016/07/12 06:13:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.7 2016/08/20 06:31:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -616,7 +616,8 @@ octeon_send_ipi(struct cpu_info *ci, int req)
 	struct cpu_softc * const cpu = ci->ci_softc;
 	uint64_t ipi_mask = __BIT(req);
 
-	if (__BIT(req) == (__BIT(IPI_SUSPEND)|__BIT(IPI_WDOG))) {
+	atomic_or_64(&ci->ci_request_ipis, ipi_mask);
+	if (req == IPI_SUSPEND || req == IPI_WDOG) {
 		ipi_mask <<= 16;
 	}
 
