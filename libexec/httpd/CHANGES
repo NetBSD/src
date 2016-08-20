@@ -1,4 +1,4 @@
-$eterna: CHANGES,v 1.78 2011/11/18 01:25:11 mrg Exp $
+$NetBSD: CHANGES,v 1.24 2016/08/20 00:36:41 mrg Exp $
 
 changes in bozohttpd 20160517:
 	o add a bozo_get_version() function which returns the version number
