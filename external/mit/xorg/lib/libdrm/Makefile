@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/20 06:49:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/20 20:19:08 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ PKGCONFIG=	libdrm
 PKGDIST=	${LIB}
 
 COPTS.xf86drm.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=cpp :}
+COPTS.xf86drm.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=\#warnings :}
 
 CWARNFLAGS.clang+=	-Wno-conversion -Wno-tautological-compare
 
