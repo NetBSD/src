@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.35 2016/07/07 06:55:42 msaitoh Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.36 2016/08/20 12:37:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.35 2016/07/07 06:55:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.36 2016/08/20 12:37:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,7 +583,6 @@ efs_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
 
-	vcache_remove(vp->v_mount, &eip->ei_number, sizeof(eip->ei_number));
 	genfs_node_destroy(vp);
 	pool_put(&efs_inode_pool, eip);
 	vp->v_data = NULL;
