@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1531 2016/08/11 09:06:49 christos Exp $
+# $NetBSD: mi,v 1.1532 2016/08/20 11:34:50 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -522,8 +522,8 @@
 ./usr/share/man/cat1/smbutil.0			man-util-catman		.cat
 ./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
-./usr/share/man/cat1/sortinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
+./usr/share/man/cat1/sortinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/source.0			man-util-catman		.cat
 ./usr/share/man/cat1/spell.0			man-util-catman		.cat
 ./usr/share/man/cat1/split.0			man-util-catman		.cat
@@ -575,6 +575,7 @@
 ./usr/share/man/cat1/ttyflags.0			man-obsolete		obsolete
 ./usr/share/man/cat1/ul.0			man-util-catman		.cat
 ./usr/share/man/cat1/uname.0			man-util-catman		.cat
+./usr/share/man/cat1/unbound-host.0		man-netutil-catman	.cat,crypto,unbound
 ./usr/share/man/cat1/uncompress.0		man-util-catman		.cat
 ./usr/share/man/cat1/unexpand.0			man-util-catman		.cat
 ./usr/share/man/cat1/uniq.0			man-util-catman		.cat
@@ -649,6 +650,7 @@
 ./usr/share/man/cat3/atari/ahdi_writelabel.0	man-obsolete		obsolete
 ./usr/share/man/cat3/i386			man-obsolete		obsolete
 ./usr/share/man/cat3/i386/keycap.0		man-obsolete		obsolete
+./usr/share/man/cat3/libunbound.0		man-netutil-catman	.cat,crypto,unbound
 ./usr/share/man/cat3lua/gpio.0			man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.attach.0		man-sys-catman		.cat
 ./usr/share/man/cat3lua/gpio.close.0		man-sys-catman		.cat
@@ -2122,8 +2124,8 @@
 ./usr/share/man/cat5/lvm.conf.0			man-lvm-catman		lvm,.cat
 ./usr/share/man/cat5/magic.0			man-util-catman		.cat
 ./usr/share/man/cat5/mailer.conf.0		man-mailwrapper-catman	.cat
-./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
 ./usr/share/man/cat5/malloc.conf.0		man-sys-catman		.cat
+./usr/share/man/cat5/man.conf.0			man-man-catman		.cat
 ./usr/share/man/cat5/map3270.0			man-obsolete		obsolete
 ./usr/share/man/cat5/master.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman		.cat
@@ -2205,6 +2207,7 @@
 ./usr/share/man/cat5/types.0			man-obsolete		obsolete
 ./usr/share/man/cat5/tzfile.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ucontext.0			man-obsolete		obsolete
+./usr/share/man/cat5/unbound.conf.0		man-netutil-catman	.cat,crypto,unbound
 ./usr/share/man/cat5/usermgmt.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/utmp.0			man-sys-catman		.cat
 ./usr/share/man/cat5/utmpx.0			man-sys-catman		.cat
@@ -3089,6 +3092,10 @@
 ./usr/share/man/cat8/ttyflags.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/tunefs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/umount.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/unbound-anchor.0		man-netutil-catman	.cat,crypto,unbound
+./usr/share/man/cat8/unbound-checkconf.0	man-netutil-catman	.cat,crypto,unbound
+./usr/share/man/cat8/unbound-control.0		man-netutil-catman	.cat,crypto,unbound
+./usr/share/man/cat8/unbound.0			man-netutil-catman	.cat,crypto,unbound
 ./usr/share/man/cat8/unlink.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/update.0			man-obsolete		obsolete
 ./usr/share/man/cat8/usbd.0			man-obsolete		obsolete
@@ -3661,8 +3668,8 @@
 ./usr/share/man/html1/smbutil.html		man-util-htmlman	html
 ./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
-./usr/share/man/html1/sortinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/sort.html			man-util-htmlman	html
+./usr/share/man/html1/sortinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/source.html		man-util-htmlman	html
 ./usr/share/man/html1/spell.html		man-util-htmlman	html
 ./usr/share/man/html1/split.html		man-util-htmlman	html
@@ -3712,6 +3719,7 @@
 ./usr/share/man/html1/tty.html			man-util-htmlman	html
 ./usr/share/man/html1/ul.html			man-util-htmlman	html
 ./usr/share/man/html1/uname.html		man-util-htmlman	html
+./usr/share/man/html1/unbound-host.html		man-netutil-htmlman	html,crypto,unbound
 ./usr/share/man/html1/uncompress.html		man-util-htmlman	html
 ./usr/share/man/html1/unexpand.html		man-util-htmlman	html
 ./usr/share/man/html1/uniq.html			man-util-htmlman	html
@@ -3776,6 +3784,7 @@
 ./usr/share/man/html1/zless.html		man-util-htmlman	html
 ./usr/share/man/html1/zmore.html		man-util-htmlman	html
 ./usr/share/man/html1/znew.html			man-util-htmlman	html
+./usr/share/man/html3/libunbound.html		man-netutil-htmlman	html,crypto,unbound
 ./usr/share/man/html3lua/gpio.attach.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.close.html	man-sys-htmlman		html
 ./usr/share/man/html3lua/gpio.html		man-sys-htmlman		html
@@ -5187,6 +5196,7 @@
 ./usr/share/man/html5/ttys.html			man-sys-htmlman		html
 ./usr/share/man/html5/types.html		man-obsolete		obsolete
 ./usr/share/man/html5/tzfile.html		man-sys-htmlman		html
+./usr/share/man/html5/unbound.conf.html		man-netutil-htmlman	html,crypto,unbound
 ./usr/share/man/html5/usermgmt.conf.html	man-sys-htmlman		html
 ./usr/share/man/html5/utmp.html			man-sys-htmlman		html
 ./usr/share/man/html5/utmpx.html		man-sys-htmlman		html
@@ -5879,6 +5889,10 @@
 ./usr/share/man/html8/ttyflags.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/tunefs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/umount.html		man-sysutil-htmlman	html
+./usr/share/man/html8/unbound-anchor.html	man-netutil-htmlman	html,crypto,unbound
+./usr/share/man/html8/unbound-checkconf.html	man-netutil-htmlman	html,crypto,unbound
+./usr/share/man/html8/unbound-control.html	man-netutil-htmlman	html,crypto,unbound
+./usr/share/man/html8/unbound.html		man-netutil-htmlman	html,crypto,unbound
 ./usr/share/man/html8/unlink.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/usbdevs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/user.html			man-sysutil-htmlman	html
@@ -6452,8 +6466,8 @@
 ./usr/share/man/man1/smbutil.1			man-util-man		.man
 ./usr/share/man/man1/sntp.1			man-ntp-man		.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
-./usr/share/man/man1/sortinfo.1			man-texinfo-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
+./usr/share/man/man1/sortinfo.1			man-texinfo-man		.man
 ./usr/share/man/man1/source.1			man-util-man		.man
 ./usr/share/man/man1/spell.1			man-util-man		.man
 ./usr/share/man/man1/split.1			man-util-man		.man
@@ -6505,6 +6519,7 @@
 ./usr/share/man/man1/ttyflags.1			man-obsolete		obsolete
 ./usr/share/man/man1/ul.1			man-util-man		.man
 ./usr/share/man/man1/uname.1			man-util-man		.man
+./usr/share/man/man1/unbound-host.1		man-netutil-man		.man,crypto,unbound
 ./usr/share/man/man1/uncompress.1		man-util-man		.man
 ./usr/share/man/man1/unexpand.1			man-util-man		.man
 ./usr/share/man/man1/uniq.1			man-util-man		.man
@@ -6579,6 +6594,7 @@
 ./usr/share/man/man3/atari/ahdi_writelabel.3	man-obsolete		obsolete
 ./usr/share/man/man3/i386			man-obsolete		obsolete
 ./usr/share/man/man3/i386/keycap.3		man-obsolete		obsolete
+./usr/share/man/man3/libunbound.3		man-netutil-man		.man,crypto,unbound
 ./usr/share/man/man3lua/gpio.3lua		man-sys-man		.man
 ./usr/share/man/man3lua/gpio.attach.3lua	man-sys-man		.man
 ./usr/share/man/man3lua/gpio.close.3lua		man-sys-man		.man
@@ -8135,6 +8151,7 @@
 ./usr/share/man/man5/types.5			man-obsolete		obsolete
 ./usr/share/man/man5/tzfile.5			man-sys-man		.man
 ./usr/share/man/man5/ucontext.5			man-obsolete		obsolete
+./usr/share/man/man5/unbound.conf.5		man-netutil-man		.man,crypto,unbound
 ./usr/share/man/man5/usermgmt.conf.5		man-sys-man		.man
 ./usr/share/man/man5/utmp.5			man-sys-man		.man
 ./usr/share/man/man5/utmpx.5			man-sys-man		.man
@@ -9016,6 +9033,10 @@
 ./usr/share/man/man8/ttyflags.8			man-sysutil-man		.man
 ./usr/share/man/man8/tunefs.8			man-sysutil-man		.man
 ./usr/share/man/man8/umount.8			man-sysutil-man		.man
+./usr/share/man/man8/unbound-anchor.8		man-netutil-man		.man,crypto,unbound
+./usr/share/man/man8/unbound-checkconf.8	man-netutil-man		.man,crypto,unbound
+./usr/share/man/man8/unbound-control.8		man-netutil-man		.man,crypto,unbound
+./usr/share/man/man8/unbound.8
 ./usr/share/man/man8/unlink.8			man-sysutil-man		.man
 ./usr/share/man/man8/update.8			man-obsolete		obsolete
 ./usr/share/man/man8/usbd.8			man-obsolete		obsolete
