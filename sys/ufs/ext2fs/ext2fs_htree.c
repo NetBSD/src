@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.7 2016/08/19 00:05:43 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.8 2016/08/20 19:45:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.7 2016/08/19 00:05:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.8 2016/08/20 19:45:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,7 @@ ext2fs_htree_split_dirblock(char *block1, char *block2, uint32_t blksize,
 	 * Sort directory entry descriptors by name hash value.
 	 */
 	kheapsort(sort_info, entry_cnt, sizeof(struct ext2fs_htree_sort_entry),
-	    ext2fs_htree_cmp_sort_entry,&dummy);
+	    ext2fs_htree_cmp_sort_entry, &dummy);
 
 	/*
 	 * Count the number of entries to move to directory block 2.
