@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1351 2016/08/15 11:06:46 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1352 2016/08/20 11:25:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -130,6 +130,20 @@ The Makefiles in src/external/bsd/bind are not handled by the script.
 Build bind to generate the include files.
 Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
+
+Package:	unbound 
+Version:	1.5.9
+Current Vers:	1.5.9
+Maintainer:	Christos Zoulas
+Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
+Home Page:	https://www.unbound.net/
+Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
+Responsible:	christos
+License:	BSD-like
+Location:	external/bsd/unbound/dist
+Notes:
+Use cleantags to import
+run configure and update config files in include
 
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
