@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2057 2016/08/20 11:34:49 christos Exp $
+#	$NetBSD: mi,v 1.2058 2016/08/20 12:37:06 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11111,7 +11111,7 @@
 ./usr/share/man/cat9/vcache_new.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vcache_rekey_enter.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/vcache_rekey_exit.0	comp-sys-catman		.cat
-./usr/share/man/cat9/vcache_remove.0		comp-sys-catman		.cat
+./usr/share/man/cat9/vcache_remove.0		comp-sys-catman		obsolete
 ./usr/share/man/cat9/vcons.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vcount.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/vdead_check.0		comp-sys-catman		.cat
@@ -18226,7 +18226,7 @@
 ./usr/share/man/html9/vcache_new.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcache_rekey_enter.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vcache_rekey_exit.html	comp-sys-htmlman	html
-./usr/share/man/html9/vcache_remove.html	comp-sys-htmlman	html
+./usr/share/man/html9/vcache_remove.html	comp-sys-htmlman	obsolete
 ./usr/share/man/html9/vcons.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vcount.html		comp-obsolete	obsolete
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
@@ -25575,7 +25575,7 @@
 ./usr/share/man/man9/vcache_new.9		comp-sys-man		.man
 ./usr/share/man/man9/vcache_rekey_enter.9	comp-sys-man		.man
 ./usr/share/man/man9/vcache_rekey_exit.9	comp-sys-man		.man
-./usr/share/man/man9/vcache_remove.9		comp-sys-man		.man
+./usr/share/man/man9/vcache_remove.9		comp-sys-man		obsolete
 ./usr/share/man/man9/vcons.9			comp-sys-man		.man
 ./usr/share/man/man9/vcount.9			comp-obsolete		obsolete
 ./usr/share/man/man9/vdead_check.9		comp-sys-man		.man

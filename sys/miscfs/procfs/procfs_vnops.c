@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.193 2015/04/20 23:03:08 riastradh Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.194 2016/08/20 12:37:09 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.193 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.194 2016/08/20 12:37:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,6 @@ procfs_reclaim(void *v)
 	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
 	mutex_exit(vp->v_interlock);
-	vcache_remove(vp->v_mount, &pfs->pfs_key, sizeof(pfs->pfs_key));
 	kmem_free(pfs, sizeof(*pfs));
 	return 0;
 }
