@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2016/08/20 05:02:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.84 2016/08/20 05:24:26 mrg Exp $
 
 # xf86-input drivers
 
@@ -283,6 +283,7 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ati \
 	xf86-video-mach64 \
+	xf86-video-mga \
 	xf86-video-r128 \
 	xf86-video-radeon \
 	xf86-video-suncg6 \
@@ -291,7 +292,6 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ag10e \
 	xf86-video-glint \
-	xf86-video-mga \
 	xf86-video-sunffb \
 	xf86-video-sunleo
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
