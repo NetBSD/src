@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20 2016/08/18 21:42:27 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.21 2016/08/20 20:09:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2016/08/18 21:42:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2016/08/20 20:09:47 mrg Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1411,8 +1411,8 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			continue;
 
 		PMAP_COUNT(kremove_pages);
-		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
+		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
 		if (pg != NULL && pmap_md_virtual_cache_aliasing_p()) {
 			pmap_remove_pv(pmap, sva, pg, !pte_readonly_p(pte));
 		}
