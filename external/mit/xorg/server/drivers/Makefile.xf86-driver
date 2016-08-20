@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.21 2016/08/20 00:22:02 mrg Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.22 2016/08/20 03:44:19 mrg Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
@@ -51,8 +51,9 @@ CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 .PATH:	${X11SRCDIR.${DRIVER}}/src
 .PATH:	${X11SRCDIR.${DRIVER}}/man
 
+DRIVER_TOPDIR:=${.PARSEDIR}
 .if !exists(${X11SRCDIR.${DRIVER}}/../include)
-CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/../fake-include
+CPPFLAGS+=	-DHAVE_CONFIG_H -I${DRIVER_TOPDIR}/fake-include
 .endif
 
 .include <bsd.lib.mk>
