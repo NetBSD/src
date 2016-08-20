@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2016/08/20 05:24:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.85 2016/08/20 06:51:00 mrg Exp $
 
 # xf86-input drivers
 
@@ -210,7 +210,6 @@ SUBDIR+= \
 .if ${MACHINE} == "macppc"
 SUBDIR+= \
 	xf86-video-ati \
-	xf86-video-chips \
 	xf86-video-mach64 \
 	xf86-video-mga \
 	xf86-video-nv \
@@ -219,6 +218,10 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-wsfb
 #	xf86-video-imstt
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+SUBDIR+= \
+	xf86-video-chips
+.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "macppc"
 
 .if ${MACHINE} == "netwinder"
