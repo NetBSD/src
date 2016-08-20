@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/12/27 06:36:36 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.4 2016/08/20 17:06:18 christos Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/rump/modautoload
@@ -15,6 +15,7 @@ LDADD+=		-Wl,--whole-archive	${DESTDIR}/usr/lib/librumpvfs.a	\
 					${DESTDIR}/usr/lib/librump.a	\
 		-Wl,--no-whole-archive
 LDADD+=		-lrumpuser -lpthread
+DPADD+=		${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
 
 WARNS=	4
 
