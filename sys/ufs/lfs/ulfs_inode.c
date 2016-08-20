@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.16 2016/08/20 12:37:09 hannken Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.15 2016/06/20 03:36:09 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.16 2016/08/20 12:37:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -148,11 +148,6 @@ ulfs_reclaim(struct vnode *vp)
 	/* note: originally the first was inside a wapbl txn */
 	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
 	lfs_update(vp, NULL, NULL, UPDATE_CLOSE);
-
-	/*
-	 * Remove the inode from the vnode cache.
-	 */
-	vcache_remove(vp->v_mount, &ip->i_number, sizeof(ip->i_number));
 
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
