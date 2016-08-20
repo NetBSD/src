@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.1 2016/08/19 19:02:07 palle Exp $	*/
+/*	$NetBSD: ldc.c,v 1.2 2016/08/20 18:21:18 nakayama Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -256,7 +256,7 @@ ldc_send_vers(struct ldc_conn *lc)
 		return;
 	}
 
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_CTRL;
 	lp->stype = LDC_INFO;
@@ -291,7 +291,7 @@ ldc_send_ack(struct ldc_conn *lc)
 		return;
 	}
 
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_CTRL;
 	lp->stype = LDC_ACK;
@@ -326,7 +326,7 @@ ldc_send_rts(struct ldc_conn *lc)
 		return;
 	}
 
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_CTRL;
 	lp->stype = LDC_INFO;
@@ -361,7 +361,7 @@ ldc_send_rtr(struct ldc_conn *lc)
 		return;
 	}
 
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_CTRL;
 	lp->stype = LDC_INFO;
@@ -396,7 +396,7 @@ ldc_send_rdx(struct ldc_conn *lc)
 		return;
 	}
 
-	lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+	lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 	bzero(lp, sizeof(struct ldc_pkt));
 	lp->type = LDC_CTRL;
 	lp->stype = LDC_INFO;
@@ -442,7 +442,7 @@ ldc_send_unreliable(struct ldc_conn *lc, void *msg, size_t len)
 	}
 
 	while (len > 0) {
-		lp = (struct ldc_pkt *)(lc->lc_txq->lq_va + tx_tail);
+		lp = (struct ldc_pkt *)(uintptr_t)(lc->lc_txq->lq_va + tx_tail);
 		bzero(lp, sizeof(struct ldc_pkt));
 		lp->type = LDC_DATA;
 		lp->stype = LDC_INFO;
