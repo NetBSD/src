@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.28 2016/08/20 17:34:23 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.29 2016/08/20 18:04:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.28 2016/08/20 17:34:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.29 2016/08/20 18:04:04 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -206,12 +206,14 @@ gdt_reload_cpu(struct cpu_info *ci)
 #endif
 
 /*
- * Grow or shrink the GDT.
+ * Grow the GDT.
  */
 static void
 gdt_grow(void)
 {
 	size_t old_len, new_len;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	struct vm_page *pg;
 	vaddr_t va;
 
@@ -221,15 +223,19 @@ gdt_grow(void)
 	gdt_dynavail =
 	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
-	for (va = (vaddr_t)gdtstore + old_len; va < (vaddr_t)gdtstore + new_len;
-	    va += PAGE_SIZE) {
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-		       NULL) {
-			uvm_wait("gdt_grow");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
+		     va < (vaddr_t)(ci->ci_gdt) + new_len;
+		     va += PAGE_SIZE) {
+			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
+			    NULL) {
+				uvm_wait("gdt_grow");
+			}
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
+
 	pmap_update(pmap_kernel());
 }
 
