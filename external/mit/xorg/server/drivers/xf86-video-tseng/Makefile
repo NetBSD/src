@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/20 05:02:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2016/08/20 05:44:01 mrg Exp $
 
 DRIVER=		xf86-video-tseng
 DRIVER_NAME=	tseng_drv
@@ -9,7 +9,9 @@ MAN=		tseng.4
 
 CPPFLAGS+=	-I${X11SRCDIR.${DRIVER}}/../include
 
+.if ${ACTIVE_CC} == "gcc"
 COPTS+=		-Wno-error=cpp
+.endif
 
 CWARNFLAGS.clang+=	-Wno-pointer-sign
 
