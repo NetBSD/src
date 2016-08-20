@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.54 2016/08/19 00:05:43 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.55 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -100,6 +100,7 @@ int ext2fs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t ext2fs_blkpref(struct inode *, daddr_t, int, int32_t *);
 void ext2fs_blkfree(struct inode *, daddr_t);
 int ext2fs_vfree(struct vnode *, ino_t, int);
+int ext2fs_cg_verify_and_initialize(struct vnode *, struct m_ext2fs *, int);
 
 /* ext2fs_balloc.c */
 int ext2fs_balloc(struct inode *, daddr_t, int, kauth_cred_t,
