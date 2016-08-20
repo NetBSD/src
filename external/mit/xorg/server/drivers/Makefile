@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2016/08/20 03:57:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.83 2016/08/20 05:02:58 mrg Exp $
 
 # xf86-input drivers
 
@@ -28,9 +28,15 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-ast \
 	xf86-video-ati \
+	xf86-video-cirrus \
+	xf86-video-cirrus_alpine \
+	xf86-video-cirrus_laguna \
+	xf86-video-i128 \
+	xf86-video-i740 \
 	xf86-video-intel \
 	xf86-video-mach64 \
 	xf86-video-mga \
+	xf86-video-neomagic \
 	xf86-video-nv \
 	xf86-video-nouveau \
 	xf86-video-openchrome \
@@ -45,6 +51,7 @@ SUBDIR+= \
 	xf86-video-tdfx \
 	xf86-video-tga \
 	xf86-video-trident \
+	xf86-video-tseng \
 	xf86-video-vmware \
 	xf86-video-vesa \
 	xf86-video-wsfb
@@ -59,15 +66,8 @@ SUBDIR+= \
 	xf86-video-apm \
 	xf86-video-ark \
 	xf86-video-chips \
-	xf86-video-cirrus \
-	xf86-video-cirrus_alpine \
-	xf86-video-cirrus_laguna \
 	xf86-video-glint \
-	xf86-video-i128 \
-	xf86-video-i740 \
 	xf86-video-intel-old \
-	xf86-video-neomagic \
-	xf86-video-tseng \
 	xf86-video-xgi
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 
