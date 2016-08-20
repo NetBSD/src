@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.49 2016/08/20 19:47:44 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.50 2016/08/20 19:51:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.49 2016/08/20 19:47:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.50 2016/08/20 19:51:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,8 +417,11 @@ ext2fs_alloccg(struct inode *ip, int cg, daddr_t bpref, int size)
 	}
 
 	bno = ext2fs_mapsearch(fs, bbp, bpref);
+#if 0
+	/* XXX jdolecek mapsearch actually never fails, it panics instead */
 	if (bno < 0)
 		return 0;
+#endif
 gotit:
 #ifdef DIAGNOSTIC
 	if (isset(bbp, (daddr_t)bno)) {
