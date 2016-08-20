@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.199 2016/08/14 11:44:54 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.200 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.199 2016/08/14 11:44:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.200 2016/08/20 19:47:44 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -723,6 +723,12 @@ ext2fs_mountfs(struct vnode *devvp, struct mount *mp)
 		bp = NULL;
 	}
 
+	error = ext2fs_cg_verify_and_initialize(devvp, m_fs, ronly);
+	if (error) {
+		kmem_free(m_fs->e2fs_gd, m_fs->e2fs_ngdb * m_fs->e2fs_bsize);
+		goto out;
+	}
+
 	mp->mnt_data = ump;
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)dev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_EXT2FS);
@@ -834,7 +840,15 @@ ext2fs_statvfs(struct mount *mp, struct statvfs *sbp)
 	    fs->e2fs_itpg;
 	overhead = fs->e2fs.e2fs_first_dblock +
 	    fs->e2fs_ncg * overhead_per_group;
-	if (EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_SPARSESUPER)) {
+	if (EXT2F_HAS_COMPAT_FEATURE(fs, EXT2F_COMPAT_SPARSESUPER2)) {
+		/*
+		 * Superblock and group descriptions is in group zero,
+		 * then optionally 0, 1 or 2 extra copies.
+		 */
+		ngroups = 1
+			+ (fs->e2fs.e4fs_backup_bgs[0] ? 1 : 0)
+			+ (fs->e2fs.e4fs_backup_bgs[1] ? 1 : 0);
+	} else if (EXT2F_HAS_ROCOMPAT_FEATURE(fs, EXT2F_ROCOMPAT_SPARSESUPER)) {
 		for (i = 0, ngroups = 0; i < fs->e2fs_ncg; i++) {
 			if (cg_has_sb(i))
 				ngroups++;
