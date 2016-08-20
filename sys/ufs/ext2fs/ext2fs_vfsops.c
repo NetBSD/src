@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.201 2016/08/20 20:05:28 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.202 2016/08/20 21:22:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.201 2016/08/20 20:05:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.202 2016/08/20 21:22:25 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -239,6 +239,22 @@ ext2fs_done(void)
 	pool_destroy(&ext2fs_inode_pool);
 }
 
+static void
+ext2fs_sb_setmountinfo(struct m_ext2fs *fs, struct mount *mp)
+{
+	(void)strncpy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname,
+            sizeof(fs->e2fs_fsmnt));
+	if (fs->e2fs_ronly == 0 && fs->e2fs.e2fs_rev > E2FS_REV0) {
+		(void)strncpy(fs->e2fs.e2fs_fsmnt, mp->mnt_stat.f_mntonname,
+                    sizeof(fs->e2fs.e2fs_fsmnt));
+
+		fs->e2fs.e2fs_mtime = time_second;
+		fs->e2fs.e2fs_mnt_count++;
+
+		fs->e2fs_fmod = 1;
+	}
+}
+
 /*
  * Called by main() when ext2fs is going to be mounted as root.
  *
@@ -270,14 +286,7 @@ ext2fs_mountroot(void)
 	mountlist_append(mp);
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
-	memset(fs->e2fs_fsmnt, 0, sizeof(fs->e2fs_fsmnt));
-	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
-	    sizeof(fs->e2fs_fsmnt) - 1, 0);
-	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
-		memset(fs->e2fs.e2fs_fsmnt, 0, sizeof(fs->e2fs.e2fs_fsmnt));
-		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
-		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
-	}
+	ext2fs_sb_setmountinfo(fs, mp);
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp, false, NULL);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
@@ -297,7 +306,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct m_ext2fs *fs;
-	size_t size;
 	int error = 0, flags, update;
 	mode_t accessmode;
 
@@ -467,15 +475,9 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, l);
-	(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs_fsmnt,
-	    sizeof(fs->e2fs_fsmnt) - 1, &size);
-	memset(fs->e2fs_fsmnt + size, 0, sizeof(fs->e2fs_fsmnt) - size);
-	if (fs->e2fs.e2fs_rev > E2FS_REV0) {
-		(void) copystr(mp->mnt_stat.f_mntonname, fs->e2fs.e2fs_fsmnt,
-		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, &size);
-		memset(fs->e2fs.e2fs_fsmnt, 0,
-		    sizeof(fs->e2fs.e2fs_fsmnt) - size);
-	}
+	if (error == 0)
+		ext2fs_sb_setmountinfo(fs, mp);
+
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
