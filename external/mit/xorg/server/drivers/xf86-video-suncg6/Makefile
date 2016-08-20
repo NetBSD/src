@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/08/19 19:10:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2016/08/20 20:22:54 mrg Exp $
 
 DRIVER=		xf86-video-suncg6
 DRIVER_NAME=	suncg6_drv
@@ -9,7 +9,9 @@ CPPFLAGS+=	${X11FLAGS.DRI}
 
 MAN=		suncg6.4
 
-# XXX
-COPTS.cg6_accel.c+=	-Wno-error=discarded-qualifiers
-
 .include "../Makefile.xf86-driver"
+
+# XXX
+.if ${HAVE_GCC} > 48
+COPTS.cg6_accel.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
+.endif
