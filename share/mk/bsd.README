@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.354 2016/06/14 13:26:45 christos Exp $
+#	$NetBSD: bsd.README,v 1.355 2016/08/20 11:23:33 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -369,6 +369,10 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
 
+MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
+		which is necessary for the radeon DRM driver.
+		Default: yes on i386 and amd64, no elsewhere.
+
 MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
 		also force immediate symbol binding.
 		Default: no
@@ -408,6 +412,8 @@ MKTPM		If "no" then don't build the Trusted Platform Module
 		infrastructure.
 		Default: no
 
+MKUNBOUND	If not "no", build and install the "unbound" DNS resolver.
+
 MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
 		files or directories, and keep a metadata log of what
 		the owner/group/mode should be.  This allows a
@@ -432,10 +438,6 @@ MKX11MOTIF:	If "yes", build the native X11 libGLw with Motif stubs.  If
 		Motif is not installed in the default location /usr/pkg, the
 		location can be specified using the X11MOTIFPATH variable.
 		Default: no
-
-MKRADEONFIRMWARE If "no", install the /libdata/firmware/radeon directory,
-		which is necessary for the radeon DRM driver.
-		Default: yes on i386 and amd64, no elsewhere.
 
 MKYP		If "no", disables building of YP (NIS)
 		infrastructure (libraries and support programs).
@@ -1640,6 +1642,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBSUPCXX?=	${DESTDIR}/usr/lib/libsupc++.a
 		LIBTERMINFO?=	${DESTDIR}/usr/lib/libterminfo.a
 		LIBTRE?=	${DESTDIR}/usr/lib/libtre.a
+		LIBUNBOUND?=	${DESTDIR}/usr/lib/libunbound.a
 		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 		LIBWIND?=	${DESTDIR}/usr/lib/libwind.a

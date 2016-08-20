@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.299 2016/04/04 15:06:16 joerg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.300 2016/08/20 11:23:33 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -199,6 +199,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	supcxx \
 	terminfo \
 	tre \
+	unbound \
 	usbhid \
 	util \
 	wind \
