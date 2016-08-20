@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.110 2016/08/20 01:08:13 mrg Exp $
+# $NetBSD: md.i386,v 1.111 2016/08/20 03:57:25 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -60,8 +60,8 @@
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ast_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	xorg,xorg_server_ver=110

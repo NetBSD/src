@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.31 2016/08/20 01:08:13 mrg Exp $
+# $NetBSD: md.amd64,v 1.32 2016/08/20 03:57:25 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			-unknown-	debuglib,xorg,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			-unknown-	debuglib,xorg,compatx11file
@@ -77,7 +77,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=118
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	-unknown-		xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7017_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ch7xxx_drv.so.2.debug	-unknown-		xorg,debug,xorg_server_ver=110
