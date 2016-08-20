@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.355 2016/08/20 11:23:33 christos Exp $
+#	$NetBSD: bsd.README,v 1.356 2016/08/20 16:11:07 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -413,6 +413,7 @@ MKTPM		If "no" then don't build the Trusted Platform Module
 		Default: no
 
 MKUNBOUND	If not "no", build and install the "unbound" DNS resolver.
+		Default: yes
 
 MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
 		files or directories, and keep a metadata log of what
