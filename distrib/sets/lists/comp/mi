@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2056 2016/08/11 14:48:47 christos Exp $
+#	$NetBSD: mi,v 1.2057 2016/08/20 11:34:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3057,6 +3057,7 @@
 ./usr/include/ufs/ufs/ufs_wapbl.h		comp-c-include
 ./usr/include/ufs/ufs/ufsmount.h		comp-c-include
 ./usr/include/ulimit.h				comp-c-include
+./usr/include/unbound.h				comp-c-include		crypto,unbound
 ./usr/include/unctrl.h				comp-c-include
 ./usr/include/unistd.h				comp-c-include
 ./usr/include/unwind.h				comp-c-include
@@ -3612,6 +3613,8 @@
 ./usr/lib/libtre_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libtspi.a				comp-c-lib		compatfile,tpm
 ./usr/lib/libtspi_p.a				comp-c-proflib		compatfile,tpm,profile
+./usr/lib/libunbound.a				comp-c-lib		compatfile,crypto,unbound
+./usr/lib/libunbound_p.a			comp-c-lib		compatfile,profile,crypto,unbound
 ./usr/lib/libubsan.a				comp-c-lib		compatfile,gcc=53
 ./usr/lib/libubsan_p.a				comp-c-proflib		compatfile,profile,gcc=53
 ./usr/lib/libukfs.a				comp-c-lib		compatfile,rump
@@ -3762,6 +3765,7 @@
 ./usr/libdata/lint/llib-ltre.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltspi.ln		comp-c-lintlib		tpm,lint
 ./usr/libdata/lint/llib-lukfs.ln		comp-c-lintlib		lint,rump
+./usr/libdata/lint/llib-lunbound.ln		comp-c-lintlib		lint,crypto,unbound
 ./usr/libdata/lint/llib-lusb.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lusbhid.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lutil.ln		comp-c-lintlib		lint

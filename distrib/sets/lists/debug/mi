@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.163 2016/08/14 14:55:41 jakllsch Exp $
+# $NetBSD: mi,v 1.164 2016/08/20 11:34:49 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -38,8 +38,8 @@
 ./usr/lib/libbluetooth_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbsdmalloc_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libbz2_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libc_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libc++_g.a				comp-c-debuglib		debuglib,compatfile,libcxx
+./usr/lib/libc_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libcom_err_g.a			comp-c-debuglib		debuglib,kerberos,compatfile
 ./usr/lib/libcompat_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libcrypt_g.a				comp-c-debuglib		debuglib,compatfile
@@ -209,8 +209,8 @@
 ./usr/lib/librumpnet_agr_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_bpfjit_g.a			comp-c-debuglib		debuglib,rump,sljit
 ./usr/lib/librumpnet_bridge_g.a			comp-c-debuglib		debuglib,rump
-./usr/lib/librumpnet_gif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_g.a			comp-c-debuglib		debuglib,compatfile,rump
+./usr/lib/librumpnet_gif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_local_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_net80211_g.a		comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_net_g.a			comp-c-debuglib		debuglib,rump
@@ -248,6 +248,7 @@
 ./usr/lib/libubsan_g.a				comp-c-debuglib		debuglib,compatfile,gcc=53
 ./usr/lib/libukfs_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libumem_g.a				comp-c-debuglib		debuglib,compatfile,zfs
+./usr/lib/libunbound_g.a			comp-c-debuglib		debuglib,compatfile,crypto,unbound
 ./usr/lib/libusbhid_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libutil_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libuutil_g.a				comp-c-debuglib		debuglib,compatfile,zfs
@@ -755,8 +756,8 @@
 ./usr/libdata/debug/usr/bin/smbutil.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
-./usr/libdata/debug/usr/bin/sortinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/sortinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sqlite3.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ssh-add.debug	comp-secsh-debug	crypto,debug
@@ -800,6 +801,7 @@
 ./usr/libdata/debug/usr/bin/tty.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/ul.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uname.debug		comp-util-debug		debug
+./usr/libdata/debug/usr/bin/unbound-host.debug		base-netutil-debug	debug,crypto,unbound
 ./usr/libdata/debug/usr/bin/unexpand.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/unifdef.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/uniq.debug		comp-util-debug		debug
@@ -1209,7 +1211,6 @@
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
-./usr/libdata/debug/usr/sbin/rump.rtadvd.debug	comp-router-debug	use_inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rump.arp.debug	comp-netutil-debug	debug,rump
@@ -1217,6 +1218,7 @@
 ./usr/libdata/debug/usr/sbin/rump.fssconfig.debug comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.ndp.debug	comp-netutil-debug	inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump.rtadvd.debug	comp-router-debug	use_inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-puffs-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_efs.debug	comp-puffs-debug	debug,rump
@@ -1289,6 +1291,10 @@
 ./usr/libdata/debug/usr/sbin/traceroute6.debug	comp-netutil-debug	use_inet6,debug
 ./usr/libdata/debug/usr/sbin/trpt.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/trsp.debug		comp-obsolete		obsolete,compatfile
+./usr/libdata/debug/usr/sbin/unbound-anchor.debug	base-netutil-debug	debug,crypto,unbound
+./usr/libdata/debug/usr/sbin/unbound-checkconf.debug	base-netutil-debug	debug,crypto,unbound
+./usr/libdata/debug/usr/sbin/unbound-control.debug	base-netutil-debug	debug,crypto,unbound
+./usr/libdata/debug/usr/sbin/unbound.debug	base-netutil-debug	debug,crypto,unbound
 ./usr/libdata/debug/usr/sbin/unlink.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/usbdevs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/user.debug		comp-sysutil-debug	debug
@@ -1631,10 +1637,10 @@
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vfsops.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/vfs/t_vnops.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/include/machine/t_bswap.debug		tests-include-tests	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/include/sys/t_pslist.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_bitops.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_bootblock.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_cdefs.debug			tests-include-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/include/sys/t_pslist.debug		tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_socket.debug		tests-include-tests	debug,atf,rump
 ./usr/libdata/debug/usr/tests/include/sys/t_tree.debug			tests-include-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/include/sys/t_types.debug			tests-include-tests	debug,atf,compattestfile
