@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.245 2016/06/05 01:23:58 christos Exp $
+#	$NetBSD: Makefile,v 1.246 2016/08/20 11:22:26 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -224,6 +224,9 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 SUBDIR+=	.WAIT
 
 SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
+.if ${MKCRYPTO} != "no" && ${MKUNBOUND} != "no"
+SUBDIR+=	../external/bsd/unbound/lib	# depends on libcrypto
+.endif
 
 .if ${MKDTRACE} != "no"
 SUBDIR+=        ../external/cddl/osnet/lib/libdtrace	# depends on libproc

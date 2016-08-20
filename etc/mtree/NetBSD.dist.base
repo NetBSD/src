@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.153 2016/03/12 23:07:05 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.154 2016/08/20 11:21:50 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -61,6 +61,7 @@
 ./etc/skel
 ./etc/sliphome
 ./etc/ssh
+./etc/unbound
 ./etc/zfs
 ./lib
 ./lib/npf
@@ -1283,6 +1284,9 @@
 ./var/chroot/sshd		mode=0755
 ./var/chroot/tcpdump		mode=0755
 ./var/chroot/tftp-proxy		mode=0755
+./var/chroot/unbound		mode=0755 uname=_unbound gname=_unbound
+./var/chroot/unbound/etc	mode=0755 uname=_unbound gname=_unbound
+./var/chroot/unbound/etc/unbound	mode=0755 uname=_unbound gname=_unbound
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
