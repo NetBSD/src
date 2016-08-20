@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bswap.c,v 1.23 2016/08/15 18:29:34 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.23 2016/08/15 18:29:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bswap.c,v 1.24 2016/08/20 19:47:44 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <ufs/ext2fs/ext2fs.h>
@@ -80,21 +80,6 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_algo		=	bswap32(old->e2fs_algo);
 	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
 	new->e4fs_want_extra_isize =	bswap16(old->e4fs_want_extra_isize);
-}
-
-void
-e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
-{
-	int i;
-
-	for (i = 0; i < (size / (int)sizeof(struct  ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
-	}
 }
 
 void
