@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/20 00:48:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/20 05:44:01 mrg Exp $
 
 DRIVER=		xf86-video-s3
 DRIVER_NAME=	s3_drv
@@ -22,7 +22,9 @@ CPPFLAGS.s3_video.c+=		-DS3_NEWMMIO=1 \
 CPPFLAGS+=	-DPACKAGE_VERSION=\"${PACKAGE_VERSION}\"
 
 # XXX xf86PciInfo.h
+.if ${ACTIVE_CC} == "gcc"
 COPTS+=	-Wno-error=cpp
+.endif
 
 CWARNFLAGS.clang+=	-Wno-parentheses
 
