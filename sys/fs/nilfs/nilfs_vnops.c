@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $ */
+/* $NetBSD: nilfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.32 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $");
 #endif /* not lint */
 
 
@@ -117,9 +117,6 @@ nilfs_reclaim(void *v)
 
 	/* update note for closure */
 	nilfs_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
-
-	/* remove from vnode cache. */
-	vcache_remove(vp->v_mount, &nilfs_node->ino, sizeof(nilfs_node->ino));
 
 	/* dispose all node knowledge */
 	genfs_node_destroy(vp);

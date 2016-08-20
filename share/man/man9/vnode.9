@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.70 2015/07/17 06:45:55 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.71 2016/08/20 12:37:06 hannken Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,6 @@
 .Nm vcache_new ,
 .Nm vcache_rekey_enter ,
 .Nm vcache_rekey_exit ,
-.Nm vcache_remove ,
 .Nm vrecycle ,
 .Nm vgone ,
 .Nm vgonel ,
@@ -85,8 +84,6 @@
 .Fn vcache_rekey_enter "struct mount *mp" "struct vnode *vp" "const void *old_key" "size_t old_key_len" "const void *new_key" "size_t new_key_len"
 .Ft void
 .Fn vcache_rekey_exit "struct mount *mp" "struct vnode *vp" "const void *old_key" "size_t old_key_len" "const void *new_key" "size_t new_key_len"
-.Ft void
-.Fn vcache_remove "struct mount *mp" "const void *key" "size_t key_len"
 .Ft int
 .Fn vrecycle "struct vnode *vp"
 .Ft void
@@ -709,19 +706,6 @@ is returned, otherwise zero is returned.
 .It Fn vcache_rekey_exit "mp" "vp" "old_key" "old_key_len" "new_key" "new_key_len"
 Finish rename after calling
 .Fn vcache_rekey_enter .
-.It Fn vcache_remove "mp" "key" "key_len"
-Remove a vnode from the cache.
-Must be called when a file system reclaims a vnode.
-.Pp
-The argument
-.Fa mp
-is the mount point for the file system this file resides in.
-.Pp
-The arguments
-.Fa key
-and
-.Fa key_len
-uniquely identify the file in the file system.
 .It Fn vrecycle "vp"
 Recycle the referenced vnode
 .Fa vp

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.73 2015/04/20 19:36:55 riastradh Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.74 2016/08/20 12:37:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.73 2015/04/20 19:36:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.74 2016/08/20 12:37:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -538,8 +538,6 @@ union_freevp(struct vnode *vp)
 	un->un_vnode = NULL;
 	un->un_uppersz = VNOVAL;
 	un->un_lowersz = VNOVAL;
-
-	vcache_remove(vp->v_mount, &un, sizeof(un));
 
 	/* Detach union node from vnode. */
 	mutex_enter(vp->v_interlock);

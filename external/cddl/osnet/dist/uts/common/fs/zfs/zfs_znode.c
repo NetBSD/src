@@ -1057,7 +1057,6 @@ zfs_znode_free(znode_t *zp)
 	mutex_enter(&zp->z_lock);
 	vp = ZTOV(zp);
 	if (vp != NULL) {
-		vcache_remove(vp->v_mount, &zp->z_id, sizeof(zp->z_id));
 		genfs_node_destroy(vp);
 		/*
 		 * To interlock with zfs_sync().

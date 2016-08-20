@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.55 2016/08/20 12:33:57 hannken Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.56 2016/08/20 12:37:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.55 2016/08/20 12:33:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.56 2016/08/20 12:37:08 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -1599,29 +1599,6 @@ vcache_reclaim(vnode_t *vp)
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-}
-
-/*
- * Remove a vnode / fs node pair from the cache.
- */
-void
-vcache_remove(struct mount *mp, const void *key, size_t key_len)
-{
-#ifdef DIAGNOSTIC
-	uint32_t hash;
-	struct vcache_key vcache_key;
-	struct vcache_node *node;
-
-	vcache_key.vk_mount = mp;
-	vcache_key.vk_key = key;
-	vcache_key.vk_key_len = key_len;
-	hash = vcache_hash(&vcache_key);
-
-	mutex_enter(&vcache.lock);
-	node = vcache_hash_lookup(&vcache_key, hash);
-	KASSERT(node != NULL);
-	mutex_exit(&vcache.lock);
-#endif
 }
 
 /*

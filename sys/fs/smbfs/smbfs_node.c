@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.53 2014/12/21 10:48:53 hannken Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.54 2016/08/20 12:37:08 hannken Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.53 2014/12/21 10:48:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.54 2016/08/20 12:37:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,8 +234,6 @@ smbfs_reclaim(void *v)
 		SMBVDEBUG0("root vnode\n");
 		smp->sm_root = NULL;
 	}
-
-	vcache_remove(vp->v_mount, np->n_key, SMBFS_KEYSIZE(np->n_nmlen));
 
 	genfs_node_destroy(vp);
 

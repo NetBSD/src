@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.59 2015/11/13 13:36:54 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.60 2016/08/20 12:37:08 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.59 2015/11/13 13:36:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.60 2016/08/20 12:37:08 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -706,8 +706,6 @@ sysvbfs_reclaim(void *v)
 
 	DPRINTF("%s:\n", __func__);
 
-	vcache_remove(vp->v_mount,
-	    &bnode->inode->number, sizeof(bnode->inode->number));
 	if (bnode->removed) {
 		if (bfs_inode_delete(bfs, bnode->inode->number) != 0)
 			DPRINTF("%s: delete inode failed\n", __func__);

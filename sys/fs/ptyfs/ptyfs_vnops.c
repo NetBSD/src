@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.51 2015/06/23 10:41:06 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.52 2016/08/20 12:37:07 hannken Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.51 2015/06/23 10:41:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.52 2016/08/20 12:37:07 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,9 +223,7 @@ ptyfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-	vcache_remove(vp->v_mount, &ptyfs->ptyfs_key, sizeof(ptyfs->ptyfs_key));
 	vp->v_data = NULL;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.102 2016/08/20 12:37:08 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.101 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.102 2016/08/20 12:37:08 hannken Exp $");
 #endif /* not lint */
 
 
@@ -173,9 +173,6 @@ udf_reclaim(void *v)
 		vprint("udf_reclaim(): waiting for writeout\n", vp);
 		tsleep(&udf_node->outstanding_nodedscr, PRIBIO, "recl wait", hz/8);
 	}
-
-	vcache_remove(vp->v_mount, &udf_node->loc.loc, 
-	    sizeof(udf_node->loc.loc));
 
 	/* dispose all node knowledge */
 	udf_dispose_node(udf_node);

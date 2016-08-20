@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.155 2015/04/20 23:03:08 riastradh Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.156 2016/08/20 12:37:09 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.155 2015/04/20 23:03:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.156 2016/08/20 12:37:09 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1082,7 +1082,6 @@ kernfs_reclaim(void *v)
 	struct kernfs_node *kfs = VTOKERN(vp);
 
 	vp->v_data = NULL;
-	vcache_remove(vp->v_mount, &kfs->kfs_kt, sizeof(kfs->kfs_kt));
 	mutex_enter(&kfs_lock);
 	TAILQ_REMOVE(&VFSTOKERNFS(vp->v_mount)->nodelist, kfs, kfs_list);
 	mutex_exit(&kfs_lock);
