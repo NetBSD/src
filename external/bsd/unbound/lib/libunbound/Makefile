@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2016/08/20 11:20:31 christos Exp $
+# $NetBSD: Makefile,v 1.2 2016/08/20 15:24:29 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -101,3 +101,6 @@ CLEANFILES+=libunbound.3
 libunbound.3: libunbound.3.in __subst
 
 .include <bsd.lib.mk>
+
+# Use the generated files
+.y.c:
