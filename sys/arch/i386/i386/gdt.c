@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.54 2016/08/20 16:05:48 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.55 2016/08/20 19:46:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.54 2016/08/20 16:05:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.55 2016/08/20 19:46:54 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -304,6 +304,7 @@ gdt_grow(int which)
  *    the new slots.
  */
 
+#ifndef XEN
 static int
 gdt_get_slot(void)
 {
@@ -312,6 +313,7 @@ gdt_get_slot(void)
 
 	return gdt_get_slot1(0);
 }
+#endif
 
 static int
 gdt_get_slot1(int which)
@@ -343,6 +345,7 @@ gdt_get_slot1(int which)
 /*
  * Deallocate a GDT slot, putting it on the free list.
  */
+#ifndef XEN
 static void
 gdt_put_slot(int slot)
 {
@@ -351,6 +354,7 @@ gdt_put_slot(int slot)
 
 	gdt_put_slot1(slot, 0);
 }
+#endif
 
 static void
 gdt_put_slot1(int slot, int which)
