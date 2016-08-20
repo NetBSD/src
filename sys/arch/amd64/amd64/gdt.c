@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.27 2016/08/20 16:05:48 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.28 2016/08/20 17:34:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.27 2016/08/20 16:05:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.28 2016/08/20 17:34:23 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -65,8 +65,6 @@ int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 void gdt_init(void);
 static void gdt_grow(void);
-static int gdt_get_slot(void);
-static void gdt_put_slot(int);
 
 void
 update_descriptor(void *tp, void *ep)
@@ -235,6 +233,7 @@ gdt_grow(void)
 	pmap_update(pmap_kernel());
 }
 
+#if !defined(XEN) || defined(USER_LDT)
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
@@ -292,6 +291,7 @@ gdt_put_slot(int slot)
 	gdt[slot].sd_xx3 = gdt_free;
 	gdt_free = slot;
 }
+#endif
 
 int
 tss_alloc(struct x86_64_tss *tss)
