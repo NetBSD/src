@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.120 2016/08/16 01:03:07 mrg Exp $
+#	$NetBSD: bsd.x11.mk,v 1.121 2016/08/20 00:35:37 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -114,8 +114,10 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
     ${MACHINE} == "shark"	|| \
     ${MACHINE} == "zaurus"
 #	LOADABLE
-X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
-			${${ACTIVE_CXX} == "gcc":? -fno-merge-constants :}
+.if ${XORG_SERVER_SUBDIR:Uxorg-server.old} == "xorg-server.old"
+X11FLAGS.LOADABLE=	-DXFree86LOADER
+.endif
+X11FLAGS.LOADABLE+=	${${ACTIVE_CXX} == "gcc":? -fno-merge-constants :}
 .endif
 
 # XXX FIX ME
