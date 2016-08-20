@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1133 2016/07/31 02:14:12 pgoyette Exp $
+# $NetBSD: mi,v 1.1134 2016/08/20 11:34:49 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -123,6 +123,7 @@
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
 ./etc/systrace					base-obsolete		obsolete
+./etc/unbound					base-sys-root
 ./etc/uucp					base-obsolete		obsolete
 ./etc/zfs					base-zfs-root
 ./lib						base-sys-root		compatdir
@@ -942,6 +943,7 @@
 ./usr/bin/tty					base-util-bin
 ./usr/bin/ul					base-util-bin
 ./usr/bin/uname					base-util-bin
+./usr/bin/unbound-host				base-netutil-bin	crypto,unbound
 ./usr/bin/uncompress				base-util-bin
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
@@ -1927,6 +1929,11 @@
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
+./usr/sbin/unbound				base-netutil-bin	crypto,unbound
+./usr/sbin/unbound-anchor			base-netutil-bin	crypto,unbound
+./usr/sbin/unbound-checkconf			base-netutil-bin	crypto,unbound
+./usr/sbin/unbound-control			base-netutil-bin	crypto,unbound
+./usr/sbin/unbound-control-setup		base-netutil-bin	crypto,unbound
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
 ./usr/sbin/usbdevs				base-sysutil-bin
@@ -5908,6 +5915,9 @@
 ./var/chroot/tcpdump/etc			base-obsolete		obsolete
 ./var/chroot/tcpdump/etc/protocols		base-obsolete		obsolete
 ./var/chroot/tftp-proxy				base-sys-root
+./var/chroot/unbound				base-sys-root
+./var/chroot/unbound/etc			base-sys-root
+./var/chroot/unbound/etc/unbound		base-sys-root
 ./var/crash					base-sys-root
 ./var/cron					base-cron-root
 ./var/cron/tabs					base-cron-root
