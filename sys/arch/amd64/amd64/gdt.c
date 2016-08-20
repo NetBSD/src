@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.29 2016/08/20 18:04:04 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.30 2016/08/20 18:31:06 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.29 2016/08/20 18:04:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.30 2016/08/20 18:31:06 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -330,29 +330,30 @@ tss_free(int sel)
 }
 
 #ifdef USER_LDT
-void
-ldt_alloc(struct pmap *pmap, char *ldt, size_t len)
+/*
+ * XXX: USER_LDT is not implemented on amd64.
+ */
+int
+ldt_alloc(void *ldtp, size_t len)
 {
 	int slot;
-	struct sys_segment_descriptor *gdt;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
-
 	slot = gdt_get_slot();
-	set_sys_gdt(slot, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0);
-	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+	set_sys_gdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0);
+
+	return GDYNSEL(slot, SEL_KPL);
 }
 
 void
-ldt_free(struct pmap *pmap)
+ldt_free(int sel)
 {
 	int slot;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	slot = IDXDYNSEL(pmap->pm_ldt_sel);
+	slot = IDXDYNSEL(sel);
 
 	gdt_put_slot(slot);
 }
