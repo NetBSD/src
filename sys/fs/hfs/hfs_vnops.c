@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.32 2015/06/21 13:50:34 maxv Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.32 2015/06/21 13:50:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.33 2016/08/20 12:37:07 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1029,9 +1029,6 @@ hfs_vop_reclaim(void *v)
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
-
-	KASSERT(hp->h_key.hnk_cnid == hp->h_rec.u.cnid);
-	vcache_remove(vp->v_mount, &hp->h_key, sizeof(hp->h_key));
 
 	/* Decrement the reference count to the volume's device. */
 	if (hp->h_devvp) {
