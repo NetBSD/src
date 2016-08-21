@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.56 2016/08/20 15:48:18 christos Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.57 2016/08/21 13:23:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -632,7 +632,7 @@ symlink_len(const atf_tc_t *tc, const char *mp, size_t len)
 
 	USES_SYMLINKS;
 
-	RLF(rump_sys_chdir(mp), "%s", buf);
+	RLF(rump_sys_chdir(mp), "%s", mp);
 
 	buf = malloc(len + 1);
 	ATF_REQUIRE(buf);
