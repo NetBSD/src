@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.33 2016/08/21 10:20:21 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.34 2016/08/21 10:42:33 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.33 2016/08/21 10:20:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.34 2016/08/21 10:42:33 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -228,21 +228,22 @@ gdt_reload_cpu(struct cpu_info *ci)
 static void
 gdt_grow(void)
 {
-	size_t old_len, new_len;
+	size_t old_size;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	struct vm_page *pg;
 	vaddr_t va;
 
-	old_len = gdt_size;
+	old_size = gdt_size;
 	gdt_size <<= 1;
-	new_len = old_len << 1;
+	if (gdt_size > MAXGDTSIZ)
+		gdt_size = MAXGDTSIZ;
 	gdt_dynavail =
 	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		for (va = (vaddr_t)(ci->ci_gdt) + old_len;
-		     va < (vaddr_t)(ci->ci_gdt) + new_len;
+		for (va = (vaddr_t)(ci->ci_gdt) + old_size;
+		     va < (vaddr_t)(ci->ci_gdt) + gdt_size;
 		     va += PAGE_SIZE) {
 			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
 			    NULL) {
