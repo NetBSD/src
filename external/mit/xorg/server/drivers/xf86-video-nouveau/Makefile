@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/08/20 20:22:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2016/08/21 18:23:58 joerg Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -48,7 +48,7 @@ CPPFLAGS+=	-DNV_DRIVER_DATE=${DRIVER_DATE}
 .include "../Makefile.xf86-driver"
 
 # XXX
-.if ${HAVE_GCC} > 48
+.if ${HAVE_GCC:U0} > 48
 COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
 

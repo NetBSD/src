@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/08/20 20:22:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/21 18:23:58 joerg Exp $
 
 DRIVER=		xf86-video-siliconmotion
 DRIVER_NAME=	siliconmotion_drv
@@ -14,7 +14,7 @@ CPPFLAGS+=	-DHAVE_XMODES -DHAVE_XEXTPROTO_71
 
 .include "../Makefile.xf86-driver"
 
-.if ${HAVE_GCC} > 48
+.if ${HAVE_GCC:U0} > 48
 COPTS.smi_video.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
 
