@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.30 2016/08/20 18:31:06 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.31 2016/08/21 08:30:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.30 2016/08/20 18:31:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.31 2016/08/21 08:30:22 christos Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -64,7 +64,6 @@ int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 void gdt_init(void);
-static void gdt_grow(void);
 
 void
 update_descriptor(void *tp, void *ep)
@@ -205,6 +204,7 @@ gdt_reload_cpu(struct cpu_info *ci)
 }
 #endif
 
+#if !defined(XEN) || defined(USER_LDT)
 /*
  * Grow the GDT.
  */
@@ -239,7 +239,6 @@ gdt_grow(void)
 	pmap_update(pmap_kernel());
 }
 
-#if !defined(XEN) || defined(USER_LDT)
 /*
  * Allocate a GDT slot as follows:
  * 1) If there are entries on the free list, use those.
