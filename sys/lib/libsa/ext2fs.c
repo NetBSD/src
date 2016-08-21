@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.24 2016/08/04 21:39:20 rjs Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.25 2016/08/21 08:27:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -923,20 +923,6 @@ e2fs_sb_bswap(struct ext2fs *old, struct ext2fs *new)
 	new->e2fs_features_rocompat =	bswap32(old->e2fs_features_rocompat);
 	new->e2fs_algo		=	bswap32(old->e2fs_algo);
 	new->e2fs_reserved_ngdb	=	bswap16(old->e2fs_reserved_ngdb);
-}
-
-void e2fs_cg_bswap(struct ext2_gd *old, struct ext2_gd *new, int size)
-{
-	int i;
-
-	for (i = 0; i < (size / sizeof(struct ext2_gd)); i++) {
-		new[i].ext2bgd_b_bitmap	= bswap32(old[i].ext2bgd_b_bitmap);
-		new[i].ext2bgd_i_bitmap	= bswap32(old[i].ext2bgd_i_bitmap);
-		new[i].ext2bgd_i_tables	= bswap32(old[i].ext2bgd_i_tables);
-		new[i].ext2bgd_nbfree	= bswap16(old[i].ext2bgd_nbfree);
-		new[i].ext2bgd_nifree	= bswap16(old[i].ext2bgd_nifree);
-		new[i].ext2bgd_ndirs	= bswap16(old[i].ext2bgd_ndirs);
-	}
 }
 
 void e2fs_i_bswap(struct ext2fs_dinode *old, struct ext2fs_dinode *new,
