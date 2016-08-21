@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2016/08/20 20:22:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2016/08/21 18:23:58 joerg Exp $
 
 DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
@@ -23,7 +23,7 @@ CWARNFLAGS.clang+=	-Wno-parentheses
 .include "../Makefile.xf86-driver"
 
 # XXX
-.if ${HAVE_GCC} > 48
+.if ${HAVE_GCC:U0} > 48
 COPTS.sis_driver.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.sis_utility.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.initextx.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
