@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2181 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2182 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -313,7 +313,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	acpi(4): Updated ACPICA to 20160422. [christos 20160504]
 	dhcpcd(8): Import dhcpcd-6.11.0 [roy 20160509]
 	x86: Map the kernel image segments independently with fine-grained
-		permissions on amd64 and i386. [maxv 20160514]
+		permissions on amd64 and i386 (W^X). [maxv 20160514]
 	x86: Use processor-specific features to optimize memory access time to
 		the kernel image on amd64 and i386. [maxv 20160515]
 	arm: Add support for i.MX7 SoC. [ryo 20160517]
@@ -331,12 +331,21 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd(8): Import dhcpcd-6.11.1. [roy 20160617]
 	mdocml: Import 1.13.4. [christos 20160715]
 	acpi(4): Updated ACPICA to 20160527. [christos 20160718]
+	kernel: Use fine-grained permissions for kernel modules segments
+		(W^X). [maxv 20160720]
+	amd64: Prevent NULL from being mappable in kernel mode. [maxv 20160722]
+	amd64: Use fine-grained permissions for architecture-specific memory
+		areas (W^X). [maxv 20160725]
 	sdtemp(4): Add support for Atmel AT30TS00, AT30TSE004, Giantec
 		GT30TS00, GT34TS02, Microchip MCP9804, MCP98244, IDT
 		TS3000GB[02], TS3001GB2, TSE200[24]GB2 and On Semiconductor
 		CAT34TS04. [msaitoh 20160726]
 	sdtemp(4): Add JEDEC TSE2004av support. [msaitoh 20160728]
 	OpenSSH: Imported 7.3. [christos 20160802]
+	xen: Map the kernel image segments independently with fine-grained
+		permissions (W^X). [maxv 20160802]
+	kernel: Provide an efficient way to prevent NULL from being mappable
+		in userland processes. [maxv 20160806]
 	zoneinfo: Import tzdata2016f. [kre 20160807]
 	dhcpcd(8): Import dhcpcd-6.11.3. [roy 20160815]
 	unbound: Import 1.5.9. [christos 20160820]
