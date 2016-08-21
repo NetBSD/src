@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/08/19 03:59:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2016/08/21 20:51:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,6 @@ SUBDIR+=	dix fb mi Xext miext os randr render
 SUBDIR+=	present pseudoramiX
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
 SUBDIR+=	damageext composite config .WAIT
-SUBDIR+=	hw
 
 # XXX
 .if ${HAVE_DRI3:Uno} != "no"
@@ -20,6 +19,9 @@ SUBDIR+=	dri3
 .if ${HAVE_XORG_GLAMOR} != "no"
 SUBDIR+=	glamor
 .endif
+
+# And finally, build the servers.
+SUBDIR+=	.WAIT hw
 
 .PATH:	${X11SRCDIR.xorg-server}
 
