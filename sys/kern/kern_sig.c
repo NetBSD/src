@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.328 2016/08/04 06:43:43 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.329 2016/08/21 15:24:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.328 2016/08/04 06:43:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.329 2016/08/21 15:24:17 hannken Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -527,14 +527,14 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
 static int
 siggetinfo(sigpend_t *sp, ksiginfo_t *out, int signo)
 {
-	ksiginfo_t *ksi;
+	ksiginfo_t *ksi, *nksi;
 
 	if (sp == NULL)
 		goto out;
 
 	/* Find siginfo and copy it out. */
 	int count = 0;
-	TAILQ_FOREACH(ksi, &sp->sp_info, ksi_list) {
+	TAILQ_FOREACH_SAFE(ksi, &sp->sp_info, ksi_list, nksi) {
 		if (ksi->ksi_signo != signo)
 			continue;
 		if (count++ > 0) /* Only remove the first, count all of them */
