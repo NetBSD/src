@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.31 2016/08/21 08:30:22 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.32 2016/08/21 10:07:15 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.31 2016/08/21 08:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.32 2016/08/21 10:07:15 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -105,7 +105,8 @@ set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 }
 
 /*
- * Initialize the GDT.
+ * Initialize the GDT. We already have a gdtstore, which was temporarily used
+ * by the bootstrap code. Now, we allocate a new gdtstore, and put it in cpu0.
  */
 void
 gdt_init(void)
@@ -120,11 +121,18 @@ gdt_init(void)
 	gdt_next = 0;
 	gdt_free = GNULL_SEL;
 	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
+	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
 	old_gdt = gdtstore;
+
+	/* Allocate MAXGDTSIZ bytes of virtual memory. */
 	gdtstore = (char *)uvm_km_alloc(kernel_map, MAXGDTSIZ, 0,
 	    UVM_KMF_VAONLY);
+
+	/*
+	 * Allocate only MINGDTSIZ bytes of physical memory. We will grow this
+	 * area in gdt_grow at run-time if needed.
+	 */
 	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MINGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -135,17 +143,21 @@ gdt_init(void)
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
+
+	/* Copy the initial bootstrap GDT into the new area. */
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
 	ci->ci_gdt = (void *)gdtstore;
 #ifndef XEN
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
 #endif
+
 	gdt_init_cpu(ci);
 }
 
 /*
- * Allocate shadow GDT for a slave CPU.
+ * Allocate shadow GDT for a secondary CPU. It contains the same values as the
+ * GDT present in cpu0 (gdtstore).
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
@@ -157,6 +169,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len,
 	    0, UVM_KMF_VAONLY);
+
 	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
 	    va += PAGE_SIZE) {
 		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
@@ -167,19 +180,21 @@ gdt_alloc_cpu(struct cpu_info *ci)
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
+
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdtstore, gdt_size);
 }
 
-
 /*
- * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a CPU knows who it is).
+ * Load appropriate GDT descriptor into the currently running CPU, which must
+ * be ci.
  */
 void
 gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
+
+	KASSERT(curcpu() == ci);
 
 #ifndef XEN
 	setregion(&region, ci->ci_gdt, (uint16_t)(MAXGDTSIZ - 1));
@@ -206,7 +221,9 @@ gdt_reload_cpu(struct cpu_info *ci)
 
 #if !defined(XEN) || defined(USER_LDT)
 /*
- * Grow the GDT.
+ * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
+ * of them. We already have the virtual memory, we only need to grow the
+ * physical memory.
  */
 static void
 gdt_grow(void)
@@ -305,10 +322,13 @@ tss_alloc(struct x86_64_tss *tss)
 	int slot;
 
 	mutex_enter(&cpu_lock);
+
 	slot = gdt_get_slot();
-	set_sys_gdt(slot, tss, sizeof (struct x86_64_tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0);
+	set_sys_gdt(slot, tss, sizeof(struct x86_64_tss) - 1, SDT_SYS386TSS,
+	    SEL_KPL, 0);
+
 	mutex_exit(&cpu_lock);
+
 	return GDYNSEL(slot, SEL_KPL);
 #else  /* XEN */
 	/* TSS, what for? */
