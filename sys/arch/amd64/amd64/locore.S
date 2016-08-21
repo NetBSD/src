@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.108 2016/07/25 16:03:38 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.109 2016/08/21 09:53:25 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1247,7 +1247,7 @@ IDTVEC_END(syscall32)
 IDTVEC(syscall)
 #ifndef XEN
 	/*
-	 * The user %rip is in %rcx and the user %flags in %r11. The kernel %cs
+	 * The user %rip is in %rcx and the user %rflags in %r11. The kernel %cs
 	 * and %ss are loaded, but nothing else is.
 	 *
 	 * The 'swapgs' instruction gives us access to cpu-specific memory where
@@ -1266,12 +1266,11 @@ IDTVEC(syscall)
 
 	/* Make stack look like an 'int nn' frame */
 #define SP(x)	(x)-(TF_SS+8)(%r15)
-	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS) /* user %ss */
-	movq	%rsp,SP(TF_RSP)		/* User space rsp */
-
-	movq	%r11,SP(TF_RFLAGS)	/* old rflags from syscall insn */
-	movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS)
-	movq	%rcx,SP(TF_RIP)		/* syscall saves rip in rcx */
+	movq	$(LSEL(LUDATA_SEL, SEL_UPL)),SP(TF_SS)	/* user %ss */
+	movq	%rsp,SP(TF_RSP)				/* user %rsp */
+	movq	%r11,SP(TF_RFLAGS)			/* user %rflags */
+	movq	$(LSEL(LUCODE_SEL, SEL_UPL)),SP(TF_CS)	/* user %cs */
+	movq	%rcx,SP(TF_RIP)				/* user %rip */
 
 	leaq	SP(0),%rsp		/* %rsp now valid after frame */
 	movq	CPUVAR(SCRATCH),%r15
