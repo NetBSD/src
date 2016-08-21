@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.32 2016/08/21 10:07:15 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.33 2016/08/21 10:20:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.32 2016/08/21 10:07:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.33 2016/08/21 10:20:21 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -278,22 +278,17 @@ gdt_get_slot(void)
 		slot = gdt_free;
 		gdt_free = gdt[slot].sd_xx3;	/* XXXfvdl res. field abuse */
 	} else {
-#ifdef DIAGNOSTIC
-		if (gdt_next != gdt_dyncount)
-			panic("gdt_get_slot botch 1");
-#endif
+		KASSERT(gdt_next == gdt_dyncount);
 		if (gdt_next >= gdt_dynavail) {
-#ifdef DIAGNOSTIC
 			if (gdt_size >= MAXGDTSIZ)
-				panic("gdt_get_slot botch 2");
-#endif
+				panic("gdt_get_slot: out of memory");
 			gdt_grow();
 		}
 		slot = gdt_next++;
 	}
 
 	gdt_dyncount++;
-	return (slot);
+	return slot;
 }
 
 /*
