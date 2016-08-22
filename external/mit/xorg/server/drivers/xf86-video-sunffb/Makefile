@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/08/20 20:22:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2016/08/22 08:39:20 mrg Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
@@ -26,4 +26,5 @@ MAN=		sunffb.4
 # XXX
 .if ${HAVE_GCC} > 48
 COPTS.ffb_dac.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
+COPTS.ffb_dga.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
