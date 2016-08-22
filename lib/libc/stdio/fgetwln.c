@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.5 2012/03/15 18:22:30 christos Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.6 2016/08/22 06:11:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.5 2012/03/15 18:22:30 christos Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.6 2016/08/22 06:11:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,7 +94,7 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 		if (wc == L'\n')
 			break;
 	}
-	if (len == 0)
+	if (len == 0 || fp->flags & __SERR)
 		goto error;
 
 	FUNLOCKFILE(fp);
