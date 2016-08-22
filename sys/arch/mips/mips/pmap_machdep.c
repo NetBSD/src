@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.4 2016/08/22 11:34:06 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.5 2016/08/22 11:34:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.4 2016/08/22 11:34:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.5 2016/08/22 11:34:42 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -654,7 +654,7 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 	 */
 	if (MIPS_HAS_R4K_MMU) {
 		if (VM_PAGEMD_CACHED_P(mdpg)) {
-			mips_icache_sync_range_index( va, PAGE_SIZE);
+			mips_icache_sync_range_index(va, PAGE_SIZE);
 		}
 	} else {
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(pg)),
