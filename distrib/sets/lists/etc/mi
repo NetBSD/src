@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.239 2015/12/13 02:06:16 christos Exp $
+# $NetBSD: mi,v 1.240 2016/08/22 07:37:43 christos Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -292,6 +292,7 @@
 ./etc/rc.d/timed				etc-timed-rc
 ./etc/rc.d/tpctl				etc-sys-rc
 ./etc/rc.d/ttys					etc-sys-rc
+./etc/rc.d/unbound				etc-net-rc
 ./etc/rc.d/veriexec				etc-sys-rc
 ./etc/rc.d/virecover				etc-sys-rc
 ./etc/rc.d/wdogctl				etc-sysutil-rc
