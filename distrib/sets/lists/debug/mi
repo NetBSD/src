@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 2016/08/20 11:34:49 christos Exp $
+# $NetBSD: mi,v 1.165 2016/08/22 08:49:33 maya Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2105,6 +2105,7 @@
 ./usr/libdata/debug/usr/tests/lib/libm/t_floor.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_fmod.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_hypot.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libm/t_ilogb.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_infinity.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_ldexp.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libm/t_libm.debug			tests-obsolete		obsolete,compattestfile
