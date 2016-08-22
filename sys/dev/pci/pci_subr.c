@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.149 2016/08/17 06:32:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.150 2016/08/22 08:35:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.149 2016/08/17 06:32:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.150 2016/08/22 08:35:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3490,6 +3490,10 @@ pci_conf_print_extcaplist(
 		off = PCI_EXTCAPLIST_NEXT(rval);
 		if (off == 0)
 			break;
+		else if (off <= PCI_CONF_SIZE) {
+			printf("    next pointer: 0x%03x (incorrect)\n", off);
+			return;
+		}
 		rval = regs[o2i(off)];
 	}
 
