@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.1 2016/08/22 08:49:33 maya Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.2 2016/08/22 10:36:20 maya Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -83,11 +83,11 @@ ATF_TC_BODY(ilogb, tc)
 	ATF_CHECK(ilogbl(-INFINITY) == INT_MAX);
 	ATF_CHECK_RAISED_INVALID;
 
-	ATF_CHECK(ilogbf(2^20) == 20);
+	ATF_CHECK(ilogbf(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
-	ATF_CHECK(ilogb(2^20) == 20);
+	ATF_CHECK(ilogb(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
-	ATF_CHECK(ilogbl(2^20) == 20);
+	ATF_CHECK(ilogbl(1024) == 10);
 	ATF_CHECK_RAISED_NOTHING;
 
 #ifndef __vax__
