@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.66 2016/03/17 15:25:46 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.67 2016/08/22 16:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.66 2016/03/17 15:25:46 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.67 2016/08/22 16:08:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,13 +323,14 @@ daemon2_fork(void)
 	 pid = fork();
 	 switch (pid) {
 	 case -1:
-		 return -1;
+		return -1;
 	 case 0:
-		 /* child */
-		 (void)close(detach_msg_pipe[0]);
+		/* child */
+		(void)close(detach_msg_pipe[0]);
+		(void)write(detach_msg_pipe[1], "", 1);
 		 return detach_msg_pipe[1];
 	 default:
-		 break;
+		break;
 	}
 
 	/* Parent */
@@ -497,6 +498,8 @@ main(int argc, char *argv[])
 
 	if (debug == 0) {
 		parent_fd = daemon2_fork();
+		if (parent_fd == -1)
+			logit(LOG_ERR, "daemon2_fork failed");
 		openlog("nfsd", LOG_PID, LOG_DAEMON);
 	}
 
