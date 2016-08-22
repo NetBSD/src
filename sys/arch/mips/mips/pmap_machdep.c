@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.3 2016/08/19 10:05:35 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.4 2016/08/22 11:34:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.3 2016/08/19 10:05:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.4 2016/08/22 11:34:06 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -177,7 +177,6 @@ pmap_md_map_ephemeral_page(struct vm_page *pg, bool locked_p, int prot,
 	UVMHIST_LOG(pmaphist, "(pg=%p, prot=%d, ptep=%p)",
 	    pg, prot, old_pte_p, 0);
 
-	KASSERT(locked_p || !VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 	KASSERT(!locked_p || VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 
 	if (!MIPS_CACHE_VIRTUAL_ALIAS || !mips_cache_badalias(pv->pv_va, pa)) {
@@ -258,7 +257,6 @@ pmap_md_unmap_ephemeral_page(struct vm_page *pg, bool locked_p, register_t va,
 	UVMHIST_LOG(pmaphist, "(pg=%p, va=%#lx, pte=%#"PRIxPTE")",
 	    pg, va, pte_value(old_pte), 0);
 
-	KASSERT(locked_p || !VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 	KASSERT(!locked_p || VM_PAGEMD_PVLIST_LOCKED_P(mdpg));
 
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
