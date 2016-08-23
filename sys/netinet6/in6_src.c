@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.67 2016/08/23 19:39:04 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.68 2016/08/23 19:39:57 roy Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.67 2016/08/23 19:39:04 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.68 2016/08/23 19:39:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -444,7 +444,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 				/* XXX breaks stat */
 				REPLACE(0);
 			}
-		}			
+		}
 	skip_rule4:
 #endif /* MIP6 && NMIP > 0 */
 
@@ -878,7 +878,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 	u_int16_t lport, *lastport;
 	enum kauth_network_req req;
 	int error = 0;
-	
+
 	if (in6p->in6p_flags & IN6P_LOWPORT) {
 #ifndef IPNOPRIVPORTS
 		req = KAUTH_REQ_NETWORK_BIND_PRIVPORT;
@@ -904,7 +904,7 @@ in6_pcbsetport(struct sockaddr_in6 *sin6, struct in6pcb *in6p, struct lwp *l)
 	error = portalgo_randport(&lport, &in6p->in6p_head, l->l_cred);
 	if (error)
 		return error;
-	
+
 	in6p->in6p_flags |= IN6P_ANONPORT;
 	*lastport = lport;
 	in6p->in6p_lport = htons(lport);
