@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.202 2016/08/20 21:22:25 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.203 2016/08/23 06:24:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.202 2016/08/20 21:22:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.203 2016/08/23 06:24:30 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -242,12 +242,9 @@ ext2fs_done(void)
 static void
 ext2fs_sb_setmountinfo(struct m_ext2fs *fs, struct mount *mp)
 {
-	(void)strncpy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname,
+	(void)strlcpy(fs->e2fs_fsmnt, mp->mnt_stat.f_mntonname,
             sizeof(fs->e2fs_fsmnt));
 	if (fs->e2fs_ronly == 0 && fs->e2fs.e2fs_rev > E2FS_REV0) {
-		(void)strncpy(fs->e2fs.e2fs_fsmnt, mp->mnt_stat.f_mntonname,
-                    sizeof(fs->e2fs.e2fs_fsmnt));
-
 		fs->e2fs.e2fs_mtime = time_second;
 		fs->e2fs.e2fs_mnt_count++;
 
