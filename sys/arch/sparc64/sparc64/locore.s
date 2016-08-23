@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.399 2016/07/18 19:51:06 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.400 2016/08/23 19:57:01 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -2851,15 +2851,7 @@ sun4v_dtsb_miss:
 	retry
 	NOTREACHED
 
-sun4v_datatrap:			! branch further based on trap level
-	rdpr	%tl, %g1
-	dec	%g1
-	beq	sun4v_datatrap_tl0
-	 nop
-	ba	sun4v_datatrap_tl1
-	 nop
-
-sun4v_datatrap_tl0:
+sun4v_datatrap:
 	GET_MMFSA %g3				! MMU Fault status area
 	add	%g3, 0x48, %g1
 	LDPTRA	[%g1] ASI_PHYS_CACHED, %g1	! Data fault address
@@ -2918,10 +2910,6 @@ sun4v_datatrap_tl0:
 	 nop
 	NOTREACHED
 	
-sun4v_datatrap_tl1:
-	/* XXX missing implementaion */
-	sir
-
 sun4v_tl0_dtsb_prot:
 	GET_MMFSA %g1				! MMU Fault status area
 	add	%g1, 0x48, %g3
