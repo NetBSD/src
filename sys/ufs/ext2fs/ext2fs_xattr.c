@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_xattr.c,v 1.3 2016/08/14 11:40:31 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_xattr.c,v 1.4 2016/08/23 06:40:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.3 2016/08/14 11:40:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_xattr.c,v 1.4 2016/08/23 06:40:54 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,9 @@ static const char * const xattr_prefix_index[] = {
 };
 
 static int
-ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, int attrnamespace, struct uio *uio, size_t *size, uint8_t name_index, const char *name)
+ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end,
+    int attrnamespace, struct uio *uio, size_t *size, uint8_t name_index,
+    const char *name)
 {
 	uint8_t *value;
 	int error;
@@ -83,8 +85,10 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 		 * Only EXT2FS_XATTR_PREFIX_USER is USER, anything else
 		 * is considered SYSTEM.
 		 */
-		if ((attrnamespace == EXTATTR_NAMESPACE_USER && e->e_name_index != EXT2FS_XATTR_PREFIX_USER) ||
-		    (attrnamespace == EXTATTR_NAMESPACE_SYSTEM && e->e_name_index == EXT2FS_XATTR_PREFIX_USER)) {
+		if ((attrnamespace == EXTATTR_NAMESPACE_USER
+		    && e->e_name_index != EXT2FS_XATTR_PREFIX_USER) ||
+		    (attrnamespace == EXTATTR_NAMESPACE_SYSTEM
+		    && e->e_name_index == EXT2FS_XATTR_PREFIX_USER)) {
 			continue;
 		}
 
@@ -94,8 +98,8 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 			continue;
 
 		value_offs = fs2h32(e->e_value_offs);
-		value_len  = fs2h32(e->e_value_size);
-		value      = &start[value_offs];
+		value_len = fs2h32(e->e_value_size);
+		value = &start[value_offs];
 
 		/* make sure the value offset are sane */
 		if (&value[value_len] > end)
@@ -103,8 +107,8 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 
 		if (uio != NULL) {
 			/*
-			 * Figure out maximum to transfer -- use buffer size and
-			 * local data limit.
+			 * Figure out maximum to transfer -- use buffer size
+			 * and local data limit.
 			 */
 			len = MIN(uio->uio_resid, value_len);
 			old_len = uio->uio_resid;
@@ -131,24 +135,27 @@ ext2fs_find_xattr(struct ext2fs_xattr_entry *e, uint8_t *start, uint8_t *end, in
 }
 
 static int
-ext2fs_get_inode_xattr(struct inode *ip, int attrnamespace, struct uio *uio, size_t *size, uint8_t name_index, const char *name)
+ext2fs_get_inode_xattr(struct inode *ip, int attrnamespace, struct uio *uio,
+    size_t *size, uint8_t name_index, const char *name)
 {
 	struct ext2fs_dinode *di = ip->i_din.e2fs_din;
 	struct ext2fs_xattr_ibody_header *h;
 	uint8_t *start, *end;
 
 	start = &((uint8_t *)di)[EXT2_REV0_DINODE_SIZE + di->e2di_extra_isize];
-	h     = (struct ext2fs_xattr_ibody_header *)start;
-	end   = &((uint8_t *)di)[EXT2_DINODE_SIZE(ip->i_e2fs)];
+	h = (struct ext2fs_xattr_ibody_header *)start;
+	end = &((uint8_t *)di)[EXT2_DINODE_SIZE(ip->i_e2fs)];
 
 	if (end <= start || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
 		return ENODATA;
 
-	return ext2fs_find_xattr(EXT2FS_XATTR_IFIRST(h), start, end, attrnamespace, uio, size, name_index, name);
+	return ext2fs_find_xattr(EXT2FS_XATTR_IFIRST(h), start, end,
+	    attrnamespace, uio, size, name_index, name);
 }
 
 static int
-ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, size_t *size, uint8_t name_index, const char *name)
+ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio,
+    size_t *size, uint8_t name_index, const char *name)
 {
 	struct ext2fs_dinode *di = ip->i_din.e2fs_din;
 	uint8_t *start, *end;
@@ -165,7 +172,8 @@ ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
 	if (xblk == 0)
 		return 0;
 
-	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk), (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
+	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk),
+	    (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
 	if (error)
 		goto out;
 
@@ -176,9 +184,10 @@ ext2fs_get_block_xattr(struct inode *ip, int attrnamespace, struct uio *uio, siz
 	if (end <= start || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
 		goto out;
 
-	error = ext2fs_find_xattr(EXT2FS_XATTR_BFIRST(h), start, end, attrnamespace, uio, size, name_index, name);
+	error = ext2fs_find_xattr(EXT2FS_XATTR_BFIRST(h), start, end,
+	    attrnamespace, uio, size, name_index, name);
 
-    out:
+out:
 	if (bp)
 		brelse(bp, 0);
 	return error;
@@ -197,7 +206,7 @@ ext2fs_getextattr(void *v)
 	} */ *ap = v;
 	struct inode *ip = VTOI(ap->a_vp);
 	char namebuf[EXT2FS_XATTR_NAME_LEN_MAX + 1];
-	int error, i;
+	int error;
 	const char *prefix, *name;
 	uint8_t name_index;
 	size_t name_match, valuesize = 0;
@@ -224,23 +233,25 @@ ext2fs_getextattr(void *v)
 	name = ap->a_name;
 	name_index = 0;
 	name_match = 0;
-	for(i=0; i < sizeof(xattr_prefix_index)/sizeof(void *); i++) {
+	for(size_t i = 0; i < __arraycount(xattr_prefix_index); i++) {
 		prefix = xattr_prefix_index[i];
-		if (strlen(prefix) > 0 &&
-		    strncmp(ap->a_name, prefix, strlen(prefix)) == 0 &&
-		    name_match < strlen(prefix)) {
-			name = &ap->a_name[strlen(prefix)];
+		size_t l = strlen(prefix);
+		if (l > 0 && strncmp(ap->a_name, prefix, l) == 0 &&
+		    name_match < l) {
+			name = &ap->a_name[l];
 			name_index = i;
-			name_match = strlen(prefix);
+			name_match = l;
 			continue;
 		}
 	}
 
 	/* fetch the xattr */
-	error = ext2fs_get_inode_xattr(ip, ap->a_attrnamespace, ap->a_uio, &valuesize, name_index, name);
+	error = ext2fs_get_inode_xattr(ip, ap->a_attrnamespace, ap->a_uio,
+	    &valuesize, name_index, name);
 	if (error == ENODATA) {
 		/* not found in inode, try facl */
-		error = ext2fs_get_block_xattr(ip, ap->a_attrnamespace, ap->a_uio, &valuesize, name_index, name);
+		error = ext2fs_get_block_xattr(ip, ap->a_attrnamespace,
+		    ap->a_uio, &valuesize, name_index, name);
 	}
 
 	if (ap->a_size != NULL)
@@ -270,7 +281,8 @@ ext2fs_setextattr(void *v)
 }
 
 static int
-ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end, int attrnamespace, int flags, struct uio *uio, size_t *size)
+ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end,
+    int attrnamespace, int flags, struct uio *uio, size_t *size)
 {
 	char name[EXT2FS_XATTR_NAME_LEN_MAX + 1];
 	uint8_t len;
@@ -286,12 +298,14 @@ ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end, int attrnamespace,
 		 * Only EXT2FS_XATTR_PREFIX_USER is USER, anything else
 		 * is considered SYSTEM.
 		 */
-		if ((attrnamespace == EXTATTR_NAMESPACE_USER && e->e_name_index != EXT2FS_XATTR_PREFIX_USER) ||
-		    (attrnamespace == EXTATTR_NAMESPACE_SYSTEM && e->e_name_index == EXT2FS_XATTR_PREFIX_USER)) {
+		if ((attrnamespace == EXTATTR_NAMESPACE_USER
+		    && e->e_name_index != EXT2FS_XATTR_PREFIX_USER) ||
+		    (attrnamespace == EXTATTR_NAMESPACE_SYSTEM
+		    && e->e_name_index == EXT2FS_XATTR_PREFIX_USER)) {
 			continue;
 		}
 
-		if (e->e_name_index <= sizeof(xattr_prefix_index)/sizeof(void *))
+		if (e->e_name_index < __arraycount(xattr_prefix_index))
 			prefix = xattr_prefix_index[e->e_name_index];
 		else
 			prefix = "";
@@ -303,7 +317,9 @@ ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end, int attrnamespace,
 		if (uio != NULL) {
 			if (flags & EXTATTR_LIST_LENPREFIX) {
 				/* write name length */
-				uiomove(&len, sizeof(uint8_t), uio);
+				error = uiomove(&len, sizeof(uint8_t), uio);
+				if (error)
+					return error;
 			} else {
 				/* include trailing NUL */
 				len++;
@@ -321,7 +337,8 @@ ext2fs_list_xattr(struct ext2fs_xattr_entry *e, uint8_t *end, int attrnamespace,
 }
 
 static int
-ext2fs_list_inode_xattr(struct inode *ip, int attrnamespace, int flags, struct uio *uio, size_t *size)
+ext2fs_list_inode_xattr(struct inode *ip, int attrnamespace, int flags,
+    struct uio *uio, size_t *size)
 {
 	struct ext2fs_dinode *di = ip->i_din.e2fs_din;
 	void *start, *end;
@@ -334,11 +351,13 @@ ext2fs_list_inode_xattr(struct inode *ip, int attrnamespace, int flags, struct u
 	if (end <= start || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
 		return 0;
 
-	return ext2fs_list_xattr(EXT2FS_XATTR_IFIRST(h), end, attrnamespace, flags, uio, size);
+	return ext2fs_list_xattr(EXT2FS_XATTR_IFIRST(h), end, attrnamespace,
+	    flags, uio, size);
 }
 
 static int
-ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags, struct uio *uio, size_t *size)
+ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags,
+    struct uio *uio, size_t *size)
 {
 	struct ext2fs_dinode *di = ip->i_din.e2fs_din;
 	void *end;
@@ -355,19 +374,21 @@ ext2fs_list_block_xattr(struct inode *ip, int attrnamespace, int flags, struct u
 	if (xblk == 0)
 		return 0;
 
-	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk), (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
+	error = bread(ip->i_devvp, fsbtodb(ip->i_e2fs, xblk),
+	    (int)ip->i_e2fs->e2fs_bsize, 0, &bp);
 	if (error)
 		goto out;
 
-	h     = (struct ext2fs_xattr_header *)bp->b_data;
-	end   = &((uint8_t *)bp->b_data)[bp->b_bcount];
+	h = (struct ext2fs_xattr_header *)bp->b_data;
+	end = &((uint8_t *)bp->b_data)[bp->b_bcount];
 
 	if (end <= (void *)h || fs2h32(h->h_magic) != EXT2FS_XATTR_MAGIC)
 		goto out;
 
-	error = ext2fs_list_xattr(EXT2FS_XATTR_BFIRST(h), end, attrnamespace, flags, uio, size);
+	error = ext2fs_list_xattr(EXT2FS_XATTR_BFIRST(h), end, attrnamespace,
+	    flags, uio, size);
 
-    out:
+out:
 	if (bp)
 		brelse(bp, 0);
 	return error;
@@ -417,15 +438,17 @@ ext2fs_listextattr(void *v)
                 return ENXIO;
 
 	/* fetch inode xattrs */
-	error = ext2fs_list_inode_xattr(ip, ap->a_attrnamespace, ap->a_flag, ap->a_uio, &listsize);
+	error = ext2fs_list_inode_xattr(ip, ap->a_attrnamespace, ap->a_flag,
+	    ap->a_uio, &listsize);
 	if (error)
 		return error;
 
-	error = ext2fs_list_block_xattr(ip, ap->a_attrnamespace, ap->a_flag, ap->a_uio, &listsize);
+	error = ext2fs_list_block_xattr(ip, ap->a_attrnamespace, ap->a_flag,
+	    ap->a_uio, &listsize);
 	if (error)
 		return error;
 
-    out:
+out:
 	if (ap->a_size != NULL)
 		*ap->a_size = listsize;
 
