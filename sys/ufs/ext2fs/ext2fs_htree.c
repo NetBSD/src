@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_htree.c,v 1.8 2016/08/20 19:45:20 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2012 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  * $FreeBSD: head/sys/fs/ext2fs/ext2fs_htree.c 294653 2016-01-24 02:41:49Z pfg $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.8 2016/08/20 19:45:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_htree.c,v 1.9 2016/08/23 06:23:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,8 +451,6 @@ ext2fs_htree_create_index(struct vnode *vp, struct componentname *cnp,
 		bdwrite(bp);
 	
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (error)
-		goto out;
 
 	/*
 	 * Write directory block 1.
