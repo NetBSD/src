@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.69 2016/03/18 03:08:25 mrg Exp $
+# $NetBSD: md.alpha,v 1.70 2016/08/23 10:12:02 christos Exp $
 ./usr/include/alpha				comp-c-include
 ./usr/include/alpha/_G_config.h			comp-obsolete		obsolete
 ./usr/include/alpha/alpha_cpu.h			comp-c-include
@@ -23,6 +23,7 @@
 ./usr/include/alpha/endian.h			comp-c-include
 ./usr/include/alpha/endian_machdep.h		comp-c-include
 ./usr/include/alpha/fbio.h			comp-obsolete		obsolete
+./usr/include/alpha/fenv.h			comp-c-include
 ./usr/include/alpha/float.h			comp-c-include
 ./usr/include/alpha/fpu.h			comp-c-include
 ./usr/include/alpha/frame.h			comp-c-include
