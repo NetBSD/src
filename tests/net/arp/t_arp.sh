@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.16 2016/06/21 05:04:16 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.17 2016/08/23 16:03:45 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,8 +25,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-inetserver="rump_server -lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_shmif"
-inetserver="$inetserver -lrumpdev -lrumpnet_tap"
+inetlib="-lrumpnet_shmif -lrumpnet_tap -lrumpnet -lrumpnet_net -lrumpnet_netinet"
+inetserver="rump_server $inetlib -lrumpdev"
 HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCKSRC=unix://commsock1
