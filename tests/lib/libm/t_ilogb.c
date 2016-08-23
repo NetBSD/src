@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.2 2016/08/22 10:36:20 maya Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.3 2016/08/23 10:03:44 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -33,17 +33,24 @@
 #include <fenv.h>
 #include <math.h>
 
-#define ATF_CHECK_RAISED_INVALID do { \
+#ifndef __HAVE_FENV
+
+# define ATF_CHECK_RAISED_INVALID 
+# define ATF_CHECK_RAISED_NOTHING 
+
+#else
+# define ATF_CHECK_RAISED_INVALID do { \
 	int r; \
 	r = feclearexcept(FE_ALL_EXCEPT); \
 	ATF_CHECK(r == FE_INVALID); \
-	} while (0)
+} while (/*CONSTCOND*/0)
 
-#define ATF_CHECK_RAISED_NOTHING do { \
+# define ATF_CHECK_RAISED_NOTHING do { \
 	int r; \
 	r = feclearexcept(FE_ALL_EXCEPT); \
 	ATF_CHECK(r == 0); \
-	} while (0)
+} while (/*CONSTCOND*/0)
+#endif
 
 ATF_TC(ilogb);
 ATF_TC_HEAD(ilogb, tc)
