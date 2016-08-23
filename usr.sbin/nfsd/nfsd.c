@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.67 2016/08/22 16:08:51 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.68 2016/08/23 13:10:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.67 2016/08/22 16:08:51 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.68 2016/08/23 13:10:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -425,6 +425,7 @@ main(int argc, char *argv[])
 	int ip6flag, ip4flag;
 	int s, compat;
 	int parent_fd = -1;
+	pthread_t *workers;
 
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
@@ -517,11 +518,16 @@ main(int argc, char *argv[])
 		tryconf(&cfg[i], i, reregister);
 	}
 
+	workers = calloc(nfsdcnt, sizeof(*workers));
+	if (workers == NULL) {
+		logit(LOG_ERR, "thread alloc %s", strerror(errno));
+		exit(1);
+	}
+
 	for (i = 0; i < nfsdcnt; i++) {
-		pthread_t t;
 		int error;
 
-		error = pthread_create(&t, NULL, worker, NULL);
+		error = pthread_create(&workers[i], NULL, worker, NULL);
 		if (error) {
 			errno = error;
 			logit(LOG_ERR, "pthread_create: %s", strerror(errno));
@@ -544,9 +550,6 @@ main(int argc, char *argv[])
 
 	}
 
-	if (connect_type_cnt == 0)
-		exit(0);
-
 	pthread_setname_np(pthread_self(), "master", NULL);
 
 	if (debug == 0) {
@@ -555,6 +558,12 @@ main(int argc, char *argv[])
 		(void)signal(SIGINT, SIG_IGN);
 		(void)signal(SIGQUIT, SIG_IGN);
 		(void)signal(SIGSYS, nonfs);
+	}
+
+	if (connect_type_cnt == 0) {
+		for (i = 0; i < nfsdcnt; i++)
+			    pthread_join(workers[i], NULL);
+		exit(0);
 	}
 
 	/*
