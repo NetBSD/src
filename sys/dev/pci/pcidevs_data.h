@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1252 2016/08/23 09:18:21 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1253 2016/08/23 09:20:00 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1261 2016/08/23 09:18:01 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1262 2016/08/23 09:19:44 msaitoh Exp
  */
 
 /*
@@ -6222,6 +6222,10 @@ static const uint16_t pci_products[] = {
 	    17863, 21272, 17876, 21387, 21396, 20694, 20671, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG8, 
 	    17863, 21272, 17876, 21387, 21396, 20694, 20671, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_3, 
+	    17863, 21272, 17876, 21387, 21414, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_4, 
+	    17863, 21272, 17876, 21387, 21414, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_1, 
 	    17863, 21272, 17876, 21387, 21414, 21420, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_2, 
@@ -6233,10 +6237,6 @@ static const uint16_t pci_products[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_7, 
 	    17863, 21272, 17876, 21387, 21414, 21420, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_8, 
-	    17863, 21272, 17876, 21387, 21414, 21420, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_3, 
-	    17863, 21272, 17876, 21387, 21414, 21420, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_4, 
 	    17863, 21272, 17876, 21387, 21414, 21420, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_XE5_V3_PCU_4, 
 	    17863, 21272, 17876, 3749, 8546, 19768, 0,
@@ -14138,7 +14138,7 @@ static const char pci_words[] = { "."
 	    "Decode\0" /* 6 refs @ 21403 */
 	    "Ras\0" /* 1 refs @ 21410 */
 	    "DDRIO\0" /* 12 refs @ 21414 */
-	    "Multicast\0" /* 6 refs @ 21420 */
+	    "Multicast\0" /* 4 refs @ 21420 */
 	    "3165\0" /* 2 refs @ 21430 */
 	    "31244\0" /* 1 refs @ 21435 */
 	    "82855PM\0" /* 3 refs @ 21441 */
