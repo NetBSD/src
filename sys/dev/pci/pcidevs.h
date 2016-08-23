@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1254 2016/08/23 09:20:00 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1255 2016/08/23 09:34:47 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1262 2016/08/23 09:19:44 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1263 2016/08/23 09:34:28 msaitoh Exp
  */
 
 /*
@@ -1298,9 +1298,8 @@
 #define	PCI_PRODUCT_ATI_SB700_SATA_AHCI	0x4391		/* SB700-SB900 SATA Controller (AHCI mode) */
 #define	PCI_PRODUCT_ATI_SB700_SATA_RAID	0x4392		/* SB700-SB900 RAID SATA Controller */
 #define	PCI_PRODUCT_ATI_SB700_SATA_RAID5	0x4393		/* SB700-SB900 RAID5 SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_SATA_FC	0x4394		/* SB700-SB900 FC SATA Controller */
-#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI2	0x4395		/* SB700-SB900 SATA Controller (AHCI mode) */
-#define	PCI_PRODUCT_ATI_SB800_SATA	0x4395		/* SB800/SB900 SATA Controller */
+#define	PCI_PRODUCT_ATI_SB700_SATA_AHCI2	0x4394		/* SB700-SB900 SATA Controller (AHCI mode) */
+#define	PCI_PRODUCT_ATI_SB700_SATA_STORAGE	0x4395		/* SB700-SB900 SATA Controller (Storage mode) */
 #define	PCI_PRODUCT_ATI_SB700_USB_EHCI	0x4396		/* SB700-SB900 USB EHCI Controller */
 #define	PCI_PRODUCT_ATI_SB700_USB_OHCI0	0x4397		/* SB700-SB900 USB OHCI Controller */
 #define	PCI_PRODUCT_ATI_SB700_USB_OHCI1	0x4398		/* SB700-SB900 USB OHCI Controller */
