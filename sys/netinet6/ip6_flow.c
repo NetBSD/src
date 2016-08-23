@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_flow.c,v 1.30 2016/08/02 04:50:16 knakahara Exp $	*/
+/*	$NetBSD: ip6_flow.c,v 1.31 2016/08/23 09:59:20 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.30 2016/08/02 04:50:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.31 2016/08/23 09:59:20 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_flow.c,v 1.30 2016/08/02 04:50:16 knakahara Exp 
 
 static struct pool ip6flow_pool;
 
-LIST_HEAD(ip6flowhead, ip6flow);
+TAILQ_HEAD(ip6flowhead, ip6flow);
 
 /*
  * We could use IPv4 defines (IPFLOW_HASHBITS) but we'll
@@ -113,19 +113,20 @@ static void ip6flow_sysctl_init(struct sysctllog **);
 /*
  * Insert an ip6flow into the list.
  */
-#define	IP6FLOW_INSERT(bucket, ip6f) \
+#define	IP6FLOW_INSERT(hashidx, ip6f) \
 do { \
-	LIST_INSERT_HEAD((bucket), (ip6f), ip6f_hash); \
-	LIST_INSERT_HEAD(&ip6flowlist, (ip6f), ip6f_list); \
+	(ip6f)->ip6f_hashidx = (hashidx); \
+	TAILQ_INSERT_HEAD(&ip6flowtable[(hashidx)], (ip6f), ip6f_hash); \
+	TAILQ_INSERT_HEAD(&ip6flowlist, (ip6f), ip6f_list); \
 } while (/*CONSTCOND*/ 0)
 
 /*
  * Remove an ip6flow from the list.
  */
-#define	IP6FLOW_REMOVE(ip6f) \
+#define	IP6FLOW_REMOVE(hashidx, ip6f) \
 do { \
-	LIST_REMOVE((ip6f), ip6f_hash); \
-	LIST_REMOVE((ip6f), ip6f_list); \
+	TAILQ_REMOVE(&ip6flowtable[(hashidx)], (ip6f), ip6f_hash); \
+	TAILQ_REMOVE(&ip6flowlist, (ip6f), ip6f_list); \
 } while (/*CONSTCOND*/ 0)
 
 #ifndef IP6FLOW_DEFAULT
@@ -171,7 +172,7 @@ ip6flow_lookup(const struct ip6_hdr *ip6)
 
 	hash = ip6flow_hash(ip6);
 
-	LIST_FOREACH(ip6f, &ip6flowtable[hash], ip6f_hash) {
+	TAILQ_FOREACH(ip6f, &ip6flowtable[hash], ip6f_hash) {
 		if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &ip6f->ip6f_dst)
 		    && IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6f->ip6f_src)
 		    && ip6f->ip6f_flow == ip6->ip6_flow) {
@@ -217,9 +218,9 @@ ip6flow_init_locked(int table_size)
 	ip6flowtable = new_table;
 	ip6_hashsize = table_size;
 
-	LIST_INIT(&ip6flowlist);
+	TAILQ_INIT(&ip6flowlist);
 	for (i = 0; i < ip6_hashsize; i++)
-		LIST_INIT(&ip6flowtable[i]);
+		TAILQ_INIT(&ip6flowtable[i]);
 
 	return 0;
 }
@@ -352,6 +353,15 @@ ip6flow_fastforward(struct mbuf **mp)
 
 	ip6f->ip6f_uses++;
 
+#if 0
+	/*
+	 * We use FIFO cache replacement instead of LRU the same ip_flow.c.
+	 */
+	/* move to head (LRU) for ip6flowlist. ip6flowtable does not care LRU. */
+	TAILQ_REMOVE(&ip6flowlist, ip6f, ip6f_list);
+	TAILQ_INSERT_HEAD(&ip6flowlist, ip6f, ip6f_list);
+#endif
+
 	/* Send on its way - straight to the interface output routine. */
 	if ((error = if_output_lock(rt->rt_ifp, rt->rt_ifp, m, dst, rt)) != 0) {
 		ip6f->ip6f_dropped++;
@@ -399,7 +409,7 @@ ip6flow_free(struct ip6flow *ip6f)
 	 * Once it's off the list, we can deal with it at normal
 	 * network IPL.
 	 */
-	IP6FLOW_REMOVE(ip6f);
+	IP6FLOW_REMOVE(ip6f->ip6f_hashidx, ip6f);
 
 	ip6flow_inuse--;
 	ip6flow_addstats(ip6f);
@@ -410,14 +420,34 @@ ip6flow_free(struct ip6flow *ip6f)
 static struct ip6flow *
 ip6flow_reap_locked(int just_one)
 {
+	struct ip6flow *ip6f;
 
 	KASSERT(mutex_owned(&ip6flow_lock));
 
-	while (just_one || ip6flow_inuse > ip6_maxflows) {
-		struct ip6flow *ip6f, *maybe_ip6f = NULL;
+	/*
+	 * This case must remove one ip6flow. Furthermore, this case is used in
+	 * fast path(packet processing path). So, simply remove TAILQ_LAST one.
+	 */
+	if (just_one) {
+		ip6f = TAILQ_LAST(&ip6flowlist, ip6flowhead);
+		KASSERT(ip6f != NULL);
 
-		ip6f = LIST_FIRST(&ip6flowlist);
-		while (ip6f != NULL) {
+		IP6FLOW_REMOVE(ip6f->ip6f_hashidx, ip6f);
+
+		ip6flow_addstats(ip6f);
+		rtcache_free(&ip6f->ip6f_ro);
+		return ip6f;
+	}
+
+	/*
+	 * This case is used in slow path(sysctl).
+	 * At first, remove invalid rtcache ip6flow, and then remove TAILQ_LAST
+	 * ip6flow if it is ensured least recently used by comparing last_uses.
+	 */
+	while (ip6flow_inuse > ip6_maxflows) {
+		struct ip6flow *maybe_ip6f = TAILQ_LAST(&ip6flowlist, ip6flowhead);
+
+		TAILQ_FOREACH(ip6f, &ip6flowlist, ip6f_list) {
 			/*
 			 * If this no longer points to a valid route -
 			 * reclaim it.
@@ -429,27 +459,20 @@ ip6flow_reap_locked(int just_one)
 			 * used or has had the least uses in the
 			 * last 1.5 intervals.
 			 */
-			if (maybe_ip6f == NULL ||
-			    ip6f->ip6f_timer < maybe_ip6f->ip6f_timer ||
-			    (ip6f->ip6f_timer == maybe_ip6f->ip6f_timer &&
-			     ip6f->ip6f_last_uses + ip6f->ip6f_uses <
-			         maybe_ip6f->ip6f_last_uses +
-			         maybe_ip6f->ip6f_uses))
+			if (ip6f->ip6f_timer < maybe_ip6f->ip6f_timer
+			    || ((ip6f->ip6f_timer == maybe_ip6f->ip6f_timer)
+				&& (ip6f->ip6f_last_uses + ip6f->ip6f_uses
+				    < maybe_ip6f->ip6f_last_uses + maybe_ip6f->ip6f_uses)))
 				maybe_ip6f = ip6f;
-			ip6f = LIST_NEXT(ip6f, ip6f_list);
 		}
 		ip6f = maybe_ip6f;
 	    done:
 		/*
 		 * Remove the entry from the flow table
 		 */
-		IP6FLOW_REMOVE(ip6f);
+		IP6FLOW_REMOVE(ip6f->ip6f_hashidx, ip6f);
 
 		rtcache_free(&ip6f->ip6f_ro);
-		if (just_one) {
-			ip6flow_addstats(ip6f);
-			return ip6f;
-		}
 		ip6flow_inuse--;
 		ip6flow_addstats(ip6f);
 		pool_put(&ip6flow_pool, ip6f);
@@ -486,8 +509,8 @@ ip6flow_slowtimo_work(struct work *wk, void *arg)
 	mutex_enter(&ip6flow_lock);
 	KERNEL_LOCK(1, NULL);
 
-	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
-		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
+	for (ip6f = TAILQ_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
+		next_ip6f = TAILQ_NEXT(ip6f, ip6f_list);
 		if (PRT_SLOW_ISEXPIRED(ip6f->ip6f_timer) ||
 		    rtcache_validate(&ip6f->ip6f_ro) == NULL) {
 			ip6flow_free(ip6f);
@@ -567,7 +590,7 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 		}
 		memset(ip6f, 0, sizeof(*ip6f));
 	} else {
-		IP6FLOW_REMOVE(ip6f);
+		IP6FLOW_REMOVE(ip6f->ip6f_hashidx, ip6f);
 
 		ip6flow_addstats(ip6f);
 		rtcache_free(&ip6f->ip6f_ro);
@@ -590,7 +613,7 @@ ip6flow_create(const struct route *ro, struct mbuf *m)
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ip6flow_hash(ip6);
-	IP6FLOW_INSERT(&ip6flowtable[hash], ip6f);
+	IP6FLOW_INSERT(hash, ip6f);
 
  out:
 	KERNEL_UNLOCK_ONE(NULL);
@@ -611,8 +634,8 @@ ip6flow_invalidate_all(int new_size)
 
 	mutex_enter(&ip6flow_lock);
 
-	for (ip6f = LIST_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
-		next_ip6f = LIST_NEXT(ip6f, ip6f_list);
+	for (ip6f = TAILQ_FIRST(&ip6flowlist); ip6f != NULL; ip6f = next_ip6f) {
+		next_ip6f = TAILQ_NEXT(ip6f, ip6f_list);
 		ip6flow_free(ip6f);
 	}
 
