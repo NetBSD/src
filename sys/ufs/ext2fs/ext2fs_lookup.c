@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.87 2016/08/19 00:05:43 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.88 2016/08/23 06:40:25 christos Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.87 2016/08/19 00:05:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.88 2016/08/23 06:40:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,8 +305,6 @@ ext2fs_lookup(void *v)
 	int dirblksiz = ump->um_dirblksiz;
 	ino_t foundino;
 	struct ufs_lookup_results *results;
-	doff_t i_offset;		/* cached i_offset value */
-	struct ext2fs_searchslot ss;
 
 	flags = cnp->cn_flags;
 
@@ -386,7 +384,6 @@ ext2fs_lookup(void *v)
 	prevoff = results->ulr_offset;
 	endsearch = roundup(ext2fs_size(dp), dirblksiz);
 	enduseful = 0;
-
 	/*
 	 * Try to lookup dir entry using htree directory index.
 	 *
@@ -394,6 +391,8 @@ ext2fs_lookup(void *v)
 	 * we will fall back to linear search.
 	 */
 	if (!ext2fs_is_dot_entry(cnp) && ext2fs_htree_has_idx(dp)) {
+		doff_t i_offset;		/* cached i_offset value */
+		struct ext2fs_searchslot ss;
 		numdirpasses = 1;
 		entryoffsetinblock = 0;
 		
@@ -402,8 +401,7 @@ ext2fs_lookup(void *v)
 		    &prevoff, &enduseful, &ss);
 		switch (htree_lookup_ret) {
 		case 0:
-			ep = (struct ext2fs_direct*)((char *)bp->b_data +
-			    (i_offset & bmask));
+			ep = (void *)((char *)bp->b_data + (i_offset & bmask));
 			foundino = ep->e2d_ino;
 			goto found;
 		case ENOENT:
@@ -428,8 +426,8 @@ searchloop:
 		if ((results->ulr_offset & bmask) == 0) {
 			if (bp != NULL)
 				brelse(bp, 0);
-			error = ext2fs_blkatoff(vdp, (off_t)results->ulr_offset, NULL,
-			    &bp);
+			error = ext2fs_blkatoff(vdp, (off_t)results->ulr_offset,
+			    NULL, &bp);
 			if (error != 0)
 				return error;
 			entryoffsetinblock = 0;
