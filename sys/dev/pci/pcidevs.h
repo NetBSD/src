@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1253 2016/08/23 09:18:21 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1254 2016/08/23 09:20:00 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1261 2016/08/23 09:18:01 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1262 2016/08/23 09:19:44 msaitoh Exp
  */
 
 /*
@@ -3743,14 +3743,14 @@
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG6	0x2fb5		/* Xeon E5 v3 IMC Ch 0-1 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG7	0x2fb6		/* Xeon E5 v3 IMC Ch 2-3 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_REG8	0x2fb7		/* Xeon E5 v3 IMC Ch 2-3 Registers */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_3	0x2fb8		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_4	0x2fb9		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_1	0x2fba		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_2	0x2fbb		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_5	0x2fbc		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_6	0x2fbd		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_7	0x2fbe		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_8	0x2fbf		/* Xeon E5 v3 IMC DDRIO Multicast */
-#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_3	0x2fbe		/* Xeon E5 v3 IMC DDRIO Multicast */
-#define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_DDRIO_4	0x2fbf		/* Xeon E5 v3 IMC DDRIO Multicast */
 #define	PCI_PRODUCT_INTEL_XE5_V3_PCU_4	0x2fc0		/* Xeon E5 v3 Power Control Unit */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG5	0x2fd4		/* Xeon E5 v3 IMC Ch 0-1 Registers */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC1_REG6	0x2fd5		/* Xeon E5 v3 IMC Ch 0-1 Registers */
