@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.28 2016/08/18 14:39:04 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.29 2016/08/23 07:29:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28 2016/08/18 14:39:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.29 2016/08/23 07:29:46 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.28 2016/08/18 14:39:04 skrll Exp $");
 #include <mips/pte.h>
 
 #if defined(DDB) || defined(KGDB)
-#ifdef DDB 
+#ifdef DDB
 #include <mips/db_machdep.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -126,7 +126,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 #ifdef MIPS64_OCTEON
 	vaddr_t exc_page = MIPS_UTLB_MISS_EXC_VEC + 0x1000*cpu_id;
 	__CTASSERT(sizeof(struct cpu_info) + sizeof(struct pmap_tlb_info) <= 0x1000 - 0x280);
-	
+
 	struct cpu_info * const ci = ((struct cpu_info *)(exc_page + 0x1000)) - 1;
 	memset((void *)exc_page, 0, PAGE_SIZE);
 
@@ -135,7 +135,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 		pmap_tlb_info_init(ti);
 	}
 #else
-	const vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK; 
+	const vaddr_t cpu_info_offset = (vaddr_t)&cpu_info_store & PAGE_MASK;
 	struct pglist pglist;
 	int error;
 
@@ -187,12 +187,12 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	ci->ci_data.cpu_smt_id = cpu_smt_id;
 	ci->ci_cpu_freq = cpu_info_store.ci_cpu_freq;
 	ci->ci_cctr_freq = cpu_info_store.ci_cctr_freq;
-        ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
-        ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
-        ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
+	ci->ci_cycles_per_hz = cpu_info_store.ci_cycles_per_hz;
+	ci->ci_divisor_delay = cpu_info_store.ci_divisor_delay;
+	ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
-	pmap_md_alloc_ephemeral_address_space(ci); 
+	pmap_md_alloc_ephemeral_address_space(ci);
 
 	mi_cpu_attach(ci);
 
@@ -521,9 +521,9 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		if (ci == cur_ci) {
 			softint_trigger(SOFTINT_KPREEMPT);
-                } else {
-                        cpu_send_ipi(ci, IPI_KPREEMPT);
-                }
+		} else {
+			cpu_send_ipi(ci, IPI_KPREEMPT);
+		}
 #endif
 		return;
 	}
@@ -531,7 +531,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #ifdef MULTIPROCESSOR
 	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
 		cpu_send_ipi(ci, IPI_AST);
-	} 
+	}
 #endif
 }
 
@@ -576,7 +576,7 @@ cpu_set_curpri(int pri)
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {
-        KASSERT(kpreempt_disabled());
+	KASSERT(kpreempt_disabled());
 
 #if 0
 	if (where == (intptr_t)-2) {
@@ -686,7 +686,7 @@ cpu_ipi_wait(const char *s, const kcpuset_t *watchset, const kcpuset_t *wanted)
 	bool done = false;
 	kcpuset_t *kcp;
 	kcpuset_create(&kcp, false);
-	
+
 	/* some finite amount of time */
 
 	for (u_long limit = curcpu()->ci_cpu_freq/10; !done && limit--; ) {
