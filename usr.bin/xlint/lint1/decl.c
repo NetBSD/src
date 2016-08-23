@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.64 2016/08/19 11:51:27 christos Exp $ */
+/* $NetBSD: decl.c,v 1.65 2016/08/23 16:42:55 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.64 2016/08/19 11:51:27 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.65 2016/08/23 16:42:55 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -486,6 +486,17 @@ settdsym(type_t *tp, sym_t *sym)
 	}
 }
 
+static size_t
+bitfieldsize(sym_t **mem)
+{
+	size_t len = (*mem)->s_type->t_flen;
+	while (*mem && (*mem)->s_type->t_isfield) {
+		len += (*mem)->s_type->t_flen;
+		*mem = (*mem)->s_nxt;
+	}
+	return ((len + INT_SIZE - 1) / INT_SIZE) * INT_SIZE;
+}
+
 static void
 setpackedsize(type_t *tp)
 {
@@ -500,14 +511,7 @@ setpackedsize(type_t *tp)
 		sp->size = 0;
 		for (mem = sp->memb; mem != NULL; mem = mem->s_nxt) {
 			if (mem->s_type->t_isfield) {
-				size_t len = mem->s_type->t_flen;
-				while (mem && mem->s_type->t_isfield) {
-					len += mem->s_type->t_flen;
-					mem = mem->s_nxt;
-				}
-				len = ((len + INT_SIZE - 1) /
-				    INT_SIZE) * INT_SIZE;
-				sp->size += len;
+				sp->size += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
 			}
@@ -1783,6 +1787,11 @@ compltag(type_t *tp, sym_t *fmem)
 			/* bind anonymous members to the structure */
 			if (mem->s_styp == NULL) {
 				mem->s_styp = sp;
+				if (mem->s_type->t_isfield) {
+					sp->size += bitfieldsize(&mem);
+					if (mem == NULL)
+						break;
+				}
 				sp->size += tsize(mem->s_type);
 			}
 			if (mem->s_name != unnamed)
