@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2016/08/23 09:59:26 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2016/08/24 06:22:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das@FreeBSD.ORG>
@@ -37,12 +37,12 @@ typedef	__uint64_t	fenv_t;
 typedef	__uint16_t	fexcept_t;
 
 /* Exception flags */
-#define	FE_INVALID	0x02
-#define	FE_DIVBYZERO	0x04
-#define	FE_OVERFLOW	0x08
-#define	FE_UNDERFLOW	0x10
-#define	FE_INEXACT	0x20
-#define	FE_INTOVF	0x40	/* not maskable */
+#define	FE_INVALID	0x01
+#define	FE_DIVBYZERO	0x02
+#define	FE_OVERFLOW	0x04
+#define	FE_UNDERFLOW	0x08
+#define	FE_INEXACT	0x10
+#define	FE_INTOVF	0x20	/* not maskable */
 #define	FE_ALL_EXCEPT	(FE_DIVBYZERO | FE_INEXACT | FE_INTOVF | \
 			 FE_INVALID | FE_OVERFLOW | FE_UNDERFLOW)
 
@@ -55,7 +55,7 @@ typedef	__uint16_t	fexcept_t;
 			 FE_UPWARD | FE_TOWARDZERO)
 #define	_ROUND_SHIFT	58
 
-#define	_FPUSW_SHIFT	51
+#define	_FPUSW_SHIFT	52
 
 #define	__excb()	__asm __volatile("excb")
 #define	__mf_fpcr(__cw)	__asm __volatile("mf_fpcr %0" : "=f" (*(__cw)))
