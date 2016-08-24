@@ -1,4 +1,4 @@
-/*	$NetBSD: s_ilogbl.c,v 1.2 2013/02/09 22:56:00 matt Exp $	*/
+/*	$NetBSD: s_ilogbl.c,v 1.3 2016/08/24 10:03:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_ilogbl.c,v 1.2 2013/02/09 22:56:00 matt Exp $");
+__RCSID("$NetBSD: s_ilogbl.c,v 1.3 2016/08/24 10:03:32 christos Exp $");
 
 #include "namespace.h"
 
 #include <float.h>
 #include <math.h>
+#include <fenv.h>
 #include <machine/ieee.h>
 
 #ifdef __HAVE_LONG_DOUBLE
@@ -53,13 +54,17 @@ ilogbl(long double x)
 {
 	union ieee_ext_u u;
 
-	if (x == 0.0L)
+	if (x == 0.0L) {
+		feraiseexcept(FE_INVALID);
 		return FP_ILOGB0;	/* ilogbl(0) = 0x80000001 */
+	}
 
 	u.extu_ld = x;
 
-	if (u.extu_ext.ext_exp == EXT_EXP_INFNAN)
-		return FP_ILOGBNAN;	/* inf too */
+	if (u.extu_ext.ext_exp == EXT_EXP_INFNAN) {
+		feraiseexcept(FE_INVALID);
+		return isnan(x) ? FP_ILOGBNAN : INT_MAX;
+	}
 
 	if (u.extu_ext.ext_exp == 0) {
 		/*
