@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.4 2016/08/24 09:13:44 christos Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.5 2016/08/24 10:04:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -40,15 +40,15 @@
 
 #else
 # define ATF_CHECK_RAISED_INVALID do { \
-	int r; \
-	r = feclearexcept(FE_ALL_EXCEPT); \
-	ATF_CHECK(r == FE_INVALID); \
+	int r = fetestexcept(FE_ALL_EXCEPT); \
+	ATF_CHECK_MSG(r == FE_INVALID, "r=%#x != %#x\n", r, FE_INVALID); \
+	(void)feclearexcept(FE_ALL_EXCEPT); \
 } while (/*CONSTCOND*/0)
 
 # define ATF_CHECK_RAISED_NOTHING do { \
-	int r; \
-	r = feclearexcept(FE_ALL_EXCEPT); \
-	ATF_CHECK(r == 0); \
+	int r = fetestexcept(FE_ALL_EXCEPT); \
+	ATF_CHECK_MSG(r == 0, "r=%#x != 0\n", r); \
+	(void)feclearexcept(FE_ALL_EXCEPT); \
 } while (/*CONSTCOND*/0)
 #endif
 
@@ -60,7 +60,6 @@ ATF_TC_HEAD(ilogb, tc)
 
 ATF_TC_BODY(ilogb, tc)
 {
-  atf_tc_expect_fail("PR lib/51427");
 
 	ATF_CHECK(ilogbf(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
