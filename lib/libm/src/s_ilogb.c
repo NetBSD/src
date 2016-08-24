@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogb.c,v 1.14 2013/02/09 22:56:00 matt Exp $");
+__RCSID("$NetBSD: s_ilogb.c,v 1.15 2016/08/24 10:03:32 christos Exp $");
 #endif
 
 /* ilogb(double x)
@@ -21,7 +21,8 @@ __RCSID("$NetBSD: s_ilogb.c,v 1.14 2013/02/09 22:56:00 matt Exp $");
  * ilogb(inf/NaN) = 0x7fffffff (no signal is raised)
  */
 
-#include "math.h"
+#include <math.h>
+#include <fenv.h>
 #include "math_private.h"
 
 #ifndef __HAVE_LONG_DOUBLE
@@ -31,22 +32,28 @@ __strong_alias(ilogbl,ilogb)
 int
 ilogb(double x)
 {
-	int32_t hx,lx,ix;
+	int32_t hx, lx, ix;
 
-	GET_HIGH_WORD(hx,x);
+	GET_HIGH_WORD(hx, x);
 	hx &= 0x7fffffff;
-	if(hx<0x00100000) {
-	    GET_LOW_WORD(lx,x);
-	    if((hx|lx)==0)
-		return FP_ILOGB0;	/* ilogb(0) = 0x80000001 */
-	    else			/* subnormal x */
-		if(hx==0) {
-		    for (ix = -1043; lx>0; lx<<=1) ix -=1;
-		} else {
-		    for (ix = -1022,hx<<=11; hx>0; hx<<=1) ix -=1;
+	if (hx < 0x00100000) {
+		GET_LOW_WORD(lx, x);
+		if ((hx | lx) == 0) {
+			feraiseexcept(FE_INVALID);
+			return FP_ILOGB0;	/* ilogb(0) = 0x80000001 */
 		}
-	    return ix;
+		if (hx == 0) {
+			for (ix = -1043; lx > 0; lx <<= 1) ix -= 1;
+		} else {
+			for (ix = -1022, hx <<= 11; hx > 0; hx <<= 1) ix -= 1;
+		}
+		return ix;
 	}
-	else if (hx<0x7ff00000) return (hx>>20)-1023;
-	else return FP_ILOGBNAN;	/* inf too */
+
+	if (hx < 0x7ff00000) {
+		return (hx >> 20) - 1023;
+	}
+
+	feraiseexcept(FE_INVALID);
+	return isnan(x) ? FP_ILOGBNAN : INT_MAX;
 }
