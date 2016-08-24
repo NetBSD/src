@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.44 2016/07/15 22:10:47 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.45 2016/08/24 14:41:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.44 2016/07/15 22:10:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.45 2016/08/24 14:41:51 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -583,13 +583,11 @@ awacs_setup_sgsmix(device_t cookie)
 	sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
-	mutex_enter(&sc->sc_intr_lock);
 	awacs_select_output(sc, sc->sc_output_mask);
 	awacs_set_volume(sc, sc->vol_l, sc->vol_r);
 	awacs_set_bass(sc, 128);
 	awacs_set_treble(sc, 128);
 	cv_signal(&sc->sc_event);	
-	mutex_exit(&sc->sc_intr_lock);
 #endif
 	return 0;
 }
@@ -855,15 +853,11 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		/* No change necessary? */
 		if (mc->un.mask == sc->sc_output_mask)
 			return 0;
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_select_output(sc, mc->un.mask);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_VOL_MASTER:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_volume(sc, l, r);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_INPUT_SELECT:
@@ -904,15 +898,11 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 
 #if NSGSMIX > 0
 	case AWACS_BASS:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_bass(sc, l);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_TREBLE:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_treble(sc, l);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 #endif
 	}
