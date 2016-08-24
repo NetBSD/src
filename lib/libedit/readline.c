@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.136 2016/06/02 21:40:51 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.137 2016/08/24 13:10:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.136 2016/06/02 21:40:51 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.137 2016/08/24 13:10:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -95,6 +95,7 @@ int rl_catch_sigwinch = 1;
 
 int history_base = 1;		/* probably never subject to change */
 int history_length = 0;
+int history_offset = 0;
 int max_input_history = 0;
 char history_expansion_char = '!';
 char history_subst_char = '^';
@@ -156,14 +157,6 @@ char *rl_special_prefixes = NULL;
  */
 int rl_completion_append_character = ' ';
 
-/*
- * When the history cursor is on the newest element and next_history()
- * is called, GNU readline moves the cursor beyond the newest element.
- * The editline library does not provide data structures to express
- * that state, so we need a local flag.
- */
-static int current_history_valid = 1;
-
 /* stuff below is used internally by libedit for readline emulation */
 
 static History *h = NULL;
@@ -176,7 +169,6 @@ static unsigned char	 _el_rl_complete(EditLine *, int);
 static unsigned char	 _el_rl_tstp(EditLine *, int);
 static char		*_get_prompt(EditLine *);
 static int		 _getc_function(EditLine *, wchar_t *);
-static HIST_ENTRY	*_move_history(int);
 static int		 _history_expand_command(const char *, size_t, size_t,
     char **);
 static char		*_rl_compat_sub(const char *, const char *,
@@ -184,6 +176,7 @@ static char		*_rl_compat_sub(const char *, const char *,
 static int		 _rl_event_read_char(EditLine *, wchar_t *);
 static void		 _rl_update_pos(void);
 
+static HIST_ENTRY rl_he;
 
 /* ARGSUSED */
 static char *
@@ -191,25 +184,6 @@ _get_prompt(EditLine *el __attribute__((__unused__)))
 {
 	rl_already_prompted = 1;
 	return rl_prompt;
-}
-
-
-/*
- * generic function for moving around history
- */
-static HIST_ENTRY *
-_move_history(int op)
-{
-	HistEvent ev;
-	static HIST_ENTRY rl_he;
-
-	if (history(h, &ev, op) != 0)
-		return NULL;
-
-	rl_he.line = ev.str;
-	rl_he.data = NULL;
-
-	return &rl_he;
 }
 
 
@@ -298,8 +272,6 @@ rl_initialize(void)
 	HistEvent ev;
 	int editmode = 1;
 	struct termios t;
-
-	current_history_valid = 1;
 
 	if (e != NULL)
 		el_end(e);
@@ -399,7 +371,7 @@ rl_initialize(void)
 	el_set(e, EL_BIND, "\\e[1;5C", "em-next-word", NULL);
 	el_set(e, EL_BIND, "\\e[1;5D", "ed-prev-word", NULL);
 	el_set(e, EL_BIND, "\\e[5C", "em-next-word", NULL);
-	el_set(e, EL_BIND, "\\e[5D", "ed-prev-word", NULL);
+	el_set(e, EL_BIND, "\\e[5D", "ed-erev-word", NULL);
 	el_set(e, EL_BIND, "\\e\\e[C", "em-next-word", NULL);
 	el_set(e, EL_BIND, "\\e\\e[D", "ed-prev-word", NULL);
 
@@ -494,6 +466,7 @@ using_history(void)
 {
 	if (h == NULL || e == NULL)
 		rl_initialize();
+	history_offset = history_length;
 }
 
 
@@ -575,7 +548,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	}
 
 	if ('0' <= cmd[idx] && cmd[idx] <= '9') {
-		HIST_ENTRY *rl_he;
+		HIST_ENTRY *he;
 
 		num = 0;
 		while (cmd[idx] && '0' <= cmd[idx] && cmd[idx] <= '9') {
@@ -585,11 +558,11 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 		if (sign)
 			num = history_length - num + 1;
 
-		if (!(rl_he = history_get(num)))
+		if (!(he = history_get(num)))
 			return NULL;
 
 		*cindex = idx;
-		return rl_he->line;
+		return he->line;
 	}
 	sub = 0;
 	if (cmd[idx] == '?') {
@@ -1461,7 +1434,6 @@ add_history(const char *line)
 		history_base++;
 	else
 		history_length = ev.num;
-	current_history_valid = 1;
 	return 0;
 }
 
@@ -1552,8 +1524,7 @@ clear_history(void)
 		rl_initialize();
 
 	(void)history(h, &ev, H_CLEAR);
-	history_length = 0;
-	current_history_valid = 1;
+	history_offset = history_length = 0;
 }
 
 
@@ -1563,24 +1534,42 @@ clear_history(void)
 int
 where_history(void)
 {
-	HistEvent ev;
-	int curr_num, off;
-
-	if (history(h, &ev, H_CURR) != 0)
-		return 0;
-	curr_num = ev.num;
-
-	/* start from the oldest */
-	(void)history(h, &ev, H_LAST);
-
-	/* position is zero-based */
-	off = 0;
-	while (ev.num != curr_num && history(h, &ev, H_PREV) == 0)
-		off++;
-
-	return off;
+	return history_offset;
 }
 
+static HIST_ENTRY **_history_listp;
+static HIST_ENTRY *_history_list;
+
+HIST_ENTRY **
+history_list(void)
+{
+	HistEvent ev;
+	HIST_ENTRY **nlp, *nl;
+	int i;
+
+	if (history(h, &ev, H_LAST) != 0)
+		return NULL;
+
+	if ((nlp = el_realloc(_history_listp,
+	    (size_t)history_length * sizeof(*nlp))) == NULL)
+		return NULL;
+	_history_listp = nlp;
+
+	if ((nl = el_realloc(_history_list,
+	    (size_t)history_length * sizeof(*nl))) == NULL)
+		return NULL;
+	_history_list = nl;
+
+	i = 0;
+	do {
+		_history_listp[i] = &_history_list[i];
+		_history_list[i].line = ev.str;
+		_history_list[i].data = NULL;
+		if (i++ == history_length)
+			abort();
+	} while (history(h, &ev, H_PREV) == 0);
+	return _history_listp;
+}
 
 /*
  * returns current history event or NULL if there is no such event
@@ -1588,8 +1577,14 @@ where_history(void)
 HIST_ENTRY *
 current_history(void)
 {
+	HistEvent ev;
 
-	return current_history_valid ? _move_history(H_CURR) : NULL;
+	if (history(h, &ev, H_PREV_EVENT, history_offset + 1) != 0)
+		return NULL;
+
+	rl_he.line = ev.str;
+	rl_he.data = NULL;
+	return &rl_he;
 }
 
 
@@ -1626,24 +1621,10 @@ history_total_bytes(void)
 int
 history_set_pos(int pos)
 {
-	HistEvent ev;
-	int curr_num;
-
 	if (pos >= history_length || pos < 0)
 		return 0;
 
-	(void)history(h, &ev, H_CURR);
-	curr_num = ev.num;
-	current_history_valid = 1;
-
-	/*
-	 * use H_DELDATA to set to nth history (without delete) by passing
-	 * (void **)-1
-	 */
-	if (history(h, &ev, H_DELDATA, pos, (void **)-1)) {
-		(void)history(h, &ev, H_SET, curr_num);
-		return 0;
-	}
+	history_offset = pos;
 	return 1;
 }
 
@@ -1655,12 +1636,16 @@ history_set_pos(int pos)
 HIST_ENTRY *
 previous_history(void)
 {
+	HistEvent ev;
 
-	if (current_history_valid == 0) {
-		current_history_valid = 1;
-		return _move_history(H_CURR);
-	}
-	return _move_history(H_NEXT);
+	if (history_offset == 0)
+		return NULL;
+
+	if (history(h, &ev, H_LAST) != 0)
+		return NULL;
+
+	history_offset--;
+	return current_history();
 }
 
 
@@ -1670,12 +1655,16 @@ previous_history(void)
 HIST_ENTRY *
 next_history(void)
 {
-	HIST_ENTRY *he;
+	HistEvent ev;
 
-	he = _move_history(H_PREV);
-	if (he == NULL)
-		current_history_valid = 0;
-	return he;
+	if (history_offset >= history_length)
+		return NULL;
+
+	if (history(h, &ev, H_LAST) != 0)
+		return NULL;
+
+	history_offset++;
+	return current_history();
 }
 
 
