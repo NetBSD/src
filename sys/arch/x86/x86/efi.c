@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.3 2016/06/10 07:50:15 pgoyette Exp $	*/
+/*	$NetBSD: efi.c,v 1.4 2016/08/24 10:27:23 nonaka Exp $	*/
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.3 2016/06/10 07:50:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.4 2016/08/24 10:27:23 nonaka Exp $");
 #include <sys/kmem.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ efi_getcfgtblhead(void)
 	paddr_t	pa;
 	vaddr_t	va;
 
-	if (efi_cfgtblhead_va == NULL)
-		return NULL;
+	if (efi_cfgtblhead_va != NULL)
+		return efi_cfgtblhead_va;
 
 	pa = (paddr_t) efi_systbl_va->st_cfgtbl;
 	aprint_debug("efi: cfgtbl at pa %" PRIxPADDR "\n", pa);
