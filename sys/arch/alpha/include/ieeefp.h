@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.9 2016/08/23 09:59:26 christos Exp $ */
+/* $NetBSD: ieeefp.h,v 1.10 2016/08/25 07:39:55 christos Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
@@ -44,7 +44,7 @@ typedef int fp_except;
 #define	FP_X_OFL	FE_OVERFLOW	/* overflow exception */
 #define	FP_X_UFL	FE_UNDERFLOW	/* underflow exception */
 #define	FP_X_IMP	FE_INEXACT	/* imprecise (prec. loss; "inexact") */
-#define	FP_X_IOV	FE_IOVERFLOW	/* integer overflow */
+#define	FP_X_IOV	FE_INTOVF	/* integer overflow */
 
 /*
  * fp_rnd bits match the fpcr, below, as well as bits 12:11
