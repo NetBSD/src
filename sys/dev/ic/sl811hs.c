@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.93 2016/07/01 09:03:28 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.94 2016/08/25 20:14:02 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.93 2016/07/01 09:03:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.94 2016/08/25 20:14:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -920,6 +920,11 @@ slhci_start(struct usbd_xfer *xfer)
 		else
 			spipe->buffer = NULL;
 		spipe->lastframe = t->frame;
+		if (spipe->ptype == PT_INTR) {
+			spipe->frame = spipe->lastframe +
+			    spipe->pipe.up_interval;
+		}
+
 #if defined(DEBUG) || defined(SLHCI_DEBUG)
 		if (__predict_false(spipe->ptype == PT_INTR &&
 		    xfer->ux_length > spipe->tregs[LEN])) {
