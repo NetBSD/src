@@ -1,4 +1,4 @@
-/* $NetBSD: ieeefp.h,v 1.5 2016/08/25 12:19:42 christos Exp $ */
+/* $NetBSD: ieeefp.h,v 1.6 2016/08/25 12:29:14 christos Exp $ */
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -16,6 +16,8 @@
 
 #if defined(_NETBSD_SOURCE)
 
+typedef int fp_except;
+
 #define	FP_X_INV	FE_INVALID	/* invalid operation exception */
 #define	FP_X_DZ		FE_DIVBYZERO	/* divide-by-zero exception */
 #define	FP_X_OFL	FE_OVERFLOW	/* overflow exception */
@@ -24,6 +26,8 @@
 
 typedef enum {
 	FP_RN=FE_TONEAREST,	/* round to nearest representable number */
+	FP_RM=FE_DOWNWARD,      /* round toward negative infinity */
+	FP_RP=FE_UPWARD,        /* round toward positive infinity */
 	FP_RZ=FE_TOWARDZERO	/* round to zero (truncate) */
 } fp_rnd;
 

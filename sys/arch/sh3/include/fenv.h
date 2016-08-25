@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2016/08/25 12:14:10 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2016/08/25 12:29:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -53,8 +53,9 @@
 /* Rounding modes, from FPSCR */
 #define FE_TONEAREST	FPSCR_ROUND_NEAREST
 #define	FE_TOWARDZERO	FPSCR_ROUND_ZERO
-/* 	FE_DOWNWARD	*/
-/*	FE_UPWARD	*/
+/* These two don't exist and are only defined for the benefit of softfloat */
+#define	FE_DOWNWARD	(FPSCR_ROUND_ZERO + 1)
+#define	FE_UPWARD	(FPSCR_ROUND_ZERO + 2)
 
 #define _ROUND_MASK	\
     (FE_TONEAREST | FE_TOWARDZERO)
