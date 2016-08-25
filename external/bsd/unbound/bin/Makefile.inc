@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2016/08/20 11:20:31 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2016/08/25 07:13:39 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -11,7 +11,7 @@ PROGDPLIBS+= ${DPLIBS}
 
 .if defined(PROG)
 .PATH: ${UNBOUND}/smallapp
-SRCS+=${PROG}.c worker_cb.c
+SRCS+=${PROG}.c
 CLEANFILES+=${PROG}.1
 MAN+=${PROG}.1
 ${PROG}.1: ${PROG}.1.in __subst
