@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.14 2014/11/04 00:20:19 justin Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.15 2016/08/25 00:26:01 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.14 2014/11/04 00:20:19 justin Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.15 2016/08/25 00:26:01 maya Exp $");
 
 #include <sys/param.h>
 
@@ -170,10 +170,8 @@ run_test(struct ldexp_test *table)
 
 		v = ldexp(table->x, table->exp1);
 
-		if (table->exp2 == SKIP)
-			continue;
-
-		v = ldexp(v, table->exp2);
+		if (table->exp2 != SKIP)
+			v = ldexp(v, table->exp2);
 
 		(void)snprintf(outbuf, sizeof(outbuf), FORMAT, v);
 
