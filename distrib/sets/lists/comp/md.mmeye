@@ -1,4 +1,4 @@
-# $NetBSD: md.mmeye,v 1.31 2013/01/16 16:01:06 christos Exp $
+# $NetBSD: md.mmeye,v 1.32 2016/08/25 12:17:26 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mmeye				comp-c-include
 ./usr/include/mmeye/_G_config.h			comp-obsolete		obsolete
@@ -19,6 +19,7 @@
 ./usr/include/mmeye/elf_machdep.h		comp-c-include
 ./usr/include/mmeye/endian.h			comp-c-include
 ./usr/include/mmeye/endian_machdep.h		comp-c-include
+./usr/include/mmeye/fenv.h			comp-c-include
 ./usr/include/mmeye/float.h			comp-c-include
 ./usr/include/mmeye/frame.h			comp-c-include
 ./usr/include/mmeye/ieee.h			comp-c-include

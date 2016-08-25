@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.27 2013/01/16 16:01:06 christos Exp $
+# $NetBSD: md.hpcsh,v 1.28 2016/08/25 12:17:26 christos Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/hpcsh/elf_machdep.h		comp-c-include
 ./usr/include/hpcsh/endian.h			comp-c-include
 ./usr/include/hpcsh/endian_machdep.h		comp-c-include
+./usr/include/hpcsh/fenv.h			comp-c-include
 ./usr/include/hpcsh/float.h			comp-c-include
 ./usr/include/hpcsh/frame.h			comp-c-include
 ./usr/include/hpcsh/ieee.h			comp-c-include
