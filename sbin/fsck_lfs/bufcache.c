@@ -1,4 +1,4 @@
-/* $NetBSD: bufcache.c,v 1.18 2016/08/18 08:08:02 christos Exp $ */
+/* $NetBSD: bufcache.c,v 1.19 2016/08/25 07:43:18 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -173,8 +173,6 @@ bremfree(struct ubuf * bp)
 	 * We only calculate the head of the freelist when removing
 	 * the last element of the list as that is the only time that
 	 * it is needed (e.g. to reset the tail pointer).
-	 *
-	 * NB: This makes an assumption about how tailq's are implemented.
 	 */
 	if (bp->b_flags & B_LOCKED) {
 		locked_queue_bytes -= bp->b_bcount;
@@ -182,7 +180,7 @@ bremfree(struct ubuf * bp)
 	}
 	if (TAILQ_NEXT(bp, b_freelist) == NULL) {
 		for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
-			if (dp->tqh_last == &bp->b_freelist.tqe_next)
+			if (TAILQ_LAST(dp, bqueues) == bp)
 				break;
 		if (dp == &bufqueues[BQUEUES])
 			errx(1, "bremfree: lost tail");
