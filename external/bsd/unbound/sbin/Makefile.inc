@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2016/08/20 11:20:32 christos Exp $
+# $NetBSD: Makefile.inc,v 1.2 2016/08/25 07:13:39 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -12,7 +12,7 @@ PROGDPLIBS+= ${DPLIBS}
 .if defined(PROG)
 .if ${PROG} != "unbound"
 .PATH: ${UNBOUND}/smallapp
-SRCS+=${PROG}.c worker_cb.c
+SRCS+=${PROG}.c
 .else
 MAN+=${PROG}.conf.5
 ${PROG}.conf.5: ${PROG}.conf.5.in __subst
