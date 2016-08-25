@@ -1,4 +1,4 @@
-/* $NetBSD: t_ldexp.c,v 1.15 2016/08/25 00:26:01 maya Exp $ */
+/* $NetBSD: t_ldexp.c,v 1.16 2016/08/25 00:32:31 maya Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ldexp.c,v 1.15 2016/08/25 00:26:01 maya Exp $");
+__RCSID("$NetBSD: t_ldexp.c,v 1.16 2016/08/25 00:32:31 maya Exp $");
 
 #include <sys/param.h>
 
@@ -96,10 +96,12 @@ struct ldexp_test ldexp_overflow[] = {
 	{ 1.0,	1023,	1,	"                    inf" },
 	{ 1.0,	-1022,	2046,	"                    inf" },
 	{ 1.0,	1025,	SKIP,	"                    inf" },
+	{ 2.0,	INT_MAX,SKIP,	"                    inf" },
 	{ -1.0,	1024,	SKIP,	"                   -inf" },
 	{ -1.0,	1023,	1,	"                   -inf" },
 	{ -1.0,	-1022,	2046,	"                   -inf" },
 	{ -1.0,	1025,	SKIP,	"                   -inf" },
+	{ -2.0, INT_MAX,SKIP,	"                   -inf" },
 	{ 0,	0,	0,	NULL }
 };
 
