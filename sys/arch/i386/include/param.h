@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.78 2015/10/27 22:28:56 mrg Exp $	*/
+/*	$NetBSD: param.h,v 1.79 2016/08/26 05:56:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #ifndef NMBCLUSTERS_MAX
-#define	NMBCLUSTERS_MAX	(0x2000000 / MCLBYTES)	/* Limit to 64MB for clusters */
+#define	NMBCLUSTERS_MAX	(0x4000000 / MCLBYTES)	/* Limit to 64MB for clusters */
 #endif
 
 #ifndef NFS_RSIZE
