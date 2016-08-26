@@ -1,4 +1,4 @@
-/* $NetBSD: t_ilogb.c,v 1.5 2016/08/24 10:04:53 christos Exp $ */
+/* $NetBSD: t_ilogb.c,v 1.6 2016/08/26 08:01:55 christos Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -65,8 +65,10 @@ ATF_TC_BODY(ilogb, tc)
 	ATF_CHECK_RAISED_INVALID;
 	ATF_CHECK(ilogb(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
+#ifdef __HAVE_LONG_DOUBLE
 	ATF_CHECK(ilogbl(0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
+#endif
 
 	ATF_CHECK(ilogbf(-0) == FP_ILOGB0);
 	ATF_CHECK_RAISED_INVALID;
