@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/08/07 20:23:09 dholland Exp $
+# $NetBSD: Makefile,v 1.3 2016/08/26 23:55:04 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,8 @@ ATFTESTER_LIBDIR!=	cd ${.CURDIR}/../../lib/libatf_tester; ${PRINTOBJDIR}
 TESTER_LIBDIR!=		cd ${.CURDIR}/../../lib/libtester; ${PRINTOBJDIR}
 LDADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
 DPADD+=		${ATFTESTER_LIBDIR}/libatf_tester.a
-LDADD+=		${TESTER_LIBDIR}/libtester/libtester.a
-DPADD+=		${TESTER_LIBDIR}/libtester/libtester.a
+LDADD+=		${TESTER_LIBDIR}/libtester.a
+DPADD+=		${TESTER_LIBDIR}/libtester.a
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${.CURDIR}/../../lib/libtester
