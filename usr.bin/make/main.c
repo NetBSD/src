@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.251 2016/08/26 23:28:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.251 2016/08/26 23:28:39 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.250 2016/08/11 19:53:17 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.251 2016/08/26 23:28:39 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -151,6 +151,7 @@ Lst			create;		/* Targets to be made */
 time_t			now;		/* Time at start of make */
 GNode			*DEFAULT;	/* .DEFAULT node */
 Boolean			allPrecious;	/* .PRECIOUS given on line by itself */
+Boolean			deleteOnError;	/* .DELETE_ON_ERROR: set */
 
 static Boolean		noBuiltins;	/* -r flag */
 static Lst		makefiles;	/* ordered list of makefiles to read */
@@ -944,6 +945,7 @@ main(int argc, char **argv)
 	noRecursiveExecute = FALSE;	/* Execute all .MAKE targets */
 	keepgoing = FALSE;		/* Stop on error */
 	allPrecious = FALSE;		/* Remove targets when interrupted */
+	deleteOnError = FALSE;		/* Historical default behavior */
 	queryFlag = FALSE;		/* This is not just a check-run */
 	noBuiltins = FALSE;		/* Read the built-in rules */
 	touchFlag = FALSE;		/* Actually update targets */
