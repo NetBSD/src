@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2016/01/29 01:54:14 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2016/08/26 13:54:18 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2016/01/29 01:54:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2016/08/26 13:54:18 skrll Exp $");
+
+#include "opt_ingenic.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,8 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2016/01/29 01:54:14 macallan Exp $");
 #include <mips/locore.h>
 #include <mips/asm.h>
 #include <mips/ingenic/ingenic_regs.h>
-
-#include "opt_ingenic.h"
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
