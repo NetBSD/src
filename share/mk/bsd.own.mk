@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.946 2016/08/26 15:41:02 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.947 2016/08/26 16:57:50 nonaka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -403,6 +403,7 @@ TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
 TOOL_GENASSYM=		${TOOLDIR}/bin/${_TOOL_PREFIX}genassym
 TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
+TOOL_GPT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gpt
 # grep exists in src/tools, but is not hooked up into the build.
 #TOOL_GREP=		${TOOLDIR}/bin/${_TOOL_PREFIX}grep
 TOOL_GREP=		grep
@@ -515,6 +516,7 @@ TOOL_FGEN=		fgen
 TOOL_GENASSYM=		genassym
 TOOL_GENCAT=		gencat
 TOOL_GMAKE=		gmake
+TOOL_GPT=		gpt
 TOOL_GREP=		grep
 TOOL_GROFF=		groff
 TOOL_HEXDUMP=		hexdump
