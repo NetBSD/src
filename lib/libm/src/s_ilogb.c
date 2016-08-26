@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogb.c,v 1.15 2016/08/24 10:03:32 christos Exp $");
+__RCSID("$NetBSD: s_ilogb.c,v 1.16 2016/08/26 08:20:31 christos Exp $");
 #endif
 
 /* ilogb(double x)
@@ -22,7 +22,11 @@ __RCSID("$NetBSD: s_ilogb.c,v 1.15 2016/08/24 10:03:32 christos Exp $");
  */
 
 #include <math.h>
+#define __TEST_FENV
 #include <fenv.h>
+#ifndef __HAVE_FENV
+#define feraiseexcept(a)
+#endif
 #include "math_private.h"
 
 #ifndef __HAVE_LONG_DOUBLE
