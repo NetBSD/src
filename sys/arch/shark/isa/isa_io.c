@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.13 2016/08/26 20:19:45 macallan Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.13 2016/08/26 20:19:45 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,16 @@ __KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $");
 #include <machine/isa_machdep.h>
 #include <machine/ofw.h>
 #include "igsfb_ofbus.h"
+#include "chipsfb_ofbus.h"
 
 #if NIGSFB_OFBUS > 0
 extern vaddr_t igsfb_mem_vaddr, igsfb_mmio_vaddr;
 extern paddr_t igsfb_mem_paddr;
+#endif
+
+#if NCHIPSFB_OFBUS > 0
+extern vaddr_t chipsfb_mem_vaddr, chipsfb_mmio_vaddr;
+extern paddr_t chipsfb_mem_paddr;
 #endif
 
 /* Proto types for all the bus_space structure functions */
@@ -352,6 +358,11 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 #if NIGSFB_OFBUS > 0
 	if ((vaddr_t)cookie == igsfb_mem_vaddr) {
 		paddr = igsfb_mem_paddr;
+	} else
+#endif
+#if NCHIPSFB_OFBUS > 0
+	if ((vaddr_t)cookie == chipsfb_mem_vaddr) {
+		paddr = chipsfb_mem_paddr;
 	} else
 #endif
 	paddr = ofw_gettranslation((vaddr_t)cookie);
