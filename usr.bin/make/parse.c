@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $	*/
+/*	$NetBSD: parse.c,v 1.215 2016/08/26 23:28:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.215 2016/08/26 23:28:39 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.214 2016/04/06 09:57:00 gson Exp $");
+__RCSID("$NetBSD: parse.c,v 1.215 2016/08/26 23:28:39 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -181,6 +181,7 @@ typedef struct IFile {
 typedef enum {
     Begin,  	    /* .BEGIN */
     Default,	    /* .DEFAULT */
+    DeleteOnError,  /* .DELETE_ON_ERROR */
     End,    	    /* .END */
     dotError,	    /* .ERROR */
     Ignore,	    /* .IGNORE */
@@ -298,6 +299,7 @@ static const struct {
 } parseKeywords[] = {
 { ".BEGIN", 	  Begin,    	0 },
 { ".DEFAULT",	  Default,  	0 },
+{ ".DELETE_ON_ERROR", DeleteOnError, 0 },
 { ".END",   	  End,	    	0 },
 { ".ERROR",   	  dotError,    	0 },
 { ".EXEC",	  Attribute,   	OP_EXEC },
@@ -1320,6 +1322,7 @@ ParseDoDependency(char *line)
 		 *	.BEGIN
 		 *	.END
 		 *	.ERROR
+		 *	.DELETE_ON_ERROR
 		 *	.INTERRUPT  	Are not to be considered the
 		 *			main target.
 		 *  	.NOTPARALLEL	Make only one target at a time.
@@ -1354,6 +1357,9 @@ ParseDoDependency(char *line)
 		    gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
 		    (void)Lst_AtEnd(targets, gn);
 		    DEFAULT = gn;
+		    break;
+		case DeleteOnError:
+		    deleteOnError = TRUE;
 		    break;
 		case NotParallel:
 		    maxJobs = 1;
@@ -1583,7 +1589,8 @@ ParseDoDependency(char *line)
 	    goto out;
 	}
 	*line = '\0';
-    } else if ((specType == NotParallel) || (specType == SingleShell)) {
+    } else if ((specType == NotParallel) || (specType == SingleShell) ||
+	    (specType == DeleteOnError)) {
 	*line = '\0';
     }
 

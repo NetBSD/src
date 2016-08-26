@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.100 2016/06/07 00:40:00 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.101 2016/08/26 23:28:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -373,6 +373,7 @@ extern Boolean  beSilent;    	/* True if should print no commands */
 extern Boolean  noExecute;    	/* True if should execute nothing */
 extern Boolean  noRecursiveExecute;    	/* True if should execute nothing */
 extern Boolean  allPrecious;   	/* True if every target is precious */
+extern Boolean  deleteOnError;	/* True if failed targets should be deleted */
 extern Boolean  keepgoing;    	/* True if should continue on unaffected
 				 * portions of the graph when have an error
 				 * in one portion */
