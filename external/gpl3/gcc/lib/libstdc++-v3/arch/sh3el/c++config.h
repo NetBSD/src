@@ -665,7 +665,7 @@ namespace std
 #define _GLIBCXX_HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the <fenv.h> header file. */
-/* #undef _GLIBCXX_HAVE_FENV_H */
+#define _GLIBCXX_HAVE_FENV_H 1
 
 /* Define to 1 if you have the `finite' function. */
 #define _GLIBCXX_HAVE_FINITE 1
@@ -1328,7 +1328,7 @@ namespace std
 
 /* Define if C99 functions in <fenv.h> should be imported in <tr1/cfenv> in
    namespace std::tr1. */
-/* #undef _GLIBCXX_USE_C99_FENV_TR1 */
+#define _GLIBCXX_USE_C99_FENV_TR1 1
 
 /* Define if C99 functions in <inttypes.h> should be imported in
    <tr1/cinttypes> in namespace std::tr1. */
