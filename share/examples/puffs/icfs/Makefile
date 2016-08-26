@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2007/06/24 18:32:00 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2016/08/26 22:12:22 tnn Exp $
 
-PROG=	icfs
-LDADD+= -lpuffs -lutil
-DBG=-g -O0
+PROG=		icfs
+CPPFLAGS+=	-D_KERNTYPES
+LDADD+= 	-lpuffs -lutil
+DBG=		-g -O0
 
 WARNS=	3
 
