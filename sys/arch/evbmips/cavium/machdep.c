@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2016/07/11 16:18:56 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2016/08/26 13:51:55 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2016/07/11 16:18:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2016/08/26 13:51:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	case 7: cpu_setmodel("Cavium Octeon CN52XX"); break;
 	default: cpu_setmodel("Cavium Octeon"); break;
 	}
-	
+
 	mach_init_vector();
 
 	/* set the VM page size */
@@ -358,7 +358,7 @@ mach_init_memory(u_quad_t memsize)
 		mem_cluster_cnt = 3;
 	}
 
-	
+
 #ifdef MULTIPROCESSOR
 	const u_int cores = mipsNN_cp0_ebase_read() & MIPS_EBASE_CPUNUM;
 	mem_clusters[0].start = cores * 4096;
