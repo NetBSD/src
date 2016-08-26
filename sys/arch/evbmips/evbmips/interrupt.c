@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.22 2015/06/06 22:22:03 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.23 2016/08/26 07:07:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.22 2015/06/06 22:22:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.23 2016/08/26 07:07:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.22 2015/06/06 22:22:03 matt Exp $");
 
 #include <mips/locore.h>
 #include <mips/mips3_clock.h>
-
-struct clockframe cf;
 
 void
 intr_init(void)
@@ -74,12 +72,15 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
 		KASSERT(pending != 0);
 
-		cf.pc = pc;
-		cf.sr = status;
-		cf.intr = (ci->ci_idepth > 1);
 
 #ifdef MIPS3_ENABLE_CLOCK_INTR
 		if (pending & MIPS_INT_MASK_5) {
+			struct clockframe cf;
+
+			cf.pc = pc;
+			cf.sr = status;
+			cf.intr = (ci->ci_idepth > 1);
+
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
