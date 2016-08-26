@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.182 2016/08/26 08:31:17 christos Exp $
+#  $NetBSD: Makefile,v 1.183 2016/08/26 08:33:48 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -170,12 +170,8 @@ COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
 COMMON_SRCS += fenv.c
-.if (${LIBC_MACHINE_CPU} == "sh3")
-.PATH:	${.CURDIR}/arch/sh3
-COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS += fenv.c
 .endif
 
