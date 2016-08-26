@@ -15,11 +15,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_ilogbf.c,v 1.9 2016/08/24 10:03:32 christos Exp $");
+__RCSID("$NetBSD: s_ilogbf.c,v 1.10 2016/08/26 08:20:31 christos Exp $");
 #endif
 
 #include <math.h>
+#define __TEST_FENV
 #include <fenv.h>
+#ifndef __HAVE_FENV
+#define feraiseexcept(a)
+#endif
 #include "math_private.h"
 
 int
