@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.196 2016/08/19 12:26:01 roy Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.197 2016/08/26 21:48:31 dholland Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.196 2016/08/19 12:26:01 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.197 2016/08/26 21:48:31 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1533,7 +1533,7 @@ ni6_nametodns(const char *name, int namelen, int old)
 		 */
 		i = 0;
 		for (p = name; p < name + namelen; p++) {
-			if (*p && *p == '.')
+			if (*p == '.')
 				i++;
 		}
 		if (i < 2)
