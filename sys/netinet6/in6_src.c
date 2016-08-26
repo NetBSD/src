@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.69 2016/08/26 19:45:55 roy Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.70 2016/08/26 20:29:31 roy Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.69 2016/08/26 19:45:55 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.70 2016/08/26 20:29:31 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -245,13 +245,9 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 
 		_s = pserialize_read_enter();
 		ifa = ifa_ifwithaddr(sin6tosa(&srcsock));
-		if (ifa == NULL) {
-			pserialize_read_exit(_s);
-			*errorp = EADDRNOTAVAIL;
-			goto exit;
-		}
-		ia6 = ifatoia6(ifa);
-		if (ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
+		if ((ia6 = ifatoia6(ifa)) == NULL ||
+		    ia6->ia6_flags &
+		    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
 			pserialize_read_exit(_s);
 			*errorp = EADDRNOTAVAIL;
 			goto exit;
