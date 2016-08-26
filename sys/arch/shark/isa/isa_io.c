@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.13 2016/08/26 20:19:45 macallan Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.14 2016/08/26 22:19:48 macallan Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,14 +38,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.13 2016/08/26 20:19:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.14 2016/08/26 22:19:48 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <uvm/uvm.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 #include <machine/ofw.h>
+#include <machine/pmap.h>
 #include "igsfb_ofbus.h"
 #include "chipsfb_ofbus.h"
 
@@ -362,7 +364,7 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 #endif
 #if NCHIPSFB_OFBUS > 0
 	if ((vaddr_t)cookie == chipsfb_mem_vaddr) {
-		paddr = chipsfb_mem_paddr;
+		paddr = 0;
 	} else
 #endif
 	paddr = ofw_gettranslation((vaddr_t)cookie);
@@ -377,7 +379,10 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 #ifdef OFISA_DEBUG
 	printf(" -> %08x %08x\n", (uint32_t)paddr, (uint32_t)ret);
 #endif
-	return arm_btop(ret);
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+		return (arm_btop(ret) | ARM32_MMAP_WRITECOMBINE);
+	} else
+		return arm_btop(ret);	
 }
 
 int
