@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2016/01/29 01:54:14 macallan Exp $ */
+/*	$NetBSD: intr.c,v 1.11 2016/08/26 15:45:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2016/01/29 01:54:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2016/08/26 15:45:48 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -54,9 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.10 2016/01/29 01:54:14 macallan Exp $");
 #define DPRINTF while (0) printf
 #endif
 
-extern void ingenic_clockintr(uint32_t);
+extern void ingenic_clockintr(struct clockframe *);
 extern void ingenic_puts(const char *);
-extern struct clockframe cf;
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
@@ -139,7 +138,7 @@ evbmips_intr_init(void)
 }
 
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	uint32_t id;
 #ifdef INGENIC_INTR_DEBUG
@@ -192,7 +191,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 				tag = MFC0(CP0_CORE_MBOX, 1);
 				ingenic_puts("1");
 				if (tag & 0x400)
-					hardclock(&cf);
+					hardclock(cf);
 				//ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
@@ -209,7 +208,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		/* this is a timer interrupt */
-		ingenic_clockintr(id);
+		ingenic_clockintr(cf);
 		clockintrs.ev_count++;
 		ingenic_puts("INT2\n");
 	}
@@ -230,7 +229,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		mask = readreg(JZ_ICPR0);
 		if (mask & 0x0c000000) {
 			writereg(JZ_ICMSR0, 0x0c000000);
-			ingenic_clockintr(id);
+			ingenic_clockintr(cf);
 			writereg(JZ_ICMCR0, 0x0c000000);
 			clockintrs.ev_count++;
 		}
