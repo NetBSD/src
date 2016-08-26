@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.181 2016/08/25 12:15:28 christos Exp $
+#  $NetBSD: Makefile,v 1.182 2016/08/26 08:31:17 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -57,7 +57,6 @@ LINTFLAGS += -g
 .PATH: ${.CURDIR}/arch/aarch64
 ARCH_SRCS = e_sqrt.S e_sqrtf.S s_fabsf.S
 ARCH_SRCS+= s_fma.S s_fmaf.S s_fmax.S s_fmaxf.S s_fmin.S s_fminf.S
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= fenv.c
 COMMON_SRCS+= e_sqrtl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
@@ -70,7 +69,6 @@ COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .PATH.c: ${.CURDIR}/arch/arm
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COPTS.fenv.c+=	-mfpu=vfp
 .if (${MKSOFTFLOAT} == "no")
 .PATH.S: ${.CURDIR}/arch/arm
@@ -80,17 +78,14 @@ ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
 .PATH.c: ${.CURDIR}/arch/hppa
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 .elif (${LIBC_MACHINE_ARCH} == "sparc")
 .PATH: ${.CURDIR}/arch/sparc
 COMMON_SRCS+= fenv.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .elif (${LIBC_MACHINE_ARCH} == "sparc64")
 .PATH: ${.CURDIR}/arch/sparc64
 COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 .ifndef _COMPAT_M32_MK_
 COMMON_SRCS+= s_nexttoward.c
 .endif
@@ -106,7 +101,6 @@ COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 COMMON_SRCS+= fenv.c s_nexttoward.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
 COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 
 ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 	    e_logf.S e_log10.S e_log10f.S e_log2.S e_log2f.S e_remainder.S \
@@ -143,7 +137,6 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 	    e_log10.S e_remainder.S e_scalb.S e_sinh.S e_sqrt.S s_atan.S \
 	    s_ceil.S s_copysign.S s_cos.S s_expm1.S s_finite.S s_floor.S \
 	    s_log1p.S s_logb.S s_rint.S s_scalbn.S s_sin.S s_tan.S s_tanh.S
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS += fenv.c
 .endif
 .endif
@@ -173,11 +166,12 @@ ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_CPU} == "mips")
 .PATH:	${.CURDIR}/arch/mips
-COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COMMON_SRCS += fenv.c
+.if (${LIBC_MACHINE_CPU} == "sh3")
+.PATH:	${.CURDIR}/arch/sh3
 COMMON_SRCS += fenv.c
 .elif (${LIBC_MACHINE_CPU} == "sh3")
 .PATH:	${.CURDIR}/arch/sh3
