@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_intr.c,v 1.2 2015/06/01 22:55:12 matt Exp $	*/
+/*	$NetBSD: mach_intr.c,v 1.3 2016/08/26 15:45:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.2 2015/06/01 22:55:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_intr.c,v 1.3 2016/08/26 15:45:47 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -61,8 +61,8 @@ evbmips_intr_init(void)
 }
 
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 
-	octeon_iointr(ipl, pc, ipending);
+	octeon_iointr(ipl, cf->pc, ipending);
 }
