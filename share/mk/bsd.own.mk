@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.945 2016/08/20 11:23:33 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.946 2016/08/26 15:41:02 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -587,6 +587,8 @@ TOOL_ZIC=		zic
 .if defined(BINDIR) && ${BINDIR} == "/usr/mdec"
 NOPIE=			# defined
 NOCTF=			# defined
+.elif ${MACHINE} == "sun2"
+NOPIE=			# we don't have PIC, so no PIE
 .endif
 
 # Fallback to ensure that all variables are defined to something
