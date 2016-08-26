@@ -1,4 +1,4 @@
-/*	$NetBSD: s_ilogbl.c,v 1.3 2016/08/24 10:03:32 christos Exp $	*/
+/*	$NetBSD: s_ilogbl.c,v 1.4 2016/08/26 08:20:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,13 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_ilogbl.c,v 1.3 2016/08/24 10:03:32 christos Exp $");
+__RCSID("$NetBSD: s_ilogbl.c,v 1.4 2016/08/26 08:20:31 christos Exp $");
 
 #include "namespace.h"
 
 #include <float.h>
 #include <math.h>
+#define __TEST_FENV
 #include <fenv.h>
+#ifndef __HAVE_FENV
+#define feraiseexcept(a)
+#endif
 #include <machine/ieee.h>
 
 #ifdef __HAVE_LONG_DOUBLE
