@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.148 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.149 2016/08/26 19:53:07 roy Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.148 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.149 2016/08/26 19:53:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -271,7 +271,7 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		 */
 		if (ifa &&
 		    ifatoia6(ifa)->ia6_flags &
-		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED)) {
+		    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
 			error = EADDRNOTAVAIL;
 			goto out;
 		}

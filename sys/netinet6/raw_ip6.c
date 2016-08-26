@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.149 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.150 2016/08/26 19:53:07 roy Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.149 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.150 2016/08/26 19:53:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -700,8 +700,7 @@ rip6_bind(struct socket *so, struct sockaddr *nam, struct lwp *l)
 		goto out;
 	}
 	if (ifa && (ifatoia6(ifa))->ia6_flags &
-	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED)) {
+	    (IN6_IFF_ANYCAST | IN6_IFF_NOTREADY)) {
 		error = EADDRNOTAVAIL;
 		goto out;
 	}
