@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.92 2016/08/17 20:59:08 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.93 2016/08/27 07:22:14 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1540,10 +1540,16 @@ NESTED_NOPROFILE(MIPSX(user_intr), CALLFRAME_SIZ, ra)
 	 */
 	mfc0	v1, MIPS_COP_0_STATUS
 #ifdef NOFPU
+	/*
+	 * enter kernel mode
+	 */
 	MFC0_HAZARD
-	and	v0, v1, MIPS_SR_KSU_MASK|MIPS_SR_EXL
-	xor	v0, v1				# clear the bits
+	and	v0, v1, MIPS_SR_EXL|MIPS_SR_KSU_MASK # bits to clear
+	xor	v0, v1				# clear them.
 #else
+	/*
+	 * Turn off FPU and enter kernel mode
+	 */
 	lui	v0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	v0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	and	v0, v1
@@ -1729,18 +1735,21 @@ NESTED_NOPROFILE(MIPSX(systemcall), CALLFRAME_SIZ, ra)
 #endif
 	PTR_L	s0, L_PROC(MIPS_CURLWP)		# curlwp->l_proc
 	PTR_L	t9, P_MD_SYSCALL(s0)		# t9 = syscall
+#ifdef NOFPU
+	/*
+	 * enter kernel mode
+	 */
+	and	t0, a1, MIPS_SR_EXL|MIPS_SR_KSU_MASK # bits to clear
+	xor	t0, a1				# clear them.
+#else
 	/*
 	 * Turn off FPU and enter kernel mode
 	 */
-#ifdef NOFPU
-	and	t0, a1, MIPS_SR_EXL|MIPS_SR_KSU_MASK
-	xor	t0, a1				# turns off the FPU & ints on
-#else
 	lui	t0, %hi(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	addiu	t0, %lo(~(MIPS_SR_COP_1_BIT|MIPS_SR_EXL|MIPS_SR_KSU_MASK))
 	and	t0, a1
 #endif
-	mtc0	t0, MIPS_COP_0_STATUS		# re-enable interrupts
+	mtc0	t0, MIPS_COP_0_STATUS
 	COP0_SYNC
 /*
  * Call the system call handler.
