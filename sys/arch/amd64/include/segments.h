@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.26 2016/08/27 14:12:58 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.27 2016/08/27 14:19:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -248,7 +248,6 @@ void cpu_init_idt(void);
 void update_descriptor(void *, void *);
 
 #if !defined(XEN)
-void idt_init(void);
 void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
