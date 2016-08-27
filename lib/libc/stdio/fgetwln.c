@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetwln.c,v 1.7 2016/08/22 07:41:10 christos Exp $	*/
+/*	$NetBSD: fgetwln.c,v 1.8 2016/08/27 13:15:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Tim J. Robbins.
@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdio/fgetwln.c,v 1.2 2004/08/06 17:00:09 tjr Exp $");
 #else
-__RCSID("$NetBSD: fgetwln.c,v 1.7 2016/08/22 07:41:10 christos Exp $");
+__RCSID("$NetBSD: fgetwln.c,v 1.8 2016/08/27 13:15:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -88,13 +88,25 @@ fgetwln(FILE * __restrict fp, size_t *lenp)
 	while ((wc = __fgetwc_unlock(fp)) != WEOF) {
 #define	GROW	512
 		if (len * sizeof(wchar_t) >= _EXT(fp)->_fgetstr_len &&
-		    __slbexpand(fp, (len + GROW) * sizeof(wchar_t)))
+		    __slbexpand(fp, (len + GROW) * sizeof(wchar_t))) {
+			fp->_flags |= __SERR;
 			goto error;
+		}
 		*((wchar_t *)(void *)_EXT(fp)->_fgetstr_buf + len++) = wc;
 		if (wc == L'\n')
 			break;
 	}
-	if (len == 0 || fp->_flags & __SERR)
+
+	/*
+	 * The following test assumes that fgetwc() fails when
+	 * feof() is already set, and that fgetwc() will never
+	 * set feof() in the same call where it also sets ferror()
+	 * or returns non-WEOF.
+	 * Testing ferror() would not be better because fgetwc()
+	 * may succeed even when ferror() is already set.
+	 */
+
+	if (len == 0 || (wc == WEOF && !__sfeof(fp)))
 		goto error;
 
 	FUNLOCKFILE(fp);
