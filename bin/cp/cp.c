@@ -1,4 +1,4 @@
-/* $NetBSD: cp.c,v 1.58 2012/01/04 15:58:37 christos Exp $ */
+/* $NetBSD: cp.c,v 1.58.2.1 2016/08/27 13:25:23 bouyer Exp $ */
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.58 2012/01/04 15:58:37 christos Exp $");
+__RCSID("$NetBSD: cp.c,v 1.58.2.1 2016/08/27 13:25:23 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
 			iflag = 0;
 			break;
 		case 'i':
-			iflag = isatty(fileno(stdin));
+			iflag = 1;
 			fflag = 0;
 			break;
 		case 'l':
