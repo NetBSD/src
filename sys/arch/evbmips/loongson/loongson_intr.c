@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.5 2016/08/26 15:45:48 skrll Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.6 2016/08/27 05:53:40 skrll Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.5 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.6 2016/08/27 05:53:40 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -179,7 +179,7 @@ void *
 loongson_pciide_compat_intr_establish(void *v, device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
-	pci_chipset_tag_t pc = pa->pa_pc; 
+	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie;
 	int bus, irq;
 	char buf[PCI_INTRSTR_LEN];
@@ -235,7 +235,7 @@ loongson_pci_intr_map(const struct pci_attach_args *pa,
 const char *
 loongson_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	
+
 	const struct bonito_config *bc = v;
 	return loongson_intr_string(bc, ih, buf, len);
 }

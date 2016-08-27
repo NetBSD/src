@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.11 2016/08/26 15:45:48 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.12 2016/08/27 05:52:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2016/08/27 05:52:43 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -143,7 +143,7 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 	uint32_t id;
 #ifdef INGENIC_INTR_DEBUG
 	char buffer[256];
-	
+
 #if 0
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
 	    MFC0(MIPS_COP_0_CAUSE, 0));
@@ -172,7 +172,7 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 #ifdef MULTIPROCESSOR
 				uint32_t tag;
 				tag = MFC0(CP0_CORE_MBOX, 0);
-	
+
 				ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
@@ -222,9 +222,9 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 		 * but I haven't seen them there so for now we just weed them
 		 * out right here.
 		 * The idea is to allow peripheral interrupts on both cores but
-		 * block INT0 on core1 so it would see only timer interrupts 
+		 * block INT0 on core1 so it would see only timer interrupts
 		 * and IPIs. If that doesn't work we'll have to send an IPI to
-		 * core1 for each timer tick.  
+		 * core1 for each timer tick.
 		 */
 		mask = readreg(JZ_ICPR0);
 		if (mask & 0x0c000000) {
@@ -268,13 +268,13 @@ ingenic_irq(int ipl)
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
-			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			intrs[idx].ih_func(intrs[idx].ih_arg);
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR0, mask);
-		}		
+		}
 		irql &= ~mask;
 		bit = ffs32(irql);
 		bail--;
@@ -296,13 +296,13 @@ ingenic_irq(int ipl)
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
-			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			intrs[idx].ih_func(intrs[idx].ih_arg);
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR1, mask);
-		}		
+		}
 		irqh &= ~mask;
 		bit = ffs32(irqh);
 	}

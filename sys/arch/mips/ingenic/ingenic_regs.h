@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.23 2016/04/07 01:00:05 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.24 2016/08/27 05:56:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -63,15 +63,15 @@
 /* timers and PWMs */
 #define JZ_TC_TER	0x10002010	/* TC enable reg, ro */
 #define JZ_TC_TESR	0x10002014	/* TC enable set reg. */
-	#define TESR_TCST0	0x0001	/* enable counter 0 */ 
-	#define TESR_TCST1	0x0002	/* enable counter 1 */ 
-	#define TESR_TCST2	0x0004	/* enable counter 2 */ 
-	#define TESR_TCST3	0x0008	/* enable counter 3 */ 
-	#define TESR_TCST4	0x0010	/* enable counter 4 */ 
-	#define TESR_TCST5	0x0020	/* enable counter 5 */ 
-	#define TESR_TCST6	0x0040	/* enable counter 6 */ 
-	#define TESR_TCST7	0x0080	/* enable counter 7 */ 
-	#define TESR_OST	0x8000	/* enable OST */ 
+	#define TESR_TCST0	0x0001	/* enable counter 0 */
+	#define TESR_TCST1	0x0002	/* enable counter 1 */
+	#define TESR_TCST2	0x0004	/* enable counter 2 */
+	#define TESR_TCST3	0x0008	/* enable counter 3 */
+	#define TESR_TCST4	0x0010	/* enable counter 4 */
+	#define TESR_TCST5	0x0020	/* enable counter 5 */
+	#define TESR_TCST6	0x0040	/* enable counter 6 */
+	#define TESR_TCST7	0x0080	/* enable counter 7 */
+	#define TESR_OST	0x8000	/* enable OST */
 #define JZ_TC_TECR	0x10002018	/* TC enable clear reg. */
 #define JZ_TC_TFR	0x10002020
 	#define TFR_FFLAG0	0x00000001	/* channel 0 */
@@ -167,7 +167,7 @@ MFC0(uint32_t r, uint32_t s)
 #define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
 
 #define CP0_CORE0_MBOX	_(20), 0
-#define CP0_CORE1_MBOX	_(20), 1	
+#define CP0_CORE1_MBOX	_(20), 1
 
 
 
@@ -289,7 +289,7 @@ MFC0(uint32_t r, uint32_t s)
 	#define PCR_CLK_48	0x02000000	/* 48MHz */
 	#define PCR_CLK_24	0x01000000	/* 24MHz */
 	#define PCR_CLK_12	0x00000000	/* 12MHz */
-	#define PCR_DMPD1	0x00800000	/* pull down D- on port 1 */ 
+	#define PCR_DMPD1	0x00800000	/* pull down D- on port 1 */
 	#define PCR_DPPD1	0x00400000	/* pull down D+ on port 1 */
 	#define PCR_PORT0_RST	0x00200000	/* port 0 reset */
 	#define PCR_PORT1_RST	0x00100000	/* port 1 reset */
@@ -399,7 +399,7 @@ MFC0(uint32_t r, uint32_t s)
 /*
  * INT == 1: 0 - level triggered, 1 - edge triggered
  * INT == 0: 0 - device select, see below
- */ 
+ */
 #define JZ_GPIO_PAT1	0x00000030	/* pattern 1 register */
 #define JZ_GPIO_PAT1S	0x00000034	/* pattern 1 set register */
 #define JZ_GPIO_PAT1C	0x00000038	/* pattern 1 clear register */
@@ -468,7 +468,7 @@ gpio_as_dev0(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 0 */
 	writereg(reg + JZ_GPIO_PAT0C, mask);
 }
-	
+
 static inline void
 gpio_as_dev1(uint32_t g, int pin)
 {
@@ -480,7 +480,7 @@ gpio_as_dev1(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1C, mask);	/* select 1 */
 	writereg(reg + JZ_GPIO_PAT0S, mask);
 }
-	
+
 static inline void
 gpio_as_dev2(uint32_t g, int pin)
 {
@@ -492,7 +492,7 @@ gpio_as_dev2(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 2 */
 	writereg(reg + JZ_GPIO_PAT0C, mask);
 }
-	
+
 static inline void
 gpio_as_dev3(uint32_t g, int pin)
 {
@@ -504,7 +504,7 @@ gpio_as_dev3(uint32_t g, int pin)
 	writereg(reg + JZ_GPIO_PAT1S, mask);	/* select 3 */
 	writereg(reg + JZ_GPIO_PAT0S, mask);
 }
-	
+
 static inline void
 gpio_as_intr_level(uint32_t g, int pin)
 {
