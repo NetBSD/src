@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.121 2016/08/16 07:52:05 wiz Exp $
+.\"	$NetBSD: hier.7,v 1.122 2016/08/27 03:57:21 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)hier.7	8.5 (Berkeley) 6/1/94
 .\"
-.Dd August 15, 2016
+.Dd August 26, 2016
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -405,7 +405,10 @@ Super-user id mapping between machines.
 System programs and administration utilities
 used in both single-user and multi-user environments.
 .It Sy /stand/
-Programs used in a standalone environment.
+Programs used in a standalone environment, that is, things that run on
+bare hardware without a kernel.
+Currently kernel modules are also placed here, although this remains
+somewhat controversial and they may yet get moved.
 .It Sy /tmp/
 Temporary files.
 The contents of
