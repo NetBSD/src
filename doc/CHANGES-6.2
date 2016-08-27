@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.257 2016/07/21 12:58:24 martin Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.258 2016/08/27 13:34:42 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14602,4 +14602,34 @@ libexec/mail.local/mail.local.c			1.28
 
 	Fix error checks in open(2) calls.
 	[shm, ticket #1392]
+
+sys/miscfs/kernfs/kernfs_vnops.c		1.151
+	>From Ilya Zykov: Unbreak kernfs which was broken by this commit
+
+	|Make the spec_node table implementation private to spec_vnops.c.
+	|To retrieve a spec_node, two new lookup functions (by device or
+	| by mount) are implemented.  Both return a referenced vnode,
+	| for an opened block device the opened vnode is returned so
+	| further diagnostic checks "vp == ... sd_bdevvp" will not fire.
+	| Otherwise any vnode matching the criteria gets returned.
+	|No objections on tech-kern.
+
+	The effect was that ls /kernfs appeared empty in most cases.    
+	[is, ticket #1367]
+
+etc/Makefile					1.403
+
+	spwd.db should be 0600 (Brooks Davis)
+	[christos, ticket #1369]
+
+bin/cp/cp.c					1.59
+
+	The '-i' flag should work regardless of whether the standard input is
+	a terminal.  The Open Group notes this historic behavior and correctly
+	notes that it doesn't make much sense.  Note also, that mv(1) has
+	always respected its '-i' regardless of whether the standard input is
+	a terminal.
+
+	From Timo Buhrmester.
+	[uwe, ticket #1372]
 
