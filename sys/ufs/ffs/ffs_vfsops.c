@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.299.2.3 2015/01/28 18:34:11 martin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.299.2.4 2016/08/27 15:17:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299.2.3 2015/01/28 18:34:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.299.2.4 2016/08/27 15:17:34 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1450,7 +1450,8 @@ ffs_oldfscompat_read(struct fs *fs, struct ufsmount *ump, daddr_t sblockloc)
 		fs->fs_old_trackskew = 0;
 	}
 
-	if (fs->fs_old_inodefmt < FS_44INODEFMT) {
+	if (fs->fs_magic == FS_UFS1_MAGIC &&
+	    fs->fs_old_inodefmt < FS_44INODEFMT) {
 		fs->fs_maxfilesize = (u_quad_t) 1LL << 39;
 		fs->fs_qbmask = ~fs->fs_bmask;
 		fs->fs_qfmask = ~fs->fs_fmask;
@@ -1895,7 +1896,8 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 	 * fix until fsck has been changed to do the update.
 	 */
 
-	if (fs->fs_old_inodefmt < FS_44INODEFMT) {		/* XXX */
+	if (fs->fs_magic == FS_UFS1_MAGIC &&			/* XXX */
+	    fs->fs_old_inodefmt < FS_44INODEFMT) {		/* XXX */
 		ip->i_uid = ip->i_ffs1_ouid;			/* XXX */
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
