@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ev64260.inc,v 1.5.14.1 2014/04/11 08:31:56 msaitoh Exp $
+#	$NetBSD: Makefile.ev64260.inc,v 1.5.14.2 2016/08/27 14:44:10 bouyer Exp $
 
 MKIMG?=	${HOST_SH} ${THISPPC}/compile/walnut-mkimg.sh
 
@@ -9,5 +9,5 @@ SYSTEM_FIRST_SFILE=	${THISPPC}/${BOARDTYPE}/${BOARDTYPE}_locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT}; \
 		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
