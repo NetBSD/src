@@ -1,9 +1,8 @@
-/* @(#)e_pow.c 5.1 93/09/24 */
+/* @(#)e_pow.c 1.5 04/04/22 SMI */
 /*
  * ====================================================
- * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
+ * Copyright (C) 2004 by Sun Microsystems, Inc. All rights reserved.
  *
- * Developed at SunPro, a Sun Microsystems, Inc. business.
  * Permission to use, copy, modify, and distribute this
  * software is freely granted, provided that this notice
  * is preserved.
@@ -12,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_pow.c,v 1.16 2010/04/23 19:17:07 drochner Exp $");
+__RCSID("$NetBSD: e_pow.c,v 1.17 2016/08/27 10:01:08 christos Exp $");
 #endif
 
 /* __ieee754_pow(x,y) return x**y
@@ -29,13 +28,13 @@ __RCSID("$NetBSD: e_pow.c,v 1.16 2010/04/23 19:17:07 drochner Exp $");
  * Special cases:
  *	1.  (anything) ** 0  is 1
  *	2.  (anything) ** 1  is itself
- *	3.  (anything) ** NAN is NAN
+ *	3.  (anything) ** NAN is NAN except 1 ** NAN = 1
  *	4.  NAN ** (anything except 0) is NAN
  *	5.  +-(|x| > 1) **  +INF is +INF
  *	6.  +-(|x| > 1) **  -INF is +0
  *	7.  +-(|x| < 1) **  +INF is +0
  *	8.  +-(|x| < 1) **  -INF is +INF
- *	9.  +-1         ** +-INF is NAN
+ *	9.  +-1         ** +-INF is 1
  *	10. +0 ** (+anything except 0, NAN)               is +0
  *	11. -0 ** (+anything except 0, NAN, odd integer)  is +0
  *	12. +0 ** (-anything except 0, NAN)               is +INF
@@ -113,10 +112,13 @@ __ieee754_pow(double x, double y)
     /* y==zero: x**0 = 1 */
 	if((iy|ly)==0) return one;
 
-    /* +-NaN return x+y */
+    /* x==1: 1**y = 1, even if y is NaN */
+	if (hx==0x3ff00000 && lx == 0) return one;
+
+    /* y!=zero: result is NaN if either arg is NaN */
 	if(ix > 0x7ff00000 || ((ix==0x7ff00000)&&(lx!=0)) ||
 	   iy > 0x7ff00000 || ((iy==0x7ff00000)&&(ly!=0)))
-		return x+y;
+		return (x+0.0)+(y+0.0);
 
     /* determine if y is an odd int when x < 0
      * yisint = 0	... y is not an integer
@@ -142,7 +144,7 @@ __ieee754_pow(double x, double y)
 	if(ly==0) {
 	    if (iy==0x7ff00000) {	/* y is +-inf */
 	        if(((ix-0x3ff00000)|lx)==0)
-		    return  y - y;	/* inf**+-1 is NaN */
+		    return  one;	/* (-1)**+-inf is 1 */
 	        else if (ix >= 0x3ff00000)/* (|x|>1)**+-inf = inf,0 */
 		    return (hy>=0)? y: zero;
 	        else			/* (|x|<1)**-,+inf = inf,0 */
@@ -174,7 +176,11 @@ __ieee754_pow(double x, double y)
 	    }
 	}
 
+    /* CYGNUS LOCAL + fdlibm-5.3 fix: This used to be
 	n = (hx>>31)+1;
+       but ANSI C says a right shift of a signed negative quantity is
+       implementation defined.  */
+	n = ((u_int32_t)hx>>31)-1;
 
     /* (x<0)**(non-int) is NaN */
 	if((n|yisint)==0) return (x-x)/(x-x);
