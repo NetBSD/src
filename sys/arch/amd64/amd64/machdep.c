@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 2016/08/27 16:07:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230 2016/08/27 16:17:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2016/08/27 16:07:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2016/08/27 16:17:16 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1828,8 +1828,6 @@ cpu_reset(void)
 	 */
 	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
-	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	kpreempt_enable();
 	breakpoint();
