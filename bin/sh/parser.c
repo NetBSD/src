@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $	*/
+/*	$NetBSD: parser.c,v 1.80.4.1 2016/08/27 14:46:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.80 2011/08/31 16:24:55 plunky Exp $");
+__RCSID("$NetBSD: parser.c,v 1.80.4.1 2016/08/27 14:46:36 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1294,7 +1294,7 @@ parsesub: {
 			do {
 				USTPUTC(c, out);
 				c = pgetc();
-			} while (is_digit(c));
+			} while (subtype != VSNORMAL && is_digit(c));
 		}
 		else if (is_special(c)) {
 			USTPUTC(c, out);
