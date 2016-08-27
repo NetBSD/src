@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.102 2016/07/21 12:54:44 martin Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.103 2016/08/27 04:32:15 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5181,4 +5181,17 @@ libexec/mail.local/mail.local.c			1.28
 
 	Fix error checks in open(2) calls.
 	[shm, ticket #1207]
+
+sys/netinet/ip_carp.c				1.75
+
+	Workaround for PR 47013: ipv4+ipv6 carp0 interface is trying
+	to get MASTER status although master is still advertising.
+	Only works for mixed IPv4/IPv6 environemnts, not pure-IPv6.
+	[is, ticket #1208]
+
+sys/netinet/ip_carp.c				1.76
+
+	carp(4): Print the IPv6 or IPv4 source addresses of packets with
+	wrong hash, to help debugging.
+	[is, ticket #1209]
 
