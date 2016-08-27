@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.6 2016/08/27 09:11:56 christos Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.7 2016/08/27 09:35:13 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.6 2016/08/27 09:11:56 christos Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.7 2016/08/27 09:35:13 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.6 2016/08/27 09:11:56 christos Exp 
 
 double ldexp(double, int);
 
-#include <stdio.h>
 /*
  * Multiply the given value by 2^expon.
  */
@@ -100,7 +99,6 @@ ldexp(double val, int expon)
 	 * Calculate the new exponent and check for underflow and overflow.
 	 */
 	newexp = oldexp + expon;
-	printf("ee %#x oldexp %#x\n", oldexp, expon);
 
 	if (newexp >= DBL_EXP_INFNAN ||
 	    (oldexp >= 0 && expon >= DBL_EXP_INFNAN)) {
