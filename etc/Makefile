@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.396.2.2 2012/09/17 19:00:34 riz Exp $
+#	$NetBSD: Makefile,v 1.396.2.2.4.1 2016/08/27 13:23:05 bouyer Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -288,8 +288,10 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	    ${DESTDIR}/etc/master.passwd
 .if ${MKUNPRIVED} != "no"
 	( \
-		for metaent in passwd pwd.db spwd.db; do \
-	    		echo "./etc/$${metaent} type=file mode=0644 uname=root gname=wheel tags=etc_pkg"; \
+		mode=0600; \
+		for metaent in spwd.db passwd pwd.db; do \
+	    		echo "./etc/$${metaent} type=file mode=$${mode} uname=root gname=wheel tags=etc_pkg"; \
+			mode=0644; \
 		done; \
 	) | ${METALOG.add}
 .endif	# MKUNPRIVED != no
