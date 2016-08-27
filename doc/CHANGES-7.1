@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.103 2016/08/27 04:32:15 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.104 2016/08/27 15:11:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5194,4 +5194,17 @@ sys/netinet/ip_carp.c				1.76
 	carp(4): Print the IPv6 or IPv4 source addresses of packets with
 	wrong hash, to help debugging.
 	[is, ticket #1209]
+
+sys/dev/fss.c					1.95
+
+	Disestablish COW handler on error.  No need to do further copies after
+	the snapshot device failed.
+
+	Should fix PR kern/51377: fss(4) panic if snapshot mounted read/write
+	[hannken, ticket #1239]
+
+sys/compat/common/vfs_syscalls_43.c		1.58
+
+	fill in the tv_nsec parts of the converted timespec in cvtstat().
+	[mrg, ticket #1240]
 
