@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.71 2016/08/27 14:42:02 bouyer Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.72 2016/08/27 14:49:09 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -8427,4 +8427,12 @@ usr.sbin/quot/quot.c				1.34
 	even for UFS2, so problems were apparent only on file systems created
 	by other operating systems, for example, FreeBSD.
 	[martin, ticket #1395]
+
+sys/dev/fss.c					1.95
+
+	Disestablish COW handler on error.  No need to do further copies after
+	the snapshot device failed.
+
+	Should fix PR kern/51377: fss(4) panic if snapshot mounted read/write
+	[hannken, ticket #1399]
 
