@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.81.8.1 2013/12/17 21:07:59 bouyer Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.81.8.2 2016/08/27 13:57:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -169,7 +169,7 @@ enum {
 /*
  * Global defines
  */
-#define	FTPBUFLEN	MAXPATHLEN + 200
+#define	FTPBUFLEN	(4 * MAXPATHLEN)
 #define	MAX_IN_PORT_T	0xffffU
 
 #define	HASHBYTES	1024	/* default mark for `hash' command */
@@ -337,11 +337,12 @@ extern	struct option	optiontab[];
 #endif
 
 #ifdef NO_DEBUG
-#define DPRINTF(...)
-#define DWARN(...)
+#define DPRINTF(...)	(void)0
+#define DWARN(...)	(void)0
 #else
-#define DPRINTF(...)	if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__)
-#define DWARN(...)	if (ftp_debug) warn(__VA_ARGS__)
+#define DWFTP(a)	do a; while (/*CONSTCOND*/0)
+#define DPRINTF(...)	DWFTP(if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__))
+#define DWARN(...)	DWFTP(if (ftp_debug) warn(__VA_ARGS__))
 #endif
 
 #define STRorNULL(s)	((s) ? (s) : "<null>")
