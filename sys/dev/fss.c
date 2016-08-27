@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.91 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: fss.c,v 1.91.4.1 2016/08/27 15:09:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.91 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.91.4.1 2016/08/27 15:09:48 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,17 +445,20 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
 
 /*
  * An error occurred reading or writing the snapshot or backing store.
- * If it is the first error log to console.
+ * If it is the first error log to console and disestablish cow handler.
  * The caller holds the mutex.
  */
 static inline void
 fss_error(struct fss_softc *sc, const char *msg)
 {
 
-	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
-		aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
-	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
-		sc->sc_flags |= FSS_ERROR;
+	if ((sc->sc_flags & (FSS_ACTIVE | FSS_ERROR)) != FSS_ACTIVE)
+		return;
+
+	aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
+	sc->sc_flags |= FSS_ERROR;
 }
 
 /*
@@ -575,9 +578,8 @@ fss_unmount_hook(struct mount *mp)
 		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
 			continue;
 		mutex_enter(&sc->sc_slock);
-		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
-		    sc->sc_mount == mp)
-			fss_error(sc, "forced unmount");
+		if ((sc->sc_flags & FSS_ACTIVE) != 0 && sc->sc_mount == mp)
+			fss_error(sc, "forced by unmount");
 		mutex_exit(&sc->sc_slock);
 	}
 	mutex_exit(&fss_device_lock);
@@ -886,7 +888,7 @@ static int
 fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+	if ((sc->sc_flags & (FSS_PERSISTENT | FSS_ERROR)) == 0)
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 
 	mutex_enter(&sc->sc_slock);
