@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2016/08/13 11:21:06 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2016/08/27 08:38:58 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -36,6 +36,7 @@ VFSTESTDIR != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 LDADD+=-L${VFSTESTDIR} -lvfstest
 
 LDADD+=-lrumpvfs -lrumpkern_sysproxy -lrump -lrumpuser		# base
+LDADD+=-lrumpnet						# static linking
 LDADD+=-lpthread
 
 LDADD+=-lutil
