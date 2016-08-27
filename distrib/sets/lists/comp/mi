@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2058 2016/08/20 12:37:06 hannken Exp $
+#	$NetBSD: mi,v 1.2059 2016/08/27 08:03:47 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5216,6 +5216,7 @@
 ./usr/share/man/cat3/atomic_add_int_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_long.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_long_nv.0	comp-c-catman		.cat
+./usr/share/man/cat3/atomic_add_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_add_ptr_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and.0		comp-c-catman		.cat
@@ -5223,6 +5224,7 @@
 ./usr/share/man/cat3/atomic_and_32_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and_64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and_64_nv.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_and_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and_uint.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and_uint_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_and_ulong.0		comp-c-catman		.cat
@@ -5232,6 +5234,7 @@
 ./usr/share/man/cat3/atomic_cas_32_ni.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_64_ni.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_cas_ni.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_ptr_ni.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_cas_uint.0		comp-c-catman		.cat
@@ -5243,6 +5246,7 @@
 ./usr/share/man/cat3/atomic_dec_32_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_64_nv.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_dec_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_ptr_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_dec_uint.0		comp-c-catman		.cat
@@ -5254,6 +5258,7 @@
 ./usr/share/man/cat3/atomic_inc_32_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_inc_64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_inc_64_nv.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_inc_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_inc_ptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_inc_ptr_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_inc_uint.0		comp-c-catman		.cat
@@ -5266,6 +5271,7 @@
 ./usr/share/man/cat3/atomic_or_32_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_or_64.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_or_64_nv.0		comp-c-catman		.cat
+./usr/share/man/cat3/atomic_or_nv.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_or_uint.0		comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_or_uint_nv.0	comp-c-catman		.cat
 ./usr/share/man/cat3/atomic_or_ulong.0		comp-c-catman		.cat
@@ -12550,6 +12556,7 @@
 ./usr/share/man/html3/atomic_add_int_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_long.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_long_nv.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_add_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_ptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_add_ptr_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and.html		comp-c-htmlman		html
@@ -12557,6 +12564,7 @@
 ./usr/share/man/html3/atomic_and_32_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and_64.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and_64_nv.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_and_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and_uint.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and_uint_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_and_ulong.html	comp-c-htmlman		html
@@ -12566,6 +12574,7 @@
 ./usr/share/man/html3/atomic_cas_32_ni.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_64.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_64_ni.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_cas_ni.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_ptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_ptr_ni.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_cas_uint.html	comp-c-htmlman		html
@@ -12577,6 +12586,7 @@
 ./usr/share/man/html3/atomic_dec_32_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_64.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_64_nv.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_dec_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_ptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_ptr_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_dec_uint.html	comp-c-htmlman		html
@@ -12588,6 +12598,7 @@
 ./usr/share/man/html3/atomic_inc_32_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_inc_64.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_inc_64_nv.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_inc_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_inc_ptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_inc_ptr_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_inc_uint.html	comp-c-htmlman		html
@@ -12600,6 +12611,7 @@
 ./usr/share/man/html3/atomic_or_32_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_or_64.html		comp-c-htmlman		html
 ./usr/share/man/html3/atomic_or_64_nv.html	comp-c-htmlman		html
+./usr/share/man/html3/atomic_or_nv.html		comp-c-htmlman		html
 ./usr/share/man/html3/atomic_or_uint.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_or_uint_nv.html	comp-c-htmlman		html
 ./usr/share/man/html3/atomic_or_ulong.html	comp-c-htmlman		html
@@ -19685,6 +19697,7 @@
 ./usr/share/man/man3/atomic_add_int_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_add_long.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_add_long_nv.3	comp-c-man		.man
+./usr/share/man/man3/atomic_add_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_add_ptr.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_add_ptr_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_and.3		comp-c-man		.man
@@ -19692,6 +19705,7 @@
 ./usr/share/man/man3/atomic_and_32_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_and_64.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_and_64_nv.3		comp-c-man		.man
+./usr/share/man/man3/atomic_and_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_and_uint.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_and_uint_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_and_ulong.3		comp-c-man		.man
@@ -19701,6 +19715,7 @@
 ./usr/share/man/man3/atomic_cas_32_ni.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_64.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_64_ni.3		comp-c-man		.man
+./usr/share/man/man3/atomic_cas_ni.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_ptr.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_ptr_ni.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_cas_uint.3		comp-c-man		.man
@@ -19712,6 +19727,7 @@
 ./usr/share/man/man3/atomic_dec_32_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_64.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_64_nv.3		comp-c-man		.man
+./usr/share/man/man3/atomic_dec_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_ptr.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_ptr_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_dec_uint.3		comp-c-man		.man
@@ -19723,6 +19739,7 @@
 ./usr/share/man/man3/atomic_inc_32_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_inc_64.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_inc_64_nv.3		comp-c-man		.man
+./usr/share/man/man3/atomic_inc_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_inc_ptr.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_inc_ptr_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_inc_uint.3		comp-c-man		.man
@@ -19735,6 +19752,7 @@
 ./usr/share/man/man3/atomic_or_32_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_or_64.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_or_64_nv.3		comp-c-man		.man
+./usr/share/man/man3/atomic_or_nv.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_or_uint.3		comp-c-man		.man
 ./usr/share/man/man3/atomic_or_uint_nv.3	comp-c-man		.man
 ./usr/share/man/man3/atomic_or_ulong.3		comp-c-man		.man
