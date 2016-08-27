@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.258 2016/08/27 13:34:42 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.259 2016/08/27 14:18:42 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14632,4 +14632,38 @@ bin/cp/cp.c					1.59
 
 	From Timo Buhrmester.
 	[uwe, ticket #1372]
+
+src/usr.bin/ftp/cmds.c:		patch
+src/usr.bin/ftp/fetch.c:	patch
+src/usr.bin/ftp/ftp.1:		patch
+src/usr.bin/ftp/ftp.c:		patch
+src/usr.bin/ftp/ftp_var.h:	patch
+src/usr.bin/ftp/main.c:		patch
+src/usr.bin/ftp/ssl.c:		patch
+src/usr.bin/ftp/ssl.h:		patch
+src/usr.bin/ftp/version.h:	patch
+
+	Update ftp(1) to version 20150912, adding https via proxy support.
+	[nonaka, ticket #1375]
+
+sys/dev/ic/gem.c				1.105
+	PR kern/46083
+	Track the start of each packet, so that we set the "Start of Frame"
+	bit in all the relevant transmit descriptors when enqueing multiple
+	packets.
+	Patch from Valery Ushakov, slightly modified by me to handle debug
+	output. Tested on macppc/6.x and sparc64/7.99.x.
+	[jdc, ticket #1384]
+
+sys/dev/isapnp/isapnpdevs			1.69
+sys/dev/isapnp/isapnpdevs.c			regen
+sys/dev/isapnp/isapnpdevs.h			regen
+
+	Add another le board.
+	[pgoyette, ticket #1386]
+
+sys/ufs/lfs/lfs_vnops.c				1.304
+
+	Fix a deadlock
+	[dholland, ticket #1389]
 
