@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2016/08/27 14:19:47 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.229 2016/08/27 16:07:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2016/08/27 14:19:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2016/08/27 16:07:26 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -262,6 +262,10 @@ unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
+vaddr_t gdt_vaddr;
+paddr_t gdt_paddr;
+vaddr_t ldt_vaddr;
+paddr_t ldt_paddr;
 
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
@@ -1624,32 +1628,27 @@ init_x86_64(paddr_t first_avail)
 	kpreempt_disable();
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(ldt_vaddr, ldt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
+	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
-	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, 0);
-#ifdef XEN
-	/* Steal one more page for LDT */
-	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, 0);
-#endif
+
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
 	idt = (struct gate_descriptor *)idt_vaddr;
-	gdtstore = (char *)(idt + NIDT);
-	ldtstore = gdtstore + DYNSEL_START;
 #else
 	xen_idt = (struct trap_info *)idt_vaddr;
 	xen_idt_idx = 0;
-	/* Xen wants page aligned GDT/LDT in separated pages */
-	ldtstore = (char *) roundup((vaddr_t) (xen_idt + NIDT), PAGE_SIZE);
-	gdtstore = (char *) (ldtstore + PAGE_SIZE);
-#endif /* XEN */
+#endif
+	gdtstore = (char *)gdt_vaddr;
+	ldtstore = (char *)ldt_vaddr;
 
 	/*
 	 * Make GDT gates and memory segments.
