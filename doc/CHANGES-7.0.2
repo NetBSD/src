@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.8 2016/08/27 15:11:46 bouyer Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.9 2016/08/27 15:21:28 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -223,4 +223,28 @@ sys/compat/common/vfs_syscalls_43.c		1.58
 
 	fill in the tv_nsec parts of the converted timespec in cvtstat().
 	[mrg, ticket #1240]
+
+sbin/fsdb/fsdb.c				1.49
+sys/ufs/ffs/ffs_vfsops.c			1.340
+usr.sbin/quot/quot.c				1.34
+
+From Michael Plass:
+
+The superblock field that distinguishes between 4.2BSD and 4.4BSD
+inodes is really only relevant on a UFS1 file system. Make sure that
+it is a UFS1 fs before using fs_old_inodefmt.
+
+Note that the NetBSD newfs and mkfs utilities initialize fs_old_inodefmt
+even for UFS2, so problems were apparent only on file systems created
+by other operating systems, for example, FreeBSD.
+[martin, ticket #1210]
+
+sys/arch/evbppc/conf/Makefile.ev64260.inc	1.8
+sys/arch/evbppc/conf/Makefile.obs405.inc	1.13
+sys/arch/evbppc/conf/Makefile.walnut.inc	1.9
+
+Fix typo in Makefile which resulted in kernel image not being generated
+
+From Rin Okuyama in PR/51369
+[maya, ticket #1211]
 
