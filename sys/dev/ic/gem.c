@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.98.2.1 2012/07/05 17:59:12 riz Exp $ */
+/*	$NetBSD: gem.c,v 1.98.2.2 2016/08/27 14:04:25 bouyer Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.98.2.1 2012/07/05 17:59:12 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.98.2.2 2016/08/27 14:04:25 bouyer Exp $");
 
 #include "opt_inet.h"
 
@@ -1359,6 +1359,9 @@ gem_start(struct ifnet *ifp)
 	struct gem_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx = -1, lasttx = -1, ofree, seg;
+#ifdef GEM_DEBUG
+	int otxnext;
+#endif
 	uint64_t flags = 0;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
@@ -1369,10 +1372,12 @@ gem_start(struct ifnet *ifp)
 	 * the first descriptor we'll use.
 	 */
 	ofree = sc->sc_txfree;
-	firsttx = sc->sc_txnext;
+#ifdef GEM_DEBUG
+	otxnext = sc->sc_txnext;
+#endif
 
 	DPRINTF(sc, ("%s: gem_start: txfree %d, txnext %d\n",
-	    device_xname(sc->sc_dev), ofree, firsttx));
+	    device_xname(sc->sc_dev), ofree, otxnext));
 
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
@@ -1477,7 +1482,8 @@ gem_start(struct ifnet *ifp)
 		/*
 		 * Initialize the transmit descriptors.
 		 */
-		for (nexttx = sc->sc_txnext, seg = 0;
+		firsttx = sc->sc_txnext;
+		for (nexttx = firsttx, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = GEM_NEXTTX(nexttx)) {
 
@@ -1599,7 +1605,7 @@ gem_start(struct ifnet *ifp)
 
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
-		    device_xname(sc->sc_dev), lasttx, firsttx));
+		    device_xname(sc->sc_dev), lasttx, otxnext));
 		/*
 		 * The entire packet chain is set up.
 		 * Kick the transmitter.
