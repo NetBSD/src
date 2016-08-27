@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.6 2016/08/27 09:11:56 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.6 2016/08/27 09:11:56 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.5 2010/04/23 19:04:54 drochner Exp 
 
 double ldexp(double, int);
 
+#include <stdio.h>
 /*
  * Multiply the given value by 2^expon.
  */
@@ -99,8 +100,19 @@ ldexp(double val, int expon)
 	 * Calculate the new exponent and check for underflow and overflow.
 	 */
 	newexp = oldexp + expon;
+	printf("ee %#x oldexp %#x\n", oldexp, expon);
 
-	if (newexp <= 0) {
+	if (newexp >= DBL_EXP_INFNAN ||
+	    (oldexp >= 0 && expon >= DBL_EXP_INFNAN)) {
+		/*
+		 * The result overflowed; return +/-Inf.
+		 */
+		u.dblu_dbl.dbl_exp = DBL_EXP_INFNAN;
+		u.dblu_dbl.dbl_frach = 0;
+		u.dblu_dbl.dbl_fracl = 0;
+		errno = ERANGE;
+		return (u.dblu_d);
+	} else if (newexp <= 0) {
 		/*
 		 * The output number is either denormal or underflows (see
 		 * comments in machine/ieee.h).
@@ -122,15 +134,6 @@ ldexp(double val, int expon)
 		mul.dblu_d = 0.0;
 		mul.dblu_dbl.dbl_exp = expon + DBL_EXP_BIAS;
 		u.dblu_d *= mul.dblu_d;
-		return (u.dblu_d);
-	} else if (newexp >= DBL_EXP_INFNAN) {
-		/*
-		 * The result overflowed; return +/-Inf.
-		 */
-		u.dblu_dbl.dbl_exp = DBL_EXP_INFNAN;
-		u.dblu_dbl.dbl_frach = 0;
-		u.dblu_dbl.dbl_fracl = 0;
-		errno = ERANGE;
 		return (u.dblu_d);
 	} else {
 		/*
