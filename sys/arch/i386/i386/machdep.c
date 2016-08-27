@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.759 2016/07/16 17:02:34 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.760 2016/08/27 14:19:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.759 2016/07/16 17:02:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.760 2016/08/27 14:19:47 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1303,10 +1303,7 @@ init386(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
 
-
 #ifndef XEN
-	idt_init();
-
 	idt = (struct gate_descriptor *)idt_vaddr;
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());

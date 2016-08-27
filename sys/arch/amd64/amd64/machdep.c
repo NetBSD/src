@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2016/08/27 14:12:58 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 2016/08/27 14:19:47 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2016/08/27 14:12:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2016/08/27 14:19:47 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1640,7 +1640,6 @@ init_x86_64(paddr_t first_avail)
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
-	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
 	gdtstore = (char *)(idt + NIDT);
 	ldtstore = gdtstore + DYNSEL_START;
@@ -1652,17 +1651,14 @@ init_x86_64(paddr_t first_avail)
 	gdtstore = (char *) (ldtstore + PAGE_SIZE);
 #endif /* XEN */
 
-	/* make gdt gates and memory segments */
+	/*
+	 * Make GDT gates and memory segments.
+	 */
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
 	    0xfffff, SDT_MEMERA, SEL_KPL, 1, 0, 1);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0,
 	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
-
-#ifndef XEN
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
-	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
-#endif
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
@@ -1670,7 +1666,14 @@ init_x86_64(paddr_t first_avail)
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
-	/* make ldt gates and memory segments */
+#ifndef XEN
+	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
+	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
+#endif
+
+	/*
+	 * Make LDT gates and memory segments.
+	 */
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
@@ -1705,7 +1708,7 @@ init_x86_64(paddr_t first_avail)
 	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
-	 * Other entries.
+	 * Other LDT entries.
 	 */
 	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
 	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
