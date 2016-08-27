@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2016/08/27 14:21:07 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2016/08/27 14:23:54 christos Exp $
 #
 
 TESTSDIR=	${TESTSBASE}/rump/modautoload
-.include <bsd.init.mk>
-NOPIE=yes
+
 TESTS_C=	t_modautoload
 PAXCTL_FLAGS=	+m
 
