@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.25 2016/08/21 11:48:59 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.26 2016/08/27 14:12:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -331,7 +331,7 @@ void cpu_fsgs_reload(struct lwp *, int, int);
  * Entries in the Interrupt Descriptor Table (IDT)
  */
 #define NIDT	256
-#define NRSVIDT	32		/* reserved entries for CPU exceptions */
+#define NCPUIDT	32		/* reserved entries for CPU exceptions */
 
 /*
  * Entries in the Global Descriptor Table (GDT)

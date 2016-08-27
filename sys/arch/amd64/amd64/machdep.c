@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 2016/07/22 14:08:33 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227 2016/08/27 14:12:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2016/07/22 14:08:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2016/08/27 14:12:58 maxv Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1714,8 +1714,8 @@ init_x86_64(paddr_t first_avail)
 	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    sizeof (struct gate_descriptor));
 
-	/* exceptions */
-	for (x = 0; x < 32; x++) {
+	/* CPU-specific IDT exceptions. */
+	for (x = 0; x < NCPUIDT; x++) {
 #ifndef XEN
 		idt_vec_reserve(x);
 		switch (x) {
