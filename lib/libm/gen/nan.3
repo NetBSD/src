@@ -1,4 +1,4 @@
-.\"	$NetBSD: nan.3,v 1.4 2011/06/10 14:10:18 njoly Exp $
+.\"	$NetBSD: nan.3,v 1.5 2016/08/27 02:56:26 dholland Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,11 +49,11 @@
 The call
 .Fn nan "\*qn-char-sequence\*q"
 is equivalent to the call
-.Fn strod "\*qNAN(n-char-sequence)\*q" "NULL" .
+.Fn strtod "\*qNAN(n-char-sequence)\*q" "NULL" .
 The call
 .Fn nan "\*q\*q"
 is equivalent to the call
-.Fn strod "\*qNAN()\*q" "NULL" .
+.Fn strtod "\*qNAN()\*q" "NULL" .
 .Pp
 The
 .Fn nanf
