@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.120.2.1 2013/12/17 21:07:59 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.120.2.2 2016/08/27 13:57:01 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,14 +91,14 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
  The Regents of the University of California.  All rights reserved.\
-  Copyright 1996-2008 The NetBSD Foundation, Inc.  All rights reserved");
+  Copyright 1996-2015 The NetBSD Foundation, Inc.  All rights reserved");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.120.2.1 2013/12/17 21:07:59 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.120.2.2 2016/08/27 13:57:01 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -266,7 +266,7 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:q:r:Rs:tT:u:vV")) != -1) {
+	while ((ch = getopt(argc, argv, "46AadefginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -406,6 +406,13 @@ main(int volatile argc, char **volatile argv)
 
 		case 'V':
 			progress = verbose = 0;
+			break;
+
+		case 'x':
+			sndbuf_size = strsuftoi(optarg);
+			if (sndbuf_size < 1)
+				errx(1, "Bad xferbuf value: %s", optarg);
+			rcvbuf_size = sndbuf_size;
 			break;
 
 		default:
@@ -1045,7 +1052,7 @@ usage(void)
 
 	(void)fprintf(stderr,
 "usage: %s [-46AadefginpRtVv] [-N netrc] [-o outfile] [-P port] [-q quittime]\n"
-"           [-r retry] [-s srcaddr] [-T dir,max[,inc]]\n"
+"           [-r retry] [-s srcaddr] [-T dir,max[,inc]] [-x xferbufsize]\n"
 "           [[user@]host [port]] [host:path[/]] [file:///file]\n"
 "           [ftp://[user[:pass]@]host[:port]/path[/]]\n"
 "           [http://[user[:pass]@]host[:port]/path] [...]\n"
