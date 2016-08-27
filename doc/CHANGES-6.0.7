@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.71 2016/07/21 13:14:35 martin Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.72 2016/08/27 13:22:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -8687,4 +8687,9 @@ libexec/mail.local/mail.local.c			1.28
 
 	Fix error checks in open(2) calls.
 	[shm, ticket #1392]
+
+etc/Makefile					1.403
+
+	spwd.db should be 0600 (Brooks Davis)
+	[christos, ticket #1369]
 
