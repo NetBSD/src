@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.220 2016/08/19 18:24:57 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.221 2016/08/27 16:07:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220 2016/08/19 18:24:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.221 2016/08/27 16:07:26 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -538,6 +538,10 @@ static struct pool_allocator pmap_pdp_allocator = {
 
 extern vaddr_t idt_vaddr;
 extern paddr_t idt_paddr;
+extern vaddr_t gdt_vaddr;
+extern paddr_t gdt_paddr;
+extern vaddr_t ldt_vaddr;
+extern paddr_t ldt_paddr;
 
 extern int end;
 
@@ -1389,8 +1393,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif
 
-#ifdef XEN
-#ifdef __x86_64__
+#if defined(XEN) && defined(__x86_64__)
 	/*
 	 * We want a dummy page directory for Xen: when deactivating a pmap, Xen
 	 * will still consider it active. So we set user PGD to this one to lift
@@ -1405,27 +1408,24 @@ pmap_bootstrap(vaddr_t kva_start)
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
-#endif /* __x86_64__ */
-	/*
-	 * Xen requires one more page as we can't store GDT and LDT on the same
-	 * page.
-	 */
-	idt_vaddr = pmap_bootstrap_valloc(3);
-	idt_paddr = pmap_bootstrap_palloc(3);
-#else /* XEN */
+#endif
 
-#if defined(__x86_64__)
-	idt_vaddr = pmap_bootstrap_valloc(2);
-	idt_paddr = pmap_bootstrap_palloc(2);
-#else
+	/*
+	 * Allocate space for the IDT, GDT and LDT.
+	 */
 	idt_vaddr = pmap_bootstrap_valloc(1);
 	idt_paddr = pmap_bootstrap_palloc(1);
 
+	gdt_vaddr = pmap_bootstrap_valloc(1);
+	gdt_paddr = pmap_bootstrap_palloc(1);
+
+	ldt_vaddr = pmap_bootstrap_valloc(1);
+	ldt_paddr = pmap_bootstrap_palloc(1);
+
+#if !defined(__x86_64__) && !defined(XEN)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = pmap_bootstrap_valloc(1);
 #endif
-
-#endif /* XEN */
 
 	/*
 	 * Now we reserve some VM for mapping pages when doing a crash dump.

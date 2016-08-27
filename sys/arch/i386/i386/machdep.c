@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.760 2016/08/27 14:19:47 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.761 2016/08/27 16:07:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.760 2016/08/27 14:19:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.761 2016/08/27 16:07:26 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -243,6 +243,11 @@ unsigned int msgbuf_p_cnt = 0;
 
 vaddr_t idt_vaddr;
 paddr_t idt_paddr;
+vaddr_t gdt_vaddr;
+paddr_t gdt_paddr;
+vaddr_t ldt_vaddr;
+paddr_t ldt_paddr;
+
 vaddr_t pentium_idt_vaddr;
 
 struct vm_map *phys_map = NULL;
@@ -1300,19 +1305,22 @@ init386(paddr_t first_avail)
 #endif /* !XEN */
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(ldt_vaddr, ldt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
+	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
 #ifndef XEN
-	idt = (struct gate_descriptor *)idt_vaddr;
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 
 	tgdt = gdt;
-	gdt = (union descriptor *)
-		    ((char *)idt + NIDT * sizeof(struct gate_descriptor));
-	ldt = gdt + NGDT;
+	idt = (struct gate_descriptor *)idt_vaddr;
+	gdt = (union descriptor *)gdt_vaddr;
+	ldt = (union descriptor *)ldt_vaddr;
 
 	memcpy(gdt, tgdt, NGDT * sizeof(*gdt));
 
