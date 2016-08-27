@@ -41,6 +41,7 @@
 
 #include "os.h"
 #include <ctype.h>
+#include <math.h>
 #ifdef HAVE_STDARG_H
 #include <stdarg.h>
 #else
@@ -711,8 +712,11 @@ diff_per_second(unsigned int x, unsigned int y)
 void
 double2tv(struct timeval *tv, double d)
 {
-    tv->tv_sec = (int)d;
-    tv->tv_usec = (d - tv->tv_sec) * 1000000;
+    double di;
+
+    di = floor(d);
+    tv->tv_sec = (time_t)di;
+    tv->tv_usec = (int)ceil((d - di) * 1000000.0);
 }
 
 static int debug_on = 0;
