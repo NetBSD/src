@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/05/15 22:55:01 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2016/08/27 03:58:13 macallan Exp $
 
 DRIVER=		xf86-video-chips
 DRIVER_NAME=	chips_drv
@@ -9,7 +9,7 @@ SRCS+=		ct_accelmm.c ct_accelhi.c
 MAN=		chips.4
 
 .if ${MACHINE} == "shark"
-CPPFLAGS+=		-DHAVE_ISA
+CPPFLAGS+=		-DHAVE_ISA -DAVOID_VGAHW
 .endif
 
 CPPFLAGS.ct_driver.c=	-DVERSION=${PACKAGE_MAJOR} -I${X11SRCDIR.xorg-server}
