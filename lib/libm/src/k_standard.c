@@ -12,13 +12,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: k_standard.c,v 1.21 2016/08/27 10:00:38 christos Exp $");
+__RCSID("$NetBSD: k_standard.c,v 1.22 2016/08/27 10:03:16 christos Exp $");
 #endif
 
 #include "math.h"
 #include "math_private.h"
 #include <errno.h>
-#include <stdio.h>
 
 #ifndef _USE_WRITE
 #include <stdio.h>			/* fputs(), stderr */
