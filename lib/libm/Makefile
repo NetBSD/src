@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.183 2016/08/26 08:33:48 christos Exp $
+#  $NetBSD: Makefile,v 1.184 2016/08/27 09:15:44 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -113,7 +113,7 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_expf.S e_fmod.S e_log.S \
 # do not pick up the i387 asm version for the following functions;
 # it is incorrect
 .for f in modf ilogb ilogbl ilogbf
-s_${f}.o s_${f}.pico s_${f}.po s_${f}.d: s_${f}.c
+s_${f}.o s_${f}.pico s_${f}.po s_${f}.go s_${f}.d: s_${f}.c
 .endfor
 
 .if (${MACHINE_ARCH} == "i386")
