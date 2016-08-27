@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.43.10.1 2016/08/27 14:41:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.43 2011/08/29 14:34:59 joerg Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.43.10.1 2016/08/27 14:41:48 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1235,7 +1235,7 @@ CMDFUNCSTART(chgroup)
 			return 1;
 		}
 	}
-	if (sblock->fs_old_inodefmt < FS_44INODEFMT)
+	if (!is_ufs2 && sblock->fs_old_inodefmt < FS_44INODEFMT)
 		curinode->dp1.di_ogid = iswap32(gid);
 	else
 		DIP_SET(curinode, gid, iswap32(gid));
