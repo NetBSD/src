@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.708 2016/06/01 04:52:20 pgoyette Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.709 2016/08/27 08:43:36 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.715 2016/06/01 04:47:02 pgoyette Exp
+ *	NetBSD: usbdevs,v 1.716 2016/08/27 08:42:16 skrll Exp
  */
 
 /*
@@ -1768,6 +1768,8 @@ static const uint16_t usb_products[] = {
 	    8956, 8507, 8915, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_WUA1340, 
 	    9063, 0,
+	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DUBE100B1, 
+	    8906, 8507, 9007, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA111, 
 	    9072, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA110, 
@@ -5867,7 +5869,7 @@ static const char usb_words[] = { "."
 	    "XH1153\0" /* 1 refs @ 8486 */
 	    "C-Net\0" /* 1 refs @ 8493 */
 	    "CWD-854\0" /* 1 refs @ 8499 */
-	    "rev\0" /* 15 refs @ 8507 */
+	    "rev\0" /* 16 refs @ 8507 */
 	    "F\0" /* 2 refs @ 8511 */
 	    "RTL8187\0" /* 4 refs @ 8513 */
 	    "AccelePort\0" /* 3 refs @ 8521 */
@@ -5917,7 +5919,7 @@ static const char usb_words[] = { "."
 	    "SD-U2VDH\0" /* 1 refs @ 8881 */
 	    "nanovision\0" /* 1 refs @ 8890 */
 	    "MiMo\0" /* 1 refs @ 8901 */
-	    "DUB-E100\0" /* 2 refs @ 8906 */
+	    "DUB-E100\0" /* 3 refs @ 8906 */
 	    "C1\0" /* 3 refs @ 8915 */
 	    "E\0" /* 1 refs @ 8918 */
 	    "DWA-130\0" /* 3 refs @ 8920 */
@@ -5933,7 +5935,7 @@ static const char usb_words[] = { "."
 	    "DWL-AG122\0" /* 2 refs @ 8987 */
 	    "AirPlus\0" /* 1 refs @ 8997 */
 	    "G\0" /* 1 refs @ 9005 */
-	    "B1\0" /* 1 refs @ 9007 */
+	    "B1\0" /* 2 refs @ 9007 */
 	    "DWA-140\0" /* 1 refs @ 9010 */
 	    "B3\0" /* 1 refs @ 9018 */
 	    "DWA-160\0" /* 3 refs @ 9021 */
