@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.72 2016/08/27 14:49:09 bouyer Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.73 2016/08/27 14:52:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -8435,4 +8435,9 @@ sys/dev/fss.c					1.95
 
 	Should fix PR kern/51377: fss(4) panic if snapshot mounted read/write
 	[hannken, ticket #1399]
+
+sys/compat/common/vfs_syscalls_43.c		1.58
+
+	fill in the tv_nsec parts of the converted timespec in cvtstat().
+	[mrg, ticket #1400]
 
