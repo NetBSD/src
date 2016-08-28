@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.105 2016/08/27 15:21:10 bouyer Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.106 2016/08/28 04:37:17 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5242,4 +5242,16 @@ bin/sh/parser.c					1.114 via patch
 	discuss (among other things) the history of this (and other ash
 	based) shells .. see http://www.in-ulm.de/~mascheck/ (from kre@)
 	[kre, ticket #1212]
+
+sys/arch/x86/pci/ichlpcib.c			1.51
+
+	Disable gpio(4) attachment to ichlpcib(4) by default.
+	GPIO functionality can be enabled by setting ichlpcib_gpio_disable
+	to 0, for instance with `gdb -write`.  PR port-amd64/50733.
+	[maya, ticket #1213]
+
+sys/dev/splash/splash.c				1.13
+
+	Don't panic if the splash screen is bigger than the framebuffer.
+	[khorben, ticket #1238]
 
