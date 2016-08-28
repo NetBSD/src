@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.6 2016/05/06 10:24:06 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.7 2016/08/28 16:41:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,11 @@
 #define	 XHCI_HCS2_IST(x)	((x) & 0xF)
 #define	 XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xF)
 #define	 XHCI_HCS2_SPR(x)	(((x) >> 24) & 0x1)
-#define	 XHCI_HCS2_MAXSPBUF(x)	(((x) >> 27) & 0x7F)
+#define  XHCI_HCS2_SPBUFLO	__BITS(31, 27)
+#define  XHCI_HCS2_SPBUFHI	__BITS(25, 21)
+#define	 XHCI_HCS2_MAXSPBUF(x)	\
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI) << 5) | \
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO))
 
 #define	XHCI_HCSPARAMS3		0x0C	/* RO structual parameters 3 */
 #define	 XHCI_HCS3_U1_DEL(x)	((x) & 0xFF)
