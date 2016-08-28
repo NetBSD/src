@@ -1,4 +1,4 @@
-.\" $NetBSD: a1k2cp.4,v 1.4 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: a1k2cp.4,v 1.5 2016/08/28 00:05:32 dholland Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,9 +64,9 @@ driver was written by
 .Sh CAVEATS
 Even if connected to clockport header, Real Time Clock modules are
 supported by the
-.Xr a2kbbc
+.Xr a2kbbc 4
 and
-.Xr a34kbbc
+.Xr a34kbbc 4
 drivers.
 .Pp
 Only one clockport is supported, even if clockport expander is present.
