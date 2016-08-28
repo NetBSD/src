@@ -1,4 +1,4 @@
-.\"	$NetBSD: brk.2,v 1.33 2016/08/27 23:06:01 dholland Exp $
+.\"	$NetBSD: brk.2,v 1.34 2016/08/28 05:07:50 wiz Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -183,12 +183,10 @@ one of the following are true:
 .It Bq Er ENOMEM
 The limit, as set by
 .Xr setrlimit 2 ,
-was exceeded.
-.It Bq Er ENOMEM
-The maximum possible size of a data segment (compiled into the
-system) was exceeded.
-.It Bq Er ENOMEM
-Insufficient space existed in the swap area
+was exceeded;
+or the maximum possible size of a data segment (compiled into the
+system) was exceeded;
+or insufficient space existed in the swap area
 to support the expansion.
 .El
 .Sh SEE ALSO
