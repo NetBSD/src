@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/02/05 09:44:23 roy Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2016/08/28 10:32:23 bouyer Exp $
 
 CONFIGFILES=		dot.cshrc dot.klogin dot.login dot.profile dot.shrc
 
@@ -12,4 +12,5 @@ FILESNAME_${F}=		${F:S/dot//}
 CONFIGLINKS=		/root/.cshrc	/.cshrc \
 			/root/.profile	/.profile
 
-.include <bsd.prog.mk>
+.include <bsd.files.mk>
+.include <bsd.links.mk>
