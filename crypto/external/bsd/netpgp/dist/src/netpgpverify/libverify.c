@@ -2016,7 +2016,7 @@ read_ascii_armor(pgpv_cursor_t *cursor, pgpv_mem_t *mem, const char *filename)
 	litdata.s.data = p;
 	litdata.u.litdata.offset = (size_t)(p - mem->mem);
 	litdata.u.litdata.filename = (uint8_t *)strdup(filename);
-	if ((p = find_bin_string(datastart = p, mem->size - litdata.offset, SIGSTART, strlen(SIGSTART))) == NULL) {
+	if ((p = find_bin_string(datastart = p, mem->size - litdata.offset, SIGSTART, sizeof(SIGSTART) - 1)) == NULL) {
 		snprintf(cursor->why, sizeof(cursor->why),
 			"malformed armor - no sig - at %zu", (size_t)(p - mem->mem));
 		return 0;
@@ -2030,7 +2030,13 @@ read_ascii_armor(pgpv_cursor_t *cursor, pgpv_mem_t *mem, const char *filename)
 		return 0;
 	}
 	p += 2;
-	sigend = find_bin_string(p, mem->size, SIGEND, strlen(SIGEND));
+	sigend = find_bin_string(p, mem->size, SIGEND, sizeof(SIGEND) - 1);
+	if (sigend == NULL) {
+		snprintf(cursor->why, sizeof(cursor->why),
+			"malformed armor - no end sig - at %zu",
+			(size_t)(p - mem->mem));
+		return 0;
+	}
 	binsigsize = b64decode((char *)p, (size_t)(sigend - p), binsig, sizeof(binsig));
 
 	read_binary_memory(cursor->pgp, "signature", cons_onepass, 15);
