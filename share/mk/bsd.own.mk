@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.947 2016/08/26 16:57:50 nonaka Exp $
+#	$NetBSD: bsd.own.mk,v 1.948 2016/08/28 14:22:35 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1075,7 +1075,8 @@ MKCTF?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE} == "evbarm" || \
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc64"
 MKPIE?=		yes
 .else
