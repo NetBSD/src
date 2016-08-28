@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.260 2016/08/27 14:53:48 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.261 2016/08/28 10:50:37 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14742,4 +14742,25 @@ sys/compat/common/vfs_syscalls_43.c		1.58
 
 	fill in the tv_nsec parts of the converted timespec in cvtstat().
 	[mrg, ticket #1400]
+
+etc/root/Makefile				1.4
+
+	We don't need to include <bsd.prog.mk> to install a few config files
+	just <bsd.files.mk> and <bsd.links.mk> is enough.
+
+	Noticed because <bsd.prog.mk> sets LINKSMODE to BINMODE and that does
+	the wrong thing at least for unprivileged builds
+	(/root/.cshrc and /root/.profile have the wrong mode).
+	[uwe, ticket #1368]
+
+sys/arch/i386/stand/misc/rawr32.exe.uue		sync to 1.6
+
+	New Rawrite32 release
+	[martin, ticket #1385]
+
+sys/netinet/ip_carp.c				1.75
+
+	Workaround for PR 47013 by bouyer@. Only works for mixed IPv4/IPv6
+	environemnts, not for pure-IPv6 yet. A real fix is still needed.
+	[is, ticket #1393]
 
