@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.57 2016/08/21 13:23:36 christos Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.58 2016/08/29 02:31:46 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -28,6 +28,7 @@
 
 #include <sys/stat.h>
 #include <sys/statvfs.h>
+#include <sys/time.h>
 
 #include <assert.h>
 #include <atf-c.h>
@@ -85,11 +86,9 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 {
 	char pb[MAXPATHLEN];
 	struct stat sb1, sb2;
+	struct timespec atplus1, onesec;
 
 	USES_DIRS;
-
-	if (FSTYPE_UDF(tc))
-		atf_tc_expect_fail("PR kern/49033");
 
 	snprintf(pb, sizeof(pb), "%s/dir", mountpath);
 	if (rump_sys_mkdir(pb, 0777) == -1)
@@ -100,6 +99,24 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 	snprintf(pb, sizeof(pb), "%s/./dir/../././dir/.", mountpath);
 	if (rump_sys_stat(pb, &sb2) == -1)
 		atf_tc_fail_errno("stat 2");
+
+	/*
+	 * The lookup is permitted to modify the access time of
+	 * any directories searched - such a directory is the
+	 * subject of this test.   Any difference should cause
+	 * the 2nd lookup atime tp be >= the first, if it is ==, all is
+	 * OK (atime is not required to be modified by the search, or
+	 * both references may happen within the came clock tick), if the
+	 * 2nd lookup atime is > the first, but not "too much" greater,
+	 * just set it back, so the memcmp just below succeeds
+	 * (assuming all else is OK).
+	 */
+	onesec.tv_sec = 1;
+	onesec.tv_nsec = 0;
+	timespecadd(&sb1.st_atimespec, &onesec, &atplus1);
+	if (timespeccmp(&sb2.st_atimespec, &sb1.st_atimespec, >) &&
+	    timespeccmp(&sb2.st_atimespec, &atplus1, <))
+		sb2.st_atimespec = sb1.st_atimespec;
 
 	if (memcmp(&sb1, &sb2, sizeof(sb1)) != 0) {
 		printf("what\tsb1\t\tsb2\n");
@@ -133,9 +150,6 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 
 		atf_tc_fail("stat results differ, see ouput for more details");
 	}
-	if (FSTYPE_UDF(tc))
-		atf_tc_fail("random failure of PR kern/49033 "
-			    "did not happen this time");
 }
 
 static void
