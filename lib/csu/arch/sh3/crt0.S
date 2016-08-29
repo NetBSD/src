@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.S,v 1.5 2016/08/28 13:50:25 christos Exp $ */
+/* $NetBSD: crt0.S,v 1.6 2016/08/29 21:27:03 uwe Exp $ */
 
 /*
  * Copyright (c) 1998 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: crt0.S,v 1.5 2016/08/28 13:50:25 christos Exp $")
+RCSID("$NetBSD: crt0.S,v 1.6 2016/08/29 21:27:03 uwe Exp $")
 
 STRONG_ALIAS(_start,__start)
 
@@ -49,7 +49,6 @@ STRONG_ALIAS(_start,__start)
  * proper registers.
  */
 _ENTRY(__start)
-	PIC_PROLOGUE_NOSAVE(.L_got)
 	mov.l	.L___start, r0
 	mov	r7, r4		! void (*cleanup)(void)
 	mov	r8, r5		! const Obj_Entry *obj
@@ -57,7 +56,5 @@ _ENTRY(__start)
 	 mov	r9, r6		! struct ps_strings *ps_strings
 
 	.p2align 2
-.L_got:
-	PIC_GOT_DATUM
 .L___start:
-	CALL_DATUM(___start, 1b)
+	CALL_DATUM_LOCAL(___start, 1b)
