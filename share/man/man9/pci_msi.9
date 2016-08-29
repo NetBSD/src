@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_msi.9,v 1.10 2016/07/12 03:39:55 knakahara Exp $
+.\" $NetBSD: pci_msi.9,v 1.11 2016/08/29 02:48:56 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -159,6 +159,11 @@ when the driver is no longer interested in MSIs from the device.
 After that, the driver should also call
 .Fn pci_intr_release
 to free resources about MSI as well as INTx and MSI-X.
+If
+.Fa pih
+is NULL,
+.Fn pci_intr_release
+does nothing.
 .Pp
 If a driver wishes to establish an MSI-X handler for the device,
 it is almost the same as MSI.
