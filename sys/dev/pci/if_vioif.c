@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.24 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.24 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -427,7 +427,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 	}
 
 	for (i = 0; i < txqsize; i++) {
-		C_L1(txhdr_dmamaps[i], rx_hdrs[i],
+		C_L1(txhdr_dmamaps[i], tx_hdrs[i],
 		    sizeof(struct virtio_net_hdr), 1,
 		    WRITE, "tx header");
 		C(tx_dmamaps[i], NULL, ETHER_MAX_LEN, 16 /* XXX */, 0,
