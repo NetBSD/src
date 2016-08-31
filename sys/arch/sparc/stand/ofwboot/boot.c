@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.33 2016/06/11 06:43:47 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.34 2016/08/31 16:24:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -364,8 +364,9 @@ start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy,
 	int boothowto)
 {
 	int fd;
-	u_long marks[MARK_MAX];
+	u_long marks[MARK_MAX] = {0};
 	int flags = LOAD_ALL;
+
 	if (isfloppy)
 		flags &= ~LOAD_BACKWARDS;
 
