@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2016/01/10 19:02:14 christos Exp $
+# $NetBSD: Makefile,v 1.17 2016/08/31 09:33:20 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,7 @@ SRCS+=		cmd-select-window.c
 SRCS+=		cmd-send-keys.c
 SRCS+=		cmd-set-buffer.c
 SRCS+=		cmd-set-environment.c
+SRCS+=		cmd-set-hook.c
 SRCS+=		cmd-set-option.c
 SRCS+=		cmd-show-environment.c
 SRCS+=		cmd-show-messages.c
@@ -87,9 +88,9 @@ SRCS+=		control-notify.c
 SRCS+=		control.c
 SRCS+=		environ.c
 SRCS+=		format.c
-SRCS+=		grid-cell.c
 SRCS+=		grid-view.c
 SRCS+=		grid.c
+SRCS+=		hooks.c
 SRCS+=		input-keys.c
 SRCS+=		input.c
 SRCS+=		job.c
@@ -106,6 +107,7 @@ SRCS+=		options.c
 SRCS+=		options-table.c
 SRCS+=		osdep-netbsd.c
 SRCS+=		paste.c
+SRCS+=		proc.c
 SRCS+=		resize.c
 SRCS+=		screen-redraw.c
 SRCS+=		screen-write.c
@@ -171,6 +173,7 @@ CPPFLAGS+=	-DHAVE_OPENAT=1
 CPPFLAGS+=	-DHAVE_PATHS_H=1
 CPPFLAGS+=	-DHAVE_PROC_PID=1
 CPPFLAGS+=	-DHAVE_QUEUE_H=1
+CPPFLAGS+=	-DHAVE_REALLOCARRAY=1
 CPPFLAGS+=	-DHAVE_SETENV=1
 CPPFLAGS+=	-DHAVE_SETPROCTITLE=1
 CPPFLAGS+=	-DHAVE_STDINT_H=1
@@ -196,15 +199,15 @@ CPPFLAGS+=	-DHAVE___PROGNAME=1
 CPPFLAGS+=	-DPACKAGE=\"tmux\"
 CPPFLAGS+=	-DPACKAGE_BUGREPORT=\"\"
 CPPFLAGS+=	-DPACKAGE_NAME=\"tmux\"
-CPPFLAGS+=	-DPACKAGE_STRING=\"tmux\ 2.1\"
+CPPFLAGS+=	-DPACKAGE_STRING=\"tmux\ 2.2\"
 CPPFLAGS+=	-DPACKAGE_TARNAME=\"tmux\"
 CPPFLAGS+=	-DPACKAGE_URL=\"\"
-CPPFLAGS+=	-DPACKAGE_VERSION=\"2.1\"
+CPPFLAGS+=	-DPACKAGE_VERSION=\"2.2\"
 CPPFLAGS+=	-DSTDC_HEADERS=1
 CPPFLAGS+=	-DSUPPORT_UTMP
 CPPFLAGS+=	-DSUPPORT_UTMPX
 CPPFLAGS+=	-DTMUX_CONF="\"/etc/tmux.conf\""
-CPPFLAGS+=	-DVERSION=\"2.1\"
+CPPFLAGS+=	-DVERSION=\"2.2\"
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
