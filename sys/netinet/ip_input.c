@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.339 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.340 2016/08/31 09:14:47 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.339 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.340 2016/08/31 09:14:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -225,7 +225,7 @@ pfil_head_t *		inet_pfil_hook		__read_mostly;
 ipid_state_t *		ip_ids			__read_mostly;
 percpu_t *		ipstat_percpu		__read_mostly;
 
-static struct route	ipforward_rt		__cacheline_aligned;
+static percpu_t		*ipforward_rt_percpu	__cacheline_aligned;
 
 uint16_t ip_id;
 
@@ -345,6 +345,10 @@ ip_init(void)
 #endif /* MBUFTRACE */
 
 	ipstat_percpu = percpu_alloc(sizeof(uint64_t) * IP_NSTATS);
+
+	ipforward_rt_percpu = percpu_alloc(sizeof(struct route));
+	if (ipforward_rt_percpu == NULL)
+		panic("failed to allocate ipforward_rt_percpu");
 }
 
 static struct in_ifaddr *
@@ -1163,11 +1167,14 @@ ip_rtaddr(struct in_addr dst)
 		struct sockaddr		dst;
 		struct sockaddr_in	dst4;
 	} u;
+	struct route *ro;
 
 	sockaddr_in_init(&u.dst4, &dst, 0);
 
 	SOFTNET_LOCK();
-	rt = rtcache_lookup(&ipforward_rt, &u.dst);
+	ro = percpu_getref(ipforward_rt_percpu);
+	rt = rtcache_lookup(ro, &u.dst);
+	percpu_putref(ipforward_rt_percpu);
 	SOFTNET_UNLOCK();
 	if (rt == NULL)
 		return NULL;
@@ -1300,6 +1307,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		struct sockaddr_in	dst4;
 	} u;
 	uint64_t *ips;
+	struct route *ro;
 
 	KASSERTMSG(cpu_softintr_p(), "ip_forward: not in the software "
 	    "interrupt handler; synchronization assumptions violated");
@@ -1331,7 +1339,9 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 
 	sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 
-	if ((rt = rtcache_lookup(&ipforward_rt, &u.dst)) == NULL) {
+	ro = percpu_getref(ipforward_rt_percpu);
+	if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
+		percpu_putref(ipforward_rt_percpu);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NET, dest, 0);
 		SOFTNET_UNLOCK();
 		return;
@@ -1376,7 +1386,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 		}
 	}
 
-	error = ip_output(m, NULL, &ipforward_rt,
+	error = ip_output(m, NULL, ro,
 	    (IP_FORWARDING | (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
 	    NULL, NULL);
 
@@ -1398,17 +1408,19 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	if (mcopy) {
 #ifdef GATEWAY
 		if (mcopy->m_flags & M_CANFASTFWD)
-			ipflow_create(&ipforward_rt, mcopy);
+			ipflow_create(ro, mcopy);
 #endif
 		m_freem(mcopy);
 	}
 
+	percpu_putref(ipforward_rt_percpu);
 	SOFTNET_UNLOCK();
 	return;
 
 redirect:
 error:
 	if (mcopy == NULL) {
+		percpu_putref(ipforward_rt_percpu);
 		SOFTNET_UNLOCK();
 		return;
 	}
@@ -1432,7 +1444,7 @@ error:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 
-		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
+		if ((rt = rtcache_validate(ro)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
 #ifdef IPSEC
 		if (ipsec_used)
@@ -1450,10 +1462,12 @@ error:
 		 */
 		if (mcopy)
 			m_freem(mcopy);
+		percpu_putref(ipforward_rt_percpu);
 		SOFTNET_UNLOCK();
 		return;
 	}
 	icmp_error(mcopy, type, code, dest, destmtu);
+	percpu_putref(ipforward_rt_percpu);
 	SOFTNET_UNLOCK();
 }
 

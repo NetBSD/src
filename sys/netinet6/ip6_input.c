@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.166 2016/08/02 04:50:16 knakahara Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.167 2016/08/31 09:14:47 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.166 2016/08/02 04:50:16 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.167 2016/08/31 09:14:47 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.166 2016/08/02 04:50:16 knakahara Ex
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/cprng.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -143,6 +144,8 @@ pfil_head_t *inet6_pfil_hook;
 
 percpu_t *ip6stat_percpu;
 
+percpu_t *ip6_forward_rt_percpu __cacheline_aligned;
+
 static void ip6_init2(void);
 static void ip6intr(void *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
@@ -194,6 +197,10 @@ ip6_init(void)
 	KASSERT(inet6_pfil_hook != NULL);
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
+
+	ip6_forward_rt_percpu = percpu_alloc(sizeof(struct route));
+	if (ip6_forward_rt_percpu == NULL)
+		panic("failed to alllocate ip6_forward_rt_percpu");
 }
 
 static void
@@ -239,8 +246,6 @@ ip6intr(void *arg __unused)
 	mutex_exit(softnet_lock);
 }
 
-extern struct	route ip6_forward_rt;
-
 void
 ip6_input(struct mbuf *m, struct ifnet *rcvif)
 {
@@ -256,6 +261,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		struct sockaddr		dst;
 		struct sockaddr_in6	dst6;
 	} u;
+	struct route *ro;
 
 	/*
 	 * make sure we don't have onion peering information into m_tag.
@@ -461,7 +467,9 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 	/*
 	 *  Unicast check
 	 */
-	rt = rtcache_lookup2(&ip6_forward_rt, &u.dst, 1, &hit);
+	ro = percpu_getref(ip6_forward_rt_percpu);
+	rt = rtcache_lookup2(ro, &u.dst, 1, &hit);
+	percpu_putref(ip6_forward_rt_percpu);
 	if (hit)
 		IP6_STATINC(IP6_STAT_FORWARD_CACHEHIT);
 	else
