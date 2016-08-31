@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.261 2016/08/28 10:50:37 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.262 2016/08/31 15:16:28 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14763,4 +14763,13 @@ sys/netinet/ip_carp.c				1.75
 	Workaround for PR 47013 by bouyer@. Only works for mixed IPv4/IPv6
 	environemnts, not for pure-IPv6 yet. A real fix is still needed.
 	[is, ticket #1393]
+
+sys/net80211/ieee80211_input.c			1.83, 1.84
+
+	Don't check sequence number on multicast packets in station mode.
+	Handle overflow of 12bit sequence number.
+
+	In station mode filter packets that or not for us in case the
+	interface is in promiscous mode or doesn't filter packets itself.
+	[mlelstv, ticket #1382]
 
