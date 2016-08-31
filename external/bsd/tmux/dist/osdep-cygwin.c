@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@
 #include "tmux.h"
 
 char *
-osdep_get_name(int fd, unused char *tty)
+osdep_get_name(int fd, __unused char *tty)
 {
 	FILE	*f;
 	char	*path, *buf;

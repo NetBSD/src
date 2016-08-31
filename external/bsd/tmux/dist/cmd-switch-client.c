@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,34 +30,33 @@
 enum cmd_retval	 cmd_switch_client_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_switch_client_entry = {
-	"switch-client", "switchc",
-	"lc:Enpt:rT:", 0, 0,
-	"[-Elnpr] [-c target-client] [-t target-session] [-T key-table]",
-	CMD_READONLY,
-	cmd_switch_client_exec
+	.name = "switch-client",
+	.alias = "switchc",
+
+	.args = { "lc:Enpt:rT:", 0, 0 },
+	.usage = "[-Elnpr] [-c target-client] [-t target-session] "
+		 "[-T key-table]",
+
+	.cflag = CMD_CLIENT,
+	.tflag = CMD_SESSION_WITHPANE,
+
+	.flags = CMD_READONLY,
+	.exec = cmd_switch_client_exec
 };
 
 enum cmd_retval
 cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct client		*c;
-	struct session		*s = NULL;
-	struct winlink		*wl = NULL;
-	struct window 		*w = NULL;
-	struct window_pane	*wp = NULL;
-	const char		*tflag, *tablename, *update;
+	struct cmd_state	*state = &cmdq->state;
+	struct client		*c = state->c;
+	struct session		*s = cmdq->state.tflag.s;
+	struct window_pane	*wp;
+	const char		*tablename, *update;
 	struct key_table	*table;
 
-	if ((c = cmd_find_client(cmdq, args_get(args, 'c'), 0)) == NULL)
-		return (CMD_RETURN_ERROR);
-
-	if (args_has(args, 'r')) {
-		if (c->flags & CLIENT_READONLY)
-			c->flags &= ~CLIENT_READONLY;
-		else
-			c->flags |= CLIENT_READONLY;
-	}
+	if (args_has(args, 'r'))
+		c->flags ^= CLIENT_READONLY;
 
 	tablename = args_get(args, 'T');
 	if (tablename != NULL) {
@@ -69,9 +68,9 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 		table->references++;
 		key_bindings_unref_table(c->keytable);
 		c->keytable = table;
+		return (CMD_RETURN_NORMAL);
 	}
 
-	tflag = args_get(args, 't');
 	if (args_has(args, 'n')) {
 		if ((s = session_next_session(c->session)) == NULL) {
 			cmdq_error(cmdq, "can't find next session");
@@ -85,48 +84,32 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	} else if (args_has(args, 'l')) {
 		if (c->last_session != NULL && session_alive(c->last_session))
 			s = c->last_session;
+		else
+			s = NULL;
 		if (s == NULL) {
 			cmdq_error(cmdq, "can't find last session");
 			return (CMD_RETURN_ERROR);
 		}
 	} else {
-		if (tflag == NULL) {
-			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
-				return (CMD_RETURN_ERROR);
-		} else if (tflag[strcspn(tflag, ":.")] != '\0') {
-			if ((wl = cmd_find_pane(cmdq, tflag, &s, &wp)) == NULL)
-				return (CMD_RETURN_ERROR);
-		} else {
-			if ((s = cmd_find_session(cmdq, tflag, 1)) == NULL)
-				return (CMD_RETURN_ERROR);
-			w = window_find_by_id_str(tflag);
-			if (w == NULL) {
-				wp = window_pane_find_by_id_str(tflag);
-				if (wp != NULL)
-					w = wp->window;
-			}
-			if (w != NULL)
-				wl = winlink_find_by_window(&s->windows, w);
-		}
-
 		if (cmdq->client == NULL)
 			return (CMD_RETURN_NORMAL);
-
-		if (wl != NULL) {
+		if (state->tflag.wl != NULL) {
+			wp = state->tflag.wp;
 			if (wp != NULL)
 				window_set_active_pane(wp->window, wp);
-			session_set_current(s, wl);
+			session_set_current(s, state->tflag.wl);
 		}
 	}
 
 	if (c != NULL && !args_has(args, 'E')) {
-		update = options_get_string(&s->options, "update-environment");
-		environ_update(update, &c->environ, &s->environ);
+		update = options_get_string(s->options, "update-environment");
+		environ_update(update, c->environ, s->environ);
 	}
 
 	if (c->session != NULL && c->session != s)
 		c->last_session = c->session;
 	c->session = s;
+	server_client_set_key_table(c, NULL);
 	status_timer_start(c);
 	session_update_activity(s, NULL);
 	gettimeofday(&s->last_attached_time, NULL);
@@ -135,6 +118,7 @@ cmd_switch_client_exec(struct cmd *self, struct cmd_q *cmdq)
 	server_check_unattached();
 	server_redraw_client(c);
 	s->curw->flags &= ~WINLINK_ALERTFLAGS;
+	alerts_check_session(s);
 
 	return (CMD_RETURN_NORMAL);
 }
