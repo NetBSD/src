@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 
 #include <errno.h>
 #include <event.h>
@@ -29,22 +30,21 @@
 
 #include "tmux.h"
 
-void	server_client_key_table(struct client *, const char *);
-void	server_client_free(int, short, void *);
-void	server_client_check_focus(struct window_pane *);
-void	server_client_check_resize(struct window_pane *);
-int	server_client_check_mouse(struct client *);
-void	server_client_repeat_timer(int, short, void *);
-void	server_client_check_exit(struct client *);
-void	server_client_check_redraw(struct client *);
-void	server_client_set_title(struct client *);
-void	server_client_reset_state(struct client *);
-int	server_client_assume_paste(struct session *);
+void		server_client_free(int, short, void *);
+void		server_client_check_focus(struct window_pane *);
+void		server_client_check_resize(struct window_pane *);
+key_code	server_client_check_mouse(struct client *);
+void		server_client_repeat_timer(int, short, void *);
+void		server_client_check_exit(struct client *);
+void		server_client_check_redraw(struct client *);
+void		server_client_set_title(struct client *);
+void		server_client_reset_state(struct client *);
+int		server_client_assume_paste(struct session *);
 
-int	server_client_msg_dispatch(struct client *);
-void	server_client_msg_command(struct client *, struct imsg *);
-void	server_client_msg_identify(struct client *, struct imsg *);
-void	server_client_msg_shell(struct client *);
+void		server_client_dispatch(struct imsg *, void *);
+void		server_client_dispatch_command(struct client *, struct imsg *);
+void		server_client_dispatch_identify(struct client *, struct imsg *);
+void		server_client_dispatch_shell(struct client *);
 
 /* Check if this client is inside this server. */
 int
@@ -56,7 +56,7 @@ server_client_check_nested(struct client *c)
 	if (c->tty.path == NULL)
 		return (0);
 
-	envent = environ_find(&c->environ, "TMUX");
+	envent = environ_find(c->environ, "TMUX");
 	if (envent == NULL || *envent->value == '\0')
 		return (0);
 
@@ -69,11 +69,30 @@ server_client_check_nested(struct client *c)
 
 /* Set client key table. */
 void
-server_client_key_table(struct client *c, const char *name)
+server_client_set_key_table(struct client *c, const char *name)
 {
+	if (name == NULL)
+		name = server_client_get_key_table(c);
+
 	key_bindings_unref_table(c->keytable);
 	c->keytable = key_bindings_get_table(name, 1);
 	c->keytable->references++;
+}
+
+/* Get default key table. */
+const char *
+server_client_get_key_table(struct client *c)
+{
+	struct session	*s = c->session;
+	const char	*name;
+
+	if (s == NULL)
+		return ("root");
+
+	name = options_get_string(s->options, "key-table");
+	if (*name == '\0')
+		return ("root");
+	return (name);
 }
 
 /* Create a new client. */
@@ -86,17 +105,16 @@ server_client_create(int fd)
 
 	c = xcalloc(1, sizeof *c);
 	c->references = 1;
-	imsg_init(&c->ibuf, fd);
-	server_update_event(c);
+	c->peer = proc_add_peer(server_proc, fd, server_client_dispatch, c);
 
 	if (gettimeofday(&c->creation_time, NULL) != 0)
 		fatal("gettimeofday failed");
 	memcpy(&c->activity_time, &c->creation_time, sizeof c->activity_time);
 
-	environ_init(&c->environ);
+	c->environ = environ_create();
 
 	c->fd = -1;
-	c->cwd = -1;
+	c->cwd = NULL;
 
 	c->cmdq = cmdq_new(c);
 	c->cmdq->client_exit = 1;
@@ -130,7 +148,7 @@ server_client_create(int fd)
 	evtimer_set(&c->repeat_timer, server_client_repeat_timer, c);
 
 	TAILQ_INSERT_TAIL(&clients, c, entry);
-	log_debug("new client %d", fd);
+	log_debug("new client %p", c);
 }
 
 /* Open client terminal if needed. */
@@ -171,7 +189,7 @@ server_client_lost(struct client *c)
 		c->stdin_callback(c, 1, c->stdin_callback_data);
 
 	TAILQ_REMOVE(&clients, c, entry);
-	log_debug("lost client %d", c->ibuf.fd);
+	log_debug("lost client %p", c);
 
 	/*
 	 * If CLIENT_TERMINAL hasn't been set, then tty_init hasn't been called
@@ -192,7 +210,7 @@ server_client_lost(struct client *c)
 	screen_free(&c->status);
 
 	free(c->title);
-	close(c->cwd);
+	free((void *)c->cwd);
 
 	evtimer_del(&c->repeat_timer);
 
@@ -217,12 +235,10 @@ server_client_lost(struct client *c)
 	cmdq_free(c->cmdq);
 	c->cmdq = NULL;
 
-	environ_free(&c->environ);
+	environ_free(c->environ);
 
-	close(c->ibuf.fd);
-	imsg_clear(&c->ibuf);
-	if (event_initialized(&c->event))
-		event_del(&c->event);
+	proc_remove_peer(c->peer);
+	c->peer = NULL;
 
 	server_client_unref(c);
 
@@ -237,7 +253,7 @@ server_client_lost(struct client *c)
 void
 server_client_unref(struct client *c)
 {
-	log_debug("unref client %d (%d references)", c->ibuf.fd, c->references);
+	log_debug("unref client %p (%d references)", c, c->references);
 
 	c->references--;
 	if (c->references == 0)
@@ -246,52 +262,31 @@ server_client_unref(struct client *c)
 
 /* Free dead client. */
 void
-server_client_free(unused int fd, unused short events, void *arg)
+server_client_free(__unused int fd, __unused short events, void *arg)
 {
 	struct client	*c = arg;
 
-	log_debug("free client %d (%d references)", c->ibuf.fd, c->references);
+	log_debug("free client %p (%d references)", c, c->references);
 
 	if (c->references == 0)
 		free(c);
 }
 
-/* Process a single client event. */
+/* Detach a client. */
 void
-server_client_callback(int fd, short events, void *data)
+server_client_detach(struct client *c, enum msgtype msgtype)
 {
-	struct client	*c = data;
+	struct session	*s = c->session;
 
-	if (c->flags & CLIENT_DEAD)
+	if (s == NULL)
 		return;
 
-	if (fd == c->ibuf.fd) {
-		if (events & EV_WRITE && msgbuf_write(&c->ibuf.w) <= 0 &&
-		    errno != EAGAIN)
-			goto client_lost;
-
-		if (c->flags & CLIENT_BAD) {
-			if (c->ibuf.w.queued == 0)
-				goto client_lost;
-			return;
-		}
-
-		if (events & EV_READ && server_client_msg_dispatch(c) != 0)
-			goto client_lost;
-	}
-
-	server_push_stdout(c);
-	server_push_stderr(c);
-
-	server_update_event(c);
-	return;
-
-client_lost:
-	server_client_lost(c);
+	hooks_run(c->session->hooks, c, NULL, "client-detached");
+	proc_send_s(c->peer, msgtype, s->name);
 }
 
 /* Check for mouse keys. */
-int
+key_code
 server_client_check_mouse(struct client *c)
 {
 	struct session				*s = c->session;
@@ -301,7 +296,7 @@ server_client_check_mouse(struct client *c)
 	enum { NOTYPE, DOWN, UP, DRAG, WHEEL }	 type = NOTYPE;
 	enum { NOWHERE, PANE, STATUS, BORDER }	 where = NOWHERE;
 	u_int					 x, y, b;
-	int					 key;
+	key_code				 key;
 
 	log_debug("mouse %02x at %u,%u (last %u,%u) (%d)", m->b, m->x, m->y,
 	    m->lx, m->ly, c->tty.mouse_drag_flag);
@@ -330,7 +325,7 @@ server_client_check_mouse(struct client *c)
 		log_debug("down at %u,%u", x, y);
 	}
 	if (type == NOTYPE)
-		return (KEYC_NONE);
+		return (KEYC_UNKNOWN);
 
 	/* Always save the session. */
 	m->s = s->id;
@@ -340,7 +335,7 @@ server_client_check_mouse(struct client *c)
 	if (m->statusat != -1 && y == (u_int)m->statusat) {
 		w = status_get_window_at(c, x);
 		if (w == NULL)
-			return (KEYC_NONE);
+			return (KEYC_UNKNOWN);
 		m->w = w->id;
 		where = STATUS;
 	} else
@@ -366,11 +361,14 @@ server_client_check_mouse(struct client *c)
 			where = BORDER;
 		else {
 			wp = window_get_active_at(s->curw->window, x, y);
-			if (wp != NULL)
+			if (wp != NULL) {
 				where = PANE;
+				log_debug("mouse at %u,%u is on pane %%%u",
+				    x, y, wp->id);
+			}
 		}
 		if (where == NOWHERE)
-			return (KEYC_NONE);
+			return (KEYC_UNKNOWN);
 		m->wp = wp->id;
 		m->w = wp->window->id;
 	} else
@@ -384,12 +382,46 @@ server_client_check_mouse(struct client *c)
 		c->tty.mouse_drag_update = NULL;
 		c->tty.mouse_drag_release = NULL;
 
+		/*
+		 * End a mouse drag by passing a MouseDragEnd key corresponding
+		 * to the button that started the drag.
+		 */
+		switch (c->tty.mouse_drag_flag) {
+		case 1:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND1_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND1_STATUS;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND1_BORDER;
+			break;
+		case 2:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND2_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND2_STATUS;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND2_BORDER;
+			break;
+		case 3:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND3_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND3_STATUS;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND3_BORDER;
+			break;
+		default:
+			key = KEYC_MOUSE;
+			break;
+		}
 		c->tty.mouse_drag_flag = 0;
-		return (KEYC_MOUSE); /* not a key, but still may want to pass */
+
+		return (key);
 	}
 
 	/* Convert to a key binding. */
-	key = KEYC_NONE;
+	key = KEYC_UNKNOWN;
 	switch (type) {
 	case NOTYPE:
 		break;
@@ -425,7 +457,11 @@ server_client_check_mouse(struct client *c)
 			}
 		}
 
-		c->tty.mouse_drag_flag = 1;
+		/*
+		 * Begin a drag by setting the flag to a non-zero value that
+		 * corresponds to the mouse button in use.
+		 */
+		c->tty.mouse_drag_flag = MOUSE_BUTTONS(b) + 1;
 		break;
 	case WHEEL:
 		if (MOUSE_BUTTONS(b) == MOUSE_WHEEL_UP) {
@@ -501,8 +537,8 @@ server_client_check_mouse(struct client *c)
 		}
 		break;
 	}
-	if (key == KEYC_NONE)
-		return (KEYC_NONE);
+	if (key == KEYC_UNKNOWN)
+		return (KEYC_UNKNOWN);
 
 	/* Apply modifiers if any. */
 	if (b & MOUSE_MASK_META)
@@ -522,25 +558,33 @@ server_client_assume_paste(struct session *s)
 	struct timeval	tv;
 	int		t;
 
-	if ((t = options_get_number(&s->options, "assume-paste-time")) == 0)
+	if ((t = options_get_number(s->options, "assume-paste-time")) == 0)
 		return (0);
 
 	timersub(&s->activity_time, &s->last_activity_time, &tv);
-	if (tv.tv_sec == 0 && tv.tv_usec < t * 1000)
-		return (1);
+	if (tv.tv_sec == 0 && tv.tv_usec < t * 1000) {
+		log_debug("session %s pasting (flag %d)", s->name,
+		    !!(s->flags & SESSION_PASTING));
+		if (s->flags & SESSION_PASTING)
+			return (1);
+		s->flags |= SESSION_PASTING;
+		return (0);
+	}
+	log_debug("session %s not pasting", s->name);
+	s->flags &= ~SESSION_PASTING;
 	return (0);
 }
 
 /* Handle data key input from client. */
 void
-server_client_handle_key(struct client *c, int key)
+server_client_handle_key(struct client *c, key_code key)
 {
 	struct mouse_event	*m = &c->tty.mouse;
 	struct session		*s = c->session;
 	struct window		*w;
 	struct window_pane	*wp;
 	struct timeval		 tv;
-	struct key_table	*table = c->keytable;
+	struct key_table	*table;
 	struct key_binding	 bd_find, *bd;
 	int			 xtimeout;
 
@@ -548,7 +592,6 @@ server_client_handle_key(struct client *c, int key)
 	if (s == NULL || (c->flags & (CLIENT_DEAD|CLIENT_SUSPENDED)) != 0)
 		return;
 	w = s->curw->window;
-	wp = w->active;
 
 	/* Update the activity timer. */
 	if (gettimeofday(&c->activity_time, NULL) != 0)
@@ -583,30 +626,25 @@ server_client_handle_key(struct client *c, int key)
 		if (c->flags & CLIENT_READONLY)
 			return;
 		key = server_client_check_mouse(c);
-		if (key == KEYC_NONE)
+		if (key == KEYC_UNKNOWN)
 			return;
 
 		m->valid = 1;
 		m->key = key;
 
-		if (!options_get_number(&s->options, "mouse")) {
-			window_pane_key(wp, c, s, key, m);
-			return;
-		}
+		if (!options_get_number(s->options, "mouse"))
+			goto forward;
 	} else
 		m->valid = 0;
 
 	/* Treat everything as a regular key when pasting is detected. */
-	if (server_client_assume_paste(s)) {
-		if (!(c->flags & CLIENT_READONLY))
-			window_pane_key(wp, c, s, key, m);
-		return;
-	}
+	if (!KEYC_IS_MOUSE(key) && server_client_assume_paste(s))
+		goto forward;
 
 retry:
 	/* Try to see if there is a key binding in the current table. */
 	bd_find.key = key;
-	bd = RB_FIND(key_bindings, &table->key_bindings, &bd_find);
+	bd = RB_FIND(key_bindings, &c->keytable->key_bindings, &bd_find);
 	if (bd != NULL) {
 		/*
 		 * Key was matched in this table. If currently repeating but a
@@ -614,7 +652,7 @@ retry:
 		 * again in the root table.
 		 */
 		if ((c->flags & CLIENT_REPEAT) && !bd->can_repeat) {
-			server_client_key_table(c, "root");
+			server_client_set_key_table(c, NULL);
 			c->flags &= ~CLIENT_REPEAT;
 			server_status_client(c);
 			goto retry;
@@ -624,13 +662,14 @@ retry:
 		 * Take a reference to this table to make sure the key binding
 		 * doesn't disappear.
 		 */
+		table = c->keytable;
 		table->references++;
 
 		/*
 		 * If this is a repeating key, start the timer. Otherwise reset
 		 * the client back to the root table.
 		 */
-		xtimeout = options_get_number(&s->options, "repeat-time");
+		xtimeout = options_get_number(s->options, "repeat-time");
 		if (xtimeout != 0 && bd->can_repeat) {
 			c->flags |= CLIENT_REPEAT;
 
@@ -640,7 +679,7 @@ retry:
 			evtimer_add(&c->repeat_timer, &tv);
 		} else {
 			c->flags &= ~CLIENT_REPEAT;
-			server_client_key_table(c, "root");
+			server_client_set_key_table(c, NULL);
 		}
 		server_status_client(c);
 
@@ -655,15 +694,15 @@ retry:
 	 * root table and try again.
 	 */
 	if (c->flags & CLIENT_REPEAT) {
-		server_client_key_table(c, "root");
+		server_client_set_key_table(c, NULL);
 		c->flags &= ~CLIENT_REPEAT;
 		server_status_client(c);
 		goto retry;
 	}
 
 	/* If no match and we're not in the root table, that's it. */
-	if (strcmp(c->keytable->name, "root") != 0) {
-		server_client_key_table(c, "root");
+	if (strcmp(c->keytable->name, server_client_get_key_table(c)) != 0) {
+		server_client_set_key_table(c, NULL);
 		server_status_client(c);
 		return;
 	}
@@ -672,11 +711,21 @@ retry:
 	 * No match, but in the root table. Prefix switches to the prefix table
 	 * and everything else is passed through.
 	 */
-	if (key == options_get_number(&s->options, "prefix") ||
-	    key == options_get_number(&s->options, "prefix2")) {
-		server_client_key_table(c, "prefix");
+	if (key == (key_code)options_get_number(s->options, "prefix") ||
+	    key == (key_code)options_get_number(s->options, "prefix2")) {
+		server_client_set_key_table(c, "prefix");
 		server_status_client(c);
-	} else if (!(c->flags & CLIENT_READONLY))
+		return;
+	}
+
+forward:
+	if (c->flags & CLIENT_READONLY)
+		return;
+	if (KEYC_IS_MOUSE(key))
+		wp = cmd_mouse_pane(m, NULL, NULL);
+	else
+		wp = w->active;
+	if (wp != NULL)
 		window_pane_key(wp, c, s, key, m);
 }
 
@@ -750,7 +799,7 @@ server_client_check_focus(struct window_pane *wp)
 	int		 push;
 
 	/* Are focus events off? */
-	if (!options_get_number(&global_options, "focus-events"))
+	if (!options_get_number(global_options, "focus-events"))
 		return;
 
 	/* Do we need to push the focus state? */
@@ -810,7 +859,7 @@ server_client_reset_state(struct client *c)
 	struct window		*w = c->session->curw->window;
 	struct window_pane	*wp = w->active;
 	struct screen		*s = wp->screen;
-	struct options		*oo = &c->session->options;
+	struct options		*oo = c->session->options;
 	int			 status, mode, o;
 
 	if (c->flags & CLIENT_SUSPENDED)
@@ -837,19 +886,6 @@ server_client_reset_state(struct client *c)
 	if (options_get_number(oo, "mouse"))
 		mode = (mode & ~ALL_MOUSE_MODES) | MODE_MOUSE_BUTTON;
 
-	/*
-	 * Set UTF-8 mouse input if required. If the terminal is UTF-8, the
-	 * user has set mouse-utf8 and any mouse mode is in effect, turn on
-	 * UTF-8 mouse input. If the receiving terminal hasn't requested it
-	 * (that is, it isn't in s->mode), then it'll be converted in
-	 * input_mouse.
-	 */
-	if ((c->tty.flags & TTY_UTF8) &&
-	    (mode & ALL_MOUSE_MODES) && options_get_number(oo, "mouse-utf8"))
-		mode |= MODE_MOUSE_UTF8;
-	else
-		mode &= ~MODE_MOUSE_UTF8;
-
 	/* Set the terminal mode and reset attributes. */
 	tty_update_mode(&c->tty, mode, s);
 	tty_reset(&c->tty);
@@ -857,12 +893,12 @@ server_client_reset_state(struct client *c)
 
 /* Repeat time callback. */
 void
-server_client_repeat_timer(unused int fd, unused short events, void *data)
+server_client_repeat_timer(__unused int fd, __unused short events, void *data)
 {
 	struct client	*c = data;
 
 	if (c->flags & CLIENT_REPEAT) {
-		server_client_key_table(c, "root");
+		server_client_set_key_table(c, NULL);
 		c->flags &= ~CLIENT_REPEAT;
 		server_status_client(c);
 	}
@@ -882,7 +918,7 @@ server_client_check_exit(struct client *c)
 	if (EVBUFFER_LENGTH(c->stderr_data) != 0)
 		return;
 
-	server_write_client(c, MSG_EXIT, &c->retval, sizeof c->retval);
+	proc_send(c->peer, MSG_EXIT, -1, &c->retval, sizeof c->retval);
 	c->flags &= ~CLIENT_EXIT;
 }
 
@@ -899,7 +935,7 @@ server_client_check_redraw(struct client *c)
 		return;
 
 	if (c->flags & (CLIENT_REDRAW|CLIENT_STATUS)) {
-		if (options_get_number(&s->options, "set-titles"))
+		if (options_get_number(s->options, "set-titles"))
 			server_client_set_title(c);
 
 		if (c->message_string != NULL)
@@ -959,9 +995,9 @@ server_client_set_title(struct client *c)
 	char			*title;
 	struct format_tree	*ft;
 
-	template = options_get_string(&s->options, "set-titles-string");
+	template = options_get_string(s->options, "set-titles-string");
 
-	ft = format_create();
+	ft = format_create(NULL, 0);
 	format_defaults(ft, c, NULL, NULL, NULL);
 
 	title = format_expand_time(ft, template, time(NULL));
@@ -976,123 +1012,111 @@ server_client_set_title(struct client *c)
 }
 
 /* Dispatch message from client. */
-int
-server_client_msg_dispatch(struct client *c)
+void
+server_client_dispatch(struct imsg *imsg, void *arg)
 {
-	struct imsg		 imsg;
+	struct client		*c = arg;
 	struct msg_stdin_data	 stdindata;
 	const char		*data;
-	ssize_t			 n, datalen;
+	ssize_t			 datalen;
 	struct session		*s;
 
-	if ((n = imsg_read(&c->ibuf)) == -1 || n == 0)
-		return (-1);
+	if (c->flags & CLIENT_DEAD)
+		return;
 
-	for (;;) {
-		if ((n = imsg_get(&c->ibuf, &imsg)) == -1)
-			return (-1);
-		if (n == 0)
-			return (0);
+	if (imsg == NULL) {
+		server_client_lost(c);
+		return;
+	}
 
-		data = imsg.data;
-		datalen = imsg.hdr.len - IMSG_HEADER_SIZE;
+	data = imsg->data;
+	datalen = imsg->hdr.len - IMSG_HEADER_SIZE;
 
-		if (imsg.hdr.peerid != PROTOCOL_VERSION) {
-			server_write_client(c, MSG_VERSION, NULL, 0);
-			c->flags |= CLIENT_BAD;
-			if (imsg.fd != -1)
-				close(imsg.fd);
-			imsg_free(&imsg);
-			continue;
+	switch (imsg->hdr.type) {
+	case MSG_IDENTIFY_FLAGS:
+	case MSG_IDENTIFY_TERM:
+	case MSG_IDENTIFY_TTYNAME:
+	case MSG_IDENTIFY_CWD:
+	case MSG_IDENTIFY_STDIN:
+	case MSG_IDENTIFY_ENVIRON:
+	case MSG_IDENTIFY_CLIENTPID:
+	case MSG_IDENTIFY_DONE:
+		server_client_dispatch_identify(c, imsg);
+		break;
+	case MSG_COMMAND:
+		server_client_dispatch_command(c, imsg);
+		break;
+	case MSG_STDIN:
+		if (datalen != sizeof stdindata)
+			fatalx("bad MSG_STDIN size");
+		memcpy(&stdindata, data, sizeof stdindata);
+
+		if (c->stdin_callback == NULL)
+			break;
+		if (stdindata.size <= 0)
+			c->stdin_closed = 1;
+		else {
+			evbuffer_add(c->stdin_data, stdindata.data,
+			    stdindata.size);
 		}
+		c->stdin_callback(c, c->stdin_closed,
+		    c->stdin_callback_data);
+		break;
+	case MSG_RESIZE:
+		if (datalen != 0)
+			fatalx("bad MSG_RESIZE size");
 
-		log_debug("got %u from client %d", imsg.hdr.type, c->ibuf.fd);
-		switch (imsg.hdr.type) {
-		case MSG_IDENTIFY_FLAGS:
-		case MSG_IDENTIFY_TERM:
-		case MSG_IDENTIFY_TTYNAME:
-		case MSG_IDENTIFY_CWD:
-		case MSG_IDENTIFY_STDIN:
-		case MSG_IDENTIFY_ENVIRON:
-		case MSG_IDENTIFY_CLIENTPID:
-		case MSG_IDENTIFY_DONE:
-			server_client_msg_identify(c, &imsg);
+		if (c->flags & CLIENT_CONTROL)
 			break;
-		case MSG_COMMAND:
-			server_client_msg_command(c, &imsg);
-			break;
-		case MSG_STDIN:
-			if (datalen != sizeof stdindata)
-				fatalx("bad MSG_STDIN size");
-			memcpy(&stdindata, data, sizeof stdindata);
-
-			if (c->stdin_callback == NULL)
-				break;
-			if (stdindata.size <= 0)
-				c->stdin_closed = 1;
-			else {
-				evbuffer_add(c->stdin_data, stdindata.data,
-				    stdindata.size);
-			}
-			c->stdin_callback(c, c->stdin_closed,
-			    c->stdin_callback_data);
-			break;
-		case MSG_RESIZE:
-			if (datalen != 0)
-				fatalx("bad MSG_RESIZE size");
-
-			if (c->flags & CLIENT_CONTROL)
-				break;
-			if (tty_resize(&c->tty)) {
-				recalculate_sizes();
-				server_redraw_client(c);
-			}
-			break;
-		case MSG_EXITING:
-			if (datalen != 0)
-				fatalx("bad MSG_EXITING size");
-
-			c->session = NULL;
-			tty_close(&c->tty);
-			server_write_client(c, MSG_EXITED, NULL, 0);
-			break;
-		case MSG_WAKEUP:
-		case MSG_UNLOCK:
-			if (datalen != 0)
-				fatalx("bad MSG_WAKEUP size");
-
-			if (!(c->flags & CLIENT_SUSPENDED))
-				break;
-			c->flags &= ~CLIENT_SUSPENDED;
-
-			if (c->tty.fd == -1) /* exited in the meantime */
-				break;
-			s = c->session;
-
-			if (gettimeofday(&c->activity_time, NULL) != 0)
-				fatal("gettimeofday failed");
-			if (s != NULL)
-				session_update_activity(s, &c->activity_time);
-
-			tty_start_tty(&c->tty);
-			server_redraw_client(c);
+		if (tty_resize(&c->tty)) {
 			recalculate_sizes();
-			break;
-		case MSG_SHELL:
-			if (datalen != 0)
-				fatalx("bad MSG_SHELL size");
-
-			server_client_msg_shell(c);
-			break;
+			server_redraw_client(c);
 		}
+		if (c->session != NULL)
+			hooks_run(c->session->hooks, c, NULL, "client-resized");
+		break;
+	case MSG_EXITING:
+		if (datalen != 0)
+			fatalx("bad MSG_EXITING size");
 
-		imsg_free(&imsg);
+		c->session = NULL;
+		tty_close(&c->tty);
+		proc_send(c->peer, MSG_EXITED, -1, NULL, 0);
+		break;
+	case MSG_WAKEUP:
+	case MSG_UNLOCK:
+		if (datalen != 0)
+			fatalx("bad MSG_WAKEUP size");
+
+		if (!(c->flags & CLIENT_SUSPENDED))
+			break;
+		c->flags &= ~CLIENT_SUSPENDED;
+
+		if (c->tty.fd == -1) /* exited in the meantime */
+			break;
+		s = c->session;
+
+		if (gettimeofday(&c->activity_time, NULL) != 0)
+			fatal("gettimeofday failed");
+		if (s != NULL)
+			session_update_activity(s, &c->activity_time);
+
+		tty_start_tty(&c->tty);
+		server_redraw_client(c);
+		recalculate_sizes();
+		break;
+	case MSG_SHELL:
+		if (datalen != 0)
+			fatalx("bad MSG_SHELL size");
+
+		server_client_dispatch_shell(c);
+		break;
 	}
 }
 
 /* Handle command message. */
 void
-server_client_msg_command(struct client *c, struct imsg *imsg)
+server_client_dispatch_command(struct client *c, struct imsg *imsg)
 {
 	struct msg_command_data	  data;
 	char			 *buf;
@@ -1145,9 +1169,9 @@ error:
 
 /* Handle identify message. */
 void
-server_client_msg_identify(struct client *c, struct imsg *imsg)
+server_client_dispatch_identify(struct client *c, struct imsg *imsg)
 {
-	const char	*data;
+	const char	*data, *home;
 	size_t	 	 datalen;
 	int		 flags;
 
@@ -1163,37 +1187,49 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 			fatalx("bad MSG_IDENTIFY_FLAGS size");
 		memcpy(&flags, data, sizeof flags);
 		c->flags |= flags;
+		log_debug("client %p IDENTIFY_FLAGS %#x", c, flags);
 		break;
 	case MSG_IDENTIFY_TERM:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_TERM string");
 		c->term = xstrdup(data);
+		log_debug("client %p IDENTIFY_TERM %s", c, data);
 		break;
 	case MSG_IDENTIFY_TTYNAME:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_TTYNAME string");
 		c->ttyname = xstrdup(data);
+		log_debug("client %p IDENTIFY_TTYNAME %s", c, data);
 		break;
 	case MSG_IDENTIFY_CWD:
-		if (datalen != 0)
-			fatalx("bad MSG_IDENTIFY_CWD size");
-		c->cwd = imsg->fd;
+		if (datalen == 0 || data[datalen - 1] != '\0')
+			fatalx("bad MSG_IDENTIFY_CWD string");
+		if (access(data, X_OK) == 0)
+			c->cwd = xstrdup(data);
+		else if ((home = find_home()) != NULL)
+			c->cwd = xstrdup(home);
+		else
+			c->cwd = xstrdup("/");
+		log_debug("client %p IDENTIFY_CWD %s", c, data);
 		break;
 	case MSG_IDENTIFY_STDIN:
 		if (datalen != 0)
 			fatalx("bad MSG_IDENTIFY_STDIN size");
 		c->fd = imsg->fd;
+		log_debug("client %p IDENTIFY_STDIN %d", c, imsg->fd);
 		break;
 	case MSG_IDENTIFY_ENVIRON:
 		if (datalen == 0 || data[datalen - 1] != '\0')
 			fatalx("bad MSG_IDENTIFY_ENVIRON string");
 		if (strchr(data, '=') != NULL)
-			environ_put(&c->environ, data);
+			environ_put(c->environ, data);
+		log_debug("client %p IDENTIFY_ENVIRON %s", c, data);
 		break;
 	case MSG_IDENTIFY_CLIENTPID:
 		if (datalen != sizeof c->pid)
 			fatalx("bad MSG_IDENTIFY_CLIENTPID size");
 		memcpy(&c->pid, data, sizeof c->pid);
+		log_debug("client %p IDENTIFY_CLIENTPID %ld", c, (long)c->pid);
 		break;
 	default:
 		break;
@@ -1205,7 +1241,6 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 
 #ifdef __CYGWIN__
 	c->fd = open(c->ttyname, O_RDWR|O_NOCTTY);
-	c->cwd = open(".", O_RDONLY);
 #endif
 
 	if (c->flags & CLIENT_CONTROL) {
@@ -1216,10 +1251,9 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 
 		if (c->flags & CLIENT_CONTROLCONTROL)
 			evbuffer_add_printf(c->stdout_data, "\033P1000p");
-		server_write_client(c, MSG_STDIN, NULL, 0);
+		proc_send(c->peer, MSG_STDIN, -1, NULL, 0);
 
 		c->tty.fd = -1;
-		c->tty.log_fd = -1;
 
 		close(c->fd);
 		c->fd = -1;
@@ -1247,14 +1281,101 @@ server_client_msg_identify(struct client *c, struct imsg *imsg)
 
 /* Handle shell message. */
 void
-server_client_msg_shell(struct client *c)
+server_client_dispatch_shell(struct client *c)
 {
 	const char	*shell;
 
-	shell = options_get_string(&global_s_options, "default-shell");
+	shell = options_get_string(global_s_options, "default-shell");
 	if (*shell == '\0' || areshell(shell))
 		shell = _PATH_BSHELL;
-	server_write_client(c, MSG_SHELL, shell, strlen(shell) + 1);
+	proc_send_s(c->peer, MSG_SHELL, shell);
 
-	c->flags |= CLIENT_BAD;	/* it will die after exec */
+	proc_kill_peer(c->peer);
+}
+
+/* Event callback to push more stdout data if any left. */
+static void
+server_client_stdout_cb(__unused int fd, __unused short events, void *arg)
+{
+	struct client	*c = arg;
+
+	if (~c->flags & CLIENT_DEAD)
+		server_client_push_stdout(c);
+	server_client_unref(c);
+}
+
+/* Push stdout to client if possible. */
+void
+server_client_push_stdout(struct client *c)
+{
+	struct msg_stdout_data data;
+	size_t                 sent, left;
+
+	left = EVBUFFER_LENGTH(c->stdout_data);
+	while (left != 0) {
+		sent = left;
+		if (sent > sizeof data.data)
+			sent = sizeof data.data;
+		memcpy(data.data, EVBUFFER_DATA(c->stdout_data), sent);
+		data.size = sent;
+
+		if (proc_send(c->peer, MSG_STDOUT, -1, &data, sizeof data) != 0)
+			break;
+		evbuffer_drain(c->stdout_data, sent);
+
+		left = EVBUFFER_LENGTH(c->stdout_data);
+		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
+		    sent, left);
+	}
+	if (left != 0) {
+		c->references++;
+		event_once(-1, EV_TIMEOUT, server_client_stdout_cb, c, NULL);
+		log_debug("%s: client %p, queued", __func__, c);
+	}
+}
+
+/* Event callback to push more stderr data if any left. */
+static void
+server_client_stderr_cb(__unused int fd, __unused short events, void *arg)
+{
+	struct client	*c = arg;
+
+	if (~c->flags & CLIENT_DEAD)
+		server_client_push_stderr(c);
+	server_client_unref(c);
+}
+
+/* Push stderr to client if possible. */
+void
+server_client_push_stderr(struct client *c)
+{
+	struct msg_stderr_data data;
+	size_t                 sent, left;
+
+	if (c->stderr_data == c->stdout_data) {
+		server_client_push_stdout(c);
+		return;
+	}
+
+	left = EVBUFFER_LENGTH(c->stderr_data);
+	while (left != 0) {
+		sent = left;
+		if (sent > sizeof data.data)
+			sent = sizeof data.data;
+		memcpy(data.data, EVBUFFER_DATA(c->stderr_data), sent);
+		data.size = sent;
+
+		if (proc_send(c->peer, MSG_STDERR, -1, &data, sizeof data) != 0)
+			break;
+		evbuffer_drain(c->stderr_data, sent);
+
+		left = EVBUFFER_LENGTH(c->stderr_data);
+		log_debug("%s: client %p, sent %zu, left %zu", __func__, c,
+		    sent, left);
+	}
+	if (left != 0) {
+		c->references++;
+		event_once(-1, EV_TIMEOUT, server_client_stderr_cb, c, NULL);
+		log_debug("%s: client %p, queued", __func__, c);
+	}
 }
