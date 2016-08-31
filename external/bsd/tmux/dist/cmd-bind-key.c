@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,14 +29,19 @@
 
 enum cmd_retval	 cmd_bind_key_exec(struct cmd *, struct cmd_q *);
 
-enum cmd_retval	 cmd_bind_key_mode_table(struct cmd *, struct cmd_q *, int);
+enum cmd_retval	 cmd_bind_key_mode_table(struct cmd *, struct cmd_q *,
+		     key_code);
 
 const struct cmd_entry cmd_bind_key_entry = {
-	"bind-key", "bind",
-	"cnrt:T:", 1, -1,
-	"[-cnr] [-t mode-table] [-T key-table] key command [arguments]",
-	0,
-	cmd_bind_key_exec
+	.name = "bind-key",
+	.alias = "bind",
+
+	.args = { "cnrt:T:", 1, -1 },
+	.usage = "[-cnr] [-t mode-table] [-T key-table] key command "
+		 "[arguments]",
+
+	.flags = 0,
+	.exec = cmd_bind_key_exec
 };
 
 enum cmd_retval
@@ -45,7 +50,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args	*args = self->args;
 	char		*cause;
 	struct cmd_list	*cmdlist;
-	int		 key;
+	key_code	 key;
 	const char	*tablename;
 
 	if (args_has(args, 't')) {
@@ -61,7 +66,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 	}
 
 	key = key_string_lookup_string(args->argv[0]);
-	if (key == KEYC_NONE) {
+	if (key == KEYC_NONE || key == KEYC_UNKNOWN) {
 		cmdq_error(cmdq, "unknown key: %s", args->argv[0]);
 		return (CMD_RETURN_ERROR);
 	}
@@ -89,7 +94,7 @@ cmd_bind_key_exec(struct cmd *self, struct cmd_q *cmdq)
 }
 
 enum cmd_retval
-cmd_bind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, int key)
+cmd_bind_key_mode_table(struct cmd *self, struct cmd_q *cmdq, key_code key)
 {
 	struct args			*args = self->args;
 	const char			*tablename;

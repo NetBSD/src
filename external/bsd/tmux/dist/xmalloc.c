@@ -1,148 +1,137 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2004 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Author: Tatu Ylonen <ylo@cs.hut.fi>
+ * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
+ *                    All rights reserved
+ * Versions of malloc and friends that check their results, and never return
+ * failure (they call fatalx if they encounter an error).
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF MIND, USE, DATA OR PROFITS, WHETHER
- * IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ * As far as I am concerned, the code I have written for this software
+ * can be used freely for any purpose.  Any derived versions of this
+ * software must be clearly marked as such, and if the derived work is
+ * incompatible with the protocol description in the RFC file, it must be
+ * called by a name other than "ssh" or "Secure Shell".
  */
 
-#include <sys/types.h>
-
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "tmux.h"
 
-char *
-xstrdup(const char *s)
+void *
+xmalloc(size_t size)
 {
-	char	*ptr;
-	size_t	 len;
+	void *ptr;
 
-	len = strlen(s) + 1;
-	ptr = xmalloc(len);
-
-	strlcpy(ptr, s, len);
-	return (ptr);
+	if (size == 0)
+		fatalx("xmalloc: zero size");
+	ptr = malloc(size);
+	if (ptr == NULL)
+		fatalx("xmalloc: allocating %zu bytes: %s",
+		    size, strerror(errno));
+	return ptr;
 }
 
 void *
 xcalloc(size_t nmemb, size_t size)
 {
-	void	*ptr;
+	void *ptr;
 
 	if (size == 0 || nmemb == 0)
-		fatalx("zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatalx("nmemb * size > SIZE_MAX");
-	if ((ptr = calloc(nmemb, size)) == NULL)
-		fatal("xcalloc failed");
-
-	return (ptr);
+		fatalx("xcalloc: zero size");
+	ptr = calloc(nmemb, size);
+	if (ptr == NULL)
+		fatalx("xcalloc: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
+	return ptr;
 }
 
 void *
-xmalloc(size_t size)
+xrealloc(void *ptr, size_t size)
 {
-	void	*ptr;
-
-	if (size == 0)
-		fatalx("zero size");
-	if ((ptr = malloc(size)) == NULL)
-		fatal("xmalloc failed");
-
-	return (ptr);
+	return xreallocarray(ptr, 1, size);
 }
 
 void *
-xrealloc(void *oldptr, size_t newsize)
+xreallocarray(void *ptr, size_t nmemb, size_t size)
 {
-	void	*newptr;
+	void *new_ptr;
 
-	if (newsize == 0)
-		fatalx("zero size");
-	if ((newptr = realloc(oldptr, newsize)) == NULL)
-		fatal("xrealloc failed");
-
-	return (newptr);
+	if (nmemb == 0 || size == 0)
+		fatalx("xreallocarray: zero size");
+	new_ptr = reallocarray(ptr, nmemb, size);
+	if (new_ptr == NULL)
+		fatalx("xreallocarray: allocating %zu * %zu bytes: %s",
+		    nmemb, size, strerror(errno));
+	return new_ptr;
 }
 
-void *
-xreallocarray(void *oldptr, size_t nmemb, size_t size)
+char *
+xstrdup(const char *str)
 {
-	size_t	 newsize = nmemb * size;
-	void	*newptr;
+	char *cp;
 
-	if (newsize == 0)
-		fatalx("zero size");
-	if (SIZE_MAX / nmemb < size)
-		fatalx("nmemb * size > SIZE_MAX");
-	if ((newptr = realloc(oldptr, newsize)) == NULL)
-		fatal("xreallocarray failed");
-
-	return (newptr);
+	if ((cp = strdup(str)) == NULL)
+		fatalx("xstrdup: %s", strerror(errno));
+	return cp;
 }
 
 int
 xasprintf(char **ret, const char *fmt, ...)
 {
 	va_list ap;
-	int	i;
+	int i;
 
 	va_start(ap, fmt);
 	i = xvasprintf(ret, fmt, ap);
 	va_end(ap);
 
-	return (i);
+	return i;
 }
 
 int
 xvasprintf(char **ret, const char *fmt, va_list ap)
 {
-	int	i;
+	int i;
 
 	i = vasprintf(ret, fmt, ap);
-	if (i < 0 || *ret == NULL)
-		fatal("xvasprintf failed");
 
-	return (i);
+	if (i < 0 || *ret == NULL)
+		fatalx("xasprintf: %s", strerror(errno));
+
+	return i;
 }
 
 int
-xsnprintf(char *buf, size_t len, const char *fmt, ...)
+xsnprintf(char *str, size_t len, const char *fmt, ...)
 {
 	va_list ap;
-	int	i;
+	int i;
 
 	va_start(ap, fmt);
-	i = xvsnprintf(buf, len, fmt, ap);
+	i = xvsnprintf(str, len, fmt, ap);
 	va_end(ap);
 
-	return (i);
+	return i;
 }
 
 int
-xvsnprintf(char *buf, size_t len, const char *fmt, va_list ap)
+xvsnprintf(char *str, size_t len, const char *fmt, va_list ap)
 {
-	int	i;
+	int i;
 
 	if (len > INT_MAX)
-		fatalx("len > INT_MAX");
+		fatalx("xsnprintf: len > INT_MAX");
 
-	i = vsnprintf(buf, len, fmt, ap);
-	if (i < 0)
-		fatal("vsnprintf failed");
+	i = vsnprintf(str, len, fmt, ap);
 
-	return (i);
+	if (i < 0 || i >= (int)len)
+		fatalx("xsnprintf: overflow");
+
+	return i;
 }

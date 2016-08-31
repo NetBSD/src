@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -36,11 +36,16 @@
 enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_list_clients_entry = {
-	"list-clients", "lsc",
-	"F:t:", 0, 0,
-	"[-F format] " CMD_TARGET_SESSION_USAGE,
-	CMD_READONLY,
-	cmd_list_clients_exec
+	.name = "list-clients",
+	.alias = "lsc",
+
+	.args = { "F:t:", 0, 0 },
+	.usage = "[-F format] " CMD_TARGET_SESSION_USAGE,
+
+	.tflag = CMD_SESSION,
+
+	.flags = CMD_READONLY,
+	.exec = cmd_list_clients_exec
 };
 
 enum cmd_retval
@@ -54,11 +59,9 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 	u_int			 idx;
 	char			*line;
 
-	if (args_has(args, 't')) {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-	} else
+	if (args_has(args, 't'))
+		s = cmdq->state.tflag.s;
+	else
 		s = NULL;
 
 	if ((template = args_get(args, 'F')) == NULL)
@@ -69,7 +72,7 @@ cmd_list_clients_exec(struct cmd *self, struct cmd_q *cmdq)
 		if (c->session == NULL || (s != NULL && s != c->session))
 			continue;
 
-		ft = format_create();
+		ft = format_create(cmdq, 0);
 		format_add(ft, "line", "%u", idx);
 		format_defaults(ft, c, NULL, NULL, NULL);
 

@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,19 +27,29 @@
 enum cmd_retval	 cmd_copy_mode_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_copy_mode_entry = {
-	"copy-mode", NULL,
-	"Met:u", 0, 0,
-	"[-Meu] " CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_copy_mode_exec
+	.name = "copy-mode",
+	.alias = NULL,
+
+	.args = { "Met:u", 0, 0 },
+	.usage = "[-Mu] " CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_copy_mode_exec
 };
 
 const struct cmd_entry cmd_clock_mode_entry = {
-	"clock-mode", NULL,
-	"t:", 0, 0,
-	CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_copy_mode_exec
+	.name = "clock-mode",
+	.alias = NULL,
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_copy_mode_exec
 };
 
 enum cmd_retval
@@ -48,15 +58,14 @@ cmd_copy_mode_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args		*args = self->args;
 	struct client		*c = cmdq->client;
 	struct session		*s;
-	struct window_pane	*wp;
+	struct window_pane	*wp = cmdq->state.tflag.wp;
 
 	if (args_has(args, 'M')) {
 		if ((wp = cmd_mouse_pane(&cmdq->item->mouse, &s, NULL)) == NULL)
 			return (CMD_RETURN_NORMAL);
 		if (c == NULL || c->session != s)
 			return (CMD_RETURN_NORMAL);
-	} else if (cmd_find_pane(cmdq, args_get(args, 't'), NULL, &wp) == NULL)
-		return (CMD_RETURN_ERROR);
+	}
 
 	if (self->entry == &cmd_clock_mode_entry) {
 		window_pane_set_mode(wp, &window_clock_mode);

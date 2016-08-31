@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -132,7 +132,7 @@ load_cfg(const char *path, struct cmd_q *cmdq, char **cause)
 }
 
 void
-cfg_default_done(unused struct cmd_q *cmdq)
+cfg_default_done(__unused struct cmd_q *cmdq)
 {
 	if (--cfg_references != 0)
 		return;

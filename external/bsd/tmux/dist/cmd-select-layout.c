@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,43 +29,55 @@
 enum cmd_retval	 cmd_select_layout_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_layout_entry = {
-	"select-layout", "selectl",
-	"nopt:", 0, 1,
-	"[-nop] " CMD_TARGET_WINDOW_USAGE " [layout-name]",
-	0,
-	cmd_select_layout_exec
+	.name = "select-layout",
+	.alias = "selectl",
+
+	.args = { "nopt:", 0, 1 },
+	.usage = "[-nop] " CMD_TARGET_WINDOW_USAGE " [layout-name]",
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_select_layout_exec
 };
 
 const struct cmd_entry cmd_next_layout_entry = {
-	"next-layout", "nextl",
-	"t:", 0, 0,
-	CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_select_layout_exec
+	.name = "next-layout",
+	.alias = "nextl",
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_select_layout_exec
 };
 
 const struct cmd_entry cmd_previous_layout_entry = {
-	"previous-layout", "prevl",
-	"t:", 0, 0,
-	CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_select_layout_exec
+	.name = "previous-layout",
+	.alias = "prevl",
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_select_layout_exec
 };
 
 enum cmd_retval
 cmd_select_layout_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct winlink	*wl;
+	struct winlink	*wl = cmdq->state.tflag.wl;
 	struct window	*w;
 	const char	*layoutname;
 	char		*oldlayout;
 	int		 next, previous, layout;
 
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
-		return (CMD_RETURN_ERROR);
 	w = wl->window;
-
 	server_unzoom_window(w);
 
 	next = self->entry == &cmd_next_layout_entry;

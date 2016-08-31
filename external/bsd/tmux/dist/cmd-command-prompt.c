@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,11 +35,17 @@ int	cmd_command_prompt_callback(void *, const char *);
 void	cmd_command_prompt_free(void *);
 
 const struct cmd_entry cmd_command_prompt_entry = {
-	"command-prompt", NULL,
-	"I:p:t:", 0, 1,
-	"[-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " [template]",
-	0,
-	cmd_command_prompt_exec
+	.name = "command-prompt",
+	.alias = NULL,
+
+	.args = { "I:p:t:", 0, 1 },
+	.usage = "[-I inputs] [-p prompts] " CMD_TARGET_CLIENT_USAGE " "
+		 "[template]",
+
+	.tflag = CMD_CLIENT,
+
+	.flags = 0,
+	.exec = cmd_command_prompt_exec
 };
 
 struct cmd_command_prompt_cdata {
@@ -58,12 +64,9 @@ cmd_command_prompt_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct args			*args = self->args;
 	const char			*inputs, *prompts;
 	struct cmd_command_prompt_cdata	*cdata;
-	struct client			*c;
+	struct client			*c = cmdq->state.c;
 	char				*prompt, *ptr, *input = NULL;
 	size_t				 n;
-
-	if ((c = cmd_find_client(cmdq, args_get(args, 't'), 0)) == NULL)
-		return (CMD_RETURN_ERROR);
 
 	if (c->prompt_string != NULL)
 		return (CMD_RETURN_NORMAL);

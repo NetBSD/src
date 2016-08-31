@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -95,10 +95,12 @@ extern const struct cmd_entry cmd_send_prefix_entry;
 extern const struct cmd_entry cmd_server_info_entry;
 extern const struct cmd_entry cmd_set_buffer_entry;
 extern const struct cmd_entry cmd_set_environment_entry;
+extern const struct cmd_entry cmd_set_hook_entry;
 extern const struct cmd_entry cmd_set_option_entry;
 extern const struct cmd_entry cmd_set_window_option_entry;
 extern const struct cmd_entry cmd_show_buffer_entry;
 extern const struct cmd_entry cmd_show_environment_entry;
+extern const struct cmd_entry cmd_show_hooks_entry;
 extern const struct cmd_entry cmd_show_messages_entry;
 extern const struct cmd_entry cmd_show_options_entry;
 extern const struct cmd_entry cmd_show_window_options_entry;
@@ -182,10 +184,12 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_server_info_entry,
 	&cmd_set_buffer_entry,
 	&cmd_set_environment_entry,
+	&cmd_set_hook_entry,
 	&cmd_set_option_entry,
 	&cmd_set_window_option_entry,
 	&cmd_show_buffer_entry,
 	&cmd_show_environment_entry,
+	&cmd_show_hooks_entry,
 	&cmd_show_messages_entry,
 	&cmd_show_options_entry,
 	&cmd_show_window_options_entry,
@@ -344,12 +348,12 @@ cmd_parse(int argc, char **argv, const char *file, u_int line, char **cause)
 		return (NULL);
 	}
 
-	args = args_parse(entry->args_template, argc, argv);
+	args = args_parse(entry->args.template, argc, argv);
 	if (args == NULL)
 		goto usage;
-	if (entry->args_lower != -1 && args->argc < entry->args_lower)
+	if (entry->args.lower != -1 && args->argc < entry->args.lower)
 		goto usage;
-	if (entry->args_upper != -1 && args->argc > entry->args_upper)
+	if (entry->args.upper != -1 && args->argc > entry->args.upper)
 		goto usage;
 
 	cmd = xcalloc(1, sizeof *cmd);
@@ -383,21 +387,192 @@ usage:
 	return (NULL);
 }
 
-size_t
-cmd_print(struct cmd *cmd, char *buf, size_t len)
+static int
+cmd_prepare_state_flag(char c, const char *target, enum cmd_entry_flag flag,
+    struct cmd_q *cmdq, struct cmd_q *parent)
 {
-	size_t	off, used;
+	int			 targetflags, error;
+	struct cmd_find_state	*fs = NULL;
+	struct cmd_find_state	*current = NULL;
+	struct cmd_find_state	 tmp;
 
-	off = xsnprintf(buf, len, "%s ", cmd->entry->name);
-	if (off + 1 < len) {
-		used = args_print(cmd->args, buf + off, len - off - 1);
-		if (used == 0)
-			off--;
+	if (flag == CMD_NONE ||
+	    flag == CMD_CLIENT ||
+	    flag == CMD_CLIENT_CANFAIL)
+		return (0);
+
+	if (c == 't')
+		fs = &cmdq->state.tflag;
+	else if (c == 's')
+		fs = &cmdq->state.sflag;
+
+	if (flag == CMD_SESSION_WITHPANE) {
+		if (target != NULL && target[strcspn(target, ":.")] != '\0')
+			flag = CMD_PANE;
 		else
-			off += used;
-		buf[off] = '\0';
+			flag = CMD_SESSION;
 	}
-	return (off);
+
+	targetflags = 0;
+	switch (flag) {
+	case CMD_SESSION:
+	case CMD_SESSION_CANFAIL:
+	case CMD_SESSION_PREFERUNATTACHED:
+		if (flag == CMD_SESSION_CANFAIL)
+			targetflags |= CMD_FIND_QUIET;
+		if (flag == CMD_SESSION_PREFERUNATTACHED)
+			targetflags |= CMD_FIND_PREFER_UNATTACHED;
+		break;
+	case CMD_MOVEW_R:
+		flag = CMD_WINDOW_INDEX;
+		/* FALLTHROUGH */
+	case CMD_WINDOW:
+	case CMD_WINDOW_CANFAIL:
+	case CMD_WINDOW_MARKED:
+	case CMD_WINDOW_INDEX:
+		if (flag == CMD_WINDOW_CANFAIL)
+			targetflags |= CMD_FIND_QUIET;
+		if (flag == CMD_WINDOW_MARKED)
+			targetflags |= CMD_FIND_DEFAULT_MARKED;
+		if (flag == CMD_WINDOW_INDEX)
+			targetflags |= CMD_FIND_WINDOW_INDEX;
+		break;
+	case CMD_PANE:
+	case CMD_PANE_CANFAIL:
+	case CMD_PANE_MARKED:
+		if (flag == CMD_PANE_CANFAIL)
+			targetflags |= CMD_FIND_QUIET;
+		if (flag == CMD_PANE_MARKED)
+			targetflags |= CMD_FIND_DEFAULT_MARKED;
+		break;
+	default:
+		fatalx("unknown %cflag %d", c, flag);
+	}
+
+	log_debug("%s: flag %c %d %#x", __func__, c, flag, targetflags);
+	if (parent != NULL) {
+		if (c == 't')
+			current = &parent->state.tflag;
+		else if (c == 's')
+			current = &parent->state.sflag;
+	} else {
+		error = cmd_find_current(&tmp, cmdq, targetflags);
+		if (error != 0 && ~targetflags & CMD_FIND_QUIET)
+			return (-1);
+		current = &tmp;
+	}
+
+	switch (flag) {
+	case CMD_NONE:
+	case CMD_CLIENT:
+	case CMD_CLIENT_CANFAIL:
+		return (0);
+	case CMD_SESSION:
+	case CMD_SESSION_CANFAIL:
+	case CMD_SESSION_PREFERUNATTACHED:
+	case CMD_SESSION_WITHPANE:
+		error = cmd_find_target(fs, current, cmdq, target,
+		    CMD_FIND_SESSION, targetflags);
+		if (error != 0 && ~targetflags & CMD_FIND_QUIET)
+			return (-1);
+		break;
+	case CMD_MOVEW_R:
+		error = cmd_find_target(fs, current, cmdq, target,
+		    CMD_FIND_SESSION, CMD_FIND_QUIET);
+		if (error == 0)
+			break;
+		/* FALLTHROUGH */
+	case CMD_WINDOW:
+	case CMD_WINDOW_CANFAIL:
+	case CMD_WINDOW_MARKED:
+	case CMD_WINDOW_INDEX:
+		error = cmd_find_target(fs, current, cmdq, target,
+		    CMD_FIND_WINDOW, targetflags);
+		if (error != 0 && ~targetflags & CMD_FIND_QUIET)
+			return (-1);
+		break;
+	case CMD_PANE:
+	case CMD_PANE_CANFAIL:
+	case CMD_PANE_MARKED:
+		error = cmd_find_target(fs, current, cmdq, target,
+		    CMD_FIND_PANE, targetflags);
+		if (error != 0 && ~targetflags & CMD_FIND_QUIET)
+			return (-1);
+		break;
+	default:
+		fatalx("unknown %cflag %d", c, flag);
+	}
+	return (0);
+}
+
+int
+cmd_prepare_state(struct cmd *cmd, struct cmd_q *cmdq, struct cmd_q *parent)
+{
+	const struct cmd_entry		*entry = cmd->entry;
+	struct cmd_state		*state = &cmdq->state;
+	char				*tmp;
+	enum cmd_entry_flag		 flag;
+	const char			*s;
+	int				 error;
+
+	tmp = cmd_print(cmd);
+	log_debug("preparing state for %s (client %p)", tmp, cmdq->client);
+	free(tmp);
+
+	state->c = NULL;
+	cmd_find_clear_state(&state->tflag, NULL, 0);
+	cmd_find_clear_state(&state->sflag, NULL, 0);
+
+	flag = cmd->entry->cflag;
+	if (flag == CMD_NONE) {
+		flag = cmd->entry->tflag;
+		if (flag == CMD_CLIENT || flag == CMD_CLIENT_CANFAIL)
+			s = args_get(cmd->args, 't');
+		else
+			s = NULL;
+	} else
+		s = args_get(cmd->args, 'c');
+	switch (flag) {
+	case CMD_CLIENT:
+		state->c = cmd_find_client(cmdq, s, 0);
+		if (state->c == NULL)
+			return (-1);
+		break;
+	default:
+		state->c = cmd_find_client(cmdq, s, 1);
+		break;
+	}
+
+	s = args_get(cmd->args, 't');
+	log_debug("preparing -t state: target %s", s == NULL ? "none" : s);
+
+	error = cmd_prepare_state_flag('t', s, entry->tflag, cmdq, parent);
+	if (error != 0)
+		return (error);
+
+	s = args_get(cmd->args, 's');
+	log_debug("preparing -s state: target %s", s == NULL ? "none" : s);
+
+	error = cmd_prepare_state_flag('s', s, entry->sflag, cmdq, parent);
+	if (error != 0)
+		return (error);
+
+	return (0);
+}
+
+char *
+cmd_print(struct cmd *cmd)
+{
+	char	*out, *s;
+
+	s = args_print(cmd->args);
+	if (*s != '\0')
+		xasprintf(&out, "%s %s", cmd->entry->name, s);
+	else
+		out = xstrdup(cmd->entry->name);
+	free(s);
+
+	return (out);
 }
 
 /* Adjust current mouse position for a pane. */

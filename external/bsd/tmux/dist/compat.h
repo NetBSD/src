@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,9 @@
 #define __attribute__(a)
 #endif
 
+#ifndef __unused
+#define __unused __attribute__ ((__unused__))
+#endif
 #ifndef __dead
 #define __dead __attribute__ ((__noreturn__))
 #endif
@@ -255,13 +258,18 @@ int		 unsetenv(const char *);
 
 #ifndef HAVE_CFMAKERAW
 /* cfmakeraw.c */
-void		cfmakeraw(struct termios *);
+void		 cfmakeraw(struct termios *);
 #endif
 
 #ifndef HAVE_OPENAT
 /* openat.c */
 #define AT_FDCWD -100
-int		openat(int, const char *, int, ...);
+int		 openat(int, const char *, int, ...);
+#endif
+
+#ifndef HAVE_REALLOCARRAY
+/* reallocarray.c */
+void		*reallocarray(void *, size_t, size_t size);
 #endif
 
 #ifdef HAVE_GETOPT
