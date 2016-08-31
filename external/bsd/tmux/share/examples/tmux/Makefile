@@ -1,14 +1,14 @@
-# $NetBSD: Makefile,v 1.1 2011/03/10 09:18:00 jmmv Exp $
+# $NetBSD: Makefile,v 1.2 2016/08/31 17:27:37 christos Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
 SRCDIR=		${NETBSDSRCDIR}/external/bsd/tmux/dist
-.PATH:		${SRCDIR}/examples
+.PATH:		${SRCDIR}
 
 FILESDIR=	/usr/share/examples/tmux
 FILESMODE=	444
-FILES=		screen-keys.conf
+FILES=		example_tmux.conf
 .endif
 
 .include <bsd.prog.mk>
