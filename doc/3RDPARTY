@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1354 2016/08/22 22:53:02 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1355 2016/08/31 09:34:04 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1359,8 +1359,8 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	2.1
-Current Vers:	2.1
+Version:	2.2
+Current Vers:	2.2
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
