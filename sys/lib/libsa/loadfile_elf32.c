@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.31 2015/07/25 07:06:11 isaki Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.32 2016/08/31 16:22:37 martin Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -278,6 +278,9 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 
 	/* some ports dont use the offset */
 	(void)&offset;
+
+	/* have not seen a data segment so far */
+	marks[MARK_DATA] = 0;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 
