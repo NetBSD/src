@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -99,25 +99,28 @@ cmd_list_free(struct cmd_list *cmdlist)
 	free(cmdlist);
 }
 
-size_t
-cmd_list_print(struct cmd_list *cmdlist, char *buf, size_t len)
+char *
+cmd_list_print(struct cmd_list *cmdlist)
 {
 	struct cmd	*cmd;
-	size_t		 off, used;
+	char		*buf, *this;
+	size_t		 len;
 
-	off = 0;
+	len = 1;
+	buf = xcalloc(1, len);
+
 	TAILQ_FOREACH(cmd, &cmdlist->list, qentry) {
-		if (off >= len)
-			break;
-		off += cmd_print(cmd, buf + off, len - off);
-		if (off >= len)
-			break;
-		if (TAILQ_NEXT(cmd, qentry) != NULL) {
-			used = xsnprintf(buf + off, len - off, " ; ");
-			if (used > len - off)
-				used = len - off;
-			off += used;
-		}
+		this = cmd_print(cmd);
+
+		len += strlen(this) + 3;
+		buf = xrealloc(buf, len);
+
+		strlcat(buf, this, len);
+		if (TAILQ_NEXT(cmd, qentry) != NULL)
+			strlcat(buf, " ; ", len);
+
+		free(this);
 	}
-	return (off);
+
+	return (buf);
 }
