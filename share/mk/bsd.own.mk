@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.948 2016/08/28 14:22:35 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.949 2016/08/31 17:31:22 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -174,7 +174,6 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 .if ${MACHINE} == "alpha" || \
     ${MACHINE} == "amd64" || \
-    ${MACHINE} == "evbarm" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "ia64" || \
@@ -182,6 +181,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "powerpc"
 HAVE_BINUTILS?=	226
