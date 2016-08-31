@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,26 +33,28 @@ void	cmd_paste_buffer_filter(struct window_pane *,
 	    const char *, size_t, const char *, int);
 
 const struct cmd_entry cmd_paste_buffer_entry = {
-	"paste-buffer", "pasteb",
-	"db:prs:t:", 0, 0,
-	"[-dpr] [-s separator] " CMD_BUFFER_USAGE " " CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_paste_buffer_exec
+	.name = "paste-buffer",
+	.alias = "pasteb",
+
+	.args = { "db:prs:t:", 0, 0 },
+	.usage = "[-dpr] [-s separator] " CMD_BUFFER_USAGE " "
+		 CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_paste_buffer_exec
 };
 
 enum cmd_retval
 cmd_paste_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct window_pane	*wp;
-	struct session		*s;
+	struct window_pane	*wp = cmdq->state.tflag.wp;
 	struct paste_buffer	*pb;
 	const char		*sepstr, *bufname, *bufdata, *bufend, *line;
 	size_t			 seplen, bufsize;
 	int			 bracket = args_has(args, 'p');
-
-	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
-		return (CMD_RETURN_ERROR);
 
 	bufname = NULL;
 	if (args_has(args, 'b'))

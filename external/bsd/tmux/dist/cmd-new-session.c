@@ -314,11 +314,11 @@ cmd_new_session_exec(struct cmd *self, struct cmd_q *cmdq)
 		cmdq->client_exit = 0;
 
 	if (to_free != NULL)
-		free((void *)to_free);
+		free(__UNCONST(to_free));
 	return (CMD_RETURN_NORMAL);
 
 error:
 	if (to_free != NULL)
-		free((void *)to_free);
+		free(__UNCONST(to_free));
 	return (CMD_RETURN_ERROR);
 }

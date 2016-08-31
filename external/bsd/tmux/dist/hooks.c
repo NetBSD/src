@@ -66,7 +66,7 @@ hooks_free1(struct hooks *hooks, struct hook *hook)
 {
 	RB_REMOVE(hooks_tree, &hooks->tree, hook);
 	cmd_list_free(hook->cmdlist);
-	free((char *)hook->name);
+	free(__UNCONST(hook->name));
 	free(hook);
 }
 

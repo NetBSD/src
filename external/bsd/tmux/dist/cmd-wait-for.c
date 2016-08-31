@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2013 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2013 Thiago de Arruda <tpadilha84@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -31,11 +31,14 @@
 enum cmd_retval cmd_wait_for_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_wait_for_entry = {
-	"wait-for", "wait",
-	"LSU", 1, 1,
-	"[-L|-S|-U] channel",
-	0,
-	cmd_wait_for_exec
+	.name = "wait-for",
+	.alias = "wait",
+
+	.args = { "LSU", 1, 1 },
+	.usage = "[-L|-S|-U] channel",
+
+	.flags = 0,
+	.exec = cmd_wait_for_exec
 };
 
 struct wait_channel {
@@ -111,7 +114,7 @@ cmd_wait_for_remove(struct wait_channel *wc)
 }
 
 enum cmd_retval
-cmd_wait_for_exec(struct cmd *self, unused struct cmd_q *cmdq)
+cmd_wait_for_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args     	*args = self->args;
 	const char		*name = args->argv[0];
@@ -130,7 +133,7 @@ cmd_wait_for_exec(struct cmd *self, unused struct cmd_q *cmdq)
 }
 
 enum cmd_retval
-cmd_wait_for_signal(unused struct cmd_q *cmdq, const char *name,
+cmd_wait_for_signal(__unused struct cmd_q *cmdq, const char *name,
     struct wait_channel *wc)
 {
 	struct cmd_q	*wq, *wq1;
@@ -170,12 +173,11 @@ cmd_wait_for_wait(struct cmd_q *cmdq, const char *name,
 		wc = cmd_wait_for_add(name);
 
 	if (wc->woken) {
-		log_debug("wait channel %s already woken (client %d)", wc->name,
-		    c->tty.fd);
+		log_debug("wait channel %s already woken (%p)", wc->name, c);
 		cmd_wait_for_remove(wc);
 		return (CMD_RETURN_NORMAL);
 	}
-	log_debug("wait channel %s not woken (client %d)", wc->name, c->tty.fd);
+	log_debug("wait channel %s not woken (%p)", wc->name, c);
 
 	TAILQ_INSERT_TAIL(&wc->waiters, cmdq, waitentry);
 	cmdq->references++;

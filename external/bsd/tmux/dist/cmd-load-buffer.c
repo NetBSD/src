@@ -35,11 +35,14 @@ enum cmd_retval	 cmd_load_buffer_exec(struct cmd *, struct cmd_q *);
 void		 cmd_load_buffer_callback(struct client *, int, void *);
 
 const struct cmd_entry cmd_load_buffer_entry = {
-	"load-buffer", "loadb",
-	"b:", 1, 1,
-	CMD_BUFFER_USAGE " path",
-	0,
-	cmd_load_buffer_exec
+	.name = "load-buffer",
+	.alias = "loadb",
+
+	.args = { "b:", 1, 1 },
+	.usage = CMD_BUFFER_USAGE " path",
+
+	.flags = 0,
+	.exec = cmd_load_buffer_exec
 };
 
 enum cmd_retval
@@ -49,10 +52,10 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 	struct client	*c = cmdq->client;
 	struct session  *s;
 	FILE		*f;
-	const char	*path, *bufname;
-	char		*pdata, *new_pdata, *cause;
+	const char	*path, *bufname, *cwd;
+	char		*pdata, *new_pdata, *cause, *file, resolved[PATH_MAX];
 	size_t		 psize;
-	int		 ch, error, cwd, fd;
+	int		 ch, error;
 
 	bufname = NULL;
 	if (args_has(args, 'b'))
@@ -70,18 +73,26 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_WAIT);
 	}
 
-	if (c != NULL && c->session == NULL)
+	if (c != NULL && c->session == NULL && c->cwd != NULL)
 		cwd = c->cwd;
-	else if ((s = cmd_find_current(cmdq)) != NULL)
+	else if ((s = c->session) != NULL && s->cwd != NULL)
 		cwd = s->cwd;
 	else
-		cwd = AT_FDCWD;
+		cwd = ".";
 
-	if ((fd = openat(cwd, path, O_RDONLY)) == -1 ||
-	    (f = fdopen(fd, "rb")) == NULL) {
-		if (fd != -1)
-			close(fd);
-		cmdq_error(cmdq, "%s: %s", path, strerror(errno));
+	if (*path == '/')
+		file = xstrdup(path);
+	else
+		xasprintf(&file, "%s/%s", cwd, path);
+	if (realpath(file, resolved) == NULL &&
+	    strlcpy(resolved, file, sizeof resolved) >= sizeof resolved) {
+		cmdq_error(cmdq, "%s: %s", file, strerror(ENAMETOOLONG));
+		return (CMD_RETURN_ERROR);
+	}
+	f = fopen(resolved, "rb");
+	free(file);
+	if (f == NULL) {
+		cmdq_error(cmdq, "%s: %s", resolved, strerror(errno));
 		return (CMD_RETURN_ERROR);
 	}
 
@@ -97,7 +108,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		pdata[psize++] = ch;
 	}
 	if (ferror(f)) {
-		cmdq_error(cmdq, "%s: read error", path);
+		cmdq_error(cmdq, "%s: read error", resolved);
 		goto error;
 	}
 	if (pdata != NULL)
@@ -125,7 +136,7 @@ void
 cmd_load_buffer_callback(struct client *c, int closed, void *data)
 {
 	const char	*bufname = data;
-	char		*pdata, *cause;
+	char		*pdata, *cause, *saved;
 	size_t		 psize;
 
 	if (!closed)
@@ -146,8 +157,13 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 
 	if (paste_set(pdata, psize, bufname, &cause) != 0) {
 		/* No context so can't use server_client_msg_error. */
+		if (~c->flags & CLIENT_UTF8) {
+			saved = cause;
+			cause = utf8_sanitize(saved);
+			free(saved);
+		}
 		evbuffer_add_printf(c->stderr_data, "%s", cause);
-		server_push_stderr(c);
+		server_client_push_stderr(c);
 		free(pdata);
 		free(cause);
 	}

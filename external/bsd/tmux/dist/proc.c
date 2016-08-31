@@ -145,7 +145,7 @@ proc_send(struct tmuxpeer *peer, enum msgtype type, int fd, const void *buf,
     size_t len)
 {
 	struct imsgbuf	*ibuf = &peer->ibuf;
-	void		*vp = (void *)buf;
+	void		*vp = __UNCONST(buf);
 	int		 retval;
 
 	if (peer->flags & PEER_BAD)

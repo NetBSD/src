@@ -82,7 +82,7 @@ cmd_attach_session(struct cmd_q *cmdq, int dflag, int rflag, const char *cflag,
 		cwd = format_expand(ft, cflag);
 		format_free(ft);
 
-		free((void *)s->cwd);
+		free(__UNCONST(s->cwd));
 		s->cwd = cwd;
 	}
 

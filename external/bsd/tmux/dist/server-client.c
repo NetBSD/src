@@ -210,7 +210,7 @@ server_client_lost(struct client *c)
 	screen_free(&c->status);
 
 	free(c->title);
-	free((void *)c->cwd);
+	free(__UNCONST(c->cwd));
 
 	evtimer_del(&c->repeat_timer);
 
