@@ -124,7 +124,7 @@ utf8_width(wchar_t wc)
 enum utf8_state
 utf8_combine(const struct utf8_data *ud, wchar_t *wc)
 {
-	switch (mbtowc(wc, ud->data, ud->size)) {
+	switch (mbtowc(wc, (const char *)ud->data, ud->size)) {
 	case -1:
 		mbtowc(NULL, NULL, MB_CUR_MAX);
 		return (UTF8_ERROR);
