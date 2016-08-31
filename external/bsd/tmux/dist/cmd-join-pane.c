@@ -2,7 +2,7 @@
 
 /*
  * Copyright (c) 2011 George Nachman <tmux@georgester.com>
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,19 +33,31 @@ enum cmd_retval	 cmd_join_pane_exec(struct cmd *, struct cmd_q *);
 enum cmd_retval	 join_pane(struct cmd *, struct cmd_q *, int);
 
 const struct cmd_entry cmd_join_pane_entry = {
-	"join-pane", "joinp",
-	"bdhvp:l:s:t:", 0, 0,
-	"[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
-	0,
-	cmd_join_pane_exec
+	.name = "join-pane",
+	.alias = "joinp",
+
+	.args = { "bdhvp:l:s:t:", 0, 0 },
+	.usage = "[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
+
+	.sflag = CMD_PANE_MARKED,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_join_pane_exec
 };
 
 const struct cmd_entry cmd_move_pane_entry = {
-	"move-pane", "movep",
-	"bdhvp:l:s:t:", 0, 0,
-	"[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
-	0,
-	cmd_join_pane_exec
+	.name = "move-pane",
+	.alias = "movep",
+
+	.args = { "bdhvp:l:s:t:", 0, 0 },
+	.usage = "[-bdhv] [-p percentage|-l size] " CMD_SRCDST_PANE_USAGE,
+
+	.sflag = CMD_PANE,
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_join_pane_exec
 };
 
 enum cmd_retval
@@ -67,16 +79,15 @@ join_pane(struct cmd *self, struct cmd_q *cmdq, int not_same_window)
 	enum layout_type	 type;
 	struct layout_cell	*lc;
 
-	dst_wl = cmd_find_pane(cmdq, args_get(args, 't'), &dst_s, &dst_wp);
-	if (dst_wl == NULL)
-		return (CMD_RETURN_ERROR);
+	dst_s = cmdq->state.tflag.s;
+	dst_wl = cmdq->state.tflag.wl;
+	dst_wp = cmdq->state.tflag.wp;
 	dst_w = dst_wl->window;
 	dst_idx = dst_wl->idx;
 	server_unzoom_window(dst_w);
 
-	src_wl = cmd_find_pane_marked(cmdq, args_get(args, 's'), NULL, &src_wp);
-	if (src_wl == NULL)
-		return (CMD_RETURN_ERROR);
+	src_wl = cmdq->state.sflag.wl;
+	src_wp = cmdq->state.sflag.wp;
 	src_w = src_wl->window;
 	server_unzoom_window(src_w);
 

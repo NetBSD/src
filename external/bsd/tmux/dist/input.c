@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -100,7 +100,7 @@ struct input_ctx {
 struct input_transition;
 int	input_split(struct input_ctx *);
 int	input_get(struct input_ctx *, u_int, int, int);
-void	input_reply(struct input_ctx *, const char *, ...);
+void printflike(2, 3) input_reply(struct input_ctx *, const char *, ...);
 void	input_set_state(struct window_pane *, const struct input_transition *);
 void	input_reset_cell(struct input_ctx *);
 
@@ -446,11 +446,11 @@ const struct input_transition input_state_ground_table[] = {
 	{ 0x1c, 0x1f, input_c0_dispatch, NULL },
 	{ 0x20, 0x7e, input_print,	 NULL },
 	{ 0x7f, 0x7f, NULL,		 NULL },
-	{ 0x80, 0xc1, input_print,	 NULL },
+	{ 0x80, 0xc1, NULL,		 NULL },
 	{ 0xc2, 0xdf, input_utf8_open,	 &input_state_utf8_one },
 	{ 0xe0, 0xef, input_utf8_open,	 &input_state_utf8_two },
 	{ 0xf0, 0xf4, input_utf8_open,	 &input_state_utf8_three },
-	{ 0xf5, 0xff, input_print,	 NULL },
+	{ 0xf5, 0xff, NULL,		 NULL },
 
 	{ -1, -1, NULL, NULL }
 };
@@ -762,24 +762,12 @@ input_init(struct window_pane *wp)
 
 	ictx = wp->ictx = xcalloc(1, sizeof *ictx);
 
-	input_reset_cell(ictx);
-
-	*ictx->interm_buf = '\0';
-	ictx->interm_len = 0;
-
-	*ictx->param_buf = '\0';
-	ictx->param_len = 0;
-
 	ictx->input_space = INPUT_BUF_START;
 	ictx->input_buf = xmalloc(INPUT_BUF_START);
 
-	*ictx->input_buf = '\0';
-	ictx->input_len = 0;
-
-	ictx->state = &input_state_ground;
-	ictx->flags = 0;
-
 	ictx->since_ground = evbuffer_new();
+
+	input_reset(wp, 0);
 }
 
 /* Destroy input parser. */
@@ -797,18 +785,32 @@ input_free(struct window_pane *wp)
 
 /* Reset input state and clear screen. */
 void
-input_reset(struct window_pane *wp)
+input_reset(struct window_pane *wp, int clear)
 {
 	struct input_ctx	*ictx = wp->ictx;
 
 	input_reset_cell(ictx);
 
-	if (wp->mode == NULL)
-		screen_write_start(&ictx->ctx, wp, &wp->base);
-	else
-		screen_write_start(&ictx->ctx, NULL, &wp->base);
-	screen_write_reset(&ictx->ctx);
-	screen_write_stop(&ictx->ctx);
+	if (clear) {
+		if (wp->mode == NULL)
+			screen_write_start(&ictx->ctx, wp, &wp->base);
+		else
+			screen_write_start(&ictx->ctx, NULL, &wp->base);
+		screen_write_reset(&ictx->ctx);
+		screen_write_stop(&ictx->ctx);
+	}
+
+	*ictx->interm_buf = '\0';
+	ictx->interm_len = 0;
+
+	*ictx->param_buf = '\0';
+	ictx->param_len = 0;
+
+	*ictx->input_buf = '\0';
+	ictx->input_len = 0;
+
+	ictx->state = &input_state_ground;
+	ictx->flags = 0;
 }
 
 /* Return pending data. */
@@ -1006,7 +1008,7 @@ input_print(struct input_ctx *ictx)
 	else
 		ictx->cell.cell.attr &= ~GRID_ATTR_CHARSET;
 
-	grid_cell_one(&ictx->cell.cell, ictx->ch);
+	utf8_set(&ictx->cell.cell.data, ictx->ch);
 	screen_write_cell(&ictx->ctx, &ictx->cell.cell);
 
 	ictx->cell.cell.attr &= ~GRID_ATTR_CHARSET;
@@ -1627,18 +1629,20 @@ input_csi_dispatch_sgr_256(struct input_ctx *ictx, int fgbg, u_int *i)
 	c = input_get(ictx, *i, 0, -1);
 	if (c == -1) {
 		if (fgbg == 38) {
-			gc->flags &= ~GRID_FLAG_FG256;
+			gc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
 			gc->fg = 8;
 		} else if (fgbg == 48) {
-			gc->flags &= ~GRID_FLAG_BG256;
+			gc->flags &= ~(GRID_FLAG_BG256|GRID_FLAG_BGRGB);
 			gc->bg = 8;
 		}
 	} else {
 		if (fgbg == 38) {
 			gc->flags |= GRID_FLAG_FG256;
+			gc->flags &= ~GRID_FLAG_FGRGB;
 			gc->fg = c;
 		} else if (fgbg == 48) {
 			gc->flags |= GRID_FLAG_BG256;
+			gc->flags &= ~GRID_FLAG_BGRGB;
 			gc->bg = c;
 		}
 	}
@@ -1649,7 +1653,7 @@ void
 input_csi_dispatch_sgr_rgb(struct input_ctx *ictx, int fgbg, u_int *i)
 {
 	struct grid_cell	*gc = &ictx->cell.cell;
-	int			 c, r, g, b;
+	int			 r, g, b;
 
 	(*i)++;
 	r = input_get(ictx, *i, 0, -1);
@@ -1664,13 +1668,18 @@ input_csi_dispatch_sgr_rgb(struct input_ctx *ictx, int fgbg, u_int *i)
 	if (b == -1 || b > 255)
 		return;
 
-	c = colour_find_rgb(r, g, b);
 	if (fgbg == 38) {
-		gc->flags |= GRID_FLAG_FG256;
-		gc->fg = c;
+		gc->flags &= ~GRID_FLAG_FG256;
+		gc->flags |= GRID_FLAG_FGRGB;
+		gc->fg_rgb.r = r;
+		gc->fg_rgb.g = g;
+		gc->fg_rgb.b = b;
 	} else if (fgbg == 48) {
-		gc->flags |= GRID_FLAG_BG256;
-		gc->bg = c;
+		gc->flags &= ~GRID_FLAG_BG256;
+		gc->flags |= GRID_FLAG_BGRGB;
+		gc->bg_rgb.r = r;
+		gc->bg_rgb.g = g;
+		gc->bg_rgb.b = b;
 	}
 }
 
@@ -1752,11 +1761,11 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 35:
 		case 36:
 		case 37:
-			gc->flags &= ~GRID_FLAG_FG256;
+			gc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
 			gc->fg = n - 30;
 			break;
 		case 39:
-			gc->flags &= ~GRID_FLAG_FG256;
+			gc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
 			gc->fg = 8;
 			break;
 		case 40:
@@ -1767,11 +1776,11 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 45:
 		case 46:
 		case 47:
-			gc->flags &= ~GRID_FLAG_BG256;
+			gc->flags &= ~(GRID_FLAG_BG256|GRID_FLAG_BGRGB);
 			gc->bg = n - 40;
 			break;
 		case 49:
-			gc->flags &= ~GRID_FLAG_BG256;
+			gc->flags &= ~(GRID_FLAG_BG256|GRID_FLAG_BGRGB);
 			gc->bg = 8;
 			break;
 		case 90:
@@ -1782,7 +1791,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 95:
 		case 96:
 		case 97:
-			gc->flags &= ~GRID_FLAG_FG256;
+			gc->flags &= ~(GRID_FLAG_FG256|GRID_FLAG_FGRGB);
 			gc->fg = n;
 			break;
 		case 100:
@@ -1793,7 +1802,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 		case 105:
 		case 106:
 		case 107:
-			gc->flags &= ~GRID_FLAG_BG256;
+			gc->flags &= ~(GRID_FLAG_BG256|GRID_FLAG_BGRGB);
 			gc->bg = n - 10;
 			break;
 		}
@@ -1907,12 +1916,12 @@ input_exit_rename(struct input_ctx *ictx)
 {
 	if (ictx->flags & INPUT_DISCARD)
 		return;
-	if (!options_get_number(&ictx->wp->window->options, "allow-rename"))
+	if (!options_get_number(ictx->wp->window->options, "allow-rename"))
 		return;
 	log_debug("%s: \"%s\"", __func__, ictx->input_buf);
 
 	window_set_name(ictx->wp->window, ictx->input_buf);
-	options_set_number(&ictx->wp->window->options, "automatic-rename", 0);
+	options_set_number(ictx->wp->window->options, "automatic-rename", 0);
 
 	server_status_window(ictx->wp->window);
 }
@@ -1921,14 +1930,13 @@ input_exit_rename(struct input_ctx *ictx)
 int
 input_utf8_open(struct input_ctx *ictx)
 {
-	if (!options_get_number(&ictx->wp->window->options, "utf8")) {
-		/* Print, and do not switch state. */
-		input_print(ictx);
-		return (-1);
-	}
-	log_debug("%s", __func__);
+	struct utf8_data	*ud = &ictx->utf8data;
 
-	utf8_open(&ictx->utf8data, ictx->ch);
+	if (utf8_open(ud, ictx->ch) != UTF8_MORE)
+		fatalx("UTF-8 open invalid %#x", ictx->ch);
+
+	log_debug("%s %hhu", __func__, ud->size);
+
 	return (0);
 }
 
@@ -1936,9 +1944,13 @@ input_utf8_open(struct input_ctx *ictx)
 int
 input_utf8_add(struct input_ctx *ictx)
 {
+	struct utf8_data	*ud = &ictx->utf8data;
+
+	if (utf8_append(ud, ictx->ch) != UTF8_MORE)
+		fatalx("UTF-8 add invalid %#x", ictx->ch);
+
 	log_debug("%s", __func__);
 
-	utf8_append(&ictx->utf8data, ictx->ch);
 	return (0);
 }
 
@@ -1946,11 +1958,21 @@ input_utf8_add(struct input_ctx *ictx)
 int
 input_utf8_close(struct input_ctx *ictx)
 {
-	log_debug("%s", __func__);
+	struct utf8_data	*ud = &ictx->utf8data;
 
-	utf8_append(&ictx->utf8data, ictx->ch);
+	if (utf8_append(ud, ictx->ch) != UTF8_DONE) {
+		/*
+		 * An error here could be invalid UTF-8 or it could be a
+		 * nonprintable character for which we can't get the
+		 * width. Drop it.
+		 */
+		return (0);
+	}
 
-	grid_cell_set(&ictx->cell.cell, &ictx->utf8data);
+	log_debug("%s %hhu '%*s' (width %hhu)", __func__, ud->size,
+	    (int)ud->size, ud->data, ud->width);
+
+	utf8_copy(&ictx->cell.cell.data, ud);
 	screen_write_cell(&ictx->ctx, &ictx->cell.cell);
 
 	return (0);

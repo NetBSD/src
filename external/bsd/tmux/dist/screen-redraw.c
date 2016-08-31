@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -222,7 +222,7 @@ void
 screen_redraw_screen(struct client *c, int draw_panes, int draw_status,
     int draw_borders)
 {
-	struct options	*oo = &c->session->options;
+	struct options	*oo = c->session->options;
 	struct tty	*tty = &c->tty;
 	u_int		 top;
 	int	 	 status, spos;
@@ -276,7 +276,7 @@ screen_redraw_draw_borders(struct client *c, int status, u_int top)
 {
 	struct session		*s = c->session;
 	struct window		*w = s->curw->window;
-	struct options		*oo = &w->options;
+	struct options		*oo = w->options;
 	struct tty		*tty = &c->tty;
 	struct window_pane	*wp;
 	struct grid_cell	 m_active_gc, active_gc, m_other_gc, other_gc;
@@ -331,9 +331,9 @@ screen_redraw_draw_borders(struct client *c, int status, u_int top)
 				continue;
 			active = screen_redraw_check_is(i, j, type, w,
 			    w->active, wp);
-			if (server_is_marked(s, s->curw, marked_window_pane) &&
+			if (server_is_marked(s, s->curw, marked_pane.wp) &&
 			    screen_redraw_check_is(i, j, type, w,
-			    marked_window_pane, wp)) {
+			    marked_pane.wp, wp)) {
 				if (active)
 					tty_attributes(tty, &m_active_gc, NULL);
 				else
@@ -392,7 +392,7 @@ screen_redraw_draw_number(struct client *c, struct window_pane *wp, u_int top)
 {
 	struct tty		*tty = &c->tty;
 	struct session		*s = c->session;
-	struct options		*oo = &s->options;
+	struct options		*oo = s->options;
 	struct window		*w = wp->window;
 	struct grid_cell	 gc;
 	u_int			 idx, px, py, i, j, xoff, yoff;

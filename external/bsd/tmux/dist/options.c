@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,34 +29,64 @@
  * a red-black tree.
  */
 
+struct options {
+	RB_HEAD(options_tree, options_entry) tree;
+	struct options	*parent;
+};
+
+static int	options_cmp(struct options_entry *, struct options_entry *);
+RB_PROTOTYPE(options_tree, options_entry, entry, options_cmp);
 RB_GENERATE(options_tree, options_entry, entry, options_cmp);
 
-int
+static void	options_free1(struct options *, struct options_entry *);
+
+static int
 options_cmp(struct options_entry *o1, struct options_entry *o2)
 {
 	return (strcmp(o1->name, o2->name));
 }
 
-void
-options_init(struct options *oo, struct options *parent)
+struct options *
+options_create(struct options *parent)
 {
+	struct options	*oo;
+
+	oo = xcalloc(1, sizeof *oo);
 	RB_INIT(&oo->tree);
 	oo->parent = parent;
+	return (oo);
+}
+
+static void
+options_free1(struct options *oo, struct options_entry *o)
+{
+	RB_REMOVE(options_tree, &oo->tree, o);
+	free((char *)o->name);
+	if (o->type == OPTIONS_STRING)
+		free(o->str);
+	free(o);
 }
 
 void
 options_free(struct options *oo)
 {
-	struct options_entry	*o;
+	struct options_entry	*o, *o1;
 
-	while (!RB_EMPTY(&oo->tree)) {
-		o = RB_ROOT(&oo->tree);
-		RB_REMOVE(options_tree, &oo->tree, o);
-		free(o->name);
-		if (o->type == OPTIONS_STRING)
-			free(o->str);
-		free(o);
-	}
+	RB_FOREACH_SAFE (o, options_tree, &oo->tree, o1)
+		options_free1(oo, o);
+	free(oo);
+}
+
+struct options_entry *
+options_first(struct options *oo)
+{
+	return (RB_MIN(options_tree, &oo->tree));
+}
+
+struct options_entry *
+options_next(struct options_entry *o)
+{
+	return (RB_NEXT(options_tree, &oo->tree, o));
 }
 
 struct options_entry *
@@ -64,7 +94,7 @@ options_find1(struct options *oo, const char *name)
 {
 	struct options_entry	p;
 
-	p.name = (char *) name;
+	p.name = (char *)name;
 	return (RB_FIND(options_tree, &oo->tree, &p));
 }
 
@@ -73,7 +103,7 @@ options_find(struct options *oo, const char *name)
 {
 	struct options_entry	*o, p;
 
-	p.name = (char *) name;
+	p.name = (char *)name;
 	o = RB_FIND(options_tree, &oo->tree, &p);
 	while (o == NULL) {
 		oo = oo->parent;
@@ -89,14 +119,8 @@ options_remove(struct options *oo, const char *name)
 {
 	struct options_entry	*o;
 
-	if ((o = options_find1(oo, name)) == NULL)
-		return;
-
-	RB_REMOVE(options_tree, &oo->tree, o);
-	free(o->name);
-	if (o->type == OPTIONS_STRING)
-		free(o->str);
-	free(o);
+	if ((o = options_find1(oo, name)) != NULL)
+		options_free1(oo, o);
 }
 
 struct options_entry *
@@ -126,9 +150,9 @@ options_get_string(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		fatalx("missing option");
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_STRING)
-		fatalx("option not a string");
+		fatalx("option %s not a string", name);
 	return (o->str);
 }
 
@@ -156,9 +180,9 @@ options_get_number(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		fatalx("missing option");
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_NUMBER)
-		fatalx("option not a number");
+		fatalx("option %s not a number", name);
 	return (o->num);
 }
 
@@ -196,8 +220,8 @@ options_get_style(struct options *oo, const char *name)
 	struct options_entry	*o;
 
 	if ((o = options_find(oo, name)) == NULL)
-		fatalx("missing option");
+		fatalx("missing option %s", name);
 	if (o->type != OPTIONS_STYLE)
-		fatalx("option not a style");
+		fatalx("option %s not a style", name);
 	return (&o->style);
 }

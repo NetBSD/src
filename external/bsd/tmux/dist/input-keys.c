@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,7 @@
 void	 input_key_mouse(struct window_pane *, struct mouse_event *);
 
 struct input_key_ent {
-	int		 key;
+	key_code	 key;
 	const char	*data;
 
 	int		 flags;
@@ -134,17 +134,32 @@ const struct input_key_ent input_keys[] = {
 	{ KEYC_KP_PERIOD,	".",		0 },
 };
 
+/* Split a character into two UTF-8 bytes. */
+static size_t
+input_split2(u_int c, u_char *dst)
+{
+	if (c > 0x7f) {
+		dst[0] = (c >> 6) | 0xc0;
+		dst[1] = (c & 0x3f) | 0x80;
+		return (2);
+	}
+	dst[0] = c;
+	return (1);
+}
+
 /* Translate a key code into an output key sequence. */
 void
-input_key(struct window_pane *wp, int key, struct mouse_event *m)
+input_key(struct window_pane *wp, key_code key, struct mouse_event *m)
 {
-	const struct input_key_ent     *ike;
-	u_int				i;
-	size_t				dlen;
-	char			       *out;
-	u_char				ch;
+	const struct input_key_ent	*ike;
+	u_int				 i;
+	size_t				 dlen;
+	char				*out;
+	key_code			 justkey;
+	struct utf8_data		 ud;
 
-	log_debug("writing key 0x%x (%s)", key, key_string_lookup_key(key));
+	log_debug("writing key 0x%llx (%s) to %%%u", key,
+	    key_string_lookup_key(key), wp->id);
 
 	/* If this is a mouse key, pass off to mouse function. */
 	if (KEYC_IS_MOUSE(key)) {
@@ -155,13 +170,22 @@ input_key(struct window_pane *wp, int key, struct mouse_event *m)
 
 	/*
 	 * If this is a normal 7-bit key, just send it, with a leading escape
-	 * if necessary.
+	 * if necessary. If it is a UTF-8 key, split it and send it.
 	 */
-	if (key != KEYC_NONE && (key & ~KEYC_ESCAPE) < 0x100) {
+	justkey = (key & ~KEYC_ESCAPE);
+	if (justkey <= 0x7f) {
 		if (key & KEYC_ESCAPE)
 			bufferevent_write(wp->event, "\033", 1);
-		ch = key & ~KEYC_ESCAPE;
-		bufferevent_write(wp->event, &ch, 1);
+		ud.data[0] = justkey;
+		bufferevent_write(wp->event, &ud.data[0], 1);
+		return;
+	}
+	if (justkey > 0x7f && justkey < KEYC_BASE) {
+		if (utf8_split(justkey, &ud) != UTF8_DONE)
+			return;
+		if (key & KEYC_ESCAPE)
+			bufferevent_write(wp->event, "\033", 1);
+		bufferevent_write(wp->event, ud.data, ud.size);
 		return;
 	}
 
@@ -169,7 +193,7 @@ input_key(struct window_pane *wp, int key, struct mouse_event *m)
 	 * Then try to look this up as an xterm key, if the flag to output them
 	 * is set.
 	 */
-	if (options_get_number(&wp->window->options, "xterm-keys")) {
+	if (options_get_number(wp->window->options, "xterm-keys")) {
 		if ((out = xterm_keys_lookup(key)) != NULL) {
 			bufferevent_write(wp->event, out, strlen(out));
 			free(out);
@@ -194,11 +218,11 @@ input_key(struct window_pane *wp, int key, struct mouse_event *m)
 			break;
 	}
 	if (i == nitems(input_keys)) {
-		log_debug("key 0x%x missing", key);
+		log_debug("key 0x%llx missing", key);
 		return;
 	}
 	dlen = strlen(ike->data);
-	log_debug("found key 0x%x: \"%s\"", key, ike->data);
+	log_debug("found key 0x%llx: \"%s\"", key, ike->data);
 
 	/* Prefix a \033 for escape. */
 	if (key & KEYC_ESCAPE)
@@ -238,10 +262,12 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		len = xsnprintf(buf, sizeof buf, "\033[<%u;%u;%u%c",
 		    m->sgr_b, x + 1, y + 1, m->sgr_type);
 	} else if (wp->screen->mode & MODE_MOUSE_UTF8) {
+		if (m->b > 0x7ff - 32 || x > 0x7ff - 33 || y > 0x7ff - 33)
+			return;
 		len = xsnprintf(buf, sizeof buf, "\033[M");
-		len += utf8_split2(m->b + 32, &buf[len]);
-		len += utf8_split2(x + 33, &buf[len]);
-		len += utf8_split2(y + 33, &buf[len]);
+		len += input_split2(m->b + 32, &buf[len]);
+		len += input_split2(x + 33, &buf[len]);
+		len += input_split2(y + 33, &buf[len]);
 	} else {
 		if (m->b > 223)
 			return;
@@ -250,6 +276,6 @@ input_key_mouse(struct window_pane *wp, struct mouse_event *m)
 		buf[len++] = x + 33;
 		buf[len++] = y + 33;
 	}
-	log_debug("writing mouse %.*s", (int)len, buf);
+	log_debug("writing mouse %.*s to %%%u", (int)len, buf, wp->id);
 	bufferevent_write(wp->event, buf, len);
 }

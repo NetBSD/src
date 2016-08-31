@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -150,7 +150,7 @@ paste_add(char *data, size_t size)
 	if (size == 0)
 		return;
 
-	limit = options_get_number(&global_options, "buffer-limit");
+	limit = options_get_number(global_options, "buffer-limit");
 	RB_FOREACH_REVERSE_SAFE(pb, paste_time_tree, &paste_by_time, pb1) {
 		if (paste_num_automatic < limit)
 			break;
@@ -274,7 +274,7 @@ paste_set(char *data, size_t size, const char *name, char **cause)
 
 /* Convert start of buffer into a nice string. */
 char *
-paste_make_sample(struct paste_buffer *pb, int utf8flag)
+paste_make_sample(struct paste_buffer *pb)
 {
 	char		*buf;
 	size_t		 len, used;
@@ -286,10 +286,7 @@ paste_make_sample(struct paste_buffer *pb, int utf8flag)
 		len = width;
 	buf = xreallocarray(NULL, len, 4 + 4);
 
-	if (utf8flag)
-		used = utf8_strvis(buf, pb->data, len, flags);
-	else
-		used = strvisx(buf, pb->data, len, flags);
+	used = utf8_strvis(buf, pb->data, len, flags);
 	if (pb->size > width || used > width)
 		strlcpy(buf + width, "...", 4);
 	return (buf);

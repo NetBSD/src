@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,34 +29,37 @@
 enum cmd_retval	cmd_swap_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_swap_window_entry = {
-	"swap-window", "swapw",
-	"ds:t:", 0, 0,
-	"[-d] " CMD_SRCDST_WINDOW_USAGE,
-	0,
-	cmd_swap_window_exec
+	.name = "swap-window",
+	.alias = "swapw",
+
+	.args = { "ds:t:", 0, 0 },
+	.usage = "[-d] " CMD_SRCDST_WINDOW_USAGE,
+
+	.sflag = CMD_WINDOW_MARKED,
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_swap_window_exec
 };
 
 enum cmd_retval
 cmd_swap_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args		*args = self->args;
-	const char		*target_src, *target_dst;
 	struct session		*src, *dst;
 	struct session_group	*sg_src, *sg_dst;
 	struct winlink		*wl_src, *wl_dst;
 	struct window		*w;
 
-	target_src = args_get(args, 's');
-	if ((wl_src = cmd_find_window_marked(cmdq, target_src, &src)) == NULL)
-		return (CMD_RETURN_ERROR);
-	target_dst = args_get(args, 't');
-	if ((wl_dst = cmd_find_window(cmdq, target_dst, &dst)) == NULL)
-		return (CMD_RETURN_ERROR);
-
+	wl_src = cmdq->state.sflag.wl;
+	src = cmdq->state.sflag.s;
 	sg_src = session_group_find(src);
+
+	wl_dst = cmdq->state.tflag.wl;
+	dst = cmdq->state.tflag.s;
 	sg_dst = session_group_find(dst);
-	if (src != dst &&
-	    sg_src != NULL && sg_dst != NULL && sg_src == sg_dst) {
+
+	if (src != dst && sg_src != NULL && sg_dst != NULL &&
+	    sg_src == sg_dst) {
 		cmdq_error(cmdq, "can't move window, sessions are grouped");
 		return (CMD_RETURN_ERROR);
 	}
