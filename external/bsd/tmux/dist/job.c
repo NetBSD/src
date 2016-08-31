@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -40,37 +40,40 @@ struct joblist	all_jobs = LIST_HEAD_INITIALIZER(all_jobs);
 
 /* Start a job running, if it isn't already. */
 struct job *
-job_run(const char *cmd, struct session *s, int cwd,
+job_run(const char *cmd, struct session *s, const char *cwd,
     void (*callbackfn)(struct job *), void (*freefn)(void *), void *data)
 {
 	struct job	*job;
-	struct environ	 env;
+	struct environ	*env;
 	pid_t		 pid;
 	int		 nullfd, out[2];
+	const char	*home;
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, out) != 0)
 		return (NULL);
 
-	environ_init(&env);
-	environ_copy(&global_environ, &env);
+	env = environ_create();
+	environ_copy(global_environ, env);
 	if (s != NULL)
-		environ_copy(&s->environ, &env);
-	server_fill_environ(s, &env);
+		environ_copy(s->environ, env);
+	server_fill_environ(s, env);
 
 	switch (pid = fork()) {
 	case -1:
-		environ_free(&env);
+		environ_free(env);
 		close(out[0]);
 		close(out[1]);
 		return (NULL);
 	case 0:		/* child */
 		clear_signals(1);
 
-		if (cwd != -1 && fchdir(cwd) != 0)
-			chdir("/");
+		if (cwd == NULL || chdir(cwd) != 0) {
+			if ((home = find_home()) == NULL || chdir(home) != 0)
+				chdir("/");
+		}
 
-		environ_push(&env);
-		environ_free(&env);
+		environ_push(env);
+		environ_free(env);
 
 		if (dup2(out[1], STDIN_FILENO) == -1)
 			fatal("dup2 failed");
@@ -95,7 +98,7 @@ job_run(const char *cmd, struct session *s, int cwd,
 	}
 
 	/* parent */
-	environ_free(&env);
+	environ_free(env);
 	close(out[1]);
 
 	job = xmalloc(sizeof *job);
@@ -146,7 +149,7 @@ job_free(struct job *job)
 
 /* Called when output buffer falls below low watermark (default is 0). */
 void
-job_write_callback(unused struct bufferevent *bufev, void *data)
+job_write_callback(__unused struct bufferevent *bufev, void *data)
 {
 	struct job	*job = data;
 	size_t		 len = EVBUFFER_LENGTH(EVBUFFER_OUTPUT(job->event));
@@ -162,7 +165,8 @@ job_write_callback(unused struct bufferevent *bufev, void *data)
 
 /* Job buffer error callback. */
 void
-job_callback(unused struct bufferevent *bufev, unused short events, void *data)
+job_callback(__unused struct bufferevent *bufev, __unused short events,
+    void *data)
 {
 	struct job	*job = data;
 
