@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,43 +29,62 @@
 enum cmd_retval	 cmd_select_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_select_window_entry = {
-	"select-window", "selectw",
-	"lnpTt:", 0, 0,
-	"[-lnpT] " CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_select_window_exec
+	.name = "select-window",
+	.alias = "selectw",
+
+	.args = { "lnpTt:", 0, 0 },
+	.usage = "[-lnpT] " CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_select_window_exec
 };
 
 const struct cmd_entry cmd_next_window_entry = {
-	"next-window", "next",
-	"at:", 0, 0,
-	"[-a] " CMD_TARGET_SESSION_USAGE,
-	0,
-	cmd_select_window_exec
+	.name = "next-window",
+	.alias = "next",
+
+	.args = { "at:", 0, 0 },
+	.usage = "[-a] " CMD_TARGET_SESSION_USAGE,
+
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
+	.exec = cmd_select_window_exec
 };
 
 const struct cmd_entry cmd_previous_window_entry = {
-	"previous-window", "prev",
-	"at:", 0, 0,
-	"[-a] " CMD_TARGET_SESSION_USAGE,
-	0,
-	cmd_select_window_exec
+	.name = "previous-window",
+	.alias = "prev",
+
+	.args = { "at:", 0, 0 },
+	.usage = "[-a] " CMD_TARGET_SESSION_USAGE,
+
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
+	.exec = cmd_select_window_exec
 };
 
 const struct cmd_entry cmd_last_window_entry = {
-	"last-window", "last",
-	"t:", 0, 0,
-	CMD_TARGET_SESSION_USAGE,
-	0,
-	cmd_select_window_exec
+	.name = "last-window",
+	.alias = "last",
+
+	.args = { "t:", 0, 0 },
+	.usage = CMD_TARGET_SESSION_USAGE,
+
+	.tflag = CMD_SESSION,
+
+	.flags = 0,
+	.exec = cmd_select_window_exec
 };
 
 enum cmd_retval
 cmd_select_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args	*args = self->args;
-	struct winlink	*wl;
-	struct session	*s;
+	struct winlink	*wl = cmdq->state.tflag.wl;
+	struct session	*s = cmdq->state.tflag.s;
 	int		 next, previous, last, activity;
 
 	next = self->entry == &cmd_next_window_entry;
@@ -79,10 +98,6 @@ cmd_select_window_exec(struct cmd *self, struct cmd_q *cmdq)
 		last = 1;
 
 	if (next || previous || last) {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
-
 		activity = args_has(self->args, 'a');
 		if (next) {
 			if (session_next(s, activity) != 0) {
@@ -103,10 +118,6 @@ cmd_select_window_exec(struct cmd *self, struct cmd_q *cmdq)
 
 		server_redraw_session(s);
 	} else {
-		wl = cmd_find_window(cmdq, args_get(args, 't'), &s);
-		if (wl == NULL)
-			return (CMD_RETURN_ERROR);
-
 		/*
 		 * If -T and select-window is invoked on same window as
 		 * current, switch to previous window.

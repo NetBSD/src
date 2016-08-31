@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,32 +27,38 @@
 enum cmd_retval	 cmd_kill_window_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_kill_window_entry = {
-	"kill-window", "killw",
-	"at:", 0, 0,
-	"[-a] " CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_kill_window_exec
+	.name = "kill-window",
+	.alias = "killw",
+
+	.args = { "at:", 0, 0 },
+	.usage = "[-a] " CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_kill_window_exec
 };
 
 const struct cmd_entry cmd_unlink_window_entry = {
-	"unlink-window", "unlinkw",
-	"kt:", 0, 0,
-	"[-k] " CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_kill_window_exec
+	.name = "unlink-window",
+	.alias = "unlinkw",
+
+	.args = { "kt:", 0, 0 },
+	.usage = "[-k] " CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_kill_window_exec
 };
 
 enum cmd_retval
 cmd_kill_window_exec(struct cmd *self, struct cmd_q *cmdq)
 {
-	struct args	*args = self->args;
-	struct winlink	*wl, *wl2, *wl3;
-	struct window	*w;
-	struct session	*s;
-
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), &s)) == NULL)
-		return (CMD_RETURN_ERROR);
-	w = wl->window;
+	struct args		*args = self->args;
+	struct winlink		*wl = cmdq->state.tflag.wl, *wl2, *wl3;
+	struct window		*w = wl->window;
+	struct session		*s = cmdq->state.tflag.s;
 
 	if (self->entry == &cmd_unlink_window_entry) {
 		if (!args_has(self->args, 'k') && !session_is_linked(s, w)) {

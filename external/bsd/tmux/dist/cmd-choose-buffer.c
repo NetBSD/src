@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2010 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -33,37 +33,37 @@
 enum cmd_retval	 cmd_choose_buffer_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_choose_buffer_entry = {
-	"choose-buffer", NULL,
-	"F:t:", 0, 1,
-	CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
-	0,
-	cmd_choose_buffer_exec
+	.name = "choose-buffer",
+	.alias = NULL,
+
+	.args = { "F:t:", 0, 1 },
+	.usage = CMD_TARGET_WINDOW_USAGE " [-F format] [template]",
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_choose_buffer_exec
 };
 
 enum cmd_retval
 cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args			*args = self->args;
-	struct client			*c;
+	struct client			*c = cmdq->state.c;
+	struct winlink			*wl = cmdq->state.tflag.wl;
 	struct window_choose_data	*cdata;
-	struct winlink			*wl;
 	struct paste_buffer		*pb;
 	char				*action, *action_data;
 	const char			*template;
 	u_int				 idx;
-	int				 utf8flag;
 
-	if ((c = cmd_find_client(cmdq, NULL, 1)) == NULL) {
+	if (c == NULL) {
 		cmdq_error(cmdq, "no client available");
 		return (CMD_RETURN_ERROR);
 	}
 
 	if ((template = args_get(args, 'F')) == NULL)
 		template = CHOOSE_BUFFER_TEMPLATE;
-
-	if ((wl = cmd_find_window(cmdq, args_get(args, 't'), NULL)) == NULL)
-		return (CMD_RETURN_ERROR);
-	utf8flag = options_get_number(&wl->window->options, "utf8");
 
 	if (paste_get_top(NULL) == NULL)
 		return (CMD_RETURN_NORMAL);
@@ -83,7 +83,7 @@ cmd_choose_buffer_exec(struct cmd *self, struct cmd_q *cmdq)
 		cdata->idx = idx;
 
 		cdata->ft_template = xstrdup(template);
-		format_defaults_paste_buffer(cdata->ft, pb, utf8flag);
+		format_defaults_paste_buffer(cdata->ft, pb);
 
 		xasprintf(&action_data, "%s", paste_buffer_name(pb));
 		cdata->command = cmd_template_replace(action, action_data, 1);

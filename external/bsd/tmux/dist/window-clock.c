@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,7 +28,7 @@ struct screen *window_clock_init(struct window_pane *);
 void	window_clock_free(struct window_pane *);
 void	window_clock_resize(struct window_pane *, u_int, u_int);
 void	window_clock_key(struct window_pane *, struct client *,
-	    struct session *, int, struct mouse_event *);
+	    struct session *, key_code, struct mouse_event *);
 
 void	window_clock_timer_callback(int, short, void *);
 void	window_clock_draw_screen(struct window_pane *);
@@ -120,7 +120,7 @@ const char window_clock_table[14][5][5] = {
 };
 
 void
-window_clock_timer_callback(unused int fd, unused short events, void *arg)
+window_clock_timer_callback(__unused int fd, __unused short events, void *arg)
 {
 	struct window_pane		*wp = arg;
 	struct window_clock_mode_data	*data = wp->modedata;
@@ -185,8 +185,9 @@ window_clock_resize(struct window_pane *wp, u_int sx, u_int sy)
 }
 
 void
-window_clock_key(struct window_pane *wp, unused struct client *c,
-    unused struct session *sess, unused int key, unused struct mouse_event *m)
+window_clock_key(struct window_pane *wp, __unused struct client *c,
+    __unused struct session *sess, __unused key_code key,
+    __unused struct mouse_event *m)
 {
 	window_pane_reset_mode(wp);
 }
@@ -204,8 +205,8 @@ window_clock_draw_screen(struct window_pane *wp)
 	struct tm			*tm;
 	u_int				 i, j, x, y, idx;
 
-	colour = options_get_number(&wp->window->options, "clock-mode-colour");
-	style = options_get_number(&wp->window->options, "clock-mode-style");
+	colour = options_get_number(wp->window->options, "clock-mode-colour");
+	style = options_get_number(wp->window->options, "clock-mode-style");
 
 	screen_write_start(&ctx, NULL, s);
 
