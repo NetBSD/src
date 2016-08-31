@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  * Copyright (c) 2011 Marcel P. Partap <mpartap@gmx.net>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -31,30 +31,31 @@
 enum cmd_retval	 cmd_respawn_pane_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_respawn_pane_entry = {
-	"respawn-pane", "respawnp",
-	"kt:", 0, -1,
-	"[-k] " CMD_TARGET_PANE_USAGE " [command]",
-	0,
-	cmd_respawn_pane_exec
+	.name = "respawn-pane",
+	.alias = "respawnp",
+
+	.args = { "kt:", 0, -1 },
+	.usage = "[-k] " CMD_TARGET_PANE_USAGE " [command]",
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_respawn_pane_exec
 };
 
 enum cmd_retval
 cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
-	struct winlink		*wl;
-	struct window		*w;
-	struct window_pane	*wp;
-	struct session		*s;
-	struct environ		 env;
+	struct winlink		*wl = cmdq->state.tflag.wl;
+	struct window		*w = wl->window;
+	struct window_pane	*wp = cmdq->state.tflag.wp;
+	struct session		*s = cmdq->state.tflag.s;
+	struct environ		*env;
 	const char		*path;
 	char			*cause;
 	u_int			 idx;
 	struct environ_entry	*envent;
-
-	if ((wl = cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp)) == NULL)
-		return (CMD_RETURN_ERROR);
-	w = wl->window;
 
 	if (!args_has(self->args, 'k') && wp->fd != -1) {
 		if (window_pane_index(wp, &idx) != 0)
@@ -64,10 +65,10 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_ERROR);
 	}
 
-	environ_init(&env);
-	environ_copy(&global_environ, &env);
-	environ_copy(&s->environ, &env);
-	server_fill_environ(s, &env);
+	env = environ_create();
+	environ_copy(global_environ, env);
+	environ_copy(s->environ, env);
+	server_fill_environ(s, env);
 
 	window_pane_reset_mode(wp);
 	screen_reinit(&wp->base);
@@ -75,22 +76,22 @@ cmd_respawn_pane_exec(struct cmd *self, struct cmd_q *cmdq)
 
 	path = NULL;
 	if (cmdq->client != NULL && cmdq->client->session == NULL)
-		envent = environ_find(&cmdq->client->environ, "PATH");
+		envent = environ_find(cmdq->client->environ, "PATH");
 	else
-		envent = environ_find(&s->environ, "PATH");
+		envent = environ_find(s->environ, "PATH");
 	if (envent != NULL)
 		path = envent->value;
 
-	if (window_pane_spawn(wp, args->argc, args->argv, path, NULL, -1, &env,
+	if (window_pane_spawn(wp, args->argc, args->argv, path, NULL, NULL, env,
 	    s->tio, &cause) != 0) {
 		cmdq_error(cmdq, "respawn pane failed: %s", cause);
 		free(cause);
-		environ_free(&env);
+		environ_free(env);
 		return (CMD_RETURN_ERROR);
 	}
 	wp->flags |= PANE_REDRAW;
 	server_status_window(w);
 
-	environ_free(&env);
+	environ_free(env);
 	return (CMD_RETURN_NORMAL);
 }

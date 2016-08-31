@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,24 +30,17 @@
 #define grid_view_x(gd, x) (x)
 #define grid_view_y(gd, y) ((gd)->hsize + (y))
 
-/* Get cell for reading. */
-const struct grid_cell *
-grid_view_peek_cell(struct grid *gd, u_int px, u_int py)
+/* Get cell. */
+void
+grid_view_get_cell(struct grid *gd, u_int px, u_int py, struct grid_cell *gc)
 {
-	return (grid_peek_cell(gd, grid_view_x(gd, px), grid_view_y(gd, py)));
-}
-
-/* Get cell for writing. */
-struct grid_cell *
-grid_view_get_cell(struct grid *gd, u_int px, u_int py)
-{
-	return (grid_get_cell(gd, grid_view_x(gd, px), grid_view_y(gd, py)));
+	grid_get_cell(gd, grid_view_x(gd, px), grid_view_y(gd, py), gc);
 }
 
 /* Set cell. */
 void
-grid_view_set_cell(
-    struct grid *gd, u_int px, u_int py, const struct grid_cell *gc)
+grid_view_set_cell(struct grid *gd, u_int px, u_int py,
+    const struct grid_cell *gc)
 {
 	grid_set_cell(gd, grid_view_x(gd, px), grid_view_y(gd, py), gc);
 }
