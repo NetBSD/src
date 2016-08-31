@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.198 2016/06/29 23:23:05 christos Exp $
+# $NetBSD: mi,v 1.199 2016/08/31 17:28:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1612,7 +1612,8 @@
 ./usr/share/examples/syslogd/all.debug		misc-sysutil-examples	share
 ./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples	share
 ./usr/share/examples/tmux			misc-tmux-examples
-./usr/share/examples/tmux/screen-keys.conf	misc-tmux-examples	share
+./usr/share/examples/tmux/example_tmux.conf	misc-tmux-examples	share
+./usr/share/examples/tmux/screen-keys.conf	misc-obsolete		obsolete
 ./usr/share/examples/usermgmt			misc-obsolete		obsolete
 ./usr/share/examples/usermgmt/.cshrc		misc-obsolete		obsolete
 ./usr/share/examples/usermgmt/.login		misc-obsolete		obsolete
