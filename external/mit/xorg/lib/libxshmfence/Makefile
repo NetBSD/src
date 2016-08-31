@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2016/08/18 18:11:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2016/08/31 14:29:13 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,8 @@ DPADD+=	${LIBRT}
 NOMAN=	# defined
 
 PKGDIST=	${LIB}
+
+COPTS.xshmfence_semaphore.c += -Wno-stack-protector
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
