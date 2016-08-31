@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -37,7 +37,11 @@ key_table_cmp(struct key_table *e1, struct key_table *e2)
 int
 key_bindings_cmp(struct key_binding *bd1, struct key_binding *bd2)
 {
-	return (bd1->key - bd2->key);
+	if (bd1->key < bd2->key)
+		return (-1);
+	if (bd1->key > bd2->key)
+		return (1);
+	return (0);
 }
 
 struct key_table *
@@ -64,12 +68,12 @@ void
 key_bindings_unref_table(struct key_table *table)
 {
 	struct key_binding	*bd;
+	struct key_binding	*bd1;
 
 	if (--table->references != 0)
 		return;
 
-	while (!RB_EMPTY(&table->key_bindings)) {
-		bd = RB_ROOT(&table->key_bindings);
+	RB_FOREACH_SAFE(bd, key_bindings, &table->key_bindings, bd1) {
 		RB_REMOVE(key_bindings, &table->key_bindings, bd);
 		cmd_list_free(bd->cmdlist);
 		free(bd);
@@ -80,7 +84,7 @@ key_bindings_unref_table(struct key_table *table)
 }
 
 void
-key_bindings_add(const char *name, int key, int can_repeat,
+key_bindings_add(const char *name, key_code key, int can_repeat,
     struct cmd_list *cmdlist)
 {
 	struct key_table	*table;
@@ -105,7 +109,7 @@ key_bindings_add(const char *name, int key, int can_repeat,
 }
 
 void
-key_bindings_remove(const char *name, int key)
+key_bindings_remove(const char *name, key_code key)
 {
 	struct key_table	*table;
 	struct key_binding	 bd_find, *bd;
@@ -223,8 +227,11 @@ key_bindings_init(void)
 		"bind -n MouseDown1Pane select-pane -t=\\; send-keys -M",
 		"bind -n MouseDrag1Border resize-pane -M",
 		"bind -n MouseDown1Status select-window -t=",
+		"bind -n WheelDownStatus next-window",
+		"bind -n WheelUpStatus previous-window",
 		"bind -n MouseDrag1Pane if -Ft= '#{mouse_any_flag}' 'if -Ft= \"#{pane_in_mode}\" \"copy-mode -M\" \"send-keys -M\"' 'copy-mode -M'",
-		"bind -n MouseDown3Pane select-pane -mt=",
+		"bind -n MouseDown3Pane if-shell -Ft= '#{mouse_any_flag}' 'select-pane -t=; send-keys -M' 'select-pane -mt='",
+		"bind -n WheelUpPane if-shell -Ft= '#{mouse_any_flag}' 'send-keys -M' 'if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -et=\"'",
 	};
 	u_int		 i;
 	struct cmd_list	*cmdlist;
