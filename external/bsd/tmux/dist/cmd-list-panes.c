@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -35,33 +35,31 @@ void	cmd_list_panes_window(struct cmd *, struct session *, struct winlink *,
 	    struct cmd_q *, int);
 
 const struct cmd_entry cmd_list_panes_entry = {
-	"list-panes", "lsp",
-	"asF:t:", 0, 0,
-	"[-as] [-F format] " CMD_TARGET_WINDOW_USAGE,
-	0,
-	cmd_list_panes_exec
+	.name = "list-panes",
+	.alias = "lsp",
+
+	.args = { "asF:t:", 0, 0 },
+	.usage = "[-as] [-F format] " CMD_TARGET_WINDOW_USAGE,
+
+	.tflag = CMD_WINDOW,
+
+	.flags = 0,
+	.exec = cmd_list_panes_exec
 };
 
 enum cmd_retval
 cmd_list_panes_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args	*args = self->args;
-	struct session	*s;
-	struct winlink	*wl;
+	struct session	*s = cmdq->state.tflag.s;
+	struct winlink	*wl = cmdq->state.tflag.wl;
 
 	if (args_has(args, 'a'))
 		cmd_list_panes_server(self, cmdq);
-	else if (args_has(args, 's')) {
-		s = cmd_find_session(cmdq, args_get(args, 't'), 0);
-		if (s == NULL)
-			return (CMD_RETURN_ERROR);
+	else if (args_has(args, 's'))
 		cmd_list_panes_session(self, s, cmdq, 1);
-	} else {
-		wl = cmd_find_window(cmdq, args_get(args, 't'), &s);
-		if (wl == NULL)
-			return (CMD_RETURN_ERROR);
+	else
 		cmd_list_panes_window(self, s, wl, cmdq, 0);
-	}
 
 	return (CMD_RETURN_NORMAL);
 }
@@ -125,7 +123,7 @@ cmd_list_panes_window(struct cmd *self, struct session *s, struct winlink *wl,
 
 	n = 0;
 	TAILQ_FOREACH(wp, &wl->window->panes, entry) {
-		ft = format_create();
+		ft = format_create(cmdq, 0);
 		format_add(ft, "line", "%u", n);
 		format_defaults(ft, NULL, s, wl, wp);
 

@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2009 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,17 +29,17 @@ struct screen *window_choose_init(struct window_pane *);
 void	window_choose_free(struct window_pane *);
 void	window_choose_resize(struct window_pane *, u_int, u_int);
 void	window_choose_key(struct window_pane *, struct client *,
-	    struct session *, int, struct mouse_event *);
+	    struct session *, key_code, struct mouse_event *);
 
 void	window_choose_default_callback(struct window_choose_data *);
 struct window_choose_mode_item *window_choose_get_item(struct window_pane *,
-	    int, struct mouse_event *);
+	    key_code, struct mouse_event *);
 
-void	window_choose_fire_callback(
-	    struct window_pane *, struct window_choose_data *);
+void	window_choose_fire_callback(struct window_pane *,
+	    struct window_choose_data *);
 void	window_choose_redraw_screen(struct window_pane *);
-void	window_choose_write_line(
-	    struct window_pane *, struct screen_write_ctx *, u_int);
+void	window_choose_write_line(struct window_pane *,
+	    struct screen_write_ctx *, u_int);
 
 void	window_choose_scroll_up(struct window_pane *);
 void	window_choose_scroll_down(struct window_pane *);
@@ -86,9 +86,9 @@ struct window_choose_mode_data {
 
 void	window_choose_free1(struct window_choose_mode_data *);
 int     window_choose_key_index(struct window_choose_mode_data *, u_int);
-int     window_choose_index_key(struct window_choose_mode_data *, int);
+int     window_choose_index_key(struct window_choose_mode_data *, key_code);
 void	window_choose_prompt_input(enum window_choose_input_type,
-	    const char *, struct window_pane *, int);
+	    const char *, struct window_pane *, key_code);
 void	window_choose_reset_top(struct window_pane *, u_int);
 
 void
@@ -169,7 +169,7 @@ window_choose_init(struct window_pane *wp)
 	screen_init(s, screen_size_x(&wp->base), screen_size_y(&wp->base), 0);
 	s->mode &= ~MODE_CURSOR;
 
-	keys = options_get_number(&wp->window->options, "mode-keys");
+	keys = options_get_number(wp->window->options, "mode-keys");
 	if (keys == MODEKEY_EMACS)
 		mode_key_init(&data->mdata, &mode_key_tree_emacs_choice);
 	else
@@ -186,7 +186,7 @@ window_choose_data_create(int type, struct client *c, struct session *s)
 	wcd = xmalloc(sizeof *wcd);
 	wcd->type = type;
 
-	wcd->ft = format_create();
+	wcd->ft = format_create(NULL, 0);
 	wcd->ft_template = NULL;
 
 	wcd->command = NULL;
@@ -299,8 +299,8 @@ window_choose_resize(struct window_pane *wp, u_int sx, u_int sy)
 }
 
 void
-window_choose_fire_callback(
-    struct window_pane *wp, struct window_choose_data *wcd)
+window_choose_fire_callback(struct window_pane *wp,
+    struct window_choose_data *wcd)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 
@@ -314,7 +314,7 @@ window_choose_fire_callback(
 
 void
 window_choose_prompt_input(enum window_choose_input_type input_type,
-    const char *prompt, struct window_pane *wp, int key)
+    const char *prompt, struct window_pane *wp, key_code key)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	size_t				 input_len;
@@ -490,7 +490,8 @@ window_choose_expand(struct window_pane *wp, struct session *s, u_int pos)
 }
 
 struct window_choose_mode_item *
-window_choose_get_item(struct window_pane *wp, int key, struct mouse_event *m)
+window_choose_get_item(struct window_pane *wp, key_code key,
+    struct mouse_event *m)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	u_int				 x, y, idx;
@@ -508,8 +509,8 @@ window_choose_get_item(struct window_pane *wp, int key, struct mouse_event *m)
 }
 
 void
-window_choose_key(struct window_pane *wp, unused struct client *c,
-    unused struct session *sess, int key, struct mouse_event *m)
+window_choose_key(struct window_pane *wp, __unused struct client *c,
+    __unused struct session *sess, key_code key, struct mouse_event *m)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	struct screen			*s = &data->screen;
@@ -613,10 +614,10 @@ window_choose_key(struct window_pane *wp, unused struct client *c,
 			window_choose_scroll_up(wp);
 		else {
 			screen_write_start(&ctx, wp, NULL);
-			window_choose_write_line(
-			    wp, &ctx, data->selected - data->top);
-			window_choose_write_line(
-			    wp, &ctx, data->selected + 1 - data->top);
+			window_choose_write_line(wp, &ctx,
+			    data->selected - data->top);
+			window_choose_write_line(wp, &ctx,
+			    data->selected + 1 - data->top);
 			screen_write_stop(&ctx);
 		}
 		break;
@@ -633,10 +634,10 @@ window_choose_key(struct window_pane *wp, unused struct client *c,
 
 		if (data->selected < data->top + screen_size_y(s)) {
 			screen_write_start(&ctx, wp, NULL);
-			window_choose_write_line(
-			    wp, &ctx, data->selected - data->top);
-			window_choose_write_line(
-			    wp, &ctx, data->selected - 1 - data->top);
+			window_choose_write_line(wp, &ctx,
+			    data->selected - data->top);
+			window_choose_write_line(wp, &ctx,
+			    data->selected - 1 - data->top);
 			screen_write_stop(&ctx);
 		} else
 			window_choose_scroll_down(wp);
@@ -648,8 +649,8 @@ window_choose_key(struct window_pane *wp, unused struct client *c,
 			data->selected--;
 			window_choose_scroll_up(wp);
 			screen_write_start(&ctx, wp, NULL);
-			window_choose_write_line(
-			    wp, &ctx, screen_size_y(s) - 1);
+			window_choose_write_line(wp, &ctx,
+			    screen_size_y(s) - 1);
 			screen_write_stop(&ctx);
 		} else
 			window_choose_scroll_up(wp);
@@ -743,23 +744,22 @@ window_choose_key(struct window_pane *wp, unused struct client *c,
 }
 
 void
-window_choose_write_line(
-    struct window_pane *wp, struct screen_write_ctx *ctx, u_int py)
+window_choose_write_line(struct window_pane *wp, struct screen_write_ctx *ctx,
+    u_int py)
 {
 	struct window_choose_mode_data	*data = wp->modedata;
 	struct window_choose_mode_item	*item;
-	struct options			*oo = &wp->window->options;
+	struct options			*oo = wp->window->options;
 	struct screen			*s = &data->screen;
 	struct grid_cell		 gc;
 	size_t				 last, xoff = 0;
 	char				 hdr[32], label[32];
-	int				 utf8flag, key;
+	int				 key;
 
 	if (data->callbackfn == NULL)
 		fatalx("called before callback assigned");
 
 	last = screen_size_y(s) - 1;
-	utf8flag = options_get_number(&wp->window->options, "utf8");
 	memcpy(&gc, &grid_default_cell, sizeof gc);
 	if (data->selected == data->top + py)
 		style_apply(&gc, oo, "mode-style");
@@ -776,7 +776,7 @@ window_choose_write_line(
 			xsnprintf(label, sizeof label, "(%c)", key);
 		else
 			xsnprintf(label, sizeof label, "(%d)", item->pos);
-		screen_write_nputs(ctx, screen_size_x(s) - 1, &gc, utf8flag,
+		screen_write_nputs(ctx, screen_size_x(s) - 1, &gc,
 		    "%*s %s %s", data->width + 2, label,
 		    /*
 		     * Add indication to tree if necessary about whether it's
@@ -821,7 +821,7 @@ window_choose_key_index(struct window_choose_mode_data *data, u_int idx)
 }
 
 int
-window_choose_index_key(struct window_choose_mode_data *data, int key)
+window_choose_index_key(struct window_choose_mode_data *data, key_code key)
 {
 	static const char	keys[] = "0123456789"
 	                                 "abcdefghijklmnopqrstuvwxyz"
@@ -834,7 +834,7 @@ window_choose_index_key(struct window_choose_mode_data *data, int key)
 		mkey = mode_key_lookup(&data->mdata, *ptr, NULL);
 		if (mkey != MODEKEY_NONE && mkey != MODEKEY_OTHER)
 			continue;
-		if (key == *ptr)
+		if (key == (key_code)*ptr)
 			return (idx);
 		idx++;
 	}
