@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2008 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,30 +30,41 @@
 enum cmd_retval	 cmd_send_keys_exec(struct cmd *, struct cmd_q *);
 
 const struct cmd_entry cmd_send_keys_entry = {
-	"send-keys", "send",
-	"lRMt:", 0, -1,
-	"[-lRM] " CMD_TARGET_PANE_USAGE " key ...",
-	0,
-	cmd_send_keys_exec
+	.name = "send-keys",
+	.alias = "send",
+
+	.args = { "lRMt:", 0, -1 },
+	.usage = "[-lRM] " CMD_TARGET_PANE_USAGE " key ...",
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_send_keys_exec
 };
 
 const struct cmd_entry cmd_send_prefix_entry = {
-	"send-prefix", NULL,
-	"2t:", 0, 0,
-	"[-2] " CMD_TARGET_PANE_USAGE,
-	0,
-	cmd_send_keys_exec
+	.name = "send-prefix",
+	.alias = NULL,
+
+	.args = { "2t:", 0, 0 },
+	.usage = "[-2] " CMD_TARGET_PANE_USAGE,
+
+	.tflag = CMD_PANE,
+
+	.flags = 0,
+	.exec = cmd_send_keys_exec
 };
 
 enum cmd_retval
 cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 {
 	struct args		*args = self->args;
+	struct window_pane	*wp = cmdq->state.tflag.wp;
+	struct session		*s = cmdq->state.tflag.s;
 	struct mouse_event	*m = &cmdq->item->mouse;
-	struct window_pane	*wp;
-	struct session		*s;
-	const char		*str;
-	int			 i, key;
+	const char		*keystr;
+	int			 i, literal;
+	key_code		 key;
 
 	if (args_has(args, 'M')) {
 		wp = cmd_mouse_pane(m, &s, NULL);
@@ -65,30 +76,30 @@ cmd_send_keys_exec(struct cmd *self, struct cmd_q *cmdq)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	if (cmd_find_pane(cmdq, args_get(args, 't'), &s, &wp) == NULL)
-		return (CMD_RETURN_ERROR);
-
 	if (self->entry == &cmd_send_prefix_entry) {
 		if (args_has(args, '2'))
-			key = options_get_number(&s->options, "prefix2");
+			key = options_get_number(s->options, "prefix2");
 		else
-			key = options_get_number(&s->options, "prefix");
+			key = options_get_number(s->options, "prefix");
 		window_pane_key(wp, NULL, s, key, NULL);
 		return (CMD_RETURN_NORMAL);
 	}
 
 	if (args_has(args, 'R'))
-		input_reset(wp);
+		input_reset(wp, 1);
 
 	for (i = 0; i < args->argc; i++) {
-		str = args->argv[i];
-
-		if (!args_has(args, 'l') &&
-		    (key = key_string_lookup_string(str)) != KEYC_NONE) {
-			window_pane_key(wp, NULL, s, key, NULL);
-		} else {
-			for (; *str != '\0'; str++)
-				window_pane_key(wp, NULL, s, *str, NULL);
+		literal = args_has(args, 'l');
+		if (!literal) {
+			key = key_string_lookup_string(args->argv[i]);
+			if (key != KEYC_NONE && key != KEYC_UNKNOWN)
+				window_pane_key(wp, NULL, s, key, NULL);
+			else
+				literal = 1;
+		}
+		if (literal) {
+			for (keystr = args->argv[i]; *keystr != '\0'; keystr++)
+				window_pane_key(wp, NULL, s, *keystr, NULL);
 		}
 	}
 

@@ -1,7 +1,7 @@
 /* $OpenBSD$ */
 
 /*
- * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
+ * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -94,10 +94,10 @@ screen_set_cursor_style(struct screen *s, u_int style)
 
 /* Set screen cursor colour. */
 void
-screen_set_cursor_colour(struct screen *s, const char *colour_string)
+screen_set_cursor_colour(struct screen *s, const char *colour)
 {
 	free(s->ccolour);
-	s->ccolour = xstrdup(colour_string);
+	s->ccolour = xstrdup(colour);
 }
 
 /* Set screen title. */
@@ -194,8 +194,6 @@ screen_resize_y(struct screen *s, u_int sy)
 		 * Now just increase the history size, if possible, to take
 		 * over the lines which are left. If history is off, delete
 		 * lines from the top.
-		 *
-		 * XXX Should apply history limit?
 		 */
 		available = s->cy;
 		if (gd->flags & GRID_HISTORY)
