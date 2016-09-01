@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.137 2016/08/24 13:10:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.138 2016/09/01 13:23:44 mbalmer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.137 2016/08/24 13:10:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.138 2016/09/01 13:23:44 mbalmer Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -371,7 +371,7 @@ rl_initialize(void)
 	el_set(e, EL_BIND, "\\e[1;5C", "em-next-word", NULL);
 	el_set(e, EL_BIND, "\\e[1;5D", "ed-prev-word", NULL);
 	el_set(e, EL_BIND, "\\e[5C", "em-next-word", NULL);
-	el_set(e, EL_BIND, "\\e[5D", "ed-erev-word", NULL);
+	el_set(e, EL_BIND, "\\e[5D", "ed-prev-word", NULL);
 	el_set(e, EL_BIND, "\\e\\e[C", "em-next-word", NULL);
 	el_set(e, EL_BIND, "\\e\\e[D", "ed-prev-word", NULL);
 
