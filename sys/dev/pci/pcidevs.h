@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1255 2016/08/23 09:34:47 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1256 2016/09/01 10:21:49 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1263 2016/08/23 09:34:28 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1264 2016/09/01 10:20:26 msaitoh Exp
  */
 
 /*
@@ -2594,9 +2594,13 @@
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_D_HB	0x0040		/* Iron Lake Host Bridge */
+#define	PCI_PRODUCT_INTEL_CORE_PCIE_0	0x0041		/* Core PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_D_IGD	0x0042		/* Iron Lake Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_CORE_PCIE_1	0x0043		/* Core PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_M_HB	0x0044		/* Iron Lake Host Bridge */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_M_IGD	0x0046		/* Iron Lake Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_CORE_HB	0x0048		/* Core Host Bridge */
+#define	PCI_PRODUCT_INTEL_CORE_PCIE_2	0x0049		/* Core PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_MA_HB	0x0062		/* Iron Lake Host Bridge */
 #define	PCI_PRODUCT_INTEL_IRONLAKE_MC2_HB	0x006a		/* Iron Lake Host Bridge */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_6005_2X2_1	0x0082		/* Centrino Advanced-N 6205 */
@@ -3669,6 +3673,12 @@
 #define	PCI_PRODUCT_INTEL_82GM45_IGD	0x2a42		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD_1	0x2a43		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_KT	0x2a47		/* 82GM45 KT */
+#define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* QuickPath Generic System Address Decoder */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* QPI Link */
+#define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* QPI Physical */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Reserved */
+#define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Reserved */
 #define	PCI_PRODUCT_INTEL_82IGD_E_HB	0x2e00		/* 82IGD_E Host Bridge */
 #define	PCI_PRODUCT_INTEL_82IGD_E_IGD	0x2e02		/* 82IGD_E Integrated Graphics */
 #define	PCI_PRODUCT_INTEL_82Q45_KT	0x2e07		/* 82Q45 KT */
