@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.194 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.195 2016/09/01 19:04:30 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.194 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.195 2016/09/01 19:04:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1508,15 +1508,80 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 }
 
 static int
+sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
+    struct rt_addrinfo *info, size_t len)
+{
+	struct if_xmsghdr *ifm;
+	int error;
+
+	ifm = (struct if_xmsghdr *)w->w_tmem;
+	ifm->ifm_index = ifp->if_index;
+	ifm->ifm_flags = ifp->if_flags;
+	ifm->ifm_data = ifp->if_data;
+	ifm->ifm_addrs = info->rti_addrs;
+	if ((error = copyout(ifm, w->w_where, len)) == 0)
+		w->w_where = (char *)w->w_where + len;
+	return error;
+}
+
+static int
+sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
+     struct rt_addrinfo *info)
+{
+	int len, error;
+
+	if ((error = rt_msg2(RTM_NEWADDR, info, 0, w, &len)))
+		return error;
+	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
+		struct ifa_xmsghdr *ifam;
+
+		ifam = (struct ifa_xmsghdr *)w->w_tmem;
+		ifam->ifam_index = ifa->ifa_ifp->if_index;
+		ifam->ifam_flags = ifa->ifa_flags;
+		ifam->ifam_metric = ifa->ifa_metric;
+		ifam->ifam_addrs = info->rti_addrs;
+		if ((error = copyout(w->w_tmem, w->w_where, len)) == 0)
+			w->w_where = (char *)w->w_where + len;
+	}
+	return error;
+}
+
+static int
 sysctl_iflist(int af, struct rt_walkarg *w, int type)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 	struct	rt_addrinfo info;
-	int	len, error = 0;
+	int	cmd, len, error = 0;
+	int	(*iflist_if)(struct ifnet *, struct rt_walkarg *,
+			     struct rt_addrinfo *, size_t);
 	int s;
 	struct psref psref;
 	int bound = curlwp_bind();
+
+	switch (type) {
+	case NET_RT_IFLIST:
+		cmd = RTM_IFINFO;
+		iflist_if = sysctl_iflist_if;
+		break;
+#ifdef COMPAT_14
+	case NET_RT_OOIFLIST:
+		cmd = RTM_OOIFINFO;
+		iflist_if = compat_14_iflist;
+		break;
+#endif
+#ifdef COMPAT_50
+	case NET_RT_OIFLIST:
+		cmd = RTM_OIFINFO;
+		iflist_if = compat_50_iflist;
+		break;
+#endif
+	default:
+#ifdef DIAGNOSTIC
+		printf("sysctl_iflist\n");
+#endif
+		return EINVAL;
+	}
 
 	memset(&info, 0, sizeof(info));
 
@@ -1531,60 +1596,12 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 		pserialize_read_exit(s);
 
 		info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
-		switch (type) {
-		case NET_RT_IFLIST:
-			error = rt_msg2(RTM_IFINFO, &info, NULL, w, &len);
-			break;
-#ifdef COMPAT_14
-		case NET_RT_OOIFLIST:
-			error = rt_msg2(RTM_OOIFINFO, &info, NULL, w, &len);
-			break;
-#endif
-#ifdef COMPAT_50
-		case NET_RT_OIFLIST:
-			error = rt_msg2(RTM_OIFINFO, &info, NULL, w, &len);
-			break;
-#endif
-		default:
-			panic("sysctl_iflist(1)");
-		}
-		if (error)
+		if ((error = rt_msg2(cmd, &info, NULL, w, &len)) != 0)
 			goto release_exit;
 		info.rti_info[RTAX_IFP] = NULL;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			switch (type) {
-			case NET_RT_IFLIST: {
-				struct if_xmsghdr *ifm;
-
-				ifm = (struct if_xmsghdr *)w->w_tmem;
-				ifm->ifm_index = ifp->if_index;
-				ifm->ifm_flags = ifp->if_flags;
-				ifm->ifm_data = ifp->if_data;
-				ifm->ifm_addrs = info.rti_addrs;
-				error = copyout(ifm, w->w_where, len);
-				if (error)
-					goto release_exit;
-				w->w_where = (char *)w->w_where + len;
-				break;
-			}
-
-#ifdef COMPAT_14
-			case NET_RT_OOIFLIST:
-				error = compat_14_iflist(ifp, w, &info, len);
-				if (error)
-					goto release_exit;
-				break;
-#endif
-#ifdef COMPAT_50
-			case NET_RT_OIFLIST:
-				error = compat_50_iflist(ifp, w, &info, len);
-				if (error)
-					goto release_exit;
-				break;
-#endif
-			default:
-				panic("sysctl_iflist(2)");
-			}
+			if ((error = iflist_if(ifp, w, &info, len)) != 0)
+				goto release_exit;
 		}
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (af && af != ifa->ifa_addr->sa_family)
@@ -1592,21 +1609,8 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			if ((error = rt_msg2(RTM_NEWADDR, &info, 0, w, &len)))
+			if ((error = sysctl_iflist_addr(w, ifa, &info)) != 0)
 				goto release_exit;
-			if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-				struct ifa_xmsghdr *ifam;
-
-				ifam = (struct ifa_xmsghdr *)w->w_tmem;
-				ifam->ifam_index = ifa->ifa_ifp->if_index;
-				ifam->ifam_flags = ifa->ifa_flags;
-				ifam->ifam_metric = ifa->ifa_metric;
-				ifam->ifam_addrs = info.rti_addrs;
-				error = copyout(w->w_tmem, w->w_where, len);
-				if (error)
-					goto release_exit;
-				w->w_where = (char *)w->w_where + len;
-			}
 		}
 		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
 		    info.rti_info[RTAX_BRD] = NULL;
