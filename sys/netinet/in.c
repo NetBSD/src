@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.178 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.179 2016/09/01 04:27:00 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.178 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.179 2016/09/01 04:27:00 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -944,7 +944,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 		struct in_ifaddr *ia;
 		struct in_addr mask, candidate, match;
 		struct sockaddr_in *sin;
-		int cmp;
+		int cmp, s;
 
 		memset(&mask, 0, sizeof(mask));
 		memset(&match, 0, sizeof(match));	/* XXX gcc */
@@ -975,6 +975,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			}
 		}
 
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -985,8 +986,10 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			if (candidate.s_addr == match.s_addr)
 				break;
 		}
-		if (ifa == NULL)
+		if (ifa == NULL) {
+			pserialize_read_exit(s);
 			return EADDRNOTAVAIL;
+		}
 		ia = (struct in_ifaddr *)ifa;
 
 		if (cmd == SIOCGLIFADDR) {
@@ -1003,6 +1006,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 				in_mask2len(&ia->ia_sockmask.sin_addr);
 
 			iflr->flags = 0;	/*XXX*/
+			pserialize_read_exit(s);
 
 			return 0;
 		} else {
@@ -1021,6 +1025,7 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 			}
 			memcpy(&ifra.ifra_dstaddr, &ia->ia_sockmask,
 				ia->ia_sockmask.sin_len);
+			pserialize_read_exit(s);
 
 			return in_control(so, SIOCDIFADDR, &ifra, ifp);
 		}
@@ -1342,6 +1347,7 @@ in_if_link_up(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia;
+	int s, bound;
 
 	/* Ensure it's sane to run DAD */
 	if (ifp->if_link_state == LINK_STATE_DOWN)
@@ -1349,9 +1355,16 @@ in_if_link_up(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		return;
 
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
+		struct psref psref;
+
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
+		ifa_acquire(ifa, &psref);
+		pserialize_read_exit(s);
+
 		ia = (struct in_ifaddr *)ifa;
 
 		/* If detached then mark as tentative */
@@ -1368,7 +1381,12 @@ in_if_link_up(struct ifnet *ifp)
 			ia->ia4_flags &= ~IN_IFF_DUPLICATED;
 			ia->ia_dad_start(ifa);
 		}
+
+		s = pserialize_read_enter();
+		ifa_release(ifa, &psref);
 	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
 }
 
 void
@@ -1387,10 +1405,18 @@ in_if_link_down(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia;
+	int s, bound;
 
+	bound = curlwp_bind();
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
+		struct psref psref;
+
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
+		ifa_acquire(ifa, &psref);
+		pserialize_read_exit(s);
+
 		ia = (struct in_ifaddr *)ifa;
 
 		/* Stop DAD processing */
@@ -1406,7 +1432,12 @@ in_if_link_down(struct ifnet *ifp)
 			    ~(IN_IFF_TENTATIVE | IN_IFF_DUPLICATED);
 			rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 		}
+
+		s = pserialize_read_enter();
+		ifa_release(ifa, &psref);
 	}
+	pserialize_read_exit(s);
+	curlwp_bindx(bound);
 }
 
 void
