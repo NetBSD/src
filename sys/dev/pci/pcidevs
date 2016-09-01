@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1263 2016/08/23 09:34:28 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1264 2016/09/01 10:20:26 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2587,9 +2587,13 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 
 /* Intel products */
 product INTEL IRONLAKE_D_HB	0x0040	Iron Lake Host Bridge
+product INTEL CORE_PCIE_0	0x0041	Core PCIe Root Port
 product INTEL IRONLAKE_D_IGD	0x0042	Iron Lake Integrated Graphics Device
+product INTEL CORE_PCIE_1	0x0043	Core PCIe Root Port
 product INTEL IRONLAKE_M_HB	0x0044	Iron Lake Host Bridge
 product INTEL IRONLAKE_M_IGD	0x0046	Iron Lake Integrated Graphics Device
+product INTEL CORE_HB		0x0048	Core Host Bridge
+product INTEL CORE_PCIE_2	0x0049	Core PCIe Root Port
 product INTEL IRONLAKE_MA_HB	0x0062	Iron Lake Host Bridge
 product INTEL IRONLAKE_MC2_HB	0x006a	Iron Lake Host Bridge
 product INTEL WIFI_LINK_6005_2X2_1	0x0082	Centrino Advanced-N 6205
@@ -3662,6 +3666,12 @@ product INTEL 82GM45_HB		0x2a40	82GM45 Host Bridge
 product INTEL 82GM45_IGD	0x2a42	82GM45 Integrated Graphics Device
 product INTEL 82GM45_IGD_1	0x2a43	82GM45 Integrated Graphics Device
 product INTEL 82GM45_KT		0x2a47	82GM45 KT
+product INTEL CORE_QP_REG_1	0x2c61	QuickPath Generic Non-Core Register
+product INTEL CORE_QP_SAD	0x2d01	QuickPath Generic System Address Decoder
+product INTEL CORE_QPI_LINK	0x2d10	QPI Link
+product INTEL CORE_QPI_PHYS	0x2d11	QPI Physical
+product INTEL CORE_RSVD_1	0x2d12	Reserved
+product INTEL CORE_RSVD_2	0x2d13	Reserved
 product INTEL 82IGD_E_HB	0x2e00	82IGD_E Host Bridge
 product INTEL 82IGD_E_IGD	0x2e02	82IGD_E Integrated Graphics
 product INTEL 82Q45_KT		0x2e07	82Q45 KT
