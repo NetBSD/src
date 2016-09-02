@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.95 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.96 2016/09/02 07:51:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.95 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.96 2016/09/02 07:51:05 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -116,7 +116,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb = lwp_getpcb(l);
 
 #if defined(USER_LDT) && 0
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
 	netbsd32_adjust_limits(p);
