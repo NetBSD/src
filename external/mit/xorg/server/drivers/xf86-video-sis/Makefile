@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2016/08/21 18:23:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2016/09/02 04:49:48 jakllsch Exp $
 
 DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
@@ -28,3 +28,6 @@ COPTS.sis_driver.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :
 COPTS.sis_utility.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.initextx.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
+COPTS.sis_driver.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.sis_utility.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.initextx.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
