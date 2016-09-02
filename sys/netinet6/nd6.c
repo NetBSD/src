@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.206 2016/08/06 20:00:14 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.207 2016/09/02 07:15:14 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.206 2016/08/06 20:00:14 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.207 2016/09/02 07:15:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1300,15 +1300,25 @@ done:
 	return;
 }
 
+struct gc_args {
+	int gc_entries;
+	const struct in6_addr *skip_in6;
+};
+
 static int
 nd6_purge_entry(struct lltable *llt, struct llentry *ln, void *farg)
 {
-	int *n = farg;
+	struct gc_args *args = farg;
+	int *n = &args->gc_entries;
+	const struct in6_addr *skip_in6 = args->skip_in6;
 
 	if (*n <= 0)
 		return 0;
 
 	if (ND6_LLINFO_PERMANENT(ln))
+		return 0;
+
+	if (IN6_ARE_ADDR_EQUAL(&ln->r_l3addr.addr6, skip_in6))
 		return 0;
 
 	LLE_WLOCK(ln);
@@ -1324,17 +1334,17 @@ nd6_purge_entry(struct lltable *llt, struct llentry *ln, void *farg)
 }
 
 static void
-nd6_gc_neighbors(struct lltable *llt)
+nd6_gc_neighbors(struct lltable *llt, const struct in6_addr *in6)
 {
-	int max_gc_entries = 10;
 
 	if (ip6_neighborgcthresh >= 0 &&
 	    lltable_get_entry_count(llt) >= ip6_neighborgcthresh) {
+		struct gc_args gc_args = {10, in6};
 		/*
 		 * XXX entries that are "less recently used" should be
 		 * freed first.
 		 */
-		lltable_foreach_lle(llt, nd6_purge_entry, &max_gc_entries);
+		lltable_foreach_lle(llt, nd6_purge_entry, &gc_args);
 	}
 }
 
@@ -1546,7 +1556,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * purging for some entries.
 		 */
 		if (rt->rt_ifp != NULL)
-			nd6_gc_neighbors(LLTABLE6(rt->rt_ifp));
+			nd6_gc_neighbors(LLTABLE6(rt->rt_ifp), NULL);
 		break;
 	    }
 
@@ -2138,7 +2148,7 @@ nd6_cache_lladdr(
 	 * purging for some entries.
 	 */
 	if (is_newentry)
-		nd6_gc_neighbors(LLTABLE6(ifp));
+		nd6_gc_neighbors(LLTABLE6(ifp), &ln->r_l3addr.addr6);
 
 	/*
 	 * When the link-layer address of a router changes, select the
@@ -2381,7 +2391,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m,
 		m_freem(m);
   exit:
 	if (created)
-		nd6_gc_neighbors(LLTABLE6(ifp));
+		nd6_gc_neighbors(LLTABLE6(ifp), &dst->sin6_addr);
 
 	return error;
 #undef senderr
