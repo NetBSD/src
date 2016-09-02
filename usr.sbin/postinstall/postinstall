@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.203 2016/08/20 11:24:13 christos Exp $
+# $NetBSD: postinstall,v 1.204 2016/09/02 05:38:44 kre Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -648,7 +648,7 @@ obsolete_stand()
 
 	( cd "${DEST_DIR}${dir}" && ls -1d [0-9]*[0-9]/. ) \
 	| ${GREP} -v '[^0-9./]' \
-	| sort -t. -r -k1n -k2n -k3n \
+	| sort -t. -r -k1,1n -k2,2n -k3,3n \
 	| tail -n +2 \
 	| while read subdir ; do
 		subdir="${subdir%/.}"
