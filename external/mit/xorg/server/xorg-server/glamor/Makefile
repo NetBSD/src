@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/08/18 18:42:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2016/09/02 03:58:59 jakllsch Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -51,6 +51,8 @@ CPPFLAGS+=      -I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
 CPPFLAGS+=      ${X11FLAGS.DIX}
+
+COPTS+=		${${ACTIVE_CC} == "clang":? -Wno-error=enum-conversion :}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
