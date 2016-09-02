@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.217 2016/08/18 09:34:43 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.218 2016/09/02 15:57:54 roy Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.217 2016/08/18 09:34:43 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.218 2016/09/02 15:57:54 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1376,13 +1376,9 @@ in6_unlink_ifa(struct in6_ifaddr *ia, struct ifnet *ifp)
 		in6_savemkludge(ia);
 
 	/*
-	 * Release the reference to the base prefix.  There should be a
-	 * positive reference.
+	 * Release the reference to the ND prefix.
 	 */
-	if (ia->ia6_ndpr == NULL) {
-		nd6log(LOG_NOTICE, "autoconf'ed address %p has no prefix\n",
-		    ia);
-	} else {
+	if (ia->ia6_ndpr != NULL) {
 		ia->ia6_ndpr->ndpr_refcnt--;
 		ia->ia6_ndpr = NULL;
 	}
