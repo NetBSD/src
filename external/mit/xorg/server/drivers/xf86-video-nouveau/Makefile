@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/08/21 18:23:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2016/09/02 04:27:13 jakllsch Exp $
 
 DRIVER=		xf86-video-nouveau
 DRIVER_NAME=	nouveau_drv
@@ -51,6 +51,7 @@ CPPFLAGS+=	-DNV_DRIVER_DATE=${DRIVER_DATE}
 .if ${HAVE_GCC:U0} > 48
 COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
+COPTS.nouveau_xv.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
 
 .if ${XORG_SERVER_SUBDIR} != "xorg-server.old"
 CPPFLAGS+=	-DHAVE_XORG_LIST
