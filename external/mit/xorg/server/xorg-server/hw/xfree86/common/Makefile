@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/08/30 04:04:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2016/09/02 11:38:01 jakllsch Exp $
 
 .include <bsd.own.mk>
 
@@ -128,6 +128,8 @@ COPTS.xf86sbusBus.c=		-Wno-error=incompatible-pointer-types
 .if ${HAVE_GCC:U0} > 48
 COPTS.xf86Configure.c=		${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
+
+COPTS.xf86pciBus.c=		${${ACTIVE_CC} == "clang":? -Wno-error=tautological-constant-out-of-range-compare :}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
