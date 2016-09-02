@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.4 2016/08/17 19:08:18 jakllsch Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.5 2016/09/02 19:06:58 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.4 2016/08/17 19:08:18 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.5 2016/09/02 19:06:58 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -601,7 +601,7 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_L("disp1", "mux_disp1", CAR_DEV_L_DISP1),
 	CLK_GATE_L("disp2", "mux_disp2", CAR_DEV_L_DISP2),
 	CLK_GATE_H("hdmi", "div_hdmi", CAR_DEV_H_HDMI),
-	CLK_GATE_SIMPLE("pll_p_out5", "div_pllp_out5",
+	CLK_GATE_SIMPLE("pll_p_out5", "div_pll_p_out5",
 		CAR_PLLP_OUTC_REG, CAR_PLLP_OUTC_OUT5_CLKEN),
 };
 
