@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.27 2016/08/27 14:19:47 maxv Exp $	*/
+/*	$NetBSD: segments.h,v 1.28 2016/09/02 08:52:12 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -147,7 +147,7 @@
  */
 
 /*
- * Below is used for TSS and LDT.
+ * System segment descriptor (16 bytes): used for TSS and LDT.
  */
 struct sys_segment_descriptor {
 	uint64_t sd_lolimit:16;	/* segment extent (lsb) */
@@ -165,7 +165,7 @@ struct sys_segment_descriptor {
 } __packed;
 
 /*
- * Below is used for cs, ds, etc.
+ * Memory segment descriptor (8 bytes): used for cs, ds, etc.
  */
 struct mem_segment_descriptor {
 	unsigned sd_lolimit:16;	/* segment extent (lsb) */
@@ -192,7 +192,7 @@ struct common_segment_descriptor {
 } __packed;
 
 /*
- * Gate descriptors (e.g. indirect descriptors)
+ * Gate descriptors (16 bytes).
  */
 struct gate_descriptor {
 	uint64_t gd_looffset:16;/* gate offset (lsb) */
@@ -209,7 +209,8 @@ struct gate_descriptor {
 } __packed;
 
 /*
- * Generic descriptor
+ * Generic descriptor (8 bytes). Note: it does not include system segment
+ * descriptors and gate descriptors, since these are 16-byte-long.
  */
 union descriptor {
 	struct mem_segment_descriptor sd;
@@ -218,7 +219,7 @@ union descriptor {
 } __packed;
 
 /*
- * region descriptors, used to load gdt/idt tables before segments yet exist.
+ * Region descriptors, used to load gdt/idt tables before segments yet exist.
  */
 struct region_descriptor {
 	uint16_t rd_limit;	/* segment extent */
@@ -226,9 +227,6 @@ struct region_descriptor {
 } __packed;
 
 #ifdef _KERNEL
-#if 0
-extern struct sys_segment_descriptor *ldt;
-#endif
 #ifdef XEN
 extern struct trap_info *idt;
 #else
