@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.32 2016/06/26 07:10:24 mlelstv Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.33 2016/09/02 05:59:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,6 +28,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: usbdevs.c,v 1.33 2016/09/02 05:59:04 skrll Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
