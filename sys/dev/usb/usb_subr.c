@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.213 2016/09/03 07:20:12 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.214 2016/09/03 07:23:27 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.213 2016/09/03 07:20:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.214 2016/09/03 07:23:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1489,7 +1489,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		     int usedev)
 {
 	struct usbd_port *p;
-	int i, j, err, s;
+	int i, j, err;
 
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
@@ -1553,7 +1553,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		if (p->up_dev)
 			err = p->up_dev->ud_addr;
 		else {
-			s = UGETW(p->up_status.wPortStatus);
+			int s = UGETW(p->up_status.wPortStatus);
 			if (s & UPS_PORT_ENABLED)
 				err = USB_PORT_ENABLED;
 			else if (s & UPS_SUSPEND)
@@ -1582,7 +1582,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
                          int usedev)
 {
 	struct usbd_port *p;
-	int i, j, err, s;
+	int i, j, err;
 
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
@@ -1629,7 +1629,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
 		if (p->up_dev)
 			err = p->up_dev->ud_addr;
 		else {
-			s = UGETW(p->up_status.wPortStatus);
+			int s = UGETW(p->up_status.wPortStatus);
 			if (s & UPS_PORT_ENABLED)
 				err = USB_PORT_ENABLED;
 			else if (s & UPS_SUSPEND)
