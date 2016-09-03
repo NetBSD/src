@@ -2440,7 +2440,9 @@ bool X86FrameLowering::adjustStackWithPops(MachineBasicBlock &MBB,
 
     bool IsDef = false;
     for (const MachineOperand &MO : Prev->implicit_operands()) {
-      if (MO.isReg() && MO.isDef() && MO.getReg() == Candidate) {
+      if (MO.isReg() && MO.isDef() &&
+          (TRI->isSubRegisterEq(MO.getReg(), Candidate) ||
+           TRI->isSuperRegister(MO.getReg(), Candidate))) {
         IsDef = true;
         break;
       }
@@ -2567,6 +2569,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       --I;
     BuildStackAdjustment(MBB, I, DL, -InternalAmt, /*InEpilogue=*/false);
   }
+}
+
+bool X86FrameLowering::canUseAsPrologue(const MachineBasicBlock &MBB) const {
+  assert(MBB.getParent() && "Block is not attached to a function!");
+  const MachineFunction &MF = *MBB.getParent();
+  return !TRI->needsStackRealignment(MF) || !MBB.isLiveIn(X86::EFLAGS);
 }
 
 bool X86FrameLowering::canUseAsEpilogue(const MachineBasicBlock &MBB) const {

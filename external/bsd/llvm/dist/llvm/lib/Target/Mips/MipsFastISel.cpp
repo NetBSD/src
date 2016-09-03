@@ -192,7 +192,8 @@ public:
         TII(*Subtarget->getInstrInfo()), TLI(*Subtarget->getTargetLowering()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
-    bool ISASupported = !Subtarget->hasMips32r6() && Subtarget->hasMips32();
+    bool ISASupported = !Subtarget->hasMips32r6() &&
+                        !Subtarget->inMicroMipsMode() && Subtarget->hasMips32();
     TargetSupported =
         ISASupported && (TM.getRelocationModel() == Reloc::PIC_) &&
         (static_cast<const MipsTargetMachine &>(TM).getABI().IsO32());
@@ -802,7 +803,7 @@ bool MipsFastISel::emitStore(MVT VT, unsigned SrcReg, Address &Addr,
     unsigned Offset = Addr.getOffset();
     MachineFrameInfo &MFI = *MF->getFrameInfo();
     MachineMemOperand *MMO = MF->getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(*MF, FI), MachineMemOperand::MOLoad,
+        MachinePointerInfo::getFixedStack(*MF, FI), MachineMemOperand::MOStore,
         MFI.getObjectSize(FI), Align);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc))
         .addReg(SrcReg)
@@ -1207,7 +1208,7 @@ bool MipsFastISel::processCallArgs(CallLoweringInfo &CLI,
 bool MipsFastISel::finishCall(CallLoweringInfo &CLI, MVT RetVT,
                               unsigned NumBytes) {
   CallingConv::ID CC = CLI.CallConv;
-  emitInst(Mips::ADJCALLSTACKUP).addImm(16);
+  emitInst(Mips::ADJCALLSTACKUP).addImm(16).addImm(0);
   if (RetVT != MVT::isVoid) {
     SmallVector<CCValAssign, 16> RVLocs;
     CCState CCInfo(CC, false, *FuncInfo.MF, RVLocs, *Context);
