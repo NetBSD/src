@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.950 2016/09/03 09:08:28 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.951 2016/09/03 12:32:12 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -78,6 +78,7 @@ HAVE_GCC?=	0
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_CPU} == "powerpc" || \
+    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_GCC?=	53
 .else
@@ -158,7 +159,7 @@ USE_SSP?=	yes
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "powerpc" || \
     ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+    ${MACHINE_CPU} == "mips"
 HAVE_GDB?=	710
 .else
 HAVE_GDB?=	79
@@ -184,6 +185,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc"
 HAVE_BINUTILS?=	226
 .else
@@ -1076,6 +1078,7 @@ MKCTF?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc64"
