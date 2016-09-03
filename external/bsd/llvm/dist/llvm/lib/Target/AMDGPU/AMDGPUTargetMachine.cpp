@@ -52,6 +52,10 @@ extern "C" void LLVMInitializeAMDGPUTarget() {
   initializeSILoadStoreOptimizerPass(*PR);
   initializeAMDGPUAnnotateKernelFeaturesPass(*PR);
   initializeAMDGPUAnnotateUniformValuesPass(*PR);
+  initializeAMDGPUPromoteAllocaPass(*PR);
+  initializeSIAnnotateControlFlowPass(*PR);
+  initializeSIInsertWaitsPass(*PR);
+  initializeSILowerControlFlowPass(*PR);
 }
 
 static std::unique_ptr<TargetLoweringObjectFile> createTLOF(const Triple &TT) {
@@ -87,14 +91,28 @@ static std::string computeDataLayout(const Triple &TT) {
   return Ret;
 }
 
+LLVM_READNONE
+static StringRef getGPUOrDefault(const Triple &TT, StringRef GPU) {
+  if (!GPU.empty())
+    return GPU;
+
+  // HSA only supports CI+, so change the default GPU to a CI for HSA.
+  if (TT.getArch() == Triple::amdgcn)
+    return (TT.getOS() == Triple::AMDHSA) ? "kaveri" : "tahiti";
+
+  return "";
+}
+
 AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, const Triple &TT,
                                          StringRef CPU, StringRef FS,
                                          TargetOptions Options, Reloc::Model RM,
                                          CodeModel::Model CM,
                                          CodeGenOpt::Level OptLevel)
-    : LLVMTargetMachine(T, computeDataLayout(TT), TT, CPU, FS, Options, RM, CM,
+    : LLVMTargetMachine(T, computeDataLayout(TT), TT,
+                        getGPUOrDefault(TT, CPU), FS, Options, RM, CM,
                         OptLevel),
-      TLOF(createTLOF(getTargetTriple())), Subtarget(TT, CPU, FS, *this),
+      TLOF(createTLOF(getTargetTriple())),
+      Subtarget(TT, getTargetCPU(), FS, *this),
       IntrinsicInfo() {
   setRequiresStructuredCFG(true);
   initAsmInfo();
@@ -213,7 +231,7 @@ void AMDGPUPassConfig::addIRPasses() {
 void AMDGPUPassConfig::addCodeGenPrepare() {
   const AMDGPUSubtarget &ST = *getAMDGPUTargetMachine().getSubtargetImpl();
   if (ST.isPromoteAllocaEnabled()) {
-    addPass(createAMDGPUPromoteAlloca(ST));
+    addPass(createAMDGPUPromoteAlloca(TM));
     addPass(createSROAPass());
   }
   TargetPassConfig::addCodeGenPrepare();
@@ -343,8 +361,8 @@ void GCNPassConfig::addPreSched2() {
 }
 
 void GCNPassConfig::addPreEmitPass() {
-  addPass(createSIInsertWaits(*TM), false);
-  addPass(createSILowerControlFlowPass(*TM), false);
+  addPass(createSIInsertWaitsPass(), false);
+  addPass(createSILowerControlFlowPass(), false);
 }
 
 TargetPassConfig *GCNTargetMachine::createPassConfig(PassManagerBase &PM) {
