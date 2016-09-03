@@ -58,8 +58,6 @@ public:
   };
 
 private:
-  std::string DevName;
-  bool Is64bit;
   bool DumpCode;
   bool R600ALUInst;
   bool HasVertexCache;
@@ -81,6 +79,7 @@ private:
   unsigned WavefrontSize;
   bool CFALUBug;
   int LocalMemorySize;
+  unsigned MaxPrivateElementSize;
   bool EnableVGPRSpilling;
   bool SGPRInitBug;
   bool IsGCN;
@@ -122,10 +121,6 @@ public:
   }
 
   void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
-
-  bool is64bit() const {
-    return Is64bit;
-  }
 
   bool hasVertexCache() const {
     return HasVertexCache;
@@ -249,6 +244,10 @@ public:
     return LocalMemorySize;
   }
 
+  unsigned getMaxPrivateElementSize() const {
+    return MaxPrivateElementSize;
+  }
+
   bool hasSGPRInitBug() const {
     return SGPRInitBug;
   }
@@ -272,10 +271,6 @@ public:
   // Helper functions to simplify if statements
   bool isTargetELF() const {
     return false;
-  }
-
-  StringRef getDeviceName() const {
-    return DevName;
   }
 
   bool enableHugeScratchBuffer() const {
