@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.66 2016/09/03 12:06:50 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.67 2016/09/03 12:07:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.66 2016/09/03 12:06:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.67 2016/09/03 12:07:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2498,7 +2498,14 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 
 	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
 	KASSERT(sc->sc_command_addr == 0);
-	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
+	/*
+	 * If enqueue pointer points at last of ring, it's Link TRB,
+	 * command TRB will be stored in 0th TRB.
+	 */
+	if (cr->xr_ep == cr->xr_ntrb - 1)
+		sc->sc_command_addr = xhci_ring_trbp(cr, 0);
+	else
+		sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
 
 	mutex_enter(&cr->xr_lock);
 	xhci_ring_put(sc, cr, NULL, trb, 1);
