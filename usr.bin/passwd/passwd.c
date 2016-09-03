@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.30 2009/04/17 20:25:08 dyoung Exp $	*/
+/*	$NetBSD: passwd.c,v 1.31 2016/09/03 02:24:04 sevan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: passwd.c,v 1.30 2009/04/17 20:25:08 dyoung Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.31 2016/09/03 02:24:04 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,12 +200,12 @@ static struct pw_module_s {
 	const char *argv0;
 	const char *args;
 	const char *usage;
-	int (*pw_init) __P((const char *));
-	int (*pw_arg) __P((char, const char *));
-	int (*pw_arg_end) __P((void));
-	void (*pw_end) __P((void));
+	int (*pw_init)(const char *);
+	int (*pw_arg)(char, const char *);
+	int (*pw_arg_end)(void);
+	void (*pw_end)(void);
 
-	int (*pw_chpw) __P((const char*));
+	int (*pw_chpw)(const char*);
 	int invalid;
 #define	INIT_INVALID 1
 #define ARG_INVALID 2
