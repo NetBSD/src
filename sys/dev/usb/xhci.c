@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.65 2016/08/18 07:18:52 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.66 2016/09/03 12:06:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.65 2016/08/18 07:18:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.66 2016/09/03 12:06:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1511,11 +1511,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 		return;
 	}
 
-	/*
-	 * This may fail in the case that xhci_close_pipe is called after
-	 * xhci_abort_xfer e.g. usbd_kill_pipe.
-	 */
-	(void)xhci_stop_endpoint(pipe);
+	if (xhci_get_epstate(sc, xs, dci) != XHCI_EPSTATE_STOPPED)
+		(void)xhci_stop_endpoint(pipe);
 
 	/*
 	 * set appropriate bit to be dropped.
