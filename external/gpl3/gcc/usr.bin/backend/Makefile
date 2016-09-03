@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2016/06/17 03:27:50 skrll Exp $
+#	$NetBSD: Makefile,v 1.33 2016/09/03 15:47:54 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -511,7 +511,9 @@ CFLAGS+=	-Wno-stack-protector
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"
-COPTS.tree-loop-distribution.c=	-O2
+COPTS.tree-loop-distribution.c+=-O2
+COPTS.generic-match.c+=-fno-jump-tables
+COPTS.gimple-match.c+=-fno-jump-tables
 .endif
 
 
