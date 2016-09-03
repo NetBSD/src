@@ -44,8 +44,6 @@ static const char *const EndCfIntrinsic = "llvm.SI.end.cf";
 
 class SIAnnotateControlFlow : public FunctionPass {
 
-  static char ID;
-
   Type *Boolean;
   Type *Void;
   Type *Int64;
@@ -83,13 +81,16 @@ class SIAnnotateControlFlow : public FunctionPass {
 
   void insertElse(BranchInst *Term);
 
-  Value *handleLoopCondition(Value *Cond, PHINode *Broken, llvm::Loop *L);
+  Value *handleLoopCondition(Value *Cond, PHINode *Broken,
+                             llvm::Loop *L, BranchInst *Term);
 
   void handleLoop(BranchInst *Term);
 
   void closeControlFlow(BasicBlock *BB);
 
 public:
+  static char ID;
+
   SIAnnotateControlFlow():
     FunctionPass(ID) { }
 
@@ -111,6 +112,11 @@ public:
 };
 
 } // end anonymous namespace
+
+INITIALIZE_PASS_BEGIN(SIAnnotateControlFlow, DEBUG_TYPE,
+                      "Annotate SI Control Flow", false, false)
+INITIALIZE_PASS_END(SIAnnotateControlFlow, DEBUG_TYPE,
+                    "Annotate SI Control Flow", false, false)
 
 char SIAnnotateControlFlow::ID = 0;
 
@@ -208,7 +214,7 @@ void SIAnnotateControlFlow::insertElse(BranchInst *Term) {
 
 /// \brief Recursively handle the condition leading to a loop
 Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
-                                                  llvm::Loop *L) {
+                                             llvm::Loop *L, BranchInst *Term) {
 
   // Only search through PHI nodes which are inside the loop.  If we try this
   // with PHI nodes that are outside of the loop, we end up inserting new PHI
@@ -232,7 +238,7 @@ Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
       }
 
       Phi->setIncomingValue(i, BoolFalse);
-      Value *PhiArg = handleLoopCondition(Incoming, Broken, L);
+      Value *PhiArg = handleLoopCondition(Incoming, Broken, L, Term);
       NewPhi->addIncoming(PhiArg, From);
     }
 
@@ -246,7 +252,23 @@ Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
 
       BasicBlock *From = Phi->getIncomingBlock(i);
       if (From == IDom) {
+        // We're in the following situation:
+        //   IDom/From
+        //      |   \
+        //      |   If-block
+        //      |   /
+        //     Parent
+        // where we want to break out of the loop if the If-block is not taken.
+        // Due to the depth-first traversal, there should be an end.cf
+        // intrinsic in Parent, and we insert an else.break before it.
+        //
+        // Note that the end.cf need not be the first non-phi instruction
+        // of parent, particularly when we're dealing with a multi-level
+        // break, but it should occur within a group of intrinsic calls
+        // at the beginning of the block.
         CallInst *OldEnd = dyn_cast<CallInst>(Parent->getFirstInsertionPt());
+        while (OldEnd && OldEnd->getCalledFunction() != EndCf)
+          OldEnd = dyn_cast<CallInst>(OldEnd->getNextNode());
         if (OldEnd && OldEnd->getCalledFunction() == EndCf) {
           Value *Args[] = { OldEnd->getArgOperand(0), NewPhi };
           Ret = CallInst::Create(ElseBreak, Args, "", OldEnd);
@@ -271,6 +293,11 @@ Value *SIAnnotateControlFlow::handleLoopCondition(Value *Cond, PHINode *Broken,
     Value *Args[] = { Cond, Broken };
     return CallInst::Create(IfBreak, Args, "", Insert);
 
+  // Insert IfBreak before TERM for constant COND.
+  } else if (isa<ConstantInt>(Cond)) {
+    Value *Args[] = { Cond, Broken };
+    return CallInst::Create(IfBreak, Args, "", Term);
+
   } else {
     llvm_unreachable("Unhandled loop condition!");
   }
@@ -286,7 +313,7 @@ void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
 
   Value *Cond = Term->getCondition();
   Term->setCondition(BoolTrue);
-  Value *Arg = handleLoopCondition(Cond, Broken, L);
+  Value *Arg = handleLoopCondition(Cond, Broken, L, Term);
 
   for (pred_iterator PI = pred_begin(Target), PE = pred_end(Target);
        PI != PE; ++PI) {
