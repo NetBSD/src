@@ -16,7 +16,7 @@ frontend, part of the LLVM Compiler Infrastructure, release 3.8. Here we
 describe the status of Clang in some detail, including major
 improvements from the previous release and new feature work. For the
 general LLVM release notes, see `the LLVM
-documentation <http://llvm.org/docs/ReleaseNotes.html>`_. All LLVM
+documentation <../../../docs/ReleaseNotes.html>`_. All LLVM
 releases may be downloaded from the `LLVM releases web
 site <http://llvm.org/releases/>`_.
 
@@ -33,11 +33,6 @@ here. Generic improvements to Clang as a whole or to its underlying
 infrastructure are described first, followed by language-specific
 sections with improvements to Clang's support for those languages.
 
-Major New Features
-------------------
-
-- Feature1...
-
 Improvements to Clang's diagnostics
 -----------------------------------
 
@@ -48,8 +43,6 @@ about them. The improvements since the 3.7 release include:
 - ``-Wmicrosoft`` has been split into many targeted flags, so that projects can
   choose to enable only a subset of these warnings. ``-Wno-microsoft`` still
   disables all these warnings, and ``-Wmicrosoft`` still enables them all.
-
--  ...
 
 New Compiler Flags
 ------------------
@@ -71,16 +64,89 @@ debugger. Clang supports tuning for three debuggers, as follows.
 
 Specifying ``-g`` without a tuning option will use a target-dependent default.
 
+The new ``-fstrict-vtable-pointers`` flag enables better devirtualization
+support (experimental).
 
-New Pragmas in Clang
------------------------
 
-Clang now supports the ...
+Alignment
+---------
+Clang has gotten better at passing down strict type alignment information to LLVM,
+and several targets have gotten better at taking advantage of that information.
 
-Windows Support
----------------
+Dereferencing a pointer that is not adequately aligned for its type is undefined
+behavior.  It may crash on target architectures that strictly enforce alignment, but
+even on architectures that do not, frequent use of unaligned pointers may hurt
+the performance of the generated code.
 
-Clang's support for building native Windows programs ...
+If you find yourself fixing a bug involving an inadequately aligned pointer, you
+have several options.
+
+The best option, when practical, is to increase the alignment of the memory.
+For example, this array is not guaranteed to be sufficiently aligned to store
+a pointer value:
+
+.. code-block:: c
+
+  char buffer[sizeof(const char*)];
+
+Writing a pointer directly into it violates C's alignment rules:
+
+.. code-block:: c
+
+  ((const char**) buffer)[0] = "Hello, world!\n";
+
+But you can use alignment attributes to increase the required alignment:
+
+.. code-block:: c
+
+  __attribute__((aligned(__alignof__(const char*))))
+  char buffer[sizeof(const char*)];
+
+When that's not practical, you can instead reduce the alignment requirements
+of the pointer.  If the pointer is to a struct that represents that layout of a
+serialized structure, consider making that struct packed; this will remove any
+implicit internal padding that the compiler might add to the struct and
+reduce its alignment requirement to 1.
+
+.. code-block:: c
+
+  struct file_header {
+    uint16_t magic_number;
+    uint16_t format_version;
+    uint16_t num_entries;
+  } __attribute__((packed));
+
+You may also override the default alignment assumptions of a pointer by
+using a typedef with explicit alignment:
+
+.. code-block:: c
+
+  typedef const char *unaligned_char_ptr __attribute__((aligned(1)));
+  ((unaligned_char_ptr*) buffer)[0] = "Hello, world!\n";
+
+The final option is to copy the memory into something that is properly
+aligned.  Be aware, however, that Clang will assume that pointers are
+properly aligned for their type when you pass them to a library function
+like memcpy.  For example, this code will assume that the source and
+destination pointers are both properly aligned for an int:
+
+.. code-block:: c
+
+  void copy_int_array(int *dest, const int *src, size_t num) {
+    memcpy(dest, src, num * sizeof(int));
+  }
+
+You may explicitly disable this assumption by casting the argument to a
+less-aligned pointer type:
+
+.. code-block:: c
+
+  void copy_unaligned_int_array(int *dest, const int *src, size_t num) {
+    memcpy((char*) dest, (const char*) src, num * sizeof(int));
+  }
+
+Clang promises not to look through the explicit cast when inferring the
+alignment of this memcpy.
 
 
 C Language Changes in Clang
@@ -116,30 +182,6 @@ type conversion rules, so the following code would not compile:
 Now, Clang is able to selectively use C's type conversion rules during overload
 resolution in C, which allows the above example to compile (albeit potentially
 with a warning about an implicit conversion from ``int*`` to ``char*``).
-
-
-...
-
-
-C11 Feature Support
-^^^^^^^^^^^^^^^^^^^
-
-...
-
-C++ Language Changes in Clang
------------------------------
-
-- ...
-
-C++11 Feature Support
-^^^^^^^^^^^^^^^^^^^^^
-
-...
-
-Objective-C Language Changes in Clang
--------------------------------------
-
-...
 
 OpenCL C Language Changes in Clang
 ----------------------------------
@@ -180,10 +222,10 @@ Several additional features/bugfixes have been added to the previous standards:
 - Improved diagnostics for function pointers.
 
 OpenMP Support in Clang
----------------------
+-----------------------
 
-OpenMP 3.1 is fully supported and is enabled by default with -fopenmp 
-which now uses the clang OpenMP library instead of the GCC OpenMP library.
+OpenMP 3.1 is fully supported and is enabled by default with ``-fopenmp`` 
+which now uses the Clang OpenMP library instead of the GCC OpenMP library.
 The runtime can be built in-tree.  
 
 In addition to OpenMP 3.1, several important elements of the OpenMP 4.0/4.5 
@@ -214,7 +256,7 @@ Clang has experimental support for end-to-end CUDA compilation now:
   pipelines, links device-side code with appropriate CUDA bitcode and produces
   single object file with host and GPU code.
 
-- Implemented target attribute-based function overloading which allows clang to
+- Implemented target attribute-based function overloading which allows Clang to
   compile CUDA sources without splitting them into separate host/device TUs.
 
 Internal API Changes
@@ -271,17 +313,11 @@ recordDecl() previously matched AST nodes of type CXXRecordDecl, but now
 matches AST nodes of type RecordDecl. If a CXXRecordDecl is required, use the
 cxxRecordDecl() matcher instead.
 
-...
-
-libclang
---------
-
-...
 
 Static Analyzer
 ---------------
 
-The scan-build and scan-view tools will now be installed with clang. Use these
+The scan-build and scan-view tools will now be installed with Clang. Use these
 tools to run the static analyzer on projects and view the produced results.
 
 Static analysis of C++ lambdas has been greatly improved, including
@@ -302,25 +338,76 @@ Several new checks were added:
   the following command to scan-build:
   ``-enable-checker optin.osx.cocoa.localizability``.
 
-Core Analysis Improvements
-==========================
 
-- ...
+Clang-tidy
+----------
 
-New Issues Found
-================
+New checks have been added to clang-tidy:
 
-- ...
+* Checks enforcing certain rules of the `CERT Secure Coding Standards
+  <https://www.securecoding.cert.org/confluence/display/seccode/SEI+CERT+Coding+Standards>`_:
 
-Python Binding Changes
-----------------------
+  * `cert-dcl03-c <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-dcl03-c.html>`_
+  * `cert-dcl50-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-dcl50-cpp.html>`_
+  * `cert-err52-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-err52-cpp.html>`_
+  * `cert-err58-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-err58-cpp.html>`_
+  * `cert-err60-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-err60-cpp.html>`_
+  * `cert-err61-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-err61-cpp.html>`_
+  * `cert-fio38-c <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-fio38-c.html>`_
+  * `cert-oop11-cpp <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cert-oop11-cpp.html>`_
 
-The following methods have been added:
+* Checks supporting the `C++ Core Guidelines
+  <https://github.com/isocpp/CppCoreGuidelines/blob/master/CppCoreGuidelines.md>`_:
 
--  ...
+  * `cppcoreguidelines-pro-bounds-array-to-pointer-decay <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-bounds-array-to-pointer-decay.html>`_
+  * `cppcoreguidelines-pro-bounds-constant-array-index <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-bounds-constant-array-index.html>`_
+  * `cppcoreguidelines-pro-bounds-pointer-arithmetic <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-bounds-pointer-arithmetic.html>`_
+  * `cppcoreguidelines-pro-type-const-cast <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-const-cast.html>`_
+  * `cppcoreguidelines-pro-type-cstyle-cast <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-cstyle-cast.html>`_
+  * `cppcoreguidelines-pro-type-reinterpret-cast <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-reinterpret-cast.html>`_
+  * `cppcoreguidelines-pro-type-static-cast-downcast <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-static-cast-downcast.html>`_
+  * `cppcoreguidelines-pro-type-union-access <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-union-access.html>`_
+  * `cppcoreguidelines-pro-type-vararg <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/cppcoreguidelines-pro-type-vararg.html>`_
 
-Significant Known Problems
-==========================
+* The functionality of the clang-modernize tool has been moved to the new
+  ``modernize`` module in clang-tidy along with a few new checks:
+
+  * `modernize-loop-convert <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-loop-convert.html>`_
+  * `modernize-make-unique <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-make-unique.html>`_
+  * `modernize-pass-by-value <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-pass-by-value.html>`_
+  * `modernize-redundant-void-arg <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-redundant-void-arg.html>`_
+  * `modernize-replace-auto-ptr <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-replace-auto-ptr.html>`_
+  * `modernize-shrink-to-fit <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-shrink-to-fit.html>`_ (renamed from readability-shrink-to-fit)
+  * `modernize-use-auto <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-use-auto.html>`_
+  * `modernize-use-default <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-use-default.html>`_
+  * `modernize-use-nullptr <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-use-nullptr.html>`_
+  * `modernize-use-override <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/modernize-use-override.html>`_ (renamed from misc-use-override)
+
+* New checks flagging various readability-related issues:
+
+  * `readability-identifier-naming <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-identifier-naming.html>`_
+  * `readability-implicit-bool-cast <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-implicit-bool-cast.html>`_
+  * `readability-inconsistent-declaration-parameter-name <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-inconsistent-declaration-parameter-name.html>`_
+  * `readability-uniqueptr-delete-release <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/readability-uniqueptr-delete-release.html>`_
+
+* New ``performance`` module for checks targeting potential performance issues:
+
+  * performance-unnecessary-copy-initialization
+
+* A few new checks have been added to the ``misc`` module:
+
+  * `misc-definitions-in-headers <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-definitions-in-headers.html>`_
+  * misc-move-const-arg
+  * `misc-move-constructor-init <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-move-constructor-init.html>`_
+  * `misc-new-delete-overloads <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-new-delete-overloads.html>`_
+  * `misc-non-copyable-objects <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-non-copyable-objects.html>`_
+  * `misc-sizeof-container <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-sizeof-container.html>`_
+  * `misc-string-integer-assignment <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-string-integer-assignment.html>`_
+  * `misc-throw-by-value-catch-by-reference <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-throw-by-value-catch-by-reference.html>`_
+  * `misc-unused-alias-decls <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-unused-alias-decls.html>`_
+  * `misc-unused-parameters <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-unused-parameters.html>`_
+  * `misc-virtual-near-miss <http://llvm.org/releases/3.8.0/tools/clang/tools/extra/docs/clang-tidy/checks/misc-virtual-near-miss.html>`_
+
 
 Additional Information
 ======================
