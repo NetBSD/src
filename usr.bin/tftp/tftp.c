@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.35 2016/09/03 02:24:04 sevan Exp $	*/
+/*	$NetBSD: tftp.c,v 1.36 2016/09/03 06:00:32 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.35 2016/09/03 02:24:04 sevan Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.36 2016/09/03 06:00:32 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ static int makerequest(int, const char *, struct tftphdr *, const char *, off_t)
 static void printstats(const char *, unsigned long);
 static void startclock(void);
 static void stopclock(void);
-__dead static void timer(int);
+static __dead void timer(int);
 static void tpacket(const char *, struct tftphdr *, int);
 static int cmpport(struct sockaddr *, struct sockaddr *);
 
