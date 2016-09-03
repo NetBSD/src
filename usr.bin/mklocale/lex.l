@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.19 2016/09/03 02:24:04 sevan Exp $	*/
+/*	$NetBSD: lex.l,v 1.20 2016/09/03 05:56:59 dholland Exp $	*/
 
 %{
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.l	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lex.l,v 1.19 2016/09/03 02:24:04 sevan Exp $");
+__RCSID("$NetBSD: lex.l,v 1.20 2016/09/03 05:56:59 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,7 @@ ENCODING			{ return(ENCODING); }
 
 #if	!defined(yywrap)
 int
-yywrap()
+yywrap(void)
 {
 	return(1);
 }
