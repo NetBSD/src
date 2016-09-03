@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2014/07/15 13:17:15 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2016/09/03 02:24:04 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -55,8 +55,8 @@ extern const char *language;           /* the language indicator */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-extern int      STRNCMP __P((char *, char *, int));
-extern char    *convexp __P((char *));
-extern char    *expmatch __P((char *, char *, char *));
+extern int      STRNCMP(char *, char *, int);
+extern char    *convexp(char *);
+extern char    *expmatch(char *, char *, char *);
 __END_DECLS
 

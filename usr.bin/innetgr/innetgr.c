@@ -1,4 +1,4 @@
-/*	$NetBSD: innetgr.c,v 1.8 2012/03/20 20:34:57 matt Exp $	*/
+/*	$NetBSD: innetgr.c,v 1.9 2016/09/03 02:24:04 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,15 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: innetgr.c,v 1.8 2012/03/20 20:34:57 matt Exp $");
+__RCSID("$NetBSD: innetgr.c,v 1.9 2016/09/03 02:24:04 sevan Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netgroup.h>
 
-static void usage __P((void)) __dead;
-int main __P((int, char *[]));
+static void usage(void) __dead;
 
 static void
 usage(void)

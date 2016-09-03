@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.34 2012/07/16 09:20:26 he Exp $	*/
+/*	$NetBSD: tftp.c,v 1.35 2016/09/03 02:24:04 sevan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.34 2012/07/16 09:20:26 he Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.35 2016/09/03 02:24:04 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,14 +73,14 @@ char    ackbuf[PKTSIZE];
 int	timeout;
 jmp_buf	timeoutbuf;
 
-static void nak __P((int, struct sockaddr *));
-static int makerequest __P((int, const char *, struct tftphdr *, const char *, off_t));
-static void printstats __P((const char *, unsigned long));
-static void startclock __P((void));
-static void stopclock __P((void));
-__dead static void timer __P((int));
-static void tpacket __P((const char *, struct tftphdr *, int));
-static int cmpport __P((struct sockaddr *, struct sockaddr *));
+static void nak(int, struct sockaddr *);
+static int makerequest(int, const char *, struct tftphdr *, const char *, off_t);
+static void printstats(const char *, unsigned long);
+static void startclock(void);
+static void stopclock(void);
+__dead static void timer(int);
+static void tpacket(const char *, struct tftphdr *, int);
+static int cmpport(struct sockaddr *, struct sockaddr *);
 
 static void get_options(struct tftphdr *, int);
 static int tftp_igmp_join(void);

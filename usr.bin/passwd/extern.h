@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2011/09/16 15:39:27 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2016/09/03 02:24:04 sevan Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -62,24 +62,24 @@ enum {
 };
 
 #ifdef KERBEROS5
-int	krb5_init __P((const char *));
-int	krb5_arg __P((char, const char *));
-int	krb5_arg_end __P((void));
-void	krb5_end __P((void));
-int	krb5_chpw __P((const char *));
+int	krb5_init(const char *);
+int	krb5_arg(char, const char *);
+int	krb5_arg_end(void);
+void	krb5_end(void);
+int	krb5_chpw(const char *);
 #endif
 #ifdef YP
-int	yp_init __P((const char *));
-int	yp_arg __P((char, const char *));
-int	yp_arg_end __P((void));
-void	yp_end __P((void));
-int	yp_chpw __P((const char *));
+int	yp_init(const char *);
+int	yp_arg(char, const char *);
+int	yp_arg_end(void);
+void	yp_end(void);
+int	yp_chpw(const char *);
 #endif
 /* local */
-int	local_init __P((const char *));
-int	local_arg __P((char, const char *));
-int	local_arg_end __P((void));
-void	local_end __P((void));
-int	local_chpw __P((const char *));
+int	local_init(const char *);
+int	local_arg(char, const char *);
+int	local_arg_end(void);
+void	local_end(void);
+int	local_chpw(const char *);
 
 #endif /* USE_PAM */
