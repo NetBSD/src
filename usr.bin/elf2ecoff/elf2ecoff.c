@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.29 2013/11/10 17:14:25 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.30 2016/09/03 11:35:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -217,23 +217,25 @@ usage:
 	    (int (*) (const void *, const void *)) phcmp);
 
 	for (i = 0; i < ex.e_phnum; i++) {
-		/* Section types we can ignore... */
-		if (ph[i].p_type == PT_NULL || ph[i].p_type == PT_NOTE ||
-		    ph[i].p_type == PT_PHDR ||
-		    ph[i].p_type == PT_MIPS_REGINFO) {
-
+		switch (ph[i].p_type) {
+		case PT_NOTE:
+		case PT_NULL:
+		case PT_PHDR:
+		case PT_MIPS_ABIFLAGS:
+		case PT_MIPS_REGINFO:
+			/* Section types we can ignore... */
 			if (debug) {
-				fprintf(stderr, "  skipping PH %zu type %d "
-				    "flags 0x%x\n",
+				fprintf(stderr, "  skipping PH %zu type %#x "
+				    "flags %#x\n",
 				    i, ph[i].p_type, ph[i].p_flags);
 			}
 			continue;
-		}
-		/* Section types we can't handle... */
-		else
+		default:
+			/* Section types we can't handle... */
 			if (ph[i].p_type != PT_LOAD)
-				errx(1, "Program header %zu type %d can't be "
+				errx(1, "Program header %zu type %#x can't be "
 				    "converted", i, ph[i].p_type);
+		}
 		/* Writable (data) segment? */
 		if (ph[i].p_flags & PF_W) {
 			struct sect ndata, nbss;
