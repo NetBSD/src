@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.951 2016/09/03 12:32:12 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.952 2016/09/03 16:10:34 jakllsch Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1399,7 +1399,11 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 .endfor
 
 # During transition from xorg-server 1.10 to 1.18
+.if ${MACHINE} == "shark"
+HAVE_XORG_SERVER_VER?=118
+.else
 HAVE_XORG_SERVER_VER?=110
+.endif
 
 .if ${HAVE_XORG_SERVER_VER} == "118"
 XORG_SERVER_SUBDIR?=xorg-server
