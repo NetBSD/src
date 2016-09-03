@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup.c,v 1.8 2016/09/03 02:24:04 sevan Exp $	*/
+/*	$NetBSD: netgroup.c,v 1.9 2016/09/03 05:58:30 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,16 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netgroup.c,v 1.8 2016/09/03 02:24:04 sevan Exp $");
+__RCSID("$NetBSD: netgroup.c,v 1.9 2016/09/03 05:58:30 dholland Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <netgroup.h>
 
-static void usage(void) __dead;
-
-static void
+static __dead void
 usage(void)
 {
 
