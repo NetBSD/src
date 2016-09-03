@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.15 2011/03/18 03:06:21 joerg Exp $	*/
+/*	$NetBSD: testldt.c,v 1.16 2016/09/03 08:47:38 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1993 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ check_desc(int desc)
 {
 	unsigned int sel = LSEL(desc, SEL_UPL);
 	set_fs(sel);
-	return(get_fs_byte((char *) 0));
+	return get_fs_byte((char *)0);
 }
 
 static void
@@ -89,14 +89,14 @@ make_sd(void *basep, unsigned limit, int type, int dpl, int seg32, int inpgs)
 	d.sd.sd_lobase  = base & 0x00ffffff;
 	d.sd.sd_type    = type & 0x01f;
 	d.sd.sd_dpl     = dpl & 0x3;
-	d.sd.sd_p	     = 1;
+	d.sd.sd_p       = 1;
 	d.sd.sd_hilimit = (limit & 0x00ff0000) >> 16;
-	d.sd.sd_xx	     = 0;
+	d.sd.sd_xx      = 0;
 	d.sd.sd_def32   = seg32?1:0;
 	d.sd.sd_gran    = inpgs?1:0;
 	d.sd.sd_hibase  = (base & 0xff000000) >> 24;
 
-	return (&d);
+	return &d;
 }
 
 static union descriptor *
@@ -110,10 +110,10 @@ make_gd(void *func, unsigned int sel, unsigned stkcpy, int type, int dpl)
 	d.gd.gd_stkcpy   = stkcpy & 0x1ff;
 	d.gd.gd_type     = type & 0x1ff;
 	d.gd.gd_dpl      = dpl & 0x3;
-	d.gd.gd_p	      = 1;
+	d.gd.gd_p        = 1;
 	d.gd.gd_hioffset = (offset & 0xffff0000) >> 16;
 
-	return(&d);
+	return &d;
 }
 
 static const char *
@@ -133,10 +133,9 @@ segtype(unsigned int type)
 {
 	if (type >= 32)
 		return "Out of range";
-	
+
 	return seg_type_name[type];
 }
-	
 
 static void
 print_ldt(union descriptor *dp)
@@ -145,8 +144,8 @@ print_ldt(union descriptor *dp)
 	unsigned int type, dpl;
 	unsigned long lp[2];
 
-	(void) memcpy(lp, dp, sizeof(lp));
-    
+	memcpy(lp, dp, sizeof(lp));
+
 	base_addr = dp->sd.sd_lobase | (dp->sd.sd_hibase << 24);
 	limit = dp->sd.sd_lolimit | (dp->sd.sd_hilimit << 16);
 	offset = dp->gd.gd_looffset | (dp->gd.gd_hioffset << 16);
@@ -157,13 +156,11 @@ print_ldt(union descriptor *dp)
 
 	if (type == SDT_SYS386CGT || type == SDT_SYS286CGT)
 		printf("LDT: Gate Off %8.8lx, Sel   %5.5x, Stkcpy %lu DPL %d,"
-		    " Type %d/%s\n",
-		    offset, dp->gd.gd_selector, stack_copy, dpl,
+		    " Type %d/%s\n", offset, dp->gd.gd_selector, stack_copy, dpl,
 		    type, segtype(type));
 	else
 		printf("LDT: Seg Base %8.8lx, Limit %5.5lx, DPL %d, "
-		    "Type %d/%s\n",
-		    base_addr, limit, dpl,
+		    "Type %d/%s\n", base_addr, limit, dpl,
 		    type, segtype(type));
 	printf("	  ");
 	if (type & 0x1)
@@ -188,7 +185,6 @@ print_ldt(union descriptor *dp)
 	printf("	  Raw descriptor: %08lx %08lx\n", lp[0], lp[1]);
 }
 
-/* ARGSUSED */
 static void
 busfault(int signo)
 {
@@ -196,12 +192,13 @@ busfault(int signo)
 }
 
 static void
-usage(int status)
+usage(void)
 {
-	errx(status, "Usage: testldt [-v]");
+	errx(1, "Usage: testldt [-v]");
 }
 
 #define MAX_USER_LDT 1024
+#define DATA_ADDR ((void *)0x005f0000)
 
 int
 main(int argc, char *argv[])
@@ -226,21 +223,20 @@ main(int argc, char *argv[])
 			verbose++;
 			break;
 		default:
-			usage(1);
+			usage();
 			break;
 		}
 	}
 
-	printf("Testing i386_get_ldt...\n");
+	printf("Testing i386_get_ldt\n");
 	if ((num = i386_get_ldt(0, ldt, MAX_USER_LDT)) < 0)
 		err(2, "get_ldt");
-
 	if (num == 0)
 		errx(1, "i386_get_ldt() returned empty initial LDT");
 
 	if (verbose) {
 		printf("Got %d (initial) LDT entries\n", num);
-		for (n=0; n < num; n++) {
+		for (n = 0; n < num; n++) {
 			printf("Entry %d: ", n);
 			print_ldt(&ldt[n]);
 		}
@@ -249,15 +245,11 @@ main(int argc, char *argv[])
 	/*
 	 * mmap a data area and assign an LDT to it
 	 */
-	printf("Testing i386_set_ldt...\n");
-	data = (void *) mmap( (char *)0x005f0000, 0x0fff,
-	    PROT_EXEC | PROT_READ | PROT_WRITE,
+	printf("Testing i386_set_ldt\n");
+	data = (void *)mmap(DATA_ADDR, 4096, PROT_READ | PROT_WRITE,
 	    MAP_FIXED | MAP_PRIVATE | MAP_ANON, -1, (off_t)0);
-	if (data == NULL)
+	if (data != DATA_ADDR)
 		err(1, "mmap");
-
-	if (verbose)
-		printf("data address: %p\n", data);
 
 	*data = 0x97;
 
@@ -265,8 +257,8 @@ main(int argc, char *argv[])
 	sd = make_sd(data, 2048, SDT_MEMRW, SEL_UPL, 0, 0);
 	if ((num = i386_set_ldt(1024, sd, 1)) < 0)
 		err(1, "set_ldt");
-
-	if (verbose) printf("setldt returned: %d\n", num);
+	if (verbose)
+		printf("setldt returned: %d\n", num);
 	if ((n = i386_get_ldt(num, ldt, 1)) < 0)
 		err(1, "get_ldt");
 
@@ -281,13 +273,13 @@ main(int argc, char *argv[])
 	if (check_desc(num) != 0x97)
 		errx(1, "ERROR: descriptor check failed; "
 		    "expected 0x97, got 0x%x", check_desc(num));
-	
+
 	/*
 	 * Test a Call Gate
 	 */
-	printf("Making Call Gate\n");
+	printf("Making call gate\n");
 	fflush(stdout);
-	
+
 	gd = make_gd((void *)gated_call, cs, 0, SDT_SYS386CGT, SEL_UPL);
 	if ((num = i386_set_ldt(4095, gd, 1)) < 0)
 		err(1, "set_ldt: call gate");
@@ -319,9 +311,9 @@ main(int argc, char *argv[])
 	 * Test multiple sets.
 	 */
 
-	printf("Testing multiple descriptors at once.\n");
+	printf("Testing multiple descriptors at once\n");
 
-	sd = (union descriptor *)malloc (sizeof(*sd) * 2);
+	sd = malloc(sizeof(*sd) * 2);
 	if (sd == NULL)
 		err(1, "can't malloc");
 
@@ -330,8 +322,8 @@ main(int argc, char *argv[])
 
 	if ((num = i386_set_ldt(8000, (union descriptor *)sd, 2)) < 0)
 		err(1, "set_ldt");
-
-	if (verbose) printf("setldt returned: %d\n", num);
+	if (verbose)
+		printf("setldt returned: %d\n", num);
 	if ((n = i386_get_ldt(num, ldt, 2)) < 0)
 		err(1, "get_ldt");
 
@@ -342,17 +334,16 @@ main(int argc, char *argv[])
 		print_ldt(&ldt[1]);
 	}
 	val = check_desc(num);
-	printf("contents of segment ONE: %x\n", val);
-	if (val != 1) {
+	printf("Contents of segment ONE: %x\n", val);
+	if (val != 1)
 		errx(1, "ONE has unexpected value %x", val);
-	}
-	val = check_desc(num+1);	
-	printf("contents of segment TWO: %x\n", val);
+	val = check_desc(num+1);
+	printf("Contents of segment TWO: %x\n", val);
 	if (val != 2)
 		errx(1, "TWO has unexpected value %x", val);
 
 	if ((n = i386_get_ldt(num, ldt, 2)) < 0)
-		err(1, "get_ldt");		
+		err(1, "get_ldt");
 
 	if (verbose) {
 		printf("Entry %d: ", num);
@@ -360,6 +351,8 @@ main(int argc, char *argv[])
 		printf("Entry %d: ", num+1);
 		print_ldt(&ldt[1]);
 	}
+
+	printf("Done! No error detected.\n");
 
 	return 0;
 }
