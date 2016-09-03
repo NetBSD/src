@@ -2085,8 +2085,10 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 {
 	FILE		*fp;
 	char		 buf[BUFSIZ];
+	int		 rv;
 
 	if (cursor == NULL || pgp == NULL || p == NULL) {
+		snprintf(cursor->why, sizeof(cursor->why), "No input data");
 		return 0;
 	}
 	memset(cursor, 0x0, sizeof(*cursor));
@@ -2104,19 +2106,19 @@ setup_data(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 			return 0;
 		}
 		if (is_armored(buf, sizeof(buf))) {
-			read_ascii_armor_file(cursor, p);
+			rv = read_ascii_armor_file(cursor, p);
 		} else {
-			read_binary_file(pgp, "signature", "%s", (const char *)p);
+			rv = read_binary_file(pgp, "signature", "%s", (const char *)p);
 		}
 		fclose(fp);
 	} else {
 		if (is_armored(p, (size_t)size)) {
-			read_ascii_armor_memory(cursor, p, (size_t)size);
+			rv = read_ascii_armor_memory(cursor, p, (size_t)size);
 		} else {
-			read_binary_memory(pgp, "signature", p, (size_t)size);
+			rv = read_binary_memory(pgp, "signature", p, (size_t)size);
 		}
 	}
-	return 1;
+	return rv;
 }
 
 /* get the data and size from litdata packet */
@@ -2780,7 +2782,6 @@ pgpv_verify(pgpv_cursor_t *cursor, pgpv_t *pgp, const void *p, ssize_t size)
 		return 0;
 	}
 	if (!setup_data(cursor, pgp, p, size)) {
-		snprintf(cursor->why, sizeof(cursor->why), "No input data");
 		return 0;
 	}
 	if (ARRAY_COUNT(cursor->pgp->pkts) == ARRAY_LAST(cursor->pgp->datastarts) + 1) {
