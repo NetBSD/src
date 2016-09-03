@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.56 2016/09/03 12:20:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.55 2016/05/27 16:35:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.56 2016/09/03 12:20:58 christos Exp $");
 
 #include "opt_pax.h"
 
@@ -632,7 +632,7 @@ pax_aslr_rtld_offset(struct exec_package *epp, vaddr_t align, int use_topdown)
 }
 
 void
-pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
+pax_aslr_stack(struct exec_package *epp, vsize_t *max_stack_size)
 {
 	if (!pax_aslr_epp_active(epp))
 		return;
