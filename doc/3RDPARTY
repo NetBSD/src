@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1356 2016/09/03 23:01:57 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1357 2016/09/03 23:31:53 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -737,7 +737,7 @@ Notes:
   .so'ing only. Copy the rest to man.
 
 Package:	llvm
-Version:	3.4rc1 (r195771)
+Version:	3.8.1+ (r280599)
 Current Vers.:	3.9.0
 Maintainer:	llvmdev@cs.uiuc.edu
 Home Page:	http://llvm.org
