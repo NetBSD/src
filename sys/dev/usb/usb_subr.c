@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.214 2016/09/03 07:23:27 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.215 2016/09/03 07:29:16 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.214 2016/09/03 07:23:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.215 2016/09/03 07:29:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1545,10 +1545,8 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		return;
 	}
 
-	for (i = 0;
-	     i < __arraycount(di->udi_ports) &&
-		     i < dev->ud_hub->uh_hubdesc.bNbrPorts;
-	     i++) {
+	const int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	for (i = 0; i < __arraycount(di->udi_ports) && i < nports; i++) {
 		p = &dev->ud_hub->uh_ports[i];
 		if (p->up_dev)
 			err = p->up_dev->ud_addr;
@@ -1573,7 +1571,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		}
 		di->udi_ports[i] = err;
 	}
-	di->udi_nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	di->udi_nports = nports;
 }
 
 #ifdef COMPAT_30
@@ -1621,9 +1619,9 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
 		di->udi_nports = 0;
 		return;
 	}
-	for (i = 0;
-	     i < __arraycount(di->udi_ports) &&
-		     i < dev->ud_hub->uh_hubdesc.bNbrPorts;
+
+	const int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	for (i = 0; i < __arraycount(di->udi_ports) && i < nports;
 	     i++) {
 		p = &dev->ud_hub->uh_ports[i];
 		if (p->up_dev)
@@ -1641,7 +1639,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
 		}
 		di->udi_ports[i] = err;
 	}
-	di->udi_nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	di->udi_nports = nports;
 }
 #endif
 
