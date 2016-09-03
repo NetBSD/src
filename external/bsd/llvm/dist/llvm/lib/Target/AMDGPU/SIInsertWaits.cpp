@@ -26,6 +26,8 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 
+#define DEBUG_TYPE "si-insert-waits"
+
 using namespace llvm;
 
 namespace {
@@ -53,7 +55,6 @@ typedef std::pair<unsigned, unsigned> RegInterval;
 class SIInsertWaits : public MachineFunctionPass {
 
 private:
-  static char ID;
   const SIInstrInfo *TII;
   const SIRegisterInfo *TRI;
   const MachineRegisterInfo *MRI;
@@ -116,7 +117,9 @@ private:
   void handleSendMsg(MachineBasicBlock &MBB, MachineBasicBlock::iterator I);
 
 public:
-  SIInsertWaits(TargetMachine &tm) :
+  static char ID;
+
+  SIInsertWaits() :
     MachineFunctionPass(ID),
     TII(nullptr),
     TRI(nullptr),
@@ -136,14 +139,22 @@ public:
 
 } // End anonymous namespace
 
+INITIALIZE_PASS_BEGIN(SIInsertWaits, DEBUG_TYPE,
+                      "SI Insert Waits", false, false)
+INITIALIZE_PASS_END(SIInsertWaits, DEBUG_TYPE,
+                    "SI Insert Waits", false, false)
+
 char SIInsertWaits::ID = 0;
 
-const Counters SIInsertWaits::WaitCounts = { { 15, 7, 7 } };
+char &llvm::SIInsertWaitsID = SIInsertWaits::ID;
+
+FunctionPass *llvm::createSIInsertWaitsPass() {
+  return new SIInsertWaits();
+}
+
+const Counters SIInsertWaits::WaitCounts = { { 15, 7, 15 } };
 const Counters SIInsertWaits::ZeroCounts = { { 0, 0, 0 } };
 
-FunctionPass *llvm::createSIInsertWaits(TargetMachine &tm) {
-  return new SIInsertWaits(tm);
-}
 
 Counters SIInsertWaits::getHwCounts(MachineInstr &MI) {
   uint64_t TSFlags = MI.getDesc().TSFlags;
@@ -379,7 +390,7 @@ bool SIInsertWaits::insertWait(MachineBasicBlock &MBB,
   BuildMI(MBB, I, DebugLoc(), TII->get(AMDGPU::S_WAITCNT))
           .addImm((Counts.Named.VM & 0xF) |
                   ((Counts.Named.EXP & 0x7) << 4) |
-                  ((Counts.Named.LGKM & 0x7) << 8));
+                  ((Counts.Named.LGKM & 0xF) << 8));
 
   LastOpcodeType = OTHER;
   LastInstWritesM0 = false;
@@ -463,7 +474,7 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const SIInstrInfo *>(MF.getSubtarget().getInstrInfo());
   TRI =
       static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
-
+  const AMDGPUSubtarget &ST = MF.getSubtarget<AMDGPUSubtarget>();
   MRI = &MF.getRegInfo();
 
   WaitedOn = ZeroCounts;
@@ -482,6 +493,12 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
          I != E; ++I) {
 
+      // Insert required wait states for SMRD reading an SGPR written by a VALU
+      // instruction.
+      if (ST.getGeneration() <= AMDGPUSubtarget::SOUTHERN_ISLANDS &&
+          I->getOpcode() == AMDGPU::V_READFIRSTLANE_B32)
+        TII->insertWaitStates(std::next(I), 4);
+
       // Wait for everything before a barrier.
       if (I->getOpcode() == AMDGPU::S_BARRIER)
         Changes |= insertWait(MBB, I, LastIssued);
@@ -494,14 +511,6 @@ bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
 
     // Wait for everything at the end of the MBB
     Changes |= insertWait(MBB, MBB.getFirstTerminator(), LastIssued);
-
-    // Functions returning something shouldn't contain S_ENDPGM, because other
-    // bytecode will be appended after it.
-    if (!ReturnsVoid) {
-      MachineBasicBlock::iterator I = MBB.getFirstTerminator();
-      if (I != MBB.end() && I->getOpcode() == AMDGPU::S_ENDPGM)
-        I->eraseFromParent();
-    }
   }
 
   return Changes;

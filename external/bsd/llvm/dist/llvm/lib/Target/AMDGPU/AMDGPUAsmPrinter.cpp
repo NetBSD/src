@@ -366,6 +366,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
         unsigned reg = MO.getReg();
         switch (reg) {
         case AMDGPU::EXEC:
+        case AMDGPU::EXEC_LO:
+        case AMDGPU::EXEC_HI:
         case AMDGPU::SCC:
         case AMDGPU::M0:
           continue;
@@ -483,7 +485,7 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   ProgInfo.DX10Clamp = 0;
 
   const MachineFrameInfo *FrameInfo = MF.getFrameInfo();
-  ProgInfo.ScratchSize = FrameInfo->estimateStackSize(MF);
+  ProgInfo.ScratchSize = FrameInfo->getStackSize();
 
   ProgInfo.FlatUsed = FlatUsed;
   ProgInfo.VCCUsed = VCCUsed;
@@ -593,6 +595,20 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
   }
 }
 
+// This is supposed to be log2(Size)
+static amd_element_byte_size_t getElementByteSizeValue(unsigned Size) {
+  switch (Size) {
+  case 4:
+    return AMD_ELEMENT_4_BYTES;
+  case 8:
+    return AMD_ELEMENT_8_BYTES;
+  case 16:
+    return AMD_ELEMENT_16_BYTES;
+  default:
+    llvm_unreachable("invalid private_element_size");
+  }
+}
+
 void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
                                          const SIProgramInfo &KernelInfo) const {
   const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
@@ -605,6 +621,11 @@ void AMDGPUAsmPrinter::EmitAmdKernelCodeT(const MachineFunction &MF,
       KernelInfo.ComputePGMRSrc1 |
       (KernelInfo.ComputePGMRSrc2 << 32);
   header.code_properties = AMD_CODE_PROPERTY_IS_PTR64;
+
+
+  AMD_HSA_BITS_SET(header.code_properties,
+                   AMD_CODE_PROPERTY_PRIVATE_ELEMENT_SIZE,
+                   getElementByteSizeValue(STM.getMaxPrivateElementSize()));
 
   if (MFI->hasPrivateSegmentBuffer()) {
     header.code_properties |=

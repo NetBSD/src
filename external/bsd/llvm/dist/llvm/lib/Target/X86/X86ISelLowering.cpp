@@ -11537,53 +11537,6 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   llvm_unreachable("Unimplemented!");
 }
 
-// This function assumes its argument is a BUILD_VECTOR of constants or
-// undef SDNodes. i.e: ISD::isBuildVectorOfConstantSDNodes(BuildVector) is
-// true.
-static bool BUILD_VECTORtoBlendMask(BuildVectorSDNode *BuildVector,
-                                    unsigned &MaskValue) {
-  MaskValue = 0;
-  unsigned NumElems = BuildVector->getNumOperands();
-
-  // There are 2 lanes if (NumElems > 8), and 1 lane otherwise.
-  // We don't handle the >2 lanes case right now.
-  unsigned NumLanes = (NumElems - 1) / 8 + 1;
-  if (NumLanes > 2)
-    return false;
-
-  unsigned NumElemsInLane = NumElems / NumLanes;
-
-  // Blend for v16i16 should be symmetric for the both lanes.
-  for (unsigned i = 0; i < NumElemsInLane; ++i) {
-    SDValue EltCond = BuildVector->getOperand(i);
-    SDValue SndLaneEltCond =
-        (NumLanes == 2) ? BuildVector->getOperand(i + NumElemsInLane) : EltCond;
-
-    int Lane1Cond = -1, Lane2Cond = -1;
-    if (isa<ConstantSDNode>(EltCond))
-      Lane1Cond = !isNullConstant(EltCond);
-    if (isa<ConstantSDNode>(SndLaneEltCond))
-      Lane2Cond = !isNullConstant(SndLaneEltCond);
-
-    unsigned LaneMask = 0;
-    if (Lane1Cond == Lane2Cond || Lane2Cond < 0)
-      // Lane1Cond != 0, means we want the first argument.
-      // Lane1Cond == 0, means we want the second argument.
-      // The encoding of this argument is 0 for the first argument, 1
-      // for the second. Therefore, invert the condition.
-      LaneMask = !Lane1Cond << i;
-    else if (Lane1Cond < 0)
-      LaneMask = !Lane2Cond << i;
-    else
-      return false;
-
-    MaskValue |= LaneMask;
-    if (NumLanes == 2)
-      MaskValue |= LaneMask << NumElemsInLane;
-  }
-  return true;
-}
-
 /// \brief Try to lower a VSELECT instruction to a vector shuffle.
 static SDValue lowerVSELECTtoVectorShuffle(SDValue Op,
                                            const X86Subtarget *Subtarget,
@@ -20588,20 +20541,49 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                           DAG.getConstant(0, dl, HalfT));
     swapInH = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, HalfT, N->getOperand(3),
                           DAG.getConstant(1, dl, HalfT));
-    swapInL = DAG.getCopyToReg(cpInH.getValue(0), dl,
-                               Regs64bit ? X86::RBX : X86::EBX,
-                               swapInL, cpInH.getValue(1));
-    swapInH = DAG.getCopyToReg(swapInL.getValue(0), dl,
-                               Regs64bit ? X86::RCX : X86::ECX,
-                               swapInH, swapInL.getValue(1));
-    SDValue Ops[] = { swapInH.getValue(0),
-                      N->getOperand(1),
-                      swapInH.getValue(1) };
+    swapInH =
+        DAG.getCopyToReg(cpInH.getValue(0), dl, Regs64bit ? X86::RCX : X86::ECX,
+                         swapInH, cpInH.getValue(1));
+    // If the current function needs the base pointer, RBX,
+    // we shouldn't use cmpxchg directly.
+    // Indeed the lowering of that instruction will clobber
+    // that register and since RBX will be a reserved register
+    // the register allocator will not make sure its value will
+    // be properly saved and restored around this live-range.
+    const X86RegisterInfo *TRI = Subtarget->getRegisterInfo();
+    SDValue Result;
     SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
+    unsigned BasePtr = TRI->getBaseRegister();
     MachineMemOperand *MMO = cast<AtomicSDNode>(N)->getMemOperand();
-    unsigned Opcode = Regs64bit ? X86ISD::LCMPXCHG16_DAG :
-                                  X86ISD::LCMPXCHG8_DAG;
-    SDValue Result = DAG.getMemIntrinsicNode(Opcode, dl, Tys, Ops, T, MMO);
+    if (TRI->hasBasePointer(DAG.getMachineFunction()) &&
+        (BasePtr == X86::RBX || BasePtr == X86::EBX)) {
+      // ISel prefers the LCMPXCHG64 variant.
+      // If that assert breaks, that means it is not the case anymore,
+      // and we need to teach LCMPXCHG8_SAVE_EBX_DAG how to save RBX,
+      // not just EBX. This is a matter of accepting i64 input for that
+      // pseudo, and restoring into the register of the right wide
+      // in expand pseudo. Everything else should just work.
+      assert(((Regs64bit == (BasePtr == X86::RBX)) || BasePtr == X86::EBX) &&
+             "Saving only half of the RBX");
+      unsigned Opcode = Regs64bit ? X86ISD::LCMPXCHG16_SAVE_RBX_DAG
+                                  : X86ISD::LCMPXCHG8_SAVE_EBX_DAG;
+      SDValue RBXSave = DAG.getCopyFromReg(swapInH.getValue(0), dl,
+                                           Regs64bit ? X86::RBX : X86::EBX,
+                                           HalfT, swapInH.getValue(1));
+      SDValue Ops[] = {/*Chain*/ RBXSave.getValue(1), N->getOperand(1), swapInL,
+                       RBXSave,
+                       /*Glue*/ RBXSave.getValue(2)};
+      Result = DAG.getMemIntrinsicNode(Opcode, dl, Tys, Ops, T, MMO);
+    } else {
+      unsigned Opcode =
+          Regs64bit ? X86ISD::LCMPXCHG16_DAG : X86ISD::LCMPXCHG8_DAG;
+      swapInL = DAG.getCopyToReg(swapInH.getValue(0), dl,
+                                 Regs64bit ? X86::RBX : X86::EBX, swapInL,
+                                 swapInH.getValue(1));
+      SDValue Ops[] = {swapInL.getValue(0), N->getOperand(1),
+                       swapInL.getValue(1)};
+      Result = DAG.getMemIntrinsicNode(Opcode, dl, Tys, Ops, T, MMO);
+    }
     SDValue cpOutL = DAG.getCopyFromReg(Result.getValue(0), dl,
                                         Regs64bit ? X86::RAX : X86::EAX,
                                         HalfT, Result.getValue(1));
@@ -20757,6 +20739,10 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::LCMPXCHG_DAG:       return "X86ISD::LCMPXCHG_DAG";
   case X86ISD::LCMPXCHG8_DAG:      return "X86ISD::LCMPXCHG8_DAG";
   case X86ISD::LCMPXCHG16_DAG:     return "X86ISD::LCMPXCHG16_DAG";
+  case X86ISD::LCMPXCHG8_SAVE_EBX_DAG:
+    return "X86ISD::LCMPXCHG8_SAVE_EBX_DAG";
+  case X86ISD::LCMPXCHG16_SAVE_RBX_DAG:
+    return "X86ISD::LCMPXCHG16_SAVE_RBX_DAG";
   case X86ISD::VZEXT_MOVL:         return "X86ISD::VZEXT_MOVL";
   case X86ISD::VZEXT_LOAD:         return "X86ISD::VZEXT_LOAD";
   case X86ISD::VZEXT:              return "X86ISD::VZEXT";
@@ -22888,6 +22874,14 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VFMSUBADDPDr213rY:
   case X86::VFMSUBADDPSr213rY:
     return emitFMA3Instr(MI, BB);
+  case X86::LCMPXCHG8B_SAVE_EBX:
+  case X86::LCMPXCHG16B_SAVE_RBX: {
+    unsigned BasePtr =
+        MI->getOpcode() == X86::LCMPXCHG8B_SAVE_EBX ? X86::EBX : X86::RBX;
+    if (!BB->isLiveIn(BasePtr))
+      BB->addLiveIn(BasePtr);
+    return BB;
+  }
   }
 }
 
@@ -24272,50 +24266,6 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-static SDValue
-transformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
-                                      const X86Subtarget *Subtarget) {
-  SDLoc dl(N);
-  SDValue Cond = N->getOperand(0);
-  SDValue LHS = N->getOperand(1);
-  SDValue RHS = N->getOperand(2);
-
-  if (Cond.getOpcode() == ISD::SIGN_EXTEND) {
-    SDValue CondSrc = Cond->getOperand(0);
-    if (CondSrc->getOpcode() == ISD::SIGN_EXTEND_INREG)
-      Cond = CondSrc->getOperand(0);
-  }
-
-  if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
-    return SDValue();
-
-  // A vselect where all conditions and data are constants can be optimized into
-  // a single vector load by SelectionDAGLegalize::ExpandBUILD_VECTOR().
-  if (ISD::isBuildVectorOfConstantSDNodes(LHS.getNode()) &&
-      ISD::isBuildVectorOfConstantSDNodes(RHS.getNode()))
-    return SDValue();
-
-  unsigned MaskValue = 0;
-  if (!BUILD_VECTORtoBlendMask(cast<BuildVectorSDNode>(Cond), MaskValue))
-    return SDValue();
-
-  MVT VT = N->getSimpleValueType(0);
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> ShuffleMask(NumElems, -1);
-  for (unsigned i = 0; i < NumElems; ++i) {
-    // Be sure we emit undef where we can.
-    if (Cond.getOperand(i)->getOpcode() == ISD::UNDEF)
-      ShuffleMask[i] = -1;
-    else
-      ShuffleMask[i] = i + NumElems * ((MaskValue >> i) & 1);
-  }
-
-  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  if (!TLI.isShuffleMaskLegal(ShuffleMask, VT))
-    return SDValue();
-  return DAG.getVectorShuffle(VT, dl, LHS, RHS, &ShuffleMask[0]);
-}
-
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
 /// nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
@@ -24728,25 +24678,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
 
       return DAG.getBitcast(VT, Ret);
     }
-  }
-
-  // We should generate an X86ISD::BLENDI from a vselect if its argument
-  // is a sign_extend_inreg of an any_extend of a BUILD_VECTOR of
-  // constants. This specific pattern gets generated when we split a
-  // selector for a 512 bit vector in a machine without AVX512 (but with
-  // 256-bit vectors), during legalization:
-  //
-  // (vselect (sign_extend (any_extend (BUILD_VECTOR)) i1) LHS RHS)
-  //
-  // Iff we find this pattern and the build_vectors are built from
-  // constants, we translate the vselect into a shuffle_vector that we
-  // know will be matched by LowerVECTOR_SHUFFLEtoBlend.
-  if ((N->getOpcode() == ISD::VSELECT ||
-       N->getOpcode() == X86ISD::SHRUNKBLEND) &&
-      !DCI.isBeforeLegalize() && !VT.is512BitVector()) {
-    SDValue Shuffle = transformVSELECTtoBlendVECTOR_SHUFFLE(N, DAG, Subtarget);
-    if (Shuffle.getNode())
-      return Shuffle;
   }
 
   // If this is a *dynamic* select (non-constant condition) and we can match
