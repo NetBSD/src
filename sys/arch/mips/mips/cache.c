@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.53 2016/08/19 10:05:35 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.54 2016/09/04 07:30:52 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.53 2016/08/19 10:05:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.54 2016/09/04 07:30:52 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -465,8 +465,6 @@ mips_config_cache_prehistoric(void)
 			panic("r4k pdcache line size %d",
 			    mci->mci_pdcache_line_size);
 		}
-
-		/* Virtually-indexed cache; no use for colors. */
 		break;
 
 	case MIPS_R4600:
@@ -581,8 +579,6 @@ primary_cache_is_2way:
 			mco->mco_pdcache_wbinv_range =
 			    vr4131v1_pdcache_wbinv_range_16;
 		}
-
-		/* Virtually-indexed cache; no use for colors. */
 		break;
 #ifdef ENABLE_MIPS4_CACHE_R10K
 	case MIPS_R10000:
