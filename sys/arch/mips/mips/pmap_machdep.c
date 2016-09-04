@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.5 2016/08/22 11:34:42 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.6 2016/09/04 07:38:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.5 2016/08/22 11:34:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6 2016/09/04 07:38:45 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -294,6 +294,7 @@ pmap_md_unmap_ephemeral_page(struct vm_page *pg, bool locked_p, register_t va,
 static void
 pmap_md_vca_page_wbinv(struct vm_page *pg, bool locked_p)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	pt_entry_t pte;
 
 	const register_t va = pmap_md_map_ephemeral_page(pg, locked_p,
@@ -637,6 +638,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 void
 pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	struct mips_options * const opts = &mips_options;
 	if (opts->mips_cpu_flags & CPU_MIPS_I_D_CACHE_COHERENT)
 		return;
@@ -775,12 +777,14 @@ pmap_md_io_vaddr_p(vaddr_t va)
 void
 pmap_md_icache_sync_range_index(vaddr_t va, vsize_t len)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	mips_icache_sync_range_index(va, len);
 }
 
 void
 pmap_md_icache_sync_all(void)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	mips_icache_sync_all();
 }
 
@@ -875,6 +879,7 @@ tlb_walk(void *ctx, tlb_walkfunc_t func)
 bool
 pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	if (!MIPS_HAS_R4K_MMU || !MIPS_CACHE_VIRTUAL_ALIAS)
 		return false;
@@ -941,9 +946,11 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 void
 pmap_md_vca_clean(struct vm_page *pg, int op)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 	if (!MIPS_HAS_R4K_MMU || !MIPS_CACHE_VIRTUAL_ALIAS)
 		return;
 
+	UVMHIST_LOG(pmaphist, "(pg=%p, op=%d)", pg, op, 0, 0);
 	KASSERT(VM_PAGEMD_PVLIST_LOCKED_P(VM_PAGE_TO_MD(pg)));
 
 	if (op == PMAP_WB || op == PMAP_WBINV) {
