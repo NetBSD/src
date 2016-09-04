@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.952 2016/09/03 16:10:34 jakllsch Exp $
+#	$NetBSD: bsd.own.mk,v 1.953 2016/09/04 18:57:39 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -67,23 +67,15 @@ MKGCC?=		no
 .if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
 .elif \
-    ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_ARCH} == "vax"
-HAVE_GCC?=	53
-.else
-# Otherwise, default to GCC4.8
+    ${MACHINE_CPU} == "mips" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_ARCH} == "coldfire" || \
+    ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE} == "or1k" || \
+    ${MACHINE} == "riscv"
 HAVE_GCC?=	48
+.else
+HAVE_GCC?=	53
 .endif
 
 #
