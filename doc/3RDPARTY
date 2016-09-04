@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1357 2016/09/03 23:31:53 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1358 2016/09/04 14:38:50 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1211,8 +1211,8 @@ Notes:
 Old versions are available from Purdue (ftp.cs.purdue.edu:/pub/RCS).
 
 Package:	root.cache
-Version:	2015120100 (March 23, 2016)
-Current Vers:	2015120100 (March 23, 2016)
+Version:	2016082500 (August 25, 2016)
+Current Vers:	2016082500 (August 25, 2016)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
