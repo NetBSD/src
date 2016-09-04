@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.7 2016/09/04 07:47:12 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.8 2016/09/04 15:21:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.7 2016/09/04 07:47:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.8 2016/09/04 15:21:54 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -905,15 +905,19 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *ptep)
 	if (__predict_true(!mips_cache_badalias(pv->pv_va, va))) {
 		return false;
 	}
-	for (pv_entry_t npv = pv; npv; npv = npv->pv_next) {
-		if (npv->pv_va & PV_KENTER)
+	for (pv_entry_t npv = pv; npv && npv->pmap;) {
+		if (npv->pv_va & PV_KENTER) {
+			npv = npv->pv_next)
 			continue;
+		}
 		vaddr_t nva = trunc_page(npv->pv_va);
 		pmap_t npm = npv->pv_pmap;
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_remove(npm, nva, nva + PAGE_SIZE);
 		pmap_update(npm);
 		(void)VM_PAGEMD_PVLIST_LOCK(mdpg);
+
+		npv = pv;
 	}
 	return true;
 #else	/* !PMAP_NO_PV_UNCACHED */
