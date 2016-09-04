@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.6 2016/09/04 07:38:45 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.7 2016/09/04 07:47:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6 2016/09/04 07:38:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.7 2016/09/04 07:47:12 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -563,9 +563,9 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		if (p == curlwp->l_proc
 		    && mips_cache_info.mci_pdcache_way_mask < PAGE_SIZE)
 		    /* XXX check icache mask too? */
-			mips_icache_sync_range(va, len);
+			mips_icache_sync_range((intptr_t)va, len);
 		else
-			mips_icache_sync_range_index(va, len);
+			mips_icache_sync_range_index((intptr_t)va, len);
 	} else {
 		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 		kpreempt_disable();
@@ -645,7 +645,7 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &mdpg->mdpg_first;
-	const vaddr_t va = trunc_page(pv->pv_va);
+	const register_t va = (intptr_t)trunc_page(pv->pv_va);
 
 	/*
 	 * If onproc is empty, we could do a
