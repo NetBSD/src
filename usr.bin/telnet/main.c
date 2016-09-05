@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2012/03/20 20:34:59 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2016/09/05 00:40:30 sevan Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.29 2012/03/20 20:34:59 matt Exp $");
+__RCSID("$NetBSD: main.c,v 1.30 2016/09/05 00:40:30 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,8 +69,6 @@ char *ipsec_policy_out = NULL;
 #endif
 
 int family = AF_UNSPEC;
-
-int main(int, char *[]);
 
 /*
  * Initialize variables.

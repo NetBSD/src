@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.c,v 1.17 2009/04/12 13:53:02 lukem Exp $	*/
+/*	$NetBSD: locate.c,v 1.18 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: locate.c,v 1.17 2009/04/12 13:53:02 lukem Exp $");
+__RCSID("$NetBSD: locate.c,v 1.18 2016/09/05 00:40:29 sevan Exp $");
 #endif /* not lint */
 
 /*
@@ -102,9 +102,6 @@ LIST_HEAD(db_list, locate_db) db_list;
 static void add_db(const char *);
 static int fastfind(FILE *, char *);
 static char *patprep(const char *);
-
-int	main(int, char **);
-
 
 static void
 add_db(const char *path)
