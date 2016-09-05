@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.38 2014/01/08 01:45:29 pooka Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.39 2016/09/05 20:41:59 dholland Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -60,14 +60,17 @@
  * XXX: NetBSD's __unused collides with Linux headers, so we cannot
  * define it before we've included everything.
  */
-#if !defined(__unused) && defined(__GNUC__)
+#if !defined(__unused) && (defined(__clang__) || defined(__GNUC__))
 #define __unused __attribute__((__unused__))
+#endif
+#if !defined(__printflike) && (defined(__clang__) || defined(__GNUC__))
+#define __printflike(a,b) __attribute__((__format__(__printf__, a, b))))
 #endif
 
 //#define DEBUG
 #ifdef DEBUG
 #define DPRINTF(x) mydprintf x
-static void
+static __printflike(1, 2) void
 mydprintf(const char *fmt, ...)
 {
 	va_list ap;
