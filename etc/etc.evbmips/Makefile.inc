@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2015/05/01 23:55:14 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2016/09/05 07:23:43 skrll Exp $
 #
 #	etc.evbmips/Makefile.inc -- evbmips-specific etc Makefile targets
 #
@@ -6,7 +6,7 @@
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SUFFIXES=	srec
+KERNEL_SUFFIXES=	srec ub elf32
 
 .if ${MACHINE_ARCH} == "mipsel"
 KERNEL_SETS=		ALCHEMY CI20 CPMBR1400 DBAU1500 DBAU1550 GDIUM
