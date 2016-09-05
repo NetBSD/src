@@ -2616,7 +2616,13 @@ _bfd_sparc_elf_size_dynamic_sections (bfd *output_bfd,
 		    srel = htab->elf.irelplt;
 		  srel->size += p->count * SPARC_ELF_RELA_BYTES (htab);
 		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
+		    {
+		      info->flags |= DF_TEXTREL;
+		      if ((info->warn_shared_textrel && bfd_link_pic (info))
+			|| info->error_textrel)
+			info->callbacks->einfo (_("%P: %B: warning: relocation "
+			  "in readonly section `%A'\n"), p->sec->owner, p->sec);
+		    }
 		}
 	    }
 	}
