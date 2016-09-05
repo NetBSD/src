@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2014/12/16 19:30:24 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$NetBSD: extern.h,v 1.33 2014/12/16 19:30:24 christos Exp $
+ *	$NetBSD: extern.h,v 1.34 2016/09/05 00:40:29 sevan Exp $
  */
 
 #ifndef __EXTERN_H__
@@ -210,7 +210,6 @@ int	show_headers_and_exit(int) __dead;
  */
 struct name *lexpand(char *, int);
 void	setscreensize(void);
-int	main(int, char **);
 
 /*
  * from names.c

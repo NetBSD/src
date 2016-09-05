@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90 2016/08/07 10:37:24 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.91 2016/09/05 00:40:28 sevan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.90 2016/08/07 10:37:24 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.91 2016/09/05 00:40:28 sevan Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -122,7 +122,6 @@ static	int	undo_option(struct hashtab *, struct nvlist **,
 		    struct nvlist ***, const char *, const char *, int);
 static	int	crosscheck(void);
 static	int	badstar(void);
-	int	main(int, char **);
 static	int	mkallsubdirs(void);
 static	int	mksymlinks(void);
 static	int	mkident(void);
