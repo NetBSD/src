@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.166 2016/08/31 14:05:09 maya Exp $
+# $NetBSD: mi,v 1.167 2016/09/05 02:25:38 ozaki-r Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -223,6 +223,7 @@
 ./usr/lib/librumpnet_shmif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_sockin_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_tap_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_tun_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_virtif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpuser_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpvfs_aio_g.a			comp-c-debuglib		debuglib,rump
