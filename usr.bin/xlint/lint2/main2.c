@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.8 2010/01/14 16:58:27 christos Exp $	*/
+/*	$NetBSD: main2.c,v 1.9 2016/09/05 00:40:30 sevan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.8 2010/01/14 16:58:27 christos Exp $");
+__RCSID("$NetBSD: main2.c,v 1.9 2016/09/05 00:40:30 sevan Exp $");
 #endif
 
 #include <stdio.h>
@@ -89,8 +89,6 @@ int	Fflag;
 const	char	**libs;
 
 static	void	usage(void);
-
-int main(int, char *[]);
 
 int
 main(int argc, char *argv[])
