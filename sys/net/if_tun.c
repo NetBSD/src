@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.128 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.129 2016/09/05 01:57:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.128 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.129 2016/09/05 01:57:54 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -121,7 +121,7 @@ tunattach(int unused)
 
 	/*
 	 * Nothing to do here, initialization is handled by the
-	 * module initialization code in pppinit() below).
+	 * module initialization code in tuninit() below).
 	 */
 }
 
