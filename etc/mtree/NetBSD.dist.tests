@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.130 2016/08/14 14:55:42 jakllsch Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.131 2016/09/05 02:26:48 ozaki-r Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -330,6 +330,7 @@
 ./usr/tests/net/if_loop
 ./usr/tests/net/if_pppoe
 ./usr/tests/net/if_tap
+./usr/tests/net/if_tun
 ./usr/tests/net/in_cksum
 ./usr/tests/net/mcast
 ./usr/tests/net/mpls
