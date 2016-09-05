@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2016/05/06 00:24:45 khorben Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2016/09/05 01:09:57 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2016/05/06 00:24:45 khorben Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2016/09/05 01:09:57 sevan Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: main.c,v 1.5 2016/05/06 00:24:45 khorben Exp $");
 
 #include "prog_ops.h"
 
-int	main(int, char **);
 static void	usage(void) __dead;
 
 int
