@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.58 2015/06/17 01:38:02 christos Exp $	*/
+/*	$NetBSD: tip.c,v 1.59 2016/09/05 00:40:30 sevan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.58 2015/06/17 01:38:02 christos Exp $");
+__RCSID("$NetBSD: tip.c,v 1.59 2016/09/05 00:40:30 sevan Exp $");
 #endif /* not lint */
 
 /*
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: tip.c,v 1.58 2015/06/17 01:38:02 christos Exp $");
 __dead static void	tipusage(void);
 
 int	escape(void);
-int	main(int, char **);
 __dead static void	intprompt(int);
 __dead static void	tipin(void);
 

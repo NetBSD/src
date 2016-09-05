@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $ */
+/* $NetBSD: vmstat.c,v 1.207 2016/09/05 00:40:30 sevan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.206 2014/12/24 20:01:22 dennis Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.207 2016/09/05 00:40:30 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,6 @@ void	doforkst(void);
 void	hist_traverse(int, const char *);
 void	hist_dodump(struct kern_history *);
 
-int	main(int, char **);
 char	**choosedrives(char **);
 
 /* Namelist and memory file names. */
