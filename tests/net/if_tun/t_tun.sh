@@ -1,4 +1,4 @@
-#	$NetBSD: t_tun.sh,v 1.1 2016/09/05 02:26:48 ozaki-r Exp $
+#	$NetBSD: t_tun.sh,v 1.2 2016/09/05 04:35:46 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -28,7 +28,13 @@
 RUMP_FLAGS="-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6"
 RUMP_FLAGS="$RUMP_FLAGS -lrumpnet_shmif -lrumpnet_tun -lrumpdev"
 
+BUS=bus
 SOCK_LOCAL=unix://commsock1
+SOCK_REMOTE=unix://commsock2
+IP_LOCAL=10.0.0.1
+IP_REMOTE=10.0.0.2
+
+DEBUG=true
 
 atf_test_case tun_create_destroy cleanup
 tun_create_destroy_head()
@@ -57,8 +63,78 @@ tun_create_destroy_cleanup()
 	RUMP_SERVER=${SOCK_LOCAL} rump.halt
 }
 
+atf_test_case tun_setup cleanup
+tun_setup_head()
+{
+
+	atf_set "descr" "tests of setting up a tunnel"
+	atf_set "require.progs" "rump_server"
+}
+
+check_route_entry()
+{
+	local ip=$(echo $1 |sed 's/\./\\./g')
+	local gw=$2
+	local flags=$3
+	local iface=$4
+
+	atf_check -s exit:0 -o match:" $flags " -e ignore -x \
+	    "rump.netstat -rn -f inet | grep ^'$ip'"
+	atf_check -s exit:0 -o match:" $gw " -e ignore -x \
+	    "rump.netstat -rn -f inet | grep ^'$ip'"
+	atf_check -s exit:0 -o match:" $iface" -e ignore -x \
+	    "rump.netstat -rn -f inet | grep ^'$ip'"
+}
+
+tun_setup_body()
+{
+
+	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_LOCAL}
+	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${SOCK_REMOTE}
+
+	export RUMP_SERVER=${SOCK_LOCAL}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS
+	atf_check -s exit:0 rump.ifconfig shmif0 ${IP_LOCAL}/24 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=${SOCK_REMOTE}
+
+	atf_check -s exit:0 rump.ifconfig shmif0 create
+	atf_check -s exit:0 rump.ifconfig shmif0 linkstr $BUS
+	atf_check -s exit:0 rump.ifconfig shmif0 ${IP_REMOTE}/24 up
+	atf_check -s exit:0 rump.ifconfig -w 10
+
+	export RUMP_SERVER=${SOCK_LOCAL}
+	atf_check -s exit:0 rump.ifconfig tun0 create
+	atf_check -s exit:0 rump.ifconfig tun0 ${IP_LOCAL} ${IP_REMOTE} up
+	atf_check -s exit:0 \
+	    -o match:"inet ${IP_LOCAL} -> ${IP_REMOTE} netmask 0xff000000" \
+	    rump.ifconfig tun0
+	$DEBUG && rump.netstat -nr -f inet
+	check_route_entry ${IP_REMOTE} ${IP_LOCAL} UH tun0
+
+	export RUMP_SERVER=${SOCK_REMOTE}
+	atf_check -s exit:0 rump.ifconfig tun0 create
+	atf_check -s exit:0 rump.ifconfig tun0 ${IP_REMOTE} ${IP_LOCAL} up
+	atf_check -s exit:0 \
+	    -o match:"inet ${IP_REMOTE} -> ${IP_LOCAL} netmask 0xff000000" \
+	    rump.ifconfig tun0
+	$DEBUG && rump.netstat -nr -f inet
+	check_route_entry ${IP_LOCAL} ${IP_REMOTE} UH tun0
+}
+
+tun_setup_cleanup()
+{
+
+	RUMP_SERVER=${SOCK_LOCAL} rump.halt
+	RUMP_SERVER=${SOCK_REMOTE} rump.halt
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case tun_create_destroy
+	atf_add_test_case tun_setup
 }
