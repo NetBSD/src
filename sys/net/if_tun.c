@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.129 2016/09/05 01:57:54 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.130 2016/09/05 02:25:37 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.129 2016/09/05 01:57:54 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.130 2016/09/05 02:25:37 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -115,6 +115,10 @@ const struct cdevsw tun_cdevsw = {
 	.d_flag = D_OTHER
 };
 
+#ifdef _MODULE
+devmajor_t tun_bmajor = -1, tun_cmajor = -1;
+#endif
+
 void
 tunattach(int unused)
 {
@@ -133,6 +137,9 @@ tuninit(void)
 	LIST_INIT(&tun_softc_list);
 	LIST_INIT(&tunz_softc_list);
 	if_clone_attach(&tun_cloner);
+#ifdef _MODULE
+	devsw_attach("tun", NULL, &tun_bmajor, &tun_cdevsw, &tun_cmajor);
+#endif
 }
 
 static int
@@ -143,6 +150,10 @@ tundetach(void)
 	if (!LIST_EMPTY(&tun_softc_list) || !LIST_EMPTY(&tunz_softc_list))
 		error = EBUSY;
 
+#ifdef _MODULE
+	if (error == 0)
+		error = devsw_detach(NULL, &tun_cdevsw);
+#endif
 	if (error == 0) {
 		if_clone_detach(&tun_cloner);
 		mutex_destroy(&tun_softc_lock);
