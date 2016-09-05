@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.10 2016/09/04 15:25:11 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.11 2016/09/05 06:59:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.10 2016/09/04 15:25:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11 2016/09/05 06:59:25 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -656,6 +656,8 @@ pmap_md_page_syncicache(struct vm_page *pg, const kcpuset_t *onproc)
 	 */
 	if (MIPS_HAS_R4K_MMU) {
 		if (VM_PAGEMD_CACHED_P(mdpg)) {
+			/* This was probably mapped cached by UBC so flush it */
+			mips_dcache_wbinv_range_index(va, PAGE_SIZE);
 			mips_icache_sync_range_index(va, PAGE_SIZE);
 		}
 	} else {
