@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2016/05/06 00:24:45 khorben Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2016/09/05 01:09:57 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2016/05/06 00:24:45 khorben Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2016/09/05 01:09:57 sevan Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: main.c,v 1.16 2016/05/06 00:24:45 khorben Exp $");
 
 #include "prog_ops.h"
 
-int		main(int, char **);
 static void	parse_bool_param(prop_dictionary_t, const char *,
 				 const char *);
 static void	parse_int_param(prop_dictionary_t, const char *,

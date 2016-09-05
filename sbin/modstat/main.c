@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2016/08/03 23:55:47 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2016/09/05 01:09:57 sevan Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2016/08/03 23:55:47 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2016/09/05 01:09:57 sevan Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -45,7 +45,6 @@ __RCSID("$NetBSD: main.c,v 1.22 2016/08/03 23:55:47 pgoyette Exp $");
 
 #include "prog_ops.h"
 
-int	main(int, char **);
 static void	usage(void) __dead;
 static int	modstatcmp(const void *, const void *);
 

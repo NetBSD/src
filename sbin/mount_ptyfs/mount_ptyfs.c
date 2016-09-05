@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ptyfs.c,v 1.16 2016/02/21 22:51:29 christos Exp $	*/
+/*	$NetBSD: mount_ptyfs.c,v 1.17 2016/09/05 01:09:57 sevan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_ptyfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_ptyfs.c,v 1.16 2016/02/21 22:51:29 christos Exp $");
+__RCSID("$NetBSD: mount_ptyfs.c,v 1.17 2016/09/05 01:09:57 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,6 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-int	main(int, char *[]);
 int	mount_ptyfs(int argc, char **argv);
 
 static gid_t	getgrp(const char *name);
