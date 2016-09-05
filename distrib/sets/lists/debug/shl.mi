@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.143 2016/08/20 11:34:49 christos Exp $
+# $NetBSD: shl.mi,v 1.144 2016/09/05 02:25:38 ozaki-r Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.203.debug			comp-sys-debug	debug,dynamicroot
@@ -250,6 +250,7 @@
 ./usr/libdata/debug/usr/lib/librumpnet_shmif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_sockin.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_tap.so.0.0.debug		comp-rump-debug	debug,rump
+./usr/libdata/debug/usr/lib/librumpnet_tun.so.0.0.debug		comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpnet_virtif.so.0.0.debug	comp-rump-debug	debug,rump
 ./usr/libdata/debug/usr/lib/librumpuser.so.0.1.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpvfs.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
