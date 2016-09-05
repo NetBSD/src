@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.124 2016/06/01 00:47:16 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.125 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.124 2016/06/01 00:47:16 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.125 2016/09/05 00:40:29 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,6 @@ static const char * const linux_ptrace_ops[] = {
 	"PTRACE_SYSCALL",
 };
 
-int	main(int, char **);
 static int	fread_tail(void *, size_t, size_t);
 static int	dumpheader(struct ktr_header *);
 static void	output_long(u_long, int);

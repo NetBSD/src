@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.12 2009/11/17 18:31:12 drochner Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.13 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: locate.bigram.c,v 1.12 2009/11/17 18:31:12 drochner Exp $");
+__RCSID("$NetBSD: locate.bigram.c,v 1.13 2016/09/05 00:40:29 sevan Exp $");
 #endif /* not lint */
 
 /*
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: locate.bigram.c,v 1.12 2009/11/17 18:31:12 drochner Exp $");
 #include <string.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
 
-int	main(int, char **);
 static int compare_bigrams(const void *, const void *);
 static void add_bigram(u_char, u_char);
 

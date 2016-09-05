@@ -1,4 +1,4 @@
-/*	$NetBSD: mkstr.c,v 1.16 2012/03/20 20:34:58 matt Exp $	*/
+/*	$NetBSD: mkstr.c,v 1.17 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)mkstr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mkstr.c,v 1.16 2012/03/20 20:34:58 matt Exp $");
+__RCSID("$NetBSD: mkstr.c,v 1.17 2016/09/05 00:40:29 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ const char	usagestr[] =	"usage: %s [ - ] mesgfile prefix file ...\n";
 char	name[100], *np;
 
 void process(void);
-int main(int, char **);
 int match(const char *);
 int octdigit(char);
 void inithash(void);

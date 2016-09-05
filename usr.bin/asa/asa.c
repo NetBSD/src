@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.16 2007/06/24 23:23:10 christos Exp $	*/
+/*	$NetBSD: asa.c,v 1.17 2016/09/05 00:40:28 sevan Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: asa.c,v 1.16 2007/06/24 23:23:10 christos Exp $");
+__RCSID("$NetBSD: asa.c,v 1.17 2016/09/05 00:40:28 sevan Exp $");
 #endif
 
 #include <err.h>
@@ -40,7 +40,6 @@ __RCSID("$NetBSD: asa.c,v 1.16 2007/06/24 23:23:10 christos Exp $");
 #include <stdlib.h>
 
 static void asa(FILE *);
-int main(int, char *[]);
 
 int
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.16 2009/04/12 02:53:56 lukem Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.17 2016/09/05 00:40:28 sevan Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.16 2009/04/12 02:53:56 lukem Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.17 2016/09/05 00:40:28 sevan Exp $");
 #endif
 
 #include <sys/types.h>
@@ -69,8 +69,6 @@ static const char *fdb_array[2] = {_PATH_FLOPPYTAB, 0};
 static int	confirm(int);
 static void	usage(void) __dead;
 static int	verify_track(int, int, int, struct fdformat_parms *, char *);
-
-int	main(int, char **);
 
 static int
 confirm(int def)

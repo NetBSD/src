@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.33 2013/10/18 20:47:06 christos Exp $	*/
+/*	$NetBSD: lock.c,v 1.34 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.33 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: lock.c,v 1.34 2016/09/05 00:40:29 sevan Exp $");
 #endif /* not lint */
 
 /*
@@ -79,8 +79,6 @@ __RCSID("$NetBSD: lock.c,v 1.33 2013/10/18 20:47:06 christos Exp $");
 
 
 #define	TIMEOUT	15
-
-int	main(int, char **);
 
 static void	bye(int) __dead;
 static void	hi(int);

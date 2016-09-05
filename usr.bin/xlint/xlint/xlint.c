@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.44 2011/09/18 09:07:35 njoly Exp $ */
+/* $NetBSD: xlint.c,v 1.45 2016/09/05 00:40:30 sevan Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.44 2011/09/18 09:07:35 njoly Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.45 2016/09/05 00:40:30 sevan Exp $");
 #endif
 
 #include <sys/param.h>
@@ -60,8 +60,6 @@ __RCSID("$NetBSD: xlint.c,v 1.44 2011/09/18 09:07:35 njoly Exp $");
 #include "findcc.h"
 
 #define DEFAULT_PATH		_PATH_DEFPATH
-
-int main(int, char *[]);
 
 /* directory for temporary files */
 static	const	char *tmpdir;

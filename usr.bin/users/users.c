@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.16 2012/03/20 20:34:59 matt Exp $	*/
+/*	$NetBSD: users.c,v 1.17 2016/09/05 00:40:30 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: users.c,v 1.16 2012/03/20 20:34:59 matt Exp $");
+__RCSID("$NetBSD: users.c,v 1.17 2016/09/05 00:40:30 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,8 +52,6 @@ __RCSID("$NetBSD: users.c,v 1.16 2012/03/20 20:34:59 matt Exp $");
 #include <unistd.h>
 
 #include "utmpentry.h"
-
-int	main(int, char **);
 
 int
 main(int argc, char **argv)

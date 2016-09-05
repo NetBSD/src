@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.22 2016/02/25 13:23:27 ginsbach Exp $	*/
+/*	$NetBSD: indent.c,v 1.23 2016/09/05 00:40:29 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985 Sun Microsystems, Inc.\
 #if 0
 static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: indent.c,v 1.22 2016/02/25 13:23:27 ginsbach Exp $");
+__RCSID("$NetBSD: indent.c,v 1.23 2016/09/05 00:40:29 sevan Exp $");
 #endif
 #endif				/* not lint */
 
@@ -99,8 +99,6 @@ const char *in_name = "Standard Input";		/* will always point to name of
 const char *out_name = "Standard Output";	/* will always point to name of
 						 * output file */
 char    bakfile[MAXPATHLEN] = "";
-
-int main(int, char **);
 
 int
 main(int argc, char **argv)

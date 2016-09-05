@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.29 2009/04/12 06:18:54 lukem Exp $	*/
+/*	$NetBSD: finger.c,v 1.30 2016/09/05 00:40:28 sevan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.29 2009/04/12 06:18:54 lukem Exp $");
+__RCSID("$NetBSD: finger.c,v 1.30 2016/09/05 00:40:28 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,6 @@ struct utmpentry *ehead;
 
 static void loginlist(void);
 static void userlist(int, char **);
-int main(int, char **);
 
 int
 main(int argc, char **argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.16 2014/09/11 08:22:03 wiz Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.17 2016/09/05 00:40:30 sevan Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.16 2014/09/11 08:22:03 wiz Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.17 2016/09/05 00:40:30 sevan Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -125,8 +125,6 @@ char    *l_strbeg;		/* delimiter for string constant */
 char    *l_strend;		/* delimiter for string constant */
 bool	 l_toplex;		/* procedures only defined at top lex level */
 const char *language = "c";	/* the language indicator */
-
-int	main(int, char **);
 
 #define	ps(x)	printf("%s", x)
 static char minus[] = "-";
