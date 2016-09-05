@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.47 2016/06/27 01:46:04 christos Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.48 2016/09/05 17:42:57 dholland Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.47 2016/06/27 01:46:04 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.48 2016/09/05 17:42:57 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -562,7 +562,7 @@ ELFNAMEEND(coredump_savenote)(struct note_state *ns, unsigned int type,
 #else	/* COREDUMP */
 
 int
-ELFNAMEEND(coredump)(struct lwp *l, void *cookie)
+ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 {
 
 	return ENOSYS;
