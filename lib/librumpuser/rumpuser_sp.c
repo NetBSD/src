@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.70 2015/08/16 11:37:39 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.71 2016/09/06 07:32:39 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.70 2015/08/16 11:37:39 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.71 2016/09/06 07:32:39 martin Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -691,8 +691,8 @@ serv_handlesyscall(struct spclient *spc, struct rsp_hdr *rhdr, uint8_t *data)
 	spc->spc_syscallreq = 0;
 	lwproc_release();
 
-	DPRINTF(("rump_sp: got return value %d & %d/%d\n",
-	    rv, retval[0], retval[1]));
+	DPRINTF(("rump_sp: got return value %d & %ld/%ld\n",
+	    rv, (long)retval[0], (long)retval[1]));
 
 	send_syscall_resp(spc, rhdr->rsp_reqno, rv, retval);
 }
