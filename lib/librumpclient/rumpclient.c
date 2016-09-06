@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.65 2015/01/17 19:34:50 justin Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.66 2016/09/06 07:12:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.65 2015/01/17 19:34:50 justin Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.66 2016/09/06 07:12:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -590,8 +590,9 @@ rumpclient_syscall(int sysnum, const void *data, size_t dlen,
 		goto out;
 
 	resp = rdata;
-	DPRINTF(("rumpsp syscall_resp: syscall %d error %d, rv: %d/%d\n",
-	    sysnum, rv, resp->rsys_retval[0], resp->rsys_retval[1]));
+	DPRINTF(("rumpsp syscall_resp: syscall %d error %d, rv: %ld/%ld\n",
+	    sysnum, rv, (unsigned long)resp->rsys_retval[0],
+	    (unsigned long)resp->rsys_retval[1]));
 
 	memcpy(retval, &resp->rsys_retval, sizeof(resp->rsys_retval));
 	rv = resp->rsys_error;
