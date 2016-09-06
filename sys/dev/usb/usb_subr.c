@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.215 2016/09/03 07:29:16 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.216 2016/09/06 06:46:15 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.215 2016/09/03 07:29:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.216 2016/09/06 06:46:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -562,7 +562,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_config_descriptor_t cd, *cdp;
-	usb_bos_descriptor_t bd, *bdp = NULL;
+	usb_bos_descriptor_t *bdp = NULL;
 	usbd_status err;
 	int i, ifcidx, nifc, len, selfpowered, power;
 
@@ -633,6 +633,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	if (USB_IS_SS(dev->ud_speed)) {
+		usb_bos_descriptor_t bd;
+
 		/* get short bos desc */
 		err = usbd_get_bos_desc(dev, index, &bd);
 		if (!err) {
