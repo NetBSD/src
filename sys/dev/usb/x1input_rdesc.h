@@ -1,4 +1,4 @@
-/* $NetBSD: x1input_rdesc.h,v 1.1.2.2 2015/02/11 08:25:40 snj Exp $ */
+/* $NetBSD: x1input_rdesc.h,v 1.1.2.2.4.1 2016/09/06 20:33:09 skrll Exp $ */
 
 /*-
  * Copyright (C) 2014 Loic Nageleisen
@@ -14,7 +14,7 @@
  *   * Neither the name of the copyright holders nor the
  *     names of its contributors may be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,10 +27,10 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	USBIF_IS_X1INPUT(uaa)			\
-	((uaa)->class == UICLASS_VENDOR && 	\
-	 (uaa)->subclass == 0x47 &&		\
-	 (uaa)->proto == 0xd0)
+#define	USBIF_IS_X1INPUT(uiaa)				\
+	((uiaa)->uiaa_class == UICLASS_VENDOR && 	\
+	 (uiaa)->uiaa_subclass == 0x47 &&		\
+	 (uiaa)->uiaa_proto == 0xd0)
 
 static const uByte uhid_x1input_report_descr[] = {
     0x05, 0x01,                     // Usage Page (Generic Desktop)

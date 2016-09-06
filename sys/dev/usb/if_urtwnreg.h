@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.7 2014/07/20 13:25:23 nonaka Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.7.8.1 2016/09/06 20:33:08 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -530,7 +530,7 @@
 
 /* Bits for R92C_BCNDMATIM */
 #define R92C_DMA_ATIME_INT_TIME		0x02
- 
+
 /* Bits for R92C_APSD_CTRL. */
 #define R92C_APSD_CTRL_OFF		0x40
 #define R92C_APSD_CTRL_OFF_STATUS	0x80

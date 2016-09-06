@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.5.10.1 2016/09/06 20:33:08 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5 2014/03/15 13:33:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.5.10.1 2016/09/06 20:33:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -204,7 +204,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc_model = mva->mva_model;
 	sc->sc_rev = mva->mva_revision;
@@ -226,7 +226,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc.iot = sc->sc_iot;
-	sc->sc.sc_bus.dmatag = mva->mva_dmat;
+	sc->sc.sc_bus.ub_dmatag = mva->mva_dmat;
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
@@ -235,7 +235,7 @@ mvusb_attach(device_t parent, device_t self, void *aux)
 
 	marvell_intr_establish(mva->mva_irq, IPL_USB, ehci_intr, sc);
 
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc.sc_id_vendor = 0x0000;				/* XXXXX */
 	strcpy(sc->sc.sc_vendor, "Marvell");

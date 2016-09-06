@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.129.4.1 2015/03/21 17:30:43 snj Exp $        */
+/*      $NetBSD: ukbd.c,v 1.129.4.1.4.1 2016/09/06 20:33:09 skrll Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,11 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.4.1 2015/03/21 17:30:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.129.4.1.4.1 2016/09/06 20:33:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ukbd.h"
 #include "opt_ukbd_layout.h"
+#include "opt_usb.h"
 #include "opt_wsdisplay_compat.h"
 #include "opt_ddb.h"
 #endif /* _KERNEL_OPT */
@@ -86,8 +87,8 @@ int	ukbddebug = 0;
 #define MAXMOD 8		/* max 32 */
 
 struct ukbd_data {
-	u_int32_t	modifiers;
-	u_int8_t	keycode[MAXKEYCODE];
+	uint32_t	modifiers;
+	uint8_t		keycode[MAXKEYCODE];
 };
 
 #define PRESS    0x000
@@ -95,8 +96,8 @@ struct ukbd_data {
 #define CODEMASK 0x0ff
 
 struct ukbd_keycodetrans {
-	u_int16_t	from;
-	u_int16_t	to;
+	uint16_t	from;
+	uint16_t	to;
 };
 
 #define IS_PMF	0x8000
@@ -195,7 +196,7 @@ Static const struct ukbd_keycodetrans trtab_generic[] = {
  * For example, some keys generate Fake ShiftL events (e0 2a)
  * before the actual key sequence.
  */
-Static const u_int8_t ukbd_trtab[256] = {
+Static const uint8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
     0x12, 0x21, 0x22, 0x23, 0x17, 0x24, 0x25, 0x26, /* 08 - 0f */
     0x32, 0x31, 0x18, 0x19, 0x10, 0x13, 0x1f, 0x14, /* 10 - 17 */
@@ -243,8 +244,8 @@ struct ukbd_softc {
 	struct hid_location sc_modloc[MAXMOD];
 	u_int sc_nmod;
 	struct {
-		u_int32_t mask;
-		u_int8_t key;
+		uint32_t mask;
+		uint8_t key;
 	} sc_mods[MAXMOD];
 
 	struct hid_location sc_keycodeloc;
@@ -287,7 +288,7 @@ struct ukbd_softc {
 
 	int sc_spl;
 	int sc_npollchar;
-	u_int16_t sc_pollchars[MAXKEYS];
+	uint16_t sc_pollchars[MAXKEYS];
 
 	u_char sc_dying;
 };
@@ -334,11 +335,11 @@ const struct wskbd_consops ukbd_consops = {
 	.bell =  NULL,
 };
 
-Static const char *ukbd_parse_desc(struct ukbd_softc *sc);
+Static const char *ukbd_parse_desc(struct ukbd_softc *);
 
-Static void	ukbd_intr(struct uhidev *addr, void *ibuf, u_int len);
-Static void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
-Static void	ukbd_delayed_decode(void *addr);
+Static void	ukbd_intr(struct uhidev *, void *, u_int);
+Static void	ukbd_decode(struct ukbd_softc *, struct ukbd_data *);
+Static void	ukbd_delayed_decode(void *);
 
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
@@ -389,9 +390,9 @@ ukbd_match(device_t parent, cfdata_t match, void *aux)
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_KEYBOARD)))
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
-	return (UMATCH_IFACECLASS);
+	return UMATCH_IFACECLASS;
 }
 
 void
@@ -399,7 +400,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct ukbd_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
-	u_int32_t qflags;
+	uint32_t qflags;
 	const char *parseerr;
 	struct wskbddev_attach_args a;
 
@@ -431,8 +432,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 		sc->sc_flags |= FLAG_APPLE_FIX_ISO;
 
 #ifdef GDIUM_KEYBOARD_HACK
-	if (uha->uaa->vendor == USB_VENDOR_CYPRESS &&
-	    uha->uaa->product == USB_PRODUCT_CYPRESS_LPRDK)
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_CYPRESS &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_CYPRESS_LPRDK)
 		sc->sc_flags = FLAG_GDIUM_FN;
 #endif
 
@@ -497,7 +498,7 @@ ukbd_enable(void *v, int on)
 	struct ukbd_softc *sc = v;
 
 	if (on && sc->sc_dying)
-		return (EIO);
+		return EIO;
 
 	/* Should only be called to change state */
 	if ((sc->sc_flags & FLAG_ENABLED) != 0 && on != 0) {
@@ -505,17 +506,17 @@ ukbd_enable(void *v, int on)
 		printf("ukbd_enable: %s: bad call on=%d\n",
 		       device_xname(sc->sc_hdev.sc_dev), on);
 #endif
-		return (EBUSY);
+		return EBUSY;
 	}
 
 	DPRINTF(("ukbd_enable: sc=%p on=%d\n", sc, on));
 	if (on) {
 		sc->sc_flags |= FLAG_ENABLED;
-		return (uhidev_open(&sc->sc_hdev));
+		return uhidev_open(&sc->sc_hdev);
 	} else {
 		sc->sc_flags &= ~FLAG_ENABLED;
 		uhidev_close(&sc->sc_hdev);
-		return (0);
+		return 0;
 	}
 }
 
@@ -586,7 +587,7 @@ ukbd_detach(device_t self, int flags)
 	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
 		uhidev_close(&sc->sc_hdev);
 
-	return (rv);
+	return rv;
 }
 
 static void
@@ -595,7 +596,7 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 {
 	const struct ukbd_keycodetrans *tp;
 	int i;
-	u_int8_t key;
+	uint8_t key;
 
 	for (i = 0; i < sc->sc_nkeycode; i++) {
 		key = ud->keycode[i];
@@ -614,8 +615,8 @@ ukbd_translate_keycodes(struct ukbd_softc *sc, struct ukbd_data *ud,
 	}
 }
 
-static u_int16_t
-ukbd_translate_modifier(struct ukbd_softc *sc, u_int16_t key)
+static uint16_t
+ukbd_translate_modifier(struct ukbd_softc *sc, uint16_t key)
 {
 	if ((sc->sc_flags & FLAG_APPLE_FN) && (key & CODEMASK) == 0x00e2) {
 		if ((key & ~CODEMASK) == PRESS) {
@@ -714,7 +715,7 @@ void
 ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 {
 	int mod, omod;
-	u_int16_t ibuf[MAXKEYS];	/* chars events */
+	uint16_t ibuf[MAXKEYS];	/* chars events */
 	int s;
 	int nkeys, i, j;
 	int key;
@@ -816,7 +817,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 
 	if (sc->sc_flags & FLAG_POLLING) {
 		DPRINTFN(1,("ukbd_intr: pollchar = 0x%03x\n", ibuf[0]));
-		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(u_int16_t));
+		memcpy(sc->sc_pollchars, ibuf, nkeys * sizeof(uint16_t));
 		sc->sc_npollchar = nkeys;
 		return;
 	}
@@ -888,7 +889,7 @@ void
 ukbd_set_leds(void *v, int leds)
 {
 	struct ukbd_softc *sc = v;
-	usbd_device_handle udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
 
 	DPRINTF(("ukbd_set_leds: sc=%p leds=%d, sc_leds=%d\n",
 		 sc, leds, sc->sc_leds));
@@ -947,13 +948,13 @@ ukbd_ioctl(void *v, u_long cmd, void *data, int flag,
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_USB;
-		return (0);
+		return 0;
 	case WSKBDIO_SETLEDS:
 		ukbd_set_leds(v, *(int *)data);
-		return (0);
+		return 0;
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
-		return (0);
+		return 0;
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 	case WSKBDIO_SETMODE:
 		DPRINTF(("ukbd_ioctl: set raw = %d\n", *(int *)data));
@@ -961,10 +962,10 @@ ukbd_ioctl(void *v, u_long cmd, void *data, int flag,
 #if defined(UKBD_REPEAT)
 		callout_stop(&sc->sc_rawrepeat_ch);
 #endif
-		return (0);
+		return 0;
 #endif
 	}
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 /*
@@ -1001,7 +1002,7 @@ ukbd_cngetc(void *v, u_int *type, int *data)
 	c = sc->sc_pollchars[0];
 	sc->sc_npollchar--;
 	memcpy(sc->sc_pollchars, sc->sc_pollchars+1,
-	       sc->sc_npollchar * sizeof(u_int16_t));
+	       sc->sc_npollchar * sizeof(uint16_t));
 	*type = c & RELEASE ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 	*data = c & CODEMASK;
 	DPRINTFN(0,("ukbd_cngetc: return 0x%02x\n", c));
@@ -1013,7 +1014,7 @@ void
 ukbd_cnpollc(void *v, int on)
 {
 	struct ukbd_softc *sc = v;
-	usbd_device_handle dev;
+	struct usbd_device *dev;
 
 	DPRINTFN(2,("ukbd_cnpollc: sc=%p on=%d\n", v, on));
 
@@ -1038,7 +1039,7 @@ ukbd_cnattach(void)
 	 * XXX keyboard until autconfiguration has run its course.
 	 */
 	ukbd_is_console = 1;
-	return (0);
+	return 0;
 }
 
 const char *
@@ -1075,7 +1076,7 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
 			if (h.loc.size != 1)
-				return ("bad modifier size");
+				return "bad modifier size";
 			/* Single item */
 			if (imod < MAXMOD) {
 				sc->sc_modloc[imod] = h.loc;
@@ -1083,17 +1084,17 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 				sc->sc_mods[imod].key = HID_GET_USAGE(h.usage);
 				imod++;
 			} else
-				return ("too many modifier keys");
+				return "too many modifier keys";
 		} else {
 			/* Array */
 			if (h.loc.size != 8)
-				return ("key code size != 8");
+				return "key code size != 8";
 			if (h.loc.count > MAXKEYCODE)
 				h.loc.count = MAXKEYCODE;
 			if (h.loc.pos % 8 != 0)
-				return ("key codes not on byte boundary");
+				return "key codes not on byte boundary";
 			if (sc->sc_nkeycode != 0)
-				return ("multiple key code arrays\n");
+				return "multiple key code arrays";
 			sc->sc_keycodeloc = h.loc;
 			sc->sc_nkeycode = h.loc.count;
 		}
@@ -1110,5 +1111,5 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 	hid_locate(desc, size, HID_USAGE2(HUP_LEDS, HUD_LED_COMPOSE),
 		   sc->sc_hdev.sc_report_id, hid_output, &sc->sc_compose, NULL);
 
-	return (NULL);
+	return NULL;
 }

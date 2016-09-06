@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.10 2014/03/15 17:14:56 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.10.10.1 2016/09/06 20:33:06 skrll Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.10 2014/03/15 17:14:56 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.10.10.1 2016/09/06 20:33:06 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -24,7 +24,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.10 2014/03/15 17:14:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.10.10.1 2016/09/06 20:33:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,8 +118,8 @@ obioohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.iot = obio->obio_iot;
 	sc->sc.sc_dev = self;
 	sc->sc.sc_size = obio->obio_size;
-	sc->sc.sc_bus.dmatag = obio->obio_dmat;
-	sc->sc.sc_bus.hci_private = &sc->sc;
+	sc->sc.sc_bus.ub_dmatag = obio->obio_dmat;
+	sc->sc.sc_bus.ub_hcpriv = &sc->sc;
 
 	/* Map I/O space */
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,

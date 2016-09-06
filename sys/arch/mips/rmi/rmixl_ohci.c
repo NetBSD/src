@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.4.34.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.4.34.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->iot = usbi->usbi_el_bst;
 	sc->sc_size = usbi->usbi_size;
-	sc->sc_bus.dmatag = usbi->usbi_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbi->usbi_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	if (bus_space_map(sc->iot, usbi->usbi_addr, sc->sc_size, 0, &sc->ioh)) {
 		aprint_error_dev(self, "unable to map registers\n");

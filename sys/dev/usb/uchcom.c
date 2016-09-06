@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.10.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.10.1 2016/09/06 20:33:09 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13 2014/03/15 19:20:27 martin Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -120,14 +120,14 @@ int	uchcomdebug = 0;
 struct uchcom_softc
 {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 	device_t		sc_subdev;
-	usbd_interface_handle	sc_iface;
+	struct usbd_interface *	sc_iface;
 	int			sc_dying;
 	/* */
 	int			sc_intr_endpoint;
 	int			sc_intr_size;
-	usbd_pipe_handle	sc_intr_pipe;
+	struct usbd_pipe *	sc_intr_pipe;
 	u_char			*sc_intr_buf;
 	/* */
 	uint8_t			sc_version;
@@ -184,11 +184,11 @@ Static void	uchcom_set(void *, int, int, int);
 Static int	uchcom_param(void *, int, struct termios *);
 Static int	uchcom_open(void *, int);
 Static void	uchcom_close(void *, int);
-Static void	uchcom_intr(usbd_xfer_handle, usbd_private_handle,
+Static void	uchcom_intr(struct usbd_xfer *, void *,
 			    usbd_status);
 
 static int	set_config(struct uchcom_softc *);
-static int	find_ifaces(struct uchcom_softc *, usbd_interface_handle *);
+static int	find_ifaces(struct uchcom_softc *, struct usbd_interface **);
 static int	find_endpoints(struct uchcom_softc *,
 			       struct uchcom_endpoints *);
 static void	close_intr_pipe(struct uchcom_softc *);
@@ -226,24 +226,24 @@ CFATTACH_DECL2_NEW(uchcom,
  * driver entry points
  */
 
-int 
+int
 uchcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (uchcom_lookup(uaa->vendor, uaa->product) != NULL ?
+	return (uchcom_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 uchcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uchcom_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	char *devinfop;
 	struct uchcom_endpoints endpoints;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -263,7 +263,7 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	if (set_config(sc))
 		goto failed;
 
-	switch (uaa->release) {
+	switch (uaa->uaa_release) {
 	case UCHCOM_REV_CH340:
 		aprint_normal_dev(self, "CH340 detected\n");
 		break;
@@ -282,23 +282,22 @@ uchcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_size = endpoints.ep_intr_size;
 
 	/* setup ucom layer */
-	uca.portno = UCOM_UNK_PORTNO;
-	uca.bulkin = endpoints.ep_bulkin;
-	uca.bulkout = endpoints.ep_bulkout;
-	uca.ibufsize = UCHCOMIBUFSIZE;
-	uca.obufsize = UCHCOMOBUFSIZE;
-	uca.ibufsizepad = UCHCOMIBUFSIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = sc->sc_iface;
-	uca.methods = &uchcom_methods;
-	uca.arg = sc;
-	uca.info = NULL;
+	ucaa.ucaa_portno = UCOM_UNK_PORTNO;
+	ucaa.ucaa_bulkin = endpoints.ep_bulkin;
+	ucaa.ucaa_bulkout = endpoints.ep_bulkout;
+	ucaa.ucaa_ibufsize = UCHCOMIBUFSIZE;
+	ucaa.ucaa_obufsize = UCHCOMOBUFSIZE;
+	ucaa.ucaa_ibufsizepad = UCHCOMIBUFSIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = sc->sc_iface;
+	ucaa.ucaa_methods = &uchcom_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_info = NULL;
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
 
-	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
+	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &ucaa,
 					    ucomprint, ucomsubmatch);
 
 	return;
@@ -317,7 +316,7 @@ uchcom_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int 
+int
 uchcom_detach(device_t self, int flags)
 {
 	struct uchcom_softc *sc = device_private(self);
@@ -332,8 +331,7 @@ uchcom_detach(device_t self, int flags)
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
-			   sc->sc_dev);
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 
 	return rv;
 }
@@ -369,7 +367,7 @@ set_config(struct uchcom_softc *sc)
 }
 
 static int
-find_ifaces(struct uchcom_softc *sc, usbd_interface_handle *riface)
+find_ifaces(struct uchcom_softc *sc, struct usbd_interface **riface)
 {
 	usbd_status err;
 
@@ -505,7 +503,7 @@ read_reg(struct uchcom_softc *sc,
 
 	err = generic_control_in(
 		sc, UCHCOM_REQ_READ_REG,
-		reg1|((uint16_t)reg2<<8), 0, buf, sizeof buf, &actin);
+		reg1|((uint16_t)reg2<<8), 0, buf, sizeof(buf), &actin);
 	if (err)
 		return err;
 
@@ -527,7 +525,7 @@ get_version(struct uchcom_softc *sc, uint8_t *rver)
 	int actin;
 
 	err = generic_control_in(
-		sc, UCHCOM_REQ_GET_VERSION, 0, 0, buf, sizeof buf, &actin);
+		sc, UCHCOM_REQ_GET_VERSION, 0, 0, buf, sizeof(buf), &actin);
 	if (err)
 		return err;
 
@@ -872,7 +870,7 @@ setup_intr_pipe(struct uchcom_softc *sc)
 	usbd_status err;
 
 	if (sc->sc_intr_endpoint != -1 && sc->sc_intr_pipe == NULL) {
-		sc->sc_intr_buf = malloc(sc->sc_intr_size, M_USBDEV, M_WAITOK);
+		sc->sc_intr_buf = kmem_alloc(sc->sc_intr_size, KM_SLEEP);
 		err = usbd_open_pipe_intr(sc->sc_iface,
 					  sc->sc_intr_endpoint,
 					  USBD_SHORT_XFER_OK,
@@ -909,7 +907,7 @@ close_intr_pipe(struct uchcom_softc *sc)
 			aprint_error_dev(sc->sc_dev,
 			    "close interrupt pipe failed: %s\n",
 			    usbd_errstr(err));
-		free(sc->sc_intr_buf, M_USBDEV);
+		kmem_free(sc->sc_intr_buf, sc->sc_intr_size);
 		sc->sc_intr_pipe = NULL;
 	}
 }
@@ -1009,7 +1007,7 @@ uchcom_close(void *arg, int portno)
  * callback when the modem status is changed.
  */
 void
-uchcom_intr(usbd_xfer_handle xfer, usbd_private_handle priv,
+uchcom_intr(struct usbd_xfer *xfer, void * priv,
 	    usbd_status status)
 {
 	struct uchcom_softc *sc = priv;

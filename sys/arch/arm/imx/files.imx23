@@ -1,7 +1,11 @@
-# $Id: files.imx23,v 1.2 2013/10/07 17:36:40 matt Exp $
+# $Id: files.imx23,v 1.2.10.1 2016/09/06 20:33:06 skrll Exp $
 #
 # Freescale i.MX23 applications processor configuration info.
 #
+
+defparam opt_imx.h			MEMSIZE
+
+defflag opt_imx.h                               IMX23
 
 file	arch/arm/arm32/irq_dispatch.S	icoll
 file	arch/arm/imx/imx23_space.c	ahb|apbh|apbx

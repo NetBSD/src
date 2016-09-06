@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $	*/
+/*	$NetBSD: uipad.c,v 1.1.32.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1 2011/12/31 00:08:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.1.32.1 2016/09/06 20:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -71,7 +70,7 @@ int	uipaddebug = 0;
 
 struct uipad_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 };
 
 /*
@@ -116,7 +115,7 @@ uipad_cmd(struct uipad_softc *sc, uint8_t requestType, uint8_t reqno,
 static void
 uipad_charge(struct uipad_softc *sc)
 {
-	if (sc->sc_udev->power != USB_MAX_POWER)
+	if (sc->sc_udev->ud_power != USB_MAX_POWER)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 
@@ -126,7 +125,7 @@ uipad_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50, ("uipad_match\n"));
-	return uipad_lookup(uaa->vendor, uaa->product) != NULL ?
+	return uipad_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -135,7 +134,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 
 	DPRINTFN(10,("uipad_attach: sc=%p\n", sc));

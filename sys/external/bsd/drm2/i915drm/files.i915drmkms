@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.5.2.4 2015/03/06 21:39:10 snj Exp $
+#	$NetBSD: files.i915drmkms,v 1.5.2.4.4.1 2016/09/06 20:33:10 skrll Exp $
 
 define	intelfbbus	{ }
 device	i915drmkms: drmkms, drmkms_pci, intelfbbus, agp_i810
@@ -17,7 +17,8 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_panel.c"+="-Wno-shadow"
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_pm.c"+="-Wno-shadow"
 
 # XXX x86 kludge.
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 
 file	external/bsd/drm2/dist/drm/i915/dvo_ch7017.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/dvo_ch7xxx.c	i915drmkms

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.2.20.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.20.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include "locators.h"
 
@@ -81,9 +81,9 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->iot = aa->aa_bst_le;
 	sc->sc_size = aa->aa_size;
-	//sc->sc_bus.hci_private = sc;
-	sc->sc_bus.dmatag = aa->aa_dmat;
-	sc->sc_bus.usbrev = USBREV_1_0;
+	//sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_dmatag = aa->aa_dmat;
+	sc->sc_bus.ub_revision = USBREV_1_0;
 	sc->sc_flags |= EHCIF_ETTF;
 
 	error = bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,

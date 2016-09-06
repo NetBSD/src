@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $ */
+/*	$NetBSD: ohci_s3c24x0.c,v 1.8.34.1 2016/09/06 20:33:06 skrll Exp $ */
 
 /* derived from ohci_pci.c */
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8 2011/07/01 20:31:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_s3c24x0.c,v 1.8.34.1 2016/09/06 20:33:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = sa->sa_iot;
 	/*ohcidebug=15;*/
@@ -110,7 +110,7 @@ ohci_ssio_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 			  OHCI_ALL_INTRS);
 
-	sc->sc.sc_bus.dmatag = sa->sa_dmat;
+	sc->sc.sc_bus.ub_dmatag = sa->sa_dmat;
 
 	/* Enable the device. */
 	/* XXX: provide clock to USB block */

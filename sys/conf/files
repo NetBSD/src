@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1096.2.7 2016/06/22 08:26:05 snj Exp $
+#	$NetBSD: files,v 1.1096.2.7.2.1 2016/09/06 20:33:07 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20100430
@@ -179,6 +179,14 @@ include "crypto/cprng_fast/files.cprng_fast"
 defflag opt_kernhist.h			KERNHIST KERNHIST_PRINT
 defparam opt_kernhist.h			KERNHIST_DELAY
 file	kern/kern_history.c		kernhist
+
+#
+# These are here for the benefit of kern_history.c so that
+# UVMHIST can be built in kernels without usb.
+#
+# top level usb debug defines
+defflag	opt_usb.h			USB_DEBUG: KERNHIST
+defparam opt_usb.h			USBHIST_SIZE
 
 #
 # System monitoring framework
@@ -1138,6 +1146,9 @@ define drm {}
 include "external/bsd/drm/conf/files.drm"
 include "dev/drm/files.drm"
 
+# Linux API support
+include "external/bsd/common/conf/files.linux"
+
 # DRM/KMS - Newer direct rendering manager with kernel mode-switching
 include "external/bsd/drm2/drm/files.drmkms"
 
@@ -1218,10 +1229,8 @@ define	sdmmcbus { }			# SD/MMC attachment
 # use them in an 'attach-with'.
 #
 
-defparam USB_MEM_RESERVE
-
 define	usbroothub
-file	dev/usb/usbroothub_subr.c	usbroothub
+file	dev/usb/usbroothub.c	usbroothub
 
 define	usb_dma
 
@@ -1247,11 +1256,11 @@ file	dev/usb/xhci.c			xhci			needs-flag
 
 # Mentor graphics OTG IP
 defflag	opt_motg.h	MOTG_ALLWINNER
-device	motg: usbus, usbroothub, usb_dma
+device	motg: usbus, usbroothub
 file	dev/usb/motg.c			motg			needs-flag
 
 # SL811HS/T USB controller
-defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
+defflag	opt_slhci.h	SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
 device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
