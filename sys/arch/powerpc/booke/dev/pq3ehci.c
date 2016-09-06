@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.5.20.1 2016/09/06 20:33:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.20.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -94,9 +94,9 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	psc->sc_children |= cna->cna_childmask;
 	sc->sc.iot = cna->cna_le_memt;	/* EHCI registers are little endian */
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.dmatag = cna->cna_dmat;
-	sc->sc.sc_bus.hci_private = sc;
-	sc->sc.sc_bus.usbrev = USBREV_2_0;
+	sc->sc.sc_bus.ub_dmatag = cna->cna_dmat;
+	sc->sc.sc_bus.ub_hcpriv = sc;
+	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags |= EHCIF_ETTF;
 

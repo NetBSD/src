@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.9 2012/12/27 16:42:32 skrll Exp $ */
+/* $NetBSD: emdtv.c,v 1.9.18.1 2016/09/06 20:33:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9.18.1 2016/09/06 20:33:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/module.h>
 #include <sys/conf.h>
 
@@ -72,7 +73,7 @@ emdtv_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct usb_attach_arg *uaa = opaque;
 
-	return usb_lookup(emdtv_devices, uaa->vendor, uaa->product) != NULL ?
+	return usb_lookup(emdtv_devices, uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -81,7 +82,7 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 {
 	struct emdtv_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = opaque;
-	usbd_device_handle dev = uaa->device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status status;
 	char *devinfo;
 
@@ -93,8 +94,8 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_dev = self;
 	sc->sc_udev = dev;
 
-	sc->sc_vendor = uaa->vendor;
-	sc->sc_product = uaa->product;
+	sc->sc_vendor = uaa->uaa_vendor;
+	sc->sc_product = uaa->uaa_product;
 
 	emdtv_i2c_attach(sc);
 

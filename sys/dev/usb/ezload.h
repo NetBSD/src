@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.h,v 1.5 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: ezload.h,v 1.5.70.1 2016/09/06 20:33:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 struct ezdata {
-	u_int8_t	length;
-	u_int16_t	address;
-	const u_int8_t	*data;
+	uint8_t		length;
+	uint16_t	address;
+	const uint8_t	*data;
 };
 
-usbd_status ezload_reset(usbd_device_handle, int);
-usbd_status ezload_download(usbd_device_handle, const struct ezdata *);
-usbd_status ezload_downloads_and_reset(usbd_device_handle, const struct ezdata **);
+usbd_status ezload_reset(struct usbd_device *, int);
+usbd_status ezload_download(struct usbd_device *, const struct ezdata *);
+usbd_status ezload_downloads_and_reset(struct usbd_device *, const struct ezdata **);

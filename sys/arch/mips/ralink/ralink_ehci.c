@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_ehci.c,v 1.5 2014/04/30 00:54:47 matt Exp $	*/
+/*	$NetBSD: ralink_ehci.c,v 1.5.8.1 2016/09/06 20:33:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_ehci.c -- Ralink EHCI USB Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.5 2014/04/30 00:54:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_ehci.c,v 1.5.8.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,9 +93,9 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": EHCI USB controller\n");
 
 	sc->sc_ehci.sc_dev = self;
-	sc->sc_ehci.sc_bus.hci_private = sc;
+	sc->sc_ehci.sc_bus.ub_hcpriv = sc;
 	sc->sc_ehci.iot = ma->ma_memt;
-	sc->sc_ehci.sc_bus.dmatag = ma->ma_dmat;
+	sc->sc_ehci.sc_bus.ub_dmatag = ma->ma_dmat;
 
 	/* Map EHCI registers */
 	if ((error = bus_space_map(sc->sc_ehci.iot, RA_USB_EHCI_BASE,
@@ -106,7 +106,7 @@ ralink_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ehci.sc_size = RA_USB_BLOCK_SIZE;
-	sc->sc_ehci.sc_bus.usbrev = USBREV_2_0;
+	sc->sc_ehci.sc_bus.ub_revision = USBREV_2_0;
 
 #if defined(RALINK_EHCI_DEBUG)
 	aprint_normal_dev(self, "sc %p ma %p\n", sc, ma);

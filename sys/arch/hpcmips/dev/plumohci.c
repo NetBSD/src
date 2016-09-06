@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $ */
+/*	$NetBSD: plumohci.c,v 1.14.18.1 2016/09/06 20:33:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14 2012/10/27 17:17:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.14.18.1 2016/09/06 20:33:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,10 +135,10 @@ plumohci_attach(device_t parent, device_t self, void *aux)
 	usbd_status r;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = pa->pa_iot;
-	sc->sc.sc_bus.dmatag = &plumohci_bus_dma_tag.bdt;
+	sc->sc.sc_bus.ub_dmatag = &plumohci_bus_dma_tag.bdt;
 	plumohci_bus_dma_tag._dmamap_chipset_v = sc;
 
 	/* Map I/O space */

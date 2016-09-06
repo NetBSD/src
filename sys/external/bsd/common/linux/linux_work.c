@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.7.2.2 2016/02/11 23:11:31 snj Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.1.6.2 2016/09/06 20:33:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.7.2.2 2016/02/11 23:11:31 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.1.6.2 2016/09/06 20:33:10 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.7.2.2 2016/02/11 23:11:31 snj Exp $
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/workqueue.h>
+#include <sys/cpu.h>
 
 #include <machine/lock.h>
 

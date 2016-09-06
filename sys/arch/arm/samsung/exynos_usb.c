@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.7.4.1 2015/01/04 11:19:00 martin Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.7.4.1.4.1 2016/09/06 20:33:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.7.4.1 2015/01/04 11:19:00 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.7.4.1.4.1 2016/09/06 20:33:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,8 +273,8 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbsc->sc_bst;
 	sc->ioh = usbsc->sc_ohci_bsh;
 	sc->sc_size = EXYNOS_BLOCK_SIZE;
-	sc->sc_bus.dmatag = usbsc->sc_dmat;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_dmatag = usbsc->sc_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
 
 	strlcpy(sc->sc_vendor, "exynos", sizeof(sc->sc_vendor));
 
@@ -326,9 +326,9 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->iot = usbsc->sc_bst;
 	sc->ioh = usbsc->sc_ehci_bsh;
 	sc->sc_size = EXYNOS_BLOCK_SIZE;
-	sc->sc_bus.dmatag = usbsc->sc_dmat;
-	sc->sc_bus.hci_private = sc;
-	sc->sc_bus.usbrev = USBREV_2_0;
+	sc->sc_bus.ub_dmatag = usbsc->sc_dmat;
+	sc->sc_bus.ub_hcpriv = sc;
+	sc->sc_bus.ub_revision = USBREV_2_0;
 	sc->sc_ncomp = 0;
 	if (usbsc->sc_ohci_dev != NULL)
 		sc->sc_comps[sc->sc_ncomp++] = usbsc->sc_ohci_dev;

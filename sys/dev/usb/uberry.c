@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.9 2012/12/27 16:42:32 skrll Exp $	*/
+/*	$NetBSD: uberry.c,v 1.9.18.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,12 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9 2012/12/27 16:42:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.9.18.1 2016/09/06 20:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
@@ -71,7 +70,7 @@ int	uberrydebug = 0;
 
 struct uberry_softc {
  	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 };
 
 /*
@@ -120,7 +119,7 @@ uberry_charge(struct uberry_softc *sc)
 	char dummy[2];
 	usbd_status err;
 
-	if (sc->sc_udev->power != USB_MAX_POWER) {
+	if (sc->sc_udev->ud_power != USB_MAX_POWER) {
 		uberry_cmd(sc, UT_READ | UT_VENDOR, 0xa5, 0, 1, dummy, 2);
 		uberry_cmd(sc, UT_WRITE | UT_VENDOR, 0xa2, 0, 1, dummy, 0);
 	}
@@ -159,7 +158,7 @@ uberry_match(device_t parent, cfdata_t match, void *aux)
 	struct usb_attach_arg *uaa = aux;
 
 	DPRINTFN(50, ("uberry_match\n"));
-	return (uberry_lookup(uaa->vendor, uaa->product) != NULL ?
+	return (uberry_lookup(uaa->uaa_vendor, uaa->uaa_product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
@@ -168,7 +167,7 @@ uberry_attach(device_t parent, device_t self, void *aux)
 {
 	struct uberry_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	usbd_device_handle	dev = uaa->device;
+	struct usbd_device *	dev = uaa->uaa_device;
 	char			*devinfop;
 
 	DPRINTFN(10,("uberry_attach: sc=%p\n", sc));
@@ -184,7 +183,7 @@ uberry_attach(device_t parent, device_t self, void *aux)
 	usbd_devinfo_free(devinfop);
 
 	uberry_charge(sc);
-	if (uaa->product == USB_PRODUCT_RIM_BLACKBERRY_PEARL)
+	if (uaa->uaa_product == USB_PRODUCT_RIM_BLACKBERRY_PEARL)
 		uberry_dual_mode(sc);
 
 	DPRINTFN(10, ("uberry_attach: %p\n", sc->sc_udev));

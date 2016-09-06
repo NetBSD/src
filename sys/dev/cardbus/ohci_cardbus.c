@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.39.32.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.39 2011/08/01 11:20:28 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.39.32.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -113,7 +113,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	const char *devname = device_xname(self);
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -129,7 +129,7 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
-	sc->sc.sc_bus.dmatag = ca->ca_dmat;
+	sc->sc.sc_bus.ub_dmatag = ca->ca_dmat;
 
 	/* Enable the device. */
 	csr = Cardbus_conf_read(ct, ca->ca_tag,

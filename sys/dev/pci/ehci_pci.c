@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.58 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.58.8.1 2016/09/06 20:33:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.58 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.58.8.1 2016/09/06 20:33:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	pci_aprint_devinfo(pa, "USB controller");
 
@@ -150,7 +150,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
-	sc->sc.sc_bus.dmatag = pa->pa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Handle quirks */
 	switch (quirk) {
@@ -192,14 +192,14 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_USBREV_PRE_1_0:
 	case PCI_USBREV_1_0:
 	case PCI_USBREV_1_1:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
 		return;
 	case PCI_USBREV_2_0:
-		sc->sc.sc_bus.usbrev = USBREV_2_0;
+		sc->sc.sc_bus.ub_revision = USBREV_2_0;
 		break;
 	default:
-		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
+		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		break;
 	}
 
@@ -469,7 +469,7 @@ static int
 ehci_apply_amd_quirks(struct ehci_pci_softc *sc)
 {
 	pcireg_t value;
- 
+
 	aprint_normal_dev(sc->sc.sc_dev,
 	    "applying AMD SB600/SB700 USB freeze workaround\n");
 	value = pci_conf_read(sc->sc_pc, sc->sc_tag, EHCI_SBx00_WORKAROUND_REG);

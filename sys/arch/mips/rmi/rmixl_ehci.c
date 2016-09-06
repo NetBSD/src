@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $	*/
+/*	$NetBSD: rmixl_ehci.c,v 1.5.20.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5 2012/07/20 02:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ehci.c,v 1.5.20.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include "locators.h"
 
@@ -92,11 +92,11 @@ rmixl_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dev = self;
-	sc->sc_bus.hci_private = sc;
+	sc->sc_bus.ub_hcpriv = sc;
 	sc->iot = usbi->usbi_el_bst;
 	sc->sc_size = usbi->usbi_size;
-	sc->sc_bus.dmatag = usbi->usbi_dmat;
-	sc->sc_bus.usbrev = USBREV_1_0;
+	sc->sc_bus.ub_dmatag = usbi->usbi_dmat;
+	sc->sc_bus.ub_revision = USBREV_1_0;
 
 	/*
 	 * Grab the companion OHCI devices from our parent.

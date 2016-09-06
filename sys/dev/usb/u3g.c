@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.30.4.1 2014/10/15 08:43:08 martin Exp $	*/
+/*	$NetBSD: u3g.c,v 1.30.4.1.4.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,12 +50,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.30.4.1 2014/10/15 08:43:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.30.4.1.4.1 2016/09/06 20:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.30.4.1 2014/10/15 08:43:08 martin Exp $");
 
 struct u3g_softc {
 	device_t		sc_dev;
-	usbd_device_handle	sc_udev;
+	struct usbd_device *	sc_udev;
 	bool			sc_dying;	/* We're going away */
 	int			sc_ifaceno;	/* Device interface number */
 
@@ -127,8 +127,9 @@ struct u3g_softc {
 	} sc_com[10];
 	size_t			sc_ncom;
 
-	usbd_pipe_handle	sc_intr_pipe;	/* Interrupt pipe */
+	struct usbd_pipe *	sc_intr_pipe;	/* Interrupt pipe */
 	u_char			*sc_intr_buff;	/* Interrupt buffer */
+	size_t			sc_intr_size;	/* buffer size */
 };
 
 /*
@@ -160,30 +161,30 @@ CFATTACH_DECL2_NEW(u3g, sizeof(struct u3g_softc), u3g_match,
     u3g_attach, u3g_detach, u3g_activate, NULL, u3g_childdet);
 
 
-static void u3g_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+static void u3g_intr(struct usbd_xfer *, void *, usbd_status);
 static void u3g_get_status(void *, int, u_char *, u_char *);
 static void u3g_set(void *, int, int, int);
 static int  u3g_open(void *, int);
 static void u3g_close(void *, int);
 static void u3g_read(void *, int, u_char **, uint32_t *);
-static void u3g_write(void *, int, u_char *, u_char *, u_int32_t *);
+static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 
 struct ucom_methods u3g_methods = {
-	u3g_get_status,
-	u3g_set,
-	NULL,
-	NULL,
-	u3g_open,
-	u3g_close,
-	u3g_read,
-	u3g_write,
+	.ucom_get_status = u3g_get_status,
+	.ucom_set = u3g_set,
+	.ucom_param = NULL,
+	.ucom_ioctl = NULL,
+	.ucom_open = u3g_open,
+	.ucom_close = u3g_close,
+	.ucom_read = u3g_read,
+	.ucom_write = u3g_write,
 };
 
 /*
  * Allegedly supported devices
  */
 static const struct usb_devno u3g_devs[] = {
-        { USB_VENDOR_DELL, USB_PRODUCT_DELL_W5500 },
+	{ USB_VENDOR_DELL, USB_PRODUCT_DELL_W5500 },
 	/* OEM: Huawei */
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1750 },
 	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E1820 },
@@ -265,13 +266,13 @@ static const struct usb_devno u3g_devs[] = {
 };
 
 static int
-send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
+send_bulkmsg(struct usbd_device *dev, void *cmd, size_t cmdlen)
 {
-	usbd_interface_handle iface;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	usbd_pipe_handle pipe;
-	usbd_xfer_handle xfer;
+	struct usbd_pipe *pipe;
+	struct usbd_xfer *xfer;
 	int err, i;
 
 	/* Move the device into the configured state. */
@@ -310,9 +311,10 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 		return UMATCH_NONE;
 	}
 
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer != NULL) {
-		usbd_setup_xfer(xfer, pipe, NULL, cmd, cmdlen,
+	int error = usbd_create_xfer(pipe, cmdlen, 0, 0, &xfer);
+	if (!error) {
+
+		usbd_setup_xfer(xfer, NULL, cmd, cmdlen,
 		    USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
 
 		err = usbd_transfer(xfer);
@@ -323,7 +325,7 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 #else
 		err = 0;
 #endif
-		usbd_free_xfer(xfer);
+		usbd_destroy_xfer(xfer);
 	} else {
 		aprint_error("u3ginit: failed to allocate xfer\n");
 		err = USBD_NOMEM;
@@ -332,21 +334,21 @@ send_bulkmsg(usbd_device_handle dev, void *cmd, size_t cmdlen)
 	usbd_abort_pipe(pipe);
 	usbd_close_pipe(pipe);
 
-	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
+	return err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE;
 }
 
 /* Byte 0..3: Command Block Wrapper (CBW) signature */
 static void
 set_cbw(unsigned char *cmd)
 {
-	cmd[0] = 0x55; 
+	cmd[0] = 0x55;
 	cmd[1] = 0x53;
 	cmd[2] = 0x42;
 	cmd[3] = 0x43;
 }
 
 static int
-u3g_bulk_scsi_eject(usbd_device_handle dev)
+u3g_bulk_scsi_eject(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -374,7 +376,7 @@ u3g_bulk_scsi_eject(usbd_device_handle dev)
 }
 
 static int
-u3g_bulk_ata_eject(usbd_device_handle dev)
+u3g_bulk_ata_eject(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -402,7 +404,7 @@ u3g_bulk_ata_eject(usbd_device_handle dev)
 }
 
 static int
-u3g_huawei_reinit(usbd_device_handle dev)
+u3g_huawei_reinit(struct usbd_device *dev)
 {
 	/*
 	 * The Huawei device presents itself as a umass device with Windows
@@ -418,18 +420,18 @@ u3g_huawei_reinit(usbd_device_handle dev)
 		usb_device_descriptor_t dd;
 
 		if (usbd_get_device_desc(dev, &dd) != 0)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		if (dd.bNumConfigurations != 1)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		if (usbd_set_config_index(dev, 0, 1) != 0)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 
 		cdesc = usbd_get_config_descriptor(dev);
 
 		if (cdesc == NULL)
-			return (UMATCH_NONE);
+			return UMATCH_NONE;
 	}
 
 	/*
@@ -440,7 +442,7 @@ u3g_huawei_reinit(usbd_device_handle dev)
 	 * it needs a mode-switch.
 	 */
 	if (cdesc->bNumInterface > 1)
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	req.bmRequestType = UT_WRITE_DEVICE;
 	req.bRequest = UR_SET_FEATURE;
@@ -450,11 +452,11 @@ u3g_huawei_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return (UMATCH_HIGHEST); /* Prevent umass from attaching */
+	return UMATCH_HIGHEST; /* Prevent umass from attaching */
 }
 
 static int
-u3g_huawei_k3765_reinit(usbd_device_handle dev)
+u3g_huawei_k3765_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -469,7 +471,7 @@ u3g_huawei_k3765_reinit(usbd_device_handle dev)
 	return send_bulkmsg(dev, cmd, sizeof(cmd));
 }
 static int
-u3g_huawei_e171_reinit(usbd_device_handle dev)
+u3g_huawei_e171_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -487,7 +489,7 @@ u3g_huawei_e171_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_huawei_e353_reinit(usbd_device_handle dev)
+u3g_huawei_e353_reinit(struct usbd_device *dev)
 {
 	unsigned char cmd[31];
 
@@ -509,7 +511,7 @@ u3g_huawei_e353_reinit(usbd_device_handle dev)
 }
 
 static int
-u3g_sierra_reinit(usbd_device_handle dev)
+u3g_sierra_reinit(struct usbd_device *dev)
 {
 	/* Some Sierra devices presents themselves as a umass device with
 	 * Windows drivers on it. After installation of the driver, it
@@ -525,11 +527,11 @@ u3g_sierra_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
+	return UMATCH_HIGHEST; /* Match to prevent umass from attaching */
 }
 
 static int
-u3g_4gsystems_reinit(usbd_device_handle dev)
+u3g_4gsystems_reinit(struct usbd_device *dev)
 {
 	/* magic string adapted from usb_modeswitch database */
 	unsigned char cmd[31];
@@ -569,33 +571,33 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Huawei changes product when it is configured as a modem.
 	 */
-	switch (uaa->vendor) {
+	switch (uaa->uaa_vendor) {
 	case USB_VENDOR_HUAWEI:
-		if (uaa->product == USB_PRODUCT_HUAWEI_K3765)
+		if (uaa->uaa_product == USB_PRODUCT_HUAWEI_K3765)
 			return UMATCH_NONE;
 
-		switch (uaa->product) {
+		switch (uaa->uaa_product) {
 		case USB_PRODUCT_HUAWEI_E1750INIT:
 		case USB_PRODUCT_HUAWEI_K3765INIT:
-			return u3g_huawei_k3765_reinit(uaa->device);
+			return u3g_huawei_k3765_reinit(uaa->uaa_device);
 			break;
 		case USB_PRODUCT_HUAWEI_E171INIT:
-			return u3g_huawei_e171_reinit(uaa->device);
+			return u3g_huawei_e171_reinit(uaa->uaa_device);
 			break;
 		case USB_PRODUCT_HUAWEI_E353INIT:
-			return u3g_huawei_e353_reinit(uaa->device);
+			return u3g_huawei_e353_reinit(uaa->uaa_device);
 			break;
 		default:
-			return u3g_huawei_reinit(uaa->device);
+			return u3g_huawei_reinit(uaa->uaa_device);
 			break;
 		}
 		break;
 
 	case USB_VENDOR_NOVATEL2:
-		switch (uaa->product){
+		switch (uaa->uaa_product){
 		case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 		case USB_PRODUCT_NOVATEL2_U760_DRIVER:
-			return u3g_bulk_scsi_eject(uaa->device);
+			return u3g_bulk_scsi_eject(uaa->uaa_device);
 			break;
 		default:
 			break;
@@ -603,21 +605,21 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		break;
 
 	case USB_VENDOR_SIERRA:
-		if (uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
-			return u3g_sierra_reinit(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_SIERRA_INSTALLER)
+			return u3g_sierra_reinit(uaa->uaa_device);
 		break;
 
 	case USB_VENDOR_QUALCOMM:
-		if (uaa->product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
-			return u3g_bulk_scsi_eject(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_QUALCOMM_NTT_DOCOMO_L02C_STORAGE)
+			return u3g_bulk_scsi_eject(uaa->uaa_device);
 		break;
 
 	case USB_VENDOR_ZTE:
-		switch (uaa->product){
+		switch (uaa->uaa_product){
 		case USB_PRODUCT_ZTE_INSTALLER:
 		case USB_PRODUCT_ZTE_MF820D_INSTALLER:
-			(void)u3g_bulk_ata_eject(uaa->device);
-			(void)u3g_bulk_scsi_eject(uaa->device);
+			(void)u3g_bulk_ata_eject(uaa->uaa_device);
+			(void)u3g_bulk_scsi_eject(uaa->uaa_device);
 			return UMATCH_HIGHEST;
 		default:
 			break;
@@ -625,8 +627,8 @@ u3ginit_match(device_t parent, cfdata_t match, void *aux)
 		break;
 
 	case USB_VENDOR_4GSYSTEMS:
-		if (uaa->product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
-			return u3g_4gsystems_reinit(uaa->device);
+		if (uaa->uaa_product == USB_PRODUCT_4GSYSTEMS_XSSTICK_P14_INSTALLER)
+			return u3g_4gsystems_reinit(uaa->uaa_device);
 		break;
 
 	default:
@@ -644,8 +646,8 @@ u3ginit_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Switching to 3G mode\n");
 
-	if (uaa->vendor == USB_VENDOR_NOVATEL2) {
-		switch (uaa->product) {
+	if (uaa->uaa_vendor == USB_VENDOR_NOVATEL2) {
+		switch (uaa->uaa_product) {
 	    	case USB_PRODUCT_NOVATEL2_MC950D_DRIVER:
 	    	case USB_PRODUCT_NOVATEL2_U760_DRIVER:
 			/* About to disappear... */
@@ -657,14 +659,14 @@ u3ginit_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Move the device into the configured state. */
-	(void) usbd_set_config_index(uaa->device, 0, 1);
+	(void) usbd_set_config_index(uaa->uaa_device, 0, 1);
 }
 
 static int
 u3ginit_detach(device_t self, int flags)
 {
 
-	return (0);
+	return 0;
 }
 
 
@@ -677,56 +679,58 @@ u3ginit_detach(device_t self, int flags)
 static int
 u3g_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct usbif_attach_arg *uaa = aux;
-	usbd_interface_handle iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usbd_status error;
 
-	if (!usb_lookup(u3g_devs, uaa->vendor, uaa->product))
-		return (UMATCH_NONE);
+	if (!usb_lookup(u3g_devs, uiaa->uiaa_vendor, uiaa->uiaa_product))
+		return UMATCH_NONE;
 
-	error = usbd_device2interface_handle(uaa->device, uaa->ifaceno, &iface);
+	error = usbd_device2interface_handle(uiaa->uiaa_device,
+	    uiaa->uiaa_ifaceno, &iface);
 	if (error) {
 		printf("u3g_match: failed to get interface, err=%s\n",
 		    usbd_errstr(error));
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 	}
 
 	id = usbd_get_interface_descriptor(iface);
 	if (id == NULL) {
 		printf("u3g_match: failed to get interface descriptor\n");
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 	}
 
 	/*
 	 * Huawei modems use the vendor-specific class for all interfaces,
 	 * both tty and CDC NCM, which we should avoid attaching to.
 	 */
-	if (uaa->vendor == USB_VENDOR_HUAWEI && id->bInterfaceSubClass == 2 &&
+	if (uiaa->uiaa_vendor == USB_VENDOR_HUAWEI &&
+	    id->bInterfaceSubClass == 2 &&
 	    (id->bInterfaceProtocol & 0xf) == 6)	/* 0x16, 0x46, 0x76 */
-		return (UMATCH_NONE);
+		return UMATCH_NONE;
 
 	/*
 	 * 3G modems generally report vendor-specific class
 	 *
 	 * XXX: this may be too generalised.
 	 */
-	return ((id->bInterfaceClass == UICLASS_VENDOR) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
+	return id->bInterfaceClass == UICLASS_VENDOR ?
+	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 static void
 u3g_attach(device_t parent, device_t self, void *aux)
 {
 	struct u3g_softc *sc = device_private(self);
-	struct usbif_attach_arg *uaa = aux;
-	usbd_device_handle dev = uaa->device;
-	usbd_interface_handle iface;
+	struct usbif_attach_arg *uiaa = aux;
+	struct usbd_device *dev = uiaa->uiaa_device;
+	struct usbd_interface *iface;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	struct ucom_attach_args uca;
+	struct ucom_attach_args ucaa;
 	usbd_status error;
-	int n, intr_address, intr_size; 
+	int n, intr_address, intr_size;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -735,7 +739,7 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dying = false;
 	sc->sc_udev = dev;
 
-	error = usbd_device2interface_handle(dev, uaa->ifaceno, &iface);
+	error = usbd_device2interface_handle(dev, uiaa->uiaa_ifaceno, &iface);
 	if (error) {
 		aprint_error_dev(self, "failed to get interface, err=%s\n",
 		    usbd_errstr(error));
@@ -744,20 +748,20 @@ u3g_attach(device_t parent, device_t self, void *aux)
 
 	id = usbd_get_interface_descriptor(iface);
 
-	uca.info = "3G Modem";
-	uca.ibufsize = U3G_BUFF_SIZE;
-	uca.obufsize = U3G_BUFF_SIZE;
-	uca.ibufsizepad = U3G_BUFF_SIZE;
-	uca.opkthdrlen = 0;
-	uca.device = dev;
-	uca.iface = iface;
-	uca.methods = &u3g_methods;
-	uca.arg = sc;
-	uca.portno = -1;
-	uca.bulkin = uca.bulkout = -1;
+	ucaa.ucaa_info = "3G Modem";
+	ucaa.ucaa_ibufsize = U3G_BUFF_SIZE;
+	ucaa.ucaa_obufsize = U3G_BUFF_SIZE;
+	ucaa.ucaa_ibufsizepad = U3G_BUFF_SIZE;
+	ucaa.ucaa_opkthdrlen = 0;
+	ucaa.ucaa_device = dev;
+	ucaa.ucaa_iface = iface;
+	ucaa.ucaa_methods = &u3g_methods;
+	ucaa.ucaa_arg = sc;
+	ucaa.ucaa_portno = -1;
+	ucaa.ucaa_bulkin = ucaa.ucaa_bulkout = -1;
 
 
-	sc->sc_ifaceno = uaa->ifaceno;
+	sc->sc_ifaceno = uiaa->uiaa_ifaceno;
 	intr_address = -1;
 	intr_size = 0;
 
@@ -777,29 +781,29 @@ u3g_attach(device_t parent, device_t self, void *aux)
 		} else
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkin = ed->bEndpointAddress;
+			ucaa.ucaa_bulkin = ed->bEndpointAddress;
 		} else
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			uca.bulkout = ed->bEndpointAddress;
+			ucaa.ucaa_bulkout = ed->bEndpointAddress;
 		}
-		if (uca.bulkin != -1 && uca.bulkout != -1) {
+		if (ucaa.ucaa_bulkin != -1 && ucaa.ucaa_bulkout != -1) {
 			struct u3g_com *com;
 			if (sc->sc_ncom == __arraycount(sc->sc_com)) {
 				aprint_error_dev(self, "Need to configure "
 				    "more than %zu ttys", sc->sc_ncom);
 				continue;
 			}
-			uca.portno = sc->sc_ncom++;
-			com = &sc->sc_com[uca.portno];
+			ucaa.ucaa_portno = sc->sc_ncom++;
+			com = &sc->sc_com[ucaa.ucaa_portno];
 			com->c_outpins = 0;
 			com->c_msr = UMSR_DSR | UMSR_CTS | UMSR_DCD;
 			com->c_open = false;
 			com->c_purging = false;
 			com->c_dev = config_found_sm_loc(self, "ucombus",
-				NULL, &uca, ucomprint, ucomsubmatch);
-			uca.bulkin = -1;
-			uca.bulkout = -1;
+				NULL, &ucaa, ucomprint, ucomsubmatch);
+			ucaa.ucaa_bulkin = -1;
+			ucaa.ucaa_bulkout = -1;
 		}
 	}
 
@@ -816,7 +820,8 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	 * the tty(4) device is open or not.
 	 */
 	if (intr_address != -1) {
-		sc->sc_intr_buff = malloc(intr_size, M_USBDEV, M_WAITOK);
+		sc->sc_intr_size = intr_size;
+		sc->sc_intr_buff = kmem_alloc(intr_size, KM_SLEEP);
 		error = usbd_open_pipe_intr(iface, intr_address,
 		    USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc, sc->sc_intr_buff,
 		    intr_size, u3g_intr, 100);
@@ -860,11 +865,11 @@ u3g_detach(device_t self, int flags)
 		sc->sc_intr_pipe = NULL;
 	}
 	if (sc->sc_intr_buff != NULL) {
-		free(sc->sc_intr_buff, M_USBDEV);
+		kmem_free(sc->sc_intr_buff, sc->sc_intr_size);
 		sc->sc_intr_buff = NULL;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -901,7 +906,7 @@ u3g_activate(device_t self, enum devact act)
 }
 
 static void
-u3g_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+u3g_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct u3g_softc *sc = (struct u3g_softc *)priv;
 	u_char *buf;
@@ -994,35 +999,35 @@ u3g_set(void *arg, int portno, int reg, int onoff)
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err == USBD_STALLED)
-		usbd_clear_endpoint_stall(sc->sc_udev->default_pipe);
+		usbd_clear_endpoint_stall(sc->sc_udev->ud_pipe0);
 }
 
 /*ARGSUSED*/
-static int 
+static int
 u3g_open(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
 	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
-	usbd_interface_handle ih;
+	struct usbd_interface *ih;
 	usbd_status err;
 	struct u3g_com *com = &sc->sc_com[portno];
 	int i, nin;
 
 	if (sc->sc_dying)
-		return (0);
+		return 0;
 
 	err = usbd_device2interface_handle(sc->sc_udev, sc->sc_ifaceno, &ih);
 	if (err)
-		return (EIO);
+		return EIO;
 
 	id = usbd_get_interface_descriptor(ih);
 
 	for (nin = i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(ih, i);
-		if (ed == NULL)	
-			return (EIO);
+		if (ed == NULL)
+			return EIO;
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
@@ -1035,7 +1040,7 @@ u3g_open(void *arg, int portno)
 			USETW(req.wLength, 0);
 			err = usbd_do_request(sc->sc_udev, &req, 0);
 			if (err)
-				return (EIO);
+				return EIO;
 		}
 	}
 
@@ -1043,11 +1048,11 @@ u3g_open(void *arg, int portno)
 	com->c_purging = true;
 	getmicrotime(&com->c_purge_start);
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
-static void 
+static void
 u3g_close(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
@@ -1087,7 +1092,7 @@ u3g_read(void *arg, int portno, u_char **cpp, uint32_t *ccp)
 
 /*ARGSUSED*/
 static void
-u3g_write(void *arg, int portno, u_char *to, u_char *from, u_int32_t *count)
+u3g_write(void *arg, int portno, u_char *to, u_char *from, uint32_t *count)
 {
 	struct u3g_softc *sc = arg;
 	struct u3g_com *com = &sc->sc_com[portno];

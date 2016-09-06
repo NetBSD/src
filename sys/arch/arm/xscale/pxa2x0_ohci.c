@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_ohci.c,v 1.9 2012/10/27 17:17:42 chs Exp $	*/
+/*	$NetBSD: pxa2x0_ohci.c,v 1.9.18.1 2016/09/06 20:33:06 skrll Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -80,11 +80,11 @@ pxaohci_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	sc->sc.iot = pxa->pxa_iot;
-	sc->sc.sc_bus.dmatag = pxa->pxa_dmat;
+	sc->sc.sc_bus.ub_dmatag = pxa->pxa_dmat;
 	sc->sc.sc_size = 0;
 	sc->sc_ih = NULL;
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	aprint_normal("\n");
 	aprint_naive("\n");
@@ -189,7 +189,7 @@ pxaohci_power(int why, void *arg)
 	int s;
 
 	s = splhardusb();
-	sc->sc.sc_bus.use_polling++;
+	sc->sc.sc_bus.ub_usepolling++;
 	switch (why) {
 	case PWR_STANDBY:
 	case PWR_SUSPEND:
@@ -207,7 +207,7 @@ pxaohci_power(int why, void *arg)
 #endif
 		break;
 	}
-	sc->sc.sc_bus.use_polling--;
+	sc->sc.sc_bus.ub_usepolling--;
 	splx(s);
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.4.1 2015/03/15 22:47:55 snj Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.4.1.4.1 2016/09/06 20:33:08 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.4.1 2015/03/15 22:47:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.4.1.4.1 2016/09/06 20:33:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -368,9 +368,9 @@ static void		run_calibrate_to(void *);
 static void		run_calibrate_cb(struct run_softc *, void *);
 static void		run_newassoc(struct ieee80211_node *, int);
 static void		run_rx_frame(struct run_softc *, uint8_t *, int);
-static void		run_rxeof(usbd_xfer_handle, usbd_private_handle,
+static void		run_rxeof(struct usbd_xfer *, void *,
 			    usbd_status);
-static void		run_txeof(usbd_xfer_handle, usbd_private_handle,
+static void		run_txeof(struct usbd_xfer *, void *,
 			    usbd_status);
 static int		run_tx(struct run_softc *, struct mbuf *,
 			    struct ieee80211_node *);
@@ -451,17 +451,17 @@ firmware_load(const char *dname, const char *iname, uint8_t **ucodep,
 	int error;
 
 	if ((error = firmware_open(dname, iname, &fh)) != 0)
-		return (error);
+		return error;
 	*sizep = firmware_get_size(fh);
 	if ((*ucodep = firmware_malloc(*sizep)) == NULL) {
 		firmware_close(fh);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 	if ((error = firmware_read(fh, 0, *ucodep, *sizep)) != 0)
 		firmware_free(*ucodep, *sizep);
 	firmware_close(fh);
 
-	return (error);
+	return error;
 }
 
 static int
@@ -469,7 +469,7 @@ run_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(run_devs, uaa->vendor, uaa->product) != NULL) ?
+	return (usb_lookup(run_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
@@ -490,7 +490,7 @@ run_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
-	sc->sc_udev = uaa->device;
+	sc->sc_udev = uaa->uaa_device;
 
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
@@ -676,7 +676,7 @@ run_detach(device_t self, int flags)
 	int s;
 
 	if (ifp->if_softc == NULL)
-		return (0);
+		return 0;
 
 	pmf_device_deregister(self);
 
@@ -701,7 +701,7 @@ run_detach(device_t self, int flags)
 	callout_destroy(&sc->scan_to);
 	callout_destroy(&sc->calib_to);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -712,9 +712,9 @@ run_activate(device_t self, enum devact act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		if_deactivate(sc->sc_ic.ic_ifp);
-		return (0);
+		return 0;
 	default:
-		return (EOPNOTSUPP);
+		return EOPNOTSUPP;
 	}
 }
 
@@ -733,20 +733,16 @@ run_alloc_rx_ring(struct run_softc *sc)
 
 		data->sc = sc;	/* backpointer for callbacks */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			error = ENOMEM;
+		error = usbd_create_xfer(sc->rxq.pipeh, RUN_MAX_RXSZ,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error)
 			goto fail;
-		}
-		data->buf = usbd_alloc_buffer(data->xfer, RUN_MAX_RXSZ);
-		if (data->buf == NULL) {
-			error = ENOMEM;
-			goto fail;
-		}
+
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	if (error != 0)
 fail:		run_free_rx_ring(sc);
-	return (error);
+	return error;
 }
 
 static void
@@ -757,13 +753,15 @@ run_free_rx_ring(struct run_softc *sc)
 
 	if (rxq->pipeh != NULL) {
 		usbd_abort_pipe(rxq->pipeh);
-		usbd_close_pipe(rxq->pipeh);
-		rxq->pipeh = NULL;
 	}
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		if (rxq->data[i].xfer != NULL)
-			usbd_free_xfer(rxq->data[i].xfer);
+			usbd_destroy_xfer(rxq->data[i].xfer);
 		rxq->data[i].xfer = NULL;
+	}
+	if (rxq->pipeh != NULL) {
+		usbd_close_pipe(rxq->pipeh);
+		rxq->pipeh = NULL;
 	}
 }
 
@@ -785,23 +783,19 @@ run_alloc_tx_ring(struct run_softc *sc, int qid)
 		data->sc = sc;	/* backpointer for callbacks */
 		data->qid = qid;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			error = ENOMEM;
+		error = usbd_create_xfer(txq->pipeh, RUN_MAX_TXSZ,
+		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error)
 			goto fail;
-		}
-		data->buf = usbd_alloc_buffer(data->xfer, RUN_MAX_TXSZ);
-		if (data->buf == NULL) {
-			error = ENOMEM;
-			goto fail;
-		}
+
+		data->buf = usbd_get_buffer(data->xfer);
 		/* zeroize the TXD + TXWI part */
-		memset(data->buf, 0, sizeof (struct rt2870_txd) +
-		    sizeof (struct rt2860_txwi));
+		memset(data->buf, 0, sizeof(struct rt2870_txd) +
+		    sizeof(struct rt2860_txwi));
 	}
 	if (error != 0)
 fail:		run_free_tx_ring(sc, qid);
-	return (error);
+	return error;
 }
 
 static void
@@ -817,7 +811,7 @@ run_free_tx_ring(struct run_softc *sc, int qid)
 	}
 	for (i = 0; i < RUN_TX_RING_COUNT; i++) {
 		if (txq->data[i].xfer != NULL)
-			usbd_free_xfer(txq->data[i].xfer);
+			usbd_destroy_xfer(txq->data[i].xfer);
 		txq->data[i].xfer = NULL;
 	}
 }
@@ -843,13 +837,13 @@ run_load_microcode(struct run_softc *sc)
 	if ((error = firmware_load("run", fwname, &ucode, &size)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "error %d, could not read firmware %s\n", error, fwname);
-		return (error);
+		return error;
 	}
 	if (size != 4096) {
 		aprint_error_dev(sc->sc_dev,
 		    "invalid firmware size (should be 4KB)\n");
 		firmware_free(ucode, size);
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	run_read(sc, RT2860_ASIC_VER_ID, &tmp);
@@ -865,17 +859,17 @@ run_load_microcode(struct run_softc *sc)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 0);
 	if ((error = usbd_do_request(sc->sc_udev, &req, NULL)) != 0)
-		return (error);
+		return error;
 
 	usbd_delay_ms(sc->sc_udev, 10);
 	run_write(sc, RT2860_H2M_MAILBOX, 0);
 	if ((error = run_mcu_cmd(sc, RT2860_MCU_CMD_RFRESET, 0)) != 0)
-		return (error);
+		return error;
 
 	/* wait until microcontroller is ready */
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if ((error = run_read(sc, RT2860_SYS_CTRL, &tmp)) != 0)
-			return (error);
+			return error;
 		if (tmp & RT2860_MCU_READY)
 			break;
 		DELAY(1000);
@@ -883,13 +877,13 @@ run_load_microcode(struct run_softc *sc)
 	if (ntries == 1000) {
 		aprint_error_dev(sc->sc_dev,
 		    "timeout waiting for MCU to initialize\n");
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 	}
 
 	sc->sc_flags |= RUN_FWLOADED;
 
 	DPRINTF(("microcode successfully loaded after %d tries\n", ntries));
-	return (0);
+	return 0;
 }
 
 static int
@@ -911,12 +905,12 @@ run_read(struct run_softc *sc, uint16_t reg, uint32_t *val)
 	uint32_t tmp;
 	int error;
 
-	error = run_read_region_1(sc, reg, (uint8_t *)&tmp, sizeof tmp);
+	error = run_read_region_1(sc, reg, (uint8_t *)&tmp, sizeof(tmp));
 	if (error == 0)
 		*val = le32toh(tmp);
 	else
 		*val = 0xffffffff;
-	return (error);
+	return error;
 }
 
 static int
@@ -952,7 +946,7 @@ run_write(struct run_softc *sc, uint16_t reg, uint32_t val)
 
 	if ((error = run_write_2(sc, reg, val & 0xffff)) == 0)
 		error = run_write_2(sc, reg + 2, val >> 16);
-	return (error);
+	return error;
 }
 
 static int
@@ -968,7 +962,7 @@ run_write_region_1(struct run_softc *sc, uint16_t reg, const uint8_t *buf,
 	KASSERT((len & 1) == 0);
 	for (i = 0; i < len && error == 0; i += 2)
 		error = run_write_2(sc, reg + i, buf[i] | buf[i + 1] << 8);
-	return (error);
+	return error;
 #else
 	usb_device_request_t req;
 
@@ -988,7 +982,7 @@ run_set_region_4(struct run_softc *sc, uint16_t reg, uint32_t val, int count)
 
 	for (; count > 0 && error == 0; count--, reg += 4)
 		error = run_write(sc, reg, val);
-	return (error);
+	return error;
 }
 
 /* Read 16-bit from eFUSE ROM (RT3070 only.) */
@@ -1000,7 +994,7 @@ run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 	int error, ntries;
 
 	if ((error = run_read(sc, RT3070_EFUSE_CTRL, &tmp)) != 0)
-		return (error);
+		return error;
 
 	addr *= 2;
 	/*-
@@ -1015,25 +1009,25 @@ run_efuse_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 	run_write(sc, RT3070_EFUSE_CTRL, tmp);
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT3070_EFUSE_CTRL, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT3070_EFSROM_KICK))
 			break;
 		DELAY(2);
 	}
 	if (ntries == 100)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	if ((tmp & RT3070_EFUSE_AOUT_MASK) == RT3070_EFUSE_AOUT_MASK) {
 		*val = 0xffff;	/* address not found */
-		return (0);
+		return 0;
 	}
 	/* determine to which 32-bit register our 16-bit word belongs */
 	reg = RT3070_EFUSE_DATA3 - (addr & 0xc);
 	if ((error = run_read(sc, reg, &tmp)) != 0)
-		return (error);
+		return error;
 
 	*val = (addr & 2) ? tmp >> 16 : tmp & 0xffff;
-	return (0);
+	return 0;
 }
 
 static int
@@ -1048,13 +1042,13 @@ run_eeprom_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 	req.bRequest = RT2870_EEPROM_READ;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, addr);
-	USETW(req.wLength, sizeof tmp);
+	USETW(req.wLength, sizeof(tmp));
 	error = usbd_do_request(sc->sc_udev, &req, &tmp);
 	if (error == 0)
 		*val = le16toh(tmp);
 	else
 		*val = 0xffff;
-	return (error);
+	return error;
 }
 
 static __inline int
@@ -1073,12 +1067,12 @@ run_rt2870_rf_write(struct run_softc *sc, uint8_t reg, uint32_t val)
 
 	for (ntries = 0; ntries < 10; ntries++) {
 		if ((error = run_read(sc, RT2860_RF_CSR_CFG0, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT2860_RF_REG_CTRL))
 			break;
 	}
 	if (ntries == 10)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	/* RF registers are 24-bit on the RT2860 */
 	tmp = RT2860_RF_REG_CTRL | 24 << RT2860_RF_REG_WIDTH_SHIFT |
@@ -1094,28 +1088,28 @@ run_rt3070_rf_read(struct run_softc *sc, uint8_t reg, uint8_t *val)
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT3070_RF_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT3070_RF_KICK))
 			break;
 	}
 	if (ntries == 100)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	tmp = RT3070_RF_KICK | reg << 8;
 	if ((error = run_write(sc, RT3070_RF_CSR_CFG, tmp)) != 0)
-		return (error);
+		return error;
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT3070_RF_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT3070_RF_KICK))
 			break;
 	}
 	if (ntries == 100)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	*val = tmp & 0xff;
-	return (0);
+	return 0;
 }
 
 static int
@@ -1126,12 +1120,12 @@ run_rt3070_rf_write(struct run_softc *sc, uint8_t reg, uint8_t val)
 
 	for (ntries = 0; ntries < 10; ntries++) {
 		if ((error = run_read(sc, RT3070_RF_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT3070_RF_KICK))
 			break;
 	}
 	if (ntries == 10)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	tmp = RT3070_RF_WRITE | RT3070_RF_KICK | reg << 8 | val;
 	return run_write(sc, RT3070_RF_CSR_CFG, tmp);
@@ -1145,28 +1139,28 @@ run_bbp_read(struct run_softc *sc, uint8_t reg, uint8_t *val)
 
 	for (ntries = 0; ntries < 10; ntries++) {
 		if ((error = run_read(sc, RT2860_BBP_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT2860_BBP_CSR_KICK))
 			break;
 	}
 	if (ntries == 10)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	tmp = RT2860_BBP_CSR_READ | RT2860_BBP_CSR_KICK | reg << 8;
 	if ((error = run_write(sc, RT2860_BBP_CSR_CFG, tmp)) != 0)
-		return (error);
+		return error;
 
 	for (ntries = 0; ntries < 10; ntries++) {
 		if ((error = run_read(sc, RT2860_BBP_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT2860_BBP_CSR_KICK))
 			break;
 	}
 	if (ntries == 10)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	*val = tmp & 0xff;
-	return (0);
+	return 0;
 }
 
 static int
@@ -1177,12 +1171,12 @@ run_bbp_write(struct run_softc *sc, uint8_t reg, uint8_t val)
 
 	for (ntries = 0; ntries < 10; ntries++) {
 		if ((error = run_read(sc, RT2860_BBP_CSR_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT2860_BBP_CSR_KICK))
 			break;
 	}
 	if (ntries == 10)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	tmp = RT2860_BBP_CSR_KICK | reg << 8 | val;
 	return run_write(sc, RT2860_BBP_CSR_CFG, tmp);
@@ -1199,17 +1193,17 @@ run_mcu_cmd(struct run_softc *sc, uint8_t cmd, uint16_t arg)
 
 	for (ntries = 0; ntries < 100; ntries++) {
 		if ((error = run_read(sc, RT2860_H2M_MAILBOX, &tmp)) != 0)
-			return (error);
+			return error;
 		if (!(tmp & RT2860_H2M_BUSY))
 			break;
 	}
 	if (ntries == 100)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	tmp = RT2860_H2M_BUSY | RT2860_TOKEN_NO_INTR << 16 | arg;
 	if ((error = run_write(sc, RT2860_H2M_MAILBOX, tmp)) == 0)
 		error = run_write(sc, RT2860_HOST_CMD, cmd);
-	return (error);
+	return error;
 }
 
 /*
@@ -1230,7 +1224,7 @@ b4inc(uint32_t b32, int8_t delta)
 			b4 = 0xf;
 		b32 = b32 >> 4 | b4 << 28;
 	}
-	return (b32);
+	return b32;
 }
 
 static const char *
@@ -1500,15 +1494,15 @@ run_read_eeprom(struct run_softc *sc)
 			sc->rssi_5ghz[ant] = 0;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 static struct ieee80211_node *
 run_node_alloc(struct ieee80211_node_table *nt)
 {
 	struct run_node *rn =
-	    malloc(sizeof (struct run_node), M_DEVBUF, M_NOWAIT | M_ZERO);
-	return (rn) ? &rn->ni : NULL;
+	    malloc(sizeof(struct run_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return rn ? &rn->ni : NULL;
 }
 
 static int
@@ -1521,7 +1515,7 @@ run_media_change(struct ifnet *ifp)
 
 	error = ieee80211_media_change(ifp);
 	if (error != ENETRESET)
-		return (error);
+		return error;
 
 	if (ic->ic_fixed_rate != IEEE80211_FIXED_RATE_NONE) {
 		rate = ic->ic_sup_rates[ic->ic_curmode].
@@ -1535,7 +1529,7 @@ run_media_change(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
 		run_init(ifp);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -1584,7 +1578,7 @@ run_do_async(struct run_softc *sc, void (*cb)(struct run_softc *, void *),
 	s = splusb();
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
-	KASSERT(len <= sizeof (cmd->data));
+	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
 	ring->cur = (ring->cur + 1) % RUN_HOST_CMD_RING_COUNT;
 
@@ -1606,8 +1600,8 @@ run_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	/* do it in a process context */
 	cmd.state = nstate;
 	cmd.arg = arg;
-	run_do_async(sc, run_newstate_cb, &cmd, sizeof cmd);
-	return (0);
+	run_do_async(sc, run_newstate_cb, &cmd, sizeof(cmd));
+	return 0;
 }
 
 static void
@@ -1682,7 +1676,7 @@ run_newstate_cb(struct run_softc *sc, void *arg)
 
 			/* clear statistic registers used by AMRR */
 			run_read_region_1(sc, RT2860_TX_STA_CNT0,
-			    (uint8_t *)sta, sizeof sta);
+			    (uint8_t *)sta, sizeof(sta));
 			/* start calibration timer */
 			callout_schedule(&sc->calib_to, hz);
 		}
@@ -1703,7 +1697,7 @@ run_updateedca(struct ieee80211com *ic)
 
 	/* do it in a process context */
 	run_do_async(ic->ic_ifp->if_softc, run_updateedca_cb, NULL, 0);
-	return (0);
+	return 0;
 }
 
 /* ARGSUSED */
@@ -1760,7 +1754,7 @@ run_set_key(struct ieee80211com *ic, const struct ieee80211_key *k,
 	/* do it in a process context */
 	cmd.key = *k;
 	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
-	run_do_async(sc, run_set_key_cb, &cmd, sizeof cmd);
+	run_do_async(sc, run_set_key_cb, &cmd, sizeof(cmd));
 	return 1;
 }
 
@@ -1825,7 +1819,7 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 	    (k->wk_flags & IEEE80211_KEY_XMIT)) {
 		/* set initial packet number in IV+EIV */
 		if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_WEP) {
-			memset(iv, 0, sizeof iv);
+			memset(iv, 0, sizeof(iv));
 			iv[3] = sc->sc_ic.ic_crypto.cs_def_txkey << 6;
 		} else {
 			if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP) {
@@ -1870,7 +1864,7 @@ run_delete_key(struct ieee80211com *ic, const struct ieee80211_key *k)
 	/* do it in a process context */
 	cmd.key = *k;
 	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
-	run_do_async(sc, run_delete_key_cb, &cmd, sizeof cmd);
+	run_do_async(sc, run_delete_key_cb, &cmd, sizeof(cmd));
 	return 1;
 }
 
@@ -1920,7 +1914,7 @@ run_calibrate_cb(struct run_softc *sc, void *arg)
 
 	/* read statistic counters (clear on read) and update AMRR state */
 	error = run_read_region_1(sc, RT2860_TX_STA_CNT0, (uint8_t *)sta,
-	    sizeof sta);
+	    sizeof(sta));
 	if (error != 0)
 		goto skip;
 
@@ -2002,7 +1996,7 @@ run_maxrssi_chain(struct run_softc *sc, const struct rt2860_rxwi *rxwi)
 			if (rxwi->rssi[2] > rxwi->rssi[rxchain])
 				rxchain = 2;
 	}
-	return (rxchain);
+	return rxchain;
 }
 
 static void
@@ -2146,7 +2140,7 @@ run_rx_frame(struct run_softc *sc, uint8_t *buf, int dmalen)
 }
 
 static void
-run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_rx_data *data = priv;
 	struct run_softc *sc = data->sc;
@@ -2184,19 +2178,19 @@ run_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 			    dmalen + 8, xferlen));
 			break;
 		}
-		run_rx_frame(sc, buf + sizeof (uint32_t), dmalen);
+		run_rx_frame(sc, buf + sizeof(uint32_t), dmalen);
 		buf += dmalen + 8;
 		xferlen -= dmalen + 8;
 	}
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->rxq.pipeh, data, data->buf, RUN_MAX_RXSZ,
-	    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT, run_rxeof);
+	usbd_setup_xfer(xfer, data, data->buf, RUN_MAX_RXSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
 
 static void
-run_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+run_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
 	struct run_tx_data *data = priv;
 	struct run_softc *sc = data->sc;
@@ -2247,7 +2241,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 		k = ieee80211_crypto_encap(ic, ni, m);
 		if (k == NULL) {
 			m_freem(m);
-			return (ENOBUFS);
+			return ENOBUFS;
 		}
 
 		/* packet header may have moved, reset our local pointer */
@@ -2284,7 +2278,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* get MCS code from rate index */
 	mcs = rt2860_rates[ridx].mcs;
 
-	xferlen = sizeof (*txwi) + m->m_pkthdr.len;
+	xferlen = sizeof(*txwi) + m->m_pkthdr.len;
 	/* roundup to 32-bit alignment */
 	xferlen = (xferlen + 3) & ~3;
 
@@ -2347,14 +2341,14 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)(txwi + 1));
 	m_freem(m);
 
-	xferlen += sizeof (*txd) + 4;
+	xferlen += sizeof(*txd) + 4;
 
-	usbd_setup_xfer(data->xfer, ring->pipeh, data, data->buf, xferlen,
-	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RUN_TX_TIMEOUT, run_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, RUN_TX_TIMEOUT, run_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS &&
 	    error != USBD_NORMAL_COMPLETION))
-		return (error);
+		return error;
 
 	ieee80211_free_node(ni);
 
@@ -2362,7 +2356,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	if (++ring->queued >= RUN_TX_RING_COUNT)
 		sc->qfullmsk |= 1 << qid;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -2385,8 +2379,8 @@ run_start(struct ifnet *ifp)
 		/* send pending management frames first */
 		IF_DEQUEUE(&ic->ic_mgtq, m);
 		if (m != NULL) {
-			ni = (void *)m->m_pkthdr.rcvif;
-			m->m_pkthdr.rcvif = NULL;
+			ni = M_GETCTX(m, struct ieee80211_node *);
+			M_CLEARCTX(m);
 			goto sendit;
 		}
 		if (ic->ic_state != IEEE80211_S_RUN)
@@ -2502,7 +2496,7 @@ run_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 
-	return (error);
+	return error;
 }
 
 static void
@@ -2880,7 +2874,7 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 
 	chan = ieee80211_chan2ieee(ic, c);
 	if (chan == 0 || chan == IEEE80211_CHAN_ANY)
-		return (EINVAL);
+		return EINVAL;
 
 	if (sc->mac_ver == 0x3572)
 		run_rt3572_set_chan(sc, chan);
@@ -2903,7 +2897,7 @@ run_set_chan(struct run_softc *sc, struct ieee80211_channel *c)
 	run_select_chan_group(sc, group);
 
 	DELAY(1000);
-	return (0);
+	return 0;
 }
 
 static void
@@ -3060,7 +3054,7 @@ run_rssi2dbm(struct run_softc *sc, uint8_t rssi, uint8_t rxchain)
 	} else
 		delta = sc->rssi_2ghz[rxchain] - sc->lna[0];
 
-	return (-12 - delta - rssi);
+	return -12 - delta - rssi;
 }
 
 static int
@@ -3072,12 +3066,12 @@ run_bbp_init(struct run_softc *sc)
 	/* wait for BBP to wake up */
 	for (ntries = 0; ntries < 20; ntries++) {
 		if ((error = run_bbp_read(sc, 0, &bbp0)) != 0)
-			return (error);
+			return error;
 		if (bbp0 != 0 && bbp0 != 0xff)
 			break;
 	}
 	if (ntries == 20)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	/* initialize BBP registers to default values */
 	for (i = 0; i < (int)__arraycount(rt2860_def_bbp); i++) {
@@ -3097,7 +3091,7 @@ run_bbp_init(struct run_softc *sc)
 		run_bbp_write(sc, 69, 0x16);
 		run_bbp_write(sc, 73, 0x12);
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -3230,7 +3224,7 @@ run_rt3070_rf_init(struct run_softc *sc)
 			rf |= 0x03;
 		run_rt3070_rf_write(sc, 27, rf);
 	}
-	return (0);
+	return 0;
 }
 
 static int
@@ -3262,7 +3256,7 @@ run_rt3070_filter_calib(struct run_softc *sc, uint8_t init, uint8_t target,
 			break;
 	}
 	if (ntries == 100)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	/* set power and frequency of stopband test tone */
 	run_bbp_write(sc, 24, 0x06);
@@ -3295,7 +3289,7 @@ run_rt3070_filter_calib(struct run_softc *sc, uint8_t init, uint8_t target,
 	run_rt3070_rf_read(sc, 22, &rf22);
 	run_rt3070_rf_write(sc, 22, rf22 & ~0x01);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -3385,13 +3379,13 @@ run_txrx_enable(struct run_softc *sc)
 	run_write(sc, RT2860_MAC_SYS_CTRL, RT2860_MAC_TX_EN);
 	for (ntries = 0; ntries < 200; ntries++) {
 		if ((error = run_read(sc, RT2860_WPDMA_GLO_CFG, &tmp)) != 0)
-			return (error);
+			return error;
 		if ((tmp & (RT2860_TX_DMA_BUSY | RT2860_RX_DMA_BUSY)) == 0)
 			break;
 		DELAY(1000);
 	}
 	if (ntries == 200)
-		return (ETIMEDOUT);
+		return ETIMEDOUT;
 
 	DELAY(50);
 
@@ -3418,7 +3412,7 @@ run_txrx_enable(struct run_softc *sc)
 	run_write(sc, RT2860_MAC_SYS_CTRL,
 	    RT2860_MAC_RX_EN | RT2860_MAC_TX_EN);
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -3624,9 +3618,8 @@ run_init(struct ifnet *ifp)
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		struct run_rx_data *data = &sc->rxq.data[i];
 
-		usbd_setup_xfer(data->xfer, sc->rxq.pipeh, data, data->buf,
-		    RUN_MAX_RXSZ, USBD_SHORT_XFER_OK | USBD_NO_COPY,
-		    USBD_NO_TIMEOUT, run_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, RUN_MAX_RXSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS)
@@ -3646,7 +3639,7 @@ run_init(struct ifnet *ifp)
 
 	if (error != 0)
 fail:		run_stop(ifp, 1);
-	return (error);
+	return error;
 }
 
 static void
@@ -3708,9 +3701,9 @@ run_setup_beacon(struct run_softc *sc)
 	int ridx;
 
 	if ((m = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo)) == NULL)
-		return (ENOBUFS);
+		return ENOBUFS;
 
-	memset(&txwi, 0, sizeof txwi);
+	memset(&txwi, 0, sizeof(txwi));
 	txwi.wcid = 0xff;
 	txwi.len = htole16(m->m_pkthdr.len);
 	/* send beacons at the lowest available rate */
@@ -3723,13 +3716,13 @@ run_setup_beacon(struct run_softc *sc)
 	txwi.flags = RT2860_TX_TS;
 
 	run_write_region_1(sc, RT2860_BCN_BASE(0),
-	    (uint8_t *)&txwi, sizeof txwi);
-	run_write_region_1(sc, RT2860_BCN_BASE(0) + sizeof txwi,
+	    (uint8_t *)&txwi, sizeof(txwi));
+	run_write_region_1(sc, RT2860_BCN_BASE(0) + sizeof(txwi),
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 
 	m_freem(m);
 
-	return (0);
+	return 0;
 }
 #endif
 
@@ -3750,14 +3743,14 @@ if_run_modcmd(modcmd_t cmd, void *arg)
 		error = config_init_component(cfdriver_ioconf_run,
 		    cfattach_ioconf_run, cfdata_ioconf_run);
 #endif
-		return (error);
+		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
 		error = config_fini_component(cfdriver_ioconf_run,
 		    cfattach_ioconf_run, cfdata_ioconf_run);
 #endif
-		return (error);
+		return error;
 	default:
-		return (ENOTTY);
+		return ENOTTY;
 	}
 }

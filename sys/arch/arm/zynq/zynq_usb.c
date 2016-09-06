@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usb.c,v 1.1.4.2 2015/05/11 11:00:33 msaitoh Exp $	*/
+/*	$NetBSD: zynq_usb.c,v 1.1.4.2.4.1 2016/09/06 20:33:06 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.1.4.2 2015/05/11 11:00:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.1.4.2.4.1 2016/09/06 20:33:06 skrll Exp $");
 
 #include "opt_zynq.h"
 
@@ -77,8 +77,8 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	sc->sc_iftype = type;
 	sc->sc_role = role;
 
-	hsc->sc_bus.hci_private = sc;
-	hsc->sc_bus.usbrev = USBREV_2_0;
+	hsc->sc_bus.ub_hcpriv = sc;
+	hsc->sc_bus.ub_revision = USBREV_2_0;
 	hsc->sc_flags |= EHCIF_ETTF;
 
 	aprint_normal("\n");
@@ -128,7 +128,7 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	}
 	aprint_normal("\n");
 
-	sc->sc_hsc.sc_bus.dmatag = dmat;
+	sc->sc_hsc.sc_bus.ub_dmatag = dmat;
 
 	sc->sc_hsc.sc_offs = bus_space_read_1(iot, sc->sc_hsc.ioh,
 	    EHCI_CAPLENGTH);
@@ -152,7 +152,7 @@ zynqusb_attach_common(device_t parent, device_t self, bus_space_tag_t iot,
 	zynqusb_host_mode(sc);
 
 	if (sc->sc_iftype == ZYNQUSBC_IF_ULPI) {
-		if(hsc->sc_bus.usbrev == USBREV_2_0) {
+		if(hsc->sc_bus.ub_revision == USBREV_2_0) {
 			ulpi_write(sc, ULPI_FUNCTION_CONTROL + ULPI_REG_CLEAR,
 			    FUNCTION_CONTROL_XCVRSELECT);
 			ulpi_write(sc, ULPI_FUNCTION_CONTROL + ULPI_REG_SET,

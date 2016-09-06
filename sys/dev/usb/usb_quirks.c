@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.80 2013/11/14 16:33:20 nonaka Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.80.8.1 2016/09/06 20:33:09 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.80 2013/11/14 16:33:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.80.8.1 2016/09/06 20:33:09 skrll Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_usb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +52,9 @@ extern int usbdebug;
 #define ANY 0xffff
 
 Static const struct usbd_quirk_entry {
-	u_int16_t idVendor;
-	u_int16_t idProduct;
-	u_int16_t bcdDevice;
+	uint16_t idVendor;
+	uint16_t idProduct;
+	uint16_t bcdDevice;
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  /* Devices which should be ignored by uhid */
@@ -63,6 +67,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TRIPPLITE2, ANY,			    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_MISC, USB_PRODUCT_MISC_WISPY_24X, ANY, { UQ_HID_IGNORE }},
  { USB_VENDOR_WELTREND, USB_PRODUCT_WELTREND_HID,   ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_SILABS, USB_PRODUCT_SILABS_EC3,       ANY,   { UQ_HID_IGNORE }},
+ { USB_VENDOR_TI, USB_PRODUCT_TI_MSP430,            ANY,   { UQ_HID_IGNORE }},
 
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
  { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,
@@ -89,9 +95,9 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MOTOROLA2, USB_PRODUCT_MOTOROLA2_T720C,
  	0x001, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_EICON, USB_PRODUCT_EICON_DIVA852,
-        0x100, { UQ_ASSUME_CM_OVER_DATA }},
+	0x100, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_SIEMENS2, USB_PRODUCT_SIEMENS2_MC75,
-        0x000, { UQ_ASSUME_CM_OVER_DATA }},
+	0x000, { UQ_ASSUME_CM_OVER_DATA }},
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
@@ -152,9 +158,9 @@ const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
-	u_int16_t vendor = UGETW(d->idVendor);
-	u_int16_t product = UGETW(d->idProduct);
-	u_int16_t revision = UGETW(d->bcdDevice);
+	uint16_t vendor = UGETW(d->idVendor);
+	uint16_t product = UGETW(d->idProduct);
+	uint16_t revision = UGETW(d->bcdDevice);
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
 		if (t->idVendor  == vendor &&
@@ -168,5 +174,5 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 			  UGETW(d->idVendor), UGETW(d->idProduct),
 			  UGETW(d->bcdDevice), t->quirks.uq_flags);
 #endif
-	return (&t->quirks);
+	return &t->quirks;
 }

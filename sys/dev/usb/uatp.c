@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10.2.1 2015/03/21 17:30:43 snj Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.2.1.4.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  * Apple's protocol gives more detailed sensor data that lets us detect
  * multiple fingers to emulate multi-button mice and scroll wheels.
  */
-
+
 /*
  * Protocol
  *
@@ -104,7 +104,7 @@
  *     Should make a struct uatp_motion for all that state.
  * XXX Add hooks for ignoring trackpad input while typing.
  */
-
+
 /*
  * Classifying devices
  *
@@ -144,9 +144,9 @@
  *   tweak hw.uatp0.x_sensors and hw.uatp0.y_sensors, up to a maximum
  *   of 32 for each value.
  */
-
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.1 2015/03/21 17:30:43 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.1.4.1 2016/09/06 20:33:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.1 2015/03/21 17:30:43 snj Exp $");
 		fail;							\
 	}								\
 } while (0)
-
+
 #define UATP_DEBUG_ATTACH	(1 << 0)
 #define UATP_DEBUG_MISC		(1 << 1)
 #define UATP_DEBUG_WSMOUSE	(1 << 2)
@@ -238,7 +238,7 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.2.1 2015/03/21 17:30:43 snj Exp $");
 #define UATP_STATUS_BUTTON	(1 << 0)	/* Button pressed */
 #define UATP_STATUS_BASE	(1 << 2)	/* Base sensor data */
 #define UATP_STATUS_POST_RESET	(1 << 4)	/* Post-reset */
-
+
 /* Forward declarations */
 
 struct uatp_softc;		/* Device driver state.  */
@@ -340,7 +340,7 @@ static bool motion_below_threshold(struct uatp_softc *, unsigned int,
     int, int);
 static int accelerate(struct uatp_softc *, unsigned int, unsigned int,
     unsigned int, unsigned int, bool, int *);
-
+
 struct uatp_knobs {
 	/*
 	 * Button emulation.  What do we do when two or three fingers
@@ -408,7 +408,7 @@ struct uatp_knobs {
 	unsigned int three_finger_tap_buttons;
 	unsigned int tap_track_distance_limit;
 };
-
+
 static const struct uatp_knobs default_knobs = {
 	/*
 	 * Button emulation.  Fingers on the trackpad don't change it
@@ -473,7 +473,7 @@ static const struct uatp_knobs default_knobs = {
 	.three_finger_tap_buttons	= 0,
 	.tap_track_distance_limit	= 200,
 };
-
+
 struct uatp_softc {
 	struct uhidev sc_hdev;		/* USB parent.  */
 	device_t sc_wsmousedev;		/* Attached wsmouse device.  */
@@ -522,7 +522,7 @@ struct uatp_softc {
 	uint32_t sc_debug_flags;	/* Debugging output enabled.  */
 #endif
 };
-
+
 struct uatp_descriptor {
 	uint16_t vendor;
 	uint16_t product;
@@ -559,7 +559,7 @@ struct uatp_parameters {
 	/* Called on spurious interrupts to reset.  May be null.  */
 	void (*reset)(struct uatp_softc *);
 };
-
+
 /* Known device parameters */
 
 static const struct uatp_parameters fountain_parameters = {
@@ -617,7 +617,7 @@ static const struct uatp_parameters geyser_3_4_parameters = {
 	.accumulate	= accumulate_sample_2,
 	.reset		= geyser34_deferred_reset,
 };
-
+
 /* Known device models */
 
 #define APPLE_TRACKPAD(PRODUCT, DESCRIPTION, PARAMETERS)		\
@@ -661,7 +661,7 @@ static const struct uatp_descriptor uatp_descriptors[] =
 #undef MACBOOK_TRACKPAD
 #undef POWERBOOK_TRACKPAD
 #undef APPLE_TRACKPAD
-
+
 /* Miscellaneous utilities */
 
 static const struct uatp_descriptor *
@@ -670,8 +670,8 @@ find_uatp_descriptor(const struct uhidev_attach_arg *uha)
 	unsigned int i;
 
 	for (i = 0; i < __arraycount(uatp_descriptors); i++)
-		if ((uha->uaa->vendor == uatp_descriptors[i].vendor) &&
-		    (uha->uaa->product == uatp_descriptors[i].product))
+		if ((uha->uiaa->uiaa_vendor == uatp_descriptors[i].vendor) &&
+		    (uha->uiaa->uiaa_product == uatp_descriptors[i].product))
 			return &uatp_descriptors[i];
 
 	return NULL;
@@ -722,7 +722,7 @@ uatp_clear_position(struct uatp_softc *sc)
 	sc->sc_w_remainder = 0;
 	sc->sc_track_distance = 0;
 }
-
+
 static unsigned int
 uatp_x_sensors(const struct uatp_softc *sc)
 {
@@ -764,7 +764,7 @@ uatp_y_ratio(const struct uatp_softc *sc)
 	else
 		return sc->sc_parameters->y_ratio;
 }
-
+
 static unsigned int
 uatp_old_raw_weight(const struct uatp_softc *sc)
 {
@@ -795,7 +795,7 @@ uatp_new_raw_weight(const struct uatp_softc *sc)
 	else
 		return 1;
 }
-
+
 static int
 scale_motion(const struct uatp_softc *sc, int delta, int *remainder,
     const unsigned int *multiplier, const unsigned int *divisor)
@@ -848,7 +848,7 @@ uatp_scale_fast_motion(const struct uatp_softc *sc, int delta, int *remainder)
 	    &sc->sc_knobs.fast_motion_multiplier,
 	    &sc->sc_knobs.fast_motion_divisor);
 }
-
+
 /* Driver goop */
 
 CFATTACH_DECL2_NEW(uatp, sizeof(struct uatp_softc), uatp_match, uatp_attach,
@@ -869,13 +869,13 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 	const struct uatp_descriptor *uatp_descriptor;
 
 	aprint_debug("%s: vendor 0x%04x, product 0x%04x\n", __func__,
-	    (unsigned int)uha->uaa->vendor,
-	    (unsigned int)uha->uaa->product);
+	    (unsigned int)uha->uiaa->uiaa_vendor,
+	    (unsigned int)uha->uiaa->uiaa_product);
 	aprint_debug("%s: class 0x%04x, subclass 0x%04x, proto 0x%04x\n",
 	    __func__,
-	    (unsigned int)uha->uaa->class,
-	    (unsigned int)uha->uaa->subclass,
-	    (unsigned int)uha->uaa->proto);
+	    (unsigned int)uha->uiaa->uiaa_class,
+	    (unsigned int)uha->uiaa->uiaa_subclass,
+	    (unsigned int)uha->uiaa->uiaa_proto);
 
 	uhidev_get_report_desc(uha->parent, &report_descriptor, &report_size);
 	input_size = hid_report_size(report_descriptor, report_size,
@@ -888,7 +888,7 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 	 * and product ids, but not protocols: only the trackpad
 	 * reports a mouse protocol.
 	 */
-	if (uha->uaa->proto != UIPROTO_MOUSE)
+	if (uha->uiaa->uiaa_proto != UIPROTO_MOUSE)
 		return UMATCH_NONE;
 
 	/* Check for a known vendor/product id.  */
@@ -909,7 +909,7 @@ uatp_match(device_t parent, cfdata_t match, void *aux)
 
 	return UMATCH_VENDOR_PRODUCT_CONF_IFACE;
 }
-
+
 static void
 uatp_attach(device_t parent, device_t self, void *aux)
 {
@@ -933,7 +933,8 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": %s\n", uatp_descriptor->description);
 	aprint_verbose_dev(self,
 	    "vendor 0x%04x, product 0x%04x, report id %d\n",
-	    (unsigned int)uha->uaa->vendor, (unsigned int)uha->uaa->product,
+	    (unsigned int)uha->uiaa->uiaa_vendor,
+	    (unsigned int)uha->uiaa->uiaa_product,
 	    (int)uha->reportid);
 
 	uhidev_get_report_desc(uha->parent, &report_descriptor, &report_size);
@@ -977,7 +978,7 @@ uatp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_wsmousedev = config_found_ia(self, "wsmousedev", &a,
 	    wsmousedevprint);
 }
-
+
 /* Sysctl setup */
 
 static void
@@ -1032,7 +1033,7 @@ uatp_setup_sysctl(struct uatp_softc *sc)
 		"width of right edge for edge scrolling"))
 		goto err;
 #endif
-
+
 	/*
 	 * Multifinger tracking.
 	 */
@@ -1101,7 +1102,7 @@ uatp_setup_sysctl(struct uatp_softc *sc)
 	if (!uatp_setup_sysctl_knob(sc, &sc->sc_knobs.motion_delay,
 		"motion_delay", "number of packets before motion kicks in"))
 		goto err;
-
+
 	/*
 	 * Tapping.
 	 */
@@ -1152,7 +1153,7 @@ uatp_setup_sysctl_knob(struct uatp_softc *sc, int *ptr, const char *name,
 
 	return true;
 }
-
+
 /* More driver goop */
 
 static void
@@ -1210,7 +1211,7 @@ uatp_activate(device_t self, enum devact act)
 
 	return 0;
 }
-
+
 /* wsmouse routines */
 
 static int
@@ -1271,7 +1272,7 @@ uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 	/* XXX Implement any relevant wsmouse(4) ioctls.  */
 	return EPASSTHROUGH;
 }
-
+
 /*
  * The Geyser 3 and 4 models talk the generic USB HID mouse protocol by
  * default.  This mode switch makes them give raw sensor data instead
@@ -1286,7 +1287,7 @@ uatp_ioctl(void *v, unsigned long cmd, void *data, int flag, struct lwp *p)
 static void
 geyser34_enable_raw_mode(struct uatp_softc *sc)
 {
-	usbd_device_handle udev = sc->sc_hdev.sc_parent->sc_udev;
+	struct usbd_device *udev = sc->sc_hdev.sc_parent->sc_udev;
 	usb_device_request_t req;
 	usbd_status status;
 	uint8_t report[GEYSER34_MODE_PACKET_SIZE];
@@ -1304,7 +1305,7 @@ geyser34_enable_raw_mode(struct uatp_softc *sc)
 		    "error reading feature report: %s\n", usbd_errstr(status));
 		return;
 	}
-
+
 #if UATP_DEBUG
 	if (sc->sc_debug_flags & UATP_DEBUG_RESET) {
 		unsigned int i;
@@ -1338,7 +1339,7 @@ geyser34_enable_raw_mode(struct uatp_softc *sc)
 		return;
 	}
 }
-
+
 /*
  * The Geyser 3 and 4 need to be reset periodically after we detect a
  * continual flow of spurious interrupts.  We use a USB task for this.
@@ -1382,7 +1383,7 @@ geyser34_reset_task(void *arg)
 	/* Reset by putting it into raw mode.  Not sure why.  */
 	geyser34_enable_raw_mode(sc);
 }
-
+
 /* Interrupt handler */
 
 static void
@@ -1447,7 +1448,7 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	memset(uatp_y_sample(sc), 0, UATP_MAX_Y_SENSORS);
 	sc->sc_parameters->read_sample(uatp_x_sample(sc), uatp_y_sample(sc),
 	    input);
-
+
 #if UATP_DEBUG
 	if (sc->sc_debug_flags & UATP_DEBUG_INTR) {
 		unsigned int i;
@@ -1519,7 +1520,7 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	uatp_input(sc, buttons, dx, dy, dz, dw);
 	mutex_exit(&sc->sc_tap_mutex);
 }
-
+
 /*
  * Different ways to discern the base sample initializing the state.
  * `base_sample_softc_flag' uses a state flag stored in the softc;
@@ -1577,7 +1578,7 @@ read_sample_2(uint8_t *x, uint8_t *y, const uint8_t *input)
 		y[i + 1] = input[j + 1];
 	}
 }
-
+
 static void
 accumulate_sample_1(struct uatp_softc *sc)
 {
@@ -1624,7 +1625,7 @@ accumulate_sample_2(struct uatp_softc *sc)
 			sc->sc_acc[i] = 0;
 	}
 }
-
+
 /*
  * Report input to wsmouse, if there is anything interesting to report.
  * We must take into consideration the current tap-and-drag button
@@ -1688,7 +1689,7 @@ uatp_tapped_buttons(struct uatp_softc *sc)
 		return 0;
 	}
 }
-
+
 /*
  * Interpret the current input state to find a difference in all the
  * relevant coordinates and buttons to pass on to wsmouse, and update
@@ -1755,7 +1756,7 @@ interpret_input(struct uatp_softc *sc, int *dx, int *dy, int *dz, int *dw,
 		return true;
 	}
 }
-
+
 /*
  * Interpret the accumulated sensor state along one dimension to find
  * the number, mean position, and pressure of fingers.  Returns 0 to
@@ -1822,9 +1823,9 @@ interpret_dimension(struct uatp_softc *sc, const int *acc,
 	 */
 
 	n_fingers = 0;
-	memset(weighted, 0, sizeof weighted);
-	memset(total, 0, sizeof total);
-
+	memset(weighted, 0, sizeof(weighted));
+	memset(total, 0, sizeof(total));
+
 	for (i = 0; i < n_sensors; i++) {
 		CHECK_(0 <= acc[i]);
 		v = acc[i];
@@ -1901,7 +1902,7 @@ interpret_dimension(struct uatp_softc *sc, const int *acc,
 
 #undef CHECK_
 }
-
+
 /* Tapping */
 
 /*
@@ -1959,7 +1960,7 @@ interpret_dimension(struct uatp_softc *sc, const int *acc,
  * these properties, or globally transform the state machine to avoid
  * the bad consequences of violating these properties.
  */
-
+
 static void
 uatp_tap_limit(const struct uatp_softc *sc, struct timeval *limit)
 {
@@ -1989,7 +1990,7 @@ tap_debug(struct uatp_softc *sc, const char *caller, const char *prefix)
 	case TAP_STATE_DRAGGING_UP:	state = "dragging-up";		break;
 	case TAP_STATE_TAPPING_IN_DRAG:	state = "tapping-in-drag";	break;
 	default:
-		snprintf(buffer, sizeof buffer, "unknown (%d)",
+		snprintf(buffer, sizeof(buffer), "unknown (%d)",
 		    sc->sc_tap_state);
 		state = buffer;
 		break;
@@ -2007,13 +2008,13 @@ tap_debug(struct uatp_softc *sc, const char *caller, const char *prefix)
 #  define TAP_DEBUG_POST(sc)	do {} while (0)
 
 #endif
-
+
 static void
 tap_initialize(struct uatp_softc *sc)
 {
 	callout_init(&sc->sc_untap_callout, 0);
 	callout_setfunc(&sc->sc_untap_callout, untap_callout, sc);
-	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_tap_cv, "uatptap");
 }
 
@@ -2078,7 +2079,7 @@ tap_reset_wait(struct uatp_softc *sc)
 	tap_transition_initial(sc);
 	mutex_exit(&sc->sc_tap_mutex);
 }
-
+
 static const struct timeval zero_timeval;
 
 static void
@@ -2125,7 +2126,7 @@ tap_transition_double_tapping(struct uatp_softc *sc,
 	tap_transition(sc, TAP_STATE_DOUBLE_TAPPING, start_time, fingers,
 	    sc->sc_tapped_fingers);
 }
-
+
 static void
 tap_transition_dragging_down(struct uatp_softc *sc)
 {
@@ -2172,7 +2173,7 @@ tap_transition_dragging_up(struct uatp_softc *sc)
 	tap_transition(sc, TAP_STATE_DRAGGING_UP, &zero_timeval, 0,
 	    sc->sc_tapped_fingers);
 }
-
+
 static void
 tap_touched(struct uatp_softc *sc, unsigned int fingers)
 {
@@ -2247,7 +2248,7 @@ tap_touched(struct uatp_softc *sc, unsigned int fingers)
 	TAP_DEBUG_POST(sc);
 	mutex_exit(&sc->sc_tap_mutex);
 }
-
+
 static bool
 tap_released(struct uatp_softc *sc)
 {
@@ -2324,7 +2325,7 @@ tap_released(struct uatp_softc *sc)
 	mutex_exit(&sc->sc_tap_mutex);
 	return ok;
 }
-
+
 /* Untapping: Releasing the button after a tap */
 
 static void
@@ -2379,7 +2380,7 @@ untap_callout(void *arg)
 	cv_broadcast(&sc->sc_tap_cv);
 	mutex_exit(&sc->sc_tap_mutex);
 }
-
+
 /*
  * Emulate different buttons if the user holds down n fingers while
  * pressing the physical button.  (This is unrelated to tapping.)
@@ -2405,7 +2406,7 @@ emulated_buttons(struct uatp_softc *sc, unsigned int fingers)
 		return sc->sc_knobs.three_finger_buttons;
 	}
 }
-
+
 /*
  * Update the position known to the driver based on the position and
  * number of fingers.  dx, dy, dz, and dw are expected to hold zero;
@@ -2448,7 +2449,7 @@ scroll_wheel(struct uatp_softc *sc, unsigned int x_raw, unsigned int y_raw,
 	    &sc->sc_z_remainder, &sc->sc_w_remainder,
 	    dz, dw);
 }
-
+
 static void
 move(struct uatp_softc *sc, const char *ctx, unsigned int a, unsigned int b,
     int *a_raw, int *b_raw,
@@ -2504,7 +2505,7 @@ move(struct uatp_softc *sc, const char *ctx, unsigned int a, unsigned int b,
 	CHECK_(0 <= *b_smoothed);
 	CHECK_(*a_smoothed <= UATP_MAX_POSITION);
 	CHECK_(*b_smoothed <= UATP_MAX_POSITION);
-
+
 	if (sc->sc_motion_timer < sc->sc_knobs.motion_delay) {
 		DPRINTF(sc, UATP_DEBUG_MOVE, ("delay motion %u\n",
 			sc->sc_motion_timer));
@@ -2573,7 +2574,7 @@ move(struct uatp_softc *sc, const char *ctx, unsigned int a, unsigned int b,
 
 #undef CHECK_
 }
-
+
 static int
 smooth(struct uatp_softc *sc, unsigned int old_raw, unsigned int old_smoothed,
     unsigned int raw)
@@ -2646,7 +2647,7 @@ accelerate(struct uatp_softc *sc, unsigned int old_raw, unsigned int raw,
 
 #undef CHECK_
 }
-
+
 MODULE(MODULE_CLASS_DRIVER, uatp, NULL);
 
 #ifdef _MODULE

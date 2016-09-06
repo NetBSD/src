@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12 2013/09/22 08:30:22 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.10.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12 2013/09/22 08:30:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.10.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,10 +276,10 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_st = aa->oba_st;
 
 	/* Initialize sc */
-	sc->sc_bus.usbrev = USBREV_1_1;
-	sc->sc_bus.methods = &ahci_bus_methods;
-	sc->sc_bus.pipe_size = sizeof(struct ahci_pipe);
-	sc->sc_bus.dmatag = sc->sc_dmat;
+	sc->sc_bus.ub_revision = USBREV_1_1;
+	sc->sc_bus.ub_methods = &ahci_bus_methods;
+	sc->sc_bus.ub_pipesize = sizeof(struct ahci_pipe);
+	sc->sc_bus.ub_dmatag = sc->sc_dmat;
 
 	/* Map the device. */
 	if (bus_space_map(sc->sc_st, aa->oba_addr,
@@ -538,7 +538,7 @@ ahci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 static void
 ahci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ahci_softc *sc = bus->hci_private;
+	struct ahci_softc *sc = bus->ub_hcpriv;
 
 	*lock = &sc->sc_lock;
 }

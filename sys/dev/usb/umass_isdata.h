@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.h,v 1.2 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umass_isdata.h,v 1.2.70.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,4 +30,4 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-int umass_isdata_attach(struct umass_softc *sc);
+int umass_isdata_attach(struct umass_softc *);

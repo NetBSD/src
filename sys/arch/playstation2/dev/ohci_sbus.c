@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.11.12.1 2016/09/06 20:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.12.1 2016/09/06 20:33:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -122,14 +122,14 @@ ohci_sbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = sc;
+	sc->sc.sc_bus.ub_hcpriv = sc;
 
 	sc->sc.iot = bus_space_create(0, "OHCI I/O space", SBUS_OHCI_REGBASE,
 	    SBUS_OHCI_REGSIZE);
 	sc->sc.ioh = SBUS_OHCI_REGBASE;
 
 	ohci_bus_dma_tag._dmachip_cookie = sc;
-	sc->sc.sc_bus.dmatag = &ohci_bus_dma_tag;
+	sc->sc.sc_bus.ub_dmatag = &ohci_bus_dma_tag;
 
 	/* Disable interrupts, so we don't can any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,

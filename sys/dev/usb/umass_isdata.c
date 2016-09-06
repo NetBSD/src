@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.29.4.1 2015/05/16 04:06:05 snj Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.29.4.1.4.1 2016/09/06 20:33:09 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,11 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.29.4.1 2015/05/16 04:06:05 snj Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_umass.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.29.4.1.4.1 2016/09/06 20:33:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,16 +63,16 @@ int umass_wd_attach(struct umass_softc *);
 
 /* XXX move this */
 struct isd200_config {
-        uByte EventNotification;
-        uByte ExternalClock;
-        uByte ATAInitTimeout;
-        uByte ATAMisc1;
+	uByte EventNotification;
+	uByte ExternalClock;
+	uByte ATAInitTimeout;
+	uByte ATAMisc1;
 #define ATATiming		0x0f
 #define ATAPIReset		0x10
 #define MasterSlaveSelection	0x20
 #define ATAPICommandBlockSize	0xc0
-        uByte ATAMajorCommand;
-        uByte ATAMinorCommand;
+	uByte ATAMajorCommand;
+	uByte ATAMinorCommand;
 	uByte ATAMisc2;
 #define LastLUNIdentifier	0x07
 #define DescriptOverride	0x08
@@ -113,7 +109,7 @@ int  uisdata_bio1(struct ata_drive_datas *, struct ata_bio *);
 void uisdata_reset_drive(struct ata_drive_datas *, int, uint32_t *);
 void uisdata_reset_channel(struct ata_channel *, int);
 int  uisdata_exec_command(struct ata_drive_datas *, struct ata_command *);
-int  uisdata_get_params(struct ata_drive_datas *, u_int8_t, struct ataparams *);
+int  uisdata_get_params(struct ata_drive_datas *, uint8_t, struct ataparams *);
 int  uisdata_addref(struct ata_drive_datas *);
 void uisdata_delref(struct ata_drive_datas *);
 void uisdata_kill_pending(struct ata_drive_datas *);
@@ -135,17 +131,17 @@ const struct ata_bustype uisdata_bustype = {
 };
 
 struct ata_cmd {
-	u_int8_t ac_signature0;
-	u_int8_t ac_signature1;
+	uint8_t ac_signature0;
+	uint8_t ac_signature1;
 
-	u_int8_t ac_action_select;
+	uint8_t ac_action_select;
 #define AC_ReadRegisterAccess		0x01
 #define AC_NoDeviceSelectionBit		0x02
 #define AC_NoBSYPollBit			0x04
 #define AC_IgnorePhaseErrorBit		0x08
 #define AC_IgnoreDeviceErrorBit		0x10
 
-	u_int8_t ac_register_select;
+	uint8_t ac_register_select;
 #define AC_SelectAlternateStatus	0x01 /* R */
 #define AC_SelectDeviceControl		0x01 /* W */
 #define AC_SelectError			0x02 /* R */
@@ -158,23 +154,23 @@ struct ata_cmd {
 #define AC_SelectStatus			0x80 /* R */
 #define AC_SelectCommand		0x80 /* W */
 
-	u_int8_t ac_transfer_blocksize;
+	uint8_t ac_transfer_blocksize;
 
-	u_int8_t ac_alternate_status;
+	uint8_t ac_alternate_status;
 #define ac_device_control ac_alternate_status
-	u_int8_t ac_error;
+	uint8_t ac_error;
 #define ac_features ac_error
 
-	u_int8_t ac_sector_count;
-	u_int8_t ac_sector_number;
-	u_int8_t ac_cylinder_low;
-	u_int8_t ac_cylinder_high;
-	u_int8_t ac_device_head;
+	uint8_t ac_sector_count;
+	uint8_t ac_sector_number;
+	uint8_t ac_cylinder_low;
+	uint8_t ac_cylinder_high;
+	uint8_t ac_device_head;
 
-	u_int8_t ac_status;
+	uint8_t ac_status;
 #define ac_command ac_status
 
-	u_int8_t ac_reserved[3];
+	uint8_t ac_reserved[3];
 };
 
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
@@ -188,7 +184,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	struct uisdata_softc *scbus;
 	struct isd200_config *cf;
 
-	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->bus = &scbus->base;
 	cf = &scbus->sc_isd_config;
 
@@ -196,7 +192,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	req.bRequest = 0x02;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 2);
-	USETW(req.wLength, sizeof *cf);
+	USETW(req.wLength, sizeof(*cf));
 
 	err = usbd_do_request(sc->sc_udev, &req, cf);
 	if (err) {
@@ -222,7 +218,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	scbus->sc_drv_data.chnl_softc = sc;
 	scbus->base.sc_child = config_found(sc->sc_dev, &adev, uwdprint);
 
-	return (0);
+	return 0;
 }
 
 
@@ -272,7 +268,7 @@ uisdata_bio(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 
 	scbus->sc_skip = 0;
-	return (uisdata_bio1(drv, ata_bio));
+	return uisdata_bio1(drv, ata_bio);
 }
 
 int
@@ -282,8 +278,8 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	struct uisdata_softc *scbus = (struct uisdata_softc *)sc->bus;
 	struct isd200_config *cf = &scbus->sc_isd_config;
 	struct ata_cmd ata;
-	u_int16_t cyl;
-	u_int8_t head, sect;
+	uint16_t cyl;
+	uint8_t head, sect;
 	int dir;
 	long nbytes;
 	u_int nblks;
@@ -295,12 +291,12 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		printf("%s: ATA_POLL not supported\n", __func__);
 		ata_bio->error = TIMEOUT;
 		ata_bio->flags |= ATA_ITSDONE;
-		return (ATACMD_COMPLETE);
+		return ATACMD_COMPLETE;
 	}
 
 	if (scbus->sc_ata_bio != NULL) {
 		printf("%s: multiple uisdata_bio\n", __func__);
-		return (ATACMD_TRY_AGAIN);
+		return ATACMD_TRY_AGAIN;
 	} else
 		scbus->sc_ata_bio = ata_bio;
 
@@ -329,7 +325,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	ata_bio->nblks = nblks;
 	ata_bio->nbytes = nbytes;
 
-	memset(&ata, 0, sizeof ata);
+	memset(&ata, 0, sizeof(ata));
 	ata.ac_signature0 = cf->ATAMajorCommand;
 	ata.ac_signature1 = cf->ATAMinorCommand;
 	ata.ac_transfer_blocksize = 1;
@@ -362,7 +358,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		 ata.ac_sector_count, ata_bio->multi));
 	DPRINTF(("    data=%p bcount=%ld, drive=%d\n", ata_bio->databuf,
 		 ata_bio->bcount, drv->drive));
-	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof ata,
+	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof(ata),
 				  ata_bio->databuf + scbus->sc_skip, nbytes,
 				  dir, ATA_DELAY, 0, uisdata_bio_cb, ata_bio);
 
@@ -371,11 +367,11 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		if (tsleep(ata_bio, PZERO, "uisdatabl", 0)) {
 			ata_bio->error = TIMEOUT;
 			ata_bio->flags |= ATA_ITSDONE;
-			return (ATACMD_COMPLETE);
+			return ATACMD_COMPLETE;
 		}
 	}
 
-	return (ata_bio->flags & ATA_ITSDONE) ? ATACMD_COMPLETE : ATACMD_QUEUED;
+	return ata_bio->flags & ATA_ITSDONE ? ATACMD_COMPLETE : ATACMD_QUEUED;
 }
 
 void
@@ -438,7 +434,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 		goto done;
 	}
 
-	memset(&ata, 0, sizeof ata);
+	memset(&ata, 0, sizeof(ata));
 	ata.ac_signature0 = cf->ATAMajorCommand;
 	ata.ac_signature1 = cf->ATAMinorCommand;
 	ata.ac_transfer_blocksize = 1;
@@ -458,7 +454,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 	DPRINTF(("%s: execute ATA command 0x%02x, drive=%d\n", __func__,
 		 ata.ac_command, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata,
-				  sizeof ata, cmd->data, cmd->bcount, dir,
+				  sizeof(ata), cmd->data, cmd->bcount, dir,
 				  cmd->timeout, 0, uisdata_exec_cb, cmd);
 	if (cmd->flags & (AT_POLL | AT_WAIT)) {
 #if 0
@@ -473,7 +469,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 	}
 
 done:
-	return (ATACMD_COMPLETE);
+	return ATACMD_COMPLETE;
 }
 
 int
@@ -481,7 +477,7 @@ uisdata_addref(struct ata_drive_datas *drv)
 {
 	DPRINTF(("%s\n", __func__));
 	/* Nothing to do */
-	return (0);
+	return 0;
 }
 
 void
@@ -510,7 +506,7 @@ uisdata_kill_pending(struct ata_drive_datas *drv)
 }
 
 int
-uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
+uisdata_get_params(struct ata_drive_datas *drvp, uint8_t flags,
 		struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
@@ -518,7 +514,7 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
-	u_int16_t *p;
+	uint16_t *p;
 #endif
 
 	DPRINTF(("%s\n", __func__));
@@ -534,12 +530,12 @@ uisdata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	ata_c.bcount = DEV_BSIZE;
 	if (uisdata_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		DPRINTF(("uisdata_get_parms: wdc_exec_command failed\n"));
-		return (CMD_AGAIN);
+		return CMD_AGAIN;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		DPRINTF(("uisdata_get_parms: ata_c.flags=0x%x\n",
 			 ata_c.flags));
-		return (CMD_ERR);
+		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
@@ -585,7 +581,7 @@ uwdprint(void *aux, const char *pnp)
 	aprint_normal(" channel %d drive %d", adev->adev_channel,
 	    adev->adev_drv_data->drive);
 #endif
-	return (UNCONF);
+	return UNCONF;
 }
 
 
@@ -595,7 +591,7 @@ int umass_wd_attach(struct umass_softc *);
 
 #if NWD > 0
 	case UMASS_CPROTO_ISD_ATA:
-		return (umass_wd_attach(sc));
+		return umass_wd_attach(sc);
 #endif
 
 #endif
