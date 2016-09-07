@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.33 2016/09/02 05:59:04 skrll Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.34 2016/09/07 08:05:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.33 2016/09/02 05:59:04 skrll Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.34 2016/09/07 08:05:02 skrll Exp $");
 #endif
 
 #include <stdio.h>
@@ -261,7 +261,7 @@ usbdev(int f, int a, int rec)
 	}
 	if (!rec)
 		return;
-	for (p = 0; p < di.udi_nports; p++) {
+	for (p = 0; p < di.udi_nports && p < __arraycount(di.udi_ports); p++) {
 		int s = di.udi_ports[p];
 		if (s >= USB_MAX_DEVICES) {
 			if (verbose) {
