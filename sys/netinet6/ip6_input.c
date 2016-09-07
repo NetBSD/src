@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.167 2016/08/31 09:14:47 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.168 2016/09/07 15:41:44 roy Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.167 2016/08/31 09:14:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.168 2016/09/07 15:41:44 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -504,7 +504,7 @@ ip6_input(struct mbuf *m, struct ifnet *rcvif)
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
 		 */
-		if (!(ia6->ia6_flags & IN6_IFF_NOTREADY)) {
+		if (!(ia6->ia6_flags & (IN6_IFF_NOTREADY | IN6_IFF_DETACHED))) {
 			/* this address is ready */
 			ours = 1;
 			deliverifp = ia6->ia_ifp;	/* correct? */

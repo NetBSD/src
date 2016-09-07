@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.340 2016/08/31 09:14:47 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.341 2016/09/07 15:41:44 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.340 2016/08/31 09:14:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.341 2016/09/07 15:41:44 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -382,7 +382,8 @@ ip_match_our_address(struct ifnet *ifp, struct ip *ip, int *downmatch)
 				continue;
 			if (checkif && ia->ia_ifp != ifp)
 				continue;
-			if ((ia->ia_ifp->if_flags & IFF_UP) != 0)
+			if ((ia->ia_ifp->if_flags & IFF_UP) != 0 &&
+			    (ia->ia4_flags & IN_IFF_DETACHED) == 0)
 				break;
 			else
 				(*downmatch)++;
@@ -402,7 +403,7 @@ ip_match_our_address_broadcast(struct ifnet *ifp, struct ip *ip)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		ia = ifatoia(ifa);
-		if (ia->ia4_flags & IN_IFF_NOTREADY)
+		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
 			continue;
 		if (in_hosteq(ip->ip_dst, ia->ia_broadaddr.sin_addr) ||
 		    in_hosteq(ip->ip_dst, ia->ia_netbroadcast) ||
