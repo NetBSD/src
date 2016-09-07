@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.12.1 2016/09/06 20:33:08 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.12.2 2016/09/07 10:26:39 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.12.1 2016/09/06 20:33:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.12.2 2016/09/07 10:26:39 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -716,6 +716,7 @@ athn_usb_alloc_tx_cmd(struct athn_usb_softc *usc)
 		    "could not allocate command xfer\n");
 		return err;
 	}
+	data->buf = usbd_get_buffer(data->xfer);
 
 	return 0;
 }
