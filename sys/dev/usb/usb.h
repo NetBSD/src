@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.106.4.2.4.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.106.4.2.4.2 2016/09/07 08:19:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -598,6 +598,7 @@ typedef struct {
 #define UPS_HIGH_SPEED			0x0400
 #define UPS_PORT_TEST			0x0800
 #define UPS_PORT_INDICATOR		0x1000
+#define UPS_OTHER_SPEED			0x2000	/* currently NetBSD specific */
 	uWord		wPortChange;
 #define UPS_C_CONNECT_STATUS		0x0001
 #define UPS_C_PORT_ENABLED		0x0002
