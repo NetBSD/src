@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.23.2.4.2.1 2016/09/06 20:33:09 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.23.2.4.2.2 2016/09/07 10:26:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.23.2.4.2.1 2016/09/06 20:33:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.23.2.4.2.2 2016/09/07 10:26:39 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1511,11 +1511,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 		return;
 	}
 
-	/*
-	 * This may fail in the case that xhci_close_pipe is called after
-	 * xhci_abort_xfer e.g. usbd_kill_pipe.
-	 */
-	(void)xhci_stop_endpoint(pipe);
+	if (xhci_get_epstate(sc, xs, dci) != XHCI_EPSTATE_STOPPED)
+		(void)xhci_stop_endpoint(pipe);
 
 	/*
 	 * set appropriate bit to be dropped.
@@ -2501,7 +2498,14 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 
 	/* XXX KASSERT may fire when cv_timedwait unlocks sc_lock */
 	KASSERT(sc->sc_command_addr == 0);
-	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
+	/*
+	 * If enqueue pointer points at last of ring, it's Link TRB,
+	 * command TRB will be stored in 0th TRB.
+	 */
+	if (cr->xr_ep == cr->xr_ntrb - 1)
+		sc->sc_command_addr = xhci_ring_trbp(cr, 0);
+	else
+		sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
 
 	mutex_enter(&cr->xr_lock);
 	xhci_ring_put(sc, cr, NULL, trb, 1);
