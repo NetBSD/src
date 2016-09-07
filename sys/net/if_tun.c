@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.130 2016/09/05 02:25:37 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.131 2016/09/07 10:24:57 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.130 2016/09/05 02:25:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.131 2016/09/07 10:24:57 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,7 +83,7 @@ static struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
 static void tunattach0(struct tun_softc *);
-static void tuncreate(struct tun_softc *);
+static void tun_enable(struct tun_softc *);
 static void tun_i_softintr(void *);
 static void tun_o_softintr(void *);
 #ifdef ALTQ
@@ -421,7 +421,7 @@ out_nolock:
  * Call at splnet().
  */
 static void
-tuncreate(struct tun_softc *tp)
+tun_enable(struct tun_softc *tp)
 {
 	struct ifnet	*ifp = &tp->tun_if;
 	struct ifaddr	*ifa;
@@ -484,7 +484,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		tuncreate(tp);
+		tun_enable(tp);
 		ifa->ifa_rtrequest = p2p_rtrequest;
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
 		break;
