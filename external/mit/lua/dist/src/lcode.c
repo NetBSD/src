@@ -1,4 +1,4 @@
-/*	$NetBSD: lcode.c,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lcode.c,v 1.7 2016/09/08 02:57:32 salazar Exp $	*/
 
 /*
 ** Id: lcode.c,v 2.109 2016/05/13 19:09:21 roberto Exp 
@@ -1046,8 +1046,8 @@ static void codeunexpval (FuncState *fs, OpCode op, expdesc *e, int line) {
 */
 static void codebinexpval (FuncState *fs, OpCode op,
                            expdesc *e1, expdesc *e2, int line) {
-  int rk1 = luaK_exp2RK(fs, e1);  /* both operands are "RK" */
-  int rk2 = luaK_exp2RK(fs, e2);
+  int rk2 = luaK_exp2RK(fs, e2);  /* both operands are "RK" */
+  int rk1 = luaK_exp2RK(fs, e1);
   freeexps(fs, e1, e2);
   e1->u.info = luaK_codeABC(fs, op, 0, rk1, rk2);  /* generate opcode */
   e1->k = VRELOCABLE;  /* all those operations are relocatable */
