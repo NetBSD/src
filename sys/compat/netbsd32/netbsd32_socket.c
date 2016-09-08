@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.42 2015/07/22 14:25:39 maxv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.43 2016/09/08 18:54:03 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.42 2015/07/22 14:25:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.43 2016/09/08 18:54:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,10 +207,10 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	if (from != NULL)
 		m_free(from);
 	if (error == 0) {
-		ktrkuser("msghdr", &msg, sizeof msg);
 		msg32.msg_namelen = msg.msg_namelen;
 		msg32.msg_controllen = msg.msg_controllen;
 		msg32.msg_flags = msg.msg_flags;
+		ktrkuser("msghdr", &msg32, sizeof msg32);
 		error = copyout(&msg32, SCARG_P32(uap, msg), sizeof(msg32));
 	}
 
