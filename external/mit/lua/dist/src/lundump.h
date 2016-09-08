@@ -1,4 +1,4 @@
-/*	$NetBSD: lundump.h,v 1.3 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lundump.h,v 1.4 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
 ** Id: lundump.h,v 1.45 2015/09/08 15:41:05 roberto Exp 
