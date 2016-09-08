@@ -1,5 +1,5 @@
 /*
-** $Id: lmem.h,v 1.1.1.5 2016/09/08 00:01:33 salazar Exp $
+** Id: lmem.h,v 1.43 2014/12/19 17:26:14 roberto Exp 
 ** Interface to Memory Manager
 ** See Copyright Notice in lua.h
 */
