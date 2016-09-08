@@ -1,4 +1,4 @@
-/*	$NetBSD: lutf8lib.c,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
 ** Id: lutf8lib.c,v 1.15 2015/03/28 19:16:55 roberto Exp 
