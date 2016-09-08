@@ -1,3 +1,5 @@
+/*	$NetBSD: lparser.c,v 1.1.1.8 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lparser.c,v 2.153 2016/05/13 19:10:16 roberto Exp 
 ** Lua Parser

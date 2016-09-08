@@ -1,3 +1,5 @@
+/*	$NetBSD: loslib.c,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: loslib.c,v 1.64 2016/04/18 13:06:55 roberto Exp 
 ** Standard Operating System library

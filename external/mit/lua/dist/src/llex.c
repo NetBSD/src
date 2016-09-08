@@ -1,3 +1,5 @@
+/*	$NetBSD: llex.c,v 1.1.1.9 2016/09/08 01:14:18 salazar Exp $	*/
+
 /*
 ** Id: llex.c,v 2.96 2016/05/02 14:02:12 roberto Exp 
 ** Lexical Analyzer

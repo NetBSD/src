@@ -1,3 +1,5 @@
+/*	$NetBSD: lualib.h,v 1.1.1.6 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lualib.h,v 1.44 2014/02/06 17:32:33 roberto Exp 
 ** Lua standard libraries

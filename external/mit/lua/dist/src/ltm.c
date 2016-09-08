@@ -1,3 +1,5 @@
+/*	$NetBSD: ltm.c,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: ltm.c,v 2.37 2016/02/26 19:20:15 roberto Exp 
 ** Tag methods

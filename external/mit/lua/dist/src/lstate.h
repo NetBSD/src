@@ -1,3 +1,5 @@
+/*	$NetBSD: lstate.h,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lstate.h,v 2.130 2015/12/16 16:39:38 roberto Exp 
 ** Global State

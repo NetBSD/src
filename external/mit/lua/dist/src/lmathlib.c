@@ -1,3 +1,5 @@
+/*	$NetBSD: lmathlib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lmathlib.c,v 1.117 2015/10/02 15:39:23 roberto Exp 
 ** Standard mathematical library

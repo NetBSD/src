@@ -1,3 +1,5 @@
+/*	$NetBSD: lbaselib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lbaselib.c,v 1.313 2016/04/11 19:18:40 roberto Exp 
 ** Basic library

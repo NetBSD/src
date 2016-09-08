@@ -1,3 +1,5 @@
+/*	$NetBSD: lcode.h,v 1.1.1.6 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lcode.h,v 1.64 2016/01/05 16:22:37 roberto Exp 
 ** Code generator for Lua

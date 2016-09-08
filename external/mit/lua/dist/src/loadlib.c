@@ -1,3 +1,5 @@
+/*	$NetBSD: loadlib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: loadlib.c,v 1.127 2015/11/23 11:30:45 roberto Exp 
 ** Dynamic library loader for Lua

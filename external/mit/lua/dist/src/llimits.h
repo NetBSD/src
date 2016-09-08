@@ -1,3 +1,5 @@
+/*	$NetBSD: llimits.h,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: llimits.h,v 1.141 2015/11/19 19:16:22 roberto Exp 
 ** Limits, basic types, and some other 'installation-dependent' definitions

@@ -1,3 +1,5 @@
+/*	$NetBSD: lua.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lua.c,v 1.226 2015/08/14 19:11:20 roberto Exp 
 ** Lua stand-alone interpreter

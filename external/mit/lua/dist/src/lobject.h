@@ -1,3 +1,5 @@
+/*	$NetBSD: lobject.h,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lobject.h,v 2.116 2015/11/03 18:33:10 roberto Exp 
 ** Type definitions for Lua objects

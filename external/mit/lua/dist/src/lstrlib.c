@@ -1,3 +1,5 @@
+/*	$NetBSD: lstrlib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lstrlib.c,v 1.251 2016/05/20 14:13:21 roberto Exp 
 ** Standard library for string operations and pattern-matching

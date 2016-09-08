@@ -1,3 +1,5 @@
+/*	$NetBSD: liolib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: liolib.c,v 2.149 2016/05/02 14:03:19 roberto Exp 
 ** Standard I/O (and system) library

@@ -1,3 +1,5 @@
+/*	$NetBSD: lauxlib.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lauxlib.c,v 1.286 2016/01/08 15:33:09 roberto Exp 
 ** Auxiliary functions for building Lua libraries

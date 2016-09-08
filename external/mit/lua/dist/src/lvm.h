@@ -1,3 +1,5 @@
+/*	$NetBSD: lvm.h,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: lvm.h,v 2.40 2016/01/05 16:07:21 roberto Exp 
 ** Lua virtual machine

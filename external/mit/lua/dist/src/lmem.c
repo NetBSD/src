@@ -1,3 +1,5 @@
+/*	$NetBSD: lmem.c,v 1.1.1.8 2016/09/08 01:14:18 salazar Exp $	*/
+
 /*
 ** Id: lmem.c,v 1.91 2015/03/06 19:45:54 roberto Exp 
 ** Interface to Memory Manager

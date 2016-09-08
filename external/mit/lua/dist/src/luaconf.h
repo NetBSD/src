@@ -1,3 +1,5 @@
+/*	$NetBSD: luaconf.h,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: luaconf.h,v 1.255 2016/05/01 20:06:09 roberto Exp 
 ** Configuration file for Lua

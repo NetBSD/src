@@ -1,3 +1,5 @@
+/*	$NetBSD: ldblib.c,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: ldblib.c,v 1.151 2015/11/23 11:29:43 roberto Exp 
 ** Interface from Lua to its debug API

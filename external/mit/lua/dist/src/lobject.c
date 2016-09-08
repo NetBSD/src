@@ -1,3 +1,5 @@
+/*	$NetBSD: lobject.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lobject.c,v 2.111 2016/05/20 14:07:48 roberto Exp 
 ** Some generic functions over Lua objects

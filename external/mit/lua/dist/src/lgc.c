@@ -1,3 +1,5 @@
+/*	$NetBSD: lgc.c,v 1.1.1.9 2016/09/08 01:14:17 salazar Exp $	*/
+
 /*
 ** Id: lgc.c,v 2.212 2016/03/31 19:02:03 roberto Exp 
 ** Garbage Collector

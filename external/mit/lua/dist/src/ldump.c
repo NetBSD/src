@@ -1,3 +1,5 @@
+/*	$NetBSD: ldump.c,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: ldump.c,v 2.37 2015/10/08 15:53:49 roberto Exp 
 ** save precompiled Lua chunks

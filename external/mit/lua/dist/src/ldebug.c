@@ -1,3 +1,5 @@
+/*	$NetBSD: ldebug.c,v 1.1.1.9 2016/09/08 01:14:16 salazar Exp $	*/
+
 /*
 ** Id: ldebug.c,v 2.120 2016/03/31 19:01:21 roberto Exp 
 ** Debug Interface

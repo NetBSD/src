@@ -1,3 +1,5 @@
+/*	$NetBSD: lua.h,v 1.1.1.9 2016/09/08 01:14:18 salazar Exp $	*/
+
 /*
 ** Id: lua.h,v 1.331 2016/05/30 15:53:28 roberto Exp 
 ** Lua - A Scripting Language
