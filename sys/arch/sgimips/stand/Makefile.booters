@@ -1,9 +1,10 @@
-# $NetBSD: Makefile.booters,v 1.22 2014/01/12 15:26:30 tsutsui Exp $
+# $NetBSD: Makefile.booters,v 1.23 2016/09/08 14:43:48 christos Exp $
 
 # PROG set by parent.
 NOMAN=		# defined
+NOPIE=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 # $S must correspond to the top of the 'sys' tree
