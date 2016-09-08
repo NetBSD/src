@@ -1,7 +1,5 @@
-/*	$NetBSD: ldblib.c,v 1.1.1.6 2016/01/26 14:37:00 lneto Exp $	*/
-
 /*
-** Id: ldblib.c,v 1.151 2015/11/23 11:29:43 roberto Exp 
+** $Id: ldblib.c,v 1.1.1.7 2016/09/08 00:01:33 salazar Exp $
 ** Interface from Lua to its debug API
 ** See Copyright Notice in lua.h
 */

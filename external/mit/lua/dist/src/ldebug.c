@@ -1,7 +1,5 @@
-/*	$NetBSD: ldebug.c,v 1.1.1.6 2016/01/26 14:37:00 lneto Exp $	*/
-
 /*
-** Id: ldebug.c,v 2.117 2015/11/02 18:48:07 roberto Exp 
+** $Id: ldebug.c,v 1.1.1.7 2016/09/08 00:01:33 salazar Exp $
 ** Debug Interface
 ** See Copyright Notice in lua.h
 */
@@ -71,7 +69,13 @@ static void swapextra (lua_State *L) {
 
 
 /*
-** this function can be called asynchronous (e.g. during a signal)
+** This function can be called asynchronously (e.g. during a signal).
+** Fields 'oldpc', 'basehookcount', and 'hookcount' (set by
+** 'resethookcount') are for debug only, and it is no problem if they
+** get arbitrary values (causes at most one wrong hook call). 'hookmask'
+** is an atomic value. We assume that pointers are atomic too (e.g., gcc
+** ensures that for all platforms where it runs). Moreover, 'hook' is
+** always checked before being called (see 'luaD_hook').
 */
 LUA_API void lua_sethook (lua_State *L, lua_Hook func, int mask, int count) {
   if (func == NULL || mask == 0) {  /* turn off hooks? */
@@ -560,7 +564,7 @@ static const char *varinfo (lua_State *L, const TValue *o) {
 
 
 l_noret luaG_typeerror (lua_State *L, const TValue *o, const char *op) {
-  const char *t = objtypename(o);
+  const char *t = luaT_objtypename(L, o);
   luaG_runerror(L, "attempt to %s a %s value%s", op, t, varinfo(L, o));
 }
 
@@ -592,9 +596,9 @@ l_noret luaG_tointerror (lua_State *L, const TValue *p1, const TValue *p2) {
 
 
 l_noret luaG_ordererror (lua_State *L, const TValue *p1, const TValue *p2) {
-  const char *t1 = objtypename(p1);
-  const char *t2 = objtypename(p2);
-  if (t1 == t2)
+  const char *t1 = luaT_objtypename(L, p1);
+  const char *t2 = luaT_objtypename(L, p2);
+  if (strcmp(t1, t2) == 0)
     luaG_runerror(L, "attempt to compare two %s values", t1);
   else
     luaG_runerror(L, "attempt to compare %s with %s", t1, t2);

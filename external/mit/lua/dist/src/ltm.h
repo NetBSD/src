@@ -1,7 +1,5 @@
-/*	$NetBSD: ltm.h,v 1.1.1.4 2015/02/02 02:01:06 lneto Exp $	*/
-
 /*
-** Id: ltm.h,v 2.21 2014/10/25 11:50:46 roberto Exp 
+** $Id: ltm.h,v 1.1.1.5 2016/09/08 00:01:33 salazar Exp $
 ** Tag methods
 ** See Copyright Notice in lua.h
 */
@@ -53,10 +51,11 @@ typedef enum {
 #define fasttm(l,et,e)	gfasttm(G(l), et, e)
 
 #define ttypename(x)	luaT_typenames_[(x) + 1]
-#define objtypename(x)	ttypename(ttnov(x))
 
 LUAI_DDEC const char *const luaT_typenames_[LUA_TOTALTAGS];
 
+
+LUAI_FUNC const char *luaT_objtypename (lua_State *L, const TValue *o);
 
 LUAI_FUNC const TValue *luaT_gettm (Table *events, TMS event, TString *ename);
 LUAI_FUNC const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o,

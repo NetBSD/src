@@ -1,7 +1,5 @@
-/*	$NetBSD: linit.c,v 1.1.1.4 2015/02/02 02:01:08 lneto Exp $	*/
-
 /*
-** Id: linit.c,v 1.38 2015/01/05 13:48:33 roberto Exp 
+** $Id: linit.c,v 1.1.1.5 2016/09/08 00:01:35 salazar Exp $
 ** Initialization of libraries for lua.c and other clients
 ** See Copyright Notice in lua.h
 */

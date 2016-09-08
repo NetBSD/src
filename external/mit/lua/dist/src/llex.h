@@ -1,7 +1,5 @@
-/*	$NetBSD: llex.h,v 1.1.1.4 2015/02/02 02:01:08 lneto Exp $	*/
-
 /*
-** Id: llex.h,v 1.78 2014/10/29 15:38:24 roberto Exp 
+** $Id: llex.h,v 1.1.1.5 2016/09/08 00:01:34 salazar Exp $
 ** Lexical Analyzer
 ** See Copyright Notice in lua.h
 */
@@ -71,7 +69,6 @@ typedef struct LexState {
   struct Dyndata *dyd;  /* dynamic structures used by the parser */
   TString *source;  /* current source name */
   TString *envn;  /* environment variable name */
-  char decpoint;  /* locale decimal point */
 } LexState;
 
 
