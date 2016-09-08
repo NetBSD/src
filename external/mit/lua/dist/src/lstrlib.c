@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.13 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.14 2016/09/08 02:51:53 salazar Exp $	*/
 
 /*
 ** Id: lstrlib.c,v 1.251 2016/05/20 14:13:21 roberto Exp 
@@ -956,22 +956,20 @@ static void addliteral (lua_State *L, luaL_Buffer *b, int arg) {
     case LUA_TNUMBER: {
       char *buff = luaL_prepbuffsize(b, MAX_ITEM);
       int nb;
-#ifndef _KERNEL
       if (!lua_isinteger(L, arg)) {  /* float? */
+#ifndef _KERNEL
         lua_Number n = lua_tonumber(L, arg);  /* write as hexa ('%a') */
         nb = lua_number2strx(L, buff, MAX_ITEM, "%" LUA_NUMBER_FRMLEN "a", n);
         checkdp(buff, nb);  /* ensure it uses a dot */
+#endif
       }
       else {  /* integers */
-#else
-      {
         lua_Integer n = lua_tointeger(L, arg);
         const char *format = (n == LUA_MININTEGER)  /* corner case? */
                            ? "0x%" LUA_INTEGER_FRMLEN "x"  /* use hexa */
                            : LUA_INTEGER_FMT;  /* else use default format */
         nb = l_sprintf(buff, MAX_ITEM, format, n);
       }
-#endif
       luaL_addsize(b, nb);
       break;
     }
