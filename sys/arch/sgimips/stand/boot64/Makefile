@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2014/01/16 01:15:34 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2016/09/08 14:43:48 christos Exp $
 
 PROG=	ip30boot
 NOMAN=	# defined
@@ -9,7 +9,7 @@ SRCS=	start.S boot.c bootinfo.c conf.c devopen.c putchar.c getchar.c \
 
 CLEANFILES+=	boot.map
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..

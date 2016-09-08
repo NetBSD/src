@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.15 2014/01/16 01:15:33 christos Exp $
+# $NetBSD: Makefile,v 1.16 2016/09/08 14:36:13 christos Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 S!= cd ${.CURDIR}/../../../..; pwd
 
