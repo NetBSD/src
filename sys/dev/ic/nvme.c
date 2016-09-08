@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.4 2016/09/08 04:41:16 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.5 2016/09/08 15:00:08 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.4 2016/09/08 04:41:16 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.5 2016/09/08 15:00:08 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1436,7 +1436,6 @@ nvme_dmamem_free(struct nvme_softc *sc, struct nvme_dmamem *ndm)
  * ioctl
  */
 
-/* nvme */
 dev_type_open(nvmeopen);
 dev_type_close(nvmeclose);
 dev_type_ioctl(nvmeioctl);
@@ -1465,16 +1464,29 @@ int
 nvmeopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct nvme_softc *sc;
-	int unit = minor(dev);
+	int unit = minor(dev) / 0x10000;
+	int nsid = minor(dev) & 0xffff;
+	int nsidx;
 
 	if ((sc = device_lookup_private(&nvme_cd, unit)) == NULL)
 		return ENXIO;
 	if ((sc->sc_flags & NVME_F_ATTACHED) == 0)
 		return ENXIO;
-	if (ISSET(sc->sc_flags, NVME_F_OPEN))
-		return EBUSY;
 
-	SET(sc->sc_flags, NVME_F_OPEN);
+	if (nsid == 0) {
+		/* controller */
+		if (ISSET(sc->sc_flags, NVME_F_OPEN))
+			return EBUSY;
+		SET(sc->sc_flags, NVME_F_OPEN);
+	} else {
+		/* namespace */
+		nsidx = nsid - 1;
+		if (nsidx >= sc->sc_nn || sc->sc_namespaces[nsidx].dev == NULL)
+			return ENXIO;
+		if (ISSET(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN))
+			return EBUSY;
+		SET(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN);
+	}
 	return 0;
 }
 
@@ -1485,13 +1497,25 @@ int
 nvmeclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct nvme_softc *sc;
-	int unit = minor(dev);
+	int unit = minor(dev) / 0x10000;
+	int nsid = minor(dev) & 0xffff;
+	int nsidx;
 
 	sc = device_lookup_private(&nvme_cd, unit);
 	if (sc == NULL)
 		return ENXIO;
 
-	CLR(sc->sc_flags, NVME_F_OPEN);
+	if (nsid == 0) {
+		/* controller */
+		CLR(sc->sc_flags, NVME_F_OPEN);
+	} else {
+		/* namespace */
+		nsidx = nsid - 1;
+		if (nsidx >= sc->sc_nn)
+			return ENXIO;
+		CLR(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN);
+	}
+
 	return 0;
 }
 
@@ -1502,8 +1526,9 @@ int
 nvmeioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct nvme_softc *sc;
+	int unit = minor(dev) / 0x10000;
+	int nsid = minor(dev) & 0xffff;
 	struct nvme_pt_command *pt;
-	int unit = minor(dev);
 
 	sc = device_lookup_private(&nvme_cd, unit);
 	if (sc == NULL)
@@ -1511,107 +1536,9 @@ nvmeioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case NVME_PASSTHROUGH_CMD:
-		pt = (struct nvme_pt_command *)data;
-		return nvme_command_passthrough(sc, pt, pt->cmd.nsid, l, true);
-	}
-
-	return ENOTTY;
-}
-
-/* nvmens */
-dev_type_open(nvmensopen);
-dev_type_close(nvmensclose);
-dev_type_ioctl(nvmensioctl);
-
-const struct cdevsw nvmens_cdevsw = {
-	.d_open = nvmensopen,
-	.d_close = nvmensclose,
-	.d_read = noread,
-	.d_write = nowrite,
-	.d_ioctl = nvmensioctl,
-	.d_stop = nostop,
-	.d_tty = notty,
-	.d_poll = nopoll,
-	.d_mmap = nommap,
-	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
-};
-
-extern struct cfdriver nvmens_cd;
-
-/*
- * Accept an open operation on the control device.
- */
-int
-nvmensopen(dev_t dev, int flag, int mode, struct lwp *l)
-{
-	struct nvme_softc *sc;
-	int unit = minor(dev) / 0x10000;
-	int nsid = minor(dev) & 0xffff;
-	int nsidx;
-
-	if ((sc = device_lookup_private(&nvme_cd, unit)) == NULL)
-		return ENXIO;
-	if ((sc->sc_flags & NVME_F_ATTACHED) == 0)
-		return ENXIO;
-	if (nsid == 0)
-		return ENXIO;
-
-	nsidx = nsid - 1;
-	if (nsidx >= sc->sc_nn || sc->sc_namespaces[nsidx].dev == NULL)
-		return ENXIO;
-	if (ISSET(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN))
-		return EBUSY;
-
-	SET(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN);
-	return 0;
-}
-
-/*
- * Accept the last close on the control device.
- */
-int
-nvmensclose(dev_t dev, int flag, int mode, struct lwp *l)
-{
-	struct nvme_softc *sc;
-	int unit = minor(dev) / 0x10000;
-	int nsid = minor(dev) & 0xffff;
-	int nsidx;
-
-	sc = device_lookup_private(&nvme_cd, unit);
-	if (sc == NULL)
-		return ENXIO;
-	if (nsid == 0)
-		return ENXIO;
-
-	nsidx = nsid - 1;
-	if (nsidx >= sc->sc_nn)
-		return ENXIO;
-
-	CLR(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN);
-	return 0;
-}
-
-/*
- * Handle control operations.
- */
-int
-nvmensioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
-{
-	struct nvme_softc *sc;
-	int unit = minor(dev) / 0x10000;
-	int nsid = minor(dev) & 0xffff;
-
-	sc = device_lookup_private(&nvme_cd, unit);
-	if (sc == NULL)
-		return ENXIO;
-	if (nsid == 0)
-		return ENXIO;
-
-	switch (cmd) {
-	case NVME_PASSTHROUGH_CMD:
-		return nvme_command_passthrough(sc, data, nsid, l, false);
+		pt = data;
+		return nvme_command_passthrough(sc, data,
+		    nsid == 0 ? pt->cmd.nsid : nsid, l, nsid == 0);
 	}
 
 	return ENOTTY;
