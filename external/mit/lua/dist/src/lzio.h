@@ -1,4 +1,4 @@
-/*	$NetBSD: lzio.h,v 1.4 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lzio.h,v 1.5 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
 ** Id: lzio.h,v 1.31 2015/09/08 15:41:05 roberto Exp 

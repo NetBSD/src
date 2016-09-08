@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.5 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: lua.c,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
 ** Id: lua.c,v 1.226 2015/08/14 19:11:20 roberto Exp 

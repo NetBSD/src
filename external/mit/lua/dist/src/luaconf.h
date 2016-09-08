@@ -1,7 +1,7 @@
-/*	$NetBSD: luaconf.h,v 1.16 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.17 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
-** Id: luaconf.h,v 1.254 2015/10/21 18:17:40 roberto Exp 
+** Id: luaconf.h,v 1.255 2016/05/01 20:06:09 roberto Exp 
 ** Configuration file for Lua
 ** See Copyright Notice in lua.h
 */
@@ -621,7 +621,7 @@
 ** provide its own implementation.
 */
 #if !defined(LUA_USE_C89)
-#define lua_number2strx(L,b,sz,f,n)	l_sprintf(b,sz,f,n)
+#define lua_number2strx(L,b,sz,f,n)	((void)L, l_sprintf(b,sz,f,n))
 #endif
 
 

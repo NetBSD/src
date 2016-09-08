@@ -1,4 +1,4 @@
-/*	$NetBSD: loadlib.c,v 1.5 2016/01/28 14:41:39 lneto Exp $	*/
+/*	$NetBSD: loadlib.c,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
 
 /*
 ** Id: loadlib.c,v 1.127 2015/11/23 11:30:45 roberto Exp 
