@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.3 2016/06/04 16:11:51 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.4 2016/09/08 04:41:16 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.3 2016/06/04 16:11:51 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.4 2016/09/08 04:41:16 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1559,7 +1559,7 @@ nvmensopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	nsidx = nsid - 1;
-	if (nsidx > sc->sc_nn || sc->sc_namespaces[nsidx].dev == NULL)
+	if (nsidx >= sc->sc_nn || sc->sc_namespaces[nsidx].dev == NULL)
 		return ENXIO;
 	if (ISSET(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN))
 		return EBUSY;
@@ -1586,7 +1586,7 @@ nvmensclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 
 	nsidx = nsid - 1;
-	if (nsidx > sc->sc_nn)
+	if (nsidx >= sc->sc_nn)
 		return ENXIO;
 
 	CLR(sc->sc_namespaces[nsidx].flags, NVME_NS_F_OPEN);
