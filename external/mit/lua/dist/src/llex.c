@@ -1,4 +1,4 @@
-/*	$NetBSD: llex.c,v 1.8 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: llex.c,v 1.9 2016/09/08 20:57:20 salazar Exp $	*/
 
 /*
 ** Id: llex.c,v 2.96 2016/05/02 14:02:12 roberto Exp 
@@ -212,6 +212,7 @@ static int check_next2 (LexState *ls, const char *set) {
   }
   else return 0;
 }
+
 
 #ifndef _KERNEL
 /* LUA_NUMBER */
