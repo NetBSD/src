@@ -1,4 +1,4 @@
-/*	$NetBSD: loslib.c,v 1.7 2016/09/08 02:55:50 salazar Exp $	*/
+/*	$NetBSD: loslib.c,v 1.8 2016/09/08 21:19:44 salazar Exp $	*/
 
 /*
 ** Id: loslib.c,v 1.64 2016/04/18 13:06:55 roberto Exp 
@@ -264,7 +264,7 @@ static const char *checkoption (lua_State *L, const char *conv, char *buff) {
   int oplen = 1;
   int convlen = (int)strlen(conv);
   for (option = LUA_STRFTIMEOPTIONS; *option != '\0' && oplen <= convlen; option += oplen) {
-  if (*option == '|')  /* next block? */
+    if (*option == '|')  /* next block? */
       oplen++;  /* next length */
     else if (memcmp(conv, option, oplen) == 0) {  /* match? */
       memcpy(buff, conv, oplen);  /* copy valid option to buffer */
