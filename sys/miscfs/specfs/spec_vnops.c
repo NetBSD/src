@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.163 2016/08/20 12:37:09 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.164 2016/09/08 00:07:48 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.163 2016/08/20 12:37:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.164 2016/09/08 00:07:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -482,6 +482,16 @@ spec_lookup(void *v)
 
 typedef int (*spec_ioctl_t)(dev_t, u_long, void *, int, struct lwp *);
 
+struct dev_to_mod {
+	const char *dev_name, *mod_name;
+};
+
+struct dev_to_mod dev_mod_table[] = {
+	{ "tap", "if_tap" },
+	{ "tun", "if_tun" },
+	{ NULL, NULL }
+};
+	
 /*
  * Open a special file.
  */
@@ -505,6 +515,7 @@ spec_open(void *v)
 	u_int gen;
 	const char *name;
 	struct partinfo pi;
+	struct dev_to_mod *conv;
 	
 	l = curlwp;
 	vp = ap->a_vp;
@@ -571,6 +582,16 @@ spec_open(void *v)
 			/* Get device name from devsw_conv array */
 			if ((name = cdevsw_getname(major(dev))) == NULL)
 				break;
+
+			/* Check exception table for alternate module name */
+			conv = dev_mod_table;
+			while (conv->dev_name != NULL) {
+				if (strcmp(conv->dev_name, name) == 0) {
+					name = conv->mod_name;
+					break;
+				}
+				conv++;
+			}
 			
 			/* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
@@ -622,6 +643,16 @@ spec_open(void *v)
 				break;
 
 			VOP_UNLOCK(vp);
+
+			/* Check exception table for alternate module name */
+			conv = dev_mod_table;
+			while (conv->dev_name != NULL) {
+				if (strcmp(conv->dev_name, name) == 0) {
+					name = conv->mod_name;
+					break;
+				}
+				conv++;
+			}
 
                         /* Try to autoload device module */
 			(void) module_autoload(name, MODULE_CLASS_DRIVER);
