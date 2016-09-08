@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.14 2016/09/08 02:51:53 salazar Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.15 2016/09/08 20:57:20 salazar Exp $	*/
 
 /*
 ** Id: lstrlib.c,v 1.251 2016/05/20 14:13:21 roberto Exp 
@@ -942,7 +942,7 @@ static void checkdp (char *buff, int nb) {
     if (ppoint) *ppoint = '.';  /* change it to a dot */
   }
 }
-#endif
+#endif /* _KERNEL */
 
 
 static void addliteral (lua_State *L, luaL_Buffer *b, int arg) {
@@ -961,7 +961,7 @@ static void addliteral (lua_State *L, luaL_Buffer *b, int arg) {
         lua_Number n = lua_tonumber(L, arg);  /* write as hexa ('%a') */
         nb = lua_number2strx(L, buff, MAX_ITEM, "%" LUA_NUMBER_FRMLEN "a", n);
         checkdp(buff, nb);  /* ensure it uses a dot */
-#endif
+#endif /* _KERNEL */
       }
       else {  /* integers */
         lua_Integer n = lua_tointeger(L, arg);
