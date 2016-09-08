@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.c,v 1.6 2016/09/08 02:21:31 salazar Exp $	*/
+/*	$NetBSD: lparser.c,v 1.7 2016/09/08 02:53:39 salazar Exp $	*/
 
 /*
 ** Id: lparser.c,v 2.153 2016/05/13 19:10:16 roberto Exp 
@@ -327,6 +327,8 @@ static void adjust_assign (LexState *ls, int nvars, int nexps, expdesc *e) {
       luaK_nil(fs, reg, extra);
     }
   }
+  if (nexps > nvars)
+    ls->fs->freereg -= nexps - nvars;  /* remove extra values */
 }
 
 
@@ -1174,11 +1176,8 @@ static void assignment (LexState *ls, struct LHS_assign *lh, int nvars) {
     int nexps;
     checknext(ls, '=');
     nexps = explist(ls, &e);
-    if (nexps != nvars) {
+    if (nexps != nvars)
       adjust_assign(ls, nvars, nexps, &e);
-      if (nexps > nvars)
-        ls->fs->freereg -= nexps - nvars;  /* remove extra values */
-    }
     else {
       luaK_setoneret(ls->fs, &e);  /* close last expression */
       luaK_storevar(ls->fs, &lh->v, &e);
