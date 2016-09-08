@@ -1,4 +1,4 @@
-/*	$NetBSD: lcode.c,v 1.7 2016/09/08 02:57:32 salazar Exp $	*/
+/*	$NetBSD: lcode.c,v 1.8 2016/09/08 20:57:20 salazar Exp $	*/
 
 /*
 ** Id: lcode.c,v 2.109 2016/05/13 19:09:21 roberto Exp 
@@ -775,7 +775,7 @@ int luaK_exp2RK (FuncState *fs, expdesc *e) {
     case VKINT: e->u.info = luaK_intK(fs, e->u.ival); goto vk;
 #ifndef _KERNEL
     case VKFLT: e->u.info = luaK_numberK(fs, e->u.nval); goto vk;
-#endif
+#endif /* _KERNEL */
     case VK:
      vk:
       e->k = VK;
