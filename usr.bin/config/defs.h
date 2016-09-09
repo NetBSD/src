@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.97 2016/08/07 21:11:55 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.98 2016/09/09 21:09:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,7 +190,8 @@ struct attr {
 #define	a_weight	a_m.m_weight
 
 	/* "interface attribute" */
-	int	a_iattr;		/* true => allows children */
+	uint8_t	a_iattr;		/* true => allows children */
+	uint8_t a_deselected;		/* deselected */	
 	struct	loclist *a_locs;	/* locators required */
 	int	a_loclen;		/* length of above list */
 	struct	nvlist *a_devs;		/* children */

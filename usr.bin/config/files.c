@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.35 2015/09/04 21:32:54 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.36 2016/09/09 21:09:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.35 2015/09/04 21:32:54 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.36 2016/09/09 21:09:11 christos Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -334,6 +334,11 @@ fixfiles(void)
 			fi->fi_optf = flathead;
 			if (!sel)
 				continue;
+		}
+		if (fi->fi_attr && fi->fi_attr->a_deselected) {
+			CFGDBG(5, "file `%s' deselected because attr `%s' was",
+			    fi->fi_path, fi->fi_attr->a_name);
+			continue;
 		}
 
 		/* We like this file.  Make sure it generates a unique .o. */
