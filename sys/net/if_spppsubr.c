@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.147 2016/08/06 22:03:45 pgoyette Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.148 2016/09/09 12:41:14 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.147 2016/08/06 22:03:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.148 2016/09/09 12:41:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4054,20 +4054,20 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_bytes(value, value_len);
 			addlog(">\n");
 		}
-		if (value_len != sizeof(sp->myauth.challenge)) {
+		if (value_len != sizeof(sp->hisauth.challenge)) {
 			if (debug)
 				log(LOG_DEBUG,
 				    "%s: chap bad hash value length: "
-				    "%d bytes, should be %ld\n",
+				    "%d bytes, should be %zu\n",
 				    ifp->if_xname, value_len,
-				    (long) sizeof(sp->myauth.challenge));
+				    sizeof(sp->hisauth.challenge));
 			goto chap_failure;
 		}
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->hisauth.secret, sp->hisauth.secret_len);
-		MD5Update(&ctx, sp->myauth.challenge, sizeof(sp->myauth.challenge));
+		MD5Update(&ctx, sp->hisauth.challenge, sizeof(sp->hisauth.challenge));
 		MD5Final(digest, &ctx);
 
 #define FAILMSG "Failed..."
@@ -4130,7 +4130,7 @@ sppp_chap_init(struct sppp *sp)
 static void
 sppp_chap_open(struct sppp *sp)
 {
-	if (sp->myauth.proto == PPP_CHAP &&
+	if (sp->hisauth.proto == PPP_CHAP &&
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for CHAP, start it */
 		chap.scr(sp);
@@ -4265,24 +4265,22 @@ sppp_chap_scr(struct sppp *sp)
 	uint32_t *ch;
 	u_char clen = 4 * sizeof(uint32_t);
 
-	if (sp->myauth.name == NULL) {
+	if (sp->hisauth.name == NULL) {
 	    /* can't do anything useful */
-	    printf("%s: chap starting without my name being set\n",
+	    printf("%s: chap starting without his name being set\n",
 	    	sp->pp_if.if_xname);
 	    return;
 	}
 
 	/* Compute random challenge. */
-	ch = (uint32_t *)sp->myauth.challenge;
+	ch = (uint32_t *)sp->hisauth.challenge;
 	cprng_strong(kern_cprng, ch, clen, 0);
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 
 	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
 		       sizeof clen, (const char *)&clen,
-		       sizeof(sp->myauth.challenge), sp->myauth.challenge,
-		       sp->myauth.name_len,
-		       sp->myauth.name,
+		       sizeof(sp->hisauth.challenge), sp->hisauth.challenge,
 		       0);
 }
 
