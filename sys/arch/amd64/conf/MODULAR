@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.4 2016/08/07 14:28:55 christos Exp $
+# $NetBSD: MODULAR,v 1.5 2016/09/09 21:10:56 christos Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -83,6 +83,8 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 
 -no alc*	at pci?
 -no ath*	at pci?
+
+-no select sppp			# Synchronous-Point-to-Point Protocol
 
 -no pseudo-device 	crypto			# /dev/crypto device
 -no pseudo-device	swcrypto		# software crypto implementation
