@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.22 2016/09/09 05:36:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.22 2016/09/09 05:36:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -185,6 +185,10 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	if ((sc->sc_read)(sc, 2, &spd_type) != 0)
 		return 0;
 
+	/* Memory type should not be 0 */
+	if (spd_type == 0x00)
+		return 0;
+
 	/* For older memory types, validate the checksum over 1st 63 bytes */
 	if (spd_type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
 		for (i = 0; i < 63; i++) {
@@ -263,8 +267,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		 * it some other time.
 		 */
 		return 1;
-	} else
-		return 0;
+	}
 
 	/* For unrecognized memory types, don't match at all */
 	return 0;
