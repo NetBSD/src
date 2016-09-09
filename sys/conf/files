@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1163 2016/08/19 18:08:50 maxv Exp $
+#	$NetBSD: files,v 1.1164 2016/09/09 21:10:01 christos Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -1409,7 +1409,6 @@ defpseudo loop:		ifnet
 defpseudo sl:		ifnet
 defpseudo ppp:		ifnet, bpf_filter
 defpseudo pppoe:	ifnet, ether, sppp
-defpseudo sppp:		ifnet
 defpseudo tun:		ifnet
 defpseudo vlan:		ifnet, ether
 defpseudo bridge:	ifnet, ether
