@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.18 2016/09/10 09:29:13 mbalmer Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.19 2016/09/10 09:31:24 mbalmer Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.255 2016/05/01 20:06:09 roberto Exp 
@@ -770,7 +770,7 @@
 
 #ifdef __NetBSD__
 
-#define LUA_STRFTIMEOPTIONS "aAbBcCdDeFgGhHIjklmMnprRsStTuUvVwWxXyYzZi%"
+#define LUA_STRFTIMEOPTIONS "aAbBcCdDeFgGhHIjklmMnprRsStTuUvVwWxXyYzZ%"
 
 /* Integer types */
 #undef LUA_INTEGER
