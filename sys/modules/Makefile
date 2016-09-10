@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.175 2016/08/07 14:27:38 christos Exp $
+#	$NetBSD: Makefile,v 1.176 2016/09/10 02:20:10 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -61,7 +61,7 @@ SUBDIR+=	if_smsc
 SUBDIR+=	if_srt
 SUBDIR+=	if_stf
 SUBDIR+=	if_strip
-SUBDIR+=	if_tun
+SUBDIR+=	if_tun tun
 SUBDIR+=	if_vlan
 SUBDIR+=	iic
 SUBDIR+=	ipl
