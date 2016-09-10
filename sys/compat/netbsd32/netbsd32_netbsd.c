@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.201 2016/09/10 08:20:49 skrll Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.202 2016/09/10 08:21:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.201 2016/09/10 08:20:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.202 2016/09/10 08:21:26 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -921,7 +921,7 @@ netbsd32___socket30(struct lwp *l, const struct netbsd32___socket30_args *uap, r
 	NETBSD32TO64_UAP(domain);
 	NETBSD32TO64_UAP(type);
 	NETBSD32TO64_UAP(protocol);
-	return (sys___socket30(l, &ua, retval));	
+	return (sys___socket30(l, &ua, retval));
 }
 
 int
@@ -1457,7 +1457,7 @@ fixlimit(int which, struct rlimit *alim)
 			alim->rlim_cur = MAXDSIZ32;
 		if (LIMITCHECK(alim->rlim_max, MAXDSIZ32))
 			alim->rlim_max = MAXDSIZ32;
-		return;	
+		return;
 	case RLIMIT_STACK:
 		if (LIMITCHECK(alim->rlim_cur, MAXSSIZ32))
 			alim->rlim_cur = MAXSSIZ32;
@@ -1826,7 +1826,7 @@ netbsd32_swapctl(struct lwp *l, const struct netbsd32_swapctl_args *uap, registe
 	/* SWAP_STATS50 and SWAP_STATS13 structures need no translation */
 	if (SCARG(&ua, cmd) == SWAP_STATS)
 		return netbsd32_swapctl_stats(l, &ua, retval);
-	
+
 	return (sys_swapctl(l, &ua, retval));
 }
 
