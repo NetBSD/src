@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.112 2015/12/03 10:38:21 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.113 2016/09/10 08:18:45 skrll Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -703,7 +703,7 @@
 			    lwpid_t lid, netbsd32_size_t size, \
 			    netbsd32_cpusetp_t cpuset); }
 350	NOARGS 		{ int|sys||sched_yield(void); }
-351	UNIMPL
+351	STD		{ int|netbsd32||_sched_protect(int priority); }
 352	UNIMPL
 353	UNIMPL
 354	STD		{ int|netbsd32||fsync_range(int fd, int flags, \
