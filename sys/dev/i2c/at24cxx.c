@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.22 2016/07/23 18:02:10 jakllsch Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.23 2016/09/10 13:16:12 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.22 2016/07/23 18:02:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.23 2016/09/10 13:16:12 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 {
 	struct seeprom_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	u_int n;
+	u_int n, m;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
@@ -185,9 +185,12 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_size <= 0 && ia->ia_ncompat > 0) {
 		for (n = 0; n < __arraycount(seeprom_sizes); n++) {
-			if (!strcmp(seeprom_sizes[n].name, ia->ia_compat[n])) {
-				sc->sc_size = seeprom_sizes[n].size;
-				break;
+			for (m = 0; m < ia->ia_ncompat; m++) {
+				if (!strcmp(seeprom_sizes[n].name,
+				    ia->ia_compat[m])) {
+					sc->sc_size = seeprom_sizes[n].size;
+					break;
+				}
 			}
 		}
 	}
