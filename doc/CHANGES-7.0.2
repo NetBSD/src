@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.9 2016/08/27 15:21:28 bouyer Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.10 2016/09/10 06:40:51 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -247,4 +247,11 @@ Fix typo in Makefile which resulted in kernel image not being generated
 
 From Rin Okuyama in PR/51369
 [maya, ticket #1211]
+
+sys/arch/sparc64/sparc64/kobj_machdep.c		1.6
+
+	The target of the OLO10 relocation is the simd13 field of the
+	instruction, so use a 13 bit target mask.
+	Fixes PR kern/51436.
+	[martin, ticket #1248]
 
