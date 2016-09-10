@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.38.6.1 2015/08/06 21:13:44 snj Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.38.6.2 2016/09/10 06:36:37 snj Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.38.6.1 2015/08/06 21:13:44 snj Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.38.6.2 2016/09/10 06:36:37 snj Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -105,7 +105,8 @@ union dinode {
 	} while (0)
 
 /* a cg's worth of brand new squeaky-clean inodes */
-static struct ufs1_dinode *zinodes;
+static struct ufs1_dinode *zinodes1;
+static struct ufs2_dinode *zinodes2;
 
 /* pointers to the in-core cgs, read off disk and possibly modified */
 static struct cg **cgs;
@@ -615,10 +616,15 @@ initcg(int cgn)
 	newsb->fs_cstotal.cs_nffree += cg->cg_cs.cs_nffree;
 	newsb->fs_cstotal.cs_nbfree += cg->cg_cs.cs_nbfree;
 	newsb->fs_cstotal.cs_nifree += cg->cg_cs.cs_nifree;
-	if (is_ufs2 == 0)
+	if (is_ufs2) {
 		/* Write out the cleared inodes. */
-		writeat(FFS_FSBTODB(newsb, cgimin(newsb, cgn)), zinodes,
-		    newsb->fs_ipg * sizeof(*zinodes));
+		writeat(FFS_FSBTODB(newsb, cgimin(newsb, cgn)), zinodes2,
+		    cg->cg_initediblk * sizeof(*zinodes2));
+	} else {
+		/* Write out the cleared inodes. */
+		writeat(FFS_FSBTODB(newsb, cgimin(newsb, cgn)), zinodes1,
+		    newsb->fs_ipg * sizeof(*zinodes1));
+	}
 	/* Dirty the cg. */
 	cgflags[cgn] |= CGF_DIRTY;
 }
@@ -993,8 +999,15 @@ grow(void)
 	/* Update the timestamp. */
 	newsb->fs_time = timestamp();
 	/* Allocate and clear the new-inode area, in case we add any cgs. */
-	zinodes = alloconce(newsb->fs_ipg * sizeof(*zinodes), "zeroed inodes");
-	memset(zinodes, 0, newsb->fs_ipg * sizeof(*zinodes));
+	if (is_ufs2) {
+		zinodes2 = alloconce(newsb->fs_ipg * sizeof(*zinodes2),
+			"zeroed inodes");
+		memset(zinodes2, 0, newsb->fs_ipg * sizeof(*zinodes2));
+	} else {
+		zinodes1 = alloconce(newsb->fs_ipg * sizeof(*zinodes1),
+			"zeroed inodes");
+		memset(zinodes1, 0, newsb->fs_ipg * sizeof(*zinodes1));
+	}
 	
 	/* Check that the new last sector (frag, actually) is writable.  Since
 	 * it's at least one frag larger than it used to be, we know we aren't
