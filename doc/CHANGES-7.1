@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.106 2016/08/28 04:37:17 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.107 2016/09/10 06:39:43 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5254,4 +5254,16 @@ sys/dev/splash/splash.c				1.13
 
 	Don't panic if the splash screen is bigger than the framebuffer.
 	[khorben, ticket #1238]
+
+sbin/resize_ffs/resize_ffs.c			1.47
+
+	Fix handling of ffsv2 inode initialization. PR 51116.
+	[dholland, ticket #1242]
+
+sys/arch/sparc64/sparc64/kobj_machdep.c		1.6
+
+	The target of the OLO10 relocation is the simd13 field of the
+	instruction, so use a 13 bit target mask.
+	Fixes PR kern/51436.
+	[martin, ticket #1248]
 
