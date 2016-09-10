@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.93 2016/08/07 14:28:11 christos Exp $
+# $NetBSD: mi,v 1.94 2016/09/10 02:20:41 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -294,6 +294,8 @@
 ./@MODULEDIR@/tmpfs/tmpfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/tprof				base-kernel-modules	kmod
 ./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/tun				base-kernel-modules	kmod
+./@MODULEDIR@/tun/tun.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/uatp				base-kernel-modules	kmod
 ./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
