@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.241 2016/07/11 18:54:32 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.242 2016/09/10 13:40:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.241 2016/07/11 18:54:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.242 2016/09/10 13:40:14 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -433,21 +433,28 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		}
 		if ((type & T_USER) == 0)
 			goto copyfault;
-		if (rv == ENOMEM) {
-			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
-			       p->p_pid, p->p_comm,
-			       l->l_cred ?
-			       kauth_cred_geteuid(l->l_cred) : (uid_t) -1);
+
+		KSI_INIT_TRAP(&ksi);
+		switch (rv) {
+		case EINVAL:
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRERR;
+			break;
+		case EACCES:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_ACCERR;
+			rv = EFAULT;
+			break;
+		case ENOMEM:
 			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = 0;
-		} else {
-			if (rv == EACCES) {
-				ksi.ksi_signo = SIGBUS;
-				ksi.ksi_code = BUS_OBJERR;
-			} else {
-				ksi.ksi_signo = SIGSEGV;
-				ksi.ksi_code = SEGV_MAPERR;
-			}
+			printf("UVM: pid %d.%d (%s), uid %d killed: "
+			    "out of swap\n", p->p_pid, l->l_lid, p->p_comm,
+			    l->l_cred ? kauth_cred_geteuid(l->l_cred) : -1);
+			break;
+		default:
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			break;
 		}
 		ksi.ksi_trap = type & ~T_USER;
 		ksi.ksi_addr = (void *)vaddr;
