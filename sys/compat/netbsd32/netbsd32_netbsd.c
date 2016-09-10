@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.200 2016/05/13 16:54:36 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.201 2016/09/10 08:20:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.200 2016/05/13 16:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.201 2016/09/10 08:20:49 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2711,6 +2711,20 @@ netbsd32__sched_getaffinity(struct lwp *l,
 	NETBSD32TOX_UAP(size, size_t);
 	NETBSD32TOP_UAP(cpuset, cpuset_t *);
 	return sys__sched_getaffinity(l, &ua, retval);
+}
+
+int
+netbsd32__sched_protect(struct lwp *l,
+			const struct netbsd32__sched_protect_args *uap,
+			register_t *retval)
+{
+	/* {
+		syscallarg(int) priority;
+	} */
+	struct sys__sched_protect_args ua;
+
+	NETBSD32TO64_UAP(priority);
+	return sys__sched_protect(l, &ua, retval);
 }
 
 int
