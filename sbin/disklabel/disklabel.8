@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.65 2015/04/29 17:07:11 christos Exp $
+.\"	$NetBSD: disklabel.8,v 1.66 2016/09/11 01:48:00 sevan Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 29, 2015
+.Dd September 11, 2016
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ Read/write the disk directly rather than using
 requests on the kernel.
 When writing a label, the kernel will be told about the label before the
 label is written and asked to write afterwards.
-This is the historic behaviour and can be supressed by specifying
+This is the historic behaviour and can be suppressed by specifying
 .Fl F .
 .It Fl t
 Format the output as a
@@ -250,7 +250,7 @@ command line, or writing the disklabel failed.
 .It 4
 An I/O error of some sort occurred.
 .It 101..n
-One or more warnings occured while reading the disklabel.
+One or more warnings occurred while reading the disklabel.
 Subtract 100 to get the number of warnings detected.
 .El
 .Sh EXAMPLES
@@ -266,7 +266,7 @@ as on-disk.
 .Pp
 .Dl Ic disklabel -i -I sd0
 .Pp
-As previous, but don't fail if there was no label on the disk yet;
+As previous, but do not fail if there was no label on the disk yet;
 provide some default values instead.
 .Pp
 .Dl Ic disklabel -e -I sd0
@@ -318,6 +318,11 @@ partition.
 .Xr installboot 8 ,
 .Xr mbrlabel 8 ,
 .Xr mscdlabel 8
+.Sh HISTORY
+The
+.Nm
+utility appeared in
+.Bx 4.3 Tahoe .
 .Sh BUGS
 .Pp
 The
