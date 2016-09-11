@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.85 2014/04/04 13:07:30 wiz Exp $
+.\"	$NetBSD: fdisk.8,v 1.86 2016/09/11 03:35:08 sevan Exp $
 .\"
-.Dd April 3, 2014
+.Dd September 11, 2016
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -157,11 +157,11 @@ is specified and
 is not specified, then the offset is set to the alignment.
 If
 .Fl A
-isn't specified, then the alignment of the first partition is inspected.
+is not specified, then the alignment of the first partition is inspected.
 If it ends on a 2048 sector boundary, then the alignment is set to 2048,
 if the start is a power of 2 less than, or equal to 2048 then the offset
 is set to the start sector.
-If the first partition isn't defined then the alignment and offset for disks
+If the first partition is not defined then the alignment and offset for disks
 larger than 128GB is set to 2048 (1MB).
 In all other cases the alignment default to a cylinder
 and the offset to a track (both using the BIOS geometry).
@@ -217,7 +217,7 @@ machines.
 Specify logical partition
 .Ar number
 to be printed or updated.
-If the specified logical partition doesn't exist on updating partition data
+If the specified logical partition does not exist on updating partition data
 an additional logical partition will be created.
 .It Fl F
 Indicate that
@@ -367,7 +367,7 @@ If
 is specified for any partition
 .Nm
 will determine whether the installed boot code supports the bootselect code,
-if it doesn't you will be asked whether you want to install the required
+if it does not you will be asked whether you want to install the required
 boot code.
 To remove a
 .Em bootmenu
@@ -652,6 +652,21 @@ partition using whole disk without prompt against 1GB disk image file
 .Xr installboot 8 ,
 .Xr mbr 8 ,
 .Xr mbrlabel 8
+.Sh HISTORY
+A version of
+.Nm
+first appeared in the Mach Operating System.
+It was subsequently ported to
+.Bx 386 .
+.Sh AUTHORS
+.An -nosplit
+.Nm
+for Mach Operating System was written by
+.An Robert Baron Aq Mt rvb@cs.cmu.edu .
+It was ported to
+.Bx 386
+by
+.An Julian Elischer Aq Mt julian@tfs.com .
 .Sh BUGS
 The word
 .Sq partition
