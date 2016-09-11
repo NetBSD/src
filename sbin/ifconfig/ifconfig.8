@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.110 2016/01/07 11:32:21 roy Exp $
+.\"	$NetBSD: ifconfig.8,v 1.111 2016/09/11 22:10:47 sevan Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd January 7, 2016
+.Dd January 7, 2016.
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -316,7 +316,7 @@ to the destination network or host.
 .It Cm mtu Ar n
 Set the maximum transmission unit of the interface to
 .Ar n .
-Most interfaces don't support this option.
+Most interfaces do not support this option.
 .It Cm netmask Ar mask
 .Pq inet, inet6, and ISO
 Specify how much of the address to reserve for subdividing
@@ -388,7 +388,7 @@ can be any value between 0 and 2347.
 The default is 2347, which indicates the RTS/CTS mechanism should not be used.
 .It Cm ssid Ar id
 .Pq IEEE 802.11 devices only
-Configure the Service Set Identifier (a.k.a. the network name)
+Configure the Service Set Identifier (aka the network name)
 for IEEE 802.11-based wireless network interfaces.
 The
 .Ar id
@@ -436,7 +436,7 @@ are configured as WEP keys.
 Note that the order must be match within same network if multiple keys
 are used.
 For IEEE 802.11 wireless network, the length of each key is restricted to
-40 bits, i.e. 5-character string or 10 hexadecimal digits,
+40 bits, i.e., 5-character string or 10 hexadecimal digits,
 while the WaveLAN/IEEE Gold cards accept the 104 bits
 .Pq 13 characters
 key.
@@ -497,7 +497,7 @@ to be used for IEEE 802.11-based wireless network interfaces.
 .Pq IEEE 802.11 devices only
 Unset the desired channel to be used
 for IEEE 802.11-based wireless network interfaces.
-It doesn't affect the channel to be created for IBSS or hostap mode.
+It does not affect the channel to be created for IBSS or hostap mode.
 .It Cm list scan
 .Pq IEEE 802.11 devices only
 Display the access points and/or ad-hoc neighbors
