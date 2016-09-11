@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.48 2016/06/09 19:04:43 christos Exp $
+.\" $NetBSD: gpt.8,v 1.49 2016/09/11 21:38:16 sevan Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd June 9, 2016
+.Dd September 11, 2016
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -74,7 +74,7 @@ Override the default media size for the device (obtained
 from the kernel if possible) or defaulting to the file size for
 plain files.
 .It Fl n
-Don't update the wedge information that
+Do not update the wedge information that
 .Nm
 changed.
 You need to use the
@@ -87,7 +87,7 @@ Currently this option is primarily useful for the
 .Ic show
 command, but the intent is to use it to implement dry-run behaviour.
 .It Fl q
-Don't print error messages.
+Do not print error messages.
 This is not implemented completely yet.
 .It Fl s Ar sectorsize
 Override the default sector size for the device (obtained
@@ -378,7 +378,7 @@ disk labels into GPT partitions by creating
 the GPT equivalent of a slice.
 Note that the
 .Fl s
-option isn't applicable to
+option is not applicable to
 .Nx
 partitions.
 .Pp
@@ -403,7 +403,7 @@ See the
 option
 for the size of the GPT partition table.
 By default, just about all devices have a minimum of 62 sectors free at the
-beginning of the device, but don't have any free space at the end.
+beginning of the device, but do not have any free space at the end.
 For the default GPT partition table size on a 512 byte sector size device,
 33 sectors at the end of the device would need to be freed.
 .\" ==== recover ====
@@ -674,6 +674,9 @@ The
 utility appeared in
 .Fx 5.0
 for ia64.
+.Nm
+utility first appeared in
+.Nx 5.0 .
 .Sh BUGS
 The development of the
 .Nm
