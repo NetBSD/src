@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.39 2016/09/11 03:48:11 sevan Exp $
+.\"	$NetBSD: fsck.8,v 1.40 2016/09/11 09:09:54 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -98,7 +98,7 @@ will check all file systems listed in
 according to their pass number, and will make minor repairs without
 human intervention.
 .It Fl q
-Quiet mode, do not output any messages for clean filesystems.
+Quiet mode, do not output any messages for clean file systems.
 .It Fl T Ar fstype:fsoptions
 List of comma separated file system specific options for the specified
 file system type, in the same format as
@@ -115,7 +115,7 @@ for the file system types that are not specified in the list.
 .It Fl v
 Print the commands before executing them.
 .It Fl x Ar mountpoint
-Exclude the filesystem which has a
+Exclude the file system which has a
 .Ar mountpoint
 the same as in
 .Pa /etc/fstab .
@@ -148,16 +148,16 @@ intervention is required.
 .It Dv 1
 Usage problem.
 .It Dv 2
-Unresolved errors while checking the filesystem.
+Unresolved errors while checking the file system.
 Re-running
 .Nm
-on the filesystem(s) is required.
+on the file system(s) is required.
 .It Dv 4
-The root filesystem was changed in the process of checking, and updating the
+The root file system was changed in the process of checking, and updating the
 mount was unsuccessful.
 A reboot (without sync) is required.
 .It Dv 8
-The filesystem check has failed, and a subsequent check is required
+The file system check has failed, and a subsequent check is required
 that will require human intervention.
 .It Dv 12
 .Nm
@@ -179,8 +179,8 @@ A
 .Nm
 utility appeared in
 .Bx 4.0 .
-It was reimplemented as a filesystem independent wrapper in
+It was reimplemented as a file system independent wrapper in
 .Nx 1.3 .
-The original filesystem specific utility became
+The original file system specific utility became
 .Xr fsck_ffs 8
 at this point.
