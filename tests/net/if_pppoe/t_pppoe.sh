@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.2 2016/08/07 23:34:31 pgoyette Exp $
+#	$NetBSD: t_pppoe.sh,v 1.3 2016/09/12 14:47:24 christos Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -42,8 +42,6 @@ TIMEOUT=3
 WAITTIME=5
 DEBUG=false
 
-atf_test_case pap cleanup
-
 setup()
 {
 	atf_check -s exit:0 ${server} $SERVER
@@ -75,17 +73,13 @@ setup()
 	atf_check -s exit:0 -x "$HIJACKING pppoectl -e shmif0 pppoe0"
 	unset RUMP_SERVER
 }
+
 cleanup()
 {
 	env RUMP_SERVER=$SERVER rump.halt
 	env RUMP_SERVER=$CLIENT rump.halt
 }
 
-pap_head()
-{
-	atf_set "descr" "Does simple pap tests"
-	atf_set "require.progs" "rump_server pppoectl"
-}
 
 wait_for_session_established()
 {
@@ -103,9 +97,9 @@ wait_for_session_established()
 	fi
 }
 
-pap_body()
+run_test()
 {
-	local auth=pap
+	local auth=$1
 	setup
 
 	export RUMP_SERVER=$SERVER
@@ -183,11 +177,44 @@ pap_body()
 	unset RUMP_SERVER
 }
 
+atf_test_case pap cleanup
+
+pap_head()
+{
+	atf_set "descr" "Does simple pap tests"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pap_body()
+{
+	run_test pap
+}
+
 pap_cleanup()
 {
 	cleanup
 }
+
+atf_test_case chap cleanup
+
+chap_head()
+{
+	atf_set "descr" "Does simple chap tests"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+chap_body()
+{
+	run_test chap
+}
+
+chap_cleanup()
+{
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case pap
+	atf_add_test_case chap
 }
