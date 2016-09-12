@@ -1,4 +1,4 @@
-.\"     $NetBSD: resize_ffs.8,v 1.16 2015/04/06 22:44:04 jmcneill Exp $
+.\"     $NetBSD: resize_ffs.8,v 1.17 2016/09/12 05:47:21 sevan Exp $
 .\"
 .\" As its sole author, I explicitly place this man page in the public
 .\" domain.  Anyone may use it in any way for any purpose (though I would
@@ -38,7 +38,7 @@ assumes this.
 has to copy anything that currently resides in the space being shrunk
 away; there must be enough space free on the file system for this to
 succeed.
-If there isn't,
+If there is not,
 .Nm
 will complain and exit; when this happens, it attempts to always leave
 the file system in a consistent state, but it is probably a good idea to
@@ -90,7 +90,7 @@ with,
 .Nm
 may misbehave, anything from dumping core to completely curdling the
 data.
-It's probably wise to
+It is probably wise to
 .Xr fsck 8
 the file system before and after, just to be safe.
 You should be aware that just because
@@ -143,4 +143,4 @@ when the new size is extremely close to the minimum possible.
 Has no intelligence whatever when it comes to allocating blocks to copy
 data into when shrinking.
 .Pp
-Doesn't currently support shrinking FFSv2 file systems.
+Does not currently support shrinking FFSv2 file systems.
