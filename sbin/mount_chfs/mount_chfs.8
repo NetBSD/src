@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_chfs.8,v 1.3 2011/11/29 13:27:50 ahoka Exp $
+.\" $NetBSD: mount_chfs.8,v 1.4 2016/09/12 00:38:42 sevan Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 29, 2011
+.Dd September 12, 2016
 .Dt MOUNT_CHFS 8
 .Os
 .Sh NAME
@@ -49,12 +49,16 @@ CHFS stands for Chip File System.
 .Xr mount 8 ,
 .Xr flash 9
 .Sh HISTORY
+A
+.Nm
+utility appeared in
+.Nx 6.0 .
 CHFS was originally called ChewieFS during development.
 The name was changed to avoid legal issues and to have a more
 neutral name.
 .Sh AUTHORS
-CHFS was developed at the Department of Software Engineering,
-University of Szeged, Hungary.
+CHFS was developed at the
+.An Department of Software Engineering, University of Szeged, Hungary.
 .Sh BUGS
 CHFS has a few known bugs as of 2011.
 Writing the FS full can cause problems.
