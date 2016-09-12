@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_msdos.8,v 1.38 2016/01/30 10:13:02 wiz Exp $
+.\" $NetBSD: mount_msdos.8,v 1.39 2016/09/12 01:44:52 sevan Exp $
 .\"
 .\" Copyright (c) 1993, 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd January 30, 2016
+.Dd September 12, 2016
 .Dt MOUNT_MSDOS 8
 .Os
 .Sh NAME
@@ -52,10 +52,10 @@
 .Sh DESCRIPTION
 The
 .Nm
-command attaches the MS-DOS filesystem residing on
+command attaches the MS-DOS file system residing on
 the device
 .Pa special
-to the global filesystem namespace at the location
+to the global file system namespace at the location
 indicated by
 .Pa node .
 Both
@@ -80,9 +80,9 @@ if deleting or renaming a file.
 This forces
 .Fl s .
 .It Fl G
-This option causes the filesystem to be interpreted as an Atari-Gemdos
-filesystem.
-The differences to the MS-DOS filesystem are minimal and
+This option causes the file system to be interpreted as an Atari-Gemdos
+file system.
+The differences to the MS-DOS file system are minimal and
 limited to the boot block.
 This option also allows mounting X680x0's Human68k floppies.
 This option enforces
@@ -103,9 +103,9 @@ nor
 .Fl l
 are given,
 .Nm
-searches the root directory of the filesystem to
+searches the root directory of the file system to
 be mounted for any existing Win'95 long filenames.
-If the filesystem is not empty and no such entries are found,
+If the file system is not empty and no such entries are found,
 .Fl s
 is the default.
 Otherwise
@@ -190,22 +190,31 @@ mount_msdos -m 0644 -M 0755 /dev/wd0e /msdos
 .Xr fstab 5 ,
 .Xr mount 8
 .Sh HISTORY
-The
+The predecessor to
 .Nm
-utility first appeared in
-.Nx 0.9 .
-Its predecessor, the
-.Ic mount_pcfs
-utility appeared in
-.Nx 0.8 ,
-and was abandoned in favor
-of the more aptly-named
-.Nm .
+utility named
+.Nm mount_pcfs
+appeared in
+.Bx 386 .
+It was abandoned in favour of the more aptly-named
+.Nm
+in
+.Nx 0.9
+and rewritten entirely by
+.Nx 1.0 .
+.Sh AUTHORS
+Initial implimintation as
+.Nm mount_pcfs
+was written by
+.An -nosplit
+.An Paul Popelka Aq Mt paulp@uts.amdahl.com .
+It was rewritten by
+.An Christopher G. Demetriou Aq Mt cgd@NetBSD.org .
 .Sh BUGS
 Compressed partitions are not supported.
 .Pp
 The use of the
 .Fl 9
-flag could result in damaged filesystems,
+flag could result in damaged file systems,
 albeit the damage is in part taken care of by
 procedures similar to the ones used in Win'95.
