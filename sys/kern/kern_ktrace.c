@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.167 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.168 2016/09/13 07:01:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.167 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.168 2016/09/13 07:01:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,7 +938,7 @@ ktruser(const char *id, void *addr, size_t len, int ustr)
 }
 
 void
-ktr_kuser(const char *id, void *addr, size_t len)
+ktr_kuser(const char *id, const void *addr, size_t len)
 {
 	struct ktrace_entry *kte;
 	struct ktr_user *ktp;
