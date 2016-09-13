@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.43 2016/09/08 18:54:03 martin Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.44 2016/09/13 07:01:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.43 2016/09/08 18:54:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.44 2016/09/13 07:01:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,8 +193,8 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	msg.msg_iov = iov;
 	msg.msg_iovlen = msg32.msg_iovlen;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
-	    msg.msg_control != NULL ? &control : NULL, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &msg32, sizeof(msg32),
+	    &from, msg.msg_control != NULL ? &control : NULL, retval);
 	if (error != 0)
 		goto done;
 
@@ -367,7 +367,8 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 		goto out;
 	msg.msg_iov = iov;
 
-	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    &msg32, sizeof(msg32), retval);
 	/* msg.msg_control freed by do_sys_sendmsg() */
 
 	if (iov != aiov)
@@ -406,7 +407,8 @@ netbsd32_recvfrom(struct lwp *l, const struct netbsd32_recvfrom_args *uap, regis
 	msg.msg_control = NULL;
 	msg.msg_flags = SCARG(uap, flags) & MSG_USERFLAGS;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from, NULL, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, ~0U,
+	    &from, NULL, retval);
 	if (error != 0)
 		return error;
 
@@ -439,5 +441,6 @@ netbsd32_sendto(struct lwp *l, const struct netbsd32_sendto_args *uap, register_
 	aiov.iov_base = SCARG_P32(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_flags = 0;
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    NULL, ~0U, retval);
 }
