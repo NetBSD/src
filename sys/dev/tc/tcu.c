@@ -1,4 +1,4 @@
-/* $NetBSD: tcu.c,v 1.1 2016/08/11 09:05:42 christos Exp $ */
+/* $NetBSD: tcu.c,v 1.2 2016/09/13 16:54:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2016, Felix Deichmann
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.1 2016/08/11 09:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.2 2016/09/13 16:54:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,11 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: tcu.c,v 1.1 2016/08/11 09:05:42 christos Exp $");
 #include "slhci_tcu.h"
 
 #define TCU_GPIO_NPINS	8
-#define TCU_GPIO_OFFS	0x80
-#define TCU_GPIO_SIZE	(3 * 4)
-#define TCU_GPIO_DIR	0x0
-#define TCU_GPIO_IN	0x4
-#define TCU_GPIO_OUT	0x8
+
+#define TCU_CPLD_OFFS	0x80
+#define TCU_CPLD_SIZE	(4 * 4)
+
+#define TCU_CFG		0x0
+#define   TCU_CFG_RUN	__BIT(7)	/* write-only */
+#define TCU_GPIO_DIR	0x4
+#define TCU_GPIO_IN	0x8
+#define TCU_GPIO_OUT	0xc
 
 struct tcu_softc {
 #if NGPIO > 0
@@ -94,8 +98,45 @@ tcu_match(device_t parent, cfdata_t cf, void *aux)
 static void
 tcu_attach(device_t parent, device_t self, void *aux)
 {
+	struct tc_attach_args *ta = aux;
+	bus_space_tag_t iot = ta->ta_memt;
+	bus_space_handle_t ioh;
+	int error;
+	uint8_t cfg;
+	char buf[30];
 
 	printf(": TC-USB\n");
+
+	error = bus_space_map(iot, ta->ta_addr + TCU_CPLD_OFFS, TCU_CPLD_SIZE,
+	    0, &ioh);
+	if (error) {
+		aprint_error_dev(self, "bus_space_map() failed (%d)\n", error);
+		return;
+	}
+
+	/*
+	 * Force reset in case system didn't. SL811 reset pulse and hold time
+	 * must be min. 16 clocks long (at 48 MHz clock) each.
+	 */
+	bus_space_write_1(iot, ioh, TCU_CFG, 0);
+	DELAY(1000);
+	bus_space_write_1(iot, ioh, TCU_CFG, TCU_CFG_RUN);
+	DELAY(1000);
+
+	cfg = bus_space_read_1(iot, ioh, TCU_CFG);
+
+	bus_space_unmap(iot, ioh, TCU_CPLD_SIZE);
+
+	/* Display DIP switch configuration. */
+	(void)snprintb(buf, sizeof(buf),
+	    "\177\020"
+	    "b\3S1-1\0"
+	    "b\2S1-2\0"
+	    "b\1S1-3\0"
+	    "b\0S1-4\0"
+	    "\0", cfg);
+	aprint_normal_dev(self, "config %s\n", buf);
+
 #if NSLHCI_TCU > 0
 	/* Attach slhci. */
 	(void)config_found_ia(self, "tcu", aux, tcu_print);
@@ -132,7 +173,7 @@ tcu_gpio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gpio_iot = iot;
 
-	error = bus_space_map(iot, ta->ta_addr + TCU_GPIO_OFFS, TCU_GPIO_SIZE,
+	error = bus_space_map(iot, ta->ta_addr + TCU_CPLD_OFFS, TCU_CPLD_SIZE,
 	    0, &sc->sc_gpio_ioh);
 	if (error) {
 		aprint_error_dev(self, "bus_space_map() failed (%d)\n", error);
