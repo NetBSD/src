@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.80 2016/09/13 00:19:28 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.81 2016/09/13 00:45:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 #define IN_IFF_DETACHED		0x04	/* may be detached from the link */
 #define IN_IFF_TRYTENTATIVE	0x08	/* intent to try DAD */
 
-#define IN_IFFBITS \       
+#define IN_IFFBITS \
     "\020\1TENTATIVE\2DUPLICATED\3DETACHED\4TRYTENTATIVE"
 
 /* do not input/output */
