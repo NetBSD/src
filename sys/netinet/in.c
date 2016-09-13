@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.180 2016/09/13 15:41:33 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.181 2016/09/13 15:57:50 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.180 2016/09/13 15:41:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.181 2016/09/13 15:57:50 christos Exp $");
 
 #include "arp.h"
 
@@ -1065,7 +1065,6 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 */
 	oldaddr = ia->ia_addr;
 	ia->ia_addr = *sin;
-	ia->ia4_flags = 0;
 
 	/* Set IN_IFF flags early for if_addr_init() */
 	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
