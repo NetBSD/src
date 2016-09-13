@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.76 2016/09/09 21:09:11 christos Exp $	*/
+/*	$NetBSD: sem.c,v 1.77 2016/09/13 16:06:59 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.76 2016/09/09 21:09:11 christos Exp $");
+__RCSID("$NetBSD: sem.c,v 1.77 2016/09/13 16:06:59 christos Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -336,6 +336,14 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 	struct attr *a, *dep;
 	struct attrlist *al;
 
+	if (getrefattr(name, &a)) {
+		cfgerror("attribute `%s' already defined", name);
+		loclist_destroy(locs);
+		return (1);
+	}
+	if (a == NULL)
+		a = mkattr(name);
+
 	/*
 	 * If this attribute depends on any others, make sure none of
 	 * the dependencies are interface attributes.
@@ -352,13 +360,6 @@ defattr(const char *name, struct loclist *locs, struct attrlist *deps,
 		CFGDBG(2, "attr `%s' depends on attr `%s'", name, dep->a_name);
 	}
 
-	if (getrefattr(name, &a)) {
-		cfgerror("attribute `%s' already defined", name);
-		loclist_destroy(locs);
-		return (1);
-	}
-	if (a == NULL)
-		a = mkattr(name);
 
 	a->a_deps = deps;
 	expandattr(a, NULL);
