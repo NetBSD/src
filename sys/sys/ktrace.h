@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.64 2016/09/13 07:01:08 martin Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.65 2016/09/13 07:39:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -431,6 +431,15 @@ ktrexecfd(int fd, u_int dtype)
 	if (__predict_false(ktrace_on))
 		ktr_execfd(fd, dtype);
 }
+
+struct ktrace_entry;
+int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int, size_t);
+void	ktesethdrlen(struct ktrace_entry *, size_t);
+void	ktraddentry(lwp_t *, struct ktrace_entry *, int);
+/* Flags for ktraddentry (3rd arg) */
+#define	KTA_NOWAIT		0x0000
+#define	KTA_WAITOK		0x0001
+#define	KTA_LARGE		0x0002
 
 #endif	/* !_KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.202 2016/09/10 08:21:26 skrll Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.203 2016/09/13 07:39:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.202 2016/09/10 08:21:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.203 2016/09/13 07:39:45 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -103,6 +103,8 @@ void netbsd32_syscall_intern(struct proc *);
 void syscall(void);
 #endif
 
+void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
+
 #define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 
 #ifdef COMPAT_16
@@ -162,7 +164,8 @@ struct emul emul_netbsd32 = {
 	.e_vm_default_addr =	netbsd32_vm_default_addr,
 	.e_usertrap =		NULL,
 	.e_ucsize =		sizeof(ucontext32_t),
-	.e_startlwp =		startlwp32
+	.e_startlwp =		startlwp32,
+	.e_ktrpsig =		netbsd32_ktrpsig
 };
 
 /*

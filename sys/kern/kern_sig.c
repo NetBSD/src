@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.329 2016/08/21 15:24:17 hannken Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.330 2016/09/13 07:39:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.329 2016/08/21 15:24:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.330 2016/09/13 07:39:45 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -913,8 +913,14 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		kpsendsig(l, ksi, mask);
 		mutex_exit(p->p_lock);
 		if (ktrpoint(KTR_PSIG)) {
-			ktrpsig(signo, SIGACTION_PS(ps, signo).sa_handler,
-			    mask, ksi);
+			if (p->p_emul->e_ktrpsig)
+				p->p_emul->e_ktrpsig(signo,
+				    SIGACTION_PS(ps, signo).sa_handler,
+				    mask, ksi);
+			else
+				ktrpsig(signo, 
+				    SIGACTION_PS(ps, signo).sa_handler,
+				    mask, ksi);
 		}
 	} else {
 		/* XXX for core dump/debugger */
@@ -1860,7 +1866,11 @@ postsig(int signo)
 
 	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(p->p_lock);
-		ktrpsig(signo, action, returnmask, &ksi);
+		if (p->p_emul->e_ktrpsig)
+			p->p_emul->e_ktrpsig(signo, action,
+			    returnmask, &ksi);
+		else
+			ktrpsig(signo, action, returnmask, &ksi);
 		mutex_enter(p->p_lock);
 	}
 

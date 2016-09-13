@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.331 2016/06/10 23:24:33 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.332 2016/09/13 07:39:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -192,6 +192,10 @@ struct emul {
 	void 		(*e_dtrace_syscall)(uint32_t, register_t,
 			    const struct sysent *, const void *,
 			    const register_t *, int);
+
+	/* Emulation specific support for ktracing signal posts */
+	void		(*e_ktrpsig)(int, sig_t, const sigset_t *,
+			    const struct ksiginfo *);
 };
 
 /*
