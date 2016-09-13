@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.148 2016/09/09 12:41:14 christos Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.149 2016/09/13 19:51:12 joerg Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.148 2016/09/09 12:41:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.149 2016/09/13 19:51:12 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -442,6 +442,27 @@ static const struct cp *cps[IDX_COUNT] = {
 	&chap,			/* IDX_CHAP */
 };
 
+static void
+sppp_change_phase(struct sppp *sp, int phase)
+{
+	STDDCL;
+
+	if (sp->pp_phase == phase)
+		return;
+
+	sp->pp_phase = phase;
+
+	if (phase == SPPP_PHASE_NETWORK)
+		if_link_state_change(ifp, LINK_STATE_UP);
+	else
+		if_link_state_change(ifp, LINK_STATE_DOWN);
+
+	if (debug)
+	{
+		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
+			sppp_phase_name(sp->pp_phase));
+	}
+}
 
 /*
  * Exported functions, comprising our interface to the lower layer.
@@ -2481,7 +2502,7 @@ drop:
 static void
 sppp_lcp_tlu(struct sppp *sp)
 {
-	STDDCL;
+	struct ifnet *ifp = &sp->pp_if;
 	int i;
 	uint32_t mask;
 
@@ -2498,15 +2519,9 @@ sppp_lcp_tlu(struct sppp *sp)
 
 	if ((sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0 ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)
-		sp->pp_phase = SPPP_PHASE_AUTHENTICATE;
+		sppp_change_phase(sp, SPPP_PHASE_AUTHENTICATE);
 	else
-		sp->pp_phase = SPPP_PHASE_NETWORK;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-		    sppp_phase_name(sp->pp_phase));
-	}
+		sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
 	/*
 	 * Open all authentication protocols.  This is even required
@@ -2543,17 +2558,10 @@ sppp_lcp_tlu(struct sppp *sp)
 static void
 sppp_lcp_tld(struct sppp *sp)
 {
-	STDDCL;
 	int i;
 	uint32_t mask;
 
-	sp->pp_phase = SPPP_PHASE_TERMINATE;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_TERMINATE);
 
 	/*
 	 * Take upper layers down.  We send the Down event first and
@@ -2571,7 +2579,6 @@ sppp_lcp_tld(struct sppp *sp)
 static void
 sppp_lcp_tls(struct sppp *sp)
 {
-	STDDCL;
 
 	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
 	    printf("%s: authentication failed %d times, not retrying again\n",
@@ -2580,13 +2587,7 @@ sppp_lcp_tls(struct sppp *sp)
 	    return;
 	}
 
-	sp->pp_phase = SPPP_PHASE_ESTABLISH;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_ESTABLISH);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tls)
@@ -2596,15 +2597,8 @@ sppp_lcp_tls(struct sppp *sp)
 static void
 sppp_lcp_tlf(struct sppp *sp)
 {
-	STDDCL;
 
-	sp->pp_phase = SPPP_PHASE_DEAD;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_DEAD);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tlf)
@@ -5368,17 +5362,10 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 static void
 sppp_phase_network(struct sppp *sp)
 {
-	STDDCL;
 	int i;
 	uint32_t mask;
 
-	sp->pp_phase = SPPP_PHASE_NETWORK;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
 	/* Notify NCPs now. */
 	for (i = 0; i < IDX_COUNT; i++)
