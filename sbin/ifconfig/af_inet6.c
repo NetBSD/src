@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.35 2016/02/29 16:23:25 riastradh Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.36 2016/09/13 00:20:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.35 2016/02/29 16:23:25 riastradh Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.36 2016/09/13 00:20:51 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -325,20 +325,10 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFAFLAG_IN6");
 	} else {
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_ANYCAST)
-			printf(" anycast");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TENTATIVE)
-			printf(" tentative");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED)
-			printf(" duplicated");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DETACHED)
-			printf(" detached");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
-			printf(" deprecated");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_AUTOCONF)
-			printf(" autoconf");
-		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_TEMPORARY)
-			printf(" temporary");
+		char fbuf[1024];
+		(void)snprintb(fbuf, sizeof(fbuf), IN6_IFFBITS,
+		    ifr6.ifr_ifru.ifru_flags6);
+		printf(" flags %s", fbuf);
 	}
 
 	if (scopeid)
