@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.19 2016/02/29 16:23:25 riastradh Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.20 2016/09/13 00:20:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.19 2016/02/29 16:23:25 riastradh Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.20 2016/09/13 00:20:51 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -149,12 +149,10 @@ in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 		if (errno != EADDRNOTAVAIL)
 			warn("SIOCGIFAFLAG_IN");
 	} else {
-		if (ifr.ifr_addrflags & IN_IFF_TENTATIVE)
-			printf(" tentative");
-		if (ifr.ifr_addrflags & IN_IFF_DUPLICATED)
-			printf(" duplicated");
-		if (ifr.ifr_addrflags & IN_IFF_DETACHED)
-			printf(" detached");
+		char fbuf[1024];
+		(void)snprintb(fbuf, sizeof(fbuf), IN_IFFBITS,
+		    ifr.ifr_addrflags);
+		printf(" flags %s", fbuf);
 	}
 #endif
 }
