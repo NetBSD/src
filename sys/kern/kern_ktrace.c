@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.168 2016/09/13 07:01:08 martin Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.169 2016/09/13 07:39:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.168 2016/09/13 07:01:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.169 2016/09/13 07:39:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,6 @@ struct ktr_desc {
 	kcondvar_t ktd_cv;
 };
 
-static int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int,
-			 size_t);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
 static int	ktrops(lwp_t *, struct proc *, int, int,
 		    struct ktr_desc *);
@@ -142,11 +140,6 @@ static struct ktr_desc *
 		ktd_lookup(file_t *);
 static void	ktdrel(struct ktr_desc *);
 static void	ktdref(struct ktr_desc *);
-static void	ktraddentry(lwp_t *, struct ktrace_entry *, int);
-/* Flags for ktraddentry (3rd arg) */
-#define	KTA_NOWAIT		0x0000
-#define	KTA_WAITOK		0x0001
-#define	KTA_LARGE		0x0002
 static void	ktefree(struct ktrace_entry *);
 static void	ktd_logerrl(struct ktr_desc *, int);
 static void	ktrace_thread(void *);
@@ -535,6 +528,12 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 	*bufp = buf;
 
 	return 0;
+}
+
+void
+ktesethdrlen(struct ktrace_entry *kte, size_t l)
+{	
+	kte->kte_kth.ktr_len = l;
 }
 
 void
