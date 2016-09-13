@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.79 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.80 2016/09/13 00:19:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
 #define IN_IFF_DUPLICATED	0x02	/* DAD detected duplicate */
 #define IN_IFF_DETACHED		0x04	/* may be detached from the link */
 #define IN_IFF_TRYTENTATIVE	0x08	/* intent to try DAD */
+
+#define IN_IFFBITS \       
+    "\020\1TENTATIVE\2DUPLICATED\3DETACHED\4TRYTENTATIVE"
 
 /* do not input/output */
 #define IN_IFF_NOTREADY \
