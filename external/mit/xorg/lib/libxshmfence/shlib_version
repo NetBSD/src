@@ -1,0 +1,4 @@
+#	$NetBSD: shlib_version,v 1.1.2.2 2016/09/14 03:04:16 pgoyette Exp $
+#
+major=1
+minor=0

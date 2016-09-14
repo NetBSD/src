@@ -1,0 +1,8 @@
+# $NetBSD: md.ia64,v 1.1.2.2 2016/09/14 03:04:05 pgoyette Exp $
+#
+# XXX add skiload for now
+#
+# XXX loader.sym probaby not necessary
+#
+./usr/libdata/debug/usr/mdec/loader.sym.debug	comp-sys-debug		debug
+./usr/libdata/debug/usr/mdec/skiload.debug	comp-sys-debug		debug
