@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1533 2016/08/24 22:50:57 szptvlfn Exp $
+# $NetBSD: mi,v 1.1534 2016/09/14 20:05:04 scole Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1388,6 +1388,7 @@
 ./usr/share/man/cat4/macppc/mesh.0		man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/obio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/pbms.0		man-sys-catman		.cat
+./usr/share/man/cat4/macppc/platinumfb.0	man-sys-catman		.cat
 ./usr/share/man/cat4/macppc/snapper.0		man-sys-catman		.cat
 ./usr/share/man/cat4/mainbus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/makphy.0			man-sys-catman		.cat
@@ -4435,6 +4436,7 @@
 ./usr/share/man/html4/macppc/mesh.html		man-sys-htmlman		html
 ./usr/share/man/html4/macppc/obio.html		man-sys-htmlman		html
 ./usr/share/man/html4/macppc/pbms.html		man-sys-htmlman		html
+./usr/share/man/html4/macppc/platinumfb.html	man-sys-htmlman		html
 ./usr/share/man/html4/macppc/snapper.html	man-sys-htmlman		html
 ./usr/share/man/html4/mainbus.html		man-sys-htmlman		html
 ./usr/share/man/html4/makphy.html		man-sys-htmlman		html
@@ -7332,6 +7334,7 @@
 ./usr/share/man/man4/macppc/mesh.4		man-sys-man		.man
 ./usr/share/man/man4/macppc/obio.4		man-sys-man		.man
 ./usr/share/man/man4/macppc/pbms.4		man-sys-man		.man
+./usr/share/man/man4/macppc/platinumfb.4	man-sys-man		.man
 ./usr/share/man/man4/macppc/snapper.4		man-sys-man		.man
 ./usr/share/man/man4/mainbus.4			man-sys-man		.man
 ./usr/share/man/man4/makphy.4			man-sys-man		.man
