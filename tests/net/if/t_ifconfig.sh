@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.11 2016/08/10 22:30:02 kre Exp $
+# $NetBSD: t_ifconfig.sh,v 1.12 2016/09/14 16:18:31 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,9 @@ RUMP_FLAGS=\
 RUMP_FLAGS="${RUMP_FLAGS} -lrumpdev"
 
 TIMEOUT=3
+
+anycast="[Aa][Nn][Yy][Cc][Aa][Ss][Tt]"
+deprecated="[Dd][Ee][Pp][Rr][Ee][Cc][Aa][Tt][Ee][Dd]"
 
 atf_test_case ifconfig_create_destroy cleanup
 ifconfig_create_destroy_head()
@@ -290,22 +293,22 @@ ifconfig_parameters_body()
 
 	# anycast
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::2 anycast
-	atf_check -s exit:0 -o match:'fc00::2.+anycast' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:"fc00::2.+$anycast" rump.ifconfig shmif0 inet6
 
 	# deprecated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::3 deprecated
 	# Not deprecated immediately. Need to wait nd6_timer that does it is scheduled.
 	interval=$(sysctl -n net.inet6.icmp6.nd6_prune)
 	atf_check -s exit:0 sleep $((interval + 1))
-	atf_check -s exit:0 -o match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:"fc00::3.+$deprecated" rump.ifconfig shmif0 inet6
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::3 -deprecated
-	atf_check -s exit:0 -o not-match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o not-match:"fc00::3.+$deprecated" rump.ifconfig shmif0 inet6
 
 	# pltime
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::3 pltime 3
-	atf_check -s exit:0 -o not-match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o not-match:"fc00::3.+$deprecated" rump.ifconfig shmif0 inet6
 	atf_check -s exit:0 sleep 5
-	atf_check -s exit:0 -o match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
+	atf_check -s exit:0 -o match:"fc00::3.+$deprecated" rump.ifconfig shmif0 inet6
 
 	# eui64
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00:1::0 eui64
