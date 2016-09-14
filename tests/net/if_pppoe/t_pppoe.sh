@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.3 2016/09/12 14:47:24 christos Exp $
+#	$NetBSD: t_pppoe.sh,v 1.4 2016/09/14 01:48:08 knakahara Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -102,11 +102,18 @@ run_test()
 	local auth=$1
 	setup
 
+	# As pppoe client doesn't support rechallenge yet.
+	local server_optparam=""
+	if [ $auth = "chap" ]; then
+		server_optparam="norechallenge"
+	fi
+
 	export RUMP_SERVER=$SERVER
 	local setup_serverparam="pppoectl pppoe0 hisauthproto=$auth \
 				    'hisauthname=$AUTHNAME' \
 				    'hisauthsecret=$SECRET' \
-				    'myauthproto=none'"
+				    'myauthproto=none' \
+				    $server_optparam"
 	atf_check -s exit:0 -x "$HIJACKING $setup_serverparam"
 	atf_check -s exit:0 rump.ifconfig pppoe0 up
 	unset RUMP_SERVER
