@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.149 2016/09/13 19:51:12 joerg Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.150 2016/09/14 10:58:38 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.149 2016/09/13 19:51:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.150 2016/09/14 10:58:38 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -861,6 +861,31 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	return error;
 }
 
+static int
+sppp_mediachange(struct ifnet *ifp)
+{
+
+	return (0);
+}
+
+static void
+sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+
+	switch (ifp->if_link_state) {
+	case LINK_STATE_UP:
+		imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+		break;
+	case LINK_STATE_DOWN:
+		imr->ifm_status = IFM_AVALID;
+		break;
+	default:
+		/* Should be impossible as we set link state down in attach. */
+		imr->ifm_status = 0;
+		break;
+	}
+}
+
 void
 sppp_attach(struct ifnet *ifp)
 {
@@ -896,6 +921,11 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_down = lcp.Down;
 
 	if_alloc_sadl(ifp);
+
+	/* Lets not beat about the bush, we know we're down. */
+	ifp->if_link_state = LINK_STATE_DOWN;
+	/* There is no media for PPP, but it's needed to report link status. */
+	ifmedia_init(&sp->pp_im, 0, sppp_mediachange, sppp_mediastatus);
 
 	memset(&sp->myauth, 0, sizeof sp->myauth);
 	memset(&sp->hisauth, 0, sizeof sp->hisauth);
@@ -1099,6 +1129,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case __SPPPGETKEEPALIVE50:
 #endif /* COMPAT_50 || MODULAR */
 		error = sppp_params(sp, cmd, data);
+		break;
+
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sp->pp_im, cmd);
 		break;
 
 	default:
