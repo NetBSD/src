@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.150 2016/09/14 10:58:38 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.151 2016/09/14 11:54:42 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.150 2016/09/14 10:58:38 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.151 2016/09/14 11:54:42 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -967,6 +967,9 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
+
+	/* Safety - shouldn't be needed as there is no media to set. */
+	ifmedia_delete_instance(&sp->pp_im, IFM_INST_ANY);
 }
 
 /*
