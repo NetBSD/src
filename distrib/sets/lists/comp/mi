@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2051.2.4 2016/08/06 00:18:39 pgoyette Exp $
+#	$NetBSD: mi,v 1.2051.2.5 2016/09/14 03:04:04 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -15931,7 +15931,7 @@
 ./usr/share/man/html3/sched_getscheduler.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_protect.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_rr_get_interval.html	comp-c-htmlman		html
-./usr/share/man/html3/sched_affinity_np.html	comp-c-htmlman		html
+./usr/share/man/html3/sched_setaffinity_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_setparam.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_setscheduler.html	comp-c-htmlman		html
 ./usr/share/man/html3/sched_yield.html		comp-c-htmlman		html
