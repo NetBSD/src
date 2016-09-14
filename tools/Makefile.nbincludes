@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.nbincludes,v 1.4 2015/01/24 16:21:33 uwe Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.5 2016/09/14 00:41:04 christos Exp $
 
 # NOxxx definitions are copied from Makefile.host, and are
 # required before .include <bsd.own.mk>.   The include of bsd.own.mk
@@ -35,7 +35,7 @@ _INCS=		disktab.h
 _SYSINCS=	bootblock.h \
 		disklabel.h disklabel_acorn.h disklabel_gpt.h disklabel_rdb.h \
 		dkbad.h \
-		exec_elf.h
+		exec_elf.h exec_ecoff.h
 
 HOST_CPPFLAGS+=	-I${TOOLDIR}/include -I${TOOLDIR}/include/nbinclude
 
