@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.110 2016/08/05 08:24:46 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.111 2016/09/14 23:16:30 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.110 2016/08/05 08:24:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.111 2016/09/14 23:16:30 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -305,29 +305,31 @@ cgdclose(dev_t dev, int flags, int fmt, struct lwp *l)
 static void
 cgdstrategy(struct buf *bp)
 {
-	struct	cgd_softc *cs = getcgd_softc(bp->b_dev);
-	struct	dk_softc *dksc = &cs->sc_dksc;
-	struct	disk_geom *dg = &dksc->sc_dkdev.dk_geom;
+	struct	cgd_softc *cs;
 
 	DPRINTF_FOLLOW(("cgdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
 
-	/*
-	 * Reject unaligned writes.  We can encrypt and decrypt only
-	 * complete disk sectors, and we let the ciphers require their
-	 * buffers to be aligned to 32-bit boundaries.
-	 */
-	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % dg->dg_secsize) != 0 ||
-	    ((uintptr_t)bp->b_data & 3) != 0) {
-		bp->b_error = EINVAL;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
+	cs = getcgd_softc(bp->b_dev);
+	if (!cs) {
+		bp->b_error = ENXIO;
+		goto bail;
 	}
 
-	/* XXXrcd: Should we test for (cs != NULL)? */
+	/*
+	 * Reject unaligned writes.
+	 */
+	if (((uintptr_t)bp->b_data & 3) != 0) {
+		bp->b_error = EINVAL;
+		goto bail;
+	}
+
 	dk_strategy(&cs->sc_dksc, bp);
+	return;
+
+bail:
+	bp->b_resid = bp->b_bcount;
+	biodone(bp);
 	return;
 }
 
