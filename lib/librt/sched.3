@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.17 2016/08/05 13:03:13 christos Exp $
+.\"	$NetBSD: sched.3,v 1.18 2016/09/15 07:53:59 njoly Exp $
 .\"
 .\" Copyright (c) 2008, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,9 +64,9 @@
 .Ft int
 .Fn sched_yield "void"
 .Ft int
-.fn sched_setaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
+.Fn sched_setaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
 .Ft int
-.fn sched_getaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
+.Fn sched_getaffinity_np "pid_t pid" "size_t size" "cpuset_t *cpuset"
 .Ft int
 .Fn sched_protect "int priority"
 .Sh DESCRIPTION
