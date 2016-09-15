@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.173 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.174 2016/09/15 18:25:45 roy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.173 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.174 2016/09/15 18:25:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.173 2016/08/01 03:15:31 ozaki-r Exp
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
@@ -135,6 +136,7 @@ static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 static int ip6_getpmtu(struct route *, struct route *, struct ifnet *,
     const struct in6_addr *, u_long *, int *);
 static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
+static int ip6_ifaddrvalid(const struct in6_addr *);
 
 #ifdef RFC2292
 static int ip6_pcbopts(struct ip6_pktopts **, struct socket *, struct sockopt *);
@@ -549,6 +551,22 @@ ip6_output(
 		goto badscope;
 
 	/* scope check is done. */
+
+	/* Ensure we only sent from a valid address. */
+	if ((error = ip6_ifaddrvalid(&src0)) != 0) {
+		nd6log(LOG_ERR,
+		    "refusing to send from invalid address %s (pid %d)\n",
+		    ip6_sprintf(&src0), curproc->p_pid);
+		if (error == 1 && ip6->ip6_nxt == IPPROTO_TCP)
+			/* Address exists, but is tentative or detached.
+			 * We can't send from it because it's invalid,
+			 * so we drop the packet and continue ...
+			 * TCP will timeout eventually. */
+			error = 0;
+		else
+			error = EADDRNOTAVAIL;
+		goto bad;
+	}
 
 	if (rt == NULL || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		dst = satocsin6(rtcache_getdst(ro));
@@ -3249,4 +3267,39 @@ ip6_optlen(struct in6pcb *in6p)
 	len += elen(in6p->in6p_outputopts->ip6po_dest2);
 	return len;
 #undef elen
+}
+
+/*
+ * Ensure sending address is valid.
+ * Returns 0 on success, -1 if an error should be sent back or 1
+ * if the packet could be dropped without error (protocol dependent).
+ */
+static int
+ip6_ifaddrvalid(const struct in6_addr *addr)
+{
+	struct sockaddr_in6 sin6;
+	int s, error;
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia6;
+
+	if (IN6_IS_ADDR_UNSPECIFIED(addr))
+		return 0;
+
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_addr = *addr;
+
+	s = pserialize_read_enter();
+	ifa = ifa_ifwithaddr(sin6tosa(&sin6));
+	if ((ia6 = ifatoia6(ifa)) == NULL ||
+	    ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_DUPLICATED))
+		error = -1;
+	else if (ia6->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED))
+		error = 1;
+	else
+		error = 0;
+	pserialize_read_exit(s);
+
+	return error;
 }
