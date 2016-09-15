@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.86 2016/09/15 17:45:44 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.87 2016/09/15 18:40:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.86 2016/09/15 17:45:44 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.87 2016/09/15 18:40:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -114,6 +114,7 @@ static void	elf_free_emul_arg(void *);
 #define DPRINTF(a, ...)	printf("%s: " a "\n", __func__, ##__VA_ARGS__)
 #else
 #define DPRINTF(a, ...)
+#endif
 
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
