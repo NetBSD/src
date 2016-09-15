@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.260 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.261 2016/09/15 18:25:45 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.260 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.261 2016/09/15 18:25:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -153,6 +153,7 @@ static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
+static int ip_ifaddrvalid(const struct in_ifaddr *);
 
 extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
@@ -607,14 +608,31 @@ sendit:
 
 	m->m_pkthdr.csum_data |= hlen << 16;
 
-#if IFA_STATS
 	/*
 	 * search for the source address structure to
 	 * maintain output statistics.
 	 */
 	KASSERT(ia == NULL);
 	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
-#endif
+
+	/* Ensure we only sent from a valid address. */
+	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
+	    (error = ip_ifaddrvalid(ia)) != 0)
+	{
+		arplog(LOG_ERR,
+		    "refusing to send from invalid address %s (pid %d)\n",
+		    in_fmtaddr(ip->ip_src), curproc->p_pid);
+		IP_STATINC(IP_STAT_ODROPPED);
+		if (error == 1 && ip->ip_p == IPPROTO_TCP)
+			/* Address exists, but is tentative or detached.
+			 * We can't send from it because it's invalid,
+			 * so we drop the packet and continue ...
+			 * TCP will timeout eventually. */
+			error = 0;
+		else
+			error = EADDRNOTAVAIL;
+		goto bad;
+	}
 
 	/* Maybe skip checksums on loopback interfaces. */
 	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
@@ -1849,4 +1867,27 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 #endif
+}
+
+/*
+ * Ensure sending address is valid.
+ * Returns 0 on success, -1 if an error should be sent back or 1
+ * if the packet could be dropped without error (protocol dependent).
+ */
+static int
+ip_ifaddrvalid(const struct in_ifaddr *ia)
+{
+
+	if (ia == NULL)
+		return -1;
+
+	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY)
+		return 0;
+
+	if (ia->ia4_flags & IN_IFF_DUPLICATED)
+		return -1;
+	else if (ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DETACHED))
+		return 1;
+
+	return 0;
 }
