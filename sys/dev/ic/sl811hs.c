@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.94 2016/08/25 20:14:02 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.95 2016/09/15 21:45:37 jdolecek Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.94 2016/08/25 20:14:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.95 2016/09/15 21:45:37 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1599,7 +1599,7 @@ waitcheck:
 /* Register read/write routines and barriers. */
 #ifdef SLHCI_BUS_SPACE_BARRIERS
 #define BSB(a, b, c, d, e) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_ # e)
-#define BSB_SYNC(a, b, c, d) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_SYNC)
+#define BSB_SYNC(a, b, c, d) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 #else /* now !SLHCI_BUS_SPACE_BARRIERS */
 #define BSB(a, b, c, d, e) __USE(d)
 #define BSB_SYNC(a, b, c, d)
