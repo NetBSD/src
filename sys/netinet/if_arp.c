@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.223 2016/09/07 13:01:39 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.224 2016/09/15 18:17:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.223 2016/09/07 13:01:39 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.224 2016/09/15 18:17:29 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -149,12 +149,10 @@ static int	arp_maxhold = 1;	/* number of packets to hold per ARP entry */
 
 int		ip_dad_count = PROBE_NUM;
 #ifdef ARP_DEBUG
-static int	arp_debug = 1;
+int		arp_debug = 1;
 #else
-static int	arp_debug = 0;
+int		arp_debug = 0;
 #endif
-#define arplog(level, fmt, args...) \
-	do { if (arp_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
 static	void arp_init(void);
 
