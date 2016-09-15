@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.122 2016/09/01 06:50:09 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.123 2016/09/15 06:59:32 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.122 2016/09/01 06:50:09 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.123 2016/09/15 06:59:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -991,15 +991,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
-	if ((nsrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
-		error =  ENOMEM;
-		goto out;
-	}
-	if ((ndst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
-		sockaddr_free(nsrc);
-		error = ENOMEM;
-		goto out;
-	}
+	nsrc = sockaddr_dup(src, M_WAITOK);
+	ndst = sockaddr_dup(dst, M_WAITOK);
 
 	gif_encap_pause(sc);
 
