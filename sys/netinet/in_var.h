@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.81 2016/09/13 00:45:15 christos Exp $	*/
+/*	$NetBSD: in_var.h,v 1.82 2016/09/15 18:17:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -378,6 +378,9 @@ struct in_multi {
 extern pktqueue_t *ip_pktq;
 
 extern int ip_dad_count;		/* Duplicate Address Detection probes */
+extern int arp_debug;
+#define arplog(level, fmt, args...) \
+	do { if (arp_debug) log(level, "%s: " fmt, __func__, ##args);} while (0)
 
 /*
  * Structure used by functions below to remember position when stepping
