@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.436 2016/08/06 15:13:13 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.437 2016/09/15 17:44:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.436 2016/08/06 15:13:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.437 2016/09/15 17:44:16 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -660,7 +660,7 @@ exec_vm_minaddr(vaddr_t va_min)
 	 * Increase va_min if we don't want NULL to be mappable by the
 	 * process.
 	 */
-#define VM_MIN_GUARD	(2 * PAGE_SIZE)
+#define VM_MIN_GUARD	PAGE_SIZE
 	if (user_va0_disable && (va_min < VM_MIN_GUARD))
 		return VM_MIN_GUARD;
 	return va_min;
