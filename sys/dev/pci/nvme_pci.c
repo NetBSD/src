@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.4 2016/07/11 06:14:51 knakahara Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.5 2016/09/16 10:59:28 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.4 2016/07/11 06:14:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.5 2016/09/16 10:59:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype;
 	bus_addr_t memaddr;
 	int flags, msixoff;
-	int nq, error;
+	int error;
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
@@ -166,8 +166,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_establish = nvme_pci_intr_establish;
 	sc->sc_intr_disestablish = nvme_pci_intr_disestablish;
 
-	nq = sc->sc_nq + (sc->sc_use_mq ? 1 : 0);
-	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * nq, KM_SLEEP);
+	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * psc->psc_nintrs, KM_SLEEP);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to allocate ih memory\n");
 		goto intr_release;
@@ -185,7 +184,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 intr_free:
-	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * nq);
+	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	sc->sc_nq = 0;
 intr_release:
 	pci_intr_release(pa->pa_pc, psc->psc_intrs, psc->psc_nintrs);
@@ -200,7 +199,7 @@ nvme_pci_detach(device_t self, int flags)
 {
 	struct nvme_pci_softc *psc = device_private(self);
 	struct nvme_softc *sc = &psc->psc_nvme;
-	int i, nq, error;
+	int error;
 
 	if (!ISSET(sc->sc_flags, NVME_F_ATTACHED))
 		return 0;
@@ -209,12 +208,7 @@ nvme_pci_detach(device_t self, int flags)
 	if (error)
 		return error;
 
-	nq = sc->sc_nq + (sc->sc_use_mq ? 1 : 0);
-	if (!sc->sc_use_mq) {
-		for (i = 0; i < nq; i++)
-			pci_intr_disestablish(psc->psc_pc, sc->sc_ih[i]);
-	}
-	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * nq);
+	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	pci_intr_release(psc->psc_pc, psc->psc_intrs, psc->psc_nintrs);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	return 0;
@@ -274,7 +268,7 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 	    sizeof(intrbuf));
 	if (!sc->sc_use_mq) {
 		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
-	} else if (qid == 0) {
+	} else if (qid == NVME_ADMIN_Q) {
 		aprint_normal_dev(sc->sc_dev,
 		    "for admin queue interrupting at %s\n", intrstr);
 	} else if (!nvme_pci_mpsafe) {
