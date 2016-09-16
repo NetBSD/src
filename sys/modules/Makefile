@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2016/09/10 02:20:10 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.177 2016/09/16 11:35:07 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -183,6 +183,7 @@ SUBDIR+=	vmt
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	ubsec		# Builds on architectures with PCI bus
+SUBDIR+=	nvme
 .endif
 
 .if ${MKSLJIT} != "no"
