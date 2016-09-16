@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.16 2016/09/16 14:55:28 jdolecek Exp $
+$NetBSD: storage,v 1.17 2016/09/16 15:02:23 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -320,10 +320,15 @@ or less work than doing an implementation.
 Note however that implementing ext3 has already defeated several
 people; this is a harder project than it looks.
 
- - As of May 2016 there is a GSoC project to implement read-only ext4
-   support, but (it not being summer yet) no particular progress.
+ - GSoc 2016 brought support for extents, and also ro support for dir
+   hashes; jdolecek also implemented several frequently used ext4 features
+   so most contemporary ext filesystems should be possible to mount
+   read-write
+ - still need rw dir_nhash and xattr (semi-easy), and eventually journalling
+   (hard)
  - There is no clear timeframe or release target.
- - Contact ?? for further information.
+ - jdolecek is working on improving ext3/ext4 support (particularily
+   journalling) 
 
 
 14. Port hammer from Dragonfly
