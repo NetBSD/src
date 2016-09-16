@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.6 2016/09/16 00:14:33 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.7 2016/09/16 00:50:43 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,6 +34,8 @@ SOCKLOCAL=unix://commsock1
 SOCKPEER=unix://commsock2
 
 DEBUG=false
+
+duplicated="[Dd][Uu][Pp][Ll][Ii][Cc][Aa][Tt][Ee][Dd]"
 
 atf_test_case dad_basic cleanup
 atf_test_case dad_duplicated cleanup
@@ -180,8 +182,8 @@ dad_duplicated_body()
 	export RUMP_SERVER=$SOCKLOCAL
 
 	# The primary address isn't marked as duplicated
-	atf_check -s exit:0 -o not-match:'DUPLICATED' \
-	    -x "rump.ifconfig shmif0 |grep $localip1"
+	atf_check -s exit:0 -o not-match:"$localip1.+$duplicated" \
+	    rump.ifconfig shmif0
 
 	#
 	# Add a new address duplicated with the peer server
@@ -190,14 +192,14 @@ dad_duplicated_body()
 	atf_check -s exit:0 sleep 1
 
 	# The new address is marked as duplicated
-	atf_check -s exit:0 -o match:'DUPLICATED' \
-	    -x "rump.ifconfig shmif0 |grep $peerip"
+	atf_check -s exit:0 -o match:"$peerip.+$duplicated" \
+	    rump.ifconfig shmif0
 
 	# A unique address isn't marked as duplicated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $localip2
 	atf_check -s exit:0 sleep 1
-	atf_check -s exit:0 -o not-match:'DUPLICATED' \
-	    -x "rump.ifconfig shmif0 |grep $localip2"
+	atf_check -s exit:0 -o not-match:"$localip2.+$duplicated" \
+	    rump.ifconfig shmif0
 }
 
 cleanup()
