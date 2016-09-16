@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.3 2016/06/04 16:29:35 nonaka Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.4 2016/09/16 10:54:45 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -186,6 +186,8 @@ struct nvme_sqe_io {
 
 	uint16_t	nlb;	/* Number of Logical Blocks */
 	uint16_t	ioflags;
+#define NVM_SQE_IO_FUA	__BIT(14)	/* Force Unit Access (bypass cache) */
+#define NVM_SQE_IO_LR	__BIT(15)	/* Limited Retry */
 
 	uint8_t		dsm;	/* Dataset Management */
 	uint8_t		_reserved2[3];
