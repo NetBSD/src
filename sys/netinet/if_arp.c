@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.224 2016/09/15 18:17:29 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.225 2016/09/16 09:59:45 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.224 2016/09/15 18:17:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.225 2016/09/16 09:59:45 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1476,10 +1476,16 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 	ifa->ifa_flags |= RTF_CONNECTED;
 
 	/* ARP will handle DAD for this address. */
-	if (ia->ia4_flags & IN_IFF_TRYTENTATIVE) {
-		ia->ia4_flags |= IN_IFF_TENTATIVE;
+	if (in_nullhost(*ip)) {
+		if (ia->ia_dad_stop != NULL)	/* safety */
+			ia->ia_dad_stop(ifa);
+		ia->ia_dad_start = NULL;
+		ia->ia_dad_stop = NULL;
+	} else {
 		ia->ia_dad_start = arp_dad_start;
 		ia->ia_dad_stop = arp_dad_stop;
+		if (ia->ia4_flags & IN_IFF_TRYTENTATIVE)
+			ia->ia4_flags |= IN_IFF_TENTATIVE;
 	}
 }
 
