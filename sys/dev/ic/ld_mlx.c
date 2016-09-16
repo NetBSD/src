@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.21 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.22 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.21 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.22 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ ld_mlx_attach(device_t parent, device_t self, void *aux)
 	else
 		aprint_normal(": RAID%d, %s\n", ms->ms_raidlevel, statestr);
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int

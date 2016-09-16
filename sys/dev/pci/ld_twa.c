@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.17 2015/04/13 16:33:25 riastradh Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.18 2016/09/16 15:20:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.17 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.18 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ ld_twa_attach(device_t parent, device_t self, void *aux)
 	ld->sc_start = ld_twa_start;
 	ld->sc_dump = ld_twa_dump;
 	ld->sc_flush = ld_twa_flush;
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int

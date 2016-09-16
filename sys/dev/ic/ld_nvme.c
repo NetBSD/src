@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.2 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,13 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.1 2016/05/01 10:21:02 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.2 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/disk.h>
 #include <sys/kmem.h>
 
@@ -113,7 +114,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dump = ld_nvme_dump;
 	ld->sc_flush = ld_nvme_flush;
 	ld->sc_flags = LDF_ENABLED;
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int

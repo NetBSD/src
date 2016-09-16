@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.23 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ ld_amr_attach(device_t parent, device_t self, void *aux)
 	    amr->amr_drive[sc->sc_hwunit].al_properties & AMR_DRV_RAID_MASK,
 	    statestr);
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 CFATTACH_DECL_NEW(ld_amr, sizeof(struct ld_amr_softc),
