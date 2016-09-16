@@ -684,6 +684,8 @@ m68k_option_override (void)
       else
 	m68k_sched_mac = MAC_NO;
     }
+    // XXX: Avoid https://gcc.gnu.org/bugzilla/show_bug.cgi?id=71695
+    flag_split_wide_types = 0;
 }
 
 /* Implement TARGET_OVERRIDE_OPTIONS_AFTER_CHANGE.  */
