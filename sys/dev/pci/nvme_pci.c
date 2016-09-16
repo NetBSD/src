@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.6 2016/09/16 11:35:07 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.7 2016/09/16 23:20:31 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.6 2016/09/16 11:35:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.7 2016/09/16 23:20:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.6 2016/09/16 11:35:07 jdolecek Exp $"
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
 #include <sys/pmf.h>
-#ifdef _MODULE
 #include <sys/module.h>
-#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
