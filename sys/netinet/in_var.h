@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.82 2016/09/15 18:17:29 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.83 2016/09/16 14:17:23 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -405,7 +405,7 @@ int in_multi_lock_held(void);
 struct ifaddr;
 
 int	in_ifinit(struct ifnet *,
-	    struct in_ifaddr *, const struct sockaddr_in *, int, int);
+	    struct in_ifaddr *, const struct sockaddr_in *, int);
 void	in_savemkludge(struct in_ifaddr *);
 void	in_restoremkludge(struct in_ifaddr *, struct ifnet *);
 void	in_purgemkludge(struct ifnet *);
