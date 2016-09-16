@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.5 2016/09/08 15:00:08 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.6 2016/09/16 11:41:40 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.5 2016/09/08 15:00:08 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.6 2016/09/16 11:41:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +187,7 @@ nvme_version(struct nvme_softc *sc, uint32_t ver)
 }
 
 #ifdef NVME_DEBUG
-static void
+static __used void
 nvme_dumpregs(struct nvme_softc *sc)
 {
 	uint64_t r8;
@@ -202,7 +202,7 @@ nvme_dumpregs(struct nvme_softc *sc)
 	    (u_int)NVME_CAP_MPSMIN(r8), (1 << NVME_CAP_MPSMIN(r8)));
 	printf("%s:  css %llu\n", DEVNAME(sc), NVME_CAP_CSS(r8));
 	printf("%s:  nssrs %llu\n", DEVNAME(sc), NVME_CAP_NSSRS(r8));
-	printf("%s:  dstrd %u\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
+	printf("%s:  dstrd %llu\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
 	printf("%s:  to %llu msec\n", DEVNAME(sc), NVME_CAP_TO(r8));
 	printf("%s:  ams %llu\n", DEVNAME(sc), NVME_CAP_AMS(r8));
 	printf("%s:  cqr %llu\n", DEVNAME(sc), NVME_CAP_CQR(r8));
@@ -218,7 +218,7 @@ nvme_dumpregs(struct nvme_softc *sc)
 	printf("%s:  ams %u\n", DEVNAME(sc), NVME_CC_AMS_R(r4));
 	printf("%s:  mps %u\n", DEVNAME(sc), NVME_CC_MPS_R(r4));
 	printf("%s:  css %u\n", DEVNAME(sc), NVME_CC_CSS_R(r4));
-	printf("%s:  en %u\n", DEVNAME(sc), ISSET(r4, NVME_CC_EN));
+	printf("%s:  en %u\n", DEVNAME(sc), ISSET(r4, NVME_CC_EN) ? 1 : 0);
 
 	printf("%s: csts 0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_CSTS));
 	printf("%s: aqa  0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_AQA));
