@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.21 2015/08/28 06:04:43 mlelstv Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.22 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.21 2015/08/28 06:04:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.22 2016/09/16 15:20:50 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -147,7 +147,7 @@ ld_sdmmc_doattach(void *arg)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
 	if (ssc->sc_transfer_mode != NULL)
 		aprint_normal(" %s,", ssc->sc_transfer_mode);
