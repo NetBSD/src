@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.15 2016/05/17 21:03:36 christos Exp $
+$NetBSD: storage,v 1.16 2016/09/16 14:55:28 jdolecek Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -93,8 +93,8 @@ best option at this point is:
 disk early) has been examined by several people who know the code base
 and judged difficult. Also, some other problems have come to light
 more recently; e.g. PR 50725, PR 47146, and a problem where truncating
-large sparse files takes ~forever. Also see PR 45676. Still, it might
-be the best way forward.
+large sparse files takes ~forever in PR 49175. Also see PR 45676. Still,
+it might be the best way forward.
 
 + There is another journaling FFS; the Harvard one done by Margo
 Seltzer's group some years back. We have a copy of this, but as it was
@@ -121,9 +121,8 @@ forward. Given the general manpower shortage, it may be that the best
 way is whatever looks best to someone who wants to work on the
 problem.
 
- - As of November 2015 nobody is working on fixing WAPBL. There has
-   been some interest in the Harvard journaling FFS but no significant
-   progress. Nobody is known to be working on or particularly
+ - There has been some interest in the Harvard journaling FFS but no
+   significant progress. Nobody is known to be working on or particularly
    interested in porting softupdates-with-journaling. And, while
    dholland has been mumbling for some time about a plan for a
    specific new file system to solve this problem, there isn't any
@@ -133,6 +132,8 @@ problem.
  - There is no clear timeframe or release target; but given that WAPBL
    has been disabled by default for new installs in -7 this problem
    can reasonably be said to have become critical.
+ - jdolecek is working on fixing WAPBL, goal is to get WAPBL fixed
+   enough to be safe to re-enable as default for -8
  - Contact joerg or martin regarding WAPBL; contact dholland regarding
    the Harvard journaling FFS.
 
