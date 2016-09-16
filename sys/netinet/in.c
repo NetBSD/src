@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.181 2016/09/13 15:57:50 christos Exp $	*/
+/*	$NetBSD: in.c,v 1.182 2016/09/16 14:17:23 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.181 2016/09/13 15:57:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.182 2016/09/16 14:17:23 roy Exp $");
 
 #include "arp.h"
 
@@ -600,8 +600,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			mutex_exit(&in_ifaddr_lock);
 			need_reinsert = true;
 		}
-		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
-		    1, hostIsNew);
+		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),1);
 
 		run_hook = true;
 		break;
@@ -617,7 +616,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			mutex_exit(&in_ifaddr_lock);
 			need_reinsert = true;
 		}
-		error = in_ifinit(ifp, ia, NULL, 0, 0);
+		error = in_ifinit(ifp, ia, NULL, 0);
 		break;
 
 	case SIOCAIFADDR:
@@ -649,8 +648,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 				mutex_exit(&in_ifaddr_lock);
 				need_reinsert = true;
 			}
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0,
-			    hostIsNew);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
@@ -1051,11 +1049,11 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
-    const struct sockaddr_in *sin, int scrub, int hostIsNew)
+    const struct sockaddr_in *sin, int scrub)
 {
 	u_int32_t i;
 	struct sockaddr_in oldaddr;
-	int s = splnet(), flags = RTF_UP, error;
+	int s, oldflags, flags = RTF_UP, error, hostIsNew;
 
 	if (sin == NULL)
 		sin = &ia->ia_addr;
@@ -1064,32 +1062,50 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * Set up new addresses.
 	 */
 	oldaddr = ia->ia_addr;
+	oldflags = ia->ia4_flags;
 	ia->ia_addr = *sin;
+	hostIsNew = oldaddr.sin_family != AF_INET ||
+	    !in_hosteq(ia->ia_addr.sin_addr, oldaddr.sin_addr);
 
-	/* Set IN_IFF flags early for if_addr_init() */
-	if (hostIsNew && if_do_dad(ifp) && !in_nullhost(ia->ia_addr.sin_addr)) {
-		if (ifp->if_link_state == LINK_STATE_DOWN)
-			ia->ia4_flags |= IN_IFF_DETACHED;
-		else
-			/* State the intent to try DAD if possible */
-			ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
+	/*
+	 * Configure address flags.
+	 * We need to do this early because they maybe adjusted
+	 * by if_addr_init depending on the address.
+	 */
+	if (ia->ia4_flags & IN_IFF_DUPLICATED) {
+		ia->ia4_flags &= ~IN_IFF_DUPLICATED;
+		hostIsNew = 1;
 	}
+	if (ifp->if_link_state == LINK_STATE_DOWN) {
+		ia->ia4_flags |= IN_IFF_DETACHED;
+		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
+	} else if (hostIsNew && if_do_dad(ifp))
+		ia->ia4_flags |= IN_IFF_TRYTENTATIVE;
 
 	/*
 	 * Give the interface a chance to initialize
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if ((error = if_addr_init(ifp, &ia->ia_ifa, true)) != 0)
-		goto bad;
+	s = splnet();
+	error = if_addr_init(ifp, &ia->ia_ifa, true);
+	splx(s);
 	/* Now clear the try tentative flag, it's job is done. */
 	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
-	splx(s);
+	if (error != 0) {
+		ia->ia_addr = oldaddr;
+		ia->ia4_flags = oldflags;
+		return error;
+	}
 
 	if (scrub) {
+		int newflags = ia->ia4_flags;
+
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
+		ia->ia4_flags = oldflags;
 		in_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+		ia->ia4_flags = newflags;
 	}
 
 	/* Add the local route to the address */
@@ -1147,16 +1163,12 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		ia->ia_allhosts = in_addmulti(&addr, ifp);
 	}
 
-	if (hostIsNew && if_do_dad(ifp) &&
-	    !in_nullhost(ia->ia_addr.sin_addr) &&
-	    ia->ia4_flags & IN_IFF_TENTATIVE)
+	if (hostIsNew &&
+	    ia->ia4_flags & IN_IFF_TENTATIVE &&
+	    if_do_dad(ifp))
 		ia->ia_dad_start((struct ifaddr *)ia);
 
-	return (error);
-bad:
-	splx(s);
-	ia->ia_addr = oldaddr;
-	return (error);
+	return error;
 }
 
 #define rtinitflags(x) \

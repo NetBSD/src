@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.151 2016/09/14 11:54:42 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.152 2016/09/16 14:17:23 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.151 2016/09/14 11:54:42 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.152 2016/09/16 14:17:23 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4902,7 +4902,7 @@ sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
 
 found:
 	{
-		int error, hostIsNew;
+		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 
@@ -4913,13 +4913,8 @@ found:
 		 */
 		in_ifscrub(ifp, ifatoia(ifa));
 
-		hostIsNew = 0;
-		if (myaddr != 0) {
-			if (new_sin.sin_addr.s_addr != htonl(myaddr)) {
-				new_sin.sin_addr.s_addr = htonl(myaddr);
-				hostIsNew = 1;
-			}
-		}
+		if (myaddr != 0)
+			new_sin.sin_addr.s_addr = htonl(myaddr);
 		if (hisaddr != 0) {
 			new_dst.sin_addr.s_addr = htonl(hisaddr);
 			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr) {
@@ -4931,7 +4926,7 @@ found:
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, hostIsNew);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
@@ -4993,7 +4988,7 @@ found:
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0);
+		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
