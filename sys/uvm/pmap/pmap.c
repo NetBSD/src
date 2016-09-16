@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.21 2016/08/20 20:09:47 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22 2016/09/16 17:27:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2016/08/20 20:09:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2016/09/16 17:27:09 matt Exp $");
 
 /*
  *	Manages physical address maps.
@@ -713,6 +713,15 @@ pmap_page_remove(struct vm_page *pg)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
+	UVMHIST_LOG(pmapexechist, "pg %p (pa %#"PRIxPADDR")%s: %s",
+	    pg, VM_PAGE_TO_PHYS(pg), " [page removed]", "execpage cleared");
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE|VM_PAGEMD_UNCACHED);
+#else
+	pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE);
+#endif
+	PMAP_COUNT(exec_uncached_remove);
+
 	pv_entry_t pv = &mdpg->mdpg_first;
 	if (pv->pv_pmap == NULL) {
 		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
@@ -800,9 +809,6 @@ pmap_page_remove(struct vm_page *pg)
 		}
 	}
 
-#ifdef PMAP_VIRTUAL_CACHE_ALIASES
-	pmap_page_clear_attributes(mdpg, VM_PAGEMD_UNCACHED);
-#endif
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
