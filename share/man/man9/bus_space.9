@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_space.9,v 1.49 2016/09/15 21:47:26 jdolecek Exp $
+.\" $NetBSD: bus_space.9,v 1.50 2016/09/16 08:26:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 1, 2016
+.Dd September 15, 2016
 .Dt BUS_SPACE 9
 .Os
 .Sh NAME
@@ -1363,12 +1363,12 @@ Supported flags are:
 .Bl -tag -width BUS_SPACE_BARRIER_WRITE -offset indent
 .It Dv BUS_SPACE_BARRIER_READ
 Force all
-.Xr bus_space 9
+.Nm
 operations before the barrier to complete before any reads
 after the barrier may be issued.
 .It Dv BUS_SPACE_BARRIER_WRITE
 Force all
-.Xr bus_space 9
+.Nm
 operations before the barrier to complete before any writes
 after the barrier may be issued.
 .El
@@ -1984,7 +1984,7 @@ developer
 community.
 Primary contributors and implementors were
 .An Chris Demetriou ,
-.An Jason Thorpe,
+.An Jason Thorpe ,
 and
 .An Charles Hannum ,
 but the rest of the
