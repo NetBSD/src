@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.71 2016/03/20 04:24:46 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.72 2016/09/16 11:13:47 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -376,6 +376,8 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 		dip = lfs_ifind(fs, ino, bp);
 		if (dip == NULL) {
 			brelse(bp, 0);
+			free(ip->i_din);
+			free(ip->inode_ext.lfs);
 			free(ip);
 			free(vp);
 			return NULL;
