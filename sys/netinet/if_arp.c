@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.225 2016/09/16 09:59:45 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.226 2016/09/16 13:47:47 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.225 2016/09/16 09:59:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.226 2016/09/16 13:47:47 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1481,6 +1481,7 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 			ia->ia_dad_stop(ifa);
 		ia->ia_dad_start = NULL;
 		ia->ia_dad_stop = NULL;
+		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
 	} else {
 		ia->ia_dad_start = arp_dad_start;
 		ia->ia_dad_stop = arp_dad_stop;
