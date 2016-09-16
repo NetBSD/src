@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.94 2016/02/27 08:54:49 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.95 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.94 2016/02/27 08:54:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.95 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ static struct	dkdriver lddkdriver = {
 };
 
 void
-ldattach(struct ld_softc *sc)
+ldattach(struct ld_softc *sc, const char *default_strategy)
 {
 	device_t self = sc->sc_dv;
 	struct dk_softc *dksc = &sc->sc_dksc;
@@ -153,7 +153,7 @@ ldattach(struct ld_softc *sc)
 	disk_attach(&dksc->sc_dkdev);
 	ld_set_geometry(sc);
 
-	bufq_alloc(&dksc->sc_bufq, BUFQ_DISK_DEFAULT_STRAT, BUFQ_SORT_RAWBLOCK);
+	bufq_alloc(&dksc->sc_bufq, default_strategy, BUFQ_SORT_RAWBLOCK);
 
 	/* Register with PMF */
 	if (!pmf_device_register1(dksc->sc_dev, ld_suspend, NULL, ld_shutdown))
