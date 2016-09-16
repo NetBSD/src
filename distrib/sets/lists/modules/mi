@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.94 2016/09/10 02:20:41 pgoyette Exp $
+# $NetBSD: mi,v 1.95 2016/09/16 23:01:53 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -214,6 +214,8 @@
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/null				base-kernel-modules	kmod
 ./@MODULEDIR@/null/null.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/nvme				base-kernel-modules	kmod
+./@MODULEDIR@/nvme/nvme.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/onewire				base-kernel-modules	kmod
 ./@MODULEDIR@/onewire/onewire.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/opencrypto			base-kernel-modules	kmod
