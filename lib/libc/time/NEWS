@@ -1,6 +1,135 @@
 News for the tz database
 
+Release 2016f - 2016-07-05 16:26:51 +0200
+
+  Changes affecting future time stamps
+
+    The Egyptian government changed its mind on short notice, and
+    Africa/Cairo will not introduce DST starting 2016-07-07 after all.
+    (Thanks to Mina Samuel.)
+
+    Asia/Novosibirsk switches from +06 to +07 on 2016-07-24 at 02:00.
+    (Thanks to Stepan Golosunov.)
+
+  Changes to past and future time stamps
+
+    Asia/Novokuznetsk and Asia/Novosibirsk now use numeric time zone
+    abbreviations instead of invented ones.
+
+  Changes affecting past time stamps
+
+    Europe/Minsk's 1992-03-29 spring-forward transition was at 02:00 not 00:00.
+    (Thanks to Stepan Golosunov.)
+
+
+Release 2016e - 2016-06-14 08:46:16 -0700
+
+  Changes affecting future time stamps
+
+    Africa/Cairo observes DST in 2016 from July 7 to the end of October.
+    Guess October 27 and 24:00 transitions.  (Thanks to Steffen Thorsen.)
+    For future years, guess April's last Thursday to October's last
+    Thursday except for Ramadan.
+
+  Changes affecting past time stamps
+
+    Locations while uninhabited now use '-00', not 'zzz', as a
+    placeholder time zone abbreviation.  This is inspired by Internet
+    RFC 3339 and is more consistent with numeric time zone
+    abbreviations already used elsewhere.  The change affects several
+    arctic and antarctic locations, e.g., America/Cambridge_Bay before
+    1920 and Antarctica/Troll before 2005.
+
+    Asia/Baku's 1992-09-27 transition from +04 (DST) to +04 (non-DST) was
+    at 03:00, not 23:00 the previous day.  (Thanks to Michael Deckers.)
+
+  Changes to code
+
+    zic now outputs a dummy transition at time 2**31 - 1 in zones
+    whose POSIX-style TZ strings contain a '<'.  This mostly works
+    around Qt bug 53071 <https://bugreports.qt.io/browse/QTBUG-53071>.
+    (Thanks to Zhanibek Adilbekov for reporting the Qt bug.)
+
+  Changes affecting documentation and commentary
+
+    tz-link.htm says why governments should give plenty of notice for
+    time zone or DST changes, and refers to Matt Johnson's blog post.
+
+    tz-link.htm mentions Tzdata for Elixir.  (Thanks to Matt Johnson.)
+
+
+Release 2016d - 2016-04-17 22:50:29 -0700
+
+  Changes affecting future time stamps
+
+    America/Caracas switches from -0430 to -04 on 2016-05-01 at 02:30.
+    (Thanks to Alexander Krivenyshev for the heads-up.)
+
+    Asia/Magadan switches from +10 to +11 on 2016-04-24 at 02:00.
+    (Thanks to Alexander Krivenyshev and Matt Johnson.)
+
+    New zone Asia/Tomsk, split off from Asia/Novosibirsk.  It covers
+    Tomsk Oblast, Russia, which switches from +06 to +07 on 2016-05-29
+    at 02:00.  (Thanks to Stepan Golosunov.)
+
+  Changes affecting past time stamps
+
+    New zone Europe/Kirov, split off from Europe/Volgograd.  It covers
+    Kirov Oblast, Russia, which switched from +04/+05 to +03/+04 on
+    1989-03-26 at 02:00, roughly a year after Europe/Volgograd made
+    the same change.  (Thanks to Stepan Golosunov.)
+
+    Russia and nearby locations had daylight-saving transitions on
+    1992-03-29 at 02:00 and 1992-09-27 at 03:00, instead of on
+    1992-03-28 at 23:00 and 1992-09-26 at 23:00.  (Thanks to Stepan
+    Golosunov.)
+
+    Many corrections to historical time in Kazakhstan from 1991
+    through 2005.  (Thanks to Stepan Golosunov.)  Replace Kazakhstan's
+    invented time zone abbreviations with numeric abbreviations.
+
+  Changes to commentary
+
+    Mention Internet RFCs 7808 (TZDIST) and 7809 (CalDAV time zone references).
+
+
+Release 2016c - 2016-03-23 00:51:27 -0700
+
+  Changes affecting future time stamps
+
+    Azerbaijan no longer observes DST.  (Thanks to Steffen Thorsen.)
+
+    Chile reverts from permanent to seasonal DST.  (Thanks to Juan
+    Correa for the heads-up, and to Tim Parenti for corrections.)
+    Guess that future transitions are August's and May's second
+    Saturdays at 24:00 mainland time.  Also, call the period from
+    2014-09-07 through 2016-05-14 daylight saving time instead of
+    standard time, as that seems more appropriate now.
+
+  Changes affecting past time stamps
+
+    Europe/Kaliningrad and Europe/Vilnius changed from +03/+04 to
+    +02/+03 on 1989-03-26, not 1991-03-31.  Europe/Volgograd changed
+    from +04/+05 to +03/+04 on 1988-03-27, not 1989-03-26.
+    (Thanks to Stepan Golosunov.)
+
+  Changes to commentary
+
+    Several updates and URLs for historical and proposed Russian changes.
+    (Thanks to Stepan Golosunov, Matt Johnson, and Alexander Krivenyshev.)
+
+
 Release 2016b - 2016-03-12 17:30:14 -0800
+
+  Compatibility note
+
+    Starting with release 2016b, some data entries cause zic implementations
+    derived from tz releases 2005j through 2015e to issue warnings like
+    "time zone abbreviation differs from POSIX standard (+03)".
+    These warnings should not otherwise affect zic's output and can safely be
+    ignored on today's platforms, as the warnings refer to a restriction in
+    POSIX.1-1988 that was removed in POSIX.1-2001.  One way to suppress the
+    warnings is to upgrade to zic derived from tz releases 2015f and later.
 
   Changes affecting future time stamps
 
