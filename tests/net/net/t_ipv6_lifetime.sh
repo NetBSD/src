@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.2 2016/08/10 21:33:52 kre Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.3 2016/09/16 00:44:14 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -32,6 +32,8 @@ SOCK=unix://sock
 BUS=./bus
 
 DEBUG=false
+
+deprecated="[Dd][Ee][Pp][Rr][Ee][Cc][Aa][Tt][Ee][Dd]"
 
 atf_test_case basic cleanup
 
@@ -69,7 +71,7 @@ basic_body()
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Should remain but marked as deprecated
-	atf_check -s exit:0 -o match:'deprecated' rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:"$ip.+$deprecated" rump.ifconfig -L shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip delete
 
 	# Setting only a valid lifetime (invalid)
@@ -96,7 +98,7 @@ basic_body()
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Should remain but marked as deprecated
-	atf_check -s exit:0 -o match:'deprecated' rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:"$ip.+$deprecated" rump.ifconfig -L shmif0
 	atf_check -s exit:0 sleep $(($time + $bonus))
 	$DEBUG && rump.ifconfig -L shmif0
 	# Shouldn't remain anymore
