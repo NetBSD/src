@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.6 2016/09/16 11:41:40 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.7 2016/09/16 12:57:26 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.6 2016/09/16 11:41:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.7 2016/09/16 12:57:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ static void	nvme_ccb_put(struct nvme_queue *, struct nvme_ccb *);
 
 static int	nvme_poll(struct nvme_softc *, struct nvme_queue *,
 		    struct nvme_ccb *, void (*)(struct nvme_queue *,
-		    struct nvme_ccb *, void *));
+		    struct nvme_ccb *, void *), int);
 static void	nvme_poll_fill(struct nvme_queue *, struct nvme_ccb *, void *);
 static void	nvme_poll_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
@@ -106,6 +106,11 @@ static void	nvme_pt_done(struct nvme_queue *, struct nvme_ccb *,
 		    struct nvme_cqe *);
 static int	nvme_command_passthrough(struct nvme_softc *,
 		    struct nvme_pt_command *, uint16_t, struct lwp *, bool);
+
+#define NVME_TIMO_QOP		5	/* queue create and delete timeout */
+#define NVME_TIMO_IDENT		10	/* probe identify timeout */
+#define NVME_TIMO_PT		-1	/* passthrough cmd timeout */
+#define NVME_TIMO_SY		-1	/* sync cache timeout */
 
 #define nvme_read4(_s, _r) \
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
@@ -250,8 +255,10 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	uint32_t cc;
 
 	cc = nvme_read4(sc, NVME_CC);
-	if (ISSET(cc, NVME_CC_EN))
-		return nvme_ready(sc, NVME_CSTS_RDY);
+	if (ISSET(cc, NVME_CC_EN)) {
+		aprint_error_dev(sc->sc_dev, "controller unexpectedly enabled, failed to stay disabled\n");
+		return 0;
+	}
 
 	nvme_write4(sc, NVME_AQA, NVME_AQA_ACQS(sc->sc_admin_q->q_entries) |
 	    NVME_AQA_ASQS(sc->sc_admin_q->q_entries));
@@ -541,7 +548,7 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	ccb->ccb_cookie = &sqe;
 
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_IDENT);
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
 
 	nvme_ccb_put(sc->sc_admin_q, ccb);
@@ -610,7 +617,7 @@ nvme_ns_dobio(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 	}
 
 	if (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_POLL)) {
-		if (nvme_poll(sc, q, ccb, nvme_ns_io_fill) != 0)
+		if (nvme_poll(sc, q, ccb, nvme_ns_io_fill, NVME_TIMO_PT) != 0)
 			return EIO;
 		return 0;
 	}
@@ -691,7 +698,7 @@ nvme_ns_sync(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 	ccb->ccb_cookie = ctx;
 
 	if (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_POLL)) {
-		if (nvme_poll(sc, q, ccb, nvme_ns_sync_fill) != 0)
+		if (nvme_poll(sc, q, ccb, nvme_ns_sync_fill, NVME_TIMO_SY) != 0)
 			return EIO;
 		return 0;
 	}
@@ -852,7 +859,7 @@ nvme_command_passthrough(struct nvme_softc *sc, struct nvme_pt_command *pt,
 	ccb->ccb_cookie = pt;
 
 	pt->cmd.nsid = nsid;
-	if (nvme_poll(sc, q, ccb, nvme_pt_fill)) {
+	if (nvme_poll(sc, q, ccb, nvme_pt_fill, NVME_TIMO_PT)) {
 		error = EIO;
 		goto out;
 	}
@@ -903,12 +910,15 @@ struct nvme_poll_state {
 
 static int
 nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
-    void (*fill)(struct nvme_queue *, struct nvme_ccb *, void *))
+    void (*fill)(struct nvme_queue *, struct nvme_ccb *, void *), int timo_sec)
 {
 	struct nvme_poll_state state;
 	void (*done)(struct nvme_queue *, struct nvme_ccb *, struct nvme_cqe *);
 	void *cookie;
 	uint16_t flags;
+	int step = 10;
+	int maxloop = timo_sec * 1000000 / step;
+	int error = 0;
 
 	memset(&state, 0, sizeof(state));
 	(*fill)(q, ccb, &state.s);
@@ -922,17 +932,23 @@ nvme_poll(struct nvme_softc *sc, struct nvme_queue *q, struct nvme_ccb *ccb,
 	nvme_q_submit(sc, q, ccb, nvme_poll_fill);
 	while (!ISSET(state.c.flags, htole16(NVME_CQE_PHASE))) {
 		if (nvme_q_complete(sc, q) == 0)
-			delay(10);
+			delay(step);
 
-		/* XXX no timeout? */
+		if (timo_sec >= 0 && --maxloop <= 0) {
+			error = ETIMEDOUT;
+			break;
+		}
 	}
 
 	ccb->ccb_cookie = cookie;
 	done(q, ccb, &state.c);
 
-	flags = lemtoh16(&state.c.flags);
-
-	return flags & ~NVME_CQE_PHASE;
+	if (error == 0) {
+		flags = lemtoh16(&state.c.flags);
+		return flags & ~NVME_CQE_PHASE;
+	} else {
+		return 1;
+	}
 }
 
 static void
@@ -1030,7 +1046,8 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	ccb->ccb_cookie = mem;
 
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_PREREAD);
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_fill_identify);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_fill_identify,
+	    NVME_TIMO_IDENT);
 	nvme_dmamem_sync(sc, mem, BUS_DMASYNC_POSTREAD);
 
 	nvme_ccb_put(sc->sc_admin_q, ccb);
@@ -1090,7 +1107,7 @@ nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
 	if (sc->sc_use_mq)
 		htolem16(&sqe.cqid, q->q_id);	/* qid == vector */
 
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
 	if (rv != 0)
 		goto fail;
 
@@ -1105,7 +1122,7 @@ nvme_q_create(struct nvme_softc *sc, struct nvme_queue *q)
 	htolem16(&sqe.cqid, q->q_id);
 	sqe.qflags = NVM_SQE_Q_PC;
 
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
 	if (rv != 0)
 		goto fail;
 
@@ -1131,7 +1148,7 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 	sqe.opcode = NVM_ADMIN_DEL_IOSQ;
 	htolem16(&sqe.qid, q->q_id);
 
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
 	if (rv != 0)
 		goto fail;
 
@@ -1143,7 +1160,7 @@ nvme_q_delete(struct nvme_softc *sc, struct nvme_queue *q)
 	htolem64(&sqe.prp1, NVME_DMA_DVA(q->q_sq_dmamem));
 	htolem16(&sqe.qid, q->q_id);
 
-	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill);
+	rv = nvme_poll(sc, sc->sc_admin_q, ccb, nvme_sqe_fill, NVME_TIMO_QOP);
 	if (rv != 0)
 		goto fail;
 
