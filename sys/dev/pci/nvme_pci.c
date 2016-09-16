@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.5 2016/09/16 10:59:28 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.6 2016/09/16 11:35:07 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.5 2016/09/16 10:59:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.6 2016/09/16 11:35:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.5 2016/09/16 10:59:28 jdolecek Exp $"
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
 #include <sys/pmf.h>
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -414,4 +417,58 @@ retry:
 	sc->sc_use_mq = alloced_counts[intr_type] > 1;
 	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, nvme, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+
+extern const struct bdevsw ld_bdevsw;
+extern const struct cdevsw ld_cdevsw;
+#endif
+
+static int
+nvme_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	devmajor_t cmajor, bmajor;
+#endif
+	int error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+#ifdef _MODULE
+		/* devsw must be done before configuring the pci device,
+		 * otherwise ldattach() fails
+		 */
+		bmajor = cmajor = NODEVMAJOR;
+		error = devsw_attach(ld_cd.cd_name, &ld_bdevsw, &bmajor,
+		    &ld_cdevsw, &cmajor);
+		if (error && error != EEXIST) {
+			aprint_error("%s: unable to register devsw\n",
+			    ld_cd.cd_name);
+			return error;
+		}
+
+		error = config_init_component(cfdriver_ioconf_nvme_pci,
+		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		if (error)
+			return error;
+
+#endif
+		return error;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+		error = config_fini_component(cfdriver_ioconf_nvme_pci,
+		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		if (error)
+			return error;
+
+		/* devsw not detached, it's static data and fine to stay */
+#endif
+		return error;
+	default:
+		return ENOTTY;
+	}
 }
