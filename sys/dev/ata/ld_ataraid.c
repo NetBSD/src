@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.41 2016/05/02 19:18:29 christos Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.41 2016/05/02 19:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp $");
 
 #include "bio.h"
 
@@ -249,8 +249,8 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 		panic("%s: bioctl registration failed\n",
 		    device_xname(ld->sc_dv));
 #endif
-       SIMPLEQ_INIT(&sc->sc_cbufq);
-	ldattach(ld);
+	SIMPLEQ_INIT(&sc->sc_cbufq);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int
