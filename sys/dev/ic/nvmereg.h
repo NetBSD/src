@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.4 2016/09/16 10:54:45 jdolecek Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.5 2016/09/17 23:59:30 jdolecek Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -81,8 +81,10 @@
 #define NVME_AQA	0x0024	/* Admin Queue Attributes */
 				/* Admin Completion Queue Size */
 #define  NVME_AQA_ACQS(_v)	(((_v) - 1) << 16)
+#define  NVME_AQA_ACQS_R(_v)	((_v >> 16) & ((1 << 12) - 1))
 				/* Admin Submission Queue Size */
 #define  NVME_AQA_ASQS(_v)	(((_v) - 1) << 0)
+#define  NVME_AQA_ASQS_R(_v)	(_v & ((1 << 12) - 1))
 #define NVME_ASQ	0x0028	/* Admin Submission Queue Base Address */
 #define NVME_ACQ	0x0030	/* Admin Completion Queue Base Address */
 
