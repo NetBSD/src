@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.956 2016/09/15 07:49:08 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.957 2016/09/17 00:59:59 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -68,9 +68,6 @@ MKGCC?=		no
 HAVE_GCC?=	0
 .elif \
     ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_ARCH} == "coldfire" || \
-    ${MACHINE_ARCH} == "m68000" || \
     ${MACHINE} == "or1k" || \
     ${MACHINE} == "riscv"
 HAVE_GCC?=	48
@@ -149,9 +146,10 @@ USE_SSP?=	yes
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_CPU} == "mips"
+    ${MACHINE_CPU} == "sh3" ||
 HAVE_GDB?=	710
 .else
 HAVE_GDB?=	79
@@ -175,7 +173,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "m68k" ||
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc"
@@ -1072,6 +1070,7 @@ MKCTF?=		yes
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc64"
 MKPIE?=		yes
