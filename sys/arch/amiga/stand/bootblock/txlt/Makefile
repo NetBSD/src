@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2015/02/03 19:58:41 aymeric Exp $
+#	$NetBSD: Makefile,v 1.10 2016/09/17 17:09:10 christos Exp $
 #
-PROG=txlt
+
 NOMAN=	# defined
+.include <bsd.init.mk>
+
+PROG=txlt
 CLEANFILES+=	txlt.c
 
 .ifndef HOSTPROG
