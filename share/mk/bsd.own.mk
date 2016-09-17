@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.959 2016/09/17 04:01:43 kre Exp $
+#	$NetBSD: bsd.own.mk,v 1.960 2016/09/17 06:06:15 kre Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -149,7 +149,7 @@ USE_SSP?=	yes
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3" ||
+    ${MACHINE_CPU} == "sh3"
 HAVE_GDB?=	710
 .else
 HAVE_GDB?=	79
