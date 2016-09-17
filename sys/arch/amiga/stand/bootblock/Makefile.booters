@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.booters,v 1.8 2016/09/17 17:09:10 christos Exp $
+#	$NetBSD: Makefile.booters,v 1.9 2016/09/17 18:08:02 christos Exp $
 
+NOSSP=	# defined
 NOPIE=	# defined
 .include <bsd.init.mk>
 
