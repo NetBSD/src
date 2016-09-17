@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.9 2016/09/17 11:07:42 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.10 2016/09/17 12:58:51 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.9 2016/09/17 11:07:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.10 2016/09/17 12:58:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,13 +443,13 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		/* devsw must be done before configuring the pci device,
+		/* devsw must be done before configuring the actual device,
 		 * otherwise ldattach() fails
 		 */
 		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach(ld_cd.cd_name, &ld_bdevsw, &bmajor,
 		    &ld_cdevsw, &cmajor);
-		if (error && error != EEXIST) {
+		if (error) {
 			aprint_error("%s: unable to register devsw\n",
 			    ld_cd.cd_name);
 			return error;
@@ -469,7 +469,7 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 		if (error)
 			return error;
 
-		/* devsw not detached, it's static data and fine to stay */
+		devsw_detach(&ld_bdevsw, &ld_cdevsw);
 #endif
 		return error;
 	default:
