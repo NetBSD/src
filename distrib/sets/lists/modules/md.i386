@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.68 2015/06/23 14:38:49 matt Exp $
+# $NetBSD: md.i386,v 1.69 2016/09/17 02:27:19 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -123,6 +123,9 @@
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio				base-kernel-modules	kmod
 ./@MODULEDIR@/nsclpcsio/nsclpcsio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/nvme				base-kernel-modules	kmod
+./@MODULEDIR@/nvme/nvme.kmod			base-kernel-modules	kmod
+
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod
