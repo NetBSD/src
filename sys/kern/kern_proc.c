@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.196 2016/05/25 17:43:58 christos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.197 2016/09/17 12:00:34 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.196 2016/05/25 17:43:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.197 2016/09/17 12:00:34 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -480,7 +480,7 @@ proc0_init(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS),
+	    trunc_page(VM_MAXUSER_ADDRESS),
 #ifdef __USE_TOPDOWN_VM
 	    true
 #else
