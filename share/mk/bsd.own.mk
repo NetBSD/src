@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.958 2016/09/17 02:50:08 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.959 2016/09/17 04:01:43 kre Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -173,7 +173,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "m68k" || \\
+    ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
     ${MACHINE_ARCH} == "powerpc"
