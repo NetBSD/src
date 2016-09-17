@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.66 2015/12/03 10:38:21 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.67 2016/09/17 02:27:19 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -123,6 +123,8 @@
 ./@MODULEDIR@/lm_wbsio/lm_wbsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/nvme				base-kernel-modules	kmod
+./@MODULEDIR@/nvme/nvme.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod
