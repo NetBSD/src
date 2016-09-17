@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.960 2016/09/17 06:06:15 kre Exp $
+#	$NetBSD: bsd.own.mk,v 1.961 2016/09/17 15:58:21 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -166,6 +166,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 .if ${MACHINE} == "alpha" || \
     ${MACHINE} == "amd64" || \
+    ${MACHINE_CPU} == "arm" || \
     ${MACHINE} == "hppa" || \
     ${MACHINE} == "i386" || \
     ${MACHINE} == "ia64" || \
