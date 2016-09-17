@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.7 2016/09/16 23:20:31 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.8 2016/09/17 03:02:03 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.7 2016/09/16 23:20:31 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.8 2016/09/17 03:02:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,7 +417,7 @@ retry:
 	return 0;
 }
 
-MODULE(MODULE_CLASS_DRIVER, nvme, "pci");
+MODULE(MODULE_CLASS_DRIVER, nvme, "pci,dk_subr");
 
 #ifdef _MODULE
 #include "ioconf.c"
