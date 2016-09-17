@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.8 2016/09/17 03:02:03 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.9 2016/09/17 11:07:42 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.8 2016/09/17 03:02:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.9 2016/09/17 11:07:42 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	struct nvme_pci_softc *psc = device_private(self);
 	struct nvme_softc *sc = &psc->psc_nvme;
 	struct pci_attach_args *pa = aux;
-	pcireg_t memtype;
+	pcireg_t memtype, reg;
 	bus_addr_t memaddr;
 	int flags, msixoff;
 	int error;
@@ -123,6 +123,12 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	pci_aprint_devinfo(pa, NULL);
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if ((reg & PCI_COMMAND_MASTER_ENABLE) == 0) {
+		reg |= PCI_COMMAND_MASTER_ENABLE;
+        	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
+	}
 
 	/* Map registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR);
