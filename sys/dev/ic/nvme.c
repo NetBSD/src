@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.7 2016/09/16 12:57:26 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.8 2016/09/17 19:52:16 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.7 2016/09/16 12:57:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.8 2016/09/17 19:52:16 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,35 +200,47 @@ nvme_dumpregs(struct nvme_softc *sc)
 
 #define	DEVNAME(_sc) device_xname((_sc)->sc_dev)
 	r8 = nvme_read8(sc, NVME_CAP);
-	printf("%s: cap  0x%016llx\n", DEVNAME(sc), nvme_read8(sc, NVME_CAP));
+	printf("%s: cap  0x%016"PRIx64"\n", DEVNAME(sc), nvme_read8(sc, NVME_CAP));
 	printf("%s:  mpsmax %u (%u)\n", DEVNAME(sc),
 	    (u_int)NVME_CAP_MPSMAX(r8), (1 << NVME_CAP_MPSMAX(r8)));
 	printf("%s:  mpsmin %u (%u)\n", DEVNAME(sc),
 	    (u_int)NVME_CAP_MPSMIN(r8), (1 << NVME_CAP_MPSMIN(r8)));
-	printf("%s:  css %llu\n", DEVNAME(sc), NVME_CAP_CSS(r8));
-	printf("%s:  nssrs %llu\n", DEVNAME(sc), NVME_CAP_NSSRS(r8));
-	printf("%s:  dstrd %llu\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
-	printf("%s:  to %llu msec\n", DEVNAME(sc), NVME_CAP_TO(r8));
-	printf("%s:  ams %llu\n", DEVNAME(sc), NVME_CAP_AMS(r8));
-	printf("%s:  cqr %llu\n", DEVNAME(sc), NVME_CAP_CQR(r8));
-	printf("%s:  mqes %llu\n", DEVNAME(sc), NVME_CAP_MQES(r8));
+	printf("%s:  css %"PRIu64"\n", DEVNAME(sc), NVME_CAP_CSS(r8));
+	printf("%s:  nssrs %"PRIu64"\n", DEVNAME(sc), NVME_CAP_NSSRS(r8));
+	printf("%s:  dstrd %"PRIu64"\n", DEVNAME(sc), NVME_CAP_DSTRD(r8));
+	printf("%s:  to %"PRIu64" msec\n", DEVNAME(sc), NVME_CAP_TO(r8));
+	printf("%s:  ams %"PRIu64"\n", DEVNAME(sc), NVME_CAP_AMS(r8));
+	printf("%s:  cqr %"PRIu64"\n", DEVNAME(sc), NVME_CAP_CQR(r8));
+	printf("%s:  mqes %"PRIu64"\n", DEVNAME(sc), NVME_CAP_MQES(r8));
 
 	printf("%s: vs   0x%04x\n", DEVNAME(sc), nvme_read4(sc, NVME_VS));
 
 	r4 = nvme_read4(sc, NVME_CC);
 	printf("%s: cc   0x%04x\n", DEVNAME(sc), r4);
-	printf("%s:  iocqes %u\n", DEVNAME(sc), NVME_CC_IOCQES_R(r4));
-	printf("%s:  iosqes %u\n", DEVNAME(sc), NVME_CC_IOSQES_R(r4));
+	printf("%s:  iocqes %u (%u)\n", DEVNAME(sc), NVME_CC_IOCQES_R(r4),
+	    (1 << NVME_CC_IOCQES_R(r4)));
+	printf("%s:  iosqes %u (%u)\n", DEVNAME(sc), NVME_CC_IOSQES_R(r4),
+	    (1 << NVME_CC_IOSQES_R(r4)));
 	printf("%s:  shn %u\n", DEVNAME(sc), NVME_CC_SHN_R(r4));
 	printf("%s:  ams %u\n", DEVNAME(sc), NVME_CC_AMS_R(r4));
-	printf("%s:  mps %u\n", DEVNAME(sc), NVME_CC_MPS_R(r4));
+	printf("%s:  mps %u (%u)\n", DEVNAME(sc), NVME_CC_MPS_R(r4),
+	    (1 << NVME_CC_MPS_R(r4)));
 	printf("%s:  css %u\n", DEVNAME(sc), NVME_CC_CSS_R(r4));
 	printf("%s:  en %u\n", DEVNAME(sc), ISSET(r4, NVME_CC_EN) ? 1 : 0);
 
-	printf("%s: csts 0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_CSTS));
-	printf("%s: aqa  0x%08x\n", DEVNAME(sc), nvme_read4(sc, NVME_AQA));
-	printf("%s: asq  0x%016llx\n", DEVNAME(sc), nvme_read8(sc, NVME_ASQ));
-	printf("%s: acq  0x%016llx\n", DEVNAME(sc), nvme_read8(sc, NVME_ACQ));
+	r4 = nvme_read4(sc, NVME_CSTS);
+	printf("%s: csts 0x%08x\n", DEVNAME(sc), r4);
+	printf("%s:  rdy %u\n", DEVNAME(sc), r4 & NVME_CSTS_RDY);
+	printf("%s:  cfs %u\n", DEVNAME(sc), r4 & NVME_CSTS_CFS);
+	printf("%s:  shst %x\n", DEVNAME(sc), r4 & NVME_CSTS_SHST_MASK);
+
+	r4 = nvme_read4(sc, NVME_AQA);
+	printf("%s: aqa  0x%08x\n", DEVNAME(sc), r4);
+	printf("%s:  acqs %u\n", DEVNAME(sc), NVME_AQA_ACQS_R(r4));
+	printf("%s:  asqs %u\n", DEVNAME(sc), NVME_AQA_ASQS_R(r4));
+
+	printf("%s: asq  0x%016"PRIx64"\n", DEVNAME(sc), nvme_read8(sc, NVME_ASQ));
+	printf("%s: acq  0x%016"PRIx64"\n", DEVNAME(sc), nvme_read8(sc, NVME_ACQ));
 #undef	DEVNAME
 }
 #endif	/* NVME_DEBUG */
@@ -237,10 +249,19 @@ static int
 nvme_ready(struct nvme_softc *sc, uint32_t rdy)
 {
 	u_int i = 0;
+	uint32_t cc;
+
+	cc = nvme_read4(sc, NVME_CC);
+	if (((cc & NVME_CC_EN) != 0) != (rdy != 0)) {
+		aprint_error_dev(sc->sc_dev,
+		    "controller enabled status expected %d, found to be %d\n",
+		    (rdy != 0), ((cc & NVME_CC_EN) != 0));
+		return ENXIO;
+	}
 
 	while ((nvme_read4(sc, NVME_CSTS) & NVME_CSTS_RDY) != rdy) {
 		if (i++ > sc->sc_rdy_to)
-			return 1;
+			return ENXIO;
 
 		delay(1000);
 		nvme_barrier(sc, NVME_CSTS, 4, BUS_SPACE_BARRIER_READ);
@@ -252,22 +273,31 @@ nvme_ready(struct nvme_softc *sc, uint32_t rdy)
 static int
 nvme_enable(struct nvme_softc *sc, u_int mps)
 {
-	uint32_t cc;
+	uint32_t cc, csts;
 
 	cc = nvme_read4(sc, NVME_CC);
+	csts = nvme_read4(sc, NVME_CSTS);
+	
 	if (ISSET(cc, NVME_CC_EN)) {
 		aprint_error_dev(sc->sc_dev, "controller unexpectedly enabled, failed to stay disabled\n");
-		return 0;
+
+		if (ISSET(csts, NVME_CSTS_RDY))
+			return 1;
+
+		goto waitready;
 	}
+
+	nvme_write8(sc, NVME_ASQ, NVME_DMA_DVA(sc->sc_admin_q->q_sq_dmamem));
+	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
+	delay(5000);
+	nvme_write8(sc, NVME_ACQ, NVME_DMA_DVA(sc->sc_admin_q->q_cq_dmamem));
+	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
+	delay(5000);
 
 	nvme_write4(sc, NVME_AQA, NVME_AQA_ACQS(sc->sc_admin_q->q_entries) |
 	    NVME_AQA_ASQS(sc->sc_admin_q->q_entries));
 	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
-
-	nvme_write8(sc, NVME_ASQ, NVME_DMA_DVA(sc->sc_admin_q->q_sq_dmamem));
-	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
-	nvme_write8(sc, NVME_ACQ, NVME_DMA_DVA(sc->sc_admin_q->q_cq_dmamem));
-	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_WRITE);
+	delay(5000);
 
 	CLR(cc, NVME_CC_IOCQES_MASK | NVME_CC_IOSQES_MASK | NVME_CC_SHN_MASK |
 	    NVME_CC_AMS_MASK | NVME_CC_MPS_MASK | NVME_CC_CSS_MASK);
@@ -281,7 +311,9 @@ nvme_enable(struct nvme_softc *sc, u_int mps)
 	nvme_write4(sc, NVME_CC, cc);
 	nvme_barrier(sc, 0, sc->sc_ios,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	delay(5000);
 
+    waitready:
 	return nvme_ready(sc, NVME_CSTS_RDY);
 }
 
@@ -291,18 +323,17 @@ nvme_disable(struct nvme_softc *sc)
 	uint32_t cc, csts;
 
 	cc = nvme_read4(sc, NVME_CC);
-	if (ISSET(cc, NVME_CC_EN)) {
-		csts = nvme_read4(sc, NVME_CSTS);
-		if (!ISSET(csts, NVME_CSTS_CFS) &&
-		    nvme_ready(sc, NVME_CSTS_RDY) != 0)
-			return 1;
-	}
+	csts = nvme_read4(sc, NVME_CSTS);
+
+	if (ISSET(cc, NVME_CC_EN) && !ISSET(csts, NVME_CSTS_RDY))
+		nvme_ready(sc, NVME_CSTS_RDY);
 
 	CLR(cc, NVME_CC_EN);
 
 	nvme_write4(sc, NVME_CC, cc);
-	nvme_barrier(sc, 0, sc->sc_ios,
-	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	nvme_barrier(sc, 0, sc->sc_ios, BUS_SPACE_BARRIER_READ);
+	
+	delay(5000);
 
 	return nvme_ready(sc, 0);
 }
@@ -340,6 +371,7 @@ nvme_attach(struct nvme_softc *sc)
 	if (NVME_CAP_MPSMAX(cap) < mps)
 		mps = NVME_CAP_MPSMAX(cap);
 
+	/* set initial values to be used for admin queue during probe */
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
 	sc->sc_mps = 1 << mps;
 	sc->sc_mdts = MAXPHYS;
