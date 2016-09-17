@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.203 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.204 2016/09/17 02:44:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.203 2016/09/13 07:39:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.204 2016/09/17 02:44:38 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_ntp.h"
+#include "opt_ktrace.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
@@ -102,8 +103,6 @@ void netbsd32_syscall_intern(struct proc *);
 #else
 void syscall(void);
 #endif
-
-void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
 
 #define LIMITCHECK(a, b) ((a) != RLIM_INFINITY && (a) > (b))
 

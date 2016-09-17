@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.40 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.41 2016/09/17 02:44:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.40 2016/09/13 07:39:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.41 2016/09/17 02:44:38 christos Exp $");
+
+#if defined(_KERNEL_OPT) 
+#include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.40 2016/09/13 07:39:45 martin 
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 #include <compat/common/compat_sigaltstack.h>
-
-void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
 
 int
 netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, register_t *retval)
@@ -506,6 +508,7 @@ struct netbsd32_ktr_psig {
 	/* and optional siginfo_t */
 };
 
+#ifdef KTRACE
 void
 netbsd32_ktrpsig(int sig, sig_t action, const sigset_t *mask,
 	 const ksiginfo_t *ksi)
@@ -539,5 +542,6 @@ netbsd32_ktrpsig(int sig, sig_t action, const sigset_t *mask,
 
 	ktraddentry(l, kte, KTA_WAITOK);
 }
+#endif
 
 
