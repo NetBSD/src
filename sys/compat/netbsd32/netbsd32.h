@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.109 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.110 2016/09/17 02:44:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1105,6 +1105,12 @@ void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32);
+
+#ifdef KTRACE
+void netbsd32_ktrpsig(int, sig_t, const sigset_t *, const ksiginfo_t *);
+#else
+#define netbsd32_ktrpsig NULL
+#endif
 
 
 void	startlwp32(void *);
