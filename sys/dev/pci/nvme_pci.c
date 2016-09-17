@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.11 2016/09/17 20:12:53 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.12 2016/09/17 20:15:09 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.11 2016/09/17 20:12:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.12 2016/09/17 20:15:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,16 +192,9 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		goto intr_release;
 	}
 
-	sc->sc_softih = kmem_zalloc(sizeof(*sc->sc_softih) * psc->psc_nintrs,
-	    KM_SLEEP);
-	if (sc->sc_softih == NULL) {
-		aprint_error_dev(self, "unable to allocate softih memory\n");
-		goto intr_free;
-	}
-
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
-		goto softintr_free;
+		goto intr_free;
 	}
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -210,8 +203,6 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	SET(sc->sc_flags, NVME_F_ATTACHED);
 	return;
 
-softintr_free:
-	kmem_free(sc->sc_softih, sizeof(*sc->sc_softih) * psc->psc_nintrs);
 intr_free:
 	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	sc->sc_nq = 0;
