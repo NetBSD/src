@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.226 2016/09/16 13:47:47 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.227 2016/09/18 02:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.226 2016/09/16 13:47:47 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.227 2016/09/18 02:17:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.226 2016/09/16 13:47:47 roy Exp $");
 
 #ifdef INET
 
+#include "arp.h"
 #include "bridge.h"
 
 #include <sys/param.h>
