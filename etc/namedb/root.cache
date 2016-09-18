@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.18.4.2 2016/04/11 10:03:35 snj Exp $
+;	$NetBSD: root.cache,v 1.18.4.3 2016/09/18 06:06:13 snj Exp $
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
 ;       (e.g. reference this file in the "cache  .  <file>"
@@ -10,8 +10,8 @@
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    March 23, 2016
-;       related version of root zone:   2016032301
+;       last update:    August 25, 2016
+;       related version of root zone:   2016082500
 ;
 ; formerly NS.INTERNIC.NET
 ;
@@ -41,6 +41,7 @@ D.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:2d::d
 ;
 .                        3600000      NS    E.ROOT-SERVERS.NET.
 E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10
+E.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:a8::e
 ;
 ; FORMERLY NS.ISC.ORG
 ;
