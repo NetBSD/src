@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.41 2016/09/17 02:44:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.42 2016/09/18 01:56:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.41 2016/09/17 02:44:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.42 2016/09/18 01:56:42 christos Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -199,7 +199,8 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	case SIGSEGV:
 	case SIGFPE:
 	case SIGTRAP:
-		si->_reason._fault._addr = NETBSD32IPTR64(si32->_reason._fault._addr);
+		si->_reason._fault._addr =
+		    NETBSD32IPTR64(si32->_reason._fault._addr);
 		si->_reason._fault._trap = si32->_reason._fault._trap;
 		break;
 	case SIGALRM:
@@ -208,7 +209,8 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	default:	/* see sigqueue() and kill1() */
 		si->_reason._rt._pid = si32->_reason._rt._pid;
 		si->_reason._rt._uid = si32->_reason._rt._uid;
-		si->_reason._rt._value.sival_int = si32->_reason._rt._value.sival_int;
+		si->_reason._rt._value.sival_int =
+		    si32->_reason._rt._value.sival_int;
 		break;
 	case SIGCHLD:
 		si->_reason._child._pid = si32->_reason._child._pid;
@@ -221,9 +223,12 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 		si->_reason._poll._band = si32->_reason._poll._band;
 		si->_reason._poll._fd = si32->_reason._poll._fd;
 		break;
+	default:
+		break;
 	}
 }
 
+#ifdef KTRACE
 static void
 netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 {
@@ -248,7 +253,8 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 	default:	/* see sigqueue() and kill1() */
 		si32->_reason._rt._pid = si->_reason._rt._pid;
 		si32->_reason._rt._uid = si->_reason._rt._uid;
-		si32->_reason._rt._value.sival_int = si->_reason._rt._value.sival_int;
+		si32->_reason._rt._value.sival_int =
+		    si->_reason._rt._value.sival_int;
 		break;
 	case SIGCHLD:
 		si32->_reason._child._pid = si->_reason._child._pid;
@@ -261,8 +267,11 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 		si32->_reason._poll._band = si->_reason._poll._band;
 		si32->_reason._poll._fd = si->_reason._poll._fd;
 		break;
+	default:
+		break;
 	}
 }
+#endif
 
 void
 netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
