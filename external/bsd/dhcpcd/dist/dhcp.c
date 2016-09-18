@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.45 2016/08/15 11:04:53 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.46 2016/09/18 15:37:23 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -729,8 +729,8 @@ static ssize_t
 make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 {
 	struct bootp *bootp;
-	uint8_t *lp, *p, *e, *auth;
-	uint8_t *n_params = NULL, auth_len;
+	uint8_t *lp, *p, *e;
+	uint8_t *n_params = NULL;
 	uint32_t ul;
 	uint16_t sz;
 	size_t len, i;
@@ -742,6 +742,9 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 	const char *hostname;
 	const struct vivco *vivco;
 	int mtu;
+#ifndef NO_AUTH
+	uint8_t *auth, auth_len;
+#endif
 
 	if ((mtu = if_getmtu(ifp)) == -1)
 		logger(ifp->ctx, LOG_ERR,
@@ -1056,6 +1059,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		*n_params = (uint8_t)(p - n_params - 1);
 	}
 
+#ifndef NO_AUTH
 	/* silence GCC */
 	auth_len = 0;
 	auth = NULL;
@@ -1080,7 +1084,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 			p += auth_len;
 		}
 	}
-
+#endif
 	*p++ = DHO_END;
 	len = (size_t)(p - (uint8_t *)bootp);
 
@@ -1093,10 +1097,11 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		*p++ = DHO_PAD;
 		len++;
 	}
-
+#ifndef NO_AUTH
 	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len != 0)
 		dhcp_auth_encode(&ifo->auth, state->auth.token,
 		    (uint8_t *)bootp, len, 4, type, auth, auth_len);
+#endif
 
 	return (ssize_t)len;
 
@@ -1132,9 +1137,11 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 	struct dhcp_state *state = D_STATE(ifp);
 	uint8_t *lease;
 	size_t bytes;
-	const uint8_t *auth;
 	uint8_t type;
+#ifndef NO_AUTH
 	size_t auth_len;
+	const uint8_t *auth;
+#endif
 
 	/* Safety */
 	*bootp = NULL;
@@ -1187,6 +1194,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 	    DHO_MESSAGETYPE) == -1)
 		type = 0;
 
+#ifndef NO_AUTH
 	/* Authenticate the message */
 	auth = get_option(ifp->ctx, (struct bootp *)lease, bytes,
 	    DHO_AUTHENTICATION, &auth_len);
@@ -1214,7 +1222,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 		free(lease);
 		return 0;
 	}
-
+#endif
 out:
 	*bootp = (struct bootp *)lease;
 	return bytes;
@@ -2563,7 +2571,9 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	}
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+#ifndef NO_AUTH
 	dhcp_auth_reset(&state->auth);
+#endif
 	dhcp_close(ifp);
 
 	free(state->offer);
@@ -2684,14 +2694,16 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	struct if_options *ifo = ifp->options;
 	struct dhcp_lease *lease = &state->lease;
 	uint8_t type, tmp;
-	const uint8_t *auth;
 	struct in_addr addr;
 	unsigned int i;
-	size_t auth_len;
 	char *msg;
 	bool bootp_copied;
 #ifdef IN_IFF_DUPLICATED
 	struct ipv4_addr *ia;
+#endif
+#ifndef NO_AUTH
+	const uint8_t *auth;
+	size_t auth_len;
 #endif
 
 #define LOGDHCP0(l, m) \
@@ -2730,6 +2742,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	}
 
 	/* Authenticate the message */
+#ifndef NO_AUTH
 	auth = get_option(ifp->ctx, bootp, bootp_len,
 	    DHO_AUTHENTICATION, &auth_len);
 	if (auth) {
@@ -2756,7 +2769,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		}
 		LOGDHCP0(LOG_WARNING, "no authentication");
 	}
-
+#endif
 	/* RFC 3203 */
 	if (type == DHCP_FORCERENEW) {
 		if (from->s_addr == INADDR_ANY ||
@@ -2765,11 +2778,13 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			LOGDHCP(LOG_ERR, "discarding Force Renew");
 			return;
 		}
+#ifndef NO_AUTH
 		if (auth == NULL) {
 			LOGDHCP(LOG_ERR, "unauthenticated Force Renew");
 			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
 				return;
 		}
+#endif
 		if (state->state != DHS_BOUND && state->state != DHS_INFORM) {
 			LOGDHCP(LOG_DEBUG, "not bound, ignoring Force Renew");
 			return;
