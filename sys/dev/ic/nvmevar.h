@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.2 2016/06/04 16:11:51 nonaka Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.3 2016/09/18 21:19:39 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -95,23 +95,27 @@ struct nvme_softc {
 				    uint16_t qid, struct nvme_queue *);
 	int			(*sc_intr_disestablish)(struct nvme_softc *,
 				    uint16_t qid);
-	void			**sc_ih;
+	void			**sc_ih;	/* interrupt handlers */
+	void			**sc_softih;	/* softintr handlers */
 
-	u_int			sc_rdy_to;
-	size_t			sc_mps;
-	size_t			sc_mdts;
-	u_int			sc_max_sgl;
+	u_int			sc_rdy_to;	/* RDY timeout */
+	size_t			sc_mps;		/* memory page size */  
+	size_t			sc_mdts;	/* max data trasfer size */
+	u_int			sc_max_sgl;	/* max S/G segments */
 
 	struct nvm_identify_controller
 				sc_identify;
 
-	u_int			sc_nn;
+	u_int			sc_nn;		/* namespace count */
 	struct nvme_namespace	*sc_namespaces;
 
 	bool			sc_use_mq;
 	u_int			sc_nq;		/* # of io queue (sc_q) */
 	struct nvme_queue	*sc_admin_q;
 	struct nvme_queue	**sc_q;
+
+	pool_cache_t		sc_ctxpool;
+	char			sc_ctxpoolname[16];	/* pool wchan */
 
 	uint32_t		sc_flags;
 #define	NVME_F_ATTACHED	__BIT(0)
@@ -134,8 +138,8 @@ int	nvme_attach(struct nvme_softc *);
 int	nvme_detach(struct nvme_softc *, int flags);
 void	nvme_childdet(device_t, device_t);
 int	nvme_intr(void *);
-int	nvme_mq_msi_intr(void *);
-int	nvme_mq_msix_intr(void *);
+int	nvme_intr_msi(void *);
+void	nvme_softintr_msi(void *);
 
 static inline struct nvme_queue *
 nvme_get_q(struct nvme_softc *sc)
@@ -174,10 +178,10 @@ struct nvme_ns_context {
 	int		nnc_status;
 };
 
-extern pool_cache_t nvme_ns_ctx_cache;
-
-#define	nvme_ns_get_ctx(flags)	pool_cache_get(nvme_ns_ctx_cache, (flags))
-#define	nvme_ns_put_ctx(ctx)	pool_cache_put(nvme_ns_ctx_cache, (ctx))
+#define	nvme_ns_get_ctx(sc, flags) \
+	pool_cache_get((sc)->sc_nvme->sc_ctxpool, (flags))
+#define	nvme_ns_put_ctx(sc, ctx) \
+	pool_cache_put((sc)->sc_nvme->sc_ctxpool, (ctx))
 
 int	nvme_ns_dobio(struct nvme_softc *, struct nvme_ns_context *);
 int	nvme_ns_sync(struct nvme_softc *, struct nvme_ns_context *);
