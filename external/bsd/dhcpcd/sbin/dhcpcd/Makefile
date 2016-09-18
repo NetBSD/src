@@ -1,5 +1,10 @@
-# $NetBSD: Makefile,v 1.31 2016/05/09 10:19:26 roy Exp $
+# $NetBSD: Makefile,v 1.32 2016/09/18 15:37:23 christos Exp $
 #
+
+WARNS?=		6
+USE_FORT?=	yes	# network client (local server)
+
+.include <bsd.init.mk>
 
 PROG=		dhcpcd
 SRCS=		common.c control.c dhcpcd.c duid.c eloop.c
@@ -7,14 +12,13 @@ SRCS+=		if.c if-options.c script.c
 SRCS+=		dhcp-common.c dhcpcd-embedded.c
 SRCS+=		if-bsd.c
 
-WARNS?=		6
-USE_FORT?=	yes	# network client (local server)
-
 CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
-.include <bsd.own.mk>
-
+.if defined(SMALLPROG)
+CPPFLAGS+=	-DNO_AUTH
+.else
 SRCS+=		auth.c hmac_md5.c
+.endif
 
 USE_INET?=	yes
 .if (${USE_INET} != "no")
