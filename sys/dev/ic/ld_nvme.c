@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.4 2016/09/18 21:19:39 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.5 2016/09/18 21:52:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.4 2016/09/18 21:19:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.5 2016/09/18 21:52:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ struct ld_nvme_softc {
 	struct nvme_softc	*sc_nvme;
 
 	uint16_t		sc_nsid;
+	int			sc_attaching;
 };
 
 static int	ld_nvme_match(device_t, cfdata_t, void *);
@@ -91,6 +92,7 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dv = self;
 	sc->sc_nvme = nsc;
 	sc->sc_nsid = naa->naa_nsid;
+	sc->sc_attaching = 1;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -115,6 +117,8 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_flush = ld_nvme_flush;
 	ld->sc_flags = LDF_ENABLED;
 	ldattach(ld, "fcfs");
+
+	sc->sc_attaching = 0;
 }
 
 static int
@@ -156,7 +160,8 @@ ld_nvme_dobio(struct ld_nvme_softc *sc, void *data, int datasize, daddr_t blkno,
 {
 	struct nvme_ns_context *ctx;
 	int error;
-	int waitok = (bp != NULL && !cpu_softintr_p() && !cpu_intr_p());
+	int waitok = (bp != NULL && !cpu_softintr_p() && !cpu_intr_p()
+	    && !sc->sc_attaching);
 
 	ctx = nvme_ns_get_ctx(sc, waitok ? PR_WAITOK : PR_NOWAIT);
 	if (ctx == NULL)
