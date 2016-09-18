@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.13 2016/09/18 11:58:35 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.14 2016/09/18 21:19:39 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.13 2016/09/18 11:58:35 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.14 2016/09/18 21:19:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.13 2016/09/18 11:58:35 jdolecek Exp $
 #include <dev/ic/nvmevar.h>
 
 int nvme_pci_force_intx = 0;
-int nvme_pci_mpsafe = 0;
+int nvme_pci_mpsafe = 1;
 int nvme_pci_mq = 1;		/* INTx: ioq=1, MSI/MSI-X: ioq=ncpu */
 
 #define NVME_PCI_BAR		0x10
@@ -192,9 +192,19 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		goto intr_release;
 	}
 
+	if (sc->sc_use_mq) {
+		sc->sc_softih = kmem_zalloc(
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs, KM_SLEEP);
+		if (sc->sc_softih == NULL) {
+			aprint_error_dev(self,
+			    "unable to allocate softih memory\n");
+			goto intr_free;
+		}
+	}
+
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
-		goto intr_free;
+		goto softintr_free;
 	}
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -203,6 +213,11 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	SET(sc->sc_flags, NVME_F_ATTACHED);
 	return;
 
+softintr_free:
+	if (sc->sc_softih) {
+		kmem_free(sc->sc_softih,
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs);
+	}
 intr_free:
 	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	sc->sc_nq = 0;
@@ -228,6 +243,11 @@ nvme_pci_detach(device_t self, int flags)
 	if (error)
 		return error;
 
+	if (sc->sc_softih) {
+		kmem_free(sc->sc_softih,
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs);
+		sc->sc_softih = NULL;
+	}
 	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	pci_intr_release(psc->psc_pc, psc->psc_intrs, psc->psc_nintrs);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -274,13 +294,11 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 			    device_xname(sc->sc_dev), qid);
 		}
 		ih_arg = q;
-		if (pci_intr_type(psc->psc_pc, psc->psc_intrs[qid])
-		    == PCI_INTR_TYPE_MSIX)
-			ih_func = nvme_mq_msix_intr;
-		else
-			ih_func = nvme_mq_msi_intr;
+		ih_func = nvme_intr_msi;
 	}
 #endif /* __HAVE_PCI_MSI_MSIX */
+
+	/* establish hardware interrupt */
 	sc->sc_ih[qid] = pci_intr_establish_xname(psc->psc_pc,
 	    psc->psc_intrs[qid], IPL_BIO, ih_func, ih_arg, intr_xname);
 	if (sc->sc_ih[qid] == NULL) {
@@ -288,6 +306,23 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 		    "unable to establish %s interrupt\n", intr_xname);
 		return 1;
 	}
+
+	/* if MSI, establish also the software interrupt */
+	if (sc->sc_softih) {
+		sc->sc_softih[qid] = softint_establish(
+		    SOFTINT_BIO|(nvme_pci_mpsafe ? SOFTINT_MPSAFE : 0),
+		    nvme_softintr_msi, q);
+		if (sc->sc_softih[qid] == NULL) {
+			pci_intr_disestablish(psc->psc_pc, sc->sc_ih[qid]);
+			sc->sc_ih[qid] = NULL;
+	
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish %s soft interrupt\n",
+			    intr_xname);
+			return 1;
+		}
+	}
+	
 	intrstr = pci_intr_string(psc->psc_pc, psc->psc_intrs[qid], intrbuf,
 	    sizeof(intrbuf));
 	if (!sc->sc_use_mq) {
@@ -324,10 +359,13 @@ nvme_pci_intr_disestablish(struct nvme_softc *sc, uint16_t qid)
 {
 	struct nvme_pci_softc *psc = (struct nvme_pci_softc *)sc;
 
-	if (!sc->sc_use_mq && qid > 0)
-		return 0;
-
+	KASSERT(sc->sc_use_mq || qid == NVME_ADMIN_Q);
 	KASSERT(sc->sc_ih[qid] != NULL);
+
+	if (sc->sc_softih) {
+		softint_disestablish(sc->sc_softih[qid]);
+		sc->sc_softih[qid] = NULL;
+	}
 
 	pci_intr_disestablish(psc->psc_pc, sc->sc_ih[qid]);
 	sc->sc_ih[qid] = NULL;
