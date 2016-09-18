@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.11 2016/09/10 06:43:52 snj Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.12 2016/09/18 06:24:11 snj Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -252,4 +252,14 @@ sys/arch/sparc64/sparc64/kobj_machdep.c		1.6
 	instruction, so use a 13 bit target mask.
 	Fixes PR kern/51436.
 	[martin, ticket #1248]
+
+sys/dev/pci/if_vioif.c				1.25
+
+	Fix initializing wrong queues.  PR kern/51448.
+	[ozaki-r, ticket #1244]
+
+etc/namedb/root.cache				1.21
+
+	Update root.cache to 2016/8/25 version.
+	[taca, ticket #1246]
 
