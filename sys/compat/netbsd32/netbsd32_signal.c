@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.42 2016/09/18 01:56:42 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.43 2016/09/18 05:16:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.42 2016/09/18 01:56:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.43 2016/09/18 05:16:21 christos Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -223,8 +223,6 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 		si->_reason._poll._band = si32->_reason._poll._band;
 		si->_reason._poll._fd = si32->_reason._poll._fd;
 		break;
-	default:
-		break;
 	}
 }
 
@@ -266,8 +264,6 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 	case SIGIO:
 		si32->_reason._poll._band = si->_reason._poll._band;
 		si32->_reason._poll._fd = si->_reason._poll._fd;
-		break;
-	default:
 		break;
 	}
 }
