@@ -372,7 +372,7 @@
     ACPI_TRACE_ENTRY (Name, AcpiUtTraceU32, const UINT32, Value)
 
 #define ACPI_FUNCTION_TRACE_STR(Name, String) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTraceStr, char *, String)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTraceStr, const char *, String)
 
 #define ACPI_FUNCTION_ENTRY() \
     AcpiUtTrackStackPtr()
