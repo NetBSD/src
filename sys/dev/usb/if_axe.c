@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.2.1 2016/09/18 06:00:20 snj Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.2.1 2016/09/18 06:00:20 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -155,6 +155,7 @@ static const struct axe_type axe_devs[] = {
 	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100}, 0 },
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100B1 }, AX772 },
+	{ { USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DUBE100B1 }, AX772 },
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100C1 }, AX772 | AX772B },
 	{ { USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
 	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
