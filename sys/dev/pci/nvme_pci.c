@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.12 2016/09/17 20:15:09 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.13 2016/09/18 11:58:35 jdolecek Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.12 2016/09/17 20:15:09 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.13 2016/09/18 11:58:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -469,9 +469,6 @@ MODULE(MODULE_CLASS_DRIVER, nvme, "pci,dk_subr");
 
 #ifdef _MODULE
 #include "ioconf.c"
-
-extern const struct bdevsw ld_bdevsw;
-extern const struct cdevsw ld_cdevsw;
 #endif
 
 static int
@@ -479,6 +476,9 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 {
 #ifdef _MODULE
 	devmajor_t cmajor, bmajor;
+	extern const struct bdevsw ld_bdevsw;
+	extern const struct cdevsw ld_cdevsw;
+	extern const struct cdevsw nvme_cdevsw;
 #endif
 	int error = 0;
 
@@ -502,10 +502,20 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 		if (error)
 			return error;
 
+		bmajor = cmajor = NODEVMAJOR;
+		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
+		    &nvme_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw\n",
+			    nvme_cd.cd_name);
+			/* do not abort, just /dev/nvme* will not work */
+		}
 #endif
 		return error;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
+		devsw_detach(NULL, &nvme_cdevsw);
+
 		error = config_fini_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
 		if (error)
