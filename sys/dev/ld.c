@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.95 2016/09/16 15:20:50 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.96 2016/09/19 23:32:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.95 2016/09/16 15:20:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.96 2016/09/19 23:32:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,10 +353,6 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 	sc = device_lookup_private(&ld_cd, unit);
 	dksc = &sc->sc_dksc;
 
-	error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
-
 	error = 0;
 
 	switch (cmd) {
@@ -372,8 +368,9 @@ ldioctl(dev_t dev, u_long cmd, void *addr, int32_t flag, struct lwp *l)
 		else
 			error = 0;	/* XXX Error out instead? */
 		break;
+
 	default:
-		error = ENOTTY;
+		error = dk_ioctl(dksc, dev, cmd, addr, flag, l);
 		break;
 	}
 
