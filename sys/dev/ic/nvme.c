@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.9 2016/09/18 21:19:39 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.10 2016/09/19 19:06:57 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.9 2016/09/18 21:19:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.10 2016/09/19 19:06:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1048,7 +1048,7 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 		rv = 1;
 
 		/*
-		 * Unlock the mutext before calling the ccb_done callback
+		 * Unlock the mutex before calling the ccb_done callback
 		 * and re-lock afterwards. The callback triggers lddone()
 		 * which schedules another i/o, and also calls nvme_ccb_put().
 		 * Unlock/relock avoids possibility of deadlock.
@@ -1393,8 +1393,10 @@ nvme_intr(void *xsc)
 	struct nvme_softc *sc = xsc;
 	int rv = 0;
 
-	/* INTx is level triggered, controller deasserts the interrupt only
-	 * when we advance command queue head via write to the doorbell */
+	/*
+	 * INTx is level triggered, controller deasserts the interrupt only
+	 * when we advance command queue head via write to the doorbell.
+	 */
 	if (nvme_q_complete(sc, sc->sc_admin_q))
 	        rv = 1;
 	if (sc->sc_q != NULL)
