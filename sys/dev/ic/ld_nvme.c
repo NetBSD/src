@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.5 2016/09/18 21:52:36 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.6 2016/09/19 20:33:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.5 2016/09/18 21:52:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.6 2016/09/19 20:33:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ struct ld_nvme_softc {
 	struct nvme_softc	*sc_nvme;
 
 	uint16_t		sc_nsid;
-	int			sc_attaching;
 };
 
 static int	ld_nvme_match(device_t, cfdata_t, void *);
@@ -60,11 +59,8 @@ static int	ld_nvme_start(struct ld_softc *, struct buf *);
 static int	ld_nvme_dump(struct ld_softc *, void *, int, int);
 static int	ld_nvme_flush(struct ld_softc *, int);
 
-static int	ld_nvme_dobio(struct ld_nvme_softc *, void *, int, daddr_t,
-		    int, struct buf *);
-static void	ld_nvme_biodone(struct nvme_ns_context *);
-static void	ld_nvme_syncdone(struct nvme_ns_context *);
-
+static void	ld_nvme_biodone(void *, struct buf *, uint16_t);
+static void	ld_nvme_syncdone(void *, struct buf *, uint16_t);
 
 static int
 ld_nvme_match(device_t parent, cfdata_t match, void *aux)
@@ -92,7 +88,6 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_dv = self;
 	sc->sc_nvme = nsc;
 	sc->sc_nsid = naa->naa_nsid;
-	sc->sc_attaching = 1;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -117,8 +112,6 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ld->sc_flush = ld_nvme_flush;
 	ld->sc_flags = LDF_ENABLED;
 	ldattach(ld, "fcfs");
-
-	sc->sc_attaching = 0;
 }
 
 static int
@@ -142,8 +135,11 @@ ld_nvme_start(struct ld_softc *ld, struct buf *bp)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	return ld_nvme_dobio(sc, bp->b_data, bp->b_bcount, bp->b_rawblkno,
-	    BUF_ISWRITE(bp), bp);
+	return nvme_ns_dobio(sc->sc_nvme, sc->sc_nsid, sc,
+	    bp, bp->b_data, bp->b_bcount,
+	    sc->sc_ld.sc_secsize, bp->b_rawblkno,
+	    BUF_ISWRITE(bp) ? 0 : NVME_NS_CTX_F_READ,
+	    ld_nvme_biodone);
 }
 
 static int
@@ -151,51 +147,18 @@ ld_nvme_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
 
-	return ld_nvme_dobio(sc, data, blkcnt * ld->sc_secsize, blkno, 1, NULL);
-}
-
-static int
-ld_nvme_dobio(struct ld_nvme_softc *sc, void *data, int datasize, daddr_t blkno,
-    int dowrite, struct buf *bp)
-{
-	struct nvme_ns_context *ctx;
-	int error;
-	int waitok = (bp != NULL && !cpu_softintr_p() && !cpu_intr_p()
-	    && !sc->sc_attaching);
-
-	ctx = nvme_ns_get_ctx(sc, waitok ? PR_WAITOK : PR_NOWAIT);
-	if (ctx == NULL)
-		return EAGAIN;
-
-	ctx->nnc_cookie = sc;
-	ctx->nnc_nsid = sc->sc_nsid;
-	ctx->nnc_done = ld_nvme_biodone;
-	ctx->nnc_buf = bp;
-	ctx->nnc_data = data;
-	ctx->nnc_datasize = datasize;
-	ctx->nnc_secsize = sc->sc_ld.sc_secsize;
-	ctx->nnc_blkno = blkno;
-	ctx->nnc_flags = dowrite ? 0 : NVME_NS_CTX_F_READ;
-	if (bp == NULL)
-		SET(ctx->nnc_flags, NVME_NS_CTX_F_POLL);
-
-	error = nvme_ns_dobio(sc->sc_nvme, ctx);
-	if (error)
-		nvme_ns_put_ctx(sc, ctx);
-
-	return error;
+	return nvme_ns_dobio(sc->sc_nvme, sc->sc_nsid, sc,
+	    NULL, data, blkcnt * ld->sc_secsize,
+	    sc->sc_ld.sc_secsize, blkno,
+	    NVME_NS_CTX_F_POLL,
+	    ld_nvme_biodone);
 }
 
 static void
-ld_nvme_biodone(struct nvme_ns_context *ctx)
+ld_nvme_biodone(void *xc, struct buf *bp, uint16_t cmd_status)
 {
-	struct ld_nvme_softc *sc = ctx->nnc_cookie;
-	struct buf *bp = ctx->nnc_buf;
-	int status = NVME_CQE_SC(ctx->nnc_status);
-
-	/* free before processing to avoid starvation, lddone() could trigger
-	 * another i/o request */
-	nvme_ns_put_ctx(sc, ctx);
+	struct ld_nvme_softc *sc = xc;
+	uint16_t status = NVME_CQE_SC(cmd_status);
 
 	if (bp != NULL) {
 		if (status != NVME_CQE_SC_SUCCESS) {
@@ -217,33 +180,14 @@ static int
 ld_nvme_flush(struct ld_softc *ld, int flags)
 {
 	struct ld_nvme_softc *sc = device_private(ld->sc_dv);
-	struct nvme_ns_context *ctx;
-	int error;
-	int waitok = (!ISSET(flags, LDFL_POLL)
-	    && !cpu_softintr_p() && !cpu_intr_p());
 
-	ctx = nvme_ns_get_ctx(sc, waitok ? PR_WAITOK : PR_NOWAIT);
-	if (ctx == NULL)
-		return EAGAIN;
-
-	ctx->nnc_cookie = sc;
-	ctx->nnc_nsid = sc->sc_nsid;
-	ctx->nnc_done = ld_nvme_syncdone;
-	ctx->nnc_flags = 0;
-	if (flags & LDFL_POLL)
-		SET(ctx->nnc_flags, NVME_NS_CTX_F_POLL);
-
-	error = nvme_ns_sync(sc->sc_nvme, ctx);
-	if (error)
-		nvme_ns_put_ctx(sc, ctx);
-
-	return error;
+	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
+	    (flags & LDFL_POLL) ? NVME_NS_CTX_F_POLL : 0,
+	    ld_nvme_syncdone);
 }
 
 static void
-ld_nvme_syncdone(struct nvme_ns_context *ctx)
+ld_nvme_syncdone(void *xc, struct buf *bp, uint16_t cmd_status)
 {
-	struct ld_nvme_softc *sc = ctx->nnc_cookie;
-
-	nvme_ns_put_ctx(sc, ctx);
+	/* nothing to do */
 }
