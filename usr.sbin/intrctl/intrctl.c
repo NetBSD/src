@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.2 2016/08/03 08:34:21 knakahara Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.3 2016/09/19 18:46:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.2 2016/08/03 08:34:21 knakahara Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.3 2016/09/19 18:46:39 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -112,8 +112,9 @@ static int intrctl_io_alloc_retry_count = 4;
 static void
 intrctl_list(int argc, char **argv)
 {
+	char buf[64];
 	struct intrio_list_line *illine;
-	int i, ncpus;
+	int i, ncpus, *cpucol;
 	void *handle;
 	size_t intridlen;
 
@@ -124,34 +125,53 @@ intrctl_list(int argc, char **argv)
 	/* calc columns */
 	ncpus = intrctl_io_ncpus(handle);
 	intridlen = strlen("interrupt id");
-	illine = intrctl_io_firstline(handle);
-	for (; illine != NULL; illine = intrctl_io_nextline(handle, illine)) {
+	for (illine = intrctl_io_firstline(handle); illine != NULL;
+	    illine = intrctl_io_nextline(handle, illine)) {
 		size_t len = strlen(illine->ill_intrid);
 		if (intridlen < len)
 			intridlen = len;
 	}
 
-	/* header */
-	printf("%-*s", (int)intridlen, "interrupt id");
+	cpucol = malloc(sizeof(*cpucol) * (size_t)ncpus);
+	if (cpucol == NULL)
+		err(EXIT_FAILURE, "malloc");
 	for (i = 0; i < ncpus; i++) {
-		char buf[64];
 		snprintf(buf, sizeof(buf), "CPU%u", i);
-		printf(" %20s ", buf);
+		cpucol[i] = strlen(buf);
 	}
-	printf(" device name(s)\n");
+	for (illine = intrctl_io_firstline(handle); illine != NULL;
+	    illine = intrctl_io_nextline(handle, illine)) {
+		for (i = 0; i < ncpus; i++) {
+			int len;
+			snprintf(buf, sizeof(buf), "%" PRIu64,
+			    illine->ill_cpu[i].illc_count);
+			len = (int)strlen(buf);
+			if (cpucol[i] < len)
+				cpucol[i] = len;
+		}
+	}
+
+	/* header */
+	printf("%-*s  ", (int)intridlen, "interrupt id");
+	for (i = 0; i < ncpus; i++) {
+		snprintf(buf, sizeof(buf), "CPU%u", i);
+		printf("%*s  ", cpucol[i], buf);
+	}
+	printf("device name(s)\n");
 
 	/* body */
-	illine = intrctl_io_firstline(handle);
-	for (; illine != NULL; illine = intrctl_io_nextline(handle, illine)) {
-		printf("%-*s ", (int)intridlen, illine->ill_intrid);
+	for (illine = intrctl_io_firstline(handle); illine != NULL;
+	    illine = intrctl_io_nextline(handle, illine)) {
+		printf("%-*s  ", (int)intridlen, illine->ill_intrid);
 		for (i = 0; i < ncpus; i++) {
 			struct intrio_list_line_cpu *illc = &illine->ill_cpu[i];
-			printf("%20" PRIu64 "%c ", illc->illc_count,
+			printf("%*" PRIu64 "%c ", cpucol[i], illc->illc_count,
 			    illc->illc_assigned ? '*' : ' ');
 		}
 		printf("%s\n", illine->ill_xname);
 	}
 
+	free(cpucol);
 	intrctl_io_free(handle);
 }
 
