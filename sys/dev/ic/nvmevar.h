@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.3 2016/09/18 21:19:39 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.4 2016/09/19 20:33:51 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -38,22 +38,37 @@ struct nvme_dmamem {
 struct nvme_softc;
 struct nvme_queue;
 
+typedef void (*nvme_nnc_done)(void *, struct buf *, uint16_t);
+
 struct nvme_ccb {
 	SIMPLEQ_ENTRY(nvme_ccb)	ccb_entry;
 
+	/* DMA handles */
 	bus_dmamap_t		ccb_dmamap;
-
-	void			*ccb_cookie;
-	void			(*ccb_done)(struct nvme_queue *,
-				    struct nvme_ccb *, struct nvme_cqe *);
 
 	bus_addr_t		ccb_prpl_off;
 	uint64_t		ccb_prpl_dva;
 	uint64_t		*ccb_prpl;
 
+	/* command context */
 	uint16_t		ccb_id;
+	void			*ccb_cookie;
+	void			(*ccb_done)(struct nvme_queue *,
+				    struct nvme_ccb *, struct nvme_cqe *);
+
+	/* namespace context */
+	void		*nnc_cookie;
+	nvme_nnc_done	nnc_done;
+	uint16_t	nnc_nsid;
+	uint16_t	nnc_flags;
+#define	NVME_NS_CTX_F_READ	__BIT(0)
+#define	NVME_NS_CTX_F_POLL	__BIT(1)
+
+	struct buf	*nnc_buf;
+	daddr_t		nnc_blkno;
+	size_t		nnc_datasize;
+	int		nnc_secsize;
 };
-SIMPLEQ_HEAD(nvme_ccb_list, nvme_ccb);
 
 struct nvme_queue {
 	struct nvme_softc	*q_sc;
@@ -72,7 +87,7 @@ struct nvme_queue {
 	kmutex_t		q_ccb_mtx;
 	u_int			q_nccbs;
 	struct nvme_ccb		*q_ccbs;
-	struct nvme_ccb_list	q_ccb_list;
+	SIMPLEQ_HEAD(, nvme_ccb) q_ccb_list;
 	struct nvme_dmamem	*q_ccb_prpls;
 };
 
@@ -113,9 +128,6 @@ struct nvme_softc {
 	u_int			sc_nq;		/* # of io queue (sc_q) */
 	struct nvme_queue	*sc_admin_q;
 	struct nvme_queue	**sc_q;
-
-	pool_cache_t		sc_ctxpool;
-	char			sc_ctxpoolname[16];	/* pool wchan */
 
 	uint32_t		sc_flags;
 #define	NVME_F_ATTACHED	__BIT(0)
@@ -160,28 +172,6 @@ nvme_ns_get(struct nvme_softc *sc, uint16_t nsid)
 
 int	nvme_ns_identify(struct nvme_softc *, uint16_t);
 void	nvme_ns_free(struct nvme_softc *, uint16_t);
-
-struct nvme_ns_context {
-	void		*nnc_cookie;
-	void		(*nnc_done)(struct nvme_ns_context *);
-	uint16_t	nnc_nsid;
-
-	struct buf	*nnc_buf;
-	void		*nnc_data;
-	int		nnc_datasize;
-	int		nnc_secsize;
-	daddr_t		nnc_blkno;
-	u_int		nnc_flags;
-#define	NVME_NS_CTX_F_READ	__BIT(0)
-#define	NVME_NS_CTX_F_POLL	__BIT(1)
-
-	int		nnc_status;
-};
-
-#define	nvme_ns_get_ctx(sc, flags) \
-	pool_cache_get((sc)->sc_nvme->sc_ctxpool, (flags))
-#define	nvme_ns_put_ctx(sc, ctx) \
-	pool_cache_put((sc)->sc_nvme->sc_ctxpool, (ctx))
-
-int	nvme_ns_dobio(struct nvme_softc *, struct nvme_ns_context *);
-int	nvme_ns_sync(struct nvme_softc *, struct nvme_ns_context *);
+int	nvme_ns_dobio(struct nvme_softc *, uint16_t, void *,
+    struct buf *, void *, size_t, int, daddr_t, int, nvme_nnc_done);
+int	nvme_ns_sync(struct nvme_softc *, uint16_t, void *, int, nvme_nnc_done);

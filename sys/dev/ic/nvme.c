@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.10 2016/09/19 19:06:57 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.11 2016/09/19 20:33:51 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.10 2016/09/19 19:06:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.11 2016/09/19 20:33:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -417,15 +417,6 @@ nvme_attach(struct nvme_softc *sc)
 	if (!sc->sc_use_mq)
 		nvme_write4(sc, NVME_INTMC, 1);
 
-	snprintf(sc->sc_ctxpoolname, sizeof(sc->sc_ctxpoolname),
-	    "%s_ns_ctx", device_xname(sc->sc_dev));
-	sc->sc_ctxpool = pool_cache_init(sizeof(struct nvme_ns_context),
-	    0, 0, 0, sc->sc_ctxpoolname, NULL, IPL_BIO, NULL, NULL, NULL);
-	if (sc->sc_ctxpool == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to create ctx pool\n");
-		goto free_q;
-	}
-
 	/* probe subdevices */
 	sc->sc_namespaces = kmem_zalloc(sizeof(*sc->sc_namespaces) * sc->sc_nn,
 	    KM_SLEEP);
@@ -484,8 +475,6 @@ nvme_detach(struct nvme_softc *sc, int flags)
 		return error;
 
 	/* from now on we are committed to detach, following will never fail */
-	pool_cache_destroy(sc->sc_ctxpool);
-
 	for (i = 0; i < sc->sc_nq; i++)
 		nvme_q_free(sc, sc->sc_q[i]);
 	kmem_free(sc->sc_q, sizeof(*sc->sc_q) * sc->sc_nq);
@@ -565,8 +554,7 @@ nvme_ns_identify(struct nvme_softc *sc, uint16_t nsid)
 	KASSERT(nsid > 0);
 
 	ccb = nvme_ccb_get(sc->sc_admin_q);
-	if (ccb == NULL)
-		return EAGAIN;
+	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
 	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
 	if (mem == NULL)
@@ -608,7 +596,9 @@ done:
 }
 
 int
-nvme_ns_dobio(struct nvme_softc *sc, struct nvme_ns_context *ctx)
+nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
+    struct buf *bp, void *data, size_t datasize,
+    int secsize, daddr_t blkno, int flags, nvme_nnc_done nnc_done)
 {
 	struct nvme_queue *q = nvme_get_q(sc);
 	struct nvme_ccb *ccb;
@@ -620,14 +610,23 @@ nvme_ns_dobio(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 		return EAGAIN;
 
 	ccb->ccb_done = nvme_ns_io_done;
-	ccb->ccb_cookie = ctx;
+	ccb->ccb_cookie = cookie;
+
+	/* namespace context */
+	ccb->nnc_nsid = nsid;
+	ccb->nnc_flags = flags;
+	ccb->nnc_buf = bp;
+	ccb->nnc_datasize = datasize;
+	ccb->nnc_secsize = secsize;
+	ccb->nnc_blkno = blkno;
+	ccb->nnc_done = nnc_done;
 
 	dmap = ccb->ccb_dmamap;
-	error = bus_dmamap_load(sc->sc_dmat, dmap, ctx->nnc_data,
-	    ctx->nnc_datasize, NULL,
-	    (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_POLL) ?
+	error = bus_dmamap_load(sc->sc_dmat, dmap, data,
+	    datasize, NULL,
+	    (ISSET(flags, NVME_NS_CTX_F_POLL) ?
 	      BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-	    (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_READ) ?
+	    (ISSET(flags, NVME_NS_CTX_F_READ) ?
 	      BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error) {
 		nvme_ccb_put(q, ccb);
@@ -635,7 +634,7 @@ nvme_ns_dobio(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-	    ISSET(ctx->nnc_flags, NVME_NS_CTX_F_READ) ?
+	    ISSET(flags, NVME_NS_CTX_F_READ) ?
 	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	if (dmap->dm_nsegs > 2) {
@@ -650,7 +649,7 @@ nvme_ns_dobio(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 		    BUS_DMASYNC_PREWRITE);
 	}
 
-	if (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_POLL)) {
+	if (ISSET(flags, NVME_NS_CTX_F_POLL)) {
 		if (nvme_poll(sc, q, ccb, nvme_ns_io_fill, NVME_TIMO_PT) != 0)
 			return EIO;
 		return 0;
@@ -664,12 +663,11 @@ static void
 nvme_ns_io_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 {
 	struct nvme_sqe_io *sqe = slot;
-	struct nvme_ns_context *ctx = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
 
-	sqe->opcode = ISSET(ctx->nnc_flags, NVME_NS_CTX_F_READ) ?
+	sqe->opcode = ISSET(ccb->nnc_flags, NVME_NS_CTX_F_READ) ?
 	    NVM_CMD_READ : NVM_CMD_WRITE;
-	htolem32(&sqe->nsid, ctx->nnc_nsid);
+	htolem32(&sqe->nsid, ccb->nnc_nsid);
 
 	htolem64(&sqe->entry.prp[0], dmap->dm_segs[0].ds_addr);
 	switch (dmap->dm_nsegs) {
@@ -684,8 +682,11 @@ nvme_ns_io_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 		break;
 	}
 
-	htolem64(&sqe->slba, ctx->nnc_blkno);
-	htolem16(&sqe->nlb, (ctx->nnc_datasize / ctx->nnc_secsize) - 1);
+	htolem64(&sqe->slba, ccb->nnc_blkno);
+
+	/* guaranteed by upper layers, but check just in case */
+	KASSERT((ccb->nnc_datasize % ccb->nnc_secsize) == 0);
+	htolem16(&sqe->nlb, (ccb->nnc_datasize / ccb->nnc_secsize) - 1);
 }
 
 static void
@@ -693,9 +694,10 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
     struct nvme_cqe *cqe)
 {
 	struct nvme_softc *sc = q->q_sc;
-	struct nvme_ns_context *ctx = ccb->ccb_cookie;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	uint16_t flags;
+	void *nnc_cookie = ccb->ccb_cookie;
+	nvme_nnc_done nnc_done = ccb->nnc_done;
+	struct buf *bp = ccb->nnc_buf;
 
 	if (dmap->dm_nsegs > 2) {
 		bus_dmamap_sync(sc->sc_dmat,
@@ -706,20 +708,18 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
-	    ISSET(ctx->nnc_flags, NVME_NS_CTX_F_READ) ?
+	    ISSET(ccb->nnc_flags, NVME_NS_CTX_F_READ) ?
 	    BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	nvme_ccb_put(q, ccb);
 
-	flags = lemtoh16(&cqe->flags);
-
-	ctx->nnc_status = flags;
-	(*ctx->nnc_done)(ctx);
+	nnc_done(nnc_cookie, bp, lemtoh16(&cqe->flags));
 }
 
 int
-nvme_ns_sync(struct nvme_softc *sc, struct nvme_ns_context *ctx)
+nvme_ns_sync(struct nvme_softc *sc, uint16_t nsid, void *cookie,
+    int flags, nvme_nnc_done nnc_done)
 {
 	struct nvme_queue *q = nvme_get_q(sc);
 	struct nvme_ccb *ccb;
@@ -729,9 +729,14 @@ nvme_ns_sync(struct nvme_softc *sc, struct nvme_ns_context *ctx)
 		return EAGAIN;
 
 	ccb->ccb_done = nvme_ns_sync_done;
-	ccb->ccb_cookie = ctx;
+	ccb->ccb_cookie = cookie;
 
-	if (ISSET(ctx->nnc_flags, NVME_NS_CTX_F_POLL)) {
+	/* namespace context */
+	ccb->nnc_nsid = nsid;
+	ccb->nnc_flags = flags;
+	ccb->nnc_done = nnc_done;
+
+	if (ISSET(flags, NVME_NS_CTX_F_POLL)) {
 		if (nvme_poll(sc, q, ccb, nvme_ns_sync_fill, NVME_TIMO_SY) != 0)
 			return EIO;
 		return 0;
@@ -745,25 +750,21 @@ static void
 nvme_ns_sync_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 {
 	struct nvme_sqe *sqe = slot;
-	struct nvme_ns_context *ctx = ccb->ccb_cookie;
 
 	sqe->opcode = NVM_CMD_FLUSH;
-	htolem32(&sqe->nsid, ctx->nnc_nsid);
+	htolem32(&sqe->nsid, ccb->nnc_nsid);
 }
 
 static void
 nvme_ns_sync_done(struct nvme_queue *q, struct nvme_ccb *ccb,
     struct nvme_cqe *cqe)
 {
-	struct nvme_ns_context *ctx = ccb->ccb_cookie;
-	uint16_t flags;
+	void *cookie = ccb->ccb_cookie;
+	nvme_nnc_done nnc_done = ccb->nnc_done;
 
 	nvme_ccb_put(q, ccb);
 
-	flags = lemtoh16(&cqe->flags);
-
-	ctx->nnc_status = flags;
-	(*ctx->nnc_done)(ctx);
+	nnc_done(cookie, NULL, lemtoh16(&cqe->flags));
 }
 
 void
@@ -1078,8 +1079,7 @@ nvme_identify(struct nvme_softc *sc, u_int mps)
 	int rv = 1;
 
 	ccb = nvme_ccb_get(sc->sc_admin_q);
-	if (ccb == NULL)
-		panic("%s: nvme_ccb_get returned NULL", __func__);
+	KASSERT(ccb != NULL); /* it's a bug if we don't have spare ccb here */
 
 	mem = nvme_dmamem_alloc(sc, sizeof(*identify));
 	if (mem == NULL)
