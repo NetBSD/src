@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.59 2016/09/16 17:12:06 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.60 2016/09/19 18:43:23 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.59 2016/09/16 17:12:06 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.60 2016/09/19 18:43:23 christos Exp $");
 #endif /* !defined lint */
 
 #include "private.h"
@@ -158,7 +158,7 @@ enum { PERCENT_Z_LEN_BOUND = sizeof "+995959" - 1 };
    QTBUG-53071 <https://bugreports.qt.io/browse/QTBUG-53071>.  This
    workaround will no longer be needed when Qt 5.6.1 and earlier are
    obsolete, say in the year 2021.  */
-enum { WORK_AROUND_QTBUG_53071 = true };
+enum { WORK_AROUND_QTBUG_53071 = 1 };
 
 static int		charcnt;
 static bool		errors;
@@ -1645,7 +1645,7 @@ writezone(const char *const name, const char *const string, char version)
 	zic_t one = 1;
 	zic_t y2038_boundary = one << 31;
 	int nats = timecnt + WORK_AROUND_QTBUG_53071;
-	zic_t *ats = zic_malloc(size_product(timecnt, sizeof *ats + 1));
+	zic_t *ats = zic_malloc(size_product(nats, sizeof *ats + 1));
 	void *typesptr = ats + nats;
 	unsigned char *types = typesptr;
 
