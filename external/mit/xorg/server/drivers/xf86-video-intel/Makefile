@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2016/08/16 06:24:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2016/09/19 19:15:04 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -178,6 +178,7 @@ CPPFLAGS+=	-DUMS=1
 CPPFLAGS+=	-DUSE_BACKLIGHT=1
 CPPFLAGS+=	-DUSE_SNA=1
 CPPFLAGS+=	-DUSE_UXA=1
+CPPFLAGS+=	-DXFree86LOADER
 
 # XXX This should not be hard-coded here...
 DRI_DRIVER_PATH=	/usr/X11R7/lib/modules/dri
