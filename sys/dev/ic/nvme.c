@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.12 2016/09/19 22:11:41 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.13 2016/09/20 21:18:08 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.12 2016/09/19 22:11:41 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.13 2016/09/20 21:18:08 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ static int	nvme_command_passthrough(struct nvme_softc *,
 #define NVME_TIMO_QOP		5	/* queue create and delete timeout */
 #define NVME_TIMO_IDENT		10	/* probe identify timeout */
 #define NVME_TIMO_PT		-1	/* passthrough cmd timeout */
-#define NVME_TIMO_SY		-1	/* sync cache timeout */
+#define NVME_TIMO_SY		60	/* sync cache timeout */
 
 #define nvme_read4(_s, _r) \
 	bus_space_read_4((_s)->sc_iot, (_s)->sc_ioh, (_r))
