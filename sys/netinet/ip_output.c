@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.262 2016/09/18 02:17:43 christos Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.263 2016/09/20 14:30:13 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.262 2016/09/18 02:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.263 2016/09/20 14:30:13 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -617,7 +617,7 @@ sendit:
 	KASSERT(ia == NULL);
 	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
 
-	/* Ensure we only sent from a valid address. */
+	/* Ensure we only send from a valid address. */
 	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
 	    (error = ip_ifaddrvalid(ia)) != 0)
 	{
@@ -625,11 +625,12 @@ sendit:
 		    "refusing to send from invalid address %s (pid %d)\n",
 		    in_fmtaddr(ip->ip_src), curproc->p_pid);
 		IP_STATINC(IP_STAT_ODROPPED);
-		if (error == 1 && ip->ip_p == IPPROTO_TCP)
-			/* Address exists, but is tentative or detached.
+		if (error == 1)
+			/*
+			 * Address exists, but is tentative or detached.
 			 * We can't send from it because it's invalid,
-			 * so we drop the packet and continue ...
-			 * TCP will timeout eventually. */
+			 * so we drop the packet.
+			 */
 			error = 0;
 		else
 			error = EADDRNOTAVAIL;
