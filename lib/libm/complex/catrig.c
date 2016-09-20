@@ -1,4 +1,4 @@
-/*	$NetBSD: catrig.c,v 1.1 2016/09/19 22:05:05 christos Exp $	*/
+/*	$NetBSD: catrig.c,v 1.2 2016/09/20 18:25:20 christos Exp $	*/
 /*-
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/catrig.c 275819 2014-12-16 09:21:56Z ed $");
 #endif
-__RCSID("$NetBSD: catrig.c,v 1.1 2016/09/19 22:05:05 christos Exp $");
+__RCSID("$NetBSD: catrig.c,v 1.2 2016/09/20 18:25:20 christos Exp $");
 
 #include "namespace.h"
 #ifdef __weak_alias
@@ -59,15 +59,24 @@ __weak_alias(catan, _catan)
 static const double
 A_crossover =		10, /* Hull et al suggest 1.5, but 10 works better */
 B_crossover =		0.6417,			/* suggested by Hull et al */
-FOUR_SQRT_MIN =		0x1p-509,		/* >= 4 * sqrt(DBL_MIN) */
-QUARTER_SQRT_MAX =	0x1p509,		/* <= sqrt(DBL_MAX) / 4 */
 m_e =			2.7182818284590452e0,	/*  0x15bf0a8b145769.0p-51 */
 m_ln2 =			6.9314718055994531e-1,	/*  0x162e42fefa39ef.0p-53 */
 pio2_hi =		1.5707963267948966e0,	/*  0x1921fb54442d18.0p-52 */
 RECIP_EPSILON =		1 / DBL_EPSILON,
 SQRT_3_EPSILON =	2.5809568279517849e-8,	/*  0x1bb67ae8584caa.0p-78 */
 SQRT_6_EPSILON =	3.6500241499888571e-8,	/*  0x13988e1409212e.0p-77 */
+#if DBL_MAX_EXP == 1024	/* IEEE */
+FOUR_SQRT_MIN =		0x1p-509,		/* >= 4 * sqrt(DBL_MIN) */
+QUARTER_SQRT_MAX =	0x1p509,		/* <= sqrt(DBL_MAX) / 4 */
 SQRT_MIN =		0x1p-511;		/* >= sqrt(DBL_MIN) */
+#elif DBL_MAX_EXP == 127 /* VAX */
+FOUR_SQRT_MIN =		0x1p-62,		/* >= 4 * sqrt(DBL_MIN) */
+QUARTER_SQRT_MAX =	0x1p62,			/* <= sqrt(DBL_MAX) / 4 */
+SQRT_MIN =		0x1p-64;		/* >= sqrt(DBL_MIN) */
+#else
+	#error "unsupported floating point format"
+#endif
+
 
 static const volatile double
 pio2_lo =		6.1232339957367659e-17;	/*  0x11a62633145c07.0p-106 */
