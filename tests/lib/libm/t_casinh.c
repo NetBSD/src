@@ -1,4 +1,4 @@
-/* $NetBSD: t_casinh.c,v 1.1 2016/08/31 14:05:10 maya Exp $ */
+/* $NetBSD: t_casinh.c,v 1.2 2016/09/20 17:19:28 christos Exp $ */
 
 /*
  * Written by Maya Rashish
@@ -44,8 +44,11 @@ static const struct {
 #define crude_equality(a,b) ((a == b) || both_nan(a,b))
 
 #define ATF_COMPLEX_EQUAL(a,b) do { \
-	ATF_CHECK(crude_equality(creal(a),creal(b)) && \
-	    crude_equality(cimag(a), cimag(b))); \
+	complex double ci = casinh(a); \
+	ATF_CHECK_MSG(crude_equality(creal(ci),creal(b)) && \
+	    crude_equality(cimag(ci), cimag(b)), \
+	    "for casinh([%g,%g]) = [%g,%g] != [%g,%g]", \
+	    creal(a), cimag(a), creal(ci), cimag(ci), creal(b), cimag(b)); \
 } while (0/*CONSTCOND*/)
 
 
@@ -65,7 +68,7 @@ ATF_TC_BODY(casinh, tc)
 		IM(input) = values[i].input_im;
 		RE(result) = values[i].result_re;
 		IM(result) = values[i].result_im;
-		ATF_COMPLEX_EQUAL(casinh(input), result);
+		ATF_COMPLEX_EQUAL(input, result);
 	}
 }
 
