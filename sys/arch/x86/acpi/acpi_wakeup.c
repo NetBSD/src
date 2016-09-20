@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.41 2016/07/27 13:04:28 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2016/07/27 13:04:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2016/07/27 13:04:28 maxv Exp $"
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2016/07/27 13:04:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.41 2016/07/27 13:04:28 maxv Exp $"
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
-int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
+int acpi_md_vbios_reset = 0; /* Referenced by dev/pci/vga_pci.c */
 int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
