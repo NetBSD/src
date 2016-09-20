@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.2 2010/11/06 16:03:23 uebayasi Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.3 2016/09/20 20:57:45 christos Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.2 2010/11/06 16:03:23 uebayasi Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.3 2016/09/20 20:57:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,6 +167,10 @@ main(int argc, char *argv[])
 	md_root_size_offset = md_root_symbols[X_MD_ROOT_SIZE].offset;
 	md_root_size = bfd_get_32(abfd, &mappedkfile[md_root_size_offset]);
 
+	if (verbose)
+		fprintf(stderr, "root @ %#zx/%zu\n",
+		    md_root_offset, md_root_size);
+
 	munmap(mappedkfile, ksb.st_size);
 
 	if (extract) {
@@ -187,8 +191,8 @@ main(int argc, char *argv[])
 	}
 
 	if (verbose)
-		fprintf(stderr, "copying image %s %s %s\n", fsfile,
-		    (extract ? "from" : "into"), kfile);
+		fprintf(stderr, "copying image %s %s %s (%zd bytes)\n", fsfile,
+		    (extract ? "from" : "into"), kfile, left_to_copy);
 
 	if (lseek(kfd, md_root_offset, SEEK_SET) != md_root_offset)
 		err(1, "seek %s", kfile);
