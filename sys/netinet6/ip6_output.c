@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.174 2016/09/15 18:25:45 roy Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.175 2016/09/20 14:30:13 roy Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.174 2016/09/15 18:25:45 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.175 2016/09/20 14:30:13 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -552,16 +552,19 @@ ip6_output(
 
 	/* scope check is done. */
 
-	/* Ensure we only sent from a valid address. */
+	/* Ensure we only send from a valid address. */
 	if ((error = ip6_ifaddrvalid(&src0)) != 0) {
 		nd6log(LOG_ERR,
 		    "refusing to send from invalid address %s (pid %d)\n",
 		    ip6_sprintf(&src0), curproc->p_pid);
-		if (error == 1 && ip6->ip6_nxt == IPPROTO_TCP)
-			/* Address exists, but is tentative or detached.
+		IP6_STATINC(IP6_STAT_ODROPPED);
+		in6_ifstat_inc(origifp, ifs6_out_discard);
+		if (error == 1)
+			/*
+			 * Address exists, but is tentative or detached.
 			 * We can't send from it because it's invalid,
-			 * so we drop the packet and continue ...
-			 * TCP will timeout eventually. */
+			 * so we drop the packet.
+			 */
 			error = 0;
 		else
 			error = EADDRNOTAVAIL;
