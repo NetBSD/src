@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.9 2001/10/01 23:32:34 cgd Exp $ */
+/* $NetBSD: extern.h,v 1.10 2016/09/21 16:25:41 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -30,22 +30,22 @@
  */
 
 #ifdef NLIST_AOUT
-int	check_aout __P((const char *, size_t));
-int	findoff_aout __P((const char *, size_t, u_long, size_t *));
+int	check_aout(const char *, size_t);
+int	findoff_aout(const char *, size_t, u_long, size_t *, u_long);
 #endif
 #ifdef NLIST_ECOFF
-int	check_ecoff __P((const char *, size_t));
-int	findoff_ecoff __P((const char *, size_t, u_long, size_t *));
+int	check_ecoff(const char *, size_t);
+int	findoff_ecoff(const char *, size_t, u_long, size_t *, u_long);
 #endif
 #ifdef NLIST_ELF32
-int	check_elf32 __P((const char *, size_t));
-int	findoff_elf32 __P((const char *, size_t, u_long, size_t *));
+int	check_elf32(const char *, size_t);
+int	findoff_elf32(const char *, size_t, u_long, size_t *, u_long);
 #endif
 #ifdef NLIST_ELF64
-int	check_elf64 __P((const char *, size_t));
-int	findoff_elf64 __P((const char *, size_t, u_long, size_t *));
+int	check_elf64(const char *, size_t);
+int	findoff_elf64(const char *, size_t, u_long, size_t *, u_long);
 #endif
 #ifdef NLIST_COFF
-int	check_coff __P((const char *, size_t));
-int	findoff_coff __P((const char *, size_t, u_long, size_t *));
+int	check_coff(const char *, size_t);
+int	findoff_coff(const char *, size_t, u_long, size_t *, u_long);
 #endif
