@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.15 2012/03/13 21:13:40 christos Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.16 2016/09/21 10:53:24 roy Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.15 2012/03/13 21:13:40 christos Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.16 2016/09/21 10:53:24 roy Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -225,6 +225,7 @@ getifaddrs(struct ifaddrs **pif)
 			ift->ifa_name = cif.ifa_name;
 			ift->ifa_flags = cif.ifa_flags;
 			ift->ifa_data = NULL;
+			ift->ifa_addrflags = ifam->ifam_addrflags;
 			p = (char *)(void *)(ifam + 1);
 			/* Scan to look for length of address */
 			alen = 0;
