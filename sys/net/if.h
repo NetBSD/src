@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.225 2016/08/10 10:09:42 kre Exp $	*/
+/*	$NetBSD: if.h,v 1.226 2016/09/21 10:50:22 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -634,10 +634,12 @@ struct ifa_msghdr {
 				/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
-	int	ifam_addrs;	/* like rtm_addrs */
-	int	ifam_flags;	/* value of ifa_flags */
-	int	ifam_metric;	/* value of ifa_metric */
 	u_short	ifam_index;	/* index for associated ifp */
+	int	ifam_flags;	/* value of ifa_flags */
+	int	ifam_addrs;	/* like rtm_addrs */
+	pid_t	ifam_pid;	/* identify sender */
+	int	ifam_addrflags;	/* family specific address flags */
+	int	ifam_metric;	/* value of ifa_metric */
 };
 
 /*

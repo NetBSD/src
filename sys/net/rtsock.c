@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.195 2016/09/01 19:04:30 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.196 2016/09/21 10:50:22 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.195 2016/09/01 19:04:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.196 2016/09/21 10:50:22 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -98,12 +98,15 @@ extern void sctp_add_ip_address(struct ifaddr *);
 extern void sctp_delete_ip_address(struct ifaddr *);
 #endif
 
-#if defined(COMPAT_14) || defined(COMPAT_50)
+#if defined(COMPAT_14) || defined(COMPAT_50) || defined(COMPAT_70)
 #include <compat/net/if.h>
 #include <compat/net/route.h>
 #endif
 #ifdef COMPAT_RTSOCK
 #define	RTM_XVERSION	RTM_OVERSION
+#define	RTM_XNEWADDR	RTM_ONEWADDR
+#define	RTM_XDELADDR	RTM_ODELADDR
+#define	RTM_XCHGADDR	RTM_OCHGADDR
 #define	RT_XADVANCE(a,b) RT_OADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_OROUNDUP(n)
 #define	PF_XROUTE	PF_OROUTE
@@ -115,8 +118,12 @@ extern void sctp_delete_ip_address(struct ifaddr *);
 #define	DOMAINNAME	"oroute"
 CTASSERT(sizeof(struct ifa_xmsghdr) == 20);
 DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
+#undef COMPAT_70
 #else /* COMPAT_RTSOCK */
 #define	RTM_XVERSION	RTM_VERSION
+#define	RTM_XNEWADDR	RTM_NEWADDR
+#define	RTM_XDELADDR	RTM_DELADDR
+#define	RTM_XCHGADDR	RTM_CHGADDR
 #define	RT_XADVANCE(a,b) RT_ADVANCE(a,b)
 #define	RT_XROUNDUP(n)	RT_ROUNDUP(n)
 #define	PF_XROUTE	PF_ROUTE
@@ -126,7 +133,7 @@ DOMAIN_DEFINE(compat_50_routedomain); /* forward declare and add to link set */
 #define	if_xannouncemsghdr	if_announcemsghdr
 #define	COMPATNAME(x)	x
 #define	DOMAINNAME	"route"
-CTASSERT(sizeof(struct ifa_xmsghdr) == 24);
+CTASSERT(sizeof(struct ifa_xmsghdr) == 32);
 #ifdef COMPAT_50
 #define	COMPATCALL(name, args)	compat_50_ ## name args
 #endif
@@ -1028,6 +1035,17 @@ rt_getlen(int type)
 #endif
 
 	switch (type) {
+	case RTM_ODELADDR:
+	case RTM_ONEWADDR:
+	case RTM_OCHGADDR:
+#ifdef COMPAT_70
+		return sizeof(struct ifa_msghdr70);
+#else
+#ifdef DIAGNOSTIC
+		printf("RTM_ONEWADDR\n");
+#endif
+		return -1;
+#endif
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
 	case RTM_CHGADDR:
@@ -1278,6 +1296,25 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 #endif
 }
 
+#ifndef COMPAT_RTSOCK
+static int
+if_addrflags(struct ifaddr *ifa)
+{
+
+	switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+	case AF_INET:
+		return ((struct in_ifaddr *)ifa)->ia4_flags;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		return ((struct in6_ifaddr *)ifa)->ia6_flags;
+#endif
+	default:
+		return 0;
+	}
+}
+#endif
 
 /*
  * This is called to generate messages from the routing socket
@@ -1302,6 +1339,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 	int ncmd;
 
 	KASSERT(ifa != NULL);
+	KASSERT(ifa->ifa_addr != NULL);
 	ifp = ifa->ifa_ifp;
 #ifdef SCTP
 	if (cmd == RTM_ADD) {
@@ -1325,17 +1363,29 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		case cmdpass(RTM_CHGADDR, 1):
 			switch (cmd) {
 			case RTM_ADD:
-				ncmd = RTM_NEWADDR;
+				ncmd = RTM_XNEWADDR;
 				break;
 			case RTM_DELETE:
-				ncmd = RTM_DELADDR;
+				ncmd = RTM_XDELADDR;
 				break;
 			case RTM_CHANGE:
-				ncmd = RTM_CHGADDR;
+				ncmd = RTM_XCHGADDR;
+				break;
+			case RTM_NEWADDR:
+				ncmd = RTM_XNEWADDR;
+				break;
+			case RTM_DELADDR:
+				ncmd = RTM_XDELADDR;
+				break;
+			case RTM_CHGADDR:
+				ncmd = RTM_XCHGADDR;
 				break;
 			default:
-				ncmd = cmd;
+				panic("%s: unknown command %d", __func__, cmd);
 			}
+#ifdef COMPAT_70
+			compat_70_rt_newaddrmsg1(ncmd, ifa);
+#endif
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			KASSERT(ifp->if_dl != NULL);
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -1345,6 +1395,10 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
+#ifndef COMPAT_RTSOCK
+			ifam.ifam_pid = curproc->p_pid;
+			ifam.ifam_addrflags = if_addrflags(ifa);
+#endif
 			m = COMPATNAME(rt_msg1)(ncmd, &info, &ifam, sizeof(ifam));
 			if (m == NULL)
 				continue;
@@ -1379,6 +1433,7 @@ COMPATNAME(rt_newaddrmsg)(int cmd, struct ifaddr *ifa, int error,
 		COMPATNAME(route_enqueue)(m, sa ? sa->sa_family : 0);
 	}
 #undef cmdpass
+
 }
 
 static struct mbuf *
@@ -1530,7 +1585,7 @@ sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 {
 	int len, error;
 
-	if ((error = rt_msg2(RTM_NEWADDR, info, 0, w, &len)))
+	if ((error = rt_msg2(RTM_XNEWADDR, info, 0, w, &len)))
 		return error;
 	if (w->w_where && w->w_tmem && w->w_needed <= 0) {
 		struct ifa_xmsghdr *ifam;
@@ -1540,6 +1595,10 @@ sysctl_iflist_addr(struct rt_walkarg *w, struct ifaddr *ifa,
 		ifam->ifam_flags = ifa->ifa_flags;
 		ifam->ifam_metric = ifa->ifa_metric;
 		ifam->ifam_addrs = info->rti_addrs;
+#ifndef COMPAT_RTSOCK
+		ifam->ifam_pid = 0;
+		ifam->ifam_addrflags = if_addrflags(ifa);
+#endif
 		if ((error = copyout(w->w_tmem, w->w_where, len)) == 0)
 			w->w_where = (char *)w->w_where + len;
 	}
@@ -1555,6 +1614,8 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	int	cmd, len, error = 0;
 	int	(*iflist_if)(struct ifnet *, struct rt_walkarg *,
 			     struct rt_addrinfo *, size_t);
+	int	(*iflist_addr)(struct rt_walkarg *, struct ifaddr *,
+			       struct rt_addrinfo *);
 	int s;
 	struct psref psref;
 	int bound = curlwp_bind();
@@ -1563,17 +1624,27 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 	case NET_RT_IFLIST:
 		cmd = RTM_IFINFO;
 		iflist_if = sysctl_iflist_if;
+		iflist_addr = sysctl_iflist_addr;
 		break;
 #ifdef COMPAT_14
-	case NET_RT_OOIFLIST:
+	case NET_RT_OOOIFLIST:
 		cmd = RTM_OOIFINFO;
 		iflist_if = compat_14_iflist;
+		iflist_addr = compat_70_iflist_addr;
 		break;
 #endif
 #ifdef COMPAT_50
-	case NET_RT_OIFLIST:
+	case NET_RT_OOIFLIST:
 		cmd = RTM_OIFINFO;
 		iflist_if = compat_50_iflist;
+		iflist_addr = compat_70_iflist_addr;
+		break;
+#endif
+#ifdef COMPAT_70
+	case NET_RT_OIFLIST:
+		cmd = RTM_IFINFO;
+		iflist_if = sysctl_iflist_if;
+		iflist_addr = compat_70_iflist_addr;
 		break;
 #endif
 	default:
@@ -1609,7 +1680,7 @@ sysctl_iflist(int af, struct rt_walkarg *w, int type)
 			info.rti_info[RTAX_IFA] = ifa->ifa_addr;
 			info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 			info.rti_info[RTAX_BRD] = ifa->ifa_dstaddr;
-			if ((error = sysctl_iflist_addr(w, ifa, &info)) != 0)
+			if ((error = iflist_addr(w, ifa, &info)) != 0)
 				goto release_exit;
 		}
 		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
@@ -1689,11 +1760,16 @@ again:
 		break;
 
 #ifdef COMPAT_14
-	case NET_RT_OOIFLIST:
+	case NET_RT_OOOIFLIST:
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
 #endif
 #ifdef COMPAT_50
+	case NET_RT_OOIFLIST:
+		error = sysctl_iflist(af, &w, w.w_op);
+		break;
+#endif
+#ifdef COMPAT_70
 	case NET_RT_OIFLIST:
 		error = sysctl_iflist(af, &w, w.w_op);
 		break;
