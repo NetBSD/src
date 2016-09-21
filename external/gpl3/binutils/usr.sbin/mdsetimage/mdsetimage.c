@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.3 2016/09/20 20:57:45 christos Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.4 2016/09/21 01:33:42 christos Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.3 2016/09/20 20:57:45 christos Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.4 2016/09/21 01:33:42 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 	md_root_size = bfd_get_32(abfd, &mappedkfile[md_root_size_offset]);
 
 	if (verbose)
-		fprintf(stderr, "root @ %#zx/%zu\n",
+		fprintf(stderr, "root @ %#zx/%u\n",
 		    md_root_offset, md_root_size);
 
 	munmap(mappedkfile, ksb.st_size);
