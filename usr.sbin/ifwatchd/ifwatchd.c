@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.27 2016/01/27 18:55:51 riastradh Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.28 2016/09/21 14:46:55 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -117,7 +117,9 @@ main(int argc, char **argv)
 {
 	int c, s, n;
 	int errs = 0;
-	char msg[2048], *msgp;
+	struct msghdr msg;
+	struct iovec iov[1];
+	char buf[2048];
 
 	openlog(argv[0], LOG_PID|LOG_CONS, LOG_DAEMON);
 	while ((c = getopt(argc, argv, "qvhic:n:u:d:A:D:")) != -1) {
@@ -206,13 +208,20 @@ main(int argc, char **argv)
 	if (!inhibit_initial)
 		run_initial_ups();
 
+	iov[0].iov_base = buf;
+	iov[0].iov_len = sizeof(buf);
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_iov = iov;
+	msg.msg_iovlen = 1;
+
 	for (;;) {
-		n = read(s, msg, sizeof msg);
-		msgp = msg;
-		for (msgp = msg; n > 0;
-		     n -= ((struct rt_msghdr*)msgp)->rtm_msglen,
-		     msgp += ((struct rt_msghdr*)msgp)->rtm_msglen)
-			dispatch(msgp, n);
+		n = recvmsg(s, &msg, 0);
+		if (n == -1) {
+			syslog(LOG_ERR, "recvmsg: %m");
+			exit(EXIT_FAILURE);
+		}
+		if (n != 0)
+			dispatch(iov[0].iov_base, n);
 	}
 
 	close(s);
