@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2185 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2186 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -325,10 +325,14 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		there [christos 20160527]
 	zoneinfo: Import tzdata2016d. [agc 20160531]
 	ntp: Import ntp 4.2.8p8. [christos 20160603]
+	ext2fs: Add ext4 extent support from FreeBSD, ported and contributed by
+		Hrishikesh Goyal (GSoc 2016) [christos 20160603]
 	sys_info: Import a script to return version information for system
 		libraries and utilities [agc 20160604]
 	nvmectl(8): Added NVM Express control utility. [nonaka 20160604]
 	dhcpcd(8): Import dhcpcd-6.11.1. [roy 20160617]
+	ext2fs: Add ext4 htree index support from FreeBSD, ported and
+		contributed by Hrishikesh Goyal (GSoc 2016). [christos 20160624]
 	mdocml: Import 1.13.4. [christos 20160715]
 	acpi(4): Updated ACPICA to 20160527. [christos 20160718]
 	kernel: Use fine-grained permissions for kernel modules segments
@@ -344,12 +348,21 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	OpenSSH: Imported 7.3. [christos 20160802]
 	xen: Map the kernel image segments independently with fine-grained
 		permissions (W^X). [maxv 20160802]
+	ext2fs: Add ext4 extra_inode support. [jdolecek 20160603]
 	kernel: Provide an efficient way to prevent NULL from being mappable
 		in userland processes. [maxv 20160806]
+	ext2fs: Actually fill file type for readdir(4) and friends.
+		[jdolecek 20160615]
 	zoneinfo: Import tzdata2016f. [kre 20160807]
+	ext2fs: Add read-only ext4 extended attribute support.
+		[jdolecek 20160612]
 	dhcpcd(8): Import dhcpcd-6.11.3. [roy 20160815]
+	ext2fs: Add ext4 dir_nlink support, supporting up to 64000 file hard
+		links, and unlimited directory links. [jdolecek 20160615]
 	unbound: Import 1.5.9. [christos 20160820]
+	ext2fs: Add ext4 gdt_csum/uninit_bg support. [jdolecek 20160615]
 	tmux(1): Import of tmux 2.2 [christos 20160831]
 	lua: updated to 5.3.3 and applied all three patches from 
 		http://lua.org/bugs.html [salazar 20160908]
 	libc: Update to tzcode2016f. [christos 20160916]
+	nvme(4): NVMe driver is now MPSAFE. [jdolecek 20160918]
