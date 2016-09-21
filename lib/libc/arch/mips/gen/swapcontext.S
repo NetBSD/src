@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.6 2016/09/21 06:41:42 skrll Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.7 2016/09/21 06:49:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,13 +33,14 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.6 2016/09/21 06:41:42 skrll Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.7 2016/09/21 06:49:39 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
 
 NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	.mask	0x80000030, (CALLFRAME_RA - CALLFRAME_SIZ)
+	PIC_PROLOGUE(swapcontext)
 	PTR_SUBU	sp, sp, CALLFRAME_SIZ
 	PTR_S		ra, CALLFRAME_RA(sp)	# save ra
 	PTR_S		a0, 0(sp)		# stash away oucp
@@ -53,6 +54,10 @@ NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	PTR_ADDIU	v0, sp, CALLFRAME_SIZ
 	REG_PROLOGUE
 	REG_S		zero, _OFFSETOF_UC_GREGS_V0(v1)
+#if defined(__mips_n32) || defined(__mips_n64)
+	/* PIC_PROLOGUE saved gp in t3 */
+	REG_S		t3, _OFFSETOF_UC_GREGS_GP(v1)
+#endif
 	REG_S		ra, _OFFSETOF_UC_GREGS_EPC(v1)
 	REG_S		v0, _OFFSETOF_UC_GREGS_SP(v1)
 	REG_EPILOGUE
