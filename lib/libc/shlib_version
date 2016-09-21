@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.267 2016/09/15 16:23:05 joerg Exp $
+#	$NetBSD: shlib_version,v 1.268 2016/09/21 10:54:36 roy Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -46,4 +46,4 @@
 # - stop all math functions from setting errno
 # - boot obsolete signal functions to libcompat
 major=12
-minor=203
+minor=204
