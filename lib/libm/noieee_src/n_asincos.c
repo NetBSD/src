@@ -1,4 +1,4 @@
-/*	$NetBSD: n_asincos.c,v 1.8 2013/11/24 14:41:53 martin Exp $	*/
+/*	$NetBSD: n_asincos.c,v 1.9 2016/09/21 14:11:40 christos Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -27,6 +27,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: n_asincos.c,v 1.9 2016/09/21 14:11:40 christos Exp $");
 
 #ifndef lint
 #if 0
@@ -86,7 +88,15 @@ static char sccsid[] = "@(#)asincos.c	8.1 (Berkeley) 6/4/93";
  *      1.99 ulps.
  */
 
+#include "namespace.h"
 #include "mathimpl.h"
+
+#ifdef __weak_alias
+__weak_alias(asinf, _asinf)
+#endif
+#ifdef __weak_alias
+__weak_alias(asin, _asin)
+#endif
 
 double
 asin(double x)
