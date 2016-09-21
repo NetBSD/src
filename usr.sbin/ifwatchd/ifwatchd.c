@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.28 2016/09/21 14:46:55 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.29 2016/09/21 14:50:48 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -262,6 +262,9 @@ dispatch(void *msg, size_t len)
 	struct ifa_msghdr *ifam;
 	enum event ev;
 
+	if (hd->rtm_version != RTM_VERSION)
+		return;
+
 	switch (hd->rtm_type) {
 	case RTM_NEWADDR:
 		ev = UP;
@@ -284,6 +287,9 @@ dispatch(void *msg, size_t len)
 	case RTM_REDIRECT:
 	case RTM_MISS:
 	case RTM_IEEE80211:
+	case RTM_ONEWADDR:
+	case RTM_ODELADDR:
+	case RTM_OCHGADDR:
 		return;
 	}
 	if (verbose)
