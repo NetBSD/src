@@ -338,9 +338,11 @@ namespace __sanitizer {
 # endif
     void *ifa_dstaddr; // (struct sockaddr *)
     void *ifa_data;
-#ifdef __NetBSD__
+# ifdef __NetBSD__
+#  if __NetBSD_Prereq__(7, 99, 39)
     unsigned int ifa_addrflags;
-#endif
+#  endif
+# endif
   };
 #endif  // !SANITIZER_ANDROID
 
