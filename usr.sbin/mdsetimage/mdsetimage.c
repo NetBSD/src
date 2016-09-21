@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.21 2016/09/21 16:25:41 christos Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.22 2016/09/21 16:29:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.21 2016/09/21 16:25:41 christos Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.22 2016/09/21 16:29:48 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -245,8 +245,8 @@ usage(void)
 	const char **list;
 
 	fprintf(stderr, "Usage: %s [-svx] [-b bfdname] [-I image_symbol] "
-	    "[-S size_symbol] [-T address] kernel image", getprogname());
-	fprintf(stderr, "supported targets:");
+	    "[-S size_symbol] [-T address] kernel image\n", getprogname());
+	fprintf(stderr, "Supported targets:");
 	for (list = bin_supported_targets(); *list != NULL; list++)
 		fprintf(stderr, " %s", *list);
 	fprintf(stderr, "\n");
