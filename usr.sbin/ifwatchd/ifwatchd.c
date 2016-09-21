@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.32 2016/09/21 20:31:31 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.33 2016/09/21 21:07:29 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #endif
 #include <net/route.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <arpa/inet.h>
 
 #include <paths.h>
@@ -61,10 +62,12 @@
 #include <syslog.h>
 
 enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
+enum addrflag { NOTREADY, DETACHED, READY };
 
 /* local functions */
 __dead static void usage(void);
 static void dispatch(const void *, size_t);
+static enum addrflag check_addrflags(int af, int addrflags);
 static void check_addrs(const struct ifa_msghdr *ifam);
 static void invoke_script(const struct sockaddr *sa, const struct sockaddr *dst,
     enum event ev, int ifindex, const char *ifname_hint);
@@ -293,6 +296,27 @@ dispatch(const void *msg, size_t len)
 	}
 }
 
+static enum addrflag
+check_addrflags(int af, int addrflags)
+{
+
+	switch (af) {
+	case AF_INET:
+		if (addrflags & IN_IFF_NOTREADY)
+			return NOTREADY;
+		if (addrflags & IN_IFF_DETACHED)
+			return DETACHED;
+		break;
+	case AF_INET6:
+		if (addrflags & IN6_IFF_NOTREADY)
+			return NOTREADY;
+		if (addrflags & IN6_IFF_DETACHED)
+			return DETACHED;
+		break;
+	}
+	return READY;
+}
+
 static void
 check_addrs(const struct ifa_msghdr *ifam)
 {
@@ -300,6 +324,7 @@ check_addrs(const struct ifa_msghdr *ifam)
 	const struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	unsigned i;
 	struct interface_data *ifd = NULL;
+	int aflag;
 	enum event ev;
 
 	if (ifam->ifam_addrs == 0)
@@ -327,6 +352,13 @@ check_addrs(const struct ifa_msghdr *ifam)
 	}
 	if (ifa != NULL && ifd != NULL) {
 		ev = ifam->ifam_type == RTM_DELADDR ? DOWN : UP;
+		aflag = check_addrflags(ifa->sa_family, ifam->ifam_addrflags);
+		if (ev == UP) {
+			if (aflag == NOTREADY)
+				return;
+			if (aflag == DETACHED)
+				return;		/* XXX set ev to DOWN? */
+		}
 		if ((ev == UP && if_is_connected(ifd->ifname)) ||
 		    (ev == DOWN && if_is_not_connected(ifd->ifname)))
 			invoke_script(ifa, brd, ev, ifd->index, ifd->ifname);
@@ -540,7 +572,8 @@ run_initial_ups(void)
 {
 	struct interface_data * ifd;
 	struct ifaddrs *res = NULL, *p;
-	int s;
+	struct sockaddr *ifa;
+	int s, aflag;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
@@ -557,15 +590,16 @@ run_initial_ups(void)
 		if (ifd == NULL)
 			continue;
 
-		if (p->ifa_addr && p->ifa_addr->sa_family == AF_LINK)
+		ifa = p->ifa_addr;
+		if (ifa != NULL && ifa->sa_family == AF_LINK)
 			invoke_script(NULL, NULL, ARRIVAL, ifd->index,
 			    NULL);
 
 		if ((p->ifa_flags & IFF_UP) == 0)
 			continue;
-		if (p->ifa_addr == NULL)
+		if (ifa == NULL)
 			continue;
-		if (p->ifa_addr->sa_family == AF_LINK) {
+		if (ifa->sa_family == AF_LINK) {
 			struct ifmediareq ifmr;
 
 			memset(&ifmr, 0, sizeof(ifmr));
@@ -581,8 +615,11 @@ run_initial_ups(void)
 			    }
 			continue;
 		}
+		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
+		if (aflag != READY)
+			continue;
 		if (if_is_connected(ifd->ifname))
-			invoke_script(p->ifa_addr, p->ifa_dstaddr, UP,
+			invoke_script(ifa, p->ifa_dstaddr, UP,
 			    ifd->index, ifd->ifname);
 	}
 	freeifaddrs(res);
