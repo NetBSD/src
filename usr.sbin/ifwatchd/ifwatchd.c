@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.31 2016/09/21 18:18:10 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.32 2016/09/21 20:31:31 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ static void check_announce(const struct if_announcemsghdr *ifan);
 static void check_carrier(const struct if_msghdr *ifm);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
-static int find_interface(int index);
+static struct interface_data * find_interface(int index);
 static void run_initial_ups(void);
 
 #ifdef SPPP_IF_SUPPORT
@@ -298,10 +298,8 @@ check_addrs(const struct ifa_msghdr *ifam)
 {
 	const char *cp = (const char *)(ifam + 1);
 	const struct sockaddr *sa, *ifa = NULL, *brd = NULL;
-	char ifname_buf[IFNAMSIZ];
-	const char *ifname;
-	int ifndx = 0;
 	unsigned i;
+	struct interface_data *ifd = NULL;
 	enum event ev;
 
 	if (ifam->ifam_addrs == 0)
@@ -314,10 +312,11 @@ check_addrs(const struct ifa_msghdr *ifam)
 			const struct sockaddr_dl *li;
 
 			li = (const struct sockaddr_dl *)sa;
-			ifndx = li->sdl_index;
-			if (!find_interface(ifndx)) {
+			if ((ifd = find_interface(li->sdl_index)) == NULL) {
 				if (verbose)
-					printf("ignoring change on interface #%d\n", ifndx);
+					printf("ignoring change"
+					    " on interface #%d\n",
+					    li->sdl_index);
 				return;
 			}
 		} else if (i == RTA_IFA)
@@ -326,18 +325,11 @@ check_addrs(const struct ifa_msghdr *ifam)
 			brd = sa;
 		RT_ADVANCE(cp, sa);
 	}
-	if (ifa != NULL) {
+	if (ifa != NULL && ifd != NULL) {
 		ev = ifam->ifam_type == RTM_DELADDR ? DOWN : UP;
-		ifname = if_indextoname(ifndx, ifname_buf);
-		if (ifname == NULL)
-			invoke_script(ifa, brd, ev, ifndx, ifname);
-		else if (ev == UP) {
-			if (if_is_connected(ifname))
-				invoke_script(ifa, brd, ev, ifndx, ifname);
-		} else if (ev == DOWN) {
-			if (if_is_not_connected(ifname))
-				invoke_script(ifa, brd, ev, ifndx, ifname);
-		}
+		if ((ev == UP && if_is_connected(ifd->ifname)) ||
+		    (ev == DOWN && if_is_not_connected(ifd->ifname)))
+			invoke_script(ifa, brd, ev, ifd->index, ifd->ifname);
 	}
 }
 
@@ -532,15 +524,15 @@ free_interfaces(void)
 	}
 }
 
-static int
+static struct interface_data *
 find_interface(int idx)
 {
 	struct interface_data * p;
 
 	SLIST_FOREACH(p, &ifs, next)
 		if (p->index == idx)
-			return 1;
-	return 0;
+			return p;
+	return NULL;
 }
 
 static void
