@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.30 2016/09/21 16:47:35 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.31 2016/09/21 18:18:10 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -65,12 +65,12 @@ enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
 /* local functions */
 __dead static void usage(void);
 static void dispatch(const void *, size_t);
-static void check_addrs(const char *cp, int addrs, enum event ev);
+static void check_addrs(const struct ifa_msghdr *ifam);
 static void invoke_script(const struct sockaddr *sa, const struct sockaddr *dst,
     enum event ev, int ifindex, const char *ifname_hint);
 static void list_interfaces(const char *ifnames);
 static void check_announce(const struct if_announcemsghdr *ifan);
-static void check_carrier(int if_index, int carrier);
+static void check_carrier(const struct if_msghdr *ifm);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
 static int find_interface(int index);
@@ -259,28 +259,22 @@ static void
 dispatch(const void *msg, size_t len)
 {
 	const struct rt_msghdr *hd = msg;
-	const struct if_msghdr *ifmp;
-	const struct ifa_msghdr *ifam;
-	enum event ev;
 
 	if (hd->rtm_version != RTM_VERSION)
 		return;
 
 	switch (hd->rtm_type) {
 	case RTM_NEWADDR:
-		ev = UP;
-		goto work;
 	case RTM_DELADDR:
-		ev = DOWN;
-		goto work;
+		check_addrs(msg);
+		break;
 	case RTM_IFANNOUNCE:
 		rescan_interfaces();
 		check_announce(msg);
-		return;
+		break;
 	case RTM_IFINFO:
-		ifmp = (const struct if_msghdr*)msg;
-		check_carrier(ifmp->ifm_index, ifmp->ifm_data.ifi_link_state);
-		return;
+		check_carrier(msg);
+		break;
 	case RTM_ADD:
 	case RTM_DELETE:
 	case RTM_CHANGE:
@@ -291,30 +285,29 @@ dispatch(const void *msg, size_t len)
 	case RTM_ONEWADDR:
 	case RTM_ODELADDR:
 	case RTM_OCHGADDR:
-		return;
+		break;
+	default:
+		if (verbose)
+			printf("unknown message ignored (%d)\n", hd->rtm_type);
+		break;
 	}
-	if (verbose)
-		printf("unknown message ignored (%d)\n", hd->rtm_type);
-	return;
-
-work:
-	ifam = (const struct ifa_msghdr *)msg;
-	check_addrs((const char *)(ifam + 1), ifam->ifam_addrs, ev);
 }
 
 static void
-check_addrs(const char *cp, int addrs, enum event ev)
+check_addrs(const struct ifa_msghdr *ifam)
 {
+	const char *cp = (const char *)(ifam + 1);
 	const struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	char ifname_buf[IFNAMSIZ];
 	const char *ifname;
 	int ifndx = 0;
 	unsigned i;
+	enum event ev;
 
-	if (addrs == 0)
+	if (ifam->ifam_addrs == 0)
 		return;
 	for (i = 1; i; i <<= 1) {
-		if ((i & addrs) == 0)
+		if ((i & ifam->ifam_addrs) == 0)
 			continue;
 		sa = (const struct sockaddr *)cp;
 		if (i == RTA_IFP) {
@@ -334,8 +327,9 @@ check_addrs(const char *cp, int addrs, enum event ev)
 		RT_ADVANCE(cp, sa);
 	}
 	if (ifa != NULL) {
+		ev = ifam->ifam_type == RTM_DELADDR ? DOWN : UP;
 		ifname = if_indextoname(ifndx, ifname_buf);
-		if (ifname == NULL || ev < UP)
+		if (ifname == NULL)
 			invoke_script(ifa, brd, ev, ifndx, ifname);
 		else if (ev == UP) {
 			if (if_is_connected(ifname))
@@ -444,13 +438,14 @@ list_interfaces(const char *ifnames)
 }
 
 static void
-check_carrier(int if_index, int carrier_status)
+check_carrier(const struct if_msghdr *ifm)
 {
 	struct interface_data * p;
+	int carrier_status;
 	enum event ev;
 
 	SLIST_FOREACH(p, &ifs, next)
-		if (p->index == if_index)
+		if (p->index == ifm->ifm_index)
 			break;
 
 	if (p == NULL)
@@ -462,7 +457,7 @@ check_carrier(int if_index, int carrier_status)
 	 * - this is the first time we've been called, and
 	 * inhibit_initial is not set
 	 */
-
+	carrier_status = ifm->ifm_data.ifi_link_state;
 	if ((carrier_status != p->last_carrier_status) ||
 	    ((p->last_carrier_status == -1) && !inhibit_initial)) {
 		switch (carrier_status) {
@@ -477,7 +472,7 @@ check_carrier(int if_index, int carrier_status)
 				printf("unknown link status ignored\n");
 			return;
 		}
-		invoke_script(NULL, NULL, ev, if_index, p->ifname);
+		invoke_script(NULL, NULL, ev, ifm->ifm_index, p->ifname);
 		p->last_carrier_status = carrier_status;
 	}
 }
