@@ -13,6 +13,9 @@
 #ifndef SANITIZER_PLATFORM_LIMITS_POSIX_H
 #define SANITIZER_PLATFORM_LIMITS_POSIX_H
 
+#ifdef __NetBSD__
+#include <sys/param.h>
+#endif
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_platform.h"
 
