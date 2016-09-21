@@ -1,4 +1,4 @@
-/*	$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $	*/
+/*	$NetBSD: swapcontext.S,v 1.6 2016/09/21 06:41:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,11 +33,11 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: swapcontext.S,v 1.5 2012/09/12 02:00:52 manu Exp $")
+	RCSID("$NetBSD: swapcontext.S,v 1.6 2016/09/21 06:41:42 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 	.set	reorder
-	
+
 NESTED(swapcontext, CALLFRAME_SIZ, ra)
 	.mask	0x80000030, (CALLFRAME_RA - CALLFRAME_SIZ)
 	PTR_SUBU	sp, sp, CALLFRAME_SIZ
