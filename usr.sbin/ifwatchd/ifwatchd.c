@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.29 2016/09/21 14:50:48 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.30 2016/09/21 16:47:35 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -64,11 +64,12 @@ enum event { ARRIVAL, DEPARTURE, UP, DOWN, CARRIER, NO_CARRIER };
 
 /* local functions */
 __dead static void usage(void);
-static void dispatch(void*, size_t);
-static void check_addrs(char *cp, int addrs, enum event ev);
-static void invoke_script(struct sockaddr *sa, struct sockaddr *dst, enum event ev, int ifindex, const char *ifname_hint);
+static void dispatch(const void *, size_t);
+static void check_addrs(const char *cp, int addrs, enum event ev);
+static void invoke_script(const struct sockaddr *sa, const struct sockaddr *dst,
+    enum event ev, int ifindex, const char *ifname_hint);
 static void list_interfaces(const char *ifnames);
-static void check_announce(struct if_announcemsghdr *ifan);
+static void check_announce(const struct if_announcemsghdr *ifan);
 static void check_carrier(int if_index, int carrier);
 static void rescan_interfaces(void);
 static void free_interfaces(void);
@@ -255,11 +256,11 @@ usage(void)
 }
 
 static void
-dispatch(void *msg, size_t len)
+dispatch(const void *msg, size_t len)
 {
-	struct rt_msghdr *hd = msg;
-	struct if_msghdr *ifmp;
-	struct ifa_msghdr *ifam;
+	const struct rt_msghdr *hd = msg;
+	const struct if_msghdr *ifmp;
+	const struct ifa_msghdr *ifam;
 	enum event ev;
 
 	if (hd->rtm_version != RTM_VERSION)
@@ -274,10 +275,10 @@ dispatch(void *msg, size_t len)
 		goto work;
 	case RTM_IFANNOUNCE:
 		rescan_interfaces();
-		check_announce((struct if_announcemsghdr *)msg);
+		check_announce(msg);
 		return;
 	case RTM_IFINFO:
-		ifmp = (struct if_msghdr*)msg;
+		ifmp = (const struct if_msghdr*)msg;
 		check_carrier(ifmp->ifm_index, ifmp->ifm_data.ifi_link_state);
 		return;
 	case RTM_ADD:
@@ -297,14 +298,14 @@ dispatch(void *msg, size_t len)
 	return;
 
 work:
-	ifam = (struct ifa_msghdr *)msg;
-	check_addrs((char *)(ifam + 1), ifam->ifam_addrs, ev);
+	ifam = (const struct ifa_msghdr *)msg;
+	check_addrs((const char *)(ifam + 1), ifam->ifam_addrs, ev);
 }
 
 static void
-check_addrs(char *cp, int addrs, enum event ev)
+check_addrs(const char *cp, int addrs, enum event ev)
 {
-	struct sockaddr *sa, *ifa = NULL, *brd = NULL;
+	const struct sockaddr *sa, *ifa = NULL, *brd = NULL;
 	char ifname_buf[IFNAMSIZ];
 	const char *ifname;
 	int ifndx = 0;
@@ -315,9 +316,11 @@ check_addrs(char *cp, int addrs, enum event ev)
 	for (i = 1; i; i <<= 1) {
 		if ((i & addrs) == 0)
 			continue;
-		sa = (struct sockaddr *)cp;
+		sa = (const struct sockaddr *)cp;
 		if (i == RTA_IFP) {
-			struct sockaddr_dl * li = (struct sockaddr_dl*)sa;
+			const struct sockaddr_dl *li;
+
+			li = (const struct sockaddr_dl *)sa;
 			ifndx = li->sdl_index;
 			if (!find_interface(ifndx)) {
 				if (verbose)
@@ -345,8 +348,8 @@ check_addrs(char *cp, int addrs, enum event ev)
 }
 
 static void
-invoke_script(struct sockaddr *sa, struct sockaddr *dest, enum event ev,
-    int ifindex, const char *ifname_hint)
+invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
+    enum event ev, int ifindex, const char *ifname_hint)
 {
 	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ];
 	const char * volatile ifname;
@@ -360,7 +363,7 @@ invoke_script(struct sockaddr *sa, struct sockaddr *dest, enum event ev,
 	if (sa != NULL && sa->sa_family == AF_INET6) {
 		struct sockaddr_in6 sin6;
 
-		(void) memcpy(&sin6, (struct sockaddr_in6 *)sa, sizeof (sin6));
+		memcpy(&sin6, (const struct sockaddr_in6 *)sa, sizeof (sin6));
 		if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
 			return;
 	}
@@ -480,7 +483,7 @@ check_carrier(int if_index, int carrier_status)
 }
 
 static void
-check_announce(struct if_announcemsghdr *ifan)
+check_announce(const struct if_announcemsghdr *ifan)
 {
 	struct interface_data * p;
 	const char *ifname = ifan->ifan_name;
