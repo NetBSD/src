@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.22 2016/09/21 16:29:48 christos Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.23 2016/09/22 08:43:26 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.22 2016/09/21 16:29:48 christos Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.23 2016/09/22 08:43:26 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,8 +167,9 @@ main(int argc, char *argv[])
 		if ((uintmax_t)fssb.st_size != (size_t)fssb.st_size)
 			errx(1, "fs image is too big");
 		if (fssb.st_size > md_root_size_value)
-			errx(1, "fs image (%td bytes) too big for buffer"
-			    " (%u bytes)", fssb.st_size, md_root_size_value);
+			errx(1, "fs image (%jd bytes) too big for buffer"
+			    " (%u bytes)", (intmax_t) fssb.st_size,
+			    md_root_size_value);
 		left_to_copy = fssb.st_size;
 	}
 
@@ -219,8 +220,8 @@ main(int argc, char *argv[])
 		char buf[sizeof(uint32_t)];
 
 		if (verbose)
-			fprintf(stderr, "setting md_root_size to %llu\n",
-			    (unsigned long long) fssb.st_size);
+			fprintf(stderr, "setting md_root_size to %jd\n",
+			    (intmax_t) fssb.st_size);
 		if (lseek(kfd, md_root_size_offset, SEEK_SET) !=
 		    (off_t)md_root_size_offset)
 			err(1, "seek %s", kfile);
