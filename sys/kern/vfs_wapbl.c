@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.79 2016/09/22 16:20:56 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.80 2016/09/22 16:22:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.79 2016/09/22 16:20:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.80 2016/09/22 16:22:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -502,7 +502,6 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	/* XXX fix actual number of buffers reserved per filesystem. */
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
 
-	/* Calculate number of blocks described in a blocklist header */
 	wl->wl_brperjblock = ((1<<wl->wl_log_dev_bshift)
 	    - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
 	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
@@ -2076,6 +2075,7 @@ wapbl_transaction_len(struct wapbl *wl)
 	int blocklen = 1<<wl->wl_log_dev_bshift;
 	size_t len;
 
+	/* Calculate number of blocks described in a blocklist header */
 	len = wl->wl_bcount;
 	len += howmany(wl->wl_bufcount, wl->wl_brperjblock) * blocklen;
 	len += howmany(wl->wl_dealloccnt, wl->wl_brperjblock) * blocklen;
