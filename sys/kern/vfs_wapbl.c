@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.79 2016/09/22 16:20:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.78 2016/05/19 18:32:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.79 2016/09/22 16:20:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -200,6 +200,10 @@ struct wapbl {
 
 #ifdef WAPBL_DEBUG_BUFBYTES
 	size_t wl_unsynced_bufbytes; /* Byte count of unsynced buffers */
+#endif
+
+#if _KERNEL
+	int wl_brperjblock;	/* r Block records per journal block */
 #endif
 
 	daddr_t *wl_deallocblks;/* lm:	address of block */
@@ -497,6 +501,12 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	/* XXX maybe use filesystem fragment size instead of 1024 */
 	/* XXX fix actual number of buffers reserved per filesystem. */
 	wl->wl_bufcount_max = (nbuf / 2) * 1024;
+
+	/* Calculate number of blocks described in a blocklist header */
+	wl->wl_brperjblock = ((1<<wl->wl_log_dev_bshift)
+	    - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
+	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
+	KASSERT(wl->wl_brperjblock > 0);
 
 	/* XXX tie this into resource estimation */
 	wl->wl_dealloclim = wl->wl_bufbytes_max / mp->mnt_stat.f_bsize / 2;
@@ -2065,17 +2075,10 @@ wapbl_transaction_len(struct wapbl *wl)
 {
 	int blocklen = 1<<wl->wl_log_dev_bshift;
 	size_t len;
-	int bph;
-
-	/* Calculate number of blocks described in a blocklist header */
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
-
-	KASSERT(bph > 0);
 
 	len = wl->wl_bcount;
-	len += howmany(wl->wl_bufcount, bph) * blocklen;
-	len += howmany(wl->wl_dealloccnt, bph) * blocklen;
+	len += howmany(wl->wl_bufcount, wl->wl_brperjblock) * blocklen;
+	len += howmany(wl->wl_dealloccnt, wl->wl_brperjblock) * blocklen;
 	len += wapbl_transaction_inodes_len(wl);
 
 	return len;
@@ -2228,16 +2231,12 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 	struct wapbl_wc_blocklist *wc =
 	    (struct wapbl_wc_blocklist *)wl->wl_wc_scratch;
 	int blocklen = 1<<wl->wl_log_dev_bshift;
-	int bph;
 	struct buf *bp;
 	off_t off = *offp;
 	int error;
 	size_t padding;
 
 	KASSERT(rw_write_held(&wl->wl_rwlock));
-
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
 
 	bp = LIST_FIRST(&wl->wl_bufs);
 
@@ -2250,7 +2249,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 		wc->wc_type = WAPBL_WC_BLOCKS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
-		while (bp && (wc->wc_blkcount < bph)) {
+		while (bp && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			/*
 			 * Make sure all the physical block numbers are up to
 			 * date.  If this is not always true on a given
@@ -2289,7 +2288,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			return error;
 		bp = obp;
 		cnt = 0;
-		while (bp && (cnt++ < bph)) {
+		while (bp && (cnt++ < wl->wl_brperjblock)) {
 			error = wapbl_circ_write(wl, bp->b_data,
 			    bp->b_bcount, &off);
 			if (error)
@@ -2326,22 +2325,18 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 	    (struct wapbl_wc_blocklist *)wl->wl_wc_scratch;
 	int i;
 	int blocklen = 1<<wl->wl_log_dev_bshift;
-	int bph;
 	off_t off = *offp;
 	int error;
 
 	if (wl->wl_dealloccnt == 0)
 		return 0;
 
-	bph = (blocklen - offsetof(struct wapbl_wc_blocklist, wc_blocks)) /
-	    sizeof(((struct wapbl_wc_blocklist *)0)->wc_blocks[0]);
-
 	i = 0;
 	while (i < wl->wl_dealloccnt) {
 		wc->wc_type = WAPBL_WC_REVOCATIONS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
-		while ((i < wl->wl_dealloccnt) && (wc->wc_blkcount < bph)) {
+		while ((i < wl->wl_dealloccnt) && (wc->wc_blkcount < wl->wl_brperjblock)) {
 			wc->wc_blocks[wc->wc_blkcount].wc_daddr =
 			    wl->wl_deallocblks[i];
 			wc->wc_blocks[wc->wc_blkcount].wc_dlen =
