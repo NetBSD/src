@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.258 2016/04/27 21:15:40 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.259 2016/09/23 14:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.258 2016/04/27 21:15:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.259 2016/09/23 14:09:39 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -651,7 +651,7 @@ retry:
 	KASSERT(p->p_nlwps == 1);
 }
 
-static int
+int
 do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
     struct wrusage *wru, siginfo_t *si)
 {
