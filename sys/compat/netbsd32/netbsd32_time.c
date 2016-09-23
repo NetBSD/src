@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.46 2015/10/31 17:04:39 njoly Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.47 2016/09/23 14:09:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.46 2015/10/31 17:04:39 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.47 2016/09/23 14:09:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -566,3 +566,34 @@ netbsd32_timer_getoverrun(struct lwp *l, const struct netbsd32_timer_getoverrun_
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_getoverrun(l, (void *)&ua, retval);
 }
+
+int
+netbsd32_clock_getcpuclockid2(struct lwp *l,
+    const struct netbsd32_clock_getcpuclockid2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) id;
+		syscallarg(netbsd32_clockidp_t) clock_id;
+	} */
+	pid_t pid;
+	lwpid_t lid;
+	clockid_t clock_id;
+	id_t id = SCARG(uap, id);
+
+	switch (SCARG(uap, idtype)) {
+	case P_PID:
+		pid = id == 0 ? l->l_proc->p_pid : id;
+		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
+		break;
+	case P_LWPID:
+		lid = id == 0 ? l->l_lid : id;
+		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
+		break;
+	default:
+		return EINVAL;
+	}
+	return copyout(&clock_id, SCARG_P32(uap, clock_id), sizeof(clock_id));
+}
+

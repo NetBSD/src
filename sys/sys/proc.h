@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.332 2016/09/13 07:39:45 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.333 2016/09/23 14:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <machine/pcb.h>
 #include <sys/aio.h>
+#include <sys/idtype.h>
 #include <sys/rwlock.h>
 #include <sys/mqueue.h>
 #include <sys/mutex.h>
@@ -500,6 +501,9 @@ int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int, int) __dead;
 int	kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval);
 int	do_sys_wait(int *, int *, int, struct rusage *);
+int	do_sys_waitid(idtype_t, id_t, int *, int *, int, struct wrusage *,
+	    siginfo_t *);
+
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 pid_t	proc_alloc_pid(struct proc *);
