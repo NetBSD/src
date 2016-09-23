@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.259 2016/09/23 14:09:39 skrll Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.260 2016/09/23 14:16:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.259 2016/09/23 14:09:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.260 2016/09/23 14:16:44 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -658,7 +658,7 @@ do_sys_waitid(idtype_t idtype, id_t id, int *pid, int *status, int options,
 	proc_t *child;
 	int error;
 
-	
+
 	if (wru != NULL)
 		memset(wru, 0, sizeof(*wru));
 	if (si != NULL)
@@ -793,7 +793,7 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
 	retval[0] = pid; 	/* tell userland who it was */
 
 #if 0
-	/* 
+	/*
 	 * should we copyout if there was no process, hence no useful data?
 	 * We don't for an old sytle wait4() (etc) but I believe
 	 * FreeBSD does for wait6(), so a tossup...  Go with FreeBSD for now.
@@ -1036,7 +1036,7 @@ find_stopped_child(struct proc *parent, idtype_t idtype, id_t id, int options,
 				}
 				if (si) {
 					si->si_status = child->p_xsig;
-					si->si_code = 
+					si->si_code =
 					    (child->p_slflag & PSL_TRACED) ?
 					    CLD_TRAPPED : CLD_STOPPED;
 				}
@@ -1131,7 +1131,7 @@ proc_free(struct proc *p, struct wrusage *wru)
 	p->p_xexit = 0;
 
 	/*
-	 * At this point we are going to start freeing the final resources. 
+	 * At this point we are going to start freeing the final resources.
 	 * If anyone tries to access the proc structure after here they will
 	 * get a shock - bits are missing.  Attempt to make it hard!  We
 	 * don't bother with any further locking past this point.

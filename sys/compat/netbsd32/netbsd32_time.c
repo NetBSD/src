@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.47 2016/09/23 14:09:39 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.48 2016/09/23 14:16:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.47 2016/09/23 14:09:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.48 2016/09/23 14:16:32 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.47 2016/09/23 14:09:39 skrll Exp
 #ifdef NTP
 
 int
-netbsd32___ntp_gettime50(struct lwp *l, 
+netbsd32___ntp_gettime50(struct lwp *l,
     const struct netbsd32___ntp_gettime50_args *uap, register_t *retval)
 {
 	/* {
@@ -83,7 +83,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 
 #ifdef COMPAT_50
 int
-compat_50_netbsd32_ntp_gettime(struct lwp *l, 
+compat_50_netbsd32_ntp_gettime(struct lwp *l,
     const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
 	/* {
@@ -327,7 +327,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 		if (error)
 			return (error);
 	}
-	
+
 	if (SCARG_P32(uap, delta)) {
 		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)

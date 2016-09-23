@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.111 2016/09/23 14:12:00 skrll Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.112 2016/09/23 14:16:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -276,7 +276,7 @@ struct netbsd32_export_args30 {
 	int	ex_addrlen;		/* and the net address length */
 	netbsd32_pointer_t ex_mask;	/* mask of valid bits in saddr */
 	int	ex_masklen;		/* and the smask length */
-	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */ 
+	netbsd32_charp ex_indexfile;	/* index file for WebNFS URLs */
 };
 
 /* from <sys/poll.h> */
