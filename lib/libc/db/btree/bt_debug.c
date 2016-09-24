@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.17 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.18 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_debug.c,v 1.17 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.18 2016/09/24 21:31:25 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -111,7 +111,7 @@ __bt_dump(DB *dbp)
 #undef X
 
 	for (i = P_ROOT; i < t->bt_mp->npages &&
-	    (h = mpool_getf(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
+	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
 		__bt_dpage(h);
 
 	(void)fflush(tracefp);
@@ -183,7 +183,7 @@ __bt_dnpage(DB *dbp, pgno_t pgno)
 	__bt_dinit();
 
 	t = dbp->internal;
-	if ((h = mpool_getf(t->bt_mp, pgno, MPOOL_IGNOREPIN)) != NULL) {
+	if ((h = mpool_get(t->bt_mp, pgno, MPOOL_IGNOREPIN)) != NULL) {
 		__bt_dpage(h);
 		(void)mpool_put(t->bt_mp, h, 0);
 	}
@@ -312,7 +312,7 @@ __bt_stat(DB *dbp)
 	pcont = pinternal = pleaf = 0;
 	nkeys = ifree = lfree = 0;
 	for (i = P_ROOT; i < t->bt_mp->npages &&
-	    (h = mpool_getf(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
+	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
 		switch (h->flags & P_TYPE) {
 		case P_BINTERNAL:
 		case P_RINTERNAL:
@@ -334,7 +334,7 @@ __bt_stat(DB *dbp)
 
 	/* Count the levels of the tree. */
 	for (i = P_ROOT, levels = 0 ;; ++levels) {
-		h = mpool_getf(t->bt_mp, i, MPOOL_IGNOREPIN);
+		h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN);
 		if (h->flags & (P_BLEAF|P_RLEAF)) {
 			if (levels == 0)
 				levels = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_split.c,v 1.21 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_split.c,v 1.22 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_split.c,v 1.21 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_split.c,v 1.22 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -153,7 +153,7 @@ __bt_split(BTREE *t, PAGE *sp, const DBT *key, const DBT *data, int flags,
 		rchild = r;
 
 		/* Get the parent page. */
-		if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
 			goto err2;
 
 	 	/*
@@ -401,7 +401,7 @@ bt_page(BTREE *t, PAGE *h, PAGE **lp, PAGE **rp, indx_t *skip, size_t ilen)
 
 	/* Fix up the previous pointer of the page after the split page. */
 	if (h->nextpg != P_INVALID) {
-		if ((tp = mpool_getf(t->bt_mp, h->nextpg, 0)) == NULL) {
+		if ((tp = mpool_get(t->bt_mp, h->nextpg, 0)) == NULL) {
 			free(l);
 			/* XXX mpool_free(t->bt_mp, r->pgno); */
 			return (NULL);
@@ -799,7 +799,7 @@ bt_preserve(BTREE *t, pgno_t pg)
 {
 	PAGE *h;
 
-	if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+	if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 		return (RET_ERROR);
 	h->flags |= P_PRESERVE;
 	mpool_put(t->bt_mp, h, MPOOL_DIRTY);
