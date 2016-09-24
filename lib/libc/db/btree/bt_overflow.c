@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_overflow.c,v 1.21 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_overflow.c,v 1.22 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_overflow.c,v 1.21 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_overflow.c,v 1.22 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -112,7 +112,7 @@ __ovfl_get(BTREE *t, void *p, size_t *ssz, void **buf, size_t *bufsz)
 	_DBFIT(temp, uint32_t);
 	plen = (uint32_t)temp;
 	for (p = *buf;; p = (char *)p + nb, pg = h->nextpg) {
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return (RET_ERROR);
 
 		nb = MIN(sz, plen);
@@ -208,7 +208,7 @@ __ovfl_delete(BTREE *t, void *p)
 	if (pg == P_INVALID || sz == 0)
 		abort();
 #endif
-	if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+	if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 		return (RET_ERROR);
 
 	/* Don't delete chains used by internal pages. */
@@ -226,7 +226,7 @@ __ovfl_delete(BTREE *t, void *p)
 		__bt_free(t, h);
 		if (sz <= plen)
 			break;
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return (RET_ERROR);
 	}
 	return (RET_SUCCESS);
