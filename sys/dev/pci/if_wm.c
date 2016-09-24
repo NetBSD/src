@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.227.2.19 2016/05/06 18:43:34 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.227.2.20 2016/09/24 13:14:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.19 2016/05/06 18:43:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.227.2.20 2016/09/24 13:14:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6003,7 +6003,7 @@ wm_nvm_version_invm(struct wm_softc *sc)
 static void
 wm_nvm_version(struct wm_softc *sc)
 {
-	uint16_t major, minor, build, patch;
+	uint16_t major, minor, patch, build = 0; /* XXX old gcc */
 	uint16_t uid0, uid1;
 	uint16_t nvm_data;
 	uint16_t off;
