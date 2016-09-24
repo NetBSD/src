@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338.8.7 2015/11/15 21:02:13 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.8.8 2016/09/24 13:18:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5202,12 +5202,12 @@ ENTRY(cpu_switchto)
 	brz,pt	%o1, Lsw_noras		! no, skip RAS check
 	 LDPTR	[%i1 + L_TF], %l3	! pointer to trap frame
 	call	_C_LABEL(ras_lookup)
-	 LDPTR	[%l3 + TF_PC], %o1
+	 ldx	[%l3 + TF_PC], %o1
 	cmp	%o0, -1
-	be,pt	%xcc, Lsw_noras
+	be,pt	CCCR, Lsw_noras
 	 add	%o0, 4, %o1
-	STPTR	%o0, [%l3 + TF_PC]	! store rewound %pc
-	STPTR	%o1, [%l3 + TF_NPC]	! and %npc
+	stx	%o0, [%l3 + TF_PC]	! store rewound %pc
+	stx	%o1, [%l3 + TF_NPC]	! and %npc
 
 Lsw_noras:
 
