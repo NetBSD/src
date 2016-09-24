@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsreg.h,v 1.5 2016/09/24 14:55:16 skrll Exp $	*/
+/*	$NetBSD: sl811hsreg.h,v 1.6 2016/09/24 15:06:29 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -88,8 +88,6 @@
 #define SL11_EPSTAT_ERRBITS	( \
     SL11_EPSTAT_ERROR | \
     SL11_EPSTAT_TIMEOUT | \
-    SL11_EPSTAT_SETUP | \
-    SL11_EPSTAT_OVERFLOW | \
     SL11_EPSTAT_NAK | \
     SL11_EPSTAT_STALL \
     )
