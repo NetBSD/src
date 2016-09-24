@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $	*/
+/*	$NetBSD: bt_delete.c,v 1.18 2016/09/24 20:11:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $");
+__RCSID("$NetBSD: bt_delete.c,v 1.18 2016/09/24 20:11:12 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -53,7 +53,6 @@ __RCSID("$NetBSD: bt_delete.c,v 1.17 2009/01/29 02:02:36 lukem Exp $");
 static int __bt_bdelete(BTREE *, const DBT *);
 static int __bt_curdel(BTREE *, const DBT *, PAGE *, u_int);
 static int __bt_pdelete(BTREE *, PAGE *);
-static int __bt_relink(BTREE *, PAGE *);
 static int __bt_stkacq(BTREE *, PAGE **, CURSOR *);
 
 /*
@@ -97,7 +96,7 @@ __bt_delete(const DB *dbp, const DBT *key, u_int flags)
 		if (F_ISSET(c, CURS_INIT)) {
 			if (F_ISSET(c, CURS_ACQUIRE | CURS_AFTER | CURS_BEFORE))
 				return (RET_SPECIAL);
-			if ((h = mpool_get(t->bt_mp, c->pg.pgno, 0)) == NULL)
+			if ((h = mpool_getf(t->bt_mp, c->pg.pgno, 0)) == NULL)
 				return (RET_ERROR);
 
 			/*
@@ -181,7 +180,7 @@ __bt_stkacq(BTREE *t, PAGE **hp, CURSOR *c)
 		/* Move up the stack. */
 		for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
 			/* Get the parent page. */
-			if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
+			if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
 				return (1);
 
 			/* Move to the next index. */
@@ -204,12 +203,12 @@ __bt_stkacq(BTREE *t, PAGE **hp, CURSOR *c)
 			mpool_put(t->bt_mp, h, 0);
 
 			/* Get the next level down. */
-			if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
+			if ((h = mpool_getf(t->bt_mp, pgno, 0)) == NULL)
 				return (1);
 			idx = 0;
 		}
 		mpool_put(t->bt_mp, h, 0);
-		if ((h = mpool_get(t->bt_mp, nextpg, 0)) == NULL)
+		if ((h = mpool_getf(t->bt_mp, nextpg, 0)) == NULL)
 			return (1);
 	}
 
@@ -236,7 +235,7 @@ __bt_stkacq(BTREE *t, PAGE **hp, CURSOR *c)
 		/* Move up the stack. */
 		for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
 			/* Get the parent page. */
-			if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
+			if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
 				return (1);
 
 			/* Move to the next index. */
@@ -258,20 +257,20 @@ __bt_stkacq(BTREE *t, PAGE **hp, CURSOR *c)
 			mpool_put(t->bt_mp, h, 0);
 
 			/* Get the next level down. */
-			if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
+			if ((h = mpool_getf(t->bt_mp, pgno, 0)) == NULL)
 				return (1);
 
 			idx = NEXTINDEX(h) - 1;
 			BT_PUSH(t, pgno, idx);
 		}
 		mpool_put(t->bt_mp, h, 0);
-		if ((h = mpool_get(t->bt_mp, prevpg, 0)) == NULL)
+		if ((h = mpool_getf(t->bt_mp, prevpg, 0)) == NULL)
 			return (1);
 	}
 	
 
 ret:	mpool_put(t->bt_mp, h, 0);
-	return ((*hp = mpool_get(t->bt_mp, c->pg.pgno, 0)) == NULL);
+	return ((*hp = mpool_getf(t->bt_mp, c->pg.pgno, 0)) == NULL);
 }
 
 /*
@@ -394,7 +393,7 @@ __bt_pdelete(BTREE *t, PAGE *h)
 	 */
 	while ((parent = BT_POP(t)) != NULL) {
 		/* Get the parent page. */
-		if ((pg = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
+		if ((pg = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
 			return (RET_ERROR);
 		
 		idx = parent->index;
@@ -577,7 +576,7 @@ __bt_curdel(BTREE *t, const DBT *key, PAGE *h, u_int idx)
 		}
 		/* Check previous key if at the beginning of the page. */
 		if (idx == 0 && h->prevpg != P_INVALID) {
-			if ((pg = mpool_get(t->bt_mp, h->prevpg, 0)) == NULL)
+			if ((pg = mpool_getf(t->bt_mp, h->prevpg, 0)) == NULL)
 				return (RET_ERROR);
 			e.page = pg;
 			e.index = NEXTINDEX(pg) - 1;
@@ -589,7 +588,7 @@ __bt_curdel(BTREE *t, const DBT *key, PAGE *h, u_int idx)
 		}
 		/* Check next key if at the end of the page. */
 		if (idx == (unsigned)(NEXTINDEX(h) - 1) && h->nextpg != P_INVALID) {
-			if ((pg = mpool_get(t->bt_mp, h->nextpg, 0)) == NULL)
+			if ((pg = mpool_getf(t->bt_mp, h->nextpg, 0)) == NULL)
 				return (RET_ERROR);
 			e.page = pg;
 			e.index = 0;
@@ -621,19 +620,19 @@ dup2:				c->pg.pgno = e.page->pgno;
  *	t:	tree
  *	h:	page to be deleted
  */
-static int
+int
 __bt_relink(BTREE *t, PAGE *h)
 {
 	PAGE *pg;
 
 	if (h->nextpg != P_INVALID) {
-		if ((pg = mpool_get(t->bt_mp, h->nextpg, 0)) == NULL)
+		if ((pg = mpool_getf(t->bt_mp, h->nextpg, 0)) == NULL)
 			return (RET_ERROR);
 		pg->prevpg = h->prevpg;
 		mpool_put(t->bt_mp, pg, MPOOL_DIRTY);
 	}
 	if (h->prevpg != P_INVALID) {
-		if ((pg = mpool_get(t->bt_mp, h->prevpg, 0)) == NULL)
+		if ((pg = mpool_getf(t->bt_mp, h->prevpg, 0)) == NULL)
 			return (RET_ERROR);
 		pg->nextpg = h->nextpg;
 		mpool_put(t->bt_mp, pg, MPOOL_DIRTY);
