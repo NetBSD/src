@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.30 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.31 2016/09/24 20:59:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.30 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.31 2016/09/24 20:59:51 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -174,6 +174,8 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 	struct fs *fs = ump->um_fs;
 	int i, error __diagused;
 
+	UFS_WAPBL_JLOCK_ASSERT(mp);
+
 #ifdef WAPBL_DEBUG_INODES
 	ufs_wapbl_verify_inodes(mp, "ffs_wapbl_sync_metadata");
 #endif
@@ -187,10 +189,12 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		    FFS_DBTOFSB(fs, deallocblks[i]), dealloclens[i], -1);
 	}
 
-	fs->fs_fmod = 0;
-	fs->fs_time = time_second;
-	error = ffs_cgupdate(ump, 0);
-	KASSERT(error == 0);
+	if (fs->fs_fmod != 0) {
+		fs->fs_fmod = 0;
+		fs->fs_time = time_second;
+		error = ffs_cgupdate(ump, 0);
+		KASSERT(error != 0);
+	}
 }
 
 void
