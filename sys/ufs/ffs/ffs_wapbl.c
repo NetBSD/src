@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.31 2016/09/24 20:59:51 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.32 2016/09/24 21:00:54 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.31 2016/09/24 20:59:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.32 2016/09/24 21:00:54 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -193,7 +193,7 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 		fs->fs_fmod = 0;
 		fs->fs_time = time_second;
 		error = ffs_cgupdate(ump, 0);
-		KASSERT(error != 0);
+		KASSERT(error == 0);
 	}
 }
 
