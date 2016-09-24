@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.786 2016/09/24 20:13:48 christos Exp $
+# $NetBSD: shl.mi,v 1.787 2016/09/24 23:12:54 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -432,7 +432,7 @@
 ./usr/lib/libpcap.so.5.1			base-net-shlib		compatfile
 ./usr/lib/libpci.so				base-sys-shlib		compatfile
 ./usr/lib/libpci.so.2				base-sys-shlib		compatfile
-./usr/lib/libpci.so.2.1				base-sys-shlib		compatfile
+./usr/lib/libpci.so.2.2				base-sys-shlib		compatfile
 ./usr/lib/libperfuse.so				base-perfuse-shlib	compatfile
 ./usr/lib/libperfuse.so.0			base-perfuse-shlib	compatfile
 ./usr/lib/libperfuse.so.0.0			base-perfuse-shlib	compatfile

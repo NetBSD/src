@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.29 2015/08/24 23:55:04 pooka Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.29 2015/08/24 23:55:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -80,6 +80,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct pciio_bdf_cfgreg *bdfr;
 	struct pciio_businfo *binfo;
 	struct pciio_drvname *dname;
+	struct pciio_drvnameonbus *dnameonbus;
 	pcitag_t tag;
 
 	switch (cmd) {
@@ -118,6 +119,29 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			return ENXIO;
 		strlcpy(dname->name, device_xname(child->c_dev),
 			sizeof dname->name);
+		return 0;
+
+	case PCI_IOC_DRVNAMEONBUS:
+		dnameonbus = data;
+		int i;
+
+		for (i = 0; i < pci_cd.cd_ndevs; i++) {
+			sc = device_lookup_private(&pci_cd, i);
+			if (sc->sc_bus == dnameonbus->bus)
+				break;	/* found the right bus */
+		}
+		if (i == pci_cd.cd_ndevs || sc == NULL)
+			return ENXIO;
+		if (dnameonbus->device >= sc->sc_maxndevs ||
+		    dnameonbus->function > 7)
+			return EINVAL;
+
+		child = &sc->PCI_SC_DEVICESC(dnameonbus->device,
+					     dnameonbus->function);
+		if (!child->c_dev)
+			return ENXIO;
+		strlcpy(dnameonbus->name, device_xname(child->c_dev),
+			sizeof dnameonbus->name);
 		return 0;
 
 	default:
