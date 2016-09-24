@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.76 2016/08/28 10:49:31 bouyer Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.77 2016/09/24 13:24:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -8725,4 +8725,34 @@ sys/arch/i386/stand/misc/rawr32.exe.uue		sync to 1.6
 
 	New Rawrite32 release
 	[martin, ticket #1385]
+
+sys/dev/pci/if_vioif.c				1.25
+
+	Fix initializing wrong queue, pointed out by Mike Larkin.
+	PR kern/51448
+	[ozaki-r, ticket #1401]
+
+etc/namedb/root.cache				1.21
+
+	Update root.cache to 2016/8/25 version, l.root-servers.net has
+	AAAA record now.
+	[taca, ticket #1403]
+
+sys/arch/sparc64/sparc64/kobj_machdep.c		1.5, 1.6
+
+	Follow rev. 1.54, 1.55 of libexec/ld.elf_so/arch/sparc64/mdreloc.c.
+	The target of the OLO10 relocation is the simd13 field of the
+	instruction, so use a 13 bit target mask.
+	Fixes PR kern/51436 (I broke this myself in rev 1.4)
+	[martin, ticket #1405]
+
+sys/lib/libsa/checkpasswd.c			1.10
+
+	Check bounds on input. From Michael Plass.
+	[dholland, ticket #1406]
+
+sys/arch/sparc64/sparc64/locore.s		1.401
+
+	Fix RAS for 32-bit kernels.  trapframe is always 64-bit.
+	[nakayama, ticket #1408]
 
