@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1135 2016/09/24 20:13:48 christos Exp $
+# $NetBSD: mi,v 1.1136 2016/09/24 23:15:26 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -105,7 +105,6 @@
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
-./etc/nsd					base-sys-root
 ./etc/obsolete					base-obsolete		obsolete
 ./etc/openldap					base-ldap-root
 ./etc/openssl					base-crypto-root
@@ -5898,12 +5897,6 @@
 ./var/chroot/named/var/run/lwresd		base-bind-root
 ./var/chroot/named/var/run/named		base-bind-root
 ./var/chroot/named/var/tmp			base-bind-root
-./var/chroot/nsd				base-sys-root
-./var/chroot/nsd/etc				base-sys-root
-./var/chroot/nsd/etc/nsd			base-sys-root
-./var/chroot/nsd/var				base-sys-root
-./var/chroot/nsd/var/db				base-sys-root
-./var/chroot/nsd/var/db/nsd			base-sys-root
 ./var/chroot/ntpd				base-ntp-root
 ./var/chroot/ntpd/dev				base-ntp-root
 ./var/chroot/ntpd/etc				base-ntp-root
