@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.22 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: mpool.c,v 1.23 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mpool.c,v 1.22 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.23 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/queue.h>
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: mpool.c,v 1.22 2016/09/24 20:11:12 christos Exp $");
 __weak_alias(mpool_close,_mpool_close)
 __weak_alias(mpool_filter,_mpool_filter)
 __weak_alias(mpool_get,_mpool_get)
-__weak_alias(mpool_getf,_mpool_getf)
 __weak_alias(mpool_new,_mpool_new)
 __weak_alias(mpool_newf,_mpool_newf)
 __weak_alias(mpool_open,_mpool_open)
@@ -194,7 +193,7 @@ mpool_delete(MPOOL *mp, void *page)
  */
 /*ARGSUSED*/
 void *
-mpool_getf(MPOOL *mp, pgno_t pgno, unsigned int flags)
+mpool_get(MPOOL *mp, pgno_t pgno, unsigned int flags)
 {
 	struct _hqh *head;
 	BKT *bp;
@@ -285,12 +284,6 @@ bp->flags |= MPOOL_INUSE;
 		(mp->pgin)(mp->pgcookie, bp->pgno, bp->page);
 
 	return bp->page;
-}
-
-void *
-mpool_get(MPOOL *mp, pgno_t pgno)
-{
-	return mpool_getf(mp, pgno, 0);
 }
 
 /*

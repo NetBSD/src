@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_open.c,v 1.21 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: rec_open.c,v 1.22 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_open.c,v 1.21 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: rec_open.c,v 1.22 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -197,7 +197,7 @@ slow:			if ((t->bt_rfp = fdopen(rfd, "r")) == NULL)
 	dbp->sync = __rec_sync;
 
 	/* If the root page was created, reset the flags. */
-	if ((h = mpool_getf(t->bt_mp, P_ROOT, 0)) == NULL)
+	if ((h = mpool_get(t->bt_mp, P_ROOT, 0)) == NULL)
 		goto err;
 	if ((h->flags & P_TYPE) == P_BLEAF) {
 		F_CLR(h, P_TYPE);

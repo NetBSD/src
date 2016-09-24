@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.19 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.20 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_seq.c,v 1.19 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_seq.c,v 1.20 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -181,7 +181,7 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 		BT_CLR(t);
 		/* Walk down the left-hand side of the tree. */
 		for (pg = P_ROOT;;) {
-			if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return (RET_ERROR);
 
 			/* Check for an empty tree. */
@@ -205,7 +205,7 @@ __bt_seqset(BTREE *t, EPG *ep, DBT *key, int flags)
 		BT_CLR(t);
 		/* Walk down the right-hand side of the tree. */
 		for (pg = P_ROOT;;) {
-			if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return (RET_ERROR);
 
 			/* Check for an empty tree. */
@@ -299,7 +299,7 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 	}
 
 	/* Get the page referenced by the cursor. */
-	if ((h = mpool_getf(t->bt_mp, c->pg.pgno, 0)) == NULL)
+	if ((h = mpool_get(t->bt_mp, c->pg.pgno, 0)) == NULL)
 		return (RET_ERROR);
 
 	/*
@@ -327,7 +327,7 @@ __bt_seqadv(BTREE *t, EPG *ep, int flags)
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
 				return RET_SPECIAL;
-			if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return RET_ERROR;
 			idx = 0;
 		}
@@ -356,7 +356,7 @@ usecurrent:		F_CLR(c, CURS_AFTER | CURS_BEFORE);
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
 				return RET_SPECIAL;
-			if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return RET_ERROR;
 			idx = NEXTINDEX(h) - 1;
 		} else
@@ -388,7 +388,7 @@ __bt_rseq_next(BTREE *t, EPG *ep)
 		/* Did we hit the right edge of the root? */
 		if (up == NULL)
 			return RET_SPECIAL;
-		if ((h = mpool_getf(t->bt_mp, up->pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, up->pgno, 0)) == NULL)
 			return RET_ERROR;
 		idx = up->index;
 	} while (++idx == NEXTINDEX(h));
@@ -398,7 +398,7 @@ __bt_rseq_next(BTREE *t, EPG *ep)
 		BT_PUSH(t, h->pgno, idx);
 		pg = GETBINTERNAL(h, idx)->pgno;
 		mpool_put(t->bt_mp, h, 0);
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return RET_ERROR;
 		idx = 0;
 	}
@@ -427,7 +427,7 @@ __bt_rseq_prev(BTREE *t, EPG *ep)
 		/* Did we hit the left edge of the root? */
 		if (up == NULL)
 			return RET_SPECIAL;
-		if ((h = mpool_getf(t->bt_mp, up->pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, up->pgno, 0)) == NULL)
 			return RET_ERROR;
 		idx = up->index;
 	} while (idx == 0);
@@ -437,7 +437,7 @@ __bt_rseq_prev(BTREE *t, EPG *ep)
 		BT_PUSH(t, h->pgno, idx);
 		pg = GETBINTERNAL(h, idx)->pgno;
 		mpool_put(t->bt_mp, h, 0);
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return RET_ERROR;
 		idx = NEXTINDEX(h) - 1;
 	}
@@ -507,7 +507,7 @@ __bt_first(BTREE *t, const DBT *key, EPG *erval, int *exactp)
 					break;
 				if (h->pgno != save.page->pgno)
 					mpool_put(t->bt_mp, h, 0);
-				if ((hprev = mpool_getf(t->bt_mp,
+				if ((hprev = mpool_get(t->bt_mp,
 				    h->prevpg, 0)) == NULL) {
 					if (h->pgno == save.page->pgno)
 						mpool_put(t->bt_mp,
@@ -539,7 +539,7 @@ __bt_first(BTREE *t, const DBT *key, EPG *erval, int *exactp)
 		mpool_put(t->bt_mp, h, 0);
 		if (pg == P_INVALID)
 			return (RET_SPECIAL);
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return (RET_ERROR);
 		ep->index = 0;
 		ep->page = h;

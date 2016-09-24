@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_close.c,v 1.16 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_close.c,v 1.17 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_close.c,v 1.16 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_close.c,v 1.17 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 
@@ -164,7 +164,7 @@ bt_meta(BTREE *t)
 	BTMETA m;
 	void *p;
 
-	if ((p = mpool_getf(t->bt_mp, P_META, 0)) == NULL)
+	if ((p = mpool_get(t->bt_mp, P_META, 0)) == NULL)
 		return (RET_ERROR);
 
 	/* Fill in metadata. */

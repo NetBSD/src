@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.21 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.22 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_put.c,v 1.21 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.22 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -152,7 +152,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 
 	/* Replace the cursor. */
 	if (flags == R_CURSOR) {
-		if ((h = mpool_getf(t->bt_mp, t->bt_cursor.pg.pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, t->bt_cursor.pg.pgno, 0)) == NULL)
 			return (RET_ERROR);
 		idx = t->bt_cursor.pg.index;
 		goto delete;
@@ -271,7 +271,7 @@ bt_fast(BTREE *t, const DBT *key, const DBT *data, int *exactp)
 	uint32_t nbytes;
 	int cmp;
 
-	if ((h = mpool_getf(t->bt_mp, t->bt_last.pgno, 0)) == NULL) {
+	if ((h = mpool_get(t->bt_mp, t->bt_last.pgno, 0)) == NULL) {
 		t->bt_order = NOT;
 		return (NULL);
 	}
