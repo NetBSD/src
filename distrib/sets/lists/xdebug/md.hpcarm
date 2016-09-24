@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcarm,v 1.6 2016/08/19 22:37:03 mrg Exp $
+# $NetBSD: md.hpcarm,v 1.7 2016/09/24 21:57:38 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2_g.a		-unknown-	debuglib,xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri_g.a		-unknown-	debuglib,xorg,obsolete
@@ -23,11 +23,14 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdri2.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libextmod.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libglx.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/extensions/librecord.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libshadow.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libexa.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libfb.so.0.debug	-unknown-	xorg,debug
@@ -36,3 +39,4 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvbe.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libvgahw.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/libxaa.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
