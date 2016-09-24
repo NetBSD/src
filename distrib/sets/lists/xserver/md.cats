@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.53 2016/08/19 22:37:04 mrg Exp $
+# $NetBSD: md.cats,v 1.54 2016/09/24 21:57:38 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -11,8 +11,10 @@
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		-unknown-	xorg
@@ -33,8 +35,10 @@
 ./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	-obsolete-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		-unknown-	obsolete
-./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/i128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i128_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/i740_drv.so		-unknown-	xorg
@@ -95,7 +99,9 @@
 ./usr/X11R7/lib/modules/extensions/libcfb_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libdbe.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libdbe.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
@@ -107,7 +113,9 @@
 ./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
@@ -119,7 +127,9 @@
 ./usr/X11R7/lib/modules/extensions/libmfb_pic.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/librecord.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/librecord.so		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/extensions/librecord.so.0	-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/extensions/librecord_pic.a	-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libshadow.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libshadow.so		-unknown-	xorg
@@ -175,7 +185,9 @@
 ./usr/X11R7/lib/modules/libvgahw_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libxaa.a			-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libxaa.so			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/libxaa_pic.a			-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/libxf1bpp.a			-unknown-	obsolete
 ./usr/X11R7/lib/modules/libxf1bpp.so			-unknown-	obsolete
@@ -199,13 +211,15 @@
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	obsolete
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	obsolete
 ./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	obsolete
-./usr/X11R7/man/cat4/apm.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/apm.0				-unknown-	.cat,xorg,xorg_server_ver=110
+./usr/X11R7/man/cat4/apm.0				-unknown-	.cat,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg,xorg_server_ver=110
+./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/imstt.0				-unknown-	obsolete
@@ -237,13 +251,15 @@
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	obsolete
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	obsolete
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	obsolete
-./usr/X11R7/man/html4/apm.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/apm.html				-unknown-	html,xorg,xorg_server_ver=110
+./usr/X11R7/man/html4/apm.html				-unknown-	html,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			-unknown-	obsolete
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
-./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=110
+./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/html4/i128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/i740.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/imstt.html			-unknown-	obsolete
@@ -275,13 +291,15 @@
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	obsolete
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	obsolete
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	obsolete
-./usr/X11R7/man/man4/apm.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/apm.4				-unknown-	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/apm.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
-./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/man4/i128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i740.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/imstt.4				-unknown-	obsolete
