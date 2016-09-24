@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.28 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.29 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_open.c,v 1.28 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.29 2016/09/24 21:31:25 christos Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -354,7 +354,7 @@ nroot(BTREE *t)
 	PAGE *meta, *root;
 	pgno_t npg;
 
-	if ((root = mpool_getf(t->bt_mp, 1, 0)) != NULL) {
+	if ((root = mpool_get(t->bt_mp, 1, 0)) != NULL) {
 		if (root->lower == 0 &&
 		    root->pgno == 0 &&
 		    root->linp[0] == 0) {
