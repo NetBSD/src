@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.16.10.3 2016/05/06 18:34:56 snj Exp $
+;	$NetBSD: root.cache,v 1.16.10.4 2016/09/24 13:01:38 bouyer Exp $
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
 ;       (e.g. reference this file in the "cache  .  <file>"
@@ -41,6 +41,7 @@ D.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:2d::d
 ;
 .                        3600000      NS    E.ROOT-SERVERS.NET.
 E.ROOT-SERVERS.NET.      3600000      A     192.203.230.10
+E.ROOT-SERVERS.NET.      3600000      AAAA  2001:500:a8::e
 ;
 ; FORMERLY NS.ISC.ORG
 ;
