@@ -1,4 +1,4 @@
-/*	$NetBSD: h_db.c,v 1.2 2016/09/24 20:12:33 christos Exp $	*/
+/*	$NetBSD: h_db.c,v 1.3 2016/09/24 21:18:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)dbtest.c	8.17 (Berkeley) 9/1/94";
 #else
-__RCSID("$NetBSD: h_db.c,v 1.2 2016/09/24 20:12:33 christos Exp $");
+__RCSID("$NetBSD: h_db.c,v 1.3 2016/09/24 21:18:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -529,7 +529,7 @@ unlinkpg(DB *dbp)
 
 	for (pg = P_ROOT; pg < t->bt_mp->npages;
 	     mpool_put(t->bt_mp, h, 0), pg++) {
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			break;
 		/* Look for a nonempty leaf page that has both left
 		 * and right siblings. */

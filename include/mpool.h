@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.15 2016/09/24 20:11:43 christos Exp $	*/
+/*	$NetBSD: mpool.h,v 1.16 2016/09/24 21:18:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -102,8 +102,7 @@ void	 mpool_filter(MPOOL *, void (*)(void *, pgno_t, void *),
 void	*mpool_new(MPOOL *, pgno_t *);
 void	*mpool_newf(MPOOL *, pgno_t *, unsigned int);
 int	 mpool_delete(MPOOL *, void *);
-void	*mpool_get(MPOOL *, pgno_t);
-void	*mpool_getf(MPOOL *, pgno_t, unsigned int);
+void	*mpool_get(MPOOL *, pgno_t, unsigned int);
 int	 mpool_put(MPOOL *, void *, unsigned int);
 int	 mpool_sync(MPOOL *);
 int	 mpool_close(MPOOL *);
