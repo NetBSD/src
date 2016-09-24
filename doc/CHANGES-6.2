@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.263 2016/09/03 11:36:54 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.264 2016/09/24 13:25:33 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -14758,4 +14758,47 @@ sys/net80211/ieee80211_input.c			1.83, 1.84
 	In station mode filter packets that or not for us in case the
 	interface is in promiscous mode or doesn't filter packets itself.
 	[mlelstv, ticket #1382]
+
+sys/dev/pci/if_vioif.c				1.25
+
+	Fix initializing wrong queues, pointed out by Mike Larkin.
+	Fixes PR kern/51448
+	[ozaki-r, ticket #1401]
+
+etc/namedb/root.cache				1.21
+
+	Update root.cache to 2016/8/25 version, l.root-servers.net has
+	AAAA record now.
+	[taca, ticket #1403]
+
+lib/libc/gen/glob.c				1.36
+
+	Bump the glob limits to 512KB for total string size and 64K path
+	entries. The old limits were too small for some important FTP use cases
+	like a pkgsrc repository.
+	[joerg, ticket #1404]
+
+sys/arch/sparc64/sparc64/kobj_machdep.c		1.5, 1.6
+
+	Follow rev. 1.54, 1.55 of libexec/ld.elf_so/arch/sparc64/mdreloc.c.
+	The target of the OLO10 relocation is the simd13 field of the
+	instruction, so use a 13 bit target mask.
+	Fixes PR kern/51436 (I broke this myself in rev 1.4)
+	[martin, ticket #1405]
+
+sys/lib/libsa/checkpasswd.c			1.10
+
+	Check bounds on input. From Michael Plass.
+	[dholland, ticket #1406]
+
+sys/dev/pci/if_wm.c     			patch
+
+	fix evbppc build, where the older gcc wrongly warns about uninitialized
+	variable.
+	[martin, ticket #1407]
+
+sys/arch/sparc64/sparc64/locore.s		1.401
+
+	Fix RAS for 32-bit kernels.  trapframe is always 64-bit.
+	[nakayama, ticket #1408]
 
