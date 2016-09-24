@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_page.c,v 1.13 2008/09/11 12:58:00 joerg Exp $	*/
+/*	$NetBSD: bt_page.c,v 1.14 2016/09/24 20:11:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_page.c,v 1.13 2008/09/11 12:58:00 joerg Exp $");
+__RCSID("$NetBSD: bt_page.c,v 1.14 2016/09/24 20:11:12 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -89,7 +89,7 @@ __bt_new(BTREE *t, pgno_t *npg)
 	PAGE *h;
 
 	if (t->bt_free != P_INVALID &&
-	    (h = mpool_get(t->bt_mp, t->bt_free, 0)) != NULL) {
+	    (h = mpool_getf(t->bt_mp, t->bt_free, 0)) != NULL) {
 		*npg = t->bt_free;
 		t->bt_free = h->nextpg;
 		F_SET(t, B_METADIRTY);
