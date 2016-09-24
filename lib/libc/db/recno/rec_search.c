@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_search.c,v 1.15 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: rec_search.c,v 1.16 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rec_search.c,v 1.15 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: rec_search.c,v 1.16 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -77,7 +77,7 @@ __rec_search(BTREE *t, recno_t recno, enum SRCHOP op)
 
 	BT_CLR(t);
 	for (pg = P_ROOT, total = 0;;) {
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			goto err;
 		if (h->flags & P_RLEAF) {
 			t->bt_cur.page = h;
@@ -113,7 +113,7 @@ __rec_search(BTREE *t, recno_t recno, enum SRCHOP op)
 err:	sverrno = errno;
 	if (op != SEARCH)
 		while  ((parent = BT_POP(t)) != NULL) {
-			if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
+			if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
 				break;
 			if (op == SINSERT)
 				--GETRINTERNAL(h, parent->index)->nrecs;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_search.c,v 1.18 2016/09/24 20:11:12 christos Exp $	*/
+/*	$NetBSD: bt_search.c,v 1.19 2016/09/24 21:31:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_search.c,v 1.18 2016/09/24 20:11:12 christos Exp $");
+__RCSID("$NetBSD: bt_search.c,v 1.19 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -75,7 +75,7 @@ __bt_search(BTREE *t, const DBT *key, int *exactp)
 
 	BT_CLR(t);
 	for (pg = P_ROOT;;) {
-		if ((h = mpool_getf(t->bt_mp, pg, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 			return (NULL);
 
 		/* Do a binary search on the current page. */
@@ -161,7 +161,7 @@ __bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 	 * Get the next page.  The key is either an exact
 	 * match, or not as good as the one we already have.
 	 */
-	if ((e.page = mpool_getf(t->bt_mp, h->nextpg, 0)) == NULL)
+	if ((e.page = mpool_get(t->bt_mp, h->nextpg, 0)) == NULL)
 		return 0;
 	e.index = 0;
 	if (__bt_cmp(t, key, &e) != 0) {
@@ -179,7 +179,7 @@ __bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 	 */
 	for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
 		/* Get the parent page. */
-		if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
 			return 0;
 
 		/* Move to the next index. */
@@ -203,7 +203,7 @@ __bt_snext(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 		mpool_put(t->bt_mp, h, 0);
 
 		/* Get the next level down. */
-		if ((h = mpool_getf(t->bt_mp, pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
 			return 0;
 		idx = 0;
 	}
@@ -238,7 +238,7 @@ __bt_sprev(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 	 * Get the previous page.  The key is either an exact
 	 * match, or not as good as the one we already have.
 	 */
-	if ((e.page = mpool_getf(t->bt_mp, h->prevpg, 0)) == NULL)
+	if ((e.page = mpool_get(t->bt_mp, h->prevpg, 0)) == NULL)
 		return 0;
 	e.index = NEXTINDEX(e.page) - 1;
 	if (__bt_cmp(t, key, &e) != 0) {
@@ -257,7 +257,7 @@ __bt_sprev(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 	 */
 	for (level = 0; (parent = BT_POP(t)) != NULL; ++level) {
 		/* Get the parent page. */
-		if ((h = mpool_getf(t->bt_mp, parent->pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, parent->pgno, 0)) == NULL)
 			return 1;
 
 		/* Move to the next index. */
@@ -279,7 +279,7 @@ __bt_sprev(BTREE *t, PAGE *h, const DBT *key, int *exactp)
 		mpool_put(t->bt_mp, h, 0);
 
 		/* Get the next level down. */
-		if ((h = mpool_getf(t->bt_mp, pgno, 0)) == NULL)
+		if ((h = mpool_get(t->bt_mp, pgno, 0)) == NULL)
 			return 1;
 
 		idx = NEXTINDEX(h) - 1;
