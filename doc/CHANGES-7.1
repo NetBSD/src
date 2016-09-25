@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.110 2016/09/25 11:38:50 bouyer Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.111 2016/09/25 12:25:13 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5357,4 +5357,14 @@ sys/net/if_spppsubr.c				1.149
 	up, if the current phase is SPPP_PHASE_NETWORK, otherwise it is down.
 	Useful when using dhcpcd for DHCPv6 PD.
 	[joerg, ticket #1254]
+
+sys/arch/xen/conf/files.xen			1.137
+
+	Include files.sljit as i386/amd64 do.
+	[sborrill, ticket #1255]
+
+sys/arch/sparc64/sparc64/locore.s		1.401
+
+	Fix RAS for 32-bit kernels.  trapframe is always 64-bit.
+	[nakayama, ticket #1257]
 
