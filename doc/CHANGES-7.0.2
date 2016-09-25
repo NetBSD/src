@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.13 2016/09/25 11:39:00 bouyer Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.14 2016/09/25 12:24:51 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -267,4 +267,9 @@ sys/lib/libsa/checkpasswd.c			1.10
 
 	Check bounds on input. From Michael Plass.
 	[dholland, ticket #1250]
+
+sys/arch/sparc64/sparc64/locore.s		1.401
+
+	Fix RAS for 32-bit kernels.  trapframe is always 64-bit.
+	[nakayama, ticket #1257]
 
