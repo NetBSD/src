@@ -1,7 +1,7 @@
-/*	$NetBSD: lparser.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
+/*	$NetBSD: lparser.h,v 1.2.2.3 2016/09/25 11:16:02 bouyer Exp $	*/
 
 /*
-** Id: lparser.h,v 1.74 2014/10/25 11:50:46 roberto Exp 
+** Id: lparser.h,v 1.76 2015/12/30 18:16:13 roberto Exp 
 ** Lua Parser
 ** See Copyright Notice in lua.h
 */
@@ -15,27 +15,40 @@
 
 
 /*
-** Expression descriptor
+** Expression and variable descriptor.
+** Code generation for variables and expressions can be delayed to allow
+** optimizations; An 'expdesc' structure describes a potentially-delayed
+** variable/expression. It has a description of its "main" value plus a
+** list of conditional jumps that can also produce its value (generated
+** by short-circuit operators 'and'/'or').
 */
 
+/* kinds of variables/expressions */
 typedef enum {
-  VVOID,	/* no value */
-  VNIL,
-  VTRUE,
-  VFALSE,
-  VK,		/* info = index of constant in 'k' */
+  VVOID,  /* when 'expdesc' describes the last expression a list,
+             this kind means an empty list (so, no expression) */
+  VNIL,  /* constant nil */
+  VTRUE,  /* constant true */
+  VFALSE,  /* constant false */
+  VK,  /* constant in 'k'; info = index of constant in 'k' */
 #ifndef _KERNEL
-  VKFLT,	/* nval = numerical float value */
-#endif /* _KERNEL */
-  VKINT,	/* nval = numerical integer value */
-  VNONRELOC,	/* info = result register */
-  VLOCAL,	/* info = local register */
-  VUPVAL,       /* info = index of upvalue in 'upvalues' */
-  VINDEXED,	/* t = table register/upvalue; idx = index R/K */
-  VJMP,		/* info = instruction pc */
-  VRELOCABLE,	/* info = instruction pc */
-  VCALL,	/* info = instruction pc */
-  VVARARG	/* info = instruction pc */
+  VKFLT,  /* floating constant; nval = numerical float value */
+#endif
+  VKINT,  /* integer constant; nval = numerical integer value */
+  VNONRELOC,  /* expression has its value in a fixed register;
+                 info = result register */
+  VLOCAL,  /* local variable; info = local register */
+  VUPVAL,  /* upvalue variable; info = index of upvalue in 'upvalues' */
+  VINDEXED,  /* indexed variable;
+                ind.vt = whether 't' is register or upvalue;
+                ind.t = table register or upvalue;
+                ind.idx = key's R/K index */
+  VJMP,  /* expression is a test/comparison;
+            info = pc of corresponding jump instruction */
+  VRELOCABLE,  /* expression can put result in any register;
+                  info = instruction pc */
+  VCALL,  /* expression is a function call; info = instruction pc */
+  VVARARG  /* vararg expression; info = instruction pc */
 } expkind;
 
 
@@ -45,16 +58,14 @@ typedef enum {
 typedef struct expdesc {
   expkind k;
   union {
+    lua_Integer ival;    /* for VKINT */
+    lua_Number nval;  /* for VKFLT */
+    int info;  /* for generic use */
     struct {  /* for indexed variables (VINDEXED) */
       short idx;  /* index (R/K) */
       lu_byte t;  /* table (register or upvalue) */
       lu_byte vt;  /* whether 't' is register (VLOCAL) or upvalue (VUPVAL) */
     } ind;
-    int info;  /* for generic use */
-#ifndef _KERNEL
-    lua_Number nval;  /* for VKFLT */
-#endif /* _KERNEL */
-    lua_Integer ival;    /* for VKINT */
   } u;
   int t;  /* patch list of 'exit when true' */
   int f;  /* patch list of 'exit when false' */

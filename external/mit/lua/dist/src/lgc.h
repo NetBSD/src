@@ -1,7 +1,7 @@
-/*	$NetBSD: lgc.h,v 1.2.2.2 2016/07/01 06:35:02 snj Exp $	*/
+/*	$NetBSD: lgc.h,v 1.2.2.3 2016/09/25 11:16:02 bouyer Exp $	*/
 
 /*
-** Id: lgc.h,v 2.90 2015/10/21 18:15:15 roberto Exp 
+** Id: lgc.h,v 2.91 2015/12/21 13:02:14 roberto Exp 
 ** Garbage Collector
 ** See Copyright Notice in lua.h
 */
@@ -114,7 +114,7 @@
 	  condchangemem(L,pre,pos); }
 
 /* more often than not, 'pre'/'pos' are empty */
-#define luaC_checkGC(L)		luaC_condGC(L,,)
+#define luaC_checkGC(L)		luaC_condGC(L,(void)0,(void)0)
 
 
 #define luaC_barrier(L,p,v) (  \

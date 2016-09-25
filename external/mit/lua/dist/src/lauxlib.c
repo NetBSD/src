@@ -1,7 +1,7 @@
-/*	$NetBSD: lauxlib.c,v 1.3.2.3 2016/07/01 06:35:02 snj Exp $	*/
+/*	$NetBSD: lauxlib.c,v 1.3.2.4 2016/09/25 11:16:02 bouyer Exp $	*/
 
 /*
-** Id: lauxlib.c,v 1.284 2015/11/19 19:16:22 roberto Exp 
+** Id: lauxlib.c,v 1.286 2016/01/08 15:33:09 roberto Exp 
 ** Auxiliary functions for building Lua libraries
 ** See Copyright Notice in lua.h
 */
@@ -23,7 +23,8 @@
 #endif /* _KERNEL */
 
 
-/* This file uses only the official API of Lua.
+/*
+** This file uses only the official API of Lua.
 ** Any function declared here could be written as an application function.
 */
 
@@ -204,6 +205,10 @@ static void tag_error (lua_State *L, int arg, int tag) {
 }
 
 
+/*
+** The use of 'lua_pushfstring' ensures this function does not
+** need reserved stack space when called.
+*/
 LUALIB_API void luaL_where (lua_State *L, int level) {
   lua_Debug ar;
   if (lua_getstack(L, level, &ar)) {  /* check function at level */
@@ -213,10 +218,15 @@ LUALIB_API void luaL_where (lua_State *L, int level) {
       return;
     }
   }
-  lua_pushliteral(L, "");  /* else, no information available... */
+  lua_pushfstring(L, "");  /* else, no information available... */
 }
 
 
+/*
+** Again, the use of 'lua_pushvfstring' ensures this function does
+** not need reserved stack space when called. (At worst, it generates
+** an error with "stack overflow" instead of the given message.)
+*/
 LUALIB_API int luaL_error (lua_State *L, const char *fmt, ...) {
   va_list argp;
   va_start(argp, fmt);
@@ -359,10 +369,15 @@ LUALIB_API int luaL_checkoption (lua_State *L, int arg, const char *def,
 }
 
 
+/*
+** Ensures the stack has at least 'space' extra slots, raising an error
+** if it cannot fulfill the request. (The error handling needs a few
+** extra slots to format the error message. In case of an error without
+** this extra space, Lua will generate the same 'stack overflow' error,
+** but without 'msg'.)
+*/
 LUALIB_API void luaL_checkstack (lua_State *L, int space, const char *msg) {
-  /* keep some extra space to run error routines, if needed */
-  const int extra = LUA_MINSTACK;
-  if (!lua_checkstack(L, space + extra)) {
+  if (!lua_checkstack(L, space)) {
     if (msg)
       luaL_error(L, "stack overflow (%s)", msg);
     else
@@ -691,7 +706,7 @@ static int skipcomment (LoadF *lf, int *cp) {
   if (c == '#') {  /* first line is a comment (Unix exec. file)? */
     do {  /* skip first line */
       c = getc(lf->f);
-    } while (c != EOF && c != '\n') ;
+    } while (c != EOF && c != '\n');
     *cp = getc(lf->f);  /* skip end-of-line, if present */
     return 1;  /* there was a comment */
   }
