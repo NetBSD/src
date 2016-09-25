@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.85 2016/09/16 11:48:10 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.86 2016/09/25 12:53:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.85 2016/09/16 11:48:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 2016/09/25 12:53:24 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -310,10 +310,6 @@ trap(struct trapframe *frame)
 copyefault:
 			error = EFAULT;
 copyfault:
-			KASSERT(onfault == kcopy_fault ||
-			    rcr2() < VM_MAXUSER_ADDRESS);
-			KASSERT(onfault != kcopy_fault ||
-			    rcr2() >= VM_MAXUSER_ADDRESS);
 			frame->tf_rip = (uintptr_t)onfault;
 			frame->tf_rax = error;
 			return;
