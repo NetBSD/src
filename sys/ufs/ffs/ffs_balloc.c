@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.62 2016/09/25 11:45:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.61 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_balloc.c,v 1.62 2016/09/25 11:45:39 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -636,7 +636,7 @@ ffs_balloc_ufs2(struct vnode *vp, off_t off, int size, kauth_cred_t cred,
 			if (error)
 				return (error);
 			error = ffs_getblk(vp, -1 - lbn, FFS_FSBTODB(fs, newb),
-			    nsize, (flags & BA_CLRBUF) != 0, &bp);
+			    nsize, (flags & B_CLRBUF) != 0, &bp);
 			if (error)
 				return error;
 			bp->b_xflags |= BX_ALTDATA;
