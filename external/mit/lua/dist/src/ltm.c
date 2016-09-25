@@ -1,7 +1,7 @@
-/*	$NetBSD: ltm.c,v 1.2.2.3 2016/07/01 06:35:02 snj Exp $	*/
+/*	$NetBSD: ltm.c,v 1.2.2.4 2016/09/25 11:16:02 bouyer Exp $	*/
 
 /*
-** Id: ltm.c,v 2.36 2015/11/03 15:47:30 roberto Exp 
+** Id: ltm.c,v 2.37 2016/02/26 19:20:15 roberto Exp 
 ** Tag methods
 ** See Copyright Notice in lua.h
 */
@@ -89,6 +89,22 @@ const TValue *luaT_gettmbyobj (lua_State *L, const TValue *o, TMS event) {
       mt = G(L)->mt[ttnov(o)];
   }
   return (mt ? luaH_getshortstr(mt, G(L)->tmname[event]) : luaO_nilobject);
+}
+
+
+/*
+** Return the name of the type of an object. For tables and userdata
+** with metatable, use their '__name' metafield, if present.
+*/
+const char *luaT_objtypename (lua_State *L, const TValue *o) {
+  Table *mt;
+  if ((ttistable(o) && (mt = hvalue(o)->metatable) != NULL) ||
+      (ttisfulluserdata(o) && (mt = uvalue(o)->metatable) != NULL)) {
+    const TValue *name = luaH_getshortstr(mt, luaS_new(L, "__name"));
+    if (ttisstring(name))  /* is '__name' a string? */
+      return getstr(tsvalue(name));  /* use it as type name */
+  }
+  return ttypename(ttnov(o));  /* else use standard type name */
 }
 
 
