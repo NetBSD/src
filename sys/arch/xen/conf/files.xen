@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.133 2014/02/12 23:24:09 dsl Exp $
+#	$NetBSD: files.xen,v 1.133.4.1 2016/09/25 12:11:33 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -107,6 +107,12 @@ file	arch/xen/xen/xengnt.c
 
 file	dev/cons.c
 
+
+#
+# Stack-less Just-In-Time compiler
+#
+
+include	"external/bsd/sljit/conf/files.sljit"
 
 #
 # Machine-independent SCSI drivers
