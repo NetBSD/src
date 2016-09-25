@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.164.2.3 2015/11/08 00:24:25 riz Exp $
+#  $NetBSD: Makefile,v 1.164.2.4 2016/09/25 11:32:33 bouyer Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -71,6 +71,7 @@ COMMON_SRCS+= fenv.c s_nexttowardf.c \
 	s_nearbyint.c s_rintl.c
 COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COPTS.fenv.c+=	-mfpu=vfp
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .if (${MKSOFTFLOAT} == "no")
 .PATH.S: ${.CURDIR}/arch/arm
 ARCH_SRCS = e_sqrt.S e_sqrtf.S lrint.S lrintf.S s_fabsf.S s_fma.S s_fmaf.S
