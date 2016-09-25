@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.109 2016/09/18 06:20:12 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.110 2016/09/25 11:38:50 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5295,4 +5295,66 @@ external/bsd/kyua-testers/tests/kyua-testers/Makefile 1.2, 1.3
 
 	Fix wrong objdir-finding logic.  PR 51389.
 	[dholland, ticket #1249]
+
+external/mit/lua/dist/Makefile			sync to 1.6
+external/mit/lua/dist/README			sync to 1.6
+external/mit/lua/dist/doc/contents.html		sync to 1.5
+external/mit/lua/dist/doc/lua.css		sync to 1.6
+external/mit/lua/dist/doc/manual.html		sync to 1.6
+external/mit/lua/dist/doc/readme.html		sync to 1.5
+external/mit/lua/dist/src/lapi.c		sync to 1.7
+external/mit/lua/dist/src/lauxlib.c		sync to 1.7
+external/mit/lua/dist/src/lbaselib.c		sync to 1.7
+external/mit/lua/dist/src/lcode.c		sync to 1.8
+external/mit/lua/dist/src/lcode.h		sync to 1.5
+external/mit/lua/dist/src/lcorolib.c		sync to 1.4
+external/mit/lua/dist/src/ldebug.c		sync to 1.7
+external/mit/lua/dist/src/ldo.c			sync to 1.6
+external/mit/lua/dist/src/ldo.h			sync to 1.6
+external/mit/lua/dist/src/lgc.c			sync to 1.6
+external/mit/lua/dist/src/lgc.h			sync to 1.5
+external/mit/lua/dist/src/liolib.c		sync to 1.6
+external/mit/lua/dist/src/llex.c		sync to 1.9
+external/mit/lua/dist/src/llex.h		sync to 1.5
+external/mit/lua/dist/src/lobject.c		sync to 1.9
+external/mit/lua/dist/src/loslib.c		sync to 1.8
+external/mit/lua/dist/src/lparser.c		sync to 1.7
+external/mit/lua/dist/src/lparser.h		sync to 1.5
+external/mit/lua/dist/src/lstate.h		sync to 1.6
+external/mit/lua/dist/src/lstrlib.c		sync to 1.15
+external/mit/lua/dist/src/ltablib.c		sync to 1.6
+external/mit/lua/dist/src/ltm.c			sync to 1.6
+external/mit/lua/dist/src/ltm.h			sync to 1.5
+external/mit/lua/dist/src/lua.h			sync to 1.7
+external/mit/lua/dist/src/luaconf.h		sync to 1.19
+external/mit/lua/dist/src/lvm.c			sync to 1.11
+external/mit/lua/dist/src/lvm.h			sync to 1.7
+doc/3RDPARTY					1.1360 via patch
+
+	Update Lua to 5.3.3
+	[salazar, ticket #1251]
+
+tests/lib/libc/net/getaddrinfo/Makefile		1.2
+tests/lib/libc/regex/Makefile			1.10
+
+	Replace MKMAN with NOMAN as suggested by christos@.  Allows
+	userland to build when building man pages.
+	[darcy, ticket #1241]
+
+sys/lib/libsa/checkpasswd.c			1.10
+
+	Check bounds on input. From Michael Plass.
+	[dholland, ticket #1250]
+
+lib/libm/Makefile				1.185 via patch
+
+	Actually get fma(3) and friends into ARM libm.
+	[jakllsch, ticket #1253]
+
+sys/net/if_spppsubr.c				1.149
+
+	Report link state changes for sppp consumers. The link is considered
+	up, if the current phase is SPPP_PHASE_NETWORK, otherwise it is down.
+	Useful when using dhcpcd for DHCPv6 PD.
+	[joerg, ticket #1254]
 
