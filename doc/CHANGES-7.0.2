@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.2,v 1.1.2.12 2016/09/18 06:24:11 snj Exp $
+# $NetBSD: CHANGES-7.0.2,v 1.1.2.13 2016/09/25 11:39:00 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0.1 release to the NetBSD 7.0.2
 release:
@@ -262,4 +262,9 @@ etc/namedb/root.cache				1.21
 
 	Update root.cache to 2016/8/25 version.
 	[taca, ticket #1246]
+
+sys/lib/libsa/checkpasswd.c			1.10
+
+	Check bounds on input. From Michael Plass.
+	[dholland, ticket #1250]
 
