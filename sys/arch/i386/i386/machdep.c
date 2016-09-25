@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.761 2016/08/27 16:07:26 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.762 2016/09/25 12:59:19 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.761 2016/08/27 16:07:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.762 2016/09/25 12:59:19 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1280,19 +1280,15 @@ init386(paddr_t first_avail)
 
 	init386_msgbuf();
 
-#ifndef XEN
+#if !defined(XEN) && NBIOSCALL > 0
 	/*
 	 * XXX Remove this
 	 *
 	 * Setup a temporary Page Table Entry to allow identity mappings of
-	 * the real mode address. This is required by:
-	 * - bioscall
-	 * - MP bootstrap
-	 * - ACPI wakecode
+	 * the real mode address. This is required by bioscall.
 	 */
 	init386_pte0();
 
-#if NBIOSCALL > 0
 	KASSERT(biostramp_image_size <= PAGE_SIZE);
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE, (paddr_t)BIOSTRAMP_BASE,
 	    VM_PROT_ALL, 0);
@@ -1302,7 +1298,6 @@ init386(paddr_t first_avail)
 	/* Needed early, for bioscall() */
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
-#endif /* !XEN */
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
