@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.28 2015/12/22 22:10:36 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.29 2016/09/26 20:05:03 jakllsch Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -89,6 +89,10 @@ file	arch/arm/nvidia/tegra_usbphy.c		tegra_usbphy
 # USB 2.0
 attach	ehci at fdt with tegra_ehci
 file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
+
+# XUSB (USB 3.0)
+attach	xhci at fdt with tegra_xusb
+file	arch/arm/nvidia/tegra_xusb.c		tegra_xusb
 
 # SDMMC
 attach	sdhc at fdt with tegra_sdhc
