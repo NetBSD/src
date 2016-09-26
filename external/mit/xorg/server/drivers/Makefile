@@ -1,4 +1,13 @@
-#	$NetBSD: Makefile,v 1.87 2016/08/22 08:58:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.88 2016/09/26 22:37:31 mrg Exp $
+
+.include <bsd.own.mk>
+
+# modesetting is builtin to xorg-server 1.18 tree
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+MODE_SETTING=	xf86-video-modesetting
+.else
+MODE_SETTING=
+.endif
 
 # xf86-input drivers
 
@@ -21,8 +30,6 @@ SUBDIR+= \
 
 # xf86-video drivers
 
-.include <bsd.own.mk>
-
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
@@ -37,6 +44,7 @@ SUBDIR+= \
 	xf86-video-intel \
 	xf86-video-mach64 \
 	xf86-video-mga \
+	${MODE_SETTING} \
 	xf86-video-neomagic \
 	xf86-video-nv \
 	xf86-video-nouveau \
@@ -164,7 +172,7 @@ SUBDIR+= \
 
 .if ${MACHINE} == "evbarm"
 SUBDIR+= \
-	xf86-video-modesetting \
+	${MODE_SETTING} \
 	xf86-video-wsfb
 .endif # ${MACHINE} == "evbarm"
 

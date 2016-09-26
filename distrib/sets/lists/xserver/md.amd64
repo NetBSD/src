@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.97 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.amd64,v 1.98 2016/09/26 22:37:31 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -109,6 +109,8 @@
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/modesetting_drv.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/modesetting_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
@@ -321,6 +323,7 @@
 ./usr/X11R7/man/cat4/intel_old.0			-unknown-	.cat,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/cat4/kbd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/modesetting.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/neomagic.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nouveau.0				-unknown-	.cat,xorg
@@ -374,6 +377,7 @@
 ./usr/X11R7/man/html4/intel_old.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/html4/kbd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/modesetting.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/neomagic.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/nouveau.html			-unknown-	html,xorg
@@ -426,6 +430,7 @@
 ./usr/X11R7/man/man4/intel_old.4			-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/kbd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/modesetting.4			-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/neomagic.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nouveau.4				-unknown-	.man,xorg
