@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1361 2016/09/16 17:13:06 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1362 2016/09/26 22:41:25 kamil Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -760,7 +760,7 @@ Location:	external/gpl2/lvm2/dist
 Notes:
 Use the src/external/gpl2/lvm2tools/dist/lvm2netbsd script to
 prepare source tree for import. Keep eye on dist/include/configure.h
-it migh change over the releases.  We maintain our own version of
+it might change over the releases.  We maintain our own version of
 libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
