@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-simple,v 1.1 2016/09/23 16:55:56 schmonz Exp $
+# $NetBSD: test-simple,v 1.2 2016/09/26 00:21:22 schmonz Exp $
 
 test="$1"
 bozohttpd="$2"
@@ -19,4 +19,5 @@ if ./html_cmp $test.out tmp.$test.out; then
 	exit 0
 else
 	[ "yes" = "$verbose" ] || echo "Failed test $test: `cat tmp.$test.err; echo; cat $test.out`"
+	exit 1
 fi
