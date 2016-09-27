@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.98 2016/09/27 20:52:43 pgoyette Exp $
+# $NetBSD: mi,v 1.99 2016/09/27 23:25:10 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -220,8 +220,8 @@
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mlx				base-obsolete		obsolete
 ./@MODULEDIR@/mlx/mlx.kmod			base-obsolete		obsolete
-./@MODULEDIR@/mlx_pci				base-kernel-modules	kmod
-./@MODULEDIR@/mlx_pci/mlx_pci.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mlx_pci				base-obsolete		obsolete
+./@MODULEDIR@/mlx_pci/mlx_pci.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/mqueue				base-kernel-modules	kmod
 ./@MODULEDIR@/mqueue/mqueue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/msdos				base-kernel-modules	kmod
