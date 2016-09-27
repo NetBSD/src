@@ -1,11 +1,11 @@
-/* $NetBSD: TODO.modules,v 1.6 2016/09/27 22:27:50 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.7 2016/09/27 22:54:57 christos Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
 christos and pgoyette.
 
-1. Builtin drivers can't depend on modularized drivers (the modularized
-   drivers are attempted to load as builtins).
+ 1. Builtin drivers can't depend on modularized drivers (the modularized
+    drivers are attempted to load as builtins).
 
 	The assumption is that dependencies are loaded before those
 	modules which depend on them.  At load time, a module's
@@ -25,14 +25,17 @@ christos and pgoyette.
 	requires that the parent module know about all potentially
 	loadable children.
 
-2. Currently, config(1) has no way to "no define" drivers
+ 2. Currently, config(1) has no way to "no define" drivers
+	XXX: I don't think this is true anymore. I think we can
+	undefine drivers now, see MODULAR in amd64, which does
+	no ath* and no select sppp*
 
-3. It is not always obvious by their names which drivers/options
-   correspond to which modules.
+ 3. It is not always obvious by their names which drivers/options
+    correspond to which modules.
 
-4. Right now critical drivers that would need to be pre-loaded (ffs,
-   exec_elf64) are still built-in so that we don't need to alter the boot
-   blocks to boot.
+ 4. Right now critical drivers that would need to be pre-loaded (ffs,
+    exec_elf64) are still built-in so that we don't need to alter the boot
+    blocks to boot.
 
 	This was a conscious decision by core@ some years ago.  It is
 	not a requirement that ffs or exec_* be built-in.  The only
@@ -43,13 +46,13 @@ christos and pgoyette.
 	this in all cases; currently the "push" only occurs if the
 	booted filesystem is not ffs.)
 
-5. Not all parent bus drivers are capable of rescan, so some drivers
-   just have to be built-in.
+ 5. Not all parent bus drivers are capable of rescan, so some drivers
+    just have to be built-in.
 
-6. Many (most?) drivers are not yet modularized
+ 6. Many (most?) drivers are not yet modularized
 
-7. There's currently no provisions for autoconfig to figure out which
-   modules are needed, and thus to load the required modules.
+ 7. There's currently no provisions for autoconfig to figure out which
+    modules are needed, and thus to load the required modules.
 
 	In the "normal" built-in world, autoconfigure can only ask
 	existing drivers if they're willing to manage (ie, attach) a
@@ -58,8 +61,8 @@ christos and pgoyette.
 	mechanism for identifying and loading drivers based on what
 	devices might be found.
 
-8. Even for existing modules, there are "surprise" dependencies with
-   code that has not yet been modularized.
+ 8. Even for existing modules, there are "surprise" dependencies with
+    code that has not yet been modularized.
 
 	For example, even though the bpf code has been modularized,
 	there is some shared code in bpf_filter.c which is needed by
@@ -78,27 +81,31 @@ christos and pgoyette.
 	have "sysmon_taskq" and "sysmon" built-in since "sysmon_power"
 	rerefences them.
 
-9. As a corollary to #8 above, having dependencies on modules from code
-   which has not been modularized makes it extremely difficult to test
-   the module code adequately.  Testing of module code should include
-   both testing-as-a-built-in module and testing-as-a-loaded-module, and
-   all dependencies need to be identified.
+ 9. As a corollary to #8 above, having dependencies on modules from code
+    which has not been modularized makes it extremely difficult to test
+    the module code adequately.  Testing of module code should include
+    both testing-as-a-built-in module and testing-as-a-loaded-module, and
+    all dependencies need to be identified.
 
-10.The current /stand/$ARCH/$VERSION/modules/ hierarchy won't scale as
-   we get more and more modules.  There are hundreds of potential device
-   driver modules.
+10. The current /stand/$ARCH/$VERSION/modules/ hierarchy won't scale as
+    we get more and more modules.  There are hundreds of potential device
+    driver modules.
 
-11.There currently isn't any good way to handle attachment-specific
-   modules.  The build infrastructure (ie, sys/modules/Makefile) doesn't
-   readily lend itself to bus-specific modules irrespective of $ARCH,
-   and maintaining distrib/sets/lists/modules/* is awkward at best.
+11. There currently isn't any good way to handle attachment-specific
+    modules.  The build infrastructure (ie, sys/modules/Makefile) doesn't
+    readily lend itself to bus-specific modules irrespective of $ARCH,
+    and maintaining distrib/sets/lists/modules/* is awkward at best.
 
-   Furthermore, devices such as ld(4), which can attach to a large set
-   of parent devices, need to be modified.  The parent devices need to
-   provide a common attribute (for example, ld_bud), and the ld driver
-   should attach to that attribute rather than to each parent.  But
-   currently, config(1) doesn't handle this - it doesn't allow an
-   attribute to be used as the device tree's pseudo-root.
+    Furthermore, devices such as ld(4), which can attach to a large set
+    of parent devices, need to be modified.  The parent devices need to
+    provide a common attribute (for example, ld_bud), and the ld driver
+    should attach to that attribute rather than to each parent.  But
+    currently, config(1) doesn't handle this - it doesn't allow an
+    attribute to be used as the device tree's pseudo-root. The current
+    directory structure where driver foo is split between ic/foo.c
+    and bus1/foo_bus1.c ... busn/foo_busn.c is annoying. It would be
+    better to switch to the FreeBSD model which puts all the driver
+    files in one directory.
 
-12.Item #11 gets even murkier when a particular parent can provide more
-   than one attribute.
+12. Item #11 gets even murkier when a particular parent can provide more
+    than one attribute.
