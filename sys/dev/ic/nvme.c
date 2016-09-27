@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.13 2016/09/20 21:18:08 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.14 2016/09/27 03:33:32 pgoyette Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.13 2016/09/20 21:18:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.14 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,6 @@ nvme_disable(struct nvme_softc *sc)
 int
 nvme_attach(struct nvme_softc *sc)
 {
-	struct nvme_attach_args naa;
 	uint64_t cap;
 	uint32_t reg;
 	u_int dstrd;
@@ -424,13 +423,7 @@ nvme_attach(struct nvme_softc *sc)
 	    KM_SLEEP);
 	if (sc->sc_namespaces == NULL)
 		goto free_q;
-	for (i = 0; i < sc->sc_nn; i++) {
-		memset(&naa, 0, sizeof(naa));
-		naa.naa_nsid = i + 1;
-		naa.naa_qentries = ioq_entries;
-		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
-		    nvme_print);
-	}
+	nvme_rescan(sc->sc_dev, "nvme", &i);
 
 	return 0;
 
@@ -447,6 +440,25 @@ free_admin_q:
 	nvme_q_free(sc, sc->sc_admin_q);
 
 	return 1;
+}
+
+int
+nvme_rescan(device_t self, const char *attr, const int *flags)
+{
+	int i;
+	struct nvme_softc *sc = device_private(self);
+	struct nvme_attach_args naa;
+
+	for (i = 0; i < sc->sc_nn; i++) {
+		if (sc->sc_namespaces[i].dev)
+			continue;
+		memset(&naa, 0, sizeof(naa));
+		naa.naa_nsid = i + 1;
+		naa.naa_qentries = nvme_ioq_size;
+		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
+		    nvme_print);
+	}
+	return 0;
 }
 
 static int
