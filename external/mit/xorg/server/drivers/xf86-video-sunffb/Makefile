@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2016/09/27 19:24:19 joerg Exp $
+#	$NetBSD: Makefile,v 1.13 2016/09/27 19:26:06 joerg Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
@@ -14,7 +14,8 @@ AFLAGS+= -x assembler-with-cpp -Wa,-Av9a
 
 .if ${MACHINE_ARCH} == "sparc"
 AFLAGS+= -x assembler-with-cpp -Wa,-Av8plusa
-COPTS= -mv8plus
+COPTS+=	${${ACTIVE_CC} == "gcc" :? -mv8plus :}
+COPTS+=	${${ACTIVE_CC} == "clang" :? -Wa,-Av8plusa :}
 .endif
 
 CPPFLAGS+=	${X11FLAGS.DRI} -DUSE_VIS
