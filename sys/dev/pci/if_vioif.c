@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.26 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.26 2016/09/27 03:33:32 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $"
 #include <sys/mutex.h>
 #include <sys/sockio.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.25 2016/08/29 04:21:25 ozaki-r Exp $"
 
 #include <net/bpf.h>
 
+#include "ioconf.h"
 
 #ifdef NET_MPSAFE
 #define VIOIF_MPSAFE	1
@@ -1510,4 +1512,34 @@ vioif_updown(struct vioif_softc *sc, bool isup)
 				     VIRTIO_NET_CONFIG_STATUS,
 				     isup?VIRTIO_NET_S_LINK_UP:0);
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
+ 
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+ 
+static int 
+if_vioif_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_if_vioif, 
+		    cfattach_ioconf_if_vioif, cfdata_ioconf_if_vioif); 
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_if_vioif,
+		    cfattach_ioconf_if_vioif, cfdata_ioconf_if_vioif);
+		break;
+	default:
+		error = ENOTTY;
+		break; 
+	}
+#endif
+   
+	return error;
 }

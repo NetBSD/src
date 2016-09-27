@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.14 2016/09/18 21:19:39 jdolecek Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.15 2016/09/27 03:33:32 pgoyette Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.14 2016/09/18 21:19:39 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.15 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,10 @@ struct nvme_pci_softc {
 static int	nvme_pci_match(device_t, cfdata_t, void *);
 static void	nvme_pci_attach(device_t, device_t, void *);
 static int	nvme_pci_detach(device_t, int);
+static int	nvme_pci_rescan(device_t, const char *, const int *);
 
 CFATTACH_DECL3_NEW(nvme_pci, sizeof(struct nvme_pci_softc),
-    nvme_pci_match, nvme_pci_attach, nvme_pci_detach, NULL, NULL,
+    nvme_pci_match, nvme_pci_attach, nvme_pci_detach, NULL, nvme_pci_rescan,
     nvme_childdet, DVF_DETACH_SHUTDOWN);
 
 static int	nvme_pci_intr_establish(struct nvme_softc *,
@@ -227,6 +228,13 @@ intr_release:
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	sc->sc_ios = 0;
+}
+
+static int
+nvme_pci_rescan(device_t self, const char *attr, const int *flags)
+{
+
+	return nvme_rescan(self, attr, flags);
 }
 
 static int
@@ -514,31 +522,17 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 {
 #ifdef _MODULE
 	devmajor_t cmajor, bmajor;
-	extern const struct bdevsw ld_bdevsw;
-	extern const struct cdevsw ld_cdevsw;
 	extern const struct cdevsw nvme_cdevsw;
 #endif
 	int error = 0;
 
+#ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
-		/* devsw must be done before configuring the actual device,
-		 * otherwise ldattach() fails
-		 */
-		bmajor = cmajor = NODEVMAJOR;
-		error = devsw_attach(ld_cd.cd_name, &ld_bdevsw, &bmajor,
-		    &ld_cdevsw, &cmajor);
-		if (error) {
-			aprint_error("%s: unable to register devsw\n",
-			    ld_cd.cd_name);
-			return error;
-		}
-
 		error = config_init_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
 		if (error)
-			return error;
+			break;
 
 		bmajor = cmajor = NODEVMAJOR;
 		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
@@ -548,21 +542,16 @@ nvme_modcmd(modcmd_t cmd, void *opaque)
 			    nvme_cd.cd_name);
 			/* do not abort, just /dev/nvme* will not work */
 		}
-#endif
-		return error;
+		break;
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
 		devsw_detach(NULL, &nvme_cdevsw);
 
 		error = config_fini_component(cfdriver_ioconf_nvme_pci,
 		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
-		if (error)
-			return error;
-
-		devsw_detach(&ld_bdevsw, &ld_cdevsw);
-#endif
-		return error;
+		break;
 	default:
-		return ENOTTY;
+		break;
 	}
+#endif
+	return error;
 }

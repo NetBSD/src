@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: viomb.c,v 1.7 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.7 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $");
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_page.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -45,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.6 2016/07/07 06:55:41 msaitoh Exp $");
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
+
+#include "ioconf.h"
 
 /* Configuration registers */
 #define VIRTIO_BALLOON_CONFIG_NUM_PAGES	0 /* 32bit */
@@ -524,4 +527,34 @@ viomb_thread(void *arg)
 			     mstohz(sleeptime));
 		mutex_exit(&sc->sc_waitlock);
 	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, viomb, "virtio");
+ 
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+ 
+static int 
+viomb_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_viomb, 
+		    cfattach_ioconf_viomb, cfdata_ioconf_viomb); 
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_viomb,
+		    cfattach_ioconf_viomb, cfdata_ioconf_viomb);
+		break;
+	default:
+		error = ENOTTY;
+		break; 
+	}
+#endif
+   
+	return error;
 }
