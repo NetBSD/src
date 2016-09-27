@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.5 2016/08/06 00:30:57 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.6 2016/09/27 22:27:50 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -84,3 +84,21 @@ christos and pgoyette.
    both testing-as-a-built-in module and testing-as-a-loaded-module, and
    all dependencies need to be identified.
 
+10.The current /stand/$ARCH/$VERSION/modules/ hierarchy won't scale as
+   we get more and more modules.  There are hundreds of potential device
+   driver modules.
+
+11.There currently isn't any good way to handle attachment-specific
+   modules.  The build infrastructure (ie, sys/modules/Makefile) doesn't
+   readily lend itself to bus-specific modules irrespective of $ARCH,
+   and maintaining distrib/sets/lists/modules/* is awkward at best.
+
+   Furthermore, devices such as ld(4), which can attach to a large set
+   of parent devices, need to be modified.  The parent devices need to
+   provide a common attribute (for example, ld_bud), and the ld driver
+   should attach to that attribute rather than to each parent.  But
+   currently, config(1) doesn't handle this - it doesn't allow an
+   attribute to be used as the device tree's pseudo-root.
+
+12.Item #11 gets even murkier when a particular parent can provide more
+   than one attribute.
