@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2016/08/31 14:29:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2016/09/27 19:18:42 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,10 @@ NOMAN=	# defined
 PKGDIST=	${LIB}
 
 COPTS.xshmfence_semaphore.c += -Wno-stack-protector
+
+.if ${MACHINE_ARCH} == "sparc" || ${COMMON_MACHINE_ARCH:U} == "sparc"
+COPTS.xshmfence_semaphore.c+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
