@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860.c,v 1.22 2016/09/27 20:16:35 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.23 2016/09/27 20:37:05 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
 /*	$FreeBSD: head/sys/dev/ral/rt2860.c 297793 2016-04-10 23:07:00Z pfg $ */
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.22 2016/09/27 20:16:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.23 2016/09/27 20:37:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1231,7 +1231,7 @@ rt2860_tx_intr(struct rt2860_softc *sc, int qid)
 	rt2860_drain_stats_fifo(sc);
 
 	hw = RAL_READ(sc, RT2860_TX_DTX_IDX(qid));
-	DPRINTF(("%s: rx mbuf %#x\n", __func__, hw));
+	DPRINTF(("%s: tx mbuf %#x\n", __func__, hw));
 	while (ring->next != hw) {
 		struct rt2860_tx_data *data = ring->data[ring->next];
 
@@ -1385,7 +1385,6 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 			m->m_data += 2;
 			wh = mtod(m, struct ieee80211_frame *);
 		}
-		printf("%s wh=%p\n", __func__, wh);
 
 #ifdef HW_CRYPTO
 		if (__predict_false(rxd->flags & htole32(RT2860_RX_MICERR))) {
