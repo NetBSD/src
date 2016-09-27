@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2016/09/05 06:30:40 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2016/09/27 19:24:19 joerg Exp $
 
 DRIVER=		xf86-video-sunffb
 DRIVER_NAME=	sunffb_drv
@@ -28,3 +28,6 @@ MAN=		sunffb.4
 COPTS.ffb_dac.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 COPTS.ffb_dga.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
+COPTS.ffb_dac.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.ffb_dga.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+COPTS.ffb_exa.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=pointer-sign :}
