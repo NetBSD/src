@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.962 2016/09/23 21:30:49 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.963 2016/09/27 16:47:01 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1453,10 +1453,18 @@ X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
 X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 .endfor
 
+# xf86-video-modesetting move into the server build.
+EXTRA_DRIVERS=
+.if ${HAVE_XORG_SERVER_VER} == "118"
+X11SRCDIR.xf86-video-modesetting=${X11SRCDIR.xorg-server}/hw/xfree86/drivers/modesetting
+.else
+EXTRA_DRIVERS=	modesetting 
+.endif
+
 .for _v in \
 	ag10e amdgpu apm ark ast ati ati-kms chips cirrus crime \
 	geode glint i128 i740 igs imstt intel intel-old \
-	modesetting mach64 mga \
+	${EXTRA_DRIVERS} mach64 mga \
 	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
 	r128 rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
