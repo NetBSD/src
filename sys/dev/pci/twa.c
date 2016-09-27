@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.54 2016/09/27 03:33:32 pgoyette Exp $ */
+/*	$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.54 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.55 2016/09/27 12:04:16 pgoyette Exp $");
 
 //#define TWA_DEBUG
 
@@ -778,7 +778,7 @@ twa_read_capacity(struct twa_request *tr, int lunid)
 	if (error == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		array_size = bswap64(_8btol(
-		    ((struct scsipi_read_capacity_16_data *)tr->tr_data->addr) + 1);
+		    ((struct scsipi_read_capacity_16_data *)tr->tr_data)->addr) + 1);
 #else
 		array_size = _8btol(((struct scsipi_read_capacity_16_data *)
 				tr->tr_data)->addr) + 1;
