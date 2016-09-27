@@ -1,21 +1,16 @@
-#	$NetBSD: Makefile,v 1.178 2016/09/27 03:53:06 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.179 2016/09/27 20:52:43 pgoyette Exp $
 
 .include <bsd.own.mk>
 
 # For all platforms
 
-SUBDIR=		aac
-SUBDIR+=	accf_dataready
+SUBDIR=		accf_dataready
 SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
-SUBDIR+=	amr
-SUBDIR+=	ataraid
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
-SUBDIR+=	cac
-SUBDIR+=	cac_pci
 SUBDIR+=	camellia
 SUBDIR+=	cast128
 SUBDIR+=	ccd
@@ -67,23 +62,11 @@ SUBDIR+=	if_srt
 SUBDIR+=	if_stf
 SUBDIR+=	if_strip
 SUBDIR+=	if_tun tun
-SUBDIR+=	if_vioif
 SUBDIR+=	if_vlan
 SUBDIR+=	iic
 SUBDIR+=	ipl
 SUBDIR+=	kernfs
 SUBDIR+=	layerfs
-SUBDIR+=	ld
-SUBDIR+=	ld_aac
-SUBDIR+=	ld_amr
-SUBDIR+=	ld_ataraid
-SUBDIR+=	ld_cac
-SUBDIR+=	ld_icp
-SUBDIR+=	ld_mlx
-SUBDIR+=	ld_sdmmc
-SUBDIR+=	ld_twa
-SUBDIR+=	ld_twe
-SUBDIR+=	ld_virtio
 SUBDIR+=	lfs
 SUBDIR+=	lua
 SUBDIR+=	luasystm
@@ -91,8 +74,6 @@ SUBDIR+=	luapmf
 SUBDIR+=	mfs
 SUBDIR+=	miiverbose
 SUBDIR+=	miniroot
-SUBDIR+=	mlx
-SUBDIR+=	mlx_pci
 SUBDIR+=	mqueue
 SUBDIR+=	msdos
 SUBDIR+=	nand
@@ -142,16 +123,12 @@ SUBDIR+=	swcrypto
 SUBDIR+=	swsensor
 SUBDIR+=	swwdog
 SUBDIR+=	tmpfs
-SUBDIR+=	twa
-SUBDIR+=	twe
 SUBDIR+=	uatp
 SUBDIR+=	udf
 SUBDIR+=	umap
 SUBDIR+=	union
 SUBDIR+=	usbverbose
 SUBDIR+=	vcoda
-SUBDIR+=	viomb
-SUBDIR+=	virtio
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
 SUBDIR+=	wapbl
@@ -206,8 +183,6 @@ SUBDIR+=	vmt
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	ubsec		# Builds on architectures with PCI bus
-SUBDIR+=	ld_nvme
-SUBDIR+=	nvme
 .endif
 
 .if ${MKSLJIT} != "no"
@@ -328,18 +303,6 @@ SUBDIR+=	compat_aoutm68k
 SUBDIR+=	pwdog
 .endif
 
-#
-# eisa bus modules
-#
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "alpha" || \
-    ${MACHINE_ARCH} == "hppa" || \
-    ${MACHINE_ARCH} == "prep" || \
-    ${MACHINE_ARCH} == "sgimips"
-SUBDIR+=	cac_eisa
-SUBDIR+=	mlx_eisa
-.endif
-
 .include <bsd.own.mk>
 
 #
@@ -399,6 +362,40 @@ SUBDIR+=	spkr
 
 .if (${MKISCSI} != "no")
 SUBDIR+=	iscsi
+.endif
+
+# For now, all of these are disabled, pending resolution of how to deal
+# with attachment-specific modules and bus-specific modules (as opposed
+# to machine- or architecture-specific modules)
+
+.if 0
+SUBDIR+=	aac
+SUBDIR+=	amr
+SUBDIR+=	ataraid
+SUBDIR+=	cac
+SUBDIR+=	cac_eisa
+SUBDIR+=	cac_pci
+SUBDIR+=	if_vioif
+SUBDIR+=	ld
+SUBDIR+=	ld_aac
+SUBDIR+=	ld_amr
+SUBDIR+=	ld_ataraid
+SUBDIR+=	ld_cac
+SUBDIR+=	ld_icp
+SUBDIR+=	ld_mlx
+SUBDIR+=	ld_sdmmc
+SUBDIR+=	ld_twa
+SUBDIR+=	ld_twe
+SUBDIR+=	ld_virtio
+SUBDIR+=	mlx
+SUBDIR+=	mlx_eisa
+SUBDIR+=	mlx_pci
+SUBDIR+=	ld_nvme
+SUBDIR+=	nvme
+SUBDIR+=	twa
+SUBDIR+=	twe
+SUBDIR+=	viomb
+SUBDIR+=	virtio
 .endif
 
 SUBDIR+=	examples	# build these regularly to avoid bit-rot
