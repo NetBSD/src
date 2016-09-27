@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.96 2016/09/17 02:27:19 pgoyette Exp $
+# $NetBSD: mi,v 1.97 2016/09/27 04:00:33 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10,6 +10,8 @@
 #		Sorry for any inconvenience this may cause, the management.
 #
 ./@MODULEDIR@					base-kernel-modules	kmod
+./@MODULEDIR@/aac				base-kernel-modules	kmod
+./@MODULEDIR@/aac/aac.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready			base-kernel-modules	kmod
 ./@MODULEDIR@/accf_dataready/accf_dataready.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/accf_httpready			base-kernel-modules	kmod
@@ -18,12 +20,20 @@
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/aio				base-kernel-modules	kmod
 ./@MODULEDIR@/aio/aio.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/amr				base-kernel-modules	kmod
+./@MODULEDIR@/amr/amr.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ataraid				base-kernel-modules	kmod
+./@MODULEDIR@/ataraid/ataraid.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish				base-kernel-modules	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpf				base-kernel-modules	kmod
 ./@MODULEDIR@/bpf/bpf.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/bpf_filter			base-kernel-modules	kmod
 ./@MODULEDIR@/bpf_filter/bpf_filter.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/cac				base-kernel-modules	kmod
+./@MODULEDIR@/cac/cac.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/cac_pci				base-kernel-modules	kmod
+./@MODULEDIR@/cac_pci/cac_pci.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/camellia				base-kernel-modules	kmod
 ./@MODULEDIR@/camellia/camellia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/cast128				base-kernel-modules	kmod
@@ -154,6 +164,8 @@
 ./@MODULEDIR@/if_strip/if_strip.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_tun				base-kernel-modules	kmod
 ./@MODULEDIR@/if_tun/if_tun.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/if_vioif				base-kernel-modules	kmod
+./@MODULEDIR@/if_vioif/if_vioif.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/if_vlan				base-kernel-modules	kmod
 ./@MODULEDIR@/if_vlan/if_vlan.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/iic				base-kernel-modules	kmod
@@ -168,6 +180,28 @@
 ./@MODULEDIR@/ksem/ksem.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/layerfs				base-kernel-modules	kmod
 ./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld				base-kernel-modules	kmod
+./@MODULEDIR@/ld/ld.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/ld_aac				base-kernel-modules	kmod
+./@MODULEDIR@/ld_aac/ld_aac.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_amr				base-kernel-modules	kmod
+./@MODULEDIR@/ld_amr/ld_amr.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_ataraid			base-kernel-modules	kmod
+./@MODULEDIR@/ld_ataraid/ld_ataraid.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/ld_cac				base-kernel-modules	kmod
+./@MODULEDIR@/ld_cac/ld_cac.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_icp				base-kernel-modules	kmod
+./@MODULEDIR@/ld_icp/ld_icp.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_mlx				base-kernel-modules	kmod
+./@MODULEDIR@/ld_mlx/ld_mlx.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_sdmmc				base-kernel-modules	kmod
+./@MODULEDIR@/ld_sdmmc/ld_sdmmc.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_twa				base-kernel-modules	kmod
+./@MODULEDIR@/ld_twa/ld_twa.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_twe				base-kernel-modules	kmod
+./@MODULEDIR@/ld_twe/ld_twe.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_virtio				base-kernel-modules	kmod
+./@MODULEDIR@/ld_virtio/ld_virtio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lfs				base-kernel-modules	kmod
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/lua				base-kernel-modules	kmod
@@ -184,6 +218,10 @@
 ./@MODULEDIR@/miiverbose/miiverbose.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot				base-kernel-modules	kmod
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mlx				base-kernel-modules	kmod
+./@MODULEDIR@/mlx/mlx.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/mlx_pci				base-kernel-modules	kmod
+./@MODULEDIR@/mlx_pci/mlx_pci.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mqueue				base-kernel-modules	kmod
 ./@MODULEDIR@/mqueue/mqueue.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/msdos				base-kernel-modules	kmod
@@ -296,6 +334,10 @@
 ./@MODULEDIR@/tprof/tprof.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/tun				base-kernel-modules	kmod
 ./@MODULEDIR@/tun/tun.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/twa				base-kernel-modules	kmod
+./@MODULEDIR@/twa/twa.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/twe				base-kernel-modules	kmod
+./@MODULEDIR@/twe/twe.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/uatp				base-kernel-modules	kmod
 ./@MODULEDIR@/uatp/uatp.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/udf				base-kernel-modules	kmod
@@ -310,6 +352,10 @@
 ./@MODULEDIR@/v7fs/v7fs.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/vcoda				base-kernel-modules	kmod
 ./@MODULEDIR@/vcoda/vcoda.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/viomb				base-kernel-modules	kmod
+./@MODULEDIR@/viomb/viomb.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/virtio				base-kernel-modules	kmod
+./@MODULEDIR@/virtio/virtio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/vnd 				base-kernel-modules	kmod
 ./@MODULEDIR@/vnd/vnd.kmod		        base-kernel-modules	kmod
 ./@MODULEDIR@/wapbl				base-kernel-modules	kmod
