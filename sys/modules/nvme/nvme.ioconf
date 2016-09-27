@@ -1,4 +1,4 @@
-#       $NetBSD: nvme.ioconf,v 1.1 2016/09/16 11:35:07 jdolecek Exp $
+#       $NetBSD: nvme.ioconf,v 1.2 2016/09/27 03:53:09 pgoyette Exp $
 
 ioconf nvme_pci
 
@@ -8,4 +8,3 @@ include "dev/pci/files.pci"
 pseudo-root pci*
 
 nvme* at pci? dev ? function ?
-ld* at nvme? nsid ?
