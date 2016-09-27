@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.43 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.44 2016/09/27 08:05:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.43 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.44 2016/09/27 08:05:34 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -754,7 +754,6 @@ ld_ataraid_modcmd(modcmd_t cmd, void *opaque)
 		error = ENOTTY;
 	break;
 	}
-printf("%s: return %d\n", __func__, error);
 #endif
 
 	return error;

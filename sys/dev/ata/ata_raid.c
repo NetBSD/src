@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.39 2016/09/27 08:05:34 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.38 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.39 2016/09/27 08:05:34 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -177,7 +177,6 @@ ata_raid_finalize(device_t self)
 		    ataraid_cd.cd_name);
 
  out:
-printf("%s: exit\n", __func__);
 	return (1);
 }
 
