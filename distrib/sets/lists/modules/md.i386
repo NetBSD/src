@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.69 2016/09/17 02:27:19 pgoyette Exp $
+# $NetBSD: md.i386,v 1.70 2016/09/27 04:00:33 pgoyette Exp $
 #
 # NOTE that there are three sets of files here:
 # @MODULEDIR@, i386-xen, and i386pae-xen
@@ -47,6 +47,8 @@
 ./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/bpfjit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod,sljit
+./@MODULEDIR@/cac_eisa				base-kernel-modules	kmod
+./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_freebsd/compat_freebsd.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_ibcs2			base-kernel-modules	kmod
@@ -105,6 +107,8 @@
 ./@MODULEDIR@/i915drmkms/i915drmkms.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/itesio				base-kernel-modules	kmod
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_nvme				base-kernel-modules	kmod
+./@MODULEDIR@/ld_nvme/ld_nvme.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303				base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303/lg3303.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lm				base-kernel-modules	kmod
@@ -117,6 +121,8 @@
 ./@MODULEDIR@/lm_wbsio/lm_wbsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mach64drm				base-kernel-modules	kmod
 ./@MODULEDIR@/mach64drm/mach64drm.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mlx_eisa				base-kernel-modules	kmod
+./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mgadrm				base-kernel-modules	kmod
 ./@MODULEDIR@/mgadrm/mgadrm.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
