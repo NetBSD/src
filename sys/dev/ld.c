@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.96 2016/09/19 23:32:30 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.97 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.96 2016/09/19 23:32:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.97 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,9 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.96 2016/09/19 23:32:30 jdolecek Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
+#include <sys/module.h>
 
 #include <dev/ldvar.h>
-
-#include <prop/proplib.h>
 
 static void	ldminphys(struct buf *bp);
 static bool	ld_suspend(device_t, const pmf_qual_t *);
@@ -589,4 +588,43 @@ lddiscard(dev_t dev, off_t pos, off_t len)
 	dksc = &sc->sc_dksc;
 
 	return dk_discard(dksc, dev, pos, len);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld, "dk_subr");
+
+#ifdef _MODULE
+CFDRIVER_DECL(ld, DV_DISK, NULL);
+#endif
+
+static int
+ld_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	devmajor_t bmajor, cmajor;
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		bmajor = cmajor = -1;
+		error = devsw_attach(ld_cd.cd_name, &ld_bdevsw, &bmajor,
+		    &ld_cdevsw, &cmajor);
+		if (error)
+			break;
+		error = config_cfdriver_attach(&ld_cd);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_cfdriver_detach(&ld_cd);
+		if (error)
+			break;
+		devsw_detach(&ld_bdevsw, &ld_cdevsw);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }
