@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.68 2016/09/27 04:00:33 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.69 2016/09/27 20:52:43 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -111,8 +111,8 @@
 ./@MODULEDIR@/i915drmkms/i915drmkms.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/itesio				base-kernel-modules	kmod
 ./@MODULEDIR@/itesio/itesio.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/ld_nvme				base-kernel-modules	kmod
-./@MODULEDIR@/ld_nvme/ld_nvme.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/ld_nvme				base-obsolete		obsolete
+./@MODULEDIR@/ld_nvme/ld_nvme.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/lg3303				base-kernel-modules	kmod
 ./@MODULEDIR@/lg3303/lg3303.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/lm				base-kernel-modules	kmod
@@ -125,8 +125,8 @@
 ./@MODULEDIR@/lm_wbsio/lm_wbsio.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131				base-kernel-modules	kmod
 ./@MODULEDIR@/mt2131/mt2131.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/nvme				base-kernel-modules	kmod
-./@MODULEDIR@/nvme/nvme.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/nvme				base-obsolete		obsolete
+./@MODULEDIR@/nvme/nvme.kmod			base-obsolete		obsolete
 ./@MODULEDIR@/nxt2k				base-kernel-modules	kmod
 ./@MODULEDIR@/nxt2k/nxt2k.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/odcm				base-kernel-modules	kmod

@@ -1,5 +1,5 @@
-# $NetBSD: md.sgimips,v 1.1 2016/09/27 04:00:33 pgoyette Exp $
-./@MODULEDIR@/cac_eisa				base-kernel-modules	kmod
-./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa				base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-kernel-modules	kmod
+# $NetBSD: md.sgimips,v 1.2 2016/09/27 20:52:43 pgoyette Exp $
+./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
+./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete

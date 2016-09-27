@@ -1,8 +1,8 @@
-# $NetBSD: md.hppa,v 1.4 2016/09/27 04:00:33 pgoyette Exp $
-./@MODULEDIR@/cac_eisa				base-kernel-modules	kmod
-./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-kernel-modules	kmod
+# $NetBSD: md.hppa,v 1.5 2016/09/27 20:52:43 pgoyette Exp $
+./@MODULEDIR@/cac_eisa				base-obsolete		obsolete
+./@MODULEDIR@/cac_eisa/cac_eisa.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa				base-kernel-modules	kmod
-./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/mlx_eisa				base-obsolete		obsolete
+./@MODULEDIR@/mlx_eisa/mlx_eisa.kmod		base-obsolete		obsolete
 
