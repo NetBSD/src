@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.43 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,10 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.43 2016/09/27 03:33:32 pgoyette Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "bio.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 #if NBIO > 0
 #include <dev/ata/atavar.h>
 #include <dev/ata/atareg.h>
@@ -79,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.42 2016/09/16 15:20:50 jdolecek Exp
 #include <dev/ldvar.h>
 
 #include <dev/ata/ata_raidvar.h>
+
+#include "ioconf.h"
 
 struct ld_ataraid_softc {
 	struct ld_softc sc_ld;
@@ -711,3 +715,47 @@ ld_ataraid_biodisk(struct ld_ataraid_softc *sc, struct bioc_disk *bd)
 	return 0;
 }
 #endif /* NBIO > 0 */
+
+MODULE(MODULE_CLASS_DRIVER, ld_ataraid, "ld,ataraid");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_ataraid"
+ * XXX it will be defined in the common-code module
+ */     
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif 
+  
+static int
+ld_ataraid_modcmd(modcmd_t cmd, void *opaque)
+{ 
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+ 
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_ataraid, cfdata_ioconf_ld_ataraid);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_ataraid, cfdata_ioconf_ld_ataraid);
+		break;
+	default:
+		error = ENOTTY;
+	break;
+	}
+printf("%s: return %d\n", __func__, error);
+#endif
+
+	return error;
+}

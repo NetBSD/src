@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $	*/
+/*	$NetBSD: ld_amr.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.25 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $")
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
+#include <sys/module.h>
 
 #include <sys/bus.h>
 
@@ -54,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: ld_amr.c,v 1.24 2016/09/16 15:20:50 jdolecek Exp $")
 #include <dev/pci/pcivar.h>
 #include <dev/pci/amrreg.h>
 #include <dev/pci/amrvar.h>
+
+#include "ioconf.h"
 
 struct ld_amr_softc {
 	struct	ld_softc sc_ld;
@@ -200,4 +203,47 @@ ld_amr_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return (ld_amr_dobio(sc, data, blkcnt * ld->sc_secsize, blkno, 1,
 	    NULL));
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_amr, "ld,amr");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_amr_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_amr, cfdata_ioconf_ld_amr);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_amr, cfdata_ioconf_ld_amr);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

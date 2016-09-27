@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.105 2016/07/14 04:19:27 msaitoh Exp $	*/
+/*	$NetBSD: twe.c,v 1.106 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.105 2016/07/14 04:19:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.106 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.105 2016/07/14 04:19:27 msaitoh Exp $");
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
-
+#include <sys/module.h>
 #include <sys/bswap.h>
 #include <sys/bus.h>
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.105 2016/07/14 04:19:27 msaitoh Exp $");
 #include <dev/pci/tweio.h>
 
 #include "locators.h"
+#include "ioconf.h"
 
 #define	PCI_CBIO	0x10
 
@@ -100,6 +101,7 @@ static void	twe_aen_enqueue(struct twe_softc *sc, uint16_t, int);
 static uint16_t	twe_aen_dequeue(struct twe_softc *);
 
 static void	twe_attach(device_t, device_t, void *);
+static int	twe_rescan(device_t, const char *, const int *);
 static int	twe_init_connection(struct twe_softc *);
 static int	twe_intr(void *);
 static int	twe_match(device_t, cfdata_t, void *);
@@ -122,8 +124,8 @@ static inline void twe_outl(struct twe_softc *, int, u_int32_t);
 
 extern struct	cfdriver twe_cd;
 
-CFATTACH_DECL_NEW(twe, sizeof(struct twe_softc),
-    twe_match, twe_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(twe, sizeof(struct twe_softc),
+    twe_match, twe_attach, NULL, NULL, twe_rescan, NULL, 0);
 
 /* FreeBSD driver revision for sysctl expected by the 3ware cli */
 const char twever[] = "1.50.01.002";
@@ -452,9 +454,7 @@ twe_attach(device_t parent, device_t self, void *aux)
 	twe_describe_controller(sc);
 
 	/* Find and attach RAID array units. */
-	sc->sc_nunits = 0;
-	for (i = 0; i < TWE_MAX_UNITS; i++)
-		(void) twe_add_unit(sc, i);
+	twe_rescan(self, "twe", 0);
 
 	/* ...and finally, enable interrupts. */
 	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
@@ -483,6 +483,20 @@ twe_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 }
+
+static int
+twe_rescan(device_t self, const char *attr, const int *flags)
+{
+	struct twe_softc *sc;
+	int i;
+
+	sc = device_private(self);
+	sc->sc_nunits = 0;
+	for (i = 0; i < TWE_MAX_UNITS; i++)
+		(void) twe_add_unit(sc, i);
+	return 0;
+}
+
 
 void
 twe_register_callbacks(struct twe_softc *sc, int unit,
@@ -1990,4 +2004,34 @@ twe_describe_controller(struct twe_softc *sc)
 		free(p[1], M_DEVBUF);
 	}
 	free(p[0], M_DEVBUF);
+}
+
+MODULE(MODULE_CLASS_DRIVER, twe, "pci");
+ 
+#ifdef _MODULE  
+#include "ioconf.c"
+#endif 
+
+static int      
+twe_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_twe,
+		    cfattach_ioconf_twe, cfdata_ioconf_twe);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_twe,
+		    cfattach_ioconf_twe, cfdata_ioconf_twe);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif  
+        
+	return error;
 }

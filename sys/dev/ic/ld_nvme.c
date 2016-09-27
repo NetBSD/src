@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.7 2016/09/20 21:18:08 jdolecek Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.8 2016/09/27 03:33:32 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.7 2016/09/20 21:18:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.8 2016/09/27 03:33:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,10 +36,13 @@ __KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.7 2016/09/20 21:18:08 jdolecek Exp $")
 #include <sys/bufq.h>
 #include <sys/disk.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 #include <dev/ldvar.h>
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
+
+#include "ioconf.h"
 
 struct ld_nvme_softc {
 	struct ld_softc		sc_ld;
@@ -190,4 +193,47 @@ static void
 ld_nvme_syncdone(void *xc, struct buf *bp, uint16_t cmd_status)
 {
 	/* nothing to do */
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_nvme, "ld,nvme");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef	CFDRIVER_DECL
+#define	CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_nvme_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_nvme, cfdata_ioconf_ld_nvme);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_nvme, cfdata_ioconf_ld_nvme);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

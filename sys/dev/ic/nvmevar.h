@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.5 2016/09/19 22:11:41 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.6 2016/09/27 03:33:32 pgoyette Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -148,6 +148,7 @@ struct nvme_attach_args {
 
 int	nvme_attach(struct nvme_softc *);
 int	nvme_detach(struct nvme_softc *, int flags);
+int	nvme_rescan(device_t, const char *, const int *);
 void	nvme_childdet(device_t, device_t);
 int	nvme_intr(void *);
 int	nvme_intr_msi(void *);
