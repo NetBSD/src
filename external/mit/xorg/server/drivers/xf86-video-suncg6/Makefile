@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2016/09/05 06:30:40 martin Exp $
+#	$NetBSD: Makefile,v 1.9 2016/09/27 19:24:19 joerg Exp $
 
 DRIVER=		xf86-video-suncg6
 DRIVER_NAME=	suncg6_drv
@@ -15,3 +15,4 @@ MAN=		suncg6.4
 .if ${HAVE_GCC:U0} > 48
 COPTS.cg6_accel.c+=	${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
 .endif
+COPTS.cg6_accel.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
