@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.136.2.1 2016/09/28 20:24:06 bouyer Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136 2014/08/09 05:33:01 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.136.2.1 2016/09/28 20:24:06 bouyer Exp $");
 
 #include "opt_ipsec.h"
 
@@ -683,8 +683,7 @@ rip6_bind(struct socket *so, struct mbuf *nam, struct lwp *l)
 	    (ia = ifa_ifwithaddr((struct sockaddr *)addr)) == 0)
 		return EADDRNOTAVAIL;
 	if (ia && ((struct in6_ifaddr *)ia)->ia6_flags &
-	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|
-	     IN6_IFF_DETACHED|IN6_IFF_DEPRECATED))
+	    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY))
 		return EADDRNOTAVAIL;
 	in6p->in6p_laddr = addr->sin6_addr;
 	return 0;
