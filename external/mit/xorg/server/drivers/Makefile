@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.88 2016/09/26 22:37:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.89 2016/09/28 18:12:06 macallan Exp $
 
 .include <bsd.own.mk>
 
@@ -275,12 +275,8 @@ SUBDIR+= \
 .if ${MACHINE} == "shark"
 SUBDIR+= \
 	xf86-video-chips \
+        xf86-video-igs \
         xf86-video-wsfb
-# needs porting for xorg-server 1.18
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-SUBDIR+= \
-        xf86-video-igs
-.endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 .endif	# ${MACHINE} == "shark"
 
 .if ${MACHINE} == "sparc" || \
@@ -294,15 +290,23 @@ SUBDIR+= \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
 	xf86-video-wsfb
+#	xf86-video-ag10e \
+#	xf86-video-glint \
+
 .if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
 	xf86-video-ag10e \
 	xf86-video-glint \
 	xf86-video-sunleo
 .endif	# ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+
 .if ${MACHINE} == "sparc"
+.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
 SUBDIR+= \
-	xf86-video-pnozz \
+	xf86-video-pnozz
+.endif  # ${XORG_SERVER_SUBDIR} == "xorg-server.old"
+
+SUBDIR+= \
 	xf86-video-suncg14 \
 	xf86-video-suntcx
 .endif	# ${MACHINE} == "sparc"
