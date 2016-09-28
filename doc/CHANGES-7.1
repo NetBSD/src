@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.111 2016/09/25 12:25:13 bouyer Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.112 2016/09/28 20:24:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5367,4 +5367,11 @@ sys/arch/sparc64/sparc64/locore.s		1.401
 
 	Fix RAS for 32-bit kernels.  trapframe is always 64-bit.
 	[nakayama, ticket #1257]
+
+sys/netinet6/in6_pcb.c				1.149 via patch
+sys/netinet6/raw_ip6.c				1.150 via patch
+
+	Allow explicit binding to detached addresss.
+	Fixes PR kern/51435.
+	[roy, ticket #1243]
 
