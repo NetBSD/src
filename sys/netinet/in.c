@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.183 2016/09/29 14:18:38 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.184 2016/09/29 15:04:17 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.183 2016/09/29 14:18:38 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.184 2016/09/29 15:04:17 roy Exp $");
 
 #include "arp.h"
 
@@ -381,7 +381,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = NULL;
 	struct in_aliasreq *ifra = (struct in_aliasreq *)data;
-	struct sockaddr_in oldaddr;
+	struct sockaddr_in oldaddr, *new_dstaddr;
 	int error, hostIsNew, maskIsNew;
 	int newifaddr = 0;
 	bool run_hook = false;
@@ -601,7 +601,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			mutex_exit(&in_ifaddr_lock);
 			need_reinsert = true;
 		}
-		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),1);
+		error = in_ifinit(ifp, ia, satocsin(ifreq_getaddr(cmd, ifr)),
+		    NULL, 1);
 
 		run_hook = true;
 		break;
@@ -617,7 +618,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			mutex_exit(&in_ifaddr_lock);
 			need_reinsert = true;
 		}
-		error = in_ifinit(ifp, ia, NULL, 0);
+		error = in_ifinit(ifp, ia, NULL, NULL, 0);
 		break;
 
 	case SIOCAIFADDR:
@@ -637,9 +638,10 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			 * otherwise userland gets a bogus message */
 			if ((ia->ia_flags & IFA_ROUTE))
 				in_ifscrub(ifp, ia);
-			ia->ia_dstaddr = ifra->ifra_dstaddr;
+			new_dstaddr = &ifra->ifra_dstaddr;
 			maskIsNew  = 1; /* We lie; but the effect's the same */
-		}
+		} else
+			new_dstaddr = NULL;
 		if (ifra->ifra_addr.sin_family == AF_INET &&
 		    (hostIsNew || maskIsNew)) {
 			if (!newifaddr) {
@@ -649,7 +651,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 				mutex_exit(&in_ifaddr_lock);
 				need_reinsert = true;
 			}
-			error = in_ifinit(ifp, ia, &ifra->ifra_addr, 0);
+			error = in_ifinit(ifp, ia, &ifra->ifra_addr,
+			    new_dstaddr, 0);
 		}
 		if ((ifp->if_flags & IFF_BROADCAST) &&
 		    (ifra->ifra_broadaddr.sin_family == AF_INET))
@@ -1059,23 +1062,30 @@ in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
  */
 int
 in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
-    const struct sockaddr_in *sin, int scrub)
+    const struct sockaddr_in *sin, const struct sockaddr_in *dst, int scrub)
 {
 	u_int32_t i;
-	struct sockaddr_in oldaddr;
+	struct sockaddr_in oldaddr, olddst;
 	int s, oldflags, flags = RTF_UP, error, hostIsNew;
 
 	if (sin == NULL)
 		sin = &ia->ia_addr;
+	if (dst == NULL)
+		dst = &ia->ia_dstaddr;
 
 	/*
 	 * Set up new addresses.
 	 */
 	oldaddr = ia->ia_addr;
+	olddst = ia->ia_dstaddr;
 	oldflags = ia->ia4_flags;
 	ia->ia_addr = *sin;
+	ia->ia_dstaddr = *dst;
 	hostIsNew = oldaddr.sin_family != AF_INET ||
 	    !in_hosteq(ia->ia_addr.sin_addr, oldaddr.sin_addr);
+	if (!scrub)
+		scrub = oldaddr.sin_family != ia->ia_dstaddr.sin_family ||
+		    !in_hosteq(ia->ia_dstaddr.sin_addr, olddst.sin_addr);
 
 	/*
 	 * Configure address flags.
@@ -1104,6 +1114,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	ia->ia4_flags &= ~IN_IFF_TRYTENTATIVE;
 	if (error != 0) {
 		ia->ia_addr = oldaddr;
+		ia->ia_dstaddr = olddst;
 		ia->ia4_flags = oldflags;
 		return error;
 	}
@@ -1112,12 +1123,14 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		int newflags = ia->ia4_flags;
 
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
+		ia->ia_ifa.ifa_dstaddr = sintosa(&olddst);
 		ia->ia4_flags = oldflags;
 		if (hostIsNew)
 			in_scrubaddr(ia);
 		else if (scrub)
 			in_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+		ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 		ia->ia4_flags = newflags;
 	}
 
