@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.153 2016/09/29 14:08:40 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.154 2016/09/29 15:04:17 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.153 2016/09/29 14:08:40 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.154 2016/09/29 15:04:17 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4906,27 +4906,18 @@ found:
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 
-		/*
-		 * Scrub old routes now instead of calling in_ifinit with
-		 * scrub=1, because we may change the dstaddr
-		 * before the call to in_ifinit.
-		 */
-		in_ifscrub(ifp, ifatoia(ifa));
-
 		if (myaddr != 0)
 			new_sin.sin_addr.s_addr = htonl(myaddr);
 		if (hisaddr != 0) {
 			new_dst.sin_addr.s_addr = htonl(hisaddr);
-			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr) {
+			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr)
 				sp->ipcp.saved_hisaddr = dest->sin_addr.s_addr;
-				*dest = new_dst; /* fix dstaddr in place */
-			}
 		}
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
@@ -4977,19 +4968,18 @@ sppp_clear_ip_addrs(struct sppp *sp)
 found:
 	{
 		struct sockaddr_in new_sin = *si;
+		struct sockaddr_in new_dst = *dest;
 		int error;
 
-		in_ifscrub(ifp, ifatoia(ifa));
 		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
 			new_sin.sin_addr.s_addr = 0;
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
-			/* replace peer addr in place */
-			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+			new_dst.sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
