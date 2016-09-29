@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.260 2016/07/31 04:05:32 dholland Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.261 2016/09/29 18:47:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.260 2016/07/31 04:05:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.261 2016/09/29 18:47:35 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1882,19 +1882,18 @@ vfs_bufstats(void)
 	int i, j, count;
 	buf_t *bp;
 	struct bqueue *dp;
-	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
+	int counts[MAXBSIZE / MIN_PAGE_SIZE + 1];
 	static const char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
-			counts[j] = 0;
+		memset(counts, 0, sizeof(counts));
 		TAILQ_FOREACH(bp, &dp->bq_queue, b_freelist) {
-			counts[bp->b_bufsize/PAGE_SIZE]++;
+			counts[bp->b_bufsize / PAGE_SIZE]++;
 			count++;
 		}
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
+		for (j = 0; j <= MAXBSIZE / PAGE_SIZE; j++)
 			if (counts[j] != 0)
 				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");
