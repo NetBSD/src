@@ -1,4 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.35 2016/09/29 15:21:09 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.36 2016/09/29 15:25:28 roy Exp $	*/
+#include <sys/cdefs.h>
+ __RCSID("$NetBSD: ifwatchd.c,v 1.36 2016/09/29 15:25:28 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
