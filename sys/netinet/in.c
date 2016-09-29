@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.182 2016/09/16 14:17:23 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.183 2016/09/29 14:18:38 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.182 2016/09/16 14:17:23 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.183 2016/09/29 14:18:38 roy Exp $");
 
 #include "arp.h"
 
@@ -149,6 +149,7 @@ static int	in_lifaddr_ioctl(struct socket *, u_long, void *,
 	struct ifnet *);
 
 static int	in_addprefix(struct in_ifaddr *, int);
+static void	in_scrubaddr(struct in_ifaddr *);
 static int	in_scrubprefix(struct in_ifaddr *);
 static void	in_sysctl_init(struct sysctllog **);
 
@@ -799,6 +800,22 @@ out:
 	curlwp_bindx(bound);
 }
 
+static void
+in_scrubaddr(struct in_ifaddr *ia)
+{
+
+	/* stop DAD processing */
+	if (ia->ia_dad_stop != NULL)
+		ia->ia_dad_stop(&ia->ia_ifa);
+
+	in_ifscrub(ia->ia_ifp, ia);
+	in_ifremlocal(&ia->ia_ifa);
+	if (ia->ia_allhosts != NULL) {
+		in_delmulti(ia->ia_allhosts);
+		ia->ia_allhosts = NULL;
+	}
+}
+
 /*
  * Depends on it isn't called in concurrent. It should be guaranteed
  * by ifa->ifa_ifp's ioctl lock. The possible callers are in_control
@@ -809,19 +826,12 @@ out:
 void
 in_purgeaddr(struct ifaddr *ifa)
 {
-	struct ifnet *ifp = ifa->ifa_ifp;
 	struct in_ifaddr *ia = (void *) ifa;
+	struct ifnet *ifp = ifa->ifa_ifp;
 
 	KASSERT(!ifa_held(ifa));
 
-	/* stop DAD processing */
-	if (ia->ia_dad_stop != NULL)
-		ia->ia_dad_stop(ifa);
-
-	in_ifscrub(ifp, ia);
-	in_ifremlocal(ifa);
-	if (ia->ia_allhosts != NULL)
-		in_delmulti(ia->ia_allhosts);
+	in_scrubaddr(ia);
 
 	mutex_enter(&in_ifaddr_lock);
 	LIST_REMOVE(ia, ia_hash);
@@ -1098,12 +1108,15 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		return error;
 	}
 
-	if (scrub) {
+	if (scrub || hostIsNew) {
 		int newflags = ia->ia4_flags;
 
 		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
 		ia->ia4_flags = oldflags;
-		in_ifscrub(ifp, ia);
+		if (hostIsNew)
+			in_scrubaddr(ia);
+		else if (scrub)
+			in_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 		ia->ia4_flags = newflags;
 	}
@@ -1248,7 +1261,7 @@ in_scrubprefix(struct in_ifaddr *target)
 	int error;
 	int s;
 
-	/* If we don't have IFA_ROUTE we should still inform userland */
+	/* If we don't have IFA_ROUTE we have nothing to do */
 	if ((target->ia_flags & IFA_ROUTE) == 0)
 		return 0;
 
