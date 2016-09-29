@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.184 2016/09/29 15:04:17 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.185 2016/09/29 15:18:18 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.184 2016/09/29 15:04:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.185 2016/09/29 15:18:18 roy Exp $");
 
 #include "arp.h"
 
@@ -608,7 +608,7 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 
 	case SIOCSIFNETMASK:
-		in_ifscrub(ifp, ia);
+		in_scrubprefix(ia);
 		ia->ia_sockmask = *satocsin(ifreq_getaddr(cmd, ifr));
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 		if (!newifaddr) {
@@ -624,20 +624,13 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCAIFADDR:
 		maskIsNew = 0;
 		if (ifra->ifra_mask.sin_len) {
-			/* Only scrub if we control the prefix route,
-			 * otherwise userland gets a bogus message */
-			if ((ia->ia_flags & IFA_ROUTE))
-				in_ifscrub(ifp, ia);
+			in_scrubprefix(ia);
 			ia->ia_sockmask = ifra->ifra_mask;
 			ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr;
 			maskIsNew = 1;
 		}
 		if ((ifp->if_flags & IFF_POINTOPOINT) &&
 		    (ifra->ifra_dstaddr.sin_family == AF_INET)) {
-			/* Only scrub if we control the prefix route,
-			 * otherwise userland gets a bogus message */
-			if ((ia->ia_flags & IFA_ROUTE))
-				in_ifscrub(ifp, ia);
 			new_dstaddr = &ifra->ifra_dstaddr;
 			maskIsNew  = 1; /* We lie; but the effect's the same */
 		} else
@@ -811,8 +804,9 @@ in_scrubaddr(struct in_ifaddr *ia)
 	if (ia->ia_dad_stop != NULL)
 		ia->ia_dad_stop(&ia->ia_ifa);
 
-	in_ifscrub(ia->ia_ifp, ia);
+	in_scrubprefix(ia);
 	in_ifremlocal(&ia->ia_ifa);
+
 	if (ia->ia_allhosts != NULL) {
 		in_delmulti(ia->ia_allhosts);
 		ia->ia_allhosts = NULL;
@@ -1047,16 +1041,6 @@ in_lifaddr_ioctl(struct socket *so, u_long cmd, void *data,
 }
 
 /*
- * Delete any existing route for an interface.
- */
-void
-in_ifscrub(struct ifnet *ifp, struct in_ifaddr *ia)
-{
-
-	in_scrubprefix(ia);
-}
-
-/*
  * Initialize an interface's internet address
  * and routing table entry.
  */
@@ -1128,7 +1112,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 		if (hostIsNew)
 			in_scrubaddr(ia);
 		else if (scrub)
-			in_ifscrub(ifp, ia);
+			in_scrubprefix(ia);
 		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 		ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 		ia->ia4_flags = newflags;
