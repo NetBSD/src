@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.34 2016/09/29 13:36:30 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.35 2016/09/29 15:21:09 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -29,11 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Define this for special treatment of sys/net/if_spppsubr.c based interfaces.
- */
-#define SPPP_IF_SUPPORT
-
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -43,9 +38,6 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_media.h>
-#ifdef SPPP_IF_SUPPORT
-#include <net/if_sppp.h>
-#endif
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
@@ -78,15 +70,6 @@ static void rescan_interfaces(void);
 static void free_interfaces(void);
 static struct interface_data * find_interface(int index);
 static void run_initial_ups(void);
-
-#ifdef SPPP_IF_SUPPORT
-static int check_is_connected(const char * ifname, int def_retvalue);
-#define if_is_connected(X)	(check_is_connected((X), 1))
-#define if_is_not_connected(X)	(!check_is_connected((X), 0))
-#else
-#define	if_is_connected(X)	1
-#define	if_is_not_connected(X)	1
-#endif
 
 /* global variables */
 static int verbose = 0, quiet = 0;
@@ -359,8 +342,8 @@ check_addrs(const struct ifa_msghdr *ifam)
 			if (aflag == DETACHED)
 				return;		/* XXX set ev to DOWN? */
 		}
-		if ((ev == UP && if_is_connected(ifd->ifname)) ||
-		    (ev == DOWN && if_is_not_connected(ifd->ifname)))
+		if ((ev == UP && aflag == READY) ||
+		    (ev == DOWN && aflag == DETACHED /* XXX why DETACHED? */))
 			invoke_script(ifa, brd, ev, ifd->index, ifd->ifname);
 	}
 }
@@ -633,55 +616,9 @@ run_initial_ups(void)
 		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
 		if (aflag != READY)
 			continue;
-		if (if_is_connected(ifd->ifname))
-			invoke_script(ifa, p->ifa_dstaddr, UP,
-			    ifd->index, ifd->ifname);
+		invoke_script(ifa, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
 	}
 	freeifaddrs(res);
 out:
 	close(s);
 }
-
-#ifdef SPPP_IF_SUPPORT
-/*
- * Special case support for in-kernel PPP interfaces.
- * If these are IFF_UP, but have not yet connected or completed authentication
- * we don't want to call the up script in the initial interface scan (there
- * will be an UP event generated later, when IPCP completes, anyway).
- *
- * If this is no if_spppsubr.c based interface, this ioctl just fails and we
- * treat is as connected.
- */
-static int
-check_is_connected(const char *ifname, int def_retval)
-{
-	int s, error;
-	struct spppstatus oldstatus;
-	struct spppstatusncp status;
-
-	memset(&status, 0, sizeof status);
-	strncpy(status.ifname, ifname, sizeof status.ifname);
-	memset(&oldstatus, 0, sizeof oldstatus);
-	strncpy(oldstatus.ifname, ifname, sizeof oldstatus.ifname);
-
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-	if (s < 0)
-		return 1;	/* no idea how to handle this... */
-	error = ioctl(s, SPPPGETSTATUSNCP, &status);
-	if (error != 0) {
-		error = ioctl(s, SPPPGETSTATUS, &oldstatus);
-		if (error != 0) {
-			/* not if_spppsubr.c based - return default */
-			close(s);
-			return def_retval;
-		} else {
-			/* can't query NCPs, so use default */
-			status.phase = oldstatus.phase;
-			status.ncpup = def_retval;
-		}
-	}
-	close(s);
-
-	return status.phase == SPPP_PHASE_NETWORK && status.ncpup > 0;
-}
-#endif
