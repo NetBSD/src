@@ -1,4 +1,4 @@
-/*	$NetBSD: ifwatchd.c,v 1.33 2016/09/21 21:07:29 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.34 2016/09/29 13:36:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -374,16 +374,31 @@ invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
 	const char *script;
 	int status;
 
-	if (sa != NULL && sa->sa_len == 0) {
-		fprintf(stderr, "illegal socket address (sa_len == 0)\n");
-		return;
-	}
-	if (sa != NULL && sa->sa_family == AF_INET6) {
-		struct sockaddr_in6 sin6;
-
-		memcpy(&sin6, (const struct sockaddr_in6 *)sa, sizeof (sin6));
-		if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
+	if (sa != NULL) {
+		if (sa->sa_len == 0) {
+			fprintf(stderr,
+			    "illegal socket address (sa_len == 0)\n");
 			return;
+		}
+		switch (sa->sa_family) {
+		case AF_INET:
+		{
+			const struct sockaddr_in *sin;
+
+			sin = (const struct sockaddr_in *)sa;
+			if (sin->sin_addr.s_addr == INADDR_ANY ||
+			    sin->sin_addr.s_addr == INADDR_BROADCAST)
+				return;
+		}
+		case AF_INET6:
+		{
+			const struct sockaddr_in6 *sin6;
+
+			sin6 = (const struct sockaddr_in6 *)sa;
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				return;
+		}
+		}
 	}
 
 	addr[0] = daddr[0] = 0;
