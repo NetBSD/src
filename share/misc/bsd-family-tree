@@ -344,6 +344,7 @@ FreeBSD 5.2           |      |                 |                       |
  |     |              |      |                 |               DragonFly 4.4.1
  |  FreeBSD           |      |            OpenBSD 5.9                  |
  |   10.3             |      |                 |                       |
+ |                    |   NetBSD 7.0.1         |                       |
  |                    |      |                 |               DragonFly 4.6.0
  *--FreeBSD           |      |            OpenBSD 6.0                  |
  |   11.0             |      |                 |                       |
@@ -699,6 +700,7 @@ OpenBSD 5.8		2015-10-18 [OBD]
 DragonFly 4.4.1		2015-12-07 [DFB]
 OpenBSD 5.9		2016-03-29 [OBD]
 FreeBSD 10.3		2016-04-04 [FBD]
+NetBSD 7.0.1		2016-05-22 [NBD]
 DragonFly 4.6.0		2016-08-02 [DFB]
 OpenBSD 6.0		2016-09-01 [OBD]
 
@@ -766,4 +768,4 @@ Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: http://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
 $FreeBSD: head/share/misc/bsd-family-tree 305215 2016-09-01 17:05:54Z maxim $
-$NetBSD: bsd-family-tree,v 1.57 2016/09/29 14:32:51 sevan Exp $
+$NetBSD: bsd-family-tree,v 1.58 2016/09/29 15:10:37 sevan Exp $
