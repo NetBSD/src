@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2016/09/03 15:47:54 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2016/09/29 20:08:25 uwe Exp $
 
 LIBISPRIVATE=	yes
 
@@ -211,7 +211,7 @@ auto-build.h: gmp.h Makefile
 	(cd .ab && \
 		AWK=${TOOL_AWK:Q} \
 		CC=${ORIGHOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
-		MAKE=${MAKE:Q} \
+		MAKE=${TOOL_GMAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
 		gcc_cv_ld=${LD:Q} \
 		gcc_cv_as=${AS:Q} \
