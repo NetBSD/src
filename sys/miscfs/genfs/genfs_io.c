@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.62 2016/09/29 18:47:35 christos Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.63 2016/09/29 19:08:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.62 2016/09/29 18:47:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.63 2016/09/29 19:08:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,10 +821,15 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kmutex_t * const slock = uobj->vmobjlock;
 	off_t off;
-#define MAXPAGES (MAXPHYS / MIN_PAGE_SIZE)
 	int i, error, npages, nback;
 	int freeflag;
-	struct vm_page *pgs[MAXPAGES], *pg, *nextpg, *tpg, curmp, endmp;
+	/*
+	 * This array is larger than it should so that it's size is constant.
+	 * The right size is MAXPAGES.
+	 */
+	struct vm_page *pgs[MAXPHYS / MIN_PAGE_SIZE];
+#define MAXPAGES (MAXPHYS / PAGE_SIZE)
+	struct vm_page *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
