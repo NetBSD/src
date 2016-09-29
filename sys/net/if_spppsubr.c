@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.152 2016/09/16 14:17:23 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.153 2016/09/29 14:08:40 roy Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.152 2016/09/16 14:17:23 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.153 2016/09/29 14:08:40 roy Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -4934,8 +4934,8 @@ found:
 
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,
@@ -4950,7 +4950,7 @@ found:
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
+	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 
@@ -4977,6 +4977,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 found:
 	{
 		struct sockaddr_in new_sin = *si;
+		int error;
 
 		in_ifscrub(ifp, ifatoia(ifa));
 		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
@@ -4988,14 +4989,21 @@ found:
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
 
-		(void)pfil_run_hooks(if_pfil,
-		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
+		if (debug && error)
+		{
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
+		}
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
+			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+		}
 	}
 }
 #endif
@@ -5093,8 +5101,8 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		error = in6_ifinit(ifp, ifatoia6(ifa), &new_sin6, 1);
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip6_addr: in6_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in6_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,
