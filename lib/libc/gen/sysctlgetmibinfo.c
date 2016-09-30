@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.12 2016/09/30 06:16:47 dholland Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.13 2016/09/30 06:22:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.12 2016/09/30 06:16:47 dholland Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.13 2016/09/30 06:22:21 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -277,6 +277,7 @@ __learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	struct sysctlnode qnode;
 	uint32_t rc;
 	size_t sz;
+	int serrno;
 
 	if (pnode == NULL)
 		pnode = &sysctl_mibroot;
@@ -303,7 +304,9 @@ __learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 	rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
 		    &qnode, sizeof(qnode));
 	if (sz == 0) {
+		serrno = errno;
 		free(pnode->sysctl_child);
+		errno = serrno;
 		pnode->sysctl_child = NULL;
 		return (rc);
 	}
@@ -324,7 +327,9 @@ __learn_tree(int *name, u_int namelen, struct sysctlnode *pnode)
 		rc = sysctl(name, namelen + 1, pnode->sysctl_child, &sz,
 			    &qnode, sizeof(qnode));
 		if (rc) {
+			serrno = errno;
 			free(pnode->sysctl_child);
+			errno = serrno;
 			pnode->sysctl_child = NULL;
 			return (rc);
 		}
