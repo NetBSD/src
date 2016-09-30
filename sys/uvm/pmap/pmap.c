@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2016/09/16 17:27:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2016/09/30 12:10:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2016/09/16 17:27:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.23 2016/09/30 12:10:40 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1272,16 +1272,19 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	UVMHIST_LOG(*histp, "new pte %#"PRIxPTE" (pa %#"PRIxPADDR")",
 	    pte_value(npte), pa, 0, 0);
 
-	if (pte_valid_p(opte) && pte_to_paddr(opte) != pa) {
-		pmap_remove(pmap, va, va + NBPG);
-		PMAP_COUNT(user_mappings_changed);
-	}
-
 	KASSERT(pte_valid_p(npte));
 	const bool resident = pte_valid_p(opte);
+	bool remap = false;
 	if (resident) {
+		if (pte_to_paddr(opte) != pa) {
+			pmap_remove(pmap, va, va + NBPG);
+			PMAP_COUNT(user_mappings_changed);
+			remap = true;
+		}
 		update_flags |= PMAP_TLB_NEED_IPI;
-	} else {
+	}
+
+	if (!resident || remap) {
 		pmap->pm_stats.resident_count++;
 	}
 
