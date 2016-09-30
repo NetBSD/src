@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.20 2016/09/13 00:20:51 christos Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.21 2016/09/30 16:47:56 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.20 2016/09/13 00:20:51 christos Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.21 2016/09/30 16:47:56 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -62,11 +62,10 @@ __RCSID("$NetBSD: af_inet.c,v 1.20 2016/09/13 00:20:51 christos Exp $");
 static void in_constructor(void) __attribute__((constructor));
 static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
-static bool in_addr_flags(struct ifaddrs *, int);
 static bool in_addr_tentative(struct ifaddrs *);
 static bool in_addr_tentative_or_detached(struct ifaddrs *);
-static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
-    struct in_aliasreq *);
+static void in_alias(struct ifaddrs *, prop_dictionary_t, prop_dictionary_t,
+    bool);
 
 static struct afswtch af = {
 	.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
@@ -76,94 +75,50 @@ static struct afswtch af = {
 };
 
 static void
-in_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
-    struct in_aliasreq *creq)
+in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv,
+    bool alias)
 {
-	struct ifreq ifr;
-	bool alias;
-	int s;
-	unsigned short flags;
-	struct in_aliasreq in_addreq;
-	const struct sockaddr_in * const asin = &in_addreq.ifra_addr;
-	const struct sockaddr_in * const dsin = &in_addreq.ifra_dstaddr;
-	const struct sockaddr_in * const bsin = &in_addreq.ifra_broadaddr;
+	struct sockaddr_in sin;
 	char hbuf[NI_MAXHOST];
 	const int niflag = Nflag ? 0 : NI_NUMERICHOST;
+	char fbuf[1024];
 
 	if (lflag)
 		return;
 
-	alias = true;
-
-	/* Get the non-alias address for this interface. */
-	if ((s = getsock(AF_INET)) == -1) {
-		if (errno == EAFNOSUPPORT)
-			return;
-		err(EXIT_FAILURE, "socket");
-	}
-	memset(&ifr, 0, sizeof(ifr));
-	estrlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-	if (prog_ioctl(s, SIOCGIFADDR, &ifr) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT)
-			return;
-		warn("SIOCGIFADDR");
-	}
-	/* If creq and ifr are the same address, this is not an alias. */
-	if (memcmp(&ifr.ifr_addr, &creq->ifra_addr, sizeof(ifr.ifr_addr)) == 0)
-		alias = false;
-	in_addreq = *creq;
-	if (prog_ioctl(s, SIOCGIFALIAS, &in_addreq) == -1) {
-		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
-			return;
-		} else
-			warn("SIOCGIFALIAS");
-	}
-
-	if (getnameinfo((const struct sockaddr *)asin, asin->sin_len,
+	if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
 		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
 	printf("\tinet %s%s", alias ? "alias " : "", hbuf);
 
-	if (getifflags(env, oenv, &flags) == -1)
-		err(EXIT_FAILURE, "%s: getifflags", __func__);
-
-	if (flags & IFF_POINTOPOINT) {
-		if (getnameinfo((const struct sockaddr *)dsin, dsin->sin_len,
+	if (ifa->ifa_flags & IFF_POINTOPOINT) {
+		if (getnameinfo(ifa->ifa_dstaddr, ifa->ifa_dstaddr->sa_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag))
 			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
 		printf(" -> %s", hbuf);
 	}
 
-	printf(" netmask 0x%x", ntohl(in_addreq.ifra_mask.sin_addr.s_addr));
+	memcpy(&sin, ifa->ifa_netmask, ifa->ifa_netmask->sa_len);
+	printf(" netmask 0x%x", ntohl(sin.sin_addr.s_addr));
 
-	if (flags & IFF_BROADCAST) {
-		if (getnameinfo((const struct sockaddr *)bsin, bsin->sin_len,
+	if (ifa->ifa_flags & IFF_BROADCAST) {
+		if (getnameinfo(ifa->ifa_broadaddr, ifa->ifa_broadaddr->sa_len,
 				hbuf, sizeof(hbuf), NULL, 0, niflag))
 			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
 		printf(" broadcast %s", hbuf);
 	}
 
-#ifdef IN_IFF_TENTATIVE
-	memcpy(&ifr.ifr_addr, &creq->ifra_addr, creq->ifra_addr.sin_len);
-	if (prog_ioctl(s, SIOCGIFAFLAG_IN, &ifr) == -1) {
-		if (errno != EADDRNOTAVAIL)
-			warn("SIOCGIFAFLAG_IN");
-	} else {
-		char fbuf[1024];
-		(void)snprintb(fbuf, sizeof(fbuf), IN_IFFBITS,
-		    ifr.ifr_addrflags);
-		printf(" flags %s", fbuf);
-	}
-#endif
+	(void)snprintb(fbuf, sizeof(fbuf), IN_IFFBITS, ifa->ifa_addrflags);
+	printf(" flags %s", fbuf);
 }
 
 static void
 in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct in_aliasreq ifra;
 	bool printprefs = false;
 	const char *ifname;
+	int alias = 0;
 
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
@@ -178,13 +133,8 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 			continue;
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
-		if (sizeof(ifra.ifra_addr) < ifa->ifa_addr->sa_len)
-			continue;
-
-		memset(&ifra, 0, sizeof(ifra));
-		estrlcpy(ifra.ifra_name, ifa->ifa_name, sizeof(ifra.ifra_name));
-		memcpy(&ifra.ifra_addr, ifa->ifa_addr, ifa->ifa_addr->sa_len);
-		in_alias(ifa->ifa_name, env, oenv, &ifra);
+		/* The first address is not an alias. */
+		in_alias(ifa, env, oenv, alias++);
 		if (printprefs)
 			ifa_print_preference(ifa->ifa_name, ifa->ifa_addr);
 		printf("\n");
@@ -244,7 +194,7 @@ static bool
 in_addr_tentative(struct ifaddrs *ifa)
 {
 
-#ifdef IN_IFF_TENTATIVE
+#ifdef SIOCGIFAFLAG_IN
 	return in_addr_flags(ifa, IN_IFF_TENTATIVE);
 #else
 	return false;
@@ -255,7 +205,7 @@ static bool
 in_addr_tentative_or_detached(struct ifaddrs *ifa)
 {
 
-#ifdef IN_IFF_TENTATIVE
+#ifdef SIOCGIFAFLAG_IN
 	return in_addr_flags(ifa, IN_IFF_TENTATIVE | IN_IFF_DETACHED);
 #else
 	return false;
