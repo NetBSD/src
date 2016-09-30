@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.21 2016/09/30 16:47:56 roy Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.22 2016/09/30 16:52:17 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.21 2016/09/30 16:47:56 roy Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.22 2016/09/30 16:52:17 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -64,8 +64,7 @@ static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
 static bool in_addr_tentative(struct ifaddrs *);
 static bool in_addr_tentative_or_detached(struct ifaddrs *);
-static void in_alias(struct ifaddrs *, prop_dictionary_t, prop_dictionary_t,
-    bool);
+static void in_alias(struct ifaddrs *, prop_dictionary_t, prop_dictionary_t);
 
 static struct afswtch af = {
 	.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
@@ -75,8 +74,7 @@ static struct afswtch af = {
 };
 
 static void
-in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv,
-    bool alias)
+in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct sockaddr_in sin;
 	char hbuf[NI_MAXHOST];
@@ -89,7 +87,7 @@ in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv,
 	if (getnameinfo(ifa->ifa_addr, ifa->ifa_addr->sa_len,
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
 		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
-	printf("\tinet %s%s", alias ? "alias " : "", hbuf);
+	printf("\tinet %s", hbuf);
 
 	if (ifa->ifa_flags & IFF_POINTOPOINT) {
 		if (getnameinfo(ifa->ifa_dstaddr, ifa->ifa_dstaddr->sa_len,
@@ -118,7 +116,6 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 	struct ifaddrs *ifap, *ifa;
 	bool printprefs = false;
 	const char *ifname;
-	int alias = 0;
 
 	if ((ifname = getifname(env)) == NULL)
 		err(EXIT_FAILURE, "%s: getifname", __func__);
@@ -134,7 +131,7 @@ in_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 		/* The first address is not an alias. */
-		in_alias(ifa, env, oenv, alias++);
+		in_alias(ifa, env, oenv);
 		if (printprefs)
 			ifa_print_preference(ifa->ifa_name, ifa->ifa_addr);
 		printf("\n");
