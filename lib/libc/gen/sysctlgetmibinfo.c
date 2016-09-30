@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlgetmibinfo.c,v 1.11 2014/05/16 12:22:32 martin Exp $ */
+/*	$NetBSD: sysctlgetmibinfo.c,v 1.12 2016/09/30 06:16:47 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.11 2014/05/16 12:22:32 martin Exp $");
+__RCSID("$NetBSD: sysctlgetmibinfo.c,v 1.12 2016/09/30 06:16:47 dholland Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -421,20 +421,27 @@ sysctlgetmibinfo_unlocked(const char *gname, int *iname, u_int *namelenp,
 	if (rnode != NULL) {
 		if (*rnode == NULL) {
 			/* XXX later deal with dealing back a sub version */
-			if (v != SYSCTL_VERSION)
-				return (EINVAL);
+			if (v != SYSCTL_VERSION) {
+				errno = EINVAL;
+				return -1;
+			}
 
 			pnode = &sysctl_mibroot;
 		}
 		else {
 			/* this is just someone being silly */
-			if (SYSCTL_VERS((*rnode)->sysctl_flags) != (uint32_t)v)
-				return (EINVAL);
+			if (SYSCTL_VERS((*rnode)->sysctl_flags)
+			    != (uint32_t)v) {
+				errno = EINVAL;
+				return -1;
+			}
 
 			/* XXX later deal with other people's trees */
 			if (SYSCTL_VERS((*rnode)->sysctl_flags) !=
-			    SYSCTL_VERSION)
-				return (EINVAL);
+			    SYSCTL_VERSION) {
+				errno = EINVAL;
+				return -1;
+			}
 
 			pnode = *rnode;
 		}
