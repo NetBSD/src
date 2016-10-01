@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.19 2016/10/01 11:07:30 mlelstv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.20 2016/10/01 11:09:12 mlelstv Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.19 2016/10/01 11:07:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.20 2016/10/01 11:09:12 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2334,6 +2334,9 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	uint8_t *buf;
 	uint32_t dmalen;
 	int xferlen;
+
+	if (__predict_false(sc->sc_flags & RUN_DETACHING))
+		return;
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		DPRINTF(("RX status=%d\n", status));
