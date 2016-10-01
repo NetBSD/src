@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.17 2016/10/01 07:21:45 mlelstv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.18 2016/10/01 07:23:40 mlelstv Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.17 2016/10/01 07:21:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.18 2016/10/01 07:23:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -749,7 +749,7 @@ run_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	s = splnet();
+	s = splusb();
 
 	sc->sc_flags |= RUN_DETACHING;
 
