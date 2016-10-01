@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.12 2016/09/14 16:18:31 christos Exp $
+# $NetBSD: t_ifconfig.sh,v 1.13 2016/10/01 15:35:22 roy Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -233,13 +233,14 @@ ifconfig_parameters_body()
 	atf_check -s ignore -o ignore -e match:'down' rump.ping -c 1 \
 	    -w $TIMEOUT -n 192.168.0.2
 	atf_check -s exit:0 rump.ifconfig shmif0 up
+	atf_check -s exit:0 rump.ifconfig -w 10
 	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT -n 192.168.0.2
 
 	# alias
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 192.168.1.1/24 alias
-	atf_check -s exit:0 -o match:'alias 192.168.1.1' rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:'192.168.1.1/24' rump.ifconfig shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 192.168.1.1/24 -alias
-	atf_check -s exit:0 -o not-match:'192.168.1.1' rump.ifconfig shmif0
+	atf_check -s exit:0 -o not-match:'192.168.1.1/24' rump.ifconfig shmif0
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::2
 	atf_check -s exit:0 -o match:'fc00::1' rump.ifconfig shmif0 inet6
