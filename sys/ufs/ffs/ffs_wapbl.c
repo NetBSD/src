@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.32 2016/09/24 21:00:54 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.33 2016/10/01 13:06:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.32 2016/09/24 21:00:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.33 2016/10/01 13:06:20 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -277,6 +277,7 @@ wapbl_remove_log(struct mount *mp)
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		vput(vp);
+		break;
 
 	case UFS_WAPBL_JOURNALLOC_END_PARTITION:
 		DPRINTF("end-of-partition log\n");
