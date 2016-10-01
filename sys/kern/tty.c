@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.272 2016/09/29 21:46:32 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.273 2016/10/01 03:46:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.272 2016/09/29 21:46:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.273 2016/10/01 03:46:00 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1246,6 +1246,9 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 				return EPERM;
 			if (!isctty(p, tp))
 				return EACCES;
+			if (!proc_uidmatch(tp->t_session->s_leader->p_cred,
+			    p->p_cred))
+				return error;
 			return error;
 		}
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
