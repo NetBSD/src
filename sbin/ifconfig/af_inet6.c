@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.37 2016/09/30 16:47:56 roy Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.38 2016/10/01 15:10:58 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.37 2016/09/30 16:47:56 roy Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.38 2016/10/01 15:10:58 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -277,6 +277,9 @@ in6_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 	printf("\tinet6 %s", hbuf);
 	inet6_putscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
 
+	sin6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
+	printf("/%d", prefix(&sin6->sin6_addr, sizeof(struct in6_addr)));
+
 	if (ifa->ifa_flags & IFF_POINTOPOINT) {
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
 		inet6_getscopeid(sin6, INET6_IS_ADDR_LINKLOCAL);
@@ -286,10 +289,6 @@ in6_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
 		printf(" -> %s", hbuf);
 	}
-
-	sin6 = (struct sockaddr_in6 *)ifa->ifa_netmask;
-	printf(" prefixlen %d", prefix(&sin6->sin6_addr,
-	    sizeof(struct in6_addr)));
 
 	(void)snprintb(fbuf, sizeof(fbuf), IN6_IFFBITS, ifa->ifa_addrflags);
 	printf(" flags %s", fbuf);
