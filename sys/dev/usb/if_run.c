@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.16 2016/09/16 09:25:30 mlelstv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.17 2016/10/01 07:21:45 mlelstv Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.16 2016/09/16 09:25:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.17 2016/10/01 07:21:45 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2418,8 +2418,8 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct run_tx_data *data;
 	struct rt2870_txd *txd;
 	struct rt2860_txwi *txwi;
-	uint16_t dur;
-	uint8_t type, mcs, tid, qid, qos = 0;
+	uint16_t dur, mcs;
+	uint8_t type, tid, qid, qos = 0;
 	int error, hasqos, ridx, ctl_ridx, xferlen, txwisize;
 	uint8_t pad;
 
