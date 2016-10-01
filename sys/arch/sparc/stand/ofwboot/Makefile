@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.36 2015/10/26 07:11:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.37 2016/10/01 13:57:44 christos Exp $
+
+.include <bsd.init.mk>
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
