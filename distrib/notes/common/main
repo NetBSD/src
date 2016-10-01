@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.531 2016/08/01 19:06:32 scole Exp $
+.\"	$NetBSD: main,v 1.532 2016/10/01 12:32:35 flxd Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1157,6 +1157,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Jed Davis Ta Mt jld@NetBSD.org
 .It Ta Matt DeBergalis Ta Mt deberg@NetBSD.org
 .It Ta Arnaud Degroote Ta Mt degroote@NetBSD.org
+.It Ta Felix Deichmann Ta Mt flxd@NetBSD.org
 .It Ta Rob Deker Ta Mt deker@NetBSD.org
 .It Ta Chris G. Demetriou Ta Mt cgd@NetBSD.org
 .It Ta Tracy Di Marco White Ta Mt gendalia@NetBSD.org
