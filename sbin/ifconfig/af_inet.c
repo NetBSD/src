@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.23 2016/10/01 15:10:58 roy Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.24 2016/10/01 20:59:49 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.23 2016/10/01 15:10:58 roy Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.24 2016/10/01 20:59:49 kre Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -64,6 +64,7 @@ static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
 static bool in_addr_tentative(struct ifaddrs *);
 static bool in_addr_tentative_or_detached(struct ifaddrs *);
+static in_addr_t in_netmask(struct sockaddr *);;
 static int  in_prefixlen(struct sockaddr *);
 static void in_alias(struct ifaddrs *, prop_dictionary_t, prop_dictionary_t);
 
@@ -74,17 +75,34 @@ static struct afswtch af = {
 	.af_addr_tentative_or_detached = in_addr_tentative_or_detached
 };
 
-static int
-in_prefixlen(struct sockaddr *sa)
+static in_addr_t
+in_netmask(struct sockaddr *sa)
 {
 	struct sockaddr_in sin;
-	in_addr_t mask;
-	int cidr;
 
 	memset(&sin, 0, sizeof(sin));
 	memcpy(&sin, sa, sa->sa_len);
-	mask = ntohl(sin.sin_addr.s_addr);
-	cidr = 33 - ffs(mask);
+	return ntohl(sin.sin_addr.s_addr);
+}
+
+static int
+in_prefixlen(struct sockaddr *sa)
+{
+	in_addr_t mask;
+	int cidr;
+
+	mask = in_netmask(sa);
+	if (mask == 0)			/* mask 0 ==> /0 */
+		return 0;
+
+	cidr = 33 - ffs(mask);		/* 33 - (1 .. 32) -> 32 .. 1 */
+
+	if (cidr < 32) {		/* more than 1 bit in mask */
+		/* check for non-contig netmask */
+		if ((mask ^ (((1 << cidr) - 1) << (32 - cidr))) != 0)
+			return -1;	/* noncontig, no pfxlen */
+	}
+
 	return cidr;
 }
 
@@ -93,6 +111,7 @@ in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char hbuf[NI_MAXHOST];
 	const int niflag = Nflag ? 0 : NI_NUMERICHOST;
+	int pfxlen;
 	char fbuf[1024];
 
 	if (lflag)
@@ -102,7 +121,9 @@ in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 			hbuf, sizeof(hbuf), NULL, 0, niflag))
 		strlcpy(hbuf, "", sizeof(hbuf));	/* some message? */
 	printf("\tinet %s", hbuf);
-	printf("/%d", in_prefixlen(ifa->ifa_netmask));
+	pfxlen = in_prefixlen(ifa->ifa_netmask);
+	if (pfxlen >= 0)
+		printf("/%d", pfxlen);
 
 	if (ifa->ifa_flags & IFF_POINTOPOINT) {
 		if (getnameinfo(ifa->ifa_dstaddr, ifa->ifa_dstaddr->sa_len,
@@ -110,6 +131,9 @@ in_alias(struct ifaddrs *ifa, prop_dictionary_t env, prop_dictionary_t oenv)
 			strlcpy(hbuf, "", sizeof(hbuf)); /* some message? */
 		printf(" -> %s", hbuf);
 	}
+
+	if (pfxlen < 0)
+		printf(" netmask %#x", in_netmask(ifa->ifa_netmask));
 
 	if (ifa->ifa_flags & IFF_BROADCAST) {
 		if (getnameinfo(ifa->ifa_broadaddr, ifa->ifa_broadaddr->sa_len,
