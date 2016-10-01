@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.33 2016/10/01 13:06:20 jdolecek Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.34 2016/10/01 13:15:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.33 2016/10/01 13:06:20 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.34 2016/10/01 13:15:45 jdolecek Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -167,12 +167,12 @@ ffs_wapbl_replay_finish(struct mount *mp)
 
 /* Callback for wapbl */
 void
-ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
-    int *dealloclens, int dealloccnt)
+ffs_wapbl_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int i, error __diagused;
+	int error __diagused;
+	struct wapbl_dealloc *wd;
 
 	UFS_WAPBL_JLOCK_ASSERT(mp);
 
@@ -180,13 +180,13 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 	ufs_wapbl_verify_inodes(mp, "ffs_wapbl_sync_metadata");
 #endif
 
-	for (i = 0; i< dealloccnt; i++) {
+	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
 		/*
 		 * blkfree errors are unreported, might silently fail
 		 * if it cannot read the cylinder group block
 		 */
 		ffs_blkfree(fs, ump->um_devvp,
-		    FFS_DBTOFSB(fs, deallocblks[i]), dealloclens[i], -1);
+		    FFS_DBTOFSB(fs, wd->wd_blkno), wd->wd_len, -1);
 	}
 
 	if (fs->fs_fmod != 0) {
@@ -198,22 +198,21 @@ ffs_wapbl_sync_metadata(struct mount *mp, daddr_t *deallocblks,
 }
 
 void
-ffs_wapbl_abort_sync_metadata(struct mount *mp, daddr_t *deallocblks,
-    int *dealloclens, int dealloccnt)
+ffs_wapbl_abort_sync_metadata(struct mount *mp, struct wapbl_dealloc *fdealloc)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
 	struct fs *fs = ump->um_fs;
-	int i;
+	struct wapbl_dealloc *wd;
 
-	for (i = 0; i < dealloccnt; i++) {
+	for (wd = fdealloc; wd != NULL; wd = SIMPLEQ_NEXT(wd, wd_entries)) {
 		/*
 		 * Since the above blkfree may have failed, this blkalloc might
 		 * fail as well, so don't check its error.  Note that if the
 		 * blkfree succeeded above, then this shouldn't fail because
 		 * the buffer will be locked in the current transaction.
 		 */
-		ffs_blkalloc_ump(ump, FFS_DBTOFSB(fs, deallocblks[i]),
-		    dealloclens[i]);
+		ffs_blkalloc_ump(ump, FFS_DBTOFSB(fs, wd->wd_blkno),
+		    wd->wd_len);
 	}
 }
 
