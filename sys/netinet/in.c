@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.185 2016/09/29 15:18:18 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.186 2016/10/01 17:17:20 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.185 2016/09/29 15:18:18 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.186 2016/10/01 17:17:20 roy Exp $");
 
 #include "arp.h"
 
@@ -1122,7 +1122,9 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	in_ifaddlocal(&ia->ia_ifa);
 
 	i = ia->ia_addr.sin_addr.s_addr;
-	if (IN_CLASSA(i))
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ia->ia_netmask = INADDR_BROADCAST;	/* default to /32 */
+	else if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
 	else if (IN_CLASSB(i))
 		ia->ia_netmask = IN_CLASSB_NET;
