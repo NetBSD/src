@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.18 2016/10/01 07:23:40 mlelstv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.19 2016/10/01 11:07:30 mlelstv Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.18 2016/10/01 07:23:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.19 2016/10/01 11:07:30 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2374,7 +2374,7 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 skip:	/* setup a new transfer */
 	usbd_setup_xfer(xfer, data, data->buf, RUN_MAX_RXSZ,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
-	(void)usbd_transfer(data->xfer);
+	(void)usbd_transfer(xfer);
 }
 
 static void
