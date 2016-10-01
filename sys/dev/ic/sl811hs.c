@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.96 2016/09/24 15:06:29 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.97 2016/10/01 13:46:52 christos Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.96 2016/09/24 15:06:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.97 2016/10/01 13:46:52 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -184,12 +184,6 @@ static const uint8_t slhci_tregs[2][4] =
 #define SLHCI_OVERTIME_WARNING_RATE { 60, 0 } /* 60 seconds */
 #endif
 static const struct timeval reserved_warn_rate = SLHCI_OVERTIME_WARNING_RATE;
-
-/* Rate for overflow warnings */
-#ifndef SLHCI_OVERFLOW_WARNING_RATE
-#define SLHCI_OVERFLOW_WARNING_RATE { 60, 0 } /* 60 seconds */
-#endif
-static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 
 /*
  * For EOF, the spec says 42 bit times, plus (I think) a possible hub skew of
