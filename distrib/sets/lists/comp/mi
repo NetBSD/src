@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2060 2016/09/05 02:25:37 ozaki-r Exp $
+#	$NetBSD: mi,v 1.2061 2016/10/02 13:09:24 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2745,6 +2745,7 @@
 ./usr/include/stdint.h				comp-c-include
 ./usr/include/stdio.h				comp-c-include
 ./usr/include/stdlib.h				comp-c-include
+./usr/include/stdnoreturn.h			comp-c-include
 ./usr/include/string.h				comp-c-include
 ./usr/include/stringlist.h			comp-c-include
 ./usr/include/strings.h				comp-c-include
