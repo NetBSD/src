@@ -1,4 +1,4 @@
-.\"	$NetBSD: column.1,v 1.9 2009/03/09 19:24:32 joerg Exp $
+.\"	$NetBSD: column.1,v 1.10 2016/10/02 21:06:18 abhinav Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -71,9 +71,6 @@ Useful for pretty-printing displays.
 .It Fl x
 Fill columns before filling rows.
 .El
-.Pp
-.Nm
-exits 0 on success, \*[Gt]0 if an error occurred.
 .Sh ENVIRONMENT
 .Bl -tag -width COLUMNS
 .It Ev COLUMNS
@@ -82,6 +79,8 @@ The environment variable
 is used to determine the size of
 the screen if no other information is available.
 .El
+.Sh EXIT STATUS
+.Ex -std column
 .Sh EXAMPLES
 .Dl (echo \&"PERM LINKS OWNER GROUP SIZE MONTH DAY HH:MM/YEAR NAME\&"\&;\ \&\e
 .Dl ls -l \&| sed 1d) \&| column -t
