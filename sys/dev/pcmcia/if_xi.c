@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.77 2016/06/10 13:27:15 ozaki-r Exp $ */
+/*	$NetBSD: if_xi.c,v 1.78 2016/10/02 14:16:03 christos Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.77 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.78 2016/10/02 14:16:03 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -811,8 +811,7 @@ xi_start(struct ifnet *ifp)
 			bus_space_write_1(bst, bsh, EDP,
 			    *(mtod(m, u_int8_t *) + m->m_len - 1));
 		}
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 	DPRINTF(XID_CONFIG, ("xi: len=%d pad=%d total=%d\n", len, pad, len+pad+4));
 	if (sc->sc_chipset >= XI_CHIPSET_MOHAWK)

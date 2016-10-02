@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.126 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.127 2016/10/02 14:17:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.126 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.127 2016/10/02 14:17:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -846,8 +846,7 @@ slintr(void *arg)
 				}
 				bp = cp;
 			}
-			MFREE(m, m2);
-			m = m2;
+			m = m2 = m_free(m);
 		}
 
 		if (putc(FRAME_END, &tp->t_outq)) {
