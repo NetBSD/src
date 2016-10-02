@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1534 2016/09/14 20:05:04 scole Exp $
+# $NetBSD: mi,v 1.1535 2016/10/02 23:14:19 jdolecek Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -744,6 +744,7 @@
 ./usr/share/man/cat4/aha.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahc.0			man-sys-catman		.cat
+./usr/share/man/cat4/ahci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahcisata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ahd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ai.0			man-sys-catman		.cat
@@ -3870,6 +3871,7 @@
 ./usr/share/man/html4/aha.html			man-sys-htmlman		html
 ./usr/share/man/html4/ahb.html			man-sys-htmlman		html
 ./usr/share/man/html4/ahc.html			man-sys-htmlman		html
+./usr/share/man/html4/ahci.html			man-sys-htmlman		html
 ./usr/share/man/html4/ahcisata.html		man-sys-htmlman		html
 ./usr/share/man/html4/ahd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ai.html			man-sys-htmlman		html
@@ -3879,7 +3881,7 @@
 ./usr/share/man/html4/akbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/alc.html			man-sys-htmlman		html
 ./usr/share/man/html4/ale.html			man-sys-htmlman		html
-./usr/share/man/html4/alipm.html			man-sys-htmlman		html
+./usr/share/man/html4/alipm.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/apecs.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/autoconf.html	man-sys-htmlman		html
@@ -6690,6 +6692,7 @@
 ./usr/share/man/man4/aha.4			man-sys-man		.man
 ./usr/share/man/man4/ahb.4			man-sys-man		.man
 ./usr/share/man/man4/ahc.4			man-sys-man		.man
+./usr/share/man/man4/ahci.4			man-sys-man		.man
 ./usr/share/man/man4/ahcisata.4			man-sys-man		.man
 ./usr/share/man/man4/ahd.4			man-sys-man		.man
 ./usr/share/man/man4/ai.4			man-sys-man		.man
