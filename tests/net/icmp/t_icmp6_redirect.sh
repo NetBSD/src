@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.2 2016/08/10 22:17:44 kre Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.3 2016/10/02 04:46:07 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -50,7 +50,8 @@ get_lladdr()
 {
 
 	export RUMP_SERVER=${1}
-	rump.ifconfig ${2} inet6 | awk "/fe80/ {sub(/%$2/, \"\"); print \$2;}"
+	rump.ifconfig ${2} inet6 |
+	    awk "/fe80/ {sub(/%$2/, \"\"); sub(/\\/[0-9]*/, \"\"); print \$2;}"
 	unset RUMP_SERVER
 
 	return 0
