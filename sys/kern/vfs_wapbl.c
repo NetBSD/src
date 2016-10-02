@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.83 2016/10/02 16:44:02 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.84 2016/10/02 16:52:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.83 2016/10/02 16:44:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.84 2016/10/02 16:52:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -1946,16 +1946,19 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len)
 	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim))
 		panic("wapbl_register_deallocation: out of resources");
 
+	wl->wl_dealloccnt++;
+	mutex_exit(&wl->wl_mtx);
+
 	wd = pool_get(&wapbl_dealloc_pool, PR_WAITOK);
 	wd->wd_blkno = blk;
 	wd->wd_len = len;
 
+	mutex_enter(&wl->wl_mtx);
 	SIMPLEQ_INSERT_TAIL(&wl->wl_dealloclist, wd, wd_entries);
-	wl->wl_dealloccnt++;
+	mutex_exit(&wl->wl_mtx);
 
 	WAPBL_PRINTF(WAPBL_PRINT_ALLOC,
 	    ("wapbl_register_deallocation: blk=%"PRId64" len=%d\n", blk, len));
-	mutex_exit(&wl->wl_mtx);
 }
 
 /****************************************************************/
