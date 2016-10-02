@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.106 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.107 2016/10/02 14:17:07 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.106 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.107 2016/10/02 14:17:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -676,8 +676,7 @@ strip_sendbody(struct strip_softc *sc, struct mbuf *m)
 			dp = StuffData(mtod(m, u_char *), m->m_len, dp,
 			    &rllstate_ptr);
 		}
-		MFREE(m, m2);
-		m = m2;
+		m = m2 = m_free(m);
 	}
 
 	/*

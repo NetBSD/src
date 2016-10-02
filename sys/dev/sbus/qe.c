@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.65 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: qe.c,v 1.66 2016/10/02 14:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.65 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.66 2016/10/02 14:16:03 christos Exp $");
 
 #define QEDEBUG
 
@@ -383,13 +383,13 @@ qe_put(struct qe_softc *sc, int idx, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(bp + boff, mtod(m, void *), len);
 		boff += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.35 2016/06/10 13:27:11 ozaki-r Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.36 2016/10/02 14:25:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.35 2016/06/10 13:27:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.36 2016/10/02 14:25:26 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -417,7 +417,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 		totlen += len;
 		memcpy(buff, data, len);
 		buff += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 
 	if (totlen > PAGE_SIZE)
