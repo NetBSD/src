@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.157 2016/08/07 17:38:34 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.158 2016/10/02 14:17:07 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.157 2016/08/07 17:38:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.158 2016/10/02 14:17:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1593,7 +1593,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 			bcopy(mtod(m, u_char *),
 			    mtod(mp, u_char *) + mp->m_len, m->m_len);
 			mp->m_len += m->m_len;
-			MFREE(m, mp->m_next);
+			mp->m_next = m_free(m);
 		} else
 			mp->m_next = m;
 		m = mp;

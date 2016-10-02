@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.58 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.59 2016/10/02 14:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.58 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.59 2016/10/02 14:16:03 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -728,8 +728,7 @@ cnw_transmit(struct cnw_softc *sc, struct mbuf *m0)
 			mptr += n;
 			mbytes -= n;
 		}
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 
 	/* Issue transmit command */
