@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.132 2016/09/07 10:27:44 ozaki-r Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.133 2016/10/02 14:17:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.132 2016/09/07 10:27:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.133 2016/10/02 14:17:07 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -840,8 +840,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 		len = min(uio->uio_resid, m0->m_len);
 		if (len != 0)
 			error = uiomove(mtod(m0, void *), len, uio);
-		MFREE(m0, m);
-		m0 = m;
+		m0 = m = m_free(m0);
 	}
 
 	if (m0) {
