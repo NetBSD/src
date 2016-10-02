@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.91 2016/09/07 14:21:01 jakllsch Exp $	*/
+/*	$NetBSD: if_se.c,v 1.92 2016/10/02 14:16:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.91 2016/09/07 14:21:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.92 2016/10/02 14:16:03 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -448,8 +448,7 @@ se_ifstart(struct ifnet *ifp)
 	for (m = m0; m != NULL; ) {
 		memcpy(cp, mtod(m, u_char *), m->m_len);
 		cp += m->m_len;
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 	if (len < SEMINSIZE) {
 #ifdef SEDEBUG
