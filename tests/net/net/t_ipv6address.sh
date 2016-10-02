@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.7 2016/08/10 21:33:52 kre Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.8 2016/10/02 04:29:25 kre Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -202,7 +202,7 @@ get_lladdr()
 {
 	export RUMP_SERVER=${1}
 	rump.ifconfig ${2} inet6 | grep "fe80" \
-	    | awk '{print $2}' | sed -e "s/%$2//g"
+	    | awk '{print $2}' | sed -e "s/%$2//g" -e 's;/[0-9]*$;;'
 	unset RUMP_SERVER
 
 	return 0
