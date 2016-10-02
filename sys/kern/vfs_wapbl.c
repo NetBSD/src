@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.81 2016/10/01 13:15:45 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.82 2016/10/02 14:38:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.81 2016/10/01 13:15:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.82 2016/10/02 14:38:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -2335,8 +2335,7 @@ wapbl_write_revocations(struct wapbl *wl, off_t *offp)
 	if (wl->wl_dealloccnt == 0)
 		return 0;
 
-	wd = SIMPLEQ_FIRST(&wl->wl_dealloclist);
-	while (wd) {
+	while ((wd = SIMPLEQ_FIRST(&wl->wl_dealloclist)) != NULL) {
 		wc->wc_type = WAPBL_WC_REVOCATIONS;
 		wc->wc_len = blocklen;
 		wc->wc_blkcount = 0;
