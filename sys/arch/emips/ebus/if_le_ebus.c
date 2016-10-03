@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.10 2016/10/02 14:25:26 christos Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.11 2016/10/03 17:35:38 maya Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.10 2016/10/02 14:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.11 2016/10/03 17:35:38 maya Exp $");
 
 #include "opt_inet.h"
 
@@ -938,8 +938,8 @@ int enic_put(struct enic_softc *sc, struct mbuf **pm)
 		len = m->m_len;
 		if (len == 0) {
 			n = m_free(m);
-		if (m == *pm)
-			*pm = n;
+			if (m == *pm)
+				*pm = n;
 			continue;
 		}
 		tlen -= len;
