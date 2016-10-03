@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.227 2016/09/18 02:17:43 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.227 2016/09/18 02:17:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -288,6 +288,7 @@ arp_init(void)
 
 	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
+	IFQ_LOCK_INIT(&arpintrq);
 }
 
 static void
@@ -914,13 +915,15 @@ arpintr(void)
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
-	while (arpintrq.ifq_head) {
+	for (;;) {
 		struct ifnet *rcvif;
 
-		s = splnet();
+		IFQ_LOCK(&arpintrq);
 		IF_DEQUEUE(&arpintrq, m);
-		splx(s);
-		if (m == NULL || (m->m_flags & M_PKTHDR) == 0)
+		IFQ_UNLOCK(&arpintrq);
+		if (m == NULL)
+			goto out;
+		if ((m->m_flags & M_PKTHDR) == 0)
 			panic("arpintr");
 
 		MCLAIM(m, &arpdomain.dom_mowner);
@@ -962,6 +965,7 @@ badlen:
 		}
 		m_freem(m);
 	}
+out:
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
 }
