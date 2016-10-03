@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.50 2016/10/02 14:25:26 christos Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.51 2016/10/03 01:23:55 ozaki-r Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.50 2016/10/02 14:25:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.51 2016/10/03 01:23:55 ozaki-r Exp $");
 
 #include "opt_inet.h"
 
@@ -621,7 +621,7 @@ bmac_put(struct bmac_softc *sc, void *buff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			n = m_feee(m);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(buff, mtod(m, void *), len);
