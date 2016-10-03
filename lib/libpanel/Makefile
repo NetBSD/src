@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2015/11/22 04:30:33 kamil Exp $
+#	$NetBSD: Makefile,v 1.8 2016/10/03 17:06:58 christos Exp $
 
-WARNS=	4
+WARNS=	6
 
 CPPFLAGS+=	-I${.CURDIR}
 
