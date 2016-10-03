@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.226 2016/09/21 10:50:22 roy Exp $	*/
+/*	$NetBSD: if.h,v 1.227 2016/10/03 11:06:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -916,6 +916,11 @@ do {									\
 #define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
+
+#define IFQ_LOCK_INIT(ifq)	(ifq)->ifq_lock =			\
+	    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET)
+#define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
+#define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
 #define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
