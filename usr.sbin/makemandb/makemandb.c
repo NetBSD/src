@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.43 2016/10/03 13:53:39 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.44 2016/10/03 16:11:11 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.43 2016/10/03 13:53:39 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.44 2016/10/03 16:11:11 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1089,6 +1089,22 @@ pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 	if (n == NULL)
 		return;
 
+	switch (n->sec) {
+	case SEC_NAME:
+	case SEC_SYNOPSIS:
+	case SEC_EXAMPLES:
+	case SEC_STANDARDS:
+	case SEC_HISTORY:
+	case SEC_AUTHORS:
+	case SEC_BUGS:
+		/*
+		 * We don't care about text from these sections
+		 */
+		return;
+	default:
+		break;
+	}
+
 	if (n->type == ROFFT_BLOCK)
 		mdoc_parse_Sh(n->body, rec);
 }
@@ -1174,14 +1190,6 @@ mdoc_parse_section(enum roff_sec sec, const char *string, mandb_rec *rec)
 		break;
 	case SEC_ERRORS:
 		append(&rec->errors, string);
-		break;
-	case SEC_NAME:
-	case SEC_SYNOPSIS:
-	case SEC_EXAMPLES:
-	case SEC_STANDARDS:
-	case SEC_HISTORY:
-	case SEC_AUTHORS:
-	case SEC_BUGS:
 		break;
 	default:
 		append(&rec->desc, string);
