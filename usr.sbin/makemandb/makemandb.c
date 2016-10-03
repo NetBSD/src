@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.42 2016/07/17 15:56:14 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.43 2016/10/03 13:53:39 abhinav Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.42 2016/07/17 15:56:14 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.43 2016/10/03 13:53:39 abhinav Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -107,6 +107,7 @@ static void proff_node(const struct roff_node *, mandb_rec *, const proff_nf *);
 static void pmdoc_Nm(const struct roff_node *, mandb_rec *);
 static void pmdoc_Nd(const struct roff_node *, mandb_rec *);
 static void pmdoc_Sh(const struct roff_node *, mandb_rec *);
+static void mdoc_parse_Sh(const struct roff_node *, mandb_rec *);
 static void pmdoc_Xr(const struct roff_node *, mandb_rec *);
 static void pmdoc_Pp(const struct roff_node *, mandb_rec *);
 static void pmdoc_macro_handler(const struct roff_node *, mandb_rec *, int);
@@ -1080,13 +1081,26 @@ pmdoc_Pp(const struct roff_node *n, mandb_rec *rec)
 
 /*
  * pmdoc_Sh --
- *  Called when a .Sh macro is encountered and loops through its body, calling
+ *  Called when a .Sh macro is encountered and tries to parse its body
+ */
+static void
+pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
+{
+	if (n == NULL)
+		return;
+
+	if (n->type == ROFFT_BLOCK)
+		mdoc_parse_Sh(n->body, rec);
+}
+
+/*
+ *  Called from pmdoc_Sh to parse body of a .Sh macro. It calls
  *  mdoc_parse_section to append the data to the section specific buffer.
  *  Two special macros which may occur inside the body of Sh are .Nm and .Xr and
  *  they need special handling, thus the separate if branches for them.
  */
 static void
-pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
+mdoc_parse_Sh(const struct roff_node *n, mandb_rec *rec)
 {
 	if (n == NULL || (n->type != ROFFT_TEXT && n->tok == MDOC_MAX))
 		return;
@@ -1116,8 +1130,8 @@ pmdoc_Sh(const struct roff_node *n, mandb_rec *rec)
 	 * already been explored by pmdoc_macro_handler.
 	 */
 	if (xr_found == 0)
-		pmdoc_Sh(n->child, rec);
-	pmdoc_Sh(n->next, rec);
+		mdoc_parse_Sh(n->child, rec);
+	mdoc_parse_Sh(n->next, rec);
 }
 
 /*
