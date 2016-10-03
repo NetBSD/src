@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2189 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2190 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -368,4 +368,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	nvme(4): NVMe driver is now MPSAFE. [jdolecek 20160918]
 	zoneinfo: Import tzdata2016g.  [kre 20160929]
 	libc: Add <stdalign.h> and <stdnoreturn.h>. [kamil 20161002]
-	c11: Import cc(1) wrapper for C11 [kamil 20161003]
+	c11: Import cc(1) wrapper for C11. [kamil 20161003]
+	libc: Add the C11 static_assert macro in <assert.h>. [kamil 20161003]
