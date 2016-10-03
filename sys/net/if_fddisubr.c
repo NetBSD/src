@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.100 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.101 2016/10/03 07:13:29 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.100 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.101 2016/10/03 07:13:29 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -583,8 +583,9 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 	}
 #endif
 #if defined(NETATALK)
-	if (!inq) {
+	if (inq == NULL) {
 		m_freem(m);
+		return;
 	}
 	s = splnet();
 	if (IF_QFULL(inq)) {
