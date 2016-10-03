@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.196 2016/09/21 10:50:22 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.197 2016/10/03 11:06:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.196 2016/09/21 10:50:22 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.197 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1806,14 +1806,13 @@ COMPATNAME(route_intr)(void *cookie)
 	struct sockproto proto = { .sp_family = PF_XROUTE, };
 	struct route_info * const ri = &COMPATNAME(route_info);
 	struct mbuf *m;
-	int s;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
-	while (!IF_IS_EMPTY(&ri->ri_intrq)) {
-		s = splnet();
+	for (;;) {
+		IFQ_LOCK(&ri->ri_intrq);
 		IF_DEQUEUE(&ri->ri_intrq, m);
-		splx(s);
+		IFQ_UNLOCK(&ri->ri_intrq);
 		if (m == NULL)
 			break;
 		proto.sp_protocol = M_GETCTX(m, uintptr_t);
@@ -1830,20 +1829,24 @@ void
 COMPATNAME(route_enqueue)(struct mbuf *m, int family)
 {
 	struct route_info * const ri = &COMPATNAME(route_info);
-	int s, wasempty;
+	int wasempty;
 
-	s = splnet();
+	IFQ_LOCK(&ri->ri_intrq);
 	if (IF_QFULL(&ri->ri_intrq)) {
 		IF_DROP(&ri->ri_intrq);
+		IFQ_UNLOCK(&ri->ri_intrq);
 		m_freem(m);
 	} else {
 		wasempty = IF_IS_EMPTY(&ri->ri_intrq);
 		M_SETCTX(m, (uintptr_t)family);
 		IF_ENQUEUE(&ri->ri_intrq, m);
-		if (wasempty)
+		IFQ_UNLOCK(&ri->ri_intrq);
+		if (wasempty) {
+			kpreempt_disable();
 			softint_schedule(ri->ri_sih);
+			kpreempt_enable();
+		}
 	}
-	splx(s);
 }
 
 static void
@@ -1859,6 +1862,7 @@ COMPATNAME(route_init)(void)
 	ri->ri_intrq.ifq_maxlen = ri->ri_maxqlen;
 	ri->ri_sih = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    COMPATNAME(route_intr), NULL);
+	IFQ_LOCK_INIT(&ri->ri_intrq);
 }
 
 /*
