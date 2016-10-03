@@ -1,4 +1,4 @@
-.\"	$NetBSD: c11.1,v 1.1 2016/10/03 01:00:27 kamil Exp $
+.\"	$NetBSD: c11.1,v 1.2 2016/10/03 08:20:12 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Op Fl pedantic
 .Op Fl pedantic-errors
 .Op Fl D_ANSI_SOURCE
-.Op options ...
+.Op Ar options ...
 .Sh DESCRIPTION
 Calls the C compiler (cc) with the given
 .Ar options ,
@@ -44,8 +44,8 @@ using a C language environment compatible with the
 specification.
 .Pp
 This includes
-alignment specification (
-.Ar _Alignas
+alignment specification
+.Ar ( _Alignas
 specifier,
 .Ar _Alignof operator ) ,
 the
@@ -79,7 +79,7 @@ Tell the system header file set to use an ANSI-conformant "clean" namespace.
 .Xr cc 1
 .Sh STANDARDS
 .Nm
-is
+is a
 .Nx
 extension.
 .Sh HISTORY
@@ -91,4 +91,5 @@ Since
 .Nm
 is a shell wrapper script to
 .Ar cc ,
-compile errors are prefixed by "cc:".
+compile errors are prefixed by
+.Dq cc: .
