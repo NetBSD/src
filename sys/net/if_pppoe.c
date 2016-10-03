@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.117 2016/08/11 15:16:07 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.118 2016/10/03 11:06:06 ozaki-r Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.117 2016/08/11 15:16:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.118 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -231,6 +231,9 @@ pppoeinit(void)
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
 	sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
+
+	IFQ_LOCK_INIT(&ppoediscinq);
+	IFQ_LOCK_INIT(&ppoeinq);
 }
 
 static int
@@ -394,24 +397,24 @@ static void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int s, disc_done, data_done;
+	int disc_done, data_done;
 
 	do {
 		disc_done = 0;
 		data_done = 0;
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoediscinq);
 			IF_DEQUEUE(&ppoediscinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoediscinq);
 			if (m == NULL) break;
 			disc_done = 1;
 			pppoe_disc_input(m);
 		}
 
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoeinq);
 			IF_DEQUEUE(&ppoeinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoeinq);
 			if (m == NULL) break;
 			data_done = 1;
 			pppoe_data_input(m);
@@ -1631,11 +1634,14 @@ pppoe_enqueue(struct ifqueue *inq, struct mbuf *m)
 	}
 #endif
 
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		softint_schedule(pppoe_softintr);
 	}
 	return;

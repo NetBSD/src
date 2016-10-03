@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.16 2016/01/20 21:44:00 riastradh Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.17 2016/10/03 11:06:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.16 2016/01/20 21:44:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.17 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,4 +117,5 @@ u_int natm_sookbytes = 0;		/* # of bytes ok */
 void natm_init(void)
 {
 	natmintrq.ifq_maxlen = natmqmaxlen;
+	IFQ_LOCK_INIT(&natmintrq);
 }

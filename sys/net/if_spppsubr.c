@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.154 2016/09/29 15:04:17 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.155 2016/10/03 11:06:06 ozaki-r Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.154 2016/09/29 15:04:17 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.155 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -478,7 +478,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq = NULL;
 	uint16_t protocol;
-	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int isr = 0;
@@ -642,19 +641,19 @@ queue_pkt:
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		/* Queue overflow. */
 		IF_DROP(inq);
-		splx(s);
+		IFQ_UNLOCK(inq);
 		if (debug)
 			log(LOG_DEBUG, "%s: protocol queue overflow\n",
 				ifp->if_xname);
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
+	IFQ_UNLOCK(inq);
 	schednetisr(isr);
-	splx(s);
 }
 
 /*

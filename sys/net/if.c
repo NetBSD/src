@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.357 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.358 2016/10/03 11:06:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.357 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.358 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -657,7 +657,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_snd.altq_ifp  = ifp;
 #endif
 
-	ifp->if_snd.ifq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
+	IFQ_LOCK_INIT(&ifp->if_snd);
 
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	(void)pfil_run_hooks(if_pfil,

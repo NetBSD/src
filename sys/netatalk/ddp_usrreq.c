@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.68 2015/05/02 17:18:03 rtr Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.69 2016/10/03 11:06:06 ozaki-r Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.68 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.69 2016/10/03 11:06:06 ozaki-r Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -597,6 +597,8 @@ ddp_init(void)
 	TAILQ_INIT(&at_ifaddr);
 	atintrq1.ifq_maxlen = IFQ_MAXLEN;
 	atintrq2.ifq_maxlen = IFQ_MAXLEN;
+	IFQ_LOCK_INIT(&atintrq1);
+	IFQ_LOCK_INIT(&atintrq2);
 
 	MOWNER_ATTACH(&atalk_tx_mowner);
 	MOWNER_ATTACH(&atalk_rx_mowner);
