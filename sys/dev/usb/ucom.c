@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.113 2016/05/14 10:52:29 mlelstv Exp $	*/
+/*	$NetBSD: ucom.c,v 1.114 2016/10/03 13:36:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.113 2016/05/14 10:52:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.114 2016/10/03 13:36:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -835,7 +835,9 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	sc->sc_refcnt++;
+	mutex_exit(&sc->sc_lock);
 	error = ucom_do_ioctl(sc, cmd, data, flag, l);
+	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
@@ -891,7 +893,9 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 		break;
 
 	case TIOCGFLAGS:
+		mutex_enter(&sc->sc_lock);
 		*(int *)data = sc->sc_swflags;
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case TIOCSFLAGS:
@@ -899,7 +903,9 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
+		mutex_enter(&sc->sc_lock);
 		sc->sc_swflags = *(int *)data;
+		mutex_exit(&sc->sc_lock);
 		break;
 
 	case TIOCMSET:
@@ -947,6 +953,7 @@ tiocm_to_ucom(struct ucom_softc *sc, u_long how, int ttybits)
 	if (ISSET(ttybits, TIOCM_RTS))
 		SET(combits, UMCR_RTS);
 
+	mutex_enter(&sc->sc_lock);
 	switch (how) {
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, combits);
@@ -961,6 +968,7 @@ tiocm_to_ucom(struct ucom_softc *sc, u_long how, int ttybits)
 		SET(sc->sc_mcr, combits);
 		break;
 	}
+	mutex_exit(&sc->sc_lock);
 
 	if (how == TIOCMSET || ISSET(combits, UMCR_DTR))
 		ucom_dtr(sc, (sc->sc_mcr & UMCR_DTR) != 0);
@@ -974,6 +982,7 @@ ucom_to_tiocm(struct ucom_softc *sc)
 	u_char combits;
 	int ttybits = 0;
 
+	mutex_enter(&sc->sc_lock);
 	combits = sc->sc_mcr;
 	if (ISSET(combits, UMCR_DTR))
 		SET(ttybits, TIOCM_DTR);
@@ -995,6 +1004,7 @@ XXX;
 	if (sc->sc_ier != 0)
 		SET(ttybits, TIOCM_LE);
 #endif
+	mutex_exit(&sc->sc_lock);
 
 	return ttybits;
 }
