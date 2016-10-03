@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.28 2016/07/06 18:03:27 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.29 2016/10/03 13:36:35 abhinav Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.28 2016/07/06 18:03:27 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.29 2016/10/03 13:36:35 abhinav Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -175,7 +175,8 @@ create_db(sqlite3 *db)
 	    "CREATE VIRTUAL TABLE mandb USING fts4(section, name, "
 		"name_desc, desc, lib, return_vals, env, files, "
 		"exit_status, diagnostics, errors, md5_hash UNIQUE, machine, "
-		"compress=zip, uncompress=unzip, tokenize=porter); "
+		"compress=zip, uncompress=unzip, tokenize=porter, "
+		"notindexed=section, notindexed=md5_hash); "
 	    //mandb_meta
 	    "CREATE TABLE IF NOT EXISTS mandb_meta(device, inode, mtime, "
 		"file UNIQUE, md5_hash UNIQUE, id  INTEGER PRIMARY KEY); "
