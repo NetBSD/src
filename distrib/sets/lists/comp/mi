@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2062 2016/10/02 17:19:00 kamil Exp $
+#	$NetBSD: mi,v 1.2063 2016/10/03 01:00:27 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9,6 +9,7 @@
 ./usr/bin/atf-compile				comp-obsolete		obsolete
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		binutils
+./usr/bin/c11					comp-c-bin
 ./usr/bin/c89					comp-c-bin
 ./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
@@ -3932,6 +3933,7 @@
 ./usr/share/man/cat1/asa.0			comp-fortran-catman	.cat
 ./usr/share/man/cat1/c++.0			comp-cxx-catman		gcccmds,.cat
 ./usr/share/man/cat1/c++filt.0			comp-cxx-catman		binutils,.cat
+./usr/share/man/cat1/c11.0			comp-c-catman		.cat
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
 ./usr/share/man/cat1/c99.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cc.0			comp-c-catman		gcccmds,.cat
@@ -11305,6 +11307,7 @@
 ./usr/share/man/html1/asa.html			comp-fortran-htmlman	html
 ./usr/share/man/html1/c++.html			comp-cxx-htmlman	gcccmds,html
 ./usr/share/man/html1/c++filt.html		comp-cxx-htmlman	binutils,html
+./usr/share/man/html1/c11.html			comp-c-htmlman		html
 ./usr/share/man/html1/c89.html			comp-c-htmlman		html
 ./usr/share/man/html1/c99.html			comp-c-htmlman		html
 ./usr/share/man/html1/cc.html			comp-c-htmlman		gcccmds,html
@@ -18417,6 +18420,7 @@
 ./usr/share/man/man1/asa.1			comp-fortran-man	.man
 ./usr/share/man/man1/c++.1			comp-cxx-man		gcccmds,.man
 ./usr/share/man/man1/c++filt.1			comp-cxx-man		binutils,.man
+./usr/share/man/man1/c11.1			comp-c-man		.man
 ./usr/share/man/man1/c89.1			comp-c-man		.man
 ./usr/share/man/man1/c99.1			comp-c-man		.man
 ./usr/share/man/man1/cc.1			comp-c-man		gcccmds,.man
