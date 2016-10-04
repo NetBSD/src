@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2191 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2192 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -373,3 +373,7 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	mntva(4): Add driver for MNTMN VA2000 FPGA-based graphics card for
 		Amiga computers with Zorro slot. Supports accelerated wsdisplay
 		console and wsfb-based X11. [rkujawa 20161003]
+	libc: Add the timespec_get function and TIME_UTC definition in the
+		<time.h> header. Enable unconditionally the timespec struct
+		definition in <time.h>. Changes conform to the C11 standard.
+		[kamil 20161004]
