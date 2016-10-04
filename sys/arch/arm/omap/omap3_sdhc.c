@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.24 2016/08/15 13:02:07 mlelstv Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.24 2016/08/15 13:02:07 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -259,8 +259,8 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
 
-//	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
-//	sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
+	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+	sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
@@ -479,6 +479,11 @@ no_dma:
 		aprint_error_dev(self, "ICS timeout(2)\n");
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_SDCLK_ENABLE);
+
+	if (sc->sc.sc_flags & SDHC_FLAG_USE_ADMA2)
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
+		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) |
+		    CON_MNS);
 
 	return;
 
