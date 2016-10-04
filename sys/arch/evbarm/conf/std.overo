@@ -1,4 +1,4 @@
-#	$NetBSD: std.overo,v 1.7 2016/08/04 07:02:39 kiyohara Exp $
+#	$NetBSD: std.overo,v 1.8 2016/10/04 16:17:37 kiyohara Exp $
 #
 # standard NetBSD/evbarm for OVERO options
 
@@ -9,7 +9,7 @@ include		"arch/evbarm/conf/files.overo"
 
 options 	CORTEX_PMC
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
-#options 	TPIDRPRW_IS_CURLWP
+options 	TPIDRPRW_IS_CURCPU
 
 options 	KERNEL_BASE_EXT=0x80000000
 makeoptions	LOADADDRESS="0x80200000"
