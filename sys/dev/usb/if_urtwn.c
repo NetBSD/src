@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.45 2016/06/10 13:27:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.46 2016/10/04 21:36:38 christos Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.45 2016/06/10 13:27:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.46 2016/10/04 21:36:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -180,6 +180,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(ZYXEL,	RTL8192CU),
 
 	/* URTWN_RTL8188E */
+	URTWN_RTL8188E_DEV(DLINK, DWA125D1),
 	URTWN_RTL8188E_DEV(ELECOM, WDC150SU2M),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188ETV),
 	URTWN_RTL8188E_DEV(REALTEK, RTL8188EU),
