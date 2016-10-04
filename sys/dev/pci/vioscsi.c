@@ -1,3 +1,4 @@
+/*	$NetBSD: vioscsi.c,v 1.7 2016/10/04 18:20:49 jdolecek Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -17,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.6 2015/11/01 08:55:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.7 2016/10/04 18:20:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,16 +228,15 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	periph = xs->xs_periph;
 
 	vr = vioscsi_req_get(sc);
-#ifdef DIAGNOSTIC
 	/*
-	 * This should never happen as we track the resources
-	 * in the mid-layer.
+	 * This can happen when we run out of queue slots.
 	 */
 	if (vr == NULL) {
-		scsipi_printaddr(xs->xs_periph);
-		panic("%s: unable to allocate request\n", __func__);
+		xs->error = XS_RESOURCE_SHORTAGE;
+		scsipi_done(xs);
+		return;
 	}
-#endif
+
 	req = &vr->vr_req;
 	slot = vr - sc->sc_reqs;
 
@@ -284,7 +284,7 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 	stuffup:
 		xs->error = XS_DRIVER_STUFFUP;
 nomore:
-		// XXX: free req?
+		vioscsi_req_put(sc, vr);
 		scsipi_done(xs);
 		return;
 	}
