@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.23 2013/10/20 17:13:18 christos Exp $	*/
+/*	$NetBSD: nand.c,v 1.24 2016/10/04 14:43:55 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.23 2013/10/20 17:13:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.24 2016/10/04 14:43:55 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -63,6 +63,7 @@ int nand_print(void *, const char *);
 
 static int nand_search(device_t, cfdata_t, const int *, void *);
 static void nand_address_row(device_t, size_t);
+static inline uint8_t nand_get_status(device_t);
 static void nand_address_column(device_t, size_t, size_t);
 static int nand_fill_chip_structure(device_t, struct nand_chip *);
 static int nand_scan_media(device_t, struct nand_chip *);
@@ -354,6 +355,7 @@ nand_scan_media(device_t self, struct nand_chip *chip)
 
 	nand_select(self, true);
 	nand_command(self, ONFI_RESET);
+	KASSERT(nand_get_status(self) & ONFI_STATUS_RDY);
 	nand_select(self, false);
 
 	/* check if the device implements the ONFI standard */
