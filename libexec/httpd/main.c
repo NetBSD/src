@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14 2016/05/24 21:18:29 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.15 2016/10/04 18:26:47 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -101,6 +101,7 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozowarn(httpd,
 		"   -v virtualroot\tenable virtual host support "
 		"in this directory");
+	bozowarn(httpd, "   -V\t\tUnknown virtual hosts go to `slashdir'");
 #ifndef NO_DIRINDEX_SUPPORT
 	bozowarn(httpd,
 		"   -X\t\t\tenable automatic directory index support");
