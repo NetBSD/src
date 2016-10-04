@@ -1,3 +1,30 @@
+	--- 9.10.4-P3 released ---
+
+4468.	[bug]		Address ECS option handling issues. [RT #43191]
+
+			Note: Only the parts required to restore
+			interoperation with ECS clients have been
+			included in this security release.  The full
+			fix is included in BIND 9.10.5.
+
+4467.	[security]	It was possible to trigger a assertion when rendering
+			a message. (CVE-2016-2776) [RT #43139]
+
+	--- 9.10.4-P2 released ---
+
+4406.	[bug]		getrrsetbyname with a non absolute name could
+			trigger an infinite recursion bug in lwresd
+			and named with lwres configured if when combined
+			with a search list entry the resulting name is
+			too long. (CVE-2016-2775) [RT #42694]
+
+4405.	[bug]		Change 4342 introduced a regression where you could
+			not remove a delegation in a NSEC3 signed zone using
+			OPTOUT via nsupdate. [RT #42702]
+
+4387.	[bug]		Change 4336 was not complete leading to SERVFAIL
+			being return as NS records expired. [RT #42683]
+
 	--- 9.10.4-P1 released ---
 
 4368.	[bug]		Fix a crash when calling "rndc stats" on some
