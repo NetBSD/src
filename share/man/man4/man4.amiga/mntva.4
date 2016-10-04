@@ -1,4 +1,4 @@
-.\" $NetBSD: mntva.4,v 1.1 2016/10/03 18:57:54 rkujawa Exp $
+.\" $NetBSD: mntva.4,v 1.2 2016/10/04 09:21:05 wiz Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,13 +44,15 @@ interface for the machine independent
 .Xr wscons 4
 driver.
 .Pp
-VA2000 integrated blitter engine is used to accelerate some of the text mode
+The VA2000 integrated blitter engine is used to accelerate some of the text mode
 drawing operations, like copying rows and columns.
 .Pp
-X11 server is supported via the wsfb driver.
+The X11 server is supported via the
+.Xr wsfb 4
+driver.
 .Sh SEE ALSO
-.Xr wsdisplay 4 ,
-.Xr wscons 4
+.Xr wscons 4 ,
+.Xr wsdisplay 4
 .Sh HISTORY
 The
 .Nm
@@ -66,7 +68,7 @@ and
 .An Radoslaw Kujawa Aq Mt radoslaw.kujawa@gmail.com .
 .Sh CAVEATS
 There is no way to detect whether the card is used as a console.
-Therefore, the user has to explicitely set
+Therefore, the user has to explicitely set the
 .Dv MNTVA_CONSOLE
 option in the kernel config file.
 .Pp
