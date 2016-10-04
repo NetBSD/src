@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307reg.h,v 1.6 2016/04/05 10:53:16 bouyer Exp $	*/
+/*	$NetBSD: ds1307reg.h,v 1.7 2016/10/04 15:06:59 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -64,6 +64,10 @@
 #define	DS1339_RTC_SIZE		DSXXXX_RTC_SIZE
 #define	DS1339_NVRAM_START	0
 #define	DS1339_NVRAM_SIZE	0
+
+#define	DS1340_RTC_START	0
+#define	DS1340_RTC_SIZE		DSXXXX_RTC_SIZE
+#define	DS1340_SECONDS_EOSC		(1 << 7) /* Clock Hold */
 
 #define DS1672_CNTR1		0x00
 #define DS1672_CNTR2		0x01
