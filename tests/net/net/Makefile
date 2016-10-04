@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2016/08/08 14:16:32 pgoyette Exp $
+# $NetBSD: Makefile,v 1.16 2016/10/04 04:15:25 ozaki-r Exp $
 #
 
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ TESTS_SH=	t_forwarding
 TESTS_SH+=	t_ipaddress
 TESTS_SH+=	t_ipv6address
 TESTS_SH+=	t_ipv6_lifetime
+TESTS_SH+=	t_mtudisc
 .endif
 
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net -lrumpdev
