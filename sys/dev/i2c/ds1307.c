@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.22 2016/04/05 10:53:16 bouyer Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.23 2016/10/04 15:06:59 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.22 2016/04/05 10:53:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.23 2016/10/04 15:06:59 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,13 @@ static const struct dsrtc_model dsrtc_models[] = {
 		.dm_model = 1339,
 		.dm_rtc_start = DS1339_RTC_START,
 		.dm_rtc_size = DS1339_RTC_SIZE,
+		.dm_flags = DSRTC_FLAG_BCD,
+	}, {
+		.dm_model = 1340,
+		.dm_ch_reg = DSXXXX_SECONDS,
+		.dm_ch_value = DS1340_SECONDS_EOSC,
+		.dm_rtc_start = DS1340_RTC_START,
+		.dm_rtc_size = DS1340_RTC_SIZE,
 		.dm_flags = DSRTC_FLAG_BCD,
 	}, {
 		.dm_model = 1672,
