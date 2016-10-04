@@ -1,4 +1,4 @@
-; Copyright (C) 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
+; Copyright (C) 2016  Internet Systems Consortium, Inc. ("ISC")
 ;
 ; Permission to use, copy, modify, and/or distribute this software for any
 ; purpose with or without fee is hereby granted, provided that the above
@@ -12,15 +12,7 @@
 ; OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 ; PERFORMANCE OF THIS SOFTWARE.
 
-$TTL 300
-@	SOA ns1. hostmaster.warn.example. (
-	    1 3600 1200 604800 3600 )
-	NS  ns1.
-ns1. A 10.53.0.1
-;
-example. NS ns2.example.
-ns2.example. A 10.53.0.2
-example. NS ns4.example.
-ns4.example. A 10.53.0.4
-tld. NS ns2.tld.
-ns2.tld. A 10.53.0.2
+$TTL 10
+delegation.test. IN SOA delegation.test. hostmaster.delegation.test. 1 3600 900 2419200 3600
+delegation.test. IN NS delegation.test.
+delegation.test. IN A 10.53.0.3
