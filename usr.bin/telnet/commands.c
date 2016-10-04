@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.69 2016/10/04 14:35:38 joerg Exp $	*/
+/*	$NetBSD: commands.c,v 1.70 2016/10/04 14:36:11 joerg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.69 2016/10/04 14:35:38 joerg Exp $");
+__RCSID("$NetBSD: commands.c,v 1.70 2016/10/04 14:36:11 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,6 @@ __RCSID("$NetBSD: commands.c,v 1.69 2016/10/04 14:35:38 joerg Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <netdb.h>
 #include <pwd.h>
