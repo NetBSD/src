@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.37 2012/01/10 23:39:11 joerg Exp $	*/
+/*	$NetBSD: externs.h,v 1.38 2016/10/04 14:35:38 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -230,7 +230,6 @@ int tn(int, char *[]);
 void command(int, const char *, int);
 void cmdrc(const char *, const char *);
 struct addrinfo;
-int sourceroute(struct addrinfo *, char *, char **, int *, int*);
 
 /* main.c */
 void tninit(void);
