@@ -1,4 +1,4 @@
-/*	$NetBSD: nand.c,v 1.24 2016/10/04 14:43:55 kiyohara Exp $	*/
+/*	$NetBSD: nand.c,v 1.25 2016/10/04 14:47:18 kiyohara Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -34,7 +34,7 @@
 /* Common driver for NAND chips implementing the ONFI 2.2 specification */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.24 2016/10/04 14:43:55 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nand.c,v 1.25 2016/10/04 14:47:18 kiyohara Exp $");
 
 #include "locators.h"
 
@@ -640,7 +640,7 @@ nand_get_status(device_t self)
 static bool
 nand_check_wp(device_t self)
 {
-	if (nand_get_status(self) & 0x80)
+	if (nand_get_status(self) & ONFI_STATUS_WP)
 		return false;
 	else
 		return true;
