@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipaddress.sh,v 1.3 2016/08/10 21:33:52 kre Exp $
+#	$NetBSD: t_ipaddress.sh,v 1.4 2016/10/04 03:43:15 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -156,6 +156,44 @@ test_same_address6()
 	check_entry_fail $net
 }
 
+test_auto_linklocal()
+{
+	atf_check -s exit:0 ${SERVER6} ${SOCK_LOCAL}
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	#
+	# Test enabled auto linklocal
+	#
+
+	# Check default value
+	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet6.ip6.auto_linklocal
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr ${BUS}
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+
+	$DEBUG && rump.netstat -nr -f inet
+
+	# IPv6 link-local address is set
+	atf_check -s exit:0 -o match:"inet6 fe80::" rump.ifconfig shmif0
+
+	#
+	# Test disabled auto linklocal
+	#
+	atf_check -s exit:0 -o ignore rump.sysctl -w -q net.inet6.ip6.auto_linklocal=0
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 create
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 linkstr ${BUS}
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif1 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+
+	$DEBUG && rump.netstat -nr -f inet
+
+	# IPv6 link-local address is not set
+	atf_check -s exit:0 -o not-match:"inet6 fe80::" rump.ifconfig shmif1
+}
+
 cleanup()
 {
 
@@ -187,4 +225,5 @@ atf_init_test_cases()
 
 	add_test same_address	"Assigning/deleting an IP address twice"
 	add_test same_address6	"Assigning/deleting an IPv6 address twice"
+	add_test auto_linklocal	"Assigning an IPv6 link-local address automatically"
 }
