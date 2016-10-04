@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.964 2016/09/29 03:53:13 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.965 2016/10/04 04:58:11 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -137,22 +137,12 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "mips" || \
-    ${MACHINE_CPU} == "powerpc" || \
-    ${MACHINE_CPU} == "sh3"
-HAVE_GDB?=	710
-.else
+.if ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb" || \
+    ${MACHINE_ARCH} == "powerpc64"
 HAVE_GDB?=	79
+.else
+HAVE_GDB?=	710
 .endif
 
 .if ${HAVE_GDB} == 79
@@ -164,23 +154,12 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 # What binutils is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE} == "hppa" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE} == "playstation2" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "vax" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "powerpc"
-HAVE_BINUTILS?=	226
-.else
+.if ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb" || \
+    ${MACHINE_ARCH} == "powerpc64"
 HAVE_BINUTILS?=	223
+.else
+HAVE_BINUTILS?=	226
 .endif
 
 .if ${HAVE_BINUTILS} == 223
