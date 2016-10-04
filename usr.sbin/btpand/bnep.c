@@ -1,4 +1,4 @@
-/*	$NetBSD: bnep.c,v 1.11 2011/08/27 22:30:44 joerg Exp $	*/
+/*	$NetBSD: bnep.c,v 1.12 2016/10/04 21:40:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bnep.c,v 1.11 2011/08/27 22:30:44 joerg Exp $");
+__RCSID("$NetBSD: bnep.c,v 1.12 2016/10/04 21:40:31 joerg Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -587,7 +587,7 @@ bnep_recv_filter_multi_addr_rsp(channel_t *chan, uint8_t *ptr, size_t size)
 }
 
 void
-bnep_send_control(channel_t *chan, uint8_t type, ...)
+bnep_send_control(channel_t *chan, int type, ...)
 {
 	packet_t *pkt;
 	uint8_t *p;
