@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1257 2016/09/16 05:42:58 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1258 2016/10/04 15:00:40 kiyohara Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1265 2016/09/16 05:42:22 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1266 2016/10/04 14:55:32 kiyohara Exp
  */
 
 /*
@@ -2329,6 +2329,7 @@
 
 /* Marvell products */
 #define	PCI_PRODUCT_MARVELL_GT64010A	0x0146		/* GT-64010A System Controller */
+#define	PCI_PRODUCT_MARVELL_88AP510	0x0510		/* 88AP510 */
 #define	PCI_PRODUCT_MARVELL_88F1181	0x1181		/* 88F1181 */
 #define	PCI_PRODUCT_MARVELL_88F1281	0x1281		/* 88F1281 SoC Orion2 */
 #define	PCI_PRODUCT_MARVELL_88W8300_1	0x1fa6		/* Libertas 88W8300 */
