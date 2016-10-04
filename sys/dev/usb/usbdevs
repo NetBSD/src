@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.716 2016/08/27 08:42:16 skrll Exp $
+$NetBSD: usbdevs,v 1.717 2016/10/04 21:36:38 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1362,6 +1362,7 @@ product DLINK RTL8192CU_2	0x3309	RTL8192CU
 product DLINK RTL8192CU_3	0x330a	RTL8192CU
 product DLINK RTL8192CU_4	0x330b	RTL8192CU
 product DLINK DWA131B		0x330d	DWA-131 rev B
+product	DLINK DWA125D1		0x330f  DWA-125 rev D1
 product DLINK DWL122		0x3700	Wireless DWL122
 product DLINK DWLG120		0x3701	DWL-G120
 product DLINK DWL120F		0x3702	DWL-120 rev F
