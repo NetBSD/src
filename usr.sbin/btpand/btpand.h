@@ -1,4 +1,4 @@
-/*	$NetBSD: btpand.h,v 1.4 2012/10/14 08:35:45 plunky Exp $	*/
+/*	$NetBSD: btpand.h,v 1.5 2016/10/04 21:40:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008-2009 Iain Hibbert
@@ -168,7 +168,7 @@ b2eaddr(void *dst, bdaddr_t *src)
 /* bnep.c */
 bool		bnep_send(channel_t *, packet_t *);
 bool		bnep_recv(packet_t *);
-void		bnep_send_control(channel_t *, uint8_t, ...);
+void		bnep_send_control(channel_t *, int, ...);
 
 /* channel.c */
 void		channel_init(void);
