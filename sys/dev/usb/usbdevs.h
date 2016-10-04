@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.708 2016/08/27 08:43:36 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.709 2016/10/04 21:36:56 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.716 2016/08/27 08:42:16 skrll Exp
+ *	NetBSD: usbdevs,v 1.717 2016/10/04 21:36:38 christos Exp
  */
 
 /*
@@ -1369,6 +1369,7 @@
 #define	USB_PRODUCT_DLINK_RTL8192CU_3	0x330a		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_RTL8192CU_4	0x330b		/* RTL8192CU */
 #define	USB_PRODUCT_DLINK_DWA131B	0x330d		/* DWA-131 rev B */
+#define	USB_PRODUCT_DLINK_DWA125D1	0x330f		/* DWA-125 rev D1 */
 #define	USB_PRODUCT_DLINK_DWL122	0x3700		/* Wireless DWL122 */
 #define	USB_PRODUCT_DLINK_DWLG120	0x3701		/* DWL-G120 */
 #define	USB_PRODUCT_DLINK_DWL120F	0x3702		/* DWL-120 rev F */
