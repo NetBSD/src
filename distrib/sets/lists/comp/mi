@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2063 2016/10/03 01:00:27 kamil Exp $
+#	$NetBSD: mi,v 1.2064 2016/10/04 09:41:40 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9357,6 +9357,7 @@
 ./usr/share/man/cat3/timersub.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timespec.0			comp-c-catman		.cat
+./usr/share/man/cat3/timespec_get.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespecadd.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespecclear.0		comp-c-catman		.cat
 ./usr/share/man/cat3/timespeccmp.0		comp-c-catman		.cat
@@ -16565,6 +16566,7 @@
 ./usr/share/man/html3/timersub.html		comp-c-htmlman		html
 ./usr/share/man/html3/times.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespec.html		comp-c-htmlman		html
+./usr/share/man/html3/timespec_get.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespecadd.html		comp-c-htmlman		html
 ./usr/share/man/html3/timespecclear.html	comp-c-htmlman		html
 ./usr/share/man/html3/timespeccmp.html		comp-c-htmlman		html
@@ -23836,6 +23838,7 @@
 ./usr/share/man/man3/timersub.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
 ./usr/share/man/man3/timespec.3			comp-c-man		.man
+./usr/share/man/man3/timespec_get.3		comp-c-man		.man
 ./usr/share/man/man3/timespecadd.3		comp-c-man		.man
 ./usr/share/man/man3/timespecclear.3		comp-c-man		.man
 ./usr/share/man/man3/timespeccmp.3		comp-c-man		.man
