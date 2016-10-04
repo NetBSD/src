@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.63 2016/09/28 18:17:10 macallan Exp $
+# $NetBSD: md.sparc,v 1.64 2016/10/04 21:34:02 mrg Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -43,6 +43,8 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/pnozz_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/pnozz_drv.so.0		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/pnozz_drv.so		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/pnozz_drv.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
@@ -194,6 +196,7 @@
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/pnozz.0				-unknown-	.cat,xorg,xorg_server_ver=110
+./usr/X11R7/man/cat4/pnozz.0				-unknown-	.cat,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/cat4/r128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/suncg14.0				-unknown-	.cat,xorg
@@ -220,6 +223,7 @@
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/pnozz.html			-unknown-	html,xorg,xorg_server_ver=110
+./usr/X11R7/man/html4/pnozz.html			-unknown-	html,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/html4/r128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/suncg14.html			-unknown-	html,xorg
@@ -246,6 +250,7 @@
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/pnozz.4				-unknown-	.man,xorg,xorg_server_ver=110
+./usr/X11R7/man/man4/pnozz.4				-unknown-	.man,xorg,xorg_server_ver=118,obsolete
 ./usr/X11R7/man/man4/r128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/suncg14.4				-unknown-	.man,xorg
