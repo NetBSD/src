@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1265 2016/09/16 05:42:22 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1266 2016/10/04 14:55:32 kiyohara Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2322,6 +2322,7 @@ product FREESCALE P5010		0x0429	P5010
 
 /* Marvell products */
 product MARVELL GT64010A	0x0146	GT-64010A System Controller
+product MARVELL 88AP510		0x0510	88AP510
 product MARVELL 88F1181		0x1181	88F1181
 product MARVELL 88F1281		0x1281	88F1281 SoC Orion2
 product MARVELL 88W8300_1	0x1fa6	Libertas 88W8300
