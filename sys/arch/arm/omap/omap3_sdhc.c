@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.26 2016/10/04 16:06:42 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.26 2016/10/04 16:06:42 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
@@ -49,8 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.25 2016/10/04 15:51:34 kiyohara Exp
 #include <arm/omap/omap3_sdmmcreg.h>
 
 #ifdef TI_AM335X
+#  include <arm/mainbus/mainbus.h>
 #  include <arm/omap/am335x_prcm.h>
 #  include <arm/omap/omap2_prcm.h>
+#  include <arm/omap/omap_var.h>
 #  include <arm/omap/sitara_cm.h>
 #  include <arm/omap/sitara_cmreg.h>
 #endif
@@ -82,25 +85,19 @@ int om3sdhcdebug = 1;
 #define SDHC_WRITE(sc, reg, val) \
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_sdhc_bsh, (reg), (val))
 
-static int obiosdhc_match(device_t, cfdata_t, void *);
-static void obiosdhc_attach(device_t, device_t, void *);
-static int obiosdhc_detach(device_t, int);
-
-static int obiosdhc_bus_width(struct sdhc_softc *, int);
-static int obiosdhc_rod(struct sdhc_softc *, int);
-static int obiosdhc_write_protect(struct sdhc_softc *);
-static int obiosdhc_card_detect(struct sdhc_softc *);
-
-struct obiosdhc_softc {
+struct mmchs_softc {
 	struct sdhc_softc	sc;
+	bus_addr_t		sc_addr;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	bus_space_handle_t	sc_hl_bsh;
 	bus_space_handle_t	sc_sdhc_bsh;
 	struct sdhc_host	*sc_hosts[1];
+	int			sc_irq;
 	void 			*sc_ih;		/* interrupt vectoring */
 
 #if NEDMA > 0
+	int			sc_edmabase;
 	struct edma_channel	*sc_edma_tx;
 	struct edma_channel	*sc_edma_rx;
 	uint16_t		sc_edma_param_tx[EDMA_MAX_PARAMS];
@@ -114,26 +111,45 @@ struct obiosdhc_softc {
 #endif
 };
 
+static int obiosdhc_match(device_t, cfdata_t, void *);
+static void obiosdhc_attach(device_t, device_t, void *);
+#ifdef TI_AM335X
+static int mainbussdhc_match(device_t, cfdata_t, void *);
+static void mainbussdhc_attach(device_t, device_t, void *);
+#endif
+static int mmchs_detach(device_t, int);
+
+static int mmchs_attach(struct mmchs_softc *);
+static void mmchs_init(device_t);
+
+static int mmchs_bus_width(struct sdhc_softc *, int);
+static int mmchs_rod(struct sdhc_softc *, int);
+static int mmchs_write_protect(struct sdhc_softc *);
+static int mmchs_card_detect(struct sdhc_softc *);
+
 #if NEDMA > 0
-static int obiosdhc_edma_init(struct obiosdhc_softc *, unsigned int);
-static int obiosdhc_edma_xfer_data(struct sdhc_softc *, struct sdmmc_command *);
-static void obiosdhc_edma_done(void *);
-static int obiosdhc_edma_transfer(struct sdhc_softc *, struct sdmmc_command *);
+static int mmchs_edma_init(struct mmchs_softc *, unsigned int);
+static int mmchs_edma_xfer_data(struct sdhc_softc *, struct sdmmc_command *);
+static void mmchs_edma_done(void *);
+static int mmchs_edma_transfer(struct sdhc_softc *, struct sdmmc_command *);
 #endif
 
 #ifdef TI_AM335X
-struct am335x_sdhc {
+struct am335x_mmchs {
 	const char *as_name;
+	const char *as_parent_name;
 	bus_addr_t as_base_addr;
 	int as_intr;
 	struct omap_module as_module;
 };
 
-static const struct am335x_sdhc am335x_sdhc[] = {
-	/* XXX All offset by 0x100 because of the am335x's mmc registers.  */
-	{ "MMCHS0", SDMMC1_BASE_TIAM335X, 64, { AM335X_PRCM_CM_PER, 0x3c } },
-	{ "MMC1",   SDMMC2_BASE_TIAM335X, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
-	{ "MMCHS2", SDMMC3_BASE_TIAM335X, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+static const struct am335x_mmchs am335x_mmchs[] = {
+	{ "MMCHS0", "obio",
+	    SDMMC1_BASE_TIAM335X, 64, { AM335X_PRCM_CM_PER, 0x3c } },
+	{ "MMC1",   "obio",
+	    SDMMC2_BASE_TIAM335X, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
+	{ "MMCHS2", "mainbus",
+	    SDMMC3_BASE_TIAM335X, 29, { AM335X_PRCM_CM_PER, 0xf8 } },
 };
 
 struct am335x_padconf {
@@ -155,17 +171,14 @@ const struct am335x_padconf am335x_padconf_mmc1[] = {
 };
 #endif
 
-CFATTACH_DECL_NEW(obiosdhc, sizeof(struct obiosdhc_softc),
-    obiosdhc_match, obiosdhc_attach, obiosdhc_detach, NULL);
+CFATTACH_DECL_NEW(obiosdhc, sizeof(struct mmchs_softc),
+    obiosdhc_match, obiosdhc_attach, mmchs_detach, NULL);
 
 static int
 obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
-#if defined(OMAP_3430) || defined(OMAP_3530) || defined(OMAP4)
 	struct obio_attach_args * const oa = aux;
-#endif
 #ifdef TI_AM335X
-	struct obio_attach_args * const oa = aux;
 	size_t i;
 #endif
 
@@ -189,9 +202,10 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 #endif
 
 #ifdef TI_AM335X
-	for (i = 0; i < __arraycount(am335x_sdhc); i++)
-		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
-		    (oa->obio_intr == am335x_sdhc[i].as_intr))
+	for (i = 0; i < __arraycount(am335x_mmchs); i++)
+		if (device_is_a(parent, am335x_mmchs[i].as_parent_name) &&
+		    (oa->obio_addr == am335x_mmchs[i].as_base_addr) &&
+		    (oa->obio_intr == am335x_mmchs[i].as_intr))
 			return 1;
 #endif
 
@@ -201,31 +215,104 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 static void
 obiosdhc_attach(device_t parent, device_t self, void *aux)
 {
-	struct obiosdhc_softc * const sc = device_private(self);
+	struct mmchs_softc * const sc = device_private(self);
 	struct obio_attach_args * const oa = aux;
-	prop_dictionary_t prop = device_properties(self);
-	uint32_t clkd, stat;
-	int error, timo, clksft, n;
-	bool support8bit = false;
-	const char *transfer_mode = "PIO";
-#if defined(OMAP4)
-	uint32_t v;
-	int x, y;
-#endif
-#ifdef TI_AM335X
-	size_t i;
-#endif
-
-	prop_dictionary_get_bool(prop, "8bit", &support8bit);
+	int error;
 
 	sc->sc.sc_dmat = oa->obio_dmat;
 	sc->sc.sc_dev = self;
+	sc->sc_addr = oa->obio_addr;
+	sc->sc_bst = oa->obio_iot;
+	sc->sc_irq = oa->obio_intr;
+#if defined(TI_AM335X)
+	sc->sc_edmabase = oa->obio_edmabase;
+#endif
+
+#if defined(TI_AM335X)
+	error = bus_space_map(sc->sc_bst, oa->obio_addr + OMAP4_SDMMC_HL_SIZE,
+	    oa->obio_size - OMAP4_SDMMC_HL_SIZE, 0, &sc->sc_bsh);
+#elif defined(OMAP4)
+	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
+	    &sc->sc_hl_bsh);
+	if (error == 0)
+		error = bus_space_subregion(sc->sc_bst, sc->sc_hl_bsh,
+		    OMAP4_SDMMC_HL_SIZE, oa->obio_size - OMAP4_SDMMC_HL_SIZE,
+		    &sc->sc_bsh);
+#else
+	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
+	    &sc->sc_bsh);
+#endif
+	if (error != 0) {
+		aprint_error("can't map registers: %d\n", error);
+		return;
+	}
+
+	if (mmchs_attach(sc) == 0)
+		mmchs_init(self);
+}
+
+#ifdef TI_AM335X
+CFATTACH_DECL_NEW(mainbussdhc, sizeof(struct mmchs_softc),
+    mainbussdhc_match, mainbussdhc_attach, mmchs_detach, NULL);
+
+static int
+mainbussdhc_match(device_t parent, cfdata_t cf, void *aux)
+{
+	struct mainbus_attach_args * const mb = aux;
+	int i;
+
+	for (i = 0; i < __arraycount(am335x_mmchs); i++)
+		if (device_is_a(parent, am335x_mmchs[i].as_parent_name) &&
+		    (mb->mb_iobase == am335x_mmchs[i].as_base_addr) &&
+		    (mb->mb_irq == am335x_mmchs[i].as_intr))
+			return 1;
+	return 0;
+}
+
+static void
+mainbussdhc_attach(device_t parent, device_t self, void *aux)
+{
+	struct mmchs_softc * const sc = device_private(self);
+	struct mainbus_attach_args * const mb = aux;
+	int error;
+
+	sc->sc.sc_dmat = &omap_bus_dma_tag;
+	sc->sc.sc_dev = self;
+	sc->sc_addr = mb->mb_iobase;
+	sc->sc_bst = &omap_bs_tag;
+	sc->sc_irq = mb->mb_irq;
+	sc->sc_edmabase = -1;
+
+	error = bus_space_map(sc->sc_bst, mb->mb_iobase + OMAP4_SDMMC_HL_SIZE,
+	    mb->mb_iosize - OMAP4_SDMMC_HL_SIZE, 0, &sc->sc_bsh);
+	if (error != 0) {
+		aprint_error("can't map registers: %d\n", error);
+		return;
+	}
+
+	if (mmchs_attach(sc) == 0)
+		/* Ensure attach prcm, icu and edma. */
+		config_defer(self, mmchs_init);
+}
+#endif
+
+static int
+mmchs_attach(struct mmchs_softc *sc)
+{
+	device_t dev = sc->sc.sc_dev;
+	prop_dictionary_t prop = device_properties(dev);
+	int error;
+	bool support8bit = false, dualvolt = false;
+
+	prop_dictionary_get_bool(prop, "8bit", &support8bit);
+	prop_dictionary_get_bool(prop, "dual-volt", &dualvolt);
+
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
 	if (support8bit)
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
-#if defined(OMAP_3430) || /* XXX until TI_DM37XX has working omap_devid() */ defined(TI_DM37XX)
+#if defined(OMAP_3430)
 	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
 #elif defined(OMAP_3530) || defined(TI_DM37XX)
 	/*
@@ -258,52 +345,54 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	 * mode configuration (MMCHS_HCTL.HSPE=0).
 	 */
 	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
-
-	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
-	sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
 	if (!prop_dictionary_get_uint32(prop, "clkmask", &sc->sc.sc_clkmsk))
 		sc->sc.sc_clkmsk = 0x0000ffc0;
-	sc->sc.sc_vendor_rod = obiosdhc_rod;
-	sc->sc.sc_vendor_write_protect = obiosdhc_write_protect;
-	sc->sc.sc_vendor_card_detect = obiosdhc_card_detect;
-	sc->sc.sc_vendor_bus_width = obiosdhc_bus_width;
-	sc->sc_bst = oa->obio_iot;
+	if (sc->sc_addr == SDMMC1_BASE_3530 ||
+	    sc->sc_addr == SDMMC1_BASE_TIAM335X ||
+	    sc->sc_addr == SDMMC1_BASE_4430 ||
+	    dualvolt)
+		sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_0V;
+	sc->sc.sc_vendor_rod = mmchs_rod;
+	sc->sc.sc_vendor_write_protect = mmchs_write_protect;
+	sc->sc.sc_vendor_card_detect = mmchs_card_detect;
+	sc->sc.sc_vendor_bus_width = mmchs_bus_width;
 
-	clksft = ffs(sc->sc.sc_clkmsk) - 1;
-
-#if defined(TI_AM335X)
-	error = bus_space_map(sc->sc_bst, oa->obio_addr + OMAP4_SDMMC_HL_SIZE,
-	    oa->obio_size - OMAP4_SDMMC_HL_SIZE, 0, &sc->sc_bsh);
-#elif defined(OMAP4)
-	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
-	    &sc->sc_hl_bsh);
-	if (!error)
-		bus_space_subregion(sc->sc_bst, sc->sc_hl_bsh,
-		    OMAP4_SDMMC_HL_SIZE, oa->obio_size - OMAP4_SDMMC_HL_SIZE,
-		    &sc->sc_bsh);
-#else
-	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
-	    &sc->sc_bsh);
-#endif
-	if (error) {
-		aprint_error_dev(self,
-		    "can't map registers: %d\n", error);
-		return;
+	error = bus_space_subregion(sc->sc_bst, sc->sc_bsh,
+	    OMAP3_SDMMC_SDHC_OFFSET, OMAP3_SDMMC_SDHC_SIZE, &sc->sc_sdhc_bsh);
+	if (error != 0) {
+		aprint_error("can't map subregion: %d\n", error);
+		return -1;
 	}
 
-	bus_space_subregion(sc->sc_bst, sc->sc_bsh, OMAP3_SDMMC_SDHC_OFFSET,
-	    OMAP3_SDMMC_SDHC_SIZE, &sc->sc_sdhc_bsh);
+	aprint_naive("\n");
+	aprint_normal(": SDHC controller\n");
+
+	return 0;
+}
+
+static void
+mmchs_init(device_t dev)
+{
+	struct mmchs_softc * const sc = device_private(dev);
+	uint32_t clkd, stat;
+	int error, timo, clksft, n;
+#if defined(OMAP4)
+	uint32_t rev, hwinfo;
+	int x, y;
+#elif defined(TI_AM335X)
+	int i;
+#endif
 
 #if NEDMA > 0
-	if (oa->obio_edmabase != -1) {
-		if (obiosdhc_edma_init(sc, oa->obio_edmabase) != 0)
+	if (sc->sc_edmabase != -1) {
+		if (mmchs_edma_init(sc, sc->sc_edmabase) != 0)
 			goto no_dma;
 
 		cv_init(&sc->sc_edma_cv, "sdhcedma");
-		sc->sc_edma_fifo = oa->obio_addr +
+		sc->sc_edma_fifo = sc->sc_addr +
 #ifdef TI_AM335X
 		    OMAP4_SDMMC_HL_SIZE +
 #endif
@@ -311,54 +400,29 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTDMA_DMAEN;
-		sc->sc.sc_vendor_transfer_data_dma = obiosdhc_edma_xfer_data;
-		transfer_mode = "EDMA";
-	}
-no_dma:
-#endif
-	if (sc->sc.sc_flags & SDHC_FLAG_USE_ADMA2)
-		transfer_mode = "ADMA2";
-
-	aprint_naive("\n");
-	aprint_normal(": SDHC controller (%s)\n", transfer_mode);
-
-#if defined(OMAP4)
-	v = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_REV);
-	aprint_normal_dev(sc->sc.sc_dev, "IP Rev 0x%08x", v);
-	v = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_HWINFO);
-	aprint_normal("%s", v & HL_HWINFO_RETMODE ? ", Retention Mode" : "");
-	x = 0;
-	switch (v & HL_HWINFO_MEM_SIZE_MASK) {
-	case HL_HWINFO_MEM_SIZE_512: 	x = 512;	y = 512;	break;
-	case HL_HWINFO_MEM_SIZE_1024:	x = 1024;	y = 1024;	break;
-	case HL_HWINFO_MEM_SIZE_2048:	x = 2048;	y = 2048;	break;
-	case HL_HWINFO_MEM_SIZE_4096:	x = 4096;	y = 2048;	break;
-	}
-	if (x != 0)
-		aprint_normal(", %d byte FIFO, max block length %d bytes",
-		    x, y);
-	aprint_normal("\n");
-#endif
-
-#if NEDMA > 0
-	if (strcmp(transfer_mode, "EDMA") == 0)
+		sc->sc.sc_vendor_transfer_data_dma = mmchs_edma_xfer_data;
 		aprint_normal_dev(sc->sc.sc_dev,
 		    "EDMA tx channel %d, rx channel %d\n",
 		    edma_channel_index(sc->sc_edma_tx),
 		    edma_channel_index(sc->sc_edma_rx));
+	}
+no_dma:
 #endif
+
+	/* XXXXXX: Turn-on regulator via I2C. */
+	/* XXXXXX: And enable ICLOCK/FCLOCK. */
 
 #ifdef TI_AM335X
 	/* XXX Not really AM335X-specific.  */
-	for (i = 0; i < __arraycount(am335x_sdhc); i++)
-		if ((oa->obio_addr == am335x_sdhc[i].as_base_addr) &&
-		    (oa->obio_intr == am335x_sdhc[i].as_intr)) {
-			prcm_module_enable(&am335x_sdhc[i].as_module);
+	for (i = 0; i < __arraycount(am335x_mmchs); i++)
+		if ((sc->sc_addr == am335x_mmchs[i].as_base_addr) &&
+		    (sc->sc_irq == am335x_mmchs[i].as_intr)) {
+			prcm_module_enable(&am335x_mmchs[i].as_module);
 			break;
 		}
-	KASSERT(i < __arraycount(am335x_sdhc));
+	KASSERT(i < __arraycount(am335x_mmchs));
 
-	if (oa->obio_addr == SDMMC2_BASE_TIAM335X) {
+	if (sc->sc_addr == SDMMC2_BASE_TIAM335X) {
 		const char *mode;
 		u_int state;
 
@@ -366,13 +430,13 @@ no_dma:
 		for (i = 0; padconf[i].padname; i++) {
 			const char *padname = padconf[i].padname;
 			const char *padmode = padconf[i].padmode;
-			if (sitara_cm_padconf_get(padname, &mode, &state) == 0) {
-				aprint_debug_dev(self, "%s mode %s state %d\n",
+			if (sitara_cm_padconf_get(padname, &mode, &state) == 0)
+				aprint_debug_dev(dev, "%s mode %s state %d\n",
 				    padname, mode, state);
-			}
 			if (sitara_cm_padconf_set(padname, padmode,
 			    (1 << 4) | (1 << 5)) != 0) {
-				aprint_error_dev(self, "can't switch %s pad from %s to %s\n",
+				aprint_error_dev(dev,
+				    "can't switch %s pad from %s to %s\n",
 				    padname, mode, padmode);
 				return;
 			}
@@ -380,8 +444,33 @@ no_dma:
 	}
 #endif
 
-	/* XXXXXX: Turn-on regulator via I2C. */
-	/* XXXXXX: And enable ICLOCK/FCLOCK. */
+#if defined(OMAP4)
+	rev = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_REV);
+	hwinfo = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_HWINFO);
+	x = 0;
+	switch (hwinfo & HL_HWINFO_MEM_SIZE_MASK) {
+	case HL_HWINFO_MEM_SIZE_512:  x =  512; y =  512; break;
+	case HL_HWINFO_MEM_SIZE_1024: x = 1024; y = 1024; break;
+	case HL_HWINFO_MEM_SIZE_2048: x = 2048; y = 2048; break;
+	case HL_HWINFO_MEM_SIZE_4096: x = 4096; y = 2048; break;
+	}
+	if (hwinfo & HL_HWINFO_MADMA_EN) {
+		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+		sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
+	}
+	aprint_normal_dev(sc->sc.sc_dev, "IP Rev 0x%08x%s",
+	    rev, hwinfo & HL_HWINFO_RETMODE ? ", Retention Mode" : "");
+	if (x != 0)
+		aprint_normal(", %d byte FIFO, max block length %d bytes",
+		    x, y);
+	aprint_normal("\n");
+#endif
+
+	SDHC_WRITE(sc, SDHC_CAPABILITIES,
+	    SDHC_READ(sc, SDHC_CAPABILITIES) | SDHC_VOLTAGE_SUPP_1_8V);
+	if (sc->sc.sc_caps & SDHC_VOLTAGE_SUPP_3_0V)
+		SDHC_WRITE(sc, SDHC_CAPABILITIES,
+		    SDHC_READ(sc, SDHC_CAPABILITIES) | SDHC_VOLTAGE_SUPP_3_0V);
 
 	/* MMCHS Soft reset */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_SYSCONFIG,
@@ -399,7 +488,7 @@ no_dma:
 	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
 	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
 
-	sc->sc_ih = intr_establish(oa->obio_intr, IPL_SDMMC, IST_LEVEL,
+	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
@@ -476,7 +565,7 @@ no_dma:
 		delay(1);
 	}
 	if (timo == 0)
-		aprint_error_dev(self, "ICS timeout(2)\n");
+		aprint_error_dev(dev, "ICS timeout\n");
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_SDCLK_ENABLE);
 
@@ -484,21 +573,12 @@ no_dma:
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
 		    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) |
 		    CON_MNS);
-
-	return;
-
-fail:
-	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
-		sc->sc_ih = NULL;
-	}
-	bus_space_unmap(sc->sc_bst, sc->sc_bsh, oa->obio_size);
 }
 
 static int
-obiosdhc_detach(device_t self, int flags)
+mmchs_detach(device_t self, int flags)
 {
-//	struct obiosdhc_softc *sc = device_private(self);
+//	struct mmchs_softc *sc = device_private(self);
 	int error;
 
 	error = config_detach_children(self, flags);
@@ -510,23 +590,23 @@ obiosdhc_detach(device_t self, int flags)
 }
 
 static int
-obiosdhc_rod(struct sdhc_softc *sc, int on)
+mmchs_rod(struct sdhc_softc *sc, int on)
 {
-	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
+	struct mmchs_softc *hmsc = (struct mmchs_softc *)sc;
 	uint32_t con;
 
-	con = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON);
+	con = bus_space_read_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON);
 	if (on)
 		con |= CON_OD;
 	else
 		con &= ~CON_OD;
-	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON, con);
+	bus_space_write_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON, con);
 
 	return 0;
 }
 
 static int
-obiosdhc_write_protect(struct sdhc_softc *sc)
+mmchs_write_protect(struct sdhc_softc *sc)
 {
 
 	/* Maybe board dependent, using GPIO. Get GPIO-pin from prop? */
@@ -534,7 +614,7 @@ obiosdhc_write_protect(struct sdhc_softc *sc)
 }
 
 static int
-obiosdhc_card_detect(struct sdhc_softc *sc)
+mmchs_card_detect(struct sdhc_softc *sc)
 {
 
 	/* Maybe board dependent, using GPIO. Get GPIO-pin from prop? */
@@ -542,34 +622,34 @@ obiosdhc_card_detect(struct sdhc_softc *sc)
 }
 
 static int
-obiosdhc_bus_width(struct sdhc_softc *sc, int width)
+mmchs_bus_width(struct sdhc_softc *sc, int width)
 {
-	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
+	struct mmchs_softc *hmsc = (struct mmchs_softc *)sc;
 	uint32_t con;
 
-	con = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON);
+	con = bus_space_read_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON);
 	if (width == 8) {
 		con |= CON_DW8;
 	} else {
 		con &= ~CON_DW8;
 	}
-	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON, con);
+	bus_space_write_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON, con);
 
 	return 0;
 }
 
 #if NEDMA > 0
 static int
-obiosdhc_edma_init(struct obiosdhc_softc *sc, unsigned int edmabase)
+mmchs_edma_init(struct mmchs_softc *sc, unsigned int edmabase)
 {
 	int i, error, rseg;
 
 	/* Request tx and rx DMA channels */
 	sc->sc_edma_tx = edma_channel_alloc(EDMA_TYPE_DMA, edmabase + 0,
-	    obiosdhc_edma_done, sc);
+	    mmchs_edma_done, sc);
 	KASSERT(sc->sc_edma_tx != NULL);
 	sc->sc_edma_rx = edma_channel_alloc(EDMA_TYPE_DMA, edmabase + 1,
-	    obiosdhc_edma_done, sc);
+	    mmchs_edma_done, sc);
 	KASSERT(sc->sc_edma_rx != NULL);
 
 	/* Allocate some PaRAM pages */
@@ -610,9 +690,9 @@ obiosdhc_edma_init(struct obiosdhc_softc *sc, unsigned int edmabase)
 }
 
 static int
-obiosdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
+mmchs_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
-	struct obiosdhc_softc *sc = device_private(sdhc_sc->sc_dev);
+	struct mmchs_softc *sc = device_private(sdhc_sc->sc_dev);
 	const bus_dmamap_t map = cmd->c_dmamap;
 	int seg, error;
 	bool bounce;
@@ -644,7 +724,7 @@ obiosdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 		cmd->c_dmamap = sc->sc_edma_dmamap;
 	}
 
-	error = obiosdhc_edma_transfer(sdhc_sc, cmd);
+	error = mmchs_edma_transfer(sdhc_sc, cmd);
 
 	if (bounce) {
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
@@ -666,9 +746,9 @@ obiosdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 }
 
 static int
-obiosdhc_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
+mmchs_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
-	struct obiosdhc_softc *sc = device_private(sdhc_sc->sc_dev);
+	struct mmchs_softc *sc = device_private(sdhc_sc->sc_dev);
 	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
 	struct edma_channel *edma;
 	uint16_t *edma_param;
@@ -776,9 +856,9 @@ obiosdhc_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 }
 
 static void
-obiosdhc_edma_done(void *priv)
+mmchs_edma_done(void *priv)
 {
-	struct obiosdhc_softc *sc = priv;
+	struct mmchs_softc *sc = priv;
 	kmutex_t *plock = sdhc_host_lock(sc->sc_hosts[0]);
 
 	mutex_enter(plock);
