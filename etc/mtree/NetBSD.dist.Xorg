@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.18 2016/08/18 08:11:22 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.19 2016/10/04 23:52:02 mrg Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -94,6 +94,7 @@
 ./usr/X11R7/lib/X11/locale/mulelao-1
 ./usr/X11R7/lib/X11/locale/nokhchi-1
 ./usr/X11R7/lib/X11/locale/pt_BR.UTF-8
+./usr/X11R7/lib/X11/locale/pt_PT.UTF-8
 ./usr/X11R7/lib/X11/locale/ru_RU.UTF-8
 ./usr/X11R7/lib/X11/locale/sr_CS.UTF-8
 ./usr/X11R7/lib/X11/locale/tatar-cyr
