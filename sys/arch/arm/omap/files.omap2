@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.33 2016/07/04 15:35:55 kiyohara Exp $
+#	$NetBSD: files.omap2,v 1.34 2016/10/04 15:23:40 kiyohara Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -117,7 +117,7 @@ file	arch/arm/omap/omap2_l3i.c		omap2 | omap3
 # General Purpose Memory Controller
 # XXX some addl. chip select config parms may be desired here (e.g. timing)
 # XXX so far we just use the setup established by boot firmware
-device	gpmc { [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
+device	gpmc { [cs=-1], [addr=-1], [size=0], [intr=-1], [mult=1], [nobyteacc=0]
 	      } : bus_space_generic
 attach	gpmc at mainbus
 file	arch/arm/omap/omap2_gpmc.c		gpmc
