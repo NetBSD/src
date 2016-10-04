@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.60 2016/05/24 21:18:29 agc Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.61 2016/10/04 18:33:00 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2015 Matthew R. Green
+.\" Copyright (c) 1997-2016 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 17, 2016
+.Dd October 4, 2016
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -276,8 +276,9 @@ translation.
 Note that enabling this support implies that users can run
 commands as web server user, this may have security implications.
 .It Fl V
-Sets the default virtual host directory to
-.Ar slashdir .
+Sets the backup virtual host directory to the
+.Ar slashdir
+argument.
 If no directory exists in
 .Ar virtualroot
 for the request, then
@@ -530,7 +531,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20150501.
+version 20160415.
 .Sh AUTHORS
 .An -nosplit
 .Nm
