@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.1.1.13 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.1.1.14 2016/10/04 23:33:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -135,9 +135,6 @@ fromwire_opt(ARGS_FROMWIRE) {
 			isc_region_consume(&sregion, 1);
 			scope = uint8_fromregion(&sregion);
 			isc_region_consume(&sregion, 1);
-
-			if (addrlen == 0U && family != 0U)
-				return (DNS_R_OPTERR);
 
 			switch (family) {
 			case 0:

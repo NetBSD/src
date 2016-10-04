@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.1.1.5 2016/05/26 15:45:51 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.1.1.6 2016/10/04 23:33:59 christos Exp $	*/
 
 /*
  * Copyright (C) 2012, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
@@ -107,7 +107,7 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 			  0x00, 0x08, 0x00, 0x04,
 			  0x00, 0x01, 0x00, 0x00
 			},
-			8, ISC_FALSE
+			8, ISC_TRUE
 		},
 		{
 			/* Option code family 2 (ipv6) , source 0, scope 0 */
@@ -115,7 +115,7 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 			  0x00, 0x08, 0x00, 0x04,
 			  0x00, 0x02, 0x00, 0x00
 			},
-			8, ISC_FALSE
+			8, ISC_TRUE
 		},
 		{
 			/* extra octet */
