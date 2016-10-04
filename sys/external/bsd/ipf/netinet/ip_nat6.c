@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.9 2015/10/06 10:21:08 prlw1 Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.10 2016/10/04 14:36:46 sborrill Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -2471,8 +2471,8 @@ ipf_nat6_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 				}
 			}
 
-			np->nl_realip6 = nat->nat_ndst6.in6;
-			np->nl_realport = nat->nat_ndport;
+			np->nl_realip6 = nat->nat_odst6.in6;
+			np->nl_realport = nat->nat_odport;
 		}
  	}
 
