@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2016/09/18 15:38:05 christos Exp $
+#	$NetBSD: list,v 1.17 2016/10/04 14:00:27 christos Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -6,6 +6,7 @@ PROG	bin/cat
 PROG	bin/chmod
 PROG	bin/cp
 PROG	bin/dd
+PROG	bin/dmesg
 PROG	bin/df
 PROG	bin/ed
 PROG	bin/ln
