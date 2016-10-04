@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.46 2015/12/19 13:27:29 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.47 2016/10/04 15:18:23 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -507,10 +507,12 @@ cortex_init:
 #if defined(MULTIPROCESSOR) || defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA7) || defined(CPU_CORTEXA9) || defined(CPU_CORTEXA15) || defined(CPU_CORTEXA17)
 	//
-	// Step 4a, set ACTLR.SMP=1
+	// Step 4a, set ACTLR.SMP=1, if ACTLR.SMP=0
+	// i.e. OMAP4430 was enabled yet.
 	//
 	mrc	p15, 0, r0, c1, c0, 1		// ACTLR read
-	orr	r0, r0, #CORTEXA9_AUXCTL_SMP	// enable SMP
+	tst	r0, #CORTEXA9_AUXCTL_SMP
+	orreq	r0, r0, #CORTEXA9_AUXCTL_SMP	// enable SMP
 
 #if defined(CPU_CORTEXA15)
 	// The A15 requires snoop-delayed exclusive handling to be set
@@ -524,16 +526,16 @@ cortex_init:
 	//
 	// Step 4a (continued on A5/A9), ACTLR.FW=1)
 	//
-	orr	r0, r0, #CORTEXA9_AUXCTL_FW	// enable cache/tlb/coherency
+	orreq	r0, r0, #CORTEXA9_AUXCTL_FW	// enable cache/tlb/coherency
 #endif	/* A5 || A9 */
 #if defined(CPU_CORTEXA9)
 	//
 	// Step 4b (continued on A9), ACTLR.L2PE=1)
 	//
-	orr	r0, r0, #CORTEXA9_AUXCTL_L2PE	// enable L2 cache prefetch
+	orreq	r0, r0, #CORTEXA9_AUXCTL_L2PE	// enable L2 cache prefetch
 #endif
 
-	mcr	p15, 0, r0, c1, c0, 1		// ACTLR write
+	mcreq	p15, 0, r0, c1, c0, 1		// ACTLR write
 	isb
 	dsb
 #endif	/* A5 || A7 || A9 || A15 || A17 */
