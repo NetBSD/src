@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1363 2016/09/29 20:44:06 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.1364 2016/10/04 23:47:12 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -114,8 +114,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.10.4-P1
-Current Vers:	9.10.4-P2
+Version:	9.10.4-P3/BSD	9.11.0/MPL
+Current Vers:	9.10.4-P3/BSD
 Maintainer:	Paul Vixie <vixie@vix.com>
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
