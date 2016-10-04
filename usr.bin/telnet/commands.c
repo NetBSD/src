@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.68 2012/01/09 16:08:55 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.69 2016/10/04 14:35:38 joerg Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.68 2012/01/09 16:08:55 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.69 2016/10/04 14:35:38 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,7 @@ __RCSID("$NetBSD: commands.c,v 1.68 2012/01/09 16:08:55 christos Exp $");
 #include <arpa/inet.h>
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <netdb.h>
 #include <pwd.h>
@@ -2192,11 +2193,6 @@ tn(int argc, char *argv[])
     struct addrinfo hints, *res, *res0;
     const char *cause = "telnet: unknown";
     int error;
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
-    char *srp = 0;
-    long srlen;
-    int proto, opt;
-#endif
     char *cmd, *hostp = 0;
     const char *portp = 0;
     const char *user = 0;
@@ -2249,20 +2245,7 @@ tn(int argc, char *argv[])
 	goto usage;
 
     (void) strlcpy(_hostname, hostp, sizeof(_hostname));
-    if (hostp[0] == '@' || hostp[0] == '!') {
-	char *p;
-	hostname = NULL;
-	for (p = hostp + 1; *p; p++) {
-	    if (*p == ',' || *p == '@')
-		hostname = p;
-	}
-	if (hostname == NULL) {
-	    fprintf(stderr, "%s: bad source route specification\n", hostp);
-	    return 0;
-	}
-	*hostname++ = '\0';
-    } else
-	hostname = hostp;
+    hostname = hostp;
 
     if (!portp) {
 	telnetport = 1;
@@ -2321,15 +2304,6 @@ tn(int argc, char *argv[])
 
 	if (telnet_debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
 	    perror("setsockopt (SO_DEBUG)");
-	}
-	if (hostp[0] == '@' || hostp[0] == '!') {
-	    if ((srlen = sourceroute(res, hostp, &srp, &proto, &opt)) < 0) {
-		(void) NetClose(net);
-		net = -1;
-		continue;
-	    }
-	    if (srp && setsockopt(net, proto, opt, srp, srlen) < 0)
-		perror("setsockopt (source route)");
 	}
 
 #if defined(IPSEC) && defined(IPSEC_POLICY_IPSEC)
@@ -2691,217 +2665,4 @@ cmdrc(const char *m1, const char *m2)
 	(*c->handler)(margc, margv);
     }
     fclose(rcfile);
-}
-
-/*
- * Source route is handed in as
- *	[!]@hop1@hop2...@dst
- *
- * If the leading ! is present, it is a strict source route, otherwise it is
- * assmed to be a loose source route.  Note that leading ! is effective
- * only for IPv4 case.
- *
- * We fill in the source route option as
- *	hop1,hop2,hop3...dest
- * and return a pointer to hop1, which will
- * be the address to connect() to.
- *
- * Arguments:
- *	ai:	The address (by struct addrinfo) for the final destination.
- *
- *	arg:	Pointer to route list to decipher
- *
- *	cpp: 	Pointer to a pointer, so that sourceroute() can return
- *		the address of result buffer (statically alloc'ed).
- *
- *	protop/optp:
- *		Pointer to an integer.  The pointed variable
- *	lenp:	pointer to an integer that contains the
- *		length of *cpp if *cpp != NULL.
- *
- * Return values:
- *
- *	Returns the length of the option pointed to by *cpp.  If the
- *	return value is -1, there was a syntax error in the
- *	option, either arg contained unknown characters or too many hosts,
- *	or hostname cannot be resolved.
- *
- *	The caller needs to pass return value (len), *cpp, *protop and *optp
- *	to setsockopt(2).
- *
- *	*cpp:	Points to the result buffer.  The region is statically
- *		allocated by the function.
- *
- *	*protop:
- *		protocol # to be passed to setsockopt(2).
- *
- *	*optp:	option # to be passed to setsockopt(2).
- *
- */
-int
-sourceroute(struct addrinfo *ai, char *arg, char **cpp, int *protop, int *optp)
-{
-	char *cp, *cp2, *lsrp, *lsrep;
-	struct addrinfo hints, *res;
-	int len, error;
-	struct sockaddr_in *sin;
-	char c;
-	static char lsr[44];
-#ifdef INET6
-	struct cmsghdr *cmsg;
-	struct sockaddr_in6 *sin6;
-	static char rhbuf[1024];
-#endif
-
-	/*
-	 * Verify the arguments.
-	 */
-	if (cpp == NULL)
-		return -1;
-
-	cp = arg;
-
-	*cpp = NULL;
-
-	  /* init these just in case.... */
-	lsrp = NULL;
-	lsrep = NULL;
-#ifdef INET6
-	cmsg = NULL;
-#endif
-	
-	switch (ai->ai_family) {
-	case AF_INET:
-		lsrp = lsr;
-		lsrep = lsrp + sizeof(lsr);
-
-		/*
-		 * Next, decide whether we have a loose source
-		 * route or a strict source route, and fill in
-		 * the begining of the option.
-		 */
-		if (*cp == '!') {
-			cp++;
-			*lsrp++ = IPOPT_SSRR;
-		} else
-			*lsrp++ = IPOPT_LSRR;
-		if (*cp != '@')
-			return -1;
-		lsrp++;		/* skip over length, we'll fill it in later */
-		*lsrp++ = 4;
-		cp++;
-		*protop = IPPROTO_IP;
-		*optp = IP_OPTIONS;
-		break;
-#ifdef INET6
-	case AF_INET6:
-#ifdef IPV6_PKTOPTIONS
-		/* RFC2292 */
-		cmsg = inet6_rthdr_init(rhbuf, IPV6_RTHDR_TYPE_0);
-		if (*cp != '@')
-			return -1;
-		cp++;
-		*protop = IPPROTO_IPV6;
-		*optp = IPV6_PKTOPTIONS;
-		break;
-#else
-		/* no RFC2292 */
-		return -1;
-#endif
-#endif
-	default:
-		return -1;
-	}
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = ai->ai_family;
-	hints.ai_socktype = SOCK_STREAM;
-
-	for (c = 0;;) {
-		if (c == ':')
-			cp2 = 0;
-		else for (cp2 = cp; (c = *cp2) != '\0'; cp2++) {
-			if (c == ',') {
-				*cp2++ = '\0';
-				if (*cp2 == '@')
-					cp2++;
-			} else if (c == '@') {
-				*cp2++ = '\0';
-			}
-#if 0	/*colon conflicts with IPv6 address*/
-			else if (c == ':') {
-				*cp2++ = '\0';
-			}
-#endif
-			else
-				continue;
-			break;
-		}
-		if (!c)
-			cp2 = 0;
-
-		error = getaddrinfo(cp, NULL, &hints, &res);
-		if (error) {
-			fprintf(stderr, "%s: %s\n", cp, gai_strerror(error));
-			return -1;
-		}
-		if (ai->ai_family != res->ai_family) {
-			freeaddrinfo(res);
-			return -1;
-		}
-		if (ai->ai_family == AF_INET) {
-			/*
-			 * Check to make sure there is space for address
-			 */
-			if (lsrp + 4 > lsrep) {
-				freeaddrinfo(res);
-				return -1;
-			}
-			sin = (struct sockaddr_in *)res->ai_addr;
-			memcpy(lsrp, &sin->sin_addr, sizeof(struct in_addr));
-			lsrp += sizeof(struct in_addr);
-		}
-#ifdef INET6
-		else if (ai->ai_family == AF_INET6) {
-			sin6 = (struct sockaddr_in6 *)res->ai_addr;
-			inet6_rthdr_add(cmsg, &sin6->sin6_addr,
-				IPV6_RTHDR_LOOSE);
-		}
-#endif
-		else {
-			freeaddrinfo(res);
-			return -1;
-		}
-		freeaddrinfo(res);
-		if (cp2)
-			cp = cp2;
-		else
-			break;
-	}
-	switch (ai->ai_family) {
-	case AF_INET:
-		/* record the last hop */
-		if (lsrp + 4 > lsrep)
-			return -1;
-		sin = (struct sockaddr_in *)ai->ai_addr;
-		memcpy(lsrp, &sin->sin_addr, sizeof(struct in_addr));
-		lsrp += sizeof(struct in_addr);
-		lsr[IPOPT_OLEN] = lsrp - lsr;
-		if (lsr[IPOPT_OLEN] <= 7 || lsr[IPOPT_OLEN] > 40)
-			return -1;
-		*lsrp++ = IPOPT_NOP;	/*32bit word align*/
-		len = lsrp - lsr;
-		*cpp = lsr;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
-		len = cmsg->cmsg_len;
-		*cpp = rhbuf;
-		break;
-#endif
-	default:
-		return -1;
-	}
-	return len;
 }
