@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_reg.h,v 1.8 2016/10/05 15:39:31 ryo Exp $	*/
+/*	$NetBSD: ralink_reg.h,v 1.9 2016/10/05 15:54:58 ryo Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -55,7 +55,7 @@
 #endif
 #define RA_BUS_FREQ		166000000 /* DDR speed */
 #define RA_UART_FREQ		40000000
-#elif defined(MT7620)
+#elif defined(MT7620) || defined(MT7628)
 #define RA_CLOCK_RATE		580000000
 #define RA_BUS_FREQ		(RA_CLOCK_RATE / 3)
 #define RA_UART_FREQ		40000000
@@ -78,7 +78,9 @@
 #if defined(RT3052) || defined(RT3050)
 #define RA_PCM_BASE		0x10000400
 #endif
+#if !defined(MT7628)
 #define RA_UART_BASE		0x10000500
+#endif
 #define RA_PIO_BASE		0x10000600
 #if defined(RT3052) || defined(RT3050)
 #define RA_GDMA_BASE		0x10000700
@@ -90,6 +92,11 @@
 #define RA_I2S_BASE		0x10000A00
 #define RA_SPI_BASE		0x10000B00
 #define RA_UART_LITE_BASE	0x10000C00
+#if defined(MT7628)
+#define RA_UART1_BASE		0x10000D00
+#define RA_UART2_BASE		0x10000E00
+#endif
+#define RA_UART_SIZE		0x00000100
 #if defined(RT3883)
 #define RA_PCM_BASE		0x10002000
 #define RA_GDMA_BASE		0x10002800
@@ -99,9 +106,9 @@
 #define RA_FRAME_ENGINE_BASE	0x10100000
 #define RA_ETH_SW_BASE		0x10110000
 #define RA_ROM_BASE		0x10118000
-#if defined(RT3883) || defined(MT7620)
+#if defined(RT3883) || defined(MT7620) || defined(MT7628)
 #define RA_USB_DEVICE_BASE	0x10120000
-#if defined(MT7620)
+#if defined(MT7620) || defined(MT7628)
 #define RA_SDHC_BASE		0x10130000
 #endif
 #define RA_PCI_BASE		0x10140000
@@ -109,7 +116,7 @@
 #endif
 #define RA_11N_MAC_BASE		0x10180000
 #define RA_USB_OTG_BASE		0x101C0000
-#if defined(RT3883) || defined(MT7620)
+#if defined(RT3883) || defined(MT7620) || defined(MT7628)
 #define RA_USB_HOST_BASE	0x101C0000
 #define RA_USB_BLOCK_SIZE	0x1000
 #define RA_USB_EHCI_BASE	(RA_USB_HOST_BASE + 0x0000)
@@ -118,7 +125,7 @@
 #if defined(RT3052) || defined(RT3050)
 #define RA_FLASH_BASE		0x1F000000
 #define RA_FLASH_END		0x1F7FFFFF
-#elif defined(RT3883) || defined(MT7620)
+#elif defined(RT3883) || defined(MT7620) || defined(MT7628)
 #define RA_FLASH_BASE		0x1C000000
 #define RA_FLASH_END		0x1DFFFFFF
 #endif
@@ -141,7 +148,14 @@
 #define RA_SYSCTL_CLKCFG1		0x30
 #define RA_SYSCTL_RST			0x34
 #define RA_SYSCTL_RSTSTAT		0x38
+
+#if defined(MT7628)
+#define RA_SYSCTL_GPIO1MODE		0x60
+#define RA_SYSCTL_GPIOMODE		RA_SYSCTL_GPIO1MODE
+#define RA_SYSCTL_GPIO2MODE		0x64
+#else
 #define RA_SYSCTL_GPIOMODE		0x60
+#endif
 
 #if defined(RT3050) || defined(RT3052)
 #define	SYSCTL_CFG0_INIC_EE_SDRAM	__BIT(29)
@@ -172,6 +186,16 @@
 #define	SYSCTL_CFG0_XTAL_FREQ_SEL	__BIT(6)
 #define	SYSCTL_CFG0_DRAM_TYPE		__BITS(5,4)
 #define	SYSCTL_CFG0_CHIP_MODE		__BITS(3,0)
+#elif defined(MT7628)
+#define	SYSCTL_CFG0_TEST_CODE		__BITS(31,24)
+#define	SYSCTL_CFG0_BS_SHADOW		__BITS(20,12)
+#define	SYSCTL_CFG0_DBG_JTAG_MODE	__BIT(8)
+#define	SYSCTL_CFG0_TEST_MODE_1		__BIT(7)
+#define	SYSCTL_CFG0_XTAL_FREQ_SEL	__BIT(6)
+#define	SYSCTL_CFG0_EXT_BG		__BIT(5)
+#define	SYSCTL_CFG0_TEST_MODE_0		__BIT(4)
+#define	SYSCTL_CFG0_CHIP_MODE		__BITS(3,1)
+#define	SYSCTL_CFG0_DRAM_TYPE		__BIT(0)
 #endif
 
 #if defined(RT3883) || defined(MT7620)
@@ -188,7 +212,7 @@
 #define SYSCTL_CFG1_PCI_66M_MODE	__BIT(6)
 #endif
 
-#if defined(RT3883) || defined(MT7620)
+#if defined(RT3883) || defined(MT7620) || defined(MT7628)
 #define SYSCTL_CLKCFG0_REFCLK0_RATE	__BITS(11,9)
 #endif
 #if defined(RT3883)
@@ -197,46 +221,61 @@
 #define SYSCTL_CLKCFG0_REFCLK0_IS_OUT	__BIT(8)
 #define SYSCTL_CLKCFG0_CPU_FREQ_ADJ	__BITS(3,0)
 #endif
-#if defined(MT7620)
+#if defined(MT7620) || defined(MT7628)
 #define SYSCTL_CLKCFG0_OSC_1US_DIV_7620	__BITS(29,24)
 #define SYSCTL_CLKCFG0_INT_CLK_FDIV	__BITS(22,18)
 #define SYSCTL_CLKCFG0_INT_CLK_FFRAC	__BITS(16,12)
 #define SYSCTL_CLKCFG0_PERI_CLK_SEL	__BIT(4)
+#endif
+#if defined(MT7620)
 #define SYSCTL_CLKCFG0_EPHY_USE_25M	__BIT(3)
 #endif
 
 #if defined(RT3883)
-#define SYSCTL_CLKCFG1_PBUS_DIV2	__BIT(30)
-#define SYSCTL_CLKCFG1_SYS_TCK_EN	__BIT(29)
-#define SYSCTL_CLKCFG1_FE_GDMA_PCLK_EN	__BIT(22)
-#define SYSCTL_CLKCFG1_PCIE_CLK_EN_3883	__BIT(21)
-#define SYSCTL_CLKCFG1_UPHY1_CLK_EN	__BIT(20)
-#define SYSCTL_CLKCFG1_PCI_CLK_EN	__BIT(19)
-#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_3883 __BIT(18)
-#define SYSCTL_CLKCFG1_GE2_CLK_EN_3883	__BIT(17)
-#define SYSCTL_CLKCFG1_GE1_CLK_EN_3883	__BIT(16)
+#define SYSCTL_CLKCFG1_PBUS_DIV2		__BIT(30)
+#define SYSCTL_CLKCFG1_SYS_TCK_EN		__BIT(29)
+#define SYSCTL_CLKCFG1_FE_GDMA_PCLK_EN		__BIT(22)
+#define SYSCTL_CLKCFG1_PCIE_CLK_EN_3883		__BIT(21)
+#define SYSCTL_CLKCFG1_UPHY1_CLK_EN		__BIT(20)
+#define SYSCTL_CLKCFG1_PCI_CLK_EN		__BIT(19)
+#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_3883	__BIT(18)
+#define SYSCTL_CLKCFG1_GE2_CLK_EN_3883		__BIT(17)
+#define SYSCTL_CLKCFG1_GE1_CLK_EN_3883		__BIT(16)
+#endif
+#if defined(MT7628)
+#define SYSCTL_CLKCFG1_PWM_CLK_EN_7628		__BIT(31)
+#define SYSCTL_CLKCFG1_AUX_SYS_TCK_EN_7628	__BIT(29)
+#define SYSCTL_CLKCFG1_MIPSC_CLK_EN_7628	__BIT(28)
+#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_7628	__BIT(22)
+#define SYSCTL_CLKCFG1_UART2_CLK_EN_7628	__BIT(20)
+#define SYSCTL_CLKCFG1_UART1_CLK_EN_7628	__BIT(19)
+#define SYSCTL_CLKCFG1_UART0_CLK_EN_7628	__BIT(12)
 #endif
 #if defined(MT7620)
-#define SYSCTL_CLKCFG1_SDHC_CLK_EN	__BIT(30)
-#define SYSCTL_CLKCFG1_AUX_SYS_TCK_EN	__BIT(28)
-#define SYSCTL_CLKCFG1_PCIE_CLK_EN_7620 __BIT(26)
-#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620 __BIT(25)
-#define SYSCTL_CLKCFG1_ESW_CLK_EN	__BIT(23)
-#define SYSCTL_CLKCFG1_FE_CLK_EN	__BIT(21)
-#define SYSCTL_CLKCFG1_UARTL_CLK_EN	__BIT(19)
-#define SYSCTL_CLKCFG1_SPI_CLK_EN	__BIT(18)
-#define SYSCTL_CLKCFG1_I2S_CLK_EN	__BIT(17)
-#define SYSCTL_CLKCFG1_I2C_CLK_EN	__BIT(16)
-#define SYSCTL_CLKCFG1_NAND_CLK_EN	__BIT(15)
-#define SYSCTL_CLKCFG1_GDMA_CLK_EN	__BIT(14)
-#define SYSCTL_CLKCFG1_GPIO_CLK_EN	__BIT(13)
-#define SYSCTL_CLKCFG1_UART_CLK_EN	__BIT(12)
-#define SYSCTL_CLKCFG1_PCM_CLK_EN	__BIT(11)
-#define SYSCTL_CLKCFG1_MC_CLK_EN	__BIT(10)
-#define SYSCTL_CLKCFG1_INTC_CLK_EN	__BIT(9)
-#define SYSCTL_CLKCFG1_TIMER_CLK_EN	__BIT(8)
-#define SYSCTL_CLKCFG1_GE2_CLK_EN_7620	__BIT(7)
-#define SYSCTL_CLKCFG1_GE1_CLK_EN_7620	__BIT(6)
+#define SYSCTL_CLKCFG1_AUX_SYS_TCK_EN		__BIT(28)
+#define SYSCTL_CLKCFG1_FE_CLK_EN		__BIT(21)
+#define SYSCTL_CLKCFG1_UARTL_CLK_EN		__BIT(19)
+#define SYSCTL_CLKCFG1_GE2_CLK_EN_7620		__BIT(7)
+#define SYSCTL_CLKCFG1_GE1_CLK_EN_7620		__BIT(6)
+#define SYSCTL_CLKCFG1_GE2_CLK_EN_7620		__BIT(7)
+#define SYSCTL_CLKCFG1_GE1_CLK_EN_7620		__BIT(6)
+#endif
+#if defined(MT7620) || defined(MT7628)
+#define SYSCTL_CLKCFG1_SDHC_CLK_EN		__BIT(30)
+#define SYSCTL_CLKCFG1_PCIE_CLK_EN_7620		__BIT(26)
+#define SYSCTL_CLKCFG1_UPHY0_CLK_EN_7620	__BIT(25)
+#define SYSCTL_CLKCFG1_ESW_CLK_EN		__BIT(23)
+#define SYSCTL_CLKCFG1_SPI_CLK_EN		__BIT(18)
+#define SYSCTL_CLKCFG1_I2S_CLK_EN		__BIT(17)
+#define SYSCTL_CLKCFG1_I2C_CLK_EN		__BIT(16)
+#define SYSCTL_CLKCFG1_NAND_CLK_EN		__BIT(15)
+#define SYSCTL_CLKCFG1_GDMA_CLK_EN		__BIT(14)
+#define SYSCTL_CLKCFG1_GPIO_CLK_EN		__BIT(13)
+#define SYSCTL_CLKCFG1_UART_CLK_EN		__BIT(12)
+#define SYSCTL_CLKCFG1_PCM_CLK_EN		__BIT(11)
+#define SYSCTL_CLKCFG1_MC_CLK_EN		__BIT(10)
+#define SYSCTL_CLKCFG1_INTC_CLK_EN		__BIT(9)
+#define SYSCTL_CLKCFG1_TIMER_CLK_EN		__BIT(8)
 #endif
 
 #if defined(RT3883) || defined(MT7620)
@@ -248,73 +287,113 @@
 #define RA_SYSCTL_MEMO1	0x6C
 #endif
 
-#define  RST_PPE_7620		__BIT(31)
-#define  RST_SDHC_7620		__BIT(30)
-#define  RST_MIPS_CNT_7620	__BIT(28)
-#define  RST_PCIPCIE_3883	__BIT(27)
-#define  RST_FLASH_3883		__BIT(26)
-#define  RST_PCIE0_7620		__BIT(26)
-#define  RST_UDEV_3883		__BIT(25)
-#define  RST_UHST0_7620		__BIT(25)
-#define  RST_PCI_3883		__BIT(24)
-#define  RST_EPHY_7620		__BIT(24)
-#define  RST_PCIE_3883		__BIT(23)
-#define  RST_ESW_7620		__BIT(23)
-#define  RST_UHST		__BIT(22)
-#define  RST_FE			__BIT(21)
-#define  RST_WLAN		__BIT(20)
-#define  RST_UARTL		__BIT(19)
-#define  RST_SPI		__BIT(18)
-#define  RST_I2S		__BIT(17)
-#define  RST_I2C		__BIT(16)
-#define  RST_NAND		__BIT(15)
-#define  RST_DMA		__BIT(14)
-#define  RST_PIO		__BIT(13)
-#define  RST_UART		__BIT(12)
-#define  RST_PCM		__BIT(11)
-#define  RST_MC			__BIT(10)
-#define  RST_INTC		__BIT(9)
-#define  RST_TIMER		__BIT(8)
-#define  RST_GE2		__BIT(7)
-#define  RST_GE1		__BIT(6)
-#define  RST_SYS		__BIT(0)
+#define  RST_PPE_7620			__BIT(31)
+#define  RST_PWM_7628			__BIT(31)
+#define  RST_SDHC_7620			__BIT(30)
+#define  RST_CRYPTO_7628		__BIT(29)
+#define  RST_MIPS_CNT_7620		__BIT(28)
+#define  RST_PCIPCIE_3883		__BIT(27)
+#define  RST_FLASH_3883			__BIT(26)
+#define  RST_PCIE0_7620			__BIT(26)
+#define  RST_UDEV_3883			__BIT(25)
+#define  RST_UHST0_7620			__BIT(25)
+#define  RST_PCI_3883			__BIT(24)
+#define  RST_EPHY_7620			__BIT(24)
+#define  RST_PCIE_3883			__BIT(23)
+#define  RST_ESW_7620			__BIT(23)
+#define  RST_UHST			__BIT(22)
+#define  RST_FE				__BIT(21)
+#define  RST_WLAN			__BIT(20)
+#define  RST_UART2_7628			__BIT(20)
+#define  RST_UARTL			__BIT(19)
+#define  RST_UART1_7628			__BIT(19)
+#define  RST_SPI			__BIT(18)
+#define  RST_I2S			__BIT(17)
+#define  RST_I2C			__BIT(16)
+#define  RST_NAND			__BIT(15)
+#define  RST_DMA			__BIT(14)
+#define  RST_PIO			__BIT(13)
+#define  RST_UART			__BIT(12)
+#define  RST_UART0_7628			__BIT(12)
+#define  RST_PCM			__BIT(11)
+#define  RST_MC				__BIT(10)
+#define  RST_INTC			__BIT(9)
+#define  RST_TIMER			__BIT(8)
+#define  RST_GE2			__BIT(7)
+#define  RST_GE1			__BIT(6)
+#define  RST_HIF_7628			__BIT(5)
+#define  RST_WIFI_7628			__BIT(4)
+#define  RST_SPIS_7628			__BIT(3)
+#define  RST_SYS			__BIT(0)
 
-#define  GPIOMODE_RGMII		__BIT(9)
-#define  GPIOMODE_SDRAM		__BIT(8)
-#define  GPIOMODE_MDIO		__BIT(7)
-#define  GPIOMODE_JTAG		__BIT(6)
-#define  GPIOMODE_UARTL		__BIT(5)
-#define  GPIOMODE_UARTF2	__BIT(4)
-#define  GPIOMODE_UARTF1	__BIT(3)
-#define  GPIOMODE_UARTF0	__BIT(2)
+#if defined(MT7628)
+#define  GPIO1MODE_PWM1			__BITS(31,30)
+#define  GPIO1MODE_PWM0			__BITS(29,18)
+#define  GPIO1MODE_UART2		__BITS(27,26)
+#define  GPIO1MODE_UART1		__BITS(25,24)
+#define  GPIO1MODE_I2C			__BITS(21,20)
+#define  GPIOMODE_I2C			GPIO1MODE_I2C
+#define  GPIO1MODE_REFCLK		__BIT(18)
+#define  GPIO1MODE_PERST		__BIT(16)
+#define  GPIO1MODE_ESD			__BIT(15)
+#define  GPIO1MODE_WDT			__BIT(14)
+#define  GPIO1MODE_SPI			__BIT(12)
+#define  GPIO1MODE_SD			__BITS(11,10)
+#define  GPIO1MODE_UART0		__BITS(9,8)
+#define  GPIO1MODE_I2S			__BITS(7,6)
+#define  GPIO1MODE_SPI_CS1		__BITS(5,4)
+#define  GPIO1MODE_SPIS			__BITS(3,2)
+#define  GPIO1MODE_GPIO			__BITS(1,0)
+#define  GPIO2MODE_P4_LED_KN		__BITS(27,26)
+#define  GPIO2MODE_P3_LED_KN		__BITS(25,24)
+#define  GPIO2MODE_P2_LED_KN		__BITS(23,22)
+#define  GPIO2MODE_P1_LED_KN		__BITS(21,10)
+#define  GPIO2MODE_P0_LED_KN		__BITS(19,18)
+#define  GPIO2MODE_WLED_KN		__BITS(17,16)
+#define  GPIO2MODE_P4_LED_AN		__BITS(11,10)
+#define  GPIO2MODE_P3_LED_AN		__BITS(9,8)
+#define  GPIO2MODE_P2_LED_AN		__BITS(7,6)
+#define  GPIO2MODE_P1_LED_AN		__BITS(5,4)
+#define  GPIO2MODE_P0_LED_AN		__BITS(3,2)
+#define  GPIO2MODE_WLED_AN		__BITS(1,0)
+#else
+#define  GPIOMODE_RGMII			__BIT(9)
+#define  GPIOMODE_SDRAM			__BIT(8)
+#define  GPIOMODE_MDIO			__BIT(7)
+#define  GPIOMODE_JTAG			__BIT(6)
+#define  GPIOMODE_UARTL			__BIT(5)
+#define  GPIOMODE_UARTF2		__BIT(4)
+#define  GPIOMODE_UARTF1		__BIT(3)
+#define  GPIOMODE_UARTF0		__BIT(2)
 #define  GPIOMODE_UARTF_0_2	\
 		(GPIOMODE_UARTF0|GPIOMODE_UARTF1|GPIOMODE_UARTF2)
-#define  GPIOMODE_SPI		__BIT(1)
-#define  GPIOMODE_I2C		__BIT(0)
+#define  GPIOMODE_SPI			__BIT(1)
+#define  GPIOMODE_I2C			__BIT(0)
+#endif
 
 /*
  * Timer Registers
  */
-#define RA_TIMER_STAT		0x00
-#define RA_TIMER_0_LOAD		0x10
-#define RA_TIMER_0_VALUE	0x14
-#define RA_TIMER_0_CNTRL	0x18
-#define RA_TIMER_1_LOAD		0x20
-#define RA_TIMER_1_VALUE	0x24
-#define RA_TIMER_1_CNTRL	0x28
+#define RA_TIMER_STAT			0x00
+#define RA_TIMER_0_LOAD			0x10
+#define RA_TIMER_0_VALUE		0x14
+#define RA_TIMER_0_CNTRL		0x18
+#define RA_TIMER_1_LOAD			0x20
+#define RA_TIMER_1_VALUE		0x24
+#define RA_TIMER_1_CNTRL		0x28
 
-#define  TIMER_1_RESET		__BIT(5)
-#define  TIMER_0_RESET		__BIT(4)
-#define  TIMER_1_INT_STATUS	__BIT(1)
-#define  TIMER_0_INT_STATUS	__BIT(0)
-#define  TIMER_TEST_EN		__BIT(15)
-#define  TIMER_EN		__BIT(7)
-#define  TIMER_MODE(x)		(((x) & 0x3) << 4)
-#define   TIMER_MODE_FREE	0
-#define   TIMER_MODE_PERIODIC	1
-#define   TIMER_MODE_TIMEOUT	2
-#define   TIMER_MODE_WDOG	3	/* only valid for TIMER_1 */
-#define  TIMER_PRESCALE(x)	(((x) & 0xf) << 0)
+#define  TIMER_1_RESET			__BIT(5)
+#define  TIMER_0_RESET			__BIT(4)
+#define  TIMER_1_INT_STATUS		__BIT(1)
+#define  TIMER_0_INT_STATUS		__BIT(0)
+#define  TIMER_TEST_EN			__BIT(15)
+#define  TIMER_EN			__BIT(7)
+#define  TIMER_MODE(x)			(((x) & 0x3) << 4)
+#define   TIMER_MODE_FREE		0
+#define   TIMER_MODE_PERIODIC		1
+#define   TIMER_MODE_TIMEOUT		2
+#define   TIMER_MODE_WDOG		3	/* only valid for TIMER_1 */
+#define  TIMER_PRESCALE(x)		(((x) & 0xf) << 0)
 #define   TIMER_PRESCALE_DIV_1		0
 #define   TIMER_PRESCALE_DIV_4		1
 #define   TIMER_PRESCALE_DIV_8		2
@@ -335,62 +414,131 @@
 /*
  * Interrupt Controller Registers
  */
+#if defined(MT7628)
+#define RA_INTCTL_IRQ0STAT	0x9c
+#define RA_INTCTL_IRQ1STAT	0xa0
+#define RA_INTCTL_TYPE		0x00
+#define RA_INTCTL_RAW		0xa4
+#define RA_INTCTL_ENABLE	0x80
+#define RA_INTCTL_DISABLE	0x78
+#else
 #define RA_INTCTL_IRQ0STAT	0x00
 #define RA_INTCTL_IRQ1STAT	0x04
 #define RA_INTCTL_TYPE		0x20
 #define RA_INTCTL_RAW		0x30
 #define RA_INTCTL_ENABLE	0x34
 #define RA_INTCTL_DISABLE	0x38
+#endif
 
+/* Interrupt controller mask bit */
+#define INT_GLOBAL	31
+#define INT_GLOBAL_EN	__BIT(INT_GLOBAL)
+#if defined(MT7628)
+#define INT_WDOG	24
+#define INT_UART2	22
+#define INT_UART1	21
+#define INT_UARTL	20
+#endif
+#define INT_UDEV	19
+#define INT_USB		18
+#define INT_ETHSW	17
+#define INT_R2P		15
+#define INT_SDHC	14
+#define INT_CRYPTO	13
+#if !defined(MT7628)
+#define INT_UARTL	12
+#endif
+#define INT_SPI		11
+#define INT_I2S		10
+#define INT_PERF	9
+#define INT_NAND	8
+#define INT_DMA		7
+#define INT_PIO		6
+#define INT_UARTF	5
+#define INT_PCM		4
+#define INT_ILLACC	3
+#if !defined(MT7628)
+#define INT_WDOG	2
+#endif
+#define INT_TIMER0	1
+#define INT_SYSCTL	0
 
-#define INT_GLOBAL	__BIT(31)
-#define INT_UDEV	__BIT(19)
-#define INT_USB		__BIT(18)
-#define INT_ETHSW	__BIT(17)
-#define INT_R2P		__BIT(15)
-#define INT_SDHC	__BIT(14)
-#define INT_UARTL	__BIT(12)
-#define INT_SPI		__BIT(11)
-#define INT_I2S		__BIT(10)
-#define INT_PERF	__BIT(9)
-#define INT_NAND	__BIT(8)
-#define INT_DMA		__BIT(7)
-#define INT_PIO		__BIT(6)
-#define INT_UARTF	__BIT(5)
-#define INT_PCM		__BIT(4)
-#define INT_ILLACC	__BIT(3)
-#define INT_WDOG	__BIT(2)
-#define INT_TIMER0	__BIT(1)
-#define INT_SYSCTL	__BIT(0)
 
 /*
  * Ralink Linear CPU Interrupt Mapping For Lists
  */
-#define RA_IRQ_LOW	0
-#define RA_IRQ_HIGH     1
-#define RA_IRQ_PCI	2
-#define RA_IRQ_FENGINE  3
-#define RA_IRQ_WLAN     4
-#define RA_IRQ_TIMER    5
-#define RA_IRQ_SYSCTL   6
-#define RA_IRQ_TIMER0   7
-#define RA_IRQ_WDOG     8
-#define RA_IRQ_ILLACC   9
-#define RA_IRQ_PCM	10
-#define RA_IRQ_UARTF    11
-#define RA_IRQ_PIO	12
-#define RA_IRQ_DMA	13
-#define RA_IRQ_NAND     14
-#define RA_IRQ_PERF     15
-#define RA_IRQ_I2S	16
-#define RA_IRQ_UARTL    17
-#define RA_IRQ_ETHSW    18
-#define RA_IRQ_USB	19
-#define RA_IRQ_MAX	20
+enum ralink_irq {
+	/* CPU interrupts */
+	RA_IRQ_LOW = 0,
+	RA_IRQ_HIGH,
+	RA_IRQ_PCI,
+	RA_IRQ_FENGINE,
+	RA_IRQ_WLAN,
+	RA_IRQ_TIMER,
+
+	/* pseudo IRQ for Interrupt controller */
+	RA_IRQ_SYSCTL,
+	RA_IRQ_TIMER0,
+	RA_IRQ_WDOG,
+	RA_IRQ_ILLACC,
+	RA_IRQ_PCM,
+	RA_IRQ_UARTF,
+	RA_IRQ_PIO,
+	RA_IRQ_DMA,
+	RA_IRQ_NAND,
+	RA_IRQ_PERF,
+	RA_IRQ_I2S,
+	RA_IRQ_SPI,
+	RA_IRQ_UARTL,
+	RA_IRQ_CRYPTO,
+	RA_IRQ_SDHC,
+	RA_IRQ_R2P,
+	RA_IRQ_ETHSW,
+	RA_IRQ_USB,
+	RA_IRQ_UDEV,
+	RA_IRQ_UART1,
+	RA_IRQ_UART2,
+	RA_IRQ_MAX
+};
 
 /*
  * General Purpose I/O
  */
+#if defined(MT7628)
+#define RA_PIO_00_31_DIR		0x00
+#define RA_PIO_32_63_DIR		0x04
+#define RA_PIO_64_95_DIR		0x08
+#define RA_PIO_00_31_POLARITY		0x10
+#define RA_PIO_32_63_POLARITY		0x14
+#define RA_PIO_64_95_POLARITY		0x18
+#define RA_PIO_00_31_DATA		0x20
+#define RA_PIO_32_63_DATA		0x24
+#define RA_PIO_64_95_DATA		0x28
+#define RA_PIO_00_31_SET_BIT		0x30
+#define RA_PIO_32_63_SET_BIT		0x34
+#define RA_PIO_64_95_SET_BIT		0x38
+#define RA_PIO_00_31_CLR_BIT		0x40
+#define RA_PIO_32_63_CLR_BIT		0x44
+#define RA_PIO_64_95_CLR_BIT		0x48
+#define RA_PIO_00_31_INT_RISE_EN	0x50
+#define RA_PIO_32_63_INT_RISE_EN	0x54
+#define RA_PIO_64_95_INT_RISE_EN	0x58
+#define RA_PIO_00_31_INT_FALL_EN	0x60
+#define RA_PIO_32_63_INT_FALL_EN	0x64
+#define RA_PIO_64_95_INT_FALL_EN	0x68
+#define RA_PIO_00_31_INT_HIGH_EN	0x70
+#define RA_PIO_32_63_INT_HIGH_EN	0x74
+#define RA_PIO_64_95_INT_HIGH_EN	0x78
+#define RA_PIO_00_31_INT_LOW_EN		0x80
+#define RA_PIO_32_63_INT_LOW_EN		0x84
+#define RA_PIO_64_95_INT_LOW_EN		0x88
+#define RA_PIO_00_31_INT_STAT		0x90
+#define RA_PIO_32_63_INT_STAT		0x94
+#define RA_PIO_64_95_INT_STAT		0x98
+#define RA_PIO_00_31_INT_STAT_EDGE	0xA0
+#define RA_PIO_32_63_INT_STAT_EDGE	0xA4
+#define RA_PIO_64_95_INT_STAT_EDGE	0xA8
+#else
 #define RA_PIO_00_23_INT		0x00
 #define RA_PIO_00_23_EDGE_INT		0x04
 #define RA_PIO_00_23_INT_RISE_EN	0x08
@@ -431,12 +579,25 @@
 #define RA_PIO_72_95_SET_BIT		0xa4
 #define RA_PIO_72_95_CLR_BIT		0xa8
 #define RA_PIO_72_95_TGL_BIT		0xac
-
+#endif
 
 /*
  * UART registers
  */
 
+#if defined(MT7628)
+#define RA_UART_RBR	0x00
+#define RA_UART_TBR	0x00
+#define RA_UART_IER	0x04
+#define RA_UART_IIR	0x08
+#define RA_UART_FCR	0x08
+#define RA_UART_LCR	0x0c
+#define RA_UART_MCR	0x10
+#define RA_UART_LSR	0x14
+#define RA_UART_MSR	0x18
+#define RA_UART_DLL	0x00
+#define RA_UART_DLM	0x04
+#else
 #define RA_UART_RBR	0x00
 #define RA_UART_TBR	0x04
 #define RA_UART_IER	0x08
@@ -447,10 +608,11 @@
 #define RA_UART_LSR	0x1C
 #define RA_UART_MSR	0x20
 #define RA_UART_DLL	0x28
+#endif
 
 
-#define UART_IER_ELSI	__BIT(2)    /* Receiver Line Status Interrupt Enable */
-#define UART_IER_ETBEI	__BIT(1)   /* Transmit Buffer Empty Interrupt Enable */
+#define UART_IER_ELSI	__BIT(2)	/* RX Line Status Interrupt Enable */
+#define UART_IER_ETBEI	__BIT(1)	/* TX Buffer Empty Interrupt Enable */
 #define UART_IER_ERBFI	__BIT(0)
 			/* Data Ready or Character Time-Out Interrupt Enable */
 
@@ -461,10 +623,10 @@
 #define UART_IIR_IID1	 __BIT(1)	/* Interrupt Source Encoded */
 #define UART_IIR_IP	 __BIT(0)	/* Interrupt Pending (active low) */
 
-#define UART_FCR_RXTRIG1 __BIT(7)	/* Receiver Interrupt Trigger Level */
-#define UART_FCR_RXTRIG0 __BIT(6)	/* Receiver Interrupt Trigger Level */
-#define UART_FCR_TXTRIG1 __BIT(5)    /* Transmitter Interrupt Trigger Level */
-#define UART_FCR_TXTRIG0 __BIT(4)    /* Transmitter Interrupt Trigger Level */
+#define UART_FCR_RXTRIG1 __BIT(7)	/* RX Interrupt Trigger Level */
+#define UART_FCR_RXTRIG0 __BIT(6)	/* RX Interrupt Trigger Level */
+#define UART_FCR_TXTRIG1 __BIT(5)	/* TX Interrupt Trigger Level */
+#define UART_FCR_TXTRIG0 __BIT(4)	/* TX Interrupt Trigger Level */
 #define UART_FCR_DMAMODE __BIT(3)	/* Enable DMA transfers */
 #define UART_FCR_TXRST	 __BIT(2)	/* Reset Transmitter FIFO */
 #define UART_FCR_RXRST	 __BIT(1)	/* Reset Receiver FIFO */
@@ -559,6 +721,71 @@
 /*
  * Frame Engine registers
  */
+#if defined(MT7628)
+#define RA_FE_TX_BASE_PTR_0	0x800	/*  TX Ring #0 Base Pointer */
+#define RA_FE_TX_MAX_CNT_0	0x804	/*  TX Ring #0 Maximum Count */
+#define RA_FE_TX_CTX_IDX_0	0x808	/*  TX Ring #0 CPU pointer */
+#define RA_FE_TX_DTX_IDX_0	0x80c	/*  TX Ring #0 DMA poitner */
+#define RA_FE_PDMA_TX0_PTR	RA_FE_TX_BASE_PTR_0
+#define RA_FE_PDMA_TX0_COUNT	RA_FE_TX_MAX_CNT_0
+#define RA_FE_PDMA_TX0_CPU_IDX	RA_FE_TX_CTX_IDX_0
+#define RA_FE_PDMA_TX0_DMA_IDX	RA_FE_TX_DTX_IDX_0
+#define RA_FE_TX_BASE_PTR_1	0x810	/*  TX Ring #1 Base Pointer */
+#define RA_FE_TX_MAX_CNT_1	0x814	/*  TX Ring #1 Maximum Count */
+#define RA_FE_TX_CTX_IDX_1	0x818	/*  TX Ring #1 CPU pointer */
+#define RA_FE_TX_DTX_IDX_1	0x81c	/*  TX Ring #1 DMA poitner */
+#define RA_FE_TX_BASE_PTR_2	0x820	/*  TX Ring #2 Base Pointer */
+#define RA_FE_TX_MAX_CNT_2	0x824	/*  TX Ring #2 Maximum Count */
+#define RA_FE_TX_CTX_IDX_2	0x828	/*  TX Ring #2 CPU pointer */
+#define RA_FE_TX_DTX_IDX_2	0x82c	/*  TX Ring #2 DMA poitner */
+#define RA_FE_TX_BASE_PTR_3	0x830	/*  TX Ring #3 Base Pointer */
+#define RA_FE_TX_MAX_CNT_3	0x834	/*  TX Ring #3 Maximum Count */
+#define RA_FE_TX_CTX_IDX_3	0x838	/*  TX Ring #3 CPU pointer */
+#define RA_FE_TX_DTX_IDX_3	0x83c	/*  TX Ring #3 DMA poitner */
+#define RA_FE_RX_BASE_PTR_0	0x900	/*  RX Ring #0 Base Pointer */
+#define RA_FE_RX_MAX_CNT_0	0x904	/*  RX Ring #0 Maximum Count */
+#define RA_FE_RX_CRX_IDX_0	0x908	/*  RX Ring #0 CPU pointer */
+#define RA_FE_RX_DRX_IDX_0	0x90c	/*  RX Ring #0 DMA poitner */
+#define RA_FE_PDMA_RX0_PTR	RA_FE_RX_BASE_PTR_0
+#define RA_FE_PDMA_RX0_COUNT	RA_FE_RX_MAX_CNT_0
+#define RA_FE_PDMA_RX0_CPU_IDX	RA_FE_RX_CRX_IDX_0
+#define RA_FE_PDMA_RX0_DMA_IDX	RA_FE_RX_DRX_IDX_0
+#define RA_FE_RX_BASE_PTR_1	0x910	/*  RX Ring #1 Base Pointer */
+#define RA_FE_RX_MAX_CNT_1	0x914	/*  RX Ring #1 Maximum Count */
+#define RA_FE_RX_CRX_IDX_1	0x918	/*  RX Ring #1 CPU pointer */
+#define RA_FE_RX_DRX_IDX_1	0x91c	/*  RX Ring #1 DMA poitner */
+#define RA_FE_PDMA_INFO		0xa00	/*  PDMA Information */
+#define RA_FE_PDMA_GLOBAL_CFG	0xa04	/*  PDMA Global Configuration */
+#define RA_FE_DELAY_INT_CFG	0xa0c	/*  Delay Interrupt Configuration */
+#define RA_FE_FREEQ_THRES	0xa10	/*  Free Queue Threshold */
+#define RA_FE_INT_STATUS	0xa20	/*  Interrupt Status */
+#define RA_FE_INT_MASK		0xa28	/*  Interrupt Mask */
+#define  RA_FE_INT_RX_COHERENT		__BIT(31)
+#define  RA_FE_INT_RX_DLY		__BIT(30)
+#define  RA_FE_INT_TX_COHERENT		__BIT(29)
+#define  RA_FE_INT_TX_DLY_INT		__BIT(28)
+#define  RA_FE_INT_RX_DONE_INT1		__BIT(17)
+#define  RA_FE_INT_RX_DONE_INT0		__BIT(16)
+#define  RA_FE_INT_TX_DONE_INT3		__BIT(3)
+#define  RA_FE_INT_TX_DONE_INT2		__BIT(2)
+#define  RA_FE_INT_TX_DONE_INT1		__BIT(1)
+#define  RA_FE_INT_TX_DONE_INT0		__BIT(0)
+
+#define RA_FE_PDMA_SCH		0xa80	/*  Scheduler Configuration for Q0&Q1 */
+#define RA_FE_PDMA_WRR		0xa84	/*  Scheduler Configuration for Q2&Q3 */
+#define RA_FE_SDM_CON		0xc00	/*  Switch DMA Control */
+#define RA_FE_SDM_RING		0xc04	/*  Switch DMA Rx Ring */
+#define RA_FE_SDM_TRING		0xc08	/*  Switch DMA TX Ring */
+#define RA_FE_SDM_MAC_ADRL	0xc0c	/*  Switch MAC Address LSB */
+#define RA_FE_SDM_MAC_ADRH	0xc10	/*  Switch MAC Address MSB */
+#define RA_FE_GDMA1_MAC_LSB	RA_FE_SDM_MAC_ADRL
+#define RA_FE_GDMA1_MAC_MSB	RA_FE_SDM_MAC_ADRH
+#define RA_FE_SDM_TPCNT		0xd00	/*  Switch DMA Tx Packet Count */
+#define RA_FE_SDM_TBCNT		0xd04	/*  Switch DMA TX Byte Count */
+#define RA_FE_SDM_RPCNT		0xd08	/*  Switch DMA RX Packet Count */
+#define RA_FE_SDM_RBCNT		0xd0c	/*  Switch DMA RX Byte Count */
+#define RA_FE_SDM_CS_ERR	0xd10	/*  Switch DMA RX Checksum Error */
+#else /* !MT7628 */
 #define RA_FE_MDIO_ACCESS	0x000
 #define RA_FE_MDIO_CFG1		0x004
 #define RA_FE_GLOBAL_CFG	0x008
@@ -628,6 +855,7 @@
 #define RA_FE_PDMA_TX3_CPU_IDX	0x158
 #define RA_FE_PDMA_TX3_DMA_IDX	0x15C
 #define RA_FE_PDMA_FC_CFG	0x1F0
+#endif /* !MT7628 */
 /* TODO: FE_COUNTERS */
 
 #define  MDIO_ACCESS_TRG			__BIT(31)
@@ -729,11 +957,15 @@
 /*
  * 10/100 Switch registers
  */
-
 #define RA_ETH_SW_ISR		0x00
 #define RA_ETH_SW_IMR		0x04
 #define RA_ETH_SW_FCT0		0x08
+#define  RA_ETH_SW_FCT0_FC_RLS_TH(x)	(((x) & 0xff) << 24)
+#define  RA_ETH_SW_FCT0_FC_SET_TH(x)	(((x) & 0xff) << 16)
+#define  RA_ETH_SW_FCT0_DROP_RLS_TH(x)	(((x) & 0xff) << 8)
+#define  RA_ETH_SW_FCT0_DROP_SET_TH(x)	(((x) & 0xff) << 0)
 #define RA_ETH_SW_FCT1		0x0C
+#define  RA_ETH_SW_FCT1_PORT_TH(x)	(((x) & 0xff) << 0)
 #define RA_ETH_SW_PFC0		0x10
 #define RA_ETH_SW_PFC1		0x14
 #define RA_ETH_SW_PFC2		0x18
@@ -778,8 +1010,8 @@
 #define RA_ETH_SW_LEDP4		0xB4
 #define RA_ETH_SW_WDOG		0xB8
 #define RA_ETH_SW_DBG		0xBC
-#define RA_ETH_SW_PCTL0		0xC0
-#define RA_ETH_SW_PCTL1		0xC4
+#define RA_ETH_SW_PCTL0		0xC0	/* PCR0 */
+#define RA_ETH_SW_PCTL1		0xC4	/* PCR1 */
 #define RA_ETH_SW_FPORT		0xC8
 #define RA_ETH_SW_FTC2		0xCC
 #define RA_ETH_SW_QSS0		0xD0
@@ -1107,8 +1339,8 @@
 #define  PCICFG_P2P_BR_DEVNUM0		__BITS(19,16)
 #define  PCICFG_PSIRST			__BIT(1)
 #define RA_PCI_PCIINT			0x0008
-#define  PCIINT_INT3			__BIT(21) // PCIe1 interrupt
-#define  PCIINT_INT2			__BIT(20) // PCIe0 interrupt
+#define  PCIINT_INT3			__BIT(21) /* PCIe1 interrupt */
+#define  PCIINT_INT2			__BIT(20) /* PCIe0 interrupt */
 #define  PCIINT_INT1			__BIT(19)
 #define  PCIINT_INT0			__BIT(18)
 #define RA_PCI_PCIENA			0x000c
