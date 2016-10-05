@@ -853,6 +853,17 @@ microblaze*-*-rtems*)
 	extra_parts="$extra_parts crtbeginS.o crtendS.o crtbeginT.o crti.o crtn.o"
 	;;
 mips*-*-netbsd*)			# NetBSD/mips, either endian.
+	if test "${libgcc_cv_mips_hard_float}" = no; then
+	  # Eat soft float stuff added above since the netbsd libc provides it.
+	  xtmake_file=
+	  for t in ${tmake_file}; do
+	    case $t in
+	    *softfp*) ;;
+	    *)	xtmake_file="${xtmake_file} $t";;
+	    esac
+	  done
+	  tmake_file="${xtmake_file}"
+	fi
 	;;
 mips*-*-linux*)				# Linux MIPS, either endian.
 	extra_parts="$extra_parts crtfastmath.o"
