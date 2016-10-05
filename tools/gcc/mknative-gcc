@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.87 2016/03/17 23:41:21 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.88 2016/10/05 14:16:12 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -59,6 +59,10 @@ get_libg2c () {
 
 ##### lib/libgcc #####
 
+skipsoftfloat() {
+	sed -e 's@${GNUHOSTDIST}/libgcc/soft-fp/[a-z0-9]*.c@@g' -e 's@ @@g'
+}
+
 get_libgcc () {
 	_subdir="$1"
 	mkdir -p $_OUTDIR/lib/lib$_subdir/arch
@@ -71,13 +75,14 @@ get_libgcc () {
 	cd $_TMPDIR/$_PLATFORM/libgcc
 	{
 		getvars $_PLATFORM/libgcc/Makefile \
-			INCLUDES LIB2ADD LIB2ADDEH LIB2ADD_ST \
+			INCLUDES LIB2ADDEH LIB2ADD_ST \
 			LIB1ASMFUNCS LIB1ASMSRC \
 			LIB2_DIVMOD_FUNCS LIB2FUNCS_ST \
 			LIB2FUNCS_EXTRA \
 			LIBGCC2_CFLAGS \
 			SHLIB_MKMAP SHLIB_MKMAP_OPTS \
 			SHLIB_MAPFILES SHLIB_NM_FLAGS
+		getvars $_PLATFORM/libgcc/Makefile LIB2ADD | skipsoftfloat
 		getvars gcc/Makefile \
 			NOEXCEPTION_FLAGS EXTRA_HEADERS
 		getlinks config.status libgcc
