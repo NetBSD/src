@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.78.4.3 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.78.4.4 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.4 2016/10/05 20:55:41 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -229,7 +229,7 @@ eshconfig(struct esh_softc *sc)
 			       sc->sc_dma_size, (void **)&sc->sc_dma_addr,
 			       BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, 
+		aprint_error_dev(sc->sc_dev,
 		       "couldn't map memory for host-side structures\n");
 		goto bad_dmamem_map;
 	}
@@ -691,7 +691,7 @@ bad_init:
  * intervening memcpy's to slow us down.
  */
 
-int 
+int
 esh_fpopen(dev_t dev, int oflags, int devtype,
     struct lwp *l)
 {
@@ -907,7 +907,7 @@ bad_fp_dmamem_alloc:
 }
 
 
-int 
+int
 esh_fpclose(dev_t dev, int fflag, int devtype,
     struct lwp *l)
 {
@@ -2222,7 +2222,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 
 	for (n0 = n = m; n; n = n->m_next) {
 		while (n && n->m_len == 0) {
-			MFREE(n, m0);
+			m0 = m_free(n);
 			if (n == m)
 				n = n0 = m = m0;
 			else
@@ -2243,7 +2243,7 @@ esh_adjust_mbufs(struct esh_softc *sc, struct mbuf *m)
 
 			MCLGET(o, M_DONTWAIT);
 			if (!(o->m_flags & M_EXT)) {
-				MFREE(o, m0);
+				m0 = m_free(o);
 				goto bogosity;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.90.4.3 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: hme.c,v 1.90.4.4 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90.4.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.90.4.4 2016/10/05 20:55:41 skrll Exp $");
 
 /* #define HMEDEBUG */
 
@@ -89,7 +89,7 @@ static bool	hme_shutdown(device_t, int);
 static int	hme_init(struct ifnet *);
 static void	hme_meminit(struct hme_softc *);
 static void	hme_mifinit(struct hme_softc *);
-static void	hme_reset(struct hme_softc *);  
+static void	hme_reset(struct hme_softc *);
 static void	hme_chipreset(struct hme_softc *);
 static void	hme_setladrf(struct hme_softc *);
 
@@ -665,13 +665,13 @@ hme_put(struct hme_softc *sc, int ri, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(bp, mtod(m, void *), len);
 		bp += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return (tlen);
 }
@@ -1126,7 +1126,7 @@ hme_eint(struct hme_softc *sc, u_int status)
 
 	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
 	printf("%s: status=%s\n", device_xname(sc->sc_dev), bits);
-		
+
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.77 2016/06/10 08:15:21 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.78 2016/10/05 20:55:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.77 2016/06/10 08:15:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.78 2016/10/05 20:55:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1930,7 +1930,7 @@ ohci_timeout(void *addr)
 		timeout = true;
 	}
 	mutex_exit(&sc->sc_lock);
- 
+
 	if (timeout) {
 		/* Execute the abort in a process context. */
 		usb_init_task(&xfer->ux_aborttask, ohci_timeout_task, addr,

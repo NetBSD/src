@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.21.2.1 2015/04/06 15:18:00 skrll Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.21.2.2 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.21.2.1 2015/04/06 15:18:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.21.2.2 2016/10/05 20:55:34 skrll Exp $");
 
 #include "opt_modular.h"
 
@@ -130,6 +130,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[0],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #ifdef MULTIPROCESSOR
 	[CPU_MAXNUM-1] = {
@@ -138,6 +139,7 @@ struct cpu_info cpu_info[] = {
 		.ci_softc = &cpu_softc[CPU_MAXNUM-1],
 		.ci_cpl = IPL_HIGH,
 		.ci_idepth = -1,
+		.ci_pmap_kern_segtab = &pmap_kern_segtab,
 	},
 #endif
 };
@@ -633,7 +635,7 @@ sort_data(uint64_t *data, size_t count)
 			 * (module 65536) to achieve the division.
 			 *
 			 * iN = 2^16 / 1.24733... = 52540
-			 * x / N == (x * iN) / 65536 
+			 * x / N == (x * iN) / 65536
 			 */
 			gap = (gap * 52540) / 65536;
 		}

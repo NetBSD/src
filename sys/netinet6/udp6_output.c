@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.46.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.46.2.5 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.46.2.5 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -227,6 +227,7 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 
 		if (!IN6_IS_ADDR_V4MAPPED(faddr)) {
 			struct psref psref;
+			int bound = curlwp_bind();
 
 			laddr = in6_selectsrc(sin6, optp,
 			    in6p->in6p_moptions,
@@ -236,9 +237,11 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			    (error = in6_setscope(&sin6->sin6_addr,
 			    oifp, NULL))) {
 				if_put(oifp, &psref);
+				curlwp_bindx(bound);
 				goto release;
 			}
 			if_put(oifp, &psref);
+			curlwp_bindx(bound);
 		} else {
 			/*
 			 * XXX: freebsd[34] does not have in_selectsrc, but
@@ -247,15 +250,20 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 			 * never see this path.
 			 */
 			if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
-				struct sockaddr_in *sinp, sin_dst;
+				struct sockaddr_in sin_dst;
 				struct in_addr ina;
+				struct in_ifaddr *ia4;
+				struct psref _psref;
+				int bound;
 
 				memcpy(&ina, &faddr->s6_addr[12], sizeof(ina));
 				sockaddr_in_init(&sin_dst, &ina, 0);
-				sinp = in_selectsrc(&sin_dst, &in6p->in6p_route,
+				bound = curlwp_bind();
+				ia4 = in_selectsrc(&sin_dst, &in6p->in6p_route,
 				    in6p->in6p_socket->so_options, NULL,
-				    &error);
-				if (sinp == NULL) {
+				    &error, &_psref);
+				if (ia4 == NULL) {
+					curlwp_bindx(bound);
 					if (error == 0)
 						error = EADDRNOTAVAIL;
 					goto release;
@@ -263,8 +271,10 @@ udp6_output(struct in6pcb * const in6p, struct mbuf *m,
 				memset(&laddr_mapped, 0, sizeof(laddr_mapped));
 				laddr_mapped.s6_addr16[5] = 0xffff; /* ugly */
 				memcpy(&laddr_mapped.s6_addr[12],
-				      &sinp->sin_addr,
-				      sizeof(sinp->sin_addr));
+				      &IA_SIN(ia4)->sin_addr,
+				      sizeof(IA_SIN(ia4)->sin_addr));
+				ia4_release(ia4, &_psref);
+				curlwp_bindx(bound);
 				laddr = &laddr_mapped;
 			} else
 			{

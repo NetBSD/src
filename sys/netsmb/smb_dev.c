@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.43.2.1 2015/09/22 12:06:12 skrll Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.43.2.2 2016/10/05 20:56:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43.2.1 2015/09/22 12:06:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43.2.2 2016/10/05 20:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -372,25 +372,29 @@ MODULE(MODULE_CLASS_DRIVER, nsmb, NULL);
 static int
 nsmb_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
+#endif
 	int error = 0;
 
 	switch (cmd) {
 	    case MODULE_CMD_INIT:
 		nsmbattach(1);
+#ifdef _MODULE
 		error =
 		    devsw_attach("nsmb", NULL, &bmajor, &nsmb_cdevsw, &cmajor);
-		if (error == EEXIST) /* builtin */
-			error = 0;
 		if (error) {
 			nsmbdetach();
 		}
+#endif
 
 		break;
 	    case MODULE_CMD_FINI:
+#ifdef _MODULE
 		error = devsw_detach(NULL, &nsmb_cdevsw);
 		if (error)
 			break;
+#endif
 		nsmbdetach();
 		break;
 	    default:

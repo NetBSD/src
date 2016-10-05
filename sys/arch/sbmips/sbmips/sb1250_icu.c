@@ -1,4 +1,4 @@
-/* $NetBSD: sb1250_icu.c,v 1.13 2011/07/09 16:59:40 matt Exp $ */
+/* $NetBSD: sb1250_icu.c,v 1.13.30.1 2016/10/05 20:55:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.13 2011/07/09 16:59:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb1250_icu.c,v 1.13.30.1 2016/10/05 20:55:34 skrll Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -90,8 +90,8 @@ static void sb1250_ipi_intr(void *, uint32_t, vaddr_t);
 #endif
 #define	SB1250_I_MAP(x)		(R_IMR_INTERRUPT_MAP_BASE + (x) * 8)
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		mips3_ld((register_t)(rp))
+#define	WRITE_REG(rp, val)	mips3_sd((register_t)(rp), (val))
 
 static void	sb1250_cpu_intr(int, vaddr_t, uint32_t);
 static void	*sb1250_intr_establish(u_int, u_int,

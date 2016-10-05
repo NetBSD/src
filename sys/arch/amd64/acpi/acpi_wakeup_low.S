@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup_low.S,v 1.4 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup_low.S,v 1.4.62.1 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
@@ -80,7 +80,7 @@ acpi_md_sleep_exit:
 	movq	ACPI_SUSPEND_CR0(%r8),%rax
 	movq	%rax,%cr0
 
-	jmp 1f
+	jmp	1f
 1:
 
 	movq	CPUVAR(GDT),%rax
@@ -88,7 +88,7 @@ acpi_md_sleep_exit:
 	andq	$~0x0200,4(%rax,%rdx, 1)
 
 	ltr	%dx
-	lldt 	ACPI_SUSPEND_LDT(%r8)
+	lldt	ACPI_SUSPEND_LDT(%r8)
 	lidt	ACPI_SUSPEND_IDT(%r8)
 
 	movq	ACPI_SUSPEND_REG+(0*8)(%r8),%rsp

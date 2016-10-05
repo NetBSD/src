@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.11 2011/07/01 17:37:26 dyoung Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.11.30.1 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.11 2011/07/01 17:37:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.11.30.1 2016/10/05 20:55:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ geode_wdog_enable(struct geode_wdog_softc *sc)
 static void
 geode_wdog_reset(struct geode_wdog_softc *sc)
 {
-	/* set countdown */ 
+	/* set countdown */
 	bus_space_write_2(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh,
 	    SC1100_GCB_WDTO, sc->sc_countdown);
 }
@@ -237,8 +237,8 @@ geode_wdog_attach(device_t parent, device_t self, void *aux)
 	 * Determine cause of the last reset, and issue a warning if it
 	 * was due to watchdog expiry.
 	 */
-	wdsts = bus_space_read_1(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh,
-	    SC1100_GCB_WDSTS);
+	wdsts = bus_space_read_1(sc->sc_gcb_dev->sc_iot,
+	    sc->sc_gcb_dev->sc_ioh, SC1100_GCB_WDSTS);
 
 	GEODE_DPRINTF(("%s: status %#02" PRIx8 "\n", device_xname(self),
 	    wdsts));

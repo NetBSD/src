@@ -1,7 +1,7 @@
 #
-#	$NetBSD: VTC100,v 1.1.2.2 2016/07/09 20:24:51 skrll Exp $
+#	$NetBSD: VTC100,v 1.1.2.3 2016/10/05 20:55:26 skrll Exp $
 #
-#	BEAGLEBONE -- TI AM335x board Kernel
+#	VTC100 -- NEXCOM VTC100 Kernel
 #
 
 include	"arch/evbarm/conf/std.beagle"
@@ -145,10 +145,8 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 
 ## USB Debugging options
-options USB_DEBUG
-options EHCI_DEBUG
-options OHCI_DEBUG
-options UHUB_DEBUG
+#options 	USB_DEBUG
+#options 	MOTG_DEBUG
 
 
 # Valid options for BOOT_ARGS:
@@ -266,8 +264,8 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 # Ethernet
-cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 93
-ukphy*		at mii?
+cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
+atphy*		at mii? phy ?		# Attansic/Atheros PHYs
 
 # On-board USB. Experimental
 tiotg* 	at mainbus0 base 0x47400000 size 0x5000 intrbase 17
@@ -276,7 +274,7 @@ usb*		at motg?
 uhub*		at usb?
 uhub*		at uhub? port ?
 
-uhidev*		at uhub?
+uhidev* 	at uhub?
 
 # USB Keyboards
 ukbd*	at uhidev? reportid ?
@@ -286,47 +284,15 @@ wskbd*	at ukbd? console ? mux 1
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 
-# USB generic touchscreen
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB Modem
-umodem* at uhub? port ? configuration ?
-ucom*	at umodem?
-# Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
-
-uchcom* at uhub? port ? 	# WinChipHead CH341/CH340 serial adapter
-ucom*	at uchcom? portno ?
-
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
-
-uipaq*	at uhub? port ?		# iPAQ PDAs
-ucom*	at uipaq? portno ?
-
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
-
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
-
-uslsa*	at uhub? port ?		# Silicon Labs USB-RS232 serial adapter
-ucom*	at uslsa? portno ?
-
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-
-
 umass*		at uhub? port ? configuration ? interface ?
 wd*		at umass?
 # SCSI bus support
 scsibus*	at scsi?
 # SCSI devices
-sd*		at scsibus? target ? lun ?      # SCSI disk drives
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
-axe*		at uhub? port ? configuration ? interface ?
+u3g*		at uhub? port ?
+ucom*		at u3g?
 
 # Pseudo-Devices
 
@@ -340,6 +306,7 @@ pseudo-device	drvctl			# driver control
 # network pseudo-devices
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
+#pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	kttcp			# network loopback
 
 # miscellaneous pseudo-devices

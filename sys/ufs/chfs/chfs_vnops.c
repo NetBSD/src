@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.22.4.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.22.4.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1512,7 +1512,6 @@ chfs_reclaim(void *v)
 	}
 
 	cache_purge(vp);
-	vcache_remove(vp->v_mount, &ip->ino, sizeof(ip->ino));
 	if (ip->devvp) {
 		vrele(ip->devvp);
 		ip->devvp = 0;

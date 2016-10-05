@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.52.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.52.2.2 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.52.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.52.2.2 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ smbfs_loadvnode(struct mount *mp, struct vnode *vp,
     const void *key, size_t key_len, const void **new_key)
 {
 	struct smbnode *np;
-	
+
 	np = pool_get(&smbfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof(*np));
 
@@ -234,8 +234,6 @@ smbfs_reclaim(void *v)
 		SMBVDEBUG0("root vnode\n");
 		smp->sm_root = NULL;
 	}
-
-	vcache_remove(vp->v_mount, np->n_key, SMBFS_KEYSIZE(np->n_nmlen));
 
 	genfs_node_destroy(vp);
 

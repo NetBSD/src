@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.34 2011/06/03 16:28:40 tsutsui Exp $	*/
+/*	$NetBSD: if_ix.c,v 1.34.30.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.34 2011/06/03 16:28:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ix.c,v 1.34.30.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,8 @@ static void	ix_zeromem (struct ie_softc *, int, int);
 static void	ix_mediastatus(struct ie_softc *, struct ifmediareq *);
 
 static u_int16_t ix_read_eeprom(bus_space_tag_t, bus_space_handle_t, int);
-static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int, int);
+static void	ix_eeprom_outbits(bus_space_tag_t, bus_space_handle_t, int,
+    int);
 static int	ix_eeprom_inbits (bus_space_tag_t, bus_space_handle_t);
 static void	ix_eeprom_clock  (bus_space_tag_t, bus_space_handle_t, int);
 
@@ -156,7 +157,8 @@ ix_read_eeprom(bus_space_tag_t iot, bus_space_handle_t ioh, int location)
 }
 
 static void
-ix_eeprom_outbits(bus_space_tag_t iot, bus_space_handle_t ioh, int edata, int count)
+ix_eeprom_outbits(bus_space_tag_t iot, bus_space_handle_t ioh, int edata,
+    int count)
 {
 	int ectrl, i;
 
@@ -234,7 +236,7 @@ ix_intrhook(struct ie_softc *sc, int where)
 
 
 static void
-ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
+ix_copyin(struct ie_softc *sc, void *dst, int offset, size_t size)
 {
 	int i, dribble;
 	u_int8_t* bptr = dst;
@@ -249,7 +251,7 @@ ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 		bus_space_barrier(sc->bt, sc->bh, IX_READPTR, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	} else {
-	bus_space_barrier(sc->bt, sc->bh, offset, size,
+		bus_space_barrier(sc->bt, sc->bh, offset, size,
 			  BUS_SPACE_BARRIER_READ);
 	}
 
@@ -257,7 +259,7 @@ ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 		if (isc->use_pio)
 			*bptr = bus_space_read_1(sc->bt, sc->bh, IX_DATAPORT);
 		else
-		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
+			*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
 		offset++; bptr++; size--;
 	}
 
@@ -281,12 +283,12 @@ ix_copyin (struct ie_softc *sc, void *dst, int offset, size_t size)
 		if (isc->use_pio)
 			*bptr = bus_space_read_1(sc->bt, sc->bh, IX_DATAPORT);
 		else
-		*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
+			*bptr = bus_space_read_1(sc->bt, sc->bh, offset);
 	}
 }
 
 static void
-ix_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
+ix_copyout(struct ie_softc *sc, const void *src, int offset, size_t size)
 {
 	int i, dribble;
 	int osize = size;
@@ -306,7 +308,7 @@ ix_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 		if (isc->use_pio)
 			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, *bptr);
 		else
-		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
+			bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 		offset++; bptr++; size--;
 	}
 
@@ -330,14 +332,14 @@ ix_copyout (struct ie_softc *sc, const void *src, int offset, size_t size)
 		if (isc->use_pio)
 			bus_space_write_1(sc->bt, sc->bh, IX_DATAPORT, *bptr);
 		else
-		bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
+			bus_space_write_1(sc->bt, sc->bh, offset, *bptr);
 	}
 
 	if (isc->use_pio)
 		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	else
-	bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
+		bus_space_barrier(sc->bt, sc->bh, ooffset, osize,
 			  BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -389,7 +391,7 @@ ix_write_16 (struct ie_softc *sc, int offset, u_int16_t value)
 		bus_space_barrier(sc->bt, sc->bh, IX_DATAPORT, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	} else {
-        bus_space_write_2(sc->bt, sc->bh, offset, value);
+		bus_space_write_2(sc->bt, sc->bh, offset, value);
 		bus_space_barrier(sc->bt, sc->bh, offset, 2,
 						  BUS_SPACE_BARRIER_WRITE);
 	}
@@ -861,11 +863,11 @@ ix_attach(device_t parent, device_t self, void *aux)
 		sc->sc_msize = memsize;
 		sc->sc_maddr = (void*) 0;
 	} else {
-	sc->bt = ia->ia_memt;
-	sc->bh = memh;
+		sc->bt = ia->ia_memt;
+		sc->bh = memh;
 
-	sc->sc_msize = ia->ia_iomem[0].ir_size;
-	sc->sc_maddr = (void *)memh;
+		sc->sc_msize = ia->ia_iomem[0].ir_size;
+		sc->sc_maddr = (void *)memh;
 	}
 
 	/* Map i/o space. */
@@ -908,7 +910,7 @@ ix_attach(device_t parent, device_t self, void *aux)
 		bus_space_barrier(sc->bt, sc->bh, 0, IX_IOSIZE,
 				  BUS_SPACE_BARRIER_WRITE);
 	} else {
-	bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
+		bus_space_barrier(sc->bt, sc->bh, 0, sc->sc_msize,
 			  BUS_SPACE_BARRIER_WRITE);
 	}
 
@@ -918,7 +920,8 @@ ix_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(iot, ioh, ia->ia_io[0].ir_size);
 
 		if (ia->ia_iomem[0].ir_size)
-		bus_space_unmap(ia->ia_memt, memh, ia->ia_iomem[0].ir_size);
+			bus_space_unmap(ia->ia_memt, memh,
+			    ia->ia_iomem[0].ir_size);
 		return;
 	}
 
@@ -958,7 +961,8 @@ ix_attach(device_t parent, device_t self, void *aux)
 		      ix_media, NIX_MEDIA, media);
 
 	if (isc->use_pio)
-		aprint_error_dev(self, "unsupported memory config, using PIO to access %d bytes of memory\n", sc->sc_msize);
+		aprint_error_dev(self, "unsupported memory config, using PIO "
+		    "to access %d bytes of memory\n", sc->sc_msize);
 
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_NET, i82586_intr, sc);

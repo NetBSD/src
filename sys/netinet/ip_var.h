@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.107.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.107.2.5 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -52,8 +52,9 @@ struct ipovly {
  * IP Flow structure
  */
 struct ipflow {
-	LIST_ENTRY(ipflow) ipf_list;	/* next in active list */
-	LIST_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	TAILQ_ENTRY(ipflow) ipf_list;	/* next in active list */
+	TAILQ_ENTRY(ipflow) ipf_hash;	/* next ipflow in bucket */
+	size_t ipf_hashidx;		/* own hash index of ipflowtable[] */
 	struct in_addr ipf_dst;		/* destination address */
 	struct in_addr ipf_src;		/* source address */
 	uint8_t ipf_tos;		/* type-of-service */

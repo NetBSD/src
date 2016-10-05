@@ -1,8 +1,10 @@
-/*	$NetBSD: mcontext.h,v 1.3.14.1 2016/07/09 20:24:52 skrll Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.3.14.2 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * Copyright (c) 1999, 2003 Marcel Moolenaar
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Klaus Klein.
@@ -15,6 +17,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -33,6 +37,19 @@
 #define _IA64_MCONTEXT_H_
 
 #include <machine/_regset.h>
+
+/* XXX fix this, just get to compile for now */
+#define _NGREG	128
+
+#ifndef __ASSEMBLER__
+typedef unsigned long __greg_t;
+typedef __greg_t __gregset_t[_NGREG];
+
+typedef struct {
+  union _ia64_fpreg __fpregs[_NGREG];
+} __fpregset_t;
+
+#endif /* __ASSEMBLER__ */
 
 /*
  * The mc_flags field provides the necessary clues when dealing with the gory
@@ -80,7 +97,6 @@ typedef struct __mcontext {
 	unsigned long		mc_flags;
 #define	_MC_FLAGS_ASYNC_CONTEXT		0x0001
 #define	_MC_FLAGS_HIGHFP_VALID		0x0002
-#define	_MC_FLAGS_KSE_SET_MBOX		0x0004	/* Undocumented. Has to go. */
 #define	_MC_FLAGS_SYSCALL_CONTEXT	0x0008
 	unsigned long		_reserved_;
 	struct _special		mc_special;
@@ -89,10 +105,15 @@ typedef struct __mcontext {
 	struct _caller_saved	mc_scratch;
 	struct _caller_saved_fp	mc_scratch_fp;
 	struct _high_fp		mc_high_fp;
+
+	/* XXX fix */
+	__gregset_t		__gregs;
+	__fpregset_t		__fpregs;
 } mcontext_t;
 
 #define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.mc_special.sp)
-#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.mc_special.rp)
+/* XXX or assembly "mov Rn = ip" or ...? */
+#define	_UC_MACHINE_PC(uc)	((uc)->uc_mcontext.mc_special.iip)
 
 static __inline void *
 __lwp_getprivate_fast(void)

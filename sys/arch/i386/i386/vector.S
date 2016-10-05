@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $	*/
+/*	$NetBSD: vector.S,v 1.64.6.1 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64.6.1 2016/10/05 20:55:28 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $");
  * If the interrupt frame is made more flexible,  INTR can push %eax first and
  * decide the ipending case with less overhead, e.g., by avoiding loading the
  * segment registers.
- *
  */
 
 /*
@@ -132,13 +131,13 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.64 2014/01/26 19:16:17 dsl Exp $");
 	.globl	dtrace_invop_jump_addr
 	.align	4
 	.type	dtrace_invop_jump_addr, @object
-        .size	dtrace_invop_jump_addr, 4
+	.size	dtrace_invop_jump_addr, 4
 dtrace_invop_jump_addr:
 	.zero	4
 	.globl	dtrace_invop_calltrap_addr
 	.align	4
 	.type	dtrace_invop_calltrap_addr, @object
-        .size	dtrace_invop_calltrap_addr, 4
+	.size	dtrace_invop_calltrap_addr, 4
 dtrace_invop_calltrap_addr:
 	.zero	8
 	.text
@@ -154,15 +153,15 @@ IDTVEC(recurse_lapic_ipi)
 	pushfl
 	pushl	%cs
 	pushl	%esi
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
+	INTRENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ipi)
 IDTVEC(intr_lapic_ipi)
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
+	INTRENTRY
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_HIGH,%ebx
@@ -189,7 +188,7 @@ IDTVEC(intr_lapic_tlb)
 	pushl	$0
 	pushl	$T_ASTFLT
 	INTRENTRY
-	movl	$0, _C_LABEL(local_apic)+LAPIC_EOI
+	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	call	_C_LABEL(pmap_tlb_intr)
 	INTRFASTEXIT
 IDTVEC_END(intr_lapic_tlb)
@@ -213,7 +212,7 @@ IDTVEC(intrddbipi)
 IDTVEC_END(intrddbipi)
 #endif /* DDB */
 #endif /* MULTIPROCESSOR */
-	
+
 	/*
 	 * Interrupt from the local APIC timer.
 	 */
@@ -221,15 +220,15 @@ IDTVEC(recurse_lapic_ltimer)
 	pushfl
 	pushl	%cs
 	pushl	%esi
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
+	INTRENTRY
 	jmp	1f
 IDTVEC_END(recurse_lapic_ltimer)
 IDTVEC(intr_lapic_ltimer)
-	pushl	$0		
+	pushl	$0
 	pushl	$T_ASTFLT
-	INTRENTRY		
+	INTRENTRY
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	movl	CPUVAR(ILEVEL),%ebx
 	cmpl	$IPL_CLOCK,%ebx
@@ -242,7 +241,7 @@ IDTVEC(resume_lapic_ltimer)
 	sti
 	pushl	$0
 	call	_C_LABEL(lapic_clockintr)
-	addl	$4,%esp		
+	addl	$4,%esp
 	cli
 	jmp	_C_LABEL(Xdoreti)
 2:
@@ -272,7 +271,7 @@ IDTVEC_END(recurse_ ## name ## num)					;\
 IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	movl	%ebx,%esi						;\
-	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
+	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
 	movl	IS_MAXLEVEL(%ebp),%ebx					;\
 	jmp	1f							;\
 IDTVEC_END(resume_ ## name ## num)					;\
@@ -280,7 +279,7 @@ IDTVEC(intr_ ## name ## num)						;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
+	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
 	mask(num)			/* mask it in hardware */	;\
 	early_ack(num)			/* and allow other intrs */	;\
 	testl	%ebp,%ebp						;\
@@ -318,12 +317,12 @@ IDTVEC(intr_ ## name ## num)						;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 7:									\
 	cli								;\
-	orl     $(1 << num),CPUVAR(IPENDING)				;\
+	orl	$(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
 10:									\
-	orl     $(1 << num),CPUVAR(IPENDING)				;\
+	orl	$(1 << num),CPUVAR(IPENDING)				;\
 	level_mask(num)							;\
 	late_ack(num)							;\
 	INTRFASTEXIT							;\
@@ -631,7 +630,7 @@ IDTVEC(recurse_ ## name ## num)						;\
 IDTVEC(resume_ ## name ## num)						\
 	movl	$IREENT_MAGIC,TF_ERR(%esp)				;\
 	pushl	%ebx							;\
-	movl	CPUVAR(ISOURCES) + (num) * 4, %ebp			;\
+	movl	CPUVAR(ISOURCES) + (num) * 4,%ebp			;\
 	movl	$num,CPUVAR(ILEVEL)					;\
 	IDEPTH_INCR /* leaves old %esp on stack	*/			;\
 	STI(%eax)							;\
@@ -657,8 +656,8 @@ IDTVEC(resume_ ## name ## num)						\
  * the C function doing it, maybe rewrite in inline assembly ?
  */
 #define hypervisor_asm_unmask(num)			\
-	pushl $num					;\
-	call _C_LABEL(hypervisor_enable_ipl)		;\
+	pushl	$num					;\
+	call	_C_LABEL(hypervisor_enable_ipl)		;\
 	addl	$4,%esp
 
 XENINTRSTUB(xenev,0,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
@@ -753,35 +752,35 @@ END(xenev_stubs)
  * activation and restart the handler using the previous one.
  */
 NENTRY(hypervisor_callback)
-	pushl	$0			# dummy error code
+	pushl	$0			/* dummy error code */
 	pushl	$T_ASTFLT
 	INTRENTRY
-        movl TF_EIP(%esp),%eax
-        cmpl $scrit,%eax
-        jb   11f
-        cmpl $ecrit,%eax
-        jb   critical_region_fixup
-11:     pushl CPUVAR(ILEVEL)
-        push %esp
-        call do_hypervisor_callback
-        add  $8,%esp
-        xorl %eax,%eax
-        movb TF_CS(%esp),%cl
-        test $CHK_UPL,%cl		# slow return to ring 2 or 3
-        je   safesti
-        movl CPUVAR(ILEVEL),%ebx
-        jmp  doreti_checkast
+	movl	TF_EIP(%esp),%eax
+	cmpl	$scrit,%eax
+	jb	11f
+	cmpl	$ecrit,%eax
+	jb	critical_region_fixup
+11:	pushl	CPUVAR(ILEVEL)
+	push	%esp
+	call	do_hypervisor_callback
+	add	$8,%esp
+	xorl	%eax,%eax
+	movb	TF_CS(%esp),%cl
+	test	$CHK_UPL,%cl		/* slow return to ring 2 or 3 */
+	je	safesti
+	movl	CPUVAR(ILEVEL),%ebx
+	jmp	doreti_checkast
 safesti:
-	movl CPUVAR(VCPU),%esi
-	XEN_UNBLOCK_EVENTS(%esi)	# reenable event callbacks
-scrit:  /**** START OF CRITICAL REGION ****/
-        XEN_TEST_PENDING(%esi)
-        jnz  14f			# process more events if necessary...
-        INTRFASTEXIT
+	movl	CPUVAR(VCPU),%esi
+	XEN_UNBLOCK_EVENTS(%esi)	/* reenable event callbacks */
+scrit:	/**** START OF CRITICAL REGION ****/
+	XEN_TEST_PENDING(%esi)
+	jnz	14f		/* process more events if necessary... */
+	INTRFASTEXIT
 critiret:
-14:     XEN_BLOCK_EVENTS(%esi)
-        jmp  11b
-ecrit:  /**** END OF CRITICAL REGION ****/
+14:	XEN_BLOCK_EVENTS(%esi)
+	jmp	11b
+ecrit:	/**** END OF CRITICAL REGION ****/
 /*
  * [How we do the fixup]. We want to merge the current stack frame with the
  * just-interrupted frame. How we do this depends on where in the critical
@@ -792,27 +791,27 @@ ecrit:  /**** END OF CRITICAL REGION ****/
  * interrupted stack frame.
  */
 critical_region_fixup:
-        cmpl	$(critiret-1),%eax	    # eip points to iret?
+	cmpl	$(critiret-1),%eax	/* eip points to iret? */
 	jne	1f
 	movl	$(TF_PUSHSIZE+0x8),%eax
 	jmp	2f
 1:	xorl	%eax,%eax
 2:
 	/* %eax contains num bytes popped */
-        mov  %esp,%esi
-        add  %eax,%esi        # %esi points at end of src region
-        mov  %esp,%edi
-        add  $(TF_PUSHSIZE+0x8+0xC),%edi # %edi points at end of dst region
-        mov  %eax,%ecx
-        shr  $2,%ecx          # convert words to bytes
-        je   16f              # skip loop if nothing to copy
-15:     subl $4,%esi          # pre-decrementing copy loop
-        subl $4,%edi
-        movl (%esi),%eax
-        movl %eax,(%edi)
-        loop 15b
-16:     movl %edi,%esp        # final %edi is top of merged stack
-        jmp  11b
+	mov	%esp,%esi
+	add	%eax,%esi		/* %esi points at end of src region */
+	mov	%esp,%edi
+	add	$(TF_PUSHSIZE+0x8+0xC),%edi /* %edi points at end of dst region */
+	mov	%eax,%ecx
+	shr	$2,%ecx		/* convert words to bytes */
+	je	16f		/* skip loop if nothing to copy */
+15:	subl	$4,%esi		/* pre-decrementing copy loop */
+	subl	$4,%edi
+	movl	(%esi),%eax
+	movl	%eax,(%edi)
+	loop	15b
+16:	movl	%edi,%esp	/* final %edi is top of merged stack */
+	jmp	11b
 END(hypervisor_callback)
 
 

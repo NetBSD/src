@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.67.36.1 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.67.36.2 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -82,10 +82,8 @@
 #define	SIGUSR1		30	/* user defined signal 1 */
 #define	SIGUSR2		31	/* user defined signal 2 */
 #define	SIGPWR		32	/* power fail/restart (not reset when caught) */
-#ifdef _KERNEL
-#define	SIGRTMIN	33	/* Kernel only; not exposed to userland yet */
-#define	SIGRTMAX	63	/* Kernel only; not exposed to userland yet */
-#endif
+#define	SIGRTMIN	33
+#define	SIGRTMAX	63
 
 #ifndef _KERNEL
 #include <sys/cdefs.h>

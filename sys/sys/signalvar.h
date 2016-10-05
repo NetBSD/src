@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.86 2014/05/15 07:11:30 uebayasi Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.86.4.1 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -151,7 +151,7 @@ int	sigget(sigpend_t *, ksiginfo_t *, int, const sigset_t *);
 void	sigclear(sigpend_t *, const sigset_t *, ksiginfoq_t *);
 void	sigclearall(struct proc *, const sigset_t *, ksiginfoq_t *);
 
-void	kpsignal2(struct proc *, ksiginfo_t *);
+int	kpsignal2(struct proc *, ksiginfo_t *);
 
 void	signal_init(void);
 

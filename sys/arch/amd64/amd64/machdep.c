@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.6 2016/07/09 20:24:49 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.7 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.6 2016/07/09 20:24:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.7 2016/10/05 20:55:23 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -217,25 +217,22 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.6 2016/07/09 20:24:49 skrll Exp 
 char machine[] = "amd64";		/* CPU "architecture" */
 char machine_arch[] = "x86_64";		/* machine == machine_arch */
 
-extern struct bi_devmatch *x86_alldisks;
-extern int x86_ndisks;
-
 #ifdef CPURESET_DELAY
-int	cpureset_delay = CPURESET_DELAY;
+int cpureset_delay = CPURESET_DELAY;
 #else
-int     cpureset_delay = 2000; /* default to 2s */
+int cpureset_delay = 2000; /* default to 2s */
 #endif
 
-int	cpu_class = CPUCLASS_686;
+int cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-uint64_t	dumpmem_low;
-uint64_t	dumpmem_high;
-int	cpu_class;
-int	use_pae;
+uint64_t dumpmem_low;
+uint64_t dumpmem_high;
+int cpu_class;
+int use_pae;
 
 #ifndef NO_SPARSE_DUMP
 int sparse_dump = 1;
@@ -255,8 +252,7 @@ size_t dump_npages;
 size_t dump_header_size;
 size_t dump_totalbytesleft;
 
-vaddr_t	msgbuf_vaddr;
-paddr_t msgbuf_paddr;
+vaddr_t msgbuf_vaddr;
 
 struct {
 	paddr_t paddr;
@@ -264,8 +260,12 @@ struct {
 } msgbuf_p_seg[VM_PHYSSEG_MAX];
 unsigned int msgbuf_p_cnt = 0;
 
-vaddr_t	idt_vaddr;
-paddr_t	idt_paddr;
+vaddr_t idt_vaddr;
+paddr_t idt_paddr;
+vaddr_t gdt_vaddr;
+paddr_t gdt_paddr;
+vaddr_t ldt_vaddr;
+paddr_t ldt_paddr;
 
 vaddr_t module_start, module_end;
 static struct vm_map module_map_store;
@@ -274,9 +274,9 @@ vaddr_t kern_end;
 
 struct vm_map *phys_map = NULL;
 
-extern	paddr_t avail_start, avail_end;
+extern paddr_t avail_start, avail_end;
 #ifdef XEN
-extern  paddr_t pmap_pa_start, pmap_pa_end;
+extern paddr_t pmap_pa_start, pmap_pa_end;
 #endif
 
 #ifndef XEN
@@ -292,15 +292,15 @@ void (*initclock_func)(void) = xen_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
+int mem_cluster_cnt;
 
-char	x86_64_doubleflt_stack[4096];
+char x86_64_doubleflt_stack[4096];
 
-int	cpu_dump(void);
-int	cpu_dumpsize(void);
-u_long	cpu_dump_mempagecnt(void);
-void	dodumpsys(void);
-void	dumpsys(void);
+int cpu_dump(void);
+int cpu_dumpsize(void);
+u_long cpu_dump_mempagecnt(void);
+void dodumpsys(void);
+void dumpsys(void);
 
 extern int time_adjusted;	/* XXX no common header */
 
@@ -323,7 +323,7 @@ int dump_header_finish(void);
 int dump_seg_count_range(paddr_t, paddr_t);
 int dumpsys_seg(paddr_t, paddr_t);
 
-void	init_x86_64(paddr_t);
+void init_x86_64(paddr_t);
 
 static int valid_user_selector(struct lwp *, uint64_t);
 
@@ -351,17 +351,15 @@ cpu_startup(void)
 	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
 		continue;
 
-	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0,
-	    UVM_KMF_VAONLY);
+	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
-	/* msgbuf_paddr was init'd in pmap */
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
-				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
-				       VM_PROT_READ | VM_PROT_WRITE, 0);
+			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
+			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
 
 	pmap_update(pmap_kernel());
@@ -383,9 +381,8 @@ cpu_startup(void)
 	 * created in locore.S, which is not big enough if we want to load many
 	 * modules dynamically. We really should be using kernel_map instead.
 	 *
-	 * But because of the R_X86_64_32 relocations that are usually present
-	 * in dynamic modules, the module map must be in low memory, and this
-	 * wouldn't been guaranteed if we were using kernel_map.
+	 * But the modules must be located above the kernel image, and that
+	 * wouldn't be guaranteed if we were using kernel_map.
 	 */
 	uvm_map_setup(&module_map_store, module_start, module_end, 0);
 	module_map_store.pmap = pmap_kernel();
@@ -1543,13 +1540,7 @@ init_x86_64(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	int ist;
-	extern struct extent *iomem_ex;
-#if !defined(REALEXTMEM) && !defined(REALBASEMEM)
-	struct btinfo_memmap *bim;
-#endif
 #endif /* !XEN */
-
-	cpu_probe(&cpu_info_primary);
 
 #ifdef XEN
 	KASSERT(HYPERVISOR_shared_info != NULL);
@@ -1558,6 +1549,7 @@ init_x86_64(paddr_t first_avail)
 	__PRINTK(("init_x86_64(0x%lx)\n", first_avail));
 #endif /* XEN */
 
+	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
 
 	use_pae = 1; /* PAE always enabled in long mode */
@@ -1596,25 +1588,10 @@ init_x86_64(paddr_t first_avail)
 	 */
 	avail_start = 8 * PAGE_SIZE;
 
-#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
-#endif	/* ! REALBASEMEM && ! REALEXTMEM */
-
-	/*
-	 * If the loop above didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
+	/* Initialize the memory clusters (needed in pmap_boostrap). */
+	init_x86_clusters();
 #else	/* XEN */
-	/* Parse Xen command line (replace bootinfo */
+	/* Parse Xen command line (replace bootinfo) */
 	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
 
 	/* Determine physical address space */
@@ -1632,11 +1609,9 @@ init_x86_64(paddr_t first_avail)
 	 */
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
-	if (avail_start != PAGE_SIZE)
-		pmap_prealloc_lowmem_ptps();
-
 #ifndef XEN
-	initx86_load_memmap(first_avail);
+	/* Internalize the physical pages into the VM system. */
+	init_x86_vm(first_avail);
 #else	/* XEN */
 	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;
@@ -1651,46 +1626,38 @@ init_x86_64(paddr_t first_avail)
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
 	kpreempt_disable();
+
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(ldt_vaddr, ldt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
+	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
 #ifndef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
-	pmap_kenter_pa(idt_vaddr + PAGE_SIZE, idt_paddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, 0);
-#ifdef XEN
-	/* Steal one more page for LDT */
-	pmap_kenter_pa(idt_vaddr + 2 * PAGE_SIZE, idt_paddr + 2 * PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE, 0);
-#endif
+
 	pmap_update(pmap_kernel());
 
 #ifndef XEN
-	idt_init();
 	idt = (struct gate_descriptor *)idt_vaddr;
-	gdtstore = (char *)(idt + NIDT);
-	ldtstore = gdtstore + DYNSEL_START;
 #else
 	xen_idt = (struct trap_info *)idt_vaddr;
 	xen_idt_idx = 0;
-	/* Xen wants page aligned GDT/LDT in separated pages */
-	ldtstore = (char *) roundup((vaddr_t) (xen_idt + NIDT), PAGE_SIZE);
-	gdtstore = (char *) (ldtstore + PAGE_SIZE);
-#endif /* XEN */
+#endif
+	gdtstore = (char *)gdt_vaddr;
+	ldtstore = (char *)ldt_vaddr;
 
-	/* make gdt gates and memory segments */
+	/*
+	 * Make GDT gates and memory segments.
+	 */
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GCODE_SEL), 0,
 	    0xfffff, SDT_MEMERA, SEL_KPL, 1, 0, 1);
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GDATA_SEL), 0,
 	    0xfffff, SDT_MEMRWA, SEL_KPL, 1, 0, 1);
-
-#ifndef XEN
-	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
-	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
-#endif
 
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMERA, SEL_UPL, 1, 0, 1);
@@ -1698,7 +1665,14 @@ init_x86_64(paddr_t first_avail)
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUDATA_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
-	/* make ldt gates and memory segments */
+#ifndef XEN
+	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
+	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
+#endif
+
+	/*
+	 * Make LDT gates and memory segments.
+	 */
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
@@ -1733,7 +1707,7 @@ init_x86_64(paddr_t first_avail)
 	    SDT_MEMRWA, SEL_UPL, 1, 1, 0);
 
 	/*
-	 * Other entries.
+	 * Other LDT entries.
 	 */
 	memcpy((struct gate_descriptor *)(ldtstore + LSOL26CALLS_SEL),
 	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
@@ -1742,8 +1716,8 @@ init_x86_64(paddr_t first_avail)
 	    (struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    sizeof (struct gate_descriptor));
 
-	/* exceptions */
-	for (x = 0; x < 32; x++) {
+	/* CPU-specific IDT exceptions. */
+	for (x = 0; x < NCPUIDT; x++) {
 #ifndef XEN
 		idt_vec_reserve(x);
 		switch (x) {
@@ -1854,8 +1828,6 @@ cpu_reset(void)
 	 */
 	kpreempt_disable();
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
-	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
-	    VM_PROT_READ|VM_PROT_WRITE);
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
 	kpreempt_enable();
 	breakpoint();

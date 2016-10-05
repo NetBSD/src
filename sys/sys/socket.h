@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.110.4.3 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.110.4.4 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -472,12 +472,13 @@ struct kinfo_pcb {
  *	Fifth: type of info, defined below
  *	Sixth: flag(s) to mask with for NET_RT_FLAGS
  */
-#define NET_RT_DUMP	1		/* dump; may limit to a.f. */
-#define NET_RT_FLAGS	2		/* by flags, e.g. RESOLVING */
-#define NET_RT_OOIFLIST	3		/* old NET_RT_IFLIST (pre 1.5) */
-#define NET_RT_OIFLIST	4		/* survey interface list */
-#define	NET_RT_IFLIST	5
-#define	NET_RT_MAXID	6
+#define	NET_RT_DUMP		1	/* dump; may limit to a.f. */
+#define	NET_RT_FLAGS		2	/* by flags, e.g. RESOLVING */
+#define	NET_RT_OOOIFLIST	3	/* old NET_RT_IFLIST (pre 1.5) */
+#define	NET_RT_OOIFLIST		4	/* old NET_RT_IFLIST (pre-64bit time) */
+#define	NET_RT_OIFLIST		5	/* old NET_RT_IFLIST (pre 8.0) */
+#define	NET_RT_IFLIST		6	/* survey interface list */
+#define	NET_RT_MAXID		7
 
 #define CTL_NET_RT_NAMES { \
 	{ 0, 0 }, \

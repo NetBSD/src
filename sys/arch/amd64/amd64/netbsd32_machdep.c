@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.92.6.2 2015/12/27 12:09:28 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.92.6.3 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.2 2015/12/27 12:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.3 2016/10/05 20:55:23 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.92.6.2 2015/12/27 12:09:28 sk
 
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
-const char	machine_arch32[] = "i386";	
+const char	machine_arch32[] = "i386";
 
 #ifdef MTRR
 static int x86_64_get_mtrr32(struct lwp *, void *, register_t *);
@@ -116,7 +116,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	pcb = lwp_getpcb(l);
 
 #if defined(USER_LDT) && 0
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
 	netbsd32_adjust_limits(p);
@@ -435,7 +435,7 @@ compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32_
 #ifdef COREDUMP
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 struct md_core32 {
 	struct reg32 intreg;
 	struct fpreg32 freg;
@@ -973,7 +973,7 @@ compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigr
 		return error;
 
 	tf->tf_gs = context.sc_gs;
-	tf->tf_fs = context.sc_fs;		
+	tf->tf_fs = context.sc_fs;
 	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
 	tf->tf_rflags = context.sc_eflags;

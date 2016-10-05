@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.22 2011/07/26 08:36:02 macallan Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.22.30.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.22 2011/07/26 08:36:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.22.30.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,8 +123,9 @@ mc_attach(device_t parent, device_t self, void *aux)
 	bus_space_map(sc->sc_regt, reg[0], reg[1], 0, &sc->sc_regh);
 
 	sc->sc_tail = 0;
-	sc->sc_txdmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 2);
-	sc->sc_rxdmacmd = (void *)dbdma_alloc(sizeof(dbdma_command_t) * 8);
+	sc->sc_txdmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 2, NULL);
+	sc->sc_rxdmacmd = (void *)dbdma_alloc(sizeof(dbdma_command_t) * 8,
+	    NULL);
 	memset(sc->sc_txdmacmd, 0, sizeof(dbdma_command_t) * 2);
 	memset(sc->sc_rxdmacmd, 0, sizeof(dbdma_command_t) * 8);
 

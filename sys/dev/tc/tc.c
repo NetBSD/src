@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.51 2011/06/04 01:57:34 tsutsui Exp $	*/
+/*	$NetBSD: tc.c,v 1.51.30.1 2016/10/05 20:55:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.51 2011/06/04 01:57:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.51.30.1 2016/10/05 20:55:57 skrll Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -206,6 +206,22 @@ static const tc_offset_t tc_slot_romoffs[] = {
 #endif
 };
 
+static int
+tc_check_romp(const struct tc_rommap *romp)
+{
+	if (romp->tcr_stride.v != 4)
+		return 0;
+
+	for (size_t j = 0; j < romp->tcr_width.v; j++) {
+		if (romp->tcr_test[j + 0 * romp->tcr_stride.v] != 0x55 ||
+		    romp->tcr_test[j + 1 * romp->tcr_stride.v] != 0x00 ||
+		    romp->tcr_test[j + 2 * romp->tcr_stride.v] != 0xaa ||
+		    romp->tcr_test[j + 3 * romp->tcr_stride.v] != 0xff)
+			return 0;
+	}
+	return 1;
+}
+
 int
 tc_checkslot(tc_addr_t slotbase, char *namep)
 {
@@ -226,15 +242,8 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 			continue;
 		}
 
-		if (romp->tcr_stride.v != 4)
+		if (!tc_check_romp(romp))
 			continue;
-
-		for (j = 0; j < 4; j++)
-			if (romp->tcr_test[j+0*romp->tcr_stride.v] != 0x55 ||
-			    romp->tcr_test[j+1*romp->tcr_stride.v] != 0x00 ||
-			    romp->tcr_test[j+2*romp->tcr_stride.v] != 0xaa ||
-			    romp->tcr_test[j+3*romp->tcr_stride.v] != 0xff)
-				continue;
 
 		for (j = 0; j < TC_ROM_LLEN; j++)
 			namep[j] = romp->tcr_modname[j].v;

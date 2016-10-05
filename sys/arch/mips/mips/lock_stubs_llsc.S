@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 
 #include <machine/asm.h>
 
+RCSID("$NetBSD: lock_stubs_llsc.S,v 1.2.30.3 2016/10/05 20:55:32 skrll Exp $")
+
 #include "assym.h"
 
 #if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR)
@@ -45,8 +47,8 @@
 
 #if defined(MULTIPROCESSOR)
 #if defined(__OCTEON__)
-#define	SYNC		syncw
-#define	BDSYNC		syncw
+#define	SYNC		sync 4
+#define	BDSYNC		sync 4
 #else
 #define	SYNC		sync
 #define	BDSYNC		sync

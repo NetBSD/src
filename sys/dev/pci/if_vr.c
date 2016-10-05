@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.114.4.3 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.114.4.4 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.114.4.3 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.114.4.4 2016/10/05 20:55:43 skrll Exp $");
 
 
 
@@ -1514,8 +1514,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    vr_restore_state)) && error != EOPNOTSUPP) {
-		aprint_error_dev(self, "cannot activate %d\n",
-		    error);
+		aprint_error_dev(self, "cannot activate %d\n", error);
 		return;
 	}
 
@@ -1562,7 +1561,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 		}
 #endif
 		else {
-			printf(": unable to map device registers\n");
+			aprint_error(": unable to map device registers\n");
 			return;
 		}
 
@@ -1571,7 +1570,8 @@ vr_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "couldn't map interrupt\n");
 			return;
 		}
-		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
+		intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+		    sizeof(intrbuf));
 		sc->vr_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
 						vr_intr, sc);
 		if (sc->vr_ih == NULL) {
@@ -1672,7 +1672,8 @@ vr_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamap_load(sc->vr_dmat, sc->vr_cddmamap,
 	    sc->vr_control_data, sizeof(struct vr_control_data), NULL,
 	    0)) != 0) {
-		aprint_error_dev(self, "unable to load control data DMA map, error = %d\n",
+		aprint_error_dev(self,
+		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -1684,8 +1685,9 @@ vr_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->vr_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0,
 		    &VR_DSTX(sc, i)->ds_dmamap)) != 0) {
-			aprint_error_dev(self, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create tx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_4;
 		}
 	}
@@ -1697,8 +1699,9 @@ vr_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->vr_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0,
 		    &VR_DSRX(sc, i)->ds_dmamap)) != 0) {
-			aprint_error_dev(self, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self,
+			    "unable to create rx DMA map %d, error = %d\n", i,
+			    error);
 			goto fail_5;
 		}
 		VR_DSRX(sc, i)->ds_mbuf = NULL;

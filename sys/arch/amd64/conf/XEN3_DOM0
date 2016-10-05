@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.6 2016/05/29 08:44:15 skrll Exp $
+# $NetBSD: XEN3_DOM0,v 1.112.2.7 2016/10/05 20:55:23 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -301,10 +301,32 @@ amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
 
+# Intel ICH SMBus controller
+ichsmb* at pci? dev ? function ?
+iic*	at ichsmb?
+
 # Thermal monitor and fan controller
 #dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
 #dbcool* at iic? addr 0x2D		# Tyan S2881
 #dbcool* at iic? addr 0x2E		# Tyan S2882-D
+
+# Serial Presence Detect capable memory modules
+#spdmem* at iic? addr 0x50
+#spdmem* at iic? addr 0x51
+#spdmem* at iic? addr 0x52
+#spdmem* at iic? addr 0x53
+#spdmem* at iic? addr 0x54
+#spdmem* at iic? addr 0x55
+#spdmem* at iic? addr 0x56
+#spdmem* at iic? addr 0x57
+#sdtemp* at iic? addr 0x18
+#sdtemp* at iic? addr 0x19
+#sdtemp* at iic? addr 0x1a
+#sdtemp* at iic? addr 0x1b
+#sdtemp* at iic? addr 0x1c
+#sdtemp* at iic? addr 0x1d
+#sdtemp* at iic? addr 0x1e
+#sdtemp* at iic? addr 0x1f
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

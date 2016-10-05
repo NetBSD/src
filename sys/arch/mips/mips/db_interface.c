@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75.30.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.75.30.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,12 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75.30.2 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75.30.3 2016/10/05 20:55:32 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+
+#define __PMAP_PRIVATE
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -241,7 +243,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		int i;
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
-			tlb_read_indexed(i, &tlb);
+			tlb_read_entry(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08x Lo 0x%08x",
 				(tlb.tlb_lo1 & MIPS1_PG_V) ? ' ' : '*',
 				i, tlb.tlb_hi,
@@ -258,7 +260,7 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		int i;
 
 		for (i = 0; i < mips_options.mips_num_tlb_entries; i++) {
-			tlb_read_indexed(i, &tlb);
+			tlb_read_entry(i, &tlb);
 			db_printf("TLB%c%2d Hi 0x%08"PRIxVADDR" ",
 			(tlb.tlb_lo0 | tlb.tlb_lo1) & MIPS3_PG_V ? ' ' : '*',
 				i, tlb.tlb_hi);
@@ -266,12 +268,12 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo0),
 				(tlb.tlb_lo0 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo0 & MIPS3_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo0 >> 3) & 7);
+				(int)(tlb.tlb_lo0 >> 3) & 7);
 			db_printf("Lo1=0x%09" PRIx64 " %c%c attr %x sz=%x\n",
 				(uint64_t)mips_tlbpfn_to_paddr(tlb.tlb_lo1),
 				(tlb.tlb_lo1 & MIPS3_PG_D) ? 'D' : ' ',
 				(tlb.tlb_lo1 & MIPS3_PG_G) ? 'G' : ' ',
-				(tlb.tlb_lo1 >> 3) & 7,
+				(int)(tlb.tlb_lo1 >> 3) & 7,
 				tlb.tlb_mask);
 		}
 	}
@@ -760,8 +762,7 @@ db_mach_nmi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		    (long)addr);
 		return;
 	}
-	mips64_sd_a64(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_NMI),
-	     __BIT(ci->ci_cpuid));
+	mips3_sd(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_NMI), __BIT(ci->ci_cpuid));
 }
 #endif
 
@@ -769,8 +770,8 @@ static void
 db_mach_reset_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		const char *modif)
 {
-	mips64_sd_a64(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_SOFT_RST),
-	     mips64_ld_a64(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_FUSE)));
+	mips3_sd(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_SOFT_RST),
+	     mips3_ld(MIPS_PHYS_TO_XKPHYS_UNCACHED(CIU_FUSE)));
 }
 
 #endif

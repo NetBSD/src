@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.14 2012/10/27 17:18:18 chs Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.14.14.1 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -347,6 +347,7 @@ struct aac_attach_args {
 };
 
 int	aac_attach(struct aac_softc *);
+int	aac_devscan(struct aac_softc *);
 void	aac_ccb_enqueue(struct aac_softc *, struct aac_ccb *);
 void	aac_ccb_free(struct aac_softc *, struct aac_ccb *);
 struct aac_ccb *aac_ccb_alloc(struct aac_softc *, int);

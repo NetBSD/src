@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.16 2009/10/05 21:27:36 dyoung Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.16.40.1 2016/10/05 20:56:08 skrll Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -25,6 +25,8 @@
  *
  * From: Id: if_sppp.h,v 1.7 1998/12/01 20:20:19 hm Exp
  */
+
+#include <net/if_media.h>
 
 #define IDX_LCP 0		/* idx into state table */
 
@@ -79,6 +81,7 @@ struct sauth {
 struct sppp {
 	/* NB: pp_if _must_ be first */
 	struct  ifnet pp_if;    /* network interface data */
+	struct	ifmedia pp_im;	/* interface media, to report link status */
 	struct  ifqueue pp_fastq; /* fast output queue */
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */

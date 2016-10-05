@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.7 2014/04/08 21:51:06 martin Exp $	*/
+/*	$NetBSD: devicename.c,v 1.7.4.1 2016/10/05 20:55:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -91,7 +91,7 @@ ski_parsedev(struct ski_devdesc **dev, const char *devspec, const char **path)
 	struct devsw	*dv;
 	int dv_type;
 	int		i, unit, slice, partition, err;
-	char		*cp;
+	char		*cp = NULL;
 	const char	*np;
 
 	/* minimum length check */
@@ -146,6 +146,10 @@ ski_parsedev(struct ski_devdesc **dev, const char *devspec, const char **path)
 				cp++;
 			}
 		}
+		if (cp == NULL) {
+			err = EINVAL;
+			goto fail;
+		}
 		if (*cp && (*cp != ':')) {
 			err = EINVAL;
 			goto fail;
@@ -168,6 +172,10 @@ ski_parsedev(struct ski_devdesc **dev, const char *devspec, const char **path)
 				err = EUNIT;
 				goto fail;
 			}
+		}
+		if (cp == NULL) {
+			err = EINVAL;
+			goto fail;
 		}
 		if (*cp && (*cp != ':')) {
 			err = EINVAL;
@@ -228,6 +236,7 @@ ski_fmtdev(void *vdev)
 		break;
 
 	case DEVT_NET:
+		/* XXX XXX XXX: Yay, 'len' is not initialized here */
 		snprintf(buf, buflen - len, "%s%d:", dev->d_dev->dv_name, dev->d_kind.netif.unit);
 		break;
 	}

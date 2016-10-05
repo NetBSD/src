@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.133.2.4 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.133.2.5 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133.2.4 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.133.2.5 2016/10/05 20:55:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -299,7 +299,7 @@ static const struct pci_class pci_subclass_communications[] = {
 /*
  * Class 0x08.
  * Base system peripheral.
- */ 
+ */
 
 /* PIC programming interface */
 static const struct pci_class pci_interface_pic[] = {
@@ -1054,7 +1054,7 @@ pci_conf_print_pcipm_cap(const pcireg_t *regs, int capoff)
 	onoff("B2/B3 support", reg, PCI_PMCSR_B2B3_SUPPORT);
 	onoff("Bus Power/Clock Control Enable", reg, PCI_PMCSR_BPCC_EN);
 	printf("    Data register: 0x%02x\n", (reg >> 24) & 0xff);
-	
+
 }
 
 /* XXX pci_conf_print_vpd_cap */
@@ -1123,7 +1123,7 @@ pci_conf_print_pcix_cap_2ndbusmode(int num)
 		printf("PCI-X 266 (Mode 2)\n");
 	else
 		printf("PCI-X 533 (Mode 2)\n");
-	
+
 	printf("      Error protection: %s\n", (num <= 3) ? "parity" : "ECC");
 	switch (num & 0x03) {
 	default:
@@ -2061,7 +2061,7 @@ static struct {
 	{ PCI_CAP_AGP,		"AGP",		pci_conf_print_agp_cap },
 	{ PCI_CAP_VPD,		"VPD",		NULL },
 	{ PCI_CAP_SLOTID,	"SlotID",	NULL },
-	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap }, 
+	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap },
 	{ PCI_CAP_CPCI_HOTSWAP,	"CompactPCI Hot-swapping", NULL },
 	{ PCI_CAP_PCIX,		"PCI-X",	pci_conf_print_pcix_cap },
 	{ PCI_CAP_LDT,		"HyperTransport", pci_conf_print_ht_cap },
@@ -2993,7 +2993,70 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 
 /* XXX pci_conf_print_amd_cap */
 /* XXX pci_conf_print_resiz_bar_cap */
-/* XXX pci_conf_print_dpa_cap */
+
+static void
+pci_conf_print_dpa_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t reg;
+	unsigned int substmax, i;
+
+	printf("\n  Dynamic Power Allocation\n");
+
+	reg = regs[o2i(extcapoff + PCI_DPA_CAP)];
+	printf("    Capability register: 0x%08x\n", reg);
+	substmax = __SHIFTOUT(reg, PCI_DPA_CAP_SUBSTMAX);
+	printf("      Substate Max: %u\n", substmax);
+	printf("      Transition Latency Unit: ");
+	switch (__SHIFTOUT(reg, PCI_DPA_CAP_TLUINT)) {
+	case 0:
+		printf("1ms\n");
+		break;
+	case 1:
+		printf("10ms\n");
+		break;
+	case 2:
+		printf("100ms\n");
+		break;
+	default:
+		printf("reserved\n");
+		break;
+	}
+	printf("      Power Allocation Scale: ");
+	switch (__SHIFTOUT(reg, PCI_DPA_CAP_PAS)) {
+	case 0:
+		printf("10.0x\n");
+		break;
+	case 1:
+		printf("1.0x\n");
+		break;
+	case 2:
+		printf("0.1x\n");
+		break;
+	case 3:
+		printf("0.01x\n");
+		break;
+	}
+	printf("      Transition Latency Value 0: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CAP_XLCY0));
+	printf("      Transition Latency Value 1: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CAP_XLCY1));
+
+	reg = regs[o2i(extcapoff + PCI_DPA_LATIND)];
+	printf("    Latency Indicatior register: 0x%08x\n", reg);
+
+	reg = regs[o2i(extcapoff + PCI_DPA_CS)];
+	printf("    Status register: 0x%04x\n", reg & 0xffff);
+	printf("      Substate Status: %02x\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CS_SUBSTSTAT));
+	onoff("Substate Control Enabled", reg, PCI_DPA_CS_SUBSTCTLEN);
+	printf("    Control register: 0x%04x\n", reg >> 16);
+	printf("      Substate Control: %02x\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CS_SUBSTCTL));
+
+	for (i = 0; i <= substmax; i++)
+		printf("    Substate Power Allocation register %d: 0x%02x\n",
+		    i, (regs[PCI_DPA_PWRALLOC + (i / 4)] >> (i % 4) & 0xff));
+}
 
 static const char *
 pci_conf_print_tph_req_cap_sttabloc(unsigned char val)
@@ -3338,7 +3401,7 @@ static struct {
 	{ PCI_EXTCAP_RESIZ_BAR,	"Resizable BAR",
 	  NULL },
 	{ PCI_EXTCAP_DPA,	"Dynamic Power Allocation",
-	  NULL },
+	  pci_conf_print_dpa_cap },
 	{ PCI_EXTCAP_TPH_REQ,	"TPH Requester",
 	  pci_conf_print_tph_req_cap },
 	{ PCI_EXTCAP_LTR,	"Latency Tolerance Reporting",
@@ -3427,6 +3490,10 @@ pci_conf_print_extcaplist(
 		off = PCI_EXTCAPLIST_NEXT(rval);
 		if (off == 0)
 			break;
+		else if (off <= PCI_CONF_SIZE) {
+			printf("    next pointer: 0x%03x (incorrect)\n", off);
+			return;
+		}
 		rval = regs[o2i(off)];
 	}
 

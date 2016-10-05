@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.29.4.2 2016/07/09 20:25:02 skrll Exp $ */
+/* $NetBSD: mtd803.c,v 1.29.4.3 2016/10/05 20:55:41 skrll Exp $ */
 
 /*-
  *
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.29.4.2 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.29.4.3 2016/10/05 20:55:41 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -432,19 +432,19 @@ mtd_put(struct mtd_softc *sc, int index, struct mbuf *m)
 	for (tlen = 0; m != NULL; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		} else if (tlen > MTD_TXBUF_SIZE) {
 			/* XXX FIXME: No idea what to do here. */
 			aprint_error_dev(sc->dev, "packet too large! Size = %i\n",
 				tlen);
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(buf, mtod(m, void *), len);
 		buf += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	sc->desc[MTD_NUM_RXD + index].conf = MTD_TXD_CONF_PAD | MTD_TXD_CONF_CRC
 		| MTD_TXD_CONF_IRQC

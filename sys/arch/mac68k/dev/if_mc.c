@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.40.6.2 2016/07/09 20:24:52 skrll Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.40.6.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.40.6.2 2016/07/09 20:24:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.40.6.3 2016/10/05 20:55:31 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -362,7 +362,7 @@ hide int
 mcstop(struct mc_softc *sc)
 {
 	int s;
-	
+
 	s = splnet();
 
 	NIC_PUT(sc, MACE_BIUCC, SWRST);
@@ -407,7 +407,7 @@ maceput(struct mc_softc *sc, struct mbuf *m)
 		totlen += len;
 		memcpy(buff, data, len);
 		buff += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 
 	if (totlen > PAGE_SIZE)

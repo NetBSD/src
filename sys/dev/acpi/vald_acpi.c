@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.4.42.1 2016/10/05 20:55:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.4 2010/04/15 07:02:24 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.4.42.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,8 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
 	rv = vald_acpi_ghci_get(sc, GHCI_BACKLIGHT, &value, &result);
 	if (ACPI_SUCCESS(rv)) {
 		if (result != 0)
-			aprint_error_dev(self, "can't get backlight status error=%d\n",
-			    result);
+			aprint_error_dev(self,
+			    "can't get backlight status error=%d\n", result);
 		else
 			aprint_verbose_dev(self, "LCD backlight %s\n",
 			    ((value == GHCI_ON) ? "on" : "off"));
@@ -217,8 +217,8 @@ vald_acpi_attach(device_t parent, device_t self, void *aux)
 	rv = vald_acpi_ghci_set(sc, GHCI_SYSTEM_EVENT_FIFO, GHCI_ENABLE,
 	    &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
-		aprint_error_dev(self, "can't enable SystemEventFIFO error=%d\n",
-		    result);
+		aprint_error_dev(self,
+		    "can't enable SystemEventFIFO error=%d\n", result);
 
 	rv = vald_acpi_ghci_set(sc, GHCI_HOTKEY_EVENT, GHCI_ENABLE, &result);
 	if (ACPI_SUCCESS(rv) && result != 0)
@@ -558,7 +558,8 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 		rv = vald_acpi_ghci_set(sc, GHCI_BACKLIGHT, backlight_new,
 		    &result);
 		if (ACPI_SUCCESS(rv) && result != 0)
-			aprint_error_dev(sc->sc_dev, "can't set LCD backlight %s error=%x\n",
+			aprint_error_dev(sc->sc_dev,
+			    "can't set LCD backlight %s error=%x\n",
 			    ((backlight_new == 1) ? "on" : "off"), result);
 	}
 
@@ -569,7 +570,8 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 		rv = vald_acpi_bcm_set(sc->lcd_handle, bright);
 		if (ACPI_FAILURE(rv))
-			aprint_error_dev(sc->sc_dev, "unable to evaluate _BCM: %s\n",
+			aprint_error_dev(sc->sc_dev,
+			    "unable to evaluate _BCM: %s\n",
 			    AcpiFormatException(rv));
 	} else {
 		bright = 0;
@@ -598,8 +600,8 @@ vald_acpi_video_switch(struct vald_acpi_softc *sc)
 	if (ACPI_FAILURE(rv))
 		return;
 	if (result != 0) {
-		aprint_error_dev(sc->sc_dev, "can't get video status  error=%x\n",
-		    result);
+		aprint_error_dev(sc->sc_dev,
+		    "can't get video status  error=%x\n", result);
 		return;
 	}
 

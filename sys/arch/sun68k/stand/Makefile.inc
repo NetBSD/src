@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.25.4.1 2016/03/19 11:30:06 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.25.4.2 2016/10/05 20:55:36 skrll Exp $
 
+NOSSP=	# defined
+NOPIE=	# defined
 # Must have S=/usr/src/sys (or equivalent)
 # But note: this is w.r.t. a subdirectory
 S=	${.CURDIR}/../../../..

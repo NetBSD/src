@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.3 2015/12/27 12:09:47 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.4 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.3 2015/12/27 12:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.4 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.3 2015/12/27 12:09:47 skrl
 #include <sys/clockctl.h>
 #include <sys/exec_elf.h>
 #include <sys/ksyms.h>
+#include <sys/drvctlio.h>
 
 #ifdef __sparc__
 #include <dev/sun/fbio.h>
@@ -475,6 +476,29 @@ netbsd32_to_npf_ioctl_table(
 	}
 }
 
+static inline void
+netbsd32_to_devlistargs(
+    const struct netbsd32_devlistargs *s32p,
+    struct devlistargs *p,
+    u_long cmd)
+{
+	memcpy(p->l_devname, s32p->l_devname, sizeof(p->l_devname));
+	p->l_children = s32p->l_children;
+	p->l_childname = NETBSD32PTR64(s32p->l_childname);
+}
+
+static inline void
+netbsd32_to_devrescanargs(
+    const struct netbsd32_devrescanargs *s32p,
+    struct devrescanargs *p,
+    u_long cmd)
+{
+	memcpy(p->busname, s32p->busname, sizeof(p->busname));
+	memcpy(p->ifattr, s32p->ifattr, sizeof(p->ifattr));
+	p->numlocators = s32p->numlocators;
+	p->locators = NETBSD32PTR64(s32p->locators);
+}
+
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
@@ -874,6 +898,29 @@ netbsd32_from_npf_ioctl_table(
 	}
 }
 
+static inline void
+netbsd32_from_devlistargs(
+    const struct devlistargs *p,
+    struct netbsd32_devlistargs *s32p,
+    u_long cmd)
+{
+	memcpy(s32p->l_devname, p->l_devname, sizeof(s32p->l_devname));
+	s32p->l_children = p->l_children;
+	NETBSD32PTR32(s32p->l_childname, p->l_childname);
+}
+
+static inline void
+netbsd32_from_devrescanargs(
+    const struct devrescanargs *p,
+    struct netbsd32_devrescanargs *s32p,
+    u_long cmd)
+{
+	memcpy(s32p->busname, p->busname, sizeof(s32p->busname));
+	memcpy(s32p->ifattr, p->ifattr, sizeof(s32p->ifattr));
+	s32p->numlocators = p->numlocators;
+	NETBSD32PTR32(s32p->locators, p->locators);
+}
+
 /*
  * main ioctl syscall.
  *
@@ -1262,6 +1309,15 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 		IOCTL_STRUCT_CONV_TO(IOC_NPF_SAVE, plistref);
 	case IOC_NPF_RULE32:
 		IOCTL_STRUCT_CONV_TO(IOC_NPF_RULE, plistref);
+
+	case DRVRESCANBUS32:
+		IOCTL_STRUCT_CONV_TO(DRVRESCANBUS, devrescanargs);
+	case DRVLISTDEV32:
+		IOCTL_STRUCT_CONV_TO(DRVLISTDEV, devlistargs);
+	case DRVCTLCOMMAND32:
+		IOCTL_STRUCT_CONV_TO(DRVCTLCOMMAND, plistref);
+	case DRVGETEVENT32:
+		IOCTL_STRUCT_CONV_TO(DRVGETEVENT, plistref);
 
 	default:
 #ifdef NETBSD32_MD_IOCTL

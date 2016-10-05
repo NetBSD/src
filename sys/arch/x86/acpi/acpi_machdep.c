@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.8.4.3 2016/10/05 20:55:36 skrll Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.3 2016/10/05 20:55:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll E
 
 #include <machine/cpufunc.h>
 #include <machine/bootinfo.h>
+#include <machine/autoconf.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
@@ -76,6 +77,16 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8.4.2 2016/03/19 11:30:06 skrll E
 #include "acpica.h"
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
+#include "opt_vga.h"
+
+/*
+ * Default VBIOS reset method for non-HW accelerated VGA drivers.
+ */
+#ifdef VGA_POST
+# define VBIOS_RESET_DEFAULT	2
+#else
+# define VBIOS_RESET_DEFAULT	1
+#endif
 
 ACPI_STATUS
 acpi_md_OsInitialize(void)
@@ -455,3 +466,26 @@ acpi_md_callback(struct acpi_softc *sc)
 
 	acpimcfg_init(x86_bus_space_mem, &acpi_md_mcfg_ops);
 }
+
+#ifndef XEN
+void
+device_acpi_register(device_t dev, void *aux)
+{
+	device_t parent;
+	bool device_is_vga, device_is_pci, device_is_isa;
+
+	parent = device_parent(dev);
+	if (parent == NULL)
+		return;
+
+	device_is_vga = device_is_a(dev, "vga") || device_is_a(dev, "genfb");
+	device_is_pci = device_is_a(parent, "pci");
+	device_is_isa = device_is_a(parent, "isa");
+
+	if (device_is_vga && (device_is_pci || device_is_isa)) {
+		extern int acpi_md_vbios_reset;
+
+		acpi_md_vbios_reset = VBIOS_RESET_DEFAULT;
+	}
+}
+#endif

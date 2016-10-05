@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.68.2.1 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.68.2.2 2016/10/05 20:56:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.68.2.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.68.2.2 2016/10/05 20:56:08 skrll Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -1633,6 +1633,8 @@ ieee80211_find_node_with_ssid(struct ieee80211_node_table *nt,
 	int hash;
 
 	IEEE80211_NODE_LOCK(nt);
+	__USE(ic);
+
 	/*
 	 * A mac address that is all zero means match only the ssid;
 	 * otherwise we must match both.

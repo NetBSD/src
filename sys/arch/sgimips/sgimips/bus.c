@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.65.14.1 2015/04/06 15:18:02 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.65.14.2 2016/10/05 20:55:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65.14.1 2015/04/06 15:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.65.14.2 2016/10/05 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,8 +218,8 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 #ifdef BUS_DMA_DEBUG
 		printf("bus_dmamap_sync_mips1: flushing segment %d "
-		    "(0x%lx..0x%lx) ...", i, addr + offset,
-		    addr + offset + minlen - 1);
+		    "(0x%"PRIxBUSADDR"..0x%"PRIxBUSADDR") ...", i,
+		    addr + offset, addr + offset + minlen - 1);
 #endif
 		mips_dcache_inv_range(
 		    MIPS_PHYS_TO_KSEG0(addr + offset), minlen);
@@ -229,7 +229,7 @@ _bus_dmamap_sync_mips1(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		offset = 0;
 		len -= minlen;
 	}
-}	
+}
 
 #if 0
 paddr_t

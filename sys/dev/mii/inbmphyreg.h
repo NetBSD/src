@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.3 2011/05/20 06:06:59 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.3.32.1 2016/10/05 20:55:42 skrll Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -84,13 +84,13 @@ POSSIBILITY OF SUCH DAMAGE.
 #define	I82577_ADDR_REG		16
 #define	I82577_CFG_REG		22
 
+#define HV_INTC_FC_PAGE_START	768
+#define	BM_PORT_CTRL_PAGE	769
+
 #define HV_OEM_BITS		BME1000_REG(0, 25)
 #define HV_OEM_BITS_LPLU	(1 << 2)
 #define HV_OEM_BITS_A1KDIS	(1 << 6)
 #define HV_OEM_BITS_ANEGNOW	(1 << 10)
-
-#define HV_INTC_FC_PAGE_START	768
-#define	BM_PORT_CTRL_PAGE	769
 
 #define	HV_KMRN_MODE_CTRL	BME1000_REG(BM_PORT_CTRL_PAGE, 16)
 #define	HV_KMRN_MDIO_SLOW	0x0400

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17.6.1 2016/03/19 11:29:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.6.2 2016/10/05 20:55:26 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.6.1 2016/03/19 11:29:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.6.2 2016/10/05 20:55:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -204,7 +204,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	int i;
 	psize_t memsize;
 	char *envp[128];
-	int32_t *eptrs = (int32_t *)envp32; 
+	int32_t *eptrs = (int32_t *)envp32;
 	extern char edata[], end[];
 
 	/*
@@ -255,7 +255,7 @@ mach_init(int argc, char **argv, char **envp32, void *callvec)
 	/*
 	 * Disable the 2nd PCI window since we don't need it.
 	 */
-	mips3_sd((uint64_t *)MIPS_PHYS_TO_KSEG1(BONITO_REGBASE + 0x158), 0xe);
+	mips3_sd(MIPS_PHYS_TO_KSEG1(BONITO_REGBASE + 0x158), 0xe);
 	pci_conf_write(&gc->gc_pc, pci_make_tag(&gc->gc_pc, 0, 0, 0), 18, 0);
 
 	/*

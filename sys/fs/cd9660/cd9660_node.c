@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.34 2014/11/10 18:46:33 maxv Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.34.2.1 2016/10/05 20:56:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.34 2014/11/10 18:46:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.34.2.1 2016/10/05 20:56:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,14 +131,9 @@ cd9660_reclaim(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct iso_node *ip = VTOI(vp);
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("cd9660_reclaim: pushing active", vp);
-	/*
-	 * Remove the inode from the vnode cache.
-	 */
-	vcache_remove(vp->v_mount, &ip->i_number, sizeof(ip->i_number));
 	/*
 	 * Purge old data structures associated with the inode.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: yeeloong_machdep.c,v 1.6.6.1 2015/09/22 12:05:41 skrll Exp $	*/
+/*	$NetBSD: yeeloong_machdep.c,v 1.6.6.2 2016/10/05 20:55:27 skrll Exp $	*/
 /*	$OpenBSD: yeeloong_machdep.c,v 1.16 2011/04/15 20:40:06 deraadt Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.6.6.1 2015/09/22 12:05:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yeeloong_machdep.c,v 1.6.6.2 2016/10/05 20:55:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,19 @@ lemote_device_register(device_t dev, void *aux)
 	if (device_class(dev) != bootdev_class)
 		return;
 
-	/* 
+	/* OHCI memory space access may not be enabled by the BIOS */
+	if (device_is_a(dev, "ohci")) {
+		struct pci_attach_args *pa = aux;
+		pcireg_t csr = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
+			csr |= PCI_COMMAND_MEM_ENABLE;
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    PCI_COMMAND_STATUS_REG, csr);
+		}
+	}
+
+	/*
 	 * The device numbering must match. There's no way
 	 * pmon tells us more info. Depending on the usb slot
 	 * and hubs used you may be lucky. Also, assume umass/sd for usb

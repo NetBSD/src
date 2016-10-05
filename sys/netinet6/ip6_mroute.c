@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.107.4.2 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.107.4.3 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.107.4.2 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.107.4.3 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -592,7 +592,7 @@ ip6_mrouter_done(void)
 		if_detach(&multicast_register_if6);
 		reg_mif_num = (mifi_t)-1;
 	}
- 
+
 	ip6_mrouter = NULL;
 	ip6_mrouter_ver = 0;
 
@@ -667,7 +667,7 @@ add_m6if(struct mif6ctl *mifcp)
 		ifp = &multicast_register_if6;
 
 		if (reg_mif_num == (mifi_t)-1) {
-			strlcpy(ifp->if_xname, "register_mif", 
+			strlcpy(ifp->if_xname, "register_mif",
 			    sizeof(ifp->if_xname));
 			ifp->if_flags |= IFF_LOOPBACK;
 			ifp->if_index = mifcp->mif6c_mifi;
@@ -1016,8 +1016,7 @@ static int
 socket_send(struct socket *s, struct mbuf *mm, struct sockaddr_in6 *src)
 {
 	if (s) {
-		if (sbappendaddr(&s->so_rcv,
-		    (struct sockaddr *)src, mm, NULL) != 0) {
+		if (sbappendaddr(&s->so_rcv, sin6tosa(src), mm, NULL) != 0) {
 			sorwakeup(s);
 			return 0;
 		}
@@ -1584,8 +1583,8 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	 * If we belong to the destination multicast group
 	 * on the outgoing interface, loop back a copy.
 	 */
-	/* 
-	 * Does not have to check source info, as it's alreay covered by 
+	/*
+	 * Does not have to check source info, as it's alreay covered by
 	 * ip6_input
 	 */
 	sockaddr_in6_init(&dst6, &ip6->ip6_dst, 0, 0, 0);
@@ -1616,7 +1615,7 @@ phyint_send(struct ip6_hdr *ip6, struct mif6 *mifp, struct mbuf *m)
 	} else {
 		/*
 		 * pMTU discovery is intentionally disabled by default, since
-		 * various router may notify pMTU in multicast, which can be 
+		 * various router may notify pMTU in multicast, which can be
 		 * a DDoS to a router
 		 */
 		if (ip6_mcast_pmtu)
@@ -1909,8 +1908,8 @@ pim6_input(struct mbuf **mp, int *offp, int proto)
 		}
 #endif
 
-		looutput(mif6table[reg_mif_num].m6_ifp, m,
-			      (struct sockaddr *)__UNCONST(&dst), NULL);
+		looutput(mif6table[reg_mif_num].m6_ifp, m, sin6tocsa(&dst),
+		    NULL);
 
 		/* prepare the register head to send to the mrouting daemon */
 		m = mcp;

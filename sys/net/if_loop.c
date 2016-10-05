@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.80.4.6 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.80.4.7 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.6 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.7 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.80.4.6 2016/07/09 20:25:21 skrll Exp $
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <sys/cpu.h>
 
@@ -142,8 +144,28 @@ void
 loopattach(int n)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in loopnit() below).
+	 */
+}
+
+void
+loopinit(void)
+{
+
+	if (lo0ifp != NULL)	/* can happen in rump kernel */
+		return;
+
 	(void)loop_clone_create(&loop_cloner, 0);	/* lo0 always exists */
 	if_clone_attach(&loop_cloner);
+}
+
+static int
+loopdetach(void)
+{
+	/* no detach for now; we don't allow lo0 to be deleted */
+	return EBUSY;
 }
 
 static int
@@ -487,3 +509,10 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 	return (error);
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, loop, "")

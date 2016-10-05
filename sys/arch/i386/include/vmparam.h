@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.81 2014/07/24 13:42:28 riastradh Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.81.4.1 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,7 +37,6 @@
 #ifndef _I386_VMPARAM_H_
 #define _I386_VMPARAM_H_
 
-#include <sys/tree.h>
 #include <sys/mutex.h>
 
 /*

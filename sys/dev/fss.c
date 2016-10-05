@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.92.2.1 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: fss.c,v 1.92.2.2 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92.2.1 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92.2.2 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,17 +445,20 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
 
 /*
  * An error occurred reading or writing the snapshot or backing store.
- * If it is the first error log to console.
+ * If it is the first error log to console and disestablish cow handler.
  * The caller holds the mutex.
  */
 static inline void
 fss_error(struct fss_softc *sc, const char *msg)
 {
 
-	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
-		aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
-	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
-		sc->sc_flags |= FSS_ERROR;
+	if ((sc->sc_flags & (FSS_ACTIVE | FSS_ERROR)) != FSS_ACTIVE)
+		return;
+
+	aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
+	sc->sc_flags |= FSS_ERROR;
 }
 
 /*
@@ -575,9 +578,8 @@ fss_unmount_hook(struct mount *mp)
 		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
 			continue;
 		mutex_enter(&sc->sc_slock);
-		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
-		    sc->sc_mount == mp)
-			fss_error(sc, "forced unmount");
+		if ((sc->sc_flags & FSS_ACTIVE) != 0 && sc->sc_mount == mp)
+			fss_error(sc, "forced by unmount");
 		mutex_exit(&sc->sc_slock);
 	}
 	mutex_exit(&fss_device_lock);
@@ -886,7 +888,7 @@ static int
 fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
-	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
+	if ((sc->sc_flags & (FSS_PERSISTENT | FSS_ERROR)) == 0)
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 
 	mutex_enter(&sc->sc_slock);
@@ -1290,10 +1292,11 @@ fss_bs_thread(void *arg)
 MODULE(MODULE_CLASS_DRIVER, fss, NULL);
 CFDRIVER_DECL(fss, DV_DISK, NULL);
 
+devmajor_t fss_bmajor = -1, fss_cmajor = -1;
+
 static int
 fss_modcmd(modcmd_t cmd, void *arg)
 {
-	devmajor_t bmajor = -1, cmajor = -1;
 	int error = 0;
 
 	switch (cmd) {
@@ -1311,9 +1314,8 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		error = devsw_attach(fss_cd.cd_name,
-		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
-		if (error == EEXIST)
-			error = 0;
+		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
+
 		if (error) {
 			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
 			config_cfdriver_detach(&fss_cd);
@@ -1323,11 +1325,14 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
-		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&fss_cd);
 		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+		if (error) {
+			devsw_attach(fss_cd.cd_name, &fss_bdevsw, &fss_bmajor,
+			    &fss_cdevsw, &fss_cmajor);
+			break;
+		}
+		config_cfdriver_detach(&fss_cd);
 		mutex_destroy(&fss_device_lock);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_intr.c,v 1.8.30.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: rmixl_intr.c,v 1.8.30.2 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.8.30.1 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_intr.c,v 1.8.30.2 2016/10/05 20:55:32 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -391,7 +391,7 @@ dclz(uint64_t val)
 
 	asm volatile("dclz %0, %1;"
 		: "=r"(nlz) : "r"(val));
-	
+
 	return nlz;
 }
 
@@ -590,7 +590,7 @@ rmixl_irt_thread_mask(int cpumask)
 	 * discount cpus not present
 	 */
 	cpumask &= cpu_present_mask;
-	
+
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_XLS104:
 	case MIPS_XLS204:
@@ -865,12 +865,12 @@ rmixl_intr_disestablish(void *cookie)
 }
 
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
+evbmips_iointr(int ipl, uint32_t pending, struct clockframe *cf)
 {
 	struct rmixl_cpu_softc *sc = (void *)curcpu()->ci_softc;
 
 	DPRINTF(("%s: cpu%u: ipl %d, pc %#"PRIxVADDR", pending %#x\n",
-		__func__, cpu_number(), ipl, pc, pending));
+		__func__, cpu_number(), ipl, cf->pc, pending));
 
 	/*
 	 * 'pending' arg is a summary that there is something to do
@@ -978,7 +978,7 @@ static int
 rmixl_ipi_intr(void *arg)
 {
 	struct cpu_info * const ci = curcpu();
-	const uint64_t ipi_mask = 1 << (uintptr_t)arg;
+	const uint64_t ipi_mask = 1ULL << (uintptr_t)arg;
 
 	KASSERT(ci->ci_cpl >= IPL_SCHED);
 	KASSERT((uintptr_t)arg < NIPIS);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.46.16.2 2016/07/09 20:24:53 skrll Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.46.16.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46.16.2 2016/07/09 20:24:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.46.16.3 2016/10/05 20:55:31 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -214,8 +214,9 @@ bmac_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_txdma = mapiodev(ca->ca_reg[2], PAGE_SIZE, false);
 	sc->sc_rxdma = mapiodev(ca->ca_reg[4], PAGE_SIZE, false);
-	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t));
-	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t));
+	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t), NULL);
+	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t),
+	    NULL);
 	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
 	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||
@@ -620,13 +621,13 @@ bmac_put(struct bmac_softc *sc, void *buff, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(buff, mtod(m, void *), len);
 		buff = (char *)buff + len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	if (tlen > PAGE_SIZE)
 		panic("%s: putpacket packet overflow",

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.25 2012/10/27 17:18:37 chs Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.25.14.1 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.25 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.25.14.1 2016/10/05 20:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,8 @@ tr_pcmcia_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh) != 0) {
+	    cfe->iospace[0].length, cfe->iospace[0].length, &psc->sc_pioh)
+	    != 0) {
 		aprint_error_dev(self, "can't allocate pio space\n");
 		goto fail1;
 	}
@@ -212,7 +213,8 @@ tr_pcmcia_enable(struct tr_softc *sc)
 
 	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, tr_intr, psc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(psc->sc_tr.sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(psc->sc_tr.sc_dev,
+		    "couldn't establish interrupt\n");
 		return 1;
 	}
 

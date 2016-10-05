@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.166.2.1 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.166.2.2 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166.2.1 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.166.2.2 2016/10/05 20:56:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,8 +126,6 @@ struct ktr_desc {
 	kcondvar_t ktd_cv;
 };
 
-static int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int,
-			 size_t);
 static void	ktrwrite(struct ktr_desc *, struct ktrace_entry *);
 static int	ktrops(lwp_t *, struct proc *, int, int,
 		    struct ktr_desc *);
@@ -142,11 +140,6 @@ static struct ktr_desc *
 		ktd_lookup(file_t *);
 static void	ktdrel(struct ktr_desc *);
 static void	ktdref(struct ktr_desc *);
-static void	ktraddentry(lwp_t *, struct ktrace_entry *, int);
-/* Flags for ktraddentry (3rd arg) */
-#define	KTA_NOWAIT		0x0000
-#define	KTA_WAITOK		0x0001
-#define	KTA_LARGE		0x0002
 static void	ktefree(struct ktrace_entry *);
 static void	ktd_logerrl(struct ktr_desc *, int);
 static void	ktrace_thread(void *);
@@ -538,6 +531,12 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 }
 
 void
+ktesethdrlen(struct ktrace_entry *kte, size_t l)
+{
+	kte->kte_kth.ktr_len = l;
+}
+
+void
 ktr_syscall(register_t code, const register_t args[], int narg)
 {
 	lwp_t *l = curlwp;
@@ -823,7 +822,7 @@ ktr_csw(int out, int user)
 		return;
 
 	/*
-	 * Don't record context switches resulting from blocking on 
+	 * Don't record context switches resulting from blocking on
 	 * locks; it's too easy to get duff results.
 	 */
 	if (l->l_syncobj == &mutex_syncobj || l->l_syncobj == &rw_syncobj)
@@ -836,7 +835,7 @@ ktr_csw(int out, int user)
 	 * XXX This is not ideal: it would be better to maintain a pool
 	 * of ktes and actually push this to the kthread when context
 	 * switch happens, however given the points where we are called
-	 * from that is difficult to do. 
+	 * from that is difficult to do.
 	 */
 	if (out) {
 		if (ktrenter(l))
@@ -873,7 +872,7 @@ ktr_csw(int out, int user)
 			kte->kte_kth.ktr_otv.tv_sec = ts->tv_sec;
 			kte->kte_kth.ktr_otv.tv_usec = ts->tv_nsec / 1000;
 			break;
-		case 1: 
+		case 1:
 			kte->kte_kth.ktr_ots.tv_sec = ts->tv_sec;
 			kte->kte_kth.ktr_ots.tv_nsec = ts->tv_nsec;
 			break;
@@ -938,7 +937,7 @@ ktruser(const char *id, void *addr, size_t len, int ustr)
 }
 
 void
-ktr_kuser(const char *id, void *addr, size_t len)
+ktr_kuser(const char *id, const void *addr, size_t len)
 {
 	struct ktrace_entry *kte;
 	struct ktr_user *ktp;

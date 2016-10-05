@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.6.2 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.6.3 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -152,7 +152,16 @@ struct pmap_limits {
 	vaddr_t virtual_end;
 };
 
-/* 
+/*
+ * Initialize the kernel pmap.
+ */
+#ifdef MULTIPROCESSOR
+#define PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
+#else
+#define PMAP_SIZE	sizeof(struct pmap)
+#endif
+
+/*
  * The pools from which pmap structures and sub-structures are allocated.
  */
 extern struct pool pmap_pmap_pool;
@@ -161,6 +170,10 @@ extern struct pool_allocator pmap_pv_page_allocator;
 
 extern struct pmap_kernel kernel_pmap_store;
 extern struct pmap_limits pmap_limits;
+
+extern u_int pmap_page_colormask;
+
+extern pmap_segtab_t pmap_kern_segtab;
 
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
@@ -173,12 +186,17 @@ void	pmap_set_modified(paddr_t);
 bool	pmap_page_clear_attributes(struct vm_page_md *, u_int);
 void	pmap_page_set_attributes(struct vm_page_md *, u_int);
 void	pmap_pvlist_lock_init(size_t);
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+void	pmap_page_cache(struct vm_page *, bool cached);
+#endif
+
 
 #define	PMAP_WB		0
 #define	PMAP_WBINV	1
 #define	PMAP_INV	2
 
-uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
+//uint16_t pmap_pvlist_lock(struct vm_page_md *, bool);
+kmutex_t *pmap_pvlist_lock_addr(struct vm_page_md *);
 
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define	PMAP_GROWKERNEL		/* enable pmap_growkernel() */
@@ -192,6 +210,12 @@ struct vm_page *pmap_md_alloc_poolpage(int);
 #define	PMAP_ALLOC_POOLPAGE(flags)	pmap_md_alloc_poolpage(flags)
 #define	PMAP_MAP_POOLPAGE(pa)		pmap_map_poolpage(pa)
 #define	PMAP_UNMAP_POOLPAGE(va)		pmap_unmap_poolpage(va)
+
+#define PMAP_COUNT(name)	(pmap_evcnt_##name.ev_count++ + 0)
+#define PMAP_COUNTER(name, desc) \
+struct evcnt pmap_evcnt_##name = \
+	EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", desc); \
+EVCNT_ATTACH_STATIC(pmap_evcnt_##name)
 
 #endif	/* _KERNEL */
 #endif	/* _COMMON_PMAP_H_ */

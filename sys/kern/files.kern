@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.2.2.5 2016/04/22 15:44:16 skrll Exp $
+#	$NetBSD: files.kern,v 1.2.2.6 2016/10/05 20:56:02 skrll Exp $
 
 #
 # kernel sources
@@ -33,7 +33,10 @@ file	kern/kern_clock.c		kern
 file	kern/kern_condvar.c		kern
 file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c			kern
-file	kern/kern_ctf.c			kdtrace_hooks
+
+#kern/kern_ctf.c is only needed as part of dtrace_fbt module
+#file	kern/kern_ctf.c			kdtrace_hooks
+
 file	kern/kern_descrip.c		kern
 file	kern/kern_event.c		kern
 file	kern/kern_exec.c		kern

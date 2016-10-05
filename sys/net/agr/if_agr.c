@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.31.6.3 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.31.6.4 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.3 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.4 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -44,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31.6.3 2016/07/09 20:25:21 skrll Exp $"
 #include <sys/proc.h>	/* XXX for curproc */
 #include <sys/kauth.h>
 #include <sys/xcall.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -96,6 +99,8 @@ static void agr_ports_exit(struct agr_softc *);
 static struct if_clone agr_cloner =
     IF_CLONE_INITIALIZER("agr", agr_clone_create, agr_clone_destroy);
 
+static u_int agr_count;
+
 /*
  * EXPORTED FUNCTIONS
  */
@@ -108,7 +113,30 @@ void
 agrattach(int count)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in agrinit() below).
+	 */
+}
+
+static void
+agrinit(void)
+{
 	if_clone_attach(&agr_cloner);
+}
+
+static int
+agrdetach(void)
+{
+	int error = 0;
+
+	if (agr_count != 0)
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&agr_cloner);
+
+	return error;
 }
 
 /*
@@ -140,7 +168,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 #if NVLAN > 0
 	/* got a vlan packet? */
 	if ((mtag = m_tag_find(m, PACKET_TAG_VLAN, NULL)) != NULL) {
-#ifdef DNH_DEBUG 
+#ifdef DNH_DEBUG
 		printf("%s: vlan tag %d attached\n",
 			ifp->if_xname,
 			htole16((*(u_int *)(mtag + 1)) & 0xffff));
@@ -148,7 +176,7 @@ agr_input(struct ifnet *ifp_port, struct mbuf *m)
 #endif
 		vlan_input(ifp, m);
 		return;
-#ifdef DNH_DEBUG 
+#ifdef DNH_DEBUG
 	} else {
 		struct ethercom *ec = (void *)ifp;
 		printf("%s: no vlan tag attached, ec_nvlans=%d\n",
@@ -338,7 +366,7 @@ agr_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 
 	agr_reset_iftype(ifp);
-
+	atomic_inc_uint(&agr_count);
 	return 0;
 }
 
@@ -375,6 +403,7 @@ agr_clone_destroy(struct ifnet *ifp)
 	cv_destroy(&sc->sc_ports_cv);
 	agr_free_softc(sc);
 
+	atomic_dec_uint(&agr_count);
 	return 0;
 }
 
@@ -567,6 +596,7 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	struct agr_softc *sc = ifp->if_softc;
 	struct agr_port *port = NULL;
 	int error = 0;
+	int s;
 
 	if (ifp_port->if_ioctl == NULL) {
 		error = EOPNOTSUPP;
@@ -591,12 +621,15 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	}
 	port->port_flags = AGRPORT_LARVAL;
 
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp_port) {
 		if (ifa->ifa_addr->sa_family != AF_LINK) {
+			pserialize_read_exit(s);
 			error = EBUSY;
 			goto out;
 		}
 	}
+	pserialize_read_exit(s);
 
 	if (sc->sc_nports == 0) {
 		switch (ifp_port->if_type) {
@@ -632,9 +665,9 @@ agr_addport(struct ifnet *ifp, struct ifnet *ifp_port)
 	 */
 
 	/*
-	 * XXX this should probably be SIOCALIFADDR but that doesn't 
+	 * XXX this should probably be SIOCALIFADDR but that doesn't
 	 * appear to work (ENOTTY). We want to change the mac address
-	 * of each port to that of the first port. No need for arps 
+	 * of each port to that of the first port. No need for arps
 	 * since there are no inet addresses assigned to the ports.
 	 */
 	error = if_addr_init(ifp_port, ifp->if_dl, true);
@@ -890,7 +923,7 @@ static int
 agrreq_copyin(const void *ubuf, struct agrreq *ar)
 {
 	int error;
-			
+
 	error = copyin(ubuf, ar, sizeof(*ar));
 	if (error) {
 		return error;
@@ -907,7 +940,7 @@ static int
 agrreq_copyout(void *ubuf, struct agrreq *ar)
 {
 	int error;
-			
+
 	KASSERT(ar->ar_version == AGRREQ_VERSION);
 
 	error = copyout(ar, ubuf, sizeof(*ar));
@@ -1187,3 +1220,10 @@ agrport_config_promisc(struct agr_port *port, bool promisc)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include <net/if_module.h>
+
+IF_MODULE(MODULE_CLASS_DRIVER, agr, "")

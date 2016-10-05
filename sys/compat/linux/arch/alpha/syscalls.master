@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.89.2.1 2015/12/27 12:09:46 skrll Exp $
+	$NetBSD: syscalls.master,v 1.89.2.2 2016/10/05 20:55:37 skrll Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -155,7 +155,7 @@
 55	UNIMPL
 56	UNIMPL
 57	NOARGS		{ int|sys||symlink(const char *path, const char *to); }
-58	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+58	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 59	NOARGS		{ int|sys||execve(const char *path, char **argp, \
 			    char **envp); }
@@ -725,7 +725,7 @@
 			    int fd2, const char *name2, int flags); }
 459	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-460	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+460	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 461	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }

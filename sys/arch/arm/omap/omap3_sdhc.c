@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14.6.6 2016/07/09 20:24:50 skrll Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.6.7 2016/10/05 20:55:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.6 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.6.7 2016/10/05 20:55:25 skrll Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -87,7 +87,6 @@ static void obiosdhc_attach(device_t, device_t, void *);
 static int obiosdhc_detach(device_t, int);
 
 static int obiosdhc_bus_width(struct sdhc_softc *, int);
-static int obiosdhc_bus_clock(struct sdhc_softc *, int);
 static int obiosdhc_rod(struct sdhc_softc *, int);
 static int obiosdhc_write_protect(struct sdhc_softc *);
 static int obiosdhc_card_detect(struct sdhc_softc *);
@@ -96,6 +95,7 @@ struct obiosdhc_softc {
 	struct sdhc_softc	sc;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+	bus_space_handle_t	sc_hl_bsh;
 	bus_space_handle_t	sc_sdhc_bsh;
 	struct sdhc_host	*sc_hosts[1];
 	void 			*sc_ih;		/* interrupt vectoring */
@@ -173,19 +173,19 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 	if (oa->obio_addr == SDMMC1_BASE_3430
 	    || oa->obio_addr == SDMMC2_BASE_3430
 	    || oa->obio_addr == SDMMC3_BASE_3430)
-                return 1;
+		return 1;
 #elif defined(OMAP_3530)
 	if (oa->obio_addr == SDMMC1_BASE_3530
 	    || oa->obio_addr == SDMMC2_BASE_3530
 	    || oa->obio_addr == SDMMC3_BASE_3530)
-                return 1;
+		return 1;
 #elif defined(OMAP4) || defined(OMAP5)
 	if (oa->obio_addr == SDMMC1_BASE_4430
 	    || oa->obio_addr == SDMMC2_BASE_4430
 	    || oa->obio_addr == SDMMC3_BASE_4430
 	    || oa->obio_addr == SDMMC4_BASE_4430
 	    || oa->obio_addr == SDMMC5_BASE_4430)
-                return 1;
+		return 1;
 #endif
 
 #ifdef TI_AM335X
@@ -195,7 +195,7 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 			return 1;
 #endif
 
-        return 0;
+	return 0;
 }
 
 static void
@@ -208,6 +208,10 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	int error, timo, clksft, n;
 	bool support8bit = false;
 	const char *transfer_mode = "PIO";
+#if defined(OMAP4)
+	uint32_t v;
+	int x, y;
+#endif
 #ifdef TI_AM335X
 	size_t i;
 #endif
@@ -219,16 +223,44 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags |= SDHC_FLAG_32BIT_ACCESS;
 	sc->sc.sc_flags |= SDHC_FLAG_NO_LED_ON;
 	sc->sc.sc_flags |= SDHC_FLAG_RSP136_CRC;
-	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
 	if (support8bit)
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
-#ifdef TI_AM335X
+#if defined(OMAP_3430) || /* XXX until TI_DM37XX has working omap_devid() */ defined(TI_DM37XX)
+	sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
+#elif defined(OMAP_3530) || defined(TI_DM37XX)
+	/*
+	 * Advisory 2.1.1.128: MMC: Multiple Block Read Operation Issue
+	 * from "OMAP3530/25/15/03 Applications Processor Silicon Revisions
+	 * 3.1.2, 3.1, 3.0, 2.1, and 2.0".
+	 */
+	switch (omap_devid()) {
+	case DEVID_OMAP35X_ES10:
+	case DEVID_OMAP35X_ES20:
+	case DEVID_OMAP35X_ES21:
+	case DEVID_AMDM37X_ES10:	/* XXXX ? */
+	case DEVID_AMDM37X_ES11:	/* XXXX ? */
+	case DEVID_AMDM37X_ES12:	/* XXXX ? */
+		sc->sc.sc_flags |= SDHC_FLAG_SINGLE_ONLY;
+		break;
+	default:
+		break;
+	}
+	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
+#elif defined(TI_AM335X)
 	sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
-	sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
-#endif
-#if defined(OMAP_3530)
-	if (omap_chipid() == CHIPID_OMAP3530)
-		sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
+#elif defined(OMAP_4430)
+	/*
+	 * MMCHS_HCTL.HSPE Is Not Functional
+	 * Errata ID: i626
+	 *
+	 * Due to design issue MMCHS_HCTL.HSPE bit does not work as intended.
+	 * This means that the configuration must always be the normal speed
+	 * mode configuration (MMCHS_HCTL.HSPE=0).
+	 */
+	sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
+
+//	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+//	sc->sc.sc_flags |= SDHC_FLAG_USE_ADMA2;
 #endif
 	sc->sc.sc_host = sc->sc_hosts;
 	sc->sc.sc_clkbase = 96000;	/* 96MHZ */
@@ -237,7 +269,6 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_rod = obiosdhc_rod;
 	sc->sc.sc_vendor_write_protect = obiosdhc_write_protect;
 	sc->sc.sc_vendor_card_detect = obiosdhc_card_detect;
-	sc->sc.sc_vendor_bus_clock = obiosdhc_bus_clock;
 	sc->sc.sc_vendor_bus_width = obiosdhc_bus_width;
 	sc->sc_bst = oa->obio_iot;
 
@@ -246,6 +277,13 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 #if defined(TI_AM335X)
 	error = bus_space_map(sc->sc_bst, oa->obio_addr + OMAP4_SDMMC_HL_SIZE,
 	    oa->obio_size - OMAP4_SDMMC_HL_SIZE, 0, &sc->sc_bsh);
+#elif defined(OMAP4)
+	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
+	    &sc->sc_hl_bsh);
+	if (!error)
+		bus_space_subregion(sc->sc_bst, sc->sc_hl_bsh,
+		    OMAP4_SDMMC_HL_SIZE, oa->obio_size - OMAP4_SDMMC_HL_SIZE,
+		    &sc->sc_bsh);
 #else
 	error = bus_space_map(sc->sc_bst, oa->obio_addr, oa->obio_size, 0,
 	    &sc->sc_bsh);
@@ -266,19 +304,49 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 
 		cv_init(&sc->sc_edma_cv, "sdhcedma");
 		sc->sc_edma_fifo = oa->obio_addr +
-		    OMAP4_SDMMC_HL_SIZE + OMAP3_SDMMC_SDHC_OFFSET + SDHC_DATA;
+#ifdef TI_AM335X
+		    OMAP4_SDMMC_HL_SIZE +
+#endif
+		    OMAP3_SDMMC_SDHC_OFFSET + SDHC_DATA;
 		sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTERNAL_DMA;
 		sc->sc.sc_flags |= SDHC_FLAG_EXTDMA_DMAEN;
-		sc->sc.sc_flags &= ~SDHC_FLAG_SINGLE_ONLY;
 		sc->sc.sc_vendor_transfer_data_dma = obiosdhc_edma_xfer_data;
 		transfer_mode = "EDMA";
 	}
 no_dma:
 #endif
+	if (sc->sc.sc_flags & SDHC_FLAG_USE_ADMA2)
+		transfer_mode = "ADMA2";
 
 	aprint_naive("\n");
 	aprint_normal(": SDHC controller (%s)\n", transfer_mode);
+
+#if defined(OMAP4)
+	v = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_REV);
+	aprint_normal_dev(sc->sc.sc_dev, "IP Rev 0x%08x", v);
+	v = bus_space_read_4(sc->sc_bst, sc->sc_hl_bsh, MMCHS_HL_HWINFO);
+	aprint_normal("%s", v & HL_HWINFO_RETMODE ? ", Retention Mode" : "");
+	x = 0;
+	switch (v & HL_HWINFO_MEM_SIZE_MASK) {
+	case HL_HWINFO_MEM_SIZE_512: 	x = 512;	y = 512;	break;
+	case HL_HWINFO_MEM_SIZE_1024:	x = 1024;	y = 1024;	break;
+	case HL_HWINFO_MEM_SIZE_2048:	x = 2048;	y = 2048;	break;
+	case HL_HWINFO_MEM_SIZE_4096:	x = 4096;	y = 2048;	break;
+	}
+	if (x != 0)
+		aprint_normal(", %d byte FIFO, max block length %d bytes",
+		    x, y);
+	aprint_normal("\n");
+#endif
+
+#if NEDMA > 0
+	if (strcmp(transfer_mode, "EDMA") == 0)
+		aprint_normal_dev(sc->sc.sc_dev,
+		    "EDMA tx channel %d, rx channel %d\n",
+		    edma_channel_index(sc->sc_edma_tx),
+		    edma_channel_index(sc->sc_edma_rx));
+#endif
 
 #ifdef TI_AM335X
 	/* XXX Not really AM335X-specific.  */
@@ -293,7 +361,7 @@ no_dma:
 	if (oa->obio_addr == SDMMC2_BASE_TIAM335X) {
 		const char *mode;
 		u_int state;
-		
+
 		const struct am335x_padconf *padconf = am335x_padconf_mmc1;
 		for (i = 0; padconf[i].padname; i++) {
 			const char *padname = padconf[i].padname;
@@ -331,7 +399,7 @@ no_dma:
 	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
 	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
 
-	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
+	sc->sc_ih = intr_establish(oa->obio_intr, IPL_SDMMC, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
@@ -387,30 +455,28 @@ no_dma:
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) | CON_INIT);
-	for (; n > 0; n--) {
-		SDHC_WRITE(sc, SDHC_TRANSFER_MODE, 0x00000000);
-		timo = 3000000;	/* XXXX 3 sec. */
-		stat = 0;
-		while (!(stat & SDHC_COMMAND_COMPLETE)) {
-			stat = SDHC_READ(sc, SDHC_NINTR_STATUS);
-			if (--timo == 0)
-				break;
-			delay(1);
-		}
-		if (timo == 0) {
-			aprint_error_dev(self, "INIT Procedure timeout\n");
-			break;
-		}
-		SDHC_WRITE(sc, SDHC_NINTR_STATUS, stat);
-	}
+	SDHC_WRITE(sc, SDHC_TRANSFER_MODE, 0x00000000);
+	delay(1000);
+	stat = SDHC_READ(sc, SDHC_NINTR_STATUS);
+	SDHC_WRITE(sc, SDHC_NINTR_STATUS, stat | SDHC_COMMAND_COMPLETE);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
 	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) & ~CON_INIT);
+	SDHC_WRITE(sc, SDHC_NINTR_STATUS, 0xffffffff);
+
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) & ~SDHC_SDCLK_ENABLE);
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) & ~sc->sc.sc_clkmsk);
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | CLKD(150) << clksft);
+	timo = 3000000;	/* XXXX 3 sec. */
+	while (--timo) {
+		if (SDHC_READ(sc, SDHC_CLOCK_CTL) & SDHC_INTCLK_STABLE)
+			break;
+		delay(1);
+	}
+	if (timo == 0)
+		aprint_error_dev(self, "ICS timeout(2)\n");
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_SDCLK_ENABLE);
 
@@ -487,23 +553,6 @@ obiosdhc_bus_width(struct sdhc_softc *sc, int width)
 	return 0;
 }
 
-static int
-obiosdhc_bus_clock(struct sdhc_softc *sc, int clk)
-{
-	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
-	uint32_t ctl;
-
-	ctl = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL);
-	if (clk == 0) {
-		ctl &= ~SYSCTL_CEN;
-	} else {
-		ctl |= SYSCTL_CEN;
-	}
-	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_SYSCTL, ctl);
-
-	return 0;
-}
-
 #if NEDMA > 0
 static int
 obiosdhc_edma_init(struct obiosdhc_softc *sc, unsigned int edmabase)
@@ -517,10 +566,6 @@ obiosdhc_edma_init(struct obiosdhc_softc *sc, unsigned int edmabase)
 	sc->sc_edma_rx = edma_channel_alloc(EDMA_TYPE_DMA, edmabase + 1,
 	    obiosdhc_edma_done, sc);
 	KASSERT(sc->sc_edma_rx != NULL);
-
-	device_printf(sc->sc.sc_dev, "EDMA tx channel %d, rx channel %d\n",
-	    edma_channel_index(sc->sc_edma_tx),
-	    edma_channel_index(sc->sc_edma_rx));
 
 	/* Allocate some PaRAM pages */
 	for (i = 0; i < __arraycount(sc->sc_edma_param_tx); i++) {
@@ -676,7 +721,7 @@ obiosdhc_edma_transfer(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 		 */
 		KASSERT((cmd->c_dmamap->dm_segs[seg].ds_addr & 0x1f) == 0);
 
-                /*
+		/*
 		 * For unknown reason, the A-DMA transfers never completes for
 		 * transfers larger than 64 butes. So use a AB transfer,
 		 * with a 64 bytes A len

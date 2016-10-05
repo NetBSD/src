@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200.2.3 2015/12/27 12:09:44 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.200.2.4 2016/10/05 20:55:36 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.3 2015/12/27 12:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.4 2016/10/05 20:55:36 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.3 2015/12/27 12:09:44 skrll Exp
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
+#include <sparc64/dev/cbusvar.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -980,6 +981,11 @@ device_register(device_t dev, void *aux)
 		dev_path_drive_match(dev, ofnode, adev->adev_channel*2+
 		    adev->adev_drv_data->drive, 0, 0);
 		return;
+	} else if (device_is_a(dev, "vdsk")) {
+		struct cbus_attach_args *ca = aux;
+		ofnode = ca->ca_node;
+		/* Ensure that the devices ofnode is stored for later use */
+		device_setofnode(dev, ofnode);
 	}
 
 	if (busdev == NULL)
@@ -1317,6 +1323,49 @@ device_register_post_config(device_t dev, void *aux)
 			}
 		}
 	}
+
+	if (CPU_ISSUN4V) {
+
+	  /*
+	   * Special sun4v handling in case the kernel is running in a
+	   * secondary logical domain
+	   *
+	   * The bootpath looks something like this:
+	   *   /virtual-devices@100/channel-devices@200/disk@1:a
+	   *
+	   * The device hierarchy constructed during autoconfiguration is:
+	   *   mainbus/vbus/vdsk/scsibus/sd
+	   *
+	   * The logic to figure out the boot device is to look at the
+	   * grandparent to the 'sd' device and if this is a 'vdsk' device
+	   * and the ofnode matches the bootpaths ofnode then we have located
+	   * the boot device.
+	   */
+
+	  int ofnode;
+
+	  /* Cache the vdsk ofnode for later use later/below with sd device */
+	  if (device_is_a(dev, "vdsk")) {
+	    ofnode = device_ofnode(dev);
+	    device_setofnode(dev, ofnode);
+	  }
+
+	  /* Examine if this is a sd device */
+	  if (device_is_a(dev, "sd")) {
+	    device_t parent = device_parent(dev);
+	    device_t parent_parent = device_parent(parent);
+	    if (device_is_a(parent_parent, "vdsk")) {
+	      ofnode = device_ofnode(parent_parent);
+	      if (ofnode == ofbootpackage) {
+		booted_device = dev;
+		DPRINTF(ACDB_BOOTDEV, ("booted_device: %s\n",
+				       device_xname(dev)));
+		return;
+	      }
+	    }
+	  }
+	}
+
 }
 
 static void

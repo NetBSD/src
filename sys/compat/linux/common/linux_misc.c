@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.230.2.1 2015/04/06 15:18:06 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.230.2.2 2016/10/05 20:55:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.1 2015/04/06 15:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.230.2.2 2016/10/05 20:55:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +231,8 @@ linux_sys_wait4(struct lwp *l, const struct linux_sys_wait4_args *uap, register_
 		options |= WNOHANG;
 	if (linux_options & LINUX_WAIT4_WUNTRACED)
 		options |= WUNTRACED;
+	if (linux_options & LINUX_WAIT4_WCONTINUED)
+		options |= WCONTINUED;
 	if (linux_options & LINUX_WAIT4_WALL)
 		options |= WALLSIG;
 	if (linux_options & LINUX_WAIT4_WCLONE)
@@ -980,7 +982,7 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 		retval[0] = led->led_personality;
 		return 0;
 	}
-	 
+
 	switch (per & LINUX_PER_MASK) {
 	case LINUX_PER_LINUX:
 	case LINUX_PER_LINUX32:
@@ -1127,7 +1129,7 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			case LINUX_PTRACE_PEEKTEXT:
 			case LINUX_PTRACE_PEEKDATA:
 				error = copyout (retval,
-				    (void *)SCARG(uap, data), 
+				    (void *)SCARG(uap, data),
 				    sizeof *retval);
 				*retval = SCARG(uap, data);
 				break;
@@ -1269,7 +1271,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	si.sharedram = 0;	/* XXX */
 	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;
-	si.freeswap = 
+	si.freeswap =
 	    (u_long)(uvmexp.swpages - uvmexp.swpginuse) * uvmexp.pagesize;
 	si.procs = nprocs;
 

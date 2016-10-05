@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.121.2.3 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.121.2.4 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.121.2.3 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.121.2.4 2016/10/05 20:56:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1071,7 +1071,6 @@ tmpfs_reclaim(void *v)
 
 	/* Disassociate inode from vnode. */
 	node->tn_vnode = NULL;
-	vcache_remove(vp->v_mount, &node, sizeof(node));
 	vp->v_data = NULL;
 
 	/* If inode is not referenced, i.e. no links, then destroy it. */

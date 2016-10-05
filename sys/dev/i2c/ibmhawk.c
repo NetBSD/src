@@ -1,4 +1,4 @@
-/* $NetBSD: ibmhawk.c,v 1.3 2011/06/21 12:38:27 hannken Exp $ */
+/* $NetBSD: ibmhawk.c,v 1.3.30.1 2016/10/05 20:55:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@ ibmhawk_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	if (ibmhawk_request(sc, IHR_NAME, &resp)) {
-		aprint_normal(": communication failed\n");
+		aprint_error_dev(self, "communication failed\n");
 		return;
 	}
 	aprint_normal(": IBM Hawk \"%.16s\"\n", resp.ihr_name);

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.19.6.3 2016/07/09 20:25:04 skrll Exp $ */
+/*      $NetBSD: if_xge.c,v 1.19.6.4 2016/10/05 20:55:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.3 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.19.6.4 2016/10/05 20:55:43 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -321,9 +321,11 @@ xge_attach(device_t parent, device_t self, void *aux)
 #error bad endianness!
 #endif
 
-	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC)
-		return printf("%s: failed configuring endian, %llx != %llx!\n",
+	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
+		aprint_error("%s: failed configuring endian, %llx != %llx!\n",
 		    XNAME, (unsigned long long)val, SWAPPER_MAGIC);
+		return;
+	}
 
 	/*
 	 * The MAC addr may be all FF's, which is not good.
@@ -357,9 +359,11 @@ xge_attach(device_t parent, device_t self, void *aux)
 #error bad endianness!
 #endif
 
-	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC)
-		return printf("%s: failed configuring endian2, %llx != %llx!\n",
+	if ((val = PIF_RCSR(PIF_RD_SWAPPER_Fb)) != SWAPPER_MAGIC) {
+		aprint_error("%s: failed configuring endian2, %llx != %llx!\n",
 		    XNAME, (unsigned long long)val, SWAPPER_MAGIC);
+		return;
+	}
 
 	/*
 	 * XGXS initialization.
@@ -384,8 +388,10 @@ xge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Get memory for transmit descriptor lists.
 	 */
-	if (xge_alloc_txmem(sc))
-		return printf("%s: failed allocating txmem.\n", XNAME);
+	if (xge_alloc_txmem(sc)) {
+		aprint_error("%s: failed allocating txmem.\n", XNAME);
+		return;
+	}
 
 	/* 9 and 10 - set FIFO number/prio */
 	PIF_WCSR(TX_FIFO_P0, TX_FIFO_LEN0(NTXDESCS));
@@ -410,8 +416,10 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 */
 	for (i = 0; i < NTXDESCS; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_IP_MAXPACKET,
-		    NTXFRAGS, MCLBYTES, 0, 0, &sc->sc_txm[i]))
-			return printf("%s: cannot create TX DMA maps\n", XNAME);
+		    NTXFRAGS, MCLBYTES, 0, 0, &sc->sc_txm[i])) {
+			aprint_error("%s: cannot create TX DMA maps\n", XNAME);
+			return;
+		}
 	}
 
 	sc->sc_lasttx = NTXDESCS-1;
@@ -420,14 +428,18 @@ xge_attach(device_t parent, device_t self, void *aux)
 	 * RxDMA initialization.
 	 * Only use one out of 8 possible receive queues.
 	 */
-	if (xge_alloc_rxmem(sc))	/* allocate rx descriptor memory */
-		return printf("%s: failed allocating rxmem\n", XNAME);
+	if (xge_alloc_rxmem(sc)) {	/* allocate rx descriptor memory */
+		aprint_error("%s: failed allocating rxmem\n", XNAME);
+		return;
+	}
 
 	/* Create receive buffer DMA maps */
 	for (i = 0; i < NRXREAL; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, XGE_MAX_MTU,
-		    NRXFRAGS, MCLBYTES, 0, 0, &sc->sc_rxm[i]))
-			return printf("%s: cannot create RX DMA maps\n", XNAME);
+		    NRXFRAGS, MCLBYTES, 0, 0, &sc->sc_rxm[i])) {
+			aprint_error("%s: cannot create RX DMA maps\n", XNAME);
+			return;
+		}
 	}
 
 	/* allocate mbufs to receive descriptors */
@@ -546,13 +558,18 @@ xge_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Setup interrupt vector before initializing.
 	 */
-	if (pci_intr_map(pa, &ih))
-		return aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
+	if (pci_intr_map(pa, &ih)) {
+		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
+		return;
+	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	if ((sc->sc_ih =
-	    pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL)
-		return aprint_error_dev(sc->sc_dev, "unable to establish interrupt at %s\n",
+		pci_intr_establish(pc, ih, IPL_NET, xge_intr, sc)) == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish interrupt at %s\n",
 		    intrstr ? intrstr : "<unknown>");
+		return;
+	}
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 #ifdef XGE_EVENT_COUNTERS
@@ -694,7 +711,7 @@ xge_intr(void *pv)
 		while ((PIF_RCSR(ADAPTER_STATUS) & QUIESCENT) != QUIESCENT)
 			;
 		PIF_WCSR(MAC_RMAC_ERR_REG, RMAC_LINK_STATE_CHANGE_INT);
-		
+
 		val = PIF_RCSR(ADAPTER_STATUS);
 		if ((val & (RMAC_REMOTE_FAULT|RMAC_LOCAL_FAULT)) == 0)
 			xge_enable(sc); /* Only if link restored */

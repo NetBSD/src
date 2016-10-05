@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.36 2014/03/14 21:59:41 mrg Exp $	*/
+/*	$NetBSD: mesh.c,v 1.36.6.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mesh.c,v 1.36.6.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -236,7 +236,7 @@ mesh_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sizeof(sc->sc_scb)/sizeof(sc->sc_scb[0]); i++)
 		TAILQ_INSERT_TAIL(&sc->free_scb, &sc->sc_scb[i], chain);
 
-	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20, NULL);
 
 	mesh_reset(sc);
 	mesh_bus_reset(sc);

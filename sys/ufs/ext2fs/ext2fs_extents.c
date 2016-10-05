@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extents.c,v 1.1.2.2 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extents.c,v 1.1.2.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Zheng Liu <lz@freebsd.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.1.2.2 2016/07/09 20:25:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_extents.c,v 1.1.2.3 2016/10/05 20:56:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,13 +80,13 @@ ext4_ext_binsearch_index(struct inode *ip, struct ext4_extent_path *path,
 		path->ep_sparse_ext.e_start_hi = 0;
 		path->ep_sparse_ext.e_start_lo = 0;
 		path->ep_is_sparse = true;
-		return (true);
+		return true;
 	}
 	path->ep_index = l - 1;
 	*first_lbn = path->ep_index->ei_blk;
 	if (path->ep_index < last)
 		*last_lbn = l->ei_blk - 1;
-	return (false);
+	return false;
 }
 
 static void
@@ -147,7 +147,7 @@ ext4_ext_in_cache(struct inode *ip, daddr_t lbn, struct ext4_extent *ep)
 
 	/* cache is invalid */
 	if (ecp->ec_type == EXT4_EXT_CACHE_NO)
-		return (ret);
+		return ret;
 
 	if (lbn >= ecp->ec_blk && lbn < ecp->ec_blk + ecp->ec_len) {
 		ep->e_blk = ecp->ec_blk;
@@ -156,7 +156,7 @@ ext4_ext_in_cache(struct inode *ip, daddr_t lbn, struct ext4_extent *ep)
 		ep->e_len = ecp->ec_len;
 		ret = ecp->ec_type;
 	}
-	return (ret);
+	return ret;
 }
 
 /*
@@ -189,7 +189,7 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 	ehp = (struct ext4_extent_header *)ip->i_din.e2fs_din->e2di_blocks;
 
 	if (ehp->eh_magic != EXT4_EXT_MAGIC)
-		return (NULL);
+		return NULL;
 
 	path->ep_header = ehp;
 
@@ -201,7 +201,7 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 		path->ep_ext = NULL;
 		if (ext4_ext_binsearch_index(ip, path, lbn, &first_lbn,
 		    &last_lbn)) {
-			return (path);
+			return path;
 		}
 
 		nblk = (daddr_t)path->ep_index->ei_leaf_hi << 32 |
@@ -216,7 +216,7 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 		if (error) {
 			brelse(path->ep_bp, 0);
 			path->ep_bp = NULL;
-			return (NULL);
+			return NULL;
 		}
 		ehp = (struct ext4_extent_header *)path->ep_bp->b_data;
 		path->ep_header = ehp;
@@ -228,5 +228,5 @@ ext4_ext_find_extent(struct m_ext2fs *fs, struct inode *ip,
 	path->ep_is_sparse = false;
 
 	ext4_ext_binsearch(ip, path, lbn, first_lbn, last_lbn);
-	return (path);
+	return path;
 }

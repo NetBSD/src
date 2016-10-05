@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.146.4.5 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.146.4.6 2016/10/05 20:56:08 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,11 +102,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.5 2016/07/09 20:25:21 skrll Exp $");
-
-#include "ppp.h"
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.6 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
+#include "ppp.h"
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_ppp.h"
@@ -133,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.5 2016/07/09 20:25:21 skrll Exp $
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -181,6 +182,8 @@ static void	ppp_ifstart(struct ifnet *ifp);
 
 static void	pppintr(void *);
 
+extern struct linesw ppp_disc;
+
 /*
  * Some useful mbuf macros not in mbuf.h.
  */
@@ -214,11 +217,11 @@ struct if_clone ppp_cloner =
     IF_CLONE_INITIALIZER("ppp", ppp_clone_create, ppp_clone_destroy);
 
 #ifdef PPP_COMPRESS
-ONCE_DECL(ppp_compressor_mtx_init);
 static LIST_HEAD(, compressor) ppp_compressors = { NULL };
 static kmutex_t ppp_compressors_mtx;
 
 static int ppp_compressor_init(void);
+static int ppp_compressor_destroy(void);
 static struct compressor *ppp_get_compressor(uint8_t);
 static void ppp_compressor_rele(struct compressor *);
 #endif /* PPP_COMPRESS */
@@ -230,15 +233,45 @@ static void ppp_compressor_rele(struct compressor *);
 void
 pppattach(int n __unused)
 {
-	extern struct linesw ppp_disc;
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in pppinit() below).
+	 */
+}
+
+static void
+pppinit(void)
+{
+	/* Init the compressor sub-sub-system */
+	ppp_compressor_init();
 
 	if (ttyldisc_attach(&ppp_disc) != 0)
-		panic("pppattach");
+		panic("%s", __func__);
 
 	mutex_init(&ppp_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ppp_softc_list);
 	if_clone_attach(&ppp_cloner);
-	RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
+}
+
+static int
+pppdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&ppp_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&ppp_disc);
+
+	if (error == 0) {
+		mutex_destroy(&ppp_list_lock);
+		if_clone_detach(&ppp_cloner);
+		ppp_compressor_destroy();
+	}
+
+	return error;
 }
 
 static struct ppp_softc *
@@ -1560,7 +1593,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 			bcopy(mtod(m, u_char *),
 			    mtod(mp, u_char *) + mp->m_len, m->m_len);
 			mp->m_len += m->m_len;
-			MFREE(m, mp->m_next);
+			mp->m_next = m_free(m);
 		} else
 			mp->m_next = m;
 		m = mp;
@@ -1798,6 +1831,14 @@ ppp_compressor_init(void)
 	return 0;
 }
 
+static int
+ppp_compressor_destroy(void)
+{
+
+	mutex_destroy(&ppp_compressors_mtx);
+	return 0;
+}
+
 static void
 ppp_compressor_rele(struct compressor *cp)
 {
@@ -1865,8 +1906,6 @@ ppp_register_compressor(struct compressor *pc, size_t ncomp)
 	int error = 0;
 	size_t i;
 
-	RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
-
 	mutex_enter(&ppp_compressors_mtx);
 	for (i = 0; i < ncomp; i++) {
 		if (ppp_get_compressor_noload(pc[i].compress_proto,
@@ -1907,3 +1946,16 @@ ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+#ifdef PPP_FILTER
+#define PPP_DEP "bpf_filter,"
+#else
+#define PPP_DEP
+#endif
+
+IF_MODULE(MODULE_CLASS_DRIVER, ppp, PPP_DEP "slcompress")

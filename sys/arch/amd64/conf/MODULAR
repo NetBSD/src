@@ -1,0 +1,137 @@
+# $NetBSD: MODULAR,v 1.5.2.2 2016/10/05 20:55:23 skrll Exp $
+#
+# Try to exclude all the drivers in GENERIC that have been modularized
+# XXX: incomplete
+
+include "arch/amd64/conf/GENERIC"
+options 	MODULAR		# new style module(7) framework
+options 	MODULAR_DEFAULT_AUTOLOAD
+
+-no acpicpu*	at cpu?
+-no est0		at cpu0
+-no powernow0	at cpu0
+-no vmt0		at cpu0
+
+-no options 	COMPAT_15	# NetBSD 1.5,
+-no options 	COMPAT_16	# NetBSD 1.6,
+-no options 	COMPAT_20	# NetBSD 2.0,
+-no options 	COMPAT_30	# NetBSD 3.0,
+-no options 	COMPAT_40	# NetBSD 4.0,
+-no options 	COMPAT_50	# NetBSD 5.0,
+-no options 	COMPAT_60	# NetBSD 6.0, and
+-no options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
+-no options 	COMPAT_43	# and 4.3BSD
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
+
+-no options 	COMPAT_OSSAUDIO
+-no options 	COMPAT_NETBSD32
+-no options 	COMPAT_LINUX
+-no options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
+-no options 	EXEC_ELF32
+-no options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+-no options	SYSVMSG		# System V-like message queues
+-no options	SYSVSEM		# System V-like semaphores
+-no options	SYSVSHM		# System V-like memory sharing
+
+# XXX: for now
+#no file-system 	FFS		# UFS
+-no file-system	MFS		# memory file system
+-no file-system 	NFS		# Network File System client
+-no file-system	TMPFS		# Efficient memory file-system
+-no file-system	EXT2FS		# second extended file system (linux)
+-no file-system	LFS		# log-structured file system
+-no file-system	NTFS		# Windows/NT file system (experimental)
+-no file-system	CD9660		# ISO 9660 + Rock Ridge file system
+-no file-system	MSDOSFS		# MS-DOS file system
+-no file-system	FDESC		# /dev/fd
+-no file-system	KERNFS		# /kern
+-no file-system	NULLFS		# loopback file system
+-no file-system	OVERLAY		# overlay file system
+-no file-system	PROCFS		# /proc
+-no file-system	PUFFS		# Userspace file systems (e.g. ntfs-3g & sshfs)
+-no file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
+-no file-system	UMAPFS		# NULLFS + uid and gid remapping
+-no file-system	UNION		# union file system
+-no file-system	CODA		# Coda File System; also needs vcoda (below)
+-no file-system	PTYFS		# /dev/ptm support
+
+-no options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+-no options 	PPP_DEFLATE	# Deflate compression support for PPP
+
+-no options	AIO
+
+-no acpiacad*	at acpi?		# ACPI AC Adapter
+-no acpibat*	at acpi?		# ACPI Battery
+-no acpibut*	at acpi?		# ACPI Button
+-no acpifan*	at acpi?		# ACPI Fan
+-no acpilid*	at acpi?		# ACPI Lid Switch
+-no acpitz* 	at acpi?		# ACPI Thermal Zone
+-no acpivga*	at acpi?		# ACPI Display Adapter
+-no acpiwdrt*	at acpi?		# ACPI Watchdog Resource Table
+-no acpiwmi*	at acpi?		# ACPI WMI Mapper
+
+-no options	NFSSERVER
+
+-no axe*	at uhub?
+-no axen*	at uhub?
+-no rum*	at uhub?
+-no urtwn*	at uhub?
+-no urtw*	at uhub?
+-no run*	at uhub?
+-no athn*	at uhub?
+
+-no alc*	at pci?
+-no ath*	at pci?
+
+-no select sppp			# Synchronous-Point-to-Point Protocol
+
+-no pseudo-device 	crypto			# /dev/crypto device
+-no pseudo-device	swcrypto		# software crypto implementation
+
+# disk/mass storage pseudo-devices
+-no pseudo-device	ccd			# concatenated/striped disk devices
+-no pseudo-device	cgd			# cryptographic disk devices
+-no pseudo-device	raid			# RAIDframe disk driver
+-no pseudo-device	fss			# file system snapshot device
+-no pseudo-device	putter			# for puffs and pud
+
+-no pseudo-device	vnd			# disk-like interface to files
+
+# network pseudo-devices
+-no pseudo-device	bpfilter		# Berkeley packet filter
+-no pseudo-device	ipfilter		# IP filter (firewall) and NAT
+# Loopback is hardcoded (looutput) everywhere!
+#no pseudo-device	loop			# network loopback
+-no pseudo-device	mpls			# MPLS pseudo-interface
+-no pseudo-device	ppp			# Point-to-Point Protocol
+-no pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+-no pseudo-device	sl			# Serial Line IP
+-no pseudo-device	strip			# Starmode Radio IP (Metricom)
+-no pseudo-device	tun			# network tunneling over tty
+-no pseudo-device	tap			# virtual Ethernet
+-no pseudo-device	gre			# generic L3 over IP tunnel
+-no pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
+-no pseudo-device	faith			# IPv[46] tcp relay translation i/f
+-no pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+-no pseudo-device	vlan			# IEEE 802.1q encapsulation
+-no pseudo-device	agr			# IEEE 802.3ad link aggregation
+-no pseudo-device	npf			# NPF packet filter
+
+#
+# accept filters
+-no pseudo-device   accf_data		# "dataready" accept filter
+-no pseudo-device   accf_http		# "httpready" accept filter
+
+# miscellaneous pseudo-devices
+-no pseudo-device	clockctl		# user control of clock subsystem
+-no pseudo-device	vcoda			# coda minicache <-> venus comm.
+
+# a pseudo device needed for SMBFS
+-no pseudo-device	nsmb			# experimental - SMB requester
+
+# pseudo audio device driver
+-no pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+-no pseudo-device	drvctl

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isapnp.c,v 1.21 2012/10/27 17:18:26 chs Exp $	*/
+/*	$NetBSD: if_tr_isapnp.c,v 1.21.14.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.21 2012/10/27 17:18:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isapnp.c,v 1.21.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,15 +86,16 @@ tr_isapnp_attach(device_t parent, device_t self, void *aux)
 	struct isapnp_attach_args *ipa = aux;
 	int mmioidx, sramidx;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		aprint_error_dev(self, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", device_xname(self), ipa->ipa_devident,
-	    ipa->ipa_devclass);
+	aprint_normal_dev(self, "%s %s\n",
+	    ipa->ipa_devident, ipa->ipa_devclass);
 
 	sc->sc_dev = self;
 	sc->sc_piot = ipa->ipa_iot;
@@ -103,8 +104,7 @@ tr_isapnp_attach(device_t parent, device_t self, void *aux)
 	if (strcmp(ipa->ipa_devlogic, "TCM3190") == 0) {
 		mmioidx = 0;
 		sramidx = 1;
-	}
-	else {	/* Default */
+	} else { /* Default */
 		mmioidx = 1;
 		sramidx = 0;
 	}

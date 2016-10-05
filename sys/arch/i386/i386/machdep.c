@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.752.6.3 2016/05/29 08:44:17 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.752.6.4 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.3 2016/05/29 08:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.4 2016/10/05 20:55:28 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -215,42 +215,44 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.752.6.3 2016/05/29 08:44:17 skrll Exp 
 char machine[] = "i386";		/* CPU "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
-extern struct bi_devmatch *x86_alldisks;
-extern int x86_ndisks;
-
 #ifdef CPURESET_DELAY
-int	cpureset_delay = CPURESET_DELAY;
+int cpureset_delay = CPURESET_DELAY;
 #else
-int     cpureset_delay = 2000; /* default to 2s */
+int cpureset_delay = 2000; /* default to 2s */
 #endif
 
 #ifdef MTRR
 struct mtrr_funcs *mtrr_funcs;
 #endif
 
-int	cpu_class;
-int	use_pae;
-int	i386_fpu_present = 1;
-int	i386_fpu_fdivbug;
+int cpu_class;
+int use_pae;
+int i386_fpu_present = 1;
+int i386_fpu_fdivbug;
 
-int	i386_use_fxsave;
-int	i386_has_sse;
-int	i386_has_sse2;
+int i386_use_fxsave;
+int i386_has_sse;
+int i386_has_sse2;
 
-vaddr_t	msgbuf_vaddr;
+vaddr_t msgbuf_vaddr;
 struct {
 	paddr_t paddr;
 	psize_t sz;
 } msgbuf_p_seg[VM_PHYSSEG_MAX];
 unsigned int msgbuf_p_cnt = 0;
 
-vaddr_t	idt_vaddr;
-paddr_t	idt_paddr;
-vaddr_t	pentium_idt_vaddr;
+vaddr_t idt_vaddr;
+paddr_t idt_paddr;
+vaddr_t gdt_vaddr;
+paddr_t gdt_paddr;
+vaddr_t ldt_vaddr;
+paddr_t ldt_paddr;
+
+vaddr_t pentium_idt_vaddr;
 
 struct vm_map *phys_map = NULL;
 
-extern	paddr_t avail_start, avail_end;
+extern paddr_t avail_start, avail_end;
 #ifdef XEN
 extern paddr_t pmap_pa_start, pmap_pa_end;
 void hypervisor_callback(void);
@@ -270,10 +272,10 @@ void (*initclock_func)(void) = i8254_initclocks;
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt = 0;
+int mem_cluster_cnt = 0;
 
-void	init386(paddr_t);
-void	initgdt(union descriptor *);
+void init386(paddr_t);
+void initgdt(union descriptor *);
 
 extern int time_adjusted;
 
@@ -285,30 +287,32 @@ extern int boothowto;
 
 /* Base memory reported by BIOS. */
 #ifndef REALBASEMEM
-int	biosbasemem = 0;
+int biosbasemem = 0;
 #else
-int	biosbasemem = REALBASEMEM;
+int biosbasemem = REALBASEMEM;
 #endif
 
 /* Extended memory reported by BIOS. */
 #ifndef REALEXTMEM
-int	biosextmem = 0;
+int biosextmem = 0;
 #else
-int	biosextmem = REALEXTMEM;
+int biosextmem = REALEXTMEM;
 #endif
 
 /* Set if any boot-loader set biosbasemem/biosextmem. */
-int	biosmem_implicit;
+int biosmem_implicit;
 
-/* Representation of the bootinfo structure constructed by a NetBSD native
- * boot loader.  Only be used by native_loader(). */
+/*
+ * Representation of the bootinfo structure constructed by a NetBSD native
+ * boot loader.  Only be used by native_loader().
+ */
 struct bootinfo_source {
 	uint32_t bs_naddrs;
 	void *bs_addrs[1]; /* Actually longer. */
 };
 
-/* Only called by locore.h; no need to be in a header file. */
-void	native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
+/* Only called by locore.S; no need to be in a header file. */
+void native_loader(int, int, struct bootinfo_source *, paddr_t, int, int);
 
 /*
  * Called as one of the very first things during system startup (just after
@@ -429,17 +433,18 @@ cpu_startup(void)
 		panic("msgbuf paddr map has not been set up");
 	for (x = 0, sz = 0; x < msgbuf_p_cnt; sz += msgbuf_p_seg[x++].sz)
 		continue;
+
 	msgbuf_vaddr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_VAONLY);
 	if (msgbuf_vaddr == 0)
 		panic("failed to valloc msgbuf_vaddr");
 
-	/* msgbuf_paddr was init'd in pmap */
 	for (y = 0, sz = 0; y < msgbuf_p_cnt; y++) {
 		for (x = 0; x < btoc(msgbuf_p_seg[y].sz); x++, sz += PAGE_SIZE)
 			pmap_kenter_pa((vaddr_t)msgbuf_vaddr + sz,
 			    msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
 			    VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
+
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((void *)msgbuf_vaddr, sz);
@@ -466,7 +471,7 @@ cpu_startup(void)
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
+	    VM_PHYS_SIZE, 0, false, NULL);
 
 	/* Say hello. */
 	banner();
@@ -1129,9 +1134,7 @@ init386(paddr_t first_avail)
 	int x;
 #ifndef XEN
 	union descriptor *tgdt;
-	extern struct extent *iomem_ex;
 	struct region_descriptor region;
-	struct btinfo_memmap *bim;
 #endif
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -1144,10 +1147,10 @@ init386(paddr_t first_avail)
 	KASSERT(HYPERVISOR_shared_info != NULL);
 	cpu_info_primary.ci_vcpu = &HYPERVISOR_shared_info->vcpu_info[0];
 #endif
-	cpu_probe(&cpu_info_primary);
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
+	cpu_probe(&cpu_info_primary);
 	cpu_init_msrs(&cpu_info_primary, true);
 
 #ifdef PAE
@@ -1176,10 +1179,6 @@ init386(paddr_t first_avail)
 	cpu_info_primary.ci_pae_l3_pdir = (pd_entry_t *)(rcr3() + KERNBASE);
 #endif /* PAE && !XEN */
 
-#ifdef XEN
-	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
-#endif
-
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
@@ -1204,10 +1203,14 @@ init386(paddr_t first_avail)
 	 */
 	avail_start = 6 * PAGE_SIZE;
 #else /* !XEN */
-	/* steal one page for gdt */
+	/* Parse Xen command line (replace bootinfo) */
+	xen_parse_cmdline(XEN_PARSE_BOOTFLAGS, NULL);
+
+	/* Steal one page for gdt */
 	gdt = (void *)((u_long)first_avail + KERNBASE);
 	first_avail += PAGE_SIZE;
-	/* Make sure the end of the space used by the kernel is rounded. */
+
+	/* Determine physical address space */
 	first_avail = round_page(first_avail);
 	avail_start = first_avail;
 	avail_end = ctob((paddr_t)xen_start_info.nr_pages);
@@ -1218,12 +1221,12 @@ init386(paddr_t first_avail)
 	mem_cluster_cnt++;
 	physmem += xen_start_info.nr_pages;
 	uvmexp.wired += atop(avail_start);
+
 	/*
 	 * initgdt() has to be done before consinit(), so that %fs is properly
 	 * initialised. initgdt() uses pmap_kenter_pa so it can't be called
 	 * before the above variables are set.
 	 */
-
 	initgdt(gdt);
 
 	mutex_init(&pte_lock, MUTEX_DEFAULT, IPL_VM);
@@ -1246,24 +1249,11 @@ init386(paddr_t first_avail)
 	pmap_bootstrap((vaddr_t)atdevbase + IOM_SIZE);
 
 #ifndef XEN
-	/*
-	 * Check to see if we have a memory map from the BIOS (passed
-	 * to us by the boot program.
-	 */
-	bim = lookup_bootinfo(BTINFO_MEMMAP);
-	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
-	    bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim, iomem_ex);
+	/* Initialize the memory clusters. */
+	init_x86_clusters();
 
-	/*
-	 * If the loop above didn't find any valid segment, fall back to
-	 * former code.
-	 */
-	if (mem_cluster_cnt == 0)
-		initx86_fake_memmap(iomem_ex);
-
-	initx86_load_memmap(first_avail);
-
+	/* Internalize the physical pages into the VM system. */
+	init_x86_vm(first_avail);
 #else /* !XEN */
 	XENPRINTK(("load the memory cluster 0x%" PRIx64 " (%" PRId64 ") - "
 	    "0x%" PRIx64 " (%" PRId64 ")\n",
@@ -1290,50 +1280,44 @@ init386(paddr_t first_avail)
 
 	init386_msgbuf();
 
-#ifndef XEN
+#if !defined(XEN) && NBIOSCALL > 0
 	/*
 	 * XXX Remove this
 	 *
 	 * Setup a temporary Page Table Entry to allow identity mappings of
-	 * the real mode address. This is required by:
-	 * - bioscall
-	 * - MP bootstrap
-	 * - ACPI wakecode
+	 * the real mode address. This is required by bioscall.
 	 */
 	init386_pte0();
 
-#if NBIOSCALL > 0
 	KASSERT(biostramp_image_size <= PAGE_SIZE);
-	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
-		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL, 0);		/* protection */
+	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE, (paddr_t)BIOSTRAMP_BASE,
+	    VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 	memcpy((void *)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
 
 	/* Needed early, for bioscall() */
 	cpu_info_primary.ci_pmap = pmap_kernel();
 #endif
-#endif /* !XEN */
 
 	pmap_kenter_pa(idt_vaddr, idt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(gdt_vaddr, gdt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
+	pmap_kenter_pa(ldt_vaddr, ldt_paddr, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	memset((void *)idt_vaddr, 0, PAGE_SIZE);
-
+	memset((void *)gdt_vaddr, 0, PAGE_SIZE);
+	memset((void *)ldt_vaddr, 0, PAGE_SIZE);
 
 #ifndef XEN
-	idt_init();
-
-	idt = (struct gate_descriptor *)idt_vaddr;
 	pmap_kenter_pa(pentium_idt_vaddr, idt_paddr, VM_PROT_READ, 0);
 	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 
 	tgdt = gdt;
-	gdt = (union descriptor *)
-		    ((char *)idt + NIDT * sizeof (struct gate_descriptor));
-	ldt = gdt + NGDT;
+	idt = (struct gate_descriptor *)idt_vaddr;
+	gdt = (union descriptor *)gdt_vaddr;
+	ldt = (union descriptor *)ldt_vaddr;
 
-	memcpy(gdt, tgdt, NGDT*sizeof(*gdt));
+	memcpy(gdt, tgdt, NGDT * sizeof(*gdt));
 
 	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
 	    SDT_SYSLDT, SEL_KPL, 0, 0);

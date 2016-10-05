@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.23.6.1 2016/05/29 08:44:17 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.23.6.2 2016/10/05 20:55:28 skrll Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.23.6.1 2016/05/29 08:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.23.6.2 2016/10/05 20:55:28 skrll Exp $");
 
 #include "assym.h"
 
@@ -687,13 +687,16 @@ ENTRY(x86_copyargs)
 	movl	16(%esp),%ecx
 
 	/*
-	 * We check that the end of the destination buffer is not past the end
-	 * of the user's address space.  If it's not, then we only need to
-	 * check that each page is readable, and the CPU will do that for us.
+	 * In this function, we may copy more than the size given in the third
+	 * argument. In order to make sure the real end of the destination
+	 * buffer is not past the end of the user's address space, we don't
+	 * check the third argument but rather the largest possible size, which
+	 * is:
+	 * 	(2 + SYS_MAXSYSARGS) * 4 = 10 * 4
 	 */
 .Lx86_copyargs_start:
 	movl	%esi,%eax
-	addl	%ecx,%eax
+	addl	$(10 * 4),%eax
 	jc	_C_LABEL(x86_copyargs_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%eax
 	ja	_C_LABEL(x86_copyargs_efault)

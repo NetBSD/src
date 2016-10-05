@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.72.4.1 2015/09/22 12:05:58 skrll Exp $	*/
+/*	$NetBSD: seagate.c,v 1.72.4.2 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.72.4.1 2015/09/22 12:05:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.72.4.2 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,6 +391,7 @@ seaattach(device_t parent, device_t self, void *aux)
 	struct scsipi_channel *chan = &sea->sc_channel;
 	int i;
 
+	aprint_naive("\n");
 	sea->sc_dev = self;
 
 	/* XXX XXX XXX */
@@ -462,7 +463,7 @@ seaattach(device_t parent, device_t self, void *aux)
 	chan->chan_id = sea->our_id;
 	chan->chan_flags = SCSIPI_CHAN_CANGROW;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, seaintr, sea);
@@ -554,7 +555,8 @@ sea_init(struct sea_softc *sea)
  * the unit, target and lu.
  */
 void
-sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
+sea_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
+    void *arg)
 {
 	struct scsipi_xfer *xs;
 	struct scsipi_periph *periph __diagused;

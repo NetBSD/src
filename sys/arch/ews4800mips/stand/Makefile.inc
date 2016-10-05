@@ -1,5 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/12/29 15:20:09 tsutsui Exp $
+# $NetBSD: Makefile.inc,v 1.1.144.1 2016/10/05 20:55:27 skrll Exp $
 
-.include <bsd.own.mk>
+NOPIE=	# defined
 
 BINDIR?=	/usr/mdec

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.121.2.2 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.121.2.3 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.121.2.2 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.121.2.3 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1167,7 +1167,7 @@ bad:
 			sbfree(sb, np);
 
 		n0 = n->m_nextpkt;	/* iterate at next prepended address */
-		MFREE(n, np);		/* free prepended address (not data) */
+		np = m_free(n);		/* free prepended address (not data) */
 	}
 	return error;
 }
@@ -1297,7 +1297,7 @@ sbflush(struct sockbuf *sb)
 void
 sbdrop(struct sockbuf *sb, int len)
 {
-	struct mbuf	*m, *mn, *next;
+	struct mbuf	*m, *next;
 
 	KASSERT(solocked(sb->sb_so));
 
@@ -1319,13 +1319,11 @@ sbdrop(struct sockbuf *sb, int len)
 		}
 		len -= m->m_len;
 		sbfree(sb, m);
-		MFREE(m, mn);
-		m = mn;
+		m = m_free(m);
 	}
 	while (m && m->m_len == 0) {
 		sbfree(sb, m);
-		MFREE(m, mn);
-		m = mn;
+		m = m_free(m);
 	}
 	if (m) {
 		sb->sb_mb = m;
@@ -1361,7 +1359,7 @@ sbdroprecord(struct sockbuf *sb)
 		sb->sb_mb = m->m_nextpkt;
 		do {
 			sbfree(sb, m);
-			MFREE(m, mn);
+			mn = m_free(m);
 		} while ((m = mn) != NULL);
 	}
 	SB_EMPTY_FIXUP(sb);

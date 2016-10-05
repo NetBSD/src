@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.492.2.4 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.492.2.5 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.4 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.5 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4323,7 +4323,7 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	 *
 	 * XXX Because nothing is locked and the compiler may reorder
 	 * things here, unmounting the file system at an inopportune
-	 * moment may cause rename to fail with ENXDEV when it really
+	 * moment may cause rename to fail with EXDEV when it really
 	 * should fail with ENOENT.
 	 */
 	tmp = tdvp->v_mount;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.316.2.4 2015/12/27 12:09:30 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.316.2.5 2016/10/05 20:55:24 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.4 2015/12/27 12:09:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316.2.5 2016/10/05 20:55:24 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -818,12 +818,10 @@ pmap_tlb_flush_SE(pmap_t pm, vaddr_t va, u_int flags)
 #endif /* ARM_MMU_EXTENDED */
 }
 
+#ifndef ARM_MMU_EXTENDED
 static inline void
 pmap_tlb_flushID(pmap_t pm)
 {
-#ifdef ARM_MMU_EXTENDED
-	pmap_tlb_asid_release_all(pm);
-#else
 	if (pm->pm_cstate.cs_tlb_id) {
 		cpu_tlb_flushID();
 #if ARM_MMU_V7 == 0
@@ -837,10 +835,8 @@ pmap_tlb_flushID(pmap_t pm)
 		pm->pm_cstate.cs_tlb = 0;
 #endif /* ARM_MMU_V7 */
 	}
-#endif /* ARM_MMU_EXTENDED */
 }
 
-#ifndef ARM_MMU_EXTENDED
 static inline void
 pmap_tlb_flushD(pmap_t pm)
 {
@@ -5000,24 +4996,79 @@ pmap_deactivate(struct lwp *l)
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
+#ifdef ARM_MMU_EXTENDED
+static inline void
+pmap_remove_all_complete(pmap_t pm)
+{
+	KASSERT(pm != pmap_kernel());
+
+	KASSERTMSG(curcpu()->ci_pmap_cur != pm
+	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
+	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
+	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
+	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
+
+	/*
+	 * Finish up the pmap_remove_all() optimisation by flushing
+	 * all our ASIDs.
+	 */
+#ifdef MULTIPROCESSOR
+	// This should be the last CPU with this pmap onproc
+//	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(curcpu())));
+#if PMAP_TLB_MAX > 1
+	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
+		KASSERT(i < pmap_ntlbs);
+		struct pmap_tlb_info * const ti = pmap_tlbs[i];
+#else
+		struct pmap_tlb_info * const ti = &pmap_tlb0_info;
+#endif
+		struct cpu_info * const ci = curcpu();
+		TLBINFO_LOCK(ti);
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
+		if (PMAP_PAI_ASIDVALID_P(pai, ti)) {
+			if (kcpuset_isset(pm->pm_onproc, cpu_index(ci))) {
+#if PMAP_TLB_MAX == 1
+				    KASSERT(cpu_tlb_info(ci) == ti);
+
+				    tlb_invalidate_asids(pai->pai_asid,
+					pai->pai_asid);
+#else
+				    if (cpu_tlb_info(ci) == ti) {
+					    tlb_invalidate_asids(pai->pai_asid,
+						pai->pai_asid);
+				    } else {
+					    pm->pm_shootdown_needed = 1;
+				    }
+#endif
+			}
+		}
+		TLBINFO_UNLOCK(ti);
+
+#if PMAP_TLB_MAX > 1
+	}
+#endif
+#else /* MULTIPROCESSOR */
+
+	struct pmap_asid_info * const pai =
+	    PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	tlb_invalidate_asids(pai->pai_asid, pai->pai_asid);
+#endif /* MULTIPROCESSOR */
+}
+#endif
+
 void
 pmap_update(pmap_t pm)
 {
 
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
+	    0);
+
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
-		KASSERT(pm != pmap_kernel());
-
-		KASSERTMSG(curcpu()->ci_pmap_cur != pm
-		    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
-		    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
-		    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
-		    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
-		/*
-		 * Finish up the pmap_remove_all() optimisation by flushing
-		 * all our ASIDs.
-		 */
-		pmap_tlb_asid_release_all(pm);
+		pmap_remove_all_complete(pm);
 #else
 		/*
 		 * Finish up the pmap_remove_all() optimisation by flushing
@@ -5035,7 +5086,7 @@ pmap_update(pmap_t pm)
 	armreg_bpiall_write(0);
 #endif
 
-#if defined(MULTIPROCESSOR) && PMAP_MAX_TLB > 1
+#if defined(MULTIPROCESSOR) && PMAP_TLB_MAX > 1
 	u_int pending = atomic_swap_uint(&pmap->pm_shootdown_pending, 0);
 	if (pending && pmap_tlb_shootdown_bystanders(pmap)) {
 		PMAP_COUNT(shootdown_ipis);
@@ -5071,6 +5122,7 @@ pmap_update(pmap_t pm)
 	 * make sure TLB/cache operations have completed.
 	 */
 	cpu_cpwait();
+	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
 void
@@ -5096,13 +5148,23 @@ pmap_remove_all(pmap_t pm)
 void
 pmap_destroy(pmap_t pm)
 {
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
 	u_int count;
 
 	if (pm == NULL)
 		return;
 
+	UVMHIST_LOG(maphist, "pm=%#x remove_all %d", pm, pm->pm_remove_all, 0,
+	    0);
+
 	if (pm->pm_remove_all) {
+#ifdef ARM_MMU_EXTENDED
+		pmap_remove_all_complete(pm);
+ 		pmap_tlb_asid_release_all(pm);
+#else
 		pmap_tlb_flushID(pm);
+#endif
 		pm->pm_remove_all = false;
 	}
 
@@ -5153,6 +5215,7 @@ pmap_destroy(pmap_t pm)
 	uvm_obj_destroy(&pm->pm_obj, false);
 	mutex_destroy(&pm->pm_obj_lock);
 	pool_cache_put(&pmap_cache, pm);
+	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
 
 
@@ -7857,7 +7920,7 @@ pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 int
 pic_ipi_shootdown(void *arg)
 {
-#if PMAP_NEED_TLB_SHOOTDOWN
+#if PMAP_TLB_NEED_SHOOTDOWN
 	pmap_tlb_shootdown_process();
 #endif
 	return 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.36 2014/02/19 21:45:01 dsl Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.36.6.1 2016/10/05 20:55:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.36 2014/02/19 21:45:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.36.6.1 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -276,7 +276,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	struct proc *p = l->l_proc;
 
 #if defined(USER_LDT) && 0
-	pmap_ldt_cleanup(p);
+	pmap_ldt_cleanup(l);
 #endif
 
 	netbsd32_adjust_limits(p);

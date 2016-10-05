@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.7 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.8 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.7 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.8 2016/10/05 20:56:08 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.7 2016/07/09 20:25:21 skrll Exp $"
 #include <sys/ioctl.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -136,6 +137,8 @@ static struct pool	rtentry_pool;
 static struct pool	rttimer_pool;
 
 static struct callout	rt_timer_ch; /* callout for rt_timer_timer() */
+struct workqueue	*rt_timer_wq;
+struct work		rt_timer_wk;
 
 #ifdef RTFLUSH_DEBUG
 static int _rtcache_debug = 0;
@@ -492,9 +495,10 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	uint64_t *stat = NULL;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
+	struct psref psref;
 
 	/* verify the gateway is directly reachable */
-	if ((ifa = ifa_ifwithnet(gateway)) == NULL) {
+	if ((ifa = ifa_ifwithnet_psref(gateway, &psref)) == NULL) {
 		error = ENETUNREACH;
 		goto out;
 	}
@@ -508,8 +512,15 @@ rtredirect(const struct sockaddr *dst, const struct sockaddr *gateway,
 	if (!(flags & RTF_DONE) && rt &&
 	     (sockaddr_cmp(src, rt->rt_gateway) != 0 || rt->rt_ifa != ifa))
 		error = EINVAL;
-	else if (ifa_ifwithaddr(gateway))
-		error = EHOSTUNREACH;
+	else {
+		int s = pserialize_read_enter();
+		struct ifaddr *_ifa;
+
+		_ifa = ifa_ifwithaddr(gateway);
+		if (_ifa != NULL)
+			error = EHOSTUNREACH;
+		pserialize_read_exit(s);
+	}
 	if (error)
 		goto done;
 	/*
@@ -577,6 +588,7 @@ out:
 	info.rti_info[RTAX_NETMASK] = netmask;
 	info.rti_info[RTAX_AUTHOR] = src;
 	rt_missmsg(RTM_REDIRECT, &info, flags, error);
+	ifa_release(ifa, &psref);
 }
 
 /*
@@ -607,10 +619,11 @@ rtdeletemsg(struct rtentry *rt)
 }
 
 struct ifaddr *
-ifa_ifwithroute(int flags, const struct sockaddr *dst,
-	const struct sockaddr *gateway)
+ifa_ifwithroute_psref(int flags, const struct sockaddr *dst,
+	const struct sockaddr *gateway, struct psref *psref)
 {
-	struct ifaddr *ifa;
+	struct ifaddr *ifa = NULL;
+
 	if ((flags & RTF_GATEWAY) == 0) {
 		/*
 		 * If we are adding a route to an interface,
@@ -619,35 +632,55 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 		 * as our clue to the interface.  Otherwise
 		 * we can use the local address.
 		 */
-		ifa = NULL;
 		if ((flags & RTF_HOST) && gateway->sa_family != AF_LINK)
-			ifa = ifa_ifwithdstaddr(dst);
+			ifa = ifa_ifwithdstaddr_psref(dst, psref);
 		if (ifa == NULL)
-			ifa = ifa_ifwithaddr(gateway);
+			ifa = ifa_ifwithaddr_psref(gateway, psref);
 	} else {
 		/*
 		 * If we are adding a route to a remote net
 		 * or host, the gateway may still be on the
 		 * other end of a pt to pt link.
 		 */
-		ifa = ifa_ifwithdstaddr(gateway);
+		ifa = ifa_ifwithdstaddr_psref(gateway, psref);
 	}
 	if (ifa == NULL)
-		ifa = ifa_ifwithnet(gateway);
+		ifa = ifa_ifwithnet_psref(gateway, psref);
 	if (ifa == NULL) {
-		struct rtentry *rt = rtalloc1(dst, 0);
+		int s;
+		struct rtentry *rt;
+
+		rt = rtalloc1(dst, 0);
 		if (rt == NULL)
 			return NULL;
-		ifa = rt->rt_ifa;
+		/*
+		 * Just in case. May not need to do this workaround.
+		 * Revisit when working on rtentry MP-ification.
+		 */
+		s = pserialize_read_enter();
+		IFADDR_READER_FOREACH(ifa, rt->rt_ifp) {
+			if (ifa == rt->rt_ifa)
+				break;
+		}
+		if (ifa != NULL)
+			ifa_acquire(ifa, psref);
+		pserialize_read_exit(s);
 		rtfree(rt);
 		if (ifa == NULL)
 			return NULL;
 	}
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
-		struct ifaddr *oifa = ifa;
-		ifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
-		if (ifa == NULL)
-			ifa = oifa;
+		struct ifaddr *nifa;
+		int s;
+
+		s = pserialize_read_enter();
+		nifa = ifaof_ifpforaddr(dst, ifa->ifa_ifp);
+		if (nifa != NULL) {
+			ifa_release(ifa, psref);
+			ifa_acquire(nifa, psref);
+			ifa = nifa;
+		}
+		pserialize_read_exit(s);
 	}
 	return ifa;
 }
@@ -696,48 +729,69 @@ rtrequest_newmsg(const int req, const struct sockaddr *dst,
 	return 0;
 }
 
-int
-rt_getifa(struct rt_addrinfo *info)
+struct ifnet *
+rt_getifp(struct rt_addrinfo *info, struct psref *psref)
 {
-	struct ifaddr *ifa;
-	const struct sockaddr *dst = info->rti_info[RTAX_DST];
-	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
-	const struct sockaddr *ifaaddr = info->rti_info[RTAX_IFA];
 	const struct sockaddr *ifpaddr = info->rti_info[RTAX_IFP];
-	int flags = info->rti_flags;
 
+	if (info->rti_ifp != NULL)
+		return NULL;
 	/*
 	 * ifp may be specified by sockaddr_dl when protocol address
 	 * is ambiguous
 	 */
-	if (info->rti_ifp == NULL && ifpaddr != NULL
-	    && ifpaddr->sa_family == AF_LINK &&
-	    (ifa = ifa_ifwithnet(ifpaddr)) != NULL)
-		info->rti_ifp = ifa->ifa_ifp;
-	if (info->rti_ifa == NULL && ifaaddr != NULL)
-		info->rti_ifa = ifa_ifwithaddr(ifaaddr);
-	if (info->rti_ifa == NULL) {
-		const struct sockaddr *sa;
+	if (ifpaddr != NULL && ifpaddr->sa_family == AF_LINK) {
+		struct ifaddr *ifa;
+		int s = pserialize_read_enter();
 
-		sa = ifaaddr != NULL ? ifaaddr :
-		    (gateway != NULL ? gateway : dst);
-		if (sa != NULL && info->rti_ifp != NULL)
-			info->rti_ifa = ifaof_ifpforaddr(sa, info->rti_ifp);
-		else if (dst != NULL && gateway != NULL)
-			info->rti_ifa = ifa_ifwithroute(flags, dst, gateway);
-		else if (sa != NULL)
-			info->rti_ifa = ifa_ifwithroute(flags, sa, sa);
+		ifa = ifa_ifwithnet(ifpaddr);
+		if (ifa != NULL)
+			info->rti_ifp = if_get_byindex(ifa->ifa_ifp->if_index,
+			    psref);
+		pserialize_read_exit(s);
 	}
-	if ((ifa = info->rti_ifa) == NULL)
-		return ENETUNREACH;
+
+	return info->rti_ifp;
+}
+
+struct ifaddr *
+rt_getifa(struct rt_addrinfo *info, struct psref *psref)
+{
+	struct ifaddr *ifa = NULL;
+	const struct sockaddr *dst = info->rti_info[RTAX_DST];
+	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
+	const struct sockaddr *ifaaddr = info->rti_info[RTAX_IFA];
+	int flags = info->rti_flags;
+	const struct sockaddr *sa;
+
+	if (info->rti_ifa == NULL && ifaaddr != NULL) {
+		ifa = ifa_ifwithaddr_psref(ifaaddr, psref);
+		if (ifa != NULL)
+			goto got;
+	}
+
+	sa = ifaaddr != NULL ? ifaaddr :
+	    (gateway != NULL ? gateway : dst);
+	if (sa != NULL && info->rti_ifp != NULL)
+		ifa = ifaof_ifpforaddr_psref(sa, info->rti_ifp, psref);
+	else if (dst != NULL && gateway != NULL)
+		ifa = ifa_ifwithroute_psref(flags, dst, gateway, psref);
+	else if (sa != NULL)
+		ifa = ifa_ifwithroute_psref(flags, sa, sa, psref);
+	if (ifa == NULL)
+		return NULL;
+got:
 	if (ifa->ifa_getifa != NULL) {
-		info->rti_ifa = ifa = (*ifa->ifa_getifa)(ifa, dst);
+		/* FIXME NOMPSAFE */
+		ifa = (*ifa->ifa_getifa)(ifa, dst);
 		if (ifa == NULL)
-			return ENETUNREACH;
+			return NULL;
+		ifa_acquire(ifa, psref);
 	}
+	info->rti_ifa = ifa;
 	if (info->rti_ifp == NULL)
 		info->rti_ifp = ifa->ifa_ifp;
-	return 0;
+	return ifa;
 }
 
 /*
@@ -747,18 +801,23 @@ rt_getifa(struct rt_addrinfo *info)
 int
 rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 {
-	int s = splsoftnet();
+	int s = splsoftnet(), ss;
 	int error = 0, rc;
 	struct rtentry *rt;
 	rtbl_t *rtbl;
-	struct ifaddr *ifa, *ifa2;
+	struct ifaddr *ifa = NULL, *ifa2 = NULL;
 	struct sockaddr_storage maskeddst;
 	const struct sockaddr *dst = info->rti_info[RTAX_DST];
 	const struct sockaddr *gateway = info->rti_info[RTAX_GATEWAY];
 	const struct sockaddr *netmask = info->rti_info[RTAX_NETMASK];
 	int flags = info->rti_flags;
+	struct psref psref_ifp, psref_ifa;
+	int bound = 0;
+	struct ifnet *ifp = NULL;
+	bool need_to_release_ifa = true;
 #define senderr(x) { error = x ; goto bad; }
 
+	bound = curlwp_bind();
 	if ((rtbl = rt_gettable(dst->sa_family)) == NULL)
 		senderr(ESRCH);
 	if (flags & RTF_HOST)
@@ -785,6 +844,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			}
 			if (ifa->ifa_rtrequest)
 				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+			ifa = NULL;
 		}
 		rttrash++;
 		if (ret_nrt) {
@@ -799,9 +859,16 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		break;
 
 	case RTM_ADD:
-		if (info->rti_ifa == NULL && (error = rt_getifa(info)))
-			senderr(error);
-		ifa = info->rti_ifa;
+		if (info->rti_ifa == NULL) {
+			ifp = rt_getifp(info, &psref_ifp);
+			ifa = rt_getifa(info, &psref_ifa);
+			if (ifa == NULL)
+				senderr(ENETUNREACH);
+		} else {
+			/* Caller should have a reference of ifa */
+			ifa = info->rti_ifa;
+			need_to_release_ifa = false;
+		}
 		rt = pool_get(&rtentry_pool, PR_NOWAIT);
 		if (rt == NULL)
 			senderr(ENOBUFS);
@@ -832,17 +899,23 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 				senderr(ENOBUFS);
 		}
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-		if (info->rti_info[RTAX_IFP] != NULL &&
-		    (ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP])) != NULL &&
-		    ifa2->ifa_ifp != NULL)
-			rt->rt_ifp = ifa2->ifa_ifp;
-		else
+
+		ss = pserialize_read_enter();
+		if (info->rti_info[RTAX_IFP] != NULL) {
+			ifa2 = ifa_ifwithnet(info->rti_info[RTAX_IFP]);
+			if (ifa2 != NULL)
+				rt->rt_ifp = ifa2->ifa_ifp;
+			else
+				rt->rt_ifp = ifa->ifa_ifp;
+		} else
 			rt->rt_ifp = ifa->ifa_ifp;
+		pserialize_read_exit(ss);
+
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		rc = rt_addaddr(rtbl, rt, netmask);
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (rc != 0) {
-			ifafree(ifa);
+			ifafree(ifa); /* for rt_set_ifa above */
 			rt_destroy(rt);
 			pool_put(&rtentry_pool, rt);
 			senderr(rc);
@@ -850,6 +923,11 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, info);
+		if (need_to_release_ifa)
+			ifa_release(ifa, &psref_ifa);
+		ifa = NULL;
+		if_put(ifp, &psref_ifp);
+		ifp = NULL;
 		RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 		if (ret_nrt) {
 			*ret_nrt = rt;
@@ -872,6 +950,10 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		break;
 	}
 bad:
+	if (need_to_release_ifa)
+		ifa_release(ifa, &psref_ifa);
+	if_put(ifp, &psref_ifp);
+	curlwp_bindx(bound);
 	splx(s);
 	return error;
 }
@@ -1147,13 +1229,21 @@ static int rt_init_done = 0;
  * that this is run when the first queue is added...
  */
 
+static void rt_timer_work(struct work *, void *);
+
 void
 rt_timer_init(void)
 {
+	int error;
+
 	assert(rt_init_done == 0);
 
 	LIST_INIT(&rttimer_queue_head);
-	callout_init(&rt_timer_ch, 0);
+	callout_init(&rt_timer_ch, CALLOUT_MPSAFE);
+	error = workqueue_create(&rt_timer_wq, "rt_timer",
+	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	if (error)
+		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 	rt_init_done = 1;
 }
@@ -1287,9 +1377,8 @@ rt_timer_add(struct rtentry *rt,
 	return 0;
 }
 
-/* ARGSUSED */
-void
-rt_timer_timer(void *arg)
+static void
+rt_timer_work(struct work *wk, void *arg)
 {
 	struct rttimer_queue *rtq;
 	struct rttimer *r;
@@ -1313,6 +1402,13 @@ rt_timer_timer(void *arg)
 	splx(s);
 
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
+}
+
+void
+rt_timer_timer(void *arg)
+{
+
+	workqueue_enqueue(rt_timer_wq, &rt_timer_wk, NULL);
 }
 
 static struct rtentry *
@@ -1393,12 +1489,12 @@ static void
 rtcache_clear_rtentry(int family, struct rtentry *rt)
 {
 	struct domain *dom;
-	struct route *ro;
+	struct route *ro, *nro;
 
 	if ((dom = pffinddomain(family)) == NULL)
 		return;
 
-	LIST_FOREACH(ro, &dom->dom_rtcache, ro_rtcache_next) {
+	LIST_FOREACH_SAFE(ro, &dom->dom_rtcache, ro_rtcache_next, nro) {
 		if (ro->_ro_rt == rt)
 			rtcache_clear(ro);
 	}

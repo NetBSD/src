@@ -1,25 +1,25 @@
-/* $NetBSD: sbbrz_pci.c,v 1.5.6.1 2015/12/27 12:09:39 skrll Exp $ */
+/* $NetBSD: sbbrz_pci.c,v 1.5.6.2 2016/10/05 20:55:32 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
  * Broadcom Corporation. All rights reserved.
- * 
+ *
  * This software is furnished under license and may be used and copied only
  * in accordance with the following terms and conditions.  Subject to these
  * conditions, you may download, copy, install, use, modify and distribute
  * modified or unmodified copies of this software in source and/or binary
  * form. No title or ownership is transferred hereby.
- * 
+ *
  * 1) Any source code used, modified or distributed must reproduce and
  *    retain this copyright notice and list of conditions as they appear in
  *    the source file.
- * 
+ *
  * 2) No right is granted to use any trade name, trademark, or logo of
  *    Broadcom Corporation. Neither the "Broadcom Corporation" name nor any
  *    trademark or logo of Broadcom Corporation may be used to endorse or
  *    promote products derived from this software without the prior written
  *    permission of Broadcom Corporation.
- * 
+ *
  * 3) THIS SOFTWARE IS PROVIDED "AS-IS" AND ANY EXPRESS OR IMPLIED
  *    WARRANTIES, INCLUDING BUT NOT LIMITED TO, ANY IMPLIED WARRANTIES OF
  *    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR
@@ -40,17 +40,17 @@
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.5.6.1 2015/12/27 12:09:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbbrz_pci.c,v 1.5.6.2 2016/10/05 20:55:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ sbbrz_pci_bus_maxdevs(void *cpv, int busno)
 		return 32;
 
 	/* If the PCI on the 1250, 32 devices if host mode, otherwise only 2. */
-	regval = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
+	regval = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
 	host = (regval & M_SYS_PCI_HOST) != 0;
 
 	return (host ? 32 : 2);
@@ -192,7 +192,7 @@ sbbrz_pci_conf_read(void *cpv, pcitag_t tag, int offset)
 	if (badaddr64(addr, 4) != 0)
 		return 0xffffffff;
 
-	return mips3_lw_a64(addr);
+	return mips3_ld(addr);
 }
 
 void
@@ -211,7 +211,7 @@ sbbrz_pci_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	addr = A_PHYS_LDTPCI_CFG_MATCH_BITS + tag + offset;
 	addr = MIPS_PHYS_TO_XKPHYS(MIPS3_TLB_ATTR_UNCACHED, addr);
 
-	return mips3_sw_a64(addr, data);
+	return mips3_sd(addr, data);
 }
 
 int

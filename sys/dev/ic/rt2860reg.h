@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2860reg.h,v 1.1.20.2 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: rt2860reg.h,v 1.1.20.3 2016/10/05 20:55:41 skrll Exp $	*/
 /*	$OpenBSD: rt2860reg.h,v 1.32 2014/05/24 10:10:17 stsp Exp $	*/
 
 /*-
@@ -82,6 +82,8 @@
 #define RT3090_OSC_CTRL			0x05a4
 #define RT3070_LDO_CFG0			0x05d4
 #define RT3070_GPIO_SWITCH		0x05dc
+
+
 
 /* RT5592 registers */
 #define RT5592_DEBUG_INDEX		0x05e8
@@ -782,6 +784,12 @@
 
 /* possible flags for RT3053 RF register 51 */
 #define RT3593_TX_LO1	(1U << 4)
+
+/* Possible flags for RT5390 RF register 2. */
+#define RT5390_RESCAL	(1 << 7)
+
+/* Possible flags for RT5390 RF register 3. */
+#define RT5390_VCOCAL	(1 << 7)
 
 /* Possible flags for RT5390 BBP register 4. */
 #define RT5390_MAC_IF_CTRL	(1U << 6)

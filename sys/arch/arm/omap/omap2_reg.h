@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.28.4.4 2016/07/09 20:24:50 skrll Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.28.4.5 2016/10/05 20:55:25 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -788,6 +788,23 @@
 #define	GPIO4_BASE_TI_DM37XX		0x49054000
 #define	GPIO5_BASE_TI_DM37XX		0x49056000
 #define	GPIO6_BASE_TI_DM37XX		0x49058000
+
+#define	GPIO_SIZE2			0x100
+
+#define	GPIO_REVISION			0x000
+#define	GPIO_SYSCONFIG			0x010
+#define	GPIO_EOI			0x020	/* AM33xx */
+#define	GPIO_IRQSTATUS_RAW_0		0x024
+#define	GPIO_IRQSTATUS_RAW_1		0x028
+#define	GPIO_IRQSTATUS_0		0x02c
+#define	GPIO_IRQSTATUS_1		0x030
+#define	GPIO_IRQSTATUS_SET_0		0x034
+#define	GPIO_IRQSTATUS_SET_1		0x038
+#define	GPIO_IRQSTATUS_CLR_0		0x03c
+#define	GPIO_IRQSTATUS_CLR_1		0x040
+#define	GPIO_IRQWAKEN_0			0x044
+#define	GPIO_IRQWAKEN_1			0x048
+#define	GPIO_SYSSTATUS			0x114
 
 #define	GPIO_IRQSTATUS1			0x018
 #define	GPIO_IRQENABLE1			0x01c

@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.9.6.1 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: gffb.c,v 1.9.6.2 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.9.6.1 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.9.6.2 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,8 +112,7 @@ static void	gffb_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(gffb, sizeof(struct gffb_softc),
     gffb_match, gffb_attach, NULL, NULL);
 
-static int	gffb_ioctl(void *, void *, u_long, void *, int,
-			     struct lwp *);
+static int	gffb_ioctl(void *, void *, u_long, void *, int, struct lwp *);
 static paddr_t	gffb_mmap(void *, void *, off_t, int);
 static void	gffb_init_screen(void *, struct vcons_screen *, int, long *);
 
@@ -130,8 +129,7 @@ static void	gffb_sync(struct gffb_softc *);
 
 static void	gffb_rectfill(struct gffb_softc *, int, int, int, int,
 			    uint32_t);
-static void	gffb_bitblt(void *, int, int, int, int, int,
-			    int, int);
+static void	gffb_bitblt(void *, int, int, int, int, int, int, int);
 static void	gffb_rop(struct gffb_softc *, int);
 
 static void	gffb_cursor(void *, int, int, int);
@@ -276,7 +274,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	 */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	/* init engine here */	
+	/* init engine here */
 	gffb_init(sc);
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
@@ -297,19 +295,19 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 		gffb_rectfill(sc, 0, 0, sc->sc_width, sc->sc_height,
 		    ri->ri_devcmap[(defattr >> 16) & 0xf]);
-		
+
 		sc->sc_defaultscreen_descr.textops = &ri->ri_ops;
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		
+
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
 				ri->ri_font->fontwidth,
 				ri->ri_font->fontheight,
 				defattr);
-		
+
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
 		vcons_replay_msgbuf(&sc->sc_console_screen);
@@ -324,7 +322,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 			    &defattr);
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
-		
+
 		glyphcache_init(&sc->sc_gc, sc->sc_height + 5,
 				(0x800000 / sc->sc_stride) - sc->sc_height - 5,
 				sc->sc_width,
@@ -360,7 +358,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 			    (i + j ) & 1 ? 0xe0e0e0e0 : 0x03030303);
 		}
 	}
-	
+
 	gffb_rectfill(sc, 0, 800, 1280, 224, 0x92929292);
 	gffb_bitblt(sc, 0, 10, 10, 810, 200, 20, 0xcc);
 	gffb_bitblt(sc, 0, 10, 10, 840, 300, 20, 0xcc);
@@ -378,8 +376,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
-	struct lwp *l)
+gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct vcons_data *vd = v;
 	struct gffb_softc *sc = vd->cookie;
@@ -398,7 +395,7 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		    cmd, data, flag, l);
 
 	case WSDISPLAYIO_GET_BUSID:
-		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc, 
+		return wsdisplayio_busid_pci(sc->sc_dev, sc->sc_pc,
 		    sc->sc_pcitag, data);
 
 	case WSDISPLAYIO_GINFO:
@@ -439,7 +436,7 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		}
 		return 0;
-	
+
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
@@ -485,7 +482,7 @@ gffb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
-	if ((offset >= sc->sc_reg) && 
+	if ((offset >= sc->sc_reg) &&
 	    (offset < (sc->sc_reg + sc->sc_regsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 		    BUS_SPACE_MAP_LINEAR);
@@ -636,7 +633,7 @@ gffb_putpalreg(struct gffb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
 	    GFFB_PDIO1 + GFFB_PEL_D, g);
 	bus_space_write_1(sc->sc_memt, sc->sc_regh,
 	    GFFB_PDIO1 + GFFB_PEL_D, b);
-	
+
 	return 0;
 }
 
@@ -680,7 +677,7 @@ gffb_dmastart(struct gffb_softc *sc, uint32_t tag, int size)
 
 #define SKIPS  8
 
-static void 
+static void
 gffb_make_room(struct gffb_softc *sc, int size)
 {
 	uint32_t get;
@@ -759,7 +756,7 @@ gffb_init(struct gffb_softc *sc)
 	GFFB_WRITE_4(GFFB_CRTC1 + GFFB_DISPLAYSTART, 0x2000);
 	GFFB_WRITE_4(GFFB_PDIO0 + GFFB_PEL_MASK, 0xff);
 	GFFB_WRITE_4(GFFB_PDIO1 + GFFB_PEL_MASK, 0xff);
-	
+
 	/* DMA stuff. A whole lot of magic number voodoo from xf86-video-nv */
 	GFFB_WRITE_4(GFFB_PMC + 0x140, 0);
 	GFFB_WRITE_4(GFFB_PMC + 0x200, 0xffff00ff);
@@ -931,7 +928,7 @@ gffb_init(struct gffb_softc *sc)
 
 	for(i = 0; i < SKIPS; i++)
 		gffb_dmanext(sc, 0);
-	
+
 	gffb_dmanext(sc, 0x00040000);
 	gffb_dmanext(sc, 0x80000010);
 	gffb_dmanext(sc, 0x00042000);
@@ -967,7 +964,7 @@ gffb_init(struct gffb_softc *sc)
 	gffb_dmanext(sc, 0xffffffff);
 	gffb_dmanext(sc, 0xffffffff);
 	gffb_dmanext(sc, 0xffffffff);
-	
+
 	gffb_dmastart(sc, ROP_SET, 1);
 	gffb_dmanext(sc, 0xcc);
 	sc->sc_rop = 0xcc;
@@ -975,7 +972,7 @@ gffb_init(struct gffb_softc *sc)
 	gffb_dma_kickoff(sc);
 	gffb_sync(sc);
 	DPRINTF("put %x current %x\n", sc->sc_put, sc->sc_current);
-	
+
 }
 
 static void
@@ -986,7 +983,7 @@ gffb_rop(struct gffb_softc *sc, int rop)
 	sc->sc_rop = rop;
 	gffb_dmastart(sc, ROP_SET, 1);
 	gffb_dmanext(sc, rop);
-}	
+}
 
 static void
 gffb_rectfill(struct gffb_softc *sc, int x, int y, int wi, int he,
@@ -1030,10 +1027,10 @@ gffb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -1067,7 +1064,7 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	int x, y, wi, he, rv = GC_NOPE;
 	uint32_t bg;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1075,11 +1072,11 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	wi = font->fontwidth;
 	he = font->fontheight;
-	
+
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-	
+
 	if (c == 0x20) {
 		gffb_rectfill(sc, x, y, wi, he, bg);
 		return;
@@ -1106,7 +1103,7 @@ gffb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1124,7 +1121,7 @@ gffb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1161,7 +1158,7 @@ gffb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;

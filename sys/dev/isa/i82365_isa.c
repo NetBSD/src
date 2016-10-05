@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.34 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.34.14.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.34 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isa.c,v 1.34.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #define	PCICISADEBUG
 
@@ -193,18 +193,19 @@ pcic_isa_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
 
+	aprint_naive("\n");
 	sc->dev = self;
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, PCIC_IOSIZE, 0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
 	/* Map mem space. */
 	if (bus_space_map(memt, ia->ia_iomem[0].ir_addr,
 	    ia->ia_iomem[0].ir_size, 0, &memh)) {
-		printf(": can't map mem space\n");
+		aprint_error(": can't map mem space\n");
 		return;
 	}
 
@@ -224,7 +225,7 @@ pcic_isa_attach(device_t parent, device_t self, void *aux)
 	else
 		sc->irq = ISA_UNKNOWN_IRQ;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	pcic_attach(sc);
 	pcic_isa_bus_width_probe(sc, iot, ioh, ia->ia_io[0].ir_addr,

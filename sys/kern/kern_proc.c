@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.193.4.3 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.193.4.4 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.193.4.3 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.193.4.4 2016/10/05 20:56:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -480,7 +480,7 @@ proc0_init(void)
 	 * share proc0's vmspace, and thus, the kernel pmap.
 	 */
 	uvmspace_init(&vmspace0, pmap_kernel(), round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS),
+	    trunc_page(VM_MAXUSER_ADDRESS),
 #ifdef __USE_TOPDOWN_VM
 	    true
 #else
@@ -1354,7 +1354,7 @@ proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 /*
  * Acquire a write lock on the process credential.
  */
-void 
+void
 proc_crmod_enter(void)
 {
 	struct lwp *l = curlwp;
@@ -1588,7 +1588,7 @@ static struct lwp *
 proc_active_lwp(struct proc *p)
 {
 	static const int ostat[] = {
-		0,	
+		0,
 		2,	/* LSIDL */
 		6,	/* LSRUN */
 		5,	/* LSSLEEP */
@@ -1770,7 +1770,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		/*
 		 * Grab a hold on the process.
 		 */
-		if (mmmbrains) { 
+		if (mmmbrains) {
 			zombie = true;
 		} else {
 			zombie = !rw_tryenter(&p->p_reflock, RW_READER);
@@ -2052,12 +2052,6 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 		goto done;
 	}
 
-#ifdef COMPAT_NETBSD32
-	if (p->p_flag & PK_32)
-		entry_len = sizeof(netbsd32_charp);
-	else
-#endif
-		entry_len = sizeof(char *);
 
 	/*
 	 * Now copy each string.
@@ -2065,6 +2059,7 @@ copy_procargs(struct proc *p, int oid, size_t *limit,
 	len = 0; /* bytes written to user buffer */
 	loaded = 0; /* bytes from argv already processed */
 	i = 0; /* To make compiler happy */
+	entry_len = PROC_PTRSZ(p);
 
 	for (; argvlen; --argvlen) {
 		int finished = 0;

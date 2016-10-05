@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.8 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.9 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -511,9 +511,6 @@ if_is_link_state_changeable(struct ifnet *ifp)
 #define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
 	KASSERT(!rw_lock_held((ifp)->if_afdata_lock))
 
-#define IFQ_LOCK(_ifq)		if ((_ifq)->ifq_lock) mutex_enter((_ifq)->ifq_lock)
-#define IFQ_UNLOCK(_ifq)	if ((_ifq)->ifq_lock) mutex_exit((_ifq)->ifq_lock)
-
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
  * input routines have queues of messages stored on ifqueue structures
@@ -601,6 +598,7 @@ struct ifaddr {
 	int16_t	ifa_preference;	/* preference level for this address */
 #ifdef _KERNEL
 	struct pslist_entry     ifa_pslist_entry;
+	struct psref_target	ifa_psref;
 #endif
 };
 #define	IFA_ROUTE	RTF_UP	/* (0x01) route installed */
@@ -636,10 +634,12 @@ struct ifa_msghdr {
 				/* to skip over non-understood messages */
 	u_char	ifam_version;	/* future binary compatibility */
 	u_char	ifam_type;	/* message type */
-	int	ifam_addrs;	/* like rtm_addrs */
-	int	ifam_flags;	/* value of ifa_flags */
-	int	ifam_metric;	/* value of ifa_metric */
 	u_short	ifam_index;	/* index for associated ifp */
+	int	ifam_flags;	/* value of ifa_flags */
+	int	ifam_addrs;	/* like rtm_addrs */
+	pid_t	ifam_pid;	/* identify sender */
+	int	ifam_addrflags;	/* family specific address flags */
+	int	ifam_metric;	/* value of ifa_metric */
 };
 
 /*
@@ -806,7 +806,7 @@ struct if_addrprefreq {
 #ifdef ALTQ
 #define IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED((ifq)))					\
 		ALTQ_ENQUEUE((ifq), (m), (err));			\
 	else {								\
@@ -820,41 +820,41 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (TBR_IS_ENABLED((ifq)))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_REMOVE);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_DEQUEUE((ifq), (m));				\
 	else								\
 		IF_DEQUEUE((ifq), (m));					\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (TBR_IS_ENABLED((ifq)))					\
 		(m) = tbr_dequeue((ifq), ALTDQ_POLL);			\
 	else if (ALTQ_IS_ENABLED((ifq)))				\
 		ALTQ_POLL((ifq), (m));					\
 	else								\
 		IF_POLL((ifq), (m));					\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED((ifq)))					\
 		ALTQ_PURGE((ifq));					\
 	else								\
 		IF_PURGE((ifq));					\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)						\
@@ -864,7 +864,7 @@ do {									\
 
 #define	IFQ_CLASSIFY(ifq, m, af)					\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (ALTQ_IS_ENABLED((ifq))) {					\
 		if (ALTQ_NEEDS_CLASSIFY((ifq)))				\
 			m->m_pkthdr.pattr_class = (*(ifq)->altq_classify) \
@@ -872,12 +872,12 @@ do {									\
 		m->m_pkthdr.pattr_af = (af);				\
 		m->m_pkthdr.pattr_hdr = mtod((m), void *);		\
 	}								\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 #else /* ! ALTQ */
 #define	IFQ_ENQUEUE(ifq, m, err)					\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	if (IF_QFULL((ifq))) {						\
 		m_freem((m));						\
 		(err) = ENOBUFS;					\
@@ -887,28 +887,28 @@ do {									\
 	}								\
 	if ((err))							\
 		(ifq)->ifq_drops++;					\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_DEQUEUE(ifq, m)						\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	IF_DEQUEUE((ifq), (m));						\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_POLL(ifq, m)						\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	IF_POLL((ifq), (m));						\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_PURGE(ifq)							\
 do {									\
-	IFQ_LOCK((ifq));						\
+	mutex_enter((ifq)->ifq_lock);					\
 	IF_PURGE((ifq));						\
-	IFQ_UNLOCK((ifq));						\
+	mutex_exit((ifq)->ifq_lock);					\
 } while (/*CONSTCOND*/ 0)
 
 #define	IFQ_SET_READY(ifq)	/* nothing */
@@ -916,6 +916,11 @@ do {									\
 #define	IFQ_CLASSIFY(ifq, m, af) /* nothing */
 
 #endif /* ALTQ */
+
+#define IFQ_LOCK_INIT(ifq)	(ifq)->ifq_lock =			\
+	    mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET)
+#define IFQ_LOCK(ifq)		mutex_enter((ifq)->ifq_lock)
+#define IFQ_UNLOCK(ifq)		mutex_exit((ifq)->ifq_lock)
 
 #define	IFQ_IS_EMPTY(ifq)		IF_IS_EMPTY((ifq))
 #define	IFQ_INC_LEN(ifq)		((ifq)->ifq_len++)
@@ -987,17 +992,29 @@ void
 void ifa_insert(struct ifnet *, struct ifaddr *);
 void ifa_remove(struct ifnet *, struct ifaddr *);
 
+void	ifa_psref_init(struct ifaddr *);
+void	ifa_acquire(struct ifaddr *, struct psref *);
+void	ifa_release(struct ifaddr *, struct psref *);
+bool	ifa_held(struct ifaddr *);
+
 void	ifaref(struct ifaddr *);
 void	ifafree(struct ifaddr *);
 
 struct	ifaddr *ifa_ifwithaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithaddr_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithaf(int);
 struct	ifaddr *ifa_ifwithdstaddr(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithdstaddr_psref(const struct sockaddr *,
+	    struct psref *);
 struct	ifaddr *ifa_ifwithnet(const struct sockaddr *);
+struct	ifaddr *ifa_ifwithnet_psref(const struct sockaddr *, struct psref *);
 struct	ifaddr *ifa_ifwithladdr(const struct sockaddr *);
-struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
-					const struct sockaddr *);
+struct	ifaddr *ifa_ifwithladdr_psref(const struct sockaddr *, struct psref *);
+struct	ifaddr *ifa_ifwithroute_psref(int, const struct sockaddr *,
+	    const struct sockaddr *, struct psref *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
+struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
+	    struct psref *);
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
@@ -1011,6 +1028,7 @@ int	ifq_enqueue2(struct ifnet *, struct ifqueue *, struct mbuf *);
 
 int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
+void	loopinit(void);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, const struct rtentry *);
 void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);

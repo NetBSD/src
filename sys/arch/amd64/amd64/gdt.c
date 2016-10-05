@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.25.6.1 2015/12/27 12:09:28 skrll Exp $	*/
+/*	$NetBSD: gdt.c,v 1.25.6.2 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.25.6.1 2015/12/27 12:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.25.6.2 2016/10/05 20:55:23 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -64,9 +64,6 @@ int gdt_next;		/* next available slot for sweeping */
 int gdt_free;		/* next free slot; terminated with GNULL_SEL */
 
 void gdt_init(void);
-void gdt_grow(void);
-int gdt_get_slot(void);
-void gdt_put_slot(int);
 
 void
 update_descriptor(void *tp, void *ep)
@@ -88,8 +85,7 @@ update_descriptor(void *tp, void *ep)
 }
 
 void
-set_sys_gdt(int slot, void *base, size_t limit,
-	    int type, int dpl, int gran)
+set_sys_gdt(int slot, void *base, size_t limit, int type, int dpl, int gran)
 {
 	union {
 		struct sys_segment_descriptor sd;
@@ -109,7 +105,8 @@ set_sys_gdt(int slot, void *base, size_t limit,
 }
 
 /*
- * Initialize the GDT.
+ * Initialize the GDT. We already have a gdtstore, which was temporarily used
+ * by the bootstrap code. Now, we allocate a new gdtstore, and put it in cpu0.
  */
 void
 gdt_init(void)
@@ -124,11 +121,18 @@ gdt_init(void)
 	gdt_next = 0;
 	gdt_free = GNULL_SEL;
 	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
+	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
 	old_gdt = gdtstore;
+
+	/* Allocate MAXGDTSIZ bytes of virtual memory. */
 	gdtstore = (char *)uvm_km_alloc(kernel_map, MAXGDTSIZ, 0,
 	    UVM_KMF_VAONLY);
+
+	/*
+	 * Allocate only MINGDTSIZ bytes of physical memory. We will grow this
+	 * area in gdt_grow at run-time if needed.
+	 */
 	for (va = (vaddr_t)gdtstore; va < (vaddr_t)gdtstore + MINGDTSIZ;
 	    va += PAGE_SIZE) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
@@ -139,17 +143,21 @@ gdt_init(void)
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
+
+	/* Copy the initial bootstrap GDT into the new area. */
 	memcpy(gdtstore, old_gdt, DYNSEL_START);
 	ci->ci_gdt = (void *)gdtstore;
 #ifndef XEN
 	set_sys_segment(GDT_ADDR_SYS(gdtstore, GLDT_SEL), ldtstore,
 	    LDT_SIZE - 1, SDT_SYSLDT, SEL_KPL, 0);
 #endif
+
 	gdt_init_cpu(ci);
 }
 
 /*
- * Allocate shadow GDT for a slave CPU.
+ * Allocate shadow GDT for a secondary CPU. It contains the same values as the
+ * GDT present in cpu0 (gdtstore).
  */
 void
 gdt_alloc_cpu(struct cpu_info *ci)
@@ -161,6 +169,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 
 	ci->ci_gdt = (union descriptor *)uvm_km_alloc(kernel_map, max_len,
 	    0, UVM_KMF_VAONLY);
+
 	for (va = (vaddr_t)ci->ci_gdt; va < (vaddr_t)ci->ci_gdt + min_len;
 	    va += PAGE_SIZE) {
 		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO))
@@ -171,19 +180,21 @@ gdt_alloc_cpu(struct cpu_info *ci)
 		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
 	pmap_update(pmap_kernel());
+
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdtstore, gdt_size);
 }
 
-
 /*
- * Load appropriate gdt descriptor; we better be running on *ci
- * (for the most part, this is how a CPU knows who it is).
+ * Load appropriate GDT descriptor into the currently running CPU, which must
+ * be ci.
  */
 void
 gdt_init_cpu(struct cpu_info *ci)
 {
 	struct region_descriptor region;
+
+	KASSERT(curcpu() == ci);
 
 #ifndef XEN
 	setregion(&region, ci->ci_gdt, (uint16_t)(MAXGDTSIZ - 1));
@@ -208,32 +219,41 @@ gdt_reload_cpu(struct cpu_info *ci)
 }
 #endif
 
-
+#if !defined(XEN) || defined(USER_LDT)
 /*
- * Grow or shrink the GDT.
+ * Grow the GDT. The GDT is present on each CPU, so we need to iterate over all
+ * of them. We already have the virtual memory, we only need to grow the
+ * physical memory.
  */
-void
+static void
 gdt_grow(void)
 {
-	size_t old_len, new_len;
+	size_t old_size;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 	struct vm_page *pg;
 	vaddr_t va;
 
-	old_len = gdt_size;
+	old_size = gdt_size;
 	gdt_size <<= 1;
-	new_len = old_len << 1;
+	if (gdt_size > MAXGDTSIZ)
+		gdt_size = MAXGDTSIZ;
 	gdt_dynavail =
-	    (gdt_size - DYNSEL_START) / sizeof (struct sys_segment_descriptor);
+	    (gdt_size - DYNSEL_START) / sizeof(struct sys_segment_descriptor);
 
-	for (va = (vaddr_t)gdtstore + old_len; va < (vaddr_t)gdtstore + new_len;
-	    va += PAGE_SIZE) {
-		while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
-		       NULL) {
-			uvm_wait("gdt_grow");
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (va = (vaddr_t)(ci->ci_gdt) + old_size;
+		     va < (vaddr_t)(ci->ci_gdt) + gdt_size;
+		     va += PAGE_SIZE) {
+			while ((pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO)) ==
+			    NULL) {
+				uvm_wait("gdt_grow");
+			}
+			pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
 		}
-		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
-		    VM_PROT_READ | VM_PROT_WRITE, 0);
 	}
+
 	pmap_update(pmap_kernel());
 }
 
@@ -245,7 +265,7 @@ gdt_grow(void)
  * 3) As a last resort, we increase the size of the GDT, and sweep through
  *    the new slots.
  */
-int
+static int
 gdt_get_slot(void)
 {
 	int slot;
@@ -259,28 +279,23 @@ gdt_get_slot(void)
 		slot = gdt_free;
 		gdt_free = gdt[slot].sd_xx3;	/* XXXfvdl res. field abuse */
 	} else {
-#ifdef DIAGNOSTIC
-		if (gdt_next != gdt_dyncount)
-			panic("gdt_get_slot botch 1");
-#endif
+		KASSERT(gdt_next == gdt_dyncount);
 		if (gdt_next >= gdt_dynavail) {
-#ifdef DIAGNOSTIC
 			if (gdt_size >= MAXGDTSIZ)
-				panic("gdt_get_slot botch 2");
-#endif
+				panic("gdt_get_slot: out of memory");
 			gdt_grow();
 		}
 		slot = gdt_next++;
 	}
 
 	gdt_dyncount++;
-	return (slot);
+	return slot;
 }
 
 /*
  * Deallocate a GDT slot, putting it on the free list.
  */
-void
+static void
 gdt_put_slot(int slot)
 {
 	struct sys_segment_descriptor *gdt;
@@ -294,6 +309,7 @@ gdt_put_slot(int slot)
 	gdt[slot].sd_xx3 = gdt_free;
 	gdt_free = slot;
 }
+#endif
 
 int
 tss_alloc(struct x86_64_tss *tss)
@@ -302,10 +318,13 @@ tss_alloc(struct x86_64_tss *tss)
 	int slot;
 
 	mutex_enter(&cpu_lock);
+
 	slot = gdt_get_slot();
-	set_sys_gdt(slot, tss, sizeof (struct x86_64_tss) - 1,
-	    SDT_SYS386TSS, SEL_KPL, 0);
+	set_sys_gdt(slot, tss, sizeof(struct x86_64_tss) - 1, SDT_SYS386TSS,
+	    SEL_KPL, 0);
+
 	mutex_exit(&cpu_lock);
+
 	return GDYNSEL(slot, SEL_KPL);
 #else  /* XEN */
 	/* TSS, what for? */
@@ -326,29 +345,30 @@ tss_free(int sel)
 }
 
 #ifdef USER_LDT
-void
-ldt_alloc(struct pmap *pmap, char *ldt, size_t len)
+/*
+ * XXX: USER_LDT is not implemented on amd64.
+ */
+int
+ldt_alloc(void *ldtp, size_t len)
 {
 	int slot;
-	struct sys_segment_descriptor *gdt;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	gdt = (struct sys_segment_descriptor *)&gdtstore[DYNSEL_START];
-
 	slot = gdt_get_slot();
-	set_sys_gdt(slot, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0);
-	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
+	set_sys_gdt(slot, ldtp, len - 1, SDT_SYSLDT, SEL_KPL, 0);
+
+	return GDYNSEL(slot, SEL_KPL);
 }
 
 void
-ldt_free(struct pmap *pmap)
+ldt_free(int sel)
 {
 	int slot;
 
 	KASSERT(mutex_owned(&cpu_lock));
 
-	slot = IDXDYNSEL(pmap->pm_ldt_sel);
+	slot = IDXDYNSEL(sel);
 
 	gdt_put_slot(slot);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ecoff_machdep.h,v 1.21 2012/03/20 11:28:04 nonaka Exp $	*/
+/*	$NetBSD: ecoff_machdep.h,v 1.21.16.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -43,7 +43,7 @@
         u_long cprmask[4]; \
         u_long gp_value
 #ifdef _KERNEL
-#include <mips/cpu.h>		/* mips CPU architecture levels */
+#include <mips/locore.h>		/* mips CPU architecture levels */
 #define _MIPS3_OK() CPUISMIPS3
 #else
 #define _MIPS3_OK() /*CONSTCOND*/1

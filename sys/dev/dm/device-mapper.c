@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.35.2.2 2015/09/22 12:05:57 skrll Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.35.2.3 2016/10/05 20:55:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -228,8 +228,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
  *	Autoconfiguration match function for pseudo-device glue.
  */
 static int
-dm_match(device_t parent, cfdata_t match,
-    void *aux)
+dm_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	/* Pseudo-device; always present. */
@@ -242,8 +241,7 @@ dm_match(device_t parent, cfdata_t match,
  *	Autoconfiguration attach function for pseudo-device glue.
  */
 static void
-dm_attach(device_t parent, device_t self,
-    void *aux)
+dm_attach(device_t parent, device_t self, void *aux)
 {
 	return;
 }
@@ -364,7 +362,8 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		if ((r = dm_ioctl_switch(cmd)) != 0)
 			return r;
 
-		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in)) != 0)
+		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in))
+		    != 0)
 			return r;
 
 		if ((r = dm_check_version(dm_dict_in)) != 0)
@@ -386,7 +385,8 @@ cleanup_exit:
  * Translate command sent from libdevmapper to func.
  */
 static int
-dm_cmd_to_fun(prop_dictionary_t dm_dict) {
+dm_cmd_to_fun(prop_dictionary_t dm_dict)
+ {
 	int i, r;
 	prop_string_t command;
 

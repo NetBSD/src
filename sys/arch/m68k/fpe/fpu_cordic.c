@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_cordic.c,v 1.2 2013/04/20 01:48:20 isaki Exp $	*/
+/*	$NetBSD: fpu_cordic.c,v 1.2.16.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.2 2013/04/20 01:48:20 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_cordic.c,v 1.2.16.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <machine/ieee.h>
 
@@ -68,6 +68,9 @@ static struct sfpn atan_table[EXT_FRACBITS];
 static struct sfpn atanh_table[EXT_FRACBITS];
 static struct fpn inv_gain1;
 static struct fpn inv_gain2;
+
+static void fpu_cordit2(struct fpemu *,
+	struct fpn *, struct fpn *, struct fpn *, const struct fpn *);
 
 int
 main(int argc, char *argv[])
@@ -548,7 +551,8 @@ fpu_cordit1(struct fpemu *fe, struct fpn *x0, struct fpn *y0, struct fpn *z0,
 	CPYFPN(z0, &z);
 }
 
-void
+#if defined(CORDIC_BOOTSTRAP)
+static void
 fpu_cordit2(struct fpemu *fe, struct fpn *x0, struct fpn *y0, struct fpn *z0,
 	const struct fpn *vecmode)
 {
@@ -644,3 +648,4 @@ fpu_cordit2(struct fpemu *fe, struct fpn *x0, struct fpn *y0, struct fpn *z0,
 	CPYFPN(y0, &y);
 	CPYFPN(z0, &z);
 }
+#endif /* CORDIC_BOOTSTRAP */

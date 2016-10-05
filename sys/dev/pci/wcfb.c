@@ -1,4 +1,4 @@
-/*	$NetBSD: wcfb.c,v 1.12.14.1 2015/04/06 15:18:12 skrll Exp $ */
+/*	$NetBSD: wcfb.c,v 1.12.14.2 2016/10/05 20:55:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -20,7 +20,7 @@
 /* a driver for (some) 3DLabs Wildcat cards, based on OpenBSD's ifb driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.12.14.1 2015/04/06 15:18:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wcfb.c,v 1.12.14.2 2016/10/05 20:55:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,9 +135,9 @@ static void 	wcfb_putpalreg(struct wcfb_softc *, int, int, int, int);
 static void	wcfb_bitblt(struct wcfb_softc *, int, int, int, int, int,
 			int, uint32_t);
 static void	wcfb_rectfill(struct wcfb_softc *, int, int, int, int, int);
-static void	wcfb_rop_common(struct wcfb_softc *, bus_addr_t, int, int, int, 
+static void	wcfb_rop_common(struct wcfb_softc *, bus_addr_t, int, int, int,
 			int, int, int, uint32_t, int32_t);
-static void	wcfb_rop_jfb(struct wcfb_softc *, int, int, int, int, int, int, 
+static void	wcfb_rop_jfb(struct wcfb_softc *, int, int, int, int, int, int,
 			uint32_t, int32_t);
 static int	wcfb_rop_wait(struct wcfb_softc *);
 
@@ -178,7 +178,7 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	if (!is_console) return;
 #endif
 	sc->sc_memt = pa->pa_memt;
-	sc->sc_iot = pa->pa_iot;	
+	sc->sc_iot = pa->pa_iot;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
@@ -208,13 +208,13 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR0) - sc->sc_fb;
 	sc->sc_fb0 = sc->sc_fbaddr + sc->sc_fb0off;
-	sc->sc_fb1off = 
+	sc->sc_fb1off =
 	    bus_space_read_4(sc->sc_regt, sc->sc_regh,
 	        WC_FB8_ADDR1) - sc->sc_fb;
 	sc->sc_fb1 = sc->sc_fbaddr + sc->sc_fb1off;
 
 	sub = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
-	printf("subsys: %08x\n", sub);
+	aprint_normal("subsys: %08x\n", sub);
 	switch (sub) {
 		case WC_XVR1200:
 			sc->sc_is_jfb = 1;
@@ -232,26 +232,26 @@ wcfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_stride = 1 <<
 	    ((bus_space_read_4(sc->sc_regt, sc->sc_regh, WC_CONFIG) &
 	      0x00ff0000) >> 16);
-	printf("%s: %d x %d, %d\n", device_xname(sc->sc_dev), 
+	aprint_normal_dev(self, "%d x %d, %d\n",
 	    sc->sc_width, sc->sc_height, sc->sc_stride);
 
 	if (sc->sc_is_jfb == 0) {
 		sc->sc_shadow = kmem_alloc(sc->sc_stride * sc->sc_height,
 		    KM_SLEEP);
 		if (sc->sc_shadow == NULL) {
-			printf("%s: failed to allocate shadow buffer\n",
-			    device_xname(self));
+			aprint_error_dev(self,
+			    "failed to allocate shadow buffer\n");
 			return;
 		}
 	}
 
 	for (i = 0x40; i < 0x100; i += 16) {
-		printf("%04x:", i);
+		aprint_normal("%04x:", i);
 		for (j = 0; j < 16; j += 4) {
-			printf(" %08x", bus_space_read_4(sc->sc_regt,
+			aprint_normal(" %08x", bus_space_read_4(sc->sc_regt,
 			    sc->sc_regh, 0x8000 + i + j));
 		}
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	/* make sure video output is on */
@@ -375,7 +375,7 @@ wcfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), 
+	if (kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal_dev(sc->sc_dev, "mmap() rejected.\n");
@@ -467,7 +467,7 @@ wcfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		to1 += sc->sc_stride;
 		from += sc->sc_stride;
 	}
-}	
+}
 
 static void
 wcfb_putpalreg(struct wcfb_softc *sc, int i, int r, int g, int b)
@@ -486,7 +486,7 @@ wcfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int coffset;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 
 		if (ri->ri_flg & RI_CURSOR) {
@@ -495,8 +495,8 @@ wcfb_cursor(void *cookie, int on, int row, int col)
 #ifdef WSDISPLAY_SCROLLSUPPORT
 			coffset += scr->scr_offset_to_zero;
 #endif
-			wcfb_putchar(cookie, ri->ri_crow, 
-			    ri->ri_ccol, scr->scr_chars[coffset], 
+			wcfb_putchar(cookie, ri->ri_crow,
+			    ri->ri_ccol, scr->scr_chars[coffset],
 			    scr->scr_attrs[coffset]);
 			ri->ri_flg &= ~RI_CURSOR;
 		}
@@ -711,7 +711,7 @@ wcfb_rop_jfb(struct wcfb_softc *sc, int sx, int sy, int dx, int dy,
 	if (sc->sc_comm != NULL) {
 		spr = sc->sc_comm[IFB_SHARED_TERM8_SPR >> 2];
 		splr = sc->sc_comm[IFB_SHARED_TERM8_SPLR >> 2];
-	} else 
+	} else
 #endif
 	{
 		/* supposedly sane defaults */
@@ -771,7 +771,7 @@ wcfb_acc_putchar(void *cookie, int row, int col, u_int c, long attr)
 	sc->putchar(ri, row, col, c, attr);
 	/* ... and then blit it into buffer 1 */
 	wcfb_bitblt(sc, x, y, x, y, wi, he, WC_ROP_COPY);
-}	
+}
 
 static void
 wcfb_acc_cursor(void *cookie, int on, int row, int col)
@@ -780,10 +780,10 @@ wcfb_acc_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -814,7 +814,7 @@ wcfb_acc_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -833,7 +833,7 @@ wcfb_acc_erasecols(void *cookie, int row, int startcol, int ncols,
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -870,7 +870,7 @@ wcfb_acc_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct wcfb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.50.4.1 2015/04/06 15:18:19 skrll Exp $	*/
+// /*	$NetBSD: msdosfs_denode.c,v 1.50.4.2 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.50.4.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.50.4.2 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,10 +548,6 @@ msdosfs_reclaim(void *v)
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("msdosfs_reclaim(): pushing active", vp);
-	/*
-	 * Remove the denode from the vnode cache.
-	 */
-	vcache_remove(vp->v_mount, &dep->de_key, sizeof(dep->de_key));
 	/*
 	 * Purge old data structures associated with the denode.
 	 */

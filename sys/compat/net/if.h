@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.3 2011/02/01 01:39:20 matt Exp $	*/
+/*	$NetBSD: if.h,v 1.3.32.1 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -182,5 +182,29 @@ struct if_announcemsghdr50 {
 	char	ifan_name[IFNAMSIZ]; /* if name, e.g. "en0" */
 	u_short	ifan_what;	/* what type of announcement */
 };
+
+#if !defined(_KERNEL) || !defined(COMPAT_RTSOCK)
+#define	__align64	__aligned(sizeof(uint64_t))
+#else
+#define	__align64
+#endif
+/*
+ * Message format for use in obtaining information about interface addresses
+ * from sysctl and the routing socket.
+ */
+struct ifa_msghdr70 {
+	u_short	ifam_msglen __align64;
+				/* to skip over non-understood messages */
+	u_char	ifam_version;	/* future binary compatibility */
+	u_char	ifam_type;	/* message type */
+	int	ifam_addrs;	/* like rtm_addrs */
+	int	ifam_flags;	/* value of ifa_flags */
+	int	ifam_metric;	/* value of ifa_metric */
+	u_short	ifam_index;	/* index for associated ifp */
+};
+#undef __align64
+
+int compat_70_iflist_addr(struct rt_walkarg *, struct ifaddr *,
+    struct rt_addrinfo *);
 
 #endif /* _COMPAT_NET_IF_H_ */

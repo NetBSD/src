@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_intr.c,v 1.1 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: algor_intr.c,v 1.1.30.1 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_intr.c,v 1.1 2011/07/09 16:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_intr.c,v 1.1.30.1 2016/10/05 20:55:23 skrll Exp $");
 
 #define	__INTR_PRIVATE
 #include "opt_algor_p4032.h"
@@ -102,9 +102,9 @@ intr_init(void)
 
 #ifdef evbmips
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t pending)
+evbmips_iointr(int ipl, uint32_t pending, struct clockframe *cf)
 {
-	(*algor_iointr)(ipl, pc, pending);
+	(*algor_iointr)(ipl, cf->pc, pending);
 }
 
 void *

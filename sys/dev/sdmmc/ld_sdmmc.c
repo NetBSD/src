@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_sdmmc.c,v 1.14.2.2 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: ld_sdmmc.c,v 1.14.2.3 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14.2.2 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14.2.3 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -45,10 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: ld_sdmmc.c,v 1.14.2.2 2015/09/22 12:06:00 skrll Exp 
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/kthread.h>
+#include <sys/module.h>
 
 #include <dev/ldvar.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
+
+#include "ioconf.h"
 
 #ifdef LD_SDMMC_DEBUG
 #define DPRINTF(s)	printf s
@@ -147,7 +150,7 @@ ld_sdmmc_doattach(void *arg)
 	struct ld_softc *ld = &sc->sc_ld;
 	struct sdmmc_softc *ssc = device_private(device_parent(ld->sc_dv));
 
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 	aprint_normal_dev(ld->sc_dv, "%d-bit width,", sc->sc_sf->width);
 	if (ssc->sc_transfer_mode != NULL)
 		aprint_normal(" %s,", ssc->sc_transfer_mode);
@@ -243,4 +246,47 @@ ld_sdmmc_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return sdmmc_mem_write_block(sc->sc_sf, blkno, data,
 	    blkcnt * ld->sc_secsize);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_sdmmc, "ld");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_sdmmc_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_sdmmc, cfdata_ioconf_ld_sdmmc);
+        	break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_sdmmc, cfdata_ioconf_ld_sdmmc);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

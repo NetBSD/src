@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5.32.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.32.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,15 +38,9 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.5.32.2 2015/09/22 12:05:47 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.5.32.3 2016/10/05 20:55:32 skrll Exp $")
 
 #include "assym.h"
-
-#if (MIPS1 + MIPS2) > 0
-#define	NOP_L	nop
-#else
-#define	NOP_L	/* nothing */
-#endif
 
 	.data
 	.globl	_C_LABEL(ipl_sr_map)
@@ -140,8 +134,8 @@ STATIC_XLEAF(_splsw_splx_noprof)		# does not get mcount hooks
 1:
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	NOP_L					# load delay
-	or	v1, MIPS_INT_MASK		# set all INT bits
-	xor	v1, a1				# clear any bits for this IPL
+	xor	a1, MIPS_INT_MASK		# invert SR bits
+	or	v1, a1				# set any bits for this IPL
 	DYNAMIC_STATUS_MASK(v1,t0)		# machine dependent masking
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
 	COP0_SYNC
@@ -173,8 +167,6 @@ STATIC_LEAF(_splsw_spl0)
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
 	or	v1, MIPS_SR_INT_IE		# mask sure interrupts are on
 	xor	v1, MIPS_INT_MASK		# invert
-	mtc0	zero, MIPS_COP_0_CAUSE		# clear SOFT_INT bits
-	COP0_SYNC
 	mfc0	a0, MIPS_COP_0_STATUS
 	NOP_L					# load delay
 	or	v0, a0, v1

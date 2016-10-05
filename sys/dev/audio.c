@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.266.2.1 2016/03/23 22:12:03 skrll Exp $	*/
+/*	$NetBSD: audio.c,v 1.266.2.2 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -90,12 +90,12 @@
  *   returned in the second parameter to hw_if->get_locks().  It is known
  *   as the "thread lock".
  *
- *   It serializes access to state in all places except the 
+ *   It serializes access to state in all places except the
  *   driver's interrupt service routine.  This lock is taken from process
  *   context (example: access to /dev/audio).  It is also taken from soft
  *   interrupt handlers in this module, primarily to serialize delivery of
  *   wakeups.  This lock may be used/provided by modules external to the
- *   audio subsystem, so take care not to introduce a lock order problem. 
+ *   audio subsystem, so take care not to introduce a lock order problem.
  *   LONG TERM SLEEPS MUST NOT OCCUR WITH THIS LOCK HELD.
  *
  * - sc_intr_lock, provided by the underlying driver.  This may be either a
@@ -130,7 +130,7 @@
  *	query_encoding		-	x
  *	set_params 		-	x
  *	round_blocksize		-	x
- *	commit_settings		-	x 
+ *	commit_settings		-	x
  *	init_output 		x	x
  *	init_input 		x	x
  *	start_output 		x	x
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.266.2.1 2016/03/23 22:12:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.266.2.2 2016/10/05 20:55:39 skrll Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -320,10 +320,8 @@ void	au_get_gain(struct audio_softc *, struct au_mixer_ports *,
 int	au_set_port(struct audio_softc *, struct au_mixer_ports *,
 			u_int);
 int	au_get_port(struct audio_softc *, struct au_mixer_ports *);
-int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *,
-			int *, int *);
-int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
-			int, int);
+int	au_get_lr_value(struct audio_softc *, mixer_ctrl_t *, int *, int *);
+int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *, int, int);
 int	au_portof(struct audio_softc *, char *, int);
 
 typedef struct uio_fetcher {
@@ -413,7 +411,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_lchan, "audiolk");
 
 	if (hwp == 0 || hwp->get_locks == 0) {
-		printf(": missing method\n");
+		aprint_error(": missing method\n");
 		panic("audioattach");
 	}
 
@@ -431,7 +429,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	    hwp->get_port == 0 ||
 	    hwp->query_devinfo == 0 ||
 	    hwp->get_props == 0) {
-		printf(": missing method\n");
+		aprint_error(": missing method\n");
 		sc->hw_if = 0;
 		return;
 	}
@@ -1686,7 +1684,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	sc->sc_playdrop = 0;
 
 	mutex_enter(sc->sc_intr_lock);
-	sc->sc_full_duplex = 
+	sc->sc_full_duplex =
 		(flags & (FWRITE|FREAD)) == (FWRITE|FREAD) &&
 		(audio_get_props(sc) & AUDIO_PROP_FULLDUPLEX);
 	mutex_exit(sc->sc_intr_lock);
@@ -1846,8 +1844,7 @@ audio_drain(struct audio_softc *sc)
  */
 /* ARGSUSED */
 int
-audio_close(struct audio_softc *sc, int flags, int ifmt,
-    struct lwp *l)
+audio_close(struct audio_softc *sc, int flags, int ifmt, struct lwp *l)
 {
 	const struct audio_hw_if *hw;
 
@@ -3765,9 +3762,11 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	}
 #ifdef AUDIO_DEBUG
 	if (audiodebug > 1 && nr > 0)
-	    audio_print_params("audiosetinfo() After setting record params:", &sc->sc_rparams);
+	    audio_print_params("audiosetinfo() After setting record params:",
+		&sc->sc_rparams);
 	if (audiodebug > 1 && np > 0)
-	    audio_print_params("audiosetinfo() After setting play params:", &sc->sc_pparams);
+	    audio_print_params("audiosetinfo() After setting play params:",
+		&sc->sc_pparams);
 #endif
 
 	if (SPECIFIED(p->port)) {
@@ -4107,8 +4106,7 @@ mixer_signal(struct audio_softc *sc)
  */
 /* ARGSUSED */
 int
-mixer_close(struct audio_softc *sc, int flags, int ifmt,
-    struct lwp *l)
+mixer_close(struct audio_softc *sc, int flags, int ifmt, struct lwp *l)
 {
 
 	KASSERT(mutex_owned(sc->sc_lock));

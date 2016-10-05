@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_tlb.c,v 1.13.6.1 2015/04/06 15:18:00 skrll Exp $	*/
+/*	$NetBSD: e500_tlb.c,v 1.13.6.2 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.13.6.1 2015/04/06 15:18:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_tlb.c,v 1.13.6.2 2016/10/05 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -142,10 +142,10 @@ hwtlb_read(uint32_t mas0, u_int slot)
 	/*
 	 * ESEL is the way we want to look up.
 	 * If tlbassoc is the same as tlbentries (like in TLB1) then the TLB is
-	 * fully associative, the entire slot is placed into ESEL.  If tlbassoc 
+	 * fully associative, the entire slot is placed into ESEL.  If tlbassoc
 	 * is less than the number of tlb entries, the slot is split in two
 	 * fields.  Since the TLB is M rows by N ways, the lowers bits are for
-	 * row (MAS2[EPN]) and the upper for the way (MAS1[ESEL]). 
+	 * row (MAS2[EPN]) and the upper for the way (MAS1[ESEL]).
 	 */
 	const u_int tlbassoc = TLBCFG_ASSOC(tlbcfg);
 	const u_int tlbentries = TLBCFG_NENTRY(tlbcfg);
@@ -167,7 +167,7 @@ hwtlb_read(uint32_t mas0, u_int slot)
 	 * Now select the entry and grab its contents.
 	 */
 	__asm volatile("tlbre");
-	
+
 	hwtlb.hwtlb_mas0 = mfspr(SPR_MAS0);
 	hwtlb.hwtlb_mas1 = mfspr(SPR_MAS1);
 	hwtlb.hwtlb_mas2 = mfspr(SPR_MAS2);
@@ -206,10 +206,10 @@ hwtlb_write(const struct e500_hwtlb hwtlb, bool needs_sync)
 		mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
 		//mtspr(SPR_MAS7, 0);
 	}
-	
+
 #if 0
 	printf("%s->[%x,%x,%x,%x]\n",
-	    __func__, 
+	    __func__,
 	    hwtlb.hwtlb_mas0, hwtlb.hwtlb_mas1,
 	    hwtlb.hwtlb_mas2, hwtlb.hwtlb_mas3);
 #endif
@@ -319,7 +319,7 @@ e500_alloc_tlb1_entry(void)
 		return -1;
 	const u_int slot = tlb1->tlb1_freelist[--tlb1->tlb1_numfree];
 	KASSERT((tlb1->tlb1_entries[slot].e_hwtlb.hwtlb_mas1 & MAS1_V) == 0);
-	tlb1->tlb1_entries[slot].e_hwtlb.hwtlb_mas0 = 
+	tlb1->tlb1_entries[slot].e_hwtlb.hwtlb_mas0 =
 	    MAS0_TLBSEL_TLB1 | __SHIFTIN(slot, MAS0_ESEL);
 	return (int)slot;
 }
@@ -465,7 +465,7 @@ e500_tlb_invalidate_asids(tlb_asid_t asid_lo, tlb_asid_t asid_hi)
 }
 
 static u_int
-e500_tlb_record_asids(u_long *bitmap)
+e500_tlb_record_asids(u_long *bitmap, tlb_asid_t asid_max)
 {
 	const size_t tlbassoc = TLBCFG_ASSOC(mftlb0cfg());
 	const size_t tlbentries = TLBCFG_NENTRY(mftlb0cfg());
@@ -554,7 +554,8 @@ e500_tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 #endif
 			return false;
 		}
-		mtspr(SPR_MAS1, hwtlb.hwtlb_mas1);
+		mas1 = hwtlb.hwtlb_mas1 | MAS1_V;
+		mtspr(SPR_MAS1, mas1);
 	}
 	mtspr(SPR_MAS2, hwtlb.hwtlb_mas2);
 	mtspr(SPR_MAS3, hwtlb.hwtlb_mas3);
@@ -615,8 +616,8 @@ e500_tlb_dump(void (*pr)(const char *, ...))
 				struct e500_tlb tlb = hwtlb_to_tlb(hwtlb);
 				(*pr)("[%zu,%zu]->[%x,%x,%x]",
 				    assoc, atop(epn),
-				    hwtlb.hwtlb_mas1, 
-				    hwtlb.hwtlb_mas2, 
+				    hwtlb.hwtlb_mas1,
+				    hwtlb.hwtlb_mas2,
 				    hwtlb.hwtlb_mas3);
 				(*pr)(": VA=%#lx size=4KB asid=%u pte=%x",
 				    tlb.tlb_va, tlb.tlb_asid, tlb.tlb_pte);
@@ -792,7 +793,7 @@ e500_tlb_ioreserve(vaddr_t va, vsize_t len, pt_entry_t pte)
 	if (slot < 0)
 		return ENOMEM;
 
-	xtlb = &tlb1->tlb1_entries[slot]; 
+	xtlb = &tlb1->tlb1_entries[slot];
 	xtlb->e_tlb.tlb_va = va;
 	xtlb->e_tlb.tlb_size = len;
 	xtlb->e_tlb.tlb_pte = pte;

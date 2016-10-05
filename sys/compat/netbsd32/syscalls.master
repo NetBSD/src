@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.101.4.3 2015/12/27 12:09:47 skrll Exp $
+	$NetBSD: syscalls.master,v 1.101.4.4 2016/10/05 20:55:39 skrll Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -703,7 +703,7 @@
 			    lwpid_t lid, netbsd32_size_t size, \
 			    netbsd32_cpusetp_t cpuset); }
 350	NOARGS 		{ int|sys||sched_yield(void); }
-351	UNIMPL
+351	STD		{ int|netbsd32||_sched_protect(int priority); }
 352	UNIMPL
 353	UNIMPL
 354	STD		{ int|netbsd32||fsync_range(int fd, int flags, \
@@ -1053,4 +1053,9 @@
 			    netbsd32_off_t pos, netbsd32_off_t len); }
 480	STD		{ int|netbsd32||fdiscard(int fd, int PAD, \
 			    netbsd32_off_t pos, netbsd32_off_t len); }
+481	STD 		{ int|netbsd32||wait6(idtype_t idtype, id_t id, \
+			    netbsd32_intp status, int options, \
+			    netbsd32_wrusagep_t wru, netbsd32_siginfop_t info); }
+482	STD		{ int|netbsd32||clock_getcpuclockid2(idtype_t idtype, \
+			    id_t id, netbsd32_clockidp_t clock_id); }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.58.6.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.58.6.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.58.6.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.58.6.2 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -821,11 +821,15 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kmutex_t * const slock = uobj->vmobjlock;
 	off_t off;
-	/* Even for strange MAXPHYS, the shift rounds down to a page */
-#define maxpages (MAXPHYS >> PAGE_SHIFT)
 	int i, error, npages, nback;
 	int freeflag;
-	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
+	/*
+	 * This array is larger than it should so that it's size is constant.
+	 * The right size is MAXPAGES.
+	 */
+	struct vm_page *pgs[MAXPHYS / MIN_PAGE_SIZE];
+#define MAXPAGES (MAXPHYS / PAGE_SIZE)
+	struct vm_page *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
@@ -1084,7 +1088,7 @@ retry:
 			 * first look backward.
 			 */
 
-			npages = MIN(maxpages >> 1, off >> PAGE_SHIFT);
+			npages = MIN(MAXPAGES >> 1, off >> PAGE_SHIFT);
 			nback = npages;
 			uvn_findpages(uobj, off - PAGE_SIZE, &nback, &pgs[0],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY|UFP_BACKWARD);
@@ -1110,7 +1114,7 @@ retry:
 			 * the array of pages.
 			 */
 
-			npages = maxpages - nback - 1;
+			npages = MAXPAGES - nback - 1;
 			uvn_findpages(uobj, off + PAGE_SIZE, &npages,
 			    &pgs[nback + 1],
 			    UFP_NOWAIT|UFP_NOALLOC|UFP_DIRTYONLY);

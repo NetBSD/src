@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.39 2014/03/14 21:59:41 mrg Exp $	*/
+/*	$NetBSD: snapper.c,v 1.39.6.1 2016/10/05 20:55:31 skrll Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.39 2014/03/14 21:59:41 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.39.6.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -756,9 +756,9 @@ snapper_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_odmacmd = dbdma_alloc((SNAPPER_MAXPAGES + 4) * 
-				     sizeof(struct dbdma_command));
+				     sizeof(struct dbdma_command), NULL);
 	sc->sc_idmacmd = dbdma_alloc((SNAPPER_MAXPAGES + 4) * 
-				     sizeof(struct dbdma_command));
+				     sizeof(struct dbdma_command), NULL);
 
 	sc->sc_baseaddr = ca->ca_baseaddr;
 	OF_getprop(soundbus, "reg", reg, sizeof reg);

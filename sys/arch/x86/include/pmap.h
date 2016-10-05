@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55.6.3 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.55.6.4 2016/10/05 20:55:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@ extern struct pmap_head pmaps;
 extern kmutex_t pmaps_lock;    /* protects pmaps */
 
 /*
- * pool_cache(9) that PDPs are allocated from 
+ * pool_cache(9) that PDPs are allocated from
  */
 extern struct pool_cache pmap_pdp_cache;
 
@@ -180,8 +180,8 @@ struct pmap {
 	((pmap)->pm_pdirpa[0] + (index) * sizeof(pd_entry_t))
 #endif
 
-/* 
- * flag to be used for kernel mappings: PG_u on Xen/amd64, 
+/*
+ * flag to be used for kernel mappings: PG_u on Xen/amd64,
  * 0 otherwise.
  */
 #if defined(XEN) && defined(__x86_64__)
@@ -209,6 +209,7 @@ struct pmap {
 extern u_long PDPpaddr;
 
 extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
+extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
 extern long nkptp[PTP_LEVELS];
 
 /*
@@ -254,6 +255,7 @@ void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
 paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 void		pmap_remove_all(struct pmap *);
+void		pmap_ldt_cleanup(struct lwp *);
 void		pmap_ldt_sync(struct pmap *);
 void		pmap_kremove_local(vaddr_t, vsize_t);
 

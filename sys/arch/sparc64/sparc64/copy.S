@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4.40.1 2015/12/27 12:09:44 skrll Exp $	*/
+/*	$NetBSD: copy.S,v 1.4.40.2 2016/10/05 20:55:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -432,7 +432,7 @@ Lcopyout_start:
 	 .empty
 0:
 	inc	%o0
-	ldsb	[%o0 - 1], %o4!	(++dst)[-1] = *src++;
+	ldsb	[%o0 - 1], %o4	! (++dst)[-1] = *src++;
 	stba	%o4, [%o1] %asi
 	deccc	%o2
 	bge	0b
@@ -846,7 +846,7 @@ ENTRY(probeget)
 	 lda	[%o0] %asi, %o0		!	value = *(int *)addr;
 0:
 	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
-1:	
+1:
 #ifndef _LP64
 	SPLIT(%o0, %o0, %o1)
 #endif
@@ -858,7 +858,7 @@ ENTRY(probeget)
 	 nop
 	DLFLUSH2(%o5)			!	flush cache line again
 1:
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	STPTR	%g0, [%o2 + PCB_ONFAULT]
 	retl				! made it, clear onfault and return
 	 membar	#StoreStore|#StoreLoad
@@ -872,7 +872,7 @@ _C_LABEL(Lfsprobe):
 #endif
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	mov	-1, %o1
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	membar	#StoreStore|#StoreLoad
 	retl				! and return error indicator
 	 mov	-1, %o0
@@ -923,7 +923,7 @@ ENTRY(probeset)
 	 sta	%o3, [%o0] %asi		!	*(int *)addr = value;
 1:	membar	#Sync
 	clr	%o0			! made it, clear onfault and return 0
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI	
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	STPTR	%g0, [%o2 + PCB_ONFAULT]
 	retl
 	 membar	#StoreStore|#StoreLoad

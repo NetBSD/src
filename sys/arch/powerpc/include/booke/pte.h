@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6.30.1 2015/09/22 12:05:50 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.6.30.2 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,6 +111,12 @@ static inline bool
 pte_exec_p(pt_entry_t pt_entry)
 {
 	return (pt_entry & PTE_xX) != 0;
+}
+
+static inline bool
+pte_readonly_p(pt_entry_t pt_entry)
+{
+	return (pt_entry & PTE_xW) == 0;
 }
 
 static inline bool

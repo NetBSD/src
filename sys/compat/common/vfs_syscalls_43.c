@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.57.2.1 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57.2.1 2016/10/05 20:55:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -75,7 +75,32 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.57 2014/09/05 09:21:54 matt Ex
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
+static void cvttimespec(struct timespec *, struct timespec50 *);
 static void cvtstat(struct stat *, struct stat43 *);
+
+/*
+ * Convert from an old to a new timespec structure.
+ */
+static void
+cvttimespec(struct timespec *ts, struct timespec50 *ots)
+{
+
+	if (ts->tv_sec > INT_MAX) {
+#if defined(DEBUG) || 1
+		static bool first = true;
+
+		if (first) {
+			first = false;
+			printf("%s[%s:%d]: time_t does not fit\n",
+			    __func__, curlwp->l_proc->p_comm,
+			    curlwp->l_lid);
+		}
+#endif
+		ots->tv_sec = INT_MAX;
+	} else
+		ots->tv_sec = ts->tv_sec;
+	ots->tv_nsec = ts->tv_nsec;
+}
 
 /*
  * Convert from an old to a new stat structure.
@@ -84,6 +109,8 @@ static void
 cvtstat(struct stat *st, struct stat43 *ost)
 {
 
+	/* Handle any padding. */
+	memset(ost, 0, sizeof *ost);
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode & 0xffff;
@@ -95,9 +122,9 @@ cvtstat(struct stat *st, struct stat43 *ost)
 		ost->st_size = st->st_size;
 	else
 		ost->st_size = -2;
-	ost->st_atime = st->st_atime;
-	ost->st_mtime = st->st_mtime;
-	ost->st_ctime = st->st_ctime;
+	cvttimespec(&st->st_atimespec, &ost->st_atimespec);
+	cvttimespec(&st->st_mtimespec, &ost->st_mtimespec);
+	cvttimespec(&st->st_ctimespec, &ost->st_ctimespec);
 	ost->st_blksize = st->st_blksize;
 	ost->st_blocks = st->st_blocks;
 	ost->st_flags = st->st_flags;

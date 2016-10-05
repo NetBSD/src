@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.67.14.1 2015/04/06 15:18:01 skrll Exp $	*/
+/*	$NetBSD: hpc.c,v 1.67.14.2 2016/10/05 20:55:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.67.14.1 2015/04/06 15:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.67.14.2 2016/10/05 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ static const struct hpc_device hpc1_devices[] = {
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
 	  3,
 	  HPCDEV_IP12 | HPCDEV_IP20 },
-	
+
 	{ "sq",		/* E++ GIO adapter slot 0 (Indigo) */
 	  HPC_BASE_ADDRESS_1,
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
@@ -99,7 +99,7 @@ static const struct hpc_device hpc1_devices[] = {
 	  HPC_BASE_ADDRESS_1,
 	  HPC1_ENET_DEVREGS, HPC1_ENET_REGS,
 	  22,
-	  HPCDEV_IP24 }, 
+	  HPCDEV_IP24 },
 
 	{ "sq",		/* E++ GIO adapter slot 1 (Indigo) */
 	  HPC_BASE_ADDRESS_2,
@@ -116,7 +116,7 @@ static const struct hpc_device hpc1_devices[] = {
 	{ "wdsc",	/* Personal Iris/Indigo onboard SCSI */
 	  HPC_BASE_ADDRESS_0,
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
-	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */    
+	  2,    /* XXX 1 = IRQ_LOCAL0 + 2 */
 	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ "wdsc",	/* GIO32 SCSI adapter slot 0 (Indigo) */
@@ -129,7 +129,7 @@ static const struct hpc_device hpc1_devices[] = {
 	  HPC_BASE_ADDRESS_1,
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
 	  22,
-	  HPCDEV_IP24 }, 
+	  HPCDEV_IP24 },
 
 	{ "wdsc",	/* GIO32 SCSI adapter slot 1 (Indigo) */
 	  HPC_BASE_ADDRESS_2,
@@ -272,7 +272,7 @@ static struct hpc_values hpc1_values = {
 	.scsi1_devregs_size =	0,
 	.enet_devregs =		HPC1_ENET_DEVREGS,
 	.enet_devregs_size =	HPC1_ENET_DEVREGS_SIZE,
-	.pbus_fifo =		0,	
+	.pbus_fifo =		0,
 	.pbus_fifo_size =	0,
 	.pbus_bbram =		0,
 #define MAX_SCSI_XFER   (512*1024)
@@ -445,7 +445,7 @@ hpc_attach(device_t parent, device_t self, void *aux)
 	isonboard = (ga->ga_addr == HPC_BASE_ADDRESS_0);
 	isioplus = (ga->ga_addr == HPC_BASE_ADDRESS_1 && hpctype == 3 &&
 	    sysmask == HPCDEV_IP24);
-	
+
 	printf(": SGI HPC%d%s (%s)\n", (hpctype ==  3) ? 3 : 1,
 	    (hpctype == 15) ? ".5" : "", (isonboard) ? "onboard" :
 	    (isioplus) ? "IOPLUS mezzanine" : "GIO slot");
@@ -527,7 +527,9 @@ hpc_attach(device_t parent, device_t self, void *aux)
 
 		/* XXX This is disgusting. */
 		ha.ha_st = normal_memt;
-		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+		if (bus_space_map(normal_memt, sc->sc_base, 0,
+		    BUS_SPACE_MAP_LINEAR, &ha.ha_sh) != 0)
+		    	continue;
 		ha.ha_dmat = &sgimips_default_bus_dma_tag;
 		if (hpctype == 3)
 			ha.hpc_regs = &hpc3_values;

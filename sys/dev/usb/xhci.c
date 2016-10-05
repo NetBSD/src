@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.76 2016/07/09 20:25:17 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.77 2016/10/05 20:55:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.76 2016/07/09 20:25:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.77 2016/10/05 20:55:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -518,6 +518,17 @@ xhci_trb_get_idx(struct xhci_ring *xr, uint64_t trb_0, int *idx)
 	}
 	*idx = (trb_0 - trbp) / sizeof(struct xhci_trb);
 	return 0;
+}
+
+static unsigned int
+xhci_get_epstate(struct xhci_softc * const sc, struct xhci_slot * const xs,
+    u_int dci)
+{
+	uint32_t *cp;
+
+	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
+	cp = xhci_slot_get_dcv(sc, xs, dci);
+	return XHCI_EPCTX_0_EPSTATE_GET(le32toh(cp[0]));
 }
 
 /* --- */
@@ -1281,7 +1292,7 @@ xhci_unconfigure_endpoint(struct usbd_pipe *pipe)
 
 /* 4.6.8, 6.4.3.7 */
 static usbd_status
-xhci_reset_endpoint(struct usbd_pipe *pipe)
+xhci_reset_endpoint_locked(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
@@ -1292,15 +1303,29 @@ xhci_reset_endpoint(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "slot %u dci %u", xs->xs_idx, dci, 0, 0);
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	trb.trb_0 = 0;
 	trb.trb_2 = 0;
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
 	    XHCI_TRB_3_EP_SET(dci) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_RESET_EP);
 
-	err = xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
+	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
 	return err;
+}
+
+static usbd_status
+xhci_reset_endpoint(struct usbd_pipe *pipe)
+{
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+
+	mutex_enter(&sc->sc_lock);
+	usbd_status ret = xhci_reset_endpoint_locked(pipe);
+	mutex_exit(&sc->sc_lock);
+
+	return ret;
 }
 
 /*
@@ -1342,7 +1367,7 @@ xhci_stop_endpoint(struct usbd_pipe *pipe)
  * error will be generated.
  */
 static usbd_status
-xhci_set_dequeue(struct usbd_pipe *pipe)
+xhci_set_dequeue_locked(struct usbd_pipe *pipe)
 {
 	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
 	struct xhci_slot * const xs = pipe->up_dev->ud_hcpriv;
@@ -1354,6 +1379,8 @@ xhci_set_dequeue(struct usbd_pipe *pipe)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "slot %u dci %u", xs->xs_idx, dci, 0, 0);
 
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	xhci_host_dequeue(xr);
 
 	/* set DCS */
@@ -1363,9 +1390,21 @@ xhci_set_dequeue(struct usbd_pipe *pipe)
 	    XHCI_TRB_3_EP_SET(dci) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_SET_TR_DEQUEUE);
 
-	err = xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
+	err = xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 
 	return err;
+}
+
+static usbd_status
+xhci_set_dequeue(struct usbd_pipe *pipe)
+{
+	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
+
+	mutex_enter(&sc->sc_lock);
+	usbd_status ret = xhci_set_dequeue_locked(pipe);
+	mutex_exit(&sc->sc_lock);
+
+	return ret;
 }
 
 /*
@@ -1474,11 +1513,8 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 		return;
 	}
 
-	/*
-	 * This may fail in the case that xhci_close_pipe is called after
-	 * xhci_abort_xfer e.g. usbd_kill_pipe.
-	 */
-	(void)xhci_stop_endpoint(pipe);
+	if (xhci_get_epstate(sc, xs, dci) != XHCI_EPSTATE_STOPPED)
+		(void)xhci_stop_endpoint(pipe);
 
 	/*
 	 * set appropriate bit to be dropped.
@@ -1510,12 +1546,14 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 
 /*
  * Abort transfer.
- * May be called from softintr context.
+ * Should be called with sc_lock held.
  */
 static void
 xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
 	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
+	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 	DPRINTFN(4, "xfer %p pipe %p status %d",
@@ -1532,10 +1570,66 @@ xhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 		return;
 	}
 
-	/* XXX need more stuff */
+	/*
+	 * If an abort is already in progress then just wait for it to
+	 * complete and return.
+	 */
+	if (xfer->ux_hcflags & UXFER_ABORTING) {
+		DPRINTFN(4, "already aborting", 0, 0, 0, 0);
+#ifdef DIAGNOSTIC
+		if (status == USBD_TIMEOUT)
+			DPRINTFN(4, "TIMEOUT while aborting", 0, 0, 0, 0);
+#endif
+		/* Override the status which might be USBD_TIMEOUT. */
+		xfer->ux_status = status;
+		DPRINTFN(4, "xfer %p waiting for abort to finish", xfer, 0, 0,
+		    0);
+		xfer->ux_hcflags |= UXFER_ABORTWAIT;
+		while (xfer->ux_hcflags & UXFER_ABORTING)
+			cv_wait(&xfer->ux_hccv, &sc->sc_lock);
+		return;
+	}
+	xfer->ux_hcflags |= UXFER_ABORTING;
+
+	/*
+	 * Step 1: Stop xfer timeout timer.
+	 */
 	xfer->ux_status = status;
 	callout_stop(&xfer->ux_callout);
+
+	/*
+	 * Step 2: Stop execution of TD on the ring.
+	 */
+	switch (xhci_get_epstate(sc, xs, dci)) {
+	case XHCI_EPSTATE_HALTED:
+		(void)xhci_reset_endpoint_locked(xfer->ux_pipe);
+		break;
+	case XHCI_EPSTATE_STOPPED:
+		break;
+	default:
+		(void)xhci_stop_endpoint(xfer->ux_pipe);
+		break;
+	}
+#ifdef DIAGNOSTIC
+	uint32_t epst = xhci_get_epstate(sc, xs, dci);
+	if (epst != XHCI_EPSTATE_STOPPED)
+		DPRINTFN(4, "dci %u not stopped %u", dci, epst, 0, 0);
+#endif
+
+	/*
+	 * Step 3: Remove any vestiges of the xfer from the ring.
+	 */
+	xhci_set_dequeue_locked(xfer->ux_pipe);
+
+	/*
+	 * Step 4: Notify completion to waiting xfers.
+	 */
+	int wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
+	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
 	usb_transfer_complete(xfer);
+	if (wake) {
+		cv_broadcast(&xfer->ux_hccv);
+	}
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -1667,12 +1761,12 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		}
 		xx = xr->xr_cookies[idx];
 
+		/* clear cookie of consumed TRB */
+		xr->xr_cookies[idx] = NULL;
+
 		/*
-		 * If endpoint is stopped between TDs, TRB pointer points at
-		 * next TRB, however, it is not put yet or is a garbage TRB.
-		 * That's why xr_cookies may be NULL or look like broken.
-		 * Note: this ev happens only when hciversion >= 1.0 or
-		 * hciversion == 0.96 and FSE of hcc1 is set.
+		 * xx is NULL if pipe is opened but xfer is not started.
+		 * It happens when stopping idle pipe.
 		 */
 		if (xx == NULL || trbcode == XHCI_TRB_ERROR_LENGTH) {
 			DPRINTFN(1, "Ignore #%u: cookie %p cc %u dci %u",
@@ -1680,6 +1774,7 @@ xhci_event_transfer(struct xhci_softc * const sc,
 			DPRINTFN(1, " orig TRB %"PRIx64" type %u", trb_0,
 			    XHCI_TRB_3_TYPE_GET(le32toh(xr->xr_trb[idx].trb_3)),
 			    0, 0);
+			return;
 		}
 	} else {
 		/* When ED != 0, trb_0 is virtual addr of struct xhci_xfer. */
@@ -1720,10 +1815,10 @@ xhci_event_transfer(struct xhci_softc * const sc,
 	case XHCI_TRB_ERROR_SHORT_PKT:
 	case XHCI_TRB_ERROR_SUCCESS:
 		/*
-		 * A ctrl transfer generates two events if it has a Data stage.
-		 * After a successful Data stage we cannot call call
-		 * usb_transfer_complete - this can only happen after the Data
-		 * stage.
+		 * A ctrl transfer can generate two events if it has a Data
+		 * stage.  A short data stage can be OK and should not
+		 * complete the transfer as the status stage needs to be
+		 * performed.
 		 *
 		 * Note: Data and Status stage events point at same xfer.
 		 * ux_actlen and ux_dmabuf will be passed to
@@ -1739,9 +1834,31 @@ xhci_event_transfer(struct xhci_softc * const sc,
 		 * ctrl xfer uses EVENT_DATA, and others do not.
 		 * Thus driver can switch the flow by checking ED bit.
 		 */
-		xfer->ux_actlen =
-		    xfer->ux_length - XHCI_TRB_2_REM_GET(trb_2);
+		if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
+			if (xfer->ux_actlen == 0)
+				xfer->ux_actlen = xfer->ux_length -
+				    XHCI_TRB_2_REM_GET(trb_2);
+			if (XHCI_TRB_3_TYPE_GET(le32toh(xr->xr_trb[idx].trb_3))
+			    == XHCI_TRB_TYPE_DATA_STAGE) {
+				return;
+			}
+		} else if ((trb_0 & 0x3) == 0x3) {
+			return;
+		}
 		err = USBD_NORMAL_COMPLETION;
+		break;
+	case XHCI_TRB_ERROR_STOPPED:
+	case XHCI_TRB_ERROR_LENGTH:
+	case XHCI_TRB_ERROR_STOPPED_SHORT:
+		/*
+		 * don't complete the transfer being aborted
+		 * as abort_xfer does instead.
+		 */
+		if (xfer->ux_hcflags & UXFER_ABORTING) {
+			DPRINTFN(14, "ignore aborting xfer %p", xfer, 0, 0, 0);
+			return;
+		}
+		err = USBD_CANCELLED;
 		break;
 	case XHCI_TRB_ERROR_STALL:
 	case XHCI_TRB_ERROR_BABBLE:
@@ -2079,8 +2196,10 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 		/* 4.3.2 */
 		err = xhci_enable_slot(sc, &slot);
-		if (err)
+		if (err) {
+			DPRINTFN(1, "enable slot %u", err, 0, 0, 0);
 			goto bad;
+		}
 
 		xs = &sc->sc_slots[slot];
 		dev->ud_hcpriv = xs;
@@ -2088,6 +2207,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 		/* 4.3.3 initialize slot structure */
 		err = xhci_init_slot(dev, slot);
 		if (err) {
+			DPRINTFN(1, "init slot %u", err, 0, 0, 0);
 			dev->ud_hcpriv = NULL;
 			/*
 			 * We have to disable_slot here because
@@ -2112,7 +2232,7 @@ xhci_new_device(device_t parent, struct usbd_bus *bus, int depth,
 
 		cp = xhci_slot_get_dcv(sc, xs, XHCI_DCI_SLOT);
 		//hexdump("slot context", cp, sc->sc_ctxsz);
-		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(cp[3]);
+		uint8_t addr = XHCI_SCTX_3_DEV_ADDR_GET(le32toh(cp[3]));
 		DPRINTFN(4, "device address %u", addr, 0, 0, 0);
 		/* XXX ensure we know when the hardware does something
 		   we can't yet cope with */
@@ -2235,7 +2355,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 		DPRINTFN(12, " %016"PRIx64" %08"PRIx32" %08"PRIx32,
 		    trbs[i].trb_0, trbs[i].trb_2, trbs[i].trb_3, 0);
 		KASSERTMSG(XHCI_TRB_3_TYPE_GET(trbs[i].trb_3) !=
-		    XHCI_TRB_TYPE_LINK, "trb3 type %d", trbs[i].trb_3);
+		    XHCI_TRB_TYPE_LINK, "trbs[%zu].trb3 %#x", i, trbs[i].trb_3);
 	}
 
 	DPRINTFN(12, "%p xr_ep 0x%x xr_cs %u", xr, xr->xr_ep, xr->xr_cs, 0);
@@ -2257,58 +2377,63 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 	 * The code should write the 'cycle' bit on the link trb AFTER
 	 * adding the other trb.
 	 */
-	if (ri + ntrbs >= (xr->xr_ntrb - 1)) {
-		parameter = xhci_ring_trbp(xr, 0);
-		status = 0;
-		control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_LINK) |
-		    XHCI_TRB_3_TC_BIT | (cs ? XHCI_TRB_3_CYCLE_BIT : 0);
-		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
-		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
-		    BUS_DMASYNC_PREWRITE);
-		xr->xr_cookies[ri] = NULL;
-		xr->xr_ep = 0;
-		xr->xr_cs ^= 1;
-		ri = xr->xr_ep;
-		cs = xr->xr_cs;
-	}
+	u_int firstep = xr->xr_ep;
+	u_int firstcs = xr->xr_cs;
 
-	ri++;
+	for (i = 0; i < ntrbs; ) {
+		u_int oldri = ri;
+		u_int oldcs = cs;
 
-	/* Write any subsequent TRB first */
-	for (i = 1; i < ntrbs; i++) {
-		parameter = trbs[i].trb_0;
-		status = trbs[i].trb_2;
-		control = trbs[i].trb_3;
-
-		if (cs) {
-			control |= XHCI_TRB_3_CYCLE_BIT;
+		if (ri >= (xr->xr_ntrb - 1)) {
+			/* Put Link TD at the end of ring */
+			parameter = xhci_ring_trbp(xr, 0);
+			status = 0;
+			control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_LINK) |
+			    XHCI_TRB_3_TC_BIT;
+			xr->xr_cookies[ri] = NULL;
+			xr->xr_ep = 0;
+			xr->xr_cs ^= 1;
+			ri = xr->xr_ep;
+			cs = xr->xr_cs;
 		} else {
-			control &= ~XHCI_TRB_3_CYCLE_BIT;
+			parameter = trbs[i].trb_0;
+			status = trbs[i].trb_2;
+			control = trbs[i].trb_3;
+
+			xr->xr_cookies[ri] = cookie;
+			ri++;
+			i++;
 		}
-
-		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
-		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
-		    BUS_DMASYNC_PREWRITE);
-		xr->xr_cookies[ri] = cookie;
-		ri++;
+		/*
+		 * If this is a first TRB, mark it invalid to prevent
+		 * xHC from running it immediately.
+		 */
+		if (oldri == firstep) {
+			if (oldcs) {
+				control &= ~XHCI_TRB_3_CYCLE_BIT;
+			} else {
+				control |= XHCI_TRB_3_CYCLE_BIT;
+			}
+		} else {
+			if (oldcs) {
+				control |= XHCI_TRB_3_CYCLE_BIT;
+			} else {
+				control &= ~XHCI_TRB_3_CYCLE_BIT;
+			}
+		}
+		xhci_trb_put(&xr->xr_trb[oldri], parameter, status, control);
+		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * oldri,
+		    XHCI_TRB_SIZE * 1, BUS_DMASYNC_PREWRITE);
 	}
 
-	/* Write the first TRB last */
-	i = 0;
-	parameter = trbs[i].trb_0;
-	status = trbs[i].trb_2;
-	control = trbs[i].trb_3;
-
-	if (xr->xr_cs) {
-		control |= XHCI_TRB_3_CYCLE_BIT;
+	/* Now invert cycle bit of first TRB */
+	if (firstcs) {
+		xr->xr_trb[firstep].trb_3 |= htole32(XHCI_TRB_3_CYCLE_BIT);
 	} else {
-		control &= ~XHCI_TRB_3_CYCLE_BIT;
+		xr->xr_trb[firstep].trb_3 &= ~htole32(XHCI_TRB_3_CYCLE_BIT);
 	}
-
-	xhci_trb_put(&xr->xr_trb[xr->xr_ep], parameter, status, control);
-	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * xr->xr_ep, XHCI_TRB_SIZE * 1,
-	    BUS_DMASYNC_PREWRITE);
-	xr->xr_cookies[xr->xr_ep] = cookie;
+	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * firstep,
+	    XHCI_TRB_SIZE * 1, BUS_DMASYNC_PREWRITE);
 
 	xr->xr_ep = ri;
 	xr->xr_cs = cs;
@@ -2380,7 +2505,15 @@ xhci_do_command_locked(struct xhci_softc * const sc,
 	while (sc->sc_command_addr != 0)
 		cv_wait(&sc->sc_cmdbusy_cv, &sc->sc_lock);
 
-	sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
+	/*
+	 * If enqueue pointer points at last of ring, it's Link TRB,
+	 * command TRB will be stored in 0th TRB.
+	 */
+	if (cr->xr_ep == cr->xr_ntrb - 1)
+		sc->sc_command_addr = xhci_ring_trbp(cr, 0);
+	else
+		sc->sc_command_addr = xhci_ring_trbp(cr, cr->xr_ep);
+
 	sc->sc_resultpending = true;
 
 	mutex_enter(&cr->xr_lock);
@@ -3466,7 +3599,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	i = 0;
 
 	/* setup phase */
-	memcpy(&parameter, req, sizeof(*req));
+	memcpy(&parameter, req, sizeof(parameter));
 	status = XHCI_TRB_2_IRQ_SET(0) | XHCI_TRB_2_BYTES_SET(sizeof(*req));
 	control = ((len == 0) ? XHCI_TRB_3_TRT_NONE :
 	     (isread ? XHCI_TRB_3_TRT_IN : XHCI_TRB_3_TRT_OUT)) |
@@ -3483,12 +3616,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 		    XHCI_TRB_2_BYTES_SET(len);
 		control = (isread ? XHCI_TRB_3_DIR_IN : 0) |
 		    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_DATA_STAGE) |
-		    XHCI_TRB_3_CHAIN_BIT | XHCI_TRB_3_ENT_BIT;
-		xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
-
-		parameter = (uintptr_t)xfer | 0x3;
-		status = XHCI_TRB_2_IRQ_SET(0);
-		control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVENT_DATA) |
+		    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
 		    XHCI_TRB_3_IOC_BIT;
 		xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 	}
@@ -3498,12 +3626,6 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	/* the status stage has inverted direction */
 	control = ((isread && (len > 0)) ? 0 : XHCI_TRB_3_DIR_IN) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_STATUS_STAGE) |
-	    XHCI_TRB_3_CHAIN_BIT | XHCI_TRB_3_ENT_BIT;
-	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
-
-	parameter = (uintptr_t)xfer | 0x0;
-	status = XHCI_TRB_2_IRQ_SET(0);
-	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_EVENT_DATA) |
 	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
@@ -3619,7 +3741,8 @@ xhci_device_bulk_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_2_TDSZ_SET(1) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
-	    XHCI_TRB_3_ISP_BIT | XHCI_TRB_3_IOC_BIT;
+	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
+	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
 	mutex_enter(&tr->xr_lock);
@@ -3724,7 +3847,8 @@ xhci_device_intr_start(struct usbd_xfer *xfer)
 	    XHCI_TRB_2_TDSZ_SET(1) |
 	    XHCI_TRB_2_BYTES_SET(len);
 	control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_NORMAL) |
-	    XHCI_TRB_3_ISP_BIT | XHCI_TRB_3_IOC_BIT;
+	    (usbd_xfer_isread(xfer) ? XHCI_TRB_3_ISP_BIT : 0) |
+	    XHCI_TRB_3_IOC_BIT;
 	xhci_trb_put(&xx->xx_trb[i++], parameter, status, control);
 
 	mutex_enter(&tr->xr_lock);
@@ -3815,11 +3939,6 @@ xhci_timeout_task(void *addr)
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	mutex_enter(&sc->sc_lock);
-#if 0
 	xhci_abort_xfer(xfer, USBD_TIMEOUT);
-#else
-	xfer->ux_status = USBD_TIMEOUT;
-	usb_transfer_complete(xfer);
-#endif
 	mutex_exit(&sc->sc_lock);
 }

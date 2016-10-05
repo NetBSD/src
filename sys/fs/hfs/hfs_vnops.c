@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.31.4.1 2015/09/22 12:06:06 skrll Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.31.4.2 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.31.4.1 2015/09/22 12:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.31.4.2 2016/10/05 20:56:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -393,7 +393,7 @@ hfs_vop_lookup(void *v)
 		return 0;
 	}
 #endif
-	
+
 	if (flags & ISDOTDOT) {
 		DPRINTF(("DOTDOT "));
 		error = hfs_vget_internal(vdp->v_mount, dp->h_parent,
@@ -430,7 +430,7 @@ hfs_vop_lookup(void *v)
 			error = EINVAL;
 			goto error;
 		}
-			
+
 		result = hfslib_find_catalog_record_with_key(&dp->h_hmp->hm_vol,
 		    &key, &rec, &cbargs);
 		if (result > 0) {
@@ -478,7 +478,7 @@ hfs_vop_lookup(void *v)
 #if 0
 	cache_enter(vdp, *vpp, cnp);
 #endif
-	
+
 	error = 0;
 
 	/* FALLTHROUGH */
@@ -508,7 +508,7 @@ hfs_vop_open(void *v)
 	 * XXX cache in sync when the file grows/shrinks. (So would that go
 	 * XXX in vop_truncate?)
 	 */
-	
+
 	return 0;
 }
 
@@ -526,7 +526,7 @@ hfs_vop_close(void *v)
 	DPRINTF(("VOP = hfs_vop_close()\n"));
 
 	/* Release extents cache here. */
-	
+
 	return 0;
 }
 
@@ -607,7 +607,7 @@ hfs_vop_getattr(void *v)
 	vp = ap->a_vp;
 	hp = VTOH(vp);
 	vap = ap->a_vap;
-	
+
 	vattr_null(vap);
 
 	/*
@@ -672,7 +672,7 @@ hfs_vop_getattr(void *v)
 	vap->va_blocksize = hp->h_hmp->hm_vol.vh.block_size;
 	vap->va_gen = 1;
 	vap->va_flags = 0;
-	
+
 	return 0;
 }
 
@@ -850,7 +850,7 @@ hfs_vop_read(void *v)
 		len = MIN(uio->uio_resid, fsize - uio->uio_offset);
 		if (len == 0)
 			break;
-		
+
 		error = ubc_uiomove(&vp->v_uobj, uio, len, advice,
 		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
@@ -922,7 +922,7 @@ hfs_vop_readdir(void *v)
 	DPRINTF(("numchildren = %u\n", numchildren));
 	for (curchild = 0; curchild < numchildren && uio->uio_resid > 0;
 	    curchild++) {
-		namlen = utf16_to_utf8(curent.d_name, NAME_MAX, 
+		namlen = utf16_to_utf8(curent.d_name, NAME_MAX,
 		    childnames[curchild].unicode, childnames[curchild].length,
 		    0, NULL);
 		/* XXX: check conversion errors? */
@@ -1024,14 +1024,11 @@ hfs_vop_reclaim(void *v)
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;
-	
+
 	DPRINTF(("VOP = hfs_vop_reclaim()\n"));
 
 	vp = ap->a_vp;
 	hp = VTOH(vp);
-
-	KASSERT(hp->h_key.hnk_cnid == hp->h_rec.u.cnid);
-	vcache_remove(vp->v_mount, &hp->h_key, sizeof(hp->h_key));
 
 	/* Decrement the reference count to the volume's device. */
 	if (hp->h_devvp) {

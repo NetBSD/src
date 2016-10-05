@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.2 2011/06/12 03:35:51 rmind Exp $	*/
+/*	$NetBSD: mm.h,v 1.2.32.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -88,8 +88,10 @@ bool	mm_md_direct_mapped_io(void *, paddr_t *);
 
 /*
  * Some architectures may need to deal with cache aliasing issues.
- *
- * machine/types.h must define __HAVE_MM_MD_CACHE_ALIASING to note that.
+ * Optional hook to fetch a page's current color and returns whether
+ * that page can be direct mapped.
+ * machine/types.h must define __HAVE_MM_MD_CACHE_ALIASING to use this.
  */
+bool	mm_md_page_color(paddr_t, int *);
 
 #endif /* _SYS_DEV_MM_H_ */

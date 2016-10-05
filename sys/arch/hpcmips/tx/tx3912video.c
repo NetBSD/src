@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.43.4.1 2016/07/09 20:24:52 skrll Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.43.4.2 2016/10/05 20:55:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43.4.1 2016/07/09 20:24:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43.4.2 2016/10/05 20:55:28 skrll Exp $");
 
 #define TX3912VIDEO_DEBUG
 
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: tx3912video.c,v 1.43.4.1 2016/07/09 20:24:52 skrll E
 #include <machine/bus.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
+
+#include <mips/locore.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>
@@ -106,7 +108,7 @@ void	tx3912video_clut_init(struct tx3912video_softc *);
 void	tx3912video_clut_install(void *, struct rasops_info *);
 void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int,
 	    int);
-			     
+
 static int __get_color8(int);
 static int __get_color4(int);
 
@@ -129,7 +131,7 @@ tx3912video_attach(device_t parent, device_t self, void *aux)
 {
 	struct tx3912video_softc *sc = device_private(self);
 	struct video_chip *chip;
-	static const char *const depth_print[] = { 
+	static const char *const depth_print[] = {
 		[TX3912_VIDEOCTRL1_BITSEL_MONOCHROME] = "monochrome",
 		[TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE] = "2bit greyscale",
 		[TX3912_VIDEOCTRL1_BITSEL_4BITGREYSCALE] = "4bit greyscale",
@@ -147,7 +149,7 @@ tx3912video_attach(device_t parent, device_t self, void *aux)
 	/* print video module information */
 	printf(": %s, frame buffer 0x%08x-0x%08x\n",
 	    depth_print[(ffs(chip->vc_fbdepth) - 1) & 0x3],
-	    (unsigned)chip->vc_fbpaddr, 
+	    (unsigned)chip->vc_fbpaddr,
 	    (unsigned)(chip->vc_fbpaddr + chip->vc_fbsize));
 
 	/* don't inverse VDAT[3:0] signal */
@@ -162,7 +164,7 @@ tx3912video_attach(device_t parent, device_t self, void *aux)
 	/* if serial console, power off video module */
 	tx3912video_power(sc, 0, 0, (void *)
 	    (console ? PWR_RESUME : PWR_SUSPEND));
-	
+
 	/* Add a hard power hook to power saving */
 	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
 	    CONFIG_HOOK_PMEVENT_HARDPOWER, CONFIG_HOOK_SHARE,
@@ -175,7 +177,7 @@ tx3912video_attach(device_t parent, device_t self, void *aux)
 	video_attach_drawfunc(sc->sc_chip);
 	tx_conf_register_video(tc, sc->sc_chip);
 #endif
-	
+
 	/* Attach frame buffer device */
 	tx3912video_hpcfbinit(sc);
 
@@ -238,9 +240,9 @@ tx3912video_hpcfbinit(struct tx3912video_softc *sc)
 	struct video_chip *chip = sc->sc_chip;
 	struct hpcfb_fbconf *fb = &sc->sc_fbconf;
 	vaddr_t fbvaddr = (vaddr_t)MIPS_PHYS_TO_KSEG1(chip->vc_fbpaddr);
-	
+
 	memset(fb, 0, sizeof(struct hpcfb_fbconf));
-	
+
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
 	strncpy(fb->hf_name, "TX3912 built-in video", HPCFB_MAXNAMELEN);
@@ -299,11 +301,11 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 	tx_chipset_tag_t tc;
 	txreg_t reg;
 	int fbdepth, reverse, error;
-	
+
 	reverse = video_reverse_color();
 	chip->vc_v = tc = tx_conf_get_tag();
-	
-	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+
+	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 	fbdepth = 1 << (TX3912_VIDEOCTRL1_BITSEL(reg));
 
 	switch (fbdepth) {
@@ -314,7 +316,7 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 		/* XXX should implement rasops4.c */
 		fbdepth = 2;
 		bootinfo->fb_type = reverse ? BIFB_D2_M2L_3 : BIFB_D2_M2L_0;
-		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+		reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 		TX3912_VIDEOCTRL1_BITSEL_CLR(reg);
 		reg = TX3912_VIDEOCTRL1_BITSEL_SET(reg,
 		    TX3912_VIDEOCTRL1_BITSEL_2BITGREYSCALE);
@@ -334,20 +336,20 @@ tx3912video_init(paddr_t fb_start, paddr_t *fb_end)
 	if (error != 0)
 		return (1);
 
-#if notyet 
+#if notyet
 	tx3912video_resolution_init(chip);
 #else
 	/* Use Windows CE setting. */
 #endif
 	/* Set DMA transfer address to VID module */
 	tx3912video_framebuffer_init(chip);
-	
+
 	/* Syncronize framebuffer addr to frame signal */
 	tx3912video_reset(chip);
 
 	bootinfo->fb_line_bytes = (chip->vc_fbwidth * fbdepth) / NBBY;
 	bootinfo->fb_addr = (void *)MIPS_PHYS_TO_KSEG1(chip->vc_fbpaddr);
-	
+
 	return (0);
 }
 
@@ -383,7 +385,7 @@ tx3912video_framebuffer_alloc(struct video_chip *chip, paddr_t fb_start,
 	chip->vc_fbpaddr = addr;
 	chip->vc_fbvaddr = MIPS_PHYS_TO_KSEG1(addr);
 	chip->vc_fbsize = size;
-	
+
 	*fb_end = addr + size;
 
 	return (0);
@@ -402,11 +404,11 @@ tx3912video_framebuffer_init(struct video_chip *chip)
 	/*  XXX currently I don't set DFVAL, so force DF signal toggled on
          *  XXX each frame. */
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
-	reg &= ~TX3912_VIDEOCTRL1_DFMODE; 
+	reg &= ~TX3912_VIDEOCTRL1_DFMODE;
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
 	/* Set DMA transfer start and end address */
-	
+
 	bank = TX3912_VIDEOCTRL3_VIDBANK(fb_addr);
 	base = TX3912_VIDEOCTRL3_VIDBASEHI(fb_addr);
 	reg = TX3912_VIDEOCTRL3_VIDBANK_SET(0, bank);
@@ -422,7 +424,7 @@ tx3912video_framebuffer_init(struct video_chip *chip)
 	reg = TX3912_VIDEOCTRL4_DFVAL_SET(reg, 0); /* XXX not yet*/
 
 	/* Set VIDDONE signal delay after FRAME signal */
-	/* XXX not yet*/	
+	/* XXX not yet*/
 	tx_conf_write(tc, TX3912_VIDEOCTRL4_REG, reg);
 
 	/* Clear frame buffer */
@@ -437,7 +439,7 @@ tx3912video_resolution_init(struct video_chip *chip)
 	tx_chipset_tag_t tc = chip->vc_v;
 	txreg_t reg;
 	u_int32_t val;
-	
+
 	h = chip->vc_fbwidth;
 	v = chip->vc_fbheight;
 	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
@@ -446,22 +448,22 @@ tx3912video_resolution_init(struct video_chip *chip)
 
 	if ((val == TX3912_VIDEOCTRL1_BITSEL_8BITCOLOR) && !split) {
 		/* (LCD horizontal pixels / 8bit) * RGB - 1 */
-		horzval = (h / 8) * 3 - 1; 
+		horzval = (h / 8) * 3 - 1;
 	} else {
 		horzval = h / 4 - 1;
 	}
 	lineval = (split ? v / 2 : v) - 1;
 
 	/* Video rate */
-	/* XXX 
-	 *  probably This value should be determined from DFINT and LCDINT 
+	/* XXX
+	 *  probably This value should be determined from DFINT and LCDINT
 	 */
 	reg = TX3912_VIDEOCTRL2_VIDRATE_SET(0, horzval + 1);
 	/* Horizontal size of LCD */
 	reg = TX3912_VIDEOCTRL2_HORZVAL_SET(reg, horzval);
 	/* # of lines for the LCD */
 	reg = TX3912_VIDEOCTRL2_LINEVAL_SET(reg, lineval);
-	
+
 	tx_conf_write(tc, TX3912_VIDEOCTRL2_REG, reg);
 }
 
@@ -470,11 +472,11 @@ tx3912video_reset(struct video_chip *chip)
 {
 	tx_chipset_tag_t tc = chip->vc_v;
 	txreg_t reg;
-	
-	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);	
+
+	reg = tx_conf_read(tc, TX3912_VIDEOCTRL1_REG);
 
 	/* Disable video logic at end of this frame */
-	reg |= TX3912_VIDEOCTRL1_ENFREEZEFRAME; 
+	reg |= TX3912_VIDEOCTRL1_ENFREEZEFRAME;
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
 	/* Wait for end of frame */
@@ -482,12 +484,12 @@ tx3912video_reset(struct video_chip *chip)
 
 	/* Make sure to disable video logic */
 	reg &= ~TX3912_VIDEOCTRL1_ENVID;
-	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);	
+	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
 	delay(1000);
 
 	/* Enable video logic again */
-	reg &= ~TX3912_VIDEOCTRL1_ENFREEZEFRAME; 
+	reg &= ~TX3912_VIDEOCTRL1_ENFREEZEFRAME;
 	reg |= TX3912_VIDEOCTRL1_ENVID;
 	tx_conf_write(tc, TX3912_VIDEOCTRL1_REG, reg);
 
@@ -535,7 +537,7 @@ tx3912video_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 out:
 		cmap_work_free(r, g, b, rgb);
 		return error;
-		
+
 	case WSDISPLAYIO_PUTCMAP:
 		/*
 		 * TX3912 can't change CLUT index. R:G:B = 3:3:2
@@ -615,21 +617,21 @@ tx3912video_mmap(void *ctx, off_t offset, int prot)
 static const struct {
 	int mul, div;
 } dither_list [] = {
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_1]	= { 1, 1 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_6_7]	= { 6, 7 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_5]	= { 4, 5 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_4]	= { 3, 4 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_5_7]	= { 5, 7 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_3]	= { 2, 3 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_5]	= { 3, 5 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_7]	= { 4, 7 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_4]	= { 2, 4 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_7]	= { 3, 7 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_5]	= { 2, 5 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_3]	= { 1, 3 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_7]	= { 2, 7 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_5]	= { 1, 5 }, 
-	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_7]	= { 1, 7 }, 
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1]	= { 1, 1 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_6_7]	= { 6, 7 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_5]	= { 4, 5 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_4]	= { 3, 4 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_5_7]	= { 5, 7 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_3]	= { 2, 3 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_5]	= { 3, 5 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_4_7]	= { 4, 7 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_4]	= { 2, 4 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_3_7]	= { 3, 7 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_5]	= { 2, 5 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_3]	= { 1, 3 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_2_7]	= { 2, 7 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_5]	= { 1, 5 },
+	[TX3912_VIDEO_DITHER_DUTYCYCLE_1_7]	= { 1, 7 },
 	[TX3912_VIDEO_DITHER_DUTYCYCLE_0]	= { 0, 1 }
 }, *dlp;
 
@@ -678,7 +680,7 @@ tx3912video_clut_get(struct tx3912video_softc *sc, u_int32_t *rgb, int beg,
 	KASSERT(rgb);
 	KASSERT(LEGAL_CLUT_INDEX(beg));
 	KASSERT(LEGAL_CLUT_INDEX(beg + cnt - 1));
-	
+
 	for (i = beg; i < beg + cnt; i++) {
 		*rgb++ =  RGB24(__get_color8((i >> 5) & 0x7),
 		    __get_color8((i >> 2) & 0x7),
@@ -710,7 +712,7 @@ tx3912video_clut_install(void *ctx, struct rasops_info *ri)
 	};
 
 	KASSERT(ri);
-	
+
 	if (sc->sc_chip->vc_fbdepth == 8) {
 		/* XXX 2bit gray scale LUT not supported */
 		memcpy(ri->ri_devcmap, system_cmap, sizeof system_cmap);
@@ -726,33 +728,33 @@ tx3912video_clut_init(struct tx3912video_softc *sc)
 		return; /* XXX 2bit gray scale LUT not supported */
 	}
 
-	/* 
+	/*
 	 * time-based dithering pattern (TOSHIBA recommended pattern)
 	 */
 	/* 2/3, 1/3 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL8_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL8_REG,
 	    TX3912_VIDEOCTRL8_PAT2_3_DEFAULT);
 	/* 3/4, 2/4 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL9_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL9_REG,
 	    (TX3912_VIDEOCTRL9_PAT3_4_DEFAULT << 16) |
 	    TX3912_VIDEOCTRL9_PAT2_4_DEFAULT);
 	/* 4/5, 1/5 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL10_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL10_REG,
 	    TX3912_VIDEOCTRL10_PAT4_5_DEFAULT);
 	/* 3/5, 2/5 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL11_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL11_REG,
 	    TX3912_VIDEOCTRL11_PAT3_5_DEFAULT);
 	/* 6/7, 1/7 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL12_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL12_REG,
 	    TX3912_VIDEOCTRL12_PAT6_7_DEFAULT);
 	/* 5/7, 2/7 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL13_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL13_REG,
 	    TX3912_VIDEOCTRL13_PAT5_7_DEFAULT);
 	/* 4/7, 3/7 */
-	tx_conf_write(tc, TX3912_VIDEOCTRL14_REG, 
+	tx_conf_write(tc, TX3912_VIDEOCTRL14_REG,
 	    TX3912_VIDEOCTRL14_PAT4_7_DEFAULT);
 
-	/* 
+	/*
 	 * dither-pattern look-up table. (selected by uch)
 	 */
 	/* red */

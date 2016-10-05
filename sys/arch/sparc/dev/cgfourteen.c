@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.79.4.2 2016/07/09 20:24:56 skrll Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.79.4.3 2016/10/05 20:55:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -293,7 +293,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	sc->sc_regaddr = BUS_ADDR(sa->sa_slot, sa->sa_offset);
 	sc->sc_fbaddr = BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].sbr_slot,
 				sc->sc_physadr[CG14_PXL_IDX].sbr_offset);
-	
+
 	sc->sc_ctl   = (struct cg14ctl  *) (bh);
 	sc->sc_hwc   = (struct cg14curs *) (bh + CG14_OFFSET_CURS);
 	sc->sc_dac   = (struct cg14dac  *) (bh + CG14_OFFSET_DAC);
@@ -332,7 +332,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 		    sc->sc_physadr[CG14_PXL_IDX].sbr_offset,
 		    sc->sc_vramsize, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_LARGE,
 		    &bh) != 0) {
-			printf("%s: cannot map pixels\n", 
+			printf("%s: cannot map pixels\n",
 				device_xname(sc->sc_dev));
 			return;
 		}
@@ -362,7 +362,7 @@ cgfourteenattach(device_t parent, device_t self, void *aux)
 	if (sc->sc_sx != NULL) {
 		sc->sc_fb_paddr = bus_space_mmap(sc->sc_bustag,
 		    sc->sc_fbaddr, 0, 0, 0) & 0xfffff000;
-		aprint_normal_dev(sc->sc_dev, "using %s\n", 
+		aprint_normal_dev(sc->sc_dev, "using %s\n",
 		    device_xname(sc->sc_sx->sc_dev));
 		aprint_debug_dev(sc->sc_dev, "fb paddr: %08x\n",
 		    sc->sc_fb_paddr);
@@ -407,7 +407,7 @@ cgfourteenopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct cgfourteen_softc *sc = 
+	struct cgfourteen_softc *sc =
 	    device_lookup_private(&cgfourteen_cd, minor(dev));
 	int opens;
 
@@ -418,9 +418,13 @@ cgfourteenclose(dev_t dev, int flags, int mode, struct lwp *l)
 	/*
 	 * Restore video state to make the PROM happy, on last close.
 	 */
-	if (opens == 0)
+	if (opens == 0) {
 		cg14_reset(sc);
-
+#if NSX > 0
+		if (sc->sc_sx)
+			glyphcache_wipe(&sc->sc_gc);
+#endif
+	}
 	return (0);
 }
 
@@ -505,7 +509,7 @@ cgfourteenunblank(device_t dev)
 		vcons_redraw_screen(sc->sc_vd.active);
 		sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 	}
-#endif	
+#endif
 }
 
 /*
@@ -575,7 +579,7 @@ cgfourteenmmap(dev_t dev, off_t off, int prot)
 #endif
 	} else
 		return -1;
-	
+
 	return (bus_space_mmap(sc->sc_bustag, offset, off, prot,
 		    BUS_SPACE_MAP_LINEAR));
 }
@@ -755,7 +759,7 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
 		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
-			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) - 
+			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) -
 			 sc->sc_fb.fb_type.fb_height - 5,
 			sc->sc_fb.fb_type.fb_width,
 			ri->ri_font->fontwidth,
@@ -832,7 +836,7 @@ cg14_putcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
 		sc->sc_cmap.cm_map[index][3] = rbuf[index];
 		sc->sc_cmap.cm_map[index][2] = gbuf[index];
 		sc->sc_cmap.cm_map[index][1] = bbuf[index];
-		
+
 		index++;
 	}
 	cg14_load_hwcmap(sc, 0, 256);
@@ -855,7 +859,7 @@ cg14_getcmap(struct cgfourteen_softc *sc, struct wsdisplay_cmap *cm)
 		rbuf[i] = sc->sc_cmap.cm_map[index][3];
 		gbuf[i] = sc->sc_cmap.cm_map[index][2];
 		bbuf[i] = sc->sc_cmap.cm_map[index][1];
-		
+
 		index++;
 	}
 	error = copyout(rbuf,   cm->red,   count);
@@ -918,6 +922,10 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 						cg14_set_depth(sc, 8);
 						cg14_init_cmap(sc);
+#if NSX > 0
+						if (sc->sc_sx)
+							glyphcache_wipe(&sc->sc_gc);
+#endif
 						vcons_redraw_screen(ms);
 					} else {
 
@@ -930,7 +938,7 @@ cg14_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			cg14_set_video(sc, *(int *)data);
 			return 0;
 		case WSDISPLAYIO_GVIDEO:
-			return cg14_get_video(sc) ? 
+			return cg14_get_video(sc) ?
 			    WSDISPLAYIO_VIDEO_ON : WSDISPLAYIO_VIDEO_OFF;
 		case WSDISPLAYIO_GCURPOS:
 			{
@@ -1050,7 +1058,7 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 	switch (depth) {
 		case 8:
 			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
-			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL, CG14_MCTL_ENABLEVID |
 			    CG14_MCTL_PIXMODE_8 | CG14_MCTL_POWERCTL);
 			sc->sc_depth = 8;
 			/* everything is CLUT1 */
@@ -1059,7 +1067,7 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 			break;
 		case 32:
 			bus_space_write_1(sc->sc_bustag, sc->sc_regh,
-			    CG14_MCTL, CG14_MCTL_ENABLEVID | 
+			    CG14_MCTL, CG14_MCTL_ENABLEVID |
 			    CG14_MCTL_PIXMODE_32 | CG14_MCTL_POWERCTL);
 			sc->sc_depth = 32;
 			for (i = 0; i < CG14_CLUT_SIZE; i++)
@@ -1104,7 +1112,7 @@ cg14_do_cursor(struct cgfourteen_softc *sc, struct wsdisplay_cursor *cur)
 	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
 		int i;
 		uint32_t val;
-	
+
 		for (i = 0; i < min(cur->cmap.count, 3); i++) {
 			val = (cur->cmap.red[i] ) |
 			      (cur->cmap.green[i] << 8) |
@@ -1187,8 +1195,8 @@ cg14_rectfill(struct cgfourteen_softc *sc, int x, int y, int wi, int he,
 	/*
 	 * Calculate the number of pixels we need to do one by one
 	 * until we're 32bit aligned, then do the rest in 32bit
-	 * mode. Assumes that stride is always a multiple of 4. 
-	 */ 
+	 * mode. Assumes that stride is always a multiple of 4.
+	 */
 	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
@@ -1226,8 +1234,8 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 	/*
 	 * Calculate the number of pixels we need to do one by one
 	 * until we're 32bit aligned, then do the rest in 32bit
-	 * mode. Assumes that stride is always a multiple of 4. 
-	 */ 
+	 * mode. Assumes that stride is always a multiple of 4.
+	 */
 	/* TODO: use 32bit writes with byte mask instead */
 	pre = addr & 3;
 	if (pre != 0) pre = 4 - pre;
@@ -1394,7 +1402,7 @@ cg14_bitblt_gc(void *cookie, int xs, int ys, int xd, int yd,
 		saddr &= ~3;
 	}
 	swi = (swi + 3) >> 2;	/* round up, number of quads to read */
-	
+
 	if (daddr & 3) {
 		in = 4 - (daddr & 3); /* pixels to write in byte mode */
 		cnt -= in;
@@ -1402,7 +1410,7 @@ cg14_bitblt_gc(void *cookie, int xs, int ys, int xd, int yd,
 
 	q = cnt >> 2;
 	out = cnt & 3;
-	
+
 	for (line = 0; line < he; line++) {
 		/* read source line, in all quads */
 		sta(saddr & ~7, ASI_SX, SX_LDUQ0(8, swi - 1, saddr & 7));
@@ -1440,7 +1448,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 	uint32_t addr;
 	int stride = sc->sc_fb.fb_type.fb_width;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1502,10 +1510,10 @@ cg14_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -1542,7 +1550,7 @@ cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	int r1, g1, b1, r0, g0, b0, fgo, bgo, rv;
 	uint8_t *data8;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1627,7 +1635,7 @@ cg14_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		if (cnt > 0) {
 			sta(next & ~7, ASI_SX, SX_STB(reg, cnt - 1, next & 7));
 		}
-			
+
 		addr += stride;
 	}
 
@@ -1643,7 +1651,7 @@ cg14_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1661,7 +1669,7 @@ cg14_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1698,7 +1706,7 @@ cg14_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct cgfourteen_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;

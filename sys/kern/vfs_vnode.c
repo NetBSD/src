@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.39.2.5 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.39.2.6 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -89,8 +89,9 @@
  *	references, e.g. count of links, whether the file was removed).
  *
  *	Depending on indication, vnode can be put into a free list (cache),
- *	or cleaned via vclean(9), which calls VOP_RECLAIM(9) to disassociate
- *	underlying file system from the vnode, and finally destroyed.
+ *	or cleaned via vcache_reclaim, which calls VOP_RECLAIM(9) to
+ *	disassociate underlying file system from the vnode, and finally
+ *	destroyed.
  *
  * Vnode state
  *
@@ -113,10 +114,10 @@
  *			vcache_new() and is ready to use.
  *	ACTIVE -> RECLAIMING
  *			Vnode starts disassociation from underlying file
- *			system in vclean().
+ *			system in vcache_reclaim().
  *	RECLAIMING -> RECLAIMED
  *			Vnode finished disassociation from underlying file
- *			system in vclean().
+ *			system in vcache_reclaim().
  *	ACTIVE -> BLOCKED
  *			Either vcache_rekey*() is changing the vnode key or
  *			vrelel() is about to call VOP_INACTIVE().
@@ -155,7 +156,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.5 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.6 2016/10/05 20:56:03 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -242,7 +243,7 @@ static struct vcache_node *vcache_alloc(void);
 static void		vcache_free(struct vcache_node *);
 static void		vcache_init(void);
 static void		vcache_reinit(void);
-static void		vclean(vnode_t *);
+static void		vcache_reclaim(vnode_t *);
 static void		vrelel(vnode_t *, int);
 static void		vdrain_thread(void *);
 static void		vrele_thread(void *);
@@ -527,7 +528,7 @@ try_nextlist:
 	 * before doing this.
 	 */
 	vp->v_usecount = 1;
-	vclean(vp);
+	vcache_reclaim(vp);
 	vrelel(vp, 0);
 	fstrans_done(mp);
 
@@ -588,7 +589,7 @@ vremfree(vnode_t *vp)
  *
  * => Must be called with v_interlock held.
  *
- * If state is VN_RECLAIMING, the vnode may be eliminated in vgone()/vclean().
+ * If state is VN_RECLAIMING, the vnode may be eliminated in vcache_reclaim().
  * In that case, we cannot grab the vnode, so the process is awakened when
  * the transition is completed, and an error returned to indicate that the
  * vnode is no longer usable.
@@ -783,7 +784,7 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		VOP_INACTIVE(vp, &recycle);
 		if (recycle) {
-			/* vclean() below will drop the lock. */
+			/* vcache_reclaim() below will drop the lock. */
 			if (vn_lock(vp, LK_EXCLUSIVE) != 0)
 				recycle = false;
 		}
@@ -812,7 +813,7 @@ vrelel(vnode_t *vp, int flags)
 		 */
 		if (recycle) {
 			VSTATE_ASSERT(vp, VN_ACTIVE);
-			vclean(vp);
+			vcache_reclaim(vp);
 		}
 		KASSERT(vp->v_usecount > 0);
 	}
@@ -990,96 +991,6 @@ holdrelel(vnode_t *vp)
 }
 
 /*
- * Disassociate the underlying file system from a vnode.
- *
- * Must be called with vnode locked and will return unlocked.
- * Must be called with the interlock held, and will return with it held.
- */
-static void
-vclean(vnode_t *vp)
-{
-	lwp_t *l = curlwp;
-	bool recycle, active;
-	int error;
-
-	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
-	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
-	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT(vp->v_usecount != 0);
-
-	active = (vp->v_usecount > 1);
-	/*
-	 * Prevent the vnode from being recycled or brought into use
-	 * while we clean it out.
-	 */
-	VSTATE_CHANGE(vp, VN_ACTIVE, VN_RECLAIMING);
-	if (vp->v_iflag & VI_EXECMAP) {
-		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
-		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
-	}
-	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
-	mutex_exit(vp->v_interlock);
-
-	/*
-	 * Clean out any cached data associated with the vnode.
-	 * If purging an active vnode, it must be closed and
-	 * deactivated before being reclaimed. Note that the
-	 * VOP_INACTIVE will unlock the vnode.
-	 */
-	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-	if (error != 0) {
-		if (wapbl_vphaswapbl(vp))
-			WAPBL_DISCARD(wapbl_vptomp(vp));
-		error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
-	}
-	KASSERTMSG((error == 0), "vinvalbuf failed: %d", error);
-	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
-		 spec_node_revoke(vp);
-	}
-	if (active) {
-		VOP_INACTIVE(vp, &recycle);
-	} else {
-		/*
-		 * Any other processes trying to obtain this lock must first
-		 * wait for VN_RECLAIMED, then call the new lock operation.
-		 */
-		VOP_UNLOCK(vp);
-	}
-
-	/* Disassociate the underlying file system from the vnode. */
-	if (VOP_RECLAIM(vp)) {
-		vnpanic(vp, "%s: cannot reclaim", __func__);
-	}
-
-	KASSERT(vp->v_data == NULL);
-	KASSERT(vp->v_uobj.uo_npages == 0);
-
-	if (vp->v_type == VREG && vp->v_ractx != NULL) {
-		uvm_ra_freectx(vp->v_ractx);
-		vp->v_ractx = NULL;
-	}
-
-	/* Purge name cache. */
-	cache_purge(vp);
-
-	/* Move to dead mount. */
-	vp->v_vflag &= ~VV_ROOT;
-	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
-	vfs_insmntque(vp, dead_rootmount);
-
-	/* Done with purge, notify sleepers of the grim news. */
-	mutex_enter(vp->v_interlock);
-	vp->v_op = dead_vnodeop_p;
-	vp->v_vflag |= VV_LOCKSWORK;
-	VSTATE_CHANGE(vp, VN_RECLAIMING, VN_RECLAIMED);
-	vp->v_tag = VT_NON;
-	KNOTE(&vp->v_klist, NOTE_REVOKE);
-
-	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-}
-
-/*
  * Recycle an unused vnode if caller holds the last reference.
  */
 bool
@@ -1096,7 +1007,7 @@ vrecycle(vnode_t *vp)
 		VOP_UNLOCK(vp);
 		return false;
 	}
-	vclean(vp);
+	vcache_reclaim(vp);
 	vrelel(vp, 0);
 	return true;
 }
@@ -1149,7 +1060,7 @@ vgone(vnode_t *vp)
 	}
 
 	mutex_enter(vp->v_interlock);
-	vclean(vp);
+	vcache_reclaim(vp);
 	vrelel(vp, 0);
 }
 
@@ -1575,26 +1486,119 @@ vcache_rekey_exit(struct mount *mp, struct vnode *vp,
 }
 
 /*
- * Remove a vnode / fs node pair from the cache.
+ * Disassociate the underlying file system from a vnode.
+ *
+ * Must be called with vnode locked and will return unlocked.
+ * Must be called with the interlock held, and will return with it held.
  */
-void
-vcache_remove(struct mount *mp, const void *key, size_t key_len)
+static void
+vcache_reclaim(vnode_t *vp)
 {
+	lwp_t *l = curlwp;
+	struct vcache_node *node = VP_TO_VN(vp);
 	uint32_t hash;
-	struct vcache_key vcache_key;
-	struct vcache_node *node;
+	uint8_t temp_buf[64], *temp_key;
+	size_t temp_key_len;
+	bool recycle, active;
+	int error;
 
-	vcache_key.vk_mount = mp;
-	vcache_key.vk_key = key;
-	vcache_key.vk_key_len = key_len;
-	hash = vcache_hash(&vcache_key);
+	KASSERT((vp->v_vflag & VV_LOCKSWORK) == 0 ||
+	    VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
+	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(vp->v_usecount != 0);
 
+	active = (vp->v_usecount > 1);
+	temp_key_len = node->vn_key.vk_key_len;
+	/*
+	 * Prevent the vnode from being recycled or brought into use
+	 * while we clean it out.
+	 */
+	VSTATE_CHANGE(vp, VN_ACTIVE, VN_RECLAIMING);
+	if (vp->v_iflag & VI_EXECMAP) {
+		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
+		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
+	}
+	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
+	mutex_exit(vp->v_interlock);
+
+	/* Replace the vnode key with a temporary copy. */
+	if (node->vn_key.vk_key_len > sizeof(temp_buf)) {
+		temp_key = kmem_alloc(temp_key_len, KM_SLEEP);
+	} else {
+		temp_key = temp_buf;
+	}
 	mutex_enter(&vcache.lock);
-	node = vcache_hash_lookup(&vcache_key, hash);
-	KASSERT(node != NULL);
+	memcpy(temp_key, node->vn_key.vk_key, temp_key_len);
+	node->vn_key.vk_key = temp_key;
+	mutex_exit(&vcache.lock);
+
+	/*
+	 * Clean out any cached data associated with the vnode.
+	 * If purging an active vnode, it must be closed and
+	 * deactivated before being reclaimed. Note that the
+	 * VOP_INACTIVE will unlock the vnode.
+	 */
+	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+	if (error != 0) {
+		if (wapbl_vphaswapbl(vp))
+			WAPBL_DISCARD(wapbl_vptomp(vp));
+		error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
+	}
+	KASSERTMSG((error == 0), "vinvalbuf failed: %d", error);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
+		 spec_node_revoke(vp);
+	}
+	if (active) {
+		VOP_INACTIVE(vp, &recycle);
+	} else {
+		/*
+		 * Any other processes trying to obtain this lock must first
+		 * wait for VN_RECLAIMED, then call the new lock operation.
+		 */
+		VOP_UNLOCK(vp);
+	}
+
+	/* Disassociate the underlying file system from the vnode. */
+	if (VOP_RECLAIM(vp)) {
+		vnpanic(vp, "%s: cannot reclaim", __func__);
+	}
+
+	KASSERT(vp->v_data == NULL);
+	KASSERT(vp->v_uobj.uo_npages == 0);
+
+	if (vp->v_type == VREG && vp->v_ractx != NULL) {
+		uvm_ra_freectx(vp->v_ractx);
+		vp->v_ractx = NULL;
+	}
+
+	/* Purge name cache. */
+	cache_purge(vp);
+
+	/* Move to dead mount. */
+	vp->v_vflag &= ~VV_ROOT;
+	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
+	vfs_insmntque(vp, dead_rootmount);
+
+	/* Remove from vnode cache. */
+	hash = vcache_hash(&node->vn_key);
+	mutex_enter(&vcache.lock);
+	KASSERT(node == vcache_hash_lookup(&node->vn_key, hash));
 	SLIST_REMOVE(&vcache.hashtab[hash & vcache.hashmask],
 	    node, vcache_node, vn_hash);
 	mutex_exit(&vcache.lock);
+	if (temp_key != temp_buf)
+		kmem_free(temp_key, temp_key_len);
+
+	/* Done with purge, notify sleepers of the grim news. */
+	mutex_enter(vp->v_interlock);
+	vp->v_op = dead_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	VSTATE_CHANGE(vp, VN_RECLAIMING, VN_RECLAIMED);
+	vp->v_tag = VT_NON;
+	KNOTE(&vp->v_klist, NOTE_REVOKE);
+
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.8 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.9 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.8 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.9 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2506,17 +2506,17 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	/*
 	 * Check for SNAP/LLC.
 	 */
-        if (ether_type < ETHERMTU) {
-                struct llc *llc2 = (struct llc *)(eh1 + 1);
+	if (ether_type < ETHERMTU) {
+		struct llc *llc2 = (struct llc *)(eh1 + 1);
 
-                if ((*mp)->m_len >= ETHER_HDR_LEN + 8 &&
-                    llc2->llc_dsap == LLC_SNAP_LSAP &&
-                    llc2->llc_ssap == LLC_SNAP_LSAP &&
-                    llc2->llc_control == LLC_UI) {
-                	ether_type = htons(llc2->llc_un.type_snap.ether_type);
+		if ((*mp)->m_len >= ETHER_HDR_LEN + 8 &&
+		    llc2->llc_dsap == LLC_SNAP_LSAP &&
+		    llc2->llc_ssap == LLC_SNAP_LSAP &&
+		    llc2->llc_control == LLC_UI) {
+			ether_type = htons(llc2->llc_un.type_snap.ether_type);
 			snap = 1;
-                }
-        }
+		}
+	}
 
 	/*
 	 * If we're trying to filter bridge traffic, don't look at anything
@@ -2557,13 +2557,13 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	switch (ether_type)
 	{
 	case ETHERTYPE_IP :
-		error = (dir == PFIL_IN) ? bridge_ip_checkbasic(mp) : 0;
+		error = bridge_ip_checkbasic(mp);
 		if (error == 0)
 			error = pfil_run_hooks(inet_pfil_hook, mp, ifp, dir);
 		break;
 # ifdef INET6
 	case ETHERTYPE_IPV6 :
-		error = (dir == PFIL_IN) ? bridge_ip6_checkbasic(mp) : 0;
+		error = bridge_ip6_checkbasic(mp);
 		if (error == 0)
 			error = pfil_run_hooks(inet6_pfil_hook, mp, ifp, dir);
 		break;
@@ -2659,46 +2659,46 @@ bridge_ip_checkbasic(struct mbuf **mp)
 		if (ip == NULL) goto bad;
 	}
 
-        switch (m->m_pkthdr.csum_flags &
-                ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_IPv4) |
-                 M_CSUM_IPv4_BAD)) {
-        case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
-                /* INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad); */
-                goto bad;
+	switch (m->m_pkthdr.csum_flags &
+	        ((m_get_rcvif_NOMPSAFE(m)->if_csum_flags_rx & M_CSUM_IPv4) |
+	         M_CSUM_IPv4_BAD)) {
+	case M_CSUM_IPv4|M_CSUM_IPv4_BAD:
+		/* INET_CSUM_COUNTER_INCR(&ip_hwcsum_bad); */
+		goto bad;
 
-        case M_CSUM_IPv4:
-                /* Checksum was okay. */
-                /* INET_CSUM_COUNTER_INCR(&ip_hwcsum_ok); */
-                break;
+	case M_CSUM_IPv4:
+		/* Checksum was okay. */
+		/* INET_CSUM_COUNTER_INCR(&ip_hwcsum_ok); */
+		break;
 
-        default:
-                /* Must compute it ourselves. */
-                /* INET_CSUM_COUNTER_INCR(&ip_swcsum); */
-                if (in_cksum(m, hlen) != 0)
-                        goto bad;
-                break;
-        }
+	default:
+		/* Must compute it ourselves. */
+		/* INET_CSUM_COUNTER_INCR(&ip_swcsum); */
+		if (in_cksum(m, hlen) != 0)
+			goto bad;
+		break;
+	}
 
-        /* Retrieve the packet length. */
-        len = ntohs(ip->ip_len);
+	/* Retrieve the packet length. */
+	len = ntohs(ip->ip_len);
 
-        /*
-         * Check for additional length bogosity
-         */
-        if (len < hlen) {
+	/*
+	 * Check for additional length bogosity
+	 */
+	if (len < hlen) {
 		ip_statinc(IP_STAT_BADLEN);
-                goto bad;
-        }
+		goto bad;
+	}
 
-        /*
-         * Check that the amount of data in the buffers
-         * is as at least much as the IP header would have us expect.
-         * Drop packet if shorter than we expect.
-         */
-        if (m->m_pkthdr.len < len) {
+	/*
+	 * Check that the amount of data in the buffers
+	 * is as at least much as the IP header would have us expect.
+	 * Drop packet if shorter than we expect.
+	 */
+	if (m->m_pkthdr.len < len) {
 		ip_statinc(IP_STAT_TOOSHORT);
-                goto bad;
-        }
+		goto bad;
+	}
 
 	/* Checks out, proceed */
 	*mp = m;
@@ -2721,37 +2721,37 @@ bridge_ip6_checkbasic(struct mbuf **mp)
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6;
 
-        /*
-         * If the IPv6 header is not aligned, slurp it up into a new
-         * mbuf with space for link headers, in the event we forward
-         * it.  Otherwise, if it is aligned, make sure the entire base
-         * IPv6 header is in the first mbuf of the chain.
-         */
-        if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
-                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
-                if ((m = m_copyup(m, sizeof(struct ip6_hdr),
-                                  (max_linkhdr + 3) & ~3)) == NULL) {
-                        /* XXXJRT new stat, please */
+	/*
+	 * If the IPv6 header is not aligned, slurp it up into a new
+	 * mbuf with space for link headers, in the event we forward
+	 * it.  Otherwise, if it is aligned, make sure the entire base
+	 * IPv6 header is in the first mbuf of the chain.
+	 */
+	if (IP6_HDR_ALIGNED_P(mtod(m, void *)) == 0) {
+		struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
+		if ((m = m_copyup(m, sizeof(struct ip6_hdr),
+		                  (max_linkhdr + 3) & ~3)) == NULL) {
+			/* XXXJRT new stat, please */
 			ip6_statinc(IP6_STAT_TOOSMALL);
-                        in6_ifstat_inc(inifp, ifs6_in_hdrerr);
-                        goto bad;
-                }
-        } else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
-                struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
-                if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
+			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
+			goto bad;
+		}
+	} else if (__predict_false(m->m_len < sizeof(struct ip6_hdr))) {
+		struct ifnet *inifp = m_get_rcvif_NOMPSAFE(m);
+		if ((m = m_pullup(m, sizeof(struct ip6_hdr))) == NULL) {
 			ip6_statinc(IP6_STAT_TOOSMALL);
-                        in6_ifstat_inc(inifp, ifs6_in_hdrerr);
-                        goto bad;
-                }
-        }
+			in6_ifstat_inc(inifp, ifs6_in_hdrerr);
+			goto bad;
+		}
+	}
 
-        ip6 = mtod(m, struct ip6_hdr *);
+	ip6 = mtod(m, struct ip6_hdr *);
 
-        if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+	if ((ip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
 		ip6_statinc(IP6_STAT_BADVERS);
-                in6_ifstat_inc(m_get_rcvif_NOMPSAFE(m), ifs6_in_hdrerr);
-                goto bad;
-        }
+		in6_ifstat_inc(m_get_rcvif_NOMPSAFE(m), ifs6_in_hdrerr);
+		goto bad;
+	}
 
 	/* Checks out, proceed */
 	*mp = m;

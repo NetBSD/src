@@ -1,4 +1,4 @@
-/* $NetBSD: tiotg.c,v 1.2.8.5 2016/07/09 20:24:50 skrll Exp $ */
+/* $NetBSD: tiotg.c,v 1.2.8.6 2016/10/05 20:55:25 skrll Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.5 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tiotg.c,v 1.2.8.6 2016/10/05 20:55:25 skrll Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -133,14 +133,14 @@ tiotg_match(device_t parent, cfdata_t match, void *aux)
 	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT ||
 	    mb->mb_iosize == MAINBUSCF_SIZE_DEFAULT ||
 	    mb->mb_intrbase == MAINBUSCF_INTRBASE_DEFAULT)
-                return 0;
-        return 1;
+		return 0;
+	return 1;
 }
 
 static void
 tiotg_attach(device_t parent, device_t self, void *aux)
 {
-	struct tiotg_softc       *sc = device_private(self);
+	struct tiotg_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = aux;
 	uint32_t val;
 
@@ -157,7 +157,7 @@ tiotg_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intrbase = mb->mb_intrbase;
 	sc->sc_ih = intr_establish(mb->mb_intrbase, IPL_USB, IST_LEVEL,
 	    tiotg_intr, sc);
-        KASSERT(sc->sc_ih != NULL);
+	KASSERT(sc->sc_ih != NULL);
 	aprint_normal(": TI dual-port USB controller");
 	/* XXX this looks wrong */
 	prcm_write_4(AM335X_PRCM_CM_WKUP, CM_WKUP_CM_CLKDCOLDO_DPLL_PER,
@@ -335,10 +335,18 @@ ti_motg_attach(device_t parent, device_t self, void *aux)
 	DPRINTF("now val 0x%x", val, 0, 0, 0);
 #endif
 	/* XXX configure mode */
+#if 0
 	if (sc->sc_ctrlport == 0)
 		sc->sc_motg.sc_mode = MOTG_MODE_DEVICE;
 	else
 		sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#else
+	/* XXXXX
+	 * Both ports always the host mode only.
+	 * And motg(4) doesn't supports device and OTG modes.
+	 */
+	sc->sc_motg.sc_mode = MOTG_MODE_HOST;
+#endif
 	if (sc->sc_motg.sc_mode == MOTG_MODE_HOST) {
 		val = TIOTG_USBC_READ4(sc, USBCTRL_MODE);
 		val |= USBCTRL_MODE_IDDIGMUX;

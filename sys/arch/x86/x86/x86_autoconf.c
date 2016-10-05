@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.72.2.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.72.2.2 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.72.2.1 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.72.2.2 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ is_valid_disk(device_t dv)
 
 	if (device_class(dv) != DV_DISK)
 		return (0);
-	
+
 	return (device_is_a(dv, "dk") ||
 		device_is_a(dv, "sd") ||
 		device_is_a(dv, "wd") ||
@@ -282,7 +282,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		DPRINTF(("%s: no label %s\n", __func__, device_xname(dv)));
 		return 0;
 	}
-	
+
 	if ((tmpvn = opendisk(dv)) == NULL) {
 		DPRINTF(("%s: can't open %s\n", __func__, device_xname(dv)));
 		return 0;
@@ -330,7 +330,7 @@ findroot(void)
 
 	if (booted_device)
 		return;
-	
+
 	if (lookup_bootinfo(BTINFO_NETIF) != NULL) {
 		/*
 		 * We got netboot interface information, but device_register()
@@ -541,6 +541,8 @@ void
 device_register(device_t dev, void *aux)
 {
 	device_t isaboot, pciboot;
+
+	device_acpi_register(dev, aux);
 
 	isaboot = device_isa_register(dev, aux);
 	pciboot = device_pci_register(dev, aux);

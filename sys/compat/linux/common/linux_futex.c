@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.33.6.1 2016/05/29 08:44:20 skrll Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.33.6.2 2016/10/05 20:55:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33.6.1 2016/05/29 08:44:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.33.6.2 2016/10/05 20:55:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -128,7 +128,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 
 	if ((SCARG(uap, op) & LINUX_FUTEX_CMD_MASK) == LINUX_FUTEX_WAIT &&
 	    SCARG(uap, timeout) != NULL) {
-		if ((error = copyin(SCARG(uap, timeout), 
+		if ((error = copyin(SCARG(uap, timeout),
 		    &lts, sizeof(lts))) != 0) {
 			return error;
 		}
@@ -209,7 +209,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 				tout = 0;
 		}
 		FUTEX_SYSTEM_LOCK;
-		if ((error = copyin(SCARG(uap, uaddr), 
+		if ((error = copyin(SCARG(uap, uaddr),
 		    &val, sizeof(val))) != 0) {
 			FUTEX_SYSTEM_UNLOCK;
 			return error;
@@ -221,8 +221,8 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 		}
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: val = %d, uaddr = %p, "
-		    "*uaddr = %d, timeout = %lld.%09ld\n", 
-		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val), 
+		    "*uaddr = %d, timeout = %lld.%09ld\n",
+		    l->l_proc->p_pid, l->l_lid, SCARG(uap, val),
 		    SCARG(uap, uaddr), val, (long long)ts->tv_sec,
 		    ts->tv_nsec));
 
@@ -236,7 +236,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 		futex_wp_free(wp);
 
 		FUTEXPRINTF(("FUTEX_WAIT %d.%d: uaddr = %p, "
-		    "ret = %d\n", l->l_proc->p_pid, l->l_lid, 
+		    "ret = %d\n", l->l_proc->p_pid, l->l_lid,
 		    SCARG(uap, uaddr), ret));
 
 		FUTEX_SYSTEM_UNLOCK;
@@ -259,14 +259,14 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 
 		/* NOTREACHED */
 		break;
-		
+
 	case LINUX_FUTEX_WAKE:
 		val = FUTEX_BITSET_MATCH_ANY;
 		/*FALLTHROUGH*/
 	case LINUX_FUTEX_WAKE_BITSET:
-		/* 
-		 * XXX: Linux is able cope with different addresses 
-		 * corresponding to the same mapped memory in the sleeping 
+		/*
+		 * XXX: Linux is able cope with different addresses
+		 * corresponding to the same mapped memory in the sleeping
 		 * and the waker process(es).
 		 */
 		FUTEXPRINTF(("FUTEX_WAKE %d.%d: uaddr = %p, val = %d\n",
@@ -286,7 +286,7 @@ linux_do_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t
 	case LINUX_FUTEX_CMP_REQUEUE:
 		FUTEX_SYSTEM_LOCK;
 
-		if ((error = copyin(SCARG(uap, uaddr), 
+		if ((error = copyin(SCARG(uap, uaddr),
 		    &val, sizeof(val))) != 0) {
 			FUTEX_SYSTEM_UNLOCK;
 			return error;
@@ -444,7 +444,7 @@ futex_ref(struct futex *f)
 	f->f_refcount++;
 }
 
-static void 
+static void
 futex_put(struct futex *f)
 {
 
@@ -458,7 +458,7 @@ futex_put(struct futex *f)
 	}
 }
 
-static int 
+static int
 futex_sleep(struct futex **fp, lwp_t *l, int timeout, struct waiting_proc *wp)
 {
 	struct futex *f;
@@ -769,6 +769,7 @@ release_futexes(struct lwp *l)
 			return;
 
 		head.futex_offset = (unsigned long)u32;
+		futex_offset = head.futex_offset;
 	} else
 #endif
 	if (copyin(&head.futex_offset, &futex_offset, sizeof(unsigned long)))

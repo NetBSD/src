@@ -1,4 +1,4 @@
-/* $NetBSD: atppcreg.h,v 1.5 2005/12/11 12:21:25 christos Exp $ */
+/* $NetBSD: atppcreg.h,v 1.5.140.1 2016/10/05 20:55:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -186,24 +186,6 @@
 #define atppc_barrier(atppc) bus_space_barrier((atppc)->sc_iot, \
 	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE | \
 	BUS_SPACE_BARRIER_READ)
-
-/* These are defined in man pages but don't actually exist for all acrhs */
-#define atppc_barrier_rr(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_READ)
-#define atppc_barrier_rw(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
-#define atppc_barrier_rb(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_READ_BEFORE_READ | \
-	BUS_SPACE_BARRIER_READ_BEFORE_WRITE)
-#define atppc_barrier_wr(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_READ)
-#define atppc_barrier_ww(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
-#define atppc_barrier_wb(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_WRITE_BEFORE_READ | \
-	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE)
-#define atppc_barrier_sync(atppc) bus_space_barrier((atppc)->sc_iot, \
-	(atppc)->sc_ioh, 0, IO_LPTSIZE, BUS_SPACE_BARRIER_SYNC)
 
 /*
  * Register defines for the PC873xx parts

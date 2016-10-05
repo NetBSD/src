@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.35 2011/08/01 11:20:27 drochner Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.35.30.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.35 2011/08/01 11:20:27 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.35.30.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include "opt_ahc_cardbus.h"
 
@@ -138,7 +138,7 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 		csc->sc_csr |= PCI_COMMAND_IO_ENABLE;
 	} else {
 		csc->sc_bar = 0;
-		printf("%s: unable to map device registers\n",
+		aprint_error("%s: unable to map device registers\n",
 		    ahc_name(ahc));
 		return;
 	}
@@ -194,7 +194,7 @@ ahc_cardbus_attach(device_t parent, device_t self, void *aux)
 	 */
 	ahc->ih = Cardbus_intr_establish(ct, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
+		aprint_error("%s: unable to establish interrupt\n",
 		    ahc_name(ahc));
 		return;
 	}

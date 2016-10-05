@@ -1,4 +1,4 @@
-/*	$NetBSD: efiapi.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efiapi.h,v 1.1.1.1.12.1 2016/10/05 20:56:00 skrll Exp $	*/
 
 #ifndef _EFI_API_H
 #define _EFI_API_H
@@ -848,6 +848,9 @@ typedef struct _EFI_BOOT_SERVICES {
 #define SAL_SYSTEM_TABLE_GUID    \
     { 0xeb9d2d32, 0x2d88, 0x11d3, {0x9a, 0x16, 0x0, 0x90, 0x27, 0x3f, 0xc1, 0x4d} }
 
+/* DIG64 Headless Console & Debug Port Table. */
+#define	HCDP_TABLE_GUID    \
+    { 0xf951938d, 0x620b, 0x42ef, {0x82, 0x79, 0xa8, 0x4b, 0x79, 0x61, 0x78, 0x98} }
 
 typedef struct _EFI_CONFIGURATION_TABLE {
     EFI_GUID                VendorGuid;

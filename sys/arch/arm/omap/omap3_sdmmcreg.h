@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdmmcreg.h,v 1.7.6.1 2016/07/09 20:24:50 skrll Exp $	*/
+/*	$NetBSD: omap3_sdmmcreg.h,v 1.7.6.2 2016/10/05 20:55:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,6 +54,30 @@
 
 #define	OMAP4_SDMMC_HL_SIZE	0x100
 
+#define MMCHS_HL_REV		0x000
+#define MMCHS_HL_HWINFO		0x004
+#  define HL_HWINFO_RETMODE		(1 << 8)
+#  define HL_HWINFO_MEM_SIZE_MASK	(0xf << 2)
+#  define HL_HWINFO_MEM_SIZE_512	(0x1 << 2)
+#  define HL_HWINFO_MEM_SIZE_1024	(0x2 << 2)
+#  define HL_HWINFO_MEM_SIZE_2048	(0x4 << 2)
+#  define HL_HWINFO_MEM_SIZE_4096	(0x8 << 2)
+#  define HL_HWINFO_MEMRGE_MEM		(1 << 1)
+#  define HL_HWINFO_MADMA_EN		(1 << 0)
+#define MMCHS_HL_SYSCONFIG	0x010
+#  define HL_SYSCONFIG_STANDBYMODE_MASK	(0x3 << 2)
+#  define HL_SYSCONFIG_STANDBYMODE_FORCE (0 << 2)
+#  define HL_SYSCONFIG_STANDBYMODE_NO	(1 << 2)
+#  define HL_SYSCONFIG_STANDBYMODE_SMART (2 << 2)
+#  define HL_SYSCONFIG_STANDBYMODE_WC	(3 << 2) /* Smart-Idle wakeup-capable */
+#  define HL_SYSCONFIG_IDLEMODE_MASK	(0x3 << 2)
+#  define HL_SYSCONFIG_IDLEMODE_FORCE	(0 << 2)
+#  define HL_SYSCONFIG_IDLEMODE_NO	(1 << 2)
+#  define HL_SYSCONFIG_IDLEMODE_SMART	(2 << 2)
+#  define HL_SYSCONFIG_IDLEMODE_WC	(3 << 2) /* Smart-Idle wakeup-capable */
+#  define HL_SYSCONFIG_FREEEMU		(1 << 1)
+#  define HL_SYSCONFIG_SOFTRESET	(1 << 0)
+
 #define MMCHS_SYSCONFIG		0x010	/* System Configuration */
 #  define SYSCONFIG_CLOCKACTIVITY_MASK	(3 << 8)
 #  define SYSCONFIG_CLOCKACTIVITY_FCLK	(2 << 8)
@@ -88,7 +112,5 @@
 #  define CON_INIT			(1 << 1)	/* Send init stream */
 #  define CON_OD			(1 << 0)	/* Card open drain */
 #define MMCHS_PWCNT		0x030	/* Power counter */
-#define MMCHS_SYSCTL		0x12c	/* SD system control register */
-#  define SYSCTL_CEN			(1 << 2)	/* Clock enable */
 
 #endif

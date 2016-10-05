@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.80.2.4 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.80.2.5 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.4 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.5 2016/10/05 20:56:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -54,13 +54,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.4 2016/07/09 20:25:21 skrll Exp $"
 #include <sys/proc.h>
 #include <sys/select.h>
 #include <sys/sockio.h>
-#if defined(COMPAT_40) || defined(MODULAR)
 #include <sys/sysctl.h>
-#endif
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/intr.h>
 #include <sys/stat.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -73,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.4 2016/07/09 20:25:21 skrll Exp $"
 
 #include "ioconf.h"
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl node management
  *
@@ -88,10 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.4 2016/07/09 20:25:21 skrll Exp $"
  * tap_log allows the module to log creations of nodes and
  * destroy them all at once using sysctl_teardown.
  */
-static int tap_node;
+static int	tap_node;
 static int	tap_sysctl_handler(SYSCTLFN_PROTO);
-SYSCTL_SETUP_PROTO(sysctl_tap_setup);
-#endif
+static void	sysctl_tap_setup(struct sysctllog **);
 
 /*
  * Since we're an Ethernet device, we need the 2 following
@@ -212,9 +211,7 @@ static int	tap_init(struct ifnet *);
 static int	tap_ioctl(struct ifnet *, u_long, void *);
 
 /* Internal functions */
-#if defined(COMPAT_40) || defined(MODULAR)
 static int	tap_lifaddr(struct ifnet *, u_long, struct ifaliasreq *);
-#endif
 static void	tap_softintr(void *);
 
 /*
@@ -234,20 +231,63 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 static struct tap_softc *	tap_clone_creator(int);
 int	tap_clone_destroyer(device_t);
 
+static struct sysctllog *tap_sysctl_clog;
+
+#ifdef _MODULE
+devmajor_t tap_bmajor = -1, tap_cmajor = -1;
+#endif
+
+static u_int tap_count;
+
 void
 tapattach(int n)
 {
-	int error;
 
-	error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
-	if (error) {
-		aprint_error("%s: unable to register cfattach\n",
-		    tap_cd.cd_name);
-		(void)config_cfdriver_detach(&tap_cd);
-		return;
-	}
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in tapinit() below).
+	 */
+}
+
+static void
+tapinit(void)
+{
+        int error = config_cfattach_attach(tap_cd.cd_name, &tap_ca);
+        if (error) {
+                aprint_error("%s: unable to register cfattach\n",
+                    tap_cd.cd_name);
+                (void)config_cfdriver_detach(&tap_cd);
+                return;
+        }
 
 	if_clone_attach(&tap_cloners);
+	sysctl_tap_setup(&tap_sysctl_clog);
+#ifdef _MODULE
+	devsw_attach("tap", NULL, &tap_bmajor, &tap_cdevsw, &tap_cmajor);
+#endif
+}
+
+static int
+tapdetach(void)
+{
+	int error = 0;
+
+	if (tap_count != 0)
+		return EBUSY;
+
+#ifdef _MODULE
+	if (error == 0)
+		error = devsw_detach(NULL, &tap_cdevsw);
+#endif
+	if (error == 0)
+		sysctl_teardown(&tap_sysctl_clog);
+	if (error == 0)
+		if_clone_detach(&tap_cloners);
+
+	if (error == 0)
+		error = config_cfattach_detach(tap_cd.cd_name, &tap_ca);
+
+	return error;
 }
 
 /* Pretty much useless for a pseudo-device */
@@ -263,10 +303,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp;
-#if defined(COMPAT_40) || defined(MODULAR)
 	const struct sysctlnode *node;
 	int error;
-#endif
 	uint8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
@@ -346,7 +384,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, enaddr);
 	if_register(ifp);
 
-#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Add a sysctl node for that interface.
 	 *
@@ -369,7 +406,6 @@ tap_attach(device_t parent, device_t self, void *aux)
 	    CTL_EOL)) != 0)
 		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
 		    error);
-#endif
 }
 
 /*
@@ -381,9 +417,7 @@ tap_detach(device_t self, int flags)
 {
 	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#if defined(COMPAT_40) || defined(MODULAR)
 	int error;
-#endif
 	int s;
 
 	sc->sc_flags |= TAP_GOING;
@@ -397,7 +431,6 @@ tap_detach(device_t self, int flags)
 		sc->sc_sih = NULL;
 	}
 
-#if defined(COMPAT_40) || defined(MODULAR)
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
 	 * sysctl_destroyv.  One should be sure to always end the path with
@@ -407,7 +440,6 @@ tap_detach(device_t self, int flags)
 	    device_unit(sc->sc_dev), CTL_EOL)) != 0)
 		aprint_error_dev(self,
 		    "sysctl_destroyv returned %d, ignoring\n", error);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
@@ -543,11 +575,9 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
 		break;
-#if defined(COMPAT_40) || defined(MODULAR)
 	case SIOCSIFPHYADDR:
 		error = tap_lifaddr(ifp, cmd, (struct ifaliasreq *)data);
 		break;
-#endif
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET)
@@ -560,7 +590,6 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return (error);
 }
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * Helper function to set Ethernet address.  This has been replaced by
  * the generic SIOCALIFADDR ioctl on a PF_LINK socket.
@@ -577,7 +606,6 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 
 	return (0);
 }
-#endif
 
 /*
  * _init() would typically be called when an interface goes up,
@@ -629,7 +657,7 @@ tap_clone_create(struct if_clone *ifc, int unit)
                     tap_cd.cd_name, unit);
 		return (ENXIO);
 	}
-
+	atomic_inc_uint(&tap_count);
 	return (0);
 }
 
@@ -669,8 +697,11 @@ static int
 tap_clone_destroy(struct ifnet *ifp)
 {
 	struct tap_softc *sc = ifp->if_softc;
+	int error = tap_clone_destroyer(sc->sc_dev);
 
-	return tap_clone_destroyer(sc->sc_dev);
+	if (error == 0)
+		atomic_dec_uint(&tap_count);
+	return error;
 }
 
 int
@@ -956,8 +987,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	do {
 		error = uiomove(mtod(m, void *),
 		    min(m->m_len, uio->uio_resid), uio);
-		MFREE(m, n);
-		m = n;
+		m = n = m_free(m);
 	} while (m != NULL && uio->uio_resid > 0 && error == 0);
 
 	if (m != NULL)
@@ -1275,7 +1305,6 @@ tap_kqread(struct knote *kn, long hint)
 	return rv;
 }
 
-#if defined(COMPAT_40) || defined(MODULAR)
 /*
  * sysctl management routines
  * You can set the address of an interface through:
@@ -1304,7 +1333,8 @@ tap_kqread(struct knote *kn, long hint)
  * full path starting from the root for later calls to sysctl_createv
  * and sysctl_destroyv.
  */
-SYSCTL_SETUP(sysctl_tap_setup, "sysctl net.link.tap subtree setup")
+static void
+sysctl_tap_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node;
 	int error = 0;
@@ -1399,4 +1429,10 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);
 }
-#endif
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, tap, "")

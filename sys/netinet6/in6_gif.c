@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.60.4.5 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.60.4.6 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.5 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.6 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -381,7 +381,7 @@ in6_gif_attach(struct gif_softc *sc)
 	if (!sc->gif_psrc || !sc->gif_pdst)
 		return EINVAL;
 	sc->encap_cookie6 = encap_attach(AF_INET6, -1, sc->gif_psrc,
-	    (struct sockaddr *)&mask6, sc->gif_pdst, (struct sockaddr *)&mask6,
+	    sin6tosa(&mask6), sc->gif_pdst, sin6tosa(&mask6),
 	    (const void *)&in6_gif_encapsw, sc);
 #else
 	sc->encap_cookie6 = encap_attach_func(AF_INET6, -1, gif_encapcheck,

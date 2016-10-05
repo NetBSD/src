@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.16 2012/10/27 17:18:16 chs Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.16.14.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.16 2012/10/27 17:18:16 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.16.14.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,8 @@ cs80busattach(device_t parent, device_t self, void *aux)
 
 	for (slave = 0; slave < 8; slave++) {
 
-		if (gpib_isalloc(device_private(device_parent(sc->sc_dev)), slave))
+		if (gpib_isalloc(device_private(device_parent(sc->sc_dev)),
+		    slave))
 			continue;
 
 		if (gpibrecv(sc->sc_ic, GPIB_BROADCAST_ADDR,
@@ -133,7 +134,8 @@ cs80busattach(device_t parent, device_t self, void *aux)
 		ca.ca_slave = slave;
 		ca.ca_id = id;
 
-		(void)config_search_ia(cs80bussearch, sc->sc_dev, "cs80bus", &ca);
+		(void)config_search_ia(cs80bussearch, sc->sc_dev, "cs80bus",
+		    &ca);
 	}
 }
 

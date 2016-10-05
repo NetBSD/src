@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.122.2.5 2016/07/09 20:25:00 skrll Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.122.2.6 2016/10/05 20:55:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.5 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.6 2016/10/05 20:55:38 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -428,7 +428,8 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	aiov.iov_base = __UNCONST(SCARG(uap, msg));
 	aiov.iov_len = SCARG(uap, len);
 
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags,
+	    NULL, 0, retval);
 }
 
 static void
@@ -617,7 +618,8 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	}
 
 skipcmsg:
-	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags,
+	    NULL, 0, retval);
 	/* Freed internally */
 	ctl_mbuf = NULL;
 
@@ -779,7 +781,7 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 	}
 	msg.msg_flags |= MSG_IOVUSRSPACE;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, 0, &from,
 	    msg.msg_control != NULL ? &control : NULL, retval);
 	if (error != 0)
 		return error;
@@ -1117,7 +1119,6 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	struct linux_ifreq ifr, *ifrp = NULL;
 	struct linux_ifconf ifc;
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
 	struct sockaddr *sa;
 	struct osockaddr *osa;
 	int space = 0, error;
@@ -1140,8 +1141,8 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		struct ifaddr *ifa;
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
-		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -1151,23 +1152,32 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 		}
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
+			struct psref psref_ifa;
+			ifa_acquire(ifa, &psref_ifa);
+			pserialize_read_exit(s);
+
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
 			    sa->sa_len > sizeof(*osa))
-				continue;
+				goto next;
 			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 			osa = (struct osockaddr *)&ifr.ifr_addr;
 			osa->sa_family = sa->sa_family;
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
-				if (error != 0)
+				if (error != 0) {
+					s = pserialize_read_enter();
+					ifa_release(ifa, &psref_ifa);
 					goto release_exit;
+				}
 				ifrp++;
 			}
 			space -= sz;
+		next:
+			s = pserialize_read_enter();
+			ifa_release(ifa, &psref_ifa);
 		}
 
-		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
@@ -1181,6 +1191,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	return copyout(&ifc, data, sizeof(ifc));
 
 release_exit:
+	pserialize_read_exit(s);
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	curlwp_bindx(bound);
 	return error;

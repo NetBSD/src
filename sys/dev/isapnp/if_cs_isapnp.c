@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_isapnp.c,v 1.18.24.1 2015/06/06 14:40:08 skrll Exp $ */
+/* $NetBSD: if_cs_isapnp.c,v 1.18.24.2 2016/10/05 20:55:42 skrll Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.18.24.1 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_isapnp.c,v 1.18.24.2 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,28 +93,28 @@ cs_isapnp_attach(device_t parent, device_t self, void *aux)
 	printf("\n");
 
 	if (ipa->ipa_nio != 1 || ipa->ipa_nirq != 1 || ipa->ipa_ndrq) {
-		printf("%s: unexpected resource requirements\n",
-			DEVNAME(sc));
+		aprint_error_dev(self, "unexpected resource requirements\n");
 		return;
 	}
 
 	if (ipa->ipa_io[0].length != CS8900_IOSIZE) {
-		printf("%s: unexpected io size\n", DEVNAME(sc));
+		aprint_error_dev(self, "unexpected io size\n");
 		return;
 	}
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: unable to allocate resources\n", DEVNAME(sc));
+		aprint_error_dev(self, "unable to allocate resources\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", DEVNAME(sc), ipa->ipa_devident,
-		ipa->ipa_devclass);
+	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
+	    ipa->ipa_devclass);
 
 #ifdef notyet
 #ifdef DEBUG
-	printf("%s: nio=%u, nmem=%u, nmem32=%u, ndrq=%u, nirq=%u\n", DEVNAME(sc),
-		ipa->ipa_nio, ipa->ipa_nmem, ipa->ipa_nmem32, ipa->ipa_ndrq, ipa->ipa_nirq);
+	printf("%s: nio=%u, nmem=%u, nmem32=%u, ndrq=%u, nirq=%u\n",
+	    DEVNAME(sc), ipa->ipa_nio, ipa->ipa_nmem, ipa->ipa_nmem32,
+	    ipa->ipa_ndrq, ipa->ipa_nirq);
 #endif
 	isc->sc_ic = ipa->ipa_ic;
 	isc->sc_drq = -1;
@@ -131,19 +131,19 @@ cs_isapnp_attach(device_t parent, device_t self, void *aux)
 
 			id = CS_READ_PACKET_PAGE_MEM(sc, PKTPG_EISA_NUM);
 			if (id != EISA_NUM_CRYSTAL) {
-				printf("%s: unexpected id(%u)\n",
-					 DEVNAME(sc), id);
+				aprint_verbose_dev(self, "unexpected id(%u)\n",
+				    id);
 				continue;
 			}
-			printf("%s: correct id(%u) from mem=%u\n",
-				 DEVNAME(sc), id, (u_int)ipa->ipa_mem[i].h);
+			aprint_verbose_dev(self,"correct id(%u) from mem=%u\n",
+			    id, (u_int)ipa->ipa_mem[i].h);
 #endif
 
 			sc->sc_memt = ipa->ipa_memt;
 			sc->sc_memh = ipa->ipa_mem[i].h;
 			sc->sc_pktpgaddr = ipa->ipa_mem[i].base;
 			sc->sc_cfgflags |= CFGFLG_MEM_MODE;
-			printf("%s: memory mode\n", DEVNAME(sc));
+			aprint_normal_dev(self, "memory mode\n");
 			break;
 		}
 	}
@@ -152,13 +152,12 @@ cs_isapnp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 		ipa->ipa_irq[0].type, IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == 0) {
-		printf("%s: unable to establish interrupt\n",
-			DEVNAME(sc));
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		goto fail;
 	}
 
 	if (cs_attach(sc, 0, 0, 0, 0)) {
-		printf("%s: unable to attach\n", DEVNAME(sc));
+		aprint_error_dev(self, "unable to attach\n");
 		goto fail;
 	}
 

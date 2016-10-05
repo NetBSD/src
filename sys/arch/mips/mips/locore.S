@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190.14.3 2016/07/09 20:24:54 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.190.14.4 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,13 +62,9 @@
 #include <mips/cpuregs.h>
 #include <mips/trap.h>
 
-#include "assym.h"
+RCSID("$NetBSD: locore.S,v 1.190.14.4 2016/10/05 20:55:32 skrll Exp $")
 
-#if defined(MIPS1) || defined(MIPS2)
-#define	NOP_L		nop
-#else
-#define	NOP_L		/* nothing */
-#endif
+#include "assym.h"
 
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
 #define MFC0_HAZARD	nop
@@ -97,6 +93,8 @@ _C_LABEL(kernel_text):
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 #endif
+	mtc0	zero, MIPS_COP_0_CAUSE
+	COP0_SYNC
 #ifdef MIPS64_OCTEON
 	//
 	// U-boot on the erlite starts all cpus at the kernel entry point.
@@ -139,7 +137,9 @@ _C_LABEL(kernel_text):
 
 #ifdef NOFPU /* No FPU; avoid touching FPU registers */
 #if !defined(emips)   /*  XXX??? we have already disabled interrupts! */
-#ifdef _LP64
+#ifdef __mips_n32
+	li	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
+#elif defined(_LP64)
 	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
@@ -158,7 +158,7 @@ _C_LABEL(kernel_text):
 #else
 	mfc0	t0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
-#ifdef _LP64
+#if defined(_LP64) || defined(__mips_n32)
 	or	t0, MIPS_SR_KX			# turn on XKSEG and XKPHYS
 #endif
 	or	t0, MIPS_SR_COP_1_BIT		# Disable interrupts, and
@@ -880,6 +880,14 @@ XNESTED(logstacktrace)
 END(stacktrace)
 #endif	/* DEBUG || DDB */
 #endif	/* DDB_TRACE */
+
+	.section .stub, "ax"
+NESTED_NOPROFILE(tlb_update_addr, 0, ra)
+	lui	v0,%hi(_C_LABEL(mips_locore_jumpvec)+LJV_TLB_UPDATE_ADDR)
+	PTR_L	t9,%lo(_C_LABEL(mips_locore_jumpvec)+LJV_TLB_UPDATE_ADDR)(v0)
+	jr	t9
+	 nop
+END(tlb_update_addr)
 
 	.sdata
 	.globl	_C_LABEL(esym)

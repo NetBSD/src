@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.4.6.3 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.4.6.4 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -418,8 +418,12 @@ struct spdmem_rambus {				/* Direct Rambus DRAM */
 } __packed;
 
 struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
-	uint8_t	ddr3_len;
-	uint8_t ddr3_size;
+	SPD_BITFIELD(				\
+		uint8_t	ddr3_ROM_used:4,	\
+		uint8_t	ddr3_ROM_size:3,	\
+		uint8_t	ddr3_crccover:1,	\
+	);
+	uint8_t	ddr3_romrev;
 	uint8_t ddr3_type;
 	uint8_t	ddr3_mod_type;
 	SPD_BITFIELD(				\

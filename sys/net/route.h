@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.84.4.5 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: route.h,v 1.84.4.6 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -219,8 +219,8 @@ struct rt_msghdr {
 #define RTM_OLDADD	0x9	/* caused by SIOCADDRT */
 #define RTM_OLDDEL	0xa	/* caused by SIOCDELRT */
 // #define RTM_RESOLVE	0xb	/* req to resolve dst to LL addr */
-#define RTM_NEWADDR	0xc	/* address being added to iface */
-#define RTM_DELADDR	0xd	/* address being removed from iface */
+#define RTM_ONEWADDR	0xc	/* Old (pre-8.0) RTM_NEWADDR message */
+#define RTM_ODELADDR	0xd	/* Old (pre-8.0) RTM_DELADDR message */
 #define RTM_OOIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
 #define RTM_OIFINFO	0xf	/* Old (pre-64bit time) RTM_IFINFO message */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
@@ -232,7 +232,10 @@ struct rt_msghdr {
 				 * address has changed
 				 */
 #define RTM_IFINFO	0x14	/* iface/link going up/down etc. */
-#define RTM_CHGADDR	0x15	/* address properties changed */
+#define RTM_OCHGADDR	0x15	/* Old (pre-8.0) RTM_CHGADDR message */
+#define RTM_NEWADDR	0x16	/* address being added to iface */
+#define RTM_DELADDR	0x17	/* address being removed from iface */
+#define RTM_CHGADDR	0x18	/* address properties changed */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -396,7 +399,10 @@ int	rt_ifa_addlocal(struct ifaddr *);
 int	rt_ifa_remlocal(struct ifaddr *, struct ifaddr *);
 struct ifaddr *
 	rt_get_ifa(struct rtentry *);
-int	rt_getifa(struct rt_addrinfo *);
+struct ifaddr *
+	rt_getifa(struct rt_addrinfo *, struct psref *);
+struct ifnet *
+	rt_getifp(struct rt_addrinfo *, struct psref *);
 void	rt_replace_ifa(struct rtentry *, struct ifaddr *);
 int	rt_setgate(struct rtentry *, const struct sockaddr *);
 

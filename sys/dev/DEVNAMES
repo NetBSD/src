@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.292.2.4 2016/05/29 08:44:20 skrll Exp $
+#	$NetBSD: DEVNAMES,v 1.292.2.5 2016/10/05 20:55:39 skrll Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1327,6 +1327,7 @@ tcds			alpha
 tcic			i386
 tcom			MI
 tctrl			sparc
+tcu			MI
 tcx			sparc
 tcx			sparc64
 tdvfb			MI

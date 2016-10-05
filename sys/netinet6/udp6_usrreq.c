@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.115.4.5 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.115.4.6 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.115.4.5 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_usrreq.c,v 1.115.4.6 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -289,11 +289,11 @@ udp6_ctlinput(int cmd, const struct sockaddr *sa, void *d)
 		}
 
 		(void) in6_pcbnotify(&udbtable, sa, uh.uh_dport,
-		    (const struct sockaddr *)sa6_src, uh.uh_sport, cmd, cmdarg,
+		    sin6tocsa(sa6_src), uh.uh_sport, cmd, cmdarg,
 		    notify);
 	} else {
 		(void) in6_pcbnotify(&udbtable, sa, 0,
-		    (const struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
+		    sin6tocsa(sa6_src), 0, cmd, cmdarg, notify);
 	}
 	return NULL;
 }
@@ -464,8 +464,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 					continue;
 			}
 
-			udp6_sendup(m, off, (struct sockaddr *)src,
-				in6p->in6p_socket);
+			udp6_sendup(m, off, sin6tosa(src), in6p->in6p_socket);
 			rcvcnt++;
 
 			/*
@@ -493,7 +492,7 @@ udp6_realinput(int af, struct sockaddr_in6 *src, struct sockaddr_in6 *dst,
 				return rcvcnt;
 		}
 
-		udp6_sendup(m, off, (struct sockaddr *)src, in6p->in6p_socket);
+		udp6_sendup(m, off, sin6tosa(src), in6p->in6p_socket);
 		rcvcnt++;
 	}
 

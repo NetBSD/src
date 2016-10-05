@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.8.2.3 2016/03/19 11:29:58 skrll Exp $
+#	$NetBSD: EXYNOS,v 1.8.2.4 2016/10/05 20:55:26 skrll Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -145,7 +145,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 options 	DDB_KEYCODE=0x40
@@ -203,7 +202,7 @@ armgtmr0	at armperiph?			# Generic Timer
 
 # On-board I/O
 exynosfdt0	at mainbus?
-fdt0		at exynosfdt0 
+fdt0		at exynosfdt0
 simplebus*	at fdt?
 fdt*		at simplebus?
 

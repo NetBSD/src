@@ -1,0 +1,10 @@
+#       $NetBSD: virtio.ioconf,v 1.1.2.2 2016/10/05 20:56:08 skrll Exp $
+
+ioconf virtio
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+virtio* at pci? dev ? function ?

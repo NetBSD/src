@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.c,v 1.14.32.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: cache_mipsNN.c,v 1.14.32.2 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.14.32.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.14.32.2 2016/10/05 20:55:32 skrll Exp $");
 
 #include <sys/param.h>
 
+#include <mips/locore.h>
 #include <mips/cache.h>
 #include <mips/cache_r4k.h>
 #include <mips/cache_mipsNN.h>
@@ -47,162 +48,72 @@ __KERNEL_RCSID(0, "$NetBSD: cache_mipsNN.c,v 1.14.32.1 2015/06/06 14:40:02 skrll
 
 #include <uvm/uvm_extern.h>
 
-#define	round_line16(x)		(((x) + 15L) & -16L)
-#define	trunc_line16(x)		((x) & -16L)
-
-#define	round_line32(x)		(((x) + 31L) & -32L)
-#define	trunc_line32(x)		((x) & -32L)
-
-
-#ifdef SB1250_PASS1
-#define	SYNC	__asm volatile("sync; sync")
-#else
-#define	SYNC	__asm volatile("sync")
-#endif
-
-#ifdef __mips_o32
-__asm(".set mips32");
-#elif !defined(__mips64)
-__asm(".set mips64");
-#endif
-
-static int picache_stride;
-static int picache_loopcount;
+#define	round_line(x,n)		(((x) + (n) - 1) & -(n))
+#define	trunc_line(x,n)		((x) & -(n))
 
 void
 mipsNN_cache_init(uint32_t config, uint32_t config1)
 {
-	struct mips_cache_info * const mci = &mips_cache_info;
-	bool flush_multiple_lines_per_way;
-
-	flush_multiple_lines_per_way = mci->mci_picache_way_size > PAGE_SIZE;
-	if (config & MIPSNN_CFG_VI) {
-		/*
-		 * With a virtual Icache we don't need to flush
-		 * multiples of the page size with index ops; we just
-		 * need to flush one pages' worth.
-		 */
-		flush_multiple_lines_per_way = false;
-	}
-
-	if (flush_multiple_lines_per_way) {
-		picache_stride = PAGE_SIZE;
-		picache_loopcount = (mci->mci_picache_way_size / PAGE_SIZE) *
-		    mci->mci_picache_ways;
-	} else {
-		picache_stride = mci->mci_picache_way_size;
-		picache_loopcount = mci->mci_picache_ways;
-	}
-
-#define CACHE_DEBUG
-#ifdef CACHE_DEBUG
-	if (config & MIPSNN_CFG_VI)
-		printf("  icache is virtual\n");
-	printf("  picache_stride    = %d\n", picache_stride);
-	printf("  picache_loopcount = %d\n", picache_loopcount);
-#endif
+	/* nothing to do */
 }
 
 void
-mipsNN_icache_sync_all_16(void)
+mipsNN_picache_sync_all(void)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t va, eva;
-
-	va = MIPS_PHYS_TO_KSEG0(0);
-	eva = va + mci->mci_picache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
 	 * worry about the N different "ways".
 	 */
-
-	mips_intern_dcache_wbinv_all();
-
-	while (va < eva) {
-		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va += (32 * 16);
-	}
-
-	SYNC;
+	mips_intern_dcache_sync_all();
+	mips_intern_icache_sync_range_index(MIPS_KSEG0_START,
+	    mci->mci_picache_size);
 }
 
 void
-mipsNN_icache_sync_all_32(void)
+mipsNN_pdcache_wbinv_all(void)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t va, eva;
-
-	va = MIPS_PHYS_TO_KSEG0(0);
-	eva = va + mci->mci_picache_size;
 
 	/*
 	 * Since we're hitting the whole thing, we don't have to
 	 * worry about the N different "ways".
 	 */
-
-	mips_intern_dcache_wbinv_all();
-
-	while (va < eva) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		va += (32 * 32);
-	}
-
-	SYNC;
+	mips_intern_pdcache_wbinv_range_index(MIPS_KSEG0_START,
+	    mci->mci_pdcache_size);
 }
 
 void
-mipsNN_icache_sync_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
-
-	mips_intern_dcache_wb_range(va, (eva - va));
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += 16;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_icache_sync_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
-
-	mips_intern_dcache_wb_range(va, (eva - va));
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_I|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_icache_sync_range_index_16(vaddr_t va, vsize_t size)
+mipsNN_sdcache_wbinv_all(void)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t eva, tmpva;
-	int i, stride, loopcount;
+
+	/*
+	 * Since we're hitting the whole thing, we don't have to
+	 * worry about the N different "ways".
+	 */
+	mips_intern_sdcache_wbinv_range_index(MIPS_KSEG0_START,
+	    mci->mci_sdcache_size);
+}
+
+void
+mipsNN_picache_sync_range(register_t va, vsize_t size)
+{
+
+	mips_intern_dcache_sync_range(va, size);
+	mips_intern_icache_sync_range(va, size);
+}
+
+void
+mipsNN_picache_sync_range_index(vaddr_t va, vsize_t size)
+{
+	struct mips_cache_info * const mci = &mips_cache_info;
+	const size_t ways = mci->mci_picache_ways;
+	const size_t line_size = mci->mci_picache_line_size;
+	const size_t way_size = mci->mci_picache_way_size;
+	const size_t way_mask = way_size - 1;
+	vaddr_t eva;
 
 	/*
 	 * Since we're doing Index ops, we expect to not be able
@@ -210,256 +121,57 @@ mipsNN_icache_sync_range_index_16(vaddr_t va, vsize_t size)
 	 * bits that determine the cache index, and make a KSEG0
 	 * address out of them.
 	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_picache_way_mask);
+	va = MIPS_PHYS_TO_KSEG0(va & way_mask);
 
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
+	eva = round_line(va + size, line_size);
+	va = trunc_line(va, line_size);
+	size = eva - va;
 
 	/*
-	 * If we are going to flush more than is in a way, we are flushing
-	 * everything.
+	 * If we are going to flush more than is in a way (or the stride
+	 * need for that way), we are flushing everything.
 	 */
-	if (eva - va >= mci->mci_picache_way_size) {
-		mipsNN_icache_sync_all_16();
+	if (size >= way_size) {
+		mipsNN_picache_sync_all();
 		return;
 	}
 
-	/*
-	 * GCC generates better code in the loops if we reference local
-	 * copies of these global variables.
-	 */
-	stride = picache_stride;
-	loopcount = picache_loopcount;
-
-	mips_intern_dcache_wbinv_range_index(va, (eva - va));
-
-	while ((eva - va) >= (8 * 16)) {
-		tmpva = va;
-		for (i = 0; i < loopcount; i++, tmpva += stride) {
-			cache_r4k_op_8lines_16(tmpva,
-			    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		}
-		va += 8 * 16;
-	}
-
-	while (va < eva) {
-		tmpva = va;
-		for (i = 0; i < loopcount; i++, tmpva += stride) {
-			cache_op_r4k_line(tmpva,
-			    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		}
-		va += 16;
+	for (size_t way = 0; way < ways; way++) {
+		mips_intern_dcache_sync_range_index(va, size);
+		mips_intern_icache_sync_range_index(va, size);
+		va += way_size;
+		eva += way_size;
 	}
 }
 
 void
-mipsNN_icache_sync_range_index_32(vaddr_t va, vsize_t size)
+mipsNN_pdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t eva, tmpva;
-	int i, stride, loopcount;
-
-	/*
-	 * Since we're doing Index ops, we expect to not be able
-	 * to access the address we've been given.  So, get the
-	 * bits that determine the cache index, and make a KSEG0
-	 * address out of them.
-	 */
-	va = MIPS_PHYS_TO_KSEG0(va & mci->mci_picache_way_mask);
-
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
-
-	/*
-	 * If we are going to flush more than is in a way, we are flushing
-	 * everything.
-	 */
-	if (eva - va >= mci->mci_picache_way_size) {
-		mipsNN_icache_sync_all_32();
-		return;
-	}
-
-	/*
-	 * GCC generates better code in the loops if we reference local
-	 * copies of these global variables.
-	 */
-	stride = picache_stride;
-	loopcount = picache_loopcount;
-
-	mips_intern_dcache_wbinv_range_index(va, (eva - va));
-
-	while ((eva - va) >= (8 * 32)) {
-		tmpva = va;
-		for (i = 0; i < loopcount; i++, tmpva += stride) {
-			cache_r4k_op_8lines_32(tmpva,
-			    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		}
-		va += 8 * 32;
-	}
-
-	while (va < eva) {
-		tmpva = va;
-		for (i = 0; i < loopcount; i++, tmpva += stride) {
-			cache_op_r4k_line(tmpva,
-			    CACHE_R4K_I|CACHEOP_R4K_INDEX_INV);
-		}
-		va += 32;
-	}
-}
-
-void
-mipsNN_pdcache_wbinv_all_16(void)
-{
-	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t va, eva;
-
-	va = MIPS_PHYS_TO_KSEG0(0);
-	eva = va + mci->mci_pdcache_size;
-
-	/*
-	 * Since we're hitting the whole thing, we don't have to
-	 * worry about the N different "ways".
-	 */
-
-	while (va < eva) {
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (32 * 16);
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_wbinv_all_32(void)
-{
-	struct mips_cache_info * const mci = &mips_cache_info;
-	vaddr_t va, eva;
-
-	va = MIPS_PHYS_TO_KSEG0(0);
-	eva = va + mci->mci_pdcache_size;
-
-	/*
-	 * Since we're hitting the whole thing, we don't have to
-	 * worry about the N different "ways".
-	 */
-
-	while (va < eva) {
-		cache_r4k_op_32lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-		va += (32 * 32);
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_wbinv_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += 16;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		va += 32;
-	}
-
-	SYNC;
-}
-
-static void
-mipsNN_pdcache_wbinv_range_index_16_intern(vaddr_t va, vaddr_t eva)
-{
-	/*
-	 * Since we're doing Index ops, we expect to not be able
-	 * to access the address we've been given.  So, get the
-	 * bits that determine the cache index, and make a KSEG0
-	 * address out of them.
-	 */
-	va = MIPS_PHYS_TO_KSEG0(va);
-	eva = MIPS_PHYS_TO_KSEG0(eva);
-
-	for (; (eva - va) >= (8 * 16); va += 8 * 16) {
-		cache_r4k_op_8lines_16(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-	}
-
-	for (; va < eva; va += 16) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-	}
-}
-
-static void
-mipsNN_pdcache_wbinv_range_index_32_intern(vaddr_t va, vaddr_t eva)
-{
-	/*
-	 * Since we're doing Index ops, we expect to not be able
-	 * to access the address we've been given.  So, get the
-	 * bits that determine the cache index, and make a KSEG0
-	 * address out of them.
-	 */
-	va = MIPS_PHYS_TO_KSEG0(va);
-	eva = MIPS_PHYS_TO_KSEG0(eva);
-
-	for (; (eva - va) >= (8 * 32); va += 8 * 32) {
-		cache_r4k_op_8lines_32(va,
-		    CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-	}
-
-	for (; va < eva; va += 32) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_INDEX_WB_INV);
-	}
-}
-
-void
-mipsNN_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
-{
-	struct mips_cache_info * const mci = &mips_cache_info;
+	const size_t ways = mci->mci_pdcache_ways;
+	const size_t line_size = mci->mci_pdcache_line_size;
 	const vaddr_t way_size = mci->mci_pdcache_way_size;
 	const vaddr_t way_mask = way_size - 1;
-	const u_int ways = mci->mci_pdcache_ways;
 	vaddr_t eva;
 
-	va &= way_mask;
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & way_mask);
+	eva = round_line(va + size, line_size);
+	va = trunc_line(va, line_size);
+	size = eva - va;
 
 	/*
 	 * If we are going to flush more than is in a way, we are flushing
 	 * everything.
 	 */
-	if (eva - va >= way_size) {
-		mipsNN_pdcache_wbinv_all_16();
+	if (size >= way_size) {
+		mips_intern_pdcache_wbinv_range_index(MIPS_KSEG0_START,
+		    mci->mci_pdcache_size);
 		return;
 	}
 
@@ -468,32 +180,41 @@ mipsNN_pdcache_wbinv_range_index_16(vaddr_t va, vsize_t size)
 	 * the way, we will be invalidating in two ways but eventually things
 	 * work out since the last way will wrap into the first way.
 	 */
-	for (u_int way = 0; way < ways; way++) {
-		mipsNN_pdcache_wbinv_range_index_16_intern(va, eva);
+	for (size_t way = 0; way < ways; way++) {
+		mips_intern_pdcache_wbinv_range_index(va, size);
 		va += way_size;
 		eva += way_size;
 	}
 }
- 
+
 void
-mipsNN_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
+mipsNN_sdcache_wbinv_range_index(vaddr_t va, vsize_t size)
 {
 	struct mips_cache_info * const mci = &mips_cache_info;
-	const vaddr_t way_size = mci->mci_pdcache_way_size;
+	const size_t ways = mci->mci_sdcache_ways;
+	const size_t line_size = mci->mci_sdcache_line_size;
+	const vaddr_t way_size = mci->mci_sdcache_way_size;
 	const vaddr_t way_mask = way_size - 1;
-	const u_int ways = mci->mci_pdcache_ways;
 	vaddr_t eva;
 
-	va &= way_mask;
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
+	/*
+	 * Since we're doing Index ops, we expect to not be able
+	 * to access the address we've been given.  So, get the
+	 * bits that determine the cache index, and make a KSEG0
+	 * address out of them.
+	 */
+	va = MIPS_PHYS_TO_KSEG0(va & way_mask);
+	eva = round_line(va + size, line_size);
+	va = trunc_line(va, line_size);
+	size = eva - va;
 
 	/*
 	 * If we are going to flush more than is in a way, we are flushing
 	 * everything.
 	 */
-	if (eva - va >= way_size) {
-		mipsNN_pdcache_wbinv_all_32();
+	if (size >= way_size) {
+		mips_intern_sdcache_wbinv_range_index(MIPS_KSEG0_START,
+		    mci->mci_sdcache_size);
 		return;
 	}
 
@@ -502,93 +223,9 @@ mipsNN_pdcache_wbinv_range_index_32(vaddr_t va, vsize_t size)
 	 * the way, we will be invalidating in two ways but eventually things
 	 * work out since the last way will wrap into the first way.
 	 */
-	for (u_int way = 0; way < ways; way++) {
-		mipsNN_pdcache_wbinv_range_index_32_intern(va, eva);
+	for (size_t way = 0; way < ways; way++) {
+		mips_intern_sdcache_wbinv_range_index(va, size);
 		va += way_size;
 		eva += way_size;
 	}
-}
- 
-void
-mipsNN_pdcache_inv_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 16;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_inv_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		va += 32;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_wb_range_16(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line16(va + size);
-	va = trunc_line16(va);
-
-	while ((eva - va) >= (32 * 16)) {
-		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += (32 * 16);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 16;
-	}
-
-	SYNC;
-}
-
-void
-mipsNN_pdcache_wb_range_32(vaddr_t va, vsize_t size)
-{
-	vaddr_t eva;
-
-	eva = round_line32(va + size);
-	va = trunc_line32(va);
-
-	while ((eva - va) >= (32 * 32)) {
-		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += (32 * 32);
-	}
-
-	while (va < eva) {
-		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		va += 32;
-	}
-
-	SYNC;
 }

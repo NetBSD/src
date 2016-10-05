@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.198.2.3 2016/07/09 20:25:19 skrll Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.198.2.4 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198.2.3 2016/07/09 20:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.198.2.4 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1147,7 +1147,7 @@ puffs_vnop_getattr(void *v)
 static void
 zerofill_lastpage(struct vnode *vp, voff_t off)
 {
-	char zbuf[PAGE_SIZE];
+	char zbuf[16384];
 	struct iovec iov;
 	struct uio uio;
 	vsize_t len;
@@ -1160,6 +1160,7 @@ zerofill_lastpage(struct vnode *vp, voff_t off)
 		return;
 
 	len = round_page(off) - off;
+	KASSERT(len < sizeof(zbuf));
 	memset(zbuf, 0, len);
 
 	iov.iov_base = zbuf;
@@ -2718,7 +2719,7 @@ puffs_vnop_advlock(void *v)
 
 	if (!EXISTSOP(pmp, ADVLOCK))
 		return lf_advlock(ap, &pn->pn_lockf, vp->v_size);
-	
+
 	PUFFS_MSG_ALLOC(vn, advlock);
 	(void)memcpy(&advlock_msg->pvnr_fl, ap->a_fl,
 		     sizeof(advlock_msg->pvnr_fl));

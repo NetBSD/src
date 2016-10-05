@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22 2014/03/24 19:13:48 christos Exp $ */
+/* $NetBSD: cpu.c,v 1.22.6.1 2016/10/05 20:55:34 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2014/03/24 19:13:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22.6.1 2016/10/05 20:55:34 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2014/03/24 19:13:48 christos Exp $");
 #include <mips/sibyte/dev/sbscdvar.h>
 #include <mips/cfe/cfe_api.h>
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
+#define	READ_REG(rp)		mips3_ld((register_t)(rp))
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);

@@ -1,9 +1,9 @@
-/*	$NetBSD: ext2fs_extents.h,v 1.2.2.2 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: ext2fs_extents.h,v 1.2.2.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2010 Zheng Liu <lz@freebsd.org>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,9 +24,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * $FreeBSD: head/sys/fs/ext2fs/ext2_extents.h 295523 2016-02-11 15:27:14Z pfg $
- */     
+ */
 
 #ifndef _UFS_EXT2FS_EXT2FS_EXTENTS_H_
 #define	_UFS_EXT2FS_EXT2FS_EXTENTS_H_

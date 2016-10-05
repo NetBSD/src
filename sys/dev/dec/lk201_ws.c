@@ -1,4 +1,4 @@
-/* $NetBSD: lk201_ws.c,v 1.8.40.1 2015/04/06 15:18:08 skrll Exp $ */
+/* $NetBSD: lk201_ws.c,v 1.8.40.2 2016/10/05 20:55:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.8.40.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.8.40.2 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: lk201_ws.c,v 1.8.40.1 2015/04/06 15:18:08 skrll Exp 
 #define send(lks, c) ((*((lks)->attmt.sendchar))((lks)->attmt.cookie, c))
 
 void lk201_identify(void *);
-
-static callout_t lkkbd_id;
 
 static const char *lkkbd_descr[] = {
 	"no keyboard",
@@ -82,20 +80,6 @@ lk201_init(struct lk201_state *lks)
 	send(lks, LK_LED_ALL);
 	lks->leds_state = 0;
 
-	callout_init(&lkkbd_id, 0);
-	callout_setfunc(&lkkbd_id, lk201_identify, lks);
-	callout_schedule(&lkkbd_id, 0);
-
-	return (0);
-}
-
-void
-lk201_identify(void *v)
-{
-	struct lk201_state *lks = v;
-	int i;
-
-	callout_destroy(&lkkbd_id);
 	/*
 	 * Swallow all the keyboard acknowledges from lk201_init().
 	 * There should be 14 of them - one per LK_CMD_MODE command.
@@ -133,6 +117,8 @@ lk201_identify(void *v)
 	lks->waitack = 0;
 
 	printf("lkkbd0: %s\n", lkkbd_descr[lks->kbdtype]);
+
+	return 0;
 }
 
 int

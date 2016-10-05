@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.16.14.1 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.16.14.2 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.16.14.1 2015/12/27 12:10:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.16.14.2 2016/10/05 20:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,7 +58,7 @@ static void l2cap_recv_disconnect_req(struct mbuf *, struct hci_link *);
 static void l2cap_recv_disconnect_rsp(struct mbuf *, struct hci_link *);
 static void l2cap_recv_info_req(struct mbuf *, struct hci_link *);
 static int l2cap_send_signal(struct hci_link *, uint8_t, uint8_t, uint16_t, void *);
-static int l2cap_send_command_rej(struct hci_link *, uint8_t, uint16_t, ...);
+static int l2cap_send_command_rej(struct hci_link *, uint8_t, int, ...);
 static void l2cap_qos_btoh(l2cap_qos_t *, void *);
 static void l2cap_qos_htob(void *, l2cap_qos_t *);
 
@@ -1049,7 +1049,7 @@ l2cap_send_signal(struct hci_link *link, uint8_t code, uint8_t ident,
  */
 static int
 l2cap_send_command_rej(struct hci_link *link, uint8_t ident,
-			uint16_t reason, ...)
+			int reason, ...)
 {
 	l2cap_cmd_rej_cp cp;
 	int len = 0;

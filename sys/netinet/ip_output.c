@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.233.2.7 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.233.2.8 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.7 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.8 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,6 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.7 2016/07/09 20:25:22 skrll Ex
 #include "opt_net_mpsafe.h"
 #include "opt_mpls.h"
 #endif
+
+#include "arp.h"
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -112,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.233.2.7 2016/07/09 20:25:22 skrll Ex
 #include <sys/domain.h>
 #endif
 #include <sys/systm.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -152,6 +155,7 @@ static struct mbuf *ip_insertoptions(struct mbuf *, struct mbuf *, int *);
 static struct ifnet *ip_multicast_if(struct in_addr *, int *);
 static void ip_mloopback(struct ifnet *, struct mbuf *,
     const struct sockaddr_in *);
+static int ip_ifaddrvalid(const struct in_ifaddr *);
 
 extern pfil_head_t *inet_pfil_hook;			/* XXX */
 
@@ -235,7 +239,7 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	int len, error = 0;
 	struct route iproute;
 	const struct sockaddr_in *dst;
-	struct in_ifaddr *ia;
+	struct in_ifaddr *ia = NULL;
 	int isbroadcast;
 	int sw_csum;
 	u_long mtu;
@@ -251,8 +255,9 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	struct sockaddr *rdst = &u.dst;	/* real IP destination, as opposed
 					 * to the nexthop
 					 */
-	struct psref psref;
+	struct psref psref, psref_ia;
 	int bound;
+	bool bind_need_restore = false;
 
 	len = 0;
 
@@ -311,15 +316,23 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			goto bad;
 	}
 
+	bound = curlwp_bind();
+	bind_need_restore = true;
 	/*
 	 * If routing to interface only, short circuit routing lookup.
 	 */
 	if (flags & IP_ROUTETOIF) {
-		if ((ia = ifatoia(ifa_ifwithladdr(sintocsa(dst)))) == NULL) {
+		struct ifaddr *ifa;
+
+		ifa = ifa_ifwithladdr_psref(sintocsa(dst), &psref_ia);
+		if (ifa == NULL) {
 			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
+		/* ia is already referenced by psref_ia */
+		ia = ifatoia(ifa);
+
 		ifp = ia->ia_ifp;
 		mtu = ifp->if_mtu;
 		ip->ip_ttl = 1;
@@ -327,16 +340,18 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 	} else if ((IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    ip->ip_dst.s_addr == INADDR_BROADCAST) &&
 	    imo != NULL && imo->imo_multicast_if_index != 0) {
-		bound = curlwp_bind();
 		ifp = mifp = if_get_byindex(imo->imo_multicast_if_index, &psref);
 		if (ifp == NULL) {
-			curlwp_bindx(bound);
 			IP_STATINC(IP_STAT_NOROUTE);
 			error = ENETUNREACH;
 			goto bad;
 		}
 		mtu = ifp->if_mtu;
-		ia = in_get_ia_from_ifp(ifp);
+		ia = in_get_ia_from_ifp_psref(ifp, &psref_ia);
+		if (ia == NULL) {
+			error = EADDRNOTAVAIL;
+			goto bad;
+		}
 		isbroadcast = 0;
 	} else {
 		if (rt == NULL)
@@ -346,6 +361,11 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 			error = EHOSTUNREACH;
 			goto bad;
 		}
+		/*
+		 * XXX NOMPSAFE: depends on accessing rt->rt_ifa isn't racy.
+		 * Revisit when working on rtentry MP-ification.
+		 */
+		ifa_acquire(rt->rt_ifa, &psref_ia);
 		ia = ifatoia(rt->rt_ifa);
 		ifp = rt->rt_ifp;
 		if ((mtu = rt->rt_rmx.rmx_mtu) == 0)
@@ -403,21 +423,26 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 		if (in_nullhost(ip->ip_src)) {
 			struct in_ifaddr *xia;
 			struct ifaddr *xifa;
+			struct psref _psref;
 
-			xia = in_get_ia_from_ifp(ifp);
+			xia = in_get_ia_from_ifp_psref(ifp, &_psref);
 			if (!xia) {
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
 			xifa = &xia->ia_ifa;
 			if (xifa->ifa_getifa != NULL) {
+				ia4_release(xia, &_psref);
+				/* FIXME NOMPSAFE */
 				xia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 				if (xia == NULL) {
 					error = EADDRNOTAVAIL;
 					goto bad;
 				}
+				ia4_acquire(xia, &_psref);
 			}
 			ip->ip_src = xia->ia_addr.sin_addr;
+			ia4_release(xia, &_psref);
 		}
 
 		inmgroup = in_multi_group(ip->ip_dst, ifp, flags);
@@ -477,11 +502,14 @@ ip_output(struct mbuf *m0, struct mbuf *opt, struct route *ro, int flags,
 
 		xifa = &ia->ia_ifa;
 		if (xifa->ifa_getifa != NULL) {
+			ia4_release(ia, &psref_ia);
+			/* FIXME NOMPSAFE */
 			ia = ifatoia((*xifa->ifa_getifa)(xifa, rdst));
 			if (ia == NULL) {
 				error = EADDRNOTAVAIL;
 				goto bad;
 			}
+			ia4_acquire(ia, &psref_ia);
 		}
 		ip->ip_src = ia->ia_addr.sin_addr;
 	}
@@ -543,6 +571,10 @@ sendit:
 			ip->ip_id = ip_newid_range(ia, num);
 		}
 	}
+	if (ia != NULL) {
+		ia4_release(ia, &psref_ia);
+		ia = NULL;
+	}
 
 	/*
 	 * If we're doing Path MTU Discovery, we need to set DF unless
@@ -578,13 +610,32 @@ sendit:
 
 	m->m_pkthdr.csum_data |= hlen << 16;
 
-#if IFA_STATS
 	/*
 	 * search for the source address structure to
 	 * maintain output statistics.
 	 */
-	ia = in_get_ia(ip->ip_src);
-#endif
+	KASSERT(ia == NULL);
+	ia = in_get_ia_psref(ip->ip_src, &psref_ia);
+
+	/* Ensure we only send from a valid address. */
+	if ((ia != NULL || (flags & IP_FORWARDING) == 0) &&
+	    (error = ip_ifaddrvalid(ia)) != 0)
+	{
+		arplog(LOG_ERR,
+		    "refusing to send from invalid address %s (pid %d)\n",
+		    in_fmtaddr(ip->ip_src), curproc->p_pid);
+		IP_STATINC(IP_STAT_ODROPPED);
+		if (error == 1)
+			/*
+			 * Address exists, but is tentative or detached.
+			 * We can't send from it because it's invalid,
+			 * so we drop the packet.
+			 */
+			error = 0;
+		else
+			error = EADDRNOTAVAIL;
+		goto bad;
+	}
 
 	/* Maybe skip checksums on loopback interfaces. */
 	if (IN_NEED_CHECKSUM(ifp, M_CSUM_IPv4)) {
@@ -713,6 +764,7 @@ sendit:
 		IP_STATINC(IP_STAT_FRAGMENTED);
 	}
 done:
+	ia4_release(ia, &psref_ia);
 	if (ro == &iproute) {
 		rtcache_free(&iproute);
 	}
@@ -723,8 +775,9 @@ done:
 #endif
 	if (mifp != NULL) {
 		if_put(mifp, &psref);
-		curlwp_bindx(bound);
 	}
+	if (bind_need_restore)
+		curlwp_bindx(bound);
 	return error;
 bad:
 	m_freem(m);
@@ -1817,4 +1870,27 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, const struct sockaddr_in *dst)
 #ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 #endif
+}
+
+/*
+ * Ensure sending address is valid.
+ * Returns 0 on success, -1 if an error should be sent back or 1
+ * if the packet could be dropped without error (protocol dependent).
+ */
+static int
+ip_ifaddrvalid(const struct in_ifaddr *ia)
+{
+
+	if (ia == NULL)
+		return -1;
+
+	if (ia->ia_addr.sin_addr.s_addr == INADDR_ANY)
+		return 0;
+
+	if (ia->ia4_flags & IN_IFF_DUPLICATED)
+		return -1;
+	else if (ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DETACHED))
+		return 1;
+
+	return 0;
 }

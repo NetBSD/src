@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.159.2.5 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.159.2.6 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.5 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.159.2.6 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -633,28 +633,6 @@ m_clget(struct mbuf *m, int nowait)
 {
 
 	MCLGET(m, nowait);
-}
-
-struct mbuf *
-m_free(struct mbuf *m)
-{
-	struct mbuf *n;
-
-	MFREE(m, n);
-	return (n);
-}
-
-void
-m_freem(struct mbuf *m)
-{
-	struct mbuf *n;
-
-	if (m == NULL)
-		return;
-	do {
-		MFREE(m, n);
-		m = n;
-	} while (m);
 }
 
 #ifdef MBUFTRACE
@@ -1935,3 +1913,79 @@ m_claim(struct mbuf *m, struct mowner *mo)
 	mowner_claim(m, mo);
 }
 #endif /* defined(MBUFTRACE) */
+
+/*
+ * MFREE(struct mbuf *m, struct mbuf *n)
+ * Free a single mbuf and associated external storage.
+ * Place the successor, if any, in n.
+ */
+#define	MFREE(f, l, m, n)						\
+	mowner_revoke((m), 1, (m)->m_flags);				\
+	mbstat_type_add((m)->m_type, -1);				\
+	if ((m)->m_flags & M_PKTHDR)					\
+		m_tag_delete_chain((m), NULL);				\
+	(n) = (m)->m_next;						\
+	if ((m)->m_flags & M_EXT) {					\
+		m_ext_free((m));					\
+	} else {							\
+		MBUFFREE(f, l, m);					\
+	}								\
+
+#ifdef DEBUG
+#define MBUFFREE(f, l, m)						\
+	do {								\
+		if ((m)->m_type == MT_FREE)				\
+			panic("mbuf was already freed at %s,%d", 	\
+			    m->m_data, m->m_len);			\
+		(m)->m_type = MT_FREE;					\
+		(m)->m_data = __UNCONST(f);				\
+		(m)->m_len = l;						\
+		pool_cache_put(mb_cache, (m));				\
+	} while (/*CONSTCOND*/0)
+
+#else
+#define MBUFFREE(f, l, m)						\
+	do {								\
+		KASSERT((m)->m_type != MT_FREE);			\
+		(m)->m_type = MT_FREE;					\
+		pool_cache_put(mb_cache, (m));				\
+	} while (/*CONSTCOND*/0)
+#endif
+
+struct mbuf *
+m__free(const char *f, int l, struct mbuf *m)
+{
+	struct mbuf *n;
+
+	MFREE(f, l, m, n);
+	return (n);
+}
+
+void
+m__freem(const char *f, int l, struct mbuf *m)
+{
+	struct mbuf *n;
+
+	if (m == NULL)
+		return;
+	do {
+		MFREE(f, l, m, n);
+		m = n;
+	} while (m);
+}
+
+#undef m_free
+struct mbuf *m_free(struct mbuf *);
+struct mbuf *
+m_free(struct mbuf *m)
+{
+	return m__free(__func__, __LINE__, m);
+}
+
+#undef m_freem
+void m_freem(struct mbuf *);
+void
+m_freem(struct mbuf *m)
+{
+	m__freem(__func__, __LINE__, m);
+}

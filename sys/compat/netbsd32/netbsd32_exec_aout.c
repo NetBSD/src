@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.28.2.1 2015/04/06 15:18:07 skrll Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.28.2.2 2016/10/05 20:55:39 skrll Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.28.2.1 2015/04/06 15:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_aout.c,v 1.28.2.2 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ netbsd32_exec_aout_prep_zmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	error = vn_marktext(epp->ep_vp);
@@ -205,7 +205,7 @@ netbsd32_exec_aout_prep_nmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, AOUT_LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text segment */
@@ -244,7 +244,7 @@ netbsd32_exec_aout_prep_omagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text and data segments */
@@ -294,7 +294,7 @@ netbsd32_exec_aout_prep_oldzmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	error = vn_marktext(epp->ep_vp);
@@ -342,7 +342,7 @@ netbsd32_exec_aout_prep_oldnmagic(struct lwp *l, struct exec_package *epp)
 	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, AOUT_LDPGSZ);
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS32;
 
 	/* set up command for text segment */

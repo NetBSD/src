@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.113.2.3 2016/07/09 20:24:52 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.113.2.4 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.3 2016/07/09 20:24:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.4 2016/10/05 20:55:28 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_copy_symtab.h"
@@ -273,35 +273,17 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.113.2.3 2016/07/09 20:24:52 skrll Exp $
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
-#ifdef __ELF__
 	.align	PAGE_SIZE
-#else
-	.align	12
-#endif
 	.globl	_C_LABEL(local_apic)
-	.globl	_C_LABEL(lapic_id)
 
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
-	.space	LAPIC_ID
+	.space	LAPIC_TPRI
 END(local_apic)
-	.type	_C_LABEL(lapic_id), @object
-LABEL(lapic_id)
-	.long	0x00000000
-	.space	LAPIC_TPRI-(LAPIC_ID+4)
-END(lapic_id)
 	.type	_C_LABEL(lapic_tpr), @object
 LABEL(lapic_tpr)
-	.space	LAPIC_PPRI-LAPIC_TPRI
+	.space	PAGE_SIZE-LAPIC_TPRI
 END(lapic_tpr)
-	.type	_C_LABEL(lapic_ppr), @object
-_C_LABEL(lapic_ppr):
-	.space	LAPIC_ISR-LAPIC_PPRI
-END(lapic_ppr)
-	.type	_C_LABEL(lapic_isr), @object
-_C_LABEL(lapic_isr):
-	.space	PAGE_SIZE-LAPIC_ISR
-END(lapic_isr)
 #else
 	.type	_C_LABEL(lapic_tpr), @object
 LABEL(lapic_tpr)

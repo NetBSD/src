@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.52.14.1 2016/07/09 20:25:02 skrll Exp $	 */
+/* $NetBSD: adw.c,v 1.52.14.2 2016/10/05 20:55:41 skrll Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.52.14.1 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.52.14.2 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,17 +108,16 @@ adw_alloc_controls(ADW_SOFTC *sc)
          * Allocate the control structure.
          */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, sizeof(struct adw_control),
-			   PAGE_SIZE, 0, &seg, 1, &rseg,
-			   BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate control structures,"
-		       " error = %d\n", error);
+	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to allocate control "
+		    "structures, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-		   sizeof(struct adw_control), (void **) & sc->sc_control,
-				 BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control structures, error = %d\n",
-		       error);
+	    sizeof(struct adw_control), (void **) & sc->sc_control,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control structures, error = %d\n", error);
 		return (error);
 	}
 
@@ -126,17 +125,17 @@ adw_alloc_controls(ADW_SOFTC *sc)
          * Create and load the DMA map used for the control blocks.
          */
 	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct adw_control),
-			   1, sizeof(struct adw_control), 0, BUS_DMA_NOWAIT,
-				       &sc->sc_dmamap_control)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control DMA map, error = %d\n",
-		       error);
+	    1, sizeof(struct adw_control), 0, BUS_DMA_NOWAIT,
+	    &sc->sc_dmamap_control)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control DMA map, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_control,
-			   sc->sc_control, sizeof(struct adw_control), NULL,
-				     BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load control DMA map, error = %d\n",
-		       error);
+	    sc->sc_control, sizeof(struct adw_control), NULL,
+	    BUS_DMA_NOWAIT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load control DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -162,18 +161,18 @@ adw_alloc_carriers(ADW_SOFTC *sc)
 	}
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
-			0x10, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to allocate carrier structures,"
-		       " error = %d\n", error);
+	    sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
+	    0x10, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error_dev(sc->sc_dev, "unable to allocate carrier "
+		    "structures, error = %d\n", error);
 		return (error);
 	}
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
-			(void **) &sc->sc_control->carriers,
-			BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map carrier structures,"
-			" error = %d\n", error);
+	    sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
+	    (void **)&sc->sc_control->carriers,
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map carrier structures, error = %d\n", error);
 		return (error);
 	}
 
@@ -181,19 +180,18 @@ adw_alloc_carriers(ADW_SOFTC *sc)
          * Create and load the DMA map used for the control blocks.
          */
 	if ((error = bus_dmamap_create(sc->sc_dmat,
-			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 1,
-			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 0,BUS_DMA_NOWAIT,
-			&sc->sc_dmamap_carrier)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create carriers DMA map,"
-			" error = %d\n", error);
+	    sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 1,
+	    sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, 0,BUS_DMA_NOWAIT,
+	    &sc->sc_dmamap_carrier)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create carriers DMA map, error = %d\n", error);
 		return (error);
 	}
-	if ((error = bus_dmamap_load(sc->sc_dmat,
-			sc->sc_dmamap_carrier, sc->sc_control->carriers,
-			sizeof(ADW_CARRIER) * ADW_MAX_CARRIER, NULL,
-			BUS_DMA_NOWAIT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to load carriers DMA map,"
-			" error = %d\n", error);
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_carrier,
+	    sc->sc_control->carriers, sizeof(ADW_CARRIER) * ADW_MAX_CARRIER,
+	    NULL, BUS_DMA_NOWAIT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load carriers DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -219,8 +217,8 @@ adw_create_ccbs(ADW_SOFTC *sc, ADW_CCB *ccbstore, int count)
 	for (i = 0; i < count; i++) {
 		ccb = &ccbstore[i];
 		if ((error = adw_init_ccb(sc, ccb)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to initialize ccb, error = %d\n",
-			       error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to initialize ccb, error = %d\n", error);
 			return (i);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, chain);
@@ -264,12 +262,12 @@ adw_init_ccb(ADW_SOFTC *sc, ADW_CCB *ccb)
          * Create the DMA map for this CCB.
          */
 	error = bus_dmamap_create(sc->sc_dmat,
-				  (ADW_MAX_SG_LIST - 1) * PAGE_SIZE,
-			 ADW_MAX_SG_LIST, (ADW_MAX_SG_LIST - 1) * PAGE_SIZE,
-		   0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
+	    (ADW_MAX_SG_LIST - 1) * PAGE_SIZE, ADW_MAX_SG_LIST,
+	    (ADW_MAX_SG_LIST - 1) * PAGE_SIZE, 0,
+	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &ccb->dmamap_xfer);
 	if (error) {
-		aprint_error_dev(sc->sc_dev, "unable to create CCB DMA map, error = %d\n",
-		       error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create CCB DMA map, error = %d\n", error);
 		return (error);
 	}
 
@@ -394,10 +392,10 @@ adw_init(ADW_SOFTC *sc)
 
 		if (warn_code & ADW_WARN_EEPROM_CHKSUM)
 			aprint_error_dev(sc->sc_dev, "Bad checksum found. "
-			       "Setting default values\n");
+			    "Setting default values\n");
 		if (warn_code & ADW_WARN_EEPROM_TERMINATION)
-			aprint_error_dev(sc->sc_dev, "Bad bus termination setting."
-			       "Using automatic termination.\n");
+			aprint_error_dev(sc->sc_dev, "Bad bus termination "
+			    "setting. Using automatic termination.\n");
 	}
 
 	sc->isr_callback = (ADW_CALLBACK) adw_isr_callback;
@@ -700,8 +698,8 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 
 		default:
 			xs->error = XS_DRIVER_STUFFUP;
-			aprint_error_dev(sc->sc_dev, "error %d loading DMA map\n",
-			    error);
+			aprint_error_dev(sc->sc_dev,
+			    "error %d loading DMA map\n", error);
 out_bad:
 			adw_free_ccb(sc, ccb);
 			scsipi_done(xs);
@@ -1104,7 +1102,8 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 		case QHSTA_M_SXFR_OFF_UFLW:
 		case QHSTA_M_SXFR_OFF_OFLW:
 		case QHSTA_M_DATA_OVER_RUN:
-			aprint_error_dev(sc->sc_dev, "Overrun/Overflow/Underflow condition\n");
+			aprint_error_dev(sc->sc_dev,
+			    "Overrun/Overflow/Underflow condition\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -1139,7 +1138,8 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 			 * Lets try resetting the bus and reinitialize
 			 * the host adapter.
 			 */
-			aprint_error_dev(sc->sc_dev, "DMA Error. Reseting bus\n");
+			aprint_error_dev(sc->sc_dev,
+			    "DMA Error. Reseting bus\n");
 			TAILQ_REMOVE(&sc->sc_pending_ccb, ccb, chain);
 			adw_reset_bus(sc);
 			xs->error = XS_BUSY;
@@ -1182,7 +1182,8 @@ adw_isr_callback(ADW_SOFTC *sc, ADW_SCSI_REQ_Q *scsiq)
 			 * User didn't request sense, but we got a
 			 * check condition.
 			 */
-			aprint_error_dev(sc->sc_dev, "Unexpected Check Condition\n");
+			aprint_error_dev(sc->sc_dev,
+			    "Unexpected Check Condition\n");
 			xs->error = XS_DRIVER_STUFFUP;
 			break;
 
@@ -1212,7 +1213,8 @@ adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 	switch (code) {
 	case ADV_ASYNC_SCSI_BUS_RESET_DET:
 		/* The firmware detected a SCSI Bus reset. */
-		printf("%s: SCSI Bus reset detected\n", device_xname(sc->sc_dev));
+		printf("%s: SCSI Bus reset detected\n",
+		    device_xname(sc->sc_dev));
 		break;
 
 	case ADV_ASYNC_RDMA_FAILURE:
@@ -1233,7 +1235,8 @@ adw_async_callback(ADW_SOFTC *sc, u_int8_t code)
 
 	case ADV_ASYNC_CARRIER_READY_FAILURE:
 		/* Carrier Ready failure. */
-		printf("%s: Carrier Ready failure!\n", device_xname(sc->sc_dev));
+		printf("%s: Carrier Ready failure!\n",
+		    device_xname(sc->sc_dev));
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_pnpbios.c,v 1.12 2011/07/01 18:14:15 dyoung Exp $ */
+/* $NetBSD: lpt_pnpbios.c,v 1.12.30.1 2016/10/05 20:55:29 skrll Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.12 2011/07/01 18:14:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pnpbios.c,v 1.12.30.1 2016/10/05 20:55:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,12 +77,13 @@ lpt_pnpbios_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) { 	
-		printf(": can't map i/o space\n");
+	aprint_naive("\n");
+	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &sc->sc_iot, &sc->sc_ioh)) {
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 	pnpbios_print_devres(self, aa);
 
 	lpt_attach_subr(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.174 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.174.2.1 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.174 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.174.2.1 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,6 +404,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		 * overlap).  If stack limit is going up make more
 		 * accessible, if going down make inaccessible.
 		 */
+		limp->rlim_max = round_page(limp->rlim_max);
 		limp->rlim_cur = round_page(limp->rlim_cur);
 		if (limp->rlim_cur != alimp->rlim_cur) {
 			vaddr_t addr;

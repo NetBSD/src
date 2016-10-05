@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.36 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.36.6.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.36 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.36.6.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -178,9 +178,9 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5,
 	    AHCI_QUIRK_BADPMPRESET },
-	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC,
-	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI2,
+	    AHCI_QUIRK_BADPMPRESET },
+	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_STORAGE,
 	    AHCI_QUIRK_BADPMPRESET },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237R_SATA,
 	    AHCI_QUIRK_BADPMP },

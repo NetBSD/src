@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.55.4.3 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: igmp.c,v 1.55.4.4 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.55.4.3 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.55.4.4 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -361,9 +361,11 @@ igmp_input(struct mbuf *m, ...)
 		 * determine the arrival interface of an incoming packet.
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
-			ia = in_get_ia_from_ifp(ifp);		/* XXX */
+			int s = pserialize_read_enter();
+			ia = in_get_ia_from_ifp(ifp); /* XXX */
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
+			pserialize_read_exit(s);
 		}
 
 		/*
@@ -394,26 +396,32 @@ igmp_input(struct mbuf *m, ...)
 		in_multi_unlock();
 		break;
 
-	case IGMP_v2_HOST_MEMBERSHIP_REPORT:
+	case IGMP_v2_HOST_MEMBERSHIP_REPORT: {
+		int s = pserialize_read_enter();
 #ifdef MROUTING
 		/*
 		 * Make sure we don't hear our own membership report.  Fast
 		 * leave requires knowing that we are the only member of a
 		 * group.
 		 */
-		ia = in_get_ia_from_ifp(ifp);			/* XXX */
-		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr))
+		ia = in_get_ia_from_ifp(ifp);	/* XXX */
+		if (ia && in_hosteq(ip->ip_src, ia->ia_addr.sin_addr)) {
+			pserialize_read_exit(s);
 			break;
+		}
 #endif
 
 		IGMP_STATINC(IGMP_STAT_RCV_REPORTS);
 
-		if (ifp->if_flags & IFF_LOOPBACK)
+		if (ifp->if_flags & IFF_LOOPBACK) {
+			pserialize_read_exit(s);
 			break;
+		}
 
 		if (!IN_MULTICAST(igmp->igmp_group.s_addr) ||
 		    !in_hosteq(igmp->igmp_group, ip->ip_dst)) {
 			IGMP_STATINC(IGMP_STAT_RCV_BADREPORTS);
+			pserialize_read_exit(s);
 			goto drop;
 		}
 
@@ -428,11 +436,12 @@ igmp_input(struct mbuf *m, ...)
 		 */
 		if ((ip->ip_src.s_addr & IN_CLASSA_NET) == 0) {
 #ifndef MROUTING
-			ia = in_get_ia_from_ifp(ifp);		/* XXX */
+			ia = in_get_ia_from_ifp(ifp); /* XXX */
 #endif
 			if (ia)
 				ip->ip_src.s_addr = ia->ia_subnet;
 		}
+		pserialize_read_exit(s);
 
 		/*
 		 * If we belong to the group being reported, stop
@@ -457,7 +466,7 @@ igmp_input(struct mbuf *m, ...)
 		}
 		in_multi_unlock();
 		break;
-
+	    }
 	}
 	m_put_rcvif_psref(ifp, &psref);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.19 2011/03/10 17:40:50 tsutsui Exp $ */
+/* $NetBSD: sbtimer.c,v 1.19.32.1 2016/10/05 20:55:32 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.19 2011/03/10 17:40:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbtimer.c,v 1.19.32.1 2016/10/05 20:55:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,8 +56,8 @@ struct sbtimer_softc {
 #define	SBTIMER_CLOCK		1
 #define	SBTIMER_STATCLOCK	2
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		mips3_ld((register_t)(rp))
+#define	WRITE_REG(rp, val)	mips3_sd((register_t)(rp), (val))
 
 static int	sbtimer_match(device_t, cfdata_t, void *);
 static void	sbtimer_attach(device_t, device_t, void *);

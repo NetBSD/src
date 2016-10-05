@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.131.2.5 2016/07/09 20:25:21 skrll Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.5 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.6 2016/10/05 20:56:08 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.131.2.5 2016/07/09 20:25:21 skrll 
 #include <sys/inttypes.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -441,6 +442,27 @@ static const struct cp *cps[IDX_COUNT] = {
 	&chap,			/* IDX_CHAP */
 };
 
+static void
+sppp_change_phase(struct sppp *sp, int phase)
+{
+	STDDCL;
+
+	if (sp->pp_phase == phase)
+		return;
+
+	sp->pp_phase = phase;
+
+	if (phase == SPPP_PHASE_NETWORK)
+		if_link_state_change(ifp, LINK_STATE_UP);
+	else
+		if_link_state_change(ifp, LINK_STATE_DOWN);
+
+	if (debug)
+	{
+		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
+			sppp_phase_name(sp->pp_phase));
+	}
+}
 
 /*
  * Exported functions, comprising our interface to the lower layer.
@@ -456,7 +478,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	pktqueue_t *pktq = NULL;
 	struct ifqueue *inq = NULL;
 	uint16_t protocol;
-	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
 	int isr = 0;
@@ -620,19 +641,19 @@ queue_pkt:
 		return;
 	}
 
-	s = splnet();
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		/* Queue overflow. */
 		IF_DROP(inq);
-		splx(s);
+		IFQ_UNLOCK(inq);
 		if (debug)
 			log(LOG_DEBUG, "%s: protocol queue overflow\n",
 				ifp->if_xname);
 		goto drop;
 	}
 	IF_ENQUEUE(inq, m);
+	IFQ_UNLOCK(inq);
 	schednetisr(isr);
-	splx(s);
 }
 
 /*
@@ -839,6 +860,31 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	return error;
 }
 
+static int
+sppp_mediachange(struct ifnet *ifp)
+{
+
+	return (0);
+}
+
+static void
+sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+
+	switch (ifp->if_link_state) {
+	case LINK_STATE_UP:
+		imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+		break;
+	case LINK_STATE_DOWN:
+		imr->ifm_status = IFM_AVALID;
+		break;
+	default:
+		/* Should be impossible as we set link state down in attach. */
+		imr->ifm_status = 0;
+		break;
+	}
+}
+
 void
 sppp_attach(struct ifnet *ifp)
 {
@@ -874,6 +920,11 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_down = lcp.Down;
 
 	if_alloc_sadl(ifp);
+
+	/* Lets not beat about the bush, we know we're down. */
+	ifp->if_link_state = LINK_STATE_DOWN;
+	/* There is no media for PPP, but it's needed to report link status. */
+	ifmedia_init(&sp->pp_im, 0, sppp_mediachange, sppp_mediastatus);
 
 	memset(&sp->myauth, 0, sizeof sp->myauth);
 	memset(&sp->hisauth, 0, sizeof sp->hisauth);
@@ -915,6 +966,9 @@ sppp_detach(struct ifnet *ifp)
 	if (sp->myauth.secret) free(sp->myauth.secret, M_DEVBUF);
 	if (sp->hisauth.name) free(sp->hisauth.name, M_DEVBUF);
 	if (sp->hisauth.secret) free(sp->hisauth.secret, M_DEVBUF);
+
+	/* Safety - shouldn't be needed as there is no media to set. */
+	ifmedia_delete_instance(&sp->pp_im, IFM_INST_ANY);
 }
 
 /*
@@ -1077,6 +1131,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case __SPPPGETKEEPALIVE50:
 #endif /* COMPAT_50 || MODULAR */
 		error = sppp_params(sp, cmd, data);
+		break;
+
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sp->pp_im, cmd);
 		break;
 
 	default:
@@ -2480,7 +2538,7 @@ drop:
 static void
 sppp_lcp_tlu(struct sppp *sp)
 {
-	STDDCL;
+	struct ifnet *ifp = &sp->pp_if;
 	int i;
 	uint32_t mask;
 
@@ -2497,15 +2555,9 @@ sppp_lcp_tlu(struct sppp *sp)
 
 	if ((sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0 ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)
-		sp->pp_phase = SPPP_PHASE_AUTHENTICATE;
+		sppp_change_phase(sp, SPPP_PHASE_AUTHENTICATE);
 	else
-		sp->pp_phase = SPPP_PHASE_NETWORK;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-		    sppp_phase_name(sp->pp_phase));
-	}
+		sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
 	/*
 	 * Open all authentication protocols.  This is even required
@@ -2542,17 +2594,10 @@ sppp_lcp_tlu(struct sppp *sp)
 static void
 sppp_lcp_tld(struct sppp *sp)
 {
-	STDDCL;
 	int i;
 	uint32_t mask;
 
-	sp->pp_phase = SPPP_PHASE_TERMINATE;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_TERMINATE);
 
 	/*
 	 * Take upper layers down.  We send the Down event first and
@@ -2570,7 +2615,6 @@ sppp_lcp_tld(struct sppp *sp)
 static void
 sppp_lcp_tls(struct sppp *sp)
 {
-	STDDCL;
 
 	if (sp->pp_max_auth_fail != 0 && sp->pp_auth_failures >= sp->pp_max_auth_fail) {
 	    printf("%s: authentication failed %d times, not retrying again\n",
@@ -2579,13 +2623,7 @@ sppp_lcp_tls(struct sppp *sp)
 	    return;
 	}
 
-	sp->pp_phase = SPPP_PHASE_ESTABLISH;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_ESTABLISH);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tls)
@@ -2595,15 +2633,8 @@ sppp_lcp_tls(struct sppp *sp)
 static void
 sppp_lcp_tlf(struct sppp *sp)
 {
-	STDDCL;
 
-	sp->pp_phase = SPPP_PHASE_DEAD;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_DEAD);
 
 	/* Notify lower layer if desired. */
 	if (sp->pp_tlf)
@@ -4053,20 +4084,20 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			sppp_print_bytes(value, value_len);
 			addlog(">\n");
 		}
-		if (value_len != sizeof(sp->myauth.challenge)) {
+		if (value_len != sizeof(sp->hisauth.challenge)) {
 			if (debug)
 				log(LOG_DEBUG,
 				    "%s: chap bad hash value length: "
-				    "%d bytes, should be %ld\n",
+				    "%d bytes, should be %zu\n",
 				    ifp->if_xname, value_len,
-				    (long) sizeof(sp->myauth.challenge));
+				    sizeof(sp->hisauth.challenge));
 			goto chap_failure;
 		}
 
 		MD5Init(&ctx);
 		MD5Update(&ctx, &h->ident, 1);
 		MD5Update(&ctx, sp->hisauth.secret, sp->hisauth.secret_len);
-		MD5Update(&ctx, sp->myauth.challenge, sizeof(sp->myauth.challenge));
+		MD5Update(&ctx, sp->hisauth.challenge, sizeof(sp->hisauth.challenge));
 		MD5Final(digest, &ctx);
 
 #define FAILMSG "Failed..."
@@ -4129,7 +4160,7 @@ sppp_chap_init(struct sppp *sp)
 static void
 sppp_chap_open(struct sppp *sp)
 {
-	if (sp->myauth.proto == PPP_CHAP &&
+	if (sp->hisauth.proto == PPP_CHAP &&
 	    (sp->lcp.opts & (1 << LCP_OPT_AUTH_PROTO)) != 0) {
 		/* we are authenticator for CHAP, start it */
 		chap.scr(sp);
@@ -4264,24 +4295,22 @@ sppp_chap_scr(struct sppp *sp)
 	uint32_t *ch;
 	u_char clen = 4 * sizeof(uint32_t);
 
-	if (sp->myauth.name == NULL) {
+	if (sp->hisauth.name == NULL) {
 	    /* can't do anything useful */
-	    printf("%s: chap starting without my name being set\n",
+	    printf("%s: chap starting without his name being set\n",
 	    	sp->pp_if.if_xname);
 	    return;
 	}
 
 	/* Compute random challenge. */
-	ch = (uint32_t *)sp->myauth.challenge;
+	ch = (uint32_t *)sp->hisauth.challenge;
 	cprng_strong(kern_cprng, ch, clen, 0);
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 
 	sppp_auth_send(&chap, sp, CHAP_CHALLENGE, sp->confid[IDX_CHAP],
 		       sizeof clen, (const char *)&clen,
-		       sizeof(sp->myauth.challenge), sp->myauth.challenge,
-		       sp->myauth.name_len,
-		       sp->myauth.name,
+		       sizeof(sp->hisauth.challenge), sp->hisauth.challenge,
 		       0);
 }
 
@@ -4872,36 +4901,22 @@ sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
 
 found:
 	{
-		int error, hostIsNew;
+		int error;
 		struct sockaddr_in new_sin = *si;
 		struct sockaddr_in new_dst = *dest;
 
-		/*
-		 * Scrub old routes now instead of calling in_ifinit with
-		 * scrub=1, because we may change the dstaddr
-		 * before the call to in_ifinit.
-		 */
-		in_ifscrub(ifp, ifatoia(ifa));
-
-		hostIsNew = 0;
-		if (myaddr != 0) {
-			if (new_sin.sin_addr.s_addr != htonl(myaddr)) {
-				new_sin.sin_addr.s_addr = htonl(myaddr);
-				hostIsNew = 1;
-			}
-		}
+		if (myaddr != 0)
+			new_sin.sin_addr.s_addr = htonl(myaddr);
 		if (hisaddr != 0) {
 			new_dst.sin_addr.s_addr = htonl(hisaddr);
-			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr) {
+			if (new_dst.sin_addr.s_addr != dest->sin_addr.s_addr)
 				sp->ipcp.saved_hisaddr = dest->sin_addr.s_addr;
-				*dest = new_dst; /* fix dstaddr in place */
-			}
 		}
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, hostIsNew);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
@@ -4909,8 +4924,8 @@ found:
 
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip_addrs: in_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,
@@ -4925,7 +4940,7 @@ found:
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
 {
-	struct ifnet *ifp = &sp->pp_if;
+	STDDCL;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 
@@ -4952,25 +4967,32 @@ sppp_clear_ip_addrs(struct sppp *sp)
 found:
 	{
 		struct sockaddr_in new_sin = *si;
+		struct sockaddr_in new_dst = *dest;
+		int error;
 
-		in_ifscrub(ifp, ifatoia(ifa));
 		if (sp->ipcp.flags & IPCP_MYADDR_DYN)
 			new_sin.sin_addr.s_addr = 0;
 		if (sp->ipcp.flags & IPCP_HISADDR_DYN)
-			/* replace peer addr in place */
-			dest->sin_addr.s_addr = sp->ipcp.saved_hisaddr;
+			new_dst.sin_addr.s_addr = sp->ipcp.saved_hisaddr;
 
 		LIST_REMOVE(ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_REMOVE(ifatoia(ifa));
 
-		in_ifinit(ifp, ifatoia(ifa), &new_sin, 0, 0);
+		error = in_ifinit(ifp, ifatoia(ifa), &new_sin, &new_dst, 0);
 
 		LIST_INSERT_HEAD(&IN_IFADDR_HASH(ifatoia(ifa)->ia_addr.sin_addr.s_addr),
 		    ifatoia(ifa), ia_hash);
 		IN_ADDRHASH_WRITER_INSERT_HEAD(ifatoia(ifa));
 
-		(void)pfil_run_hooks(if_pfil,
-		    (struct mbuf **)SIOCDIFADDR, ifp, PFIL_IFADDR);
+		if (debug && error)
+		{
+			log(LOG_DEBUG, "%s: %s: in_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
+		}
+		if (!error) {
+			(void)pfil_run_hooks(if_pfil,
+			    (struct mbuf **)SIOCAIFADDR, ifp, PFIL_IFADDR);
+		}
 	}
 }
 #endif
@@ -5068,8 +5090,8 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 		error = in6_ifinit(ifp, ifatoia6(ifa), &new_sin6, 1);
 		if (debug && error)
 		{
-			log(LOG_DEBUG, "%s: sppp_set_ip6_addr: in6_ifinit "
-			" failed, error=%d\n", ifp->if_xname, error);
+			log(LOG_DEBUG, "%s: %s: in6_ifinit failed, error=%d\n",
+			    ifp->if_xname, __func__, error);
 		}
 		if (!error) {
 			(void)pfil_run_hooks(if_pfil,
@@ -5369,17 +5391,10 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 static void
 sppp_phase_network(struct sppp *sp)
 {
-	STDDCL;
 	int i;
 	uint32_t mask;
 
-	sp->pp_phase = SPPP_PHASE_NETWORK;
-
-	if (debug)
-	{
-		log(LOG_INFO, "%s: phase %s\n", ifp->if_xname,
-			sppp_phase_name(sp->pp_phase));
-	}
+	sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
 	/* Notify NCPs now. */
 	for (i = 0; i < IDX_COUNT; i++)
@@ -5592,3 +5607,23 @@ sppp_null(struct sppp *unused)
  * hilit-auto-highlight-maxout: 120000
  * End:
  */
+
+/*
+ * Module glue
+ */
+MODULE(MODULE_CLASS_MISC, sppp_subr, NULL);
+
+static int
+sppp_subr_modcmd(modcmd_t cmd, void *arg)
+{
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+        case MODULE_CMD_FINI:
+                return 0;
+        case MODULE_CMD_STAT:
+        case MODULE_CMD_AUTOUNLOAD:
+        default:
+                return ENOTTY;
+        }
+}
+

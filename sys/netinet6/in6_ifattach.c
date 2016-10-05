@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.94.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.94.2.5 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.94.2.5 2016/10/05 20:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,14 +244,16 @@ generate_tmp_ifid(u_int8_t *seed0, const u_int8_t *seed1, u_int8_t *ret)
 		badid = 1;
 	else {
 		struct in6_ifaddr *ia;
+		int s = pserialize_read_enter();
 
 		IN6_ADDRLIST_READER_FOREACH(ia) {
-			if (!memcmp(&ia->ia_addr.sin6_addr.s6_addr[8], 
+			if (!memcmp(&ia->ia_addr.sin6_addr.s6_addr[8],
 			    ret, 8)) {
 				badid = 1;
 				break;
 			}
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*
@@ -318,30 +320,34 @@ int
 in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 {
 	struct ifaddr *ifa;
-	const struct sockaddr_dl *sdl = NULL, *tsdl;
-	const char *addr;
-	size_t addrlen;
+	const struct sockaddr_dl *sdl = NULL;
+	const char *addr = NULL; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
+	size_t addrlen = 0; /* XXX gcc 4.8 -Werror=maybe-uninitialized */
 	static u_int8_t allzero[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	int s;
 
+	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
+		const struct sockaddr_dl *tsdl;
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		tsdl = satocsdl(ifa->ifa_addr);
 		if (tsdl == NULL || tsdl->sdl_alen == 0)
 			continue;
-		if (sdl == NULL || ifa == ifp->if_dl || ifa == ifp->if_hwdl)
+		if (sdl == NULL || ifa == ifp->if_dl || ifa == ifp->if_hwdl) {
 			sdl = tsdl;
+			addr = CLLADDR(sdl);
+			addrlen = sdl->sdl_alen;
+		}
 		if (ifa == ifp->if_hwdl)
 			break;
 	}
+	pserialize_read_exit(s);
 
 	if (sdl == NULL)
 		return -1;
-
-	addr = CLLADDR(sdl);
-	addrlen = sdl->sdl_alen;
 
 	switch (ifp->if_type) {
 	case IFT_IEEE1394:
@@ -450,7 +456,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
  * altifp - secondary EUI64 source
  */
 static int
-get_ifid(struct ifnet *ifp0, struct ifnet *altifp, 
+get_ifid(struct ifnet *ifp0, struct ifnet *altifp,
 	struct in6_addr *in6)
 {
 	struct ifnet *ifp;
@@ -527,10 +533,8 @@ success:
 static int
 in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 {
-	struct in6_ifaddr *ia __diagused;
 	struct in6_aliasreq ifra;
-	struct nd_prefixctl prc0;
-	int i, error;
+	int error;
 
 	/*
 	 * configure link-local address.
@@ -585,46 +589,6 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 			    "(errno=%d)\n",
 			    if_name(ifp), error);
 		return -1;
-	}
-
-	ia = in6ifa_ifpforlinklocal(ifp, 0); /* ia must not be NULL */
-	KASSERTMSG(ia, "ia == NULL in in6_ifattach_linklocal");
-
-	/*
-	 * Make the link-local prefix (fe80::/64%link) as on-link.
-	 * Since we'd like to manage prefixes separately from addresses,
-	 * we make an ND6 prefix structure for the link-local prefix,
-	 * and add it to the prefix list as a never-expire prefix.
-	 * XXX: this change might affect some existing code base...
-	 */
-	memset(&prc0, 0, sizeof(prc0));
-	prc0.ndprc_ifp = ifp;
-	/* this should be 64 at this moment. */
-	prc0.ndprc_plen = in6_mask2len(&ifra.ifra_prefixmask.sin6_addr, NULL);
-	prc0.ndprc_prefix = ifra.ifra_addr;
-	/* apply the mask for safety. (nd6_prelist_add will apply it again) */
-	for (i = 0; i < 4; i++) {
-		prc0.ndprc_prefix.sin6_addr.s6_addr32[i] &=
-		    in6mask64.s6_addr32[i];
-	}
-	/*
-	 * Initialize parameters.  The link-local prefix must always be
-	 * on-link, and its lifetimes never expire.
-	 */
-	prc0.ndprc_raf_onlink = 1;
-	prc0.ndprc_raf_auto = 1;	/* probably meaningless */
-	prc0.ndprc_vltime = ND6_INFINITE_LIFETIME;
-	prc0.ndprc_pltime = ND6_INFINITE_LIFETIME;
-	/*
-	 * Since there is no other link-local addresses, nd6_prefix_lookup()
-	 * probably returns NULL.  However, we cannot always expect the result.
-	 * For example, if we first remove the (only) existing link-local
-	 * address, and then reconfigure another one, the prefix is still
-	 * valid with referring to the old link-local address.
-	 */
-	if (nd6_prefix_lookup(&prc0) == NULL) {
-		if ((error = nd6_prelist_add(&prc0, NULL, NULL)) != 0)
-			return error;
 	}
 
 	return 0;
@@ -686,7 +650,7 @@ in6_ifattach_loopback(struct ifnet *ifp)
  * when ifp == NULL, the caller is responsible for filling scopeid.
  */
 int
-in6_nigroup(struct ifnet *ifp, const char *name, int namelen, 
+in6_nigroup(struct ifnet *ifp, const char *name, int namelen,
 	struct sockaddr_in6 *sa6)
 {
 	const char *p;
@@ -809,24 +773,29 @@ in6_ifattach(struct ifnet *ifp, struct ifnet *altifp)
 	 * XXX multiple loopback interface case.
 	 */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
+		int s = pserialize_read_enter();
 		in6 = in6addr_loopback;
 		if (in6ifa_ifpwithaddr(ifp, &in6) == NULL) {
-			if (in6_ifattach_loopback(ifp) != 0)
+			if (in6_ifattach_loopback(ifp) != 0) {
+				pserialize_read_exit(s);
 				return;
+			}
 		}
+		pserialize_read_exit(s);
 	}
 
 	/*
 	 * assign a link-local address, if there's none.
 	 */
 	if (!(ND_IFINFO(ifp)->flags & ND6_IFF_IFDISABLED) &&
-	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL)
-	{
+	    ND_IFINFO(ifp)->flags & ND6_IFF_AUTO_LINKLOCAL) {
+		int s = pserialize_read_enter();
 		ia = in6ifa_ifpforlinklocal(ifp, 0);
 		if (ia == NULL && in6_ifattach_linklocal(ifp, altifp) != 0) {
 			printf("%s: cannot assign link-local address\n",
 			    ifp->if_xname);
 		}
+		pserialize_read_exit(s);
 	}
 }
 
@@ -863,7 +832,7 @@ in6_ifdetach(struct ifnet *ifp)
 }
 
 int
-in6_get_tmpifid(struct ifnet *ifp, u_int8_t *retbuf, 
+in6_get_tmpifid(struct ifnet *ifp, u_int8_t *retbuf,
 	const u_int8_t *baseid, int generate)
 {
 	u_int8_t nullbuf[8];

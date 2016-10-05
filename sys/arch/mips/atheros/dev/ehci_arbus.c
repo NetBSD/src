@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.2.16.4 2015/09/22 12:05:46 skrll Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.2.16.5 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.16.4 2015/09/22 12:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.16.5 2016/10/05 20:55:31 skrll Exp $");
 
 #include "locators.h"
 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2.16.4 2015/09/22 12:05:46 skrll Ex
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <mips/locore.h>
 #include <mips/atheros/include/ar9344reg.h>
 #include <mips/atheros/include/arbusvar.h>
 

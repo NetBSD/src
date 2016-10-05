@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.32.2 2015/09/22 12:05:47 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.54.32.3 2016/10/05 20:55:32 skrll Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -84,12 +84,12 @@ include <sys/bitops.h>
 
 include <uvm/uvm.h>
 
+include <mips/locore.h>
 include <mips/pcb.h>
 include <mips/cache.h>
 include <mips/regnum.h>
 include <mips/vmparam.h>
 include <mips/pte.h>
-include <mips/locore.h>
 
 define	SIGFPE		 	SIGFPE
 define	SIGILL		 	SIGILL
@@ -98,7 +98,26 @@ define	SIGSEGV			SIGSEGV
 ifndef _MODULE
 define	PAGE_SIZE		PAGE_SIZE
 define	PGSHIFT			PGSHIFT
+define	PGOFSET			PGOFSET
 define	NBPG			NBPG
+define	SEGSHIFT		SEGSHIFT
+define	SEGOFSET		SEGOFSET
+define	SEGLENGTH		SEGLENGTH
+define	NBSEG			NBSEG
+define	NSEGPG			NSEGPG
+define	PTPSHIFT		PTPSHIFT
+define	PTPLENGTH		PTPLENGTH
+define	NPTEPG			NPTEPG
+ifdef _LP64
+define	XSEGSHIFT		XSEGSHIFT
+define	XSEGOFSET		XSEGOFSET
+define	XSEGLENGTH		XSEGLENGTH
+define	NBXSEG			NBXSEG
+define	NXSEGPG			NXSEGPG
+else
+define	XSEGSHIFT		SEGSHIFT
+define	XSEGLENGTH		SEGLENGTH
+endif
 define	USPACE			USPACE
 define	UPAGES			UPAGES
 endif
@@ -126,10 +145,8 @@ define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_STAT			offsetof(struct lwp, l_stat)
 ifndef _MODULE
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
-if USPACE > PAGE_SIZE
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
-endif
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 endif
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
@@ -159,7 +176,17 @@ define	MIPS3_PG_G		MIPS3_PG_G
 define	MIPS3_PG_V		MIPS3_PG_V
 define	MIPS3_PG_HVPN		MIPS3_PG_HVPN
 define	MIPS3_PG_ASID		MIPS3_PG_ASID
+ifdef MIPS3_PG_ODDPG
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
+define	V_MIPS3_PG_ODDPG	ilog2(MIPS3_PG_ODDPG)
+endif
+ifdef MIPS3_PG_NEXT
+define	MIPS3_PG_NEXT		MIPS3_PG_NEXT
+endif
+define	V_MIPS3_PG_V		ilog2(MIPS3_PG_V)
+define	V_MIPS3_PG_HVPN		ilog2(__LOWEST_SET_BIT(MIPS3_PG_HVPN))
+define	V_MIPS3_PG_ASID		ilog2(__LOWEST_SET_BIT(MIPS3_PG_ASID))
+define	S_MIPS3_PG_ASID		ilog2(MIPS3_PG_ASID+1)
 endif
 
 define	TF_SIZ			sizeof(struct trapframe)
@@ -326,6 +353,8 @@ define	IPL_HIGH		IPL_HIGH
 
 define	V_MIPS3_SR_SR		ilog2(MIPS3_SR_SR)
 define	V_MIPS_SR_BEV		ilog2(MIPS_SR_BEV)
+define	V_MIPS1_TLB_PID		ilog2(__LOWEST_SET_BIT(MIPS1_TLB_PID))
+define	S_MIPS1_TLB_PID		ilog2(MIPS1_TLB_PID+1)
 
 ifdef __HAVE_PREEMPTION
 define	__HAVE_PREEMPTION	1
@@ -338,6 +367,8 @@ define	TLBMASK_LO0		offsetof(struct tlbmask, tlb_lo0)
 define	TLBMASK_LO1		offsetof(struct tlbmask, tlb_lo1)
 define	TLBMASK_MASK		offsetof(struct tlbmask, tlb_mask)
 
+define	PMAP_LIMITS_VIRTUAL_END	offsetof(struct pmap_limits, virtual_end)
+
 define	MO_CPU_ID		offsetof(struct mips_options, mips_cpu_id)
 define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)
 define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
@@ -346,3 +377,15 @@ define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)
 
 define	MIPS_CURLWP_LABEL	MIPS_CURLWP_LABEL
 define	MIPS_CURLWP_REG		MIPS_CURLWP_REG
+
+define	LJV_TLB_UPDATE_ADDR	offsetof(mips_locore_jumpvec_t, ljv_tlb_update_addr)
+
+ifdef MIPS1
+define	MIPS_HAS_LLSC		0
+else
+ifdef MIPS3_4100
+define	MIPS_HAS_LLSC		0
+else
+define	MIPS_HAS_LLSC		1
+endif
+endif

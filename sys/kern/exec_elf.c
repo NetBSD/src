@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.70.2.6 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.70.2.7 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.6 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.7 2016/10/05 20:56:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -109,6 +109,12 @@ int	netbsd_elf_probe(struct lwp *, struct exec_package *, void *, char *,
 	    vaddr_t *);
 
 static void	elf_free_emul_arg(void *);
+
+#ifdef DEBUG_ELF
+#define DPRINTF(a, ...)	printf("%s: " a "\n", __func__, ##__VA_ARGS__)
+#else
+#define DPRINTF(a, ...)
+#endif
 
 /* round up and down to page boundaries. */
 #define	ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
@@ -259,22 +265,30 @@ elf_check_header(Elf_Ehdr *eh)
 {
 
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) != 0 ||
-	    eh->e_ident[EI_CLASS] != ELFCLASS)
+	    eh->e_ident[EI_CLASS] != ELFCLASS) {
+		DPRINTF("bad magic %#x%x%x", eh->e_ident[0], eh->e_ident[1],
+		    eh->e_ident[2]);
 		return ENOEXEC;
+	}
 
 	switch (eh->e_machine) {
 
 	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
+		DPRINTF("bad machine %#x", eh->e_machine);
 		return ENOEXEC;
 	}
 
-	if (ELF_EHDR_FLAGS_OK(eh) == 0)
+	if (ELF_EHDR_FLAGS_OK(eh) == 0) {
+		DPRINTF("bad flags %#x", eh->e_flags);
 		return ENOEXEC;
+	}
 
-	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_phnum > ELF_MAXPHNUM)
+	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_phnum > ELF_MAXPHNUM) {
+		DPRINTF("bad shnum/phnum %#x/%#x", eh->e_shnum, eh->e_phnum);
 		return ENOEXEC;
+	}
 
 	return 0;
 }
@@ -451,6 +465,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	if ((error = elf_check_header(&eh)) != 0)
 		goto bad;
 	if (eh.e_type != ET_DYN || eh.e_phnum == 0) {
+		DPRINTF("bad interpreter type %#x", eh.e_type);
 		error = ENOEXEC;
 		goto bad;
 	}
@@ -495,6 +510,7 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		}
 
 		if (base_ph == NULL) {
+			DPRINTF("no interpreter loadable sections");
 			error = ENOEXEC;
 			goto bad;
 		}
@@ -616,19 +632,25 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	struct elf_args *ap;
 	bool is_dyn = false;
 
-	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr))
+	if (epp->ep_hdrvalid < sizeof(Elf_Ehdr)) {
+		DPRINTF("small header %#x", epp->ep_hdrvalid);
 		return ENOEXEC;
+	}
 	if ((error = elf_check_header(eh)) != 0)
 		return error;
 
 	if (eh->e_type == ET_DYN)
 		/* PIE, and some libs have an entry point */
 		is_dyn = true;
-	else if (eh->e_type != ET_EXEC)
+	else if (eh->e_type != ET_EXEC) {
+		DPRINTF("bad type %#x", eh->e_type);
 		return ENOEXEC;
+	}
 
-	if (eh->e_phnum == 0)
+	if (eh->e_phnum == 0) {
+		DPRINTF("no program headers");
 		return ENOEXEC;
+	}
 
 	error = vn_marktext(epp->ep_vp);
 	if (error)
@@ -652,6 +674,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		pp = &ph[i];
 		if (pp->p_type == PT_INTERP) {
 			if (pp->p_filesz < 2 || pp->p_filesz > MAXPATHLEN) {
+				DPRINTF("bad interpreter namelen %#jx",
+				    (uintmax_t)pp->p_filesz);
 				error = ENOEXEC;
 				goto bad;
 			}
@@ -661,6 +685,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 				goto bad;
 			/* Ensure interp is NUL-terminated and of the expected length */
 			if (strnlen(interp, pp->p_filesz) != pp->p_filesz - 1) {
+				DPRINTF("bad interpreter name");
 				error = ENOEXEC;
 				goto bad;
 			}
@@ -746,6 +771,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	if (epp->ep_vmcmds.evs_used == 0) {
 		/* No VMCMD; there was no PT_LOAD section, or those
 		 * sections were empty */
+		DPRINTF("no vmcommands");
 		error = ENOEXEC;
 		goto bad;
 	}
@@ -769,6 +795,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		}
 		if (epp->ep_vmcmds.evs_used == nused) {
 			/* elf_load_interp() has not set up any new VMCMD */
+			DPRINTF("no vmcommands for interpreter");
 			error = ENOEXEC;
 			goto bad;
 		}
@@ -839,8 +866,10 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 #endif
 
 	epp->ep_pax_flags = 0;
-	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_shnum == 0)
+	if (eh->e_shnum > ELF_MAXSHNUM || eh->e_shnum == 0) {
+		DPRINTF("no signature %#x", eh->e_shnum);
 		return ENOEXEC;
+	}
 
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = kmem_alloc(shsize, KM_SLEEP);
@@ -1004,6 +1033,10 @@ bad:
 	kmem_free(np, ELF_MAXNOTESIZE);
 
 	error = isnetbsd ? 0 : ENOEXEC;
+#ifdef DEBUG_ELF
+	if (error)
+		DPRINTF("not netbsd");
+#endif
 out:
 	kmem_free(sh, shsize);
 	return error;

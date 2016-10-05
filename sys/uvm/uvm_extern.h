@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.191.4.4 2016/05/29 08:44:40 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.191.4.5 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -627,6 +627,8 @@ int			uvm_io(struct vm_map *, struct uio *, int);
 /* uvm_km.c */
 vaddr_t			uvm_km_alloc(struct vm_map *, vsize_t, vsize_t,
 			    uvm_flag_t);
+int			uvm_km_protect(struct vm_map *, vaddr_t, vsize_t,
+			    vm_prot_t);
 void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t,
 			    uvm_flag_t);
 

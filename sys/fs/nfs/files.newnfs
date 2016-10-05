@@ -1,4 +1,4 @@
-#	$NetBSD: files.newnfs,v 1.2 2014/10/11 06:42:18 uebayasi Exp $
+#	$NetBSD: files.newnfs,v 1.2.2.1 2016/10/05 20:56:01 skrll Exp $
 
 deffs NEW_NFSCLIENT
 defflag opt_newnfs.h			NEW_NFS_BOOT_BOOTP
@@ -7,7 +7,7 @@ defflag opt_newnfs.h			NEW_NFS_BOOT_BOOTP
 					NEW_NFS_BOOT
 
 # XXX
-define	new_nfsclient: vfs
+define	new_nfsclient: vfs, net
 file	fs/nfs/client/nfs_clbio.c	 new_nfsclient
 file	fs/nfs/client/nfs_clcomsubs.c	 new_nfsclient
 file	fs/nfs/client/nfs_clkrpc.c	 new_nfsclient

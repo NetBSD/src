@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.89 2014/11/22 13:18:45 njoly Exp $
+	$NetBSD: syscalls.master,v 1.89.2.1 2016/10/05 20:55:38 skrll Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -180,7 +180,7 @@
 #else
 84	UNIMPL		compat_43_sys_lstat
 #endif
-85	NOARGS		{ int|sys||readlink(const char *name, char *buf, \
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 #ifdef EXEC_AOUT
 86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -505,7 +505,7 @@
 			    int fd2, const char *name2, int flags); }
 297	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-298	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+298	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 299	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }

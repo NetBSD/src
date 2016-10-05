@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20.6.4 2016/04/22 15:44:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.20.6.5 2016/10/05 20:56:11 skrll Exp $
 #
 
 
@@ -20,6 +20,10 @@ SRCS+=	net_component.c
 
 .if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	rtsock_50.c uipc_syscalls_50.c
+.endif
+
+.if !empty(RUMP_NBCOMPAT:M70)
+SRCS+=	rtsock_70.c uipc_usrreq_70.c
 .endif
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"

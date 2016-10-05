@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.23.6.1 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.23.6.2 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.23.6.1 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.23.6.2 2016/10/05 20:55:43 skrll Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -163,7 +163,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 		mpt->sc_st = memt;
 		mpt->sc_sh = memh;
 	} else {
-		aprint_error_dev(mpt->sc_dev, "unable to map device registers\n");
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -219,8 +219,7 @@ mpt_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate DMA memory. */
 	if (mpt_dma_mem_alloc(mpt) != 0) {
-		aprint_error_dev(mpt->sc_dev,
-		    "unable to allocate DMA memory\n");
+		aprint_error_dev(self, "unable to allocate DMA memory\n");
 		return;
 	}
 

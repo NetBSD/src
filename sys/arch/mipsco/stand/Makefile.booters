@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.booters,v 1.21 2014/01/31 19:38:48 tsutsui Exp $
+#	$NetBSD: Makefile.booters,v 1.21.6.1 2016/10/05 20:55:32 skrll Exp $
 
 NOMAN=		# defined
+NOPIE=		# defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips
@@ -66,7 +67,8 @@ CPPFLAGS+=	-DPRIMARY_BOOTBLOCK \
 
 CHECKSIZE_CMD?=	SIZE=${SIZE} ${HOST_SH} ${.CURDIR}/../common/checksize.sh
 
-STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr
+STRIPSECTIONS?= -R .reginfo -R .mdebug.abi32 -R .comment -R .pdr \
+	-R .MIPS.abiflags  -R .gnu.attributes
 
 .elif defined(SECONDARY_PROG)
 PROG=		${SECONDARY_PROG}

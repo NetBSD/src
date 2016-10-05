@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.36.2.3 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.36.2.4 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36.2.3 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.36.2.4 2016/10/05 20:56:08 skrll Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.36.2.3 2016/07/09 20:25:21 skrll Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.36.2.4 2016/10/05 20:56:08 skrll Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1594,10 +1594,9 @@ optimize(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 /*
  * Convert BPF_ALU operations except BPF_NEG and BPF_DIV to sljit operation.
  */
-static int
-bpf_alu_to_sljit_op(const struct bpf_insn *pc)
+static bool
+alu_to_op(const struct bpf_insn *pc, int *res)
 {
-	const int bad = SLJIT_UNUSED;
 	const uint32_t k = pc->k;
 
 	/*
@@ -1605,49 +1604,64 @@ bpf_alu_to_sljit_op(const struct bpf_insn *pc)
 	 * instruction so SLJIT_I32_OP doesn't have any overhead.
 	 */
 	switch (BPF_OP(pc->code)) {
-	case BPF_ADD: return SLJIT_ADD;
-	case BPF_SUB: return SLJIT_SUB;
-	case BPF_MUL: return SLJIT_MUL|SLJIT_I32_OP;
-	case BPF_OR:  return SLJIT_OR;
-	case BPF_XOR: return SLJIT_XOR;
-	case BPF_AND: return SLJIT_AND;
-	case BPF_LSH: return (k > 31) ? bad : SLJIT_SHL;
-	case BPF_RSH: return (k > 31) ? bad : SLJIT_LSHR|SLJIT_I32_OP;
+	case BPF_ADD:
+		*res = SLJIT_ADD;
+		return true;
+	case BPF_SUB:
+		*res = SLJIT_SUB;
+		return true;
+	case BPF_MUL:
+		*res = SLJIT_MUL|SLJIT_I32_OP;
+		return true;
+	case BPF_OR:
+		*res = SLJIT_OR;
+		return true;
+	case BPF_XOR:
+		*res = SLJIT_XOR;
+		return true;
+	case BPF_AND:
+		*res = SLJIT_AND;
+		return true;
+	case BPF_LSH:
+		*res = SLJIT_SHL;
+		return k < 32;
+	case BPF_RSH:
+		*res = SLJIT_LSHR|SLJIT_I32_OP;
+		return k < 32;
 	default:
-		return bad;
+		return false;
 	}
 }
 
 /*
  * Convert BPF_JMP operations except BPF_JA to sljit condition.
  */
-static int
-bpf_jmp_to_sljit_cond(const struct bpf_insn *pc, bool negate)
+static bool
+jmp_to_cond(const struct bpf_insn *pc, bool negate, int *res)
 {
+
 	/*
 	 * Note: all supported 64bit arches have 32bit comparison
 	 * instructions so SLJIT_I32_OP doesn't have any overhead.
 	 */
-	int rv = SLJIT_I32_OP;
+	*res = SLJIT_I32_OP;
 
 	switch (BPF_OP(pc->code)) {
 	case BPF_JGT:
-		rv |= negate ? SLJIT_LESS_EQUAL : SLJIT_GREATER;
-		break;
+		*res |= negate ? SLJIT_LESS_EQUAL : SLJIT_GREATER;
+		return true;
 	case BPF_JGE:
-		rv |= negate ? SLJIT_LESS : SLJIT_GREATER_EQUAL;
-		break;
+		*res |= negate ? SLJIT_LESS : SLJIT_GREATER_EQUAL;
+		return true;
 	case BPF_JEQ:
-		rv |= negate ? SLJIT_NOT_EQUAL : SLJIT_EQUAL;
-		break;
+		*res |= negate ? SLJIT_NOT_EQUAL : SLJIT_EQUAL;
+		return true;
 	case BPF_JSET:
-		rv |= negate ? SLJIT_EQUAL : SLJIT_NOT_EQUAL;
-		break;
+		*res |= negate ? SLJIT_EQUAL : SLJIT_NOT_EQUAL;
+		return true;
 	default:
-		BJ_ASSERT(false);
+		return false;
 	}
-
-	return rv;
 }
 
 /*
@@ -1695,9 +1709,9 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 	struct sljit_jump *to_mchain_jump;
 
 	size_t i;
-	int status;
-	int branching, negate;
 	unsigned int rval, mode, src, op;
+	int branching, negate;
+	int status, cond, op2;
 	uint32_t jt, jf;
 
 	bool unconditional_ret;
@@ -1935,10 +1949,9 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 			op = BPF_OP(pc->code);
 			if (op != BPF_DIV && op != BPF_MOD) {
-				const int op2 = bpf_alu_to_sljit_op(pc);
-
-				if (op2 == SLJIT_UNUSED)
+				if (!alu_to_op(pc, &op2))
 					goto fail;
+
 				status = sljit_emit_op2(compiler,
 				    op2, BJ_AREG, 0, BJ_AREG, 0,
 				    kx_to_reg(pc), kx_to_reg_arg(pc));
@@ -2005,9 +2018,10 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 			if (branching) {
 				if (op != BPF_JSET) {
+					if (!jmp_to_cond(pc, negate, &cond))
+						goto fail;
 					jump = sljit_emit_cmp(compiler,
-					    bpf_jmp_to_sljit_cond(pc, negate),
-					    BJ_AREG, 0,
+					    cond, BJ_AREG, 0,
 					    kx_to_reg(pc), kx_to_reg_arg(pc));
 				} else {
 					status = sljit_emit_op2(compiler,
@@ -2018,10 +2032,10 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 					if (status != SLJIT_SUCCESS)
 						goto fail;
 
+					if (!jmp_to_cond(pc, negate, &cond))
+						goto fail;
 					jump = sljit_emit_cmp(compiler,
-					    bpf_jmp_to_sljit_cond(pc, negate),
-					    BJ_TMP1REG, 0,
-					    SLJIT_IMM, 0);
+					    cond, BJ_TMP1REG, 0, SLJIT_IMM, 0);
 				}
 
 				if (jump == NULL)

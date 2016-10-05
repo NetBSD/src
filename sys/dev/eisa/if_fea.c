@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.46 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.46.6.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.46 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fea.c,v 1.46.6.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -523,9 +523,9 @@ pdq_eisa_attach(
     if (sc->sc_ats == NULL)
 	aprint_error_dev(self, "warning: couldn't establish shutdown hook\n");
     if (sc->sc_csr_memmapped)
-	printf("%s: using iomem 0x%x-0x%x\n", device_xname(sc->sc_dev), maddr, maddr + msiz - 1);
+	aprint_normal_dev(self, "using iomem 0x%x-0x%x\n",  maddr, maddr + msiz - 1);
     if (intrstr != NULL)
-	printf("%s: interrupting at %s\n", device_xname(sc->sc_dev), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 }
 
 CFATTACH_DECL_NEW(fea, sizeof(pdq_softc_t),

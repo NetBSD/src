@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.6 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.7 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.6 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.7 2016/10/05 20:56:02 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -121,6 +121,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.6 2016/07/09 20:25:20 skrll Ex
 #endif
 
 struct execve_data;
+
+extern int user_va0_disable;
 
 static size_t calcargs(struct execve_data * restrict, const size_t);
 static size_t calcstack(struct execve_data * restrict, const size_t);
@@ -401,11 +403,10 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 	/*
 	 * Set up default address space limits.  Can be overridden
 	 * by individual exec packages.
-	 *
-	 * XXX probably should be all done in the exec packages.
 	 */
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = VM_MAXUSER_ADDRESS;
+
 	/*
 	 * set up the vmcmds for creation of the process
 	 * address space
@@ -650,6 +651,19 @@ makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
 out:
 	*pbp = pathbuf_assimilate(path);
 	return 0;
+}
+
+vaddr_t
+exec_vm_minaddr(vaddr_t va_min)
+{
+	/*
+	 * Increase va_min if we don't want NULL to be mappable by the
+	 * process.
+	 */
+#define VM_MIN_GUARD	PAGE_SIZE
+	if (user_va0_disable && (va_min < VM_MIN_GUARD))
+		return VM_MIN_GUARD;
+	return va_min;
 }
 
 static int

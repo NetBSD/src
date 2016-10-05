@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.47.6.2 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: lapic.c,v 1.47.6.3 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.2 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.3 2016/10/05 20:55:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -125,7 +125,7 @@ lapic_map(paddr_t lapic_base)
 	 */
 
 	pte = kvtopte(va);
-	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g;
+	*pte = lapic_base | PG_RW | PG_V | PG_N | pmap_pg_g | pmap_pg_nx;
 	invlpg(va);
 
 #ifdef MULTIPROCESSOR

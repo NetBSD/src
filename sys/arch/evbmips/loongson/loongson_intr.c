@@ -1,4 +1,4 @@
-/*      $NetBSD: loongson_intr.c,v 1.4 2014/03/29 19:28:28 christos Exp $      */
+/*      $NetBSD: loongson_intr.c,v 1.4.6.1 2016/10/05 20:55:27 skrll Exp $      */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.4 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loongson_intr.c,v 1.4.6.1 2016/10/05 20:55:27 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -136,7 +136,7 @@ evbmips_intr_init(void)
 }
 
 void
-evbmips_iointr(int ppl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ppl, uint32_t ipending, struct clockframe *cf)
 {
 	struct evbmips_intrhand *ih;
 	int irq;
@@ -162,21 +162,24 @@ evbmips_iointr(int ppl, vaddr_t pc, uint32_t ipending)
 			bonito_intrhead[irq].intr_count.ev_count++;
 			LIST_FOREACH (ih,
 			    &bonito_intrhead[irq].intrhand_head, ih_q) {
-				(*ih->ih_func)(ih->ih_arg);
+				if (ih->ih_arg)
+					(*ih->ih_func)(ih->ih_arg);
+				else
+					(*ih->ih_func)(cf);
 			}
 		}
 		REGVAL(BONITO_INTENSET) = isr;
 		(void)REGVAL(BONITO_INTENSET);
 	}
 	if (isr0 & LOONGSON_INTRMASK_INT0)
-		sys_platform->isa_intr(ppl, pc, ipending);
+		sys_platform->isa_intr(ppl, cf->pc, ipending);
 }
 
 void *
 loongson_pciide_compat_intr_establish(void *v, device_t dev,
     const struct pci_attach_args *pa, int chan, int (*func)(void *), void *arg)
 {
-	pci_chipset_tag_t pc = pa->pa_pc; 
+	pci_chipset_tag_t pc = pa->pa_pc;
 	void *cookie;
 	int bus, irq;
 	char buf[PCI_INTRSTR_LEN];
@@ -232,7 +235,7 @@ loongson_pci_intr_map(const struct pci_attach_args *pa,
 const char *
 loongson_pci_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
-	
+
 	const struct bonito_config *bc = v;
 	return loongson_intr_string(bc, ih, buf, len);
 }

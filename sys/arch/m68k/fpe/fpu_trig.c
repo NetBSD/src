@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_trig.c,v 1.15.12.1 2016/04/22 15:44:10 skrll Exp $	*/
+/*	$NetBSD: fpu_trig.c,v 1.15.12.2 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.15.12.1 2016/04/22 15:44:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_trig.c,v 1.15.12.2 2016/10/05 20:55:31 skrll Exp $");
 
 #include "fpu_emulate.h"
 
@@ -89,7 +89,7 @@ fpu_acos(struct fpemu *fe)
 /*
  *                          x
  * arcsin(x) = arctan(---------------)
- *                     sqrt(1 - x^2) 
+ *                     sqrt(1 - x^2)
  */
 struct fpn *
 fpu_asin(struct fpemu *fe)
@@ -229,11 +229,10 @@ fpu_cos(struct fpemu *fe)
 	if (ISINF(&fe->fe_f2))
 		return fpu_newnan(fe);
 
-	CPYFPN(&x, &fe->fe_f2);
-
 	/* x = abs(input) */
-	x.fp_sign = 0;
 	sign = 0;
+	CPYFPN(&x, &fe->fe_f2);
+	x.fp_sign = 0;
 
 	/* p <- 2*pi */
 	fpu_const(&p, FPU_CONST_PI);
@@ -334,13 +333,9 @@ fpu_sin(struct fpemu *fe)
 	if (ISZERO(&fe->fe_f2))
 		return &fe->fe_f2;
 
-#if defined(__GNUC__) && (__GNUC__ >= 5) && defined(__OPTIMIZE__)
-	x.fp_sign = 0;
-#endif
-	CPYFPN(&x, &fe->fe_f2);
-
 	/* x = abs(input) */
-	sign = x.fp_sign;
+	sign = fe->fe_f2.fp_sign;
+	CPYFPN(&x, &fe->fe_f2);
 	x.fp_sign = 0;
 
 	/* p <- 2*pi */

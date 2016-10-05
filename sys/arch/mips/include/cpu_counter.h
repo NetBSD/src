@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.4 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.4.32.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -32,32 +32,41 @@
  * Machine-specific support for CPU counter.
  */
 
-#include <machine/cpu.h>
-
 #ifdef _KERNEL
+#if __mips < 3
+#include <mips/locore.h>
+#endif
 
-#if !defined(__mips_o32) || defined(MIPS3_PLUS)
 static __inline int
 cpu_hascounter(void)
 {
-
 	/*
 	 * MIPS III and MIPS IV CPU's have a cycle counter
 	 * running at half the internal pipeline rate.
 	 */
+#if __mips >= 3
+	return 1;
+#elif !defined(__mips_o32) || defined(MIPS3_PLUS)
 	return (MIPS_HAS_CLOCK);
+#else
+	return 0;
+#endif
 }
 
+#if __mips >= 3 || !defined(__mips_o32) || defined(MIPS3_PLUS)
 #define cpu_counter()		cpu_counter32()
 
 uint32_t cpu_counter32(void);	/* weak alias of mips3_cp0_count_read */
+#else
+#define	cpu_counter()		(0)
+#define cpu_counter32()		(0)
+#endif
 
 static __inline uint64_t
 cpu_frequency(struct cpu_info *ci)
 {
 	return ci->ci_cctr_freq;
 }
-#endif
 
 #endif /* _KERNEL */
 #endif /* !_MIPS_CPU_COUNTER_H_ */

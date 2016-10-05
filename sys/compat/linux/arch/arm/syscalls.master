@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62.2.1 2015/04/06 15:18:06 skrll Exp $
+	$NetBSD: syscalls.master,v 1.62.2.2 2016/10/05 20:55:38 skrll Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -164,7 +164,7 @@
 83	NOARGS		{ int|sys||symlink(const char *path, const char *link); }
 84	NOARGS		{ int|compat_43_sys||lstat(const char *path, \
 			    struct stat43 *ub); } oolstat
-85	NOARGS		{ int|sys||readlink(const char *path, char *buf, \
+85	NOARGS		{ ssize_t|sys||readlink(const char *path, char *buf, \
 			    int count); }
 #ifdef EXEC_AOUT
 86	STD		{ int|linux_sys||uselib(const char *path); }
@@ -524,7 +524,7 @@
 			    int fd2, const char *name2, int flags); }
 331	NOARGS		{ int|sys||symlinkat(const char *path1, int fd, \
 			    const char *path2); }
-332	NOARGS		{ int|sys||readlinkat(int fd, const char *path, \
+332	NOARGS		{ ssize_t|sys||readlinkat(int fd, const char *path, \
 			    char *buf, size_t bufsize); }
 333	STD		{ int|linux_sys||fchmodat(int fd, const char *path, \
 			    linux_umode_t mode); }

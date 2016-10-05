@@ -1,4 +1,4 @@
-/*	$NetBSD: sbt.c,v 1.4 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: sbt.c,v 1.4.4.1 2016/10/05 20:55:56 skrll Exp $	*/
 /*	$OpenBSD: sbt.c,v 1.9 2007/06/19 07:59:57 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Type-A/B SDIO Bluetooth cards */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.4 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbt.c,v 1.4.4.1 2016/10/05 20:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 
 	(void)sdmmc_io_function_disable(sc->sc_sf);
 	if (sdmmc_io_function_enable(sc->sc_sf)) {
-		printf("%s: function not ready\n", DEVNAME(sc));
+		aprint_error("%s: function not ready\n", DEVNAME(sc));
 		return;
 	}
 
@@ -184,7 +184,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_buf = malloc(SBT_PKT_BUFSIZ, M_DEVBUF, M_NOWAIT | M_CANFAIL);
 	if (sc->sc_buf == NULL) {
-		printf("%s: can't allocate cmd buffer\n", DEVNAME(sc));
+		aprint_error("%s: can't allocate cmd buffer\n", DEVNAME(sc));
 		return;
 	}
 
@@ -194,7 +194,7 @@ sbt_attach(device_t parent, device_t self, void *aux)
 	/* Enable the card interrupt for this function. */
 	sc->sc_ih = sdmmc_intr_establish(parent, sbt_intr, sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n", DEVNAME(sc));
+		aprint_error("%s: can't establish interrupt\n", DEVNAME(sc));
 		return;
 	}
 	sdmmc_intr_enable(sc->sc_sf);

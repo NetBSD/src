@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma_defs.h,v 1.1.30.1 2015/09/22 12:05:47 skrll Exp $ */
+/* $NetBSD: bus_dma_defs.h,v 1.1.30.2 2016/10/05 20:55:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@ typedef struct mips_bus_dmamap	*bus_dmamap_t;
 struct mips_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
+	register_t	_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct mips_bus_dma_segment	bus_dma_segment_t;
 

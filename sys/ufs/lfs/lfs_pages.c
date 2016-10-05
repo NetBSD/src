@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.1.10.1 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.1.10.2 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1.10.1 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.1.10.2 2016/10/05 20:56:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -244,7 +244,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 {
 	int by_list;
 	struct vm_page *curpg = NULL; /* XXX: gcc */
-	struct vm_page *pgs[MAXBSIZE / PAGE_SIZE], *pg;
+	struct vm_page *pgs[MAXBSIZE /
+	    (__builtin_constant_p(PAGE_SIZE) ? PAGE_SIZE : 1024)], *pg;
 	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
 	int i;
@@ -498,7 +499,7 @@ lfs_putpages(void *v)
 			vn_syncer_remove_from_worklist(vp);
 		}
 		mutex_exit(vp->v_interlock);
-		
+
 		/* Remove us from paging queue, if we were on it */
 		mutex_enter(&lfs_lock);
 		if (ip->i_flags & IN_PAGING) {
@@ -657,7 +658,7 @@ lfs_putpages(void *v)
 		if (!(ip->i_flags & IN_PAGING)) {
 			ip->i_flags |= IN_PAGING;
 			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
-		} 
+		}
 		wakeup(&lfs_writer_daemon);
 		mutex_exit(&lfs_lock);
 		preempt();
@@ -777,7 +778,7 @@ lfs_putpages(void *v)
 			sp->vp = NULL;
 			goto get_seglock;
 		}
-	
+
 		busypg = NULL;
 		KASSERT(!mutex_owned(&uvm_pageqlock));
 		oreclaim = (ap->a_flags & PGO_RECLAIM);
@@ -785,7 +786,7 @@ lfs_putpages(void *v)
 		error = genfs_do_putpages(vp, startoffset, endoffset,
 					   ap->a_flags, &busypg);
 		ap->a_flags |= oreclaim;
-	
+
 		if (error == EDEADLK || error == EAGAIN) {
 			DLOG((DLOG_PAGE, "lfs_putpages: genfs_putpages returned"
 			      " %d ino %d off %jx (seg %d)\n", error,

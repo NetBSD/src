@@ -1,39 +1,7 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.9 2014/02/25 22:16:52 dsl Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.9.12.1 2016/10/05 20:55:36 skrll Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
-
-/*
- * This file contains definitions of structures that match the memory
- * layouts used x86 processors to save floating point registers and other
- * extended cpu state.
- * This includes registers (etc) used by SSE/SSE2/SSE3/SSSE3/SSE4 and
- * the later AVX instructions.
- * The definitions are such that any future 'extended state' should
- * be handled (provided the kernel doesn't need to know the actual contents.
- *
- * The actual structures the cpu accesses must be aligned to 16 for
- * FXSAVE and 64 for XSAVE. The types aren't aligned because copies
- * do not need extra alignment.
- *
- * The slightly different layout saved by the i387 fsave in also defined.
- * This is only normally written by pre Pentium II type cpus that don't 
- * support the fxsave instruction.  
- *
- * Associated save instructions:
- * FNSAVE:  Saves x87 state in 108 bytes (original i387 layout).
- *          Then reinitialies the fpu.
- * FSAVE:   Encodes to FWAIT followed by FNSAVE.
- * FXSAVE:  Saves the x87 state and XMM (aka SSE) registers to the
- *          first 448 (max) bytes of a 512 byte area.
- *          This layout does not match that written by FNSAVE.
- * XSAVE:   Uses the same layout for the x87 and XMM registers,
- *          followed by a 64byte header and separate save areas
- *          for additional extended cpu state.
- *          The x87 state is always saved, the others conditionally.
- * XSAVEOPT: As XSAVE but (IIRC) only writes the registers blocks
- *          that have been modified.
- */
 
 #ifdef __lint__
 /* Lint has different packing rules and doesn't understand __aligned() */
@@ -43,10 +11,43 @@
 #endif
 
 /*
- * Layout for code/data pointers relating to FP exceptions.
- * Marked 'packed' because they aren't always 64bit aligned.
- * Since the x86 cpu supports misaligned accesses it isn't
- * worth avoiding the 'packed' attribute.
+ * This file contains definitions of structures that match the memory layouts
+ * used on x86 processors to save floating point registers and other extended
+ * cpu states.
+ *
+ * This includes registers (etc) used by SSE/SSE2/SSE3/SSSE3/SSE4 and the later
+ * AVX instructions.
+ *
+ * The definitions are such that any future 'extended state' should be handled
+ * (provided the kernel doesn't need to know the actual contents).
+ *
+ * The actual structures the cpu accesses must be aligned to 16 bytes for FXSAVE
+ * and 64 for XSAVE. The types aren't aligned because copies do not need extra
+ * alignment.
+ *
+ * The slightly different layout saved by the i387 fsave is also defined.
+ * This is only normally written by pre Pentium II type cpus that don't
+ * support the fxsave instruction.
+ *
+ * Associated save instructions:
+ * FNSAVE:   Saves x87 state in 108 bytes (original i387 layout).
+ *           Then reinitializes the fpu.
+ * FSAVE:    Encodes to FWAIT followed by FNSAVE.
+ * FXSAVE:   Saves the x87 state and XMM (aka SSE) registers to the
+ *           first 448 (max) bytes of a 512 byte area.
+ *           This layout does not match that written by FNSAVE.
+ * XSAVE:    Uses the same layout for the x87 and XMM registers,
+ *           followed by a 64byte header and separate save areas
+ *           for additional extended cpu state.
+ *           The x87 state is always saved, the others conditionally.
+ * XSAVEOPT: As XSAVE but only writes the registers blocks that have been
+ *           modified.
+ */
+
+/*
+ * Layout for code/data pointers relating to FP exceptions. Marked 'packed'
+ * because they aren't always 64bit aligned. Since the x86 cpu supports
+ * misaligned accesses it isn't worth avoiding the 'packed' attribute.
  */
 union fp_addr {
 	uint64_t fa_64;	/* Linear address for 64bit systems */
@@ -59,8 +60,8 @@ union fp_addr {
 
 /* The x87 registers are 80 bits */
 struct fpacc87 {
-	uint64_t	f87_mantissa;	/* mantissa */
-	uint16_t	f87_exp_sign;	/* exponent and sign */
+	uint64_t f87_mantissa;	/* mantissa */
+	uint16_t f87_exp_sign;	/* exponent and sign */
 } __packed __aligned(2);
 
 /* The x87 registers padded out to 16 bytes for fxsave */
@@ -81,76 +82,69 @@ struct ymmreg {
 /*
  * Floating point unit registers (fsave instruction).
  * The s87_ac[] and fx_87_ac[] are relative to the stack top.
- * The 'tag word' contains 2 bits per register and refers to
- * absolute register numbers.
+ * The 'tag word' contains 2 bits per register and refers to absolute register
+ * numbers.
  * The cpu sets the tag values 0b01 (zero) and 0b10 (special) when a value
  * is loaded. The software need only set 0b00 (used) and 0xb11 (unused).
  * The fxsave 'Abridged tag word' in inverted.
  */
 struct save87 {
-	uint16_t	s87_cw __aligned(4);	/* control word (16bits) */
-	uint16_t	s87_sw __aligned(4);	/* status word (16bits) */
-	uint16_t	s87_tw __aligned(4);	/* tag word (16bits) */
-	union fp_addr	s87_ip;		/* floating point instruction pointer */
+	uint16_t s87_cw __aligned(4);	/* control word */
+	uint16_t s87_sw __aligned(4);	/* status word  */
+	uint16_t s87_tw __aligned(4);	/* tag word */
+	union fp_addr s87_ip;		/* floating point instruction pointer */
 #define s87_opcode s87_ip.fa_32.fa_opcode	/* opcode last executed (11bits) */
-	union fp_addr	s87_dp;		/* floating operand offset */
-	struct fpacc87	s87_ac[8];	/* accumulator contents, 0-7 */
+	union fp_addr s87_dp;		/* floating operand offset */
+	struct fpacc87 s87_ac[8];	/* accumulator contents */
 };
-__CTASSERT_NOLINT(sizeof (struct save87) == 108);
+__CTASSERT_NOLINT(sizeof(struct save87) == 108);
 
-/* FPU/MMX/SSE/SSE2 context */
+/*
+ * FPU/MMX/SSE/SSE2 context
+ */
 struct fxsave {
-/*0*/	uint16_t	fx_cw;		/* FPU Control Word */
-	uint16_t	fx_sw;		/* FPU Status Word */
-	uint8_t		fx_tw;		/* FPU Tag Word (abridged) */
-	uint16_t	fx_opcode;	/* FPU Opcode */
-	union fp_addr	fx_ip;		/* FPU Instruction Pointer */
-/*16*/	union fp_addr	fx_dp;		/* FPU Data pointer */
-	uint32_t	fx_mxcsr;	/* MXCSR Register State */
-	uint32_t	fx_mxcsr_mask;
-	struct fpaccfx	fx_87_ac[8];	/* 8 x87 registers */
-	struct xmmreg	fx_xmm[16];	/* XMM regs (8 in 32bit modes) */
-	uint8_t		fx_rsvd[48];
-	uint8_t		fx_kernel[48];	/* Not written by the hardware */
+	uint16_t fx_cw;		/* FPU Control Word */
+	uint16_t fx_sw;		/* FPU Status Word */
+	uint8_t fx_tw;		/* FPU Tag Word (abridged) */
+	uint16_t fx_opcode;	/* FPU Opcode */
+	union fp_addr fx_ip;	/* FPU Instruction Pointer */
+	union fp_addr fx_dp;	/* FPU Data pointer */
+	uint32_t fx_mxcsr;	/* MXCSR Register State */
+	uint32_t fx_mxcsr_mask;
+	struct fpaccfx fx_87_ac[8];	/* 8 x87 registers */
+	struct xmmreg fx_xmm[16];	/* XMM regs (8 in 32bit modes) */
+	uint8_t fx_rsvd[48];
+	uint8_t fx_kernel[48];	/* Not written by the hardware */
 } __aligned(16);
-__CTASSERT_NOLINT(sizeof (struct fxsave) == 512);
+__CTASSERT_NOLINT(sizeof(struct fxsave) == 512);
 
-/* The end of the fsave buffer can be used by the operating system */
+/*
+ * The end of the fsave buffer can be used by the operating system
+ */
 struct fxsave_os {
-	uint8_t		fxo_fxsave[512 - 48];
+	uint8_t fxo_fxsave[512 - 48];
 	/* 48 bytes available, NB copied to/from userspace */
-	uint16_t	fxo_dflt_cw;	/* Control word for signal handlers */
+	uint16_t fxo_dflt_cw;	/* Control word for signal handlers */
 };
 
 /*
- * For XSAVE a 64byte header follows the fxsave data.
- * Currently it only contains one field of which only 3 bits are defined.
- * Some other parts must be zero - zero it all.
- *
- * The xsh_xstate_bv bits match those of XCR0:
- *   XCR0_X87        0x00000001      x87 FPU/MMX state
- *   XCR0_SSE        0x00000002      SSE state
- *   XCR0_AVX        0x00000004      AVX state (ymmn registers)
- *
- * The offsets and sizes of any save areas can be found by reading
- * the correct control registers.
+ * For XSAVE, a 64byte header follows the fxsave data.
  */
-
 struct xsave_header {
-	uint64_t	xsh_fxsave[64];	/* to align in the union */
-	uint64_t	xsh_xstate_bv;	/* bitmap of saved sub structures */
-	uint64_t	xsh_rsrvd[2];	/* must be zero */
-	uint64_t	xsh_reserved[5];/* best if zero */
+	uint64_t xsh_fxsave[64];	/* to align in the union */
+	uint64_t xsh_xstate_bv;		/* bitmap of saved sub structures */
+	uint64_t xsh_rsrvd[2];		/* must be zero */
+	uint64_t xsh_reserved[5];	/* best if zero */
 };
-__CTASSERT(sizeof (struct xsave_header) == 512 + 64);
+__CTASSERT(sizeof(struct xsave_header) == 512 + 64);
 
 /*
  * The ymm save area actually follows the xsave_header.
  */
 struct xsave_ymm {
-	struct ymmreg	xs_ymm[16];	/* High bits of YMM registers */
+	struct ymmreg xs_ymm[16];	/* High bits of YMM registers */
 };
-__CTASSERT(sizeof (struct xsave_ymm) == 256);
+__CTASSERT(sizeof(struct xsave_ymm) == 256);
 
 /*
  * The following union is placed at the end of the pcb.
@@ -186,7 +180,7 @@ union savefpu {
 #define EN_SW_PRECLOSS		0x0020  /* Loss of precision */
 /* Status word bits (reserved in control word) */
 #define EN_SW_STACK_FAULT	0x0040	/* Stack under/overflow */
-#define EN_SW_ERROR_SUMMARY	0x0080	/* Unmasked error has ocurred */
+#define EN_SW_ERROR_SUMMARY	0x0080	/* Unmasked error has occurred */
 /* Control bits (badly named) */
 #define EN_SW_CTL_PREC		0x0300	/* Precision control */
 #define EN_SW_PREC_24		0x0000	/* Single precision */

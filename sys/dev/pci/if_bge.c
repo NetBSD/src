@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.7 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.8 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.7 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.8 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3744,7 +3744,7 @@ alloc_retry:
 	sc->bge_intrhand = pci_intr_establish(pc, sc->bge_pihp[0], IPL_NET,
 	    bge_intr, sc);
 	if (sc->bge_intrhand == NULL) {
-		intr_type = pci_intr_type(sc->bge_pihp[0]);
+		intr_type = pci_intr_type(pc, sc->bge_pihp[0]);
 		aprint_error_dev(sc->bge_dev,"unable to establish %s\n",
 		    (intr_type == PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 		pci_intr_release(pc, sc->bge_pihp, 1);

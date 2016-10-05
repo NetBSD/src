@@ -1,4 +1,4 @@
-/*	$$NetBSD: pwdog.c,v 1.7.30.1 2015/06/06 14:40:12 skrll Exp $ */
+/*	$$NetBSD: pwdog.c,v 1.7.30.2 2016/10/05 20:55:55 skrll Exp $ */
 /*	$OpenBSD: pwdog.c,v 1.7 2010/04/08 00:23:53 tedu Exp $ */
 
 /*
@@ -83,6 +83,7 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *const pa = (struct pci_attach_args *)aux;
 	pcireg_t memtype;
 
+	aprint_naive("\n");
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_iosize)) {
@@ -91,7 +92,7 @@ pwdog_attach(device_t parent, device_t self, void *aux)
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_dev = self;
 

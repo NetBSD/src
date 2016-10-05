@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.52 2012/01/11 20:41:28 macallan Exp $ */
+/*	$NetBSD: igsfb.c,v 1.52.24.1 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.52 2012/01/11 20:41:28 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.52.24.1 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 	vcons_init_screen(&dc->dc_vd, &dc->dc_console, 1, &defattr);
 	dc->dc_console.scr_flags |= VCONS_SCREEN_IS_STATIC;
 
-	printf("%s: %dMB, %s%dx%d, %dbpp\n",
+	aprint_normal("%s: %dMB, %s%dx%d, %dbpp\n",
 	       device_xname(sc->sc_dev),
 	       (uint32_t)(dc->dc_vmemsz >> 20),
 	       (dc->dc_hwflags & IGSFB_HW_BSWAP)
@@ -201,7 +201,7 @@ igsfb_attach_subr(struct igsfb_softc *sc, int isconsole)
 		       ? "hardware bswap, " : "software bswap, "
 		   : "",
 	       dc->dc_width, dc->dc_height, dc->dc_depth);
-	printf("%s: using %dbpp for X\n", device_xname(sc->sc_dev),
+	aprint_normal("%s: using %dbpp for X\n", device_xname(sc->sc_dev),
 	       dc->dc_maxdepth);
 	ri = &dc->dc_console.scr_ri;
 	ri->ri_ops.eraserows(ri, 0, ri->ri_rows, defattr);

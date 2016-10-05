@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3.14.1 2015/12/27 12:09:37 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3.14.2 2016/10/05 20:55:29 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3.14.1 2015/12/27 12:09:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3.14.2 2016/10/05 20:55:29 skrll Exp $");
 
 #include <machine/bus.h>
 #include <machine/sal.h>
@@ -101,4 +101,14 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	    tag | reg, sizeof(pcireg_t), val, 0, 0, 0, 0);
 	if (res.sal_status < 0)
 		printf("pci configuration write failed\n");
+}
+
+int
+pci_enumerate_bus(struct pci_softc *sc, const int *locators,
+		  int (*match)(const struct pci_attach_args *), struct pci_attach_args *pap)
+{
+	/* XXX implement */
+	panic("ia64 pci_enumerate_bus not implemented");
+
+	return -1;
 }

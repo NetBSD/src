@@ -54,11 +54,6 @@
 
 /* Local Prototypes */
 
-static UINT8
-AcpiHwGetAccessBitWidth (
-    ACPI_GENERIC_ADDRESS    *Reg,
-    UINT8                   MaxBitWidth);
-
 static ACPI_STATUS
 AcpiHwReadMultiple (
     UINT32                  *Value,
@@ -72,61 +67,6 @@ AcpiHwWriteMultiple (
     ACPI_GENERIC_ADDRESS    *RegisterB);
 
 #endif /* !ACPI_REDUCED_HARDWARE */
-
-
-/******************************************************************************
- *
- * FUNCTION:    AcpiHwGetAccessBitWidth
- *
- * PARAMETERS:  Reg                 - GAS register structure
- *              MaxBitWidth         - Max BitWidth supported (32 or 64)
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Obtain optimal access bit width
- *
- ******************************************************************************/
-
-static UINT8
-AcpiHwGetAccessBitWidth (
-    ACPI_GENERIC_ADDRESS    *Reg,
-    UINT8                   MaxBitWidth)
-{
-    UINT64                  Address;
-
-
-    if (!Reg->AccessWidth)
-    {
-        /*
-         * Detect old register descriptors where only the BitWidth field
-         * makes senses. The target address is copied to handle possible
-         * alignment issues.
-         */
-        ACPI_MOVE_64_TO_64 (&Address, &Reg->Address);
-        if (!Reg->BitOffset && Reg->BitWidth &&
-            ACPI_IS_POWER_OF_TWO (Reg->BitWidth) &&
-            ACPI_IS_ALIGNED (Reg->BitWidth, 8) &&
-            ACPI_IS_ALIGNED (Address, Reg->BitWidth))
-        {
-            return (Reg->BitWidth);
-        }
-        else
-        {
-            if (Reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_IO)
-            {
-                return (32);
-            }
-            else
-            {
-                return (MaxBitWidth);
-            }
-        }
-    }
-    else
-    {
-        return (1 << (Reg->AccessWidth + 2));
-    }
-}
 
 
 /******************************************************************************
@@ -151,9 +91,6 @@ AcpiHwValidateRegister (
     UINT8                   MaxBitWidth,
     UINT64                  *Address)
 {
-    UINT8                   BitWidth;
-    UINT8                   AccessWidth;
-
 
     /* Must have a valid pointer to a GAS structure */
 
@@ -183,25 +120,24 @@ AcpiHwValidateRegister (
         return (AE_SUPPORT);
     }
 
-    /* Validate the AccessWidth */
+    /* Validate the BitWidth */
 
-    if (Reg->AccessWidth > 4)
+    if ((Reg->BitWidth != 8) &&
+        (Reg->BitWidth != 16) &&
+        (Reg->BitWidth != 32) &&
+        (Reg->BitWidth != MaxBitWidth))
     {
         ACPI_ERROR ((AE_INFO,
-            "Unsupported register access width: 0x%X", Reg->AccessWidth));
+            "Unsupported register bit width: 0x%X", Reg->BitWidth));
         return (AE_SUPPORT);
     }
 
-    /* Validate the BitWidth, convert AccessWidth into number of bits */
+    /* Validate the BitOffset. Just a warning for now. */
 
-    AccessWidth = AcpiHwGetAccessBitWidth (Reg, MaxBitWidth);
-    BitWidth = ACPI_ROUND_UP (Reg->BitOffset + Reg->BitWidth, AccessWidth);
-    if (MaxBitWidth < BitWidth)
+    if (Reg->BitOffset != 0)
     {
         ACPI_WARNING ((AE_INFO,
-            "Requested bit width 0x%X is smaller than register bit width 0x%X",
-            MaxBitWidth, BitWidth));
-        return (AE_SUPPORT);
+            "Unsupported register bit offset: 0x%X", Reg->BitOffset));
     }
 
     return (AE_OK);
@@ -222,7 +158,10 @@ AcpiHwValidateRegister (
  *              64-bit values is not needed.
  *
  * LIMITATIONS: <These limitations also apply to AcpiHwWrite>
+ *      BitWidth must be exactly 8, 16, or 32.
  *      SpaceID must be SystemMemory or SystemIO.
+ *      BitOffset and AccessWidth are currently ignored, as there has
+ *          not been a need to implement these.
  *
  ******************************************************************************/
 
@@ -232,12 +171,7 @@ AcpiHwRead (
     ACPI_GENERIC_ADDRESS    *Reg)
 {
     UINT64                  Address;
-    UINT8                   AccessWidth;
-    UINT32                  BitWidth;
-    UINT8                   BitOffset;
     UINT64                  Value64;
-    UINT32                  Value32;
-    UINT8                   Index;
     ACPI_STATUS             Status;
 
 
@@ -252,74 +186,30 @@ AcpiHwRead (
         return (Status);
     }
 
-    /*
-     * Initialize entire 32-bit return value to zero, convert AccessWidth
-     * into number of bits based
-     */
+    /* Initialize entire 32-bit return value to zero */
+
     *Value = 0;
-    AccessWidth = AcpiHwGetAccessBitWidth (Reg, 32);
-    BitWidth = Reg->BitOffset + Reg->BitWidth;
-    BitOffset = Reg->BitOffset;
 
     /*
      * Two address spaces supported: Memory or IO. PCI_Config is
      * not supported here because the GAS structure is insufficient
      */
-    Index = 0;
-    while (BitWidth)
+    if (Reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY)
     {
-        if (BitOffset >= AccessWidth)
-        {
-            Value32 = 0;
-            BitOffset -= AccessWidth;
-        }
-        else
-        {
-            if (Reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY)
-            {
-                Status = AcpiOsReadMemory ((ACPI_PHYSICAL_ADDRESS)
-                    Address + Index * ACPI_DIV_8 (AccessWidth),
-                    &Value64, AccessWidth);
-                Value32 = (UINT32) Value64;
-            }
-            else /* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
-            {
-                Status = AcpiHwReadPort ((ACPI_IO_ADDRESS)
-                    Address + Index * ACPI_DIV_8 (AccessWidth),
-                    &Value32, AccessWidth);
-            }
+        Status = AcpiOsReadMemory ((ACPI_PHYSICAL_ADDRESS)
+            Address, &Value64, Reg->BitWidth);
 
-            /*
-             * Use offset style bit masks because:
-             * BitOffset < AccessWidth/BitWidth < AccessWidth, and
-             * AccessWidth is ensured to be less than 32-bits by
-             * AcpiHwValidateRegister().
-             */
-            if (BitOffset)
-            {
-                Value32 &= ACPI_MASK_BITS_BELOW (BitOffset);
-                BitOffset = 0;
-            }
-            if (BitWidth < AccessWidth)
-            {
-                Value32 &= ACPI_MASK_BITS_ABOVE (BitWidth);
-            }
-        }
-
-        /*
-         * Use offset style bit writes because "Index * AccessWidth" is
-         * ensured to be less than 32-bits by AcpiHwValidateRegister().
-         */
-        ACPI_SET_BITS (Value, Index * AccessWidth,
-            ACPI_MASK_BITS_ABOVE_32 (AccessWidth), Value32);
-
-        BitWidth -= BitWidth > AccessWidth ? AccessWidth : BitWidth;
-        Index++;
+        *Value = (UINT32) Value64;
+    }
+    else /* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
+    {
+        Status = AcpiHwReadPort ((ACPI_IO_ADDRESS)
+            Address, Value, Reg->BitWidth);
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_IO,
         "Read:  %8.8X width %2d from %8.8X%8.8X (%s)\n",
-        *Value, AccessWidth, ACPI_FORMAT_UINT64 (Address),
+        *Value, Reg->BitWidth, ACPI_FORMAT_UINT64 (Address),
         AcpiUtGetRegionName (Reg->SpaceId)));
 
     return (Status);
@@ -347,12 +237,6 @@ AcpiHwWrite (
     ACPI_GENERIC_ADDRESS    *Reg)
 {
     UINT64                  Address;
-    UINT8                   AccessWidth;
-    UINT32                  BitWidth;
-    UINT8                   BitOffset;
-    UINT64                  Value64;
-    UINT32                  NewValue32, OldValue32;
-    UINT8                   Index;
     ACPI_STATUS             Status;
 
 
@@ -367,131 +251,24 @@ AcpiHwWrite (
         return (Status);
     }
 
-    /* Convert AccessWidth into number of bits based */
-
-    AccessWidth = AcpiHwGetAccessBitWidth (Reg, 32);
-    BitWidth = Reg->BitOffset + Reg->BitWidth;
-    BitOffset = Reg->BitOffset;
-
     /*
      * Two address spaces supported: Memory or IO. PCI_Config is
      * not supported here because the GAS structure is insufficient
      */
-    Index = 0;
-    while (BitWidth)
+    if (Reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY)
     {
-        /*
-         * Use offset style bit reads because "Index * AccessWidth" is
-         * ensured to be less than 32-bits by AcpiHwValidateRegister().
-         */
-        NewValue32 = ACPI_GET_BITS (&Value, Index * AccessWidth,
-            ACPI_MASK_BITS_ABOVE_32 (AccessWidth));
-
-        if (BitOffset >= AccessWidth)
-        {
-            BitOffset -= AccessWidth;
-        }
-        else
-        {
-            /*
-             * Use offset style bit masks because AccessWidth is ensured
-             * to be less than 32-bits by AcpiHwValidateRegister() and
-             * BitOffset/BitWidth is less than AccessWidth here.
-             */
-            if (BitOffset)
-            {
-                NewValue32 &= ACPI_MASK_BITS_BELOW (BitOffset);
-            }
-            if (BitWidth < AccessWidth)
-            {
-                NewValue32 &= ACPI_MASK_BITS_ABOVE (BitWidth);
-            }
-
-            if (Reg->SpaceId == ACPI_ADR_SPACE_SYSTEM_MEMORY)
-            {
-                if (BitOffset || BitWidth < AccessWidth)
-                {
-                    /*
-                     * Read old values in order not to modify the bits that
-                     * are beyond the register BitWidth/BitOffset setting.
-                     */
-                    Status = AcpiOsReadMemory ((ACPI_PHYSICAL_ADDRESS)
-                        Address + Index * ACPI_DIV_8 (AccessWidth),
-                        &Value64, AccessWidth);
-                    OldValue32 = (UINT32) Value64;
-
-                    /*
-                     * Use offset style bit masks because AccessWidth is
-                     * ensured to be less than 32-bits by
-                     * AcpiHwValidateRegister() and BitOffset/BitWidth is
-                     * less than AccessWidth here.
-                     */
-                    if (BitOffset)
-                    {
-                        OldValue32 &= ACPI_MASK_BITS_ABOVE (BitOffset);
-                        BitOffset = 0;
-                    }
-                    if (BitWidth < AccessWidth)
-                    {
-                        OldValue32 &= ACPI_MASK_BITS_BELOW (BitWidth);
-                    }
-
-                    NewValue32 |= OldValue32;
-                }
-
-                Value64 = (UINT64) NewValue32;
-                Status = AcpiOsWriteMemory ((ACPI_PHYSICAL_ADDRESS)
-                    Address + Index * ACPI_DIV_8 (AccessWidth),
-                    Value64, AccessWidth);
-            }
-            else /* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
-            {
-                if (BitOffset || BitWidth < AccessWidth)
-                {
-                    /*
-                     * Read old values in order not to modify the bits that
-                     * are beyond the register BitWidth/BitOffset setting.
-                     */
-                    Status = AcpiHwReadPort ((ACPI_IO_ADDRESS)
-                        Address + Index * ACPI_DIV_8 (AccessWidth),
-                        &OldValue32, AccessWidth);
-
-                    /*
-                     * Use offset style bit masks because AccessWidth is
-                     * ensured to be less than 32-bits by
-                     * AcpiHwValidateRegister() and BitOffset/BitWidth is
-                     * less than AccessWidth here.
-                     */
-                    if (BitOffset)
-                    {
-                        OldValue32 &= ACPI_MASK_BITS_ABOVE (BitOffset);
-                        BitOffset = 0;
-                    }
-                    if (BitWidth < AccessWidth)
-                    {
-                        OldValue32 &= ACPI_MASK_BITS_BELOW (BitWidth);
-                    }
-
-                    NewValue32 |= OldValue32;
-                }
-
-                Status = AcpiHwWritePort ((ACPI_IO_ADDRESS)
-                    Address + Index * ACPI_DIV_8 (AccessWidth),
-                    NewValue32, AccessWidth);
-            }
-        }
-
-        /*
-         * Index * AccessWidth is ensured to be less than 32-bits by
-         * AcpiHwValidateRegister().
-         */
-        BitWidth -= BitWidth > AccessWidth ? AccessWidth : BitWidth;
-        Index++;
+        Status = AcpiOsWriteMemory ((ACPI_PHYSICAL_ADDRESS)
+            Address, (UINT64) Value, Reg->BitWidth);
+    }
+    else /* ACPI_ADR_SPACE_SYSTEM_IO, validated earlier */
+    {
+        Status = AcpiHwWritePort ((ACPI_IO_ADDRESS)
+            Address, Value, Reg->BitWidth);
     }
 
     ACPI_DEBUG_PRINT ((ACPI_DB_IO,
         "Wrote: %8.8X width %2d   to %8.8X%8.8X (%s)\n",
-        Value, AccessWidth, ACPI_FORMAT_UINT64 (Address),
+        Value, Reg->BitWidth, ACPI_FORMAT_UINT64 (Address),
         AcpiUtGetRegionName (Reg->SpaceId)));
 
     return (Status);

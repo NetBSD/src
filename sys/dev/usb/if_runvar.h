@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.1.20.3 2016/03/20 08:42:19 skrll Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.1.20.4 2016/10/05 20:55:57 skrll Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -147,7 +147,7 @@ struct run_softc {
 
 	uint16_t			mac_ver;
 	uint16_t			mac_rev;
-	uint8_t				rf_rev;
+	uint16_t			rf_rev;
 	uint8_t				freq;
 	uint8_t				ntxchains;
 	uint8_t				nrxchains;
@@ -167,6 +167,7 @@ struct run_softc {
 	uint8_t				txmixgain_5ghz;
 	int8_t				txpow1[54];
 	int8_t				txpow2[54];
+	int8_t				txpow3[54];
 	int8_t				rssi_2ghz[3];
 	int8_t				rssi_5ghz[3];
 	uint8_t				lna[4];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.78.2.4 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.78.2.5 2016/10/05 20:56:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.78.2.4 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.78.2.5 2016/10/05 20:56:08 skrll Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.78.2.4 2016/05/29 08:44:38 skr
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/mbuf.h> 
+#include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/endian.h>
 #include <sys/kernel.h>
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.78.2.4 2016/05/29 08:44:38 skr
 #include <net/if_ether.h>
 #include <net/if_llc.h>
 
-#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 
 #include <net/bpf.h>
@@ -116,6 +115,7 @@ doprint(struct ieee80211com *ic, int subtype)
 	if ((_ic)->ic_debug & (_m))					\
 		ieee80211_discard_mac(_ic, _mac, _type, _fmt, __VA_ARGS__);\
 } while (0)
+#define	IEEE80211_DEBUGVAR(a) a
 
 static const u_int8_t *ieee80211_getbssid(struct ieee80211com *,
 	const struct ieee80211_frame *);
@@ -130,6 +130,7 @@ static void ieee80211_discard_mac(struct ieee80211com *,
 #define	IEEE80211_DISCARD(_ic, _m, _wh, _type, _fmt, ...)
 #define	IEEE80211_DISCARD_IE(_ic, _m, _wh, _type, _fmt, ...)
 #define	IEEE80211_DISCARD_MAC(_ic, _m, _mac, _type, _fmt, ...)
+#define	IEEE80211_DEBUGVAR(a)
 #endif /* IEEE80211_DEBUG */
 
 static struct mbuf *ieee80211_defrag(struct ieee80211com *,
@@ -172,6 +173,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	u_int8_t dir, type, subtype;
 	u_int8_t *bssid;
 	u_int16_t rxseq;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	IASSERT(ni != NULL, ("null node"));
 	ni->ni_inact = ni->ni_inact_reload;
@@ -222,7 +224,9 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			if (!IEEE80211_ADDR_EQ(bssid, ni->ni_bssid)) {
 				/* not interested in */
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-				    bssid, NULL, "%s", "not to bss");
+				    bssid, NULL, "node %s, %s",
+				    ether_snprintf(ebuf, sizeof(ebuf),
+				    ni->ni_bssid), "not to bss");
 				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
@@ -265,8 +269,14 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss->ni_bssid) &&
 			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr)) {
 				/* not interested in */
+				IEEE80211_DEBUGVAR(
+				    char bbuf[3 * ETHER_ADDR_LEN]);
 				IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_INPUT,
-				    bssid, NULL, "%s", "not to bss");
+				    bssid, NULL, "bss %s, broadcast %s, %s",
+				    ether_snprintf(ebuf, sizeof(ebuf),
+				    ic->ic_bss->ni_bssid),
+				    ether_snprintf(bbuf, sizeof(bbuf),
+				    ifp->if_broadcastaddr), "not to bss");
 				ic->ic_stats.is_rx_wrongbss++;
 				goto out;
 			}
@@ -553,7 +563,8 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 			if_printf(ic->ic_ifp, "received %s from %s rssi %d\n",
 			    ieee80211_mgt_subtype_name[subtype >>
 				IEEE80211_FC0_SUBTYPE_SHIFT],
-			    ether_sprintf(wh->i_addr2), rssi);
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
+			    rssi);
 		}
 #endif
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -919,11 +930,13 @@ ieee80211_setup_rates(struct ieee80211_node *ni,
 		 */
 		nxrates = xrates[1];
 		if (rs->rs_nrates + nxrates > IEEE80211_RATE_MAXSIZE) {
+			IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 			nxrates = IEEE80211_RATE_MAXSIZE - rs->rs_nrates;
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_XRATE,
 			     "[%s] extended rate set too large;"
 			     " only using %u of %u rates\n",
-			     ether_sprintf(ni->ni_macaddr), nxrates, xrates[1]);
+			     ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
+			     nxrates, xrates[1]);
 			ic->ic_stats.is_rx_rstoobig++;
 		}
 		memcpy(rs->rs_rates + rs->rs_nrates, xrates+2, nxrates);
@@ -937,6 +950,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
     struct ieee80211_node *ni, int rssi, u_int32_t rstamp,
     u_int16_t seq, u_int16_t status)
 {
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	if (ni->ni_authmode == IEEE80211_AUTH_SHARED) {
 		IEEE80211_DISCARD_MAC(ic, IEEE80211_MSG_AUTH,
@@ -986,7 +1000,7 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			IEEE80211_FC0_SUBTYPE_AUTH, seq + 1);
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 		    "[%s] station authenticated (open)\n",
-		    ether_sprintf(ni->ni_macaddr));
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
 		/*
 		 * When 802.1x is not in use mark the port
 		 * authorized at this point so traffic can flow.
@@ -1003,10 +1017,12 @@ ieee80211_auth_open(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			return;
 		}
 		if (status != 0) {
+
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 			    "[%s] open auth failed (reason %d)\n",
-			    ether_sprintf(ni->ni_macaddr), status);
+			    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
+			    status);
 			/* XXX can this happen? */
 			if (ni != ic->ic_bss)
 				ni->ni_fails++;
@@ -1053,9 +1069,11 @@ alloc_challenge(struct ieee80211com *ic, struct ieee80211_node *ni)
 		ni->ni_challenge = malloc(IEEE80211_CHALLENGE_LEN,
 		    M_DEVBUF, M_NOWAIT);
 	if (ni->ni_challenge == NULL) {
+		 IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
+
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 		    "[%s] shared key challenge alloc failed\n",
-		    ether_sprintf(ni->ni_macaddr));
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
 		/* XXX statistic */
 	}
 	return (ni->ni_challenge != NULL);
@@ -1069,6 +1087,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 {
 	u_int8_t *challenge;
 	int estatus;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	/*
 	 * NB: this can happen as we allow pre-shared key
@@ -1170,6 +1189,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 					(void) ieee80211_ref_node(ni);
 				allocbs = 0;
 			}
+			__USE(allocbs);
 			/*
 			 * Mark the node as referenced to reflect that its
 			 * reference count has been bumped to insure it remains
@@ -1187,7 +1207,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			IEEE80211_DPRINTF(ic,
 				IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 				"[%s] shared key %sauth request\n",
-				ether_sprintf(ni->ni_macaddr),
+				ether_snprintf(ebuf, sizeof(ebuf),
+				ni->ni_macaddr),
 				allocbs ? "" : "re");
 			break;
 		case IEEE80211_AUTH_SHARED_RESPONSE:
@@ -1218,7 +1239,7 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 			    "[%s] station authenticated (shared key)\n",
-			    ether_sprintf(ni->ni_macaddr));
+			    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
 			ieee80211_node_authorize(ni);
 			break;
 		default:
@@ -1248,7 +1269,8 @@ ieee80211_auth_shared(struct ieee80211com *ic, struct ieee80211_frame *wh,
 				IEEE80211_DPRINTF(ic,
 				    IEEE80211_MSG_DEBUG | IEEE80211_MSG_AUTH,
 				    "[%s] shared key auth failed (reason %d)\n",
-				    ether_sprintf(ieee80211_getbssid(ic, wh)),
+				    ether_snprintf(ebuf, sizeof(ebuf),
+				    ieee80211_getbssid(ic, wh)),
 				    status);
 				/* XXX can this happen? */
 				if (ni != ic->ic_bss)
@@ -1336,8 +1358,10 @@ static void
 ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 	u_int8_t mac[IEEE80211_ADDR_LEN], u_int8_t *ssid)
 {
+	char ebuf[3 * ETHER_ADDR_LEN];
+
 	printf("[%s] discard %s frame, ssid mismatch: ",
-		ether_sprintf(mac), tag);
+	    ether_snprintf(ebuf, sizeof(ebuf), mac), tag);
 	ieee80211_print_essid(ssid + 2, ssid[1]);
 	printf("\n");
 }
@@ -1865,6 +1889,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	u_int8_t *ssid, *rates, *xrates, *wpa, *wme;
 	int reassoc, resp, allocbs;
 	u_int8_t rate;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)&wh[1];
@@ -2049,8 +2074,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			if (ni->ni_erp != scan.erp) {
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 				    "[%s] erp change: was 0x%x, now 0x%x\n",
-				    ether_sprintf(wh->i_addr2),
-				    ni->ni_erp, scan.erp);
+				    ether_snprintf(ebuf, sizeof(ebuf),
+				    wh->i_addr2), ni->ni_erp, scan.erp);
 				if (ic->ic_curmode == IEEE80211_MODE_11G &&
 				    (ni->ni_erp & IEEE80211_ERP_USE_PROTECTION))
 					ic->ic_flags |= IEEE80211_F_USEPROT;
@@ -2063,7 +2088,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 				    "[%s] capabilities change: before 0x%x,"
 				     " now 0x%x\n",
-				     ether_sprintf(wh->i_addr2),
+				     ether_snprintf(ebuf, sizeof(ebuf),
+				     wh->i_addr2),
 				     ni->ni_capinfo, scan.capinfo);
 				/*
 				 * NB: we assume short preamble doesn't
@@ -2184,7 +2210,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		} else
 			allocbs = 0;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
-		    "[%s] recv probe req\n", ether_sprintf(wh->i_addr2));
+		    "[%s] recv probe req\n", ether_snprintf(
+		    ebuf, sizeof(ebuf), wh->i_addr2));
 		ni->ni_rssi = rssi;
 		ni->ni_rstamp = rstamp;
 		rate = ieee80211_setup_rates(ni, rates, xrates,
@@ -2220,7 +2247,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		status = le16toh(*(u_int16_t *)(frm + 4));
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 		    "[%s] recv auth frame with algorithm %d seq %d\n",
-		    ether_sprintf(wh->i_addr2), algo, seq);
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2), algo, seq);
 		/*
 		 * Consult the ACL policy module if setup.
 		 */
@@ -2348,7 +2375,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		if (ni == ic->ic_bss) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			    "[%s] deny %s request, sta not authenticated\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    reassoc ? "reassoc" : "assoc");
 			ieee80211_send_error(ic, ni, wh->i_addr2,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
@@ -2361,7 +2388,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
 			    "[%s] no WPA/RSN IE in association request\n",
-			    ether_sprintf(wh->i_addr2));
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2));
 			IEEE80211_SEND_MGMT(ic, ni,
 			    IEEE80211_FC0_SUBTYPE_DEAUTH,
 			    IEEE80211_REASON_RSN_REQUIRED);
@@ -2394,7 +2421,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic,
 			    IEEE80211_MSG_ASSOC | IEEE80211_MSG_WPA,
 			    "[%s] %s ie: mc %u/%u uc %u/%u key %u caps 0x%x\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    wpa[0] != IEEE80211_ELEMID_RSN ?  "WPA" : "RSN",
 			    rsn.rsn_mcastcipher, rsn.rsn_mcastkeylen,
 			    rsn.rsn_ucastcipher, rsn.rsn_ucastkeylen,
@@ -2409,7 +2436,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		if ((capinfo & IEEE80211_CAPINFO_ESS) == 0) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			    "[%s] deny %s request, capability mismatch 0x%x\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    reassoc ? "reassoc" : "assoc", capinfo);
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_CAPINFO);
@@ -2430,7 +2457,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    ((ic->ic_flags & IEEE80211_F_PUREG) && rate < 48)) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 			    "[%s] deny %s request, rate set mismatch\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    reassoc ? "reassoc" : "assoc");
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_BASIC_RATE);
@@ -2509,7 +2536,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		if (status != 0) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 			    "[%s] %sassoc failed (reason %d)\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    ISREASSOC(subtype) ?  "re" : "", status);
 			if (ni != ic->ic_bss)	/* XXX never true? */
 				ni->ni_fails++;
@@ -2544,7 +2571,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		if (rate & IEEE80211_RATE_BASIC) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 			    "[%s] %sassoc failed (rate set mismatch)\n",
-			    ether_sprintf(wh->i_addr2),
+			    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 			    ISREASSOC(subtype) ?  "re" : "");
 			if (ni != ic->ic_bss)	/* XXX never true? */
 				ni->ni_fails++;
@@ -2590,7 +2617,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			ic->ic_flags &= ~IEEE80211_F_USEPROT;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		    "[%s] %sassoc success: %s preamble, %s slot time%s%s\n",
-		    ether_sprintf(wh->i_addr2),
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2),
 		    ISREASSOC(subtype) ? "re" : "",
 		    ic->ic_flags&IEEE80211_F_SHPREAMBLE ? "short" : "long",
 		    ic->ic_flags&IEEE80211_F_SHSLOT ? "short" : "long",
@@ -2614,6 +2641,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 */
 		IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
 		reason = le16toh(*(u_int16_t *)frm);
+		__USE(reason);
 		ic->ic_stats.is_rx_deauth++;
 		IEEE80211_NODE_STAT(ni, rx_deauth);
 
@@ -2624,7 +2652,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_AUTH,
 		    "[%s] recv deauthenticate (reason %d)\n",
-		    ether_sprintf(ni->ni_macaddr), reason);
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), reason);
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			ieee80211_new_state(ic, IEEE80211_S_AUTH,
@@ -2658,6 +2686,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		 */
 		IEEE80211_VERIFY_LENGTH(efrm - frm, 2);
 		reason = le16toh(*(u_int16_t *)frm);
+		__USE(reason);
 		ic->ic_stats.is_rx_disassoc++;
 		IEEE80211_NODE_STAT(ni, rx_disassoc);
 
@@ -2668,7 +2697,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		}
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC,
 		    "[%s] recv disassociate (reason %d)\n",
-		    ether_sprintf(ni->ni_macaddr), reason);
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), reason);
 		switch (ic->ic_opmode) {
 		case IEEE80211_M_STA:
 			ieee80211_new_state(ic, IEEE80211_S_ASSOC,
@@ -2707,6 +2736,7 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 {
 	struct ieee80211com *ic = ni->ni_ic;
 	struct mbuf *m;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	if (enable) {
 		if ((ni->ni_flags & IEEE80211_NODE_PWR_MGT) == 0)
@@ -2714,7 +2744,8 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 		ni->ni_flags |= IEEE80211_NODE_PWR_MGT;
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 		    "[%s] power save mode on, %u sta's in ps mode\n",
-		    ether_sprintf(ni->ni_macaddr), ic->ic_ps_sta);
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
+		    ic->ic_ps_sta);
 		return;
 	}
 
@@ -2723,7 +2754,7 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 	ni->ni_flags &= ~IEEE80211_NODE_PWR_MGT;
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 	    "[%s] power save mode off, %u sta's in ps mode\n",
-	    ether_sprintf(ni->ni_macaddr), ic->ic_ps_sta);
+	    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), ic->ic_ps_sta);
 	/* XXX if no stations in ps mode, flush mc frames */
 
 	/*
@@ -2736,7 +2767,8 @@ ieee80211_node_pwrsave(struct ieee80211_node *ni, int enable)
 	}
 	IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 	    "[%s] flush ps queue, %u packets queued\n",
-	    ether_sprintf(ni->ni_macaddr), IEEE80211_NODE_SAVEQ_QLEN(ni));
+	    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr),
+	    IEEE80211_NODE_SAVEQ_QLEN(ni));
 	for (;;) {
 		int qlen;
 
@@ -2770,6 +2802,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	struct mbuf *m;
 	u_int16_t aid;
 	int qlen;
+	IEEE80211_DEBUGVAR(char ebuf[3 * ETHER_ADDR_LEN]);
 
 	wh = mtod(m0, struct ieee80211_frame_min *);
 	if (ni->ni_associd == 0) {
@@ -2799,7 +2832,7 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	if (m == NULL) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 		    "[%s] recv ps-poll, but queue empty\n",
-		    ether_sprintf(wh->i_addr2));
+		    ether_snprintf(ebuf, sizeof(ebuf), wh->i_addr2));
 		ieee80211_send_nulldata(ieee80211_ref_node(ni));
 		ic->ic_stats.is_ps_qempty++;	/* XXX node stat */
 		if (ic->ic_set_tim != NULL)
@@ -2814,12 +2847,12 @@ ieee80211_recv_pspoll(struct ieee80211com *ic,
 	if (qlen != 0) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 		    "[%s] recv ps-poll, send packet, %u still queued\n",
-		    ether_sprintf(ni->ni_macaddr), qlen);
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr), qlen);
 		m->m_flags |= M_MORE_DATA;
 	} else {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_POWER,
 		    "[%s] recv ps-poll, send packet, queue empty\n",
-		    ether_sprintf(ni->ni_macaddr));
+		    ether_snprintf(ebuf, sizeof(ebuf), ni->ni_macaddr));
 		if (ic->ic_set_tim != NULL)
 			ic->ic_set_tim(ni, 0);
 	}
@@ -2868,12 +2901,14 @@ ieee80211_note_frame(struct ieee80211com *ic,
 {
 	char buf[128];		/* XXX */
 	va_list ap;
+	char ebuf[3 * ETHER_ADDR_LEN];
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	if_printf(ic->ic_ifp, "[%s] %s\n",
-		ether_sprintf(ieee80211_getbssid(ic, wh)), buf);
+	    ether_snprintf(ebuf, sizeof(ebuf),
+	    ieee80211_getbssid(ic, wh)), buf);
 }
 
 void
@@ -2883,11 +2918,13 @@ ieee80211_note_mac(struct ieee80211com *ic,
 {
 	char buf[128];		/* XXX */
 	va_list ap;
+	char ebuf[3 * ETHER_ADDR_LEN];
 
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	if_printf(ic->ic_ifp, "[%s] %s\n", ether_sprintf(mac), buf);
+	if_printf(ic->ic_ifp, "[%s] %s\n", ether_snprintf(ebuf, sizeof(ebuf),
+	    mac), buf);
 }
 
 static void
@@ -2896,9 +2933,10 @@ ieee80211_discard_frame(struct ieee80211com *ic,
 	const char *type, const char *fmt, ...)
 {
 	va_list ap;
+	char ebuf[3 * ETHER_ADDR_LEN];
 
 	printf("[%s:%s] discard ", ic->ic_ifp->if_xname,
-		ether_sprintf(ieee80211_getbssid(ic, wh)));
+		ether_snprintf(ebuf, sizeof(ebuf), ieee80211_getbssid(ic, wh)));
 	if (type != NULL)
 		printf("%s frame, ", type);
 	else
@@ -2915,9 +2953,10 @@ ieee80211_discard_ie(struct ieee80211com *ic,
 	const char *type, const char *fmt, ...)
 {
 	va_list ap;
+	char ebuf[3 * ETHER_ADDR_LEN];
 
 	printf("[%s:%s] discard ", ic->ic_ifp->if_xname,
-		ether_sprintf(ieee80211_getbssid(ic, wh)));
+	    ether_snprintf(ebuf, sizeof(ebuf), ieee80211_getbssid(ic, wh)));
 	if (type != NULL)
 		printf("%s information element, ", type);
 	else
@@ -2934,8 +2973,10 @@ ieee80211_discard_mac(struct ieee80211com *ic,
 	const char *type, const char *fmt, ...)
 {
 	va_list ap;
+	char ebuf[3 * ETHER_ADDR_LEN];
 
-	printf("[%s:%s] discard ", ic->ic_ifp->if_xname, ether_sprintf(mac));
+	printf("[%s:%s] discard ", ic->ic_ifp->if_xname,
+	    ether_snprintf(ebuf, sizeof(ebuf), mac));
 	if (type != NULL)
 		printf("%s frame, ", type);
 	else

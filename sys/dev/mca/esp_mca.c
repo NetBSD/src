@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.21 2009/11/23 02:13:47 rmind Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.21.40.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.21 2009/11/23 02:13:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_mca.c,v 1.21.40.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,7 +252,7 @@ esp_mca_attach(device_t parent, device_t self, void *aux)
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 
 	/* Do the common parts of attachment. */
-	printf("%s", device_xname(self));
+	aprint_normal("%s", device_xname(self));
 	ncr53c9x_attach(sc);
 }
 

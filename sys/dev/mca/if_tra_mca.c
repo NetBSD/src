@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tra_mca.c,v 1.16.14.1 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: if_tra_mca.c,v 1.16.14.2 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.16.14.1 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tra_mca.c,v 1.16.14.2 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,7 +208,8 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
-	printf(" slot %d ports %#x-%#x irq %d: %s\n", ma->ma_slot + 1,iobase, iobase + TIARA_NPORTS, irq, tra_p->tra_name);
+	printf(" slot %d ports %#x-%#x irq %d: %s\n", ma->ma_slot + 1,iobase,
+	    iobase + TIARA_NPORTS, irq, tra_p->tra_name);
 
 	/* Map i/o space. */
 	if (bus_space_map(iot, iobase, TIARA_NPORTS, 0, &ioh)) {
@@ -240,7 +241,8 @@ tiara_mca_attach(device_t parent, device_t self, void *aux)
 	isc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET,
 			mb86950_intr, sc);
 	if (isc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt handler\n");
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 }

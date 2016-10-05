@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.65.6.1 2016/07/09 20:25:00 skrll Exp $ */
+/* $NetBSD: hypervisor.c,v 1.65.6.2 2016/10/05 20:55:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65.6.1 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65.6.2 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,10 +91,10 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.65.6.1 2016/07/09 20:25:00 skrll Ex
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <machine/mpconfig.h>
-#include <xen/mpacpi.h>       
+#include <xen/mpacpi.h>
 #endif
 #ifdef MPBIOS
-#include <machine/mpbiosvar.h>       
+#include <machine/mpbiosvar.h>
 #endif
 #endif /* NPCI */
 
@@ -151,10 +151,10 @@ union hypervisor_attach_cookie {
 	struct vcpu_attach_args hac_vcaa;
 };
 
-/* 
+/*
  * This is set when the ISA bus is attached.  If it's not set by the
- * time it's checked below, then mainbus attempts to attach an ISA. 
- */   
+ * time it's checked below, then mainbus attempts to attach an ISA.
+ */
 #ifdef DOM0OPS
 int     isa_has_been_seen;
 #if NISA > 0
@@ -262,7 +262,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #ifdef MULTIPROCESSOR
 
-	/* 
+	/*
 	 * The xenstore contains the configured number of vcpus.
 	 * The xenstore however, is not accessible until much later in
 	 * the boot sequence. We therefore bruteforce check for
@@ -277,7 +277,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_vcaa.vcaa_caa.cpu_number = vcpuid;
 		hac.hac_vcaa.vcaa_caa.cpu_role = CPU_ROLE_AP;
 		hac.hac_vcaa.vcaa_caa.cpu_func = NULL; /* See xen/x86/cpu.c:vcpu_attach() */
-		if (NULL == config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_vcpu_print)) {
+		if (NULL == config_found_ia(self, "xendevbus", &hac.hac_vcaa,
+			hypervisor_vcpu_print)) {
 			break;
 		}
 	}
@@ -374,7 +375,7 @@ hypervisor_suspend(device_t dev, const pmf_qual_t *qual)
 {
 	events_suspend();
 	xengnt_suspend();
-	
+
 	return true;
 }
 

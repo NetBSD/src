@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.h,v 1.6 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: cache_tx39.h,v 1.6.64.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -144,26 +144,26 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 void	tx3900_icache_sync_all_16(void);
-void	tx3900_icache_sync_range_16(vaddr_t, vsize_t);
+void	tx3900_icache_sync_range_16(register_t, vsize_t);
 
 void	tx3900_pdcache_wbinv_all_4(void);
 
-void	tx3900_pdcache_inv_range_4(vaddr_t, vsize_t);
-void	tx3900_pdcache_wb_range_4(vaddr_t, vsize_t);
+void	tx3900_pdcache_inv_range_4(register_t, vsize_t);
+void	tx3900_pdcache_wb_range_4(register_t, vsize_t);
 
 void	tx3920_icache_sync_all_16wb(void);
-void	tx3920_icache_sync_range_16wt(vaddr_t, vsize_t);
-void	tx3920_icache_sync_range_16wb(vaddr_t, vsize_t);
+void	tx3920_icache_sync_range_16wt(register_t, vsize_t);
+void	tx3920_icache_sync_range_16wb(register_t, vsize_t);
 
 void	tx3920_pdcache_wbinv_all_16wt(void);
 void	tx3920_pdcache_wbinv_all_16wb(void);
-void	tx3920_pdcache_wbinv_range_16wb(vaddr_t, vsize_t);
+void	tx3920_pdcache_wbinv_range_16wb(register_t, vsize_t);
 
-void	tx3920_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	tx3920_pdcache_wb_range_16wt(vaddr_t, vsize_t);
-void	tx3920_pdcache_wb_range_16wb(vaddr_t, vsize_t);
+void	tx3920_pdcache_inv_range_16(register_t, vsize_t);
+void	tx3920_pdcache_wb_range_16wt(register_t, vsize_t);
+void	tx3920_pdcache_wb_range_16wb(register_t, vsize_t);
 
 void	tx3900_icache_do_inv_index_16(vaddr_t, vsize_t);
-void	tx3920_icache_do_inv_16(vaddr_t, vsize_t);
+void	tx3920_icache_do_inv_16(register_t, vsize_t);
 
 #endif /* !_LOCORE */

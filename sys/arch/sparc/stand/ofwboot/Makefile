@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.32.6.2 2015/12/27 12:09:43 skrll Exp $
+#	$NetBSD: Makefile,v 1.32.6.3 2016/10/05 20:55:35 skrll Exp $
+
+.include <bsd.init.mk>
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -33,7 +35,7 @@ CPPFLAGS+=	-D_STANDALONE
 CPPFLAGS+=	-DBOOT_ELF32 -DBOOT_ELF64 -DBOOT_AOUT
 CPPFLAGS+=	-DNETBOOT
 CPPFLAGS+=	-DSUPPORT_DHCP
-#CPPFLAGS+=	-DNETIF_DEBUG 
+#CPPFLAGS+=	-DNETIF_DEBUG
 #CPPFLAGS+=	-D_DEBUG
 
 LINKS+=		${BINDIR}/ofwboot ${BINDIR}/ofwboot.net

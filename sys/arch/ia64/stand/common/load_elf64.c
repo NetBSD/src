@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf64.c,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+/*	$NetBSD: load_elf64.c,v 1.2.138.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -75,8 +75,10 @@ elf64_loadfile(char *filename, u_int64_t dest, struct preloaded_file **result)
 
     marks[MARK_START] = dest;
 
-    if ((fd = loadfile(filename, marks, LOAD_KERNEL)) == -1)
+    if ((fd = loadfile(filename, marks, LOAD_KERNEL)) == -1) {
+	    err = EPERM;
 	    goto oerr;
+    }
     close(fd);
 
     dest = marks[MARK_ENTRY];

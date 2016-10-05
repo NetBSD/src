@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.1.2.4 2016/04/22 15:44:17 skrll Exp $
+#	$NetBSD: files.net,v 1.1.2.5 2016/10/05 20:56:08 skrll Exp $
 
 # XXX CLEANUP
 define	net
@@ -25,7 +25,7 @@ file	net/if_ieee1394subr.c		ieee1394
 file	net/if_llatbl.c			inet | inet6
 file	net/if_loop.c			loop
 file	net/if_media.c			net
-file	net/if_mpls.c			ifmpls			needs-flag
+file	net/if_mpls.c			mpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
@@ -49,7 +49,7 @@ file	net/route.c			net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
-file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression | kdtrace_hooks
+file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum

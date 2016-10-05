@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1.2.3 2015/09/22 12:05:50 skrll Exp $
+# $NetBSD: GENERIC,v 1.1.2.4 2016/10/05 20:55:34 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/riscv/conf/std.riscv64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1.2.3 $"
+#ident 		"GENERIC-$Revision: 1.1.2.4 $"
 
 maxusers	64		# estimated number of users
 
@@ -109,7 +109,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
+#options 	MPLS		# MultiProtocol Label Switching (needs mpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 #options 	NETATALK	# AppleTalk networking protocols

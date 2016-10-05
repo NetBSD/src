@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.120.4.5 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.120.4.6 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.5 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.6 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.120.4.5 2016/07/09 20:25:21 skrll Exp $
 #include <sys/kauth.h>
 #include <sys/mutex.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -81,7 +83,7 @@ static struct if_clone tun_cloner =
     IF_CLONE_INITIALIZER("tun", tun_clone_create, tun_clone_destroy);
 
 static void tunattach0(struct tun_softc *);
-static void tuninit(struct tun_softc *);
+static void tun_enable(struct tun_softc *, const struct ifaddr *);
 static void tun_i_softintr(void *);
 static void tun_o_softintr(void *);
 #ifdef ALTQ
@@ -113,14 +115,51 @@ const struct cdevsw tun_cdevsw = {
 	.d_flag = D_OTHER
 };
 
+#ifdef _MODULE
+devmajor_t tun_bmajor = -1, tun_cmajor = -1;
+#endif
+
 void
 tunattach(int unused)
+{
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in tuninit() below).
+	 */
+}
+
+static void
+tuninit(void)
 {
 
 	mutex_init(&tun_softc_lock, MUTEX_DEFAULT, IPL_NET);
 	LIST_INIT(&tun_softc_list);
 	LIST_INIT(&tunz_softc_list);
 	if_clone_attach(&tun_cloner);
+#ifdef _MODULE
+	devsw_attach("tun", NULL, &tun_bmajor, &tun_cdevsw, &tun_cmajor);
+#endif
+}
+
+static int
+tundetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&tun_softc_list) || !LIST_EMPTY(&tunz_softc_list))
+		error = EBUSY;
+
+#ifdef _MODULE
+	if (error == 0)
+		error = devsw_detach(NULL, &tun_cdevsw);
+#endif
+	if (error == 0) {
+		if_clone_detach(&tun_cloner);
+		mutex_destroy(&tun_softc_lock);
+	}
+
+	return error;
 }
 
 /*
@@ -382,50 +421,53 @@ out_nolock:
  * Call at splnet().
  */
 static void
-tuninit(struct tun_softc *tp)
+tun_enable(struct tun_softc *tp, const struct ifaddr *ifa)
 {
 	struct ifnet	*ifp = &tp->tun_if;
-	struct ifaddr	*ifa;
 
-	TUNDEBUG("%s: tuninit\n", ifp->if_xname);
+	TUNDEBUG("%s: %s\n", __func__, ifp->if_xname);
 
 	mutex_enter(&tp->tun_lock);
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
 	tp->tun_flags &= ~(TUN_IASET|TUN_DSTADDR);
-	IFADDR_READER_FOREACH(ifa, ifp) {
+
+	switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		if (ifa->ifa_addr->sa_family == AF_INET) {
-			struct sockaddr_in *sin;
+	case AF_INET: {
+		struct sockaddr_in *sin;
 
-			sin = satosin(ifa->ifa_addr);
+		sin = satosin(ifa->ifa_addr);
+		if (sin && sin->sin_addr.s_addr)
+			tp->tun_flags |= TUN_IASET;
+
+		if (ifp->if_flags & IFF_POINTOPOINT) {
+			sin = satosin(ifa->ifa_dstaddr);
 			if (sin && sin->sin_addr.s_addr)
-				tp->tun_flags |= TUN_IASET;
-
-			if (ifp->if_flags & IFF_POINTOPOINT) {
-				sin = satosin(ifa->ifa_dstaddr);
-				if (sin && sin->sin_addr.s_addr)
-					tp->tun_flags |= TUN_DSTADDR;
-			}
+				tp->tun_flags |= TUN_DSTADDR;
 		}
+		break;
+	    }
 #endif
 #ifdef INET6
-		if (ifa->ifa_addr->sa_family == AF_INET6) {
-			struct sockaddr_in6 *sin;
+	case AF_INET6: {
+		struct sockaddr_in6 *sin;
 
-			sin = (struct sockaddr_in6 *)ifa->ifa_addr;
-			if (!IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
-				tp->tun_flags |= TUN_IASET;
+		sin = satosin6(ifa->ifa_addr);
+		if (!IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+			tp->tun_flags |= TUN_IASET;
 
-			if (ifp->if_flags & IFF_POINTOPOINT) {
-				sin = (struct sockaddr_in6 *)ifa->ifa_dstaddr;
-				if (sin &&
-				    !IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
-					tp->tun_flags |= TUN_DSTADDR;
-			} else
-				tp->tun_flags &= ~TUN_DSTADDR;
-		}
+		if (ifp->if_flags & IFF_POINTOPOINT) {
+			sin = satosin6(ifa->ifa_dstaddr);
+			if (sin && !IN6_IS_ADDR_UNSPECIFIED(&sin->sin6_addr))
+				tp->tun_flags |= TUN_DSTADDR;
+		} else
+			tp->tun_flags &= ~TUN_DSTADDR;
+		break;
+	    }
 #endif /* INET6 */
+	default:
+		break;
 	}
 	mutex_exit(&tp->tun_lock);
 }
@@ -445,7 +487,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCINITIFADDR:
-		tuninit(tp);
+		tun_enable(tp, ifa);
 		ifa->ifa_rtrequest = p2p_rtrequest;
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
 		break;
@@ -798,8 +840,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 		len = min(uio->uio_resid, m0->m_len);
 		if (len != 0)
 			error = uiomove(mtod(m0, void *), len, uio);
-		MFREE(m0, m);
-		m0 = m;
+		m0 = m = m_free(m0);
 	}
 
 	if (m0) {
@@ -1113,3 +1154,10 @@ out_nolock:
 	splx(s);
 	return (rv);
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, tun, "")

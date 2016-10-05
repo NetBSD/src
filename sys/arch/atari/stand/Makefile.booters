@@ -1,5 +1,7 @@
-# $NetBSD: Makefile.booters,v 1.4 2013/08/12 16:34:05 joerg Exp $
+# $NetBSD: Makefile.booters,v 1.4.6.1 2016/10/05 20:55:25 skrll Exp $
 
+NOPIE=	# defined
+NOSSP=	# defined
 BINDIR=		/usr/mdec/${BTYPE:tl}
 
 DBG=

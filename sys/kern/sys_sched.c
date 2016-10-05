@@ -1,9 +1,9 @@
-/*	$NetBSD: sys_sched.c,v 1.43.6.1 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.43.6.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.43.6.1 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.43.6.2 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -536,8 +536,8 @@ out:
  * analogue of priority inheritance: temp raise the priority
  * of the caller when accessing a protected resource.
  */
-int 
-sys__sched_protect(struct lwp *l, 
+int
+sys__sched_protect(struct lwp *l,
     const struct sys__sched_protect_args *uap, register_t *retval)
 {
         /* {
@@ -549,7 +549,7 @@ sys__sched_protect(struct lwp *l,
 
 	KASSERT(l->l_inheritedprio == -1);
 	KASSERT(l->l_auxprio == -1 || l->l_auxprio == l->l_protectprio);
-	
+
 	pri = SCARG(uap, priority);
 	error = 0;
 	lwp_lock(l);
@@ -570,7 +570,7 @@ sys__sched_protect(struct lwp *l,
 		}
 	} else if (pri < 0) {
 		/* Just retrieve the current value, for debugging */
-		if (l->l_protectprio != -1)
+		if (l->l_protectprio == -1)
 			error = ENOENT;
 		else
 			*retval = l->l_protectprio - PRI_USER_RT;
@@ -582,7 +582,7 @@ sys__sched_protect(struct lwp *l,
 		/* play along but make no changes if not a realtime LWP. */
 		l->l_protectdepth++;
 		pri += PRI_USER_RT;
-		if (__predict_true(l->l_class != SCHED_OTHER && 
+		if (__predict_true(l->l_class != SCHED_OTHER &&
 		    pri > l->l_protectprio)) {
 			l->l_protectprio = pri;
 			l->l_auxprio = pri;

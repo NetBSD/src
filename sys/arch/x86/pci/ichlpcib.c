@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.43.6.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.43.6.3 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.43.6.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.43.6.3 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,6 +275,14 @@ static struct lpcib_device {
 
 	{ 0, 0, 0, 0 },
 };
+
+/*
+ * Allow user to enable GPIO functionality if they really need it.  The
+ * vast majority of systems with an ICH should not expose GPIO to the
+ * kernel or user.  In at least one instance the gpio_resume() handler
+ * on ICH GPIO was found to sabotage S3 suspend/resume.
+ */
+int	ichlpcib_gpio_disable = 1;
 
 /*
  * Autoconf callbacks.
@@ -887,6 +895,9 @@ lpcib_gpio_configure(device_t self)
 	uint32_t use, io, bit;
 	int pin, shift, base_reg, cntl_reg, reg;
 	int rv;
+
+	if (ichlpcib_gpio_disable != 0)
+		return;
 
 	/* this implies ICH >= 6, and thus different mapreg */
 	if (sc->sc_has_rcba) {

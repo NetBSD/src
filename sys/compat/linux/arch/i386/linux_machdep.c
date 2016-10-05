@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.159.2.1 2015/12/27 12:09:46 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.159.2.2 2016/10/05 20:55:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.1 2015/12/27 12:09:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.2 2016/10/05 20:55:38 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -107,8 +107,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.1 2015/12/27 12:09:46 skrl
 #define DPRINTF(a)
 #endif
 
-static struct biosdisk_info *fd2biosinfo(struct proc *, struct file *);
 extern struct disklist *x86_alldisks;
+
+static struct biosdisk_info *fd2biosinfo(struct proc *, struct file *);
 static void linux_save_ucontext(struct lwp *, struct trapframe *,
     const sigset_t *, struct sigaltstack *, struct linux_ucontext *);
 static void linux_save_sigcontext(struct lwp *, struct trapframe *,
@@ -761,6 +762,8 @@ fd2biosinfo(struct proc *p, struct file *fp)
 	struct nativedisk_info *nip;
 	struct disklist *dl = x86_alldisks;
 
+	if (dl == NULL)
+		return NULL;
 	if (fp->f_type != DTYPE_VNODE)
 		return NULL;
 	vp = (struct vnode *)fp->f_data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.6.10.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.6.10.2 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -171,7 +171,7 @@ void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
 void	pmap_tlb_asid_acquire(pmap_t, struct lwp *l);
 void	pmap_tlb_asid_deactivate(pmap_t);
 void	pmap_tlb_asid_release_all(pmap_t);
-int	pmap_tlb_update_addr(pmap_t, vaddr_t, uint32_t, u_int);
+int	pmap_tlb_update_addr(pmap_t, vaddr_t, pt_entry_t, u_int);
 #define	PMAP_TLB_NEED_IPI	0x01
 #define	PMAP_TLB_INSERT		0x02
 void	pmap_tlb_invalidate_addr(pmap_t, vaddr_t);

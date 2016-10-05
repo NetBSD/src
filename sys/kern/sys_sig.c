@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.43.2.2 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.43.2.3 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.43.2.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.43.2.3 2016/10/05 20:56:03 skrll Exp $");
 
 #include "opt_dtrace.h"
 
@@ -169,7 +169,7 @@ sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap,
 }
 
 /*
- * Suspend process until signal, providing mask to be set in the meantime. 
+ * Suspend process until signal, providing mask to be set in the meantime.
  * Note nonstandard calling convention: libc stub passes mask, not pointer,
  * to save a copyin.
  */
@@ -258,7 +258,7 @@ kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(ksi->ksi_signo),
 		    NULL, NULL);
 		if (!error && ksi->ksi_signo) {
-			kpsignal2(p, ksi);
+			error = kpsignal2(p, ksi);
 		}
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);

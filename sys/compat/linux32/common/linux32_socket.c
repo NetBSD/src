@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.19.2.3 2016/07/09 20:25:00 skrll Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.19.2.4 2016/10/05 20:55:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -14,14 +14,14 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed by Emmanuel Dreyfus
- * 4. The name of the author may not be used to endorse or promote 
- *    products derived from this software without specific prior written 
+ * 4. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
  *    permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS'' 
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY THE THE AUTHOR AND CONTRIBUTORS ``AS IS''
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS 
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS
  * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
  * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
  * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.19.2.3 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.19.2.4 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -418,7 +418,6 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	struct linux32_ifreq ifr, *ifrp = NULL;
 	struct linux32_ifconf ifc;
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
 	struct sockaddr *sa;
 	struct osockaddr *osa;
 	int space = 0, error;
@@ -441,8 +440,8 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		struct ifaddr *ifa;
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
-		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -452,23 +451,32 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 		}
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
+			struct psref psref_ifa;
+			ifa_acquire(ifa, &psref_ifa);
+			pserialize_read_exit(s);
+
 			sa = ifa->ifa_addr;
 			if (sa->sa_family != AF_INET ||
 			    sa->sa_len > sizeof(*osa))
-				continue;
+				goto next;
 			memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 			osa = (struct osockaddr *)&ifr.ifr_addr;
 			osa->sa_family = sa->sa_family;
 			if (space >= sz) {
 				error = copyout(&ifr, ifrp, sz);
-				if (error != 0)
+				if (error != 0) {
+					s = pserialize_read_enter();
+					ifa_release(ifa, &psref_ifa);
 					goto release_exit;
+				}
 				ifrp++;
 			}
 			space -= sz;
+		next:
+			s = pserialize_read_enter();
+			ifa_release(ifa, &psref_ifa);
 		}
 
-		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
@@ -482,6 +490,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	return copyout(&ifc, data, sizeof(ifc));
 
 release_exit:
+	pserialize_read_exit(s);
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	curlwp_bindx(bound);
 	return error;

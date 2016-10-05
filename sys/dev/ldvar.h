@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.21.16.2 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.21.16.3 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct ld_softc {
 #define	LDFL_POLL	0x001		/* poll for completion */
 
 int	ldadjqparam(struct ld_softc *, int);
-void	ldattach(struct ld_softc *);
+void	ldattach(struct ld_softc *, const char *);
 int	ldbegindetach(struct ld_softc *, int);
 void	ldenddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);

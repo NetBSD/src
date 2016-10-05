@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.29.4.1 2015/09/22 12:05:39 skrll Exp $
+#	$NetBSD: Makefile,v 1.29.4.2 2016/10/05 20:55:26 skrll Exp $
 
 NOMAN= # defined
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 
 S=	${.CURDIR}/../../../..
 MIPS=	${S}/arch/mips

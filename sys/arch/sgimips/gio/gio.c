@@ -1,4 +1,4 @@
-/*	$NetBSD: gio.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $	*/
+/*	$NetBSD: gio.c,v 1.33.14.2 2016/10/05 20:55:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.33.14.1 2015/04/06 15:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gio.c,v 1.33.14.2 2016/10/05 20:55:34 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -128,7 +128,7 @@ static const struct gio_probe slot_bases[] = {
  *
  * Graphics boards are not treated like expansion slot cards. Their base
  * addresses do not necessarily correspond to GIO slot addresses and they
- * do not contain product identification words. 
+ * do not contain product identification words.
  */
 static const struct gio_probe gfx_bases[] = {
 	/* grtwo, and newport on IP22 */
@@ -172,7 +172,7 @@ gio_match(device_t parent, cfdata_t match, void *aux)
 	if (mach_type == MACH_SGI_IP12 || mach_type == MACH_SGI_IP20 ||
 	    mach_type == MACH_SGI_IP22)
 		return 1;
-	
+
 	return 0;
 }
 
@@ -207,15 +207,18 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
+			continue;
 		ga.ga_iot = normal_memt;
-		/* XXX bus_space_map() */
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
 
-		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
-			continue;
-		
+
 		if (config_found_sm_loc(self, "gio", NULL, &ga, gio_print,
 		    gio_submatch)) {
 			if (ngfx == MAXGFX)
@@ -252,12 +255,15 @@ gio_attach(device_t parent, device_t self, void *aux)
 
 		ga.ga_slot = slot_bases[i].slot;
 		ga.ga_addr = slot_bases[i].base;
-		ga.ga_iot = normal_memt;
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
-		ga.ga_dmat = &sgimips_default_bus_dma_tag;
-
-		if (platform.badaddr((void *)ga.ga_ioh, sizeof(uint32_t)))
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
 			continue;
+		ga.ga_iot = normal_memt;
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
+		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 
 		ga.ga_product = bus_space_read_4(ga.ga_iot, ga.ga_ioh, 0);
 
@@ -366,13 +372,16 @@ gio_cnattach(void)
 
 		ga.ga_slot = -1;
 		ga.ga_addr = gfx_bases[i].base;
+		/* XXX */
+		if (platform.badaddr((void *)MIPS_PHYS_TO_KSEG1(ga.ga_addr),
+		    sizeof(uint32_t)))
+			continue;
 		ga.ga_iot = normal_memt;
-		ga.ga_ioh = MIPS_PHYS_TO_KSEG1(ga.ga_addr);
+		if (bus_space_map(normal_memt, ga.ga_addr, 0,
+		    BUS_SPACE_MAP_LINEAR, &ga.ga_ioh) != 0)
+		    	continue;
 		ga.ga_dmat = &sgimips_default_bus_dma_tag;
 		ga.ga_product = -1;
-		
-		if (platform.badaddr((void *)ga.ga_ioh,sizeof(uint32_t)))
-			continue;
 
 #if (NGRTWO > 0)
 		if (grtwo_cnattach(&ga) == 0)
@@ -400,7 +409,7 @@ gio_cnattach(void)
  * registers, depending on the machine in question.
  */
 int
-gio_arb_config(int slot, uint32_t flags) 
+gio_arb_config(int slot, uint32_t flags)
 {
 
 	if (flags == 0)

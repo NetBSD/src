@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2011/03/18 16:17:22 tsutsui Exp $	*/
+/*	$NetBSD: param.h,v 1.29.32.1 2016/10/05 20:55:24 skrll Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -67,7 +67,6 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#define	UPAGES		2		/* pages of u-area */
 #if defined(_LOCORE) && defined(notyet)
 #define	UADDR		0xffffffffffffc000	/* address of u */
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_ras.S,v 1.4.30.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_ras.S,v 1.4.30.2 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,6 +36,8 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
+
+RCSID("$NetBSD: lock_stubs_ras.S,v 1.4.30.2 2016/10/05 20:55:32 skrll Exp $")
 
 #include "assym.h"
 
@@ -71,7 +73,7 @@
  *   into each other.  Use objdump -d to check alignment after making
  *   changes.
  */
-#ifdef _LP64
+#ifndef __mips_o32
 	.set	mips3
 #else
 	.set	mips1
@@ -194,7 +196,7 @@ STATIC_LEAF_NOPROFILE(ras_mutex_enter)
 _mutex_enter_ras_start:
 	 nop
 	bnez	t0, ras_mutex_vector_enter
-	 nop			
+	 nop
 	PTR_S	MIPS_CURLWP, (a0)/* <- critical section end */
 _mutex_enter_ras_end:
 	J_RA
@@ -213,7 +215,7 @@ STATIC_LEAF_NOPROFILE(ras_mutex_exit)
 _mutex_exit_ras_start:
 	 nop
 	bne	t0, MIPS_CURLWP, ras_mutex_vector_exit
-	 nop			
+	 nop
 	PTR_S	zero, (a0)	/* <- critical section end */
 _mutex_exit_ras_exit:
 	J_RA
@@ -297,7 +299,7 @@ LEAF_NOPROFILE(_restart_lock_ras)
 	andi	t1, RAS_MASK	/* was the PC in a RAS? */
 	bnez	t1, 1f		/* yes, adjust PC */
 	 and	t0, k1, 15	/* get offset in RAS */
-	
+
 	j	ra
 	 nop
 1:

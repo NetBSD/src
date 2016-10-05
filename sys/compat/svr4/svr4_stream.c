@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.81.2.2 2015/06/06 14:40:05 skrll Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.81.2.3 2016/10/05 20:55:39 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81.2.2 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.81.2.3 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1502,7 +1502,7 @@ svr4_sys_putmsg(struct lwp *l, const struct svr4_sys_putmsg_args *uap, register_
 		aiov.iov_base = NETBSD32PTR(dat.buf);
 		aiov.iov_len = dat.len;
 		error = do_sys_sendmsg(l, SCARG(uap, fd), &msg,
-			       SCARG(uap, flags), retval);
+			       SCARG(uap, flags),  NULL, 0, retval);
 
 		*retval = 0;
 		return error;
@@ -1734,8 +1734,8 @@ svr4_sys_getmsg(struct lwp *l, const struct svr4_sys_getmsg_args *uap, register_
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = do_sys_recvmsg(l,  SCARG(uap, fd), &msg, &name, NULL,
-		    retval);
+		error = do_sys_recvmsg(l,  SCARG(uap, fd), &msg, NULL, 0,
+		    &name, NULL, retval);
 
 		if (error) {
 			DPRINTF(("getmsg: do_sys_recvmsg failed %d\n", error));

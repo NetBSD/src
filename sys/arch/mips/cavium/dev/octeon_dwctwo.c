@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.2.2.4 2016/05/29 08:44:18 skrll Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.2.2.5 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2.2.4 2016/05/29 08:44:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2.2.5 2016/10/05 20:55:31 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -321,7 +321,7 @@ octeon_dwc2_rd_4(void *v, bus_space_handle_t h, bus_size_t off)
 {
 
 	/* dwc2 uses little-endian addressing */
-	return mips3_lw_a64((h + off) ^ 4);
+	return mips_lwu((h + off) ^ 4);
 }
 
 static void
@@ -330,7 +330,7 @@ octeon_dwc2_wr_4(void *v, bus_space_handle_t h, bus_size_t off,
 {
 
 	/* dwc2 uses little-endian addressing */
-	mips3_sw_a64((h + off) ^ 4, val);
+	mips_sw((h + off) ^ 4, val);
 }
 
 int

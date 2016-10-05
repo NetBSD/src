@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.74.2.4 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.74.2.5 2016/10/05 20:55:43 skrll Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.4 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.74.2.5 2016/10/05 20:55:43 skrll Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -447,7 +447,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 	if (error != 0) {
 		aprint_error_dev(self, "could not attach device\n");
 		return;
-	}	
+	}
 
 	if ((error = iwn_hw_prepare(sc)) != 0) {
 		aprint_error_dev(self, "hardware not ready\n");
@@ -1858,7 +1858,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* XXX Do not abort a running scan. */
 		if (sc->sc_flags & IWN_FLAG_SCANNING) {
 			if (ic->ic_state != nstate)
-				aprint_error_dev(sc->sc_dev, "scan request(%d) "
+				aprint_debug_dev(sc->sc_dev, "scan request(%d) "
 				    "while scanning(%d) ignored\n", nstate,
 				    ic->ic_state);
 			break;
@@ -2905,7 +2905,7 @@ iwn_tx(struct iwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
 	    (IEEE80211_FC0_TYPE_CTL | IEEE80211_FC0_SUBTYPE_BAR))
 		flags |= IWN_TX_IMM_BA;		/* Cannot happen yet. */
-#endif         
+#endif
 
 	if (wh->i_fc[1] & IEEE80211_FC1_MORE_FRAG)
 		flags |= IWN_TX_MORE_FRAG;	/* Cannot happen yet. */

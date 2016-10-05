@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187.2.5 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.2.6 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.5 2016/07/09 20:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.6 2016/10/05 20:55:37 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -492,10 +492,7 @@ static struct pool_cache pmap_cache;
  */
 static struct pool_cache pmap_pv_cache;
 
-#ifdef __HAVE_DIRECT_MAP
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
-#else
+#ifndef __HAVE_DIRECT_MAP
 /*
  * MULTIPROCESSOR: special VAs and PTEs are actually allocated inside a
  * (maxcpus * NPTECL) array of PTE, to avoid cache line thrashing due to
@@ -541,6 +538,10 @@ static struct pool_allocator pmap_pdp_allocator = {
 
 extern vaddr_t idt_vaddr;
 extern paddr_t idt_paddr;
+extern vaddr_t gdt_vaddr;
+extern paddr_t gdt_paddr;
+extern vaddr_t ldt_vaddr;
+extern paddr_t ldt_paddr;
 
 extern int end;
 
@@ -572,7 +573,7 @@ static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
     vaddr_t, struct pv_entry **);
 
 static paddr_t pmap_get_physpage(void);
-static void pmap_alloc_level(pd_entry_t * const *, vaddr_t, int, long *);
+static void pmap_alloc_level(vaddr_t, long *);
 
 static bool pmap_reactivate(struct pmap *);
 
@@ -1392,8 +1393,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	}
 #endif
 
-#ifdef XEN
-#ifdef __x86_64__
+#if defined(XEN) && defined(__x86_64__)
 	/*
 	 * We want a dummy page directory for Xen: when deactivating a pmap, Xen
 	 * will still consider it active. So we set user PGD to this one to lift
@@ -1408,27 +1408,24 @@ pmap_bootstrap(vaddr_t kva_start)
 	    pmap_pa2pte(xen_dummy_user_pgd) | PG_u | PG_V, UVMF_INVLPG);
 	/* Pin as L4 */
 	xpq_queue_pin_l4_table(xpmap_ptom_masked(xen_dummy_user_pgd));
-#endif /* __x86_64__ */
-	/*
-	 * Xen requires one more page as we can't store GDT and LDT on the same
-	 * page.
-	 */
-	idt_vaddr = pmap_bootstrap_valloc(3);
-	idt_paddr = pmap_bootstrap_palloc(3);
-#else /* XEN */
+#endif
 
-#if defined(__x86_64__)
-	idt_vaddr = pmap_bootstrap_valloc(2);
-	idt_paddr = pmap_bootstrap_palloc(2);
-#else
+	/*
+	 * Allocate space for the IDT, GDT and LDT.
+	 */
 	idt_vaddr = pmap_bootstrap_valloc(1);
 	idt_paddr = pmap_bootstrap_palloc(1);
 
+	gdt_vaddr = pmap_bootstrap_valloc(1);
+	gdt_paddr = pmap_bootstrap_palloc(1);
+
+	ldt_vaddr = pmap_bootstrap_valloc(1);
+	ldt_paddr = pmap_bootstrap_palloc(1);
+
+#if !defined(__x86_64__) && !defined(XEN)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = pmap_bootstrap_valloc(1);
 #endif
-
-#endif /* XEN */
 
 	/*
 	 * Now we reserve some VM for mapping pages when doing a crash dump.
@@ -1608,7 +1605,12 @@ pmap_remap_largepages(void)
 	}
 
 	/* Remap the kernel data+bss using large pages. */
-	kva = roundup((vaddr_t)&__data_start, NBPD_L2);
+	/*
+	 * XXX: we need to make sure the first page (PAGE_SIZE) of .data is not
+	 * mapped with a large page. As bizarre as it might seem, this first
+	 * page is used as the VA for the LAPIC page.
+	 */
+	kva = roundup((vaddr_t)&__data_start+PAGE_SIZE, NBPD_L2);
 	kva_end = rounddown((vaddr_t)&__kernel_end, NBPD_L1);
 	pa = kva - KERNBASE;
 	for (/* */; kva + NBPD_L2 <= kva_end; kva += NBPD_L2, pa += NBPD_L2) {
@@ -1618,73 +1620,6 @@ pmap_remap_largepages(void)
 	}
 }
 #endif /* !XEN */
-
-#if defined(__x86_64__)
-/*
- * Pre-allocate PTPs for low memory, so that 1:1 mappings for various
- * trampoline code can be entered.
- */
-void
-pmap_prealloc_lowmem_ptps(void)
-{
-	int level;
-	paddr_t newp;
-	pd_entry_t *pdes;
-
-	const pd_entry_t pteflags = PG_k | PG_V | PG_RW;
-
-	pdes = pmap_kernel()->pm_pdir;
-	level = PTP_LEVELS;
-	for (;;) {
-		newp = pmap_bootstrap_palloc(1);
-
-#ifdef __HAVE_DIRECT_MAP
-		memset((void *)PMAP_DIRECT_MAP(newp), 0, PAGE_SIZE);
-#else
-		pmap_pte_set(early_zero_pte, pmap_pa2pte(newp) | pteflags |
-		    pmap_pg_nx);
-		pmap_pte_flush();
-		pmap_update_pg((vaddr_t)early_zerop);
-		memset(early_zerop, 0, PAGE_SIZE);
-#endif
-
-#ifdef XEN
-		/* Mark R/O before installing */
-		HYPERVISOR_update_va_mapping ((vaddr_t)early_zerop,
-		    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-		if (newp < (NKL2_KIMG_ENTRIES * NBPD_L2))
-			HYPERVISOR_update_va_mapping (newp + KERNBASE,
-			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
-
-
-		if (level == PTP_LEVELS) { /* Top level pde is per-cpu */
-			pd_entry_t *kpm_pdir;
-			/* Reach it via recursive mapping */
-			kpm_pdir = normal_pdes[PTP_LEVELS - 2];
-
-			/* Set it as usual. We can't defer this
-			 * outside the loop since recursive
-			 * pte entries won't be accessible during
-			 * further iterations at lower levels
-			 * otherwise.
-			 */
-			pmap_pte_set(&kpm_pdir[pl_i(0, PTP_LEVELS)],
-			    pmap_pa2pte(newp) | pteflags);
-		}
-#endif /* XEN */
-
-		pmap_pte_set(&pdes[pl_i(0, level)],
-		    pmap_pa2pte(newp) | pteflags);
-
-		pmap_pte_flush();
-
-		level--;
-		if (level <= 1)
-			break;
-		pdes = normal_pdes[level - 2];
-	}
-}
-#endif /* defined(__x86_64__) */
 
 /*
  * pmap_init: called from uvm_init, our job is to get the pmap
@@ -1822,14 +1757,12 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
  * pmap_enter_pv: enter a mapping onto a pv_head lst
  *
  * => caller should adjust ptp's wire_count before calling
+ * => caller has preallocated pve and *sparepve for us
  */
 
 static struct pv_entry *
-pmap_enter_pv(struct pmap_page *pp,
-	      struct pv_entry *pve,	/* preallocated pve for us to use */
-	      struct pv_entry **sparepve,
-	      struct vm_page *ptp,
-	      vaddr_t va)
+pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
+    struct pv_entry **sparepve, struct vm_page *ptp, vaddr_t va)
 {
 
 	KASSERT(ptp == NULL || ptp->wire_count >= 2);
@@ -2510,30 +2443,49 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		return;
 	}
 
+	/*
+	 * Copy the LDT into the new process.
+	 *
+	 * Read pmap1's ldt pointer and length unlocked; if it changes
+	 * behind our back we'll retry. This will starve if there's a
+	 * stream of LDT changes in another thread but that should not
+	 * happen.
+	 */
+
  retry:
 	if (pmap1->pm_ldt != NULL) {
 		len = pmap1->pm_ldt_len;
+		/* Allocate space for the new process's LDT */
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map, len, 0,
 		    UVM_KMF_WIRED);
+		if (new_ldt == NULL) {
+			printf("WARNING: pmap_fork: "
+			       "unable to allocate LDT space\n");
+			return;
+		}
 		mutex_enter(&cpu_lock);
+		/* Get a GDT slot for it */
 		sel = ldt_alloc(new_ldt, len);
 		if (sel == -1) {
 			mutex_exit(&cpu_lock);
 			uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 			    UVM_KMF_WIRED);
-			printf("WARNING: pmap_fork: unable to allocate LDT\n");
+			printf("WARNING: pmap_fork: "
+			       "unable to allocate LDT selector\n");
 			return;
 		}
 	} else {
+		/* Wasn't anything there after all. */
 		len = -1;
 		new_ldt = NULL;
 		sel = -1;
 		mutex_enter(&cpu_lock);
 	}
 
- 	/* Copy the LDT, if necessary. */
+ 	/* If there's still something there now that we have cpu_lock... */
  	if (pmap1->pm_ldt != NULL) {
 		if (len != pmap1->pm_ldt_len) {
+			/* Oops, it changed. Drop what we did and try again */
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
@@ -2543,6 +2495,7 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 			goto retry;
 		}
 
+		/* Copy the LDT data and install it in pmap2 */
 		memcpy(new_ldt, pmap1->pm_ldt, len);
 		pmap2->pm_ldt = new_ldt;
 		pmap2->pm_ldt_len = pmap1->pm_ldt_len;
@@ -2551,11 +2504,14 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	}
 
 	if (len != -1) {
+		/* There wasn't still something there, so mop up */
 		ldt_free(sel);
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)new_ldt, len,
 		    UVM_KMF_WIRED);
+	} else {
+		mutex_exit(&cpu_lock);
 	}
-	mutex_exit(&cpu_lock);
 #endif /* USER_LDT */
 }
 #endif /* PMAP_FORK */
@@ -3467,23 +3423,17 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			blkendva = eva;
 
 		/*
-		 * XXXCDC: our PTE mappings should never be removed
-		 * with pmap_remove!  if we allow this (and why would
-		 * we?) then we end up freeing the pmap's page
-		 * directory page (PDP) before we are finished using
-		 * it when we hit in in the recursive mapping.  this
-		 * is BAD.
+		 * Our PTE mappings should never be removed with pmap_remove.
 		 *
-		 * long term solution is to move the PTEs out of user
-		 * address space.  and into kernel address space (up
-		 * with APTE).  then we can set VM_MAXUSER_ADDRESS to
-		 * be VM_MAX_ADDRESS.
+		 * XXXmaxv: still needed?
+		 *
+		 * A long term solution is to move the PTEs out of user address
+		 * space, and into kernel address space. Then we can set
+		 * VM_MAXUSER_ADDRESS to be VM_MAX_ADDRESS.
 		 */
-
-		/* XXXCDC: ugly hack to avoid freeing PDP here */
 		for (i = 0; i < PDP_SIZE; i++) {
 			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
-				continue;
+				panic("PTE space accessed");
 		}
 
 		lvl = pmap_pdes_invalid(va, pdes, &pde);
@@ -3897,12 +3847,21 @@ pmap_pv_clear_attrs(paddr_t pa, unsigned clearbits)
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
+	pt_entry_t bit_rem, bit_put;
 	pt_entry_t *ptes;
 	pt_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blockend, va;
 
 	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+
+	bit_rem = 0;
+	if (!(prot & VM_PROT_WRITE))
+		bit_rem = PG_RW;
+
+	bit_put = 0;
+	if (!(prot & VM_PROT_EXECUTE))
+		bit_put = pmap_pg_nx;
 
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
@@ -3911,7 +3870,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	kpreempt_disable();
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 
-	for (va = sva ; va < eva ; va = blockend) {
+	for (va = sva ; va < eva; va = blockend) {
 		pt_entry_t *spte, *epte;
 		int i;
 
@@ -3920,18 +3879,17 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			blockend = eva;
 
 		/*
-		 * XXXCDC: our PTE mappings should never be write-protected!
+		 * Our PTE mappings should never be write-protected.
 		 *
-		 * long term solution is to move the PTEs out of user
-		 * address space.  and into kernel address space (up
-		 * with APTE).  then we can set VM_MAXUSER_ADDRESS to
-		 * be VM_MAX_ADDRESS.
+		 * XXXmaxv: still needed?
+		 *
+		 * A long term solution is to move the PTEs out of user address
+		 * space, and into kernel address space. Then we can set
+		 * VM_MAXUSER_ADDRESS to be VM_MAX_ADDRESS.
 		 */
-
-		/* XXXCDC: ugly hack to avoid freeing PDP here */
 		for (i = 0; i < PDP_SIZE; i++) {
 			if (pl_i(va, PTP_LEVELS) == PDIR_SLOT_PTE+i)
-				continue;
+				panic("PTE space accessed");
 		}
 
 		/* Is it a valid block? */
@@ -3943,15 +3901,15 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		spte = &ptes[pl1_i(va)];
 		epte = &ptes[pl1_i(blockend)];
 
-		for (/*null */; spte < epte ; spte++) {
+		for (/* */; spte < epte; spte++) {
 			pt_entry_t opte, npte;
 
 			do {
 				opte = *spte;
-				if ((~opte & (PG_RW | PG_V)) != 0) {
+				if (!pmap_valid_entry(opte)) {
 					goto next;
 				}
-				npte = opte & ~PG_RW;
+				npte = (opte & ~bit_rem) | bit_put;
 			} while (pmap_pte_cas(spte, opte, npte) != opte);
 
 			if ((opte & PG_M) != 0) {
@@ -4045,7 +4003,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	struct pmap_page *new_pp, *old_pp;
 	struct pv_entry *old_pve = NULL;
 	struct pv_entry *new_pve;
-	struct pv_entry *new_pve2;
+	struct pv_entry *new_sparepve;
 	int error;
 	bool wired = (flags & PMAP_WIRED) != 0;
 	struct pmap *pmap2;
@@ -4070,7 +4028,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PG_u;
 	else if (va < VM_MAX_ADDRESS)
-		npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
+		panic("PTE space accessed");	/* XXXmaxv: no longer needed? */
 	else
 		npte |= PG_k;
 	if (pmap == pmap_kernel())
@@ -4102,8 +4060,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 	/* get pves. */
 	new_pve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	new_pve2 = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
-	if (new_pve == NULL || new_pve2 == NULL) {
+	new_sparepve = pool_cache_get(&pmap_pv_cache, PR_NOWAIT);
+	if (new_pve == NULL || new_sparepve == NULL) {
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
 			goto out2;
@@ -4209,7 +4167,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 
 	if (new_pp) {
-		new_pve = pmap_enter_pv(new_pp, new_pve, &new_pve2, ptp, va);
+		new_pve = pmap_enter_pv(new_pp, new_pve, &new_sparepve, ptp, va);
 	}
 
 same_pa:
@@ -4234,8 +4192,8 @@ out2:
 	if (new_pve != NULL) {
 		pool_cache_put(&pmap_pv_cache, new_pve);
 	}
-	if (new_pve2 != NULL) {
-		pool_cache_put(&pmap_pv_cache, new_pve2);
+	if (new_sparepve != NULL) {
+		pool_cache_put(&pmap_pv_cache, new_sparepve);
 	}
 
 	return error;
@@ -4294,18 +4252,17 @@ pmap_get_physpage(void)
 }
 
 /*
- * Allocate the amount of specified ptps for a ptp level, and populate
- * all levels below accordingly, mapping virtual addresses starting at
- * kva.
+ * Expand the page tree with the specified amount of PTPs, mapping virtual
+ * addresses starting at kva. We populate all the levels but the last one
+ * (L1). The nodes of the tree are created as RWX, but the pages covered
+ * will be kentered in L1, with proper permissions.
  *
- * Used by pmap_growkernel.
+ * Used only by pmap_growkernel.
  */
 static void
-pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
-    long *needed_ptps)
+pmap_alloc_level(vaddr_t kva, long *needed_ptps)
 {
 	unsigned long i;
-	vaddr_t va;
 	paddr_t pa;
 	unsigned long index, endindex;
 	int level;
@@ -4314,15 +4271,13 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 	int s = splvm(); /* protect xpq_* */
 #endif
 
-	for (level = lvl; level > 1; level--) {
+	for (level = PTP_LEVELS; level > 1; level--) {
 		if (level == PTP_LEVELS)
 			pdep = pmap_kernel()->pm_pdir;
 		else
-			pdep = pdes[level - 2];
-		va = kva;
+			pdep = normal_pdes[level - 2];
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
-
 
 		for (i = index; i <= endindex; i++) {
 			pt_entry_t pte;
@@ -4330,9 +4285,9 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pa = pmap_get_physpage();
 			pte = pmap_pa2pte(pa) | PG_k | PG_V | PG_RW;
-#ifdef XEN
 			pmap_pte_set(&pdep[i], pte);
-#if defined(PAE) || defined(__x86_64__)
+
+#if defined(XEN) && (defined(PAE) || defined(__x86_64__))
 			if (level == PTP_LEVELS && i >= PDIR_SLOT_KERN) {
 				if (__predict_true(
 				    cpu_info_primary.ci_flags & CPUF_PRESENT)) {
@@ -4354,14 +4309,11 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 					pmap_pte_set(cpu_pdep, pte);
 				}
 			}
-#endif /* PAE || __x86_64__ */
-#else /* XEN */
-			pdep[i] = pte;
-#endif /* XEN */
+#endif /* XEN && (PAE || __x86_64__) */
+
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
 			nkptp[level - 1]++;
-			va += nbpd[level - 1];
 		}
 		pmap_pte_flush();
 	}
@@ -4371,10 +4323,10 @@ pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
 }
 
 /*
- * pmap_growkernel: increase usage of KVM space
+ * pmap_growkernel: increase usage of KVM space.
  *
  * => we allocate new PTPs for the kernel and install them in all
- *	the pmaps on the system.
+ *    the pmaps on the system.
  */
 
 vaddr_t
@@ -4403,27 +4355,21 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	old = nkptp[PTP_LEVELS - 1];
 #endif
 
-	/*
-	 * This loop could be optimized more, but pmap_growkernel()
-	 * is called infrequently.
-	 */
+	/* Initialize needed_kptp. */
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
 		target_nptp = pl_i_roundup(maxkvaddr, i + 1) -
 		    pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1);
-		/*
-		 * XXX only need to check toplevel.
-		 */
+
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
 		KASSERT(target_nptp >= nkptp[i]);
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
 
-	pmap_alloc_level(normal_pdes, pmap_maxkvaddr, PTP_LEVELS, needed_kptp);
+	pmap_alloc_level(pmap_maxkvaddr, needed_kptp);
 
 	/*
-	 * If the number of top level entries changed, update all
-	 * pmaps.
+	 * If the number of top level entries changed, update all pmaps.
 	 */
 	if (needed_kptp[PTP_LEVELS - 1] != 0) {
 #ifdef XEN
@@ -4433,7 +4379,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			int pdkidx;
-			for (pdkidx =  PDIR_SLOT_KERN + old;
+			for (pdkidx = PDIR_SLOT_KERN + old;
 			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
 			    pdkidx++) {
 				pmap_pte_set(&pm->pm_pdir[pdkidx],
@@ -4449,8 +4395,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		mutex_enter(&pmaps_lock);
 		LIST_FOREACH(pm, &pmaps, pm_list) {
 			memcpy(&pm->pm_pdir[PDIR_SLOT_KERN + old],
-			       &kpm->pm_pdir[PDIR_SLOT_KERN + old],
-			       newpdes * sizeof (pd_entry_t));
+			    &kpm->pm_pdir[PDIR_SLOT_KERN + old],
+			    newpdes * sizeof (pd_entry_t));
 		}
 		mutex_exit(&pmaps_lock);
 #endif

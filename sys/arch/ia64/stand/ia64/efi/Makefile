@@ -1,48 +1,37 @@
+#	$NetBSD: Makefile,v 1.3.32.1 2016/10/05 20:55:30 skrll Exp $	
+
 S=	${.CURDIR}/../../../../..
 
 VERSIONFILE= ${.CURDIR}/version
 
 .include "../Makefile.booters"
 
-PROG=		loader.sym
+PROGS=		loader.sym loader.efi
 
-MAN=#		Tell bsd.prog.mk that loader.sym is not a man page.
+MAN.loader.sym=		# no man
+MAN.loader.efi=		# no man
 
-INTERNALPROG=
-
-
-SRCS=		start.S conf.c efimd.c vers.c main.c
-
-CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include
-CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/include/${MACHINE_ARCH}
 CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/libefi/
-CPPFLAGS+=	-I${IA64_STAND_DIR}/efi/libshell/
 CPPFLAGS+=	-I${IA64_STAND_DIR}/common/
 CPPFLAGS+=	-I${S}
-
-CPPFLAGS+=	-DLOADER
-
-CPPFLAGS+= 	-DLIBKERN_OPTIMISE_SPACE \
-		-DHEAP_VARIABLE
-
-
-# Pick up FreeBSD glue
-#CPPFLAGS+= -I${.CURDIR}/../../
+CPPFLAGS+=	-DLOADER -DLIBKERN_OPTIMISE_SPACE -DHEAP_VARIABLE
 
 # Always add MI sources
 .PATH: ${.CURDIR}/../../common
 .include "${.CURDIR}/../../common/Makefile.inc"
 
+# need to do this after common stuff pulled in
+SRCS.loader.sym:=	start.S conf.c efimd.c vers.c main.c ${SRCS}
 
-FILES=		loader.efi
-
+# XXX verify
+BINDIR?=	/usr/mdec
 
 LDSCRIPT=	${.CURDIR}/ldscript.${MACHINE_ARCH}
 LDFLAGS=	-Wl,-T${LDSCRIPT} -shared -symbolic -nostdlib
 
-${PROG}: ${LDSCRIPT}
+loader.sym: ${LDSCRIPT}
 
-CLEANFILES+=	vers.c loader.efi ${OBJS}
+CLEANFILES+=	vers.c ${OBJS}
 
 NEWVERSWHAT=	"EFI boot" ${MACHINE_ARCH}
 
@@ -50,14 +39,14 @@ vers.c: ${VERSIONFILE} ${SOURCES}
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${${MKREPRO} == "yes" :?:-D} \
 	    ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
-loader.efi: ${PROG}
-	if [ `${OBJDUMP} -t ${.ALLSRC} | fgrep '*UND*' | wc -l` != 0 ]; then \
-		${OBJDUMP} -t ${.ALLSRC} | fgrep '*UND*'; \
+loader.efi: loader.sym
+	if [ `${OBJDUMP} -t loader.sym | fgrep '*UND*' | wc -l` != 0 ]; then \
+		${OBJDUMP} -t loader.sym | fgrep '*UND*'; \
 		exit 1; \
 	fi
 	${OBJCOPY} -j .data -j .dynamic -j .dynstr -j .dynsym -j .hash \
 	    -j .rela.dyn -j .reloc -j .sdata -j .text \
-	    --target=efi-app-${MACHINE_ARCH} ${.ALLSRC} ${.TARGET}
+	    --target=efi-app-${MACHINE_ARCH} loader.sym ${.TARGET}
 	@echo link finished.
 
 all: loader.efi

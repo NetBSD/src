@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb_pci.c,v 1.23 2012/01/30 19:41:21 drochner Exp $ */
+/*	$NetBSD: igsfb_pci.c,v 1.23.24.1 2016/10/05 20:55:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.23 2012/01/30 19:41:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb_pci.c,v 1.23.24.1 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ igsfb_pci_attach(device_t parent, device_t self, void *aux)
 			    pa->pa_iot, pa->pa_memt, pa->pa_pc,
 			    pa->pa_tag, PCI_PRODUCT(pa->pa_id)) != 0)
 		{
-			printf("unable to map device registers\n");
+			aprint_error("unable to map device registers\n");
 			free(sc->sc_dc, M_DEVBUF);
 			sc->sc_dc = NULL;
 			return;

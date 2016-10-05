@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.262.2.3 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.262.2.4 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262.2.3 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262.2.4 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -225,7 +225,7 @@ int tty_qsize = TTY_MINQSIZE;
 static int
 tty_get_qsize(int *qsize, int newsize)
 {
-	newsize = 1 << ilog2(newsize);	/* Make it a power of two */ 
+	newsize = 1 << ilog2(newsize);	/* Make it a power of two */
 
 	if (newsize < TTY_MINQSIZE || newsize > TTY_MAXQSIZE)
 		return EINVAL;
@@ -973,7 +973,7 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 			mutex_enter(proc_lock);
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
 			mutex_exit(proc_lock);
-			
+
 			mutex_spin_enter(&tty_lock);
 			error = ttypause(tp, hz);
 			if (error) {
@@ -1240,12 +1240,14 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_STI,
-		    tp) != 0) {
+		if ((error = kauth_authorize_device_tty(l->l_cred,
+		    KAUTH_DEVICE_TTY_STI, tp)) != 0) {
 			if (!ISSET(flag, FREAD))
-				return (EPERM);
+				return EPERM;
 			if (!isctty(p, tp))
-				return (EACCES);
+				return EACCES;
+			if (tp->t_session->s_leader->p_cred != p->p_cred)
+				return error;
 		}
 		(*tp->t_linesw->l_rint)(*(u_char *)data, tp);
 		break;
@@ -2610,7 +2612,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 		default:
 			lp = l->l_wchan ? l->l_wmesg : "iowait";
 			break;
-		} 
+		}
 		strlcat(buf, lp, bufsz);
 		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
 		    bufsz);
@@ -2835,7 +2837,7 @@ tty_free(struct tty *tp)
 
 	mutex_enter(proc_lock);
 	mutex_enter(&tty_lock);
-	for (i = 0; i < TTYSIG_COUNT; i++) 
+	for (i = 0; i < TTYSIG_COUNT; i++)
 		sigemptyset(&tp->t_sigs[i]);
 	if (tp->t_sigcount != 0)
 		TAILQ_REMOVE(&tty_sigqueue, tp, t_sigqueue);

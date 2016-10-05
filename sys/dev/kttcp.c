@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.37.4.2 2016/07/09 20:25:01 skrll Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.37.4.3 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.37.4.2 2016/07/09 20:25:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.37.4.3 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -474,8 +474,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
-			MFREE(m, so->so_rcv.sb_mb);
-			m = so->so_rcv.sb_mb;
+			m = so->so_rcv.sb_mb = m_free(m);
 		}
 	}
 	while (m && m->m_type == MT_CONTROL && error == 0) {
@@ -483,8 +482,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 			m = m->m_next;
 		} else {
 			sbfree(&so->so_rcv, m);
-			MFREE(m, so->so_rcv.sb_mb);
-			m = so->so_rcv.sb_mb;
+			m = so->so_rcv.sb_mb = m_free(m);
 		}
 	}
 
@@ -562,8 +560,7 @@ kttcp_soreceive(struct socket *so, unsigned long long slen,
 					so->so_rcv.sb_mb = m = m->m_next;
 					*mp = NULL;
 				} else {
-					MFREE(m, so->so_rcv.sb_mb);
-					m = so->so_rcv.sb_mb;
+					m = so->so_rcv.sb_mb = m_free(m);
 				}
 				/*
 				 * If m != NULL, we also know that

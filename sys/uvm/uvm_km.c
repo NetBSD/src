@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.138.14.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.138.14.2 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138.14.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.138.14.2 2016/10/05 20:56:12 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -593,7 +593,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	struct vm_page *pg;
 	struct uvm_object *obj;
 	int pgaflags;
-	vm_prot_t prot;
+	vm_prot_t prot, vaprot;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(vm_map_pmap(map) == pmap_kernel());
@@ -617,8 +617,9 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 * allocate some virtual space
 	 */
 
+	vaprot = (flags & UVM_KMF_EXEC) ? UVM_PROT_ALL : UVM_PROT_RW;
 	if (__predict_false(uvm_map(map, &kva, size, obj, UVM_UNKNOWN_OFFSET,
-	    align, UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_NONE,
+	    align, UVM_MAPFLAG(vaprot, UVM_PROT_ALL, UVM_INH_NONE,
 	    UVM_ADV_RANDOM,
 	    (flags & (UVM_KMF_TRYLOCK | UVM_KMF_NOWAIT | UVM_KMF_WAITVA
 	     | UVM_KMF_COLORMATCH)))) != 0)) {
@@ -708,6 +709,16 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 }
 
 /*
+ * uvm_km_protect: change the protection of an allocated area
+ */
+
+int
+uvm_km_protect(struct vm_map *map, vaddr_t addr, vsize_t size, vm_prot_t prot)
+{
+	return uvm_map_protect(map, addr, addr + round_page(size), prot, false);
+}
+
+/*
  * uvm_km_free: free an area of kernel memory
  */
 
@@ -793,7 +804,7 @@ again:
 
 #ifdef PMAP_GROWKERNEL
 	/*
-	 * These VA allocations happen independently of uvm_map 
+	 * These VA allocations happen independently of uvm_map
 	 * so this allocation must not extend beyond the current limit.
 	 */
 	KASSERTMSG(uvm_maxkaddr >= va + size,

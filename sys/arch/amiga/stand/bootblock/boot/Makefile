@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.52.4.1 2016/03/19 11:29:55 skrll Exp $
+#	$NetBSD: Makefile,v 1.52.4.2 2016/10/05 20:55:24 skrll Exp $
 
-.include <bsd.own.mk>
+.include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
 
 ### what we need:
@@ -49,8 +49,8 @@ SOBJS += libstubs.o
 
 OBJS=	$(SOBJS) $(COBJS)
 
-#XX#DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR 
-DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER 
+#XX#DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER -DDYNAMIC_CRC_TABLE -DNOBYFOUR -UBYFOUR
+DEFS = -D_STANDALONE -DSA_EXEC_ANYOWNER
 DEFS += -D__INTERNAL_LIBSA_CREAD
 DEFS += -DSERCONSOLE
 SOBJS += cread.o

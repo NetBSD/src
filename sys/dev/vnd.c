@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.234.2.4 2015/12/27 12:09:48 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.234.2.5 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.4 2015/12/27 12:09:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.5 2016/10/05 20:55:40 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.4 2015/12/27 12:09:48 skrll Exp $");
 #include <sys/uio.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <net/zlib.h>
 
@@ -2041,10 +2042,6 @@ vnd_set_geometry(struct vnd_softc *vnd)
 	disk_set_info(vnd->sc_dev, &vnd->sc_dkdev, NULL);
 }
 
-#ifdef _MODULE
-
-#include <sys/module.h>
-
 #ifdef VND_COMPRESSION
 #define VND_DEPENDS "zlib"
 #else
@@ -2052,15 +2049,21 @@ vnd_set_geometry(struct vnd_softc *vnd)
 #endif
 
 MODULE(MODULE_CLASS_DRIVER, vnd, VND_DEPENDS);
+
+#ifdef _MODULE
+int vnd_bmajor = -1, vnd_cmajor = -1;
+
 CFDRIVER_DECL(vnd, DV_DISK, NULL);
+#endif
 
 static int
 vnd_modcmd(modcmd_t cmd, void *arg)
 {
-	int bmajor = -1, cmajor = -1,  error = 0;
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#ifdef _MODULE
 		error = config_cfdriver_attach(&vnd_cd);
 		if (error)
 			break;
@@ -2068,27 +2071,57 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 		error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	        if (error) {
 			config_cfdriver_detach(&vnd_cd);
-			aprint_error("%s: unable to register cfattach\n",
-			    vnd_cd.cd_name);
+			aprint_error("%s: unable to register cfattach for \n"
+			    "%s, error %d", __func__, vnd_cd.cd_name, error);
 			break;
 		}
 
-		error = devsw_attach("vnd", &vnd_bdevsw, &bmajor,
-		    &vnd_cdevsw, &cmajor);
+                /*
+                 * Attach the {b,c}devsw's
+                 */
+		error = devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+		    &vnd_cdevsw, &vnd_cmajor);
+                /*
+                 * If devsw_attach fails, remove from autoconf database
+                 */
 		if (error) {
 			config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
 			config_cfdriver_detach(&vnd_cd);
+                        aprint_error("%s: unable to attach %s devsw, "
+                            "error %d", __func__, vnd_cd.cd_name, error);
 			break;
 		}
-
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
-		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
-		if (error)
-			break;
-		config_cfdriver_detach(&vnd_cd);
+#ifdef _MODULE
+                /*
+                 * Remove {b,c}devsw's
+                 */
 		devsw_detach(&vnd_bdevsw, &vnd_cdevsw);
+
+                /*
+                 * Now remove device from autoconf database
+                 */
+		error = config_cfattach_detach(vnd_cd.cd_name, &vnd_ca);
+                if (error) {
+                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                            &vnd_cdevsw, &vnd_cmajor);
+                        aprint_error("%s: failed to detach %s cfattach, "
+                            "error %d\n", __func__, vnd_cd.cd_name, error);
+                        break;
+                }
+                error = config_cfdriver_detach(&vnd_cd);
+                if (error) {
+                        (void)config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
+                        (void)devsw_attach("vnd", &vnd_bdevsw, &vnd_bmajor,
+                            &vnd_cdevsw, &vnd_cmajor);
+                        aprint_error("%s: failed to detach %s cfdriver, "
+                            "error %d\n", __func__, vnd_cd.cd_name, error);
+                        break;
+                }
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
@@ -2100,5 +2133,3 @@ vnd_modcmd(modcmd_t cmd, void *arg)
 
 	return error;
 }
-
-#endif

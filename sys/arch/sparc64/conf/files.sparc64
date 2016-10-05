@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.145.6.3 2016/07/09 20:24:57 skrll Exp $
+#	$NetBSD: files.sparc64,v 1.145.6.4 2016/10/05 20:55:35 skrll Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -222,7 +222,7 @@ file	arch/sparc64/dev/pld_wdog.c		pldwdog
 
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
-file	dev/sun/disksubr.c 
+file	dev/sun/disksubr.c
 
 file	arch/sparc64/sparc64/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
@@ -325,3 +325,11 @@ file  dev/ofw/ofw_subr.c
 device	vrtc
 attach	vrtc at vbus
 file	arch/sparc64/dev/vrtc.c			vrtc
+
+define	ldc
+file	arch/sparc64/dev/ldc.c			ldc
+
+# Virtual disk
+device	vdsk: ldc, scsi
+attach	vdsk at cbus
+file	arch/sparc64/dev/vdsk.c			vdsk

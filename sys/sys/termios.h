@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.32 2013/07/11 16:46:06 christos Exp $	*/
+/*	$NetBSD: termios.h,v 1.32.8.1 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -98,7 +98,7 @@
 #define	ICRNL		0x00000100U	/* map CR to NL (ala CRMOD) */
 #define	IXON		0x00000200U	/* enable output flow control */
 #define	IXOFF		0x00000400U	/* enable input flow control */
-#if defined(_NETBSD_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #define	IXANY		0x00000800U	/* any char will restart after stop */
 #endif
 #if defined(_NETBSD_SOURCE)

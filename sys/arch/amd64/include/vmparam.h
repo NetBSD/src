@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36 2014/07/24 13:42:28 riastradh Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.4.1 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,6 @@
 
 #ifdef __x86_64__
 
-#include <sys/tree.h>
 #include <sys/mutex.h>
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"

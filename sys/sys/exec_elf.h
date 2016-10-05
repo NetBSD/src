@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.145.2.6 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.145.2.7 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -364,6 +364,7 @@ typedef struct {
 #define PT_HIPROC	0x7fffffff
 
 #define PT_MIPS_REGINFO 0x70000000
+#define PT_MIPS_ABIFLAGS 0x70000003
 
 /* p_flags */
 #define PF_R		0x4		/* Segment is readable */
@@ -900,7 +901,7 @@ typedef struct {
 /* Go-specific note type: buildid
  * name: Go\0\0
  * namesz: 4
- * desc: 
+ * desc:
  *	words[10]
  * descsz: 40
  */

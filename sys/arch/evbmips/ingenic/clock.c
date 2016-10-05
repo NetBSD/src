@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.2.3 2016/03/19 11:29:59 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.1.2.4 2016/10/05 20:55:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.2.3 2016/03/19 11:29:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.2.4 2016/10/05 20:55:27 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.1.2.3 2016/03/19 11:29:59 skrll Exp $");
 
 extern void ingenic_puts(const char *);
 
-void ingenic_clockintr(uint32_t);
+void ingenic_clockintr(struct clockframe *);
 
 static u_int
 ingenic_count_read(struct timecounter *tc)
@@ -191,9 +191,8 @@ int cnt = 99;
 #endif
 
 void
-ingenic_clockintr(uint32_t id)
+ingenic_clockintr(struct clockframe *cf)
 {
-	extern struct clockframe cf;
 	int s = splsched();
 	struct cpu_info * const ci = curcpu();
 #ifdef USE_OST
@@ -239,6 +238,6 @@ ingenic_clockintr(uint32_t id)
 	 */
 	MTC0(1 << IPI_CLOCK, 20, 1);
 #endif
-	hardclock(&cf);
+	hardclock(cf);
 	splx(s);
 }

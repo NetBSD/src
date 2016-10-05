@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.156.2.6 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.156.2.7 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -573,25 +573,6 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /*
- * MFREE(struct mbuf *m, struct mbuf *n)
- * Free a single mbuf and associated external storage.
- * Place the successor, if any, in n.
- */
-#define	MFREE(m, n)							\
-	mowner_revoke((m), 1, (m)->m_flags);				\
-	mbstat_type_add((m)->m_type, -1);				\
-	if ((m)->m_flags & M_PKTHDR)					\
-		m_tag_delete_chain((m), NULL);				\
-	(n) = (m)->m_next;						\
-	if ((m)->m_flags & M_EXT) {					\
-		m_ext_free((m));						\
-	} else {							\
-		KASSERT((m)->m_type != MT_FREE);				\
-		(m)->m_type = MT_FREE;					\
-		pool_cache_put(mb_cache, (m));				\
-	}								\
-
-/*
  * Copy mbuf pkthdr from `from' to `to'.
  * `from' must have M_PKTHDR set, and `to' must be empty.
  */
@@ -849,7 +830,6 @@ struct	mbuf *m_copypacket(struct mbuf *, int);
 struct	mbuf *m_devget(char *, int, int, struct ifnet *,
 			    void (*copy)(const void *, void *, size_t));
 struct	mbuf *m_dup(struct mbuf *, int, int, int);
-struct	mbuf *m_free(struct mbuf *);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_getclr(int, int);
 struct	mbuf *m_gethdr(int, int);
@@ -871,7 +851,15 @@ struct	mbuf *m_copyback_cow(struct mbuf *, int, int, const void *, int);
 int 	m_makewritable(struct mbuf **, int, int, int);
 struct	mbuf *m_getcl(int, int, int);
 void	m_copydata(struct mbuf *, int, int, void *);
+struct	mbuf *m__free(const char *, int, struct mbuf *);
+void	m__freem(const char *, int, struct mbuf *);
+#ifdef DEBUG
+#define m_free(m)	m__free(__func__, __LINE__, m)
+#define m_freem(m)	m__freem(__func__, __LINE__, m)
+#else
+struct	mbuf *m_free(struct mbuf *);
 void	m_freem(struct mbuf *);
+#endif
 void	m_reclaim(void *, int);
 void	mbinit(void);
 void	m_ext_free(struct mbuf *);

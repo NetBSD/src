@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.38.6.1 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.38.6.2 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.38.6.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.38.6.2 2016/10/05 20:55:39 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.38.6.1 2015/09/22 12:05:55 skr
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/signalvar.h>
+#include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/wait.h>
 #include <sys/dirent.h>
@@ -50,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.38.6.1 2015/09/22 12:05:55 skr
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 #include <compat/common/compat_sigaltstack.h>
-
 
 int
 netbsd32_sigaction(struct lwp *l, const struct netbsd32_sigaction_args *uap, register_t *retval)
@@ -195,7 +199,8 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	case SIGSEGV:
 	case SIGFPE:
 	case SIGTRAP:
-		si->_reason._fault._addr = NETBSD32IPTR64(si32->_reason._fault._addr);
+		si->_reason._fault._addr =
+		    NETBSD32IPTR64(si32->_reason._fault._addr);
 		si->_reason._fault._trap = si32->_reason._fault._trap;
 		break;
 	case SIGALRM:
@@ -204,7 +209,8 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	default:	/* see sigqueue() and kill1() */
 		si->_reason._rt._pid = si32->_reason._rt._pid;
 		si->_reason._rt._uid = si32->_reason._rt._uid;
-		si->_reason._rt._value.sival_int = si32->_reason._rt._value.sival_int;
+		si->_reason._rt._value.sival_int =
+		    si32->_reason._rt._value.sival_int;
 		break;
 	case SIGCHLD:
 		si->_reason._child._pid = si32->_reason._child._pid;
@@ -219,6 +225,49 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 		break;
 	}
 }
+
+#ifdef KTRACE
+static void
+netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
+{
+	memset(si32, 0, sizeof (*si32));
+	si32->_signo = si->_signo;
+	si32->_code = si->_code;
+	si32->_errno = si->_errno;
+
+	switch (si->_signo) {
+	case SIGILL:
+	case SIGBUS:
+	case SIGSEGV:
+	case SIGFPE:
+	case SIGTRAP:
+		si32->_reason._fault._addr =
+		    NETBSD32PTR32I(si->_reason._fault._addr);
+		si32->_reason._fault._trap = si->_reason._fault._trap;
+		break;
+	case SIGALRM:
+	case SIGVTALRM:
+	case SIGPROF:
+	default:	/* see sigqueue() and kill1() */
+		si32->_reason._rt._pid = si->_reason._rt._pid;
+		si32->_reason._rt._uid = si->_reason._rt._uid;
+		si32->_reason._rt._value.sival_int =
+		    si->_reason._rt._value.sival_int;
+		break;
+	case SIGCHLD:
+		si32->_reason._child._pid = si->_reason._child._pid;
+		si32->_reason._child._uid = si->_reason._child._uid;
+		si32->_reason._child._utime = si->_reason._child._utime;
+		si32->_reason._child._stime = si->_reason._child._stime;
+		break;
+	case SIGURG:
+	case SIGIO:
+		si32->_reason._poll._band = si->_reason._poll._band;
+		si32->_reason._poll._fd = si->_reason._poll._fd;
+		break;
+	}
+}
+#endif
 
 void
 netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
@@ -455,3 +504,49 @@ netbsd32_sigqueueinfo(struct lwp *l,
 
 	return kill1(l, SCARG(uap, pid), &ksi, retval);
 }
+
+struct netbsd32_ktr_psig {
+	int			signo;
+	netbsd32_pointer_t	action;
+	sigset_t		mask;
+	int			code;
+	/* and optional siginfo_t */
+};
+
+#ifdef KTRACE
+void
+netbsd32_ktrpsig(int sig, sig_t action, const sigset_t *mask,
+	 const ksiginfo_t *ksi)
+{
+	struct ktrace_entry *kte;
+	lwp_t *l = curlwp;
+	struct {
+		struct netbsd32_ktr_psig	kp;
+		siginfo32_t			si;
+	} *kbuf;
+
+	if (!KTRPOINT(l->l_proc, KTR_PSIG))
+		return;
+
+	if (ktealloc(&kte, (void *)&kbuf, l, KTR_PSIG, sizeof(*kbuf)))
+		return;
+
+	kbuf->kp.signo = (char)sig;
+	NETBSD32PTR32(kbuf->kp.action, action);
+	kbuf->kp.mask = *mask;
+
+	if (ksi) {
+		kbuf->kp.code = KSI_TRAPCODE(ksi);
+		(void)memset(&kbuf->si, 0, sizeof(kbuf->si));
+		netbsd32_ksi_to_ksi32(&kbuf->si._info, &ksi->ksi_info);
+		ktesethdrlen(kte, sizeof(*kbuf));
+	} else {
+		kbuf->kp.code = 0;
+		ktesethdrlen(kte, sizeof(struct netbsd32_ktr_psig));
+	}
+
+	ktraddentry(l, kte, KTA_WAITOK);
+}
+#endif
+
+

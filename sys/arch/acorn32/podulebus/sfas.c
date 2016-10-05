@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.26 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: sfas.c,v 1.26.2.1 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.26 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.26.2.1 2016/10/05 20:55:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1410,7 +1410,7 @@ sfas_postaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 					 * Make sure that the specs are within
 					 * chip limits. Note that if we
 					 * initiated the negotiation the specs
-					 * WILL be withing chip limits. If it
+					 * WILL be within chip limits. If it
 					 * was the scsi unit that initiated
 					 * the negotiation, the specs may be
 					 * to high.

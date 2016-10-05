@@ -1,4 +1,4 @@
-/*	$NetBSD: gpib.c,v 1.22 2014/07/25 08:10:36 dholland Exp $	*/
+/*	$NetBSD: gpib.c,v 1.22.4.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.22 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpib.c,v 1.22.4.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,8 @@ gpibattach(device_t parent, device_t self, void *aux)
 	for (address=0; address<GPIB_NDEVS; address++) {
 		ga.ga_ic = sc->sc_ic;
 		ga.ga_address = address;
-		(void) config_search_ia(gpibsubmatch1, sc->sc_dev, "gpib", &ga);
+		(void) config_search_ia(gpibsubmatch1, sc->sc_dev, "gpib",
+		    &ga);
 	}
 
 	/* attach the wild-carded devices - probably protocol busses */
@@ -224,7 +225,8 @@ gpibintr(void *v)
  * Create a callback handle.
  */
 int
-_gpibregister(struct gpib_softc *sc, int slave, gpib_callback_t callback, void *arg, gpib_handle_t *hdl)
+_gpibregister(struct gpib_softc *sc, int slave, gpib_callback_t callback,
+    void *arg, gpib_handle_t *hdl)
 {
 
 	*hdl = malloc(sizeof(struct gpibqueue), M_DEVBUF, M_NOWAIT);

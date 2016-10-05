@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2.2.2 2016/07/09 20:24:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2.2.3 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,11 +80,18 @@ __KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.2.2.2 2016/07/09 20:24:53 skrll Exp
  *  https://support.apple.com/kb/SP343?locale=en_US
  *
  * default console and X bpp/depth for built-in X config file,
- * select 8 or 16 or 32. 
+ * select 8 or 16 or 32.
  *
  */
 #define PLATINUM_CONSOLE_DEPTH 8
 #define PLATINUM_FB_DEPTH      16
+
+/*
+ * XXX 16 bit console not working without this patch to rasops15.c,
+ * http://mail-index.netbsd.org/current-users/2016/09/14/msg030132.html
+ * see thread, but rasops may need separate flags for host byte order
+ * and video hw byte order
+ */
 
 /*
  * resolution, from one of platinumfb_setting vmode_name's.
@@ -234,14 +241,14 @@ static void	platinumfb_set_hardware(struct platinumfb_softc *);
 
 static inline void platinumfb_write_reg(struct platinumfb_softc *,
  					int, uint32_t);
- 					
+
 #ifdef notyet
 static inline uint32_t platinumfb_read_reg(struct platinumfb_softc *, int);
 #endif
-static inline void platinumfb_write_cmap_reg(struct platinumfb_softc *, 
+static inline void platinumfb_write_cmap_reg(struct platinumfb_softc *,
  					     int, uint8_t);
 static inline uint8_t platinumfb_read_cmap_reg(struct platinumfb_softc *, int);
-static inline void platinumfb_store_d2(struct platinumfb_softc *, 
+static inline void platinumfb_store_d2(struct platinumfb_softc *,
 				       uint8_t, uint8_t);
 
 struct wsscreen_descr platinumfb_defaultscreen = {
@@ -289,7 +296,7 @@ platinumfb_read_reg(struct platinumfb_softc *sc, int reg)
 #endif
 
 static inline void
-platinumfb_write_cmap_reg(struct platinumfb_softc *sc, 
+platinumfb_write_cmap_reg(struct platinumfb_softc *sc,
 			  int reg_offset, uint8_t val)
 {
 	out8(sc->sc_cmap + reg_offset, val);
@@ -302,7 +309,7 @@ platinumfb_read_cmap_reg(struct platinumfb_softc *sc, int reg_offset)
 }
 
 static inline void
-platinumfb_store_d2(struct platinumfb_softc *sc, 
+platinumfb_store_d2(struct platinumfb_softc *sc,
 			  uint8_t a, uint8_t d)
 {
 	platinumfb_write_cmap_reg(sc, PLATINUM_CMAP_ADDR_OFFSET, a + 32);
@@ -476,7 +483,7 @@ platinumfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cmap_size = PLATINUM_CMAP_SIZE;
 
 	aprint_normal(" reg-addr 0x%08lx fb-addr 0x%08lx cmap-addr 0x%08lx\n",
-		      (paddr_t)sc->sc_reg, 
+		      (paddr_t)sc->sc_reg,
 		      (paddr_t)sc->sc_fb,
 		      (paddr_t)sc->sc_cmap);
 
@@ -568,7 +575,7 @@ platinumfb_init(device_t self)
 	int options;
 	char output_device[128];
 	options = OF_finddevice("/options");
-	if (options == 0 || 
+	if (options == 0 ||
 	    options == -1 ||
 	    OF_getprop(options, "output-device", output_device,
 		 sizeof(output_device)) == 0 ) {
@@ -579,7 +586,7 @@ platinumfb_init(device_t self)
 		    strcmp(output_device,"screen") == 0 ) {
 			is_console = TRUE;
 		}
-	}	
+	}
 
 	sc->sc_pfs = NULL;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
@@ -594,7 +601,7 @@ platinumfb_init(device_t self)
 
 	for (i=0; i < sizeof(pfb_setting)/sizeof(pfb_setting[0]); i++) {
 		if (strcmp(PLATINUM_FB_VMODE, pfb_setting[i]->vmode_name)==0) {
-			mode = pick_mode_by_ref(pfb_setting[i]->width, 
+			mode = pick_mode_by_ref(pfb_setting[i]->width,
 						pfb_setting[i]->height,
  						pfb_setting[i]->freq);
 			break;
@@ -654,7 +661,7 @@ platinumfb_set_hardware(struct platinumfb_softc *sc)
 	for (i = 0; i < 26; ++i)
 		platinumfb_write_reg(sc, i+32, sc->sc_pfs->regs[i]);
 
-	platinumfb_write_reg(sc, 26+32, one_bank ? 
+	platinumfb_write_reg(sc, 26+32, one_bank ?
 			 sc->sc_pfs->offset[sc->sc_cmode] + 4 - sc->sc_cmode :
 			 sc->sc_pfs->offset[sc->sc_cmode]);
 
@@ -675,7 +682,7 @@ platinumfb_set_hardware(struct platinumfb_softc *sc)
 
 	platinumfb_write_reg(sc, 18, sc->sc_pfs->pitch[sc->sc_cmode]);
 
-	/* 
+	/*
 	 * XXX register 19 setting looks wrong for 1 bank & 32 bpp.
 	 * 512x384 is only resolution that would use such a setting, but
 	 * that is not currently in videomodes.c
@@ -685,7 +692,7 @@ platinumfb_set_hardware(struct platinumfb_softc *sc)
 		aprint_error_dev(sc->sc_dev,
 		    "platinumfb reg19 array out-of-bounds");
 
-	platinumfb_write_reg(sc, 19, one_bank ? 
+	platinumfb_write_reg(sc, 19, one_bank ?
 	    sc->sc_pfs->mode[sc->sc_cmode+1] : /* XXX fix this for 32 bpp */
 	    sc->sc_pfs->mode[sc->sc_cmode]);
 
@@ -722,7 +729,7 @@ platinumfb_set_mode(struct platinumfb_softc *sc,
 
 	if (i >= __arraycount(pfb_setting)) {
 		aprint_error_dev(sc->sc_dev,
-		    "Can't find a mode register value for %s\n", 
+		    "Can't find a mode register value for %s\n",
 				 mode->name);
 		return EINVAL;
 	}
@@ -804,9 +811,9 @@ platinumfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
-		/* 
+		/*
 		 * poor man's screen blanking, just write zeros to colormap
-		 * registers but don't save in softc.  
+		 * registers but don't save in softc.
 		 */
 		if (*(int *)data != sc->sc_on) {
 			sc->sc_on = (sc->sc_on == WSDISPLAYIO_VIDEO_ON ?
@@ -847,26 +854,26 @@ platinumfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			/*
 			 * XXX - not sure how this is supposed to work for
 			 * switching bpp between console and X, but cases with
-			 * (EMUL MAPPED) or (EMUL MAPPED DUMBFB) work, but 
+			 * (EMUL MAPPED) or (EMUL MAPPED DUMBFB) work, but
 			 * (EMUL DUMBFB) garbles screen for some reason.
 			 */
 			case WSDISPLAYIO_MODE_EMUL:
 			case WSDISPLAYIO_MODE_MAPPED:
 			/* case WSDISPLAYIO_MODE_DUMBFB: XXX */
-	
+
 				/* in case screen is "blanked" */
 				platinumfb_restore_palette(sc);
-	
+
 				sc->sc_mode = new_mode;
-	
+
 				platinumfb_set_mode(sc, sc->sc_videomode, new_depth);
 				platinumfb_set_rasops(sc, &ms->scr_ri, true);
-	
+
 				if (new_mode == WSDISPLAYIO_MODE_EMUL)
 					vcons_redraw_screen(ms);
 			}
 		}
-	
+
 		return 0;
 	}
 

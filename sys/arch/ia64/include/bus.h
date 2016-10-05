@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: bus.h,v 1.1.42.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -957,16 +957,8 @@ ia64_bus_space_copy_region_8(bus_space_tag_t t,
 #define	bus_space_barrier(t, h, o, l, f)	\
 	ia64_bus_space_barrier((t), (h), (o), (l), (f))
 
-
 #define	BUS_SPACE_BARRIER_READ	0x01
 #define	BUS_SPACE_BARRIER_WRITE	0x02
-
-/* XXX to be investigated: are these used? */
-#define	BUS_SPACE_BARRIER_READ_BEFORE_READ	0x04
-#define	BUS_SPACE_BARRIER_READ_BEFORE_WRITE	0x08
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_READ	0x10
-#define	BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE	0x20
-#define	BUS_SPACE_BARRIER_SYNC			0x40
 
 static __inline void
 ia64_bus_space_barrier(bus_space_tag_t t, bus_space_handle_t handle,

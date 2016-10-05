@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34.16.2 2016/05/29 08:44:15 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.34.16.3 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -84,7 +84,7 @@
 #endif /* XEN */
 
 /*
- * The x86_64 pmap module closely resembles the i386 one and it 
+ * The x86_64 pmap module closely resembles the i386 one and it
  * uses the same recursive entry scheme. See the i386 pmap.h
  * for a description. The obvious difference is that 3 extra
  * levels of page table need to be dealt with. The level 1 page
@@ -323,7 +323,6 @@ pmap_pte_flush(void)
 }
 #endif
 
-void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
 
 #include <x86/pmap_pv.h>

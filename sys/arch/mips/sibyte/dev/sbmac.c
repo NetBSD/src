@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.43.2.2 2016/07/09 20:24:54 skrll Exp $ */
+/* $NetBSD: sbmac.c,v 1.43.2.3 2016/10/05 20:55:32 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.2 2016/07/09 20:24:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.43.2.3 2016/10/05 20:55:32 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -111,8 +111,8 @@ typedef enum { sbmac_state_uninit, sbmac_state_off, sbmac_state_on,
 #define	dprintf(x)
 #endif
 
-#define	SBMAC_READCSR(t) mips3_ld((volatile uint64_t *) (t))
-#define	SBMAC_WRITECSR(t, v) mips3_sd((volatile uint64_t *) (t), (v))
+#define	SBMAC_READCSR(t) mips3_ld((register_t)(t))
+#define	SBMAC_WRITECSR(t, v) mips3_sd((register_t)(t), (v))
 
 #define	PKSEG1(x) ((sbmac_port_t) MIPS_PHYS_TO_KSEG1(x))
 
@@ -1091,7 +1091,7 @@ sbmac_initctx(struct sbmac_softc *sc)
 	sc->sbm_duplex = sbmac_duplex_half;
 	sc->sbm_fc = sbmac_fc_disabled;
 
-	/* 
+	/*
 	 * Determine SOC type.  112x has Pass3 SOC features.
 	 */
 	sysrev = SBMAC_READCSR( PKSEG1(A_SCD_SYSTEM_REVISION) );
@@ -1288,7 +1288,7 @@ sbmac_channel_start(struct sbmac_softc *sc)
 	 * On chips which support unaligned DMA features, set the descriptor
 	 * ring for transmit channels to use the unaligned buffer format.
 	 */
-	txdma = &(sc->sbm_txdma); 
+	txdma = &(sc->sbm_txdma);
 
 	if (sc->sbm_pass3_dma) {
 		dma_cfg0 = SBMAC_READCSR(txdma->sbdma_config0);

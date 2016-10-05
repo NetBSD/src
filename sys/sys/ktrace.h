@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.61.6.2 2016/04/22 15:44:19 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.61.6.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -296,7 +296,7 @@ void ktr_namei2(const char *, size_t, const char *, size_t);
 void ktr_psig(int, sig_t, const sigset_t *, const ksiginfo_t *);
 void ktr_syscall(register_t, const register_t [], int);
 void ktr_sysret(register_t, int, register_t *);
-void ktr_kuser(const char *, void *, size_t);
+void ktr_kuser(const char *, const void *, size_t);
 void ktr_mib(const int *a , u_int b);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
@@ -398,7 +398,7 @@ ktrsysret(register_t a, int b, register_t *c)
 }
 
 static inline void
-ktrkuser(const char *a, void *b, size_t c)
+ktrkuser(const char *a, const void *b, size_t c)
 {
 	if (__predict_false(ktrace_on))
 		ktr_kuser(a, b, c);
@@ -431,6 +431,15 @@ ktrexecfd(int fd, u_int dtype)
 	if (__predict_false(ktrace_on))
 		ktr_execfd(fd, dtype);
 }
+
+struct ktrace_entry;
+int	ktealloc(struct ktrace_entry **, void **, lwp_t *, int, size_t);
+void	ktesethdrlen(struct ktrace_entry *, size_t);
+void	ktraddentry(lwp_t *, struct ktrace_entry *, int);
+/* Flags for ktraddentry (3rd arg) */
+#define	KTA_NOWAIT		0x0000
+#define	KTA_WAITOK		0x0001
+#define	KTA_LARGE		0x0002
 
 #endif	/* !_KERNEL */
 

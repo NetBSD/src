@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: mlx.c,v 1.62.4.2 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,9 +67,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62.4.2 2016/10/05 20:55:41 skrll Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "ld.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $");
 #include <sys/kthread.h>
 #include <sys/disk.h>
 #include <sys/kauth.h>
-
+#include <sys/module.h>
 #include <machine/vmparam.h>
 #include <sys/bus.h>
 
@@ -108,7 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.62.4.1 2016/07/09 20:25:02 skrll Exp $");
 static void	mlx_adjqparam(struct mlx_softc *, int, int);
 static int	mlx_ccb_submit(struct mlx_softc *, struct mlx_ccb *);
 static int	mlx_check(struct mlx_softc *, int);
-static void	mlx_configure(struct mlx_softc *, int);
 static void	mlx_describe(struct mlx_softc *);
 static void	*mlx_enquire(struct mlx_softc *, int, size_t,
 			     void (*)(struct mlx_ccb *), int);
@@ -508,7 +509,8 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 		rv = kthread_create(PRI_NONE, 0, NULL, mlx_periodic_thread,
 		    NULL, &mlx_periodic_lwp, "mlxtask");
 		if (rv != 0)
-			printf("mlx_init: unable to create thread (%d)\n", rv);
+			aprint_error_dev(mlx->mlx_dv,
+			    "mlx_init: unable to create thread (%d)\n", rv);
 	}
 }
 
@@ -550,7 +552,7 @@ mlx_describe(struct mlx_softc *mlx)
 /*
  * Locate disk resources and attach children to them.
  */
-static void
+int
 mlx_configure(struct mlx_softc *mlx, int waitok)
 {
 	struct mlx_enquiry *me;
@@ -637,6 +639,8 @@ mlx_configure(struct mlx_softc *mlx, int waitok)
 		    mlx->mlx_max_queuecnt % nunits);
  out:
  	mlx->mlx_flags &= ~MLXF_RESCANNING;
+
+	return 0;
 }
 
 /*
@@ -713,8 +717,7 @@ mlxopen(dev_t dev, int flag, int mode, struct lwp *l)
  * Accept the last close on the control device.
  */
 int
-mlxclose(dev_t dev, int flag, int mode,
-    struct lwp *l)
+mlxclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 
@@ -727,8 +730,7 @@ mlxclose(dev_t dev, int flag, int mode,
  * Handle control operations.
  */
 int
-mlxioctl(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
+mlxioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct mlx_softc *mlx;
 	struct mlx_rebuild_request *rb;
@@ -1688,11 +1690,12 @@ mlx_rebuild(struct mlx_softc *mlx, int channel, int target)
 		goto out;
 
 	/* Command completed OK? */
-	aprint_normal_dev(mlx->mlx_dv, "");
 	if (mc->mc_status != 0)
-		printf("REBUILD ASYNC failed - %s\n", mlx_ccb_diagnose(mc));
+		aprint_normal_dev(mlx->mlx_dv, "REBUILD ASYNC failed - %s\n",
+		    mlx_ccb_diagnose(mc));
 	else
-		printf("rebuild started for %d:%d\n", channel, target);
+		aprint_normal_dev(mlx->mlx_dv, "rebuild started for %d:%d\n",
+		    channel, target);
 
 	error = mc->mc_status;
 
@@ -2211,9 +2214,35 @@ mlx_fw_message(struct mlx_softc *mlx, int error, int param1, int param2)
 		return (0);
 	}
 
-	aprint_normal_dev(mlx->mlx_dv, "");
-	aprint_normal(fmt, param2, param1);
+	aprint_normal_dev(mlx->mlx_dv, fmt, param2, param1);
 	aprint_normal("\n");
 
 	return (0);
+}
+
+MODULE(MODULE_CLASS_DRIVER, mlx, NULL);
+
+#ifdef _MODULE
+CFDRIVER_DECL(cac, DV_DISK, NULL);
+#endif
+
+static int
+mlx_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_cfdriver_attach(&mlx_cd);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_cfdriver_detach(&mlx_cd);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+	return error;
 }

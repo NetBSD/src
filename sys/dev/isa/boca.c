@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.54 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: boca.c,v 1.54.14.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.54 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.54.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +166,8 @@ bocaattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(sc->sc_dev, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}

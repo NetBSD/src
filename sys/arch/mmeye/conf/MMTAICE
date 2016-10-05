@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAICE,v 1.51.8.1 2015/09/22 12:05:48 skrll Exp $
+#	$NetBSD: MMTAICE,v 1.51.8.2 2016/10/05 20:55:32 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -16,13 +16,9 @@ include "arch/mmeye/conf/std.mmeye"
 maxusers	32		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-#options 	I486_CPU
-#options 	I586_CPU
 options		SH3
 options 	SH7708		# 60MHz
 #options 	SH7708R		# 100MHz
-#options 	I686_CPU
 options 	PCLOCK=33330000		# 33.33MHz
 options 	INITTODR_ALWAYS_USE_RTC
 
@@ -32,8 +28,6 @@ makeoptions	DEFTEXTADDR="0x8c010000"
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation
-#options 	VM86		# virtual 8086 emulation
-#options 	USER_LDT	# user-settable LDT; used by WINE
 # eliminate delay no-ops in I/O; recommended on all but very old machines
 #options 	DUMMY_NOPS
 

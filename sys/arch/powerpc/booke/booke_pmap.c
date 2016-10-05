@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.18.6.2 2015/12/27 12:09:40 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.18.6.3 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18.6.2 2015/12/27 12:09:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18.6.3 2016/10/05 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -53,18 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18.6.2 2015/12/27 12:09:40 skrll Ex
 kmutex_t pmap_tlb_miss_lock;
 #endif
 
-/*
- * Initialize the kernel pmap.
- */
-#ifdef MULTIPROCESSOR
-#define	PMAP_SIZE	offsetof(struct pmap, pm_pai[PMAP_TLB_MAX])
-#else
-#define	PMAP_SIZE	sizeof(struct pmap)
-#endif
+PMAP_COUNTER(zeroed_pages, "pages zeroed");
+PMAP_COUNTER(copied_pages, "pages copied");
 
 CTASSERT(sizeof(pmap_segtab_t) == NBPG);
-
-pmap_segtab_t pmap_kernel_segtab;
 
 void
 pmap_procwr(struct proc *p, vaddr_t va, size_t len)
@@ -140,7 +132,7 @@ kvtopte(const pmap_segtab_t *stp, vaddr_t va)
 vaddr_t
 pmap_kvptefill(vaddr_t sva, vaddr_t eva, pt_entry_t pt_entry)
 {
-	const pmap_segtab_t * const stp = pmap_kernel()->pm_segtab;
+	pmap_segtab_t * const stp = &pmap_kern_segtab;
 	KASSERT(sva == trunc_page(sva));
 	pt_entry_t *ptep = kvtopte(stp, sva);
 	for (; sva < eva; sva += NBPG) {
@@ -158,13 +150,7 @@ vaddr_t
 pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	phys_ram_seg_t *avail, size_t cnt)
 {
-	pmap_segtab_t * const stp = &pmap_kernel_segtab;
-
-	/*
-	 * Initialize the kernel segment table.
-	 */
-	pmap_kernel()->pm_segtab = stp;
-	curcpu()->ci_pmap_kern_segtab = stp;
+	pmap_segtab_t * const stp = &pmap_kern_segtab;
 
 	KASSERT(endkernel == trunc_page(endkernel));
 
@@ -350,6 +336,7 @@ pmap_md_unmap_poolpage(vaddr_t va, vsize_t size)
 void
 pmap_zero_page(paddr_t pa)
 {
+	PMAP_COUNT(zeroed_pages);
 	vaddr_t va = pmap_md_map_poolpage(pa, NBPG);
 	dcache_zero_page(va);
 
@@ -364,6 +351,8 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	vaddr_t src_va = pmap_md_map_poolpage(src, NBPG);
 	vaddr_t dst_va = pmap_md_map_poolpage(dst, NBPG);
 	const vaddr_t end = src_va + PAGE_SIZE;
+
+	PMAP_COUNT(copied_pages);
 
 	while (src_va < end) {
 		__asm __volatile(

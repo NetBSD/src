@@ -1,9 +1,9 @@
-/*	$NetBSD: uipc_syscalls_40.c,v 1.8.2.2 2016/07/09 20:25:00 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls_40.c,v 1.8.2.3 2016/10/05 20:55:37 skrll Exp $	*/
 
 /* written by Pavel Cahyna, 2006. Public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.8.2.2 2016/07/09 20:25:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_40.c,v 1.8.2.3 2016/10/05 20:55:37 skrll Exp $");
 
 /*
  * System call interface to the socket abstraction.
@@ -34,7 +34,6 @@ compat_ifconf(u_long cmd, void *data)
 {
 	struct oifconf *ifc = data;
 	struct ifnet *ifp;
-	struct ifaddr *ifa;
 	struct oifreq ifr, *ifrp = NULL;
 	int space = 0, error = 0;
 	const int sz = (int)sizeof(ifr);
@@ -51,8 +50,9 @@ compat_ifconf(u_long cmd, void *data)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFNET_READER_FOREACH(ifp) {
+		struct ifaddr *ifa;
+
 		psref_acquire(&psref, &ifp->if_psref, ifnet_psref_class);
-		pserialize_read_exit(s);
 
 		(void)strncpy(ifr.ifr_name, ifp->if_xname,
 		    sizeof(ifr.ifr_name));
@@ -74,6 +74,10 @@ compat_ifconf(u_long cmd, void *data)
 
 		IFADDR_READER_FOREACH(ifa, ifp) {
 			struct sockaddr *sa = ifa->ifa_addr;
+			struct psref psref_ifa;
+
+			ifa_acquire(ifa, &psref_ifa);
+			pserialize_read_exit(s);
 #ifdef COMPAT_OSOCK
 			if (cmd == OOSIOCGIFCONF) {
 				struct osockaddr *osa =
@@ -81,8 +85,11 @@ compat_ifconf(u_long cmd, void *data)
 				/*
 				 * If it does not fit, we don't bother with it
 				 */
-				if (sa->sa_len > sizeof(*osa))
+				if (sa->sa_len > sizeof(*osa)) {
+					s = pserialize_read_enter();
+					ifa_release(ifa, &psref_ifa);
 					continue;
+				}
 				memcpy(&ifr.ifr_addr, sa, sa->sa_len);
 				osa->sa_family = sa->sa_family;
 				if (space >= sz) {
@@ -112,12 +119,13 @@ compat_ifconf(u_long cmd, void *data)
 						 (char *)&ifrp->ifr_addr);
 				}
 			}
+			s = pserialize_read_enter();
+			ifa_release(ifa, &psref_ifa);
 			if (error != 0)
 				goto release_exit;
 			space -= sz;
 		}
 
-		s = pserialize_read_enter();
 		psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	}
 	pserialize_read_exit(s);
@@ -130,6 +138,7 @@ compat_ifconf(u_long cmd, void *data)
 	return (0);
 
 release_exit:
+	pserialize_read_exit(s);
 	psref_release(&psref, &ifp->if_psref, ifnet_psref_class);
 	curlwp_bindx(bound);
 	return error;

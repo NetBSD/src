@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.rumpnetcomp,v 1.10.6.3 2016/04/22 15:44:19 skrll Exp $
+#	$NetBSD: Makefile.rumpnetcomp,v 1.10.6.4 2016/10/05 20:56:10 skrll Exp $
 #
 
 .include <bsd.own.mk>
 
 RUMPNETCOMP=	agr bridge net net80211 netbt netinet netinet6
-RUMPNETCOMP+=	gif netmpls npf local pppoe shmif tap
+RUMPNETCOMP+=	gif netmpls npf local pppoe shmif tap tun
 
 .if ${MKSLJIT} != "no" || make(rumpdescribe)
 RUMPNETCOMP+=	bpfjit

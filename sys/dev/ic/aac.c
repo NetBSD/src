@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.44 2012/10/27 17:18:18 chs Exp $	*/
+/*	$NetBSD: aac.c,v 1.44.14.1 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.44 2012/10/27 17:18:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.44.14.1 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.44 2012/10/27 17:18:18 chs Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <sys/bus.h>
 
@@ -87,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.44 2012/10/27 17:18:18 chs Exp $");
 #include <dev/ic/aac_tables.h>
 
 #include "locators.h"
+
+#include "ioconf.h"
 
 static int	aac_new_intr(void *);
 static int	aac_alloc_commands(struct aac_softc *);
@@ -147,9 +150,7 @@ extern struct	cfdriver aac_cd;
 int
 aac_attach(struct aac_softc *sc)
 {
-	struct aac_attach_args aaca;
-	int i, rv;
-	int locs[AACCF_NLOCS];
+	int rv;
 
 	SIMPLEQ_INIT(&sc->sc_ccb_free);
 	SIMPLEQ_INIT(&sc->sc_ccb_queue);
@@ -183,8 +184,27 @@ aac_attach(struct aac_softc *sc)
 	aac_describe_controller(sc);
 
 	/*
-	 * Attach devices.
+	 * Attach devices
 	 */
+	aac_devscan(sc);
+
+	/*
+	 * Enable interrupts, and register our shutdown hook.
+	 */
+	sc->sc_flags |= AAC_ONLINE;
+	AAC_UNMASK_INTERRUPTS(sc);
+	if (aac_sdh != NULL)
+		shutdownhook_establish(aac_shutdown, NULL);
+	return (0);
+}
+
+int
+aac_devscan(struct aac_softc *sc)
+{
+	struct aac_attach_args aaca;
+	int i;
+	int locs[AACCF_NLOCS];
+
 	for (i = 0; i < AAC_MAX_CONTAINERS; i++) {
 		if (!sc->sc_hdr[i].hd_present)
 			continue;
@@ -195,15 +215,7 @@ aac_attach(struct aac_softc *sc)
 		config_found_sm_loc(sc->sc_dv, "aac", locs, &aaca,
 				    aac_print, config_stdsubmatch);
 	}
-
-	/*
-	 * Enable interrupts, and register our shutdown hook.
-	 */
-	sc->sc_flags |= AAC_ONLINE;
-	AAC_UNMASK_INTERRUPTS(sc);
-	if (aac_sdh != NULL)
-		shutdownhook_establish(aac_shutdown, NULL);
-	return (0);
+	return 0;
 }
 
 static int
@@ -1750,3 +1762,33 @@ aac_print_fib(struct aac_softc *sc, struct aac_fib *fib,
 	}
 }
 #endif /* AAC_DEBUG */
+
+MODULE(MODULE_CLASS_DRIVER, aac, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+aac_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_aac,
+		    cfattach_ioconf_aac, cfdata_ioconf_aac);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_aac,
+		    cfattach_ioconf_aac, cfdata_ioconf_aac);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2010/11/14 13:33:22 uebayasi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.36.1 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,10 @@
 
 #ifndef _SH3_VMPARAM_H_
 #define	_SH3_VMPARAM_H_
+
 #include <sys/queue.h>
+
+#define __USE_TOPDOWN_VM
 
 /*
  * We use 4K pages on the sh3/sh4.  Override the PAGE_* definitions
@@ -51,7 +54,7 @@
 /* top of stack */
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 
-/* Virtual memory resoruce limit. */
+/* Virtual memory resource limit. */
 #define	MAXTSIZ			(64 * 1024 * 1024)	/* max text size */
 #ifndef MAXDSIZ
 #define	MAXDSIZ			(512 * 1024 * 1024)	/* max data size */

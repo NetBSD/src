@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.19 2009/05/12 09:10:16 cegger Exp $	*/
+/*	$NetBSD: tcom.c,v 1.19.40.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.19 2009/05/12 09:10:16 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.19.40.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,8 @@ tcomattach(device_t parent, device_t self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(sc->sc_dev, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(sc->sc_dev,
+			    "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}
