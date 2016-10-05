@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.38 2016/06/09 17:43:36 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.39 2016/10/05 03:06:24 kre Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -158,7 +158,7 @@ print_part_type(int map_type, int flags, void *map_data, off_t map_start)
 }
 
 static int
-show(gpt_t gpt, int show)
+show(gpt_t gpt, int xshow)
 {
 	map_t m;
 
@@ -178,7 +178,7 @@ show(gpt_t gpt, int show)
 			printf("     ");
 		putchar(' ');
 		putchar(' ');
-		print_part_type(m->map_type, show, m->map_data, m->map_start);
+		print_part_type(m->map_type, xshow, m->map_data, m->map_start);
 		putchar('\n');
 		m = m->map_next;
 	}
