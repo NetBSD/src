@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1738.2.16.2.4 2016/05/18 10:45:12 snj Exp $
+#	$NetBSD: mi,v 1.1738.2.16.2.5 2016/10/05 10:42:29 bouyer Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5063,6 +5063,7 @@
 ./usr/share/man/cat3/ERR_set_mark.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_DigestInit.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/EVP_EncodeInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_EncryptInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_OpenInit.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/EVP_PKEY_new.0		comp-c-catman		crypto,.cat
@@ -6150,7 +6151,9 @@
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DSAPublicKey.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_ECPrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_PrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_RSAPublicKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_SSL_SESSION.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_X509.0			comp-c-catman		crypto,.cat
@@ -11424,6 +11427,7 @@
 ./usr/share/man/html3/ERR_set_mark.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_BytesToKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_DigestInit.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/EVP_EncodeInit.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_EncryptInit.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_OpenInit.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/EVP_PKEY_new.html		comp-c-htmlman		crypto,html
@@ -12456,7 +12460,9 @@
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_DHparams.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_DSAPublicKey.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_ECPrivateKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_PrivateKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_RSAPublicKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_SSL_SESSION.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_X509.html		comp-c-htmlman		crypto,html
@@ -17583,6 +17589,7 @@
 ./usr/share/man/man3/ERR_set_mark.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_BytesToKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_DigestInit.3		comp-c-man		crypto,.man
+./usr/share/man/man3/EVP_EncodeInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_EncryptInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_OpenInit.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/EVP_PKEY_new.3		comp-c-man		crypto,.man
@@ -18670,7 +18677,9 @@
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_DSAPublicKey.3		comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_ECPrivateKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_PrivateKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_RSAPublicKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_SSL_SESSION.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_X509.3			comp-c-man		crypto,.man
