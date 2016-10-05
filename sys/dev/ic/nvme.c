@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.14 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: nvme.c,v 1.15 2016/10/05 03:46:38 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.14 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.15 2016/10/05 03:46:38 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,6 +357,8 @@ nvme_attach(struct nvme_softc *sc)
 	}
 	if (NVME_CAP_MPSMAX(cap) < mps)
 		mps = NVME_CAP_MPSMAX(cap);
+	if (ioq_entries > NVME_CAP_MQES(cap))
+		ioq_entries = NVME_CAP_MQES(cap);
 
 	/* set initial values to be used for admin queue during probe */
 	sc->sc_rdy_to = NVME_CAP_TO(cap);
@@ -445,16 +447,22 @@ free_admin_q:
 int
 nvme_rescan(device_t self, const char *attr, const int *flags)
 {
-	int i;
 	struct nvme_softc *sc = device_private(self);
 	struct nvme_attach_args naa;
+	uint64_t cap;
+	int ioq_entries = nvme_ioq_size;
+	int i;
+
+	cap = nvme_read8(sc, NVME_CAP);
+	if (ioq_entries > NVME_CAP_MQES(cap))
+		ioq_entries = NVME_CAP_MQES(cap);
 
 	for (i = 0; i < sc->sc_nn; i++) {
 		if (sc->sc_namespaces[i].dev)
 			continue;
 		memset(&naa, 0, sizeof(naa));
 		naa.naa_nsid = i + 1;
-		naa.naa_qentries = nvme_ioq_size;
+		naa.naa_qentries = ioq_entries;
 		sc->sc_namespaces[i].dev = config_found(sc->sc_dev, &naa,
 		    nvme_print);
 	}
