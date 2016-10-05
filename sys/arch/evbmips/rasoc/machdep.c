@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2015/06/26 22:14:01 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2016/10/05 15:54:58 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2015/06/26 22:14:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2016/10/05 15:54:58 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -162,7 +162,7 @@ mach_init(void)
 	/*
 	 * Determine the memory size.
 	 */
-#if defined(MT7620)
+#if defined(MT7620) || defined(MT7628)
 	memsize = 128 << 20;
 #else
 	memsize = *(volatile uint32_t *)
