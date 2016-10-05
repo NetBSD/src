@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.2.8.3 2015/04/02 17:47:51 snj Exp $
+#	$NetBSD: man.inc,v 1.2.8.4 2016/10/05 10:41:58 bouyer Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -95,7 +95,8 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	X509_STORE_CTX_new.3 X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_CTX_set_verify_cb.3 X509_STORE_set_verify_cb_func.3 \
 	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3 \
-	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_ticket_key_cb.3
+	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_ticket_key_cb.3 \
+	EVP_EncodeInit.3 d2i_ECPrivateKey.3 d2i_PrivateKey.3
 
 MAN+=	openssl.cnf.5
 
