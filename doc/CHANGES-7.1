@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.112 2016/09/28 20:24:43 bouyer Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.113 2016/10/05 09:51:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -5374,4 +5374,127 @@ sys/netinet6/raw_ip6.c				1.150 via patch
 	Allow explicit binding to detached addresss.
 	Fixes PR kern/51435.
 	[roy, ticket #1243]
+
+xsrc/external/mit/libX11/dist/src/FontNames.c		patch
+xsrc/external/mit/libX11/dist/src/GetImage.c		patch
+xsrc/external/mit/libX11/dist/src/ListExt.c		patch
+xsrc/external/mit/libX11/dist/src/ModMap.c		patch
+xsrc/external/mit/libXfixes/dist/src/Region.c		patch
+xsrc/external/mit/libXi/dist/src/XGMotion.c		patch
+xsrc/external/mit/libXi/dist/src/XGetBMap.c		patch
+xsrc/external/mit/libXi/dist/src/XGetDCtl.c		patch
+xsrc/external/mit/libXi/dist/src/XGetFCtl.c		patch
+xsrc/external/mit/libXi/dist/src/XGetKMap.c		patch
+xsrc/external/mit/libXi/dist/src/XGetMMap.c		patch
+xsrc/external/mit/libXi/dist/src/XIQueryDevice.c	patch
+xsrc/external/mit/libXi/dist/src/XListDev.c		patch
+xsrc/external/mit/libXi/dist/src/XOpenDev.c		patch
+xsrc/external/mit/libXi/dist/src/XQueryDv.c		patch
+xsrc/external/mit/libXrandr/dist/src/XrrConfig.c	patch
+xsrc/external/mit/libXrandr/dist/src/XrrCrtc.c		patch
+xsrc/external/mit/libXrandr/dist/src/XrrOutput.c	patch
+xsrc/external/mit/libXrandr/dist/src/XrrProvider.c	patch
+xsrc/external/mit/libXrandr/dist/src/XrrScreen.c	patch
+xsrc/external/mit/libXrender/dist/src/Filter.c		patch
+xsrc/external/mit/libXrender/dist/src/Xrender.c		patch
+xsrc/external/mit/libXtst/dist/src/XRecord.c		patch
+xsrc/external/mit/libXv/dist/src/Xv.c			patch
+xsrc/external/mit/libXvMC/dist/src/XvMC.c		patch
+
+	Fix (backported from upstream) the following issues in X client
+	libraries:
+	libX11 - insufficient validation of data from the X server
+		 can cause out of boundary memory read (XGetImage())
+		 or write (XListFonts()).
+		 Affected versions libX11 <= 1.6.3
+
+	libXfixes - insufficient validation of data from the X server
+		can cause an integer overflow on 32 bit architectures.
+		Affected versions : libXfixes <= 5.0.2
+
+	libXi - insufficient validation of data from the X server
+		can cause out of boundary memory access or
+		endless loops (Denial of Service).
+		Affected versions libXi <= 1.7.6
+
+	libXrandr - insufficient validation of data from the X server
+		can cause out of boundary memory writes.
+		Affected versions: libXrandr <= 1.5.0
+
+	libXrender - insufficient validation of data from the X server
+		can cause out of boundary memory writes.
+		Affected version: libXrender <= 0.9.9
+
+	XRecord - insufficient validation of data from the X server
+		can cause out of boundary memory access or
+		endless loops (Denial of Service).
+		 Affected version libXtst <= 1.2.2
+
+	libXv - insufficient validation of data from the X server
+		can cause out of boundary memory and memory corruption.
+		CVE-2016-5407
+		affected versions libXv <= 1.0.10
+
+	libXvMC - insufficient validation of data from the X server
+		can cause a one byte buffer read underrun.
+		Affected versions: libXvMC <= 1.0.9
+	[mrg, ticket 1262]
+
+xsrc/xfree/xc/lib/X11/FontNames.c		patch
+xsrc/xfree/xc/lib/X11/GetImage.c		patch
+xsrc/xfree/xc/lib/X11/ListExt.c			patch
+xsrc/xfree/xc/lib/X11/ModMap.c			patch
+xsrc/xfree/xc/lib/X11/Xlibint.h			patch
+xsrc/xfree/xc/lib/Xi/XGMotion.c			patch
+xsrc/xfree/xc/lib/Xi/XGetBMap.c			patch
+xsrc/xfree/xc/lib/Xi/XGetDCtl.c			patch
+xsrc/xfree/xc/lib/Xi/XGetFCtl.c			patch
+xsrc/xfree/xc/lib/Xi/XGetKMap.c			patch
+xsrc/xfree/xc/lib/Xi/XGetMMap.c			patch
+xsrc/xfree/xc/lib/Xi/XOpenDev.c			patch
+xsrc/xfree/xc/lib/Xi/XQueryDv.c			patch
+xsrc/xfree/xc/lib/Xrender/Filter.c		patch
+xsrc/xfree/xc/lib/Xrender/Xrender.c		patch
+xsrc/xfree/xc/lib/Xtst/XRecord.c		patch
+xsrc/xfree/xc/lib/Xv/Xv.c			patch
+xsrc/xfree/xc/programs/Xserver/include/dix.h	patch
+
+	Fix (backported from upstream) the following issues in X client
+	libraries:
+	libX11 - insufficient validation of data from the X server
+		 can cause out of boundary memory read (XGetImage())
+		 or write (XListFonts()).
+		 Affected versions libX11 <= 1.6.3
+
+	libXfixes - insufficient validation of data from the X server
+		can cause an integer overflow on 32 bit architectures.
+		Affected versions : libXfixes <= 5.0.2
+
+	libXi - insufficient validation of data from the X server
+		can cause out of boundary memory access or
+		endless loops (Denial of Service).
+		Affected versions libXi <= 1.7.6
+
+	libXrandr - insufficient validation of data from the X server
+		can cause out of boundary memory writes.
+		Affected versions: libXrandr <= 1.5.0
+
+	libXrender - insufficient validation of data from the X server
+		can cause out of boundary memory writes.
+		Affected version: libXrender <= 0.9.9
+
+	XRecord - insufficient validation of data from the X server
+		can cause out of boundary memory access or
+		endless loops (Denial of Service).
+		 Affected version libXtst <= 1.2.2
+
+	libXv - insufficient validation of data from the X server
+		can cause out of boundary memory and memory corruption.
+		CVE-2016-5407
+		affected versions libXv <= 1.0.10
+
+	libXvMC - insufficient validation of data from the X server
+		can cause a one byte buffer read underrun.
+		Affected versions: libXvMC <= 1.0.9
+	[mrg, ticket 1263]
 
