@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.26 2016/10/04 16:06:42 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.27 2016/10/05 13:12:08 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.26 2016/10/04 16:06:42 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.27 2016/10/05 13:12:08 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -483,32 +483,36 @@ no_dma:
 		delay(1);
 	}
 	if (timo == 0)
-		aprint_error_dev(self, "Soft reset timeout\n");
+		aprint_error_dev(dev, "Soft reset timeout\n");
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_SYSCONFIG,
-	    SYSCONFIG_ENAWAKEUP | SYSCONFIG_AUTOIDLE | SYSCONFIG_SIDLEMODE_AUTO |
-	    SYSCONFIG_CLOCKACTIVITY_FCLK | SYSCONFIG_CLOCKACTIVITY_ICLK);
+	    SYSCONFIG_ENAWAKEUP |
+	    SYSCONFIG_AUTOIDLE |
+	    SYSCONFIG_SIDLEMODE_AUTO |
+	    SYSCONFIG_CLOCKACTIVITY_FCLK |
+	    SYSCONFIG_CLOCKACTIVITY_ICLK);
 
-	sc->sc_ih = intr_establish(oa->obio_intr, IPL_VM, IST_LEVEL,
+	sc->sc_ih = intr_establish(sc->sc_irq, IPL_VM, IST_LEVEL,
 	    sdhc_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		     oa->obio_intr);
-		goto fail;
+		aprint_error_dev(dev, "failed to establish interrupt %d\n",
+		     sc->sc_irq);
+		return;
 	}
 
 	error = sdhc_host_found(&sc->sc, sc->sc_bst, sc->sc_sdhc_bsh,
-	    oa->obio_size - OMAP3_SDMMC_SDHC_OFFSET);
+	    OMAP3_SDMMC_SDHC_SIZE);
 	if (error != 0) {
-		aprint_error_dev(self, "couldn't initialize host, error=%d\n",
+		aprint_error_dev(dev, "couldn't initialize host, error=%d\n",
 		    error);
-		goto fail;
+		intr_disestablish(sc->sc_ih);
+		return;
 	}
+
+	clksft = ffs(sc->sc.sc_clkmsk) - 1;
 
 	/* Set SDVS 1.8v and DTW 1bit mode */
 	SDHC_WRITE(sc, SDHC_HOST_CTL,
 	    SDHC_VOLTAGE_1_8V << (SDHC_VOLTAGE_SHIFT + 8));
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON,
-	    bus_space_read_4(sc->sc_bst, sc->sc_bsh, MMCHS_CON) | CON_OD);
 	SDHC_WRITE(sc, SDHC_CLOCK_CTL,
 	    SDHC_READ(sc, SDHC_CLOCK_CTL) | SDHC_INTCLK_ENABLE |
 							SDHC_SDCLK_ENABLE);
