@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.27 2016/10/05 13:12:08 kiyohara Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.28 2016/10/05 13:37:48 christos Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.27 2016/10/05 13:12:08 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.28 2016/10/05 13:37:48 christos Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -178,9 +178,7 @@ static int
 obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args * const oa = aux;
-#ifdef TI_AM335X
-	size_t i;
-#endif
+	__USE(oa);	// Simpler than complex ifdef.
 
 #if defined(OMAP_3430)
 	if (oa->obio_addr == SDMMC1_BASE_3430
@@ -202,7 +200,7 @@ obiosdhc_match(device_t parent, cfdata_t cf, void *aux)
 #endif
 
 #ifdef TI_AM335X
-	for (i = 0; i < __arraycount(am335x_mmchs); i++)
+	for (size _t i = 0; i < __arraycount(am335x_mmchs); i++)
 		if (device_is_a(parent, am335x_mmchs[i].as_parent_name) &&
 		    (oa->obio_addr == am335x_mmchs[i].as_base_addr) &&
 		    (oa->obio_intr == am335x_mmchs[i].as_intr))
