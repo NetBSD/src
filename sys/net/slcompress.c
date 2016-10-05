@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.c,v 1.38.40.1 2015/09/22 12:06:10 skrll Exp $   */
+/*	$NetBSD: slcompress.c,v 1.38.40.2 2016/10/05 20:56:08 skrll Exp $   */
 /*	Id: slcompress.c,v 1.3 1996/05/24 07:04:47 paulus Exp 	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.38.40.1 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.38.40.2 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: slcompress.c,v 1.38.40.1 2015/09/22 12:06:10 skrll E
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -617,3 +618,21 @@ bad:
 	return (-1);
 }
 #endif
+
+MODULE(MODULE_CLASS_MISC, slcompress, NULL);
+
+static int
+slcompress_modcmd(modcmd_t cmd, void *arg)
+{
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+	case MODULE_CMD_FINI:
+#ifdef INET
+		return 0;
+#endif
+	case MODULE_CMD_STAT:
+	case MODULE_CMD_AUTOUNLOAD:
+	default:
+		return ENOTTY;
+	}
+}

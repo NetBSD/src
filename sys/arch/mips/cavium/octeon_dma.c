@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dma.c,v 1.1.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_dma.c,v 1.1.2.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dma.c,v 1.1.2.2 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dma.c,v 1.1.2.3 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,4 +71,9 @@ octeon_dma_init(struct octeon_config *mcp)
 	/* XXX struct copy */
 	mcp->mc_bootbus_dmat = mcp->mc_iobus_dmat;
 	mcp->mc_core1_dmat = mcp->mc_iobus_dmat;
+	mcp->mc_fpa_dmat = mcp->mc_iobus_dmat;
+
+#ifdef __mips_n32
+	mcp->mc_fpa_dmat._bounce_alloc_hi = round_page(MIPS_PHYS_MASK);
+#endif
 }

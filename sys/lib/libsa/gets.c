@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.10.82.1 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: gets.c,v 1.10.82.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -33,11 +33,13 @@
 
 #include "stand.h"
 
+#if 0 /* harmful */
 void
 gets(char *buf)
 {
 	kgets(buf, (size_t)-1);
 }
+#endif
 
 void
 kgets(char *buf, size_t size)

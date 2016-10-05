@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.40 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.40.2.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.40 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.40.2.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,8 +170,8 @@ ahc_eisa_attach(device_t parent, device_t self, void *aux)
 	ahc->ih = eisa_intr_establish(ec, ih,
 	    intrtype, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		aprint_error_dev(ahc->sc_dev, "couldn't establish %s interrupt",
-		    intrtypestr);
+		aprint_error_dev(ahc->sc_dev,
+		    "couldn't establish %s interrupt", intrtypestr);
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");

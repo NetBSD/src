@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.9.2.2 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: if_43.c,v 1.9.2.3 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.2 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.3 2016/10/05 20:55:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -218,11 +218,16 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifreq ifrb;
 	struct oifreq *oifr = NULL;
-	struct ifnet *ifp = ifunit(ifr->ifr_name);
+	struct ifnet *ifp;
 	struct sockaddr *sa;
+	struct psref psref;
+	int bound = curlwp_bind();
 
-	if (ifp == NULL)
+	ifp = if_get(ifr->ifr_name, &psref);
+	if (ifp == NULL) {
+		curlwp_bindx(bound);
 		return ENXIO;
+	}
 
 	/*
 	 * If we have not been converted, make sure that we are.
@@ -257,6 +262,8 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	}
 
 	error = (*so->so_proto->pr_usrreqs->pr_ioctl)(so, cmd, ifr, ifp);
+	if_put(ifp, &psref);
+	curlwp_bindx(bound);
 
 	switch (ocmd) {
 	case OOSIOCGIFADDR:

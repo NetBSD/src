@@ -1,4 +1,4 @@
-/*	$NetBSD: devicename.c,v 1.8 2014/04/08 21:51:06 martin Exp $	*/
+/*	$NetBSD: devicename.c,v 1.8.4.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Michael Smith <msmith@freebsd.org>
@@ -95,7 +95,7 @@ efi_parsedev(struct efi_devdesc **dev, const char *devspec, const char **path)
 	struct devsw	*dv;
 	int dv_type;
 	int		i, unit, slice, partition, err;
-	char		*cp;
+	char		*cp = NULL;
 	const char	*np;
 
 	/* minimum length check */
@@ -151,6 +151,10 @@ efi_parsedev(struct efi_devdesc **dev, const char *devspec, const char **path)
 				cp++;
 			}
 		}
+		if (cp == NULL) {
+			err = EINVAL;
+			goto fail;
+		}
 		if (*cp && (*cp != ':')) {
 			err = EINVAL;
 			goto fail;
@@ -173,6 +177,10 @@ efi_parsedev(struct efi_devdesc **dev, const char *devspec, const char **path)
 				err = EUNIT;
 				goto fail;
 			}
+		}
+		if (cp == NULL) {
+			err = EINVAL;
+			goto fail;
 		}
 		if (*cp && (*cp != ':')) {
 			err = EINVAL;

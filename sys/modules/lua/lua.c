@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.c,v 1.14.2.2 2016/05/29 08:44:37 skrll Exp $ */
+/*	$NetBSD: lua.c,v 1.14.2.3 2016/10/05 20:56:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -152,7 +152,7 @@ lua_attach(device_t parent, device_t self, void *aux)
             CTL_KERN, CTL_CREATE, CTL_EOL);
 
         if (node == NULL) {
-		printf(": can't create sysctl node\n");
+		aprint_error(": can't create sysctl node\n");
                 return;
 	}
 

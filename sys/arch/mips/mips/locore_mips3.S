@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.102.30.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.102.30.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -91,6 +91,8 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
+
+RCSID("$NetBSD: locore_mips3.S,v 1.102.30.3 2016/10/05 20:55:32 skrll Exp $")
 
 #include "assym.h"
 
@@ -304,6 +306,50 @@ LEAF(mipsNN_cp0_config3_read)
 	jr	ra
 	 nop
 END(mipsNN_cp0_config3_read)
+
+/*
+ * uint32_t mipsNN_cp0_config4_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 4) register.
+ */
+LEAF(mipsNN_cp0_config4_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 4
+	jr	ra
+	 nop
+END(mipsNN_cp0_config4_read)
+
+/*
+ * uint32_t mipsNN_cp0_config5_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 5) register.
+ */
+LEAF(mipsNN_cp0_config5_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 5
+	jr	ra
+	 nop
+END(mipsNN_cp0_config5_read)
+
+/*
+ * uint32_t mipsNN_cp0_config6_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 6) register.
+ */
+LEAF(mipsNN_cp0_config6_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 6
+	jr	ra
+	 nop
+END(mipsNN_cp0_config6_read)
+
+/*
+ * uint32_t mipsNN_cp0_config7_read(void)
+ *
+ *	Return the current value of the CP0 Config (Select 7) register.
+ */
+LEAF(mipsNN_cp0_config7_read)
+	mfc0	v0, MIPS_COP_0_CONFIG, 7
+	jr	ra
+	 nop
+END(mipsNN_cp0_config7_read)
 
 /*
  * uintptr_t mipsNN_cp0_watchlo_read(u_int sel)
@@ -523,70 +569,61 @@ END(mips3_cp0_pg_mask_write)
 #if __mips != 32
 LEAF(mips3_ld)
 #if defined(__mips_o32)
+#if (MIPS64R2) > 0
+	di	t0
+#else
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
+#endif
 	COP0_SYNC
 
 	ld	v0, 0(a0)
-#if defined(_MIPS_BSD_API) && \
-    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
-	# nothing to do
-#else
 #if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	v1, v0, 32
 	dsra	v1, v1, 32			# low word in v1
-	dsra	v0, v0, 32			# high word in v0
 #else
 	dsra	v1, v0, 32			# high word in v1
 	dsll	v0, v0, 32
+#endif
 	dsra	v0, v0, 32			# low word in v0
-#endif
-#endif
 
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
 	JR_HB_RA
 #else /* !__mips_o32 */
-	ld	v0, 0(a0)
 	jr	ra
-	 nop
+	 ld	v0, 0(a0)
 #endif /* !__mips_o32 */
 END(mips3_ld)
 
 LEAF(mips3_sd)
 #if defined(__mips_o32)
+#if (MIPS64R2) > 0
+	di	t0
+#else
 	mfc0	t0, MIPS_COP_0_STATUS		# turn off interrupts
 	and	t1, t0, ~(MIPS_SR_INT_IE)
 	mtc0	t1, MIPS_COP_0_STATUS
+#endif
 	COP0_SYNC
 
-#if defined(_MIPS_BSD_API) && \
-    (_MIPS_BSD_API == _MIPS_BSD_API_N32 || _MIPS_BSD_API == _MIPS_BSD_API_LP64)
-	# nothing to do
-#else
-	# NOTE: a1 is padding!
-
-#if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	a2, a2, 32			# high word in a2
+#if _BYTE_ORDER == _BIG_ENDIAN
 	dsll	a3, a3, 32			# low word in a3
 	dsrl	a3, a3, 32
 #else
-	dsll	a2, a2, 32			# low word in a2
 	dsrl	a2, a2, 32
 	dsll	a3, a3, 32			# high word in a3
 #endif
 	or	a1, a2, a3
-#endif
 	sd	a1, 0(a0)
 
 	mtc0	t0, MIPS_COP_0_STATUS		# restore intr status.
 	JR_HB_RA
 #else /* !__mips_o32 */
-	sd	a1, 0(a0)
 	jr	ra
-	 nop
+	 sd	a1, 0(a0)
 #endif /* !__mips_o32 */
-
 END(mips3_sd)
 
 /*
@@ -598,17 +635,15 @@ LEAF(badaddr64)
 	PTR_L	v1, L_PCB(MIPS_CURLWP)
 	PTR_LA	v0, _C_LABEL(baderr64)
 
+#ifdef __mips_o32
 	/* Enable KX */
 	mfc0	t0, MIPS_COP_0_STATUS
 	or	t1, t0, MIPS3_SR_KX
-#ifdef __mips_o32
 	and	t2, t0, MIPS_SR_INT_IE	# disable interrupts
 	xor	t1, t2
-#endif
 	mtc0	t1, MIPS_COP_0_STATUS
 	COP0_SYNC
 
-#ifdef __mips_o32
 #ifdef __MIPSEB__
 	dsll	a0, a0, 32	# MSW
 	dsll	a1, a1, 32	# LSW
@@ -640,16 +675,20 @@ LEAF(badaddr64)
 	REG_L	v0, (a0)
 9:
 	sync
+#ifdef __mips_o32
 	mtc0	t0, MIPS_COP_0_STATUS           # Restore KX
 	COP0_SYNC
+#endif
 	PTR_S	zero, PCB_ONFAULT(v1)
 	jr	ra
 	 move	v0, zero			# made it w/o errors
 END(badaddr64)
 
 LEAF(baderr64)
+#ifdef __mips_o32
 	mtc0	t0, MIPS_COP_0_STATUS		# Restore KX
 	COP0_SYNC
+#endif
 	PTR_S	zero, PCB_ONFAULT(v1)
 	jr	ra
 	 li	v0, -1
@@ -690,6 +729,7 @@ LEAF(mips3_cp0_tlb_entry_hi_probe)
 	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_hi_probe)
+#endif /* __mips != 32 */
 
 /*
  * uint64_t mips3_cp0_tlb_entry_lo_probe(void);
@@ -718,7 +758,6 @@ LEAF(mips3_cp0_tlb_entry_lo_probe)
 	jr	ra
 	 nop
 END(mips3_cp0_tlb_entry_lo_probe)
-#endif /* __mips != 32 */
 
 /*
  * uint32_t mips3_cp0_tlb_page_mask_probe(void);
@@ -761,6 +800,8 @@ NESTED_NOPROFILE(cpu_trampoline, 0, ra)
 
 #ifdef _LP64
 	li	v0, MIPS_SR_KX | MIPS_SR_UX	# allow 64bit addressing
+#elif defined(__mips_n32)
+	li	v0, MIPS_SR_KX			# allow 64bit kernel addressing
 #else
 	li	v0, 0
 #endif

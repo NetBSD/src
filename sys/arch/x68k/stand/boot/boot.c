@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.22.4.1 2016/07/09 20:24:58 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.22.4.2 2016/10/05 20:55:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -317,7 +317,7 @@ bootmenu(void)
 	printf("\r");
 	printf("booting %s - starting in %d seconds. ", default_kernel, 0);
 	printf("\n");
-	
+
 	if (c == 0 || c == '\r') {
 		doboot(default_kernel, 0);
 		printf("Could not start %s; ", default_kernel);
@@ -333,7 +333,7 @@ bootmenu(void)
 		char *p, *options;
 
 		printf("> ");
-		gets(input);
+		kgets(input, sizeof(input));
 
 		for (p = &input[0]; p - &input[0] < 80 && *p == ' '; p++)
 			;
@@ -378,7 +378,7 @@ extern const char bootprog_name[];
 
 /*
  * Arguments from the boot block:
- *   bootdev - specifies the device from which /boot was read, in 
+ *   bootdev - specifies the device from which /boot was read, in
  *		bootdev format.
  */
 void

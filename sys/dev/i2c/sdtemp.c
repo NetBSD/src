@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.23.6.2 2015/06/06 14:40:07 skrll Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.23.6.3 2016/10/05 20:55:41 skrll Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.23.6.2 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.23.6.3 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ struct sdtemp_softc {
 	sysmon_envsys_lim_t sc_deflims;
 	uint32_t sc_defprops;
 	int sc_resolution;
+	uint16_t sc_mfgid;
+	uint16_t sc_devid;
+	uint16_t sc_devid_masked;
 	uint16_t sc_capability;
 };
 
@@ -79,12 +82,15 @@ static int	sdtemp_write_16(struct sdtemp_softc *, uint8_t, uint16_t);
 static uint32_t	sdtemp_decode_temp(struct sdtemp_softc *, uint16_t);
 static bool	sdtemp_pmf_suspend(device_t, const pmf_qual_t *);
 static bool	sdtemp_pmf_resume(device_t, const pmf_qual_t *);
+/* Device dependent config functions */
+static void	sdtemp_config_mcp(struct sdtemp_softc *);
+static void	sdtemp_config_idt(struct sdtemp_softc *);
 
 struct sdtemp_dev_entry {
 	const uint16_t sdtemp_mfg_id;
-	const uint16_t  sdtemp_devrev;
-	const uint16_t  sdtemp_mask;
-	const uint8_t  sdtemp_resolution;
+	const uint16_t sdtemp_devrev;
+	const uint16_t sdtemp_mask;
+	void         (*sdtemp_config)(struct sdtemp_softc *);
 	const char    *sdtemp_desc;
 };
 
@@ -92,47 +98,82 @@ struct sdtemp_dev_entry {
 
 #define	__UK2C(uk) (((uk) - 273150000) / 1000000)
 
-/*
- * List of devices known to conform to JEDEC JC42.4
- *
- * NOTE: A non-negative value for resolution indicates that the sensor
- * resolution is fixed at that number of fractional bits;  a negative
- * value indicates that the sensor needs to be configured.  In either
- * case, trip-point registers are fixed at two-bit (0.25C) resolution.
- */
+/* List of devices known to conform to JEDEC JC42.4 */
+
+#define	CMCP sdtemp_config_mcp
+#define	CIDT sdtemp_config_idt
+
 static const struct sdtemp_dev_entry
 sdtemp_dev_table[] = {
-    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,    MAX_6604_MASK,   3,
+    { AT_MANUFACTURER_ID,   AT_30TS00_DEVICE_ID,     AT_30TS00_MASK,	  NULL,
+	"Atmel AT30TS00" },
+    { AT2_MANUFACTURER_ID,  AT2_30TSE004_DEVICE_ID,  AT2_30TSE004_MASK,	  NULL,
+	"Atmel AT30TSE004" },
+    { GT_MANUFACTURER_ID,   GT_30TS00_DEVICE_ID,     GT_30TS00_MASK,	  NULL,
+	"Giantec GT30TS00" },
+    { GT2_MANUFACTURER_ID,  GT2_34TS02_DEVICE_ID,    GT2_34TS02_MASK,	  NULL,
+	"Giantec GT34TS02" },
+    { MAXIM_MANUFACTURER_ID, MAX_6604_DEVICE_ID,     MAX_6604_MASK,	  NULL,
 	"Maxim MAX6604" },
-    { MCP_MANUFACTURER_ID,   MCP_9805_DEVICE_ID,    MCP_9805_MASK,   2,
+    { MCP_MANUFACTURER_ID,  MCP_9804_DEVICE_ID,	     MCP_9804_MASK,	  CMCP,
+	"Microchip Tech MCP9804" },
+    { MCP_MANUFACTURER_ID,  MCP_9805_DEVICE_ID,	     MCP_9805_MASK,	  NULL,
 	"Microchip Tech MCP9805/MCP9843" },
-    { MCP_MANUFACTURER_ID,   MCP_98243_DEVICE_ID,   MCP_98243_MASK, -4,
-	"Microchip Tech MCP98243" },
-    { MCP_MANUFACTURER_ID,   MCP_98242_DEVICE_ID,   MCP_98242_MASK, -4,
+    { MCP_MANUFACTURER_ID,  MCP_98242_DEVICE_ID,     MCP_98242_MASK,	  CMCP,
 	"Microchip Tech MCP98242" },
-    { ADT_MANUFACTURER_ID,   ADT_7408_DEVICE_ID,    ADT_7408_MASK,   4,
+    { MCP_MANUFACTURER_ID,  MCP_98243_DEVICE_ID,     MCP_98243_MASK,	  CMCP,
+	"Microchip Tech MCP98243" },
+    { MCP_MANUFACTURER_ID,  MCP_98244_DEVICE_ID,     MCP_98244_MASK,	  CMCP,
+	"Microchip Tech MCP98244" },
+    { ADT_MANUFACTURER_ID,  ADT_7408_DEVICE_ID,	     ADT_7408_MASK,	  NULL,
 	"Analog Devices ADT7408" },
-    { NXP_MANUFACTURER_ID,   NXP_SE98_DEVICE_ID,    NXP_SE98_MASK,   3,
+    { NXP_MANUFACTURER_ID,  NXP_SE98_DEVICE_ID,	     NXP_SE98_MASK,	  NULL,
 	"NXP Semiconductors SE97B/SE98" },
-    { NXP_MANUFACTURER_ID,   NXP_SE97_DEVICE_ID,    NXP_SE97_MASK,   3,
+    { NXP_MANUFACTURER_ID,  NXP_SE97_DEVICE_ID,	     NXP_SE97_MASK,	  NULL,
 	"NXP Semiconductors SE97" },
-    { STTS_MANUFACTURER_ID,  STTS_424E_DEVICE_ID,   STTS_424E_MASK,  2,
+    { STTS_MANUFACTURER_ID, STTS_424E_DEVICE_ID,     STTS_424E_MASK,	  NULL,
 	"STmicroelectronics STTS424E" },
-    { STTS_MANUFACTURER_ID,  STTS_424_DEVICE_ID,    STTS_424_MASK,   2,
+    { STTS_MANUFACTURER_ID, STTS_424_DEVICE_ID,	     STTS_424_MASK,	  NULL,
 	"STmicroelectronics STTS424" },
-    { STTS_MANUFACTURER_ID,  STTS_2002_DEVICE_ID,    STTS_2002_MASK,   2,
+    { STTS_MANUFACTURER_ID, STTS_2002_DEVICE_ID,     STTS_2002_MASK,	  NULL,
 	"STmicroelectronics STTS2002" },
-    { STTS_MANUFACTURER_ID,  STTS_2004_DEVICE_ID,    STTS_2004_MASK,   2,
-	"STmicroelectronics STTS2002" },
-    { STTS_MANUFACTURER_ID,  STTS_3000_DEVICE_ID,    STTS_3000_MASK,   2,
+    { STTS_MANUFACTURER_ID, STTS_2004_DEVICE_ID,     STTS_2004_MASK,	  NULL,
+	"STmicroelectronics STTS2004" },
+    { STTS_MANUFACTURER_ID, STTS_3000_DEVICE_ID,     STTS_3000_MASK,	  NULL,
 	"STmicroelectronics STTS3000" },
-    { CAT_MANUFACTURER_ID,   CAT_34TS02_DEVICE_ID,  CAT_34TS02_MASK, 4,
+    { CAT_MANUFACTURER_ID,  CAT_34TS02_DEVICE_ID,    CAT_34TS02_MASK,	  NULL,
 	"Catalyst CAT34TS02/CAT6095" },
-    { CAT_MANUFACTURER_ID,   CAT_34TS02C_DEVICE_ID,  CAT_34TS02C_MASK, 4,
+    { CAT_MANUFACTURER_ID,  CAT_34TS02C_DEVICE_ID,   CAT_34TS02C_MASK,	  NULL,
 	"Catalyst CAT34TS02C" },
-    { IDT_MANUFACTURER_ID,   IDT_TS3000B3_DEVICE_ID, IDT_TS3000B3_MASK, 4,
+    { CAT_MANUFACTURER_ID,  CAT_34TS04_DEVICE_ID,    CAT_34TS04_MASK,	  NULL,
+	"Catalyst CAT34TS04" },
+    { IDT_MANUFACTURER_ID,  IDT_TSE2004GB2_DEVICE_ID,IDT_TSE2004GB2_MASK, NULL,
+	"Integrated Device Technology TSE2004GB2" },
+    { IDT_MANUFACTURER_ID,  IDT_TS3000B3_DEVICE_ID,  IDT_TS3000B3_MASK,	  CIDT,
 	"Integrated Device Technology TS3000B3/TSE2002B3" },
-    { 0, 0, 0, 2, "Unknown" }
+    { IDT_MANUFACTURER_ID,  IDT_TS3000GB0_DEVICE_ID, IDT_TS3000GB0_MASK,  CIDT,
+	"Integrated Device Technology TS3000GB0" },
+    { IDT_MANUFACTURER_ID,  IDT_TS3000GB2_DEVICE_ID, IDT_TS3000GB2_MASK,  CIDT,
+	"Integrated Device Technology TS3000GB2" },
+    { IDT_MANUFACTURER_ID,  IDT_TS3001GB2_DEVICE_ID, IDT_TS3001GB2_MASK,  CIDT,
+	"Integrated Device Technology TS3001GB2" },
+    /*
+     * Don't change the location of the following two entries. Device specific
+     * entry must be located at above.
+     */
+    { 0,		    TSE2004AV_ID,	     TSE2004AV_MASK,	  NULL,
+	"TSE2004av compliant device (generic driver)" },
+    { 0, 0, 0, NULL, "Unknown" }
+};
+
+#undef CMCP
+#undef CIDT
+
+static const char *temp_resl[] = {
+	"0.5C",
+	"0.25C",
+	"0.125C",
+	"0.0625C"
 };
 
 static int
@@ -147,6 +188,10 @@ sdtemp_lookup(uint16_t mfg, uint16_t devrev)
 		    sdtemp_dev_table[i].sdtemp_devrev)
 			break;
 	}
+	/* Check TSE2004av */
+	if ((sdtemp_dev_table[i].sdtemp_mfg_id == 0)
+	    && (SDTEMP_IS_TSE2004AV(devrev) == 0))
+			i++; /* Unknown */
 
 	return i;
 }
@@ -155,7 +200,7 @@ static int
 sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
-	uint16_t mfgid, devid;
+	uint16_t mfgid, devid, cap;
 	struct sdtemp_softc sc;
 	int i, error;
 
@@ -165,22 +210,31 @@ sdtemp_match(device_t parent, cfdata_t cf, void *aux)
 	if ((ia->ia_addr & SDTEMP_ADDRMASK) != SDTEMP_ADDR)
 		return 0;
 
-	/* Verify that we can read the manufacturer ID  & Device ID */
+	/* Verify that we can read the manufacturer ID, Device ID and the capability */
 	iic_acquire_bus(sc.sc_tag, 0);
 	error = sdtemp_read_16(&sc, SDTEMP_REG_MFG_ID,  &mfgid) |
-		sdtemp_read_16(&sc, SDTEMP_REG_DEV_REV, &devid);
+		sdtemp_read_16(&sc, SDTEMP_REG_DEV_REV, &devid) |
+		sdtemp_read_16(&sc, SDTEMP_REG_CAPABILITY, &cap);
 	iic_release_bus(sc.sc_tag, 0);
 
 	if (error)
 		return 0;
 
 	i = sdtemp_lookup(mfgid, devid);
-	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
+	if ((sdtemp_dev_table[i].sdtemp_mfg_id == 0) &&
+	    (sdtemp_dev_table[i].sdtemp_devrev == 0)) {
 		aprint_debug("sdtemp: No match for mfg 0x%04x dev 0x%02x "
 		    "rev 0x%02x at address 0x%02x\n", mfgid, devid >> 8,
 		    devid & 0xff, sc.sc_address);
 		return 0;
 	}
+
+	/*
+	 * Check by SDTEMP_IS_TSE2004AV() might not be enough, so check the alarm
+	 * capability, too.
+	 */
+	if ((cap & SDTEMP_CAP_HAS_ALARM) == 0)
+		return 0;
 
 	return 1;
 }
@@ -204,23 +258,62 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": attach error %d\n", error);
 		return;
 	}
+	sc->sc_mfgid = mfgid;
+	sc->sc_devid = devid;
 	i = sdtemp_lookup(mfgid, devid);
-	sc->sc_resolution =
-	    sdtemp_dev_table[i].sdtemp_resolution;
+	sc->sc_devid_masked = devid & sdtemp_dev_table[i].sdtemp_mask;
 
 	aprint_naive(": Temp Sensor\n");
 	aprint_normal(": %s Temp Sensor\n", sdtemp_dev_table[i].sdtemp_desc);
 
-	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0)
-		aprint_debug_dev(self,
-		    "mfg 0x%04x dev 0x%02x rev 0x%02x at addr 0x%02x\n",
-		    mfgid, devid >> 8, devid & 0xff, ia->ia_addr);
+	if (sdtemp_dev_table[i].sdtemp_mfg_id == 0) {
+		if (SDTEMP_IS_TSE2004AV(devid))
+			aprint_normal_dev(self, "TSE2004av compliant. "
+			    "Manufacturer ID 0x%04hx, Device revision 0x%02x\n",
+			    mfgid, devid & TSE2004AV_REV);
+		else {
+			aprint_error_dev(self,
+			    "mfg 0x%04x dev 0x%02x rev 0x%02x at addr 0x%02x\n",
+			    mfgid, devid >> 8, devid & 0xff, ia->ia_addr);
+			iic_release_bus(sc->sc_tag, 0);
+			aprint_error_dev(self, "It should no happen. "
+			    "Why attach() found me?\n");
+			return;
+		}
+	}
 
+	error = sdtemp_read_16(sc, SDTEMP_REG_CAPABILITY, &sc->sc_capability);
+	aprint_debug_dev(self, "capability reg = %04x\n", sc->sc_capability);
+	sc->sc_resolution
+	    = __SHIFTOUT(sc->sc_capability, SDTEMP_CAP_RESOLUTION);
+	/*
+	 * Call device dependent function here. Currently, it's used for
+	 * the resolution.
+	 *
+	 * IDT's devices and some Microchip's devices have the resolution
+	 * register in the vendor specific registers area. The devices'
+	 * resolution bits in the capability register are not the maximum
+	 * resolution but the current vaule of the setting.
+	 */
+	if (sdtemp_dev_table[i].sdtemp_config != NULL)
+		sdtemp_dev_table[i].sdtemp_config(sc);
+
+	aprint_normal_dev(self, "%s accuracy",
+	    (sc->sc_capability & SDTEMP_CAP_ACCURACY_1C) ? "high" : "default");
+	if ((sc->sc_capability & SDTEMP_CAP_WIDER_RANGE) != 0)
+		aprint_normal(", wider range");
+	aprint_normal(", %s resolution", temp_resl[sc->sc_resolution]);
+	if ((sc->sc_capability & SDTEMP_CAP_VHV) != 0)
+		aprint_debug(", high voltage standoff");
+	aprint_debug(", %s timeout",
+	    (sc->sc_capability & SDTEMP_CAP_TMOUT) ? "25-35ms" : "10-60ms");
+	if ((sc->sc_capability & SDTEMP_CAP_EVSD) != 0)
+		aprint_normal(", event with shutdown");
+	aprint_normal("\n");
 	/*
 	 * Alarm capability is required;  if not present, this is likely
 	 * not a real sdtemp device.
 	 */
-	error = sdtemp_read_16(sc, SDTEMP_REG_CAPABILITY, &sc->sc_capability);
 	if (error != 0 || (sc->sc_capability & SDTEMP_CAP_HAS_ALARM) == 0) {
 		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(self,
@@ -234,19 +327,6 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "error %d writing config register\n",
 		    error);
 		return;
-	}
-	/* If variable resolution, set to max */
-	if (sc->sc_resolution < 0) {
-		sc->sc_resolution = ~sc->sc_resolution;
-		error = sdtemp_write_16(sc, SDTEMP_REG_RESOLUTION,
-					sc->sc_resolution & 0x3);
-		if (error != 0) {
-			iic_release_bus(sc->sc_tag, 0);
-			aprint_error_dev(self,
-			    "error %d writing resolution register\n", error);
-			return;
-		} else
-			sc->sc_resolution++;
 	}
 	iic_release_bus(sc->sc_tag, 0);
 
@@ -468,7 +548,7 @@ sdtemp_decode_temp(struct sdtemp_softc *sc, uint16_t temp)
 		temp |= SDTEMP_TEMP_SIGN_EXT;
 
 	/* Mask off only bits valid within current resolution */
-	temp &= ~(0xf >> sc->sc_resolution);
+	temp &= ~(0x7 >> sc->sc_resolution);
 
 	/* Treat as signed and extend to 32-bits */
 	stemp = (int16_t)temp;
@@ -553,6 +633,64 @@ sdtemp_pmf_resume(device_t dev, const pmf_qual_t *qual)
 	}
 	iic_release_bus(sc->sc_tag, 0);
 	return (error == 0);
+}
+
+/* Device dependent config functions */
+
+static void
+sdtemp_config_mcp(struct sdtemp_softc *sc)
+{
+	int rv;
+	uint8_t resolreg;
+
+	/* Note that MCP9805 has no resolution register */
+	switch (sc->sc_devid_masked) {
+	case MCP_9804_DEVICE_ID:
+	case MCP_98242_DEVICE_ID:
+	case MCP_98243_DEVICE_ID:
+		resolreg = SDTEMP_REG_MCP_RESOLUTION_9804;
+		break;
+	case MCP_98244_DEVICE_ID:
+		resolreg = SDTEMP_REG_MCP_RESOLUTION_98244;
+		break;
+	default:
+		aprint_error("%s: %s: unknown device ID (%04hx)\n",
+		    device_xname(sc->sc_dev), __func__, sc->sc_devid_masked);
+		return;
+	}
+
+	/*
+	 * Set resolution to the max.
+	 *
+	 * Even if it fails, the resolution will be the default. It's not a
+	 * fatal error.
+	 */
+	rv = sdtemp_write_16(sc, resolreg, SDTEMP_CAP_RESOLUTION_MAX);
+	if (rv == 0)
+		sc->sc_resolution = SDTEMP_CAP_RESOLUTION_MAX;
+	else
+		aprint_error("%s: error %d writing resolution register\n",
+		    device_xname(sc->sc_dev), rv);
+}
+
+static void
+sdtemp_config_idt(struct sdtemp_softc *sc)
+{
+	int rv;
+
+	/*
+	 * Set resolution to the max.
+	 *
+	 * Even if it fails, the resolution will be the default. It's not a
+	 * fatal error.
+	 */
+	rv = sdtemp_write_16(sc, SDTEMP_REG_IDT_RESOLUTION,
+	    __SHIFTIN(SDTEMP_CAP_RESOLUTION_MAX, SDTEMP_CAP_RESOLUTION));
+	if (rv == 0)
+		sc->sc_resolution = SDTEMP_CAP_RESOLUTION_MAX;
+	else
+		aprint_error("%s: error %d writing resolution register\n",
+		    device_xname(sc->sc_dev), rv);
 }
 
 MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec,sysmon_envsys");

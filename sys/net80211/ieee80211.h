@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.h,v 1.26.12.1 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: ieee80211.h,v 1.26.12.2 2016/10/05 20:56:08 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -181,6 +181,9 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_FC1_DIR_FROMDS		0x02	/* AP ->STA */
 #define	IEEE80211_FC1_DIR_DSTODS		0x03	/* AP ->AP  */
 
+#define IEEE80211_IS_DSTODS(wh) \
+	(((wh)->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
+
 #define	IEEE80211_FC1_MORE_FRAG			0x04
 #define	IEEE80211_FC1_RETRY			0x08
 #define	IEEE80211_FC1_PWR_MGT			0x10
@@ -212,6 +215,12 @@ struct ieee80211_qosframe_addr4 {
 #define	IEEE80211_QOS_ESOP			0x0010
 #define	IEEE80211_QOS_ESOP_S			4
 #define	IEEE80211_QOS_TID			0x000f
+
+/* does frame have QoS sequence control data */
+#define IEEE80211_QOS_HAS_SEQ(wh) \
+	(((wh)->i_fc[0] & \
+	    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
+	    (IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
 
 /*
  * WME/802.11e information element.

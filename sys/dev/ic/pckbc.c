@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.57.4.1 2015/06/06 14:40:07 skrll Exp $ */
+/* $NetBSD: pckbc.c,v 1.57.4.2 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.57.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.57.4.2 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ pckbc_attach(struct pckbc_softc *sc)
 
 	/* set initial cmd byte */
 	if (!pckbc_put8042cmd(t)) {
-		printf("pckbc: cmd word write error\n");
+		aprint_error("pckbc: cmd word write error\n");
 		return;
 	}
 
@@ -340,11 +340,11 @@ pckbc_attach(struct pckbc_softc *sc)
 	 *  (eg UMC880?).
 	 */
 	if (!pckbc_send_cmd(iot, ioh_c, KBC_AUXECHO)) {
-		printf("pckbc: aux echo error 1\n");
+		aprint_error("pckbc: aux echo error 1\n");
 		goto nomouse;
 	}
 	if (!pckbc_wait_output(iot, ioh_c)) {
-		printf("pckbc: aux echo error 2\n");
+		aprint_error("pckbc: aux echo error 2\n");
 		goto nomouse;
 	}
 	t->t_haveaux = 1;
@@ -386,7 +386,7 @@ nomouse:
 	/* enable needed interrupts */
 	t->t_cmdbyte |= cmdbits;
 	if (!pckbc_put8042cmd(t))
-		printf("pckbc: cmd word write error\n");
+		aprint_error("pckbc: cmd word write error\n");
 }
 
 static void

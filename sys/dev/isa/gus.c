@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.109 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: gus.c,v 1.109.14.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999, 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.109 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.109.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -693,8 +693,8 @@ gusprobe(device_t parent, cfdata_t match, void *aux)
 
 	if (recdrq != ISA_UNKNOWN_DRQ) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == -1) {
-			printf("gus: invalid second DMA channel (%d), card not "
-			    "probed\n", recdrq);
+			printf("gus: invalid second DMA channel (%d), card "
+			    "not probed\n", recdrq);
 			return 0;
 		}
 	} else
@@ -944,8 +944,8 @@ gusattach(device_t parent, device_t self, void *aux)
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
 		    sc->sc_play_maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(sc->sc_dev, "can't create map for drq %d\n",
-			       sc->sc_playdrq);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_playdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
 		}
@@ -961,8 +961,8 @@ gusattach(device_t parent, device_t self, void *aux)
 		}
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
 		    sc->sc_req_maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
-			aprint_error_dev(sc->sc_dev, "can't create map for drq %d\n",
-			       sc->sc_recdrq);
+			aprint_error_dev(sc->sc_dev,
+			    "can't create map for drq %d\n", sc->sc_recdrq);
 			ad1848_destroy_locks(&sc->sc_codec.sc_ad1848);
 			return;
 		}
@@ -1057,11 +1057,13 @@ gusattach(device_t parent, device_t self, void *aux)
 	 * full right.
 	 * For mono playback, we set up both voices playing the same buffer.
 	 */
-	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, (unsigned char) GUS_VOICE_LEFT);
+	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT,
+	    (unsigned char)GUS_VOICE_LEFT);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_PAN_POS);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, GUS_PAN_FULL_LEFT);
 
-	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, (unsigned char) GUS_VOICE_RIGHT);
+	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT,
+	    (unsigned char)GUS_VOICE_RIGHT);
 	SELECT_GUS_REG(iot, ioh2, GUSREG_PAN_POS);
 	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, GUS_PAN_FULL_RIGHT);
 
@@ -1144,7 +1146,8 @@ gus_deinterleave(struct gus_softc *sc, void *tbuf, int size)
 		printf("gus: deinterleave %d > %d\n", size, sc->sc_blocksize);
 		return;
 	} else if (size < sc->sc_blocksize) {
-		DPRINTF(("gus: deinterleave %d < %d\n", size, sc->sc_blocksize));
+		DPRINTF(("gus: deinterleave %d < %d\n", size,
+			sc->sc_blocksize));
 	}
 
 	/*
@@ -1403,7 +1406,8 @@ gusintr(void *arg)
 
 	if (HAS_CODEC(sc))
 		retval = ad1848_isa_intr(&sc->sc_codec);
-	if ((intr = bus_space_read_1(iot, ioh1, GUS_IRQ_STATUS)) & GUSMASK_IRQ_DMATC) {
+	if ((intr = bus_space_read_1(iot, ioh1, GUS_IRQ_STATUS))
+	    & GUSMASK_IRQ_DMATC) {
 		DMAPRINTF(("gusintr DMA flags=%x\n", sc->sc_flags));
 #ifdef DIAGNOSTIC
 		gusdmaintrcnt++;
@@ -1727,8 +1731,9 @@ gus_voice_intr(struct gus_softc *sc)
 			status = bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
 			if (status & GUSMASK_VOICE_STOPPED) {
 				if (voice != GUS_VOICE_LEFT) {
-					DMAPRINTF(("%s: spurious voice %d stop?\n",
-						   device_xname(sc->sc_dev), voice));
+					DMAPRINTF(("%s: spurious voice %d "
+					    "stop?\n",
+					    device_xname(sc->sc_dev), voice));
 					gus_stop_voice(sc, voice, 0);
 					continue;
 				}
@@ -1743,15 +1748,18 @@ gus_voice_intr(struct gus_softc *sc)
 					 * just trying to get the next buffer
 					 * in place.  Start the voice again.
 					 */
-					printf("%s: stopped voice not drained? (%x)\n",
-					       device_xname(sc->sc_dev), sc->sc_bufcnt);
+					printf("%s: stopped voice not drained?"
+					    " (%x)\n",
+					    device_xname(sc->sc_dev),
+					    sc->sc_bufcnt);
 					gus_falsestops++;
 
-					sc->sc_playbuf = (sc->sc_playbuf + 1) % sc->sc_nbufs;
+					sc->sc_playbuf = (sc->sc_playbuf + 1)
+					    % sc->sc_nbufs;
 					gus_start_playing(sc, sc->sc_playbuf);
 				} else if (sc->sc_bufcnt < 0) {
-					panic("%s: negative bufcnt in stopped voice",
-					      device_xname(sc->sc_dev));
+					panic("%s: negative bufcnt in stopped "
+					    "voice", device_xname(sc->sc_dev));
 				} else {
 					sc->sc_playbuf = -1; /* none are active */
 					gus_stops++;
@@ -2240,10 +2248,12 @@ gus_set_volume(struct gus_softc *sc, int voice, int volume)
 	bus_space_write_1(iot, ioh2, GUS_VOICE_SELECT, (unsigned char) voice);
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_START_VOLUME);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) (gusvol >> 4));
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    (unsigned char)(gusvol >> 4));
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_END_VOLUME);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) (gusvol >> 4));
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    (unsigned char)(gusvol >> 4));
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_CUR_VOLUME);
 	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, gusvol << 4);
@@ -2773,9 +2783,11 @@ guspoke(bus_space_tag_t iot, bus_space_handle_t ioh2,
 	 */
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
-	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
+	bus_space_write_2(iot, ioh2, GUS_DATA_LOW,
+	    (unsigned int)(address & 0xffff));
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    (unsigned char)((address >> 16) & 0xff));
 
 	/*
 	 * Actually write the data
@@ -2796,9 +2808,11 @@ guspeek(bus_space_tag_t iot, bus_space_handle_t ioh2, u_long address)
 	 */
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_LOW);
-	bus_space_write_2(iot, ioh2, GUS_DATA_LOW, (unsigned int) (address & 0xffff));
+	bus_space_write_2(iot, ioh2, GUS_DATA_LOW,
+	    (unsigned int)(address & 0xffff));
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DRAM_ADDR_HIGH);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, (unsigned char) ((address >> 16) & 0xff));
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    (unsigned char)((address >> 16) & 0xff));
 
 	/*
 	 * Read in the data from the board
@@ -2936,8 +2950,8 @@ gusreset(struct gus_softc *sc, int voices)
 	bus_space_read_1(iot, ioh2, GUS_DATA_HIGH);
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
-	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, GUSMASK_MASTER_RESET | GUSMASK_DAC_ENABLE |
-		GUSMASK_IRQ_ENABLE);
+	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH,
+	    GUSMASK_MASTER_RESET | GUSMASK_DAC_ENABLE | GUSMASK_IRQ_ENABLE);
 }
 
 
@@ -2982,7 +2996,8 @@ gus_init_cs4231(struct gus_softc *sc)
 		   will do the real mixing for them. */
 		sc->sc_mixcontrol &= ~GUSMASK_LINE_IN; /* 0 enables. */
 		sc->sc_mixcontrol |= GUSMASK_MIC_IN; /* 1 enables. */
-		bus_space_write_1(iot, ioh1, GUS_MIX_CONTROL, sc->sc_mixcontrol);
+		bus_space_write_1(iot, ioh1, GUS_MIX_CONTROL,
+		    sc->sc_mixcontrol);
 
 		ad1848_isa_attach(&sc->sc_codec);
 		/* turn on pre-MUX microphone gain. */
@@ -3112,7 +3127,8 @@ gus_dmain_intr(struct gus_softc *sc)
 		sc->sc_inarg = 0;
 
 		sc->sc_flags &= ~GUS_DMAIN_ACTIVE;
-		DMAPRINTF(("calling dmain_intr callback %p(%p)\n", callback, arg));
+		DMAPRINTF(("calling dmain_intr callback %p(%p)\n", callback,
+		    arg));
 		(*callback)(arg);
 		return 1;
 	} else {

@@ -1,4 +1,4 @@
-/* $NetBSD: argpio.c,v 1.6 2011/07/17 01:29:25 dyoung Exp $ */
+/* $NetBSD: argpio.c,v 1.6.30.1 2016/10/05 20:55:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Garrett D'Amore
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.6 2011/07/17 01:29:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: argpio.c,v 1.6.30.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,7 +91,7 @@ CFATTACH_DECL_NEW(argpio, sizeof (struct argpio_softc), argpio_match,
 #define	GETREG(sc, o)		bus_space_read_4(sc->sc_st, sc->sc_sh, o)
 #define	PUTREG(sc, o, v)	bus_space_write_4(sc->sc_st, sc->sc_sh, o, v)
 #define	FLUSH(sc)		bus_space_barrier(sc->sc_st, sc->sc_sh, \
-				0, 12, BUS_SPACE_BARRIER_SYNC)
+				0, 12, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 
 int
 argpio_match(device_t parent, cfdata_t match, void *aux)

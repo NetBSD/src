@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.30.1 2016/10/05 20:55:27 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.30.1 2016/10/05 20:55:27 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -59,6 +59,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2011/08/27 13:42:45 bouyer Exp $");
 #include <mips/bonito/bonitoreg.h>
 
 #include <evbmips/loongson/autoconf.h>
+#if defined(PCI_NETBSD_CONFIGURE)
+#include <evbmips/loongson/loongson_bus_defs.h>
+#endif
 
 #include "locators.h"
 #include "pci.h"
@@ -100,19 +103,16 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 #if defined(PCI_NETBSD_CONFIGURE)
-	{
-		struct extent *ioext, *memext;
+	struct extent *ioext = extent_create("pciio",  0x00001000, 0x00003fff,
+	    NULL, 0, EX_NOWAIT);
+	struct extent *memext = extent_create("pcimem", 0, BONITO_PCILO_SIZE,
+	    NULL, 0, EX_NOWAIT);
+	struct mips_cache_info * const mci = &mips_cache_info;
 
-		ioext = extent_create("pciio",  0x00001000, 0x00003fff,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-		memext = extent_create("pcimem", 0, BONITO_PCILO_SIZE,
-		    M_DEVBUF, NULL, 0, EX_NOWAIT);
-
-		pci_configure_bus(&gdium_configuration.gc_pc, ioext, memext,
-		    NULL, 0, mips_dcache_align);
-		extent_destroy(ioext);
-		extent_destroy(memext);
-	}
+	pci_configure_bus(&bonito_pc, ioext, memext,
+	    NULL, 0, mci->mci_dcache_align);
+	extent_destroy(ioext);
+	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	for (i = 0; i < __arraycount(mainbusdevs); i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdium_intr.c,v 1.7 2014/03/29 19:28:28 christos Exp $	*/
+/*	$NetBSD: gdium_intr.c,v 1.7.6.1 2016/10/05 20:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.7 2014/03/29 19:28:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdium_intr.c,v 1.7.6.1 2016/10/05 20:55:26 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -297,7 +297,7 @@ evbmips_intr_disestablish(void *cookie)
 }
 
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	struct evbmips_intrhand *ih;
 	int level;

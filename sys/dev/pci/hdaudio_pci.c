@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio_pci.c,v 1.1.2.4 2016/07/09 20:25:03 skrll Exp $ */
+/* $NetBSD: hdaudio_pci.c,v 1.1.2.5 2016/10/05 20:55:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.1.2.4 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio_pci.c,v 1.1.2.5 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,9 +170,11 @@ hdaudio_pci_attach(device_t parent, device_t self, void *opaque)
 				sc->sc_hdaudio.sc_memh,
 				sc->sc_hdaudio.sc_memsize);
 		sc->sc_hdaudio.sc_memvalid = false;
-		csr = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG);
+		csr = pci_conf_read(sc->sc_pc, sc->sc_tag,
+		    PCI_COMMAND_STATUS_REG);
 		csr &= ~(PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG, csr);
+		pci_conf_write(sc->sc_pc, sc->sc_tag,
+		    PCI_COMMAND_STATUS_REG, csr);
 		pmf_device_deregister(self);
 	}
 }

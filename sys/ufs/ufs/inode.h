@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.71.4.1 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: inode.h,v 1.71.4.2 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -210,29 +210,6 @@ struct inode {
 #define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
 #define	i_ffs2_extb		i_din.ffs2_din->di_extb
 
-#define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
-#define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
-#define	i_e2fs_size		i_din.e2fs_din->e2di_size
-#define	i_e2fs_atime		i_din.e2fs_din->e2di_atime
-#define	i_e2fs_ctime		i_din.e2fs_din->e2di_ctime
-#define	i_e2fs_mtime		i_din.e2fs_din->e2di_mtime
-#define	i_e2fs_dtime		i_din.e2fs_din->e2di_dtime
-#define	i_e2fs_gid		i_din.e2fs_din->e2di_gid
-#define	i_e2fs_nlink		i_din.e2fs_din->e2di_nlink
-#define	i_e2fs_nblock		i_din.e2fs_din->e2di_nblock
-#define	i_e2fs_flags		i_din.e2fs_din->e2di_flags
-#define	i_e2fs_version		i_din.e2fs_din->e2di_version
-#define	i_e2fs_blocks		i_din.e2fs_din->e2di_blocks
-#define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
-#define	i_e2fs_gen		i_din.e2fs_din->e2di_gen
-#define	i_e2fs_facl		i_din.e2fs_din->e2di_facl
-#define	i_e2fs_dacl		i_din.e2fs_din->e2di_dacl
-#define	i_e2fs_faddr		i_din.e2fs_din->e2di_faddr
-#define	i_e2fs_nblock_high	i_din.e2fs_din->e2di_nblock_high
-#define	i_e2fs_facl_high	i_din.e2fs_din->e2di_facl_high
-#define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
-#define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
-
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */
 #define	IN_CHANGE	0x0002		/* Inode change time update request. */
@@ -249,7 +226,6 @@ struct inode {
 /*	   unused       0x1000 */	/* was LFS-only IN_PAGING */
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 /*	   unused	0x4000 */	/* was LFS-only IN_CDIROP */
-#define	IN_E4EXTENTS    0x8000		/* ext4 extents */
 
 #if defined(_KERNEL)
 

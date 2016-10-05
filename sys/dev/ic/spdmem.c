@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.10.4.4 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: spdmem.c,v 1.10.4.5 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.10.4.4 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.10.4.5 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -185,6 +185,10 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	if ((sc->sc_read)(sc, 2, &spd_type) != 0)
 		return 0;
 
+	/* Memory type should not be 0 */
+	if (spd_type == 0x00)
+		return 0;
+
 	/* For older memory types, validate the checksum over 1st 63 bytes */
 	if (spd_type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
 		for (i = 0; i < 63; i++) {
@@ -263,8 +267,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		 * it some other time.
 		 */
 		return 1;
-	} else
-		return 0;
+	}
 
 	/* For unrecognized memory types, don't match at all */
 	return 0;
@@ -408,7 +411,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 			strlcat(sc->sc_type, " NVDIMM hybrid",
 			    SPDMEM_TYPE_MAXLEN);
 	}
-	
+
 	if (node != NULL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    0,
@@ -845,7 +848,7 @@ decode_fbdimm(const struct sysctlnode *node, device_t self, struct spdmem *s)
 #define	__FBDIMM_CYCLES(field) (s->sm_fbd.field / s->sm_fbd.fbdimm_tCKmin)
 
 	aprint_verbose_dev(self, LATENCY, __FBDIMM_CYCLES(fbdimm_tAAmin),
-		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin), 
+		__FBDIMM_CYCLES(fbdimm_tRCDmin), __FBDIMM_CYCLES(fbdimm_tRPmin),
 		(s->sm_fbd.fbdimm_tRAS_msb * 256 + s->sm_fbd.fbdimm_tRAS_lsb) /
 		    s->sm_fbd.fbdimm_tCKmin);
 
@@ -898,7 +901,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	default:
 		dimm_size = -1;		/* flag invalid value */
 	}
-	if (dimm_size >= 0) {				
+	if (dimm_size >= 0) {
 		dimm_size = (1 << dimm_size) *
 		    (s->sm_ddr4.ddr4_package_ranks + 1); /* log.ranks/DIMM */
 		if (s->sm_ddr4.ddr4_signal_loading == 2) {

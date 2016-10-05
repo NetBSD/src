@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.74.2.4 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.4 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll E
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/percpu.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -72,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.3 2016/07/09 20:25:22 skrll E
 
 #include <net/net_osdep.h>
 
-struct	route ip6_forward_rt;
+extern percpu_t *ip6_forward_rt_percpu;
 
 extern pfil_head_t *inet6_pfil_hook;	/* XXX */
 
@@ -135,6 +136,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	struct in6_addr src_in6, dst_in6;
 	struct ifnet *rcvif = NULL;
 	struct psref psref;
+	struct route *ro;
 #ifdef IPSEC
 	int needipsec = 0;
 	struct secpolicy *sp = NULL;
@@ -203,6 +205,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 #endif /* IPSEC */
 
+	ro = percpu_getref(ip6_forward_rt_percpu);
 	if (srcrt) {
 		union {
 			struct sockaddr		dst;
@@ -210,17 +213,18 @@ ip6_forward(struct mbuf *m, int srcrt)
 		} u;
 
 		sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-		if ((rt = rtcache_lookup(&ip6_forward_rt, &u.dst)) == NULL) {
+		if ((rt = rtcache_lookup(ro, &u.dst)) == NULL) {
 			IP6_STATINC(IP6_STAT_NOROUTE);
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
 				icmp6_error(mcopy, ICMP6_DST_UNREACH,
 					    ICMP6_DST_UNREACH_NOROUTE, 0);
 			}
+			percpu_putref(ip6_forward_rt_percpu);
 			goto drop;
 		}
-	} else if ((rt = rtcache_validate(&ip6_forward_rt)) == NULL &&
-	           (rt = rtcache_update(&ip6_forward_rt, 1)) == NULL) {
+	} else if ((rt = rtcache_validate(ro)) == NULL &&
+	           (rt = rtcache_update(ro, 1)) == NULL) {
 		/*
 		 * rtcache_getdst(ip6_forward_rt)->sin6_addr was equal to
 		 * ip6->ip6_dst
@@ -231,9 +235,11 @@ ip6_forward(struct mbuf *m, int srcrt)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
 			    ICMP6_DST_UNREACH_NOROUTE, 0);
 		}
+		percpu_putref(ip6_forward_rt_percpu);
 		goto drop;
 	}
-	dst = satocsin6(rtcache_getdst(&ip6_forward_rt));
+	dst = satocsin6(rtcache_getdst(ro));
+	percpu_putref(ip6_forward_rt_percpu);
 
 	/*
 	 * Source scope check: if a packet can't be delivered to its
@@ -250,7 +256,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	    in6_setscope(&src_in6, rcvif, &inzone) != 0 ||
 	    inzone != outzone) {
 		ip6_cantforward(ip6, rcvif, rt->rt_ifp,
-		    "src[%s] inzone %d outzone %d", 
+		    "src[%s] inzone %d outzone %d",
 		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
@@ -318,10 +324,11 @@ ip6_forward(struct mbuf *m, int srcrt)
 	 */
 	if (rt->rt_ifp == rcvif && !srcrt && ip6_sendredirects &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0) {
+		ro = percpu_getref(ip6_forward_rt_percpu);
 		if ((rt->rt_ifp->if_flags & IFF_POINTOPOINT) &&
-		    nd6_is_addr_neighbor(
-		        satocsin6(rtcache_getdst(&ip6_forward_rt)),
-			rt->rt_ifp)) {
+		    nd6_is_addr_neighbor(satocsin6(rtcache_getdst(ro)),
+		                         rt->rt_ifp)) {
+			percpu_putref(ip6_forward_rt_percpu);
 			/*
 			 * If the incoming interface is equal to the outgoing
 			 * one, the link attached to the interface is
@@ -341,6 +348,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 				    ICMP6_DST_UNREACH_ADDR, 0);
 			goto drop;
 		}
+		percpu_putref(ip6_forward_rt_percpu);
 		type = ND_REDIRECT;
 	}
 
@@ -409,8 +417,10 @@ ip6_forward(struct mbuf *m, int srcrt)
 			IP6_STATINC(IP6_STAT_REDIRECTSENT);
 		else {
 #ifdef GATEWAY
+			ro = percpu_getref(ip6_forward_rt_percpu);
 			if (m->m_flags & M_CANFASTFWD)
-				ip6flow_create(&ip6_forward_rt, m);
+				ip6flow_create(ro, m);
+			percpu_putref(ip6_forward_rt_percpu);
 #endif
 			if (mcopy)
 				goto freecopy;

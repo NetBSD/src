@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.98.2.2 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.98.2.3 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.2 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.98.2.3 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1672,9 +1672,6 @@ coda_reclaim(void *v)
 	cp->c_flags &= ~C_SYMLINK;
 	cp->c_symlen = 0;
     }
-
-    /* Remove it from the table so it can't be found. */
-    vcache_remove(vp->v_mount, &cp->c_fid, sizeof(CodaFid));
 
     mutex_enter(vp->v_interlock);
     mutex_enter(&cp->c_lock);

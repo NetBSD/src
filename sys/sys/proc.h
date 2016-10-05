@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.320.6.6 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.320.6.7 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@
 #include <machine/proc.h>		/* Machine-dependent proc substruct */
 #include <machine/pcb.h>
 #include <sys/aio.h>
+#include <sys/idtype.h>
 #include <sys/rwlock.h>
 #include <sys/mqueue.h>
 #include <sys/mutex.h>
@@ -192,6 +193,10 @@ struct emul {
 	void 		(*e_dtrace_syscall)(uint32_t, register_t,
 			    const struct sysent *, const void *,
 			    const register_t *, int);
+
+	/* Emulation specific support for ktracing signal posts */
+	void		(*e_ktrpsig)(int, sig_t, const sigset_t *,
+			    const struct ksiginfo *);
 };
 
 /*
@@ -496,6 +501,9 @@ int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int, int) __dead;
 int	kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval);
 int	do_sys_wait(int *, int *, int, struct rusage *);
+int	do_sys_waitid(idtype_t, id_t, int *, int *, int, struct wrusage *,
+	    siginfo_t *);
+
 struct proc *proc_alloc(void);
 void	proc0_init(void);
 pid_t	proc_alloc_pid(struct proc *);
@@ -547,6 +555,8 @@ _proclist_skipmarker(struct proc *p0)
 
 	return p;
 }
+
+#define PROC_PTRSZ(p) (((p)->p_flag & PK_32) ? sizeof(int) : sizeof(void *))
 
 /*
  * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.

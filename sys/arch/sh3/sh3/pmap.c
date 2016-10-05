@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2010/11/12 07:59:27 uebayasi Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77.36.1 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2010/11/12 07:59:27 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77.36.1 2016/10/05 20:55:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -904,15 +904,21 @@ pmap_phys_address(paddr_t cookie)
  * a virtual cache alias against vaddr_t foff.
  */
 void
-pmap_prefer(vaddr_t foff, vaddr_t *vap)
+pmap_prefer(vaddr_t foff, vaddr_t *vap, int td)
 {
-	vaddr_t va;
+	if (!SH_HAS_VIRTUAL_ALIAS) 
+		return;
 
-	if (SH_HAS_VIRTUAL_ALIAS) {
-		va = *vap;
+	vaddr_t va = *vap;
+	vsize_t d = (foff - va) & sh_cache_prefer_mask;
 
-		*vap = va + ((foff - va) & sh_cache_prefer_mask);
-	}
+	if (d == 0)
+		return;
+
+	if (td)
+		*vap = va - ((-d) & sh_cache_prefer_mask);
+	else
+		*vap = va + d;
 }
 #endif /* SH4 */
 

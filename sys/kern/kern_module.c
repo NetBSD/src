@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.101.2.5 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.101.2.6 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.5 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.6 2016/10/05 20:56:02 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -93,7 +93,8 @@ static void	module_require_force(module_t *);
 static int	module_do_load(const char *, bool, int, prop_dictionary_t,
 		    module_t **, modclass_t modclass, bool);
 static int	module_do_unload(const char *, bool);
-static int	module_do_builtin(const char *, module_t **, prop_dictionary_t);
+static int	module_do_builtin(const module_t *, const char *, module_t **,
+    prop_dictionary_t);
 static int	module_fetch_info(module_t *);
 static void	module_thread(void *);
 
@@ -266,11 +267,12 @@ module_builtin_add(modinfo_t *const *mip, size_t nmodinfo, bool init)
 	/* finally, init (if required) */
 	if (init) {
 		for (i = 0; i < nmodinfo; i++) {
-			rv = module_do_builtin(modp[i]->mod_info->mi_name,
-			    NULL, NULL);
+			rv = module_do_builtin(modp[i],
+			    modp[i]->mod_info->mi_name, NULL, NULL);
 			/* throw in the towel, recovery hard & not worth it */
 			if (rv)
-				panic("builtin module \"%s\" init failed: %d",
+				panic("%s: builtin module \"%s\" init failed:"
+				    " %d", __func__,
 				    modp[i]->mod_info->mi_name, rv);
 		}
 	}
@@ -388,7 +390,7 @@ module_start_unload_thread(void)
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, module_thread,
 	    NULL, NULL, "modunload");
 	if (error != 0)
-		panic("module_init: %d", error);
+		panic("%s: %d", __func__, error);
 }
 
 /*
@@ -506,7 +508,8 @@ module_init_class(modclass_t modclass)
 			 * MODFLG_MUST_FORCE, don't try to override that!)
 			 */
 			if ((mod->mod_flags & MODFLG_MUST_FORCE) ||
-			    module_do_builtin(mi->mi_name, NULL, NULL) != 0) {
+			    module_do_builtin(mod, mi->mi_name, NULL,
+			    NULL) != 0) {
 				TAILQ_REMOVE(&module_builtins, mod, mod_chain);
 				TAILQ_INSERT_TAIL(&bi_fail, mod, mod_chain);
 			}
@@ -704,7 +707,7 @@ module_rele(const char *name)
 	mod = module_lookup(name);
 	if (mod == NULL) {
 		kernconfig_unlock();
-		panic("module_rele: gone");
+		panic("%s: gone", __func__);
 	}
 	mod->mod_refcnt--;
 	kernconfig_unlock();
@@ -746,7 +749,8 @@ module_enqueue(module_t *mod)
  *	already linked into the kernel.
  */
 static int
-module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
+module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
+    prop_dictionary_t props)
 {
 	const char *p, *s;
 	char buf[MAXMODNAME];
@@ -785,7 +789,8 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 		 * cases (such as nfsserver + nfs), the dependee can be
 		 * succesfully linked without the dependencies.
 		 */
-		module_error("can't find builtin dependency `%s'", name);
+		module_error("%s: can't find builtin dependency `%s'",
+		    pmod->mod_info->mi_name, name);
 		return ENOENT;
 	}
 
@@ -804,12 +809,12 @@ module_do_builtin(const char *name, module_t **modp, prop_dictionary_t props)
 			if (buf[0] == '\0')
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
-				module_error("too many required modules "
-				    "%d >= %d", mod->mod_nrequired,
-				    MAXMODDEPS - 1);
+				module_error("%s: too many required modules "
+				    "%d >= %d", pmod->mod_info->mi_name,
+				    mod->mod_nrequired, MAXMODDEPS - 1);
 				return EINVAL;
 			}
-			error = module_do_builtin(buf, &mod2, NULL);
+			error = module_do_builtin(mod, buf, &mod2, NULL);
 			if (error != 0) {
 				return error;
 			}
@@ -913,7 +918,7 @@ module_do_load(const char *name, bool isdep, int flags,
 			depth--;
 			return EPERM;
 		} else {
-			error = module_do_builtin(name, modp, props);
+			error = module_do_builtin(mod, name, modp, props);
 			depth--;
 			return error;
 		}
@@ -1169,7 +1174,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(name != NULL);
 
 	module_print("unload requested for '%s' (%s)", name,
-	    load_requires_force?"TRUE":"FALSE");
+	    load_requires_force ? "TRUE" : "FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
 		module_error("module `%s' not found", name);

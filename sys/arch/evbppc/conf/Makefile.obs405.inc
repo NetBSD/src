@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.obs405.inc,v 1.12 2014/08/05 15:40:59 apb Exp $
+#	$NetBSD: Makefile.obs405.inc,v 1.12.4.1 2016/10/05 20:55:27 skrll Exp $
 
 CFLAGS+=-mcpu=405
 AFLAGS+=-mcpu=405
@@ -15,7 +15,7 @@ SYSTEM_FIRST_SFILE=	${THISPPC}/obs405/obs200_locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT}; \
 		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 
@@ -30,7 +30,7 @@ SYSTEM_FIRST_SFILE=	${POWERPC}/${PPCDIR}/openbios/locore.S
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${MKIMG} $@ $@.img ; \
-	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT]; \
+	OBJDUMP=${OBJDUMP}; OBJCOPY=${OBJCOPY}; STAT=${TOOL_STAT}; \
 		export OBJDUMP OBJCOPY STAT; ${MKIMG} $@ $@.img
 
 

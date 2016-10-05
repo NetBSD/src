@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_mipsNN.h,v 1.4 2003/02/17 11:35:02 simonb Exp $	*/
+/*	$NetBSD: cache_mipsNN.h,v 1.4.172.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,21 +35,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MIPS_CACHE_MIPSNN_H_
+#define _MIPS_CACHE_MIPSNN_H_
+
 void	mipsNN_cache_init(uint32_t, uint32_t);
 
-void	mipsNN_icache_sync_all_16(void);
-void	mipsNN_icache_sync_all_32(void);
-void	mipsNN_icache_sync_range_16(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_32(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_16(vaddr_t, vsize_t);
-void	mipsNN_icache_sync_range_index_32(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_all_16(void);
-void	mipsNN_pdcache_wbinv_all_32(void);
-void	mipsNN_pdcache_wbinv_range_16(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_32(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_16(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wbinv_range_index_32(vaddr_t, vsize_t);
-void	mipsNN_pdcache_inv_range_16(vaddr_t, vsize_t);
-void	mipsNN_pdcache_inv_range_32(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wb_range_16(vaddr_t, vsize_t);
-void	mipsNN_pdcache_wb_range_32(vaddr_t, vsize_t);
+void	mipsNN_picache_sync_all(void);
+void	mipsNN_picache_sync_range(register_t, vsize_t);
+void	mipsNN_picache_sync_range_index(vaddr_t, vsize_t);
+
+void	mipsNN_pdcache_wbinv_all(void);
+void	mipsNN_pdcache_wbinv_range_index(vaddr_t, vsize_t);
+
+void	mipsNN_sdcache_wbinv_all(void);
+void	mipsNN_sdcache_wbinv_range_index(vaddr_t, vsize_t);
+
+#endif /* _MIPS_CACHE_MIPSNN_H_ */

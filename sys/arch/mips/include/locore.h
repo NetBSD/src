@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.94.2.2 2015/09/22 12:05:47 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.94.2.3 2016/10/05 20:55:31 skrll Exp $ */
 
 /*
  * This file should not be included by MI code!!!
@@ -32,9 +32,282 @@
 #include "opt_cputype.h"
 #endif
 
+#include <sys/cpu.h>
+
 #include <mips/mutex.h>
 #include <mips/cpuregs.h>
 #include <mips/reg.h>
+
+#ifndef __BSD_PTENTRY_T__
+#define __BSD_PTENTRY_T__
+typedef uint32_t pt_entry_t;
+#define PRIxPTE		PRIx32
+#endif
+
+#include <uvm/pmap/tlb.h>
+
+#ifdef _KERNEL
+
+#if defined(_MODULAR) || defined(_LKM) || defined(_STANDALONE)
+/* Assume all CPU architectures are valid for LKM's and standlone progs */
+#if !defined(__mips_n32) && !defined(__mips_n64)
+#define	MIPS1		1
+#endif
+#define	MIPS3		1
+#define	MIPS4		1
+#if !defined(__mips_n32) && !defined(__mips_n64)
+#define	MIPS32		1
+#define	MIPS32R2	1
+#endif
+#define	MIPS64		1
+#define	MIPS64R2	1
+#endif /* _MODULAR || _LKM || _STANDALONE */
+
+#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
+#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64R2 must be specified
+#endif
+
+/* Shortcut for MIPS3 or above defined */
+#if defined(MIPS3) || defined(MIPS4) \
+    || defined(MIPS32) || defined(MIPS32R2) \
+    || defined(MIPS64) || defined(MIPS64R2)
+
+#define	MIPS3_PLUS	1
+#if !defined(MIPS32) && !defined(MIPS32R2)
+#define MIPS3_64BIT	1
+#endif
+#if !defined(MIPS3) && !defined(MIPS4)
+#define MIPSNN		1
+#endif
+#if defined(MIPS32R2) || defined(MIPS64R2)
+#define MIPSNNR2	1
+#endif
+#else
+#undef MIPS3_PLUS
+#endif
+
+#if !defined(MIPS3_PLUS) && (ENABLE_MIPS_8KB_PAGE + ENABLE_MIPS_16KB_PAGE) > 0
+#error MIPS1 does not support non-4KB page sizes.
+#endif
+
+/* XXX simonb
+ * Should the following be in a cpu_info type structure?
+ * And how many of these are per-cpu vs. per-system?  (Ie,
+ * we can assume that all cpus have the same mmu-type, but
+ * maybe not that all cpus run at the same clock speed.
+ * Some SGI's apparently support R12k and R14k in the same
+ * box.)
+ */
+struct mips_options {
+	const struct pridtab *mips_cpu;
+
+	u_int mips_cpu_arch;
+	u_int mips_cpu_mhz; /* CPU speed in MHz, estimated by mc_cpuspeed(). */
+	u_int mips_cpu_flags;
+	u_int mips_num_tlb_entries;
+	mips_prid_t mips_cpu_id;
+	mips_prid_t mips_fpu_id;
+	bool mips_has_r4k_mmu;
+	bool mips_has_llsc;
+	u_int mips3_pg_shift;
+	u_int mips3_pg_cached;
+	u_int mips3_cca_devmem;
+#ifdef MIPS3_PLUS
+#ifndef __mips_o32
+	uint64_t mips3_xkphys_cached;
+#endif
+	uint64_t mips3_tlb_vpn_mask;
+	uint64_t mips3_tlb_pfn_mask;
+	uint32_t mips3_tlb_pg_mask;
+#endif
+};
+
+/*
+ * Macros to find the CPU architecture we're on at run-time,
+ * or if possible, at compile-time.
+ */
+
+#define	CPU_ARCH_MIPSx		0		/* XXX unknown */
+#define	CPU_ARCH_MIPS1		(1 << 0)
+#define	CPU_ARCH_MIPS2		(1 << 1)
+#define	CPU_ARCH_MIPS3		(1 << 2)
+#define	CPU_ARCH_MIPS4		(1 << 3)
+#define	CPU_ARCH_MIPS5		(1 << 4)
+#define	CPU_ARCH_MIPS32		(1 << 5)
+#define	CPU_ARCH_MIPS64		(1 << 6)
+#define	CPU_ARCH_MIPS32R2	(1 << 7)
+#define	CPU_ARCH_MIPS64R2	(1 << 8)
+
+#define	CPU_MIPS_R4K_MMU		0x0001
+#define	CPU_MIPS_NO_LLSC		0x0002
+#define	CPU_MIPS_CAUSE_IV		0x0004
+#define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
+#define	CPU_MIPS_CACHED_CCA_MASK	0x0070
+#define	CPU_MIPS_CACHED_CCA_SHIFT	 4
+#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
+#define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
+#define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
+#define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
+#define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
+#define	CPU_MIPS_NO_LLADDR		0x1000
+#define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
+#define	CPU_MIPS_LOONGSON2		0x4000
+#define	MIPS_NOT_SUPP			0x8000
+#define	CPU_MIPS_HAVE_DSP		0x10000
+
+#endif	/* !_LOCORE */
+
+#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 1) || defined(_LOCORE)
+
+#if defined(MIPS1)
+
+# define CPUISMIPS3		0
+# define CPUIS64BITS		0
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		0
+# define CPUISMIPSNNR2		0
+# define MIPS_HAS_R4K_MMU	0
+# define MIPS_HAS_CLOCK		0
+# define MIPS_HAS_LLSC		0
+# define MIPS_HAS_LLADDR	0
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
+
+#elif defined(MIPS3) || defined(MIPS4)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		0
+# define CPUISMIPSNNR2		0
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# if defined(_LOCORE)
+#  if !defined(MIPS3_4100)
+#   define MIPS_HAS_LLSC	1
+#  else
+#   define MIPS_HAS_LLSC	0
+#  endif
+# else	/* _LOCORE */
+#  define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
+# endif	/* _LOCORE */
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
+# if defined(MIPS3_LOONGSON2)
+#  define MIPS_HAS_LMMI		((mips_options.mips_cpu_flags & CPU_MIPS_LOONGSON2) != 0)
+# else
+#  define MIPS_HAS_LMMI		0
+# endif
+#elif defined(MIPS32)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		0
+# define CPUISMIPS32		1
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		1
+# define CPUISMIPSNNR2		0
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
+
+#elif defined(MIPS32R2)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		0
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		1
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		1
+# define CPUISMIPSNNR2		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_LMMI		0
+
+#elif defined(MIPS64)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		1
+# define CPUISMIPS64R2		0
+# define CPUISMIPSNN		1
+# define CPUISMIPSNNR2		0
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		0
+# define MIPS_HAS_LMMI		0
+
+#elif defined(MIPS64R2)
+
+# define CPUISMIPS3		1
+# define CPUIS64BITS		1
+# define CPUISMIPS32		0
+# define CPUISMIPS32R2		0
+# define CPUISMIPS64		0
+# define CPUISMIPS64R2		1
+# define CPUISMIPSNN		1
+# define CPUISMIPSNNR2		1
+# define MIPS_HAS_R4K_MMU	1
+# define MIPS_HAS_CLOCK		1
+# define MIPS_HAS_LLSC		1
+# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+# define MIPS_HAS_LMMI		0
+
+#endif
+
+#else /* run-time test */
+
+#ifdef MIPS1
+#define	MIPS_HAS_R4K_MMU	(mips_options.mips_has_r4k_mmu)
+#define	MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
+#else
+#define	MIPS_HAS_R4K_MMU	1
+#if !defined(MIPS3_4100)
+#define MIPS_HAS_LLSC		1
+#else
+#define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
+#endif
+#endif
+#define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
+#define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
+
+/* This test is ... rather bogus */
+#define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
+	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
+
+/* And these aren't much better while the previous test exists as is... */
+#define	CPUISMIPS4	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) != 0)
+#define	CPUISMIPS5	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) != 0)
+#define	CPUISMIPS32	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) != 0)
+#define	CPUISMIPS32R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) != 0)
+#define	CPUISMIPS64	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) != 0)
+#define	CPUISMIPS64R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) != 0)
+#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
+#define	CPUIS64BITS	((mips_options.mips_cpu_arch & \
+	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
+
+#define	MIPS_HAS_CLOCK	(mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3)
+
+#endif /* run-time test */
 
 struct tlbmask;
 struct trapframe;
@@ -119,16 +392,6 @@ void	mips_fixup_stubs(uint32_t *, uint32_t *);
  * Define these stubs...
  */
 void	mips_cpu_switch_resume(struct lwp *);
-void	tlb_set_asid(uint32_t);
-void	tlb_invalidate_all(void);
-void	tlb_invalidate_globals(void);
-void	tlb_invalidate_asids(uint32_t, uint32_t);
-void	tlb_invalidate_addr(vaddr_t);
-u_int	tlb_record_asids(u_long *, uint32_t);
-int	tlb_update(vaddr_t, uint32_t);
-void	tlb_enter(size_t, vaddr_t, uint32_t);
-void	tlb_read_indexed(size_t, struct tlbmask *);
-void	tlb_write_indexed(size_t, const struct tlbmask *);
 void	wbflush(void);
 
 #ifdef MIPS1
@@ -137,18 +400,22 @@ void	mips1_tlb_invalidate_all(void);
 uint32_t tx3900_cp0_config_read(void);
 #endif
 
-#if (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#ifdef MIPS3_PLUS
 uint32_t mips3_cp0_compare_read(void);
 void	mips3_cp0_compare_write(uint32_t);
 
 uint32_t mips3_cp0_config_read(void);
 void	mips3_cp0_config_write(uint32_t);
 
-#if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
+#ifdef MIPSNN
 uint32_t mipsNN_cp0_config1_read(void);
 void	mipsNN_cp0_config1_write(uint32_t);
 uint32_t mipsNN_cp0_config2_read(void);
 uint32_t mipsNN_cp0_config3_read(void);
+uint32_t mipsNN_cp0_config4_read(void);
+uint32_t mipsNN_cp0_config5_read(void);
+uint32_t mipsNN_cp0_config6_read(void);
+uint32_t mipsNN_cp0_config7_read(void);
 
 intptr_t mipsNN_cp0_watchlo_read(u_int);
 void	mipsNN_cp0_watchlo_write(u_int, intptr_t);
@@ -158,11 +425,11 @@ void	mipsNN_cp0_watchhi_write(u_int, uint32_t);
 int32_t mipsNN_cp0_ebase_read(void);
 void	mipsNN_cp0_ebase_write(int32_t);
 
-#if (MIPS32R2 + MIPS64R2) > 0
+#ifdef MIPSNNR2
 void	mipsNN_cp0_hwrena_write(uint32_t);
 void	mipsNN_cp0_userlocal_write(void *);
 #endif
-#endif
+#endif /* MIPSNN */
 
 uint32_t mips3_cp0_count_read(void);
 void	mips3_cp0_count_write(uint32_t);
@@ -171,187 +438,119 @@ uint32_t mips3_cp0_wired_read(void);
 void	mips3_cp0_wired_write(uint32_t);
 void	mips3_cp0_pg_mask_write(uint32_t);
 
-#if defined(__GNUC__) && !defined(__mips_o32)
-static inline uint64_t
-mips3_ld(const volatile uint64_t *va)
-{
-	uint64_t rv;
+#endif	/* MIPS3_PLUS */
+
+/* 64-bit address space accessor for n32, n64 ABI */
+/* 32-bit address space accessor for o32 ABI */
+static inline uint8_t	mips_lbu(register_t addr) __unused;
+static inline void	mips_sb(register_t addr, uint8_t val) __unused;
+static inline uint16_t	mips_lhu(register_t addr) __unused;
+static inline void	mips_sh(register_t addr, uint16_t val) __unused;
+static inline uint32_t	mips_lwu(register_t addr) __unused;
+static inline void	mips_sw(register_t addr, uint32_t val) __unused;
+#ifdef MIPS3_64BIT
 #if defined(__mips_o32)
-	uint32_t sr;
-
-	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
-
-	__asm volatile(
-		".set push		\n\t"
-		".set mips3		\n\t"
-		".set noreorder		\n\t"
-		".set noat		\n\t"
-		"ld	%M0,0(%1)	\n\t"
-		"dsll32	%L0,%M0,0	\n\t"
-		"dsra32	%M0,%M0,0	\n\t"		/* high word */
-		"dsra32	%L0,%L0,0	\n\t"		/* low word */
-		"ld	%0,0(%1)	\n\t"
-		".set pop"
-	    : "=d"(rv)
-	    : "r"(va));
-
-	mips_cp0_status_write(sr);
-#elif defined(_LP64)
-	rv = *va;
+uint64_t		mips3_ld(register_t addr);
+void			mips3_sd(register_t addr, uint64_t val);
 #else
-	__asm volatile("ld	%0,0(%1)" : "=d"(rv) : "r"(va));
+static inline uint64_t	mips3_ld(register_t addr) __unused;
+static inline void	mips3_sd(register_t addr, uint64_t val) __unused;
+#endif
 #endif
 
+static inline uint8_t
+mips_lbu(register_t addr)
+{
+	uint8_t rv;
+#if defined(__mips_n32)
+	__asm volatile("lbu\t%0, 0(%1)" : "=r"(rv) : "d"(addr));
+#else
+	rv = *(const volatile uint8_t *)addr;
+#endif
 	return rv;
 }
-static inline void
-mips3_sd(volatile uint64_t *va, uint64_t v)
+
+static inline uint16_t
+mips_lhu(register_t addr)
 {
-#if defined(__mips_o32)
-	uint32_t sr;
-
-	sr = mips_cp0_status_read();
-	mips_cp0_status_write(sr & ~MIPS_SR_INT_IE);
-
-	__asm volatile(
-		".set push		\n\t"
-		".set mips3		\n\t"
-		".set noreorder		\n\t"
-		".set noat		\n\t"
-		"dsll32	%M0,%M0,0	\n\t"
-		"dsll32	%L0,%L0,0	\n\t"
-		"dsrl32	%L0,%L0,0	\n\t"
-		"or	%0,%L0,%M0	\n\t"
-		"sd	%0,0(%1)	\n\t"
-		".set pop"
-	    : "=d"(v) : "0"(v), "r"(va));
-
-	mips_cp0_status_write(sr);
-#elif defined(_LP64)
-	*va = v;
+	uint16_t rv;
+#if defined(__mips_n32)
+	__asm volatile("lhu\t%0, 0(%1)" : "=r"(rv) : "d"(addr));
 #else
-	__asm volatile("sd	%0,0(%1)" :: "r"(v), "r"(va));
+	rv = *(const volatile uint16_t *)addr;
 #endif
+	return rv;
 }
-#else
-uint64_t mips3_ld(volatile uint64_t *va);
-void	mips3_sd(volatile uint64_t *, uint64_t);
-#endif	/* __GNUC__ */
-#endif	/* (MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 
-#if (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0
-static __inline uint32_t	mips3_lw_a64(uint64_t addr) __unused;
-static __inline void	mips3_sw_a64(uint64_t addr, uint32_t val) __unused;
-
-static __inline uint32_t
-mips3_lw_a64(uint64_t addr)
+static inline uint32_t
+mips_lwu(register_t addr)
 {
 	uint32_t rv;
-#if defined(__mips_o32)
-	uint32_t sr;
-
-	sr = mips_cp0_status_read();
-	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-
-	__asm volatile (
-		".set push		\n\t"
-		".set mips3		\n\t"
-		".set noreorder		\n\t"
-		".set noat		\n\t"
-		"dsll32	%M1,%M1,0	\n\t"
-		"dsll32	%L1,%L1,0	\n\t"
-		"dsrl32	%L1,%L1,0	\n\t"
-		"or	%1,%M1,%L1	\n\t"
-		"lw	%0, 0(%1)	\n\t"
-		".set pop"
-	    : "=r"(rv), "=d"(addr)
-	    : "1"(addr)
-	    );
-
-	mips_cp0_status_write(sr);
-#elif defined(__mips_n32)
-	uint32_t sr = mips_cp0_status_read();
-	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-	__asm volatile("lw	%0, 0(%1)" : "=r"(rv) : "d"(addr));
-	mips_cp0_status_write(sr);
-#elif defined(_LP64)
-	rv = *(const uint32_t *)addr;
+#if defined(__mips_n32)
+	__asm volatile("lwu\t%0, 0(%1)" : "=r"(rv) : "d"(addr));
 #else
-#error unknown ABI
+	rv = *(const volatile uint32_t *)addr;
 #endif
 	return (rv);
 }
 
-static __inline void
-mips3_sw_a64(uint64_t addr, uint32_t val)
-{
-#if defined(__mips_o32)
-	uint32_t sr;
-
-	sr = mips_cp0_status_read();
-	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-
-	__asm volatile (
-		".set push		\n\t"
-		".set mips3		\n\t"
-		".set noreorder		\n\t"
-		".set noat		\n\t"
-		"dsll32	%M0,%M0,0	\n\t"
-		"dsll32	%L0,%L0,0	\n\t"
-		"dsrl32	%L0,%L0,0	\n\t"
-		"or	%0,%M0,%L0	\n\t"
-		"sw	%1, 0(%0)	\n\t"
-		".set pop"
-	    : "=d"(addr): "r"(val), "0"(addr)
-	    );
-
-	mips_cp0_status_write(sr);
-#elif defined(__mips_n32)
-	uint32_t sr = mips_cp0_status_read();
-	mips_cp0_status_write((sr & ~MIPS_SR_INT_IE) | MIPS3_SR_KX);
-	__asm volatile("sw	%1, 0(%0)" :: "d"(addr), "r"(val));
-	mips_cp0_status_write(sr);
-#elif defined(_LP64)
-	*(uint32_t *)addr = val;
-#else
-#error unknown ABI
-#endif
-}
-#endif	/* (MIPS3 + MIPS4 + MIPS64 + MIPS64R2) > 0 */
-
-#if (MIPS64 + MIPS64R2) > 0 && !defined(__mips_o32)
-/* 64-bits address space accessor for n32, n64 ABI */
-
-static __inline uint64_t	mips64_ld_a64(uint64_t addr) __unused;
-static __inline void		mips64_sd_a64(uint64_t addr, uint64_t val) __unused;
-
-static __inline uint64_t
-mips64_ld_a64(uint64_t addr)
+#if defined(MIPS3_64BIT) && !defined(__mips_o32)
+static inline uint64_t
+mips3_ld(register_t addr)
 {
 	uint64_t rv;
 #if defined(__mips_n32)
-	__asm volatile("ld	%0, 0(%1)" : "=r"(rv) : "d"(addr));
+	__asm volatile("ld\t%0, 0(%1)" : "=r"(rv) : "d"(addr));
 #elif defined(_LP64)
-	rv = *(volatile uint64_t *)addr;
+	rv = *(const volatile uint64_t *)addr;
 #else
 #error unknown ABI
 #endif
 	return (rv);
 }
+#endif	/* MIPS3_64BIT && !__mips_o32 */
 
-static __inline void
-mips64_sd_a64(uint64_t addr, uint64_t val)
+static inline void
+mips_sb(register_t addr, uint8_t val)
 {
 #if defined(__mips_n32)
-	__asm volatile("sd	%1, 0(%0)" :: "d"(addr), "r"(val));
-#elif defined(_LP64)
-	*(volatile uint64_t *)addr = val;
+	__asm volatile("sb\t%1, 0(%0)" :: "d"(addr), "r"(val));
 #else
-#error unknown ABI
+	*(volatile uint8_t *)addr = val;
 #endif
 }
-#endif	/* (MIPS64 + MIPS64R2) > 0 */
+
+static inline void
+mips_sh(register_t addr, uint16_t val)
+{
+#if defined(__mips_n32)
+	__asm volatile("sh\t%1, 0(%0)" :: "d"(addr), "r"(val));
+#else
+	*(volatile uint16_t *)addr = val;
+#endif
+}
+
+static inline void
+mips_sw(register_t addr, uint32_t val)
+{
+#if defined(__mips_n32)
+	__asm volatile("sw\t%1, 0(%0)" :: "d"(addr), "r"(val));
+#else
+	*(volatile uint32_t *)addr = val;
+#endif
+}
+
+#if defined(MIPS3_64BIT) && !defined(__mips_o32)
+static inline void
+mips3_sd(register_t addr, uint64_t val)
+{
+#if defined(__mips_n32)
+	__asm volatile("sd\t%1, 0(%0)" :: "d"(addr), "r"(val));
+#else
+	*(volatile uint64_t *)addr = val;
+#endif
+}
+#endif	/* MIPS3_64BIT && !__mips_o32 */
 
 /*
  * A vector with an entry for each mips-ISA-level dependent
@@ -361,16 +560,16 @@ typedef struct  {
 	void	(*ljv_cpu_switch_resume)(struct lwp *);
 	intptr_t ljv_lwp_trampoline;
 	void	(*ljv_wbflush)(void);
-	void	(*ljv_tlb_set_asid)(uint32_t pid);
-	void	(*ljv_tlb_invalidate_asids)(uint32_t, uint32_t);
-	void	(*ljv_tlb_invalidate_addr)(vaddr_t);
+	tlb_asid_t (*ljv_tlb_get_asid)(void);
+	void	(*ljv_tlb_set_asid)(tlb_asid_t pid);
+	void	(*ljv_tlb_invalidate_asids)(tlb_asid_t, tlb_asid_t);
+	void	(*ljv_tlb_invalidate_addr)(vaddr_t, tlb_asid_t);
 	void	(*ljv_tlb_invalidate_globals)(void);
 	void	(*ljv_tlb_invalidate_all)(void);
-	u_int	(*ljv_tlb_record_asids)(u_long *, uint32_t);
-	int	(*ljv_tlb_update)(vaddr_t, uint32_t);
-	void	(*ljv_tlb_enter)(size_t, vaddr_t, uint32_t);
-	void	(*ljv_tlb_read_indexed)(size_t, struct tlbmask *);
-	void	(*ljv_tlb_write_indexed)(size_t, const struct tlbmask *);
+	u_int	(*ljv_tlb_record_asids)(u_long *, tlb_asid_t);
+	int	(*ljv_tlb_update_addr)(vaddr_t, tlb_asid_t, pt_entry_t, bool);
+	void	(*ljv_tlb_read_entry)(size_t, struct tlbmask *);
+	void	(*ljv_tlb_write_entry)(size_t, const struct tlbmask *);
 } mips_locore_jumpvec_t;
 
 typedef struct {
@@ -409,6 +608,142 @@ struct mips_vmfreelist {
 	int fl_freelist;
 };
 
+struct cpu_info *
+	cpu_info_alloc(struct pmap_tlb_info *, cpuid_t, cpuid_t, cpuid_t,
+	    cpuid_t);
+void	cpu_attach_common(device_t, struct cpu_info *);
+void	cpu_startup_common(void);
+
+#ifdef MULTIPROCESSOR
+void	cpu_hatch(struct cpu_info *ci);
+void	cpu_trampoline(void);
+void	cpu_halt(void);
+void	cpu_halt_others(void);
+void	cpu_pause(struct reg *);
+void	cpu_pause_others(void);
+void	cpu_resume(cpuid_t);
+void	cpu_resume_others(void);
+bool	cpu_is_paused(cpuid_t);
+void	cpu_debug_dump(void);
+
+extern kcpuset_t *cpus_running;
+extern kcpuset_t *cpus_hatched;
+extern kcpuset_t *cpus_paused;
+extern kcpuset_t *cpus_resumed;
+extern kcpuset_t *cpus_halted;
+#endif
+
+/* copy.S */
+int32_t kfetch_32(volatile uint32_t *, uint32_t);
+int8_t	ufetch_int8(void *);
+int16_t	ufetch_int16(void *);
+int32_t ufetch_int32(void *);
+uint8_t	ufetch_uint8(void *);
+uint16_t ufetch_uint16(void *);
+uint32_t ufetch_uint32(void *);
+int8_t	ufetch_int8_intrsafe(void *);
+int16_t	ufetch_int16_intrsafe(void *);
+int32_t ufetch_int32_intrsafe(void *);
+uint8_t	ufetch_uint8_intrsafe(void *);
+uint16_t ufetch_uint16_intrsafe(void *);
+uint32_t ufetch_uint32_intrsafe(void *);
+#ifdef _LP64
+int64_t ufetch_int64(void *);
+uint64_t ufetch_uint64(void *);
+int64_t ufetch_int64_intrsafe(void *);
+uint64_t ufetch_uint64_intrsafe(void *);
+#endif
+char	ufetch_char(void *);
+short	ufetch_short(void *);
+int	ufetch_int(void *);
+long	ufetch_long(void *);
+char	ufetch_char_intrsafe(void *);
+short	ufetch_short_intrsafe(void *);
+int	ufetch_int_intrsafe(void *);
+long	ufetch_long_intrsafe(void *);
+
+u_char	ufetch_uchar(void *);
+u_short	ufetch_ushort(void *);
+u_int	ufetch_uint(void *);
+u_long	ufetch_ulong(void *);
+u_char	ufetch_uchar_intrsafe(void *);
+u_short	ufetch_ushort_intrsafe(void *);
+u_int	ufetch_uint_intrsafe(void *);
+u_long	ufetch_ulong_intrsafe(void *);
+void 	*ufetch_ptr(void *);
+
+int	ustore_int8(void *, int8_t);
+int	ustore_int16(void *, int16_t);
+int	ustore_int32(void *, int32_t);
+int	ustore_uint8(void *, uint8_t);
+int	ustore_uint16(void *, uint16_t);
+int	ustore_uint32(void *, uint32_t);
+int	ustore_int8_intrsafe(void *, int8_t);
+int	ustore_int16_intrsafe(void *, int16_t);
+int	ustore_int32_intrsafe(void *, int32_t);
+int	ustore_uint8_intrsafe(void *, uint8_t);
+int	ustore_uint16_intrsafe(void *, uint16_t);
+int	ustore_uint32_intrsafe(void *, uint32_t);
+#ifdef _LP64
+int	ustore_int64(void *, int64_t);
+int	ustore_uint64(void *, uint64_t);
+int	ustore_int64_intrsafe(void *, int64_t);
+int	ustore_uint64_intrsafe(void *, uint64_t);
+#endif
+int	ustore_char(void *, char);
+int	ustore_char_intrsafe(void *, char);
+int	ustore_short(void *, short);
+int	ustore_short_intrsafe(void *, short);
+int	ustore_int(void *, int);
+int	ustore_int_intrsafe(void *, int);
+int	ustore_long(void *, long);
+int	ustore_long_intrsafe(void *, long);
+int	ustore_uchar(void *, u_char);
+int	ustore_uchar_intrsafe(void *, u_char);
+int	ustore_ushort(void *, u_short);
+int	ustore_ushort_intrsafe(void *, u_short);
+int	ustore_uint(void *, u_int);
+int	ustore_uint_intrsafe(void *, u_int);
+int	ustore_ulong(void *, u_long);
+int	ustore_ulong_intrsafe(void *, u_long);
+int 	ustore_ptr(void *, void *);
+int	ustore_ptr_intrsafe(void *, void *);
+
+int	ustore_uint32_isync(void *, uint32_t);
+
+/* trap.c */
+void	netintr(void);
+int	kdbpeek(vaddr_t);
+
+/* mips_dsp.c */
+void	dsp_init(void);
+void	dsp_discard(void);
+void	dsp_load(void);
+void	dsp_save(void);
+bool	dsp_used_p(void);
+extern const pcu_ops_t mips_dsp_ops;
+
+/* mips_fpu.c */
+void	fpu_init(void);
+void	fpu_discard(void);
+void	fpu_load(void);
+void	fpu_save(void);
+bool	fpu_used_p(void);
+extern const pcu_ops_t mips_fpu_ops;
+
+/* mips_machdep.c */
+void	dumpsys(void);
+int	savectx(struct pcb *);
+void	cpu_identify(device_t);
+
+/* locore*.S */
+int	badaddr(void *, size_t);
+int	badaddr64(uint64_t, size_t);
+
+/* vm_machdep.c */
+int	ioaccess(vaddr_t, paddr_t, vsize_t);
+int	iounaccess(vaddr_t, vsize_t);
+
 /*
  * The "active" locore-function vector, and
  */
@@ -417,6 +752,9 @@ extern const mips_locore_atomicvec_t mips_llsc_locore_atomicvec;
 extern mips_locore_atomicvec_t mips_locore_atomicvec;
 extern mips_locore_jumpvec_t mips_locore_jumpvec;
 extern struct locoresw mips_locoresw;
+
+extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
+extern struct mips_options mips_options;
 
 struct splsw;
 struct mips_vmfreelist;
@@ -467,8 +805,8 @@ void	mips_page_physload(vaddr_t, vaddr_t,
  * Global variables used to communicate CPU type, and parameters
  * such as cache size, from locore to higher-level code (e.g., pmap).
  */
-void mips_pagecopy(void *dst, void *src);
-void mips_pagezero(void *dst);
+void mips_pagecopy(register_t dst, register_t src);
+void mips_pagezero(register_t dst);
 
 #ifdef __HAVE_MIPS_MACHDEP_CACHE_CONFIG
 void mips_machdep_cache_config(void);
@@ -630,4 +968,5 @@ struct pridtab {
 			>> MIPS_CIDFL_RMI_L2SZ_SHIFT))
 
 #endif	/* _KERNEL */
+
 #endif	/* _MIPS_LOCORE_H */

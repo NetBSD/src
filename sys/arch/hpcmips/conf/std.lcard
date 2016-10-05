@@ -1,4 +1,4 @@
-#	$NetBSD: std.lcard,v 1.8 2011/02/20 07:58:13 matt Exp $
+#	$NetBSD: std.lcard,v 1.8.32.1 2016/10/05 20:55:28 skrll Exp $
 # standard, required hpcmips info
 
 machine hpcmips mips
@@ -12,7 +12,8 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 options 	MIPS3_4100		# VR4100 core
 makeoptions	CPUFLAGS="-mips3"	# CPU codegen options
 options 	VR41XX			# NEC VR41xx series
-options 	MIPS3_NO_PV_UNCACHED
+options 	PMAP_NO_PV_UNCACHED
+options 	ENABLE_MIPS_4KB_PAGE
 options		NO_SYMBOLSZ_ENTRY
 
 options 	VR4181			# NEC VR4181

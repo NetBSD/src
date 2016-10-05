@@ -1,21 +1,26 @@
-/*	$NetBSD: cache_octeon.c,v 1.1.2.2 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: cache_octeon.c,v 1.1.2.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.1.2.2 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_octeon.c,v 1.1.2.3 2016/10/05 20:55:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <mips/locore.h>
 #include <mips/cache.h>
 #include <mips/cache_octeon.h>
 
 #define	SYNC	__asm volatile("sync")
 
-__asm(".set mips3");
-
 #ifdef OCTEON_ICACHE_DEBUG
 int octeon_cache_debug;
 #endif
+
+static inline void
+mips_synci(vaddr_t va)
+{
+	__asm __volatile("synci 0(%0)" :: "r"(va));
+}
 
 void
 octeon_icache_sync_all(void)
@@ -24,30 +29,36 @@ octeon_icache_sync_all(void)
 	if (__predict_false(octeon_cache_debug != 0))
 		printf("%s\n", __func__);
 #endif
-	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
+	mips_synci(MIPS_KSEG0_START);
+//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
 	SYNC;
 }
 void
-octeon_icache_sync_range(vaddr_t va, vsize_t size)
+octeon_icache_sync_range(register_t va, vsize_t size)
 {
 #ifdef OCTEON_ICACHE_DEBUG
 	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=0x%08x, size=0x%08x\n", __func__, (int)va, (int)size);
+		printf("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
+		    __func__, va, size);
 #endif
-	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
-	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
+	mips_synci(MIPS_KSEG0_START);
+//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
 	SYNC;
 }
+
 void
 octeon_icache_sync_range_index(vaddr_t va, vsize_t size)
 {
 #ifdef OCTEON_ICACHE_DEBUG
 	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=0x%08x, size=0x%08x\n", __func__, (int)va, (int)size);
+		printf("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
+		    __func__, va, size);
 #endif
-	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
-	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
+	mips_synci(MIPS_KSEG0_START);
+//	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_I);
+	SYNC;
 }
+
 void
 octeon_pdcache_inv_all(void)
 {
@@ -58,32 +69,29 @@ octeon_pdcache_inv_all(void)
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
 	SYNC;
 }
+
 void
-octeon_pdcache_inv_range(vaddr_t va, vsize_t size)
+octeon_pdcache_inv_range(register_t va, vsize_t size)
 {
 #ifdef OCTEON_ICACHE_DEBUG
 	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=0x%08x, size=0x%08x\n", __func__, (int)va, (int)size);
+		printf("%s: va=%#"PRIxREGISTER", size=%#"PRIxVSIZE"\n",
+		    __func__, va, size);
 #endif
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
 	SYNC;
 }
+
 void
 octeon_pdcache_inv_range_index(vaddr_t va, vsize_t size)
 {
 #ifdef OCTEON_ICACHE_DEBUG
 	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=0x%08x, size=0x%08x\n", __func__, (int)va, (int)size);
+		printf("%s: va=%#"PRIxVADDR", size=%#"PRIxVSIZE"\n",
+		    __func__, va, size);
 #endif
 	cache_octeon_invalidate(CACHEOP_OCTEON_INV_ALL | CACHE_OCTEON_D);
-}
-void
-octeon_pdcache_wb_range(vaddr_t va, vsize_t size)
-{
-#ifdef OCTEON_ICACHE_DEBUG
-	if (__predict_false(octeon_cache_debug != 0))
-		printf("%s: va=0x%08x, size=0x%08x\n", __func__, (int)va, (int)size);
-#endif
+	SYNC;
 }
 
 /* ---- debug dump */
@@ -130,11 +138,11 @@ octeon_pdcache_wb_range(vaddr_t va, vsize_t size)
 void		octeon_icache_dump_all(void);
 void		octeon_icache_dump_way(int);
 void		octeon_icache_dump_index(int, int);
-void		octeon_icache_dump_va(vaddr_t);
+void		octeon_icache_dump_va(register_t);
 void		octeon_dcache_dump_all(void);
 void		octeon_dcache_dump_way(int);
 void		octeon_dcache_dump_index(int, int);
-void		octeon_dcache_dump_va(vaddr_t);
+void		octeon_dcache_dump_va(register_t);
 
 void
 octeon_icache_dump_all(void)
@@ -167,7 +175,7 @@ octeon_icache_dump_index(int way, int index)
 }
 
 void
-octeon_icache_dump_va(vaddr_t va)
+octeon_icache_dump_va(register_t va)
 {
 	uint64_t taglo, datalo, datahi;
 
@@ -238,7 +246,7 @@ octeon_dcache_dump_index(int way, int index)
 }
 
 void
-octeon_dcache_dump_va(vaddr_t va)
+octeon_dcache_dump_va(register_t va)
 {
 	uint64_t taglo, taghi, datalo, datahi;
 

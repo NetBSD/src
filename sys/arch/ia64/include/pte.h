@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2012/12/27 15:58:55 martin Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.14.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $FreeBSD$
+ * $FreeBSD: releng/10.1/sys/ia64/include/pte.h 137978 2004-11-21 21:40:08Z marcel $
  */
 
 #ifndef _MACHINE_PTE_H_
@@ -45,7 +45,6 @@
 #define	PTE_PL_KERN	0x0000000000000000
 #define	PTE_PL_USER	0x0000000000000180
 #define	PTE_AR_MASK	0x0000000000000E00
-
 #define	PTE_AR_R	0x0000000000000000
 #define	PTE_AR_RX	0x0000000000000200
 #define	PTE_AR_RW	0x0000000000000400
@@ -71,30 +70,15 @@
 
 typedef uint64_t pt_entry_t;
 
-#ifdef _KERNEL
-static __inline pt_entry_t
-pte_atomic_clear(pt_entry_t *ptep, uint64_t val)
-{
-	return (atomic_clear_64(ptep, val));
-}
-
-static __inline pt_entry_t
-pte_atomic_set(pt_entry_t *ptep, uint64_t val)
-{
-	return (atomic_set_64(ptep, val));
-}
-#endif
-
 /*
  * A long-format VHPT entry.
  */
 struct ia64_lpte {
-        pt_entry_t      pte;
-        uint64_t        itir;
-        uint64_t        tag;            /* includes ti */
-        uint64_t        chain;          /* pa of collision chain */
+	pt_entry_t	pte;
+	uint64_t	itir;
+	uint64_t	tag;		/* includes ti */
+	uint64_t	chain;		/* pa of collision chain */
 };
-
 
 /*
  * Layout of rr[x].

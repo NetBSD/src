@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.9.2.3 2015/09/22 12:05:41 skrll Exp $
+#	$NetBSD: ERLITE,v 1.9.2.4 2016/10/05 20:55:26 skrll Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.9.2.3 $"
+#ident 		"ERLITE-$Revision: 1.9.2.4 $"
 
 maxusers	32
 
@@ -51,6 +51,7 @@ makeoptions	COPY_SYMTAB=1	# size for embedded symbol table
 #options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 #options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_70	# NetBSD 7.0 binary compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

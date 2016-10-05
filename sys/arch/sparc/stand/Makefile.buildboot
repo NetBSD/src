@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile.buildboot,v 1.29.6.1 2016/03/19 11:30:05 skrll Exp $
+#	$NetBSD: Makefile.buildboot,v 1.29.6.2 2016/10/05 20:55:35 skrll Exp $
 #
 # This file is for the sparc `boot' and `bootxx' only; it does not
 # currently play well on a 64-bit system.
+
+NOSSP=		# defined
+NOPIE=		# defined
+NOMAN=		# defined
 
 S=	${.CURDIR}/../../../..
 
@@ -10,7 +14,6 @@ S=	${.CURDIR}/../../../..
 COMMONSOURCE=	srt0.S promdev.c dvma.c promlib.c isfloppy.c
 
 SRCS=		${COMMONSOURCE} ${PROGSOURCE}
-NOMAN=		# defined
 BINMODE=	444
 
 .include <bsd.own.mk>

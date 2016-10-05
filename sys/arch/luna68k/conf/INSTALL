@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.19 2014/08/23 20:26:58 dholland Exp $
+# $NetBSD: INSTALL,v 1.19.2.1 2016/10/05 20:55:31 skrll Exp $
 #
 # config for installation ramdisk kernel
 # 
@@ -15,7 +15,7 @@ options 	FPSP	# on m68040 to emulate some missing FP instructions
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT		# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
-options 	MEMORY_DISK_ROOT_SIZE=3600	# 1.80 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3800	# 1.90 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.31 2012/01/27 18:52:56 para Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.31.24.1 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,19 +31,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31 2012/01/27 18:52:56 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.31.24.1 2016/10/05 20:55:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
 #include <mips/pte.h>
-#include <machine/bus.h>
+
 #include <machine/bus_space_hpcmips.h>
 
 #ifdef BUS_SPACE_DEBUG
@@ -224,39 +225,37 @@ hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
 	}
 }
 
+static bool
+mips_pte_cachechange(struct pmap *pmap, vaddr_t sva, vaddr_t eva,
+    pt_entry_t *ptep, uintptr_t flags)
+{
+	mips_dcache_wbinv_range(sva, eva - sva);
+
+	for (; sva < eva; sva += PAGE_SIZE) {
+		pt_entry_t pte = pte_cached_change(*ptep, flags);
+		/*
+		 * Update the same virtual address entry.
+		 */
+		*ptep = pte;
+		tlb_update_addr(sva, KERNEL_PID, pte, 0);
+	}
+
+	return false;
+}
+
 bus_space_handle_t
 __hpcmips_cacheable(struct bus_space_tag_hpcmips *t, bus_addr_t bpa,
     bus_size_t size, int cacheable)
 {
-	vaddr_t va, endva;
-	pt_entry_t *pte;
-	u_int32_t opte, npte;
-
 	if (t->base >= MIPS_KSEG2_START) {
-		va = mips_trunc_page(bpa);
-		endva = mips_round_page(bpa + size);
-		npte = CPUISMIPS3 ? MIPS3_PG_UNCACHED : MIPS1_PG_N;
-		
-		mips_dcache_wbinv_range(va, endva - va);
-
-		for (; va < endva; va += PAGE_SIZE) {
-			pte = kvtopte(va);
-			opte = pte->pt_entry;
-			if (cacheable) {
-				opte &= ~npte;
-			} else {
-				opte |= npte;
-			}
-			pte->pt_entry = opte;
-			/*
-			 * Update the same virtual address entry.
-			 */
-			tlb_update(va, opte);
-		}
-		return (bpa);
+		const vaddr_t sva = mips_trunc_page(bpa);
+		const vaddr_t eva = mips_round_page(bpa + size);
+		pmap_pte_process(pmap_kernel(), sva, eva,
+		    mips_pte_cachechange, cacheable);
+		return bpa;
 	}
 
-	return (cacheable ? MIPS_PHYS_TO_KSEG0(bpa) : MIPS_PHYS_TO_KSEG1(bpa));
+	return cacheable ? MIPS_PHYS_TO_KSEG0(bpa) : MIPS_PHYS_TO_KSEG1(bpa);
 }
 
 /* ARGSUSED */

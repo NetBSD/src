@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.117.6.1 2016/07/09 20:25:04 skrll Exp $ */
+/* $NetBSD: isp_pci.c,v 1.117.6.2 2016/10/05 20:55:43 skrll Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.117.6.1 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.117.6.2 2016/10/05 20:55:43 skrll Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -517,7 +517,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		st = iot;
 		sh = ioh;
 	} else {
-		printf(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 	dstring = "\n";
@@ -689,7 +689,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 
 	isp->isp_param = malloc(mamt, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_param == NULL) {
-		printf(nomem, device_xname(self));
+		aprint_error(nomem, device_xname(self));
 		return;
 	}
 	memset(isp->isp_param, 0, mamt);
@@ -697,7 +697,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 	isp->isp_osinfo.chan = malloc(mamt, M_DEVBUF, M_NOWAIT);
 	if (isp->isp_osinfo.chan == NULL) {
 		free(isp->isp_param, M_DEVBUF);
-		printf(nomem, device_xname(self));
+		aprint_error(nomem, device_xname(self));
 		return;
 	}
 	memset(isp->isp_osinfo.chan, 0, mamt);
@@ -717,9 +717,9 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 #endif
 #endif
 	if (isp->isp_dblev & ISP_LOGCONFIG) {
-		printf("\n");
+		aprint_normal("\n");
 	} else {
-		printf("%s", dstring);
+		aprint_normal("%s", dstring);
 	}
 
 	isp->isp_dmatag = pa->pa_dmat;
@@ -775,7 +775,7 @@ isp_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	isp->isp_confopts = device_cfdata(self)->cf_flags;
 	ISP_LOCK(isp);

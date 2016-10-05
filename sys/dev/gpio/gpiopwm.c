@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopwm.c,v 1.4 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: gpiopwm.c,v 1.4.6.1 2016/10/05 20:55:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Marc Balmer <marc@msys.ch>
@@ -109,29 +109,29 @@ gpiopwm_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_pulse, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pulse, gpiopwm_pulse, sc);
 
-        sysctl_createv(&sc->sc_log, 0, NULL, &node,
-            0,
-            CTLTYPE_NODE, device_xname(sc->sc_dev),
-            SYSCTL_DESCR("GPIO software PWM"),
-            NULL, 0, NULL, 0,
-            CTL_HW, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&sc->sc_log, 0, NULL, &node,
+	    0,
+	    CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("GPIO software PWM"),
+	    NULL, 0, NULL, 0,
+	    CTL_HW, CTL_CREATE, CTL_EOL);
 
-        if (node == NULL) {
-		printf(": can't create sysctl node\n");
-                return;
+	if (node == NULL) {
+		aprint_error(": can't create sysctl node\n");
+		return;
 	}
 
-        sysctl_createv(&sc->sc_log, 0, &node, NULL,
-            CTLFLAG_READWRITE,
-            CTLTYPE_INT, "on",
-            SYSCTL_DESCR("PWM 'on' period in ticks"),
-            gpiopwm_set_on, 0, (void *)sc, 0,
+	sysctl_createv(&sc->sc_log, 0, &node, NULL,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "on",
+	    SYSCTL_DESCR("PWM 'on' period in ticks"),
+	    gpiopwm_set_on, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
-        sysctl_createv(&sc->sc_log, 0, &node, NULL,
-            CTLFLAG_READWRITE,
-            CTLTYPE_INT, "off",
-            SYSCTL_DESCR("PWM 'off' period in ticks"),
-            gpiopwm_set_off, 0, (void *)sc, 0,
+	sysctl_createv(&sc->sc_log, 0, &node, NULL,
+	    CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "off",
+	    SYSCTL_DESCR("PWM 'off' period in ticks"),
+	    gpiopwm_set_off, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
 
 	aprint_normal("\n");
@@ -238,5 +238,4 @@ gpiopwm_activate(device_t self, enum devact act)
 	default:
 		return EOPNOTSUPP;
 	}
-
 }

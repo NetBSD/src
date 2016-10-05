@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.7 2016/05/29 08:44:31 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.8 2016/10/05 20:55:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
@@ -60,7 +60,11 @@
 #define	 XHCI_HCS2_IST(x)	((x) & 0xF)
 #define	 XHCI_HCS2_ERST_MAX(x)	(((x) >> 4) & 0xF)
 #define	 XHCI_HCS2_SPR(x)	(((x) >> 24) & 0x1)
-#define	 XHCI_HCS2_MAXSPBUF(x)	(((x) >> 27) & 0x7F)
+#define  XHCI_HCS2_SPBUFLO	__BITS(31, 27)
+#define  XHCI_HCS2_SPBUFHI	__BITS(25, 21)
+#define	 XHCI_HCS2_MAXSPBUF(x)	\
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFHI) << 5) | \
+    (__SHIFTOUT((x), XHCI_HCS2_SPBUFLO))
 
 #define	XHCI_HCSPARAMS3		0x0C	/* RO structual parameters 3 */
 #define	 XHCI_HCS3_U1_DEL(x)	((x) & 0xFF)
@@ -75,7 +79,7 @@
 #define	 XHCI_HCC_LHRC(x)	(((x) >> 5) & 0x1)	/* light HC reset */
 #define	 XHCI_HCC_LTC(x)	(((x) >> 6) & 0x1)	/* latency tolerance msg */
 #define	 XHCI_HCC_NSS(x)	(((x) >> 7) & 0x1)	/* no secondary sid */
-#define	 XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1)	/* Pase All Event Data */
+#define	 XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1)	/* Parse All Event Data */
 #define	 XHCI_HCC_SPC(x)	(((x) >> 9) & 0x1)	/* Short packet */
 #define	 XHCI_HCC_SEC(x)	(((x) >> 10) & 0x1)	/* Stopped EDTLA */
 #define	 XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1)	/* Configuous Frame ID */
@@ -228,7 +232,7 @@
 
 /* XHCI extended capability ID's */
 #define	XHCI_ID_USB_LEGACY	0x0001	/* USB Legacy Support */
-#define	 XHCI_XECP_USBLESUP	0x0000	/* Legacy Support Capability Reg */
+#define	 XHCI_XECP_USBLEGSUP	0x0000	/* Legacy Support Capability Reg */
 #define	 XHCI_XECP_USBLEGCTLSTS	0x0004	/* Legacy Support Ctrl & Status Reg */
 #define	XHCI_ID_PROTOCOLS	0x0002	/* Supported Protocol */
 #define	XHCI_ID_POWER_MGMT	0x0003	/* Extended Power Management */

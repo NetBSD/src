@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.1 2011/02/01 01:39:20 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.1.38.1 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -88,6 +88,7 @@ void	compat_50_rt_missmsg(int, const struct rt_addrinfo *, int, int);
 struct mbuf *
 	compat_50_rt_msg1(int, struct rt_addrinfo *, void *, int);
 void	compat_50_rt_newaddrmsg(int, struct ifaddr *, int, struct rtentry *);
+void	compat_70_rt_newaddrmsg1(int, struct ifaddr *);
 #endif
 
 #define RTM_OVERSION	3	/* Up the ante and ignore older versions */

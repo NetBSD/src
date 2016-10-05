@@ -1,4 +1,4 @@
-/* $NetBSD: isic_pci.c,v 1.40 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: isic_pci.c,v 1.40.6.1 2016/10/05 20:55:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.40 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pci.c,v 1.40.6.1 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -72,7 +72,8 @@ static int isic_pci_match(device_t, cfdata_t, void *);
 static void isic_pci_attach(device_t, device_t, void *);
 static const struct isic_pci_product * find_matching_card(struct pci_attach_args *pa);
 
-static void isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname);
+static void isic_pci_isdn_attach(struct pci_isic_softc *psc,
+    struct pci_attach_args *pa, const char *cardname);
 static int isic_pci_detach(device_t self, int flags);
 static int isic_pci_activate(device_t self, enum devact act);
 
@@ -134,13 +135,14 @@ isic_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	const struct isic_pci_product * prod;
 
+	aprint_naive("\n");
 	sc->sc_dev = self;
 
 	/* Redo probe */
 	prod = find_matching_card(pa);
 	if (prod == NULL) return; /* oops - not found?!? */
 
-	printf(": %s\n", prod->name);
+	aprint_normal(": %s\n", prod->name);
 
 	callout_init(&sc->sc_T3_callout, 0);
 	callout_init(&sc->sc_T4_callout, 0);
@@ -158,7 +160,8 @@ isic_pci_attach(device_t parent, device_t self, void *aux)
  *	isic - pci device driver attach routine
  *---------------------------------------------------------------------------*/
 static void
-isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa, const char *cardname)
+isic_pci_isdn_attach(struct pci_isic_softc *psc, struct pci_attach_args *pa,
+    const char *cardname)
 {
 	struct isic_softc *sc = &psc->sc_isic;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -306,8 +309,10 @@ isic_pci_detach(device_t self, int flags)
 {
 	struct pci_isic_softc *psc = device_private(self);
 
-	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
-	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h, psc->sc_size);
+	bus_space_unmap(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h,
+	    psc->sc_size);
+	bus_space_free(psc->sc_isic.sc_maps[0].t, psc->sc_isic.sc_maps[0].h,
+	    psc->sc_size);
 	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 
 	return (0);

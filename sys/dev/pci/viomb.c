@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.3.4.3 2016/07/09 20:25:14 skrll Exp $	*/
+/*	$NetBSD: viomb.c,v 1.3.4.4 2016/10/05 20:55:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3.4.3 2016/07/09 20:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3.4.4 2016/10/05 20:55:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3.4.3 2016/07/09 20:25:14 skrll Exp $");
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <uvm/uvm_page.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
@@ -45,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.3.4.3 2016/07/09 20:25:14 skrll Exp $");
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
+
+#include "ioconf.h"
 
 /* Configuration registers */
 #define VIRTIO_BALLOON_CONFIG_NUM_PAGES	0 /* 32bit */
@@ -227,7 +230,7 @@ viomb_read_config(struct viomb_softc *sc)
 	reg = virtio_read_device_config_4(sc->sc_virtio,
 					  VIRTIO_BALLOON_CONFIG_NUM_PAGES);
 	sc->sc_npages = le32toh(reg);
-	
+
 	reg = virtio_read_device_config_4(sc->sc_virtio,
 					  VIRTIO_BALLOON_CONFIG_ACTUAL);
 	sc->sc_actual = le32toh(reg);
@@ -366,7 +369,7 @@ inflate_done(struct viomb_softc *sc)
 
 	return 1;
 }
-	
+
 /*
  * Deflate: free previously allocated memory.
  */
@@ -443,7 +446,7 @@ deflateq_done(struct virtqueue *vq)
 
 	return 1;
 }
-	
+
 static int
 deflate_done(struct viomb_softc *sc)
 {
@@ -524,4 +527,34 @@ viomb_thread(void *arg)
 			     mstohz(sleeptime));
 		mutex_exit(&sc->sc_waitlock);
 	}
+}
+
+MODULE(MODULE_CLASS_DRIVER, viomb, "virtio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+viomb_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_viomb,
+		    cfattach_ioconf_viomb, cfdata_ioconf_viomb);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_viomb,
+		    cfattach_ioconf_viomb, cfdata_ioconf_viomb);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

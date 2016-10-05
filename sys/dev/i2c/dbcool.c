@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.41.4.3 2015/12/27 12:09:49 skrll Exp $ */
+/*	$NetBSD: dbcool.c,v 1.41.4.4 2016/10/05 20:55:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.41.4.3 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.41.4.4 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -785,12 +785,12 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	        if (sc->sc_dc.dc_chip->company == SMSC_COMPANYID)
 	        {
 		        aprint_normal_dev(self, "SMSC %s Controller "
-			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
-        			ver >> 4, ver & 0x0f);
+			    "(rev 0x%02x, stepping 0x%02x)\n",
+			    sc->sc_dc.dc_chip->name, ver >> 4, ver & 0x0f);
 	        } else {
 		        aprint_normal_dev(self, "%s dBCool(tm) Controller "
-			        "(rev 0x%02x, stepping 0x%02x)\n", sc->sc_dc.dc_chip->name,
-        			ver >> 4, ver & 0x0f);
+			    "(rev 0x%02x, stepping 0x%02x)\n",
+			    sc->sc_dc.dc_chip->name, ver >> 4, ver & 0x0f);
                 }
 	else
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "

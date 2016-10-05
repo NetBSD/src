@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.78.2.8 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.78.2.9 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.8 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.9 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.8 2016/07/09 20:25:21 skrll Exp $
 #include <sys/proc.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/bpf.h>
 #include <net/if.h>
@@ -196,9 +198,35 @@ void
 vlanattach(int n)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in vlaninit() below).
+	 */
+}
+
+static void
+vlaninit(void)
+{
+
 	LIST_INIT(&ifv_list);
 	mutex_init(&ifv_mtx, MUTEX_DEFAULT, IPL_NONE);
 	if_clone_attach(&vlan_cloner);
+}
+
+static int
+vlandetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&ifv_list))
+		error = EBUSY;
+
+	if (error == 0) {
+		if_clone_detach(&vlan_cloner);
+		mutex_destroy(&ifv_mtx);
+	}
+
+	return error;
 }
 
 static void
@@ -910,3 +938,10 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	m->m_flags &= ~M_PROMISC;
 	if_input(&ifv->ifv_if, m);
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, vlan, "")

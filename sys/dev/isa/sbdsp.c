@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.135 2011/11/23 23:07:32 jmcneill Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.135.26.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.135 2011/11/23 23:07:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.135.26.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -442,7 +442,8 @@ sbdsp_attach(struct sbdsp_softc *sc)
 	}
 
 	if (!pmf_device_register(sc->sc_dev, NULL, sbdsp_resume))
-		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish power handler\n");
 }
 
 static bool
@@ -1213,7 +1214,8 @@ int
 sbdsp16_set_rate(struct sbdsp_softc *sc, int cmd, int rate)
 {
 
-	DPRINTF(("sbdsp16_set_rate: sc=%p cmd=0x%02x rate=%d\n", sc, cmd, rate));
+	DPRINTF(("sbdsp16_set_rate: sc=%p cmd=0x%02x rate=%d\n", sc, cmd,
+	    rate));
 	if (sbdsp_wdsp(sc, cmd) < 0 ||
 	    sbdsp_wdsp(sc, rate >> 8) < 0 ||
 	    sbdsp_wdsp(sc, rate) < 0)
@@ -1555,7 +1557,8 @@ sbdsp_intr(void *arg)
 	mutex_spin_enter(&sc->sc_intr_lock);
 	if (ISSB16CLASS(sc)) {
 		irq = sbdsp_mix_read(sc, SBP_IRQ_STATUS);
-		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16 | SBP_IRQ_MPU401)) == 0) {
+		if ((irq & (SBP_IRQ_DMA8 | SBP_IRQ_DMA16 | SBP_IRQ_MPU401))
+		    == 0) {
 			mutex_spin_exit(&sc->sc_intr_lock);
 			DPRINTF(("sbdsp_intr: Spurious interrupt 0x%x\n", irq));
 			return 0;
@@ -1695,13 +1698,15 @@ sbdsp_set_mixer_gain(struct sbdsp_softc *sc, int port)
 			src = SB16P_BASS_L;
 			break;
 		case SB_PCSPEAKER:
-			sbdsp_mix_write(sc, SB16P_PCSPEAKER, sc->gain[port][SB_LEFT]);
+			sbdsp_mix_write(sc, SB16P_PCSPEAKER,
+			    sc->gain[port][SB_LEFT]);
 			return;
 		default:
 			return;
 		}
 		sbdsp_mix_write(sc, src, sc->gain[port][SB_LEFT]);
-		sbdsp_mix_write(sc, SB16P_L_TO_R(src), sc->gain[port][SB_RIGHT]);
+		sbdsp_mix_write(sc, SB16P_L_TO_R(src),
+		    sc->gain[port][SB_RIGHT]);
 		break;
 	}
 }
@@ -1743,11 +1748,13 @@ sbdsp_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 			}
 			switch (cp->dev) {
 			case SB_TREBLE:
-				sbdsp_set_ifilter(addr, cp->un.ord ? SB_TREBLE : 0);
+				sbdsp_set_ifilter(addr,
+				    cp->un.ord ? SB_TREBLE : 0);
 				mutex_spin_exit(&sc->sc_intr_lock);
 				return 0;
 			case SB_BASS:
-				sbdsp_set_ifilter(addr, cp->un.ord ? SB_BASS : 0);
+				sbdsp_set_ifilter(addr,
+				    cp->un.ord ? SB_BASS : 0);
 				mutex_spin_exit(&sc->sc_intr_lock);
 				return 0;
 			}
@@ -1949,7 +1956,7 @@ sbdsp_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 		return EINVAL;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
-	
+
 	switch (cp->dev) {
 	case SB_TREBLE:
 	case SB_BASS:

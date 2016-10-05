@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.41 2012/10/27 17:18:25 chs Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.41.14.1 2016/10/05 20:55:42 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.41 2012/10/27 17:18:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.41.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,8 @@ pcdisplay_probe_mono(bus_space_tag_t iot, bus_space_tag_t memt)
 }
 
 static void
-pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot, bus_space_tag_t memt, int mono)
+pcdisplay_init(struct pcdisplay_config *dc, bus_space_tag_t iot,
+    bus_space_tag_t memt, int mono)
 {
 	struct pcdisplay_handle *ph = &dc->dc_ph;
 	int cpos;
@@ -328,7 +329,7 @@ pcdisplay_attach(device_t parent, device_t self, void *aux)
 	aa.accessops = &pcdisplay_accessops;
 	aa.accesscookie = sc;
 
-        config_found(self, &aa, wsemuldisplaydevprint);
+	config_found(self, &aa, wsemuldisplaydevprint);
 }
 
 
@@ -376,8 +377,7 @@ pcdisplay_ioctl(void *v, void *vs, u_long cmd,
 }
 
 static paddr_t
-pcdisplay_mmap(void *v, void *vs, off_t offset,
-    int prot)
+pcdisplay_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	return (-1);
 }
@@ -411,9 +411,8 @@ pcdisplay_free_screen(void *v, void *cookie)
 }
 
 static int
-pcdisplay_show_screen(void *v, void *cookie,
-    int waitok, void (*cb)(void *, int, int),
-    void *cbarg)
+pcdisplay_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
 {
 #ifdef DIAGNOSTIC
 	struct pcdisplay_softc *sc = v;
@@ -425,8 +424,7 @@ pcdisplay_show_screen(void *v, void *cookie,
 }
 
 static int
-pcdisplay_allocattr(void *id, int fg, int bg,
-    int flags, long *attrp)
+pcdisplay_allocattr(void *id, int fg, int bg, int flags, long *attrp)
 {
 	if (flags & WSATTR_REVERSE)
 		*attrp = FG_BLACK | BG_LIGHTGREY;

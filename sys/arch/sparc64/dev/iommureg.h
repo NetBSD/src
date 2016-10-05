@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.20 2014/08/24 19:09:43 palle Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.20.2.1 2016/10/05 20:55:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,11 +63,11 @@ struct iommureg2 {
 	volatile uint64_t	iommu_cr;	/* IOMMU control register */
 	volatile uint64_t	iommu_tsb;	/* IOMMU TSB base register */
 	volatile uint64_t	iommu_flush;	/* IOMMU flush register */
-	volatile u_int64_t	iommu_ctxflush;
-	volatile u_int64_t	iommu_reserved[28];
-	volatile u_int64_t	iommu_cache_flush;
-	volatile u_int64_t	iommu_cache_invalidate;
-	volatile u_int64_t	iommu_reserved2[30];
+	volatile uint64_t	iommu_ctxflush;
+	volatile uint64_t	iommu_reserved[28];
+	volatile uint64_t	iommu_cache_flush;
+	volatile uint64_t	iommu_cache_invalidate;
+	volatile uint64_t	iommu_reserved2[30];
 };
 
 /* streaming buffer registers */

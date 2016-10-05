@@ -1,4 +1,4 @@
-/*	$NetBSD: lynxfb.c,v 1.4 2012/03/14 13:41:07 nonaka Exp $	*/
+/*	$NetBSD: lynxfb.c,v 1.4.18.1 2016/10/05 20:55:43 skrll Exp $	*/
 /*	$OpenBSD: smfb.c,v 1.13 2011/07/21 20:36:12 miod Exp $	*/
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.4 2012/03/14 13:41:07 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lynxfb.c,v 1.4.18.1 2016/10/05 20:55:43 skrll Exp $");
 
 #include "opt_wsemul.h"
 
@@ -824,11 +824,11 @@ lynxfb_vcons_eraserows(void *cookie, int row, int num, long attr)
 }
 
 static void
-lynxfb_blank(struct lynxfb *fb, int blank)
+lynxfb_blank(struct lynxfb *fb, int enable)
 {
 
-	fb->blank = blank;
-	if (!blank) {
+	fb->blank = !enable;
+	if (enable) {
 		lynxfb_vgats_write(fb, 0x31,
 		    lynxfb_vgats_read(fb, 0x31) | 0x01);
 	} else {

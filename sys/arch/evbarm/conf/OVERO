@@ -1,5 +1,5 @@
 #
-#	$NetBSD: OVERO,v 1.42.2.1 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: OVERO,v 1.42.2.2 2016/10/05 20:55:26 skrll Exp $
 #
 #	OVERO -- Gumstix. Inc. Overo COMS platforms kernel
 #
@@ -23,6 +23,9 @@ options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions	CPUFLAGS="-mcpu=cortex-a8 -mfpu=neon"
 
 # Architecture options
+
+makeoptions	BOARDTYPE="overo"
+options 	EVBARM_BOARDTYPE=overo
 
 # Gumstix options
 options 	OVERO

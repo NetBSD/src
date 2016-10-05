@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.21.6.1 2016/04/22 15:44:10 skrll Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.21.6.2 2016/10/05 20:55:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.21.6.1 2016/04/22 15:44:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.21.6.2 2016/10/05 20:55:33 skrll Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -67,11 +67,13 @@ __KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.21.6.1 2016/04/22 15:44:10 skrll Exp
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
+#include <mips/locore.h>
+#include <mips/cache.h>
+
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/machConst.h>
 
-#include <mips/cache.h>
 
 #include <newsmips/dev/screg_1185.h>
 #include <newsmips/dev/scsireg.h>

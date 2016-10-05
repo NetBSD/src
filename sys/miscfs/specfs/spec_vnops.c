@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.145.4.6 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145.4.7 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.6 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.7 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -658,7 +658,7 @@ spec_open(void *v)
 	if (cdev_type(dev) != D_DISK || error != 0)
 		return error;
 
-	
+
 	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
 	error = (*ioctl)(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, curlwp);
 	if (error == 0)
@@ -1090,10 +1090,9 @@ spec_reclaim(void *v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
+	struct vnode *vp __diagused = ap->a_vp;
 
 	KASSERT(vp->v_mount == dead_rootmount);
-	vcache_remove(vp->v_mount, &vp->v_interlock, sizeof(vp->v_interlock));
 	return 0;
 }
 

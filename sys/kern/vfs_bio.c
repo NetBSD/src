@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.252.2.3 2016/03/19 11:30:31 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252.2.4 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.3 2016/03/19 11:30:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.4 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -800,6 +800,14 @@ bwrite(buf_t *bp)
 	KASSERT(!cv_has_waiters(&bp->b_done));
 
 	vp = bp->b_vp;
+
+	/*
+	 * dholland 20160728 AFAICT vp==NULL must be impossible as it
+	 * will crash upon reaching VOP_STRATEGY below... see further
+	 * analysis on tech-kern.
+	 */
+	KASSERTMSG(vp != NULL, "bwrite given buffer with null vnode");
+
 	if (vp != NULL) {
 		KASSERT(bp->b_objlock == vp->v_interlock);
 		if (vp->v_type == VBLK)
@@ -1874,19 +1882,18 @@ vfs_bufstats(void)
 	int i, j, count;
 	buf_t *bp;
 	struct bqueue *dp;
-	int counts[(MAXBSIZE / PAGE_SIZE) + 1];
+	int counts[MAXBSIZE / MIN_PAGE_SIZE + 1];
 	static const char *bname[BQUEUES] = { "LOCKED", "LRU", "AGE" };
 
 	for (dp = bufqueues, i = 0; dp < &bufqueues[BQUEUES]; dp++, i++) {
 		count = 0;
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
-			counts[j] = 0;
+		memset(counts, 0, sizeof(counts));
 		TAILQ_FOREACH(bp, &dp->bq_queue, b_freelist) {
-			counts[bp->b_bufsize/PAGE_SIZE]++;
+			counts[bp->b_bufsize / PAGE_SIZE]++;
 			count++;
 		}
 		printf("%s: total-%d", bname[i], count);
-		for (j = 0; j <= MAXBSIZE/PAGE_SIZE; j++)
+		for (j = 0; j <= MAXBSIZE / PAGE_SIZE; j++)
 			if (counts[j] != 0)
 				printf(", %d-%d", j * PAGE_SIZE, counts[j]);
 		printf("\n");

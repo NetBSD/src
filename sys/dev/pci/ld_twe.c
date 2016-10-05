@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.36.24.1 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.36.24.2 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.36.24.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.36.24.2 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,13 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.36.24.1 2015/06/06 14:40:09 skrll Exp $
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/proc.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/ldvar.h>
 
 #include <dev/pci/twereg.h>
 #include <dev/pci/twevar.h>
+
+#include "ioconf.h"
 
 struct ld_twe_softc {
 	struct	ld_softc sc_ld;
@@ -148,7 +150,7 @@ ld_twe_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal(": %s%s, status: %s\n", stripebuf, typestr, statstr);
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 static int
@@ -320,4 +322,47 @@ ld_twe_adjqparam(device_t self, int openings)
 	struct ld_softc *ld = &sc->sc_ld;
 
 	ldadjqparam(ld, openings);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_twe, "ld,twe");
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_twe_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_twe, cfdata_ioconf_ld_twe);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_twe, cfdata_ioconf_ld_twe);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

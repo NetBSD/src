@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.6.2.2 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: TEGRA,v 1.6.2.3 2016/10/05 20:55:26 skrll Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -34,7 +34,7 @@ armgtmr0	at armperiph?				# ARM Generic Timer
 
 # On-board I/O
 tegrafdt0	at mainbus?
-fdt0		at tegrafdt0 
+fdt0		at tegrafdt0
 simplebus*	at fdt?
 fdt*		at simplebus?
 
@@ -152,6 +152,10 @@ nouveau*	at fdt?			# GPU
 
 # Thermal throttling controller
 tegrasoctherm*	at fdt?			# SOC_THERM
+
+# USB XHCI
+#xhci*		at fdt?			# XUSB
+#usb*		at xhci?
 
 # USB 2.0
 tegrausbphy*	at fdt?			# USB PHY

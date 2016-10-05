@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7.2.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.7.2.2 2016/10/05 20:55:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -77,6 +77,7 @@ tlb_invalidate_all(void)
 			armreg_iciallu_write(0);
 		}
 	}
+	arm_dsb();
 	arm_isb();
 }
 
@@ -99,6 +100,7 @@ tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
 			armreg_tlbiasid_write(lo);
 #endif
 		}
+		arm_dsb();
 		arm_isb();
 		if (__predict_false(vivt_icache_p)) {
 #ifdef MULTIPROCESSOR
@@ -130,7 +132,6 @@ tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 #endif
 		//armreg_tlbiall_write(asid);
 	}
-	arm_dsb();
 	arm_isb();
 }
 
@@ -143,7 +144,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 
 #if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA5)
 static u_int
-tlb_cortex_a5_record_asids(u_long *mapp)
+tlb_cortex_a5_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 	u_int nasids = 0;
 	for (size_t va_index = 0; va_index < 63; va_index++) {
@@ -175,7 +176,7 @@ tlb_cortex_a5_record_asids(u_long *mapp)
 
 #if !defined(MULTIPROCESSOR) && defined(CPU_CORTEXA7)
 static u_int
-tlb_cortex_a7_record_asids(u_long *mapp)
+tlb_cortex_a7_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 	u_int nasids = 0;
 	for (size_t va_index = 0; va_index < 128; va_index++) {
@@ -207,16 +208,16 @@ tlb_cortex_a7_record_asids(u_long *mapp)
 #endif
 
 u_int
-tlb_record_asids(u_long *mapp)
+tlb_record_asids(u_long *mapp, tlb_asid_t asid_max)
 {
 #ifndef MULTIPROCESSOR
 #ifdef CPU_CORTEXA5
 	if (CPU_ID_CORTEX_A5_P(curcpu()->ci_arm_cpuid))
-		return tlb_cortex_a5_record_asids(mapp);
+		return tlb_cortex_a5_record_asids(mapp, asid_max);
 #endif
 #ifdef CPU_CORTEXA7
 	if (CPU_ID_CORTEX_A7_P(curcpu()->ci_arm_cpuid))
-		return tlb_cortex_a7_record_asids(mapp);
+		return tlb_cortex_a7_record_asids(mapp, asid_max);
 #endif
 #endif /* MULTIPROCESSOR */
 #ifdef DIAGNOSTIC

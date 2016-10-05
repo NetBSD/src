@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.9.4.3 2016/03/19 11:30:09 skrll Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.9.4.4 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.9.4.3 2016/03/19 11:30:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.9.4.4 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,6 +88,7 @@ struct spdmem_i2c_softc {
 	i2c_addr_t sc_page1;
 };
 
+static int  spdmem_reset_page(struct spdmem_i2c_softc *);
 static int  spdmem_i2c_match(device_t, cfdata_t, void *);
 static void spdmem_i2c_attach(device_t, device_t, void *);
 static int  spdmem_i2c_detach(device_t, int);
@@ -96,6 +97,79 @@ CFATTACH_DECL_NEW(spdmem_iic, sizeof(struct spdmem_i2c_softc),
     spdmem_i2c_match, spdmem_i2c_attach, spdmem_i2c_detach, NULL);
 
 static int spdmem_i2c_read(struct spdmem_softc *, uint16_t, uint8_t *);
+
+static int
+spdmem_reset_page(struct spdmem_i2c_softc *sc)
+{
+	uint8_t reg, byte0, byte2;
+	int rv;
+
+	reg = 0;
+
+	iic_acquire_bus(sc->sc_tag, 0);
+
+	/*
+	 * Try to read byte 0 and 2. If it failed, it's not spdmem or a device
+	 * doesn't exist at the address.
+	 */
+	rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
+	    &byte0, 1, I2C_F_POLL);
+	rv |= iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
+	    &byte2, 1, I2C_F_POLL);
+	if (rv != 0)
+		goto error;
+
+	/*
+	 * Quirk for BIOSes that leave page 1 of a 4kbit EEPROM selected.
+	 *
+	 * byte0 is the length, byte2 is the memory type. Both of them should
+	 * not be zero. If zero, the current page might be 1 (DDR4 and newer).
+	 * If page 1 is selected, offset 0 can be 0 (Module Characteristics
+	 * (Energy backup is not available)) and also offset 2 can be 0
+	 * (Megabytes, and a part of Capacity digits).
+	 *
+	 * Note: The encoding of byte0 is vary in memory type, so we check
+	 * just with zero to be simple.
+	 *
+	 * Try to see if we are not at page 0. If it's not, select page 0.
+	 */
+	if ((byte0 == 0) || (byte2 == 0)) {
+		/*
+		 * Note that SDCTL_RPA is the same as sc->sc_page0(SPDCTL_SPA0)
+		 * Write is SPA0, read is RPA.
+		 *
+		 * This call returns 0 on page 0 and returns -1 on page 1.
+		 * I don't know whether our icc_exec()'s API is good or not.
+		 */
+		rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_page0,
+		    &reg, 1, NULL, 0, I2C_F_POLL);
+		if (rv != 0) {
+			/*
+			 * The possibilities are:
+			 * a) page 1 is selected.
+			 * b) The device doesn't support page select and
+			 *    it's not a SPD ROM.
+			 * Is there no way to distinguish them now?
+			 */
+			rv = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			    sc->sc_page0, &reg, 1, NULL, 0, I2C_F_POLL);
+			if (rv == 0) {
+				aprint_debug("Page 1 was selected. Page 0 is "
+				    "selected now.\n");
+			} else {
+				aprint_debug("Failed to select page 0. This "
+				    "device isn't SPD ROM\n");
+			}
+		} else {
+			/* This device isn't SPD ROM */
+			rv = -1;
+		}
+	}
+error:
+	iic_release_bus(sc->sc_tag, 0);
+
+	return rv;
+}
 
 static int
 spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
@@ -121,6 +195,10 @@ spdmem_i2c_match(device_t parent, cfdata_t match, void *aux)
 	sc.sc_page0 = SPDCTL_SPA0;
 	sc.sc_page1 = SPDCTL_SPA1;
 	sc.sc_base.sc_read = spdmem_i2c_read;
+
+	/* Check the bank and reset to the page 0 */
+	if (spdmem_reset_page(&sc) != 0)
+		return 0;
 
 	return spdmem_common_probe(&sc.sc_base);
 }

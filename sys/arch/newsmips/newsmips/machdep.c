@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116.2.1 2015/09/22 12:05:48 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.116.2.2 2016/10/05 20:55:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2015/09/22 12:05:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.2 2016/10/05 20:55:33 skrll Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -75,6 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2015/09/22 12:05:48 skrll Exp 
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
+#include <mips/cache.h>
+#include <mips/locore.h>
+
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -83,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116.2.1 2015/09/22 12:05:48 skrll Exp 
 #include <machine/apbus.h>
 #include <machine/apcall.h>
 
-#include <mips/cache.h>
-#include <mips/locore.h>
 
 #define	_NEWSMIPS_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -190,7 +191,7 @@ mach_init(int x_boothowto, int x_bootdev, int x_bootname, int x_maxmem)
 		memset(edata, 0, end - edata);
 	}
 
-	if (systype == 0) 
+	if (systype == 0)
 		systype = NEWS3400;	/* XXX compatibility for old boot */
 
 #ifdef news5000

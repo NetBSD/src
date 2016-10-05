@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.17.16.1 2015/12/27 12:09:43 skrll Exp $	*/
+/*	$NetBSD: emul.c,v 1.17.16.2 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.17.16.1 2015/12/27 12:09:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.17.16.2 2016/10/05 20:55:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ writegpreg(struct trapframe *tf, int i, const void *val)
 	int error = 0;
 
 	if (i == 0)
-		return error;
+		return 0;
 	else if (i < 16)
 		GPR(tf, i) = *(const int32_t *) val;
 	else

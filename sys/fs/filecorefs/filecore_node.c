@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.27 2014/10/04 13:27:24 hannken Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.27.2.1 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27 2014/10/04 13:27:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.27.2.1 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,10 +246,6 @@ filecore_reclaim(void *v)
 
 	if (prtactive && vp->v_usecount > 1)
 		vprint("filecore_reclaim: pushing active", vp);
-	/*
-	 * Remove the inode from the vnode cache.
-	 */
-	vcache_remove(vp->v_mount, &ip->i_number, sizeof(ip->i_number));
 
 	/*
 	 * Purge old data structures associated with the inode.

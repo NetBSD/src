@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.booters,v 1.7 2010/07/06 05:59:57 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.7.36.1 2016/10/05 20:55:24 skrll Exp $
 
-.include <bsd.own.mk>
+NOSSP=	# defined
+NOPIE=	# defined
+.include <bsd.init.mk>
 
 RELOC2BB=	${TOOL_AMIGAELF2BB}
 TXLT=		${TOOL_AMIGATXLT}

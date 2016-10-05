@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.40.10.1 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: opl.c,v 1.40.10.2 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.40.10.1 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.40.10.2 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ opl_attach(struct opl_softc *sc)
 	i = opl_find(sc);
 	mutex_exit(sc->lock);
 	if (i == 0) {
-		printf("\nopl: find failed\n");
+		aprint_error("\nopl: find failed\n");
 		return;
 	}
 
@@ -342,7 +342,7 @@ opl_get_block_fnum(midipitch_t mp)
 	midihz18_t hz18;
 	uint32_t block;
 	uint32_t f_num;
-	
+
 	/*
 	 * We can get to about note 30 before needing to switch from block 0.
 	 * Thereafter, switch block every octave; that will keep f_num in the
@@ -355,10 +355,10 @@ opl_get_block_fnum(midipitch_t mp)
 	/*
 	 * Could subtract block*MIDIPITCH_OCTAVE here, or >>block later. Later.
 	 */
-	
+
 	hz18 = MIDIPITCH_TO_HZ18(mp);
 	hz18 >>= block;
-	
+
 	/*
 	 * The formula in the manual is f_num = ((hz<<19)/fs)>>(block-1) (though
 	 * block==0 implies >>-1 which is a C unspecified result). As we already
@@ -369,8 +369,8 @@ opl_get_block_fnum(midipitch_t mp)
 	 * continued fraction matches 4/fs to 9+ significant figures. Doing the
 	 * shift first (above) ensures there's room in hz18 to multiply by 9.
 	 */
-	
-	f_num = (9 * hz18) / 111875; 
+
+	f_num = (9 * hz18) / 111875;
 	return ((block << 10) | f_num);
 }
 
@@ -462,7 +462,7 @@ int
 opl_calc_vol(int regbyte, int16_t level_cB)
 {
 	int level = regbyte & OPL_TOTAL_LEVEL_MASK;
-	
+
 	/*
 	 * level is a six-bit attenuation, from 0 (full output)
 	 * to -48dB (but without the minus sign) in steps of .75 dB.
@@ -569,7 +569,7 @@ oplsyn_setv(midisyn *ms,
 		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 0, r40m);
 		opl_set_op_reg(sc, OPL_KSL_LEVEL,   voice, 1, r40c);
 	}
-	
+
 	if ( act & OPLACT_PITCH ) {
 		mult = 1;
 		if ( mp > MIDIPITCH_FROM_KEY(114) ) { /* out of mult 1 range */
@@ -638,12 +638,12 @@ oplsyn_ctlnotice(midisyn *ms,
 {
 
 	DPRINTFN(1, ("%s: %p %d\n", __func__, ms->data, chan));
-	
+
 	switch (evt) {
 	case MIDICTL_RESET:
 		oplsyn_panhandler(ms, chan);
 		return 1;
-	
+
 	case MIDICTL_CTLR:
 		switch (key) {
 		case MIDI_CTRL_PAN_MSB:
@@ -668,8 +668,7 @@ oplsyn_programchange(midisyn *ms, uint_fast8_t chan, uint_fast8_t prog)
 }
 
 void
-oplsyn_loadpatch(midisyn *ms, struct sysex_info *sysex,
-    struct uio *uio)
+oplsyn_loadpatch(midisyn *ms, struct sysex_info *sysex, struct uio *uio)
 {
 #if 0
 	struct opl_softc *sc = ms->data;
@@ -690,7 +689,7 @@ oplsyn_panhandler(midisyn *ms, uint_fast8_t chan)
 {
 	struct opl_softc *sc = ms->data;
 	uint_fast16_t setting;
-	
+
 	setting = midictl_read(&ms->ctl, chan, MIDI_CTRL_PAN_MSB, 8192);
 	setting >>= 7; /* we used to treat it as MSB only */
 	sc->pan[chan] =

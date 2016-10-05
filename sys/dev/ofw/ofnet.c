@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.53.14.2 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.53.14.3 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.53.14.2 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.53.14.3 2016/10/05 20:55:42 skrll Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -335,7 +335,7 @@ ofnet_start(struct ifnet *ifp)
 		for (bufp = buf; (m = m0) != NULL;) {
 			memcpy(bufp, mtod(m, char *), m->m_len);
 			bufp += m->m_len;
-			MFREE(m, m0);
+			m0 = m_free(m);
 		}
 
 		/*

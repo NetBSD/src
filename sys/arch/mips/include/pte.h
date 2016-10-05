@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.20.32.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.20.32.2 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,15 +52,11 @@
 #define	PG_ASID	0x000000ff	/* Address space ID */
 
 #ifndef _LOCORE
-#include <mips/cpu.h>
-
-typedef union pt_entry {
-	uint32_t	 pt_entry;	/* for copying, etc. */
-#if 0
-	struct mips1_pte pt_mips1_pte;	/* for getting to bits by name */
-	struct mips3_pte pt_mips3_pte;
+#ifndef __BSD_PTENTRY_T__
+#define __BSD_PTENTRY_T__
+typedef uint32_t pt_entry_t;
+#define PRIxPTE		PRIx32
 #endif
-} pt_entry_t;
 
 /*
  * Macros/inline functions to hide PTE format differences.
@@ -88,7 +84,7 @@ bool pmap_is_page_ro_p(struct pmap *pmap, vaddr_t, uint32_t);
 #define	mips_pg_global_bit()	(MIPS1_PG_G)
 #define	mips_pg_wired_bit()	(MIPS1_PG_WIRED)
 
-#define	PTE_TO_PADDR(pte)	MIPS1_PTE_TO_PADDR((pte))
+#define	pte_to_paddr(pte)	MIPS1_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS1_PAGE_IS_RDONLY((pte), (va))
 
 #define	mips_tlbpfn_to_paddr(x)		mips1_tlbpfn_to_paddr((vaddr_t)(x))
@@ -112,7 +108,7 @@ bool pmap_is_page_ro_p(struct pmap *pmap, vaddr_t, uint32_t);
 #define	mips_pg_global_bit()	(MIPS3_PG_G)
 #define	mips_pg_wired_bit()	(MIPS3_PG_WIRED)
 
-#define	PTE_TO_PADDR(pte)	MIPS3_PTE_TO_PADDR((pte))
+#define	pte_to_paddr(pte)	MIPS3_PTE_TO_PADDR((pte))
 #define	PAGE_IS_RDONLY(pte, va)	MIPS3_PAGE_IS_RDONLY((pte), (va))
 
 #define	mips_tlbpfn_to_paddr(x)		mips3_tlbpfn_to_paddr((vaddr_t)(x))
@@ -136,7 +132,7 @@ static __inline uint32_t
     mips_pg_cwpage_bit(void) __pure,
     mips_pg_rwpage_bit(void) __pure,
     mips_pg_global_bit(void) __pure;
-static __inline paddr_t PTE_TO_PADDR(uint32_t pte) __pure;
+static __inline paddr_t pte_to_paddr(pt_entry_t pte) __pure;
 static __inline bool PAGE_IS_RDONLY(uint32_t pte, vaddr_t va) __pure;
 
 static __inline paddr_t mips_tlbpfn_to_paddr(uint32_t pfn) __pure;
@@ -225,7 +221,7 @@ mips_pg_wired_bit(void)
 }
 
 static __inline paddr_t
-PTE_TO_PADDR(uint32_t pte)
+pte_to_paddr(pt_entry_t pte)
 {
 	if (MIPS_HAS_R4K_MMU)
 		return (MIPS3_PTE_TO_PADDR(pte));
@@ -260,29 +256,205 @@ mips_paddr_to_tlbpfn(paddr_t pa)
 #endif /* ! _LOCORE */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-/*
- * Kernel virtual address to page table entry and visa versa.
- */
-#define	kvtopte(va) \
-	(Sysmap + (((vaddr_t)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT))
-#define	ptetokv(pte) \
-	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
+#define MIPS_MMU(X)	(MIPS_HAS_R4K_MMU ? MIPS3_##X : MIPS1_##X)
+static inline bool
+pte_valid_p(pt_entry_t pte)
+{
+	return (pte & MIPS_MMU(PG_V)) != 0;
+}
 
-extern	pt_entry_t *Sysmap;		/* kernel pte table */
-extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
+static inline bool
+pte_modified_p(pt_entry_t pte)
+{
+	return (pte & MIPS_MMU(PG_D)) != 0;
+}
+
+static inline bool
+pte_global_p(pt_entry_t pte)
+{
+	return (pte & MIPS_MMU(PG_G)) != 0;
+}
+
+static inline bool
+pte_wired_p(pt_entry_t pte)
+{
+	return (pte & MIPS_MMU(PG_WIRED)) != 0;
+}
+
+static inline pt_entry_t
+pte_wire_entry(pt_entry_t pte)
+{
+	return pte | MIPS_MMU(PG_WIRED);
+}
+
+static inline pt_entry_t
+pte_unwire_entry(pt_entry_t pte)
+{
+	return pte & ~MIPS_MMU(PG_WIRED);
+}
+
+static inline uint32_t
+pte_value(pt_entry_t pte)
+{
+	return pte;
+}
+
+static inline bool
+pte_readonly_p(pt_entry_t pte)
+{
+	return (pte & MIPS_MMU(PG_RO)) != 0;
+}
 
 static inline bool
 pte_zero_p(pt_entry_t pte)
 {
-	return pte.pt_entry == 0;
+	return pte == 0;
 }
 
-#define PRIxPTE		PRIx32
-static inline uint32_t
-pte_value(pt_entry_t pte)
+static inline bool
+pte_cached_p(pt_entry_t pte)
 {
-	return pte.pt_entry;
+	if (MIPS_HAS_R4K_MMU) {
+		return MIPS3_PG_TO_CCA(pte) == MIPS3_PG_TO_CCA(mips_options.mips3_pg_cached);
+	} else {
+		return (pte & MIPS1_PG_N) == 0;
+	}
 }
+
+static inline bool
+pte_deferred_exec_p(pt_entry_t pte)
+{
+	return false;
+}
+
+static inline pt_entry_t
+pte_nv_entry(bool kernel_p)
+{
+	__CTASSERT(MIPS1_PG_NV == MIPS3_PG_NV);
+	__CTASSERT(MIPS1_PG_NV == 0);
+	return (kernel_p && MIPS_HAS_R4K_MMU) ? MIPS3_PG_G : 0;
+}
+
+static inline pt_entry_t
+pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
+{
+	const uint32_t ro_bit = MIPS_MMU(PG_RO);
+	const uint32_t rw_bit = MIPS_MMU(PG_D);
+
+	return (pte & ~(ro_bit|rw_bit))
+	    | ((prot & VM_PROT_WRITE) ? rw_bit : ro_bit);
+}
+
+static inline pt_entry_t
+pte_prot_nowrite(pt_entry_t pte)
+{
+	return pte & ~MIPS_MMU(PG_D);
+}
+
+static inline pt_entry_t
+pte_cached_change(pt_entry_t pte, bool cached)
+{
+	if (MIPS_HAS_R4K_MMU) {
+		pte &= ~MIPS3_PG_CACHEMODE;
+		pte |= (cached ? MIPS3_PG_CACHED : MIPS3_PG_UNCACHED);
+	}
+	return pte;
+}
+
+#ifdef __PMAP_PRIVATE
+struct vm_page_md;
+
+static inline pt_entry_t
+pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
+    u_int flags)
+{
+	pt_entry_t pte;
+	if (MIPS_HAS_R4K_MMU) {
+		pte = mips3_paddr_to_tlbpfn(pa)
+		    | ((prot & VM_PROT_WRITE) ? MIPS3_PG_D : MIPS3_PG_RO)
+		    | ((flags & PMAP_NOCACHE) ? MIPS3_PG_UNCACHED : MIPS3_PG_CACHED)
+		    | MIPS3_PG_WIRED | MIPS3_PG_V | MIPS3_PG_G;
+	} else {
+		pte = mips1_paddr_to_tlbpfn(pa)
+		    | ((prot & VM_PROT_WRITE) ? MIPS1_PG_D : MIPS1_PG_RO)
+		    | ((flags & PMAP_NOCACHE) ? MIPS1_PG_N : 0)
+		    | MIPS1_PG_WIRED | MIPS1_PG_V | MIPS1_PG_G;
+	}
+	return pte;
+}
+
+static inline pt_entry_t
+pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
+    u_int flags, bool is_kernel_pmap_p)
+{
+	pt_entry_t pte;
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+	const bool cached = (flags & PMAP_NOCACHE) == 0
+	    && (pa & PGC_NOCACHE) == 0;
+	const bool prefetch = (pa & PGC_PREFETCH) != 0;
+
+	pa &= ~(PGC_NOCACHE|PGC_PREFETCH);
+#endif
+
+#if defined(cobalt) || defined(newsmips) || defined(pmax) /* otherwise ok */
+	/* this is not error in general. */
+	KASSERTMSG((pa & 0x80000000) == 0, "%#"PRIxPADDR, pa);
+#endif
+
+	if (mdpg != NULL) {
+		if ((prot & VM_PROT_WRITE) == 0) {
+			/*
+			 * If page is not yet referenced, we could emulate this
+			 * by not setting the page valid, and setting the
+			 * referenced status in the TLB fault handler, similar
+			 * to how page modified status is done for UTLBmod
+			 * exceptions.
+			 */
+			pte = mips_pg_ropage_bit();
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+		} else if (cached == false) {
+			if (VM_PAGEMD_MODIFIED_P(mdpg)) {
+				pte = mips_pg_rwncpage_bit();
+			} else {
+				pte = mips_pg_cwncpage_bit();
+			}
+#endif
+		} else {
+			if (VM_PAGEMD_MODIFIED_P(mdpg)) {
+				pte = mips_pg_rwpage_bit();
+			} else {
+				pte = mips_pg_cwpage_bit();
+			}
+		}
+	} else if (MIPS_HAS_R4K_MMU) {
+		/*
+		 * Assumption: if it is not part of our managed memory
+		 * then it must be device memory which may be volatile.
+		 */
+		u_int cca = PMAP_CCA_FOR_PA(pa);
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+		if (prefetch)
+			cca = mips_options.mips3_cca_devmem;
+#endif
+		pte = MIPS3_PG_IOPAGE(cca) & ~MIPS3_PG_G;
+	} else if (prot & VM_PROT_WRITE) {
+		pte = MIPS1_PG_N | MIPS1_PG_D;
+	} else {
+		pte = MIPS1_PG_N | MIPS1_PG_RO;
+	}
+
+	if (MIPS_HAS_R4K_MMU) {
+		pte |= mips3_paddr_to_tlbpfn(pa)
+		    | (is_kernel_pmap_p ? MIPS3_PG_G : 0);
+	} else {
+		pte |= mips1_paddr_to_tlbpfn(pa)
+		    | MIPS1_PG_V
+		    | (is_kernel_pmap_p ? MIPS1_PG_G : 0);
+	}
+
+	return pte;
+}
+#endif /* __PMAP_PRIVATE */
 
 #endif	/* defined(_KERNEL) && !defined(_LOCORE) */
 #endif /* __MIPS_PTE_H__ */

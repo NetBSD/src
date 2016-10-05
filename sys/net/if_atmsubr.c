@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.52.4.6 2016/07/09 20:25:21 skrll Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.52.4.7 2016/10/05 20:56:08 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.6 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.52.4.7 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -216,15 +216,16 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
 		inq = &natmintrq;
 		m_set_rcvif(m, rxhand); /* XXX: overload */
 
-		s = splnet();
+		IFQ_LOCK(inq);
 		if (IF_QFULL(inq)) {
 			IF_DROP(inq);
+			IFQ_UNLOCK(inq);
 			m_freem(m);
 		} else {
 			IF_ENQUEUE(inq, m);
+			IFQ_UNLOCK(inq);
 			schednetisr(isr);
 		}
-		splx(s);
 #else
 		printf("%s: NATM detected but not configured in kernel\n",
 		    __func__);

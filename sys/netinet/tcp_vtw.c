@@ -123,7 +123,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.3 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.4 2016/10/05 20:56:09 skrll Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -1050,7 +1050,7 @@ vtw_next_port_v4(struct tcp_ports_iterator *it)
 			if (!(inuse & (1 << i)))
 				continue;
 
-			inuse &= ~0 << i;
+			inuse &= ~0U << i;
 
 			if (i < it->slot_idx)
 				continue;
@@ -1164,7 +1164,7 @@ vtw_next_port_v6(struct tcp_ports_iterator *it)
 			if (!(inuse & (1 << i)))
 				continue;
 
-			inuse &= ~0 << i;
+			inuse &= ~0U << i;
 
 			if (i < it->slot_idx)
 				continue;

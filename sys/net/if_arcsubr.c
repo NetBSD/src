@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.66.4.6 2016/05/29 08:44:38 skrll Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66.4.7 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.6 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.7 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -505,7 +505,6 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 	struct ifqueue *inq;
 	uint8_t atype;
 	int isr = 0;
-	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -568,22 +567,23 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 			m_freem(m);
 		}
-		splx(s);
 		return;
 	}
+
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		schednetisr(isr);
 	}
-	splx(s);
 }
 
 /*

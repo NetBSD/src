@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.1.2.5 2016/04/22 15:44:10 skrll Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.1.2.6 2016/10/05 20:55:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -167,7 +167,7 @@ MFC0(uint32_t r, uint32_t s)
 #define CP0_CORE_MBOX	20	/* select 0 for core 0, 1 for 1 */
 
 #define CP0_CORE0_MBOX	_(20), 0
-#define CP0_CORE1_MBOX	_(20), 1	
+#define CP0_CORE1_MBOX	_(20), 1
 
 
 

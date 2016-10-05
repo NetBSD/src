@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $	*/
+/*	$NetBSD: awacs.c,v 1.43.14.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.43 2012/11/02 20:09:02 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.43.14.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -345,8 +345,8 @@ awacs_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_odma = bus_space_vaddr(sc->sc_tag, sc->sc_odmah);
 	sc->sc_idma = bus_space_vaddr(sc->sc_tag, sc->sc_idmah);
-	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
-	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command));
+	sc->sc_odmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command), NULL);
+	sc->sc_idmacmd = dbdma_alloc(20 * sizeof(struct dbdma_command), NULL);
 
 	if (strcmp(ca->ca_name, "i2s") == 0) {
 		int node, intr[6];
@@ -583,13 +583,11 @@ awacs_setup_sgsmix(device_t cookie)
 	sc->sc_codecctl1 &= ~AWACS_MUTE_HEADPHONE;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
-	mutex_enter(&sc->sc_intr_lock);
 	awacs_select_output(sc, sc->sc_output_mask);
 	awacs_set_volume(sc, sc->vol_l, sc->vol_r);
 	awacs_set_bass(sc, 128);
 	awacs_set_treble(sc, 128);
 	cv_signal(&sc->sc_event);	
-	mutex_exit(&sc->sc_intr_lock);
 #endif
 	return 0;
 }
@@ -855,15 +853,11 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 		/* No change necessary? */
 		if (mc->un.mask == sc->sc_output_mask)
 			return 0;
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_select_output(sc, mc->un.mask);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_VOL_MASTER:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_volume(sc, l, r);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_INPUT_SELECT:
@@ -904,15 +898,11 @@ awacs_set_port(void *h, mixer_ctrl_t *mc)
 
 #if NSGSMIX > 0
 	case AWACS_BASS:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_bass(sc, l);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 
 	case AWACS_TREBLE:
-		mutex_enter(&sc->sc_intr_lock);
 		awacs_set_treble(sc, l);
-		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 #endif
 	}

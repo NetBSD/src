@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.35.14.2 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35.14.2 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/module.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -74,16 +75,19 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp
 
 static int	ataraid_match(device_t, cfdata_t, void *);
 static void	ataraid_attach(device_t, device_t, void *);
+static int	ataraid_rescan(device_t, const char *, const int *);
 static int	ataraid_print(void *, const char *);
 
 static int	ata_raid_finalize(device_t);
+
+static int	finalize_done;
 
 ataraid_array_info_list_t ataraid_array_info_list =
     TAILQ_HEAD_INITIALIZER(ataraid_array_info_list);
 u_int ataraid_array_info_count;
 
-CFATTACH_DECL_NEW(ataraid, 0,
-    ataraid_match, ataraid_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(ataraid, 0,
+    ataraid_match, ataraid_attach, NULL, NULL, ataraid_rescan, NULL, 0);
 
 /*
  * ataraidattach:
@@ -98,8 +102,26 @@ ataraidattach(int count)
 	 * Register a finalizer which will be used to actually configure
 	 * the logical disks configured by ataraid.
 	 */
+	finalize_done = 0;
 	if (config_finalize_register(NULL, ata_raid_finalize) != 0)
-		printf("WARNING: unable to register ATA RAID finalizer\n");
+		aprint_normal("WARNING: "
+		    "unable to register ATA RAID finalizer\n");
+}
+
+/*
+ * Use the config_finalizer to rescan for new devices, since the
+ * ld_ataraid driver might not be immediately available.
+ */
+
+/* ARGSUSED */
+static int
+ataraid_rescan(device_t self, const char *attr, const int *flags)
+{
+
+	finalize_done = 0;
+	(void)ata_raid_finalize(self);
+
+	return 0;
 }
 
 /*
@@ -139,28 +161,16 @@ ata_raid_finalize(device_t self)
 		.cf_unit = 0,
 		.cf_fstate = FSTATE_STAR,
 	};
-	extern struct cfdriver ataraid_cd;
-	static int done_once;
-	int error;
 
 	/*
-	 * Since we only handle real hardware, we only need to be
-	 * called once.
+	 * Only run once for each instantiation
 	 */
-	if (done_once)
-		return (0);
-	done_once = 1;
+	if (finalize_done)
+		return 0;
+	finalize_done = 1;
 
 	if (TAILQ_EMPTY(&ataraid_array_info_list))
 		goto out;
-
-	error = config_cfattach_attach(ataraid_cd.cd_name, &ataraid_ca);
-	if (error) {
-		printf("%s: unable to register cfattach, error = %d\n",
-		    ataraid_cd.cd_name, error);
-		(void) config_cfdriver_detach(&ataraid_cd);
-		goto out;
-	}
 
 	if (config_attach_pseudo(&ataraid_cfdata) == NULL)
 		printf("%s: unable to attach an instance\n",
@@ -309,4 +319,59 @@ ata_raid_config_block_rw(struct vnode *vp, daddr_t blkno, void *tbuf,
 
 	putiobuf(bp);
 	return (error);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ataraid, "");
+
+#ifdef _MODULE
+CFDRIVER_DECL(ataraid, DV_DISK, NULL);
+#endif
+
+static int
+ataraid_modcmd(modcmd_t cmd, void *arg)
+{
+        int error = 0;
+
+        switch (cmd) {
+        case MODULE_CMD_INIT:
+#ifdef _MODULE
+		error = config_cfdriver_attach(&ataraid_cd);
+		if (error)
+			break;
+
+		error = config_cfattach_attach(ataraid_cd.cd_name, &ataraid_ca);
+		if (error) {
+			config_cfdriver_detach(&ataraid_cd);
+			aprint_error("%s: unable to register cfattach for \n"
+			    "%s, error %d", __func__, ataraid_cd.cd_name,
+			    error);
+			break;
+		}
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#ifdef _MODULE
+
+		error = config_cfattach_detach(ataraid_cd.cd_name, &ataraid_ca);
+		if (error) {
+			aprint_error("%s: failed to detach %s cfattach, "
+			    "error %d\n", __func__, ataraid_cd.cd_name, error);
+			break;
+		}
+		error = config_cfdriver_detach(&ataraid_cd);
+		if (error) {
+			(void)config_cfattach_attach(ataraid_cd.cd_name,
+			    &ataraid_ca);
+			aprint_error("%s: failed to detach %s cfdriver, "
+			    "error %d\n", __func__, ataraid_cd.cd_name, error);
+			break;
+		}
+#endif
+		break;
+	case MODULE_CMD_STAT:
+	default:
+		error = ENOTTY;
+	}
+
+	return error;
 }

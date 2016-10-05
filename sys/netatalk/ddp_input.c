@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.26.30.1 2016/07/09 20:25:22 skrll Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.26.30.2 2016/10/05 20:56:08 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.26.30.1 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.26.30.2 2016/10/05 20:56:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,15 +65,12 @@ atintr(void)
 	struct ifnet   *ifp;
 	struct mbuf    *m;
 	struct at_ifaddr *aa;
-	int             s;
 
 	mutex_enter(softnet_lock);
 	for (;;) {
-		s = splnet();
-
+		IFQ_LOCK(&atintrq2);
 		IF_DEQUEUE(&atintrq2, m);
-
-		splx(s);
+		IFQ_UNLOCK(&atintrq2);
 
 		if (m == 0)	/* no more queued packets */
 			break;
@@ -92,11 +89,9 @@ atintr(void)
 	}
 
 	for (;;) {
-		s = splnet();
-
+		IFQ_LOCK(&atintrq1);
 		IF_DEQUEUE(&atintrq1, m);
-
-		splx(s);
+		IFQ_UNLOCK(&atintrq1);
 
 		if (m == 0)	/* no more queued packets */
 

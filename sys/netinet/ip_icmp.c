@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.134.4.5 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.134.4.6 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.5 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.134.4.6 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -562,7 +562,8 @@ icmp_input(struct mbuf *m, ...)
 
 	case ICMP_MASKREQ: {
 		struct ifnet *rcvif;
-		int s;
+		int s, ss;
+		struct ifaddr *ifa;
 
 		if (icmpmaskrepl == 0)
 			break;
@@ -579,12 +580,15 @@ icmp_input(struct mbuf *m, ...)
 			icmpdst.sin_addr = ip->ip_src;
 		else
 			icmpdst.sin_addr = ip->ip_dst;
+		ss = pserialize_read_enter();
 		rcvif = m_get_rcvif(m, &s);
-		ia = ifatoia(ifaof_ifpforaddr(sintosa(&icmpdst),
-		    rcvif));
+		ifa = ifaof_ifpforaddr(sintosa(&icmpdst), rcvif);
 		m_put_rcvif(rcvif, &s);
-		if (ia == 0)
+		if (ifa == NULL) {
+			pserialize_read_exit(ss);
 			break;
+		}
+		ia = ifatoia(ifa);
 		icp->icmp_type = ICMP_MASKREPLY;
 		icp->icmp_mask = ia->ia_sockmask.sin_addr.s_addr;
 		if (in_nullhost(ip->ip_src)) {
@@ -593,6 +597,7 @@ icmp_input(struct mbuf *m, ...)
 			else if (ia->ia_ifp->if_flags & IFF_POINTOPOINT)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
+		pserialize_read_exit(ss);
 reflect:
 		{
 			uint64_t *icps = percpu_getref(icmpstat_percpu);
@@ -693,7 +698,11 @@ icmp_reflect(struct mbuf *m)
 	struct mbuf *opts = NULL;
 	int optlen = (ip->ip_hl << 2) - sizeof(struct ip);
 	struct ifnet *rcvif;
-	struct psref psref;
+	struct psref psref, psref_ia;
+	int s;
+	int bound;
+
+	bound = curlwp_bind();
 
 	if (!in_canforward(ip->ip_src) &&
 	    ((ip->ip_src.s_addr & IN_CLASSA_NET) !=
@@ -712,15 +721,18 @@ icmp_reflect(struct mbuf *m)
 	 */
 
 	/* Look for packet addressed to us */
-	ia = in_get_ia(t);
-	if (ia && (ia->ia4_flags & IN_IFF_NOTREADY))
+	ia = in_get_ia_psref(t, &psref_ia);
+	if (ia && (ia->ia4_flags & IN_IFF_NOTREADY)) {
+		ia4_release(ia, &psref_ia);
 		ia = NULL;
+	}
 
 	rcvif = m_get_rcvif_psref(m, &psref);
 
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && rcvif &&
 	    (rcvif->if_flags & IFF_BROADCAST)) {
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
@@ -731,6 +743,9 @@ icmp_reflect(struct mbuf *m)
 				ia = NULL;
 			}
 		}
+		if (ia != NULL)
+			ia4_acquire(ia, &psref_ia);
+		pserialize_read_exit(s);
 	}
 
 	sin = ia ? &ia->ia_addr : NULL;
@@ -751,14 +766,17 @@ icmp_reflect(struct mbuf *m)
 		sockaddr_in_init(&sin_dst, &ip->ip_dst, 0);
 		memset(&icmproute, 0, sizeof(icmproute));
 		errornum = 0;
-		sin = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum);
+		ia = in_selectsrc(&sin_dst, &icmproute, 0, NULL, &errornum,
+		    &psref_ia);
 		/* errornum is never used */
 		rtcache_free(&icmproute);
 		/* check to make sure sin is a source address on rcvif */
-		if (sin) {
+		if (ia != NULL) {
+			sin = &ia->ia_addr;
 			t = sin->sin_addr;
 			sin = NULL;
-			ia = in_get_ia_on_iface(t, rcvif);
+			ia4_release(ia, &psref_ia);
+			ia = in_get_ia_on_iface_psref(t, rcvif, &psref_ia);
 			if (ia != NULL)
 				sin = &ia->ia_addr;
 		}
@@ -771,12 +789,16 @@ icmp_reflect(struct mbuf *m)
 	 * when the incoming packet was encapsulated
 	 */
 	if (sin == NULL && rcvif) {
+		KASSERT(ia == NULL);
+		s = pserialize_read_enter();
 		IFADDR_READER_FOREACH(ifa, rcvif) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
+			ia4_acquire(ifatoia(ifa), &psref_ia);
 			break;
 		}
+		pserialize_read_exit(s);
 	}
 
 	m_put_rcvif_psref(rcvif, &psref);
@@ -787,25 +809,34 @@ icmp_reflect(struct mbuf *m)
 	 * We find the first AF_INET address on the first non-loopback
 	 * interface.
 	 */
-	if (sin == NULL)
+	if (sin == NULL) {
+		KASSERT(ia == NULL);
+		s = pserialize_read_enter();
 		IN_ADDRLIST_READER_FOREACH(ia) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
 			sin = &ia->ia_addr;
+			ia4_acquire(ia, &psref_ia);
 			break;
 		}
+		pserialize_read_exit(s);
+	}
 
 	/*
 	 * If we still didn't find an address, punt.  We could have an
 	 * interface up (and receiving packets) with no address.
 	 */
 	if (sin == NULL) {
+		KASSERT(ia == NULL);
 		m_freem(m);
 		goto done;
 	}
 
 	ip->ip_src = sin->sin_addr;
 	ip->ip_ttl = MAXTTL;
+
+	if (ia != NULL)
+		ia4_release(ia, &psref_ia);
 
 	if (optlen > 0) {
 		u_char *cp;
@@ -890,6 +921,7 @@ icmp_reflect(struct mbuf *m)
 
 	icmp_send(m, opts);
 done:
+	curlwp_bindx(bound);
 	if (opts)
 		(void)m_free(opts);
 }

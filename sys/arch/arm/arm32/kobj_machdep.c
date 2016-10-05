@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.10 2014/11/07 21:28:32 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.10.2.1 2016/10/05 20:55:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.10 2014/11/07 21:28:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.10.2.1 2016/10/05 20:55:24 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -399,7 +399,7 @@ kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 
 	if (load) {
 #if __ARMEB__
-		if (CPU_IS_ARMV7_P())
+		if (CPU_IS_ARMV7_P() && base == (void*)ko->ko_text_address)
 			kobj_be8_fixup(ko);
 #endif
 #ifndef _RUMPKERNEL

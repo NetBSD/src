@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.32.2.3 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.32.2.4 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.32.2.3 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.32.2.4 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,8 @@ struct ehci_cardbus_softc {
 };
 
 CFATTACH_DECL_NEW(ehci_cardbus, sizeof(struct ehci_cardbus_softc),
-    ehci_cardbus_match, ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate);
+    ehci_cardbus_match, ehci_cardbus_attach, ehci_cardbus_detach,
+    ehci_activate);
 
 static TAILQ_HEAD(, usb_cardbus) ehci_cardbus_alldevs =
 	TAILQ_HEAD_INITIALIZER(ehci_cardbus_alldevs);
@@ -135,14 +136,15 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.ub_hcpriv = sc;
 
+	aprint_naive("\n");
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
-	printf(": %s (rev. 0x%02x)\n", devinfo,
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	       PCI_REVISION(ca->ca_class));
 
 	/* Map I/O registers */
 	if (Cardbus_mapreg_map(ct, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
 			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
-		printf("%s: can't map mem space\n", devname);
+		aprint_error("%s: can't map mem space\n", devname);
 		return;
 	}
 
@@ -164,7 +166,7 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ih = Cardbus_intr_establish(ct, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n", devname);
+		aprint_error("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
 
@@ -191,7 +193,7 @@ ehci_cardbus_attach(device_t parent, device_t self, void *aux)
 
 	int err = ehci_init(&sc->sc);
 	if (err) {
-		printf("%s: init failed, error=%d\n", devname, err);
+		aprint_error("%s: init failed, error=%d\n", devname, err);
 
 		/* Avoid spurious interrupts. */
 		Cardbus_intr_disestablish(ct, sc->sc_ih);
@@ -231,7 +233,8 @@ ehci_cardbus_detach(device_t self, int flags)
 }
 
 void
-usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, device_t bu)
+usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca,
+    device_t bu)
 {
 	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
 	up->bus = ca->ca_bus;

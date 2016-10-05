@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_component.c,v 1.1.12.1 2016/03/19 11:30:34 skrll Exp $	*/
+/*	$NetBSD: bpf_component.c,v 1.1.12.2 2016/10/05 20:56:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_component.c,v 1.1.12.1 2016/03/19 11:30:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_component.c,v 1.1.12.2 2016/10/05 20:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -50,4 +50,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 		panic("bpf devsw attach failed: %d", error);
 	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/bpf", cmaj, 0)) !=0)
 		panic("cannot create bpf device nodes: %d", error);
+	if ((error = devsw_detach(NULL, &bpf_cdevsw)) != 0)
+		panic("cannot detach bpf devsw: %d", error);
 }

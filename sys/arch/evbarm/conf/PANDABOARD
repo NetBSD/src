@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.17.2.2 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: PANDABOARD,v 1.17.2.3 2016/10/05 20:55:26 skrll Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -190,7 +190,7 @@ omapgpio0	at obio1 addr 0x4a310000 size 0x0400 intrbase 160 intr 61
 omapgpio1	at obio2 addr 0x48055000 size 0x0400 intrbase 192 intr 62
 omapgpio2	at obio2 addr 0x48057000 size 0x0400 intrbase 224 intr 63
 omapgpio3	at obio2 addr 0x48059000 size 0x0400 intrbase 256 intr 64
-omapgpio4	at obio2 addr 0x4805a000 size 0x0400 intrbase 288 intr 65
+omapgpio4	at obio2 addr 0x4805b000 size 0x0400 intrbase 288 intr 65
 omapgpio5	at obio2 addr 0x4805d000 size 0x0400 intrbase 320 intr 66
 
 gpio*		at omapgpio?

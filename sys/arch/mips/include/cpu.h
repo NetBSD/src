@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109.6.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109.6.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,11 +37,13 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
-#include <mips/cpuregs.h>
-
 /*
  * Exported definitions unique to NetBSD/mips cpu support.
  */
+
+#ifdef _LOCORE
+#error Use assym.h to get definitions from <mips/cpu.h>
+#endif
 
 #ifdef _KERNEL
 
@@ -51,7 +53,6 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#ifndef _LOCORE
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
@@ -63,6 +64,7 @@ typedef struct cpu_watchpoint {
 	uint32_t	cw_asid;
 	uint32_t	cw_mode;
 } cpu_watchpoint_t;
+
 /* (abstract) mode bits */
 #define CPUWATCH_WRITE	__BIT(0)
 #define CPUWATCH_READ	__BIT(1)
@@ -122,10 +124,9 @@ struct cpu_info {
 	union pmap_segtab *ci_pmap_seg0tabs[2];
 #define ci_pmap_user_seg0tab	ci_pmap_seg0tabs[0]
 #define ci_pmap_kern_seg0tab	ci_pmap_seg0tabs[1]
-#else
+#endif
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
-#endif
 
 	u_int ci_cpuwatch_count;	/* number of watchpoints on this CPU */
 	cpu_watchpoint_t ci_cpuwatch_tab[CPUWATCH_MAX];
@@ -163,80 +164,11 @@ struct cpu_info {
     ci = &cpu_info_store; ci != NULL; ci = NULL
 #endif
 
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
-
-/*
- * CTL_MACHDEP definitions.
- */
-#define CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
-#define CPU_ROOT_DEVICE		3	/* string: root device name */
-#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
-#define CPU_LMMI		5	/* Loongson multimedia instructions */
-
-/*
- * Platform can override, but note this breaks userland compatibility
- * with other mips platforms.
- */
-#ifndef CPU_MAXID
-#define CPU_MAXID		5	/* number of valid machdep ids */
-#endif
-
-#ifdef _KERNEL
-#if defined(_MODULAR) || defined(_LKM) || defined(_STANDALONE)
-/* Assume all CPU architectures are valid for LKM's and standlone progs */
-#if !defined(__mips_n32) && !defined(__mips_n64)
-#define	MIPS1		1
-#endif
-#define	MIPS3		1
-#define	MIPS4		1
-#if !defined(__mips_n32) && !defined(__mips_n64)
-#define	MIPS32		1
-#define	MIPS32R2	1
-#endif
-#define	MIPS64		1
-#define	MIPS64R2	1
-#endif
-
-#if (MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 0
-#error at least one of MIPS1, MIPS3, MIPS4, MIPS32, MIPS32R2, MIPS64, or MIPS64R2 must be specified
-#endif
-
-/* Shortcut for MIPS3 or above defined */
-#if defined(MIPS3) || defined(MIPS4) \
-    || defined(MIPS32) || defined(MIPS32R2) \
-    || defined(MIPS64) || defined(MIPS64R2)
-
-#define	MIPS3_PLUS	1
-#define __HAVE_CPU_COUNTER
-#else
-#undef MIPS3_PLUS
-#endif
-
-/*
- * Macros to find the CPU architecture we're on at run-time,
- * or if possible, at compile-time.
- */
-
-#define	CPU_ARCH_MIPSx		0		/* XXX unknown */
-#define	CPU_ARCH_MIPS1		(1 << 0)
-#define	CPU_ARCH_MIPS2		(1 << 1)
-#define	CPU_ARCH_MIPS3		(1 << 2)
-#define	CPU_ARCH_MIPS4		(1 << 3)
-#define	CPU_ARCH_MIPS5		(1 << 4)
-#define	CPU_ARCH_MIPS32		(1 << 5)
-#define	CPU_ARCH_MIPS64		(1 << 6)
-#define	CPU_ARCH_MIPS32R2	(1 << 7)
-#define	CPU_ARCH_MIPS64R2	(1 << 8)
-
 /* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
 //	MIPS_CURLWP moved to <mips/regdef.h>
-#define MIPS_CURLWP_QUOTED      "$24"
+#define MIPS_CURLWP_QUOTED	"$24"
 #define MIPS_CURLWP_LABEL	_L_T8
 #define MIPS_CURLWP_REG		_R_T8
-
-#ifndef _LOCORE
 
 extern struct cpu_info cpu_info_store;
 #ifdef MULTIPROCESSOR
@@ -254,205 +186,6 @@ register struct lwp *mips_curlwp asm(MIPS_CURLWP_QUOTED);
 #define	cpu_number()		(0)
 #define	CPU_IS_PRIMARY(ci)	(true)
 #endif
-
-/* XXX simonb
- * Should the following be in a cpu_info type structure?
- * And how many of these are per-cpu vs. per-system?  (Ie,
- * we can assume that all cpus have the same mmu-type, but
- * maybe not that all cpus run at the same clock speed.
- * Some SGI's apparently support R12k and R14k in the same
- * box.)
- */
-struct mips_options {
-	const struct pridtab *mips_cpu;
-
-	u_int mips_cpu_arch;
-	u_int mips_cpu_mhz; /* CPU speed in MHz, estimated by mc_cpuspeed(). */
-	u_int mips_cpu_flags;
-	u_int mips_num_tlb_entries;
-	mips_prid_t mips_cpu_id;
-	mips_prid_t mips_fpu_id;
-	bool mips_has_r4k_mmu;
-	bool mips_has_llsc;
-	u_int mips3_pg_shift;
-	u_int mips3_pg_cached;
-	u_int mips3_cca_devmem;
-#ifdef MIPS3_PLUS
-#ifdef _LP64
-	uint64_t mips3_xkphys_cached;
-#endif
-	uint64_t mips3_tlb_vpn_mask;
-	uint64_t mips3_tlb_pfn_mask;
-	uint32_t mips3_tlb_pg_mask;
-#endif
-};
-extern struct mips_options mips_options;
-
-#define	CPU_MIPS_R4K_MMU		0x0001
-#define	CPU_MIPS_NO_LLSC		0x0002
-#define	CPU_MIPS_CAUSE_IV		0x0004
-#define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
-#define	CPU_MIPS_CACHED_CCA_MASK	0x0070
-#define	CPU_MIPS_CACHED_CCA_SHIFT	 4
-#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
-#define	CPU_MIPS_USE_WAIT		0x0100	/* Use "wait"-based cpu_idle() */
-#define	CPU_MIPS_NO_WAIT		0x0200	/* Inverse of previous, for mips32/64 */
-#define	CPU_MIPS_D_CACHE_COHERENT	0x0400	/* D-cache is fully coherent */
-#define	CPU_MIPS_I_D_CACHE_COHERENT	0x0800	/* I-cache funcs don't need to flush the D-cache */
-#define	CPU_MIPS_NO_LLADDR		0x1000
-#define	CPU_MIPS_HAVE_MxCR		0x2000	/* have mfcr, mtcr insns */
-#define	CPU_MIPS_LOONGSON2		0x4000
-#define	MIPS_NOT_SUPP			0x8000
-#define	CPU_MIPS_HAVE_DSP		0x10000
-
-#endif	/* !_LOCORE */
-
-#if ((MIPS1 + MIPS3 + MIPS4 + MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) == 1) || defined(_LOCORE)
-
-#if defined(MIPS1)
-
-# define CPUISMIPS3		0
-# define CPUIS64BITS		0
-# define CPUISMIPS32		0
-# define CPUISMIPS32R2		0
-# define CPUISMIPS64		0
-# define CPUISMIPS64R2		0
-# define CPUISMIPSNN		0
-# define MIPS_HAS_R4K_MMU	0
-# define MIPS_HAS_CLOCK		0
-# define MIPS_HAS_LLSC		0
-# define MIPS_HAS_LLADDR	0
-# define MIPS_HAS_DSP		0
-# define MIPS_HAS_LMMI		0
-
-#elif defined(MIPS3) || defined(MIPS4)
-
-# define CPUISMIPS3		1
-# define CPUIS64BITS		1
-# define CPUISMIPS32		0
-# define CPUISMIPS32R2		0
-# define CPUISMIPS64		0
-# define CPUISMIPS64R2		0
-# define CPUISMIPSNN		0
-# define MIPS_HAS_R4K_MMU	1
-# define MIPS_HAS_CLOCK		1
-# if defined(_LOCORE)
-#  if !defined(MIPS3_4100)
-#   define MIPS_HAS_LLSC	1
-#  else
-#   define MIPS_HAS_LLSC	0
-#  endif
-# else	/* _LOCORE */
-#  define MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
-# endif	/* _LOCORE */
-# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
-# if defined(MIPS3_LOONGSON2)
-#  define MIPS_HAS_LMMI		((mips_options.mips_cpu_flags & CPU_MIPS_LOONGSON2) != 0)
-# else
-#  define MIPS_HAS_LMMI		0
-# endif
-#elif defined(MIPS32)
-
-# define CPUISMIPS3		1
-# define CPUIS64BITS		0
-# define CPUISMIPS32		1
-# define CPUISMIPS32R2		0
-# define CPUISMIPS64		0
-# define CPUISMIPS64R2		0
-# define CPUISMIPSNN		1
-# define MIPS_HAS_R4K_MMU	1
-# define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
-# define MIPS_HAS_LMMI		0
-
-#elif defined(MIPS32R2)
-
-# define CPUISMIPS3		1
-# define CPUIS64BITS		0
-# define CPUISMIPS32		0
-# define CPUISMIPS32R2		1
-# define CPUISMIPS64		0
-# define CPUISMIPS64R2		0
-# define CPUISMIPSNN		1
-# define MIPS_HAS_R4K_MMU	1
-# define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
-# define MIPS_HAS_LMMI		0
-
-#elif defined(MIPS64)
-
-# define CPUISMIPS3		1
-# define CPUIS64BITS		1
-# define CPUISMIPS32		0
-# define CPUISMIPS32R2		0
-# define CPUISMIPS64		1
-# define CPUISMIPS64R2		0
-# define CPUISMIPSNN		1
-# define MIPS_HAS_R4K_MMU	1
-# define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		0
-# define MIPS_HAS_LMMI		0
-
-#elif defined(MIPS64R2)
-
-# define CPUISMIPS3		1
-# define CPUIS64BITS		1
-# define CPUISMIPS32		0
-# define CPUISMIPS32R2		0
-# define CPUISMIPS64		0
-# define CPUISMIPS64R2		1
-# define CPUISMIPSNN		1
-# define MIPS_HAS_R4K_MMU	1
-# define MIPS_HAS_CLOCK		1
-# define MIPS_HAS_LLSC		1
-# define MIPS_HAS_LLADDR	((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
-# define MIPS_HAS_LMMI		0
-
-#endif
-
-#else /* run-time test */
-
-#ifndef	_LOCORE
-
-#define	MIPS_HAS_R4K_MMU	(mips_options.mips_has_r4k_mmu)
-#define	MIPS_HAS_LLSC		(mips_options.mips_has_llsc)
-#define	MIPS_HAS_LLADDR		((mips_options.mips_cpu_flags & CPU_MIPS_NO_LLADDR) == 0)
-# define MIPS_HAS_DSP		(mips_options.mips_cpu_flags & CPU_MIPS_HAVE_DSP)
-
-/* This test is ... rather bogus */
-#define	CPUISMIPS3	((mips_options.mips_cpu_arch & \
-	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS32 | CPU_ARCH_MIPS64)) != 0)
-
-/* And these aren't much better while the previous test exists as is... */
-#define	CPUISMIPS4	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS4) != 0)
-#define	CPUISMIPS5	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS5) != 0)
-#define	CPUISMIPS32	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32) != 0)
-#define	CPUISMIPS32R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS32R2) != 0)
-#define	CPUISMIPS64	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64) != 0)
-#define	CPUISMIPS64R2	((mips_options.mips_cpu_arch & CPU_ARCH_MIPS64R2) != 0)
-#define	CPUISMIPSNN	((mips_options.mips_cpu_arch & (CPU_ARCH_MIPS32 | CPU_ARCH_MIPS32R2 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
-#define	CPUIS64BITS	((mips_options.mips_cpu_arch & \
-	(CPU_ARCH_MIPS3 | CPU_ARCH_MIPS4 | CPU_ARCH_MIPS64 | CPU_ARCH_MIPS64R2)) != 0)
-
-#define	MIPS_HAS_CLOCK	(mips_options.mips_cpu_arch >= CPU_ARCH_MIPS3)
-
-#else	/* !_LOCORE */
-
-#define	MIPS_HAS_LLSC	0
-
-#endif	/* !_LOCORE */
-
-#endif /* run-time test */
-
-#ifndef	_LOCORE
 
 /*
  * definitions of cpu-dependent requirements
@@ -494,28 +227,11 @@ struct clockframe {
  * These differ on r4000 and r3000 systems; provide them in the
  * port-dependent file that includes this one, using the macros below.
  */
+uint32_t cpu_clkf_usermode_mask(void);
 
-/* mips1 versions */
-#define	MIPS1_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KU_PREV)
-
-/* mips3 versions */
-#define	MIPS3_CLKF_USERMODE(framep)	((framep)->sr & MIPS_SR_KSU_USER)
-
-#define	CLKF_PC(framep)		((framep)->pc)
-#define	CLKF_INTR(framep)	((framep)->intr)
-
-#if defined(MIPS3_PLUS) && !defined(MIPS1)		/* XXX bogus! */
-#define	CLKF_USERMODE(framep)	MIPS3_CLKF_USERMODE(framep)
-#endif
-
-#if !defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
-#define	CLKF_USERMODE(framep)	MIPS1_CLKF_USERMODE(framep)
-#endif
-
-#if defined(MIPS3_PLUS) && defined(MIPS1)		/* XXX bogus! */
-#define CLKF_USERMODE(framep) \
-    ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
-#endif
+#define	CLKF_USERMODE(framep)	((framep)->sr & cpu_clkf_usermode_mask())
+#define	CLKF_PC(framep)		((framep)->pc + 0)
+#define	CLKF_INTR(framep)	((framep)->intr + 0)
 
 /*
  * Misc prototypes and variable declarations.
@@ -546,152 +262,33 @@ void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
 void	cpu_set_curpri(int);
 
-extern int mips_poolpage_vmfreelist;	/* freelist to allocate poolpages */
-
-struct cpu_info *
-	cpu_info_alloc(struct pmap_tlb_info *, cpuid_t, cpuid_t, cpuid_t,
-	    cpuid_t);
-void	cpu_attach_common(device_t, struct cpu_info *);
-void	cpu_startup_common(void);
-#ifdef _LP64
-void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
-#endif
-
-#ifdef MULTIPROCESSOR
-void	cpu_hatch(struct cpu_info *ci);
-void	cpu_trampoline(void);
+/* VM related hooks */
 void	cpu_boot_secondary_processors(void);
-void	cpu_halt(void);
-void	cpu_halt_others(void);
-void	cpu_pause(struct reg *);
-void	cpu_pause_others(void);
-void	cpu_resume(cpuid_t);
-void	cpu_resume_others(void);
-bool	cpu_is_paused(cpuid_t);
-void	cpu_debug_dump(void);
-
-extern kcpuset_t *cpus_running;
-extern kcpuset_t *cpus_hatched;
-extern kcpuset_t *cpus_paused;
-extern kcpuset_t *cpus_resumed;
-extern kcpuset_t *cpus_halted;
-#endif
-
-/* copy.S */
-int32_t kfetch_32(volatile uint32_t *, uint32_t);
-int8_t	ufetch_int8(void *);
-int16_t	ufetch_int16(void *);
-int32_t ufetch_int32(void *);
-uint8_t	ufetch_uint8(void *);
-uint16_t ufetch_uint16(void *);
-uint32_t ufetch_uint32(void *);
-int8_t	ufetch_int8_intrsafe(void *);
-int16_t	ufetch_int16_intrsafe(void *);
-int32_t ufetch_int32_intrsafe(void *);
-uint8_t	ufetch_uint8_intrsafe(void *);
-uint16_t ufetch_uint16_intrsafe(void *);
-uint32_t ufetch_uint32_intrsafe(void *);
-#ifdef _LP64
-int64_t ufetch_int64(void *);
-uint64_t ufetch_uint64(void *);
-int64_t ufetch_int64_intrsafe(void *);
-uint64_t ufetch_uint64_intrsafe(void *);
-#endif
-char	ufetch_char(void *);
-short	ufetch_short(void *);
-int	ufetch_int(void *);
-long	ufetch_long(void *);
-char	ufetch_char_intrsafe(void *);
-short	ufetch_short_intrsafe(void *);
-int	ufetch_int_intrsafe(void *);
-long	ufetch_long_intrsafe(void *);
-
-u_char	ufetch_uchar(void *);
-u_short	ufetch_ushort(void *);
-u_int	ufetch_uint(void *);
-u_long	ufetch_ulong(void *);
-u_char	ufetch_uchar_intrsafe(void *);
-u_short	ufetch_ushort_intrsafe(void *);
-u_int	ufetch_uint_intrsafe(void *);
-u_long	ufetch_ulong_intrsafe(void *);
-void 	*ufetch_ptr(void *);
-
-int	ustore_int8(void *, int8_t);
-int	ustore_int16(void *, int16_t);
-int	ustore_int32(void *, int32_t);
-int	ustore_uint8(void *, uint8_t);
-int	ustore_uint16(void *, uint16_t);
-int	ustore_uint32(void *, uint32_t);
-int	ustore_int8_intrsafe(void *, int8_t);
-int	ustore_int16_intrsafe(void *, int16_t);
-int	ustore_int32_intrsafe(void *, int32_t);
-int	ustore_uint8_intrsafe(void *, uint8_t);
-int	ustore_uint16_intrsafe(void *, uint16_t);
-int	ustore_uint32_intrsafe(void *, uint32_t);
-#ifdef _LP64
-int	ustore_int64(void *, int64_t);
-int	ustore_uint64(void *, uint64_t);
-int	ustore_int64_intrsafe(void *, int64_t);
-int	ustore_uint64_intrsafe(void *, uint64_t);
-#endif
-int	ustore_char(void *, char);
-int	ustore_char_intrsafe(void *, char);
-int	ustore_short(void *, short);
-int	ustore_short_intrsafe(void *, short);
-int	ustore_int(void *, int);
-int	ustore_int_intrsafe(void *, int);
-int	ustore_long(void *, long);
-int	ustore_long_intrsafe(void *, long);
-int	ustore_uchar(void *, u_char);
-int	ustore_uchar_intrsafe(void *, u_char);
-int	ustore_ushort(void *, u_short);
-int	ustore_ushort_intrsafe(void *, u_short);
-int	ustore_uint(void *, u_int);
-int	ustore_uint_intrsafe(void *, u_int);
-int	ustore_ulong(void *, u_long);
-int	ustore_ulong_intrsafe(void *, u_long);
-int 	ustore_ptr(void *, void *);
-int	ustore_ptr_intrsafe(void *, void *);
-
-int	ustore_uint32_isync(void *, uint32_t);
-
-/* trap.c */
-void	netintr(void);
-int	kdbpeek(vaddr_t);
-
-/* mips_dsp.c */
-void	dsp_init(void);
-void	dsp_discard(void);
-void	dsp_load(void);
-void	dsp_save(void);
-bool	dsp_used_p(void);
-extern const pcu_ops_t mips_dsp_ops;
-
-/* mips_fpu.c */
-void	fpu_init(void);
-void	fpu_discard(void);
-void	fpu_load(void);
-void	fpu_save(void);
-bool	fpu_used_p(void);
-extern const pcu_ops_t mips_fpu_ops;
-
-/* mips_machdep.c */
-void	dumpsys(void);
-int	savectx(struct pcb *);
-void	cpu_identify(device_t);
-
-/* locore*.S */
-int	badaddr(void *, size_t);
-int	badaddr64(uint64_t, size_t);
-
-/* vm_machdep.c */
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
 void	cpu_proc_fork(struct proc *, struct proc *);
 vaddr_t	cpu_lwp_pc(struct lwp *);
-int	ioaccess(vaddr_t, paddr_t, vsize_t);
-int	iounaccess(vaddr_t, vsize_t);
+#ifdef _LP64
+void	cpu_vmspace_exec(struct lwp *, vaddr_t, vaddr_t);
+#endif
 
-#endif /* ! _LOCORE */
 #endif /* _KERNEL */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define CPU_ROOT_DEVICE		3	/* string: root device name */
+#define CPU_LLSC		4	/* OS/CPU supports LL/SC instruction */
+#define CPU_LMMI		5	/* Loongson multimedia instructions */
+
+/*
+ * Platform can override, but note this breaks userland compatibility
+ * with other mips platforms.
+ */
+#ifndef CPU_MAXID
+#define CPU_MAXID		5	/* number of valid machdep ids */
+#endif
+
 #endif /* _CPU_H_ */

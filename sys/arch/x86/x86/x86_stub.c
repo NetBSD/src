@@ -1,7 +1,7 @@
-/* $NetBSD: x86_stub.c,v 1.4 2011/10/19 05:01:43 dyoung Exp $ */
+/* $NetBSD: x86_stub.c,v 1.4.30.1 2016/10/05 20:55:37 skrll Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_stub.c,v 1.4 2011/10/19 05:01:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_stub.c,v 1.4.30.1 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,6 +31,7 @@ x86_zeroop(void)
 	return 0;
 }
 
+__weak_alias(device_acpi_register, x86_nullop);
 __weak_alias(device_isa_register, x86_nullop);
 __weak_alias(device_pci_props_register, x86_voidop);
 __weak_alias(device_pci_register, x86_nullop);

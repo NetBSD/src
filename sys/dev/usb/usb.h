@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.111.2.9 2016/04/06 07:01:37 skrll Exp $	*/
+/*	$NetBSD: usb.h,v 1.111.2.10 2016/10/05 20:55:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -306,9 +306,12 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bMaxBurst;
 	uByte		bmAttributes;
-#define UE_SSC_MAXSTREAMS(x)	__SHIFTOUT(x, __BITS(4,0))	/* bulk */
-#define UE_SSC_MULT(x)		__SHIFTOUT(x, __BITS(1,0))	/* isoch */
-#define UE_SSC_SSP_ISO(x) 	__SHIFTOUT(x, __BIT(7))		/* isoch */
+#define UE_GET_BULK_STREAMS_MASK	__BITS(4,0)
+#define UE_GET_BULK_STREAMS(x)		__SHIFTOUT(x, UE_GET_BULK_STREAMS_MASK)
+#define UE_GET_SS_ISO_MULT_MASK		__BITS(1,0)
+#define UE_GET_SS_ISO_MULT(x)		__SHIFTOUT(x, UE_GET_SS_ISO_MULT_MASK)
+#define UE_GET_SS_ISO_SSP_MASK		__BIT(7)
+#define UE_GET_SS_ISO_SSP(x)		__SHIFTOUT(x, UE_GET_SS_ISO_SSP_MASK)
 	/* The fields below are only valid for periodic endpoints */
 	uWord		wBytesPerInterval;
 } UPACKED usb_endpoint_ss_comp_descriptor_t;
@@ -352,7 +355,14 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bDevCapabilityType;
 	uDWord		bmAttributes;
-#define USB_DEVCAP_USB2EXT_LPM __BIT(1)
+#define USB_DEVCAP_V2EXT_LPM			__BIT(1)
+#define USB_DEVCAP_V2EXT_BESL_SUPPORTED		__BIT(2)
+#define USB_DEVCAP_V2EXT_BESL_BASELINE_VALID	__BIT(3)
+#define USB_DEVCAP_V2EXT_BESL_DEEP_VALID	__BIT(4)
+#define USB_DEVCAP_V2EXT_BESL_BASELINE_MASK	__BITS(11, 8)
+#define USB_DEVCAP_V2EXT_BESL_BASELINE_GET(x)	__SHIFTOUT(x, USB_V2EXT_BESL_BASELINE_MASK)
+#define USB_DEVCAP_V2EXT_BESL_DEEP_MASK		__BITS(15, 12)
+#define USB_DEVCAP_V2EXT_BESL_DEEP_GET(x)	__SHIFTOUT(x, USB_V2EXT_BESL_DEEP_MASK)
 } UPACKED usb_devcap_usb2ext_descriptor_t;
 #define USB_DEVCAP_USB2EXT_DESCRIPTOR_SIZE 7
 
@@ -432,7 +442,8 @@ typedef struct {
 #define UR_RESET_TT		0x09
 #define UR_GET_TT_STATE		0x0a
 #define UR_STOP_TT		0x0b
-#define UR_SET_HUB_DEPTH	0x0c
+#define UR_SET_AND_TEST		0x0c	/* USB 2.0 only */
+#define UR_SET_HUB_DEPTH	0x0c	/* USB 3.0 only */
 #define UR_GET_PORT_ERR_COUNT	0x0d
 /* Port Status Type for GET_STATUS,  USB 3.1 10.16.2.6 and Table 10-12 */
 #define  UR_PST_PORT_STATUS	0

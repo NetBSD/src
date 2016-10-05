@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461.2.7 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461.2.8 2016/10/05 20:56:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.7 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.8 2016/10/05 20:56:02 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -931,10 +931,10 @@ start_init(void *arg)
 	 */
 	addr = (vaddr_t)STACK_ALLOC(USRSTACK, PAGE_SIZE);
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE,
-                    NULL, UVM_UNKNOWN_OFFSET, 0,
-                    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
-		    UVM_ADV_NORMAL,
-                    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW, UVM_INH_COPY,
+	    UVM_ADV_NORMAL,
+	    UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW)) != 0)
 		panic("init: couldn't allocate argument space");
 	p->p_vmspace->vm_maxsaddr = (void *)STACK_MAX(addr, PAGE_SIZE);
 

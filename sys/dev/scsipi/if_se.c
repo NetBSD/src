@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.87.4.3 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: if_se.c,v 1.87.4.4 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.87.4.3 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.87.4.4 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -203,7 +203,9 @@ static void	sedone(struct scsipi_xfer *, int);
 static int	se_ioctl(struct ifnet *, u_long, void *);
 static void	sewatchdog(struct ifnet *);
 
+#if 0
 static inline u_int16_t ether_cmp(void *, void *);
+#endif
 static void	se_recv(void *);
 static struct mbuf *se_get(struct se_softc *, char *, int);
 static int	se_read(struct se_softc *, char *, int);
@@ -267,6 +269,7 @@ const struct scsipi_inquiry_pattern se_patterns[] = {
 	 "Cabletrn",         "EA412",                 ""},
 };
 
+#if 0
 /*
  * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.
@@ -285,6 +288,7 @@ ether_cmp(void *one, void *two)
 }
 
 #define ETHER_CMP	ether_cmp
+#endif
 
 static int
 sematch(device_t parent, cfdata_t match, void *aux)
@@ -444,8 +448,7 @@ se_ifstart(struct ifnet *ifp)
 	for (m = m0; m != NULL; ) {
 		memcpy(cp, mtod(m, u_char *), m->m_len);
 		cp += m->m_len;
-		MFREE(m, m0);
-		m = m0;
+		m = m0 = m_free(m);
 	}
 	if (len < SEMINSIZE) {
 #ifdef SEDEBUG

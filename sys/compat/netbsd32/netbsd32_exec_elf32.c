@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.38.2.1 2015/04/06 15:18:07 skrll Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.38.2.2 2016/10/05 20:55:39 skrll Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.38.2.1 2015/04/06 15:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.38.2.2 2016/10/05 20:55:39 skrll Exp $");
 
 #define	ELFSIZE		32
 
@@ -115,7 +115,7 @@ ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 #ifdef _LP64
 	epp->ep_flags |= EXEC_32 | EXEC_FORCEAUX;
 #endif
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = USRSTACK32;
 #ifdef ELF_INTERP_NON_RELOCATABLE
 	*pos = ELF_LINK_ADDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.119.4.4 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.119.4.5 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119.4.4 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119.4.5 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119.4.4 2016/07/09 20:25:21 skrll Exp $"
 #endif
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -190,7 +192,7 @@ struct if_clone sl_cloner =
 
 static void	slintr(void *);
 
-static int	slinit(struct sl_softc *);
+static int	slcreate(struct sl_softc *);
 static struct mbuf *sl_btom(struct sl_softc *, int);
 
 static int	slclose(struct tty *, int);
@@ -219,10 +221,37 @@ void
 slattach(int n __unused)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in slinit() below).
+	 */
+}
+
+static void
+slinit(void)
+{
+
 	if (ttyldisc_attach(&slip_disc) != 0)
-		panic("slattach");
+		panic("%s", __func__);
 	LIST_INIT(&sl_softc_list);
 	if_clone_attach(&sl_cloner);
+}
+
+static int
+sldetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&sl_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&slip_disc);
+
+	if (error == 0)
+		if_clone_detach(&sl_cloner);
+
+	return error;
 }
 
 static int
@@ -267,7 +296,7 @@ sl_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-slinit(struct sl_softc *sc)
+slcreate(struct sl_softc *sc)
 {
 
 	if (sc->sc_mbuf == NULL) {
@@ -312,7 +341,7 @@ slopen(dev_t dev, struct tty *tp)
 			    slintr, sc);
 			if (sc->sc_si == NULL)
 				return ENOMEM;
-			if (slinit(sc) == 0) {
+			if (slcreate(sc) == 0) {
 				softint_disestablish(sc->sc_si);
 				return ENOBUFS;
 			}
@@ -817,8 +846,7 @@ slintr(void *arg)
 				}
 				bp = cp;
 			}
-			MFREE(m, m2);
-			m = m2;
+			m = m2 = m_free(m);
 		}
 
 		if (putc(FRAME_END, &tp->t_outq)) {
@@ -1036,3 +1064,12 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 	splx(s);
 	return error;
 }
+
+
+/*
+ * Module infrastructure
+ */
+
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, sl, "slcompress");

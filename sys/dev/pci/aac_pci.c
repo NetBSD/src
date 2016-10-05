@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_pci.c,v 1.36.6.1 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: aac_pci.c,v 1.36.6.2 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.36.6.1 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac_pci.c,v 1.36.6.2 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -598,8 +598,16 @@ aac_pci_attach(device_t parent, device_t self, void *aux)
 		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
 }
 
-CFATTACH_DECL_NEW(aac_pci, sizeof(struct aac_pci_softc),
-    aac_pci_match, aac_pci_attach, NULL, NULL);
+/* ARGSUSED */
+static int
+aac_pci_rescan(device_t self, const char *attr, const int *flags)
+{
+
+	return aac_devscan(device_private(self));
+}
+
+CFATTACH_DECL3_NEW(aac_pci, sizeof(struct aac_pci_softc),
+    aac_pci_match, aac_pci_attach, NULL, NULL, aac_pci_rescan, NULL, 0);
 
 /*
  * Read the current firmware status word.

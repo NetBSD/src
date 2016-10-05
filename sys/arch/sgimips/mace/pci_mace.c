@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.17.6.2 2015/12/27 12:09:42 skrll Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.17.6.3 2016/10/05 20:55:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.17.6.2 2015/12/27 12:09:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.17.6.3 2016/10/05 20:55:34 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -293,11 +293,11 @@ macepci_intr(void *arg)
 {
 	struct macepci_softc *sc = (struct macepci_softc *)arg;
 	pci_chipset_tag_t pc = &sc->sc_pc;
-	u_int32_t error, address;
+	uint32_t error, address;
 
 	error = bus_space_read_4(pc->iot, pc->ioh, MACE_PCI_ERROR_FLAGS);
 	address = bus_space_read_4(pc->iot, pc->ioh, MACE_PCI_ERROR_ADDR);
-	while (error & 0xffc00000) {
+	if (error & 0xffc00000) {
 		if (error & MACE_PERR_MASTER_ABORT) {
 			/*
 			 * this seems to be a more-or-less normal error
@@ -305,73 +305,47 @@ macepci_intr(void *arg)
 			 * a _lot_ of these errors, so no message for now
 			 * while I figure out if I missed a trick somewhere.
 			 */
-			error &= ~MACE_PERR_MASTER_ABORT;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_TARGET_ABORT) {
 			printf("mace: target abort at %x\n", address);
-			error &= ~MACE_PERR_TARGET_ABORT;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_DATA_PARITY_ERR) {
 			printf("mace: parity error at %x\n", address);
-			error &= ~MACE_PERR_DATA_PARITY_ERR;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_RETRY_ERR) {
 			printf("mace: retry error at %x\n", address);
-			error &= ~MACE_PERR_RETRY_ERR;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_ILLEGAL_CMD) {
 			printf("mace: illegal command at %x\n", address);
-			error &= ~MACE_PERR_ILLEGAL_CMD;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_SYSTEM_ERR) {
 			printf("mace: system error at %x\n", address);
-			error &= ~MACE_PERR_SYSTEM_ERR;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_INTERRUPT_TEST) {
 			printf("mace: interrupt test at %x\n", address);
-			error &= ~MACE_PERR_INTERRUPT_TEST;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_PARITY_ERR) {
 			printf("mace: parity error at %x\n", address);
-			error &= ~MACE_PERR_PARITY_ERR;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_RSVD) {
 			printf("mace: reserved condition at %x\n", address);
-			error &= ~MACE_PERR_RSVD;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
 
 		if (error & MACE_PERR_OVERRUN) {
 			printf("mace: overrun at %x\n", address);
-			error &= ~MACE_PERR_OVERRUN;
-			bus_space_write_4(pc->iot, pc->ioh,
-			    MACE_PCI_ERROR_FLAGS, error);
 		}
+
+		/* clear all */
+		bus_space_write_4(pc->iot, pc->ioh,
+			    MACE_PCI_ERROR_FLAGS, error & ~0xffc00000);
 	}
 	return 0;
 }

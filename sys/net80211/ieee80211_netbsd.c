@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.26.4.1 2016/05/29 08:44:38 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.26.4.2 2016/10/05 20:56:08 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.26.4.1 2016/05/29 08:44:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.26.4.2 2016/10/05 20:56:08 skrll Exp $");
 #endif
 
 /*
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.26.4.1 2016/05/29 08:44:38 sk
  */
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/systm.h> 
-#include <sys/mbuf.h>   
+#include <sys/systm.h>
+#include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/once.h>
@@ -263,7 +263,7 @@ ieee80211_sysctl_detach(struct ieee80211com *ic)
  *
  *	If there is any single 802.11 interface, ieee80211_node_walkfirst
  *	must not return NULL.
- */	
+ */
 static struct ieee80211_node *
 ieee80211_node_walkfirst(struct ieee80211_node_walk *nw, u_short if_index)
 {
@@ -468,7 +468,7 @@ static void
 ieee80211_sysctl_setup(void)
 {
 	int rc;
-	const struct sysctlnode *cnode, *rnode;
+	const struct sysctlnode *rnode;
 
 	if ((rnode = ieee80211_sysctl_treetop(&ieee80211_sysctllog)) == NULL)
 		return;
@@ -480,7 +480,7 @@ ieee80211_sysctl_setup(void)
 
 #ifdef IEEE80211_DEBUG
 	/* control debugging printfs */
-	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, &cnode,
+	if ((rc = sysctl_createv(&ieee80211_sysctllog, 0, &rnode, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("control debugging printfs"),
 	    NULL, 0, &ieee80211_debug, 0, CTL_CREATE, CTL_EOL)) != 0)

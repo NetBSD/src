@@ -1,4 +1,4 @@
-/*	$NetBSD: netinet_component.c,v 1.4.2.1 2016/03/19 11:30:38 skrll Exp $	*/
+/*	$NetBSD: netinet_component.c,v 1.4.2.2 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4.2.1 2016/03/19 11:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netinet_component.c,v 1.4.2.2 2016/10/05 20:56:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -65,6 +65,9 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET_IFCFG)
 	struct sockaddr_in *sin;
 	struct socket *so;
 	int error;
+
+	if (lo0ifp == NULL)
+		panic("lo0 config: rumpnet_net has not been initialized");
 
 	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0, curlwp, NULL)) != 0)
 		panic("lo0 config: cannot create socket");

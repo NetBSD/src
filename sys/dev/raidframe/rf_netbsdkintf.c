@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.6 2016/05/29 08:44:30 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.7 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.6 2016/05/29 08:44:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.7 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -756,9 +756,9 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 		goto out;
 	}
 
-	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
+	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev,
 				blkno, va, nblk * raidPtr->bytesPerSector);
-	
+
 out:
 	raidunlock(rs);
 
@@ -865,7 +865,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		/* free the pseudo device attach bits */
 		cf = device_cfdata(dksc->sc_dev);
 		error = config_detach(dksc->sc_dev, 0);
-		if (error == 0) 
+		if (error == 0)
 			free(cf, M_RAIDFRAME);
 	} else if (do_put) {
 		raidput(rs);
@@ -1785,18 +1785,17 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	/*
 	 * Add support for "regular" device ioctls here.
 	 */
-	
-	error = dk_ioctl(dksc, dev, cmd, data, flag, l);
-	if (error != EPASSTHROUGH)
-		return (error);
 
 	switch (cmd) {
 	case DIOCCACHESYNC:
-		return rf_sync_component_caches(raidPtr);
+		retcode = rf_sync_component_caches(raidPtr);
+		break;
 
 	default:
-		retcode = ENOTTY;
+		retcode = dk_ioctl(dksc, dev, cmd, data, flag, l);
+		break;
 	}
+
 	return (retcode);
 
 }
@@ -2916,7 +2915,7 @@ rf_find_raid_components(void)
 					vput(vp);
 					continue;
 				}
-					
+
 				ac_list = rf_get_component(ac_list, dev, vp,
 				    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 				rf_part_found = 1; /*There is a raid component on this disk*/

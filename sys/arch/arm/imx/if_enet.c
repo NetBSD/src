@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.1.2.5 2016/07/09 20:24:50 skrll Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.1.2.6 2016/10/05 20:55:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.5 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.1.2.6 2016/10/05 20:55:25 skrll Exp $");
 
 #include "vlan.h"
 
@@ -1507,7 +1507,7 @@ enet_encap_mbufalign(struct mbuf **mp)
 					memcpy(mtod(x, void *), mtod(m, void *),
 					    m->m_len);
 					p->m_next = x;
-					MFREE(m, x->m_next);
+					x->m_next = m_free(m);
 					m = x;
 				}
 			}

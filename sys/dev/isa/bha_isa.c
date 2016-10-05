@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.36 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.36.2.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.36 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha_isa.c,v 1.36.2.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,8 @@ bha_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmaflags = 0;
 	if (bpd.sc_drq != -1) {
 		if ((error = isa_dmacascade(ic, bpd.sc_drq)) != 0) {
-			aprint_error_dev(sc->sc_dev, " unable to cascade DRQ, error = %d\n", error);
+			aprint_error_dev(sc->sc_dev,
+			    " unable to cascade DRQ, error = %d\n", error);
 			return;
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.63.2.2 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.63.2.3 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -231,12 +231,13 @@ struct	ip6_pktopts {
 
 #define IP6FLOW_HASHBITS         6 /* should not be a multiple of 8 */
 
-/* 
+/*
  * Structure for an IPv6 flow (ip6_fastforward).
  */
 struct ip6flow {
-	LIST_ENTRY(ip6flow) ip6f_list;  /* next in active list */
-	LIST_ENTRY(ip6flow) ip6f_hash;  /* next ip6flow in bucket */
+	TAILQ_ENTRY(ip6flow) ip6f_list;  /* next in active list */
+	TAILQ_ENTRY(ip6flow) ip6f_hash;  /* next ip6flow in bucket */
+	size_t ip6f_hashidx;             /* own hash index of ipflowtable[] */
 	struct in6_addr ip6f_dst;       /* destination address */
 	struct in6_addr ip6f_src;       /* source address */
 	struct route ip6f_ro;       /* associated route entry */

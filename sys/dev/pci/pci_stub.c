@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.1.30.2 2015/12/27 12:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.1.30.3 2016/10/05 20:55:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -17,7 +17,7 @@ int default_pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 int default_pci_chipset_tag_create(pci_chipset_tag_t, uint64_t,
     const struct pci_overrides *, void *, pci_chipset_tag_t *);
 void default_pci_chipset_tag_destroy(pci_chipset_tag_t);
-pci_intr_type_t default_pci_intr_type(pci_intr_handle_t);
+pci_intr_type_t default_pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
 int default_pci_intr_alloc(const struct pci_attach_args *,
     pci_intr_handle_t **, int *, pci_intr_type_t);
 void default_pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
@@ -59,7 +59,7 @@ default_pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
 }
 
 pci_intr_type_t
-default_pci_intr_type(pci_intr_handle_t ih)
+default_pci_intr_type(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 
 	return PCI_INTR_TYPE_INTX;

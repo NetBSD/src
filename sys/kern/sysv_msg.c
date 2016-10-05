@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.66.6.2 2015/12/27 12:10:05 skrll Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.66.6.3 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66.6.2 2015/12/27 12:10:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66.6.3 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -195,6 +195,7 @@ msgfini(void)
 	sz = round_page(sz);
 	uvm_km_free(kernel_map, v, sz, UVM_KMF_WIRED);
 
+	cv_destroy(&msg_realloc_cv);
 	mutex_exit(&msgmutex);
 	mutex_destroy(&msgmutex);
 

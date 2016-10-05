@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.20.36.1 2015/09/22 12:05:55 skrll Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.20.36.2 2016/10/05 20:55:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.20.36.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.20.36.2 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,8 @@ osf1_sys_sendmsg_xopen(struct lwp *l, const struct osf1_sys_sendmsg_xopen_args *
                 bsd_iovec[i].iov_len = osf_iovec.iov_len;
 	}
 
-	error = do_sys_sendmsg(l, SCARG(uap, s), &bsd_msghdr, flags, retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &bsd_msghdr, flags, NULL, 0,
+	    retval);
 err:
 	kmem_free(bsd_iovec, iov_len * sizeof(struct iovec));
 	return error;

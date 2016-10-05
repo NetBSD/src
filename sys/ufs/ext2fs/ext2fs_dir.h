@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.19.16.1 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.19.16.2 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,6 +67,7 @@
 #ifndef _UFS_EXT2FS_EXT2FS_DIR_H_
 #define	_UFS_EXT2FS_EXT2FS_DIR_H_
 
+#include <sys/dirent.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 
 /*
@@ -164,6 +165,30 @@ inot2ext2dt(uint16_t type)
 		return EXT2_FT_SOCK;
 	default:
 		return 0;
+	}
+}
+
+static __inline uint8_t ext2dt2dt(uint8_t) __unused;
+static __inline uint8_t
+ext2dt2dt(uint8_t type)
+{
+	switch (type) {
+	case EXT2_FT_REG_FILE:
+		return DT_FIFO;
+	case EXT2_FT_DIR:
+		return DT_DIR;
+	case EXT2_FT_CHRDEV:
+		return DT_CHR;
+	case EXT2_FT_BLKDEV:
+		return DT_BLK;
+	case EXT2_FT_FIFO:
+		return DT_FIFO;
+	case EXT2_FT_SOCK:
+		return DT_SOCK;
+	case EXT2_FT_SYMLINK:
+		return DT_LNK;
+	default:
+		return DT_UNKNOWN;
 	}
 }
 

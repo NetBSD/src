@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.10 2014/03/31 11:25:49 martin Exp $	*/
+/*	$NetBSD: sif.c,v 1.10.8.1 2016/10/05 20:55:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.10 2014/03/31 11:25:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.10.8.1 2016/10/05 20:55:33 skrll Exp $");
 
 #include "debug_playstation2.h"
 
@@ -131,7 +131,7 @@ iopdma_allocate_buffer(struct iopdma_segment *seg, size_t size)
 void
 iopdma_free_buffer(struct iopdma_segment *seg)
 {
-	int ret;
+	int ret __unused;
 
 	ret = iopmem_free(seg->iop_paddr);
 #ifdef SIF_DEBUG

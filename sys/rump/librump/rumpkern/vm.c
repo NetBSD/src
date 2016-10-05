@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.159.4.4 2016/03/19 11:30:37 skrll Exp $	*/
+/*	$NetBSD: vm.c,v 1.159.4.5 2016/10/05 20:56:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.4 2016/03/19 11:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.159.4.5 2016/10/05 20:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -779,6 +779,12 @@ uvm_km_free(struct vm_map *map, vaddr_t vaddr, vsize_t size, uvm_flag_t flags)
 		rumpuser_unmap((void *)vaddr, size);
 	else
 		rumpuser_free((void *)vaddr, size);
+}
+
+int
+uvm_km_protect(struct vm_map *map, vaddr_t vaddr, vsize_t size, vm_prot_t prot)
+{
+	return 0;
 }
 
 struct vm_map *

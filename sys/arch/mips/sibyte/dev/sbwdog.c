@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $ */
+/* $NetBSD: sbwdog.c,v 1.13.30.1 2016/10/05 20:55:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13 2011/07/10 23:32:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbwdog.c,v 1.13.30.1 2016/10/05 20:55:32 skrll Exp $");
 
 #include "locators.h"
 
@@ -76,8 +76,8 @@ static void sbwdog_intr(void *, uint32_t, vaddr_t);
 CFATTACH_DECL_NEW(sbwdog, sizeof(struct sbwdog_softc),
     sbwdog_match, sbwdog_attach, NULL, NULL);
 
-#define	READ_REG(rp)		(mips3_ld((volatile uint64_t *)(rp)))
-#define	WRITE_REG(rp, val)	(mips3_sd((volatile uint64_t *)(rp), (val)))
+#define	READ_REG(rp)		(mips3_ld((register_t)(rp)))
+#define	WRITE_REG(rp, val)	(mips3_sd((register_t)(rp), (val)))
 
 static int
 sbwdog_match(device_t parent, cfdata_t cf, void *aux)

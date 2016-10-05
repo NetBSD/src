@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.69.2.3 2016/07/09 20:25:01 skrll Exp $
+# $NetBSD: majors,v 1.69.2.4 2016/10/05 20:55:39 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -28,10 +28,10 @@ device-major bthub     char 175		   bthub	single
 device-major amr       char 176		   amr		vector=1
 device-major lockstat  char 177		   lockstat	single
 device-major putter    char 178		   putter
-device-major srt       char 179		   srt		
+device-major srt       char 179		   srt
 device-major drm       char 180		   drmbase | drmkms
 device-major bio       char 181		   bio		single
-device-major altmem    char 182 block 182  altmem	
+device-major altmem    char 182 block 182  altmem
 device-major twa       char 187		   twa
 device-major cpuctl    char 188				single
 device-major pad       char 189		   pad		vector=4,linkzero
@@ -59,10 +59,10 @@ device-major lua       char 209            lua
 # NOTE:
 # The following ranges are reserved for devices that have historical MD
 # definition, but are for "partially" MI use.
-# 
+#
 # Any new port should use these "previously not" MI definitions instead of
 # separate MD values.
-# 
+#
 # New MI devices should go to this file instead of majors.*
 #
 # 210-219 reserved for previously not MI ws devices
@@ -73,4 +73,3 @@ device-major lua       char 209            lua
 
 device-major hdmicec   char 340            hdmicec
 device-major nvme      char 341		   nvme
-device-major nvmens    char 342		   nvmens

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.22 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.22.40.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.22 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.22.40.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,7 +217,8 @@ ep_mca_attach(device_t parent, device_t self, void *aux)
 	/* Map and establish the interrupt. */
 	sc->sc_ih = mca_intr_establish(ma->ma_mc, irq, IPL_NET, epintr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt handler\n");
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 

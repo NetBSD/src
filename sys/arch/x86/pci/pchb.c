@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.34 2012/04/16 04:57:42 pgoyette Exp $ */
+/*	$NetBSD: pchb.c,v 1.34.16.1 2016/10/05 20:55:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.34 2012/04/16 04:57:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.34.16.1 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,13 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.34 2012/04/16 04:57:42 pgoyette Exp $");
 #define	I82443BX_SDRAMC_REG	0x74 /* upper 16 bits */
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
-#define I82424_CPU_BCTL_REG		0x53
+#define I82424_CPU_BCTL_REG		0x50 /* upper 8 bits */
 #define I82424_PCI_BCTL_REG		0x54
 
-#define I82424_BCTL_CPUMEM_POSTEN	0x01
-#define I82424_BCTL_CPUPCI_POSTEN	0x02
-#define I82424_BCTL_PCIMEM_BURSTEN	0x01
-#define I82424_BCTL_PCI_BURSTEN		0x02
+#define I82424_BCTL_CPUMEM_POSTEN	0x01000000
+#define I82424_BCTL_CPUPCI_POSTEN	0x02000000
+#define I82424_BCTL_PCIMEM_BURSTEN	0x01000000
+#define I82424_BCTL_PCI_BURSTEN		0x02000000
 
 static int	pchbmatch(device_t, cfdata_t, void *);
 static void	pchbattach(device_t, device_t, void *);

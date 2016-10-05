@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.45.4.4 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: natm.c,v 1.45.4.5 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.45.4.4 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.45.4.5 2016/10/05 20:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -444,9 +444,9 @@ natmintr(void)
 
   mutex_enter(softnet_lock);
 next:
-  s = splnet();
+  IFQ_LOCK(&natmintrq);
   IF_DEQUEUE(&natmintrq, m);
-  splx(s);
+  IFQ_UNLOCK(&natmintrq);
   if (m == NULL) {
     mutex_exit(softnet_lock);
     return;

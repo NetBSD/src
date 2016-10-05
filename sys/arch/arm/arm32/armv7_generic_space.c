@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.1.2.3 2015/12/27 12:09:30 skrll Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.1.2.4 2016/10/05 20:55:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.1.2.3 2015/12/27 12:09:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.1.2.4 2016/10/05 20:55:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct bus_space armv7_generic_bs_tag = {
 	/* set region */
 	generic_bs_sr_1,
 	NSWAP(generic_armv4_bs_sr_2),
-	bs_notimpl_bs_sr_4,
+	NSWAP(generic_bs_sr_4),
 	bs_notimpl_bs_sr_8,
 
 	/* copy */
@@ -365,7 +365,7 @@ armv7_generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
-	
+
 	if (flags)
 		arm_dsb();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.2.2.3 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.2.2.4 2016/10/05 20:55:43 skrll Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.3 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.4 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.3 2016/07/09 20:25:04 skrll Exp $
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
 #include <sys/pmf.h>
+#include <sys/module.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -63,10 +64,17 @@ __KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.2.2.3 2016/07/09 20:25:04 skrll Exp $
 #include <dev/ic/nvmevar.h>
 
 int nvme_pci_force_intx = 0;
-int nvme_pci_mpsafe = 0;
+int nvme_pci_mpsafe = 1;
 int nvme_pci_mq = 1;		/* INTx: ioq=1, MSI/MSI-X: ioq=ncpu */
 
 #define NVME_PCI_BAR		0x10
+
+#ifndef __HAVE_PCI_MSI_MSIX
+#define pci_intr_release(pc, intrs, nintrs) \
+	kmem_free(intrs, sizeof(*intrs) * nintrs)
+#define pci_intr_establish_xname(pc, ih, level, intrhand, intrarg, xname) \
+	pci_intr_establish(pc, ih, level, intrhand, intrarg)
+#endif
 
 struct nvme_pci_softc {
 	struct nvme_softc	psc_nvme;
@@ -79,9 +87,10 @@ struct nvme_pci_softc {
 static int	nvme_pci_match(device_t, cfdata_t, void *);
 static void	nvme_pci_attach(device_t, device_t, void *);
 static int	nvme_pci_detach(device_t, int);
+static int	nvme_pci_rescan(device_t, const char *, const int *);
 
 CFATTACH_DECL3_NEW(nvme_pci, sizeof(struct nvme_pci_softc),
-    nvme_pci_match, nvme_pci_attach, nvme_pci_detach, NULL, NULL,
+    nvme_pci_match, nvme_pci_attach, nvme_pci_detach, NULL, nvme_pci_rescan,
     nvme_childdet, DVF_DETACH_SHUTDOWN);
 
 static int	nvme_pci_intr_establish(struct nvme_softc *,
@@ -109,10 +118,12 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	struct nvme_pci_softc *psc = device_private(self);
 	struct nvme_softc *sc = &psc->psc_nvme;
 	struct pci_attach_args *pa = aux;
-	pcireg_t memtype;
+	pcireg_t memtype, reg;
 	bus_addr_t memaddr;
-	int flags, msixoff;
-	int nq, error;
+	int flags, error;
+#ifdef __HAVE_PCI_MSI_MSIX
+	int msixoff;
+#endif
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
@@ -122,6 +133,12 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmat = pa->pa_dmat;
 
 	pci_aprint_devinfo(pa, NULL);
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	if ((reg & PCI_COMMAND_MASTER_ENABLE) == 0) {
+		reg |= PCI_COMMAND_MASTER_ENABLE;
+        	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, reg);
+	}
 
 	/* Map registers */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, NVME_PCI_BAR);
@@ -136,6 +153,8 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "can't get map info\n");
 		return;
 	}
+
+#ifdef __HAVE_PCI_MSI_MSIX
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSIX, &msixoff,
 	    NULL)) {
 		pcireg_t msixtbl;
@@ -150,6 +169,8 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 			sc->sc_ios = table_offset;
 		}
 	}
+#endif /* __HAVE_PCI_MSI_MSIX */
+
 	error = bus_space_map(sc->sc_iot, memaddr, sc->sc_ios, flags,
 	    &sc->sc_ioh);
 	if (error != 0) {
@@ -166,16 +187,25 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_intr_establish = nvme_pci_intr_establish;
 	sc->sc_intr_disestablish = nvme_pci_intr_disestablish;
 
-	nq = sc->sc_nq + (sc->sc_use_mq ? 1 : 0);
-	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * nq, KM_SLEEP);
+	sc->sc_ih = kmem_zalloc(sizeof(*sc->sc_ih) * psc->psc_nintrs, KM_SLEEP);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "unable to allocate ih memory\n");
 		goto intr_release;
 	}
 
+	if (sc->sc_use_mq) {
+		sc->sc_softih = kmem_zalloc(
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs, KM_SLEEP);
+		if (sc->sc_softih == NULL) {
+			aprint_error_dev(self,
+			    "unable to allocate softih memory\n");
+			goto intr_free;
+		}
+	}
+
 	if (nvme_attach(sc) != 0) {
 		/* error printed by nvme_attach() */
-		goto intr_free;
+		goto softintr_free;
 	}
 
 	if (!pmf_device_register(self, NULL, NULL))
@@ -184,8 +214,13 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 	SET(sc->sc_flags, NVME_F_ATTACHED);
 	return;
 
+softintr_free:
+	if (sc->sc_softih) {
+		kmem_free(sc->sc_softih,
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs);
+	}
 intr_free:
-	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * nq);
+	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	sc->sc_nq = 0;
 intr_release:
 	pci_intr_release(pa->pa_pc, psc->psc_intrs, psc->psc_nintrs);
@@ -196,11 +231,18 @@ unmap:
 }
 
 static int
+nvme_pci_rescan(device_t self, const char *attr, const int *flags)
+{
+
+	return nvme_rescan(self, attr, flags);
+}
+
+static int
 nvme_pci_detach(device_t self, int flags)
 {
 	struct nvme_pci_softc *psc = device_private(self);
 	struct nvme_softc *sc = &psc->psc_nvme;
-	int i, nq, error;
+	int error;
 
 	if (!ISSET(sc->sc_flags, NVME_F_ATTACHED))
 		return 0;
@@ -209,12 +251,12 @@ nvme_pci_detach(device_t self, int flags)
 	if (error)
 		return error;
 
-	nq = sc->sc_nq + (sc->sc_use_mq ? 1 : 0);
-	if (!sc->sc_use_mq) {
-		for (i = 0; i < nq; i++)
-			pci_intr_disestablish(psc->psc_pc, sc->sc_ih[i]);
+	if (sc->sc_softih) {
+		kmem_free(sc->sc_softih,
+		    sizeof(*sc->sc_softih) * psc->psc_nintrs);
+		sc->sc_softih = NULL;
 	}
-	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * nq);
+	kmem_free(sc->sc_ih, sizeof(*sc->sc_ih) * psc->psc_nintrs);
 	pci_intr_release(psc->psc_pc, psc->psc_intrs, psc->psc_nintrs);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 	return 0;
@@ -230,26 +272,29 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 	const char *intrstr = NULL;
 	int (*ih_func)(void *);
 	void *ih_arg;
-	kcpuset_t *affinity;
-	cpuid_t affinity_to;
+#ifdef __HAVE_PCI_MSI_MSIX
 	int error;
+#endif
 
-	if (!sc->sc_use_mq && qid > 0)
-		return 0;
-
+	KASSERT(sc->sc_use_mq || qid == NVME_ADMIN_Q);
 	KASSERT(sc->sc_ih[qid] == NULL);
 
 	if (nvme_pci_mpsafe) {
 		pci_intr_setattr(psc->psc_pc, &psc->psc_intrs[qid],
 		    PCI_INTR_MPSAFE, true);
 	}
+
+#ifdef __HAVE_PCI_MSI_MSIX
 	if (!sc->sc_use_mq) {
+#endif
 		snprintf(intr_xname, sizeof(intr_xname), "%s",
 		    device_xname(sc->sc_dev));
 		ih_arg = sc;
 		ih_func = nvme_intr;
-	} else {
-		if (qid == 0) {
+#ifdef __HAVE_PCI_MSI_MSIX
+	}
+	else {
+		if (qid == NVME_ADMIN_Q) {
 			snprintf(intr_xname, sizeof(intr_xname), "%s adminq",
 			    device_xname(sc->sc_dev));
 		} else {
@@ -257,11 +302,11 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 			    device_xname(sc->sc_dev), qid);
 		}
 		ih_arg = q;
-		if (pci_intr_type(psc->psc_intrs[qid]) == PCI_INTR_TYPE_MSIX)
-			ih_func = nvme_mq_msix_intr;
-		else
-			ih_func = nvme_mq_msi_intr;
+		ih_func = nvme_intr_msi;
 	}
+#endif /* __HAVE_PCI_MSI_MSIX */
+
+	/* establish hardware interrupt */
 	sc->sc_ih[qid] = pci_intr_establish_xname(psc->psc_pc,
 	    psc->psc_intrs[qid], IPL_BIO, ih_func, ih_arg, intr_xname);
 	if (sc->sc_ih[qid] == NULL) {
@@ -269,17 +314,39 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 		    "unable to establish %s interrupt\n", intr_xname);
 		return 1;
 	}
+
+	/* if MSI, establish also the software interrupt */
+	if (sc->sc_softih) {
+		sc->sc_softih[qid] = softint_establish(
+		    SOFTINT_BIO|(nvme_pci_mpsafe ? SOFTINT_MPSAFE : 0),
+		    nvme_softintr_msi, q);
+		if (sc->sc_softih[qid] == NULL) {
+			pci_intr_disestablish(psc->psc_pc, sc->sc_ih[qid]);
+			sc->sc_ih[qid] = NULL;
+
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish %s soft interrupt\n",
+			    intr_xname);
+			return 1;
+		}
+	}
+
 	intrstr = pci_intr_string(psc->psc_pc, psc->psc_intrs[qid], intrbuf,
 	    sizeof(intrbuf));
 	if (!sc->sc_use_mq) {
 		aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
-	} else if (qid == 0) {
+	}
+#ifdef __HAVE_PCI_MSI_MSIX
+	else if (qid == NVME_ADMIN_Q) {
 		aprint_normal_dev(sc->sc_dev,
 		    "for admin queue interrupting at %s\n", intrstr);
 	} else if (!nvme_pci_mpsafe) {
 		aprint_normal_dev(sc->sc_dev,
 		    "for io queue %d interrupting at %s\n", qid, intrstr);
 	} else {
+		kcpuset_t *affinity;
+		cpuid_t affinity_to;
+
 		kcpuset_create(&affinity, true);
 		affinity_to = (qid - 1) % ncpu;
 		kcpuset_set(affinity, affinity_to);
@@ -291,6 +358,7 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 			aprint_normal(" affinity to cpu%lu", affinity_to);
 		aprint_normal("\n");
 	}
+#endif
 	return 0;
 }
 
@@ -299,10 +367,13 @@ nvme_pci_intr_disestablish(struct nvme_softc *sc, uint16_t qid)
 {
 	struct nvme_pci_softc *psc = (struct nvme_pci_softc *)sc;
 
-	if (!sc->sc_use_mq && qid > 0)
-		return 0;
-
+	KASSERT(sc->sc_use_mq || qid == NVME_ADMIN_Q);
 	KASSERT(sc->sc_ih[qid] != NULL);
+
+	if (sc->sc_softih) {
+		softint_disestablish(sc->sc_softih[qid]);
+		sc->sc_softih[qid] = NULL;
+	}
 
 	pci_intr_disestablish(psc->psc_pc, sc->sc_ih[qid]);
 	sc->sc_ih[qid] = NULL;
@@ -314,11 +385,16 @@ static int
 nvme_pci_setup_intr(struct pci_attach_args *pa, struct nvme_pci_softc *psc)
 {
 	struct nvme_softc *sc = &psc->psc_nvme;
-	pci_intr_handle_t *ihps;
-	int counts[PCI_INTR_TYPE_SIZE], alloced_counts[PCI_INTR_TYPE_SIZE];
-	int max_type, intr_type;
+#ifdef __HAVE_PCI_MSI_MSIX
 	int error;
+	int counts[PCI_INTR_TYPE_SIZE], alloced_counts[PCI_INTR_TYPE_SIZE];
+	pci_intr_handle_t *ihps;
+	int max_type, intr_type;
+#else
+	pci_intr_handle_t ih;
+#endif /* __HAVE_PCI_MSI_MSIX */
 
+#ifdef __HAVE_PCI_MSI_MSIX
 	if (nvme_pci_force_intx) {
 		max_type = PCI_INTR_TYPE_INTX;
 		goto force_intx;
@@ -399,7 +475,7 @@ retry:
 		return error;
 	}
 
-	intr_type = pci_intr_type(ihps[0]);
+	intr_type = pci_intr_type(pa->pa_pc, ihps[0]);
 	if (alloced_counts[intr_type] < counts[intr_type]) {
 		if (intr_type != PCI_INTR_TYPE_INTX) {
 			pci_intr_release(pa->pa_pc, ihps,
@@ -418,5 +494,64 @@ retry:
 	}
 	sc->sc_use_mq = alloced_counts[intr_type] > 1;
 	sc->sc_nq = sc->sc_use_mq ? alloced_counts[intr_type] - 1 : 1;
+
+#else /* !__HAVE_PCI_MSI_MSIX */
+        if (pci_intr_map(pa, &ih)) {
+                aprint_error_dev(sc->sc_dev, "couldn't map interrupt\n");
+                return EBUSY;
+        }
+
+	psc->psc_intrs = kmem_zalloc(sizeof(ih), KM_SLEEP);
+	psc->psc_intrs[0] = ih;
+	psc->psc_nintrs = 1;
+	sc->sc_use_mq = 0;
+	sc->sc_nq = 1;
+#endif /* __HAVE_PCI_MSI_MSIX */
+
 	return 0;
+}
+
+MODULE(MODULE_CLASS_DRIVER, nvme, "pci,dk_subr");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+nvme_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	devmajor_t cmajor, bmajor;
+	extern const struct cdevsw nvme_cdevsw;
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_nvme_pci,
+		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		if (error)
+			break;
+
+		bmajor = cmajor = NODEVMAJOR;
+		error = devsw_attach(nvme_cd.cd_name, NULL, &bmajor,
+		    &nvme_cdevsw, &cmajor);
+		if (error) {
+			aprint_error("%s: unable to register devsw\n",
+			    nvme_cd.cd_name);
+			/* do not abort, just /dev/nvme* will not work */
+		}
+		break;
+	case MODULE_CMD_FINI:
+		devsw_detach(NULL, &nvme_cdevsw);
+
+		error = config_fini_component(cfdriver_ioconf_nvme_pci,
+		    cfattach_ioconf_nvme_pci, cfdata_ioconf_nvme_pci);
+		break;
+	default:
+		break;
+	}
+#endif
+	return error;
 }

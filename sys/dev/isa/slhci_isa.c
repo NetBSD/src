@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_isa.c,v 1.12.32.2 2016/07/09 20:25:03 skrll Exp $	*/
+/*	$NetBSD: slhci_isa.c,v 1.12.32.3 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Kiyoshi Ikehara. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.12.32.2 2016/07/09 20:25:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: slhci_isa.c,v 1.12.32.3 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,7 @@ slhci_isa_attach(device_t parent, device_t self, void *aux)
 
 	/* Map I/O space */
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, SL11_PORTSIZE, 0, &ioh)) {
-		printf("%s: can't map I/O space\n", SC_NAME(sc));
+		aprint_error("%s: can't map I/O space\n", SC_NAME(sc));
 		return;
 	}
 
@@ -140,11 +140,11 @@ slhci_isa_attach(device_t parent, device_t self, void *aux)
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_USB, slhci_intr, sc);
 	if (isc->sc_ih == NULL) {
-		printf("%s: can't establish interrupt\n", SC_NAME(sc));
+		aprint_error("%s: can't establish interrupt\n", SC_NAME(sc));
 		return;
 	}
 
 	/* Attach SL811HS/T */
 	if (slhci_attach(sc))
-		printf("%s: slhci_attach failed\n", SC_NAME(sc));
+		aprint_error("%s: slhci_attach failed\n", SC_NAME(sc));
 }

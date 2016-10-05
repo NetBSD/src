@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.6.2 2016/10/05 20:55:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.2 2016/10/05 20:55:36 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll E
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.2 2016/10/05 20:55:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll E
 static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
-int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
+int acpi_md_vbios_reset = 0; /* Referenced by dev/pci/vga_pci.c */
 int acpi_md_vesa_modenum = 0; /* Referenced by arch/x86/x86/genfb_machdep.c */
 static int acpi_md_beep_on_reset = 0;
 
@@ -165,10 +165,8 @@ acpi_md_sleep_patch(struct cpu_info *ci)
 
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr4, uint32_t, ci->ci_suspend_cr4);
-#else
-	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 #endif
-
+	WAKECODE_FIXUP(WAKEUP_efer, uint32_t, ci->ci_suspend_efer);
 	WAKECODE_FIXUP(WAKEUP_curcpu, void *, ci);
 #ifdef __i386__
 	WAKECODE_FIXUP(WAKEUP_r_cr3, uint32_t, tmp_pdir);
@@ -264,10 +262,9 @@ acpi_cpu_sleep(struct cpu_info *ci)
 		return;
 
 	/* Execute Wakeup */
-#ifndef __i386__
 	cpu_init_msrs(ci, false);
-#endif
 	fpuinit(ci);
+
 #if NLAPIC > 0
 	lapic_enable();
 	lapic_set_lvt();

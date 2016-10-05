@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.2 2010/06/28 12:14:08 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2.36.1 2016/10/05 20:55:29 skrll Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -41,5 +41,14 @@ pcitag_t pci_make_tag(pci_chipset_tag_t, int, int, int);
 void pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *, int *);
 pcireg_t pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void pci_conf_write(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+
+/*
+ * XXX should ia64_pci_enumerate_bus and
+ *  #define PCI_MACHDEP_ENUMERATE_BUS ia64_pci_enumerate_bus
+ * be used? acpi_pci appears to require pci_enumerate_bus though.
+ */
+int pci_enumerate_bus(struct pci_softc *, const int *,
+		      int (*)(const struct pci_attach_args *),
+		      struct pci_attach_args *);
 
 #endif

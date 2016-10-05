@@ -1,4 +1,4 @@
-/*	$NetBSD: intrio.h,v 1.1.2.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: intrio.h,v 1.1.2.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -47,9 +47,12 @@ struct intrio_list_line_cpu {
 };
 
 struct intrio_list_line {
-	char ill_intrid[INTRIDBUF];
-	char ill_xname[INTRDEVNAMEBUF];
-	struct intrio_list_line_cpu ill_cpu[1]; /* Array size is overwritten to ncpu. */
+	char ill_intrid[INTRIDBUF];		/* NUL terminated. */
+	char ill_xname[INTRDEVNAMEBUF];		/* NUL terminated. */
+	struct intrio_list_line_cpu ill_cpu[1];	/*
+						 * Array size is overwritten
+						 * to ncpu.
+						 */
 };
 
 struct intrio_list {

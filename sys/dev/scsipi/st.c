@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.226.4.1 2015/09/22 12:06:00 skrll Exp $ */
+/*	$NetBSD: st.c,v 1.226.4.2 2016/10/05 20:55:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226.4.1 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226.4.2 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -401,22 +401,22 @@ stattach(device_t parent, device_t self, void *aux)
 	 * Any steps needed to bring it into line
 	 */
 	st_identify_drive(st, &sa->sa_inqbuf);
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	/* Use the subdriver to request information regarding the drive.  */
-	printf("%s : %s", device_xname(st->sc_dev), st->quirkdata
-	    ? "quirks apply, " : "");
+	aprint_normal_dev(self, "%s", st->quirkdata ? "quirks apply, " : "");
 	if (scsipi_test_unit_ready(periph,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE) ||
 	    st->ops(st, ST_OPS_MODESENSE,
 	    XS_CTL_DISCOVERY | XS_CTL_SILENT | XS_CTL_IGNORE_MEDIA_CHANGE))
-		printf("drive empty\n");
+		aprint_normal("drive empty\n");
 	else {
-		printf("density code %d, ", st->media_density);
+		aprint_normal("density code %d, ", st->media_density);
 		if (st->media_blksize > 0)
-			printf("%d-byte", st->media_blksize);
+			aprint_normal("%d-byte", st->media_blksize);
 		else
-			printf("variable");
-		printf(" blocks, write-%s\n",
+			aprint_normal("variable");
+		aprint_normal(" blocks, write-%s\n",
 		    (st->flags & ST_READONLY) ? "protected" : "enabled");
 	}
 

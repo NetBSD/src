@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.89.2.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.89.2.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -115,9 +115,9 @@
 #define	MIPS_PHYS_MASK			0x1fffffff
 
 #define	MIPS_KSEG0_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG0(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG0_START)
+#define	MIPS_PHYS_TO_KSEG0(x)	((intptr_t)((x) + MIPS_KSEG0_START))
 #define	MIPS_KSEG1_TO_PHYS(x)	((uintptr_t)(x) & MIPS_PHYS_MASK)
-#define	MIPS_PHYS_TO_KSEG1(x)	((uintptr_t)(x) | (intptr_t)MIPS_KSEG1_START)
+#define	MIPS_PHYS_TO_KSEG1(x)	((intptr_t)(x) | (intptr_t)MIPS_KSEG1_START)
 
 #define	MIPS_KSEG0_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG0_START)
 #define	MIPS_KSEG1_P(x)		(((intptr_t)(x) & ~MIPS_PHYS_MASK) == MIPS_KSEG1_START)

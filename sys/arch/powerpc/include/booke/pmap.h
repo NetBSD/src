@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.6.1 2015/04/06 15:18:00 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.6.2 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -131,7 +131,7 @@ pmap_md_vca_add(struct vm_page *pg, vaddr_t va, pt_entry_t *nptep)
 }
 
 static inline void
-pmap_md_vca_remove(struct vm_page *pg, vaddr_t va)
+pmap_md_vca_remove(struct vm_page *pg, vaddr_t va, bool dirty)
 {
 
 }
@@ -140,11 +140,20 @@ static inline void
 pmap_md_vca_clean(struct vm_page *pg, vaddr_t va, int op)
 {
 }
+#endif
 
+#ifdef __PMAP_PRIVATE
 static inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
+}
+
+struct vm_physseg;
+static inline bool
+pmap_md_ok_to_steal_p(const struct vm_physseg *seg, size_t npgs)
+{
+	return true;
 }
 #endif
 

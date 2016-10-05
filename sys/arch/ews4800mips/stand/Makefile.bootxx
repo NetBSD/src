@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.bootxx,v 1.8 2014/01/31 19:25:13 tsutsui Exp $
+#	$NetBSD: Makefile.bootxx,v 1.8.6.1 2016/10/05 20:55:27 skrll Exp $
 
 NOMAN		=
+NOPIE		=
+
+.include <bsd.init.mk>
 
 BINMODE		= 0444
 

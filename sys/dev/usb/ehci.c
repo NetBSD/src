@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.103 2016/06/10 08:15:21 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.104 2016/10/05 20:55:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.103 2016/06/10 08:15:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.104 2016/10/05 20:55:57 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2168,8 +2168,11 @@ ehci_sync_hc(ehci_softc_t *sc)
 	DPRINTF("cmd = 0x%08x sts = 0x%08x ... done",
 	    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS), 0, 0);
 #ifdef DIAGNOSTIC
-	if (error)
-		printf("ehci_sync_hc: cv_timedwait() = %d\n", error);
+	if (error == EWOULDBLOCK) {
+		printf("ehci_sync_hc: timed out\n");
+	} else if (error) {
+		printf("ehci_sync_hc: cv_timedwait: error %d\n", error);
+	}
 #endif
 }
 

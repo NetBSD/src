@@ -1,4 +1,4 @@
-# $NetBSD: std.xen,v 1.7 2014/10/11 09:50:03 uebayasi Exp $
+# $NetBSD: std.xen,v 1.7.2.1 2016/10/05 20:55:23 skrll Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
@@ -13,3 +13,6 @@ options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR
+
+options 	CHILD_MAX=1024	# 160 is too few
+options 	OPEN_MAX=1024	# 128 is too few

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $	*/
+/*	$NetBSD: isa_io.c,v 1.12.24.1 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,19 +38,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12 2012/01/31 04:28:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_io.c,v 1.12.24.1 2016/10/05 20:55:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
+#include <uvm/uvm.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
 #include <machine/ofw.h>
+#include <machine/pmap.h>
 #include "igsfb_ofbus.h"
+#include "chipsfb_ofbus.h"
 
 #if NIGSFB_OFBUS > 0
 extern vaddr_t igsfb_mem_vaddr, igsfb_mmio_vaddr;
 extern paddr_t igsfb_mem_paddr;
+#endif
+
+#if NCHIPSFB_OFBUS > 0
+extern vaddr_t chipsfb_mem_vaddr, chipsfb_mmio_vaddr;
+extern paddr_t chipsfb_mem_paddr;
 #endif
 
 /* Proto types for all the bus_space structure functions */
@@ -354,6 +362,11 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 		paddr = igsfb_mem_paddr;
 	} else
 #endif
+#if NCHIPSFB_OFBUS > 0
+	if ((vaddr_t)cookie == chipsfb_mem_vaddr) {
+		paddr = 0;
+	} else
+#endif
 	paddr = ofw_gettranslation((vaddr_t)cookie);
 	
 	if (paddr == -1) {
@@ -366,7 +379,10 @@ isa_bs_mmap(void *cookie, bus_addr_t addr, off_t off, int prot,
 #ifdef OFISA_DEBUG
 	printf(" -> %08x %08x\n", (uint32_t)paddr, (uint32_t)ret);
 #endif
-	return arm_btop(ret);
+	if (flags & BUS_SPACE_MAP_PREFETCHABLE) {
+		return (arm_btop(ret) | ARM32_MMAP_WRITECOMBINE);
+	} else
+		return arm_btop(ret);	
 }
 
 int

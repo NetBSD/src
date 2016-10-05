@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.30 2016/05/02 13:10:15 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.31 2016/10/05 20:55:57 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.30 2016/05/02 13:10:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.31 2016/10/05 20:55:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -562,7 +562,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	usb_config_descriptor_t cd, *cdp;
-	usb_bos_descriptor_t bd, *bdp = NULL;
+	usb_bos_descriptor_t *bdp = NULL;
 	usbd_status err;
 	int i, ifcidx, nifc, len, selfpowered, power;
 
@@ -633,6 +633,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	}
 
 	if (USB_IS_SS(dev->ud_speed)) {
+		usb_bos_descriptor_t bd;
+
 		/* get short bos desc */
 		err = usbd_get_bos_desc(dev, index, &bd);
 		if (!err) {
@@ -1489,7 +1491,7 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 		     int usedev)
 {
 	struct usbd_port *p;
-	int i, j, err, s;
+	int i, j, err;
 
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
@@ -1540,38 +1542,38 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 	for (/* j is set */; j < USB_MAX_DEVNAMES; j++)
 		di->udi_devnames[j][0] = 0;                 /* empty */
 
-	if (dev->ud_hub) {
-		for (i = 0;
-		     i < sizeof(di->udi_ports) / sizeof(di->udi_ports[0]) &&
-			     i < dev->ud_hub->uh_hubdesc.bNbrPorts;
-		     i++) {
-			p = &dev->ud_hub->uh_ports[i];
-			if (p->up_dev)
-				err = p->up_dev->ud_addr;
-			else {
-				s = UGETW(p->up_status.wPortStatus);
-				if (s & UPS_PORT_ENABLED)
-					err = USB_PORT_ENABLED;
-				else if (s & UPS_SUSPEND)
-					err = USB_PORT_SUSPENDED;
-				/*
-				 * Note: UPS_PORT_POWER_SS is available only
-				 * on 3.x, and UPS_PORT_POWER is available
-				 * only on 2.0 or 1.1.
-				 */
-				else if (USB_IS_SS(dev->ud_speed) &&
-				    (s & UPS_PORT_POWER_SS))
-					err = USB_PORT_POWERED;
-				else if (s & UPS_PORT_POWER)
-					err = USB_PORT_POWERED;
-				else
-					err = USB_PORT_DISABLED;
-			}
-			di->udi_ports[i] = err;
-		}
-		di->udi_nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
-	} else
+	if (!dev->ud_hub) {
 		di->udi_nports = 0;
+		return;
+	}
+
+	const int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	for (i = 0; i < __arraycount(di->udi_ports) && i < nports; i++) {
+		p = &dev->ud_hub->uh_ports[i];
+		if (p->up_dev)
+			err = p->up_dev->ud_addr;
+		else {
+			int s = UGETW(p->up_status.wPortStatus);
+			if (s & UPS_PORT_ENABLED)
+				err = USB_PORT_ENABLED;
+			else if (s & UPS_SUSPEND)
+				err = USB_PORT_SUSPENDED;
+			/*
+			 * Note: UPS_PORT_POWER_SS is available only
+			 * on 3.x, and UPS_PORT_POWER is available
+			 * only on 2.0 or 1.1.
+			 */
+			else if (USB_IS_SS(dev->ud_speed) &&
+			    (s & UPS_PORT_POWER_SS))
+				err = USB_PORT_POWERED;
+			else if (s & UPS_PORT_POWER)
+				err = USB_PORT_POWERED;
+			else
+				err = USB_PORT_DISABLED;
+		}
+		di->udi_ports[i] = err;
+	}
+	di->udi_nports = nports;
 }
 
 #ifdef COMPAT_30
@@ -1580,7 +1582,7 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
                          int usedev)
 {
 	struct usbd_port *p;
-	int i, j, err, s;
+	int i, j, err;
 
 	di->udi_bus = device_unit(dev->ud_bus->ub_usbctl);
 	di->udi_addr = dev->ud_addr;
@@ -1615,30 +1617,31 @@ usbd_fill_deviceinfo_old(struct usbd_device *dev, struct usb_device_info_old *di
 	for (/* j is set */; j < USB_MAX_DEVNAMES; j++)
 		di->udi_devnames[j][0] = 0;		 /* empty */
 
-	if (dev->ud_hub) {
-		for (i = 0;
-		     i < sizeof(di->udi_ports) / sizeof(di->udi_ports[0]) &&
-			     i < dev->ud_hub->uh_hubdesc.bNbrPorts;
-		     i++) {
-			p = &dev->ud_hub->uh_ports[i];
-			if (p->up_dev)
-				err = p->up_dev->ud_addr;
-			else {
-				s = UGETW(p->up_status.wPortStatus);
-				if (s & UPS_PORT_ENABLED)
-					err = USB_PORT_ENABLED;
-				else if (s & UPS_SUSPEND)
-					err = USB_PORT_SUSPENDED;
-				else if (s & UPS_PORT_POWER)
-					err = USB_PORT_POWERED;
-				else
-					err = USB_PORT_DISABLED;
-			}
-			di->udi_ports[i] = err;
-		}
-		di->udi_nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
-	} else
+	if (!dev->ud_hub) {
 		di->udi_nports = 0;
+		return;
+	}
+
+	const int nports = dev->ud_hub->uh_hubdesc.bNbrPorts;
+	for (i = 0; i < __arraycount(di->udi_ports) && i < nports;
+	     i++) {
+		p = &dev->ud_hub->uh_ports[i];
+		if (p->up_dev)
+			err = p->up_dev->ud_addr;
+		else {
+			int s = UGETW(p->up_status.wPortStatus);
+			if (s & UPS_PORT_ENABLED)
+				err = USB_PORT_ENABLED;
+			else if (s & UPS_SUSPEND)
+				err = USB_PORT_SUSPENDED;
+			else if (s & UPS_PORT_POWER)
+				err = USB_PORT_POWERED;
+			else
+				err = USB_PORT_DISABLED;
+		}
+		di->udi_ports[i] = err;
+	}
+	di->udi_nports = nports;
 }
 #endif
 

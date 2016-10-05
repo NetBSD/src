@@ -1,4 +1,4 @@
-/*	$NetBSD: tap_component.c,v 1.1.2.4 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: tap_component.c,v 1.1.2.5 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Wei Liu.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.4 2016/03/19 11:30:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.5 2016/10/05 20:56:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -37,27 +37,26 @@ __KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.4 2016/03/19 11:30:39 skrll 
 
 #include "ioconf.h"
 
-CFDRIVER_DECL(tap, DV_IFNET, NULL);
-
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 	extern const struct cdevsw tap_cdevsw;
-	devmajor_t bmaj, cmaj;
+	extern devmajor_t tap_bmajor, tap_cmajor;
 	int error;
 
-	config_cfdriver_attach(&tap_cd);
-	tapattach(0);
-
-	bmaj = cmaj = NODEVMAJOR;
-	error = devsw_attach("tap", NULL, &bmaj, &tap_cdevsw, &cmaj);
+	error = devsw_attach("tap", NULL, &tap_bmajor,
+	    &tap_cdevsw, &tap_cmajor);
 	if (error != 0)
 		panic("tap devsw attach failed: %d", error);
 
-	error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/tap", cmaj, 0xfffff);
+	error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/tap", tap_cmajor,
+	    0xfffff);
 	if (error != 0)
 		panic("cannot create tap device node: %d", error);
 
-	error = rump_vfs_makedevnodes(S_IFCHR, "/dev/tap", '0', cmaj, 0, 4);
+	error = rump_vfs_makedevnodes(S_IFCHR, "/dev/tap", '0', tap_cmajor,
+	    0, 4);
 	if (error != 0)
 		panic("cannot create tap[0-4] device node: %d", error);
+
+	devsw_detach(NULL, &tap_cdevsw);
 }

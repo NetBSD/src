@@ -1,4 +1,4 @@
-/*	$NetBSD: efinet.c,v 1.6 2009/10/26 19:16:56 cegger Exp $	*/
+/*	$NetBSD: efinet.c,v 1.6.40.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -30,17 +30,39 @@
 /* __FBSDID("$FreeBSD: src/sys/boot/efi/libefi/efinet.c,v 1.6 2004/01/04 23:28:16 obrien Exp $"); */
 
 #include <sys/param.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
 
 #include <lib/libsa/stand.h>
-#include <net.h>
-#include <netif.h>
+#include <lib/libsa/loadfile.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+
+#ifdef EFINET_DEBUG
+#include <lib/libsa/ether_sprintf.c>
+#endif
 
 #include <efi.h>
 #include <efilib.h>
 
 extern struct netif_driver efi_net;
+
+int  efinet_match(struct netif *, void *);
+int  efinet_probe(struct netif *, void *);
+void efinet_init(struct iodesc *, void *);
+int  efinet_get(struct iodesc *, void *, size_t, saseconds_t);
+int  efinet_put(struct iodesc *, void *, size_t);
+void efinet_end(struct netif *);
+
+struct netif_driver efi_net = {
+	"net",			/* netif_bname */
+	efinet_match,		/* netif_match */
+	efinet_probe,		/* netif_probe */
+	efinet_init,		/* netif_init */
+	efinet_get,		/* netif_get */
+	efinet_put,		/* netif_put */
+	efinet_end,		/* netif_end */
+	0,			/* netif_ifs */
+	0			/* netif_nifs */
+};
 
 #ifdef EFINET_DEBUG
 static void
@@ -120,7 +142,7 @@ efinet_put(struct iodesc *desc, void *pkt, size_t len)
 
 
 int
-efinet_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
+efinet_get(struct iodesc *desc, void *pkt, size_t len, saseconds_t timeout)
 {
 	struct netif *nif = desc->io_netif;
 	EFI_SIMPLE_NETWORK *net;
@@ -223,7 +245,7 @@ efinet_init_driver(void)
 	handles = (EFI_HANDLE *) alloc(sz);
 	status = BS->LocateHandle(ByProtocol, &netid, 0, &sz, handles);
 	if (EFI_ERROR(status)) {
-		free(handles, sz);
+                free(handles);
 		return;
 	}
 
@@ -255,16 +277,3 @@ efinet_end(struct netif *nif)
 
 	net->Shutdown(net);
 }
-
-struct netif_driver efi_net = {
-	"net",			/* netif_bname */
-	efinet_match,		/* netif_match */
-	efinet_probe,		/* netif_probe */
-	efinet_init,		/* netif_init */
-	efinet_get,		/* netif_get */
-	efinet_put,		/* netif_put */
-	efinet_end,		/* netif_end */
-	0,			/* netif_ifs */
-	0			/* netif_nifs */
-};
-

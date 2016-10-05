@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.158.4.3 2016/07/09 20:25:04 skrll Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.158.4.4 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158.4.3 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.158.4.4 2016/10/05 20:55:43 skrll Exp $");
 
 
 
@@ -293,7 +293,7 @@ struct sip_softc {
 		/* VLAN_ATTACHED */
 		int		is_vlan;
 	}	sc_prev;
-	
+
 	short	sc_if_flags;
 
 	int	sc_rxptr;		/* next ready Rx descriptor/descsoft */
@@ -1000,7 +1000,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 
 	sip = sipcom_lookup(pa, strcmp(cf->cf_name, "gsip") == 0);
 	if (sip == NULL) {
-		printf("\n");
+		aprint_error("\n");
 		panic("%s: impossible", __func__);
 	}
 	sc->sc_dev = self;
@@ -1023,7 +1023,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
 
-	printf(": %s, rev %#02x\n", sip->sip_name, sc->sc_rev);
+	aprint_naive("\n");
+	aprint_normal(": %s, rev %#02x\n", sip->sip_name, sc->sc_rev);
 
 	sc->sc_model = sip;
 
@@ -1070,8 +1071,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sh = ioh;
 		sc->sc_sz = iosz;
 	} else {
-		printf("%s: unable to map device registers\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
 
@@ -1140,18 +1140,16 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct sip_control_data), 1,
 	    sizeof(struct sip_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to create control data DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(self, "unable to create control data DMA map"
+		    ", error = %d\n", error);
 		sipcom_do_detach(self, SIP_ATTACH_MAP_MEM);
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct sip_control_data), NULL,
 	    0)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to load control data DMA map, error = %d\n",
-		    error);
+		aprint_error_dev(self, "unable to load control data DMA map"
+		    ", error = %d\n", error);
 		sipcom_do_detach(self, SIP_ATTACH_CREATE_MAP);
 	}
 
@@ -1162,8 +1160,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, tx_dmamap_size,
 		    sc->sc_parm->p_ntxsegs, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self, "unable to create tx DMA map %d"
+			    ", error = %d\n", i, error);
 			sipcom_do_detach(self, SIP_ATTACH_CREATE_TXMAP);
 		}
 	}
@@ -1174,8 +1172,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(self, "unable to create rx DMA map %d"
+			    ", error = %d\n", i, error);
 			sipcom_do_detach(self, SIP_ATTACH_CREATE_RXMAP);
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
@@ -1207,8 +1205,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 
 	(*sip->sip_variant->sipv_read_macaddr)(sc, pa, enaddr);
 
-	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),
-	    ether_sprintf(enaddr));
+	aprint_normal_dev(self, "Ethernet address %s\n",ether_sprintf(enaddr));
 
 	/*
 	 * Initialize the configuration register: aggressive PCI
@@ -1503,7 +1500,8 @@ sipcom_start(struct ifnet *ifp)
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
 					printf("%s: unable to allocate Tx "
-					    "cluster\n", device_xname(sc->sc_dev));
+					    "cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -1513,8 +1511,8 @@ sipcom_start(struct ifnet *ifp)
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
-				printf("%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->sc_dev), error);
+				printf("%s: unable to load Tx buffer, error = "
+				    "%d\n", device_xname(sc->sc_dev), error);
 				break;
 			}
 		} else if (error == EFBIG) {
@@ -1524,8 +1522,8 @@ sipcom_start(struct ifnet *ifp)
 			 * since we can't sanely copy a jumbo packet
 			 * to a single buffer.
 			 */
-			printf("%s: Tx packet consumes too many "
-			    "DMA segments, dropping...\n", device_xname(sc->sc_dev));
+			printf("%s: Tx packet consumes too many DMA segments, "
+			    "dropping...\n", device_xname(sc->sc_dev));
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
 			continue;
@@ -1982,7 +1980,8 @@ sipcom_txintr(struct sip_softc *sc)
 		sip_cdtxsync(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc]));
+		cmdsts = le32toh(*sipd_cmdsts(sc,
+			&sc->sc_txdescs[txs->txs_lastdesc]));
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
@@ -2472,7 +2471,8 @@ sipcom_reset(struct sip_softc *sc)
 	}
 
 	if (i == SIP_TIMEOUT) {
-		printf("%s: reset failed to complete\n", device_xname(sc->sc_dev));
+		printf("%s: reset failed to complete\n",
+		    device_xname(sc->sc_dev));
 		return false;
 	}
 

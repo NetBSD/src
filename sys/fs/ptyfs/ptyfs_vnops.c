@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.50.2.1 2015/09/22 12:06:06 skrll Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.50.2.2 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.50.2.1 2015/09/22 12:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.50.2.2 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,9 +223,7 @@ ptyfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	struct ptyfsnode *ptyfs = VTOPTYFS(vp);
 
-	vcache_remove(vp->v_mount, &ptyfs->ptyfs_key, sizeof(ptyfs->ptyfs_key));
 	vp->v_data = NULL;
 	return 0;
 }
@@ -956,7 +954,7 @@ ptyfs_itimes(struct ptyfsnode *ptyfs, const struct timespec *acc,
     const struct timespec *mod, const struct timespec *cre)
 {
 	struct timespec now;
- 
+
 	KASSERT(ptyfs->ptyfs_status & (PTYFS_ACCESS|PTYFS_CHANGE|PTYFS_MODIFY));
 
 	getnanotime(&now);

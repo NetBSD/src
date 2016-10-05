@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.27 2014/07/25 08:10:36 dholland Exp $ */
+/*	$NetBSD: ct.c,v 1.27.4.1 2016/10/05 20:55:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.27 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.27.4.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,7 +275,8 @@ ctattach(device_t parent, device_t self, void *aux)
 
 	if (cs80describe(parent, sc->sc_slave, sc->sc_punit, &csd)) {
 		aprint_normal("\n");
-		aprint_error_dev(sc->sc_dev, "didn't respond to describe command\n");
+		aprint_error_dev(sc->sc_dev,
+		    "didn't respond to describe command\n");
 		return;
 	}
 	memset(name, 0, sizeof(name));
@@ -620,14 +621,14 @@ cteof(struct ct_softc *sc, struct buf *bp)
 	 * we really read and update b_resid.
 	 */
 	blks = sc->sc_stat.c_blk - sc->sc_blkno - 1;
-	DPRINTF(CDB_FILES, ("cteof: bc %d oblk %d nblk %d read %ld, resid %ld\n",
+	DPRINTF(CDB_FILES,
+	    ("cteof: bc %d oblk %d nblk %d read %ld, resid %ld\n",
 	    bp->b_bcount, sc->sc_blkno, sc->sc_stat.c_blk,
 	    blks, bp->b_bcount - CTKTOB(blks)));
 	if (blks == -1) { /* 9145 on EOF does not change sc_stat.c_blk */
 		blks = 0;
 		sc->sc_blkno++;
-	}
-	else {
+	} else {
 		sc->sc_blkno = sc->sc_stat.c_blk;
 	}
 	bp->b_resid = bp->b_bcount - CTKTOB(blks);
@@ -729,9 +730,10 @@ ctintr(struct ct_softc *sc)
 		(void) gpibrecv(sc->sc_ic, slave, CS80CMD_EXEC, &sc->sc_stat,
 		    sizeof(sc->sc_stat));
 		(void) gpibrecv(sc->sc_ic, slave, CS80CMD_QSTAT, &stat, 1);
-		DPRINTF(CDB_FILES, ("ctintr: return stat 0x%x, A%x F%x blk %d\n",
-			       stat, sc->sc_stat.c_aef,
-			       sc->sc_stat.c_fef, sc->sc_stat.c_blk));
+		DPRINTF(CDB_FILES,
+		    ("ctintr: return stat 0x%x, A%x F%x blk %d\n",
+			stat, sc->sc_stat.c_aef,
+			sc->sc_stat.c_fef, sc->sc_stat.c_blk));
 		if (stat == 0) {
 			if (sc->sc_stat.c_aef & (AEF_EOF | AEF_EOV)) {
 				cteof(sc, bp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.55.6.2 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: unistd.h,v 1.55.6.3 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -93,6 +93,8 @@
 #define	_POSIX_CHOWN_RESTRICTED		1
 					/* clock selection */
 #define	_POSIX_CLOCK_SELECTION		-1
+					/* cputime clock */
+#define	_POSIX_CPUTIME			200112L
 					/* CPU type */
 #undef	_POSIX_CPUTYPE
 					/* file synchronization is available */
@@ -145,6 +147,8 @@
 #define	_POSIX_THREAD_ATTR_STACKSIZE	200112L
 					/* pthread_attr for stack address */
 #define	_POSIX_THREAD_ATTR_STACKADDR	200112L
+					/* thread cputime clock */
+#define	_POSIX_THREAD_CPUTIME		200112L
 					/* _r functions */
 #define	_POSIX_THREAD_PRIO_PROTECT	200112L
 					/* PTHREAD_PRIO_PROTECT */
@@ -314,6 +318,8 @@
 #define	_SC_CPUTIME			90
 #define	_SC_THREAD_CPUTIME		91
 #define	_SC_DELAYTIMER_MAX		92
+#define	_SC_SIGQUEUE_MAX		93
+#define	_SC_REALTIME_SIGNALS		94
 
 /* Extensions found in Solaris and Linux. */
 #define	_SC_PHYS_PAGES		121

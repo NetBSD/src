@@ -1,4 +1,4 @@
-/*	$NetBSD: twa.c,v 1.52.2.1 2016/07/09 20:25:14 skrll Exp $ */
+/*	$NetBSD: twa.c,v 1.52.2.2 2016/10/05 20:55:55 skrll Exp $ */
 /*	$wasabi: twa.c,v 1.27 2006/07/28 18:17:21 wrstuden Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.52.2.1 2016/07/09 20:25:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.52.2.2 2016/10/05 20:55:55 skrll Exp $");
 
 //#define TWA_DEBUG
 
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.52.2.1 2016/07/09 20:25:14 skrll Exp $");
 #include <sys/disk.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
@@ -104,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: twa.c,v 1.52.2.1 2016/07/09 20:25:14 skrll Exp $");
 #include <dev/ldvar.h>
 
 #include "locators.h"
+#include "ioconf.h"
 
 #define	PCI_CBIO	0x10
 
@@ -114,6 +115,7 @@ static uint16_t	twa_enqueue_aen(struct twa_softc *sc,
 			struct twa_command_header *);
 
 static void	twa_attach(device_t, device_t, void *);
+static int	twa_request_bus_scan(device_t, const char *, const int *);
 static void	twa_shutdown(void *);
 static int	twa_init_connection(struct twa_softc *, uint16_t, uint32_t,
 					uint16_t, uint16_t, uint16_t, uint16_t,
@@ -140,8 +142,8 @@ extern struct	cfdriver twa_cd;
 extern uint32_t twa_fw_img_size;
 extern uint8_t	twa_fw_img[];
 
-CFATTACH_DECL_NEW(twa, sizeof(struct twa_softc),
-    twa_match, twa_attach, NULL, NULL);
+CFATTACH_DECL3_NEW(twa, sizeof(struct twa_softc),
+    twa_match, twa_attach, NULL, NULL, twa_request_bus_scan, NULL, 0);
 
 /* FreeBSD driver revision for sysctl expected by the 3ware cli */
 const char twaver[] = "1.50.01.002";
@@ -236,7 +238,7 @@ static const struct twa_message	twa_aen_table[] = {
 	{0x0057, "Battery charging fault"},
 	{0x0058, "Battery capacity is below warning level"},
 	{0x0059, "Battery capacity is below error level"},
-	{0x005A, "Battery is present"}, 
+	{0x005A, "Battery is present"},
 	{0x005B, "Battery is not present"},
 	{0x005C, "Battery is weak"},
 	{0x005D, "Battery health check failed"},
@@ -580,7 +582,7 @@ twa_wait_request(struct twa_request *tr, uint32_t timeout)
 			return(rv);
 		if ((rv = tsleep(tr, PRIBIO, "twawait", timeout * hz)) == 0)
 			break;
-		
+
 		if (rv == EWOULDBLOCK) {
 			/*
 			 * We will reset the controller only if the request has
@@ -639,7 +641,7 @@ twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 
 	rv = twa_map_request(tr);
 
-	if (rv != 0) 
+	if (rv != 0)
 		return(rv);
 
 	timeout = (timeout * 10000 * 10);
@@ -670,7 +672,7 @@ twa_immediate_request(struct twa_request *tr, uint32_t timeout)
 	 * expected to NOT cleanup when ETIMEDOUT is returned.
 	 */
 	rv = ETIMEDOUT;
-	
+
 	if (tr->tr_status == TWA_CMD_BUSY)
 		twa_reset(tr->tr_sc);
 	else {
@@ -772,11 +774,11 @@ twa_read_capacity(struct twa_request *tr, int lunid)
 	tr_9k_cmd->cdb[1] = ((lunid << 5) & 0x0e) | SRC16_SERVICE_ACTION;
 
 	error = twa_immediate_request(tr, TWA_REQUEST_TIMEOUT_PERIOD);
-	
+
 	if (error == 0) {
 #if BYTE_ORDER == BIG_ENDIAN
 		array_size = bswap64(_8btol(
-		    ((struct scsipi_read_capacity_16_data *)tr->tr_data->addr) + 1);
+		    ((struct scsipi_read_capacity_16_data *)tr->tr_data)->addr) + 1);
 #else
 		array_size = _8btol(((struct scsipi_read_capacity_16_data *)
 				tr->tr_data)->addr) + 1;
@@ -835,7 +837,7 @@ twa_alloc_req_pkts(struct twa_softc *sc, int num_reqs)
 	int	i, rv, rseg, size;
 
 	if ((sc->sc_units = malloc(sc->sc_nunits *
-	    sizeof(struct twa_drive), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL) 
+	    sizeof(struct twa_drive), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return(ENOMEM);
 
 	if ((sc->twa_req_buf = malloc(num_reqs * sizeof(struct twa_request),
@@ -970,9 +972,11 @@ twa_recompute_openings(struct twa_softc *sc)
 	}
 }
 
+/* ARGSUSED */
 static int
-twa_request_bus_scan(struct twa_softc *sc)
+twa_request_bus_scan(device_t self, const char *attr, const int *flags)
 {
+	struct twa_softc *sc = device_private(self);
 	struct twa_drive *td;
 	struct twa_request *tr;
 	struct twa_attach_args twaa;
@@ -1013,7 +1017,7 @@ twa_request_bus_scan(struct twa_softc *sc)
 				locs[TWACF_UNIT] = unit;
 
 				sc->sc_units[unit].td_dev =
-				    config_found_sm_loc(sc->twa_dv, "twa",
+				    config_found_sm_loc(sc->twa_dv, attr,
 				    locs, &twaa, twa_print, config_stdsubmatch);
 			}
 		} else {
@@ -1043,12 +1047,12 @@ twa_check_busy_q(struct twa_request *tr)
 	struct twa_softc *sc = tr->tr_sc;
 
 	TAILQ_FOREACH(rq, &sc->twa_busy, tr_link) {
-		if (tr->tr_request_id == rq->tr_request_id) { 
+		if (tr->tr_request_id == rq->tr_request_id) {
 			panic("cannot submit same request more than once");
 		} else if (tr->bp == rq->bp && tr->bp != 0) {
 			/* XXX A check for 0 for the buf ptr is needed to
 			 * guard against ioctl requests with a buf ptr of
-			 * 0 and also aen notifications. Looking for 
+			 * 0 and also aen notifications. Looking for
 			 * external cmds only.
 			 */
 			panic("cannot submit same buf more than once");
@@ -1326,7 +1330,7 @@ twa_check_response_q(struct twa_request *tr, int clear)
 
 
 	if (clear) {
-		i = 0; 
+		i = 0;
 		for (j = 0; j < 255; j++)
 			hist[j] = 0;
 		return;
@@ -1337,12 +1341,12 @@ twa_check_response_q(struct twa_request *tr, int clear)
 
 	if ((tr->tr_cmd_pkt_type & TWA_CMD_PKT_TYPE_EXTERNAL) != 0) {
 		/* XXX this is bogus ! req can't be anything else but tr ! */
-		if (req->tr_request_id == tr->tr_request_id) 
+		if (req->tr_request_id == tr->tr_request_id)
 			panic("req id: %d on controller queue twice",
 		    	    tr->tr_request_id);
-		
-		for (j = 0; j < i; j++) 
-			if (tr->bp == hist[j]) 
+
+		for (j = 0; j < i; j++)
+			if (tr->bp == hist[j])
 				panic("req id: %d buf found twice",
 		    	    	    tr->tr_request_id);
 		}
@@ -1374,7 +1378,7 @@ twa_done(struct twa_softc *sc)
 #endif
 		/* Unmap the command packet, and any associated data buffer. */
 		twa_unmap_request(tr);
-	
+
 		tr->tr_status = TWA_CMD_COMPLETE;
 		TAILQ_REMOVE(&tr->tr_sc->twa_busy, tr, tr_link);
 
@@ -1382,7 +1386,7 @@ twa_done(struct twa_softc *sc)
 			tr->tr_callback(tr);
 	}
 	(void)twa_drain_pending_queue(sc);
-	
+
 #if 0
 	twa_check_response_q(NULL, 1);
 #endif
@@ -1437,11 +1441,14 @@ twa_init_ctlr(struct twa_softc *sc)
 }
 
 static int
-twa_setup(struct twa_softc *sc)
+twa_setup(device_t self)
 {
+	struct twa_softc *sc;
 	struct tw_cl_event_packet *aen_queue;
 	uint32_t		i = 0;
 	int			error = 0;
+
+	sc = device_private(self);
 
 	/* Initialize request queues. */
 	TAILQ_INIT(&sc->twa_free);
@@ -1488,7 +1495,7 @@ twa_setup(struct twa_softc *sc)
 
 	twa_describe_controller(sc);
 
-	error = twa_request_bus_scan(sc);
+	error = twa_request_bus_scan(self, "twa", 0);
 
 	twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
 		TWA_CONTROL_CLEAR_ATTENTION_INTERRUPT |
@@ -1509,7 +1516,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	pcireg_t csr;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	const struct sysctlnode *node; 
+	const struct sysctlnode *node;
 	const struct twa_pci_identity *entry;
 	int i;
 	bool use_64bit;
@@ -1528,7 +1535,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	pci_aprint_devinfo_fancy(pa, "RAID controller", entry->name, 1);
 
 	sc->sc_quirks = 0;
-		
+
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9000) {
 		sc->sc_nunits = TWA_MAX_UNITS;
 		use_64bit = false;
@@ -1540,8 +1547,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9550) {
 		sc->sc_nunits = TWA_MAX_UNITS;
 		use_64bit = true;
-		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
-	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08,
+	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot,
 		    &sc->twa_bus_ioh, NULL, NULL)) {
 			aprint_error_dev(sc->twa_dv, "can't map mem space\n");
 			return;
@@ -1549,8 +1556,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9650) {
 		sc->sc_nunits = TWA_9650_MAX_UNITS;
 		use_64bit = true;
-		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
-	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08,
+	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot,
 		    &sc->twa_bus_ioh, NULL, NULL)) {
 			aprint_error_dev(sc->twa_dv, "can't map mem space\n");
 			return;
@@ -1559,8 +1566,8 @@ twa_attach(device_t parent, device_t self, void *aux)
 	} else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3WARE_9690) {
 		sc->sc_nunits = TWA_9690_MAX_UNITS;
 		use_64bit = true;
-		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08, 
-	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot, 
+		if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x08,
+	    	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->twa_bus_iot,
 		    &sc->twa_bus_ioh, NULL, NULL)) {
 			aprint_error_dev(sc->twa_dv, "can't map mem space\n");
 			return;
@@ -1607,7 +1614,7 @@ twa_attach(device_t parent, device_t self, void *aux)
 	if (intrstr != NULL)
 		aprint_normal_dev(sc->twa_dv, "interrupting at %s\n", intrstr);
 
-	twa_setup(sc);
+	twa_setup(self);
 
 	if (twa_sdh == NULL)
 		twa_sdh = shutdownhook_establish(twa_shutdown, NULL);
@@ -2043,7 +2050,7 @@ fw_passthru_done:
 	}
 
 	case TW_OSL_IOCTL_SCAN_BUS:
-		twa_request_bus_scan(sc);
+		twa_request_bus_scan(sc->twa_dv, "twa", 0);
 		break;
 
 	case TW_CL_IOCTL_GET_FIRST_EVENT:
@@ -2748,11 +2755,11 @@ twa_aen_callback(struct twa_request *tr)
 		cmd_hdr->err_specific_desc[sizeof(cmd_hdr->err_specific_desc) - 1] = '\0';
 		for (i = 0; i < 18; i++)
 			printf("%x\t", tr->tr_command->cmd_hdr.sense_data[i]);
-
-		printf(""); /* print new line */
+		printf("\n"); /* print new line */
 
 		for (i = 0; i < 128; i++)
 			printf("%x\t", ((int8_t *)(tr->tr_data))[i]);
+		printf("\n"); /* print new line */
 	}
 	if (tr->tr_data)
 		free(tr->tr_data, M_DEVBUF);
@@ -3123,11 +3130,11 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 			 * bothering the console.
  			 */
  			if ((sc->sc_product_id != PCI_PRODUCT_3WARE_9650) ||
- 			    ((sc->twa_sc_flags & TWA_STATE_IN_RESET) == 0)) { 
+ 			    ((sc->twa_sc_flags & TWA_STATE_IN_RESET) == 0)) {
  				aprint_error_dev(sc->twa_dv,
  				    "clearing controller queue error\n");
  			}
- 		
+
   			twa_outl(sc, TWA_CONTROL_REGISTER_OFFSET,
  				TWA_CONTROL_CLEAR_QUEUE_ERROR);
 		}
@@ -3138,4 +3145,34 @@ twa_check_ctlr_state(struct twa_softc *sc, uint32_t status_reg)
 		}
 	}
 	return(result);
+}
+
+MODULE(MODULE_CLASS_DRIVER, twa, "pci");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
+
+static int
+twa_modcmd(modcmd_t cmd, void *opaque)
+{
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(cfdriver_ioconf_twa,
+		    cfattach_ioconf_twa, cfdata_ioconf_twa);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(cfdriver_ioconf_twa,
+		    cfattach_ioconf_twa, cfdata_ioconf_twa);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

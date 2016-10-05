@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.2.2.3 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.2.2.4 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@ struct octeon_config {
 	struct mips_bus_dma_tag mc_iobus_dmat;
 	struct mips_bus_dma_tag mc_bootbus_dmat;
 	struct mips_bus_dma_tag mc_core1_dmat;
+	struct mips_bus_dma_tag mc_fpa_dmat;
 
 	struct extent *mc_io_ex;
 	struct extent *mc_mem_ex;
@@ -239,6 +240,7 @@ void	octeon_pci_init(pci_chipset_tag_t, struct octeon_config *);
 void	*octeon_intr_establish(int, int, int (*)(void *), void *);
 void	octeon_intr_disestablish(void *cookie);
 
+void	octeon_reset_vector(void);
 uint64_t mips_cp0_cvmctl_read(void);
 void	 mips_cp0_cvmctl_write(uint64_t);
 
@@ -309,13 +311,13 @@ void	 mips_cp0_cvmctl_write(uint64_t);
 static inline uint64_t
 octeon_xkphys_read_8(paddr_t address)
 {
-	return mips64_ld_a64(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address));
+	return mips3_ld(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address));
 }
 
 static inline void
 octeon_xkphys_write_8(paddr_t address, uint64_t value)
 {
-	mips64_sd_a64(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address), value);
+	mips3_sd(MIPS_PHYS_TO_XKPHYS(OCTEON_CCA_NONE, address), value);
 }
 
 /* XXX backward compatibility */

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.30.6.1 2015/09/22 12:06:07 skrll Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.30.6.2 2016/10/05 20:56:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -279,6 +279,9 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	/* some ports dont use the offset */
 	(void)&offset;
 
+	/* have not seen a data segment so far */
+	marks[MARK_DATA] = 0;
+
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
 
 	sz = elf->e_phnum * sizeof(Elf_Phdr);
@@ -556,7 +559,7 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 		}
 		DEALLOC(shp, sz);
 	}
-	
+
 	if (shstr) {
 	    DEALLOC(shstr, shstrsz);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.20.2.2 2015/09/22 12:05:41 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20.2.3 2016/10/05 20:55:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.2 2015/09/22 12:05:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.3 2016/10/05 20:55:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -39,8 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.2 2015/09/22 12:05:41 skrll Exp
 
 #include <mips/locore.h>
 #include <mips/mips3_clock.h>
-
-struct clockframe cf;
 
 void
 intr_init(void)
@@ -74,12 +72,15 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
 		KASSERT(pending != 0);
 
-		cf.pc = pc;
-		cf.sr = status;
-		cf.intr = (ci->ci_idepth > 1);
+		struct clockframe cf = {
+			.pc = pc,
+			.sr = status,
+			.intr = (ci->ci_idepth > 1)
+		};
 
 #ifdef MIPS3_ENABLE_CLOCK_INTR
 		if (pending & MIPS_INT_MASK_5) {
+
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
@@ -91,7 +92,7 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 
 		if (pending != 0) {
 			/* Process I/O and error interrupts. */
-			evbmips_iointr(ipl, pc, pending);
+			evbmips_iointr(ipl, pending, &cf);
 		}
 		KASSERT(biglock_count == ci->ci_biglock_count);
 		KASSERT(blcnt == curlwp->l_blcnt);

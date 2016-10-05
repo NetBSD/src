@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.33.4.2 2016/07/09 20:25:19 skrll Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.33.4.3 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33.4.2 2016/07/09 20:25:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.33.4.3 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ efs_getattr(void *v)
 	vap->va_bytes		= eip->ei_size;
 /*	vap->va_filerev		= */
 /*	vap->va_vaflags		= */
-	
+
 	return (0);
 }
 
@@ -463,7 +463,7 @@ efs_readdir(void *v)
 		free(cookies, M_TEMP);
 
 	free(dp, M_EFSTMP);
-	
+
 	return (err);
 }
 
@@ -583,7 +583,6 @@ efs_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct efs_inode *eip = EFS_VTOI(vp);
 
-	vcache_remove(vp->v_mount, &eip->ei_number, sizeof(eip->ei_number));
 	genfs_node_destroy(vp);
 	pool_put(&efs_inode_pool, eip);
 	vp->v_data = NULL;

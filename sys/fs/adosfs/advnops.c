@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.45.4.2 2015/06/06 14:40:20 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.45.4.3 2016/10/05 20:56:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.45.4.2 2015/06/06 14:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.45.4.3 2016/10/05 20:56:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -879,7 +879,6 @@ adosfs_reclaim(void *v)
 #endif
 	vp = sp->a_vp;
 	ap = VTOA(vp);
-	vcache_remove(vp->v_mount, &ap->block, sizeof(ap->block));
 	if (vp->v_type == VDIR && ap->tab)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)

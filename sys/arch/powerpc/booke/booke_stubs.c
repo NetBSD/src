@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_stubs.c,v 1.9 2011/06/30 00:52:58 matt Exp $	*/
+/*	$NetBSD: booke_stubs.c,v 1.9.30.1 2016/10/05 20:55:34 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.9 2011/06/30 00:52:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.9.30.1 2016/10/05 20:55:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -118,12 +118,12 @@ tlb_write_entry(size_t pos, const struct tlbmask *tlb)
 	(*cpu_md_ops.md_tlb_ops->md_tlb_write_entry)(pos, tlb);
 }
 
-u_int tlb_record_asids(u_long *) __stub;
+u_int tlb_record_asids(u_long *, tlb_asid_t) __stub;
 
 u_int
-tlb_record_asids(u_long *bitmap)
+tlb_record_asids(u_long *bitmap, tlb_asid_t asid_max)
 {
-	return (*cpu_md_ops.md_tlb_ops->md_tlb_record_asids)(bitmap);
+	return (*cpu_md_ops.md_tlb_ops->md_tlb_record_asids)(bitmap, asid_max);
 }
 
 void tlb_dump(void (*)(const char *, ...)) __stub;

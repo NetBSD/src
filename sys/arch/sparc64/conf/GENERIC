@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.6 2016/07/09 20:24:57 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.7 2016/10/05 20:55:35 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.6 $"
+#ident 		"GENERIC-$Revision: 1.177.2.7 $"
 
 maxusers	64
 
@@ -277,6 +277,7 @@ timer*	at mainbus0				# sun4c
 
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
+vdsk*	at cbus?
 
 #### Serial port configuration
 
