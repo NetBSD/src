@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.965 2016/10/04 04:58:11 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.966 2016/10/05 20:02:03 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -67,7 +67,6 @@ MKGCC?=		no
 .if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
 .elif \
-    ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb" || \
     ${MACHINE} == "or1k" || \
     ${MACHINE} == "riscv"
 HAVE_GCC?=	48
@@ -137,13 +136,7 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_ARCH} == "powerpc64"
-HAVE_GDB?=	79
-.else
 HAVE_GDB?=	710
-.endif
 
 .if ${HAVE_GDB} == 79
 EXTERNAL_GDB_SUBDIR=		gdb.old
@@ -154,13 +147,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 # What binutils is used?
 #
-.if ${MACHINE_ARCH} == "mips64el" || \
-    ${MACHINE_ARCH} == "mips64eb" || \
-    ${MACHINE_ARCH} == "powerpc64"
-HAVE_BINUTILS?=	223
-.else
 HAVE_BINUTILS?=	226
-.endif
 
 .if ${HAVE_BINUTILS} == 223
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
@@ -1048,9 +1035,9 @@ MKCTF?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "sh3" || \
     ${MACHINE} == "sparc64"
 MKPIE?=		yes
