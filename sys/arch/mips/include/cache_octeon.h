@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_octeon.h,v 1.1.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: cache_octeon.h,v 1.1.2.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 #define	CACHE_OCTEON_I			0
 #define	CACHE_OCTEON_D			1
@@ -46,11 +46,11 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 void octeon_icache_sync_all(void);
-void octeon_icache_sync_range(vaddr_t va, vsize_t size);
+void octeon_icache_sync_range(register_t va, vsize_t size);
 void octeon_icache_sync_range_index(vaddr_t va, vsize_t size);
 void octeon_pdcache_inv_all(void);
-void octeon_pdcache_inv_range(vaddr_t va, vsize_t size);
+void octeon_pdcache_inv_range(register_t va, vsize_t size);
 void octeon_pdcache_inv_range_index(vaddr_t va, vsize_t size);
-void octeon_pdcache_wb_range(vaddr_t va, vsize_t size);
+void octeon_pdcache_wb_range(register_t va, vsize_t size);
 
 #endif /* !_LOCORE */

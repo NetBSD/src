@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.16.2.1 2016/03/19 11:30:39 skrll Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.16.2.2 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -94,7 +94,13 @@ struct wapbl_entry;
 struct wapbl_replay;
 struct wapbl;
 
-typedef void (*wapbl_flush_fn_t)(struct mount *, daddr_t *, int *, int);
+struct wapbl_dealloc {
+	SIMPLEQ_ENTRY(wapbl_dealloc) wd_entries;
+	daddr_t wd_blkno;	/* address of block */
+	int wd_len;		/* size of block */
+};
+
+typedef void (*wapbl_flush_fn_t)(struct mount *, struct wapbl_dealloc *);
 
 /*
  * This structure holds per transaction log information
@@ -226,7 +232,7 @@ struct wapbl_replay {
 	int wr_log_dev_bshift;
 	int wr_fs_dev_bshift;
 	int64_t wr_circ_off;
-	int64_t wr_circ_size;	
+	int64_t wr_circ_size;
 	uint32_t wr_generation;
 
 	void *wr_scratch;

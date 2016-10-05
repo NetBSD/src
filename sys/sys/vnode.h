@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.6 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.7 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -543,7 +543,6 @@ int	vcache_rekey_enter(struct mount *, struct vnode *,
 	    const void *, size_t, const void *, size_t);
 void	vcache_rekey_exit(struct mount *, struct vnode *,
 	    const void *, size_t, const void *, size_t);
-void	vcache_remove(struct mount *, const void *, size_t);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);

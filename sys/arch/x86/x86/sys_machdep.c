@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.28.4.1 2015/12/27 12:09:45 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.1 2015/12/27 12:09:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28.4.2 2016/10/05 20:55:37 skrll Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -327,7 +327,7 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 		new_len = max(new_len, NLDT * sizeof(union descriptor));
 		new_len = round_page(new_len);
 		new_ldt = (union descriptor *)uvm_km_alloc(kernel_map,
-		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
+		    new_len, 0, UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_WAITVA);
 		mutex_enter(&cpu_lock);
 		if (pmap->pm_ldt_len <= new_len) {
 			break;
@@ -365,9 +365,11 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	}
 
 	/* All changes are now globally visible.  Swap in the new LDT. */
-	pmap->pm_ldt = new_ldt;
 	pmap->pm_ldt_len = new_len;
 	pmap->pm_ldt_sel = new_sel;
+	/* membar_store_store for pmap_fork() to read these unlocked safely */
+	membar_producer();
+	pmap->pm_ldt = new_ldt;
 
 	/* Switch existing users onto new LDT. */
 	pmap_ldt_sync(pmap);
@@ -375,10 +377,13 @@ x86_set_ldt1(struct lwp *l, struct x86_set_ldt_args *ua,
 	/* Free existing LDT (if any). */
 	if (old_ldt != NULL) {
 		ldt_free(old_sel);
+		/* exit the mutex before free */
+		mutex_exit(&cpu_lock);
 		uvm_km_free(kernel_map, (vaddr_t)old_ldt, old_len,
 		    UVM_KMF_WIRED);
+	} else {
+		mutex_exit(&cpu_lock);
 	}
-	mutex_exit(&cpu_lock);
 
 	return error;
 #endif
@@ -759,23 +764,23 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-	case X86_IOPL: 
+	case X86_IOPL:
 		error = x86_iopl(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_GET_LDT: 
+	case X86_GET_LDT:
 		error = x86_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_SET_LDT: 
+	case X86_SET_LDT:
 		error = x86_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_GET_IOPERM: 
+	case X86_GET_IOPERM:
 		error = x86_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_SET_IOPERM: 
+	case X86_SET_IOPERM:
 		error = x86_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
@@ -846,6 +851,6 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 	if ((l->l_proc->p_flag & PK_32) == 0) {
 		return x86_set_sdbase(addr, 'f', l, true);
 	}
-#endif	
+#endif
 	return x86_set_sdbase(addr, 'g', l, true);
 }

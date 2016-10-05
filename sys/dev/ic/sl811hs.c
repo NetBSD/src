@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.18 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.19 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.18 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.19 2016/10/05 20:55:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -184,12 +184,6 @@ static const uint8_t slhci_tregs[2][4] =
 #define SLHCI_OVERTIME_WARNING_RATE { 60, 0 } /* 60 seconds */
 #endif
 static const struct timeval reserved_warn_rate = SLHCI_OVERTIME_WARNING_RATE;
-
-/* Rate for overflow warnings */
-#ifndef SLHCI_OVERFLOW_WARNING_RATE
-#define SLHCI_OVERFLOW_WARNING_RATE { 60, 0 } /* 60 seconds */
-#endif
-static const struct timeval overflow_warn_rate = SLHCI_OVERFLOW_WARNING_RATE;
 
 /*
  * For EOF, the spec says 42 bit times, plus (I think) a possible hub skew of
@@ -920,6 +914,11 @@ slhci_start(struct usbd_xfer *xfer)
 		else
 			spipe->buffer = NULL;
 		spipe->lastframe = t->frame;
+		if (spipe->ptype == PT_INTR) {
+			spipe->frame = spipe->lastframe +
+			    spipe->pipe.up_interval;
+		}
+
 #if defined(DEBUG) || defined(SLHCI_DEBUG)
 		if (__predict_false(spipe->ptype == PT_INTR &&
 		    xfer->ux_length > spipe->tregs[LEN])) {
@@ -1594,7 +1593,7 @@ waitcheck:
 /* Register read/write routines and barriers. */
 #ifdef SLHCI_BUS_SPACE_BARRIERS
 #define BSB(a, b, c, d, e) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_ # e)
-#define BSB_SYNC(a, b, c, d) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_SYNC)
+#define BSB_SYNC(a, b, c, d) bus_space_barrier(a, b, c, d, BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
 #else /* now !SLHCI_BUS_SPACE_BARRIERS */
 #define BSB(a, b, c, d, e) __USE(d)
 #define BSB_SYNC(a, b, c, d)
@@ -2042,24 +2041,21 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 #endif
 
 	if (!(status & SL11_EPSTAT_ERRBITS)) {
-		unsigned int cont;
-		cont = slhci_read(sc, slhci_tregs[ab][CONT]);
-		if (cont != 0)
-			DLOG(D_XFER, "cont %d len %d", cont,
-			    spipe->tregs[LEN], 0,0);
-		if (__predict_false(cont > spipe->tregs[LEN])) {
-			DDOLOG("cont > len! cont %d len %d xfer->ux_length %d "
-			    "spipe %p", cont, spipe->tregs[LEN], xfer->ux_length,
-			    spipe);
-			printf("%s: cont > len! cont %d len %d xfer->ux_length "
-			    "%d", SC_NAME(sc), cont, spipe->tregs[LEN],
-			    xfer->ux_length);
-			slhci_halt(sc, spipe, xfer);
-			return;
+		unsigned int cont = slhci_read(sc, slhci_tregs[ab][CONT]);
+		unsigned int len = spipe->tregs[LEN];
+		DLOG(D_XFER, "cont %d len %d", cont, len, 0, 0);
+		if ((status & SL11_EPSTAT_OVERFLOW) || cont > len) {
+			DDOLOG("overflow - cont %d len %d xfer->ux_length %d "
+			    "xfer->actlen %d", cont, len, xfer->ux_length,
+			    xfer->ux_actlen);
+			printf("%s: overflow cont %d len %d xfer->ux_length"
+			    " %d xfer->ux_actlen %d\n", SC_NAME(sc), cont,
+			    len, xfer->ux_length, xfer->ux_actlen);
+			actlen = len;
 		} else {
-			spipe->nerrs = 0;
-			actlen = spipe->tregs[LEN] - cont;
+			actlen = len - cont;
 		}
+		spipe->nerrs = 0;
 	}
 
 	/* Actual copyin done after starting next transfer. */
@@ -2115,16 +2111,6 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 			    0);
 			DDOLOGSTATUS(status);
 
-			if (status & SL11_EPSTAT_OVERFLOW &&
-			    ratecheck(&sc->sc_overflow_warn_rate,
-			    &overflow_warn_rate)) {
-				printf("%s: Overflow condition: "
-				    "data corruption possible\n",
-				    SC_NAME(sc));
-				DDOLOG("Overflow condition: "
-				    "data corruption possible",
-				    0, 0, 0, 0);
-			}
 			head = Q_CALLBACKS;
 		} else {
 			head = Q_NEXT_CB;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.28.4.1 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.28.4.2 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.28.4.1 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.28.4.2 2016/10/05 20:55:43 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -80,6 +80,7 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct pciio_bdf_cfgreg *bdfr;
 	struct pciio_businfo *binfo;
 	struct pciio_drvname *dname;
+	struct pciio_drvnameonbus *dnameonbus;
 	pcitag_t tag;
 
 	switch (cmd) {
@@ -120,6 +121,29 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			sizeof dname->name);
 		return 0;
 
+	case PCI_IOC_DRVNAMEONBUS:
+		dnameonbus = data;
+		int i;
+
+		for (i = 0; i < pci_cd.cd_ndevs; i++) {
+			sc = device_lookup_private(&pci_cd, i);
+			if (sc->sc_bus == dnameonbus->bus)
+				break;	/* found the right bus */
+		}
+		if (i == pci_cd.cd_ndevs || sc == NULL)
+			return ENXIO;
+		if (dnameonbus->device >= sc->sc_maxndevs ||
+		    dnameonbus->function > 7)
+			return EINVAL;
+
+		child = &sc->PCI_SC_DEVICESC(dnameonbus->device,
+					     dnameonbus->function);
+		if (!child->c_dev)
+			return ENXIO;
+		strlcpy(dnameonbus->name, device_xname(child->c_dev),
+			sizeof dnameonbus->name);
+		return 0;
+
 	default:
 		return ENOTTY;
 	}
@@ -146,11 +170,11 @@ pcimmap(dev_t dev, off_t offset, int prot)
 	 * XXX Need a way to deal with linear/etc.
 	 *
 	 * XXX we rely on MD mmap() methods to enforce limits since these
-	 * are hidden in *_tag_t structs if they exist at all 
+	 * are hidden in *_tag_t structs if they exist at all
 	 */
 
 #ifdef PCI_MAGIC_IO_RANGE
-	/* 
+	/*
 	 * first, check if someone's trying to map the IO range
 	 * XXX this assumes 64kB IO space even though some machines can have
 	 * significantly more than that - macppc's bandit host bridge allows

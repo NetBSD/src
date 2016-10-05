@@ -1,0 +1,10 @@
+#       $NetBSD: mlx_eisa.ioconf,v 1.1.2.2 2016/10/05 20:56:07 skrll Exp $
+
+ioconf mlx_eisa
+
+include "conf/files"
+include "dev/eisa/files.eisa"
+
+pseudo-root eisa*
+
+mlx* at eisa? slot ?

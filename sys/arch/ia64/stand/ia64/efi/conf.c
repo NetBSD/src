@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2009/07/20 04:59:04 kiyohara Exp $	 */
+/*	$NetBSD: conf.c,v 1.3.40.1 2016/10/05 20:55:30 skrll Exp $	 */
 
 /*
  * Copyright (c) 2004
@@ -12,6 +12,12 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project
+ *	by Matthias Drochner.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,13 +33,14 @@
 
 
 #include <sys/cdefs.h>
+/* __FBSDID("$FreeBSD: releng/10.1/sys/boot/ia64/efi/conf.c 219691 2011-03-16 03:53:18Z marcel $"); */
 
 #include <sys/types.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/net.h>
 #include <lib/libsa/loadfile.h>
-
-#include <bootstrap.h>
+#include <lib/libsa/nfs.h>
 
 #include <efi.h>
 #include <efilib.h>
@@ -44,13 +51,23 @@
 #include "dev_net.h"
 
 struct devsw devsw[] = { 
-	{"disk", efifs_dev_strategy, efifs_dev_open, efifs_dev_close, noioctl},
+    {"disk", efifs_dev_strategy, efifs_dev_open, efifs_dev_close, noioctl},
+    { "net",  net_strategy,  net_open,  net_close,  net_ioctl },
 }; 
 
 int ndevs = sizeof(devsw) / sizeof(struct devsw);
 
+extern struct netif_driver efi_net;
+
+struct netif_driver *netif_drivers[] = {
+    &efi_net
+};
+
+int n_netif_drivers = (sizeof(netif_drivers) / sizeof(netif_drivers[0]));
+
 struct fs_ops file_system[] = {
-        FS_OPS(efifs),
+    FS_OPS(efifs),
+    FS_OPS(nfs),
 };
 
 int nfsys = sizeof(file_system) / sizeof(struct fs_ops);

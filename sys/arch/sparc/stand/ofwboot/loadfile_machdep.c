@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.c,v 1.13.4.1 2015/09/22 12:05:52 skrll Exp $	*/
+/*	$NetBSD: loadfile_machdep.c,v 1.13.4.2 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -174,9 +174,9 @@ static void
 tlb_init(void)
 {
 	phandle_t root;
-#ifdef SUN4V	
+#ifdef SUN4V
 	char buf[128];
-#endif	
+#endif
 
 	if (dtlb_store != NULL) {
 		return;
@@ -185,7 +185,7 @@ tlb_init(void)
 	if ( (root = prom_findroot()) == -1) {
 		panic("tlb_init: prom_findroot()");
 	}
-#ifdef SUN4V		
+#ifdef SUN4V
 	if (_prom_getprop(root, "compatible", buf, sizeof(buf)) > 0 &&
 		    strcmp(buf, "sun4v") == 0) {
 		tlb_init_sun4v();
@@ -194,7 +194,7 @@ tlb_init(void)
 	else {
 #endif
 		tlb_init_sun4u();
-#ifdef SUN4V		
+#ifdef SUN4V
 	}
 #endif
 
@@ -216,6 +216,7 @@ tlb_init_sun4u(void)
 	phandle_t child;
 	phandle_t root;
 	char buf[128];
+	bool foundcpu = false;
 	u_int bootcpu;
 	u_int cpu;
 
@@ -236,10 +237,13 @@ tlb_init_sun4u(void)
 			    sizeof(cpu)) == -1 && _prom_getprop(child, "portid",
 			    &cpu, sizeof(cpu)) == -1)
 				panic("tlb_init: prom_getprop");
+			foundcpu = true;
 			if (cpu == bootcpu)
 				break;
 		}
 	}
+	if (!foundcpu)
+		panic("tlb_init: no cpu found!");
 	if (cpu != bootcpu)
 		panic("tlb_init: no node for bootcpu?!?!");
 	if (_prom_getprop(child, "#dtlb-entries", &dtlb_slot_max,
@@ -288,11 +292,11 @@ mmu_mapin(vaddr_t rva, vsize_t len)
 
 	tlb_init();
 
-#if SUN4V	
+#if SUN4V
 	if ( sun4v )
 		return mmu_mapin_sun4v(rva, len);
 	else
-#endif		
+#endif
 		return mmu_mapin_sun4u(rva, len);
 }
 
@@ -412,7 +416,7 @@ mmu_mapin_sun4v(vaddr_t rva, vsize_t len)
 			panic("mmu_mapin: out of dtlb_slots");
 		if (itlb_slot >= itlb_slot_max)
 			panic("mmu_mapin: out of itlb_slots");
-		
+
 		DPRINTF(("mmu_mapin: 0x%lx:0x%x.0x%x\n", va,
 		    hi(pa), lo(pa)));
 
@@ -428,7 +432,7 @@ mmu_mapin_sun4v(vaddr_t rva, vsize_t len)
 			0		/* endianness */
 			);
 		data |= SUN4V_TLB_CV; /* virt.cache */
-		
+
 		dtlb_store[dtlb_slot].te_pa = pa;
 		dtlb_store[dtlb_slot].te_va = va;
 		dtlb_slot++;
@@ -605,7 +609,7 @@ sparc64_finalize_tlb(u_long data_va)
 	if ( sun4v )
 		sparc64_finalize_tlb_sun4v(data_va);
 	else
-#endif	
+#endif
 		sparc64_finalize_tlb_sun4u(data_va);
 }
 
@@ -709,7 +713,7 @@ sparc64_finalize_tlb_sun4v(u_long data_va)
 				      "rc = %ld", hv_rc);
 			}
 		}
-		
+
 		itlb_store[itlb_slot] = dtlb_store[i];
 		itlb_slot++;
 		hv_rc = hv_mmu_map_perm_addr(dtlb_store[i].te_va, data,

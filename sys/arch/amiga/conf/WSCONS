@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.67.6.1 2015/12/27 12:09:28 skrll Exp $
+# $NetBSD: WSCONS,v 1.67.6.2 2016/10/05 20:55:23 skrll Exp $
 
 # GENERIC with wscons(4)
 #
@@ -13,12 +13,12 @@ options 	FONT_VT220ISO8x16
 
 wskbd0		at kbd0 console ?
 
-ukbd*		at uhidev? reportid ?  
+ukbd*		at uhidev? reportid ?
 wskbd*		at ukbd? console ?
 
 wsmouse*	at ms?
 
-ums*		at uhidev? reportid ? 
+ums*		at uhidev? reportid ?
 wsmouse*	at ums?
 
 amidisplaycc0	at mainbus0		# wscons interface to custom chips
@@ -45,12 +45,15 @@ no ite5		at grf5
 no ite6		at grf6
 no ite7		at grf7
 
+mntva*          at zbus?                # MNTMN VA2000
+#options         MNTVA_CONSOLE
+
 # PCI framebuffers
 #genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only
-voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX 
+voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
 #radeonfb*	at pci?			# untested
 
-# Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in 
+# Console support for CyberVisionPPC, BlizzardVisionPPC and 3Dfx Voodoo 3 in
 # G-REX.
 #options		P5PB_CONSOLE
 
@@ -59,3 +62,4 @@ wsdisplay*	at wsemuldisplaydev? console ?
 
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 pseudo-device	wsmux			# mouse & keyboard multiplexor
+

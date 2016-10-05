@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.331.2.5 2016/07/09 20:25:25 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.331.2.6 2016/10/05 20:56:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.5 2016/07/09 20:25:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.331.2.6 2016/10/05 20:56:12 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -171,7 +171,7 @@ vaddr_t uvm_maxkaddr;
 #undef __USER_VA0_DISABLE_DEFAULT
 #define __USER_VA0_DISABLE_DEFAULT USER_VA0_DISABLE_DEFAULT
 #endif
-static int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
+int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
 #endif
 
 /*

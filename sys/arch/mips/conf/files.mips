@@ -1,9 +1,10 @@
-#	$NetBSD: files.mips,v 1.72.30.1 2015/06/06 14:40:01 skrll Exp $
+#	$NetBSD: files.mips,v 1.72.30.2 2016/10/05 20:55:31 skrll Exp $
 #
 
 defflag	opt_cputype.h		NOFPU FPEMUL
 				MIPS64_SB1
 				ENABLE_MIPS_16KB_PAGE
+				ENABLE_MIPS_8KB_PAGE
 				MIPS64_XLP MIPS64_XLR MIPS64_XLS
 				MIPS64_OCTEON
 					# and the rest...
@@ -43,9 +44,11 @@ file	arch/mips/mips/db_interface.c		ddb | kgdb
 file	arch/mips/mips/db_trace.c		ddb
 file	arch/mips/mips/ipifuncs.c		multiprocessor
 file	arch/mips/mips/kgdb_machdep.c		kgdb
-file	arch/mips/mips/pmap.c
-file	arch/mips/mips/pmap_segtab.c
-file	arch/mips/mips/pmap_tlb.c
+file	arch/mips/mips/pmap_machdep.c
+file	uvm/pmap/pmap.c
+file	uvm/pmap/pmap_segtab.c
+file	uvm/pmap/pmap_synci.c
+file	uvm/pmap/pmap_tlb.c
 file	arch/mips/mips/trap.c			# trap handlers
 file	arch/mips/mips/syscall.c		# syscall entries
 file	arch/mips/mips/mips_dsp.c		mips32r2 | mips64r2
@@ -72,6 +75,14 @@ file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_octeon.c		mips64_octeon
 file	arch/mips/mips/cache_mipsNN.c		mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache32.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache64.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_pcache128.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache16.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache32.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache64.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
+file	arch/mips/mips/cache_r4k_scache128.S	mips3|mips4|mips32|mips32r2|mips64|mips64r2
 
 file	arch/mips/mips/mips_fputrap.c		!nofpu | fpemul
 file	arch/mips/mips/mips_emul.c

@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.10.4.3 2016/07/09 20:24:59 skrll Exp $ */
+/* $NetBSD: vmt.c,v 1.10.4.4 2016/10/05 20:55:37 skrll Exp $ */
 /* $OpenBSD: vmt.c,v 1.11 2011/01/27 21:29:25 dtucker Exp $ */
 
 /*
@@ -801,15 +801,16 @@ vmt_tclo_tick(void *xarg)
 			sc->sc_rpc_error = 1;
 		}
 	} else if (strcmp(sc->sc_rpc_buf, "Set_Option broadcastIP 1") == 0) {
+		struct ifaddr *iface_addr = NULL;
 		struct ifnet *iface;
 		struct sockaddr_in *guest_ip;
 		int s;
+		struct psref psref;
 
 		/* find first available ipv4 address */
 		guest_ip = NULL;
 		s = pserialize_read_enter();
 		IFNET_READER_FOREACH(iface) {
-			struct ifaddr *iface_addr;
 
 			/* skip loopback */
 			if (strncmp(iface->if_xname, "lo", 2) == 0 &&
@@ -823,6 +824,7 @@ vmt_tclo_tick(void *xarg)
 				}
 
 				guest_ip = satosin(iface_addr->ifa_addr);
+				ifa_acquire(iface_addr, &psref);
 				break;
 			}
 		}
@@ -834,6 +836,7 @@ vmt_tclo_tick(void *xarg)
 				device_printf(sc->sc_dev, "unable to send guest IP address\n");
 				sc->sc_rpc_error = 1;
 			}
+			ifa_release(iface_addr, &psref);
 
 			if (vm_rpc_send_str(&sc->sc_tclo_rpc, VM_RPC_REPLY_OK) != 0) {
 				device_printf(sc->sc_dev, "error sending broadcastIP response\n");

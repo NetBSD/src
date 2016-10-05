@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.7.2.6 2016/07/09 20:24:57 skrll Exp $ */
+ /* $NetBSD: TODO,v 1.7.2.7 2016/10/05 20:55:36 skrll Exp $ */
 
 Things to be done:
 
@@ -28,5 +28,6 @@ sun4v:
 - interrups not handled properly (com at ebus only...)
 - mpt(4) complains: mpt0: Phy 0: Link Status Unknown
 - locore.s: TRAP_SETUP() - sun4u specific ASI_DMMU
-- man pages for drivers imported from OpenBSD lke vpci, vbus etc.
+- man pages for drivers imported from OpenBSD lke vpci, vbus, cbus, vdsk, ldc etc.
+- vdsk and ldc drivers: code maked with OPENBSD_BUSDMA - make the bus_dma stuff work properly
 

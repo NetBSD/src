@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.19.4.3 2016/07/09 20:25:21 skrll Exp $ */
+/* $NetBSD: if_srt.c,v 1.19.4.4 2016/10/05 20:56:08 skrll Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19.4.3 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19.4.4 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -31,6 +31,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.19.4.3 2016/07/09 20:25:21 skrll Exp $"
 #include <sys/fcntl.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/module.h>
+#include <sys/device.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <net/if_types.h>
@@ -51,10 +53,12 @@ struct srt_softc {
 #define SKF_CDEVOPEN 0x00000001
 };
 
-void srtattach(void);
+#include "ioconf.h"
 
 static struct srt_softc *softcv[SRT_MAXUNIT+1];
 static unsigned int global_flags;
+
+static u_int srt_count;
 
 /* Internal routines. */
 
@@ -264,6 +268,7 @@ srt_clone_create(struct if_clone *cl, int unit)
 	bpf_attach(&sc->intf, 0, 0);
 #endif
 	softcv[unit] = sc;
+	atomic_inc_uint(&srt_count);
 	return 0;
 }
 
@@ -288,6 +293,7 @@ srt_clone_destroy(struct ifnet *ifp)
 	}
 	softcv[sc->unit] = 0;
 	free(sc,M_DEVBUF);
+	atomic_inc_uint(&srt_count);
 	return 0;
 }
 
@@ -295,14 +301,42 @@ struct if_clone srt_clone =
     IF_CLONE_INITIALIZER("srt",&srt_clone_create,&srt_clone_destroy);
 
 void
-srtattach(void)
+srtattach(int n)
+{
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in srtinit() below).
+	 */
+}
+
+static void
+srtinit(void)
 {
 	int i;
 
-	for (i=SRT_MAXUNIT;i>=0;i--)
+	for (i = SRT_MAXUNIT; i >= 0; i--)
 		softcv[i] = 0;
 	global_flags = 0;
 	if_clone_attach(&srt_clone);
+}
+
+static int
+srtdetach(void)
+{
+	int error = 0;
+	int i;
+
+	for (i = SRT_MAXUNIT; i >= 0; i--)
+		if(softcv[i]) {
+			error = EBUSY;
+			break;
+		}
+
+	if (error == 0)
+		if_clone_detach(&srt_clone);
+
+	return error;
 }
 
 /* Special-device interface. */
@@ -497,3 +531,10 @@ const struct cdevsw srt_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, srt, "")

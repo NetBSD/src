@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.100.2.4 2015/12/27 12:09:57 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.100.2.5 2016/10/05 20:55:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -359,7 +359,7 @@ typedef enum {
 } pci_intr_type_t;
 
 pci_intr_type_t
-	pci_intr_type(pci_intr_handle_t);
+	pci_intr_type(pci_chipset_tag_t, pci_intr_handle_t);
 int	pci_intr_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
 		       int *, pci_intr_type_t);
 void	pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);

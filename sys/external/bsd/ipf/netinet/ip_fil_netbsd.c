@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.11.4.2 2016/07/09 20:25:18 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.11.4.3 2016/10/05 20:56:00 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.11.4.2 2016/07/09 20:25:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.11.4.3 2016/10/05 20:56:00 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -2162,7 +2162,9 @@ static int ipl_init(void *);
 static int ipl_fini(void *);
 static int ipl_modcmd(modcmd_t, void *);
 
+#ifdef _MODULE
 static devmajor_t ipl_cmaj = -1, ipl_bmaj = -1;
+#endif
 
 static int
 ipl_modcmd(modcmd_t cmd, void *opaque)
@@ -2198,20 +2200,14 @@ ipl_init(void *opaque)
 	mutex_init(&ipf_ref_mutex, MUTEX_DEFAULT, IPL_NONE);
 	ipf_active = 0;
 
+#ifdef _MODULE
 	/*
-	 * Insert ourself into the cdevsw list.  It's OK if we are
-	 * already there, since this will happen when our module is
-	 * built-in to the kernel.  (We could skip the insert in
-	 * that case, but that would break the possibility of a
-	 * unload/re-load sequence for the built-in module, which
-	 * corresponds to disable/re-enable.)
+	 * Insert ourself into the cdevsw list.
 	 */
 	error = devsw_attach("ipl", NULL, &ipl_bmaj, &ipl_cdevsw, &ipl_cmaj);
-	if (error == EEXIST)
-		error = 0;
-
 	if (error)
 		ipl_fini(opaque);
+#endif
 
 	return error;
 }
@@ -2220,7 +2216,9 @@ static int
 ipl_fini(void *opaque)
 {
 
+#ifdef _MODULE
 	(void)devsw_detach(NULL, &ipl_cdevsw);
+#endif
 
 	/*
 	 * Grab the mutex, verify that there are no references
@@ -2230,8 +2228,10 @@ ipl_fini(void *opaque)
 	 */
 	mutex_enter(&ipf_ref_mutex);
 	if (ipf_active != 0 || ipfmain.ipf_running > 0) {
+#ifdef _MODULE
 		(void)devsw_attach("ipl", NULL, &ipl_bmaj,
 		    &ipl_cdevsw, &ipl_cmaj);
+#endif
 		mutex_exit(&ipf_ref_mutex);
 		return EBUSY;
 	}

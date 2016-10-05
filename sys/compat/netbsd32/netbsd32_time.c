@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.42.14.2 2015/12/27 12:09:47 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.42.14.3 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42.14.2 2015/12/27 12:09:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42.14.3 2016/10/05 20:55:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42.14.2 2015/12/27 12:09:47 skrl
 #ifdef NTP
 
 int
-netbsd32___ntp_gettime50(struct lwp *l, 
+netbsd32___ntp_gettime50(struct lwp *l,
     const struct netbsd32___ntp_gettime50_args *uap, register_t *retval)
 {
 	/* {
@@ -83,7 +83,7 @@ netbsd32___ntp_gettime50(struct lwp *l,
 
 #ifdef COMPAT_50
 int
-compat_50_netbsd32_ntp_gettime(struct lwp *l, 
+compat_50_netbsd32_ntp_gettime(struct lwp *l,
     const struct compat_50_netbsd32_ntp_gettime_args *uap, register_t *retval)
 {
 	/* {
@@ -327,7 +327,7 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 		if (error)
 			return (error);
 	}
-	
+
 	if (SCARG_P32(uap, delta)) {
 		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
@@ -566,3 +566,34 @@ netbsd32_timer_getoverrun(struct lwp *l, const struct netbsd32_timer_getoverrun_
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_getoverrun(l, (void *)&ua, retval);
 }
+
+int
+netbsd32_clock_getcpuclockid2(struct lwp *l,
+    const struct netbsd32_clock_getcpuclockid2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) id;
+		syscallarg(netbsd32_clockidp_t) clock_id;
+	} */
+	pid_t pid;
+	lwpid_t lid;
+	clockid_t clock_id;
+	id_t id = SCARG(uap, id);
+
+	switch (SCARG(uap, idtype)) {
+	case P_PID:
+		pid = id == 0 ? l->l_proc->p_pid : id;
+		clock_id = CLOCK_PROCESS_CPUTIME_ID | pid;
+		break;
+	case P_LWPID:
+		lid = id == 0 ? l->l_lid : id;
+		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
+		break;
+	default:
+		return EINVAL;
+	}
+	return copyout(&clock_id, SCARG_P32(uap, clock_id), sizeof(clock_id));
+}
+

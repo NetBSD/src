@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.81.4.2 2016/07/09 20:25:01 skrll Exp $	*/
+/*	$NetBSD: midi.c,v 1.81.4.3 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.2 2016/07/09 20:25:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.81.4.3 2016/10/05 20:55:40 skrll Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -165,7 +165,7 @@ midiattach(device_t parent, device_t self, void *aux)
 	    hwp->close == 0 ||
 	    hwp->output == 0 ||
 	    hwp->getinfo == 0) {
-		printf("midi: missing method\n");
+		aprint_error_dev(self, "missing method\n");
 		return;
 	}
 #endif
@@ -226,7 +226,7 @@ mididetach(device_t self, int flags)
 	 */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
-	
+
 	if (!(sc->props & MIDI_PROP_NO_OUTPUT)) {
 		evcnt_detach(&sc->xmt.bytesDiscarded);
 		evcnt_detach(&sc->xmt.incompleteMessages);
@@ -312,7 +312,7 @@ midi_attach(struct midi_softc *sc)
 			EVCNT_TYPE_MISC, NULL,
 			device_xname(sc->dev), "rcv incomplete msgs");
 	}
-	
+
 	aprint_naive("\n");
 	aprint_normal(": %s\n", mi.name);
 
@@ -435,18 +435,18 @@ midi_fst(struct midi_state *s, u_char c, enum fst_form form)
 
 	if (c >= 0xf8) { /* All realtime messages bypass state machine */
 	        if (c == 0xf9 || c == 0xfd) {
-			DPRINTF( ("midi_fst: s=%p c=0x%02x undefined\n", 
+			DPRINTF( ("midi_fst: s=%p c=0x%02x undefined\n",
 			    s, c));
 			s->bytesDiscarded.ev_count++;
 			return FST_ERR;
 		}
-		DPRINTFN(9, ("midi_fst: s=%p System Real-Time data=0x%02x\n", 
+		DPRINTFN(9, ("midi_fst: s=%p System Real-Time data=0x%02x\n",
 		    s, c));
 		s->msg[2] = c;
 		FST_RETURN(2,3,FST_RT);
 	}
 
-	DPRINTFN(4, ("midi_fst: s=%p data=0x%02x state=%d\n", 
+	DPRINTFN(4, ("midi_fst: s=%p data=0x%02x state=%d\n",
 	    s, c, s->state));
 
         switch (s->state | MIDI_CAT(c)) { /* break ==> return FST_MORE */
@@ -465,7 +465,7 @@ midi_fst(struct midi_state *s, u_char c, enum fst_form form)
 		default: goto protocol_violation;
 		}
 		break;
-	
+
 	case MIDI_IN_RUN1_1 | MIDI_CAT_STATUS1:
 		if (c == s->msg[0]) {
 			s->state = MIDI_IN_RNX0_1;
@@ -478,7 +478,7 @@ midi_fst(struct midi_state *s, u_char c, enum fst_form form)
 	        s->state = MIDI_IN_RUN0_1;
 	        s->msg[0] = c;
 		break;
-	
+
 	case MIDI_IN_RUN2_2 | MIDI_CAT_STATUS2:
 	case MIDI_IN_RXX2_2 | MIDI_CAT_STATUS2:
 		if (c == s->msg[0]) {
@@ -700,12 +700,12 @@ midi_in(void *addr, int data)
 
 	if ((sc->flags & FREAD) == 0)
 		return;		/* discard data if not reading */
-	
+
 sxp_again:
 	do {
 		got = midi_fst(&sc->rcv, data, FST_CANON);
 	} while (got == FST_HUH);
-	
+
 	switch (got) {
 	case FST_MORE:
 	case FST_ERR:
@@ -757,7 +757,7 @@ sxp_again:
 		if (count > buf_lim - buf_cur
 		     || 1 > idx_lim - idx_cur) {
 			sc->rcv.bytesDiscarded.ev_count += count;
-			DPRINTF(("midi_in: buffer full, discard data=0x%02x\n", 
+			DPRINTF(("midi_in: buffer full, discard data=0x%02x\n",
 				 sc->rcv.pos[0]));
 			return;
 		}
@@ -828,18 +828,18 @@ midiopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	sc->xmt.state = MIDI_IN_START;
 	sc->xmt.pos = sc->xmt.msg;
 	sc->xmt.end = sc->xmt.msg;
-	
+
 	/* copy error counters so an ioctl (TBA) can give since-open stats */
 	sc->rcv.atOpen.bytesDiscarded  = sc->rcv.bytesDiscarded.ev_count;
 	sc->rcv.atQuery.bytesDiscarded = sc->rcv.bytesDiscarded.ev_count;
-	
+
 	sc->xmt.atOpen.bytesDiscarded  = sc->xmt.bytesDiscarded.ev_count;
 	sc->xmt.atQuery.bytesDiscarded = sc->xmt.bytesDiscarded.ev_count;
-	
+
 	/* and the buffers */
 	midi_initbuf(&sc->outbuf);
 	midi_initbuf(&sc->inbuf);
-	
+
 	/* and the receive flags */
 	sc->rcv_expect_asense = 0;
 	sc->rcv_quiescent = 0;
@@ -956,9 +956,9 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			    MB_IDX_LEN(*idx_cur) - appetite);
 		}
 		KASSERT(buf_cur + appetite <= buf_lim);
-		
+
 		/* move the bytes */
-		if (appetite > 0) {		
+		if (appetite > 0) {
 			first = 0;  /* we know we won't return empty-handed */
 			/* do two uiomoves if data wrap around end of buf */
 			if (buf_cur + appetite > buf_end) {
@@ -989,7 +989,7 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			}
 			buf_cur += appetite;
 		}
-		
+
 		MIDI_BUF_WRAP(idx);
 		MIDI_BUF_WRAP(buf);
 		MIDI_BUF_CONSUMER_WBACK(mb,idx);
@@ -1042,7 +1042,7 @@ midi_rcv_asense(void *arg)
 			softint_schedule(sc->sih);
 		mutex_exit(sc->lock);
 		return;
-	}	
+	}
 	sc->rcv_quiescent = 1;
 	callout_schedule(&sc->rcv_asense_co, MIDI_RCV_ASENSE_PERIOD);
 	mutex_exit(sc->lock);
@@ -1055,7 +1055,7 @@ midi_xmt_asense(void *arg)
 	int error, armed;
 
 	sc = arg;
-	
+
 	mutex_enter(sc->lock);
 	if (sc->pbus || sc->dying || !sc->isopen) {
 		mutex_exit(sc->lock);
@@ -1101,9 +1101,9 @@ midi_msg_out(struct midi_softc *sc, u_char **idx, u_char **idxl, u_char **buf,
 	idx_lim = *idxl;
 	buf_cur = *buf;
 	buf_lim = *bufl;
-	
+
 	length = MB_IDX_LEN(*idx_cur);
-	
+
 	for ( cp = contig, ep = cp + length; cp < ep;) {
 		*cp++ = *buf_cur++;
 		MIDI_BUF_WRAP(buf);
@@ -1134,7 +1134,7 @@ midi_msg_out(struct midi_softc *sc, u_char **idx, u_char **idxl, u_char **buf,
 	default:
 		error = EIO;
 	}
-	
+
 	if (!error) {
 		++ idx_cur;
 		MIDI_BUF_WRAP(idx);
@@ -1143,7 +1143,7 @@ midi_msg_out(struct midi_softc *sc, u_char **idx, u_char **idxl, u_char **buf,
 		*buf  = buf_cur;
 		*bufl = buf_lim;
 	}
-	
+
 	return error;
 }
 
@@ -1265,7 +1265,7 @@ midi_intr_out(struct midi_softc *sc)
 
 	MIDI_BUF_CONSUMER_INIT(mb,idx);
 	MIDI_BUF_CONSUMER_INIT(mb,buf);
-	
+
 	while (idx_cur != idx_lim) {
 		if (sc->hw_if_ext) {
 			error = midi_msg_out(sc, &idx_cur, &idx_lim,
@@ -1344,7 +1344,7 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 	iend = ibuf + cc;
 	mb = &sc->outbuf;
 	arming = 0;
-	
+
 	/*
 	 * If the hardware uses the extended hw_if, pass it canonicalized
 	 * messages (or compressed ones if it specifically requests, using
@@ -1361,7 +1361,7 @@ real_writebytes(struct midi_softc *sc, u_char *ibuf, int cc)
 
 	MIDI_BUF_PRODUCER_INIT(mb,idx);
 	MIDI_BUF_PRODUCER_INIT(mb,buf);
-	
+
 	while (ibuf < iend) {
 		got = midi_fst(&sc->xmt, *ibuf, form);
 		++ibuf;
@@ -1478,7 +1478,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 			bufspace = MIDI_BUF_PRODUCER_REFRESH(mb,buf) - buf_cur;
 			if (idxspace >= 1 && bufspace >= 3 && !pollout)
 				break;
-			DPRINTFN(8,("midi_write: sleep idx=%zd buf=%zd\n", 
+			DPRINTFN(8,("midi_write: sleep idx=%zd buf=%zd\n",
 				 idxspace, bufspace));
 			if (ioflag & IO_NDELAY) {
 				/*
@@ -1537,7 +1537,7 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 #endif
 		if (error)
 			break;
-		
+
 		/*
 		 * The number of bytes we extracted being calculated to
 		 * definitely fit in the buffer even with canonicalization,
@@ -1620,7 +1620,7 @@ midiioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case FIONBIO:
 		/* All handled in the upper layer. */
 		break;
-	
+
 	case FIONREAD:
 		/*
 		 * This code relies on the current implementation of midi_in

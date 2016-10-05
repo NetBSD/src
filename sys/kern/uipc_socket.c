@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.235.2.5 2016/07/09 20:25:20 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235.2.6 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.5 2016/07/09 20:25:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.6 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1324,8 +1324,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				m->m_next = NULL;
 				m = so->so_rcv.sb_mb;
 			} else {
-				MFREE(m, so->so_rcv.sb_mb);
-				m = so->so_rcv.sb_mb;
+				m = so->so_rcv.sb_mb = m_free(m);
 			}
 			sbsync(&so->so_rcv, nextrecord);
 		}
@@ -1349,8 +1348,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 					m->m_next = 0;
 					m = so->so_rcv.sb_mb;
 				} else {
-					MFREE(m, so->so_rcv.sb_mb);
-					m = so->so_rcv.sb_mb;
+					m = so->so_rcv.sb_mb = m_free(m);
 				}
 			}
 		}
@@ -1505,8 +1503,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 					so->so_rcv.sb_mb = m = m->m_next;
 					*mp = NULL;
 				} else {
-					MFREE(m, so->so_rcv.sb_mb);
-					m = so->so_rcv.sb_mb;
+					m = so->so_rcv.sb_mb = m_free(m);
 				}
 				/*
 				 * If m != NULL, we also know that

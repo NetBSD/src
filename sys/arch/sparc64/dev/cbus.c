@@ -1,4 +1,4 @@
-/*	$NetBSD: cbus.c,v 1.1.2.2 2016/07/09 20:24:57 skrll Exp $	*/
+/*	$NetBSD: cbus.c,v 1.1.2.3 2016/10/05 20:55:36 skrll Exp $	*/
 /*	$OpenBSD: cbus.c,v 1.15 2015/09/27 11:29:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -34,7 +34,7 @@
 #ifdef DEBUG
 #define CBUSDB_AC               0x01
 #define CBUSDB_INTR             0x02
-int cbus_debug = 0x00|CBUSDB_INTR;
+int cbus_debug = 0x00;
 #define DPRINTF(l, s)   do { if (cbus_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -302,7 +302,7 @@ cbus_get_channel_endpoint(struct cbus_softc *sc, struct cbus_attach_args *ca)
 			ca->ca_tx_ino = mdesc_get_prop_val(arc, "tx-ino");
 			ca->ca_rx_ino = mdesc_get_prop_val(arc, "rx-ino");
 			DPRINTF(CBUSDB_AC, ("cbus_get_channel_endpoint() "
-					    "- tx-ino %lu rx-ino %lu\n", 
+					    "- tx-ino %lu rx-ino %lu\n",
 					    ca->ca_tx_ino, ca->ca_rx_ino));
 			return (0);
 		}

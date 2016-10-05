@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.22 2009/05/12 10:16:35 cegger Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.22.40.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.22 2009/05/12 10:16:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.22.40.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ an_isapnp_attach(device_t parent, device_t self, void *aux)
 	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
 	    ipa->ipa_irq[0].type, IPL_NET, an_intr, sc);
 	if (isc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt handler\n");
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 

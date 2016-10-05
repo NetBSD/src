@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.100.2.5 2016/05/29 08:44:30 skrll Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.100.2.6 2016/10/05 20:55:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1784,6 +1784,19 @@ struct pci_rom {
  * Extended capability ID: 0x0016
  * Dynamic Power Allocation
  */
+#define	PCI_DPA_CAP	0x04	/* Capability */
+#define	PCI_DPA_CAP_SUBSTMAX	__BITS(4, 0)	/* Substate Max */
+#define	PCI_DPA_CAP_TLUINT	__BITS(9, 8)	/* Transition Latency Unit */
+#define	PCI_DPA_CAP_PAS		__BITS(13, 12)	/* Power Allocation Scale */
+#define	PCI_DPA_CAP_XLCY0	__BITS(23, 16)	/* Transition Latency Value0 */
+#define	PCI_DPA_CAP_XLCY1	__BITS(31, 24)	/* Transition Latency Value1 */
+#define	PCI_DPA_LATIND	0x08	/* Latency Indicator */
+#define	PCI_DPA_CS	0x0c	/* Control and Status */
+#define	PCI_DPA_CS_SUBSTSTAT	__BITS(4, 0)	/* Substate Status */
+#define	PCI_DPA_CS_SUBSTCTLEN	__BIT(8)	/* Substate Control Enabled */
+#define	PCI_DPA_CS_SUBSTCTL	__BITS(20, 16)	/* Substate Control */
+#define	PCI_DPA_PWRALLOC 0x10	/* Start address of Power Allocation Array */
+#define	PCI_DPA_SUBST_MAXNUM	32	/* Max number of Substates (0 to 31) */
 
 /*
  * Extended capability ID: 0x0017

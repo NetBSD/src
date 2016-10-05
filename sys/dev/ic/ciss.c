@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.32.6.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: ciss.c,v 1.32.6.2 2016/10/05 20:55:41 skrll Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.68 2013/05/30 16:15:02 deraadt Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32.6.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.32.6.2 2016/10/05 20:55:41 skrll Exp $");
 
 #include "bio.h"
 
@@ -142,12 +142,12 @@ ciss_attach(struct ciss_softc *sc)
 	    (u_int32_t *)&sc->cfg, sizeof(sc->cfg) / 4);
 
 	if (sc->cfg.signature != CISS_SIGNATURE) {
-		printf(": bad sign 0x%08x\n", sc->cfg.signature);
+		aprint_error(": bad sign 0x%08x\n", sc->cfg.signature);
 		return -1;
 	}
 
 	if (!(sc->cfg.methods & CISS_METH_SIMPL)) {
-		printf(": not simple 0x%08x\n", sc->cfg.methods);
+		aprint_error(": not simple 0x%08x\n", sc->cfg.methods);
 		return -1;
 	}
 
@@ -202,7 +202,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	if (!(bus_space_read_4(sc->sc_iot, sc->cfg_ioh, sc->cfgoff +
 	    offsetof(struct ciss_config, amethod)) & CISS_METH_READY)) {
-		printf(": she never came ready for me 0x%08x\n",
+		aprint_error(": she never came ready for me 0x%08x\n",
 		    sc->cfg.amethod);
 		return -1;
 	}
@@ -221,27 +221,27 @@ ciss_attach(struct ciss_softc *sc)
 	total = sc->ccblen * sc->maxcmd;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, total, PAGE_SIZE, 0,
 	    sc->cmdseg, 1, &rseg, BUS_DMA_NOWAIT))) {
-		printf(": cannot allocate CCBs (%d)\n", error);
+		aprint_error(": cannot allocate CCBs (%d)\n", error);
 		return -1;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, sc->cmdseg, rseg, total,
 	    (void **)&sc->ccbs, BUS_DMA_NOWAIT))) {
-		printf(": cannot map CCBs (%d)\n", error);
+		aprint_error(": cannot map CCBs (%d)\n", error);
 		return -1;
 	}
 	memset(sc->ccbs, 0, total);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, total, 1,
 	    total, 0, BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &sc->cmdmap))) {
-		printf(": cannot create CCBs dmamap (%d)\n", error);
+		aprint_error(": cannot create CCBs dmamap (%d)\n", error);
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		return -1;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->cmdmap, sc->ccbs, total,
 	    NULL, BUS_DMA_NOWAIT))) {
-		printf(": cannot load CCBs dmamap (%d)\n", error);
+		aprint_error(": cannot load CCBs dmamap (%d)\n", error);
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
 		return -1;
@@ -278,7 +278,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if (i < sc->maxcmd) {
-		printf(": cannot create ccb#%d dmamap (%d)\n", i, error);
+		aprint_error(": cannot create ccb#%d dmamap (%d)\n", i, error);
 		if (i == 0) {
 			/* TODO leaking cmd's dmamaps and shitz */
 			bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
@@ -289,22 +289,22 @@ ciss_attach(struct ciss_softc *sc)
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, PAGE_SIZE, PAGE_SIZE, 0,
 	    seg, 1, &rseg, BUS_DMA_NOWAIT))) {
-		printf(": cannot allocate scratch buffer (%d)\n", error);
+		aprint_error(": cannot allocate scratch buffer (%d)\n", error);
 		return -1;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, seg, rseg, PAGE_SIZE,
 	    (void **)&sc->scratch, BUS_DMA_NOWAIT))) {
-		printf(": cannot map scratch buffer (%d)\n", error);
+		aprint_error(": cannot map scratch buffer (%d)\n", error);
 		return -1;
 	}
 	memset(sc->scratch, 0, PAGE_SIZE);
 	sc->sc_waitflag = XS_CTL_NOSLEEP;		/* can't sleep yet */
 
-	mutex_enter(&sc->sc_mutex_scratch);		/* is this really needed? */
+	mutex_enter(&sc->sc_mutex_scratch);	/* is this really needed? */
 	inq = sc->scratch;
 	if (ciss_inq(sc, inq)) {
-		printf(": adapter inquiry failed\n");
+		aprint_error(": adapter inquiry failed\n");
 		mutex_exit(&sc->sc_mutex_scratch);
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
@@ -312,7 +312,7 @@ ciss_attach(struct ciss_softc *sc)
 	}
 
 	if (!(inq->flags & CISS_INQ_BIGMAP)) {
-		printf(": big map is not supported, flags=0x%x\n",
+		aprint_error(": big map is not supported, flags=0x%x\n",
 		    inq->flags);
 		mutex_exit(&sc->sc_mutex_scratch);
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
@@ -323,15 +323,15 @@ ciss_attach(struct ciss_softc *sc)
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
 	sc->ndrives = inq->buswidth ? inq->buswidth : 256;
-	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s",
+	aprint_normal(": %d LD%s, HW rev %d, FW %4.4s/%4.4s",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
 
 	if (sc->cfg.methods & CISS_METH_FIFO64)
-		printf(", 64bit fifo");
+		aprint_normal(", 64bit fifo");
 	else if (sc->cfg.methods & CISS_METH_FIFO64_RRO)
-		printf(", 64bit fifo rro");
-	printf("\n");
+		aprint_normal(", 64bit fifo rro");
+	aprint_normal("\n");
 
 	mutex_exit(&sc->sc_mutex_scratch);
 
@@ -357,7 +357,8 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->sc_flush = CISS_FLUSH_ENABLE;
 	if (!(sc->sc_sh = shutdownhook_establish(ciss_shutdown, sc))) {
-		printf(": unable to establish shutdown hook\n");
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish shutdown hook\n");
 		bus_dmamem_free(sc->sc_dmat, sc->cmdseg, 1);
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmdmap);
 		return -1;
@@ -976,7 +977,7 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 	pdid = sc->scratch;
 	if (sc->ndrives == 256) {
 		for (i = 0; i < CISS_BIGBIT; i++)
-			if (!ciss_pdid(sc, i, pdid, 
+			if (!ciss_pdid(sc, i, pdid,
 					XS_CTL_POLL|XS_CTL_NOSLEEP) &&
 			    (pdid->present & CISS_PD_PRESENT))
 				buf[k++] = i;
@@ -1352,7 +1353,7 @@ ciss_ioctl(device_t dev, u_long cmd, void *addr)
 			}
 			bd->bd_size = (u_int64_t)le32toh(pdid->nblocks) *
 			    le16toh(pdid->blksz);
-			bd->bd_channel = pdid->bus;  
+			bd->bd_channel = pdid->bus;
 			bd->bd_target = pdid->target;
 			bd->bd_lun = 0;
 			strlcpy(bd->bd_vendor, pdid->model,

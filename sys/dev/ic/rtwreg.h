@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.28 2010/03/15 23:21:08 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.28.36.1 2016/10/05 20:55:41 skrll Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -990,27 +990,6 @@ struct rtw_rxdesc {
 
 #define	RTW_CLR(regs, reg, mask)					\
 	RTW_WRITE((regs), (reg), RTW_READ((regs), (reg)) & ~(mask))
-
-/* bus_space(9) lied? */
-#ifndef BUS_SPACE_BARRIER_SYNC
-#define BUS_SPACE_BARRIER_SYNC (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
-#endif
-
-#ifndef BUS_SPACE_BARRIER_READ_BEFORE_READ
-#define BUS_SPACE_BARRIER_READ_BEFORE_READ BUS_SPACE_BARRIER_READ
-#endif
-
-#ifndef BUS_SPACE_BARRIER_READ_BEFORE_WRITE
-#define BUS_SPACE_BARRIER_READ_BEFORE_WRITE BUS_SPACE_BARRIER_READ
-#endif
-
-#ifndef BUS_SPACE_BARRIER_WRITE_BEFORE_READ
-#define BUS_SPACE_BARRIER_WRITE_BEFORE_READ BUS_SPACE_BARRIER_WRITE
-#endif
-
-#ifndef BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE
-#define BUS_SPACE_BARRIER_WRITE_BEFORE_WRITE BUS_SPACE_BARRIER_WRITE
-#endif
 
 /*
  * Registers for RTL8180L's built-in baseband modem.

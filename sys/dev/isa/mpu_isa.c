@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_isa.c,v 1.22 2011/11/24 03:35:58 mrg Exp $	*/
+/*	$NetBSD: mpu_isa.c,v 1.22.26.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.22 2011/11/24 03:35:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isa.c,v 1.22.26.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,11 +106,13 @@ mpu_isa_attach(device_t parent, device_t self, void *aux)
 	struct mpu_isa_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	if (bus_space_map(sc->sc_mpu.iot, ia->ia_io[0].ir_addr, MPU401_NPORT,
 	    0, &sc->sc_mpu.ioh)) {
-		printf("mpu_isa_attach: bus_space_map failed\n");
+		aprint_error_dev(self,
+		    "mpu_isa_attach: bus_space_map failed\n");
 		return;
 	}
 

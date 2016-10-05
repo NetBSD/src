@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.21 2009/01/21 14:34:18 jnemeth Exp $
+$NetBSD: tcdevs,v 1.21.42.1 2016/10/05 20:55:57 skrll Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -83,6 +83,7 @@ device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
 device	PMTNV-AA	???	Non-volatile RAM option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
+device	TC-USB  	tcu	flxd TC-USB
 
 # the following entries are unconfirmed
 #device	PMAF-CA		fza	DEC FDDIcontroller 700C (DEFZA; copper)

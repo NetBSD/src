@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.29.2.1 2015/12/27 12:09:27 skrll Exp $	*/
+/*	$NetBSD: esc.c,v 1.29.2.2 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.29.2.1 2015/12/27 12:09:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.29.2.2 2016/10/05 20:55:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -675,7 +675,7 @@ esc_ixfer(struct esc_softc *dev)
 			dev->sc_interrupt = *esc_interrupt;
 		}
 	}
-	
+
 /* Update buffer pointers to reflect the sent/received data. */
 	dev->sc_buf = buf;
 	dev->sc_len = len;
@@ -1491,7 +1491,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 					 * Make sure that the specs are within
 					 * chip limits. Note that if we
 					 * initiated the negotiation the specs
-					 * WILL be withing chip limits. If it
+					 * WILL be within chip limits. If it
 					 * was the scsi unit that initiated
 					 * the negotiation, the specs may be
 					 * to high.

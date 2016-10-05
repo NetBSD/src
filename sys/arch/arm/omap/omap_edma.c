@@ -1,4 +1,4 @@
-/* $NetBSD: omap_edma.c,v 1.1.4.3 2016/07/09 20:24:50 skrll Exp $ */
+/* $NetBSD: omap_edma.c,v 1.1.4.4 2016/10/05 20:55:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.1.4.3 2016/07/09 20:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.1.4.4 2016/10/05 20:55:25 skrll Exp $");
 
 #include "opt_omap.h"
 
@@ -504,7 +504,7 @@ edma_halt(struct edma_channel *ch)
 	bus_size_t off = (ch->ch_index < 32 ? 0 : 4);
 	uint32_t bit = __BIT(ch->ch_index < 32 ?
 			     ch->ch_index : ch->ch_index - 32);
-	
+
 	EDMA_WRITE(sc, EDMA_EECR_REG + off, bit);
 	EDMA_WRITE(sc, EDMA_ECR_REG + off, bit);
 	EDMA_WRITE(sc, EDMA_SECR_REG + off, bit);

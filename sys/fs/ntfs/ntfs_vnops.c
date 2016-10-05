@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.59 2014/11/13 16:51:53 hannken Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.59.2.1 2016/10/05 20:56:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.59 2014/11/13 16:51:53 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.59.2.1 2016/10/05 20:56:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,8 +247,6 @@ ntfs_reclaim(void *v)
 
 	if ((error = ntfs_ntget(ip)) != 0)
 		return (error);
-
-	vcache_remove(vp->v_mount, fp->f_key, NTKEY_SIZE(attrlen));
 
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r10k.h,v 1.3 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: cache_r10k.h,v 1.3.142.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 KIYOHARA Takashi <kiyohara@kk.iij4u.or.jp>
@@ -70,18 +70,18 @@
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 void	r10k_icache_sync_all(void);
-void	r10k_icache_sync_range(vaddr_t, vsize_t);
+void	r10k_icache_sync_range(register_t, vsize_t);
 void	r10k_icache_sync_range_index(vaddr_t, vsize_t);
 void	r10k_pdcache_wbinv_all(void);
-void	r10k_pdcache_wbinv_range(vaddr_t, vsize_t);
+void	r10k_pdcache_wbinv_range(register_t, vsize_t);
 void	r10k_pdcache_wbinv_range_index(vaddr_t, vsize_t);
-void	r10k_pdcache_inv_range(vaddr_t, vsize_t);
-void	r10k_pdcache_wb_range(vaddr_t, vsize_t);
+void	r10k_pdcache_inv_range(register_t, vsize_t);
+void	r10k_pdcache_wb_range(register_t, vsize_t);
 void	r10k_sdcache_wbinv_all(void);
-void	r10k_sdcache_wbinv_range(vaddr_t, vsize_t);
+void	r10k_sdcache_wbinv_range(register_t, vsize_t);
 void	r10k_sdcache_wbinv_range_index(vaddr_t, vsize_t);
-void	r10k_sdcache_inv_range(vaddr_t, vsize_t);
-void	r10k_sdcache_wb_range(vaddr_t, vsize_t);
+void	r10k_sdcache_inv_range(register_t, vsize_t);
+void	r10k_sdcache_wb_range(register_t, vsize_t);
 
 #endif /* _KERNEL && !_LOCORE */
 

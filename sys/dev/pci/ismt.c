@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.3.2.2 2016/03/19 11:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.3.2.3 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,12 +765,12 @@ ismt_attach(device_t parent, device_t self, void *aux)
 	    ismt_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(sc->pcidev, "unable to establish %s\n",
-		    (pci_intr_type(sc->sc_pihp[0])
+		    (pci_intr_type(pa->pa_pc, sc->sc_pihp[0])
 			== PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
 		/* Polling */
 	}
 
-	if (pci_intr_type(sc->sc_pihp[0]) == PCI_INTR_TYPE_MSI)
+	if (pci_intr_type(pa->pa_pc, sc->sc_pihp[0]) == PCI_INTR_TYPE_MSI)
 		sc->using_msi = 1;
 
 	aprint_normal_dev(sc->pcidev, "interrupting at %s\n", intrstr);

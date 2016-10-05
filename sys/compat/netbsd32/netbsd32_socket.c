@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.41.16.1 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.41.16.2 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.41.16.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.41.16.2 2016/10/05 20:55:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,7 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 		if (msg32.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
 		iov = kmem_alloc(iovsz, KM_SLEEP);
-	} else 
+	} else
 		iov = aiov;
 	error = netbsd32_to_iovecin(NETBSD32PTR64(msg32.msg_iov), iov,
 	    msg32.msg_iovlen);
@@ -193,8 +193,8 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	msg.msg_iov = iov;
 	msg.msg_iovlen = msg32.msg_iovlen;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from,
-	    msg.msg_control != NULL ? &control : NULL, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &msg32, sizeof(msg32),
+	    &from, msg.msg_control != NULL ? &control : NULL, retval);
 	if (error != 0)
 		goto done;
 
@@ -207,10 +207,10 @@ netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, registe
 	if (from != NULL)
 		m_free(from);
 	if (error == 0) {
-		ktrkuser("msghdr", &msg, sizeof msg);
 		msg32.msg_namelen = msg.msg_namelen;
 		msg32.msg_controllen = msg.msg_controllen;
 		msg32.msg_flags = msg.msg_flags;
+		ktrkuser("msghdr", &msg32, sizeof msg32);
 		error = copyout(&msg32, SCARG_P32(uap, msg), sizeof(msg32));
 	}
 
@@ -367,7 +367,8 @@ netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, registe
 		goto out;
 	msg.msg_iov = iov;
 
-	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    &msg32, sizeof(msg32), retval);
 	/* msg.msg_control freed by do_sys_sendmsg() */
 
 	if (iov != aiov)
@@ -406,7 +407,8 @@ netbsd32_recvfrom(struct lwp *l, const struct netbsd32_recvfrom_args *uap, regis
 	msg.msg_control = NULL;
 	msg.msg_flags = SCARG(uap, flags) & MSG_USERFLAGS;
 
-	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, &from, NULL, retval);
+	error = do_sys_recvmsg(l, SCARG(uap, s), &msg, NULL, ~0U,
+	    &from, NULL, retval);
 	if (error != 0)
 		return error;
 
@@ -439,5 +441,6 @@ netbsd32_sendto(struct lwp *l, const struct netbsd32_sendto_args *uap, register_
 	aiov.iov_base = SCARG_P32(uap, buf);	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
 	msg.msg_flags = 0;
-	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	return do_sys_sendmsg(l, SCARG(uap, s), &msg, SCARG(uap, flags),
+	    NULL, ~0U, retval);
 }

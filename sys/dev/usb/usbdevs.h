@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.676.2.7 2016/07/09 20:25:16 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.676.2.8 2016/10/05 20:55:57 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.715 2016/06/01 04:47:02 pgoyette Exp
+ *	NetBSD: usbdevs,v 1.716 2016/08/27 08:42:16 skrll Exp
  */
 
 /*
@@ -1407,6 +1407,7 @@
 #define	USB_PRODUCT_DLINK2_AR9271	0x3a10		/* AR9271 */
 #define	USB_PRODUCT_DLINK2_DWLG122C1	0x3c03		/* DWL-G122 rev C1 */
 #define	USB_PRODUCT_DLINK2_WUA1340	0x3c04		/* WUA-1340 */
+#define	USB_PRODUCT_DLINK2_DUBE100B1	0x3c05		/* DUB-E100 rev B1 */
 #define	USB_PRODUCT_DLINK2_DWA111	0x3c06		/* DWA-111 */
 #define	USB_PRODUCT_DLINK2_DWA110	0x3c07		/* DWA-110 */
 #define	USB_PRODUCT_DLINK2_RT2870_1	0x3c09		/* RT2870 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.91.4.2 2016/07/09 20:25:23 skrll Exp $	*/
+/*	$NetBSD: key.c,v 1.91.4.3 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91.4.2 2016/07/09 20:25:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.91.4.3 2016/10/05 20:56:09 skrll Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -4117,6 +4117,7 @@ key_ismyaddr(const struct sockaddr *sa)
 #ifdef INET
 	const struct sockaddr_in *sin;
 	const struct in_ifaddr *ia;
+	int s;
 #endif
 
 	/* sanity check */
@@ -4127,14 +4128,17 @@ key_ismyaddr(const struct sockaddr *sa)
 #ifdef INET
 	case AF_INET:
 		sin = (const struct sockaddr_in *)sa;
+		s = pserialize_read_enter();
 		IN_ADDRLIST_READER_FOREACH(ia) {
 			if (sin->sin_family == ia->ia_addr.sin_family &&
 			    sin->sin_len == ia->ia_addr.sin_len &&
 			    sin->sin_addr.s_addr == ia->ia_addr.sin_addr.s_addr)
 			{
+				pserialize_read_exit(s);
 				return 1;
 			}
 		}
+		pserialize_read_exit(s);
 		break;
 #endif
 #ifdef INET6
@@ -4160,11 +4164,15 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 {
 	struct in6_ifaddr *ia;
 	const struct in6_multi *in6m;
+	int s;
 
+	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
 		if (key_sockaddrcmp((const struct sockaddr *)&sin6,
-		    (const struct sockaddr *)&ia->ia_addr, 0) == 0)
+		    (const struct sockaddr *)&ia->ia_addr, 0) == 0) {
+			pserialize_read_exit(s);
 			return 1;
+		}
 
 		/*
 		 * XXX Multicast
@@ -4182,9 +4190,12 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 		     (in6m) = in6m->in6m_entry.le_next)
 			continue;
 #endif
-		if (in6m)
+		if (in6m) {
+			pserialize_read_exit(s);
 			return 1;
+		}
 	}
+	pserialize_read_exit(s);
 
 	/* loopback, just for safety */
 	if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))

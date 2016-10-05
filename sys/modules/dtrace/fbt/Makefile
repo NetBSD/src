@@ -7,7 +7,11 @@
 KMOD=		dtrace_fbt
 SRCS=		fbt.c
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
+.PATH:	${S}/kern
+
+SRCS+=		kern_ctf.c
+
+CPPFLAGS.fbt.c+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys \
 		-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common 
 
 CPPFLAGS+=	-Wno-unknown-pragmas

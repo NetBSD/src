@@ -1,4 +1,4 @@
-#	$NetBSD: files.ia64,v 1.7 2011/10/01 15:59:27 chs Exp $
+#	$NetBSD: files.ia64,v 1.7.30.1 2016/10/05 20:55:29 skrll Exp $
 #
 # new style config file for ia64 architecture
 #
@@ -25,6 +25,8 @@ file	arch/ia64/ia64/interrupt.c
 file	arch/ia64/ia64/vm_machdep.c
 file	arch/ia64/ia64/efi.c
 file	arch/ia64/ia64/sal.c
+#file	arch/ia64/ia64/physmem.c
+#file	arch/ia64/ia64/unaligned.c
 
 file	arch/ia64/disasm/disasm_decode.c	ddb
 file	arch/ia64/disasm/disasm_extract.c	ddb
@@ -36,6 +38,7 @@ file	arch/ia64/ia64/db_trace.c		ddb
 
 file 	arch/ia64/ia64/exception.S
 file	arch/ia64/ia64/context.S
+#file	arch/ia64/ia64/physical.S
 file	arch/ia64/ia64/syscall_stubs.S
 file	arch/ia64/ia64/support.S
 file	arch/ia64/ia64/setjmp.S
@@ -55,7 +58,7 @@ file	arch/ia64/pci/pci_machdep.c		acpi | pci
 #
 # System bus types
 #
-device	mainbus: cpubus, acpibus
+device	mainbus: cpubus, acpibus, pcibus
 attach	mainbus at root
 file	arch/ia64/ia64/mainbus.c	mainbus
 
@@ -86,6 +89,8 @@ device	fdc {drive = -1}		# XXXXXXX: Oops, required by acpi
 # PCI fixup options			# XXXXXX: Oops, required by acpi.c
 defflag opt_pcifixup.h			ACPI_PCI_FIXUP
 
+# PCI Root Bridge 
+#device pchb: pcibus
 include "dev/acpi/files.acpi"
 
 include "arch/ia64/conf/majors.ia64"

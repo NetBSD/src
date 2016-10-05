@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.25 2014/03/23 02:45:02 christos Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.25.6.1 2016/10/05 20:55:42 skrll Exp $	*/
 /*
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.25 2014/03/23 02:45:02 christos Exp $
+ * $Id: if_ntwoc_isa.c,v 1.25.6.1 2016/10/05 20:55:42 skrll Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.25 2014/03/23 02:45:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.25.6.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,8 +419,7 @@ ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 	if ((rv = bus_space_map(ia->ia_iot, ia->ia_io[0].ir_addr,
 	    NTWOC_SRC_IOPORT_SIZE, 0, &sca->sc_ioh))) {
 		aprint_error_dev(sc->sc_dev, "can't map io 0x%x sz %d, %d\n",
-		    ia->ia_io[0].ir_addr,
-		    NTWOC_SRC_IOPORT_SIZE, rv);
+		    ia->ia_io[0].ir_addr, NTWOC_SRC_IOPORT_SIZE, rv);
 		return;
 	}
 
@@ -430,7 +429,8 @@ ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 		/* map the isa io addresses */
 		if ((tmp = bus_space_map(ia->ia_iot, ioport, 16, 0,
 		    &sca->scu_sca_ioh[i]))) {
-			aprint_error_dev(sc->sc_dev, "mapping sca 0x%x sz %d failed: %d\n",
+			aprint_error_dev(sc->sc_dev,
+			    "mapping sca 0x%x sz %d failed: %d\n",
 			    ioport, 16, tmp);
 			return;
 		}
@@ -569,8 +569,9 @@ ntwoc_isa_attach(device_t parent, device_t self, void *aux)
 
 	/* make sure we have 2 pages for each port */
 	if (pgs < 2 * sca->sc_numports) {
-		printf("%s: %d less than required pages of memory of %d\n",
-		    device_xname(sc->sc_dev), pgs, 2 * sca->sc_numports);
+		aprint_error_dev(self,
+		    "%d less than required pages of memory of %d\n",
+		    pgs, 2 * sca->sc_numports);
 		return;
 	}
 

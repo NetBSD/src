@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.24 2012/10/27 17:18:24 chs Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.24.14.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early!! */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.24 2012/10/27 17:18:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_isa.c,v 1.24.14.1 2016/10/05 20:55:42 skrll Exp $");
 
 #undef TRISADEBUG
 
@@ -82,7 +82,8 @@ CFATTACH_DECL_NEW(tr_isa, sizeof(struct tr_softc),
     tr_isa_probe, tr_isa_attach, NULL, NULL);
 
 int
-tr_isa_map_io(struct isa_attach_args *ia, bus_space_handle_t *pioh, bus_space_handle_t *mmioh)
+tr_isa_map_io(struct isa_attach_args *ia, bus_space_handle_t *pioh,
+    bus_space_handle_t *mmioh)
 {
 	bus_size_t mmio;
 	u_int8_t s;
@@ -113,7 +114,8 @@ tr_isa_map_io(struct isa_attach_args *ia, bus_space_handle_t *pioh, bus_space_ha
 }
 
 void
-tr_isa_unmap_io(struct isa_attach_args *ia, bus_space_handle_t pioh, bus_space_handle_t mmioh)
+tr_isa_unmap_io(struct isa_attach_args *ia, bus_space_handle_t pioh,
+    bus_space_handle_t mmioh)
 {
 	bus_space_unmap(ia->ia_memt, mmioh, TR_MMIO_SIZE);
 	bus_space_unmap(ia->ia_iot, pioh, ia->ia_io[0].ir_size);
@@ -203,12 +205,12 @@ tr_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;
 	if (tr_isa_map_io(ia, &sc->sc_pioh, &sc->sc_mmioh)) {
-		printf("tr_isa_attach: IO space vanished\n");
+		aprint_error("tr_isa_attach: IO space vanished\n");
 		return;
 	}
 	if (bus_space_map(sc->sc_memt, ia->ia_iomem[0].ir_addr,
 	    ia->ia_iomem[0].ir_size, 0, &sc->sc_sramh)) {
-		printf("tr_isa_attach: shared ram space vanished\n");
+		aprint_error("tr_isa_attach: shared ram space vanished\n");
 		return;
 	}
 	/* set ACA offset */

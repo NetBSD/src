@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.31.4.1 2015/04/06 15:17:59 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.31.4.2 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31.4.1 2015/04/06 15:17:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31.4.2 2016/10/05 20:55:32 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
@@ -104,20 +104,17 @@ paddr_t kvtophys(vaddr_t);	/* XXX */
 static int
 _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
     void *buf, bus_size_t buflen, struct vmspace *vm, int flags,
-    int *segp, bool first)
+    int *segp, vaddr_t lastvaddr, bool first)
 {
-	bus_size_t sgsize;
 	paddr_t baddr, curaddr, lastaddr;
-	vaddr_t vaddr = (vaddr_t)buf, lastvaddr;
-	int seg = *segp;
-	bus_dma_segment_t *ds = &map->dm_segs[seg];
+	vaddr_t vaddr = (vaddr_t)buf;
+	bus_dma_segment_t *ds = &map->dm_segs[*segp];
 	bus_dma_segment_t * const eds = &map->dm_segs[map->_dm_segcnt];
+	const bus_addr_t bmask = ~(map->_dm_boundary - 1);
 	const bool d_cache_coherent =
 	    (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT) != 0;
 
 	lastaddr = ds->ds_addr + ds->ds_len;
-	lastvaddr = ds->_ds_vaddr + ds->ds_len;
-	const bus_size_t bmask = ~(map->_dm_boundary - 1);
 
 	while (buflen > 0) {
 		/*
@@ -146,7 +143,7 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((uintptr_t)vaddr & PGOFSET);
+		bus_size_t sgsize = PAGE_SIZE - ((uintptr_t)vaddr & PGOFSET);
 		if (sgsize > buflen) {
 			sgsize = buflen;
 		}
@@ -168,23 +165,46 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map,
 		 * Insert chunk into a segment, coalescing with
 		 * the previous segment if possible.
 		 */
-		if (first) {
-			ds->ds_addr = curaddr;
-			ds->ds_len = sgsize;
-			ds->_ds_vaddr = vaddr;
-			first = false;
-		} else if (curaddr == lastaddr
-		    && (d_cache_coherent || lastvaddr == vaddr)
-		    && ds->ds_len + sgsize <= map->dm_maxsegsz
+		if (!first
+		    && curaddr == lastaddr
+		    && (d_cache_coherent
+#ifndef __mips_o32
+			|| !MIPS_CACHE_VIRTUAL_ALIAS
+#endif
+			|| vaddr == lastvaddr)
+		    && (ds->ds_len + sgsize) <= map->dm_maxsegsz
 		    && (map->_dm_boundary == 0
 			|| ((ds->ds_addr ^ curaddr) & bmask) == 0)) {
 			ds->ds_len += sgsize;
 		} else {
-			if (++ds >= eds)
+			if (!first && ++ds >= eds)
 				break;
 			ds->ds_addr = curaddr;
 			ds->ds_len = sgsize;
-			ds->_ds_vaddr = vaddr;
+			ds->_ds_vaddr = (intptr_t)vaddr;
+			first = false;
+			/*
+			 * If this segment uses the correct color, try to see
+			 * if we can use a direct-mapped VA for the segment.
+			 */
+			if (!mips_cache_badalias(curaddr, vaddr)) {
+#ifdef __mips_o32
+				if (MIPS_KSEG0_P(curaddr + sgsize - 1)) {
+					ds->_ds_vaddr =
+					    MIPS_PHYS_TO_KSEG0(curaddr);
+				}
+#else
+				/*
+				 * All physical addresses can be accessed
+				 * via XKPHYS.
+				 */
+		    		ds->_ds_vaddr =
+				    MIPS_PHYS_TO_XKPHYS_CACHED(curaddr);
+#endif
+			}
+			/* Make sure this is a valid kernel address */
+			KASSERTMSG(ds->_ds_vaddr < 0,
+			    "_ds_vaddr %#"PRIxREGISTER, ds->_ds_vaddr);
 		}
 
 		lastaddr = curaddr + sgsize;
@@ -245,7 +265,7 @@ _bus_dma_load_bouncebuf(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	cookie->id_buftype = buftype;
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, cookie->id_bouncebuf,
-	    buflen, vm, flags, &seg, true);
+	    buflen, vm, flags, &seg, 0, true);
 	if (error)
 		return (error);
 
@@ -436,7 +456,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	seg = 0;
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen,
-	    vm, flags, &seg, true);
+	    vm, flags, &seg, 0, true);
 	if (error == 0) {
 		map->dm_mapsize = buflen;
 		map->dm_nsegs = seg + 1;
@@ -481,7 +501,6 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	int seg, error;
 	struct mbuf *m;
 	struct vmspace * vm = vmspace_kernel();
-	bool first;
 
 	if (map->dm_nsegs > 0) {
 #ifdef _MIPS_NEED_BUS_DMA_BOUNCE
@@ -496,6 +515,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 #endif
 		STAT_INCR(unloads);
 	}
+
 	/*
 	 * Make sure that on error condition we return "no valid mappings."
 	 */
@@ -511,15 +531,17 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map,
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	first = true;
+	vaddr_t lastvaddr = 0;
+	bool first = true;
 	seg = 0;
 	error = 0;
 	for (m = m0; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
-		    vm, flags, &seg, first);
+		    vm, flags, &seg, lastvaddr, first);
 		first = false;
+		lastvaddr = (vaddr_t)m->m_data + m->m_len;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -550,7 +572,6 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
     struct uio *uio, int flags)
 {
 	int seg, i, error;
-	bool first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
 	void *addr;
@@ -578,7 +599,8 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	first = true;
+	vaddr_t lastvaddr = 0;
+	bool first = true;
 	seg = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -590,8 +612,9 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		addr = (void *)iov[i].iov_base;
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
-		    uio->uio_vmspace, flags, &seg, first);
+		    uio->uio_vmspace, flags, &seg, lastvaddr, first);
 		first = false;
+		lastvaddr = (vaddr_t)addr + minlen;
 
 		resid -= minlen;
 	}
@@ -628,6 +651,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	const bool coherent_p = (mips_options.mips_cpu_flags & CPU_MIPS_D_CACHE_COHERENT);
 	const bool cached_p = coherent_p || (flags & BUS_DMA_COHERENT) == 0;
 	bus_size_t mapsize = 0;
+	vaddr_t lastvaddr = 0;
 	bool first = true;
 	int curseg = 0;
 	int error = 0;
@@ -651,8 +675,9 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 #endif	/* _LP64 */
 		mapsize += segs->ds_len;
 		error = _bus_dmamap_load_buffer(t, map, kva, segs->ds_len,
-		    vm, flags, &curseg, first);
+		    vm, flags, &curseg, lastvaddr, first);
 		first = false;
+		lastvaddr = (vaddr_t)kva + segs->ds_len;
 	}
 	if (error == 0) {
 		map->dm_mapsize = mapsize;
@@ -725,7 +750,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		panic("_bus_dmamap_sync: mix PRE and POST");
 
 	if (offset >= map->dm_mapsize)
-		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR 
+		panic("_bus_dmamap_sync: bad offset %"PRIxPADDR
 			" (map size is %"PRIxPSIZE")",
 				offset, map->dm_mapsize);
 	if (len == 0 || (offset + len) > map->dm_mapsize)
@@ -803,6 +828,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    || (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) == 0)
 		goto bounce_it;
 
+#ifdef _mips_o32
 	/*
 	 * If the mapping belongs to the kernel, or it belongs
 	 * to the currently-running process (XXX actually, vmspace),
@@ -812,29 +838,30 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	const bool useindex = (!VMSPACE_IS_KERNEL_P(map->_dm_vmspace)
 	    && map->_dm_vmspace != curproc->p_vmspace);
+#endif
 
 	bus_dma_segment_t *seg = map->dm_segs;
 	bus_dma_segment_t * const lastseg = seg + map->dm_nsegs;
 	/*
-	 * Skip segments until offset are withing a segment.
+	 * Skip segments until offset are within a segment.
 	 */
 	for (; offset >= seg->ds_len; seg++) {
 		offset -= seg->ds_len;
 	}
-		
+
 	for (; seg < lastseg && len != 0; seg++, offset = 0, len -= minlen) {
 		/*
 		 * Now at the first segment to sync; nail each segment until we
 		 * have exhausted the length.
 		 */
-		vaddr_t vaddr = seg->_ds_vaddr + offset;
+		register_t vaddr = seg->_ds_vaddr + offset;
 		minlen = ulmin(len, seg->ds_len - offset);
 
 #ifdef BUS_DMA_DEBUG
-		printf("bus_dmamap_sync: flushing segment %p "
-		    "(0x%"PRIxBUSADDR"+%"PRIxBUSADDR
-		    ", 0x%"PRIxBUSADDR"+0x%"PRIxBUSADDR
-		    ") (olen = %"PRIxBUSADDR")...", seg,
+		printf("bus_dmamap_sync(op=%d: flushing segment %p "
+		    "(0x%"PRIxREGISTER"+%"PRIxBUSADDR
+		    ", 0x%"PRIxREGISTER"+0x%"PRIxBUSADDR
+		    ") (olen = %"PRIxBUSADDR")...", op, seg,
 		    vaddr - offset, offset,
 		    vaddr - offset, offset + minlen - 1, len);
 #endif
@@ -843,13 +870,15 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 * If we are forced to use Index ops, it's always a
 		 * Write-back,Invalidate, so just do one test.
 		 */
-		if (__predict_false(useindex)) {
+#ifdef mips_o32
+		if (__predict_false(useindex || vaddr == 0)) {
 			mips_dcache_wbinv_range_index(vaddr, minlen);
 #ifdef BUS_DMA_DEBUG
 			printf("\n");
 #endif
 			continue;
 		}
+#endif
 
 		switch (ops) {
 		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
@@ -858,10 +887,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 
 		case BUS_DMASYNC_PREREAD: {
 			struct mips_cache_info * const mci = &mips_cache_info;
-			vaddr_t start = vaddr;
-			vaddr_t end = vaddr + minlen;
-			vaddr_t preboundary, firstboundary, lastboundary;
-			vaddr_t mask = mci->mci_dcache_align_mask;
+			register_t start = vaddr;
+			register_t end = vaddr + minlen;
+			register_t preboundary, firstboundary, lastboundary;
+			register_t mask = mci->mci_dcache_align_mask;
 
 			preboundary = start & ~mask;
 			firstboundary = (start + mask) & ~mask;
@@ -905,7 +934,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		break;
 
 	case _BUS_DMA_BUFTYPE_MBUF:
-		m_copyback(cookie->id_origmbuf, offset, len, 
+		m_copyback(cookie->id_origmbuf, offset, len,
 		    (char *)cookie->id_bouncebuf + offset);
 		break;
 
@@ -962,7 +991,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags, paddr_t low, paddr_t high)
 {
 	paddr_t curaddr, lastaddr;
-	struct vm_page *m;    
+	struct vm_page *m;
 	struct pglist mlist;
 	int curseg, error;
 
@@ -1089,7 +1118,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	*kvap = (void *)va;
 
 	for (curseg = 0; curseg < nsegs; curseg++) {
-		for (addr = segs[curseg].ds_addr;
+		for (addr = trunc_page(segs[curseg].ds_addr);
 		    addr < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.154.2.3 2015/12/27 12:09:48 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.154.2.4 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154.2.3 2015/12/27 12:09:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154.2.4 2016/10/05 20:55:39 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -219,6 +219,12 @@ static	void printiinfo(struct ccdiinfo *);
 static LIST_HEAD(, ccd_softc) ccds = LIST_HEAD_INITIALIZER(ccds);
 static kmutex_t ccd_lock;
 static size_t ccd_nactive = 0;
+
+#ifdef _MODULE
+static struct sysctllog *ccd_clog;
+#endif
+
+SYSCTL_SETUP_PROTO(sysctl_kern_ccd_setup);
 
 static struct ccd_softc *
 ccdcreate(int unit) {
@@ -1665,6 +1671,7 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 
 		error = devsw_attach("ccd", &ccd_bdevsw, &bmajor,
 		    &ccd_cdevsw, &cmajor);
+		sysctl_kern_ccd_setup(&ccd_clog);
 #endif
 		break;
 
@@ -1679,6 +1686,7 @@ ccd_modcmd(modcmd_t cmd, void *arg)
 			error = devsw_detach(&ccd_bdevsw, &ccd_cdevsw);
 			ccddetach();
 		}
+		sysctl_teardown(&ccd_clog);
 #endif
 		break;
 

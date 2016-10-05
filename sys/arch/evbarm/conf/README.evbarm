@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.8.4.2 2015/06/06 14:39:58 skrll Exp $
+$NetBSD: README.evbarm,v 1.8.4.3 2016/10/05 20:55:26 skrll Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -32,6 +32,7 @@ IXM1200		2002/07/15	Intel IMX1200 eval board
 JETSONTK1	2015/05/29	NVIDIA Jetson TK1 development kit
 KOBO		2014/07/25	Kobo touch (eReaders)
 KUROBOX_PRO	2010/10/02	Kuroutoshikou KURO-BOX/PRO
+KURONAS_X4	2016/07/11	Kuroutoshikou KURO-NAS/x4
 LUBBOCK		2003/06/18	Intel Lubbock DBPXA250 board
 MARVELL_NAS	2010/10/02	Generic Marvell SoC based NAS
 MINI2440	2012/01/30	FrendlyARM Mini2440 S3C2440 SoC board
@@ -64,5 +65,6 @@ TOASTER		2005/08/14	NetBSD/toaster based on TS-7200
 TS7200		2004/12/23	Technologic Systems TS-7200 board
 TWINTAIL	2005/02/26	Genetec corp. "Twintail" PXA255 eval board
 VIPER		2005/06/06	Arcom Viper PXA255 ARM board
+VTC100		2016/07/04	NEXCOM VTC100
 ZAO425		2003/05/23	NOVATEC NTNP425B "ZAO425" IXP425 eval board
 ZEDBOARD	2015/01/23	Xilinx Zynq-7000

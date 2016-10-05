@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.9.2.3 2016/03/19 11:29:59 skrll Exp $ */
+/*	$NetBSD: intr.c,v 1.9.2.4 2016/10/05 20:55:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.3 2016/03/19 11:29:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.4 2016/10/05 20:55:27 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -54,9 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.9.2.3 2016/03/19 11:29:59 skrll Exp $");
 #define DPRINTF while (0) printf
 #endif
 
-extern void ingenic_clockintr(uint32_t);
+extern void ingenic_clockintr(struct clockframe *);
 extern void ingenic_puts(const char *);
-extern struct clockframe cf;
 /*
  * This is a mask of bits to clear in the SR when we go to a
  * given hardware interrupt priority level.
@@ -139,12 +138,12 @@ evbmips_intr_init(void)
 }
 
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	uint32_t id;
 #ifdef INGENIC_INTR_DEBUG
 	char buffer[256];
-	
+
 #if 0
 	snprintf(buffer, 256, "pending: %08x CR %08x\n", ipending,
 	    MFC0(MIPS_COP_0_CAUSE, 0));
@@ -173,7 +172,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 #ifdef MULTIPROCESSOR
 				uint32_t tag;
 				tag = MFC0(CP0_CORE_MBOX, 0);
-	
+
 				ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
@@ -192,7 +191,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 				tag = MFC0(CP0_CORE_MBOX, 1);
 				ingenic_puts("1");
 				if (tag & 0x400)
-					hardclock(&cf);
+					hardclock(cf);
 				//ipi_process(curcpu(), tag);
 #ifdef INGENIC_INTR_DEBUG
 				snprintf(buffer, 256,
@@ -209,7 +208,7 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		/* this is a timer interrupt */
-		ingenic_clockintr(id);
+		ingenic_clockintr(cf);
 		clockintrs.ev_count++;
 		ingenic_puts("INT2\n");
 	}
@@ -223,14 +222,14 @@ evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 		 * but I haven't seen them there so for now we just weed them
 		 * out right here.
 		 * The idea is to allow peripheral interrupts on both cores but
-		 * block INT0 on core1 so it would see only timer interrupts 
+		 * block INT0 on core1 so it would see only timer interrupts
 		 * and IPIs. If that doesn't work we'll have to send an IPI to
-		 * core1 for each timer tick.  
+		 * core1 for each timer tick.
 		 */
 		mask = readreg(JZ_ICPR0);
 		if (mask & 0x0c000000) {
 			writereg(JZ_ICMSR0, 0x0c000000);
-			ingenic_clockintr(id);
+			ingenic_clockintr(cf);
 			writereg(JZ_ICMCR0, 0x0c000000);
 			clockintrs.ev_count++;
 		}
@@ -269,13 +268,13 @@ ingenic_irq(int ipl)
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
-			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			intrs[idx].ih_func(intrs[idx].ih_arg);
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR0, mask);
-		}		
+		}
 		irql &= ~mask;
 		bit = ffs32(irql);
 		bail--;
@@ -297,13 +296,13 @@ ingenic_irq(int ipl)
 		if (intrs[idx].ih_func != NULL) {
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_LOCK(1, NULL);
-			intrs[idx].ih_func(intrs[idx].ih_arg);	
+			intrs[idx].ih_func(intrs[idx].ih_arg);
 			if (intrs[idx].ih_ipl == IPL_VM)
 				KERNEL_UNLOCK_ONE(NULL);
 		} else {
 			/* spurious interrupt, mask it */
 			writereg(JZ_ICMSR1, mask);
-		}		
+		}
 		irqh &= ~mask;
 		bit = ffs32(irqh);
 	}

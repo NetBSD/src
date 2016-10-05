@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.102.2.4 2016/07/09 20:25:21 skrll Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.102.2.5 2016/10/05 20:56:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.4 2016/07/09 20:25:21 skrll Exp $");
-
-#include "pppoe.h"
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.5 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
+#include "pppoe.h"
 #include "opt_pppoe.h"
 #endif
 
@@ -50,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.4 2016/07/09 20:25:21 skrll Exp
 #include <sys/kauth.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -61,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102.2.4 2016/07/09 20:25:21 skrll Exp
 #include <net/bpf.h>
 
 #include "ioconf.h"
-
-#undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
-/* #define PPPOE_DEBUG 1 */
 
 struct pppoehdr {
 	uint8_t vertype;
@@ -203,6 +202,11 @@ static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
 static int	pppoe_clone_create(struct if_clone *, int);
 static int	pppoe_clone_destroy(struct ifnet *);
 
+static bool	pppoe_term_unknown = false;
+
+static struct sysctllog	*pppoe_sysctl_clog;
+static void sysctl_net_pppoe_setup(struct sysctllog **);
+
 static struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
 
@@ -210,11 +214,44 @@ static struct if_clone pppoe_cloner =
 void
 pppoeattach(int count)
 {
+
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in pppoeinit() below).
+	 */
+}
+
+static void
+pppoeinit(void)
+{
+
 	LIST_INIT(&pppoe_softc_list);
 	if_clone_attach(&pppoe_cloner);
 
 	pppoe_softintr = softint_establish(SOFTINT_NET, pppoe_softintr_handler,
 	    NULL);
+	sysctl_net_pppoe_setup(&pppoe_sysctl_clog);
+
+	IFQ_LOCK_INIT(&ppoediscinq);
+	IFQ_LOCK_INIT(&ppoeinq);
+}
+
+static int
+pppoedetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&pppoe_softc_list))
+		error = EBUSY;
+
+	if (error == 0) {
+		if_clone_detach(&pppoe_cloner);
+		softint_disestablish(pppoe_softintr);
+		/* Remove our sysctl sub-tree */
+		sysctl_teardown(&pppoe_sysctl_clog);
+	}
+
+	return error;
 }
 
 static int
@@ -360,24 +397,24 @@ static void
 pppoeintr(void)
 {
 	struct mbuf *m;
-	int s, disc_done, data_done;
+	int disc_done, data_done;
 
 	do {
 		disc_done = 0;
 		data_done = 0;
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoediscinq);
 			IF_DEQUEUE(&ppoediscinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoediscinq);
 			if (m == NULL) break;
 			disc_done = 1;
 			pppoe_disc_input(m);
 		}
 
 		for (;;) {
-			s = splnet();
+			IFQ_LOCK(&ppoeinq);
 			IF_DEQUEUE(&ppoeinq, m);
-			splx(s);
+			IFQ_UNLOCK(&ppoeinq);
 			if (m == NULL) break;
 			data_done = 1;
 			pppoe_data_input(m);
@@ -565,7 +602,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
 				if (n && error) {
-					strlcpy(error, 
+					strlcpy(error,
 					    mtod(n, char *) + noff, len);
 				}
 			}
@@ -769,15 +806,13 @@ pppoe_data_input(struct mbuf *m)
 	struct pppoehdr *ph;
 	struct ifnet *rcvif;
 	struct psref psref;
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
 	uint8_t shost[ETHER_ADDR_LEN];
-#endif
 
 	KASSERT(m->m_flags & M_PKTHDR);
 
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-	memcpy(shost, mtod(m, struct ether_header*)->ether_shost, ETHER_ADDR_LEN);
-#endif
+	if (pppoe_term_unknown)
+		memcpy(shost, mtod(m, struct ether_header*)->ether_shost,
+		    ETHER_ADDR_LEN);
 	m_adj(m, sizeof(struct ether_header));
 	if (m->m_pkthdr.len <= PPPOE_HEADERLEN) {
 		printf("pppoe (data): dropping too short packet: %d bytes\n",
@@ -808,11 +843,11 @@ pppoe_data_input(struct mbuf *m)
 		goto drop;
 	sc = pppoe_find_softc_by_session(session, rcvif);
 	if (sc == NULL) {
-#ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-		printf("pppoe: input for unknown session 0x%x, sending PADT\n",
-		    session);
-		pppoe_send_padt(rcvif, session, shost);
-#endif
+		if (pppoe_term_unknown) {
+			printf("pppoe: input for unknown session %#x, "
+			    "sending PADT\n", session);
+			pppoe_send_padt(rcvif, session, shost);
+		}
 		m_put_rcvif_psref(rcvif, &psref);
 		goto drop;
 	}
@@ -1599,11 +1634,14 @@ pppoe_enqueue(struct ifqueue *inq, struct mbuf *m)
 	}
 #endif
 
+	IFQ_LOCK(inq);
 	if (IF_QFULL(inq)) {
 		IF_DROP(inq);
+		IFQ_UNLOCK(inq);
 		m_freem(m);
 	} else {
 		IF_ENQUEUE(inq, m);
+		IFQ_UNLOCK(inq);
 		softint_schedule(pppoe_softintr);
 	}
 	return;
@@ -1622,3 +1660,33 @@ pppoedisc_input(struct ifnet *ifp, struct mbuf *m)
 	pppoe_enqueue(&ppoediscinq, m);
 	return;
 }
+
+static void
+sysctl_net_pppoe_setup(struct sysctllog **clog)
+{
+	const struct sysctlnode *node = NULL;
+
+	sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "pppoe",
+	    SYSCTL_DESCR("PPPOE protocol"),
+	    NULL, 0, NULL, 0,
+	    CTL_NET, CTL_CREATE, CTL_EOL);
+
+	if (node == NULL)
+		return;
+
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+	    CTLTYPE_BOOL, "term_unknown",
+	    SYSCTL_DESCR("Terminate unknown sessions"),
+	    NULL, 0, &pppoe_term_unknown, sizeof(pppoe_term_unknown),
+	    CTL_CREATE, CTL_EOL);
+}
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, pppoe, "sppp_subr")

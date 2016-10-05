@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.192.2.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.192.2.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.192.2.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.192.2.2 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,6 @@ procfs_reclaim(void *v)
 	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
 	mutex_exit(vp->v_interlock);
-	vcache_remove(vp->v_mount, &pfs->pfs_key, sizeof(pfs->pfs_key));
 	kmem_free(pfs, sizeof(*pfs));
 	return 0;
 }
@@ -596,7 +595,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	    len / 2, 0, caller) != 0) {
 		vp = NULL;
 		if (bpp) {
-/* 
+/*
 			if (t == PFSexe) {
 				snprintf(path, len, "%s/%d/file"
 				    mp->mnt_stat.f_mntonname, pfs->pfs_pid);
@@ -1696,7 +1695,7 @@ procfs_readlink(void *v)
 		default:
 			error = EINVAL;
 			break;
-		}	
+		}
 		closef(fp);
 		procfs_proc_unlock(pown);
 	}

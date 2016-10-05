@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.97.6.2 2016/07/09 20:25:04 skrll Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.97.6.3 2016/10/05 20:55:43 skrll Exp $  */
 /*	$OpenBSD: if_iwi.c,v 1.111 2010/11/15 19:11:57 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.97.6.2 2016/07/09 20:25:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.97.6.3 2016/10/05 20:55:43 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -651,7 +651,7 @@ iwi_reset_tx_ring(struct iwi_softc *sc, struct iwi_tx_ring *ring)
 			m_freem(data->m);
 			data->m = NULL;
 		}
-	
+
 		if (data->map != NULL) {
 			bus_dmamap_sync(sc->sc_dmat, data->map, 0,
 			    data->map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1282,6 +1282,14 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_notif *notif)
 			break;
 
 		case IWI_AUTH_FAIL:
+			break;
+
+		case IWI_AUTH_SENT_1:
+		case IWI_AUTH_RECV_2:
+		case IWI_AUTH_SEQ1_PASS:
+			break;
+
+		case IWI_AUTH_SEQ1_FAIL:
 			break;
 
 		default:

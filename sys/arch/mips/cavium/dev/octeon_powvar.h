@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_powvar.h,v 1.1.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_powvar.h,v 1.1.2.3 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -113,7 +113,7 @@ extern struct octeon_pow_softc	octeon_pow_softc;
 
 /* GET_WORK Loads */
 
-static inline uint64_t 
+static inline uint64_t
 octeon_pow_ops_get_work_load(
 	int wait)			/* 0-1 */
 {
@@ -286,7 +286,7 @@ octeon_pow_store(
 	    POW_OPERATION_BASE_IO_BIT |
 	    __BITS64_SET(POW_OPERATION_BASE_MAJOR_DID, 0x0c) |
 	    __BITS64_SET(POW_OPERATION_BASE_SUB_DID, subdid) |
-	    __BITS64_SET(POW_PHY_ADDR_STORE_ADDR, addr); 
+	    __BITS64_SET(POW_PHY_ADDR_STORE_ADDR, addr);
 
 	/* Store Data on Store to POW */
 	uint64_t args =
@@ -296,7 +296,7 @@ octeon_pow_store(
 	    __BITS64_SET(POW_STORE_DATA_QOS, qos) |
 	    __BITS64_SET(POW_STORE_DATA_GRP, grp) |
 	    __BITS64_SET(POW_STORE_DATA_TYPE, type) |
-	    __BITS64_SET(POW_STORE_DATA_TAG, tag); 
+	    __BITS64_SET(POW_STORE_DATA_TAG, tag);
 
 	octeon_xkphys_write_8(ptr, args);
 }
@@ -457,10 +457,17 @@ octeon_pow_work_response_async(uint64_t scraddr)
 	OCTEON_SYNCIOBDMA;
 	result = octeon_cvmseg_read_8(scraddr);
 
-	return (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK) ?
-	    NULL :
-	    (uint64_t *)MIPS_PHYS_TO_XKPHYS_CACHED(
-		result & POW_IOBDMA_GET_WORK_RESULT_ADDR);
+	paddr_t addr = result & POW_IOBDMA_GET_WORK_RESULT_ADDR;
+
+	if (result & POW_IOBDMA_GET_WORK_RESULT_NO_WORK)
+	    return NULL;
+#ifdef __mips_n32
+	KASSERT(addr < MIPS_PHYS_MASK);
+	//if (addr < MIPS_PHYS_MASK)
+		return (uint64_t *)MIPS_PHYS_TO_KSEG0(addr);
+#else
+	return (uint64_t *)MIPS_PHYS_TO_XKPHYS_CACHED(addr);
+#endif
 }
 
 static inline void
@@ -472,7 +479,7 @@ octeon_pow_config_int_pc(struct octeon_pow_softc *sc, int unit)
 
 	if (cpu_clock_hz == 0)
 		cpu_clock_hz  = curcpu()->ci_cpu_freq;
-	
+
 	/* from SDK */
 	pc_thr = (cpu_clock_hz) / (unit * 16 * 256);
 

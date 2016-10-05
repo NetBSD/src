@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.165.2.4 2016/05/29 08:44:37 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.165.2.5 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.4 2016/05/29 08:44:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.165.2.5 2016/10/05 20:56:03 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -563,7 +563,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		case PIOD_READ_AUXV:
 			req = PT_READ_D;
 			uio.uio_rw = UIO_READ;
-			tmp = t->p_execsw->es_arglen * sizeof(char *);
+			tmp = t->p_execsw->es_arglen * PROC_PTRSZ(t);
 			if (uio.uio_offset > tmp)
 				return EIO;
 			if (uio.uio_resid > tmp - uio.uio_offset)
@@ -662,7 +662,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		}
 		else
 			tmp = -tmp;
-		
+
 		if (tmp > 0) {
 			if (req == PT_DETACH) {
 				error = EINVAL;
@@ -678,7 +678,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			resume_all = 0;
 			signo = 0;
 		}
-			
+
 		/*
 		 * From the 4.4BSD PRM:
 		 * "The data argument is taken as a signal number and the
@@ -710,7 +710,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 * the requested thread, and clear it for other threads.
 		 */
 		LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
-			if (lt != lt2) 
+			if (lt != lt2)
 			{
 				lwp_lock(lt2);
 				process_sstep(lt2, 0);
@@ -806,7 +806,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			break;
 		}
 		memset(&pe, 0, sizeof(pe));
-		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ? 
+		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ?
 		    PTRACE_FORK : 0;
 		error = copyout(&pe, SCARG(uap, addr), sizeof(pe));
 		break;

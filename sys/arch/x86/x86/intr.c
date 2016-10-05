@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.77.4.4 2016/07/09 20:24:59 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.77.4.5 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.4 2016/07/09 20:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.77.4.5 2016/10/05 20:55:37 skrll Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -2103,7 +2103,7 @@ interrupt_get_devname(const char *intrid, char *buf, size_t len)
 	}
 	slot = ih->ih_slot;
 	isp = ih->ih_cpu->ci_isources[slot];
-	strncpy(buf, isp->is_xname, INTRDEVNAMEBUF);
+	strlcpy(buf, isp->is_xname, len);
 
  out:
 	mutex_exit(&cpu_lock);

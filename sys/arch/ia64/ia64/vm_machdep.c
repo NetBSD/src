@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11 2011/02/10 14:46:46 pooka Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.32.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb1, *pcb2;
-	struct trapframe *tf;
+	struct trapframe * volatile tf;
 
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.19.4.1 2016/03/19 11:30:08 skrll Exp $	*/
+/*	$NetBSD: mm.c,v 1.19.4.2 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.19.4.1 2016/03/19 11:30:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.19.4.2 2016/10/05 20:55:40 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -128,11 +128,11 @@ mm_init(void)
  * constant, general mapping address otherwise.
  */
 static inline vaddr_t
-dev_mem_getva(paddr_t pa)
+dev_mem_getva(paddr_t pa, int color)
 {
 #ifdef __HAVE_MM_MD_CACHE_ALIASING
 	return uvm_km_alloc(kernel_map, PAGE_SIZE,
-	    atop(pa) & uvmexp.colormask,
+	    color & uvmexp.colormask,
 	    UVM_KMF_VAONLY | UVM_KMF_WAITVA | UVM_KMF_COLORMATCH);
 #else
 	return dev_mem_addr;
@@ -161,6 +161,7 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	size_t len, offset;
 	bool have_direct;
 	int error;
+	int color = 0;
 
 	/* Check for wrap around. */
 	if ((intptr_t)uio->uio_offset != uio->uio_offset) {
@@ -175,16 +176,24 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	offset = uio->uio_offset & PAGE_MASK;
 	len = MIN(uio->uio_resid, PAGE_SIZE - offset);
 
+#ifdef __HAVE_MM_MD_CACHE_ALIASING
+	have_direct = mm_md_page_color(paddr, &color);
+#else
+	have_direct = true;
+	color = 0;
+#endif
+
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	/* Is physical address directly mapped?  Return VA. */
-	have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
+	if (have_direct)
+		have_direct = mm_md_direct_mapped_phys(paddr, &vaddr);
 #else
 	vaddr = 0;
 	have_direct = false;
 #endif
 	if (!have_direct) {
 		/* Get a special virtual address. */
-		const vaddr_t va = dev_mem_getva(paddr);
+		const vaddr_t va = dev_mem_getva(paddr, color);
 
 		/* Map selected KVA to physical address. */
 		mutex_enter(&dev_mem_lock);

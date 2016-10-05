@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.26.14.1 2016/07/09 20:25:24 skrll Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.26.14.2 2016/10/05 20:56:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26.14.1 2016/07/09 20:25:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.26.14.2 2016/10/05 20:56:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,7 @@ ext2fs_bmap(void *v)
 		daddr_t *a_bnp;
 		int *a_runp;
 	} */ *ap = v;
+
 	/*
 	 * Check for underlying vnode requests and ensure that logical
 	 * to physical mapping is requested.
@@ -113,17 +114,14 @@ ext2fs_bmap(void *v)
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = VTOI(ap->a_vp)->i_devvp;
 	if (ap->a_bnp == NULL)
-		return (0);
-	
-	
-	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & IN_E4EXTENTS)
+		return 0;
+
+	if (VTOI(ap->a_vp)->i_din.e2fs_din->e2di_flags & EXT2_EXTENTS)
 		return ext4_bmapext(ap->a_vp, ap->a_bn, ap->a_bnp,
 		    ap->a_runp, NULL);
 	else
 		return ext2fs_bmaparray(ap->a_vp, ap->a_bn, ap->a_bnp, NULL,
 		    NULL, ap->a_runp);
-	
-		
 }
 
 /*
@@ -132,7 +130,7 @@ ext2fs_bmap(void *v)
  */
 static int
 ext4_bmapext(struct vnode *vp, int32_t bn, int64_t *bnp, int *runp, int *runb)
-{	
+{
 	struct inode *ip;
 	struct m_ext2fs	 *fs;
 	struct ext4_extent *ep;
@@ -244,14 +242,14 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 				is_sequential(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn - 1]),
 							  (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
-		return (0);
+		return 0;
 	}
 
 	xap = ap == NULL ? a : ap;
 	if (!nump)
 		nump = &num;
 	if ((error = ufs_getlbns(vp, bn, xap, nump)) != 0)
-		return (error);
+		return error;
 
 	num = *nump;
 
@@ -299,7 +297,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			 * for detail.
 			 */
 
-			 return (ENOMEM);
+			 return ENOMEM;
 		}
 		if (bp->b_oflags & (BO_DONE | BO_DELWRI)) {
 			trace(TR_BREADHIT, pack(vp, size), metalbn);
@@ -316,7 +314,7 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 			curlwp->l_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp, 0);
-				return (error);
+				return error;
 			}
 		}
 
@@ -335,5 +333,5 @@ ext2fs_bmaparray(struct vnode *vp, daddr_t bn, daddr_t *bnp, struct indir *ap,
 
 	daddr = blkptrtodb(ump, daddr);
 	*bnp = daddr == 0 ? -1 : daddr;
-	return (0);
+	return 0;
 }

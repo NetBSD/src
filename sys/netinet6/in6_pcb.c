@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.134.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.134.2.5 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.5 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -203,6 +203,7 @@ static int
 in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 {
 	int error;
+	int s;
 
 	/*
 	 * We should check the family, but old programs
@@ -219,9 +220,12 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 	if ((error = sa6_embedscope(sin6, ip6_use_defzone)) != 0)
 		return (error);
 
+	s = pserialize_read_enter();
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
-		if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY) != 0)
-			return (EINVAL);
+		if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY) != 0) {
+			error = EINVAL;
+			goto out;
+		}
 		if (sin6->sin6_addr.s6_addr32[3]) {
 			struct sockaddr_in sin;
 
@@ -230,18 +234,27 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 			sin.sin_family = AF_INET;
 			bcopy(&sin6->sin6_addr.s6_addr32[3],
 			    &sin.sin_addr, sizeof(sin.sin_addr));
-			if (!IN_MULTICAST(sin.sin_addr.s_addr) &&
-			    ifa_ifwithaddr((struct sockaddr *)&sin) == NULL)
-				return EADDRNOTAVAIL;
+			if (!IN_MULTICAST(sin.sin_addr.s_addr)) {
+				struct ifaddr *ifa;
+				ifa = ifa_ifwithaddr((struct sockaddr *)&sin);
+				if (ifa == NULL) {
+					error = EADDRNOTAVAIL;
+					goto out;
+				}
+			}
 		}
 	} else if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
 		// succeed
 	} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
-		struct ifaddr *ia = NULL;
+		struct ifaddr *ifa = NULL;
 
-		if ((in6p->in6p_flags & IN6P_FAITH) == 0 &&
-		    (ia = ifa_ifwithaddr((struct sockaddr *)sin6)) == NULL)
-			return (EADDRNOTAVAIL);
+		if ((in6p->in6p_flags & IN6P_FAITH) == 0) {
+			ifa = ifa_ifwithaddr(sin6tosa(sin6));
+			if (ifa == NULL) {
+				error = EADDRNOTAVAIL;
+				goto out;
+			}
+		}
 
 		/*
 		 * bind to an anycast address might accidentally
@@ -256,17 +269,18 @@ in6_pcbbind_addr(struct in6pcb *in6p, struct sockaddr_in6 *sin6, struct lwp *l)
 		 * flag to control the bind(2) behavior against
 		 * deprecated addresses (default: forbid bind(2)).
 		 */
-		if (ia &&
-		    ((struct in6_ifaddr *)ia)->ia6_flags &
-		    (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY|IN6_IFF_DETACHED))
-			return (EADDRNOTAVAIL);
+		if (ifa &&
+		    ifatoia6(ifa)->ia6_flags &
+		    (IN6_IFF_ANYCAST | IN6_IFF_DUPLICATED)) {
+			error = EADDRNOTAVAIL;
+			goto out;
+		}
 	}
-
-
 	in6p->in6p_laddr = sin6->sin6_addr;
-
-
-	return (0);
+	error = 0;
+out:
+	pserialize_read_exit(s);
+	return error;
 }
 
 /*
@@ -485,23 +499,27 @@ in6_pcbconnect(void *v, struct sockaddr_in6 *sin6, struct lwp *l)
 	if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
 	    in6p->in6p_laddr.s6_addr32[3] == 0) {
 #ifdef INET
-		struct sockaddr_in sin, *sinp;
+		struct sockaddr_in sin;
+		struct in_ifaddr *ia4;
+		struct psref _psref;
 
 		memset(&sin, 0, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		memcpy(&sin.sin_addr, &sin6->sin6_addr.s6_addr32[3],
 			sizeof(sin.sin_addr));
-		sinp = in_selectsrc(&sin, &in6p->in6p_route,
-			in6p->in6p_socket->so_options, NULL, &error);
-		if (sinp == NULL) {
+		ia4 = in_selectsrc(&sin, &in6p->in6p_route,
+			in6p->in6p_socket->so_options, NULL, &error, &_psref);
+		if (ia4 == NULL) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
 			return (error);
 		}
 		memset(&mapped, 0, sizeof(mapped));
 		mapped.s6_addr16[5] = htons(0xffff);
-		memcpy(&mapped.s6_addr32[3], &sinp->sin_addr, sizeof(sinp->sin_addr));
+		memcpy(&mapped.s6_addr32[3], &IA_SIN(ia4)->sin_addr,
+		    sizeof(IA_SIN(ia4)->sin_addr));
+		ia4_release(ia4, &_psref);
 		in6a = &mapped;
 #else
 		return EADDRNOTAVAIL;

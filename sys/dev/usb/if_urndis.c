@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.9 2016/07/09 20:25:15 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.10 2016/10/05 20:55:57 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.9 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.10 2016/10/05 20:55:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,8 @@ static uint32_t urndis_ctrl_halt(struct urndis_softc *);
 #endif
 static uint32_t urndis_ctrl_query(struct urndis_softc *, uint32_t, void *,
     size_t, void **, size_t *);
-static uint32_t urndis_ctrl_set(struct urndis_softc *, uint32_t, void *, size_t);
+static uint32_t urndis_ctrl_set(struct urndis_softc *, uint32_t, void *,
+    size_t);
 #if 0
 static uint32_t urndis_ctrl_set_param(struct urndis_softc *, const char *,
     uint32_t, void *, size_t);
@@ -108,7 +109,8 @@ static uint32_t urndis_ctrl_keepalive(struct urndis_softc *);
 #endif
 
 static int urndis_encap(struct urndis_softc *, struct mbuf *, int);
-static void urndis_decap(struct urndis_softc *, struct urndis_chain *, uint32_t);
+static void urndis_decap(struct urndis_softc *, struct urndis_chain *,
+    uint32_t);
 
 static int urndis_match(device_t, cfdata_t, void *);
 static void urndis_attach(device_t, device_t, void *);
@@ -1385,7 +1387,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_iface_data == NULL) {
-		printf("%s: no data interface\n", DEVNAME(sc));
+		aprint_error("%s: no data interface\n", DEVNAME(sc));
 		return;
 	}
 
@@ -1395,8 +1397,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 
 	for (j = 0; j < altcnt; j++) {
 		if (usbd_set_interface(sc->sc_iface_data, j)) {
-			printf("%s: interface alternate setting %u failed\n",
-			    DEVNAME(sc), j);
+			aprint_error("%s: interface alternate setting %u "
+			    "failed\n", DEVNAME(sc), j);
 			return;
 		}
 		/* Find endpoints. */
@@ -1406,8 +1408,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 			ed = usbd_interface2endpoint_descriptor(
 			    sc->sc_iface_data, i);
 			if (!ed) {
-				printf("%s: no descriptor for bulk endpoint "
-				    "%u\n", DEVNAME(sc), i);
+				aprint_error("%s: no descriptor for bulk "
+				    "endpoint %u\n", DEVNAME(sc), i);
 				return;
 			}
 			if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -1431,9 +1433,9 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_bulkin_no == -1)
-		printf("%s: could not find data bulk in\n", DEVNAME(sc));
+		aprint_error("%s: could not find data bulk in\n", DEVNAME(sc));
 	if (sc->sc_bulkout_no == -1 )
-		printf("%s: could not find data bulk out\n", DEVNAME(sc));
+		aprint_error("%s: could not find data bulk out\n",DEVNAME(sc));
 	return;
 
 	found:
@@ -1458,7 +1460,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 
 	if (urndis_ctrl_query(sc, OID_802_3_PERMANENT_ADDRESS, NULL, 0,
 	    &buf, &bufsz) != RNDIS_STATUS_SUCCESS) {
-		printf("%s: unable to get hardware address\n", DEVNAME(sc));
+		aprint_error("%s: unable to get hardware address\n",
+		    DEVNAME(sc));
 		urndis_stop(ifp);
 		splx(s);
 		return;
@@ -1466,10 +1469,11 @@ urndis_attach(device_t parent, device_t self, void *aux)
 
 	if (bufsz == ETHER_ADDR_LEN) {
 		memcpy(eaddr, buf, ETHER_ADDR_LEN);
-		printf("%s: address %s\n", DEVNAME(sc), ether_sprintf(eaddr));
+		aprint_normal("%s: address %s\n", DEVNAME(sc),
+		    ether_sprintf(eaddr));
 		kmem_free(buf, bufsz);
 	} else {
-		printf("%s: invalid address\n", DEVNAME(sc));
+		aprint_error("%s: invalid address\n", DEVNAME(sc));
 		kmem_free(buf, bufsz);
 		urndis_stop(ifp);
 		splx(s);
@@ -1482,7 +1486,7 @@ urndis_attach(device_t parent, device_t self, void *aux)
 	filter = htole32(sc->sc_filter);
 	if (urndis_ctrl_set(sc, OID_GEN_CURRENT_PACKET_FILTER, &filter,
 	    sizeof(filter)) != RNDIS_STATUS_SUCCESS) {
-		printf("%s: unable to set data filters\n", DEVNAME(sc));
+		aprint_error("%s: unable to set data filters\n", DEVNAME(sc));
 		urndis_stop(ifp);
 		splx(s);
 		return;

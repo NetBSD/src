@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.67.4.1 2016/03/19 11:30:07 skrll Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.67.4.2 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.1 2016/03/19 11:30:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.67.4.2 2016/10/05 20:55:37 skrll Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -243,7 +243,7 @@ module_init_md(void)
 			md_root_setconf((void *)((uintptr_t)bi->base + KERNBASE),
 			    bi->len);
 #endif
-			break;	
+			break;
 		default:
 			aprint_debug("Skipping non-ELF module\n");
 			break;
@@ -459,281 +459,6 @@ x86_cpu_idle_set(void (*func)(void), const char *text, bool ipi)
 #define KBTOB(x)	((size_t)(x) * 1024UL)
 #define MBTOB(x)	((size_t)(x) * 1024UL * 1024UL)
 
-extern paddr_t avail_start, avail_end;
-
-static int
-add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
-	struct extent *iomem_ex,
-	uint64_t seg_start, uint64_t seg_end, uint32_t type)
-{
-	uint64_t new_physmem = 0;
-	phys_ram_seg_t *cluster;
-	int i;
-
-#ifdef i386
-#ifdef PAE
-#define TOPLIMIT	0x1000000000ULL /* 64GB */
-#else
-#define TOPLIMIT	0x100000000ULL	/* 4GB */
-#endif
-#else
-#define TOPLIMIT	0x100000000000ULL /* 16TB */
-#endif
-
-	if (seg_end > TOPLIMIT) {
-		aprint_verbose("WARNING: skipping large memory map entry: "
-		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
-		    seg_start,
-		    (seg_end - seg_start),
-		    type);
-		return seg_cluster_cnt;
-	}
-
-	/*
-	 * XXX Chop the last page off the size so that
-	 * XXX it can fit in avail_end.
-	 */
-	if (seg_end == TOPLIMIT)
-		seg_end -= PAGE_SIZE;
-
-	if (seg_end <= seg_start)
-		return seg_cluster_cnt;
-
-	for (i = 0; i < seg_cluster_cnt; i++) {
-		cluster = &seg_clusters[i];
-		if ((cluster->start == round_page(seg_start))
-		    && (cluster->size == trunc_page(seg_end) - cluster->start))
-		{
-#ifdef DEBUG_MEMLOAD
-			printf("WARNING: skipping duplicate segment entry\n");
-#endif
-			return seg_cluster_cnt;
-		}
-	}
-
-	/*
-	 * Allocate the physical addresses used by RAM
-	 * from the iomem extent map.  This is done before
-	 * the addresses are page rounded just to make
-	 * sure we get them all.
-	 */
-	if (seg_start < 0x100000000ULL) {
-		uint64_t io_end;
-
-		if (seg_end > 0x100000000ULL)
-			io_end = 0x100000000ULL;
-		else
-			io_end = seg_end;
-
-		if (iomem_ex != NULL && extent_alloc_region(iomem_ex, seg_start,
-		    io_end - seg_start, EX_NOWAIT)) {
-			/* XXX What should we do? */
-			printf("WARNING: CAN't ALLOCATE MEMORY SEGMENT "
-			    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
-			    "IOMEM EXTENT MAP!\n",
-			    seg_start, seg_end - seg_start, type);
-			return seg_cluster_cnt;
-		}
-	}
-
-	/*
-	 * If it's not free memory, skip it.
-	 */
-	if (type != BIM_Memory)
-		return seg_cluster_cnt;
-
-	/* XXX XXX XXX */
-	if (seg_cluster_cnt >= VM_PHYSSEG_MAX)
-		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
-			__func__);
-
-#ifdef PHYSMEM_MAX_ADDR
-	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
-		return seg_cluster_cnt;
-	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
-		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
-#endif
-
-	seg_start = round_page(seg_start);
-	seg_end = trunc_page(seg_end);
-
-	if (seg_start == seg_end)
-		return seg_cluster_cnt;
-
-	cluster = &seg_clusters[seg_cluster_cnt];
-	cluster->start = seg_start;
-	if (iomem_ex != NULL)
-		new_physmem = physmem + atop(seg_end - seg_start);
-
-#ifdef PHYSMEM_MAX_SIZE
-	if (iomem_ex != NULL) {
-		if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
-			return seg_cluster_cnt;
-		if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
-			seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
-			new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
-		}
-	}
-#endif
-
-	cluster->size = seg_end - seg_start;
-
-	if (iomem_ex != NULL) {
-		if (avail_end < seg_end)
-			avail_end = seg_end;
-		physmem = new_physmem;
-	}
-	seg_cluster_cnt++;
-
-	return seg_cluster_cnt;
-}
-
-int
-initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
-{
-	uint64_t seg_start, seg_end;
-	uint64_t addr, size;
-	uint32_t type;
-	int x;
-
-	KASSERT(bim != NULL);
-	KASSERT(bim->num > 0);
-
-#ifdef DEBUG_MEMLOAD
-	printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
-#endif
-	for (x = 0; x < bim->num; x++) {
-		addr = bim->entry[x].addr;
-		size = bim->entry[x].size;
-		type = bim->entry[x].type;
-#ifdef DEBUG_MEMLOAD
-		printf("    addr 0x%"PRIx64"  size 0x%"PRIx64"  type 0x%x\n",
-			addr, size, type);
-#endif
-
-		/*
-		 * If the segment is not memory, skip it.
-		 */
-		switch (type) {
-		case BIM_Memory:
-		case BIM_ACPI:
-		case BIM_NVS:
-			break;
-		default:
-			continue;
-		}
-
-		/*
-		 * If the segment is smaller than a page, skip it.
-		 */
-		if (size < NBPG)
-			continue;
-
-		seg_start = addr;
-		seg_end = addr + size;
-
-		/*
-		 *   Avoid Compatibility Holes.
-		 * XXX Holes within memory space that allow access
-		 * XXX to be directed to the PC-compatible frame buffer
-		 * XXX (0xa0000-0xbffff), to adapter ROM space
-		 * XXX (0xc0000-0xdffff), and to system BIOS space
-		 * XXX (0xe0000-0xfffff).
-		 * XXX Some laptop(for example,Toshiba Satellite2550X)
-		 * XXX report this area and occurred problems,
-		 * XXX so we avoid this area.
-		 */
-		if (seg_start < 0x100000 && seg_end > 0xa0000) {
-			printf("WARNING: memory map entry overlaps "
-			    "with ``Compatibility Holes'': "
-			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
-			    seg_end - seg_start, type);
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				seg_start, 0xa0000, type);
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				0x100000, seg_end, type);
-		} else
-			mem_cluster_cnt = add_mem_cluster(
-				mem_clusters, mem_cluster_cnt, iomem_ex,
-				seg_start, seg_end, type);
-	}
-
-	return 0;
-}
-
-int
-initx86_fake_memmap(struct extent *iomem_ex)
-{
-	phys_ram_seg_t *cluster;
-	KASSERT(mem_cluster_cnt == 0);
-
-	/*
-	 * Allocate the physical addresses used by RAM from the iomem
-	 * extent map. This is done before the addresses are
-	 * page rounded just to make sure we get them all.
-	 */
-	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem),
-	    EX_NOWAIT))
-	{
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
-		    "IOMEM EXTENT MAP!\n");
-	}
-
-	cluster = &mem_clusters[0];
-	cluster->start = 0;
-	cluster->size = trunc_page(KBTOB(biosbasemem));
-	physmem += atop(cluster->size);
-
-	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
-	    EX_NOWAIT))
-	{
-		/* XXX What should we do? */
-		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
-		    "IOMEM EXTENT MAP!\n");
-	}
-
-#if NISADMA > 0
-	/*
-	 * Some motherboards/BIOSes remap the 384K of RAM that would
-	 * normally be covered by the ISA hole to the end of memory
-	 * so that it can be used.  However, on a 16M system, this
-	 * would cause bounce buffers to be allocated and used.
-	 * This is not desirable behaviour, as more than 384K of
-	 * bounce buffers might be allocated.  As a work-around,
-	 * we round memory down to the nearest 1M boundary if
-	 * we're using any isadma devices and the remapped memory
-	 * is what puts us over 16M.
-	 */
-	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
-		char pbuf[9];
-
-		format_bytes(pbuf, sizeof(pbuf),
-		    biosextmem - (15*1024));
-		printf("Warning: ignoring %s of remapped memory\n",
-		    pbuf);
-		biosextmem = (15*1024);
-	}
-#endif
-	cluster = &mem_clusters[1];
-	cluster->start = IOM_END;
-	cluster->size = trunc_page(KBTOB(biosextmem));
-	physmem += atop(cluster->size);
-
-	mem_cluster_cnt = 2;
-
-	avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
-
-	return 0;
-}
-
-#ifdef amd64
-extern vaddr_t kern_end;
-extern vaddr_t module_start, module_end;
-#endif
-
 static struct {
 	int freelist;
 	uint64_t limit;
@@ -757,6 +482,8 @@ static struct {
 	{ VM_FREELIST_FIRST16,	16 * 1024 * 1024 },
 };
 
+extern paddr_t avail_start, avail_end;
+
 int
 x86_select_freelist(uint64_t maxaddr)
 {
@@ -773,8 +500,344 @@ x86_select_freelist(uint64_t maxaddr)
 	panic("no freelist for maximum address %"PRIx64, maxaddr);
 }
 
+static int
+x86_add_cluster(struct extent *iomem_ex, uint64_t seg_start, uint64_t seg_end,
+    uint32_t type)
+{
+	uint64_t new_physmem = 0;
+	phys_ram_seg_t *cluster;
+	int i;
+
+#ifdef i386
+#ifdef PAE
+#define TOPLIMIT	0x1000000000ULL /* 64GB */
+#else
+#define TOPLIMIT	0x100000000ULL	/* 4GB */
+#endif
+#else
+#define TOPLIMIT	0x100000000000ULL /* 16TB */
+#endif
+
+	if (seg_end > TOPLIMIT) {
+		aprint_verbose("WARNING: skipping large memory map entry: "
+		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
+		    seg_start, (seg_end - seg_start), type);
+		return 0;
+	}
+
+	/*
+	 * XXX: Chop the last page off the size so that it can fit in avail_end.
+	 */
+	if (seg_end == TOPLIMIT)
+		seg_end -= PAGE_SIZE;
+
+	if (seg_end <= seg_start)
+		return 0;
+
+	for (i = 0; i < mem_cluster_cnt; i++) {
+		cluster = &mem_clusters[i];
+		if ((cluster->start == round_page(seg_start)) &&
+		    (cluster->size == trunc_page(seg_end) - cluster->start)) {
+#ifdef DEBUG_MEMLOAD
+			printf("WARNING: skipping duplicate segment entry\n");
+#endif
+			return 0;
+		}
+	}
+
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem extent
+	 * map. This is done before the addresses are page rounded just to make
+	 * sure we get them all.
+	 */
+	if (seg_start < 0x100000000ULL) {
+		uint64_t io_end;
+
+		if (seg_end > 0x100000000ULL)
+			io_end = 0x100000000ULL;
+		else
+			io_end = seg_end;
+
+		if (iomem_ex != NULL && extent_alloc_region(iomem_ex, seg_start,
+		    io_end - seg_start, EX_NOWAIT)) {
+			/* XXX What should we do? */
+			printf("WARNING: CAN't ALLOCATE MEMORY SEGMENT "
+			    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
+			    "IOMEM EXTENT MAP!\n",
+			    seg_start, seg_end - seg_start, type);
+			return 0;
+		}
+	}
+
+	/* If it's not free memory, skip it. */
+	if (type != BIM_Memory)
+		return 0;
+
+	if (mem_cluster_cnt >= VM_PHYSSEG_MAX) {
+		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
+			__func__);
+	}
+
+#ifdef PHYSMEM_MAX_ADDR
+	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
+		return 0;
+	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
+		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
+#endif
+
+	seg_start = round_page(seg_start);
+	seg_end = trunc_page(seg_end);
+
+	if (seg_start == seg_end)
+		return 0;
+
+	cluster = &mem_clusters[mem_cluster_cnt];
+	cluster->start = seg_start;
+	if (iomem_ex != NULL)
+		new_physmem = physmem + atop(seg_end - seg_start);
+
+#ifdef PHYSMEM_MAX_SIZE
+	if (iomem_ex != NULL) {
+		if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+			return 0;
+		if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+			seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+			new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+		}
+	}
+#endif
+
+	cluster->size = seg_end - seg_start;
+
+	if (iomem_ex != NULL) {
+		if (avail_end < seg_end)
+			avail_end = seg_end;
+		physmem = new_physmem;
+	}
+	mem_cluster_cnt++;
+
+	return 0;
+}
+
+static int
+x86_parse_clusters(struct btinfo_memmap *bim, struct extent *iomem_ex)
+{
+	uint64_t seg_start, seg_end;
+	uint64_t addr, size;
+	uint32_t type;
+	int x;
+
+	KASSERT(bim != NULL);
+	KASSERT(bim->num > 0);
+
+#ifdef DEBUG_MEMLOAD
+	printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
+#endif
+
+	for (x = 0; x < bim->num; x++) {
+		addr = bim->entry[x].addr;
+		size = bim->entry[x].size;
+		type = bim->entry[x].type;
+#ifdef DEBUG_MEMLOAD
+		printf("    addr 0x%"PRIx64"  size 0x%"PRIx64"  type 0x%x\n",
+			addr, size, type);
+#endif
+
+		/* If the segment is not memory, skip it. */
+		switch (type) {
+		case BIM_Memory:
+		case BIM_ACPI:
+		case BIM_NVS:
+			break;
+		default:
+			continue;
+		}
+
+		/* If the segment is smaller than a page, skip it. */
+		if (size < PAGE_SIZE)
+			continue;
+
+		seg_start = addr;
+		seg_end = addr + size;
+
+		/*
+		 * XXX XXX: Avoid compatibility holes.
+		 *
+		 * Holes within memory space that allow access to be directed
+		 * to the PC-compatible frame buffer (0xa0000-0xbffff), to
+		 * adapter ROM space (0xc0000-0xdffff), and to system BIOS
+		 * space (0xe0000-0xfffff).
+		 *
+		 * Some laptop (for example, Toshiba Satellite2550X) report
+		 * this area and occurred problems, so we avoid this area.
+		 */
+		if (seg_start < 0x100000 && seg_end > 0xa0000) {
+			printf("WARNING: memory map entry overlaps "
+			    "with ``Compatibility Holes'': "
+			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
+			    seg_end - seg_start, type);
+
+			x86_add_cluster(iomem_ex, seg_start, 0xa0000, type);
+			x86_add_cluster(iomem_ex, 0x100000, seg_end, type);
+		} else {
+			x86_add_cluster(iomem_ex, seg_start, seg_end, type);
+		}
+	}
+
+	return 0;
+}
+
+static int
+x86_fake_clusters(struct extent *iomem_ex)
+{
+	phys_ram_seg_t *cluster;
+	KASSERT(mem_cluster_cnt == 0);
+
+	/*
+	 * Allocate the physical addresses used by RAM from the iomem extent
+	 * map. This is done before the addresses are page rounded just to make
+	 * sure we get them all.
+	 */
+	if (extent_alloc_region(iomem_ex, 0, KBTOB(biosbasemem), EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE BASE MEMORY FROM "
+		    "IOMEM EXTENT MAP!\n");
+	}
+
+	cluster = &mem_clusters[0];
+	cluster->start = 0;
+	cluster->size = trunc_page(KBTOB(biosbasemem));
+	physmem += atop(cluster->size);
+
+	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
+	    EX_NOWAIT)) {
+		/* XXX What should we do? */
+		printf("WARNING: CAN'T ALLOCATE EXTENDED MEMORY FROM "
+		    "IOMEM EXTENT MAP!\n");
+	}
+
+#if NISADMA > 0
+	/*
+	 * Some motherboards/BIOSes remap the 384K of RAM that would
+	 * normally be covered by the ISA hole to the end of memory
+	 * so that it can be used.  However, on a 16M system, this
+	 * would cause bounce buffers to be allocated and used.
+	 * This is not desirable behaviour, as more than 384K of
+	 * bounce buffers might be allocated.  As a work-around,
+	 * we round memory down to the nearest 1M boundary if
+	 * we're using any isadma devices and the remapped memory
+	 * is what puts us over 16M.
+	 */
+	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
+		char pbuf[9];
+
+		format_bytes(pbuf, sizeof(pbuf), biosextmem - (15*1024));
+		printf("Warning: ignoring %s of remapped memory\n", pbuf);
+		biosextmem = (15*1024);
+	}
+#endif
+
+	cluster = &mem_clusters[1];
+	cluster->start = IOM_END;
+	cluster->size = trunc_page(KBTOB(biosextmem));
+	physmem += atop(cluster->size);
+
+	mem_cluster_cnt = 2;
+
+	avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
+
+	return 0;
+}
+
+/*
+ * x86_load_region: load the physical memory region from seg_start to seg_end
+ * into the VM system.
+ */
+static void
+x86_load_region(uint64_t seg_start, uint64_t seg_end)
+{
+	unsigned int i;
+	uint64_t tmp;
+
+	i = __arraycount(x86_freelists);
+	while (i--) {
+		if (x86_freelists[i].limit <= seg_start)
+			continue;
+		if (x86_freelists[i].freelist == VM_FREELIST_DEFAULT)
+			continue;
+		tmp = MIN(x86_freelists[i].limit, seg_end);
+		if (tmp == seg_start)
+			continue;
+
+#ifdef DEBUG_MEMLOAD
+		printf("loading freelist %d 0x%"PRIx64"-0x%"PRIx64
+		    " (0x%"PRIx64"-0x%"PRIx64")\n", x86_freelists[i].freelist,
+		    seg_start, tmp, (uint64_t)atop(seg_start),
+		    (uint64_t)atop(tmp));
+#endif
+
+		uvm_page_physload(atop(seg_start), atop(tmp), atop(seg_start),
+		    atop(tmp), x86_freelists[i].freelist);
+		seg_start = tmp;
+	}
+
+	if (seg_start != seg_end) {
+#ifdef DEBUG_MEMLOAD
+		printf("loading default 0x%"PRIx64"-0x%"PRIx64
+		    " (0x%"PRIx64"-0x%"PRIx64")\n", seg_start, seg_end,
+		    (uint64_t)atop(seg_start), (uint64_t)atop(seg_end));
+#endif
+		uvm_page_physload(atop(seg_start), atop(seg_end),
+		    atop(seg_start), atop(seg_end), VM_FREELIST_DEFAULT);
+	}
+}
+
+/*
+ * init_x86_clusters: retrieve the memory clusters provided by the BIOS, and
+ * initialize mem_clusters.
+ */
+void
+init_x86_clusters(void)
+{
+	extern struct extent *iomem_ex;
+	struct btinfo_memmap *bim;
+
+	/*
+	 * Check to see if we have a memory map from the BIOS (passed to us by
+	 * the boot program).
+	 */
+#ifdef i386
+	extern int biosmem_implicit;
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
+	    bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim, iomem_ex);
+#else
+#if !defined(REALBASEMEM) && !defined(REALEXTMEM)
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim != NULL && bim->num > 0)
+		x86_parse_clusters(bim, iomem_ex);
+#else
+	(void)bim, (void)iomem_ex;
+#endif
+#endif
+
+	if (mem_cluster_cnt == 0) {
+		/*
+		 * If x86_parse_clusters didn't find any valid segment, create
+		 * fake clusters.
+		 */
+		x86_fake_clusters(iomem_ex);
+	}
+}
+
+/*
+ * init_x86_vm: initialize the VM system on x86. We basically internalize as
+ * many physical pages as we can, starting at avail_start, but we don't
+ * internalize the kernel physical pages (from IOM_END to pa_kend).
+ */
 int
-initx86_load_memmap(paddr_t first_avail)
+init_x86_vm(paddr_t pa_kend)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t seg_start1, seg_end1;
@@ -787,20 +850,23 @@ initx86_load_memmap(paddr_t first_avail)
 	}
 
 	/* Make sure the end of the space used by the kernel is rounded. */
-	first_avail = round_page(first_avail);
+	pa_kend = round_page(pa_kend);
 
 #ifdef amd64
-	kern_end = KERNBASE + first_avail;
+	extern vaddr_t kern_end;
+	extern vaddr_t module_start, module_end;
+
+	kern_end = KERNBASE + pa_kend;
 	module_start = kern_end;
 	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 #endif
 
 	/*
-	 * Now, load the memory clusters (which have already been
-	 * rounded and truncated) into the VM system.
+	 * Now, load the memory clusters (which have already been rounded and
+	 * truncated) into the VM system.
 	 *
-	 * NOTE: WE ASSUME THAT MEMORY STARTS AT 0 AND THAT THE KERNEL
-	 * IS LOADED AT IOM_END (1M).
+	 * NOTE: we assume that memory starts at 0 and that the kernel is
+	 * loaded at IOM_END (1MB).
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
 		const phys_ram_seg_t *cluster = &mem_clusters[x];
@@ -810,26 +876,22 @@ initx86_load_memmap(paddr_t first_avail)
 		seg_start1 = 0;
 		seg_end1 = 0;
 
-		/*
-		 * Skip memory before our available starting point.
-		 */
+		/* Skip memory before our available starting point. */
 		if (seg_end <= avail_start)
 			continue;
 
-		if (avail_start >= seg_start && avail_start < seg_end) {
-			if (seg_start != 0)
-				panic("init_x86_64: memory doesn't start at 0");
+		if (seg_start <= avail_start && avail_start < seg_end) {
 			seg_start = avail_start;
 			if (seg_start == seg_end)
 				continue;
 		}
 
 		/*
-		 * If this segment contains the kernel, split it
-		 * in two, around the kernel.
+		 * If this segment contains the kernel, split it in two, around
+		 * the kernel.
 		 */
-		if (seg_start <= IOM_END && first_avail <= seg_end) {
-			seg_start1 = first_avail;
+		if (seg_start <= IOM_END && pa_kend <= seg_end) {
+			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
 			seg_end = IOM_END;
 			KASSERT(seg_end < seg_end1);
@@ -837,92 +899,19 @@ initx86_load_memmap(paddr_t first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			i = __arraycount(x86_freelists);
-			while (i--) {
-				uint64_t tmp;
-
-				if (x86_freelists[i].limit <= seg_start)
-					continue;
-				if (x86_freelists[i].freelist ==
-				    VM_FREELIST_DEFAULT)
-					continue;
-				tmp = MIN(x86_freelists[i].limit, seg_end);
-				if (tmp == seg_start)
-					continue;
-#ifdef DEBUG_MEMLOAD
-				printf("loading freelist %d"
-				    " 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    x86_freelists[i].freelist, seg_start, tmp,
-				    (uint64_t)atop(seg_start),
-				    (uint64_t)atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start), atop(tmp),
-				    atop(seg_start), atop(tmp),
-				    x86_freelists[i].freelist);
-				seg_start = tmp;
-			}
-
-			if (seg_start != seg_end) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    seg_start, seg_end,
-				    (uint64_t)atop(seg_start),
-				    (uint64_t)atop(seg_end));
-#endif
-				uvm_page_physload(atop(seg_start),
-				    atop(seg_end), atop(seg_start),
-				    atop(seg_end), VM_FREELIST_DEFAULT);
-			}
+			x86_load_region(seg_start, seg_end);
 		}
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			i = __arraycount(x86_freelists);
-			while (i--) {
-				uint64_t tmp;
-
-				if (x86_freelists[i].limit <= seg_start1)
-					continue;
-				if (x86_freelists[i].freelist ==
-				    VM_FREELIST_DEFAULT)
-					continue;
-				tmp = MIN(x86_freelists[i].limit, seg_end1);
-				if (tmp == seg_start1)
-					continue;
-#ifdef DEBUG_MEMLOAD
-				printf("loading freelist %u"
-				    " 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    x86_freelists[i].freelist, seg_start1, tmp,
-				    (uint64_t)atop(seg_start1),
-				    (uint64_t)atop(tmp));
-#endif
-				uvm_page_physload(atop(seg_start1), atop(tmp),
-				    atop(seg_start1), atop(tmp),
-				    x86_freelists[i].freelist);
-				seg_start1 = tmp;
-			}
-
-			if (seg_start1 != seg_end1) {
-#ifdef DEBUG_MEMLOAD
-				printf("loading default 0x%"PRIx64"-0x%"PRIx64
-				    " (0x%"PRIx64"-0x%"PRIx64")\n",
-				    seg_start1, seg_end1,
-				    (uint64_t)atop(seg_start1),
-				    (uint64_t)atop(seg_end1));
-#endif
-				uvm_page_physload(atop(seg_start1),
-				    atop(seg_end1), atop(seg_start1),
-				    atop(seg_end1), VM_FREELIST_DEFAULT);
-			}
+			x86_load_region(seg_start1, seg_end1);
 		}
 	}
 
 	return 0;
 }
-#endif
+
+#endif /* !XEN */
 
 void
 x86_reset(void)
@@ -1028,7 +1017,7 @@ x86_startup(void)
 #endif /* !defined(XEN) */
 }
 
-/* 
+/*
  * machine dependent system variables.
  */
 static int

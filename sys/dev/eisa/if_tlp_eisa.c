@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_eisa.c,v 1.26 2014/10/17 17:09:44 snj Exp $	*/
+/*	$NetBSD: if_tlp_eisa.c,v 1.26.2.1 2016/10/05 20:55:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.26 2014/10/17 17:09:44 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_eisa.c,v 1.26.2.1 2016/10/05 20:55:40 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -169,7 +169,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	 */
 	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot),
 	    EISA_SLOT_SIZE, 0, &ioh)) {
-		printf(": unable to map I/O space\n");
+		aprint_error(": unable to map I/O space\n");
 		return;
 	}
 
@@ -179,7 +179,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 
 	tep = tlp_eisa_lookup(ea);
 	if (tep == NULL) {
-		printf("\n");
+		aprint_normal("\n");
 		panic("tlp_eisa_attach: impossible");
 	}
 	sc->sc_chip = tep->tep_chip;
@@ -209,7 +209,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_rev = bus_space_read_4(iot, ioh, DE425_CFRV) & 0xff;
 
-	printf(": %s Ethernet, pass %d.%d\n",
+	aprint_normal(": %s Ethernet, pass %d.%d\n",
 	    tep->tep_name, (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	sc->sc_dmat = ea->ea_dmat;
@@ -261,8 +261,7 @@ tlp_eisa_attach(device_t parent, device_t self, void *aux)
 	 * Map and establish our interrupt.
 	 */
 	if (eisa_intr_map(ec, irq, &ih)) {
-		aprint_error_dev(self, "unable to map interrupt (%u)\n",
-		    irq);
+		aprint_error_dev(self, "unable to map interrupt (%u)\n", irq);
 		return;
 	}
 	intrstr = eisa_intr_string(ec, ih, intrbuf, sizeof(intrbuf));

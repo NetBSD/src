@@ -1,4 +1,4 @@
-/*	$NetBSD: uyap.c,v 1.19.24.3 2015/09/28 16:24:19 skrll Exp $	*/
+/*	$NetBSD: uyap.c,v 1.19.24.4 2016/10/05 20:55:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19.24.3 2015/09/28 16:24:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uyap.c,v 1.19.24.4 2016/10/05 20:55:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,15 @@ struct uyap_softc {
 	device_t		sc_dev;		/* base device */
 };
 
-int             uyap_match(device_t, cfdata_t, void *);
-void            uyap_attach(device_t, device_t, void *);
-int             uyap_detach(device_t, int);
-int             uyap_activate(device_t, enum devact);
+int	uyap_match(device_t, cfdata_t, void *);
+void	uyap_attach(device_t, device_t, void *);
+int	uyap_detach(device_t, int);
+int	uyap_activate(device_t, enum devact);
 extern struct cfdriver uyap_cd;
-CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach, uyap_detach, uyap_activate);
+CFATTACH_DECL_NEW(uyap, sizeof(struct uyap_softc), uyap_match, uyap_attach,
+    uyap_detach, uyap_activate);
 
-int 
+int
 uyap_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -73,7 +74,7 @@ uyap_match(device_t parent, cfdata_t match, void *aux)
 	return (UMATCH_NONE);
 }
 
-void 
+void
 uyap_attach(device_t parent, device_t self, void *aux)
 {
 	struct uyap_softc *sc = device_private(self);
@@ -105,7 +106,7 @@ uyap_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int 
+int
 uyap_detach(device_t self, int flags)
 {
 #if 0

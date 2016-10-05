@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.10.28.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.10.28.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.2 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.3 2016/10/05 20:55:32 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -145,6 +145,14 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 				}
 				lui_insnp = NULL;
 			}
+		} else if (INSN_LOAD_P(insn)) {
+			/*
+			 * If we are loading the register used in the LUI,
+			 * then that LUI is meaningless now.
+			 */
+			size_t rt = (insn >> 16) & 31;
+			if (lui_reg == rt)
+				lui_insn = 0;
 		}
 	}
 
@@ -169,6 +177,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 #endif
 	KASSERT((intptr_t)ci <= load_addr);
 	KASSERT(load_addr < (intptr_t)(ci + 1));
+	KASSERT(MIPS_HAS_R4K_MMU);
 
 	/*
 	 * Use the load instruction as a prototype and it make use $0
@@ -191,8 +200,6 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	/*
 	 * Construct the TLB_LO entry needed to map cpu_info_store.
 	 */
-	const uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V|MIPS3_PG_D
-	    | mips3_paddr_to_tlbpfn(MIPS_KSEG0_TO_PHYS(trunc_page(load_addr)));
 
 	/*
 	 * Now allocate a TLB entry in the primary TLB for the mapping and
@@ -200,10 +207,23 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	 */
 	TLBINFO_LOCK(ti);
 	if (ci->ci_tlb_slot < 0) {
+		uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V|MIPS3_PG_D
+		    | mips3_paddr_to_tlbpfn(MIPS_KSEG0_TO_PHYS(trunc_page(load_addr)));
+		struct tlbmask tlbmask = {
+			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
+#if PGSHIFT & 1
+			.tlb_lo1 = tlb_lo,
+			.tlb_lo1 = tlb_lo + MIPS3_PG_NEXT,
+#else
+			.tlb_lo0 = 0,
+			.tlb_lo1 = tlb_lo,
+#endif
+			.tlb_mask = -1,
+		};
 		ci->ci_tlb_slot = ti->ti_wired++;
-		if (MIPS_HAS_R4K_MMU)
-			mips3_cp0_wired_write(ti->ti_wired);
-		tlb_enter(ci->ci_tlb_slot, -PAGE_SIZE, tlb_lo);
+		mips3_cp0_wired_write(ti->ti_wired);
+		tlb_invalidate_addr(-PAGE_SIZE, KERNEL_PID);
+		tlb_write_entry(ci->ci_tlb_slot, &tlbmask);
 	}
 	TLBINFO_UNLOCK(ti);
 
@@ -268,12 +288,12 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	nop
 	 */
 	mips_reg_t regs[32];
-	uint32_t used = 1;
+	uint32_t used = 1 |__BIT(_R_A0)|__BIT(_R_A1)|__BIT(_R_A2)|__BIT(_R_A3);
 	size_t n;
 	const char *errstr = "mips";
 	/*
 	 * This is basically a small MIPS emulator for those instructions
-	 * that might in a stub routine.
+	 * that might be in a stub routine.
 	 */
 	for (n = 0; n < 16; n++) {
 		const InstFmt insn = { .word = stubp[n] };
@@ -292,6 +312,12 @@ mips_fixup_addr(const uint32_t *stubp)
 			    (regs[insn.IType.rs] + (int16_t)insn.IType.imm);
 			used |= (1 << insn.IType.rt);
 			break;
+		case OP_SD:
+			if (insn.IType.rt != _R_RA || insn.IType.rs != _R_SP) {
+				errstr = "SD";
+				goto out;
+			}
+			break;
 #else
 		case OP_LW:
 			if ((used & (1 << insn.IType.rs)) == 0) {
@@ -302,6 +328,12 @@ mips_fixup_addr(const uint32_t *stubp)
 			    ((intptr_t)regs[insn.IType.rs]
 			    + (int16_t)insn.IType.imm);
 			used |= (1 << insn.IType.rt);
+			break;
+		case OP_SW:
+			if (insn.IType.rt != _R_RA || insn.IType.rs != _R_SP) {
+				errstr = "SW";
+				goto out;
+			}
 			break;
 #endif
 		case OP_ORI:
@@ -331,12 +363,14 @@ mips_fixup_addr(const uint32_t *stubp)
 			break;
 		case OP_SPECIAL:
 			switch (insn.RType.func) {
+			case OP_JALR:
 			case OP_JR:
 				if ((used & (1 << insn.RType.rs)) == 0) {
 					errstr = "JR";
 					goto out;
 				}
 				if (stubp[n+1] != 0
+				    && (stubp[n+1] & 0xfff0003c) != 0x0000003c
 				    && stubp[n+1] != 0x00200825) {
 					n++;
 					errstr = "delay slot";
@@ -353,12 +387,24 @@ mips_fixup_addr(const uint32_t *stubp)
 				    regs[insn.RType.rs] & regs[insn.RType.rt];
 				used |= (1 << insn.RType.rd);
 				break;
+#if !defined(__mips_o32)
+			case OP_DSLL32:	/* force to 32-bits */
+			case OP_DSRA32:	/* force to 32-bits */
+				if (regs[insn.RType.rd] != regs[insn.RType.rt]
+				    || (used & (1 << insn.RType.rt)) == 0
+				    || regs[insn.RType.shamt] != 0) {
+					errstr = "AND";
+					goto out;
+				}
+				break;
+#endif
 			case OP_SLL:	/* nop */
 				if (insn.RType.rd != _R_ZERO) {
 					errstr = "NOP";
 					goto out;
 				}
 				break;
+			case OP_DSLL:
 			default:
 				errstr = "SPECIAL";
 				goto out;
@@ -462,16 +508,18 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 #define	__stub		__section(".stub")
 
 void	mips_cpu_switch_resume(struct lwp *)		__stub;
+tlb_asid_t
+	tlb_get_asid(void)				__stub;
 void	tlb_set_asid(uint32_t)				__stub;
 void	tlb_invalidate_all(void)			__stub;
 void	tlb_invalidate_globals(void)			__stub;
 void	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
-void	tlb_invalidate_addr(vaddr_t)			__stub;
+void	tlb_invalidate_addr(vaddr_t, tlb_asid_t)	__stub;
 u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
-int	tlb_update(vaddr_t, uint32_t)			__stub;
-void	tlb_enter(size_t, vaddr_t, uint32_t)		__stub;
-void	tlb_read_indexed(size_t, struct tlbmask *)	__stub;
-void	tlb_write_indexed(size_t, const struct tlbmask *) __stub;
+bool	tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool)
+							__stub;
+void	tlb_read_entry(size_t, struct tlbmask *)	__stub;
+void	tlb_write_entry(size_t, const struct tlbmask *) __stub;
 
 /*
  * wbflush isn't a stub since it gets overridden quite late
@@ -485,70 +533,72 @@ mips_cpu_switch_resume(struct lwp *l)
 	(*mips_locore_jumpvec.ljv_cpu_switch_resume)(l);
 }
 
+tlb_asid_t
+tlb_get_asid(void)
+{
+	return (*mips_locore_jumpvec.ljv_tlb_get_asid)();
+}
+
 void
 tlb_set_asid(uint32_t asid)
 {
-        (*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);
+	(*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);
 }
 
 void
 tlb_invalidate_all(void)
 {
-        (*mips_locore_jumpvec.ljv_tlb_invalidate_all)();
+	(*mips_locore_jumpvec.ljv_tlb_invalidate_all)();
 }
 
 void
-tlb_invalidate_addr(vaddr_t va)
+tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
 {
-        (*mips_locore_jumpvec.ljv_tlb_invalidate_addr)(va);
+	(*mips_locore_jumpvec.ljv_tlb_invalidate_addr)(va, asid);
 }
 
 void
 tlb_invalidate_globals(void)
 {
-        (*mips_locore_jumpvec.ljv_tlb_invalidate_globals)();
+	(*mips_locore_jumpvec.ljv_tlb_invalidate_globals)();
 }
 
 void
 tlb_invalidate_asids(uint32_t asid_lo, uint32_t asid_hi)
 {
-        (*mips_locore_jumpvec.ljv_tlb_invalidate_asids)(asid_lo, asid_hi);
+	(*mips_locore_jumpvec.ljv_tlb_invalidate_asids)(asid_lo, asid_hi);
 }
 
 u_int
-tlb_record_asids(u_long *bitmap, uint32_t asid_max)
+tlb_record_asids(u_long *bitmap, tlb_asid_t asid_max)
 {
-        return (*mips_locore_jumpvec.ljv_tlb_record_asids)(bitmap, asid_max);
+	return (*mips_locore_jumpvec.ljv_tlb_record_asids)(bitmap, asid_max);
 }
 
-int
-tlb_update(vaddr_t va, uint32_t pte)
+#if 0
+bool
+tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert)
 {
-        return (*mips_locore_jumpvec.ljv_tlb_update)(va, pte);
+	return (*mips_locore_jumpvec.ljv_tlb_update_addr)(va, asid, pte, insert);
+}
+#endif
+
+void
+tlb_read_entry(size_t tlbno, struct tlbmask *tlb)
+{
+	(*mips_locore_jumpvec.ljv_tlb_read_entry)(tlbno, tlb);
 }
 
 void
-tlb_enter(size_t tlbno, vaddr_t va, uint32_t pte)
+tlb_write_entry(size_t tlbno, const struct tlbmask *tlb)
 {
-        (*mips_locore_jumpvec.ljv_tlb_enter)(tlbno, va, pte);
-}
-
-void
-tlb_read_indexed(size_t tlbno, struct tlbmask *tlb)
-{
-        (*mips_locore_jumpvec.ljv_tlb_read_indexed)(tlbno, tlb);
-}
-
-void
-tlb_write_indexed(size_t tlbno, const struct tlbmask *tlb)
-{
-        (*mips_locore_jumpvec.ljv_tlb_write_indexed)(tlbno, tlb);
+	(*mips_locore_jumpvec.ljv_tlb_write_entry)(tlbno, tlb);
 }
 
 void
 wbflush(void)
 {
-        (*mips_locoresw.lsw_wbflush)();
+	(*mips_locoresw.lsw_wbflush)();
 }
 
 #ifndef LOCKDEBUG

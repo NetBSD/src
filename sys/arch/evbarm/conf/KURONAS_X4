@@ -1,0 +1,39 @@
+#	$NetBSD: KURONAS_X4,v 1.1.4.2 2016/10/05 20:55:26 skrll Exp $
+#
+#  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
+#
+
+include 	"arch/evbarm/conf/MARVELL_NAS"
+
+# Board Type
+makeoptions	BOARDTYPE="kuronas_x4"
+options 	EVBARM_BOARDTYPE=kuronas_x4
+
+makeoptions	CPUFLAGS="-mcpu=xscale"	# Xscale instruction set support
+no options	CPU_SHEEVA
+no options	KIRKWOOD
+
+# Also build a kernel with root on wd0, to avoid query for root fs
+config		netbsd-wd0	root on wd0 type ffs
+
+# Development and Debugging options
+
+#options 	PERFCTRS	# performance counters
+options 	DIAGNOSTIC	# internal consistency checks
+options 	DEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+#options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
+#options 	KGDB
+#options 	DEBUG_KGDB
+makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	COPTS="-O2"
+makeoptions	COPY_SYMTAB=1
+#options 	AUDIO_DEBUG=2
+
+
+rs5c372rtc* at iic? addr 0x32		# RICOH RS5C372 RTC
+
+# PCI network interfaces
+#mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
+#msk*	at mskc?

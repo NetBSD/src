@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.91 2013/12/18 11:53:17 macallan Exp $	*/
+/*	$NetBSD: machfb.c,v 1.91.6.1 2016/10/05 20:55:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,8 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.91 2013/12/18 11:53:17 macallan Exp $");
+__KERNEL_RCSID(0,
+	"$NetBSD: machfb.c,v 1.91.6.1 2016/10/05 20:55:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,8 @@ extern const u_char rasops_cmap[768];
 static int	mach64_match(device_t, cfdata_t, void *);
 static void	mach64_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(machfb, sizeof(struct mach64_softc), mach64_match, mach64_attach,
-    NULL, NULL);
+CFATTACH_DECL_NEW(machfb, sizeof(struct mach64_softc), mach64_match,
+    mach64_attach, NULL, NULL);
 
 static void	mach64_init(struct mach64_softc *);
 static int	mach64_get_memsize(struct mach64_softc *);
@@ -393,7 +393,7 @@ static inline void
 regw(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
 	bus_space_write_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -401,7 +401,7 @@ static inline void
 regws(struct mach64_softc *sc, uint32_t index, uint32_t data)
 {
 	bus_space_write_stream_4(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 4, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 4,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -409,7 +409,7 @@ static inline void
 regwb(struct mach64_softc *sc, uint32_t index, uint8_t data)
 {
 	bus_space_write_1(sc->sc_regt, sc->sc_regh, index + 0x400, data);
-	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 1, 
+	bus_space_barrier(sc->sc_regt, sc->sc_regh, index + 0x400, 1,
 	    BUS_SPACE_BARRIER_WRITE);
 }
 
@@ -511,7 +511,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 #ifdef MACHFB_DEBUG
 	printf(prop_dictionary_externalize(device_properties(self)));
 #endif
-	
+
 	/* enable memory access */
 	screg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	if ((screg & enables) != enables) {
@@ -530,7 +530,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_debug_dev(sc->sc_dev, "aperture size %08x\n",
 	    (uint32_t)sc->sc_apersize);
 
-	sc->sc_rom.vb_type = PCI_MAPREG_TYPE_ROM;	
+	sc->sc_rom.vb_type = PCI_MAPREG_TYPE_ROM;
 	pci_mapreg_info(sc->sc_pc, sc->sc_pcitag, PCI_MAPREG_ROM,
 		    sc->sc_rom.vb_type, &sc->sc_rom.vb_base,
 		    &sc->sc_rom.vb_size, &sc->sc_rom.vb_flags);
@@ -538,8 +538,8 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	/* use MMIO register aperture if available */
 	if ((sc->sc_regbase != 0) && (sc->sc_regbase != 0xffffffff)) {
-		if (pci_mapreg_map(pa, MACH64_BAR_MMIO,  PCI_MAPREG_TYPE_MEM, 0,
-		    &sc->sc_regt, &sc->sc_regh, &sc->sc_regbase, 
+		if (pci_mapreg_map(pa, MACH64_BAR_MMIO,  PCI_MAPREG_TYPE_MEM,
+		    0, &sc->sc_regt, &sc->sc_regh, &sc->sc_regbase,
 		    &sc->sc_regsize) == 0) {
 
 			/*
@@ -551,10 +551,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			aprint_normal_dev(sc->sc_dev, "using MMIO aperture\n");
 			use_mmio = TRUE;
 		}
-	} 
+	}
 	if (!use_mmio) {
-		if (bus_space_map(sc->sc_memt, sc->sc_aperbase, sc->sc_apersize,
-			BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
+		if (bus_space_map(sc->sc_memt, sc->sc_aperbase,
+		    sc->sc_apersize, BUS_SPACE_MAP_LINEAR, &sc->sc_memh)) {
 			panic("%s: failed to map aperture",
 			    device_xname(sc->sc_dev));
 		}
@@ -690,7 +690,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		/* fill in default_mode if it's empty */
 		mach64_get_mode(sc, &default_mode);
 		if (default_mode.dot_clock == 0) {
-			memcpy(&default_mode, &mach64_modes[4], 
+			memcpy(&default_mode, &mach64_modes[4],
 			    sizeof(default_mode));
 		}
 		sc->sc_my_mode = &default_mode;
@@ -698,7 +698,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	}
 #else
 	if (default_mode.dot_clock == 0) {
-		memcpy(&default_mode, &mach64_modes[0], 
+		memcpy(&default_mode, &mach64_modes[0],
 		    sizeof(default_mode));
 	}
 	sc->sc_my_mode = &mach64_modes[0];
@@ -725,7 +725,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	    sc->bits_per_pixel);
 
 	wsfont_init();
-	
+
 	vcons_init(&sc->vd, sc, &mach64_defaultscreen, &sc->sc_accessops);
 	sc->vd.init_screen = mach64_init_screen;
 
@@ -751,7 +751,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		    ri->ri_font->fontwidth,
 		    ri->ri_font->fontheight,
 		    defattr);
-		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);	
+		wsdisplay_cnattach(&mach64_defaultscreen, ri, 0, 0, defattr);
 	} else {
 		/*
 		 * since we're not the console we can postpone the rest
@@ -782,7 +782,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		vcons_replay_msgbuf(&mach64_console_screen);
 
 	machfb_blank(sc, 0);	/* unblank the screen */
-		
+
 	aa.console = sc->sc_console;
 	aa.scrdata = &mach64_screenlist;
 	aa.accessops = &sc->sc_accessops;
@@ -795,10 +795,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	 * so we need to turn them off only when mapping vram in
 	 * WSDISPLAYIO_MODE_DUMB would overlap ( unlikely but far from
 	 * impossible )
-	 */ 
+	 */
 	if (use_mmio) {
 		/*
-		 * Now that we took over, turn off the aperture registers if we 
+		 * Now that we took over, turn off the aperture registers if we
 		 * don't use them. Can't do this earlier since on some hardware
 		 * we use firmware calls as early console output which may in
 		 * turn try to access these registers.
@@ -848,12 +848,12 @@ mach64_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 			    device_xname(sc->sc_dev));
 		}
 	}
-	
+
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;
 	rasops_reconfig(ri, sc->sc_my_mode->vdisplay / ri->ri_font->fontheight,
 		    sc->sc_my_mode->hdisplay / ri->ri_font->fontwidth);
-	
+
 	/* enable acceleration */
 	ri->ri_hw = scr;
 	ri->ri_ops.copyrows = mach64_copyrows;
@@ -1033,7 +1033,7 @@ mach64_modeswitch(struct mach64_softc *sc, struct videomode *mode)
 		return 1;
 	aprint_debug("crtc dot clock: %d\n", crtc.dot_clock);
 	if (crtc.dot_clock == 0) {
-		aprint_error("%s: preposterous dot clock (%d)\n", 
+		aprint_error("%s: preposterous dot clock (%d)\n",
 		    device_xname(sc->sc_dev), crtc.dot_clock);
 		return 1;
 	}
@@ -1287,7 +1287,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 	aprint_debug("vclk_ctl: %02x\n", vclk_ctl);
 	vclk_ctl |= PLL_VCLK_RESET;
 	regwb_pll(sc, PLL_VCLK_CNTL, vclk_ctl);
-	
+
 	regwb_pll(sc, MCLK_FB_DIV, sc->mclk_fb_div);
 	reg = regrb_pll(sc, VCLK_POST_DIV);
 	reg &= ~(3 << clockshift);
@@ -1320,16 +1320,16 @@ mach64_init_lut(struct mach64_softc *sc)
 }
 
 static int
-mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g, 
+mach64_putpalreg(struct mach64_softc *sc, uint8_t index, uint8_t r, uint8_t g,
     uint8_t b)
 {
 	sc->sc_cmap_red[index] = r;
 	sc->sc_cmap_green[index] = g;
 	sc->sc_cmap_blue[index] = b;
-	/* 
+	/*
 	 * writing the dac index takes a while, in theory we can poll some
 	 * register to see when it's ready - but we better avoid writing it
-	 * unnecessarily 
+	 * unnecessarily
 	 */
 	if (index != sc->sc_dacw) {
 		regwb(sc, DAC_MASK, 0xff);
@@ -1437,10 +1437,10 @@ mach64_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if ((!sc->sc_locked) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -1478,7 +1478,7 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	struct wsdisplay_font *font = PICK_FONT(ri, c);
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		int fg, bg, uc;
 		uint8_t *data;
@@ -1496,7 +1496,7 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 			mach64_rectfill(sc, x, y, wi, he, bg);
 		} else {
 			uc = c - font->firstchar;
-			data = (uint8_t *)font->data + uc * 
+			data = (uint8_t *)font->data + uc *
 			    ri->ri_fontscale;
 
 			mach64_setup_mono(sc, x, y, wi, he, fg, bg);
@@ -1518,7 +1518,7 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *data8;
 	int rv = 0, cnt = 0;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1591,8 +1591,8 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 		if ((i & 3) == 3) {
 			regws(sc, HOST_DATA0, latch);
 			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
+			 * not strictly necessary, old data should be shifted
+			 * out
 			 */
 			latch = 0;
 			cnt++;
@@ -1605,7 +1605,7 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	}
 	/* if we have pixels left in latch write them out */
 	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
+		latch = latch << ((4 - (i & 3)) << 3);
 		regws(sc, HOST_DATA0, latch);
 	}
 
@@ -1621,7 +1621,7 @@ mach64_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1639,7 +1639,7 @@ mach64_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1676,10 +1676,10 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct mach64_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		if ((row == 0) && (nrows == ri->ri_rows)) {
-			/* clear full screen */ 
+			/* clear full screen */
 			x = 0;
 			y = 0;
 			width = sc->virt_x;
@@ -1697,11 +1697,12 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
 }
 
 static void
-mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width, int height, int rop)
+mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width,
+    int height, int rop)
 {
 	struct mach64_softc *sc = cookie;
 	uint32_t dest_ctl = 0;
-	
+
 	wait_for_fifo(sc, 10);
 	regw(sc, DP_PIX_WIDTH, DST_8BPP | SRC_8BPP | HOST_8BPP);
 	regw(sc, DP_SRC, FRGD_SRC_BLIT);
@@ -1732,7 +1733,7 @@ mach64_bitblt(void *cookie, int xs, int ys, int xd, int yd, int width, int heigh
 }
 
 static void
-mach64_setup_mono(struct mach64_softc *sc, int xd, int yd, int width, 
+mach64_setup_mono(struct mach64_softc *sc, int xd, int yd, int width,
      int height, uint32_t fg, uint32_t bg)
 {
 	wait_for_idle(sc);
@@ -1760,7 +1761,7 @@ mach64_feed_bytes(struct mach64_softc *sc, int count, uint8_t *data)
 	uint32_t latch = 0, bork;
 	int shift = 0;
 	int reg = 0;
-	
+
 	for (i = 0; i < count; i++) {
 		bork = data[i];
 		latch |= (bork << shift);
@@ -1778,7 +1779,7 @@ mach64_feed_bytes(struct mach64_softc *sc, int count, uint8_t *data)
 
 
 static void
-mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height, 
+mach64_rectfill(struct mach64_softc *sc, int x, int y, int width, int height,
     int colour)
 {
 	wait_for_fifo(sc, 11);
@@ -1828,10 +1829,10 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct mach64_softc *sc = vd->cookie;
 	struct wsdisplay_fbinfo *wdf;
 	struct vcons_screen *ms = vd->active;
-	
+
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:
-		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
+		*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;
 		return 0;
 
 	case WSDISPLAYIO_LINEBYTES:
@@ -1845,15 +1846,15 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		wdf->depth = sc->bits_per_pixel;
 		wdf->cmsize = 256;
 		return 0;
-		
+
 	case WSDISPLAYIO_GETCMAP:
-		return mach64_getcmap(sc, 
+		return mach64_getcmap(sc,
 		    (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_PUTCMAP:
-		return mach64_putcmap(sc, 
+		return mach64_putcmap(sc,
 		    (struct wsdisplay_cmap *)data);
-		    
+
 	/* PCI config read/write passthrough. */
 	case PCI_IOC_CFGREAD:
 	case PCI_IOC_CFGWRITE:
@@ -1904,8 +1905,8 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 	paddr_t pa;
 
 	if (sc->sc_mode == WSDISPLAYIO_MODE_DUMBFB) {
-		/* 
-		 *'regular' framebuffer mmap()ing 
+		/*
+		 *'regular' framebuffer mmap()ing
 		 */
 		if (offset < (sc->memsize * 1024)) {
 			pa = bus_space_mmap(sc->sc_memt, sc->sc_aperbase,
@@ -1922,23 +1923,23 @@ mach64_mmap(void *v, void *vs, off_t offset, int prot)
 		    NULL, NULL, NULL, NULL) != 0) {
 			return -1;
 		}
-		if ((offset >= sc->sc_aperbase) && 
+		if ((offset >= sc->sc_aperbase) &&
 		    (offset < (sc->sc_aperbase + sc->sc_apersize))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
-		if ((offset >= sc->sc_regbase) && 
+		if ((offset >= sc->sc_regbase) &&
 		    (offset < (sc->sc_regbase + sc->sc_regsize))) {
-			pa = bus_space_mmap(sc->sc_regt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_regt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}
 
-		if ((offset >= sc->sc_rom.vb_base) && 
+		if ((offset >= sc->sc_rom.vb_base) &&
 		    (offset < (sc->sc_rom.vb_base + sc->sc_rom.vb_size))) {
-			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot, 
+			pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 			    BUS_SPACE_MAP_LINEAR);
 			return pa;
 		}

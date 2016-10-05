@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakecode.S,v 1.16 2014/02/02 22:41:20 dsl Exp $	*/
+/*	$NetBSD: acpi_wakecode.S,v 1.16.6.1 2016/10/05 20:55:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 /*
  * This code is derived from FreeBSD.  Original copyrights:
@@ -136,14 +135,13 @@ wakeup_16:
 	/* Load GDT while non-paging */
 	lgdt	tmp_gdt
 
-	/* Enable protected mode */
+	/* Enable protected mode without paging */
 	mov	%cr0,%eax
 	orl	$(CR0_PE),%eax
 	mov	%eax,%cr0
 
 	/* Switch to protected mode by intersegmental jump */
-	ljmpl	$0x8,$wakeup_32	+ ACPI_WAKEUP_ADDR
-
+	ljmpl	$0x8,$wakeup_32 + ACPI_WAKEUP_ADDR
 
 	.code32
 	.align	16
@@ -151,19 +149,28 @@ wakeup_32:
 	/*
 	 * Switched to protected mode w/o paging
 	 */
-
 	nop
+
 	/* Set up segment registers for protected mode */
 	movw	$GSEL(GDATA_SEL,SEL_KPL),%ax
 	movw	%ax,%ds
 
-	/* Restore PSE and other settings before enabling paging. */
+	/* Enable potentially PSE and PAE */
 	movl	WAKEUP_r_cr4 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr4
 
-	/* Enable paging (assumes identical mapping) */
+	/*
+	 * Load the correct MSR EFER value now to not depend on the
+	 * data segment register. After this point, no instruction is
+	 * allowed to clobber %ebx until wrmsr.
+	 */
+	movl	WAKEUP_efer + ACPI_WAKEUP_ADDR,%ebx
+
+	/* Load temporary page table, we will switch to full page table later */
 	movl	WAKEUP_r_cr3 + ACPI_WAKEUP_ADDR,%eax
 	movl	%eax,%cr3
+
+	/* Enable paging */
 	movl	%cr0,%eax
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
@@ -175,10 +182,20 @@ wakeup_32:
 
 	nop
 
+	/*
+	 * Load the normal system value of MSR EFER.  This includes
+	 * enabling NXE (if supported).
+	 */
+	movl	%ebx,%eax
+	movl	$0,%edx
+	movl	$MSR_EFER,%ecx
+	wrmsr
+
 	/* Restore registers */
 	movl	WAKEUP_curcpu + ACPI_WAKEUP_ADDR,%edx
 	movl	WAKEUP_restorecpu + ACPI_WAKEUP_ADDR,%ebx
 
+	/* Continue with wakeup in the high-level wakeup code */
 	jmp	*%ebx
 
 	.align	8
@@ -208,6 +225,8 @@ WAKEUP_r_cr4:		.long 0
 WAKEUP_curcpu:		.long 0
 	.global WAKEUP_restorecpu
 WAKEUP_restorecpu:	.long 0
+	.global WAKEUP_efer
+WAKEUP_efer:		.long 0
 
 	.global WAKEUP_vbios_reset
 WAKEUP_vbios_reset:	.byte 0

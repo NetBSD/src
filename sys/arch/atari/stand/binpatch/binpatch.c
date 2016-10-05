@@ -1,4 +1,4 @@
-/* $NetBSD: binpatch.c,v 1.6 2009/08/20 15:14:49 tsutsui Exp $ */
+/* $NetBSD: binpatch.c,v 1.6.40.1 2016/10/05 20:55:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009 Izumi Tsutsui.  All rights reserved.
@@ -60,7 +60,7 @@ __COPYRIGHT("@(#) Copyright (c) 1996\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: binpatch.c,v 1.6 2009/08/20 15:14:49 tsutsui Exp $");
+__RCSID("$NetBSD: binpatch.c,v 1.6.40.1 2016/10/05 20:55:25 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,7 +79,6 @@ __RCSID("$NetBSD: binpatch.c,v 1.6 2009/08/20 15:14:49 tsutsui Exp $");
 
 #include "extern.h"
 
-int		main(int, char *[]);
 static void	usage(void) __dead;
 
 bool replace, verbose;
@@ -88,20 +87,10 @@ char *symbol;
 size_t size;
 uint64_t val;
 	
-#ifdef NLIST_AOUT
-/*
- * Since we can't get the text address from an a.out executable, we
- * need to be able to specify it.  Note: there's no way to test to
- * see if the user entered a valid address!
- */
-int	T_flag_specified;	/* the -T flag was specified */
-u_long	text_start;		/* Start of kernel text */
-#endif /* NLIST_AOUT */
-
 static const struct {
 	const char *name;
 	int	(*check)(const char *, size_t);
-	int	(*findoff)(const char *, size_t, u_long, size_t *);
+	int	(*findoff)(const char *, size_t, u_long, size_t *, u_long);
 } exec_formats[] = {
 #ifdef NLIST_AOUT
 	{	"a.out",	check_aout,	findoff_aout,	},
@@ -139,8 +128,10 @@ main(int argc, char *argv[])
 	uint64_t uval64;
 	int64_t  sval64;
 	int ch, fd, rv, i, n;
+	u_long	text_start;		/* Start of kernel text (a.out) */
 
 	setprogname(argv[0]);
+	text_start = (unsigned long)~0;
 
 	while ((ch = getopt(argc, argv, "bwldT:a:s:o:r:v")) != -1)
 		switch (ch) {
@@ -182,15 +173,8 @@ main(int argc, char *argv[])
 			verbose = true;
 			break;
 		case 'T':
-#ifdef NLIST_AOUT
-			T_flag_specified = 1;
 			text_start = strtoul(optarg, NULL, 0);
 			break;
-#else
-			fprintf(stderr, "%s: unknown option -- %c\n",
-			    getprogname(), (char)ch);
-			/*FALLTHROUGH*/
-#endif /* NLIST_AOUT */
 		case '?':
 		default:
 			usage();
@@ -251,15 +235,13 @@ main(int argc, char *argv[])
 	if (verbose) {
 		fprintf(stderr, "%s is an %s binary\n", fname,
 		    exec_formats[i].name);
-#ifdef NLIST_AOUT
-		if (T_flag_specified)
+		if (text_start != (u_long)~0)
 			fprintf(stderr, "kernel text loads at 0x%lx\n",
 			    text_start);
-#endif
 	}
 
 	if ((*exec_formats[i].findoff)(mappedfile, sb.st_size,
-	    addr, &valoff) != 0)
+	    addr, &valoff, text_start) != 0)
 		errx(EXIT_FAILURE, "couldn't find file offset for %s in %s",
 		    symbol != NULL ? nl[0].n_name : "address" , fname);
 
@@ -365,11 +347,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-b|-w|-l|-d] [-a address | -s symbol] [-o offset]\n"
-	    "                [-r value] "
-#ifdef NLIST_AOUT
-	    "[-T text_start] "
-#endif
-	    "[-v] binary\n", getprogname());
+	    "Usage: %s [-b|-w|-l|-d] [-a address | -s symbol] [-o offset]"
+	    " [-r value] [-T text_start] [-v] binary\n", getprogname());
 	exit(EXIT_FAILURE);
 }

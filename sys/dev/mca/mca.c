@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.31 2011/06/03 07:39:30 matt Exp $	*/
+/*	$NetBSD: mca.c,v 1.31.30.1 2016/10/05 20:55:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.31 2011/06/03 07:39:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.31.30.1 2016/10/05 20:55:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,8 @@ mca_attach(device_t parent, device_t self, void *aux)
 	int slot;
 
 	mca_attach_hook(parent, self, mba);
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	iot = mba->mba_iot;
 	memt = mba->mba_memt;
@@ -156,7 +157,7 @@ mca_attach(device_t parent, device_t self, void *aux)
 					    mca_print, config_stdsubmatch);
 		else {
 			mca_print(&ma, device_xname(self));
-			printf(" disabled\n");
+			aprint_normal(" disabled\n");
 		}
 	}
 }

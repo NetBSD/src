@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.279.6.2 2016/05/29 08:44:21 skrll Exp $ */
+/*	$NetBSD: wdc.c,v 1.279.6.3 2016/10/05 20:55:41 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.279.6.2 2016/05/29 08:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.279.6.3 2016/10/05 20:55:41 skrll Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -360,7 +360,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	for (i = 0; i < chp->ch_ndrives; i++) {
 #if NATA_DMA
 		/*
-		 * Init error counter so that an error withing the first xfers
+		 * Init error counter so that an error within the first xfers
 		 * will trigger a downgrade
 		 */
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX-1;
@@ -687,8 +687,8 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	DELAY(2000);
 	(void) bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_error], 0);
 
-	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
-		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, 
+	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
 
 #ifdef WDC_NO_IDS
@@ -1027,7 +1027,7 @@ wdcreset(struct ata_channel *chp, int poll)
 
 	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
 	    ? 0x01 : 0x00;
-	if (chp->ch_ndrives > 1) 
+	if (chp->ch_ndrives > 1)
 		drv_mask1 |= (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE)
 		    ? 0x02 : 0x00;
 	drv_mask2 = __wdcwait_reset(chp, drv_mask1,
@@ -1041,8 +1041,8 @@ wdcreset(struct ata_channel *chp, int poll)
 			aprint_normal(" drive 1");
 		aprint_normal("\n");
 	}
-	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
-		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr, 
+	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT);
 
 	return  (drv_mask1 != drv_mask2) ? 1 : 0;
@@ -1069,7 +1069,7 @@ wdc_do_reset(struct ata_channel *chp, int poll)
 		delay(2000);
 	}
 	(void) bus_space_read_1(wdr->cmd_iot, wdr->cmd_iohs[wd_error], 0);
-	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
+	if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
 		bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, wd_aux_ctlr,
 		    WDCTL_4BIT | WDCTL_IDS);
 	delay(10);	/* 400ns delay */
@@ -1448,8 +1448,8 @@ __wdccommand_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	if (ata_c->flags & AT_POLL) {
 		/* polled command, disable interrupts */
-		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
-			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, 
+		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh,
 			    wd_aux_ctlr, WDCTL_4BIT | WDCTL_IDS);
 	}
 	if ((ata_c->flags & AT_LBA48) != 0) {
@@ -1631,12 +1631,12 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 		if ((ata_c->flags & AT_LBA48) != 0) {
 			if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) {
 				if ((ata_c->flags & AT_POLL) != 0)
-					bus_space_write_1(wdr->ctl_iot, 
+					bus_space_write_1(wdr->ctl_iot,
 					    wdr->ctl_ioh, wd_aux_ctlr,
 					    WDCTL_HOB|WDCTL_4BIT|WDCTL_IDS);
 				else
-					bus_space_write_1(wdr->ctl_iot, 
-					    wdr->ctl_ioh, wd_aux_ctlr, 
+					bus_space_write_1(wdr->ctl_iot,
+					    wdr->ctl_ioh, wd_aux_ctlr,
 					    WDCTL_HOB|WDCTL_4BIT);
 			}
 			ata_c->r_count |= bus_space_read_1(wdr->cmd_iot,
@@ -1649,12 +1649,12 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 			    wdr->cmd_iohs[wd_cyl_hi], 0) << 40;
 			if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) {
 				if ((ata_c->flags & AT_POLL) != 0)
-					bus_space_write_1(wdr->ctl_iot, 
-					    wdr->ctl_ioh, wd_aux_ctlr, 
+					bus_space_write_1(wdr->ctl_iot,
+					    wdr->ctl_ioh, wd_aux_ctlr,
 					    WDCTL_4BIT|WDCTL_IDS);
 				else
-					bus_space_write_1(wdr->ctl_iot, 
-					    wdr->ctl_ioh, wd_aux_ctlr, 
+					bus_space_write_1(wdr->ctl_iot,
+					    wdr->ctl_ioh, wd_aux_ctlr,
 					    WDCTL_4BIT);
 			}
 		} else {
@@ -1667,8 +1667,8 @@ __wdccommand_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	chp->ch_queue->active_xfer = NULL;
 	if (ata_c->flags & AT_POLL) {
 		/* enable interrupts */
-		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL)) 
-			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh, 
+		if (! (wdc->cap & WDC_CAPABILITY_NO_AUXCTL))
+			bus_space_write_1(wdr->ctl_iot, wdr->ctl_ioh,
 			    wd_aux_ctlr, WDCTL_4BIT);
 		delay(10); /* some drives need a little delay here */
 	}

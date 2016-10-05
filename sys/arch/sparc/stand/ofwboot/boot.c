@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.31.4.1 2016/07/09 20:24:56 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.31.4.2 2016/10/05 20:55:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -105,7 +105,7 @@ prom2boot(char *dev)
 	char *cp, *lp = 0;
 	int handle;
 	char devtype[16];
-	
+
 	for (cp = dev; *cp; cp++)
 		if (*cp == ':')
 			lp = cp;
@@ -289,7 +289,7 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw,
 			struct btinfo_common common;
 			char name[256];
 		} info;
-		
+
 		strcpy(info.name, bootdev);
 		bi_add(&info, BTINFO_BOOTDEV, strlen(bootdev)
 			+sizeof(struct btinfo_bootdev));
@@ -330,7 +330,7 @@ jump_to_kernel(u_long *marks, char *kernel, char *args, void *ofw,
 	memcpy(args + l, &machine_tag, sizeof(machine_tag));
 	l += sizeof(machine_tag);
 
-	/* 
+	/*
 	 * Since we don't need the boot string (we can get it from /chosen)
 	 * we won't pass it in.  Just pass in esym and magic #
 	 */
@@ -364,8 +364,9 @@ start_kernel(char *kernel, char *bootline, void *ofw, int isfloppy,
 	int boothowto)
 {
 	int fd;
-	u_long marks[MARK_MAX];
+	u_long marks[MARK_MAX] = {0};
 	int flags = LOAD_ALL;
+
 	if (isfloppy)
 		flags &= ~LOAD_BACKWARDS;
 

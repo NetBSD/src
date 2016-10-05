@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.62 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: uk.c,v 1.62.4.1 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.62 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.62.4.1 2016/10/05 20:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,7 +114,11 @@ ukattach(device_t parent, device_t self, void *aux)
 	uk->sc_periph = periph;
 	periph->periph_dev = uk->sc_dev;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.415.2.3 2016/07/09 20:25:01 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.415.2.4 2016/10/05 20:55:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.3 2016/07/09 20:25:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.415.2.4 2016/10/05 20:55:40 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -194,6 +194,7 @@ void  wdstart(void *);
 void  wdstart1(struct wd_softc*, struct buf *);
 void  wdrestart(void *);
 void  wddone(void *);
+static void wd_params_to_properties(struct wd_softc *);
 int   wd_get_params(struct wd_softc *, uint8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
 int   wd_trim(struct wd_softc *, int, daddr_t, long);
@@ -390,7 +391,16 @@ wdattach(device_t parent, device_t self, void *aux)
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
 	}
-	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * DEV_BSIZE);
+	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
+	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LLS) != 0)) {
+		wd->sc_blksize = 2ULL *
+		    ((uint32_t)((wd->sc_params.atap_lls_secsz[1] << 16) |
+		    wd->sc_params.atap_lls_secsz[0]));
+	} else {
+		wd->sc_blksize = 512;
+	}
+	wd->sc_capacity512 = (wd->sc_capacity * wd->sc_blksize) / DEV_BSIZE;
+	format_bytes(pbuf, sizeof(pbuf), wd->sc_capacity * wd->sc_blksize);
 	aprint_normal_dev(self, "%s, %d cyl, %d head, %d sec, "
 	    "%d bytes/sect x %llu sectors\n",
 	    pbuf,
@@ -398,11 +408,17 @@ wdattach(device_t parent, device_t self, void *aux)
 		(wd->sc_params.atap_heads * wd->sc_params.atap_sectors)) :
 		wd->sc_params.atap_cylinders,
 	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
-	    DEV_BSIZE, (unsigned long long)wd->sc_capacity);
+	    wd->sc_blksize, (unsigned long long)wd->sc_capacity);
 
 	ATADEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    device_xname(self), wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
+
+	if (wd->sc_blksize <= 0 || !powerof2(wd->sc_blksize) ||
+	    wd->sc_blksize < DEV_BSIZE || wd->sc_blksize > MAXPHYS) {
+		aprint_normal_dev(self, "WARNING: block size %u "
+		    "might not actually work\n", wd->sc_blksize);
+	}
 out:
 	/*
 	 * Initialize and attach the disk structure.
@@ -411,6 +427,7 @@ out:
 	disk_init(&wd->sc_dk, device_xname(wd->sc_dev), &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
+	wd_params_to_properties(wd);
 	rnd_attach_source(&wd->rnd_source, device_xname(wd->sc_dev),
 			  RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
@@ -542,7 +559,7 @@ wdstrategy(struct buf *bp)
 	 */
 	if (WDPART(bp->b_dev) == RAW_PART) {
 		if (bounds_check_with_mediasize(bp, DEV_BSIZE,
-		    wd->sc_capacity) <= 0)
+		    wd->sc_capacity512) <= 0)
 			goto done;
 	} else {
 		if (bounds_check_with_label(&wd->sc_dk, bp,
@@ -575,7 +592,7 @@ wdstrategy(struct buf *bp)
 	 */
 	if (__predict_false(!SLIST_EMPTY(&wd->sc_bslist))) {
 		struct disk_badsectors *dbs;
-		daddr_t maxblk = blkno + (bp->b_bcount >> DEV_BSHIFT) - 1;
+		daddr_t maxblk = blkno + (bp->b_bcount / wd->sc_blksize) - 1;
 
 		SLIST_FOREACH(dbs, &wd->sc_bslist, dbs_next)
 			if ((dbs->dbs_min <= blkno && blkno <= dbs->dbs_max) ||
@@ -662,8 +679,8 @@ wd_split_mod15_write(struct buf *bp)
 	bp->b_oflags = obp->b_oflags;
 	bp->b_cflags = obp->b_cflags;
 	bp->b_data = (char *)bp->b_data + bp->b_bcount;
-	bp->b_blkno += (bp->b_bcount / 512);
-	bp->b_rawblkno += (bp->b_bcount / 512);
+	bp->b_blkno += (bp->b_bcount / DEV_BSIZE);
+	bp->b_rawblkno += (bp->b_bcount / sc->sc_blksize);
 	s = splbio();
 	wdstart1(sc, bp);
 	splx(s);
@@ -830,12 +847,13 @@ retry2:
 		 */
 		if ((bp->b_flags & B_READ) &&
 		    ((wd->drvp->ata_vers >= 4 && wd->sc_wdc_bio.r_error & 64) ||
-	     	     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192))) {
+		     (wd->drvp->ata_vers < 4 && wd->sc_wdc_bio.r_error & 192))) {
 			struct disk_badsectors *dbs;
 
 			dbs = malloc(sizeof *dbs, M_TEMP, M_WAITOK);
 			dbs->dbs_min = bp->b_rawblkno;
-			dbs->dbs_max = dbs->dbs_min + (bp->b_bcount >> DEV_BSHIFT) - 1;
+			dbs->dbs_max = dbs->dbs_min +
+			    (bp->b_bcount /wd->sc_blksize) - 1;
 			microtime(&dbs->dbs_failedat);
 			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
 			wd->sc_bscount++;
@@ -892,9 +910,11 @@ wdrestart(void *v)
 static void
 wdminphys(struct buf *bp)
 {
+	const struct wd_softc * const wd =
+	    device_lookup_private(&wd_cd, WDUNIT(bp->b_dev));
 
-	if (bp->b_bcount > (512 * 128)) {
-		bp->b_bcount = (512 * 128);
+	if (bp->b_bcount > (wd->sc_blksize * 128)) {
+		bp->b_bcount = (wd->sc_blksize * 128);
 	}
 	minphys(bp);
 }
@@ -1063,7 +1083,7 @@ wdgetdefaultlabel(struct wd_softc *wd, struct disklabel *lp)
 	ATADEBUG_PRINT(("wdgetdefaultlabel\n"), DEBUG_FUNCS);
 	memset(lp, 0, sizeof(struct disklabel));
 
-	lp->d_secsize = DEV_BSIZE;
+	lp->d_secsize = wd->sc_blksize;
 	lp->d_ntracks = wd->sc_params.atap_heads;
 	lp->d_nsectors = wd->sc_params.atap_sectors;
 	lp->d_ncylinders = (wd->sc_flags & WDF_LBA) ? wd->sc_capacity /
@@ -1535,8 +1555,8 @@ wddiscard(dev_t dev, off_t pos, off_t len)
 		return EIO;
 
 	/* round the start up and the end down */
-	bno = (pos + DEV_BSIZE - 1) >> DEV_BSHIFT;
-	size = ((pos + len) >> DEV_BSHIFT) - bno;
+	bno = (pos + wd->sc_blksize - 1) / wd->sc_blksize;
+	size = ((pos + len) / wd->sc_blksize) - bno;
 
 	done = 0;
 	while (done < size) {
@@ -1728,14 +1748,14 @@ bad144intern(struct wd_softc *wd)
 #endif
 
 static void
-wd_params_to_properties(struct wd_softc *wd, struct ataparams *params)
+wd_params_to_properties(struct wd_softc *wd)
 {
 	struct disk_geom *dg = &wd->sc_dk.dk_geom;
 
 	memset(dg, 0, sizeof(*dg));
 
 	dg->dg_secperunit = wd->sc_capacity;
-	dg->dg_secsize = DEV_BSIZE /* XXX 512? */;
+	dg->dg_secsize = wd->sc_blksize;
 	dg->dg_nsectors = wd->sc_params.atap_sectors;
 	dg->dg_ntracks = wd->sc_params.atap_heads;
 	if ((wd->sc_flags & WDF_LBA) == 0)
@@ -1774,7 +1794,6 @@ wd_get_params(struct wd_softc *wd, uint8_t flags, struct ataparams *params)
 		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
 		/* FALLTHROUGH */
 	case CMD_OK:
-		wd_params_to_properties(wd, params);
 		return 0;
 	default:
 		panic("wd_get_params: bad return code from ata_get_params");
@@ -2035,6 +2054,30 @@ wi_find(struct buf *bp)
 	return (wi);
 }
 
+static uint
+wi_sector_size(const struct wd_ioctl * const wi)
+{
+	switch (wi->wi_atareq.command) {
+	case WDCC_READ:
+	case WDCC_WRITE:
+	case WDCC_READMULTI:
+	case WDCC_WRITEMULTI:
+	case WDCC_READDMA:
+	case WDCC_WRITEDMA:
+	case WDCC_READ_EXT:
+	case WDCC_WRITE_EXT:
+	case WDCC_READMULTI_EXT:
+	case WDCC_WRITEMULTI_EXT:
+	case WDCC_READDMA_EXT:
+	case WDCC_WRITEDMA_EXT:
+	case WDCC_READ_FPDMA_QUEUED:
+	case WDCC_WRITE_FPDMA_QUEUED:
+		return wi->wi_softc->sc_blksize;
+	default:
+		return 512;
+	}
+}
+
 /*
  * Ioctl pseudo strategy routine
  *
@@ -2086,11 +2129,11 @@ wdioctlstrategy(struct buf *bp)
 
 	/*
 	 * Abort if we didn't get a buffer size that was a multiple of
-	 * our sector size (or was larger than NBBY)
+	 * our sector size (or overflows CHS/LBA28 sector count)
 	 */
 
-	if ((bp->b_bcount % wi->wi_softc->sc_dk.dk_label->d_secsize) != 0 ||
-	    (bp->b_bcount / wi->wi_softc->sc_dk.dk_label->d_secsize) >=
+	if ((bp->b_bcount % wi_sector_size(wi)) != 0 ||
+	    (bp->b_bcount / wi_sector_size(wi)) >=
 	     (1 << NBBY)) {
 		error = EINVAL;
 		goto bad;

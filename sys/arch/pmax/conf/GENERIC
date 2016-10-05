@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.185 2014/11/16 16:01:42 manu Exp $
+# $NetBSD: GENERIC,v 1.185.2.1 2016/10/05 20:55:33 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.185 $"
+#ident		"GENERIC-$Revision: 1.185.2.1 $"
 
 maxusers	64
 
@@ -321,18 +321,24 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsfont			# wsfont control device
 pseudo-device	wsmux			# wsmux control device
 
+options 	FILEASSOC		# fileassoc(9) - required for Veriexec
+
 # Veriexec
-#
-# a pseudo device needed for veriexec
-#pseudo-device	veriexec
+pseudo-device	veriexec
 #
 # Uncomment the fingerprint methods below that are desired. Note that
 # removing fingerprint methods will have almost no impact on the kernel
 # code size.
 #
-#options VERIFIED_EXEC_FP_RMD160
-#options VERIFIED_EXEC_FP_SHA256
-#options VERIFIED_EXEC_FP_SHA384
-#options VERIFIED_EXEC_FP_SHA512
-#options VERIFIED_EXEC_FP_SHA1
-#options VERIFIED_EXEC_FP_MD5
+options 	VERIFIED_EXEC_FP_RMD160
+options 	VERIFIED_EXEC_FP_SHA256
+options 	VERIFIED_EXEC_FP_SHA384
+options 	VERIFIED_EXEC_FP_SHA512
+options 	VERIFIED_EXEC_FP_SHA1
+options 	VERIFIED_EXEC_FP_MD5
+
+options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
+options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

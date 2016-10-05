@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.262.2.2 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.262.2.3 2016/10/05 20:55:32 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.262.2.2 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.262.2.3 2016/10/05 20:55:32 skrll Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -660,7 +660,8 @@ static const struct pridtab cputab[] = {
 
 	/* Ingenic XBurst */
 	{ MIPS_PRID_CID_INGENIC, MIPS_XBURST,  -1, -1,	-1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT, 0, 0, "XBurst"		},
+	  MIPS32_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_DOUBLE_COUNT,
+	  0, 0, "XBurst"		},
 
 	{ 0, 0, 0,				0, 0, 0,
 	  0, 0, 0,				NULL			}
@@ -1053,7 +1054,7 @@ mips64r2_vector_init(const struct splsw *splsw)
 	// This may need to be on CPUs other CPU0 so use EBASE to fetch
 	// the appropriate address for exception code.  EBASE also contains
 	// the cpunum so remove that.
-	memcpy((void *)(ebase & ~MIPS_EBASE_CPUNUM), mips64r2_tlb_miss,
+	memcpy((void *)(intptr_t)(ebase & ~MIPS_EBASE_CPUNUM), mips64r2_tlb_miss,
 	      mips64r2_intr_end - mips64r2_tlb_miss);
 
 	/*
@@ -1236,12 +1237,12 @@ mips_vector_init(const struct splsw *splsw, bool multicpu_p)
 		cca = (opts->mips_cpu_flags & CPU_MIPS_CACHED_CCA_MASK) >>
 		    CPU_MIPS_CACHED_CCA_SHIFT;
 		opts->mips3_pg_cached = MIPS3_CCA_TO_PG(cca);
-#ifdef _LP64
+#ifndef __mips_o32
 		opts->mips3_xkphys_cached = MIPS_PHYS_TO_XKPHYS(cca, 0);
 #endif
 	} else {
 		opts->mips3_pg_cached = MIPS3_DEFAULT_PG_CACHED;
-#ifdef _LP64
+#ifndef __mips_o32
 		opts->mips3_xkphys_cached = MIPS3_DEFAULT_XKPHYS_CACHED;
 #endif
 	}
@@ -1719,6 +1720,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       NULL, MIPS_HAS_LMMI, NULL, 0,
 		       CTL_MACHDEP, CPU_LMMI, CTL_EOL);
 #endif
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+                       CTLTYPE_INT, "fpu_present", NULL,
+                       NULL,
+#ifdef NOFPU
+		       0,
+#else
+		       1,
+#endif
+		       NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 /*
@@ -1815,7 +1826,7 @@ cpu_dump(void)
 		cpuhdrp->pg_frame  = MIPS1_PG_FRAME;
 		cpuhdrp->pg_v      = MIPS1_PG_V;
 	}
-	cpuhdrp->sysmappa   = MIPS_KSEG0_TO_PHYS(Sysmap);
+	cpuhdrp->sysmappa   = MIPS_KSEG0_TO_PHYS(curcpu()->ci_pmap_kern_segtab);
 	cpuhdrp->nmemsegs   = mem_cluster_cnt;
 
 	/*
@@ -2058,6 +2069,10 @@ mips_init_lwp0_uarea(void)
 
 	pcb->pcb_context.val[_L_SR] = MIPS_SR_INT_IE
 	    | (ipl_sr_map.sr_bits[IPL_SCHED] ^ MIPS_INT_MASK);
+#ifdef __mips_n32
+	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX;
+	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX;
+#endif
 #ifdef _LP64
 	pcb->pcb_context.val[_L_SR] |= MIPS_SR_KX | MIPS_SR_UX;
 	l->l_md.md_utf->tf_regs[_R_SR] = MIPS_SR_KX | MIPS_SR_UX;
@@ -2376,6 +2391,20 @@ mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 		return true;
 	}
 	return false;
+}
+
+bool
+mm_md_page_color(paddr_t pa, int *colorp)
+{
+	if (MIPS_CACHE_VIRTUAL_ALIAS) {
+		struct vm_page * const pg = PHYS_TO_VM_PAGE(pa);
+		KASSERT(pg != NULL);
+		struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+		*colorp = atop(mdpg->mdpg_first.pv_va);
+		return !mips_cache_badalias(pa, mdpg->mdpg_first.pv_va);
+	}
+	*colorp = 0;
+	return true;
 }
 
 int

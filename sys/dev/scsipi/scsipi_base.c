@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.164.2.1 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.164.2.2 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164.2.1 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164.2.2 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1923,14 +1923,14 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	} else {
 		/*
 		 * If the request doesn't specify a tag, give Head
-		 * tags to URGENT operations and Ordered tags to
+		 * tags to URGENT operations and Simple tags to
 		 * everything else.
 		 */
 		if (XS_CTL_TAGTYPE(xs) == 0) {
 			if (xs->xs_control & XS_CTL_URGENT)
 				xs->xs_control |= XS_CTL_HEAD_TAG;
 			else
-				xs->xs_control |= XS_CTL_ORDERED_TAG;
+				xs->xs_control |= XS_CTL_SIMPLE_TAG;
 		}
 
 		switch (XS_CTL_TAGTYPE(xs)) {

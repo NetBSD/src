@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.176.4.1 2015/04/06 15:17:51 skrll Exp $
+#	$NetBSD: files.amiga,v 1.176.4.2 2016/10/05 20:55:23 skrll Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -19,6 +19,8 @@ defflag	opt_amigaccgrf.h	USE_C_BFOPS
 defflag	opt_amigacons.h		RETINACONSOLE ULOWELLCONSOLE CL5426CONSOLE
 defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		SERCONSOLE
+
+defflag opt_mntva.h		MNTVA_CONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
@@ -218,6 +220,11 @@ attach	grfcv3d at zbus
 file	arch/amiga/dev/grf_cv3d.c	grfcv3d needs-flag
 file	arch/amiga/dev/ite_cv3d.c	grfcv3d & ite
 
+# MNT VA2000
+device	mntva: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
+attach	mntva at zbus
+file	arch/amiga/dev/mntva.c		mntva needs-flag
+
 # device defined in sys/conf/files
 # A2065, Ameristar, Ariadne ethernet cards
 attach	le at zbus with le_zbus: le24
@@ -231,7 +238,7 @@ file	arch/amiga/dev/if_ne_zbus.c	ne_zbus needs-flag
 # X-Surf
 define	xsurfbus {}
 
-device	xsurf: xsurfbus 
+device	xsurf: xsurfbus
 attach	xsurf at zbus
 file	arch/amiga/dev/xsurf.c		xsurf needs-flag
 
@@ -493,7 +500,7 @@ file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
 attach	wdc at zbus with wdc_buddha
 file	arch/amiga/dev/wdc_buddha.c	wdc_buddha
 
-# FastATA 
+# FastATA
 device  efa: ata, wdc_common, amibus_b1000
 attach  efa at mainbus
 file    arch/amiga/dev/efa.c		efa
@@ -535,19 +542,19 @@ file	arch/amiga/pci/p5membar.c	p5membar
 
 # CyberStorm MKIII scsi
 device	cbiiisc: scsi, siopng
-attach	cbiiisc at p5bus 
+attach	cbiiisc at p5bus
 file	arch/amiga/dev/cbiiisc.c	cbiiisc needs-flag
 
 # Phase5 Blizzard 603e+ SCSI
 device	bppcsc: scsi, asiop
-attach	bppcsc at p5bus 
+attach	bppcsc at p5bus
 file	arch/amiga/dev/bppcsc.c		bppcsc needs-flag
 
 # PCI bus
 file	arch/amiga/pci/pci_machdep.c	pci
 
 device	p5pb: pcibus
-attach	p5pb at p5bus 
+attach	p5pb at p5bus
 file	arch/amiga/pci/p5pb.c		p5pb & pci
 
 device	mppb: pcibus
@@ -588,11 +595,11 @@ file	arch/amiga/dev/slhci_zbus.c	slhci_zbus
 define	acafhbus {}
 
 device	acafh: acafhbus, amibus_b4000
-attach	acafh at mainbus 
-file	arch/amiga/dev/acafh.c		acafh needs-count 
+attach	acafh at mainbus
+file	arch/amiga/dev/acafh.c		acafh needs-count
 
 attach	wdc at acafhbus with wdc_acafh: gayle, amibus_b1000
-file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh 
+file	arch/amiga/dev/wdc_acafh.c	wdc_acafh & acafh
 
 include "arch/amiga/clockport/files.clockport"
 

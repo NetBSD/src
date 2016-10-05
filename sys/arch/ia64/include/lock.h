@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2009/07/20 04:41:37 kiyohara Exp $	*/
+/*	$NetBSD: lock.h,v 1.4.40.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,6 +114,28 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 	__insn_barrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
+}
+
+/* XXX mf.a overkill for these? */
+static __inline void
+mb_read(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
+}
+
+static __inline void
+mb_write(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
+}
+
+static __inline void
+mb_memory(void)
+{
+	__asm __volatile("mf.a	\n"
+			 "mf	\n" ::: "memory");
 }
 
 #endif /* _IA64_LOCK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.20 2011/03/10 15:40:36 tsutsui Exp $	*/
+/*	$NetBSD: news5000.c,v 1.20.32.1 2016/10/05 20:55:33 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.20 2011/03/10 15:40:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.20.32.1 2016/10/05 20:55:33 skrll Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -36,6 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: news5000.c,v 1.20 2011/03/10 15:40:36 tsutsui Exp $"
 #include <sys/timetc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+
+#include <mips/locore.h>
 
 #include <machine/adrsmap.h>
 

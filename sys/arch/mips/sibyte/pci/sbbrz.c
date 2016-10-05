@@ -1,4 +1,4 @@
-/* $NetBSD: sbbrz.c,v 1.3 2011/05/17 17:34:51 dyoung Exp $ */
+/* $NetBSD: sbbrz.c,v 1.3.32.1 2016/10/05 20:55:32 skrll Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -174,7 +174,7 @@ sbbrz_attach(device_t parent, device_t self, void *aux)
         bool host;
 
         /* Tell the user whether it's host or device mode. */
-        regval = mips3_ld((void *)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
+        regval = mips3_ld((register_t)MIPS_PHYS_TO_KSEG1(A_SCD_SYSTEM_CFG));
         host = (regval & M_SYS_PCI_HOST) != 0;
 
         aprint_normal(": %s pci mode\n", host ? "host" : "device");

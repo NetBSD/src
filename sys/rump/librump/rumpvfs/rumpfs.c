@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.130.2.3 2016/03/19 11:30:37 skrll Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.130.2.4 2016/10/05 20:56:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.3 2016/03/19 11:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.4 2016/10/05 20:56:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1622,7 +1622,6 @@ rump_vop_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct rumpfs_node *rn = vp->v_data;
 
-	vcache_remove(vp->v_mount, &rn, sizeof(rn));
 	mutex_enter(&reclock);
 	rn->rn_vp = NULL;
 	mutex_exit(&reclock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.14.12.3 2015/12/27 12:09:58 skrll Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.14.12.4 2016/10/05 20:55:56 skrll Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -91,10 +91,7 @@
 #define MMC_OCR_2_2V_2_3V		(1<<10)
 #define MMC_OCR_2_1V_2_2V		(1<<9)
 #define MMC_OCR_2_0V_2_1V		(1<<8)
-#define MMC_OCR_1_9V_2_0V		(1<<7)
-#define MMC_OCR_1_8V_1_9V		(1<<6)
-#define MMC_OCR_1_7V_1_8V		(1<<5)
-#define MMC_OCR_1_6V_1_7V		(1<<4)
+#define MMC_OCR_1_65V_1_95V		(1<<7)
 
 /* R1 response type bits */
 #define MMC_R1_READY_FOR_DATA		(1<<8)	/* ready for next transfer */

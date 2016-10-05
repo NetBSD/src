@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2016/03/19 11:29:59 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.1.2.4 2016/10/05 20:55:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.3 2016/03/19 11:29:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.4 2016/10/05 20:55:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>

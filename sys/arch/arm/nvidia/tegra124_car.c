@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.2.2.2 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.2.2.3 2016/10/05 20:55:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.2.2 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2.2.3 2016/10/05 20:55:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,10 +86,10 @@ static struct tegra124_car_clock_id {
 	{ 34, "apbdma" },
 	{ 36, "kbc" },
 	{ 40, "kfuse" },
-	{ 41, "sbc1" },
+	{ 41, "spi1" },
 	{ 42, "nor" },
-	{ 44, "sbc2" },
-	{ 46, "sbc3" },
+	{ 44, "spi2" },
+	{ 46, "spi3" },
 	{ 47, "i2c5" },
 	{ 48, "dsia" },
 	{ 50, "mipi" },
@@ -106,7 +106,7 @@ static struct tegra124_car_clock_id {
 	{ 63, "bsev" },
 	{ 65, "uartd" },
 	{ 67, "i2c3" },
-	{ 68, "sbc4" },
+	{ 68, "spi4" },
 	{ 69, "sdmmc3" },
 	{ 70, "pcie" },
 	{ 71, "owr" },
@@ -127,8 +127,8 @@ static struct tegra124_car_clock_id {
 	{ 101, "i2s3" },
 	{ 102, "i2s4" },
 	{ 103, "i2c4" },
-	{ 104, "sbc5" },
-	{ 105, "sbc6" },
+	{ 104, "spi5" },
+	{ 105, "spi6" },
 	{ 106, "d_audio" },
 	{ 107, "apbif" },
 	{ 108, "dam0" },
@@ -394,6 +394,9 @@ static const char *mux_sdmmc_p[] =
 static const char *mux_i2c_p[] =
 	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
 	  "pll_m_out0", NULL, "clk_m" };
+static const char *mux_spi_p[] =
+	{ "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
+	  "pll_m_out0", NULL, "clk_m" };
 static const char *mux_sata_p[] =
 	{ "pll_p_out0", NULL, "pll_c_out0", NULL, "pll_m_out0", NULL, "clk_m" };
 static const char *mux_hda_p[] =
@@ -414,6 +417,14 @@ static const char *mux_disp_p[] =
 static const char *mux_hdmi_p[] =
 	{ "pll_p_out0", "pll_m_out0", "pll_d_out0", "pll_a_out0", "pll_c_out0",
 	  "pll_d2_out0", "clk_m" };
+static const char *mux_xusb_host_p[] =
+	{ "clk_m", "pll_p_out0", "pll_c2_out0", "pll_c_out0", "pll_c3_out0",
+	  "pll_re_out" };
+static const char *mux_xusb_ss_p[] =
+	{ "clk_m", "pll_re_out", "clk_s", "pll_u_480",
+	  "pll_c_out0", "pll_c2_out0", "pll_c3_out0", NULL };
+static const char *mux_xusb_fs_p[] =
+	{ "clk_m", NULL, "pll_u_48", NULL, "pll_p_out0", NULL, "pll_u_480" };
 
 static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_FIXED("clk_m", TEGRA_REF_FREQ),
@@ -432,6 +443,8 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_PLLD_BASE_DIVM, CAR_PLLD_BASE_DIVN, CAR_PLLD_BASE_DIVP),
 	CLK_PLL("pll_d2", "clk_m", CAR_PLLD2_BASE_REG,
 		CAR_PLLD2_BASE_DIVM, CAR_PLLD2_BASE_DIVN, CAR_PLLD2_BASE_DIVP),
+	CLK_PLL("pll_re", "clk_m", CAR_PLLREFE_BASE_REG,
+		CAR_PLLREFE_BASE_DIVM, CAR_PLLREFE_BASE_DIVN, CAR_PLLREFE_BASE_DIVP),
 
 	CLK_FIXED_DIV("pll_p_out0", "pll_p", 1),
 	CLK_FIXED_DIV("pll_u_480", "pll_u", 1),
@@ -441,6 +454,7 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_FIXED_DIV("pll_d_out", "pll_d", 1),
 	CLK_FIXED_DIV("pll_d_out0", "pll_d", 2),
 	CLK_FIXED_DIV("pll_d2_out0", "pll_d2", 1),
+	CLK_FIXED_DIV("pll_re_out", "pll_re", 1),
 
 	CLK_MUX("mux_uarta", CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_SRC,
 		mux_uart_p),
@@ -464,6 +478,12 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_MUX("mux_i2c4", CAR_CLKSRC_I2C4_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("mux_i2c5", CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
 	CLK_MUX("mux_i2c6", CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_SRC, mux_i2c_p),
+	CLK_MUX("mux_spi1", CAR_CLKSRC_SPI1_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi2", CAR_CLKSRC_SPI2_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi3", CAR_CLKSRC_SPI3_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi4", CAR_CLKSRC_SPI4_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi5", CAR_CLKSRC_SPI5_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
+	CLK_MUX("mux_spi6", CAR_CLKSRC_SPI6_REG, CAR_CLKSRC_SPI_SRC, mux_spi_p),
 	CLK_MUX("mux_sata_oob",
 		CAR_CLKSRC_SATA_OOB_REG, CAR_CLKSRC_SATA_OOB_SRC, mux_sata_p),
 	CLK_MUX("mux_sata",
@@ -491,6 +511,18 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_MUX("mux_hdmi",
 		CAR_CLKSRC_HDMI_REG, CAR_CLKSRC_HDMI_SRC,
 		mux_hdmi_p),
+	CLK_MUX("mux_xusb_host",
+		CAR_CLKSRC_XUSB_HOST_REG, CAR_CLKSRC_XUSB_HOST_SRC,
+		mux_xusb_host_p),
+	CLK_MUX("mux_xusb_falcon",
+		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_SRC,
+		mux_xusb_host_p),
+	CLK_MUX("mux_xusb_ss",
+		CAR_CLKSRC_XUSB_SS_REG, CAR_CLKSRC_XUSB_SS_SRC,
+		mux_xusb_ss_p),
+	CLK_MUX("mux_xusb_fs",
+		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_SRC,
+		mux_xusb_fs_p),
 
 	CLK_DIV("div_uarta", "mux_uarta",
 		CAR_CLKSRC_UARTA_REG, CAR_CLKSRC_UART_DIV),
@@ -508,18 +540,30 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_SDMMC3_REG, CAR_CLKSRC_SDMMC_DIV),
 	CLK_DIV("div_sdmmc4", "mux_sdmmc4",
 		CAR_CLKSRC_SDMMC4_REG, CAR_CLKSRC_SDMMC_DIV),
-	CLK_DIV("div_i2c1", "mux_i2c1", 
+	CLK_DIV("div_i2c1", "mux_i2c1",
 		CAR_CLKSRC_I2C1_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("div_i2c2", "mux_i2c2", 
+	CLK_DIV("div_i2c2", "mux_i2c2",
 		CAR_CLKSRC_I2C2_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("div_i2c3", "mux_i2c3", 
+	CLK_DIV("div_i2c3", "mux_i2c3",
 		CAR_CLKSRC_I2C3_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("div_i2c4", "mux_i2c4", 
+	CLK_DIV("div_i2c4", "mux_i2c4",
 		CAR_CLKSRC_I2C4_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("div_i2c5", "mux_i2c5", 
+	CLK_DIV("div_i2c5", "mux_i2c5",
 		CAR_CLKSRC_I2C5_REG, CAR_CLKSRC_I2C_DIV),
-	CLK_DIV("div_i2c6", "mux_i2c6", 
+	CLK_DIV("div_i2c6", "mux_i2c6",
 		CAR_CLKSRC_I2C6_REG, CAR_CLKSRC_I2C_DIV),
+	CLK_DIV("div_spi1", "mux_spi1",
+		CAR_CLKSRC_SPI1_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi2", "mux_spi2",
+		CAR_CLKSRC_SPI2_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi3", "mux_spi3",
+		CAR_CLKSRC_SPI3_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi4", "mux_spi4",
+		CAR_CLKSRC_SPI4_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi5", "mux_spi5",
+		CAR_CLKSRC_SPI5_REG, CAR_CLKSRC_SPI_DIV),
+	CLK_DIV("div_spi6", "mux_spi6",
+		CAR_CLKSRC_SPI6_REG, CAR_CLKSRC_SPI_DIV),
 	CLK_DIV("div_sata_oob", "mux_sata_oob",
 		CAR_CLKSRC_SATA_OOB_REG, CAR_CLKSRC_SATA_OOB_DIV),
 	CLK_DIV("div_sata", "mux_sata",
@@ -538,6 +582,14 @@ static struct tegra_clk tegra124_car_clocks[] = {
 		CAR_CLKSRC_HDMI_REG, CAR_CLKSRC_HDMI_DIV),
 	CLK_DIV("div_pll_p_out5", "pll_p",
 		CAR_PLLP_OUTC_REG, CAR_PLLP_OUTC_OUT5_RATIO),
+	CLK_DIV("xusb_host_src", "mux_xusb_host",
+		CAR_CLKSRC_XUSB_HOST_REG, CAR_CLKSRC_XUSB_HOST_DIV),
+	CLK_DIV("xusb_ss_src", "mux_xusb_ss",
+		CAR_CLKSRC_XUSB_SS_REG, CAR_CLKSRC_XUSB_SS_DIV),
+	CLK_DIV("xusb_fs_src", "mux_xusb_fs",
+		CAR_CLKSRC_XUSB_FS_REG, CAR_CLKSRC_XUSB_FS_DIV),
+	CLK_DIV("xusb_falcon_src", "mux_xusb_falcon",
+		CAR_CLKSRC_XUSB_FALCON_REG, CAR_CLKSRC_XUSB_FALCON_DIV),
 
 	CLK_GATE_L("uarta", "div_uarta", CAR_DEV_L_UARTA),
 	CLK_GATE_L("uartb", "div_uartb", CAR_DEV_L_UARTB),
@@ -553,6 +605,12 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_V("i2c4", "div_i2c4", CAR_DEV_V_I2C4),
 	CLK_GATE_H("i2c5", "div_i2c5", CAR_DEV_H_I2C5),
 	CLK_GATE_X("i2c6", "div_i2c6", CAR_DEV_X_I2C6),
+	CLK_GATE_H("spi1", "div_spi1", CAR_DEV_H_SPI1),
+	CLK_GATE_H("spi2", "div_spi2", CAR_DEV_H_SPI2),
+	CLK_GATE_H("spi3", "div_spi3", CAR_DEV_H_SPI3),
+	CLK_GATE_U("spi4", "div_spi4", CAR_DEV_U_SPI4),
+	CLK_GATE_V("spi5", "div_spi5", CAR_DEV_V_SPI5),
+	CLK_GATE_V("spi6", "div_spi6", CAR_DEV_V_SPI6),
 	CLK_GATE_L("usbd", "pll_u_480", CAR_DEV_L_USBD),
 	CLK_GATE_H("usb2", "pll_u_480", CAR_DEV_H_USB2),
 	CLK_GATE_H("usb3", "pll_u_480", CAR_DEV_H_USB3),
@@ -574,8 +632,10 @@ static struct tegra_clk tegra124_car_clocks[] = {
 	CLK_GATE_L("disp1", "mux_disp1", CAR_DEV_L_DISP1),
 	CLK_GATE_L("disp2", "mux_disp2", CAR_DEV_L_DISP2),
 	CLK_GATE_H("hdmi", "div_hdmi", CAR_DEV_H_HDMI),
-	CLK_GATE_SIMPLE("pll_p_out5", "div_pllp_out5",
+	CLK_GATE_SIMPLE("pll_p_out5", "div_pll_p_out5",
 		CAR_PLLP_OUTC_REG, CAR_PLLP_OUTC_OUT5_CLKEN),
+	CLK_GATE_U("xusb_host", "xusb_host_src", CAR_DEV_U_XUSB_HOST),
+	CLK_GATE_W("xusb_ss", "xusb_ss_src", CAR_DEV_W_XUSB_SS),
 };
 
 struct tegra124_car_rst {
@@ -625,6 +685,7 @@ struct tegra124_car_softc {
 
 static void	tegra124_car_init(struct tegra124_car_softc *);
 static void	tegra124_car_utmip_init(struct tegra124_car_softc *);
+static void	tegra124_car_xusb_init(struct tegra124_car_softc *);
 
 static void	tegra124_car_rnd_attach(device_t);
 static void	tegra124_car_rnd_intr(void *);
@@ -695,6 +756,7 @@ static void
 tegra124_car_init(struct tegra124_car_softc *sc)
 {
 	tegra124_car_utmip_init(sc);
+	tegra124_car_xusb_init(sc);
 }
 
 static void
@@ -728,6 +790,51 @@ tegra124_car_utmip_init(struct tegra124_car_softc *sc)
 	    CAR_UTMIP_PLL_CFG1_PLLU_POWERDOWN |
 	    CAR_UTMIP_PLL_CFG1_PLL_ENABLE_POWERDOWN);
 
+}
+
+static void
+tegra124_car_xusb_init(struct tegra124_car_softc *sc)
+{
+	const bus_space_tag_t bst = sc->sc_bst;
+	const bus_space_handle_t bsh = sc->sc_bsh;
+	uint32_t val;
+
+	/* XXX do this all better */
+
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_W_SET_REG, CAR_DEV_W_XUSB);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    0, CAR_PLLREFE_MISC_IDDQ);
+	val = __SHIFTIN(25, CAR_PLLREFE_BASE_DIVN) |
+	    __SHIFTIN(1, CAR_PLLREFE_BASE_DIVM);
+	bus_space_write_4(bst, bsh, CAR_PLLREFE_BASE_REG, val);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    0, CAR_PLLREFE_MISC_LOCK_OVERRIDE);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_BASE_REG,
+	    CAR_PLLREFE_BASE_ENABLE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLREFE_MISC_REG,
+	    CAR_PLLREFE_MISC_LOCK_ENABLE, 0);
+
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLREFE_MISC_REG);
+	} while ((val & CAR_PLLREFE_MISC_LOCK) == 0);
+
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG,
+	    CAR_PLLE_MISC_IDDQ_SWCTL, CAR_PLLE_MISC_IDDQ_OVERRIDE);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_BASE_REG,
+	    CAR_PLLE_BASE_ENABLE, 0);
+	tegra_reg_set_clear(bst, bsh, CAR_PLLE_MISC_REG,
+	    CAR_PLLE_MISC_LOCK_ENABLE, 0);
+
+	do {
+		delay(2);
+		val = bus_space_read_4(bst, bsh, CAR_PLLE_MISC_REG);
+	} while ((val & CAR_PLLE_MISC_LOCK) == 0);
+
+	tegra_reg_set_clear(bst, bsh, CAR_CLKSRC_XUSB_SS_REG,
+	    CAR_CLKSRC_XUSB_SS_HS_CLK_BYPASS, 0);
 }
 
 static void
@@ -1076,7 +1183,7 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct clk *clk_parent;
-	u_int div;
+	u_int rate;
 
 	KASSERT(tclk->type == TEGRA_CLK_DIV);
 
@@ -1087,22 +1194,30 @@ tegra124_car_clock_get_rate_div(struct tegra124_car_softc *sc,
 	const u_int raw_div = __SHIFTOUT(v, tdiv->bits);
 
 	switch (tdiv->reg) {
+	case CAR_CLKSRC_I2C1_REG:
+	case CAR_CLKSRC_I2C2_REG:
+	case CAR_CLKSRC_I2C3_REG:
+	case CAR_CLKSRC_I2C4_REG:
+	case CAR_CLKSRC_I2C5_REG:
+	case CAR_CLKSRC_I2C6_REG:
+		rate = parent_rate * 1 / (raw_div + 1);
+		break;
 	case CAR_CLKSRC_UARTA_REG:
 	case CAR_CLKSRC_UARTB_REG:
 	case CAR_CLKSRC_UARTC_REG:
 	case CAR_CLKSRC_UARTD_REG:
 		if (v & CAR_CLKSRC_UART_DIV_ENB) {
-			div = raw_div * 2;
+			rate = parent_rate * 2 / (raw_div + 2);
 		} else {
-			div = 2;
+			rate = parent_rate;
 		}
 		break;
 	default:
-		div = raw_div * 2;
+		rate = parent_rate * 2 / (raw_div + 2);
 		break;
 	}
 
-	return (parent_rate * 2) / div;
+	return rate;
 }
 
 static int
@@ -1125,6 +1240,8 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 
 	v = bus_space_read_4(bst, bsh, tdiv->reg);
 
+	raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+
 	switch (tdiv->reg) {
 	case CAR_CLKSRC_UARTA_REG:
 	case CAR_CLKSRC_UARTB_REG:
@@ -1134,6 +1251,7 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			v &= ~CAR_CLKSRC_UART_DIV_ENB;
 		} else {
 			v |= CAR_CLKSRC_UART_DIV_ENB;
+			raw_div = (parent_rate * 2) / rate - 2;
 		}
 		break;
 	case CAR_CLKSRC_SATA_REG:
@@ -1141,16 +1259,24 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			tegra_reg_set_clear(bst, bsh, CAR_SATA_PLL_CFG0_REG,
 			    0, CAR_SATA_PLL_CFG0_PADPLL_RESET_SWCTL);
 			v |= CAR_CLKSRC_SATA_AUX_CLK_ENB;
+			raw_div = (parent_rate * 2) / rate - 2;
 		} else {
 			v &= ~CAR_CLKSRC_SATA_AUX_CLK_ENB;
 		}
 		break;
-	}
-
-	if (rate) {
-		raw_div = (parent_rate * 2) / rate - 2;
-	} else {
-		raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+	case CAR_CLKSRC_I2C1_REG:
+	case CAR_CLKSRC_I2C2_REG:
+	case CAR_CLKSRC_I2C3_REG:
+	case CAR_CLKSRC_I2C4_REG:
+	case CAR_CLKSRC_I2C5_REG:
+	case CAR_CLKSRC_I2C6_REG:
+		if (rate)
+			raw_div = parent_rate / rate - 1;
+		break;
+	default:
+		if (rate)
+			raw_div = (parent_rate * 2) / rate - 2;
+		break;
 	}
 
 	v &= ~tdiv->bits;

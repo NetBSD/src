@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.56 2012/10/25 10:59:43 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.56.14.1 2016/10/05 20:56:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -155,6 +155,11 @@ void		ifmedia_removeall(struct ifmedia *);
  *	20-27	Shared (global) options
  *	28-31	Instance
  */
+
+/*
+ * Generic, only used for link status reporting.
+ */
+#define	IFM_GENERIC	0x00000000
 
 /*
  * Ethernet
@@ -614,6 +619,9 @@ struct ifmedia_status_description {
 	(ifms)->ifms_string[((ifms)->ifms_bit & (bit)) ? 1 : 0]
 
 #define	IFM_STATUS_DESCRIPTIONS {					\
+	{ IFM_GENERIC,		IFM_AVALID,	IFM_ACTIVE,		\
+	  { "no network", "active" } },					\
+									\
 	{ IFM_ETHER,		IFM_AVALID,	IFM_ACTIVE,		\
 	  { "no carrier", "active" } },					\
 									\

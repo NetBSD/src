@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.44.4.4 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: i2c.c,v 1.44.4.5 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.4 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.5 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,7 +236,7 @@ iic_attach(device_t parent, device_t self, void *aux)
 		uint64_t cookie;
 		const char *name;
 		struct i2c_attach_args ia;
-		int loc[2];
+		int loc[IICCF_NLOCS];
 
 		memset(loc, 0, sizeof loc);
 		count = prop_array_count(child_devices);
@@ -250,11 +250,11 @@ iic_attach(device_t parent, device_t self, void *aux)
 				continue;
 			if (!prop_dictionary_get_uint64(dev, "cookie", &cookie))
 				cookie = 0;
-			loc[0] = addr;
+			loc[IICCF_ADDR] = addr;
 			if (prop_dictionary_get_uint32(dev, "size", &size))
-				loc[1] = size;
+				loc[IICCF_SIZE] = size;
 			else
-				loc[1] = -1;
+				size = loc[IICCF_SIZE] = IICCF_SIZE_DEFAULT;
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;

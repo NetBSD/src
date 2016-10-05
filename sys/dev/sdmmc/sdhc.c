@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.51.2.6 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.51.2.7 2016/10/05 20:55:56 skrll Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.51.2.6 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.51.2.7 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -484,7 +484,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		aprint_normal(" SDR104 HS200");
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
-		SET(hp->ocr, MMC_OCR_1_7V_1_8V | MMC_OCR_1_8V_1_9V);
+		SET(hp->ocr, MMC_OCR_1_65V_1_95V);
 		aprint_normal(" 1.8V");
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_3_0V)) {
@@ -910,7 +910,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	 * Select the lowest voltage according to capabilities.
 	 */
 	ocr &= hp->ocr;
-	if (ISSET(ocr, MMC_OCR_1_7V_1_8V|MMC_OCR_1_8V_1_9V)) {
+	if (ISSET(ocr, MMC_OCR_1_65V_1_95V)) {
 		vdd = SDHC_VOLTAGE_1_8V;
 	} else if (ISSET(ocr, MMC_OCR_2_9V_3_0V|MMC_OCR_3_0V_3_1V)) {
 		vdd = SDHC_VOLTAGE_3_0V;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.6 2016/07/09 20:25:16 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.7 2016/10/05 20:55:57 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -97,15 +97,16 @@ void            uark_attach(device_t, device_t, void *);
 int             uark_detach(device_t, int);
 int             uark_activate(device_t, enum devact);
 extern struct cfdriver uark_cd;
-CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach, uark_detach, uark_activate);
+CFATTACH_DECL_NEW(uark, sizeof(struct uark_softc), uark_match, uark_attach,
+    uark_detach, uark_activate);
 
 int
 uark_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
 
-	return (usb_lookup(uark_devs, uaa->uaa_vendor, uaa->uaa_product) != NULL) ?
-	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return (usb_lookup(uark_devs, uaa->uaa_vendor, uaa->uaa_product)
+	    != NULL) ? UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -153,8 +154,8 @@ uark_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			aprint_error_dev(self, "no endpoint descriptor found for %d\n",
-			    i);
+			aprint_error_dev(self,
+			    "no endpoint descriptor found for %d\n", i);
 			sc->sc_dying = 1;
 			return;
 		}

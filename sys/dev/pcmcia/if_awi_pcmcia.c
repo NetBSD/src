@@ -1,4 +1,4 @@
-/* $NetBSD: if_awi_pcmcia.c,v 1.45 2012/10/27 17:18:36 chs Exp $ */
+/* $NetBSD: if_awi_pcmcia.c,v 1.45.14.1 2016/10/05 20:55:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.45 2012/10/27 17:18:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_awi_pcmcia.c,v 1.45.14.1 2016/10/05 20:55:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,8 +150,7 @@ awi_pcmcia_disable(struct awi_softc *sc)
 }
 
 static int
-awi_pcmcia_match(device_t parent, cfdata_t match,
-    void *aux)
+awi_pcmcia_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
@@ -178,8 +177,7 @@ awi_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 }
 
 static void
-awi_pcmcia_attach(device_t parent, device_t self,
-    void *aux)
+awi_pcmcia_attach(device_t parent, device_t self, void *aux)
 {
 	struct awi_pcmcia_softc *psc = device_private(self);
 	struct awi_softc *sc = &psc->sc_awi;
@@ -192,8 +190,7 @@ awi_pcmcia_attach(device_t parent, device_t self,
 
 	error = pcmcia_function_configure(pa->pf, awi_pcmcia_validate_config);
 	if (error) {
-		aprint_error_dev(self, "configure failed, error=%d\n",
-		    error);
+		aprint_error_dev(self, "configure failed, error=%d\n", error);
 		return;
 	}
 

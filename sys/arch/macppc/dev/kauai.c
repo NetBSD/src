@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.35 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: kauai.c,v 1.35.6.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.35 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.35.6.1 2016/10/05 20:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ kauai_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
-	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
+	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20, NULL);
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
 		aprint_error(": cannot find kauai node\n");

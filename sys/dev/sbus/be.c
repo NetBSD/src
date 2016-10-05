@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.80.10.3 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: be.c,v 1.80.10.4 2016/10/05 20:55:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80.10.3 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.80.10.4 2016/10/05 20:55:56 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -473,13 +473,13 @@ be_put(struct be_softc *sc, int idx, struct mbuf *m)
 	for (; m; m = n) {
 		len = m->m_len;
 		if (len == 0) {
-			MFREE(m, n);
+			n = m_free(m);
 			continue;
 		}
 		memcpy(bp + boff, mtod(m, void *), len);
 		boff += len;
 		tlen += len;
-		MFREE(m, n);
+		n = m_free(m);
 	}
 	return tlen;
 }

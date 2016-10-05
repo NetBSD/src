@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.25.2.2 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.25.2.3 2016/10/05 20:55:40 skrll Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.25.2.2 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.25.2.3 2016/10/05 20:55:40 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -780,7 +780,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	u_int pldlen;
 	int discard = 0;
 	uint16_t crc = 0xffff;
-	const char *errstr
+	const char *errstr;
 
 	DPRINTFN(3, ("%s: pi receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG

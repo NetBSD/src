@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.97.4.4 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.97.4.5 2016/10/05 20:56:08 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.4 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.5 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,6 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.4 2016/07/09 20:25:21 skrll Exp 
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/socketvar.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -222,7 +224,7 @@ struct if_clone strip_cloner =
 
 static void	stripintr(void *);
 
-static int	stripinit(struct strip_softc *);
+static int	stripcreate(struct strip_softc *);
 static struct mbuf *strip_btom(struct strip_softc *, int);
 
 /*
@@ -353,10 +355,37 @@ static struct linesw strip_disc = {
 void
 stripattach(void)
 {
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in slinit() below).
+	 */
+}
+
+static void
+stripinit(void)
+{
+
 	if (ttyldisc_attach(&strip_disc) != 0)
-		panic("stripattach");
+		panic("%s", __func__);
 	LIST_INIT(&strip_softc_list);
 	if_clone_attach(&strip_cloner);
+}
+
+static int
+stripdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&strip_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		error = ttyldisc_detach(&strip_disc);
+
+	if (error == 0)
+		if_clone_detach(&strip_cloner);
+
+	return error;
 }
 
 static int
@@ -407,7 +436,7 @@ strip_clone_destroy(struct ifnet *ifp)
 }
 
 static int
-stripinit(struct strip_softc *sc)
+stripcreate(struct strip_softc *sc)
 {
 	u_char *p;
 
@@ -483,7 +512,7 @@ stripopen(dev_t dev, struct tty *tp)
 		if (sc->sc_ttyp == NULL) {
 			sc->sc_si = softint_establish(SOFTINT_NET,
 			    stripintr, sc);
-			if (stripinit(sc) == 0) {
+			if (stripcreate(sc) == 0) {
 				softint_disestablish(sc->sc_si);
 				return (ENOBUFS);
 			}
@@ -517,7 +546,7 @@ stripopen(dev_t dev, struct tty *tp)
 					return (ENOMEM);
 				}
 				mutex_spin_enter(&tty_lock);
-			} else 
+			} else
 				sc->sc_oldbufsize = sc->sc_oldbufquot = 0;
 			strip_resetradio(sc, tp);
 			mutex_spin_exit(&tty_lock);
@@ -647,8 +676,7 @@ strip_sendbody(struct strip_softc *sc, struct mbuf *m)
 			dp = StuffData(mtod(m, u_char *), m->m_len, dp,
 			    &rllstate_ptr);
 		}
-		MFREE(m, m2);
-		m = m2;
+		m = m2 = m_free(m);
 	}
 
 	/*
@@ -1973,3 +2001,10 @@ RecvErr_Message(struct strip_softc *strip_info, u_char *sendername,
 		RecvErr("unparsed radio error message:", strip_info);
 	}
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, strip, "slcompress");

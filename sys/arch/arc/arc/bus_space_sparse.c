@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.18 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.18.30.1 2016/10/05 20:55:24 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -39,41 +39,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.18 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.18.30.1 2016/10/05 20:55:24 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/bus.h>
 #include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <mips/cpuregs.h>
+#include <mips/locore.h>
 #include <mips/pte.h>
 
-#include <sys/bus.h>
-
 extern paddr_t kvtophys(vaddr_t);	/* XXX */
-
-static void arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size);
-
-static void
-arc_kseg2_make_cacheable(vaddr_t vaddr, vsize_t size)
-{
-	vaddr_t start, end;
-	pt_entry_t *pte;
-	uint32_t entry, mask;
-
-	start = mips_trunc_page(vaddr);
-	end = mips_round_page(vaddr + size);
-	mask = ~(CPUISMIPS3 ? MIPS3_PG_UNCACHED : MIPS1_PG_N);
-	for (; start < end; start += PAGE_SIZE) {
-		pte = kvtopte(start);
-		entry = pte->pt_entry & mask;
-		pte->pt_entry &= entry;
-		tlb_update(start, entry);
-	}
-}
 
 void
 arc_sparse_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
@@ -96,7 +75,8 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 	 * Since all buses can be linearly mappable, we don't have to check
 	 * BUS_SPACE_MAP_LINEAR and BUS_SPACE_MAP_PREFETCHABLE.
 	 */
-	int cacheable = (flags & BUS_SPACE_MAP_CACHEABLE);
+	const bool cacheable = (flags & BUS_SPACE_MAP_CACHEABLE) != 0;
+	const u_int pmap_flags = cacheable ? PMAP_WRITE_BACK : 0;
 
 	/*
 	 * XXX - `bst->bs_pbase' must be page aligned,
@@ -111,22 +91,20 @@ arc_sparse_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
 		    MIPS_PHYS_TO_KSEG0(start) :
 		    MIPS_PHYS_TO_KSEG1(start));
 	} else {
-		vaddr_t va,
-		    vaddr = uvm_km_alloc(kernel_map, (vsize_t)(end - start), 0,
-		    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+		vaddr_t vaddr = uvm_km_alloc(kernel_map, (vsize_t)(end - start),
+		    0, UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 
 		if (vaddr == 0)
 			panic("arc_sparse_bus_space_compose_handle: "
 			      "cannot allocate KVA 0x%llx..0x%llx",
 			      start, end);
-		for (va = vaddr; start < end;
-		     start += PAGE_SIZE, va += PAGE_SIZE)
-			pmap_kenter_pa(va, start,
-			    VM_PROT_READ|VM_PROT_WRITE, 0);
+		for (vaddr_t va = vaddr; start < end;
+		     start += PAGE_SIZE, va += PAGE_SIZE) {
+			pmap_kenter_pa(va, start, VM_PROT_READ|VM_PROT_WRITE,
+			    pmap_flags);
+		}
 		pmap_update(pmap_kernel());
 		vaddr += (offset & PGOFSET);
-		if (cacheable)
-			arc_kseg2_make_cacheable(vaddr, size);
 		*bshp = vaddr;
 	}
 	return 0;

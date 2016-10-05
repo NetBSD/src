@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.38 2013/11/08 03:12:17 christos Exp $	*/
+/*	$NetBSD: interwave.c,v 1.38.6.1 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.38 2013/11/08 03:12:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.38.6.1 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,7 @@ iwattach(struct iw_softc *sc)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 
+	aprint_naive("\n");
 	/*
 	 * We can only use a few selected irqs, see if we got one from pnp
 	 * code that suits us.
@@ -205,16 +206,16 @@ iwattach(struct iw_softc *sc)
 		got_irq = 1;
 	}
 	if (!got_irq) {
-		printf("\niwattach: couldn't get a suitable irq\n");
+		aprint_error("\niwattach: couldn't get a suitable irq\n");
 		mutex_destroy(&sc->sc_lock);
 		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
-	printf("\n");
+	aprint_normal("\n");
 	iwreset(sc, 0);
 	iw_set_format(sc, AUDIO_ENCODING_ULAW, 0);
 	iw_set_format(sc, AUDIO_ENCODING_ULAW, 1);
-	printf("%s: interwave version %s\n",
+	aprint_normal("%s: interwave version %s\n",
 	    device_xname(sc->sc_dev), iw_device.version);
 	audio_attach_mi(sc->iw_hw_if, sc, sc->sc_dev);
 }
@@ -1265,8 +1266,10 @@ iw_set_port(void *addr, mixer_ctrl_t *cp)
 	case IW_RECORD_SOURCE:
 		error = 0;
 		sc->sc_recsrcbits = cp->un.ord << 6;
-		DPRINTF(("record source %d bits %x\n", cp->un.ord, sc->sc_recsrcbits));
-		iw_mixer_line_level(sc, IW_REC, sc->sc_rec.voll, sc->sc_rec.volr);
+		DPRINTF(("record source %d bits %x\n", cp->un.ord,
+		    sc->sc_recsrcbits));
+		iw_mixer_line_level(sc, IW_REC, sc->sc_rec.voll,
+		    sc->sc_rec.volr);
 		break;
 	}
 

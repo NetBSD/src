@@ -1,4 +1,4 @@
-/*	$NetBSD: idt.c,v 1.3 2009/04/19 14:11:37 ad Exp $	*/
+/*	$NetBSD: idt.c,v 1.3.40.1 2016/10/05 20:55:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2009 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.3 2009/04/19 14:11:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: idt.c,v 1.3.40.1 2016/10/05 20:55:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,12 +134,6 @@ idt_vec_free(int vec)
 
 	unsetgate(&idt[vec]);
 	idt_allocmap[vec] = 0;
-}
-
-void
-idt_init(void)
-{
-
 }
 
 #endif /* !defined(XEN) */

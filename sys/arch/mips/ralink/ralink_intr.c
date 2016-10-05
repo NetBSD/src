@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: ralink_intr.c,v 1.3.30.1 2016/10/05 20:55:32 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.3 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_intr.c,v 1.3.30.1 2016/10/05 20:55:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -291,7 +291,7 @@ ra_pic_intr(void *arg)
  * in the generic MIPS code for the timer
  */
 void
-evbmips_iointr(int ipl, vaddr_t pc, uint32_t ipending)
+evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 {
 	while (ipending != 0) {
 		const u_int bitno = 31 - __builtin_clz(ipending);

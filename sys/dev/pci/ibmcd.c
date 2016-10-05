@@ -1,4 +1,4 @@
-/* $NetBSD: ibmcd.c,v 1.1 2012/12/17 20:38:00 mbalmer Exp $ */
+/* $NetBSD: ibmcd.c,v 1.1.18.1 2016/10/05 20:55:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 Marc Balmer <marc@msys.ch>
@@ -102,6 +102,7 @@ ibmcd_attach(device_t parent, device_t self, void *aux)
 	struct gpiobus_attach_args gba;
 	pcireg_t memtype;
 
+	aprint_naive("\n");
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, memtype, 0, &sc->sc_iot,
 	    &sc->sc_ioh, NULL, &sc->sc_iosize)) {
@@ -110,7 +111,7 @@ ibmcd_attach(device_t parent, device_t self, void *aux)
 		    memtype == PCI_MAPREG_TYPE_IO ? "I/O" : "memory");
 		return;
 	}
-	printf(": IBM 4810 BSP cash drawer\n");
+	aprint_normal(": IBM 4810 BSP cash drawer\n");
 
 #if (__NetBSD_Version__ >= 600000000)
 	pmf_device_register(self, ibmcd_suspend, ibmcd_resume);

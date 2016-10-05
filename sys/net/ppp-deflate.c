@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.20.42.1 2016/04/22 15:44:17 skrll Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.20.42.2 2016/10/05 20:56:08 skrll Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.20.42.1 2016/04/22 15:44:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.20.42.2 2016/10/05 20:56:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -664,7 +664,7 @@ z_incomp(void *arg, struct mbuf *mi)
     state->stats.unc_packets++;
 }
 
-MODULE(MODULE_CLASS_MISC, ppp_deflate, "zlib");
+MODULE(MODULE_CLASS_MISC, ppp_deflate, "zlib,if_ppp");
 
 static int
 ppp_deflate_modcmd(modcmd_t cmd, void *arg)

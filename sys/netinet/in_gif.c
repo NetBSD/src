@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.64.4.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.64.4.5 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.5 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -65,18 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.4 2016/07/09 20:25:22 skrll Exp $"
 
 #include <net/if_gif.h>
 
-#include "gif.h"
-
 #include <net/net_osdep.h>
 
 static int gif_validate4(const struct ip *, struct gif_softc *,
 	struct ifnet *);
 
-#if NGIF > 0
 int ip_gif_ttl = GIF_TTL;
-#else
-int ip_gif_ttl = 0;
-#endif
 
 static const struct encapsw in_gif_encapsw = {
 	.encapsw4 = {
@@ -289,6 +283,7 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 {
 	struct sockaddr_in *src, *dst;
 	struct in_ifaddr *ia4;
+	int s;
 
 	src = satosin(sc->gif_psrc);
 	dst = satosin(sc->gif_pdst);
@@ -306,12 +301,16 @@ gif_validate4(const struct ip *ip, struct gif_softc *sc, struct ifnet *ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
+	s = pserialize_read_enter();
 	IN_ADDRLIST_READER_FOREACH(ia4) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
-		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)
+		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr) {
+			pserialize_read_exit(s);
 			return 0;
+		}
 	}
+	pserialize_read_exit(s);
 
 	/* ingress filters on outer source */
 	if ((sc->gif_if.if_flags & IFF_LINK2) == 0 && ifp) {

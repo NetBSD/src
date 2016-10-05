@@ -357,7 +357,7 @@
 
 #define ACPI_TRACE_ENTRY(Name, Function, Type, Param) \
     ACPI_FUNCTION_NAME (Name) \
-    Function (ACPI_DEBUG_PARAMETERS, (const Type) (Param))
+    Function (ACPI_DEBUG_PARAMETERS, (Type) (Param))
 
 /* The actual entry trace macros */
 
@@ -366,13 +366,13 @@
     AcpiUtTrace (ACPI_DEBUG_PARAMETERS)
 
 #define ACPI_FUNCTION_TRACE_PTR(Name, Pointer) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTracePtr, void *, Pointer)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTracePtr, const void *, Pointer)
 
 #define ACPI_FUNCTION_TRACE_U32(Name, Value) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTraceU32, UINT32, Value)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTraceU32, const UINT32, Value)
 
 #define ACPI_FUNCTION_TRACE_STR(Name, String) \
-    ACPI_TRACE_ENTRY (Name, AcpiUtTraceStr, char *, String)
+    ACPI_TRACE_ENTRY (Name, AcpiUtTraceStr, const char *, String)
 
 #define ACPI_FUNCTION_ENTRY() \
     AcpiUtTrackStackPtr()
@@ -432,6 +432,9 @@
 #define return_PTR(Pointer) \
     ACPI_TRACE_EXIT (AcpiUtPtrExit, void *, Pointer)
 
+#define return_STR(String) \
+    ACPI_TRACE_EXIT (AcpiUtStrExit, const char *, String)
+
 #define return_VALUE(Value) \
     ACPI_TRACE_EXIT (AcpiUtValueExit, UINT64, Value)
 
@@ -486,6 +489,7 @@
 #define return_VOID                     return
 #define return_ACPI_STATUS(s)           return(s)
 #define return_PTR(s)                   return(s)
+#define return_STR(s)                   return(s)
 #define return_VALUE(s)                 return(s)
 #define return_UINT8(s)                 return(s)
 #define return_UINT32(s)                return(s)

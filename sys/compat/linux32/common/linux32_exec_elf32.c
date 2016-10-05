@@ -1,13 +1,13 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.17.6.1 2015/04/06 15:18:07 skrll Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.17.6.2 2016/10/05 20:55:39 skrll Exp $ */
 
-/*-                     
+/*-
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
  * All rights reserved.
- *              
+ *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Christos Zoulas, Frank van der Linden, Eric Haszlakiewicz and
  * Emmanuel Dreyfus.
- *      
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.17.6.1 2015/04/06 15:18:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.17.6.2 2016/10/05 20:55:39 skrll Exp $");
 
 #define	ELFSIZE		32
 
@@ -93,7 +93,7 @@ ELFNAME2(linux32,probe)(struct lwp *l, struct exec_package *epp,
 #endif
 
 	epp->ep_flags |= EXEC_32 | EXEC_FORCEAUX;
-	epp->ep_vm_minaddr = VM_MIN_ADDRESS;
+	epp->ep_vm_minaddr = exec_vm_minaddr(VM_MIN_ADDRESS);
 	epp->ep_vm_maxaddr = USRSTACK32;
 
 	return 0;
@@ -233,7 +233,7 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	memcpy(&esd.elfhdr, eh, sizeof(*eh));
 
 	strcpy(esd.hw_platform, LINUX32_PLATFORM);
-	
+
 	/*
 	 * Copy out the ELF auxiliary table and hw platform name
 	 */

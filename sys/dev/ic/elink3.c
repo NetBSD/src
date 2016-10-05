@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.135.4.3 2016/07/09 20:25:02 skrll Exp $	*/
+/*	$NetBSD: elink3.c,v 1.135.4.4 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.135.4.3 2016/07/09 20:25:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.135.4.4 2016/10/05 20:55:41 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1202,8 +1202,7 @@ startagain:
 				bus_space_write_multi_1(iot, ioh,
 				    txreg, mtod(m, u_int8_t *), m->m_len);
 			}
-			MFREE(m, m0);
-			m = m0;
+			m = m0 = m_free(m);
 		}
 	} else {
 		for (m = m0; m;) {
@@ -1223,8 +1222,7 @@ startagain:
 				bus_space_write_1(iot, ioh, txreg,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
 			}
-			MFREE(m, m0);
-			m = m0;
+			m = m0 = m_free(m);
 		}
 	}
 	while (pad--)

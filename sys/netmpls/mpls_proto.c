@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.24.4.3 2015/09/22 12:06:12 skrll Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.24.4.4 2016/10/05 20:56:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.24.4.3 2015/09/22 12:06:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.24.4.4 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -75,6 +75,7 @@ void mpls_init(void)
 #endif
 	memset(&mplsintrq, 0, sizeof(mplsintrq));
 	mplsintrq.ifq_maxlen = 256;
+	IFQ_LOCK_INIT(&mplsintrq);
 
 	sysctl_net_mpls_setup(NULL);
 }

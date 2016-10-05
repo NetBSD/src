@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.6 2013/10/04 21:07:37 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.6.6.1 2016/10/05 20:55:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,7 +87,7 @@ struct stat12 {				/* NetBSD-1.2 stat struct */
  * stat structure used to contain timespecs, which had different
  * alignment constraints than a time_t and a long alone.  The padding
  * should be removed the next time the stat structure ABI is changed.
- * (This will happen whever we change to 8 byte time_t.)
+ * (This happened when we changed to 8 byte time_t.)
  */
 #if defined(_LP64)	/* XXXX  && _BSD_TIME_T_ == int */
 #define	__STATPAD(x)	int x;

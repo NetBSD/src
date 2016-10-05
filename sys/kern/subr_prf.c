@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.156.2.3 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.156.2.4 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.156.2.3 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.156.2.4 2016/10/05 20:56:03 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -265,7 +265,7 @@ vpanic(const char *fmt, va_list ap)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *oci;
 	int bootopt;
-	static char scratchstr[256]; /* stores panic message */
+	static char scratchstr[384]; /* stores panic message */
 
 	spldebug_stop();
 

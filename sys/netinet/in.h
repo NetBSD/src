@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.93.2.3 2015/12/27 12:10:07 skrll Exp $	*/
+/*	$NetBSD: in.h,v 1.93.2.4 2016/10/05 20:56:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -507,6 +507,8 @@ struct ip_mreq {
 #undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
+#include <sys/psref.h>
+
 /*
  * in_cksum_phdr:
  *
@@ -576,8 +578,8 @@ void	in_if_link_state_change(struct ifnet *, int);
 struct route;
 struct ip_moptions;
 
-struct sockaddr_in *in_selectsrc(struct sockaddr_in *,
-	struct route *, int, struct ip_moptions *, int *);
+struct in_ifaddr *in_selectsrc(struct sockaddr_in *,
+	struct route *, int, struct ip_moptions *, int *, struct psref *);
 
 #define	in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 #define	in_nullhost(x)	((x).s_addr == INADDR_ANY)

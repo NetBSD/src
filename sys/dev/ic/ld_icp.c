@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.26.14.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.26.14.2 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.26.14.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.26.14.2 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,13 +45,15 @@ __KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.26.14.1 2015/06/06 14:40:07 skrll Exp $
 #include <sys/endian.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
-
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <dev/ldvar.h>
 
 #include <dev/ic/icpreg.h>
 #include <dev/ic/icpvar.h>
+
+#include "ioconf.h"
 
 struct ld_icp_softc {
 	struct	ld_softc sc_ld;
@@ -158,7 +160,7 @@ ld_icp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("status: %s\n", str);
 
  out:
-	ldattach(ld);
+	ldattach(ld, BUFQ_DISK_DEFAULT_STRAT);
 }
 
 int
@@ -324,4 +326,47 @@ ld_icp_adjqparam(device_t dv, int openings)
 {
 
 	ldadjqparam((struct ld_softc *) dv, openings);
+}
+
+MODULE(MODULE_CLASS_DRIVER, ld_icp, "ld");	/* no icp module yet */
+
+#ifdef _MODULE
+/*
+ * XXX Don't allow ioconf.c to redefine the "struct cfdriver ld_cd"
+ * XXX it will be defined in the common-code module
+ */
+#undef  CFDRIVER_DECL
+#define CFDRIVER_DECL(name, class, attr)
+#include "ioconf.c"
+#endif
+
+static int
+ld_icp_modcmd(modcmd_t cmd, void *opaque)
+{
+#ifdef _MODULE
+	/*
+	 * We ignore the cfdriver_vec[] that ioconf provides, since
+	 * the cfdrivers are attached already.
+	 */
+	static struct cfdriver * const no_cfdriver_vec[] = { NULL };
+#endif
+	int error = 0;
+
+#ifdef _MODULE
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = config_init_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_icp, cfdata_ioconf_ld_icp);
+		break;
+	case MODULE_CMD_FINI:
+		error = config_fini_component(no_cfdriver_vec,
+		    cfattach_ioconf_ld_icp, cfdata_ioconf_ld_icp);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+#endif
+
+	return error;
 }

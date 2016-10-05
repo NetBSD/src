@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.7 2010/07/07 01:14:52 chs Exp $	*/
+/*	$NetBSD: gdt.h,v 1.7.36.1 2016/10/05 20:55:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,8 +42,8 @@ struct x86_64_tss;
 int tss_alloc(struct x86_64_tss *);
 void tss_free(int);
 
-void ldt_alloc(struct pmap *, char *, size_t);
-void ldt_free(struct pmap *);
+int ldt_alloc(void *, size_t);
+void ldt_free(int);
 
 void set_sys_gdt(int, void *, size_t, int, int, int);
 #endif

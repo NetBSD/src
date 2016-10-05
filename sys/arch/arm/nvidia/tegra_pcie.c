@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.2.2.4 2016/10/05 20:55:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2.2.4 2016/10/05 20:55:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -538,7 +538,7 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 static int
 tegra_pcie_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 {
-	return PCI_CONF_ALL;
+	return PCI_CONF_DEFAULT & ~PCI_CONF_ENABLE_BM;
 }
 
 static void

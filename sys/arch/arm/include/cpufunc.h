@@ -419,7 +419,9 @@ struct arm_cache_info {
 	uint8_t dcache_type;
 };
 
+#if (ARM_MMU_V6 + ARM_MMU_V7) != 0
 extern u_int arm_cache_prefer_mask;
+#endif
 extern u_int arm_dcache_align;
 extern u_int arm_dcache_align_mask;
 

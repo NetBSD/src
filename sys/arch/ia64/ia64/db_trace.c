@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 2008/04/28 20:23:25 martin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4.64.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /* Inspired by reading alpha/db_trace.c */
 
@@ -99,6 +99,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 		struct unwind_frame *uwf = &current_frame;
 		debug_frame_dump_XXX(uwf);
 #endif
+		KASSERT(ip >= kernstart);
 		patchunwindframe(&current_frame, ip - kernstart, kernstart);
 #ifdef UNWIND_DIAGNOSTIC
 		debug_frame_dump_XXX(uwf);
@@ -186,6 +187,7 @@ rewindframe(struct unwind_frame *uwf, db_addr_t ip)
 
 	/* Stomp on rp and pfs 
 	 */
+	KASSERT(ip >= kernstart);
 	patchunwindframe(uwf, ip - kernstart, kernstart);
 
 #ifdef UNWIND_DIAGNOSTIC

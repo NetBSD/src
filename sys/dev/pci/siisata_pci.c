@@ -1,4 +1,4 @@
-/* $NetBSD: siisata_pci.c,v 1.13 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: siisata_pci.c,v 1.13.6.1 2016/10/05 20:55:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.13 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata_pci.c,v 1.13.6.1 2016/10/05 20:55:55 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -92,7 +92,7 @@ static const struct siisata_pci_board siisata_pci_boards[] = {
 	{
 		.spb_vend = PCI_VENDOR_CMDTECH,
 		.spb_prod = PCI_PRODUCT_CMDTECH_3132,
-		.spb_port = 2, 
+		.spb_port = 2,
 		.spb_chip = 3132,
 	},
 	{
@@ -150,7 +150,7 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_atac.atac_dev = self;
-	
+
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
@@ -209,7 +209,8 @@ siisata_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf, sizeof(intrbuf));
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle, intrbuf,
+	    sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle,
 	    IPL_BIO, siisata_intr, sc);
 	if (psc->sc_ih == NULL) {
@@ -289,7 +290,7 @@ siisata_pci_detach(device_t dv, int flags)
 
 	bus_space_unmap(sc->sc_prt, sc->sc_prh, sc->sc_prs);
 	bus_space_unmap(sc->sc_grt, sc->sc_grh, sc->sc_grs);
-	
+
 	return 0;
 }
 
@@ -303,6 +304,6 @@ siisata_pci_resume(device_t dv, const pmf_qual_t *qual)
 	s = splbio();
 	siisata_resume(sc);
 	splx(s);
-	
+
 	return true;
 }

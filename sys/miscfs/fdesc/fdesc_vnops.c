@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.125.2.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.125.2.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125.2.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.125.2.2 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -862,7 +862,6 @@ fdesc_reclaim(void *v)
 	struct fdescnode *fd = VTOFDESC(vp);
 
 	vp->v_data = NULL;
-	vcache_remove(vp->v_mount, &fd->fd_ix, sizeof(fd->fd_ix));
 	kmem_free(fd, sizeof(struct fdescnode));
 
 	return (0);

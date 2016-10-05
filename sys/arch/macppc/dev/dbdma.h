@@ -1,4 +1,4 @@
-/*	$NetBSD: dbdma.h,v 1.5 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: dbdma.h,v 1.5.84.1 2016/10/05 20:55:31 skrll Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -166,6 +166,7 @@ void	dbdma_reset(dbdma_regmap_t *channel);
 void	dbdma_continue(dbdma_regmap_t *channel);
 void	dbdma_pause(dbdma_regmap_t *channel);
 
-dbdma_command_t	*dbdma_alloc(int);	/* Allocate command structures */
+dbdma_command_t	*dbdma_alloc(int, void **);	/* Allocate command structures */
+void	dbdma_free(void *, int);
 
 #endif /* !defined(_POWERMAC_DBDMA_H_) */

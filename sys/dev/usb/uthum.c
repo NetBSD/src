@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.10.14.6 2015/03/21 11:33:37 skrll Exp $   */
+/*	$NetBSD: uthum.c,v 1.10.14.7 2016/10/05 20:55:59 skrll Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.6 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.10.14.7 2016/10/05 20:55:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -119,8 +119,8 @@ uthum_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	return uthum_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product) != NULL ?
-		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
+	return uthum_lookup(uha->uiaa->uiaa_vendor, uha->uiaa->uiaa_product)
+	    != NULL ? UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
 void
@@ -176,8 +176,10 @@ uthum_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sensor[UTHUM_HUMIDITY].value_cur = 0;
 		sc->sc_sensor[UTHUM_HUMIDITY].state = ENVSYS_SINVALID;
 
-		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[UTHUM_TEMP]);
-		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[UTHUM_HUMIDITY]);
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+		    &sc->sc_sensor[UTHUM_TEMP]);
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+		    &sc->sc_sensor[UTHUM_HUMIDITY]);
 		sc->sc_num_sensors = 2;
 		DPRINTF(("sensor type: SHT1x\n"));
 		break;
@@ -187,7 +189,8 @@ uthum_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sensor[UTHUM_TEMP].units = ENVSYS_STEMP;
 		sc->sc_sensor[UTHUM_TEMP].state = ENVSYS_SINVALID;
 
-		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor[UTHUM_TEMP]);
+		sysmon_envsys_sensor_attach(sc->sc_sme,
+		    &sc->sc_sensor[UTHUM_TEMP]);
 		sc->sc_num_sensors = 1;
 		DPRINTF(("sensor type: TEMPer\n"));
 		break;
@@ -202,7 +205,8 @@ uthum_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sme->sme_refresh = uthum_refresh;
 
 		if (sysmon_envsys_register(sc->sc_sme)) {
-			aprint_error_dev(self, "unable to register with sysmon\n");
+			aprint_error_dev(self,
+			    "unable to register with sysmon\n");
 			sysmon_envsys_destroy(sc->sc_sme);
 		}
 	} else {
@@ -345,7 +349,8 @@ uthum_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	switch (sc->sc_sensortype) {
 	case UTHUM_TYPE_SHT1x:
-		if (uthum_read_data(sc, CMD_GETDATA, buf, sizeof(buf), 1000) != 0) {
+		if (uthum_read_data(sc, CMD_GETDATA, buf, sizeof(buf), 1000)
+		    != 0) {
 			DPRINTF(("uthum: data read fail\n"));
 			sc->sc_sensor[UTHUM_TEMP].state = ENVSYS_SINVALID;
 			sc->sc_sensor[UTHUM_HUMIDITY].state = ENVSYS_SINVALID;

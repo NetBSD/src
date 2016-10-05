@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.12 2016/07/09 20:25:15 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.13 2016/10/05 20:55:57 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.12 2016/07/09 20:25:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.13 2016/10/05 20:55:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -611,7 +611,8 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_udev = uaa->uaa_device;
 	sc->sc_hwrev = urtw_lookup(uaa->uaa_vendor, uaa->uaa_product)->rev;
 
-	printf(": ");
+	aprint_naive("\n");
+	aprint_normal(": ");
 
 	if (sc->sc_hwrev & URTW_HWREV_8187) {
 		urtw_read32_m(sc, URTW_TX_CONF, &data);
@@ -619,7 +620,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 		switch (data) {
 		case URTW_TX_HWREV_8187_D:
 			sc->sc_hwrev |= URTW_HWREV_8187_D;
-			printf("RTL8187 rev D");
+			aprint_normal("RTL8187 rev D");
 			break;
 		case URTW_TX_HWREV_8187B_D:
 			/*
@@ -627,11 +628,11 @@ urtw_attach(device_t parent, device_t self, void *aux)
 			 * USB IDs of RTL8187.
 			 */
 			sc->sc_hwrev = URTW_HWREV_8187B | URTW_HWREV_8187B_B;
-			printf("RTL8187B rev B (early)");
+			aprint_normal("RTL8187B rev B (early)");
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187_B;
-			printf("RTL8187 rev 0x%02x", data >> 25);
+			aprint_normal("RTL8187 rev 0x%02x", data >> 25);
 			break;
 		}
 	} else {
@@ -640,19 +641,19 @@ urtw_attach(device_t parent, device_t self, void *aux)
 		switch (data8) {
 		case URTW_8187B_HWREV_8187B_B:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			printf("RTL8187B rev B");
+			aprint_normal("RTL8187B rev B");
 			break;
 		case URTW_8187B_HWREV_8187B_D:
 			sc->sc_hwrev |= URTW_HWREV_8187B_D;
-			printf("RTL8187B rev D");
+			aprint_normal("RTL8187B rev D");
 			break;
 		case URTW_8187B_HWREV_8187B_E:
 			sc->sc_hwrev |= URTW_HWREV_8187B_E;
-			printf("RTL8187B rev E");
+			aprint_normal("RTL8187B rev E");
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			printf("RTL8187B rev 0x%02x", data8);
+			aprint_normal("RTL8187B rev 0x%02x", data8);
 			break;
 		}
 	}
@@ -748,13 +749,13 @@ urtw_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(URTW_TX_RADIOTAP_PRESENT);
 
-	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
+	aprint_normal(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	ieee80211_announce(ic);
 
 	return;
 fail:
-	printf(": %s failed!\n", __func__);
+	aprint_error(": %s failed!\n", __func__);
 	sc->sc_dying = true;
 }
 

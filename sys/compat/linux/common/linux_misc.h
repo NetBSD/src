@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.h,v 1.24 2013/11/18 01:32:52 chs Exp $	*/
+/*	$NetBSD: linux_misc.h,v 1.24.6.1 2016/10/05 20:55:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,14 +35,16 @@
 /*
  * Options passed to the Linux wait4() system call.
  */
-#define LINUX_WAIT4_WNOHANG   0x00000001
-#define LINUX_WAIT4_WUNTRACED 0x00000002
-#define LINUX_WAIT4_WNOTHREAD 0x20000000
-#define LINUX_WAIT4_WALL      0x40000000
-#define LINUX_WAIT4_WCLONE    0x80000000
+#define LINUX_WAIT4_WNOHANG	0x00000001
+#define LINUX_WAIT4_WUNTRACED	0x00000002
+#define LINUX_WAIT4_WCONTINUED	0x00000008
+#define LINUX_WAIT4_WNOTHREAD	0x20000000
+#define LINUX_WAIT4_WALL	0x40000000
+#define LINUX_WAIT4_WCLONE	0x80000000
 
 #define LINUX_WAIT4_KNOWNFLAGS (LINUX_WAIT4_WNOHANG | \
                                 LINUX_WAIT4_WUNTRACED | \
+                                LINUX_WAIT4_WCONTINUED | \
                                 LINUX_WAIT4_WNOTHREAD | \
                                 LINUX_WAIT4_WALL | \
                                 LINUX_WAIT4_WCLONE)

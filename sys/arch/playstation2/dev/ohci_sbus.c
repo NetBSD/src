@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.11.8.4 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.11.8.5 2016/10/05 20:55:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.4 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.5 2016/10/05 20:55:33 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.11.8.4 2014/12/05 13:23:38 skrll Exp
 #define _PLAYSTATION2_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/autoconf.h>
+
+#include <mips/cpuregs.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

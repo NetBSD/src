@@ -1,4 +1,4 @@
-/*	$NetBSD: context.S,v 1.5 2013/03/24 06:06:19 kiyohara Exp $	*/
+/*	$NetBSD: context.S,v 1.5.12.1 2016/10/05 20:55:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Marcel Moolenaar
@@ -25,7 +25,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/ia64/ia64/context.S,v 1.3 2003/07/02 12:57:07 ru Exp $
+ * $FreeBSD: releng/10.1/sys/ia64/ia64/context.S 204184 2010-02-22 01:23:41Z marcel $
  */
 
 #include <machine/asm.h>
@@ -64,7 +64,7 @@ ENTRY(restorectx, 1)
 {	.mmi
 	loadrs
 	ld8		r21=[r30],16		// rnat
-	mov		pr=r18,0x1003e		// Preserved pr (p1-p5, p16-p63)
+	mov		pr=r18,0x1fffe
 	;;
 }
 {	.mmi
@@ -88,18 +88,18 @@ ENTRY(restorectx, 1)
 {	.mmi
 	ld8.fill	r6=[r14],16		// r6
 	ld8.fill	r7=[r15],16		// r7
-	nop		1
+	nop		0
 	;;
 }
 {	.mmi
 	mov		ar.unat=r16
 	mov		ar.rsc=3
-	nop		2
+	nop		0
 }
 {	.mmi
 	ld8		r17=[r14],16		// b1
 	ld8		r18=[r15],16		// b2
-	nop		3
+	nop		0
 	;;
 }
 {	.mmi
@@ -288,7 +288,7 @@ ENTRY(swapctx, 2)
 (p15)	br.ret.sptk	rp
 	;;
 }
-{	.mfb
+{	.mib
 	mov		r32=r33
 	nop		0
 	br.sptk		restorectx
@@ -340,10 +340,10 @@ ENTRY(save_callee_saved, 1)
 	mov		r17=b5
 	;;
 }
-{	.mfi
+{	.mii
 	st8		[r14]=r17,16		// b5
-	nop		0
 	mov		r16=ar.lc
+	nop		0
 	;;
 }
 {	.mmb
@@ -365,13 +365,13 @@ ENTRY(restore_callee_saved, 1)
 	add		r31=-8,r32
 	;;
 }
-{	.mmb
+{	.mmi
 	ld8.fill	r4=[r31],16		// r4
 	ld8.fill	r5=[r32],16		// r5
 	nop		0
 	;;
 }
-{	.mmb
+{	.mmi
 	ld8.fill	r6=[r31],16		// r6
 	ld8.fill	r7=[r32],16		// r7
 	nop		0
@@ -657,7 +657,7 @@ ENTRY(restore_high_fp, 1)
 	ldf.fill	f32=[r32],32
 	;;
 	ldf.fill	f33=[r31],32
-	ldf.fill	f34=[r32],32
+	ldf.fill	f34=[r32],32	
 	;;
 	ldf.fill	f35=[r31],32
 	ldf.fill	f36=[r32],32

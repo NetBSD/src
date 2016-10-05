@@ -1,5 +1,7 @@
-#	$NetBSD: mk.tegra,v 1.1.2.4 2015/12/27 12:09:34 skrll Exp $
+#	$NetBSD: mk.tegra,v 1.1.2.5 2016/10/05 20:55:26 skrll Exp $
 CPPFLAGS+=		-mcpu=cortex-a15 -mfpu=neon
+
+.include "$S/arch/arm/nvidia/tegra_xusb-fw.mk"
 
 SYSTEM_FIRST_OBJ=	tegra_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/tegra/tegra_start.S

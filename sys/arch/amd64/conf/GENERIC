@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.404.2.9 2016/07/09 20:24:49 skrll Exp $
+# $NetBSD: GENERIC,v 1.404.2.10 2016/10/05 20:55:23 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.404.2.9 $"
+#ident 		"GENERIC-$Revision: 1.404.2.10 $"
 
 maxusers	64		# estimated number of users
 
@@ -190,7 +190,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
 options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
-#options 	MPLS		# MultiProtocol Label Switching (needs ifmpls)
+#options 	MPLS		# MultiProtocol Label Switching (needs mpls)
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
 options 	NETATALK	# AppleTalk networking protocols
@@ -534,6 +534,14 @@ iic*	at ismt?
 #spdmem* at iic? addr 0x55
 #spdmem* at iic? addr 0x56
 #spdmem* at iic? addr 0x57
+#sdtemp* at iic? addr 0x18
+#sdtemp* at iic? addr 0x19
+#sdtemp* at iic? addr 0x1a
+#sdtemp* at iic? addr 0x1b
+#sdtemp* at iic? addr 0x1c
+#sdtemp* at iic? addr 0x1d
+#sdtemp* at iic? addr 0x1e
+#sdtemp* at iic? addr 0x1f
 
 # I2O devices
 iop*	at pci? dev ? function ?	# I/O processor
@@ -1247,7 +1255,7 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ifmpls			# MPLS pseudo-interface
+#pseudo-device	mpls			# MPLS pseudo-interface
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP

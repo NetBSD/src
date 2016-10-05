@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.80.4.4 2016/07/09 20:25:21 skrll Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.80.4.5 2016/10/05 20:56:08 skrll Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,10 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.4 2016/07/09 20:25:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.5 2016/10/05 20:56:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "stf.h"
 #endif
 
 #ifndef INET6
@@ -95,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.4 2016/07/09 20:25:21 skrll Exp $"
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <sys/cpu.h>
 
@@ -112,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.4 2016/07/09 20:25:21 skrll Exp $"
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/in6_gif.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip_ecn.h>
 
@@ -120,14 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80.4.4 2016/07/09 20:25:21 skrll Exp $"
 
 #include <net/net_osdep.h>
 
-#include "stf.h"
-#include "gif.h"	/*XXX*/
-
 #include <net/bpf.h>
-
-#if NGIF > 0
-#include <net/if_gif.h>
-#endif
 
 #include "ioconf.h"
 
@@ -149,11 +144,7 @@ static int	stf_clone_destroy(struct ifnet *);
 struct if_clone stf_cloner =
     IF_CLONE_INITIALIZER("stf", stf_clone_create, stf_clone_destroy);
 
-#if NGIF > 0
-extern int ip_gif_ttl;	/*XXX*/
-#else
-static int ip_gif_ttl = 40;	/*XXX*/
-#endif
+static int ip_stf_ttl = STF_TTL;
 
 extern struct domain inetdomain;
 
@@ -182,8 +173,32 @@ void
 stfattach(int count)
 {
 
+	/*
+	 * Nothing to do here, initialization is handled by the
+	 * module initialization code in stfinit() below).
+	 */
+}
+
+static void
+stfinit(void)
+{
+
 	LIST_INIT(&stf_softc_list);
 	if_clone_attach(&stf_cloner);
+}
+
+static int
+stfdetach(void)
+{
+	int error = 0;
+
+	if (!LIST_EMPTY(&stf_softc_list))
+		error = EBUSY;
+
+	if (error == 0)
+		if_clone_detach(&stf_cloner);
+
+	return error;
 }
 
 static int
@@ -312,9 +327,10 @@ stf_getsrcifa6(struct ifnet *ifp)
 	struct in_ifaddr *ia4;
 	struct sockaddr_in6 *sin6;
 	struct in_addr in;
+	int s;
 
-	IFADDR_READER_FOREACH(ifa, ifp)
-	{
+	s = pserialize_read_enter();
+	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
 		sin6 = (struct sockaddr_in6 *)ifa->ifa_addr;
@@ -326,8 +342,11 @@ stf_getsrcifa6(struct ifnet *ifp)
 		if (ia4 == NULL)
 			continue;
 
+		pserialize_read_exit(s);
+		/* TODO NOMPSAFE */
 		return (struct in6_ifaddr *)ifa;
 	}
+	pserialize_read_exit(s);
 
 	return NULL;
 }
@@ -411,7 +430,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	    &ip->ip_src, sizeof(ip->ip_src));
 	memcpy(&ip->ip_dst, in4, sizeof(ip->ip_dst));
 	ip->ip_p = IPPROTO_IPV6;
-	ip->ip_ttl = ip_gif_ttl;	/*XXX*/
+	ip->ip_ttl = ip_stf_ttl;
 	ip->ip_len = htons(m->m_pkthdr.len);
 	if (ifp->if_flags & IFF_LINK1)
 		ip_ecn_ingress(ECN_ALLOWED, &ip->ip_tos, &tos);
@@ -710,3 +729,10 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	return error;
 }
+
+/*
+ * Module infrastructure
+ */
+#include "if_module.h"
+
+IF_MODULE(MODULE_CLASS_DRIVER, stf, "")

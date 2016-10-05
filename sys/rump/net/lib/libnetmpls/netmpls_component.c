@@ -1,4 +1,4 @@
-/* $NetBSD: netmpls_component.c,v 1.2.2.2 2016/03/19 11:30:38 skrll Exp $ */
+/* $NetBSD: netmpls_component.c,v 1.2.2.3 2016/10/05 20:56:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.2.2.2 2016/03/19 11:30:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.2.2.3 2016/10/05 20:56:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -60,5 +60,5 @@ RUMP_COMPONENT(RUMP_COMPONENT_NET)
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {
 
-	ifmplsattach(0);
+	mplsattach(0);
 }

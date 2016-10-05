@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.31.6.4 2016/03/19 11:30:19 skrll Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.31.6.5 2016/10/05 20:55:56 skrll Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.6.4 2016/03/19 11:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.31.6.5 2016/10/05 20:55:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -905,7 +905,7 @@ static int
 sdmmc_mem_mmc_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 {
 	int width, value, hs_timing, bus_clock, error;
-	char ext_csd[512];
+	uint8_t ext_csd[512];
 	uint32_t sectors = 0;
 
 	sc->sc_transfer_mode = NULL;

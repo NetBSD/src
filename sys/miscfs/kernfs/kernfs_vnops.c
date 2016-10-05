@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.154.4.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.154.4.2 2016/10/05 20:56:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.154.4.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.154.4.2 2016/10/05 20:56:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,9 +130,9 @@ const struct kernfs_fileop kernfs_default_fileops[] = {
     .kf_vop = kernfs_default_fileop_getattr },
   { .kf_fileop = KERNFS_FILEOP_IOCTL },
   { .kf_fileop = KERNFS_FILEOP_CLOSE },
-  { .kf_fileop = KERNFS_FILEOP_READ, 
+  { .kf_fileop = KERNFS_FILEOP_READ,
     .kf_vop = kernfs_default_xread },
-  { .kf_fileop = KERNFS_FILEOP_WRITE, 
+  { .kf_fileop = KERNFS_FILEOP_WRITE,
     .kf_vop = kernfs_default_xwrite },
 };
 
@@ -1082,7 +1082,6 @@ kernfs_reclaim(void *v)
 	struct kernfs_node *kfs = VTOKERN(vp);
 
 	vp->v_data = NULL;
-	vcache_remove(vp->v_mount, &kfs->kfs_kt, sizeof(kfs->kfs_kt));
 	mutex_enter(&kfs_lock);
 	TAILQ_REMOVE(&VFSTOKERNFS(vp->v_mount)->nodelist, kfs, kfs_list);
 	mutex_exit(&kfs_lock);

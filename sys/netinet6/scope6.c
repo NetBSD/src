@@ -1,4 +1,4 @@
-/*	$NetBSD: scope6.c,v 1.10.2.3 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: scope6.c,v 1.10.2.4 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME$	*/
 
 /*-
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.3 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scope6.c,v 1.10.2.4 2016/10/05 20:56:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -56,7 +56,8 @@ int ip6_use_defzone = 0;
 
 static struct scope6_id sid_default;
 #define SID(ifp) \
-	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
+    ((ifp)->if_afdata[AF_INET6] == NULL ? NULL : \
+	((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->scope6_id)
 
 void
 scope6_init(void)
@@ -100,9 +101,7 @@ scope6_set(struct ifnet *ifp, const struct scope6_id *idlist)
 {
 	int i;
 	int error = 0;
-	struct scope6_id *sid = NULL;
-
-	sid = SID(ifp);
+	struct scope6_id *sid = SID(ifp);
 
 	if (!sid)	/* paranoid? */
 		return (EINVAL);
@@ -384,7 +383,7 @@ in6_setzoneid(struct in6_addr *in6, uint32_t zoneid)
 /*
  * Determine the appropriate scope zone ID for in6 and ifp.  If ret_id is
  * non NULL, it is set to the zone ID.  If the zone ID needs to be embedded
- * in the in6_addr structure, in6 will be modified. 
+ * in the in6_addr structure, in6 will be modified.
  */
 int
 in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
@@ -393,7 +392,8 @@ in6_setscope(struct in6_addr *in6, const struct ifnet *ifp, uint32_t *ret_id)
 	uint32_t zoneid = 0;
 	const struct scope6_id *sid = SID(ifp);
 
-	KASSERT(sid != NULL);
+	if (sid == NULL)
+		return EINVAL;
 
 	/*
 	 * special case: the loopback address can only belong to a loopback

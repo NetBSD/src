@@ -1,4 +1,4 @@
-/* $NetBSD: titemp.c,v 1.1.2.3 2015/12/27 12:09:49 skrll Exp $ */
+/* $NetBSD: titemp.c,v 1.1.2.4 2016/10/05 20:55:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.1.2.3 2015/12/27 12:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: titemp.c,v 1.1.2.4 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ titemp_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 		return;
 	}
-		
+
 	iic_acquire_bus(sc->sc_i2c, 0);
 	if ((error = titemp_read(sc, reg_hi, &temp[0])) != 0)
 		goto done;
@@ -176,7 +176,7 @@ done:
 	} else {
 		edata->value_cur =
 		    ((uint64_t)temp[0] * 1000000) +
-		    ((uint64_t)temp[1] * 62500) +
+		    ((uint64_t)(temp[1]>>4) * 62500) +
 		    + 273150000;
 		edata->state = ENVSYS_SVALID;
 	}

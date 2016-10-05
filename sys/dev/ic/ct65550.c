@@ -1,4 +1,4 @@
-/*	$NetBSD: ct65550.c,v 1.10 2014/01/04 16:37:05 macallan Exp $	*/
+/*	$NetBSD: ct65550.c,v 1.10.6.1 2016/10/05 20:55:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.10 2014/01/04 16:37:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct65550.c,v 1.10.6.1 2016/10/05 20:55:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -770,12 +770,14 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 	struct chipsfb_softc *sc = vd->cookie;
 	paddr_t pa;
 
-	if (sc->sc_mmap != NULL)
-		return sc->sc_mmap(v, vs, offset, prot);
+	if (sc->sc_mmap != NULL) {
+		pa = sc->sc_mmap(v, vs, offset, prot);
+		if (pa != -1) return pa;
+	}
 
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->memsize) {
-		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
+		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb, offset, prot,
 		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
@@ -792,7 +794,7 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= sc->sc_fb) && (offset < (sc->sc_fb + sc->sc_fbsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 

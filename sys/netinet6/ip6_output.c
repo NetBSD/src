@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.160.2.4 2016/07/09 20:25:22 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.160.2.5 2016/10/05 20:56:09 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.4 2016/07/09 20:25:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.5 2016/10/05 20:56:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.160.2.4 2016/07/09 20:25:22 skrll E
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
@@ -135,6 +136,7 @@ static int ip6_splithdr(struct mbuf *, struct ip6_exthdrs *);
 static int ip6_getpmtu(struct route *, struct route *, struct ifnet *,
     const struct in6_addr *, u_long *, int *);
 static int copypktopts(struct ip6_pktopts *, struct ip6_pktopts *, int);
+static int ip6_ifaddrvalid(const struct in6_addr *);
 
 #ifdef RFC2292
 static int ip6_pcbopts(struct ip6_pktopts **, struct socket *, struct sockopt *);
@@ -188,8 +190,6 @@ ip6_output(
 	struct psref psref, psref_ia;
 	int bound = curlwp_bind();
 	bool release_psref_ia = false;
-
-	memset(&ip6route, 0, sizeof(ip6route));
 
 #ifdef  DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
@@ -437,6 +437,7 @@ ip6_output(
 	 */
 	/* initialize cached route */
 	if (ro == NULL) {
+		memset(&ip6route, 0, sizeof(ip6route));
 		ro = &ip6route;
 	}
 	ro_pmtu = ro;
@@ -527,6 +528,8 @@ ip6_output(
 	 */
 	if (ia != NULL && ia->ia_ifp) {
 		origifp = ia->ia_ifp;
+		if (if_is_deactivated(origifp))
+			goto bad;
 		if_acquire_NOMPSAFE(origifp, &psref_ia);
 		release_psref_ia = true;
 	} else
@@ -548,6 +551,25 @@ ip6_output(
 		goto badscope;
 
 	/* scope check is done. */
+
+	/* Ensure we only send from a valid address. */
+	if ((error = ip6_ifaddrvalid(&src0)) != 0) {
+		nd6log(LOG_ERR,
+		    "refusing to send from invalid address %s (pid %d)\n",
+		    ip6_sprintf(&src0), curproc->p_pid);
+		IP6_STATINC(IP6_STAT_ODROPPED);
+		in6_ifstat_inc(origifp, ifs6_out_discard);
+		if (error == 1)
+			/*
+			 * Address exists, but is tentative or detached.
+			 * We can't send from it because it's invalid,
+			 * so we drop the packet.
+			 */
+			error = 0;
+		else
+			error = EADDRNOTAVAIL;
+		goto bad;
+	}
 
 	if (rt == NULL || IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		dst = satocsin6(rtcache_getdst(ro));
@@ -762,13 +784,16 @@ ip6_output(
 		/* case 1-a and 2-a */
 		struct in6_ifaddr *ia6;
 		int sw_csum;
+		int s;
 
 		ip6 = mtod(m, struct ip6_hdr *);
+		s = pserialize_read_enter();
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 		if (ia6) {
 			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes += m->m_pkthdr.len;
 		}
+		pserialize_read_exit(s);
 
 		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 		if ((sw_csum & (M_CSUM_UDPv6|M_CSUM_TCPv6)) != 0) {
@@ -954,7 +979,9 @@ sendorfree:
 		m->m_nextpkt = 0;
 		if (error == 0) {
 			struct in6_ifaddr *ia6;
+			int s;
 			ip6 = mtod(m, struct ip6_hdr *);
+			s = pserialize_read_enter();
 			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 			if (ia6) {
 				/*
@@ -964,6 +991,7 @@ sendorfree:
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				    m->m_pkthdr.len;
 			}
+			pserialize_read_exit(s);
 			KASSERT(dst != NULL);
 			error = nd6_output(ifp, origifp, m, dst, rt);
 		} else
@@ -974,7 +1002,8 @@ sendorfree:
 		IP6_STATINC(IP6_STAT_FRAGMENTED);
 
 done:
-	rtcache_free(&ip6route);
+	if (ro == &ip6route)
+		rtcache_free(&ip6route);
 
 #ifdef IPSEC
 	if (sp != NULL)
@@ -3241,4 +3270,39 @@ ip6_optlen(struct in6pcb *in6p)
 	len += elen(in6p->in6p_outputopts->ip6po_dest2);
 	return len;
 #undef elen
+}
+
+/*
+ * Ensure sending address is valid.
+ * Returns 0 on success, -1 if an error should be sent back or 1
+ * if the packet could be dropped without error (protocol dependent).
+ */
+static int
+ip6_ifaddrvalid(const struct in6_addr *addr)
+{
+	struct sockaddr_in6 sin6;
+	int s, error;
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia6;
+
+	if (IN6_IS_ADDR_UNSPECIFIED(addr))
+		return 0;
+
+	memset(&sin6, 0, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(sin6);
+	sin6.sin6_addr = *addr;
+
+	s = pserialize_read_enter();
+	ifa = ifa_ifwithaddr(sin6tosa(&sin6));
+	if ((ia6 = ifatoia6(ifa)) == NULL ||
+	    ia6->ia6_flags & (IN6_IFF_ANYCAST | IN6_IFF_DUPLICATED))
+		error = -1;
+	else if (ia6->ia6_flags & (IN6_IFF_TENTATIVE | IN6_IFF_DETACHED))
+		error = 1;
+	else
+		error = 0;
+	pserialize_read_exit(s);
+
+	return error;
 }
