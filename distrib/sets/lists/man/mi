@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1485.2.9 2015/04/30 06:07:32 riz Exp $
+# $NetBSD: mi,v 1.1485.2.10 2016/10/06 05:51:23 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -372,6 +372,7 @@
 ./usr/share/man/cat1/openssl.0			man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_c_rehash.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ca.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_crl.0		man-crypto-catman	crypto,.cat
@@ -402,6 +403,7 @@
 ./usr/share/man/cat1/openssl_smime.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_speed.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_spkac.0		man-crypto-catman	crypto,.cat
+./usr/share/man/cat1/openssl_tsget.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_verify.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_version.0		man-crypto-catman	crypto,.cat
 ./usr/share/man/cat1/openssl_x509.0		man-crypto-catman	crypto,.cat
@@ -3490,6 +3492,7 @@
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_asn1parse.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_c_rehash.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ca.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ciphers.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_crl.html		man-crypto-htmlman	crypto,html
@@ -3520,6 +3523,7 @@
 ./usr/share/man/html1/openssl_smime.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_speed.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_spkac.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_tsget.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_verify.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_version.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_x509.html		man-crypto-htmlman	crypto,html
@@ -6254,6 +6258,7 @@
 ./usr/share/man/man1/openssl.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_c_rehash.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ciphers.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_crl.1		man-crypto-man		crypto,.man
@@ -6284,6 +6289,7 @@
 ./usr/share/man/man1/openssl_smime.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_speed.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_spkac.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_tsget.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_verify.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_version.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_x509.1		man-crypto-man		crypto,.man

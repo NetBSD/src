@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1906.2.10 2016/05/18 09:14:14 snj Exp $
+#	$NetBSD: mi,v 1.1906.2.11 2016/10/06 05:51:23 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4694,6 +4694,7 @@
 ./usr/share/man/cat3/CMSG_SPACE.0		comp-c-catman		.cat
 ./usr/share/man/cat3/CONF_modules_free.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CONF_modules_load_file.0	comp-c-man		crypto,.cat
+./usr/share/man/cat3/CMS_add1_signer.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/CRYPTO_set_ex_data.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/DH_generate_key.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/DH_generate_parameters.0	comp-c-catman		crypto,.cat
@@ -5014,9 +5015,11 @@
 ./usr/share/man/cat3/SSL_CTX_set_msg_callback.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_options.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_quiet_shutdown.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_read_ahead.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_cache_mode.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_session_id_context.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_ssl_version.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/SSL_CTX_set_tlsext_status_cb.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tlsext_ticket_key_cb.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_timeout.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/SSL_CTX_set_tmp_dh_callback.0	comp-c-catman		crypto,.cat
@@ -5946,9 +5949,12 @@
 ./usr/share/man/cat3/curses_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cuserid.0			comp-c-catman		.cat
 ./usr/share/man/cat3/d2i_ASN1_OBJECT.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_CMS_ContentInfo.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DHparams.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_DSAPublicKey.0		comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_ECPrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_PKCS8PrivateKey.0	comp-c-catman		crypto,.cat
+./usr/share/man/cat3/d2i_PrivateKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_RSAPublicKey.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_SSL_SESSION.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/d2i_X509.0			comp-c-catman		crypto,.cat
@@ -11598,6 +11604,7 @@
 ./usr/share/man/html3/CMSG_SPACE.html		comp-c-htmlman		html
 ./usr/share/man/html3/CONF_modules_free.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/CONF_modules_load_file.html	comp-c-man		crypto,html
+./usr/share/man/html3/CMS_add1_signer.html	comp-c-man		crypto,html
 ./usr/share/man/html3/CRYPTO_set_ex_data.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/DH_generate_key.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/DH_generate_parameters.html	comp-c-htmlman		crypto,html
@@ -11916,9 +11923,11 @@
 ./usr/share/man/html3/SSL_CTX_set_msg_callback.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_options.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_quiet_shutdown.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_read_ahead.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_session_cache_mode.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_session_id_context.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_ssl_version.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/SSL_CTX_set_tlsext_status_cb.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tlsext_ticket_key_cb.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_timeout.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/SSL_CTX_set_tmp_dh_callback.html	comp-c-htmlman		crypto,html
@@ -12813,9 +12822,12 @@
 ./usr/share/man/html3/curses_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/cuserid.html		comp-c-htmlman		html
 ./usr/share/man/html3/d2i_ASN1_OBJECT.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_CMS_ContentInfo.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_DHparams.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_DSAPublicKey.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_ECPrivateKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_PKCS8PrivateKey.html	comp-c-htmlman		crypto,html
+./usr/share/man/html3/d2i_PrivateKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_RSAPublicKey.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_SSL_SESSION.html	comp-c-htmlman		crypto,html
 ./usr/share/man/html3/d2i_X509.html		comp-c-htmlman		crypto,html
@@ -18319,6 +18331,7 @@
 ./usr/share/man/man3/CMSG_SPACE.3		comp-c-man		.man
 ./usr/share/man/man3/CONF_modules_free.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/CONF_modules_load_file.3	comp-c-man		crypto,.man
+./usr/share/man/man3/CMS_add1_signer.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/CRYPTO_set_ex_data.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/DH_generate_key.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/DH_generate_parameters.3	comp-c-man		crypto,.man
@@ -18639,9 +18652,11 @@
 ./usr/share/man/man3/SSL_CTX_set_msg_callback.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_options.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_quiet_shutdown.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_read_ahead.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_session_cache_mode.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_session_id_context.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_ssl_version.3	comp-c-man		crypto,.man
+./usr/share/man/man3/SSL_CTX_set_tlsext_status_cb.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tlsext_ticket_key_cb.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_timeout.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/SSL_CTX_set_tmp_dh_callback.3	comp-c-man		crypto,.man
@@ -19589,9 +19604,12 @@
 ./usr/share/man/man3/curses_window.3		comp-c-man		.man
 ./usr/share/man/man3/cuserid.3			comp-c-man		.man
 ./usr/share/man/man3/d2i_ASN1_OBJECT.3		comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_CMS_ContentInfo.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_DHparams.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_DSAPublicKey.3		comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_ECPrivateKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_PKCS8PrivateKey.3	comp-c-man		crypto,.man
+./usr/share/man/man3/d2i_PrivateKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_RSAPublicKey.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_SSL_SESSION.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/d2i_X509.3			comp-c-man		crypto,.man
