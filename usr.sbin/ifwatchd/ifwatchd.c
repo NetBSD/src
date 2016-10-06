@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.39 2016/10/06 11:08:55 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.40 2016/10/06 11:13:57 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.39 2016/10/06 11:08:55 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.40 2016/10/06 11:13:57 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -470,8 +470,7 @@ check_carrier(const struct if_msghdr *ifm)
 	 * inhibit_initial is not set
 	 */
 	carrier_status = ifm->ifm_data.ifi_link_state;
-	if ((carrier_status != p->last_carrier_status) ||
-	    ((p->last_carrier_status == -1) && !inhibit_initial)) {
+	if (carrier_status != p->last_carrier_status) {
 		switch (carrier_status) {
 		case LINK_STATE_UP:
 			ev = CARRIER;
@@ -506,7 +505,7 @@ check_announce(const struct if_announcemsghdr *ifan)
 			break;
 		case IFAN_DEPARTURE:
 			p->index = -1;
-			p->last_carrier_status = LINK_STATE_UNKNOWN;
+			p->last_carrier_status = -1;
 			invoke_script(p->ifname, DEPARTURE, NULL, NULL);
 			break;
 		default:
