@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.1 2016/10/04 04:15:25 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.2 2016/10/06 02:44:48 kre Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -207,6 +207,7 @@ mtudisc_basic_body()
 	atf_check -s exit:0 \
 		-o match:"^10.0.0.2 +10.0.1.1 +UGHS +- +- +1280 +shmif0" \
 		rump.netstat -nr -f inet
+
 }
 
 cleanup()
@@ -240,6 +241,7 @@ dump()
 mtudisc_basic_cleanup()
 {
 	$DEBUG && dump
+	kill "$(cat ${HTTPD_PID})"
 	env RUMP_SERVER=$SOCKLOCAL rump.halt
 	env RUMP_SERVER=$SOCKGATEWAY rump.halt
 	env RUMP_SERVER=$SOCKREMOTE rump.halt
