@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.37 2016/10/06 10:30:31 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.38 2016/10/06 10:33:05 roy Exp $	*/
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ifwatchd.c,v 1.37 2016/10/06 10:30:31 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.38 2016/10/06 10:33:05 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -338,14 +338,7 @@ check_addrs(const struct ifa_msghdr *ifam)
 	if (ifa != NULL && ifd != NULL) {
 		ev = ifam->ifam_type == RTM_DELADDR ? DOWN : UP;
 		aflag = check_addrflags(ifa->sa_family, ifam->ifam_addrflags);
-		if (ev == UP) {
-			if (aflag == NOTREADY)
-				return;
-			if (aflag == DETACHED)
-				return;		/* XXX set ev to DOWN? */
-		}
-		if ((ev == UP && aflag == READY) ||
-		    (ev == DOWN && aflag == DETACHED /* XXX why DETACHED? */))
+		if ((ev == UP && aflag == READY) || ev == DOWN)
 			invoke_script(ifd->ifname, ev, ifa, brd);
 	}
 }
