@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.36 2016/09/29 15:25:28 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.37 2016/10/06 10:30:31 roy Exp $	*/
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ifwatchd.c,v 1.36 2016/09/29 15:25:28 roy Exp $");
+ __RCSID("$NetBSD: ifwatchd.c,v 1.37 2016/10/06 10:30:31 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -63,8 +63,8 @@ __dead static void usage(void);
 static void dispatch(const void *, size_t);
 static enum addrflag check_addrflags(int af, int addrflags);
 static void check_addrs(const struct ifa_msghdr *ifam);
-static void invoke_script(const struct sockaddr *sa, const struct sockaddr *dst,
-    enum event ev, int ifindex, const char *ifname_hint);
+static void invoke_script(const char *ifname, enum event ev,
+    const struct sockaddr *sa, const struct sockaddr *dst);
 static void list_interfaces(const char *ifnames);
 static void check_announce(const struct if_announcemsghdr *ifan);
 static void check_carrier(const struct if_msghdr *ifm);
@@ -346,19 +346,26 @@ check_addrs(const struct ifa_msghdr *ifam)
 		}
 		if ((ev == UP && aflag == READY) ||
 		    (ev == DOWN && aflag == DETACHED /* XXX why DETACHED? */))
-			invoke_script(ifa, brd, ev, ifd->index, ifd->ifname);
+			invoke_script(ifd->ifname, ev, ifa, brd);
 	}
 }
 
 static void
-invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
-    enum event ev, int ifindex, const char *ifname_hint)
+invoke_script(const char *ifname, enum event ev,
+    const struct sockaddr *sa, const struct sockaddr *dest)
 {
-	char addr[NI_MAXHOST], daddr[NI_MAXHOST], ifname_buf[IFNAMSIZ];
-	const char * volatile ifname;
+	char addr[NI_MAXHOST], daddr[NI_MAXHOST];
 	const char *script;
 	int status;
 
+	if (ifname == NULL)
+		return;
+
+	script = *scripts[ev];
+	if (script == NULL)
+		return;
+
+	addr[0] = daddr[0] = 0;
 	if (sa != NULL) {
 		if (sa->sa_len == 0) {
 			fprintf(stderr,
@@ -384,15 +391,7 @@ invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
 				return;
 		}
 		}
-	}
 
-	addr[0] = daddr[0] = 0;
-	ifname = if_indextoname(ifindex, ifname_buf);
-	ifname = ifname ? ifname : ifname_hint;
-	if (ifname == NULL)
-		return;
-
-	if (sa != NULL) {
 		if (getnameinfo(sa, sa->sa_len, addr, sizeof addr, NULL, 0,
 		    NI_NUMERICHOST)) {
 			if (verbose)
@@ -400,6 +399,7 @@ invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
 			return;	/* this address can not be handled */
 		}
 	}
+
 	if (dest != NULL) {
 		if (getnameinfo(dest, dest->sa_len, daddr, sizeof daddr,
 		    NULL, 0, NI_NUMERICHOST)) {
@@ -408,9 +408,6 @@ invoke_script(const struct sockaddr *sa, const struct sockaddr *dest,
 			return;	/* this address can not be handled */
 		}
 	}
-
-	script = *scripts[ev];
-	if (script == NULL) return;
 
 	if (verbose)
 		(void) printf("calling: %s %s %s %s %s %s\n",
@@ -496,7 +493,7 @@ check_carrier(const struct if_msghdr *ifm)
 				printf("unknown link status ignored\n");
 			return;
 		}
-		invoke_script(NULL, NULL, ev, ifm->ifm_index, p->ifname);
+		invoke_script(p->ifname, ev, NULL, NULL);
 		p->last_carrier_status = carrier_status;
 	}
 }
@@ -513,12 +510,10 @@ check_announce(const struct if_announcemsghdr *ifan)
 
 		switch (ifan->ifan_what) {
 		case IFAN_ARRIVAL:
-			invoke_script(NULL, NULL, ARRIVAL, p->index,
-			    NULL);
+			invoke_script(p->ifname, ARRIVAL, NULL, NULL);
 			break;
 		case IFAN_DEPARTURE:
-			invoke_script(NULL, NULL, DEPARTURE, p->index,
-			    p->ifname);
+			invoke_script(p->ifname, DEPARTURE, NULL, NULL);
 			break;
 		default:
 			if (verbose)
@@ -592,8 +587,7 @@ run_initial_ups(void)
 
 		ifa = p->ifa_addr;
 		if (ifa != NULL && ifa->sa_family == AF_LINK)
-			invoke_script(NULL, NULL, ARRIVAL, ifd->index,
-			    NULL);
+			invoke_script(ifd->ifname, ARRIVAL, NULL, NULL);
 
 		if ((p->ifa_flags & IFF_UP) == 0)
 			continue;
@@ -608,8 +602,7 @@ run_initial_ups(void)
 			if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1
 			    && (ifmr.ifm_status & IFM_AVALID)
 			    && (ifmr.ifm_status & IFM_ACTIVE)) {
-				invoke_script(NULL, NULL, CARRIER,
-				    ifd->index, ifd->ifname);
+				invoke_script(ifd->ifname, CARRIER, NULL, NULL);
 				ifd->last_carrier_status =
 				    LINK_STATE_UP;
 			    }
@@ -618,7 +611,7 @@ run_initial_ups(void)
 		aflag = check_addrflags(ifa->sa_family, p->ifa_addrflags);
 		if (aflag != READY)
 			continue;
-		invoke_script(ifa, p->ifa_dstaddr, UP, ifd->index, ifd->ifname);
+		invoke_script(ifd->ifname, UP, ifa, p->ifa_dstaddr);
 	}
 	freeifaddrs(res);
 out:
