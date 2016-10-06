@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.38 2016/10/06 10:33:05 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.39 2016/10/06 11:08:55 roy Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.38 2016/10/06 10:33:05 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.39 2016/10/06 11:08:55 roy Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,6 @@ static void invoke_script(const char *ifname, enum event ev,
 static void list_interfaces(const char *ifnames);
 static void check_announce(const struct if_announcemsghdr *ifan);
 static void check_carrier(const struct if_msghdr *ifm);
-static void rescan_interfaces(void);
 static void free_interfaces(void);
 static struct interface_data * find_interface(int index);
 static void run_initial_ups(void);
@@ -257,7 +256,6 @@ dispatch(const void *msg, size_t len)
 		check_addrs(msg);
 		break;
 	case RTM_IFANNOUNCE:
-		rescan_interfaces();
 		check_announce(msg);
 		break;
 	case RTM_IFINFO:
@@ -503,9 +501,12 @@ check_announce(const struct if_announcemsghdr *ifan)
 
 		switch (ifan->ifan_what) {
 		case IFAN_ARRIVAL:
+			p->index = ifan->ifan_index;
 			invoke_script(p->ifname, ARRIVAL, NULL, NULL);
 			break;
 		case IFAN_DEPARTURE:
+			p->index = -1;
+			p->last_carrier_status = LINK_STATE_UNKNOWN;
 			invoke_script(p->ifname, DEPARTURE, NULL, NULL);
 			break;
 		default:
@@ -515,19 +516,6 @@ check_announce(const struct if_announcemsghdr *ifan)
 			break;
 		}
 		return;
-	}
-}
-
-static void
-rescan_interfaces(void)
-{
-	struct interface_data * p;
-
-	SLIST_FOREACH(p, &ifs, next) {
-		p->index = if_nametoindex(p->ifname);
-		if (verbose)
-			printf("interface \"%s\" has index %d\n", p->ifname,
-			    p->index);
 	}
 }
 
