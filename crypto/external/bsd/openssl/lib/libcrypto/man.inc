@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.4 2014/08/10 17:07:03 spz Exp $
+#	$NetBSD: man.inc,v 1.4.4.1 2016/10/06 05:38:00 snj Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -12,7 +12,8 @@ MAN+=	openssl_pkcs12.1 openssl_crl2pkcs7.1 openssl_pkcs7.1 \
 	openssl_ocsp.1 openssl_req.1 openssl_nseq.1 openssl_s_server.1 \
 	openssl_ciphers.1 openssl_s_client.1 openssl_dgst.1 \
 	openssl_verify.1 openssl_s_time.1 openssl_errstr.1 \
-	openssl_ec.1 openssl_ecparam.1 openssl_x509v3_config.1
+	openssl_ec.1 openssl_ecparam.1 openssl_x509v3_config.1 \
+	openssl_c_rehash.1 openssl_tsget.1
 
 MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	openssl_rc4.3 openssl_md5.3 SMIME_read_PKCS7.3 SMIME_write_PKCS7.3 \
@@ -95,7 +96,10 @@ MAN+=	RSA_padding_add_PKCS1_type_1.3 openssl_mdc2.3 BIO_f_base64.3 \
 	X509_STORE_CTX_new.3 X509_STORE_CTX_set_verify_cb.3 \
 	X509_STORE_CTX_set_verify_cb.3 X509_STORE_set_verify_cb_func.3 \
 	X509_VERIFY_PARAM_set_flags.3 X509_verify_cert.3 \
-	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_ticket_key_cb.3
+	EVP_PKEY_verify_recover.3 SSL_CTX_set_tlsext_ticket_key_cb.3 \
+	CMS_add1_signer.3 d2i_CMS_ContentInfo.3 d2i_ECPrivateKey.3 \
+	d2i_PrivateKey.3 SSL_CTX_set_read_ahead.3 \
+	SSL_CTX_set_tlsext_status_cb.3
 
 MAN+=	openssl.cnf.5
 
