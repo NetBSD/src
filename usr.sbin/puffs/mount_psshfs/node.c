@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.64 2012/01/20 22:07:58 jakllsch Exp $	*/
+/*	$NetBSD: node.c,v 1.65 2016/10/07 21:09:57 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.64 2012/01/20 22:07:58 jakllsch Exp $");
+__RCSID("$NetBSD: node.c,v 1.65 2016/10/07 21:09:57 christos Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -563,7 +563,7 @@ again:
 		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
 	}
 
-	if (rv == 0 && *resid > 0) {
+	if (rv == 0 && *resid > 0 && readlen > 0) {
 		reqid = NEXTREQ(pctx);
 		psbuf_recycleout(pb);
 		goto again;
