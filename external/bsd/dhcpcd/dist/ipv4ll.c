@@ -45,6 +45,7 @@
 #include "ipv4ll.h"
 #include "script.h"
 
+#ifdef IPV4LL
 static const struct in_addr inaddr_llmask = {
 	.s_addr = HTONL(LINKLOCAL_MASK)
 };
@@ -489,4 +490,5 @@ ipv4ll_handlert(struct dhcpcd_ctx *ctx, __unused int cmd, const struct rt *rt)
 
 	return 0;
 }
+#endif
 #endif

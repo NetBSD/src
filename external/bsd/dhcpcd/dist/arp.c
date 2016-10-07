@@ -445,6 +445,8 @@ arp_handleifa(int cmd, struct ipv4_addr *addr)
 	struct iarp_state *state;
 	struct arp_state *astate, *asn;
 
+	/* If the address is deleted, the ARP state should be freed by the
+	 * state owner, such as DHCP or IPv4LL. */
 	if (cmd != RTM_NEWADDR || (state = ARP_STATE(addr->iface)) == NULL)
 		return;
 

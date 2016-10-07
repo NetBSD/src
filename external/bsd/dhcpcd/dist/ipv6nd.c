@@ -712,6 +712,19 @@ try_script:
 	}
 }
 
+#ifndef DHCP6
+/* If DHCPv6 is compiled out, supply a shim to provide an error message
+ * if IPv6RA requests DHCPv6. */
+#undef dhcp6_start
+static int
+dhcp6_start(__unused struct interface *ifp, __unused enum DH6S init_state)
+{
+
+	errno = ENOTSUP;
+	return -1;
+}
+#endif
+
 static void
 ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
     struct icmp6_hdr *icp, size_t len, int hoplimit)
@@ -1102,13 +1115,19 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 handle_flag:
 	if (!(ifp->options->options & DHCPCD_DHCP6))
 		goto nodhcp6;
+/* Only log a DHCPv6 start error if compiled in or debugging is enabled. */
+#ifdef DHCP6
+#define LOG_DHCP6	LOG_ERR
+#else
+#define LOG_DHCP6	LOG_DEBUG
+#endif
 	if (rap->flags & ND_RA_FLAG_MANAGED) {
 		if (new_data && dhcp6_start(ifp, DH6S_INIT) == -1)
-			logger(ifp->ctx, LOG_ERR,
+			logger(ifp->ctx, LOG_DHCP6,
 			    "dhcp6_start: %s: %m", ifp->name);
 	} else if (rap->flags & ND_RA_FLAG_OTHER) {
 		if (new_data && dhcp6_start(ifp, DH6S_INFORM) == -1)
-			logger(ifp->ctx, LOG_ERR,
+			logger(ifp->ctx, LOG_DHCP6,
 			    "dhcp6_start: %s: %m", ifp->name);
 	} else {
 		if (new_data)
@@ -1551,7 +1570,7 @@ ipv6nd_handledata(void *arg)
 	ctx = dctx->ipv6;
 	ctx->rcvhdr.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
 	    CMSG_SPACE(sizeof(int));
-	len = recvmsg(ctx->nd_fd, &ctx->rcvhdr, 0);
+	len = recvmsg_realloc(ctx->nd_fd, &ctx->rcvhdr, 0);
 	if (len == -1) {
 		logger(dctx, LOG_ERR, "recvmsg: %m");
 		eloop_event_delete(dctx->eloop, ctx->nd_fd);
