@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.43 2016/10/07 10:58:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -28,9 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $"
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.42 2016/09/20 08:38:55 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.43 2016/10/07 10:58:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
