@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.111 2016/07/31 18:14:36 dholland Exp $	*/
+/*	$NetBSD: ping.c,v 1.112 2016/10/07 22:31:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.111 2016/07/31 18:14:36 dholland Exp $");
+__RCSID("$NetBSD: ping.c,v 1.112 2016/10/07 22:31:05 joerg Exp $");
 #endif
 
 #include <stdio.h>
@@ -181,7 +181,7 @@ static struct {
 #define	opack_icmp	out_pack.o_u.u_icmp
 static struct ip *opack_ip;
 
-static char optspace[MAX_IPOPTLEN];		/* record route space */
+static uint8_t optspace[MAX_IPOPTLEN];		/* record route space */
 static int optlen;
 
 static int npackets;				/* total packets to send */
