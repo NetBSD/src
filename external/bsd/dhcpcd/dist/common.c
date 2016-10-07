@@ -27,7 +27,11 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
+#ifdef __sun
+#include <sys/sysmacros.h>
+#endif
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -52,6 +56,9 @@
 #ifndef _PATH_DEVNULL
 #  define _PATH_DEVNULL "/dev/null"
 #endif
+
+/* Most route(4) messages are less than 256 bytes. */
+#define IOVEC_BUFSIZ	256
 
 #if USE_LOGFILE
 void
@@ -373,4 +380,52 @@ read_hwaddr_aton(uint8_t **data, const char *path)
 	}
 	fclose(fp);
 	return len;
+}
+
+ssize_t
+recvmsg_realloc(int fd, struct msghdr *msg, int flags)
+{
+	struct iovec *iov;
+	ssize_t slen;
+	size_t len;
+	void *n;
+
+	assert(msg != NULL);
+	assert(msg->msg_iov != NULL && msg->msg_iovlen > 0);
+	assert((flags & (MSG_PEEK | MSG_TRUNC)) == 0);
+
+	/* Assume we are reallocing the last iovec. */
+	iov = &msg->msg_iov[msg->msg_iovlen - 1];
+
+	for (;;) {
+		/* Passing MSG_TRUNC should return the actual size needed. */
+		slen = recvmsg(fd, msg, flags | MSG_PEEK | MSG_TRUNC);
+		if (slen == -1)
+			return -1;
+		if (!(msg->msg_flags & MSG_TRUNC))
+			break;
+
+		len = (size_t)slen;
+
+		/* Some kernels return the size of the receive buffer
+		 * on truncation, not the actual size needed.
+		 * So grow the buffer and try again. */
+		if (iov->iov_len == len)
+			len++;
+		else if (iov->iov_len > len)
+			break;
+		len = roundup(len, IOVEC_BUFSIZ);
+		if ((n = realloc(iov->iov_base, len)) == NULL)
+			return -1;
+		iov->iov_base = n;
+		iov->iov_len = len;
+	}
+
+	slen = recvmsg(fd, msg, flags);
+	if (slen != -1 && msg->msg_flags & MSG_TRUNC) {
+		/* This should not be possible ... */
+		errno = ENOBUFS;
+		return -1;
+	}
+	return slen;
 }
