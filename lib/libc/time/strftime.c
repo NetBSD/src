@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.36 2016/03/15 15:16:01 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.37 2016/10/07 15:29:42 christos Exp $	*/
 
 /* Convert a broken-down time stamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.36 2016/03/15 15:16:01 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.37 2016/10/07 15:29:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,15 +124,11 @@ strftime_lz(const timezone_t sp, char *const s, const size_t maxsize,
 	int	warn;
 
 	warn = IN_NONE;
-	p = _fmt(sp, ((format == NULL) ? "%c" : format), t, s, s + maxsize,
-	    &warn, loc);
+	p = _fmt(sp, format, t, s, s + maxsize, &warn, loc);
 #ifndef NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU
 	if (warn != IN_NONE && getenv(YEAR_2000_NAME) != NULL) {
 		(void) fprintf(stderr, "\n");
-		if (format == NULL)
-			(void) fprintf(stderr, "NULL strftime format ");
-		else	(void) fprintf(stderr, "strftime format \"%s\" ",
-				format);
+		(void) fprintf(stderr, "strftime format \"%s\" ", format);
 		(void) fprintf(stderr, "yields only two digits of years in ");
 		if (warn == IN_SOME)
 			(void) fprintf(stderr, "some locales");
