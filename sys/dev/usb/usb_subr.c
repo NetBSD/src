@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.31 2016/10/05 20:55:57 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.32 2016/10/07 10:32:49 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.31 2016/10/05 20:55:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.32 2016/10/07 10:32:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1563,10 +1563,9 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di,
 			 * on 3.x, and UPS_PORT_POWER is available
 			 * only on 2.0 or 1.1.
 			 */
-			else if (USB_IS_SS(dev->ud_speed) &&
-			    (s & UPS_PORT_POWER_SS))
+			else if (sshub_p && (s & UPS_PORT_POWER_SS))
 				err = USB_PORT_POWERED;
-			else if (s & UPS_PORT_POWER)
+			else if (!sshub_p && (s & UPS_PORT_POWER))
 				err = USB_PORT_POWERED;
 			else
 				err = USB_PORT_DISABLED;
