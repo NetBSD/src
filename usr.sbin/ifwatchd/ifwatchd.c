@@ -1,6 +1,6 @@
-/*	$NetBSD: ifwatchd.c,v 1.40 2016/10/06 11:13:57 roy Exp $	*/
+/*	$NetBSD: ifwatchd.c,v 1.41 2016/10/07 15:49:58 christos Exp $	*/
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ifwatchd.c,v 1.40 2016/10/06 11:13:57 roy Exp $");
+__RCSID("$NetBSD: ifwatchd.c,v 1.41 2016/10/07 15:49:58 christos Exp $");
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -189,7 +189,6 @@ main(int argc, char **argv)
 	s = socket(PF_ROUTE, SOCK_RAW, 0);
 	if (s < 0) {
 		syslog(LOG_ERR, "error opening routing socket: %m");
-		perror("open routing socket");
 		exit(EXIT_FAILURE);
 	}
 
@@ -358,29 +357,28 @@ invoke_script(const char *ifname, enum event ev,
 
 	addr[0] = daddr[0] = 0;
 	if (sa != NULL) {
+		const struct sockaddr_in *sin;
+		const struct sockaddr_in6 *sin6;
+
 		if (sa->sa_len == 0) {
-			fprintf(stderr,
-			    "illegal socket address (sa_len == 0)\n");
+			syslog(LOG_ERR,
+			    "illegal socket address (sa_len == 0)");
 			return;
 		}
 		switch (sa->sa_family) {
 		case AF_INET:
-		{
-			const struct sockaddr_in *sin;
-
 			sin = (const struct sockaddr_in *)sa;
 			if (sin->sin_addr.s_addr == INADDR_ANY ||
 			    sin->sin_addr.s_addr == INADDR_BROADCAST)
 				return;
-		}
+			break;
 		case AF_INET6:
-		{
-			const struct sockaddr_in6 *sin6;
-
 			sin6 = (const struct sockaddr_in6 *)sa;
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				return;
-		}
+			break;
+		default:
+			break;
 		}
 
 		if (getnameinfo(sa, sa->sa_len, addr, sizeof addr, NULL, 0,
@@ -409,14 +407,13 @@ invoke_script(const char *ifname, enum event ev,
 
 	switch (vfork()) {
 	case -1:
-		fprintf(stderr, "cannot fork\n");
+		syslog(LOG_ERR, "cannot fork: %m");
 		break;
 	case 0:
 		if (execl(script, script, ifname, DummyTTY, DummySpeed,
 		    addr, daddr, NULL) == -1) {
 			syslog(LOG_ERR, "could not execute \"%s\": %m",
 			    script);
-			perror(script);
 		}
 		_exit(EXIT_FAILURE);
 	default:
