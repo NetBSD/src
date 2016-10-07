@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.25 2016/04/04 07:37:07 ozaki-r Exp $	*/
+/*	$NetBSD: table.c,v 1.26 2016/10/07 22:32:50 joerg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.25 2016/04/04 07:37:07 ozaki-r Exp $");
+__RCSID("$NetBSD: table.c,v 1.26 2016/10/07 22:32:50 joerg Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -667,7 +667,7 @@ masktrim(struct sockaddr_in_new *ap)
 		ap->sin_len = 0;
 		return;
 	}
-	cp = (char *)(&ap->sin_addr.s_addr+1);
+	cp = (char *)&ap->sin_addr.s_addr + sizeof(ap->sin_addr.s_addr);
 	while (*--cp == 0)
 		continue;
 	ap->sin_len = cp - (char*)ap + 1;
