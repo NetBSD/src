@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.966 2016/10/05 20:02:03 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.967 2016/10/07 16:14:28 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -66,10 +66,6 @@ MKGCC?=		no
 #
 .if ${MACHINE_CPU} == "aarch64"
 HAVE_GCC?=	0
-.elif \
-    ${MACHINE} == "or1k" || \
-    ${MACHINE} == "riscv"
-HAVE_GCC?=	48
 .else
 HAVE_GCC?=	53
 .endif
@@ -86,8 +82,6 @@ MKGCCCMDS?=	no
 #
 .if ${HAVE_GCC} == 53
 EXTERNAL_GCC_SUBDIR=	gcc
-.elif ${HAVE_GCC} == 48
-EXTERNAL_GCC_SUBDIR=	gcc.old
 .else
 EXTERNAL_GCC_SUBDIR=	/does/not/exist
 .endif
@@ -138,10 +132,10 @@ USE_SSP?=	yes
 #
 HAVE_GDB?=	710
 
-.if ${HAVE_GDB} == 79
-EXTERNAL_GDB_SUBDIR=		gdb.old
-.else
+.if ${HAVE_GDB} == 710
 EXTERNAL_GDB_SUBDIR=		gdb
+.else
+EXTERNAL_GDB_SUBDIR=		/does/not/exist
 .endif
 
 #
@@ -149,9 +143,7 @@ EXTERNAL_GDB_SUBDIR=		gdb
 #
 HAVE_BINUTILS?=	226
 
-.if ${HAVE_BINUTILS} == 223
-EXTERNAL_BINUTILS_SUBDIR=	binutils.old
-.elif ${HAVE_BINUTILS} == 226
+.if ${HAVE_BINUTILS} == 226
 EXTERNAL_BINUTILS_SUBDIR=	binutils
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
