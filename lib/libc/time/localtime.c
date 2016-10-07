@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.103 2016/03/18 12:41:25 ginsbach Exp $	*/
+/*	$NetBSD: localtime.c,v 1.104 2016/10/07 15:29:42 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.103 2016/03/18 12:41:25 ginsbach Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.104 2016/10/07 15:29:42 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1560,7 +1560,7 @@ gmtsub(struct state const *sp, const time_t *timep, int_fast32_t offset,
 #ifdef TM_ZONE
 	/*
 	** Could get fancy here and deliver something such as
-	** "UT+xxxx" or "UT-xxxx" if offset is non-zero,
+	** "+xx" or "-xx" if offset is non-zero,
 	** but this is no time for a treasure hunt.
 	*/
 	if (result)
