@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/10/07 15:30:01 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2016/10/07 21:55:29 christos Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -13,7 +13,9 @@ CPPFLAGS+=-DPKGVERSION='"(tzcode) "' -DTZVERSION='"${TZVERSION}"'
 
 .PATH: ${NETBSDSRCDIR}/lib/libc/time
 
+.if !defined(HOSTPROG)
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>
