@@ -4,8 +4,8 @@
 # Package name for the code distribution.
 PACKAGE=	tzcode
 
-# Version numbers of the code and data distributions.
-VERSION=	2016f
+# Version number for the distribution, overridden in the 'tarballs' rule below.
+VERSION=	2016g
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -241,7 +241,7 @@ GCC_DEBUG_FLAGS = -Dlint -g3 -O3 -fno-common -fstrict-aliasing \
 CFLAGS=
 
 # Linker flags.  Default to $(LFLAGS) for backwards compatibility
-# to tzcode2012h and earlier.
+# to release 2012h and earlier.
 
 LDFLAGS=	$(LFLAGS)
 
@@ -257,7 +257,7 @@ ZIC=		$(zic) $(ZFLAGS)
 
 ZFLAGS=
 
-# How to use zic to install tzdata binary files.
+# How to use zic to install tz binary files.
 
 ZIC_INSTALL=	$(ZIC) -y $(YEARISTYPE) -d $(DESTDIR)$(TZDIR) $(LEAPSECONDS)
 
@@ -273,16 +273,16 @@ AWK=		awk
 KSHELL=		/bin/bash
 
 # The path where SGML DTDs are kept and the catalog file(s) to use when
-# validating.  The default is appropriate for Ubuntu 13.10.
+# validating.  The default should work on both Debian and Red Hat.
 SGML_TOPDIR= /usr
 SGML_DTDDIR= $(SGML_TOPDIR)/share/xml/w3c-sgml-lib/schema/dtd
 SGML_SEARCH_PATH= $(SGML_DTDDIR)/REC-html401-19991224
 SGML_CATALOG_FILES= \
-  $(SGML_TOPDIR)/share/doc/w3-recs/html/www.w3.org/TR/1999/REC-html401-19991224/HTML4.cat
+  $(SGML_TOPDIR)/share/doc/w3-recs/html/www.w3.org/TR/1999/REC-html401-19991224/HTML4.cat:$(SGML_TOPDIR)/share/sgml/html/4.01/HTML4.cat
 
 # The name, arguments and environment of a program to validate your web pages.
-# See <http://www.jclark.com/sp/> for a validator, and
-# <http://validator.w3.org/source/> for a validation library.
+# See <http://openjade.sourceforge.net/doc/> for a validator, and
+# <https://validator.w3.org/source/> for a validation library.
 VALIDATE = nsgmls
 VALIDATE_FLAGS = -s -B -wall -wno-unused-param
 VALIDATE_ENV = \
@@ -327,7 +327,7 @@ OK_LINE=	'^'$(OK_CHAR)'*$$'
 
 # Flags to give 'tar' when making a distribution.
 # Try to use flags appropriate for GNU tar.
-GNUTARFLAGS=	--numeric-owner --owner=0 --group=0 --mode=go+u,go-w
+GNUTARFLAGS= --numeric-owner --owner=0 --group=0 --mode=go+u,go-w --sort=name
 TARFLAGS=	`if tar $(GNUTARFLAGS) --version >/dev/null 2>&1; \
 		 then echo $(GNUTARFLAGS); \
 		 else :; \
@@ -357,7 +357,7 @@ HEADERS=	tzfile.h private.h
 NONLIBSRCS=	zic.c zdump.c
 NEWUCBSRCS=	date.c strftime.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) \
-			tzselect.ksh workman.sh
+			tzselect.ksh version workman.sh
 MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
 			tzfile.5 tzselect.8 zic.8 zdump.8
 MANTXTS=	newctime.3.txt newstrftime.3.txt newtzset.3.txt \
@@ -379,7 +379,32 @@ DATA=		$(YDATA) $(NDATA) backzone $(TABDATA) \
 			leap-seconds.list yearistype.sh
 AWK_SCRIPTS=	checklinks.awk checktab.awk leapseconds.awk
 MISC=		$(AWK_SCRIPTS) zoneinfo2tdf.pl
-ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC)
+TZS_YEAR=	2050
+TZS=		to$(TZS_YEAR).tzs
+TZS_NEW=	to$(TZS_YEAR)new.tzs
+TZS_DEPS=	$(PRIMARY_YDATA) asctime.c localtime.c \
+			private.h tzfile.h zdump.c zic.c
+ENCHILADA=	$(COMMON) $(DOCS) $(SOURCES) $(DATA) $(MISC) $(TZS)
+
+# Consult these files when deciding whether to rebuild the 'version' file.
+# This list is not the same as the output of 'git ls-files', since
+# .gitignore is not distributed.
+VERSION_DEPS= \
+		CONTRIBUTING LICENSE Makefile NEWS README Theory \
+		africa antarctica asctime.c asia australasia \
+		backward backzone \
+		checklinks.awk checktab.awk \
+		date.1 date.c difftime.c \
+		etcetera europe factory iso3166.tab \
+		leap-seconds.list leapseconds.awk localtime.c \
+		newctime.3 newstrftime.3 newtzset.3 northamerica \
+		pacificnew private.h \
+		southamerica strftime.c systemv \
+		time2posix.3 tz-art.htm tz-how-to.html tz-link.htm \
+		tzfile.5 tzfile.h tzselect.8 tzselect.ksh \
+		workman.sh yearistype.sh \
+		zdump.8 zdump.c zic.8 zic.c \
+		zone.tab zone1970.tab zoneinfo2tdf.pl
 
 # And for the benefit of csh users on systems that assume the user
 # shell should be used to handle commands in Makefiles. . .
@@ -409,9 +434,16 @@ INSTALL:	ALL install date.1
 		cp date $(DESTDIR)$(BINDIR)/.
 		cp -f date.1 $(DESTDIR)$(MANDIR)/man1/.
 
-version.h:
+version:	$(VERSION_DEPS)
+		{ V=$$(git describe --match '[0-9][0-9][0-9][0-9][a-z]*' \
+				--abbrev=7 --dirty) || \
+		  V=$(VERSION); } && \
+		printf '%s\n' "$$V" >$@
+
+version.h:	version
 		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
-		 echo 'static char const TZVERSION[]="$(VERSION)";' && \
+		 printf 'static char const TZVERSION[]="%s";\n' \
+		   "$$(cat version)" && \
 		 echo 'static char const REPORT_BUGS_TO[]="$(BUGEMAIL)";') >$@
 
 zdump:		$(TZDOBJS)
@@ -478,6 +510,27 @@ posix_packrat:
 
 zones:		$(REDO)
 
+$(TZS_NEW):	$(TDATA) zdump zic
+		mkdir -p tzs.dir
+		$(zic) -d tzs.dir $(TDATA)
+		$(AWK) '/^Link/{print $$1 "\t" $$2 "\t" $$3}' \
+		   $(TDATA) | LC_ALL=C sort >$@.out
+		zones=$$($(AWK) -v wd="$$(pwd)" \
+				'/^Zone/{print wd "/tzs.dir/" $$2}' $(TDATA) \
+			 | LC_ALL=C sort) && \
+		./zdump -i -c $(TZS_YEAR) $$zones >>$@.out
+		sed 's,^TZ=".*tzs\.dir/,TZ=",' $@.out >$@
+		rm -fr tzs.dir $@.out
+
+# If $(TZS) does not already exist (e.g., old-format tarballs), create it.
+# If it exists but 'make check_tzs' fails, a maintainer should inspect the
+# failed output and fix the inconsistency, perhaps by running 'make force_tzs'.
+$(TZS):
+		$(MAKE) force_tzs
+
+force_tzs:	$(TZS_NEW)
+		cp $(TZS_NEW) $(TZS)
+
 libtz.a:	$(LIBOBJS)
 		$(AR) ru $@ $(LIBOBJS)
 		$(RANLIB) $@
@@ -485,19 +538,19 @@ libtz.a:	$(LIBOBJS)
 date:		$(DATEOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(DATEOBJS) $(LDLIBS)
 
-tzselect:	tzselect.ksh
+tzselect:	tzselect.ksh version
 		sed \
 			-e 's|#!/bin/bash|#!$(KSHELL)|g' \
 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
 			-e 's|\(PKGVERSION\)=.*|\1='\''($(PACKAGE)) '\''|' \
 			-e 's|\(REPORT_BUGS_TO\)=.*|\1=$(BUGEMAIL)|' \
 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
-			-e 's|\(TZVERSION\)=.*|\1=$(VERSION)|' \
-			<$? >$@
+			-e 's|\(TZVERSION\)=.*|\1='"$$(cat version)"'|' \
+			<$@.ksh >$@
 		chmod +x $@
 
 check:		check_character_set check_white_space check_links check_sorted \
-		  check_tables check_web
+		  check_tables check_tzs check_web
 
 check_character_set: $(ENCHILADA)
 		LC_ALL=en_US.utf8 && export LC_ALL && \
@@ -533,6 +586,9 @@ check_tables:	checktab.awk $(PRIMARY_YDATA) $(ZONETABLES)
 		    || exit; \
 		done
 
+check_tzs:	$(TZS) $(TZS_NEW)
+		diff -u $(TZS) $(TZS_NEW)
+
 check_web:	$(WEB_PAGES)
 		$(VALIDATE_ENV) $(VALIDATE) $(VALIDATE_FLAGS) $(WEB_PAGES)
 
@@ -540,12 +596,12 @@ clean_misc:
 		rm -f core *.o *.out \
 		  date tzselect version.h zdump zic yearistype libtz.a
 clean:		clean_misc
-		rm -fr tzpublic
+		rm -fr *.dir tzdb-*/ $(TZS_NEW)
 
 maintainer-clean: clean
 		@echo 'This command is intended for maintainers to use; it'
 		@echo 'deletes files that may need special tools to rebuild.'
-		rm -f leapseconds $(MANTXTS) *.asc *.tar.gz
+		rm -f leapseconds version $(MANTXTS) $(TZS) *.asc *.tar.*
 
 names:
 		@echo $(ENCHILADA)
@@ -592,6 +648,8 @@ set-timestamps.out: $(ENCHILADA)
 		  touch -cmr `ls -t $$file workman.sh | sed 1q` $$file.txt || \
 		    exit; \
 		done
+		touch -cmr $$(ls -t $(TZS_DEPS) | sed 1q) $(TZS)
+		touch -cmr $$(ls -t $(VERSION_DEPS) | sed 1q) version
 		touch $@
 
 # The zics below ensure that each data file can stand on its own.
@@ -600,12 +658,12 @@ set-timestamps.out: $(ENCHILADA)
 check_public:
 		$(MAKE) maintainer-clean
 		$(MAKE) "CFLAGS=$(GCC_DEBUG_FLAGS)" ALL
-		mkdir tzpublic
+		mkdir -p public.dir
 		for i in $(TDATA) ; do \
-		  $(zic) -v -d tzpublic $$i 2>&1 || exit; \
+		  $(zic) -v -d public.dir $$i 2>&1 || exit; \
 		done
-		$(zic) -v -d tzpublic $(TDATA)
-		rm -fr tzpublic
+		$(zic) -v -d public.dir $(TDATA)
+		rm -fr public.dir
 
 # Check that the code works under various alternative
 # implementations of time_t.
@@ -617,15 +675,15 @@ check_time_t_alternatives:
 		fi && \
 		zones=`$(AWK) '/^[^#]/ { print $$3 }' <zone1970.tab` && \
 		for type in $(TIME_T_ALTERNATIVES); do \
-		  mkdir -p tzpublic/$$type && \
+		  mkdir -p time_t.dir/$$type && \
 		  $(MAKE) clean_misc && \
-		  $(MAKE) TOPDIR=`pwd`/tzpublic/$$type \
+		  $(MAKE) TOPDIR=$$(pwd)/time_t.dir/$$type \
 		    CFLAGS='$(CFLAGS) -Dtime_tz='"'$$type'" \
 		    REDO='$(REDO)' \
 		    install && \
 		  diff $$quiet_option -r \
-		    tzpublic/int64_t/etc/zoneinfo \
-		    tzpublic/$$type/etc/zoneinfo && \
+		    time_t.dir/int64_t/etc/zoneinfo \
+		    time_t.dir/$$type/etc/zoneinfo && \
 		  case $$type in \
 		  int32_t) range=-2147483648,2147483647;; \
 		  uint32_t) range=0,4294967296;; \
@@ -634,16 +692,20 @@ check_time_t_alternatives:
 		  *) range=-10000000000,10000000000;; \
 		  esac && \
 		  echo checking $$type zones ... && \
-		  tzpublic/int64_t/etc/zdump -V -t $$range $$zones \
-		      >tzpublic/int64_t.out && \
-		  tzpublic/$$type/etc/zdump -V -t $$range $$zones \
-		      >tzpublic/$$type.out && \
-		  diff -u tzpublic/int64_t.out tzpublic/$$type.out \
+		  time_t.dir/int64_t/etc/zdump -V -t $$range $$zones \
+		      >time_t.dir/int64_t.out && \
+		  time_t.dir/$$type/etc/zdump -V -t $$range $$zones \
+		      >time_t.dir/$$type.out && \
+		  diff -u time_t.dir/int64_t.out time_t.dir/$$type.out \
 		    || exit; \
 		done
-		rm -fr tzpublic
+		rm -fr time_t.dir
 
-tarballs:	tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz
+tarballs signatures: version
+		$(MAKE) VERSION="$$(cat version)" $@_version
+
+tarballs_version: tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz \
+		tzdb-$(VERSION).tar.lz
 
 tzcode$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
@@ -656,12 +718,24 @@ tzdata$(VERSION).tar.gz: set-timestamps.out
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) $(MISC) | \
 		  ${TOOL_GZIP} $(GZIPFLAGS) > $@
 
-signatures:	tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc
+tzdb-$(VERSION).tar.lz: set-timestamps.out
+		rm -fr tzdb-$(VERSION)
+		mkdir tzdb-$(VERSION)
+		ln $(ENCHILADA) tzdb-$(VERSION)
+		touch -cmr $$(ls -t tzdb-$(VERSION)/* | sed 1q) tzdb-$(VERSION)
+		LC_ALL=C && export LC_ALL && \
+		tar $(TARFLAGS) -cf - tzdb-$(VERSION) | lzip -9 > $@
+
+signatures_version: tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc \
+		tzdb-$(VERSION).tar.lz.asc
 
 tzcode$(VERSION).tar.gz.asc: tzcode$(VERSION).tar.gz
 		gpg --armor --detach-sign $?
 
 tzdata$(VERSION).tar.gz.asc: tzdata$(VERSION).tar.gz
+		gpg --armor --detach-sign $?
+
+tzdb-$(VERSION).tar.lz.asc: tzdb-$(VERSION).tar.lz
 		gpg --armor --detach-sign $?
 
 typecheck:
@@ -689,8 +763,10 @@ zic.o:		private.h tzfile.h version.h
 .PHONY: ALL INSTALL all
 .PHONY: check check_character_set check_links
 .PHONY: check_public check_sorted check_tables
-.PHONY: check_time_t_alternatives check_web check_white_space clean clean_misc
+.PHONY: check_time_t_alternatives check_tzs check_web check_white_space
+.PHONY: clean clean_misc force_tzs
 .PHONY: install install_data maintainer-clean names
 .PHONY: posix_only posix_packrat posix_right
-.PHONY: public right_only right_posix signatures tarballs typecheck
+.PHONY: public right_only right_posix signatures signatures_version
+.PHONY: tarballs tarballs_version typecheck
 .PHONY: zonenames zones

@@ -1,8 +1,8 @@
-.\"	$NetBSD: tzfile.5,v 1.23 2015/10/09 17:21:45 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.24 2016/10/07 15:29:42 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
-.Dd October 6, 2014
+.Dd October 6, 2016
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -138,6 +138,13 @@ POSIX-TZ-environment-variable-style string for use in handling instants
 after the last transition time stored in the file
 (with nothing between the newlines if there is no POSIX representation for
 such instants).
+The POSIX-style string must must agree with the local time type after
+both data's last transition times; for example, given the string
+.Dq WET0WEST,M3.5.0,M10.5.0/3
+then if a last transition time is in July, the transition's local time
+type must specify a daylight-saving time abbreviated
+.Dq WEST
+that is one hour east of UT.
 .Pp
 For version-3-format time zone files, the POSIX-TZ-style string may
 use two minor extensions to the POSIX TZ format, as described in

@@ -1,5 +1,5 @@
-.\"	$NetBSD: tzset.3,v 1.34 2015/10/29 22:42:55 wiz Exp $
-.Dd October 29, 2015
+.\"	$NetBSD: tzset.3,v 1.35 2016/10/07 15:29:42 christos Exp $
+.Dd October 6, 2016
 .Dt TZSET 3
 .Os
 .Sh NAME
@@ -186,6 +186,14 @@ is missing, then summer time does not apply in this locale.
 Upper- and lowercase letters are explicitly allowed.
 Any characters except a leading colon (:), digits, comma (,), minus (-),
 plus (+), and NUL bytes are allowed.
+Alternatively, a designation can be surrounded by angle brackets
+.Dv \*[Lt]
+and
+.Dv \*[Gt] ;
+in this case, the designation can contain any characters other than
+.Dv \*[Gt]
+and 
+.Dv NUL .
 .It Cm offset
 Indicates the value one must add to the local time to arrive at
 Coordinated Universal Time.

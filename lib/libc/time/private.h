@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.45 2016/03/15 15:16:01 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.46 2016/10/07 15:29:42 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -27,6 +27,7 @@
 ** Thank you!
 */
 
+/* This string was in the Factory zone through version 2016f.  */
 #define GRANDPARENTED	"Local time zone must be set--see zic manual page"
 
 /*
