@@ -121,6 +121,7 @@ struct dhcpcd_ctx {
 	int link_fd;
 	int seq;	/* route message sequence no */
 	int sseq;	/* successful seq no sent */
+	struct iovec iov[1];	/* generic iovec buffer */
 
 #ifdef USE_SIGNALS
 	sigset_t sigset;

@@ -165,6 +165,10 @@ int get_monotonic(struct timespec *);
  * However, this results in a ugly output on the command line
  * and relies on syslogd(8) starting before dhcpcd which is not
  * always the case. */
+#ifdef SMALL
+# undef USE_LOGFILE
+# define USE_LOGFILE 0
+#endif
 #ifndef USE_LOGFILE
 # define USE_LOGFILE 1
 #endif
@@ -196,4 +200,6 @@ ssize_t addvard(struct dhcpcd_ctx *,
 char *hwaddr_ntoa(const uint8_t *, size_t, char *, size_t);
 size_t hwaddr_aton(uint8_t *, const char *);
 size_t read_hwaddr_aton(uint8_t **, const char *);
+
+ssize_t recvmsg_realloc(int, struct msghdr *, int);
 #endif

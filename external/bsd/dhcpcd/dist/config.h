@@ -5,6 +5,9 @@
 #define LIBEXECDIR	"/libexec"
 #define DBDIR		"/var/db"
 #define RUNDIR		"/var/run"
+#define HAVE_IFAM_PID
+#define HAVE_IFAM_ADDRFLAGS
+#define HAVE_IFADDRS_ADDRFLAGS
 #define HAVE_UTIL_H
 #define HAVE_SYS_QUEUE_H
 #define HAVE_SPAWN_H
