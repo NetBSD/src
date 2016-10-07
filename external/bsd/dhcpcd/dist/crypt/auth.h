@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -25,8 +25,68 @@
  * SUCH DAMAGE.
  */
 
-#define INITDEFINES	@INITDEFINES@
-#define INITDEFINENDS	@INITDEFINENDS@
-#define INITDEFINE6S	@INITDEFINE6S@
+#ifndef AUTH_H
+#define AUTH_H
 
-extern const char * const dhcpcd_embedded_conf[];
+#include "config.h"
+
+#ifdef HAVE_SYS_QUEUE_H
+#include <sys/queue.h>
+#endif
+
+#define DHCPCD_AUTH_SEND	(1 << 0)
+#define DHCPCD_AUTH_REQUIRE	(1 << 1)
+#define DHCPCD_AUTH_RDM_COUNTER	(1 << 2)
+
+#define DHCPCD_AUTH_SENDREQUIRE	(DHCPCD_AUTH_SEND | DHCPCD_AUTH_REQUIRE)
+
+#define AUTH_PROTO_TOKEN	0
+#define AUTH_PROTO_DELAYED	1
+#define AUTH_PROTO_DELAYEDREALM	2
+#define AUTH_PROTO_RECONFKEY	3
+
+#define AUTH_ALG_HMAC_MD5	1
+
+#define AUTH_RDM_MONOTONIC	0
+
+struct token {
+	TAILQ_ENTRY(token) next;
+	uint32_t secretid;
+	size_t realm_len;
+	unsigned char *realm;
+	size_t key_len;
+	unsigned char *key;
+	time_t expire;
+};
+
+TAILQ_HEAD(token_head, token);
+
+struct auth {
+	int options;
+#ifdef AUTH
+	uint8_t protocol;
+	uint8_t algorithm;
+	uint8_t rdm;
+	uint64_t last_replay;
+	uint8_t last_replay_set;
+	struct token_head tokens;
+#endif
+};
+
+struct authstate {
+	uint64_t replay;
+	struct token *token;
+	struct token *reconf;
+};
+
+void dhcp_auth_reset(struct authstate *);
+
+const struct token * dhcp_auth_validate(struct authstate *,
+    const struct auth *,
+    const uint8_t *, size_t, int, int,
+    const uint8_t *, size_t);
+
+ssize_t dhcp_auth_encode(struct auth *, const struct token *,
+    uint8_t *, size_t, int, int,
+    uint8_t *, size_t);
+#endif
