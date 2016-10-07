@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.134 2016/10/07 17:12:59 christos Exp $
+#	$NetBSD: Makefile,v 1.135 2016/10/07 19:10:03 christos Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -63,7 +63,6 @@ COPTS+=		-fvisibility=hidden
 PROG=		ld.elf_so-${MLIBDIR}
 CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
 .	if ${MLIBDIR} == "o32"
-NEEDLIBGCC?=	yes
 .	endif
 .else
 PROG=		ld.elf_so
@@ -137,7 +136,7 @@ LDADD+=		-lc
 DPADD+=		${CLIBOBJ}/libc.a
 .endif
 
-.if ${MACHINE_CPU} == "hppa" || ${MACHINE_CPU} == "sh3" || ${NEEDLIBGCC:Uno} == "yes"
+.if ${MACHINE_CPU} == "hppa" || ${MACHINE_CPU} == "sh3"
 # for $$divU, $$remU etc. (millicode)
 LDADD+=		-lgcc
 DPADD+=		${LIBGCC}
