@@ -1,6 +1,6 @@
-/*	$NetBSD: rt2860.c,v 1.23 2016/09/27 20:37:05 christos Exp $	*/
+/*	$NetBSD: rt2860.c,v 1.24 2016/10/08 15:57:11 christos Exp $	*/
 /*	$OpenBSD: rt2860.c,v 1.90 2016/04/13 10:49:26 mpi Exp $	*/
-/*	$FreeBSD: head/sys/dev/ral/rt2860.c 297793 2016-04-10 23:07:00Z pfg $ */
+/*	$FreeBSD: head/sys/dev/ral/rt2860.c 306591 2016-10-02 20:35:55Z avos $ */
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.23 2016/09/27 20:37:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2860.c,v 1.24 2016/10/08 15:57:11 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -3228,6 +3228,7 @@ rt2860_get_rf(uint32_t rev)
 	case RT3070_RF_3053:	return "RT3053";
 	case RT5390_RF_5360:	return "RT5360";
 	case RT5390_RF_5390:	return "RT5390";
+	case RT5390_RF_5392:	return "RT5392";
 	default:		return "unknown";
 	}
 }
@@ -3250,9 +3251,11 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 			sc->sc_srom_read = rt3090_efuse_read_2;
 	}
 
+#ifdef RAL_DEBUG
 	/* read EEPROM version */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_VERSION);
 	DPRINTF(("EEPROM rev=%d, FAE=%d\n", val & 0xff, val >> 8));
+#endif
 
 	/* read MAC address */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_MAC01);
@@ -3265,9 +3268,11 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 	ic->ic_myaddr[4] = val & 0xff;
 	ic->ic_myaddr[5] = val >> 8;
 
+#ifdef RAL_DEBUG
 	/* read country code */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_COUNTRY);
 	DPRINTF(("EEPROM region code=0x%04x\n", val));
+#endif
 
 	/* read vendor BBP settings */
 	for (i = 0; i < 8; i++) {
@@ -3309,33 +3314,12 @@ rt2860_read_eeprom(struct rt2860_softc *sc)
 
 	/* read RF information */
 	val = rt2860_srom_read(sc, RT2860_EEPROM_ANTENNA);
-	if (sc->mac_ver >= 0x5390) {
+	if (sc->mac_ver >= 0x5390)
 		sc->rf_rev = rt2860_srom_read(sc, RT2860_EEPROM_CHIPID);
-		sc->ntxchains = (val >> 4) & 0xf;
-		sc->nrxchains = val & 0xf;
-	} else if (val == 0xffff) {
-		DPRINTF(("invalid EEPROM antenna info, using default\n"));
-		if (sc->mac_ver == 0x3593) {
-			/* default to RF3053 3T3R */
-			sc->rf_rev = RT3070_RF_3053;
-			sc->ntxchains = 3;
-			sc->nrxchains = 3;
-		} else if (sc->mac_ver >= 0x3071) {
-			/* default to RF3020 1T1R */
-			sc->rf_rev = RT3070_RF_3020;
-			sc->ntxchains = 1;
-			sc->nrxchains = 1;
-		} else {
-			/* default to RF2820 1T2R */
-			sc->rf_rev = RT2860_RF_2820;
-			sc->ntxchains = 1;
-			sc->nrxchains = 2;
-		}
-	} else {
+	else
 		sc->rf_rev = (val >> 8) & 0xf;
-		sc->ntxchains = (val >> 4) & 0xf;
-		sc->nrxchains = val & 0xf;
-	}
+	sc->ntxchains = (val >> 4) & 0xf;
+	sc->nrxchains = val & 0xf;
 	DPRINTF(("EEPROM RF rev=0x%02x chains=%dT%dR\n",
 	    sc->rf_rev, sc->ntxchains, sc->nrxchains));
 
@@ -3865,7 +3849,9 @@ rt2860_init(struct ifnet *ifp)
 		rt2860_stop(ifp, 1);
 		return ETIMEDOUT;
 	}
-	tmp &= 0xff0;
+	tmp &= ~(RT2860_RX_DMA_BUSY | RT2860_RX_DMA_EN | RT2860_TX_DMA_BUSY |
+	    RT2860_TX_DMA_EN);
+	tmp |= RT2860_TX_WB_DDONE;
 	RAL_WRITE(sc, RT2860_WPDMA_GLO_CFG, tmp);
 
 	/* disable interrupts mitigation */
@@ -3882,7 +3868,7 @@ rt2860_init(struct ifnet *ifp)
 	if (sc->rf_rev == RT3070_RF_2020 ||
 	    sc->rf_rev == RT3070_RF_3020 ||
 	    sc->rf_rev == RT3070_RF_3320 ||
-	    sc->mac_ver == 0x5390)
+	    sc->rf_rev == RT5390_RF_5390)
 		rt3090_set_rx_antenna(sc, 0);
 
 	/* send LEDs operating mode to microcontroller */
