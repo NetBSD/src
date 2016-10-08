@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.2 2016/01/13 19:01:59 christos Exp $	*/
+/*	$NetBSD: input.cpp,v 1.3 2016/10/08 20:44:59 joerg Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -941,11 +941,11 @@ static int get_copy(node **nd, int defining)
       compatible_flag = input_stack::get_compatible_flag();
       continue;
     }
-    if (c == BEGIN_QUOTE) {
+    if (c == (char)BEGIN_QUOTE) {
       input_stack::increase_level();
       continue;
     }
-    if (c == END_QUOTE) {
+    if (c == (char)END_QUOTE) {
       input_stack::decrease_level();
       continue;
     }
@@ -4238,12 +4238,12 @@ static void interpolate_arg(symbol nm)
     string args;
     for (int i = 1; i <= limit; i++) {
       args += '"';
-      args += BEGIN_QUOTE;
+      args += (char)BEGIN_QUOTE;
       input_iterator *p = input_stack::get_arg(i);
       int c;
       while ((c = p->get(0)) != EOF)
 	args += c;
-      args += END_QUOTE;
+      args += (char)END_QUOTE;
       args += '"';
       if (i != limit)
 	args += ' ';
