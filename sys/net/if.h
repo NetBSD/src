@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.227 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.228 2016/10/08 17:40:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -243,7 +243,7 @@ typedef struct ifnet {
 	struct bpf_if *if_bpf;		/* packet filter structure */
 	if_index_t	if_index;	/* numeric abbreviation for this if */
 	short	if_timer;		/* time 'til if_slowtimo called */
-	short	if_flags;		/* up/down, broadcast, etc. */
+	unsigned short	if_flags;	/* up/down, broadcast, etc. */
 	short	if_extflags;		/* if_output MP-safe, etc. */
 	struct	if_data if_data;	/* statistics and other data about if */
 	/*
