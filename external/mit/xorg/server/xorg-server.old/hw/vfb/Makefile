@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/06/29 19:36:35 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2016/10/08 20:03:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -45,7 +45,6 @@ CPPFLAGS.InitInput.c=	${X11FLAGS.EXTENSION} \
 			-UGLXEXT
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION} \
 			-DNO_HW_ONLY_EXTS -DNO_MODULE_EXTS \
-			-UXFree86LOADER \
 			-UGLXEXT
 CPPFLAGS.dpmsstubs.c=	${X11FLAGS.EXTENSION} \
 			-UGLXEXT
