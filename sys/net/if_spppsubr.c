@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.155 2016/10/03 11:06:06 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.156 2016/10/08 17:37:32 joerg Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.155 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.156 2016/10/08 17:37:32 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3208,7 +3208,7 @@ sppp_ipcp_tlf(struct sppp *sp)
 static void
 sppp_ipcp_scr(struct sppp *sp)
 {
-	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
+	uint8_t opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
 #ifdef INET
 	uint32_t ouraddr;
 #endif
