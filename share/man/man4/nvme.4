@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvme.4,v 1.6 2016/09/21 20:12:12 wiz Exp $
+.\"	$NetBSD: nvme.4,v 1.7 2016/10/08 17:46:06 jdolecek Exp $
 .\"	$OpenBSD: nvme.4,v 1.2 2016/04/14 11:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 21, 2016
+.Dd October 8, 2016
 .Dt NVME 4
 .Os
 .Sh NAME
@@ -149,7 +149,3 @@ controller responds to commands only the first time it is attached,
 after reboot or module reload it stops responding.
 The virtual machine must be completely powered off
 (or even killed) to fix this.
-.Pp
-.Nm
-kernel module is currently only loadable for kernels configured with
-.Dq no ld .
