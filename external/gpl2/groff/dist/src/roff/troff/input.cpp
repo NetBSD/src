@@ -1,4 +1,4 @@
-/*	$NetBSD: input.cpp,v 1.3 2016/10/08 20:44:59 joerg Exp $	*/
+/*	$NetBSD: input.cpp,v 1.4 2016/10/08 23:40:52 joerg Exp $	*/
 
 // -*- C++ -*-
 /* Copyright (C) 1989, 1990, 1991, 1992, 2000, 2001, 2002, 2003, 2004, 2005
@@ -941,11 +941,11 @@ static int get_copy(node **nd, int defining)
       compatible_flag = input_stack::get_compatible_flag();
       continue;
     }
-    if (c == (char)BEGIN_QUOTE) {
+    if (c == BEGIN_QUOTE) {
       input_stack::increase_level();
       continue;
     }
-    if (c == (char)END_QUOTE) {
+    if (c == END_QUOTE) {
       input_stack::decrease_level();
       continue;
     }
