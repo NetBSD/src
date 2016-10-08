@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2016/09/02 11:38:01 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.28 2016/10/08 20:08:57 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -81,7 +81,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 
 CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
 		${X11FLAGS.DIX} \
-		-DXFree86LOADER -DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
+		-DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
 		-D__XSERVERNAME__='"Xorg"' -D__XCONFIGFILE__='"xorg.conf"' \
 		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
 		-DXVENDORNAME='"The X.Org Foundation"' \
