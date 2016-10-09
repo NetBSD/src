@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.33 2016/10/09 09:18:26 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.34 2016/10/09 19:38:08 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1487,8 +1487,8 @@ ipv6nd_handlena(struct dhcpcd_ctx *dctx, struct interface *ifp,
 
 	if (ifp == NULL) {
 #ifdef DEBUG_NS
-		logger(ctx, LOG_DEBUG, "NA for unexpected interface from %s",
-		    dctx->sfrom);
+		logger(dctx, LOG_DEBUG, "NA for unexpected interface from %s",
+		    ctx->sfrom);
 #endif
 		return;
 	}
