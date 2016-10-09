@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.19 2016/07/29 10:07:58 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.20 2016/10/09 09:18:26 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -154,7 +154,8 @@ struct ipv4_addr *ipv4_findaddr(struct dhcpcd_ctx *, const struct in_addr *);
 struct ipv4_addr *ipv4_findmaskaddr(struct dhcpcd_ctx *,
     const struct in_addr *);
 void ipv4_handleifa(struct dhcpcd_ctx *, int, struct if_head *, const char *,
-    const struct in_addr *, const struct in_addr *, const struct in_addr *);
+    const struct in_addr *, const struct in_addr *, const struct in_addr *,
+    int);
 
 void ipv4_freeroutes(struct rt_head *);
 
