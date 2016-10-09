@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.27 2015/07/11 10:32:46 kamil Exp $	*/
+/*	$NetBSD: gt.c,v 1.28 2016/10/09 14:50:54 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.27 2015/07/11 10:32:46 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.28 2016/10/09 14:50:54 christos Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -807,7 +807,7 @@ gt_watchdog_init(struct gt_softc *gt)
 	gt_write(gt, GT_WDOG_Config, GT_WDOG_Config_Ctl1a|GT_WDOG_Preset_DFLT);
 	gt_write(gt, GT_WDOG_Config, GT_WDOG_Config_Ctl1b|GT_WDOG_Preset_DFLT);
 
-	r = gt_read(gt, GT_WDOG_Config),
+	r = gt_read(gt, GT_WDOG_Config);
 	aprint_normal(" status %#x,%#x: %s\n",
 	    r, gt_read(gt, GT_WDOG_Value),
 	    ((r & GT_WDOG_Config_Enb) != 0) ? "enabled" : "botch");
