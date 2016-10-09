@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.14 2016/10/02 10:39:29 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.15 2016/10/09 09:36:09 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1455,19 +1455,14 @@ done:
 void
 smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
-	struct smsc_softc	*sc;
-	struct smsc_chain	*c;
-	struct ifnet		*ifp;
-	int			s;
-
-	c = priv;
-	sc = c->sc_sc;
-	ifp = &sc->sc_ec.ec_if;
+	struct smsc_chain *c = priv;
+	struct smsc_softc *sc = c->sc_sc;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 
 	if (sc->sc_dying)
 		return;
 
-	s = splnet();
+	int s = splnet();
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1499,11 +1494,10 @@ smsc_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 int
 smsc_tx_list_init(struct smsc_softc *sc)
 {
-	struct smsc_cdata *cd;
+	struct smsc_cdata *cd = &sc->sc_cdata;
 	struct smsc_chain *c;
 	int i;
 
-	cd = &sc->sc_cdata;
 	for (i = 0; i < SMSC_TX_LIST_CNT; i++) {
 		c = &cd->tx_chain[i];
 		c->sc_sc = sc;
@@ -1541,11 +1535,10 @@ smsc_tx_list_free(struct smsc_softc *sc)
 int
 smsc_rx_list_init(struct smsc_softc *sc)
 {
-	struct smsc_cdata *cd;
+	struct smsc_cdata *cd = &sc->sc_cdata;
 	struct smsc_chain *c;
 	int i;
 
-	cd = &sc->sc_cdata;
 	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
 		c = &cd->rx_chain[i];
 		c->sc_sc = sc;
