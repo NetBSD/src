@@ -1,1 +1,0 @@
-	 .comm badsym,4
