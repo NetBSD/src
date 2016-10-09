@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.18 2016/09/24 21:31:25 christos Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.19 2016/10/09 11:48:24 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_debug.c,v 1.18 2016/09/24 21:31:25 christos Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.19 2016/10/09 11:48:24 joerg Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -312,7 +312,7 @@ __bt_stat(DB *dbp)
 	pcont = pinternal = pleaf = 0;
 	nkeys = ifree = lfree = 0;
 	for (i = P_ROOT; i < t->bt_mp->npages &&
-	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i)
+	    (h = mpool_get(t->bt_mp, i, MPOOL_IGNOREPIN)) != NULL; ++i) {
 		switch (h->flags & P_TYPE) {
 		case P_BINTERNAL:
 		case P_RINTERNAL:
