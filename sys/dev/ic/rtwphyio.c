@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.c,v 1.18 2013/09/14 13:09:18 joerg Exp $ */
+/* $NetBSD: rtwphyio.c,v 1.19 2016/10/09 14:42:30 christos Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.18 2013/09/14 13:09:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphyio.c,v 1.19 2016/10/09 14:42:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ rtw_bbp_write(struct rtw_regs *regs, u_int addr, u_int val)
 	KASSERT((val & ~__SHIFTOUT_MASK(RTW_BB_WR_MASK)) == 0);
 
 	wrbbp = __SHIFTIN(addr, RTW_BB_ADDR_MASK) | RTW_BB_WREN |
-	    __SHIFTIN(val, RTW_BB_WR_MASK) | RTW_BB_RD_MASK,
+	    __SHIFTIN(val, RTW_BB_WR_MASK) | RTW_BB_RD_MASK;
 
 	rdbbp = __SHIFTIN(addr, RTW_BB_ADDR_MASK) |
 	    RTW_BB_WR_MASK | RTW_BB_RD_MASK;

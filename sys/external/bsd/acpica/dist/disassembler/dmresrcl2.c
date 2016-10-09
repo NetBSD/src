@@ -518,7 +518,7 @@ AcpiDmI2cSerialBusDescriptor (
     ResourceSourceOffset = sizeof (AML_RESOURCE_COMMON_SERIALBUS) +
         Resource->CommonSerialBus.TypeDataLength;
 
-    DeviceName = ACPI_ADD_PTR (char, Resource, ResourceSourceOffset),
+    DeviceName = ACPI_ADD_PTR (char, Resource, ResourceSourceOffset);
     AcpiUtPrintString (DeviceName, ACPI_UINT16_MAX);
 
     /* ResourceSourceIndex, ResourceUsage */
