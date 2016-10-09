@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.46 2016/09/18 15:37:23 christos Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.47 2016/10/09 09:18:26 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -742,7 +742,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 	const char *hostname;
 	const struct vivco *vivco;
 	int mtu;
-#ifndef NO_AUTH
+#ifdef AUTH
 	uint8_t *auth, auth_len;
 #endif
 
@@ -977,6 +977,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 			p += ifo->vendor[0] + 1;
 		}
 
+#ifdef AUTH
 		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
 		    DHCPCD_AUTH_SENDREQUIRE)
 		{
@@ -986,6 +987,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 			*p++ = 1;
 			*p++ = AUTH_ALG_HMAC_MD5;
 		}
+#endif
 
 		if (ifo->vivco_len) {
 			AREA_CHECK(sizeof(ul));
@@ -1059,11 +1061,9 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		*n_params = (uint8_t)(p - n_params - 1);
 	}
 
-#ifndef NO_AUTH
-	/* silence GCC */
+#ifdef AUTH
+	auth = NULL;	/* appease GCC */
 	auth_len = 0;
-	auth = NULL;
-
 	if (ifo->auth.options & DHCPCD_AUTH_SEND) {
 		ssize_t alen = dhcp_auth_encode(&ifo->auth,
 		    state->auth.token,
@@ -1085,6 +1085,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		}
 	}
 #endif
+
 	*p++ = DHO_END;
 	len = (size_t)(p - (uint8_t *)bootp);
 
@@ -1097,7 +1098,7 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 		*p++ = DHO_PAD;
 		len++;
 	}
-#ifndef NO_AUTH
+#ifdef AUTH
 	if (ifo->auth.options & DHCPCD_AUTH_SEND && auth_len != 0)
 		dhcp_auth_encode(&ifo->auth, state->auth.token,
 		    (uint8_t *)bootp, len, 4, type, auth, auth_len);
@@ -1138,9 +1139,9 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 	uint8_t *lease;
 	size_t bytes;
 	uint8_t type;
-#ifndef NO_AUTH
-	size_t auth_len;
+#ifdef AUTH
 	const uint8_t *auth;
+	size_t auth_len;
 #endif
 
 	/* Safety */
@@ -1194,7 +1195,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 	    DHO_MESSAGETYPE) == -1)
 		type = 0;
 
-#ifndef NO_AUTH
+#ifdef AUTH
 	/* Authenticate the message */
 	auth = get_option(ifp->ctx, (struct bootp *)lease, bytes,
 	    DHO_AUTHENTICATION, &auth_len);
@@ -1223,6 +1224,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 		return 0;
 	}
 #endif
+
 out:
 	*bootp = (struct bootp *)lease;
 	return bytes;
@@ -1845,9 +1847,11 @@ dhcp_discover(void *arg)
 	if (ifo->fallback)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
 		    ifo->reboot, dhcp_fallback, ifp);
+#ifdef IPV4LL
 	else if (ifo->options & DHCPCD_IPV4LL)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
 		    ifo->reboot, ipv4ll_start, ifp);
+#endif
 	if (ifo->options & DHCPCD_REQUEST)
 		logger(ifp->ctx, LOG_INFO,
 		    "%s: soliciting a DHCP lease (requesting %s)",
@@ -2510,10 +2514,12 @@ dhcp_reboot(struct interface *ifp)
 	state->lease.server.s_addr = 0;
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
+#ifdef IPV4LL
 	/* Need to add this before dhcp_expire and friends. */
 	if (!ifo->fallback && ifo->options & DHCPCD_IPV4LL)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
 		    ifo->reboot, ipv4ll_start, ifp);
+#endif
 
 	if (ifo->options & DHCPCD_LASTLEASE && state->lease.frominfo)
 		eloop_timeout_add_sec(ifp->ctx->eloop,
@@ -2571,7 +2577,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	}
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-#ifndef NO_AUTH
+#ifdef AUTH
 	dhcp_auth_reset(&state->auth);
 #endif
 	dhcp_close(ifp);
@@ -2698,12 +2704,12 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 	unsigned int i;
 	char *msg;
 	bool bootp_copied;
+	const uint8_t *auth;
+#ifdef AUTH
+	size_t auth_len;
+#endif
 #ifdef IN_IFF_DUPLICATED
 	struct ipv4_addr *ia;
-#endif
-#ifndef NO_AUTH
-	const uint8_t *auth;
-	size_t auth_len;
 #endif
 
 #define LOGDHCP0(l, m) \
@@ -2741,8 +2747,8 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		return;
 	}
 
+#ifdef AUTH
 	/* Authenticate the message */
-#ifndef NO_AUTH
 	auth = get_option(ifp->ctx, bootp, bootp_len,
 	    DHO_AUTHENTICATION, &auth_len);
 	if (auth) {
@@ -2769,7 +2775,10 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 		}
 		LOGDHCP0(LOG_WARNING, "no authentication");
 	}
+#else
+	auth = NULL;
 #endif
+
 	/* RFC 3203 */
 	if (type == DHCP_FORCERENEW) {
 		if (from->s_addr == INADDR_ANY ||
@@ -2778,13 +2787,11 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			LOGDHCP(LOG_ERR, "discarding Force Renew");
 			return;
 		}
-#ifndef NO_AUTH
 		if (auth == NULL) {
 			LOGDHCP(LOG_ERR, "unauthenticated Force Renew");
 			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
 				return;
 		}
-#endif
 		if (state->state != DHS_BOUND && state->state != DHS_INFORM) {
 			LOGDHCP(LOG_DEBUG, "not bound, ignoring Force Renew");
 			return;
@@ -2906,6 +2913,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			    "%s: message: %s", ifp->name, msg);
 			free(msg);
 		}
+#ifdef IPV4LL
 		if (state->state == DHS_DISCOVER &&
 		    get_option_uint8(ifp->ctx, &tmp, bootp, bootp_len,
 		    DHO_AUTOCONFIGURE) == 0)
@@ -2930,6 +2938,7 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 			eloop_timeout_add_sec(ifp->ctx->eloop,
 			    DHCP_MAX, dhcp_discover, ifp);
 		}
+#endif
 		return;
 	}
 
@@ -3580,11 +3589,13 @@ dhcp_start1(void *arg)
 		}
 	}
 
+#ifdef IPV4LL
 	if (!(ifo->options & DHCPCD_DHCP)) {
 		if (ifo->options & DHCPCD_IPV4LL)
 			ipv4ll_start(ifp);
 		return;
 	}
+#endif
 
 	if (state->offer == NULL || !IS_DHCP(state->offer))
 		dhcp_discover(ifp);
@@ -3671,9 +3682,12 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia)
 		return;
 
 	if (cmd == RTM_DELADDR) {
-		if (IPV4_BRD_EQ(state->addr, ia)) {
+		if (state->addr == ia) {
 			logger(ifp->ctx, LOG_INFO,
 			    "%s: deleted IP address %s", ifp->name, ia->saddr);
+			state->addr = NULL;
+			/* Don't clear the added state as we need
+			 * to drop the lease. */
 			dhcp_drop(ifp, "EXPIRE");
 		}
 		return;
