@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.21 2016/07/29 10:07:57 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.22 2016/10/09 09:18:26 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -448,6 +448,8 @@ arp_handleifa(int cmd, struct ipv4_addr *addr)
 	struct iarp_state *state;
 	struct arp_state *astate, *asn;
 
+	/* If the address is deleted, the ARP state should be freed by the
+	 * state owner, such as DHCP or IPv4LL. */
 	if (cmd != RTM_NEWADDR || (state = ARP_STATE(addr->iface)) == NULL)
 		return;
 

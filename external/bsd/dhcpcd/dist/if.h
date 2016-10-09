@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.18 2016/07/29 10:07:58 roy Exp $ */
+/* $NetBSD: if.h,v 1.19 2016/10/09 09:18:26 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -43,6 +43,12 @@
 # if defined(__linux__)
 #  define HAVE_ROUTE_METRIC 1
 # endif
+#endif
+
+#if defined(__OpenBSD) || defined (__sun)
+#  define ROUTE_PER_GATEWAY
+/* XXX dhcpcd doesn't really support this yet.
+ * But that's generally OK if only dhcpcd is managing routes. */
 #endif
 
 /* Some systems have in-built IPv4 DAD.
@@ -181,7 +187,8 @@ ssize_t if_readraw(struct interface *, int, void *, size_t, int *);
 void if_closeraw(struct interface *, int);
 
 int if_address(unsigned char, const struct ipv4_addr *);
-int if_addrflags(const struct ipv4_addr *);
+int if_addrflags(const struct interface *, const struct in_addr *,
+    const char *);
 
 int if_route(unsigned char, const struct rt *rt);
 int if_initrt(struct dhcpcd_ctx *);
@@ -198,7 +205,8 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #endif
 
 int if_address6(unsigned char, const struct ipv6_addr *);
-int if_addrflags6(const struct ipv6_addr *);
+int if_addrflags6(const struct interface *, const struct in6_addr *,
+    const char *);
 int if_getlifetime6(struct ipv6_addr *);
 
 int if_route6(unsigned char, const struct rt6 *rt);
