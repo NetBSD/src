@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.32 2016/09/18 15:37:23 christos Exp $
+# $NetBSD: Makefile,v 1.33 2016/10/09 09:23:59 roy Exp $
 #
 
 WARNS?=		6
@@ -14,25 +14,37 @@ SRCS+=		if-bsd.c
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -D_OPENBSD_SOURCE
 
+USE_INET?=	yes
+
 .if defined(SMALLPROG)
-CPPFLAGS+=	-DNO_AUTH
+CPPFLAGS+=	-DSMALL
+DHCPCD_DEFS=	dhcpcd-definitions-small.conf
 .else
+DHCPCD_DEFS=	dhcpcd-definitions.conf
+CPPFLAGS+=	-DAUTH
 SRCS+=		auth.c hmac_md5.c
 .endif
 
-USE_INET?=	yes
 .if (${USE_INET} != "no")
 CPPFLAGS+=	-DINET
-SRCS+=		arp.c dhcp.c ipv4.c ipv4ll.c
+SRCS+=		arp.c dhcp.c ipv4.c
+.if !defined(SMALLPROG)
+CPPFLAGS+=	-DIPV4LL
+SRCS+=		ipv4ll.c
+.endif
 .endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6
-SRCS+=		ipv6.c ipv6nd.c dhcp6.c
+SRCS+=		ipv6.c ipv6nd.c
+# -DSMALL already strips out prefix delegation
+# A network could be IPv6 only and require DHCPv6
+CPPFLAGS+=	-DDHCP6
+SRCS+=		dhcp6.c
 .endif
 
 DIST=		${NETBSDSRCDIR}/external/bsd/dhcpcd/dist
-CPPFLAGS+=	-I${DIST}
+CPPFLAGS+=	-I${DIST} -I${.OBJDIR}
 
 DPADD+=		${LIBUTIL}
 LDADD+=		-lutil
@@ -65,6 +77,16 @@ MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 
 CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 \
 			dhcpcd-run-hooks dhcpcd-run-hooks.8
+
+dhcpcd-embedded.h:	genembedh ${DHCPCD_DEFS} dhcpcd-embedded.h.in
+	${HOST_SH} ${.ALLSRC} $^ > $@
+
+dhcpcd-embedded.c:	genembedc ${DHCPCD_DEFS} dhcpcd-embedded.c.in
+	${HOST_SH} ${.ALLSRC} $^ > $@
+
+if-options.c:		dhcpcd-embedded.h
+
+CLEANFILES+=		dhcpcd-embedded.c dhcpcd-embedded.h
 
 .for f in dhcpcd-run-hooks dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 ${f}:	${f}.in
