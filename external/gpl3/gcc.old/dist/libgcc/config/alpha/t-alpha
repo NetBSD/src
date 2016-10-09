@@ -1,2 +1,0 @@
-# This is a support routine for longlong.h, used by libgcc2.c.
-LIB2ADD += $(srcdir)/config/alpha/qrnnd.S
