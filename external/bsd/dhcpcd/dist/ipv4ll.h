@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4ll.h,v 1.12 2016/06/17 19:42:32 roy Exp $ */
+/* $NetBSD: ipv4ll.h,v 1.13 2016/10/09 09:18:26 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -30,16 +30,16 @@
 #ifndef IPV4LL_H
 #define IPV4LL_H
 
-#ifdef INET
-#include "arp.h"
-
-#define LINKLOCAL_ADDR	0xa9fe0000
-#define LINKLOCAL_MASK	IN_CLASSB_NET
-#define LINKLOCAL_BCAST	(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
+#define	LINKLOCAL_ADDR		0xa9fe0000
+#define	LINKLOCAL_MASK		IN_CLASSB_NET
+#define	LINKLOCAL_BCAST		(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
 
 #ifndef IN_LINKLOCAL
 # define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
 #endif
+
+#ifdef IPV4LL
+#include "arp.h"
 
 struct ipv4ll_state {
 	struct ipv4_addr *addr;
@@ -50,11 +50,11 @@ struct ipv4ll_state {
 	uint8_t down;
 };
 
-#define IPV4LL_STATE(ifp)						       \
+#define	IPV4LL_STATE(ifp)						       \
 	((struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
-#define IPV4LL_CSTATE(ifp)						       \
+#define	IPV4LL_CSTATE(ifp)						       \
 	((const struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
-#define IPV4LL_STATE_RUNNING(ifp)					       \
+#define	IPV4LL_STATE_RUNNING(ifp)					       \
 	(IPV4LL_CSTATE((ifp)) && !IPV4LL_CSTATE((ifp))->down &&		       \
 	(IPV4LL_CSTATE((ifp))->addr != NULL))
 
@@ -67,16 +67,19 @@ void ipv4ll_handle_failure(void *);
 #ifdef HAVE_ROUTE_METRIC
 int ipv4ll_handlert(struct dhcpcd_ctx *, int, const struct rt *);
 #else
-#define ipv4ll_handlert(a, b, c) (0)
+#define	ipv4ll_handlert(a, b, c)	(0)
 #endif
 
-#define ipv4ll_free(ifp) ipv4ll_freedrop((ifp), 0);
-#define ipv4ll_drop(ifp) ipv4ll_freedrop((ifp), 1);
+#define	ipv4ll_free(ifp) ipv4ll_freedrop((ifp), 0);
+#define	ipv4ll_drop(ifp) ipv4ll_freedrop((ifp), 1);
 void ipv4ll_freedrop(struct interface *, int);
 #else
-#define IPV4LL_STATE_RUNNING(ifp) (0)
-#define ipv4ll_free(a) {}
-#define ipv4ll_drop(a) {}
+#define	IPV4LL_STATE_RUNNING(ifp)	(0)
+#define	ipv4ll_subnet_route(ifp)	(NULL)
+#define	ipv4ll_default_route(ifp)	(NULL)
+#define	ipv4ll_handlert(a, b, c)	(0)
+#define	ipv4ll_free(a)			{}
+#define	ipv4ll_drop(a)			{}
 #endif
 
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.19 2016/07/29 10:07:58 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.20 2016/10/09 09:18:26 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -123,6 +123,7 @@ struct dhcpcd_ctx {
 	int link_fd;
 	int seq;	/* route message sequence no */
 	int sseq;	/* successful seq no sent */
+	struct iovec iov[1];	/* generic iovec buffer */
 
 #ifdef USE_SIGNALS
 	sigset_t sigset;
