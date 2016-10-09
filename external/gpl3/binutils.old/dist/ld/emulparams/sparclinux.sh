@@ -1,9 +1,0 @@
-SCRIPT_NAME=aout
-OUTPUT_FORMAT="a.out-sparc-linux"
-TARGET_PAGE_SIZE=0x1000
-TEXT_START_ADDR=0x1020
-case ${LD_FLAG} in
-    n|N)	TEXT_START_ADDR=0 ;;
-esac
-ARCH=sparc
-TEMPLATE_NAME=linux

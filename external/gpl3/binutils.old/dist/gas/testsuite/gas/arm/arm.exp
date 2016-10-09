@@ -1,7 +1,0 @@
-#
-# Some ARM tests
-#
-
-if {[istarget arm*-*-*]} {
-    run_dump_tests [lsort [glob -nocomplain $srcdir/$subdir/*.d]]
-}
