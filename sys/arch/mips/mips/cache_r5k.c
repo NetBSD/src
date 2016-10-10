@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.17 2016/10/08 00:39:53 macallan Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.18 2016/10/10 07:37:17 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.17 2016/10/08 00:39:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.18 2016/10/10 07:37:17 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -287,7 +287,7 @@ vr4131v1_pdcache_wbinv_range_16(register_t va, vsize_t size)
 void
 r4600v1_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	const vaddr_t eva = round_line32(va + size);
+	const register_t eva = round_line32(va + size);
 
 	/*
 	 * This is pathetically slow, but the chip bug is pretty
@@ -313,7 +313,7 @@ r4600v1_pdcache_inv_range_32(register_t va, vsize_t size)
 void
 r4600v2_pdcache_inv_range_32(register_t va, vsize_t size)
 {
-	const vaddr_t eva = round_line32(va + size);
+	const register_t eva = round_line32(va + size);
 
 	va = trunc_line32(va);
 
