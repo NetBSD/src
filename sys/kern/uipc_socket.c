@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.250 2016/10/10 01:22:08 dholland Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.251 2016/10/10 01:22:51 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.250 2016/10/10 01:22:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.251 2016/10/10 01:22:51 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1175,7 +1175,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	if (controlp != NULL)
 		*controlp = NULL;
 	if (flagsp != NULL)
-		flags = *flagsp &~ MSG_EOR;
+		flags = *flagsp & ~MSG_EOR;
 	else
 		flags = 0;
 
