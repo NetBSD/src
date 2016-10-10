@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.18 2016/10/10 07:37:17 skrll Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.19 2016/10/10 07:37:56 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.18 2016/10/10 07:37:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r5k.c,v 1.19 2016/10/10 07:37:56 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -259,7 +259,7 @@ r4600v2_pdcache_wbinv_range_32(register_t va, vsize_t size)
 	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	for (; va < eva; va += 32) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		
+
 	}
 
 	mips_cp0_status_write(ostatus);
@@ -275,7 +275,7 @@ vr4131v1_pdcache_wbinv_range_16(register_t va, vsize_t size)
 	for (; (eva - va) >= (32 * 16); va += (32 * 16)) {
 		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
 		cache_r4k_op_32lines_16(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		
+
 	}
 
 	for (; va < eva; va += 16) {
@@ -304,7 +304,7 @@ r4600v1_pdcache_inv_range_32(register_t va, vsize_t size)
 	for (; va < eva; va += 32) {
 		__asm volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		
+
 	}
 
 	mips_cp0_status_write(ostatus);
@@ -328,13 +328,13 @@ r4600v2_pdcache_inv_range_32(register_t va, vsize_t size)
 	for (; (eva - va) >= (32 * 32); va += (32 * 32)) {
 		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		
+
 	}
 
 	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	for (; va < eva; va += 32) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		
+
 	}
 
 	mips_cp0_status_write(ostatus);
@@ -360,7 +360,7 @@ r4600v1_pdcache_wb_range_32(register_t va, vsize_t size)
 	for (; va < eva; va += 32) {
 		__asm volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		
+
 	}
 
 	mips_cp0_status_write(ostatus);
@@ -384,7 +384,7 @@ r4600v2_pdcache_wb_range_32(register_t va, vsize_t size)
 	for (; (eva - va) >= (32 * 32); va += (32 * 32)) {
 		(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		
+
 	}
 
 	(void) *(volatile int *)MIPS_PHYS_TO_KSEG1(0);
