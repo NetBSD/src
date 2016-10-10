@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.13 2016/06/10 13:27:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.14 2016/10/10 14:23:35 kiyohara Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.13 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.14 2016/10/10 14:23:35 kiyohara Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1141,6 +1141,7 @@ mvxpe_ring_flush_queue(struct mvxpe_softc *sc, int q)
 {
 	struct mvxpe_rx_ring *rx = MVXPE_RX_RING(sc, q);
 	struct mvxpe_tx_ring *tx = MVXPE_TX_RING(sc, q);
+	struct mbuf *m;
 	int i;
 
 	KASSERT_RX_MTX(sc, q);
@@ -1157,11 +1158,15 @@ mvxpe_ring_flush_queue(struct mvxpe_softc *sc, int q)
 
 	/* Tx handle */
 	for (i = 0; i < MVXPE_TX_RING_CNT; i++) {
-		if (MVXPE_TX_MBUF(sc, q, i) == NULL)
+		m = MVXPE_TX_MBUF(sc, q, i);
+		if (m == NULL)
 			continue;
-		bus_dmamap_unload(sc->sc_dmat, MVXPE_TX_MAP(sc, q, i));
-		m_freem(MVXPE_TX_MBUF(sc, q, i));
 		MVXPE_TX_MBUF(sc, q, i) = NULL;
+		bus_dmamap_sync(sc->sc_dmat,
+		    MVXPE_TX_MAP(sc, q, i), 0, m->m_pkthdr.len,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, MVXPE_TX_MAP(sc, q, i));
+		m_freem(m);
 	}
 	tx->tx_dma = tx->tx_cpu = 0;
        	tx->tx_used = 0;
@@ -2141,7 +2146,7 @@ mvxpe_tx_queue(struct mvxpe_softc *sc, struct mbuf *m, int q)
 	MVXPE_TX_MBUF(sc, q, tx->tx_cpu) = m;
 	bus_dmamap_sync(sc->sc_dmat,
 	    MVXPE_TX_MAP(sc, q, tx->tx_cpu), 0, m->m_pkthdr.len,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	/* load to tx descriptors */
 	start = tx->tx_cpu;
@@ -2302,6 +2307,7 @@ mvxpe_tx_queue_complete(struct mvxpe_softc *sc, int q)
 {
 	struct mvxpe_tx_ring *tx = MVXPE_TX_RING(sc, q);
 	struct mvxpe_tx_desc *t;
+	struct mbuf *m;
 	uint32_t ptxs, ptxsu, ndesc;
 	int i;
 
@@ -2342,12 +2348,16 @@ mvxpe_tx_queue_complete(struct mvxpe_softc *sc, int q)
 			}
 			error = 1;
 		}
-		if (MVXPE_TX_MBUF(sc, q, tx->tx_dma) != NULL) {
+		m = MVXPE_TX_MBUF(sc, q, tx->tx_dma);
+		if (m != NULL) {
 			KASSERT((t->command & MVXPE_TX_CMD_F) != 0);
+			MVXPE_TX_MBUF(sc, q, tx->tx_dma) = NULL;
+			bus_dmamap_sync(sc->sc_dmat,
+			    MVXPE_TX_MAP(sc, q, tx->tx_dma), 0, m->m_pkthdr.len,
+			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat,
 			    MVXPE_TX_MAP(sc, q, tx->tx_dma));
-			m_freem(MVXPE_TX_MBUF(sc, q, tx->tx_dma));
-			MVXPE_TX_MBUF(sc, q, tx->tx_dma) = NULL;
+			m_freem(m);
 			sc->sc_tx_pending--;
 		}
 		else
