@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.273 2016/09/15 07:49:08 mrg Exp $
+$NetBSD: UPDATING,v 1.274 2016/10/10 13:28:24 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20161009:
+	a new version of dhcpcd has been imported with slightly changed
+	build infrastructure. When doing a build.sh -u this requires
+	pruning the external/bsd/dhcpcd objdir.
 
 20160914:
 	i386, amd64, shark, ofppc and macppc have joined shark and x68k
