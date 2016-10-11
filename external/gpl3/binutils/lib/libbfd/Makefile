@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/07/21 16:47:50 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2016/10/11 03:08:14 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -50,9 +50,11 @@ SRCS=		${GSRCS:.lo=.c}
 
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
 		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c \
+		elf32-riscv.c elf64-riscv.c elf32-aarch64.c elf64-aarch64.c \
 		pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
 		elf32-ia64.c elf64-ia64.c peigen.c pepigen.c \
+		elf32-riscv.c elf64-riscv.c elf32-aarch64.c elf64-aarch64.c \
 		pex64igen.c
 
 TEXINFO=	bfd.texinfo
@@ -94,6 +96,14 @@ elf32-riscv.c: elfnn-riscv.c
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
 elf64-riscv.c: elfnn-riscv.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/64/g < $> > $@
+
+elf32-aarch64.c: elfnn-aarch64.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/32/g < $> > $@
+
+elf64-aarch64.c: elfnn-aarch64.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
