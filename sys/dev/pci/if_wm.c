@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.417 2016/08/10 04:52:40 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.418 2016/10/11 15:48:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.417 2016/08/10 04:52:40 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.418 2016/10/11 15:48:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2807,13 +2807,12 @@ wm_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct wm_softc *sc = ifp->if_softc;
-	int change = ifp->if_flags ^ sc->sc_if_flags;
 	int rc = 0;
 
 	WM_CORE_LOCK(sc);
 
-	if (change != 0)
-		sc->sc_if_flags = ifp->if_flags;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
 
 	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
 		rc = ENETRESET;
