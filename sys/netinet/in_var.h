@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.87 2016/09/29 15:18:18 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.88 2016/10/11 13:59:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ struct in_ifaddr {
 	int	ia4_flags;		/* address flags */
 	void	(*ia_dad_start) (struct ifaddr *);	/* DAD start function */
 	void	(*ia_dad_stop) (struct ifaddr *);	/* DAD stop function */
+	time_t	ia_dad_defended;	/* last time of DAD defence */
 
 #ifdef _KERNEL
 	struct pslist_entry	ia_hash_pslist_entry;
