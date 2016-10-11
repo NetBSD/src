@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.229 2016/10/11 12:32:30 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.230 2016/10/11 13:59:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.229 2016/10/11 12:32:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.230 2016/10/11 13:59:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -178,7 +178,7 @@ static	void arp_drainstub(void);
 static void arp_dad_timer(struct ifaddr *);
 static void arp_dad_start(struct ifaddr *);
 static void arp_dad_stop(struct ifaddr *);
-static void arp_dad_duplicated(struct ifaddr *);
+static void arp_dad_duplicated(struct ifaddr *, const char *);
 
 static void arp_init_llentry(struct ifnet *, struct llentry *);
 #if NTOKEN > 0
@@ -1133,16 +1133,13 @@ in_arpinput(struct mbuf *m)
 	if (in_nullhost(itaddr))
 		ARP_STATINC(ARP_STAT_RCVZEROTPA);
 
-	/* DAD check, RFC 5227 2.1.1, Probe Details */
+	/* DAD check, RFC 5227 */
 	if (in_hosteq(isaddr, myaddr) ||
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr)))
 	{
-		/* If our address is tentative, mark it as duplicated */
-		if (ia->ia4_flags & IN_IFF_TENTATIVE)
-			arp_dad_duplicated((struct ifaddr *)ia);
-		/* If our address is unuseable, don't reply */
-		if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
-			goto out;
+		arp_dad_duplicated((struct ifaddr *)ia,
+		    lla_snprintf(ar_sha(ah), ah->ar_hln));
+		goto out;
 	}
 
 	/*
@@ -1155,14 +1152,6 @@ in_arpinput(struct mbuf *m)
 
 	if (in_nullhost(isaddr))
 		goto reply;
-
-	if (in_hosteq(isaddr, myaddr)) {
-		log(LOG_ERR,
-		   "duplicate IP address %s sent from link address %s\n",
-		   in_fmtaddr(isaddr), lla_snprintf(ar_sha(ah), ah->ar_hln));
-		itaddr = myaddr;
-		goto reply;
-	}
 
 	if (in_hosteq(itaddr, myaddr))
 		la = arpcreate(ifp, m, &isaddr, NULL, 1);
@@ -1774,41 +1763,45 @@ done:
 }
 
 static void
-arp_dad_duplicated(struct ifaddr *ifa)
+arp_dad_duplicated(struct ifaddr *ifa, const char *sha)
 {
 	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
-	struct ifnet *ifp;
-	struct dadq *dp;
+	struct ifnet *ifp = ifa->ifa_ifp;
+	const char *iastr = in_fmtaddr(ia->ia_addr.sin_addr);
 
-	mutex_enter(&arp_dad_lock);
-	dp = arp_dad_find(ifa);
-	if (dp == NULL) {
-		mutex_exit(&arp_dad_lock);
-		/* DAD seems to be stopping, so do nothing. */
+	if (ia->ia4_flags & (IN_IFF_TENTATIVE|IN_IFF_DUPLICATED)) {
+		log(LOG_ERR,
+		    "%s: DAD duplicate address %s from %s\n",
+		    if_name(ifp), iastr, sha);
+	} else if (ia->ia_dad_defended == 0 ||
+		   ia->ia_dad_defended < time_uptime - DEFEND_INTERVAL) {
+		ia->ia_dad_defended = time_uptime;
+		arpannounce1(ifa);
+		log(LOG_ERR,
+		    "%s: DAD defended address %s from %s\n",
+		    if_name(ifp), iastr, sha);
 		return;
+	} else {
+		/* If DAD is disabled, just report the duplicate. */
+		if (ip_dad_count == 0) {
+			log(LOG_ERR,
+			    "%s: DAD ignoring duplicate address %s from %s\n",
+			    if_name(ifp), iastr, sha);
+			return;
+		}
+		log(LOG_ERR,
+		    "%s: DAD defence failed for %s from %s\n",
+		    if_name(ifp), iastr, sha);
 	}
 
-	ifp = ifa->ifa_ifp;
-	log(LOG_ERR,
-	    "%s: DAD detected duplicate IPv4 address %s: ARP out=%d\n",
-	    if_name(ifp), in_fmtaddr(ia->ia_addr.sin_addr),
-	    dp->dad_arp_ocount);
+	arp_dad_stop(ifa);
 
 	ia->ia4_flags &= ~IN_IFF_TENTATIVE;
-	ia->ia4_flags |= IN_IFF_DUPLICATED;
-
-	/* We are done with DAD, with duplicated address found. (failure) */
-	arp_dad_stoptimer(dp);
-
-	/* Inform the routing socket that DAD has completed */
-	rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
-
-	TAILQ_REMOVE(&dadq, dp, dad_list);
-	mutex_exit(&arp_dad_lock);
-
-	free(dp, M_IPARP);
-	dp = NULL;
-	ifafree(ifa);
+	if ((ia->ia4_flags & IN_IFF_DUPLICATED) == 0) {
+		ia->ia4_flags |= IN_IFF_DUPLICATED;
+		/* Inform the routing socket of the duplicate address */
+		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
+	}
 }
 
 /*
