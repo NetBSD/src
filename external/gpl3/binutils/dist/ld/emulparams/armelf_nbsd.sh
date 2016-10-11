@@ -11,7 +11,7 @@ unset EMBEDDED
 case "$target" in
   aarch64*-*-netbsd* | arm*-*-netbsdelf*-*eabi*)
     case "$EMULATION_NAME" in
-    *32*)
+    armelf*_nbsd)
       LIB_PATH='=/usr/lib/oabi'
       ;;
     esac
