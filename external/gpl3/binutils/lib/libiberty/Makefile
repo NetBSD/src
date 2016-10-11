@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2016/10/11 03:09:37 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2016/10/11 04:10:13 mrg Exp $
 
 NOLINT=		# defined
 NOPROFILE=	# defined
@@ -23,7 +23,6 @@ SRCS=		${G_REQUIRED_OFILES:.o=.c} ${G_EXTRA_OFILES:.o=.c} \
 		${G_LIBOBJS:.o=.c} ${G_ALLOCA:.o=.c}
 
 CPPFLAGS+=	-DHAVE_CONFIG_H -I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
-		-DHAVE_LIMITS_H -DHAVE_FCNTL_H \
 		-I${DIST}/include
 
 .PATH: ${DIST}/libiberty
