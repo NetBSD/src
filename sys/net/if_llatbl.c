@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.14 2016/06/16 03:03:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.15 2016/10/11 12:32:30 roy Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -60,6 +60,7 @@
 #include <net/if_dl.h>
 #include <net/route.h>
 #include <netinet/if_inarp.h>
+#include <netinet/in_var.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 
@@ -671,11 +672,19 @@ lla_rt_output(const u_char rtm_type, const int rtm_flags, const time_t rtm_expir
 		IF_AFDATA_WUNLOCK(ifp);
 #if defined(INET) && NARP > 0
 		/* gratuitous ARP */
-		if ((laflags & LLE_PUB) && dst->sa_family == AF_INET)
-			arprequest(ifp,
-			    &((const struct sockaddr_in *)dst)->sin_addr,
-			    &((const struct sockaddr_in *)dst)->sin_addr,
-			    CLLADDR(dl));
+		if ((laflags & LLE_PUB) && dst->sa_family == AF_INET) {
+			const struct sockaddr_in *sin;
+			struct in_ifaddr *ia;
+			struct psref _psref;
+
+			sin = satocsin(dst);
+			ia = in_get_ia_on_iface_psref(sin->sin_addr,
+			    ifp, &_psref);
+			if (ia != NULL) {
+				arpannounce(ifp, &ia->ia_ifa, CLLADDR(dl));
+				ia4_release(ia, &_psref);
+			}
+		}
 #else
 		(void)laflags;
 #endif
