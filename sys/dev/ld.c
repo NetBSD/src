@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.97 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld.c,v 1.98 2016/10/11 18:31:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.97 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.98 2016/10/11 18:31:11 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.97 2016/09/27 03:33:32 pgoyette Exp $");
 #include <sys/syslog.h>
 #include <sys/mutex.h>
 #include <sys/module.h>
+#include <sys/reboot.h>
 
 #include <dev/ldvar.h>
 
@@ -274,7 +275,8 @@ ld_shutdown(device_t dev, int flags)
 	struct ld_softc *sc = device_private(dev);
 	struct dk_softc *dksc = &sc->sc_dksc;
 
-	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
+	if ((flags & RB_NOSYNC) == 0 && sc->sc_flush != NULL
+	    && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
 		device_printf(dksc->sc_dev, "unable to flush cache\n");
 		return false;
 	}
