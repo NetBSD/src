@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.341 2016/09/07 15:41:44 roy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.342 2016/10/11 05:15:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.341 2016/09/07 15:41:44 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.342 2016/10/11 05:15:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -829,7 +829,7 @@ ours:
 		 * is expensive, so explore ia here again.
 		 */
 		s = pserialize_read_enter();
-		_ia = in_get_ia(ip->ip_dst.s_addr);
+		_ia = in_get_ia(ip->ip_dst);
 		_ia->ia_ifa.ifa_data.ifad_inbytes += ntohs(ip->ip_len);
 		pserialize_read_exit(s);
 	}
