@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.77 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.78 2016/10/11 12:32:30 roy Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.77 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.78 2016/10/11 12:32:30 roy Exp $");
 
 /*
  * TODO:
@@ -1231,8 +1231,7 @@ carp_send_arp(struct carp_softc *sc)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 
-		in = &ifatoia(ifa)->ia_addr.sin_addr;
-		arprequest(sc->sc_carpdev, in, in, CLLADDR(sc->sc_if.if_sadl));
+		arpannounce(sc->sc_carpdev, ifa, CLLADDR(sc->sc_if.if_sadl));
 	}
 	splx(s);
 	KERNEL_UNLOCK_ONE(NULL);
