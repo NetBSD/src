@@ -15,6 +15,10 @@ case "$target" in
     LIB_PATH='=/usr/lib'
     ;;
   aarch64*-*-netbsd* | arm*-*-netbsdelf*)
-    LIB_PATH='=/usr/lib/eabi'
+    case "$EMULATION_NAME" in
+    *32*)
+      LIB_PATH='=/usr/lib/eabi'
+      ;;
+    esac
     ;;
 esac
