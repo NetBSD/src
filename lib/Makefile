@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.246 2016/08/20 11:22:26 christos Exp $
+#	$NetBSD: Makefile,v 1.247 2016/10/11 17:02:28 macallan Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -39,6 +39,9 @@ LIBC_MACHINE_CPU?=${MACHINE_CPU}
 .if ${LIBC_MACHINE_CPU} == "arm" && empty(LIBC_MACHINE_ARCH:M*hf*)
 SUBDIR+=	libc_vfp
 .endif
+.endif
+.if ${MACHINE_CPU} == "mips"
+SUBDIR+=	libc_fp
 .endif
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpclient
