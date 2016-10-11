@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.229 2016/10/11 12:32:30 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.229 2016/10/11 12:32:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -157,6 +157,10 @@ int		arp_debug = 0;
 
 static	void arp_init(void);
 
+static	void arprequest(struct ifnet *,
+    const struct in_addr *, const struct in_addr *,
+    const u_int8_t *);
+static	void arpannounce1(struct ifaddr *);
 static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
 	    const struct sockaddr *);
 static	void arptimer(void *);
@@ -452,22 +456,8 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 	int s;
 
 	if (req == RTM_LLINFO_UPD) {
-		struct in_addr *in;
-
-		if ((ifa = info->rti_ifa) == NULL)
-			return;
-
-		in = &ifatoia(ifa)->ia_addr.sin_addr;
-
-		if (ifatoia(ifa)->ia4_flags &
-		    (IN_IFF_NOTREADY | IN_IFF_DETACHED))
-		{
-			arplog(LOG_DEBUG, "%s not ready\n", in_fmtaddr(*in));
-			return;
-		}
-
-		arprequest(ifa->ifa_ifp, in, in,
-		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		if ((ifa = info->rti_ifa) != NULL)
+			arpannounce1(ifa);
 		return;
 	}
 
@@ -563,16 +553,11 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			struct psref psref;
 			ia = in_get_ia_on_iface_psref(
 			    satocsin(rt_getkey(rt))->sin_addr, ifp, &psref);
-			if (ia == NULL ||
-			    ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED))
-				;
-			else
-				arprequest(ifp,
-				    &satocsin(rt_getkey(rt))->sin_addr,
-				    &satocsin(rt_getkey(rt))->sin_addr,
+			if (ia != NULL) {
+				arpannounce(ifp, &ia->ia_ifa,
 				    CLLADDR(satocsdl(gate)));
-			if (ia != NULL)
 				ia4_release(ia, &psref);
+			}
 		}
 
 		if (gate->sa_family != AF_LINK ||
@@ -645,7 +630,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
  *	- arp header target ip address
  *	- arp header source ethernet address
  */
-void
+static void
 arprequest(struct ifnet *ifp,
     const struct in_addr *sip, const struct in_addr *tip,
     const u_int8_t *enaddr)
@@ -700,6 +685,26 @@ arprequest(struct ifnet *ifp,
 	arps[ARP_STAT_SENDREQUEST]++;
 	ARP_STAT_PUTREF();
 	if_output_lock(ifp, ifp, m, &sa, NULL);
+}
+
+void
+arpannounce(struct ifnet *ifp, struct ifaddr *ifa, const uint8_t *enaddr)
+{
+	struct in_ifaddr *ia = ifatoia(ifa);
+	struct in_addr *ip = &IA_SIN(ifa)->sin_addr;
+
+	if (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED)) {
+		arplog(LOG_DEBUG, "%s not ready\n", in_fmtaddr(*ip));
+		return;
+	}
+	arprequest(ifp, ip, ip, enaddr);
+}
+
+static void
+arpannounce1(struct ifaddr *ifa)
+{
+
+	arpannounce(ifa->ifa_ifp, ifa, CLLADDR(ifa->ifa_ifp->if_sadl));
 }
 
 /*
@@ -1353,7 +1358,6 @@ reply:
 		m->m_flags |= M_BCAST;
 		m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + ah->ar_hln;
 		break;
-
 	default:
 		m->m_flags &= ~(M_BCAST|M_MCAST); /* never reply by broadcast */
 		m->m_len = sizeof(*ah) + (2 * ah->ar_pln) + (2 * ah->ar_hln);
@@ -1457,8 +1461,6 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 	    (ia->ia4_flags & (IN_IFF_NOTREADY | IN_IFF_DETACHED)) == 0) {
 		struct llentry *lle;
 
-		arprequest(ifp, ip, ip, CLLADDR(ifp->if_sadl));
-
 		/*
 		 * interface address is considered static entry
 		 * because the output of the arp utility shows
@@ -1492,6 +1494,8 @@ arp_ifinit(struct ifnet *ifp, struct ifaddr *ifa)
 		ia->ia_dad_stop = arp_dad_stop;
 		if (ia->ia4_flags & IN_IFF_TRYTENTATIVE)
 			ia->ia4_flags |= IN_IFF_TENTATIVE;
+		else
+			arpannounce1(ifa);
 	}
 }
 
@@ -1590,12 +1594,9 @@ arp_dad_start(struct ifaddr *ifa)
 		return;
 	}
 	if (!ip_dad_count) {
-		struct in_addr *ip = &IA_SIN(ifa)->sin_addr;
-
 		ia->ia4_flags &= ~IN_IFF_TENTATIVE;
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
-		arprequest(ifa->ifa_ifp, ip, ip,
-		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		arpannounce1(ifa);
 		return;
 	}
 	KASSERT(ifa->ifa_ifp != NULL);
@@ -1674,7 +1675,6 @@ arp_dad_timer(struct ifaddr *ifa)
 {
 	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
 	struct dadq *dp;
-	struct in_addr *ip;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
@@ -1750,9 +1750,7 @@ announce:
 		/*
 		 * Announce the address.
 		 */
-		ip = &IA_SIN(ifa)->sin_addr;
-		arprequest(ifa->ifa_ifp, ip, ip,
-		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		arpannounce1(ifa);
 		dp->dad_arp_acount++;
 		if (dp->dad_arp_acount < dp->dad_arp_announce) {
 			arp_dad_starttimer(dp, ANNOUNCE_INTERVAL * hz);
