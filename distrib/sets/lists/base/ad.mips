@@ -1,6 +1,18 @@
-# $NetBSD: ad.mips,v 1.71 2016/03/23 06:44:09 mrg Exp $
+# $NetBSD: ad.mips,v 1.72 2016/10/11 17:02:28 macallan Exp $
+./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat
+./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat
+./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat
 ./libexec/ld.elf_so-64				base-compat-shlib	compat,pic,arch64
 ./libexec/ld.elf_so-o32				base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libc_fp.so				base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libc_fp.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/64/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libc_fp.so			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libc_fp.so.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/o32/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64
+./usr/lib/libc_fp.so				base-sys-shlib		softfloat
+./usr/lib/libc_fp.so.0				base-sys-shlib		softfloat
+./usr/lib/libc_fp.so.0.0			base-sys-shlib		softfloat
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic,arch64
 ./usr/libexec/ld.elf_so-o32			base-sysutil-bin	compat,pic,arch64
 ./usr/lkm/ldscript				base-obsolete		obsolete
