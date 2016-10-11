@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.11 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.shark,v 1.12 2016/10/11 06:11:38 martin Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -34,7 +34,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/igs_drv.so.0.debug		-unknown-	debug,xorg,xorg_server_ver=110
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/igs_drv.so.0.debug		-unknown-	debug,xorg,xorg_server_ver=118,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/igs_drv.so.0.debug		-unknown-	debug,xorg,xorg_server_ver=118
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libchips_drv.so.1.debug	obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libigs_drv.so.0.debug		obsolete	xorg,obsolete
