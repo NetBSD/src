@@ -2,7 +2,7 @@
 /* Generated from: NetBSD: mknative-binutils,v 1.9 2013/10/01 15:41:17 skrll Exp  */
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
-/* generated for  clang version 3.8 (branches/release_38 r261930) */
+/* generated for  clang version 3.8 (branches/release_38 r280599) */
 
 #ifndef GCC_GENERATED_STDINT_H
 #define GCC_GENERATED_STDINT_H 1
