@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2016/01/29 14:42:49 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2016/10/11 07:23:52 mrg Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -92,15 +92,23 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array}  ${f} "${G_target_alias}"
 
-.if ${BINUTILS_MACHINE_ARCH} == "x86_64" \
-    || ${BINUTILS_MACHINE_ARCH} == "sparc64" \
-    || !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
+.if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \
+    ${BINUTILS_MACHINE_ARCH} == "sparc64" || \
+    ${BINUTILS_MACHINE_ARCH} == "earm" || \
+    ${BINUTILS_MACHINE_ARCH} == "arm" || \
+    ${BINUTILS_MACHINE_ARCH} == "aarch64" || \
+    !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs/.xc exists - slow!
 HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 # XXX
 #HAS_XC!=	grep '^GENERATE_COMBRELOC_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
+.if ${BINUTILS_MACHINE_ARCH} == "earm" || \
+    ${BINUTILS_MACHINE_ARCH} == "arm" || \
+    ${BINUTILS_MACHINE_ARCH} == "aarch64"
+HAS_XS=		yes
+.endif
 .if !empty(HAS_XS)
 FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 # only do this if we don't have GENERATE_SHLIB_SCRIPT
