@@ -234,7 +234,6 @@ gdbscm_lazy_string_to_value (SCM self)
   SCM ls_scm = lsscm_get_lazy_string_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   lazy_string_smob *ls_smob = (lazy_string_smob *) SCM_SMOB_DATA (ls_scm);
   struct value *value = NULL;
-  volatile struct gdb_exception except;
 
   if (ls_smob->address == 0)
     {
@@ -242,11 +241,15 @@ gdbscm_lazy_string_to_value (SCM self)
 				_("cannot create a value from NULL")));
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       value = value_at_lazy (ls_smob->type, ls_smob->address);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   return vlscm_scm_from_value (value);
 }
@@ -268,7 +271,6 @@ lsscm_safe_lazy_string_to_value (SCM string, int arg_pos,
 {
   lazy_string_smob *ls_smob;
   struct value *value = NULL;
-  volatile struct gdb_exception except;
 
   gdb_assert (lsscm_is_lazy_string (string));
 
@@ -283,15 +285,16 @@ lsscm_safe_lazy_string_to_value (SCM string, int arg_pos,
       return NULL;
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       value = value_at_lazy (ls_smob->type, ls_smob->address);
     }
-  if (except.reason < 0)
+  CATCH (except, RETURN_MASK_ALL)
     {
       *except_scmp = gdbscm_scm_from_gdb_exception (except);
       return NULL;
     }
+  END_CATCH
 
   return value;
 }

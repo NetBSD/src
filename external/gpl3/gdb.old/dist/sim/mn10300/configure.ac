@@ -15,14 +15,6 @@ SIM_AC_OPTION_INLINE()
 SIM_AC_OPTION_HARDWARE(yes,,mn103cpu mn103int mn103tim mn103ser mn103iop)
 
 AC_CHECK_FUNCS(time chmod utime fork execve execv chown)
-AC_CHECK_HEADERS(unistd.h stdlib.h string.h strings.h utime.h time.h)
-
-SIM_AC_OPTION_HARDWARE(always,"","")
-
-if test -z "$SIM_DV_SOCKSER_O"; then
-	AC_MSG_ERROR([Sorry, but hardware support in this simulator
-unconditionally relies on dv-sockser.o which is unavailable for your host.
-Please fix this simulator.])
-fi
+AC_CHECK_HEADERS(utime.h)
 
 SIM_AC_OUTPUT

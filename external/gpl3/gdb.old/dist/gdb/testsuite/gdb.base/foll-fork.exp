@@ -20,7 +20,8 @@ if { [is_remote target] || ![isnative] } then {
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"]} then {
+if { ![istarget "hppa*-hp-hpux*"] && ![istarget "*-*-linux*"]
+     && ![istarget "*-*-openbsd*"] } then {
     continue
 }
 

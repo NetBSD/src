@@ -120,16 +120,14 @@ tui_set_source_content (struct symtab *s,
 		  while (cur_line < nlines)
 		    {
 		      struct tui_win_element *element
-			= (struct tui_win_element *)
-			TUI_SRC_WIN->generic.content[cur_line];
+			= TUI_SRC_WIN->generic.content[cur_line];
 
 		      /* Get the first character in the line.  */
 		      c = fgetc (stream);
 
 		      if (offset == 0)
-			src_line = ((struct tui_win_element *)
-				   TUI_SRC_WIN->generic.content[
-					cur_line])->which_element.source.line;
+			src_line = TUI_SRC_WIN->generic.content[cur_line]
+				     ->which_element.source.line;
 		      /* Init the line with the line number.  */
 		      sprintf (src_line, "%-6d", cur_line_no);
 		      cur_len = strlen (src_line);
@@ -150,11 +148,12 @@ tui_set_source_content (struct symtab *s,
 		      element->which_element.source.line_or_addr.u.line_no =
 			cur_line_no;
 		      element->which_element.source.is_exec_point =
-			(filename_cmp (((struct tui_win_element *)
-				       locator->content[0])->which_element.locator.full_name,
+			(filename_cmp (locator->content[0]
+				         ->which_element.locator.full_name,
 				       symtab_to_fullname (s)) == 0
-			 && cur_line_no == ((struct tui_win_element *)
-					    locator->content[0])->which_element.locator.line_no);
+				         && cur_line_no
+					      == locator->content[0]
+						   ->which_element.locator.line_no);
 		      if (c != EOF)
 			{
 			  i = strlen (src_line) - 1;
@@ -219,14 +218,15 @@ tui_set_source_content (struct symtab *s,
 			}
 		      /* Now copy the line taking the offset into
 			 account.  */
-		      if (strlen (src_line) > offset)
-			strcpy (((struct tui_win_element *)
-				 TUI_SRC_WIN->generic.content[cur_line])->which_element.source.line,
+		      if (offset == 0)
+			;
+		      else if (strlen (src_line) > offset)
+			strcpy (TUI_SRC_WIN->generic.content[cur_line]
+				  ->which_element.source.line,
 				&src_line[offset]);
 		      else
-			((struct tui_win_element *)
-			 TUI_SRC_WIN->generic.content[
-			  cur_line])->which_element.source.line[0] = (char) 0;
+			TUI_SRC_WIN->generic.content[cur_line]
+			  ->which_element.source.line[0] = (char) 0;
 		      cur_line++;
 		      cur_line_no++;
 		    }
@@ -268,8 +268,7 @@ tui_set_source_content_nil (struct tui_win_info *win_info,
          i.e. the line number is 0, there is no bp, it is not where
          the program is stopped.  */
 
-      struct tui_win_element *element =
-	(struct tui_win_element *) win_info->generic.content[curr_line];
+      struct tui_win_element *element = win_info->generic.content[curr_line];
 
       element->which_element.source.line_or_addr.loa = LOA_LINE;
       element->which_element.source.line_or_addr.u.line_no = 0;
@@ -337,9 +336,8 @@ tui_source_is_displayed (const char *fullname)
 {
   return (TUI_SRC_WIN != NULL
 	  && TUI_SRC_WIN->generic.content_in_use 
-	  && (filename_cmp (((struct tui_win_element *)
-			     (tui_locator_win_info_ptr ())->
-			     content[0])->which_element.locator.full_name,
+	  && (filename_cmp (tui_locator_win_info_ptr ()->content[0]
+			      ->which_element.locator.full_name,
 			    fullname) == 0));
 }
 

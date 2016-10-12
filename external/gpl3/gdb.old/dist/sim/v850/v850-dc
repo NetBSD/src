@@ -64,3 +64,9 @@
   switch,combine        :  4 :   0 :    :    :    :    0 :VI            : v850e2v3
   switch,combine        :   4 :    0 :    :    :    :    0 :VI          : v850e3v5
   switch,combine        :  10 :    0 :    :    :    :    1 :F_I,XI      : v850e3v5
+
+# for sasf, vadd.h
+  switch,combine        :  10 :    0 :    :    :    :    1 :C,IX        : v850e3v5
+  switch,combine        :  10 :    0 :    :    :    :    1 :C,XII       : v850e3v5
+  switch,combine        :  15 :    0 :    :    :    :    0 :C           : v850e3v5
+  switch,combine        :  10 :    0 :    :    :    :    1 :C,XI        : v850e3v5

@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdio.h>
 #include <assert.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -509,22 +510,14 @@ sim_store_register (SIM_DESC sd, int regno, unsigned char *buf, int length)
   return size;
 }
 
-void
-sim_info (SIM_DESC sd, int verbose)
-{
-  check_desc (sd);
-
-  printf ("The m32c minisim doesn't collect any statistics.\n");
-}
-
 static volatile int stop;
 static enum sim_stop reason;
-int siggnal;
+static int siggnal;
 
 
 /* Given a signal number used by the M32C bsp (that is, newlib),
    return a target signal number used by GDB.  */
-int
+static int
 m32c_signal_to_target (int m32c)
 {
   switch (m32c)
@@ -560,7 +553,7 @@ m32c_signal_to_target (int m32c)
 
 /* Take a step return code RC and set up the variables consulted by
    sim_stop_reason appropriately.  */
-void
+static void
 handle_step (int rc)
 {
   if (M32C_STEPPED (rc) || M32C_HIT_BREAK (rc))
@@ -609,6 +602,8 @@ sim_resume (SIM_DESC sd, int step, int sig_to_deliver)
          interrupt signal handler.  */
       for (;;)
 	{
+	  int rc;
+
 	  if (stop)
 	    {
 	      stop = 0;
@@ -617,7 +612,7 @@ sim_resume (SIM_DESC sd, int step, int sig_to_deliver)
 	      break;
 	    }
 
-	  int rc = decode_opcode ();
+	  rc = decode_opcode ();
 #ifdef TIMER_A
 	  update_timer_a ();
 #endif

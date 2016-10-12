@@ -301,9 +301,6 @@ struct bfd_link_info
   /* TRUE if the LTO plugin is active.  */
   unsigned int lto_plugin_active: 1;
 
-  /* TRUE if we are loading LTO outputs.  */
-  unsigned int loading_lto_outputs: 1;
-
   /* TRUE if global symbols in discarded sections should be stripped.  */
   unsigned int strip_discarded: 1;
 
@@ -345,9 +342,9 @@ struct bfd_link_info
   /* TRUE if PT_GNU_RELRO segment should be created.  */
   unsigned int relro: 1;
 
-  /* TRUE if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
-     should be created.  */
-  unsigned int eh_frame_hdr: 1;
+  /* Nonzero if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
+     should be created.  1 for DWARF2 tables, 2 for compact tables.  */
+  unsigned int eh_frame_hdr_type: 2;
 
   /* TRUE if we should warn when adding a DT_TEXTREL to a shared object.  */
   unsigned int warn_shared_textrel: 1;
@@ -434,6 +431,9 @@ struct bfd_link_info
   /* Separator between archive and filename in linker script filespecs.  */
   char path_separator;
 
+  /* Compress DWARF debug sections.  */
+  enum compressed_debug_section_type compress_debug;
+
   /* Default stack size.  Zero means default (often zero itself), -1
      means explicitly zero-sized.  */
   bfd_signed_vma stacksize;
@@ -519,6 +519,11 @@ struct bfd_link_info
      time the relaxation pass is restarted due to a previous
      relaxation returning true in *AGAIN.  */
   int relax_trip;
+
+  /* > 0 to treat protected data defined in the shared library as
+     reference external.  0 to treat it as internal.  -1 to let
+     backend to decide.  */
+  int extern_protected_data;
 
   /* Non-zero if auto-import thunks for DATA items in pei386 DLLs
      should be generated/linked against.  Set to 1 if this feature

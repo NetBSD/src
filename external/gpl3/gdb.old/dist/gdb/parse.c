@@ -140,13 +140,13 @@ static struct funcall *funcall_chain;
 void
 start_arglist (void)
 {
-  struct funcall *new;
+  struct funcall *newobj;
 
-  new = (struct funcall *) xmalloc (sizeof (struct funcall));
-  new->next = funcall_chain;
-  new->arglist_len = arglist_len;
+  newobj = (struct funcall *) xmalloc (sizeof (struct funcall));
+  newobj->next = funcall_chain;
+  newobj->arglist_len = arglist_len;
   arglist_len = 0;
-  funcall_chain = new;
+  funcall_chain = newobj;
 }
 
 /* Return the number of arguments in a function call just terminated,
@@ -1133,7 +1133,6 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
 			const struct block *block,
 			int comma, int void_context_p, int *out_subexp)
 {
-  volatile struct gdb_exception except;
   struct cleanup *old_chain, *inner_chain;
   const struct language_defn *lang = NULL;
   struct parser_state ps;
@@ -1215,12 +1214,12 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
   inner_chain = make_cleanup_restore_current_language ();
   set_language (lang->la_language);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       if (lang->la_parser (&ps))
         lang->la_error (NULL);
     }
-  if (except.reason < 0)
+  CATCH (except, RETURN_MASK_ALL)
     {
       if (! parse_completion)
 	{
@@ -1228,6 +1227,7 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
 	  throw_exception (except);
 	}
     }
+  END_CATCH
 
   reallocate_expout (&ps);
 
@@ -1268,6 +1268,28 @@ parse_expression (const char *string)
   return exp;
 }
 
+/* Same as parse_expression, but using the given language (LANG)
+   to parse the expression.  */
+
+struct expression *
+parse_expression_with_language (const char *string, enum language lang)
+{
+  struct cleanup *old_chain = NULL;
+  struct expression *expr;
+
+  if (current_language->la_language != lang)
+    {
+      old_chain = make_cleanup_restore_current_language ();
+      set_language (lang);
+    }
+
+  expr = parse_expression (string);
+
+  if (old_chain != NULL)
+    do_cleanups (old_chain);
+  return expr;
+}
+
 /* Parse STRING as an expression.  If parsing ends in the middle of a
    field reference, return the type of the left-hand-side of the
    reference; furthermore, if the parsing ends in the field name,
@@ -1283,15 +1305,20 @@ parse_expression_for_completion (const char *string, char **name,
   struct expression *exp = NULL;
   struct value *val;
   int subexp;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ERROR)
+  TRY
     {
       parse_completion = 1;
       exp = parse_exp_in_context (&string, 0, 0, 0, 0, &subexp);
     }
+  CATCH (except, RETURN_MASK_ERROR)
+    {
+      /* Nothing, EXP remains NULL.  */
+    }
+  END_CATCH
+
   parse_completion = 0;
-  if (except.reason < 0 || ! exp)
+  if (exp == NULL)
     return NULL;
 
   if (expout_tag_completion_type != TYPE_CODE_UNDEF)

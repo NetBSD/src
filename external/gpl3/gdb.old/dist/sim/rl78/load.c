@@ -27,6 +27,8 @@
 
 #include "libiberty.h"
 #include "bfd.h"
+#include "elf-bfd.h"
+#include "elf/rl78.h"
 #include "libbfd.h"
 #include "cpu.h"
 #include "mem.h"
@@ -89,7 +91,30 @@ rl78_load (bfd *prog, host_callback *callbacks, const char * const simname)
       fprintf (stderr, "%s: Failed to read program headers\n", simname);
       return;
     }
-  
+
+  switch (elf_elfheader (prog)->e_flags & E_FLAG_RL78_CPU_MASK)
+    {
+    case E_FLAG_RL78_G10:
+      rl78_g10_mode = 1;
+      g13_multiply = 0;
+      g14_multiply = 0;
+      mem_set_mirror (0, 0xf8000, 4096);
+      break;
+    case E_FLAG_RL78_G13:
+      rl78_g10_mode = 0;
+      g13_multiply = 1;
+      g14_multiply = 0;
+      break;
+    case E_FLAG_RL78_G14:
+      rl78_g10_mode = 0;
+      g13_multiply = 0;
+      g14_multiply = 1;
+      break;
+    default:
+      /* Keep whatever was manually specified.  */
+      break;
+    }
+
   for (i = 0; i < num_headers; i++)
     {
       Elf_Internal_Phdr * p = phdrs + i;

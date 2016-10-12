@@ -168,6 +168,9 @@ extern const struct bfd_elf_special_section _bfd_mips_elf_special_sections [];
 
 extern bfd_boolean _bfd_mips_elf_common_definition (Elf_Internal_Sym *);
 
+extern int _bfd_mips_elf_compact_eh_encoding (struct bfd_link_info *);
+extern int _bfd_mips_elf_cant_unwind_opcode (struct bfd_link_info *);
+
 static inline bfd_boolean
 gprel16_reloc_p (unsigned int r_type)
 {
@@ -191,3 +194,5 @@ literal_reloc_p (int r_type)
 #define elf_backend_merge_symbol_attribute  _bfd_mips_elf_merge_symbol_attribute
 #define elf_backend_ignore_undef_symbol _bfd_mips_elf_ignore_undef_symbol
 #define elf_backend_post_process_headers _bfd_mips_post_process_headers
+#define elf_backend_compact_eh_encoding _bfd_mips_elf_compact_eh_encoding
+#define elf_backend_cant_unwind_opcode _bfd_mips_elf_cant_unwind_opcode

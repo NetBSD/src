@@ -23,19 +23,13 @@ if { [is_remote target] || ![isnative] } then {
     continue
 }
 
-# Until "catch syscall" is implemented on other targets...
-if { ![istarget "hppa*-hp-hpux*"] && ![istarget "*-linux*"] } {
-    continue
-}
-
 # This shall be updated whenever 'catch syscall' is implemented
 # on some architecture.
-#if { ![istarget "i\[34567\]86-*-linux*"]
 if { ![istarget "x86_64-*-linux*"] && ![istarget "i\[34567\]86-*-linux*"]
      && ![istarget "powerpc-*-linux*"] && ![istarget "powerpc64-*-linux*"]
      && ![istarget "sparc-*-linux*"] && ![istarget "sparc64-*-linux*"]
      && ![istarget "mips*-linux*"] && ![istarget "arm*-linux*"]
-     && ![istarget "s390*-linux*"] } {
+     && ![istarget "s390*-linux*"] && ![istarget "aarch64*-*-linux*"] } {
      continue
 }
 
@@ -46,9 +40,9 @@ if  { [prepare_for_testing ${testfile}.exp $testfile ${testfile}.c] } {
      return -1
 }
 
-# All (but the last) syscalls from the example code
-# They are ordered according to the file, so do not change this.
-set all_syscalls { "close" "chroot" "pipe" "write" "read" }
+# All (but the last) syscalls from the example code.  It is filled in
+# proc setup_all_syscalls.
+set all_syscalls { }
 set all_syscalls_numbers { }
 
 # The last syscall (exit()) does not return, so
@@ -115,7 +109,7 @@ proc check_continue { syscall } {
     # first print that the infeior has called the syscall,
     # and after print that the syscall has returned.
 
-    # Testing if the inferiorr has called the syscall.
+    # Testing if the inferior has called the syscall.
     check_call_to_syscall $syscall
     # And now, that the syscall has returned.
     check_return_from_syscall $syscall
@@ -408,8 +402,11 @@ proc test_catch_syscall_multi_arch {} {
 	# catch syscall supports only 32-bit ARM for now.
 	verbose "Not testing ARM for multi-arch syscall support"
 	return
+    } elseif { [istarget "aarch64*-linux*"] } {
+	verbose "Not testing AARCH64 for multi-arch syscall support"
+	return
     } elseif { [istarget "s390*-linux*"] } {
-	set arch1 ""
+	set arch1 "s390:31-bit"
 	set arch2 "s390:64-bit"
 	set syscall1_name "_newselect"
 	set syscall2_name "select"
@@ -474,6 +471,36 @@ proc fill_all_syscalls_numbers {} {
 
     set last_syscall_number [get_integer_valueof "exit_group_syscall" -1]
 }
+
+# Set up the vector all_syscalls.
+
+proc setup_all_syscalls {} {
+    global all_syscalls
+    global gdb_prompt
+
+    # They are ordered according to the file, so do not change this.
+    lappend all_syscalls "close"
+    lappend all_syscalls "chroot"
+
+    # SYS_pipe doesn't exist on aarch64 kernel.
+    set test "check SYS_pipe"
+    gdb_test_multiple "p pipe_syscall" $test {
+	-re " = .*$gdb_prompt $" {
+	    pass $test
+	    lappend all_syscalls "pipe"
+	}
+	-re "No symbol .*$gdb_prompt $" {
+	    pass $test
+	    # SYS_pipe isn't defined, use SYS_pipe2 instead.
+	    lappend all_syscalls "pipe2"
+	}
+    }
+
+    lappend all_syscalls "write"
+    lappend all_syscalls "read"
+}
+
+setup_all_syscalls
 
 # Fill all the syscalls numbers before starting anything.
 fill_all_syscalls_numbers

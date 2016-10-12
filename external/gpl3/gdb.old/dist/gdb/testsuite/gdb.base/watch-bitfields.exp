@@ -54,7 +54,14 @@ proc test_watch_location {} {
 	expect_watchpoint "q.e" 0 5
 	expect_watchpoint "q.a" 1 0
 	expect_watchpoint "q.e" 5 4
-	gdb_continue_to_end
+
+	# It'll execute a large amount of code with software watchpoint
+	# enabled, which means GDB will single stepping all the way
+	# through til the inferior exits.  Increase the timeout by a
+	# factor of 4.
+	with_timeout_factor 4 {
+	    gdb_continue_to_end
+	}
     }
 }
 
@@ -73,8 +80,20 @@ proc test_regular_watch {} {
 	expect_watchpoint "q.d + q.f + q.g" 3 2
 	expect_watchpoint "q.d + q.f + q.g" 2 1
 	expect_watchpoint "q.d + q.f + q.g" 1 0
-	gdb_continue_to_end
+
+	# It'll execute a large amount of code with software watchpoint
+	# enabled, which means GDB will single stepping all the way
+	# through til the inferior exits.  Increase the timeout by a
+	# factor of 4.
+	with_timeout_factor 4 {
+	    gdb_continue_to_end
+	}
     }
+}
+
+# Disable hardware watchpoints if the target does not support them.
+if [target_info exists gdb,no_hardware_watchpoints] {
+    gdb_test_no_output "set can-use-hw-watchpoints 0"
 }
 
 test_watch_location

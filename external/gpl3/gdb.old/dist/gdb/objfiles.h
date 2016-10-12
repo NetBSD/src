@@ -699,7 +699,16 @@ extern void default_iterate_over_objfiles_in_search_order
 
 void set_objfile_per_bfd (struct objfile *obj);
 
+/* Return canonical name for OBJFILE.
+   This is the real file name if the file has been opened.
+   Otherwise it is the original name supplied by the user.  */
+
 const char *objfile_name (const struct objfile *objfile);
+
+/* Return the (real) file name of OBJFILE if the file has been opened,
+   otherwise return NULL.  */
+
+const char *objfile_filename (const struct objfile *objfile);
 
 /* Return the name to print for OBJFILE in debugging messages.  */
 

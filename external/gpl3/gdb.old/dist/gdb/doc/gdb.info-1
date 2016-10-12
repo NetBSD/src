@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -44,7 +44,7 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 7.9.1.
+   This is the Tenth Edition, for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -491,7 +491,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 7.9.1, Copyright 1999 Free Software Foundation, Inc...
+     GDB 7.10.1, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -1290,6 +1290,31 @@ you can press 'M-?' rather than pressing <TAB> twice.  'M-?' means
 '<META> ?'.  You can type this either by holding down a key designated
 as the <META> shift on your keyboard (if there is one) while typing '?',
 or as <ESC> followed by '?'.
+
+   If the number of possible completions is large, GDB will print as
+much of the list as it has collected, as well as a message indicating
+that the list may be truncated.
+
+     (gdb) b m<TAB><TAB>
+     main
+     <... the rest of the possible completions ...>
+     *** List may be truncated, max-completions reached. ***
+     (gdb) b m
+
+This behavior can be controlled with the following commands:
+
+'set max-completions LIMIT'
+'set max-completions unlimited'
+     Set the maximum number of completion candidates.  GDB will stop
+     looking for more completions once it collects this many candidates.
+     This is useful when completing on things like function names as
+     collecting all the possible candidates can be time consuming.  The
+     default value is 200.  A value of zero disables tab-completion.
+     Note that setting either no limit or a very large limit can make
+     completion slow.
+'show max-completions'
+     Show the maximum number of candidates that GDB will collect and
+     show during completion.
 
    Sometimes the string you need, while logically a "word", may contain
 parentheses or other characters that GDB normally excludes from its
@@ -2409,14 +2434,16 @@ a Solaris-specific command:
      Convenience Variables: Convenience Vars, for general information on
      convenience variables.
 
-'thread apply [THREADNO | all] COMMAND'
+'thread apply [THREADNO | all [-ascending]] COMMAND'
      The 'thread apply' command allows you to apply the named COMMAND to
      one or more threads.  Specify the numbers of the threads that you
      want affected with the command argument THREADNO.  It can be a
      single thread number, one of the numbers shown in the first field
      of the 'info threads' display; or it could be a range of thread
-     numbers, as in '2-4'.  To apply a command to all threads, type
-     'thread apply all COMMAND'.
+     numbers, as in '2-4'.  To apply a command to all threads in
+     descending order, type 'thread apply all COMMAND'.  To apply a
+     command to all threads in ascending order, type 'thread apply all
+     -ascending COMMAND'.
 
 'thread name [NAME]'
      This command assigns a name to the current thread.  If no argument
@@ -2535,6 +2562,9 @@ any other process which you attached to.
 create additional processes using the 'fork' or 'vfork' functions.
 Currently, the only platforms with this feature are HP-UX (11.x and
 later only?)  and GNU/Linux (kernel version 2.5.60 and later).
+
+   The fork debugging commands are supported in both native mode and
+when connected to 'gdbserver' using 'target extended-remote'.
 
    By default, when a program forks, GDB will continue to debug the
 parent process and the child process will run unimpeded.
@@ -4127,29 +4157,35 @@ File: gdb.info,  Node: Static Probe Points,  Next: Error in Breakpoints,  Prev: 
 
 GDB supports "SDT" probes in the code.  SDT stands for Statically
 Defined Tracing, and the probes are designed to have a tiny runtime code
-and data footprint, and no dynamic relocations.  They are usable from
-assembly, C and C++ languages.  See
-<http://sourceware.org/systemtap/wiki/UserSpaceProbeImplementation> for
-a good reference on how the SDT probes are implemented.
+and data footprint, and no dynamic relocations.
 
-   Currently, 'SystemTap' (<http://sourceware.org/systemtap/>) SDT
-probes are supported on ELF-compatible systems.  See
-<http://sourceware.org/systemtap/wiki/AddingUserSpaceProbingToApps> for
-more information on how to add 'SystemTap' SDT probes in your
-applications.
+   Currently, the following types of probes are supported on
+ELF-compatible systems:
 
-   Some probes have an associated semaphore variable; for instance, this
-happens automatically if you defined your probe using a DTrace-style
-'.d' file.  If your probe has a semaphore, GDB will automatically enable
-it when you specify a breakpoint using the '-probe-stap' notation.  But,
-if you put a breakpoint at a probe's location by some other method
-(e.g., 'break file:line'), then GDB will not automatically set the
-semaphore.
+   * 'SystemTap' (<http://sourceware.org/systemtap/>) SDT probes(1).
+     'SystemTap' probes are usable from assembly, C and C++
+     languages(2).
+
+   * 'DTrace' (<http://oss.oracle.com/projects/DTrace>) USDT probes.
+     'DTrace' probes are usable from C and C++ languages.
+
+   Some 'SystemTap' probes have an associated semaphore variable; for
+instance, this happens automatically if you defined your probe using a
+DTrace-style '.d' file.  If your probe has a semaphore, GDB will
+automatically enable it when you specify a breakpoint using the
+'-probe-stap' notation.  But, if you put a breakpoint at a probe's
+location by some other method (e.g., 'break file:line'), then GDB will
+not automatically set the semaphore.  'DTrace' probes do not support
+semaphores.
 
    You can examine the available static static probes using 'info
 probes', with optional arguments:
 
-'info probes stap [PROVIDER [NAME [OBJFILE]]]'
+'info probes [TYPE] [PROVIDER [NAME [OBJFILE]]]'
+     If given, TYPE is either 'stap' for listing 'SystemTap' probes or
+     'dtrace' for listing 'DTrace' probes.  If omitted all probes are
+     listed regardless of their types.
+
      If given, PROVIDER is a regular expression used to match against
      provider names when selecting which probes to list.  If omitted,
      probes by all probes from all providers are listed.
@@ -4165,17 +4201,56 @@ probes', with optional arguments:
 'info probes all'
      List the available static probes, from all types.
 
+   Some probe points can be enabled and/or disabled.  The effect of
+enabling or disabling a probe depends on the type of probe being
+handled.  Some 'DTrace' probes can be enabled or disabled, but
+'SystemTap' probes cannot be disabled.
+
+   You can enable (or disable) one or more probes using the following
+commands, with optional arguments:
+
+'enable probes [PROVIDER [NAME [OBJFILE]]]'
+     If given, PROVIDER is a regular expression used to match against
+     provider names when selecting which probes to enable.  If omitted,
+     all probes from all providers are enabled.
+
+     If given, NAME is a regular expression to match against probe names
+     when selecting which probes to enable.  If omitted, probe names are
+     not considered when deciding whether to enable them.
+
+     If given, OBJFILE is a regular expression used to select which
+     object files (executable or shared libraries) to examine.  If not
+     given, all object files are considered.
+
+'disable probes [PROVIDER [NAME [OBJFILE]]]'
+     See the 'enable probes' command above for a description of the
+     optional arguments accepted by this command.
+
    A probe may specify up to twelve arguments.  These are available at
 the point at which the probe is defined--that is, when the current PC is
 at the probe's location.  The arguments are available using the
 convenience variables (*note Convenience Vars::)
-'$_probe_arg0'...'$_probe_arg11'.  Each probe argument is an integer of
-the appropriate size; types are not preserved.  The convenience variable
-'$_probe_argc' holds the number of arguments at the current probe point.
+'$_probe_arg0'...'$_probe_arg11'.  In 'SystemTap' probes each probe
+argument is an integer of the appropriate size; types are not preserved.
+In 'DTrace' probes types are preserved provided that they are recognized
+as such by GDB; otherwise the value of the probe argument will be a long
+integer.  The convenience variable '$_probe_argc' holds the number of
+arguments at the current probe point.
 
    These variables are always available, but attempts to access them at
 any location other than a probe point will cause GDB to give an error
 message.
+
+   ---------- Footnotes ----------
+
+   (1) See
+<http://sourceware.org/systemtap/wiki/AddingUserSpaceProbingToApps> for
+more information on how to add 'SystemTap' SDT probes in your
+applications.
+
+   (2) See
+<http://sourceware.org/systemtap/wiki/UserSpaceProbeImplementation> for
+a good reference on how the SDT probes are implemented.
 
 
 File: gdb.info,  Node: Error in Breakpoints,  Next: Breakpoint-related Warnings,  Prev: Static Probe Points,  Up: Breakpoints
@@ -4833,12 +4908,11 @@ scheduler to allow only a single thread to run.
      mode optimizes for single-stepping; it prevents other threads from
      preempting the current thread while you are stepping, so that the
      focus of debugging does not change unexpectedly.  Other threads
-     only rarely (or never) get a chance to run when you step.  They are
-     more likely to run when you 'next' over a function call, and they
-     are completely free to run when you use commands like 'continue',
-     'until', or 'finish'.  However, unless another thread hits a
-     breakpoint during its timeslice, GDB does not change the current
-     thread away from the thread that you are debugging.
+     never get a chance to run when you step, and they are completely
+     free to run when you use commands like 'continue', 'until', or
+     'finish'.  However, unless another thread hits a breakpoint during
+     its timeslice, GDB does not change the current thread away from the
+     thread that you are debugging.
 
 'show scheduler-locking'
      Display the current scheduler locking mode.
@@ -5342,21 +5416,43 @@ GDB provides the following commands:
           replay implementation.  This method allows replaying and
           reverse execution.
 
-     'btrace'
+     'btrace FORMAT'
           Hardware-supported instruction recording.  This method does
           not record data.  Further, the data is collected in a ring
           buffer so old data will be overwritten when the buffer is
-          full.  It allows limited replay and reverse execution.
+          full.  It allows limited reverse execution.  Variables and
+          registers are not available during reverse execution.
 
-          This recording method may not be available on all processors.
+          The recording format can be specified as parameter.  Without a
+          parameter the command chooses the recording format.  The
+          following recording formats are available:
+
+          'bts'
+               Use the "Branch Trace Store" (BTS) recording format.  In
+               this format, the processor stores a from/to record for
+               each executed branch in the btrace ring buffer.
+
+          'pt'
+               Use the "Intel(R) Processor Trace" recording format.  In
+               this format, the processor stores the execution trace in
+               a compressed form that is afterwards decoded by GDB.
+
+               The trace can be recorded with very low overhead.  The
+               compressed trace format also allows small trace buffers
+               to already contain a big number of instructions compared
+               to BTS.
+
+               Decoding the recorded execution trace, on the other hand,
+               is more expensive than decoding BTS trace.  This is
+               mostly due to the increased number of instructions to
+               process.  You should increase the buffer-size with care.
+
+          Not all recording formats may be available on all processors.
 
      The process record and replay target can only debug a process that
      is already running.  Therefore, you need first to start the process
      with the 'run' or 'start' commands, and then start the recording
      with the 'record METHOD' command.
-
-     Both 'record METHOD' and 'rec METHOD' are aliases of 'target
-     record-METHOD'.
 
      Displaced stepping (*note displaced stepping: Maintenance
      Commands.) will be automatically disabled when process record and
@@ -5485,6 +5581,52 @@ GDB provides the following commands:
 'show record btrace replay-memory-access'
      Show the current setting of 'replay-memory-access'.
 
+'set record btrace bts buffer-size SIZE'
+'set record btrace bts buffer-size unlimited'
+     Set the requested ring buffer size for branch tracing in BTS
+     format.  Default is 64KB.
+
+     If SIZE is a positive number, then GDB will try to allocate a
+     buffer of at least SIZE bytes for each new thread that uses the
+     btrace recording method and the BTS format.  The actually obtained
+     buffer size may differ from the requested SIZE.  Use the 'info
+     record' command to see the actual buffer size for each thread that
+     uses the btrace recording method and the BTS format.
+
+     If LIMIT is 'unlimited' or zero, GDB will try to allocate a buffer
+     of 4MB.
+
+     Bigger buffers mean longer traces.  On the other hand, GDB will
+     also need longer to process the branch trace data before it can be
+     used.
+
+'show record btrace bts buffer-size SIZE'
+     Show the current setting of the requested ring buffer size for
+     branch tracing in BTS format.
+
+'set record btrace pt buffer-size SIZE'
+'set record btrace pt buffer-size unlimited'
+     Set the requested ring buffer size for branch tracing in Intel(R)
+     Processor Trace format.  Default is 16KB.
+
+     If SIZE is a positive number, then GDB will try to allocate a
+     buffer of at least SIZE bytes for each new thread that uses the
+     btrace recording method and the Intel(R) Processor Trace format.
+     The actually obtained buffer size may differ from the requested
+     SIZE.  Use the 'info record' command to see the actual buffer size
+     for each thread.
+
+     If LIMIT is 'unlimited' or zero, GDB will try to allocate a buffer
+     of 4MB.
+
+     Bigger buffers mean longer traces.  On the other hand, GDB will
+     also need longer to process the branch trace data before it can be
+     used.
+
+'show record btrace pt buffer-size SIZE'
+     Show the current setting of the requested ring buffer size for
+     branch tracing in Intel(R) Processor Trace format.
+
 'info record'
      Show various statistics about the recording depending on the
      recording method:
@@ -5505,10 +5647,19 @@ GDB provides the following commands:
                the execution log.
 
      'btrace'
-          For the 'btrace' recording method, it shows the number of
-          instructions that have been recorded and the number of blocks
-          of sequential control-flow that is formed by the recorded
-          instructions.
+          For the 'btrace' recording method, it shows:
+
+             * Recording format.
+             * Number of instructions that have been recorded.
+             * Number of blocks of sequential control-flow formed by the
+               recorded instructions.
+             * Whether in record mode or replay mode.
+
+          For the 'bts' recording format, it also shows:
+             * Size of the perf ring buffer.
+
+          For the 'pt' recording format, it also shows:
+             * Size of the perf ring buffer.
 
 'record delete'
      When record target runs in replay mode ("in the past"), delete the
@@ -6030,22 +6181,14 @@ brief description of the stack frame just selected.
      innermost one, and so on.  The highest-numbered frame is the one
      for 'main'.
 
-'frame ADDR'
-'f ADDR'
-     Select the frame at address ADDR.  This is useful mainly if the
-     chaining of stack frames has been damaged by a bug, making it
+'frame STACK-ADDR [ PC-ADDR ]'
+'f STACK-ADDR [ PC-ADDR ]'
+     Select the frame at address STACK-ADDR.  This is useful mainly if
+     the chaining of stack frames has been damaged by a bug, making it
      impossible for GDB to assign numbers properly to all frames.  In
      addition, this can be useful when your program has multiple stacks
-     and switches between them.
-
-     On the SPARC architecture, 'frame' needs two addresses to select an
-     arbitrary frame: a frame pointer and a stack pointer.
-
-     On the MIPS and Alpha architecture, it needs two addresses: a stack
-     pointer and a program counter.
-
-     On the 29k architecture, it needs three addresses: a register stack
-     pointer, a program counter, and a memory stack pointer.
+     and switches between them.  The optional PC-ADDR can also be given
+     to specify the value of PC for the stack frame.
 
 'up N'
      Move N frames up the stack; N defaults to 1.  For positive numbers
@@ -6327,7 +6470,7 @@ GDB understands:
           instruction, before the stack frame and arguments have been
           set up.
 
-     ''FILENAME'::FUNCADDR'
+     ''FILENAME':FUNCADDR'
           Like FUNCADDR above, but also specifies the name of the source
           file explicitly.  This is useful if the name of the function
           does not specify the function unambiguously, e.g., if there
@@ -6936,52 +7079,4 @@ argument is being invoked.
                                 character set than GDB does
 * Caching Target Data::         Data caching for targets
 * Searching Memory::            Searching memory for a sequence of bytes
-
-
-File: gdb.info,  Node: Expressions,  Next: Ambiguous Expressions,  Up: Data
-
-10.1 Expressions
-================
-
-'print' and many other GDB commands accept an expression and compute its
-value.  Any kind of constant, variable or operator defined by the
-programming language you are using is valid in an expression in GDB.
-This includes conditional expressions, function calls, casts, and string
-constants.  It also includes preprocessor macros, if you compiled your
-program to include this information; see *note Compilation::.
-
-   GDB supports array constants in expressions input by the user.  The
-syntax is {ELEMENT, ELEMENT...}.  For example, you can use the command
-'print {1, 2, 3}' to create an array of three integers.  If you pass an
-array to a function or assign it to a program variable, GDB copies the
-array to memory that is 'malloc'ed in the target program.
-
-   Because C is so widespread, most of the expressions shown in examples
-in this manual are in C. *Note Using GDB with Different Languages:
-Languages, for information on how to use expressions in other languages.
-
-   In this section, we discuss operators that you can use in GDB
-expressions regardless of your programming language.
-
-   Casts are supported in all languages, not just in C, because it is so
-useful to cast a number into a pointer in order to examine a structure
-at that address in memory.
-
-   GDB supports these operators, in addition to those common to
-programming languages:
-
-'@'
-     '@' is a binary operator for treating parts of memory as arrays.
-     *Note Artificial Arrays: Arrays, for more information.
-
-'::'
-     '::' allows you to specify a variable in terms of the file or
-     function where it is defined.  *Note Program Variables: Variables.
-
-'{TYPE} ADDR'
-     Refers to an object of type TYPE stored at address ADDR in memory.
-     The address ADDR may be any expression whose value is an integer or
-     pointer (but parentheses are required around binary operators, just
-     as in a cast).  This construct is allowed regardless of what kind
-     of data is normally supposed to reside at ADDR.
 

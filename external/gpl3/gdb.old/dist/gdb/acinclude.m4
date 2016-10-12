@@ -9,6 +9,9 @@ sinclude(acx_configure_dir.m4)
 # This gets GDB_AC_LIBMCHECK.
 sinclude(libmcheck.m4)
 
+# This gets GDB_AC_TRANSFORM.
+sinclude(transform.m4)
+
 dnl gdb/configure.in uses BFD_NEED_DECLARATION, so get its definition.
 sinclude(../bfd/bfd.m4)
 
@@ -53,6 +56,12 @@ sinclude([../config/codeset.m4])
 sinclude([../config/zlib.m4])
 
 m4_include([common/common.m4])
+
+dnl For libiberty_INIT.
+m4_include(libiberty.m4)
+
+dnl For --enable-build-with-cxx and COMPILER.
+m4_include(build-with-cxx.m4)
 
 ## ----------------------------------------- ##
 ## ANSIfy the C compiler whenever possible.  ##
@@ -456,9 +465,10 @@ AC_DEFUN([GDB_AC_CHECK_BFD], [
   # points somewhere with bfd, with -I/foo/lib and -L/foo/lib.  We
   # always want our bfd.
   CFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CFLAGS"
-  LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
+  ZLIBDIR=`echo $zlibdir | sed 's,\$(top_builddir)/,,g'`
+  LDFLAGS="-L../bfd -L../libiberty $ZLIBDIR $LDFLAGS"
   intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
-  LIBS="-lbfd -liberty $intl $LIBS"
+  LIBS="-lbfd -liberty -lz $intl $LIBS"
   AC_CACHE_CHECK([$1], [$2],
   [AC_TRY_LINK(
   [#include <stdlib.h>

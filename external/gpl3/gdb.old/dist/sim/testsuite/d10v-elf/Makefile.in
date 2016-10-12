@@ -107,7 +107,7 @@ RUN_FOR_TARGET = `\
   fi`
 
 # Force d10v into operating mode.
-RUNFLAGS_FOR_TARGET=-o
+RUNFLAGS_FOR_TARGET=--environment operating
 
 
 check: sanity $(TESTS)

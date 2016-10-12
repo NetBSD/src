@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -35,6 +35,401 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Selecting Pretty-Printers,  Next: Writing a Pretty-Printer,  Prev: Pretty Printing API,  Up: Python API
+
+23.2.2.6 Selecting Pretty-Printers
+..................................
+
+The Python list 'gdb.pretty_printers' contains an array of functions or
+callable objects that have been registered via addition as a
+pretty-printer.  Printers in this list are called 'global' printers,
+they're available when debugging all inferiors.  Each 'gdb.Progspace'
+contains a 'pretty_printers' attribute.  Each 'gdb.Objfile' also
+contains a 'pretty_printers' attribute.
+
+   Each function on these lists is passed a single 'gdb.Value' argument
+and should return a pretty-printer object conforming to the interface
+definition above (*note Pretty Printing API::).  If a function cannot
+create a pretty-printer for the value, it should return 'None'.
+
+   GDB first checks the 'pretty_printers' attribute of each
+'gdb.Objfile' in the current program space and iteratively calls each
+enabled lookup routine in the list for that 'gdb.Objfile' until it
+receives a pretty-printer object.  If no pretty-printer is found in the
+objfile lists, GDB then searches the pretty-printer list of the current
+program space, calling each enabled function until an object is
+returned.  After these lists have been exhausted, it tries the global
+'gdb.pretty_printers' list, again calling each enabled function until an
+object is returned.
+
+   The order in which the objfiles are searched is not specified.  For a
+given list, functions are always invoked from the head of the list, and
+iterated over sequentially until the end of the list, or a printer
+object is returned.
+
+   For various reasons a pretty-printer may not work.  For example, the
+underlying data structure may have changed and the pretty-printer is out
+of date.
+
+   The consequences of a broken pretty-printer are severe enough that
+GDB provides support for enabling and disabling individual printers.
+For example, if 'print frame-arguments' is on, a backtrace can become
+highly illegible if any argument is printed with a broken printer.
+
+   Pretty-printers are enabled and disabled by attaching an 'enabled'
+attribute to the registered function or callable object.  If this
+attribute is present and its value is 'False', the printer is disabled,
+otherwise the printer is enabled.
+
+
+File: gdb.info,  Node: Writing a Pretty-Printer,  Next: Type Printing API,  Prev: Selecting Pretty-Printers,  Up: Python API
+
+23.2.2.7 Writing a Pretty-Printer
+.................................
+
+A pretty-printer consists of two parts: a lookup function to detect if
+the type is supported, and the printer itself.
+
+   Here is an example showing how a 'std::string' printer might be
+written.  *Note Pretty Printing API::, for details on the API this class
+must provide.
+
+     class StdStringPrinter(object):
+         "Print a std::string"
+
+         def __init__(self, val):
+             self.val = val
+
+         def to_string(self):
+             return self.val['_M_dataplus']['_M_p']
+
+         def display_hint(self):
+             return 'string'
+
+   And here is an example showing how a lookup function for the printer
+example above might be written.
+
+     def str_lookup_function(val):
+         lookup_tag = val.type.tag
+         if lookup_tag == None:
+             return None
+         regex = re.compile("^std::basic_string<char,.*>$")
+         if regex.match(lookup_tag):
+             return StdStringPrinter(val)
+         return None
+
+   The example lookup function extracts the value's type, and attempts
+to match it to a type that it can pretty-print.  If it is a type the
+printer can pretty-print, it will return a printer object.  If not, it
+returns 'None'.
+
+   We recommend that you put your core pretty-printers into a Python
+package.  If your pretty-printers are for use with a library, we further
+recommend embedding a version number into the package name.  This
+practice will enable GDB to load multiple versions of your
+pretty-printers at the same time, because they will have different
+names.
+
+   You should write auto-loaded code (*note Python Auto-loading::) such
+that it can be evaluated multiple times without changing its meaning.
+An ideal auto-load file will consist solely of 'import's of your printer
+modules, followed by a call to a register pretty-printers with the
+current objfile.
+
+   Taken as a whole, this approach will scale nicely to multiple
+inferiors, each potentially using a different library version.
+Embedding a version number in the Python package name will ensure that
+GDB is able to load both sets of printers simultaneously.  Then, because
+the search for pretty-printers is done by objfile, and because your
+auto-loaded code took care to register your library's printers with a
+specific objfile, GDB will find the correct printers for the specific
+version of the library used by each inferior.
+
+   To continue the 'std::string' example (*note Pretty Printing API::),
+this code might appear in 'gdb.libstdcxx.v6':
+
+     def register_printers(objfile):
+         objfile.pretty_printers.append(str_lookup_function)
+
+And then the corresponding contents of the auto-load file would be:
+
+     import gdb.libstdcxx.v6
+     gdb.libstdcxx.v6.register_printers(gdb.current_objfile())
+
+   The previous example illustrates a basic pretty-printer.  There are a
+few things that can be improved on.  The printer doesn't have a name,
+making it hard to identify in a list of installed printers.  The lookup
+function has a name, but lookup functions can have arbitrary, even
+identical, names.
+
+   Second, the printer only handles one type, whereas a library
+typically has several types.  One could install a lookup function for
+each desired type in the library, but one could also have a single
+lookup function recognize several types.  The latter is the conventional
+way this is handled.  If a pretty-printer can handle multiple data
+types, then its "subprinters" are the printers for the individual data
+types.
+
+   The 'gdb.printing' module provides a formal way of solving these
+problems (*note gdb.printing::).  Here is another example that handles
+multiple types.
+
+   These are the types we are going to pretty-print:
+
+     struct foo { int a, b; };
+     struct bar { struct foo x, y; };
+
+   Here are the printers:
+
+     class fooPrinter:
+         """Print a foo object."""
+
+         def __init__(self, val):
+             self.val = val
+
+         def to_string(self):
+             return ("a=<" + str(self.val["a"]) +
+                     "> b=<" + str(self.val["b"]) + ">")
+
+     class barPrinter:
+         """Print a bar object."""
+
+         def __init__(self, val):
+             self.val = val
+
+         def to_string(self):
+             return ("x=<" + str(self.val["x"]) +
+                     "> y=<" + str(self.val["y"]) + ">")
+
+   This example doesn't need a lookup function, that is handled by the
+'gdb.printing' module.  Instead a function is provided to build up the
+object that handles the lookup.
+
+     import gdb.printing
+
+     def build_pretty_printer():
+         pp = gdb.printing.RegexpCollectionPrettyPrinter(
+             "my_library")
+         pp.add_printer('foo', '^foo$', fooPrinter)
+         pp.add_printer('bar', '^bar$', barPrinter)
+         return pp
+
+   And here is the autoload support:
+
+     import gdb.printing
+     import my_library
+     gdb.printing.register_pretty_printer(
+         gdb.current_objfile(),
+         my_library.build_pretty_printer())
+
+   Finally, when this printer is loaded into GDB, here is the
+corresponding output of 'info pretty-printer':
+
+     (gdb) info pretty-printer
+     my_library.so:
+       my_library
+         foo
+         bar
+
+
+File: gdb.info,  Node: Type Printing API,  Next: Frame Filter API,  Prev: Writing a Pretty-Printer,  Up: Python API
+
+23.2.2.8 Type Printing API
+..........................
+
+GDB provides a way for Python code to customize type display.  This is
+mainly useful for substituting canonical typedef names for types.
+
+   A "type printer" is just a Python object conforming to a certain
+protocol.  A simple base class implementing the protocol is provided;
+see *note gdb.types::.  A type printer must supply at least:
+
+ -- Instance Variable of type_printer: enabled
+     A boolean which is True if the printer is enabled, and False
+     otherwise.  This is manipulated by the 'enable type-printer' and
+     'disable type-printer' commands.
+
+ -- Instance Variable of type_printer: name
+     The name of the type printer.  This must be a string.  This is used
+     by the 'enable type-printer' and 'disable type-printer' commands.
+
+ -- Method on type_printer: instantiate (self)
+     This is called by GDB at the start of type-printing.  It is only
+     called if the type printer is enabled.  This method must return a
+     new object that supplies a 'recognize' method, as described below.
+
+   When displaying a type, say via the 'ptype' command, GDB will compute
+a list of type recognizers.  This is done by iterating first over the
+per-objfile type printers (*note Objfiles In Python::), followed by the
+per-progspace type printers (*note Progspaces In Python::), and finally
+the global type printers.
+
+   GDB will call the 'instantiate' method of each enabled type printer.
+If this method returns 'None', then the result is ignored; otherwise, it
+is appended to the list of recognizers.
+
+   Then, when GDB is going to display a type name, it iterates over the
+list of recognizers.  For each one, it calls the recognition function,
+stopping if the function returns a non-'None' value.  The recognition
+function is defined as:
+
+ -- Method on type_recognizer: recognize (self, type)
+     If TYPE is not recognized, return 'None'.  Otherwise, return a
+     string which is to be printed as the name of TYPE.  The TYPE
+     argument will be an instance of 'gdb.Type' (*note Types In
+     Python::).
+
+   GDB uses this two-pass approach so that type printers can efficiently
+cache information without holding on to it too long.  For example, it
+can be convenient to look up type information in a type printer and hold
+it for a recognizer's lifetime; if a single pass were done then type
+printers would have to make use of the event system in order to avoid
+holding information that could become stale as the inferior changed.
+
+
+File: gdb.info,  Node: Frame Filter API,  Next: Frame Decorator API,  Prev: Type Printing API,  Up: Python API
+
+23.2.2.9 Filtering Frames.
+..........................
+
+Frame filters are Python objects that manipulate the visibility of a
+frame or frames when a backtrace (*note Backtrace::) is printed by GDB.
+
+   Only commands that print a backtrace, or, in the case of GDB/MI
+commands (*note GDB/MI::), those that return a collection of frames are
+affected.  The commands that work with frame filters are:
+
+   'backtrace' (*note The backtrace command: backtrace-command.),
+'-stack-list-frames' (*note The -stack-list-frames command:
+-stack-list-frames.), '-stack-list-variables' (*note The
+-stack-list-variables command: -stack-list-variables.),
+'-stack-list-arguments' *note The -stack-list-arguments command:
+-stack-list-arguments.) and '-stack-list-locals' (*note The
+-stack-list-locals command: -stack-list-locals.).
+
+   A frame filter works by taking an iterator as an argument, applying
+actions to the contents of that iterator, and returning another iterator
+(or, possibly, the same iterator it was provided in the case where the
+filter does not perform any operations).  Typically, frame filters
+utilize tools such as the Python's 'itertools' module to work with and
+create new iterators from the source iterator.  Regardless of how a
+filter chooses to apply actions, it must not alter the underlying GDB
+frame or frames, or attempt to alter the call-stack within GDB.  This
+preserves data integrity within GDB.  Frame filters are executed on a
+priority basis and care should be taken that some frame filters may have
+been executed before, and that some frame filters will be executed
+after.
+
+   An important consideration when designing frame filters, and well
+worth reflecting upon, is that frame filters should avoid unwinding the
+call stack if possible.  Some stacks can run very deep, into the tens of
+thousands in some cases.  To search every frame when a frame filter
+executes may be too expensive at that step.  The frame filter cannot
+know how many frames it has to iterate over, and it may have to iterate
+through them all.  This ends up duplicating effort as GDB performs this
+iteration when it prints the frames.  If the filter can defer unwinding
+frames until frame decorators are executed, after the last filter has
+executed, it should.  *Note Frame Decorator API::, for more information
+on decorators.  Also, there are examples for both frame decorators and
+filters in later chapters.  *Note Writing a Frame Filter::, for more
+information.
+
+   The Python dictionary 'gdb.frame_filters' contains key/object
+pairings that comprise a frame filter.  Frame filters in this dictionary
+are called 'global' frame filters, and they are available when debugging
+all inferiors.  These frame filters must register with the dictionary
+directly.  In addition to the 'global' dictionary, there are other
+dictionaries that are loaded with different inferiors via auto-loading
+(*note Python Auto-loading::).  The two other areas where frame filter
+dictionaries can be found are: 'gdb.Progspace' which contains a
+'frame_filters' dictionary attribute, and each 'gdb.Objfile' object
+which also contains a 'frame_filters' dictionary attribute.
+
+   When a command is executed from GDB that is compatible with frame
+filters, GDB combines the 'global', 'gdb.Progspace' and all
+'gdb.Objfile' dictionaries currently loaded.  All of the 'gdb.Objfile'
+dictionaries are combined, as several frames, and thus several object
+files, might be in use.  GDB then prunes any frame filter whose
+'enabled' attribute is 'False'.  This pruned list is then sorted
+according to the 'priority' attribute in each filter.
+
+   Once the dictionaries are combined, pruned and sorted, GDB creates an
+iterator which wraps each frame in the call stack in a 'FrameDecorator'
+object, and calls each filter in order.  The output from the previous
+filter will always be the input to the next filter, and so on.
+
+   Frame filters have a mandatory interface which each frame filter must
+implement, defined here:
+
+ -- Function: FrameFilter.filter (iterator)
+     GDB will call this method on a frame filter when it has reached the
+     order in the priority list for that filter.
+
+     For example, if there are four frame filters:
+
+          Name         Priority
+
+          Filter1      5
+          Filter2      10
+          Filter3      100
+          Filter4      1
+
+     The order that the frame filters will be called is:
+
+          Filter3 -> Filter2 -> Filter1 -> Filter4
+
+     Note that the output from 'Filter3' is passed to the input of
+     'Filter2', and so on.
+
+     This 'filter' method is passed a Python iterator.  This iterator
+     contains a sequence of frame decorators that wrap each 'gdb.Frame',
+     or a frame decorator that wraps another frame decorator.  The first
+     filter that is executed in the sequence of frame filters will
+     receive an iterator entirely comprised of default 'FrameDecorator'
+     objects.  However, after each frame filter is executed, the
+     previous frame filter may have wrapped some or all of the frame
+     decorators with their own frame decorator.  As frame decorators
+     must also conform to a mandatory interface, these decorators can be
+     assumed to act in a uniform manner (*note Frame Decorator API::).
+
+     This method must return an object conforming to the Python iterator
+     protocol.  Each item in the iterator must be an object conforming
+     to the frame decorator interface.  If a frame filter does not wish
+     to perform any operations on this iterator, it should return that
+     iterator untouched.
+
+     This method is not optional.  If it does not exist, GDB will raise
+     and print an error.
+
+ -- Variable: FrameFilter.name
+     The 'name' attribute must be Python string which contains the name
+     of the filter displayed by GDB (*note Frame Filter Management::).
+     This attribute may contain any combination of letters or numbers.
+     Care should be taken to ensure that it is unique.  This attribute
+     is mandatory.
+
+ -- Variable: FrameFilter.enabled
+     The 'enabled' attribute must be Python boolean.  This attribute
+     indicates to GDB whether the frame filter is enabled, and should be
+     considered when frame filters are executed.  If 'enabled' is
+     'True', then the frame filter will be executed when any of the
+     backtrace commands detailed earlier in this chapter are executed.
+     If 'enabled' is 'False', then the frame filter will not be
+     executed.  This attribute is mandatory.
+
+ -- Variable: FrameFilter.priority
+     The 'priority' attribute must be Python integer.  This attribute
+     controls the order of execution in relation to other frame filters.
+     There are no imposed limits on the range of 'priority' other than
+     it must be a valid integer.  The higher the 'priority' attribute,
+     the sooner the frame filter will be executed in relation to other
+     frame filters.  Although 'priority' can be negative, it is
+     recommended practice to assume zero is the lowest priority that a
+     frame filter can be assigned.  Frame filters that have the same
+     priority are executed in unsorted order in that priority slot.
+     This attribute is mandatory.
 
 
 File: gdb.info,  Node: Frame Decorator API,  Next: Writing a Frame Filter,  Prev: Frame Filter API,  Up: Python API
@@ -216,7 +611,7 @@ and extend this object, and only to override the methods needed.
      when printing a frame.
 
 
-File: gdb.info,  Node: Writing a Frame Filter,  Next: Xmethods In Python,  Prev: Frame Decorator API,  Up: Python API
+File: gdb.info,  Node: Writing a Frame Filter,  Next: Unwinding Frames in Python,  Prev: Frame Decorator API,  Up: Python API
 
 23.2.2.11 Writing a Frame Filter
 ................................
@@ -477,9 +872,149 @@ method, and the 'elided' method to both print a marker in the inlined
 frame, and also show the hierarchical relationship.
 
 
-File: gdb.info,  Node: Xmethods In Python,  Next: Xmethod API,  Prev: Writing a Frame Filter,  Up: Python API
+File: gdb.info,  Node: Unwinding Frames in Python,  Next: Xmethods In Python,  Prev: Writing a Frame Filter,  Up: Python API
 
-23.2.2.12 Xmethods In Python
+23.2.2.12 Unwinding Frames in Python
+....................................
+
+In GDB terminology "unwinding" is the process of finding the previous
+frame (that is, caller's) from the current one.  An unwinder has three
+methods.  The first one checks if it can handle given frame ("sniff"
+it).  For the frames it can sniff an unwinder provides two additional
+methods: it can return frame's ID, and it can fetch registers from the
+previous frame.  A running GDB mantains a list of the unwinders and
+calls each unwinder's sniffer in turn until it finds the one that
+recognizes the current frame.  There is an API to register an unwinder.
+
+   The unwinders that come with GDB handle standard frames.  However,
+mixed language applications (for example, an application running Java
+Virtual Machine) sometimes use frame layouts that cannot be handled by
+the GDB unwinders.  You can write Python code that can handle such
+custom frames.
+
+   You implement a frame unwinder in Python as a class with which has
+two attributes, 'name' and 'enabled', with obvious meanings, and a
+single method '__call__', which examines a given frame and returns an
+object (an instance of 'gdb.UnwindInfo class)' describing it.  If an
+unwinder does not recognize a frame, it should return 'None'.  The code
+in GDB that enables writing unwinders in Python uses this object to
+return frame's ID and previous frame registers when GDB core asks for
+them.
+
+Unwinder Input
+--------------
+
+An object passed to an unwinder (a 'gdb.PendingFrame' instance) provides
+a method to read frame's registers:
+
+ -- Function: PendingFrame.read_register (reg)
+     This method returns the contents of the register REGN in the frame
+     as a 'gdb.Value' object.  REG can be either a register number or a
+     register name; the values are platform-specific.  They are usually
+     found in the corresponding 'PLATFORM-tdep.h' file in the GDB source
+     tree.
+
+   It also provides a factory method to create a 'gdb.UnwindInfo'
+instance to be returned to GDB:
+
+ -- Function: PendingFrame.create_unwind_info (frame_id)
+     Returns a new 'gdb.UnwindInfo' instance identified by given
+     FRAME_ID.  The argument is used to build GDB's frame ID using one
+     of functions provided by GDB.  FRAME_ID's attributes determine
+     which function will be used, as follows:
+
+     'sp, pc, special'
+          'frame_id_build_special (FRAME_ID.sp, FRAME_ID.pc,
+          FRAME_ID.special)'
+
+     'sp, pc'
+          'frame_id_build (FRAME_ID.sp, FRAME_ID.pc)'
+
+          This is the most common case.
+
+     'sp'
+          'frame_id_build_wild (FRAME_ID.sp)'
+     The attribute values should be 'gdb.Value'
+
+Unwinder Output: UnwindInfo
+---------------------------
+
+Use 'PendingFrame.create_unwind_info' method described above to create a
+'gdb.UnwindInfo' instance.  Use the following method to specify caller
+registers that have been saved in this frame:
+
+ -- Function: gdb.UnwindInfo.add_saved_register (reg, value)
+     REG identifies the register.  It can be a number or a name, just as
+     for the 'PendingFrame.read_register' method above.  VALUE is a
+     register value (a 'gdb.Value' object).
+
+Unwinder Skeleton Code
+----------------------
+
+GDB comes with the module containing the base 'Unwinder' class.  Derive
+your unwinder class from it and structure the code as follows:
+
+     from gdb.unwinders import Unwinder
+
+     class FrameId(object):
+         def __init__(self, sp, pc):
+             self.sp = sp
+             self.pc = pc
+
+
+     class MyUnwinder(Unwinder):
+         def __init__(....):
+             supe(MyUnwinder, self).__init___(<expects unwinder name argument>)
+
+         def __call__(pending_frame):
+             if not <we recognize frame>:
+                 return None
+             # Create UnwindInfo.  Usually the frame is identified by the stack
+             # pointer and the program counter.
+             sp = pending_frame.read_register(<SP number>)
+             pc = pending_frame.read_register(<PC number>)
+             unwind_info = pending_frame.create_unwind_info(FrameId(sp, pc))
+
+             # Find the values of the registers in the caller's frame and
+             # save them in the result:
+             unwind_info.add_saved_register(<register>, <value>)
+             ....
+
+             # Return the result:
+             return unwind_info
+
+
+Registering a Unwinder
+----------------------
+
+An object file, a program space, and the GDB proper can have unwinders
+registered with it.
+
+   The 'gdb.unwinders' module provides the function to register a
+unwinder:
+
+ -- Function: gdb.unwinder.register_unwinder (locus, unwinder,
+          replace=False)
+     LOCUS is specifies an object file or a program space to which
+     UNWINDER is added.  Passing 'None' or 'gdb' adds UNWINDER to the
+     GDB's global unwinder list.  The newly added UNWINDER will be
+     called before any other unwinder from the same locus.  Two
+     unwinders in the same locus cannot have the same name.  An attempt
+     to add a unwinder with already existing name raises an exception
+     unless REPLACE is 'True', in which case the old unwinder is
+     deleted.
+
+Unwinder Precedence
+-------------------
+
+GDB first calls the unwinders from all the object files in no particular
+order, then the unwinders from the current program space, and finally
+the unwinders from GDB.
+
+
+File: gdb.info,  Node: Xmethods In Python,  Next: Xmethod API,  Prev: Unwinding Frames in Python,  Up: Python API
+
+23.2.2.13 Xmethods In Python
 ............................
 
 "Xmethods" are additional methods or replacements for existing methods
@@ -515,7 +1050,7 @@ worker is found to be equivalent to the winning C++ method, then the
 xmethod worker is treated as a replacement for the C++ method.  GDB uses
 the overall winner to invoke the method.  If the winning xmethod worker
 is the overall winner, then the corresponding xmethod is invoked via the
-'invoke' method of the worker object.
+'__call__' method of the worker object.
 
    If one wants to implement an xmethod as a replacement for an existing
 C++ method, then they have to implement an equivalent xmethod which has
@@ -530,7 +1065,7 @@ Writing an Xmethod::, for implementing xmethods in Python.
 
 File: gdb.info,  Node: Xmethod API,  Next: Writing an Xmethod,  Prev: Xmethods In Python,  Up: Python API
 
-23.2.2.13 Xmethod API
+23.2.2.14 Xmethod API
 .....................
 
 The GDB Python API provides classes, interfaces and functions to
@@ -619,7 +1154,7 @@ using the following function defined in the module 'gdb.xmethod':
 
 File: gdb.info,  Node: Writing an Xmethod,  Next: Inferiors In Python,  Prev: Xmethod API,  Up: Python API
 
-23.2.2.14 Writing an Xmethod
+23.2.2.15 Writing an Xmethod
 ............................
 
 Implementing xmethods in Python will require implementing xmethod
@@ -800,7 +1335,7 @@ itself.
 
 File: gdb.info,  Node: Inferiors In Python,  Next: Events In Python,  Prev: Writing an Xmethod,  Up: Python API
 
-23.2.2.15 Inferiors In Python
+23.2.2.16 Inferiors In Python
 .............................
 
 Programs which are being run under GDB are called inferiors (*note
@@ -845,9 +1380,9 @@ module:
      return an empty tuple.
 
  -- Function: Inferior.read_memory (address, length)
-     Read LENGTH bytes of memory from the inferior, starting at ADDRESS.
-     Returns a buffer object, which behaves much like an array or a
-     string.  It can be modified and given to the
+     Read LENGTH addressable memory units from the inferior, starting at
+     ADDRESS.  Returns a buffer object, which behaves much like an array
+     or a string.  It can be modified and given to the
      'Inferior.write_memory' function.  In 'Python' 3, the return value
      is a 'memoryview' object.
 
@@ -856,7 +1391,7 @@ module:
      The BUFFER parameter must be a Python object which supports the
      buffer protocol, i.e., a string, an array or the object returned
      from 'Inferior.read_memory'.  If given, LENGTH determines the
-     number of bytes from BUFFER to be written.
+     number of addressable memory units from BUFFER to be written.
 
  -- Function: Inferior.search_memory (address, length, pattern)
      Search a region of the inferior memory starting at ADDRESS with the
@@ -870,7 +1405,7 @@ module:
 
 File: gdb.info,  Node: Events In Python,  Next: Threads In Python,  Prev: Inferiors In Python,  Up: Python API
 
-23.2.2.16 Events In Python
+23.2.2.17 Events In Python
 ..........................
 
 GDB provides a general event facility so that Python code can be
@@ -1041,7 +1576,7 @@ and details of the events they emit:
 
 File: gdb.info,  Node: Threads In Python,  Next: Commands In Python,  Prev: Events In Python,  Up: Python API
 
-23.2.2.17 Threads In Python
+23.2.2.18 Threads In Python
 ...........................
 
 Python scripts can access information about, and manipulate inferior
@@ -1103,7 +1638,7 @@ module:
 
 File: gdb.info,  Node: Commands In Python,  Next: Parameters In Python,  Prev: Threads In Python,  Up: Python API
 
-23.2.2.18 Commands In Python
+23.2.2.19 Commands In Python
 ............................
 
 You can implement new GDB CLI commands in Python.  A CLI command is
@@ -1321,7 +1856,7 @@ is read into GDB, you may need to import the 'gdb' module explicitly.
 
 File: gdb.info,  Node: Parameters In Python,  Next: Functions In Python,  Prev: Commands In Python,  Up: Python API
 
-23.2.2.19 Parameters In Python
+23.2.2.20 Parameters In Python
 ..............................
 
 You can implement new GDB parameters using Python.  A new parameter is
@@ -1452,7 +1987,7 @@ module:
 
 File: gdb.info,  Node: Functions In Python,  Next: Progspaces In Python,  Prev: Parameters In Python,  Up: Python API
 
-23.2.2.20 Writing new convenience functions
+23.2.2.21 Writing new convenience functions
 ...........................................
 
 You can implement new convenience functions (*note Convenience Vars::)
@@ -1508,7 +2043,7 @@ is read into GDB, you may need to import the 'gdb' module explicitly.
 
 File: gdb.info,  Node: Progspaces In Python,  Next: Objfiles In Python,  Prev: Functions In Python,  Up: Python API
 
-23.2.2.21 Program Spaces In Python
+23.2.2.22 Program Spaces In Python
 ..................................
 
 A program space, or "progspace", represents a symbolic view of an
@@ -1592,7 +2127,7 @@ will be loaded.
 
 File: gdb.info,  Node: Objfiles In Python,  Next: Frames In Python,  Prev: Progspaces In Python,  Up: Python API
 
-23.2.2.22 Objfiles In Python
+23.2.2.23 Objfiles In Python
 ............................
 
 GDB loads symbols for an inferior from various symbol-containing files
@@ -1637,7 +2172,17 @@ module:
 class.
 
  -- Variable: Objfile.filename
-     The file name of the objfile as a string.
+     The file name of the objfile as a string, with symbolic links
+     resolved.
+
+     The value is 'None' if the objfile is no longer valid.  See the
+     'gdb.Objfile.is_valid' method, described below.
+
+ -- Variable: Objfile.username
+     The file name of the objfile as specified by the user as a string.
+
+     The value is 'None' if the objfile is no longer valid.  See the
+     'gdb.Objfile.is_valid' method, described below.
 
  -- Variable: Objfile.owner
      For separate debug info objfiles this is the corresponding
@@ -1716,7 +2261,7 @@ objfile.
 
 File: gdb.info,  Node: Frames In Python,  Next: Blocks In Python,  Prev: Objfiles In Python,  Up: Python API
 
-23.2.2.23 Accessing inferior stack frames from Python.
+23.2.2.24 Accessing inferior stack frames from Python.
 ......................................................
 
 When the debugged program stops, GDB is able to analyze its call stack
@@ -1882,7 +2427,7 @@ module:
 
 File: gdb.info,  Node: Blocks In Python,  Next: Symbols In Python,  Prev: Frames In Python,  Up: Python API
 
-23.2.2.24 Accessing blocks from Python.
+23.2.2.25 Accessing blocks from Python.
 .......................................
 
 In GDB, symbols are stored in blocks.  A block corresponds roughly to a
@@ -1997,7 +2542,7 @@ module:
 
 File: gdb.info,  Node: Symbols In Python,  Next: Symbol Tables In Python,  Prev: Blocks In Python,  Up: Python API
 
-23.2.2.25 Python representation of Symbols.
+23.2.2.26 Python representation of Symbols.
 ...........................................
 
 GDB represents every variable, function and type as an entry in a symbol
@@ -2191,7 +2736,7 @@ represented as constants in the 'gdb' module:
 
 File: gdb.info,  Node: Symbol Tables In Python,  Next: Line Tables In Python,  Prev: Symbols In Python,  Up: Python API
 
-23.2.2.26 Symbol table representation in Python.
+23.2.2.27 Symbol table representation in Python.
 ................................................
 
 Access to symbol table data maintained by GDB on the inferior is exposed
@@ -2272,7 +2817,7 @@ Examining the Symbol Table: Symbols, for more information.
 
 File: gdb.info,  Node: Line Tables In Python,  Next: Breakpoints In Python,  Prev: Symbol Tables In Python,  Up: Python API
 
-23.2.2.27 Manipulating line tables using Python
+23.2.2.28 Manipulating line tables using Python
 ...............................................
 
 Python code can request and inspect line table information from a symbol
@@ -2340,7 +2885,7 @@ the following direct access methods:
 
 File: gdb.info,  Node: Breakpoints In Python,  Next: Finish Breakpoints in Python,  Prev: Line Tables In Python,  Up: Python API
 
-23.2.2.28 Manipulating breakpoints using Python
+23.2.2.29 Manipulating breakpoints using Python
 ...............................................
 
 Python code can manipulate breakpoints via the 'gdb.Breakpoint' class.
@@ -2524,7 +3069,7 @@ module:
 
 File: gdb.info,  Node: Finish Breakpoints in Python,  Next: Lazy Strings In Python,  Prev: Breakpoints In Python,  Up: Python API
 
-23.2.2.29 Finish Breakpoints
+23.2.2.30 Finish Breakpoints
 ............................
 
 A finish breakpoint is a temporary breakpoint set at the return address
@@ -2570,7 +3115,7 @@ thread selected.
 
 File: gdb.info,  Node: Lazy Strings In Python,  Next: Architectures In Python,  Prev: Finish Breakpoints in Python,  Up: Python API
 
-23.2.2.30 Python representation of lazy strings.
+23.2.2.31 Python representation of lazy strings.
 ................................................
 
 A "lazy string" is a string whose contents is not retrieved or encoded
@@ -2620,7 +3165,7 @@ string is immediately retrieved and encoded on creation.
 
 File: gdb.info,  Node: Architectures In Python,  Prev: Lazy Strings In Python,  Up: Python API
 
-23.2.2.31 Python representation of architectures
+23.2.2.32 Python representation of architectures
 ................................................
 
 GDB uses architecture specific parameters and artifacts in a number of
@@ -2691,11 +3236,12 @@ scripts can be printed.
      Print the list of all Python scripts that GDB auto-loaded.
 
      Also printed is the list of Python scripts that were mentioned in
-     the '.debug_gdb_scripts' section and were not found (*note
-     dotdebug_gdb_scripts section::).  This is useful because their
-     names are not printed when GDB tries to load them and fails.  There
-     may be many of them, and printing an error message for each one is
-     problematic.
+     the '.debug_gdb_scripts' section and were either not found (*note
+     dotdebug_gdb_scripts section::) or were not auto-loaded due to
+     'auto-load safe-path' rejection (*note Auto-loading::).  This is
+     useful because their names are not printed when GDB tries to load
+     them and fails.  There may be many of them, and printing an error
+     message for each one is problematic.
 
      If REGEXP is supplied only Python scripts with matching names are
      printed.
@@ -2708,10 +3254,10 @@ scripts can be printed.
                  full name: /tmp/py-section-script.py
           No     my-foo-pretty-printers.py
 
-   When reading an auto-loaded file, GDB sets the "current objfile".
-This is available via the 'gdb.current_objfile' function (*note Objfiles
-In Python::).  This can be useful for registering objfile-specific
-pretty-printers and frame-filters.
+   When reading an auto-loaded file or script, GDB sets the "current
+objfile".  This is available via the 'gdb.current_objfile' function
+(*note Objfiles In Python::).  This can be useful for registering
+objfile-specific pretty-printers and frame-filters.
 
 
 File: gdb.info,  Node: Python modules,  Prev: Python Auto-loading,  Up: Python
@@ -4891,7 +5437,12 @@ module:
      is called.
 
  -- Scheme Procedure: objfile-filename objfile
-     Return the file name of OBJFILE as a string.
+     Return the file name of OBJFILE as a string, with symbolic links
+     resolved.
+
+ -- Scheme Procedure: objfile-progspace objfile
+     Return the '<gdb:progspace>' that this object file lives in.  *Note
+     Progspaces In Guile::, for more on progspaces.
 
  -- Scheme Procedure: objfile-pretty-printers objfile
      Return the list of registered '<gdb:pretty-printer>' objects for
@@ -5051,6 +5602,10 @@ module:
  -- Scheme Procedure: frame-sal frame
      Return the frame's '<gdb:sal>' (symtab and line) object.  *Note
      Symbol Tables In Guile::.
+
+ -- Scheme Procedure: frame-read-register frame register
+     Return the value of REGISTER in FRAME.  REGISTER should be a
+     string, like 'pc'.
 
  -- Scheme Procedure: frame-read-var frame variable [#:block block]
      Return the value of VARIABLE in FRAME.  If the optional argument
@@ -5992,10 +6547,12 @@ object.  One can then read/write memory using that object.
           [#:size size]
      Return a port object that can be used for reading and writing
      memory.  The port will be open according to MODE, which is the
-     standard mode argument to Guile port open routines, except that it
-     is restricted to one of '"r"', '"w"', or '"r+"'.  For compatibility
-     '"b"' (binary) may also be present, but we ignore it: memory ports
-     are binary only.  The default is '"r"', read-only.
+     standard mode argument to Guile port open routines, except that the
+     '"a"' and '"l"' modes are not supported.  *Note (guile)File
+     Ports::.  The '"b"' (binary) character may be present, but is
+     ignored: memory ports are binary only.  If '"0"' is appended then
+     the port is marked as unbuffered.  The default is '"r"', read-only
+     and buffered.
 
      The chunk of memory that can be accessed can be bounded.  If both
      START and SIZE are unspecified, all of memory can be accessed.  If
@@ -6389,16 +6946,27 @@ File: gdb.info,  Node: dotdebug_gdb_scripts section,  Next: Which flavor to choo
 For systems using file formats like ELF and COFF, when GDB loads a new
 object file it will look for a special section named
 '.debug_gdb_scripts'.  If this section exists, its contents is a list of
-NUL-terminated names of scripts to load.  Each entry begins with a
-non-NULL prefix byte that specifies the kind of entry, typically the
-extension language.
+null-terminated entries specifying scripts to load.  Each entry begins
+with a non-null prefix byte that specifies the kind of entry, typically
+the extension language and whether the script is in a file or inlined in
+'.debug_gdb_scripts'.
 
-   GDB will look for each specified script file first in the current
-directory and then along the source search path (*note Specifying Source
-Directories: Source Path.), except that '$cdir' is not searched, since
-the compilation directory is not relevant to scripts.
+   The following entries are supported:
 
-   Entries can be placed in section '.debug_gdb_scripts' with, for
+'SECTION_SCRIPT_ID_PYTHON_FILE = 1'
+'SECTION_SCRIPT_ID_SCHEME_FILE = 3'
+'SECTION_SCRIPT_ID_PYTHON_TEXT = 4'
+'SECTION_SCRIPT_ID_SCHEME_TEXT = 6'
+
+23.4.2.1 Script File Entries
+............................
+
+If the entry specifies a file, GDB will look for the file first in the
+current directory and then along the source search path (*note
+Specifying Source Directories: Source Path.), except that '$cdir' is not
+searched, since the compilation directory is not relevant to scripts.
+
+   File entries can be placed in section '.debug_gdb_scripts' with, for
 example, this GCC macro for Python scripts.
 
      /* Note: The "MS" section flags are to remove duplicates.  */
@@ -6424,6 +6992,43 @@ configured 'auto-load safe-path' (*note Auto-loading safe path::).
 library using this header will get a reference to the specified script,
 and with the use of '"MS"' attributes on the section, the linker will
 remove duplicates.
+
+23.4.2.2 Script Text Entries
+............................
+
+Script text entries allow to put the executable script in the entry
+itself instead of loading it from a file.  The first line of the entry,
+everything after the prefix byte and up to the first newline ('0xa')
+character, is the script name, and must not contain any kind of space
+character, e.g., spaces or tabs.  The rest of the entry, up to the
+trailing null byte, is the script to execute in the specified language.
+The name needs to be unique among all script names, as GDB executes each
+script only once based on its name.
+
+   Here is an example from file 'py-section-script.c' in the GDB
+testsuite.
+
+     #include "symcat.h"
+     #include "gdb/section-scripts.h"
+     asm(
+     ".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\n"
+     ".byte " XSTRING (SECTION_SCRIPT_ID_PYTHON_TEXT) "\n"
+     ".ascii \"gdb.inlined-script\\n\"\n"
+     ".ascii \"class test_cmd (gdb.Command):\\n\"\n"
+     ".ascii \"  def __init__ (self):\\n\"\n"
+     ".ascii \"    super (test_cmd, self).__init__ ("
+         "\\\"test-cmd\\\", gdb.COMMAND_OBSCURE)\\n\"\n"
+     ".ascii \"  def invoke (self, arg, from_tty):\\n\"\n"
+     ".ascii \"    print (\\\"test-cmd output, arg = %s\\\" % arg)\\n\"\n"
+     ".ascii \"test_cmd ()\\n\"\n"
+     ".byte 0\n"
+     ".popsection\n"
+     );
+
+   Loading of inlined scripts requires a properly configured 'auto-load
+safe-path' (*note Auto-loading safe path::).  The path to specify in
+'auto-load safe-path' is the path of the file containing the
+'.debug_gdb_scripts' section.
 
 
 File: gdb.info,  Node: Which flavor to choose?,  Prev: dotdebug_gdb_scripts section,  Up: Auto-loading extensions
@@ -6644,8 +7249,9 @@ mode is supported only on platforms where a suitable version of the
 
    The TUI mode is enabled by default when you invoke GDB as 'gdb -tui'.
 You can also switch in and out of TUI mode while GDB runs by using
-various TUI commands and key bindings, such as 'C-x C-a'.  *Note TUI Key
-Bindings: TUI Keys.
+various TUI commands and key bindings, such as 'tui enable' or 'C-x
+C-a'.  *Note TUI Commands: TUI Commands, and *note TUI Key Bindings: TUI
+Keys.
 
 
 File: gdb.info,  Node: TUI Overview,  Next: TUI Keys,  Up: TUI
@@ -6857,759 +7463,4 @@ possible to type most GDB commands without interaction with the TUI
 SingleKey mode.  Once the command is entered the TUI SingleKey mode is
 restored.  The only way to permanently leave this mode is by typing 'q'
 or 'C-x s'.
-
-
-File: gdb.info,  Node: TUI Commands,  Next: TUI Configuration,  Prev: TUI Single Key Mode,  Up: TUI
-
-25.4 TUI-specific Commands
-==========================
-
-The TUI has specific commands to control the text windows.  These
-commands are always available, even when GDB is not in the TUI mode.
-When GDB is in the standard mode, most of these commands will
-automatically switch to the TUI mode.
-
-   Note that if GDB's 'stdout' is not connected to a terminal, or GDB
-has been started with the machine interface interpreter (*note The
-GDB/MI Interface: GDB/MI.), most of these commands will fail with an
-error, because it would not be possible or desirable to enable curses
-window management.
-
-'info win'
-     List and give the size of all displayed windows.
-
-'layout next'
-     Display the next layout.
-
-'layout prev'
-     Display the previous layout.
-
-'layout src'
-     Display the source window only.
-
-'layout asm'
-     Display the assembly window only.
-
-'layout split'
-     Display the source and assembly window.
-
-'layout regs'
-     Display the register window together with the source or assembly
-     window.
-
-'focus next'
-     Make the next window active for scrolling.
-
-'focus prev'
-     Make the previous window active for scrolling.
-
-'focus src'
-     Make the source window active for scrolling.
-
-'focus asm'
-     Make the assembly window active for scrolling.
-
-'focus regs'
-     Make the register window active for scrolling.
-
-'focus cmd'
-     Make the command window active for scrolling.
-
-'refresh'
-     Refresh the screen.  This is similar to typing 'C-L'.
-
-'tui reg float'
-     Show the floating point registers in the register window.
-
-'tui reg general'
-     Show the general registers in the register window.
-
-'tui reg next'
-     Show the next register group.  The list of register groups as well
-     as their order is target specific.  The predefined register groups
-     are the following: 'general', 'float', 'system', 'vector', 'all',
-     'save', 'restore'.
-
-'tui reg system'
-     Show the system registers in the register window.
-
-'update'
-     Update the source window and the current execution point.
-
-'winheight NAME +COUNT'
-'winheight NAME -COUNT'
-     Change the height of the window NAME by COUNT lines.  Positive
-     counts increase the height, while negative counts decrease it.  The
-     NAME parameter can be one of 'src' (the source window), 'cmd' (the
-     command window), 'asm' (the disassembly window), or 'regs' (the
-     register display window).
-
-'tabset NCHARS'
-     Set the width of tab stops to be NCHARS characters.  This setting
-     affects the display of TAB characters in the source and assembly
-     windows.
-
-
-File: gdb.info,  Node: TUI Configuration,  Prev: TUI Commands,  Up: TUI
-
-25.5 TUI Configuration Variables
-================================
-
-Several configuration variables control the appearance of TUI windows.
-
-'set tui border-kind KIND'
-     Select the border appearance for the source, assembly and register
-     windows.  The possible values are the following:
-     'space'
-          Use a space character to draw the border.
-
-     'ascii'
-          Use ASCII characters '+', '-' and '|' to draw the border.
-
-     'acs'
-          Use the Alternate Character Set to draw the border.  The
-          border is drawn using character line graphics if the terminal
-          supports them.
-
-'set tui border-mode MODE'
-'set tui active-border-mode MODE'
-     Select the display attributes for the borders of the inactive
-     windows or the active window.  The MODE can be one of the
-     following:
-     'normal'
-          Use normal attributes to display the border.
-
-     'standout'
-          Use standout mode.
-
-     'reverse'
-          Use reverse video mode.
-
-     'half'
-          Use half bright mode.
-
-     'half-standout'
-          Use half bright and standout mode.
-
-     'bold'
-          Use extra bright or bold mode.
-
-     'bold-standout'
-          Use extra bright or bold and standout mode.
-
-
-File: gdb.info,  Node: Emacs,  Next: GDB/MI,  Prev: TUI,  Up: Top
-
-26 Using GDB under GNU Emacs
-****************************
-
-A special interface allows you to use GNU Emacs to view (and edit) the
-source files for the program you are debugging with GDB.
-
-   To use this interface, use the command 'M-x gdb' in Emacs.  Give the
-executable file you want to debug as an argument.  This command starts
-GDB as a subprocess of Emacs, with input and output through a newly
-created Emacs buffer.
-
-   Running GDB under Emacs can be just like running GDB normally except
-for two things:
-
-   * All "terminal" input and output goes through an Emacs buffer,
-     called the GUD buffer.
-
-     This applies both to GDB commands and their output, and to the
-     input and output done by the program you are debugging.
-
-     This is useful because it means that you can copy the text of
-     previous commands and input them again; you can even use parts of
-     the output in this way.
-
-     All the facilities of Emacs' Shell mode are available for
-     interacting with your program.  In particular, you can send signals
-     the usual way--for example, 'C-c C-c' for an interrupt, 'C-c C-z'
-     for a stop.
-
-   * GDB displays source code through Emacs.
-
-     Each time GDB displays a stack frame, Emacs automatically finds the
-     source file for that frame and puts an arrow ('=>') at the left
-     margin of the current line.  Emacs uses a separate buffer for
-     source display, and splits the screen to show both your GDB session
-     and the source.
-
-     Explicit GDB 'list' or search commands still produce output as
-     usual, but you probably have no reason to use them from Emacs.
-
-   We call this "text command mode".  Emacs 22.1, and later, also uses a
-graphical mode, enabled by default, which provides further buffers that
-can control the execution and describe the state of your program.  *Note
-(Emacs)GDB Graphical Interface::.
-
-   If you specify an absolute file name when prompted for the 'M-x gdb'
-argument, then Emacs sets your current working directory to where your
-program resides.  If you only specify the file name, then Emacs sets
-your current working directory to the directory associated with the
-previous buffer.  In this case, GDB may find your program by searching
-your environment's 'PATH' variable, but on some operating systems it
-might not find the source.  So, although the GDB input and output
-session proceeds normally, the auxiliary buffer does not display the
-current source and line of execution.
-
-   The initial working directory of GDB is printed on the top line of
-the GUD buffer and this serves as a default for the commands that
-specify files for GDB to operate on.  *Note Commands to Specify Files:
-Files.
-
-   By default, 'M-x gdb' calls the program called 'gdb'.  If you need to
-call GDB by a different name (for example, if you keep several
-configurations around, with different names) you can customize the Emacs
-variable 'gud-gdb-command-name' to run the one you want.
-
-   In the GUD buffer, you can use these special Emacs commands in
-addition to the standard Shell mode commands:
-
-'C-h m'
-     Describe the features of Emacs' GUD Mode.
-
-'C-c C-s'
-     Execute to another source line, like the GDB 'step' command; also
-     update the display window to show the current file and location.
-
-'C-c C-n'
-     Execute to next source line in this function, skipping all function
-     calls, like the GDB 'next' command.  Then update the display window
-     to show the current file and location.
-
-'C-c C-i'
-     Execute one instruction, like the GDB 'stepi' command; update
-     display window accordingly.
-
-'C-c C-f'
-     Execute until exit from the selected stack frame, like the GDB
-     'finish' command.
-
-'C-c C-r'
-     Continue execution of your program, like the GDB 'continue'
-     command.
-
-'C-c <'
-     Go up the number of frames indicated by the numeric argument (*note
-     Numeric Arguments: (Emacs)Arguments.), like the GDB 'up' command.
-
-'C-c >'
-     Go down the number of frames indicated by the numeric argument,
-     like the GDB 'down' command.
-
-   In any source file, the Emacs command 'C-x <SPC>' ('gud-break') tells
-GDB to set a breakpoint on the source line point is on.
-
-   In text command mode, if you type 'M-x speedbar', Emacs displays a
-separate frame which shows a backtrace when the GUD buffer is current.
-Move point to any frame in the stack and type <RET> to make it become
-the current frame and display the associated source in the source
-buffer.  Alternatively, click 'Mouse-2' to make the selected frame
-become the current one.  In graphical mode, the speedbar displays watch
-expressions.
-
-   If you accidentally delete the source-display buffer, an easy way to
-get it back is to type the command 'f' in the GDB buffer, to request a
-frame display; when you run under Emacs, this recreates the source
-buffer if necessary to show you the context of the current frame.
-
-   The source files displayed in Emacs are in ordinary Emacs buffers
-which are visiting the source files in the usual way.  You can edit the
-files with these buffers if you wish; but keep in mind that GDB
-communicates with Emacs in terms of line numbers.  If you add or delete
-lines from the text, the line numbers that GDB knows cease to correspond
-properly with the code.
-
-   A more detailed description of Emacs' interaction with GDB is given
-in the Emacs manual (*note (Emacs)Debuggers::).
-
-
-File: gdb.info,  Node: GDB/MI,  Next: Annotations,  Prev: Emacs,  Up: Top
-
-27 The GDB/MI Interface
-***********************
-
-Function and Purpose
-====================
-
-GDB/MI is a line based machine oriented text interface to GDB and is
-activated by specifying using the '--interpreter' command line option
-(*note Mode Options::).  It is specifically intended to support the
-development of systems which use the debugger as just one small
-component of a larger system.
-
-   This chapter is a specification of the GDB/MI interface.  It is
-written in the form of a reference manual.
-
-   Note that GDB/MI is still under construction, so some of the features
-described below are incomplete and subject to change (*note GDB/MI
-Development and Front Ends: GDB/MI Development and Front Ends.).
-
-Notation and Terminology
-========================
-
-This chapter uses the following notation:
-
-   * '|' separates two alternatives.
-
-   * '[ SOMETHING ]' indicates that SOMETHING is optional: it may or may
-     not be given.
-
-   * '( GROUP )*' means that GROUP inside the parentheses may repeat
-     zero or more times.
-
-   * '( GROUP )+' means that GROUP inside the parentheses may repeat one
-     or more times.
-
-   * '"STRING"' means a literal STRING.
-
-* Menu:
-
-* GDB/MI General Design::
-* GDB/MI Command Syntax::
-* GDB/MI Compatibility with CLI::
-* GDB/MI Development and Front Ends::
-* GDB/MI Output Records::
-* GDB/MI Simple Examples::
-* GDB/MI Command Description Format::
-* GDB/MI Breakpoint Commands::
-* GDB/MI Catchpoint Commands::
-* GDB/MI Program Context::
-* GDB/MI Thread Commands::
-* GDB/MI Ada Tasking Commands::
-* GDB/MI Program Execution::
-* GDB/MI Stack Manipulation::
-* GDB/MI Variable Objects::
-* GDB/MI Data Manipulation::
-* GDB/MI Tracepoint Commands::
-* GDB/MI Symbol Query::
-* GDB/MI File Commands::
-* GDB/MI Target Manipulation::
-* GDB/MI File Transfer Commands::
-* GDB/MI Ada Exceptions Commands::
-* GDB/MI Support Commands::
-* GDB/MI Miscellaneous Commands::
-
-
-File: gdb.info,  Node: GDB/MI General Design,  Next: GDB/MI Command Syntax,  Up: GDB/MI
-
-27.1 GDB/MI General Design
-==========================
-
-Interaction of a GDB/MI frontend with GDB involves three parts--commands
-sent to GDB, responses to those commands and notifications.  Each
-command results in exactly one response, indicating either successful
-completion of the command, or an error.  For the commands that do not
-resume the target, the response contains the requested information.  For
-the commands that resume the target, the response only indicates whether
-the target was successfully resumed.  Notifications is the mechanism for
-reporting changes in the state of the target, or in GDB state, that
-cannot conveniently be associated with a command and reported as part of
-that command response.
-
-   The important examples of notifications are:
-
-   * Exec notifications.  These are used to report changes in target
-     state--when a target is resumed, or stopped.  It would not be
-     feasible to include this information in response of resuming
-     commands, because one resume commands can result in multiple events
-     in different threads.  Also, quite some time may pass before any
-     event happens in the target, while a frontend needs to know whether
-     the resuming command itself was successfully executed.
-
-   * Console output, and status notifications.  Console output
-     notifications are used to report output of CLI commands, as well as
-     diagnostics for other commands.  Status notifications are used to
-     report the progress of a long-running operation.  Naturally,
-     including this information in command response would mean no output
-     is produced until the command is finished, which is undesirable.
-
-   * General notifications.  Commands may have various side effects on
-     the GDB or target state beyond their official purpose.  For
-     example, a command may change the selected thread.  Although such
-     changes can be included in command response, using notification
-     allows for more orthogonal frontend design.
-
-   There's no guarantee that whenever an MI command reports an error,
-GDB or the target are in any specific state, and especially, the state
-is not reverted to the state before the MI command was processed.
-Therefore, whenever an MI command results in an error, we recommend that
-the frontend refreshes all the information shown in the user interface.
-
-* Menu:
-
-* Context management::
-* Asynchronous and non-stop modes::
-* Thread groups::
-
-
-File: gdb.info,  Node: Context management,  Next: Asynchronous and non-stop modes,  Up: GDB/MI General Design
-
-27.1.1 Context management
--------------------------
-
-27.1.1.1 Threads and Frames
-...........................
-
-In most cases when GDB accesses the target, this access is done in
-context of a specific thread and frame (*note Frames::).  Often, even
-when accessing global data, the target requires that a thread be
-specified.  The CLI interface maintains the selected thread and frame,
-and supplies them to target on each command.  This is convenient,
-because a command line user would not want to specify that information
-explicitly on each command, and because user interacts with GDB via a
-single terminal, so no confusion is possible as to what thread and frame
-are the current ones.
-
-   In the case of MI, the concept of selected thread and frame is less
-useful.  First, a frontend can easily remember this information itself.
-Second, a graphical frontend can have more than one window, each one
-used for debugging a different thread, and the frontend might want to
-access additional threads for internal purposes.  This increases the
-risk that by relying on implicitly selected thread, the frontend may be
-operating on a wrong one.  Therefore, each MI command should explicitly
-specify which thread and frame to operate on.  To make it possible, each
-MI command accepts the '--thread' and '--frame' options, the value to
-each is GDB identifier for thread and frame to operate on.
-
-   Usually, each top-level window in a frontend allows the user to
-select a thread and a frame, and remembers the user selection for
-further operations.  However, in some cases GDB may suggest that the
-current thread be changed.  For example, when stopping on a breakpoint
-it is reasonable to switch to the thread where breakpoint is hit.  For
-another example, if the user issues the CLI 'thread' command via the
-frontend, it is desirable to change the frontend's selected thread to
-the one specified by user.  GDB communicates the suggestion to change
-current thread using the '=thread-selected' notification.  No such
-notification is available for the selected frame at the moment.
-
-   Note that historically, MI shares the selected thread with CLI, so
-frontends used the '-thread-select' to execute commands in the right
-context.  However, getting this to work right is cumbersome.  The
-simplest way is for frontend to emit '-thread-select' command before
-every command.  This doubles the number of commands that need to be
-sent.  The alternative approach is to suppress '-thread-select' if the
-selected thread in GDB is supposed to be identical to the thread the
-frontend wants to operate on.  However, getting this optimization right
-can be tricky.  In particular, if the frontend sends several commands to
-GDB, and one of the commands changes the selected thread, then the
-behaviour of subsequent commands will change.  So, a frontend should
-either wait for response from such problematic commands, or explicitly
-add '-thread-select' for all subsequent commands.  No frontend is known
-to do this exactly right, so it is suggested to just always pass the
-'--thread' and '--frame' options.
-
-27.1.1.2 Language
-.................
-
-The execution of several commands depends on which language is selected.
-By default, the current language (*note show language::) is used.  But
-for commands known to be language-sensitive, it is recommended to use
-the '--language' option.  This option takes one argument, which is the
-name of the language to use while executing the command.  For instance:
-
-     -data-evaluate-expression --language c "sizeof (void*)"
-     ^done,value="4"
-     (gdb)
-
-   The valid language names are the same names accepted by the 'set
-language' command (*note Manually::), excluding 'auto', 'local' or
-'unknown'.
-
-
-File: gdb.info,  Node: Asynchronous and non-stop modes,  Next: Thread groups,  Prev: Context management,  Up: GDB/MI General Design
-
-27.1.2 Asynchronous command execution and non-stop mode
--------------------------------------------------------
-
-On some targets, GDB is capable of processing MI commands even while the
-target is running.  This is called "asynchronous command execution"
-(*note Background Execution::).  The frontend may specify a preferrence
-for asynchronous execution using the '-gdb-set mi-async 1' command,
-which should be emitted before either running the executable or
-attaching to the target.  After the frontend has started the executable
-or attached to the target, it can find if asynchronous execution is
-enabled using the '-list-target-features' command.
-
-'-gdb-set mi-async on'
-'-gdb-set mi-async off'
-     Set whether MI is in asynchronous mode.
-
-     When 'off', which is the default, MI execution commands (e.g.,
-     '-exec-continue') are foreground commands, and GDB waits for the
-     program to stop before processing further commands.
-
-     When 'on', MI execution commands are background execution commands
-     (e.g., '-exec-continue' becomes the equivalent of the 'c&' CLI
-     command), and so GDB is capable of processing MI commands even
-     while the target is running.
-
-'-gdb-show mi-async'
-     Show whether MI asynchronous mode is enabled.
-
-   Note: In GDB version 7.7 and earlier, this option was called
-'target-async' instead of 'mi-async', and it had the effect of both
-putting MI in asynchronous mode and making CLI background commands
-possible.  CLI background commands are now always possible "out of the
-box" if the target supports them.  The old spelling is kept as a
-deprecated alias for backwards compatibility.
-
-   Even if GDB can accept a command while target is running, many
-commands that access the target do not work when the target is running.
-Therefore, asynchronous command execution is most useful when combined
-with non-stop mode (*note Non-Stop Mode::).  Then, it is possible to
-examine the state of one thread, while other threads are running.
-
-   When a given thread is running, MI commands that try to access the
-target in the context of that thread may not work, or may work only on
-some targets.  In particular, commands that try to operate on thread's
-stack will not work, on any target.  Commands that read memory, or
-modify breakpoints, may work or not work, depending on the target.  Note
-that even commands that operate on global state, such as 'print', 'set',
-and breakpoint commands, still access the target in the context of a
-specific thread, so frontend should try to find a stopped thread and
-perform the operation on that thread (using the '--thread' option).
-
-   Which commands will work in the context of a running thread is highly
-target dependent.  However, the two commands '-exec-interrupt', to stop
-a thread, and '-thread-info', to find the state of a thread, will always
-work.
-
-
-File: gdb.info,  Node: Thread groups,  Prev: Asynchronous and non-stop modes,  Up: GDB/MI General Design
-
-27.1.3 Thread groups
---------------------
-
-GDB may be used to debug several processes at the same time.  On some
-platfroms, GDB may support debugging of several hardware systems, each
-one having several cores with several different processes running on
-each core.  This section describes the MI mechanism to support such
-debugging scenarios.
-
-   The key observation is that regardless of the structure of the
-target, MI can have a global list of threads, because most commands that
-accept the '--thread' option do not need to know what process that
-thread belongs to.  Therefore, it is not necessary to introduce neither
-additional '--process' option, nor an notion of the current process in
-the MI interface.  The only strictly new feature that is required is the
-ability to find how the threads are grouped into processes.
-
-   To allow the user to discover such grouping, and to support arbitrary
-hierarchy of machines/cores/processes, MI introduces the concept of a
-"thread group".  Thread group is a collection of threads and other
-thread groups.  A thread group always has a string identifier, a type,
-and may have additional attributes specific to the type.  A new command,
-'-list-thread-groups', returns the list of top-level thread groups,
-which correspond to processes that GDB is debugging at the moment.  By
-passing an identifier of a thread group to the '-list-thread-groups'
-command, it is possible to obtain the members of specific thread group.
-
-   To allow the user to easily discover processes, and other objects, he
-wishes to debug, a concept of "available thread group" is introduced.
-Available thread group is an thread group that GDB is not debugging, but
-that can be attached to, using the '-target-attach' command.  The list
-of available top-level thread groups can be obtained using
-'-list-thread-groups --available'.  In general, the content of a thread
-group may be only retrieved only after attaching to that thread group.
-
-   Thread groups are related to inferiors (*note Inferiors and
-Programs::).  Each inferior corresponds to a thread group of a special
-type 'process', and some additional operations are permitted on such
-thread groups.
-
-
-File: gdb.info,  Node: GDB/MI Command Syntax,  Next: GDB/MI Compatibility with CLI,  Prev: GDB/MI General Design,  Up: GDB/MI
-
-27.2 GDB/MI Command Syntax
-==========================
-
-* Menu:
-
-* GDB/MI Input Syntax::
-* GDB/MI Output Syntax::
-
-
-File: gdb.info,  Node: GDB/MI Input Syntax,  Next: GDB/MI Output Syntax,  Up: GDB/MI Command Syntax
-
-27.2.1 GDB/MI Input Syntax
---------------------------
-
-'COMMAND ==>'
-     'CLI-COMMAND | MI-COMMAND'
-
-'CLI-COMMAND ==>'
-     '[ TOKEN ] CLI-COMMAND NL', where CLI-COMMAND is any existing GDB
-     CLI command.
-
-'MI-COMMAND ==>'
-     '[ TOKEN ] "-" OPERATION ( " " OPTION )* [ " --" ] ( " " PARAMETER
-     )* NL'
-
-'TOKEN ==>'
-     "any sequence of digits"
-
-'OPTION ==>'
-     '"-" PARAMETER [ " " PARAMETER ]'
-
-'PARAMETER ==>'
-     'NON-BLANK-SEQUENCE | C-STRING'
-
-'OPERATION ==>'
-     _any of the operations described in this chapter_
-
-'NON-BLANK-SEQUENCE ==>'
-     _anything, provided it doesn't contain special characters such as
-     "-", NL, """ and of course " "_
-
-'C-STRING ==>'
-     '""" SEVEN-BIT-ISO-C-STRING-CONTENT """'
-
-'NL ==>'
-     'CR | CR-LF'
-
-Notes:
-
-   * The CLI commands are still handled by the MI interpreter; their
-     output is described below.
-
-   * The 'TOKEN', when present, is passed back when the command
-     finishes.
-
-   * Some MI commands accept optional arguments as part of the parameter
-     list.  Each option is identified by a leading '-' (dash) and may be
-     followed by an optional argument parameter.  Options occur first in
-     the parameter list and can be delimited from normal parameters
-     using '--' (this is useful when some parameters begin with a dash).
-
-   Pragmatics:
-
-   * We want easy access to the existing CLI syntax (for debugging).
-
-   * We want it to be easy to spot a MI operation.
-
-
-File: gdb.info,  Node: GDB/MI Output Syntax,  Prev: GDB/MI Input Syntax,  Up: GDB/MI Command Syntax
-
-27.2.2 GDB/MI Output Syntax
----------------------------
-
-The output from GDB/MI consists of zero or more out-of-band records
-followed, optionally, by a single result record.  This result record is
-for the most recent command.  The sequence of output records is
-terminated by '(gdb)'.
-
-   If an input command was prefixed with a 'TOKEN' then the
-corresponding output for that command will also be prefixed by that same
-TOKEN.
-
-'OUTPUT ==>'
-     '( OUT-OF-BAND-RECORD )* [ RESULT-RECORD ] "(gdb)" NL'
-
-'RESULT-RECORD ==>'
-     ' [ TOKEN ] "^" RESULT-CLASS ( "," RESULT )* NL'
-
-'OUT-OF-BAND-RECORD ==>'
-     'ASYNC-RECORD | STREAM-RECORD'
-
-'ASYNC-RECORD ==>'
-     'EXEC-ASYNC-OUTPUT | STATUS-ASYNC-OUTPUT | NOTIFY-ASYNC-OUTPUT'
-
-'EXEC-ASYNC-OUTPUT ==>'
-     '[ TOKEN ] "*" ASYNC-OUTPUT NL'
-
-'STATUS-ASYNC-OUTPUT ==>'
-     '[ TOKEN ] "+" ASYNC-OUTPUT NL'
-
-'NOTIFY-ASYNC-OUTPUT ==>'
-     '[ TOKEN ] "=" ASYNC-OUTPUT NL'
-
-'ASYNC-OUTPUT ==>'
-     'ASYNC-CLASS ( "," RESULT )*'
-
-'RESULT-CLASS ==>'
-     '"done" | "running" | "connected" | "error" | "exit"'
-
-'ASYNC-CLASS ==>'
-     '"stopped" | OTHERS' (where OTHERS will be added depending on the
-     needs--this is still in development).
-
-'RESULT ==>'
-     ' VARIABLE "=" VALUE'
-
-'VARIABLE ==>'
-     ' STRING '
-
-'VALUE ==>'
-     ' CONST | TUPLE | LIST '
-
-'CONST ==>'
-     'C-STRING'
-
-'TUPLE ==>'
-     ' "{}" | "{" RESULT ( "," RESULT )* "}" '
-
-'LIST ==>'
-     ' "[]" | "[" VALUE ( "," VALUE )* "]" | "[" RESULT ( "," RESULT )*
-     "]" '
-
-'STREAM-RECORD ==>'
-     'CONSOLE-STREAM-OUTPUT | TARGET-STREAM-OUTPUT | LOG-STREAM-OUTPUT'
-
-'CONSOLE-STREAM-OUTPUT ==>'
-     '"~" C-STRING NL'
-
-'TARGET-STREAM-OUTPUT ==>'
-     '"@" C-STRING NL'
-
-'LOG-STREAM-OUTPUT ==>'
-     '"&" C-STRING NL'
-
-'NL ==>'
-     'CR | CR-LF'
-
-'TOKEN ==>'
-     _any sequence of digits_.
-
-Notes:
-
-   * All output sequences end in a single line containing a period.
-
-   * The 'TOKEN' is from the corresponding request.  Note that for all
-     async output, while the token is allowed by the grammar and may be
-     output by future versions of GDB for select async output messages,
-     it is generally omitted.  Frontends should treat all async output
-     as reporting general changes in the state of the target and there
-     should be no need to associate async output to any prior command.
-
-   * STATUS-ASYNC-OUTPUT contains on-going status information about the
-     progress of a slow operation.  It can be discarded.  All status
-     output is prefixed by '+'.
-
-   * EXEC-ASYNC-OUTPUT contains asynchronous state change on the target
-     (stopped, started, disappeared).  All async output is prefixed by
-     '*'.
-
-   * NOTIFY-ASYNC-OUTPUT contains supplementary information that the
-     client should handle (e.g., a new breakpoint information).  All
-     notify output is prefixed by '='.
-
-   * CONSOLE-STREAM-OUTPUT is output that should be displayed as is in
-     the console.  It is the textual response to a CLI command.  All the
-     console output is prefixed by '~'.
-
-   * TARGET-STREAM-OUTPUT is the output produced by the target program.
-     All the target output is prefixed by '@'.
-
-   * LOG-STREAM-OUTPUT is output text coming from GDB's internals, for
-     instance messages that should be displayed as part of an error log.
-     All the log output is prefixed by '&'.
-
-   * New GDB/MI commands should only output LISTS containing VALUES.
-
-   *Note GDB/MI Stream Records: GDB/MI Stream Records, for more details
-about the various output records.
 

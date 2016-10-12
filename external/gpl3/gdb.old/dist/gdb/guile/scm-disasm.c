@@ -283,9 +283,8 @@ gdbscm_arch_disassemble (SCM self, SCM start_scm, SCM rest)
       char *as = NULL;
       struct ui_file *memfile = mem_fileopen ();
       struct cleanup *cleanups = make_cleanup_ui_file_delete (memfile);
-      volatile struct gdb_exception except;
 
-      TRY_CATCH (except, RETURN_MASK_ALL)
+      TRY
 	{
 	  if (using_port)
 	    {
@@ -295,7 +294,11 @@ gdbscm_arch_disassemble (SCM self, SCM start_scm, SCM rest)
 	  else
 	    insn_len = gdb_print_insn (gdbarch, pc, memfile, NULL);
 	}
-      GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+      CATCH (except, RETURN_MASK_ALL)
+	{
+	  GDBSCM_HANDLE_GDB_EXCEPTION_WITH_CLEANUPS (except, cleanups);
+	}
+      END_CATCH
 
       as = ui_file_xstrdup (memfile, NULL);
 

@@ -22,7 +22,7 @@ proc selftest_python {} {
     }
 
     gdb_test_no_output "set variable gdb_python_initialized = 0"
-    gdb_test "call catch_command_errors(execute_command, \"python print(5)\", 0, RETURN_MASK_ALL)" \
+    gdb_test "call catch_command_errors(execute_command, \"python print(5)\", 0)" \
 	"Python not initialized.* = 0"
     return 0
 }

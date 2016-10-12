@@ -1,3 +1,104 @@
+2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.ac (ospace_frag): Enable for i?86*-*-elfiamcu
+	target.
+	* configure: Regenerate.
+
+2015-05-13  John David Anglin  <dave.anglin@bell.net>
+
+	* configure.ac: Disable configuration of GDB for HPUX targets.
+	* configure: Regenerate.
+
+2015-05-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	PR ld/18355
+	* Makefile.def: Add extra_configure_flags to host zlib.
+	* configure.ac (extra_host_zlib_configure_flags): New.  Set
+	to --enable-host-shared When bfd is to be built as shared
+	library.  AC_SUBST.
+	* Makefile.in: Regenerated.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+	    Hans-Peter Nilsson  <hp@axis.com>
+
+	Adjust src-release.sh for sim using the gdb create-version.sh.
+	* src-release.sh (tar_compress): If there's a fifth parameter,
+	use that in the getver call instead of $tool.
+	(sim_release): Pass gdb as fifth parameter to tar_compress.
+	(SIM_SUPPORT_DIRS): Add gdb/common/create-version.sh.
+
+2015-04-14  Max Ostapenko  <m.ostapenko@partner.samsung.com>
+
+	* Makefile.tpl (EXTRA_HOST_EXPORTS): New variables.
+	(EXTRA_BOOTSTRAP_FLAGS): Likewise.
+	(check-[+module+]): Add EXTRA_HOST_EXPORTS and EXTRA_BOOTSTRAP_FLAGS.
+	* Makefile.in: Regenerate.
+
+2015-04-01  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.ac: Add --with-system-zlib.
+	* configure: Regenerated.
+
+2015-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* src-release.sh: Don't configure with  --with-target-subdir=.
+	--disable-multilib.
+
+2015-03-31  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* src-release.sh (DEVO_SUPPORT): Replace src-release with
+	src-release.sh.
+
+2015-03-30  Ed Schouten  <ed@nuxi.nl>
+
+	* config.sub: Update from upstream, to 2015-03-04 version.
+	* config.guess: Likewise.
+
+2015-03-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.def (dependencies): Add all-zlib to all-bfd.
+	* Makefile.in: Regenerated.
+
+2015-03-28  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* src-release.sh (do_proto_toplev): Configure with --target
+	--with-target-subdir and --disable-multilib.
+	(BINUTILS_SUPPORT_DIRS): Add zlib.
+	(GAS_SUPPORT_DIRS): Likewise.
+	(GDB_SUPPORT_DIRS): Likewise.
+	(SIM_SUPPORT_DIRS): Likewise.
+
+2015-03-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure.ac (target_configdirs): Exclude target-zlib if
+	target-libjava isn't built.
+	* configure: Regenerated.
+
+2015-03-17  H.J. Lu  <hongjiu.lu@intel.com>
+
+	Sync with GCC
+	2014-06-13  Thomas Schwinge  <thomas@codesourcery.com>
+
+	* config-ml.in: Robustify ac_configure_args parsing.
+
+2015-03-16  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* Makefile.def: Updated from GCC trunk.
+	* Makefile.tpl: Likewise.
+	* configure.ac: Likewise.
+	* Makefile.in: Regenerated.
+	* configure: Likewise.
+
+2015-01-28  James Bowman  <james.bowman@ftdichip.com>
+
+	* configure.ac: Add FT32 support.
+	* configure: Regenerate.
+
+2015-01-12  Anthony Green  <green@moxielogic.com>
+
+	* configure.ac: Don't disable gprof for moxie.
+	* configure: Rebuild.
+
 2015-01-03  Andrew Pinski  <apinski@cavium.com>
 
 	* Makefile.def (flags_to_pass): Pass OBJCOPY_FOR_TARGET also.

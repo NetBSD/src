@@ -31,6 +31,11 @@ struct tui_point
   int x, y;
 };
 
+struct tui_win_element;
+
+/* This describes the content of the window.  */
+typedef struct tui_win_element **tui_win_content;
+
 /* Generic window information.  */
 struct tui_gen_win_info
 {
@@ -39,7 +44,7 @@ struct tui_gen_win_info
   int width;		    /* Window width.  */
   int height;		    /* Window height.  */
   struct tui_point origin;  /* Origin of window.  */
-  void **content;	    /* Content of window.  */
+  tui_win_content content;  /* Content of window.  */
   int content_size;	    /* Size of content (# of elements).  */
   int content_in_use;	    /* Can it be used, or is it already used?  */
   int viewport_height;	    /* Viewport height.  */
@@ -87,15 +92,6 @@ struct tui_gen_win_info
 #define MAX_TARGET_WIDTH  10
 #define MAX_PID_WIDTH     19
 
-#define TUI_FLOAT_REGS_NAME                  "$FREGS"
-#define TUI_FLOAT_REGS_NAME_LOWER            "$fregs"
-#define TUI_GENERAL_REGS_NAME                "$GREGS"
-#define TUI_GENERAL_REGS_NAME_LOWER          "$gregs"
-#define TUI_SPECIAL_REGS_NAME                "$SREGS"
-#define TUI_SPECIAL_REGS_NAME_LOWER          "$sregs"
-#define TUI_GENERAL_SPECIAL_REGS_NAME        "$REGS"
-#define TUI_GENERAL_SPECIAL_REGS_NAME_LOWER  "$regs"
-
 /* Scroll direction enum.  */
 enum tui_scroll_direction
 {
@@ -134,21 +130,16 @@ enum tui_data_type
   TUI_STRUCT
 };
 
-/* Types of register displays.  */
-enum tui_register_display_type
+enum tui_line_or_address_kind
 {
-  TUI_UNDEFINED_REGS,
-  TUI_GENERAL_REGS,
-  TUI_SFLOAT_REGS,
-  TUI_DFLOAT_REGS,
-  TUI_SPECIAL_REGS,
-  TUI_GENERAL_AND_SPECIAL_REGS
+  LOA_LINE,
+  LOA_ADDRESS
 };
 
 /* Structure describing source line or line address.  */
 struct tui_line_or_address
 {
-  enum { LOA_LINE, LOA_ADDRESS } loa;
+  enum tui_line_or_address_kind loa;
   union
     {
       int line_no;
@@ -161,8 +152,6 @@ struct tui_layout_def
 {
   enum tui_win_type display_mode;
   int split;
-  enum tui_register_display_type regs_display_type;
-  enum tui_register_display_type float_regs_display_type;
 };
 
 /* Elements in the Source/Disassembly Window.  */
@@ -244,11 +233,6 @@ struct tui_win_element
   union tui_which_element which_element;
 };
 
-
-/* This describes the content of the window.  */
-typedef struct tui_win_element **tui_win_content;
-
-
 /* This struct defines the specific information about a data display
    window.  */
 struct tui_data_info
@@ -257,7 +241,6 @@ struct tui_data_info
   int data_content_count;
   tui_win_content regs_content;	/* Start of regs display content.  */
   int regs_content_count;
-  enum tui_register_display_type regs_display_type;
   int regs_column_count;
   int display_regs;		/* Should regs be displayed at all?  */
   struct reggroup *current_group;
@@ -337,7 +320,7 @@ extern void tui_free_all_source_wins_content (void);
 extern void tui_del_window (struct tui_win_info *);
 extern void tui_del_data_windows (tui_win_content, int);
 extern struct tui_win_info *tui_partial_win_by_name (char *);
-extern char *tui_win_name (struct tui_gen_win_info *);
+extern const char *tui_win_name (const struct tui_gen_win_info *);
 extern enum tui_layout_type tui_current_layout (void);
 extern void tui_set_current_layout_to (enum tui_layout_type);
 extern int tui_term_height (void);

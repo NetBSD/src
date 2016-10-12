@@ -42,6 +42,8 @@ struct ns {
 
 struct lazystring {
   const char *lazy_str;
+  /* If -1, don't pass length to gdb.lazy_string().  */
+  int len;
 };
 
 struct hint_error {
@@ -270,7 +272,7 @@ main ()
   nostring_type nstype, nstype2;
   struct memory_error me;
   struct ns ns, ns2;
-  struct lazystring estring, estring2;
+  struct lazystring estring, estring2, estring3;
   struct hint_error hint_error;
   struct children_as_list children_as_list;
 
@@ -295,10 +297,15 @@ main ()
   ns2.null_str = NULL;
   ns2.length = 20;
 
-  estring.lazy_str = "embedded x\201\202\203\204" ;
+  estring.lazy_str = "embedded x\201\202\203\204";
+  estring.len = -1;
 
   /* Incomplete UTF-8, but ok Latin-1.  */
   estring2.lazy_str = "embedded x\302";
+  estring2.len = -1;
+
+  estring3.lazy_str = NULL;
+  estring3.len = 42;
 
 #ifdef __cplusplus
   S cps;

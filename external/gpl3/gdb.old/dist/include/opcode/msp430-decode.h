@@ -19,6 +19,10 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum
 {
   MSO_unknown,
@@ -128,3 +132,7 @@ typedef struct
 } MSP430_Opcode_Decoded;
 
 int msp430_decode_opcode (unsigned long, MSP430_Opcode_Decoded *, int (*)(void *), void *);
+
+#ifdef __cplusplus
+}
+#endif
