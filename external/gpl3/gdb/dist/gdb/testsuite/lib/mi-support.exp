@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,17 @@ if ![info exists mi_gdb_prompt] then {
     set mi_gdb_prompt "\[(\]gdb\[)\] \r\n"
 }
 
-global mi_inferior_spawn_id
 global mi_inferior_tty_name
+
+# Always points to GDB's main UI spawn ID, even when testing with MI
+# running on a secondary UI.
+global gdb_main_spawn_id
+
+# Points to the spawn id of the MI channel.  When testing with MI
+# running as the primary/main UI, this is the same as
+# gdb_main_spawn_id, but will be different when testing with MI
+# running on a secondary UI.
+global mi_spawn_id
 
 set MIFLAGS "-i=mi"
 
@@ -47,7 +56,8 @@ proc mi_uncatched_gdb_exit {} {
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global verbose
-    global gdb_spawn_id
+    global gdb_spawn_id gdb_main_spawn_id
+    global mi_spawn_id inferior_spawn_id
     global gdb_prompt
     global mi_gdb_prompt
     global MIFLAGS
@@ -84,14 +94,91 @@ proc mi_uncatched_gdb_exit {} {
 	remote_close host
     }
     unset gdb_spawn_id
+    unset gdb_main_spawn_id
+    unset mi_spawn_id
+    unset inferior_spawn_id
+}
+
+# Create the PTY for the inferior process and tell GDB about it.
+
+proc mi_create_inferior_pty {} {
+    global mi_gdb_prompt
+    global inferior_spawn_id
+    global mi_inferior_tty_name
+
+    spawn -pty
+    set inferior_spawn_id $spawn_id
+    set tty_name $spawn_out(slave,name)
+    set mi_inferior_tty_name $tty_name
+
+    send_gdb "102-inferior-tty-set $tty_name\n"
+    gdb_expect 10 {
+	-re ".*102\\\^done\r\n$mi_gdb_prompt$" {
+	    verbose "redirect inferior output to new terminal device."
+	}
+	timeout {
+	    warning "Couldn't redirect inferior output." 2
+	}
+    }
+}
+
+proc mi_gdb_start_separate_mi_tty { args } {
+    global gdb_prompt mi_gdb_prompt
+    global timeout
+    global gdb_spawn_id gdb_main_spawn_id mi_spawn_id
+    global inferior_spawn_id
+
+    set separate_inferior_pty 0
+
+    foreach arg $args {
+	if {$arg == "separate-inferior-tty"} {
+	    set separate_inferior_pty 1
+	}
+    }
+
+    gdb_start
+
+    # Create the new PTY for the MI UI.
+    spawn -pty
+    set mi_spawn_id $spawn_id
+    set mi_tty_name $spawn_out(slave,name)
+    gdb_test_multiple "new-ui mi $mi_tty_name" "new-ui" {
+	-re "New UI allocated\r\n$gdb_prompt $" {
+	}
+    }
+
+    # Switch to the MI channel.
+    set gdb_main_spawn_id $gdb_spawn_id
+    switch_gdb_spawn_id $mi_spawn_id
+
+    # Consume pending output and MI prompt.
+    gdb_expect {
+	-re "$mi_gdb_prompt$" {
+	}
+	default {
+	    perror "MI channel failed"
+	    remote_close host
+	    return -1
+	}
+    }
+
+    if {$separate_inferior_pty} {
+	mi_create_inferior_pty
+    }
+
+    mi_detect_async
+
+    return 0
 }
 
 #
-# default_mi_gdb_start [INFERIOR_PTY] -- start gdb running, default procedure
+# default_mi_gdb_start [FLAGS] -- start gdb running, default procedure
 #
-# INFERIOR_PTY should be set to separate-inferior-tty to have the inferior work 
-# with it's own PTY. If set to same-inferior-tty, the inferior shares GDB's PTY. 
-# The default value is same-inferior-tty.
+# If "separate-inferior-tty" is specified, the inferior works with
+# it's own PTY.
+#
+# If "separate-mi-tty" is specified, the gdb starts in CLI mode, with
+# MI running on a secondary UI, on its own tty.
 #
 # When running over NFS, particularly if running many simultaneous
 # tests on different hosts all using the same server, things can
@@ -104,20 +191,35 @@ proc default_mi_gdb_start { args } {
     global gdb_prompt
     global mi_gdb_prompt
     global timeout
-    global gdb_spawn_id
+    global gdb_spawn_id gdb_main_spawn_id inferior_spawn_id mi_spawn_id
     global MIFLAGS
+    global FORCE_SEPARATE_MI_TTY
+
+    if {[info exists FORCE_SEPARATE_MI_TTY]} {
+	set separate_mi_pty $FORCE_SEPARATE_MI_TTY
+    } else {
+	set separate_mi_pty 0
+    }
+
+    set separate_inferior_pty 0
+
+    foreach arg $args {
+	if {$arg == "separate-mi-tty"} {
+	    set separate_mi_pty 1
+	} elseif {$arg == "separate-inferior-tty"} {
+	    set separate_inferior_pty 1
+	}
+    }
+
+    if {$separate_mi_pty} {
+	return [eval mi_gdb_start_separate_mi_tty $args]
+    }
 
     gdb_stop_suppressing_tests
     set inferior_pty no-tty
 
     # Set the default value, it may be overriden later by specific testfile.
     set use_gdb_stub [target_info exists use_gdb_stub]
-
-    if { [llength $args] == 1} {
-	set inferior_pty [lindex $args 0]
-    }
-
-    set separate_inferior_pty [string match $inferior_pty separate-inferior-tty]
 
     # Start SID.
     if { [info procs sid_start] != "" } {
@@ -136,15 +238,6 @@ proc default_mi_gdb_start { args } {
 	    perror "$GDB does not exist."
 	    exit 1
 	}
-    }
-
-    # Create the new PTY for the inferior process.
-    if { $separate_inferior_pty } {
-	spawn -pty
-	global mi_inferior_spawn_id
-	global mi_inferior_tty_name
-	set mi_inferior_spawn_id $spawn_id
-	set mi_inferior_tty_name $spawn_out(slave,name)
     }
 
     set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS [host_info gdb_opts]"]
@@ -192,6 +285,8 @@ proc default_mi_gdb_start { args } {
 	}
     }
     set gdb_spawn_id $res
+    set gdb_main_spawn_id $res
+    set mi_spawn_id $res
 
     # FIXME: mi output does not go through pagers, so these can be removed.
     # force the height to "unlimited", so no pagers get used
@@ -214,18 +309,13 @@ proc default_mi_gdb_start { args } {
 	    warning "Couldn't set the width to 0."
 	}
     }
-    # If allowing the inferior to have its own PTY then assign the inferior
-    # its own terminal device here.
+
     if { $separate_inferior_pty } {
-	send_gdb "102-inferior-tty-set $mi_inferior_tty_name\n"
-	gdb_expect 10 {
-	    -re ".*102\\\^done\r\n$mi_gdb_prompt$" {
-		verbose "redirect inferior output to new terminal device."
-	    }
-	    timeout {
-		warning "Couldn't redirect inferior output." 2
-	    }
-	}
+	mi_create_inferior_pty
+    }
+
+    if {![info exists inferior_spawn_id]} {
+	set inferior_spawn_id $gdb_spawn_id
     }
 
     mi_detect_async
@@ -238,7 +328,7 @@ proc default_mi_gdb_start { args } {
 # baseboard file.
 #
 proc mi_gdb_start { args } {
-  return [default_mi_gdb_start $args]
+  return [eval default_mi_gdb_start $args]
 }
 
 # Many of the tests depend on setting breakpoints at various places and
@@ -770,29 +860,16 @@ proc mi_gdb_test { args } {
     if { $result == 0 } {
 	if [ info exists ipattern ] {
 	    if { ![target_info exists gdb,noinferiorio] } {
-		if { [target_info gdb_protocol] == "remote"
-		    || [target_info gdb_protocol] == "extended-remote"
-		    || [target_info protocol] == "sim"} {
+		global gdb_spawn_id inferior_spawn_id
 
-		    gdb_expect {
-			-re "$ipattern" {
-			    pass "$message inferior output"
-			}
-			timeout {
-			    fail "$message inferior output (timeout)"
-			    set result 1
-			}
+		set sid "$inferior_spawn_id $gdb_spawn_id"
+		gdb_expect {
+		    -i "$sid" -re "$ipattern" {
+			pass "$message inferior output"
 		    }
-		} else {
-		    global mi_inferior_spawn_id
-		    expect {
-			-i $mi_inferior_spawn_id -re "$ipattern" {
-			    pass "$message inferior output"
-			}
-			timeout {
-			    fail "$message inferior output (timeout)"
-			    set result 1
-			}
+		    timeout {
+			fail "$message inferior output (timeout)"
+			set result 1
 		    }
 		}
 	    } else {
@@ -900,6 +977,9 @@ proc mi_run_cmd_full {use_mi_command args} {
 	# to better handle RUN.
 	send_gdb  "jump *$start\n"
 	warning "Using CLI jump command, expect run-to-main FAIL"
+	gdb_expect {
+	    -re "${run_match}&\"jump \\*${start}\\n\"\[\r\n\]+~\"Continuing at 0x\[0-9A-Fa-f\]+\\n.\"\[\r\n\]+\^running\[\r\n\]+\\*running,thread-id=\"\[^\"\]+\"\r\n${mi_gdb_prompt}" {}
+	}
 	return 0
     }
 
@@ -1192,7 +1272,7 @@ proc mi_expect_interrupt { test } {
     if {$async} {
 	set prompt_re ""
     } else {
-	set prompt_re "$mi_gdb_prompt$"
+	set prompt_re "$mi_gdb_prompt"
     }
 
     set r_nonstop "reason=\"signal-received\",signal-name=\"0\",signal-meaning=\"Signal 0\""
@@ -1207,7 +1287,7 @@ proc mi_expect_interrupt { test } {
 	    pass "$test"
 	    return 0
 	}
-	-re ".*\r\n$mi_gdb_prompt$" {
+	-re ".*\r\n$mi_gdb_prompt" {
 	    verbose -log "got $expect_out(buffer)"
 	    fail "$test (unknown output after running)"
 	    return -1
@@ -1966,32 +2046,23 @@ proc check_mi_and_console_threads {name} {
 
 # Download shared libraries to the target.
 proc mi_load_shlibs { args } {
-    if {![is_remote target]} {
-	return
-    }
-
     foreach file $args {
-	gdb_download [shlib_target_file $file]
+	gdb_remote_download target [shlib_target_file $file]
     }
 
-    # Even if the target supplies full paths for shared libraries,
-    # they may not be paths for this system.
-    mi_gdb_test "set solib-search-path [file dirname [lindex $args 0]]" "\^done" ""
-}
-
-proc mi_reverse_list { list } {
-    if { [llength $list] <= 1 } {
-	return $list
+    if {[is_remote target]} {
+	# If the target is remote, we need to tell gdb where to find the
+	# libraries.
+	#
+	# We could set this even when not testing remotely, but a user
+	# generally won't set it unless necessary.  In order to make the tests
+	# more like the real-life scenarios, we don't set it for local testing.
+	mi_gdb_test "set solib-search-path [file dirname [lindex $args 0]]" "\^done" ""
     }
-    set tail [lrange $list 1 [llength $list]]
-    set rtail [mi_reverse_list $tail]
-    lappend rtail [lindex $list 0]
-    return $rtail
 }
 
-proc mi_check_thread_states { xstates test } {
+proc mi_check_thread_states { states test } {
     global expect_out
-    set states [mi_reverse_list $xstates]
     set pattern ".*\\^done,threads=\\\["
     foreach s $states {
 	set pattern "${pattern}(.*)state=\"$s\""
@@ -2409,7 +2480,8 @@ proc mi_build_kv_pairs {attr_list {joiner ,}} {
 #
 # All arguments for the breakpoint may be specified using the options
 # number, type, disp, enabled, addr, func, file, fullanme, line,
-# thread-groups, times, ignore, script, and original-location.
+# thread-groups, cond, evaluated-by, times, ignore, script,
+# and original-location.
 #
 # Only if -script and -ignore are given will they appear in the output.
 # Otherwise, this procedure will skip them using ".*".
@@ -2424,17 +2496,36 @@ proc mi_make_breakpoint {args} {
     parse_args {{number .*} {type .*} {disp .*} {enabled .*} {addr .*}
 	{func .*} {file .*} {fullname .*} {line .*}
 	{thread-groups \\\[.*\\\]} {times .*} {ignore 0}
-	{script ""} {original-location .*}}
+	{script ""} {original-location .*} {cond ""} {evaluated-by ""}}
 
     set attr_list {}
     foreach attr [list number type disp enabled addr func file \
-		      fullname line thread-groups times] {
+		      fullname line thread-groups] {
 	lappend attr_list $attr [set $attr]
     }
 
     set result "bkpt={[mi_build_kv_pairs $attr_list]"
 
     # There are always exceptions.
+
+    # If COND is not preset, do not output it.
+    if {[string length $cond] > 0} {
+	append result ","
+	append result [mi_build_kv_pairs [list "cond" $cond]]
+
+	# When running on a remote, GDB may output who is evaluating
+	# breakpoint conditions.
+	if {[string length ${evaluated-by}] > 0} {
+	    append result [mi_build_kv_pairs \
+			       [list "evaluated-by" ${evaluated-by}]]
+	} else {
+	    append result {(,evaluated-by=".*")?}
+	}
+    }
+
+    append result ","
+    append result [mi_build_kv_pairs [list "times" $times]]
+
     # If SCRIPT and IGNORE are not present, do not output them.
     if {$ignore != 0} {
 	append result ","
@@ -2494,4 +2585,22 @@ proc mi_make_breakpoint_table {bp_list} {
 
     # Assemble the final regexp.
     return "BreakpointTable={nr_rows=\"$nr\",nr_cols=\"$nc\",$header,$body}"
+}
+
+# Return a 1 for configurations that do not support Python scripting.
+# Note: This also sets various globals that specify which version of Python
+# is in use.  See skip_python_tests_prompt.
+
+proc mi_skip_python_tests {} {
+    global mi_gdb_prompt
+    return [skip_python_tests_prompt "$mi_gdb_prompt$"]
+}
+
+# Check whether we're testing with the remote or extended-remote
+# targets.
+
+proc mi_is_target_remote {} {
+    global mi_gdb_prompt
+
+    return [gdb_is_target_remote_prompt "$mi_gdb_prompt"]
 }

@@ -1,5 +1,5 @@
 /* m68hc11-opc.c -- Motorola 68HC11, 68HC12, 9S12X and XGATE opcode list
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Stephane Carrez (stcarrez@nerim.fr)
    XGATE and S12X added by James Murray (jsm@jsm-net.demon.co.uk)
    Note: min/max cycles not updated for S12X opcodes.
@@ -328,7 +328,7 @@ const struct m68hc11_opcode m68hc11_opcodes[] = {
   { "bgt", OP_JUMP_REL,        2, 0x2e,  1,  3, CHG_NONE, cpu6811 | cpu6812|cpu9s12x, 0 },
   { "bhi", OP_JUMP_REL,        2, 0x22,  1,  3, CHG_NONE, cpu6811 | cpu6812|cpu9s12x, 0 },
   { "bhs", OP_JUMP_REL,        2, 0x24,  1,  3, CHG_NONE, cpu6811 | cpu6812|cpu9s12x, 0 },
-  
+
   { "bita", OP_IMM8,          2, 0x85,  1,  1, CLR_V_CHG_NZ, cpu6811|cpu6812|cpu9s12x, 0 },
   { "bita", OP_DIRECT,        2, 0x95,  3,  3, CLR_V_CHG_NZ, cpu6811|cpu6812|cpu9s12x, 0 },
   { "bita", OP_IND16,         3, 0xb5,  3,  3, CLR_V_CHG_NZ, cpu6811|cpu6812|cpu9s12x, 0 },

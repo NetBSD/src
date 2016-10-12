@@ -1,4 +1,4 @@
-# Copyright 2005-2015 Free Software Foundation, Inc.
+# Copyright 2005-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,9 +32,8 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}$EXEEXT" executable {debug}] != ""}
 }
 
 # Build the second test program
-set testfile2 "${testdir}/second"
-set srcfile2 ${srcdir}/${subdir}/${testfile2}.adb
-set binfile2 [standard_output_file ${testfile2}$EXEEXT]
+set srcfile2 ${srcdir}/${subdir}/${testdir}/second.adb
+set binfile2 [standard_output_file second$EXEEXT]
 
 if {[gdb_compile_ada "${srcfile2}" "${binfile2}" executable {debug}] != ""} {
     return -1
@@ -42,7 +41,7 @@ if {[gdb_compile_ada "${srcfile2}" "${binfile2}" executable {debug}] != ""} {
 
 # Start with a fresh gdb.
 
-set common_binfile [standard_output_file ${testdir}/common$EXEEXT]
+set common_binfile [standard_output_file common$EXEEXT]
 
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir

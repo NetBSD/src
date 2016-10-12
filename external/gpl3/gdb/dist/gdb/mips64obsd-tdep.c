@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +46,7 @@ mips64obsd_supply_gregset (const struct regset *regset,
 			   struct regcache *regcache, int regnum,
 			   const void *gregs, size_t len)
 {
-  const char *regs = gregs;
+  const char *regs = (const char *) gregs;
   int i;
 
   for (i = 0; i < MIPS64OBSD_NUM_REGS; i++)

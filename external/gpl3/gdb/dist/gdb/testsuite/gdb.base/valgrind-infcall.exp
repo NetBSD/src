@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Free Software Foundation, Inc.
+# Copyright 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -76,12 +76,17 @@ gdb_test_multiple "" $test {
 }
 
 # Do not kill valgrind.
-set valgrind_pid [exp_pid -i [board_info host fileid]]
+set valgrind_spawn_id [board_info host fileid]
 unset gdb_spawn_id
 set board [host_info name]
 unset_board_info fileid
 
 clean_restart $testfile
+
+# Make sure we're disconnected, in case we're testing with the
+# native-extended-gdbserver board, where gdb_start/gdb_load spawn
+# gdbserver and connect to it.
+gdb_test "disconnect" ".*"
 
 gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
 
@@ -99,13 +104,13 @@ while {$loop && $continue_count < 100} {
 	-re "Remote connection closed.*\r\n$gdb_prompt $" {
 	    fail "$test (remote connection closed)"
 	    # Only if valgrind got stuck.
-	    remote_exec host "kill -9 ${valgrind_pid}"
+	    kill_wait_spawned_process $valgrind_spawn_id
 	    return -1
 	}
 	-re "The program is not being run\\.\r\n$gdb_prompt $" {
 	    fail "$test (valgrind vgdb has terminated)"
 	    # Only if valgrind got stuck.
-	    remote_exec host "kill -9 ${valgrind_pid}"
+	    kill_wait_spawned_process $valgrind_spawn_id
 	    return -1
 	}
 	-re "\r\n$gdb_prompt $" {
@@ -126,4 +131,4 @@ gdb_test_multiple $test $test {
 }
 
 # Only if valgrind got stuck.
-remote_exec host "kill -9 ${valgrind_pid}"
+kill_wait_spawned_process $valgrind_spawn_id

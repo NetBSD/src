@@ -1,3 +1,438 @@
+2016-02-04  Nick Clifton  <nickc@redhat.com>
+
+	* cgen-scache.c (scache_option_handler): Prevent possible
+	undefined behaviour computing the size of the scache by using
+	unsigned integers instead of signed integers.
+
+2016-01-17  Joel Brobecker  <brobecker@adacore.com>
+
+	* sim-fpu.c: Minor comment fixes throughout.
+
+2016-01-17  Joel Brobecker  <brobecker@adacore.com>
+
+	* sim-fpu.c (print_bits): Minor reformatting (no code change).
+	(sim_fpu_map): Likewise.
+
+2016-01-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-config.c (print_sim_config): Drop extra whitespace before =
+	in output for byte order, stdio, and msb settings.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Call AC_MSG_CHECKING,
+	AC_DEFINE_UNQUOTED, and AC_MSG_RESULT for sim-debug.  Likewise for
+	sim-stdio, sim-trace, and sim-profile.
+	(SIM_AC_OPTION_ENVIRONMENT): Likewise.
+	(SIM_AC_OPTION_ASSERT): Likewise.
+	(SIM_AC_OPTION_SMP): Likewise.
+	(SIM_AC_OPTION_XOR_ENDIAN): Likewise.
+	* configure: Regenerate.
+	* Make-common.in (SIM_DEBUG, SIM_TRACE, SIM_PROFILE, SIM_ASSERT,
+	SIM_ENVIRONMENT, SIM_SMP, SIM_XOR_ENDIAN): Delete.
+	(CONFIG_CFLAGS): Delete $(SIM_DEBUG), $(SIM_TRACE), $(SIM_PROFILE),
+	$(SIM_ASSERT), $(SIM_ENVIRONMENT), $(SIM_SMP), and $(SIM_XOR_ENDIAN).
+	* sim-config.c (sim_config): Change DEFAULT_ENVIRONMENT to
+	WITH_ENVIRONMENT & USER_ENVIRONMENT.
+	* sim-config.h (SIM_HAVE_ENVIRONMENT, WITH_ENVIRONMENT,
+	DEFAULT_ENVIRONMENT, WITH_DEBUG, WITH_TRACE, WITH_PROFILE,
+	WITH_ASSERT, WITH_STDIO): Delete.
+	* sim-options.c (standard_options): Delete SIM_HAVE_ENVIRONMENT
+	check.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_OPTION_PACKAGES): Delete.
+	* configure: Regenerate.
+	* Make-common.in (SIM_PACKAGES): Delete.
+	(CONFIG_CFLAGS): Delete $(SIM_PACKAGES).
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Call SIM_AC_OPTION_ENVIRONMENT.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Call SIM_AC_OPTION_ASSERT.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Delete sim_link_files and
+	sim_link_links.
+	(SIM_AC_OUTPUT): Delete AC_LINK_FILES call.
+	* gentmap.c: Change targ-vals.def include to nltvals.def.
+	* Make-common.in (gentmap): Change targ-vals.def to
+	$(srccom)/nltvals.def.
+	(distclean): Delete rm -f targ-vals.def.
+	* Makefile.in: Update comment.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_COMMON): Call SIM_AC_OPTION_INLINE.
+	(SIM_AC_OPTION_INLINE): Rename default_sim_inline to sim_inline
+	and always set -DDEFAULT_INLINE.  Delete AC_ARG_ENABLE 4th arg.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Delete --enable-sim-regparm and sim_regparm,
+	and --enable-sim-stdcall and sim_stdcall.
+	* configure: Regenerate.
+	* Make-common.in (SIM_REGPARM, SIM_STDCALL): Delete.
+	(CONFIG_CFLAGS): Delete $(SIM_REGPARM) and $(SIM_STDCALL).
+	* sim-config.h (WITH_REGPARM, WITH_STDCALL): Delete.
+	* sim-inline.h (REGPARM_MODULE, REGPARM): Delete.
+	(REGPARM_*): Delete all regparm defines and their use.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4: Delete --enable-sim-cflags and sim_cflags.
+	* Make-common.in (SIM_CFLAGS): Delete.
+	(CONFIG_CFLAGS): Delete $(SIM_CFLAGS).
+	* Makefile.in: Likewise.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Change SIM_AC_COMMON to AC_PROG_CC.  Drop 2nd arg
+	to AC_OUTPUT.  Move AC_CHECK_HEADERS, AC_CHECK_FUNCS,
+	AC_CHECK_MEMBERS, and -AC_CHECK_TYPES ...
+	* acinclude.m4 (SIM_AC_COMMON): ... here.
+	* aclocal.m4, configure: Regenerate.
+	* config.in: Delete file.
+	* callback.c: Change cconfig.h include to config.h.
+	* dv-cfi.c, nrun.c, sim-basics.h, sim-load.c, sim-memopt.c,
+	syscall.c: Likewise.
+	* Make-common.in (sim-basics_h): Delete ../common/cconfig.h.
+	* Makefile.in (distclean): Delete rm -f cconfig.h config.h stamp-h.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-config.c (print_sim_config): Delete sim_io_printf of version,
+	date, and time information.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (sim_parse_args): Mark argv array const.
+	* sim-options.h (sim_parse_args): Likewise.
+
+2016-01-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-trace.c: Include dis-asm.h.
+	(OPTION_TRACE_DISASM): New enum.
+	(trace_options): Add trace-disasm flag.
+	(trace_option_handler): Handle OPTION_TRACE_DISASM.
+	(trace_idx_to_str): Handle TRACE_DISASM_IDX.
+	(dis_read, dis_printf, trace_disasm): New functions.
+	* sim-trace.h: Include dis-asm.h.
+	(TRACE_INSN_IDX): Clarify comment.
+	(TRACE_DISASM_IDX): New enum.
+	(TRACE_disasm): New define.
+	(WITH_TRACE_DISASM_P): New define.
+	(struct _trace_data): Add dis_bfd, disassembler, and dis_info.
+	(STRACE_DISASM_P): New define.
+	(TRACE_DISASM_P): Likewise.
+	(TRACE_DISASM_P): Likewise.
+	(TRACE_DISASM): Likewise.
+	(trace_disasm): New function.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-utils.c (sim_state_free): Change to STATE_MAGIC.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-scache.c (MAX): Delete.
+	(scache_init): Change MAX to max.
+	* cgen-trace.c (min): Delete.
+	* cgen-utils.c (min): Delete.
+	* sim-basics.h [!min] (min): Define.
+	[!max] (max): Define.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (sim_parse_args): Tweak getopt error message.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (sim-bswap): Delete.
+	* configure: Regenerate.
+	* Make-common.in (SIM_BSWAP): Delete.
+	(CONFIG_CFLAGS): Delete $(SIM_BSWAP).
+	* sim-config.h (htonl, ntohl): Delete.
+	(WITH_BSWAP): Delete.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (sim_parse_args): Declare local save_opterr.  Save
+	opterr state to it before calling getopt_long and restore afterwards.
+	Set opterr to 0.  When optc is '?', call sim_io_eprintf.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw-device.h (device): Delete commented typedef.
+	* sim-basics.h (device): Delete typedef.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (sim_parse_args): Replace for loop with a call
+	to countargv.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* nrun.c (myname): Mark const.
+	(main): Mark name const.  Replace myname parsing loop with a
+	call to lbasename.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	(CONFIG_CFLAGS): Delte $(SIM_HOSTENDIAN).
+	* acinclude.m4 (SIM_AC_COMMON): Call AC_C_BIGENDIAN.
+	(SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* config.in, configure: Regenerate.
+	* Make-common.in (SIM_HOSTENDIAN): Delete.
+	* sim-config.c (current_host_byte_order): Delete.
+	(sim_config): Delete current_host_byte_order assignments and
+	CURRENT_HOST_BYTE_ORDER checks.
+	(print_sim_config): Change WITH_HOST_BYTE_ORDER to HOST_BYTE_ORDER.
+	* sim-config.h (WITH_HOST_BYTE_ORDER): Change to ...
+	(HOST_BYTE_ORDER): ... this.  Define based on WORDS_BIGENDIAN.
+	(current_host_byte_order): Delete.
+	(CURRENT_HOST_BYTE_ORDER): Likewise.
+	* sim-endian.c (WITH_HOST_BYTE_ORDER): Rename to ...
+	(HOST_BYTE_ORDER): ... this.
+	(sim_endian_split_16): Change WITH_HOST_BYTE_ORDER to
+	HOST_BYTE_ORDER.
+	(sim_endian_join_16): Likewise.
+	* sim-n-core.h (sim_core_read_misaligned_N): Change
+	CURRENT_HOST_BYTE_ORDER to HOST_BYTE_ORDER.
+	(sim_core_write_misaligned_N): Likewise.
+	* sim-n-endian.h (endian_t2h_N): Likewise.
+	(endian_h2t_N, endian_h2be_N, endian_be2h_N, endian_h2le_N,
+	endian_le2h_N): Likewise.
+	(offset_N): Change WITH_HOST_BYTE_ORDER to HOST_BYTE_ORDER.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (SIM_AC_OPTION_ENDIAN): Change BIG_ENDIAN to
+	BFD_ENDIAN_BIG, LITTLE_ENDIAN to BFD_ENDIAN_LITTLE, and 0 to
+	BFD_ENDIAN_UNKNOWN.
+	(SIM_AC_OPTION_HOSTENDIAN): Likewise.
+	* cgen-ops.h (SUBWORDXFSI): Change BIG_ENDIAN to BFD_ENDIAN_BIG.
+	(SUBWORDTFSI, JOINSIDF, JOINSIXF, JOINSITF): Likewise.
+	* nrun.c (main): Likewise.
+	* sim-config.c (current_host_byte_order): Change type to enum
+	bfd_endian.  Initialize to BFD_ENDIAN_UNKNOWN.
+	(current_target_byte_order): Likewise.
+	(config_byte_order_to_a): Likewise.  Change BIG_ENDIAN to
+	BFD_ENDIAN_BIG, LITTLE_ENDIAN to BFD_ENDIAN_LITTLE, and 0 to
+	BFD_ENDIAN_UNKNOWN.
+	(sim_config): Change prefered_target_byte_order type to enum
+	bfd_endian.  Change BIG_ENDIAN to BFD_ENDIAN_BIG, LITTLE_ENDIAN
+	to BFD_ENDIAN_LITTLE, and 0 to BFD_ENDIAN_UNKNOWN.
+	* sim-config.h: Change BIG_ENDIAN to BFD_ENDIAN_BIG, LITTLE_ENDIAN
+	to BFD_ENDIAN_LITTLE, and 0 to BFD_ENDIAN_UNKNOWN.
+	Delete all the various arch/OS endian includes & defines.
+	(current_host_byte_order): Change type to enum bfd_endian.
+	(current_target_byte_order): Likewise.
+	(CURRENT_HOST_BYTE_ORDER): Compare to BFD_ENDIAN_UNKNOWN, not 0.
+	(CURRENT_TARGET_BYTE_ORDER): Likewise.
+	* sim-endian.c: Change LITTLE_ENDIAN to BFD_ENDIAN_LITTLE.
+	* sim-events.c (sim_events_watch_sim): Change BIG_ENDIAN to
+	BFD_ENDIAN_BIG, LITTLE_ENDIAN to BFD_ENDIAN_LITTLE, and 0 to
+	BFD_ENDIAN_UNKNOWN.
+	(sim_events_watch_core): Likewise.
+	* sim-events.h: Likewise.
+	* sim-n-core.h (sim_core_read_misaligned_N): Change BIG_ENDIAN to
+	BFD_ENDIAN_BIG.
+	(sim_core_write_misaligned_N): Likewise.
+	* sim-n-endian.h (endian_h2be_N): Likewise.
+	(endian_be2h_N): Likewise.
+	(endian_h2le_N): Change LITTLE_ENDIAN to BFD_ENDIAN_LITTLE.
+	(offset_N): Likewise.
+	* sim-options.c (standard_option_handler): Change LITTLE_ENDIAN to
+	BFD_ENDIAN_LITTLE and BIG_ENDIAN to BFD_ENDIAN_BIG.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* cgen-defs.h (current_state): Delete.
+	* sim-base.h (CURRENT_STATE_REG, CURRENT_STATE): Delete.
+	* sim-utils.c (current_state): Delete.
+
+2015-12-30  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-module.c (sim_pre_argv_init): Change STATE_MY_NAME assignment
+	to use lbasename.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_NEW_COMMON_OBJS): Add sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (AH_BOTTOM): Delete tconfig.h appending.
+	* config.in, configure: Regenerate.
+	* Make-common.in (sim-basics_h): Delete tconfig.h.
+	(distclean): Likewise.
+	* sim-core.c (device_io_read_buffer, device_io_write_buffer): Delete.
+	(new_sim_core_mapping): Delete WITH_HW and device *device.
+	(sim_core_map_attach, sim_core_attach): Likewise.
+	(sim_core_read_buffer): Delete WITH_DEVICES logic.
+	(sim_core_write_buffer): Likewise.
+	* sim-core.h (struct _sim_core_mapping): Delete WITH_HW and device
+	*device.
+	(sim_core_attach): Likewise.
+	(device_io_read_buffer, device_io_write_buffer): Delete.
+	* sim-n-core.h (sim_core_read_aligned_N): Delete WITH_DEVICES logic.
+	(sim_core_write_aligned_N): Likewise.
+	* tconfig.h: Delete file.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-core.c (sim_core_read_buffer): Move cia decl to top of func.
+	Call sim_cpu_hw_io_read_buffer if cpu is valid.
+	(sim_core_write_buffer): Move cia decl to top of func.  Call
+	sim_cpu_hw_io_write_buffer if cpu is valid.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* hw-properties.c (hw_find_ihandle_runtime_property): Delete
+	HW_TRACE call.
+	(hw_find_integer_property): Likewise.
+	(hw_find_integer_array_property): Likewise.
+	(hw_add_duplicate_property): Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-config.h (WITH_ENGINE): Delete.
+	* sim-module.c (modules): Always include sim_engine_install.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_NEW_COMMON_OBJS): Add sim-model.o.
+	* cgen-types.h (SIM_HAVE_MODEL): Delete.
+	* sim-base.h: Always include sim-model.h.
+	* sim-config.h (WITH_DEFAULT_MODEL): Delete.
+	* sim-cpu.h (sim_cpu_base): Always declare mach/model members.
+	* sim-model.c (sim_model_init): Return when !WITH_MODEL_P.
+	[!WITH_MODEL_P] (sim_machs): Define.
+	* sim-model.h: Add some developer docs.
+	[!WITH_DEFAULT_MODEL] (mach_attr, WITH_DEFAULT_MODEL): Define.
+	(WITH_MODEL_P): Define.
+	* sim-module.c (modules): Always include sim_model_install.
+	* sim-profile.h (WITH_PROFILE_MODEL_P): Delete.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-cpu.h: Rename MACH to SIM_MACH and MODEL to SIM_MODEL.
+	* sim-model.c: Likewise.
+	* sim-model.h: Likewise.  Rename MACH_IMP_PROPERTIES to
+	SIM_MACH_IMP_PROPERTIES
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-core.c (device_error): Delete.
+	(sim_core_map_attach): Delete calls to device_error.
+	(sim_core_attach): Likewise.
+	* sim-core.h (device_error): Delete.
+	* sim-n-core.h (sim_core_read_aligned_N): Change device_error call
+	to sim_engine_abort.
+	(sim_core_write_aligned_N): Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-config.h (WITH_CALLBACK_MEMORY): Delete.
+	* sim-core.c (sim_core_write_buffer): Likewise.
+	* sim-n-core.h (sim_core_read_aligned_N): Likewise.
+	(sim_core_write_aligned_N): Likewise.
+
+2015-12-25  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-pal.c: Include config.h and sim-main.h.
+	(hw_pal_io_read_buffer): Always call CPU_INDEX.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (standard_options): Always enable load-lma and
+	load-vma options.
+	(standard_install): Always set STATE_LOAD_AT_LMA_P(sd) to 1.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-module.c (MODULE_LIST): Delete.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-options.c (OPTION_H8300H, OPTION_H8300S, OPTION_H8300SX):
+	Move to h8300/compile.c.
+	[SIM_H8300] (standard_options): Likewise.
+	(standard_option_handler): Likewise.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-module.c [WITH_WATCHPOINTS] (modules): Always call
+	sim_watchpoint_install.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-base.h [SIM_HAVE_FLATMEM] (sim_state_base): Delete flatmem code.
+	* sim-module.c [SIM_HAVE_FLATMEM] (modules): Always call
+	sim_memopt_install.
+	* sim-options.c (OPTION_MEM_SIZE): Delete.
+	[SIM_HAVE_FLATMEM] (standard_options): Delete flatmem code.
+	(standard_option_handler): Likewise.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.h (SIM_HAVE_SIMCACHE): Delete.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/18762
+	* Makefile.in (CPPFLAGS, CXXFLAGS, LDFLAGS): Define.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/19273
+	* sim-utils.c (sim_do_commandf): Declare ret.  Call va_start,
+	vasprintf, and va_end together.  Check ret after va_end call.
+
+2015-11-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-types.h (SIM_PRI_TB): Define.
+	(PRI_TW, PRIiTW, PRIxTW): New PRI target word defines.
+	(PRI_TA, PRIiTA, PRIxTA): New PRI target address defines.
+	(PRI_TC, PRIiTC, PRIxTC): New PRI target cell defines.
+	(PRI_TF, PRIiTF, PRIxTF): New PRI target floating point defines.
+
+2015-11-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (WITH_MODULO_MEMORY): Delete.
+	* sim-core.c (new_sim_core_mapping): Always assign mask to modulo-1.
+	(sim_core_attach): Delete WITH_MODULO_MEMORY == 0 logic.
+	(sim_core_translate): Likewise.
+	* sim-core.h: Delete mention of WITH_MODULO_MEMORY.
+
+2015-11-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-close.c (__cgen_cpu_close, _cgen_cpu_close): Delete.
+	(cgen_cpu_close): Change to XCONCAT2.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_NEW_COMMON_OBJS): Add sim-reason.o, sim-reg.o,
+	and sim-stop.o.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Make-common.in (SIM_NEW_COMMON_OBJS): Add sim-close.o
+	* sim-close.c: New file.
+
+2015-09-25  Andrew Bennett  <andrew.bennett@imgtec.com>
+	    Ali Lown  <ali.lown@imgtec.com>
+
+	* sim-bits.h (EXTEND6): New macro.
+	(EXTEND12): New macro.
+	(EXTEND25): New macro.
+
 2015-06-24  Mike Frysinger  <vapier@gentoo.org>
 
 	* sim-trace.c (trace_one_insn): Delete.
@@ -596,7 +1031,7 @@
 
 	PR gdb/7205
 
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-05-24  Pedro Alves  <palves@redhat.com>
 
@@ -1247,8 +1682,8 @@
 
 2009-05-18  Jon Beniston <jon@beniston.com>
 
-        * gennltvals.sh: Add lm32 target.
-        * nltvals.def: Add lm32 syscall definitions. 
+	* gennltvals.sh: Add lm32 target.
+	* nltvals.def: Add lm32 syscall definitions.
 
 2009-03-19  J"orn Rennecke  <joern.rennecke@arc.com>  (tiny change)
 
@@ -1281,15 +1716,15 @@
 	* config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* aclocal.m4: Include ../../config/acx.m4.
 	* common.m4: Use ACX_PKGVERSION and ACX_BUGURL.
 	* configure, config.in: Regenerate.
 	* Make-common.in (LIB_OBJS): Add version.o.
 	(version.c, version.o): New rules.
-	* run.c: Include version.h. 
+	* run.c: Include version.h.
 	(usage): Add help parameter. Print output either to stdout or
 	stderr depending on that parameter.
 	(print_version): New.
@@ -1315,10 +1750,10 @@
 
 	* sim-memopt.c (memory_options): Mention that the
 	--memory-size switch accepts suffixes.
-        (parse_size): Handle a suffix on the size value.
-        * sim-options.c (standard_options): Mention that the mem-size
+	(parse_size): Handle a suffix on the size value.
+	* sim-options.c (standard_options): Mention that the mem-size
 	switch accepts suffixes.
-        (standard_option_handler): Handle a suffix on the size value.
+	(standard_option_handler): Handle a suffix on the size value.
 
 2006-12-21  Hans-Peter Nilsson  <hp@axis.com>
 
@@ -1335,7 +1770,7 @@
 	for bfd text addresses.
 
 2006-08-29  Thiemo Seufer  <ths@mips.com>
-            Nigel Stephens  <nigel@mips.com>
+	    Nigel Stephens  <nigel@mips.com>
 
 	* sim-fpu.c (pack_fpu): Handle QUIET_NAN correctly for
 	SIM_QUIET_NAN_NEGATED.
@@ -1428,7 +1863,7 @@
 	set, and doesn't include -O.  (Using -Wuninitialized without
 	optimization produces a warning, which interferes with compilation
 	with -Werror.)
-	
+
 2005-02-21  Jim Blandy  <jimb@redhat.com>
 
 	* callback.c (os_fstat): Don't declare 't' unless it's used.
@@ -1591,7 +2026,7 @@
 
 	[ include/gdb: * callback.h (host_callback_struct): Replace
 		       members fdopen and alwaysopen with fd_buddy.  ]
-        * callback.c: Changed all users.
+	* callback.c: Changed all users.
 
 2004-06-15  Alan Modra  <amodra@bigpond.net.au>
 
@@ -1664,9 +2099,9 @@
 	"int".
 
 2003-08-20  Michael Snyder  <msnyder@redhat.com>
-            Dave Brolley  <brolley@redhat.com>
+	    Dave Brolley  <brolley@redhat.com>
 
-	* cgen-par.h (flags, word1): New target-specific 
+	* cgen-par.h (flags, word1): New target-specific
 	fields of CGEN_WRITE_QUEUE_ELEMENT.
 	(CGEN_WRITE_QUEUE_ELEMENT_FLAGS): New accessor macro.
 	(CGEN_WRITE_QUEUE_ELEMENT_WORD1): New accessor macro.
@@ -1681,9 +2116,9 @@
 2003-06-22  Andrew Cagney  <cagney@redhat.com>
 
 	From matthew green <mrg@redhat.com>:
-        * sim-fpu.h: Update copyright.
+	* sim-fpu.h: Update copyright.
 	(sim_fpu_fraction, sim_fpu_guard): New prototypes.
-        * sim-fpu.c: Update copyright.
+	* sim-fpu.c: Update copyright.
 	(sim_fpu_fraction, sim_fpu_guard): New inline functions.
 
 2003-06-17  Frank Ch. Eigler  <fche@redhat.com>
@@ -1812,10 +2247,10 @@
 
 2002-06-09  Aldy Hernandez  <aldyh@redhat.com>
 
-        * sim-fpu.c (unpack_fpu): Initialize exponent for
-        sim_fpu_class_zero.
-        (i2fpu): Same.
-        (sim_fpu_sqrt): Same.
+	* sim-fpu.c (unpack_fpu): Initialize exponent for
+	sim_fpu_class_zero.
+	(i2fpu): Same.
+	(sim_fpu_sqrt): Same.
 
 2002-06-08  Andrew Cagney  <cagney@redhat.com>
 
@@ -1830,7 +2265,7 @@
 	(run.o): Update.
 	(callback.o): Update.
 	(syscall.o): Update.
-	(sim-load.o): 
+	(sim-load.o):
 	(nrun.o): Update.
 	(sim-hload.o): Update.
 	(sim-io.o): Update.
@@ -1847,17 +2282,17 @@
 	* run-sim.h: New header.  Provide prototypes for functions used
 	between run() and libsim.a which are not used by GDB.
 	* run.c: Include run-sim.h.
-        (main): If SIM_TARGET_SWITCHES is defined call
-        sim_target_parse_command_line.
-        (usage): If SIM_TARGET_SWITCHES is defined call
-        sim_target_display_usage.
+	(main): If SIM_TARGET_SWITCHES is defined call
+	sim_target_parse_command_line.
+	(usage): If SIM_TARGET_SWITCHES is defined call
+	sim_target_display_usage.
 
 2002-05-17  Andrey Volkov  <avolkov@transas.com>
 
 	* run.c: Made h8300s as new target, not h8300h alias.
 	Added new option -S (h8300s target)
 	* sim-options.c: Ditto.
-	
+
 2002-05-01  Chris Demetriou  <cgd@broadcom.com>
 
 	* callback.c: Use 'deprecated' rather than 'depreciated.'
@@ -2059,7 +2494,7 @@
 	* hw-base.h (set_hw_delete): Declare as external function.
 	* hw-alloc.c (delete_hw_alloc_data): Allow to free the memory
 	allocated using hw_malloc.
-	
+
 2000-11-24  Stephane Carrez  <Stephane.Carrez@worldnet.fr>
 
 	* sim-options.c (sim_parse_args): Free the memory used for
@@ -2082,10 +2517,10 @@
 
 2000-10-26  Ben Elliston  <bje@redhat.com>
 
-        * cgen.sh: Handle an isa argument between cpu and mach. Default to
-        `all'. Pass `-i' options to cgen applications.
-        * Make-common.in (cgen-arch, cgen-cpu, cgen-decode, cgen-cpu-decode,
-        cgen-desc): Pass $(isa) to cgen.sh.
+	* cgen.sh: Handle an isa argument between cpu and mach. Default to
+	`all'. Pass `-i' options to cgen applications.
+	* Make-common.in (cgen-arch, cgen-cpu, cgen-decode, cgen-cpu-decode,
+	cgen-desc): Pass $(isa) to cgen.sh.
 
 2000-10-08  Ben Elliston  <bje@redhat.com>
 
@@ -2234,7 +2669,7 @@ Tue Feb 22 16:45:09 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* callback.c: Fix compile time warning messages.
 	* run.c: Fix compile time warning messages.
-     
+
 1999-12-17  Dave Brolley  <brolley@cygnus.com>
 
 	* sim-profile.h: (set_profile_option_mask): Add prototype.
@@ -2352,7 +2787,7 @@ Wed Dec  8 21:47:13 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 1999-10-07  Dave Brolley  <brolley@cygnus.com>
 
-	* cgen-par.h (CGEN_FN_HI_WRITE): New enumerator. 
+	* cgen-par.h (CGEN_FN_HI_WRITE): New enumerator.
 	(fn_hi_write): New union member.
 	(sim_queue_fn_hi_write): New function.
 	* cgen-par.c (sim_queue_fn_hi_write): New function.
@@ -2380,8 +2815,8 @@ Tue Sep 21 17:14:16 1999  Dave Brolley  <brolley@cygnus.com>
 
 Mon Sep 20 21:44:06 1999  Geoffrey Keating  <geoffk@cygnus.com>
 
-        * sim-fpu.c (i2fpu): Keep the guard bits sticky when converting
-        large values.
+	* sim-fpu.c (i2fpu): Keep the guard bits sticky when converting
+	large values.
 
 Tue Feb  8 16:33:48 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
@@ -2485,7 +2920,7 @@ Sun Jul 11 23:47:20 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-resume.c (sim_resume): Ensure that the siggnal [sic] is only
  	passed in when sim_resume is first entered - don't re-pass it
  	after a restart.
-	
+
 Sun Jul 11 23:34:44 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-options.c (standard_option_handler): Add OPTION_LOAD_VMA and
@@ -2538,10 +2973,10 @@ Wed Jul  7 19:56:03 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 
 1999-05-08  Felix Lee  <flee@cygnus.com>
 
-        * aclocal.m4: Use AC_EXEEXT instead of AM_EXEEXT.  Delete defn of
-        AM_CYGWIN32 and AM_EXEEXT.
+	* aclocal.m4: Use AC_EXEEXT instead of AM_EXEEXT.  Delete defn of
+	AM_CYGWIN32 and AM_EXEEXT.
 	* configure: Regenerate.
-	
+
 Fri Apr 16 16:43:22 1999  Doug Evans  <devans@charmed.cygnus.com>
 
 	* sim-core.c (device_error,device_io_read_buffer,
@@ -2669,7 +3104,7 @@ Wed Jan 27 17:19:09 1999  Doug Evans  <devans@canuck.cygnus.com>
 	va_list, not an integer.
 	* sim-events.c (sim_events_schedule): Likewise.
 
-	* sim-types.h (UNSIGNED32, UNSIGNED64): Properly cast to 
+	* sim-types.h (UNSIGNED32, UNSIGNED64): Properly cast to
 	the appropriate type.
 
 1999-01-14  Doug Evans  <devans@casey.cygnus.com>
@@ -2729,7 +3164,7 @@ Wed Jan 27 17:19:09 1999  Doug Evans  <devans@canuck.cygnus.com>
 1998-12-24  Frank Ch. Eigler  <fche@cygnus.com>
 
 	* dv-sockser.c (DEFAULT_TIMEOUT): Increase to 1 ms.
-	
+
 	* nrun.c (main): Remain in simulation loop for traps and
  	exceptions when in operating environment mode.
 	(ui_loop_hook): New stub hook for standalone use.
@@ -2746,7 +3181,7 @@ Wed Jan 27 17:19:09 1999  Doug Evans  <devans@canuck.cygnus.com>
 	* sim-n-core.h (sim_core_trace_M): Allay const warning.
 	* sim-trace.h (trace_generic): Ditto.
 	* sim-trace.c (trace_generic): Ditto.
-	
+
 1998-12-14  Doug Evans  <devans@casey.cygnus.com>
 
 	* Make-common.in (SIM_MAIN_DEPS): New var.
@@ -2896,10 +3331,10 @@ Wed Nov 18 10:22:22 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	are used to specify types.  Handle case of ALPHA.
 
 1998-11-13  Frank Ch. Eigler  <fche@elastic.org>
-	
+
 	* aclocal.m4: Add tests for dlopen family.
 	* config.in: Regenerated.
-	
+
 Wed Nov 11 14:02:25 1998  Doug Evans  <devans@canuck.cygnus.com>
 
 	* sim-hload.c (sim_load): Pass `prog_name' to sim_load_file, not NULL.
@@ -3150,7 +3585,7 @@ Mon May 25 21:11:26 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-main.h: Include hw-handles.h, hw-instances.h.
 	* hw-base.h ({create,delete}_hw_{handles,instances}_data): Declare
 	* hw-base.c (hw_create, hw_delete): Call same.
-	
+
 Mon May 25 18:55:35 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* dv-core.c: Include hw-main.h and sim-main.h.
@@ -3168,7 +3603,7 @@ Mon May 25 18:55:35 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-base.h (do_hw_attach_regs, do_hw_poll_read_method,
  	do_hw_poll_read): Move declarations from here.
 	* hw-main.h: To here.
-	
+
 	* hw-base.h (struct hw_device_descriptor, hw_finish_callback):
  	Move from here.
 	* hw-main.h (struct hw_descriptor, hw_finish_method): To here,
@@ -3192,7 +3627,7 @@ Mon May 25 18:21:38 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-base.c (hw_create, hw_delete): Call
 	* hw-properties.c (create_hw_property_data,
  	delete_hw_property_data): Define.
-	
+
 Mon May 25 17:40:46 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-device.c, hw-properties.c: Include hw-base.h
@@ -3207,7 +3642,7 @@ Mon May 25 17:40:46 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* Make-common.in (SIM_NEW_COMMON_OBJS): Add hw-alloc.o.
 	(hw-alloc.o): New target.
-	
+
 Mon May 25 17:14:27 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-events.h, hw-events.c: New files.  Move event code to here.
@@ -3218,7 +3653,7 @@ Mon May 25 17:14:27 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-device.h (struct hw): Add struct hw_event_data events_of_hw.
 	* hw-events.h (struct hw_event): Replace typedef hw_event.
-	
+
 	* hw-base.h (create_hw_event_data, delete_hw_event_data): Declare.
 	* hw-base.c (hw_create, hw_delete): Call.
 	* hw-events.c (create_hw_event_data, delete_hw_event_data): Define.
@@ -3229,11 +3664,11 @@ Mon May 25 16:55:16 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-base.c (panic_hw_port_event, empty_hw_ports): Move from here.
   	* hw-ports.c: To here.
-	
+
 	* hw-base.h, hw-ports.c (create_hw_port_data,
  	delete_hw_port_data): New functions.
 	* hw-base.c (hw_delete, hw_create): Call same.
-	
+
 	* hw-base.h (set_hw_ports, set_hw_port_event): Move set functions
  	from here.
   	* hw-ports.h: To here.
@@ -3248,7 +3683,7 @@ Fri May 22 12:16:27 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* aclocal.m4 (SIM_AC_OPTION_HW): Add enable / disable argument.
   	Move common object files from here.
 	* Make-common.in (SIM_COMMON_HW_OBJS): To here.
-	
+
 Thu May 21 17:57:16 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-hw.c: Include ctype.h.
@@ -3287,7 +3722,7 @@ Sat May 16 12:44:52 1998  Doug Evans  <devans@seba.cygnus.com>
 
 Fri May 15 16:06:05 1998  Doug Evans  <devans@seba.cygnus.com>
 
-	* cgen-trace.c (trace_insn_init): New arg first_p. 
+	* cgen-trace.c (trace_insn_init): New arg first_p.
 	All callers updated.
 	(trace_insn_fini): New arg last_p.  All callers updated.
 	* cgen-trace.h (trace_insn_init,trace_insn_fini): Update.
@@ -3367,7 +3802,7 @@ Fri May  1 12:11:02 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-tree.h (hw_tree_print): Paramaterize with print and file
  	arguments.
 	* hw-tree.c: Update.
-	
+
 	* hw-base.h (hw_port_event_callback): Delete CPU/CIA args.
 	* hw-device.h (hw_io_read_buffer, hw_io_write_buffer): Delete
  	CPU/CIA args.
@@ -3385,7 +3820,7 @@ Fri May  1 12:11:02 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-device.h (SIM_DESC): Replace with struct sim_state.
 	* hw-base.h (hw_create): Ditto.
 	* hw-base.c (hw_create): Ditto.
-	
+
 	* hw-device.c (hw_abort, hw_trace, hw_hw_event_queue_schedule,
  	hw_event_queue_deschedule, hw_event_queue_time): Delete, moved
  	from here to.
@@ -3427,11 +3862,11 @@ Wed Apr 29 23:58:52 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 Tue Apr 28 18:28:58 1998  Geoffrey Noer  <noer@cygnus.com>
 
-        * common/aclocal.m4: call AM_EXEEXT in SIM_AC_COMMON, define
-        AM_CYGWIN32 and AM_EXEEXT.
-        * common/Make-common.in: set EXEEXT, add missing EXEEXTs
-        to run and install-common rules.
-        * common/configure: regenerate
+	* common/aclocal.m4: call AM_EXEEXT in SIM_AC_COMMON, define
+	AM_CYGWIN32 and AM_EXEEXT.
+	* common/Make-common.in: set EXEEXT, add missing EXEEXTs
+	to run and install-common rules.
+	* common/configure: regenerate
 
 Sat Apr 25 17:45:01 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
@@ -3504,7 +3939,7 @@ Tue Apr 14 18:49:31 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-bits.h (EXTEND4): Define.
 	(EXTEND4, EXTEND15, EXTEND11): Ditto.
-	
+
 Tue Apr 14 16:31:35 1998  John Metzler  <jmetzler@cygnus.com>
 
 	* sim-memopt.c (parse_addr): Sunos 4.5 does not have strtol
@@ -3537,10 +3972,10 @@ Sat Apr  4 20:36:25 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-bits.h (sim-bits.c): Include when H_REVEALS_MODULE_P.
  	selected.
 	* sim-endian.h (sim-endian.c): Ditto.
-	
+
 	* sim-events.h (_SIM_EVENTS_H_): Replace with SIM_EVENTS_H.
 	(sim_events_set_trace): Delete unused prototype.
-	
+
 	* sim-core.h (_SIM_CORE_H_): Replace with SIM_CORE_H.
 	* sim-core.c (_SIM_CORE_C_): Ditto for SIM_CORE_C.
 
@@ -3549,14 +3984,14 @@ Sat Apr  4 20:36:25 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	Comment out, not yet implemented in sim-fpu.c.
 	(sim_fpu_zero, sim_fpu_one, sim_fpu_two, sim_fpu_qnan,
  	sim_fpu_max32, sim_fpu_max64): Mark as EXTERN_SIM_FPU.
-	
+
 	* sim-inline.h: Rewrite description.
 	(H_REVEALS_MODULE_P, C_REVEALS_MODULE_P): Define.
 	(SIM_MAIN_INLINE): Add inline option.
-	
+
 	* sim-inline.c (semantics.c, idecode.c, engine.c, ...): Do not
  	include generated files. Handled by generator directly.
-	
+
 Sat Apr  4 01:07:06 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-trace.c (set_trace_option_mask): Keep TRACE_ANY_P
@@ -3579,13 +4014,13 @@ Fri Mar 27 16:15:52 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-hw.c: New file.
 	* sim-hw.h (sim_hw_parse): Declare function.
 	(hw-tree.h): Do not include.
-	
+
 	* sim-base.h (STATE_HW): Define.
 	(struct sim_state_base): Add member struct *hw.
 
 	* sim-module.c (sim-hw.h): Include.
 	(modules): Add sim_hw_install.
-	
+
 	* aclocal.m4 (sim_hw_obj): Add sim-hw.o
 
 Fri Mar 27 14:55:06 1998  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -3617,7 +4052,7 @@ Thu Mar 26 09:10:56 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 Wed Mar 25 16:17:38 1998  Ian Carmichael  <iancarm@cygnus.com>
 
-	* aclocal.m4 (AC_CHECK_HEADERS): Add check for fpu_control.h.  
+	* aclocal.m4 (AC_CHECK_HEADERS): Add check for fpu_control.h.
 	(AC_CHECK_FUNCS): Add check for __setfpucw.
 	* configure: Regenerated.
 
@@ -3647,7 +4082,7 @@ Mon Mar 23 10:25:08 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	appends extra devices.
 	(SIM_AC_OPTION_HARDWARE): Substute sim_hw, a non-duplicate list of
  	the device names.
-	
+
 	* Make-common.in (hw-config.h): New target, create hw-config.h
  	file.
 	(SIM_HW): Definition from @sim_hw@.
@@ -3662,7 +4097,7 @@ Tue Mar 24 17:41:35 1998  Stu Grossman  <grossman@bhuna.cygnus.co.uk>
 	move-if-change.  Fixes NT native build problem.
 	* configure:  Regenerate with autoconf 2.12.1 to fix shell issues for
 	NT native builds.
-	
+
 Sun Mar 22 16:54:40 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-device.h, hw-device.c (hw_strdup): New function.
@@ -3673,7 +4108,7 @@ Sun Mar 22 16:54:40 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-properties.c: Clean up property not found / wrong type error
  	messages.
-	
+
 	* hw-tree.c (hw_tree_parse): Finish a devices initialization
  	before attaching any ports.
 
@@ -3714,11 +4149,11 @@ Sun Mar 22 15:23:35 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* hw-device.h (HW_ZALLOC, HW_MALLOC): New macros.
 	(hw_alloc_data): Delcare.
 	(struct hw): Add member alloc_of_hw.
-	
+
 	* hw-device.c (hw_zalloc, hw_malloc, hw_free, hw_free_all): New
  	functions. Assocate memory with a device.
 	(stdlib.h): Include.
-	
+
 	* hw-base.h (set_hw_delete): Define.
 	(hw_delete_callback): Declare.
 	(hw_delete): Declare.
@@ -3731,9 +4166,9 @@ Sun Mar 22 15:23:35 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	any methods.
 
 	* hw-tree.h, hw-tree.c (hw_tree_delete): New function.
-	
+
 	* hw-properties.c: Replace zalloc/zfree with hw_zalloc/hw_free.
-	
+
 	* hw-ports.c: Replace zalloc/zfree with hw_zalloc/hw_free.
 	(attach_hw_port_edge): Add struct hw argument
 
@@ -3770,7 +4205,7 @@ Wed Mar 18 14:13:02 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* hw-device.h, hw-device.c, hw-properties.h, hw-properties.c,
  	hw-ports.h, hw-ports.c: New files. Copied from ../ppc/device.[ch].
-	
+
 	* hw-tree.h, hw-tree.c: New files. Copied from ../ppc/tree.[hc].
 
 	* hw-base.h, hw-base.c: new files.  Copied from
@@ -3778,7 +4213,7 @@ Wed Mar 18 14:13:02 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* dv-core.c, dv-pal.c: New files. Copied from
  	../ppc/hw_{core,pal}.c
-	
+
 	* sim-basics.h (struct hw): Declare.
 	(enum port_direction, enum object_disposition): Declare.
 
@@ -3842,7 +4277,7 @@ Wed Mar 11 14:02:47 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-core.c, sim-core.h (sim_core_attach): Replace argument
  	attach with more generic mapmask.
 	(sim_core_{read,write}_*): Change map argument to unsigned.
-	
+
 	* sim-core.c (sim_core_uninstall, sim_core_attach,
  	sim_core_detach): Iterate over nr_maps instead of
  	sim_core_nr_maps.
@@ -3900,7 +4335,7 @@ Sat Feb 28 13:54:10 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-module.c (sim_pre_argv_init): String passed to asprintf
  	can't be constant.
-  	
+
 	* sim-options.c (sim_parse_args): Ditto.
 	(sim_args_command): Return OK, instead of nothing, for an empty
  	command.
@@ -3922,7 +4357,7 @@ Fri Feb 27 13:29:13 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-module.h (MODULE_INFO_FN, MODULE_INFO_LIST): Declare.
 	(struct module_list): Declare.
-	
+
 	* sim-module.h, sim-module.c (sim_module_add_info_fn,
  	sim_module_info): New functions.
 	(sim_module_install): Clean up module data structures.
@@ -3985,7 +4420,7 @@ Wed Feb 25 14:40:24 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	(sim_fpu_max, sim_fpu_min): new functions.
 	(EXPMAX32, EXPMAX64, NR_PAD32, NR_PAD64, NR_GUARDS32, NR_GUARDS64,
  	NORMAL_EXPMAX32, NORMAL_EXPMAX64): Define.
-	
+
 Tue Feb 24 22:45:39 1998  Doug Evans  <devans@seba.cygnus.com>
 
 	* sim-profile.c (profile_print): Delete duplicate test of
@@ -4008,7 +4443,7 @@ Mon Feb 23 20:45:57 1998  Mark Alexander  <marka@cygnus.com>
 Tue Feb 24 13:18:42 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-trace.h (TRACE_ALU_RESULT2): Define.
-	
+
 	* sim-trace.h, sim-trace.c (trace_result_word2,
  	trace_input_word4, trace_result_word4): New function.
 
@@ -4069,13 +4504,13 @@ Tue Feb 17 16:27:46 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	(trace_generic): Like trace_one_insn.
 	(TRACE_ALU_IDX, TRACE_*_IDX): Change #define's to enum.
 	(TRACE_alu, TRACE_[a-z]*): Update.
-	
+
 	* sim-trace.c (trace_prefix, trace_input*, trace_result*,
  	trace_insn, save_data, trace_idx_to_str, print_data): New
  	functions.
 	(trace_one_insn): Rewrite.
 	(trace_generic): New function.
-	
+
 Tue Feb 17 17:27:30 1998  Doug Evans  <devans@seba.cygnus.com>
 
 	* aclocal.m4 (USE_MAINTAINER_MODE): New variable.
@@ -4144,7 +4579,7 @@ Sat Jan 31 18:03:55 1998  Andrew Cagney  <cagney@b1.cygnus.com>
  	WITH_TARGET_ADDRESS_BITSIZE.
 	(signed_cell, unsigned_cell, natural_cell): Ditto using
  	WITH_TARGET_CELL_BITSIZE.
-	
+
 	* sim-config.h (WITH_TARGET_ADDRESS_BITSIZE): Define.
 	(WITH_TARGET_CELL_BITSIZE): Define.
 	(WITH_HOST_WORD_BITSIZE): Delete.
@@ -4158,7 +4593,7 @@ Fri Jan 30 09:36:33 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-engine.h (sim_engine_run): Add argument nr_cpus.
 	* sim-run.c (sim_engine_run): Update.
-	
+
 	* sim-engine.h (SIM_ENGINE_HALT_HOOK): Use SET_CPU_CIA instead of
  	CPU_CIA.
   	* sim-run.c (sim_engine_run): Ditto.
@@ -4167,11 +4602,11 @@ Fri Jan 30 09:36:33 1998  Andrew Cagney  <cagney@b1.cygnus.com>
 	(sim_resume): Pass nr_cpus to sim_engine_run.
 
 	* sim-engine.h (struct _sim_engine): Add member nr_cpus.
-	
+
 	* sim-engine.c (sim_engine_init): Hardwire nr_cpus to
  	MAX_NR_PROCESSORS.
 	(sim_engine_nr_cpus) sim-engine.c, sim-engine.h: New function
-	
+
 Fri Jan 23 14:20:54 1998  Doug Evans  <devans@seba.cygnus.com>
 
 	* Make-common.in (stamp-tvals): New rule.
@@ -4516,7 +4951,7 @@ Fri Nov 14 11:33:34 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-n-core.h (sim_core_read_unaligned_N): Return static
  	sim_core_dummy_M.
 	(sim_core_dummy_M): Declare.
-	
+
 Wed Nov 12 18:16:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-core.c (sim_core_signal): Print the address of the
@@ -4588,7 +5023,7 @@ Thu Nov  6 12:06:46 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-options.h: Clarify documentation.
  	(OPTION_LONG_ONLY_P): Delete definition.
 	(OPTION_VALID_P): Define.
-	
+
 	* sim-options.c (sim_print_help): Allow short only options.
 	(sim_parse_args): Ditto.
 	(sim_args_command): Skip short only options.
@@ -4605,7 +5040,7 @@ Wed Nov  5 13:40:31 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	Declare, ditto for 5, 6 & 7 byte transfers.
 	(sim_core_write_unaligned_1, sim_core_write_unaligned_1): Define
  	as aligned variant.
-	
+
 	* sim-n-core.h (sim_core_trace_M): Rename from
  	sim_core_trace_N. Add nr_bytes argument. Replace transfer argument
  	with transfer type. Print transfer direction.  Handle 1 and 2 byte
@@ -4803,7 +5238,7 @@ Fri Oct  3 09:49:18 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-fpu.h, sim-fpu.c: Rewrite.  Change sim_fpu object to an
  	unpacked floating point struct.  Pass sim_fpu object by reference.
 	Add preliminary support for rounding modes.
-	
+
 Fri Oct  3 09:28:00 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure: Regenerated to track ../common/aclocal.m4 changes.
@@ -4815,7 +5250,7 @@ Thu Oct  2 19:43:52 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 Thu Sep 25 23:20:20 1997  Felix Lee  <flee@yin.cygnus.com>
 
-        * sim-profile.c (profile_print_core): label needs empty statement.
+	* sim-profile.c (profile_print_core): label needs empty statement.
 
 Thu Sep 25 11:20:47 1997  Stu Grossman  <grossman@babylon-5.cygnus.com>
 
@@ -4841,7 +5276,7 @@ Wed Sep 24 17:41:40 1997  Stu Grossman  <grossman@babylon-5.cygnus.com>
 	* sim-break.c sim-break.h:  New modules that implement intrinsic
 	breakpoint support.
 	* sim-module.c:  Add breakpoint module.
-	
+
 Tue Sep 23 00:26:39 1997  Felix Lee  <flee@yin.cygnus.com>
 
 	* sim-events.c (SIM_EVENTS_POLL_RATE): poll more often than once
@@ -4859,7 +5294,7 @@ Tue Sep 23 11:04:38 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* Make-common.in (SIM_SCACHE, SIM_DEFAULT_MODEL): Assign
  	configured values.
  	(CONFIG_CFLAGS): Add same.
-	
+
 Mon Sep 22 17:20:27 1997  Felix Lee  <flee@cygnus.com>
 
 	* sim-types.h (SIGNED64): ##i64 when _MSC_VER, not _WIN32.
@@ -4925,7 +5360,7 @@ Fri Sep 19 17:26:14 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* aclocal.m4 (sim_alignment): Allow configuration of hardwired and
  	default alignment requirements on memory accesses.
-	
+
 Fri Sep 19 11:51:35 1997  Jeffrey A Law  (law@cygnus.com)
 
 	* sim-load.c (sim_load_file): Return failure if the executable
@@ -4939,7 +5374,7 @@ Wed Sep 17 13:33:28 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-core.c (sim_core_signal): When bad access halt simulator
  	SIGSEGV / SIGBUS instead of aborting.
 	(signal.h): Include.
-	
+
 	* sim-watch.c (sim_watchpoint_install): Handler for watchpoint
  	options was missing.
 
@@ -4960,13 +5395,13 @@ Tue Sep 16 16:15:16 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-bits.c (LSSEXT, MSSEXT): Replace SEXT.
 	(LSINSERTED, MSINSERTED): Ditto for INSERTED.
-	
+
 	* sim-n-bits.h (MSSEXTn, LSSEXTn): Replace SEXTn.
 	(LSINSERTDn, MSINSERTEDN): Ditto for INSERTEDn.
-	
+
 	* sim-bits.h (SEXT*): Define as MSEXT/LSEXT.
 	(INSERTED*): Ditto for LSINSERTED/MSINSERTED.
-	
+
 Mon Sep 15 17:36:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* aclocal.m4 (SIM_AC_COMMON): Add optional config.h file argument.
@@ -5045,7 +5480,7 @@ Wed Sep 10 16:15:22 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	meanginful usage messages.
 
 	* sim-options.h (struct OPTION): Clarify use of doc_name field
-	
+
 Wed Sep 10 13:23:24 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-options.c (OPTION_ARCHITECTURE_INFO): New option.
@@ -5074,7 +5509,7 @@ Mon Sep  8 12:22:20 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-n-bits.h (MASKEDn): Delete, define as MSMASKED or LSMASKED.
 	(MSMASKEDn, LSMASKEDn): Add last argument.
 	(MSMASK*): Ditto.
-	
+
 	* sim-bits.h (EXTEND8, EXTEND16): Define.
 	(EXTRACTED64): Define as 64 bit extract, not 32 bit.
 
@@ -5105,8 +5540,8 @@ Fri Sep  5 08:39:02 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-utils.c (sim_do_commandf): New function, printf version of
  	sim_do_command.
 
-	* sim-basics.h (asprintf, vasprintf): Hack, define for CYGWIN32. 
-	
+	* sim-basics.h (asprintf, vasprintf): Hack, define for CYGWIN32.
+
 	* sim-alu.h (ALU64_ADD): Use explicit MSEXTRACTED64, do not assume
  	bit endianness.
 	(SIGNED64, UNSIGNED64): Delete.
@@ -5166,7 +5601,7 @@ Thu Sep  4 09:27:54 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-core.h (struct _sim_core_mapping): Change nr_bytes to type
  	address_word, add mask member.
-	
+
 	* sim-core.h, sim-core.c (sim_core_attach): Make nr_bytes of type
  	address_word, allow for 64bit targets in 32bit host. Add modulo
  	argument.
@@ -5204,7 +5639,7 @@ Wed Sep  3 10:08:21 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(sim_events_init, sim_events_uninstall): Delete prototypes.
 
 	* sim-module.h (MODULE_SUSPEND_FN, MODULE_RESUME_FN): Define types.
-	
+
 	* sim-module.c(sim_module_resume, sim_module_suspend): New
  	functions.
 
@@ -5225,9 +5660,9 @@ Mon Sep  1 10:50:11 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-utils.c (sim_state_alloc): Set CPU backlinks, callback and
  	kind.
-  	
+
 	* sim-base.h (sim_state_alloc): Add callback and kind arguments.
-	
+
 	* sim-base.h (INVALID_INSTRUCTION_ADDRESS): Add default
  	definition.
 
@@ -5269,7 +5704,7 @@ Thu Aug 28 12:09:15 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(OPTION_ARCHITECTURE, OPTION_TARGET): Define.
 	(standard_option_handler): Handle architecture and target options.
 	(bfd.h): Include.
-	
+
 	* sim-utils.c (sim_analyze_program): Pass STATE_TARGET to
  	bfd_openr.
 	(sim_analyze_program): Set prog_bfd architecture from
@@ -5299,7 +5734,7 @@ Wed Aug 27 15:13:04 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(V2_H1, V2_L1, V4_H2, V4_L2, V8_L4, V8_H4): Given N byte argument,
  	return N*2 byte value with argument in Hi/Lo word.  Renamed from
  	V1_H2, V1_L2, V2_H4, V2_L4, V4_H8, V4_L8.
- 	
+
 	* sim-alu.h (ALU32_HAD_OVERFLOW): Use 64 bit mask not 32bit.
 	(ALU16_HAD_CARRY, ALU32_HAD_CARRY, ALU16_HAD_OVERFLOW): Use MSBIT
  	so that bit offset is explicit.
@@ -5316,11 +5751,11 @@ Wed Aug 27 11:55:35 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 Tue Aug 26 12:55:26 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* run.c (main): Pass the open ABFD to sim_create_inferior.
-	
+
 	* nrun.c (main): Determine prog_bfd.  Pass to sim_create_inferior
  	and sim_load.
 	(bfd.h): Include.
-	
+
 	* sim-hload.c (sim_load): New file. Implement generic sim_load for
  	hardware only simulator targets.
 
@@ -5353,7 +5788,7 @@ Mon Aug 25 12:11:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	from same.
 	(sim_config): Return SIM_RC, don't abort.
 	(bfd.h): Include.
-	
+
 	* run.c (main): Update call to sim_open - add ABFD argument.
   	* nrun.c (main): Add NULL ABFD argument.
 
@@ -5401,7 +5836,7 @@ Wed Jun  4 11:44:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-engine.c (sim_engine_install): New function.  Install the
  	engine init functions.
 	(sim_engine_init): [Re]initialize the simulator engine.
-	
+
 	* sim-module.c: Add sim_engine to list of modules that always
  	install.
 
@@ -5417,14 +5852,14 @@ Wed May 28 14:47:41 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-n-core.h (sim_core_write_aligned_N): For 8byte reads, output
  	both low and high word.
 	(sim_core_write_aligned_N): Ditto.
-	
+
 	* sim-trace.c (set_trace_options): Delete code explicitly setting
  	core->trace.
 
 	* sim-options.c (sim_print_help): Call the list commands if not a
  	standalone simulator.
 	(sim_print_help): Advise that some options may not be applicable.
-	
+
 	* sim-trace.c (set_trace_options): Assume core present.
 
 	* sim-events.c (sim_events_schedule_after_signal): Overflow signal
@@ -5477,7 +5912,7 @@ Tue May 27 12:48:03 1997  Andrew Cagney  <cagney@b2.cygnus.com>
 	* sim-n-core.h (sim_core_read_unaligned_N): When mis-aligned
  	transfer use xor version of read buffer.
 	(sim_core_write_unaligned_N): Ditto for write.
-	
+
 	* sim-core.c (sim_core_xor_read_buffer): New function implement
  	xor-endian data read breaking transfer up into xor-endian sized
  	blocks.
@@ -5488,19 +5923,19 @@ Tue May 27 12:48:03 1997  Andrew Cagney  <cagney@b2.cygnus.com>
 Fri May 23 14:24:31 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-inline.h: Review description.
-	
+
 	* sim-core.h, sim-core.c: Reduce number of functions being inlined
  	to just those involved in data transfers and configuration.
-	
+
 	* sim-xcat.h (XSTRING): New macro, map macro definition onto
  	string.
 	* sim-n-core.h (sim_core_read_aligned_N): Use.
 	(sim_core_read_unaligned_N): Ditto.
 	(sim_core_read_unaligned_N): Ditto..
 	(sim_core_write_unaligned_N): Ditto.
-	
+
 	* sim-core.h: Add xor endian bitmap to main structure.  *
-	
+
  	sim-n-core.h (sim_core_write_aligned_N): Add suport for xor
  	endian.
 	(sim_core_read_aligned_N): Ditto.
@@ -5516,8 +5951,8 @@ Fri May 23 10:53:13 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 Thu May 22 09:12:16 1997  Gavin Koch  <gavin@cygnus.com>
 
-	* sim-engine.c (sim_engine_restart): 
-	* sim-resume.c (sim_resume): Change longjmp param/setjmp 
+	* sim-engine.c (sim_engine_restart):
+	* sim-resume.c (sim_resume): Change longjmp param/setjmp
  	return value used for simulator restart from 0 to 2.
 
 Wed May 21 08:47:30 1997  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -5542,7 +5977,7 @@ Wed May 21 08:47:30 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* Make-common.in (sim-watch.o): Add rule.
 	(sim_main_headers): Assume sim-assert.h included.
 	(sim-*.o): Simplify make rule.
-	
+
 	* sim-module.c: Add sim_watch_install to module list.
 
 Tue May 20 14:15:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -5569,7 +6004,7 @@ Tue May 20 14:15:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-events.c (sim_events_process): Allow multi tick processing.
 	(sim_events_tickn): New function - multi cycle tick.
-	
+
 	* sim-events.h (sim_events_tickn, sim_events_timewarp): Add
  	prototypes.  Under development.
 	(sim_events): Replace processing with nr_ticks_to_process.
@@ -5625,7 +6060,7 @@ Fri May 16 15:13:21 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 Tue May 13 13:50:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-module.c: Add sim_events_install to list.
-	
+
 	* sim-events.c (sim_events_install, sim_events_uninstall): Clonse
  	from sim_core_*.
 	(sim_events_init): Now returns SIG_RC.
@@ -5634,10 +6069,10 @@ Tue May 13 13:50:06 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-reason.c: New file. Generic sim_stop_reason.
 	* sim-stop.c: New file. Generic sim_stop.
 	* sim-resume.c: New file. Generic sim_resume.
-	
+
 	* Make-common.in (sim-engine.o): Add rule.
 	(sim-run.o, sim-reason.o, sim-stop.o, sim-resume.o): Ditto.
-	
+
 	* sim-engine.h, sim-engine.c: New file. Provide generic
  	implementation of sim_engine_halt, sim_engine_error. et.al.
 
@@ -5693,11 +6128,11 @@ Thu May 15 10:58:52 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* sim-fpu.h, sim-fpu.c (sim_fpu_[iu]{32,64}to): New int2fp
  	conversion functions.
 	(sim_fpu_to{32,64}[iu]): New fp2int functions.
-	
+
 	* sim-fpu.h, sim-fpu.c (sim_fpu_is_{lt,le,eq,ne,ge,gt}): New fp
  	compare functions.  Replacing.
 	(sim_fpu_cmp): This. Delete.
-	
+
 Mon May 12 14:49:05 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-core.c (sim_core_find_mapping): Call engine_error not
@@ -5807,7 +6242,7 @@ Fri May  2 17:59:42 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* sim-core.c (sim_core_map_to_str): New function ascii equivalent
  	to map type.
-	
+
 	* sim-n-core.h (sim_core_read_N, sim_core_write_N): Use in trace
  	statement.
 
@@ -5830,14 +6265,14 @@ Fri May  2 11:40:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(print_bar): Only define when used by instruction or memory profiler.
 
 	* sim-options.c (standard_option_handler): Make ul more local.
-	
+
 	* sim-load.c (sim_load_file): Make the name constant.
 	(sim_load_file): Passify gcc.
 
 	* sim-utils.h: New file, pre-declare utilites in corresponding .c
  	file.
 	* sim-utils.c, sim-load.c: Include sim-utils.h.
-	
+
 	* sim-base.h (sim_cpu): Pre define here so available to all.
 
 	* sim-core.h (DECLARE_SIM_CORE_WRITE_N, DECLARE_SIM_CORE_READ_N):
@@ -5851,7 +6286,7 @@ Fri May  2 11:40:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	(trace_option_handler): Convert #if to if where possible so always
  	compiled/checked by C compiler.
 	* sim-n-core.h (sim_core_write_N, sim_core_read_N): Update.
-	
+
 	* sim-base.h: Adjust comment documenting how to define the cpu
  	structure.
 	(sim_state_base): Add sim_core and sim_events to simulator base
@@ -5864,12 +6299,12 @@ Fri May  2 11:40:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
  	update_time_from_event, insert_sim_event,
  	sim_events_schedule_after_signal, sim_events_deschedule,
  	sim_events_tick): Ditto.
-	
+
 	* sim-basics.h (sim-module.h, sim-trace.h, sim-profile.h,
  	sim-model.h): Move #includes from here.
 	* sim-base.h: To here.
 	(sim-core.h, sim-events.h, sim-io.h): Include also
-	
+
 Wed Apr 30 15:37:54 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* callback.c (default_callback): Missing initialisers.
@@ -6106,7 +6541,7 @@ Mon Apr  7 11:39:45 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	* sim-bits.h: Allow MSB to be other than zero.
 	* sim-bits.c: Ditto.
 	* sim-n-bits.h: Ditto.
-	
+
 	* sim-bits.h (MSMASK*): New macros - converce to LSMASK*.
 	* sim-n-bits.h (MSMASKEDn): Ditto.
 
@@ -6169,10 +6604,10 @@ Wed Apr  2 11:08:11 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
  	are defined by the configure.
 
 	* aclocal.m4 (sim-stdio): Add option stdio from ../ppc configure.
-	
+
 	* aclocal.m4 (floating-point, xor-endian, alignment, smp,
  	reserved-bits): Always define.
-	
+
 	* sim-config.h, sim-config.c (sim_config): New function - and new
  	file - co-ordinate the setting/checking of the common simulator
  	configuration options.
@@ -6232,7 +6667,7 @@ Wed Mar 19 01:12:06 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 Tue Mar 18 20:48:12 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* sim-alu.h: Include sim-xcat.h.
-	
+
 Tue Mar 18 13:58:18 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* Make-common.in (sim-bits.c, sim-core.c, sim-endian.c,
@@ -6245,23 +6680,23 @@ Tue Mar 18 13:58:18 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	(sim_events_tick, sim_events_process): Move async handing to
  	sim_events_process.  Move timer decrement so that it occures after
  	events have been processed.
-	
+
 	* sim-basics.h (struct _engine): Remove declaration.
 
 	* sim-events.h, sim-events.c: Rename type to sim_events.  Prefix
  	everything with same.  Rename global struct to SIM_DESC.
 	* sim-core.h, sim-core.c, sim-n-core.c: Ditto for sim_core.
 	* sim-io.h, sim-io.c: Ditto.
-	
+
 	* sim-assert.h: New file. Optional assertion checking macros.
 	* sim-io.c (sim_io_error): Make just this function tolerant to
  	null pointers.
-	
+
 	* sim-xcat.h: New file. Define concatenate macros.
 	* sim-basics.h (XCONCAT*): Move to sim-xcat.h.
 	* sim-n-core.h, sim-n-bits.h, sim-n-endian.h: Explicitly include
  	concat macros.
-	
+
 
 Tue Mar 18 12:44:55 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
@@ -6274,7 +6709,7 @@ Mon Mar 17 18:10:05 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
  	module.
 
 Mon Mar 17 15:38:27 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
-	
+
 	* sim-events.h: Remove defunct reference to callback struct.
 
 Mon Mar 17 15:10:07 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
@@ -6313,7 +6748,7 @@ Mon Mar 17 13:16:26 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
  	function call convention.
 	(--enable-sim-xor-endian): New option.  Configure xor-endian
  	support used by some targets to implement bi-endian support.
-	
+
 Fri Mar 14 19:51:21 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* aclocal.m4 (--enable-sim-hostendian): New option.  Allow the
@@ -6325,11 +6760,11 @@ Fri Mar 14 19:51:21 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	(--enable-sim-warnings): Enable additional GCC compiler checks.
 	* Make-common.in (SIM_ENDIAN, SIM_HOSTENDIAN, SIM_INLINE,
 	SIM_WARNINGS): Add.
-	
+
 	* sim-n-core.h, sim-n-bits.h, sim-n-endian.h: Rename from
  	sim-*-n.h so that the names are uniq on dos machines
 	* sim-core.c, sim-bits.c, sim-endian.c: Update.
-	
+
 Thu Mar 13 12:32:42 1997  Doug Evans  <dje@canuck.cygnus.com>
 
 	* run.c: #include "libiberty.h".
@@ -6351,7 +6786,7 @@ Thu Mar  6 15:50:28 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 	* callback.c: Add os_flush_stderr, os_write_stderr,
  	os_evprintf_filtered functions to route error output through
  	stderr.
-	
+
 	* sim-io.h, sim-io.c (sim_io_flush_stderr, sim_io_flush_stdout):
  	Correct return type - should be void.
 
@@ -6368,24 +6803,24 @@ Thu Mar  6 15:50:28 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
  	directory.
 	* sim-events.h, sim-events.c: Ditto.
 	* sim-io.h, sim-io.c: Ditto.
-	
+
 Tue Mar  4 09:35:56 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
-	
+
 	* sim-alu.h (ALU_SUB_CA, ALU*_SUB_CA): New alu operation.
 
 	* sim-bits.h, sim-bits-n.h, sim-bits.c (LSMASKED*): New macro's
  	extract the tail or least signifiant bits from an integer of the
  	specified size.
-	
+
 	* sim-bits.h, sim-bits.c: Clean up conditionally compiled #if
  	WITH_TARGET_BITSIZE so that the compilation will fail when an
  	unsupported bitsize value is defined.
 
 	(INSERTED*): Convert to functions.
 	(EXTRACTED*): Ditto.
-	
+
 	(SIGN_EXTEND, SEXT): Change to more terse name.
-	
+
 Tue Mar  4 09:35:56 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* sim-inline.h: Allow explicit control over which .c files will be
@@ -6393,11 +6828,11 @@ Tue Mar  4 09:35:56 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* sim-inline.h: Allow explicit control over which .c files use the
  	alternative - REGPARM - parameter passing mechanism.
-	
+
 	* sim-inline.h, sim-inline.c: Don't attempt to include any of
  	icache.c, idecode.c, semantics.c or support.c.  Those names are
  	not generally applicable.
-	
+
 Thu Feb 27 10:17:23 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* sim-bits.c, sim-bits-n.h (new): Split sim-bits.c into two parts
@@ -6430,7 +6865,7 @@ Wed Feb 19 12:40:50 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 
 	* sim-alu.h (ALU_SET16, ALU_SET32, ALU_SET64, etc): Make available
  	all the ALU size alternatives and then auto-configure a default.
-	
+
 	* sim-alu.h: Copy ppc/idecode_expression.h.
 
 Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
@@ -6441,7 +6876,7 @@ Mon Feb 17 10:44:18 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 	* sim-endian.h, sim-endian-n.h (offset_N): New functions - return
  	a pointer into the middle of a host word.
 	* sim-endian.h (MS2W_4, LS2W_4): Use this function.
-	
+
 Tue Feb 11 13:46:49 1997  Michael Meissner  <meissner@tiktok.cygnus.com>
 
 	* callback.c: If HAVE_CONFIG_H is defined, include config.h from
@@ -6523,7 +6958,7 @@ Wed Nov 20 01:11:04 1996  Doug Evans  <dje@canuck.cygnus.com>
 	* Makefile.in,Make-common.in,callback.c: New files.
 	* nltvals.def,gentmap.c,gentvals.sh: New files.
 
-Tue Nov 12 13:34:00 1996  Dawn Perchik  <dawn@cygnus.com>   
+Tue Nov 12 13:34:00 1996  Dawn Perchik  <dawn@cygnus.com>
 
 	* run.c: Include stdarg.h if __STDC__.
 

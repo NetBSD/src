@@ -1,5 +1,5 @@
 /* ft32-opc.c -- Definitions for ft32 opcodes.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of the GNU opcodes library.
@@ -40,7 +40,7 @@ const ft32_opc_info_t ft32_opc_info[] =
 {      "btst", 1, 0xf9f0000fU, 0x59e0000cU, FT32_FLD_R_1|FT32_FLD_RIMM},
 {      "link", 0, 0xfe000000U, 0x94000000U, FT32_FLD_R_D|FT32_FLD_K16},
 {      "call", 0, 0xfffc0000U, 0x00340000U, FT32_FLD_PA},
-{     "callc", 0, 0xf8340000U, 0x00240000U, FT32_FLD_CBCRCV|FT32_FLD_PA},
+{     "callc", 0, 0xfe340000U, 0x00240000U, FT32_FLD_CBCRCV|FT32_FLD_PA},
 {     "callx", 0, 0xf8040000U, 0x00040000U, FT32_FLD_CR|FT32_FLD_CB|FT32_FLD_CV|FT32_FLD_PA},
 { "streamini", 1, 0xf800000fU, 0xf000000dU, FT32_FLD_R_D|FT32_FLD_R_1|FT32_FLD_RIMM},
 {       "lda", 1, 0xf8000000U, 0xc0000000U, FT32_FLD_R_D|FT32_FLD_AA},
@@ -80,7 +80,7 @@ const ft32_opc_info_t ft32_opc_info[] =
 {      "jmpi", 0, 0xfffc0000U, 0x08300000U, FT32_FLD_R_2},
 {     "jmpic", 0, 0xf8040000U, 0x08000000U, FT32_FLD_CBCRCV|FT32_FLD_R_2},
 {      "ashl", 1, 0xf800000fU, 0x40000008U, FT32_FLD_R_D|FT32_FLD_R_1|FT32_FLD_RIMM},
-{      "jmpc", 0, 0xf8340000U, 0x00200000U, FT32_FLD_CBCRCV|FT32_FLD_PA},
+{      "jmpc", 0, 0xfe340000U, 0x00200000U, FT32_FLD_CBCRCV|FT32_FLD_PA},
 {      "jmpx", 0, 0xf8040000U, 0x00000000U, FT32_FLD_CR|FT32_FLD_CB|FT32_FLD_CV|FT32_FLD_PA},
 {       "lpm", 1, 0xf8000000U, 0x68000000U, FT32_FLD_R_D|FT32_FLD_PA},
 {"streamouti", 1, 0xf800000fU, 0xf000000fU, FT32_FLD_R_D|FT32_FLD_R_1|FT32_FLD_RIMM},

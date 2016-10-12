@@ -1,6 +1,6 @@
 /* Support for printing Go types for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +48,7 @@ go_print_type (struct type *type, const char *varstring,
 {
   /* Borrowed from c-typeprint.c.  */
   if (show > 0)
-    CHECK_TYPEDEF (type);
+    type = check_typedef (type);
 
   /* Print the type of "abc" as "string", not char[4].  */
   if (TYPE_CODE (type) == TYPE_CODE_ARRAY

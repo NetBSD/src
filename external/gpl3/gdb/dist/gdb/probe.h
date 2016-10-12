@@ -1,6 +1,6 @@
 /* Generic SDT probe support for GDB.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #if !defined (PROBE_H)
 #define PROBE_H 1
+
+struct event_location;
 
 #include "gdb_vecs.h"
 
@@ -70,7 +72,8 @@ struct probe_ops
     CORE_ADDR (*get_probe_address) (struct probe *probe,
 				    struct objfile *objfile);
 
-    /* Return the number of arguments of PROBE.  */
+    /* Return the number of arguments of PROBE.  This function can
+       throw an exception.  */
 
     unsigned (*get_probe_argument_count) (struct probe *probe,
 					  struct frame_info *frame);
@@ -82,7 +85,8 @@ struct probe_ops
     int (*can_evaluate_probe_arguments) (struct probe *probe);
 
     /* Evaluate the Nth argument from the PROBE, returning a value
-       corresponding to it.  The argument number is represented N.  */
+       corresponding to it.  The argument number is represented N.
+       This function can throw an exception.  */
 
     struct value *(*evaluate_probe_argument) (struct probe *probe,
 					      unsigned n,
@@ -141,13 +145,15 @@ struct probe_ops
 
     /* Enable a probe.  The semantics of "enabling" a probe depend on
        the specific backend and the field can be NULL in case enabling
-       probes is not supported.  */
+       probes is not supported.  This function can throw an
+       exception.  */
 
     void (*enable_probe) (struct probe *probe);
 
     /* Disable a probe.  The semantics of "disabling" a probe depend
        on the specific backend and the field can be NULL in case
-       disabling probes is not supported.  */
+       disabling probes is not supported.  This function can throw an
+       exception.  */
 
     void (*disable_probe) (struct probe *probe);
   };
@@ -219,9 +225,10 @@ struct bound_probe
   };
 
 /* A helper for linespec that decodes a probe specification.  It returns a
-   symtabs_and_lines object and updates *ARGPTR or throws an error.  */
+   symtabs_and_lines object and updates LOC or throws an error.  */
 
-extern struct symtabs_and_lines parse_probes (char **argptr,
+extern struct symtabs_and_lines parse_probes (const struct event_location *loc,
+					      struct program_space *pspace,
 					      struct linespec_result *canon);
 
 /* Helper function to register the proper probe_ops to a newly created probe.
@@ -264,7 +271,9 @@ extern struct cmd_list_element **info_probes_cmdlist_get (void);
 extern CORE_ADDR get_probe_address (struct probe *probe,
 				    struct objfile *objfile);
 
-/* Return the argument count of the specified probe.  */
+/* Return the argument count of the specified probe.
+
+   This function can throw an exception.  */
 
 extern unsigned get_probe_argument_count (struct probe *probe,
 					  struct frame_info *frame);
@@ -276,7 +285,9 @@ extern unsigned get_probe_argument_count (struct probe *probe,
 extern int can_evaluate_probe_arguments (struct probe *probe);
 
 /* Evaluate argument N of the specified probe.  N must be between 0
-   inclusive and get_probe_argument_count exclusive.  */
+   inclusive and get_probe_argument_count exclusive.
+
+   This function can throw an exception.  */
 
 extern struct value *evaluate_probe_argument (struct probe *probe,
 					      unsigned n,

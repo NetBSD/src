@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -266,8 +266,6 @@
 #define INLINE_GLOBALS			4
 #define INLINE_LOCALS			8
 
-#define REGPARM_MODULE                 32
-
 #define ALL_H_INLINE (H_REVEALS_MODULE | INLINE_GLOBALS | INLINE_LOCALS)
 #define ALL_C_INLINE (C_REVEALS_MODULE | INLINE_GLOBALS | INLINE_LOCALS)
 
@@ -349,30 +347,6 @@
 
 
 
-
-/* Your compilers nonstandard function call mechanism prefix */
-
-#if !defined REGPARM
-#if defined (__GNUC__) && (defined (__i386__) || defined (__i486__) || defined (__i586__) || defined (__i686__))
-#if (WITH_REGPARM && WITH_STDCALL)
-#define REGPARM __attribute__((__regparm__(WITH_REGPARM),__stdcall__))
-#else
-#if (WITH_REGPARM && !WITH_STDCALL)
-#define REGPARM __attribute__((__regparm__(WITH_REGPARM)))
-#else
-#if (!WITH_REGPARM && WITH_STDCALL)
-#define REGPARM __attribute__((__stdcall__))
-#endif
-#endif
-#endif
-#endif
-#endif
-
-#if !defined REGPARM
-#define REGPARM
-#endif
-
-
 
 /* *****
    sim-bits and sim-endian are treated differently from the rest
@@ -387,12 +361,6 @@
 # define SIM_BITS_INLINE (ALL_H_INLINE)
 #endif
 
-#if (SIM_BITS_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_BITS REGPARM
-#else
-# define REGPARM_SIM_BITS
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_BITS_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_BITS_C) \
      && (REVEAL_MODULE_P (SIM_BITS_INLINE)))
@@ -400,18 +368,18 @@
 #  define INLINE_SIM_BITS(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_BITS_P 0
 # else
-#  define INLINE_SIM_BITS(TYPE) static TYPE UNUSED REGPARM_SIM_BITS
+#  define INLINE_SIM_BITS(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_BITS_P 0
 # endif
 #else
-# define INLINE_SIM_BITS(TYPE) TYPE REGPARM_SIM_BITS
+# define INLINE_SIM_BITS(TYPE) TYPE
 # define EXTERN_SIM_BITS_P 1
 #endif
 
 #if (SIM_BITS_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_BITS(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_BITS(TYPE) static TYPE REGPARM_SIM_BITS
+# define STATIC_INLINE_SIM_BITS(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_BITS(TYPE) static TYPE
@@ -424,12 +392,6 @@
 # define SIM_CORE_INLINE ALL_C_INLINE
 #endif
 
-#if (SIM_CORE_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_CORE REGPARM
-#else
-# define REGPARM_SIM_CORE
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_CORE_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_CORE_C) \
      && (REVEAL_MODULE_P (SIM_CORE_INLINE)))
@@ -437,18 +399,18 @@
 #  define INLINE_SIM_CORE(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_CORE_P 0
 #else
-#  define INLINE_SIM_CORE(TYPE) static TYPE UNUSED REGPARM_SIM_CORE
+#  define INLINE_SIM_CORE(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_CORE_P 0
 #endif
 #else
-# define INLINE_SIM_CORE(TYPE) TYPE REGPARM_SIM_CORE
+# define INLINE_SIM_CORE(TYPE) TYPE
 # define EXTERN_SIM_CORE_P 1
 #endif
 
 #if (SIM_CORE_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_CORE(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_CORE(TYPE) static TYPE REGPARM_SIM_CORE
+# define STATIC_INLINE_SIM_CORE(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_CORE(TYPE) static TYPE
@@ -461,12 +423,6 @@
 # define SIM_ENDIAN_INLINE ALL_H_INLINE
 #endif
 
-#if (SIM_ENDIAN_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_ENDIAN REGPARM
-#else
-# define REGPARM_SIM_ENDIAN
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_ENDIAN_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_ENDIAN_C) \
      && (REVEAL_MODULE_P (SIM_ENDIAN_INLINE)))
@@ -474,18 +430,18 @@
 #  define INLINE_SIM_ENDIAN(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_ENDIAN_P 0
 # else
-#  define INLINE_SIM_ENDIAN(TYPE) static TYPE UNUSED REGPARM_SIM_ENDIAN
+#  define INLINE_SIM_ENDIAN(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_ENDIAN_P 0
 # endif
 #else
-# define INLINE_SIM_ENDIAN(TYPE) TYPE REGPARM_SIM_ENDIAN
+# define INLINE_SIM_ENDIAN(TYPE) TYPE
 # define EXTERN_SIM_ENDIAN_P 1
 #endif
 
 #if (SIM_ENDIAN_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_ENDIAN(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_ENDIAN(TYPE) static TYPE REGPARM_SIM_ENDIAN
+# define STATIC_INLINE_SIM_ENDIAN(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_ENDIAN(TYPE) static TYPE
@@ -498,12 +454,6 @@
 # define SIM_EVENTS_INLINE ALL_C_INLINE
 #endif
 
-#if (SIM_EVENTS_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_EVENTS REGPARM
-#else
-# define REGPARM_SIM_EVENTS
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_EVENTS_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_EVENTS_C) \
      && (REVEAL_MODULE_P (SIM_EVENTS_INLINE)))
@@ -511,18 +461,18 @@
 #  define INLINE_SIM_EVENTS(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_EVENTS_P 0
 # else
-#  define INLINE_SIM_EVENTS(TYPE) static TYPE UNUSED REGPARM_SIM_EVENTS
+#  define INLINE_SIM_EVENTS(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_EVENTS_P 0
 # endif
 #else
-# define INLINE_SIM_EVENTS(TYPE) TYPE REGPARM_SIM_EVENTS
+# define INLINE_SIM_EVENTS(TYPE) TYPE
 # define EXTERN_SIM_EVENTS_P 1
 #endif
 
 #if (SIM_EVENTS_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_EVENTS(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_EVENTS(TYPE) static TYPE REGPARM_SIM_EVENTS
+# define STATIC_INLINE_SIM_EVENTS(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_EVENTS(TYPE) static TYPE
@@ -535,12 +485,6 @@
 # define SIM_FPU_INLINE ALL_C_INLINE
 #endif
 
-#if (SIM_FPU_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_FPU REGPARM
-#else
-# define REGPARM_SIM_FPU
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_FPU_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_FPU_C) \
      && (REVEAL_MODULE_P (SIM_FPU_INLINE)))
@@ -548,18 +492,18 @@
 #  define INLINE_SIM_FPU(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_FPU_P 0
 # else
-#  define INLINE_SIM_FPU(TYPE) static TYPE UNUSED REGPARM_SIM_FPU
+#  define INLINE_SIM_FPU(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_FPU_P 0
 # endif
 #else
-# define INLINE_SIM_FPU(TYPE) TYPE REGPARM_SIM_FPU
+# define INLINE_SIM_FPU(TYPE) TYPE
 # define EXTERN_SIM_FPU_P 1
 #endif
 
 #if (SIM_FPU_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_FPU(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_FPU(TYPE) static TYPE REGPARM_SIM_FPU
+# define STATIC_INLINE_SIM_FPU(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_FPU(TYPE) static TYPE
@@ -568,12 +512,6 @@
 
 /* sim-types */
 
-#if (SIM_TYPES_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_TYPES REGPARM
-#else
-# define REGPARM_SIM_TYPES
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_TYPES_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_TYPES_C) \
      && (REVEAL_MODULE_P (SIM_TYPES_INLINE)))
@@ -581,18 +519,18 @@
 #  define INLINE_SIM_TYPES(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_TYPES_P 0
 # else
-#  define INLINE_SIM_TYPES(TYPE) static TYPE UNUSED REGPARM_SIM_TYPES
+#  define INLINE_SIM_TYPES(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_TYPES_P 0
 # endif
 #else
-# define INLINE_SIM_TYPES(TYPE) TYPE REGPARM_SIM_TYPES
+# define INLINE_SIM_TYPES(TYPE) TYPE
 # define EXTERN_SIM_TYPES_P 1
 #endif
 
 #if (SIM_TYPES_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_TYPES(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_TYPES(TYPE) static TYPE REGPARM_SIM_TYPES
+# define STATIC_INLINE_SIM_TYPES(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_TYPES(TYPE) static TYPE
@@ -605,12 +543,6 @@
 # define SIM_MAIN_INLINE (ALL_C_INLINE)
 #endif
 
-#if (SIM_MAIN_INLINE & REGPARM_MODULE)
-# define REGPARM_SIM_MAIN REGPARM
-#else
-# define REGPARM_SIM_MAIN
-#endif
-
 #if ((H_REVEALS_MODULE_P (SIM_MAIN_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SIM_MAIN_C) \
      && (REVEAL_MODULE_P (SIM_MAIN_INLINE)))
@@ -618,29 +550,23 @@
 #  define INLINE_SIM_MAIN(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SIM_MAIN_P 0
 # else
-#  define INLINE_SIM_MAIN(TYPE) static TYPE UNUSED REGPARM_SIM_MAIN
+#  define INLINE_SIM_MAIN(TYPE) static TYPE UNUSED
 #  define EXTERN_SIM_MAIN_P 0
 # endif
 #else
-# define INLINE_SIM_MAIN(TYPE) TYPE REGPARM_SIM_MAIN
+# define INLINE_SIM_MAIN(TYPE) TYPE
 # define EXTERN_SIM_MAIN_P 1
 #endif
 
 #if (SIM_MAIN_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SIM_MAIN(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SIM_MAIN(TYPE) static TYPE REGPARM_SIM_MAIN
+# define STATIC_INLINE_SIM_MAIN(TYPE) static TYPE
 #endif
 
 #define STATIC_SIM_MAIN(TYPE) static TYPE
 
 /* engine */
-
-#if (ENGINE_INLINE & REGPARM_MODULE)
-# define REGPARM_ENGINE REGPARM
-#else
-# define REGPARM_ENGINE
-#endif
 
 #if ((H_REVEALS_MODULE_P (ENGINE_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (ENGINE_C) \
@@ -649,18 +575,18 @@
 #  define INLINE_ENGINE(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_ENGINE_P 0
 # else
-#  define INLINE_ENGINE(TYPE) static TYPE UNUSED REGPARM_ENGINE
+#  define INLINE_ENGINE(TYPE) static TYPE UNUSED
 #  define EXTERN_ENGINE_P 0
 # endif
 #else
-# define INLINE_ENGINE(TYPE) TYPE REGPARM_ENGINE
+# define INLINE_ENGINE(TYPE) TYPE
 # define EXTERN_ENGINE_P 1
 #endif
 
 #if (ENGINE_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_ENGINE(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_ENGINE(TYPE) static TYPE REGPARM_ENGINE
+# define STATIC_INLINE_ENGINE(TYPE) static TYPE
 #endif
 
 #define STATIC_ENGINE(TYPE) static TYPE
@@ -669,12 +595,6 @@
 
 /* icache */
 
-#if (ICACHE_INLINE & REGPARM_MODULE)
-# define REGPARM_ICACHE REGPARM
-#else
-# define REGPARM_ICACHE
-#endif
-
 #if ((H_REVEALS_MODULE_P (ICACHE_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (ICACHE_C) \
      && (REVEAL_MODULE_P (ICACHE_INLINE)))
@@ -682,18 +602,18 @@
 #  define INLINE_ICACHE(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_ICACHE_P 0
 #else
-#  define INLINE_ICACHE(TYPE) static TYPE UNUSED REGPARM_ICACHE
+#  define INLINE_ICACHE(TYPE) static TYPE UNUSED
 #  define EXTERN_ICACHE_P 0
 #endif
 #else
-# define INLINE_ICACHE(TYPE) TYPE REGPARM_ICACHE
+# define INLINE_ICACHE(TYPE) TYPE
 # define EXTERN_ICACHE_P 1
 #endif
 
 #if (ICACHE_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_ICACHE(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_ICACHE(TYPE) static TYPE REGPARM_ICACHE
+# define STATIC_INLINE_ICACHE(TYPE) static TYPE
 #endif
 
 #define STATIC_ICACHE(TYPE) static TYPE
@@ -702,12 +622,6 @@
 
 /* idecode */
 
-#if (IDECODE_INLINE & REGPARM_MODULE)
-# define REGPARM_IDECODE REGPARM
-#else
-# define REGPARM_IDECODE
-#endif
-
 #if ((H_REVEALS_MODULE_P (IDECODE_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (IDECODE_C) \
      && (REVEAL_MODULE_P (IDECODE_INLINE)))
@@ -715,18 +629,18 @@
 #  define INLINE_IDECODE(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_IDECODE_P 0
 #else
-#  define INLINE_IDECODE(TYPE) static TYPE UNUSED REGPARM_IDECODE
+#  define INLINE_IDECODE(TYPE) static TYPE UNUSED
 #  define EXTERN_IDECODE_P 0
 #endif
 #else
-# define INLINE_IDECODE(TYPE) TYPE REGPARM_IDECODE
+# define INLINE_IDECODE(TYPE) TYPE
 # define EXTERN_IDECODE_P 1
 #endif
 
 #if (IDECODE_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_IDECODE(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_IDECODE(TYPE) static TYPE REGPARM_IDECODE
+# define STATIC_INLINE_IDECODE(TYPE) static TYPE
 #endif
 
 #define STATIC_IDECODE(TYPE) static TYPE
@@ -735,12 +649,6 @@
 
 /* semantics */
 
-#if (SEMANTICS_INLINE & REGPARM_MODULE)
-# define REGPARM_SEMANTICS REGPARM
-#else
-# define REGPARM_SEMANTICS
-#endif
-
 #if ((H_REVEALS_MODULE_P (SEMANTICS_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SEMANTICS_C) \
      && (REVEAL_MODULE_P (SEMANTICS_INLINE)))
@@ -748,24 +656,24 @@
 #  define INLINE_SEMANTICS(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SEMANTICS_P 0
 #else
-#  define INLINE_SEMANTICS(TYPE) static TYPE UNUSED REGPARM_SEMANTICS
+#  define INLINE_SEMANTICS(TYPE) static TYPE UNUSED
 #  define EXTERN_SEMANTICS_P 0
 #endif
 #else
-# define INLINE_SEMANTICS(TYPE) TYPE REGPARM_SEMANTICS
+# define INLINE_SEMANTICS(TYPE) TYPE
 # define EXTERN_SEMANTICS_P 1
 #endif
 
 #if EXTERN_SEMANTICS_P
-# define EXTERN_SEMANTICS(TYPE) TYPE REGPARM_SEMANTICS
+# define EXTERN_SEMANTICS(TYPE) TYPE
 #else
-# define EXTERN_SEMANTICS(TYPE) static TYPE UNUSED REGPARM_SEMANTICS
+# define EXTERN_SEMANTICS(TYPE) static TYPE UNUSED
 #endif
 
 #if (SEMANTICS_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SEMANTICS(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SEMANTICS(TYPE) static TYPE REGPARM_SEMANTICS
+# define STATIC_INLINE_SEMANTICS(TYPE) static TYPE
 #endif
 
 #define STATIC_SEMANTICS(TYPE) static TYPE
@@ -778,12 +686,6 @@
 # define SUPPORT_INLINE ALL_C_INLINE
 #endif
 
-#if (SUPPORT_INLINE & REGPARM_MODULE)
-# define REGPARM_SUPPORT REGPARM
-#else
-# define REGPARM_SUPPORT
-#endif
-
 #if ((H_REVEALS_MODULE_P (SUPPORT_INLINE) || defined (SIM_INLINE_C)) \
      && !defined (SUPPORT_C) \
      && (REVEAL_MODULE_P (SUPPORT_INLINE)))
@@ -791,18 +693,18 @@
 #  define INLINE_SUPPORT(TYPE) static INLINE TYPE UNUSED
 #  define EXTERN_SUPPORT_P 0
 #else
-#  define INLINE_SUPPORT(TYPE) static TYPE UNUSED REGPARM_SUPPORT
+#  define INLINE_SUPPORT(TYPE) static TYPE UNUSED
 #  define EXTERN_SUPPORT_P 0
 #endif
 #else
-# define INLINE_SUPPORT(TYPE) TYPE REGPARM_SUPPORT
+# define INLINE_SUPPORT(TYPE) TYPE
 # define EXTERN_SUPPORT_P 1
 #endif
 
 #if (SUPPORT_INLINE & INLINE_LOCALS)
 # define STATIC_INLINE_SUPPORT(TYPE) static INLINE TYPE
 #else
-# define STATIC_INLINE_SUPPORT(TYPE) static TYPE REGPARM_SUPPORT
+# define STATIC_INLINE_SUPPORT(TYPE) static TYPE
 #endif
 
 #define STATIC_SUPPORT(TYPE) static TYPE

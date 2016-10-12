@@ -1,7 +1,7 @@
 /* Blackfin External Bus Interface Unit (EBIU) Asynchronous Memory Controller
    (AMC) model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -81,8 +81,8 @@ bfin_ebiu_amc_write_amgctl (struct hw *me, struct bfin_ebiu_amc *amc,
 {
   bu32 amben_old, amben, addr, i;
 
-  amben_old = MIN ((amc->amgctl >> 1) & 0x7, 4);
-  amben = MIN ((amgctl >> 1) & 0x7, 4);
+  amben_old = min ((amc->amgctl >> 1) & 0x7, 4);
+  amben = min ((amgctl >> 1) & 0x7, 4);
 
   HW_TRACE ((me, "reattaching banks: AMGCTL 0x%04x[%u] -> 0x%04x[%u]",
 	     amc->amgctl, amben_old, amgctl, amben));
@@ -121,7 +121,8 @@ bf50x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
   switch (mmr_off)
     {
     case mmr_offset(amgctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       bfin_ebiu_amc_write_amgctl (me, amc, value);
       break;
     case mmr_offset(bf50x.ambctl0):
@@ -132,15 +133,17 @@ bf50x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
       break;
     case mmr_offset(bf50x.mode):
       /* XXX: implement this.  */
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       break;
     case mmr_offset(bf50x.fctl):
       /* XXX: implement this.  */
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -155,7 +158,8 @@ bf53x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
   switch (mmr_off)
     {
     case mmr_offset(amgctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       bfin_ebiu_amc_write_amgctl (me, amc, value);
       break;
     case mmr_offset(bf53x.ambctl0):
@@ -166,7 +170,7 @@ bf53x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -181,7 +185,8 @@ bf54x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
   switch (mmr_off)
     {
     case mmr_offset(amgctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, true);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, true))
+	return 0;
       bfin_ebiu_amc_write_amgctl (me, amc, value);
       break;
     case mmr_offset(bf54x.ambctl0):
@@ -204,7 +209,7 @@ bf54x_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -217,6 +222,10 @@ bfin_ebiu_amc_io_write_buffer (struct hw *me, const void *source, int space,
   struct bfin_ebiu_amc *amc = hw_data (me);
   bu32 mmr_off;
   bu32 value;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, true))
+    return 0;
 
   value = dv_load_4 (source);
   mmr_off = addr - amc->base;
@@ -237,7 +246,8 @@ bf50x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
     {
     case mmr_offset(amgctl):
     case mmr_offset(bf50x.fctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_2 (dest, *value16);
       break;
     case mmr_offset(bf50x.ambctl0):
@@ -247,7 +257,7 @@ bf50x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -262,7 +272,8 @@ bf53x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
   switch (mmr_off)
     {
     case mmr_offset(amgctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_2 (dest, *value16);
       break;
     case mmr_offset(bf53x.ambctl0):
@@ -271,7 +282,7 @@ bf53x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -286,7 +297,8 @@ bf54x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
   switch (mmr_off)
     {
     case mmr_offset(amgctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_2 (dest, *value16);
       break;
     case mmr_offset(bf54x.ambctl0):
@@ -299,7 +311,7 @@ bf54x_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -312,6 +324,10 @@ bfin_ebiu_amc_io_read_buffer (struct hw *me, void *dest, int space,
   struct bfin_ebiu_amc *amc = hw_data (me);
   bu32 mmr_off;
   void *valuep;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, false))
+    return 0;
 
   mmr_off = addr - amc->base;
   valuep = (void *)((unsigned long)amc + mmr_base() + mmr_off);

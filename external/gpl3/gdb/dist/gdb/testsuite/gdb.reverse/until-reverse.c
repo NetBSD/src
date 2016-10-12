@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2015 Free Software Foundation, Inc.
+   Copyright 2008-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,19 +33,20 @@ int factorial(int);
 int
 main (int argc, char **argv, char **envp)
 {
-    if (argc == 12345) {  /* an unlikely value < 2^16, in case uninited */ /* set breakpoint 6 here */
-	fprintf (stderr, "usage:  factorial <number>\n");
-	return 1;
+  if (argc == 12345)
+    {
+      /* We're used by a test that requires malloc, so make sure it is
+	 in the executable.  */
+      (void) malloc (1);
+      return 1;
     }
-    printf ("%d\n", factorial (atoi ("6")));  /* set breakpoint 1 here */
+
+    factorial (atoi ("6"));  /* set breakpoint 1 here */
     /* set breakpoint 12 here */
     marker1 ();  /* set breakpoint 11 here */
     marker2 (43); /* set breakpoint 20 here */
     marker3 ("stack", "trace"); /* set breakpoint 21 here */
     marker4 (177601976L);
-    /* We're used by a test that requires malloc, so make sure it is
-       in the executable.  */
-    (void)malloc (1);
 
     argc = (argc == 12345); /* This is silly, but we can step off of it */ /* set breakpoint 2 here */
     return argc;  /* set breakpoint 10 here */

@@ -1,3 +1,8 @@
+2015-10-11  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/18407
+	* ashift_left.s: New test.
+
 2013-12-07  Mike Frysinger  <vapier@gentoo.org>
 
 	* run-tests.sh: Add +x file mode.

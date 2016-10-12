@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ if { [skip_python_tests] } { continue }
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 if ![runto_main] then {
     fail "Cannot run to main."
@@ -108,7 +108,7 @@ gdb_test "python MyFinishBreakpoint (None, gdb.selected_frame ())" \
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
@@ -135,7 +135,7 @@ gdb_test "python print (finishBP.return_value)" "None" "check return value witho
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
@@ -161,7 +161,7 @@ gdb_test "python print (finishbp.is_valid())" "False.*"\
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
@@ -187,7 +187,7 @@ gdb_test "print i" "8" "check stopped location"
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"
@@ -214,7 +214,7 @@ gdb_test "print i" "8" "check stopped location"
 #
 
 clean_restart ${testfile}
-gdb_load_shlibs ${lib_sl}
+gdb_load_shlib ${lib_sl}
 
 gdb_test "source $python_file" "Python script imported.*" \
          "import python scripts"

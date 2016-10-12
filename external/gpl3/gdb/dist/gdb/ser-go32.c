@@ -1,5 +1,5 @@
 /* Remote serial interface for local (hardwired) serial ports for GO32.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    Contributed by Nigel Stephens, Algorithmics Ltd. (nigel@algor.co.uk).
 
@@ -593,9 +593,26 @@ dos_close (struct serial *scb)
 }
 
 
+/* Implementation of the serial_ops flush_output method.  */
 
 static int
-dos_noop (struct serial *scb)
+dos_flush_output (struct serial *scb)
+{
+  return 0;
+}
+
+/* Implementation of the serial_ops setparity method.  */
+
+static int
+dos_setparity (struct serial *scb, int parity)
+{
+  return 0;
+}
+
+/* Implementation of the serial_ops drain_output method.  */
+
+static int
+dos_drain_output (struct serial *scb)
 {
   return 0;
 }
@@ -616,6 +633,8 @@ dos_readchar (struct serial *scb, int timeout)
   then = rawclock () + (timeout * RAWHZ);
   while ((c = dos_getc (port)) < 0)
     {
+      QUIT;
+
       if (timeout >= 0 && (rawclock () - then) >= 0)
 	return SERIAL_TIMEOUT;
     }
@@ -643,7 +662,7 @@ dos_get_tty_state (struct serial *scb)
 	return NULL;
     }
 
-  state = (struct dos_ttystate *) xmalloc (sizeof *state);
+  state = XNEW (struct dos_ttystate);
   *state = *port;
   return (serial_ttystate) state;
 }
@@ -653,7 +672,7 @@ dos_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
   struct dos_ttystate *state;
 
-  state = (struct dos_ttystate *) xmalloc (sizeof *state);
+  state = XNEW (struct dos_ttystate);
   *state = *(struct dos_ttystate *) ttystate;
 
   return (serial_ttystate) state;
@@ -790,10 +809,12 @@ dos_write (struct serial *scb, const void *buf, size_t count)
   size_t fifosize = port->fifo ? 16 : 1;
   long then;
   size_t cnt;
-  const char *str = buf;
+  const char *str = (const char *) buf;
 
   while (count > 0)
     {
+      QUIT;
+
       /* Send the data, fifosize bytes at a time.  */
       cnt = fifosize > count ? count : fifosize;
       port->txbusy = 1;
@@ -853,7 +874,7 @@ static const struct serial_ops dos_ops =
   NULL,				/* fdopen, not implemented */
   dos_readchar,
   dos_write,
-  dos_noop,			/* flush output */
+  dos_flush_output,
   dos_flush_input,
   dos_sendbreak,
   dos_raw,
@@ -864,8 +885,8 @@ static const struct serial_ops dos_ops =
   dos_noflush_set_tty_state,
   dos_setbaudrate,
   dos_setstopbits,
-  dos_noop,
-  dos_noop,			/* Wait for output to drain.  */
+  dos_setparity,
+  dos_drain_output,
   (void (*)(struct serial *, int))NULL	/* Change into async mode.  */
 };
 

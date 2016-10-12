@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
    binary.c.
@@ -330,6 +330,14 @@ struct mmo_data_struct
 
     /* We also need a buffer to hold the bytes we count reading or writing.  */
     bfd_byte buf[4];
+
+    /* Whether we've calculated symbol consistency requirement yet.  We do this
+       when-needed, which must be at some time after all section
+       contents is known.  */
+    bfd_boolean symbol_consistency_override_calculated;
+
+    /* Whether to consistency-check symbol values, in particular "Main".  */
+    bfd_boolean ignore_symbol_consistency;
   };
 
 typedef struct mmo_data_struct tdata_type;
@@ -583,6 +591,34 @@ mmo_mkobject (bfd *abfd)
     }
 
   return TRUE;
+}
+
+static bfd_boolean
+mmo_section_has_contents (bfd *abfd ATTRIBUTE_UNUSED, asection *sec, void *p ATTRIBUTE_UNUSED)
+{
+  /* The point is to match what --extract-symbols does (well, negated).  */
+  return bfd_get_section_size (sec) != 0;
+}
+
+/* Find out whether we should omit symbol consistency checks for this
+   bfd and cache the value.
+
+   This function must only be called when all section contents is
+   known.  However, calculating symbol consistency at the time the
+   private BFD data is initialized is too late for some uses.  */
+
+static bfd_boolean
+mmo_ignore_symbol_consistency (bfd *abfd)
+{
+  if (!abfd->tdata.mmo_data->symbol_consistency_override_calculated)
+    {
+      abfd->tdata.mmo_data->ignore_symbol_consistency =
+	bfd_sections_find_if (abfd, mmo_section_has_contents, NULL) == NULL;
+
+      abfd->tdata.mmo_data->symbol_consistency_override_calculated = TRUE;
+    }
+
+  return abfd->tdata.mmo_data->ignore_symbol_consistency;
 }
 
 static bfd_boolean
@@ -1208,7 +1244,8 @@ mmo_create_symbol (bfd *abfd, const char *symname, bfd_vma addr, enum
      object.  For written objects, we do it while setting the symbol
      table.  */
   if (strcmp (symname, MMIX_START_SYMBOL_NAME) == 0
-      && bfd_get_start_address (abfd) != addr)
+      && bfd_get_start_address (abfd) != addr
+      && !mmo_ignore_symbol_consistency (abfd))
     {
       (*_bfd_error_handler)
 	(_("%s: invalid mmo file: initialization value for $255 is not `Main'\n"),
@@ -2083,7 +2120,7 @@ mmo_get_section_contents (bfd *abfd ATTRIBUTE_UNUSED,
 
       memcpy (location, loc, chunk_size);
 
-      location += chunk_size;
+      location = (bfd_byte *) location + chunk_size;
       bytes_to_do -= chunk_size;
       offset += chunk_size;
     }
@@ -2620,7 +2657,7 @@ mmo_set_section_contents (bfd *abfd ATTRIBUTE_UNUSED, sec_ptr sec,
 
       memcpy (loc, location, chunk_size);
 
-      location += chunk_size;
+      location = (bfd_byte *) location + chunk_size;
       bytes_to_do -= chunk_size;
       offset += chunk_size;
     }
@@ -2896,16 +2933,18 @@ mmo_write_symbols_and_terminator (bfd *abfd)
 	&& (table[i]->flags & (BSF_DEBUGGING|BSF_GLOBAL)) == BSF_GLOBAL)
       {
 	asymbol *mainsym = table[i];
+	bfd_vma mainvalue
+	  = (mainsym->value
+	     + mainsym->section->output_section->vma
+	     + mainsym->section->output_offset);
 	memcpy (table + 1, orig_table, i * sizeof (asymbol *));
 	table[0] = mainsym;
 
 	/* Check that the value assigned to :Main is the same as the entry
 	   address.  The default linker script asserts this.  This is as
 	   good a place as any to check this consistency. */
-	if ((mainsym->value
-	     + mainsym->section->output_section->vma
-	     + mainsym->section->output_offset)
-	    != bfd_get_start_address (abfd))
+	if (mainvalue != bfd_get_start_address (abfd)
+	    && !mmo_ignore_symbol_consistency (abfd))
 	  {
 	    /* Arbitrary buffer to hold the printable representation of a
 	       vma.  */
@@ -2913,7 +2952,7 @@ mmo_write_symbols_and_terminator (bfd *abfd)
 	    char vmas_start[40];
 	    bfd_vma vma_start = bfd_get_start_address (abfd);
 
-	    sprintf_vma (vmas_main, mainsym->value);
+	    sprintf_vma (vmas_main, mainvalue);
 	    sprintf_vma (vmas_start, vma_start);
 
 	    (*_bfd_error_handler)
@@ -2934,59 +2973,65 @@ mmo_write_symbols_and_terminator (bfd *abfd)
       count++;
     }
 
-  for (i = 0, serno = 1; i < count && table[i] != NULL; i++)
+  /* Don't bother inspecting symbols in plugin dummy objects; their
+     symbols aren't fully inspectable.  */
+  if ((abfd->flags & BFD_PLUGIN) == 0)
     {
-      asymbol *s = table[i];
-
-      /* It's not enough to consult bfd_is_local_label, since it does not
-	 mean "local" in the sense of linkable-and-observable-after-link.
-	 Let's just check the BSF_GLOBAL flag.
-
-	 Also, don't export symbols with characters not in the allowed set.  */
-      if ((s->flags & (BSF_DEBUGGING|BSF_GLOBAL)) == BSF_GLOBAL
-	  && strspn (s->name,
-		     valid_mmo_symbol_character_set) == strlen (s->name))
+      for (i = 0, serno = 1; i < count && table[i] != NULL; i++)
 	{
-	  struct mmo_symbol sym;
-	  memset (&sym, 0, sizeof (sym));
+	  asymbol *s = table[i];
 
-	  /* Need to strip const here; strdup:ing would leak and the
-	     existing string must be safe to reuse.  */
-	  sym.name = (char *) s->name;
-	  sym.value =
-	    s->value
-	    + s->section->output_section->vma
-	    + s->section->output_offset;
+	  /* It's not enough to consult bfd_is_local_label, since it does not
+	     mean "local" in the sense of linkable-and-observable-after-link.
+	     Let's just check the BSF_GLOBAL flag.
 
-	  if (bfd_is_und_section (s->section))
-	    sym.sym_type = mmo_undef_sym;
-	  else if (strcmp (s->section->name, MMO_DATA_SECTION_NAME) == 0
-		   /* The encoding of data symbols require that the "rest"
-		      of the value fits in 6 bytes, so the upper two bytes
-		      must be 0x2000.  All other symbols get to be the
-		      absolute type.  */
-		   && (sym.value >> 48) == 0x2000)
-	    sym.sym_type = mmo_data_sym;
-	  else if (strcmp (s->section->name, MMIX_REG_SECTION_NAME) == 0)
-	    sym.sym_type = mmo_reg_sym;
-	  else if (strcmp (s->section->name,
-			   MMIX_REG_CONTENTS_SECTION_NAME) == 0)
+	     Also, don't export symbols with characters not in the
+	     allowed set.  */
+	  if ((s->flags & (BSF_DEBUGGING|BSF_GLOBAL)) == BSF_GLOBAL
+	      && strspn (s->name,
+			 valid_mmo_symbol_character_set) == strlen (s->name))
 	    {
-	      sym.sym_type = mmo_reg_sym;
-	      sym.value /= 8;
+	      struct mmo_symbol sym;
+	      memset (&sym, 0, sizeof (sym));
+
+	      /* Need to strip const here; strdup:ing would leak and the
+		 existing string must be safe to reuse.  */
+	      sym.name = (char *) s->name;
+	      sym.value =
+		s->value
+		+ s->section->output_section->vma
+		+ s->section->output_offset;
+
+	      if (bfd_is_und_section (s->section))
+		sym.sym_type = mmo_undef_sym;
+	      else if (strcmp (s->section->name, MMO_DATA_SECTION_NAME) == 0
+		       /* The encoding of data symbols require that the "rest"
+			  of the value fits in 6 bytes, so the upper two bytes
+			  must be 0x2000.  All other symbols get to be the
+			  absolute type.  */
+		       && (sym.value >> 48) == 0x2000)
+		sym.sym_type = mmo_data_sym;
+	      else if (strcmp (s->section->name, MMIX_REG_SECTION_NAME) == 0)
+		sym.sym_type = mmo_reg_sym;
+	      else if (strcmp (s->section->name,
+			       MMIX_REG_CONTENTS_SECTION_NAME) == 0)
+		{
+		  sym.sym_type = mmo_reg_sym;
+		  sym.value /= 8;
+		}
+	      else
+		sym.sym_type = mmo_abs_sym;
+
+	      /* FIXME: We assume the order of the received symbols is an
+		 ordered mapping of the serial numbers.  This is not
+		 necessarily true if we e.g. objcopy a mmo file to another and
+		 there are gaps in the numbering.  Not sure if this can
+		 happen.  Not sure what to do.  */
+	      sym.serno = serno++;
+
+	      if (! mmo_internal_add_3_sym (abfd, &root, &sym))
+		return FALSE;
 	    }
-	  else
-	    sym.sym_type = mmo_abs_sym;
-
-	  /* FIXME: We assume the order of the received symbols is an
-	     ordered mapping of the serial numbers.  This is not
-	     necessarily true if we e.g. objcopy a mmo file to another and
-	     there are gaps in the numbering.  Not sure if this can
-	     happen.  Not sure what to do.  */
-	  sym.serno = serno++;
-
-	  if (! mmo_internal_add_3_sym (abfd, &root, &sym))
-	    return FALSE;
 	}
     }
 
@@ -3233,6 +3278,7 @@ mmo_write_object_contents (bfd *abfd)
   _bfd_generic_copy_link_hash_symbol_type
 #define mmo_bfd_final_link _bfd_generic_final_link
 #define mmo_bfd_link_split_section _bfd_generic_link_split_section
+#define mmo_bfd_link_check_relocs  _bfd_generic_link_check_relocs
 
 /* Strictly speaking, only MMIX uses this restricted format, but let's not
    stop anybody from shooting themselves in the foot.  */
