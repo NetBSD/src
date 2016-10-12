@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnreg.h,v 1.8 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: if_urtwnreg.h,v 1.9 2016/10/12 02:56:45 nat Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -437,6 +437,16 @@
 #define R92C_PBP_512		3
 #define R92C_PBP_1024		4
 
+/* Bits for R92C_TXPAUSE. */
+#define TP_STOPBECON		0x40
+#define TP_STOPHIGH		0x20
+#define TP_STOPMGT		0x10
+#define TP_STOPVO		0x08
+#define TP_STOPVI		0x04
+#define TP_STOPBE		0x02
+#define TP_STOPBK		0x01
+#define TP_STOPALL		0x6f
+
 /* Bits for R92C_TRXDMA_CTRL. */
 #define R92C_TRXDMA_CTRL_RXDMA_AGG_EN		0x0004
 #define R92C_TRXDMA_CTRL_TXDMA_VOQ_MAP_M	0x0030
@@ -584,6 +594,7 @@
 #define R92C_TXAGC_A_CCK1_MCS32		0xe08
 #define	R92C_FPGA0_XA_HSSIPARAM1	0x820
 #define R92C_TXAGC_B_CCK1_55_MCS32	0x838
+#define R92C_FPGA0_XCD_SWITCHCTL	0x85c
 #define R92C_TXAGC_B_CCK11_A_CCK2_11	0x86c
 #define R92C_TXAGC_MCS03_MCS00(i)	(((i) == 0) ? 0xe10 : 0x83c)
 #define R92C_TXAGC_MCS07_MCS04(i)	(((i) == 0) ? 0xe14 : 0x848)
@@ -600,6 +611,8 @@
 #define R92C_FPGA1_TXINFO		0x90c
 #define R92C_CCK0_SYSTEM		0xa00
 #define R92C_CCK0_AFESETTING		0xa04
+#define R92C_CONFIG_ANT_A		0xb68
+#define R92C_CONFIG_ANT_B		0xb6c
 #define R92C_OFDM0_TRXPATHENA		0xc04
 #define R92C_OFDM0_TRMUXPAR		0xc08
 #define R92C_OFDM0_XARXIQIMBALANCE	0xc14
@@ -615,6 +628,25 @@
 #define R92C_OFDM0_XDTXAFE		0xc9c
 #define R92C_OFDM0_RXIQEXTANTA		0xca0
 #define R92C_OFDM1_LSTF			0xd00
+#define R92C_FPGA0_IQK			0xe28
+#define R92C_TX_IQK 			0xe40
+#define R92C_RX_IQK			0xe44
+#define R92C_BLUETOOTH			0xe6c
+#define R92C_RX_WAIT_CCA		0xe70
+#define R92C_TX_CCK_RFON		0xe74
+#define R92C_TX_CCK_BBON		0xe78
+#define R92C_TX_OFDM_RFON		0xe7c
+#define R92C_TX_OFDM_BBON		0xe80
+#define R92C_TX_TO_RX			0xe84
+#define R92C_TX_TO_TX			0xe88
+#define R92C_RX_CCK			0xe8c
+#define R92C_RX_OFDM			0xed0
+#define R92C_RX_WAIT_RIFS 		0xed4
+#define R92C_RX_TO_RX 			0xed8
+#define R92C_STANDBY 			0xedc
+#define R92C_SLEEP 			0xee0
+#define R92C_PMPD_ANAEN			0xeec
+
 
 /* Bits for R92C_FPGA[01]_RFMOD. */
 #define R92C_RFMOD_40MHZ	0x00000001
@@ -1112,3 +1144,14 @@ struct r92c_tx_desc {
 	uint16_t	txdsum;
 	uint16_t	pad;
 } __packed __aligned(4);
+
+/* Values for IQ calibration. */
+#define R92C_IQK_TRXPATHENA	0x5600
+#define R92C_IQK_TRMUXPAR	0x00e4
+#define R92C_IQK_RFIFACESW1	0x8200
+#define R92C_IQK_LSSI_PARAM	0x00010000
+#define R92C_IQK_LSSI_RESTORE	0x00032ed3
+#define R92C_IQK_CONFIG_ANT	0x00080000
+#define R92C_TX_IQK_SETTING	0x01007c00
+#define R92C_RX_IQK_SETTING	0x01004800
+#define R92C_FPGA0_IQK_SETTING	0x80800000
