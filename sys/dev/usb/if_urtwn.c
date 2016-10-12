@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.46 2016/10/04 21:36:38 christos Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.47 2016/10/12 02:50:44 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.46 2016/10/04 21:36:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.47 2016/10/12 02:50:44 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -318,6 +318,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	struct usb_attach_arg *uaa = aux;
 	char *devinfop;
 	const struct urtwn_dev *dev;
+	usb_device_request_t req;
 	size_t i;
 	int error;
 
@@ -337,6 +338,14 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 	devinfop = usbd_devinfo_alloc(sc->sc_udev, 0);
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_FEATURE;
+	USETW(req.wValue, UF_DEVICE_REMOTE_WAKEUP);
+	USETW(req.wIndex, UHF_PORT_SUSPEND);
+	USETW(req.wLength, 0);
+
+	(void) usbd_do_request(sc->sc_udev, &req, 0);
 
 	mutex_init(&sc->sc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
