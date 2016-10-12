@@ -40,6 +40,10 @@
 #include <dl.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined (HOST_HPPABSD) || defined (HOST_HPPAOSF)
 /* BSD uses a completely different scheme for object file identification.
    so for now, define _PA_RISC_ID to accept any random value for a model
@@ -235,4 +239,7 @@ int **       hppa_som_gen_reloc_type           (bfd *, int, int, enum hppa_reloc
 bfd_boolean  bfd_som_attach_compilation_unit   (bfd *, const char *, const char *, const char *, const char *);
 asection *   bfd_section_from_som_symbol       (bfd *abfd, struct som_external_symbol_dictionary_record *symbol);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* _SOM_H */

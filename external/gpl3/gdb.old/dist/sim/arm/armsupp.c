@@ -1,22 +1,23 @@
 /*  armsupp.c -- ARMulator support code:  ARM6 Instruction Emulator.
     Copyright (C) 1994 Advanced RISC Machines Ltd.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
     (at your option) any later version.
- 
+
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
- 
+
     You should have received a copy of the GNU General Public License
     along with this program; if not, see <http://www.gnu.org/licenses/>. */
 
 #include "armdefs.h"
 #include "armemu.h"
 #include "ansidecl.h"
+#include <math.h>
 
 /* Definitions for the support routines.  */
 
@@ -173,7 +174,7 @@ void
 ARMul_SetSPSR (ARMul_State * state, ARMword mode, ARMword value)
 {
   ARMword bank = ModeToBank (mode & MODEBITS);
-  
+
   if (BANK_CAN_ACCESS_SPSR (bank))
     state->Spsr[bank] = value;
 }
@@ -208,12 +209,12 @@ ARMul_CPSRAltered (ARMul_State * state)
     state->Cpsr &= (CCBITS | INTBITS | R15MODEBITS);
 
   oldmode = state->Mode;
-  
+
   if (state->Mode != (state->Cpsr & MODEBITS))
     {
       state->Mode =
 	ARMul_SwitchMode (state, state->Mode, state->Cpsr & MODEBITS);
-      
+
       state->NtransSig = (state->Mode & 3) ? HIGH : LOW;
     }
   state->Cpsr &= ~MODEBITS;
@@ -291,10 +292,10 @@ ARMul_SwitchMode (ARMul_State * state, ARMword oldmode, ARMword newmode)
   unsigned i;
   ARMword  oldbank;
   ARMword  newbank;
-  
+
   oldbank = ModeToBank (oldmode);
   newbank = state->Bank = ModeToBank (newmode);
-  
+
   /* Do we really need to do it?  */
   if (oldbank != newbank)
     {
@@ -323,7 +324,7 @@ ARMul_SwitchMode (ARMul_State * state, ARMword oldmode, ARMword newmode)
 	default:
 	  abort ();
 	}
-      
+
       /* Restore the new registers.  */
       switch (newbank)
 	{
@@ -350,7 +351,7 @@ ARMul_SwitchMode (ARMul_State * state, ARMword oldmode, ARMword newmode)
 	  abort ();
 	}
     }
-  
+
   return newmode;
 }
 
@@ -466,6 +467,422 @@ ARMul_SubOverflow (ARMul_State * state, ARMword a, ARMword b, ARMword result)
   ASSIGNV (SubOverflow (a, b, result));
 }
 
+static void
+handle_VFP_xfer (ARMul_State * state, ARMword instr)
+{
+  if (TOPBITS (28) == NV)
+    {
+      fprintf (stderr, "SIM: UNDEFINED VFP instruction\n");
+      return;
+    }
+
+  if (BITS (25, 27) != 0x6)
+    {
+      fprintf (stderr, "SIM: ISE: VFP handler called incorrectly\n");
+      return;
+    }
+	
+  switch (BITS (20, 24))
+    {
+    case 0x04:
+    case 0x05:
+      {
+	/* VMOV double precision to/from two ARM registers.  */
+	int vm  = BITS (0, 3);
+	int rt1 = BITS (12, 15);
+	int rt2 = BITS (16, 19);
+
+	/* FIXME: UNPREDICTABLE if rt1 == 15 or rt2 == 15.  */
+	if (BIT (20))
+	  {
+	    /* Transfer to ARM.  */
+	    /* FIXME: UPPREDICTABLE if rt1 == rt2.  */
+	    state->Reg[rt1] = VFP_dword (vm) & 0xffffffff;
+	    state->Reg[rt2] = VFP_dword (vm) >> 32;
+	  }
+	else
+	  {
+	    VFP_dword (vm) = state->Reg[rt2];
+	    VFP_dword (vm) <<= 32;
+	    VFP_dword (vm) |= (state->Reg[rt1] & 0xffffffff);
+	  }
+	return;
+      }
+
+    case 0x08:
+    case 0x0A:
+    case 0x0C:
+    case 0x0E:
+      {
+	/* VSTM with PUW=011 or PUW=010.  */
+	int n = BITS (16, 19);
+	int imm8 = BITS (0, 7);
+
+	ARMword address = state->Reg[n];
+	if (BIT (21))
+	  state->Reg[n] = address + (imm8 << 2);
+
+	if (BIT (8))
+	  {
+	    int src = (BIT (22) << 4) | BITS (12, 15);
+	    imm8 >>= 1;
+	    while (imm8--)
+	      {
+		if (state->bigendSig)
+		  {
+		    ARMul_StoreWordN (state, address, VFP_dword (src) >> 32);
+		    ARMul_StoreWordN (state, address + 4, VFP_dword (src));
+		  }
+		else
+		  {
+		    ARMul_StoreWordN (state, address, VFP_dword (src));
+		    ARMul_StoreWordN (state, address + 4, VFP_dword (src) >> 32);
+		  }
+		address += 8;
+		src += 1;
+	      }
+	  }
+	else
+	  {
+	    int src = (BITS (12, 15) << 1) | BIT (22);
+	    while (imm8--)
+	      {
+		ARMul_StoreWordN (state, address, VFP_uword (src));
+		address += 4;
+		src += 1;
+	      }
+	  }
+      }
+      return;
+
+    case 0x10:
+    case 0x14:
+    case 0x18:
+    case 0x1C:
+      {
+	/* VSTR */
+	ARMword imm32 = BITS (0, 7) << 2;
+	int base = state->Reg[LHSReg];
+	ARMword address;
+	int dest;
+
+	if (LHSReg == 15)
+	  base = (base + 3) & ~3;
+
+	address = base + (BIT (23) ? imm32 : - imm32);
+
+	if (CPNum == 10)
+	  {
+	    dest = (DESTReg << 1) + BIT (22);
+
+	    ARMul_StoreWordN (state, address, VFP_uword (dest));
+	  }
+	else
+	  {
+	    dest = (BIT (22) << 4) + DESTReg;
+
+	    if (state->bigendSig)
+	      {
+		ARMul_StoreWordN (state, address, VFP_dword (dest) >> 32);
+		ARMul_StoreWordN (state, address + 4, VFP_dword (dest));
+	      }
+	    else
+	      {
+		ARMul_StoreWordN (state, address, VFP_dword (dest));
+		ARMul_StoreWordN (state, address + 4, VFP_dword (dest) >> 32);
+	      }
+	  }
+      }
+      return;
+
+    case 0x12:
+    case 0x16:
+      if (BITS (16, 19) == 13)
+	{
+	  /* VPUSH */
+	  ARMword address = state->Reg[13] - (BITS (0, 7) << 2);
+	  state->Reg[13] = address;
+
+	  if (BIT (8))
+	    {
+	      int dreg = (BIT (22) << 4) | BITS (12, 15);
+	      int num  = BITS (0, 7) >> 1;
+	      while (num--)
+		{
+		  if (state->bigendSig)
+		    {
+		      ARMul_StoreWordN (state, address, VFP_dword (dreg) >> 32);
+		      ARMul_StoreWordN (state, address + 4, VFP_dword (dreg));
+		    }
+		  else
+		    {
+		      ARMul_StoreWordN (state, address, VFP_dword (dreg));
+		      ARMul_StoreWordN (state, address + 4, VFP_dword (dreg) >> 32);
+		    }
+		  address += 8;
+		  dreg += 1;
+		}
+	    }
+	  else
+	    {
+	      int sreg = (BITS (12, 15) << 1) | BIT (22);
+	      int num  = BITS (0, 7);
+	      while (num--)
+		{
+		  ARMul_StoreWordN (state, address, VFP_uword (sreg));
+		  address += 4;
+		  sreg += 1;
+		}
+	    }
+	}
+      else if (BITS (9, 11) != 0x5)
+	break;
+      else
+	{
+	  /* VSTM PUW=101 */
+	  int n = BITS (16, 19);
+	  int imm8 = BITS (0, 7);
+	  ARMword address = state->Reg[n] - (imm8 << 2);
+	  state->Reg[n] = address;
+
+	  if (BIT (8))
+	    {
+	      int src = (BIT (22) << 4) | BITS (12, 15);
+
+	      imm8 >>= 1;
+	      while (imm8--)
+		{
+		  if (state->bigendSig)
+		    {
+		      ARMul_StoreWordN (state, address, VFP_dword (src) >> 32);
+		      ARMul_StoreWordN (state, address + 4, VFP_dword (src));
+		    }
+		  else
+		    {
+		      ARMul_StoreWordN (state, address, VFP_dword (src));
+		      ARMul_StoreWordN (state, address + 4, VFP_dword (src) >> 32);
+		    }
+		  address += 8;
+		  src += 1;
+		}
+	    }
+	  else
+	    {
+	      int src = (BITS (12, 15) << 1) | BIT (22);
+
+	      while (imm8--)
+		{
+		  ARMul_StoreWordN (state, address, VFP_uword (src));
+		  address += 4;
+		  src += 1;
+		}
+	    }
+	}
+      return;
+
+    case 0x13:
+    case 0x17:
+      /* VLDM PUW=101 */
+    case 0x09:
+    case 0x0D:
+      /* VLDM PUW=010 */
+	{
+	  int n = BITS (16, 19);
+	  int imm8 = BITS (0, 7);
+
+	  ARMword address = state->Reg[n];
+	  if (BIT (23) == 0)
+	    address -= imm8 << 2;
+	  if (BIT (21))
+	    state->Reg[n] = BIT (23) ? address + (imm8 << 2) : address;
+
+	  if (BIT (8))
+	    {
+	      int dest = (BIT (22) << 4) | BITS (12, 15);
+	      imm8 >>= 1;
+	      while (imm8--)
+		{
+		  if (state->bigendSig)
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address + 4);
+		    }
+		  else
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address + 4);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address);
+		    }
+
+		  if (trace)
+		    fprintf (stderr, " VFP: VLDM: D%d = %g\n", dest, VFP_dval (dest));
+
+		  address += 8;
+		  dest += 1;
+		}
+	    }
+	  else
+	    {
+	      int dest = (BITS (12, 15) << 1) | BIT (22);
+
+	      while (imm8--)
+		{
+		  VFP_uword (dest) = ARMul_LoadWordN (state, address);
+		  address += 4;
+		  dest += 1;
+		}
+	    }
+	}
+      return;
+
+    case 0x0B:
+    case 0x0F:
+      if (BITS (16, 19) == 13)
+	{
+	  /* VPOP */
+	  ARMword address = state->Reg[13];
+	  state->Reg[13] = address + (BITS (0, 7) << 2);
+
+	  if (BIT (8))
+	    {
+	      int dest = (BIT (22) << 4) | BITS (12, 15);
+	      int num  = BITS (0, 7) >> 1;
+
+	      while (num--)
+		{
+		  if (state->bigendSig)
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address + 4);
+		    }
+		  else
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address + 4);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address);
+		    }
+
+		  if (trace)
+		    fprintf (stderr, " VFP: VPOP: D%d = %g\n", dest, VFP_dval (dest));
+
+		  address += 8;
+		  dest += 1;
+		}
+	    }
+	  else
+	    {
+	      int sreg = (BITS (12, 15) << 1) | BIT (22);
+	      int num  = BITS (0, 7);
+
+	      while (num--)
+		{
+		  VFP_uword (sreg) = ARMul_LoadWordN (state, address);
+		  address += 4;
+		  sreg += 1;
+		}
+	    }
+	}
+      else if (BITS (9, 11) != 0x5)
+	break;
+      else
+	{
+	  /* VLDM PUW=011 */
+	  int n = BITS (16, 19);
+	  int imm8 = BITS (0, 7);
+	  ARMword address = state->Reg[n];
+	  state->Reg[n] += imm8 << 2;
+
+	  if (BIT (8))
+	    {
+	      int dest = (BIT (22) << 4) | BITS (12, 15);
+
+	      imm8 >>= 1;
+	      while (imm8--)
+		{
+		  if (state->bigendSig)
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address + 4);
+		    }
+		  else
+		    {
+		      VFP_dword (dest) = ARMul_LoadWordN (state, address + 4);
+		      VFP_dword (dest) <<= 32;
+		      VFP_dword (dest) |= ARMul_LoadWordN (state, address);
+		    }
+
+		  if (trace)
+		    fprintf (stderr, " VFP: VLDM: D%d = %g\n", dest, VFP_dval (dest));
+
+		  address += 8;
+		  dest += 1;
+		}
+	    }
+	  else
+	    {
+	      int dest = (BITS (12, 15) << 1) | BIT (22);
+	      while (imm8--)
+		{
+		  VFP_uword (dest) = ARMul_LoadWordN (state, address);
+		  address += 4;
+		  dest += 1;
+		}
+	    }
+	}
+      return;
+
+    case 0x11:
+    case 0x15:
+    case 0x19:
+    case 0x1D:
+      {
+	/* VLDR */
+	ARMword imm32 = BITS (0, 7) << 2;
+	int base = state->Reg[LHSReg];
+	ARMword address;
+	int dest;
+
+	if (LHSReg == 15)
+	  base = (base + 3) & ~3;
+
+	address = base + (BIT (23) ? imm32 : - imm32);
+
+	if (CPNum == 10)
+	  {
+	    dest = (DESTReg << 1) + BIT (22);
+
+	    VFP_uword (dest) = ARMul_LoadWordN (state, address);
+	  }
+	else
+	  {
+	    dest = (BIT (22) << 4) + DESTReg;
+
+	    if (state->bigendSig)
+	      {
+		VFP_dword (dest) = ARMul_LoadWordN (state, address);
+		VFP_dword (dest) <<= 32;
+		VFP_dword (dest) |= ARMul_LoadWordN (state, address + 4);
+	      }
+	    else
+	      {
+		VFP_dword (dest) = ARMul_LoadWordN (state, address + 4);
+		VFP_dword (dest) <<= 32;
+		VFP_dword (dest) |= ARMul_LoadWordN (state, address);
+	      }
+
+	    if (trace)
+	      fprintf (stderr, " VFP: VLDR: D%d = %g\n", dest, VFP_dval (dest));
+	  }
+      }
+      return;
+    }
+
+  fprintf (stderr, "SIM: VFP: Unimplemented: %0x\n", BITS (20, 24));
+}
+
 /* This function does the work of generating the addresses used in an
    LDC instruction.  The code here is always post-indexed, it's up to the
    caller to get the input address correct and to handle base register
@@ -476,6 +893,12 @@ ARMul_LDC (ARMul_State * state, ARMword instr, ARMword address)
 {
   unsigned cpab;
   ARMword data;
+
+  if (CPNum == 10 || CPNum == 11)
+    {
+      handle_VFP_xfer (state, instr);
+      return;
+    }
 
   UNDEF_LSCPCBaseWb;
 
@@ -536,6 +959,12 @@ ARMul_STC (ARMul_State * state, ARMword instr, ARMword address)
 {
   unsigned cpab;
   ARMword data;
+
+  if (CPNum == 10 || CPNum == 11)
+    {
+      handle_VFP_xfer (state, instr);
+      return;
+    }
 
   UNDEF_LSCPCBaseWb;
 
@@ -666,12 +1095,466 @@ ARMul_MRC (ARMul_State * state, ARMword instr)
   return result;
 }
 
+static void
+handle_VFP_op (ARMul_State * state, ARMword instr)
+{
+  int dest;
+  int srcN;
+  int srcM;
+
+  if (BITS (9, 11) != 0x5 || BIT (4) != 0)
+    {
+      fprintf (stderr, "SIM: VFP: Unimplemented: Float op: %08x\n", BITS (0,31));
+      return;
+    }
+
+  if (BIT (8))
+    {
+      dest = BITS(12,15) + (BIT (22) << 4);
+      srcN = LHSReg  + (BIT (7) << 4);
+      srcM = BITS (0,3) + (BIT (5) << 4);
+    }
+  else
+    {
+      dest = (BITS(12,15) << 1) + BIT (22);
+      srcN = (LHSReg << 1) + BIT (7);
+      srcM = (BITS (0,3) << 1) + BIT (5);
+    }
+
+  switch (BITS (20, 27))
+    {
+    case 0xE0:
+    case 0xE4:
+      /* VMLA VMLS */
+      if (BIT (8))
+	{
+	  ARMdval val = VFP_dval (srcN) * VFP_dval (srcM);
+
+	  if (BIT (6))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMLS: %g = %g - %g * %g\n",
+			 VFP_dval (dest) - val, 
+			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
+	      VFP_dval (dest) -= val;
+	    }
+	  else
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMLA: %g = %g + %g * %g\n",
+			 VFP_dval (dest) + val, 
+			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
+	      VFP_dval (dest) += val;
+	    }
+	}
+      else
+	{
+	  ARMfval val = VFP_fval (srcN) * VFP_fval (srcM);
+
+	  if (BIT (6))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMLS: %g = %g - %g * %g\n",
+			 VFP_fval (dest) - val, 
+			 VFP_fval (dest), VFP_fval (srcN), VFP_fval (srcM));
+	      VFP_fval (dest) -= val;
+	    }
+	  else
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMLA: %g = %g + %g * %g\n",
+			 VFP_fval (dest) + val, 
+			 VFP_fval (dest), VFP_fval (srcN), VFP_fval (srcM));
+	      VFP_fval (dest) += val;
+	    }
+	}
+      return;
+
+    case 0xE1:
+    case 0xE5:
+      if (BIT (8))
+	{
+	  ARMdval product = VFP_dval (srcN) * VFP_dval (srcM);
+
+	  if (BIT (6))
+	    {
+	      /* VNMLA */
+	      if (trace)
+		fprintf (stderr, " VFP: VNMLA: %g = -(%g + (%g * %g))\n",
+			 -(VFP_dval (dest) + product),
+			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
+	      VFP_dval (dest) = -(product + VFP_dval (dest));
+	    }
+	  else
+	    {
+	      /* VNMLS */
+	      if (trace)
+		fprintf (stderr, " VFP: VNMLS: %g = -(%g + (%g * %g))\n",
+			 -(VFP_dval (dest) + product),
+			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
+	      VFP_dval (dest) = product - VFP_dval (dest);
+	    }
+	}
+      else
+	{
+	  ARMfval product = VFP_fval (srcN) * VFP_fval (srcM);
+
+	  if (BIT (6))
+	    /* VNMLA */
+	    VFP_fval (dest) = -(product + VFP_fval (dest));
+	  else
+	    /* VNMLS */
+	    VFP_fval (dest) = product - VFP_fval (dest);
+	}
+      return;
+
+    case 0xE2:
+    case 0xE6:
+      if (BIT (8))
+	{
+	  ARMdval product = VFP_dval (srcN) * VFP_dval (srcM);
+
+	  if (BIT (6))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMUL: %g = %g * %g\n",
+			 - product, VFP_dval (srcN), VFP_dval (srcM));
+	      /* VNMUL */
+	      VFP_dval (dest) = - product;
+	    }
+	  else
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMUL: %g = %g * %g\n",
+			 product, VFP_dval (srcN), VFP_dval (srcM));
+	      /* VMUL */
+	      VFP_dval (dest) = product;
+	    }
+	}
+      else
+	{
+	  ARMfval product = VFP_fval (srcN) * VFP_fval (srcM);
+
+	  if (BIT (6))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VNMUL: %g = %g * %g\n",
+			 - product, VFP_fval (srcN), VFP_fval (srcM));
+
+	      VFP_fval (dest) = - product;
+	    }
+	  else
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VMUL: %g = %g * %g\n",
+			 product, VFP_fval (srcN), VFP_fval (srcM));
+
+	      VFP_fval (dest) = product;
+	    }
+	}
+      return;
+	
+    case 0xE3:
+    case 0xE7:
+      if (BIT (6) == 0)
+	{
+	  /* VADD */
+	  if (BIT(8))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VADD %g = %g + %g\n",
+			 VFP_dval (srcN) + VFP_dval (srcM),
+			 VFP_dval (srcN),
+			 VFP_dval (srcM));
+	      VFP_dval (dest) = VFP_dval (srcN) + VFP_dval (srcM);
+	    }
+	  else
+	    VFP_fval (dest) = VFP_fval (srcN) + VFP_fval (srcM);
+
+	}
+      else
+	{
+	  /* VSUB */
+	  if (BIT(8))
+	    {
+	      if (trace)
+		fprintf (stderr, " VFP: VSUB %g = %g - %g\n",
+			 VFP_dval (srcN) - VFP_dval (srcM),
+			 VFP_dval (srcN),
+			 VFP_dval (srcM));
+	      VFP_dval (dest) = VFP_dval (srcN) - VFP_dval (srcM);
+	    }
+	  else
+	    VFP_fval (dest) = VFP_fval (srcN) - VFP_fval (srcM);
+	}
+      return;
+
+    case 0xE8:
+    case 0xEC:
+      if (BIT (6) == 1)
+	break;
+
+      /* VDIV */
+      if (BIT (8))
+	{
+	  ARMdval res = VFP_dval (srcN) / VFP_dval (srcM);
+	  if (trace)
+	    fprintf (stderr, " VFP: VDIV (64bit): %g = %g / %g\n",
+		     res, VFP_dval (srcN), VFP_dval (srcM));
+	  VFP_dval (dest) = res;
+	}
+      else
+	{
+	  if (trace)
+	    fprintf (stderr, " VFP: VDIV: %g = %g / %g\n",
+		     VFP_fval (srcN) / VFP_fval (srcM),
+		     VFP_fval (srcN), VFP_fval (srcM));
+
+	  VFP_fval (dest) = VFP_fval (srcN) / VFP_fval (srcM);
+	}
+      return;
+
+    case 0xEB:
+    case 0xEF:
+      if (BIT (6) != 1)
+	break;
+
+      switch (BITS (16, 19))
+	{
+	case 0x0:
+	  if (BIT (7) == 0)
+	    {
+	      if (BIT (8))
+		{
+		  /* VMOV.F64 <Dd>, <Dm>.  */
+		  VFP_dval (dest) = VFP_dval (srcM);
+		  if (trace)
+		    fprintf (stderr, " VFP: VMOV d%d, d%d: %g\n", dest, srcM, VFP_dval (srcM));
+		}
+	      else
+		{
+		  /* VMOV.F32 <Sd>, <Sm>.  */
+		  VFP_fval (dest) = VFP_fval (srcM);
+		  if (trace)
+		    fprintf (stderr, " VFP: VMOV s%d, s%d: %g\n", dest, srcM, VFP_fval (srcM));
+		}
+	    }
+	  else
+	    {
+	      /* VABS */
+	      if (BIT (8))
+		{
+		  ARMdval src = VFP_dval (srcM);
+		  
+		  VFP_dval (dest) = fabs (src);
+		  if (trace)
+		    fprintf (stderr, " VFP: VABS (%g) = %g\n", src, VFP_dval (dest));
+		}
+	      else
+		{
+		  ARMfval src = VFP_fval (srcM);
+
+		  VFP_fval (dest) = fabsf (src);
+		  if (trace)
+		    fprintf (stderr, " VFP: VABS (%g) = %g\n", src, VFP_fval (dest));
+		}
+	    }
+	  return;
+
+	case 0x1:
+	  if (BIT (7) == 0)
+	    {
+	      /* VNEG */
+	      if (BIT (8))
+		VFP_dval (dest) = - VFP_dval (srcM);
+	      else
+		VFP_fval (dest) = - VFP_fval (srcM);
+	    }
+	  else
+	    {
+	      /* VSQRT */
+	      if (BIT (8))
+		{
+		  if (trace)
+		    fprintf (stderr, " VFP: %g = root(%g)\n",
+			     sqrt (VFP_dval (srcM)), VFP_dval (srcM));
+
+		  VFP_dval (dest) = sqrt (VFP_dval (srcM));
+		}
+	      else
+		{
+		  if (trace)
+		    fprintf (stderr, " VFP: %g = root(%g)\n",
+			     sqrtf (VFP_fval (srcM)), VFP_fval (srcM));
+
+		  VFP_fval (dest) = sqrtf (VFP_fval (srcM));
+		}
+	    }
+	  return;
+
+	case 0x4:
+	case 0x5:
+	  /* VCMP, VCMPE */
+	  if (BIT(8))
+	    {
+	      ARMdval res = VFP_dval (dest);
+
+	      if (BIT (16) == 0)
+		{
+		  ARMdval src = VFP_dval (srcM);
+		  
+		  if (isinf (res) && isinf (src))
+		    {
+		      if (res > 0.0 && src > 0.0)
+			res = 0.0;
+		      else if (res < 0.0 && src < 0.0)
+			res = 0.0;
+		      /* else leave res alone.   */
+		    }
+		  else
+		    res -= src;
+		}
+
+	      /* FIXME: Add handling of signalling NaNs and the E bit.  */
+
+	      state->FPSCR &= 0x0FFFFFFF;
+	      if (res < 0.0)
+		state->FPSCR |= NBIT;
+	      else
+		state->FPSCR |= CBIT;
+	      if (res == 0.0)
+		state->FPSCR |= ZBIT;
+	      if (isnan (res))
+		state->FPSCR |= VBIT;
+
+	      if (trace)
+		fprintf (stderr, " VFP: VCMP (64bit) %g vs %g res %g, flags: %c%c%c%c\n",
+			 VFP_dval (dest), BIT (16) ? 0.0 : VFP_dval (srcM), res,
+			 state->FPSCR & NBIT ? 'N' : '-',
+			 state->FPSCR & ZBIT ? 'Z' : '-',
+			 state->FPSCR & CBIT ? 'C' : '-',
+			 state->FPSCR & VBIT ? 'V' : '-');
+	    }
+	  else
+	    {
+	      ARMfval res = VFP_fval (dest);
+
+	      if (BIT (16) == 0)
+		{
+		  ARMfval src = VFP_fval (srcM);
+		  
+		  if (isinf (res) && isinf (src))
+		    {
+		      if (res > 0.0 && src > 0.0)
+			res = 0.0;
+		      else if (res < 0.0 && src < 0.0)
+			res = 0.0;
+		      /* else leave res alone.   */
+		    }
+		  else
+		    res -= src;
+		}
+
+	      /* FIXME: Add handling of signalling NaNs and the E bit.  */
+
+	      state->FPSCR &= 0x0FFFFFFF;
+	      if (res < 0.0)
+		state->FPSCR |= NBIT;
+	      else
+		state->FPSCR |= CBIT;
+	      if (res == 0.0)
+		state->FPSCR |= ZBIT;
+	      if (isnan (res))
+		state->FPSCR |= VBIT;
+
+	      if (trace)
+		fprintf (stderr, " VFP: VCMP (32bit) %g vs %g res %g, flags: %c%c%c%c\n",
+			 VFP_fval (dest), BIT (16) ? 0.0 : VFP_fval (srcM), res,
+			 state->FPSCR & NBIT ? 'N' : '-',
+			 state->FPSCR & ZBIT ? 'Z' : '-',
+			 state->FPSCR & CBIT ? 'C' : '-',
+			 state->FPSCR & VBIT ? 'V' : '-');
+	    }
+	  return;
+
+	case 0x7:
+	  if (BIT (8))
+	    {
+	      dest = (DESTReg << 1) + BIT (22);
+	      VFP_fval (dest) = VFP_dval (srcM);
+	    }
+	  else
+	    {
+	      dest = DESTReg + (BIT (22) << 4);
+	      VFP_dval (dest) = VFP_fval (srcM);
+	    }
+	  return;
+
+	case 0x8:
+	case 0xC:
+	case 0xD:
+	  /* VCVT integer <-> FP */
+	  if (BIT (18))
+	    {
+	      /* To integer.  */
+	      if (BIT (8))
+		{
+		  dest = (BITS(12,15) << 1) + BIT (22);
+		  if (BIT (16))
+		    VFP_sword (dest) = VFP_dval (srcM);
+		  else
+		    VFP_uword (dest) = VFP_dval (srcM);
+		}
+	      else
+		{
+		  if (BIT (16))
+		    VFP_sword (dest) = VFP_fval (srcM);
+		  else
+		    VFP_uword (dest) = VFP_fval (srcM);
+		}
+	    }
+	  else
+	    {
+	      /* From integer.  */
+	      if (BIT (8))
+		{
+		  srcM = (BITS (0,3) << 1) + BIT (5);
+		  if (BIT (7))
+		    VFP_dval (dest) = VFP_sword (srcM);
+		  else
+		    VFP_dval (dest) = VFP_uword (srcM);
+		}
+	      else
+		{
+		  if (BIT (7))
+		    VFP_fval (dest) = VFP_sword (srcM);
+		  else
+		    VFP_fval (dest) = VFP_uword (srcM);
+		}
+	    }
+	  return;
+	}
+
+      fprintf (stderr, "SIM: VFP: Unimplemented: Float op3: %03x\n", BITS (16,27));
+      return;
+    }
+
+  fprintf (stderr, "SIM: VFP: Unimplemented: Float op2: %02x\n", BITS (20, 27));
+  return;
+}
+
 /* This function does the Busy-Waiting for an CDP instruction.  */
 
 void
 ARMul_CDP (ARMul_State * state, ARMword instr)
 {
   unsigned cpab;
+
+  if (CPNum == 10 || CPNum == 11)
+    {
+      handle_VFP_op (state, instr);
+      return;
+    }
 
   if (! CP_ACCESS_ALLOWED (state, CPNum))
     {
@@ -736,10 +1619,7 @@ IntPending (ARMul_State * state)
 /* Align a word access to a non word boundary.  */
 
 ARMword
-ARMul_Align (state, address, data)
-     ARMul_State * state ATTRIBUTE_UNUSED;
-     ARMword address;
-     ARMword data;
+ARMul_Align (ARMul_State *state ATTRIBUTE_UNUSED, ARMword address, ARMword data)
 {
   /* This code assumes the address is really unaligned,
      as a shift by 32 is undefined in C.  */

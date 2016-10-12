@@ -28,7 +28,7 @@ class _GdbFile (object):
     # These two are needed in Python 3
     encoding = "UTF-8"
     errors = "strict"
-    
+
     def close(self):
         # Do nothing.
         return None
@@ -71,6 +71,42 @@ type_printers = []
 xmethods = []
 # Initial frame filters.
 frame_filters = {}
+# Initial frame unwinders.
+frame_unwinders = []
+
+def execute_unwinders(pending_frame):
+    """Internal function called from GDB to execute all unwinders.
+
+    Runs each currently enabled unwinder until it finds the one that
+    can unwind given frame.
+
+    Arguments:
+        pending_frame: gdb.PendingFrame instance.
+    Returns:
+        gdb.UnwindInfo instance or None.
+    """
+    for objfile in _gdb.objfiles():
+        for unwinder in objfile.frame_unwinders:
+            if unwinder.enabled:
+                unwind_info = unwinder(pending_frame)
+                if unwind_info is not None:
+                    return unwind_info
+
+    current_progspace = _gdb.current_progspace()
+    for unwinder in current_progspace.frame_unwinders:
+        if unwinder.enabled:
+            unwind_info = unwinder(pending_frame)
+            if unwind_info is not None:
+                return unwind_info
+
+    for unwinder in frame_unwinders:
+        if unwinder.enabled:
+            unwind_info = unwinder(pending_frame)
+            if unwind_info is not None:
+                return unwind_info
+
+    return None
+
 
 # Convenience variable to GDB's python directory
 PYTHONDIR = os.path.dirname(os.path.dirname(__file__))

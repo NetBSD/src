@@ -56,7 +56,7 @@ static void overload_list_add_symbol (struct symbol *sym,
 				      const char *oload_name);
 
 static void make_symbol_overload_list_using (const char *func_name,
-					     const char *namespace);
+					     const char *the_namespace);
 
 static void make_symbol_overload_list_qualified (const char *func_name);
 
@@ -157,7 +157,6 @@ inspect_type (struct demangle_parse_info *info,
   int i;
   char *name;
   struct symbol *sym;
-  volatile struct gdb_exception except;
 
   /* Copy the symbol's name from RET_COMP and look it up
      in the symbol table.  */
@@ -173,12 +172,18 @@ inspect_type (struct demangle_parse_info *info,
     }
 
   sym = NULL;
-  TRY_CATCH (except, RETURN_MASK_ALL)
-  {
-    sym = lookup_symbol (name, 0, VAR_DOMAIN, 0);
-  }
 
-  if (except.reason >= 0 && sym != NULL)
+  TRY
+    {
+      sym = lookup_symbol (name, 0, VAR_DOMAIN, 0);
+    }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      return 0;
+    }
+  END_CATCH
+
+  if (sym != NULL)
     {
       struct type *otype = SYMBOL_TYPE (sym);
 
@@ -241,18 +246,19 @@ inspect_type (struct demangle_parse_info *info,
 	    }
 
 	  buf = mem_fileopen ();
-	  TRY_CATCH (except, RETURN_MASK_ERROR)
+	  TRY
 	  {
 	    type_print (type, "", buf, -1);
 	  }
 
 	  /* If type_print threw an exception, there is little point
 	     in continuing, so just bow out gracefully.  */
-	  if (except.reason < 0)
+	  CATCH (except, RETURN_MASK_ERROR)
 	    {
 	      ui_file_delete (buf);
 	      return 0;
 	    }
+	  END_CATCH
 
 	  name = ui_file_obsavestring (buf, &info->obstack, &len);
 	  ui_file_delete (buf);
@@ -326,15 +332,15 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
     {
       if (d_left (comp)->type == DEMANGLE_COMPONENT_NAME)
 	{
-	  struct demangle_component new;
+	  struct demangle_component newobj;
 
 	  ui_file_write (buf, d_left (comp)->u.s_name.s,
 			 d_left (comp)->u.s_name.len);
 	  name = ui_file_obsavestring (buf, &info->obstack, &len);
-	  new.type = DEMANGLE_COMPONENT_NAME;
-	  new.u.s_name.s = name;
-	  new.u.s_name.len = len;
-	  if (inspect_type (info, &new, finder, data))
+	  newobj.type = DEMANGLE_COMPONENT_NAME;
+	  newobj.u.s_name.s = name;
+	  newobj.u.s_name.len = len;
+	  if (inspect_type (info, &newobj, finder, data))
 	    {
 	      char *n, *s;
 	      long slen;
@@ -344,7 +350,7 @@ replace_typedefs_qualified_name (struct demangle_parse_info *info,
 		 node.  */
 
 	      ui_file_rewind (buf);
-	      n = cp_comp_to_string (&new, 100);
+	      n = cp_comp_to_string (&newobj, 100);
 	      if (n == NULL)
 		{
 		  /* If something went astray, abort typedef substitutions.  */
@@ -446,17 +452,21 @@ replace_typedefs (struct demangle_parse_info *info,
 
 	  if (local_name != NULL)
 	    {
-	      struct symbol *sym;
-	      volatile struct gdb_exception except;
+	      struct symbol *sym = NULL;
 
 	      sym = NULL;
-	      TRY_CATCH (except, RETURN_MASK_ALL)
+	      TRY
 		{
 		  sym = lookup_symbol (local_name, 0, VAR_DOMAIN, 0);
 		}
+	      CATCH (except, RETURN_MASK_ALL)
+		{
+		}
+	      END_CATCH
+
 	      xfree (local_name);
 
-	      if (except.reason >= 0 && sym != NULL)
+	      if (sym != NULL)
 		{
 		  struct type *otype = SYMBOL_TYPE (sym);
 		  const char *new_name = (*finder) (otype, data);
@@ -1174,7 +1184,7 @@ overload_list_add_symbol (struct symbol *sym,
 
 struct symbol **
 make_symbol_overload_list (const char *func_name,
-			   const char *namespace)
+			   const char *the_namespace)
 {
   struct cleanup *old_cleanups;
   const char *name;
@@ -1187,15 +1197,15 @@ make_symbol_overload_list (const char *func_name,
 
   old_cleanups = make_cleanup (xfree, sym_return_val);
 
-  make_symbol_overload_list_using (func_name, namespace);
+  make_symbol_overload_list_using (func_name, the_namespace);
 
-  if (namespace[0] == '\0')
+  if (the_namespace[0] == '\0')
     name = func_name;
   else
     {
       char *concatenated_name
-	= alloca (strlen (namespace) + 2 + strlen (func_name) + 1);
-      strcpy (concatenated_name, namespace);
+	= alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
+      strcpy (concatenated_name, the_namespace);
       strcat (concatenated_name, "::");
       strcat (concatenated_name, func_name);
       name = concatenated_name;
@@ -1226,19 +1236,19 @@ make_symbol_overload_list_block (const char *name,
 
 static void
 make_symbol_overload_list_namespace (const char *func_name,
-                                     const char *namespace)
+                                     const char *the_namespace)
 {
   const char *name;
   const struct block *block = NULL;
 
-  if (namespace[0] == '\0')
+  if (the_namespace[0] == '\0')
     name = func_name;
   else
     {
       char *concatenated_name
-	= alloca (strlen (namespace) + 2 + strlen (func_name) + 1);
+	= alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
 
-      strcpy (concatenated_name, namespace);
+      strcpy (concatenated_name, the_namespace);
       strcat (concatenated_name, "::");
       strcat (concatenated_name, func_name);
       name = concatenated_name;
@@ -1263,7 +1273,7 @@ static void
 make_symbol_overload_list_adl_namespace (struct type *type,
                                          const char *func_name)
 {
-  char *namespace;
+  char *the_namespace;
   const char *type_name;
   int i, prefix_len;
 
@@ -1287,11 +1297,11 @@ make_symbol_overload_list_adl_namespace (struct type *type,
 
   if (prefix_len != 0)
     {
-      namespace = alloca (prefix_len + 1);
-      strncpy (namespace, type_name, prefix_len);
-      namespace[prefix_len] = '\0';
+      the_namespace = alloca (prefix_len + 1);
+      strncpy (the_namespace, type_name, prefix_len);
+      the_namespace[prefix_len] = '\0';
 
-      make_symbol_overload_list_namespace (func_name, namespace);
+      make_symbol_overload_list_namespace (func_name, the_namespace);
     }
 
   /* Check public base type */
@@ -1340,7 +1350,7 @@ reset_directive_searched (void *data)
 
 static void
 make_symbol_overload_list_using (const char *func_name,
-				 const char *namespace)
+				 const char *the_namespace)
 {
   struct using_direct *current;
   const struct block *block;
@@ -1365,7 +1375,7 @@ make_symbol_overload_list_using (const char *func_name,
         if (current->alias != NULL || current->declaration != NULL)
           continue;
 
-        if (strcmp (namespace, current->import_dest) == 0)
+        if (strcmp (the_namespace, current->import_dest) == 0)
 	  {
 	    /* Mark this import as searched so that the recursive call
 	       does not search it again.  */
@@ -1383,7 +1393,7 @@ make_symbol_overload_list_using (const char *func_name,
       }
 
   /* Now, add names for this namespace.  */
-  make_symbol_overload_list_namespace (func_name, namespace);
+  make_symbol_overload_list_namespace (func_name, the_namespace);
 }
 
 /* This does the bulk of the work of finding overloaded symbols.
@@ -1443,7 +1453,9 @@ cp_lookup_rtti_type (const char *name, struct block *block)
   struct symbol * rtti_sym;
   struct type * rtti_type;
 
-  rtti_sym = lookup_symbol (name, block, STRUCT_DOMAIN, NULL);
+  /* Use VAR_DOMAIN here as NAME may be a typedef.  PR 18141, 18417.
+     Classes "live" in both STRUCT_DOMAIN and VAR_DOMAIN.  */
+  rtti_sym = lookup_symbol (name, block, VAR_DOMAIN, NULL);
 
   if (rtti_sym == NULL)
     {
@@ -1457,7 +1469,7 @@ cp_lookup_rtti_type (const char *name, struct block *block)
       return NULL;
     }
 
-  rtti_type = SYMBOL_TYPE (rtti_sym);
+  rtti_type = check_typedef (SYMBOL_TYPE (rtti_sym));
 
   switch (TYPE_CODE (rtti_type))
     {

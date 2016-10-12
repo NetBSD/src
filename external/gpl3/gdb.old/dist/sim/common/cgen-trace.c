@@ -66,29 +66,30 @@ static char *bufptr;
 /* Non-zero if this is the first insn in a set of parallel insns.  */
 static int first_insn_p;
 
-/* For communication between trace_insn and trace_result.  */
+/* For communication between cgen_trace_insn and cgen_trace_result.  */
 static int printed_result_p;
 
 /* Insn and its extracted fields.
-   Set by trace_insn, used by trace_insn_fini.
+   Set by cgen_trace_insn, used by cgen_trace_insn_fini.
    ??? Move to SIM_CPU to support heterogeneous multi-cpu case.  */
 static const struct cgen_insn *current_insn;
 static const struct argbuf *current_abuf;
 
 void
-trace_insn_init (SIM_CPU *cpu, int first_p)
+cgen_trace_insn_init (SIM_CPU *cpu, int first_p)
 {
   bufptr = trace_buf;
   *bufptr = 0;
   first_insn_p = first_p;
 
-  /* Set to NULL so trace_insn_fini can know if trace_insn was called.  */
+  /* Set to NULL so cgen_trace_insn_fini can know if cgen_trace_insn was
+     called.  */
   current_insn = NULL;
   current_abuf = NULL;
 }
 
 void
-trace_insn_fini (SIM_CPU *cpu, const struct argbuf *abuf, int last_p)
+cgen_trace_insn_fini (SIM_CPU *cpu, const struct argbuf *abuf, int last_p)
 {
   SIM_DESC sd = CPU_STATE (cpu);
 
@@ -143,7 +144,7 @@ trace_insn_fini (SIM_CPU *cpu, const struct argbuf *abuf, int last_p)
 	     ++i, ++opinst)
 	  {
 	    if (CGEN_OPINST_TYPE (opinst) == CGEN_OPINST_OUTPUT)
-	      trace_result (cpu, current_insn, opinst, indices[i]);
+	      cgen_trace_result (cpu, current_insn, opinst, indices[i]);
 	  }
       }
   }
@@ -158,8 +159,8 @@ trace_insn_fini (SIM_CPU *cpu, const struct argbuf *abuf, int last_p)
 }
 
 void
-trace_insn (SIM_CPU *cpu, const struct cgen_insn *opcode,
-	    const struct argbuf *abuf, IADDR pc)
+cgen_trace_insn (SIM_CPU *cpu, const struct cgen_insn *opcode,
+		 const struct argbuf *abuf, IADDR pc)
 {
   char disasm_buf[50];
 
@@ -183,7 +184,7 @@ trace_insn (SIM_CPU *cpu, const struct cgen_insn *opcode,
 }
 
 void
-trace_extract (SIM_CPU *cpu, IADDR pc, char *name, ...)
+cgen_trace_extract (SIM_CPU *cpu, IADDR pc, char *name, ...)
 {
   va_list args;
   int printed_one_p = 0;
@@ -222,7 +223,7 @@ trace_extract (SIM_CPU *cpu, IADDR pc, char *name, ...)
 }
 
 void
-trace_result (SIM_CPU *cpu, char *name, int type, ...)
+cgen_trace_result (SIM_CPU *cpu, char *name, int type, ...)
 {
   va_list args;
 
@@ -301,18 +302,10 @@ cgen_trace_printf (SIM_CPU *cpu, char *fmt, ...)
 int
 sim_disasm_sprintf (SFILE *f, const char *format, ...)
 {
-#ifndef __STDC__
-  SFILE *f;
-  const char *format;
-#endif
   int n;
   va_list args;
 
   va_start (args, format);
-#ifndef __STDC__
-  f = va_arg (args, SFILE *);
-  format = va_arg (args, char *);
-#endif
   vsprintf (f->current, format, args);
   f->current += n = strlen (f->current);
   va_end (args);

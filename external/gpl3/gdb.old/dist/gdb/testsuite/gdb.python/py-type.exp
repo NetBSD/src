@@ -247,11 +247,14 @@ restart_gdb "${binfile}"
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-gdb_test "python print gdb.lookup_type('char').array(1, 0)" \
+gdb_test "python print(gdb.lookup_type('char').array(1, 0))" \
     "char \\\[0\\\]"
 
-gdb_test "python print gdb.lookup_type('char').array(1, -1)" \
+gdb_test "python print(gdb.lookup_type('char').array(1, -1))" \
     "Array length must not be negative.*"
+
+gdb_test "python print(gdb.lookup_type('int').optimized_out())" \
+    "<optimized out>"
 
 with_test_prefix "lang_c" {
     runto_bp "break to inspect struct and array."

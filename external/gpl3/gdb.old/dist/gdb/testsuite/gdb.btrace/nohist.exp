@@ -21,7 +21,7 @@
 if { [skip_btrace_tests] } { return -1 }
 
 # start inferior
-standard_testfile x86-record_goto.S
+standard_testfile record_goto.c
 if [prepare_for_testing nohist.exp $testfile $srcfile] {
     return -1
 }
@@ -31,10 +31,11 @@ if ![runto_main] {
 }
 
 proc check_not_replaying {} {
-  gdb_test "info record" [join [list \
+  gdb_test "info record" [multi_line \
     "Active record target: record-btrace" \
-	"Recorded 0 instructions in 0 functions for \[^\\\r\\\n\]*" \
-    ] "\r\n"]
+    "Recording format: .*" \
+	"Recorded 0 instructions in 0 functions \\\(0 gaps\\\) for \[^\\\r\\\n\]*" \
+    ]
 }
 
 gdb_test_no_output "record btrace"

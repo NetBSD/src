@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 
 void
 cond_wait (pthread_cond_t *cond, pthread_mutex_t *mut)

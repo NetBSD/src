@@ -840,8 +840,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	      break;
 
 	    case 17: /* Utime.  */
-	      state->Reg[0] = (ARMword) sim_callback->time (sim_callback,
-							    (long *) state->Reg[1]);
+	      state->Reg[0] = state->Reg[1] = (ARMword) sim_callback->time (sim_callback, NULL);
 	      OSptr->ErrorNo = sim_callback->get_errno (sim_callback);
 	      break;
 

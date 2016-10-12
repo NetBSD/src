@@ -71,13 +71,13 @@ const char *gdbscm_print_excp = gdbscm_print_excp_message;
 
 #ifdef HAVE_GUILE
 /* Forward decls, these are defined later.  */
-static const struct extension_language_script_ops guile_extension_script_ops;
-static const struct extension_language_ops guile_extension_ops;
+extern const struct extension_language_script_ops guile_extension_script_ops;
+extern const struct extension_language_ops guile_extension_ops;
 #endif
 
 /* The main struct describing GDB's interface to the Guile
    extension language.  */
-const struct extension_language_defn extension_language_guile =
+EXPORTED_CONST struct extension_language_defn extension_language_guile =
 {
   EXT_LANG_GUILE,
   "guile",
@@ -124,16 +124,17 @@ static const char boot_scm_filename[] = "boot.scm";
 
 /* The interface between gdb proper and loading of python scripts.  */
 
-static const struct extension_language_script_ops guile_extension_script_ops =
+const struct extension_language_script_ops guile_extension_script_ops =
 {
   gdbscm_source_script,
   gdbscm_source_objfile_script,
+  gdbscm_execute_objfile_script,
   gdbscm_auto_load_enabled
 };
 
 /* The interface between gdb proper and guile scripting.  */
 
-static const struct extension_language_ops guile_extension_ops =
+const struct extension_language_ops guile_extension_ops =
 {
   gdbscm_finish_initialization,
   gdbscm_initialized,
@@ -309,11 +310,11 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
 {
   int from_tty_arg_pos = -1, to_string_arg_pos = -1;
   int from_tty = 0, to_string = 0;
-  volatile struct gdb_exception except;
   const SCM keywords[] = { from_tty_keyword, to_string_keyword, SCM_BOOL_F };
   char *command;
   char *result = NULL;
   struct cleanup *cleanups;
+  struct gdb_exception except = exception_none;
 
   gdbscm_parse_function_args (FUNC_NAME, SCM_ARG1, keywords, "s#tt",
 			      command_scm, &command, rest,
@@ -324,7 +325,7 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
      executed.  */
   cleanups = make_cleanup (xfree, command);
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       struct cleanup *inner_cleanups;
 
@@ -345,6 +346,12 @@ gdbscm_execute_gdb_command (SCM command_scm, SCM rest)
 
       do_cleanups (inner_cleanups);
     }
+  CATCH (ex, RETURN_MASK_ALL)
+    {
+      except = ex;
+    }
+  END_CATCH
+
   do_cleanups (cleanups);
   GDBSCM_HANDLE_GDB_EXCEPTION (except);
 
@@ -697,6 +704,10 @@ call_initialize_gdb_module (void *data)
      performed within the desired module.  */
   scm_c_define_module (gdbscm_module_name, initialize_gdb_module, NULL);
 
+#if HAVE_GUILE_MANUAL_FINALIZATION
+  scm_run_finalizers ();
+#endif
+
   return NULL;
 }
 
@@ -842,6 +853,13 @@ _initialize_guile (void)
     /* The Python support puts the C side in module "_gdb", leaving the Python
        side to define module "gdb" which imports "_gdb".  There is evidently no
        similar convention in Guile so we skip this.  */
+
+#if HAVE_GUILE_MANUAL_FINALIZATION
+    /* Our SMOB free functions are not thread-safe, as GDB itself is not
+       intended to be thread-safe.  Disable automatic finalization so that
+       finalizers aren't run in other threads.  */
+    scm_set_automatic_finalization_enabled (0);
+#endif
 
 #ifdef HAVE_SIGPROCMASK
     /* Before we initialize Guile, block SIGCHLD.

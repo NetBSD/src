@@ -28,7 +28,7 @@ if { [prepare_for_testing "${testfile}.exp" "${testfile}" \
 }
 
 # Stress test gdb's handling of cached comp units, disable the cache.
-gdb_test_no_output "maint set dwarf2 max-cache-age 0"
+gdb_test_no_output "maint set dwarf max-cache-age 0"
 
 if ![runto_main] {
     return -1

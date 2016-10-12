@@ -33,7 +33,7 @@ if { $res < 0 || $res == "" } {
 }
 pass $test
 # Declare GDB now as running.
-set gdb_spawn_id -1
+set gdb_spawn_id $res
 
 # GDB started by vgdb stops already after the startup is executed, like with
 # non-extended gdbserver.  It is also not correct to run/attach the inferior.

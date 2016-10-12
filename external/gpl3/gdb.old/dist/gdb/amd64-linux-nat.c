@@ -37,6 +37,7 @@
 #include "x86-xstate.h"
 
 #include "x86-linux-nat.h"
+#include "nat/linux-ptrace.h"
 
 /* Mapping between the general-purpose registers in GNU/Linux x86-64
    `struct user' format and GDB's register cache layout for GNU/Linux
@@ -149,7 +150,7 @@ amd64_linux_fetch_inferior_registers (struct target_ops *ops,
     {
       elf_fpregset_t fpregs;
 
-      if (have_ptrace_getregset)
+      if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
 	  char xstateregs[X86_XSTATE_MAX_SIZE];
 	  struct iovec iov;
@@ -208,7 +209,7 @@ amd64_linux_store_inferior_registers (struct target_ops *ops,
     {
       elf_fpregset_t fpregs;
 
-      if (have_ptrace_getregset)
+      if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
 	  char xstateregs[X86_XSTATE_MAX_SIZE];
 	  struct iovec iov;

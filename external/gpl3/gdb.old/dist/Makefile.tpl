@@ -223,9 +223,8 @@ HOST_EXPORTS = \
 	HOST_LIBS="$(STAGE1_LIBS)"; export HOST_LIBS; \
 	GMPLIBS="$(HOST_GMPLIBS)"; export GMPLIBS; \
 	GMPINC="$(HOST_GMPINC)"; export GMPINC; \
+	ISLLIBS="$(HOST_ISLLIBS)"; export ISLLIBS; \
 	ISLINC="$(HOST_ISLINC)"; export ISLINC; \
-	CLOOGLIBS="$(HOST_CLOOGLIBS)"; export CLOOGLIBS; \
-	CLOOGINC="$(HOST_CLOOGINC)"; export CLOOGINC; \
 	LIBELFLIBS="$(HOST_LIBELFLIBS)" ; export LIBELFLIBS; \
 	LIBELFINC="$(HOST_LIBELFINC)" ; export LIBELFINC; \
 @if gcc-bootstrap
@@ -260,6 +259,7 @@ POSTSTAGE1_HOST_EXPORTS = \
 	  $(XGCC_FLAGS_FOR_TARGET) $$TFLAGS"; export CC; \
 	CC_FOR_BUILD="$$CC"; export CC_FOR_BUILD; \
 	$(POSTSTAGE1_CXX_EXPORT) \
+	$(LTO_EXPORTS) \
 	GNATBIND="$$r/$(HOST_SUBDIR)/prev-gcc/gnatbind"; export GNATBIND; \
 	LDFLAGS="$(POSTSTAGE1_LDFLAGS) $(BOOT_LDFLAGS)"; export LDFLAGS; \
 	HOST_LIBS="$(POSTSTAGE1_LIBS)"; export HOST_LIBS;
@@ -315,11 +315,8 @@ HOST_GMPLIBS = @gmplibs@
 HOST_GMPINC = @gmpinc@
 
 # Where to find ISL
+HOST_ISLLIBS = @isllibs@
 HOST_ISLINC = @islinc@
-
-# Where to find CLOOG
-HOST_CLOOGLIBS = @clooglibs@
-HOST_CLOOGINC = @clooginc@
 
 # Where to find libelf
 HOST_LIBELFLIBS = @libelflibs@
@@ -634,7 +631,16 @@ POSTSTAGE1_FLAGS_TO_PASS = \
 	GNATBIND="$${GNATBIND}" \
 	LDFLAGS="$${LDFLAGS}" \
 	HOST_LIBS="$${HOST_LIBS}" \
+	$(LTO_FLAGS_TO_PASS) \
 	"`echo 'ADAFLAGS=$(BOOT_ADAFLAGS)' | sed -e s'/[^=][^=]*=$$/XFOO=/'`"
+
+@if gcc-bootstrap
+EXTRA_HOST_EXPORTS = if [ $(current_stage) != stage1 ]; then \
+		       $(POSTSTAGE1_HOST_EXPORTS) \
+		     fi ;
+
+EXTRA_BOOTSTRAP_FLAGS = CC="$$CC" CXX="$$CXX" LDFLAGS="$$LDFLAGS"
+@endif gcc-bootstrap
 
 # Flags to pass down to makes which are built with the target environment.
 # The double $ decreases the length of the command line; those variables
@@ -646,7 +652,9 @@ EXTRA_TARGET_FLAGS = \
 	'AS=$(COMPILER_AS_FOR_TARGET)' \
 	'CC=$$(CC_FOR_TARGET) $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
 	'CFLAGS=$$(CFLAGS_FOR_TARGET)' \
-	'CXX=$$(CXX_FOR_TARGET) $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
+	'CXX=$$(CXX_FOR_TARGET) -B$$r/$$(TARGET_SUBDIR)/libstdc++-v3/src/.libs \
+	 -B$$r/$$(TARGET_SUBDIR)/libstdc++-v3/libsupc++/.libs \
+	 $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
 	'CXXFLAGS=$$(CXXFLAGS_FOR_TARGET)' \
 	'DLLTOOL=$$(DLLTOOL_FOR_TARGET)' \
 	'GCJ=$$(GCJ_FOR_TARGET) $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
@@ -665,6 +673,8 @@ EXTRA_TARGET_FLAGS = \
 	'WINDRES=$$(WINDRES_FOR_TARGET)' \
 	'WINDMC=$$(WINDMC_FOR_TARGET)' \
 	'XGCC_FLAGS_FOR_TARGET=$(XGCC_FLAGS_FOR_TARGET)' \
+	'STAGE1_LDFLAGS=$$(POSTSTAGE1_LDFLAGS)' \
+	'STAGE1_LIBS=$$(POSTSTAGE1_LIBS)' \
 	"TFLAGS=$$TFLAGS"
 
 TARGET_FLAGS_TO_PASS = $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)
@@ -867,6 +877,18 @@ mail-report-with-warnings.log: warning.log
 	chmod +x $@
 	echo If you really want to send e-mail, run ./$@ now
 
+# Local Vim config
+
+$(srcdir)/.local.vimrc:
+	$(LN_S) $(srcdir)/contrib/vimrc $@
+
+$(srcdir)/.lvimrc:
+	$(LN_S) $(srcdir)/contrib/vimrc $@
+
+vimrc: $(srcdir)/.local.vimrc $(srcdir)/.lvimrc
+
+.PHONY: vimrc
+
 # Installation targets.
 
 .PHONY: install uninstall
@@ -1006,12 +1028,13 @@ configure-[+prefix+][+module+]: [+ IF bootstrap +][+ ELSE +]
 	  *) topdir=`echo [+subdir+]/[+module+]/ | \
 		sed -e 's,\./,,g' -e 's,[^/]*/,../,g' `$(srcdir) ;; \
 	esac; \
-	srcdiroption="--srcdir=$${topdir}/[+module+]"; \
-	libsrcdir="$$s/[+module+]"; \
+	module_srcdir=[+? module_srcdir (get "module_srcdir") (get "module")+]; \
 	[+ IF no-config-site +]rm -f no-such-file || : ; \
-	CONFIG_SITE=no-such-file [+ ENDIF +]$(SHELL) $${libsrcdir}/configure \
+	CONFIG_SITE=no-such-file [+ ENDIF +]$(SHELL) \
+	  $$s/$$module_srcdir/configure \
+	  --srcdir=$${topdir}/$$module_srcdir \
 	  [+args+] --build=${build_alias} --host=[+host_alias+] \
-	  --target=[+target_alias+] $${srcdiroption} [+extra_configure_flags+] \
+	  --target=[+target_alias+] [+extra_configure_flags+] \
 	  || exit 1
 @endif [+prefix+][+module+]
 
@@ -1059,12 +1082,12 @@ configure-stage[+id+]-[+prefix+][+module+]:
 	  *) topdir=`echo [+subdir+]/[+module+]/ | \
 		sed -e 's,\./,,g' -e 's,[^/]*/,../,g' `$(srcdir) ;; \
 	esac; \
-	srcdiroption="--srcdir=$${topdir}/[+module+]"; \
-	libsrcdir="$$s/[+module+]"; \
-	$(SHELL) $${libsrcdir}/configure \
+	module_srcdir=[+? module_srcdir (get "module_srcdir") (get "module")+]; \
+	$(SHELL) $$s/$$module_srcdir/configure \
+	  --srcdir=$${topdir}/$$module_srcdir \
 	  [+args+] --build=${build_alias} --host=[+host_alias+] \
-	  --target=[+target_alias+] $${srcdiroption} [+ IF prev +]\
-	  --with-build-libsubdir=$(HOST_SUBDIR) [+ ENDIF prev +]\
+	  --target=[+target_alias+] \
+	  [+ IF prev +] --with-build-libsubdir=$(HOST_SUBDIR) [+ ENDIF prev +] \
 	  $(STAGE[+id+]_CONFIGURE_FLAGS)[+ IF extra_configure_flags +] \
 	  [+extra_configure_flags+][+ ENDIF extra_configure_flags +]
 @endif [+prefix+][+module+]-bootstrap
@@ -1188,18 +1211,22 @@ check-[+module+]:
 	@if [ '$(host)' = '$(target)' ] ; then \
 	  r=`${PWD_COMMAND}`; export r; \
 	  s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
-	  $(HOST_EXPORTS) \
+	  $(HOST_EXPORTS) [+ IF bootstrap +]$(EXTRA_HOST_EXPORTS)[+
+	  ENDIF bootstrap +] \
 	  (cd $(HOST_SUBDIR)/[+module+] && \
-	    $(MAKE) $(FLAGS_TO_PASS) [+extra_make_flags+] check); \
+	    $(MAKE) $(FLAGS_TO_PASS) [+extra_make_flags+][+
+	    IF bootstrap +] $(EXTRA_BOOTSTRAP_FLAGS)[+ ENDIF bootstrap +] check)
 	fi
 [+ ELSE check +]
 check-[+module+]:
 	@: $(MAKE); $(unstage)
 	@r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
-	$(HOST_EXPORTS) \
+	$(HOST_EXPORTS) [+ IF bootstrap +]$(EXTRA_HOST_EXPORTS)[+
+	ENDIF bootstrap +] \
 	(cd $(HOST_SUBDIR)/[+module+] && \
-	  $(MAKE) $(FLAGS_TO_PASS) [+extra_make_flags+] check)
+	  $(MAKE) $(FLAGS_TO_PASS) [+extra_make_flags+][+
+	  IF bootstrap +] $(EXTRA_BOOTSTRAP_FLAGS)[+ ENDIF bootstrap +] check)
 [+ ENDIF no_check +]
 @endif [+module+]
 

@@ -33,7 +33,7 @@ EXEEXT = @EXEEXT@
 SUBDIRS = @subdirs@
 RPATH_ENVVAR = @RPATH_ENVVAR@
 ALL_SUBDIRS = gdb.ada gdb.arch gdb.asm gdb.base gdb.btrace gdb.cell gdb.cp \
-	gdb.disasm gdb.dlang gdb.dwarf2 gdb.fortran gdb.gdb gdb.go gdb.hp \
+	gdb.disasm gdb.dlang gdb.dwarf2 gdb.fortran gdb.gdb gdb.go \
 	gdb.java gdb.linespec gdb.mi gdb.modula2 gdb.multi \
 	gdb.objc gdb.opencl gdb.opt gdb.pascal gdb.python gdb.server \
 	gdb.stabs gdb.reverse gdb.threads gdb.trace gdb.xml \

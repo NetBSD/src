@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2016/02/02 20:30:33 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2016/10/12 15:15:18 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -58,6 +58,7 @@ COPTS.dwarf2-frame.c+=-O1
 CLEANDIRFILES+= \
 	ada-exp.c ada-lex.c \
 	c-exp.c \
+	d-exp.c \
 	cp-name-parser.c \
 	f-exp.c \
 	go-exp.c \

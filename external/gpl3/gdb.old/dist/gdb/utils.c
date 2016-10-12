@@ -191,23 +191,6 @@ make_cleanup_bfd_unref (bfd *abfd)
   return make_cleanup (do_bfd_close_cleanup, abfd);
 }
 
-static void
-do_close_cleanup (void *arg)
-{
-  int *fd = arg;
-
-  close (*fd);
-}
-
-struct cleanup *
-make_cleanup_close (int fd)
-{
-  int *saved_fd = xmalloc (sizeof (fd));
-
-  *saved_fd = fd;
-  return make_cleanup_dtor (do_close_cleanup, saved_fd, xfree);
-}
-
 /* Helper function which does the work for make_cleanup_fclose.  */
 
 static void
@@ -1058,6 +1041,18 @@ quit (void)
 #endif
 }
 
+/* See defs.h.  */
+
+void
+maybe_quit (void)
+{
+  if (check_quit_flag () || sync_quit_force_run)
+    quit ();
+  if (deprecated_interactive_hook)
+    deprecated_interactive_hook ();
+  target_check_pending_interrupt ();
+}
+
 
 /* Called when a memory allocation fails, with the number of bytes of
    memory requested in SIZE.  */
@@ -1696,6 +1691,9 @@ init_page_info (void)
 #endif
     }
 
+  /* We handle SIGWINCH ourselves.  */
+  rl_catch_sigwinch = 0;
+
   set_screen_size ();
   set_width ();
 }
@@ -1793,6 +1791,18 @@ static void
 set_height_command (char *args, int from_tty, struct cmd_list_element *c)
 {
   set_screen_size ();
+}
+
+/* See utils.h.  */
+
+void
+set_screen_width_and_height (int width, int height)
+{
+  lines_per_page = height;
+  chars_per_line = width;
+
+  set_screen_size ();
+  set_width ();
 }
 
 /* Wait, so the user can read what's on the screen.  Prompt the user
@@ -2663,23 +2673,10 @@ subset_compare (char *string_to_compare, char *template_string)
   if (template_string != (char *) NULL && string_to_compare != (char *) NULL
       && strlen (string_to_compare) <= strlen (template_string))
     match =
-      (strncmp
-       (template_string, string_to_compare, strlen (string_to_compare)) == 0);
+      (startswith (template_string, string_to_compare));
   else
     match = 0;
   return match;
-}
-
-static void
-pagination_on_command (char *arg, int from_tty)
-{
-  pagination_enabled = 1;
-}
-
-static void
-pagination_off_command (char *arg, int from_tty)
-{
-  pagination_enabled = 0;
 }
 
 static void
@@ -2713,8 +2710,6 @@ Setting this to \"unlimited\" or zero causes GDB never pause during output."),
 			    show_lines_per_page,
 			    &setlist, &showlist);
 
-  init_page_info ();
-
   add_setshow_boolean_cmd ("pagination", class_support,
 			   &pagination_enabled, _("\
 Set state of GDB output pagination."), _("\
@@ -2725,14 +2720,6 @@ Turning pagination off is an alternative to \"set height unlimited\"."),
 			   NULL,
 			   show_pagination_enabled,
 			   &setlist, &showlist);
-
-  if (xdb_commands)
-    {
-      add_com ("am", class_support, pagination_on_command,
-	       _("Enable pagination"));
-      add_com ("sm", class_support, pagination_off_command,
-	       _("Disable pagination"));
-    }
 
   add_setshow_boolean_cmd ("sevenbit-strings", class_support,
 			   &sevenbit_strings, _("\
@@ -3012,105 +2999,6 @@ dummy_obstack_deallocate (void *object, void *data)
   return;
 }
 
-/* The bit offset of the highest byte in a ULONGEST, for overflow
-   checking.  */
-
-#define HIGH_BYTE_POSN ((sizeof (ULONGEST) - 1) * HOST_CHAR_BIT)
-
-/* True (non-zero) iff DIGIT is a valid digit in radix BASE,
-   where 2 <= BASE <= 36.  */
-
-static int
-is_digit_in_base (unsigned char digit, int base)
-{
-  if (!isalnum (digit))
-    return 0;
-  if (base <= 10)
-    return (isdigit (digit) && digit < base + '0');
-  else
-    return (isdigit (digit) || tolower (digit) < base - 10 + 'a');
-}
-
-static int
-digit_to_int (unsigned char c)
-{
-  if (isdigit (c))
-    return c - '0';
-  else
-    return tolower (c) - 'a' + 10;
-}
-
-/* As for strtoul, but for ULONGEST results.  */
-
-ULONGEST
-strtoulst (const char *num, const char **trailer, int base)
-{
-  unsigned int high_part;
-  ULONGEST result;
-  int minus = 0;
-  int i = 0;
-
-  /* Skip leading whitespace.  */
-  while (isspace (num[i]))
-    i++;
-
-  /* Handle prefixes.  */
-  if (num[i] == '+')
-    i++;
-  else if (num[i] == '-')
-    {
-      minus = 1;
-      i++;
-    }
-
-  if (base == 0 || base == 16)
-    {
-      if (num[i] == '0' && (num[i + 1] == 'x' || num[i + 1] == 'X'))
-	{
-	  i += 2;
-	  if (base == 0)
-	    base = 16;
-	}
-    }
-
-  if (base == 0 && num[i] == '0')
-    base = 8;
-
-  if (base == 0)
-    base = 10;
-
-  if (base < 2 || base > 36)
-    {
-      errno = EINVAL;
-      return 0;
-    }
-
-  result = high_part = 0;
-  for (; is_digit_in_base (num[i], base); i += 1)
-    {
-      result = result * base + digit_to_int (num[i]);
-      high_part = high_part * base + (unsigned int) (result >> HIGH_BYTE_POSN);
-      result &= ((ULONGEST) 1 << HIGH_BYTE_POSN) - 1;
-      if (high_part > 0xff)
-	{
-	  errno = ERANGE;
-	  result = ~ (ULONGEST) 0;
-	  high_part = 0;
-	  minus = 0;
-	  break;
-	}
-    }
-
-  if (trailer != NULL)
-    *trailer = &num[i];
-
-  result = result + ((ULONGEST) high_part << HIGH_BYTE_POSN);
-  if (minus)
-    return -result;
-  else
-    return result;
-}
-
 /* Simple, portable version of dirname that does not modify its
    argument.  */
 
@@ -3258,41 +3146,52 @@ make_bpstat_clear_actions_cleanup (void)
 int
 producer_is_gcc_ge_4 (const char *producer)
 {
-  const char *cs;
   int major, minor;
 
-  if (producer == NULL)
-    {
-      /* For unknown compilers expect their behavior is not compliant.  For GCC
-	 this case can also happen for -gdwarf-4 type units supported since
-	 gcc-4.5.  */
-
-      return -1;
-    }
-
-  /* Skip any identifier after "GNU " - such as "C++" or "Java".  */
-
-  if (strncmp (producer, "GNU ", strlen ("GNU ")) != 0)
-    {
-      /* For non-GCC compilers expect their behavior is not compliant.  */
-
-      return -1;
-    }
-  cs = &producer[strlen ("GNU ")];
-  while (*cs && !isdigit (*cs))
-    cs++;
-  if (sscanf (cs, "%d.%d", &major, &minor) != 2)
-    {
-      /* Not recognized as GCC.  */
-
-      return -1;
-    }
-
+  if (! producer_is_gcc (producer, &major, &minor))
+    return -1;
   if (major < 4)
     return -1;
   if (major > 4)
     return INT_MAX;
   return minor;
+}
+
+/* Returns nonzero if the given PRODUCER string is GCC and sets the MAJOR
+   and MINOR versions when not NULL.  Returns zero if the given PRODUCER
+   is NULL or it isn't GCC.  */
+
+int
+producer_is_gcc (const char *producer, int *major, int *minor)
+{
+  const char *cs;
+
+  if (producer != NULL && startswith (producer, "GNU "))
+    {
+      int maj, min;
+
+      if (major == NULL)
+	major = &maj;
+      if (minor == NULL)
+	minor = &min;
+
+      /* Skip any identifier after "GNU " - such as "C11" "C++" or "Java".
+	 A full producer string might look like:
+	 "GNU C 4.7.2"
+	 "GNU Fortran 4.8.2 20140120 (Red Hat 4.8.2-16) -mtune=generic ..."
+	 "GNU C++14 5.0.0 20150123 (experimental)"
+      */
+      cs = &producer[strlen ("GNU ")];
+      while (*cs && !isspace (*cs))
+        cs++;
+      if (*cs && isspace (*cs))
+        cs++;
+      if (sscanf (cs, "%d.%d", major, minor) == 2)
+	return 1;
+    }
+
+  /* Not recognized as GCC.  */
+  return 0;
 }
 
 /* Helper for make_cleanup_free_char_ptr_vec.  */

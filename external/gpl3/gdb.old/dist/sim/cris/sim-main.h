@@ -24,34 +24,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
 
-#define USING_SIM_BASE_H
-
-struct _sim_cpu;
-typedef struct _sim_cpu SIM_CPU;
-
 #include "symcat.h"
 #include "sim-basics.h"
 #include "cgen-types.h"
 #include "cris-desc.h"
 #include "cris-opc.h"
 #include "arch.h"
-
-/* These must be defined before sim-base.h.  */
-typedef USI sim_cia;
-
-#define CIA_GET(cpu)     CPU_PC_GET (cpu)
-#define CIA_SET(cpu,val) CPU_PC_SET ((cpu), (val))
-
-#define SIM_ENGINE_HALT_HOOK(sd, cpu, cia) \
-do { \
-  if (cpu) /* Null if ctrl-c.  */ \
-    sim_pc_set ((cpu), (cia)); \
-} while (0)
-#define SIM_ENGINE_RESTART_HOOK(sd, cpu, cia) \
-do { \
-  sim_pc_set ((cpu), (cia)); \
-} while (0)
-
 #include "sim-base.h"
 #include "cgen-sim.h"
 #include "cris-sim.h"
@@ -225,8 +203,7 @@ struct _sim_cpu {
 /* The sim_state struct.  */
 
 struct sim_state {
-  sim_cpu *cpu;
-#define STATE_CPU(sd, n) (/*&*/ (sd)->cpu)
+  sim_cpu *cpu[MAX_NR_PROCESSORS];
 
   CGEN_STATE cgen_state;
 

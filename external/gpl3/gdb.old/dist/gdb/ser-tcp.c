@@ -168,12 +168,12 @@ net_open (struct serial *scb, const char *name)
   unsigned int polls = 0;
 
   use_udp = 0;
-  if (strncmp (name, "udp:", 4) == 0)
+  if (startswith (name, "udp:"))
     {
       use_udp = 1;
       name = name + 4;
     }
-  else if (strncmp (name, "tcp:", 4) == 0)
+  else if (startswith (name, "tcp:"))
     name = name + 4;
 
   port_str = strchr (name, ':');
@@ -394,6 +394,7 @@ static const struct serial_ops tcp_ops =
   ser_base_noflush_set_tty_state,
   ser_base_setbaudrate,
   ser_base_setstopbits,
+  ser_base_setparity,
   ser_base_drain_output,
   ser_base_async,
   net_read_prim,

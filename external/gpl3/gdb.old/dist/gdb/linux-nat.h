@@ -17,29 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "nat/linux-nat.h"
 #include "target.h"
-
 #include <signal.h>
 
 struct arch_lwp_info;
-
-/* Reasons an LWP last stopped.  */
-
-enum lwp_stop_reason
-{
-  /* Either not stopped, or stopped for a reason that doesn't require
-     special tracking.  */
-  LWP_STOPPED_BY_NO_REASON,
-
-  /* Stopped by a software breakpoint.  */
-  LWP_STOPPED_BY_SW_BREAKPOINT,
-
-  /* Stopped by a hardware breakpoint.  */
-  LWP_STOPPED_BY_HW_BREAKPOINT,
-
-  /* Stopped by a watchpoint.  */
-  LWP_STOPPED_BY_WATCHPOINT
-};
 
 /* Structure describing an LWP.  This is public only for the purposes
    of ALL_LWPS; target-specific code should generally not access it
@@ -93,7 +75,7 @@ struct lwp_info
 
   /* The reason the LWP last stopped, if we need to track it
      (breakpoint, watchpoint, etc.)  */
-  enum lwp_stop_reason stop_reason;
+  enum target_stop_reason stop_reason;
 
   /* On architectures where it is possible to know the data address of
      a triggered watchpoint, STOPPED_DATA_ADDRESS_P is non-zero, and
@@ -133,6 +115,10 @@ struct lwp_info
    native target is active.  */
 extern struct lwp_info *lwp_list;
 
+/* Does the current host support PTRACE_GETREGSET?  */
+enum tribool { TRIBOOL_UNKNOWN = -1, TRIBOOL_FALSE = 0, TRIBOOL_TRUE = 1 };
+extern enum tribool have_ptrace_getregset;
+
 /* Iterate over each active thread (light-weight process).  */
 #define ALL_LWPS(LP)							\
   for ((LP) = lwp_list;							\
@@ -142,7 +128,12 @@ extern struct lwp_info *lwp_list;
 /* Attempt to initialize libthread_db.  */
 void check_for_thread_db (void);
 
-int thread_db_attach_lwp (ptid_t ptid);
+/* Called from the LWP layer to inform the thread_db layer that PARENT
+   spawned CHILD.  Both LWPs are currently stopped.  This function
+   does whatever is required to have the child LWP under the
+   thread_db's control --- e.g., enabling event reporting.  Returns
+   true on success, false if the process isn't using libpthread.  */
+extern int thread_db_notice_clone (ptid_t parent, ptid_t child);
 
 /* Return the set of signals used by the threads library.  */
 extern void lin_thread_get_thread_signals (sigset_t *mask);
@@ -153,13 +144,16 @@ void linux_proc_pending_signals (int pid, sigset_t *pending,
 
 extern int lin_lwp_attach_lwp (ptid_t ptid);
 
-extern void linux_stop_lwp (struct lwp_info *lwp);
+/* For linux_stop_lwp see nat/linux-nat.h.  */
 
-/* Iterator function for lin-lwp's lwp list.  */
-struct lwp_info *iterate_over_lwps (ptid_t filter,
-				    int (*callback) (struct lwp_info *,
-						     void *), 
-				    void *data);
+/* Stop all LWPs, synchronously.  (Any events that trigger while LWPs
+   are being stopped are left pending.)  */
+extern void linux_stop_and_wait_all_lwps (void);
+
+/* Set resumed LWPs running again, as they were before being stopped
+   with linux_stop_and_wait_all_lwps.  (LWPS with pending events are
+   left stopped.)  */
+extern void linux_unstop_all_lwps (void);
 
 /* Create a prototype generic GNU/Linux target.  The client can
    override it with local methods.  */

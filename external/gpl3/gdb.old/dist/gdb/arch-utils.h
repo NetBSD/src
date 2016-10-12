@@ -104,8 +104,8 @@ extern CORE_ADDR generic_skip_solib_resolver (struct gdbarch *gdbarch,
 extern int generic_in_solib_return_trampoline (struct gdbarch *gdbarch,
 					       CORE_ADDR pc, const char *name);
 
-extern int generic_in_function_epilogue_p (struct gdbarch *gdbarch,
-					   CORE_ADDR pc);
+extern int generic_stack_frame_destroyed_p (struct gdbarch *gdbarch,
+					    CORE_ADDR pc);
 
 /* By default, registers are not convertible.  */
 extern int generic_convert_register_p (struct gdbarch *gdbarch, int regnum,
@@ -200,7 +200,9 @@ extern void default_skip_permanent_breakpoint (struct regcache *regcache);
 #define GDB_MMAP_PROT_EXEC	0x4	/* Page can be executed.  */
 
 extern CORE_ADDR default_infcall_mmap (CORE_ADDR size, unsigned prot);
+extern void default_infcall_munmap (CORE_ADDR addr, CORE_ADDR size);
 extern char *default_gcc_target_options (struct gdbarch *gdbarch);
 extern const char *default_gnu_triplet_regexp (struct gdbarch *gdbarch);
+extern int default_addressable_memory_unit_size (struct gdbarch *gdbarch);
 
 #endif

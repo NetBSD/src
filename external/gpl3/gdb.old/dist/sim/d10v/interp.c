@@ -1,10 +1,13 @@
 #include "config.h"
+#include <inttypes.h>
 #include <signal.h>
 #include "bfd.h"
 #include "gdb/callback.h"
 #include "gdb/remote-sim.h"
 
-#include "d10v_sim.h"
+#include "sim-main.h"
+#include "sim-options.h"
+
 #include "gdb/sim-d10v.h"
 #include "gdb/signals.h"
 
@@ -22,8 +25,6 @@
 
 enum _leftright { LEFT_FIRST, RIGHT_FIRST };
 
-static char *myname;
-static SIM_OPEN_KIND sim_kind;
 int d10v_debug;
 
 /* Set this to true to get the previous segment layout. */
@@ -35,14 +36,6 @@ unsigned long ins_type_counters[ (int)INS_MAX ];
 
 uint16 OP[4];
 
-static int init_text_p = 0;
-/* non-zero if we opened prog_bfd */
-static int prog_bfd_was_opened_p;
-bfd *prog_bfd;
-asection *text;
-bfd_vma text_start;
-bfd_vma text_end;
-
 static long hash (long insn, int format);
 static struct hash_entry *lookup_hash (uint32 ins, int size);
 static void get_operands (struct simops *s, uint32 ins);
@@ -50,28 +43,7 @@ static void do_long (uint32 ins);
 static void do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright);
 static void do_parallel (uint16 ins1, uint16 ins2);
 static char *add_commas (char *buf, int sizeof_buf, unsigned long value);
-extern void sim_set_profile (int n);
-extern void sim_set_profile_size (int n);
 static INLINE uint8 *map_memory (unsigned phys_addr);
-
-#ifdef NEED_UI_LOOP_HOOK
-/* How often to run the ui_loop update, when in use */
-#define UI_LOOP_POLL_INTERVAL 0x14000
-
-/* Counter for the ui_loop_hook update */
-static long ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
-
-/* Actual hook to call to run through gdb's gui event loop */
-extern int (*deprecated_ui_loop_hook) (int signo);
-#endif /* NEED_UI_LOOP_HOOK */
-
-#ifndef INLINE
-#if defined(__GNUC__) && defined(__OPTIMIZE__)
-#define INLINE __inline__
-#else
-#define INLINE
-#endif
-#endif
 
 #define MAX_HASH  63
 struct hash_entry
@@ -86,9 +58,7 @@ struct hash_entry
 struct hash_entry hash_table[MAX_HASH+1];
 
 INLINE static long 
-hash(insn, format)
-     long insn;
-     int format;
+hash (long insn, int format)
 {
   if (format & LONG_OPCODE)
     return ((insn & 0x3F000000) >> 24);
@@ -97,9 +67,7 @@ hash(insn, format)
 }
 
 INLINE static struct hash_entry *
-lookup_hash (ins, size)
-     uint32 ins;
-     int size;
+lookup_hash (uint32 ins, int size)
 {
   struct hash_entry *h;
 
@@ -112,7 +80,7 @@ lookup_hash (ins, size)
     {
       if (h->next == NULL)
 	{
-	  State.exception = SIGILL;
+	  State.exception = GDB_SIGNAL_ILL;
 	  State.pc_changed = 1; /* Don't increment the PC. */
 	  return NULL;
 	}
@@ -139,29 +107,8 @@ get_operands (struct simops *s, uint32 ins)
   State.trace.psw = PSW;
 }
 
-bfd_vma
-decode_pc ()
-{
-  asection *s;
-  if (!init_text_p && prog_bfd != NULL)
-    {
-      init_text_p = 1;
-      for (s = prog_bfd->sections; s; s = s->next)
-	if (strcmp (bfd_get_section_name (prog_bfd, s), ".text") == 0)
-	  {
-	    text = s;
-	    text_start = bfd_get_section_vma (prog_bfd, s);
-	    text_end = text_start + bfd_section_size (prog_bfd, s);
-	    break;
-	  }
-    }
-
-  return (PC << 2) + text_start;
-}
-
 static void
-do_long (ins)
-     uint32 ins;
+do_long (uint32 ins)
 {
   struct hash_entry *h;
 #ifdef DEBUG
@@ -178,9 +125,7 @@ do_long (ins)
 }
 
 static void
-do_2_short (ins1, ins2, leftright)
-     uint16 ins1, ins2;
-     enum _leftright leftright;
+do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright)
 {
   struct hash_entry *h;
   enum _ins_type first, second;
@@ -232,8 +177,7 @@ do_2_short (ins1, ins2, leftright)
 }
 
 static void
-do_parallel (ins1, ins2)
-     uint16 ins1, ins2;
+do_parallel (uint16 ins1, uint16 ins2)
 {
   struct hash_entry *h1, *h2;
 #ifdef DEBUG
@@ -299,10 +243,7 @@ do_parallel (ins1, ins2)
 }
  
 static char *
-add_commas(buf, sizeof_buf, value)
-     char *buf;
-     int sizeof_buf;
-     unsigned long value;
+add_commas (char *buf, int sizeof_buf, unsigned long value)
 {
   int comma = 3;
   char *endbuf = buf + sizeof_buf - 1;
@@ -322,9 +263,7 @@ add_commas(buf, sizeof_buf, value)
 }
 
 void
-sim_size (power)
-     int power;
-
+sim_size (int power)
 {
   int i;
   for (i = 0; i < IMEM_SEGMENTS; i++)
@@ -770,43 +709,112 @@ xfer_mem (SIM_ADDR virt,
 
 
 int
-sim_write (sd, addr, buffer, size)
-     SIM_DESC sd;
-     SIM_ADDR addr;
-     const unsigned char *buffer;
-     int size;
+sim_write (SIM_DESC sd, SIM_ADDR addr, const unsigned char *buffer, int size)
 {
   /* FIXME: this should be performing a virtual transfer */
   return xfer_mem( addr, buffer, size, 1);
 }
 
 int
-sim_read (sd, addr, buffer, size)
-     SIM_DESC sd;
-     SIM_ADDR addr;
-     unsigned char *buffer;
-     int size;
+sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
 {
   /* FIXME: this should be performing a virtual transfer */
   return xfer_mem( addr, buffer, size, 0);
 }
 
+static sim_cia
+d10v_pc_get (sim_cpu *cpu)
+{
+  return PC;
+}
+
+static void
+d10v_pc_set (sim_cpu *cpu, sim_cia pc)
+{
+  SET_PC (pc);
+}
+
+static void
+free_state (SIM_DESC sd)
+{
+  if (STATE_MODULES (sd) != NULL)
+    sim_module_uninstall (sd);
+  sim_cpu_free_all (sd);
+  sim_state_free (sd);
+}
+
+SIM_DESC trace_sd = NULL;
 
 SIM_DESC
-sim_open (kind, callback, abfd, argv)
-     SIM_OPEN_KIND kind;
-     host_callback *callback;
-     struct bfd *abfd;
-     char **argv;
+sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
 {
   struct simops *s;
   struct hash_entry *h;
   static int init_p = 0;
   char **p;
+  int i;
+  SIM_DESC sd = sim_state_alloc (kind, cb);
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
 
-  sim_kind = kind;
-  d10v_callback = callback;
-  myname = argv[0];
+  /* The cpu data is kept in a separately allocated chunk of memory.  */
+  if (sim_cpu_alloc_all (sd, 1, /*cgen_cpu_max_extra_bytes ()*/0) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* getopt will print the error message so we just have to exit if this fails.
+     FIXME: Hmmm...  in the case of gdb we need getopt to call
+     print_filtered.  */
+  if (sim_parse_args (sd, argv) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Check for/establish the a reference program image.  */
+  if (sim_analyze_program (sd,
+			   (STATE_PROG_ARGV (sd) != NULL
+			    ? *STATE_PROG_ARGV (sd)
+			    : NULL), abfd) != SIM_RC_OK)
+    {
+      free_state (sd);
+      return 0;
+    }
+
+  /* Configure/verify the target byte order and other runtime
+     configuration options.  */
+  if (sim_config (sd) != SIM_RC_OK)
+    {
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  if (sim_post_argv_init (sd) != SIM_RC_OK)
+    {
+      /* Uninstall the modules to avoid memory leaks,
+	 file descriptor leaks, etc.  */
+      sim_module_uninstall (sd);
+      return 0;
+    }
+
+  /* CPU specific initialization.  */
+  for (i = 0; i < MAX_NR_PROCESSORS; ++i)
+    {
+      SIM_CPU *cpu = STATE_CPU (sd, i);
+
+      CPU_PC_FETCH (cpu) = d10v_pc_get;
+      CPU_PC_STORE (cpu) = d10v_pc_set;
+    }
+
+  trace_sd = sd;
+  d10v_callback = cb;
   old_segment_mapping = 0;
 
   /* NOTE: This argument parsing is only effective when this function
@@ -822,8 +830,6 @@ sim_open (kind, callback, abfd, argv)
       else if (strncmp (*p, "-t", 2) == 0)
 	d10v_debug = atoi (*p + 2);
 #endif
-      else
-	(*d10v_callback->printf_filtered) (d10v_callback, "ERROR: unsupported option(s): %s\n",*p);
     }
   
   /* put all the opcodes in the hash table */
@@ -857,36 +863,14 @@ sim_open (kind, callback, abfd, argv)
     sim_size (1);
   sim_create_inferior ((SIM_DESC) 1, NULL, NULL, NULL);
 
-  /* Fudge our descriptor.  */
-  return (SIM_DESC) 1;
+  return sd;
 }
 
 
 void
-sim_close (sd, quitting)
-     SIM_DESC sd;
-     int quitting;
+sim_close (SIM_DESC sd, int quitting)
 {
-  if (prog_bfd != NULL && prog_bfd_was_opened_p)
-    {
-      bfd_close (prog_bfd);
-      prog_bfd = NULL;
-      prog_bfd_was_opened_p = 0;
-    }
-}
-
-void
-sim_set_profile (n)
-     int n;
-{
-  (*d10v_callback->printf_filtered) (d10v_callback, "sim_set_profile %d\n",n);
-}
-
-void
-sim_set_profile_size (n)
-     int n;
-{
-  (*d10v_callback->printf_filtered) (d10v_callback, "sim_set_profile_size %d\n",n);
+  /* Nothing to do.  */
 }
 
 uint8 *
@@ -951,8 +935,7 @@ imem_addr (uint32 offset)
 static int stop_simulator = 0;
 
 int
-sim_stop (sd)
-     SIM_DESC sd;
+sim_stop (SIM_DESC sd)
 {
   stop_simulator = 1;
   return 1;
@@ -961,9 +944,7 @@ sim_stop (sd)
 
 /* Run (or resume) the program.  */
 void
-sim_resume (sd, step, siggnal)
-     SIM_DESC sd;
-     int step, siggnal;
+sim_resume (SIM_DESC sd, int step, int siggnal)
 {
   uint32 inst;
   uint8 *iaddr;
@@ -977,17 +958,14 @@ sim_resume (sd, step, siggnal)
     {
     case 0:
       break;
-#ifdef SIGBUS
-    case SIGBUS:
-#endif
-    case SIGSEGV:
+    case GDB_SIGNAL_BUS:
       SET_BPC (PC);
       SET_BPSW (PSW);
       SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
       JMP (AE_VECTOR_START);
       SLOT_FLUSH ();
       break;
-    case SIGILL:
+    case GDB_SIGNAL_ILL:
       SET_BPC (PC);
       SET_BPSW (PSW);
       SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
@@ -1004,7 +982,7 @@ sim_resume (sd, step, siggnal)
       iaddr = imem_addr ((uint32)PC << 2);
       if (iaddr == State.mem.fault)
  	{
- 	  State.exception = SIGBUS;
+	  State.exception = GDB_SIGNAL_BUS;
  	  break;
  	}
  
@@ -1072,33 +1050,15 @@ sim_resume (sd, step, siggnal)
 
       /* Writeback all the DATA / PC changes */
       SLOT_FLUSH ();
-
-#ifdef NEED_UI_LOOP_HOOK
-      if (deprecated_ui_loop_hook != NULL && ui_loop_hook_counter-- < 0)
-	{
-	  ui_loop_hook_counter = UI_LOOP_POLL_INTERVAL;
-	  deprecated_ui_loop_hook (0);
-	}
-#endif /* NEED_UI_LOOP_HOOK */
     }
   while ( !State.exception && !stop_simulator);
   
   if (step && !State.exception)
-    State.exception = SIGTRAP;
+    State.exception = GDB_SIGNAL_TRAP;
 }
 
 void
-sim_set_trace (void)
-{
-#ifdef DEBUG
-  d10v_debug = DEBUG;
-#endif
-}
-
-void
-sim_info (sd, verbose)
-     SIM_DESC sd;
-     int verbose;
+sim_info (SIM_DESC sd, int verbose)
 {
   char buf1[40];
   char buf2[40];
@@ -1201,16 +1161,12 @@ sim_info (sd, verbose)
 }
 
 SIM_RC
-sim_create_inferior (sd, abfd, argv, env)
-     SIM_DESC sd;
-     struct bfd *abfd;
-     char **argv;
-     char **env;
+sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
 {
   bfd_vma start_address;
 
   /* reset all state information */
-  memset (&State.regs, 0, (int)&State.mem - (int)&State.regs);
+  memset (&State.regs, 0, (uintptr_t)&State.mem - (uintptr_t)&State.regs);
 
   /* There was a hack here to copy the values of argc and argv into r0
      and r1.  The values were also saved into some high memory that
@@ -1260,19 +1216,8 @@ sim_create_inferior (sd, abfd, argv, env)
   return SIM_RC_OK;
 }
 
-
 void
-sim_set_callbacks (p)
-     host_callback *p;
-{
-  d10v_callback = p;
-}
-
-void
-sim_stop_reason (sd, reason, sigrc)
-     SIM_DESC sd;
-     enum sim_stop *reason;
-     int *sigrc;
+sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
 {
 /*   (*d10v_callback->printf_filtered) (d10v_callback, "sim_stop_reason:  PC=0x%x\n",PC<<2); */
 
@@ -1306,11 +1251,7 @@ sim_stop_reason (sd, reason, sigrc)
 }
 
 int
-sim_fetch_register (sd, rn, memory, length)
-     SIM_DESC sd;
-     int rn;
-     unsigned char *memory;
-     int length;
+sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
 {
   int size;
   switch ((enum sim_d10v_regs) rn)
@@ -1393,11 +1334,7 @@ sim_fetch_register (sd, rn, memory, length)
 }
  
 int
-sim_store_register (sd, rn, memory, length)
-     SIM_DESC sd;
-     int rn;
-     unsigned char *memory;
-     int length;
+sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
 {
   int size;
   switch ((enum sim_d10v_regs) rn)
@@ -1477,35 +1414,3 @@ sim_store_register (sd, rn, memory, length)
   SLOT_FLUSH ();
   return size;
 }
-
-
-void
-sim_do_command (sd, cmd)
-     SIM_DESC sd;
-     const char *cmd;
-{ 
-  (*d10v_callback->printf_filtered) (d10v_callback, "sim_do_command: %s\n",cmd);
-}
-
-SIM_RC
-sim_load (sd, prog, abfd, from_tty)
-     SIM_DESC sd;
-     const char *prog;
-     bfd *abfd;
-     int from_tty;
-{
-  extern bfd *sim_load_file (); /* ??? Don't know where this should live.  */
-
-  if (prog_bfd != NULL && prog_bfd_was_opened_p)
-    {
-      bfd_close (prog_bfd);
-      prog_bfd_was_opened_p = 0;
-    }
-  prog_bfd = sim_load_file (sd, myname, d10v_callback, prog, abfd,
-			    sim_kind == SIM_OPEN_DEBUG,
-			    1/*LMA*/, sim_write);
-  if (prog_bfd == NULL)
-    return SIM_RC_FAIL;
-  prog_bfd_was_opened_p = abfd == NULL;
-  return SIM_RC_OK;
-} 

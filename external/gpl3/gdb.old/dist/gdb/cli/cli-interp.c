@@ -179,17 +179,22 @@ cli_interpreter_exec (void *data, const char *command_str)
 static struct gdb_exception
 safe_execute_command (struct ui_out *command_uiout, char *command, int from_tty)
 {
-  volatile struct gdb_exception e;
+  struct gdb_exception e = exception_none;
   struct ui_out *saved_uiout;
 
   /* Save and override the global ``struct ui_out'' builder.  */
   saved_uiout = current_uiout;
   current_uiout = command_uiout;
 
-  TRY_CATCH (e, RETURN_MASK_ALL)
+  TRY
     {
       execute_command (command, from_tty);
     }
+  CATCH (exception, RETURN_MASK_ALL)
+    {
+      e = exception;
+    }
+  END_CATCH
 
   /* Restore the global builder.  */
   current_uiout = saved_uiout;

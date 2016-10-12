@@ -33,8 +33,8 @@ static reloc_howto_type elf_d10v_howto_table[] =
   /* This reloc does nothing.  */
   HOWTO (R_D10V_NONE,		/* Type.  */
 	 0,			/* Rightshift.  */
-	 2,			/* Size (0 = byte, 1 = short, 2 = long).  */
-	 32,			/* Bitsize.  */
+	 3,			/* Size (0 = byte, 1 = short, 2 = long).  */
+	 0,			/* Bitsize.  */
 	 FALSE,			/* PC_relative.  */
 	 0,			/* Bitpos.  */
 	 complain_overflow_dont,/* Complain_on_overflow.  */
@@ -230,7 +230,7 @@ d10v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_D10V_max)
     {
-      _bfd_error_handler (_("%A: invalid D10V reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid D10V reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = &elf_d10v_howto_table[r_type];

@@ -42,7 +42,8 @@ extern int ser_base_noflush_set_tty_state (struct serial *scb,
 					   serial_ttystate new_ttystate,
 					   serial_ttystate old_ttystate);
 extern int ser_base_setbaudrate (struct serial *scb, int rate);
-extern int ser_base_setstopbits (struct serial *scb, int rate);
+extern int ser_base_setstopbits (struct serial *scb, int num);
+extern int ser_base_setparity (struct serial *scb, int parity);
 extern int ser_base_drain_output (struct serial *scb);
 
 extern int ser_base_write (struct serial *scb, const void *buf, size_t count);

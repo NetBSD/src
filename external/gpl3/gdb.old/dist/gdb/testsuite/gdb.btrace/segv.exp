@@ -31,10 +31,10 @@ if ![runto_main] {
 
 # trace the test code
 gdb_test_no_output "record btrace"
-gdb_test "continue" [join [list \
+gdb_test "continue" [multi_line \
   "Program received signal SIGSEGV, Segmentation fault\." \
   "0x0* in \\\?\\\? \\\(\\\)" \
-  ] "\r\n"] "cont to segv"
+  ] "cont to segv"
 
 # we cannot do any high-level stepping
 gdb_test "reverse-finish" "Cannot find bounds of current function"

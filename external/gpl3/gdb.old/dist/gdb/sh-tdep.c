@@ -2050,11 +2050,14 @@ static const struct frame_unwind sh_stub_unwind =
   sh_stub_unwind_sniffer
 };
 
-/* The epilogue is defined here as the area at the end of a function,
+/* Implement the stack_frame_destroyed_p gdbarch method.
+
+   The epilogue is defined here as the area at the end of a function,
    either on the `ret' instruction itself or after an instruction which
    destroys the function's stack frame.  */
+
 static int
-sh_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
+sh_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR func_addr = 0, func_end = 0;
@@ -2294,7 +2297,7 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_dummy_id (gdbarch, sh_dummy_id);
   frame_base_set_default (gdbarch, &sh_frame_base);
 
-  set_gdbarch_in_function_epilogue_p (gdbarch, sh_in_function_epilogue_p);
+  set_gdbarch_stack_frame_destroyed_p (gdbarch, sh_stack_frame_destroyed_p);
 
   dwarf2_frame_set_init_reg (gdbarch, sh_dwarf2_frame_init_reg);
 

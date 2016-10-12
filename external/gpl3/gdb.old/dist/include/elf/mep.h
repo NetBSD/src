@@ -24,10 +24,6 @@
 
 #define SHF_MEP_VLIW		0x10000000	/* contains vliw code */
 
-/* This bit is reserved by BFD for processor specific stuff.  Name
-   it properly so that we can easily stay consistent elsewhere.  */
-#define SEC_MEP_VLIW		SEC_TIC54X_BLOCK
-
 #include "elf/reloc-macros.h"
 
 /* Note: The comments in this file are used by bfd/mep-relocs.pl to
