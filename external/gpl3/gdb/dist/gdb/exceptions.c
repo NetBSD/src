@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,24 +26,23 @@
 #include "ui-out.h"
 #include "serial.h"
 #include "gdbthread.h"
-
-void
-prepare_to_throw_exception (void)
-{
-  clear_quit_flag ();
-  immediate_quit = 0;
-}
+#include "top.h"
 
 static void
 print_flush (void)
 {
+  struct ui *ui = current_ui;
   struct serial *gdb_stdout_serial;
+  struct cleanup *old_chain = make_cleanup (null_cleanup, NULL);
 
   if (deprecated_error_begin_hook)
     deprecated_error_begin_hook ();
 
   if (target_supports_terminal_ours ())
-    target_terminal_ours ();
+    {
+      make_cleanup_restore_target_terminal ();
+      target_terminal_ours_for_output ();
+    }
 
   /* We want all output to appear now, before we print the error.  We
      have 3 levels of buffering we have to flush (it's possible that
@@ -59,7 +58,7 @@ print_flush (void)
   gdb_flush (gdb_stderr);
 
   /* 3.  The system-level buffer.  */
-  gdb_stdout_serial = serial_fdopen (1);
+  gdb_stdout_serial = serial_fdopen (fileno (ui->outstream));
   if (gdb_stdout_serial)
     {
       serial_drain_output (gdb_stdout_serial);
@@ -67,6 +66,8 @@ print_flush (void)
     }
 
   annotate_error_begin ();
+
+  do_cleanups (old_chain);
 }
 
 static void
@@ -143,12 +144,7 @@ exception_fprintf (struct ui_file *file, struct gdb_exception e,
    returned by catch_exceptions().  It is an internal_error() for
    FUNC() to return a negative value.
 
-   See exceptions.h for further usage details.
-
-   Must not be called with immediate_quit in effect (bad things might
-   happen, say we got a signal in the middle of a memcpy to quit_return).
-   This is an OK restriction; with very few exceptions immediate_quit can
-   be replaced by judicious use of QUIT.  */
+   See exceptions.h for further usage details.  */
 
 /* MAYBE: cagney/1999-11-05: catch_errors() in conjunction with
    error() et al. could maintain a set of flags that indicate the

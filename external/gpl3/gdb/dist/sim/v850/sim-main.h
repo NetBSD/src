@@ -1,13 +1,6 @@
 #ifndef SIM_MAIN_H
 #define SIM_MAIN_H
 
-/* General config options */
-
-#define WITH_CORE
-#define WITH_MODULO_MEMORY 1
-#define WITH_WATCHPOINTS 1
-
-
 /* The v850 has 32bit words, numbered 31 (MSB) to 0 (LSB) */
 
 #define WITH_TARGET_WORD_MSB 31

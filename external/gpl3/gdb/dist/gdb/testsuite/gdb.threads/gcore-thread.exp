@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,7 +127,7 @@ foreach name { corefile core0file } { with_test_prefix $name {
     # mapping various OS's may do?  Let's assume that there must
     # be at least two threads:
 
-    gdb_test "info threads" ".*${nl}  2 ${horiz}${nl}\\* 1 .*" \
+    gdb_test "info threads" "\\* 1 ${horiz}${nl}  2 ${horiz}.*" \
 	    "corefile contains at least two threads"
 
     # One thread in the corefile should be in the "thread2" function.
@@ -137,6 +137,6 @@ foreach name { corefile core0file } { with_test_prefix $name {
 
     # The thread2 thread should be marked as the current thread.
 
-    gdb_test "info threads" ".*${nl}\\* ${horiz} thread2 .*" \
+    gdb_test "info threads" "\\* ${horiz} thread2 .*${nl}" \
 	    "thread2 is current thread in corefile"
 }}

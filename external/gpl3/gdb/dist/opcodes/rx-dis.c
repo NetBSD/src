@@ -1,5 +1,5 @@
 /* Disassembler code for Renesas RX.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -48,14 +48,14 @@ rx_get_byte (void * vdata)
   return buf[0];
 }
 
-static char const * size_names[] =
+static char const * size_names[RX_MAX_SIZE] =
 {
-  "", ".b", ".ub", ".b", ".w", ".uw", ".w", ".a", ".l"
+  "", ".b", ".ub", ".b", ".w", ".uw", ".w", ".a", ".l", "<error>"
 };
 
-static char const * opsize_names[] =
+static char const * opsize_names[RX_MAX_SIZE] =
 {
-  "", ".b", ".b", ".b", ".w", ".w", ".w", ".a", ".l"
+  "", ".b", ".b", ".b", ".w", ".w", ".w", ".a", ".l", "<error>"
 };
 
 static char const * register_names[] =
@@ -64,17 +64,17 @@ static char const * register_names[] =
   "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
   "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15",
   /* control register */
-  "psw", "pc", "usp", "fpsw", "", "", "", "wr",
-  "bpsw", "bpc", "isp", "fintv", "intb", "", "", "",
-  "pbp", "pben", "", "", "", "", "", "",
-  "bbpsw", "bbpc", "", "", "", "", "", ""
+  "psw", "pc", "usp", "fpsw", NULL, NULL, NULL, NULL,
+  "bpsw", "bpc", "isp", "fintv", "intb", "extb", NULL, NULL,
+  "a0", "a1", NULL, NULL, NULL, NULL, NULL, NULL,
+  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 };
 
 static char const * condition_names[] =
 {
   /* condition codes */
   "eq", "ne", "c", "nc", "gtu", "leu", "pz", "n",
-  "ge", "lt", "gt", "le", "o", "no", "always", "never"
+  "ge", "lt", "gt", "le", "o", "no", "<invalid>", "<invalid>"
 };
 
 static const char * flag_names[] =
@@ -104,6 +104,23 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
 #define PS (dis->stream)
 #define PC(c) PR (PS, "%c", c)
 
+  /* Detect illegal instructions.  */
+  if (opcode.op[0].size == RX_Bad_Size
+      || register_names [opcode.op[0].reg] == NULL
+      || register_names [opcode.op[1].reg] == NULL
+      || register_names [opcode.op[2].reg] == NULL)
+    {
+      bfd_byte buf[10];
+      int i;
+
+      PR (PS, ".byte ");
+      rx_data.dis->read_memory_func (rx_data.pc - rv, buf, rv, rx_data.dis);
+      
+      for (i = 0 ; i < rv; i++)
+	PR (PS, "0x%02x ", buf[i]);
+      return rv;
+    }
+      
   for (s = opcode.syntax; *s; s++)
     {
       if (*s != '%')
@@ -151,7 +168,7 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
 	      oper = opcode.op + *s - '0';
 	      if (do_size)
 		{
-		  if (oper->type == RX_Operand_Indirect)
+		  if (oper->type == RX_Operand_Indirect || oper->type == RX_Operand_Zero_Indirect)
 		    PR (PS, "%s", size_names[oper->size]);
 		}
 	      else
@@ -172,10 +189,10 @@ print_insn_rx (bfd_vma addr, disassemble_info * dis)
 		    PR (PS, "%s", register_names[oper->reg]);
 		    break;
 		  case RX_Operand_Indirect:
-		    if (oper->addend)
-		      PR (PS, "%d[%s]", oper->addend, register_names[oper->reg]);
-		    else
-		      PR (PS, "[%s]", register_names[oper->reg]);
+		    PR (PS, "%d[%s]", oper->addend, register_names[oper->reg]);
+		    break;
+		  case RX_Operand_Zero_Indirect:
+		    PR (PS, "[%s]", register_names[oper->reg]);
 		    break;
 		  case RX_Operand_Postinc:
 		    PR (PS, "[%s+]", register_names[oper->reg]);

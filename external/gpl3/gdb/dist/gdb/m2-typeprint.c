@@ -1,5 +1,5 @@
 /* Support for printing Modula 2 types for GDB, the GNU debugger.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,7 +74,7 @@ m2_print_type (struct type *type, const char *varstring,
 	       int show, int level,
 	       const struct type_print_options *flags)
 {
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   QUIT;
 
@@ -160,7 +160,7 @@ void
 m2_print_typedef (struct type *type, struct symbol *new_symbol,
 		  struct ui_file *stream)
 {
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   fprintf_filtered (stream, "TYPE ");
   if (!TYPE_NAME (SYMBOL_TYPE (new_symbol))
       || strcmp (TYPE_NAME ((SYMBOL_TYPE (new_symbol))),
@@ -373,7 +373,7 @@ m2_is_long_set (struct type *type)
 static int
 m2_get_discrete_bounds (struct type *type, LONGEST *lowp, LONGEST *highp)
 {
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   switch (TYPE_CODE (type))
     {
     case TYPE_CODE_CHAR:

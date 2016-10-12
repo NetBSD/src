@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -643,6 +643,11 @@ proc test_artificial_arrays {} {
     gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@2${ctrlv}@3" \
 	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
 	{p int1dim[0]@2@3}
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@TWO" " = {0, 1}" \
+        {p int1dim[0]@TWO}
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@TWO${ctrlv}@three" \
+	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
+	{p int1dim[0]@TWO@three}
     gdb_test_escape_braces {p/x (short [])0x12345678} \
 	" = ({0x1234, 0x5678}|{0x5678, 0x1234})"
 }
@@ -678,8 +683,7 @@ proc test_print_string_constants {} {
     gdb_test_no_output "set print elements 50"
 
     if [target_info exists gdb,cannot_call_functions] {
-	setup_xfail "*-*-*" 2416
-	fail "This target can not call functions"
+	unsupported "This target can not call functions"
 	return
     }
 
@@ -702,8 +706,7 @@ proc test_print_string_constants {} {
 proc test_print_array_constants {} {
 
     if [target_info exists gdb,cannot_call_functions] {
-	setup_xfail "*-*-*" 2416
-	fail "This target can not call functions"
+	unsupported "This target can not call functions"
 	return
     }
 

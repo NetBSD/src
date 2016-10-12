@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2015 Free Software Foundation, Inc.
+# Copyright (C) 2012-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,8 @@ if { [prepare_for_testing ${testfile}.exp $executable] } {
 # Start the program running and then wait for a bit, to be sure
 # that it can be attached to.
 
-set testpid [spawn_wait_for_attach $binfile]
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
 
 set parentpid 0
 
@@ -48,4 +49,4 @@ gdb_test_multiple "attach $testpid" $test {
 if {$parentpid != 0} {
   eval exec kill -9 $parentpid
 }
-eval exec kill -9 $testpid
+kill_wait_spawned_process $test_spawn_id

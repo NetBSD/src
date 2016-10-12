@@ -1,4 +1,4 @@
-# Copyright 2000-2015 Free Software Foundation, Inc.
+# Copyright 2000-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -141,6 +141,20 @@ proc skip_gdbserver_tests { } {
     return 1
   }
 
+    # If GDB is lack of XML support, and targets, like arm, have
+    # multiple target descriptions, GDB doesn't know which target
+    # description GDBserver uses, and may fail to parse 'g' packet
+    # after connection.
+    if { [gdb_skip_xml_test]
+	 && ([istarget "arm*-*-linux*"]
+	     || [istarget "mips*-*-linux*"]
+	     || [istarget "powerpc*-*-linux*"]
+	     || [istarget "s390*-*-linux*"]
+	     || [istarget "x86_64-*-linux*"]
+	     || [istarget "i\[34567\]86-*-linux*"]) } {
+	return 1
+    }
+
   return 0
 }
 
@@ -154,6 +168,10 @@ proc gdbserver_download_current_prog { } {
     global gdbserver_host_mtime
     global gdbserver_server_exec
     global last_loaded_file
+
+    if { ![info exists last_loaded_file] } {
+	return ""
+    }
 
     set host_exec $last_loaded_file
 
@@ -176,11 +194,7 @@ proc gdbserver_download_current_prog { } {
     if { $reuse == 0 } {
 	set gdbserver_host_exec $host_exec
 	set gdbserver_host_mtime [file mtime $host_exec]
-	if [is_remote target] {
-	    set gdbserver_server_exec [gdb_download $host_exec]
-	} else {
-	    set gdbserver_server_exec $host_exec
-	}
+	set gdbserver_server_exec [gdb_remote_download target $host_exec]
     }
 
     return $gdbserver_server_exec
@@ -324,7 +338,7 @@ proc gdbserver_spawn { child_args } {
 # Close the GDBserver connection.
 
 proc close_gdbserver {} {
-    global server_spawn_id inferior_spawn_id
+    global server_spawn_id
 
     # We can't just call close, because if gdbserver is local then that means
     # that it will get a SIGHUP.  Doing it this way could also allow us to
@@ -340,7 +354,6 @@ proc close_gdbserver {} {
     catch "close -i $server_spawn_id"
     catch "wait -i $server_spawn_id"
     unset server_spawn_id
-    unset inferior_spawn_id
 }
 
 # Hook into GDB exit, and close GDBserver.
@@ -349,7 +362,7 @@ if { [info procs gdbserver_gdb_exit] == "" } {
     rename gdb_exit gdbserver_orig_gdb_exit
 }
 proc gdb_exit {} {
-    global gdb_spawn_id server_spawn_id inferior_spawn_id
+    global gdb_spawn_id server_spawn_id
     global gdb_prompt
     global gdbserver_reconnect_p
 
@@ -376,7 +389,6 @@ proc gdb_exit {} {
 		-i "$server_spawn_id" eof {
 		    wait -i $expect_out(spawn_id)
 		    unset server_spawn_id
-		    unset inferior_spawn_id
 		}
 	    }
 	}
@@ -434,15 +446,21 @@ proc gdbserver_reconnect { } {
     return [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport]
 }
 
-# Start and connect to a gdbserver in extended mode.  Note this frobs
-# $gdbserver_protocol, so should be used only from a board that
-# usually connects in target remote mode.
-proc gdbserver_start_extended { } {
+# Start gdbserver in extended mode with OPTIONS and connect to it.  Note
+# this frobs $gdbserver_protocol, so should be used only from a board
+# that usually connects in target remote mode.
+proc gdbserver_start_extended { {options ""} } {
     global gdbserver_protocol
     global gdbserver_gdbport
     global use_gdb_stub
 
-    if { [catch { gdbserver_start "--multi" "" } res] == 1 } {
+    set gdbserver_options "--multi"
+
+    if { $options != "" } {
+	append gdbserver_options " $options"
+    }
+
+    if { [catch { gdbserver_start $gdbserver_options "" } res] == 1 } {
 	perror $res
 	return 2
     }

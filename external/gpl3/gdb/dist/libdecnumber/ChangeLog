@@ -1,3 +1,7 @@
+2015-07-14  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
 2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
 
 	* configure: Regenerated.
@@ -23,7 +27,7 @@
 
 	* configure.ac: Add AC_CONFIG_AUX_DIR.
 	* configure: Regenerated.
-		
+
 2013-03-27  Kai Tietz  <ktietz@redhat.com>
 
 	* configure: Regenerated.
@@ -208,7 +212,7 @@
 
 2009-04-01  Ben Elliston  <bje@au.ibm.com>
 
-        * decContext.h: Include gstdint.h instead of <stdint.h>.
+	* decContext.h: Include gstdint.h instead of <stdint.h>.
 
 2009-03-30  Ben Elliston  <bje@au.ibm.com>
 
@@ -460,7 +464,7 @@
 
 	* Makefile.in: Don't include decRound in library used by compiler.
 
-2006-10-10  Brooks Moses  <bmoses@stanford.edu> 
+2006-10-10  Brooks Moses  <bmoses@stanford.edu>
 	* Makefile.in: Added empty "pdf" target.
 
 2006-09-15  Kaveh R. Ghazi  <ghazi@caip.rutgers.edu>
@@ -555,11 +559,11 @@
 
 2006-01-02  Paolo Bonzini  <bonzini@gnu.org>
 
-        PR target/25259
-        * configure.ac: Use GCC_HEADER_STDINT.
-        * decContext.h: Include gstdint.h.
-        * aclocal.m4: Regenerate.
-        * configure: Regenerate.
+	PR target/25259
+	* configure.ac: Use GCC_HEADER_STDINT.
+	* decContext.h: Include gstdint.h.
+	* aclocal.m4: Regenerate.
+	* configure: Regenerate.
 
 2005-12-20  Roger Sayle  <roger@eyesopen.com>
 
@@ -598,7 +602,7 @@
 	* decimal32.c: Ditto.
 	* decimal64.c: Ditto.
 	* decimal128.c: Ditto.
-	
+
 2005-11-29  Ben Elliston  <bje@au.ibm.com>
 
 	* decUtility.c: Remove redundant #includes.
@@ -615,7 +619,7 @@
 2005-11-29  Ben Elliston  <bje@au.ibm.com>
 
 	* decimal32.h, decimal64.h, decimal128.h: New.
-        * decimal32.c, decimal64.c, decimal128.c: Likewise.
+	* decimal32.c, decimal64.c, decimal128.c: Likewise.
 	* decContext.c, decContext.h: Likewise.
 	* decUtility.c, decUtility.h: Likewise.
 	* decNumber.c, decNumber.h, decNumberLocal.h: Likewise.

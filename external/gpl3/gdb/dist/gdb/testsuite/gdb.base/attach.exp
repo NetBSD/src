@@ -1,4 +1,4 @@
-# Copyright 1997-2015 Free Software Foundation, Inc.
+# Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,18 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-
-# On HP-UX 11.0, this test is causing a process running the program
-# "attach" to be left around spinning.  Until we figure out why, I am
-# commenting out the test to avoid polluting tiamat (our 11.0 nightly
-# test machine) with these processes. RT
-#
-# Setting the magic bit in the target app should work.  I added a
-# "kill", and also a test for the R3 register warning.  JB
-if { [istarget "hppa*-*-hpux*"] } {
-    return 0
-}
 
 if {![can_spawn_for_attach]} {
     return 0
@@ -82,7 +70,8 @@ proc do_attach_tests {} {
     # Start the program running and then wait for a bit, to be sure
     # that it can be attached to.
 
-    set testpid [spawn_wait_for_attach $binfile]
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
     # Verify that we cannot attach to nonsense.
 
@@ -279,10 +268,11 @@ proc do_attach_tests {} {
     # the next test run (and prevent the compile by keeping
     # the text file busy), in case the "set should_exit" didn't
     # work.
-   
-    remote_exec build "kill -9 ${testpid}"
 
-    set testpid [spawn_wait_for_attach $binfile]
+    kill_wait_spawned_process $test_spawn_id
+
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
     # Verify that we can attach to the process, and find its a.out
     # when we're cd'd to some directory that doesn't contain the
@@ -322,14 +312,15 @@ proc do_attach_tests {} {
 	"y"
     
     # Another "don't leave a process around"
-    remote_exec build "kill -9 ${testpid}"
+    kill_wait_spawned_process $test_spawn_id
 }
 
 proc do_call_attach_tests {} {
     global gdb_prompt
     global binfile2
     
-    set testpid [spawn_wait_for_attach $binfile2]
+    set test_spawn_id [spawn_wait_for_attach $binfile2]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
     # Attach
    
@@ -366,7 +357,7 @@ proc do_call_attach_tests {} {
    
     # Be paranoid
    
-    remote_exec build "kill -9 ${testpid}"
+    kill_wait_spawned_process $test_spawn_id
 }
 
 proc do_command_attach_tests {} {
@@ -382,27 +373,21 @@ proc do_command_attach_tests {} {
 	return 0
     }
 
-    set testpid [spawn_wait_for_attach $binfile]
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
 
     gdb_exit
-    if $verbose>1 then {
-        send_user "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS --pid=$testpid\n"
-    }
 
-    eval "spawn $GDB $INTERNAL_GDBFLAGS $GDBFLAGS --pid=$testpid"
+    set res [gdb_spawn_with_cmdline_opts "--pid=$testpid"]
     set test "starting with --pid"
-    expect {
+    gdb_test_multiple "" $test {
 	-re "Reading symbols from.*$gdb_prompt $" {
 	    pass "$test"
-	}
-	timeout {
-	    fail "$test (timeout)"
 	}
     }
 
     # Get rid of the process
-
-    remote_exec build "kill -9 ${testpid}"
+    kill_wait_spawned_process $test_spawn_id
 }
 
 # Test ' gdb --pid PID -ex "run" '.  GDB used to have a bug where
@@ -418,7 +403,8 @@ proc test_command_line_attach_run {} {
     }
 
     with_test_prefix "cmdline attach run" {
-	set testpid [spawn_wait_for_attach $binfile]
+	set test_spawn_id [spawn_wait_for_attach $binfile]
+	set testpid [spawn_id_get_pid $test_spawn_id]
 
 	set test "run to prompt"
 	gdb_exit
@@ -427,7 +413,7 @@ proc test_command_line_attach_run {} {
 		     "-iex \"set height 0\" -iex \"set width 0\" --pid=$testpid -ex \"start\""]
 	if { $res != 0} {
 	    fail $test
-	    remote_exec build "kill -9 ${testpid}"
+	    kill_wait_spawned_process $test_spawn_id
 	    return $res
 	}
 	gdb_test_multiple "" $test {
@@ -446,7 +432,7 @@ proc test_command_line_attach_run {} {
 	}
 
 	# Get rid of the process
-	remote_exec build "kill -9 ${testpid}"
+	kill_wait_spawned_process $test_spawn_id
     }
 }
 

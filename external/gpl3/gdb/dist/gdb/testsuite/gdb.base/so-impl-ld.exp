@@ -1,4 +1,4 @@
-# Copyright 1997-2015 Free Software Foundation, Inc.
+# Copyright 1997-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,14 +30,6 @@ if [get_compiler_info] {
     return -1
 }
 
-if [get_compiler_info] {
-    return -1
-}
-
-if [test_compiler_info "hpcc-*"] {
-    lappend exec_opts "additional_flags=-Ae"
-}
-
 if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
      || [gdb_compile $srcdir/$subdir/$srcfile $binfile \
 	     executable $exec_opts] != ""} {
@@ -48,7 +40,7 @@ if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
 # Start with a fresh gdb
 
 clean_restart ${binfile}
-gdb_load_shlibs $lib_sl
+gdb_load_shlib $lib_sl
 
 # This program implicitly loads SOM shared libraries.
 #

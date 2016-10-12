@@ -1,5 +1,5 @@
 /* Support for the generic parts of COFF, for BFD.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1066,6 +1066,7 @@ bfd_boolean
 coff_write_alien_symbol (bfd *abfd,
 			 asymbol *symbol,
 			 struct internal_syment *isym,
+			 union internal_auxent *iaux,
 			 bfd_vma *written,
 			 bfd_size_type *string_size_p,
 			 asection **debug_string_section_p,
@@ -1151,6 +1152,8 @@ coff_write_alien_symbol (bfd *abfd,
 			   debug_string_section_p, debug_string_size_p);
   if (isym != NULL)
     *isym = native->u.syment;
+  if (iaux != NULL && native->u.syment.n_numaux)
+    *iaux = native[1].u.auxent;
   return ret;
 }
 
@@ -1268,7 +1271,7 @@ coff_write_symbols (bfd *abfd)
       if (c_symbol == (coff_symbol_type *) NULL
 	  || c_symbol->native == (combined_entry_type *) NULL)
 	{
-	  if (!coff_write_alien_symbol (abfd, symbol, NULL, &written,
+	  if (!coff_write_alien_symbol (abfd, symbol, NULL, NULL, &written,
 					&string_size, &debug_string_section,
 					&debug_string_size))
 	    return FALSE;
@@ -1381,7 +1384,7 @@ coff_write_symbols (bfd *abfd)
 
 	  else if (! c_symbol->native->is_sym)
 	    maxlen = bfd_coff_force_symnames_in_strings (abfd) ? 0 : SYMNMLEN;
-	    
+
 	  else if (bfd_coff_symname_in_debug (abfd,
 					      &c_symbol->native->u.syment))
 	    /* This symbol name is in the XCOFF .debug section.
@@ -1782,7 +1785,7 @@ coff_get_normalized_symtab (bfd *abfd)
   if (internal == NULL && size != 0)
     return NULL;
   internal_end = internal + obj_raw_syment_count (abfd);
-  
+
   raw_src = (char *) obj_coff_external_syms (abfd);
 
   /* Mark the end of the symbols.  */
@@ -2257,7 +2260,7 @@ coff_find_nearest_line_with_names (bfd *abfd,
 
       bias = _bfd_dwarf2_find_symbol_bias (symbols,
 					   & coff_data (abfd)->dwarf2_find_line_info);
-      
+
       if (bias
 	  && _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section,
 					    offset + bias,
@@ -2486,7 +2489,7 @@ coff_sizeof_headers (bfd *abfd, struct bfd_link_info *info)
 {
   size_t size;
 
-  if (!info->relocatable)
+  if (!bfd_link_relocatable (info))
     size = bfd_coff_filhsz (abfd) + bfd_coff_aoutsz (abfd);
   else
     size = bfd_coff_filhsz (abfd);
@@ -2688,7 +2691,13 @@ static void
 fini_reloc_cookie_rels (struct coff_reloc_cookie *cookie,
 			asection *sec)
 {
-  if (cookie->rels && coff_section_data (NULL, sec)->relocs != cookie->rels)
+  if (cookie->rels
+      /* PR 20401.  The relocs may not have been cached, so check first.
+	 If the relocs were loaded by init_reloc_cookie_rels() then this
+	 will be the case.  FIXME: Would performance be improved if the
+	 relocs *were* cached ?  */
+      && coff_section_data (NULL, sec)
+      && coff_section_data (NULL, sec)->relocs != cookie->rels)
     free (cookie->rels);
 }
 

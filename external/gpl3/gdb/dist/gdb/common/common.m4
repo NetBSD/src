@@ -1,5 +1,5 @@
 dnl Autoconf configure snippets for common.
-dnl Copyright (C) 1995-2015 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2016 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl 
@@ -30,7 +30,7 @@ AC_DEFUN([GDB_AC_COMMON], [
 		   sys/un.h sys/wait.h dnl
 		   thread_db.h wait.h)
 
-  AC_CHECK_FUNCS([fdwalk getrlimit pipe pipe2 socketpair])
+  AC_CHECK_FUNCS([fdwalk getrlimit pipe pipe2 socketpair sigaction])
 
   AC_CHECK_DECLS([strerror, strstr])
 

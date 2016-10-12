@@ -1,6 +1,6 @@
 /* Platform independent shared object routines for GDB.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -102,7 +102,7 @@ gdb_dlsym (void *handle, const char *symbol)
 #ifdef HAVE_DLFCN_H
   return dlsym (handle, symbol);
 #elif __MINGW32__
-  return (void *) GetProcAddress (handle, symbol);
+  return (void *) GetProcAddress ((HMODULE) handle, symbol);
 #endif
 }
 
@@ -112,7 +112,7 @@ gdb_dlclose (void *handle)
 #ifdef HAVE_DLFCN_H
   return dlclose (handle);
 #elif __MINGW32__
-  return !((int) FreeLibrary (handle));
+  return !((int) FreeLibrary ((HMODULE) handle));
 #endif
 }
 

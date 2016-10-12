@@ -1,6 +1,6 @@
 /* Obstack wrapper for GDB.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,5 +57,10 @@
    NULL'.  */
 
 extern char *obconcat (struct obstack *obstackp, ...) ATTRIBUTE_SENTINEL;
+
+/* Duplicate STRING, returning an equivalent string that's allocated on the
+   obstack OBSTACKP.  */
+
+extern char *obstack_strdup (struct obstack *obstackp, const char *string);
 
 #endif

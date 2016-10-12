@@ -1,5 +1,5 @@
 #  S/390 opcodes list. Use s390-mkopc to convert it into the opcode table.
-#  Copyright (C) 2000-2015 Free Software Foundation, Inc.
+#  Copyright (C) 2000-2016 Free Software Foundation, Inc.
 #  Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 5a a RX_RRRD "add" g5 esa,zarch
 6a ad RX_FRRD "add normalized (long)" g5 esa,zarch
@@ -767,10 +767,10 @@ b9aa lptea RRF_RURR2 "load page-table-entry address" z9-109 zarch
 # z9-109 conditional sske facility, sske instruction entered twice
 b22b sske RRF_U0RR "set storage key extended" z9-109 zarch optparm
 # z9-109 etf2-enhancement facility, instructions entered twice
-b993 troo RRF_U0RERE "translate one to one" z9-109 esa,zarch optparm
-b992 trot RRF_U0RERE "translate one to two" z9-109 esa,zarch optparm
-b991 trto RRF_U0RERE "translate two to one" z9-109 esa,zarch optparm
-b990 trtt RRF_U0RERE "translate two to two" z9-109 esa,zarch optparm
+b993 troo RRF_U0RER "translate one to one" z9-109 esa,zarch optparm
+b992 trot RRF_U0RER "translate one to two" z9-109 esa,zarch optparm
+b991 trto RRF_U0RER "translate two to one" z9-109 esa,zarch optparm
+b990 trtt RRF_U0RER "translate two to two" z9-109 esa,zarch optparm
 # z9-109 etf3-enhancement facility, some instructions entered twice
 b9b1 cu24 RRF_U0RERE "convert utf-16 to utf-32" z9-109 zarch optparm
 b2a6 cu21 RRF_U0RERE "convert utf-16 to utf-8" z9-109 zarch optparm
@@ -874,7 +874,7 @@ ec00000000f6 crb$32 RRS_RRRD0 "compare and branch (32)" z10 zarch
 ec00000000f6 crb RRS_RRRDU "compare and branch (32)" z10 zarch
 ec00000000e4 cgrb$32 RRS_RRRD0 "compare and branch (64)" z10 zarch
 ec00000000e4 cgrb RRS_RRRDU "compare and branch (64)" z10 zarch
-ec0000000076 crj$32 RIE_RRP "compare and branch relative (32)" z10 zarch
+ec0000000076 crj$32 RIE_RRP0 "compare and branch relative (32)" z10 zarch
 ec0000000076 crj RIE_RRPU "compare and branch relative (32)" z10 zarch
 ec0000000064 cgrj$32 RIE_RRP0 "compare and branch relative (64)" z10 zarch
 ec0000000064 cgrj RIE_RRPU "compare and branch relative (64)" z10 zarch
@@ -886,9 +886,9 @@ ec000000007e cij$12 RIE_R0PI "compare immediate and branch relative (32<8)" z10 
 ec000000007e cij RIE_RUPI "compare immediate and branch relative (32<8)" z10 zarch
 ec000000007c cgij$12 RIE_R0PI "compare immediate and branch relative (64<8)" z10 zarch
 ec000000007c cgij RIE_RUPI "compare immediate and branch relative (64<8)" z10 zarch
-b97200000000 crt$16 RRF_00RR "compare and trap" z10 zarch
+b9720000 crt$16 RRF_00RR "compare and trap" z10 zarch
 b972 crt RRF_U0RR "compare and trap" z10 zarch
-b96000000000 cgrt$16 RRF_00RR "compare and trap 64" z10 zarch
+b9600000 cgrt$16 RRF_00RR "compare and trap 64" z10 zarch
 b960 cgrt RRF_U0RR "compare and trap 64" z10 zarch
 ec0000000072 cit$32 RIE_R0I0 "compare immediate and trap (32<16)" z10 zarch
 ec0000000072 cit RIE_R0IU "compare immediate and trap (32<16)" z10 zarch
@@ -912,9 +912,9 @@ ec00000000f7 clrb$32 RRS_RRRD0 "compare logical and branch (32)" z10 zarch
 ec00000000f7 clrb RRS_RRRDU "compare logical and branch (32)" z10 zarch
 ec00000000e5 clgrb$32 RRS_RRRD0 "compare logical and branch (64)" z10 zarch
 ec00000000e5 clgrb RRS_RRRDU "compare logical and branch (64)" z10 zarch
-ec0000000077 clrj$32 RIE_RRP "compare logical and branch relative (32)" z10 zarch
+ec0000000077 clrj$32 RIE_RRP0 "compare logical and branch relative (32)" z10 zarch
 ec0000000077 clrj RIE_RRPU "compare logical and branch relative (32)" z10 zarch
-ec0000000065 clgrj$32 RIE_RRP "compare logical and branch relative (64)" z10 zarch
+ec0000000065 clgrj$32 RIE_RRP0 "compare logical and branch relative (64)" z10 zarch
 ec0000000065 clgrj RIE_RRPU "compare logical and branch relative (64)" z10 zarch
 ec00000000ff clib$12 RIS_R0RDU "compare logical immediate and branch (32<8)" z10 zarch
 ec00000000ff clib RIS_RURDU "compare logical immediate and branch (32<8)" z10 zarch
@@ -924,9 +924,9 @@ ec000000007f clij$12 RIE_R0PU "compare logical immediate and branch relative (32
 ec000000007f clij RIE_RUPU "compare logical immediate and branch relative (32<8)" z10 zarch
 ec000000007d clgij$12 RIE_R0PU "compare logical immediate and branch relative (64<8)" z10 zarch
 ec000000007d clgij RIE_RUPU "compare logical immediate and branch relative (64<8)" z10 zarch
-b97300000000 clrt$16 RRF_00RR "compare logical and trap (32)" z10 zarch
+b9730000 clrt$16 RRF_00RR "compare logical and trap (32)" z10 zarch
 b973 clrt RRF_U0RR "compare logical and trap (32)" z10 zarch
-b96100000000 clgrt$16 RRF_00RR "compare logical and trap (64)" z10 zarch
+b9610000 clgrt$16 RRF_00RR "compare logical and trap (64)" z10 zarch
 b961 clgrt RRF_U0RR "compare logical and trap (64)" z10 zarch
 ec0000000073 clfit$32 RIE_R0U0 "compare logical and trap (32<16)" z10 zarch
 ec0000000073 clfit RIE_R0UU "compare logical and trap (32<16)" z10 zarch
@@ -1022,9 +1022,9 @@ eb00000000e6 laog RSY_RRRD "load and or 64 bit" z196 zarch
 c804 lpd SSF_RERDRD2 "load pair disjoint 32 bit" z196 zarch
 c805 lpdg SSF_RERDRD2 "load pair disjoint 64 bit" z196 zarch
 b9f2 locr RRF_U0RR "load on condition 32 bit" z196 zarch
-b9f200000000 locr*16 RRF_00RR "load on condition 32 bit" z196 zarch
+b9f20000 locr*16 RRF_00RR "load on condition 32 bit" z196 zarch
 b9e2 locgr RRF_U0RR "load on condition 64  bit" z196 zarch
-b9e200000000 locgr*16 RRF_00RR "load on condition 64  bit" z196 zarch
+b9e20000 locgr*16 RRF_00RR "load on condition 64  bit" z196 zarch
 eb00000000f2 loc RSY_RURD2 "load on condition 32 bit" z196 zarch
 eb00000000f2 loc*12 RSY_R0RD "load on condition 32 bit" z196 zarch
 eb00000000e2 locg RSY_RURD2 "load on condition 64 bit" z196 zarch
@@ -1118,12 +1118,12 @@ b92c pcc RRE_00 "perform cryptographic computation" z196 zarch
 b92d kmctr RRF_R0RR2 "cipher message with counter" z196 zarch
 
 # The new instructions of the IBM zEnterprise EC12
-b2ec etnd RRE_R0 "extract transaction nesting depth" zEC12 zarch
-e30000000025 ntstg RXY_RRRD "nontransactional store" zEC12 zarch
-b2fc tabort S_RD "transaction abort" zEC12 zarch
-e560 tbegin SIL_RDU "transaction begin" zEC12 zarch
-e561 tbeginc SIL_RDU "constrained transaction begin" zEC12 zarch
-b2f8 tend S_00 "transaction end" zEC12 zarch
+b2ec etnd RRE_R0 "extract transaction nesting depth" zEC12 zarch htm
+e30000000025 ntstg RXY_RRRD "nontransactional store" zEC12 zarch htm
+b2fc tabort S_RD "transaction abort" zEC12 zarch htm
+e560 tbegin SIL_RDU "transaction begin" zEC12 zarch htm
+e561 tbeginc SIL_RDU "constrained transaction begin" zEC12 zarch htm
+b2f8 tend S_00 "transaction end" zEC12 zarch htm
 c7 bpp SMI_U0RDP "branch prediction preload" zEC12 zarch
 c5 bprp MII_UPP "branch prediction relative preload" zEC12 zarch
 b2e8 ppa RRF_U0RR "perform processor assist" zEC12 zarch
@@ -1146,516 +1146,516 @@ ed00000000a9 czxt RSL_LRDFEU "convert to zoned extended" zEC12 zarch
 
 # The new instructions of IBM z13
 
-e70000000027 lcbb RXE_RRRDU "load count to block boundary" z13 zarch
+e70000000027 lcbb RXE_RRRDU "load count to block boundary" z13 zarch vx
 
 # Chapter 21
-e70000000013 vgef VRV_VVXRDU "vector gather element 4 byte elements" z13 zarch
-e70000000012 vgeg VRV_VVXRDU "vector gather element 8 byte elements" z13 zarch
-e70000000044 vgbm VRI_V0U "vector generate byte mask" z13 zarch
-e70000000044 vzero VRI_V "vector set to zero" z13 zarch
-e700ffff0044 vone VRI_V "vector set to ones" z13 zarch
-e70000000046 vgm VRI_V0UUU "vector generate mask" z13 zarch
-e70000000046 vgmb VRI_V0UU "vector generate mask byte" z13 zarch
-e70000001046 vgmh VRI_V0UU "vector generate mask halfword" z13 zarch
-e70000002046 vgmf VRI_V0UU "vector generate mask word" z13 zarch
-e70000003046 vgmg VRI_V0UU "vector generate mask double word" z13 zarch
-e70000000006 vl VRX_VRRD "vector memory load" z13 zarch
-e70000000056 vlr VRX_VV "vector register load" z13 zarch
-e70000000005 vlrep VRX_VRRDU "vector load and replicate" z13 zarch
-e70000000005 vlrepb VRX_VRRD "vector load and replicate byte elements" z13 zarch
-e70000001005 vlreph VRX_VRRD "vector load and replicate halfword elements" z13 zarch
-e70000002005 vlrepf VRX_VRRD "vector load and replicate word elements" z13 zarch
-e70000003005 vlrepg VRX_VRRD "vector load and replicate double word elements" z13 zarch
-e70000000000 vleb VRX_VRRDU "vector load byte element" z13 zarch
-e70000000001 vleh VRX_VRRDU "vector load halfword element" z13 zarch
-e70000000003 vlef VRX_VRRDU "vector load word element" z13 zarch
-e70000000002 vleg VRX_VRRDU "vector load double word element" z13 zarch
-e70000000040 vleib VRI_V0IU "vector load byte element immediate" z13 zarch
-e70000000041 vleih VRI_V0IU "vector load halfword element immediate" z13 zarch
-e70000000043 vleif VRI_V0IU "vector load word element immediate" z13 zarch
-e70000000042 vleig VRI_V0IU "vector load double word element immediate" z13 zarch
-e70000000021 vlgv VRS_RVRDU "vector load gr from vr element" z13 zarch
-e70000000021 vlgvb VRS_RVRD "vector load gr from vr byte element" z13 zarch
-e70000001021 vlgvh VRS_RVRD "vector load gr from vr halfword element" z13 zarch
-e70000002021 vlgvf VRS_RVRD "vector load gr from vr word element" z13 zarch
-e70000003021 vlgvg VRS_RVRD "vector load gr from vr double word element" z13 zarch
-e70000000004 vllez VRX_VRRDU "vector load logical element and zero" z13 zarch
-e70000000004 vllezb VRX_VRRD "vector load logical byte element and zero" z13 zarch
-e70000001004 vllezh VRX_VRRD "vector load logical halfword element and zero" z13 zarch
-e70000002004 vllezf VRX_VRRD "vector load logical word element and zero" z13 zarch
-e70000003004 vllezg VRX_VRRD "vector load logical double word element and zero" z13 zarch
-e70000000036 vlm VRS_VVRD "vector load multiple" z13 zarch
-e70000000007 vlbb VRX_VRRDU "vector load to block boundary" z13 zarch
-e70000000022 vlvg VRS_VRRDU "vector load VR element from GR" z13 zarch
-e70000000022 vlvgb VRS_VRRD "vector load VR byte element from GR" z13 zarch
-e70000001022 vlvgh VRS_VRRD "vector load VR halfword element from GR" z13 zarch
-e70000002022 vlvgf VRS_VRRD "vector load VR word element from GR" z13 zarch
-e70000003022 vlvgg VRS_VRRD "vector load VR double word element from GR" z13 zarch
-e70000000062 vlvgp VRR_VRR "vector load VR from GRs disjoint" z13 zarch
-e70000000037 vll VRS_VRRD "vector load with length" z13 zarch
-e70000000061 vmrh VRR_VVV0U "vector merge high" z13 zarch
-e70000000061 vmrhb VRR_VVV "vector merge high byte" z13 zarch
-e70000001061 vmrhh VRR_VVV "vector merge high halfword" z13 zarch
-e70000002061 vmrhf VRR_VVV "vector merge high word" z13 zarch
-e70000003061 vmrhg VRR_VVV "vector merge high double word" z13 zarch
-e70000000060 vmrl VRR_VVV0U "vector merge low" z13 zarch
-e70000000060 vmrlb VRR_VVV "vector merge low byte" z13 zarch
-e70000001060 vmrlh VRR_VVV "vector merge low halfword" z13 zarch
-e70000002060 vmrlf VRR_VVV "vector merge low word" z13 zarch
-e70000003060 vmrlg VRR_VVV "vector merge low double word" z13 zarch
-e70000000094 vpk VRR_VVV0U "vector pack" z13 zarch
-e70000001094 vpkh VRR_VVV "vector pack halfword" z13 zarch
-e70000002094 vpkf VRR_VVV "vector pack word" z13 zarch
-e70000003094 vpkg VRR_VVV "vector pack double word" z13 zarch
-e70000000097 vpks VRR_VVV0U0U "vector pack saturate" z13 zarch
-e70000001097 vpksh VRR_VVV "vector pack saturate halfword" z13 zarch
-e70000002097 vpksf VRR_VVV "vector pack saturate word" z13 zarch
-e70000003097 vpksg VRR_VVV "vector pack saturate double word" z13 zarch
-e70000101097 vpkshs VRR_VVV "vector pack saturate halfword" z13 zarch
-e70000102097 vpksfs VRR_VVV "vector pack saturate word" z13 zarch
-e70000103097 vpksgs VRR_VVV "vector pack saturate double word" z13 zarch
-e70000000095 vpkls VRR_VVV0U0U "vector pack logical saturate" z13 zarch
-e70000001095 vpklsh VRR_VVV "vector pack logical saturate halfword" z13 zarch
-e70000002095 vpklsf VRR_VVV "vector pack logical saturate word" z13 zarch
-e70000003095 vpklsg VRR_VVV "vector pack logical saturate double word" z13 zarch
-e70000101095 vpklshs VRR_VVV "vector pack logical saturate halfword" z13 zarch
-e70000102095 vpklsfs VRR_VVV "vector pack logical saturate word" z13 zarch
-e70000103095 vpklsgs VRR_VVV "vector pack logical saturate double word" z13 zarch
-e7000000008c vperm VRR_VVV0V "vector permute" z13 zarch
-e70000000084 vpdi VRR_VVV0U "vector permute double word immediate" z13 zarch
-e7000000004d vrep VRI_VVUU "vector replicate" z13 zarch
-e7000000004d vrepb VRI_VVU "vector replicate byte" z13 zarch
-e7000000104d vreph VRI_VVU "vector replicate halfword" z13 zarch
-e7000000204d vrepf VRI_VVU "vector replicate word" z13 zarch
-e7000000304d vrepg VRI_VVU "vector replicate double word" z13 zarch
-e70000000045 vrepi VRI_V0IU "vector replicate immediate" z13 zarch
-e70000000045 vrepib VRI_V0I "vector replicate immediate byte" z13 zarch
-e70000001045 vrepih VRI_V0I "vector replicate immediate halfword" z13 zarch
-e70000002045 vrepif VRI_V0I "vector replicate immediate word" z13 zarch
-e70000003045 vrepig VRI_V0I "vector replicate immediate double word" z13 zarch
-e7000000001b vscef VRV_VVXRDU "vector scatter element 4 byte" z13 zarch
-e7000000001a vsceg VRV_VVXRDU "vector scatter element 8 byte" z13 zarch
-e7000000008d vsel VRR_VVV0V "vector select" z13 zarch
-e7000000005f vseg VRR_VV0U "vector sign extend to double word" z13 zarch
-e7000000005f vsegb VRR_VV "vector sign extend byte to double word" z13 zarch
-e7000000105f vsegh VRR_VV "vector sign extend halfword to double word" z13 zarch
-e7000000205f vsegf VRR_VV "vector sign extend word to double word" z13 zarch
-e7000000000e vst VRX_VRRD "vector store" z13 zarch
-e70000000008 vsteb VRX_VRRDU "vector store byte element" z13 zarch
-e70000000009 vsteh VRX_VRRDU "vector store halfword element" z13 zarch
-e7000000000b vstef VRX_VRRDU "vector store word element" z13 zarch
-e7000000000a vsteg VRX_VRRDU "vector store double word element" z13 zarch
-e7000000003e vstm VRS_VVRD "vector store multiple" z13 zarch
-e7000000003f vstl VRS_VRRD "vector store with length" z13 zarch
-e700000000d7 vuph VRR_VV0U "vector unpack high" z13 zarch
-e700000000d7 vuphb VRR_VV "vector unpack high byte" z13 zarch
-e700000010d7 vuphh VRR_VV "vector unpack high halfword" z13 zarch
-e700000020d7 vuphf VRR_VV "vector unpack high word" z13 zarch
-e700000000d5 vuplh VRR_VV0U "vector unpack logical high" z13 zarch
-e700000000d5 vuplhb VRR_VV "vector unpack logical high byte" z13 zarch
-e700000010d5 vuplhh VRR_VV "vector unpack logical high halfword" z13 zarch
-e700000020d5 vuplhf VRR_VV "vector unpack logical high word" z13 zarch
-e700000000d6 vupl VRR_VV0U "vector unpack low" z13 zarch
-e700000000d6 vuplb VRR_VV "vector unpack low byte" z13 zarch
-e700000010d6 vuplhw VRR_VV "vector unpack low halfword" z13 zarch
-e700000020d6 vuplf VRR_VV "vector unpack low word" z13 zarch
-e700000000d4 vupll VRR_VV0U "vector unpack logical low" z13 zarch
-e700000000d4 vupllb VRR_VV "vector unpack logical low byte" z13 zarch
-e700000010d4 vupllh VRR_VV "vector unpack logical low halfword" z13 zarch
-e700000020d4 vupllf VRR_VV "vector unpack logical low word" z13 zarch
+e70000000013 vgef VRV_VVXRDU "vector gather element 4 byte elements" z13 zarch vx
+e70000000012 vgeg VRV_VVXRDU "vector gather element 8 byte elements" z13 zarch vx
+e70000000044 vgbm VRI_V0U "vector generate byte mask" z13 zarch vx
+e70000000044 vzero VRI_V "vector set to zero" z13 zarch vx
+e700ffff0044 vone VRI_V "vector set to ones" z13 zarch vx
+e70000000046 vgm VRI_V0UUU "vector generate mask" z13 zarch vx
+e70000000046 vgmb VRI_V0UU "vector generate mask byte" z13 zarch vx
+e70000001046 vgmh VRI_V0UU "vector generate mask halfword" z13 zarch vx
+e70000002046 vgmf VRI_V0UU "vector generate mask word" z13 zarch vx
+e70000003046 vgmg VRI_V0UU "vector generate mask double word" z13 zarch vx
+e70000000006 vl VRX_VRRD "vector memory load" z13 zarch vx
+e70000000056 vlr VRX_VV "vector register load" z13 zarch vx
+e70000000005 vlrep VRX_VRRDU "vector load and replicate" z13 zarch vx
+e70000000005 vlrepb VRX_VRRD "vector load and replicate byte elements" z13 zarch vx
+e70000001005 vlreph VRX_VRRD "vector load and replicate halfword elements" z13 zarch vx
+e70000002005 vlrepf VRX_VRRD "vector load and replicate word elements" z13 zarch vx
+e70000003005 vlrepg VRX_VRRD "vector load and replicate double word elements" z13 zarch vx
+e70000000000 vleb VRX_VRRDU "vector load byte element" z13 zarch vx
+e70000000001 vleh VRX_VRRDU "vector load halfword element" z13 zarch vx
+e70000000003 vlef VRX_VRRDU "vector load word element" z13 zarch vx
+e70000000002 vleg VRX_VRRDU "vector load double word element" z13 zarch vx
+e70000000040 vleib VRI_V0IU "vector load byte element immediate" z13 zarch vx
+e70000000041 vleih VRI_V0IU "vector load halfword element immediate" z13 zarch vx
+e70000000043 vleif VRI_V0IU "vector load word element immediate" z13 zarch vx
+e70000000042 vleig VRI_V0IU "vector load double word element immediate" z13 zarch vx
+e70000000021 vlgv VRS_RVRDU "vector load gr from vr element" z13 zarch vx
+e70000000021 vlgvb VRS_RVRD "vector load gr from vr byte element" z13 zarch vx
+e70000001021 vlgvh VRS_RVRD "vector load gr from vr halfword element" z13 zarch vx
+e70000002021 vlgvf VRS_RVRD "vector load gr from vr word element" z13 zarch vx
+e70000003021 vlgvg VRS_RVRD "vector load gr from vr double word element" z13 zarch vx
+e70000000004 vllez VRX_VRRDU "vector load logical element and zero" z13 zarch vx
+e70000000004 vllezb VRX_VRRD "vector load logical byte element and zero" z13 zarch vx
+e70000001004 vllezh VRX_VRRD "vector load logical halfword element and zero" z13 zarch vx
+e70000002004 vllezf VRX_VRRD "vector load logical word element and zero" z13 zarch vx
+e70000003004 vllezg VRX_VRRD "vector load logical double word element and zero" z13 zarch vx
+e70000000036 vlm VRS_VVRD "vector load multiple" z13 zarch vx
+e70000000007 vlbb VRX_VRRDU "vector load to block boundary" z13 zarch vx
+e70000000022 vlvg VRS_VRRDU "vector load VR element from GR" z13 zarch vx
+e70000000022 vlvgb VRS_VRRD "vector load VR byte element from GR" z13 zarch vx
+e70000001022 vlvgh VRS_VRRD "vector load VR halfword element from GR" z13 zarch vx
+e70000002022 vlvgf VRS_VRRD "vector load VR word element from GR" z13 zarch vx
+e70000003022 vlvgg VRS_VRRD "vector load VR double word element from GR" z13 zarch vx
+e70000000062 vlvgp VRR_VRR "vector load VR from GRs disjoint" z13 zarch vx
+e70000000037 vll VRS_VRRD "vector load with length" z13 zarch vx
+e70000000061 vmrh VRR_VVV0U "vector merge high" z13 zarch vx
+e70000000061 vmrhb VRR_VVV "vector merge high byte" z13 zarch vx
+e70000001061 vmrhh VRR_VVV "vector merge high halfword" z13 zarch vx
+e70000002061 vmrhf VRR_VVV "vector merge high word" z13 zarch vx
+e70000003061 vmrhg VRR_VVV "vector merge high double word" z13 zarch vx
+e70000000060 vmrl VRR_VVV0U "vector merge low" z13 zarch vx
+e70000000060 vmrlb VRR_VVV "vector merge low byte" z13 zarch vx
+e70000001060 vmrlh VRR_VVV "vector merge low halfword" z13 zarch vx
+e70000002060 vmrlf VRR_VVV "vector merge low word" z13 zarch vx
+e70000003060 vmrlg VRR_VVV "vector merge low double word" z13 zarch vx
+e70000000094 vpk VRR_VVV0U "vector pack" z13 zarch vx
+e70000001094 vpkh VRR_VVV "vector pack halfword" z13 zarch vx
+e70000002094 vpkf VRR_VVV "vector pack word" z13 zarch vx
+e70000003094 vpkg VRR_VVV "vector pack double word" z13 zarch vx
+e70000000097 vpks VRR_VVV0U0U "vector pack saturate" z13 zarch vx
+e70000001097 vpksh VRR_VVV "vector pack saturate halfword" z13 zarch vx
+e70000002097 vpksf VRR_VVV "vector pack saturate word" z13 zarch vx
+e70000003097 vpksg VRR_VVV "vector pack saturate double word" z13 zarch vx
+e70000101097 vpkshs VRR_VVV "vector pack saturate halfword" z13 zarch vx
+e70000102097 vpksfs VRR_VVV "vector pack saturate word" z13 zarch vx
+e70000103097 vpksgs VRR_VVV "vector pack saturate double word" z13 zarch vx
+e70000000095 vpkls VRR_VVV0U0U "vector pack logical saturate" z13 zarch vx
+e70000001095 vpklsh VRR_VVV "vector pack logical saturate halfword" z13 zarch vx
+e70000002095 vpklsf VRR_VVV "vector pack logical saturate word" z13 zarch vx
+e70000003095 vpklsg VRR_VVV "vector pack logical saturate double word" z13 zarch vx
+e70000101095 vpklshs VRR_VVV "vector pack logical saturate halfword" z13 zarch vx
+e70000102095 vpklsfs VRR_VVV "vector pack logical saturate word" z13 zarch vx
+e70000103095 vpklsgs VRR_VVV "vector pack logical saturate double word" z13 zarch vx
+e7000000008c vperm VRR_VVV0V "vector permute" z13 zarch vx
+e70000000084 vpdi VRR_VVV0U "vector permute double word immediate" z13 zarch vx
+e7000000004d vrep VRI_VVUU "vector replicate" z13 zarch vx
+e7000000004d vrepb VRI_VVU "vector replicate byte" z13 zarch vx
+e7000000104d vreph VRI_VVU "vector replicate halfword" z13 zarch vx
+e7000000204d vrepf VRI_VVU "vector replicate word" z13 zarch vx
+e7000000304d vrepg VRI_VVU "vector replicate double word" z13 zarch vx
+e70000000045 vrepi VRI_V0IU "vector replicate immediate" z13 zarch vx
+e70000000045 vrepib VRI_V0I "vector replicate immediate byte" z13 zarch vx
+e70000001045 vrepih VRI_V0I "vector replicate immediate halfword" z13 zarch vx
+e70000002045 vrepif VRI_V0I "vector replicate immediate word" z13 zarch vx
+e70000003045 vrepig VRI_V0I "vector replicate immediate double word" z13 zarch vx
+e7000000001b vscef VRV_VVXRDU "vector scatter element 4 byte" z13 zarch vx
+e7000000001a vsceg VRV_VVXRDU "vector scatter element 8 byte" z13 zarch vx
+e7000000008d vsel VRR_VVV0V "vector select" z13 zarch vx
+e7000000005f vseg VRR_VV0U "vector sign extend to double word" z13 zarch vx
+e7000000005f vsegb VRR_VV "vector sign extend byte to double word" z13 zarch vx
+e7000000105f vsegh VRR_VV "vector sign extend halfword to double word" z13 zarch vx
+e7000000205f vsegf VRR_VV "vector sign extend word to double word" z13 zarch vx
+e7000000000e vst VRX_VRRD "vector store" z13 zarch vx
+e70000000008 vsteb VRX_VRRDU "vector store byte element" z13 zarch vx
+e70000000009 vsteh VRX_VRRDU "vector store halfword element" z13 zarch vx
+e7000000000b vstef VRX_VRRDU "vector store word element" z13 zarch vx
+e7000000000a vsteg VRX_VRRDU "vector store double word element" z13 zarch vx
+e7000000003e vstm VRS_VVRD "vector store multiple" z13 zarch vx
+e7000000003f vstl VRS_VRRD "vector store with length" z13 zarch vx
+e700000000d7 vuph VRR_VV0U "vector unpack high" z13 zarch vx
+e700000000d7 vuphb VRR_VV "vector unpack high byte" z13 zarch vx
+e700000010d7 vuphh VRR_VV "vector unpack high halfword" z13 zarch vx
+e700000020d7 vuphf VRR_VV "vector unpack high word" z13 zarch vx
+e700000000d5 vuplh VRR_VV0U "vector unpack logical high" z13 zarch vx
+e700000000d5 vuplhb VRR_VV "vector unpack logical high byte" z13 zarch vx
+e700000010d5 vuplhh VRR_VV "vector unpack logical high halfword" z13 zarch vx
+e700000020d5 vuplhf VRR_VV "vector unpack logical high word" z13 zarch vx
+e700000000d6 vupl VRR_VV0U "vector unpack low" z13 zarch vx
+e700000000d6 vuplb VRR_VV "vector unpack low byte" z13 zarch vx
+e700000010d6 vuplhw VRR_VV "vector unpack low halfword" z13 zarch vx
+e700000020d6 vuplf VRR_VV "vector unpack low word" z13 zarch vx
+e700000000d4 vupll VRR_VV0U "vector unpack logical low" z13 zarch vx
+e700000000d4 vupllb VRR_VV "vector unpack logical low byte" z13 zarch vx
+e700000010d4 vupllh VRR_VV "vector unpack logical low halfword" z13 zarch vx
+e700000020d4 vupllf VRR_VV "vector unpack logical low word" z13 zarch vx
 
 # Chapter 22
-e700000000f3 va VRR_VVV0U "vector add" z13 zarch
-e700000000f3 vab VRR_VVV "vector add byte" z13 zarch
-e700000010f3 vah VRR_VVV "vector add halfword" z13 zarch
-e700000020f3 vaf VRR_VVV "vector add word" z13 zarch
-e700000030f3 vag VRR_VVV "vector add double word" z13 zarch
-e700000040f3 vaq VRR_VVV "vector add quad word" z13 zarch
-e700000000f1 vacc VRR_VVV0U "vector add compute carry" z13 zarch
-e700000000f1 vaccb VRR_VVV "vector add compute carry byte" z13 zarch
-e700000010f1 vacch VRR_VVV "vector add compute carry halfword" z13 zarch
-e700000020f1 vaccf VRR_VVV "vector add compute carry word" z13 zarch
-e700000030f1 vaccg VRR_VVV "vector add compute carry doubleword" z13 zarch
-e700000040f1 vaccq VRR_VVV "vector add compute carry quadword" z13 zarch
-e700000000bb vac VRR_VVVU0V "vector add with carry" z13 zarch
-e700040000bb vacq VRR_VVV0V "vector add with carry quadword" z13 zarch
-e700000000b9 vaccc VRR_VVVU0V "vector add with carry compute carry" z13 zarch
-e700040000b9 vacccq VRR_VVV0V "vector add with carry compute carry quadword" z13 zarch
-e70000000068 vn VRR_VVV "vector and" z13 zarch
-e70000000069 vnc VRR_VVV "vector and with complement" z13 zarch
-e700000000f2 vavg VRR_VVV0U "vector average" z13 zarch
-e700000000f2 vavgb VRR_VVV "vector average byte" z13 zarch
-e700000010f2 vavgh VRR_VVV "vector average half word" z13 zarch
-e700000020f2 vavgf VRR_VVV "vector average word" z13 zarch
-e700000030f2 vavgg VRR_VVV "vector average double word" z13 zarch
-e700000000f0 vavgl VRR_VVV0U "vector average logical" z13 zarch
-e700000000f0 vavglb VRR_VVV "vector average logical byte" z13 zarch
-e700000010f0 vavglh VRR_VVV "vector average logical half word" z13 zarch
-e700000020f0 vavglf VRR_VVV "vector average logical word" z13 zarch
-e700000030f0 vavglg VRR_VVV "vector average logical double word" z13 zarch
-e70000000066 vcksm VRR_VVV "vector checksum" z13 zarch
-e700000000db vec VRR_VV0U "vector element compare" z13 zarch
-e700000000db vecb VRR_VV "vector element compare byte" z13 zarch
-e700000010db vech VRR_VV "vector element compare half word" z13 zarch
-e700000020db vecf VRR_VV "vector element compare word" z13 zarch
-e700000030db vecg VRR_VV "vector element compare double word" z13 zarch
-e700000000d9 vecl VRR_VV0U "vector element compare logical" z13 zarch
-e700000000d9 veclb VRR_VV "vector element compare logical byte" z13 zarch
-e700000010d9 veclh VRR_VV "vector element compare logical half word" z13 zarch
-e700000020d9 veclf VRR_VV "vector element compare logical word" z13 zarch
-e700000030d9 veclg VRR_VV "vector element compare logical double word" z13 zarch
-e700000000f8 vceq VRR_VVV0U0U "vector compare equal" z13 zarch
-e700000000f8 vceqb VRR_VVV "vector compare equal byte" z13 zarch
-e700000010f8 vceqh VRR_VVV "vector compare equal half word" z13 zarch
-e700000020f8 vceqf VRR_VVV "vector compare equal word" z13 zarch
-e700000030f8 vceqg VRR_VVV "vector compare equal double word" z13 zarch
-e700001000f8 vceqbs VRR_VVV "vector compare equal byte" z13 zarch
-e700001010f8 vceqhs VRR_VVV "vector compare equal half word" z13 zarch
-e700001020f8 vceqfs VRR_VVV "vector compare equal word" z13 zarch
-e700001030f8 vceqgs VRR_VVV "vector compare equal double word" z13 zarch
-e700000000fb vch VRR_VVV0U0U "vector compare high" z13 zarch
-e700000000fb vchb VRR_VVV "vector compare high byte" z13 zarch
-e700000010fb vchh VRR_VVV "vector compare high half word" z13 zarch
-e700000020fb vchf VRR_VVV "vector compare high word" z13 zarch
-e700000030fb vchg VRR_VVV "vector compare high double word" z13 zarch
-e700001000fb vchbs VRR_VVV "vector compare high byte" z13 zarch
-e700001010fb vchhs VRR_VVV "vector compare high half word" z13 zarch
-e700001020fb vchfs VRR_VVV "vector compare high word" z13 zarch
-e700001030fb vchgs VRR_VVV "vector compare high double word" z13 zarch
-e700000000f9 vchl VRR_VVV0U0U "vector compare high logical" z13 zarch
-e700000000f9 vchlb VRR_VVV "vector compare high logical byte" z13 zarch
-e700000010f9 vchlh VRR_VVV "vector compare high logical half word" z13 zarch
-e700000020f9 vchlf VRR_VVV "vector compare high logical word" z13 zarch
-e700000030f9 vchlg VRR_VVV "vector compare high logical double word" z13 zarch
-e700001000f9 vchlbs VRR_VVV "vector compare high logical byte" z13 zarch
-e700001010f9 vchlhs VRR_VVV "vector compare high logical half word" z13 zarch
-e700001020f9 vchlfs VRR_VVV "vector compare high logical word" z13 zarch
-e700001030f9 vchlgs VRR_VVV "vector compare high logical double word" z13 zarch
-e70000000053 vclz VRR_VV0U "vector count leading zeros" z13 zarch
-e70000000053 vclzb VRR_VV "vector count leading zeros byte" z13 zarch
-e70000001053 vclzh VRR_VV "vector count leading zeros halfword" z13 zarch
-e70000002053 vclzf VRR_VV "vector count leading zeros word" z13 zarch
-e70000003053 vclzg VRR_VV "vector count leading zeros doubleword" z13 zarch
-e70000000052 vctz VRR_VV0U "vector count trailing zeros" z13 zarch
-e70000000052 vctzb VRR_VV "vector count trailing zeros byte" z13 zarch
-e70000001052 vctzh VRR_VV "vector count trailing zeros halfword" z13 zarch
-e70000002052 vctzf VRR_VV "vector count trailing zeros word" z13 zarch
-e70000003052 vctzg VRR_VV "vector count trailing zeros doubleword" z13 zarch
-e7000000006d vx VRR_VVV "vector exclusive or" z13 zarch
-e700000000b4 vgfm VRR_VVV0U "vector galois field multiply sum" z13 zarch
-e700000000b4 vgfmb VRR_VVV "vector galois field multiply sum byte" z13 zarch
-e700000010b4 vgfmh VRR_VVV "vector galois field multiply sum halfword" z13 zarch
-e700000020b4 vgfmf VRR_VVV "vector galois field multiply sum word" z13 zarch
-e700000030b4 vgfmg VRR_VVV "vector galois field multiply sum doubleword" z13 zarch
-e700000000bc vgfma VRR_VVVU0V "vector galois field multiply sum and accumulate" z13 zarch
-e700000000bc vgfmab VRR_VVV0V "vector galois field multiply sum and accumulate byte" z13 zarch
-e700010000bc vgfmah VRR_VVV0V "vector galois field multiply sum and accumulate halfword" z13 zarch
-e700020000bc vgfmaf VRR_VVV0V "vector galois field multiply sum and accumulate word" z13 zarch
-e700030000bc vgfmag VRR_VVV0V "vector galois field multiply sum and accumulate doubleword" z13 zarch
-e700000000de vlc VRR_VV0U "vector load complement" z13 zarch
-e700000000de vlcb VRR_VV "vector load complement byte" z13 zarch
-e700000010de vlch VRR_VV "vector load complement halfword" z13 zarch
-e700000020de vlcf VRR_VV "vector load complement word" z13 zarch
-e700000030de vlcg VRR_VV "vector load complement doubleword" z13 zarch
-e700000000df vlp VRR_VV0U "vector load positive" z13 zarch
-e700000000df vlpb VRR_VV "vector load positive byte" z13 zarch
-e700000010df vlph VRR_VV "vector load positive halfword" z13 zarch
-e700000020df vlpf VRR_VV "vector load positive word" z13 zarch
-e700000030df vlpg VRR_VV "vector load positive doubleword" z13 zarch
-e700000000ff vmx VRR_VVV0U "vector maximum" z13 zarch
-e700000000ff vmxb VRR_VVV "vector maximum byte" z13 zarch
-e700000010ff vmxh VRR_VVV "vector maximum halfword" z13 zarch
-e700000020ff vmxf VRR_VVV "vector maximum word" z13 zarch
-e700000030ff vmxg VRR_VVV "vector maximum doubleword" z13 zarch
-e700000000fd vmxl VRR_VVV0U "vector maximum logical" z13 zarch
-e700000000fd vmxlb VRR_VVV "vector maximum logical byte" z13 zarch
-e700000010fd vmxlh VRR_VVV "vector maximum logical halfword" z13 zarch
-e700000020fd vmxlf VRR_VVV "vector maximum logical word" z13 zarch
-e700000030fd vmxlg VRR_VVV "vector maximum logical doubleword" z13 zarch
-e700000000fe vmn VRR_VVV0U "vector minimum" z13 zarch
-e700000000fe vmnb VRR_VVV "vector minimum byte" z13 zarch
-e700000010fe vmnh VRR_VVV "vector minimum halfword" z13 zarch
-e700000020fe vmnf VRR_VVV "vector minimum word" z13 zarch
-e700000030fe vmng VRR_VVV "vector minimum doubleword" z13 zarch
-e700000000fc vmnl VRR_VVV0U "vector minimum logical" z13 zarch
-e700000000fc vmnlb VRR_VVV "vector minimum logical byte" z13 zarch
-e700000010fc vmnlh VRR_VVV "vector minimum logical halfword" z13 zarch
-e700000020fc vmnlf VRR_VVV "vector minimum logical word" z13 zarch
-e700000030fc vmnlg VRR_VVV "vector minimum logical doubleword" z13 zarch
-e700000000aa vmal VRR_VVVU0V "vector multiply and add low" z13 zarch
-e700000000aa vmalb VRR_VVV0V "vector multiply and add low byte" z13 zarch
-e700010000aa vmalhw VRR_VVV0V "vector multiply and add low halfword" z13 zarch
-e700020000aa vmalf VRR_VVV0V "vector multiply and add low word" z13 zarch
-e700000000ab vmah VRR_VVVU0V "vector multiply and add high" z13 zarch
-e700000000ab vmahb VRR_VVV0V "vector multiply and add high byte" z13 zarch
-e700010000ab vmahh VRR_VVV0V "vector multiply and add high halfword" z13 zarch
-e700020000ab vmahf VRR_VVV0V "vector multiply and add high word" z13 zarch
-e700000000a9 vmalh VRR_VVVU0V "vector multiply and add logical high" z13 zarch
-e700000000a9 vmalhb VRR_VVV0V "vector multiply and add logical high byte" z13 zarch
-e700010000a9 vmalhh VRR_VVV0V "vector multiply and add logical high halfword" z13 zarch
-e700020000a9 vmalhf VRR_VVV0V "vector multiply and add logical high word" z13 zarch
-e700000000ae vmae VRR_VVVU0V "vector multiply and add even" z13 zarch
-e700000000ae vmaeb VRR_VVV0V "vector multiply and add even byte" z13 zarch
-e700010000ae vmaeh VRR_VVV0V "vector multiply and add even halfword" z13 zarch
-e700020000ae vmaef VRR_VVV0V "vector multiply and add even word" z13 zarch
-e700000000ac vmale VRR_VVVU0V "vector multiply and add logical even" z13 zarch
-e700000000ac vmaleb VRR_VVV0V "vector multiply and add logical even byte" z13 zarch
-e700010000ac vmaleh VRR_VVV0V "vector multiply and add logical even halfword" z13 zarch
-e700020000ac vmalef VRR_VVV0V "vector multiply and add logical even word" z13 zarch
-e700000000af vmao VRR_VVVU0V "vector multiply and add odd" z13 zarch
-e700000000af vmaob VRR_VVV0V "vector multiply and add odd byte" z13 zarch
-e700010000af vmaoh VRR_VVV0V "vector multiply and add odd halfword" z13 zarch
-e700020000af vmaof VRR_VVV0V "vector multiply and add odd word" z13 zarch
-e700000000ad vmalo VRR_VVVU0V "vector multiply and add logical odd" z13 zarch
-e700000000ad vmalob VRR_VVV0V "vector multiply and add logical odd byte" z13 zarch
-e700010000ad vmaloh VRR_VVV0V "vector multiply and add logical odd halfword" z13 zarch
-e700020000ad vmalof VRR_VVV0V "vector multiply and add logical odd word" z13 zarch
-e700000000a3 vmh VRR_VVV0U "vector multiply high" z13 zarch
-e700000000a3 vmhb VRR_VVV "vector multiply high byte" z13 zarch
-e700000010a3 vmhh VRR_VVV "vector multiply high halfword" z13 zarch
-e700000020a3 vmhf VRR_VVV "vector multiply high word" z13 zarch
-e700000000a1 vmlh VRR_VVV0U "vector multiply logical high" z13 zarch
-e700000000a1 vmlhb VRR_VVV "vector multiply logical high byte" z13 zarch
-e700000010a1 vmlhh VRR_VVV "vector multiply logical high halfword" z13 zarch
-e700000020a1 vmlhf VRR_VVV "vector multiply logical high word" z13 zarch
-e700000000a2 vml VRR_VVV0U "vector multiply low" z13 zarch
-e700000000a2 vmlb VRR_VVV "vector multiply low byte" z13 zarch
-e700000010a2 vmlhw VRR_VVV "vector multiply low halfword" z13 zarch
-e700000020a2 vmlf VRR_VVV "vector multiply low word" z13 zarch
-e700000000a6 vme VRR_VVV0U "vector multiply even" z13 zarch
-e700000000a6 vmeb VRR_VVV "vector multiply even byte" z13 zarch
-e700000010a6 vmeh VRR_VVV "vector multiply even halfword" z13 zarch
-e700000020a6 vmef VRR_VVV "vector multiply even word" z13 zarch
-e700000000a4 vmle VRR_VVV0U "vector multiply logical even" z13 zarch
-e700000000a4 vmleb VRR_VVV "vector multiply logical even byte" z13 zarch
-e700000010a4 vmleh VRR_VVV "vector multiply logical even halfword" z13 zarch
-e700000020a4 vmlef VRR_VVV "vector multiply logical even word" z13 zarch
-e700000000a7 vmo VRR_VVV0U "vector multiply odd" z13 zarch
-e700000000a7 vmob VRR_VVV "vector multiply odd byte" z13 zarch
-e700000010a7 vmoh VRR_VVV "vector multiply odd halfword" z13 zarch
-e700000020a7 vmof VRR_VVV "vector multiply odd word" z13 zarch
-e700000000a5 vmlo VRR_VVV0U "vector multiply logical odd" z13 zarch
-e700000000a5 vmlob VRR_VVV "vector multiply logical odd byte" z13 zarch
-e700000010a5 vmloh VRR_VVV "vector multiply logical odd halfword" z13 zarch
-e700000020a5 vmlof VRR_VVV "vector multiply logical odd word" z13 zarch
-e7000000006b vno VRR_VVV "vector nor" z13 zarch
-e7000000006b vnot VRR_VVV2 "vector not" z13 zarch
-e7000000006a vo VRR_VVV "vector or" z13 zarch
-e70000000050 vpopct VRR_VV0U "vector population count" z13 zarch
-e70000000073 verllv VRR_VVV0U "vector element rotate left logical reg" z13 zarch
-e70000000073 verllvb VRR_VVV "vector element rotate left logical reg byte" z13 zarch
-e70000001073 verllvh VRR_VVV "vector element rotate left logical reg halfword" z13 zarch
-e70000002073 verllvf VRR_VVV "vector element rotate left logical reg word" z13 zarch
-e70000003073 verllvg VRR_VVV "vector element rotate left logical reg doubleword" z13 zarch
-e70000000033 verll VRS_VVRDU "vector element rotate left logical mem" z13 zarch
-e70000000033 verllb VRS_VVRD "vector element rotate left logical mem byte" z13 zarch
-e70000001033 verllh VRS_VVRD "vector element rotate left logical mem halfword" z13 zarch
-e70000002033 verllf VRS_VVRD "vector element rotate left logical mem word" z13 zarch
-e70000003033 verllg VRS_VVRD "vector element rotate left logical mem doubleword" z13 zarch
-e70000000072 verim VRI_VVV0UU "vector element rotate and insert under mask" z13 zarch
-e70000000072 verimb VRI_VVV0U "vector element rotate and insert under mask byte" z13 zarch
-e70000001072 verimh VRI_VVV0U "vector element rotate and insert under mask halfword" z13 zarch
-e70000002072 verimf VRI_VVV0U "vector element rotate and insert under mask word" z13 zarch
-e70000003072 verimg VRI_VVV0U "vector element rotate and insert under mask doubleword" z13 zarch
-e70000000070 veslv VRR_VVV0U "vector element shift left reg" z13 zarch
-e70000000070 veslvb VRR_VVV "vector element shift left reg byte" z13 zarch
-e70000001070 veslvh VRR_VVV "vector element shift left reg halfword" z13 zarch
-e70000002070 veslvf VRR_VVV "vector element shift left reg word" z13 zarch
-e70000003070 veslvg VRR_VVV "vector element shift left reg doubleword" z13 zarch
-e70000000030 vesl VRS_VVRDU "vector element shift left mem" z13 zarch
-e70000000030 veslb VRS_VVRD "vector element shift left mem byte" z13 zarch
-e70000001030 veslh VRS_VVRD "vector element shift left mem halfword" z13 zarch
-e70000002030 veslf VRS_VVRD "vector element shift left mem word" z13 zarch
-e70000003030 veslg VRS_VVRD "vector element shift left mem doubleword" z13 zarch
-e7000000007a vesrav VRR_VVV0U "vector element shift right arithmetic reg" z13 zarch
-e7000000007a vesravb VRR_VVV "vector element shift right arithmetic reg byte" z13 zarch
-e7000000107a vesravh VRR_VVV "vector element shift right arithmetic reg halfword" z13 zarch
-e7000000207a vesravf VRR_VVV "vector element shift right arithmetic reg word" z13 zarch
-e7000000307a vesravg VRR_VVV "vector element shift right arithmetic reg doubleword" z13 zarch
-e7000000003a vesra VRS_VVRDU "vector element shift right arithmetic mem" z13 zarch
-e7000000003a vesrab VRS_VVRD "vector element shift right arithmetic mem byte" z13 zarch
-e7000000103a vesrah VRS_VVRD "vector element shift right arithmetic mem halfword" z13 zarch
-e7000000203a vesraf VRS_VVRD "vector element shift right arithmetic mem word" z13 zarch
-e7000000303a vesrag VRS_VVRD "vector element shift right arithmetic mem doubleword" z13 zarch
-e70000000078 vesrlv VRR_VVV0U "vector element shift right logical reg" z13 zarch
-e70000000078 vesrlvb VRR_VVV "vector element shift right logical reg byte" z13 zarch
-e70000001078 vesrlvh VRR_VVV "vector element shift right logical reg halfword" z13 zarch
-e70000002078 vesrlvf VRR_VVV "vector element shift right logical reg word" z13 zarch
-e70000003078 vesrlvg VRR_VVV "vector element shift right logical reg doubleword" z13 zarch
-e70000000038 vesrl VRS_VVRDU "vector element shift right logical mem" z13 zarch
-e70000000038 vesrlb VRS_VVRD "vector element shift right logical mem byte" z13 zarch
-e70000001038 vesrlh VRS_VVRD "vector element shift right logical mem halfword" z13 zarch
-e70000002038 vesrlf VRS_VVRD "vector element shift right logical mem word" z13 zarch
-e70000003038 vesrlg VRS_VVRD "vector element shift right logical mem doubleword" z13 zarch
-e70000000074 vsl VRR_VVV "vector shift left" z13 zarch
-e70000000075 vslb VRR_VVV "vector shift left by byte" z13 zarch
-e70000000077 vsldb VRI_VVV0U "vector shift left double by byte" z13 zarch
-e7000000007e vsra VRR_VVV "vector shift right arithmetic" z13 zarch
-e7000000007f vsrab VRR_VVV "vector shift right arithmetic by byte" z13 zarch
-e7000000007c vsrl VRR_VVV "vector shift right logical" z13 zarch
-e7000000007d vsrlb VRR_VVV "vector shift right logical by byte" z13 zarch
-e700000000f7 vs VRR_VVV0U "vector subtract" z13 zarch
-e700000000f7 vsb VRR_VVV "vector subtract byte" z13 zarch
-e700000010f7 vsh VRR_VVV "vector subtract halfword" z13 zarch
-e700000020f7 vsf VRR_VVV "vector subtract word" z13 zarch
-e700000030f7 vsg VRR_VVV "vector subtract doubleword" z13 zarch
-e700000040f7 vsq VRR_VVV "vector subtract quadword" z13 zarch
-e700000000f5 vscbi VRR_VVV0U "vector subtract compute borrow indication" z13 zarch
-e700000000f5 vscbib VRR_VVV "vector subtract compute borrow indication byte" z13 zarch
-e700000010f5 vscbih VRR_VVV "vector subtract compute borrow indication halfword" z13 zarch
-e700000020f5 vscbif VRR_VVV "vector subtract compute borrow indication word" z13 zarch
-e700000030f5 vscbig VRR_VVV "vector subtract compute borrow indication doubleword" z13 zarch
-e700000040f5 vscbiq VRR_VVV "vector subtract compute borrow indication quadword" z13 zarch
-e700000000bf vsbi VRR_VVVU0V "vector subtract with borrow indication" z13 zarch
-e700040000bf vsbiq VRR_VVV0V "vector subtract with borrow indication quadword" z13 zarch
-e700000000bd vsbcbi VRR_VVVU0V "vector subtract with borrow compute borrow indication" z13 zarch
-e700040000bd vsbcbiq VRR_VVV0V "vector subtract with borrow compute borrow indication quadword" z13 zarch
-e70000000065 vsumg VRR_VVV0U "vector sum across doubleword" z13 zarch
-e70000001065 vsumgh VRR_VVV "vector sum across doubleword - halfword" z13 zarch
-e70000002065 vsumgf VRR_VVV "vector sum across doubleword - word" z13 zarch
-e70000000067 vsumq VRR_VVV0U "vector sum across quadword" z13 zarch
-e70000002067 vsumqf VRR_VVV "vector sum across quadword - word elements" z13 zarch
-e70000003067 vsumqg VRR_VVV "vector sum across quadword - doubleword elements" z13 zarch
-e70000000064 vsum VRR_VVV0U "vector sum across word" z13 zarch
-e70000000064 vsumb VRR_VVV "vector sum across word - byte elements" z13 zarch
-e70000001064 vsumh VRR_VVV "vector sum across word - halfword elements" z13 zarch
-e700000000d8 vtm VRR_VV "vector test under mask" z13 zarch
+e700000000f3 va VRR_VVV0U "vector add" z13 zarch vx
+e700000000f3 vab VRR_VVV "vector add byte" z13 zarch vx
+e700000010f3 vah VRR_VVV "vector add halfword" z13 zarch vx
+e700000020f3 vaf VRR_VVV "vector add word" z13 zarch vx
+e700000030f3 vag VRR_VVV "vector add double word" z13 zarch vx
+e700000040f3 vaq VRR_VVV "vector add quad word" z13 zarch vx
+e700000000f1 vacc VRR_VVV0U "vector add compute carry" z13 zarch vx
+e700000000f1 vaccb VRR_VVV "vector add compute carry byte" z13 zarch vx
+e700000010f1 vacch VRR_VVV "vector add compute carry halfword" z13 zarch vx
+e700000020f1 vaccf VRR_VVV "vector add compute carry word" z13 zarch vx
+e700000030f1 vaccg VRR_VVV "vector add compute carry doubleword" z13 zarch vx
+e700000040f1 vaccq VRR_VVV "vector add compute carry quadword" z13 zarch vx
+e700000000bb vac VRR_VVVU0V "vector add with carry" z13 zarch vx
+e700040000bb vacq VRR_VVV0V "vector add with carry quadword" z13 zarch vx
+e700000000b9 vaccc VRR_VVVU0V "vector add with carry compute carry" z13 zarch vx
+e700040000b9 vacccq VRR_VVV0V "vector add with carry compute carry quadword" z13 zarch vx
+e70000000068 vn VRR_VVV "vector and" z13 zarch vx
+e70000000069 vnc VRR_VVV "vector and with complement" z13 zarch vx
+e700000000f2 vavg VRR_VVV0U "vector average" z13 zarch vx
+e700000000f2 vavgb VRR_VVV "vector average byte" z13 zarch vx
+e700000010f2 vavgh VRR_VVV "vector average half word" z13 zarch vx
+e700000020f2 vavgf VRR_VVV "vector average word" z13 zarch vx
+e700000030f2 vavgg VRR_VVV "vector average double word" z13 zarch vx
+e700000000f0 vavgl VRR_VVV0U "vector average logical" z13 zarch vx
+e700000000f0 vavglb VRR_VVV "vector average logical byte" z13 zarch vx
+e700000010f0 vavglh VRR_VVV "vector average logical half word" z13 zarch vx
+e700000020f0 vavglf VRR_VVV "vector average logical word" z13 zarch vx
+e700000030f0 vavglg VRR_VVV "vector average logical double word" z13 zarch vx
+e70000000066 vcksm VRR_VVV "vector checksum" z13 zarch vx
+e700000000db vec VRR_VV0U "vector element compare" z13 zarch vx
+e700000000db vecb VRR_VV "vector element compare byte" z13 zarch vx
+e700000010db vech VRR_VV "vector element compare half word" z13 zarch vx
+e700000020db vecf VRR_VV "vector element compare word" z13 zarch vx
+e700000030db vecg VRR_VV "vector element compare double word" z13 zarch vx
+e700000000d9 vecl VRR_VV0U "vector element compare logical" z13 zarch vx
+e700000000d9 veclb VRR_VV "vector element compare logical byte" z13 zarch vx
+e700000010d9 veclh VRR_VV "vector element compare logical half word" z13 zarch vx
+e700000020d9 veclf VRR_VV "vector element compare logical word" z13 zarch vx
+e700000030d9 veclg VRR_VV "vector element compare logical double word" z13 zarch vx
+e700000000f8 vceq VRR_VVV0U0U "vector compare equal" z13 zarch vx
+e700000000f8 vceqb VRR_VVV "vector compare equal byte" z13 zarch vx
+e700000010f8 vceqh VRR_VVV "vector compare equal half word" z13 zarch vx
+e700000020f8 vceqf VRR_VVV "vector compare equal word" z13 zarch vx
+e700000030f8 vceqg VRR_VVV "vector compare equal double word" z13 zarch vx
+e700001000f8 vceqbs VRR_VVV "vector compare equal byte" z13 zarch vx
+e700001010f8 vceqhs VRR_VVV "vector compare equal half word" z13 zarch vx
+e700001020f8 vceqfs VRR_VVV "vector compare equal word" z13 zarch vx
+e700001030f8 vceqgs VRR_VVV "vector compare equal double word" z13 zarch vx
+e700000000fb vch VRR_VVV0U0U "vector compare high" z13 zarch vx
+e700000000fb vchb VRR_VVV "vector compare high byte" z13 zarch vx
+e700000010fb vchh VRR_VVV "vector compare high half word" z13 zarch vx
+e700000020fb vchf VRR_VVV "vector compare high word" z13 zarch vx
+e700000030fb vchg VRR_VVV "vector compare high double word" z13 zarch vx
+e700001000fb vchbs VRR_VVV "vector compare high byte" z13 zarch vx
+e700001010fb vchhs VRR_VVV "vector compare high half word" z13 zarch vx
+e700001020fb vchfs VRR_VVV "vector compare high word" z13 zarch vx
+e700001030fb vchgs VRR_VVV "vector compare high double word" z13 zarch vx
+e700000000f9 vchl VRR_VVV0U0U "vector compare high logical" z13 zarch vx
+e700000000f9 vchlb VRR_VVV "vector compare high logical byte" z13 zarch vx
+e700000010f9 vchlh VRR_VVV "vector compare high logical half word" z13 zarch vx
+e700000020f9 vchlf VRR_VVV "vector compare high logical word" z13 zarch vx
+e700000030f9 vchlg VRR_VVV "vector compare high logical double word" z13 zarch vx
+e700001000f9 vchlbs VRR_VVV "vector compare high logical byte" z13 zarch vx
+e700001010f9 vchlhs VRR_VVV "vector compare high logical half word" z13 zarch vx
+e700001020f9 vchlfs VRR_VVV "vector compare high logical word" z13 zarch vx
+e700001030f9 vchlgs VRR_VVV "vector compare high logical double word" z13 zarch vx
+e70000000053 vclz VRR_VV0U "vector count leading zeros" z13 zarch vx
+e70000000053 vclzb VRR_VV "vector count leading zeros byte" z13 zarch vx
+e70000001053 vclzh VRR_VV "vector count leading zeros halfword" z13 zarch vx
+e70000002053 vclzf VRR_VV "vector count leading zeros word" z13 zarch vx
+e70000003053 vclzg VRR_VV "vector count leading zeros doubleword" z13 zarch vx
+e70000000052 vctz VRR_VV0U "vector count trailing zeros" z13 zarch vx
+e70000000052 vctzb VRR_VV "vector count trailing zeros byte" z13 zarch vx
+e70000001052 vctzh VRR_VV "vector count trailing zeros halfword" z13 zarch vx
+e70000002052 vctzf VRR_VV "vector count trailing zeros word" z13 zarch vx
+e70000003052 vctzg VRR_VV "vector count trailing zeros doubleword" z13 zarch vx
+e7000000006d vx VRR_VVV "vector exclusive or" z13 zarch vx
+e700000000b4 vgfm VRR_VVV0U "vector galois field multiply sum" z13 zarch vx
+e700000000b4 vgfmb VRR_VVV "vector galois field multiply sum byte" z13 zarch vx
+e700000010b4 vgfmh VRR_VVV "vector galois field multiply sum halfword" z13 zarch vx
+e700000020b4 vgfmf VRR_VVV "vector galois field multiply sum word" z13 zarch vx
+e700000030b4 vgfmg VRR_VVV "vector galois field multiply sum doubleword" z13 zarch vx
+e700000000bc vgfma VRR_VVVU0V "vector galois field multiply sum and accumulate" z13 zarch vx
+e700000000bc vgfmab VRR_VVV0V "vector galois field multiply sum and accumulate byte" z13 zarch vx
+e700010000bc vgfmah VRR_VVV0V "vector galois field multiply sum and accumulate halfword" z13 zarch vx
+e700020000bc vgfmaf VRR_VVV0V "vector galois field multiply sum and accumulate word" z13 zarch vx
+e700030000bc vgfmag VRR_VVV0V "vector galois field multiply sum and accumulate doubleword" z13 zarch vx
+e700000000de vlc VRR_VV0U "vector load complement" z13 zarch vx
+e700000000de vlcb VRR_VV "vector load complement byte" z13 zarch vx
+e700000010de vlch VRR_VV "vector load complement halfword" z13 zarch vx
+e700000020de vlcf VRR_VV "vector load complement word" z13 zarch vx
+e700000030de vlcg VRR_VV "vector load complement doubleword" z13 zarch vx
+e700000000df vlp VRR_VV0U "vector load positive" z13 zarch vx
+e700000000df vlpb VRR_VV "vector load positive byte" z13 zarch vx
+e700000010df vlph VRR_VV "vector load positive halfword" z13 zarch vx
+e700000020df vlpf VRR_VV "vector load positive word" z13 zarch vx
+e700000030df vlpg VRR_VV "vector load positive doubleword" z13 zarch vx
+e700000000ff vmx VRR_VVV0U "vector maximum" z13 zarch vx
+e700000000ff vmxb VRR_VVV "vector maximum byte" z13 zarch vx
+e700000010ff vmxh VRR_VVV "vector maximum halfword" z13 zarch vx
+e700000020ff vmxf VRR_VVV "vector maximum word" z13 zarch vx
+e700000030ff vmxg VRR_VVV "vector maximum doubleword" z13 zarch vx
+e700000000fd vmxl VRR_VVV0U "vector maximum logical" z13 zarch vx
+e700000000fd vmxlb VRR_VVV "vector maximum logical byte" z13 zarch vx
+e700000010fd vmxlh VRR_VVV "vector maximum logical halfword" z13 zarch vx
+e700000020fd vmxlf VRR_VVV "vector maximum logical word" z13 zarch vx
+e700000030fd vmxlg VRR_VVV "vector maximum logical doubleword" z13 zarch vx
+e700000000fe vmn VRR_VVV0U "vector minimum" z13 zarch vx
+e700000000fe vmnb VRR_VVV "vector minimum byte" z13 zarch vx
+e700000010fe vmnh VRR_VVV "vector minimum halfword" z13 zarch vx
+e700000020fe vmnf VRR_VVV "vector minimum word" z13 zarch vx
+e700000030fe vmng VRR_VVV "vector minimum doubleword" z13 zarch vx
+e700000000fc vmnl VRR_VVV0U "vector minimum logical" z13 zarch vx
+e700000000fc vmnlb VRR_VVV "vector minimum logical byte" z13 zarch vx
+e700000010fc vmnlh VRR_VVV "vector minimum logical halfword" z13 zarch vx
+e700000020fc vmnlf VRR_VVV "vector minimum logical word" z13 zarch vx
+e700000030fc vmnlg VRR_VVV "vector minimum logical doubleword" z13 zarch vx
+e700000000aa vmal VRR_VVVU0V "vector multiply and add low" z13 zarch vx
+e700000000aa vmalb VRR_VVV0V "vector multiply and add low byte" z13 zarch vx
+e700010000aa vmalhw VRR_VVV0V "vector multiply and add low halfword" z13 zarch vx
+e700020000aa vmalf VRR_VVV0V "vector multiply and add low word" z13 zarch vx
+e700000000ab vmah VRR_VVVU0V "vector multiply and add high" z13 zarch vx
+e700000000ab vmahb VRR_VVV0V "vector multiply and add high byte" z13 zarch vx
+e700010000ab vmahh VRR_VVV0V "vector multiply and add high halfword" z13 zarch vx
+e700020000ab vmahf VRR_VVV0V "vector multiply and add high word" z13 zarch vx
+e700000000a9 vmalh VRR_VVVU0V "vector multiply and add logical high" z13 zarch vx
+e700000000a9 vmalhb VRR_VVV0V "vector multiply and add logical high byte" z13 zarch vx
+e700010000a9 vmalhh VRR_VVV0V "vector multiply and add logical high halfword" z13 zarch vx
+e700020000a9 vmalhf VRR_VVV0V "vector multiply and add logical high word" z13 zarch vx
+e700000000ae vmae VRR_VVVU0V "vector multiply and add even" z13 zarch vx
+e700000000ae vmaeb VRR_VVV0V "vector multiply and add even byte" z13 zarch vx
+e700010000ae vmaeh VRR_VVV0V "vector multiply and add even halfword" z13 zarch vx
+e700020000ae vmaef VRR_VVV0V "vector multiply and add even word" z13 zarch vx
+e700000000ac vmale VRR_VVVU0V "vector multiply and add logical even" z13 zarch vx
+e700000000ac vmaleb VRR_VVV0V "vector multiply and add logical even byte" z13 zarch vx
+e700010000ac vmaleh VRR_VVV0V "vector multiply and add logical even halfword" z13 zarch vx
+e700020000ac vmalef VRR_VVV0V "vector multiply and add logical even word" z13 zarch vx
+e700000000af vmao VRR_VVVU0V "vector multiply and add odd" z13 zarch vx
+e700000000af vmaob VRR_VVV0V "vector multiply and add odd byte" z13 zarch vx
+e700010000af vmaoh VRR_VVV0V "vector multiply and add odd halfword" z13 zarch vx
+e700020000af vmaof VRR_VVV0V "vector multiply and add odd word" z13 zarch vx
+e700000000ad vmalo VRR_VVVU0V "vector multiply and add logical odd" z13 zarch vx
+e700000000ad vmalob VRR_VVV0V "vector multiply and add logical odd byte" z13 zarch vx
+e700010000ad vmaloh VRR_VVV0V "vector multiply and add logical odd halfword" z13 zarch vx
+e700020000ad vmalof VRR_VVV0V "vector multiply and add logical odd word" z13 zarch vx
+e700000000a3 vmh VRR_VVV0U "vector multiply high" z13 zarch vx
+e700000000a3 vmhb VRR_VVV "vector multiply high byte" z13 zarch vx
+e700000010a3 vmhh VRR_VVV "vector multiply high halfword" z13 zarch vx
+e700000020a3 vmhf VRR_VVV "vector multiply high word" z13 zarch vx
+e700000000a1 vmlh VRR_VVV0U "vector multiply logical high" z13 zarch vx
+e700000000a1 vmlhb VRR_VVV "vector multiply logical high byte" z13 zarch vx
+e700000010a1 vmlhh VRR_VVV "vector multiply logical high halfword" z13 zarch vx
+e700000020a1 vmlhf VRR_VVV "vector multiply logical high word" z13 zarch vx
+e700000000a2 vml VRR_VVV0U "vector multiply low" z13 zarch vx
+e700000000a2 vmlb VRR_VVV "vector multiply low byte" z13 zarch vx
+e700000010a2 vmlhw VRR_VVV "vector multiply low halfword" z13 zarch vx
+e700000020a2 vmlf VRR_VVV "vector multiply low word" z13 zarch vx
+e700000000a6 vme VRR_VVV0U "vector multiply even" z13 zarch vx
+e700000000a6 vmeb VRR_VVV "vector multiply even byte" z13 zarch vx
+e700000010a6 vmeh VRR_VVV "vector multiply even halfword" z13 zarch vx
+e700000020a6 vmef VRR_VVV "vector multiply even word" z13 zarch vx
+e700000000a4 vmle VRR_VVV0U "vector multiply logical even" z13 zarch vx
+e700000000a4 vmleb VRR_VVV "vector multiply logical even byte" z13 zarch vx
+e700000010a4 vmleh VRR_VVV "vector multiply logical even halfword" z13 zarch vx
+e700000020a4 vmlef VRR_VVV "vector multiply logical even word" z13 zarch vx
+e700000000a7 vmo VRR_VVV0U "vector multiply odd" z13 zarch vx
+e700000000a7 vmob VRR_VVV "vector multiply odd byte" z13 zarch vx
+e700000010a7 vmoh VRR_VVV "vector multiply odd halfword" z13 zarch vx
+e700000020a7 vmof VRR_VVV "vector multiply odd word" z13 zarch vx
+e700000000a5 vmlo VRR_VVV0U "vector multiply logical odd" z13 zarch vx
+e700000000a5 vmlob VRR_VVV "vector multiply logical odd byte" z13 zarch vx
+e700000010a5 vmloh VRR_VVV "vector multiply logical odd halfword" z13 zarch vx
+e700000020a5 vmlof VRR_VVV "vector multiply logical odd word" z13 zarch vx
+e7000000006b vno VRR_VVV "vector nor" z13 zarch vx
+e7000000006b vnot VRR_VVV2 "vector not" z13 zarch vx
+e7000000006a vo VRR_VVV "vector or" z13 zarch vx
+e70000000050 vpopct VRR_VV0U "vector population count" z13 zarch vx
+e70000000073 verllv VRR_VVV0U "vector element rotate left logical reg" z13 zarch vx
+e70000000073 verllvb VRR_VVV "vector element rotate left logical reg byte" z13 zarch vx
+e70000001073 verllvh VRR_VVV "vector element rotate left logical reg halfword" z13 zarch vx
+e70000002073 verllvf VRR_VVV "vector element rotate left logical reg word" z13 zarch vx
+e70000003073 verllvg VRR_VVV "vector element rotate left logical reg doubleword" z13 zarch vx
+e70000000033 verll VRS_VVRDU "vector element rotate left logical mem" z13 zarch vx
+e70000000033 verllb VRS_VVRD "vector element rotate left logical mem byte" z13 zarch vx
+e70000001033 verllh VRS_VVRD "vector element rotate left logical mem halfword" z13 zarch vx
+e70000002033 verllf VRS_VVRD "vector element rotate left logical mem word" z13 zarch vx
+e70000003033 verllg VRS_VVRD "vector element rotate left logical mem doubleword" z13 zarch vx
+e70000000072 verim VRI_VVV0UU "vector element rotate and insert under mask" z13 zarch vx
+e70000000072 verimb VRI_VVV0U "vector element rotate and insert under mask byte" z13 zarch vx
+e70000001072 verimh VRI_VVV0U "vector element rotate and insert under mask halfword" z13 zarch vx
+e70000002072 verimf VRI_VVV0U "vector element rotate and insert under mask word" z13 zarch vx
+e70000003072 verimg VRI_VVV0U "vector element rotate and insert under mask doubleword" z13 zarch vx
+e70000000070 veslv VRR_VVV0U "vector element shift left reg" z13 zarch vx
+e70000000070 veslvb VRR_VVV "vector element shift left reg byte" z13 zarch vx
+e70000001070 veslvh VRR_VVV "vector element shift left reg halfword" z13 zarch vx
+e70000002070 veslvf VRR_VVV "vector element shift left reg word" z13 zarch vx
+e70000003070 veslvg VRR_VVV "vector element shift left reg doubleword" z13 zarch vx
+e70000000030 vesl VRS_VVRDU "vector element shift left mem" z13 zarch vx
+e70000000030 veslb VRS_VVRD "vector element shift left mem byte" z13 zarch vx
+e70000001030 veslh VRS_VVRD "vector element shift left mem halfword" z13 zarch vx
+e70000002030 veslf VRS_VVRD "vector element shift left mem word" z13 zarch vx
+e70000003030 veslg VRS_VVRD "vector element shift left mem doubleword" z13 zarch vx
+e7000000007a vesrav VRR_VVV0U "vector element shift right arithmetic reg" z13 zarch vx
+e7000000007a vesravb VRR_VVV "vector element shift right arithmetic reg byte" z13 zarch vx
+e7000000107a vesravh VRR_VVV "vector element shift right arithmetic reg halfword" z13 zarch vx
+e7000000207a vesravf VRR_VVV "vector element shift right arithmetic reg word" z13 zarch vx
+e7000000307a vesravg VRR_VVV "vector element shift right arithmetic reg doubleword" z13 zarch vx
+e7000000003a vesra VRS_VVRDU "vector element shift right arithmetic mem" z13 zarch vx
+e7000000003a vesrab VRS_VVRD "vector element shift right arithmetic mem byte" z13 zarch vx
+e7000000103a vesrah VRS_VVRD "vector element shift right arithmetic mem halfword" z13 zarch vx
+e7000000203a vesraf VRS_VVRD "vector element shift right arithmetic mem word" z13 zarch vx
+e7000000303a vesrag VRS_VVRD "vector element shift right arithmetic mem doubleword" z13 zarch vx
+e70000000078 vesrlv VRR_VVV0U "vector element shift right logical reg" z13 zarch vx
+e70000000078 vesrlvb VRR_VVV "vector element shift right logical reg byte" z13 zarch vx
+e70000001078 vesrlvh VRR_VVV "vector element shift right logical reg halfword" z13 zarch vx
+e70000002078 vesrlvf VRR_VVV "vector element shift right logical reg word" z13 zarch vx
+e70000003078 vesrlvg VRR_VVV "vector element shift right logical reg doubleword" z13 zarch vx
+e70000000038 vesrl VRS_VVRDU "vector element shift right logical mem" z13 zarch vx
+e70000000038 vesrlb VRS_VVRD "vector element shift right logical mem byte" z13 zarch vx
+e70000001038 vesrlh VRS_VVRD "vector element shift right logical mem halfword" z13 zarch vx
+e70000002038 vesrlf VRS_VVRD "vector element shift right logical mem word" z13 zarch vx
+e70000003038 vesrlg VRS_VVRD "vector element shift right logical mem doubleword" z13 zarch vx
+e70000000074 vsl VRR_VVV "vector shift left" z13 zarch vx
+e70000000075 vslb VRR_VVV "vector shift left by byte" z13 zarch vx
+e70000000077 vsldb VRI_VVV0U "vector shift left double by byte" z13 zarch vx
+e7000000007e vsra VRR_VVV "vector shift right arithmetic" z13 zarch vx
+e7000000007f vsrab VRR_VVV "vector shift right arithmetic by byte" z13 zarch vx
+e7000000007c vsrl VRR_VVV "vector shift right logical" z13 zarch vx
+e7000000007d vsrlb VRR_VVV "vector shift right logical by byte" z13 zarch vx
+e700000000f7 vs VRR_VVV0U "vector subtract" z13 zarch vx
+e700000000f7 vsb VRR_VVV "vector subtract byte" z13 zarch vx
+e700000010f7 vsh VRR_VVV "vector subtract halfword" z13 zarch vx
+e700000020f7 vsf VRR_VVV "vector subtract word" z13 zarch vx
+e700000030f7 vsg VRR_VVV "vector subtract doubleword" z13 zarch vx
+e700000040f7 vsq VRR_VVV "vector subtract quadword" z13 zarch vx
+e700000000f5 vscbi VRR_VVV0U "vector subtract compute borrow indication" z13 zarch vx
+e700000000f5 vscbib VRR_VVV "vector subtract compute borrow indication byte" z13 zarch vx
+e700000010f5 vscbih VRR_VVV "vector subtract compute borrow indication halfword" z13 zarch vx
+e700000020f5 vscbif VRR_VVV "vector subtract compute borrow indication word" z13 zarch vx
+e700000030f5 vscbig VRR_VVV "vector subtract compute borrow indication doubleword" z13 zarch vx
+e700000040f5 vscbiq VRR_VVV "vector subtract compute borrow indication quadword" z13 zarch vx
+e700000000bf vsbi VRR_VVVU0V "vector subtract with borrow indication" z13 zarch vx
+e700040000bf vsbiq VRR_VVV0V "vector subtract with borrow indication quadword" z13 zarch vx
+e700000000bd vsbcbi VRR_VVVU0V "vector subtract with borrow compute borrow indication" z13 zarch vx
+e700040000bd vsbcbiq VRR_VVV0V "vector subtract with borrow compute borrow indication quadword" z13 zarch vx
+e70000000065 vsumg VRR_VVV0U "vector sum across doubleword" z13 zarch vx
+e70000001065 vsumgh VRR_VVV "vector sum across doubleword - halfword" z13 zarch vx
+e70000002065 vsumgf VRR_VVV "vector sum across doubleword - word" z13 zarch vx
+e70000000067 vsumq VRR_VVV0U "vector sum across quadword" z13 zarch vx
+e70000002067 vsumqf VRR_VVV "vector sum across quadword - word elements" z13 zarch vx
+e70000003067 vsumqg VRR_VVV "vector sum across quadword - doubleword elements" z13 zarch vx
+e70000000064 vsum VRR_VVV0U "vector sum across word" z13 zarch vx
+e70000000064 vsumb VRR_VVV "vector sum across word - byte elements" z13 zarch vx
+e70000001064 vsumh VRR_VVV "vector sum across word - halfword elements" z13 zarch vx
+e700000000d8 vtm VRR_VV "vector test under mask" z13 zarch vx
 
 # Chapter 23 - Vector String Instructions
-e70000000082 vfae VRR_VVV0U0U "vector find any element equal" z13 zarch optparm
-e70000000082 vfaeb VRR_VVV0U0 "vector find any element equal byte" z13 zarch optparm
-e70000001082 vfaeh VRR_VVV0U0 "vector find any element equal halfword" z13 zarch optparm
-e70000002082 vfaef VRR_VVV0U0 "vector find any element equal word" z13 zarch optparm
-e70000100082 vfaebs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm
-e70000101082 vfaehs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm
-e70000102082 vfaefs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm
-e70000200082 vfaezb VRR_VVV0U2 "vector find any element equal" z13 zarch optparm
-e70000201082 vfaezh VRR_VVV0U2 "vector find any element equal" z13 zarch optparm
-e70000202082 vfaezf VRR_VVV0U2 "vector find any element equal" z13 zarch optparm
-e70000300082 vfaezbs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm
-e70000301082 vfaezhs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm
-e70000302082 vfaezfs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm
-e70000000080 vfee VRR_VVV0U0U "vector find element equal" z13 zarch optparm
-e70000000080 vfeeb VRR_VVV0U0 "vector find element equal byte" z13 zarch optparm
-e70000001080 vfeeh VRR_VVV0U0 "vector find element equal halfword" z13 zarch optparm
-e70000002080 vfeef VRR_VVV0U0 "vector find element equal word" z13 zarch optparm
-e70000100080 vfeebs VRR_VVV "vector find element equal byte" z13 zarch
-e70000101080 vfeehs VRR_VVV "vector find element equal halfword" z13 zarch
-e70000102080 vfeefs VRR_VVV "vector find element equal word" z13 zarch
-e70000200080 vfeezb VRR_VVV "vector find element equal byte" z13 zarch
-e70000201080 vfeezh VRR_VVV "vector find element equal halfword" z13 zarch
-e70000202080 vfeezf VRR_VVV "vector find element equal word" z13 zarch
-e70000300080 vfeezbs VRR_VVV "vector find element equal byte" z13 zarch
-e70000301080 vfeezhs VRR_VVV "vector find element equal halfword" z13 zarch
-e70000302080 vfeezfs VRR_VVV "vector find element equal word" z13 zarch
-e70000000081 vfene VRR_VVV0U0U "vector find element not equal" z13 zarch optparm
-e70000000081 vfeneb VRR_VVV0U0 "vector find element not equal byte" z13 zarch optparm
-e70000001081 vfeneh VRR_VVV0U0 "vector find element not equal halfword" z13 zarch optparm
-e70000002081 vfenef VRR_VVV0U0 "vector find element not equal word" z13 zarch optparm
-e70000100081 vfenebs VRR_VVV "vector find element not equal byte" z13 zarch
-e70000101081 vfenehs VRR_VVV "vector find element not equal halfword" z13 zarch
-e70000102081 vfenefs VRR_VVV "vector find element not equal word" z13 zarch
-e70000200081 vfenezb VRR_VVV "vector find element not equal byte" z13 zarch
-e70000201081 vfenezh VRR_VVV "vector find element not equal halfword" z13 zarch
-e70000202081 vfenezf VRR_VVV "vector find element not equal word" z13 zarch
-e70000300081 vfenezbs VRR_VVV "vector find element not equal byte" z13 zarch
-e70000301081 vfenezhs VRR_VVV "vector find element not equal halfword" z13 zarch
-e70000302081 vfenezfs VRR_VVV "vector find element not equal word" z13 zarch
-e7000000005c vistr VRR_VV0U0U "vector isolate string" z13 zarch optparm
-e7000000005c vistrb VRR_VV0U2 "vector isolate string byte" z13 zarch optparm
-e7000000105c vistrh VRR_VV0U2 "vector isolate string halfword" z13 zarch optparm
-e7000000205c vistrf VRR_VV0U2 "vector isolate string word" z13 zarch optparm
-e7000010005c vistrbs VRR_VV "vector isolate string byte" z13 zarch
-e7000010105c vistrhs VRR_VV "vector isolate string halfword" z13 zarch
-e7000010205c vistrfs VRR_VV "vector isolate string word" z13 zarch
-e7000000008a vstrc VRR_VVVUU0V "vector string range compare" z13 zarch optparm
-e7000000008a vstrcb VRR_VVVU0VB "vector string range compare byte" z13 zarch optparm
-e7000100008a vstrch VRR_VVVU0VB "vector string range compare halfword" z13 zarch optparm
-e7000200008a vstrcf VRR_VVVU0VB "vector string range compare word" z13 zarch optparm
-e7000010008a vstrcbs VRR_VVVU0VB1 "vector string range compare byte" z13 zarch optparm
-e7000110008a vstrchs VRR_VVVU0VB1 "vector string range compare halfword" z13 zarch optparm
-e7000210008a vstrcfs VRR_VVVU0VB1 "vector string range compare word" z13 zarch optparm
-e7000020008a vstrczb VRR_VVVU0VB2 "vector string range compare byte" z13 zarch optparm
-e7000120008a vstrczh VRR_VVVU0VB2 "vector string range compare halfword" z13 zarch optparm
-e7000220008a vstrczf VRR_VVVU0VB2 "vector string range compare word" z13 zarch optparm
-e7000030008a vstrczbs VRR_VVVU0VB3 "vector string range compare byte" z13 zarch optparm
-e7000130008a vstrczhs VRR_VVVU0VB3 "vector string range compare halfword" z13 zarch optparm
-e7000230008a vstrczfs VRR_VVVU0VB3 "vector string range compare word" z13 zarch optparm
+e70000000082 vfae VRR_VVV0U0U "vector find any element equal" z13 zarch optparm,vx
+e70000000082 vfaeb VRR_VVV0U0 "vector find any element equal byte" z13 zarch optparm,vx
+e70000001082 vfaeh VRR_VVV0U0 "vector find any element equal halfword" z13 zarch optparm,vx
+e70000002082 vfaef VRR_VVV0U0 "vector find any element equal word" z13 zarch optparm,vx
+e70000100082 vfaebs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm,vx
+e70000101082 vfaehs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm,vx
+e70000102082 vfaefs VRR_VVV0U1 "vector find any element equal" z13 zarch optparm,vx
+e70000200082 vfaezb VRR_VVV0U2 "vector find any element equal" z13 zarch optparm,vx
+e70000201082 vfaezh VRR_VVV0U2 "vector find any element equal" z13 zarch optparm,vx
+e70000202082 vfaezf VRR_VVV0U2 "vector find any element equal" z13 zarch optparm,vx
+e70000300082 vfaezbs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm,vx
+e70000301082 vfaezhs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm,vx
+e70000302082 vfaezfs VRR_VVV0U3 "vector find any element equal" z13 zarch optparm,vx
+e70000000080 vfee VRR_VVV0U0U "vector find element equal" z13 zarch optparm,vx
+e70000000080 vfeeb VRR_VVV0U0 "vector find element equal byte" z13 zarch optparm,vx
+e70000001080 vfeeh VRR_VVV0U0 "vector find element equal halfword" z13 zarch optparm,vx
+e70000002080 vfeef VRR_VVV0U0 "vector find element equal word" z13 zarch optparm,vx
+e70000100080 vfeebs VRR_VVV "vector find element equal byte" z13 zarch vx
+e70000101080 vfeehs VRR_VVV "vector find element equal halfword" z13 zarch vx
+e70000102080 vfeefs VRR_VVV "vector find element equal word" z13 zarch vx
+e70000200080 vfeezb VRR_VVV "vector find element equal byte" z13 zarch vx
+e70000201080 vfeezh VRR_VVV "vector find element equal halfword" z13 zarch vx
+e70000202080 vfeezf VRR_VVV "vector find element equal word" z13 zarch vx
+e70000300080 vfeezbs VRR_VVV "vector find element equal byte" z13 zarch vx
+e70000301080 vfeezhs VRR_VVV "vector find element equal halfword" z13 zarch vx
+e70000302080 vfeezfs VRR_VVV "vector find element equal word" z13 zarch vx
+e70000000081 vfene VRR_VVV0U0U "vector find element not equal" z13 zarch optparm,vx
+e70000000081 vfeneb VRR_VVV0U0 "vector find element not equal byte" z13 zarch optparm,vx
+e70000001081 vfeneh VRR_VVV0U0 "vector find element not equal halfword" z13 zarch optparm,vx
+e70000002081 vfenef VRR_VVV0U0 "vector find element not equal word" z13 zarch optparm,vx
+e70000100081 vfenebs VRR_VVV "vector find element not equal byte" z13 zarch vx
+e70000101081 vfenehs VRR_VVV "vector find element not equal halfword" z13 zarch vx
+e70000102081 vfenefs VRR_VVV "vector find element not equal word" z13 zarch vx
+e70000200081 vfenezb VRR_VVV "vector find element not equal byte" z13 zarch vx
+e70000201081 vfenezh VRR_VVV "vector find element not equal halfword" z13 zarch vx
+e70000202081 vfenezf VRR_VVV "vector find element not equal word" z13 zarch vx
+e70000300081 vfenezbs VRR_VVV "vector find element not equal byte" z13 zarch vx
+e70000301081 vfenezhs VRR_VVV "vector find element not equal halfword" z13 zarch vx
+e70000302081 vfenezfs VRR_VVV "vector find element not equal word" z13 zarch vx
+e7000000005c vistr VRR_VV0U0U "vector isolate string" z13 zarch optparm,vx
+e7000000005c vistrb VRR_VV0U2 "vector isolate string byte" z13 zarch optparm,vx
+e7000000105c vistrh VRR_VV0U2 "vector isolate string halfword" z13 zarch optparm,vx
+e7000000205c vistrf VRR_VV0U2 "vector isolate string word" z13 zarch optparm,vx
+e7000010005c vistrbs VRR_VV "vector isolate string byte" z13 zarch vx
+e7000010105c vistrhs VRR_VV "vector isolate string halfword" z13 zarch vx
+e7000010205c vistrfs VRR_VV "vector isolate string word" z13 zarch vx
+e7000000008a vstrc VRR_VVVUU0V "vector string range compare" z13 zarch optparm,vx
+e7000000008a vstrcb VRR_VVVU0VB "vector string range compare byte" z13 zarch optparm,vx
+e7000100008a vstrch VRR_VVVU0VB "vector string range compare halfword" z13 zarch optparm,vx
+e7000200008a vstrcf VRR_VVVU0VB "vector string range compare word" z13 zarch optparm,vx
+e7000010008a vstrcbs VRR_VVVU0VB1 "vector string range compare byte" z13 zarch optparm,vx
+e7000110008a vstrchs VRR_VVVU0VB1 "vector string range compare halfword" z13 zarch optparm,vx
+e7000210008a vstrcfs VRR_VVVU0VB1 "vector string range compare word" z13 zarch optparm,vx
+e7000020008a vstrczb VRR_VVVU0VB2 "vector string range compare byte" z13 zarch optparm,vx
+e7000120008a vstrczh VRR_VVVU0VB2 "vector string range compare halfword" z13 zarch optparm,vx
+e7000220008a vstrczf VRR_VVVU0VB2 "vector string range compare word" z13 zarch optparm,vx
+e7000030008a vstrczbs VRR_VVVU0VB3 "vector string range compare byte" z13 zarch optparm,vx
+e7000130008a vstrczhs VRR_VVVU0VB3 "vector string range compare halfword" z13 zarch optparm,vx
+e7000230008a vstrczfs VRR_VVVU0VB3 "vector string range compare word" z13 zarch optparm,vx
 
 # Chapter 24
-e700000000e3 vfa VRR_VVV0UU "vector fp add" z13 zarch
-e700000030e3 vfadb VRR_VVV "vector fp add" z13 zarch
-e700000830e3 wfadb VRR_VVV "vector fp add" z13 zarch
-e700000000cb wfc VRR_VV0UU2 "vector fp compare scalar" z13 zarch
-e700000030cb wfcdb VRR_VV "vector fp compare scalar" z13 zarch
-e700000000ca wfk VRR_VV0UU2 "vector fp compare and signal scalar" z13 zarch
-e700000030ca wfkdb VRR_VV "vector fp compare and signal scalar" z13 zarch
-e700000000e8 vfce VRR_VVV0UUU "vector fp compare equal" z13 zarch
-e700000030e8 vfcedb VRR_VVV "vector fp compare equal" z13 zarch
-e700001030e8 vfcedbs VRR_VVV "vector fp compare equal" z13 zarch
-e700000830e8 wfcedb VRR_VVV "vector fp compare equal" z13 zarch
-e700001830e8 wfcedbs VRR_VVV "vector fp compare equal" z13 zarch
-e700000000eb vfch VRR_VVV0UUU "vector fp compare high" z13 zarch
-e700000030eb vfchdb VRR_VVV "vector fp compare high" z13 zarch
-e700001030eb vfchdbs VRR_VVV "vector fp compare high" z13 zarch
-e700000830eb wfchdb VRR_VVV "vector fp compare high" z13 zarch
-e700001830eb wfchdbs VRR_VVV "vector fp compare high" z13 zarch
-e700000000ea vfche VRR_VVV0UUU "vector fp compare high or equal" z13 zarch
-e700000030ea vfchedb VRR_VVV "vector fp compare high or equal" z13 zarch
-e700001030ea vfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch
-e700000830ea wfchedb VRR_VVV "vector fp compare high or equal" z13 zarch
-e700001830ea wfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch
-e700000000c3 vcdg VRR_VV0UUU "vector fp convert from fixed 64 bit" z13 zarch
-e700000030c3 vcdgb VRR_VV0UU "vector fp convert from fixed 64 bit" z13 zarch
-e700000830c3 wcdgb VRR_VV0UU8 "vector fp convert from fixed 64 bit" z13 zarch
-e700000000c1 vcdlg VRR_VV0UUU "vector fp convert from logical 64 bit" z13 zarch
-e700000030c1 vcdlgb VRR_VV0UU "vector fp convert from logical 64 bit" z13 zarch
-e700000830c1 wcdlgb VRR_VV0UU8 "vector fp convert from logical 64 bit" z13 zarch
-e700000000c2 vcgd VRR_VV0UUU "vector fp convert to fixed 64 bit" z13 zarch
-e700000030c2 vcgdb VRR_VV0UU "vector fp convert to fixed 64 bit" z13 zarch
-e700000830c2 wcgdb VRR_VV0UU8 "vector fp convert to fixed 64 bit" z13 zarch
-e700000000c0 vclgd VRR_VV0UUU "vector fp convert to logical 64 bit" z13 zarch
-e700000030c0 vclgdb VRR_VV0UU "vector fp convert to logical 64 bit" z13 zarch
-e700000830c0 wclgdb VRR_VV0UU8 "vector fp convert to logical 64 bit" z13 zarch
-e700000000e5 vfd VRR_VVV0UU "vector fp divide" z13 zarch
-e700000030e5 vfddb VRR_VVV "vector fp divide" z13 zarch
-e700000830e5 wfddb VRR_VVV "vector fp divide" z13 zarch
-e700000000c7 vfi VRR_VV0UUU "vector load fp integer" z13 zarch
-e700000030c7 vfidb VRR_VV0UU "vector load fp integer" z13 zarch
-e700000830c7 wfidb VRR_VV0UU8 "vector load fp integer" z13 zarch
-e700000000c4 vlde VRR_VV0UU2 "vector fp load lengthened" z13 zarch
-e700000020c4 vldeb VRR_VV "vector fp load lengthened" z13 zarch
-e700000820c4 wldeb VRR_VV "vector fp load lengthened" z13 zarch
-e700000000c5 vled VRR_VV0UUU "vector fp load rounded" z13 zarch
-e700000030c5 vledb VRR_VV0UU "vector fp load rounded" z13 zarch
-e700000830c5 wledb VRR_VV0UU8 "vector fp load rounded" z13 zarch
-e700000000e7 vfm VRR_VVV0UU "vector fp multiply" z13 zarch
-e700000030e7 vfmdb VRR_VVV "vector fp multiply" z13 zarch
-e700000830e7 wfmdb VRR_VVV "vector fp multiply" z13 zarch
-e7000000008f vfma VRR_VVVU0UV "vector fp multiply and add" z13 zarch
-e7000300008f vfmadb VRR_VVVV "vector fp multiply and add" z13 zarch
-e7000308008f wfmadb VRR_VVVV "vector fp multiply and add" z13 zarch
-e7000000008e vfms VRR_VVVU0UV "vector fp multiply and subtract" z13 zarch
-e7000300008e vfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch
-e7000308008e wfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch
-e700000000cc vfpso VRR_VV0UUU "vector fp perform sign operation" z13 zarch
-e700000030cc vfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch
-e700000830cc wfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch
-e700000030cc vflcdb VRR_VV "vector fp perform sign operation" z13 zarch
-e700000830cc wflcdb VRR_VV "vector fp perform sign operation" z13 zarch
-e700001030cc vflndb VRR_VV "vector fp perform sign operation" z13 zarch
-e700001830cc wflndb VRR_VV "vector fp perform sign operation" z13 zarch
-e700002030cc vflpdb VRR_VV "vector fp perform sign operation" z13 zarch
-e700002830cc wflpdb VRR_VV "vector fp perform sign operation" z13 zarch
-e700000000ce vfsq VRR_VV0UU2 "vector fp square root" z13 zarch
-e700000030ce vfsqdb VRR_VV "vector fp square root" z13 zarch
-e700000830ce wfsqdb VRR_VV "vector fp square root" z13 zarch
-e700000000e2 vfs VRR_VVV0UU "vector fp subtract" z13 zarch
-e700000030e2 vfsdb VRR_VVV "vector fp subtract" z13 zarch
-e700000830e2 wfsdb VRR_VVV "vector fp subtract" z13 zarch
-e7000000004a vftci VRI_VVUUU "vector fp test data class immediate" z13 zarch
-e7000000304a vftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch
-e7000008304a wftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch
+e700000000e3 vfa VRR_VVV0UU "vector fp add" z13 zarch vx
+e700000030e3 vfadb VRR_VVV "vector fp add" z13 zarch vx
+e700000830e3 wfadb VRR_VVV "vector fp add" z13 zarch vx
+e700000000cb wfc VRR_VV0UU2 "vector fp compare scalar" z13 zarch vx
+e700000030cb wfcdb VRR_VV "vector fp compare scalar" z13 zarch vx
+e700000000ca wfk VRR_VV0UU2 "vector fp compare and signal scalar" z13 zarch vx
+e700000030ca wfkdb VRR_VV "vector fp compare and signal scalar" z13 zarch vx
+e700000000e8 vfce VRR_VVV0UUU "vector fp compare equal" z13 zarch vx
+e700000030e8 vfcedb VRR_VVV "vector fp compare equal" z13 zarch vx
+e700001030e8 vfcedbs VRR_VVV "vector fp compare equal" z13 zarch vx
+e700000830e8 wfcedb VRR_VVV "vector fp compare equal" z13 zarch vx
+e700001830e8 wfcedbs VRR_VVV "vector fp compare equal" z13 zarch vx
+e700000000eb vfch VRR_VVV0UUU "vector fp compare high" z13 zarch vx
+e700000030eb vfchdb VRR_VVV "vector fp compare high" z13 zarch vx
+e700001030eb vfchdbs VRR_VVV "vector fp compare high" z13 zarch vx
+e700000830eb wfchdb VRR_VVV "vector fp compare high" z13 zarch vx
+e700001830eb wfchdbs VRR_VVV "vector fp compare high" z13 zarch vx
+e700000000ea vfche VRR_VVV0UUU "vector fp compare high or equal" z13 zarch vx
+e700000030ea vfchedb VRR_VVV "vector fp compare high or equal" z13 zarch vx
+e700001030ea vfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch vx
+e700000830ea wfchedb VRR_VVV "vector fp compare high or equal" z13 zarch vx
+e700001830ea wfchedbs VRR_VVV "vector fp compare high or equal" z13 zarch vx
+e700000000c3 vcdg VRR_VV0UUU "vector fp convert from fixed 64 bit" z13 zarch vx
+e700000030c3 vcdgb VRR_VV0UU "vector fp convert from fixed 64 bit" z13 zarch vx
+e700000830c3 wcdgb VRR_VV0UU8 "vector fp convert from fixed 64 bit" z13 zarch vx
+e700000000c1 vcdlg VRR_VV0UUU "vector fp convert from logical 64 bit" z13 zarch vx
+e700000030c1 vcdlgb VRR_VV0UU "vector fp convert from logical 64 bit" z13 zarch vx
+e700000830c1 wcdlgb VRR_VV0UU8 "vector fp convert from logical 64 bit" z13 zarch vx
+e700000000c2 vcgd VRR_VV0UUU "vector fp convert to fixed 64 bit" z13 zarch vx
+e700000030c2 vcgdb VRR_VV0UU "vector fp convert to fixed 64 bit" z13 zarch vx
+e700000830c2 wcgdb VRR_VV0UU8 "vector fp convert to fixed 64 bit" z13 zarch vx
+e700000000c0 vclgd VRR_VV0UUU "vector fp convert to logical 64 bit" z13 zarch vx
+e700000030c0 vclgdb VRR_VV0UU "vector fp convert to logical 64 bit" z13 zarch vx
+e700000830c0 wclgdb VRR_VV0UU8 "vector fp convert to logical 64 bit" z13 zarch vx
+e700000000e5 vfd VRR_VVV0UU "vector fp divide" z13 zarch vx
+e700000030e5 vfddb VRR_VVV "vector fp divide" z13 zarch vx
+e700000830e5 wfddb VRR_VVV "vector fp divide" z13 zarch vx
+e700000000c7 vfi VRR_VV0UUU "vector load fp integer" z13 zarch vx
+e700000030c7 vfidb VRR_VV0UU "vector load fp integer" z13 zarch vx
+e700000830c7 wfidb VRR_VV0UU8 "vector load fp integer" z13 zarch vx
+e700000000c4 vlde VRR_VV0UU2 "vector fp load lengthened" z13 zarch vx
+e700000020c4 vldeb VRR_VV "vector fp load lengthened" z13 zarch vx
+e700000820c4 wldeb VRR_VV "vector fp load lengthened" z13 zarch vx
+e700000000c5 vled VRR_VV0UUU "vector fp load rounded" z13 zarch vx
+e700000030c5 vledb VRR_VV0UU "vector fp load rounded" z13 zarch vx
+e700000830c5 wledb VRR_VV0UU8 "vector fp load rounded" z13 zarch vx
+e700000000e7 vfm VRR_VVV0UU "vector fp multiply" z13 zarch vx
+e700000030e7 vfmdb VRR_VVV "vector fp multiply" z13 zarch vx
+e700000830e7 wfmdb VRR_VVV "vector fp multiply" z13 zarch vx
+e7000000008f vfma VRR_VVVU0UV "vector fp multiply and add" z13 zarch vx
+e7000300008f vfmadb VRR_VVVV "vector fp multiply and add" z13 zarch vx
+e7000308008f wfmadb VRR_VVVV "vector fp multiply and add" z13 zarch vx
+e7000000008e vfms VRR_VVVU0UV "vector fp multiply and subtract" z13 zarch vx
+e7000300008e vfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch vx
+e7000308008e wfmsdb VRR_VVVV "vector fp multiply and subtract" z13 zarch vx
+e700000000cc vfpso VRR_VV0UUU "vector fp perform sign operation" z13 zarch vx
+e700000030cc vfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch vx
+e700000830cc wfpsodb VRR_VV0U2 "vector fp perform sign operation" z13 zarch vx
+e700000030cc vflcdb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700000830cc wflcdb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700001030cc vflndb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700001830cc wflndb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700002030cc vflpdb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700002830cc wflpdb VRR_VV "vector fp perform sign operation" z13 zarch vx
+e700000000ce vfsq VRR_VV0UU2 "vector fp square root" z13 zarch vx
+e700000030ce vfsqdb VRR_VV "vector fp square root" z13 zarch vx
+e700000830ce wfsqdb VRR_VV "vector fp square root" z13 zarch vx
+e700000000e2 vfs VRR_VVV0UU "vector fp subtract" z13 zarch vx
+e700000030e2 vfsdb VRR_VVV "vector fp subtract" z13 zarch vx
+e700000830e2 wfsdb VRR_VVV "vector fp subtract" z13 zarch vx
+e7000000004a vftci VRI_VVUUU "vector fp test data class immediate" z13 zarch vx
+e7000000304a vftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch vx
+e7000008304a wftcidb VRI_VVU2 "vector fp test data class immediate" z13 zarch vx
 
 ed00000000ae cdpt RSL_LRDFU "convert from packed to long dfp" z13 zarch
 ed00000000af cxpt RSL_LRDFEU "convert from packed to extended dfp" z13 zarch
@@ -1663,7 +1663,7 @@ ed00000000ac cpdt RSL_LRDFU "convert from long dfp to packed" z13 zarch
 ed00000000ad cpxt RSL_LRDFEU "convert from extended dfp to packed" z13 zarch
 
 b9e0 locfhr RRF_U0RR "load high on condition from gpr" z13 zarch
-b9e000000000 locfhr*16 RRF_00RR "load high on condition from gpr" z13 zarch
+b9e00000 locfhr*16 RRF_00RR "load high on condition from gpr" z13 zarch
 eb00000000e0 locfh RSY_RURD2 "load high on condition from memory" z13 zarch
 eb00000000e0 locfh*12 RSY_R0RD "load high on condition from memory" z13 zarch
 ec0000000042 lochi RIE_RUI0 "load halfword immediate on condition into 32 bit gpr" z13 zarch
@@ -1678,4 +1678,4 @@ eb00000000e1 stocfh*12 RSY_R0RD "store high on condition" z13 zarch
 e3000000003a llzrgf RXY_RRRD "load logical and zero rightmost bytes 32->64" z13 zarch
 e3000000003b lzrf RXY_RRRD "load and zero rightmost byte 32->32" z13 zarch
 e3000000002a lzrg RXY_RRRD "load and zero rightmost byte 64->64" z13 zarch
-b9ec ppno RRE_RR "perform pseudorandom number operation" z13 zarch
+b93c ppno RRE_RR "perform pseudorandom number operation" z13 zarch

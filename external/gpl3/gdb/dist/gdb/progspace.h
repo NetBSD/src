@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -236,8 +236,15 @@ extern struct program_space *current_program_space;
    pointer to the new object.  */
 extern struct program_space *add_program_space (struct address_space *aspace);
 
+/* Remove a program space from the program spaces list and release it.  It is
+   an error to call this function while PSPACE is the current program space. */
+extern void delete_program_space (struct program_space *pspace);
+
 /* Returns the number of program spaces listed.  */
 extern int number_of_program_spaces (void);
+
+/* Returns true iff there's no inferior bound to PSPACE.  */
+extern int program_space_empty_p (struct program_space *pspace);
 
 /* Copies program space SRC to DEST.  Copies the main executable file,
    and the main symbol file.  Returns DEST.  */
@@ -288,10 +295,6 @@ extern int address_space_num (struct address_space *aspace);
    target description, to fixup the program/address spaces
    mappings.  */
 extern void update_address_spaces (void);
-
-/* Prune away automatically added program spaces that aren't required
-   anymore.  */
-extern void prune_program_spaces (void);
 
 /* Reset saved solib data at the start of an solib event.  This lets
    us properly collect the data when calling solib_add, so it can then

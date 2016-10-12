@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -234,7 +234,7 @@ cmd_record_delete (char *args, int from_tty)
 {
   require_record_target ();
 
-  if (!target_record_is_replaying ())
+  if (!target_record_is_replaying (inferior_ptid))
     {
       printf_unfiltered (_("Already at end of record list.\n"));
       return;
@@ -268,7 +268,7 @@ cmd_record_stop (char *args, int from_tty)
   printf_unfiltered (_("Process record is stopped and all execution "
 		       "logs are deleted.\n"));
 
-  observer_notify_record_changed (current_inferior (), 0);
+  observer_notify_record_changed (current_inferior (), 0, NULL, NULL);
 }
 
 /* The "set record" command.  */
@@ -458,6 +458,7 @@ get_insn_history_modifiers (char **arg)
 	  switch (*args)
 	    {
 	    case 'm':
+	    case 's':
 	      modifiers |= DISASSEMBLY_SOURCE;
 	      modifiers |= DISASSEMBLY_FILENAME;
 	      break;
@@ -817,7 +818,7 @@ Argument is instruction number, as shown by 'info record'."),
 
   add_cmd ("instruction-history", class_obscure, cmd_record_insn_history, _("\
 Print disassembled instructions stored in the execution log.\n\
-With a /m modifier, source lines are included (if available).\n\
+With a /m or /s modifier, source lines are included (if available).\n\
 With a /r modifier, raw instructions in hex are included.\n\
 With a /f modifier, function names are omitted.\n\
 With a /p modifier, current position markers are omitted.\n\

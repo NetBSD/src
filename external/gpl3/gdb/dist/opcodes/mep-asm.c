@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -488,7 +488,7 @@ parse_unsigned7 (CGEN_CPU_DESC cd, const char **strp,
 	  break;
 	default:
 	  /* Safe assumption?  */
-	  abort (); 
+	  abort ();
 	}
       errmsg = cgen_parse_address (cd, strp, opindex, reloc,
 				   NULL, &value);
@@ -534,7 +534,7 @@ parse_cdisp10 (CGEN_CPU_DESC cd,
   if ((MEP_CPU & EF_MEP_CPU_MASK) == EF_MEP_CPU_C5)
     wide = 1;
 
-  if (strncmp (*strp, "0x0", 3) == 0 
+  if (strncmp (*strp, "0x0", 3) == 0
       || (**strp == '0' && *(*strp + 1) != 'x'))
     have_zero = 1;
 
@@ -601,7 +601,7 @@ mep_cgen_expand_macros_and_parse_operand
 
 static char *
 str_append (char *dest, const char *input, int len)
-{  
+{
   char *new_dest;
   int oldlen;
 
@@ -637,8 +637,8 @@ expand_macro (arg *args, int narg, macro *mac)
   /*  printf("expanding macro %s with %d args\n", mac->name, narg + 1); */
   while (*e)
     {
-      if (*e == '`' && 
-	  (*e+1) && 
+      if (*e == '`' &&
+	  (*e+1) &&
 	  ((*(e + 1) - '1') <= MAXARGS) &&
 	  ((*(e + 1) - '1') <= narg))
 	{
@@ -661,7 +661,7 @@ expand_macro (arg *args, int narg, macro *mac)
       free (result);
       return rescanned_result;
     }
-  else 
+  else
     return result;
 }
 
@@ -686,8 +686,8 @@ expand_string (const char *in, int first_only)
       switch (state)
 	{
 	case IN_TEXT:
-	  if (*in == '%' && *(in + 1) && (!first_only || num_expansions == 0)) 
-	    {	      
+	  if (*in == '%' && *(in + 1) && (!first_only || num_expansions == 0))
+	    {
 	      pmacro = lookup_macro (in + 1);
 	      if (pmacro)
 		{
@@ -698,7 +698,7 @@ expand_string (const char *in, int first_only)
 		  while (*in == ' ') ++in;
 		  if (*in != '(')
 		    {
-		      state = IN_TEXT;		      
+		      state = IN_TEXT;
 		      pmacro = NULL;
 		    }
 		  else
@@ -707,7 +707,7 @@ expand_string (const char *in, int first_only)
 		      narg = 0;
 		      args[narg].start = in + 1;
 		      args[narg].len = 0;
-		      mark = in + 1;	      		      
+		      mark = in + 1;
 		    }
 		}
 	    }
@@ -747,9 +747,9 @@ expand_string (const char *in, int first_only)
 		  depth++;
 		default:
 		  args[narg].len++;
-		  break;		  
+		  break;
 		}
-	    } 
+	    }
 	  else
 	    {
 	      if (*in == ')')
@@ -757,14 +757,14 @@ expand_string (const char *in, int first_only)
 	      if (narg > -1)
 		args[narg].len++;
 	    }
-	  
+
 	}
       ++in;
     }
-  
+
   if (mark != in)
     result = str_append (result, mark, in - mark);
-  
+
   return result;
 }
 
@@ -803,10 +803,10 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
     {
       if (strstr (*strp_in, str))
 	/* A macro-expansion was pulled off the front.  */
-	*strp_in = strstr (*strp_in, str);  
+	*strp_in = strstr (*strp_in, str);
       else
 	/* A non-macro-expansion was pulled off the front.  */
-	*strp_in += (str - hold); 
+	*strp_in += (str - hold);
     }
 
   if (hold)
@@ -815,7 +815,7 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
   return errmsg;
 }
 
-#define CGEN_ASM_INIT_HOOK (cd->parse_operand = mep_cgen_expand_macros_and_parse_operand); 
+#define CGEN_ASM_INIT_HOOK (cd->parse_operand = mep_cgen_expand_macros_and_parse_operand);
 
 /* -- dis.c */
 
@@ -1289,7 +1289,7 @@ mep_cgen_parse_operand (CGEN_CPU_DESC cd,
   return errmsg;
 }
 
-cgen_parse_fn * const mep_cgen_parse_handlers[] = 
+cgen_parse_fn * const mep_cgen_parse_handlers[] =
 {
   parse_insn_normal,
 };
@@ -1319,9 +1319,9 @@ CGEN_ASM_INIT_HOOK
 
    Returns NULL for success, an error message for failure.  */
 
-char * 
+char *
 mep_cgen_build_insn_regex (CGEN_INSN *insn)
-{  
+{
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
   char rxbuf[CGEN_MAX_RX_ELEMENTS];
@@ -1360,18 +1360,18 @@ mep_cgen_build_insn_regex (CGEN_INSN *insn)
   /* Copy any remaining literals from the syntax string into the rx.  */
   for(; * syn != 0 && rx <= rxbuf + (CGEN_MAX_RX_ELEMENTS - 7 - 4); ++syn)
     {
-      if (CGEN_SYNTAX_CHAR_P (* syn)) 
+      if (CGEN_SYNTAX_CHAR_P (* syn))
 	{
 	  char c = CGEN_SYNTAX_CHAR (* syn);
 
-	  switch (c) 
+	  switch (c)
 	    {
 	      /* Escape any regex metacharacters in the syntax.  */
-	    case '.': case '[': case '\\': 
-	    case '*': case '^': case '$': 
+	    case '.': case '[': case '\\':
+	    case '*': case '^': case '$':
 
 #ifdef CGEN_ESCAPE_EXTENDED_REGEX
-	    case '?': case '{': case '}': 
+	    case '?': case '{': case '}':
 	    case '(': case ')': case '*':
 	    case '|': case '+': case ']':
 #endif
@@ -1401,20 +1401,20 @@ mep_cgen_build_insn_regex (CGEN_INSN *insn)
     }
 
   /* Trailing whitespace ok.  */
-  * rx++ = '['; 
-  * rx++ = ' '; 
-  * rx++ = '\t'; 
-  * rx++ = ']'; 
-  * rx++ = '*'; 
+  * rx++ = '[';
+  * rx++ = ' ';
+  * rx++ = '\t';
+  * rx++ = ']';
+  * rx++ = '*';
 
   /* But anchor it after that.  */
-  * rx++ = '$'; 
+  * rx++ = '$';
   * rx = '\0';
 
   CGEN_INSN_RX (insn) = xmalloc (sizeof (regex_t));
   reg_err = regcomp ((regex_t *) CGEN_INSN_RX (insn), rxbuf, REG_NOSUB);
 
-  if (reg_err == 0) 
+  if (reg_err == 0)
     return NULL;
   else
     {
@@ -1613,7 +1613,7 @@ mep_cgen_assemble_insn (CGEN_CPU_DESC cd,
       const CGEN_INSN *insn = ilist->insn;
       recognized_mnemonic = 1;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not usually needed as unsupported opcodes
 	 shouldn't be in the hash lists.  */
       /* Is this insn supported by the selected cpu?  */
@@ -1673,7 +1673,7 @@ mep_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
       }
@@ -1682,11 +1682,11 @@ mep_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s...'"), start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s'"), start);
       }
-      
+
     *errmsg = errbuf;
     return NULL;
   }

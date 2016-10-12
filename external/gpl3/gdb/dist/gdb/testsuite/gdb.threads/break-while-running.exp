@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015 Free Software Foundation, Inc.
+# Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,7 @@ proc test { update_thread_list always_inserted non_stop } {
     # without the user explicitly fetching the thread list.
     if {$update_thread_list} {
 	gdb_test "info threads" \
-	    "\\\(running\\\).*\\\(running\\\).* main .*" \
+	    "main .*\\\(running\\\).*\\\(running\\\).*" \
 	    "only main stopped"
     }
 
@@ -107,7 +107,7 @@ proc test { update_thread_list always_inserted non_stop } {
 
     if {$non_stop == "on"} {
 	gdb_test "info threads" \
-	    "\\\(running\\\).* breakpoint_function .* main .*" \
+	    "main .* breakpoint_function .*\\\(running\\\)" \
 	    "one thread running"
 
 	# Unblock the other thread, which should then trip on the same
@@ -131,7 +131,7 @@ proc test { update_thread_list always_inserted non_stop } {
 	}
 
 	gdb_test "info threads" \
-	    " breakpoint_function .* breakpoint_function .* main .*" \
+	    " main .* breakpoint_function .* breakpoint_function .*" \
 	    "all threads stopped"
     } else {
 	# This test is not merged with the non-stop one because in
@@ -142,7 +142,7 @@ proc test { update_thread_list always_inserted non_stop } {
 	    -re "\\\(running\\\).*$gdb_prompt $" {
 		fail $test
 	    }
-	    -re "breakpoint_function .* main .*$gdb_prompt $" {
+	    -re "main .* breakpoint_function .*$gdb_prompt $" {
 		pass $test
 	    }
 	}

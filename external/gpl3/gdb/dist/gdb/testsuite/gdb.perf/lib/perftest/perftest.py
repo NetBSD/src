@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2015 Free Software Foundation, Inc.
+# Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,12 +13,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import testresult
-import reporter
-from measure import Measure
-from measure import MeasurementCpuTime
-from measure import MeasurementWallTime
-from measure import MeasurementVmSize
+from __future__ import absolute_import
+
+import perftest.testresult as testresult
+import perftest.reporter as reporter
+from perftest.measure import Measure
+from perftest.measure import MeasurementCpuTime
+from perftest.measure import MeasurementWallTime
+from perftest.measure import MeasurementVmSize
+
 
 class TestCase(object):
     """Base class of all performance testing cases.

@@ -1,5 +1,5 @@
 /* BFD back-end for PowerPC Microsoft Portable Executable files.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Original version pieced together by Kim Knuttila (krk@cygnus.com)
 
@@ -947,7 +947,7 @@ coff_ppc_relocate_section (bfd *output_bfd,
   /* If we are performing a relocatable link, we don't need to do a
      thing.  The caller will take care of adjusting the reloc
      addresses and symbol indices.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
   rel = relocs;
@@ -1026,12 +1026,9 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		     + sec->output_offset);
 	    }
 	  else
-	    {
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, h->root.root.root.string, input_bfd, input_section,
-		      rel->r_vaddr - input_section->vma, TRUE)))
-		return FALSE;
-	    }
+	    (*info->callbacks->undefined_symbol)
+	      (info, h->root.root.root.string, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma, TRUE);
 	}
 
       rstat = bfd_reloc_ok;
@@ -1423,11 +1420,10 @@ coff_ppc_relocate_section (bfd *output_bfd,
 		name = buf;
 	      }
 
-	    if (! ((*info->callbacks->reloc_overflow)
-		   (info, (h ? &h->root.root : NULL), name, howto->name,
-		    (bfd_vma) 0, input_bfd,
-		    input_section, rel->r_vaddr - input_section->vma)))
-	      return FALSE;
+	    (*info->callbacks->reloc_overflow)
+	      (info, (h ? &h->root.root : NULL), name, howto->name,
+	       (bfd_vma) 0, input_bfd, input_section,
+	       rel->r_vaddr - input_section->vma);
 	  }
 	}
     }
@@ -2043,7 +2039,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
 		  || info->strip == strip_some)
 		o->lineno_count += sec->lineno_count;
 
-	      if (info->relocatable)
+	      if (bfd_link_relocatable (info))
 		o->reloc_count += sec->reloc_count;
 
 	      if (sec->rawsize > max_contents_size)
@@ -2055,7 +2051,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
 	      if (sec->reloc_count > max_reloc_count)
 		max_reloc_count = sec->reloc_count;
 	    }
-	  else if (info->relocatable
+	  else if (bfd_link_relocatable (info)
 		   && (p->type == bfd_section_reloc_link_order
 		       || p->type == bfd_symbol_reloc_link_order))
 	    ++o->reloc_count;
@@ -2072,7 +2068,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
 
   /* If doing a relocatable link, allocate space for the pointers we
      need to keep.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       unsigned int i;
 
@@ -2123,7 +2119,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
 	     memory until the end of the link.  This wastes memory,
 	     but only when doing a relocatable link, which is not the
 	     common case.  */
-	  BFD_ASSERT (info->relocatable);
+	  BFD_ASSERT (bfd_link_relocatable (info));
 	  amt = o->reloc_count;
 	  amt *= sizeof (struct internal_reloc);
 	  flaginfo.section_info[o->target_index].relocs =
@@ -2175,7 +2171,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
   flaginfo.linenos = (bfd_byte *) bfd_malloc (amt);
   flaginfo.contents = (bfd_byte *) bfd_malloc (max_contents_size);
   flaginfo.external_relocs = (bfd_byte *) bfd_malloc (max_reloc_count * relsz);
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     {
       amt = max_reloc_count * sizeof (struct internal_reloc);
       flaginfo.internal_relocs = (struct internal_reloc *) bfd_malloc (amt);
@@ -2187,7 +2183,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
       || (flaginfo.linenos == NULL && max_lineno_count > 0)
       || (flaginfo.contents == NULL && max_contents_size > 0)
       || (flaginfo.external_relocs == NULL && max_reloc_count > 0)
-      || (! info->relocatable
+      || (! bfd_link_relocatable (info)
 	  && flaginfo.internal_relocs == NULL
 	  && max_reloc_count > 0))
     goto error_return;
@@ -2321,7 +2317,7 @@ ppc_bfd_coff_final_link (bfd *abfd, struct bfd_link_info *info)
       flaginfo.outsyms = NULL;
     }
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       /* Now that we have written out all the global symbols, we know
 	 the symbol indices to use for relocs against them, and we can

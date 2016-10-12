@@ -1,4 +1,4 @@
-#   Copyright 1988-2015 Free Software Foundation, Inc.
+#   Copyright 1988-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ test_class_help "user-defined" {
 }
 
 # Test help of an abbreviated command.  "break" is picked at random.
-set help_breakpoint_text "Set breakpoint at specified line or function\..*"
+set help_breakpoint_text "Set breakpoint at specified location\..*"
 # test help breakpoint "b" abbreviation
 gdb_test "help b" $help_breakpoint_text "help breakpoint \"b\" abbreviation"
 # test help breakpoint "br" abbreviation

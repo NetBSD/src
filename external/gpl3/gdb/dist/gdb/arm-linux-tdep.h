@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support, prototypes.
 
-   Copyright (C) 2006-2015 Free Software Foundation, Inc.
+   Copyright (C) 2006-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,9 +23,6 @@ struct regcache;
 #define ARM_LINUX_SIZEOF_NWFPE (8 * FP_REGISTER_SIZE \
 				+ 2 * INT_REGISTER_SIZE \
 				+ 8 + INT_REGISTER_SIZE)
-
-/* The index to access CSPR in user_regs defined in GLIBC.  */
-#define ARM_CPSR_GREGNUM 16
 
 /* Support for register format used by the NWFPE FPA emulator.  Each
    register takes three words, where either the first one, two, or

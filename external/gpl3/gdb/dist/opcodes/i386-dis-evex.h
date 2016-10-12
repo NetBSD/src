@@ -3196,7 +3196,7 @@ static const struct dis386 evex_table[][256] = {
   },
   /* EVEX_W_0F78_P_2 */
   {
-    { "vcvttps2uqq",	{ XM, EXxmmq, EXxEVexS }, 0 },
+    { "vcvttps2uqq",	{ XM, EXEvexHalfBcstXmmq, EXxEVexS }, 0 },
     { "vcvttpd2uqq",	{ XM, EXx, EXxEVexS }, 0 },
   },
   /* EVEX_W_0F79_P_0 */
@@ -3206,7 +3206,7 @@ static const struct dis386 evex_table[][256] = {
   },
   /* EVEX_W_0F79_P_2 */
   {
-    { "vcvtps2uqq",	{ XM, EXxmmq, EXxEVexR }, 0 },
+    { "vcvtps2uqq",	{ XM, EXEvexHalfBcstXmmq, EXxEVexR }, 0 },
     { "vcvtpd2uqq",	{ XM, EXx, EXxEVexR }, 0 },
   },
   /* EVEX_W_0F7A_P_1 */
@@ -3216,7 +3216,7 @@ static const struct dis386 evex_table[][256] = {
   },
   /* EVEX_W_0F7A_P_2 */
   {
-    { "vcvttps2qq",	{ XM, EXxmmq, EXxEVexS }, 0 },
+    { "vcvttps2qq",	{ XM, EXEvexHalfBcstXmmq, EXxEVexS }, 0 },
     { "vcvttpd2qq",	{ XM, EXx, EXxEVexS }, 0 },
   },
   /* EVEX_W_0F7A_P_3 */
@@ -3231,7 +3231,7 @@ static const struct dis386 evex_table[][256] = {
   },
   /* EVEX_W_0F7B_P_2 */
   {
-    { "vcvtps2qq",	{ XM, EXxmmq, EXxEVexR }, 0 },
+    { "vcvtps2qq",	{ XM, EXEvexHalfBcstXmmq, EXxEVexR }, 0 },
     { "vcvtpd2qq",	{ XM, EXx, EXxEVexR }, 0 },
   },
   /* EVEX_W_0F7B_P_3 */

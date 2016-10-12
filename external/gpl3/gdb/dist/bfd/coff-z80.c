@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z80 COFF binaries.
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -188,14 +188,11 @@ extra_case (bfd *in_abfd,
 	val = bfd_coff_reloc16_get_value (reloc, link_info,
 					   input_section);
 	if (val>127 || val<-128) /* Test for overflow.  */
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_8 (in_abfd, val, data + *dst_ptr);
 	(*dst_ptr) += 1;
 	(*src_ptr) += 1;
@@ -247,14 +244,11 @@ extra_case (bfd *in_abfd,
 				     the offset.  */
 
 	if (gap >= 128 || gap < -128)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_8 (in_abfd, gap, data + *dst_ptr);
 	(*dst_ptr)++;
 	(*src_ptr)++;

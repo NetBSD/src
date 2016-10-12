@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lib/unbuffer_output.c"
+
 /**************************************************************************
  * TESTS :
  *   -- function arguments that are enumerated types
@@ -911,6 +913,8 @@ int main ()  {
    static struct two_floats_t      *f1;
    static struct two_floats_t      *f2;
    static struct two_floats_t      *f3;
+
+  gdb_unbuffer_output ();
 
   /* Initialize arrays
    */

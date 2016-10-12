@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2015 Free Software Foundation, Inc.
+# Copyright (C) 2011-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,12 +55,13 @@ if {$arch == ""} {
 # Start the program running and then wait for a bit, to be sure
 # that it can be attached to.
 
-set testpid [spawn_wait_for_attach $binfile]
+set test_spawn_id [spawn_wait_for_attach $binfile]
+set testpid [spawn_id_get_pid $test_spawn_id]
 
 gdb_start
 file delete -- $binfile
-gdb_test "attach $testpid" "Attaching to process $testpid\r\n.*: No such file or directory\\." "attach"
+gdb_test "attach $testpid" "Attaching to process $testpid\r\n.*" "attach"
 gdb_test "set architecture $arch" "The target architecture is assumed to be $arch"
 gdb_test "info shared" "From\[ \t\]+To\[ \t\]+Syms Read\[ \t\]+Shared Object Library\r\n0x.*"
 
-eval exec kill -9 $testpid
+kill_wait_spawned_process $test_spawn_id

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,55 +47,40 @@ if ![runto_main] then {
     return 0
 }
 
-# First, break at empty_cycle.
-gdb_test "break empty_cycle" \
-  "Breakpoint 2 at .*: file .*${srcfile}, line .*" \
-  "Breakpoint on empty_cycle"
-
 # Set some default values.
 set hwatch_count 0
-set done 0
+set count 0
 
 # Count the number of hardware watchpoints available on
 # this target.
-while { $done == 0 } {
 
-  gdb_test "continue" \
-    ".*Breakpoint 2, empty_cycle \\(\\) at .*${srcfile}.*" \
-    "Continue to empty_cycle to insert watchpoint $hwatch_count"
+# So we get an immediate warning/error if the target doesn't support a
+# hardware watchpoint or run out of hardware resource.
+gdb_test_no_output "set breakpoint always-inserted on"
 
-  # Some targets do resource counting as we insert watchpoints.
-  # Such targets won't cause a watchpoint insertion failure, but
-  # will switch to software watchpoints silently.  We check for
-  # both cases here.
-  gdb_test_multiple "watch watched_data\[$hwatch_count\]" \
-       "watch watched_data\[$hwatch_count\]" {
-    -re "Hardware watchpoint .*$gdb_prompt $" {
-    }
-    -re "Watchpoint .*$gdb_prompt $" {
-      set done 1
-      break
-    }
-  }
-
-  gdb_test_multiple "continue" "watchpoint created successfully" {
-    -re ".*Breakpoint 2, empty_cycle \\(\\).*$gdb_prompt $" {
-      incr hwatch_count
-
-      # Some targets (like S/390) behave as though supporting
-      # unlimited hardware watchpoints.  In this case we just take a
-      # safe exit out of the loop.
-      if { $hwatch_count == $NR_THREADS } {
-	set done 1
-	break
-      }
-    }
-    -re ".*Could not insert hardware watchpoint.*$gdb_prompt $" {
-      set done 1
-      break
-    }
-  }
+while { $count < $NR_THREADS } {
+    # Some targets do resource counting as we insert watchpoints.
+    # Such targets won't cause a watchpoint insertion failure, but
+    # will switch to software watchpoints silently.  We check for
+    # both cases here.
+    gdb_test_multiple "watch watched_data\[$hwatch_count\]" \
+	"watch watched_data\[$hwatch_count\]" {
+	    -re ".*Could not insert hardware watchpoint.*$gdb_prompt $" {
+		# End the loop.
+		set count $NR_THREADS
+	    }
+	    -re "Hardware watchpoint .*$gdb_prompt $" {
+		incr hwatch_count
+	    }
+	    -re "Watchpoint .*$gdb_prompt $" {
+		# End the loop.
+		set count $NR_THREADS
+	    }
+	}
+    incr count
 }
+
+gdb_test_no_output "set breakpoint always-inserted off"
 
 # Target cannot insert hardware watchpoints.  It should have reported
 # (through board settings) that it did not support them in the first place.
@@ -113,11 +98,6 @@ gdb_test_no_output "set var hw_watch_count=${hwatch_count}" \
 # At this point, we know how many hardware watchpoints
 # the target supports.  Use that to do further testing.
 delete_breakpoints
-
-# Break out of the empty_cycle loop by changing the
-# controlling variable.
-gdb_test_no_output "set var watch_count_done=1" \
-		   "set var watch_count_done=1"
 
 # Prepare to create all the threads.
 gdb_test "break thread_started" \
