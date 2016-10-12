@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -53,9 +53,9 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
   if (bed->plt_readonly)
     pltflags |= SEC_READONLY;
 
-  if (info->shared)
+  if (bfd_link_pic (info))
     {
-      /* We need to create .rel[a].ifunc for shared objects.  */
+      /* We need to create .rel[a].ifunc for PIC objects.  */
       const char *rel_sec = (bed->rela_plts_and_copies_p
 			     ? ".rela.ifunc" : ".rel.ifunc");
 
@@ -110,22 +110,29 @@ bfd_boolean
 _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 				    struct elf_link_hash_entry *h,
 				    struct elf_dyn_relocs **head,
+				    bfd_boolean *readonly_dynrelocs_against_ifunc_p,
 				    unsigned int plt_entry_size,
 				    unsigned int plt_header_size,
-				    unsigned int got_entry_size)
+				    unsigned int got_entry_size,
+				    bfd_boolean avoid_plt)
 {
   asection *plt, *gotplt, *relplt;
   struct elf_dyn_relocs *p;
   unsigned int sizeof_reloc;
   const struct elf_backend_data *bed;
   struct elf_link_hash_table *htab;
+  bfd_boolean readonly_dynrelocs_against_ifunc;
+  /* If AVOID_PLT is TRUE, don't use PLT if possible.  */
+  bfd_boolean use_plt = !avoid_plt || h->plt.refcount > 0;
+  bfd_boolean need_dynreloc = !use_plt || bfd_link_pic (info);
 
-  /* When a shared library references a STT_GNU_IFUNC symbol defined
-     in executable, the address of the resolved function may be used.
-     But in non-shared executable, the address of its .plt slot may
-     be used.  Pointer equality may not work correctly.  PIE should
-     be used if pointer equality is required here.  */
-  if (!info->shared
+  /* When a PIC object references a STT_GNU_IFUNC symbol defined
+     in executable or it isn't referenced via PLT, the address of
+     the resolved function may be used.  But in non-PIC executable,
+     the address of its .plt slot may be used.  Pointer equality may
+     not work correctly.  PIE or non-PLT reference should be used if
+     pointer equality is required here.  */
+  if (!need_dynreloc
       && (h->dynindx != -1
 	  || info->export_dynamic)
       && h->pointer_equality_needed)
@@ -142,16 +149,30 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 
   htab = elf_hash_table (info);
 
-  /* When building shared library, we need to handle the case where it is
-     marked with regular reference, but not non-GOT reference since the
-     non-GOT reference bit may not be set here.  */
-  if (info->shared && !h->non_got_ref && h->ref_regular)
-    for (p = *head; p != NULL; p = p->next)
-      if (p->count)
-	{
-	  h->non_got_ref = 1;
-	  goto keep;
-	}
+  /* When the symbol is marked with regular reference, if PLT isn't used
+     or we are building a PIC object, we must keep dynamic relocation
+     if there is non-GOT reference and use PLT if there is PC-relative
+     reference.  */
+  if (need_dynreloc && h->ref_regular)
+    {
+      bfd_boolean keep = FALSE;
+      for (p = *head; p != NULL; p = p->next)
+	if (p->count)
+	  {
+	    h->non_got_ref = 1;
+	    /* Need dynamic relocations for non-GOT reference.  */
+	    keep = TRUE;
+	    if (p->pc_count)
+	      {
+		/* Must use PLT for PC-relative reference.  */
+		use_plt = TRUE;
+		need_dynreloc = bfd_link_pic (info);
+		break;
+	      }
+	  }
+      if (keep)
+	goto keep;
+    }
 
   /* Support garbage collection against STT_GNU_IFUNC symbols.  */
   if (h->plt.refcount <= 0 && h->got.refcount <= 0)
@@ -163,7 +184,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
     }
 
   /* Return and discard space for dynamic relocations against it if
-     it is never referenced in a non-shared object.  */
+     it is never referenced.  */
   if (!h->ref_regular)
     {
       if (h->plt.refcount > 0
@@ -190,9 +211,9 @@ keep:
       gotplt = htab->sgotplt;
       relplt = htab->srelplt;
 
-      /* If this is the first .plt entry, make room for the special
-	 first entry.  */
-      if (plt->size == 0)
+      /* If this is the first .plt entry and PLT is used, make room for
+	 the special first entry.  */
+      if (plt->size == 0 && use_plt)
 	plt->size += plt_header_size;
     }
   else
@@ -202,27 +223,34 @@ keep:
       relplt = htab->irelplt;
     }
 
-  /* Don't update value of STT_GNU_IFUNC symbol to PLT.  We need
-     the original value for R_*_IRELATIVE.  */
-  h->plt.offset = plt->size;
+  if (use_plt)
+    {
+      /* Don't update value of STT_GNU_IFUNC symbol to PLT.  We need
+	 the original value for R_*_IRELATIVE.  */
+      h->plt.offset = plt->size;
 
-  /* Make room for this entry in the .plt/.iplt section.  */
-  plt->size += plt_entry_size;
+      /* Make room for this entry in the .plt/.iplt section.  */
+      plt->size += plt_entry_size;
 
-  /* We also need to make an entry in the .got.plt/.got.iplt section,
-     which will be placed in the .got section by the linker script.  */
-  gotplt->size += got_entry_size;
+      /* We also need to make an entry in the .got.plt/.got.iplt section,
+	 which will be placed in the .got section by the linker script.  */
+      gotplt->size += got_entry_size;
+    }
 
   /* We also need to make an entry in the .rel[a].plt/.rel[a].iplt
-     section.  */
-  relplt->size += sizeof_reloc;
-  relplt->reloc_count++;
+     section for GOTPLT relocation if PLT is used.  */
+  if (use_plt)
+    {
+      relplt->size += sizeof_reloc;
+      relplt->reloc_count++;
+    }
 
   /* We need dynamic relocation for STT_GNU_IFUNC symbol only when
-     there is a non-GOT reference in a shared object.  */
-  if (!info->shared
-      || !h->non_got_ref)
+     there is a non-GOT reference in a PIC object or PLT isn't used.  */
+  if (!need_dynreloc || !h->non_got_ref)
     *head = NULL;
+
+  readonly_dynrelocs_against_ifunc = FALSE;
 
   /* Finally, allocate space.  */
   p = *head;
@@ -231,44 +259,97 @@ keep:
       bfd_size_type count = 0;
       do
 	{
+	  if (!readonly_dynrelocs_against_ifunc)
+	    {
+	      asection *s = p->sec->output_section;
+	      if (s != NULL && (s->flags & SEC_READONLY) != 0)
+		readonly_dynrelocs_against_ifunc = TRUE;
+	    }
 	  count += p->count;
 	  p = p->next;
 	}
       while (p != NULL);
-      htab->irelifunc->size += count * sizeof_reloc;
+
+      /* Dynamic relocations are stored in
+	 1. .rel[a].ifunc section in PIC object.
+	 2. .rel[a].got section in dynamic executable.
+	 3. .rel[a].iplt section in static executable.  */
+      if (bfd_link_pic (info))
+	htab->irelifunc->size += count * sizeof_reloc;
+      else if (htab->splt != NULL)
+	htab->srelgot->size += count * sizeof_reloc;
+      else
+	{
+	  relplt->size += count * sizeof_reloc;
+	  relplt->reloc_count += count;
+	}
     }
+
+  if (readonly_dynrelocs_against_ifunc_p)
+    *readonly_dynrelocs_against_ifunc_p = readonly_dynrelocs_against_ifunc;
 
   /* For STT_GNU_IFUNC symbol, .got.plt has the real function address
      and .got has the PLT entry adddress.  We will load the GOT entry
      with the PLT entry in finish_dynamic_symbol if it is used.  For
-     branch, it uses .got.plt.  For symbol value,
-     1. Use .got.plt in a shared object if it is forced local or not
+     branch, it uses .got.plt.  For symbol value, if PLT is used,
+     1. Use .got.plt in a PIC object if it is forced local or not
      dynamic.
-     2. Use .got.plt in a non-shared object if pointer equality isn't
+     2. Use .got.plt in a non-PIC object if pointer equality isn't
      needed.
      3. Use .got.plt in PIE.
      4. Use .got.plt if .got isn't used.
      5. Otherwise use .got so that it can be shared among different
      objects at run-time.
-     We only need to relocate .got entry in shared object.  */
-  if (h->got.refcount <= 0
-      || (info->shared
-	  && (h->dynindx == -1
-	      || h->forced_local))
-      || (!info->shared
-	  && !h->pointer_equality_needed)
-      || (info->executable && info->shared)
-      || htab->sgot == NULL)
+     If PLT isn't used, always use .got for symbol value.
+     We only need to relocate .got entry in PIC object or in dynamic
+     executable without PLT.  */
+  if (use_plt
+      && (h->got.refcount <= 0
+	  || (bfd_link_pic (info)
+	      && (h->dynindx == -1
+		  || h->forced_local))
+	  || (!bfd_link_pic (info)
+	      && !h->pointer_equality_needed)
+	  || bfd_link_pie (info)
+	  || htab->sgot == NULL))
     {
       /* Use .got.plt.  */
       h->got.offset = (bfd_vma) -1;
     }
   else
     {
-      h->got.offset = htab->sgot->size;
-      htab->sgot->size += got_entry_size;
-      if (info->shared)
-	htab->srelgot->size += sizeof_reloc;
+      if (!use_plt)
+	{
+	  /* PLT isn't used.  */
+	  h->plt.offset = (bfd_vma) -1;
+	}
+      if (h->got.refcount <= 0)
+	{
+	  /* GOT isn't need when there are only relocations for static
+	     pointers.  */
+	  h->got.offset = (bfd_vma) -1;
+	}
+      else
+	{
+	  h->got.offset = htab->sgot->size;
+	  htab->sgot->size += got_entry_size;
+	  /* Need to relocate the GOT entry in a PIC object or PLT isn't
+	     used.  Otherwise, the GOT entry will be filled with the PLT
+	     entry and dynamic GOT relocation isn't needed.  */
+	  if (need_dynreloc)
+	    {
+	      /* For non-static executable, dynamic GOT relocation is in
+		 .rel[a].got section, but for static executable, it is
+		 in .rel[a].iplt section.  */
+	      if (htab->splt != NULL)
+		htab->srelgot->size += sizeof_reloc;
+	      else
+		{
+		  relplt->size += sizeof_reloc;
+		  relplt->reloc_count++;
+		}
+	    }
+	}
     }
 
   return TRUE;

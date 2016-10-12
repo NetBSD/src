@@ -1,5 +1,5 @@
 /* i370.h -- Header file for S/390 opcode table
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
    PowerPC version written by Ian Lance Taylor, Cygnus Support
    Rewritten for i370 ESA/390 support, Linas Vepstas <linas@linas.org>
 

@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
 #include <sys/types.h>
 #include "terminal.h"
 #include <sys/socket.h>
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 
 #include "gdb_select.h"
 #include "gdbcmd.h"
@@ -178,9 +178,7 @@ set_tty_state (struct serial *scb, struct hardwire_ttystate *state)
 static serial_ttystate
 hardwire_get_tty_state (struct serial *scb)
 {
-  struct hardwire_ttystate *state;
-
-  state = (struct hardwire_ttystate *) xmalloc (sizeof *state);
+  struct hardwire_ttystate *state = XNEW (struct hardwire_ttystate);
 
   if (get_tty_state (scb, state))
     {
@@ -194,9 +192,8 @@ hardwire_get_tty_state (struct serial *scb)
 static serial_ttystate
 hardwire_copy_tty_state (struct serial *scb, serial_ttystate ttystate)
 {
-  struct hardwire_ttystate *state;
+  struct hardwire_ttystate *state = XNEW (struct hardwire_ttystate);
 
-  state = (struct hardwire_ttystate *) xmalloc (sizeof *state);
   *state = *(struct hardwire_ttystate *) ttystate;
 
   return (serial_ttystate) state;
@@ -452,10 +449,7 @@ hardwire_raw (struct serial *scb)
 }
 
 /* Wait for input on scb, with timeout seconds.  Returns 0 on success,
-   otherwise SERIAL_TIMEOUT or SERIAL_ERROR.
-
-   For termio{s}, we actually just setup VTIME if necessary, and let the
-   timeout occur in the read() in hardwire_read().  */
+   otherwise SERIAL_TIMEOUT or SERIAL_ERROR.  */
 
 /* FIXME: cagney/1999-09-16: Don't replace this with the equivalent
    ser_base*() until the old TERMIOS/SGTTY/... timer code has been
@@ -469,7 +463,6 @@ hardwire_raw (struct serial *scb)
 static int
 wait_for (struct serial *scb, int timeout)
 {
-#ifdef HAVE_SGTTY
   while (1)
     {
       struct timeval tv;
@@ -486,92 +479,22 @@ wait_for (struct serial *scb, int timeout)
       FD_ZERO (&readfds);
       FD_SET (scb->fd, &readfds);
 
-      if (timeout >= 0)
-	numfds = gdb_select (scb->fd + 1, &readfds, 0, 0, &tv);
-      else
-	numfds = gdb_select (scb->fd + 1, &readfds, 0, 0, 0);
+      QUIT;
 
-      if (numfds <= 0)
-	if (numfds == 0)
-	  return SERIAL_TIMEOUT;
-	else if (errno == EINTR)
-	  continue;
-	else
-	  return SERIAL_ERROR;	/* Got an error from select or poll.  */
+      if (timeout >= 0)
+	numfds = interruptible_select (scb->fd + 1, &readfds, 0, 0, &tv);
+      else
+	numfds = interruptible_select (scb->fd + 1, &readfds, 0, 0, 0);
+
+      if (numfds == -1 && errno == EINTR)
+	continue;
+      else if (numfds == -1)
+	return SERIAL_ERROR;
+      else if (numfds == 0)
+	return SERIAL_TIMEOUT;
 
       return 0;
     }
-#endif /* HAVE_SGTTY */
-
-#if defined HAVE_TERMIO || defined HAVE_TERMIOS
-  if (timeout == scb->current_timeout)
-    return 0;
-
-  scb->current_timeout = timeout;
-
-  {
-    struct hardwire_ttystate state;
-
-    if (get_tty_state (scb, &state))
-      fprintf_unfiltered (gdb_stderr, "get_tty_state failed: %s\n",
-			  safe_strerror (errno));
-
-#ifdef HAVE_TERMIOS
-    if (timeout < 0)
-      {
-	/* No timeout.  */
-	state.termios.c_cc[VTIME] = 0;
-	state.termios.c_cc[VMIN] = 1;
-      }
-    else
-      {
-	state.termios.c_cc[VMIN] = 0;
-	state.termios.c_cc[VTIME] = timeout * 10;
-	if (state.termios.c_cc[VTIME] != timeout * 10)
-	  {
-
-	    /* If c_cc is an 8-bit signed character, we can't go 
-	       bigger than this.  If it is always unsigned, we could use
-	       25.  */
-
-	    scb->current_timeout = 12;
-	    state.termios.c_cc[VTIME] = scb->current_timeout * 10;
-	    scb->timeout_remaining = timeout - scb->current_timeout;
-	  }
-      }
-#endif
-
-#ifdef HAVE_TERMIO
-    if (timeout < 0)
-      {
-	/* No timeout.  */
-	state.termio.c_cc[VTIME] = 0;
-	state.termio.c_cc[VMIN] = 1;
-      }
-    else
-      {
-	state.termio.c_cc[VMIN] = 0;
-	state.termio.c_cc[VTIME] = timeout * 10;
-	if (state.termio.c_cc[VTIME] != timeout * 10)
-	  {
-	    /* If c_cc is an 8-bit signed character, we can't go 
-	       bigger than this.  If it is always unsigned, we could use
-	       25.  */
-
-	    scb->current_timeout = 12;
-	    state.termio.c_cc[VTIME] = scb->current_timeout * 10;
-	    scb->timeout_remaining = timeout - scb->current_timeout;
-	  }
-      }
-#endif
-
-    if (set_tty_state (scb, &state))
-      fprintf_unfiltered (gdb_stderr, "set_tty_state failed: %s\n",
-			  safe_strerror (errno));
-
-    return 0;
-  }
-#endif /* HAVE_TERMIO || HAVE_TERMIOS */
 }
 
 /* Read a character with user-specified timeout.  TIMEOUT is number of
@@ -1005,21 +928,11 @@ when debugging using remote targets."),
 int
 ser_unix_read_prim (struct serial *scb, size_t count)
 {
-  int status;
-
-  while (1)
-    {
-      status = read (scb->fd, scb->buf, count);
-      if (status != -1 || errno != EINTR)
-	break;
-    }
-  return status;
+  return read (scb->fd, scb->buf, count);
 }
 
 int
 ser_unix_write_prim (struct serial *scb, const void *buf, size_t len)
 {
-  /* ??? Historically, GDB has not retried calls to "write" that
-     result in EINTR.  */
   return write (scb->fd, buf, len);
 }

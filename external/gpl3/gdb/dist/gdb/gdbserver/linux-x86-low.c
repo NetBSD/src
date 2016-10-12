@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,11 @@
 #include "i387-fp.h"
 #include "x86-low.h"
 #include "x86-xstate.h"
+#include "nat/gdb_ptrace.h"
+
+#ifdef __x86_64__
+#include "nat/amd64-linux-siginfo.h"
+#endif
 
 #include "gdb_proc_service.h"
 /* Don't include elf/common.h if linux/elf.h got included by
@@ -40,57 +45,7 @@
 #include "nat/linux-nat.h"
 #include "nat/x86-linux.h"
 #include "nat/x86-linux-dregs.h"
-
-#ifdef __x86_64__
-/* Defined in auto-generated file amd64-linux.c.  */
-void init_registers_amd64_linux (void);
-extern const struct target_desc *tdesc_amd64_linux;
-
-/* Defined in auto-generated file amd64-avx-linux.c.  */
-void init_registers_amd64_avx_linux (void);
-extern const struct target_desc *tdesc_amd64_avx_linux;
-
-/* Defined in auto-generated file amd64-avx512-linux.c.  */
-void init_registers_amd64_avx512_linux (void);
-extern const struct target_desc *tdesc_amd64_avx512_linux;
-
-/* Defined in auto-generated file amd64-mpx-linux.c.  */
-void init_registers_amd64_mpx_linux (void);
-extern const struct target_desc *tdesc_amd64_mpx_linux;
-
-/* Defined in auto-generated file x32-linux.c.  */
-void init_registers_x32_linux (void);
-extern const struct target_desc *tdesc_x32_linux;
-
-/* Defined in auto-generated file x32-avx-linux.c.  */
-void init_registers_x32_avx_linux (void);
-extern const struct target_desc *tdesc_x32_avx_linux;
-
-/* Defined in auto-generated file x32-avx512-linux.c.  */
-void init_registers_x32_avx512_linux (void);
-extern const struct target_desc *tdesc_x32_avx512_linux;
-
-#endif
-
-/* Defined in auto-generated file i386-linux.c.  */
-void init_registers_i386_linux (void);
-extern const struct target_desc *tdesc_i386_linux;
-
-/* Defined in auto-generated file i386-mmx-linux.c.  */
-void init_registers_i386_mmx_linux (void);
-extern const struct target_desc *tdesc_i386_mmx_linux;
-
-/* Defined in auto-generated file i386-avx-linux.c.  */
-void init_registers_i386_avx_linux (void);
-extern const struct target_desc *tdesc_i386_avx_linux;
-
-/* Defined in auto-generated file i386-avx512-linux.c.  */
-void init_registers_i386_avx512_linux (void);
-extern const struct target_desc *tdesc_i386_avx512_linux;
-
-/* Defined in auto-generated file i386-mpx-linux.c.  */
-void init_registers_i386_mpx_linux (void);
-extern const struct target_desc *tdesc_i386_mpx_linux;
+#include "linux-x86-tdesc.h"
 
 #ifdef __x86_64__
 static struct target_desc *tdesc_amd64_linux_no_xml;
@@ -117,7 +72,7 @@ static const char *xmltarget_amd64_linux_no_xml = "@<target>\
 
 #include <sys/reg.h>
 #include <sys/procfs.h>
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <sys/uio.h>
 
 #ifndef PTRACE_GET_THREAD_AREA
@@ -231,7 +186,7 @@ is_64bit_tdesc (void)
 /* Called by libthread_db.  */
 
 ps_err_e
-ps_get_thread_area (const struct ps_prochandle *ph,
+ps_get_thread_area (struct ps_prochandle *ph,
 		    lwpid_t lwpid, int idx, void **base)
 {
 #ifdef __x86_64__
@@ -462,7 +417,7 @@ static struct regset_info x86_regsets[] =
     FP_REGS,
     x86_fill_fpregset, x86_store_fpregset },
 #endif /* HAVE_PTRACE_GETREGS */
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static CORE_ADDR
@@ -472,13 +427,15 @@ x86_get_pc (struct regcache *regcache)
 
   if (use_64bit)
     {
-      unsigned long pc;
+      uint64_t pc;
+
       collect_register_by_name (regcache, "rip", &pc);
       return (CORE_ADDR) pc;
     }
   else
     {
-      unsigned int pc;
+      uint32_t pc;
+
       collect_register_by_name (regcache, "eip", &pc);
       return (CORE_ADDR) pc;
     }
@@ -491,17 +448,19 @@ x86_set_pc (struct regcache *regcache, CORE_ADDR pc)
 
   if (use_64bit)
     {
-      unsigned long newpc = pc;
+      uint64_t newpc = pc;
+
       supply_register_by_name (regcache, "rip", &newpc);
     }
   else
     {
-      unsigned int newpc = pc;
+      uint32_t newpc = pc;
+
       supply_register_by_name (regcache, "eip", &newpc);
     }
 }
 
-static const unsigned char x86_breakpoint[] = { 0xCC };
+static const gdb_byte x86_breakpoint[] = { 0xCC };
 #define x86_breakpoint_len 1
 
 static int
@@ -669,407 +628,14 @@ x86_debug_reg_state (pid_t pid)
    as debugging it with a 32-bit GDBSERVER, we do the 32-bit <-> 64-bit
    conversion in-place ourselves.  */
 
-/* These types below (compat_*) define a siginfo type that is layout
-   compatible with the siginfo type exported by the 32-bit userspace
-   support.  */
-
-#ifdef __x86_64__
-
-typedef int compat_int_t;
-typedef unsigned int compat_uptr_t;
-
-typedef int compat_time_t;
-typedef int compat_timer_t;
-typedef int compat_clock_t;
-
-struct compat_timeval
-{
-  compat_time_t tv_sec;
-  int tv_usec;
-};
-
-typedef union compat_sigval
-{
-  compat_int_t sival_int;
-  compat_uptr_t sival_ptr;
-} compat_sigval_t;
-
-typedef struct compat_siginfo
-{
-  int si_signo;
-  int si_errno;
-  int si_code;
-
-  union
-  {
-    int _pad[((128 / sizeof (int)) - 3)];
-
-    /* kill() */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-    } _kill;
-
-    /* POSIX.1b timers */
-    struct
-    {
-      compat_timer_t _tid;
-      int _overrun;
-      compat_sigval_t _sigval;
-    } _timer;
-
-    /* POSIX.1b signals */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-      compat_sigval_t _sigval;
-    } _rt;
-
-    /* SIGCHLD */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-      int _status;
-      compat_clock_t _utime;
-      compat_clock_t _stime;
-    } _sigchld;
-
-    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
-    struct
-    {
-      unsigned int _addr;
-    } _sigfault;
-
-    /* SIGPOLL */
-    struct
-    {
-      int _band;
-      int _fd;
-    } _sigpoll;
-  } _sifields;
-} compat_siginfo_t;
-
-/* For x32, clock_t in _sigchld is 64bit aligned at 4 bytes.  */
-typedef long __attribute__ ((__aligned__ (4))) compat_x32_clock_t;
-
-typedef struct compat_x32_siginfo
-{
-  int si_signo;
-  int si_errno;
-  int si_code;
-
-  union
-  {
-    int _pad[((128 / sizeof (int)) - 3)];
-
-    /* kill() */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-    } _kill;
-
-    /* POSIX.1b timers */
-    struct
-    {
-      compat_timer_t _tid;
-      int _overrun;
-      compat_sigval_t _sigval;
-    } _timer;
-
-    /* POSIX.1b signals */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-      compat_sigval_t _sigval;
-    } _rt;
-
-    /* SIGCHLD */
-    struct
-    {
-      unsigned int _pid;
-      unsigned int _uid;
-      int _status;
-      compat_x32_clock_t _utime;
-      compat_x32_clock_t _stime;
-    } _sigchld;
-
-    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
-    struct
-    {
-      unsigned int _addr;
-    } _sigfault;
-
-    /* SIGPOLL */
-    struct
-    {
-      int _band;
-      int _fd;
-    } _sigpoll;
-  } _sifields;
-} compat_x32_siginfo_t __attribute__ ((__aligned__ (8)));
-
-#define cpt_si_pid _sifields._kill._pid
-#define cpt_si_uid _sifields._kill._uid
-#define cpt_si_timerid _sifields._timer._tid
-#define cpt_si_overrun _sifields._timer._overrun
-#define cpt_si_status _sifields._sigchld._status
-#define cpt_si_utime _sifields._sigchld._utime
-#define cpt_si_stime _sifields._sigchld._stime
-#define cpt_si_ptr _sifields._rt._sigval.sival_ptr
-#define cpt_si_addr _sifields._sigfault._addr
-#define cpt_si_band _sifields._sigpoll._band
-#define cpt_si_fd _sifields._sigpoll._fd
-
-/* glibc at least up to 2.3.2 doesn't have si_timerid, si_overrun.
-   In their place is si_timer1,si_timer2.  */
-#ifndef si_timerid
-#define si_timerid si_timer1
-#endif
-#ifndef si_overrun
-#define si_overrun si_timer2
-#endif
-
-static void
-compat_siginfo_from_siginfo (compat_siginfo_t *to, siginfo_t *from)
-{
-  memset (to, 0, sizeof (*to));
-
-  to->si_signo = from->si_signo;
-  to->si_errno = from->si_errno;
-  to->si_code = from->si_code;
-
-  if (to->si_code == SI_TIMER)
-    {
-      to->cpt_si_timerid = from->si_timerid;
-      to->cpt_si_overrun = from->si_overrun;
-      to->cpt_si_ptr = (intptr_t) from->si_ptr;
-    }
-  else if (to->si_code == SI_USER)
-    {
-      to->cpt_si_pid = from->si_pid;
-      to->cpt_si_uid = from->si_uid;
-    }
-  else if (to->si_code < 0)
-    {
-      to->cpt_si_pid = from->si_pid;
-      to->cpt_si_uid = from->si_uid;
-      to->cpt_si_ptr = (intptr_t) from->si_ptr;
-    }
-  else
-    {
-      switch (to->si_signo)
-	{
-	case SIGCHLD:
-	  to->cpt_si_pid = from->si_pid;
-	  to->cpt_si_uid = from->si_uid;
-	  to->cpt_si_status = from->si_status;
-	  to->cpt_si_utime = from->si_utime;
-	  to->cpt_si_stime = from->si_stime;
-	  break;
-	case SIGILL:
-	case SIGFPE:
-	case SIGSEGV:
-	case SIGBUS:
-	  to->cpt_si_addr = (intptr_t) from->si_addr;
-	  break;
-	case SIGPOLL:
-	  to->cpt_si_band = from->si_band;
-	  to->cpt_si_fd = from->si_fd;
-	  break;
-	default:
-	  to->cpt_si_pid = from->si_pid;
-	  to->cpt_si_uid = from->si_uid;
-	  to->cpt_si_ptr = (intptr_t) from->si_ptr;
-	  break;
-	}
-    }
-}
-
-static void
-siginfo_from_compat_siginfo (siginfo_t *to, compat_siginfo_t *from)
-{
-  memset (to, 0, sizeof (*to));
-
-  to->si_signo = from->si_signo;
-  to->si_errno = from->si_errno;
-  to->si_code = from->si_code;
-
-  if (to->si_code == SI_TIMER)
-    {
-      to->si_timerid = from->cpt_si_timerid;
-      to->si_overrun = from->cpt_si_overrun;
-      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
-    }
-  else if (to->si_code == SI_USER)
-    {
-      to->si_pid = from->cpt_si_pid;
-      to->si_uid = from->cpt_si_uid;
-    }
-  else if (to->si_code < 0)
-    {
-      to->si_pid = from->cpt_si_pid;
-      to->si_uid = from->cpt_si_uid;
-      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
-    }
-  else
-    {
-      switch (to->si_signo)
-	{
-	case SIGCHLD:
-	  to->si_pid = from->cpt_si_pid;
-	  to->si_uid = from->cpt_si_uid;
-	  to->si_status = from->cpt_si_status;
-	  to->si_utime = from->cpt_si_utime;
-	  to->si_stime = from->cpt_si_stime;
-	  break;
-	case SIGILL:
-	case SIGFPE:
-	case SIGSEGV:
-	case SIGBUS:
-	  to->si_addr = (void *) (intptr_t) from->cpt_si_addr;
-	  break;
-	case SIGPOLL:
-	  to->si_band = from->cpt_si_band;
-	  to->si_fd = from->cpt_si_fd;
-	  break;
-	default:
-	  to->si_pid = from->cpt_si_pid;
-	  to->si_uid = from->cpt_si_uid;
-	  to->si_ptr = (void* ) (intptr_t) from->cpt_si_ptr;
-	  break;
-	}
-    }
-}
-
-static void
-compat_x32_siginfo_from_siginfo (compat_x32_siginfo_t *to,
-				 siginfo_t *from)
-{
-  memset (to, 0, sizeof (*to));
-
-  to->si_signo = from->si_signo;
-  to->si_errno = from->si_errno;
-  to->si_code = from->si_code;
-
-  if (to->si_code == SI_TIMER)
-    {
-      to->cpt_si_timerid = from->si_timerid;
-      to->cpt_si_overrun = from->si_overrun;
-      to->cpt_si_ptr = (intptr_t) from->si_ptr;
-    }
-  else if (to->si_code == SI_USER)
-    {
-      to->cpt_si_pid = from->si_pid;
-      to->cpt_si_uid = from->si_uid;
-    }
-  else if (to->si_code < 0)
-    {
-      to->cpt_si_pid = from->si_pid;
-      to->cpt_si_uid = from->si_uid;
-      to->cpt_si_ptr = (intptr_t) from->si_ptr;
-    }
-  else
-    {
-      switch (to->si_signo)
-	{
-	case SIGCHLD:
-	  to->cpt_si_pid = from->si_pid;
-	  to->cpt_si_uid = from->si_uid;
-	  to->cpt_si_status = from->si_status;
-	  to->cpt_si_utime = from->si_utime;
-	  to->cpt_si_stime = from->si_stime;
-	  break;
-	case SIGILL:
-	case SIGFPE:
-	case SIGSEGV:
-	case SIGBUS:
-	  to->cpt_si_addr = (intptr_t) from->si_addr;
-	  break;
-	case SIGPOLL:
-	  to->cpt_si_band = from->si_band;
-	  to->cpt_si_fd = from->si_fd;
-	  break;
-	default:
-	  to->cpt_si_pid = from->si_pid;
-	  to->cpt_si_uid = from->si_uid;
-	  to->cpt_si_ptr = (intptr_t) from->si_ptr;
-	  break;
-	}
-    }
-}
-
-static void
-siginfo_from_compat_x32_siginfo (siginfo_t *to,
-				 compat_x32_siginfo_t *from)
-{
-  memset (to, 0, sizeof (*to));
-
-  to->si_signo = from->si_signo;
-  to->si_errno = from->si_errno;
-  to->si_code = from->si_code;
-
-  if (to->si_code == SI_TIMER)
-    {
-      to->si_timerid = from->cpt_si_timerid;
-      to->si_overrun = from->cpt_si_overrun;
-      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
-    }
-  else if (to->si_code == SI_USER)
-    {
-      to->si_pid = from->cpt_si_pid;
-      to->si_uid = from->cpt_si_uid;
-    }
-  else if (to->si_code < 0)
-    {
-      to->si_pid = from->cpt_si_pid;
-      to->si_uid = from->cpt_si_uid;
-      to->si_ptr = (void *) (intptr_t) from->cpt_si_ptr;
-    }
-  else
-    {
-      switch (to->si_signo)
-	{
-	case SIGCHLD:
-	  to->si_pid = from->cpt_si_pid;
-	  to->si_uid = from->cpt_si_uid;
-	  to->si_status = from->cpt_si_status;
-	  to->si_utime = from->cpt_si_utime;
-	  to->si_stime = from->cpt_si_stime;
-	  break;
-	case SIGILL:
-	case SIGFPE:
-	case SIGSEGV:
-	case SIGBUS:
-	  to->si_addr = (void *) (intptr_t) from->cpt_si_addr;
-	  break;
-	case SIGPOLL:
-	  to->si_band = from->cpt_si_band;
-	  to->si_fd = from->cpt_si_fd;
-	  break;
-	default:
-	  to->si_pid = from->cpt_si_pid;
-	  to->si_uid = from->cpt_si_uid;
-	  to->si_ptr = (void* ) (intptr_t) from->cpt_si_ptr;
-	  break;
-	}
-    }
-}
-
-#endif /* __x86_64__ */
-
-/* Convert a native/host siginfo object, into/from the siginfo in the
+/* Convert a ptrace/host siginfo object, into/from the siginfo in the
    layout of the inferiors' architecture.  Returns true if any
    conversion was done; false otherwise.  If DIRECTION is 1, then copy
-   from INF to NATIVE.  If DIRECTION is 0, copy from NATIVE to
+   from INF to PTRACE.  If DIRECTION is 0, copy from PTRACE to
    INF.  */
 
 static int
-x86_siginfo_fixup (siginfo_t *native, void *inf, int direction)
+x86_siginfo_fixup (siginfo_t *ptrace, gdb_byte *inf, int direction)
 {
 #ifdef __x86_64__
   unsigned int machine;
@@ -1078,30 +644,12 @@ x86_siginfo_fixup (siginfo_t *native, void *inf, int direction)
 
   /* Is the inferior 32-bit?  If so, then fixup the siginfo object.  */
   if (!is_64bit_tdesc ())
-    {
-      gdb_assert (sizeof (siginfo_t) == sizeof (compat_siginfo_t));
-
-      if (direction == 0)
-	compat_siginfo_from_siginfo ((struct compat_siginfo *) inf, native);
-      else
-	siginfo_from_compat_siginfo (native, (struct compat_siginfo *) inf);
-
-      return 1;
-    }
+      return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
+					       FIXUP_32);
   /* No fixup for native x32 GDB.  */
   else if (!is_elf64 && sizeof (void *) == 8)
-    {
-      gdb_assert (sizeof (siginfo_t) == sizeof (compat_x32_siginfo_t));
-
-      if (direction == 0)
-	compat_x32_siginfo_from_siginfo ((struct compat_x32_siginfo *) inf,
-					 native);
-      else
-	siginfo_from_compat_x32_siginfo (native,
-					 (struct compat_x32_siginfo *) inf);
-
-      return 1;
-    }
+    return amd64_linux_siginfo_fixup_common (ptrace, inf, direction,
+					     FIXUP_X32);
 #endif
 
   return 0;
@@ -1140,9 +688,6 @@ int have_ptrace_getfpxregs =
   0
 #endif
 ;
-
-/* Does the current host support PTRACE_GETREGSET?  */
-static int have_ptrace_getregset = -1;
 
 /* Get Linux/x86 target description from running target.  */
 
@@ -1248,6 +793,9 @@ x86_linux_read_description (void)
 		case X86_XSTATE_AVX512_MASK:
 		  return tdesc_amd64_avx512_linux;
 
+		case X86_XSTATE_AVX_MPX_MASK:
+		  return tdesc_amd64_avx_mpx_linux;
+
 		case X86_XSTATE_MPX_MASK:
 		  return tdesc_amd64_mpx_linux;
 
@@ -1294,6 +842,9 @@ x86_linux_read_description (void)
 
 	    case (X86_XSTATE_MPX_MASK):
 	      return tdesc_i386_mpx_linux;
+
+	    case (X86_XSTATE_AVX_MPX_MASK):
+	      return tdesc_i386_avx_mpx_linux;
 
 	    case (X86_XSTATE_AVX_MASK):
 	      return tdesc_i386_avx_linux;
@@ -1358,29 +909,35 @@ x86_linux_update_xmltarget (void)
    PTRACE_GETREGSET.  */
 
 static void
-x86_linux_process_qsupported (const char *query)
+x86_linux_process_qsupported (char **features, int count)
 {
+  int i;
+
   /* Return if gdb doesn't support XML.  If gdb sends "xmlRegisters="
      with "i386" in qSupported query, it supports x86 XML target
      descriptions.  */
   use_xml = 0;
-  if (query != NULL && startswith (query, "xmlRegisters="))
+  for (i = 0; i < count; i++)
     {
-      char *copy = xstrdup (query + 13);
-      char *p;
+      const char *feature = features[i];
 
-      for (p = strtok (copy, ","); p != NULL; p = strtok (NULL, ","))
+      if (startswith (feature, "xmlRegisters="))
 	{
-	  if (strcmp (p, "i386") == 0)
+	  char *copy = xstrdup (feature + 13);
+	  char *p;
+
+	  for (p = strtok (copy, ","); p != NULL; p = strtok (NULL, ","))
 	    {
-	      use_xml = 1;
-	      break;
+	      if (strcmp (p, "i386") == 0)
+		{
+		  use_xml = 1;
+		  break;
+		}
 	    }
-	} 
 
-      free (copy);
+	  free (copy);
+	}
     }
-
   x86_linux_update_xmltarget ();
 }
 
@@ -1432,6 +989,25 @@ static void
 x86_arch_setup (void)
 {
   current_process ()->tdesc = x86_linux_read_description ();
+}
+
+/* Fill *SYSNO and *SYSRET with the syscall nr trapped and the syscall return
+   code.  This should only be called if LWP got a SYSCALL_SIGTRAP.  */
+
+static void
+x86_get_syscall_trapinfo (struct regcache *regcache, int *sysno)
+{
+  int use_64bit = register_size (regcache->tdesc, 0) == 8;
+
+  if (use_64bit)
+    {
+      long l_sysno;
+
+      collect_register_by_name (regcache, "orig_rax", &l_sysno);
+      *sysno = (int) l_sysno;
+    }
+  else
+    collect_register_by_name (regcache, "orig_eax", sysno);
 }
 
 static int
@@ -1516,10 +1092,10 @@ amd64_install_fast_tracepoint_jump_pad (CORE_ADDR tpoint, CORE_ADDR tpaddr,
   buf[i++] = 0x41; buf[i++] = 0x51; /* push %r9 */
   buf[i++] = 0x41; buf[i++] = 0x50; /* push %r8 */
   buf[i++] = 0x9c; /* pushfq */
-  buf[i++] = 0x48; /* movl <addr>,%rdi */
+  buf[i++] = 0x48; /* movabs <addr>,%rdi */
   buf[i++] = 0xbf;
-  *((unsigned long *)(buf + i)) = (unsigned long) tpaddr;
-  i += sizeof (unsigned long);
+  memcpy (buf + i, &tpaddr, 8);
+  i += 8;
   buf[i++] = 0x57; /* push %rdi */
   append_insns (&buildaddr, i, buf);
 
@@ -2266,6 +1842,8 @@ amd64_emit_call (CORE_ADDR fn)
   else
     {
       int offset32 = offset64; /* we know we can't overflow here.  */
+
+      buf[i++] = 0xe8; /* call <reladdr> */
       memcpy (buf + i, &offset32, 4);
       i += 4;
     }
@@ -3245,10 +2823,64 @@ x86_emit_ops (void)
     return &i386_emit_ops;
 }
 
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const gdb_byte *
+x86_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = x86_breakpoint_len;
+  return x86_breakpoint;
+}
+
 static int
 x86_supports_range_stepping (void)
 {
   return 1;
+}
+
+/* Implementation of linux_target_ops method "supports_hardware_single_step".
+ */
+
+static int
+x86_supports_hardware_single_step (void)
+{
+  return 1;
+}
+
+static int
+x86_get_ipa_tdesc_idx (void)
+{
+  struct regcache *regcache = get_thread_regcache (current_thread, 0);
+  const struct target_desc *tdesc = regcache->tdesc;
+
+#ifdef __x86_64__
+  if (tdesc == tdesc_amd64_linux || tdesc == tdesc_amd64_linux_no_xml
+      || tdesc == tdesc_x32_linux)
+    return X86_TDESC_SSE;
+  if (tdesc == tdesc_amd64_avx_linux || tdesc == tdesc_x32_avx_linux)
+    return X86_TDESC_AVX;
+  if (tdesc == tdesc_amd64_mpx_linux)
+    return X86_TDESC_MPX;
+  if (tdesc == tdesc_amd64_avx_mpx_linux)
+    return X86_TDESC_AVX_MPX;
+  if (tdesc == tdesc_amd64_avx512_linux || tdesc == tdesc_x32_avx512_linux)
+    return X86_TDESC_AVX512;
+#endif
+
+  if (tdesc == tdesc_i386_mmx_linux)
+    return X86_TDESC_MMX;
+  if (tdesc == tdesc_i386_linux || tdesc == tdesc_i386_linux_no_xml)
+    return X86_TDESC_SSE;
+  if (tdesc == tdesc_i386_avx_linux)
+    return X86_TDESC_AVX;
+  if (tdesc == tdesc_i386_mpx_linux)
+    return X86_TDESC_MPX;
+  if (tdesc == tdesc_i386_avx_mpx_linux)
+    return X86_TDESC_AVX_MPX;
+  if (tdesc == tdesc_i386_avx512_linux)
+    return X86_TDESC_AVX512;
+
+  return 0;
 }
 
 /* This is initialized assuming an amd64 target.
@@ -3263,8 +2895,8 @@ struct linux_target_ops the_low_target =
   NULL, /* fetch_register */
   x86_get_pc,
   x86_set_pc,
-  x86_breakpoint,
-  x86_breakpoint_len,
+  NULL, /* breakpoint_kind_from_pc */
+  x86_sw_breakpoint_from_kind,
   NULL,
   1,
   x86_breakpoint_at,
@@ -3291,6 +2923,10 @@ struct linux_target_ops the_low_target =
   x86_emit_ops,
   x86_get_min_fast_tracepoint_insn_len,
   x86_supports_range_stepping,
+  NULL, /* breakpoint_kind_from_current_state */
+  x86_supports_hardware_single_step,
+  x86_get_syscall_trapinfo,
+  x86_get_ipa_tdesc_idx,
 };
 
 void
@@ -3302,12 +2938,13 @@ initialize_low_arch (void)
   init_registers_amd64_avx_linux ();
   init_registers_amd64_avx512_linux ();
   init_registers_amd64_mpx_linux ();
+  init_registers_amd64_avx_mpx_linux ();
 
   init_registers_x32_linux ();
   init_registers_x32_avx_linux ();
   init_registers_x32_avx512_linux ();
 
-  tdesc_amd64_linux_no_xml = xmalloc (sizeof (struct target_desc));
+  tdesc_amd64_linux_no_xml = XNEW (struct target_desc);
   copy_target_description (tdesc_amd64_linux_no_xml, tdesc_amd64_linux);
   tdesc_amd64_linux_no_xml->xmltarget = xmltarget_amd64_linux_no_xml;
 #endif
@@ -3316,8 +2953,9 @@ initialize_low_arch (void)
   init_registers_i386_avx_linux ();
   init_registers_i386_avx512_linux ();
   init_registers_i386_mpx_linux ();
+  init_registers_i386_avx_mpx_linux ();
 
-  tdesc_i386_linux_no_xml = xmalloc (sizeof (struct target_desc));
+  tdesc_i386_linux_no_xml = XNEW (struct target_desc);
   copy_target_description (tdesc_i386_linux_no_xml, tdesc_i386_linux);
   tdesc_i386_linux_no_xml->xmltarget = xmltarget_i386_linux_no_xml;
 

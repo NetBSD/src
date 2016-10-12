@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,12 +46,12 @@ clean_restart ${binfile}
 gdb_test_no_output "set height 0"
 
 #
-# break at main
+# break in main
 #
 
 set main_line [gdb_get_line_number "break main"]
 
-gdb_test "break main" \
+gdb_test "break ${srcfile}:${main_line}" \
     "Breakpoint.*at.* file .*$srcfile, line $main_line\\." \
     "breakpoint main"
 
@@ -293,16 +293,17 @@ gdb_test_multiple "delete 3" "delete bp 3" {
 }
 
 #
-# break at main, after value is initialized. This is in preparation
+# break in main, after value is initialized. This is in preparation
 # to test the annotate output for the display command.
 #
-gdb_test_multiple "break main" "break at main" {
+set test "break in main"
+gdb_test_multiple "break ${srcfile}:${main_line}" $test {
     -re "post-prompt.*Breakpoint 4 at $hex: file ${escapedsrcfile}, line $main_line.*\032\032breakpoints-invalid.*$gdb_prompt$" {
-	pass "break at main"
+	pass $test
     }
     -re "post-prompt.*Breakpoint 4 at $hex: file .*${srcfile}, line $main_line.*\032\032breakpoints-invalid.*$gdb_prompt$" {
 	setup_xfail "*-*-*" 1270
-	fail "break at main"
+	fail $test
     }
 }
 
@@ -405,20 +406,10 @@ gdb_test_multiple "info inferior 1" "$test" {
 # annotate-signal-string-end
 # FIXME: annotate-signal not tested (requires that the inferior be 
 #                        stopped by a "random" signal)
-#
-# SIGTRAP signals are dropped before they get to the inferior process
-# on hpux11.  In theory, this behaivor can be controlled by setting
-# TTEO_NORM_SIGTRAP in the inferior, but doing so did not cause
-# the signal to be properly delivered.
-#
-# It has been verified that other signals will be delivered.  However,
-# rather than twiddle the test, I choose to leave it as-is as it
-# exposes an interesting failure on hpux11.
 
 if [target_info exists gdb,nosignals] {
     unsupported "signal sent"
 } else {
-    setup_xfail hppa*-*-hpux11*
     gdb_test_multiple "signal SIGTRAP" "signal sent" {
 	-re ".*\032\032post-prompt\r\nContinuing with signal SIGTRAP.\r\n\r\n\032\032starting\(\r\n\r\n\032\032frames-invalid\)+\r\n\r\n\032\032signalled\r\n\r\nProgram terminated with signal \r\n\032\032signal-name\r\nSIGTRAP\r\n\032\032signal-name-end\r\n, \r\n\032\032signal-string\r\nTrace.breakpoint trap\r\n\032\032signal-string-end\r\n.\r\nThe program no longer exists.\r\n\r\n\032\032stopped\r\n$gdb_prompt$" {
 	    pass "signal sent"

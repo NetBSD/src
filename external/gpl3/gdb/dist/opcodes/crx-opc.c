@@ -1,5 +1,5 @@
 /* crx-opc.c -- Table of opcodes for the CRX processor.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Tomer Levi NSC, Israel.
    Originally written for GAS 2.12 by Tomer Levi.
 

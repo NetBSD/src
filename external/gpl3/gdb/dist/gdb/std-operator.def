@@ -1,6 +1,6 @@
 /* Standard language operator definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -266,6 +266,9 @@ OP (OP_M2_STRING)		/* Modula-2 string constants */
 OP (STRUCTOP_STRUCT)
 OP (STRUCTOP_PTR)
 
+/* Anonymous field access, e.g. "foo.3".  Used in Rust.  */
+OP (STRUCTOP_ANONYMOUS)
+
 /* C++: OP_THIS is just a placeholder for the class instance variable.
    It just comes in a tight (OP_THIS, OP_THIS) pair.  */
 OP (OP_THIS)
@@ -289,8 +292,9 @@ OP (OP_NAME)
 /* An Objective C Foundation Class NSString constant.  */
 OP (OP_OBJC_NSSTRING)
 
-/* A F90 array range operator (for "exp:exp", "exp:", ":exp" and ":").  */
-OP (OP_F90_RANGE)
+/* An array range operator (in Fortran 90, for "exp:exp", "exp:",
+   ":exp" and ":").  */
+OP (OP_RANGE)
 
 /* OP_DECFLOAT is followed by a type pointer in the next exp_element
    and a dec long constant value in the following exp_element.
@@ -312,3 +316,7 @@ OP (OP_DECLTYPE)
 
 /* The typeid operator.  This has one expression argument.  */
 OP (OP_TYPEID)
+
+/* This is used for the Rust [expr; N] form of array construction.  It
+   takes two expression arguments.  */
+OP (OP_RUST_ARRAY)

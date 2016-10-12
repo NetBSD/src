@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -90,7 +90,7 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
   struct type *ptr_type = builtin_type (target_gdbarch ())->builtin_data_ptr;
   size_t ptr_size = TYPE_LENGTH (ptr_type);
   size_t auxv_pair_size = 2 * ptr_size;
-  gdb_byte *ptr_buf = alloca (ptr_size);
+  gdb_byte *ptr_buf = (gdb_byte *) alloca (ptr_size);
   LONGEST retval;
   size_t block;
 
@@ -320,7 +320,7 @@ auxv_inferior_data_cleanup (struct inferior *inf, void *arg)
 {
   struct auxv_info *info;
 
-  info = inferior_data (inf, auxv_inferior_data);
+  info = (struct auxv_info *) inferior_data (inf, auxv_inferior_data);
   if (info != NULL)
     {
       xfree (info->data);
@@ -355,7 +355,7 @@ get_auxv_inferior_data (struct target_ops *ops)
   struct auxv_info *info;
   struct inferior *inf = current_inferior ();
 
-  info = inferior_data (inf, auxv_inferior_data);
+  info = (struct auxv_info *) inferior_data (inf, auxv_inferior_data);
   if (info == NULL)
     {
       info = XCNEW (struct auxv_info);
@@ -407,10 +407,126 @@ target_auxv_search (struct target_ops *ops, CORE_ADDR match, CORE_ADDR *valp)
 }
 
 
+/* Print the description of a single AUXV entry on the specified file.  */
+
+void
+fprint_auxv_entry (struct ui_file *file, const char *name,
+		   const char *description, enum auxv_format format,
+		   CORE_ADDR type, CORE_ADDR val)
+{
+  fprintf_filtered (file, ("%-4s %-20s %-30s "),
+		    plongest (type), name, description);
+  switch (format)
+    {
+    case AUXV_FORMAT_DEC:
+      fprintf_filtered (file, ("%s\n"), plongest (val));
+      break;
+    case AUXV_FORMAT_HEX:
+      fprintf_filtered (file, ("%s\n"), paddress (target_gdbarch (), val));
+      break;
+    case AUXV_FORMAT_STR:
+      {
+	struct value_print_options opts;
+
+	get_user_print_options (&opts);
+	if (opts.addressprint)
+	  fprintf_filtered (file, ("%s "), paddress (target_gdbarch (), val));
+	val_print_string (builtin_type (target_gdbarch ())->builtin_char,
+			  NULL, val, -1, file, &opts);
+	fprintf_filtered (file, ("\n"));
+      }
+      break;
+    }
+}
+
+/* The default implementation of gdbarch_print_auxv_entry.  */
+
+void
+default_print_auxv_entry (struct gdbarch *gdbarch, struct ui_file *file,
+			  CORE_ADDR type, CORE_ADDR val)
+{
+  const char *name = "???";
+  const char *description = "";
+  enum auxv_format format = AUXV_FORMAT_HEX;
+
+  switch (type)
+    {
+#define TAG(tag, text, kind) \
+      case tag: name = #tag; description = text; format = kind; break
+      TAG (AT_NULL, _("End of vector"), AUXV_FORMAT_HEX);
+      TAG (AT_IGNORE, _("Entry should be ignored"), AUXV_FORMAT_HEX);
+      TAG (AT_EXECFD, _("File descriptor of program"), AUXV_FORMAT_DEC);
+      TAG (AT_PHDR, _("Program headers for program"), AUXV_FORMAT_HEX);
+      TAG (AT_PHENT, _("Size of program header entry"), AUXV_FORMAT_DEC);
+      TAG (AT_PHNUM, _("Number of program headers"), AUXV_FORMAT_DEC);
+      TAG (AT_PAGESZ, _("System page size"), AUXV_FORMAT_DEC);
+      TAG (AT_BASE, _("Base address of interpreter"), AUXV_FORMAT_HEX);
+      TAG (AT_FLAGS, _("Flags"), AUXV_FORMAT_HEX);
+      TAG (AT_ENTRY, _("Entry point of program"), AUXV_FORMAT_HEX);
+      TAG (AT_NOTELF, _("Program is not ELF"), AUXV_FORMAT_DEC);
+      TAG (AT_UID, _("Real user ID"), AUXV_FORMAT_DEC);
+      TAG (AT_EUID, _("Effective user ID"), AUXV_FORMAT_DEC);
+      TAG (AT_GID, _("Real group ID"), AUXV_FORMAT_DEC);
+      TAG (AT_EGID, _("Effective group ID"), AUXV_FORMAT_DEC);
+      TAG (AT_CLKTCK, _("Frequency of times()"), AUXV_FORMAT_DEC);
+      TAG (AT_PLATFORM, _("String identifying platform"), AUXV_FORMAT_STR);
+      TAG (AT_HWCAP, _("Machine-dependent CPU capability hints"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_FPUCW, _("Used FPU control word"), AUXV_FORMAT_DEC);
+      TAG (AT_DCACHEBSIZE, _("Data cache block size"), AUXV_FORMAT_DEC);
+      TAG (AT_ICACHEBSIZE, _("Instruction cache block size"), AUXV_FORMAT_DEC);
+      TAG (AT_UCACHEBSIZE, _("Unified cache block size"), AUXV_FORMAT_DEC);
+      TAG (AT_IGNOREPPC, _("Entry should be ignored"), AUXV_FORMAT_DEC);
+      TAG (AT_BASE_PLATFORM, _("String identifying base platform"),
+	   AUXV_FORMAT_STR);
+      TAG (AT_RANDOM, _("Address of 16 random bytes"), AUXV_FORMAT_HEX);
+      TAG (AT_HWCAP2, _("Extension of AT_HWCAP"), AUXV_FORMAT_HEX);
+      TAG (AT_EXECFN, _("File name of executable"), AUXV_FORMAT_STR);
+      TAG (AT_SECURE, _("Boolean, was exec setuid-like?"), AUXV_FORMAT_DEC);
+      TAG (AT_SYSINFO, _("Special system info/entry points"), AUXV_FORMAT_HEX);
+      TAG (AT_SYSINFO_EHDR, _("System-supplied DSO's ELF header"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_L1I_CACHESHAPE, _("L1 Instruction cache information"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_L1D_CACHESHAPE, _("L1 Data cache information"), AUXV_FORMAT_HEX);
+      TAG (AT_L2_CACHESHAPE, _("L2 cache information"), AUXV_FORMAT_HEX);
+      TAG (AT_L3_CACHESHAPE, _("L3 cache information"), AUXV_FORMAT_HEX);
+      TAG (AT_SUN_UID, _("Effective user ID"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_RUID, _("Real user ID"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_GID, _("Effective group ID"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_RGID, _("Real group ID"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_LDELF, _("Dynamic linker's ELF header"), AUXV_FORMAT_HEX);
+      TAG (AT_SUN_LDSHDR, _("Dynamic linker's section headers"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_SUN_LDNAME, _("String giving name of dynamic linker"),
+	   AUXV_FORMAT_STR);
+      TAG (AT_SUN_LPAGESZ, _("Large pagesize"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_PLATFORM, _("Platform name string"), AUXV_FORMAT_STR);
+      TAG (AT_SUN_HWCAP, _("Machine-dependent CPU capability hints"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_SUN_IFLUSH, _("Should flush icache?"), AUXV_FORMAT_DEC);
+      TAG (AT_SUN_CPU, _("CPU name string"), AUXV_FORMAT_STR);
+      TAG (AT_SUN_EMUL_ENTRY, _("COFF entry point address"), AUXV_FORMAT_HEX);
+      TAG (AT_SUN_EMUL_EXECFD, _("COFF executable file descriptor"),
+	   AUXV_FORMAT_DEC);
+      TAG (AT_SUN_EXECNAME,
+	   _("Canonicalized file name given to execve"), AUXV_FORMAT_STR);
+      TAG (AT_SUN_MMU, _("String for name of MMU module"), AUXV_FORMAT_STR);
+      TAG (AT_SUN_LDDATA, _("Dynamic linker's data segment address"),
+	   AUXV_FORMAT_HEX);
+      TAG (AT_SUN_AUXFLAGS,
+	   _("AF_SUN_ flags passed from the kernel"), AUXV_FORMAT_HEX);
+    }
+
+  fprint_auxv_entry (file, name, description, format, type, val);
+}
+
 /* Print the contents of the target's AUXV on the specified file.  */
+
 int
 fprint_target_auxv (struct ui_file *file, struct target_ops *ops)
 {
+  struct gdbarch *gdbarch = target_gdbarch ();
   CORE_ADDR type, val;
   gdb_byte *data;
   gdb_byte *ptr;
@@ -426,93 +542,7 @@ fprint_target_auxv (struct ui_file *file, struct target_ops *ops)
 
   while (target_auxv_parse (ops, &ptr, data + info->length, &type, &val) > 0)
     {
-      const char *name = "???";
-      const char *description = "";
-      enum { dec, hex, str } flavor = hex;
-
-      switch (type)
-	{
-#define TAG(tag, text, kind) \
-	case tag: name = #tag; description = text; flavor = kind; break
-	  TAG (AT_NULL, _("End of vector"), hex);
-	  TAG (AT_IGNORE, _("Entry should be ignored"), hex);
-	  TAG (AT_EXECFD, _("File descriptor of program"), dec);
-	  TAG (AT_PHDR, _("Program headers for program"), hex);
-	  TAG (AT_PHENT, _("Size of program header entry"), dec);
-	  TAG (AT_PHNUM, _("Number of program headers"), dec);
-	  TAG (AT_PAGESZ, _("System page size"), dec);
-	  TAG (AT_BASE, _("Base address of interpreter"), hex);
-	  TAG (AT_FLAGS, _("Flags"), hex);
-	  TAG (AT_ENTRY, _("Entry point of program"), hex);
-	  TAG (AT_NOTELF, _("Program is not ELF"), dec);
-	  TAG (AT_UID, _("Real user ID"), dec);
-	  TAG (AT_EUID, _("Effective user ID"), dec);
-	  TAG (AT_GID, _("Real group ID"), dec);
-	  TAG (AT_EGID, _("Effective group ID"), dec);
-	  TAG (AT_CLKTCK, _("Frequency of times()"), dec);
-	  TAG (AT_PLATFORM, _("String identifying platform"), str);
-	  TAG (AT_HWCAP, _("Machine-dependent CPU capability hints"), hex);
-	  TAG (AT_FPUCW, _("Used FPU control word"), dec);
-	  TAG (AT_DCACHEBSIZE, _("Data cache block size"), dec);
-	  TAG (AT_ICACHEBSIZE, _("Instruction cache block size"), dec);
-	  TAG (AT_UCACHEBSIZE, _("Unified cache block size"), dec);
-	  TAG (AT_IGNOREPPC, _("Entry should be ignored"), dec);
-	  TAG (AT_BASE_PLATFORM, _("String identifying base platform"), str);
-	  TAG (AT_RANDOM, _("Address of 16 random bytes"), hex);
-	  TAG (AT_HWCAP2, _("Extension of AT_HWCAP"), hex);
-	  TAG (AT_EXECFN, _("File name of executable"), str);
-	  TAG (AT_SECURE, _("Boolean, was exec setuid-like?"), dec);
-	  TAG (AT_SYSINFO, _("Special system info/entry points"), hex);
-	  TAG (AT_SYSINFO_EHDR, _("System-supplied DSO's ELF header"), hex);
-	  TAG (AT_L1I_CACHESHAPE, _("L1 Instruction cache information"), hex);
-	  TAG (AT_L1D_CACHESHAPE, _("L1 Data cache information"), hex);
-	  TAG (AT_L2_CACHESHAPE, _("L2 cache information"), hex);
-	  TAG (AT_L3_CACHESHAPE, _("L3 cache information"), hex);
-	  TAG (AT_SUN_UID, _("Effective user ID"), dec);
-	  TAG (AT_SUN_RUID, _("Real user ID"), dec);
-	  TAG (AT_SUN_GID, _("Effective group ID"), dec);
-	  TAG (AT_SUN_RGID, _("Real group ID"), dec);
-	  TAG (AT_SUN_LDELF, _("Dynamic linker's ELF header"), hex);
-	  TAG (AT_SUN_LDSHDR, _("Dynamic linker's section headers"), hex);
-	  TAG (AT_SUN_LDNAME, _("String giving name of dynamic linker"), str);
-	  TAG (AT_SUN_LPAGESZ, _("Large pagesize"), dec);
-	  TAG (AT_SUN_PLATFORM, _("Platform name string"), str);
-	  TAG (AT_SUN_HWCAP, _("Machine-dependent CPU capability hints"), hex);
-	  TAG (AT_SUN_IFLUSH, _("Should flush icache?"), dec);
-	  TAG (AT_SUN_CPU, _("CPU name string"), str);
-	  TAG (AT_SUN_EMUL_ENTRY, _("COFF entry point address"), hex);
-	  TAG (AT_SUN_EMUL_EXECFD, _("COFF executable file descriptor"), dec);
-	  TAG (AT_SUN_EXECNAME,
-	       _("Canonicalized file name given to execve"), str);
-	  TAG (AT_SUN_MMU, _("String for name of MMU module"), str);
-	  TAG (AT_SUN_LDDATA, _("Dynamic linker's data segment address"), hex);
-	  TAG (AT_SUN_AUXFLAGS,
-	       _("AF_SUN_ flags passed from the kernel"), hex);
-	}
-
-      fprintf_filtered (file, "%-4s %-20s %-30s ",
-			plongest (type), name, description);
-      switch (flavor)
-	{
-	case dec:
-	  fprintf_filtered (file, "%s\n", plongest (val));
-	  break;
-	case hex:
-	  fprintf_filtered (file, "%s\n", paddress (target_gdbarch (), val));
-	  break;
-	case str:
-	  {
-	    struct value_print_options opts;
-
-	    get_user_print_options (&opts);
-	    if (opts.addressprint)
-	      fprintf_filtered (file, "%s ", paddress (target_gdbarch (), val));
-	    val_print_string (builtin_type (target_gdbarch ())->builtin_char,
-			      NULL, val, -1, file, &opts);
-	    fprintf_filtered (file, "\n");
-	  }
-	  break;
-	}
+      gdbarch_print_auxv_entry (gdbarch, file, type, val);
       ++ents;
       if (type == AT_NULL)
 	break;

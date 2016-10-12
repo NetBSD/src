@@ -1,5 +1,5 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -136,12 +136,4 @@ pfildes (gdb_fildes_t fd)
 #else
   return plongest (fd);
 #endif
-}
-
-/* See common/common-exceptions.h.  */
-
-void
-prepare_to_throw_exception (void)
-{
-  /* No client-specific actions required.  */
 }

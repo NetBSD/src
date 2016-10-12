@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z800n COFF binaries.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
@@ -263,15 +263,12 @@ extra_case (bfd *in_abfd,
 	if (gap & 1)
 	  abort ();
 	gap /= 2;
-	if (gap > 128 || gap < -128)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	if (gap > 127 || gap < -128)
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_8 (in_abfd, gap, data + *dst_ptr);
 	(*dst_ptr)++;
 	(*src_ptr)++;
@@ -293,14 +290,11 @@ extra_case (bfd *in_abfd,
 	gap /= 2;
 
 	if (gap > 0 || gap < -127)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_8 (in_abfd,
                    (bfd_get_8 ( in_abfd, data + *dst_ptr) & 0x80) + (-gap & 0x7f),
                    data + *dst_ptr);
@@ -321,14 +315,11 @@ extra_case (bfd *in_abfd,
 	if (gap & 1)
 	  abort ();
 	if (gap > 4096 || gap < -4095)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	gap /= 2;
 	bfd_put_16 (in_abfd,
                     (bfd_get_16 ( in_abfd, data + *dst_ptr) & 0xf000) | (-gap & 0x0fff),
@@ -348,14 +339,11 @@ extra_case (bfd *in_abfd,
 	int gap = dst - dot - 2;
 
 	if (gap > 32767 || gap < -32768)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_16 (in_abfd, (bfd_vma) gap, data + *dst_ptr);
 	(*dst_ptr) += 2;
 	(*src_ptr) += 2;

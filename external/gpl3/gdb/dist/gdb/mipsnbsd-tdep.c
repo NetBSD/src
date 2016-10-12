@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -56,7 +56,7 @@ mipsnbsd_supply_fpregset (const struct regset *regset,
 			  int regnum, const void *fpregs, size_t len)
 {
   size_t regsize = mips_isa_regsize (get_regcache_arch (regcache));
-  const char *regs = fpregs;
+  const char *regs = (const char *) fpregs;
   int i;
 
   gdb_assert (len >= MIPSNBSD_NUM_FPREGS * regsize);
@@ -79,7 +79,7 @@ mipsnbsd_supply_gregset (const struct regset *regset,
 			 const void *gregs, size_t len)
 {
   size_t regsize = mips_isa_regsize (get_regcache_arch (regcache));
-  const char *regs = gregs;
+  const char *regs = (const char *) gregs;
   int i;
 
   gdb_assert (len >= MIPSNBSD_NUM_GREGS * regsize);
@@ -263,7 +263,7 @@ mipsnbsd_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
   CORE_ADDR jb_addr;
   gdb_byte *buf;
 
-  buf = alloca (NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch));
+  buf = (gdb_byte *) alloca (NBSD_MIPS_JB_ELEMENT_SIZE (gdbarch));
 
   jb_addr = get_frame_register_unsigned (frame, MIPS_A0_REGNUM);
 

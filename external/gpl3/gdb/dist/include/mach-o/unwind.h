@@ -1,5 +1,5 @@
 /* Mach-O compact unwind encoding.
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -102,6 +102,35 @@
 #define MACH_O_UNWIND_X86_REG_EDI 4
 #define MACH_O_UNWIND_X86_REG_ESI 5
 #define MACH_O_UNWIND_X86_REG_EBP 6
+
+/* Encodings for arm64.  */
+
+#define MACH_O_UNWIND_ARM64_MODE_MASK		0x0f000000
+
+/* Leaf function:  FP/LR are *not* saved, none or some non-volatile registers
+   are saved, stack is allocated.  The size of the frame (register saved and
+   memory) is encoded in STACK_SIZE in 16 byte units.  */
+#define MACH_O_UNWIND_ARM64_MODE_FRAMELESS	0x02000000
+
+#define MACH_O_UNWIND_ARM64_MODE_DWARF		0x03000000
+
+/* Standard frame: FP/LR are pushed, SP is copied to FP, then non-volatile
+   registers are saved.  */
+#define MACH_O_UNWIND_ARM64_MODE_FRAME		0x04000000
+
+/* Registers (for FRAME).  */
+#define MACH_O_UNWIND_ARM64_FRAME_X19_X20_PAIR	0x00000001
+#define MACH_O_UNWIND_ARM64_FRAME_X21_X22_PAIR	0x00000002
+#define MACH_O_UNWIND_ARM64_FRAME_X23_X24_PAIR	0x00000004
+#define MACH_O_UNWIND_ARM64_FRAME_X25_X26_PAIR	0x00000008
+#define MACH_O_UNWIND_ARM64_FRAME_X27_X28_PAIR	0x00000010
+#define MACH_O_UNWIND_ARM64_FRAME_D8_D9_PAIR	0x00000100
+#define MACH_O_UNWIND_ARM64_FRAME_D10_D11_PAIR	0x00000200
+#define MACH_O_UNWIND_ARM64_FRAME_D12_D13_PAIR	0x00000400
+#define MACH_O_UNWIND_ARM64_FRAME_D14_D15_PAIR	0x00000800
+
+#define MACH_O_UNWIND_ARM64_FRAMELESS_STACK_SIZE_MASK 0x00fff000
+#define MACH_O_UNWIND_ARM64_DWARF_SECTION_OFFSET 0x00ffffff
 
 /* Entry in object file (in __LD,__compact_unwind section).  */
 

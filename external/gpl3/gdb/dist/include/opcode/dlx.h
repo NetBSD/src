@@ -1,5 +1,5 @@
 /* Table of opcodes for the DLX microprocess.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 
@@ -143,7 +143,7 @@
 struct dlx_opcode
 {
   /* Name of the instruction.  */
-  char *name;
+  const char *name;
 
   /* Opcode word.  */
   unsigned long opcode;
@@ -161,7 +161,7 @@ struct dlx_opcode
      D	      An immediate operand is in bits 0-25 of the instruction.
      N	      No opperands needed, for nops.
      P	      it can be a register or a 16 bit operand.  */
-  char *args;
+  const char *args;
 };
 
 static const struct dlx_opcode dlx_opcodes[] =

@@ -1,5 +1,5 @@
 /* ia64-asmtab.h -- Header for compacted IA-64 opcode tables.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Contributed by Bob Manson of Cygnus Support <manson@cygnus.com>
 
    This file is part of the GNU opcodes library.
@@ -31,7 +31,7 @@ struct ia64_main_table
      opcode. */
   unsigned short name_index;
 
-  /* The type of opcode; corresponds to the TYPE field in 
+  /* The type of opcode; corresponds to the TYPE field in
      struct ia64_opcode. */
   unsigned char opcode_type;
 
@@ -64,7 +64,7 @@ struct ia64_main_table
    The completer entries modify certain bits in the instruction opcode.
    Which bits are to be modified are marked by the BITS, MASK and
    OFFSET fields.  The completer entry may also note dependencies for the
-   opcode. 
+   opcode.
 
    These completers are arranged in a DAG; the pointers are indexes
    into the completer_table array.  The completer DAG is searched by
@@ -81,7 +81,7 @@ struct ia64_main_table
    not contain an empty entry.
 
    Terminal completers (those completers that validly complete an
-   instruction) are marked by having the TERMINAL_COMPLETER flag set. 
+   instruction) are marked by having the TERMINAL_COMPLETER flag set.
 
    Only dependencies listed in the terminal completer for an opcode are
    considered to apply to that opcode instance. */
@@ -91,7 +91,7 @@ struct ia64_completer_table
   /* The bit value that this completer sets. */
   unsigned int bits;
 
-  /* And its mask. 1s are bits that are to be modified in the 
+  /* And its mask. 1s are bits that are to be modified in the
      instruction. */
   unsigned int mask;
 
@@ -118,11 +118,11 @@ struct ia64_completer_table
 
 /* This contains sufficient information for the disassembler to resolve
    the complete name of the original instruction.  */
-struct ia64_dis_names 
+struct ia64_dis_names
 {
   /* COMPLETER_INDEX represents the tree of completers that make up
      the instruction.  The LSB represents the top of the tree for the
-     specified instruction. 
+     specified instruction.
 
      A 0 bit indicates to go to the next alternate completer via the
      alternative field; a 1 bit indicates that the current completer

@@ -821,7 +821,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "ada-lex.l"
 /* FLEX lexer for Ada expressions, for GDB.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1389,7 +1389,7 @@ case 34:
 /* rule 34 can match eol */
 YY_RULE_SETUP
 #line 208 "ada-lex.l"
-{ return processAttribute (yytext+1); }
+{ BEGIN INITIAL; return processAttribute (yytext+1); }
 	YY_BREAK
 /* PUNCTUATION */
 case 35:
@@ -2682,7 +2682,7 @@ processReal (struct parser_state *par_state, const char *num0)
 static struct stoken
 processId (const char *name0, int len)
 {
-  char *name = obstack_alloc (&temp_parse_space, len + 11);
+  char *name = (char *) obstack_alloc (&temp_parse_space, len + 11);
   int i0, i;
   struct stoken result;
 
@@ -2753,7 +2753,7 @@ processString (const char *text, int len)
   const char *lim = text + len;
   struct stoken result;
 
-  q = obstack_alloc (&temp_parse_space, len);
+  q = (char *) obstack_alloc (&temp_parse_space, len);
   result.ptr = q;
   p = text;
   while (p < lim)

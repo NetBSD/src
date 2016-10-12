@@ -1,3 +1,72 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-11-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (sample.x, sample.mot, sample2.x, sample2.o, gloss.o):
+	Delete targets.
+	* blinky.S: Moved to ../testsuite/sim/m32c/.
+	* gloss.S, sample.ld, sample.S, sample2.c: Likewise.
+
+2015-11-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in: Delete redundant dependency info.
+
+2015-08-05  Nick Clifton  <nickc@redhat.com>
+
+	* gdb-if.c (sim_info): Stub function to allow GDB to be built
+	with this simulator.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -92,7 +161,7 @@
 
 	PR gdb/7205
 
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-05-18  Nick Clifton  <nickc@redhat.com>
 
@@ -186,7 +255,7 @@
 	(stdin_ready): Disable if no termios.
 	(m32c_sim_restore_console): Disable if no termios.
 	(mem_get_byte): Disable console input if no termios.
-	
+
 2009-01-06  Joel Sherrill <joel.sherrill@oarcorp.com>
 
 	* r8c.opc, m32c.opc: Add parentheses to remove warnings.
@@ -212,8 +281,8 @@
 	(mem_get_byte): Set raw console if m32c_use_raw_console is set.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -252,7 +321,7 @@
 	(trace_register_changes): Use it.
 	(m32c_dump_all_registers): New.
 	* timer_a.h: New.
-	
+
 	* load.c: Fix indentation.
 	* trace.c: Fix indentation.
 	* trace.h: Fix indentation.
@@ -291,7 +360,7 @@
 	Simulator for Renesas M32C and M16C, by DJ Delorie <dj@redhat.com>,
 	with further work from Jim Blandy <jimb@redhat.com> and
 	Kevin Buettner <kevinb@redhat.com>.
-	
+
 	* ChangeLog: New.
 	* Makefile.in: New.
 	* blinky.S: New.

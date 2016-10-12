@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Free Software Foundation, Inc.
+# Copyright 2012-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,11 +45,14 @@ if { [gdb_compile $srcdir/$subdir/$srcfile $binfile executable $exec_opts] != ""
 
 proc test_insert_delete_modify { } {
     global mi_gdb_prompt
+    global lib_sl1 lib_sl2
 
     gdb_exit
     if [mi_gdb_start] {
 	continue
     }
+
+    mi_load_shlibs $lib_sl1 $lib_sl2
 
     mi_run_to_main
 
@@ -150,7 +153,9 @@ proc test_insert_delete_modify { } {
     }
 }
 
-test_insert_delete_modify
+with_test_prefix "test_insert_delete_modify" {
+    test_insert_delete_modify
+}
 
 # Test 'breakpoint-modified' notification is emited when pending breakpoints are
 # resolved.
@@ -251,4 +256,6 @@ proc test_pending_resolved { } {
     }
 }
 
-test_pending_resolved
+with_test_prefix "test_pending_resolved" {
+    test_pending_resolved
+}

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -53,7 +53,7 @@ alphanbsd_supply_fpregset (const struct regset *regset,
 			   struct regcache *regcache,
 			   int regnum, const void *fpregs, size_t len)
 {
-  const gdb_byte *regs = fpregs;
+  const gdb_byte *regs = (const gdb_byte *) fpregs;
   int i;
 
   gdb_assert (len >= ALPHANBSD_SIZEOF_FPREGS);
@@ -77,7 +77,7 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
 			       struct regcache *regcache,
 			       int regnum, const void *gregs, size_t len)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
 
   /* Table to map a GDB register number to a trapframe register index.  */
@@ -121,7 +121,7 @@ alphanbsd_supply_gregset (const struct regset *regset,
 			  struct regcache *regcache,
 			  int regnum, const void *gregs, size_t len)
 {
-  const gdb_byte *regs = gregs;
+  const gdb_byte *regs = (const gdb_byte *) gregs;
   int i;
 
   if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)

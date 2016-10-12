@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -229,7 +229,6 @@ i386nbsd_sigtramp_cache_init (const struct tramp_frame *self,
 			      CORE_ADDR func)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   CORE_ADDR sp = get_frame_register_unsigned (this_frame, I386_ESP_REGNUM);
   CORE_ADDR base;

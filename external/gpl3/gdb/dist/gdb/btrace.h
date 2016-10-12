@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -28,6 +28,7 @@
 
 #include "btrace-common.h"
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "common/enum-flags.h"
 
 #if defined (HAVE_LIBIPT)
 #  include <intel-pt.h>
@@ -52,6 +53,14 @@ enum btrace_insn_class
   BTRACE_INSN_JUMP
 };
 
+/* Instruction flags.  */
+enum btrace_insn_flag
+{
+  /* The instruction has been executed speculatively.  */
+  BTRACE_INSN_FLAG_SPECULATIVE = (1 << 0)
+};
+DEF_ENUM_FLAGS_TYPE (enum btrace_insn_flag, btrace_insn_flags);
+
 /* A branch trace instruction.
 
    This represents a single instruction in a branch trace.  */
@@ -65,6 +74,9 @@ struct btrace_insn
 
   /* The instruction class of this instruction.  */
   enum btrace_insn_class iclass;
+
+  /* A bit vector of BTRACE_INSN_FLAGS.  */
+  btrace_insn_flags flags;
 };
 
 /* A vector of branch trace instructions.  */
@@ -90,6 +102,7 @@ enum btrace_function_flag
      if bfun_up_links_to_ret is clear.  */
   BFUN_UP_LINKS_TO_TAILCALL = (1 << 1)
 };
+DEF_ENUM_FLAGS_TYPE (enum btrace_function_flag, btrace_function_flags);
 
 /* Decode errors for the BTS recording format.  */
 enum btrace_bts_error
@@ -101,7 +114,7 @@ enum btrace_bts_error
   BDE_BTS_INSN_SIZE
 };
 
-/* Decode errors for the Intel(R) Processor Trace recording format.  */
+/* Decode errors for the Intel Processor Trace recording format.  */
 enum btrace_pt_error
 {
   /* The user cancelled trace processing.  */
@@ -171,7 +184,7 @@ struct btrace_function
   int level;
 
   /* A bit-vector of btrace_function_flag.  */
-  enum btrace_function_flag flags;
+  btrace_function_flags flags;
 };
 
 /* A branch trace instruction iterator.  */
@@ -230,8 +243,12 @@ enum btrace_thread_flag
   BTHR_RCONT = (1 << 3),
 
   /* The thread is to be moved.  */
-  BTHR_MOVE = (BTHR_STEP | BTHR_RSTEP | BTHR_CONT | BTHR_RCONT)
+  BTHR_MOVE = (BTHR_STEP | BTHR_RSTEP | BTHR_CONT | BTHR_RCONT),
+
+  /* The thread is to be stopped.  */
+  BTHR_STOP = (1 << 4)
 };
+DEF_ENUM_FLAGS_TYPE (enum btrace_thread_flag, btrace_thread_flags);
 
 #if defined (HAVE_LIBIPT)
 /* A packet.  */
@@ -329,7 +346,7 @@ struct btrace_thread_info
   unsigned int ngaps;
 
   /* A bit-vector of btrace_thread_flag.  */
-  enum btrace_thread_flag flags;
+  btrace_thread_flags flags;
 
   /* The instruction history iterator.  */
   struct btrace_insn_history *insn_history;

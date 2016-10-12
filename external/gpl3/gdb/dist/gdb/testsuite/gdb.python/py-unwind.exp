@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Free Software Foundation, Inc.
+# Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
 if { [skip_python_tests] } { continue }
 
 # This test runs on a specific platform.
-if { ! [istarget x86_64-*]} { continue }
+if { ![istarget x86_64-*-* ] || ![is_lp64_target] } { continue }
 
 # The following tests require execution.
 

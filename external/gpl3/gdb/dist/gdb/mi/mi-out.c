@@ -1,6 +1,6 @@
 /* MI Command Set - output generating routines.
 
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -22,19 +22,23 @@
 #include "defs.h"
 #include "ui-out.h"
 #include "mi-out.h"
+#include "vec.h"
+
+typedef struct ui_file *ui_filep;
+DEF_VEC_P (ui_filep);
 
 struct ui_out_data
   {
     int suppress_field_separator;
     int suppress_output;
     int mi_version;
-    struct ui_file *buffer;
-    struct ui_file *original_buffer;
+    VEC (ui_filep) *streams;
   };
 typedef struct ui_out_data mi_out_data;
 
 /* These are the MI output functions */
 
+static void mi_out_data_dtor (struct ui_out *ui_out);
 static void mi_table_begin (struct ui_out *uiout, int nbrofcols,
 			    int nr_rows, const char *tblid);
 static void mi_table_body (struct ui_out *uiout);
@@ -85,7 +89,7 @@ static const struct ui_out_impl mi_ui_out_impl =
   mi_wrap_hint,
   mi_flush,
   mi_redirect,
-  0,
+  mi_out_data_dtor,
   1, /* Needs MI hacks.  */
 };
 
@@ -106,8 +110,8 @@ mi_table_begin (struct ui_out *uiout,
 		const char *tblid)
 {
   mi_open (uiout, tblid, ui_out_type_tuple);
-  mi_field_int (uiout, -1, -1, -1, "nr_rows", nr_rows);
-  mi_field_int (uiout, -1, -1, -1, "nr_cols", nr_cols);
+  mi_field_int (uiout, -1, -1, ui_left, "nr_rows", nr_rows);
+  mi_field_int (uiout, -1, -1, ui_left, "nr_cols", nr_cols);
   mi_open (uiout, "hdr", ui_out_type_list);
 }
 
@@ -116,7 +120,7 @@ mi_table_begin (struct ui_out *uiout,
 void
 mi_table_body (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (data->suppress_output)
     return;
@@ -130,7 +134,7 @@ mi_table_body (struct ui_out *uiout)
 void
 mi_table_end (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   data->suppress_output = 0;
   mi_close (uiout, ui_out_type_list); /* body */
@@ -143,15 +147,15 @@ void
 mi_table_header (struct ui_out *uiout, int width, enum ui_align alignment,
 		 const char *col_name, const char *colhdr)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (data->suppress_output)
     return;
 
   mi_open (uiout, NULL, ui_out_type_tuple);
-  mi_field_int (uiout, 0, 0, 0, "width", width);
-  mi_field_int (uiout, 0, 0, 0, "alignment", alignment);
-  mi_field_string (uiout, 0, 0, 0, "col_name", col_name);
+  mi_field_int (uiout, 0, 0, ui_center, "width", width);
+  mi_field_int (uiout, 0, 0, ui_center, "alignment", alignment);
+  mi_field_string (uiout, 0, 0, ui_center, "col_name", col_name);
   mi_field_string (uiout, 0, width, alignment, "colhdr", colhdr);
   mi_close (uiout, ui_out_type_tuple);
 }
@@ -162,7 +166,7 @@ void
 mi_begin (struct ui_out *uiout, enum ui_out_type type, int level,
 	  const char *id)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (data->suppress_output)
     return;
@@ -175,7 +179,7 @@ mi_begin (struct ui_out *uiout, enum ui_out_type type, int level,
 void
 mi_end (struct ui_out *uiout, enum ui_out_type type, int level)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (data->suppress_output)
     return;
@@ -190,7 +194,7 @@ mi_field_int (struct ui_out *uiout, int fldno, int width,
               enum ui_align alignment, const char *fldname, int value)
 {
   char buffer[20];	/* FIXME: how many chars long a %d can become? */
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (data->suppress_output)
     return;
@@ -214,18 +218,20 @@ void
 mi_field_string (struct ui_out *uiout, int fldno, int width,
 		 enum ui_align align, const char *fldname, const char *string)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream;
 
   if (data->suppress_output)
     return;
 
+  stream = VEC_last (ui_filep, data->streams);
   field_separator (uiout);
   if (fldname)
-    fprintf_unfiltered (data->buffer, "%s=", fldname);
-  fprintf_unfiltered (data->buffer, "\"");
+    fprintf_unfiltered (stream, "%s=", fldname);
+  fprintf_unfiltered (stream, "\"");
   if (string)
-    fputstr_unfiltered (string, '"', data->buffer);
-  fprintf_unfiltered (data->buffer, "\"");
+    fputstr_unfiltered (string, '"', stream);
+  fprintf_unfiltered (stream, "\"");
 }
 
 /* This is the only field function that does not align.  */
@@ -235,18 +241,20 @@ mi_field_fmt (struct ui_out *uiout, int fldno, int width,
 	      enum ui_align align, const char *fldname,
 	      const char *format, va_list args)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream;
 
   if (data->suppress_output)
     return;
 
+  stream = VEC_last (ui_filep, data->streams);
   field_separator (uiout);
   if (fldname)
-    fprintf_unfiltered (data->buffer, "%s=\"", fldname);
+    fprintf_unfiltered (stream, "%s=\"", fldname);
   else
-    fputs_unfiltered ("\"", data->buffer);
-  vfprintf_unfiltered (data->buffer, format, args);
-  fputs_unfiltered ("\"", data->buffer);
+    fputs_unfiltered ("\"", stream);
+  vfprintf_unfiltered (stream, format, args);
+  fputs_unfiltered ("\"", stream);
 }
 
 void
@@ -274,26 +282,21 @@ mi_wrap_hint (struct ui_out *uiout, char *identstring)
 void
 mi_flush (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
-  gdb_flush (data->buffer);
+  gdb_flush (stream);
 }
 
 int
 mi_redirect (struct ui_out *uiout, struct ui_file *outstream)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   if (outstream != NULL)
-    {
-      data->original_buffer = data->buffer;
-      data->buffer = outstream;
-    }
-  else if (data->original_buffer != NULL)
-    {
-      data->buffer = data->original_buffer;
-      data->original_buffer = NULL;
-    }
+    VEC_safe_push (ui_filep, data->streams, outstream);
+  else
+    VEC_pop (ui_filep, data->streams);
 
   return 0;
 }
@@ -305,30 +308,32 @@ mi_redirect (struct ui_out *uiout, struct ui_file *outstream)
 static void
 field_separator (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
   if (data->suppress_field_separator)
     data->suppress_field_separator = 0;
   else
-    fputc_unfiltered (',', data->buffer);
+    fputc_unfiltered (',', stream);
 }
 
 static void
 mi_open (struct ui_out *uiout, const char *name, enum ui_out_type type)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
   field_separator (uiout);
   data->suppress_field_separator = 1;
   if (name)
-    fprintf_unfiltered (data->buffer, "%s=", name);
+    fprintf_unfiltered (stream, "%s=", name);
   switch (type)
     {
     case ui_out_type_tuple:
-      fputc_unfiltered ('{', data->buffer);
+      fputc_unfiltered ('{', stream);
       break;
     case ui_out_type_list:
-      fputc_unfiltered ('[', data->buffer);
+      fputc_unfiltered ('[', stream);
       break;
     default:
       internal_error (__FILE__, __LINE__, _("bad switch"));
@@ -338,15 +343,16 @@ mi_open (struct ui_out *uiout, const char *name, enum ui_out_type type)
 static void
 mi_close (struct ui_out *uiout, enum ui_out_type type)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
   switch (type)
     {
     case ui_out_type_tuple:
-      fputc_unfiltered ('}', data->buffer);
+      fputc_unfiltered ('}', stream);
       break;
     case ui_out_type_list:
-      fputc_unfiltered (']', data->buffer);
+      fputc_unfiltered (']', stream);
       break;
     default:
       internal_error (__FILE__, __LINE__, _("bad switch"));
@@ -359,9 +365,10 @@ mi_close (struct ui_out *uiout, enum ui_out_type type)
 void
 mi_out_buffered (struct ui_out *uiout, char *string)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
-  fprintf_unfiltered (data->buffer, "%s", string);
+  fprintf_unfiltered (stream, "%s", string);
 }
 
 /* Clear the buffer.  */
@@ -369,9 +376,10 @@ mi_out_buffered (struct ui_out *uiout, char *string)
 void
 mi_out_rewind (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *stream = VEC_last (ui_filep, data->streams);
 
-  ui_file_rewind (data->buffer);
+  ui_file_rewind (stream);
 }
 
 /* Dump the buffer onto the specified stream.  */
@@ -379,10 +387,11 @@ mi_out_rewind (struct ui_out *uiout)
 void
 mi_out_put (struct ui_out *uiout, struct ui_file *stream)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
+  struct ui_file *outstream = VEC_last (ui_filep, data->streams);
 
-  ui_file_put (data->buffer, ui_file_write_for_put, stream);
-  ui_file_rewind (data->buffer);
+  ui_file_put (outstream, ui_file_write_for_put, stream);
+  ui_file_rewind (outstream);
 }
 
 /* Return the current MI version.  */
@@ -390,9 +399,35 @@ mi_out_put (struct ui_out *uiout, struct ui_file *stream)
 int
 mi_version (struct ui_out *uiout)
 {
-  mi_out_data *data = ui_out_data (uiout);
+  mi_out_data *data = (mi_out_data *) ui_out_data (uiout);
 
   return data->mi_version;
+}
+
+/* Constructor for an `mi_out_data' object.  */
+
+static void
+mi_out_data_ctor (mi_out_data *self, int mi_version, struct ui_file *stream)
+{
+  gdb_assert (stream != NULL);
+
+  self->streams = NULL;
+  VEC_safe_push (ui_filep, self->streams, stream);
+
+  self->suppress_field_separator = 0;
+  self->suppress_output = 0;
+  self->mi_version = mi_version;
+}
+
+/* The destructor.  */
+
+static void
+mi_out_data_dtor (struct ui_out *ui_out)
+{
+  mi_out_data *data = (mi_out_data *) ui_out_data (ui_out);
+
+  VEC_free (ui_filep, data->streams);
+  xfree (data);
 }
 
 /* Initialize private members at startup.  */
@@ -401,13 +436,9 @@ struct ui_out *
 mi_out_new (int mi_version)
 {
   int flags = 0;
-
   mi_out_data *data = XNEW (mi_out_data);
-  data->suppress_field_separator = 0;
-  data->suppress_output = 0;
-  data->mi_version = mi_version;
-  /* FIXME: This code should be using a ``string_file'' and not the
-     TUI buffer hack. */
-  data->buffer = mem_fileopen ();
+  struct ui_file *stream = mem_fileopen ();
+
+  mi_out_data_ctor (data, mi_version, stream);
   return ui_out_new (&mi_ui_out_impl, data, flags);
 }

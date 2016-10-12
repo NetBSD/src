@@ -1,6 +1,6 @@
 /* Alpha VMS external format of Extended Image Identification.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Written by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.

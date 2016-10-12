@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -27,12 +27,19 @@ if { [skip_btrace_tests] } { return -1 }
 #
 # Luckily, they are similar enough that a single test script can handle
 # both.
-if {[istarget "x86_64-*-*"]} {
-	standard_testfile x86_64-record_goto.S
-} elseif {[istarget "i?86-*-*"]} {
-	standard_testfile i686-record_goto.S
+if [info exists COMPILE] {
+    # make check RUNTESTFLAGS="gdb.btrace/stepi.exp COMPILE=1"
+    standard_testfile record_goto.c
+    lappend opts debug
+} elseif {[istarget "i?86-*-*"] || [istarget "x86_64-*-*"]} {
+	if {[is_amd64_regs_target]} {
+		standard_testfile x86_64-record_goto.S
+	} else {
+		standard_testfile i686-record_goto.S
+	}
 } else {
-	return -1
+    verbose "Skipping ${testfile}."
+    return -1
 }
 
 # start inferior
