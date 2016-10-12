@@ -1,6 +1,6 @@
 /* TUI display locator.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -416,7 +416,7 @@ tui_show_frame_info (struct frame_info *fi)
 	    {
 	      if (find_pc_partial_function (get_frame_pc (fi),
 					    (const char **) NULL,
-					    &low, (CORE_ADDR) 0) == 0)
+					    &low, NULL) == 0)
 		{
 		  /* There is no symbol available for current PC.  There is no
 		     safe way how to "disassemble backwards".  */

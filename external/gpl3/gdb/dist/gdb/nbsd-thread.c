@@ -589,7 +589,7 @@ nbsd_thread_proc_read (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_read_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
+  val = target_read_memory ((CORE_ADDR)(uintptr_t)addr, (gdb_byte *)buf, size);
 
   if (val == 0)
     return 0;
@@ -603,7 +603,7 @@ nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_write_memory ((CORE_ADDR)(uintptr_t)addr, buf, size);
+  val = target_write_memory ((CORE_ADDR)(uintptr_t)addr, (gdb_byte *)buf, size);
 
   if (val == 0)
     return 0;
@@ -652,7 +652,7 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
 static int
 nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 {
-  struct nbsd_thread_proc_arg *a = arg; 
+  struct nbsd_thread_proc_arg *a = (struct nbsd_thread_proc_arg *) arg; 
   struct regcache *cache = a->cache;
   struct target_ops *ops = a->ops;
   struct cleanup *old_chain;
@@ -700,7 +700,7 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 static int
 nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 {
-  struct nbsd_thread_proc_arg *a = arg; 
+  struct nbsd_thread_proc_arg *a = (struct nbsd_thread_proc_arg *) arg; 
   struct regcache *cache = a->cache;
   struct target_ops *ops = a->ops;
   struct cleanup *old_chain;
