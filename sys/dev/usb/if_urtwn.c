@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.47 2016/10/12 02:50:44 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.48 2016/10/12 02:56:45 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.47 2016/10/12 02:50:44 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.48 2016/10/12 02:56:45 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -299,6 +299,14 @@ static void	urtwn_newassoc(struct ieee80211_node *, int);
 #define	urtwn_bb_read	urtwn_read_4
 
 #define	urtwn_lookup(d,v,p)	((const struct urtwn_dev *)usb_lookup(d,v,p))
+
+static const uint16_t addaReg[] = {
+	R92C_FPGA0_XCD_SWITCHCTL, R92C_BLUETOOTH, R92C_RX_WAIT_CCA,
+	R92C_TX_CCK_RFON, R92C_TX_CCK_BBON, R92C_TX_OFDM_RFON,
+	R92C_TX_OFDM_BBON, R92C_TX_TO_RX, R92C_TX_TO_TX, R92C_RX_CCK,
+	R92C_RX_OFDM, R92C_RX_WAIT_RIFS, R92C_RX_TO_RX,
+	R92C_STANDBY, R92C_SLEEP, R92C_PMPD_ANAEN
+};
 
 static int
 urtwn_match(device_t parent, cfdata_t match, void *aux)
@@ -4104,7 +4112,144 @@ urtwn_iq_calib(struct urtwn_softc *sc, bool inited)
 	DPRINTFN(DBG_FN, ("%s: %s: inited=%d\n", device_xname(sc->sc_dev),
 	    __func__, inited));
 
-	/* TODO */
+	uint32_t addaBackup[16], iqkBackup[4], piMode;
+
+#ifdef notyet
+	uint32_t odfm0_agccore_regs[3];
+	uint32_t ant_regs[3];
+	uint32_t rf_regs[8];
+#endif
+	uint32_t reg0, reg1, reg2;
+	int i, attempt;
+
+#ifdef notyet
+	urtwn_write_1(sc, R92E_STBC_SETTING + 2, urtwn_read_1(sc,
+	    R92E_STBC_SETTING + 2));
+	urtwn_write_1(sc, R92C_ACLK_MON, 0);
+	/* Save AGCCORE regs. */
+	for (i = 0; i < sc->nrxchains; i++) {
+		odfm0_agccore_regs[i] = urtwn_read_4(sc,
+		    R92C_OFDM0_AGCCORE1(i));
+	}
+#endif
+	/* Save BB regs. */
+	reg0 = urtwn_bb_read(sc, R92C_OFDM0_TRXPATHENA);
+	reg1 = urtwn_bb_read(sc, R92C_OFDM0_TRMUXPAR);
+	reg2 = urtwn_bb_read(sc, R92C_FPGA0_RFIFACESW(1));
+	
+	/* Save adda regs to be restored when finished. */
+	for (i = 0; i < __arraycount(addaReg); i++)
+		addaBackup[i] = urtwn_bb_read(sc, addaReg[i]);
+	/* Save mac regs. */
+	iqkBackup[0] = urtwn_read_1(sc, R92C_TXPAUSE);
+	iqkBackup[1] = urtwn_read_1(sc, R92C_BCN_CTRL);
+	iqkBackup[2] = urtwn_read_1(sc, R92C_USTIME_TSF);
+	iqkBackup[3] = urtwn_read_4(sc, R92C_GPIO_MUXCFG);
+
+#ifdef notyet
+	ant_regs[0] = urtwn_read_4(sc, R92C_CONFIG_ANT_A);
+	ant_regs[1] = urtwn_read_4(sc, R92C_CONFIG_ANT_B);
+
+	rf_regs[0] = urtwn_read_4(sc, R92C_FPGA0_RFIFACESW(0));
+	for (i = 0; i < sc->nrxchains; i++)
+		rf_regs[i+1] = urtwn_read_4(sc, R92C_FPGA0_RFIFACEOE(i));
+	reg4 = urtwn_read_4(sc, R92C_CCK0_AFESETTING);
+#endif
+
+	piMode = (urtwn_bb_read(sc, R92C_HSSI_PARAM1(0)) &
+	    R92C_HSSI_PARAM1_PI);
+	if (piMode == 0) {
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(0),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(0))|
+		    R92C_HSSI_PARAM1_PI);
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(1),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(1))|
+		    R92C_HSSI_PARAM1_PI);
+	}
+	
+	attempt = 1;
+
+next_attempt:
+
+	/* Set mac regs for calibration. */
+	for (i = 0; i < __arraycount(addaReg); i++) {
+		urtwn_bb_write(sc, addaReg[i],
+		    addaReg[__arraycount(addaReg) - 1]);
+	}
+	urtwn_write_2(sc, R92C_CCK0_AFESETTING, urtwn_read_2(sc,
+	    R92C_CCK0_AFESETTING));
+	urtwn_write_2(sc, R92C_OFDM0_TRXPATHENA, R92C_IQK_TRXPATHENA);
+	urtwn_write_2(sc, R92C_OFDM0_TRMUXPAR, R92C_IQK_TRMUXPAR);
+	urtwn_write_2(sc, R92C_FPGA0_RFIFACESW(1), R92C_IQK_RFIFACESW1);
+	urtwn_write_4(sc, R92C_LSSI_PARAM(0), R92C_IQK_LSSI_PARAM);
+
+	if (sc->ntxchains > 1)
+		urtwn_bb_write(sc, R92C_LSSI_PARAM(1), R92C_IQK_LSSI_PARAM);
+		
+	urtwn_write_1(sc, R92C_TXPAUSE, (~TP_STOPBECON) & TP_STOPALL);
+	urtwn_write_1(sc, R92C_BCN_CTRL, (iqkBackup[1] &
+	    ~R92C_BCN_CTRL_EN_BCN));
+	urtwn_write_1(sc, R92C_USTIME_TSF, (iqkBackup[2] & ~0x8));
+
+	urtwn_write_1(sc, R92C_GPIO_MUXCFG, (iqkBackup[3] &
+	    ~R92C_GPIO_MUXCFG_ENBT));
+
+	urtwn_bb_write(sc, R92C_CONFIG_ANT_A, R92C_IQK_CONFIG_ANT);
+
+	if (sc->ntxchains > 1)
+		urtwn_bb_write(sc, R92C_CONFIG_ANT_B, R92C_IQK_CONFIG_ANT);
+	urtwn_bb_write(sc, R92C_FPGA0_IQK, R92C_FPGA0_IQK_SETTING);
+	urtwn_bb_write(sc, R92C_TX_IQK, R92C_TX_IQK_SETTING);
+	urtwn_bb_write(sc, R92C_RX_IQK, R92C_RX_IQK_SETTING);
+
+	/* Restore BB regs. */
+	urtwn_bb_write(sc, R92C_OFDM0_TRXPATHENA, reg0);
+	urtwn_bb_write(sc, R92C_FPGA0_RFIFACESW(1), reg2);
+	urtwn_bb_write(sc, R92C_OFDM0_TRMUXPAR, reg1);
+
+	urtwn_bb_write(sc, R92C_FPGA0_IQK, 0x0);
+	urtwn_bb_write(sc, R92C_LSSI_PARAM(0), R92C_IQK_LSSI_RESTORE);
+	if (sc->nrxchains > 1)
+		urtwn_bb_write(sc, R92C_LSSI_PARAM(1), R92C_IQK_LSSI_RESTORE);
+
+	if (attempt-- > 0)
+		goto next_attempt;
+
+	/* Restore mode. */
+	if (piMode == 0) {
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(0),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(0)) &
+		    ~R92C_HSSI_PARAM1_PI);
+		urtwn_bb_write(sc, R92C_HSSI_PARAM1(1),
+		    urtwn_bb_read(sc, R92C_HSSI_PARAM1(1)) &
+		    ~R92C_HSSI_PARAM1_PI);
+	}
+
+#ifdef notyet
+	for (i = 0; i < sc->nrxchains; i++) {
+		urtwn_write_4(sc, R92C_OFDM0_AGCCORE1(i),
+		    odfm0_agccore_regs[i]);
+	}
+#endif
+
+	/* Restore adda regs. */
+	for (i = 0; i < __arraycount(addaReg); i++)
+		urtwn_bb_write(sc, addaReg[i], addaBackup[i]);
+	/* Restore mac regs. */
+	urtwn_write_1(sc, R92C_TXPAUSE, iqkBackup[0]);
+	urtwn_write_1(sc, R92C_BCN_CTRL, iqkBackup[1]);
+	urtwn_write_1(sc, R92C_USTIME_TSF, iqkBackup[2]);
+	urtwn_write_4(sc, R92C_GPIO_MUXCFG, iqkBackup[3]);
+
+#ifdef notyet
+	urtwn_write_4(sc, R92C_CONFIG_ANT_A, ant_regs[0]);
+	urtwn_write_4(sc, R92C_CONFIG_ANT_B, ant_regs[1]);
+
+	urtwn_write_4(sc, R92C_FPGA0_RFIFACESW(0), rf_regs[0]);
+	for (i = 0; i < sc->nrxchains; i++)
+		urtwn_write_4(sc, R92C_FPGA0_RFIFACEOE(i), rf_regs[i+1]);
+	urtwn_write_4(sc, R92C_CCK0_AFESETTING, reg4);
+#endif
 }
 
 static void
