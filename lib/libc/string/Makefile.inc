@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.80 2014/09/24 18:16:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.81 2016/10/12 20:01:12 christos Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -22,7 +22,7 @@ SRCS+=	strspn.c strstr.c swab.c strnstr.c
 SRCS+=	explicit_memset.c consttime_memequal.c
 
 SRCS+=	memccpy.c memcpy.c memmem.c memmove.c
-SRCS+=	strchr.c strrchr.c
+SRCS+=	strchr.c strrchr.c strchrnul.c
 SRCS+=	popcount32.c popcount64.c
 
 # wide char
@@ -59,6 +59,7 @@ MLINKS+=strlcpy.3 strlcat.3
 MLINKS+=strlen.3 strnlen.3
 MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strstr.3 strnstr.3
+MLINKS+=strchr.3 strchrnul.3
 MLINKS+=memchr.3 memrchr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=strerror.3 strerror_r.3 strerror.3 perror.3 \
