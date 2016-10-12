@@ -32,11 +32,14 @@
 #include "gdb/callback.h"
 #include "gdb/signals.h"
 #include "sim-main.h"
+#include "sim-syscall.h"
 #include "sim-hw.h"
 
 #include "targ-vals.h"
 
-/* The numbers here do not matter.  They just need to be unique.  */
+/* The numbers here do not matter.  They just need to be unique.  They also
+   need not be static across releases -- they're used internally only.  The
+   mapping from the Linux ABI to the CB values is in linux-targ-map.h.  */
 #define CB_SYS_ioctl        201
 #define CB_SYS_mmap2        202
 #define CB_SYS_munmap       203
@@ -123,32 +126,6 @@ count_argc (const char * const *argv)
   return i;
 }
 
-/* Read/write functions for system call interface.  */
-
-static int
-syscall_read_mem (host_callback *cb, struct cb_syscall *sc,
-		  unsigned long taddr, char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  MAYBE_TRACE (CORE, cpu, "DBUS FETCH (syscall) %i bytes @ 0x%08lx", bytes, taddr);
-
-  return sim_core_read_buffer (sd, cpu, read_map, buf, taddr, bytes);
-}
-
-static int
-syscall_write_mem (host_callback *cb, struct cb_syscall *sc,
-		  unsigned long taddr, const char *buf, int bytes)
-{
-  SIM_DESC sd = (SIM_DESC) sc->p1;
-  SIM_CPU *cpu = (SIM_CPU *) sc->p2;
-
-  MAYBE_TRACE (CORE, cpu, "DBUS STORE (syscall) %i bytes @ 0x%08lx", bytes, taddr);
-
-  return sim_core_write_buffer (sd, cpu, write_map, buf, taddr, bytes);
-}
-
 /* Simulate a monitor trap, put the result into r0 and errno into r1
    return offset by which to adjust pc.  */
 
@@ -190,8 +167,8 @@ bfin_syscall (SIM_CPU *cpu)
     }
   sc.p1 = (PTR) sd;
   sc.p2 = (PTR) cpu;
-  sc.read_mem = syscall_read_mem;
-  sc.write_mem = syscall_write_mem;
+  sc.read_mem = sim_syscall_read_mem;
+  sc.write_mem = sim_syscall_write_mem;
 
   /* Common cb_syscall() handles most functions.  */
   switch (cb_target_to_host_syscall (cb, sc.func))
@@ -627,22 +604,6 @@ bfin_syscall (SIM_CPU *cpu)
     }
 
   TRACE_SYSCALL (cpu, "%s", _tbuf);
-}
-
-void
-trace_register (SIM_DESC sd,
-		sim_cpu *cpu,
-		const char *fmt,
-		...)
-{
-  va_list ap;
-  trace_printf (sd, cpu, "%s %s",
-		"reg:     ",
-		TRACE_PREFIX (CPU_TRACE_DATA (cpu)));
-  va_start (ap, fmt);
-  trace_vprintf (sd, cpu, fmt, ap);
-  va_end (ap);
-  trace_printf (sd, cpu, "\n");
 }
 
 /* Execute a single instruction.  */

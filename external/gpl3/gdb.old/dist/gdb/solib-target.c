@@ -146,12 +146,18 @@ library_list_start_list (struct gdb_xml_parser *parser,
 			 const struct gdb_xml_element *element,
 			 void *user_data, VEC(gdb_xml_value_s) *attributes)
 {
-  char *version = xml_find_attribute (attributes, "version")->value;
+  struct gdb_xml_value *version = xml_find_attribute (attributes, "version");
 
-  if (strcmp (version, "1.0") != 0)
-    gdb_xml_error (parser,
-		   _("Library list has unsupported version \"%s\""),
-		   version);
+  /* #FIXED attribute may be omitted, Expat returns NULL in such case.  */
+  if (version != NULL)
+    {
+      const char *string = version->value;
+
+      if (strcmp (string, "1.0") != 0)
+	gdb_xml_error (parser,
+		       _("Library list has unsupported version \"%s\""),
+		       version);
+    }
 }
 
 /* Discard the constructed library list.  */
@@ -210,7 +216,7 @@ static const struct gdb_xml_element library_list_children[] = {
 };
 
 static const struct gdb_xml_attribute library_list_attributes[] = {
-  { "version", GDB_XML_AF_NONE, NULL, NULL },
+  { "version", GDB_XML_AF_OPTIONAL, NULL, NULL },
   { NULL, GDB_XML_AF_NONE, NULL, NULL }
 };
 

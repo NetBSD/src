@@ -37,20 +37,17 @@ SIM_M16_OBJ = \
 
 SIM_MULTI_OBJ = itable.o @sim_multi_obj@
 
-MIPS_EXTRA_OBJS = @mips_extra_objs@
 MIPS_EXTRA_LIBS = @mips_extra_libs@
 
 SIM_OBJS = \
+	interp.o \
 	$(SIM_@sim_gen@_OBJ) \
 	$(SIM_NEW_COMMON_OBJS) \
-	$(MIPS_EXTRA_OBJS) \
 	cp1.o \
-	interp.o \
 	mdmx.o \
 	dsp.o \
 	sim-main.o \
 	sim-hload.o \
-	sim-engine.o \
 	sim-stop.o \
 	sim-resume.o \
 	sim-reason.o \
@@ -66,10 +63,6 @@ SIM_EXTRA_DISTCLEAN = distclean-extra
 SIM_EXTRA_ALL = $(SIM_@sim_gen@_ALL)
 
 SIM_EXTRA_LIBS = $(MIPS_EXTRA_LIBS)
-
-# List of main object files for `run'.
-SIM_RUN_OBJS = nrun.o
-
 
 
 ## COMMON_POST_CONFIG_FRAG

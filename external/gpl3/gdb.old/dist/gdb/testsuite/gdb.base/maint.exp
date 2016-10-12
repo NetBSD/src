@@ -359,7 +359,7 @@ gdb_expect  {
 
 set msg "maint print type"
 gdb_test_multiple "maint print type argc" $msg {
-    -re "type node $hex\r\nname .int. \\($hex\\)\r\ntagname .<NULL>. \\($hex\\)\r\ncode $hex \\(TYPE_CODE_INT\\)\r\nlength \[24\]\r\nobjfile $hex\r\ntarget_type $hex\r\npointer_type $hex\r\nreference_type $hex\r\ntype_chain $hex\r\ninstance_flags $hex\r\nflags\r\nnfields 0 $hex\r\nvptr_basetype $hex\r\nvptr_fieldno -1\r\n$gdb_prompt $" {
+    -re "type node $hex\r\nname .int. \\($hex\\)\r\ntagname .<NULL>. \\($hex\\)\r\ncode $hex \\(TYPE_CODE_INT\\)\r\nlength \[24\]\r\nobjfile $hex\r\ntarget_type $hex\r\npointer_type $hex\r\nreference_type $hex\r\ntype_chain $hex\r\ninstance_flags $hex\r\nflags\r\nnfields 0 $hex\r\n$gdb_prompt $" {
         pass $msg
     }
 }

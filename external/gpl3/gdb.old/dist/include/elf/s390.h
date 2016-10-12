@@ -129,6 +129,17 @@ START_RELOC_NUMBERS (elf_s390_reloc_type)
     RELOC_NUMBER (R_390_GNU_VTENTRY, 251)
 END_RELOC_NUMBERS (R_390_max)
 
+/* Object attribute tags.  */
+enum
+{
+  /* 0-3 are generic. */
+  /* 4 is reserved for the FP ABI. */
+
+  /* Vector ABI:
+     0 = not affected by the vector ABI, or not tagged.
+     1 = software vector ABI being used
+     2 = hardware vector ABI being used.  */
+  Tag_GNU_S390_ABI_Vector = 8,
+};
+
 #endif /* _ELF_390_H */
-
-

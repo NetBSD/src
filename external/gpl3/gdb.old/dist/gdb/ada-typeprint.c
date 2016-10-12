@@ -159,19 +159,19 @@ print_range (struct type *type, struct ui_file *stream,
     case TYPE_CODE_ENUM:
       {
 	struct type *target_type;
-	volatile struct gdb_exception e;
 	LONGEST lo = 0, hi = 0; /* init for gcc -Wall */
+	int got_error = 0;
 
 	target_type = TYPE_TARGET_TYPE (type);
 	if (target_type == NULL)
 	  target_type = type;
 
-	TRY_CATCH (e, RETURN_MASK_ERROR)
+	TRY
 	  {
 	    lo = ada_discrete_type_low_bound (type);
 	    hi = ada_discrete_type_high_bound (type);
 	  }
-	if (e.reason < 0)
+	CATCH (e, RETURN_MASK_ERROR)
 	  {
 	    /* This can happen when the range is dynamic.  Sometimes,
 	       resolving dynamic property values requires us to have
@@ -179,8 +179,11 @@ print_range (struct type *type, struct ui_file *stream,
 	       when the user is using the "ptype" command on a type.
 	       Print the range as an unbounded range.  */
 	    fprintf_filtered (stream, "<>");
+	    got_error = 1;
 	  }
-	else
+	END_CATCH
+
+	if (!got_error)
 	  {
 	    ada_print_scalar (target_type, lo, stream);
 	    fprintf_filtered (stream, " .. ");

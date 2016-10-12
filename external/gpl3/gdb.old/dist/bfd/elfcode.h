@@ -712,7 +712,7 @@ elf_object_p (bfd *abfd)
 	      switch (ebd->elf_machine_code)
 		{
 		case EM_386:
-		case EM_486:
+		case EM_IAMCU:
 		case EM_X86_64:
 		case EM_OLD_SPARCV9:
 		case EM_SPARC32PLUS:

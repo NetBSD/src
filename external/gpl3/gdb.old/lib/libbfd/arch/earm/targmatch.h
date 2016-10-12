@@ -23,6 +23,15 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
 
+{ "aarch64-*-freebsd*",
+&aarch64_elf64_le_vec },
+#endif
+
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
+
 { "aarch64-*-linux*",
 &aarch64_elf64_le_vec },
 #endif
@@ -550,6 +559,14 @@
 
     
 
+#if !defined (SELECT_VECS) || defined (HAVE_h8300_elf32_linux_vec)
+
+{ "h8300*-*-linux*",
+&h8300_elf32_linux_vec },
+#endif
+
+    
+
 #if !defined (SELECT_VECS) || defined (HAVE_h8300_coff_vec)
 
 { "h8300*-*-*",
@@ -658,7 +675,7 @@
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
 { "i[3-7]86-*-sysv4*", NULL },{ "i[3-7]86-*-unixware*", NULL },
-{ "i[3-7]86-*-elf", NULL },{ "i[3-7]86-*-sco3.2v5*", NULL },
+{ "i[3-7]86-*-elf*", NULL },{ "i[3-7]86-*-sco3.2v5*", NULL },
 { "i[3-7]86-*-dgux*", NULL },{ "i[3-7]86-*-sysv5*",
 &i386_elf32_vec },
 #endif
@@ -708,6 +725,7 @@
 &i386_elf32_vec },
 #endif
 
+
     
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
@@ -715,12 +733,14 @@
 &i386_elf32_vec },
 #endif
 
+
     
 #if !defined (SELECT_VECS) || defined (HAVE_i386_elf32_vec)
 
 { "i[3-7]86-*-dicos*",
 &i386_elf32_vec },
 #endif
+
 
 
     
@@ -779,6 +799,7 @@
 { "i[3-7]86-*-dragonfly*",
 &i386_elf32_vec },
 #endif
+
 
 
     
@@ -874,6 +895,14 @@
 
     
 #ifdef BFD64
+#if !defined (SELECT_VECS) || defined (HAVE_x86_64_elf64_cloudabi_vec)
+
+{ "x86_64-*-cloudabi*",
+&x86_64_elf64_cloudabi_vec },
+#endif
+
+
+    
 #if !defined (SELECT_VECS) || defined (HAVE_x86_64_mach_o_vec)
 
 { "x86_64-*-darwin*",
@@ -980,6 +1009,7 @@
 { "i[3-7]86-*-gnu*",
 &i386_elf32_vec },
 #endif
+
 
     
 #if !defined (SELECT_VECS) || defined (HAVE_i386_aout_mach3_vec)
@@ -1488,28 +1518,7 @@
 
 
     
-#ifdef BFD64
-#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf32_tradlittlemips_vec)
 
-{ "mips*el-*-netbsd*",
-&bfd_elf32_tradlittlemips_vec },
-#endif
-
-
-
-
-    
-#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf32_tradbigmips_vec)
-
-{ "mips*-*-netbsd*",
-&bfd_elf32_tradbigmips_vec },
-#endif
-
-
-
-
-    
-#endif
 #if !defined (SELECT_VECS) || defined (HAVE_mips_ecoff_le_vec)
 
 { "mips*-dec-*", NULL },{ "mips*el-*-ecoff*",
@@ -1647,6 +1656,38 @@
 
 { "mips*-*-none",
 &mips_elf32_be_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_ntrad_le_vec)
+
+{ "mips64*el-*-netbsd*",
+&mips_elf32_ntrad_le_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_ntrad_be_vec)
+
+{ "mips64*-*-netbsd*",
+&mips_elf32_ntrad_be_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_le_vec)
+
+{ "mips*el-*-netbsd*",
+&mips_elf32_trad_le_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_be_vec)
+
+{ "mips*-*-netbsd*",
+&mips_elf32_trad_be_vec },
 #endif
 
 
@@ -2663,6 +2704,14 @@
 
 { "tilepro-*-*",
 &tilepro_elf32_vec },
+#endif
+
+    
+
+#if !defined (SELECT_VECS) || defined (HAVE_ft32_elf32_vec)
+
+{ "ft32*-*-*",
+&ft32_elf32_vec },
 #endif
 
     

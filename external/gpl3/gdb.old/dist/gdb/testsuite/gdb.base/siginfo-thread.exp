@@ -21,9 +21,7 @@ if [target_info exists gdb,nosignals] {
     continue
 }
 
-if { ! [istarget "i?86-*-linux*"]
-     && ! [istarget "x86_64-*-linux*"]
-     && ! [istarget "arm*-*-linux*"] } {
+if { ![supports_get_siginfo_type] } {
     verbose "Skipping siginfo-thread.exp because of lack of support."
     return
 }

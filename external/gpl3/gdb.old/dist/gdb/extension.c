@@ -61,6 +61,7 @@ static const struct extension_language_script_ops
 {
   source_gdb_script,
   source_gdb_objfile_script,
+  NULL, /* objfile_script_executor */
   auto_load_gdb_scripts_enabled
 };
 
@@ -284,6 +285,21 @@ ext_lang_objfile_script_sourcer (const struct extension_language_defn *extlang)
   gdb_assert (extlang->script_ops->objfile_script_sourcer != NULL);
 
   return extlang->script_ops->objfile_script_sourcer;
+}
+
+/* Return the objfile script "executor" function for EXTLANG.
+   This is the function that executes a script for a particular objfile.
+   If support for this language isn't compiled in, NULL is returned.
+   The extension language is not required to implement this function.  */
+
+objfile_script_executor_func *
+ext_lang_objfile_script_executor
+  (const struct extension_language_defn *extlang)
+{
+  if (extlang->script_ops == NULL)
+    return NULL;
+
+  return extlang->script_ops->objfile_script_executor;
 }
 
 /* Return non-zero if auto-loading of EXTLANG scripts is enabled.

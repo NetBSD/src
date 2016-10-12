@@ -108,10 +108,11 @@ static Elf_Internal_Rela *find_relocs_at_address
   (Elf_Internal_Rela *, Elf_Internal_Rela *,
    Elf_Internal_Rela *, enum elf_nds32_reloc_type);
 static bfd_vma calculate_memory_address
-  (bfd *, Elf_Internal_Rela *, Elf_Internal_Sym *, Elf_Internal_Shdr *);
-static int nds32_get_section_contents (bfd *, asection *, bfd_byte **);
+(bfd *, Elf_Internal_Rela *, Elf_Internal_Sym *, Elf_Internal_Shdr *);
+static int nds32_get_section_contents (bfd *, asection *,
+				       bfd_byte **, bfd_boolean);
 static bfd_boolean nds32_elf_ex9_build_hash_table
-  (bfd *, asection *, struct bfd_link_info *);
+(bfd *, asection *, struct bfd_link_info *);
 static bfd_boolean nds32_elf_ex9_itb_base (struct bfd_link_info *);
 static void nds32_elf_ex9_import_table (struct bfd_link_info *);
 static void nds32_elf_ex9_finish (struct bfd_link_info *);
@@ -321,11 +322,11 @@ static reloc_howto_type nds32_elf_howto_table[] =
   /* This reloc does nothing.  */
   HOWTO (R_NDS32_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_NDS32_NONE",	/* name */
 	 FALSE,			/* partial_inplace */
@@ -2967,7 +2968,7 @@ nds32_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type > R_NDS32_GNU_VTENTRY)
     {
-      _bfd_error_handler (_("%A: invalid NDS32 reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid NDS32 reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = bfd_elf32_bfd_reloc_type_table_lookup (r_type);
@@ -4186,11 +4187,10 @@ nds32_relocate_contents (reloc_howto_type *howto, bfd *input_bfd,
   switch (size)
     {
     default:
-    case 0:
-    case 1:
-    case 8:
       abort ();
       break;
+    case 0:
+      return bfd_reloc_ok;
     case 2:
       x = bfd_getb16 (location);
       break;
@@ -4513,6 +4513,17 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 	return FALSE;
     }
 
+  if (is_ITB_BASE_set == 0)
+    {
+      /* Set the _ITB_BASE_.  */
+      if (!nds32_elf_ex9_itb_base (info))
+	{
+	  (*_bfd_error_handler) (_("%B: error: Cannot set _ITB_BASE_"),
+				 output_bfd);
+	  bfd_set_error (bfd_error_bad_value);
+	}
+    }
+
   if (table->target_optimize & NDS32_RELAX_JUMP_IFC_ON)
     if (!nds32_elf_ifc_reloc ())
       (*_bfd_error_handler) (_("error: IFC relocation error."));
@@ -4563,10 +4574,11 @@ nds32_elf_relocate_section (bfd *                  output_bfd ATTRIBUTE_UNUSED,
 	  || (r_type >= R_NDS32_INSN16 && r_type <= R_NDS32_25_FIXED_RELA)
 	  || r_type == R_NDS32_DATA
 	  || r_type == R_NDS32_TRAN
-	  || (r_type >= R_NDS32_LONGCALL4 && r_type <= R_NDS32_LONGJUMP6))
+	  || (r_type >= R_NDS32_LONGCALL4 && r_type <= R_NDS32_LONGJUMP7))
 	continue;
 
-      /* If we enter the fp-as-gp region.  Resolve the address of best fp-base.  */
+      /* If we enter the fp-as-gp region.  Resolve the address
+	 of best fp-base.  */
       if (ELF32_R_TYPE (rel->r_info) == R_NDS32_RELAX_REGION_BEGIN
 	  && (rel->r_addend & R_NDS32_RELAX_REGION_OMIT_FP_FLAG))
 	{
@@ -5947,7 +5959,7 @@ nds32_check_vec_size (bfd *ibfd)
       /* Get vec_size in file.  */
       unsigned int flag_t;
 
-      nds32_get_section_contents (ibfd, sec_t, &contents);
+      nds32_get_section_contents (ibfd, sec_t, &contents, TRUE);
       flag_t = bfd_get_32 (ibfd, contents);
 
       /* The value could only be 4 or 16.  */
@@ -8141,7 +8153,7 @@ is_convert_32_to_16 (bfd *abfd, asection *sec,
 
   offset = reloc->r_offset;
 
-  if (!nds32_get_section_contents (abfd, sec, &contents))
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE))
     return FALSE;
   insn = bfd_getb32 (contents + offset);
 
@@ -8654,7 +8666,7 @@ nds32_elf_relax_delete_blanks (bfd *abfd, asection *sec,
       if (!(sect->flags & SEC_RELOC))
 	continue;
 
-      nds32_get_section_contents (abfd, sect, &contents);
+      nds32_get_section_contents (abfd, sect, &contents, TRUE);
 
       for (irel = internal_relocs; irel < irelend; irel++)
 	{
@@ -8902,7 +8914,8 @@ done_adjust_diff:
 /* Get the contents of a section.  */
 
 static int
-nds32_get_section_contents (bfd *abfd, asection *sec, bfd_byte **contents_p)
+nds32_get_section_contents (bfd *abfd, asection *sec,
+			    bfd_byte **contents_p, bfd_boolean cache)
 {
   /* Get the section contents.  */
   if (elf_section_data (sec)->this_hdr.contents != NULL)
@@ -8911,7 +8924,8 @@ nds32_get_section_contents (bfd *abfd, asection *sec, bfd_byte **contents_p)
     {
       if (!bfd_malloc_and_get_section (abfd, sec, contents_p))
 	return FALSE;
-      elf_section_data (sec)->this_hdr.contents = *contents_p;
+      if (cache)
+	elf_section_data (sec)->this_hdr.contents = *contents_p;
     }
 
   return TRUE;
@@ -11816,7 +11830,8 @@ nds32_elf_pick_relax (bfd_boolean init, asection *sec, bfd_boolean *again,
 		      struct elf_nds32_link_hash_table *table,
 		      struct bfd_link_info *link_info)
 {
-  static asection *final_sec;
+  static asection *final_sec, *first_sec = NULL;
+  static bfd_boolean normal_again = FALSE;
   static bfd_boolean set = FALSE;
   static bfd_boolean first = TRUE;
   int round_table[] = {
@@ -11828,6 +11843,13 @@ nds32_elf_pick_relax (bfd_boolean init, asection *sec, bfd_boolean *again,
   static int pass = 0;
   static int relax_round;
 
+  /* The new round.  */
+  if (init && first_sec == sec)
+    {
+      set = TRUE;
+      normal_again = FALSE;
+    }
+
   if (first)
     {
       /* Run an empty run to get the final section.  */
@@ -11836,27 +11858,29 @@ nds32_elf_pick_relax (bfd_boolean init, asection *sec, bfd_boolean *again,
       /* It has to enter relax again because we can
 	 not make sure what the final turn is.  */
       *again = TRUE;
+
       first = FALSE;
+      first_sec = sec;
     }
 
-  if (!set && *again)
+  if (!set)
     {
-      /* It is reentered when again is FALSE.  */
+      /* Not reenter yet.  */
       final_sec = sec;
       return relax_round;
     }
 
-  /* The second round begins.  */
-  set = TRUE;
-
   relax_round = round_table[pass];
+
+  if (!init && relax_round == NDS32_RELAX_NORMAL_ROUND && *again)
+    normal_again = TRUE;
 
   if (!init && final_sec == sec)
     {
       switch (relax_round)
 	{
 	case NDS32_RELAX_NORMAL_ROUND:
-	  if (!*again)
+	  if (!normal_again)
 	    {
 	      /* Normal relaxation done.  */
 	      if (table->target_optimize & NDS32_RELAX_JUMP_IFC_ON)
@@ -12033,7 +12057,10 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
   if (ELF32_R_TYPE (irel->r_info) == R_NDS32_RELAX_ENTRY)
     {
       if (irel->r_addend & R_NDS32_RELAX_ENTRY_DISABLE_RELAX_FLAG)
-	return TRUE;
+	{
+	  nds32_elf_pick_relax (FALSE, sec, again, table, link_info);
+	  return TRUE;
+	}
 
       if (irel->r_addend & R_NDS32_RELAX_ENTRY_OPTIMIZE_FLAG)
 	optimize = 1;
@@ -12045,7 +12072,7 @@ nds32_elf_relax_section (bfd *abfd, asection *sec,
   load_store_relax = table->load_store_relax;
 
   /* Get symbol table and section content.  */
-  if (!nds32_get_section_contents (abfd, sec, &contents)
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE)
       || !nds32_get_local_syms (abfd, sec, &isymbuf))
     goto error_return;
 
@@ -12731,7 +12758,7 @@ nds32_relax_fp_as_gp (struct bfd_link_info *link_info,
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
 
-  if (!nds32_get_section_contents (abfd, sec, &contents)
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE)
       || !nds32_get_local_syms (abfd, sec, &isymbuf))
     return FALSE;
 
@@ -12868,7 +12895,7 @@ nds32_fag_remove_unused_fpbase (bfd *abfd, asection *sec,
   */
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
-  nds32_get_section_contents (abfd, sec, &contents);
+  nds32_get_section_contents (abfd, sec, &contents, TRUE);
 
   for (irel = internal_relocs; irel < irelend; irel++)
     {
@@ -12970,7 +12997,7 @@ nds32_elf_get_relocated_section_contents (bfd *abfd,
     return NULL;
 
   /* Read in the section.  */
-  if (!nds32_get_section_contents (input_bfd, input_section, &data))
+  if (!nds32_get_section_contents (input_bfd, input_section, &data, FALSE))
     return NULL;
 
   if (reloc_size == 0)
@@ -13221,7 +13248,7 @@ nds32_elf_ifc_calc (struct bfd_link_info *info,
 	  && !(irel->r_addend & R_NDS32_RELAX_ENTRY_IFC_FLAG)))
     return TRUE;
 
-  if (!nds32_get_section_contents (abfd, sec, &contents))
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE))
     return FALSE;
 
   table = nds32_elf_hash_table (info);
@@ -13463,7 +13490,7 @@ nds32_elf_ifc_replace (struct bfd_link_info *info)
 	      irelend = internal_relocs + ptr->sec->reloc_count;
 
 	      if (!nds32_get_section_contents (ptr->sec->owner, ptr->sec,
-					       &contents))
+					       &contents, TRUE))
 		return FALSE;
 
 	      while (irel_ptr)
@@ -13520,8 +13547,9 @@ nds32_elf_ifc_replace (struct bfd_link_info *info)
 			(irel_ptr->sec->owner, irel_ptr->sec, NULL, NULL,
 			 TRUE /* keep_memory */);
 		      irelend = internal_relocs + irel_ptr->sec->reloc_count;
-		      if (!nds32_get_section_contents
-			     (irel_ptr->sec->owner, irel_ptr->sec, &contents))
+		      if (!nds32_get_section_contents (irel_ptr->sec->owner,
+						       irel_ptr->sec, &contents,
+						       TRUE))
 			return FALSE;
 
 		      irel = irel_ptr->irel;
@@ -13607,7 +13635,8 @@ nds32_elf_ifc_reloc (void)
 	  if (ptr->h == NULL)
 	    {
 	      /* Local symbol.  */
-	      if (!nds32_get_section_contents (ptr->sec->owner, ptr->sec, &contents))
+	      if (!nds32_get_section_contents (ptr->sec->owner, ptr->sec,
+					       &contents, TRUE))
 		return FALSE;
 
 	      while (irel_ptr)
@@ -13705,7 +13734,7 @@ nds32_elf_ifc_reloc (void)
 			    return FALSE;
 			}
 		      if (!nds32_get_section_contents
-			  (irel_ptr->sec->owner, irel_ptr->sec, &contents))
+			  (irel_ptr->sec->owner, irel_ptr->sec, &contents, TRUE))
 			return FALSE;
 		      insn16 = INSN_IFCALL9 | (relocation >> 1);
 		      bfd_putb16 (insn16, contents + irel_ptr->irel->r_offset);
@@ -14160,7 +14189,7 @@ nds32_elf_ex9_build_itable (struct bfd_link_info *link_info)
       table_sec = bfd_get_section_by_name (it_abfd, ".ex9.itable");
       if (table_sec != NULL)
 	{
-	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents))
+	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents, TRUE))
 	    return;
 
 	  for (ptr = ex9_insn_head; ptr !=NULL ; ptr = ptr->next)
@@ -14506,7 +14535,7 @@ nds32_elf_ex9_replace_instruction (struct bfd_link_info *info, bfd *abfd, asecti
 
 
   /* Load section instructions, relocations, and symbol table.  */
-  if (!nds32_get_section_contents (abfd, sec, &contents)
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE)
       || !nds32_get_local_syms (abfd, sec, &isym))
     return FALSE;
   internal_relocs =
@@ -15098,7 +15127,7 @@ nds32_elf_ex9_reloc_jmp (struct bfd_link_info *link_info)
 	  if (table_sec->size == 0)
 	    return;
 
-	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents))
+	  if (!nds32_get_section_contents (it_abfd, table_sec, &contents, TRUE))
 	    return;
 	}
     }
@@ -15237,7 +15266,7 @@ nds32_elf_ex9_reloc_jmp (struct bfd_link_info *link_info)
 				{
 				  if (!nds32_get_section_contents
 					 (fix_ptr->sec->owner, fix_ptr->sec,
-					  &source_contents))
+					  &source_contents, TRUE))
 				    (*_bfd_error_handler)
 				      (_("Linker: error cannot fixed ex9 relocation \n"));
 				  if (temp_ptr->order < 32)
@@ -15319,7 +15348,7 @@ nds32_elf_ex9_build_hash_table (bfd *abfd, asection *sec,
 
   sym_hashes = elf_sym_hashes (abfd);
   /* Load section instructions, relocations, and symbol table.  */
-  if (!nds32_get_section_contents (abfd, sec, &contents))
+  if (!nds32_get_section_contents (abfd, sec, &contents, TRUE))
     return FALSE;
 
   internal_relocs = _bfd_elf_link_read_relocs (abfd, sec, NULL, NULL,

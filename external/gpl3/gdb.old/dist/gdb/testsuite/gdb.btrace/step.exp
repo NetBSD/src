@@ -20,8 +20,9 @@
 # check for btrace support
 if { [skip_btrace_tests] } { return -1 }
 
+standard_testfile record_goto.c
+
 # start inferior
-standard_testfile x86-record_goto.S
 if [prepare_for_testing step.exp $testfile $srcfile] {
     return -1
 }
@@ -34,56 +35,13 @@ if ![runto_main] {
 gdb_test_no_output "record btrace"
 gdb_test "next"
 
-proc check_replay_at { insn } {
-  gdb_test "info record" [join [list \
-    "Active record target: record-btrace" \
-    "Recorded 40 instructions in 16 functions for .*" \
-    "Replay in progress\.  At instruction $insn\." \
-    ] "\r\n"]
-}
-
-# let's start by stepping back into the function we just returned from
-gdb_test "reverse-step" ".*fun4\.5.*"
-with_test_prefix "reverse-step to 39" { check_replay_at 39 }
-
-# again
-gdb_test "reverse-step" ".*fun3\.4.*"
-with_test_prefix "reverse-step to 37" { check_replay_at 37 }
-
-# and again
-gdb_test "reverse-step" ".*fun2\.3.*"
-with_test_prefix "reverse-step to 35" { check_replay_at 35 }
-
-# once more
-gdb_test "reverse-step" ".*fun1\.2.*"
-with_test_prefix "reverse-step to 33" { check_replay_at 33 }
-
-# and out again the other side
-gdb_test "reverse-step" ".*fun2\.2.*"
-with_test_prefix "reverse-step to 30" { check_replay_at 30 }
-
-# once again
-gdb_test "reverse-step" ".*fun3\.3.*"
-with_test_prefix "reverse-step to 27" { check_replay_at 27 }
-
-# and back the way we came
+# let's step around a bit
+gdb_test "reverse-next" ".*main\.2.*"
+gdb_test "step" ".*fun4\.2.*"
+gdb_test "next" ".*fun4\.3.*"
 gdb_test "step" ".*fun2\.2.*"
-with_test_prefix "step to 30" { check_replay_at 30 }
-
-gdb_test "step" ".*fun1\.2.*"
-with_test_prefix "step to 33" { check_replay_at 33 }
-
-gdb_test "step" ".*fun2\.3.*"
-with_test_prefix "step to 35" { check_replay_at 35 }
-
-gdb_test "step" ".*fun3\.4.*"
-with_test_prefix "step to 37" { check_replay_at 37 }
-
-gdb_test "step" ".*fun4\.5.*"
-with_test_prefix "step to 39" { check_replay_at 39 }
-
-gdb_test "step" ".*main\.3.*"
-gdb_test "info record" [join [list \
-  "Active record target: record-btrace" \
-  "Recorded 40 instructions in 16 functions for \[^\\\r\\\n\]*" \
-  ] "\r\n"] "step to live"
+gdb_test "finish" ".*fun4\.4.*"
+gdb_test "reverse-step" ".*fun2\.3.*"
+gdb_test "reverse-finish" ".*fun4\.3.*"
+gdb_test "reverse-next" ".*fun4\.2.*"
+gdb_test "reverse-finish" ".*main\.2.*"

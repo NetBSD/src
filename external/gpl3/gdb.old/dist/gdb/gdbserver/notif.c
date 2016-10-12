@@ -86,7 +86,7 @@ handle_notif_ack (char *own_buf, int packet_len)
     {
       const char *ack_name = notifs[i]->ack_name;
 
-      if (strncmp (own_buf, ack_name, strlen (ack_name)) == 0
+      if (startswith (own_buf, ack_name)
 	  && packet_len == strlen (ack_name))
 	break;
     }

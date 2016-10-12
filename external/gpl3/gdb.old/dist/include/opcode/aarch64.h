@@ -39,11 +39,23 @@ typedef uint32_t aarch64_insn;
 #define AARCH64_FEATURE_SIMD	0x00040000	/* SIMD instructions.  */
 #define AARCH64_FEATURE_CRC	0x00080000	/* CRC instructions.  */
 #define AARCH64_FEATURE_LSE	0x00100000	/* LSE instructions.  */
+#define AARCH64_FEATURE_PAN	0x00200000	/* PAN instructions.  */
+#define AARCH64_FEATURE_LOR	0x00400000	/* LOR instructions.  */
+#define AARCH64_FEATURE_RDMA	0x00800000	/* v8.1 SIMD instructions.  */
 
 /* Architectures are the sum of the base and extensions.  */
 #define AARCH64_ARCH_V8		AARCH64_FEATURE (AARCH64_FEATURE_V8, \
 						 AARCH64_FEATURE_FP  \
 						 | AARCH64_FEATURE_SIMD)
+#define AARCH64_ARCH_V8_1	AARCH64_FEATURE (AARCH64_FEATURE_V8, \
+						 AARCH64_FEATURE_FP  \
+						 | AARCH64_FEATURE_SIMD	\
+						 | AARCH64_FEATURE_LSE	\
+						 | AARCH64_FEATURE_PAN	\
+						 | AARCH64_FEATURE_LOR	\
+						 | AARCH64_FEATURE_RDMA)
+
+
 #define AARCH64_ARCH_NONE	AARCH64_FEATURE (0, 0)
 #define AARCH64_ANY		AARCH64_FEATURE (-1, 0)	/* Any basic core.  */
 
@@ -629,6 +641,10 @@ typedef struct
 extern const aarch64_sys_reg aarch64_sys_regs [];
 extern const aarch64_sys_reg aarch64_pstatefields [];
 extern bfd_boolean aarch64_sys_reg_deprecated_p (const aarch64_sys_reg *);
+extern bfd_boolean aarch64_sys_reg_supported_p (const aarch64_feature_set,
+						const aarch64_sys_reg *);
+extern bfd_boolean aarch64_pstatefield_supported_p (const aarch64_feature_set,
+						    const aarch64_sys_reg *);
 
 typedef struct
 {

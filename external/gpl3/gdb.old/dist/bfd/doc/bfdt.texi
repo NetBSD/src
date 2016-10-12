@@ -19,6 +19,19 @@ enum bfd_direction
     both_direction = 3
   @};
 
+enum bfd_plugin_format
+  @{
+    bfd_plugin_uknown = 0,
+    bfd_plugin_yes = 1,
+    bfd_plugin_no = 2
+  @};
+
+struct bfd_build_id
+  @{
+    bfd_size_type size;
+    bfd_byte data[1];
+  @};
+
 struct bfd
 @{
   /* The filename the application opened the BFD with.  */
@@ -53,7 +66,7 @@ struct bfd
   ENUM_BITFIELD (bfd_direction) direction : 2;
 
   /* Format_specific flags.  */
-  flagword flags : 17;
+  flagword flags : 18;
 
   /* Values that may appear in the flags field of a BFD.  These also
      appear in the object_flags field of the bfd_target structure, where
@@ -130,14 +143,19 @@ struct bfd
   /* BFD is a dummy, for plugins.  */
 #define BFD_PLUGIN 0x10000
 
+  /* Compress sections in this BFD with SHF_COMPRESSED from gABI.  */
+#define BFD_COMPRESS_GABI 0x20000
+
   /* Flags bits to be saved in bfd_preserve_save.  */
 #define BFD_FLAGS_SAVED \
-  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
+  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
+   | BFD_COMPRESS_GABI)
 
   /* Flags bits which are for BFD use only.  */
 #define BFD_FLAGS_FOR_BFD_USE_MASK \
   (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
-   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
+   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT \
+   | BFD_COMPRESS_GABI)
 
   /* Is the file descriptor being cached?  That is, can it be closed as
      needed, and re-opened when accessed later?  */
@@ -174,6 +192,19 @@ struct bfd
 
   /* Set if this is the linker output BFD.  */
   unsigned int is_linker_output : 1;
+
+  /* Set if this is the linker input BFD.  */
+  unsigned int is_linker_input : 1;
+
+  /* If this is an input for a compiler plug-in library.  */
+  ENUM_BITFIELD (bfd_plugin_format) plugin_format : 2;
+
+  /* Set if this is a plugin output file.  */
+  unsigned int lto_output : 1;
+
+  /* Set to dummy BFD created when claimed by a compiler plug-in
+     library.  */
+  bfd *plugin_dummy_bfd;
 
   /* Currently my_archive is tested before adding origin to
      anything. I believe that this can become always an add of
@@ -285,6 +316,9 @@ struct bfd
      struct objalloc *, but we use void * to avoid requiring the inclusion
      of objalloc.h.  */
   void *memory;
+
+  /* For input BFDs, the build ID, if the object has one. */
+  const struct bfd_build_id *build_id;
 @};
 
 /* See note beside bfd_set_section_userdata.  */
@@ -893,4 +927,43 @@ other such chars that would otherwise confuse the demangler.
 If passed a g++ v3 ABI mangled name, returns a buffer allocated
 with malloc holding the demangled name.  Returns NULL otherwise
 and on memory alloc failure.
+
+@findex bfd_update_compression_header
+@subsubsection @code{bfd_update_compression_header}
+@strong{Synopsis}
+@example
+void bfd_update_compression_header
+   (bfd *abfd, bfd_byte *contents, asection *sec);
+@end example
+@strong{Description}@*
+Set the compression header at CONTENTS of SEC in ABFD and update
+elf_section_flags for compression.
+
+@findex bfd_check_compression_header
+@subsubsection @code{bfd_check_compression_header}
+@strong{Synopsis}
+@example
+bfd_boolean bfd_check_compression_header
+   (bfd *abfd, bfd_byte *contents, asection *sec,
+    bfd_size_type *uncompressed_size);
+@end example
+@strong{Description}@*
+Check the compression header at CONTENTS of SEC in ABFD and
+store the uncompressed size in UNCOMPRESSED_SIZE if the
+compression header is valid.
+
+@strong{Returns}@*
+Return TRUE if the compression header is valid.
+
+@findex bfd_get_compression_header_size
+@subsubsection @code{bfd_get_compression_header_size}
+@strong{Synopsis}
+@example
+int bfd_get_compression_header_size (bfd *abfd, asection *sec);
+@end example
+@strong{Description}@*
+Return the size of the compression header of SEC in ABFD.
+
+@strong{Returns}@*
+Return the size of the compression header in bytes.
 

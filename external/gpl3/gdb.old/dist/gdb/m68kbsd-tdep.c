@@ -105,7 +105,9 @@ m68kbsd_supply_gregset (const struct regset *regset,
 static const struct regset m68kbsd_gregset =
 {
   NULL,
-  m68kbsd_supply_gregset
+  m68kbsd_supply_gregset,
+  NULL,
+  REGSET_VARIABLE_SIZE
 };
 
 static const struct regset m68kbsd_fpregset =

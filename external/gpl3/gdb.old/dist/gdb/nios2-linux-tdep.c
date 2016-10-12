@@ -114,7 +114,25 @@ nios2_iterate_over_regset_sections (struct gdbarch *gdbarch,
 }
 
 /* Initialize a trad-frame cache corresponding to the tramp-frame.
-   FUNC is the address of the instruction TRAMP[0] in memory.  */
+   FUNC is the address of the instruction TRAMP[0] in memory.
+
+   This ABI is not documented.  It corresponds to rt_setup_ucontext in
+   the kernel arch/nios2/kernel/signal.c file.
+
+   The key points are:
+   - The kernel creates a trampoline at the hard-wired address 0x1044.
+   - The stack pointer points to an object of type struct rt_sigframe.
+     The definition of this structure is not exported from the kernel.
+     The register save area is located at offset 152 bytes (as determined
+     by inspection of the stack contents in the debugger), and the
+     registers are saved as r1-r23, ra, fp, gp, ea, sp.
+
+   This interface was implemented with kernel version 3.19 (the first
+   official mainline kernel).  Older unofficial kernel versions used
+   incompatible conventions; we do not support those here.  */
+
+#define NIOS2_SIGRETURN_TRAMP_ADDR 0x1044
+#define NIOS2_SIGRETURN_REGSAVE_OFFSET 152
 
 static void
 nios2_linux_rt_sigreturn_init (const struct tramp_frame *self,
@@ -122,7 +140,8 @@ nios2_linux_rt_sigreturn_init (const struct tramp_frame *self,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
-  CORE_ADDR base = func + 41 * 4;
+  CORE_ADDR sp = get_frame_register_unsigned (next_frame, NIOS2_SP_REGNUM);
+  CORE_ADDR base = sp + NIOS2_SIGRETURN_REGSAVE_OFFSET;
   int i;
 
   for (i = 0; i < 23; i++)

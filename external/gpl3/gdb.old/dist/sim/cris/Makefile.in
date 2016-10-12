@@ -22,21 +22,16 @@
 CRISV10F_OBJS = crisv10f.o cpuv10.o decodev10.o modelv10.o mloopv10f.o
 CRISV32F_OBJS = crisv32f.o cpuv32.o decodev32.o modelv32.o mloopv32f.o
 
-CONFIG_DEVICES =
-
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-cpu.o \
-	sim-hrw.o \
 	sim-model.o \
 	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o \
-	cgen-run.o sim-reason.o sim-engine.o sim-stop.o \
+	cgen-run.o sim-reason.o sim-stop.o \
 	sim-if.o arch.o \
 	$(CRISV10F_OBJS) \
 	$(CRISV32F_OBJS) \
 	traps.o devices.o \
-	$(CONFIG_DEVICES) \
 	cris-desc.o
 
 # Extra headers included by sim-main.h.
@@ -45,7 +40,6 @@ SIM_EXTRA_DEPS = \
 	$(CGEN_INCLUDE_DEPS) $(srccom)/cgen-ops.h \
 	arch.h cpuall.h cris-sim.h cris-desc.h
 
-SIM_RUN_OBJS = nrun.o
 SIM_EXTRA_CLEAN = cris-clean
 
 # This selects the cris newlib/libgloss syscall definitions.

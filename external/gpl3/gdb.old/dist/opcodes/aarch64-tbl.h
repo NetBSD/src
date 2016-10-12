@@ -1222,6 +1222,10 @@ static const aarch64_feature_set aarch64_feature_crc =
   AARCH64_FEATURE (AARCH64_FEATURE_CRC, 0);
 static const aarch64_feature_set aarch64_feature_lse =
   AARCH64_FEATURE (AARCH64_FEATURE_LSE, 0);
+static const aarch64_feature_set aarch64_feature_lor =
+  AARCH64_FEATURE (AARCH64_FEATURE_LOR, 0);
+static const aarch64_feature_set aarch64_feature_rdma =
+  AARCH64_FEATURE (AARCH64_FEATURE_RDMA, 0);
 
 #define CORE	&aarch64_feature_v8
 #define FP	&aarch64_feature_fp
@@ -1229,6 +1233,8 @@ static const aarch64_feature_set aarch64_feature_lse =
 #define CRYPTO	&aarch64_feature_crypto
 #define CRC	&aarch64_feature_crc
 #define LSE	&aarch64_feature_lse
+#define LOR	&aarch64_feature_lor
+#define RDMA	&aarch64_feature_rdma
 
 struct aarch64_opcode aarch64_opcode_table[] =
 {
@@ -1358,6 +1364,8 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"umull", 0x2f00a000, 0xff00f400, asimdelem, 0, SIMD, OP3 (Vd, Vn, Em), QL_ELEMENT_L, F_SIZEQ},
   {"umull2", 0x6f00a000, 0xff00f400, asimdelem, 0, SIMD, OP3 (Vd, Vn, Em), QL_ELEMENT_L2, F_SIZEQ},
   {"fmulx", 0x2f809000, 0xbf80f400, asimdelem, 0, SIMD, OP3 (Vd, Vn, Em), QL_ELEMENT_FP, F_SIZEQ},
+  {"sqrdmlah", 0x2f00d000, 0xbf00f400, asimdelem, 0, RDMA, OP3 (Vd, Vn, Em), QL_ELEMENT, F_SIZEQ},
+  {"sqrdmlsh", 0x2f00f000, 0xbf00f400, asimdelem, 0, RDMA, OP3 (Vd, Vn, Em), QL_ELEMENT, F_SIZEQ},
   /* AdvSIMD EXT.  */
   {"ext", 0x2e000000, 0xbfe0c400, asimdext, 0, SIMD, OP4 (Vd, Vn, Vm, IDX), QL_VEXT, F_SIZEQ},
   /* AdvSIMD modified immediate.  */
@@ -1544,6 +1552,9 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"fminp", 0x2ea0f400, 0xbfa0fc00, asimdsame, 0, SIMD, OP3 (Vd, Vn, Vm), QL_V3SAMESD, F_SIZEQ},
   {"bit", 0x2ea01c00, 0xbfe0fc00, asimdsame, 0, SIMD, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ},
   {"bif", 0x2ee01c00, 0xbfe0fc00, asimdsame, 0, SIMD, OP3 (Vd, Vn, Vm), QL_V3SAMEB, F_SIZEQ},
+  /* AdvSIMD three same extension.  */
+  {"sqrdmlah", 0x2e008400, 0xbf20fe00, asimdsame, 0, RDMA, OP3 (Vd, Vn, Vm), QL_V3SAMEHS, F_SIZEQ},
+  {"sqrdmlsh", 0x2e008c00, 0xbf20fe00, asimdsame, 0, RDMA, OP3 (Vd, Vn, Vm), QL_V3SAMEHS, F_SIZEQ},
   /* AdvSIMD shift by immediate.  */
   {"sshr", 0xf000400, 0xbf80fc00, asimdshf, 0, SIMD, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0},
   {"ssra", 0xf001400, 0xbf80fc00, asimdshf, 0, SIMD, OP3 (Vd, Vn, IMM_VLSR), QL_VSHIFT, 0},
@@ -1604,6 +1615,8 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"fmls", 0x5f805000, 0xff80f400, asisdelem, 0, SIMD, OP3 (Sd, Sn, Em), QL_FP3, F_SSIZE},
   {"fmul", 0x5f809000, 0xff80f400, asisdelem, 0, SIMD, OP3 (Sd, Sn, Em), QL_FP3, F_SSIZE},
   {"fmulx", 0x7f809000, 0xff80f400, asisdelem, 0, SIMD, OP3 (Sd, Sn, Em), QL_FP3, F_SSIZE},
+  {"sqrdmlah", 0x7f00d000, 0xff00f400, asisdelem, 0, RDMA, OP3 (Sd, Sn, Em), QL_SISD_HS, F_SSIZE},
+  {"sqrdmlsh", 0x7f00f000, 0xff00f400, asisdelem, 0, RDMA, OP3 (Sd, Sn, Em), QL_SISD_HS, F_SSIZE},
   /* AdvSIMD load/store multiple structures.  */
   {"st4", 0xc000000, 0xbfff0000, asisdlse, 0, SIMD, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST, F_SIZEQ | F_OD(4)},
   {"st1", 0xc000000, 0xbfff0000, asisdlse, 0, SIMD, OP2 (LVt, SIMD_ADDR_SIMPLE), QL_SIMD_LDST_ANY, F_SIZEQ | F_OD(1)},
@@ -1726,6 +1739,9 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"urshl", 0x7ee05400, 0xffe0fc00, asisdsame, 0, SIMD, OP3 (Sd, Sn, Sm), QL_S_3SAMED, F_SSIZE},
   {"sub", 0x7ee08400, 0xffe0fc00, asisdsame, 0, SIMD, OP3 (Sd, Sn, Sm), QL_S_3SAMED, F_SSIZE},
   {"cmeq", 0x7ee08c00, 0xffe0fc00, asisdsame, 0, SIMD, OP3 (Sd, Sn, Sm), QL_S_3SAMED, F_SSIZE},
+  /* AdvSIMDs scalar three same extension.  */
+  {"sqrdmlah", 0x7e008400, 0xff20fc00, asimdsame, 0, RDMA, OP3 (Sd, Sn, Sm), QL_SISD_HS, F_SSIZE},
+  {"sqrdmlsh", 0x7e008c00, 0xff20fc00, asimdsame, 0, RDMA, OP3 (Sd, Sn, Sm), QL_SISD_HS, F_SSIZE},
   /* AdvSIMD scalar shift by immediate.  */
   {"sshr", 0x5f000400, 0xff80fc00, asisdshf, 0, SIMD, OP3 (Sd, Sn, IMM_VLSR), QL_SSHIFT_D, 0},
   {"ssra", 0x5f001400, 0xff80fc00, asisdshf, 0, SIMD, OP3 (Sd, Sn, IMM_VLSR), QL_SSHIFT_D, 0},
@@ -1982,30 +1998,18 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"ldtr", 0xb8400800, 0xbfe00c00, ldst_unpriv, 0, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_GPRSIZE_IN_Q},
   {"ldtrsw", 0xb8800800, 0xffe00c00, ldst_unpriv, 0, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_X32, 0},
   /* Load/store register (unscaled immediate).  */
-  {"sturb", 0x38000000, 0xffe00c00, ldst_unscaled, OP_STURB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, F_HAS_ALIAS},
-  {"ldurb", 0x38400000, 0xffe00c00, ldst_unscaled, OP_LDURB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, F_HAS_ALIAS},
-  {"strb", 0x38000000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_W8, F_ALIAS},
-  {"ldrb", 0x38400000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_W8, F_ALIAS},
-  {"ldursb", 0x38800000, 0xffa00c00, ldst_unscaled, OP_LDURSB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R8, F_HAS_ALIAS | F_LDS_SIZE},
-  {"ldrsb", 0x38800000, 0xffa00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_R8, F_ALIAS | F_LDS_SIZE},
-  {"stur", 0x3c000000, 0x3f600c00, ldst_unscaled, OP_STURV, CORE, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, F_HAS_ALIAS},
-  {"ldur", 0x3c400000, 0x3f600c00, ldst_unscaled, OP_LDURV, CORE, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, F_HAS_ALIAS},
-  {"str", 0x3c000000, 0x3f600c00, ldst_unscaled, 0, CORE, OP2 (Ft, ADDR_SIMM9_2), QL_LDST_FP, F_ALIAS},
-  {"ldr", 0x3c400000, 0x3f600c00, ldst_unscaled, 0, CORE, OP2 (Ft, ADDR_SIMM9_2), QL_LDST_FP, F_ALIAS},
-  {"sturh", 0x78000000, 0xffe00c00, ldst_unscaled, OP_STURH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, F_HAS_ALIAS},
-  {"ldurh", 0x78400000, 0xffe00c00, ldst_unscaled, OP_LDURH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, F_HAS_ALIAS},
-  {"strh", 0x78000000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_W16, F_ALIAS},
-  {"ldrh", 0x78400000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_W16, F_ALIAS},
-  {"ldursh", 0x78800000, 0xffa00c00, ldst_unscaled, OP_LDURSH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R16, F_HAS_ALIAS | F_LDS_SIZE},
-  {"ldrsh", 0x78800000, 0xffa00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_R16, F_ALIAS | F_LDS_SIZE},
-  {"stur", 0xb8000000, 0xbfe00c00, ldst_unscaled, OP_STUR, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_HAS_ALIAS | F_GPRSIZE_IN_Q},
-  {"ldur", 0xb8400000, 0xbfe00c00, ldst_unscaled, OP_LDUR, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_HAS_ALIAS | F_GPRSIZE_IN_Q},
-  {"str", 0xb8000000, 0xbfe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_R, F_ALIAS | F_GPRSIZE_IN_Q},
-  {"ldr", 0xb8400000, 0xbfe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_R, F_ALIAS | F_GPRSIZE_IN_Q},
-  {"ldursw", 0xb8800000, 0xffe00c00, ldst_unscaled, OP_LDURSW, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_X32, F_HAS_ALIAS},
-  {"ldrsw", 0xb8800000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (Rt, ADDR_SIMM9_2), QL_LDST_X32, F_ALIAS},
-  {"prfum", 0xf8800000, 0xffe00c00, ldst_unscaled, OP_PRFUM, CORE, OP2 (PRFOP, ADDR_SIMM9), QL_LDST_PRFM, F_HAS_ALIAS},
-  {"prfm", 0xf8800000, 0xffe00c00, ldst_unscaled, 0, CORE, OP2 (PRFOP, ADDR_SIMM9_2), QL_LDST_PRFM, F_ALIAS},
+  {"sturb", 0x38000000, 0xffe00c00, ldst_unscaled, OP_STURB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, 0},
+  {"ldurb", 0x38400000, 0xffe00c00, ldst_unscaled, OP_LDURB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W8, 0},
+  {"ldursb", 0x38800000, 0xffa00c00, ldst_unscaled, OP_LDURSB, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R8, F_LDS_SIZE},
+  {"stur", 0x3c000000, 0x3f600c00, ldst_unscaled, OP_STURV, CORE, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, 0},
+  {"ldur", 0x3c400000, 0x3f600c00, ldst_unscaled, OP_LDURV, CORE, OP2 (Ft, ADDR_SIMM9), QL_LDST_FP, 0},
+  {"sturh", 0x78000000, 0xffe00c00, ldst_unscaled, OP_STURH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, 0},
+  {"ldurh", 0x78400000, 0xffe00c00, ldst_unscaled, OP_LDURH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_W16, 0},
+  {"ldursh", 0x78800000, 0xffa00c00, ldst_unscaled, OP_LDURSH, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R16, F_LDS_SIZE},
+  {"stur", 0xb8000000, 0xbfe00c00, ldst_unscaled, OP_STUR, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_GPRSIZE_IN_Q},
+  {"ldur", 0xb8400000, 0xbfe00c00, ldst_unscaled, OP_LDUR, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_R, F_GPRSIZE_IN_Q},
+  {"ldursw", 0xb8800000, 0xffe00c00, ldst_unscaled, OP_LDURSW, CORE, OP2 (Rt, ADDR_SIMM9), QL_LDST_X32, 0},
+  {"prfum", 0xf8800000, 0xffe00c00, ldst_unscaled, OP_PRFUM, CORE, OP2 (PRFOP, ADDR_SIMM9), QL_LDST_PRFM, 0},
   /* Load/store exclusive.  */
   {"stxrb", 0x8007c00, 0xffe08000, ldstexcl, 0, CORE, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0},
   {"stlxrb", 0x800fc00, 0xffe08000, ldstexcl, 0, CORE, OP3 (Rs, Rt, ADDR_SIMPLE), QL_W2_LDST_EXC, 0},
@@ -2029,6 +2033,13 @@ struct aarch64_opcode aarch64_opcode_table[] =
   {"ldaxp", 0x887f8000, 0xbfe08000, ldstexcl, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMPLE), QL_R2NIL, F_GPRSIZE_IN_Q},
   {"stlr", 0x889ffc00, 0xbfe08000, ldstexcl, 0, CORE, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q},
   {"ldar", 0x88dffc00, 0xbfeffc00, ldstexcl, 0, CORE, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q},
+  /* Limited Ordering Regions load/store instructions.  */
+  {"ldlar", 0x88df7c00, 0xbfe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q},
+  {"ldlarb", 0x08df7c00, 0xffe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0},
+  {"ldlarh", 0x48df7c00, 0xffe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0},
+  {"stllr", 0x889f7c00, 0xbfe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_R1NIL, F_GPRSIZE_IN_Q},
+  {"stllrb", 0x089f7c00, 0xffe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0},
+  {"stllrh", 0x489f7c00, 0xbfe08000, ldstexcl, 0, LOR, OP2 (Rt, ADDR_SIMPLE), QL_W1_LDST_EXC, 0},
   /* Load/store no-allocate pair (offset).  */
   {"stnp", 0x28000000, 0x7fc00000, ldstnapair_offs, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF},
   {"ldnp", 0x28400000, 0x7fc00000, ldstnapair_offs, 0, CORE, OP3 (Rt, Rt2, ADDR_SIMM7), QL_LDST_PAIR_R, F_SF},

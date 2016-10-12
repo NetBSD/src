@@ -98,12 +98,6 @@ struct partial_symtab
 
   const char *dirname;
 
-  /* Set of relocation offsets to apply to each section.
-     This is typically objfile->section_offsets, but in some cases
-     it's different.  See, e.g., elfstab_offset_sections.  */
-
-  struct section_offsets *section_offsets;
-
   /* Range of text addresses covered by this file; texthigh is the
      beginning of the next section.  Do not use if PSYMTABS_ADDRMAP_SUPPORTED
      is set.  */
@@ -224,7 +218,6 @@ extern void add_psymbol_to_list (const char *, int,
 extern void init_psymbol_list (struct objfile *, int);
 
 extern struct partial_symtab *start_psymtab_common (struct objfile *,
-						    struct section_offsets *,
 						    const char *, CORE_ADDR,
 						    struct partial_symbol **,
 						    struct partial_symbol **);

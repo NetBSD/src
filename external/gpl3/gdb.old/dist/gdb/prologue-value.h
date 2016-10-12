@@ -19,6 +19,27 @@
 #ifndef PROLOGUE_VALUE_H
 #define PROLOGUE_VALUE_H
 
+/* What sort of value is this?  This determines the interpretation
+   of subsequent fields.  */
+enum prologue_value_kind
+{
+  /* We don't know anything about the value.  This is also used for
+     values we could have kept track of, when doing so would have
+     been too complex and we don't want to bother.  The bottom of
+     our lattice.  */
+  pvk_unknown,
+
+  /* A known constant.  K is its value.  */
+  pvk_constant,
+
+  /* The value that register REG originally had *UPON ENTRY TO THE
+     FUNCTION*, plus K.  If K is zero, this means, obviously, just
+     the value REG had upon entry to the function.  REG is a GDB
+     register number.  Before we start interpreting, we initialize
+     every register R to { pvk_register, R, 0 }.  */
+  pvk_register,
+};
+
 /* When we analyze a prologue, we're really doing 'abstract
    interpretation' or 'pseudo-evaluation': running the function's code
    in simulation, but using conservative approximations of the values
@@ -120,25 +141,7 @@ struct prologue_value {
 
   /* What sort of value is this?  This determines the interpretation
      of subsequent fields.  */
-  enum {
-
-    /* We don't know anything about the value.  This is also used for
-       values we could have kept track of, when doing so would have
-       been too complex and we don't want to bother.  The bottom of
-       our lattice.  */
-    pvk_unknown,
-
-    /* A known constant.  K is its value.  */
-    pvk_constant,
-
-    /* The value that register REG originally had *UPON ENTRY TO THE
-       FUNCTION*, plus K.  If K is zero, this means, obviously, just
-       the value REG had upon entry to the function.  REG is a GDB
-       register number.  Before we start interpreting, we initialize
-       every register R to { pvk_register, R, 0 }.  */
-    pvk_register,
-
-  } kind;
+  enum prologue_value_kind kind;
 
   /* The meanings of the following fields depend on 'kind'; see the
      comments for the specific 'kind' values.  */

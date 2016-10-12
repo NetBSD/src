@@ -524,18 +524,23 @@ with_test_prefix "check vfork support" {
     check_vfork_catchpoints
 }
 
-# Follow parent and follow child vfork tests with a child that execs.
-with_test_prefix "exec" {
-    # These are tests of gdb's ability to follow the parent of a Unix
-    # vfork system call.  The child will subsequently call a variant
-    # of the Unix exec system call.
-    do_vfork_and_follow_parent_tests
+# There is no support for exec events in the RSP yet.
+if { ![gdb_is_target_remote] } {
+    # Follow parent and follow child vfork tests with a child that execs.
+    with_test_prefix "exec" {
+	# These are tests of gdb's ability to follow the parent of a Unix
+	# vfork system call.  The child will subsequently call a variant
+	# of the Unix exec system call.
+	do_vfork_and_follow_parent_tests
 
-    # These are tests of gdb's ability to follow the child of a Unix
-    # vfork system call.  The child will subsequently call a variant
-    # of a Unix exec system call.
-    #
-    do_vfork_and_follow_child_tests_exec
+	# These are tests of gdb's ability to follow the child of a Unix
+	# vfork system call.  The child will subsequently call a variant
+	# of a Unix exec system call.
+	#
+	do_vfork_and_follow_child_tests_exec
+    }
+} else {
+    unsupported "vfork with exec: exec events not supported for remote"
 }
 
 # Switch to test the case of the child exiting.  We can't use

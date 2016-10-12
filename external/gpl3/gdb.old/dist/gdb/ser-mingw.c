@@ -153,7 +153,6 @@ ser_windows_raw (struct serial *scb)
   if (GetCommState (h, &state) == 0)
     return;
 
-  state.fParity = FALSE;
   state.fOutxCtsFlow = FALSE;
   state.fOutxDsrFlow = FALSE;
   state.fDtrControl = DTR_CONTROL_ENABLE;
@@ -163,7 +162,6 @@ ser_windows_raw (struct serial *scb)
   state.fNull = FALSE;
   state.fAbortOnError = FALSE;
   state.ByteSize = 8;
-  state.Parity = NOPARITY;
 
   scb->current_timeout = 0;
 
@@ -193,6 +191,40 @@ ser_windows_setstopbits (struct serial *scb, int num)
       break;
     default:
       return 1;
+    }
+
+  return (SetCommState (h, &state) != 0) ? 0 : -1;
+}
+
+/* Implement the "setparity" serial_ops callback.  */
+
+static int
+ser_windows_setparity (struct serial *scb, int parity)
+{
+  HANDLE h = (HANDLE) _get_osfhandle (scb->fd);
+  DCB state;
+
+  if (GetCommState (h, &state) == 0)
+    return -1;
+
+  switch (parity)
+    {
+    case GDBPARITY_NONE:
+      state.Parity = NOPARITY;
+      state.fParity = FALSE;
+      break;
+    case GDBPARITY_ODD:
+      state.Parity = ODDPARITY;
+      state.fParity = TRUE;
+      break;
+    case GDBPARITY_EVEN:
+      state.Parity = EVENPARITY;
+      state.fParity = TRUE;
+      break;
+    default:
+      internal_warning (__FILE__, __LINE__,
+			"Incorrect parity value: %d", parity);
+      return -1;
     }
 
   return (SetCommState (h, &state) != 0) ? 0 : -1;
@@ -1227,6 +1259,7 @@ static const struct serial_ops hardwire_ops =
   ser_base_noflush_set_tty_state,
   ser_windows_setbaudrate,
   ser_windows_setstopbits,
+  ser_windows_setparity,
   ser_windows_drain_output,
   ser_base_async,
   ser_windows_read_prim,
@@ -1255,6 +1288,7 @@ static const struct serial_ops tty_ops =
   ser_base_set_tty_state,
   ser_base_print_tty_state,
   ser_base_noflush_set_tty_state,
+  NULL,
   NULL,
   NULL,
   ser_base_drain_output,
@@ -1287,6 +1321,7 @@ static const struct serial_ops pipe_ops =
   ser_base_noflush_set_tty_state,
   ser_base_setbaudrate,
   ser_base_setstopbits,
+  ser_base_setparity,
   ser_base_drain_output,
   ser_base_async,
   pipe_windows_read,
@@ -1317,6 +1352,7 @@ static const struct serial_ops tcp_ops =
   ser_base_noflush_set_tty_state,
   ser_base_setbaudrate,
   ser_base_setstopbits,
+  ser_base_setparity,
   ser_base_drain_output,
   ser_base_async,
   net_read_prim,

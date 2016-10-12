@@ -1,3 +1,11 @@
+2015-06-30  H.J. Lu  <hongjiu.lu@intel.com>
+
+	* configure: Regenerated.
+
+2015-01-22  Eli Zaretskii  <eliz@gnu.org>
+
+	* Makefile.in (TAGS): New target, to avoid failures in "make TAGS".
+
 2014-01-23  Marek Polacek  <polacek@redhat.com>
 
 	PR c/59871

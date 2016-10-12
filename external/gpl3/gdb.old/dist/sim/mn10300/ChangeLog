@@ -1,3 +1,160 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* op_utils.c (do_syscall): Replace call to cb_syscall with
+	sim_syscall_multi.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* mn10300_sim.h (syscall_read_mem, syscall_write_mem): Delete.
+	* op_utils.c: Include sim-syscall.h.
+	(syscall_read_mem, syscall_write_mem): Delete.
+	(do_syscall): Change syscall_read_mem/syscall_write_mem
+	to sim_syscall_read_mem/sim_syscall_write_mem.  Set syscall.p2.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (get_byte, get_half, get_word, put_byte, put_half,
+	put_word): Delete.
+	(sim_fetch_register): Inline put_word call.
+	(sim_store_register): Inline get_word call.
+	* mn10300_sim.h (struct _state): Delete mem member.
+	(OP, Simops, get_byte, get_half, get_word, put_byte, put_half,
+	put_word, map): Delete.
+	* op_utils.c (MEMPTR): Delete.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (round_64, fpu_status_ok): Add static.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (mn10300_debug): Delete.
+	* mn10300_sim.h (DEBUG_TRACE, DEBUG_VALUES, mn10300_debug): Delete.
+	(struct _state): Delete exception and exited members.
+	[_WIN32] (SIGTRAP, SIGQUIT): Delete.
+	* op_utils.c (do_syscall): Call sim_engine_halt instead of setting
+	State.exception.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* mn10300_sim.h (uint8, int8, uint16, int16, uint32, int32): Typedef
+	in terms of unsigned8, signed8, unsigned16, signed16, unsigned32,
+	and signed32 respectively.
+
+2015-06-11  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (INLINE): Delete define.
+	* mn10300_sim.h (INLINE): Likewise.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+	(SIM_ADDR): Delete comment.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* dv-mn103cpu.c (deliver_mn103cpu_interrupt): Change CIA_GET to
+	CPU_PC_GET and CIA_SET to CPU_PC_SET.
+	* interp.c (sim_create_inferior): Change CIA_SET to CPU_PC_SET.
+	(program_interrupt): Change CIA_GET to CPU_PC_GET and CIA_SET to
+	CPU_PC_SET.
+	(mn10300_cpu_exception_trigger): Change CIA_SET to CPU_PC_SET.
+	(mn10300_cpu_exception_suspend): Likewise.
+	(mn10300_cpu_exception_resume): Likewise.
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (MN10300_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (MN10300_OBJS): Add sim-cpu.o.
+	* interp.c (mn10300_pc_get, mn10300_pc_set): New functions.
+	(sim_open): Declare new local var i.  Call sim_cpu_alloc_all.
+	Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+	(sim_pc_get): Delete.
+	* sim-main.h (null_cia, NULL_CIA): Delete.
+	(SIM_CPU): Define.
+	(struct sim_state): Change cpu to an array of pointers.
+	(STATE_CPU): Drop & and handle WITH_SMP.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o and sim-hrw.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_pc_get): New function.
+
+2015-03-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (MN10300_OBJS): Delete dv-sockser.o.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-03-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+	* configure.ac: Delete SIM_DV_SOCKSER_O check.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* tconfig.in: Delete file.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS): Delete.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete unistd.h & stdlib.h &
+	string.h & strings.h & time.h.
+	* aclocal.m4, configure: Regenerate.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.
