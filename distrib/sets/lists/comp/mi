@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2064 2016/10/04 09:41:40 kamil Exp $
+#	$NetBSD: mi,v 1.2065 2016/10/12 20:02:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9148,6 +9148,7 @@
 ./usr/share/man/cat3/strcasestr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcat.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strchr.0			comp-c-catman		.cat
+./usr/share/man/cat3/strchrnul.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strcmp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcoll.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strcpy.0			comp-c-catman		.cat
@@ -16373,6 +16374,7 @@
 ./usr/share/man/html3/strcasestr.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcat.html		comp-c-htmlman		html
 ./usr/share/man/html3/strchr.html		comp-c-htmlman		html
+./usr/share/man/html3/strchrnul.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcmp.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcoll.html		comp-c-htmlman		html
 ./usr/share/man/html3/strcpy.html		comp-c-htmlman		html
@@ -23629,6 +23631,7 @@
 ./usr/share/man/man3/strcasestr.3		comp-c-man		.man
 ./usr/share/man/man3/strcat.3			comp-c-man		.man
 ./usr/share/man/man3/strchr.3			comp-c-man		.man
+./usr/share/man/man3/strchrnul.3		comp-c-man		.man
 ./usr/share/man/man3/strcmp.3			comp-c-man		.man
 ./usr/share/man/man3/strcoll.3			comp-c-man		.man
 ./usr/share/man/man3/strcpy.3			comp-c-man		.man
