@@ -1,6 +1,6 @@
 /* Print values for GNU debugger GDB.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -186,8 +186,13 @@ decode_format (const char **string_ptr, int oformat, int osize)
   val.count = 1;
   val.raw = 0;
 
+  if (*p == '-')
+    {
+      val.count = -1;
+      p++;
+    }
   if (*p >= '0' && *p <= '9')
-    val.count = atoi (p);
+    val.count *= atoi (p);
   while (*p >= '0' && *p <= '9')
     p++;
 
@@ -346,7 +351,7 @@ float_type_from_length (struct type *type)
    supported at this level.  */
 
 void
-print_scalar_formatted (const void *valaddr, struct type *type,
+print_scalar_formatted (const gdb_byte *valaddr, struct type *type,
 			const struct value_print_options *options,
 			int size, struct ui_file *stream)
 {
@@ -358,9 +363,9 @@ print_scalar_formatted (const void *valaddr, struct type *type,
   /* String printing should go through val_print_scalar_formatted.  */
   gdb_assert (options->format != 's');
 
-  if (len > sizeof(LONGEST) &&
-      (TYPE_CODE (type) == TYPE_CODE_INT
-       || TYPE_CODE (type) == TYPE_CODE_ENUM))
+  if (len > sizeof(LONGEST)
+      && (TYPE_CODE (type) == TYPE_CODE_INT
+	  || TYPE_CODE (type) == TYPE_CODE_ENUM))
     {
       switch (options->format)
 	{
@@ -785,6 +790,221 @@ print_address_demangle (const struct value_print_options *opts,
 }
 
 
+/* Find the address of the instruction that is INST_COUNT instructions before
+   the instruction at ADDR.
+   Since some architectures have variable-length instructions, we can't just
+   simply subtract INST_COUNT * INSN_LEN from ADDR.  Instead, we use line
+   number information to locate the nearest known instruction boundary,
+   and disassemble forward from there.  If we go out of the symbol range
+   during disassembling, we return the lowest address we've got so far and
+   set the number of instructions read to INST_READ.  */
+
+static CORE_ADDR
+find_instruction_backward (struct gdbarch *gdbarch, CORE_ADDR addr,
+                           int inst_count, int *inst_read)
+{
+  /* The vector PCS is used to store instruction addresses within
+     a pc range.  */
+  CORE_ADDR loop_start, loop_end, p;
+  VEC (CORE_ADDR) *pcs = NULL;
+  struct symtab_and_line sal;
+  struct cleanup *cleanup = make_cleanup (VEC_cleanup (CORE_ADDR), &pcs);
+
+  *inst_read = 0;
+  loop_start = loop_end = addr;
+
+  /* In each iteration of the outer loop, we get a pc range that ends before
+     LOOP_START, then we count and store every instruction address of the range
+     iterated in the loop.
+     If the number of instructions counted reaches INST_COUNT, return the
+     stored address that is located INST_COUNT instructions back from ADDR.
+     If INST_COUNT is not reached, we subtract the number of counted
+     instructions from INST_COUNT, and go to the next iteration.  */
+  do
+    {
+      VEC_truncate (CORE_ADDR, pcs, 0);
+      sal = find_pc_sect_line (loop_start, NULL, 1);
+      if (sal.line <= 0)
+        {
+          /* We reach here when line info is not available.  In this case,
+             we print a message and just exit the loop.  The return value
+             is calculated after the loop.  */
+          printf_filtered (_("No line number information available "
+                             "for address "));
+          wrap_here ("  ");
+          print_address (gdbarch, loop_start - 1, gdb_stdout);
+          printf_filtered ("\n");
+          break;
+        }
+
+      loop_end = loop_start;
+      loop_start = sal.pc;
+
+      /* This loop pushes instruction addresses in the range from
+         LOOP_START to LOOP_END.  */
+      for (p = loop_start; p < loop_end;)
+        {
+          VEC_safe_push (CORE_ADDR, pcs, p);
+          p += gdb_insn_length (gdbarch, p);
+        }
+
+      inst_count -= VEC_length (CORE_ADDR, pcs);
+      *inst_read += VEC_length (CORE_ADDR, pcs);
+    }
+  while (inst_count > 0);
+
+  /* After the loop, the vector PCS has instruction addresses of the last
+     source line we processed, and INST_COUNT has a negative value.
+     We return the address at the index of -INST_COUNT in the vector for
+     the reason below.
+     Let's assume the following instruction addresses and run 'x/-4i 0x400e'.
+       Line X of File
+          0x4000
+          0x4001
+          0x4005
+       Line Y of File
+          0x4009
+          0x400c
+       => 0x400e
+          0x4011
+     find_instruction_backward is called with INST_COUNT = 4 and expected to
+     return 0x4001.  When we reach here, INST_COUNT is set to -1 because
+     it was subtracted by 2 (from Line Y) and 3 (from Line X).  The value
+     4001 is located at the index 1 of the last iterated line (= Line X),
+     which is simply calculated by -INST_COUNT.
+     The case when the length of PCS is 0 means that we reached an area for
+     which line info is not available.  In such case, we return LOOP_START,
+     which was the lowest instruction address that had line info.  */
+  p = VEC_length (CORE_ADDR, pcs) > 0
+    ? VEC_index (CORE_ADDR, pcs, -inst_count)
+    : loop_start;
+
+  /* INST_READ includes all instruction addresses in a pc range.  Need to
+     exclude the beginning part up to the address we're returning.  That
+     is, exclude {0x4000} in the example above.  */
+  if (inst_count < 0)
+    *inst_read += inst_count;
+
+  do_cleanups (cleanup);
+  return p;
+}
+
+/* Backward read LEN bytes of target memory from address MEMADDR + LEN,
+   placing the results in GDB's memory from MYADDR + LEN.  Returns
+   a count of the bytes actually read.  */
+
+static int
+read_memory_backward (struct gdbarch *gdbarch,
+                      CORE_ADDR memaddr, gdb_byte *myaddr, int len)
+{
+  int errcode;
+  int nread;      /* Number of bytes actually read.  */
+
+  /* First try a complete read.  */
+  errcode = target_read_memory (memaddr, myaddr, len);
+  if (errcode == 0)
+    {
+      /* Got it all.  */
+      nread = len;
+    }
+  else
+    {
+      /* Loop, reading one byte at a time until we get as much as we can.  */
+      memaddr += len;
+      myaddr += len;
+      for (nread = 0; nread < len; ++nread)
+        {
+          errcode = target_read_memory (--memaddr, --myaddr, 1);
+          if (errcode != 0)
+            {
+              /* The read was unsuccessful, so exit the loop.  */
+              printf_filtered (_("Cannot access memory at address %s\n"),
+                               paddress (gdbarch, memaddr));
+              break;
+            }
+        }
+    }
+  return nread;
+}
+
+/* Returns true if X (which is LEN bytes wide) is the number zero.  */
+
+static int
+integer_is_zero (const gdb_byte *x, int len)
+{
+  int i = 0;
+
+  while (i < len && x[i] == 0)
+    ++i;
+  return (i == len);
+}
+
+/* Find the start address of a string in which ADDR is included.
+   Basically we search for '\0' and return the next address,
+   but if OPTIONS->PRINT_MAX is smaller than the length of a string,
+   we stop searching and return the address to print characters as many as
+   PRINT_MAX from the string.  */
+
+static CORE_ADDR
+find_string_backward (struct gdbarch *gdbarch,
+                      CORE_ADDR addr, int count, int char_size,
+                      const struct value_print_options *options,
+                      int *strings_counted)
+{
+  const int chunk_size = 0x20;
+  gdb_byte *buffer = NULL;
+  struct cleanup *cleanup = NULL;
+  int read_error = 0;
+  int chars_read = 0;
+  int chars_to_read = chunk_size;
+  int chars_counted = 0;
+  int count_original = count;
+  CORE_ADDR string_start_addr = addr;
+
+  gdb_assert (char_size == 1 || char_size == 2 || char_size == 4);
+  buffer = (gdb_byte *) xmalloc (chars_to_read * char_size);
+  cleanup = make_cleanup (xfree, buffer);
+  while (count > 0 && read_error == 0)
+    {
+      int i;
+
+      addr -= chars_to_read * char_size;
+      chars_read = read_memory_backward (gdbarch, addr, buffer,
+                                         chars_to_read * char_size);
+      chars_read /= char_size;
+      read_error = (chars_read == chars_to_read) ? 0 : 1;
+      /* Searching for '\0' from the end of buffer in backward direction.  */
+      for (i = 0; i < chars_read && count > 0 ; ++i, ++chars_counted)
+        {
+          int offset = (chars_to_read - i - 1) * char_size;
+
+          if (integer_is_zero (buffer + offset, char_size)
+              || chars_counted == options->print_max)
+            {
+              /* Found '\0' or reached print_max.  As OFFSET is the offset to
+                 '\0', we add CHAR_SIZE to return the start address of
+                 a string.  */
+              --count;
+              string_start_addr = addr + offset + char_size;
+              chars_counted = 0;
+            }
+        }
+    }
+
+  /* Update STRINGS_COUNTED with the actual number of loaded strings.  */
+  *strings_counted = count_original - count;
+
+  if (read_error != 0)
+    {
+      /* In error case, STRING_START_ADDR is pointing to the string that
+         was last successfully loaded.  Rewind the partially loaded string.  */
+      string_start_addr -= chars_counted * char_size;
+    }
+
+  do_cleanups (cleanup);
+  return string_start_addr;
+}
+
 /* Examine data at address ADDR in format FMT.
    Fetch it from memory and print on gdb_stdout.  */
 
@@ -798,6 +1018,8 @@ do_examine (struct format_data fmt, struct gdbarch *gdbarch, CORE_ADDR addr)
   int i;
   int maxelts;
   struct value_print_options opts;
+  int need_to_update_next_address = 0;
+  CORE_ADDR addr_rewound = 0;
 
   format = fmt.format;
   size = fmt.size;
@@ -868,6 +1090,38 @@ do_examine (struct format_data fmt, struct gdbarch *gdbarch, CORE_ADDR addr)
 
   get_formatted_print_options (&opts, format);
 
+  if (count < 0)
+    {
+      /* This is the negative repeat count case.
+         We rewind the address based on the given repeat count and format,
+         then examine memory from there in forward direction.  */
+
+      count = -count;
+      if (format == 'i')
+        {
+          next_address = find_instruction_backward (gdbarch, addr, count,
+                                                    &count);
+        }
+      else if (format == 's')
+        {
+          next_address = find_string_backward (gdbarch, addr, count,
+                                               TYPE_LENGTH (val_type),
+                                               &opts, &count);
+        }
+      else
+        {
+          next_address = addr - count * TYPE_LENGTH (val_type);
+        }
+
+      /* The following call to print_formatted updates next_address in every
+         iteration.  In backward case, we store the start address here
+         and update next_address with it before exiting the function.  */
+      addr_rewound = (format == 's'
+                      ? next_address - TYPE_LENGTH (val_type)
+                      : next_address);
+      need_to_update_next_address = 1;
+    }
+
   /* Print as many objects as specified in COUNT, at most maxelts per line,
      with the address of the next one at the start of each line.  */
 
@@ -913,6 +1167,9 @@ do_examine (struct format_data fmt, struct gdbarch *gdbarch, CORE_ADDR addr)
       printf_filtered ("\n");
       gdb_flush (gdb_stdout);
     }
+
+  if (need_to_update_next_address)
+    next_address = addr_rewound;
 }
 
 static void
@@ -1208,7 +1465,7 @@ address_info (char *exp, int from_tty)
     error (_("Argument required."));
 
   sym = lookup_symbol (exp, get_selected_block (&context_pc), VAR_DOMAIN,
-		       &is_a_field_of_this);
+		       &is_a_field_of_this).symbol;
   if (sym == NULL)
     {
       if (is_a_field_of_this.type != NULL)
@@ -1376,16 +1633,19 @@ address_info (char *exp, int from_tty)
 	else
 	  {
 	    section = MSYMBOL_OBJ_SECTION (msym.objfile, msym.minsym);
-	    load_addr = BMSYMBOL_VALUE_ADDRESS (msym);
 
 	    if (section
 		&& (section->the_bfd_section->flags & SEC_THREAD_LOCAL) != 0)
-	      printf_filtered (_("a thread-local variable at offset %s "
-				 "in the thread-local storage for `%s'"),
-			       paddress (gdbarch, load_addr),
-			       objfile_name (section->objfile));
+	      {
+		load_addr = MSYMBOL_VALUE_RAW_ADDRESS (msym.minsym);
+		printf_filtered (_("a thread-local variable at offset %s "
+				   "in the thread-local storage for `%s'"),
+				 paddress (gdbarch, load_addr),
+				 objfile_name (section->objfile));
+	      }
 	    else
 	      {
+		load_addr = BMSYMBOL_VALUE_ADDRESS (msym);
 		printf_filtered (_("static storage at address "));
 		fputs_filtered (paddress (gdbarch, load_addr), gdb_stdout);
 		if (section_is_overlay (section))
@@ -1534,17 +1794,27 @@ display_command (char *arg, int from_tty)
   innermost_block = NULL;
   expr = parse_expression (exp);
 
-  newobj = (struct display *) xmalloc (sizeof (struct display));
+  newobj = XNEW (struct display);
 
   newobj->exp_string = xstrdup (exp);
   newobj->exp = expr;
   newobj->block = innermost_block;
   newobj->pspace = current_program_space;
-  newobj->next = display_chain;
   newobj->number = ++display_number;
   newobj->format = fmt;
   newobj->enabled_p = 1;
-  display_chain = newobj;
+  newobj->next = NULL;
+
+  if (display_chain == NULL)
+    display_chain = newobj;
+  else
+    {
+      struct display *last;
+
+      for (last = display_chain; last->next != NULL; last = last->next)
+	;
+      last->next = newobj;
+    }
 
   if (from_tty)
     do_one_display (newobj);
@@ -1988,7 +2258,11 @@ print_variable_and_value (const char *name, struct symbol *var,
       struct value *val;
       struct value_print_options opts;
 
-      val = read_var_value (var, frame);
+      /* READ_VAR_VALUE needs a block in order to deal with non-local
+	 references (i.e. to handle nested functions).  In this context, we
+	 print variables that are local to this frame, so we can avoid passing
+	 a block to it.  */
+      val = read_var_value (var, NULL, frame);
       get_user_print_options (&opts);
       opts.deref_ref = 1;
       common_val_print (val, stream, indent, &opts, current_language);
@@ -2057,7 +2331,7 @@ printf_wide_c_string (struct ui_file *stream, const char *format,
   struct type *wctype = lookup_typename (current_language, gdbarch,
 					 "wchar_t", NULL, 0);
   int wcwidth = TYPE_LENGTH (wctype);
-  gdb_byte *buf = alloca (wcwidth);
+  gdb_byte *buf = (gdb_byte *) alloca (wcwidth);
   struct obstack output;
   struct cleanup *inner_cleanup;
 
@@ -2196,7 +2470,7 @@ printf_pointer (struct ui_file *stream, const char *format,
   long val = value_as_long (value);
 #endif
 
-  fmt = alloca (strlen (format) + 5);
+  fmt = (char *) alloca (strlen (format) + 5);
 
   /* Copy up to the leading %.  */
   p = format;
@@ -2252,7 +2526,7 @@ ui_printf (const char *arg, struct ui_file *stream)
   int allocated_args = 20;
   struct cleanup *old_cleanups;
 
-  val_args = xmalloc (allocated_args * sizeof (struct value *));
+  val_args = XNEWVEC (struct value *, allocated_args);
   old_cleanups = make_cleanup (free_current_contents, &val_args);
 
   if (s == 0)
@@ -2505,7 +2779,8 @@ Format letters are o(octal), x(hex), d(decimal), u(unsigned decimal),\n\
   and z(hex, zero padded on the left).\n\
 Size letters are b(byte), h(halfword), w(word), g(giant, 8 bytes).\n\
 The specified number of objects of the specified size are printed\n\
-according to the format.\n\n\
+according to the format.  If a negative number is specified, memory is\n\
+examined backward from the address.\n\n\
 Defaults for format and size letters are those previously used.\n\
 Default count is 1.  Default address is following last thing printed\n\
 with this command or \"print\"."));

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2015 Free Software Foundation, Inc.
+   Copyright 2012-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,29 +16,12 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <pthread.h>
-
-#ifdef SYMBOL_PREFIX
-#define SYMBOL(str)     SYMBOL_PREFIX #str
-#else
-#define SYMBOL(str)     #str
-#endif
-/* Called from asm.  */
-static void __attribute__((used))
-func (void)
-{}
+#include "trace-common.h"
 
 static void *
 thread_function(void *arg)
 {
-  /* `set_point1' is the label at which to set a fast tracepoint.  The
-     insn at the label must be large enough to fit a fast tracepoint
-     jump.  */
-  asm ("    .global " SYMBOL(set_point1) "\n"
-       SYMBOL(set_point1) ":\n"
-#if (defined __x86_64__ || defined __i386__)
-       "    call " SYMBOL(func) "\n"
-#endif
-       );
+  FAST_TRACEPOINT_LABEL(set_point1);
 }
 
 static void

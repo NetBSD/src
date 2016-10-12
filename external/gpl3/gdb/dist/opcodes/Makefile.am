@@ -1,17 +1,17 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
@@ -392,15 +392,15 @@ EPIPHANY_DEPS =
 FR30_DEPS =
 FRV_DEPS =
 IP2K_DEPS =
-IQ2000_DEPS = 
-LM32_DEPS = 
+IQ2000_DEPS =
+LM32_DEPS =
 M32C_DEPS =
 M32R_DEPS =
 MEP_DEPS =
 MT_DEPS =
-OR1K_DEPS = 
-XC16X_DEPS = 
-XSTORMY16_DEPS = 
+OR1K_DEPS =
+XC16X_DEPS =
+XSTORMY16_DEPS =
 endif
 
 run-cgen:
@@ -546,7 +546,7 @@ i386-gen.o: i386-gen.c i386-opc.h $(srcdir)/../include/opcode/i386.h \
 	config.h i386-opc.h sysdep.h
 	$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
 
-$(srcdir)/i386-tbl.h: $(srcdir)/i386-init.h 
+$(srcdir)/i386-tbl.h: $(srcdir)/i386-init.h
 	@echo $@
 
 $(srcdir)/i386-init.h: @MAINT@ i386-gen$(EXEEXT_FOR_BUILD) i386-opc.tbl i386-reg.tbl

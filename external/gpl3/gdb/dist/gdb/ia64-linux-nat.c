@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 #include "linux-nat.h"
 
 #include <signal.h>
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include "gdb_wait.h"
 #ifdef HAVE_SYS_REG_H
 #include <sys/reg.h>
@@ -542,7 +542,8 @@ is_power_of_2 (int val)
 
 static int
 ia64_linux_insert_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int rw,
+			      CORE_ADDR addr, int len,
+			      enum target_hw_bp_type type,
 			      struct expression *cond)
 {
   struct lwp_info *lp;
@@ -569,7 +570,7 @@ ia64_linux_insert_watchpoint (struct target_ops *self,
   dbr_addr = (long) addr;
   dbr_mask = (~(len - 1) & 0x00ffffffffffffffL);  /* construct mask to match */
   dbr_mask |= 0x0800000000000000L;           /* Only match privilege level 3 */
-  switch (rw)
+  switch (type)
     {
     case hw_write:
       dbr_mask |= (1L << 62);			/* Set w bit */
@@ -597,7 +598,8 @@ ia64_linux_insert_watchpoint (struct target_ops *self,
 
 static int
 ia64_linux_remove_watchpoint (struct target_ops *self,
-			      CORE_ADDR addr, int len, int type,
+			      CORE_ADDR addr, int len,
+			      enum target_hw_bp_type type,
 			      struct expression *cond)
 {
   int idx;
@@ -678,7 +680,8 @@ ia64_linux_stopped_by_watchpoint (struct target_ops *ops)
 
 static int
 ia64_linux_can_use_hw_breakpoint (struct target_ops *self,
-				  int type, int cnt, int othertype)
+				  enum bptype type,
+				  int cnt, int othertype)
 {
   return 1;
 }
@@ -743,7 +746,7 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
   size = register_size (gdbarch, regnum);
 
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Read the register contents from the inferior a chunk at a time.  */
   for (i = 0; i < size / sizeof (PTRACE_TYPE_RET); i++)
@@ -801,7 +804,7 @@ ia64_linux_store_register (const struct regcache *regcache, int regnum)
   size = register_size (gdbarch, regnum);
 
   gdb_assert ((size % sizeof (PTRACE_TYPE_RET)) == 0);
-  buf = alloca (size);
+  buf = (PTRACE_TYPE_RET *) alloca (size);
 
   /* Write the register contents into the inferior a chunk at a time.  */
   regcache_raw_collect (regcache, regnum, buf);
@@ -862,7 +865,7 @@ ia64_linux_xfer_partial (struct target_ops *ops,
       if (offset >= gate_table_size)
 	return TARGET_XFER_EOF;
 
-      tmp_buf = alloca (gate_table_size);
+      tmp_buf = (gdb_byte *) alloca (gate_table_size);
       res = syscall (__NR_getunwind, tmp_buf, gate_table_size);
       if (res < 0)
 	return TARGET_XFER_E_IO;

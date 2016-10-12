@@ -1,3 +1,210 @@
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENVIRONMENT): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_INLINE): Delete call.
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2016-01-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Mark argv const.
+	(sim_create_inferior): Mark argv and env const.
+
+2016-01-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Update sim_parse_args comment.
+
+2016-01-03  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_HOSTENDIAN): Delete.
+	* configure: Regenerate.
+
+2016-01-02  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Change LITTLE_ENDIAN to
+	LITTLE.
+	* configure: Regenerate.
+
+2015-12-27  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-hload.o.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-12-24  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-if.c (cris_option_install): Delete.
+	(sim_open): Call sim_add_option_table.
+	* tconfig.h: Delete sim-module.h include.
+	(MODULE_INSTALL_FN, MODULE_LIST): Delete.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-reason.o, sim-reg.o, and
+	sim-stop.o.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* cr16_sim.h (cr16_callback): Delete.
+	* interp.c (cr16_callback): Delete.
+	(do_run): Delete cr16_callback.  Replace
+	cr16_callback->printf_filtered with sim_io_printf.
+	(sim_open): Delete cr16_callback assignment.
+	(step_once, sim_create_inferior): Replace
+	cr16_callback->printf_filtered with sim_io_printf.
+	* simops.c (move_to_cr, trace_input_func, do_trace_output_flush,
+	do_trace_output_finish, trace_output_40, trace_output_32,
+	trace_output_16, trace_output_void, trace_output_flag): Replace
+	cr16_callback->printf_filtered with sim_io_printf and
+	cr16_callback->flush_stdout with sim_io_flush_stdout.
+	(OP_14C_14): Likewise.  Rename cr16_callback to cb.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-reason.o, sim-resume.o, and
+	sim-stop.o.
+	* cr16_sim.h (struct _state): Delete exe and exception.
+	* interp.c (lookup_hash): Call sim_engine_halt instead of setting
+	State.exception.
+	(do_run): Delete unused s and func variables.
+	(stop_simulator, sim_stop, sim_stop_reason): Delete.
+	(sim_resume): Rename to ...
+	(step_once): ... this.  Delete State.exception code and move
+	siggnal checking to sim_engine_run.
+	(sim_engine_run): New function.
+	* simops.c (EXCEPTION): Define.
+	(move_to_cr): Call EXCEPTION instead of setting State.exception.
+	(OP_1_4, OP_18_8, OP_10_10, OP_C0_8, OP_102_14, OP_148_14, OP_D_C,
+	OP_14_D, OP_15_D, OP_2C00_10, OP_16_D, OP_17_D, OP_31E_10, OP_6_10):
+	Likewise.
+	(OP_C_C): Likewise.  Call sim_engine_halt instead of setting
+	State.exception.
+	(OP_0_20): Call sim_engine_halt instead of setting State.exception.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete endian.o.
+	(INCLUDE): Delete endian.c.
+	* configure.ac (SIM_AC_OPTION_ENDIAN): Declare little endian.
+	(SIM_AC_OPTION_ALIGNMENT): release unaligned loads.
+	* configure: Regenerate.
+	* cr16_sim.h (IMAP_BLOCK_SIZE, DMAP_BLOCK_SIZE, SEGMENT_SIZE,
+	IMEM_SEGMENTS, DMEM_SEGMENTS, UMEM_SEGMENTS, cr16_memory, dmem_addr,
+	imem_addr, decode_pc, get_longword, get_word, write_word,
+	write_longword, READ_16): Delete.
+	(struct _state): Delete mem member.
+	(endian.c): Delete include.
+	(SB, RB, SW, RW, SLW): Rewrite to use sim-core functions.
+	(get_longword): New function.
+	(RLW): Rewrite to use get_longword.
+	* endian.c: Delete file.
+	* interp.c (map_memory, sim_size, last_segname, last_from, last_to,
+	IMAP0_OFFSET, DMAP0_OFFSET, DMAP2_SHADDOW, DMAP2_OFFSET,
+	dmap_register, imap_register, sim_cr16_translate_dmap_addr,
+	sim_cr16_translate_imap_addr, sim_cr16_translate_addr, map_memory,
+	xfer_mem, sim_write, sim_read, dmem_addr, imem_addr): Delete.
+	(do_run): Delete iaddr and replace imem_addr/get_longword with RW.
+	(sim_open): Call sim_do_commandf.  Delete sim_size call.
+	(sim_resume): Delete iaddr and replace imem_addr/get_longword with
+	RLW.
+	* simops.c (MEMPTR): Rewrite to use sim_core_trans_addr.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* cr16_sim.h (struct simops): Add SIM_DESC and SIM_CPU to func args.
+	(SET_CREG, SET_HW_CREG, SET_PSR_BIT): Pass sd and cpu to move_to_cr.
+	(dmem_addr, imem_addr, move_to_cr): Add SIM_DESC and SIM_CPU args.
+	(RB, SW, RW, SLW, RLW): Pass sd and cpu to dmem_addr.
+	* endian.c: Change cr16_sim.h include to sim-main.h.
+	* gencode.c: Likewise.  Add SIM_DESC and SIM_CPU args to all OPs.
+	* interp.c (lookup_hash, map_memory, do_run, dmap_register,
+	imap_register, sim_cr16_translate_dmap_addr, xfer_mem,
+	sim_cr16_translate_imap_addr, sim_cr16_translate_addr): Add
+	SIM_DESC and SIM_CPU args and adjust all callers.
+	(trace_sd): Delete.
+	(sim_open): Do not assign trace_sd.
+	(sim_resume, sim_create_inferior): Set up cpu from the first one
+	in sd.
+	(cr16_reg_store): Get sim state from cpu.
+	* simops.c (move_to_cr): Add SIM_DESC and SIM_CPU args.
+	(trace_input_func, trace_input, do_trace_output_finish,
+	do_trace_output_finish, trace_output_40, trace_output_32,
+	trace_output_16, trace_output_void, trace_output_flag): Add
+	SIM_DESC arg.
+	(trace_input_func): Likewise.  Change trace_sd to sd.
+	(OP_*): Add SIM_DESC and SIM_CPU args to all OP funcs.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* cr16_sim.h (get_longlong, write_longlong, WRITE_16, READ_64,
+	WRITE_64): Delete.
+	* endian.c (get_longlong, write_longlong): Likewise.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Add sim-reg.o.
+	* interp.c (cr16_reg_fetch, cr16_reg_store): Add prototypes.
+	(sim_open): Call CPU_REG_FETCH/CPU_REG_STORE.
+	(cr16_extract_unsigned_integer, cr16_store_unsigned_integer):
+	New helper functions.
+	(sim_fetch_register): Rename to ...
+	(cr16_reg_fetch): ... this.  Use cr16_store_unsigned_integer
+	to write out the updated register values.
+	(sim_store_register): Rename to ...
+	(cr16_reg_store): ... this.  Use cr16_extract_unsigned_integer
+	to read in the updated register values.
+
+2015-11-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_open): Delete sim_create_inferior call.
+
+2015-11-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_close): Delete.
+
+2015-11-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_cr16_translate_dmap_addr): Mark static.
+	(sim_cr16_translate_imap_addr): Likewise.
+	(sim_cr16_translate_addr): Likewise.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure: Regenerate.
@@ -202,7 +409,7 @@
 
 	PR gdb/7205
 
-        Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
+	Replace TARGET_SIGNAL_ with GDB_SIGNAL_ throughout.
 
 2012-03-24  Mike Frysinger  <vapier@gentoo.org>
 
@@ -253,8 +460,8 @@
 	* interp.c (hash): Remove incorrect prototype.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* configure: Regenerate.
 
@@ -266,6 +473,6 @@
 
 2008-02-12  M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
-	* ChangeLog, Makefile.in, configure, configure.in, cr16_sim.h, 
+	* ChangeLog, Makefile.in, configure, configure.in, cr16_sim.h,
 	gencode.c, interp.c, simops.c, endian.c: Created.
 

@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -69,6 +69,10 @@ enum aarch64_regnum
 /* Total number of general (X) registers.  */
 #define AARCH64_X_REGISTER_COUNT 32
 
+/* The maximum number of modified instructions generated for one
+   single-stepped instruction.  */
+#define DISPLACED_MODIFIED_INSNS 1
+
 /* Target-dependent structure in gdbarch.  */
 struct gdbarch_tdep
 {
@@ -97,5 +101,18 @@ extern struct target_desc *tdesc_aarch64;
 
 extern int aarch64_process_record (struct gdbarch *gdbarch,
                                struct regcache *regcache, CORE_ADDR addr);
+
+struct displaced_step_closure *
+  aarch64_displaced_step_copy_insn (struct gdbarch *gdbarch,
+				    CORE_ADDR from, CORE_ADDR to,
+				    struct regcache *regs);
+
+void aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
+				   struct displaced_step_closure *dsc,
+				   CORE_ADDR from, CORE_ADDR to,
+				   struct regcache *regs);
+
+int aarch64_displaced_step_hw_singlestep (struct gdbarch *gdbarch,
+					  struct displaced_step_closure *closure);
 
 #endif /* aarch64-tdep.h */

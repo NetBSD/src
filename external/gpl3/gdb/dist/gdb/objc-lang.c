@@ -1,6 +1,6 @@
 /* Objective-C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
    Written by Michael Snyder.
@@ -85,7 +85,7 @@ lookup_struct_typedef (char *name, const struct block *block, int noerr)
 {
   struct symbol *sym;
 
-  sym = lookup_symbol (name, block, STRUCT_DOMAIN, 0);
+  sym = lookup_symbol (name, block, STRUCT_DOMAIN, 0).symbol;
 
   if (sym == NULL)
     {
@@ -226,7 +226,7 @@ objc_demangle (const char *mangled, int options)
      (mangled[1] == 'i' || mangled[1] == 'c') &&
       mangled[2] == '_')
     {
-      cp = demangled = xmalloc(strlen(mangled) + 2);
+      cp = demangled = (char *) xmalloc (strlen (mangled) + 2);
 
       if (mangled[1] == 'i')
 	*cp++ = '-';		/* for instance method */
@@ -279,6 +279,15 @@ objc_demangle (const char *mangled, int options)
     }
   else
     return NULL;	/* Not an objc mangled name.  */
+}
+
+/* la_sniff_from_mangled_name for ObjC.  */
+
+static int
+objc_sniff_from_mangled_name (const char *mangled, char **demangled)
+{
+  *demangled = objc_demangle (mangled, 0);
+  return *demangled != NULL;
 }
 
 /* Determine if we are currently in the Objective-C dispatch function.
@@ -350,6 +359,11 @@ static const struct op_print objc_op_print_tab[] =
     {NULL, OP_NULL, PREC_NULL, 0}
 };
 
+static const char *objc_extensions[] =
+{
+  ".m", NULL
+};
+
 const struct language_defn objc_language_defn = {
   "objective-c",		/* Language name */
   "Objective-C",
@@ -358,9 +372,10 @@ const struct language_defn objc_language_defn = {
   case_sensitive_on,
   array_row_major,
   macro_expansion_c,
+  objc_extensions,
   &exp_descriptor_standard,
   c_parse,
-  c_error,
+  c_yyerror,
   null_post_parser,
   c_printchar,		       /* Print a character constant */
   c_printstr,		       /* Function to print string constant */
@@ -375,6 +390,7 @@ const struct language_defn objc_language_defn = {
   basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   basic_lookup_transparent_type,/* lookup_transparent_type */
   objc_demangle,		/* Language specific symbol demangler */
+  objc_sniff_from_mangled_name,
   NULL,				/* Language specific
 				   class_name_from_physname */
   objc_op_print_tab,		/* Expression operators for printing */
@@ -413,8 +429,7 @@ static char *msglist_sel;
 void
 start_msglist(void)
 {
-  struct selname *newobj =
-    (struct selname *) xmalloc (sizeof (struct selname));
+  struct selname *newobj = XNEW (struct selname);
 
   newobj->next = selname_chain;
   newobj->msglist_len = msglist_len;
@@ -626,7 +641,7 @@ selectors_info (char *regexp, int from_tty)
       printf_filtered (_("Selectors matching \"%s\":\n\n"), 
 		       regexp ? regexp : "*");
 
-      sym_arr = alloca (matches * sizeof (struct symbol *));
+      sym_arr = XALLOCAVEC (struct symbol *, matches);
       matches = 0;
       ALL_MSYMBOLS (objfile, msymbol)
 	{
@@ -763,7 +778,7 @@ classes_info (char *regexp, int from_tty)
     {
       printf_filtered (_("Classes matching \"%s\":\n\n"), 
 		       regexp ? regexp : "*");
-      sym_arr = alloca (matches * sizeof (struct symbol *));
+      sym_arr = XALLOCAVEC (struct symbol *, matches);
       matches = 0;
       ALL_MSYMBOLS (objfile, msymbol)
 	{
@@ -982,7 +997,7 @@ find_methods (char type, const char *theclass, const char *category,
 
       unsigned int objfile_csym = 0;
 
-      objc_csym = objfile_data (objfile, objc_objfile_data);
+      objc_csym = (unsigned int *) objfile_data (objfile, objc_objfile_data);
       if (objc_csym != NULL && *objc_csym == 0)
 	/* There are no ObjC symbols in this objfile.  Skip it entirely.  */
 	continue;
@@ -1007,7 +1022,7 @@ find_methods (char type, const char *theclass, const char *category,
 	  while ((strlen (symname) + 1) >= tmplen)
 	    {
 	      tmplen = (tmplen == 0) ? 1024 : tmplen * 2;
-	      tmp = xrealloc (tmp, tmplen);
+	      tmp = (char *) xrealloc (tmp, tmplen);
 	    }
 	  strcpy (tmp, symname);
 
@@ -1035,8 +1050,7 @@ find_methods (char type, const char *theclass, const char *category,
 
       if (objc_csym == NULL)
 	{
-	  objc_csym = obstack_alloc (&objfile->objfile_obstack,
-				     sizeof (*objc_csym));
+	  objc_csym = XOBNEW (&objfile->objfile_obstack, unsigned int);
 	  *objc_csym = objfile_csym;
 	  set_objfile_data (objfile, objc_objfile_data, objc_csym);
 	}
@@ -1144,7 +1158,8 @@ find_imps (const char *method, VEC (const_char_ptr) **symbol_names)
      add the selector itself as a symbol, if it exists.  */
   if (selector_case && !VEC_empty (const_char_ptr, *symbol_names))
     {
-      struct symbol *sym = lookup_symbol (selector, NULL, VAR_DOMAIN, 0);
+      struct symbol *sym = lookup_symbol (selector, NULL, VAR_DOMAIN,
+					  0).symbol;
 
       if (sym != NULL) 
 	VEC_safe_push (const_char_ptr, *symbol_names,

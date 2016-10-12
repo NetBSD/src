@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2015 Free Software Foundation, Inc.
+# Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@ proc build_inferior {exefile lang} {
       untested "Couldn't compile ${srcfile} in $lang mode"
       return -1
   }
+
+  return 0
 }
 
 # Restart GDB.
@@ -75,6 +77,21 @@ proc test_fields {lang} {
       gdb_test "python print (c.type == gdb.parse_and_eval('d').type)" "False"
       gdb_test "python print (c.type == gdb.parse_and_eval('d').type.fields()\[0\].type)" \
 	  "True"
+
+      # Test fields of a method (its parameters)
+      gdb_test "python print (len (gdb.parse_and_eval ('C::a_method').type.fields ()))" "3"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[0\].type)" "C \\* const"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[1\].type)" "int"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_method').type.fields ()\[2\].type)" "char"
+
+      gdb_test "python print (len (gdb.parse_and_eval ('C::a_const_method').type.fields ()))" "3"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[0\].type)" "const C \\* const"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[1\].type)" "int"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_const_method').type.fields ()\[2\].type)" "char"
+
+      gdb_test "python print (len (gdb.parse_and_eval ('C::a_static_method').type.fields ()))" "2"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[0\].type)" "int"
+      gdb_test "python print (gdb.parse_and_eval ('C::a_static_method').type.fields ()\[1\].type)" "char"
     }
 
     # Test normal fields usage in structs.
@@ -109,10 +126,10 @@ proc test_fields {lang} {
     gdb_test "python print (not not st.type)" "True" "Check conversion to bool"
 
     # Test rejection of mapping operations on scalar types
-    gdb_test "python print (len (st.type\['a'\].type))" "TypeError: Type is not a structure, union, or enum type.*"
-    gdb_test "python print (st.type\['a'\].type.has_key ('x'))" "TypeError: Type is not a structure, union, or enum type.*"
-    gdb_test "python print (st.type\['a'\].type.keys ())" "TypeError: Type is not a structure, union, or enum type.*"
-    gdb_test "python print (st.type\['a'\].type\['x'\])" "TypeError: Type is not a structure, union, or enum type.*"
+    gdb_test "python print (len (st.type\['a'\].type))" "TypeError: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type.has_key ('x'))" "TypeError: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type\['x'\])" "TypeError: Type is not a structure, union, enum, or function type.*"
+    gdb_test "python print (st.type\['a'\].type.keys ())" "TypeError: Type is not a structure, union, enum, or function type.*"
 
     # Test conversion to bool on scalar types
     gdb_test "python print (not not st.type\['a'\].type)" "True"
@@ -148,6 +165,11 @@ proc test_fields {lang} {
     gdb_test "python print (vec1 == vec2)" "True"
     gdb_py_test_silent_cmd "python vec3 = vec_data_2.cast(ar\[0\].type.vector(1))" "set vec3" 1
     gdb_test "python print (vec1 == vec3)" "False"
+
+    # Test fields of a function (its parameters)
+    gdb_test "python print (len (gdb.parse_and_eval ('a_function').type.fields ()))" "2"
+    gdb_test "python print (gdb.parse_and_eval ('a_function').type.fields ()\[0\].type)" "int"
+    gdb_test "python print (gdb.parse_and_eval ('a_function').type.fields ()\[1\].type)" "char"
   }
 }
 
@@ -241,35 +263,38 @@ proc test_template {} {
 }
 
 # Perform C Tests.
-build_inferior "${binfile}" "c"
-restart_gdb "${binfile}"
+if { [build_inferior "${binfile}" "c"] == 0 } {
+  restart_gdb "${binfile}"
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
+  # Skip all tests if Python scripting is not enabled.
+  if { [skip_python_tests] } { continue }
 
-gdb_test "python print(gdb.lookup_type('char').array(1, 0))" \
-    "char \\\[0\\\]"
+  gdb_test "python print(gdb.lookup_type('char').array(1, 0))" \
+      "char \\\[0\\\]"
 
-gdb_test "python print(gdb.lookup_type('char').array(1, -1))" \
-    "Array length must not be negative.*"
+  gdb_test "python print(gdb.lookup_type('char').array(1, -1))" \
+      "Array length must not be negative.*"
 
-gdb_test "python print(gdb.lookup_type('int').optimized_out())" \
-    "<optimized out>"
+  gdb_test "python print(gdb.lookup_type('int').optimized_out())" \
+      "<optimized out>"
 
-with_test_prefix "lang_c" {
-    runto_bp "break to inspect struct and array."
-    test_fields "c"
-    test_enums
+  with_test_prefix "lang_c" {
+      runto_bp "break to inspect struct and array."
+      test_fields "c"
+      test_enums
+  }
 }
 
+
 # Perform C++ Tests.
-build_inferior "${binfile}-cxx" "c++"
-restart_gdb "${binfile}-cxx"
-with_test_prefix "lang_cpp" {
-    runto_bp "break to inspect struct and array."
-    test_fields "c++"
-    test_base_class
-    test_range
-    test_template
-    test_enums
+if { [build_inferior "${binfile}-cxx" "c++"] == 0 } {
+  restart_gdb "${binfile}-cxx"
+  with_test_prefix "lang_cpp" {
+      runto_bp "break to inspect struct and array."
+      test_fields "c++"
+      test_base_class
+      test_range
+      test_template
+      test_enums
+  }
 }

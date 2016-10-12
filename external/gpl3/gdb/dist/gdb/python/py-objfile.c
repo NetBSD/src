@@ -1,6 +1,6 @@
 /* Python interface to objfiles.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,9 +78,7 @@ objfpy_get_filename (PyObject *self, void *closure)
   objfile_object *obj = (objfile_object *) self;
 
   if (obj->objfile)
-    return PyString_Decode (objfile_name (obj->objfile),
-			    strlen (objfile_name (obj->objfile)),
-			    host_charset (), NULL);
+    return host_string_to_python_string (objfile_name (obj->objfile));
   Py_RETURN_NONE;
 }
 
@@ -96,8 +94,7 @@ objfpy_get_username (PyObject *self, void *closure)
     {
       const char *username = obj->objfile->original_name;
 
-      return PyString_Decode (username, strlen (username),
-			      host_charset (), NULL);
+      return host_string_to_python_string (username);
     }
 
   Py_RETURN_NONE;
@@ -152,8 +149,7 @@ objfpy_get_build_id (PyObject *self, void *closure)
       char *hex_form = make_hex_string (build_id->data, build_id->size);
       PyObject *result;
 
-      result = PyString_Decode (hex_form, strlen (hex_form),
-				host_charset (), NULL);
+      result = host_string_to_python_string (hex_form);
       xfree (hex_form);
       return result;
     }
@@ -200,7 +196,10 @@ static int
 objfpy_initialize (objfile_object *self)
 {
   self->objfile = NULL;
-  self->dict = NULL;
+
+  self->dict = PyDict_New ();
+  if (self->dict == NULL)
+    return 0;
 
   self->printers = PyList_New (0);
   if (self->printers == NULL)
@@ -615,7 +614,7 @@ static void
 py_free_objfile (struct objfile *objfile, void *datum)
 {
   struct cleanup *cleanup;
-  objfile_object *object = datum;
+  objfile_object *object = (objfile_object *) datum;
 
   cleanup = ensure_python_env (get_objfile_arch (objfile), current_language);
   object->objfile = NULL;
@@ -633,7 +632,7 @@ objfile_to_objfile_object (struct objfile *objfile)
 {
   objfile_object *object;
 
-  object = objfile_data (objfile, objfpy_objfile_data_key);
+  object = (objfile_object *) objfile_data (objfile, objfpy_objfile_data_key);
   if (!object)
     {
       object = PyObject_New (objfile_object, &objfile_object_type);

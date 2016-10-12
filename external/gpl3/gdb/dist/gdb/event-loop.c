@@ -1,5 +1,5 @@
 /* Event loop machinery for GDB, the GNU debugger.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -21,6 +21,7 @@
 #include "event-loop.h"
 #include "event-top.h"
 #include "queue.h"
+#include "ser-event.h"
 
 #ifdef HAVE_POLL
 #if defined (HAVE_POLL_H)
@@ -31,9 +32,10 @@
 #endif
 
 #include <sys/types.h>
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 #include "gdb_select.h"
 #include "observer.h"
+#include "top.h"
 
 /* Tell create_file_handler what events we are interested in.
    This is used by the select version of the event loop.  */
@@ -262,6 +264,28 @@ static int update_wait_timeout (void);
 static int poll_timers (void);
 
 
+/* This event is signalled whenever an asynchronous handler needs to
+   defer an action to the event loop.  */
+static struct serial_event *async_signal_handlers_serial_event;
+
+/* Callback registered with ASYNC_SIGNAL_HANDLERS_SERIAL_EVENT.  */
+
+static void
+async_signals_handler (int error, gdb_client_data client_data)
+{
+  /* Do nothing.  Handlers are run by invoke_async_signal_handlers
+     from instead.  */
+}
+
+void
+initialize_async_signal_handlers (void)
+{
+  async_signal_handlers_serial_event = make_serial_event ();
+
+  add_file_handler (serial_event_fd (async_signal_handlers_serial_event),
+		    async_signals_handler, NULL);
+}
+
 /* Process one high level event.  If nothing is ready at this time,
    wait for something to happen (via gdb_wait_for_event), then process
    it.  Returns >0 if something was done otherwise returns <0 (this
@@ -357,6 +381,7 @@ start_event_loop (void)
 	  /* If we long-jumped out of do_one_event, we probably didn't
 	     get around to resetting the prompt, which leaves readline
 	     in a messed-up state.  Reset it here.  */
+	  current_ui->prompt_state = PROMPT_NEEDED;
 	  observer_notify_command_error ();
 	  /* This call looks bizarre, but it is required.  If the user
 	     entered a command that caused an error,
@@ -455,7 +480,7 @@ create_file_handler (int fd, int mask, handler_func * proc,
      change the data associated with it.  */
   if (file_ptr == NULL)
     {
-      file_ptr = (file_handler *) xmalloc (sizeof (file_handler));
+      file_ptr = XNEW (file_handler);
       file_ptr->fd = fd;
       file_ptr->ready_mask = 0;
       file_ptr->next_file = gdb_notifier.first_file_handler;
@@ -472,7 +497,7 @@ create_file_handler (int fd, int mask, handler_func * proc,
 					   * sizeof (struct pollfd)));
 	  else
 	    gdb_notifier.poll_fds =
-	      (struct pollfd *) xmalloc (sizeof (struct pollfd));
+	      XNEW (struct pollfd);
 	  (gdb_notifier.poll_fds + gdb_notifier.num_fds - 1)->fd = fd;
 	  (gdb_notifier.poll_fds + gdb_notifier.num_fds - 1)->events = mask;
 	  (gdb_notifier.poll_fds + gdb_notifier.num_fds - 1)->revents = 0;
@@ -875,8 +900,7 @@ create_async_signal_handler (sig_handler_func * proc,
 {
   async_signal_handler *async_handler_ptr;
 
-  async_handler_ptr =
-    (async_signal_handler *) xmalloc (sizeof (async_signal_handler));
+  async_handler_ptr = XNEW (async_signal_handler);
   async_handler_ptr->ready = 0;
   async_handler_ptr->next_handler = NULL;
   async_handler_ptr->proc = proc;
@@ -889,15 +913,6 @@ create_async_signal_handler (sig_handler_func * proc,
   return async_handler_ptr;
 }
 
-/* Call the handler from HANDLER immediately.  This function runs
-   signal handlers when returning to the event loop would be too
-   slow.  */
-void
-call_async_signal_handler (struct async_signal_handler *handler)
-{
-  (*handler->proc) (handler->client_data);
-}
-
 /* Mark the handler (ASYNC_HANDLER_PTR) as ready.  This information
    will be used when the handlers are invoked, after we have waited
    for some event.  The caller of this function is the interrupt
@@ -906,6 +921,7 @@ void
 mark_async_signal_handler (async_signal_handler * async_handler_ptr)
 {
   async_handler_ptr->ready = 1;
+  serial_event_set (async_signal_handlers_serial_event);
 }
 
 /* See event-loop.h.  */
@@ -926,13 +942,19 @@ async_signal_handler_is_marked (async_signal_handler *async_handler_ptr)
 
 /* Call all the handlers that are ready.  Returns true if any was
    indeed ready.  */
+
 static int
 invoke_async_signal_handlers (void)
 {
   async_signal_handler *async_handler_ptr;
   int any_ready = 0;
 
-  /* Invoke ready handlers.  */
+  /* We're going to handle all pending signals, so no need to wake up
+     the event loop again the next time around.  Note this must be
+     cleared _before_ calling the callbacks, to avoid races.  */
+  serial_event_clear (async_signal_handlers_serial_event);
+
+  /* Invoke all ready handlers.  */
 
   while (1)
     {
@@ -947,6 +969,9 @@ invoke_async_signal_handlers (void)
 	break;
       any_ready = 1;
       async_handler_ptr->ready = 0;
+      /* Async signal handlers have no connection to whichever was the
+	 current UI, and thus always run on the main one.  */
+      current_ui = main_ui;
       (*async_handler_ptr->proc) (async_handler_ptr->client_data);
     }
 
@@ -990,7 +1015,7 @@ create_async_event_handler (async_event_handler_func *proc,
 {
   async_event_handler *h;
 
-  h = xmalloc (sizeof (*h));
+  h = XNEW (struct async_event_handler);
   h->ready = 0;
   h->next_handler = NULL;
   h->proc = proc;
@@ -1090,7 +1115,7 @@ create_timer (int milliseconds, timer_handler_func * proc,
 
   gettimeofday (&time_now, NULL);
 
-  timer_ptr = (struct gdb_timer *) xmalloc (sizeof (*timer_ptr));
+  timer_ptr = XNEW (struct gdb_timer);
   timer_ptr->when.tv_sec = time_now.tv_sec + delta.tv_sec;
   timer_ptr->when.tv_usec = time_now.tv_usec + delta.tv_usec;
   /* Carry?  */

@@ -1,7 +1,7 @@
 /*  iwmmxt.c -- Intel(r) Wireless MMX(tm) technology co-processor interface.
-    Copyright (C) 2002-2015 Free Software Foundation, Inc.
+    Copyright (C) 2002-2016 Free Software Foundation, Inc.
     Contributed by matthew green (mrg@redhat.com).
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 3 of the License, or
@@ -25,7 +25,7 @@
 
 /* #define DEBUG 1 */
 
-/* Intel(r) Wireless MMX(tm) technology co-processor.  
+/* Intel(r) Wireless MMX(tm) technology co-processor.
    It uses co-processor numbers (0 and 1).  There are 16 vector registers wRx
    and 16 control registers wCx.  Co-processors 0 and 1 are used in MCR/MRC
    to access wRx and wCx respectively.  */
@@ -231,7 +231,7 @@ Add32 (ARMword a1,
      same sign, but the result is a different sign.  */
   * overflow_ptr = (   ( (result & sign_mask) && !(a1 & sign_mask) && !(a2 & sign_mask))
 		    || (!(result & sign_mask) &&  (a1 & sign_mask) &&  (a2 & sign_mask)));
-  
+
   return result;
 }
 
@@ -495,7 +495,7 @@ static signed short
 IwmmxtSaturateS16 (signed int val, int * sat)
 {
   signed short rv;
-  
+
   if (val < -0x8000)
     {
       rv = - 0x8000;
@@ -541,7 +541,7 @@ static signed long
 IwmmxtSaturateS32 (signed long long val, int * sat)
 {
   signed long rv;
-  
+
   if (val < -0x80000000LL)
     {
       rv = -0x80000000;
@@ -616,7 +616,7 @@ TANDC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tandc\n");
-#endif  
+#endif
 
   /* The Rd field must be r15.  */
   if (BITS (12, 15) != 15)
@@ -654,7 +654,7 @@ TANDC (ARMul_State * state, ARMword instr)
       ARMul_UndefInstr (state, instr);
       return ARMul_DONE;
     }
-  
+
   ARMul_SetCPSR (state, cpsr);
 
   return ARMul_DONE;
@@ -671,7 +671,7 @@ TBCST (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tbcst\n");
-#endif  
+#endif
 
   Rn  = state->Reg [BITS (12, 15)];
   if (BITS (12, 15) == 15)
@@ -717,7 +717,7 @@ TEXTRC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "textrc\n");
-#endif  
+#endif
 
   /* The Rd field must be r15.  */
   if (BITS (12, 15) != 15)
@@ -744,7 +744,7 @@ TEXTRC (ARMul_State * state, ARMword instr)
       ARMul_UndefInstr (state, instr);
       return ARMul_DONE;
     }
-  
+
   cpsr |= wCBITS (wCASF, selector, selector + 3) << 28;
   ARMul_SetCPSR (state, cpsr);
 
@@ -764,12 +764,12 @@ TEXTRM (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "textrm\n");
-#endif  
+#endif
 
   wRn    = BITS (16, 19);
   sign   = BIT (3);
   offset = BITS (0, 2);
-  
+
   switch (BITS (22, 23))
     {
     case Bqual:
@@ -844,7 +844,7 @@ TINSR (ARMul_State * state, ARMword instr)
 
       switch (offset & 3)
 	{
-	case 0: wR [wRd] = data | (wRBITS (wRd, 16, 63) << 16); break;	  
+	case 0: wR [wRd] = data | (wRBITS (wRd, 16, 63) << 16); break;
 	case 1: wR [wRd] = wRBITS (wRd, 0, 15) | (data << 16) | (wRBITS (wRd, 32, 63) << 32); break;
 	case 2: wR [wRd] = wRBITS (wRd, 0, 31) | (data << 32) | (wRBITS (wRd, 48, 63) << 48); break;
 	case 3: wR [wRd] = wRBITS (wRd, 0, 47) | (data << 48); break;
@@ -878,7 +878,7 @@ TMCR (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmcr\n");
-#endif  
+#endif
 
   if (BITS (0, 3) != 0)
     return ARMul_CANT;
@@ -899,14 +899,14 @@ TMCR (ARMul_State * state, ARMword instr)
       /* Writing to the MUP or CUP bits clears them.  */
       wC [wCon] &= ~ (val & 0x3);
       break;
-      
+
     case wCSSF:
       /* Only the bottom 8 bits can be written to.
           The higher bits write as zero.  */
       wC [wCSSF] = (val & 0xff);
       wC [wCon] |= WCON_CUP;
       break;
-      
+
     default:
       wC [wCreg] = val;
       wC [wCon] |= WCON_CUP;
@@ -927,7 +927,7 @@ TMCRR (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmcrr\n");
-#endif  
+#endif
 
   if ((BITS (16, 19) == 15) || (BITS (12, 15) == 15))
     return ARMul_CANT;
@@ -949,7 +949,7 @@ TMIA (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmia\n");
-#endif  
+#endif
 
   if ((BITS (0, 3) == 15) || (BITS (12, 15) == 15))
     {
@@ -976,13 +976,13 @@ TMIAPH (ARMul_State * state, ARMword instr)
   signed long long r;
   ARMword Rm = state->Reg [BITS (0, 3)];
   ARMword Rs = state->Reg [BITS (12, 15)];
-  
+
   if ((read_cp15_reg (15, 0, 1) & 3) != 3)
     return ARMul_CANT;
 
 #ifdef DEBUG
   fprintf (stderr, "tmiaph\n");
-#endif  
+#endif
 
   if (BITS (0, 3) == 15 || BITS (12, 15) == 15)
     {
@@ -1000,7 +1000,7 @@ TMIAPH (ARMul_State * state, ARMword instr)
 
   r = result;
   r = EXTEND32 (r);
-  
+
   wR [BITS (5, 8)] += r;
 
   a = SUBSTR (Rs, ARMword,  0, 15);
@@ -1013,7 +1013,7 @@ TMIAPH (ARMul_State * state, ARMword instr)
 
   r = result;
   r = EXTEND32 (r);
-  
+
   wR [BITS (5, 8)] += r;
   wC [wCon] |= WCON_MUP;
 
@@ -1026,13 +1026,13 @@ TMIAxy (ARMul_State * state, ARMword instr)
   ARMword Rm;
   ARMword Rs;
   long long temp;
-  
+
   if ((read_cp15_reg (15, 0, 1) & 3) != 3)
     return ARMul_CANT;
 
 #ifdef DEBUG
   fprintf (stderr, "tmiaxy\n");
-#endif  
+#endif
 
   if (BITS (0, 3) == 15 || BITS (12, 15) == 15)
     {
@@ -1081,7 +1081,7 @@ TMOVMSK (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmovmsk\n");
-#endif  
+#endif
 
   /* The CRm field must be r0.  */
   if (BITS (0, 3) != 0)
@@ -1133,7 +1133,7 @@ TMRC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmrc\n");
-#endif  
+#endif
 
   if (BITS (0, 3) != 0)
     return ARMul_CANT;
@@ -1154,7 +1154,7 @@ TMRRC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "tmrrc\n");
-#endif  
+#endif
 
   if ((BITS (16, 19) == 15) || (BITS (12, 15) == 15) || (BITS (4, 11) != 0))
     ARMul_UndefInstr (state, instr);
@@ -1177,16 +1177,16 @@ TORC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "torc\n");
-#endif  
+#endif
 
   /* The Rd field must be r15.  */
   if (BITS (12, 15) != 15)
     return ARMul_CANT;
-  
+
   /* The CRn field must be r3.  */
   if (BITS (16, 19) != 3)
     return ARMul_CANT;
-  
+
   /* The CRm field must be r0.  */
   if (BITS (0, 3) != 0)
     return ARMul_CANT;
@@ -1215,7 +1215,7 @@ TORC (ARMul_State * state, ARMword instr)
       ARMul_UndefInstr (state, instr);
       return ARMul_DONE;
     }
-  
+
   ARMul_SetCPSR (state, cpsr);
 
   return ARMul_DONE;
@@ -1231,7 +1231,7 @@ WACC (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wacc\n");
-#endif  
+#endif
 
   wRn = BITS (16, 19);
 
@@ -1281,7 +1281,7 @@ WADD (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wadd\n");
-#endif  
+#endif
 
   /* Add two numbers using the specified function,
      leaving setting the carry bit as required.  */
@@ -1450,7 +1450,7 @@ WADD (ARMul_State * state, ARMword instr)
   wC [wCon] |= (WCON_MUP | WCON_CUP);
 
   SET_wCSSFvec (satrv);
-  
+
 #undef ADDx
 
   return ARMul_DONE;
@@ -1466,7 +1466,7 @@ WALIGNI (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "waligni\n");
-#endif  
+#endif
 
   if (shift)
     wR [BITS (12, 15)] =
@@ -1474,7 +1474,7 @@ WALIGNI (ARMword instr)
       | (wRBITS (BITS (0, 3), 0, shift) << ((64 - shift)));
   else
     wR [BITS (12, 15)] = wR [BITS (16, 19)];
-	   
+
   wC [wCon] |= WCON_MUP;
   return ARMul_DONE;
 }
@@ -1489,7 +1489,7 @@ WALIGNR (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "walignr\n");
-#endif  
+#endif
 
   if (shift)
     wR [BITS (12, 15)] =
@@ -1513,14 +1513,14 @@ WAND (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wand\n");
-#endif  
+#endif
 
   result = wR [BITS (16, 19)] & wR [BITS (0, 3)];
   wR [BITS (12, 15)] = result;
 
   SIMD64_SET (psr, (result == 0), SIMD_ZBIT);
   SIMD64_SET (psr, (result & (1ULL << 63)), SIMD_NBIT);
-  
+
   wC [wCASF] = psr;
   wC [wCon] |= (WCON_CUP | WCON_MUP);
 
@@ -1538,14 +1538,14 @@ WANDN (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wandn\n");
-#endif  
+#endif
 
   result = wR [BITS (16, 19)] & ~ wR [BITS (0, 3)];
   wR [BITS (12, 15)] = result;
 
   SIMD64_SET (psr, (result == 0), SIMD_ZBIT);
   SIMD64_SET (psr, (result & (1ULL << 63)), SIMD_NBIT);
-  
+
   wC [wCASF] = psr;
   wC [wCon] |= (WCON_CUP | WCON_MUP);
 
@@ -1566,7 +1566,7 @@ WAVG2 (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wavg2\n");
-#endif  
+#endif
 
 #define AVG2x(x, y, m) (((wRBITS (BITS (16, 19), (x), (y)) & (m)) \
 		       + (wRBITS (BITS ( 0,  3), (x), (y)) & (m)) \
@@ -1611,7 +1611,7 @@ WCMPEQ (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wcmpeq\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -1670,7 +1670,7 @@ WCMPGT (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wcmpgt\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -1681,7 +1681,7 @@ WCMPGT (ARMul_State * state, ARMword instr)
 	  for (i = 0; i < 8; i++)
 	    {
 	      signed char a, b;
-	      
+
 	      a = wRBYTE (BITS (16, 19), i);
 	      b = wRBYTE (BITS (0, 3), i);
 
@@ -1826,7 +1826,7 @@ Compute_Iwmmxt_Address (ARMul_State * state, ARMword instr, int * pFailed)
 	      /* Writeback into R15 is UNPREDICTABLE.  */
 #ifdef DEBUG
 	      fprintf (stderr, "iWMMXt: writeback into r15\n");
-#endif  
+#endif
 	      * pFailed = 1;
 	    }
 	  else
@@ -1848,7 +1848,7 @@ Compute_Iwmmxt_Address (ARMul_State * state, ARMword instr, int * pFailed)
 	    {
 #ifdef DEBUG
 	      fprintf (stderr, "iWMMXt: undefined addressing mode\n");
-#endif  
+#endif
 	      * pFailed = 1;
 	    }
 	}
@@ -1861,7 +1861,7 @@ static ARMdword
 Iwmmxt_Load_Double_Word (ARMul_State * state, ARMword address)
 {
   ARMdword value;
-  
+
   /* The address must be aligned on a 8 byte boundary.  */
   if (address & 0x7)
     {
@@ -1911,7 +1911,7 @@ Iwmmxt_Load_Word (ARMul_State * state, ARMword address)
       else
 	address &= ~ 3;
     }
-  
+
   value = ARMul_LoadWordN (state, address);
 
   if (state->Aborted)
@@ -2052,7 +2052,7 @@ WLDR (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wldr\n");
-#endif  
+#endif
 
   address = Compute_Iwmmxt_Address (state, instr, & failed);
   if (failed)
@@ -2099,7 +2099,7 @@ WMAC (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wmac\n");
-#endif  
+#endif
 
   for (i = 0; i < 4; i++)
     {
@@ -2154,7 +2154,7 @@ WMADD (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wmadd\n");
-#endif  
+#endif
 
   for (i = 0; i < 2; i++)
     {
@@ -2216,7 +2216,7 @@ WMAX (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wmax\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -2345,7 +2345,7 @@ WMIN (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wmin\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -2459,7 +2459,7 @@ WMIN (ARMul_State * state, ARMword instr)
 
   wR [BITS (12, 15)] = r;
   wC [wCon] |= WCON_MUP;
-  
+
   return ARMul_DONE;
 }
 
@@ -2475,7 +2475,7 @@ WMUL (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wmul\n");
-#endif  
+#endif
 
   for (i = 0; i < 4; i++)
     if (BIT (21))	/* Signed.  */
@@ -2527,14 +2527,14 @@ WOR (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wor\n");
-#endif  
+#endif
 
   result = wR [BITS (16, 19)] | wR [BITS (0, 3)];
   wR [BITS (12, 15)] = result;
 
   SIMD64_SET (psr, (result == 0), SIMD_ZBIT);
   SIMD64_SET (psr, (result & (1ULL << 63)), SIMD_NBIT);
-  
+
   wC [wCASF] = psr;
   wC [wCon] |= (WCON_CUP | WCON_MUP);
 
@@ -2556,8 +2556,8 @@ WPACK (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wpack\n");
-#endif  
- 
+#endif
+
   switch (BITS (22, 23))
     {
     case Hqual:
@@ -2669,7 +2669,7 @@ WROR (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wror\n");
-#endif  
+#endif
 
   DECODE_G_BIT (state, instr, shift);
 
@@ -2732,7 +2732,7 @@ WSAD (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wsad\n");
-#endif  
+#endif
 
   /* Z bit.  */
   r = BIT (20) ? 0 : (wR [BITS (12, 15)] & 0xffffffff);
@@ -2772,7 +2772,7 @@ WSHUFH (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wshufh\n");
-#endif  
+#endif
 
   imm8 = (BITS (20, 23) << 4) | BITS (0, 3);
 
@@ -2805,7 +2805,7 @@ WSLL (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wsll\n");
-#endif  
+#endif
 
   DECODE_G_BIT (state, instr, shift);
 
@@ -2874,7 +2874,7 @@ WSRA (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wsra\n");
-#endif  
+#endif
 
   DECODE_G_BIT (state, instr, shift);
 
@@ -2915,7 +2915,7 @@ WSRA (ARMul_State * state, ARMword instr)
 	  SIMD32_SET (psr, ZBIT32 (s), SIMD_ZBIT, i);
 	}
       break;
-      
+
     case Dqual:
       if (shift > 63)
 	r = (wR [BITS (16, 19)] & 0x8000000000000000ULL) ? 0xffffffffffffffffULL : 0;
@@ -3020,7 +3020,7 @@ WSTR (ARMul_State * state, ARMword instr)
 #ifdef DEBUG
   fprintf (stderr, "wstr\n");
 #endif
-  
+
   address = Compute_Iwmmxt_Address (state, instr, & failed);
   if (failed)
     return ARMul_CANT;
@@ -3069,7 +3069,7 @@ WSUB (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wsub\n");
-#endif  
+#endif
 
 /* Subtract two numbers using the specified function,
    leaving setting the carry bit as required.  */
@@ -3255,7 +3255,7 @@ WUNPCKEH (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wunpckeh\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -3322,7 +3322,7 @@ WUNPCKEL (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wunpckel\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -3390,7 +3390,7 @@ WUNPCKIH (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wunpckih\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -3407,7 +3407,7 @@ WUNPCKIH (ARMul_State * state, ARMword instr)
 	  SIMD8_SET (psr, ZBIT8 (b), SIMD_ZBIT, (i * 2) + 1);
 	}
       break;
-      
+
     case Hqual:
       for (i = 0; i < 2; i++)
 	{
@@ -3459,7 +3459,7 @@ WUNPCKIL (ARMul_State * state, ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wunpckil\n");
-#endif  
+#endif
 
   switch (BITS (22, 23))
     {
@@ -3525,14 +3525,14 @@ WXOR (ARMword instr)
 
 #ifdef DEBUG
   fprintf (stderr, "wxor\n");
-#endif  
+#endif
 
   result = wR [BITS (16, 19)] ^ wR [BITS (0, 3)];
   wR [BITS (12, 15)] = result;
 
   SIMD64_SET (psr, (result == 0), SIMD_ZBIT);
   SIMD64_SET (psr, (result & (1ULL << 63)), SIMD_NBIT);
-  
+
   wC [wCASF] = psr;
   wC [wCon] |= (WCON_CUP | WCON_MUP);
 
@@ -3560,7 +3560,7 @@ Process_Instruction (ARMul_State * state, ARMword instr)
       status = WMADD (instr); break;
 
     case 0x10e: case 0x50e: case 0x90e: case 0xd0e:
-      status = WUNPCKIL (state, instr); break;	  
+      status = WUNPCKIL (state, instr); break;
     case 0x10c: case 0x50c: case 0x90c: case 0xd0c:
       status = WUNPCKIH (state, instr); break;
     case 0x012: case 0x112: case 0x412: case 0x512:
@@ -3626,7 +3626,7 @@ Process_Instruction (ARMul_State * state, ARMword instr)
     case 0x81a: case 0x91a: case 0xa1a: case 0xb1a:
     case 0xc1a: case 0xd1a: case 0xe1a: case 0xf1a:
       status = WSUB (state, instr); break;
-    case 0x01e: case 0x11e: case 0x21e: case 0x31e:	  
+    case 0x01e: case 0x11e: case 0x21e: case 0x31e:
     case 0x41e: case 0x51e: case 0x61e: case 0x71e:
     case 0x81e: case 0x91e: case 0xa1e: case 0xb1e:
     case 0xc1e: case 0xd1e: case 0xe1e: case 0xf1e:
@@ -3643,8 +3643,8 @@ Process_Instruction (ARMul_State * state, ARMword instr)
       status = WPACK (state, instr); break;
     case 0x201: case 0x203: case 0x205: case 0x207:
     case 0x209: case 0x20b: case 0x20d: case 0x20f:
-    case 0x211: case 0x213: case 0x215: case 0x217:	  
-    case 0x219: case 0x21b: case 0x21d: case 0x21f:	  
+    case 0x211: case 0x213: case 0x215: case 0x217:
+    case 0x219: case 0x21b: case 0x21d: case 0x21f:
       switch (BITS (16, 19))
 	{
 	case 0x0: status = TMIA (state, instr); break;
@@ -3667,7 +3667,7 @@ Process_Instruction (ARMul_State * state, ARMword instr)
 
 int
 ARMul_HandleIwmmxt (ARMul_State * state, ARMword instr)
-{     
+{
   int status = ARMul_BUSY;
 
   if (BITS (24, 27) == 0xe)

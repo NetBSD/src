@@ -3,6 +3,9 @@
 /* Define if building universal (internal helper macro) */
 #undef AC_APPLE_UNIVERSAL_BUILD
 
+/* Sim debug setting */
+#undef DEBUG
+
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
@@ -37,6 +40,9 @@
 /* Define to 1 if you have the <fpu_control.h> header file. */
 #undef HAVE_FPU_CONTROL_H
 
+/* Define to 1 if you have the `ftruncate' function. */
+#undef HAVE_FTRUNCATE
+
 /* Define to 1 if you have the `getrusage' function. */
 #undef HAVE_GETRUSAGE
 
@@ -52,11 +58,26 @@
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
+/* Define to 1 if you have the `lstat' function. */
+#undef HAVE_LSTAT
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* Define to 1 if you have the `mmap' function. */
+#undef HAVE_MMAP
+
+/* Define to 1 if you have the `munmap' function. */
+#undef HAVE_MUNMAP
+
+/* Define to 1 if you have the `posix_fallocate' function. */
+#undef HAVE_POSIX_FALLOCATE
+
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
+
+/* Define to 1 if the system has the type `socklen_t'. */
+#undef HAVE_SOCKLEN_T
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -70,11 +91,56 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if `struct stat' is a member of `st_atime'. */
+#undef HAVE_STRUCT_STAT_ST_ATIME
+
+/* Define to 1 if `struct stat' is a member of `st_blksize'. */
+#undef HAVE_STRUCT_STAT_ST_BLKSIZE
+
+/* Define to 1 if `struct stat' is a member of `st_blocks'. */
+#undef HAVE_STRUCT_STAT_ST_BLOCKS
+
+/* Define to 1 if `struct stat' is a member of `st_ctime'. */
+#undef HAVE_STRUCT_STAT_ST_CTIME
+
+/* Define to 1 if `struct stat' is a member of `st_dev'. */
+#undef HAVE_STRUCT_STAT_ST_DEV
+
+/* Define to 1 if `struct stat' is a member of `st_gid'. */
+#undef HAVE_STRUCT_STAT_ST_GID
+
+/* Define to 1 if `struct stat' is a member of `st_ino'. */
+#undef HAVE_STRUCT_STAT_ST_INO
+
+/* Define to 1 if `struct stat' is a member of `st_mode'. */
+#undef HAVE_STRUCT_STAT_ST_MODE
+
+/* Define to 1 if `struct stat' is a member of `st_mtime'. */
+#undef HAVE_STRUCT_STAT_ST_MTIME
+
+/* Define to 1 if `struct stat' is a member of `st_nlink'. */
+#undef HAVE_STRUCT_STAT_ST_NLINK
+
+/* Define to 1 if `struct stat' is a member of `st_rdev'. */
+#undef HAVE_STRUCT_STAT_ST_RDEV
+
+/* Define to 1 if `struct stat' is a member of `st_size'. */
+#undef HAVE_STRUCT_STAT_ST_SIZE
+
+/* Define to 1 if `struct stat' is a member of `st_uid'. */
+#undef HAVE_STRUCT_STAT_ST_UID
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#undef HAVE_SYS_MMAN_H
+
 /* Define to 1 if you have the <sys/resource.h> header file. */
 #undef HAVE_SYS_RESOURCE_H
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/times.h> header file. */
+#undef HAVE_SYS_TIMES_H
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
@@ -87,6 +153,9 @@
 
 /* Define to 1 if you have the <time.h> header file. */
 #undef HAVE_TIME_H
+
+/* Define to 1 if you have the `truncate' function. */
+#undef HAVE_TRUNCATE
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
@@ -131,6 +200,9 @@
 /* Additional package description */
 #undef PKGVERSION
 
+/* Sim profile settings */
+#undef PROFILE
+
 /* Bug reporting address */
 #undef REPORT_BUGS_TO
 
@@ -162,6 +234,24 @@
 #endif
 
 
+/* Sim assert settings */
+#undef WITH_ASSERT
+
+/* Sim debug setting */
+#undef WITH_DEBUG
+
+/* Sim default environment */
+#undef WITH_ENVIRONMENT
+
+/* Sim profile settings */
+#undef WITH_PROFILE
+
+/* How to route I/O */
+#undef WITH_STDIO
+
+/* Sim trace settings */
+#undef WITH_TRACE
+
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
@@ -183,5 +273,3 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
-
-#include "tconfig.h"

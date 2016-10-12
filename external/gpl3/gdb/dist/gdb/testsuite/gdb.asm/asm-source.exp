@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,9 @@ switch -glob -- [istarget] {
     }
     "arm*-*-*" {
         set asm-arch arm
+    }
+    "aarch64*-*-*" {
+	set asm-arch aarch64
     }
     "bfin-*-*" {
         set asm-arch bfin
@@ -154,10 +157,6 @@ switch -glob -- [istarget] {
     }
     "hppa-*-openbsd*" {
         set asm-arch pa
-	set debug-flags "-gdwarf-2"
-    }
-    "hppa64-*-hpux*" {
-        set asm-arch pa64
 	set debug-flags "-gdwarf-2"
     }
     "h83*-*" {

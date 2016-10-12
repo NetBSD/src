@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,11 +37,17 @@
 /* Get XSAVE extended state xcr0 from core dump.  */
 extern uint64_t i386_linux_core_read_xcr0 (bfd *abfd);
 
+/* Handle and display information related to the MPX bound violation
+   to the user.  */
+extern void i386_linux_handle_segmentation_fault (struct gdbarch *gdbarch,
+						  struct ui_out *uiout);
+
 /* Linux target description.  */
 extern struct target_desc *tdesc_i386_linux;
 extern struct target_desc *tdesc_i386_mmx_linux;
 extern struct target_desc *tdesc_i386_avx_linux;
 extern struct target_desc *tdesc_i386_mpx_linux;
+extern struct target_desc *tdesc_i386_avx_mpx_linux;
 extern struct target_desc *tdesc_i386_avx512_linux;
 
 /* Format of XSAVE extended state is:
@@ -71,5 +77,8 @@ extern struct target_desc *tdesc_i386_avx512_linux;
 #define I386_LINUX_XSAVE_XCR0_OFFSET 464
 
 extern int i386_linux_gregset_reg_offset[];
+
+/* Return x86 siginfo type.  */
+extern struct type *x86_linux_get_siginfo_type (struct gdbarch *gdbarch);
 
 #endif /* i386-linux-tdep.h */

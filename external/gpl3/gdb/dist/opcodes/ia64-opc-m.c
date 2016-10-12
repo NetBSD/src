@@ -1,5 +1,5 @@
 /* ia64-opc-m.c -- IA-64 `M' opcode table.
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of the GNU opcodes library.
@@ -190,7 +190,7 @@ struct ia64_opcode ia64_opcodes_m[] =
     {"ptc.e",	M0, OpX3X6b (1, 0, 0x34), {R3}, PRIV, 0, NULL},
 
 #if 0
-// old pre-psn variant with 2-bit hints; 
+// old pre-psn variant with 2-bit hints;
 // saved for reference
     /* integer load */
     {"ld1",		M, OpMXX6aHint (4, 0, 0, 0x00, 0), {R1, MR3}, EMPTY},
@@ -893,7 +893,7 @@ struct ia64_opcode ia64_opcodes_m[] =
 #undef LDINCREG
 
 #if 0
-// old pre-psn variant with 2-bit hints; 
+// old pre-psn variant with 2-bit hints;
 // saved for reference
 
     {"st1",		M, OpMXX6aHint (4, 0, 0, 0x30, 0), {MR3, R2}, EMPTY},
@@ -1281,7 +1281,7 @@ struct ia64_opcode ia64_opcodes_m[] =
 #undef STINCIMMED
 
 #if 0
-// old pre-psn variant with 2-bit hints; 
+// old pre-psn variant with 2-bit hints;
 // saved for reference
     /* Floating-point load.  */
     {"ldfs",		M, OpMXX6aHint (6, 0, 0, 0x02, 0), {F1, MR3}, EMPTY},
@@ -1718,7 +1718,7 @@ struct ia64_opcode ia64_opcodes_m[] =
 #undef FLDINCREG
 
 #if 0
-// old pre-psn variant with 2-bit hints; 
+// old pre-psn variant with 2-bit hints;
 // saved for reference
     /* Floating-point store.  */
     {"stfs",		M, OpMXX6aHint (6, 0, 0, 0x32, 0), {MR3, F2}, EMPTY},

@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -38,13 +38,13 @@ struct perf_event_buffer
   const uint8_t *mem;
 
   /* The size of the mapped memory in bytes.  */
-  unsigned long long size;
+  size_t size;
 
   /* A pointer to the data_head field for this buffer. */
-  volatile unsigned long long *data_head;
+  volatile __u64 *data_head;
 
   /* The data_head value from the last read.  */
-  unsigned long long last_head;
+  __u64 last_head;
 };
 
 /* Branch trace target information for BTS tracing.  */
@@ -63,7 +63,8 @@ struct btrace_tinfo_bts
   struct perf_event_buffer bts;
 };
 
-/* Branch trace target information for Intel(R) Processor Trace.  */
+/* Branch trace target information for Intel Processor Trace
+   tracing.  */
 struct btrace_tinfo_pt
 {
   /* The Linux perf_event configuration for collecting the branch trace.  */
@@ -100,11 +101,6 @@ struct btrace_target_info
     struct btrace_tinfo_pt pt;
   } variant;
 #endif /* HAVE_LINUX_PERF_EVENT_H */
-
-  /* The size of a pointer in bits for this thread.
-     The information is used to identify kernel addresses in order to skip
-     records from/to kernel space.  */
-  int ptr_bits;
 };
 
 /* See to_supports_btrace in target.h.  */

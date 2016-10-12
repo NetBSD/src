@@ -1,5 +1,5 @@
 /* collection of junk waiting time to sort out
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB, the GNU debugger.
@@ -152,58 +152,6 @@ do { \
 /* Special purpose traps.  */
 #define TRAP_SYSCALL	0
 #define TRAP_BREAKPOINT	1
-
-/* Support for the MSPR register (Cache Purge Control Register)
-   and the MCCR register (Cache Control Register) are needed in order for
-   overlays to work correctly with the scache.
-   MSPR no longer exists but is supported for upward compatibility with
-   early overlay support.  */
-
-/* Cache Purge Control (only exists on early versions of chips) */
-#define MSPR_ADDR 0xfffffff7
-#define MSPR_PURGE 1
-
-/* Lock Control Register (not supported) */
-#define MLCR_ADDR 0xfffffff7
-#define MLCR_LM 1
-
-/* Power Management Control Register (not supported) */
-#define MPMR_ADDR 0xfffffffb
-
-/* Cache Control Register */
-#define MCCR_ADDR 0xffffffff
-#define MCCR_CP 0x80
-/* not supported */
-#define MCCR_CM0 2
-#define MCCR_CM1 1
-
-/* Serial device addresses.  */
-#ifdef M32R_EVA /* orig eva board, no longer supported */
-#define UART_INCHAR_ADDR	0xff102013
-#define UART_OUTCHAR_ADDR	0xff10200f
-#define UART_STATUS_ADDR	0xff102006
-/* Indicate ready bit is inverted.  */
-#define UART_INPUT_READY0
-#else
-/* These are the values for the MSA2000 board.
-   ??? Will eventually need to move this to a config file.  */
-#define UART_INCHAR_ADDR	0xff004009
-#define UART_OUTCHAR_ADDR	0xff004007
-#define UART_STATUS_ADDR	0xff004002
-#endif
-
-#define UART_INPUT_READY	0x4
-#define UART_OUTPUT_READY	0x1
-
-/* Start address and length of all device support.  */
-#define M32R_DEVICE_ADDR	0xff000000
-#define M32R_DEVICE_LEN		0x00ffffff
-
-/* sim_core_attach device argument.  */
-extern device m32r_devices;
-
-/* FIXME: Temporary, until device support ready.  */
-struct _device { int foo; };
 
 /* Handle the trap insn.  */
 USI m32r_trap (SIM_CPU *, PCADDR, int);

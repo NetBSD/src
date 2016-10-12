@@ -1,5 +1,5 @@
 /* YACC parser for Java expressions, for GDB.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,65 +51,10 @@
 #define parse_type(ps) builtin_type (parse_gdbarch (ps))
 #define parse_java_type(ps) builtin_java_type (parse_gdbarch (ps))
 
-/* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
-   as well as gratuitiously global symbol names, so we can have multiple
-   yacc generated parsers in gdb.  Note that these are only the variables
-   produced by yacc.  If other parser generators (bison, byacc, etc) produce
-   additional global names that conflict at link time, then those parser
-   generators need to be fixed instead of adding those names to this list.  */
-
-#define	yymaxdepth java_maxdepth
-#define	yyparse	java_parse_internal
-#define	yylex	java_lex
-#define	yyerror	java_error
-#define	yylval	java_lval
-#define	yychar	java_char
-#define	yydebug	java_debug
-#define	yypact	java_pact	
-#define	yyr1	java_r1			
-#define	yyr2	java_r2			
-#define	yydef	java_def		
-#define	yychk	java_chk		
-#define	yypgo	java_pgo		
-#define	yyact	java_act		
-#define	yyexca	java_exca
-#define yyerrflag java_errflag
-#define yynerrs	java_nerrs
-#define	yyps	java_ps
-#define	yypv	java_pv
-#define	yys	java_s
-#define	yy_yys	java_yys
-#define	yystate	java_state
-#define	yytmp	java_tmp
-#define	yyv	java_v
-#define	yy_yyv	java_yyv
-#define	yyval	java_val
-#define	yylloc	java_lloc
-#define yyreds	java_reds		/* With YYDEBUG defined */
-#define yytoks	java_toks		/* With YYDEBUG defined */
-#define yyname	java_name		/* With YYDEBUG defined */
-#define yyrule	java_rule		/* With YYDEBUG defined */
-#define yylhs	java_yylhs
-#define yylen	java_yylen
-#define yydefred java_yydefred
-#define yydgoto	java_yydgoto
-#define yysindex java_yysindex
-#define yyrindex java_yyrindex
-#define yygindex java_yygindex
-#define yytable	 java_yytable
-#define yycheck	 java_yycheck
-#define yyss	java_yyss
-#define yysslim	java_yysslim
-#define yyssp	java_yyssp
-#define yystacksize java_yystacksize
-#define yyvs	java_yyvs
-#define yyvsp	java_yyvsp
-
-#ifndef YYDEBUG
-#define	YYDEBUG 1		/* Default to yydebug support */
-#endif
-
-#define YYFPRINTF parser_fprintf
+/* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
+   etc).  */
+#define GDB_YY_REMAP_PREFIX java_
+#include "yy-remap.h"
 
 /* The state of the parser, used internally when we are parsing the
    expression.  */
@@ -355,7 +300,7 @@ QualifiedName:
 		    {
 		      char *buf;
 
-		      buf = malloc ($$.length + 1);
+		      buf = (char *) malloc ($$.length + 1);
 		      make_cleanup (free, buf);
 		      sprintf (buf, "%.*s.%.*s",
 			       $1.length, $1.ptr, $3.length, $3.ptr);
@@ -1270,24 +1215,22 @@ push_variable (struct parser_state *par_state, struct stoken name)
 {
   char *tmp = copy_name (name);
   struct field_of_this_result is_a_field_of_this;
-  struct symbol *sym;
+  struct block_symbol sym;
 
   sym = lookup_symbol (tmp, expression_context_block, VAR_DOMAIN,
 		       &is_a_field_of_this);
-  if (sym && SYMBOL_CLASS (sym) != LOC_TYPEDEF)
+  if (sym.symbol && SYMBOL_CLASS (sym.symbol) != LOC_TYPEDEF)
     {
-      if (symbol_read_needs_frame (sym))
+      if (symbol_read_needs_frame (sym.symbol))
 	{
 	  if (innermost_block == 0 ||
-	      contained_in (block_found, innermost_block))
-	    innermost_block = block_found;
+	      contained_in (sym.block, innermost_block))
+	    innermost_block = sym.block;
 	}
 
       write_exp_elt_opcode (par_state, OP_VAR_VALUE);
-      /* We want to use the selected frame, not another more inner frame
-	 which happens to be in the same block.  */
-      write_exp_elt_block (par_state, NULL);
-      write_exp_elt_sym (par_state, sym);
+      write_exp_elt_block (par_state, sym.block);
+      write_exp_elt_sym (par_state, sym.symbol);
       write_exp_elt_opcode (par_state, OP_VAR_VALUE);
       return 1;
     }
@@ -1296,8 +1239,8 @@ push_variable (struct parser_state *par_state, struct stoken name)
       /* it hangs off of `this'.  Must not inadvertently convert from a
 	 method call to data ref.  */
       if (innermost_block == 0 || 
-	  contained_in (block_found, innermost_block))
-	innermost_block = block_found;
+	  contained_in (sym.block, innermost_block))
+	innermost_block = sym.block;
       write_exp_elt_opcode (par_state, OP_THIS);
       write_exp_elt_opcode (par_state, OP_THIS);
       write_exp_elt_opcode (par_state, STRUCTOP_PTR);

@@ -137,7 +137,7 @@ ThumbExpandImm (ARMword tinstr)
   else
     {
       int ror = tBITS (7, 11);
-      
+
       val = (1 << 7) | tBITS (0, 6);
       val = (val >> ror) | (val << (32 - ror));
     }
@@ -204,10 +204,10 @@ handle_T2_insn (ARMul_State * state,
 
 	    simm32 = (J1 << 19) | (J2 << 18) | (imm6 << 12) | (imm11 << 1);
 	    if (S)
-	      simm32 |= (-1 << 20);
+	      simm32 |= -(1 << 20);
 	    break;
 	  }
-	  
+
 	case 1: /* B.W  */
 	  {
 	    ARMword imm10 = tBITS (0, 9);
@@ -217,10 +217,10 @@ handle_T2_insn (ARMul_State * state,
 
 	    simm32 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
 	    if (S)
-	      simm32 |= (-1 << 24);
+	      simm32 |= -(1 << 24);
 	    break;
 	  }
-	  
+
 	case 2: /* BLX <label>  */
 	  {
 	    ARMword imm10h = tBITS (0, 9);
@@ -230,7 +230,7 @@ handle_T2_insn (ARMul_State * state,
 
 	    simm32 = (I1 << 23) | (I2 << 22) | (imm10h << 12) | (imm10l << 2);
 	    if (S)
-	      simm32 |= (-1 << 24);
+	      simm32 |= -(1 << 24);
 
 	    CLEART;
 	    state->Reg[14] = (pc + 4) | 1;
@@ -246,7 +246,7 @@ handle_T2_insn (ARMul_State * state,
 
 	    simm32 = (I1 << 23) | (I2 << 22) | (imm10 << 12) | (imm11 << 1);
 	    if (S)
-	      simm32 |= (-1 << 24);
+	      simm32 |= -(1 << 24);
 	    state->Reg[14] = (pc + 4) | 1;
 	    break;
 	  }
@@ -258,7 +258,7 @@ handle_T2_insn (ARMul_State * state,
 	fprintf (stderr, " pc changed to %x\n", state->Reg[15]);
       return;
     }
-  
+
   switch (tBITS (5,12))
     {
     case 0x29:  // TST<c>.W <Rn>,<Rm>{,<shift>}
@@ -400,7 +400,7 @@ handle_T2_insn (ARMul_State * state,
 	break;
       }
 
-    case 0x50: 
+    case 0x50:
       {
 	ARMword Rd = ntBITS (8, 11);
 	ARMword Rn = tBITS (0, 3);
@@ -436,7 +436,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_decoded;
 	break;
       }
-      
+
     case 0x51: // BIC{S}<c>.W <Rd>,<Rn>,<Rm>{,<shift>}
       {
 	ARMword Rn = tBITS (0, 3);
@@ -458,8 +458,8 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_decoded;
 	break;
       }
-      
-    case 0x52: 
+
+    case 0x52:
       {
 	ARMword Rn = tBITS (0, 3);
 	ARMword Rd = ntBITS (8, 11);
@@ -539,7 +539,7 @@ handle_T2_insn (ARMul_State * state,
 	break;
       }
 
-    case 0x54: 
+    case 0x54:
       {
 	ARMword Rn = tBITS (0, 3);
 	ARMword Rd = ntBITS (8, 11);
@@ -611,7 +611,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= ntBITS (0, 3); // Rm
       * pvalid = t_decoded;
       break;
-      
+
     case 0x5B: // SBC{S}<c>.W <Rd>,<Rn>,<Rm>{,<shift>}
       {
 	ARMword Rn = tBITS (0, 3);
@@ -636,7 +636,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_decoded;
 	break;
       }
-      
+
     case 0x5E: // RSB{S}<c> <Rd>,<Rn>,<Rm>{,<shift>}
     case 0x5D: // SUB{S}<c>.W <Rd>,<Rn>,<Rm>{,<shift>}
       {
@@ -669,13 +669,13 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_decoded;
 	break;
       }
-      
+
     case 0x9D: // NOP.W
       tASSERT (tBITS (0, 15) == 0xF3AF);
       tASSERT (ntBITS (0, 15) == 0x8000);
       * pvalid = t_branch;
       break;
-      
+
     case 0x80: // AND
     case 0xA0: // TST
       {
@@ -697,7 +697,7 @@ handle_T2_insn (ARMul_State * state,
 	  {
 	    // AND{S}<c> <Rd>,<Rn>,#<const>
 	    if (in_IT_block ())
-	      S = 0;	    
+	      S = 0;
 
 	    state->Reg[Rd] = val;
 	  }
@@ -726,7 +726,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_resolved;
 	break;
       }
-      
+
     case 0xA2:
     case 0x82: // MOV{S}<c>.W <Rd>,#<const>
       {
@@ -783,13 +783,13 @@ handle_T2_insn (ARMul_State * state,
 	    if (in_IT_block ())
 	      S = 0;
 	  }
-	    
+
 	if (S)
 	  ARMul_NegZero (state, result);
 	* pvalid = t_resolved;
 	break;
       }
-      
+
     case 0xA8: // CMN
     case 0x88: // ADD
       {
@@ -838,7 +838,7 @@ handle_T2_insn (ARMul_State * state,
 	break;
       }
 
-    case 0xAA: 
+    case 0xAA:
     case 0x8A: // ADC{S}<c> <Rd>,<Rn>,#<const>
       {
 	ARMword Rn = tBITS (0, 3);
@@ -879,7 +879,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_branch;
 	break;
       }
-      
+
     case 0xAB:
     case 0x8B: // SBC{S}<c> <Rd>,<Rn>,#<const>
       {
@@ -940,7 +940,7 @@ handle_T2_insn (ARMul_State * state,
 	  }
 	else
 	  {
-	    // SUB{S}<c>.W <Rd>,<Rn>,#<const>	    
+	    // SUB{S}<c>.W <Rd>,<Rn>,#<const>
 	    if (in_IT_block ())
 	      S = 0;
 
@@ -997,7 +997,7 @@ handle_T2_insn (ARMul_State * state,
 		CLEARV;
 	      }
 	  }
-	    
+
 	* pvalid = t_branch;
 	break;
       }
@@ -1038,7 +1038,7 @@ handle_T2_insn (ARMul_State * state,
 
 	tASSERT (tBIT (4) == 0);
 	tASSERT (ntBIT (15) == 0);
-      
+
 	/* Note the ARM ARM indicates special cases for Rn == 15 (ADR)
 	   and Rn == 13 (SUB SP minus immediate), but these are implemented
 	   in exactly the same way as the normal SUBW insn.  */
@@ -1047,7 +1047,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_resolved;
 	break;
       }
-      
+
     case 0xB6:
     case 0x96: // MOVT<c> <Rd>,#<imm16>
       {
@@ -1078,7 +1078,7 @@ handle_T2_insn (ARMul_State * state,
 	ARMword Rn = tBITS (0, 3);
 	ARMword msbit = ntBITS (0, 5);
 	ARMword lsbit = (ntBITS (12, 14) << 2) | ntBITS (6, 7);
-	ARMword mask = -1 << lsbit;
+	ARMword mask = -(1 << lsbit);
 
 	tASSERT (tBIT (4) == 0);
 	tASSERT (ntBIT (15) == 0);
@@ -1098,7 +1098,7 @@ handle_T2_insn (ARMul_State * state,
 	    // BFI<c> <Rd>,<Rn>,#<lsb>,#<width>
 	    ARMword val = state->Reg[Rn] & (mask >> lsbit);
 
-	    val <<= lsbit;	    
+	    val <<= lsbit;
 	    state->Reg[Rd] &= ~ mask;
 	    state->Reg[Rd] |= val;
 	  }
@@ -1118,7 +1118,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= tBITS (0, 3); // Rn
       * pvalid = t_decoded;
       break;
-      
+
     case 0xC0: // STRB
     case 0xC4: // LDRB
       {
@@ -1157,7 +1157,7 @@ handle_T2_insn (ARMul_State * state,
 
 		tASSERT (! (Rt == 15 && P && !U && !W));
 		tASSERT (! (P && U && !W));
-	    
+
 		/* LDRB<c> <Rt>,[<Rn>,#-<imm8>]             => 1111 1000 0001 rrrr
 		   LDRB<c> <Rt>,[<Rn>],#+/-<imm8>           => 1111 1000 0001 rrrr
 		   LDRB<c> <Rt>,[<Rn>,#+/-<imm8>]!          => 1111 1000 0001 rrrr */
@@ -1239,7 +1239,7 @@ handle_T2_insn (ARMul_State * state,
 		tASSERT (! (P && U && ! W));
 		tASSERT (! (!P && U && W && Rn == 13 && imm8 == 4 && ntBIT (11) == 0));
 		tASSERT (! (P && !U && W && Rn == 13 && imm8 == 4 && ntBIT (11)));
-	  
+
 		// LDR<c> <Rt>,[<Rn>,#-<imm8>]
 		// LDR<c> <Rt>,[<Rn>],#+/-<imm8>
 		// LDR<c> <Rt>,[<Rn>,#+/-<imm8>]!
@@ -1275,7 +1275,7 @@ handle_T2_insn (ARMul_State * state,
 
 		    * ainstr = 0xE92D0000;
 		    * ainstr |= (1 << Rt);
-		    
+
 		    Rt = Rn = 0;
 		  }
 		else
@@ -1412,7 +1412,7 @@ handle_T2_insn (ARMul_State * state,
 	* pvalid = t_branch;
 	break;
       }
-      
+
     case 0xC6: // LDR.W/STR.W
       {
 	ARMword Rn = tBITS (0, 3);
@@ -1453,7 +1453,7 @@ handle_T2_insn (ARMul_State * state,
 	    // LDRSB<c> <Rt>,<label>
 	    ARMword imm12 = ntBITS (0, 11);
 	    address += (U ? imm12 : - imm12);
-	  } 
+	  }
 	else if (U)
 	  {
 	    // LDRSB<c> <Rt>,[<Rn>,#<imm12>]
@@ -1489,12 +1489,12 @@ handle_T2_insn (ARMul_State * state,
 	
 	state->Reg[Rt] = ARMul_LoadByte (state, address);
 	if (state->Reg[Rt] & 0x80)
-	  state->Reg[Rt] |= -1 << 8;
+	  state->Reg[Rt] |= -(1 << 8);
 
 	* pvalid = t_resolved;
 	break;
       }
-      
+
     case 0xC9:
     case 0xCD:// LDRSH
       {
@@ -1542,13 +1542,13 @@ handle_T2_insn (ARMul_State * state,
 
 	state->Reg[Rt] = ARMul_LoadHalfWord (state, address);
 	if (state->Reg[Rt] & 0x8000)
-	  state->Reg[Rt] |= -1 << 16;
+	  state->Reg[Rt] |= -(1 << 16);
 
 	* pvalid = t_branch;
 	break;
       }
 
-    case 0x0D0: 
+    case 0x0D0:
       {
 	ARMword Rm = ntBITS (0, 3);
 	ARMword Rd = ntBITS (8, 11);
@@ -1564,7 +1564,7 @@ handle_T2_insn (ARMul_State * state,
 	    val = state->Reg[Rm];
 	    val = (val >> ror) | (val << (32 - ror));
 	    if (val & 0x8000)
-	      val |= -1 << 16;
+	      val |= -(1 << 16);
 	    state->Reg[Rd] = val;
 	  }
 	else
@@ -1598,7 +1598,7 @@ handle_T2_insn (ARMul_State * state,
 	break;
       }
 
-    case 0xD2: 
+    case 0xD2:
       tASSERT (ntBITS (12, 15) == 15);
       if (ntBIT (7))
 	{
@@ -1622,7 +1622,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= (ntBITS (8, 11) << 12); // Rd
       * pvalid = t_decoded;
       break;
-      
+
     case 0xD3: // ROR{S}<c>.W <Rd>,<Rn>,<Rm>
       tASSERT (ntBITS (12, 15) == 15);
       tASSERT (ntBITS (4, 7) == 0);
@@ -1634,7 +1634,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= (tBITS (0, 3) << 0); // Rn
       * pvalid = t_decoded;
       break;
-      
+
     case 0xD4:
       {
 	ARMword Rn = tBITS (0, 3);
@@ -1647,9 +1647,9 @@ handle_T2_insn (ARMul_State * state,
 	  {
 	    // REV<c>.W <Rd>,<Rm>
 	    ARMword val = state->Reg[Rm];
-	    
+
 	    tASSERT (Rm == Rn);
-	    
+
 	    state->Reg [Rd] =
 	      (val >> 24)
 	      | ((val >> 8) & 0xFF00)
@@ -1741,7 +1741,7 @@ handle_T2_insn (ARMul_State * state,
 	    if (ntBITS (4, 7) == 1)
 	      {
 		// MLS<c> <Rd>,<Rn>,<Rm>,<Ra>
-		state->Reg[Rd] = state->Reg[Ra] - (state->Reg[Rn] * state->Reg[Rm]); 
+		state->Reg[Rd] = state->Reg[Ra] - (state->Reg[Rn] * state->Reg[Rm]);
 	      }
 	    else
 	      {
@@ -1769,7 +1769,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= tBITS (0, 3); // Rn
       * pvalid = t_decoded;
       break;
-      
+
     case 0xDD: // UMULL
       tASSERT (tBIT (4) == 0);
       tASSERT (ntBITS (4, 7) == 0);
@@ -1780,7 +1780,7 @@ handle_T2_insn (ARMul_State * state,
       * ainstr |= tBITS (0, 3); // Rn
       * pvalid = t_decoded;
       break;
-      
+
     case 0xDF: // UMLAL
       tASSERT (tBIT (4) == 0);
       tASSERT (ntBITS (4, 7) == 0);
@@ -1792,7 +1792,7 @@ handle_T2_insn (ARMul_State * state,
       * pvalid = t_decoded;
       break;
 
-    default:  
+    default:
       fprintf (stderr, "(op = %x) ", tBITS (5,12));
       tASSERT (0);
       return;
@@ -1860,7 +1860,7 @@ handle_v6_thumb_insn (ARMul_State * state,
 	state->Reg[Rd] += state->Reg[Rm];
 	break;
       }
-      
+
     case 0x4600: // MOV<c> <Rd>,<Rm>
       {
 	// instr [15, 8] = 0100 0110
@@ -1916,7 +1916,7 @@ handle_v6_thumb_insn (ARMul_State * state,
 	state->Reg [tBITS (0, 2)] = (val >> 16) | (val << 16);
 	break;
       }
-      
+
     case 0xb660: /* cpsie */
     case 0xb670: /* cpsid */
     case 0xbac0: /* revsh */
@@ -2017,7 +2017,7 @@ ARMul_ThumbDecode (ARMul_State * state,
 
       return t_branch;
     }
-  
+
   old_tinstr = tinstr;
   if (trace)
     fprintf (stderr, "pc: %x, Thumb instr: %x", pc & ~1, tinstr);
@@ -2072,7 +2072,7 @@ ARMul_ThumbDecode (ARMul_State * state,
       * ainstr |= tBITS (8, 10) << 16;
       * ainstr |= tBITS (0, 7);
       break;
-      
+
     case 6:
     case 7:
       * ainstr = tBIT (11)

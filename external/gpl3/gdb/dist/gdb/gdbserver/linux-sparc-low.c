@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #include "server.h"
 #include "linux-low.h"
 
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 
 #include "gdb_proc_service.h"
 
@@ -223,23 +223,19 @@ sparc_store_fpregset (struct regcache *regcache, const void *buf)
       supply_register (regcache, i, ((char *) buf) + sparc_regmap[i]);
 }
 
-extern int debug_threads;
-
-static CORE_ADDR
-sparc_get_pc (struct regcache *regcache)
-{
-  unsigned long pc;
-  collect_register_by_name (regcache, "pc", &pc);
-  if (debug_threads)
-    debug_printf ("stop pc is %08lx\n", pc);
-  return pc;
-}
-
-static const unsigned char sparc_breakpoint[INSN_SIZE] = {
+static const gdb_byte sparc_breakpoint[INSN_SIZE] = {
   0x91, 0xd0, 0x20, 0x01
 };
 #define sparc_breakpoint_len INSN_SIZE
 
+/* Implementation of linux_target_ops method "sw_breakpoint_from_kind".  */
+
+static const unsigned char *
+sparc_sw_breakpoint_from_kind (int kind, int *size)
+{
+  *size = sparc_breakpoint_len;
+  return sparc_breakpoint;
+}
 
 static int
 sparc_breakpoint_at (CORE_ADDR where)
@@ -257,19 +253,6 @@ sparc_breakpoint_at (CORE_ADDR where)
   return 0;
 }
 
-/* We only place breakpoints in empty marker functions, and thread locking
-   is outside of the function.  So rather than importing software single-step,
-   we can just run until exit.  */
-static CORE_ADDR
-sparc_reinsert_addr (void)
-{
-  struct regcache *regcache = get_thread_regcache (current_thread, 1);
-  CORE_ADDR lr;
-  /* O7 is the equivalent to the 'lr' of other archs.  */
-  collect_register_by_name (regcache, "o7", &lr);
-  return lr;
-}
-
 static void
 sparc_arch_setup (void)
 {
@@ -283,7 +266,7 @@ static struct regset_info sparc_regsets[] = {
   { PTRACE_GETFPREGS, PTRACE_SETFPREGS, 0, sizeof (fpregset_t),
     FP_REGS,
     sparc_fill_fpregset, sparc_store_fpregset },
-  { 0, 0, 0, -1, -1, NULL, NULL }
+  NULL_REGSET
 };
 
 static struct regsets_info sparc_regsets_info =
@@ -320,12 +303,12 @@ struct linux_target_ops the_low_target = {
   sparc_cannot_fetch_register,
   sparc_cannot_store_register,
   NULL, /* fetch_register */
-  sparc_get_pc,
+  linux_get_pc_64bit,
   /* No sparc_set_pc is needed.  */
   NULL,
-  (const unsigned char *) sparc_breakpoint,
-  sparc_breakpoint_len,
-  sparc_reinsert_addr,
+  NULL, /* breakpoint_kind_from_pc */
+  sparc_sw_breakpoint_from_kind,
+  NULL, /* get_next_pcs */
   0,
   sparc_breakpoint_at,
   NULL,  /* supports_z_point_type */

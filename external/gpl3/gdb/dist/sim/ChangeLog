@@ -1,3 +1,42 @@
+2016-07-19  Pitchumani Sivanupandi  <pitchumani.s@atmel.com>
+
+	PR target/ 19401
+	* avr/interp.c (step_once): Pass break instruction address to
+	sim_engine_halt function which writes that to PC. Remove code that
+	follows that function call as it is unreachable.
+
+2016-02-03  Maciej W. Rozycki  <macro@linux-mips.org>
+
+	* MAINTAINERS (Past sim maintainers): Add Thiemo Seufer.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Delete sim_common check and the
+	AC_CONFIG_SUBDIRS(common) call.
+	* configure: Regenerate.
+	* configure.tgt (sim_common): Delete the variable.
+
+2016-01-09  Mike Frysinger  <vapier@gentoo.org>
+
+	* .gitignore: Delete /common/cconfig.h entry.
+
+2016-01-05  Nick Clifton  <nickc@redhat.com>
+
+	* MAINTAINERS: Add myself as AArch64 sim maintainer.
+
+2015-12-09  Tristan Gingold  <gingold@adacore.com>
+
+	* aarch64/simulator.c: Remove syscall.h include.
+
+2015-12-26  Mike Frysinger  <vapier@gentoo.org>
+
+	* README-HACKING: Delete mention of tconfig.h.
+
+2015-11-24  Nick Clifton  <nickc@redhat.com>
+
+	* configure.tgt: Add aarch64 entry.
+	* configure: Regenerate.
+
 2015-06-23  Mike Frysinger  <vapier@gentoo.org>
 
 	* configure.ac (AC_ARG_ENABLE(sim)): Call AS_HELP_STRING.
@@ -415,7 +454,7 @@
 2009-10-06  Michael Eager  <eager@eagercon.com>
 
 	* microblaze/interp.c: Add include microblaze-dis.h.
-	
+
 2009-09-23  Michael Eager  <eager@eagercon.com>
 
 	* configure: Add microblaze-*.* (not regenerated).
@@ -449,9 +488,9 @@
 
 2009-05-18  Jon Beniston <jon@beniston.com>
 
-        * MAINTAINERS: Add Jon Beniston as maintainer of lm32 sim.
-        * configure.ac: Add lm32 target. 
-        * lm32: New directory.               
+	* MAINTAINERS: Add Jon Beniston as maintainer of lm32 sim.
+	* configure.ac: Add lm32 target.
+	* lm32: New directory.
 
 2009-05-11  Andrew Cagney  <cagney@gnu.org>
 
@@ -622,8 +661,8 @@
 	* cris/config.in: Ditto.
 
 2008-06-06  Vladimir Prus  <vladimir@codesourcery.com>
-            Daniel Jacobowitz  <dan@codesourcery.com>
-            Joseph Myers  <joseph@codesourcery.com>
+	    Daniel Jacobowitz  <dan@codesourcery.com>
+	    Joseph Myers  <joseph@codesourcery.com>
 
 	* cris/configure: Regenerate.
 
@@ -910,7 +949,7 @@
 
 	* cris/traps.c (cris_break_13_handler) <case TARGET_SYS_mmap2>:
 	For ((len & 8191) != 0 && fd == (USI) -1), don't say this isn't
-	implemented.  In call to create_map, pad length argument to 8k. 
+	implemented.  In call to create_map, pad length argument to 8k.
 
 2005-04-15  Corinna Vinschen  <vinschen@redhat.com>
 
@@ -969,7 +1008,7 @@
 
 	* configure.ac: For mips*-*-* and mn10300*-*-* configure the
 	common directory.  Remove sparc*-*-* from list.
-	
+
 2005-01-11  Andrew Cagney  <cagney@gnu.org>
 
 	* Makefile.in (autoconf-common autoheader-common): Add --force to
@@ -1016,7 +1055,7 @@
 	* MAINTAINERS: Add myself as maintainer of the FRV port.
 
 2003-08-20  Michael Snyder  <msnyder@redhat.com>
-            Dave Brolley  <brolley@redhat.com>
+	    Dave Brolley  <brolley@redhat.com>
 
 	* frv/: New directory, simulator for the Fujitsu FRV.
 	* configure.in: Add frv configury.
@@ -1062,7 +1101,7 @@
 
 	* configure.in (extra_subdirs): Mark d30v-*-* as obsolete.
 	* configure: Re-generate.
-	
+
 2002-06-16  Andrew Cagney  <ac131313@redhat.com>
 
 	* Makefile.in (autoconf-changelog autoheader-changelog): Let name,
@@ -1132,7 +1171,7 @@ Tue Jul  4 13:43:54 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 2000-04-20  Nick Clifton  <nickc@cygnus.com>
 
 	* configure.in (extra_subdirs): Add testsuite to strongarm
-	directories. 
+	directories.
 	* configure: Regenerate.
 
 Sat Mar  4 16:48:54 2000  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -1236,12 +1275,12 @@ Wed Oct  8 12:38:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 	* configure.in (extra_subdirs): Add IGEN directory when MIPS
  	target.
 	* configure: Regenerate.
-	
+
 Fri Sep 12 13:10:31 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure.in (extra_subdirs): v850ea needs igen.
 	* configure: Re-generate.
-	
+
 Mon Sep  1 16:48:23 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure.in (testdir): When a testsuite directory, add that to
@@ -1255,14 +1294,14 @@ Tue Aug 26 15:14:48 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure.in (w65-*-*, only_if_enabled): Set.
 	* configure: Re-generate.
-	
+
 Mon Aug 25 16:26:53 1997  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* configure.in (sparc*-*-*, only_if_enabled): Set
  	only_if_enabled=yes.  Check only_if_enabled before enabling a
  	simulator.
 	* configure: Regenerate.
-	
+
 Mon Aug 18 10:56:59 1997  Nick Clifton  <nickc@cygnus.com>
 
 	* configure.in (extra_subdirs): Add v850e target.
@@ -1313,7 +1352,7 @@ Wed Mar 19 14:26:21 1997  Andrew Cagney  <cagney@kremvax.cygnus.com>
 
 	* configure.in (extra_subdirs): Include testsuite for d30v.
 	* configure: Regenerate.
-	
+
 	* Makefile.in (RUNTEST, RUNTESTFLAGS): Borrow test rules from
  	../gdb/Makefile.in
 	(check): New rules - drive the testsuite.
@@ -1334,7 +1373,7 @@ Sun Feb 16 16:37:47 1997  Andrew Cagney  <cagney@critters.cygnus.com>
 
 	* configure.in (d30v): New target.
 	* configure: Regenerated.
-	
+
 Wed Feb 19 23:17:13 1997  Jeffrey A Law  (law@cygnus.com)
 
 	* configure.in: Don't require GCC to build the mn10200

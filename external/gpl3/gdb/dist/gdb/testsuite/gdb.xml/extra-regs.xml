@@ -15,12 +15,34 @@
 
     <struct id="struct2" size="8">
       <field name="f1" start="0" end="34"/>
-      <field name="f2" start="63" end="63"/>
+      <field name="f2" start="63" end="63" type="uint64"/>
     </struct>
 
     <flags id="flags" size="4">
       <field name="X" start="0" end="0"/>
-      <field name="Y" start="2" end="2"/>
+      <field name="Y" start="2" end="2" type="uint32"/>
+    </flags>
+
+    <enum id="Z_values" size="4">
+      <evalue name="yes" value="1"/>
+      <evalue name="no" value="0"/>
+      <evalue name="maybe" value="2"/>
+      <evalue name="so" value="3"/>
+    </enum>
+
+    <flags id="mixed_flags" size="4">
+      <!-- Elided type. -->
+      <field name="A" start="0" end="0"/>
+      <!-- Elided type, multiple bits. -->
+      <field name="B" start="1" end="3"/>
+      <!-- Bool. -->
+      <field name="C" start="4" end="4" type="bool"/>
+      <!-- Unsigned int. -->
+      <field name="D" start="5" end="5" type="uint32"/>
+      <!-- Anonymous field. -->
+      <field name="" start="6" end="7"/>
+      <!-- Enum bitfield. -->
+      <field name="Z" start="8" end="9" type="Z_values"/>
     </flags>
 
     <reg name="extrareg" bitsize="32"/>
@@ -30,5 +52,6 @@
     <reg name="structreg" bitsize="64" type="struct1"/>
     <reg name="bitfields" bitsize="64" type="struct2"/>
     <reg name="flags" bitsize="32" type="flags"/>
+    <reg name="mixed_flags" bitsize="32" type="mixed_flags"/>
   </feature>
 </target>
