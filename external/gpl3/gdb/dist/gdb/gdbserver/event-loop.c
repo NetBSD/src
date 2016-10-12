@@ -1,5 +1,5 @@
 /* Event loop machinery for the remote server for GDB.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include "queue.h"
 
 #include <sys/types.h>
-#include <sys/time.h>
+#include "gdb_sys_time.h"
 
 #ifdef USE_WIN32API
 #include <windows.h>
@@ -130,7 +130,7 @@ struct callback_event
   {
     int id;
     callback_handler_func *proc;
-    gdb_client_data *data;
+    gdb_client_data data;
     struct callback_event *next;
   };
 
@@ -197,9 +197,8 @@ process_event (void)
 int
 append_callback_event (callback_handler_func *proc, gdb_client_data data)
 {
-  struct callback_event *event_ptr;
+  struct callback_event *event_ptr = XNEW (struct callback_event);
 
-  event_ptr = xmalloc (sizeof (*event_ptr));
   event_ptr->id = callback_list.num_callbacks++;
   event_ptr->proc = proc;
   event_ptr->data = data;
@@ -249,7 +248,7 @@ process_callback (void)
   if (event_ptr != NULL)
     {
       callback_handler_func *proc = event_ptr->proc;
-      gdb_client_data *data = event_ptr->data;
+      gdb_client_data data = event_ptr->data;
 
       /* Remove the event before calling PROC,
 	 more events may get added by PROC.  */
@@ -289,7 +288,7 @@ create_file_handler (gdb_fildes_t fd, int mask, handler_func *proc,
      just change the data associated with it.  */
   if (file_ptr == NULL)
     {
-      file_ptr = xmalloc (sizeof (*file_ptr));
+      file_ptr = XNEW (struct file_handler);
       file_ptr->fd = fd;
       file_ptr->ready_mask = 0;
       file_ptr->next_file = gdb_notifier.first_file_handler;
@@ -447,9 +446,10 @@ create_file_event (gdb_fildes_t fd)
 {
   gdb_event *file_event_ptr;
 
-  file_event_ptr = xmalloc (sizeof (gdb_event));
+  file_event_ptr = XNEW (gdb_event);
   file_event_ptr->proc = handle_file_event;
   file_event_ptr->fd = fd;
+
   return file_event_ptr;
 }
 

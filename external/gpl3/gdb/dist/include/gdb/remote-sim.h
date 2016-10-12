@@ -1,6 +1,6 @@
 /* This file defines the interface between the simulator and gdb.
 
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,7 +104,8 @@ struct host_callback_struct;
    sim_create_inferior.  FIXME: What should the state of the simulator
    be? */
 
-SIM_DESC sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *callback, struct bfd *abfd, char **argv);
+SIM_DESC sim_open (SIM_OPEN_KIND kind, struct host_callback_struct *callback,
+		   struct bfd *abfd, char * const *argv);
 
 
 /* Destory a simulator instance.
@@ -161,7 +162,8 @@ SIM_RC sim_load (SIM_DESC sd, const char *prog, struct bfd *abfd, int from_tty);
    address space (according to the applicable ABI) and the program
    counter and stack pointer set accordingly. */
 
-SIM_RC sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env);
+SIM_RC sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
+			    char * const *argv, char * const *env);
 
 
 /* Fetch LENGTH bytes of the simulated program's memory.  Start fetch

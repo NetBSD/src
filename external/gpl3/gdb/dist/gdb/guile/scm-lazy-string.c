@@ -1,6 +1,6 @@
 /* Scheme interface to lazy strings.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -321,29 +321,32 @@ lsscm_val_print_lazy_string (SCM string, struct ui_file *stream,
 
 static const scheme_function lazy_string_functions[] =
 {
-  { "lazy-string?", 1, 0, 0, gdbscm_lazy_string_p,
+  { "lazy-string?", 1, 0, 0, as_a_scm_t_subr (gdbscm_lazy_string_p),
     "\
 Return #t if the object is a <gdb:lazy-string> object." },
 
-  { "lazy-string-address", 1, 0, 0, gdbscm_lazy_string_address,
+  { "lazy-string-address", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_lazy_string_address),
     "\
 Return the address of the lazy-string." },
 
-  { "lazy-string-length", 1, 0, 0, gdbscm_lazy_string_length,
+  { "lazy-string-length", 1, 0, 0, as_a_scm_t_subr (gdbscm_lazy_string_length),
     "\
 Return the length of the lazy-string.\n\
 If the length is -1 then the length is determined by the first null\n\
 of appropriate width." },
 
-  { "lazy-string-encoding", 1, 0, 0, gdbscm_lazy_string_encoding,
+  { "lazy-string-encoding", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_lazy_string_encoding),
     "\
 Return the encoding of the lazy-string." },
 
-  { "lazy-string-type", 1, 0, 0, gdbscm_lazy_string_type,
+  { "lazy-string-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_lazy_string_type),
     "\
 Return the <gdb:type> of the lazy-string." },
 
-  { "lazy-string->value", 1, 0, 0, gdbscm_lazy_string_to_value,
+  { "lazy-string->value", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_lazy_string_to_value),
     "\
 Return the <gdb:value> representation of the lazy-string." },
 

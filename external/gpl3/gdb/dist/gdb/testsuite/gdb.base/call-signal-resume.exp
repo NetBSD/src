@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,6 @@
 # 2) Inferior is stopped at a signal.  Upon resumption it should continue
 #    with that signal, regardless of whatever the hand-called function did.
 
-if [target_info exists gdb,noinferiorio] {
-    verbose "Skipping call-signal-resume.exp because of no fileio capabilities."
-    continue
-}
-
 if [target_info exists gdb,nosignals] {
     verbose "Skipping call-signal-resume.exp because of nosignals."
     continue
@@ -41,8 +36,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*" 2416
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
 }
 
@@ -72,15 +66,10 @@ gdb_test "continue" "Continuing.*Breakpoint \[0-9\]*, stop_one.*" \
 
 # Call function (causing the program to get a signal), and see if gdb handles
 # it properly.
-gdb_test_multiple "call gen_signal ()" \
-	"inferior function call signaled" {
-    -re "\[\r\n\]*no signal\[\r\n\]+$gdb_prompt $" {
-	unsupported "inferior function call signaled"
-	return 0
-    }
-    -re "\[\r\n\]*The program being debugged was signaled.*\[\r\n\]+$gdb_prompt $" {
-	pass "inferior function call signaled"
-    }
+if {[gdb_test "call gen_signal ()"  \
+	 "\[\r\n\]*The program being debugged was signaled.*" \
+	 "inferior function call signaled"] != 0} {
+    return 0
 }
 
 set frame_number [get_dummy_frame_number]

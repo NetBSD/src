@@ -6,6 +6,9 @@ sinclude(../acx_configure_dir.m4)
 # This gets GDB_AC_LIBMCHECK.
 sinclude(../libmcheck.m4)
 
+# This gets AM_GDB_WARNINGS.
+sinclude(../warning.m4)
+
 dnl This gets autoconf bugfixes
 sinclude(../../config/override.m4)
 
@@ -25,6 +28,9 @@ m4_include(../libiberty.m4)
 
 dnl For --enable-build-with-cxx and COMPILER.
 m4_include(../build-with-cxx.m4)
+
+dnl For GDB_AC_PTRACE.
+m4_include(../ptrace.m4)
 
 dnl Check for existence of a type $1 in libthread_db.h
 dnl Based on BFD_HAVE_SYS_PROCFS_TYPE in bfd/bfd.m4.

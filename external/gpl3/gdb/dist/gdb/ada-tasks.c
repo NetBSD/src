@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2015 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -248,7 +248,8 @@ get_ada_tasks_pspace_data (struct program_space *pspace)
 {
   struct ada_tasks_pspace_data *data;
 
-  data = program_space_data (pspace, ada_tasks_pspace_data_handle);
+  data = ((struct ada_tasks_pspace_data *)
+	  program_space_data (pspace, ada_tasks_pspace_data_handle));
   if (data == NULL)
     {
       data = XCNEW (struct ada_tasks_pspace_data);
@@ -275,7 +276,8 @@ get_ada_tasks_inferior_data (struct inferior *inf)
 {
   struct ada_tasks_inferior_data *data;
 
-  data = inferior_data (inf, ada_tasks_inferior_data_handle);
+  data = ((struct ada_tasks_inferior_data *)
+	  inferior_data (inf, ada_tasks_inferior_data_handle));
   if (data == NULL)
     {
       data = XCNEW (struct ada_tasks_inferior_data);
@@ -471,23 +473,24 @@ get_tcb_types_info (void)
 
   struct symbol *atcb_sym =
     lookup_symbol_in_language (atcb_name, NULL, STRUCT_DOMAIN,
-			       language_c, NULL);
+			       language_c, NULL).symbol;
   const struct symbol *common_atcb_sym =
     lookup_symbol_in_language (common_atcb_name, NULL, STRUCT_DOMAIN,
-			       language_c, NULL);
+			       language_c, NULL).symbol;
   const struct symbol *private_data_sym =
     lookup_symbol_in_language (private_data_name, NULL, STRUCT_DOMAIN,
-			       language_c, NULL);
+			       language_c, NULL).symbol;
   const struct symbol *entry_call_record_sym =
     lookup_symbol_in_language (entry_call_record_name, NULL, STRUCT_DOMAIN,
-			       language_c, NULL);
+			       language_c, NULL).symbol;
 
   if (atcb_sym == NULL || atcb_sym->type == NULL)
     {
       /* In Ravenscar run-time libs, the  ATCB does not have a dynamic
          size, so the symbol name differs.  */
       atcb_sym = lookup_symbol_in_language (atcb_name_fixed, NULL,
-					    STRUCT_DOMAIN, language_c, NULL);
+					    STRUCT_DOMAIN, language_c,
+					    NULL).symbol;
 
       if (atcb_sym == NULL || atcb_sym->type == NULL)
         error (_("Cannot find Ada_Task_Control_Block type. Aborting"));
@@ -783,7 +786,7 @@ read_known_tasks_array (struct ada_tasks_inferior_data *data)
 {
   const int target_ptr_byte = TYPE_LENGTH (data->known_tasks_element);
   const int known_tasks_size = target_ptr_byte * data->known_tasks_length;
-  gdb_byte *known_tasks = alloca (known_tasks_size);
+  gdb_byte *known_tasks = (gdb_byte *) alloca (known_tasks_size);
   int i;
 
   /* Build a new list by reading the ATCBs from the Known_Tasks array
@@ -809,7 +812,7 @@ static int
 read_known_tasks_list (struct ada_tasks_inferior_data *data)
 {
   const int target_ptr_byte = TYPE_LENGTH (data->known_tasks_element);
-  gdb_byte *known_tasks = alloca (target_ptr_byte);
+  gdb_byte *known_tasks = (gdb_byte *) alloca (target_ptr_byte);
   CORE_ADDR task_id;
   const struct ada_tasks_pspace_data *pspace_data
     = get_ada_tasks_pspace_data (current_program_space);
@@ -863,7 +866,7 @@ ada_tasks_inferior_data_sniffer (struct ada_tasks_inferior_data *data)
 
       /* Try to get pointer type and array length from the symtab.  */
       sym = lookup_symbol_in_language (KNOWN_TASKS_NAME, NULL, VAR_DOMAIN,
-				       language_c, NULL);
+				       language_c, NULL).symbol;
       if (sym != NULL)
 	{
 	  /* Validate.  */
@@ -908,7 +911,7 @@ ada_tasks_inferior_data_sniffer (struct ada_tasks_inferior_data *data)
       data->known_tasks_length = 1;
 
       sym = lookup_symbol_in_language (KNOWN_TASKS_LIST, NULL, VAR_DOMAIN,
-				       language_c, NULL);
+				       language_c, NULL).symbol;
       if (sym != NULL && SYMBOL_VALUE_ADDRESS (sym) != 0)
 	{
 	  /* Validate.  */
@@ -1099,7 +1102,7 @@ print_ada_task_info (struct ui_out *uiout,
       /* Print the associated Thread ID.  */
       if (ui_out_is_mi_like_p (uiout))
         {
-	  const int thread_id = pid_to_thread_id (task_info->ptid);
+	  const int thread_id = ptid_to_global_thread_id (task_info->ptid);
 
 	  if (thread_id != 0)
 	    ui_out_field_int (uiout, "thread-id", thread_id);

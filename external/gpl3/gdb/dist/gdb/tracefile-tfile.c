@@ -1,6 +1,6 @@
 /* Trace file TFILE format support in GDB.
 
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,10 @@
 #include "exec.h" /* exec_bfd */
 #include "completer.h"
 #include "filenames.h"
+#include "remote.h"
+#include "xml-tdesc.h"
+#include "target-descriptions.h"
+#include "buffer.h"
 
 #ifndef O_LARGEFILE
 #define O_LARGEFILE 0
@@ -263,6 +267,42 @@ tfile_write_uploaded_tp (struct trace_file_writer *self,
 }
 
 /* This is the implementation of trace_file_write_ops method
+   write_tdesc.  */
+
+static void
+tfile_write_tdesc (struct trace_file_writer *self)
+{
+  struct tfile_trace_file_writer *writer
+    = (struct tfile_trace_file_writer *) self;
+  char *tdesc = target_fetch_description_xml (&current_target);
+  char *ptr = tdesc;
+  char *next;
+
+  if (tdesc == NULL)
+    return;
+
+  /* Write tdesc line by line, prefixing each line with "tdesc ".  */
+  while (ptr != NULL)
+    {
+      next = strchr (ptr, '\n');
+      if (next != NULL)
+	{
+	  fprintf (writer->fp, "tdesc %.*s\n", (int) (next - ptr), ptr);
+	  /* Skip the \n.  */
+	  next++;
+	}
+      else if (*ptr != '\0')
+	{
+	  /* Last line, doesn't have a newline.  */
+	  fprintf (writer->fp, "tdesc %s\n", ptr);
+	}
+      ptr = next;
+    }
+
+  xfree (tdesc);
+}
+
+/* This is the implementation of trace_file_write_ops method
    write_definition_end.  */
 
 static void
@@ -315,6 +355,7 @@ static const struct trace_file_write_ops tfile_write_ops =
   tfile_write_status,
   tfile_write_uploaded_tsv,
   tfile_write_uploaded_tp,
+  tfile_write_tdesc,
   tfile_write_definition_end,
   tfile_write_raw_data,
   NULL,
@@ -327,7 +368,7 @@ struct trace_file_writer *
 tfile_trace_file_writer_new (void)
 {
   struct tfile_trace_file_writer *writer
-    = xmalloc (sizeof (struct tfile_trace_file_writer));
+    = XNEW (struct tfile_trace_file_writer);
 
   writer->base.ops = &tfile_write_ops;
   writer->fp = NULL;
@@ -352,7 +393,9 @@ static off_t trace_frames_offset;
 static off_t cur_offset;
 static int cur_data_size;
 int trace_regblock_size;
+static struct buffer trace_tdesc;
 
+static void tfile_append_tdesc_line (const char *line);
 static void tfile_interp_line (char *line,
 			       struct uploaded_tp **utpp,
 			       struct uploaded_tsv **utsvp);
@@ -419,6 +462,9 @@ tfile_open (const char *arg, int from_tty)
   trace_filename = xstrdup (filename);
   trace_fd = scratch_chan;
 
+  /* Make sure this is clear.  */
+  buffer_free (&trace_tdesc);
+
   bytes = 0;
   /* Read the file header and test for validity.  */
   tfile_read ((gdb_byte *) &header, TRACE_HEADER_SIZE);
@@ -466,6 +512,9 @@ tfile_open (const char *arg, int from_tty)
 	  if (i >= 1000)
 	    error (_("Excessively long lines in trace file"));
 	}
+
+      /* By now, tdesc lines have been read from tfile - let's parse them.  */
+      target_find_description ();
 
       /* Record the starting offset of the binary trace data.  */
       trace_frames_offset = bytes;
@@ -530,6 +579,11 @@ tfile_interp_line (char *line, struct uploaded_tp **utpp,
       p += strlen ("tsv ");
       parse_tsv_definition (p, utsvp);
     }
+  else if (startswith (p, "tdesc "))
+    {
+      p += strlen ("tdesc ");
+      tfile_append_tdesc_line (p);
+    }
   else
     warning (_("Ignoring trace file definition \"%s\""), line);
 }
@@ -552,6 +606,7 @@ tfile_close (struct target_ops *self)
   trace_fd = -1;
   xfree (trace_filename);
   trace_filename = NULL;
+  buffer_free (&trace_tdesc);
 
   trace_reset_local_state ();
 }
@@ -713,7 +768,7 @@ typedef int (*walk_blocks_callback_func) (char blocktype, void *data);
 static int
 match_blocktype (char blocktype, void *data)
 {
-  char *wantedp = data;
+  char *wantedp = (char *) data;
 
   if (*wantedp == blocktype)
     return 1;
@@ -796,7 +851,7 @@ tfile_fetch_registers (struct target_ops *ops,
 		       struct regcache *regcache, int regno)
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  int offset, regn, regsize;
+  int offset, regn, regsize, dummy;
 
   /* An uninitialized reg size says we're not going to be
      successful at getting register blocks.  */
@@ -805,18 +860,19 @@ tfile_fetch_registers (struct target_ops *ops,
 
   if (traceframe_find_block_type ('R', 0) >= 0)
     {
-      gdb_byte *regs = alloca (trace_regblock_size);
+      gdb_byte *regs = (gdb_byte *) alloca (trace_regblock_size);
 
       tfile_read (regs, trace_regblock_size);
 
-      /* Assume the block is laid out in GDB register number order,
-	 each register with the size that it has in GDB.  */
-      offset = 0;
       for (regn = 0; regn < gdbarch_num_regs (gdbarch); regn++)
 	{
+	  if (!remote_register_number_and_offset (get_regcache_arch (regcache),
+						  regn, &dummy, &offset))
+	    continue;
+
 	  regsize = register_size (gdbarch, regn);
 	  /* Make sure we stay within block bounds.  */
-	  if (offset + regsize >= trace_regblock_size)
+	  if (offset + regsize > trace_regblock_size)
 	    break;
 	  if (regcache_register_status (regcache, regn) == REG_UNKNOWN)
 	    {
@@ -830,11 +886,37 @@ tfile_fetch_registers (struct target_ops *ops,
 		  regcache_raw_supply (regcache, regn, regs + offset);
 		}
 	    }
-	  offset += regsize;
 	}
     }
   else
     tracefile_fetch_registers (regcache, regno);
+}
+
+static enum target_xfer_status
+tfile_xfer_partial_features (struct target_ops *ops, const char *annex,
+			     gdb_byte *readbuf, const gdb_byte *writebuf,
+			     ULONGEST offset, ULONGEST len,
+			     ULONGEST *xfered_len)
+{
+  if (strcmp (annex, "target.xml"))
+    return TARGET_XFER_E_IO;
+
+  if (readbuf == NULL)
+    error (_("tfile_xfer_partial: tdesc is read-only"));
+
+  if (trace_tdesc.used_size == 0)
+    return TARGET_XFER_E_IO;
+
+  if (offset >= trace_tdesc.used_size)
+    return TARGET_XFER_EOF;
+
+  if (len > trace_tdesc.used_size - offset)
+    len = trace_tdesc.used_size - offset;
+
+  memcpy (readbuf, trace_tdesc.buffer + offset, len);
+  *xfered_len = len;
+
+  return TARGET_XFER_OK;
 }
 
 static enum target_xfer_status
@@ -843,7 +925,10 @@ tfile_xfer_partial (struct target_ops *ops, enum target_object object,
 		    const gdb_byte *writebuf, ULONGEST offset, ULONGEST len,
 		    ULONGEST *xfered_len)
 {
-  /* We're only doing regular memory for now.  */
+  /* We're only doing regular memory and tdesc for now.  */
+  if (object == TARGET_OBJECT_AVAILABLE_FEATURES)
+    return tfile_xfer_partial_features (ops, annex, readbuf, writebuf,
+					offset, len, xfered_len);
   if (object != TARGET_OBJECT_MEMORY)
     return TARGET_XFER_E_IO;
 
@@ -966,7 +1051,7 @@ tfile_get_trace_state_variable_value (struct target_ops *self,
 static int
 build_traceframe_info (char blocktype, void *data)
 {
-  struct traceframe_info *info = data;
+  struct traceframe_info *info = (struct traceframe_info *) data;
 
   switch (blocktype)
     {
@@ -1021,6 +1106,16 @@ tfile_traceframe_info (struct target_ops *self)
 
   traceframe_walk_blocks (build_traceframe_info, 0, info);
   return info;
+}
+
+/* Handles tdesc lines from tfile by appending the payload to
+   a global trace_tdesc variable.  */
+
+static void
+tfile_append_tdesc_line (const char *line)
+{
+  buffer_grow_str (&trace_tdesc, line);
+  buffer_grow_str (&trace_tdesc, "\n");
 }
 
 static void

@@ -1,3 +1,8 @@
+2015-10-12  James Bowman  <james.bowman@ftdichip.com>
+
+	* basic.s: Add test for memory size link parameters.
+	Add test for program memory write port.
+
 2015-02-28  James Bowman  <james.bowman@ftdichip.com>
 
 	* basic.s, allinsn.exp, testutils.inc: New files.

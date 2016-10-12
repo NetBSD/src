@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,17 +78,38 @@ mi_gdb_test "-catch-exception" \
             "\\^done,bkptno=\"$decimal\",bkpt={.*disp=\"keep\",enabled=\"y\",addr=\"$hex\",what=\"all Ada exceptions\",.*}" \
             "catch all exceptions"
 
-mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"CONSTRAINT_ERROR" \
-              "foo" "" ".*" ".*" \
-              ".*" \
-              "continue until CE caught by all-exceptions catchpoint"
+# Continue to caught exception.
 
-mi_execute_to "exec-continue" \
-              "breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"PROGRAM_ERROR" \
-              "foo" "" ".*" ".*" \
-              ".*" \
-              "continue until PE caught by all-exceptions catchpoint"
+proc continue_to_exception { exception_name test } {
+    global hex any_nb
+
+    mi_send_resuming_command "exec-continue" "$test"
+
+    # Match console stream output.
+    gdb_expect {
+	-re " $exception_name at $hex in foo " {
+	}
+	timeout {
+	    fail "$test (timeout)"
+	    return -1
+	}
+    }
+
+    # Now MI stream output.
+    mi_expect_stop \
+	"breakpoint-hit\",disp=\"keep\",bkptno=\"$any_nb\",exception-name=\"$exception_name" \
+	"foo" "" ".*" ".*" \
+	".*" \
+	$test
+}
+
+continue_to_exception \
+    "CONSTRAINT_ERROR" \
+    "continue until CE caught by all-exceptions catchpoint"
+
+continue_to_exception \
+    "PROGRAM_ERROR" \
+    "continue until PE caught by all-exceptions catchpoint"
 
 ################################################
 # 2. Try catching only some of the exceptions. #

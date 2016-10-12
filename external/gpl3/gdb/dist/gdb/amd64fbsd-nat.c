@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/amd64.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@
 #include "fbsd-nat.h"
 #include "amd64-tdep.h"
 #include "amd64-nat.h"
-#include "amd64bsd-nat.h"
+#include "x86bsd-nat.h"
 #include "x86-nat.h"
 
 
@@ -140,17 +140,6 @@ amd64fbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 }
 
 
-static void (*super_mourn_inferior) (struct target_ops *ops);
-
-static void
-amd64fbsd_mourn_inferior (struct target_ops *ops)
-{
-#ifdef HAVE_PT_GETDBREGS
-  x86_cleanup_dregs ();
-#endif
-  super_mourn_inferior (ops);
-}
-
 /* Implement the to_read_description method.  */
 
 static const struct target_desc *
@@ -175,13 +164,13 @@ amd64fbsd_read_description (struct target_ops *ops)
       if (ptrace (PT_GETXSTATE_INFO, ptid_get_pid (inferior_ptid),
 		  (PTRACE_TYPE_ARG3) &info, sizeof (info)) == 0)
 	{
-	  amd64bsd_xsave_len = info.xsave_len;
+	  x86bsd_xsave_len = info.xsave_len;
 	  xcr0 = info.xsave_mask;
 	}
       xsave_probed = 1;
     }
 
-  if (amd64bsd_xsave_len != 0)
+  if (x86bsd_xsave_len != 0)
     {
       if (is64)
 	return amd64_target_description (xcr0);
@@ -209,22 +198,6 @@ _initialize_amd64fbsd_nat (void)
 
   /* Add some extra features to the common *BSD/i386 target.  */
   t = amd64bsd_target ();
-
-#ifdef HAVE_PT_GETDBREGS
-
-  x86_use_watchpoints (t);
-
-  x86_dr_low.set_control = amd64bsd_dr_set_control;
-  x86_dr_low.set_addr = amd64bsd_dr_set_addr;
-  x86_dr_low.get_addr = amd64bsd_dr_get_addr;
-  x86_dr_low.get_status = amd64bsd_dr_get_status;
-  x86_dr_low.get_control = amd64bsd_dr_get_control;
-  x86_set_debug_register_length (8);
-
-#endif /* HAVE_PT_GETDBREGS */
-
-  super_mourn_inferior = t->to_mourn_inferior;
-  t->to_mourn_inferior = amd64fbsd_mourn_inferior;
   t->to_read_description = amd64fbsd_read_description;
 
   fbsd_nat_add_target (t);

@@ -1,6 +1,6 @@
 /* Code dealing with register stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,7 +46,8 @@ sentinel_frame_prev_register (struct frame_info *this_frame,
 			      void **this_prologue_cache,
 			      int regnum)
 {
-  struct frame_unwind_cache *cache = *this_prologue_cache;
+  struct frame_unwind_cache *cache
+    = (struct frame_unwind_cache *) *this_prologue_cache;
   struct value *value;
 
   value = regcache_cooked_read_value (cache->regcache, regnum);
@@ -70,7 +71,8 @@ static struct gdbarch *
 sentinel_frame_prev_arch (struct frame_info *this_frame,
 			  void **this_prologue_cache)
 {
-  struct frame_unwind_cache *cache = *this_prologue_cache;
+  struct frame_unwind_cache *cache
+    = (struct frame_unwind_cache *) *this_prologue_cache;
 
   return get_regcache_arch (cache->regcache);
 }

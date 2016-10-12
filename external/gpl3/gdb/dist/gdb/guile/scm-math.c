@@ -1,6 +1,6 @@
 /* GDB/Scheme support for math operations on values.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -186,9 +186,9 @@ vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	    struct type *ltype = value_type (arg1);
 	    struct type *rtype = value_type (arg2);
 
-	    CHECK_TYPEDEF (ltype);
+	    ltype = check_typedef (ltype);
 	    ltype = STRIP_REFERENCE (ltype);
-	    CHECK_TYPEDEF (rtype);
+	    rtype = check_typedef (rtype);
 	    rtype = STRIP_REFERENCE (rtype);
 
 	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
@@ -206,9 +206,9 @@ vlscm_binop (enum valscm_binary_opcode opcode, SCM x, SCM y,
 	    struct type *ltype = value_type (arg1);
 	    struct type *rtype = value_type (arg2);
 
-	    CHECK_TYPEDEF (ltype);
+	    ltype = check_typedef (ltype);
 	    ltype = STRIP_REFERENCE (ltype);
-	    CHECK_TYPEDEF (rtype);
+	    rtype = check_typedef (rtype);
 	    rtype = STRIP_REFERENCE (rtype);
 
 	    if (TYPE_CODE (ltype) == TYPE_CODE_PTR
@@ -905,99 +905,99 @@ vlscm_convert_value_from_scheme (const char *func_name,
 
 static const scheme_function math_functions[] =
 {
-  { "value-add", 2, 0, 0, gdbscm_value_add,
+  { "value-add", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_add),
     "\
 Return a + b." },
 
-  { "value-sub", 2, 0, 0, gdbscm_value_sub,
+  { "value-sub", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_sub),
     "\
 Return a - b." },
 
-  { "value-mul", 2, 0, 0, gdbscm_value_mul,
+  { "value-mul", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_mul),
     "\
 Return a * b." },
 
-  { "value-div", 2, 0, 0, gdbscm_value_div,
+  { "value-div", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_div),
     "\
 Return a / b." },
 
-  { "value-rem", 2, 0, 0, gdbscm_value_rem,
+  { "value-rem", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_rem),
     "\
 Return a % b." },
 
-  { "value-mod", 2, 0, 0, gdbscm_value_mod,
+  { "value-mod", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_mod),
     "\
 Return a mod b.  See Knuth 1.2.4." },
 
-  { "value-pow", 2, 0, 0, gdbscm_value_pow,
+  { "value-pow", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_pow),
     "\
 Return pow (x, y)." },
 
-  { "value-not", 1, 0, 0, gdbscm_value_not,
+  { "value-not", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_not),
     "\
 Return !a." },
 
-  { "value-neg", 1, 0, 0, gdbscm_value_neg,
+  { "value-neg", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_neg),
     "\
 Return -a." },
 
-  { "value-pos", 1, 0, 0, gdbscm_value_pos,
+  { "value-pos", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_pos),
     "\
 Return a." },
 
-  { "value-abs", 1, 0, 0, gdbscm_value_abs,
+  { "value-abs", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_abs),
     "\
 Return abs (a)." },
 
-  { "value-lsh", 2, 0, 0, gdbscm_value_lsh,
+  { "value-lsh", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_lsh),
     "\
 Return a << b." },
 
-  { "value-rsh", 2, 0, 0, gdbscm_value_rsh,
+  { "value-rsh", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_rsh),
     "\
 Return a >> b." },
 
-  { "value-min", 2, 0, 0, gdbscm_value_min,
+  { "value-min", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_min),
     "\
 Return min (a, b)." },
 
-  { "value-max", 2, 0, 0, gdbscm_value_max,
+  { "value-max", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_max),
     "\
 Return max (a, b)." },
 
-  { "value-lognot", 1, 0, 0, gdbscm_value_lognot,
+  { "value-lognot", 1, 0, 0, as_a_scm_t_subr (gdbscm_value_lognot),
     "\
 Return ~a." },
 
-  { "value-logand", 2, 0, 0, gdbscm_value_logand,
+  { "value-logand", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_logand),
     "\
 Return a & b." },
 
-  { "value-logior", 2, 0, 0, gdbscm_value_logior,
+  { "value-logior", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_logior),
     "\
 Return a | b." },
 
-  { "value-logxor", 2, 0, 0, gdbscm_value_logxor,
+  { "value-logxor", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_logxor),
     "\
 Return a ^ b." },
 
-  { "value=?", 2, 0, 0, gdbscm_value_eq_p,
+  { "value=?", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_eq_p),
     "\
 Return a == b." },
 
-  { "value<?", 2, 0, 0, gdbscm_value_lt_p,
+  { "value<?", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_lt_p),
     "\
 Return a < b." },
 
-  { "value<=?", 2, 0, 0, gdbscm_value_le_p,
+  { "value<=?", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_le_p),
     "\
 Return a <= b." },
 
-  { "value>?", 2, 0, 0, gdbscm_value_gt_p,
+  { "value>?", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_gt_p),
     "\
 Return a > b." },
 
-  { "value>=?", 2, 0, 0, gdbscm_value_ge_p,
+  { "value>=?", 2, 0, 0, as_a_scm_t_subr (gdbscm_value_ge_p),
     "\
 Return a >= b." },
 

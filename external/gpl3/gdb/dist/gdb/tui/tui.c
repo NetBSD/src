@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -38,6 +38,7 @@
 #include "symtab.h"
 #include "source.h"
 #include "terminal.h"
+#include "top.h"
 
 #include <ctype.h>
 #include <signal.h>
@@ -302,7 +303,8 @@ static int
 tui_rl_startup_hook (void)
 {
   rl_already_prompted = 1;
-  if (tui_current_key_mode != TUI_COMMAND_MODE && immediate_quit == 0)
+  if (tui_current_key_mode != TUI_COMMAND_MODE
+      && !gdb_in_secondary_prompt_p (current_ui))
     tui_set_key_mode (TUI_SINGLE_KEY_MODE);
   tui_redisplay_readline ();
   return 0;
@@ -396,8 +398,6 @@ gdb_getenv_term (void)
 void
 tui_enable (void)
 {
-  struct interp *interp;
-
   if (tui_active)
     return;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -35,7 +35,27 @@ btrace_format_string (enum btrace_format format)
       return _("Branch Trace Store");
 
     case BTRACE_FORMAT_PT:
-      return _("Intel(R) Processor Trace");
+      return _("Intel Processor Trace");
+    }
+
+  internal_error (__FILE__, __LINE__, _("Unknown branch trace format"));
+}
+
+/* See btrace-common.h.  */
+
+const char *
+btrace_format_short_string (enum btrace_format format)
+{
+  switch (format)
+    {
+    case BTRACE_FORMAT_NONE:
+      return "unknown";
+
+    case BTRACE_FORMAT_BTS:
+      return "bts";
+
+    case BTRACE_FORMAT_PT:
+      return "pt";
     }
 
   internal_error (__FILE__, __LINE__, _("Unknown branch trace format"));
@@ -155,13 +175,13 @@ btrace_data_append (struct btrace_data *dst,
 	  dst->variant.pt.size = 0;
 
 	  /* fall-through.  */
-	case BTRACE_FORMAT_BTS:
+	case BTRACE_FORMAT_PT:
 	  {
 	    gdb_byte *data;
-	    unsigned long size;
+	    size_t size;
 
 	    size = src->variant.pt.size + dst->variant.pt.size;
-	    data = xmalloc (size);
+	    data = (gdb_byte *) xmalloc (size);
 
 	    memcpy (data, dst->variant.pt.data, dst->variant.pt.size);
 	    memcpy (data + dst->variant.pt.size, src->variant.pt.data,

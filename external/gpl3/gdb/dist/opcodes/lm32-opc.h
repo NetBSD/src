@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright (C) 1996-2015 Free Software Foundation, Inc.
+Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 
@@ -31,7 +31,7 @@ This file is part of the GNU Binutils and/or GDB, the GNU debugger.
 #define CGEN_VERBOSE_ASSEMBLER_ERRORS
 
 #define CGEN_DIS_HASH_SIZE 64
-#define CGEN_DIS_HASH(buf,value) ((value >> 26) & 0x3f) 
+#define CGEN_DIS_HASH(buf,value) ((value >> 26) & 0x3f)
 
 /* -- asm.c */
 /* Enum declaration for lm32 instruction types.  */

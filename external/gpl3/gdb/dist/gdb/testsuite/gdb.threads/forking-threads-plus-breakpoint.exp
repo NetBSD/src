@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Free Software Foundation, Inc.
+# Copyright (C) 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,13 +24,49 @@ if {[build_executable "failed to prepare" $testfile $srcfile {debug pthreads}] =
     return -1
 }
 
+# Assume yes.
+set displaced_stepping_supported 1
+
+# "set displaced on" only tells gdb to use displaced stepping if
+# possible.  Probe for actual support.
+
+proc probe_displaced_stepping_support {} {
+    global displaced_stepping_supported
+    global binfile gdb_prompt
+
+    with_test_prefix "probe displaced-stepping support" {
+	clean_restart $binfile
+
+	gdb_test_no_output "set displaced on"
+	if ![runto_main] then {
+	    fail "Can't run to main"
+	    return 0
+	}
+
+	# We're stopped at the main breakpoint.  If displaced stepping is
+	# supported, we'll see related debug output while we step past
+	# that breakpoint.
+	gdb_test_no_output "set debug displaced 1"
+	gdb_test_multiple "next" "probe" {
+	    -re "displaced pc to.*$gdb_prompt $" {
+		pass "supported"
+	    }
+	    -re ".*$gdb_prompt $" {
+		set displaced_stepping_supported 0
+		pass "not supported"
+	    }
+	}
+    }
+}
+
 # The test proper.  If COND_BP_TARGET is true, then test with
 # conditional breakpoints evaluated on the target side, if possible.
 # DETACH_ON_FORK is used as value for the "set detach-on-fork"
 # setting.  If "on", this exercises GDB explicitly continuing the fork
 # child until exit.  If "off", this exercises GDB detaching the fork
-# child.
-proc do_test { cond_bp_target detach_on_fork } {
+# child.  DISPLACED indicates whether to use displaced stepping or
+# not.
+proc do_test { cond_bp_target detach_on_fork displaced } {
     global GDBFLAGS
     global srcfile testfile binfile
     global decimal gdb_prompt
@@ -47,7 +83,23 @@ proc do_test { cond_bp_target detach_on_fork } {
 	return 0
     }
 
+    if {$cond_bp_target} {
+	set test "set breakpoint condition-evaluation target"
+	gdb_test_multiple $test $test {
+	    -re "warning: Target does not support breakpoint condition evaluation.\r\nUsing host evaluation mode instead.\r\n$gdb_prompt $" {
+		# Target doesn't support breakpoint condition
+		# evaluation on its side.  Skip the test.
+		return 0
+	    }
+	    -re "^$test\r\n$gdb_prompt $" {
+	    }
+	}
+    } else {
+	gdb_test_no_output "set breakpoint condition-evaluation host"
+    }
+
     gdb_test_no_output "set detach-on-fork $detach_on_fork"
+    gdb_test_no_output "set displaced $displaced"
 
     gdb_test "break $linenum if zero == 1" \
 	"Breakpoint .*" \
@@ -63,18 +115,20 @@ proc do_test { cond_bp_target detach_on_fork } {
     set fork_count 0
     set ok 0
 
-    set test "inferior 1 exited"
-    gdb_test_multiple "" $test {
-	-re "Inferior 1 \(\[^\r\n\]+\) exited normally" {
-	    set ok 1
-	    pass $test
-	}
-	-re "Inferior $decimal \(\[^\r\n\]+\) exited normally" {
-	    incr fork_count
-	    if {$fork_count <= 100} {
-		exp_continue
-	    } else {
-		fail "$test (too many forks)"
+    with_timeout_factor 10 {
+        set test "inferior 1 exited"
+        gdb_test_multiple "" $test {
+	    -re "Inferior 1 \(\[^\r\n\]+\) exited normally" {
+	        set ok 1
+	        pass $test
+	    }
+	    -re "Inferior $decimal \(\[^\r\n\]+\) exited normally" {
+	        incr fork_count
+	        if {$fork_count <= 100} {
+		    exp_continue
+	        } else {
+		    fail "$test (too many forks)"
+	        }
 	    }
 	}
     }
@@ -92,26 +146,24 @@ proc do_test { cond_bp_target detach_on_fork } {
 	"only inferior 1 left"
 }
 
-# Wrapper for foreach that calls with_test_prefix on each iteration,
-# including the iterator's current value in the prefix.
-
-proc foreach_with_prefix {var list body} {
-    upvar 1 $var myvar
-    foreach myvar $list {
-	with_test_prefix "$var=$myvar" {
-	    uplevel 1 $body
-	}
-    }
-}
+probe_displaced_stepping_support
 
 foreach_with_prefix cond_bp_target {1 0} {
     foreach_with_prefix detach_on_fork {"on" "off"} {
-	do_test $cond_bp_target $detach_on_fork
-
 	# Disable "off" for now.  The test does pass with
 	# detach-on-fork off (at the time of writing), but gdb seems
 	# to slow down quadratically as inferiors are created, and
 	# then the test takes annoyingly long to complete...
-	break
+	if {$detach_on_fork == "off"} {
+	    continue
+	}
+
+	foreach_with_prefix displaced {"on" "off"} {
+	    if {$displaced == "on" && !$displaced_stepping_supported} {
+		continue
+	    }
+
+	    do_test $cond_bp_target $detach_on_fork $displaced
+	}
     }
 }

@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,21 +23,12 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
-    continue
-}
-
 standard_testfile basics.c
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != "" } {
      untested mi-break.exp
      return -1
 }
-
-mi_delete_breakpoints
-mi_gdb_reinitialize_dir $srcdir/$subdir
-mi_gdb_load ${binfile}
 
 # Locate line numbers in basics.c.
 set line_callee4_head  [gdb_get_line_number "callee4 ("]
@@ -292,9 +283,25 @@ proc test_breakpoint_commands {} {
 
     mi_send_resuming_command "exec-continue" "breakpoint commands: continue"
 
-    set test "intermediate stop and continue"
+
+    # The breakpoint command's output is always sent to the main UI,
+    # even when testing with MI running on a secondary UI.
+    global gdb_main_spawn_id
+
+    set test "intermediate stop and continue, bp commands"
     gdb_expect {
-        -re ".*\\\$1 = 0.*\\\$10 = 9.*\\*running" {
+	-i $gdb_main_spawn_id
+	-re ".*\\\$1 = 0.*\\\$10 = 9" {
+	    pass $test
+	}
+	timeout {
+	    fail $test
+	}
+    }
+
+    set test "intermediate stop and continue, mi running"
+    gdb_expect {
+        -re "\\*running" {
 	    pass $test
 	}
         timeout {
@@ -305,18 +312,120 @@ proc test_breakpoint_commands {} {
     mi_expect_stop "exited-normally" "" "" "" "" "" "test hitting breakpoint with commands"
 }
 
-test_tbreak_creation_and_listing
-test_rbreak_creation_and_listing
+# Test explicit breakpoints.  These tests only test the MI portion of the
+# code.  In-depth testing of explicit breakpoints is accomplished in
+# gdb.linespec tests.
 
-test_ignore_count
+proc test_explicit_breakpoints {} {
+    global srcfile
+    global line_callee3_head line_callee4_head
+    global line_callee2_body line_main_body
 
-test_error
+    mi_delete_breakpoints
 
-test_disabled_creation
+    # First check mixed explicit/parsed linespecs.
+    mi_gdb_test "-break-insert --function main $srcfile:$line_callee3_head" \
+	".*Garbage following explicit linespec"
 
-test_breakpoint_commands
+    # Insert some breakpoints and list them
+    # Also, disable some so they do not interfere with other tests
+    # Tests:
+    # -break-insert -t --function main
+    # -break-insert -t --source basics.c --function callee2
+    # -break-insert -t --source basics.c --line $line_callee3_head
+    # -break-insert -t --source srcfile --line $line_callee4_head
+    # -break-list
 
-test_abreak_creation
+    set bps {}
+    lappend bps [mi_create_breakpoint "-t --function main" \
+		     "insert temp explicit breakpoint in main" \
+		     -func main -file ".*$srcfile" -line $line_main_body]
 
-mi_gdb_exit
-return 0
+    lappend bps \
+	[mi_create_breakpoint "-t --source $srcfile --function callee2" \
+	     "insert temp explicit breakpoint at $srcfile:callee2" \
+	     -func callee2 -file ".*$srcfile" -line $line_callee2_body]
+
+    lappend bps \
+	[mi_create_breakpoint "-t --source $srcfile --line $line_callee3_head" \
+	     "insert temp explicit breakpoint at $srcfile:$line_callee3_head" \
+	     -func callee3 -file ".*$srcfile" -line $line_callee3_head]
+
+    lappend bps \
+	[mi_create_breakpoint \
+	     "-t --source \"$srcfile\" --line  $line_callee4_head" \
+	     "insert temp explicit breakpoint at \"$srcfile\":$line_callee4_head" \
+	     -func callee4 -file ".*$srcfile" -line $line_callee4_head]
+
+    mi_gdb_test "-break-list" "\\^done,[mi_make_breakpoint_table $bps]" \
+	"list of explicit breakpoints"
+
+    mi_gdb_test "-break-delete" \
+	    "\\^done" \
+	    "delete temp breakpoints"
+
+    mi_create_breakpoint "-c \"intarg == 3\" --function callee2" \
+	"insert explicit conditional breakpoint in callee2" \
+	-func callee2 ".*$srcfile" -line $line_callee2_body \
+	-cond "intarg == 3"
+
+    # mi_create_breakpoint cannot deal with displaying canonical
+    # linespecs.
+    mi_gdb_test \
+	"-break-insert -c \"foo == 3\" --source $srcfile --function main --label label" \
+	".*No symbol \"foo\" in current context.*"
+
+    mi_gdb_test \
+	"-break-insert --source foobar.c --line 3" \
+	".*No source file named foobar.c.*"
+
+    mi_gdb_test \
+	"-break-insert --source $srcfile --function foobar" \
+	".*Function \"foobar\" not defined in \"$srcfile\".*"
+
+    mi_gdb_test \
+	"-break-insert --source $srcfile --function main --label foobar" \
+	".*No label \"foobar\" defined in function \"main\".*"
+
+    mi_gdb_test \
+	"-break-insert --source $srcfile" \
+	".*Source filename requires function, label, or line offset.*"
+}
+
+proc test_break {mi_mode} {
+    global srcdir subdir binfile
+
+    mi_gdb_exit
+
+    if {$mi_mode == "separate"} {
+	set start_ops "separate-mi-tty"
+    } else {
+	set start_ops ""
+    }
+    if [mi_gdb_start $start_ops] {
+	return
+    }
+
+    mi_delete_breakpoints
+    mi_gdb_reinitialize_dir $srcdir/$subdir
+    mi_gdb_load ${binfile}
+
+    test_tbreak_creation_and_listing
+    test_rbreak_creation_and_listing
+
+    test_ignore_count
+
+    test_error
+
+    test_disabled_creation
+
+    test_breakpoint_commands
+
+    test_abreak_creation
+
+    test_explicit_breakpoints
+}
+
+foreach_with_prefix mi-mode {"main" "separate"} {
+    test_break ${mi-mode}
+}

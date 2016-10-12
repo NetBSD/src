@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    Contributed by AdaCore.
 
@@ -162,7 +162,6 @@ macho_symtab_read (struct objfile *objfile,
 		   VEC (oso_el) **oso_vector_ptr)
 {
   long i;
-  const asymbol *dir_so = NULL;
   const asymbol *file_so = NULL;
   asymbol **oso_file = NULL;
   unsigned int nbr_syms = 0;
@@ -208,7 +207,6 @@ macho_symtab_read (struct objfile *objfile,
               else
                 {
                   file_so = sym;
-                  dir_so = NULL;
                   state = S_FIRST_SO;
                 }
             }
@@ -245,7 +243,6 @@ macho_symtab_read (struct objfile *objfile,
               else if (state == S_FIRST_SO)
                 {
                   /* Second SO stab for the file name.  */
-                  dir_so = file_so;
                   file_so = sym;
                   state = S_SECOND_SO;
                 }
@@ -292,7 +289,6 @@ macho_symtab_read (struct objfile *objfile,
                 {
                   complaint (&symfile_complaints, _("Missing nul SO"));
                   file_so = sym;
-                  dir_so = NULL;
                   state = S_FIRST_SO;
                 }
             }
@@ -783,7 +779,7 @@ macho_check_dsym (struct objfile *objfile, char **filenamep)
   size_t dsym_len = strlen (DSYM_SUFFIX);
   const char *base_name = lbasename (objfile_name (objfile));
   size_t base_len = strlen (base_name);
-  char *dsym_filename = alloca (name_len + dsym_len + base_len + 1);
+  char *dsym_filename = (char *) alloca (name_len + dsym_len + base_len + 1);
   bfd *dsym_bfd;
   bfd_mach_o_load_command *main_uuid;
   bfd_mach_o_load_command *dsym_uuid;
@@ -838,7 +834,6 @@ static void
 macho_symfile_read (struct objfile *objfile, int symfile_flags)
 {
   bfd *abfd = objfile->obfd;
-  CORE_ADDR offset;
   long storage_needed;
   bfd *dsym_bfd;
   VEC (oso_el) *oso_vector = NULL;
@@ -891,8 +886,6 @@ macho_symfile_read (struct objfile *objfile, int symfile_flags)
       dsym_bfd = macho_check_dsym (objfile, &dsym_filename);
       if (dsym_bfd != NULL)
 	{
-	  int ix;
-	  oso_el *oso;
           struct bfd_section *asect, *dsect;
 
 	  make_cleanup (xfree, dsym_filename);
@@ -963,7 +956,6 @@ macho_symfile_offsets (struct objfile *objfile,
                        const struct section_addr_info *addrs)
 {
   unsigned int i;
-  unsigned int num_sections;
   struct obj_section *osect;
 
   /* Allocate section_offsets.  */

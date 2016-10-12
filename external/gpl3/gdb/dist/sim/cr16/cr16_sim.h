@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 
    This file is part of GDB, the GNU debugger.
@@ -66,7 +66,7 @@ struct simops
   uint32 opcode;
   int format;
   char fname[12];
-  void (*func)();
+  void (*func)(SIM_DESC, SIM_CPU *);
   int numops;
   operand_desc operands[4];
 };
@@ -198,37 +198,6 @@ enum {
     } \
   while (0)
 
-/* cr16 memory: There are three separate cr16 memory regions IMEM,
-   UMEM and DMEM.  The IMEM and DMEM are further broken down into
-   blocks (very like VM pages). */
-
-enum
-{
-  IMAP_BLOCK_SIZE = 0x2000000,
-  DMAP_BLOCK_SIZE = 0x4000000
-};
-
-/* Implement the three memory regions using sparse arrays.  Allocate
-   memory using ``segments''.  A segment must be at least as large as
-   a BLOCK - ensures that an access that doesn't cross a block
-   boundary can't cross a segment boundary */
-
-enum
-{
-  SEGMENT_SIZE = 0x2000000, /* 128KB - MAX(IMAP_BLOCK_SIZE,DMAP_BLOCK_SIZE) */
-  IMEM_SEGMENTS = 8, /* 1MB */
-  DMEM_SEGMENTS = 8, /* 1MB */
-  UMEM_SEGMENTS = 128 /* 16MB */
-};
-
-struct cr16_memory
-{
-  uint8 *insn[IMEM_SEGMENTS];
-  uint8 *data[DMEM_SEGMENTS];
-  uint8 *unif[UMEM_SEGMENTS];
-  uint8 fault[16];
-};
-
 struct _state
 {
   creg_t regs[16];		/* general-purpose registers */
@@ -251,8 +220,8 @@ struct _state
 
   creg_t cregs[16];		/* control registers */
 #define CREG(N) (State.cregs[(N)] + 0)
-#define SET_CREG(N,VAL) move_to_cr ((N), 0, (VAL), 0)
-#define SET_HW_CREG(N,VAL) move_to_cr ((N), 0, (VAL), 1)
+#define SET_CREG(N,VAL) move_to_cr (sd, cpu, (N), 0, (VAL), 0)
+#define SET_HW_CREG(N,VAL) move_to_cr (sd, cpu, (N), 0, (VAL), 1)
 
   reg_t sp[2];                  /* holding area for SPI(0)/SPU(1) */
 #define HELD_SP(N) (State.sp[(N)] + 0)
@@ -267,21 +236,16 @@ struct _state
     uint16 psw;
   } trace;
 
-  uint8 exe;
-  int	exception;
   int	pc_changed;
 
   /* NOTE: everything below this line is not reset by
      sim_create_inferior() */
-
-  struct cr16_memory mem;
 
   enum _ins_type ins_type;
 
 } State;
 
 
-extern host_callback *cr16_callback;
 extern uint32 OP[4];
 extern uint32 sign_flag;
 extern struct simops Simops[];
@@ -318,7 +282,7 @@ enum
 #define PSR CREG (PSR_CR)
 #define SET_PSR(VAL) SET_CREG (PSR_CR, (VAL))
 #define SET_HW_PSR(VAL) SET_HW_CREG (PSR_CR, (VAL))
-#define SET_PSR_BIT(MASK,VAL) move_to_cr (PSR_CR, ~((creg_t) MASK), (VAL) ? (MASK) : 0, 1)
+#define SET_PSR_BIT(MASK,VAL) move_to_cr (sd, cpu, PSR_CR, ~((creg_t) MASK), (VAL) ? (MASK) : 0, 1)
 
 #define PSR_SM ((PSR & PSR_SM_BIT) != 0)
 #define SET_PSR_SM(VAL) SET_PSR_BIT (PSR_SM_BIT, (VAL))
@@ -421,35 +385,19 @@ enum
 /* sign-extend a 32-bit number */
 #define SEXT32(x)	((((x)&0xffffffff)^(~0x7fffffff))+0x80000000)
 
-extern uint8 *dmem_addr (uint32 offset);
-extern uint8 *imem_addr (uint32);
-extern bfd_vma decode_pc (void);
+#define SB(addr, data)		sim_core_write_1 (cpu, PC, read_map, addr, data)
+#define RB(addr)		sim_core_read_1 (cpu, PC, read_map, addr)
+#define SW(addr, data)		sim_core_write_unaligned_2 (cpu, PC, read_map, addr, data)
+#define RW(addr)		sim_core_read_unaligned_2 (cpu, PC, read_map, addr)
+#define SLW(addr, data)		sim_core_write_unaligned_4 (cpu, PC, read_map, addr, data)
 
-#define	RB(x)	(*(dmem_addr(x)))
-#define SB(addr,data)	( RB(addr) = (data & 0xff))
-
-#if defined(__GNUC__) && defined(__OPTIMIZE__) && !defined(NO_ENDIAN_INLINE)
-#define ENDIAN_INLINE static __inline__
-#include "endian.c"
-#undef ENDIAN_INLINE
-
-#else
-extern uint32 get_longword (uint8 *);
-extern uint16 get_word (uint8 *);
-extern int64 get_longlong (uint8 *);
-extern void write_word (uint8 *addr, uint16 data);
-extern void write_longword (uint8 *addr, uint32 data);
-extern void write_longlong (uint8 *addr, int64 data);
-#endif
-
-#define SW(addr,data)		write_word(dmem_addr(addr),data)
-#define RW(x)			get_word(dmem_addr(x))
-#define SLW(addr,data)  	write_longword(dmem_addr(addr),data)
-#define RLW(x)			get_longword(dmem_addr(x))
-#define READ_16(x)		get_word(x)
-#define WRITE_16(addr,data)	write_word(addr,data)
-#define READ_64(x)		get_longlong(x)
-#define WRITE_64(addr,data)	write_longlong(addr,data)
+/* Yes, this is as whacked as it looks.  The sim currently reads little endian
+   for 16 bits, but then merge them like big endian to get 32 bits.  */
+static inline uint32 get_longword (SIM_CPU *cpu, address_word addr)
+{
+  return (RW (addr) << 16) | RW (addr + 2);
+}
+#define RLW(addr)		get_longword (cpu, addr)
 
 #define JMP(x)			do { SET_PC (x); State.pc_changed = 1; } while (0)
 
@@ -472,7 +420,7 @@ extern void write_longlong (uint8 *addr, int64 data);
    (VAL & ~MASK)).  In addition, unless PSR_HW_P, a VAL intended for
    PSR is masked for zero bits. */
 
-extern creg_t move_to_cr (int cr, creg_t mask, creg_t val, int psw_hw_p);
+extern creg_t move_to_cr (SIM_DESC, SIM_CPU *, int cr, creg_t mask, creg_t val, int psw_hw_p);
 
 #ifndef SIGTRAP
 #define SIGTRAP 5

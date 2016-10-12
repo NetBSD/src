@@ -1,7 +1,7 @@
 /* GNU/Linux/x86 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "server.h"
 #include <sys/mman.h>
 #include "tracepoint.h"
+#include "linux-x86-tdesc.h"
 
 /* GDB register numbers.  */
 
@@ -46,10 +47,6 @@ enum i386_gdb_regnum
 };
 
 #define i386_num_regs 16
-
-/* Defined in auto-generated file i386-linux.c.  */
-void init_registers_i386_linux (void);
-extern const struct target_desc *tdesc_i386_linux;
 
 #define FT_CR_EAX 15
 #define FT_CR_ECX 14
@@ -98,8 +95,8 @@ supply_fast_tracepoint_registers (struct regcache *regcache,
     }
 }
 
-IP_AGENT_EXPORT_FUNC ULONGEST
-gdb_agent_get_raw_reg (const unsigned char *raw_regs, int regnum)
+ULONGEST
+get_raw_reg (const unsigned char *raw_regs, int regnum)
 {
   /* This should maybe be allowed to return an error code, or perhaps
      better, have the emit_reg detect this, and emit a constant zero,
@@ -247,10 +244,55 @@ initialize_fast_tracepoint_trampoline_buffer (void)
     }
 }
 
+/* Return target_desc to use for IPA, given the tdesc index passed by
+   gdbserver.  */
+
+const struct target_desc *
+get_ipa_tdesc (int idx)
+{
+  switch (idx)
+    {
+    case X86_TDESC_MMX:
+      return tdesc_i386_mmx_linux;
+    case X86_TDESC_SSE:
+      return tdesc_i386_linux;
+    case X86_TDESC_AVX:
+      return tdesc_i386_avx_linux;
+    case X86_TDESC_MPX:
+      return tdesc_i386_mpx_linux;
+    case X86_TDESC_AVX_MPX:
+      return tdesc_i386_avx_mpx_linux;
+    case X86_TDESC_AVX512:
+      return tdesc_i386_avx512_linux;
+    default:
+      internal_error (__FILE__, __LINE__,
+		      "unknown ipa tdesc index: %d", idx);
+      return tdesc_i386_linux;
+    }
+}
+
+/* Allocate buffer for the jump pads.  On i386, we can reach an arbitrary
+   address with a jump instruction, so just allocate normally.  */
+
+void *
+alloc_jump_pad_buffer (size_t size)
+{
+  void *res = mmap (NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+		    MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+
+  if (res == MAP_FAILED)
+    return NULL;
+
+  return res;
+}
+
 void
 initialize_low_tracepoint (void)
 {
+  init_registers_i386_mmx_linux ();
   init_registers_i386_linux ();
-  ipa_tdesc = tdesc_i386_linux;
+  init_registers_i386_avx_linux ();
+  init_registers_i386_mpx_linux ();
+  init_registers_i386_avx512_linux ();
   initialize_fast_tracepoint_trampoline_buffer ();
 }

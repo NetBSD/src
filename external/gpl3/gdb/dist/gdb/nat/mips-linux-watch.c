@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include "mips-linux-watch.h"
 
 /* Assuming usable watch registers REGS, return the irw_mask of
@@ -164,7 +164,7 @@ mips_linux_read_watch_registers (long lwpid,
 {
   if (force || *watch_readback_valid == 0)
     {
-      if (ptrace (PTRACE_GET_WATCH_REGS, lwpid, watch_readback) == -1)
+      if (ptrace (PTRACE_GET_WATCH_REGS, lwpid, watch_readback, NULL) == -1)
 	{
 	  *watch_readback_valid = -1;
 	  return 0;
@@ -198,7 +198,7 @@ mips_linux_read_watch_registers (long lwpid,
 /* Convert GDB's TYPE to an IRW mask.  */
 
 uint32_t
-mips_linux_watch_type_to_irw (int type)
+mips_linux_watch_type_to_irw (enum target_hw_bp_type type)
 {
   switch (type)
     {

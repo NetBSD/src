@@ -1,6 +1,6 @@
 /* Tracing functionality for remote targets in custom GDB protocol
 
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,6 +55,7 @@
 #include "filestuff.h"
 #include "rsp-low.h"
 #include "tracefile.h"
+#include "location.h"
 
 /* readline include files */
 #include "readline/readline.h"
@@ -859,7 +860,8 @@ static int memrange_cmp (const void *, const void *);
 static int
 memrange_cmp (const void *va, const void *vb)
 {
-  const struct memrange *a = va, *b = vb;
+  const struct memrange *a = (const struct memrange *) va;
+  const struct memrange *b = (const struct memrange *) vb;
 
   if (a->type < b->type)
     return -1;
@@ -947,8 +949,8 @@ add_memrange (struct collection_list *memranges,
   if (memranges->next_memrange >= memranges->listsize)
     {
       memranges->listsize *= 2;
-      memranges->list = xrealloc (memranges->list,
-				  memranges->listsize);
+      memranges->list = (struct memrange *) xrealloc (memranges->list,
+						      memranges->listsize);
     }
 
   if (type != memrange_absolute)    /* Better collect the base register!  */
@@ -1136,7 +1138,7 @@ do_collect_symbol (const char *print_name,
 		   struct symbol *sym,
 		   void *cb_data)
 {
-  struct add_local_symbols_data *p = cb_data;
+  struct add_local_symbols_data *p = (struct add_local_symbols_data *) cb_data;
 
   collect_symbol (p->collect, sym, p->gdbarch, p->frame_regno,
 		  p->frame_offset, p->pc, p->trace_string);
@@ -1230,7 +1232,7 @@ clear_collection_list (struct collection_list *list)
 static void
 do_clear_collection_list (void *list)
 {
-  struct collection_list *l = list;
+  struct collection_list *l = (struct collection_list *) list;
 
   clear_collection_list (l);
 }
@@ -1243,12 +1245,10 @@ init_collection_list (struct collection_list *clist)
   memset (clist, 0, sizeof *clist);
 
   clist->listsize = 128;
-  clist->list = xcalloc (clist->listsize,
-			 sizeof (struct memrange));
+  clist->list = XCNEWVEC (struct memrange, clist->listsize);
 
   clist->aexpr_listsize = 128;
-  clist->aexpr_list = xcalloc (clist->aexpr_listsize,
-			       sizeof (struct agent_expr *));
+  clist->aexpr_list = XCNEWVEC (struct agent_expr *, clist->aexpr_listsize);
 }
 
 /* Reduce a collection list to string form (for gdb protocol).  */
@@ -1428,14 +1428,14 @@ encode_actions_1 (struct command_line *action,
 
 	      if (0 == strncasecmp ("$reg", action_exp, 4))
 		{
-		  for (i = 0; i < gdbarch_num_regs (tloc->gdbarch); i++)
+		  for (i = 0; i < gdbarch_num_regs (target_gdbarch ()); i++)
 		    add_register (collect, i);
 		  action_exp = strchr (action_exp, ',');	/* more? */
 		}
 	      else if (0 == strncasecmp ("$arg", action_exp, 4))
 		{
 		  add_local_symbols (collect,
-				     tloc->gdbarch,
+				     target_gdbarch (),
 				     tloc->address,
 				     frame_reg,
 				     frame_offset,
@@ -1446,7 +1446,7 @@ encode_actions_1 (struct command_line *action,
 	      else if (0 == strncasecmp ("$loc", action_exp, 4))
 		{
 		  add_local_symbols (collect,
-				     tloc->gdbarch,
+				     target_gdbarch (),
 				     tloc->address,
 				     frame_reg,
 				     frame_offset,
@@ -1459,7 +1459,7 @@ encode_actions_1 (struct command_line *action,
 		  struct cleanup *old_chain1 = NULL;
 
 		  aexpr = gen_trace_for_return_address (tloc->address,
-							tloc->gdbarch,
+							target_gdbarch (),
 							trace_string);
 
 		  old_chain1 = make_cleanup_free_agent_expr (aexpr);
@@ -1513,7 +1513,7 @@ encode_actions_1 (struct command_line *action,
 		      {
 			const char *name = &exp->elts[2].string;
 
-			i = user_reg_map_name_to_regnum (tloc->gdbarch,
+			i = user_reg_map_name_to_regnum (target_gdbarch (),
 							 name, strlen (name));
 			if (i == -1)
 			  internal_error (__FILE__, __LINE__,
@@ -1543,7 +1543,7 @@ encode_actions_1 (struct command_line *action,
 
 			collect_symbol (collect,
 					exp->elts[2].symbol,
-					tloc->gdbarch,
+					target_gdbarch (),
 					frame_reg,
 					frame_offset,
 					tloc->address,
@@ -1651,9 +1651,7 @@ encode_actions_and_make_cleanup (struct bp_location *tloc,
 				 struct collection_list *tracepoint_list,
 				 struct collection_list *stepping_list)
 {
-  char *default_collect_line = NULL;
   struct command_line *actions;
-  struct command_line *default_collect_action = NULL;
   int frame_reg;
   LONGEST frame_offset;
   struct cleanup *back_to, *return_chain;
@@ -1707,9 +1705,9 @@ add_aexpr (struct collection_list *collect, struct agent_expr *aexpr)
 {
   if (collect->next_aexpr_elt >= collect->aexpr_listsize)
     {
-      collect->aexpr_list =
-	xrealloc (collect->aexpr_list,
-		  2 * collect->aexpr_listsize * sizeof (struct agent_expr *));
+      collect->aexpr_list = XRESIZEVEC (struct agent_expr *,
+					collect->aexpr_list,
+					2 * collect->aexpr_listsize);
       collect->aexpr_listsize *= 2;
     }
   collect->aexpr_list[collect->next_aexpr_elt] = aexpr;
@@ -1790,9 +1788,6 @@ start_tracing (char *notes)
 
   for (ix = 0; VEC_iterate (breakpoint_p, tp_vec, ix, b); ix++)
     {
-      struct tracepoint *t = (struct tracepoint *) b;
-      struct bp_location *loc;
-
       if (b->enable_state == bp_enabled)
 	any_enabled = 1;
 
@@ -2583,8 +2578,7 @@ trace_find_line_command (char *args, int from_tty)
     {
       sal = find_pc_line (get_frame_pc (get_current_frame ()), 0);
       sals.nelts = 1;
-      sals.sals = (struct symtab_and_line *)
-	xmalloc (sizeof (struct symtab_and_line));
+      sals.sals = XNEW (struct symtab_and_line);
       sals.sals[0] = sal;
     }
   else
@@ -2712,14 +2706,22 @@ scope_info (char *args, int from_tty)
   int j, count = 0;
   struct gdbarch *gdbarch;
   int regno;
+  struct event_location *location;
+  struct cleanup *back_to;
 
   if (args == 0 || *args == 0)
     error (_("requires an argument (function, "
 	     "line or *addr) to define a scope"));
 
-  sals = decode_line_1 (&args, DECODE_LINE_FUNFIRSTLINE, NULL, 0);
+  location = string_to_event_location (&args, current_language);
+  back_to = make_cleanup_delete_event_location (location);
+  sals = decode_line_1 (location, DECODE_LINE_FUNFIRSTLINE, NULL, NULL, 0);
   if (sals.nelts == 0)
-    return;		/* Presumably decode_line_1 has already warned.  */
+    {
+      /* Presumably decode_line_1 has already warned.  */
+      do_cleanups (back_to);
+      return;
+    }
 
   /* Resolve line numbers to PC.  */
   resolve_sal_pc (&sals.sals[0]);
@@ -2856,6 +2858,7 @@ scope_info (char *args, int from_tty)
   if (count <= 0)
     printf_filtered ("Scope for %s contains no locals or arguments.\n",
 		     save_args);
+  do_cleanups (back_to);
 }
 
 /* Helper for trace_dump_command.  Dump the action list starting at
@@ -2938,7 +2941,7 @@ trace_dump_actions (struct command_line *action,
 			{
 			  size_t len = next_comma - action_exp;
 
-			  cmd = xrealloc (cmd, len + 1);
+			  cmd = (char *) xrealloc (cmd, len + 1);
 			  memcpy (cmd, action_exp, len);
 			  cmd[len] = 0;
 			}
@@ -2946,7 +2949,7 @@ trace_dump_actions (struct command_line *action,
 			{
 			  size_t len = strlen (action_exp);
 
-			  cmd = xrealloc (cmd, len + 1);
+			  cmd = (char *) xrealloc (cmd, len + 1);
 			  memcpy (cmd, action_exp, len + 1);
 			}
 
@@ -3031,7 +3034,7 @@ all_tracepoint_actions_and_cleanup (struct breakpoint *t)
       make_cleanup (xfree, default_collect_line);
 
       validate_actionline (default_collect_line, t);
-      default_collect_action = xmalloc (sizeof (struct command_line));
+      default_collect_action = XNEW (struct command_line);
       make_cleanup (xfree, default_collect_action);
       default_collect_action->next = actions;
       default_collect_action->line = default_collect_line;
@@ -3078,7 +3081,7 @@ trace_dump_command (char *args, int from_tty)
 
 extern int
 encode_source_string (int tpnum, ULONGEST addr,
-		      char *srctype, char *src, char *buf, int buf_size)
+		      char *srctype, const char *src, char *buf, int buf_size)
 {
   if (80 + strlen (srctype) > buf_size)
     error (_("Buffer too small for source encoding"));
@@ -3227,7 +3230,8 @@ struct current_traceframe_cleanup
 static void
 do_restore_current_traceframe_cleanup (void *arg)
 {
-  struct current_traceframe_cleanup *old = arg;
+  struct current_traceframe_cleanup *old
+    = (struct current_traceframe_cleanup *) arg;
 
   set_current_traceframe (old->traceframe_number);
 }
@@ -3235,7 +3239,8 @@ do_restore_current_traceframe_cleanup (void *arg)
 static void
 restore_current_traceframe_cleanup_dtor (void *arg)
 {
-  struct current_traceframe_cleanup *old = arg;
+  struct current_traceframe_cleanup *old
+    = (struct current_traceframe_cleanup *) arg;
 
   xfree (old);
 }
@@ -3243,9 +3248,9 @@ restore_current_traceframe_cleanup_dtor (void *arg)
 struct cleanup *
 make_cleanup_restore_current_traceframe (void)
 {
-  struct current_traceframe_cleanup *old;
+  struct current_traceframe_cleanup *old =
+    XNEW (struct current_traceframe_cleanup);
 
-  old = xmalloc (sizeof (struct current_traceframe_cleanup));
   old->traceframe_number = traceframe_number;
 
   return make_cleanup_dtor (do_restore_current_traceframe_cleanup, old,
@@ -3263,8 +3268,8 @@ get_uploaded_tp (int num, ULONGEST addr, struct uploaded_tp **utpp)
   for (utp = *utpp; utp; utp = utp->next)
     if (utp->number == num && utp->addr == addr)
       return utp;
-  utp = (struct uploaded_tp *) xmalloc (sizeof (struct uploaded_tp));
-  memset (utp, 0, sizeof (struct uploaded_tp));
+
+  utp = XCNEW (struct uploaded_tp);
   utp->number = num;
   utp->addr = addr;
   utp->actions = NULL;
@@ -3272,6 +3277,7 @@ get_uploaded_tp (int num, ULONGEST addr, struct uploaded_tp **utpp)
   utp->cmd_strings = NULL;
   utp->next = *utpp;
   *utpp = utp;
+
   return utp;
 }
 
@@ -3299,11 +3305,12 @@ get_uploaded_tsv (int num, struct uploaded_tsv **utsvp)
   for (utsv = *utsvp; utsv; utsv = utsv->next)
     if (utsv->number == num)
       return utsv;
-  utsv = (struct uploaded_tsv *) xmalloc (sizeof (struct uploaded_tsv));
-  memset (utsv, 0, sizeof (struct uploaded_tsv));
+
+  utsv = XCNEW (struct uploaded_tsv);
   utsv->number = num;
   utsv->next = *utsvp;
   *utsvp = utsv;
+
   return utsv;
 }
 
@@ -3616,7 +3623,7 @@ Status line: '%s'\n"), p, line);
 	    }
 	  else if (p2 != p1)
 	    {
-	      ts->stop_desc = xmalloc (strlen (line));
+	      ts->stop_desc = (char *) xmalloc (strlen (line));
 	      end = hex2bin (p1, (gdb_byte *) ts->stop_desc, (p2 - p1) / 2);
 	      ts->stop_desc[end] = '\0';
 	    }
@@ -3636,7 +3643,7 @@ Status line: '%s'\n"), p, line);
 	  p2 = strchr (++p1, ':');
 	  if (p2 != p1)
 	    {
-	      ts->stop_desc = xmalloc ((p2 - p1) / 2 + 1);
+	      ts->stop_desc = (char *) xmalloc ((p2 - p1) / 2 + 1);
 	      end = hex2bin (p1, (gdb_byte *) ts->stop_desc, (p2 - p1) / 2);
 	      ts->stop_desc[end] = '\0';
 	    }
@@ -3690,7 +3697,7 @@ Status line: '%s'\n"), p, line);
       else if (strncmp (p, "username", p1 - p) == 0)
 	{
 	  ++p1;
-	  ts->user_name = xmalloc (strlen (p) / 2);
+	  ts->user_name = (char *) xmalloc (strlen (p) / 2);
 	  end = hex2bin (p1, (gdb_byte *) ts->user_name, (p3 - p1)  / 2);
 	  ts->user_name[end] = '\0';
 	  p = p3;
@@ -3698,7 +3705,7 @@ Status line: '%s'\n"), p, line);
       else if (strncmp (p, "notes", p1 - p) == 0)
 	{
 	  ++p1;
-	  ts->notes = xmalloc (strlen (p) / 2);
+	  ts->notes = (char *) xmalloc (strlen (p) / 2);
 	  end = hex2bin (p1, (gdb_byte *) ts->notes, (p3 - p1) / 2);
 	  ts->notes[end] = '\0';
 	  p = p3;
@@ -3825,7 +3832,7 @@ parse_tracepoint_definition (char *line, struct uploaded_tp **utpp)
       p = unpack_varlen_hex (p, &xlen);
       p++;  /* skip a colon */
 
-      buf = alloca (strlen (line));
+      buf = (char *) alloca (strlen (line));
 
       end = hex2bin (p, (gdb_byte *) buf, strlen (p) / 2);
       buf[end] = '\0';
@@ -3862,7 +3869,7 @@ parse_tsv_definition (char *line, struct uploaded_tsv **utsvp)
   int end;
   struct uploaded_tsv *utsv = NULL;
 
-  buf = alloca (strlen (line));
+  buf = (char *) alloca (strlen (line));
 
   p = line;
   p = unpack_varlen_hex (p, &num);
@@ -3883,7 +3890,8 @@ parse_tsv_definition (char *line, struct uploaded_tsv **utsvp)
 void
 free_current_marker (void *arg)
 {
-  struct static_tracepoint_marker **marker_p = arg;
+  struct static_tracepoint_marker **marker_p
+    = (struct static_tracepoint_marker **) arg;
 
   if (*marker_p != NULL)
     {
@@ -3918,14 +3926,14 @@ parse_static_tracepoint_marker_definition (char *line, char **pp,
   if (endp == NULL)
     error (_("bad marker definition: %s"), line);
 
-  marker->str_id = xmalloc (endp - p + 1);
+  marker->str_id = (char *) xmalloc (endp - p + 1);
   end = hex2bin (p, (gdb_byte *) marker->str_id, (endp - p + 1) / 2);
   marker->str_id[end] = '\0';
 
   p += 2 * end;
   p++;  /* skip a colon */
 
-  marker->extra = xmalloc (strlen (p) + 1);
+  marker->extra = (char *) xmalloc (strlen (p) + 1);
   end = hex2bin (p, (gdb_byte *) marker->extra, strlen (p) / 2);
   marker->extra[end] = '\0';
 
@@ -3950,7 +3958,6 @@ static void
 print_one_static_tracepoint_marker (int count,
 				    struct static_tracepoint_marker *marker)
 {
-  struct command_line *l;
   struct symbol *sym;
 
   char wrap_indent[80];
@@ -4176,12 +4183,14 @@ traceframe_info_start_memory (struct gdb_xml_parser *parser,
 			      const struct gdb_xml_element *element,
 			      void *user_data, VEC(gdb_xml_value_s) *attributes)
 {
-  struct traceframe_info *info = user_data;
+  struct traceframe_info *info = (struct traceframe_info *) user_data;
   struct mem_range *r = VEC_safe_push (mem_range_s, info->memory, NULL);
   ULONGEST *start_p, *length_p;
 
-  start_p = xml_find_attribute (attributes, "start")->value;
-  length_p = xml_find_attribute (attributes, "length")->value;
+  start_p
+    = (ULONGEST *) xml_find_attribute (attributes, "start")->value;
+  length_p
+    = (ULONGEST *) xml_find_attribute (attributes, "length")->value;
 
   r->start = *start_p;
   r->length = *length_p;
@@ -4195,8 +4204,9 @@ traceframe_info_start_tvar (struct gdb_xml_parser *parser,
 			     void *user_data,
 			     VEC(gdb_xml_value_s) *attributes)
 {
-  struct traceframe_info *info = user_data;
-  const char *id_attrib = xml_find_attribute (attributes, "id")->value;
+  struct traceframe_info *info = (struct traceframe_info *) user_data;
+  const char *id_attrib
+    = (const char *) xml_find_attribute (attributes, "id")->value;
   int id = gdb_xml_parse_ulongest (parser, id_attrib);
 
   VEC_safe_push (int, info->tvars, id);
@@ -4207,7 +4217,7 @@ traceframe_info_start_tvar (struct gdb_xml_parser *parser,
 static void
 free_result (void *p)
 {
-  struct traceframe_info *result = p;
+  struct traceframe_info *result = (struct traceframe_info *) p;
 
   free_traceframe_info (result);
 }

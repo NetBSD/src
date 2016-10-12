@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -151,9 +151,6 @@ gdb_test_multiple "ptype A" "ptype A" {
     }
     -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) (const volatile|volatile const);\r\n\[ \]*A & operator=\\(A const ?&\\);\r\n\[ \]*A\\(A const ?&\\);\r\n\[ \]*A\\((void|)\\);\r\n\}\r\n$gdb_prompt $" {
 	pass "ptype A"
-    }
-    -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\);\r\n\[ \]*int qux\\(int, float\\) const;\r\n\}\r\n$gdb_prompt $" {
-	pass "ptype A (HP aCC bug -- volatile not indicated)"
     }
     -re "type = class A \{\r\n\[ \]*public:\r\n\[ \]*int x;\r\n\[ \]*int y;\r\n\r\n\[ \]*int foo\\(int\\);\r\n\[ \]*int bar\\(int\\) const;\r\n\[ \]*int baz\\(int, char\\) volatile;\r\n\[ \]*int qux\\(int, float\\) const volatile;\r\n\}\r\n$gdb_prompt $" {
 	pass "ptype A"

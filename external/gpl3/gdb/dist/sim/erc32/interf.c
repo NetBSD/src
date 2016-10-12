@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -162,7 +162,7 @@ sim_open (kind, callback, abfd, argv)
      SIM_OPEN_KIND kind;
      struct host_callback_struct *callback;
      struct bfd *abfd;
-     char **argv;
+     char * const *argv;
 {
 
     int             argc = 0;
@@ -171,8 +171,7 @@ sim_open (kind, callback, abfd, argv)
 
     sim_callback = callback;
 
-    while (argv[argc])
-      argc++;
+    argc = countargv (argv);
     while (stat < argc) {
 	if (argv[stat][0] == '-') {
 	    if (strcmp(argv[stat], "-v") == 0) {
@@ -289,8 +288,8 @@ SIM_RC
 sim_create_inferior(sd, abfd, argv, env)
      SIM_DESC sd;
      struct bfd *abfd;
-     char **argv;
-     char **env;
+     char * const *argv;
+     char * const *env;
 {
     bfd_vma start_address = 0;
     if (abfd != NULL)

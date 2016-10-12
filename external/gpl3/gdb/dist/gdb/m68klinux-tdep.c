@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -256,14 +256,13 @@ m68k_linux_sigtramp_frame_cache (struct frame_info *this_frame,
   struct frame_id this_id;
   struct trad_frame_cache *cache;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct m68k_linux_sigtramp_info info;
   gdb_byte buf[4];
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct trad_frame_cache *) *this_cache;
 
   cache = trad_frame_cache_zalloc (this_frame);
 

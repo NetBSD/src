@@ -1,6 +1,6 @@
 /* Blackfin Memory Management Unit (MMU) model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -101,6 +101,10 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
   bu32 value;
   bu32 *valuep;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, true))
+    return 0;
+
   value = dv_load_4 (source);
 
   mmr_off = addr - mmu->base;
@@ -159,7 +163,7 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
       break;
     default:
       dv_bfin_mmr_invalid (me, addr, nr_bytes, true);
-      break;
+      return 0;
     }
 
   return nr_bytes;
@@ -172,6 +176,10 @@ bfin_mmu_io_read_buffer (struct hw *me, void *dest,
   struct bfin_mmu *mmu = hw_data (me);
   bu32 mmr_off;
   bu32 *valuep;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, false))
+    return 0;
 
   mmr_off = addr - mmu->base;
   valuep = (void *)((unsigned long)mmu + mmr_base() + mmr_off);
@@ -200,9 +208,8 @@ bfin_mmu_io_read_buffer (struct hw *me, void *dest,
       dv_store_4 (dest, *valuep);
       break;
     default:
-      while (1) /* Core MMRs -> exception -> doesn't return.  */
-	dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
-      break;
+      dv_bfin_mmr_invalid (me, addr, nr_bytes, false);
+      return 0;
     }
 
   return nr_bytes;
@@ -525,7 +532,7 @@ _mmu_check_addr (SIM_CPU *cpu, bu32 addr, bool write, bool inst, int size)
     }
   else
     /* Normalize hit count so hits==2 is always multiple hit exception.  */
-    hits = MIN (2, hits);
+    hits = min (2, hits);
 
   _mmu_log_fault (cpu, mmu, addr, write, inst, hits == 0, supv, dag1, faults);
 

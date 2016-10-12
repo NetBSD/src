@@ -1,6 +1,6 @@
 /* Scheme interface to blocks.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -85,7 +85,7 @@ static const struct objfile_data *bkscm_objfile_data_key;
 static hashval_t
 bkscm_hash_block_smob (const void *p)
 {
-  const block_smob *b_smob = p;
+  const block_smob *b_smob = (const block_smob *) p;
 
   return htab_hash_pointer (b_smob->block);
 }
@@ -95,8 +95,8 @@ bkscm_hash_block_smob (const void *p)
 static int
 bkscm_eq_block_smob (const void *ap, const void *bp)
 {
-  const block_smob *a = ap;
-  const block_smob *b = bp;
+  const block_smob *a = (const block_smob *) ap;
+  const block_smob *b = (const block_smob *) bp;
 
   return (a->block == b->block
 	  && a->block != NULL);
@@ -108,7 +108,7 @@ bkscm_eq_block_smob (const void *ap, const void *bp)
 static htab_t
 bkscm_objfile_block_map (struct objfile *objfile)
 {
-  htab_t htab = objfile_data (objfile, bkscm_objfile_data_key);
+  htab_t htab = (htab_t) objfile_data (objfile, bkscm_objfile_data_key);
 
   if (htab == NULL)
     {
@@ -347,7 +347,7 @@ bkscm_mark_block_invalid (void **slot, void *info)
 static void
 bkscm_del_objfile_blocks (struct objfile *objfile, void *datum)
 {
-  htab_t htab = datum;
+  htab_t htab = (htab_t) datum;
 
   if (htab != NULL)
     {
@@ -709,61 +709,63 @@ gdbscm_lookup_block (SCM pc_scm)
 
 static const scheme_function block_functions[] =
 {
-  { "block?", 1, 0, 0, gdbscm_block_p,
+  { "block?", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_p),
     "\
 Return #t if the object is a <gdb:block> object." },
 
-  { "block-valid?", 1, 0, 0, gdbscm_block_valid_p,
+  { "block-valid?", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_valid_p),
     "\
 Return #t if the block is valid.\n\
 A block becomes invalid when its objfile is freed." },
 
-  { "block-start", 1, 0, 0, gdbscm_block_start,
+  { "block-start", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_start),
     "\
 Return the start address of the block." },
 
-  { "block-end", 1, 0, 0, gdbscm_block_end,
+  { "block-end", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_end),
     "\
 Return the end address of the block." },
 
-  { "block-function", 1, 0, 0, gdbscm_block_function,
+  { "block-function", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_function),
     "\
 Return the gdb:symbol object of the function containing the block\n\
 or #f if the block does not live in any function." },
 
-  { "block-superblock", 1, 0, 0, gdbscm_block_superblock,
+  { "block-superblock", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_superblock),
     "\
 Return the superblock (parent block) of the block." },
 
-  { "block-global-block", 1, 0, 0, gdbscm_block_global_block,
+  { "block-global-block", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_global_block),
     "\
 Return the global block of the block." },
 
-  { "block-static-block", 1, 0, 0, gdbscm_block_static_block,
+  { "block-static-block", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_static_block),
     "\
 Return the static block of the block." },
 
-  { "block-global?", 1, 0, 0, gdbscm_block_global_p,
+  { "block-global?", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_global_p),
     "\
 Return #t if block is a global block." },
 
-  { "block-static?", 1, 0, 0, gdbscm_block_static_p,
+  { "block-static?", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_static_p),
     "\
 Return #t if block is a static block." },
 
-  { "block-symbols", 1, 0, 0, gdbscm_block_symbols,
+  { "block-symbols", 1, 0, 0, as_a_scm_t_subr (gdbscm_block_symbols),
     "\
 Return a list of all symbols (as <gdb:symbol> objects) in the block." },
 
-  { "make-block-symbols-iterator", 1, 0, 0, gdbscm_make_block_syms_iter,
+  { "make-block-symbols-iterator", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_make_block_syms_iter),
     "\
 Return a <gdb:iterator> object for iterating over all symbols in the block." },
 
-  { "block-symbols-progress?", 1, 0, 0, bkscm_block_syms_progress_p,
+  { "block-symbols-progress?", 1, 0, 0,
+    as_a_scm_t_subr (bkscm_block_syms_progress_p),
     "\
 Return #t if the object is a <gdb:block-symbols-progress> object." },
 
-  { "lookup-block", 1, 0, 0, gdbscm_lookup_block,
+  { "lookup-block", 1, 0, 0, as_a_scm_t_subr (gdbscm_lookup_block),
     "\
 Return the innermost GDB block containing the address or #f if none found.\n\
 \n\
@@ -792,7 +794,7 @@ gdbscm_initialize_blocks (void)
   /* This function is "private".  */
   bkscm_next_symbol_x_proc
     = scm_c_define_gsubr ("%block-next-symbol!", 1, 0, 0,
-			  gdbscm_block_next_symbol_x);
+			  as_a_scm_t_subr (gdbscm_block_next_symbol_x));
   scm_set_procedure_property_x (bkscm_next_symbol_x_proc,
 				gdbscm_documentation_symbol,
 				gdbscm_scm_from_c_string ("\

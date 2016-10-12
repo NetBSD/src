@@ -1,6 +1,6 @@
 /* Opcode table header for Visium.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB, GAS, and GNU binutils.
 
@@ -100,11 +100,11 @@ enum visium_opcode_arch_val
 
 struct reg_entry
 {
-  char *name;
+  const char *name;
   unsigned char code;
 };
 
-const struct reg_entry gen_reg_table[] =
+static const struct reg_entry gen_reg_table[] ATTRIBUTE_UNUSED =
 {
   {"fp", 0x16},
   {"r0", 0x0},
@@ -142,7 +142,7 @@ const struct reg_entry gen_reg_table[] =
   {"sp", 0x17},
 };
 
-const struct reg_entry fp_reg_table[] =
+static const struct reg_entry fp_reg_table[] ATTRIBUTE_UNUSED =
 {
   {"f0", 0x0},
   {"f1", 0x1},
@@ -162,11 +162,11 @@ const struct reg_entry fp_reg_table[] =
   {"f9", 0x9},
 };
 
-const struct cc_entry
+static const struct cc_entry
 {
-  char *name;
+  const char *name;
   int code;
-} cc_table [] =
+} cc_table [] ATTRIBUTE_UNUSED =
 {
   {"cc", 6},
   {"cs", 2},
@@ -224,12 +224,12 @@ enum addressing_mode
 
 static const struct opcode_entry
 {
-  char *mnem;
+  const char *mnem;
   enum addressing_mode mode;
   unsigned code;
   char flags;
 }
-opcode_table[] =
+opcode_table[] ATTRIBUTE_UNUSED =
 {
   { "adc.b",    mode_dab,  class3|(1<<21)|(1), def },
   { "adc.l",    mode_dab,  class3|(1<<21)|(4), def },
@@ -335,3 +335,4 @@ opcode_table[] =
   { "xor.l",    mode_dab,  class3|(8<<21)|(4), def },
   { "xor.w",    mode_dab,  class3|(8<<21)|(2), def },
 };
+

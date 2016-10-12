@@ -1,5 +1,5 @@
 /* Support for printing Java types for GDB, the GNU debugger.
-   Copyright (C) 1997-2015 Free Software Foundation, Inc.
+   Copyright (C) 1997-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -110,7 +110,7 @@ java_type_print_base (struct type *type, struct ui_file *stream, int show,
       return;
     }
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
 
   switch (TYPE_CODE (type))
     {
@@ -223,7 +223,8 @@ java_type_print_base (struct type *type, struct ui_file *stream, int show,
 	      for (j = 0; j < n_overloads; j++)
 		{
 		  const char *real_physname;
-		  char *physname, *p;
+		  const char *p;
+		  char *physname;
 		  int is_full_physname_constructor;
 
 		  real_physname = TYPE_FN_FIELD_PHYSNAME (f, j);
@@ -233,7 +234,7 @@ java_type_print_base (struct type *type, struct ui_file *stream, int show,
 		  p = strrchr (real_physname, ')');
 		  gdb_assert (p != NULL);
 		  ++p;   /* Keep the trailing ')'.  */
-		  physname = alloca (p - real_physname + 1);
+		  physname = (char *) alloca (p - real_physname + 1);
 		  memcpy (physname, real_physname, p - real_physname);
 		  physname[p - real_physname] = '\0';
 

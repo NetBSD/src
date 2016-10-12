@@ -1,6 +1,6 @@
 /* Simulator for Analog Devices Blackfin processors.
 
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -23,16 +23,12 @@
 
 #include "sim-basics.h"
 #include "sim-signal.h"
-
-/* TODO: Delete this.  Need to convert bu32/etc... to common sim types
-         and unwind the bfin-sim.h/machs.h include below first though.  */
-typedef struct _sim_cpu SIM_CPU;
+#include "arch.h"
+#include "sim-base.h"
 
 #include "bfin-sim.h"
 
 #include "machs.h"
-
-#include "sim-base.h"
 
 struct _sim_cpu {
   /* ... simulator specific members ... */
@@ -56,13 +52,9 @@ struct sim_state {
 #include "sim-options.h"
 #include "dv-bfin_trace.h"
 
-#undef MAX
-#undef MIN
 #undef CLAMP
 #undef ALIGN
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-#define MIN(a, b) ((a) < (b) ? (a) : (b))
-#define CLAMP(a, b, c) MIN (MAX (a, b), c)
+#define CLAMP(a, b, c) min (max (a, b), c)
 #define ALIGN(addr, size) (((addr) + ((size)-1)) & ~((size)-1))
 
 /* TODO: Move all this trace logic to the common code.  */

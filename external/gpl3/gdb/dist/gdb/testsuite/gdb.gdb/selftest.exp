@@ -1,4 +1,4 @@
-# Copyright 1988-2015 Free Software Foundation, Inc.
+# Copyright 1988-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,6 @@
 # This file was written by Rob Savoye. (rob@cygnus.com)
 
 load_lib selftest-support.exp
-
-# are we on a target board
-if { [is_remote target] || ![isnative] } then {
-    return
-}
 
 # Not all of the lines of code near the start of main are executed for
 # every machine.  Also, optimization may reorder some of the lines.
@@ -40,7 +35,7 @@ proc do_steps_and_nexts {} {
 	# me with GCC 3.1 on i686-pc-linux-gnu when I compile with
 	# optimization.
 	gdb_test_multiple "list" "list" {
-	    -re ".*context = data.*$gdb_prompt $" {
+	    -re ".*context = \\(struct captured_main_args \\*\\) data.*$gdb_prompt $" {
 		set description "step over context initialization"
 		set command "step"
 	    }
@@ -116,6 +111,14 @@ proc do_steps_and_nexts {} {
 		set description "next over lim_at_start initialization"
 		set command "next"
 	    }
+	    -re ".*TRY.*$gdb_prompt $" {
+		set description "next over TRY"
+		set command "next"
+	    }
+	    -re ".*captured_main \\(args\\);.*$gdb_prompt $" {
+		set description "step into captured_main (args)"
+		set command "step"
+	    }
 	    -re ".*count . 0x3.*$gdb_prompt $" {
 		set description "next over conditional stack alignment code 1"
 		set command "next"
@@ -157,6 +160,10 @@ proc do_steps_and_nexts {} {
 	    }
 	    -re ".*notice_open_fds ..;.*$gdb_prompt $" {
 		set description "next over notice_open_fds"
+		set command "next"
+	    }
+	    -re ".*save_original_signals_state ..;.*$gdb_prompt $" {
+		set description "next over save_original_signals_state"
 		set command "next"
 	    }
 	    -re ".*VEC_cleanup .cmdarg_s.*$gdb_prompt $" {
@@ -205,6 +212,10 @@ proc do_steps_and_nexts {} {
 		set description "step over gdb_stderr initialization"
 		set command "step"
 	    }
+	    -re "ui = current_ui.*$gdb_prompt $" {
+		set description "step over top_level initialization"
+		set command "step"
+	    }
 	    -re ".*main.c.*No such file or directory.*$gdb_prompt $" {
 		setup_xfail "rs6000-*-aix3*"
 		fail "must be able to list source lines"
@@ -250,43 +261,11 @@ proc do_steps_and_nexts {} {
     }
 }
 
-proc test_with_self { executable } {
+proc test_with_self { } {
     global gdb_prompt
-    global tool
-    global det_file
     global decimal
     global timeout
-    global INTERNAL_GDBFLAGS
-
-    # load yourself into the debugger
-    # This can take a relatively long time, particularly for testing where
-    # the executable is being accessed over a network, or where gdb does not
-    # support partial symbols for a particular target and has to load the
-    # entire symbol table.  Set the timeout to 10 minutes, which should be
-    # adequate for most environments (it *has* timed out with 5 min on a
-    # SPARCstation SLC under moderate load, so this isn't unreasonable).
-    # After gdb is started, set the timeout to 30 seconds for the duration
-    # of this test, and then back to the original value.
-
-    set oldtimeout $timeout
-    set timeout 600
-    verbose "Timeout is now $timeout seconds" 2
-
-    global gdb_file_cmd_debug_info
-    set gdb_file_cmd_debug_info "unset"
-
-    set result [gdb_load $executable]
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
-
-    if { $result != 0 } then {
-	return -1
-    }
-
-    if { $gdb_file_cmd_debug_info != "debug" } then {
-	untested "No debug information, skipping testcase."
-	return -1
-    }
+    global inferior_spawn_id
 
     # When GDB is built as a C++ program, disassemble shows the full
     # prototype.
@@ -297,11 +276,6 @@ proc test_with_self { executable } {
 	    "x/10i.*main.*main($cxx_main_args_re)?.$decimal.*main($cxx_main_args_re)?.$decimal.*" \
 	    "Disassemble main"
 
-    # Set a breakpoint at main
-    gdb_test "break captured_main" \
-	    "Breakpoint.*at.* file.*, line.*" \
-	    "breakpoint in captured_main"
-
     # We'll need this when we send a ^C to GDB.  Need to do it before we
     # run the program and gdb starts saving and restoring tty states.
     gdb_test "shell stty intr '^C'" ".*" \
@@ -311,36 +285,6 @@ proc test_with_self { executable } {
     # command doesn't print the same line as the current line where
     # gdb is stopped.
     gdb_test_no_output "set listsize 1" "set listsize to 1"
-
-    # run yourself
-    # It may take a very long time for the inferior gdb to start (lynx),
-    # so we bump it back up for the duration of this command.
-    set timeout 600
-
-    set description "run until breakpoint at captured_main"
-    gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
-	-re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.* at .*main.c:.*$gdb_prompt $" {
-	    pass "$description"
-	}
-	-re "Starting program.*Breakpoint \[0-9\]+,.*captured_main .data.*$gdb_prompt $" {
-	    xfail "$description (line numbers scrambled?)"
-	}
-	-re "vfork: No more processes.*$gdb_prompt $" {
-	    fail "$description (out of virtual memory)"
-	    set timeout $oldtimeout
-	    verbose "Timeout is now $timeout seconds" 2
-	    return -1
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "$description"
-	    set timeout $oldtimeout
-	    verbose "Timeout is now $timeout seconds" 2
-	    return -1
-	}
-    }
-
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
 
     # do we have a version number ?
     gdb_test_multiple "print version" "printed version" {
@@ -406,40 +350,46 @@ proc test_with_self { executable } {
 
     # start the "xgdb" process
     if [target_info exists gdb,noinferiorio] {
-	# Maybe testing with a local extended-remote gdbserver.  With
-	# no way to interact with inferior GDB, all we can do is let
-	# it run.
+	# With no way to interact with the inferior GDB, all we can do
+	# is let it run.
 	send_gdb "continue\n"
 	# Wait a bit while the inferior gdb gets to its prompt.
 	sleep 1
     } else {
 	set test "xgdb is at prompt"
 	gdb_test_multiple "continue" $test {
+	    -i "$inferior_spawn_id"
 	    -re "GNU gdb \[0-9\.\]*.*Copyright \\(C\\) \[0-9\]* Free Software Foundation, Inc.*License GPLv3\\+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.*This is free software: you are free to change and redistribute it.*There is NO WARRANTY, to the extent permitted by law.  Type \"show copying\".*and \"show warranty\" for details.*This GDB was configured as .*$gdb_prompt $" {
 		pass $test
 	    }
 	}
 
 	# set xgdb prompt so we can tell which is which
-	gdb_test_multiple "set prompt (xgdb) " "Set xgdb_prompt" {
+	send_inferior "set prompt (xgdb) \n"
+	set msg "Set xgdb_prompt"
+	gdb_test_multiple "" $msg {
+	    -i "$inferior_spawn_id"
 	    -re "\[(\]xgdb\[)\].*\[(\]xgdb\[)\] $" {
-		pass "Set xgdb prompt"
+		pass $msg
 	    }
 	}
     }
 
     # kill the xgdb process
-    set description "send ^C to child process"
-    send_gdb "\003"
-    gdb_expect {
-	-re "Program received signal SIGINT.*$gdb_prompt $" {
-	    pass "$description"
-	}
-	-re ".*$gdb_prompt $" {
-	    fail "$description"
-	}
-	timeout {
-	    fail "$description (timeout)"
+    if ![target_info exists gdb,nointerrupts] {
+	set description "send ^C to child process"
+	send_gdb "\003"
+	# "Thread 1" is displayed iff Guile support is linked in.
+	gdb_expect {
+	    -re "(Thread .*|Program) received signal SIGINT.*$gdb_prompt $" {
+		pass "$description"
+	    }
+	    -re ".*$gdb_prompt $" {
+		fail "$description"
+	    }
+	    timeout {
+		fail "$description (timeout)"
+	    }
 	}
     }
     
@@ -447,6 +397,10 @@ proc test_with_self { executable } {
     gdb_test "signal SIGINT" \
 	"Continuing with signal SIGINT.*" \
 	"$description"
+
+    # Switch back to the GDB thread if Guile support is linked in.
+    # "signal SIGINT" could also switch the current thread.
+    gdb_test "thread 1" {\[Switching to thread 1 .*\].*}
     
     # get a stack trace
     #
@@ -461,37 +415,8 @@ proc test_with_self { executable } {
 	}
     }
 
-
-    # Set the timeout back to the value it had when we were called.
-    set timeout $oldtimeout
-    verbose "Timeout is now $timeout seconds" 2
-
     # Restart gdb in case next test expects it to be started already.
     return 0
 }
 
-# Run the test with self.
-# Copy the file executable file in case this OS doesn't like to edit its own
-# text space.
-
-set GDB_FULLPATH [find_gdb $GDB]
-
-if {[is_remote host]} {
-    set xgdb x$tool
-} else {
-    set xgdb [standard_output_file x$tool]
-}
-
-# Remove any old copy lying around.
-remote_file host delete $xgdb
-
-gdb_start
-set file [remote_download host $GDB_FULLPATH $xgdb]
-set result [test_with_self $file]
-gdb_exit
-catch "remote_file host delete $file"
-
-if {$result <0} then {
-    warning "Couldn't test self"
-    return -1
-}
+do_self_tests captured_main test_with_self

@@ -1,6 +1,6 @@
 /* A GNU-like <stdio.h>.
 
-   Copyright (C) 2004, 2007-2012 Free Software Foundation, Inc.
+   Copyright (C) 2004, 2007-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,11 +46,6 @@
 #ifndef _@GUARD_PREFIX@_STDIO_H
 #define _@GUARD_PREFIX@_STDIO_H
 
-_GL_INLINE_HEADER_BEGIN
-#ifndef _GL_STDIO_INLINE
-# define _GL_STDIO_INLINE _GL_INLINE
-#endif
-
 /* Get va_list.  Needed on many systems, including glibc 2.8.  */
 #include <stdarg.h>
 
@@ -89,8 +84,13 @@ _GL_INLINE_HEADER_BEGIN
    except that it indicates to GCC that the supported format string directives
    are the ones of the system printf(), rather than the ones standardized by
    ISO C99 and POSIX.  */
-#define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
+#if GNULIB_PRINTF_ATTRIBUTE_FLAVOR_GNU
+# define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
+  _GL_ATTRIBUTE_FORMAT_PRINTF (formatstring_parameter, first_argument)
+#else
+# define _GL_ATTRIBUTE_FORMAT_PRINTF_SYSTEM(formatstring_parameter, first_argument) \
   _GL_ATTRIBUTE_FORMAT ((__printf__, formatstring_parameter, first_argument))
+#endif
 
 /* _GL_ATTRIBUTE_FORMAT_SCANF
    indicates to GCC that the function takes a format string and arguments,
@@ -129,6 +129,15 @@ _GL_INLINE_HEADER_BEGIN
 #define _GL_STDIO_STRINGIZE(token) #token
 #define _GL_STDIO_MACROEXPAND_AND_STRINGIZE(token) _GL_STDIO_STRINGIZE(token)
 
+/* When also using extern inline, suppress the use of static inline in
+   standard headers of problematic Apple configurations, as Libc at
+   least through Libc-825.26 (2013-04-09) mishandles it; see, e.g.,
+   <http://lists.gnu.org/archive/html/bug-gnulib/2012-12/msg00023.html>.
+   Perhaps Apple will fix this some day.  */
+#if (defined _GL_EXTERN_INLINE_IN_USE && defined __APPLE__ \
+     && defined __GNUC__ && defined __STDC__)
+# undef putc_unlocked
+#endif
 
 #if @GNULIB_DPRINTF@
 # if @REPLACE_DPRINTF@
@@ -580,21 +589,27 @@ _GL_CXXALIAS_RPL (fwrite, size_t,
 _GL_CXXALIAS_SYS (fwrite, size_t,
                   (const void *ptr, size_t s, size_t n, FILE *stream));
 
-/* Work around glibc bug 11959
+/* Work around bug 11959 when fortifying glibc 2.4 through 2.15
    <http://sources.redhat.com/bugzilla/show_bug.cgi?id=11959>,
    which sometimes causes an unwanted diagnostic for fwrite calls.
-   This affects only function declaration attributes, so it's not
-   needed for C++.  */
-#  if !defined __cplusplus && 0 < __USE_FORTIFY_LEVEL
-_GL_STDIO_INLINE size_t _GL_ARG_NONNULL ((1, 4))
-rpl_fwrite (const void *ptr, size_t s, size_t n, FILE *stream)
-{
-  size_t r = fwrite (ptr, s, n, stream);
-  (void) r;
-  return r;
-}
+   This affects only function declaration attributes under certain
+   versions of gcc and clang, and is not needed for C++.  */
+#  if (0 < __USE_FORTIFY_LEVEL                                          \
+       && __GLIBC__ == 2 && 4 <= __GLIBC_MINOR__ && __GLIBC_MINOR__ <= 15 \
+       && 3 < __GNUC__ + (4 <= __GNUC_MINOR__)                          \
+       && !defined __cplusplus)
 #   undef fwrite
+#   undef fwrite_unlocked
+extern size_t __REDIRECT (rpl_fwrite,
+                          (const void *__restrict, size_t, size_t,
+                           FILE *__restrict),
+                          fwrite);
+extern size_t __REDIRECT (rpl_fwrite_unlocked,
+                          (const void *__restrict, size_t, size_t,
+                           FILE *__restrict),
+                          fwrite_unlocked);
 #   define fwrite rpl_fwrite
+#   define fwrite_unlocked rpl_fwrite_unlocked
 #  endif
 # endif
 _GL_CXXALIASWARN (fwrite);
@@ -708,10 +723,9 @@ _GL_WARN_ON_USE (getline, "getline is unportable - "
    so any use of gets warrants an unconditional warning; besides, C11
    removed it.  */
 #undef gets
-#if HAVE_RAW_DECL_GETS
+#if HAVE_RAW_DECL_GETS && !defined __cplusplus
 _GL_WARN_ON_USE (gets, "gets is a security hole - use fgets instead");
 #endif
-
 
 #if @GNULIB_OBSTACK_PRINTF@ || @GNULIB_OBSTACK_PRINTF_POSIX@
 struct obstack;
@@ -1337,8 +1351,6 @@ _GL_WARN_ON_USE (vsprintf, "vsprintf is not always POSIX compliant - "
                  "use gnulib module vsprintf-posix for portable "
                       "POSIX compliance");
 #endif
-
-_GL_INLINE_HEADER_END
 
 #endif /* _@GUARD_PREFIX@_STDIO_H */
 #endif /* _@GUARD_PREFIX@_STDIO_H */

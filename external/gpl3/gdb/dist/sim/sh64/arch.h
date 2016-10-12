@@ -2,7 +2,7 @@
 
 THIS FILE IS MACHINE GENERATED WITH CGEN.
 
-Copyright 1996-2015 Free Software Foundation, Inc.
+Copyright 1996-2016 Free Software Foundation, Inc.
 
 This file is part of the GNU simulators.
 
@@ -23,8 +23,6 @@ This file is part of the GNU simulators.
 
 #ifndef SH_ARCH_H
 #define SH_ARCH_H
-
-#define TARGET_BIG_ENDIAN 1
 
 /* Enum declaration for model types.  */
 typedef enum model_type {

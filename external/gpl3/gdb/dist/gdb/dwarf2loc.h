@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -122,12 +122,19 @@ struct property_addr_info
   struct property_addr_info *next;
 };
 
-/* Converts a dynamic property into a static one.  ADDR_STACK is the stack
-   of addresses that might be needed to evaluate the property.
+/* Converts a dynamic property into a static one.  FRAME is the frame in which
+   the property is evaluated; if NULL, the selected frame (if any) is used
+   instead.
+
+   ADDR_STACK is the stack of addresses that might be needed to evaluate the
+   property. When evaluating a property that is not related to a type, it can
+   be NULL.
+
    Returns 1 if PROP could be converted and the static value is passed back
    into VALUE, otherwise returns 0.  */
 
 int dwarf2_evaluate_property (const struct dynamic_prop *prop,
+			      struct frame_info *frame,
 			      struct property_addr_info *addr_stack,
 			      CORE_ADDR *value);
 
@@ -286,9 +293,18 @@ extern struct call_site_chain *call_site_find_chain (struct gdbarch *gdbarch,
 /* A helper function to convert a DWARF register to an arch register.
    ARCH is the architecture.
    DWARF_REG is the register.
-   This will throw an exception if the DWARF register cannot be
-   translated to an architecture register.  */
+   If DWARF_REG is bad then a complaint is issued and -1 is returned.
+   Note: Some targets get this wrong.  */
 
-extern int dwarf2_reg_to_regnum_or_error (struct gdbarch *arch, int dwarf_reg);
+extern int dwarf_reg_to_regnum (struct gdbarch *arch, int dwarf_reg);
+
+/* A wrapper on dwarf_reg_to_regnum to throw an exception if the
+   DWARF register cannot be translated to an architecture register.
+   This takes a ULONGEST instead of an int because some callers actually have
+   a ULONGEST.  Negative values passed as ints will still be flagged as
+   invalid.  */
+
+extern int dwarf_reg_to_regnum_or_error (struct gdbarch *arch,
+					 ULONGEST dwarf_reg);
 
 #endif /* dwarf2loc.h */

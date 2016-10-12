@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 
@@ -60,9 +60,9 @@ cinv_entry;
 /* CRX 'cinv' options.  */
 const cinv_entry crx_cinvs[] =
 {
-  {"[i]", 2}, {"[i,u]", 3}, {"[d]", 4}, {"[d,u]", 5}, 
-  {"[d,i]", 6}, {"[d,i,u]", 7}, {"[b]", 8}, 
-  {"[b,i]", 10}, {"[b,i,u]", 11}, {"[b,d]", 12}, 
+  {"[i]", 2}, {"[i,u]", 3}, {"[d]", 4}, {"[d,u]", 5},
+  {"[d,i]", 6}, {"[d,i,u]", 7}, {"[b]", 8},
+  {"[b,i]", 10}, {"[b,i,u]", 11}, {"[b,d]", 12},
   {"[b,d,u]", 13}, {"[b,d,i]", 14}, {"[b,d,i,u]", 15}
 };
 
@@ -76,7 +76,7 @@ typedef enum REG_ARG_TYPE
     /* CO-Processor register (c<N>).  */
     COP_ARG,
     /* CO-Processor special register (cs<N>).  */
-    COPS_ARG 
+    COPS_ARG
   }
 REG_ARG_TYPE;
 
@@ -534,8 +534,8 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 
       else if (INST_HAS_REG_LIST)
         {
-	  REG_ARG_TYPE reg_arg_type = IS_INSN_TYPE (COP_REG_INS) ? 
-				 COP_ARG : IS_INSN_TYPE (COPS_REG_INS) ? 
+	  REG_ARG_TYPE reg_arg_type = IS_INSN_TYPE (COP_REG_INS) ?
+				 COP_ARG : IS_INSN_TYPE (COPS_REG_INS) ?
 				 COPS_ARG : (instruction->flags & USER_REG) ?
 				 USER_REG_ARG : REG_ARG;
 
@@ -714,9 +714,7 @@ get_words_at_PC (bfd_vma memaddr, struct disassemble_info *info)
 /* Prints the instruction by calling print_arguments after proper matching.  */
 
 int
-print_insn_crx (memaddr, info)
-     bfd_vma memaddr;
-     struct disassemble_info *info;
+print_insn_crx (bfd_vma memaddr, struct disassemble_info *info)
 {
   int is_decoded;     /* Nonzero means instruction has a match.  */
 

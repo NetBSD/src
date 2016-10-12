@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -550,13 +550,14 @@ static void
 make_command_window (struct tui_win_info **win_info_ptr, 
 		     int height, int origin_y)
 {
-  *win_info_ptr = init_and_make_win (*win_info_ptr,
-				     CMD_WIN,
-				     height,
-				     tui_term_width (),
-				     0,
-				     origin_y,
-				     DONT_BOX_WINDOW);
+  *win_info_ptr
+    = (struct tui_win_info *) init_and_make_win (*win_info_ptr,
+						 CMD_WIN,
+						 height,
+						 tui_term_width (),
+						 0,
+						 origin_y,
+						 DONT_BOX_WINDOW);
 
   (*win_info_ptr)->can_highlight = FALSE;
 }
@@ -590,13 +591,14 @@ static void
 make_data_window (struct tui_win_info **win_info_ptr, 
 		  int height, int origin_y)
 {
-  *win_info_ptr = init_and_make_win (*win_info_ptr,
-				     DATA_WIN,
-				     height,
-				     tui_term_width (),
-				     0,
-				     origin_y,
-				     BOX_WINDOW);
+  *win_info_ptr
+    = (struct tui_win_info *) init_and_make_win (*win_info_ptr,
+						 DATA_WIN,
+						 height,
+						 tui_term_width (),
+						 0,
+						 origin_y,
+						 BOX_WINDOW);
 }
 
 
@@ -662,13 +664,15 @@ show_source_disasm_command (void)
 	  if (TUI_DISASM_WIN == NULL)
 	    {
 	      make_disasm_window (&TUI_DISASM_WIN, asm_height, src_height - 1);
-	      locator = init_and_make_win (locator,
-					   LOCATOR_WIN,
-					   2 /* 1 */ ,
-					   tui_term_width (),
-					   0,
-					   (src_height + asm_height) - 1,
-					   DONT_BOX_WINDOW);
+	      locator
+		= ((struct tui_gen_win_info *)
+		   init_and_make_win (locator,
+				      LOCATOR_WIN,
+				      2 /* 1 */ ,
+				      tui_term_width (),
+				      0,
+				      (src_height + asm_height) - 1,
+				      DONT_BOX_WINDOW));
 	    }
 	  else
 	    {
@@ -754,13 +758,15 @@ show_data (enum tui_layout_type new_layout)
 	make_source_window (&tui_win_list[win_type], src_height, data_height - 1);
       else
 	make_disasm_window (&tui_win_list[win_type], src_height, data_height - 1);
-      locator = init_and_make_win (locator,
-				   LOCATOR_WIN,
-				   2 /* 1 */ ,
-				   tui_term_width (),
-				   0,
-				   total_height - 1,
-				   DONT_BOX_WINDOW);
+      locator
+	= ((struct tui_gen_win_info *)
+	   init_and_make_win (locator,
+			      LOCATOR_WIN,
+			      2 /* 1 */ ,
+			      tui_term_width (),
+			      0,
+			      total_height - 1,
+			      DONT_BOX_WINDOW));
     }
   else
     {
@@ -863,29 +869,33 @@ make_source_or_disasm_window (struct tui_win_info **win_info_ptr,
 			      enum tui_win_type type,
 			      int height, int origin_y)
 {
-  struct tui_gen_win_info *execution_info = (struct tui_gen_win_info *) NULL;
+  struct tui_gen_win_info *execution_info = NULL;
 
   /* Create the exeuction info window.  */
   if (type == SRC_WIN)
     execution_info = tui_source_exec_info_win_ptr ();
   else
     execution_info = tui_disassem_exec_info_win_ptr ();
-  execution_info = init_and_make_win (execution_info,
-				      EXEC_INFO_WIN,
-				      height,
-				      3,
-				      0,
-				      origin_y,
-				      DONT_BOX_WINDOW);
+  execution_info
+    = ((struct tui_gen_win_info *)
+       init_and_make_win (execution_info,
+			  EXEC_INFO_WIN,
+			  height,
+			  3,
+			  0,
+			  origin_y,
+			  DONT_BOX_WINDOW));
 
   /* Now create the source window.  */
-  *win_info_ptr = init_and_make_win (*win_info_ptr,
-				     type,
-				     height,
-				     tui_term_width () - execution_info->width,
-				     execution_info->width,
-				     origin_y,
-				     BOX_WINDOW);
+  *win_info_ptr
+    = ((struct tui_win_info *)
+       init_and_make_win (*win_info_ptr,
+			  type,
+			  height,
+			  tui_term_width () - execution_info->width,
+			  execution_info->width,
+			  origin_y,
+			  BOX_WINDOW));
 
   (*win_info_ptr)->detail.source_info.execution_info = execution_info;
 }
@@ -918,13 +928,15 @@ show_source_or_disasm_and_command (enum tui_layout_type layout_type)
 	    make_source_window (win_info_ptr, src_height - 1, 0);
 	  else
 	    make_disasm_window (win_info_ptr, src_height - 1, 0);
-	  locator = init_and_make_win (locator,
-				       LOCATOR_WIN,
-				       2 /* 1 */ ,
-				       tui_term_width (),
-				       0,
-				       src_height - 1,
-				       DONT_BOX_WINDOW);
+	  locator
+	    = ((struct tui_gen_win_info *)
+	       init_and_make_win (locator,
+				  LOCATOR_WIN,
+				  2 /* 1 */ ,
+				  tui_term_width (),
+				  0,
+				  src_height - 1,
+				  DONT_BOX_WINDOW));
 	}
       else
 	{

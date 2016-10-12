@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 88000 series.
 
-   Copyright (C) 2004-2015 Free Software Foundation, Inc.
+   Copyright (C) 2004-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

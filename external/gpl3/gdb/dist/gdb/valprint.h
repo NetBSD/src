@@ -1,6 +1,6 @@
 /* Declarations for value printing routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -115,7 +115,7 @@ extern void maybe_print_array_index (struct type *index_type, LONGEST index,
                                      struct ui_file *stream,
 				     const struct value_print_options *);
 
-extern void val_print_array_elements (struct type *, const gdb_byte *, int,
+extern void val_print_array_elements (struct type *, const gdb_byte *, LONGEST,
 				      CORE_ADDR, struct ui_file *, int,
 				      const struct value *,
 				      const struct value_print_options *,
@@ -124,12 +124,8 @@ extern void val_print_array_elements (struct type *, const gdb_byte *, int,
 extern void val_print_type_code_int (struct type *, const gdb_byte *,
 				     struct ui_file *);
 
-extern void val_print_type_code_flags (struct type *type,
-				       const gdb_byte *valaddr,
-				       struct ui_file *stream);
-
 extern void val_print_scalar_formatted (struct type *,
-					const gdb_byte *, int,
+					const gdb_byte *, LONGEST,
 					const struct value *,
 					const struct value_print_options *,
 					int,
@@ -190,6 +186,10 @@ struct generic_val_print_decorations
   /* What to print when we see TYPE_CODE_VOID.  */
 
   const char *void_name;
+
+  /* Array start and end strings.  */
+  const char *array_start;
+  const char *array_end;
 };
 
 

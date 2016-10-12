@@ -548,7 +548,7 @@
 
 2013-12-03  Walfred Tedeschi  <walfred.tedeschi@intel.com>
 
-	* NEWS:  Add section for Intel(R) Architecture Instructions
+	* NEWS:  Add section for Intel Architecture Instructions
 	Extesions mentioning MPX.
 
 2013-12-03  Joel Brobecker  <brobecker@adacore.com>

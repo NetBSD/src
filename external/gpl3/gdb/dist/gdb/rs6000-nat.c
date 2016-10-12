@@ -1,6 +1,6 @@
 /* IBM RS/6000 native-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "gdbcore.h"
 #include "symfile.h"
 #include "objfiles.h"
-#include "libbfd.h"		/* For bfd_default_set_arch_mach (FIXME) */
 #include "bfd.h"
 #include "gdb-stabs.h"
 #include "regcache.h"
@@ -143,9 +142,9 @@ rs6000_ptrace64 (int req, int id, long long addr, int data, void *buf)
 {
 #ifdef ARCH3264
 #  ifdef HAVE_PTRACE64
-  int ret = ptrace64 (req, id, addr, data, buf);
+  int ret = ptrace64 (req, id, addr, data, (PTRACE_TYPE_ARG5) buf);
 #  else
-  int ret = ptracex (req, id, addr, data, buf);
+  int ret = ptracex (req, id, addr, data, (PTRACE_TYPE_ARG5) buf);
 #  endif
 #else
   int ret = 0;
@@ -593,7 +592,7 @@ rs6000_ptrace_ldinfo (ptid_t ptid)
 {
   const int pid = ptid_get_pid (ptid);
   int ldi_size = 1024;
-  gdb_byte *ldi = xmalloc (ldi_size);
+  void *ldi = xmalloc (ldi_size);
   int rc = -1;
 
   while (1)
@@ -615,7 +614,7 @@ rs6000_ptrace_ldinfo (ptid_t ptid)
       ldi = xrealloc (ldi, ldi_size);
     }
 
-  return ldi;
+  return (gdb_byte *) ldi;
 }
 
 /* Implement the to_xfer_partial target_ops method for

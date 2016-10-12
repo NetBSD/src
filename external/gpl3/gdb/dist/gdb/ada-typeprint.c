@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -64,7 +64,7 @@ decoded_type_name (struct type *type)
       if (name_buffer == NULL || name_buffer_len <= strlen (raw_name))
 	{
 	  name_buffer_len = 16 + 2 * strlen (raw_name);
-	  name_buffer = xrealloc (name_buffer, name_buffer_len);
+	  name_buffer = (char *) xrealloc (name_buffer, name_buffer_len);
 	}
       strcpy (name_buffer, raw_name);
 
@@ -203,7 +203,7 @@ print_range (struct type *type, struct ui_file *stream,
    set *N past the bound and its delimiter, if any.  */
 
 static void
-print_range_bound (struct type *type, char *bounds, int *n,
+print_range_bound (struct type *type, const char *bounds, int *n,
 		   struct ui_file *stream)
 {
   LONGEST B;
@@ -230,8 +230,8 @@ print_range_bound (struct type *type, char *bounds, int *n,
   else
     {
       int bound_len;
-      char *bound = bounds + *n;
-      char *pend;
+      const char *bound = bounds + *n;
+      const char *pend;
 
       pend = strstr (bound, "__");
       if (pend == NULL)
@@ -300,7 +300,7 @@ print_range_type (struct type *raw_type, struct ui_file *stream,
   else
     {
       int prefix_len = subtype_info - name;
-      char *bounds_str;
+      const char *bounds_str;
       int n;
 
       subtype_info += 5;
@@ -363,7 +363,7 @@ static void
 print_fixed_point_type (struct type *type, struct ui_file *stream)
 {
   DOUBLEST delta = ada_delta (type);
-  DOUBLEST small = ada_fixed_to_float (type, 1.0);
+  DOUBLEST small = ada_fixed_to_float (type, 1);
 
   if (delta < 0.0)
     fprintf_filtered (stream, "delta ??");
@@ -386,6 +386,7 @@ print_array_type (struct type *type, struct ui_file *stream, int show,
 {
   int bitsize;
   int n_indices;
+  struct type *elt_type = NULL;
 
   if (ada_is_constrained_packed_array_type (type))
     type = ada_coerce_to_simple_array_type (type);
@@ -448,11 +449,15 @@ print_array_type (struct type *type, struct ui_file *stream, int show,
 	fprintf_filtered (stream, "%s<>", i == i0 ? "" : ", ");
     }
 
+  elt_type = ada_array_element_type (type, n_indices);
   fprintf_filtered (stream, ") of ");
   wrap_here ("");
-  ada_print_type (ada_array_element_type (type, n_indices), "", stream,
-		  show == 0 ? 0 : show - 1, level + 1, flags);
-  if (bitsize > 0)
+  ada_print_type (elt_type, "", stream, show == 0 ? 0 : show - 1, level + 1,
+		  flags);
+  /* Arrays with variable-length elements are never bit-packed in practice but
+     compilers have to describe their stride so that we can properly fetch
+     individual elements.  Do not say the array is packed in this case.  */
+  if (bitsize > 0 && !is_dynamic_type (elt_type))
     fprintf_filtered (stream, " <packed: %d-bit elements>", bitsize);
 }
 

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2015 Free Software Foundation, Inc.
+# Copyright 2013-2016 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -32,13 +32,15 @@ if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.btrace/tailcall.exp COMPILE=1"
     standard_testfile tailcall.c
     lappend opts debug optimize=-O2
-} elseif {[istarget "x86_64-*-*"]} {
-	standard_testfile x86_64-tailcall.S
-} elseif {[istarget "i?86-*-*"]} {
-	standard_testfile i686-tailcall.S
+} elseif {[istarget "i?86-*-*"] || [istarget "x86_64-*-*"]} {
+	if {[is_amd64_regs_target]} {
+		standard_testfile x86_64-tailcall.S
+	} else {
+		standard_testfile i686-tailcall.S
+	}
 } else {
     verbose "Skipping ${testfile}."
-    return
+    return -1
 }
 
 if [prepare_for_testing tailcall.exp $testfile $srcfile $opts] {

@@ -1,5 +1,5 @@
 /* Disassemble ft32 instructions.
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
    Contributed by FTDI (support@ftdichip.com)
 
    This file is part of the GNU opcodes library.
@@ -118,7 +118,7 @@ print_insn_ft32 (bfd_vma addr, struct disassemble_info *info)
               case  FT32_FLD_RIMM:
                 imm = (iword >> FT32_FLD_RIMM_BIT) & ((1 << FT32_FLD_RIMM_SIZ) - 1);
                 if (imm & 0x400)
-                  info->print_address_func ((bfd_vma) imm & 0x1ff, info);
+                  info->print_address_func ((bfd_vma) imm & 0x3ff, info);
                 else
                   fpr(stream, "$r%d", imm & 0x1f);
                 break;

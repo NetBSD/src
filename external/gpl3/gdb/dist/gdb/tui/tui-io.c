@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -172,9 +172,9 @@ tui_puts (const char *string)
 	  /* Expand TABs, since ncurses on MS-Windows doesn't.  */
 	  if (c == '\t')
 	    {
-	      int line, col;
+	      int col;
 
-	      getyx (w, line, col);
+	      col = getcurx (w);
 	      do
 		{
 		  waddch (w, ' ');
@@ -187,10 +187,7 @@ tui_puts (const char *string)
       else if (c == '\n')
         tui_skip_line = -1;
     }
-  getyx (w, TUI_CMD_WIN->detail.command_info.cur_line,
-         TUI_CMD_WIN->detail.command_info.curch);
-  TUI_CMD_WIN->detail.command_info.start_line
-    = TUI_CMD_WIN->detail.command_info.cur_line;
+  TUI_CMD_WIN->detail.command_info.start_line = getcury (w);
 }
 
 /* Readline callback.
@@ -201,12 +198,12 @@ tui_redisplay_readline (void)
 {
   int prev_col;
   int height;
-  int col, line;
+  int col;
   int c_pos;
   int c_line;
   int in;
   WINDOW *w;
-  char *prompt;
+  const char *prompt;
   int start_line;
 
   /* Detect when we temporarily left SingleKey and now the readline
@@ -215,7 +212,7 @@ tui_redisplay_readline (void)
      The command could call prompt_for_continue and we must not
      restore SingleKey so that the prompt and normal keymap are used.  */
   if (tui_current_key_mode == TUI_ONE_COMMAND_MODE && rl_end == 0
-      && immediate_quit == 0)
+      && !gdb_in_secondary_prompt_p (current_ui))
     tui_set_key_mode (TUI_SINGLE_KEY_MODE);
 
   if (tui_current_key_mode == TUI_SINGLE_KEY_MODE)
@@ -233,7 +230,7 @@ tui_redisplay_readline (void)
   for (in = 0; prompt && prompt[in]; in++)
     {
       waddch (w, prompt[in]);
-      getyx (w, line, col);
+      col = getcurx (w);
       if (col <= prev_col)
         height++;
       prev_col = col;
@@ -259,7 +256,7 @@ tui_redisplay_readline (void)
       else if (c == '\t')
 	{
 	  /* Expand TABs, since ncurses on MS-Windows doesn't.  */
-	  getyx (w, line, col);
+	  col = getcurx (w);
 	  do
 	    {
 	      waddch (w, ' ');
@@ -271,24 +268,16 @@ tui_redisplay_readline (void)
           waddch (w, c);
 	}
       if (c == '\n')
-        {
-          getyx (w, TUI_CMD_WIN->detail.command_info.start_line,
-                 TUI_CMD_WIN->detail.command_info.curch);
-        }
-      getyx (w, line, col);
+	TUI_CMD_WIN->detail.command_info.start_line = getcury (w);
+      col = getcurx (w);
       if (col < prev_col)
         height++;
       prev_col = col;
     }
   wclrtobot (w);
-  getyx (w, TUI_CMD_WIN->detail.command_info.start_line,
-         TUI_CMD_WIN->detail.command_info.curch);
+  TUI_CMD_WIN->detail.command_info.start_line = getcury (w);
   if (c_line >= 0)
-    {
-      wmove (w, c_line, c_pos);
-      TUI_CMD_WIN->detail.command_info.cur_line = c_line;
-      TUI_CMD_WIN->detail.command_info.curch = c_pos;
-    }
+    wmove (w, c_line, c_pos);
   TUI_CMD_WIN->detail.command_info.start_line -= height - 1;
 
   wrefresh (w);
@@ -371,10 +360,11 @@ static void
 tui_mld_erase_entire_line (const struct match_list_displayer *displayer)
 {
   WINDOW *w = TUI_CMD_WIN->generic.handle;
+  int cur_y = getcury (w);
 
-  wmove (w, TUI_CMD_WIN->detail.command_info.cur_line, 0);
+  wmove (w, cur_y, 0);
   wclrtoeol (w);
-  wmove (w, TUI_CMD_WIN->detail.command_info.cur_line, 0);
+  wmove (w, cur_y, 0);
 }
 
 /* TUI version of displayer.beep.  */
@@ -521,10 +511,6 @@ tui_cont_sig (int sig)
       /* Force a refresh of the screen.  */
       tui_refresh_all_win ();
 
-      /* Update cursor position on the screen.  */
-      wmove (TUI_CMD_WIN->generic.handle,
-             TUI_CMD_WIN->detail.command_info.start_line,
-             TUI_CMD_WIN->detail.command_info.curch);
       wrefresh (TUI_CMD_WIN->generic.handle);
     }
   signal (sig, tui_cont_sig);
@@ -599,9 +585,9 @@ tui_getc (FILE *fp)
          with empty lines with gdb prompt at beginning.  Instead of that,
          stay on the same line but provide a visual effect to show the
          user we recognized the command.  */
-      if (rl_end == 0)
+      if (rl_end == 0 && !gdb_in_secondary_prompt_p (current_ui))
         {
-          wmove (w, TUI_CMD_WIN->detail.command_info.cur_line, 0);
+	  wmove (w, getcury (w), 0);
 
           /* Clear the line.  This will blink the gdb prompt since
              it will be redrawn at the same line.  */
@@ -614,25 +600,23 @@ tui_getc (FILE *fp)
 	  /* Move cursor to the end of the command line before emitting the
 	     newline.  We need to do so because when ncurses outputs a newline
 	     it truncates any text that appears past the end of the cursor.  */
-	  int px = TUI_CMD_WIN->detail.command_info.curch;
-	  int py = TUI_CMD_WIN->detail.command_info.cur_line;
+	  int px, py;
+	  getyx (w, py, px);
 	  px += rl_end - rl_point;
 	  py += px / TUI_CMD_WIN->generic.width;
 	  px %= TUI_CMD_WIN->generic.width;
 	  wmove (w, py, px);
-	  waddch (w, ch);
+	  tui_putc ('\n');
         }
     }
   
   /* Handle prev/next/up/down here.  */
   ch = tui_dispatch_ctrl_char (ch);
   
-  if (ch == '\n' || ch == '\r' || ch == '\f')
-    TUI_CMD_WIN->detail.command_info.curch = 0;
   if (ch == KEY_BACKSPACE)
     return '\b';
 
-  if (async_command_editing_p && key_is_start_sequence (ch))
+  if (current_ui->command_editing && key_is_start_sequence (ch))
     {
       int ch_pending;
 
@@ -687,7 +671,7 @@ tui_expand_tabs (const char *string, int col)
     }
 
   /* Allocate the copy.  */
-  ret = q = xmalloc (strlen (string) + n_adjust + 1);
+  ret = q = (char *) xmalloc (strlen (string) + n_adjust + 1);
 
   /* 2. Copy the original string while replacing TABs with spaces.  */
   for (ncol = col, s = string; s; )

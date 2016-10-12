@@ -1,6 +1,6 @@
 /* Low level interface for debugging AIX 4.3+ pthreads.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
    Written by Nick Duffek <nsd@redhat.com>.
 
    This file is part of GDB.
@@ -462,7 +462,7 @@ pdc_read_data (pthdb_user_t user, void *buf,
       "pdc_read_data (user = %ld, buf = 0x%lx, addr = %s, len = %ld)\n",
       user, (long) buf, hex_string (addr), len);
 
-  status = target_read_memory (addr, buf, len);
+  status = target_read_memory (addr, (gdb_byte *) buf, len);
   ret = status == 0 ? PDC_SUCCESS : PDC_FAILURE;
 
   if (debug_aix_thread)
@@ -484,7 +484,7 @@ pdc_write_data (pthdb_user_t user, void *buf,
       "pdc_write_data (user = %ld, buf = 0x%lx, addr = %s, len = %ld)\n",
       user, (long) buf, hex_string (addr), len);
 
-  status = target_write_memory (addr, buf, len);
+  status = target_write_memory (addr, (gdb_byte *) buf, len);
   ret = status == 0 ? PDC_SUCCESS : PDC_FAILURE;
 
   if (debug_aix_thread)
@@ -703,7 +703,7 @@ sync_threadlists (void)
 
   pcount = 0;
   psize = 1;
-  pbuf = (struct pd_thread *) xmalloc (psize * sizeof *pbuf);
+  pbuf = XNEWVEC (struct pd_thread, psize);
 
   for (cmd = PTHDB_LIST_FIRST;; cmd = PTHDB_LIST_NEXT)
     {
@@ -740,7 +740,7 @@ sync_threadlists (void)
 
   gcount = 0;
   iterate_over_threads (giter_count, &gcount);
-  g = gbuf = (struct thread_info **) xmalloc (gcount * sizeof *gbuf);
+  g = gbuf = XNEWVEC (struct thread_info *, gcount);
   iterate_over_threads (giter_accum, &g);
   qsort (gbuf, gcount, sizeof *gbuf, gcmp);
 
@@ -757,7 +757,7 @@ sync_threadlists (void)
       else if (gi == gcount)
 	{
 	  thread = add_thread (ptid_build (infpid, 0, pbuf[pi].pthid));
-	  thread->priv = xmalloc (sizeof (struct private_thread_info));
+	  thread->priv = XNEW (struct private_thread_info);
 	  thread->priv->pdtid = pbuf[pi].pdtid;
 	  thread->priv->tid = pbuf[pi].tid;
 	  pi++;
@@ -789,7 +789,7 @@ sync_threadlists (void)
 	  else
 	    {
 	      thread = add_thread (pptid);
-	      thread->priv = xmalloc (sizeof (struct private_thread_info));
+	      thread->priv = XNEW (struct private_thread_info);
 	      thread->priv->pdtid = pdtid;
 	      thread->priv->tid = tid;
 	      pi++;
@@ -1007,10 +1007,10 @@ aix_thread_resume (struct target_ops *ops,
 
       if (arch64)
 	ptrace64aix (PTT_CONTINUE, tid[0], (long long) 1,
-		     gdb_signal_to_host (sig), (void *) tid);
+		     gdb_signal_to_host (sig), (PTRACE_TYPE_ARG5) tid);
       else
 	ptrace32 (PTT_CONTINUE, tid[0], (addr_ptr) 1,
-		  gdb_signal_to_host (sig), (void *) tid);
+		  gdb_signal_to_host (sig), (PTRACE_TYPE_ARG5) tid);
     }
 }
 

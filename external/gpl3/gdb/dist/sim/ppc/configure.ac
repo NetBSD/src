@@ -33,16 +33,17 @@ if test x"$silent" != x"yes" && test x"$sim_alignment" != x""; then
 fi],[sim_alignment=""])dnl
 
 
+AC_MSG_CHECKING([whether to enable sim asserts])
+sim_assert="1"
 AC_ARG_ENABLE(sim-assert,
 [  --enable-sim-assert			Specify whether to perform random assertions.],
 [case "${enableval}" in
-  yes)	sim_assert="-DWITH_ASSERT=1";;
-  no)	sim_assert="-DWITH_ASSERT=0";;
-  *)	AC_MSG_ERROR("--enable-sim-assert does not take a value"); sim_assert="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_assert" != x""; then
-  echo "Setting assert flags = $sim_assert" 6>&1
-fi],[sim_assert=""])dnl
+  yes)	sim_assert="1";;
+  no)	sim_assert="0";;
+  *)	AC_MSG_ERROR([--enable-sim-assert does not take a value]);;
+esac])dnl
+AC_DEFINE_UNQUOTED([WITH_ASSERT], [$sim_assert], [Sim assert settings])
+AC_MSG_RESULT($sim_assert)
 
 
 AC_ARG_ENABLE(sim-bitsize,
@@ -54,30 +55,6 @@ esac
 if test x"$silent" != x"yes" && test x"$sim_bitsize" != x""; then
   echo "Setting bitsize flags = $sim_bitsize" 6>&1
 fi],[sim_bitsize=""])dnl
-
-
-AC_ARG_ENABLE(sim-bswap,
-[  --enable-sim-bswap			Use the BSWAP instruction on Intel 486s and Pentiums.],
-[case "${enableval}" in
-  yes)	sim_bswap="-DWITH_BSWAP=1";;
-  no)	sim_bswap="-DWITH_BSWAP=0";;
-  *)	AC_MSG_ERROR("--enable-sim-bswap does not take a value"); sim_bswap="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_bswap" != x""; then
-  echo "Setting bswap flags = $sim_bswap" 6>&1
-fi],[sim_bswap=""])dnl
-
-
-AC_ARG_ENABLE(sim-cflags,
-[  --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator],
-[case "${enableval}" in
-  yes)	sim_cflags="-O2 -fomit-frame-pointer";;
-  no)	sim_cflags="";;
-  *)	sim_cflags=`echo "${enableval}" | sed -e "s/,/ /g"`;;
-esac
-if test x"$silent" != x"yes" && test x"$sim_cflags" != x""; then
-  echo "Setting sim cflags = $sim_cflags" 6>&1
-fi],[sim_cflags=""])dnl
 
 
 AC_ARG_ENABLE(sim-config,
@@ -161,18 +138,19 @@ if test x"$silent" != x"yes" && test x"$sim_endian" != x""; then
 fi],[sim_endian=""])dnl
 
 
+AC_MSG_CHECKING([default sim environment setting])
+sim_env="0"
 AC_ARG_ENABLE(sim-env,
 [  --enable-sim-env=env			Specify target environment (operating, virtual, user).],
 [case "${enableval}" in
-  operating | os | oea)	sim_env="-DWITH_ENVIRONMENT=OPERATING_ENVIRONMENT";;
-  virtual | vea)	sim_env="-DWITH_ENVIRONMENT=VIRTUAL_ENVIRONMENT";;
-  user | uea)		sim_env="-DWITH_ENVIRONMENT=USER_ENVIRONMENT";;
-  no)			sim_env="-DWITH_ENVIRONMENT=0";;
-  *)			AC_MSG_ERROR("Unknown value $enableval passed to --enable-sim-env"); sim_env="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_env" != x""; then
-  echo "Setting env flags = $sim_env" 6>&1
-fi],[sim_env=""])dnl
+  operating | os | oea)	sim_env="OPERATING_ENVIRONMENT";;
+  virtual | vea)	sim_env="VIRTUAL_ENVIRONMENT";;
+  user | uea)		sim_env="USER_ENVIRONMENT";;
+  no)			sim_env="0";;
+  *)			AC_MSG_ERROR([Unknown value $enableval passed to --enable-sim-env]);;
+esac])dnl
+AC_DEFINE_UNQUOTED([WITH_ENVIRONMENT], [$sim_env], [Sim default environment])
+AC_MSG_RESULT($sim_env)
 
 
 AC_ARG_ENABLE(sim-filter,
@@ -530,19 +508,6 @@ if test x"$silent" != x"yes"; then
 fi])dnl
 
 
-AC_ARG_ENABLE(sim-regparm,
-[  --enable-sim-regparm=nr-parm		Pass parameters in registers instead of on the stack - x86/GCC specific.],
-[case "${enableval}" in
-  0*|1*|2*|3*|4*|5*|6*|7*|8*|9*) sim_regparm="-DWITH_REGPARM=${enableval}";;
-  no)                            sim_regparm="" ;;
-  yes)                           sim_regparm="-DWITH_REGPARM=3";;
-  *)   AC_MSG_ERROR("Unknown value $enableval for --enable-sim-regparm"); sim_regparm="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_regparm" != x""; then
-  echo "Setting regparm flags = $sim_regparm" 6>&1
-fi],[sim_regparm=""])dnl
-
-
 AC_ARG_ENABLE(sim-reserved-bits,
 [  --enable-sim-reserved-bits		Specify whether to check reserved bits in instruction.],
 [case "${enableval}" in
@@ -570,29 +535,17 @@ if test x"$silent" != x"yes"; then
 fi])dnl
 
 
-AC_ARG_ENABLE(sim-stdcall,
-[  --enable-sim-stdcall=type		Use an alternative function call/return mechanism - x86/GCC specific.],
-[case "${enableval}" in
-  no)		sim_stdcall="" ;;
-  std*)		sim_stdcall="-DWITH_STDCALL=1";;
-  yes)		sim_stdcall="-DWITH_STDCALL=1";;
-  *)   AC_MSG_ERROR("Unknown value $enableval for --enable-sim-stdcall"); sim_stdcall="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_stdcall" != x""; then
-  echo "Setting function call flags = $sim_stdcall" 6>&1
-fi],[sim_stdcall=""])dnl
-
-
+AC_MSG_CHECKING([for sim stdio debug behavior])
+sim_stdio=0
 AC_ARG_ENABLE(sim-stdio,
 [  --enable-sim-stdio			Specify whether to use stdio for console input/output.],
 [case "${enableval}" in
-  yes)	sim_stdio="-DWITH_STDIO=DO_USE_STDIO";;
-  no)	sim_stdio="-DWITH_STDIO=DONT_USE_STDIO";;
-  *)	AC_MSG_ERROR("Unknown value $enableval passed to --enable-sim-stdio"); sim_stdio="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_stdio" != x""; then
-  echo "Setting stdio flags = $sim_stdio" 6>&1
-fi],[sim_stdio=""])dnl
+  yes)	sim_stdio="DO_USE_STDIO";;
+  no)	sim_stdio="DONT_USE_STDIO";;
+  *)	AC_MSG_ERROR([Unknown value $enableval passed to --enable-sim-stdio]);;
+esac])dnl
+AC_DEFINE_UNQUOTED([WITH_STDIO], [$sim_stdio], [How to route I/O])
+AC_MSG_RESULT($sim_stdio)
 
 
 AC_ARG_ENABLE(sim-switch,
@@ -622,16 +575,17 @@ if test x"$silent" != x"yes" && test x"$sim_timebase" != x""; then
 fi],[sim_timebase=""])dnl
 
 
+AC_MSG_CHECKING([for sim trace settings])
+sim_trace="1"
 AC_ARG_ENABLE(sim-trace,
 [  --enable-sim-trace			Specify whether tracing is supported.],
 [case "${enableval}" in
-  yes)	sim_trace="-DWITH_TRACE=1";;
-  no)	sim_trace="-DWITH_TRACE=0";;
-  *)	AC_MSG_ERROR("--enable-sim-trace does not take a value"); sim_trace="";;
-esac
-if test x"$silent" != x"yes" && test x"$sim_trace" != x""; then
-  echo "Setting trace flags = $sim_trace" 6>&1
-fi],[sim_trace=""])dnl
+  yes)	sim_trace="1";;
+  no)	sim_trace="0";;
+  *)	AC_MSG_ERROR([--enable-sim-trace does not take a value]);;
+esac])dnl
+AC_DEFINE_UNQUOTED([WITH_TRACE], [$sim_trace], [Sim trace settings])
+AC_MSG_RESULT($sim_trace)
 
 
 AC_ARG_ENABLE(sim-warnings,
@@ -886,7 +840,6 @@ AC_SUBST(HDEFINES)
 AR=${AR-ar}
 AC_SUBST(AR)
 AC_PROG_RANLIB
-AC_SUBST(sim_cflags)
 AC_SUBST(sim_warnings)
 AC_SUBST(sim_line_nr)
 AC_SUBST(sim_config)
@@ -902,28 +855,21 @@ AC_SUBST(sim_hw_obj)
 AC_SUBST(sim_pk_src)
 AC_SUBST(sim_pk_obj)
 AC_SUBST(sim_inline)
-AC_SUBST(sim_bswap)
 AC_SUBST(sim_endian)
-AC_SUBST(sim_regparm)
-AC_SUBST(sim_stdcall)
 AC_SUBST(sim_xor_endian)
 AC_SUBST(sim_hostendian)
 AC_SUBST(sim_smp)
 AC_SUBST(sim_igen_smp)
 AC_SUBST(sim_bitsize)
 AC_SUBST(sim_hostbitsize)
-AC_SUBST(sim_env)
 AC_SUBST(sim_timebase)
 AC_SUBST(sim_alignment)
 AC_SUBST(sim_float)
-AC_SUBST(sim_trace)
-AC_SUBST(sim_assert)
 AC_SUBST(sim_reserved)
 AC_SUBST(sim_monitor)
 AC_SUBST(sim_model)
 AC_SUBST(sim_default_model)
 AC_SUBST(sim_model_issue)
-AC_SUBST(sim_stdio)
 AC_SUBST(sim_termio)
 AC_SUBST(sim_devzero)
 AC_SUBST(sim_callback)

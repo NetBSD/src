@@ -1,6 +1,6 @@
 /* Python interface to line tables.
 
-   Copyright (C) 2013-2015 Free Software Foundation, Inc.
+   Copyright (C) 2013-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,7 +55,7 @@ typedef struct {
 extern PyTypeObject ltpy_iterator_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("ltpy_iterator_object");
 
-/* Internal helper function to extract gdb.Symtab from a gdb.Linetable
+/* Internal helper function to extract gdb.Symtab from a gdb.LineTable
    object.  */
 
 static PyObject *
@@ -169,7 +169,6 @@ ltpy_get_pcs_for_line (PyObject *self, PyObject *args)
   struct symtab *symtab;
   gdb_py_longest py_line;
   struct linetable_entry *best_entry = NULL;
-  linetable_entry_object *result;
   VEC (CORE_ADDR) *pcs = NULL;
   PyObject *tuple;
 
@@ -227,8 +226,8 @@ ltpy_has_line (PyObject *self, PyObject *args)
   Py_RETURN_FALSE;
 }
 
-/* Implementation of gdb.LineTable.source_lines (self) -> FrozenSet.
-   Returns a Python FrozenSet that contains source line entries in the
+/* Implementation of gdb.LineTable.source_lines (self) -> List.
+   Returns a Python List that contains source line entries in the
    line table.  This function will just return the source lines
    without corresponding addresses.  */
 
@@ -239,7 +238,6 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
   Py_ssize_t index;
   PyObject *source_list, *source_dict, *line;
   struct linetable_entry *item;
-  Py_ssize_t list_size;
 
   LTPY_REQUIRE_VALID (self, symtab);
 
@@ -288,14 +286,13 @@ ltpy_get_all_source_lines (PyObject *self, PyObject *args)
   return source_list;
 }
 
-/* Implementation of gdb.Linetable.is_valid (self) -> Boolean.
+/* Implementation of gdb.LineTable.is_valid (self) -> Boolean.
    Returns True if this line table object still exists in GDB.  */
 
 static PyObject *
 ltpy_is_valid (PyObject *self, PyObject *args)
 {
   struct symtab *symtab = NULL;
-  linetable_object *obj = (linetable_object *) self;
 
   symtab = symtab_object_to_symtab (get_symtab (self));
 
@@ -349,7 +346,7 @@ gdbpy_initialize_linetable (void)
   return 0;
 }
 
-/* Linetable entry object get functions.  */
+/* LineTable entry object get functions.  */
 
 /* Implementation of gdb.LineTableEntry.line (self) -> Long.  Returns
    a long integer associated with the line table entry.  */
@@ -373,7 +370,7 @@ ltpy_entry_get_pc (PyObject *self, void *closure)
   return  gdb_py_object_from_longest (obj->pc);
 }
 
-/* Linetable iterator functions.  */
+/* LineTable iterator functions.  */
 
 /* Return a new line table iterator.  */
 
@@ -427,7 +424,6 @@ ltpy_iternext (PyObject *self)
 {
   ltpy_iterator_object *iter_obj = (ltpy_iterator_object *) self;
   struct symtab *symtab;
-  int index;
   PyObject *obj;
   struct linetable_entry *item;
 
@@ -460,7 +456,7 @@ ltpy_iternext (PyObject *self)
   return NULL;
 }
 
-/* Implementation of gdb.LinetableIterator.is_valid (self) -> Boolean.
+/* Implementation of gdb.LineTableIterator.is_valid (self) -> Boolean.
    Returns True if this line table iterator object still exists in
    GDB.  */
 
@@ -488,11 +484,11 @@ Return executable locations for a given source line." },
     "has_line (lineno) -> Boolean\n\
 Return TRUE if this line has executable information, FALSE if not." },
   { "source_lines", ltpy_get_all_source_lines, METH_NOARGS,
-    "source_lines () -> FrozenSet\n\
-Return a frozen set of all executable source lines." },
+    "source_lines () -> List\n\
+Return a list of all executable source lines." },
   { "is_valid", ltpy_is_valid, METH_NOARGS,
     "is_valid () -> Boolean.\n\
-Return True if this Linetable is valid, False if not." },
+Return True if this LineTable is valid, False if not." },
   {NULL}  /* Sentinel */
 };
 
@@ -539,7 +535,7 @@ PyTypeObject linetable_object_type = {
 static PyMethodDef ltpy_iterator_methods[] = {
   { "is_valid", ltpy_iter_is_valid, METH_NOARGS,
     "is_valid () -> Boolean.\n\
-Return True if this Linetable iterator is valid, False if not." },
+Return True if this LineTable iterator is valid, False if not." },
   {NULL}  /* Sentinel */
 };
 

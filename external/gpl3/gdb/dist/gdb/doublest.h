@@ -1,6 +1,6 @@
 /* Floating point definitions for GDB.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,6 +88,10 @@ extern const char *floatformat_mantissa (const struct floatformat *,
    based on the type size when FLOATFORMAT is NULL.  */
 
 const struct floatformat *floatformat_from_type (const struct type *type);
+
+/* Return the floatformat's total size in host bytes.  */
+
+extern size_t floatformat_totalsize_bytes (const struct floatformat *fmt);
 
 extern DOUBLEST extract_typed_floating (const void *addr,
 					const struct type *type);

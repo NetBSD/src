@@ -1,5 +1,5 @@
 # Makefile template for Configure for the m32r simulator
-# Copyright (C) 1996-2015 Free Software Foundation, Inc.
+# Copyright (C) 1996-2016 Free Software Foundation, Inc.
 # Contributed by Cygnus Support.
 #
 # This file is part of GDB, the GNU debugger.
@@ -26,17 +26,13 @@ TRAPS_OBJ = @traps_obj@
 
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-hload.o \
-	sim-model.o \
-	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o \
-	cgen-run.o sim-reason.o sim-stop.o \
+	cgen-run.o \
 	sim-if.o arch.o \
 	$(M32R_OBJS) \
 	$(M32RX_OBJS) \
 	$(M32R2_OBJS) \
-	$(TRAPS_OBJ) \
-	devices.o
+	$(TRAPS_OBJ)
 
 # Extra headers included by sim-main.h.
 SIM_EXTRA_DEPS = \

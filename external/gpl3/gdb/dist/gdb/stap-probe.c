@@ -1,6 +1,6 @@
 /* SystemTap probe support for GDB.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -313,9 +313,8 @@ stap_get_opcode (const char **s)
       break;
 
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Invalid opcode in expression `%s' for SystemTap"
-			"probe"), *s);
+      error (_("Invalid opcode in expression `%s' for SystemTap"
+	       "probe"), *s);
     }
 
   return op;
@@ -326,7 +325,8 @@ stap_get_opcode (const char **s)
 
 static struct type *
 stap_get_expected_argument_type (struct gdbarch *gdbarch,
-				 enum stap_arg_bitness b)
+				 enum stap_arg_bitness b,
+				 const struct stap_probe *probe)
 {
   switch (b)
     {
@@ -361,8 +361,8 @@ stap_get_expected_argument_type (struct gdbarch *gdbarch,
       return builtin_type (gdbarch)->builtin_uint64;
 
     default:
-      internal_error (__FILE__, __LINE__,
-		      _("Undefined bitness for probe."));
+      error (_("Undefined bitness for probe '%s'."),
+	     probe->p.name);
       break;
     }
 }
@@ -653,7 +653,7 @@ stap_parse_register_operand (struct stap_parse_info *p)
 
   len = p->arg - start;
 
-  regname = alloca (len + gdb_reg_prefix_len + gdb_reg_suffix_len + 1);
+  regname = (char *) alloca (len + gdb_reg_prefix_len + gdb_reg_suffix_len + 1);
   regname[0] = '\0';
 
   /* We only add the GDB's register prefix/suffix if we are dealing with
@@ -1172,7 +1172,8 @@ stap_parse_probe_arguments (struct stap_probe *probe, struct gdbarch *gdbarch)
       else
 	arg.bitness = STAP_ARG_BITNESS_UNDEFINED;
 
-      arg.atype = stap_get_expected_argument_type (gdbarch, arg.bitness);
+      arg.atype = stap_get_expected_argument_type (gdbarch, arg.bitness,
+						   probe);
 
       expr = stap_parse_argument (&cur, arg.atype, gdbarch);
 
@@ -1278,11 +1279,25 @@ stap_is_operator (const char *op)
   return ret;
 }
 
+/* Return argument N of probe PROBE.
+
+   If the probe's arguments have not been parsed yet, parse them.  If
+   there are no arguments, throw an exception (error).  Otherwise,
+   return the requested argument.  */
+
 static struct stap_probe_arg *
 stap_get_arg (struct stap_probe *probe, unsigned n, struct gdbarch *gdbarch)
 {
   if (!probe->args_parsed)
     stap_parse_probe_arguments (probe, gdbarch);
+
+  gdb_assert (probe->args_parsed);
+  if (probe->args_u.vec == NULL)
+    internal_error (__FILE__, __LINE__,
+		    _("Probe '%s' apparently does not have arguments, but \n"
+		      "GDB is requesting its argument number %u anyway.  "
+		      "This should not happen.  Please report this bug."),
+		    probe->p.name, n);
 
   return VEC_index (stap_probe_arg_s, probe->args_u.vec, n);
 }
@@ -1467,14 +1482,15 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
   const char *probe_args = NULL;
   struct stap_probe *ret;
 
-  ret = obstack_alloc (&objfile->per_bfd->storage_obstack, sizeof (*ret));
+  ret = XOBNEW (&objfile->per_bfd->storage_obstack, struct stap_probe);
   ret->p.pops = &stap_probe_ops;
   ret->p.arch = gdbarch;
 
   /* Provider and the name of the probe.  */
   ret->p.provider = (char *) &el->data[3 * size];
-  ret->p.name = memchr (ret->p.provider, '\0',
-			(char *) el->data + el->size - ret->p.provider);
+  ret->p.name = ((const char *)
+		 memchr (ret->p.provider, '\0',
+			 (char *) el->data + el->size - ret->p.provider));
   /* Making sure there is a name.  */
   if (ret->p.name == NULL)
     {
@@ -1504,8 +1520,9 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
 
   /* Arguments.  We can only extract the argument format if there is a valid
      name for this probe.  */
-  probe_args = memchr (ret->p.name, '\0',
-		       (char *) el->data + el->size - ret->p.name);
+  probe_args = ((const char*)
+		memchr (ret->p.name, '\0',
+			(char *) el->data + el->size - ret->p.name));
 
   if (probe_args != NULL)
     ++probe_args;
@@ -1523,7 +1540,7 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
     }
 
   ret->args_parsed = 0;
-  ret->args_u.text = (void *) probe_args;
+  ret->args_u.text = probe_args;
 
   /* Successfully created probe.  */
   VEC_safe_push (probe_p, *probesp, (struct probe *) ret);
@@ -1535,7 +1552,7 @@ handle_stap_probe (struct objfile *objfile, struct sdt_note *el,
 static void
 get_stap_base_address_1 (bfd *abfd, asection *sect, void *obj)
 {
-  asection **ret = obj;
+  asection **ret = (asection **) obj;
 
   if ((sect->flags & (SEC_DATA | SEC_ALLOC | SEC_HAS_CONTENTS))
       && sect->name && !strcmp (sect->name, STAP_BASE_SECTION_NAME))

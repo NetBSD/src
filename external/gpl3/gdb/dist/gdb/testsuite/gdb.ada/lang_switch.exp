@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
 load_lib "ada.exp"
 
 standard_ada_testfile lang_switch
-set cfile "${testdir}/foo"
-set csrcfile ${srcdir}/${subdir}/${cfile}.c
+set cfile "foo"
+set csrcfile ${srcdir}/${subdir}/${testdir}/${cfile}.c
 set cobject [standard_output_file ${cfile}.o]
 
 gdb_compile "${csrcfile}" "${cobject}" object [list debug]

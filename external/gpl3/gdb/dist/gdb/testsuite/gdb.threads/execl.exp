@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Test handling of threads across an execl.
-
-if { [is_remote target] } then {
-    continue
-}
 
 # Original image, loads a thread library.
 standard_testfile
@@ -44,7 +40,7 @@ gdb_test "b [gdb_get_line_number "breakpoint here"]" \
 
 gdb_test "continue" ".*breakpoint here.*" "continue to exec"
 
-gdb_test "info threads" ".*3 *Thread.*2 *Thread.*1 *Thread.*" "info threads before exec"
+gdb_test "info threads" "1 *Thread.*2 *Thread.*3 *Thread.*" "info threads before exec"
 
 # When continuing from this point we'll hit the breakpoint in main()
 # again, this time in the exec'd process.

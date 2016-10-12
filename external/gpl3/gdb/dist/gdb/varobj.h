@@ -1,5 +1,5 @@
 /* GDB variable objects API.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ enum varobj_display_formats
     FORMAT_BINARY,		/* Binary display                    */
     FORMAT_DECIMAL,		/* Decimal display                   */
     FORMAT_HEXADECIMAL,		/* Hex display                       */
-    FORMAT_OCTAL		/* Octal display                     */
+    FORMAT_OCTAL,		/* Octal display                     */
+    FORMAT_ZHEXADECIMAL		/* Zero padded hexadecimal	     */
   };
 
 enum varobj_type
@@ -52,7 +53,7 @@ enum varobj_scope_status
 /* String representations of gdb's format codes (defined in varobj.c).  */
 extern char *varobj_format_string[];
 
-/* Struct thar describes a variable object instance.  */
+/* Struct that describes a variable object instance.  */
 
 struct varobj;
 
@@ -106,7 +107,7 @@ struct varobj
   int index;
 
   /* The type of this variable.  This can be NULL
-     for artifial variable objects -- currently, the "accessibility" 
+     for artificial variable objects -- currently, the "accessibility"
      variable objects in C++.  */
   struct type *type;
 
@@ -197,7 +198,7 @@ struct lang_varobj_ops
      reported by -var-update.  Return zero if -var-update should never
      report changes of such values.  This makes sense for structures
      (since the changes in children values will be reported separately),
-     or for artifical objects (like 'public' pseudo-field in C++).
+     or for artificial objects (like 'public' pseudo-field in C++).
 
      Return value of 0 means that gdb need not call value_fetch_lazy
      for the value of this variable object.  */
@@ -245,8 +246,10 @@ extern char *varobj_get_objname (const struct varobj *var);
 
 extern char *varobj_get_expression (const struct varobj *var);
 
-extern int varobj_delete (struct varobj *var, char ***dellist,
-			  int only_children);
+/* Delete a varobj and all its children if only_children == 0, otherwise delete
+   only the children.  Return the number of deleted variables.  */
+
+extern int varobj_delete (struct varobj *var, int only_children);
 
 extern enum varobj_display_formats varobj_set_display_format (
 							 struct varobj *var,

@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +38,8 @@ struct compunit_symtab;
 
 struct block;
 struct pending_block;
+
+struct dynamic_prop;
 
 #ifndef EXTERN
 #define	EXTERN extern
@@ -118,7 +120,11 @@ EXTERN struct pending *local_symbols;
 
 /* "using" directives local to lexical context.  */
 
-EXTERN struct using_direct *using_directives;
+EXTERN struct using_direct *local_using_directives;
+
+/* global "using" directives.  */
+
+EXTERN struct using_direct *global_using_directives;
 
 /* Stack representing unclosed lexical contexts (that will become
    blocks, eventually).  */
@@ -131,7 +137,7 @@ struct context_stack
 
     /* Pending using directives at the time we entered.  */
 
-    struct using_direct *using_directives;
+    struct using_direct *local_using_directives;
 
     /* Pointer into blocklist as of entry */
 
@@ -140,6 +146,11 @@ struct context_stack
     /* Name of function, if any, defining context */
 
     struct symbol *name;
+
+    /* Expression that computes the frame base of the lexically enclosing
+       function, if any.  NULL otherwise.  */
+
+    struct dynamic_prop *static_link;
 
     /* PC where this context starts */
 
@@ -192,9 +203,11 @@ extern struct symbol *find_symbol_in_list (struct pending *list,
 					   char *name, int length);
 
 extern struct block *finish_block (struct symbol *symbol,
-                                   struct pending **listhead,
-                                   struct pending_block *old_blocks,
-                                   CORE_ADDR start, CORE_ADDR end);
+				   struct pending **listhead,
+				   struct pending_block *old_blocks,
+				   const struct dynamic_prop *static_link,
+				   CORE_ADDR start,
+				   CORE_ADDR end);
 
 extern void record_block_range (struct block *,
                                 CORE_ADDR start, CORE_ADDR end_inclusive);

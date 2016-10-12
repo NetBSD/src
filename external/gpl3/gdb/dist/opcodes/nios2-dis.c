@@ -1,5 +1,5 @@
 /* Altera Nios II disassemble routines
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -96,7 +96,7 @@ nios2_r2_disassembler_state = {
   NULL,
   0
 };
-  
+
 /* Function to initialize the opcode hash table.  */
 static void
 nios2_init_opcode_hash (nios2_disassembler_state *state)
@@ -218,7 +218,7 @@ static struct nios2_reg *
 nios2_coprocessor_regs (void)
 {
   static struct nios2_reg *cached = NULL;
-  
+
   if (!cached)
     {
       int i;
@@ -238,7 +238,7 @@ static struct nios2_reg *
 nios2_control_regs (void)
 {
   static struct nios2_reg *cached = NULL;
-  
+
   if (!cached)
     {
       int i;
@@ -859,7 +859,7 @@ nios2_print_insn_arg (const char *argptr,
 	      reglist = i << 2;
 	    dir = GET_IW_F1X4L17_REGMASK (opcode) ? 1 : -1;
 	    break;
-	    
+
 	  case iw_L5I4X1_type:
 	    /* Encoding for push.n/pop.n.  */
 	    reglist |= (1 << 31);
@@ -903,7 +903,7 @@ nios2_print_insn_arg (const char *argptr,
 	    (*info->fprintf_func) (info->stream, "--");
 
 	  i = GET_IW_F1X4I12_A (opcode);
-	  (*info->fprintf_func) (info->stream, "(%s)", 
+	  (*info->fprintf_func) (info->stream, "(%s)",
 				 nios2_builtin_regs[i].name);
 
 	  if (GET_IW_F1X4L17_ID (opcode))

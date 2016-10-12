@@ -1,4 +1,4 @@
-# Copyright 2009-2015 Free Software Foundation, Inc.
+# Copyright 2009-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,6 @@
 # main thread was stopped due to user request, the new incarnation of
 # the main thread doesn't just silently stop at the first internal
 # breakpoint (usually the _dl_debug_state breakpoint).
-
-# No exec event support in the remote protocol.
-if { [is_remote target] } then {
-    continue
-}
 
 if { ![support_displaced_stepping] } { 
     unsupported "displaced stepping"

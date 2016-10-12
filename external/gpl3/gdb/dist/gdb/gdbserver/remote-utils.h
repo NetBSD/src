@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,8 +44,6 @@ void initialize_async_io (void);
 void enable_async_io (void);
 void disable_async_io (void);
 void check_remote_input_interrupt_request (void);
-void new_thread_notify (int id);
-void dead_thread_notify (int id);
 void prepare_resume_reply (char *buf, ptid_t ptid,
 			   struct target_waitstatus *status);
 

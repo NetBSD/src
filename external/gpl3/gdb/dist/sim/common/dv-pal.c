@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2015 Free Software Foundation, Inc.
+   Copyright 2002-2016 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -19,7 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-
+#include "config.h"
+#include "sim-main.h"
 #include "hw-main.h"
 #include "sim-io.h"
 
@@ -349,11 +350,7 @@ hw_pal_io_read_buffer (struct hw *me,
     {
 
     case hw_pal_cpu_nr_register:
-#ifdef CPU_INDEX
       *byte = CPU_INDEX (hw_system_cpu (me));
-#else
-      *byte = 0;
-#endif
       HW_TRACE ((me, "read - cpu-nr %d\n", *byte));
       break;
 

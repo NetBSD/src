@@ -1,6 +1,6 @@
 /* Low-level debug register code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common-defs.h"
-#include <sys/ptrace.h>
+#include "nat/gdb_ptrace.h"
 #include <sys/user.h>
 #include "target/waitstatus.h"
 #include "nat/x86-linux.h"

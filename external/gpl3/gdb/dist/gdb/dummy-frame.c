@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -128,9 +128,9 @@ remove_dummy_frame (struct dummy_frame **dummy_ptr)
 static int
 pop_dummy_frame_bpt (struct breakpoint *b, void *dummy_voidp)
 {
-  struct dummy_frame *dummy = dummy_voidp;
+  struct dummy_frame *dummy = (struct dummy_frame *) dummy_voidp;
 
-  if (b->thread == pid_to_thread_id (dummy->id.ptid)
+  if (b->thread == ptid_to_global_thread_id (dummy->id.ptid)
       && b->disposition == disp_del && frame_id_eq (b->frame_id, dummy->id.id))
     {
       while (b->related_breakpoint != b)
@@ -241,7 +241,7 @@ register_dummy_frame_dtor (struct frame_id dummy_id, ptid_t ptid,
   dp = lookup_dummy_frame (&id);
   gdb_assert (dp != NULL);
   d = *dp;
-  list = xmalloc (sizeof (*list));
+  list = XNEW (struct dummy_frame_dtor_list);
   list->next = d->dtor_list;
   d->dtor_list = list;
   list->dtor = dtor;
@@ -337,7 +337,8 @@ dummy_frame_prev_register (struct frame_info *this_frame,
 			   void **this_prologue_cache,
 			   int regnum)
 {
-  struct dummy_frame_cache *cache = (*this_prologue_cache);
+  struct dummy_frame_cache *cache
+    = (struct dummy_frame_cache *) *this_prologue_cache;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct value *reg_val;
 
@@ -367,7 +368,8 @@ dummy_frame_this_id (struct frame_info *this_frame,
 		     struct frame_id *this_id)
 {
   /* The dummy-frame sniffer always fills in the cache.  */
-  struct dummy_frame_cache *cache = (*this_prologue_cache);
+  struct dummy_frame_cache *cache
+    = (struct dummy_frame_cache *) *this_prologue_cache;
 
   gdb_assert (cache != NULL);
   (*this_id) = cache->this_id;

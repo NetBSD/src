@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,23 +16,18 @@
 # Test that annotations support doesn't leave GDB's terminal settings
 # into effect when we run a foreground command.
 
-if [is_remote target] then {
-    # We cannot use runto_main because of the different prompt we get
-    # when using annotation level 2.
-    return 0
-}
-
 standard_testfile
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug] == -1} {
     return -1
 }
 
-# Break at main
-
-gdb_test "break main" \
-    "Breakpoint.*at.* file .*$srcfile.*\\." \
-    "breakpoint main"
+# Because runto_main doesn't know how to handle the prompt with annotations,
+# run to main before we set the annotation level.
+if ![runto_main] then {
+   fail "Can't run to main"
+   return 1
+}
 
 # NOTE: this prompt is OK only when the annotation level is > 1
 # NOTE: When this prompt is in use the gdb_test procedure cannot be
@@ -59,15 +54,7 @@ proc gdb_annota_test {command pattern message} {
 }
 
 # Set the annotation level to 2.
-
-set test "annotation set at level 2"
 gdb_annota_test "set annotate 2" ".*" "annotation set at level 2"
-
-# Run to main.
-
-gdb_annota_test "run" \
-    "\r\n\032\032post-prompt.*\r\n\r\n\032\032stopped.*" \
-    "run until main breakpoint"
 
 set test "delete breakpoints"
 gdb_test_multiple "delete" $test {

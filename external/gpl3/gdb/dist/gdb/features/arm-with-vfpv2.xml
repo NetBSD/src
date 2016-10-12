@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -7,6 +7,7 @@
 
 <!DOCTYPE target SYSTEM "gdb-target.dtd">
 <target>
+  <architecture>arm</architecture>
   <xi:include href="arm-core.xml"/>
   <xi:include href="arm-vfpv2.xml"/>
 </target>

@@ -86,6 +86,7 @@ cpu-i386.c
 cpu-i860.c
 cpu-i960.c
 cpu-ia64.c
+cpu-iamcu.c
 cpu-ip2k.c
 cpu-iq2000.c
 cpu-k1om.c
@@ -156,7 +157,7 @@ elf-bfd.h
 elf-eh-frame.c
 elf-hppa.h
 elf-ifunc.c
-elf-linux-psinfo.h
+elf-linux-core.h
 elf-m10200.c
 elf-m10300.c
 elf-nacl.c
@@ -297,6 +298,8 @@ m68klinux.c
 m68knetbsd.c
 m88kmach3.c
 m88kopenbsd.c
+mach-o-aarch64.c
+mach-o-arm.c
 mach-o-i386.c
 mach-o-x86-64.c
 mach-o.c
@@ -304,6 +307,7 @@ mach-o.h
 merge.c
 mipsbsd.c
 mmo.c
+netbsd-core.c
 netbsd.h
 newsos3.c
 nlm-target.h

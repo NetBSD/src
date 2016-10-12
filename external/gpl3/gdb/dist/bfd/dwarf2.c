@@ -1,5 +1,5 @@
 /* DWARF 2 support.
-   Copyright (C) 1994-2015 Free Software Foundation, Inc.
+   Copyright (C) 1994-2016 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -1003,7 +1003,7 @@ read_attribute_value (struct attribute *  attr,
   struct dwarf_block *blk;
   bfd_size_type amt;
 
-  if (info_ptr >= info_ptr_end)
+  if (info_ptr >= info_ptr_end && form != DW_FORM_flag_present)
     {
       (*_bfd_error_handler) (_("Dwarf Error: Info pointer extends beyond end of attributes"));
       bfd_set_error (bfd_error_bad_value);
@@ -2757,11 +2757,18 @@ parse_comp_unit (struct dwarf2_debug *stash,
 
   if (version != 2 && version != 3 && version != 4)
     {
-      (*_bfd_error_handler)
-	(_("Dwarf Error: found dwarf version '%u', this reader"
-	   " only handles version 2, 3 and 4 information."), version);
-      bfd_set_error (bfd_error_bad_value);
-      return 0;
+      /* PR 19872: A version number of 0 probably means that there is padding
+	 at the end of the .debug_info section.  Gold puts it there when
+	 performing an incremental link, for example.  So do not generate
+	 an error, just return a NULL.  */
+      if (version)
+	{
+	  (*_bfd_error_handler)
+	    (_("Dwarf Error: found dwarf version '%u', this reader"
+	       " only handles version 2, 3 and 4 information."), version);
+	  bfd_set_error (bfd_error_bad_value);
+	}
+      return NULL;
     }
 
   if (addr_size > sizeof (bfd_vma))
@@ -2772,7 +2779,7 @@ parse_comp_unit (struct dwarf2_debug *stash,
 	 addr_size,
 	 (unsigned int) sizeof (bfd_vma));
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   if (addr_size != 2 && addr_size != 4 && addr_size != 8)
@@ -2781,22 +2788,23 @@ parse_comp_unit (struct dwarf2_debug *stash,
 	("Dwarf Error: found address size '%u', this reader"
 	 " can only handle address sizes '2', '4' and '8'.", addr_size);
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   /* Read the abbrevs for this compilation unit into a table.  */
   abbrevs = read_abbrevs (abfd, abbrev_offset, stash);
   if (! abbrevs)
-    return 0;
+    return NULL;
 
   abbrev_number = safe_read_leb128 (abfd, info_ptr, &bytes_read, FALSE, end_ptr);
   info_ptr += bytes_read;
   if (! abbrev_number)
     {
-      (*_bfd_error_handler) (_("Dwarf Error: Bad abbrev number: %u."),
-			     abbrev_number);
-      bfd_set_error (bfd_error_bad_value);
-      return 0;
+      /* PR 19872: An abbrev number of 0 probably means that there is padding
+	 at the end of the .debug_abbrev section.  Gold puts it there when
+	 performing an incremental link, for example.  So do not generate
+	 an error, just return a NULL.  */
+      return NULL;
     }
 
   abbrev = lookup_abbrev (abbrev_number, abbrevs);
@@ -2805,7 +2813,7 @@ parse_comp_unit (struct dwarf2_debug *stash,
       (*_bfd_error_handler) (_("Dwarf Error: Could not find abbrev number %u."),
 			     abbrev_number);
       bfd_set_error (bfd_error_bad_value);
-      return 0;
+      return NULL;
     }
 
   amt = sizeof (struct comp_unit);
@@ -3354,8 +3362,8 @@ place_sections (bfd *orig_bfd, struct dwarf2_debug *stash)
 		  /* Align the new address to the current section
 		     alignment.  */
 		  last_vma = ((last_vma
-			       + ~((bfd_vma) -1 << sect->alignment_power))
-			      & ((bfd_vma) -1 << sect->alignment_power));
+			       + ~(-((bfd_vma) 1 << sect->alignment_power)))
+			      & (-((bfd_vma) 1 << sect->alignment_power)));
 		  sect->vma = last_vma;
 		  last_vma += sz;
 		}
@@ -3706,8 +3714,10 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	   fail more quickly.  */
 	return FALSE;
 
+      /* Set BFD_DECOMPRESS to decompress debug sections.  */
       if ((debug_bfd = bfd_openr (debug_filename, NULL)) == NULL
-	  || ! bfd_check_format (debug_bfd, bfd_object)
+	  || !(debug_bfd->flags |= BFD_DECOMPRESS,
+	       bfd_check_format (debug_bfd, bfd_object))
 	  || (msec = find_debug_info (debug_bfd,
 				      debug_sections, NULL)) == NULL
 	  || !bfd_generic_link_read_symbols (debug_bfd))
@@ -4129,16 +4139,25 @@ _bfd_dwarf2_find_nearest_line (bfd *abfd,
  done:
   if (function)
     {
-      if (!function->is_linkage
-	  && _bfd_elf_find_function (abfd, symbols, section, offset,
-				     *filename_ptr ? NULL : filename_ptr,
-				     functionname_ptr))
+      if (!function->is_linkage)
 	{
-	  function->name = *functionname_ptr;
+	  asymbol *fun;
+	  bfd_vma sec_vma;
+
+	  fun = _bfd_elf_find_function (abfd, symbols, section, offset,
+					*filename_ptr ? NULL : filename_ptr,
+					functionname_ptr);
+	  sec_vma = section->vma;
+	  if (section->output_section != NULL)
+	    sec_vma = section->output_section->vma + section->output_offset;
+	  if (fun != NULL
+	      && fun->value + sec_vma == function->arange.low)
+	    function->name = *functionname_ptr;
+	  /* Even if we didn't find a linkage name, say that we have
+	     to stop a repeated search of symbols.  */
 	  function->is_linkage = TRUE;
 	}
-      else
-	*functionname_ptr = function->name;
+      *functionname_ptr = function->name;
     }
   if ((abfd->flags & (EXEC_P | DYNAMIC)) == 0)
     unset_sections (stash);
@@ -4261,7 +4280,7 @@ _bfd_dwarf2_cleanup_debug_info (bfd *abfd, void **pinfo)
 /* Find the function to a particular section and offset,
    for error reporting.  */
 
-bfd_boolean
+asymbol *
 _bfd_elf_find_function (bfd *abfd,
 			asymbol **symbols,
 			asection *section,
@@ -4278,10 +4297,10 @@ _bfd_elf_find_function (bfd *abfd,
   } *cache;
 
   if (symbols == NULL)
-    return FALSE;
+    return NULL;
 
   if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
-    return FALSE;
+    return NULL;
 
   cache = elf_tdata (abfd)->elf_find_function_cache;
   if (cache == NULL)
@@ -4289,7 +4308,7 @@ _bfd_elf_find_function (bfd *abfd,
       cache = bfd_zalloc (abfd, sizeof (*cache));
       elf_tdata (abfd)->elf_find_function_cache = cache;
       if (cache == NULL)
-	return FALSE;
+	return NULL;
     }
   if (cache->last_section != section
       || cache->func == NULL
@@ -4354,12 +4373,12 @@ _bfd_elf_find_function (bfd *abfd,
     }
 
   if (cache->func == NULL)
-    return FALSE;
+    return NULL;
 
   if (filename_ptr)
     *filename_ptr = cache->filename;
   if (functionname_ptr)
     *functionname_ptr = bfd_asymbol_name (cache->func);
 
-  return TRUE;
+  return cache->func;
 }

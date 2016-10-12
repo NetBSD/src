@@ -1,7 +1,7 @@
 # mach: crisv32
 # sim: --cris-900000xx --memory-region 0x90000000,0x10
 # xerror:
-# output: Seeing --cris-900000xx with memory defined there\n
+# output: /core/cris_900000xx: memory map 0:0x90000000..0x900000ff (256 bytes) overlaps 0:0x90000000..0x9000000f (16 bytes)\nQuit Simulator\n
 
 ; Check that I/O region overlap is detected.
 

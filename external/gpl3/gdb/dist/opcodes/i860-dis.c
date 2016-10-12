@@ -1,5 +1,5 @@
 /* Disassembler for the i860.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    Contributed by Jason Eckhardt <jle@cygnus.com>.
 
@@ -28,14 +28,14 @@
 #define I860_REG_PREFIX "%"
 
 /* Integer register names (encoded as 0..31 in the instruction).  */
-static const char *const grnames[] = 
+static const char *const grnames[] =
  {"r0",  "r1",  "sp",  "fp",  "r4",  "r5",  "r6",  "r7",
   "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
   "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
   "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"};
 
 /* FP register names (encoded as 0..31 in the instruction).  */
-static const char *const frnames[] = 
+static const char *const frnames[] =
  {"f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",
   "f8",  "f9",  "f10", "f11", "f12", "f13", "f14", "f15",
   "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
@@ -43,7 +43,7 @@ static const char *const frnames[] =
 
 /* Control/status register names (encoded as 0..11 in the instruction).
    Registers bear, ccr, p0, p1, p2 and p3 are XP only.  */
-static const char *const crnames[] = 
+static const char *const crnames[] =
  {"fir", "psr", "dirbase", "db", "fsr", "epsr", "bear", "ccr",
   "p0", "p1", "p2", "p3", "--", "--", "--", "--" };
 
@@ -78,9 +78,9 @@ print_br_address (disassemble_info *info, bfd_vma memaddr, long val)
   long adj = (long)memaddr + 4 + (val << 2);
 
   (*info->fprintf_func) (info->stream, "0x%08lx", adj);
-	    
+
   /* Attempt to obtain a symbol for the target address.  */
-	
+
   if (info->print_address_func && adj != 0)
     {
       (*info->fprintf_func) (info->stream, "\t// ");
@@ -134,7 +134,7 @@ print_insn_i860 (bfd_vma memaddr, disassemble_info *info)
       int val;
 
       /* If this a flop (or a shrd) and its dual bit is set,
-         prefix with 'd.'.  */ 	
+         prefix with 'd.'.  */
       if (((insn & 0xfc000000) == 0x48000000
            || (insn & 0xfc000000) == 0xb0000000)
           && (insn & 0x200))

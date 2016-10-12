@@ -1,4 +1,4 @@
-#   Copyright 2005-2015 Free Software Foundation, Inc.
+#   Copyright 2005-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,14 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [is_remote target] || ![isnative] } then {
-    continue
-}
-
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if {![istarget "hppa*-hp-hpux*"] && ![istarget "*-*-linux*"]} then {
+if { ![istarget "*-*-linux*"] } then {
     continue
 }
 
@@ -50,6 +46,7 @@ set exit_bp_loc [gdb_get_line_number "Set exit breakpoint here."]
 
 proc continue_to_exit_bp_loc {} {
     global exit_bp_loc decimal gdb_prompt
+    global inferior_spawn_id gdb_spawn_id
 
     gdb_breakpoint $exit_bp_loc
 
@@ -70,6 +67,7 @@ proc continue_to_exit_bp_loc {} {
 	# first in the script that occurs anywhere in the input, so that
 	# we don't skip anything.
 	gdb_expect {
+	    -i "$inferior_spawn_id $gdb_spawn_id"
 	    -re "($decimal done)|(Breakpoint)|($gdb_prompt)" {
 		if {[info exists expect_out(1,string)]} {
 		    incr seen_done
@@ -109,6 +107,7 @@ proc continue_to_exit_bp_loc {} {
 # First set gdb to follow the child.
 # The result should be that each of the 4 forks returns zero.
 
+clean_restart ${binfile}
 runto_main
 gdb_test_no_output "set follow-fork child"
 continue_to_exit_bp_loc
@@ -118,6 +117,7 @@ gdb_test "print pids" "\\$.* = \\{0, 0, 0, 0\\}.*" "follow child, print pids"
 # Now set gdb to follow the parent.
 # Result should be that none of the 4 forks returns zero.
 
+clean_restart ${binfile}
 runto_main
 gdb_test_no_output "set follow-fork parent" ""
 continue_to_exit_bp_loc
@@ -128,12 +128,6 @@ gdb_test "print pids\[0\]==0 || pids\[1\]==0 || pids\[2\]==0 || pids\[3\]==0" \
 #
 # Now test with detach-on-fork off.
 #
-
-# detach-on-fork isn't implemented on hpux.
-#
-if {![istarget "*-*-linux*"]} then {
-    continue
-}
 
 # Start with a fresh gdb
 
@@ -156,13 +150,13 @@ gdb_test_no_output "set detach off" "set detach off"
 
 for {set i 1} {$i <= 15} {incr i} {
   gdb_test "continue" "Breakpoint .* main .*exit.*" "Run to exit $i"
-  gdb_test "info inferior" " 5 .* 4 .* 3 .* 2 .*" "info inferior $i"
+  gdb_test "info inferior" " 2 .* 3 .* 4 .* 5 .*" "info inferior $i"
   gdb_test "inferior $i + 1" "(_dl_sysinfo_int80|fork|__kernel_(v|)syscall).*" \
       "inferior $i"
 }
 
 gdb_test "continue" "Breakpoint .* main .*exit.*" "Run to exit 16"
-gdb_test "info inferiors" " 5 .* 4 .* 3 .* 2 .*" "info inferior 16"
+gdb_test "info inferior" " 2 .* 3 .* 4 .* 5 .*" "info inferior 16"
 gdb_test "inferior 2" " main .*" "restart final"
 
 #
@@ -183,27 +177,9 @@ gdb_test "detach inferior 5" "Detaching .*" "Detach 5"
 # Test kill inferior
 #
 
-gdb_test_no_output "kill inferior 6" "Kill 6"
-gdb_test "info inferior 6" "<null>.*" "Did kill 6"
-gdb_test_no_output "kill inferior 7" "Kill 7"
-gdb_test "info inferior 7" "<null>.*" "Did kill 7"
-gdb_test_no_output "kill inferior 8" "Kill 8"
-gdb_test "info inferior 8" "<null>.*" "Did kill 8"
-gdb_test_no_output "kill inferior 9" "Kill 9"
-gdb_test "info inferior 9" "<null>.*" "Did kill 9"
-gdb_test_no_output "kill inferior 10" "Kill 10"
-gdb_test "info inferior 10" "<null>.*" "Did kill 10"
-gdb_test_no_output "kill inferior 11" "Kill 11"
-gdb_test "info inferior 11" "<null>.*" "Did kill 11"
-gdb_test_no_output "kill inferior 12" "Kill 12"
-gdb_test "info inferior 12" "<null>.*" "Did kill 12"
-gdb_test_no_output "kill inferior 13" "Kill 13"
-gdb_test "info inferior 13" "<null>.*" "Did kill 13"
-gdb_test_no_output "kill inferior 14" "Kill 14"
-gdb_test "info inferior 14" "<null>.*" "Did kill 14"
-gdb_test_no_output "kill inferior 15" "Kill 15"
-gdb_test "info inferior 15" "<null>.*" "Did kill 15"
-gdb_test_no_output "kill inferior 16" "Kill 16"
-gdb_test "info inferior 16" "<null>.*" "Did kill 16"
+for {set i 6} { $i <= 16} {incr i} {
+    gdb_test_no_output "kill inferior $i" "Kill $i"
+    gdb_test "info inferior $i" "<null>.*" "Did kill $i"
+}
 
 return 0

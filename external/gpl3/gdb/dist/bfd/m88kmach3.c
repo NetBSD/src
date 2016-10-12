@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola m88k a.out (Mach 3) binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,7 +23,7 @@
 #define TEXT_START_ADDR	0
 #define N_HEADER_IN_TEXT(x)	1 		/* (N_MAGIG(x) == ZMAGIC) */
 
-#define N_TXTSIZE(x)	((x).a_text)
+#define N_TXTSIZE(x)	((x)->a_text)
 
 #include "sysdep.h"
 #include "bfd.h"

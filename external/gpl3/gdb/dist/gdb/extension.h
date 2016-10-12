@@ -1,6 +1,6 @@
 /* Interface between gdb and its extension languages.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -226,7 +226,7 @@ extern void free_ext_lang_type_printers (struct ext_lang_type_printers *);
 
 extern int apply_ext_lang_val_pretty_printer
   (struct type *type, const gdb_byte *valaddr,
-   int embedded_offset, CORE_ADDR address,
+   LONGEST embedded_offset, CORE_ADDR address,
    struct ui_file *stream, int recurse,
    const struct value *val, const struct value_print_options *options,
    const struct language_defn *language);

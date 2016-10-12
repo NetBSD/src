@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This file is part of the gdb testsuite
 
@@ -78,12 +78,6 @@ gdb_test_multiple "print pmi" $name {
 	# gcc HEAD 2004-01-11 05:33:21 -gstabs+
 	kfail "gdb/NNNN" $name
     }
-    -re "$vhn = \\(int ?\\( A::\\*\\)\\) 536870920\r\n$gdb_prompt $" {
-	# the value is 0x20000008 hex.   0x20000000 is an internal flag.
-	# Use '|' to add in more values as needed.
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
-    }
 }
 
 # print dereferenced pointer to data member
@@ -155,12 +149,6 @@ gdb_test_multiple "print pmi" $name {
     -re "$vhn = not implemented: member type in c_val_print\r\n$gdb_prompt $" {
 	# gcc HEAD 2004-01-11 05:33:21 -gdwarf-2
 	# gcc HEAD 2004-01-11 05:33:21 -gstabs+
-	kfail "gdb/NNNN" $name
-    }
-    -re "$vhn = \\(int ?\\( A::\\*\\)\\) 536870924\r\n$gdb_prompt $" {
-	# the value is 0x20000008 hex.   0x20000000 is an internal flag.
-	# Use '|' to add in more values as needed.
-	# hpacc A.03.45
 	kfail "gdb/NNNN" $name
     }
 }
@@ -413,10 +401,6 @@ gdb_test_multiple "ptype pmf" $name {
     -re "type = int \\( ?A::\\*\\)\\(A \\*( const)?, int\\)\r\n$gdb_prompt $" {
 	pass $name
     }
-    -re "type = int \\( ?A::\\*\\)\\(void\\)\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
-    }
     -re "type = struct \{.*\}\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
 	# gcc 2.95.3 -gstabs+
@@ -435,10 +419,6 @@ gdb_test_multiple "print pmf" $name {
     -re "$vhn = \\(int \\(A::\\*\\)\\(A \\*( const)?, int\\)\\) $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
     }
-    -re "$vhn = .*not supported with HP aCC.*\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
-    }
     -re "$vhn = \{.*\}\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
 	# gcc 2.95.3 -gstabs+
@@ -456,10 +436,6 @@ set name "ptype pmf_p"
 gdb_test_multiple "ptype pmf_p" $name {
     -re "type = int \\( ?A::\\*\\*\\)\\(A \\*( const)?, int\\)\r\n$gdb_prompt $" {
 	pass $name
-    }
-    -re "type = int \\( ?A::\\*\\*\\)\\(void\\)\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
     }
     -re "type = struct \{.*\} \\*\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
@@ -482,10 +458,6 @@ gdb_test_multiple "print pmf_p" $name {
     -re "$vhn = \\(PMF \\*\\) $hex\r\n$gdb_prompt $" {
 	pass "gdb/NNNN"
     }
-    -re "$vhn = \\(int \\( ?A::\\*\\*\\)\\(void\\)\\) $hex\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
-    }
     -re "$vhn = \\(struct \{.*\} \\*\\) $hex\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
 	kfail "gdb/NNNN" $name
@@ -498,10 +470,6 @@ set name "print a.*pmf"
 gdb_test_multiple "print a.*pmf" $name {
     -re "$vhn = {int \\(A \\*( const)?, int\\)} $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
-    }
-    -re "Pointers to methods not supported with HP aCC\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
     }
     -re "Value can't be converted to integer.\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
@@ -520,10 +488,6 @@ set name "print a_p->*pmf"
 gdb_test_multiple "print a_p->*pmf" $name {
     -re "$vhn = {int \\(A \\*( const)?, int\\)} $hex <A::bar\\(int\\)>\r\n$gdb_prompt $" {
 	pass $name
-    }
-    -re "Pointers to methods not supported with HP aCC\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
     }
     -re "Value can't be converted to integer.\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2
@@ -553,9 +517,6 @@ gdb_test_multiple "set var pmf = &A::foo" $name {
 	# gcc 3.2.2 -gstabs+
 	# gcc HEAD 2004-01-10 -gdwarf-2
 	# gcc HEAD 2004-01-10 -gstabs+
-	kfail "gdb/NNNN" $name
-    }
-    -re "Assignment to pointers to methods not implemented with HP aCC\r\n$gdb_prompt $" {
 	kfail "gdb/NNNN" $name
     }
 }
@@ -604,10 +565,6 @@ set name "print (a.*pmf)(3)"
 gdb_test_multiple "print (a.*pmf)(3)" $name {
     -re "$vhn = 50\r\n$gdb_prompt $" {
 	pass $name
-    }
-    -re "Not implemented: function invocation through pointer to method with HP aCC\r\n$gdb_prompt $" {
-	# hpacc A.03.45
-	kfail "gdb/NNNN" $name
     }
     -re "Value can't be converted to integer.\r\n$gdb_prompt $" {
 	# gcc 2.95.3 -gdwarf-2

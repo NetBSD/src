@@ -114,6 +114,7 @@ macro to define them both!
 @example
 enum bfd_flavour
 @{
+  /* N.B. Update bfd_flavour_name if you change this.  */
   bfd_target_unknown_flavour,
   bfd_target_aout_flavour,
   bfd_target_coff_flavour,
@@ -423,6 +424,7 @@ BFD_JUMP_TABLE macros.
   NAME##_bfd_copy_link_hash_symbol_type, \
   NAME##_bfd_final_link, \
   NAME##_bfd_link_split_section, \
+  NAME##_bfd_link_check_relocs, \
   NAME##_bfd_gc_sections, \
   NAME##_bfd_lookup_section_flags, \
   NAME##_bfd_merge_sections, \
@@ -463,6 +465,9 @@ BFD_JUMP_TABLE macros.
 
   /* Should this section be split up into smaller pieces during linking.  */
   bfd_boolean (*_bfd_link_split_section) (bfd *, struct bfd_section *);
+
+  /* Check the relocations in the bfd for validity.  */
+  bfd_boolean (* _bfd_link_check_relocs)(bfd *, struct bfd_link_info *);
 
   /* Remove sections that are not referenced from the output.  */
   bfd_boolean (*_bfd_gc_sections) (bfd *, struct bfd_link_info *);
@@ -601,18 +606,26 @@ Return a freshly malloced NULL-terminated
 vector of the names of all the valid BFD targets. Do not
 modify the names.
 
-@findex bfd_seach_for_target
-@subsubsection @code{bfd_seach_for_target}
+@findex bfd_iterate_over_targets
+@subsubsection @code{bfd_iterate_over_targets}
 @strong{Synopsis}
 @example
-const bfd_target *bfd_search_for_target
-   (int (*search_func) (const bfd_target *, void *),
-    void *);
+const bfd_target *bfd_iterate_over_targets
+   (int (*func) (const bfd_target *, void *),
+    void *data);
 @end example
 @strong{Description}@*
-Return a pointer to the first transfer vector in the list of
-transfer vectors maintained by BFD that produces a non-zero
-result when passed to the function @var{search_func}.  The
-parameter @var{data} is passed, unexamined, to the search
-function.
+Call @var{func} for each target in the list of BFD target
+vectors, passing @var{data} to @var{func}.  Stop iterating if
+@var{func} returns a non-zero result, and return that target
+vector.  Return NULL if @var{func} always returns zero.
+
+@findex bfd_flavour_name
+@subsubsection @code{bfd_flavour_name}
+@strong{Synopsis}
+@example
+const char *bfd_flavour_name (enum bfd_flavour flavour);
+@end example
+@strong{Description}@*
+Return the string form of @var{flavour}.
 

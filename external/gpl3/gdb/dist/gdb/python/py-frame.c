@@ -1,6 +1,6 @@
 /* Python interface to stack frames
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -340,9 +340,13 @@ frapy_function (PyObject *self, PyObject *args)
 
   TRY
     {
+      char *funname;
+      enum language funlang;
+
       FRAPY_REQUIRE_VALID (self, frame);
 
-      sym = find_pc_function (get_frame_address_in_block (frame));
+      find_frame_funname (frame, &funname, &funlang, &sym);
+      xfree (funname);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -504,6 +508,7 @@ frapy_read_var (PyObject *self, PyObject *args)
   struct frame_info *frame;
   PyObject *sym_obj, *block_obj = NULL;
   struct symbol *var = NULL;	/* gcc-4.3.2 false warning.  */
+  const struct block *block = NULL;
   struct value *val = NULL;
 
   if (!PyArg_ParseTuple (args, "O|O", &sym_obj, &block_obj))
@@ -514,7 +519,6 @@ frapy_read_var (PyObject *self, PyObject *args)
   else if (gdbpy_is_string (sym_obj))
     {
       char *var_name;
-      const struct block *block = NULL;
       struct cleanup *cleanup;
 
       var_name = python_string_to_target_string (sym_obj);
@@ -536,11 +540,14 @@ frapy_read_var (PyObject *self, PyObject *args)
 
       TRY
 	{
+	  struct block_symbol lookup_sym;
 	  FRAPY_REQUIRE_VALID (self, frame);
 
 	  if (!block)
 	    block = get_frame_block (frame, NULL);
-	  var = lookup_symbol (var_name, block, VAR_DOMAIN, NULL);
+	  lookup_sym = lookup_symbol (var_name, block, VAR_DOMAIN, NULL);
+	  var = lookup_sym.symbol;
+	  block = lookup_sym.block;
 	}
       CATCH (except, RETURN_MASK_ALL)
 	{
@@ -572,7 +579,7 @@ frapy_read_var (PyObject *self, PyObject *args)
     {
       FRAPY_REQUIRE_VALID (self, frame);
 
-      val = read_var_value (var, frame);
+      val = read_var_value (var, block, frame);
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -666,7 +673,7 @@ gdbpy_frame_stop_reason_string (PyObject *self, PyObject *args)
       return NULL;
     }
 
-  str = unwind_stop_reason_to_string (reason);
+  str = unwind_stop_reason_to_string ((enum unwind_stop_reason) reason);
   return PyUnicode_Decode (str, strlen (str), host_charset (), NULL);
 }
 

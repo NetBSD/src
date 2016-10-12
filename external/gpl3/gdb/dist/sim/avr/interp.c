@@ -1,5 +1,5 @@
 /* Simulator for Atmel's AVR core.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
    Written by Tristan Gingold, AdaCore.
 
    This file is part of GDB, the GNU debugger.
@@ -35,15 +35,6 @@ typedef unsigned short int word;
 typedef signed short int sword;
 typedef unsigned char byte;
 typedef signed char sbyte;
-
-/* The only real register.  */
-unsigned int pc;
-
-/* We update a cycle counter.  */
-static unsigned int cycles = 0;
-
-/* If true, the pc needs more than 2 bytes.  */
-static int avr_pc22;
 
 /* Max size of I space (which is always flash on avr).  */
 #define MAX_AVR_FLASH (128 * 1024)
@@ -231,7 +222,7 @@ static byte sram[MAX_AVR_SRAM];
 static int sign_ext (word val, int nb_bits)
 {
   if (val & (1 << (nb_bits - 1)))
-    return val | (-1 << nb_bits);
+    return val | -(1 << nb_bits);
   return val;
 }
 
@@ -734,21 +725,22 @@ decode (unsigned int pc)
 }
 
 static void
-do_call (unsigned int npc)
+do_call (SIM_CPU *cpu, unsigned int npc)
 {
+  SIM_DESC sd = CPU_STATE (cpu);
   unsigned int sp = read_word (REG_SP);
 
   /* Big endian!  */
-  sram[sp--] = pc;
-  sram[sp--] = pc >> 8;
-  if (avr_pc22)
+  sram[sp--] = cpu->pc;
+  sram[sp--] = cpu->pc >> 8;
+  if (sd->avr_pc22)
     {
-      sram[sp--] = pc >> 16;
-      cycles++;
+      sram[sp--] = cpu->pc >> 16;
+      cpu->cycles++;
     }
   write_word (REG_SP, sp);
-  pc = npc & PC_MASK;
-  cycles += 3;
+  cpu->pc = npc & PC_MASK;
+  cpu->cycles += 3;
 }
 
 static int
@@ -780,7 +772,7 @@ get_lpm (unsigned int addr)
 }
 
 static void
-gen_mul (unsigned int res)
+gen_mul (SIM_CPU *cpu, unsigned int res)
 {
   write_word (0, res);
   sram[SREG] &= ~(SREG_Z | SREG_C);
@@ -788,7 +780,7 @@ gen_mul (unsigned int res)
     sram[SREG] |= SREG_Z;
   if (res & 0x8000)
     sram[SREG] |= SREG_C;
-  cycles++;
+  cpu->cycles++;
 }
 
 static void
@@ -802,8 +794,8 @@ step_once (SIM_CPU *cpu)
   byte r, d, vd;
 
  again:
-  code = flash[pc].code;
-  op = flash[pc].op;
+  code = flash[cpu->pc].code;
+  op = flash[cpu->pc].op;
 
 #if 0
       if (tracing && code != OP_unknown)
@@ -836,27 +828,27 @@ step_once (SIM_CPU *cpu)
 	  }
 
 	  if (!tracing)
-	    sim_cb_eprintf (callback, "%06x: %04x\n", 2 * pc, flash[pc].op);
+	    sim_cb_eprintf (callback, "%06x: %04x\n", 2 * cpu->pc, flash[cpu->pc].op);
 	  else
 	    {
 	      sim_cb_eprintf (callback, "pc=0x%06x insn=0x%04x code=%d r=%d\n",
-                              2 * pc, flash[pc].op, code, flash[pc].r);
-	      disassemble_insn (CPU_STATE (cpu), pc);
+                              2 * cpu->pc, flash[cpu->pc].op, code, flash[cpu->pc].r);
+	      disassemble_insn (CPU_STATE (cpu), cpu->pc);
 	      sim_cb_eprintf (callback, "\n");
 	    }
 	}
 #endif
 
-  ipc = pc;
-  pc = (pc + 1) & PC_MASK;
-  cycles++;
+  ipc = cpu->pc;
+  cpu->pc = (cpu->pc + 1) & PC_MASK;
+  cpu->cycles++;
 
   switch (code)
     {
       case OP_unknown:
 	flash[ipc].code = decode(ipc);
-	pc = ipc;
-	cycles--;
+	cpu->pc = ipc;
+	cpu->cycles--;
 	goto again;
 
       case OP_nop:
@@ -864,36 +856,36 @@ step_once (SIM_CPU *cpu)
 
       case OP_jmp:
 	/* 2 words instruction, but we don't care about the pc.  */
-	pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
-	cycles += 2;
+	cpu->pc = ((flash[ipc].r << 16) | flash[ipc + 1].op) & PC_MASK;
+	cpu->cycles += 2;
 	break;
 
       case OP_eijmp:
-	pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
-	cycles += 2;
+	cpu->pc = ((sram[EIND] << 16) | read_word (REGZ)) & PC_MASK;
+	cpu->cycles += 2;
 	break;
 
       case OP_ijmp:
-	pc = read_word (REGZ) & PC_MASK;
-	cycles += 1;
+	cpu->pc = read_word (REGZ) & PC_MASK;
+	cpu->cycles += 1;
 	break;
 
       case OP_call:
 	/* 2 words instruction.  */
-	pc++;
-	do_call ((flash[ipc].r << 16) | flash[ipc + 1].op);
+	cpu->pc++;
+	do_call (cpu, (flash[ipc].r << 16) | flash[ipc + 1].op);
 	break;
 
       case OP_eicall:
-	do_call ((sram[EIND] << 16) | read_word (REGZ));
+	do_call (cpu, (sram[EIND] << 16) | read_word (REGZ));
 	break;
 
       case OP_icall:
-	do_call (read_word (REGZ));
+	do_call (cpu, read_word (REGZ));
 	break;
 
       case OP_rcall:
-	do_call (pc + sign_ext (op & 0xfff, 12));
+	do_call (cpu, cpu->pc + sign_ext (op & 0xfff, 12));
 	break;
 
       case OP_reti:
@@ -901,25 +893,25 @@ step_once (SIM_CPU *cpu)
 	/* Fall through */
       case OP_ret:
 	{
+	  SIM_DESC sd = CPU_STATE (cpu);
 	  unsigned int sp = read_word (REG_SP);
-	  if (avr_pc22)
+	  if (sd->avr_pc22)
 	    {
-	      pc = sram[++sp] << 16;
-	      cycles++;
+	      cpu->pc = sram[++sp] << 16;
+	      cpu->cycles++;
 	    }
 	  else
-	    pc = 0;
-	  pc |= sram[++sp] << 8;
-	  pc |= sram[++sp];
+	    cpu->pc = 0;
+	  cpu->pc |= sram[++sp] << 8;
+	  cpu->pc |= sram[++sp];
 	  write_word (REG_SP, sp);
 	}
-	cycles += 3;
+	cpu->cycles += 3;
 	break;
 
       case OP_break:
 	/* Stop on this address.  */
-	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_stopped, SIM_SIGTRAP);
-	pc = ipc;
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, ipc, sim_stopped, SIM_SIGTRAP);
 	break;
 
       case OP_bld:
@@ -942,9 +934,9 @@ step_once (SIM_CPU *cpu)
       case OP_sbrs:
 	if (((sram[get_d (op)] & flash[ipc].r) == 0) ^ ((op & 0x0200) != 0))
 	  {
-	    int l = get_insn_length(pc);
-	    pc += l;
-	    cycles += l;
+	    int l = get_insn_length (cpu->pc);
+	    cpu->pc += l;
+	    cpu->cycles += l;
 	  }
 	break;
 
@@ -954,7 +946,7 @@ step_once (SIM_CPU *cpu)
 	  sram[sp--] = sram[get_d (op)];
 	  write_word (REG_SP, sp);
 	}
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_pop:
@@ -963,7 +955,7 @@ step_once (SIM_CPU *cpu)
 	  sram[get_d (op)] = sram[++sp];
 	  write_word (REG_SP, sp);
 	}
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_bclr:
@@ -975,8 +967,8 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_rjmp:
-	pc = (pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
-	cycles++;
+	cpu->pc = (cpu->pc + sign_ext (op & 0xfff, 12)) & PC_MASK;
+	cpu->cycles++;
 	break;
 
       case OP_eor:
@@ -1106,32 +1098,32 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_mul:
-	gen_mul ((word)sram[get_r (op)] * (word)sram[get_d (op)]);
+	gen_mul (cpu, (word)sram[get_r (op)] * (word)sram[get_d (op)]);
 	break;
 
       case OP_muls:
-	gen_mul ((sword)(sbyte)sram[get_r16 (op)]
-		 * (sword)(sbyte)sram[get_d16 (op)]);
+	gen_mul (cpu, (sword)(sbyte)sram[get_r16 (op)]
+		      * (sword)(sbyte)sram[get_d16 (op)]);
 	break;
 
       case OP_mulsu:
-	gen_mul ((sword)(word)sram[get_r16_23 (op)]
-		 * (sword)(sbyte)sram[get_d16_23 (op)]);
+	gen_mul (cpu, (sword)(word)sram[get_r16_23 (op)]
+		      * (sword)(sbyte)sram[get_d16_23 (op)]);
 	break;
 
       case OP_fmul:
-	gen_mul (((word)sram[get_r16_23 (op)]
-		  * (word)sram[get_d16_23 (op)]) << 1);
+	gen_mul (cpu, ((word)sram[get_r16_23 (op)]
+		       * (word)sram[get_d16_23 (op)]) << 1);
 	break;
 
       case OP_fmuls:
-	gen_mul (((sword)(sbyte)sram[get_r16_23 (op)]
-		  * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
+	gen_mul (cpu, ((sword)(sbyte)sram[get_r16_23 (op)]
+		       * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
 	break;
 
       case OP_fmulsu:
-	gen_mul (((sword)(word)sram[get_r16_23 (op)]
-		  * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
+	gen_mul (cpu, ((sword)(word)sram[get_r16_23 (op)]
+		       * (sword)(sbyte)sram[get_d16_23 (op)]) << 1);
 	break;
 
       case OP_adc:
@@ -1213,9 +1205,9 @@ step_once (SIM_CPU *cpu)
 	if (d == STDIO_PORT)
 	  putchar (res);
 	else if (d == EXIT_PORT)
-	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_exited, 0);
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_exited, 0);
 	else if (d == ABORT_PORT)
-	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_exited, 1);
+	  sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_exited, 1);
 	break;
 
       case OP_in:
@@ -1236,18 +1228,18 @@ step_once (SIM_CPU *cpu)
       case OP_sbic:
 	if (!(sram[get_biA (op) + 0x20] & 1 << get_b(op)))
 	  {
-	    int l = get_insn_length(pc);
-	    pc += l;
-	    cycles += l;
+	    int l = get_insn_length (cpu->pc);
+	    cpu->pc += l;
+	    cpu->cycles += l;
 	  }
 	break;
 
       case OP_sbis:
 	if (sram[get_biA (op) + 0x20] & 1 << get_b(op))
 	  {
-	    int l = get_insn_length(pc);
-	    pc += l;
-	    cycles += l;
+	    int l = get_insn_length (cpu->pc);
+	    cpu->pc += l;
+	    cpu->cycles += l;
 	  }
 	break;
 
@@ -1258,23 +1250,23 @@ step_once (SIM_CPU *cpu)
 	break;
 
       case OP_lds:
-	sram[get_d (op)] = sram[flash[pc].op];
-	pc++;
-	cycles++;
+	sram[get_d (op)] = sram[flash[cpu->pc].op];
+	cpu->pc++;
+	cpu->cycles++;
 	break;
 
       case OP_sts:
-	sram[flash[pc].op] = sram[get_d (op)];
-	pc++;
-	cycles++;
+	sram[flash[cpu->pc].op] = sram[get_d (op)];
+	cpu->pc++;
+	cpu->cycles++;
 	break;
 
       case OP_cpse:
 	if (sram[get_r (op)] == sram[get_d (op)])
 	  {
-	    int l = get_insn_length(pc);
-	    pc += l;
-	    cycles += l;
+	    int l = get_insn_length (cpu->pc);
+	    cpu->pc += l;
+	    cpu->cycles += l;
 	  }
 	break;
 
@@ -1311,42 +1303,42 @@ step_once (SIM_CPU *cpu)
       case OP_brbc:
 	if (!(sram[SREG] & flash[ipc].r))
 	  {
-	    pc = (pc + get_k (op)) & PC_MASK;
-	    cycles++;
+	    cpu->pc = (cpu->pc + get_k (op)) & PC_MASK;
+	    cpu->cycles++;
 	  }
 	break;
 
       case OP_brbs:
 	if (sram[SREG] & flash[ipc].r)
 	  {
-	    pc = (pc + get_k (op)) & PC_MASK;
-	    cycles++;
+	    cpu->pc = (cpu->pc + get_k (op)) & PC_MASK;
+	    cpu->cycles++;
 	  }
 	break;
 
       case OP_lpm:
 	sram[0] = get_lpm (read_word (REGZ));
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_lpm_Z:
 	sram[get_d (op)] = get_lpm (read_word (REGZ));
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_lpm_inc_Z:
 	sram[get_d (op)] = get_lpm (read_word_post_inc (REGZ));
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_elpm:
 	sram[0] = get_lpm (get_z ());
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_elpm_Z:
 	sram[get_d (op)] = get_lpm (get_z ());
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_elpm_inc_Z:
@@ -1359,97 +1351,97 @@ step_once (SIM_CPU *cpu)
 	  sram[REGZ_HI] = z >> 8;
 	  sram[RAMPZ] = z >> 16;
 	}
-	cycles += 2;
+	cpu->cycles += 2;
 	break;
 
       case OP_ld_Z_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGZ) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_dec_Z:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGZ) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_X_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGX) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_dec_X:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGX) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_Y_inc:
 	sram[get_d (op)] = sram[read_word_post_inc (REGY) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_dec_Y:
 	sram[get_d (op)] = sram[read_word_pre_dec (REGY) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_X:
 	sram[read_word (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_X_inc:
 	sram[read_word_post_inc (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_dec_X:
 	sram[read_word_pre_dec (REGX) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_Z_inc:
 	sram[read_word_post_inc (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_dec_Z:
 	sram[read_word_pre_dec (REGZ) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_Y_inc:
 	sram[read_word_post_inc (REGY) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_st_dec_Y:
 	sram[read_word_pre_dec (REGY) & SRAM_MASK] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_std_Y:
 	sram[read_word (REGY) + flash[ipc].r] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_std_Z:
 	sram[read_word (REGZ) + flash[ipc].r] = sram[get_d (op)];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ldd_Z:
 	sram[get_d (op)] = sram[read_word (REGZ) + flash[ipc].r];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ldd_Y:
 	sram[get_d (op)] = sram[read_word (REGY) + flash[ipc].r];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_ld_X:
 	sram[get_d (op)] = sram[read_word (REGX) & SRAM_MASK];
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_sbiw:
@@ -1475,7 +1467,7 @@ step_once (SIM_CPU *cpu)
 	    sram[SREG] |= SREG_S;
 	  write_word (d, wres);
 	}
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_adiw:
@@ -1501,14 +1493,14 @@ step_once (SIM_CPU *cpu)
 	    sram[SREG] |= SREG_S;
 	  write_word (d, wres);
 	}
-	cycles++;
+	cpu->cycles++;
 	break;
 
       case OP_bad:
-	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_signalled, SIM_SIGILL);
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
 
       default:
-	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, pc, sim_signalled, SIM_SIGILL);
+	sim_engine_halt (CPU_STATE (cpu), cpu, NULL, cpu->pc, sim_signalled, SIM_SIGILL);
       }
 }
 
@@ -1604,8 +1596,8 @@ sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
     }
 }
 
-int
-sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
+static int
+avr_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 {
   if (rn < 32 && length == 1)
     {
@@ -1625,16 +1617,16 @@ sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
     }
   if (rn == AVR_PC_REGNUM && length == 4)
     {
-      pc = (memory[0] >> 1) | (memory[1] << 7) 
-	| (memory[2] << 15) | (memory[3] << 23);
-      pc &= PC_MASK;
+      cpu->pc = (memory[0] >> 1) | (memory[1] << 7)
+		| (memory[2] << 15) | (memory[3] << 23);
+      cpu->pc &= PC_MASK;
       return 4;
     }
   return 0;
 }
 
-int
-sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
+static int
+avr_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 {
   if (rn < 32 && length == 1)
     {
@@ -1654,10 +1646,10 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
     }
   if (rn == AVR_PC_REGNUM && length == 4)
     {
-      memory[0] = pc << 1;
-      memory[1] = pc >> 7;
-      memory[2] = pc >> 15;
-      memory[3] = pc >> 23;
+      memory[0] = cpu->pc << 1;
+      memory[1] = cpu->pc >> 7;
+      memory[2] = cpu->pc >> 15;
+      memory[3] = cpu->pc >> 23;
       return 4;
     }
   return 0;
@@ -1666,13 +1658,13 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
 static sim_cia
 avr_pc_get (sim_cpu *cpu)
 {
-  return pc;
+  return cpu->pc;
 }
 
 static void
-avr_pc_set (sim_cpu *cpu, sim_cia _pc)
+avr_pc_set (sim_cpu *cpu, sim_cia pc)
 {
-  pc = _pc;
+  cpu->pc = pc;
 }
 
 static void
@@ -1685,7 +1677,8 @@ free_state (SIM_DESC sd)
 }
 
 SIM_DESC
-sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
+sim_open (SIM_OPEN_KIND kind, host_callback *cb,
+	  struct bfd *abfd, char * const *argv)
 {
   int i;
   SIM_DESC sd = sim_state_alloc (kind, cb);
@@ -1698,8 +1691,12 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
       return 0;
     }
 
-  STATE_WATCHPOINTS (sd)->pc = &pc;
-  STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (pc);
+  {
+    /* XXX: Only first core gets profiled ?  */
+    SIM_CPU *cpu = STATE_CPU (sd, 0);
+    STATE_WATCHPOINTS (sd)->pc = &cpu->pc;
+    STATE_WATCHPOINTS (sd)->sizeof_pc = sizeof (cpu->pc);
+  }
 
   if (sim_pre_argv_init (sd, argv[0]) != SIM_RC_OK)
     {
@@ -1707,9 +1704,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
       return 0;
     }
 
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       free_state (sd);
@@ -1747,6 +1742,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
     {
       SIM_CPU *cpu = STATE_CPU (sd, i);
 
+      CPU_REG_FETCH (cpu) = avr_reg_fetch;
+      CPU_REG_STORE (cpu) = avr_reg_store;
       CPU_PC_FETCH (cpu) = avr_pc_get;
       CPU_PC_STORE (cpu) = avr_pc_set;
     }
@@ -1758,23 +1755,22 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
   return sd;
 }
 
-void
-sim_close (SIM_DESC sd, int quitting)
-{
-  sim_module_uninstall (sd);
-}
-
 SIM_RC
-sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
+sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
+		     char * const *argv, char * const *env)
 {
+  SIM_CPU *cpu = STATE_CPU (sd, 0);
+  SIM_ADDR addr;
+
   /* Set the PC.  */
   if (abfd != NULL)
-    pc = bfd_get_start_address (abfd);
+    addr = bfd_get_start_address (abfd);
   else
-    pc = 0;
+    addr = 0;
+  sim_pc_set (cpu, addr);
 
   if (abfd != NULL)
-    avr_pc22 = (bfd_get_mach (abfd) >= bfd_mach_avr6);
+    sd->avr_pc22 = (bfd_get_mach (abfd) >= bfd_mach_avr6);
 
   return SIM_RC_OK;
 }

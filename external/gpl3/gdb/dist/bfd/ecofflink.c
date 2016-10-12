@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -496,7 +496,7 @@ bfd_ecoff_debug_init (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   ainfo->largest_file_shuffle = 0;
 
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     {
       if (!bfd_hash_table_init (&ainfo->str_hash.table, string_hash_newfunc,
 				sizeof (struct string_hash_entry)))
@@ -529,7 +529,7 @@ bfd_ecoff_debug_free (void * handle,
 
   bfd_hash_table_free (&ainfo->fdr_hash.table);
 
-  if (! info->relocatable)
+  if (! bfd_link_relocatable (info))
     bfd_hash_table_free (&ainfo->str_hash.table);
 
   objalloc_free (ainfo->memory);
@@ -818,7 +818,7 @@ bfd_ecoff_debug_accumulate (void * handle,
 	     of space required by debugging information.  We don't do
 	     this when performing a relocatable link because it would
 	     prevent us from easily merging different FDR's.  */
-	  if (! info->relocatable)
+	  if (! bfd_link_relocatable (info))
 	    {
 	      bfd_boolean ffilename;
 	      const char *name;
@@ -895,7 +895,7 @@ bfd_ecoff_debug_accumulate (void * handle,
 	  fdr.iauxBase = output_symhdr->iauxMax;
 	  output_symhdr->iauxMax += fdr.caux;
 	}
-      if (! info->relocatable)
+      if (! bfd_link_relocatable (info))
 	{
 
 	  /* When are are hashing strings, we lie about the number of
@@ -1041,7 +1041,7 @@ ecoff_add_string (struct accumulate *ainfo,
 
   symhdr = &debug->symbolic_header;
   len = strlen (string);
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       if (!add_memory_shuffle (ainfo, &ainfo->ss, &ainfo->ss_end,
                                (bfd_byte *) string, len + 1))
@@ -1598,7 +1598,7 @@ bfd_ecoff_write_accumulated_debug (void * handle,
 
   /* The string table is written out from the hash table if this is a
      final link.  */
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     {
       BFD_ASSERT (ainfo->ss_hash == (struct string_hash_entry *) NULL);
       if (! ecoff_write_shuffle (abfd, swap, ainfo->ss, space))

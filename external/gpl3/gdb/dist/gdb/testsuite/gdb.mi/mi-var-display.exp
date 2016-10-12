@@ -1,4 +1,4 @@
-# Copyright 1999-2015 Free Software Foundation, Inc.
+# Copyright 1999-2016 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,6 +81,11 @@ mi_gdb_test "-var-evaluate-expression bar" \
 	"eval variable bar"
 
 # Test: c_variable-6.5
+# Desc: change format of bar to zero-padded hexadecimal
+mi_gdb_test "-var-set-format bar zero-hexadecimal" \
+	"\\^done,format=\"zero-hexadecimal\",value=\"0x0.*849\"" \
+	"set format variable bar in zero-padded hexadecimal"
+
 # Desc: change format of bar to hex
 mi_gdb_test "-var-set-format bar hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"0x849\"" \
@@ -241,7 +246,7 @@ mi_gdb_test "-var-set-format weird.func_ptr hexadecimal" \
 
 mi_gdb_test "-var-show-format weird.func_ptr" \
 	"\\^done,format=\"hexadecimal\"" \
-	"show format variable weird.func_ptr"
+	"show format variable weird.func_ptr (hex)"
 
 mi_gdb_test "-var-set-format weird.func_ptr_ptr hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"$hex\"" \
@@ -249,7 +254,23 @@ mi_gdb_test "-var-set-format weird.func_ptr_ptr hexadecimal" \
 
 mi_gdb_test "-var-show-format weird.func_ptr_ptr" \
 	"\\^done,format=\"hexadecimal\"" \
-	"show format variable weird.func_ptr_ptr"
+	"show format variable weird.func_ptr_ptr (hex)"
+
+mi_gdb_test "-var-set-format weird.func_ptr zero-hexadecimal" \
+	"\\^done,format=\"zero-hexadecimal\",value=\"$hex\"" \
+	"set format variable weird.func_ptr in zero-padded hex"
+
+mi_gdb_test "-var-show-format weird.func_ptr" \
+	"\\^done,format=\"zero-hexadecimal\"" \
+	"show format variable weird.func_ptr (zhex)"
+
+mi_gdb_test "-var-set-format weird.func_ptr_ptr zero-hexadecimal" \
+	"\\^done,format=\"zero-hexadecimal\",value=\"$hex\"" \
+	"set format variable weird.func_ptr_ptr in zero-padded hex"
+
+mi_gdb_test "-var-show-format weird.func_ptr_ptr" \
+	"\\^done,format=\"zero-hexadecimal\"" \
+	"show format variable weird.func_ptr_ptr (zhex)"
 
 # Test: c_variable-6.24
 # Desc: format of weird and children

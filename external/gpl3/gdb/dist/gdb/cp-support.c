@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -32,8 +32,9 @@
 #include "expression.h"
 #include "value.h"
 #include "cp-abi.h"
+#include "namespace.h"
 #include <signal.h>
-
+#include "gdb_setjmp.h"
 #include "safe-ctype.h"
 
 #define d_left(dc) (dc)->u.s_binary.left
@@ -91,7 +92,7 @@ copy_string_to_obstack (struct obstack *obstack, const char *string,
 			long *len)
 {
   *len = strlen (string);
-  return obstack_copy (obstack, string, *len);
+  return (char *) obstack_copy (obstack, string, *len);
 }
 
 /* A cleanup wrapper for cp_demangled_name_parse_free.  */
@@ -175,7 +176,7 @@ inspect_type (struct demangle_parse_info *info,
 
   TRY
     {
-      sym = lookup_symbol (name, 0, VAR_DOMAIN, 0);
+      sym = lookup_symbol (name, 0, VAR_DOMAIN, 0).symbol;
     }
   CATCH (except, RETURN_MASK_ALL)
     {
@@ -457,7 +458,7 @@ replace_typedefs (struct demangle_parse_info *info,
 	      sym = NULL;
 	      TRY
 		{
-		  sym = lookup_symbol (local_name, 0, VAR_DOMAIN, 0);
+		  sym = lookup_symbol (local_name, 0, VAR_DOMAIN, 0).symbol;
 		}
 	      CATCH (except, RETURN_MASK_ALL)
 		{
@@ -1036,8 +1037,13 @@ cp_find_first_component_aux (const char *name, int permissive)
 	      return strlen (name);
 	    }
 	case '\0':
-	case ':':
 	  return index;
+	case ':':
+	  /* ':' marks a component iff the next character is also a ':'.
+	     Otherwise it is probably malformed input.  */
+	  if (name[index + 1] == ':')
+	    return index;
+	  break;
 	case 'o':
 	  /* Operator names can screw up the recursion.  */
 	  if (operator_possible
@@ -1191,8 +1197,7 @@ make_symbol_overload_list (const char *func_name,
 
   sym_return_val_size = 100;
   sym_return_val_index = 0;
-  sym_return_val = xmalloc ((sym_return_val_size + 1) *
-			    sizeof (struct symbol *));
+  sym_return_val = XNEWVEC (struct symbol *, sym_return_val_size + 1);
   sym_return_val[0] = NULL;
 
   old_cleanups = make_cleanup (xfree, sym_return_val);
@@ -1204,7 +1209,7 @@ make_symbol_overload_list (const char *func_name,
   else
     {
       char *concatenated_name
-	= alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
+	= (char *) alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
       strcpy (concatenated_name, the_namespace);
       strcat (concatenated_name, "::");
       strcat (concatenated_name, func_name);
@@ -1246,7 +1251,7 @@ make_symbol_overload_list_namespace (const char *func_name,
   else
     {
       char *concatenated_name
-	= alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
+	= (char *) alloca (strlen (the_namespace) + 2 + strlen (func_name) + 1);
 
       strcpy (concatenated_name, the_namespace);
       strcat (concatenated_name, "::");
@@ -1297,7 +1302,7 @@ make_symbol_overload_list_adl_namespace (struct type *type,
 
   if (prefix_len != 0)
     {
-      the_namespace = alloca (prefix_len + 1);
+      the_namespace = (char *) alloca (prefix_len + 1);
       strncpy (the_namespace, type_name, prefix_len);
       the_namespace[prefix_len] = '\0';
 
@@ -1339,7 +1344,7 @@ make_symbol_overload_list_adl (struct type **arg_types, int nargs,
 static void
 reset_directive_searched (void *data)
 {
-  struct using_direct *direct = data;
+  struct using_direct *direct = (struct using_direct *) data;
   direct->searched = 0;
 }
 
@@ -1455,7 +1460,7 @@ cp_lookup_rtti_type (const char *name, struct block *block)
 
   /* Use VAR_DOMAIN here as NAME may be a typedef.  PR 18141, 18417.
      Classes "live" in both STRUCT_DOMAIN and VAR_DOMAIN.  */
-  rtti_sym = lookup_symbol (name, block, VAR_DOMAIN, NULL);
+  rtti_sym = lookup_symbol (name, block, VAR_DOMAIN, NULL).symbol;
 
   if (rtti_sym == NULL)
     {
@@ -1535,7 +1540,7 @@ gdb_demangle (const char *name, int options)
 #if defined (HAVE_SIGACTION) && defined (SA_RESTART)
   struct sigaction sa, old_sa;
 #else
-  void (*ofunc) ();
+  sighandler_t ofunc;
 #endif
   static int core_dump_allowed = -1;
 
@@ -1559,7 +1564,7 @@ gdb_demangle (const char *name, int options)
 #endif
       sigaction (SIGSEGV, &sa, &old_sa);
 #else
-      ofunc = (void (*)()) signal (SIGSEGV, gdb_demangle_signal_handler);
+      ofunc = signal (SIGSEGV, gdb_demangle_signal_handler);
 #endif
 
       crash_signal = SIGSETJMP (gdb_demangle_jmp_buf);
@@ -1596,7 +1601,9 @@ gdb_demangle (const char *name, int options)
 				    "demangler-warning", short_msg);
 	      make_cleanup (xfree, long_msg);
 
-	      target_terminal_ours ();
+	      make_cleanup_restore_target_terminal ();
+	      target_terminal_ours_for_output ();
+
 	      begin_line ();
 	      if (core_dump_allowed)
 		fprintf_unfiltered (gdb_stderr,
@@ -1618,6 +1625,15 @@ gdb_demangle (const char *name, int options)
 #endif
 
   return result;
+}
+
+/* See cp-support.h.  */
+
+int
+gdb_sniff_from_mangled_name (const char *mangled, char **demangled)
+{
+  *demangled = gdb_demangle (mangled, DMGL_PARAMS | DMGL_ANSI);
+  return *demangled != NULL;
 }
 
 /* Don't allow just "maintenance cplus".  */
@@ -1646,7 +1662,7 @@ first_component_command (char *arg, int from_tty)
     return;
 
   len = cp_find_first_component (arg);
-  prefix = alloca (len + 1);
+  prefix = (char *) alloca (len + 1);
 
   memcpy (prefix, arg, len);
   prefix[len] = '\0';

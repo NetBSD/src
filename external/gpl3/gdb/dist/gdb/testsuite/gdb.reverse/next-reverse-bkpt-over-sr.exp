@@ -1,4 +1,4 @@
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,8 +48,9 @@ gdb_test "advance $lineno" ".*STEP INTO THIS CALL.*" "get past callee call"
 
 gdb_test "b \*callee" "" "set breakpoint at callee's entry"
 
+set bpnum [get_integer_valueof "\$bpnum" 0]
 gdb_test "reverse-next" \
-    "Breakpoint.*, callee.*ENTER CALLEE.*" \
+    "Breakpoint $bpnum, callee.*" \
     "reverse-next over call trips user breakpoint at function entry"
 
 gdb_test "up" \

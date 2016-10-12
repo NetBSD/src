@@ -1,6 +1,6 @@
 /* Blackfin Core Event Controller (CEC) model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -82,6 +82,10 @@ bfin_cec_io_write_buffer (struct hw *me, const void *source,
   bu32 mmr_off;
   bu32 value;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, true))
+    return 0;
+
   value = dv_load_4 (source);
   mmr_off = addr - cec->base;
 
@@ -117,6 +121,10 @@ bfin_cec_io_read_buffer (struct hw *me, void *dest,
   struct bfin_cec *cec = hw_data (me);
   bu32 mmr_off;
   bu32 *valuep;
+
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_32 (me, addr, nr_bytes, false))
+    return 0;
 
   mmr_off = addr - cec->base;
   valuep = (void *)((unsigned long)cec + mmr_base() + mmr_off);

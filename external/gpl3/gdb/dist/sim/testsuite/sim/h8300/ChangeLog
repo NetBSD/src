@@ -31,9 +31,9 @@
 	* subs.s: New file.
 	* subx.s: New file.
 	* allinsn.exp: Add new subs and subx tests.
-	* testutils.inc: Simplify (and fix) set_carry_flag. 
+	* testutils.inc: Simplify (and fix) set_carry_flag.
 	(clear_carry_flag, set_zero_flag, clear_zero_flag...): New macros.
-	* addx.s: Use simplified set_carry_flag.	
+	* addx.s: Use simplified set_carry_flag.
 
 2003-05-27  Michael Snyder  <msnyder@redhat.com>
 
@@ -80,10 +80,10 @@
 2003-05-14  Michael Snyder  <msnyder@redhat.com>
 
 	* addb.s, addw.s, addl.s, addw.s, addx.s, andb.s, andw.s, andl.s,
-	bfld.s, brabc.s, bra.s, bset.s, cmpb.s, cmpw.s, cmpl.s, daa.s, 
-	das.s, dec.s, extw.s, extl.s, inc.s, jmp.s, ldc.s, ldm.s, mac.s, 
-	mova.s, movb.s, movw.s, movl.s, movmd.s, movsd.s, neg.s, nop.s, 
-	not.s, orb.s, orw.s, orl.s, rotl.s, rotr.s, rotxl.s, rotxr.s, 
+	bfld.s, brabc.s, bra.s, bset.s, cmpb.s, cmpw.s, cmpl.s, daa.s,
+	das.s, dec.s, extw.s, extl.s, inc.s, jmp.s, ldc.s, ldm.s, mac.s,
+	mova.s, movb.s, movw.s, movl.s, movmd.s, movsd.s, neg.s, nop.s,
+	not.s, orb.s, orw.s, orl.s, rotl.s, rotr.s, rotxl.s, rotxr.s,
 	shal.s, shar.s, shll.s, shlr.s, stc.s, subb.s, subw.s, subl.s,
 	xorb.s, xorw.s, xorl.s: New files.
 	* allinsn.exp: New file.

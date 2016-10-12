@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 68000 series.
 
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -573,7 +573,7 @@ m68k_dwarf_reg_to_regnum (struct gdbarch *gdbarch, int num)
     /* pc */
     return M68K_PC_REGNUM;
   else
-    return gdbarch_num_regs (gdbarch) + gdbarch_num_pseudo_regs (gdbarch);
+    return -1;
 }
 
 
@@ -882,7 +882,7 @@ m68k_frame_cache (struct frame_info *this_frame, void **this_cache)
   int i;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct m68k_frame_cache *) *this_cache;
 
   cache = m68k_alloc_frame_cache ();
   *this_cache = cache;
@@ -1028,7 +1028,7 @@ m68k_get_longjmp_target (struct frame_info *frame, CORE_ADDR *pc)
       return 0;
     }
 
-  buf = alloca (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  buf = (gdb_byte *) alloca (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
   sp = get_frame_register_unsigned (frame, gdbarch_sp_regnum (gdbarch));
 
   if (target_read_memory (sp + SP_ARG0,	/* Offset of first arg on stack.  */
@@ -1185,7 +1185,7 @@ m68k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return best_arch->gdbarch;
     }
 
-  tdep = xzalloc (sizeof (struct gdbarch_tdep));
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->fpregs_present = has_fp;
   tdep->flavour = flavour;

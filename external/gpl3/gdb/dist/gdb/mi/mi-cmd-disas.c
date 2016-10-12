@@ -1,5 +1,5 @@
 /* MI Command Set - disassemble commands.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -44,10 +44,11 @@
    always required:
 
    MODE: 0 -- disassembly.
-         1 -- disassembly and source.
+         1 -- disassembly and source (with deprecated source-centric view).
          2 -- disassembly and opcodes.
-         3 -- disassembly, source and opcodes.
-*/
+         3 -- disassembly, source-centric and opcodes.
+         4 -- disassembly, and source (with pc-centric view).
+         5 -- disassembly, source (pc-centric) and opcodes.  */
 
 void
 mi_cmd_disassemble (char *command, char **argv, int argc)
@@ -141,16 +142,34 @@ mi_cmd_disassemble (char *command, char **argv, int argc)
 	     "[-n howmany]] [-s startaddr -e endaddr] [--] mode."));
 
   mode = atoi (argv[0]);
-  if (mode < 0 || mode > 3)
-    error (_("-data-disassemble: Mode argument must be 0, 1, 2, or 3."));
+  if (mode < 0 || mode > 5)
+    error (_("-data-disassemble: Mode argument must be in the range 0-5."));
 
   /* Convert the mode into a set of disassembly flags.  */
 
-  disasm_flags = 0;
-  if (mode & 0x1)
-    disasm_flags |= DISASSEMBLY_SOURCE;
-  if (mode & 0x2)
-    disasm_flags |= DISASSEMBLY_RAW_INSN;
+  disasm_flags = 0;  /* Initialize here for -Wall.  */
+  switch (mode)
+    {
+    case 0:
+      break;
+    case 1:
+      disasm_flags |= DISASSEMBLY_SOURCE_DEPRECATED;
+      break;
+    case 2:
+      disasm_flags |= DISASSEMBLY_RAW_INSN;
+      break;
+    case 3:
+      disasm_flags |= DISASSEMBLY_SOURCE_DEPRECATED | DISASSEMBLY_RAW_INSN;
+      break;
+    case 4:
+      disasm_flags |= DISASSEMBLY_SOURCE;
+      break;
+    case 5:
+      disasm_flags |= DISASSEMBLY_SOURCE | DISASSEMBLY_RAW_INSN;
+      break;
+    default:
+      gdb_assert_not_reached ("bad disassembly mode");
+    }
 
   /* We must get the function beginning and end where line_num is
      contained.  */

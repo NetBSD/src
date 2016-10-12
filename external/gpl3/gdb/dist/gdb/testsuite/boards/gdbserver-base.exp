@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,6 @@ set_board_info compiler "[find_gcc]"
 # Test the copy of gdbserver in the build directory.
 set_board_info gdb_server_prog "../gdbserver/gdbserver"
 
-# Can't do input (or output) in the current gdbserver.
-set_board_info gdb,noinferiorio 1
-
 # gdbserver does not intercept target file operations and perform them
 # on the host.
 set_board_info gdb,nofileio 1
@@ -44,7 +41,14 @@ proc ${board}_file { dest op args } {
 }
 
 proc ${board}_download { board host dest } {
-    return $host
+    # We pass DEST in standard_output_file, regardless of whether it is absolute
+    # or relative, because we don't want the tests to be able to write outside
+    # their standard output directory.
+    set dest [standard_output_file $dest]
+
+    file copy -force $host $dest
+
+    return $dest
 }
 
 proc ${board}_upload {dest srcfile args} {

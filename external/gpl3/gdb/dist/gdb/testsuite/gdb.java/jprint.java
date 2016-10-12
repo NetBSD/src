@@ -1,6 +1,6 @@
 // jprint.java test program.
 //
-// Copyright 2004-2015 Free Software Foundation, Inc.
+// Copyright 2004-2016 Free Software Foundation, Inc.
 //
 // Written by Jeff Johnston <jjohnstn@redhat.com> 
 // Contributed by Red Hat
