@@ -159,11 +159,13 @@
 (dnf f-u4c       "4 bit 0 extended"      () 12  4)
 (df  f-i4        "4 bit sign extended"   ()  8  4 INT #f #f)
 (df  f-m4        "4 bit minus extended"  ()  8  4 UINT
+     ; ??? This field takes a value in the range [-16,-1] but there
+     ; doesn't seem a way to tell CGEN that.  Use an unsigned field and
+     ; disable range checks on insertion by masking.  Restore the sign
+     ; on extraction.  CGEN generated documentation for insns that use
+     ; this field will be wrong.
      ((value pc) (and WI value (const #xf)))
-     ; ??? On a 64 bit host this doesn't get completely sign extended
-     ; if the value is recorded in a long, as it is during extraction.
-     ; Various fixes exist, pick one.
-     ((value pc) (or  WI value (sll WI (const -1) (const 4))))
+     ((value pc) (or  WI value (const -16)))
 )
 (dnf f-u8        "8 bit unsigned"        ()  8  8)
 (dnf f-i8        "8 bit unsigned"        ()  4  8)

@@ -1,5 +1,5 @@
 /* BFD back-end for WDC 65816 COFF binaries.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -315,14 +315,11 @@ w65_reloc16_extra_cases (bfd *abfd,
 
 	gap -= dot + 1;
 	if (gap < -128 || gap > 127)
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
+
 	bfd_put_8 (abfd, gap, data + dst_address);
 	dst_address += 1;
 	src_address += 1;
@@ -340,14 +337,10 @@ w65_reloc16_extra_cases (bfd *abfd,
 	/* This wraps within the page, so ignore the relativeness, look at the
 	   high part.  */
 	if ((gap & 0xf0000) != (dot & 0xf0000))
-	  {
-	    if (! ((*link_info->callbacks->reloc_overflow)
-		   (link_info, NULL,
-		    bfd_asymbol_name (*reloc->sym_ptr_ptr),
-		    reloc->howto->name, reloc->addend, input_section->owner,
-		    input_section, reloc->address)))
-	      abort ();
-	  }
+	  (*link_info->callbacks->reloc_overflow)
+	    (link_info, NULL, bfd_asymbol_name (*reloc->sym_ptr_ptr),
+	     reloc->howto->name, reloc->addend, input_section->owner,
+	     input_section, reloc->address);
 
 	gap -= dot + 2;
 	bfd_put_16 (abfd, gap, data + dst_address);

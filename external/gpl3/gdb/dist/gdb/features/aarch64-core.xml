@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2015 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2016 Free Software Foundation, Inc.
      Contributed by ARM Ltd.
 
      Copying and distribution of this file, with or without modification,
@@ -42,5 +42,26 @@
   <reg name="sp" bitsize="64" type="data_ptr"/>
 
   <reg name="pc" bitsize="64" type="code_ptr"/>
-  <reg name="cpsr" bitsize="32"/>
+
+  <flags id="cpsr_flags" size="4">
+    <field name="SP" start="0" end="0"/>
+    <field name="" start="1" end="1"/>
+    <field name="EL" start="2" end="3"/>
+    <field name="nRW" start="4" end="4"/>
+    <field name="" start="5" end="5"/>
+    <field name="F" start="6" end="6"/>
+    <field name="I" start="7" end="7"/>
+    <field name="A" start="8" end="8"/>
+    <field name="D" start="9" end="9"/>
+
+    <field name="IL" start="20" end="20"/>
+    <field name="SS" start="21" end="21"/>
+
+    <field name="V" start="28" end="28"/>
+    <field name="C" start="29" end="29"/>
+    <field name="Z" start="30" end="30"/>
+    <field name="N" start="31" end="31"/>
+  </flags>
+  <reg name="cpsr" bitsize="32" type="cpsr_flags"/>
+
 </feature>

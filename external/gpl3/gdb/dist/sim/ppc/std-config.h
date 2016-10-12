@@ -59,15 +59,6 @@ extern int current_target_byte_order;
 #endif
 
 
-/* Intel host BSWAP support:
-
-   Whether to use bswap on the 486 and pentiums rather than the 386
-   sequence that uses xchgb/rorl/xchgb */
-#ifndef WITH_BSWAP
-#define	WITH_BSWAP 0
-#endif
-
-
 /* SMP support:
 
    Sets a limit on the number of processors that can be simulated.  If
@@ -119,10 +110,6 @@ extern int current_target_byte_order;
 #define USER_ENVIRONMENT		1
 #define VIRTUAL_ENVIRONMENT		2
 #define OPERATING_ENVIRONMENT		3
-
-#ifndef WITH_ENVIRONMENT
-#define WITH_ENVIRONMENT		0
-#endif
 
 extern int current_environment;
 #define CURRENT_ENVIRONMENT (WITH_ENVIRONMENT \
@@ -232,20 +219,6 @@ extern int current_floating_point;
 
    Control the inclusion of debugging code. */
 
-/* Include the tracing code.  Disabling this eliminates all tracing
-   code */
-
-#ifndef WITH_TRACE
-#define WITH_TRACE                      1
-#endif
-
-/* include code that checks assertions scattered through out the
-   program */
-
-#ifndef WITH_ASSERT
-#define WITH_ASSERT			1
-#endif
-
 /* Whether to check instructions for reserved bits being set */
 
 #ifndef WITH_RESERVED_BITS
@@ -291,10 +264,6 @@ extern int current_model_issue;
 
 #define DONT_USE_STDIO			2
 #define DO_USE_STDIO			1
-
-#ifndef WITH_STDIO
-#define WITH_STDIO			0
-#endif
 
 extern int current_stdio;
 #define CURRENT_STDIO (WITH_STDIO	\
@@ -460,40 +429,6 @@ extern int current_stdio;
 #define INLINE /*inline*/
 #endif
 #endif
-
-
-/* Your compilers pass parameters in registers reserved word */
-
-#ifndef WITH_REGPARM
-#define WITH_REGPARM                   0
-#endif
-
-/* Your compilers use an alternative calling sequence reserved word */
-
-#ifndef WITH_STDCALL
-#define WITH_STDCALL                   0
-#endif
-
-#if !defined REGPARM
-#if defined(__GNUC__) && (defined(__i386__) || defined(__i486__) || defined(__i586__) || defined(__i686__))
-#if (WITH_REGPARM && WITH_STDCALL)
-#define REGPARM __attribute__((__regparm__(WITH_REGPARM),__stdcall__))
-#else
-#if (WITH_REGPARM && !WITH_STDCALL)
-#define REGPARM __attribute__((__regparm__(WITH_REGPARM)))
-#else
-#if (!WITH_REGPARM && WITH_STDCALL)
-#define REGPARM __attribute__((__stdcall__))
-#endif
-#endif
-#endif
-#endif
-#endif
-
-#if !defined REGPARM
-#define REGPARM
-#endif
-
 
 
 /* Default prefix for static functions */

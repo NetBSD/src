@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,6 +91,8 @@ proc test_value_in_inferior {} {
     global has_argv0
     set test "verify dereferenced value"
     if { $has_argv0 } {
+	gdb_test_no_output "set print elements unlimited" ""
+	gdb_test_no_output "set print repeats unlimited" ""
 	gdb_test "gu (print arg0)" "0x.*$testfile\"" $test
     } else {
 	unsupported $test

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -94,7 +94,7 @@ struct mips_watchpoint
 {
   CORE_ADDR addr;
   int len;
-  int type;
+  enum target_hw_bp_type type;
   struct mips_watchpoint *next;
 };
 
@@ -110,7 +110,7 @@ int mips_linux_watch_try_one_watch (struct pt_watch_regs *regs,
 				    CORE_ADDR addr, int len, uint32_t irw);
 void mips_linux_watch_populate_regs (struct mips_watchpoint *current_watches,
 				     struct pt_watch_regs *regs);
-uint32_t mips_linux_watch_type_to_irw (int type);
+uint32_t mips_linux_watch_type_to_irw (enum target_hw_bp_type type);
 
 int mips_linux_read_watch_registers (long lwpid,
 				     struct pt_watch_regs *watch_readback,

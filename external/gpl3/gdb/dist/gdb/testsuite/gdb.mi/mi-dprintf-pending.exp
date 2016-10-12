@@ -1,4 +1,4 @@
-# Copyright 2015 Free Software Foundation, Inc.
+# Copyright 2015-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ mi_gdb_test "-dprintf-insert -f pendfunc1 \"hello\"" \
     "mi set dprintf"
 
 mi_create_breakpoint $bp_location1 "mi insert breakpoint bp_location1" \
-    -type "breakpoint" -line $bp_location1 -file $srcdir/$subdir/$srcfile
+    -type "breakpoint" -line $bp_location1 -file ".*$srcfile"
 
 mi_run_cmd
 

@@ -1,4 +1,4 @@
-# Copyright 1997-2015 Free Software Foundation, Inc.
+# Copyright 1997-2016 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,9 +22,7 @@
 
 set data_overlays 1
 
-if [istarget "d10v-*-*"] then {
-    set linker_script "${srcdir}/${subdir}/d10v.ld"
-} elseif [istarget "m32r-*-*"] then {
+if [istarget "m32r-*-*"] then {
     set linker_script "${srcdir}/${subdir}/m32r.ld"
 } elseif [istarget "spu-*-*"] then {
     set linker_script "${srcdir}/${subdir}/spu.ld"

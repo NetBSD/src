@@ -1,5 +1,5 @@
 /* Line completion stuff for GDB, the GNU debugger.
-   Copyright (C) 2000-2015 Free Software Foundation, Inc.
+   Copyright (C) 2000-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@
 #include "reggroups.h"
 #include "user-regs.h"
 #include "arch-utils.h"
+#include "location.h"
 
 #include "cli/cli-decode.h"
 
@@ -42,6 +43,21 @@
 #undef savestring
 
 #include "completer.h"
+
+/* An enumeration of the various things a user might
+   attempt to complete for a location.  */
+
+enum explicit_location_match_type
+{
+    /* The filename of a source file.  */
+    MATCH_SOURCE,
+
+    /* The name of a function or method.  */
+    MATCH_FUNCTION,
+
+    /* The name of a label.  */
+    MATCH_LABEL
+};
 
 /* Prototypes for local functions.  */
 static
@@ -149,14 +165,14 @@ filename_completer (struct cmd_list_element *ignore,
       else if (word > text)
 	{
 	  /* Return some portion of p.  */
-	  q = xmalloc (strlen (p) + 5);
+	  q = (char *) xmalloc (strlen (p) + 5);
 	  strcpy (q, p + (word - text));
 	  xfree (p);
 	}
       else
 	{
 	  /* Return some of TEXT plus p.  */
-	  q = xmalloc (strlen (p) + (text - word) + 5);
+	  q = (char *) xmalloc (strlen (p) + (text - word) + 5);
 	  strncpy (q, word, text - word);
 	  q[text - word] = '\0';
 	  strcat (q, p);
@@ -175,7 +191,7 @@ filename_completer (struct cmd_list_element *ignore,
   return return_val;
 }
 
-/* Complete on locations, which might be of two possible forms:
+/* Complete on linespecs, which might be of two possible forms:
 
        file:line
    or
@@ -184,9 +200,9 @@ filename_completer (struct cmd_list_element *ignore,
    This is intended to be used in commands that set breakpoints
    etc.  */
 
-VEC (char_ptr) *
-location_completer (struct cmd_list_element *ignore, 
-		    const char *text, const char *word)
+static VEC (char_ptr) *
+linespec_location_completer (struct cmd_list_element *ignore,
+			     const char *text, const char *word)
 {
   int n_syms, n_files, ix;
   VEC (char_ptr) *fn_list = NULL;
@@ -248,7 +264,8 @@ location_completer (struct cmd_list_element *ignore,
       char *s;
 
       file_to_match = (char *) xmalloc (colon - text + 1);
-      strncpy (file_to_match, text, colon - text + 1);
+      strncpy (file_to_match, text, colon - text);
+      file_to_match[colon - text] = '\0';
       /* Remove trailing colons and quotes from the file name.  */
       for (s = file_to_match + (colon - text);
 	   s > file_to_match;
@@ -333,6 +350,184 @@ location_completer (struct cmd_list_element *ignore,
   return list;
 }
 
+/* A helper function to collect explicit location matches for the given
+   LOCATION, which is attempting to match on WORD.  */
+
+static VEC (char_ptr) *
+collect_explicit_location_matches (struct event_location *location,
+				   enum explicit_location_match_type what,
+				   const char *word)
+{
+  VEC (char_ptr) *matches = NULL;
+  const struct explicit_location *explicit_loc
+    = get_explicit_location (location);
+
+  switch (what)
+    {
+    case MATCH_SOURCE:
+      {
+	const char *text = (explicit_loc->source_filename == NULL
+			    ? "" : explicit_loc->source_filename);
+
+	matches = make_source_files_completion_list (text, word);
+      }
+      break;
+
+    case MATCH_FUNCTION:
+      {
+	const char *text = (explicit_loc->function_name == NULL
+			    ? "" : explicit_loc->function_name);
+
+	if (explicit_loc->source_filename != NULL)
+	  {
+	    const char *filename = explicit_loc->source_filename;
+
+	    matches = make_file_symbol_completion_list (text, word, filename);
+	  }
+	else
+	  matches = make_symbol_completion_list (text, word);
+      }
+      break;
+
+    case MATCH_LABEL:
+      /* Not supported.  */
+      break;
+
+    default:
+      gdb_assert_not_reached ("unhandled explicit_location_match_type");
+    }
+
+  return matches;
+}
+
+/* A convenience macro to (safely) back up P to the previous word.  */
+
+static const char *
+backup_text_ptr (const char *p, const char *text)
+{
+  while (p > text && isspace (*p))
+    --p;
+  for (; p > text && !isspace (p[-1]); --p)
+    ;
+
+  return p;
+}
+
+/* A completer function for explicit locations.  This function
+   completes both options ("-source", "-line", etc) and values.  */
+
+static VEC (char_ptr) *
+explicit_location_completer (struct cmd_list_element *ignore,
+			     struct event_location *location,
+			     const char *text, const char *word)
+{
+  const char *p;
+  VEC (char_ptr) *matches = NULL;
+
+  /* Find the beginning of the word.  This is necessary because
+     we need to know if we are completing an option name or value.  We
+     don't get the leading '-' from the completer.  */
+  p = backup_text_ptr (word, text);
+
+  if (*p == '-')
+    {
+      /* Completing on option name.  */
+      static const char *const keywords[] =
+	{
+	  "source",
+	  "function",
+	  "line",
+	  "label",
+	  NULL
+	};
+
+      /* Skip over the '-'.  */
+      ++p;
+
+      return complete_on_enum (keywords, p, p);
+    }
+  else
+    {
+      /* Completing on value (or unknown).  Get the previous word to see what
+	 the user is completing on.  */
+      size_t len, offset;
+      const char *new_word, *end;
+      enum explicit_location_match_type what;
+      struct explicit_location *explicit_loc
+	= get_explicit_location (location);
+
+      /* Backup P to the previous word, which should be the option
+	 the user is attempting to complete.  */
+      offset = word - p;
+      end = --p;
+      p = backup_text_ptr (p, text);
+      len = end - p;
+
+      if (strncmp (p, "-source", len) == 0)
+	{
+	  what = MATCH_SOURCE;
+	  new_word = explicit_loc->source_filename + offset;
+	}
+      else if (strncmp (p, "-function", len) == 0)
+	{
+	  what = MATCH_FUNCTION;
+	  new_word = explicit_loc->function_name + offset;
+	}
+      else if (strncmp (p, "-label", len) == 0)
+	{
+	  what = MATCH_LABEL;
+	  new_word = explicit_loc->label_name + offset;
+	}
+      else
+	{
+	  /* The user isn't completing on any valid option name,
+	     e.g., "break -source foo.c [tab]".  */
+	  return NULL;
+	}
+
+      /* If the user hasn't entered a search expression, e.g.,
+	 "break -function <TAB><TAB>", new_word will be NULL, but
+	 search routines require non-NULL search words.  */
+      if (new_word == NULL)
+	new_word = "";
+
+      /* Now gather matches  */
+      matches = collect_explicit_location_matches (location, what, new_word);
+    }
+
+  return matches;
+}
+
+/* A completer for locations.  */
+
+VEC (char_ptr) *
+location_completer (struct cmd_list_element *ignore,
+		    const char *text, const char *word)
+{
+  VEC (char_ptr) *matches = NULL;
+  const char *copy = text;
+  struct event_location *location;
+
+  location = string_to_explicit_location (&copy, current_language, 1);
+  if (location != NULL)
+    {
+      struct cleanup *cleanup;
+
+      cleanup = make_cleanup_delete_event_location (location);
+      matches = explicit_location_completer (ignore, location, text, word);
+      do_cleanups (cleanup);
+    }
+  else
+    {
+      /* This is an address or linespec location.
+	 Right now both of these are handled by the (old) linespec
+	 completer.  */
+      matches = linespec_location_completer (ignore, text, word);
+    }
+
+  return matches;
+}
+
 /* Helper for expression_completer which recursively adds field and
    method names from TYPE, a struct or union type, to the array
    OUTPUT.  */
@@ -344,7 +539,7 @@ add_struct_fields (struct type *type, VEC (char_ptr) **output,
   int computed_type_name = 0;
   const char *type_name = NULL;
 
-  CHECK_TYPEDEF (type);
+  type = check_typedef (type);
   for (i = 0; i < TYPE_NFIELDS (type); ++i)
     {
       if (i < TYPE_N_BASECLASSES (type))
@@ -415,7 +610,7 @@ expression_completer (struct cmd_list_element *ignore,
     {
       for (;;)
 	{
-	  CHECK_TYPEDEF (type);
+	  type = check_typedef (type);
 	  if (TYPE_CODE (type) != TYPE_CODE_PTR
 	      && TYPE_CODE (type) != TYPE_CODE_REF)
 	    break;
@@ -688,16 +883,6 @@ complete_line_internal (const char *text,
 		      rl_completer_word_break_characters =
 			gdb_completer_file_name_break_characters;
 		    }
-		  else if (c->completer == location_completer)
-		    {
-		      /* Commands which complete on locations want to
-			 see the entire argument.  */
-		      for (p = word;
-			   p > tmp_command
-			     && p[-1] != ' ' && p[-1] != '\t';
-			   p--)
-			;
-		    }
 		  if (reason == handle_brkchars
 		      && c->completer_handle_brkchars != NULL)
 		    (*c->completer_handle_brkchars) (c, p, word);
@@ -766,14 +951,6 @@ complete_line_internal (const char *text,
 		  rl_completer_word_break_characters =
 		    gdb_completer_file_name_break_characters;
 		}
-	      else if (c->completer == location_completer)
-		{
-		  for (p = word;
-		       p > tmp_command
-			 && p[-1] != ' ' && p[-1] != '\t';
-		       p--)
-		    ;
-		}
 	      if (reason == handle_brkchars
 		  && c->completer_handle_brkchars != NULL)
 		(*c->completer_handle_brkchars) (c, p, word);
@@ -809,7 +986,7 @@ new_completion_tracker (void)
 static void
 free_completion_tracker (void *p)
 {
-  completion_tracker_t *tracker_ptr = p;
+  completion_tracker_t *tracker_ptr = (completion_tracker_t *) p;
 
   htab_delete (*tracker_ptr);
   *tracker_ptr = NULL;
@@ -973,11 +1150,12 @@ signal_completer (struct cmd_list_element *ignore,
 /* Bit-flags for selecting what the register and/or register-group
    completer should complete on.  */
 
-enum reg_completer_targets
+enum reg_completer_target
   {
     complete_register_names = 0x1,
     complete_reggroup_names = 0x2
   };
+DEF_ENUM_FLAGS_TYPE (enum reg_completer_target, reg_completer_targets);
 
 /* Complete register names and/or reggroup names based on the value passed
    in TARGETS.  At least one bit in TARGETS must be set.  */
@@ -985,7 +1163,7 @@ enum reg_completer_targets
 static VEC (char_ptr) *
 reg_or_group_completer_1 (struct cmd_list_element *ignore,
 			  const char *text, const char *word,
-			  enum reg_completer_targets targets)
+			  reg_completer_targets targets)
 {
   VEC (char_ptr) *result = NULL;
   size_t len = strlen (word);

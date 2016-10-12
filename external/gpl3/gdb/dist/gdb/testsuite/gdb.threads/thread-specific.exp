@@ -1,4 +1,4 @@
-# Copyright 2004-2015 Free Software Foundation, Inc.
+# Copyright 2004-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,7 +66,10 @@ clean_restart ${binfile}
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 
+# As this test only runs a single inferior, $_thread and $_gthread
+# should match throughout.
 gdb_test {print $_thread} ".* = 0" "thread var when not running"
+gdb_test {print $_gthread} ".* = 0" "gthread var when not running"
 
 runto_main
 
@@ -82,6 +85,7 @@ if {[llength $threads] == 0} {
 }
 
 gdb_test {print $_thread} ".* = [lindex $threads 0]" "thread var in main"
+gdb_test {print $_gthread} ".* = [lindex $threads 0]" "gthread var in main"
 
 gdb_test_multiple "break $line thread [lindex $threads 0]" \
   "breakpoint $line main thread" {
@@ -120,6 +124,7 @@ if { $this_breakpoint != -1 } {
 
 if { $this_thread != -1 } {
     gdb_test {print $_thread} ".* = $this_thread" "thread var at break"
+    gdb_test {print $_gthread} ".* = $this_thread" "gthread var at break"
 } else {
     untested "thread var at break"
 }

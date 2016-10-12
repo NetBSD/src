@@ -1,6 +1,6 @@
 /* Basic 80960 instruction formats.
 
-   Copyright (C) 2001-2015 Free Software Foundation, Inc.
+   Copyright (C) 2001-2016 Free Software Foundation, Inc.
    
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@
 /* Description of a single i80960 instruction */
 struct i960_opcode {
 	long opcode;	/* 32 bits, constant fields filled in, rest zeroed */
-	char *name;	/* Assembler mnemonic				   */
+	const char *name;	/* Assembler mnemonic				   */
 	short iclass;	/* Class: see #defines below			   */
 	char format;	/* REG, COBR, CTRL, MEMn, COJ, FBRA, or CALLJ	   */
 	char num_ops;	/* Number of operands				   */

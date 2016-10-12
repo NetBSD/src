@@ -1,6 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -99,8 +99,7 @@ tui_find_disassembly_address (struct gdbarch *gdbarch, CORE_ADDR pc, int from)
   if (max_lines <= 1)
      return pc;
 
-  asm_lines = (struct tui_asm_line*) alloca (sizeof (struct tui_asm_line)
-                                         * max_lines);
+  asm_lines = XALLOCAVEC (struct tui_asm_line, max_lines);
   memset (asm_lines, 0, sizeof (struct tui_asm_line) * max_lines);
 
   new_low = pc;
@@ -198,8 +197,7 @@ tui_set_disassem_content (struct gdbarch *gdbarch, CORE_ADDR pc)
 							   hilite.  */
 
   /* Get temporary table that will hold all strings (addr & insn).  */
-  asm_lines = (struct tui_asm_line*) alloca (sizeof (struct tui_asm_line)
-                                         * max_lines);
+  asm_lines = XALLOCAVEC (struct tui_asm_line, max_lines);
   memset (asm_lines, 0, sizeof (struct tui_asm_line) * max_lines);
 
   tui_disassemble (gdbarch, asm_lines, pc, max_lines);

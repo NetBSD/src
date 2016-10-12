@@ -1,4 +1,4 @@
-# Copyright 1994-2015 Free Software Foundation, Inc.
+# Copyright 1994-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,11 @@
 if [target_info exists gdb,nointerrupts] {
     verbose "Skipping interrupt.exp because of nointerrupts."
     continue
+}
+
+if [target_info exists gdb,noinferiorio] {
+    verbose "Skipping interrupt.exp because of noinferiorio."
+    return
 }
 
 standard_testfile
@@ -44,11 +49,6 @@ if ![file exists $binfile] then {
 	"set interrupt character in interrupt.exp"
     if [runto_main] then {
 	global inferior_spawn_id gdb_spawn_id
-
-	if {[target_info exists gdb,noinferiorio] && $inferior_spawn_id == $gdb_spawn_id} {
-	    verbose "Skipping interrupt.exp because of noinferiorio."
-	    return
-	}
 
 	set msg "process is alive"
 	gdb_test_multiple "continue" $msg {
@@ -99,11 +99,6 @@ if ![file exists $binfile] then {
 		return
 	    }
 	    -re "$gdb_prompt $" {
-		# On HPUX-11.0 'send "p func1 ()"' above
-		# terminates the program. A defect is pending on this
-		# issue [defect #DTS CHFts24203]. Hence calling setup_xfail
-		# below.
-	        setup_xfail "hppa*-*-*11*" CHFts24203
 		fail "call function when asleep (wrong output)"
 	    }
 	    default {
@@ -118,7 +113,6 @@ if ![file exists $binfile] then {
 		setup_xfail "vax-*-*"
 		setup_xfail "alpha-*-*"
 		setup_xfail "*-*-*bsd*"
-		setup_xfail "*-*-hpux*"
 		setup_xfail "*-*-*lynx*"
 		fail "$msg (stays asleep)"
 		# Send the inferior a newline to wake it up.
@@ -153,9 +147,6 @@ if ![file exists $binfile] then {
 	# The optional leading \r\n is in case we sent a newline above
 	# to wake the program, in which case the program now sends it
 	# back.
-        # FIXME: The pattern below leads to an expected success on HPUX-11.0
-        # but the success is spurious. Need to provide the right reg.expr.
-        # here.
 
 	set msg "echo data"
 	gdb_test_multiple "" $msg {

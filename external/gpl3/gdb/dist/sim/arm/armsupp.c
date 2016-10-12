@@ -1134,7 +1134,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	    {
 	      if (trace)
 		fprintf (stderr, " VFP: VMLS: %g = %g - %g * %g\n",
-			 VFP_dval (dest) - val, 
+			 VFP_dval (dest) - val,
 			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
 	      VFP_dval (dest) -= val;
 	    }
@@ -1142,7 +1142,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	    {
 	      if (trace)
 		fprintf (stderr, " VFP: VMLA: %g = %g + %g * %g\n",
-			 VFP_dval (dest) + val, 
+			 VFP_dval (dest) + val,
 			 VFP_dval (dest), VFP_dval (srcN), VFP_dval (srcM));
 	      VFP_dval (dest) += val;
 	    }
@@ -1155,7 +1155,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	    {
 	      if (trace)
 		fprintf (stderr, " VFP: VMLS: %g = %g - %g * %g\n",
-			 VFP_fval (dest) - val, 
+			 VFP_fval (dest) - val,
 			 VFP_fval (dest), VFP_fval (srcN), VFP_fval (srcM));
 	      VFP_fval (dest) -= val;
 	    }
@@ -1163,7 +1163,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	    {
 	      if (trace)
 		fprintf (stderr, " VFP: VMLA: %g = %g + %g * %g\n",
-			 VFP_fval (dest) + val, 
+			 VFP_fval (dest) + val,
 			 VFP_fval (dest), VFP_fval (srcN), VFP_fval (srcM));
 	      VFP_fval (dest) += val;
 	    }
@@ -1345,7 +1345,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	      if (BIT (8))
 		{
 		  ARMdval src = VFP_dval (srcM);
-		  
+
 		  VFP_dval (dest) = fabs (src);
 		  if (trace)
 		    fprintf (stderr, " VFP: VABS (%g) = %g\n", src, VFP_dval (dest));
@@ -1402,7 +1402,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	      if (BIT (16) == 0)
 		{
 		  ARMdval src = VFP_dval (srcM);
-		  
+
 		  if (isinf (res) && isinf (src))
 		    {
 		      if (res > 0.0 && src > 0.0)
@@ -1442,7 +1442,7 @@ handle_VFP_op (ARMul_State * state, ARMword instr)
 	      if (BIT (16) == 0)
 		{
 		  ARMfval src = VFP_fval (srcM);
-		  
+
 		  if (isinf (res) && isinf (src))
 		    {
 		      if (res > 0.0 && src > 0.0)

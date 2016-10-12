@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,7 +116,6 @@ proc test_template_breakpoints {} {
     global gdb_prompt
     global testfile
     global srcdir
-    global hp_aCC_compiler
 
     gdb_test_multiple "break T5<int>::T5" "constructor breakpoint" {
 	-re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2.*templates.cc:T5<int>::T5\\((T5<int> const|const T5<int>) ?&\\)\[\r\n\]*.3.*templates.cc:T5<int>::T5\\(int\\)\[\r\n\]*> $" {
@@ -137,9 +136,6 @@ proc test_template_breakpoints {} {
 	}
     }
     
-# See CLLbs14792
-    if {$hp_aCC_compiler} {setup_xfail hppa*-*-* CLLbs14792}
-
     gdb_test_multiple "break T5<int>::~T5" "destructor_breakpoint" {
 	-re "Breakpoint.*at.* file .*${testfile}.cc, line.*$gdb_prompt $"
 	{
@@ -186,15 +182,13 @@ proc test_template_breakpoints {} {
 
 proc test_template_calls {} {
     global gdb_prompt
-    global hp_aCC_compiler
 
     if [target_info exists gdb,cannot_call_functions] {
-	setup_xfail "*-*-*" 2416
-	fail "This target can not call functions"
+	unsupported "This target can not call functions"
 	return
     }
 
-    if {!$hp_aCC_compiler} {setup_xfail hppa*-*-*}
+    setup_xfail hppa*-*-*
     gdb_test_multiple "print t5i.value()" "print t5i.value()" {
 	-re ".* = 2\[\r\n\]*$gdb_prompt $" {
 	    pass "print t5i.value()"

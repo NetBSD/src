@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -32,7 +32,7 @@
 /* This macro is only relevant when N_MAGIC(x) == ZMAGIC.  */
 #define N_HEADER_IN_TEXT(x)	1
 
-#define N_TXTSIZE(x)	((x).a_text)
+#define N_TXTSIZE(x)	((x)->a_text)
 
 #include "sysdep.h"
 #include "bfd.h"

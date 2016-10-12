@@ -1,5 +1,5 @@
 /* GNU/Linux/IA64 specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Copyright (C) 1995-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

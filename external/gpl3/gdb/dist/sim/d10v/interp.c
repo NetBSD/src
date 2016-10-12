@@ -31,19 +31,18 @@ int d10v_debug;
 
 int old_segment_mapping;
 
-host_callback *d10v_callback;
 unsigned long ins_type_counters[ (int)INS_MAX ];
 
 uint16 OP[4];
 
 static long hash (long insn, int format);
-static struct hash_entry *lookup_hash (uint32 ins, int size);
+static struct hash_entry *lookup_hash (SIM_DESC, SIM_CPU *, uint32 ins, int size);
 static void get_operands (struct simops *s, uint32 ins);
-static void do_long (uint32 ins);
-static void do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright);
-static void do_parallel (uint16 ins1, uint16 ins2);
+static void do_long (SIM_DESC, SIM_CPU *, uint32 ins);
+static void do_2_short (SIM_DESC, SIM_CPU *, uint16 ins1, uint16 ins2, enum _leftright leftright);
+static void do_parallel (SIM_DESC, SIM_CPU *, uint16 ins1, uint16 ins2);
 static char *add_commas (char *buf, int sizeof_buf, unsigned long value);
-static INLINE uint8 *map_memory (unsigned phys_addr);
+static INLINE uint8 *map_memory (SIM_DESC, SIM_CPU *, unsigned phys_addr);
 
 #define MAX_HASH  63
 struct hash_entry
@@ -67,7 +66,7 @@ hash (long insn, int format)
 }
 
 INLINE static struct hash_entry *
-lookup_hash (uint32 ins, int size)
+lookup_hash (SIM_DESC sd, SIM_CPU *cpu, uint32 ins, int size)
 {
   struct hash_entry *h;
 
@@ -79,11 +78,7 @@ lookup_hash (uint32 ins, int size)
   while ((ins & h->mask) != h->opcode || h->size != size)
     {
       if (h->next == NULL)
-	{
-	  State.exception = GDB_SIGNAL_ILL;
-	  State.pc_changed = 1; /* Don't increment the PC. */
-	  return NULL;
-	}
+	sim_engine_halt (sd, cpu, NULL, PC, sim_stopped, SIM_SIGILL);
       h = h->next;
     }
   return (h);
@@ -108,32 +103,32 @@ get_operands (struct simops *s, uint32 ins)
 }
 
 static void
-do_long (uint32 ins)
+do_long (SIM_DESC sd, SIM_CPU *cpu, uint32 ins)
 {
   struct hash_entry *h;
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_INSTRUCTION) != 0)
-    (*d10v_callback->printf_filtered) (d10v_callback, "do_long 0x%x\n", ins);
+    sim_io_printf (sd, "do_long 0x%x\n", ins);
 #endif
-  h = lookup_hash (ins, 1);
+  h = lookup_hash (sd, cpu, ins, 1);
   if (h == NULL)
     return;
   get_operands (h->ops, ins);
   State.ins_type = INS_LONG;
   ins_type_counters[ (int)State.ins_type ]++;
-  (h->ops->func)();
+  (h->ops->func) (sd, cpu);
 }
 
 static void
-do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright)
+do_2_short (SIM_DESC sd, SIM_CPU *cpu, uint16 ins1, uint16 ins2, enum _leftright leftright)
 {
   struct hash_entry *h;
   enum _ins_type first, second;
 
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_INSTRUCTION) != 0)
-    (*d10v_callback->printf_filtered) (d10v_callback, "do_2_short 0x%x (%s) -> 0x%x\n",
-				       ins1, (leftright) ? "left" : "right", ins2);
+    sim_io_printf (sd, "do_2_short 0x%x (%s) -> 0x%x\n", ins1,
+		   leftright ? "left" : "right", ins2);
 #endif
 
   if (leftright == LEFT_FIRST)
@@ -150,45 +145,45 @@ do_2_short (uint16 ins1, uint16 ins2, enum _leftright leftright)
     }
 
   /* Issue the first instruction */
-  h = lookup_hash (ins1, 0);
+  h = lookup_hash (sd, cpu, ins1, 0);
   if (h == NULL)
     return;
   get_operands (h->ops, ins1);
   State.ins_type = first;
   ins_type_counters[ (int)State.ins_type ]++;
-  (h->ops->func)();
+  (h->ops->func) (sd, cpu);
 
   /* Issue the second instruction (if the PC hasn't changed) */
-  if (!State.pc_changed && !State.exception)
+  if (!State.pc_changed)
     {
       /* finish any existing instructions */
       SLOT_FLUSH ();
-      h = lookup_hash (ins2, 0);
+      h = lookup_hash (sd, cpu, ins2, 0);
       if (h == NULL)
 	return;
       get_operands (h->ops, ins2);
       State.ins_type = second;
       ins_type_counters[ (int)State.ins_type ]++;
       ins_type_counters[ (int)INS_CYCLES ]++;
-      (h->ops->func)();
+      (h->ops->func) (sd, cpu);
     }
-  else if (!State.exception)
+  else
     ins_type_counters[ (int)INS_COND_JUMP ]++;
 }
 
 static void
-do_parallel (uint16 ins1, uint16 ins2)
+do_parallel (SIM_DESC sd, SIM_CPU *cpu, uint16 ins1, uint16 ins2)
 {
   struct hash_entry *h1, *h2;
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_INSTRUCTION) != 0)
-    (*d10v_callback->printf_filtered) (d10v_callback, "do_parallel 0x%x || 0x%x\n", ins1, ins2);
+    sim_io_printf (sd, "do_parallel 0x%x || 0x%x\n", ins1, ins2);
 #endif
   ins_type_counters[ (int)INS_PARALLEL ]++;
-  h1 = lookup_hash (ins1, 0);
+  h1 = lookup_hash (sd, cpu, ins1, 0);
   if (h1 == NULL)
     return;
-  h2 = lookup_hash (ins2, 0);
+  h2 = lookup_hash (sd, cpu, ins2, 0);
   if (h2 == NULL)
     return;
 
@@ -197,14 +192,14 @@ do_parallel (uint16 ins1, uint16 ins2)
       get_operands (h1->ops, ins1);
       State.ins_type = INS_LEFT_COND_TEST;
       ins_type_counters[ (int)State.ins_type ]++;
-      (h1->ops->func)();
+      (h1->ops->func) (sd, cpu);
       if (State.exe)
 	{
 	  ins_type_counters[ (int)INS_COND_TRUE ]++;
 	  get_operands (h2->ops, ins2);
 	  State.ins_type = INS_RIGHT_COND_EXE;
 	  ins_type_counters[ (int)State.ins_type ]++;
-	  (h2->ops->func)();
+	  (h2->ops->func) (sd, cpu);
 	}
       else
 	ins_type_counters[ (int)INS_COND_FALSE ]++;
@@ -214,14 +209,14 @@ do_parallel (uint16 ins1, uint16 ins2)
       get_operands (h2->ops, ins2);
       State.ins_type = INS_RIGHT_COND_TEST;
       ins_type_counters[ (int)State.ins_type ]++;
-      (h2->ops->func)();
+      (h2->ops->func) (sd, cpu);
       if (State.exe)
 	{
 	  ins_type_counters[ (int)INS_COND_TRUE ]++;
 	  get_operands (h1->ops, ins1);
 	  State.ins_type = INS_LEFT_COND_EXE;
 	  ins_type_counters[ (int)State.ins_type ]++;
-	  (h1->ops->func)();
+	  (h1->ops->func) (sd, cpu);
 	}
       else
 	ins_type_counters[ (int)INS_COND_FALSE ]++;
@@ -231,14 +226,11 @@ do_parallel (uint16 ins1, uint16 ins2)
       get_operands (h1->ops, ins1);
       State.ins_type = INS_LEFT_PARALLEL;
       ins_type_counters[ (int)State.ins_type ]++;
-      (h1->ops->func)();
-      if (!State.exception)
-	{
-	  get_operands (h2->ops, ins2);
-	  State.ins_type = INS_RIGHT_PARALLEL;
-	  ins_type_counters[ (int)State.ins_type ]++;
-	  (h2->ops->func)();
-	}
+      (h1->ops->func) (sd, cpu);
+      get_operands (h2->ops, ins2);
+      State.ins_type = INS_RIGHT_PARALLEL;
+      ins_type_counters[ (int)State.ins_type ]++;
+      (h2->ops->func) (sd, cpu);
     }
 }
  
@@ -262,7 +254,7 @@ add_commas (char *buf, int sizeof_buf, unsigned long value)
   return endbuf;
 }
 
-void
+static void
 sim_size (int power)
 {
   int i;
@@ -300,47 +292,45 @@ enum
   };
 
 static void
-set_dmap_register (int reg_nr, unsigned long value)
+set_dmap_register (SIM_DESC sd, int reg_nr, unsigned long value)
 {
-  uint8 *raw = map_memory (SIM_D10V_MEMORY_DATA
+  uint8 *raw = map_memory (sd, NULL, SIM_D10V_MEMORY_DATA
 			   + DMAP0_OFFSET + 2 * reg_nr);
   WRITE_16 (raw, value);
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_MEMORY))
     {
-      (*d10v_callback->printf_filtered)
-	(d10v_callback, "mem: dmap%d=0x%04lx\n", reg_nr, value);
+      sim_io_printf (sd, "mem: dmap%d=0x%04lx\n", reg_nr, value);
     }
 #endif
 }
 
 static unsigned long
-dmap_register (void *regcache, int reg_nr)
+dmap_register (SIM_DESC sd, SIM_CPU *cpu, void *regcache, int reg_nr)
 {
-  uint8 *raw = map_memory (SIM_D10V_MEMORY_DATA
+  uint8 *raw = map_memory (sd, cpu, SIM_D10V_MEMORY_DATA
 			   + DMAP0_OFFSET + 2 * reg_nr);
   return READ_16 (raw);
 }
 
 static void
-set_imap_register (int reg_nr, unsigned long value)
+set_imap_register (SIM_DESC sd, int reg_nr, unsigned long value)
 {
-  uint8 *raw = map_memory (SIM_D10V_MEMORY_DATA
+  uint8 *raw = map_memory (sd, NULL, SIM_D10V_MEMORY_DATA
 			   + IMAP0_OFFSET + 2 * reg_nr);
   WRITE_16 (raw, value);
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_MEMORY))
     {
-      (*d10v_callback->printf_filtered)
-	(d10v_callback, "mem: imap%d=0x%04lx\n", reg_nr, value);
+      sim_io_printf (sd, "mem: imap%d=0x%04lx\n", reg_nr, value);
     }
 #endif
 }
 
 static unsigned long
-imap_register (void *regcache, int reg_nr)
+imap_register (SIM_DESC sd, SIM_CPU *cpu, void *regcache, int reg_nr)
 {
-  uint8 *raw = map_memory (SIM_D10V_MEMORY_DATA
+  uint8 *raw = map_memory (sd, cpu, SIM_D10V_MEMORY_DATA
 			   + IMAP0_OFFSET + 2 * reg_nr);
   return READ_16 (raw);
 }
@@ -388,12 +378,16 @@ set_spu_register  (unsigned long value)
 /* Given a virtual address in the DMAP address space, translate it
    into a physical address. */
 
-unsigned long
-sim_d10v_translate_dmap_addr (unsigned long offset,
+static unsigned long
+sim_d10v_translate_dmap_addr (SIM_DESC sd,
+			      SIM_CPU *cpu,
+			      unsigned long offset,
 			      int nr_bytes,
 			      unsigned long *phys,
 			      void *regcache,
-			      unsigned long (*dmap_register) (void *regcache,
+			      unsigned long (*dmap_register) (SIM_DESC,
+							      SIM_CPU *,
+							      void *regcache,
 							      int reg_nr))
 {
   short map;
@@ -411,7 +405,7 @@ sim_d10v_translate_dmap_addr (unsigned long offset,
       /* Don't cross a BLOCK boundary */
       nr_bytes = DMAP_BLOCK_SIZE - (offset % DMAP_BLOCK_SIZE);
     }
-  map = dmap_register (regcache, regno);
+  map = dmap_register (sd, cpu, regcache, regno);
   if (regno == 3)
     {
       /* Always maps to data memory */
@@ -448,12 +442,16 @@ sim_d10v_translate_dmap_addr (unsigned long offset,
 /* Given a virtual address in the IMAP address space, translate it
    into a physical address. */
 
-unsigned long
-sim_d10v_translate_imap_addr (unsigned long offset,
+static unsigned long
+sim_d10v_translate_imap_addr (SIM_DESC sd,
+			      SIM_CPU *cpu,
+			      unsigned long offset,
 			      int nr_bytes,
 			      unsigned long *phys,
 			      void *regcache,
-			      unsigned long (*imap_register) (void *regcache,
+			      unsigned long (*imap_register) (SIM_DESC,
+							      SIM_CPU *,
+							      void *regcache,
 							      int reg_nr))
 {
   short map;
@@ -473,7 +471,7 @@ sim_d10v_translate_imap_addr (unsigned long offset,
       /* Don't cross a BLOCK boundary */
       nr_bytes = IMAP_BLOCK_SIZE - offset;
     }
-  map = imap_register (regcache, regno);
+  map = imap_register (sd, cpu, regcache, regno);
   sp = (map & 0x3000) >> 12;
   segno = (map & 0x007f);
   switch (sp)
@@ -501,14 +499,20 @@ sim_d10v_translate_imap_addr (unsigned long offset,
   return nr_bytes;
 }
 
-unsigned long
-sim_d10v_translate_addr (unsigned long memaddr,
+static unsigned long
+sim_d10v_translate_addr (SIM_DESC sd,
+			 SIM_CPU *cpu,
+			 unsigned long memaddr,
 			 int nr_bytes,
 			 unsigned long *targ_addr,
 			 void *regcache,
-			 unsigned long (*dmap_register) (void *regcache,
+			 unsigned long (*dmap_register) (SIM_DESC,
+							 SIM_CPU *,
+							 void *regcache,
 							 int reg_nr),
-			 unsigned long (*imap_register) (void *regcache,
+			 unsigned long (*imap_register) (SIM_DESC,
+							 SIM_CPU *,
+							 void *regcache,
 							 int reg_nr))
 {
   unsigned long phys;
@@ -573,13 +577,13 @@ sim_d10v_translate_addr (unsigned long memaddr,
       break;
 
     case 0x10:			/* in logical data address segment */
-      nr_bytes = sim_d10v_translate_dmap_addr (off, nr_bytes, &phys, regcache,
-					       dmap_register);
+      nr_bytes = sim_d10v_translate_dmap_addr (sd, cpu, off, nr_bytes, &phys,
+					       regcache, dmap_register);
       break;
 
     case 0x11:			/* in logical instruction address segment */
-      nr_bytes = sim_d10v_translate_imap_addr (off, nr_bytes, &phys, regcache,
-					       imap_register);
+      nr_bytes = sim_d10v_translate_imap_addr (sd, cpu, off, nr_bytes, &phys,
+					       regcache, imap_register);
       break;
 
     default:
@@ -595,7 +599,7 @@ sim_d10v_translate_addr (unsigned long memaddr,
    isn't going to cross a segment boundary. */
 
 uint8 *
-map_memory (unsigned phys_addr)
+map_memory (SIM_DESC sd, SIM_CPU *cpu, unsigned phys_addr)
 {
   uint8 **memory;
   uint8 *raw;
@@ -641,18 +645,11 @@ map_memory (unsigned phys_addr)
     default:
       /* OOPS! */
       last_segname = "scrap";
-      return State.mem.fault;
+      sim_engine_halt (sd, cpu, NULL, PC, sim_stopped, SIM_SIGBUS);
     }
   
   if (*memory == NULL)
-    {
-      *memory = calloc (1, SEGMENT_SIZE);
-      if (*memory == NULL)
-	{
-	  (*d10v_callback->printf_filtered) (d10v_callback, "Malloc failed.\n");
-	  return State.mem.fault;
-	}
-    }
+    *memory = xcalloc (1, SEGMENT_SIZE);
   
   offset = (phys_addr % SEGMENT_SIZE);
   raw = *memory + offset;
@@ -667,7 +664,8 @@ map_memory (unsigned phys_addr)
    than aborting the entire run. */
 
 static int
-xfer_mem (SIM_ADDR virt,
+xfer_mem (SIM_DESC sd,
+	  SIM_ADDR virt,
 	  unsigned char *buffer,
 	  int size,
 	  int write_p)
@@ -675,20 +673,20 @@ xfer_mem (SIM_ADDR virt,
   uint8 *memory;
   unsigned long phys;
   int phys_size;
-  phys_size = sim_d10v_translate_addr (virt, size, &phys, NULL,
+  phys_size = sim_d10v_translate_addr (sd, NULL, virt, size, &phys, NULL,
 				       dmap_register, imap_register);
   if (phys_size == 0)
     return 0;
 
-  memory = map_memory (phys);
+  memory = map_memory (sd, NULL, phys);
 
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_INSTRUCTION) != 0)
     {
-      (*d10v_callback->printf_filtered)
-	(d10v_callback,
+      sim_io_printf
+	(sd,
 	 "sim_%s %d bytes: 0x%08lx (%s) -> 0x%08lx (%s) -> 0x%08lx (%s)\n",
-	     (write_p ? "write" : "read"),
+	 write_p ? "write" : "read",
 	 phys_size, virt, last_from,
 	 phys, last_to,
 	 (long) memory, last_segname);
@@ -712,14 +710,14 @@ int
 sim_write (SIM_DESC sd, SIM_ADDR addr, const unsigned char *buffer, int size)
 {
   /* FIXME: this should be performing a virtual transfer */
-  return xfer_mem( addr, buffer, size, 1);
+  return xfer_mem (sd, addr, buffer, size, 1);
 }
 
 int
 sim_read (SIM_DESC sd, SIM_ADDR addr, unsigned char *buffer, int size)
 {
   /* FIXME: this should be performing a virtual transfer */
-  return xfer_mem( addr, buffer, size, 0);
+  return xfer_mem (sd, addr, buffer, size, 0);
 }
 
 static sim_cia
@@ -731,6 +729,7 @@ d10v_pc_get (sim_cpu *cpu)
 static void
 d10v_pc_set (sim_cpu *cpu, sim_cia pc)
 {
+  SIM_DESC sd = CPU_STATE (cpu);
   SET_PC (pc);
 }
 
@@ -743,10 +742,12 @@ free_state (SIM_DESC sd)
   sim_state_free (sd);
 }
 
-SIM_DESC trace_sd = NULL;
+static int d10v_reg_fetch (SIM_CPU *, int, unsigned char *, int);
+static int d10v_reg_store (SIM_CPU *, int, unsigned char *, int);
 
 SIM_DESC
-sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
+sim_open (SIM_OPEN_KIND kind, host_callback *cb,
+	  struct bfd *abfd, char * const *argv)
 {
   struct simops *s;
   struct hash_entry *h;
@@ -769,9 +770,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
       return 0;
     }
 
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       free_state (sd);
@@ -809,12 +808,12 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
     {
       SIM_CPU *cpu = STATE_CPU (sd, i);
 
+      CPU_REG_FETCH (cpu) = d10v_reg_fetch;
+      CPU_REG_STORE (cpu) = d10v_reg_store;
       CPU_PC_FETCH (cpu) = d10v_pc_get;
       CPU_PC_STORE (cpu) = d10v_pc_set;
     }
 
-  trace_sd = sd;
-  d10v_callback = cb;
   old_segment_mapping = 0;
 
   /* NOTE: This argument parsing is only effective when this function
@@ -861,20 +860,12 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
   /* reset the processor state */
   if (!State.mem.data[0])
     sim_size (1);
-  sim_create_inferior ((SIM_DESC) 1, NULL, NULL, NULL);
 
   return sd;
 }
 
-
-void
-sim_close (SIM_DESC sd, int quitting)
-{
-  /* Nothing to do.  */
-}
-
 uint8 *
-dmem_addr (uint16 offset)
+dmem_addr (SIM_DESC sd, SIM_CPU *cpu, uint16 offset)
 {
   unsigned long phys;
   uint8 *mem;
@@ -884,19 +875,16 @@ dmem_addr (uint16 offset)
      things like ``0xfffe + 0x0e60 == 0x10e5d''.  Since offset's type
      is uint16 this is modulo'ed onto 0x0e5d. */
 
-  phys_size = sim_d10v_translate_dmap_addr (offset, 1, &phys, NULL,
+  phys_size = sim_d10v_translate_dmap_addr (sd, cpu, offset, 1, &phys, NULL,
 					    dmap_register);
   if (phys_size == 0)
-    {
-      mem = State.mem.fault;
-    }
-  else
-    mem = map_memory (phys);
+    sim_engine_halt (sd, cpu, NULL, PC, sim_stopped, SIM_SIGBUS);
+  mem = map_memory (sd, cpu, phys);
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_MEMORY))
     {
-      (*d10v_callback->printf_filtered)
-	(d10v_callback,
+      sim_io_printf
+	(sd,
 	 "mem: 0x%08x (%s) -> 0x%08lx %d (%s) -> 0x%08lx (%s)\n",
 	 offset, last_from,
 	 phys, phys_size, last_to,
@@ -907,22 +895,20 @@ dmem_addr (uint16 offset)
 }
 
 uint8 *
-imem_addr (uint32 offset)
+imem_addr (SIM_DESC sd, SIM_CPU *cpu, uint32 offset)
 {
   unsigned long phys;
   uint8 *mem;
-  int phys_size = sim_d10v_translate_imap_addr (offset, 1, &phys, NULL,
+  int phys_size = sim_d10v_translate_imap_addr (sd, cpu, offset, 1, &phys, NULL,
 						imap_register);
   if (phys_size == 0)
-    {
-      return State.mem.fault;
-    }
-  mem = map_memory (phys); 
+    sim_engine_halt (sd, cpu, NULL, PC, sim_stopped, SIM_SIGBUS);
+  mem = map_memory (sd, cpu, phys);
 #ifdef DEBUG
   if ((d10v_debug & DEBUG_MEMORY))
     {
-      (*d10v_callback->printf_filtered)
-	(d10v_callback,
+      sim_io_printf
+	(sd,
 	 "mem: 0x%08x (%s) -> 0x%08lx %d (%s) -> 0x%08lx (%s)\n",
 	 offset, last_from,
 	 phys, phys_size, last_to,
@@ -932,59 +918,15 @@ imem_addr (uint32 offset)
   return mem;
 }
 
-static int stop_simulator = 0;
-
-int
-sim_stop (SIM_DESC sd)
-{
-  stop_simulator = 1;
-  return 1;
-}
-
-
-/* Run (or resume) the program.  */
-void
-sim_resume (SIM_DESC sd, int step, int siggnal)
+static void
+step_once (SIM_DESC sd, SIM_CPU *cpu)
 {
   uint32 inst;
   uint8 *iaddr;
 
-/*   (*d10v_callback->printf_filtered) (d10v_callback, "sim_resume (%d,%d)  PC=0x%x\n",step,siggnal,PC); */
-  State.exception = 0;
-  if (step)
-    sim_stop (sd);
-
-  switch (siggnal)
+  /* TODO: Unindent this block.  */
     {
-    case 0:
-      break;
-    case GDB_SIGNAL_BUS:
-      SET_BPC (PC);
-      SET_BPSW (PSW);
-      SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
-      JMP (AE_VECTOR_START);
-      SLOT_FLUSH ();
-      break;
-    case GDB_SIGNAL_ILL:
-      SET_BPC (PC);
-      SET_BPSW (PSW);
-      SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
-      JMP (RIE_VECTOR_START);
-      SLOT_FLUSH ();
-      break;
-    default:
-      /* just ignore it */
-      break;
-    }
-
-  do
-    {
-      iaddr = imem_addr ((uint32)PC << 2);
-      if (iaddr == State.mem.fault)
- 	{
-	  State.exception = GDB_SIGNAL_BUS;
- 	  break;
- 	}
+      iaddr = imem_addr (sd, cpu, (uint32)PC << 2);
  
       inst = get_longword( iaddr ); 
  
@@ -995,18 +937,18 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
 	{
 	case 0xC0000000:
 	  /* long instruction */
-	  do_long (inst & 0x3FFFFFFF);
+	  do_long (sd, cpu, inst & 0x3FFFFFFF);
 	  break;
 	case 0x80000000:
 	  /* R -> L */
-	  do_2_short ( inst & 0x7FFF, (inst & 0x3FFF8000) >> 15, RIGHT_FIRST);
+	  do_2_short (sd, cpu, inst & 0x7FFF, (inst & 0x3FFF8000) >> 15, RIGHT_FIRST);
 	  break;
 	case 0x40000000:
 	  /* L -> R */
-	  do_2_short ((inst & 0x3FFF8000) >> 15, inst & 0x7FFF, LEFT_FIRST);
+	  do_2_short (sd, cpu, (inst & 0x3FFF8000) >> 15, inst & 0x7FFF, LEFT_FIRST);
 	  break;
 	case 0:
-	  do_parallel ((inst & 0x3FFF8000) >> 15, inst & 0x7FFF);
+	  do_parallel (sd, cpu, (inst & 0x3FFF8000) >> 15, inst & 0x7FFF);
 	  break;
 	}
       
@@ -1051,10 +993,49 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
       /* Writeback all the DATA / PC changes */
       SLOT_FLUSH ();
     }
-  while ( !State.exception && !stop_simulator);
-  
-  if (step && !State.exception)
-    State.exception = GDB_SIGNAL_TRAP;
+}
+
+void
+sim_engine_run (SIM_DESC sd,
+		int next_cpu_nr,  /* ignore  */
+		int nr_cpus,      /* ignore  */
+		int siggnal)
+{
+  sim_cpu *cpu;
+
+  SIM_ASSERT (STATE_MAGIC (sd) == SIM_MAGIC_NUMBER);
+
+  cpu = STATE_CPU (sd, 0);
+
+  switch (siggnal)
+    {
+    case 0:
+      break;
+    case GDB_SIGNAL_BUS:
+      SET_BPC (PC);
+      SET_BPSW (PSW);
+      SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
+      JMP (AE_VECTOR_START);
+      SLOT_FLUSH ();
+      break;
+    case GDB_SIGNAL_ILL:
+      SET_BPC (PC);
+      SET_BPSW (PSW);
+      SET_HW_PSW ((PSW & (PSW_F0_BIT | PSW_F1_BIT | PSW_C_BIT)));
+      JMP (RIE_VECTOR_START);
+      SLOT_FLUSH ();
+      break;
+    default:
+      /* just ignore it */
+      break;
+    }
+
+  while (1)
+    {
+      step_once (sd, cpu);
+      if (sim_events_tick (sd))
+	sim_events_process (sd);
+    }
 }
 
 void
@@ -1095,73 +1076,74 @@ sim_info (SIM_DESC sd, int verbose)
   int nop_size			= strlen (add_commas (buf1, sizeof (buf1), (left_nops > right_nops) ? left_nops : right_nops));
   int normal_size		= strlen (add_commas (buf1, sizeof (buf1), (left > right) ? left : right));
 
-  (*d10v_callback->printf_filtered) (d10v_callback,
-				     "executed %*s left  instruction(s), %*s normal, %*s parallel, %*s EXExxx, %*s nops\n",
-				     size, add_commas (buf1, sizeof (buf1), left_total),
-				     normal_size, add_commas (buf2, sizeof (buf2), left),
-				     parallel_size, add_commas (buf3, sizeof (buf3), left_parallel),
-				     cond_size, add_commas (buf4, sizeof (buf4), left_cond),
-				     nop_size, add_commas (buf5, sizeof (buf5), left_nops));
+  sim_io_printf (sd,
+		 "executed %*s left  instruction(s), %*s normal, %*s parallel, %*s EXExxx, %*s nops\n",
+		 size, add_commas (buf1, sizeof (buf1), left_total),
+		 normal_size, add_commas (buf2, sizeof (buf2), left),
+		 parallel_size, add_commas (buf3, sizeof (buf3), left_parallel),
+		 cond_size, add_commas (buf4, sizeof (buf4), left_cond),
+		 nop_size, add_commas (buf5, sizeof (buf5), left_nops));
 
-  (*d10v_callback->printf_filtered) (d10v_callback,
-				     "executed %*s right instruction(s), %*s normal, %*s parallel, %*s EXExxx, %*s nops\n",
-				     size, add_commas (buf1, sizeof (buf1), right_total),
-				     normal_size, add_commas (buf2, sizeof (buf2), right),
-				     parallel_size, add_commas (buf3, sizeof (buf3), right_parallel),
-				     cond_size, add_commas (buf4, sizeof (buf4), right_cond),
-				     nop_size, add_commas (buf5, sizeof (buf5), right_nops));
+  sim_io_printf (sd,
+		 "executed %*s right instruction(s), %*s normal, %*s parallel, %*s EXExxx, %*s nops\n",
+		 size, add_commas (buf1, sizeof (buf1), right_total),
+		 normal_size, add_commas (buf2, sizeof (buf2), right),
+		 parallel_size, add_commas (buf3, sizeof (buf3), right_parallel),
+		 cond_size, add_commas (buf4, sizeof (buf4), right_cond),
+		 nop_size, add_commas (buf5, sizeof (buf5), right_nops));
 
   if (ins_long)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s long instruction(s)\n",
-				       size, add_commas (buf1, sizeof (buf1), ins_long));
+    sim_io_printf (sd,
+		   "executed %*s long instruction(s)\n",
+		   size, add_commas (buf1, sizeof (buf1), ins_long));
 
   if (parallel)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s parallel instruction(s)\n",
-				       size, add_commas (buf1, sizeof (buf1), parallel));
+    sim_io_printf (sd,
+		   "executed %*s parallel instruction(s)\n",
+		   size, add_commas (buf1, sizeof (buf1), parallel));
 
   if (leftright)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s instruction(s) encoded L->R\n",
-				       size, add_commas (buf1, sizeof (buf1), leftright));
+    sim_io_printf (sd,
+		   "executed %*s instruction(s) encoded L->R\n",
+		   size, add_commas (buf1, sizeof (buf1), leftright));
 
   if (rightleft)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s instruction(s) encoded R->L\n",
-				       size, add_commas (buf1, sizeof (buf1), rightleft));
+    sim_io_printf (sd,
+		   "executed %*s instruction(s) encoded R->L\n",
+		   size, add_commas (buf1, sizeof (buf1), rightleft));
 
   if (unknown)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s unknown instruction(s)\n",
-				       size, add_commas (buf1, sizeof (buf1), unknown));
+    sim_io_printf (sd,
+		   "executed %*s unknown instruction(s)\n",
+		   size, add_commas (buf1, sizeof (buf1), unknown));
 
   if (cond_true)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "executed %*s instruction(s) due to EXExxx condition being true\n",
-				       size, add_commas (buf1, sizeof (buf1), cond_true));
+    sim_io_printf (sd,
+		   "executed %*s instruction(s) due to EXExxx condition being true\n",
+		   size, add_commas (buf1, sizeof (buf1), cond_true));
 
   if (cond_false)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "skipped  %*s instruction(s) due to EXExxx condition being false\n",
-				       size, add_commas (buf1, sizeof (buf1), cond_false));
+    sim_io_printf (sd,
+		   "skipped  %*s instruction(s) due to EXExxx condition being false\n",
+		   size, add_commas (buf1, sizeof (buf1), cond_false));
 
   if (cond_jump)
-    (*d10v_callback->printf_filtered) (d10v_callback,
-				       "skipped  %*s instruction(s) due to conditional branch succeeding\n",
-				       size, add_commas (buf1, sizeof (buf1), cond_jump));
+    sim_io_printf (sd,
+		   "skipped  %*s instruction(s) due to conditional branch succeeding\n",
+		   size, add_commas (buf1, sizeof (buf1), cond_jump));
 
-  (*d10v_callback->printf_filtered) (d10v_callback,
-				     "executed %*s cycle(s)\n",
-				     size, add_commas (buf1, sizeof (buf1), cycles));
+  sim_io_printf (sd,
+		 "executed %*s cycle(s)\n",
+		 size, add_commas (buf1, sizeof (buf1), cycles));
 
-  (*d10v_callback->printf_filtered) (d10v_callback,
-				     "executed %*s total instructions\n",
-				     size, add_commas (buf1, sizeof (buf1), total));
+  sim_io_printf (sd,
+		 "executed %*s total instructions\n",
+		 size, add_commas (buf1, sizeof (buf1), total));
 }
 
 SIM_RC
-sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
+sim_create_inferior (SIM_DESC sd, struct bfd *abfd,
+		     char * const *argv, char * const *env)
 {
   bfd_vma start_address;
 
@@ -1183,9 +1165,12 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
     start_address = 0xffc0 << 2;
 #ifdef DEBUG
   if (d10v_debug)
-    (*d10v_callback->printf_filtered) (d10v_callback, "sim_create_inferior:  PC=0x%lx\n", (long) start_address);
+    sim_io_printf (sd, "sim_create_inferior:  PC=0x%lx\n", (long) start_address);
 #endif
-  SET_CREG (PC_CR, start_address >> 2);
+  {
+    SIM_CPU *cpu = STATE_CPU (sd, 0);
+    SET_CREG (PC_CR, start_address >> 2);
+  }
 
   /* cpu resets imap0 to 0 and imap1 to 0x7f, but D10V-EVA board
      initializes imap0 and imap1 to 0x1000 as part of its ROM
@@ -1193,66 +1178,33 @@ sim_create_inferior (SIM_DESC sd, struct bfd *abfd, char **argv, char **env)
   if (old_segment_mapping)
     {
       /* External memory startup.  This is the HARD reset state. */
-      set_imap_register (0, 0x0000);
-      set_imap_register (1, 0x007f);
-      set_dmap_register (0, 0x2000);
-      set_dmap_register (1, 0x2000);
-      set_dmap_register (2, 0x0000); /* Old DMAP */
-      set_dmap_register (3, 0x0000);
+      set_imap_register (sd, 0, 0x0000);
+      set_imap_register (sd, 1, 0x007f);
+      set_dmap_register (sd, 0, 0x2000);
+      set_dmap_register (sd, 1, 0x2000);
+      set_dmap_register (sd, 2, 0x0000); /* Old DMAP */
+      set_dmap_register (sd, 3, 0x0000);
     }
   else
     {
       /* Internal memory startup. This is the ROM intialized state. */
-      set_imap_register (0, 0x1000);
-      set_imap_register (1, 0x1000);
-      set_dmap_register (0, 0x2000);
-      set_dmap_register (1, 0x2000);
-      set_dmap_register (2, 0x2000); /* DMAP2 initial internal value is
-					0x2000 on the new board. */
-      set_dmap_register (3, 0x0000);
+      set_imap_register (sd, 0, 0x1000);
+      set_imap_register (sd, 1, 0x1000);
+      set_dmap_register (sd, 0, 0x2000);
+      set_dmap_register (sd, 1, 0x2000);
+      set_dmap_register (sd, 2, 0x2000); /* DMAP2 initial internal value is
+					    0x2000 on the new board. */
+      set_dmap_register (sd, 3, 0x0000);
     }
 
   SLOT_FLUSH ();
   return SIM_RC_OK;
 }
 
-void
-sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
+static int
+d10v_reg_fetch (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 {
-/*   (*d10v_callback->printf_filtered) (d10v_callback, "sim_stop_reason:  PC=0x%x\n",PC<<2); */
-
-  switch (State.exception)
-    {
-    case SIG_D10V_STOP:			/* stop instruction */
-      *reason = sim_exited;
-      *sigrc = 0;
-      break;
-
-    case SIG_D10V_EXIT:			/* exit trap */
-      *reason = sim_exited;
-      *sigrc = GPR (0);
-      break;
-
-    case SIG_D10V_BUS:
-      *reason = sim_stopped;
-      *sigrc = GDB_SIGNAL_BUS;
-      break;
-
-    default:				/* some signal */
-      *reason = sim_stopped;
-      if (stop_simulator && !State.exception)
-	*sigrc = GDB_SIGNAL_INT;
-      else
-	*sigrc = State.exception;
-      break;
-    }
-
-  stop_simulator = 0;
-}
-
-int
-sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
-{
+  SIM_DESC sd = CPU_STATE (cpu);
   int size;
   switch ((enum sim_d10v_regs) rn)
     {
@@ -1313,14 +1265,14 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
       break;
     case SIM_D10V_IMAP0_REGNUM:
     case SIM_D10V_IMAP1_REGNUM:
-      WRITE_16 (memory, imap_register (NULL, rn - SIM_D10V_IMAP0_REGNUM));
+      WRITE_16 (memory, imap_register (sd, cpu, NULL, rn - SIM_D10V_IMAP0_REGNUM));
       size = 2;
       break;
     case SIM_D10V_DMAP0_REGNUM:
     case SIM_D10V_DMAP1_REGNUM:
     case SIM_D10V_DMAP2_REGNUM:
     case SIM_D10V_DMAP3_REGNUM:
-      WRITE_16 (memory, dmap_register (NULL, rn - SIM_D10V_DMAP0_REGNUM));
+      WRITE_16 (memory, dmap_register (sd, cpu, NULL, rn - SIM_D10V_DMAP0_REGNUM));
       size = 2;
       break;
     case SIM_D10V_TS2_DMAP_REGNUM:
@@ -1333,9 +1285,10 @@ sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
   return size;
 }
  
-int
-sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
+static int
+d10v_reg_store (SIM_CPU *cpu, int rn, unsigned char *memory, int length)
 {
+  SIM_DESC sd = CPU_STATE (cpu);
   int size;
   switch ((enum sim_d10v_regs) rn)
     {
@@ -1394,14 +1347,14 @@ sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
       break;
     case SIM_D10V_IMAP0_REGNUM:
     case SIM_D10V_IMAP1_REGNUM:
-      set_imap_register (rn - SIM_D10V_IMAP0_REGNUM, READ_16(memory));
+      set_imap_register (sd, rn - SIM_D10V_IMAP0_REGNUM, READ_16(memory));
       size = 2;
       break;
     case SIM_D10V_DMAP0_REGNUM:
     case SIM_D10V_DMAP1_REGNUM:
     case SIM_D10V_DMAP2_REGNUM:
     case SIM_D10V_DMAP3_REGNUM:
-      set_dmap_register (rn - SIM_D10V_DMAP0_REGNUM, READ_16(memory));
+      set_dmap_register (sd, rn - SIM_D10V_DMAP0_REGNUM, READ_16(memory));
       size = 2;
       break;
     case SIM_D10V_TS2_DMAP_REGNUM:

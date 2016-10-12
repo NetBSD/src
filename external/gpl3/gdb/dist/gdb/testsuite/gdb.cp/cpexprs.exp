@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2015 Free Software Foundation, Inc.
+# Copyright 2008-2016 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -144,7 +144,7 @@ add {base2::a_function} \
 # On targets using the ARM EABI, the constructor is expected to return
 # "this".
 proc ctor_ret { type } {
-    if { [istarget arm*-*eabi*] } {
+    if { [istarget arm*-*eabi*] || [is_aarch32_target] } {
 	return "$type *"
     } else {
 	return "void "
@@ -195,7 +195,7 @@ add {base::base(int)} \
 # GCC returns void * instead of $type *; RealView appears to do
 # the same.
 proc dtor { type } {
-    if { [istarget arm*-*eabi*] } {
+    if { [istarget arm*-*eabi*] || [is_aarch32_target] } {
 	set ret "void *"
     } else {
 	set ret "void "

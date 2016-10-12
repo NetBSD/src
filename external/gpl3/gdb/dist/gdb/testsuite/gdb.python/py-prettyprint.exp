@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,8 +114,12 @@ proc run_lang_tests {exefile lang} {
     gdb_continue_to_end
 }
 
-run_lang_tests "${binfile}" "c"
-run_lang_tests "${binfile}-cxx" "c++"
+if { [run_lang_tests "${binfile}" "c"] == -1 } {
+    return
+}
+if { [run_lang_tests "${binfile}-cxx" "c++"] == -1 } {
+    return
+}
 
 # Run various other tests.
 

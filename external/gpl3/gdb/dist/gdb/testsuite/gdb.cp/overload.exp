@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,11 +91,6 @@ set re_synth	"foo & operator=\\(foo const ?&\\);"
 gdb_test "print foo_instance1" "\\$\[0-9\]+ = \{ifoo = 111, ccpfoo = 0x0\}"
 
 gdb_test_multiple "ptype foo_instance1" "ptype foo_instance1" {
-    -re "type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$re_dtor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 2.95.3 -gdwarf-2
-	# TODO: this is not a quirk!
-	pass "ptype foo_instance1 (HP aCC -- known quirk with ~foo parameter list)"
-    }
     -re "type = $re_class${ws}$XX_fields${ws}$re_synth${ws}$re_dtor${ws}$re_ctor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
 	# gcc 2.95.3 -gstabs+, no "const" on "const char *"
 	# TODO: gdb.base/constvar.exp has XFAILed this kind of problem for a

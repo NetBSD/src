@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2015 Free Software Foundation, Inc.
+   Copyright 2010-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,6 @@
    Contributed by Ken Werner <ken.werner@de.ibm.com>  */
 
 #include <stdarg.h>
-#include <stdio.h>
 
 #define VECTOR(n, type)					\
   type __attribute__ ((vector_size (n * sizeof(type))))
@@ -139,10 +138,10 @@ main ()
   int4 res;
 
   res = add_some_intvecs (i4a, i4a + i4b, i4b);
-  printf ("%d %d %d %d\n", res[0], res[1], res[2], res[3]);
 
   res = add_some_intvecs (i4a, i4a + i4b, i4b);
-  printf ("%d %d %d %d\n", res[0], res[1], res[2], res[3]);
+
+  add_some_intvecs (i4a, i4a + i4b, i4b);
 
   return 0;
 }

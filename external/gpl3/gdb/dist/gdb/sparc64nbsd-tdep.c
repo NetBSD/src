@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
    Based on code contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -156,7 +156,7 @@ sparc64nbsd_sigcontext_frame_cache (struct frame_info *this_frame,
   CORE_ADDR addr;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct sparc_frame_cache *) *this_cache;
 
   cache = sparc_frame_cache (this_frame, this_cache);
   gdb_assert (cache == *this_cache);

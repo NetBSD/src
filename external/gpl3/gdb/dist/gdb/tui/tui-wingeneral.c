@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -194,7 +194,7 @@ make_visible (struct tui_gen_win_info *win_info, int visible)
     {
       win_info->is_visible = FALSE;
       tui_delete_win (win_info->handle);
-      win_info->handle = (WINDOW *) NULL;
+      win_info->handle = NULL;
     }
 
   return;

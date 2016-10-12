@@ -1,5 +1,5 @@
 # Makefile template for Configure for the CR16 sim library.
-# Copyright (C) 2008-2015 Free Software Foundation, Inc.
+# Copyright (C) 2008-2016 Free Software Foundation, Inc.
 # Contributed by M Ranga Swami Reddy <MR.Swami.Reddy@nsc.com>
 #
 # This program is free software; you can redistribute it and/or modify
@@ -19,14 +19,13 @@
 
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-hload.o \
+	sim-resume.o \
 	interp.o \
 	table.o \
-	simops.o \
-	endian.o
+	simops.o
 SIM_EXTRA_CLEAN = clean-extra
 
-INCLUDE = cr16_sim.h $(srcroot)/include/gdb/callback.h targ-vals.h endian.c \
+INCLUDE = cr16_sim.h $(srcroot)/include/gdb/callback.h targ-vals.h \
 	$(srcroot)/include/gdb/sim-cr16.h
 
 # This selects the cr16 newlib/libgloss syscall definitions.

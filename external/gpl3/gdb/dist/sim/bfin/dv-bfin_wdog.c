@@ -1,6 +1,6 @@
 /* Blackfin Watchdog (WDOG) model.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -61,6 +61,10 @@ bfin_wdog_io_write_buffer (struct hw *me, const void *source,
   bu32 *value32p;
   void *valuep;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, true))
+    return 0;
+
   if (nr_bytes == 4)
     value = dv_load_4 (source);
   else
@@ -111,6 +115,10 @@ bfin_wdog_io_read_buffer (struct hw *me, void *dest,
   bu32 *value32p;
   void *valuep;
 
+  /* Invalid access mode is higher priority than missing register.  */
+  if (!dv_bfin_mmr_require_16_32 (me, addr, nr_bytes, false))
+    return 0;
+
   mmr_off = addr - wdog->base;
   valuep = (void *)((unsigned long)wdog + mmr_base() + mmr_off);
   value16p = valuep;
@@ -121,7 +129,8 @@ bfin_wdog_io_read_buffer (struct hw *me, void *dest,
   switch (mmr_off)
     {
     case mmr_offset(ctl):
-      dv_bfin_mmr_require_16 (me, addr, nr_bytes, false);
+      if (!dv_bfin_mmr_require_16 (me, addr, nr_bytes, false))
+	return 0;
       dv_store_2 (dest, *value16p);
       break;
 

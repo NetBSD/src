@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2015 Free Software Foundation, Inc.
+   Copyright (C) 2011-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,16 +23,9 @@
 
 #include <ctype.h>
 
-/* *PP is a string denoting a number.  Get the number of the.  Advance
-   *PP after the string and any trailing whitespace.
+/* See documentation in cli-utils.h.  */
 
-   Currently the string can either be a number, or "$" followed by the
-   name of a convenience variable, or ("$" or "$$") followed by digits.
-
-   TRAILER is a character which can be found after the number; most
-   commonly this is `-'.  If you don't want a trailer, use \0.  */
-
-static int
+int
 get_number_trailer (const char **pp, int trailer)
 {
   int retval = 0;	/* default */
@@ -141,7 +134,21 @@ init_number_or_range (struct get_number_or_range_state *state,
 int
 get_number_or_range (struct get_number_or_range_state *state)
 {
-  if (*state->string != '-')
+  if (state->in_range)
+    {
+      /* All number-parsing has already been done.  Return the next
+	 integer value (one greater than the saved previous value).
+	 Do not advance the token pointer until the end of range is
+	 reached.  */
+
+      if (++state->last_retval == state->end_value)
+	{
+	  /* End of range reached; advance token pointer.  */
+	  state->string = state->end_ptr;
+	  state->in_range = 0;
+	}
+    }
+  else if (*state->string != '-')
     {
       /* Default case: state->string is pointing either to a solo
 	 number, or to the first number of a range.  */
@@ -172,25 +179,24 @@ get_number_or_range (struct get_number_or_range_state *state)
 	    state->in_range = 1;
 	}
     }
-  else if (! state->in_range)
-    error (_("negative value"));
   else
-    {
-      /* state->string points to the '-' that betokens a range.  All
-	 number-parsing has already been done.  Return the next
-	 integer value (one greater than the saved previous value).
-	 Do not advance the token pointer until the end of range
-	 is reached.  */
-
-      if (++state->last_retval == state->end_value)
-	{
-	  /* End of range reached; advance token pointer.  */
-	  state->string = state->end_ptr;
-	  state->in_range = 0;
-	}
-    }
+    error (_("negative value"));
   state->finished = *state->string == '\0';
   return state->last_retval;
+}
+
+/* See documentation in cli-utils.h.  */
+
+void
+number_range_setup_range (struct get_number_or_range_state *state,
+			  int start_value, int end_value, const char *end_ptr)
+{
+  gdb_assert (start_value > 0);
+
+  state->in_range = 1;
+  state->end_ptr = end_ptr;
+  state->last_retval = start_value - 1;
+  state->end_value = end_value;
 }
 
 /* Accept a number and a string-form list of numbers such as is 
