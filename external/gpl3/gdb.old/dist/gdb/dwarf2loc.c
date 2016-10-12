@@ -39,9 +39,9 @@
 #include "dwarf2-frame.h"
 #include "compile/compile.h"
 
-extern int dwarf2_always_disassemble;
+extern int dwarf_always_disassemble;
 
-static const struct dwarf_expr_context_funcs dwarf_expr_ctx_funcs;
+extern const struct dwarf_expr_context_funcs dwarf_expr_ctx_funcs;
 
 static struct value *dwarf2_evaluate_loc_desc_full (struct type *type,
 						    struct frame_info *frame,
@@ -825,9 +825,8 @@ chain_candidate (struct gdbarch *gdbarch, struct call_site_chain **resultp,
 
   /* See call_site_find_chain_1 why there is no way to reach the bottom callee
      PC again.  In such case there must be two different code paths to reach
-     it, therefore some of the former determined intermediate PCs must differ
-     and the unambiguous chain gets shortened.  */
-  gdb_assert (result->callers + result->callees < result->length);
+     it.  CALLERS + CALLEES equal to LENGTH in the case of self tail-call.  */
+  gdb_assert (result->callers + result->callees <= result->length);
 }
 
 /* Create and return call_site_chain for CALLER_PC and CALLEE_PC.  All the
@@ -983,14 +982,13 @@ struct call_site_chain *
 call_site_find_chain (struct gdbarch *gdbarch, CORE_ADDR caller_pc,
 		      CORE_ADDR callee_pc)
 {
-  volatile struct gdb_exception e;
   struct call_site_chain *retval = NULL;
 
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       retval = call_site_find_chain_1 (gdbarch, caller_pc, callee_pc);
     }
-  if (e.reason < 0)
+  CATCH (e, RETURN_MASK_ERROR)
     {
       if (e.error == NO_ENTRY_VALUE_ERROR)
 	{
@@ -1002,6 +1000,8 @@ call_site_find_chain (struct gdbarch *gdbarch, CORE_ADDR caller_pc,
       else
 	throw_exception (e);
     }
+  END_CATCH
+
   return retval;
 }
 
@@ -2151,7 +2151,7 @@ static const struct lval_funcs pieced_value_funcs = {
 
 /* Virtual method table for dwarf2_evaluate_loc_desc_full below.  */
 
-static const struct dwarf_expr_context_funcs dwarf_expr_ctx_funcs =
+const struct dwarf_expr_context_funcs dwarf_expr_ctx_funcs =
 {
   dwarf_expr_read_addr_from_reg,
   dwarf_expr_get_reg_value,
@@ -2183,7 +2183,6 @@ dwarf2_evaluate_loc_desc_full (struct type *type, struct frame_info *frame,
   struct dwarf_expr_context *ctx;
   struct cleanup *old_chain, *value_chain;
   struct objfile *objfile = dwarf2_per_cu_objfile (per_cu);
-  volatile struct gdb_exception ex;
 
   if (byte_offset < 0)
     invalid_synthetic_pointer ();
@@ -2206,11 +2205,11 @@ dwarf2_evaluate_loc_desc_full (struct type *type, struct frame_info *frame,
   ctx->baton = &baton;
   ctx->funcs = &dwarf_expr_ctx_funcs;
 
-  TRY_CATCH (ex, RETURN_MASK_ERROR)
+  TRY
     {
       dwarf_expr_eval (ctx, data, size);
     }
-  if (ex.reason < 0)
+  CATCH (ex, RETURN_MASK_ERROR)
     {
       if (ex.error == NOT_AVAILABLE_ERROR)
 	{
@@ -2229,6 +2228,7 @@ dwarf2_evaluate_loc_desc_full (struct type *type, struct frame_info *frame,
       else
 	throw_exception (ex);
     }
+  END_CATCH
 
   if (ctx->num_pieces > 0)
     {
@@ -2461,7 +2461,8 @@ dwarf2_locexpr_baton_eval (const struct dwarf2_locexpr_baton *dlbaton,
 
 int
 dwarf2_evaluate_property (const struct dynamic_prop *prop,
-			  CORE_ADDR address, CORE_ADDR *value)
+			  struct property_addr_info *addr_stack,
+			  CORE_ADDR *value)
 {
   if (prop == NULL)
     return 0;
@@ -2472,7 +2473,8 @@ dwarf2_evaluate_property (const struct dynamic_prop *prop,
       {
 	const struct dwarf2_property_baton *baton = prop->data.baton;
 
-	if (dwarf2_locexpr_baton_eval (&baton->locexpr, address, value))
+	if (dwarf2_locexpr_baton_eval (&baton->locexpr, addr_stack->addr,
+				       value))
 	  {
 	    if (baton->referenced_type)
 	      {
@@ -2511,6 +2513,28 @@ dwarf2_evaluate_property (const struct dynamic_prop *prop,
     case PROP_CONST:
       *value = prop->data.const_val;
       return 1;
+
+    case PROP_ADDR_OFFSET:
+      {
+	struct dwarf2_property_baton *baton = prop->data.baton;
+	struct property_addr_info *pinfo;
+	struct value *val;
+
+	for (pinfo = addr_stack; pinfo != NULL; pinfo = pinfo->next)
+	  if (pinfo->type == baton->referenced_type)
+	    break;
+	if (pinfo == NULL)
+	  error (_("cannot find reference address for offset property"));
+	if (pinfo->valaddr != NULL)
+	  val = value_from_contents
+		  (baton->offset_info.type,
+		   pinfo->valaddr + baton->offset_info.offset);
+	else
+	  val = value_at (baton->offset_info.type,
+			  pinfo->addr + baton->offset_info.offset);
+	*value = value_as_address (val);
+	return 1;
+      }
     }
 
   return 0;
@@ -4112,7 +4136,7 @@ locexpr_describe_location_1 (struct symbol *symbol, CORE_ADDR addr,
       else
 	fprintf_filtered (stream, _(", and "));
 
-      if (!dwarf2_always_disassemble)
+      if (!dwarf_always_disassemble)
 	{
 	  data = locexpr_describe_location_piece (symbol, stream,
 						  addr, objfile, per_cu,
@@ -4131,7 +4155,7 @@ locexpr_describe_location_1 (struct symbol *symbol, CORE_ADDR addr,
 					       get_objfile_arch (objfile),
 					       addr_size, offset_size, data,
 					       data, end, 0,
-					       dwarf2_always_disassemble,
+					       dwarf_always_disassemble,
 					       per_cu);
 	}
 

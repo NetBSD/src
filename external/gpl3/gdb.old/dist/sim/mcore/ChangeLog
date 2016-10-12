@@ -1,3 +1,211 @@
+2015-06-23  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (handle_trap1): Replace call to cb_syscall with
+	sim_syscall.
+
+2015-06-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Include sim-syscall.h.
+	(syscall_read_mem, syscall_write_mem): Delete.
+	(m32r_trap): Change syscall_read_mem/syscall_write_mem
+	to sim_syscall_read_mem/sim_syscall_write_mem.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_resume): Change %x to %lx for all cpu registers.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (mcore_regset): Delete msize & memory.
+	(issue_messages, mem, wbat, what, wlat, rbat, what, wlat,
+	sim_memory_size, MEM_SIZE_FLOOR, sim_size, init_pointers): Delete.
+	(DEFAULT_MEMORY_SIZE): Define.
+	(set_initial_gprs): Delete memsize handling and call to init_pointers.
+	Change cpu.asregs.msize to DEFAULT_MEMORY_SIZE.
+	(syscall_read_mem): Change memcpy to sim_core_read_buffer.
+	(syscall_write_mem): Change memcpy to sim_core_write_buffer.
+	(process_stub): Change issue_messages to STATE_VERBOSE_P.
+	(util): Turn printf into a stub.  Change issue_messages to
+	STATE_VERBOSE_P.
+	(rbat, rhat, rlat, wbat, what, wlat): Define to sim core funcs.
+	(sim_resume): Change issue_messages to STATE_VERBOSE_P.
+	Delete cpu.asregs.msize range checks.
+	(sim_write, sim_read): Delete.
+	(sim_store_register, sim_fetch_register): Delete call to
+	init_pointers.
+	(sim_open): Delete osize, call to sim_size, and issue_messages.  Call
+	sim_do_commandf to setup memory.
+	(sim_create_inferior): Delete issue_messages handling.  Change
+	cpu.asregs.msize to DEFAULT_MEMORY_SIZE.  Change strcpy to
+	sim_core_write_buffer.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (WATCHFUNCTIONS): Undef it.
+	(sim_resume): Move WLhash behind WATCHFUNCTIONS.
+	(sim_do_command): Delete.
+
+2015-04-21  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (NL_TARGET): Define.
+	* interp.c (NUM_ELEM, opened, log_open, log_close, is_opened): Delete.
+	(syscall_read_mem, syscall_write_mem): New functions.
+	(handle_trap1): Delete entire body.  Replace with call to cb_syscall.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (SIM_CPU): Delete.
+
+2015-04-18  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-main.h (sim_cia): Delete.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (set_initial_gprs): Change CIA_SET to CPU_PC_SET.
+	(sim_resume): Change CIA_GET to CPU_PC_GET and CIA_SET to
+	CPU_PC_SET.
+	(sim_create_inferior): Change CIA_SET to CPU_PC_SET.
+	* sim-main.h (CIA_GET, CIA_SET): Delete.
+
+2015-04-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (mcore_pc_get, mcore_pc_set): New functions.
+	(sim_open): Call CPU_PC_FETCH & CPU_PC_STORE for all cpus.
+
+2015-04-15  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-cpu.o.
+	* sim-main.h (STATE_CPU): Delete.
+
+2015-04-13  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-06  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_OBJS): Delete sim-engine.o.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (struct aout, LONG, SHORT): Delete.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_RUN_OBJS, SIM_EXTRA_CFLAGS, SIM_EXTRA_LIBS): Delete.
+	(SIM_OBJS): Change to $(SIM_NEW_COMMON_OBJS).
+	* interp.c: Include sim-main.h, sim-base.h, and sim-options.h.
+	(word, uword): Move to sim-main.h.
+	(callback, sim_kind, myname): Delete.
+	(struct mcore_regset): Move pc to sim_cpu.
+	(memcycles, sim_size): Mark static.
+	(set_initial_gprs): Take a sim_cpu arg.  Set pc via CIA_SET.
+	(handle_trap1): Take a SIM_DESC arg.  Get callback from it.
+	(process_stub): Take a SIM_DESC arg.  Pass it to handle_trap1
+	(util): Take a SIM_DESC arg.  Pass it to process_stub.
+	(sim_resume): Get/set pc via CIA_GET/CIA_SET.  Pass sd to handle_trap1
+	and util.
+	(sim_trace, sim_stop, sim_load, sim_set_callbacks): Delete.
+	(sim_info): Get callback from SIM_DESC.
+	(free_state): New cleanup function.
+	(sim_open): Rewrite to use new common logic.
+	(sim_create_inferior): Get sim_cpu from sd.  Pass to set_initial_gprs
+	and set pc via CIA_SET.
+	* sim-main.h: New file.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Call SIM_AC_OPTION_ENDIAN, SIM_AC_OPTION_ALIGNMENT,
+	SIM_AC_OPTION_HOSTENDIAN, SIM_AC_OPTION_ENVIRONMENT, and
+	SIM_AC_OPTION_INLINE.
+	* config.in, configure: Regenerate.
+
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (heap_ptr, int_sbrk): Delete.
+	(handle_trap1): Change case 69 (sbrk) to always return -1.
+	(sim_load): Delete bss checks and heap_ptr setup.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Strip trailing whitespace.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac: Call SIM_AC_OPTION_WARNINGS.
+	* confingure: Regenerate.
+	* interp.c (mcore_extract_unsigned_integer): Make static and update
+	prototype.  Fix up printf string.
+	(mcore_store_unsigned_integer): Make static and update prototype.
+	(int_sbrk): Likewise.
+	(wbat, wlat, what, rbat, rlat, rhat): Delete INLINE and update
+	prototype.
+	(SEXTB, SEXTW, IOMEM): Delete.
+	(sim_size): Update prototype.  Fix up printf string.
+	(init_pointers): Update prototype.
+	(set_initial_gprs): Update prototype.  Fix up printf string.
+	(log_open, log_close, is_opened, handle_trap1, process_stub, util,
+	iu_carry): Update prototype.
+	(sim_resume): Update prototype.  Change addr to a word.
+	(sim_write, sim_read, sim_store_register, sim_fetch_register,
+	sim_trace, sim_stop_reason, sim_stop, sim_info, sim_open,
+	sim_close, sim_load, sim_create_inferior, sim_do_command,
+	sim_set_callbacks): Update prototype.
+
+2015-03-16  Mike Frysinger  <vapier@gentoo.org>
+
+	* config.in, configure: Regenerate.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CLEAN): Delete.
+	(interp.o, mcore-clean): Delete rules.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* Makefile.in (SIM_EXTRA_CFLAGS): Set to
+	-DSIM_USE_DEPRECATED_RUN_FRONTEND.
+	(SIM_RUN_OBJS): Set to run.o.
+
+2015-03-14  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure.ac (AC_CHECK_HEADERS): Delete.
+	* aclocal.m4, configure: Regenerate.
+
+2015-02-20  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c: Delete sysdep.h and netinet/in.h includes.
+	Include stdlib.h and string.h.
+	* sysdep.h: Delete.
+
+2015-02-19  Mike Frysinger  <vapier@gentoo.org>
+
+	* interp.c (sim_kill): Delete unused func.
+
+2015-02-11  Chen Gang <gang.chen.5i5j@gmail.com>
+
+	* interp.c: Include "unistd.h".
+
+2015-02-02  Chen Gang  <gang.chen.5i5j@gmail.com>
+
+	* interp.c (sim_do_command): Call freeargv() before return.
+
 2014-08-19  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

@@ -1,3 +1,8 @@
+2015-03-29  Mike Frysinger  <vapier@gentoo.org>
+
+	PR sim/12385
+	* testutils.inc (START): Add _start symbol.
+
 2008-05-02  M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 
 	* cbitb.cgs, cbitw.cgs, sbitb.cgs, sbitw.cgs, tbit.cgs, tbitb.cgs,

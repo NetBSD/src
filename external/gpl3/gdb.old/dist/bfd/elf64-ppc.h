@@ -57,6 +57,9 @@ struct ppc64_elf_params
 
   /* Whether to generate out-of-line register save/restore for gcc -Os code.  */
   int save_restore_funcs;
+
+  /* Set when a potential variable is detected in .toc.  */
+  int object_in_toc;
 };
 
 bfd_boolean ppc64_elf_init_stub_bfd

@@ -102,6 +102,11 @@ struct trace_write_handler
 static void
 ctf_save_write_metadata (struct trace_write_handler *handler,
 			 const char *format, ...)
+  ATTRIBUTE_PRINTF (2, 3);
+
+static void
+ctf_save_write_metadata (struct trace_write_handler *handler,
+			 const char *format, ...)
 {
   va_list args;
 

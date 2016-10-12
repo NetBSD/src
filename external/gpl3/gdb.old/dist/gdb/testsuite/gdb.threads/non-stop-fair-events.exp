@@ -24,7 +24,8 @@ if [target_info exists gdb,nosignals] {
     return -1
 }
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}] == -1} {
+set options { "additional_flags=-DTIMEOUT=$timeout" debug pthreads }
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $options] == -1} {
     return -1
 }
 

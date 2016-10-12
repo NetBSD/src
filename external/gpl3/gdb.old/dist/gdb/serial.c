@@ -190,9 +190,9 @@ serial_open (const char *name)
 
   if (strcmp (name, "pc") == 0)
     ops = serial_interface_lookup ("pc");
-  else if (strncmp (name, "lpt", 3) == 0)
+  else if (startswith (name, "lpt"))
     ops = serial_interface_lookup ("parallel");
-  else if (strncmp (name, "|", 1) == 0)
+  else if (startswith (name, "|"))
     {
       ops = serial_interface_lookup ("pipe");
       /* Discard ``|'' and any space before the command itself.  */
@@ -524,6 +524,14 @@ serial_setstopbits (struct serial *scb, int num)
   return scb->ops->setstopbits (scb, num);
 }
 
+/* See serial.h.  */
+
+int
+serial_setparity (struct serial *scb, int parity)
+{
+  return scb->ops->setparity (scb, parity);
+}
+
 int
 serial_can_async_p (struct serial *scb)
 {
@@ -638,6 +646,30 @@ serial_baud_show_cmd (struct ui_file *file, int from_tty,
 		    value);
 }
 
+/* Parity for serial port.  */
+
+int serial_parity = GDBPARITY_NONE;
+
+static const char parity_none[] = "none";
+static const char parity_odd[] = "odd";
+static const char parity_even[] = "even";
+static const char *const parity_enums[] =
+  {parity_none, parity_odd, parity_even,  NULL};
+static const char *parity = parity_none;
+
+/* Set serial_parity value.  */
+
+static void
+set_parity (char *ignore_args, int from_tty, struct cmd_list_element *c)
+{
+  if (parity == parity_odd)
+    serial_parity = GDBPARITY_ODD;
+  else if (parity == parity_even)
+    serial_parity = GDBPARITY_EVEN;
+  else
+    serial_parity = GDBPARITY_NONE;
+}
+
 void
 _initialize_serial (void)
 {
@@ -669,6 +701,14 @@ using remote targets."),
 			    NULL,
 			    serial_baud_show_cmd,
 			    &serial_set_cmdlist, &serial_show_cmdlist);
+
+  add_setshow_enum_cmd ("parity", no_class, parity_enums,
+                        &parity, _("\
+Set parity for remote serial I/O"), _("\
+Show parity for remote serial I/O"), NULL,
+                        set_parity,
+                        NULL, /* FIXME: i18n: */
+                        &serial_set_cmdlist, &serial_show_cmdlist);
 
   add_setshow_filename_cmd ("remotelogfile", no_class, &serial_logfile, _("\
 Set filename for remote session recording."), _("\

@@ -122,6 +122,9 @@
 /* Define to 1 when the gnulib module strstr should be tested. */
 #define GNULIB_TEST_STRSTR 1
 
+/* Define to 1 when the gnulib module strtok_r should be tested. */
+#define GNULIB_TEST_STRTOK_R 1
+
 /* Define to 1 if you have the `alarm' function. */
 #define HAVE_ALARM 1
 
@@ -169,6 +172,10 @@
 /* Define to 1 if you have the declaration of `memmem', and to 0 if you don't.
    */
 #define HAVE_DECL_MEMMEM 1
+
+/* Define to 1 if you have the declaration of `strtok_r', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOK_R 1
 
 /* Define to 1 if you have the declaration of `towlower', and to 0 if you
    don't. */
@@ -654,10 +661,10 @@
 #define HAVE_RAW_DECL_MKNODAT 1
 
 /* Define to 1 if mkostemp is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKOSTEMP */
+#define HAVE_RAW_DECL_MKOSTEMP 1
 
 /* Define to 1 if mkostemps is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_MKOSTEMPS */
+#define HAVE_RAW_DECL_MKOSTEMPS 1
 
 /* Define to 1 if mkstemp is declared even after undefining macros. */
 #define HAVE_RAW_DECL_MKSTEMP 1
@@ -702,7 +709,7 @@
 #define HAVE_RAW_DECL_PTSNAME 1
 
 /* Define to 1 if ptsname_r is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_PTSNAME_R */
+#define HAVE_RAW_DECL_PTSNAME_R 1
 
 /* Define to 1 if pwrite is declared even after undefining macros. */
 #define HAVE_RAW_DECL_PWRITE 1
@@ -1067,6 +1074,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #define HAVE_STRING_H 1
 
+/* Define to 1 if you have the `strtok_r' function. */
+#define HAVE_STRTOK_R 1
+
 /* Define to 1 if you have the `symlink' function. */
 #define HAVE_SYMLINK 1
 
@@ -1145,7 +1155,7 @@
 #define MALLOC_0_IS_NONNULL 1
 
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
-#define MAP_ANONYMOUS MAP_ANON
+/* #undef MAP_ANONYMOUS */
 
 /* Define if the mbrtowc function has the NULL pwc argument bug. */
 /* #undef MBRTOWC_NULL_ARG1_BUG */

@@ -42,7 +42,7 @@ struct struct_type {
   float floatfield;
   double doublefield;
   const union union_type *ptrfield;
-  struct struct_type *selffield;
+  volatile struct struct_type *selffield;
   int arrayfield[5];
   _Complex double complexfield;
   _Bool boolfield;

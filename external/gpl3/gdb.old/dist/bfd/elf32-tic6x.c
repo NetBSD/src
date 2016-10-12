@@ -152,7 +152,7 @@ static reloc_howto_type elf32_tic6x_howto_table[] =
 {
   HOWTO (R_C6000_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
@@ -820,7 +820,7 @@ static reloc_howto_type elf32_tic6x_howto_table_rel[] =
 {
   HOWTO (R_C6000_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */

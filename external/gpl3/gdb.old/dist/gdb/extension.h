@@ -48,6 +48,12 @@ typedef void objfile_script_sourcer_func
   (const struct extension_language_defn *,
    struct objfile *, FILE *stream, const char *filename);
 
+/* A function to execute a script for an objfile.
+   Any exceptions are not caught, and are passed to the caller.  */
+typedef void objfile_script_executor_func
+  (const struct extension_language_defn *,
+   struct objfile *, const char *name, const char *script);
+
 /* Enum of each extension(/scripting) language.  */
 
 enum extension_language
@@ -195,6 +201,9 @@ extern script_sourcer_func *ext_lang_script_sourcer
   (const struct extension_language_defn *);
 
 extern objfile_script_sourcer_func *ext_lang_objfile_script_sourcer
+  (const struct extension_language_defn *);
+
+extern objfile_script_executor_func *ext_lang_objfile_script_executor
   (const struct extension_language_defn *);
 
 extern int ext_lang_auto_load_enabled (const struct extension_language_defn *);

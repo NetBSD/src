@@ -186,8 +186,6 @@ do { \
 
 #if WITH_SCACHE
 
-#define CIA_ADDR(cia) (cia)
-
 #if WITH_SCACHE_PBB
 
 /* Return the scache pointer of the current insn.  */
@@ -279,8 +277,6 @@ do { \
 #else /* ! WITH_SCACHE */
 
 /* This is the "simple" engine case.  */
-
-#define CIA_ADDR(cia) (cia)
 
 #define SEM_SEM_ARG(vpc, sc) (sc)
 

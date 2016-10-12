@@ -118,7 +118,7 @@ get_task_from_args (char *args)
     {
       if (ptid_equal (inferior_ptid, null_ptid))
 	printf_unfiltered (_("No inferior running\n"));
-      return current_inferior ()->private->task;
+      return current_inferior ()->priv->task;
     }
   if (strcmp (args, "gdb") == 0)
     return mach_task_self ();
@@ -258,32 +258,32 @@ info_mach_ports_command (char *args, int from_tty)
 	    {
 	      struct inferior *inf = current_inferior ();
 
-	      if (port == inf->private->task)
+	      if (port == inf->priv->task)
 		printf_unfiltered (_(" inferior-task"));
-	      else if (port == inf->private->notify_port)
+	      else if (port == inf->priv->notify_port)
 		printf_unfiltered (_(" inferior-notify"));
 	      else
 		{
 		  int k;
 		  darwin_thread_t *t;
 
-		  for (k = 0; k < inf->private->exception_info.count; k++)
-		    if (port == inf->private->exception_info.ports[k])
+		  for (k = 0; k < inf->priv->exception_info.count; k++)
+		    if (port == inf->priv->exception_info.ports[k])
 		      {
 			printf_unfiltered (_(" inferior-excp-port"));
 			break;
 		      }
 
-		  if (inf->private->threads)
+		  if (inf->priv->threads)
 		    {
 		      for (k = 0;
 			   VEC_iterate(darwin_thread_t,
-				       inf->private->threads, k, t);
+				       inf->priv->threads, k, t);
 			   k++)
 			if (port == t->gdb_port)
 			  {
 			    printf_unfiltered (_(" inferior-thread for 0x%x"),
-					       inf->private->task);
+					       inf->priv->task);
 			    break;
 			  }
 		    }
@@ -742,7 +742,7 @@ info_mach_region_command (char *exp, int from_tty)
     error (_("Inferior not available"));
 
   inf = current_inferior ();
-  darwin_debug_region (inf->private->task, address);
+  darwin_debug_region (inf->priv->task, address);
 }
 
 static void
@@ -811,7 +811,7 @@ info_mach_exceptions_command (char *args, int from_tty)
 	{
 	  if (ptid_equal (inferior_ptid, null_ptid))
 	    printf_unfiltered (_("No inferior running\n"));
-	  disp_exception (&current_inferior ()->private->exception_info);
+	  disp_exception (&current_inferior ()->priv->exception_info);
 	  return;
 	}
       else if (strcmp (args, "host") == 0)
@@ -835,7 +835,7 @@ info_mach_exceptions_command (char *args, int from_tty)
       inf = current_inferior ();
       
       kret = task_get_exception_ports
-	(inf->private->task, EXC_MASK_ALL, info.masks,
+	(inf->priv->task, EXC_MASK_ALL, info.masks,
 	 &info.count, info.ports, info.behaviors, info.flavors);
       MACH_CHECK_ERROR (kret);
       disp_exception (&info);

@@ -1,3 +1,7 @@
+2015-04-13  Hans-Peter Nilsson  <hp@axis.com>
+
+	* basic.exp: Don't unset target ldscript here.
+
 2011-01-06  Hans-Peter Nilsson  <hp@axis.com>
 
 	* testutils.inc: Correct comment syntax fallout from

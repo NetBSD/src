@@ -20,13 +20,13 @@
 #include "defs.h"
 #include "py-event.h"
 
-static PyTypeObject inferior_call_pre_event_object_type
+extern PyTypeObject inferior_call_pre_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
-static PyTypeObject inferior_call_post_event_object_type
+extern PyTypeObject inferior_call_post_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
-static PyTypeObject register_changed_event_object_type
+extern PyTypeObject register_changed_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
-static PyTypeObject memory_changed_event_object_type
+extern PyTypeObject memory_changed_event_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object");
 
 /* Construct either a gdb.InferiorCallPreEvent or a
@@ -238,26 +238,22 @@ GDBPY_NEW_EVENT_TYPE (inferior_call_pre,
 		      "gdb.InferiorCallPreEvent",
 		      "InferiorCallPreEvent",
 		      "GDB inferior function pre-call event object",
-		      event_object_type,
-		      static);
+		      event_object_type);
 
 GDBPY_NEW_EVENT_TYPE (inferior_call_post,
 		      "gdb.InferiorCallPostEvent",
 		      "InferiorCallPostEvent",
 		      "GDB inferior function post-call event object",
-		      event_object_type,
-		      static);
+		      event_object_type);
 
 GDBPY_NEW_EVENT_TYPE (register_changed,
 		      "gdb.RegisterChangedEvent",
 		      "RegisterChangedEvent",
 		      "GDB register change event object",
-		      event_object_type,
-		      static);
+		      event_object_type);
 
 GDBPY_NEW_EVENT_TYPE (memory_changed,
 		      "gdb.MemoryChangedEvent",
 		      "MemoryChangedEvent",
 		      "GDB memory change event object",
-		      event_object_type,
-		      static);
+		      event_object_type);

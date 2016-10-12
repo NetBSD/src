@@ -131,7 +131,9 @@ hppaobsd_supply_fpregset (const struct regset *regset,
 static const struct regset hppaobsd_gregset =
 {
   NULL,
-  hppaobsd_supply_gregset
+  hppaobsd_supply_gregset,
+  NULL,
+  REGSET_VARIABLE_SIZE
 };
 
 static const struct regset hppaobsd_fpregset =

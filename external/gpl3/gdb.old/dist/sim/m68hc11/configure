@@ -601,8 +601,6 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 cgen_breaks
-m68hc11_extra_objs
-SIM_DV_SOCKSER_O
 REPORT_BUGS_TEXI
 REPORT_BUGS_TO
 PKGVERSION
@@ -634,6 +632,8 @@ SED
 LIBTOOL
 PLUGINS_FALSE
 PLUGINS_TRUE
+zlibinc
+zlibdir
 CATOBJEXT
 GENCAT
 INSTOBJEXT
@@ -744,7 +744,7 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_zlib
+with_system_zlib
 enable_plugins
 enable_shared
 enable_static
@@ -1404,15 +1404,23 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-maintainer-mode  enable make rules and dependencies not useful
 			  (and sometimes confusing) to the casual installer
-  --enable-sim-bswap			Use Host specific BSWAP instruction.
-  --enable-sim-cflags=opts		Extra CFLAGS for use in building simulator
-  --enable-sim-debug=opts		Enable debugging flags
-  --enable-sim-stdio			Specify whether to use stdio for console input/output.
-  --enable-sim-trace=opts		Enable tracing flags
-  --enable-sim-profile=opts		Enable profiling flags
-  --enable-sim-inline=inlines		Specify which functions should be inlined.
-  --enable-sim-alignment=align		Specify strict,  nonstrict or forced alignment of memory accesses.
-  --enable-sim-hostendian=end		Specify host byte endian orientation.
+  --enable-sim-bswap      Use Host specific BSWAP instruction
+  --enable-sim-cflags=opts
+                          Extra CFLAGS for use in building simulator
+  --enable-sim-debug=opts Enable debugging flags (for developers of the sim
+                          itself)
+  --enable-sim-stdio      Specify whether to use stdio for console
+                          input/output
+  --enable-sim-trace=opts Enable tracing of simulated programs
+  --enable-sim-profile=opts
+                          Enable profiling flags
+  --enable-sim-inline=inlines
+                          Specify which functions should be inlined
+  --enable-sim-alignment=align
+                          Specify strict, nonstrict or forced alignment of
+                          memory accesses
+  --enable-sim-hostendian=end
+                          Specify host byte endian orientation
   --enable-werror         treat compile warnings as errors
   --enable-build-warnings enable build-time compiler warnings if gcc is used
   --enable-sim-build-warnings
@@ -1424,11 +1432,11 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-zlib             include zlib support (auto/yes/no) default=auto
+  --with-system-zlib      use installed libz
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
-  --with-pkgversion=PKG   Use PKG in the version string in place of "GDB"
+  --with-pkgversion=PKG   Use PKG in the version string in place of "SIM"
   --with-bugurl=URL       Direct users to URL to report a bug
 
 Some influential environment variables:
@@ -2226,7 +2234,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # SIM_AC_OUTPUT is a cover function to AC_OUTPUT to generate the Makefile.
 # It is intended to be invoked last.
 #
-# The simulator's configure.in should look like:
+# The simulator's configure.ac should look like:
 #
 # dnl Process this file with autoconf to produce a configure script.
 # AC_PREREQ(2.64)dnl
@@ -2277,7 +2285,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Helper to AC_CHECK_DECLS, which generates the check for a single
 # SYMBOL with INCLUDES, performs the AC_DEFINE, then expands
 # ACTION-IF-FOUND or ACTION-IF-NOT-FOUND.
-
 
 
 
@@ -8138,7 +8145,7 @@ $as_echo "$lt_cv_ld_force_load" >&6; }
       case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
 	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-	10.[012]*)
+	10.[012][,.]*)
 	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
 	10.*)
 	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
@@ -8287,6 +8294,8 @@ esac
 else
   RANLIB="$ac_cv_prog_RANLIB"
 fi
+
+
 
 
 # Some of the common include files depend on bfd.h, and bfd.h checks
@@ -8699,88 +8708,21 @@ fi
 # BFD conditionally uses zlib, so we must link it in if libbfd does, by
 # using the same condition.
 
-  # See if the user specified whether he wants zlib support or not.
+  # Use the system's zlib library.
+  zlibdir="-L\$(top_builddir)/../zlib"
+  zlibinc="-I\$(top_srcdir)/../zlib"
 
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib;
-else
-  with_zlib=auto
-fi
-
-
-  if test "$with_zlib" != "no"; then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing zlibVersion" >&5
-$as_echo_n "checking for library containing zlibVersion... " >&6; }
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_func_search_save_LIBS=$LIBS
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char zlibVersion ();
-int
-main ()
-{
-return zlibVersion ();
-  ;
-  return 0;
-}
-_ACEOF
-for ac_lib in '' z; do
-  if test -z "$ac_lib"; then
-    ac_res="none required"
-  else
-    ac_res=-l$ac_lib
-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+# Check whether --with-system-zlib was given.
+if test "${with_system_zlib+set}" = set; then :
+  withval=$with_system_zlib; if test x$with_system_zlib = xyes ; then
+    zlibdir=
+    zlibinc=
   fi
-  if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_search_zlibVersion=$ac_res
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext
-  if test "${ac_cv_search_zlibVersion+set}" = set; then :
-  break
-fi
-done
-if test "${ac_cv_search_zlibVersion+set}" = set; then :
-
-else
-  ac_cv_search_zlibVersion=no
-fi
-rm conftest.$ac_ext
-LIBS=$ac_func_search_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_search_zlibVersion" >&5
-$as_echo "$ac_cv_search_zlibVersion" >&6; }
-ac_res=$ac_cv_search_zlibVersion
-if test "$ac_res" != no; then :
-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-  for ac_header in zlib.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "zlib.h" "ac_cv_header_zlib_h" "$ac_includes_default"
-if test "x$ac_cv_header_zlib_h" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_ZLIB_H 1
-_ACEOF
 
 fi
 
-done
 
-fi
 
-    if test "$with_zlib" = "yes" -a "$ac_cv_header_zlib_h" != "yes"; then
-      as_fn_error "zlib (libz) library was explicitly requested but not found" "$LINENO" 5
-    fi
-  fi
 
 
 # BFD uses libdl when when plugins enabled.
@@ -10161,7 +10103,7 @@ _LT_EOF
       if $LD --help 2>&1 | $EGREP ': supported targets:.* elf' > /dev/null \
 	 && test "$tmp_diet" = no
       then
-	tmp_addflag=
+	tmp_addflag=' $pic_flag'
 	tmp_sharedflag='-shared'
 	case $cc_basename,$host_cpu in
         pgcc*)				# Portland Group C compiler
@@ -12371,7 +12313,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12374 "configure"
+#line 12316 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12477,7 +12419,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12480 "configure"
+#line 12422 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12813,10 +12755,10 @@ fi
 # Check whether --enable-sim-trace was given.
 if test "${enable_sim_trace+set}" = set; then :
   enableval=$enable_sim_trace; case "${enableval}" in
-  yes)	sim_trace="-DTRACE=1 -DWITH_TRACE=-1";;
-  no)	sim_trace="-DTRACE=0 -DWITH_TRACE=0";;
+  yes)	sim_trace="-DWITH_TRACE=-1";;
+  no)	sim_trace="-DWITH_TRACE=0";;
   [-0-9]*)
-	sim_trace="-DTRACE='(${enableval})' -DWITH_TRACE='(${enableval})'";;
+	sim_trace="-DWITH_TRACE='(${enableval})'";;
   [[:lower:]]*)
 	sim_trace=""
 	for x in `echo "$enableval" | sed -e "s/,/ /g"`; do
@@ -12873,7 +12815,7 @@ if test "${with_pkgversion+set}" = set; then :
       *)   PKGVERSION="($withval) " ;;
      esac
 else
-  PKGVERSION="(GDB) "
+  PKGVERSION="(SIM) "
 
 fi
 
@@ -12957,14 +12899,6 @@ _ACEOF
 
 sim_link_files=
 sim_link_links=
-
-sim_link_links=tconfig.h
-if test -f ${srcdir}/tconfig.in
-then
-  sim_link_files=tconfig.in
-else
-  sim_link_files=../common/tconfig.in
-fi
 
 # targ-vals.def points to the libc macro description file.
 case "${target}" in
@@ -13427,16 +13361,7 @@ case "${target}" in
 	hw_extra_devices="m68hc11 m68hc11sio m68hc11eepr m68hc11tim m68hc11spi nvram"
 	SIM_SUBTARGET="$SIM_SUBTARGET -DTARGET_M68HC11=1"
 	;;
-  *)
-	m68hc11_extra_objs=""
-	;;
 esac
-
-if test x"$hw_enabled" != x"no"; then
-  enable_sim_hardware=yes
-else
-  enable_sim_hardware=no
-fi
 
 if test "$hw_devices"; then
   hardware="$hw_devices"
@@ -13452,21 +13377,18 @@ sim_hw_objs="\$(SIM_COMMON_HW_OBJS) `echo $sim_hw | sed -e 's/\([^ ][^ ]*\)/dv-\
 # Check whether --enable-sim-hardware was given.
 if test "${enable_sim_hardware+set}" = set; then :
   enableval=$enable_sim_hardware;
+else
+  enable_sim_hardware="$hw_enabled"
 fi
 
 case ${enable_sim_hardware} in
-  yes)  sim_hw_p=yes;;
-  no)   sim_hw_p=no;;
-  ,*)   sim_hw_p=yes; hardware="${hardware} `echo ${enableval} | sed -e 's/,/ /'`";;
-  *,)   sim_hw_p=yes; hardware="`echo ${enableval} | sed -e 's/,/ /'` ${hardware}";;
-  *)    sim_hw_p=yes; hardware="`echo ${enableval} | sed -e 's/,/ /'`"'';;
+  yes|no) ;;
+  ,*) hardware="${hardware} `echo ${enableval} | sed -e 's/,/ /'`";;
+  *,) hardware="`echo ${enableval} | sed -e 's/,/ /'` ${hardware}";;
+  *)  hardware="`echo ${enableval} | sed -e 's/,/ /'`"'';;
 esac
 
-if test "$sim_hw_p" != yes; then
-  if test "$hw_enabled" = "always"; then
-    as_fn_error "Sorry, but this simulator requires that hardware support
-be enabled. Please configure without --disable-hw-support." "$LINENO" 5
-  fi
+if test "$enable_sim_hardware" = no; then
   sim_hw_objs=
   sim_hw_cflags="-DWITH_HW=0"
   sim_hw=
@@ -13482,10 +13404,12 @@ else
     esac
   done
   # mingw does not support sockser
-  SIM_DV_SOCKSER_O=""
   case ${host} in
     *mingw*) ;;
-    *) SIM_DV_SOCKSER_O="dv-sockser.o"
+    *) # TODO: We don't add dv-sockser to sim_hw as it is not a "real" device
+       # that you instatiate.  Instead, other code will call into it directly.
+       # At some point, we should convert it over.
+       sim_hw_objs="$sim_hw_objs dv-sockser.o"
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_DV_SOCKSER 1
@@ -13493,7 +13417,6 @@ _ACEOF
 
        ;;
   esac
-
   if test x"$silent" != x"yes"; then
     echo "Setting hardware to $sim_hw_cflags, $sim_hw, $sim_hw_objs"
   fi
@@ -13545,24 +13468,6 @@ fi
 ;;
   esac
 fi
-
-
-for ac_header in string.h strings.h stdlib.h stdlib.h fcntl.h
-do :
-  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
-ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
-eval as_val=\$$as_ac_Header
-   if test "x$as_val" = x""yes; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-
-done
-
-
-m68hc11_extra_objs="$SIM_DV_SOCKSER_O"
 
 
 

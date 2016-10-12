@@ -846,7 +846,7 @@ mips_send_packet (const char *s, int get_ack)
   /* unsigned */ int len;
   unsigned char *packet;
   int cksum;
-  int try;
+  int attempt;
 
   len = strlen (s);
   if (len > DATA_MAXLEN)
@@ -873,7 +873,7 @@ mips_send_packet (const char *s, int get_ack)
   /* We can only have one outstanding data packet, so we just wait for
      the acknowledgement here.  Keep retransmitting the packet until
      we get one, or until we've tried too many times.  */
-  for (try = 0; try < mips_send_retries; try++)
+  for (attempt = 0; attempt < mips_send_retries; attempt++)
     {
       int garbage;
       int ch;

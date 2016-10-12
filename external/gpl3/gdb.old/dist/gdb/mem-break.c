@@ -53,12 +53,21 @@ default_memory_insert_breakpoint (struct gdbarch *gdbarch,
 
   /* Save the memory contents in the shadow_contents buffer and then
      write the breakpoint instruction.  */
-  bp_tgt->shadow_len = bplen;
   readbuf = alloca (bplen);
   val = target_read_memory (addr, readbuf, bplen);
   if (val == 0)
     {
+      /* These must be set together, either before or after the shadow
+	 read, so that if we're "reinserting" a breakpoint that
+	 doesn't have a shadow yet, the breakpoint masking code inside
+	 target_read_memory doesn't mask out this breakpoint using an
+	 unfilled shadow buffer.  The core may be trying to reinsert a
+	 permanent breakpoint, for targets that support breakpoint
+	 conditions/commands on the target side for some types of
+	 breakpoints, such as target remote.  */
+      bp_tgt->shadow_len = bplen;
       memcpy (bp_tgt->shadow_contents, readbuf, bplen);
+
       val = target_write_raw_memory (addr, bp, bplen);
     }
 

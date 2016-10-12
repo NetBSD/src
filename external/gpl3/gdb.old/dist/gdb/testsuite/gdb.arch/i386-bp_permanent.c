@@ -21,6 +21,8 @@
 #define SYMBOL(str)	#str
 #endif
 
+void standard (void);
+
 int
 main (void)
 {

@@ -73,9 +73,6 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #undef HAVE_WINDOWS_H
 
-/* Define to 1 if you have the <zlib.h> header file. */
-#undef HAVE_ZLIB_H
-
 /* Define to 1 if you have the `__setfpucw' function. */
 #undef HAVE___SETFPUCW
 
@@ -159,3 +156,5 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+#include "tconfig.h"

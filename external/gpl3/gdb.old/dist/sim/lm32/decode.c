@@ -352,7 +352,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
 
   /* Record the fields for the semantic handler.  */
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_empty", (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_empty", (char *) 0));
 
 #undef FLD
     return idesc;
@@ -375,7 +375,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
   FLD (f_r2) = f_r2;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_add", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_r2 0x%x", 'x', f_r2, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_add", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_r2 0x%x", 'x', f_r2, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -398,7 +398,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_addi", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_addi", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -421,7 +421,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_r0) = f_r0;
   FLD (f_uimm) = f_uimm;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_andi", "f_r0 0x%x", 'x', f_r0, "f_uimm 0x%x", 'x', f_uimm, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_andi", "f_r0 0x%x", 'x', f_r0, "f_uimm 0x%x", 'x', f_uimm, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -444,7 +444,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_uimm) = f_uimm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_andhii", "f_uimm 0x%x", 'x', f_uimm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_andhii", "f_uimm 0x%x", 'x', f_uimm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -461,7 +461,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
   /* Record the fields for the semantic handler.  */
   FLD (f_r0) = f_r0;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_b", "f_r0 0x%x", 'x', f_r0, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_b", "f_r0 0x%x", 'x', f_r0, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -478,7 +478,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
   /* Record the fields for the semantic handler.  */
   FLD (i_call) = f_call;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_bi", "call 0x%x", 'x', f_call, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_bi", "call 0x%x", 'x', f_call, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -501,7 +501,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
   FLD (i_branch) = f_branch;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_be", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "branch 0x%x", 'x', f_branch, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_be", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "branch 0x%x", 'x', f_branch, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -518,7 +518,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
   /* Record the fields for the semantic handler.  */
   FLD (f_r0) = f_r0;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_call", "f_r0 0x%x", 'x', f_r0, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_call", "f_r0 0x%x", 'x', f_r0, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -535,7 +535,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
   /* Record the fields for the semantic handler.  */
   FLD (i_call) = f_call;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_calli", "call 0x%x", 'x', f_call, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_calli", "call 0x%x", 'x', f_call, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -558,7 +558,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
   FLD (f_r2) = f_r2;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_divu", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_r2 0x%x", 'x', f_r2, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_divu", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_r2 0x%x", 'x', f_r2, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -581,7 +581,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lb", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lb", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -604,7 +604,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lh", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lh", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -627,7 +627,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lw", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_lw", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -650,7 +650,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_uimm) = f_uimm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_ori", "f_uimm 0x%x", 'x', f_uimm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_ori", "f_uimm 0x%x", 'x', f_uimm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -670,7 +670,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   /* Record the fields for the semantic handler.  */
   FLD (f_csr) = f_csr;
   FLD (f_r2) = f_r2;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_rcsr", "f_csr 0x%x", 'x', f_csr, "f_r2 0x%x", 'x', f_r2, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_rcsr", "f_csr 0x%x", 'x', f_csr, "f_r2 0x%x", 'x', f_r2, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -693,7 +693,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sb", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sb", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -713,7 +713,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   /* Record the fields for the semantic handler.  */
   FLD (f_r0) = f_r0;
   FLD (f_r2) = f_r2;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sextb", "f_r0 0x%x", 'x', f_r0, "f_r2 0x%x", 'x', f_r2, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sextb", "f_r0 0x%x", 'x', f_r0, "f_r2 0x%x", 'x', f_r2, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -736,7 +736,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sh", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sh", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -759,7 +759,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_imm) = f_imm;
   FLD (f_r0) = f_r0;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sw", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_sw", "f_imm 0x%x", 'x', f_imm, "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -785,7 +785,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   FLD (f_r1) = f_r1;
   FLD (f_user) = f_user;
   FLD (f_r2) = f_r2;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_user", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_user 0x%x", 'x', f_user, "f_r2 0x%x", 'x', f_r2, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_user", "f_r0 0x%x", 'x', f_r0, "f_r1 0x%x", 'x', f_r1, "f_user 0x%x", 'x', f_user, "f_r2 0x%x", 'x', f_r2, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -805,7 +805,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
   /* Record the fields for the semantic handler.  */
   FLD (f_csr) = f_csr;
   FLD (f_r1) = f_r1;
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_wcsr", "f_csr 0x%x", 'x', f_csr, "f_r1 0x%x", 'x', f_r1, (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_wcsr", "f_csr 0x%x", 'x', f_csr, "f_r1 0x%x", 'x', f_r1, (char *) 0));
 
 #undef FLD
     return idesc;
@@ -818,7 +818,7 @@ lm32bf_decode (SIM_CPU *current_cpu, IADDR pc,
 
 
   /* Record the fields for the semantic handler.  */
-  TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_break", (char *) 0));
+  CGEN_TRACE_EXTRACT (current_cpu, abuf, (current_cpu, pc, "sfmt_break", (char *) 0));
 
 #undef FLD
     return idesc;

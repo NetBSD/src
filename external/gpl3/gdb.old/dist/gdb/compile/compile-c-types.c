@@ -21,8 +21,6 @@
 #include "defs.h"
 #include "gdbtypes.h"
 #include "compile-internal.h"
-#include "gdb_assert.h"
-
 /* An object that maps a gdb type to a gcc type.  */
 
 struct type_map_instance
@@ -80,7 +78,8 @@ insert_type (struct compile_c_instance *context, struct type *type,
   add = *slot;
   /* The type might have already been inserted in order to handle
      recursive types.  */
-  gdb_assert (add == NULL || add->gcc_type == gcc_type);
+  if (add != NULL && add->gcc_type != gcc_type)
+    error (_("Unexpected type id from GCC, check you use recent enough GCC."));
 
   if (add == NULL)
     {

@@ -91,7 +91,7 @@ ia64_elf_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc,
    TYPE field.  */
 static reloc_howto_type ia64_howto_table[] =
   {
-    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   0, FALSE, TRUE),
+    IA64_HOWTO (R_IA64_NONE,	    "NONE",	   3, FALSE, TRUE),
 
     IA64_HOWTO (R_IA64_IMM14,	    "IMM14",	   0, FALSE, TRUE),
     IA64_HOWTO (R_IA64_IMM22,	    "IMM22",	   0, FALSE, TRUE),
