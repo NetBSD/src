@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.18 2016/10/05 20:55:57 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.19 2016/10/12 14:40:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.18 2016/10/05 20:55:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.19 2016/10/12 14:40:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ ucom_detach(device_t self, int flags)
 
 	/* Nuke the vnodes for any open instances. */
 	mn = device_unit(self);
-	DPRINTF("maj=%d mn=%d\n", maj, mn, 0, 0);
+	DPRINTF("maj=%d mn=%d", maj, mn, 0, 0);
 	vdevgone(maj, mn, mn, VCHR);
 	vdevgone(maj, mn | UCOMDIALOUT_MASK, mn | UCOMDIALOUT_MASK, VCHR);
 	vdevgone(maj, mn | UCOMCALLUNIT_MASK, mn | UCOMCALLUNIT_MASK, VCHR);
@@ -561,7 +561,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	tp = sc->sc_tty;
 
-	DPRINTF("unit=%d, tp=%p\n", unit, tp, 0, 0);
+	DPRINTF("unit=%d, tp=%p", unit, tp, 0, 0);
 
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp)) {
 		mutex_exit(&sc->sc_lock);
