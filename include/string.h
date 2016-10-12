@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.50 2016/03/10 18:53:48 leot Exp $	*/
+/*	$NetBSD: string.h,v 1.51 2016/10/12 20:01:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -98,6 +98,7 @@ __END_DECLS
 __BEGIN_DECLS
 void	*memmem(const void *, size_t, const void *, size_t);
 char	*strcasestr(const char *, const char *);
+char	*strchrnul(const char *, int);
 size_t	 strlcat(char *, const char *, size_t);
 size_t	 strlcpy(char *, const char *, size_t);
 char	*strsep(char **, const char *);
