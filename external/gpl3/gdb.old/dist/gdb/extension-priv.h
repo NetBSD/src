@@ -103,6 +103,11 @@ struct extension_language_script_ops
      but is not required to, throw an error.  */
   objfile_script_sourcer_func *objfile_script_sourcer;
 
+  /* Execute a script attached to an objfile.
+     If there's an error while processing the script this function may,
+     but is not required to, throw an error.  */
+  objfile_script_executor_func *objfile_script_executor;
+
   /* Return non-zero if auto-loading scripts in this extension language
      is enabled.  */
   int (*auto_load_enabled) (const struct extension_language_defn *);

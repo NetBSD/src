@@ -11,11 +11,9 @@
 #include <string.h>
 #endif
 
-#include "d10v_sim.h"
+#include "sim-main.h"
 #include "simops.h"
 #include "targ-vals.h"
-
-extern char *strrchr ();
 
 enum op_types {
   OP_VOID,
@@ -122,7 +120,7 @@ move_to_cr (int cr, reg_t mask, reg_t val, int psw_hw_p)
 }
 
 #ifdef DEBUG
-static void trace_input_func (char *name,
+static void trace_input_func (const char *name,
 			      enum op_types in1,
 			      enum op_types in2,
 			      enum op_types in3);
@@ -154,11 +152,7 @@ static void trace_input_func (char *name,
 #endif
 
 static void
-trace_input_func (name, in1, in2, in3)
-     char *name;
-     enum op_types in1;
-     enum op_types in2;
-     enum op_types in3;
+trace_input_func (const char *name, enum op_types in1, enum op_types in2, enum op_types in3)
 {
   char *comma;
   enum op_types in[3];
@@ -199,14 +193,21 @@ trace_input_func (name, in1, in2, in3)
 
   else
     {
+      extern SIM_DESC trace_sd;
+
       buf[0] = '\0';
-      byte_pc = decode_pc ();
-      if (text && byte_pc >= text_start && byte_pc < text_end)
+      byte_pc = PC;
+      if (STATE_TEXT_SECTION (trace_sd)
+	  && byte_pc >= STATE_TEXT_START (trace_sd)
+	  && byte_pc < STATE_TEXT_END (trace_sd))
 	{
 	  filename = (const char *)0;
 	  functionname = (const char *)0;
 	  linenumber = 0;
-	  if (bfd_find_nearest_line (prog_bfd, text, (struct bfd_symbol **)0, byte_pc - text_start,
+	  if (bfd_find_nearest_line (STATE_PROG_BFD (trace_sd),
+				     STATE_TEXT_SECTION (trace_sd),
+				     (struct bfd_symbol **)0,
+				     byte_pc - STATE_TEXT_START (trace_sd),
 				     &filename, &functionname, &linenumber))
 	    {
 	      p = buf;
@@ -549,7 +550,7 @@ trace_output_16 (uint16 val)
 }
 
 static void
-trace_output_void ()
+trace_output_void (void)
 {
   if ((d10v_debug & (DEBUG_TRACE | DEBUG_VALUES)) == (DEBUG_TRACE | DEBUG_VALUES))
     {
@@ -559,7 +560,7 @@ trace_output_void ()
 }
 
 static void
-trace_output_flag ()
+trace_output_flag (void)
 {
   if ((d10v_debug & (DEBUG_TRACE | DEBUG_VALUES)) == (DEBUG_TRACE | DEBUG_VALUES))
     {
@@ -581,7 +582,7 @@ trace_output_flag ()
 
 /* abs */
 void
-OP_4607 ()
+OP_4607 (void)
 {
   int16 tmp;
   trace_input ("abs", OP_REG, OP_VOID, OP_VOID);
@@ -600,7 +601,7 @@ OP_4607 ()
 
 /* abs */
 void
-OP_5607 ()
+OP_5607 (void)
 {
   int64 tmp;
   trace_input ("abs", OP_ACCUM, OP_VOID, OP_VOID);
@@ -634,7 +635,7 @@ OP_5607 ()
 
 /* add */
 void
-OP_200 ()
+OP_200 (void)
 {
   uint16 a = GPR (OP[0]);
   uint16 b = GPR (OP[1]);
@@ -647,7 +648,7 @@ OP_200 ()
 
 /* add */
 void
-OP_1201 ()
+OP_1201 (void)
 {
   int64 tmp;
   tmp = SEXT40(ACC (OP[0])) + (SEXT16 (GPR (OP[1])) << 16 | GPR (OP[1] + 1));
@@ -670,7 +671,7 @@ OP_1201 ()
 
 /* add */
 void
-OP_1203 ()
+OP_1203 (void)
 {
   int64 tmp;
   tmp = SEXT40(ACC (OP[0])) + SEXT40(ACC (OP[1]));
@@ -693,7 +694,7 @@ OP_1203 ()
 
 /* add2w */
 void
-OP_1200 ()
+OP_1200 (void)
 {
   uint32 tmp;
   uint32 a = (GPR (OP[0])) << 16 | GPR (OP[0] + 1);
@@ -708,7 +709,7 @@ OP_1200 ()
 
 /* add3 */
 void
-OP_1000000 ()
+OP_1000000 (void)
 {
   uint16 a = GPR (OP[1]);
   uint16 b = OP[2];
@@ -721,7 +722,7 @@ OP_1000000 ()
 
 /* addac3 */
 void
-OP_17000200 ()
+OP_17000200 (void)
 {
   int64 tmp;
   tmp = SEXT40(ACC (OP[2])) + SEXT40 ((GPR (OP[1]) << 16) | GPR (OP[1] + 1));
@@ -734,7 +735,7 @@ OP_17000200 ()
 
 /* addac3 */
 void
-OP_17000202 ()
+OP_17000202 (void)
 {
   int64 tmp;
   tmp = SEXT40(ACC (OP[1])) + SEXT40(ACC (OP[2]));
@@ -747,7 +748,7 @@ OP_17000202 ()
 
 /* addac3s */
 void
-OP_17001200 ()
+OP_17001200 (void)
 {
   int64 tmp;
   SET_PSW_F1 (PSW_F0);
@@ -775,7 +776,7 @@ OP_17001200 ()
 
 /* addac3s */
 void
-OP_17001202 ()
+OP_17001202 (void)
 {
   int64 tmp;
   SET_PSW_F1 (PSW_F0);
@@ -803,7 +804,7 @@ OP_17001202 ()
 
 /* addi */
 void
-OP_201 ()
+OP_201 (void)
 {
   uint16 a = GPR (OP[0]);
   uint16 b;
@@ -820,7 +821,7 @@ OP_201 ()
 
 /* and */
 void
-OP_C00 ()
+OP_C00 (void)
 {
   uint16 tmp = GPR (OP[0]) & GPR (OP[1]);
   trace_input ("and", OP_REG, OP_REG, OP_VOID);
@@ -830,7 +831,7 @@ OP_C00 ()
 
 /* and3 */
 void
-OP_6000000 ()
+OP_6000000 (void)
 {
   uint16 tmp = GPR (OP[1]) & OP[2];
   trace_input ("and3", OP_REG_OUTPUT, OP_REG, OP_CONSTANT16);
@@ -840,7 +841,7 @@ OP_6000000 ()
 
 /* bclri */
 void
-OP_C01 ()
+OP_C01 (void)
 {
   int16 tmp;
   trace_input ("bclri", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -851,7 +852,7 @@ OP_C01 ()
 
 /* bl.s */
 void
-OP_4900 ()
+OP_4900 (void)
 {
   trace_input ("bl.s", OP_CONSTANT8, OP_R0, OP_R1);
   SET_GPR (13, PC + 1);
@@ -861,7 +862,7 @@ OP_4900 ()
 
 /* bl.l */
 void
-OP_24800000 ()
+OP_24800000 (void)
 {
   trace_input ("bl.l", OP_CONSTANT16, OP_R0, OP_R1);
   SET_GPR (13, (PC + 1));
@@ -871,7 +872,7 @@ OP_24800000 ()
 
 /* bnoti */
 void
-OP_A01 ()
+OP_A01 (void)
 {
   int16 tmp;
   trace_input ("bnoti", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -882,7 +883,7 @@ OP_A01 ()
 
 /* bra.s */
 void
-OP_4800 ()
+OP_4800 (void)
 {
   trace_input ("bra.s", OP_CONSTANT8, OP_VOID, OP_VOID);
   JMP (PC + SEXT8 (OP[0]));
@@ -891,7 +892,7 @@ OP_4800 ()
 
 /* bra.l */
 void
-OP_24000000 ()
+OP_24000000 (void)
 {
   trace_input ("bra.l", OP_CONSTANT16, OP_VOID, OP_VOID);
   JMP (PC + OP[0]);
@@ -900,7 +901,7 @@ OP_24000000 ()
 
 /* brf0f.s */
 void
-OP_4A00 ()
+OP_4A00 (void)
 {
   trace_input ("brf0f.s", OP_CONSTANT8, OP_VOID, OP_VOID);
   if (!PSW_F0)
@@ -910,7 +911,7 @@ OP_4A00 ()
 
 /* brf0f.l */
 void
-OP_25000000 ()
+OP_25000000 (void)
 {
   trace_input ("brf0f.l", OP_CONSTANT16, OP_VOID, OP_VOID);
   if (!PSW_F0)
@@ -920,7 +921,7 @@ OP_25000000 ()
 
 /* brf0t.s */
 void
-OP_4B00 ()
+OP_4B00 (void)
 {
   trace_input ("brf0t.s", OP_CONSTANT8, OP_VOID, OP_VOID);
   if (PSW_F0)
@@ -930,7 +931,7 @@ OP_4B00 ()
 
 /* brf0t.l */
 void
-OP_25800000 ()
+OP_25800000 (void)
 {
   trace_input ("brf0t.l", OP_CONSTANT16, OP_VOID, OP_VOID);
   if (PSW_F0)
@@ -940,7 +941,7 @@ OP_25800000 ()
 
 /* bseti */
 void
-OP_801 ()
+OP_801 (void)
 {
   int16 tmp;
   trace_input ("bseti", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -951,7 +952,7 @@ OP_801 ()
 
 /* btsti */
 void
-OP_E01 ()
+OP_E01 (void)
 {
   trace_input ("btsti", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -961,7 +962,7 @@ OP_E01 ()
 
 /* clrac */
 void
-OP_5601 ()
+OP_5601 (void)
 {
   trace_input ("clrac", OP_ACCUM_OUTPUT, OP_VOID, OP_VOID);
   SET_ACC (OP[0], 0);
@@ -970,7 +971,7 @@ OP_5601 ()
 
 /* cmp */
 void
-OP_600 ()
+OP_600 (void)
 {
   trace_input ("cmp", OP_REG, OP_REG, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -980,7 +981,7 @@ OP_600 ()
 
 /* cmp */
 void
-OP_1603 ()
+OP_1603 (void)
 {
   trace_input ("cmp", OP_ACCUM, OP_ACCUM, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -990,7 +991,7 @@ OP_1603 ()
 
 /* cmpeq */
 void
-OP_400 ()
+OP_400 (void)
 {
   trace_input ("cmpeq", OP_REG, OP_REG, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1000,7 +1001,7 @@ OP_400 ()
 
 /* cmpeq */
 void
-OP_1403 ()
+OP_1403 (void)
 {
   trace_input ("cmpeq", OP_ACCUM, OP_ACCUM, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1010,7 +1011,7 @@ OP_1403 ()
 
 /* cmpeqi.s */
 void
-OP_401 ()
+OP_401 (void)
 {
   trace_input ("cmpeqi.s", OP_REG, OP_CONSTANT4, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1020,7 +1021,7 @@ OP_401 ()
 
 /* cmpeqi.l */
 void
-OP_2000000 ()
+OP_2000000 (void)
 {
   trace_input ("cmpeqi.l", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1030,7 +1031,7 @@ OP_2000000 ()
 
 /* cmpi.s */
 void
-OP_601 ()
+OP_601 (void)
 {
   trace_input ("cmpi.s", OP_REG, OP_CONSTANT4, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1040,7 +1041,7 @@ OP_601 ()
 
 /* cmpi.l */
 void
-OP_3000000 ()
+OP_3000000 (void)
 {
   trace_input ("cmpi.l", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1050,7 +1051,7 @@ OP_3000000 ()
 
 /* cmpu */
 void
-OP_4600 ()
+OP_4600 (void)
 {
   trace_input ("cmpu", OP_REG, OP_REG, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1060,7 +1061,7 @@ OP_4600 ()
 
 /* cmpui */
 void
-OP_23000000 ()
+OP_23000000 (void)
 {
   trace_input ("cmpui", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -1070,7 +1071,7 @@ OP_23000000 ()
 
 /* cpfg */
 void
-OP_4E09 ()
+OP_4E09 (void)
 {
   uint8 val;
   
@@ -1092,7 +1093,7 @@ OP_4E09 ()
 
 /* cpfg */
 void
-OP_4E0F ()
+OP_4E0F (void)
 {
   uint8 val;
   
@@ -1114,7 +1115,7 @@ OP_4E0F ()
 
 /* dbt */
 void
-OP_5F20 ()
+OP_5F20 (void)
 {
   /* d10v_callback->printf_filtered(d10v_callback, "***** DBT *****  PC=%x\n",PC); */
 
@@ -1145,7 +1146,7 @@ OP_5F20 ()
 
 /* divs */
 void
-OP_14002800 ()
+OP_14002800 (void)
 {
   uint16 foo, tmp, tmpf;
   uint16 hi;
@@ -1164,7 +1165,7 @@ OP_14002800 ()
 
 /* exef0f */
 void
-OP_4E04 ()
+OP_4E04 (void)
 {
   trace_input ("exef0f", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 == 0);
@@ -1173,7 +1174,7 @@ OP_4E04 ()
 
 /* exef0t */
 void
-OP_4E24 ()
+OP_4E24 (void)
 {
   trace_input ("exef0t", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 != 0);
@@ -1182,7 +1183,7 @@ OP_4E24 ()
 
 /* exef1f */
 void
-OP_4E40 ()
+OP_4E40 (void)
 {
   trace_input ("exef1f", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F1 == 0);
@@ -1191,7 +1192,7 @@ OP_4E40 ()
 
 /* exef1t */
 void
-OP_4E42 ()
+OP_4E42 (void)
 {
   trace_input ("exef1t", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F1 != 0);
@@ -1200,7 +1201,7 @@ OP_4E42 ()
 
 /* exefaf */
 void
-OP_4E00 ()
+OP_4E00 (void)
 {
   trace_input ("exefaf", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 == 0) & (PSW_F1 == 0);
@@ -1209,7 +1210,7 @@ OP_4E00 ()
 
 /* exefat */
 void
-OP_4E02 ()
+OP_4E02 (void)
 {
   trace_input ("exefat", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 == 0) & (PSW_F1 != 0);
@@ -1218,7 +1219,7 @@ OP_4E02 ()
 
 /* exetaf */
 void
-OP_4E20 ()
+OP_4E20 (void)
 {
   trace_input ("exetaf", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 != 0) & (PSW_F1 == 0);
@@ -1227,7 +1228,7 @@ OP_4E20 ()
 
 /* exetat */
 void
-OP_4E22 ()
+OP_4E22 (void)
 {
   trace_input ("exetat", OP_VOID, OP_VOID, OP_VOID);
   State.exe = (PSW_F0 != 0) & (PSW_F1 != 0);
@@ -1236,7 +1237,7 @@ OP_4E22 ()
 
 /* exp */
 void
-OP_15002A00 ()
+OP_15002A00 (void)
 {
   uint32 tmp, foo;
   int i;
@@ -1264,7 +1265,7 @@ OP_15002A00 ()
 
 /* exp */
 void
-OP_15002A02 ()
+OP_15002A02 (void)
 {
   int64 tmp, foo;
   int i;
@@ -1291,7 +1292,7 @@ OP_15002A02 ()
 
 /* jl */
 void
-OP_4D00 ()
+OP_4D00 (void)
 {
   trace_input ("jl", OP_REG, OP_R0, OP_R1);
   SET_GPR (13, PC + 1);
@@ -1301,7 +1302,7 @@ OP_4D00 ()
 
 /* jmp */
 void
-OP_4C00 ()
+OP_4C00 (void)
 {
   trace_input ("jmp", OP_REG,
 	       (OP[0] == 13) ? OP_R0 : OP_VOID,
@@ -1313,7 +1314,7 @@ OP_4C00 ()
 
 /* ld */
 void
-OP_30000000 ()
+OP_30000000 (void)
 {
   uint16 tmp;
   uint16 addr = OP[1] + GPR (OP[2]);
@@ -1332,7 +1333,7 @@ OP_30000000 ()
 
 /* ld */
 void
-OP_6401 ()
+OP_6401 (void)
 {
   uint16 tmp;
   uint16 addr = GPR (OP[1]);
@@ -1353,7 +1354,7 @@ OP_6401 ()
 
 /* ld */
 void
-OP_6001 ()
+OP_6001 (void)
 {
   uint16 tmp;
   uint16 addr = GPR (OP[1]);
@@ -1374,7 +1375,7 @@ OP_6001 ()
 
 /* ld */
 void
-OP_6000 ()
+OP_6000 (void)
 {
   uint16 tmp;
   uint16 addr = GPR (OP[1]);
@@ -1393,7 +1394,7 @@ OP_6000 ()
 
 /* ld */
 void
-OP_32010000 ()
+OP_32010000 (void)
 {
   uint16 tmp;
   uint16 addr = OP[1];
@@ -1412,7 +1413,7 @@ OP_32010000 ()
 
 /* ld2w */
 void
-OP_31000000 ()
+OP_31000000 (void)
 {
   int32 tmp;
   uint16 addr = OP[1] + GPR (OP[2]);
@@ -1431,7 +1432,7 @@ OP_31000000 ()
 
 /* ld2w */
 void
-OP_6601 ()
+OP_6601 (void)
 {
   uint16 addr = GPR (OP[1]);
   int32 tmp;
@@ -1452,7 +1453,7 @@ OP_6601 ()
 
 /* ld2w */
 void
-OP_6201 ()
+OP_6201 (void)
 {
   int32 tmp;
   uint16 addr = GPR (OP[1]);
@@ -1473,7 +1474,7 @@ OP_6201 ()
 
 /* ld2w */
 void
-OP_6200 ()
+OP_6200 (void)
 {
   uint16 addr = GPR (OP[1]);
   int32 tmp;
@@ -1492,7 +1493,7 @@ OP_6200 ()
 
 /* ld2w */
 void
-OP_33010000 ()
+OP_33010000 (void)
 {
   int32 tmp;
   uint16 addr = OP[1];
@@ -1511,7 +1512,7 @@ OP_33010000 ()
 
 /* ldb */
 void
-OP_38000000 ()
+OP_38000000 (void)
 {
   int16 tmp;
   trace_input ("ldb", OP_REG_OUTPUT, OP_MEMREF2, OP_VOID);
@@ -1522,7 +1523,7 @@ OP_38000000 ()
 
 /* ldb */
 void
-OP_7000 ()
+OP_7000 (void)
 {
   int16 tmp;
   trace_input ("ldb", OP_REG_OUTPUT, OP_MEMREF, OP_VOID);
@@ -1533,7 +1534,7 @@ OP_7000 ()
 
 /* ldi.s */
 void
-OP_4001 ()
+OP_4001 (void)
 {
   int16 tmp;
   trace_input ("ldi.s", OP_REG_OUTPUT, OP_CONSTANT4, OP_VOID);
@@ -1544,7 +1545,7 @@ OP_4001 ()
 
 /* ldi.l */
 void
-OP_20000000 ()
+OP_20000000 (void)
 {
   int16 tmp;
   trace_input ("ldi.l", OP_REG_OUTPUT, OP_CONSTANT16, OP_VOID);
@@ -1555,7 +1556,7 @@ OP_20000000 ()
 
 /* ldub */
 void
-OP_39000000 ()
+OP_39000000 (void)
 {
   int16 tmp;
   trace_input ("ldub", OP_REG_OUTPUT, OP_MEMREF2, OP_VOID);
@@ -1566,7 +1567,7 @@ OP_39000000 ()
 
 /* ldub */
 void
-OP_7200 ()
+OP_7200 (void)
 {
   int16 tmp;
   trace_input ("ldub", OP_REG_OUTPUT, OP_MEMREF, OP_VOID);
@@ -1577,7 +1578,7 @@ OP_7200 ()
 
 /* mac */
 void
-OP_2A00 ()
+OP_2A00 (void)
 {
   int64 tmp;
 
@@ -1608,7 +1609,7 @@ OP_2A00 ()
 
 /* macsu */
 void
-OP_1A00 ()
+OP_1A00 (void)
 {
   int64 tmp;
 
@@ -1623,7 +1624,7 @@ OP_1A00 ()
 
 /* macu */
 void
-OP_3A00 ()
+OP_3A00 (void)
 {
   uint64 tmp;
   uint32 src1;
@@ -1642,7 +1643,7 @@ OP_3A00 ()
 
 /* max */
 void
-OP_2600 ()
+OP_2600 (void)
 {
   int16 tmp;
   trace_input ("max", OP_REG, OP_REG, OP_VOID);
@@ -1663,7 +1664,7 @@ OP_2600 ()
 
 /* max */
 void
-OP_3600 ()
+OP_3600 (void)
 {
   int64 tmp;
 
@@ -1686,7 +1687,7 @@ OP_3600 ()
 
 /* max */
 void
-OP_3602 ()
+OP_3602 (void)
 {
   int64 tmp;
   trace_input ("max", OP_ACCUM, OP_ACCUM, OP_VOID);
@@ -1708,7 +1709,7 @@ OP_3602 ()
 
 /* min */
 void
-OP_2601 ()
+OP_2601 (void)
 {
   int16 tmp;
   trace_input ("min", OP_REG, OP_REG, OP_VOID);
@@ -1729,7 +1730,7 @@ OP_2601 ()
 
 /* min */
 void
-OP_3601 ()
+OP_3601 (void)
 {
   int64 tmp;
 
@@ -1752,7 +1753,7 @@ OP_3601 ()
 
 /* min */
 void
-OP_3603 ()
+OP_3603 (void)
 {
   int64 tmp;
   trace_input ("min", OP_ACCUM, OP_ACCUM, OP_VOID);
@@ -1773,7 +1774,7 @@ OP_3603 ()
 
 /* msb */
 void
-OP_2800 ()
+OP_2800 (void)
 {
   int64 tmp;
 
@@ -1806,7 +1807,7 @@ OP_2800 ()
 
 /* msbsu */
 void
-OP_1800 ()
+OP_1800 (void)
 {
   int64 tmp;
 
@@ -1821,7 +1822,7 @@ OP_1800 ()
 
 /* msbu */
 void
-OP_3800 ()
+OP_3800 (void)
 {
   uint64 tmp;
   uint32 src1;
@@ -1840,7 +1841,7 @@ OP_3800 ()
 
 /* mul */
 void
-OP_2E00 ()
+OP_2E00 (void)
 {
   int16 tmp;
   trace_input ("mul", OP_REG, OP_REG, OP_VOID);
@@ -1851,7 +1852,7 @@ OP_2E00 ()
 
 /* mulx */
 void
-OP_2C00 ()
+OP_2C00 (void)
 {
   int64 tmp;
 
@@ -1871,7 +1872,7 @@ OP_2C00 ()
 
 /* mulxsu */
 void
-OP_1C00 ()
+OP_1C00 (void)
 {
   int64 tmp;
 
@@ -1887,7 +1888,7 @@ OP_1C00 ()
 
 /* mulxu */
 void
-OP_3C00 ()
+OP_3C00 (void)
 {
   uint64 tmp;
   uint32 src1;
@@ -1906,7 +1907,7 @@ OP_3C00 ()
 
 /* mv */
 void
-OP_4000 ()
+OP_4000 (void)
 {
   int16 tmp;
   trace_input ("mv", OP_REG_OUTPUT, OP_REG, OP_VOID);
@@ -1917,7 +1918,7 @@ OP_4000 ()
 
 /* mv2w */
 void
-OP_5000 ()
+OP_5000 (void)
 {
   int32 tmp;
   trace_input ("mv2w", OP_DREG_OUTPUT, OP_DREG, OP_VOID);
@@ -1928,7 +1929,7 @@ OP_5000 ()
 
 /* mv2wfac */
 void
-OP_3E00 ()
+OP_3E00 (void)
 {
   int32 tmp;
   trace_input ("mv2wfac", OP_DREG_OUTPUT, OP_ACCUM, OP_VOID);
@@ -1939,7 +1940,7 @@ OP_3E00 ()
 
 /* mv2wtac */
 void
-OP_3E01 ()
+OP_3E01 (void)
 {
   int64 tmp;
   trace_input ("mv2wtac", OP_DREG, OP_ACCUM_OUTPUT, OP_VOID);
@@ -1950,7 +1951,7 @@ OP_3E01 ()
 
 /* mvac */
 void
-OP_3E03 ()
+OP_3E03 (void)
 {
   int64 tmp;
   trace_input ("mvac", OP_ACCUM_OUTPUT, OP_ACCUM, OP_VOID);
@@ -1961,7 +1962,7 @@ OP_3E03 ()
 
 /* mvb */
 void
-OP_5400 ()
+OP_5400 (void)
 {
   int16 tmp;
   trace_input ("mvb", OP_REG_OUTPUT, OP_REG, OP_VOID);
@@ -1972,7 +1973,7 @@ OP_5400 ()
 
 /* mvf0f */
 void
-OP_4400 ()
+OP_4400 (void)
 {
   int16 tmp;
   trace_input ("mvf0f", OP_REG_OUTPUT, OP_REG, OP_VOID);
@@ -1988,7 +1989,7 @@ OP_4400 ()
 
 /* mvf0t */
 void
-OP_4401 ()
+OP_4401 (void)
 {
   int16 tmp;
   trace_input ("mvf0t", OP_REG_OUTPUT, OP_REG, OP_VOID);
@@ -2004,7 +2005,7 @@ OP_4401 ()
 
 /* mvfacg */
 void
-OP_1E04 ()
+OP_1E04 (void)
 {
   int16 tmp;
   trace_input ("mvfacg", OP_REG_OUTPUT, OP_ACCUM, OP_VOID);
@@ -2015,7 +2016,7 @@ OP_1E04 ()
 
 /* mvfachi */
 void
-OP_1E00 ()
+OP_1E00 (void)
 {
   int16 tmp;
   trace_input ("mvfachi", OP_REG_OUTPUT, OP_ACCUM, OP_VOID);
@@ -2026,7 +2027,7 @@ OP_1E00 ()
 
 /* mvfaclo */
 void
-OP_1E02 ()
+OP_1E02 (void)
 {
   int16 tmp;
   trace_input ("mvfaclo", OP_REG_OUTPUT, OP_ACCUM, OP_VOID);
@@ -2037,7 +2038,7 @@ OP_1E02 ()
 
 /* mvfc */
 void
-OP_5200 ()
+OP_5200 (void)
 {
   int16 tmp;
   trace_input ("mvfc", OP_REG_OUTPUT, OP_CR, OP_VOID);
@@ -2048,7 +2049,7 @@ OP_5200 ()
 
 /* mvtacg */
 void
-OP_1E41 ()
+OP_1E41 (void)
 {
   int64 tmp;
   trace_input ("mvtacg", OP_REG, OP_ACCUM, OP_VOID);
@@ -2060,7 +2061,7 @@ OP_1E41 ()
 
 /* mvtachi */
 void
-OP_1E01 ()
+OP_1E01 (void)
 {
   uint64 tmp;
   trace_input ("mvtachi", OP_REG, OP_ACCUM, OP_VOID);
@@ -2072,7 +2073,7 @@ OP_1E01 ()
 
 /* mvtaclo */
 void
-OP_1E21 ()
+OP_1E21 (void)
 {
   int64 tmp;
   trace_input ("mvtaclo", OP_REG, OP_ACCUM, OP_VOID);
@@ -2083,7 +2084,7 @@ OP_1E21 ()
 
 /* mvtc */
 void
-OP_5600 ()
+OP_5600 (void)
 {
   int16 tmp;
   trace_input ("mvtc", OP_REG, OP_CR_OUTPUT, OP_VOID);
@@ -2094,7 +2095,7 @@ OP_5600 ()
 
 /* mvub */
 void
-OP_5401 ()
+OP_5401 (void)
 {
   int16 tmp;
   trace_input ("mvub", OP_REG_OUTPUT, OP_REG, OP_VOID);
@@ -2105,7 +2106,7 @@ OP_5401 ()
 
 /* neg */
 void
-OP_4605 ()
+OP_4605 (void)
 {
   int16 tmp;
   trace_input ("neg", OP_REG, OP_VOID, OP_VOID);
@@ -2116,7 +2117,7 @@ OP_4605 ()
 
 /* neg */
 void
-OP_5605 ()
+OP_5605 (void)
 {
   int64 tmp;
 
@@ -2140,7 +2141,7 @@ OP_5605 ()
 
 /* nop */
 void
-OP_5E00 ()
+OP_5E00 (void)
 {
   trace_input ("nop", OP_VOID, OP_VOID, OP_VOID);
 
@@ -2181,7 +2182,7 @@ OP_5E00 ()
 
 /* not */
 void
-OP_4603 ()
+OP_4603 (void)
 {
   int16 tmp;
   trace_input ("not", OP_REG, OP_VOID, OP_VOID);
@@ -2192,7 +2193,7 @@ OP_4603 ()
 
 /* or */
 void
-OP_800 ()
+OP_800 (void)
 {
   int16 tmp;
   trace_input ("or", OP_REG, OP_REG, OP_VOID);
@@ -2203,7 +2204,7 @@ OP_800 ()
 
 /* or3 */
 void
-OP_4000000 ()
+OP_4000000 (void)
 {
   int16 tmp;
   trace_input ("or3", OP_REG_OUTPUT, OP_REG, OP_CONSTANT16);
@@ -2214,7 +2215,7 @@ OP_4000000 ()
 
 /* rac */
 void
-OP_5201 ()
+OP_5201 (void)
 {
   int64 tmp;
   int shift = SEXT3 (OP[2]);
@@ -2256,7 +2257,7 @@ OP_5201 ()
 
 /* rachi */
 void
-OP_4201 ()
+OP_4201 (void)
 {
   signed64 tmp;
   int shift = SEXT3 (OP[2]);
@@ -2290,7 +2291,7 @@ OP_4201 ()
 
 /* rep */
 void
-OP_27000000 ()
+OP_27000000 (void)
 {
   trace_input ("rep", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_RPT_S (PC + 1);
@@ -2312,7 +2313,7 @@ OP_27000000 ()
 
 /* repi */
 void
-OP_2F000000 ()
+OP_2F000000 (void)
 {
   trace_input ("repi", OP_CONSTANT16, OP_CONSTANT16, OP_VOID);
   SET_RPT_S (PC + 1);
@@ -2334,7 +2335,7 @@ OP_2F000000 ()
 
 /* rtd */
 void
-OP_5F60 ()
+OP_5F60 (void)
 {
   trace_input ("rtd", OP_VOID, OP_VOID, OP_VOID);
   SET_CREG (PSW_CR, DPSW);
@@ -2344,7 +2345,7 @@ OP_5F60 ()
 
 /* rte */
 void
-OP_5F40 ()
+OP_5F40 (void)
 {
   trace_input ("rte", OP_VOID, OP_VOID, OP_VOID);
   SET_CREG (PSW_CR, BPSW);
@@ -2353,7 +2354,7 @@ OP_5F40 ()
 }
 
 /* sac */
-void OP_5209 ()
+void OP_5209 (void)
 {
   int64 tmp;
 
@@ -2386,7 +2387,7 @@ void OP_5209 ()
 
 /* sachi */
 void
-OP_4209 ()
+OP_4209 (void)
 {
   int64 tmp;
 
@@ -2419,7 +2420,7 @@ OP_4209 ()
 
 /* sadd */
 void
-OP_1223 ()
+OP_1223 (void)
 {
   int64 tmp;
 
@@ -2442,7 +2443,7 @@ OP_1223 ()
 
 /* setf0f */
 void
-OP_4611 ()
+OP_4611 (void)
 {
   int16 tmp;
   trace_input ("setf0f", OP_REG_OUTPUT, OP_VOID, OP_VOID);
@@ -2453,7 +2454,7 @@ OP_4611 ()
 
 /* setf0t */
 void
-OP_4613 ()
+OP_4613 (void)
 {
   int16 tmp;
   trace_input ("setf0t", OP_REG_OUTPUT, OP_VOID, OP_VOID);
@@ -2464,7 +2465,7 @@ OP_4613 ()
 
 /* slae */
 void
-OP_3220 ()
+OP_3220 (void)
 {
   int64 tmp;
   int16 reg;
@@ -2516,7 +2517,7 @@ OP_3220 ()
 
 /* sleep */
 void
-OP_5FC0 ()
+OP_5FC0 (void)
 {
   trace_input ("sleep", OP_VOID, OP_VOID, OP_VOID);
   SET_PSW_IE (1);
@@ -2525,7 +2526,7 @@ OP_5FC0 ()
 
 /* sll */
 void
-OP_2200 ()
+OP_2200 (void)
 {
   int16 tmp;
   trace_input ("sll", OP_REG, OP_REG, OP_VOID);
@@ -2536,7 +2537,7 @@ OP_2200 ()
 
 /* sll */
 void
-OP_3200 ()
+OP_3200 (void)
 {
   int64 tmp;
   trace_input ("sll", OP_ACCUM, OP_REG, OP_VOID);
@@ -2566,7 +2567,7 @@ OP_3200 ()
 
 /* slli */
 void
-OP_2201 ()
+OP_2201 (void)
 {
   int16 tmp;
   trace_input ("slli", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -2577,7 +2578,7 @@ OP_2201 ()
 
 /* slli */
 void
-OP_3201 ()
+OP_3201 (void)
 {
   int64 tmp;
 
@@ -2604,7 +2605,7 @@ OP_3201 ()
 
 /* slx */
 void
-OP_460B ()
+OP_460B (void)
 {
   int16 tmp;
   trace_input ("slx", OP_REG, OP_VOID, OP_VOID);
@@ -2615,7 +2616,7 @@ OP_460B ()
 
 /* sra */
 void
-OP_2400 ()
+OP_2400 (void)
 {
   int16 tmp;
   trace_input ("sra", OP_REG, OP_REG, OP_VOID);
@@ -2626,7 +2627,7 @@ OP_2400 ()
 
 /* sra */
 void
-OP_3400 ()
+OP_3400 (void)
 {
   trace_input ("sra", OP_ACCUM, OP_REG, OP_VOID);
   if ((GPR (OP[1]) & 31) <= 16)
@@ -2645,7 +2646,7 @@ OP_3400 ()
 
 /* srai */
 void
-OP_2401 ()
+OP_2401 (void)
 {
   int16 tmp;
   trace_input ("srai", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -2656,7 +2657,7 @@ OP_2401 ()
 
 /* srai */
 void
-OP_3401 ()
+OP_3401 (void)
 {
   int64 tmp;
   if (OP[1] == 0)
@@ -2670,7 +2671,7 @@ OP_3401 ()
 
 /* srl */
 void
-OP_2000 ()
+OP_2000 (void)
 {
   int16 tmp;
   trace_input ("srl", OP_REG, OP_REG, OP_VOID);
@@ -2681,7 +2682,7 @@ OP_2000 ()
 
 /* srl */
 void
-OP_3000 ()
+OP_3000 (void)
 {
   trace_input ("srl", OP_ACCUM, OP_REG, OP_VOID);
   if ((GPR (OP[1]) & 31) <= 16)
@@ -2701,7 +2702,7 @@ OP_3000 ()
 
 /* srli */
 void
-OP_2001 ()
+OP_2001 (void)
 {
   int16 tmp;
   trace_input ("srli", OP_REG, OP_CONSTANT16, OP_VOID);
@@ -2712,7 +2713,7 @@ OP_2001 ()
 
 /* srli */
 void
-OP_3001 ()
+OP_3001 (void)
 {
   int64 tmp;
   if (OP[1] == 0)
@@ -2726,7 +2727,7 @@ OP_3001 ()
 
 /* srx */
 void
-OP_4609 ()
+OP_4609 (void)
 {
   uint16 tmp;
   trace_input ("srx", OP_REG, OP_VOID, OP_VOID);
@@ -2738,7 +2739,7 @@ OP_4609 ()
 
 /* st */
 void
-OP_34000000 ()
+OP_34000000 (void)
 {
   uint16 addr = OP[1] + GPR (OP[2]);
   trace_input ("st", OP_REG, OP_MEMREF2, OP_VOID);
@@ -2755,7 +2756,7 @@ OP_34000000 ()
 
 /* st */
 void
-OP_6800 ()
+OP_6800 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st", OP_REG, OP_MEMREF, OP_VOID);
@@ -2773,7 +2774,7 @@ OP_6800 ()
 /* st */
 /* st Rsrc1,@-SP */
 void
-OP_6C1F ()
+OP_6C1F (void)
 {
   uint16 addr = GPR (OP[1]) - 2;
   trace_input ("st", OP_REG, OP_PREDEC, OP_VOID);
@@ -2797,7 +2798,7 @@ OP_6C1F ()
 
 /* st */
 void
-OP_6801 ()
+OP_6801 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st", OP_REG, OP_POSTINC, OP_VOID);
@@ -2815,7 +2816,7 @@ OP_6801 ()
 
 /* st */
 void
-OP_6C01 ()
+OP_6C01 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st", OP_REG, OP_POSTDEC, OP_VOID);
@@ -2839,7 +2840,7 @@ OP_6C01 ()
 
 /* st */
 void
-OP_36010000 ()
+OP_36010000 (void)
 {
   uint16 addr = OP[1];
   trace_input ("st", OP_REG, OP_MEMREF3, OP_VOID);
@@ -2856,7 +2857,7 @@ OP_36010000 ()
 
 /* st2w */
 void
-OP_35000000 ()
+OP_35000000 (void)
 {
   uint16 addr = GPR (OP[2])+ OP[1];
   trace_input ("st2w", OP_DREG, OP_MEMREF2, OP_VOID);
@@ -2874,7 +2875,7 @@ OP_35000000 ()
 
 /* st2w */
 void
-OP_6A00 ()
+OP_6A00 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st2w", OP_DREG, OP_MEMREF, OP_VOID);
@@ -2892,7 +2893,7 @@ OP_6A00 ()
 
 /* st2w */
 void
-OP_6E1F ()
+OP_6E1F (void)
 {
   uint16 addr = GPR (OP[1]) - 4;
   trace_input ("st2w", OP_DREG, OP_PREDEC, OP_VOID);
@@ -2917,7 +2918,7 @@ OP_6E1F ()
 
 /* st2w */
 void
-OP_6A01 ()
+OP_6A01 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st2w", OP_DREG, OP_POSTINC, OP_VOID);
@@ -2936,7 +2937,7 @@ OP_6A01 ()
 
 /* st2w */
 void
-OP_6E01 ()
+OP_6E01 (void)
 {
   uint16 addr = GPR (OP[1]);
   trace_input ("st2w", OP_DREG, OP_POSTDEC, OP_VOID);
@@ -2961,7 +2962,7 @@ OP_6E01 ()
 
 /* st2w */
 void
-OP_37010000 ()
+OP_37010000 (void)
 {
   uint16 addr = OP[1];
   trace_input ("st2w", OP_DREG, OP_MEMREF3, OP_VOID);
@@ -2979,7 +2980,7 @@ OP_37010000 ()
 
 /* stb */
 void
-OP_3C000000 ()
+OP_3C000000 (void)
 {
   trace_input ("stb", OP_REG, OP_MEMREF2, OP_VOID);
   SB (GPR (OP[2]) + OP[1], GPR (OP[0]));
@@ -2988,7 +2989,7 @@ OP_3C000000 ()
 
 /* stb */
 void
-OP_7800 ()
+OP_7800 (void)
 {
   trace_input ("stb", OP_REG, OP_MEMREF, OP_VOID);
   SB (GPR (OP[1]), GPR (OP[0]));
@@ -2997,7 +2998,7 @@ OP_7800 ()
 
 /* stop */
 void
-OP_5FE0 ()
+OP_5FE0 (void)
 {
   trace_input ("stop", OP_VOID, OP_VOID, OP_VOID);
   State.exception = SIG_D10V_STOP;
@@ -3006,7 +3007,7 @@ OP_5FE0 ()
 
 /* sub */
 void
-OP_0 ()
+OP_0 (void)
 {
   uint16 a = GPR (OP[0]);
   uint16 b = GPR (OP[1]);
@@ -3021,7 +3022,7 @@ OP_0 ()
 
 /* sub */
 void
-OP_1001 ()
+OP_1001 (void)
 {
   int64 tmp;
 
@@ -3046,7 +3047,7 @@ OP_1001 ()
 /* sub */
 
 void
-OP_1003 ()
+OP_1003 (void)
 {
   int64 tmp;
 
@@ -3070,7 +3071,7 @@ OP_1003 ()
 
 /* sub2w */
 void
-OP_1000 ()
+OP_1000 (void)
 {
   uint32 tmp, a, b;
 
@@ -3087,7 +3088,7 @@ OP_1000 ()
 
 /* subac3 */
 void
-OP_17000000 ()
+OP_17000000 (void)
 {
   int64 tmp;
 
@@ -3099,7 +3100,7 @@ OP_17000000 ()
 
 /* subac3 */
 void
-OP_17000002 ()
+OP_17000002 (void)
 {
   int64 tmp;
 
@@ -3111,7 +3112,7 @@ OP_17000002 ()
 
 /* subac3s */
 void
-OP_17001000 ()
+OP_17001000 (void)
 {
   int64 tmp;
 
@@ -3138,7 +3139,7 @@ OP_17001000 ()
 
 /* subac3s */
 void
-OP_17001002 ()
+OP_17001002 (void)
 {
   int64 tmp;
 
@@ -3165,7 +3166,7 @@ OP_17001002 ()
 
 /* subi */
 void
-OP_1 ()
+OP_1 (void)
 {
   unsigned tmp;
   if (OP[1] == 0)
@@ -3184,7 +3185,7 @@ OP_1 ()
 
 /* trap */
 void
-OP_5F00 ()
+OP_5F00 (void)
 {
   trace_input ("trap", OP_CONSTANT4, OP_VOID, OP_VOID);
   trace_output_void ();
@@ -3581,7 +3582,7 @@ OP_5F00 ()
 
 /* tst0i */
 void
-OP_7000000 ()
+OP_7000000 (void)
 {
   trace_input ("tst0i", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);;
@@ -3591,7 +3592,7 @@ OP_7000000 ()
 
 /* tst1i */
 void
-OP_F000000 ()
+OP_F000000 (void)
 {
   trace_input ("tst1i", OP_REG, OP_CONSTANT16, OP_VOID);
   SET_PSW_F1 (PSW_F0);
@@ -3601,7 +3602,7 @@ OP_F000000 ()
 
 /* wait */
 void
-OP_5F80 ()
+OP_5F80 (void)
 {
   trace_input ("wait", OP_VOID, OP_VOID, OP_VOID);
   SET_PSW_IE (1);
@@ -3610,7 +3611,7 @@ OP_5F80 ()
 
 /* xor */
 void
-OP_A00 ()
+OP_A00 (void)
 {
   int16 tmp;
   trace_input ("xor", OP_REG, OP_REG, OP_VOID);
@@ -3621,7 +3622,7 @@ OP_A00 ()
 
 /* xor3 */
 void
-OP_5000000 ()
+OP_5000000 (void)
 {
   int16 tmp;
   trace_input ("xor3", OP_REG_OUTPUT, OP_REG, OP_CONSTANT16);

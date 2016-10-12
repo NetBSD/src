@@ -185,11 +185,11 @@ gdb_test_multiple "if 1 > 0\n\033\[A\033\[A\nend" $msg {
 if [info exists env(GDBHISTFILE)] {
     set old_gdbhistfile $env(GDBHISTFILE)
 }
-if [info exists env(HISTSIZE)] {
-    set old_histsize $env(HISTSIZE)
+if [info exists env(GDBHISTSIZE)] {
+    set old_gdbhistsize $env(GDBHISTSIZE)
 }
 set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
-set env(HISTSIZE) "10"
+set env(GDBHISTSIZE) "10"
 
 gdb_exit
 gdb_start
@@ -207,10 +207,10 @@ if [info exists old_gdbhistfile] {
 } else {
     unset env(GDBHISTFILE)
 }
-if [info exists old_histsize] {
-    set env(HISTSIZE) $old_histsize
+if [info exists old_gdbhistsize] {
+    set env(GDBHISTSIZE) $old_gdbhistsize
 } else {
-    unset env(HISTSIZE)
+    unset env(GDBHISTSIZE)
 }
 set timeout $oldtimeout1
 

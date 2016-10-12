@@ -96,15 +96,22 @@ if test "${build}" = "${host}" -a "${host}" = "${target}"; then
 fi
 AC_SUBST(EXTRA_RULES)
 
+# Transform the name of some programs and generate the lib/pdtrace
+# test tool.
+AC_ARG_PROGRAM
+GDB_AC_TRANSFORM(strip, STRIP_TRANSFORM_NAME)
+GDB_AC_TRANSFORM(readelf, READELF_TRANSFORM_NAME)
+GDB_AC_TRANSFORM(as, GAS_TRANSFORM_NAME)
+GDB_AC_TRANSFORM(nm, NM_TRANSFORM_NAME)
+AC_CONFIG_FILES([lib/pdtrace], [chmod +x lib/pdtrace])
+
 AC_OUTPUT([Makefile \
   gdb.ada/Makefile \
   gdb.arch/Makefile gdb.asm/Makefile gdb.base/Makefile gdb.btrace/Makefile \
   gdb.cell/Makefile gdb.compile/Makefile gdb.cp/Makefile gdb.disasm/Makefile \
   gdb.dwarf2/Makefile gdb.dlang/Makefile gdb.fortran/Makefile gdb.gdb/Makefile \
   gdb.go/Makefile gdb.server/Makefile gdb.java/Makefile \
-  gdb.hp/Makefile gdb.hp/gdb.objdbg/Makefile gdb.hp/gdb.base-hp/Makefile \
-  gdb.hp/gdb.aCC/Makefile gdb.hp/gdb.compat/Makefile \
-  gdb.hp/gdb.defects/Makefile gdb.guile/Makefile gdb.linespec/Makefile \
+  gdb.guile/Makefile gdb.linespec/Makefile \
   gdb.mi/Makefile gdb.modula2/Makefile gdb.multi/Makefile \
   gdb.objc/Makefile gdb.opencl/Makefile gdb.opt/Makefile gdb.pascal/Makefile \
   gdb.perf/Makefile gdb.python/Makefile gdb.reverse/Makefile gdb.stabs/Makefile \

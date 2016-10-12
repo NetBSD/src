@@ -21,20 +21,19 @@
    conventions, et.al.  */
 
 #include "defs.h"
-#include <stdint.h>
 #include "guile-internal.h"
 
 /* Define VARIABLES in the gdb module.  */
 
 void
-gdbscm_define_variables (const scheme_variable *variables, int public)
+gdbscm_define_variables (const scheme_variable *variables, int is_public)
 {
   const scheme_variable *sv;
 
   for (sv = variables; sv->name != NULL; ++sv)
     {
       scm_c_define (sv->name, sv->value);
-      if (public)
+      if (is_public)
 	scm_c_export (sv->name, NULL);
     }
 }
@@ -42,7 +41,7 @@ gdbscm_define_variables (const scheme_variable *variables, int public)
 /* Define FUNCTIONS in the gdb module.  */
 
 void
-gdbscm_define_functions (const scheme_function *functions, int public)
+gdbscm_define_functions (const scheme_function *functions, int is_public)
 {
   const scheme_function *sf;
 
@@ -53,7 +52,7 @@ gdbscm_define_functions (const scheme_function *functions, int public)
 
       scm_set_procedure_property_x (proc, gdbscm_documentation_symbol,
 				    gdbscm_scm_from_c_string (sf->doc_string));
-      if (public)
+      if (is_public)
 	scm_c_export (sf->name, NULL);
     }
 }
@@ -62,14 +61,14 @@ gdbscm_define_functions (const scheme_function *functions, int public)
 
 void
 gdbscm_define_integer_constants (const scheme_integer_constant *constants,
-				 int public)
+				 int is_public)
 {
   const scheme_integer_constant *sc;
 
   for (sc = constants; sc->name != NULL; ++sc)
     {
       scm_c_define (sc->name, scm_from_int (sc->value));
-      if (public)
+      if (is_public)
 	scm_c_export (sc->name, NULL);
     }
 }

@@ -1,27 +1,23 @@
-/*
- * This file is part of SIS.
- * 
- * SIS, SPARC instruction simulator V1.8 Copyright (C) 1995 Jiri Gaisler,
- * European Space Agency
- * 
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 3 of the License, or (at your option)
- * any later version.
- * 
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- * more details.
- * 
- * You should have received a copy of the GNU General Public License along with
- * this program; if not, see <http://www.gnu.org/licenses/>.
- * 
- */
+/* This file is part of SIS (SPARC instruction simulator)
+
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
+   Contributed by Jiri Gaisler, European Space Agency
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "config.h"
 #include "sis.h"
-#include "end.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -253,7 +249,7 @@ sub_cc(psr, operand1, operand2, result)
 			   (~operand1 & operand2 & result)) >> 10) & PSR_V);
     psr = (psr & ~PSR_C) | ((((~operand1 & operand2) |
 			 ((~operand1 | operand2) & result)) >> 11) & PSR_C);
-    return (psr);
+    return psr;
 }
 
 uint32
@@ -272,7 +268,7 @@ add_cc(psr, operand1, operand2, result)
 			  (~operand1 & ~operand2 & result)) >> 10) & PSR_V);
     psr = (psr & ~PSR_C) | ((((operand1 & operand2) |
 			 ((operand1 | operand2) & ~result)) >> 11) & PSR_C);
-    return(psr);
+    return psr;
 }
 
 static void
@@ -293,8 +289,8 @@ add32 (uint32 n1, uint32 n2, int *carry)
 {
   uint32 result = n1 + n2;
 
-  *carry = result < n1 || result < n1;
-  return(result);
+  *carry = result < n1 || result < n2;
+  return result;
 }
 
 /* Multiply two 32-bit integers.  */
@@ -370,6 +366,36 @@ div64 (uint32 n1_hi, uint32 n1_low, uint32 n2, uint32 *result, int msigned)
   *result = (uint32) (n1 & 0xffffffff);
 }
 
+
+static int
+extract_short (uint32 data, uint32 address)
+{
+    return ((data >> ((2 - (address & 2)) * 8)) & 0xffff);
+}
+
+static int
+extract_short_signed (uint32 data, uint32 address)
+{
+    uint32 tmp = ((data >> ((2 - (address & 2)) * 8)) & 0xffff);
+    if (tmp & 0x8000)
+        tmp |= 0xffff0000;
+    return tmp;
+}
+
+static int
+extract_byte (uint32 data, uint32 address)
+{
+    return ((data >> ((3 - (address & 3)) * 8)) & 0xff);
+}
+
+static int
+extract_byte_signed (uint32 data, uint32 address)
+{
+    uint32 tmp = ((data >> ((3 - (address & 3)) * 8)) & 0xff);
+    if (tmp & 0x80)
+        tmp |= 0xffffff00;
+    return tmp;
+}
 
 int
 dispatch_instruction(sregs)
@@ -1078,7 +1104,8 @@ dispatch_instruction(sregs)
 		    sregs->trap = TRAP_PRIVI;
 		    break;
 		}
-		sregs->psr = (rs1 ^ operand2) & 0x00f03fff;
+		sregs->psr = (sregs->psr & 0xff000000) |
+			(rs1 ^ operand2) & 0x00f03fff;
 		break;
 	    case WRWIM:
 		if (!(sregs->psr & PSR_S)) {
@@ -1214,8 +1241,10 @@ dispatch_instruction(sregs)
 		else
 		    rdd = &(sregs->g[rd]);
 	    }
-	    mexc = memory_read(asi, address, ddata, 3, &ws);
-	    sregs->hold += ws * 2;
+	    mexc = memory_read (asi, address, ddata, 2, &ws);
+	    sregs->hold += ws;
+	    mexc |= memory_read (asi, address+4, &ddata[1], 2, &ws);
+	    sregs->hold += ws;
 	    sregs->icnt = T_LDD;
 	    if (mexc) {
 		sregs->trap = TRAP_DEXC;
@@ -1253,6 +1282,7 @@ dispatch_instruction(sregs)
 		sregs->trap = TRAP_DEXC;
 		break;
 	    }
+	    data = extract_byte (data, address);
 	    *rdd = data;
 	    data = 0x0ff;
 	    mexc = memory_write(asi, address, &data, 0, &ws);
@@ -1275,8 +1305,10 @@ dispatch_instruction(sregs)
 		sregs->trap = TRAP_DEXC;
 		break;
 	    }
-	    if ((op3 == LDSB) && (data & 0x80))
-		data |= 0xffffff00;
+	    if (op3 == LDSB)
+	        data = extract_byte_signed (data, address);
+	    else
+	        data = extract_byte (data, address);
 	    *rdd = data;
 	    break;
 	case LDSHA:
@@ -1294,8 +1326,10 @@ dispatch_instruction(sregs)
 		sregs->trap = TRAP_DEXC;
 		break;
 	    }
-	    if ((op3 == LDSH) && (data & 0x8000))
-		data |= 0xffff0000;
+	    if (op3 == LDSH)
+	        data = extract_short_signed (data, address);
+	    else
+	        data = extract_short (data, address);
 	    *rdd = data;
 	    break;
 	case LDF:
@@ -1338,8 +1372,10 @@ dispatch_instruction(sregs)
 		    ((sregs->frs2 >> 1) == (rd >> 1)))
 		    sregs->fhold += (sregs->ftime - ebase.simtime);
 	    }
-	    mexc = memory_read(asi, address, ddata, 3, &ws);
-	    sregs->hold += ws * 2;
+	    mexc = memory_read (asi, address, ddata, 2, &ws);
+	    sregs->hold += ws;
+	    mexc |= memory_read (asi, address+4, &ddata[1], 2, &ws);
+	    sregs->hold += ws;
 	    sregs->icnt = T_LDD;
 	    if (mexc) {
 		sregs->trap = TRAP_DEXC;
@@ -1584,7 +1620,7 @@ dispatch_instruction(sregs)
 	sregs->pc = pc;
 	sregs->npc = npc;
     }
-    return (0);
+    return 0;
 }
 
 #define T_FABSs		2
@@ -1646,11 +1682,11 @@ fpexec(op3, rd, rs1, rs2, sregs)
     if (sregs->fpstate == FP_EXC_MODE) {
 	sregs->fsr = (sregs->fsr & ~FSR_TT) | FP_SEQ_ERR;
 	sregs->fpstate = FP_EXC_PE;
-	return (0);
+	return 0;
     }
     if (sregs->fpstate == FP_EXC_PE) {
 	sregs->fpstate = FP_EXC_MODE;
-	return (TRAP_FPEXC);
+	return TRAP_FPEXC;
     }
     opf = (sregs->inst >> 5) & 0x1ff;
 
@@ -1696,7 +1732,7 @@ fpexec(op3, rd, rs1, rs2, sregs)
        but what about machines where float values are different endianness
        from integer values? */
 
-#ifdef HOST_LITTLE_ENDIAN_FLOAT
+#ifdef HOST_LITTLE_ENDIAN
     rs1 &= 0x1f;
     switch (opf) {
 	case FADDd:
@@ -1874,7 +1910,7 @@ fpexec(op3, rd, rs1, rs2, sregs)
 
     accex = get_accex();
 
-#ifdef HOST_LITTLE_ENDIAN_FLOAT
+#ifdef HOST_LITTLE_ENDIAN
     switch (opf) {
     case FADDd:
     case FDIVd:
@@ -1910,7 +1946,7 @@ fpexec(op3, rd, rs1, rs2, sregs)
     }
     clear_accex();
 
-    return (0);
+    return 0;
 
 
 }
@@ -1923,13 +1959,13 @@ chk_asi(sregs, asi, op3)
 {
     if (!(sregs->psr & PSR_S)) {
 	sregs->trap = TRAP_PRIVI;
-	return (0);
+	return 0;
     } else if (sregs->inst & INST_I) {
 	sregs->trap = TRAP_UNIMP;
-	return (0);
+	return 0;
     } else
 	*asi = (sregs->inst >> 5) & 0x0ff;
-    return(1);
+    return 1;
 }
 
 int
@@ -1943,11 +1979,11 @@ execute_trap(sregs)
 	sregs->npc = 4;
 	sregs->trap = 0;
     } else if (sregs->trap == 257) {
-	    return (ERROR);
+	    return ERROR;
     } else {
 
 	if ((sregs->psr & PSR_ET) == 0)
-	    return (ERROR);
+	    return ERROR;
 
 	sregs->tbr = (sregs->tbr & 0xfffff000) | (sregs->trap << 4);
 	sregs->trap = 0;
@@ -1974,7 +2010,7 @@ execute_trap(sregs)
     }
 
 
-    return (0);
+    return 0;
 
 }
 
@@ -1997,10 +2033,10 @@ check_interrupts(sregs)
 	if (sregs->trap == 0) {
 	    sregs->trap = 16 + ext_irl;
 	    irqarr[ext_irl & 0x0f].callback(irqarr[ext_irl & 0x0f].arg);
-	    return(1);
+	    return 1;
 	}
     }
-    return(0);
+    return 0;
 }
 
 void
@@ -2011,7 +2047,7 @@ init_regs(sregs)
     sregs->npc = 4;
     sregs->trap = 0;
     sregs->psr &= 0x00f03fdf;
-    sregs->psr |= 0x080;	/* Set supervisor bit */
+    sregs->psr |= 0x11000080;	/* Set supervisor bit */
     sregs->breakpoint = 0;
     sregs->annul = 0;
     sregs->fpstate = FP_EXE_MODE;
@@ -2021,7 +2057,7 @@ init_regs(sregs)
     sregs->err_mode = 0;
     ext_irl = 0;
     sregs->g[0] = 0;
-#ifdef HOST_LITTLE_ENDIAN_FLOAT
+#ifdef HOST_LITTLE_ENDIAN
     sregs->fdp = (float32 *) sregs->fd;
     sregs->fsi = (int32 *) sregs->fs;
 #else

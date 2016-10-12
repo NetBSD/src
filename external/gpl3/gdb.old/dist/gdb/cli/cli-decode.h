@@ -53,7 +53,7 @@ struct cmd_list_element
     const char *name;
 
     /* Command class; class values are chosen by application program.  */
-    enum command_class class;
+    enum command_class theclass;
 
     /* When 1 indicated that this command is deprecated.  It may be
        removed from gdb's command set in the future.  */

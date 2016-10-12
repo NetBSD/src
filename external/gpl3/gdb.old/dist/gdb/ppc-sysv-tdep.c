@@ -1892,7 +1892,8 @@ ppc64_sysv_abi_return_value_base (struct gdbarch *gdbarch, struct type *valtype,
     }
 
   /* AltiVec vectors are returned in VRs starting at v2.  */
-  if (TYPE_CODE (valtype) == TYPE_CODE_ARRAY && TYPE_VECTOR (valtype)
+  if (TYPE_LENGTH (valtype) == 16
+      && TYPE_CODE (valtype) == TYPE_CODE_ARRAY && TYPE_VECTOR (valtype)
       && tdep->vector_abi == POWERPC_VEC_ALTIVEC)
     {
       int regnum = tdep->ppc_vr0_regnum + 2 + index;
@@ -1901,6 +1902,25 @@ ppc64_sysv_abi_return_value_base (struct gdbarch *gdbarch, struct type *valtype,
 	regcache_cooked_write (regcache, regnum, writebuf);
       if (readbuf != NULL)
 	regcache_cooked_read (regcache, regnum, readbuf);
+      return 1;
+    }
+
+  /* Short vectors are returned in GPRs starting at r3.  */
+  if (TYPE_LENGTH (valtype) <= 8
+      && TYPE_CODE (valtype) == TYPE_CODE_ARRAY && TYPE_VECTOR (valtype))
+    {
+      int regnum = tdep->ppc_gp0_regnum + 3 + index;
+      int offset = 0;
+
+      if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
+	offset = 8 - TYPE_LENGTH (valtype);
+
+      if (writebuf != NULL)
+	regcache_cooked_write_part (regcache, regnum,
+				    offset, TYPE_LENGTH (valtype), writebuf);
+      if (readbuf != NULL)
+	regcache_cooked_read_part (regcache, regnum,
+				   offset, TYPE_LENGTH (valtype), readbuf);
       return 1;
     }
 
@@ -1993,6 +2013,7 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct value *function,
 
   /* Small character arrays are returned, right justified, in r3.  */
   if (TYPE_CODE (valtype) == TYPE_CODE_ARRAY
+      && !TYPE_VECTOR (valtype)
       && TYPE_LENGTH (valtype) <= 8
       && TYPE_CODE (TYPE_TARGET_TYPE (valtype)) == TYPE_CODE_INT
       && TYPE_LENGTH (TYPE_TARGET_TYPE (valtype)) == 1)
@@ -2012,7 +2033,13 @@ ppc64_sysv_abi_return_value (struct gdbarch *gdbarch, struct value *function,
   /* In the ELFv2 ABI, homogeneous floating-point or vector
      aggregates are returned in registers.  */
   if (tdep->elf_abi == POWERPC_ELF_V2
-      && ppc64_elfv2_abi_homogeneous_aggregate (valtype, &eltype, &nelt))
+      && ppc64_elfv2_abi_homogeneous_aggregate (valtype, &eltype, &nelt)
+      && (TYPE_CODE (eltype) == TYPE_CODE_FLT
+	  || TYPE_CODE (eltype) == TYPE_CODE_DECFLOAT
+	  || (TYPE_CODE (eltype) == TYPE_CODE_ARRAY
+	      && TYPE_VECTOR (eltype)
+	      && tdep->vector_abi == POWERPC_VEC_ALTIVEC
+	      && TYPE_LENGTH (eltype) == 16)))
     {
       for (i = 0; i < nelt; i++)
 	{

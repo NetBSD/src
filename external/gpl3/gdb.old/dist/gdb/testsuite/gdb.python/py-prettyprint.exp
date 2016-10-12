@@ -92,6 +92,10 @@ proc run_lang_tests {exefile lang} {
     gdb_test "print cstring" " = \"const string\""
 
     gdb_test "print estring" " = \"embedded x\\\\201\\\\202\\\\203\\\\204\""
+    if { ![is_address_zero_readable] } {
+	    gdb_test "print estring3" \
+		" = <error reading variable: Cannot create a lazy string with address 0x0, and a non-zero length.>"
+    }
 
     gdb_test_no_output "python pp_ls_encoding = 'UTF-8'"
     gdb_test "print estring2" "\"embedded \", <incomplete sequence \\\\302>"

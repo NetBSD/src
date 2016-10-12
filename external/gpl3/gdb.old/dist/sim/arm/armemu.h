@@ -462,31 +462,34 @@ typedef enum
 }
 tdstate;
 
-/* Macros to scrutinize instructions.  */
-#define UNDEF_Test
-#define UNDEF_Shift
-#define UNDEF_MSRPC
-#define UNDEF_MRSPC
-#define UNDEF_MULPCDest
-#define UNDEF_MULDestEQOp1
-#define UNDEF_LSRBPC
-#define UNDEF_LSRBaseEQOffWb
-#define UNDEF_LSRBaseEQDestWb
-#define UNDEF_LSRPCBaseWb
-#define UNDEF_LSRPCOffWb
-#define UNDEF_LSMNoRegs
-#define UNDEF_LSMPCBase
-#define UNDEF_LSMUserBankWb
-#define UNDEF_LSMBaseInListWb
-#define UNDEF_SWPPC
-#define UNDEF_CoProHS
-#define UNDEF_MCRPC
-#define UNDEF_LSCPCBaseWb
-#define UNDEF_UndefNotBounced
-#define UNDEF_ShortInt
-#define UNDEF_IllegalMode
-#define UNDEF_Prog32SigChange
-#define UNDEF_Data32SigChange
+#define t_resolved t_branch
+
+/* Macros to scrutinize instructions.  The dummy do loop is to keep the compiler
+   happy when the statement is used in an otherwise empty else statement.  */
+#define UNDEF_Test		do { ; } while (0)
+#define UNDEF_Shift		do { ; } while (0)
+#define UNDEF_MSRPC		do { ; } while (0)
+#define UNDEF_MRSPC		do { ; } while (0)
+#define UNDEF_MULPCDest		do { ; } while (0)
+#define UNDEF_MULDestEQOp1	do { ; } while (0)
+#define UNDEF_LSRBPC		do { ; } while (0)
+#define UNDEF_LSRBaseEQOffWb	do { ; } while (0)
+#define UNDEF_LSRBaseEQDestWb	do { ; } while (0)
+#define UNDEF_LSRPCBaseWb	do { ; } while (0)
+#define UNDEF_LSRPCOffWb	do { ; } while (0)
+#define UNDEF_LSMNoRegs		do { ; } while (0)
+#define UNDEF_LSMPCBase		do { ; } while (0)
+#define UNDEF_LSMUserBankWb	do { ; } while (0)
+#define UNDEF_LSMBaseInListWb	do { ; } while (0)
+#define UNDEF_SWPPC		do { ; } while (0)
+#define UNDEF_CoProHS		do { ; } while (0)
+#define UNDEF_MCRPC		do { ; } while (0)
+#define UNDEF_LSCPCBaseWb	do { ; } while (0)
+#define UNDEF_UndefNotBounced	do { ; } while (0)
+#define UNDEF_ShortInt		do { ; } while (0)
+#define UNDEF_IllegalMode	do { ; } while (0)
+#define UNDEF_Prog32SigChange	do { ; } while (0)
+#define UNDEF_Data32SigChange	do { ; } while (0)
 
 /* Prototypes for exported functions.  */
 extern unsigned ARMul_NthReg        (ARMword, unsigned);

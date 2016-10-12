@@ -1172,6 +1172,14 @@ NAME (aout, set_section_contents) (bfd *abfd,
       if (bfd_seek (abfd, section->filepos + offset, SEEK_SET) != 0
 	  || bfd_bwrite (location, count, abfd) != count)
 	return FALSE;
+
+      /* If necessary, pad the section to its aligned size.  */
+      if ((section == obj_datasec (abfd)
+	   || section == obj_textsec (abfd))
+	  && count < section->size
+	  && (bfd_seek (abfd, section->filepos + offset + section->size - 1, SEEK_SET) != 0
+	      || bfd_bwrite ("", 1, abfd) != 1))
+	return FALSE;
     }
 
   return TRUE;
@@ -1188,6 +1196,14 @@ aout_get_external_symbols (bfd *abfd)
       struct external_nlist *syms;
 
       count = exec_hdr (abfd)->a_syms / EXTERNAL_NLIST_SIZE;
+
+      /* PR 17512: file: 011f5a08.  */
+      if (count == 0)
+	{
+	  obj_aout_external_syms (abfd) = NULL;
+	  obj_aout_external_sym_count (abfd) = count;
+	  return TRUE;
+	}
 
 #ifdef USE_MMAP
       if (! bfd_get_file_window (abfd, obj_sym_filepos (abfd),
@@ -3152,7 +3168,7 @@ aout_link_reloc_link_order (struct aout_final_link_info *flaginfo,
 
       size = bfd_get_reloc_size (howto);
       buf = bfd_zmalloc (size);
-      if (buf == NULL)
+      if (buf == NULL && size != 0)
 	return FALSE;
       r = MY_relocate_contents (howto, flaginfo->output_bfd,
 				pr->addend, buf);

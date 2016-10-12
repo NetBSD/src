@@ -31,6 +31,17 @@ clean_restart ${binfile}
 
 runto_main
 
+set test "info sharedlibrary"
+gdb_test_multiple $test $test {
+    -re ".*\(\\*\)\[^\r\n\]*/libc\.so.*$gdb_prompt $" {
+	# Skip the test below if libc doesn't have debug info.
+	unsupported "libc doesn't have debug info"
+	return -1
+    }
+    -re ".*$gdb_prompt $" {
+    }
+}
+
 # pause () -> SIGALRM -> handler () -> abort ()
 gdb_test "continue" "Program received signal SIGABRT.*"
 

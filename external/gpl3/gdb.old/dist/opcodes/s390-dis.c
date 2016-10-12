@@ -107,6 +107,7 @@ s390_extract_operand (const bfd_byte *insn,
   union operand_value ret;
   unsigned int val;
   int bits;
+  const bfd_byte *orig_insn = insn;
 
   /* Extract fragments of the operand byte for byte.  */
   insn += operand->shift / 8;
@@ -140,6 +141,16 @@ s390_extract_operand (const bfd_byte *insn,
   else if (operand->flags & S390_OPERAND_LENGTH)
     /* Length x in an instruction has real length x + 1.  */
     ret.u = val + 1;
+
+  else if (operand->flags & S390_OPERAND_VR)
+    {
+      /* Extract the extra bits for a vector register operand stored
+	 in the RXB field.  */
+      unsigned vr = operand->shift == 32 ? 3
+	: (unsigned) operand->shift / 4 - 2;
+
+      ret.u = val | ((orig_insn[4] & (1 << (3 - vr))) << (vr + 1));
+    }
   else
     ret.u = val;
 
@@ -178,22 +189,45 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	  continue;
 	}
 
-      info->fprintf_func (info->stream, "%c", separator);
+      /* For instructions with a last optional operand don't print it
+	 if zero.  */
+      if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+	  && val.u == 0
+	  && opindex[1] == 0)
+	break;
 
       if (flags & S390_OPERAND_GPR)
-	info->fprintf_func (info->stream, "%%r%u", val.u);
+	info->fprintf_func (info->stream, "%c%%r%u", separator, val.u);
       else if (flags & S390_OPERAND_FPR)
-	info->fprintf_func (info->stream, "%%f%u", val.u);
+	info->fprintf_func (info->stream, "%c%%f%u", separator, val.u);
+      else if (flags & S390_OPERAND_VR)
+	info->fprintf_func (info->stream, "%c%%v%i", separator, val.u);
       else if (flags & S390_OPERAND_AR)
-	info->fprintf_func (info->stream, "%%a%u", val.u);
+	info->fprintf_func (info->stream, "%c%%a%u", separator, val.u);
       else if (flags & S390_OPERAND_CR)
-	info->fprintf_func (info->stream, "%%c%u", val.u);
+	info->fprintf_func (info->stream, "%c%%c%u", separator, val.u);
       else if (flags & S390_OPERAND_PCREL)
-	info->print_address_func (memaddr + val.i + val.i, info);
+	{
+	  info->fprintf_func (info->stream, "%c", separator);
+	  info->print_address_func (memaddr + val.i + val.i, info);
+	}
       else if (flags & S390_OPERAND_SIGNED)
-	info->fprintf_func (info->stream, "%i", val.i);
+	info->fprintf_func (info->stream, "%c%i", separator, val.i);
       else
-	info->fprintf_func (info->stream, "%u", val.u);
+	{
+	  if (flags & S390_OPERAND_OR1)
+	    val.u &= ~1;
+	  if (flags & S390_OPERAND_OR2)
+	    val.u &= ~2;
+	  if (flags & S390_OPERAND_OR8)
+	    val.u &= ~8;
+
+	  if ((opcode->flags & S390_INSTR_FLAG_OPTPARM)
+	      && val.u == 0
+	      && opindex[1] == 0)
+	    break;
+	  info->fprintf_func (info->stream, "%c%u", separator, val.u);
+	}
 
       if (flags & S390_OPERAND_DISP)
 	separator = '(';

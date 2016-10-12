@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 /* FIXME: will obviously need to evolve.
    - connectionless sockets might be more appropriate.  */
 
+#include "config.h"
 #include "sim-main.h"
 
 #ifdef HAVE_STRING_H

@@ -48,4 +48,6 @@ extern void cli_out_data_ctor (struct cli_ui_out_data *data,
 extern struct ui_file *cli_out_set_stream (struct ui_out *uiout,
 					   struct ui_file *stream);
 
+extern void cli_display_match_list (char **matches, int len, int max);
+
 #endif

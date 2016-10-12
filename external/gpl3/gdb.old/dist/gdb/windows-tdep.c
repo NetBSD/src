@@ -33,6 +33,7 @@
 #include "complaints.h"
 #include "solib.h"
 #include "solib-target.h"
+#include "gdbcore.h"
 
 struct cmd_list_element *info_w32_cmdlist;
 
@@ -401,7 +402,7 @@ windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
   obstack_grow_str (obstack, p);
   xfree (p);
   obstack_grow_str (obstack, "\"><segment address=\"");
-  dll = gdb_bfd_open_maybe_remote (so_name);
+  dll = gdb_bfd_open (so_name, gnutarget, -1);
   /* The following calls are OK even if dll is NULL.
      The default value 0x1000 is returned by pe_text_section_offset
      in that case.  */

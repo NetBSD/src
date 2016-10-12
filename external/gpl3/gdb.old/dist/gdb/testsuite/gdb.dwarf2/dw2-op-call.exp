@@ -29,7 +29,7 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} \
 }
 
 # Additional test to verify the referenced CU is not aged out.
-gdb_test_no_output "maintenance set dwarf2 max-cache-age 0"
+gdb_test_no_output "maintenance set dwarf max-cache-age 0"
 
 gdb_test "p array1" " = 1"
 gdb_test "p array2" " = 2" "array2 using DW_OP_call2"

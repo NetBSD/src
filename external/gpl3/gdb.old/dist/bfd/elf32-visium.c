@@ -33,11 +33,11 @@ static reloc_howto_type visium_elf_howto_table[] = {
   /* This reloc does nothing.  */
   HOWTO (R_VISIUM_NONE,		/* type */
 	 0,			/* rightshift */
-	 2,			/* size (0 = byte, 1 = short, 2 = long) */
-	 32,			/* bitsize */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
+	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
-	 complain_overflow_bitfield,	/* complain_on_overflow */
+	 complain_overflow_dont,	/* complain_on_overflow */
 	 bfd_elf_generic_reloc,	/* special_function */
 	 "R_VISIUM_NONE",	/* name */
 	 FALSE,			/* partial_inplace */
@@ -503,7 +503,7 @@ visium_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED, arelent *cache_ptr,
     default:
       if (r_type >= (unsigned int) R_VISIUM_max)
 	{
-	  _bfd_error_handler (_("%A: invalid Visium reloc number: %d"), abfd, r_type);
+	  _bfd_error_handler (_("%B: invalid Visium reloc number: %d"), abfd, r_type);
 	  r_type = 0;
 	}
       cache_ptr->howto = &visium_elf_howto_table[r_type];

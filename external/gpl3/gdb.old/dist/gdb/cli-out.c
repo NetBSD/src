@@ -23,10 +23,11 @@
 #include "defs.h"
 #include "ui-out.h"
 #include "cli-out.h"
+#include "completer.h"
 #include "vec.h"
+#include "readline/readline.h"
 
 typedef struct cli_ui_out_data cli_out_data;
-
 
 /* Prototypes for local functions */
 
@@ -415,4 +416,85 @@ cli_out_set_stream (struct ui_out *uiout, struct ui_file *stream)
   VEC_quick_push (ui_filep, data->streams, stream);
 
   return old;
+}
+
+/* CLI interface to display tab-completion matches.  */
+
+/* CLI version of displayer.crlf.  */
+
+static void
+cli_mld_crlf (const struct match_list_displayer *displayer)
+{
+  rl_crlf ();
+}
+
+/* CLI version of displayer.putch.  */
+
+static void
+cli_mld_putch (const struct match_list_displayer *displayer, int ch)
+{
+  putc (ch, rl_outstream);
+}
+
+/* CLI version of displayer.puts.  */
+
+static void
+cli_mld_puts (const struct match_list_displayer *displayer, const char *s)
+{
+  fputs (s, rl_outstream);
+}
+
+/* CLI version of displayer.flush.  */
+
+static void
+cli_mld_flush (const struct match_list_displayer *displayer)
+{
+  fflush (rl_outstream);
+}
+
+EXTERN_C void _rl_erase_entire_line (void);
+
+/* CLI version of displayer.erase_entire_line.  */
+
+static void
+cli_mld_erase_entire_line (const struct match_list_displayer *displayer)
+{
+  _rl_erase_entire_line ();
+}
+
+/* CLI version of displayer.beep.  */
+
+static void
+cli_mld_beep (const struct match_list_displayer *displayer)
+{
+  rl_ding ();
+}
+
+/* CLI version of displayer.read_key.  */
+
+static int
+cli_mld_read_key (const struct match_list_displayer *displayer)
+{
+  return rl_read_key ();
+}
+
+/* CLI version of rl_completion_display_matches_hook.
+   See gdb_display_match_list for a description of the arguments.  */
+
+void
+cli_display_match_list (char **matches, int len, int max)
+{
+  struct match_list_displayer displayer;
+
+  rl_get_screen_size (&displayer.height, &displayer.width);
+  displayer.crlf = cli_mld_crlf;
+  displayer.putch = cli_mld_putch;
+  displayer.puts = cli_mld_puts;
+  displayer.flush = cli_mld_flush;
+  displayer.erase_entire_line = cli_mld_erase_entire_line;
+  displayer.beep = cli_mld_beep;
+  displayer.read_key = cli_mld_read_key;
+
+  gdb_display_match_list (matches, len, max, &displayer);
+  rl_forced_update_display ();
 }

@@ -213,11 +213,10 @@ find_pretty_printer (PyObject *value)
 static PyObject *
 pretty_print_one_value (PyObject *printer, struct value **out_value)
 {
-  volatile struct gdb_exception except;
   PyObject *result = NULL;
 
   *out_value = NULL;
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       result = PyObject_CallMethodObjArgs (printer, gdbpy_to_string_cst, NULL);
       if (result)
@@ -233,6 +232,10 @@ pretty_print_one_value (PyObject *printer, struct value **out_value)
 	    }
 	}
     }
+  CATCH (except, RETURN_MASK_ALL)
+    {
+    }
+  END_CATCH
 
   return result;
 }
@@ -551,8 +554,22 @@ print_children (PyObject *printer, const char *hint,
 	  break;
 	}
 
+      if (! PyTuple_Check (item) || PyTuple_Size (item) != 2)
+	{
+	  PyErr_SetString (PyExc_TypeError,
+			   _("Result of children iterator not a tuple"
+			     " of two elements."));
+	  gdbpy_print_stack ();
+	  Py_DECREF (item);
+	  continue;
+	}
       if (! PyArg_ParseTuple (item, "sO", &name, &py_v))
 	{
+	  /* The user won't necessarily get a stack trace here, so provide
+	     more context.  */
+	  if (gdbpy_print_python_errors_p ())
+	    fprintf_unfiltered (gdb_stderr,
+				_("Bad result from children iterator.\n"));
 	  gdbpy_print_stack ();
 	  Py_DECREF (item);
 	  continue;
@@ -803,13 +820,16 @@ gdbpy_get_varobj_pretty_printer (struct value *value)
 {
   PyObject *val_obj;
   PyObject *pretty_printer = NULL;
-  volatile struct gdb_exception except;
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       value = value_copy (value);
     }
-  GDB_PY_HANDLE_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDB_PY_HANDLE_EXCEPTION (except);
+    }
+  END_CATCH
 
   val_obj = value_to_value_object (value);
   if (! val_obj)

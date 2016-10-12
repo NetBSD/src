@@ -4664,7 +4664,7 @@ _print_insn_bfin (bfd_vma pc, disassemble_info *outf)
     return -1;
   priv->iw0 = iw0;
 
-  if ((iw0 & 0xc000) == 0xc000)
+  if (((iw0 & 0xc000) == 0xc000) && ((iw0 & 0xff00) != 0xf800))
     {
       /* 32-bit insn.  */
       if (ifetch (pc + 2, outf, &iw1))

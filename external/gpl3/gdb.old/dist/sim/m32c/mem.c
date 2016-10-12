@@ -89,7 +89,7 @@ init_mem (void)
 }
 
 static unsigned char *
-mem_ptr (address)
+mem_ptr (int address)
 {
   static int recursing = 0;
   int pt1 = (address >> (L2_BITS + OFF_BITS)) & ((1 << L1_BITS) - 1);
@@ -139,7 +139,7 @@ mcs (int isput, int bytes)
 }
 
 void
-mem_usage_stats ()
+mem_usage_stats (void)
 {
   int i, j;
   int rstart = 0;
@@ -192,7 +192,7 @@ s (int address, char *dir)
 
 #define S(d) if (trace) s(address, d)
 static void
-e ()
+e (void)
 {
   if (!trace)
     return;
@@ -205,7 +205,7 @@ e ()
 
 extern int m32c_disassemble;
 
-void
+static void
 mem_put_byte (int address, unsigned char value)
 {
   unsigned char *m;
@@ -376,7 +376,7 @@ mem_put_blk (int address, const void *bufptr, int nbytes)
 }
 
 unsigned char
-mem_get_pc ()
+mem_get_pc (void)
 {
   unsigned char *m = mem_ptr (regs.r_pc & membus_mask);
   COUNT (0, 0);
@@ -388,7 +388,7 @@ static int console_raw = 0;
 static struct termios oattr;
 
 static int
-stdin_ready ()
+stdin_ready (void)
 {
   fd_set ifd;
   int n;
@@ -403,7 +403,7 @@ stdin_ready ()
 }
 
 void
-m32c_sim_restore_console ()
+m32c_sim_restore_console (void)
 {
   if (console_raw)
     tcsetattr (m32c_console_ifd, TCSANOW, &oattr);
@@ -557,7 +557,7 @@ sign_ext (int v, int bits)
 
 #if TIMER_A
 void
-update_timer_a ()
+update_timer_a (void)
 {
   if (timer_a.bsr & 1)
     {

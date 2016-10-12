@@ -24,8 +24,6 @@
 #include "regcache.h"
 #include "target.h"
 #include "linux-nat.h"
-
-#include <stdint.h>
 #include <sys/types.h>
 #include <signal.h>
 #include <sys/user.h>

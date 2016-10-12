@@ -36,6 +36,8 @@
 #include <sys/utsname.h>
 #include <sys/procfs.h>
 
+#include "nat/linux-ptrace.h"
+
 /* Prototypes for supply_gregset etc.  */
 #include "gregset.h"
 
@@ -60,13 +62,6 @@
 #define PTRACE_GETHBPREGS 29
 #define PTRACE_SETHBPREGS 30
 #endif
-
-/* A flag for whether the WMMX registers are available.  */
-static int arm_linux_has_wmmx_registers;
-
-/* The number of 64-bit VFP registers we have (expect this to be 0,
-   16, or 32).  */
-static int arm_linux_vfp_register_count;
 
 extern int arm_apcs_32;
 
@@ -95,12 +90,23 @@ fetch_fpregister (struct regcache *regcache, int regno)
 {
   int ret, tid;
   gdb_byte fp[ARM_LINUX_SIZEOF_NWFPE];
-  
+
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
 
   /* Read the floating point state.  */
-  ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &fp;
+      iov.iov_len = ARM_LINUX_SIZEOF_NWFPE;
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch floating point register."));
@@ -128,9 +134,20 @@ fetch_fpregs (struct regcache *regcache)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
+
   /* Read the floating point state.  */
-  ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &fp;
+      iov.iov_len = ARM_LINUX_SIZEOF_NWFPE;
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch the floating point registers."));
@@ -157,9 +174,20 @@ store_fpregister (const struct regcache *regcache, int regno)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
+
   /* Read the floating point state.  */
-  ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &fp;
+      iov.iov_len = ARM_LINUX_SIZEOF_NWFPE;
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch the floating point registers."));
@@ -175,7 +203,18 @@ store_fpregister (const struct regcache *regcache, int regno)
   if (regno >= ARM_F0_REGNUM && regno <= ARM_F7_REGNUM)
     collect_nwfpe_register (regcache, regno, fp);
 
-  ret = ptrace (PTRACE_SETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &fp;
+      iov.iov_len = ARM_LINUX_SIZEOF_NWFPE;
+
+      ret = ptrace (PTRACE_SETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_SETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to store floating point register."));
@@ -194,9 +233,21 @@ store_fpregs (const struct regcache *regcache)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
+
   /* Read the floating point state.  */
-  ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      elf_fpregset_t fpregs;
+      struct iovec iov;
+
+      iov.iov_base = &fpregs;
+      iov.iov_len = sizeof (fpregs);
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PT_GETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch the floating point registers."));
@@ -212,7 +263,18 @@ store_fpregs (const struct regcache *regcache)
     if (REG_VALID == regcache_register_status (regcache, regno))
       collect_nwfpe_register (regcache, regno, fp);
 
-  ret = ptrace (PTRACE_SETFPREGS, tid, 0, fp);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &fp;
+      iov.iov_len = ARM_LINUX_SIZEOF_NWFPE;
+
+      ret = ptrace (PTRACE_SETREGSET, tid, NT_FPREGSET, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_SETFPREGS, tid, 0, fp);
+
   if (ret < 0)
     {
       warning (_("Unable to store floating point registers."));
@@ -231,8 +293,19 @@ fetch_register (struct regcache *regcache, int regno)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
-  ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch general register."));
@@ -273,8 +346,19 @@ fetch_regs (struct regcache *regcache)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
-  ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch general registers."));
@@ -311,9 +395,20 @@ store_register (const struct regcache *regcache, int regno)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
+
   /* Get the general registers from the process.  */
-  ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch general registers."));
@@ -329,7 +424,18 @@ store_register (const struct regcache *regcache, int regno)
     regcache_raw_collect (regcache, ARM_PC_REGNUM,
 			 (char *) &regs[ARM_PC_REGNUM]);
 
-  ret = ptrace (PTRACE_SETREGS, tid, 0, &regs);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_SETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_SETREGS, tid, 0, &regs);
+
   if (ret < 0)
     {
       warning (_("Unable to store general register."));
@@ -345,9 +451,20 @@ store_regs (const struct regcache *regcache)
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
-  
+
   /* Fetch the general registers.  */
-  ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETREGS, tid, 0, &regs);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch general registers."));
@@ -364,7 +481,17 @@ store_regs (const struct regcache *regcache)
     regcache_raw_collect (regcache, ARM_PS_REGNUM,
 			 (char *) &regs[ARM_CPSR_GREGNUM]);
 
-  ret = ptrace (PTRACE_SETREGS, tid, 0, &regs);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = &regs;
+      iov.iov_len = sizeof (regs);
+
+      ret = ptrace (PTRACE_SETREGSET, tid, NT_PRSTATUS, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_SETREGS, tid, 0, &regs);
 
   if (ret < 0)
     {
@@ -460,18 +587,30 @@ fetch_vfp_regs (struct regcache *regcache)
 {
   char regbuf[VFP_REGS_SIZE];
   int ret, regno, tid;
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
 
-  ret = ptrace (PTRACE_GETVFPREGS, tid, 0, regbuf);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = regbuf;
+      iov.iov_len = VFP_REGS_SIZE;
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_ARM_VFP, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETVFPREGS, tid, 0, regbuf);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch VFP registers."));
       return;
     }
 
-  for (regno = 0; regno < arm_linux_vfp_register_count; regno++)
+  for (regno = 0; regno < tdep->vfp_register_count; regno++)
     regcache_raw_supply (regcache, regno + ARM_D0_REGNUM,
 			 (char *) regbuf + regno * 8);
 
@@ -484,25 +623,46 @@ store_vfp_regs (const struct regcache *regcache)
 {
   char regbuf[VFP_REGS_SIZE];
   int ret, regno, tid;
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* Get the thread id for the ptrace call.  */
   tid = GET_THREAD_ID (inferior_ptid);
 
-  ret = ptrace (PTRACE_GETVFPREGS, tid, 0, regbuf);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = regbuf;
+      iov.iov_len = VFP_REGS_SIZE;
+      ret = ptrace (PTRACE_GETREGSET, tid, NT_ARM_VFP, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_GETVFPREGS, tid, 0, regbuf);
+
   if (ret < 0)
     {
       warning (_("Unable to fetch VFP registers (for update)."));
       return;
     }
 
-  for (regno = 0; regno < arm_linux_vfp_register_count; regno++)
+  for (regno = 0; regno < tdep->vfp_register_count; regno++)
     regcache_raw_collect (regcache, regno + ARM_D0_REGNUM,
 			  (char *) regbuf + regno * 8);
 
   regcache_raw_collect (regcache, ARM_FPSCR_REGNUM,
 			(char *) regbuf + 32 * 8);
 
-  ret = ptrace (PTRACE_SETVFPREGS, tid, 0, regbuf);
+  if (have_ptrace_getregset == TRIBOOL_TRUE)
+    {
+      struct iovec iov;
+
+      iov.iov_base = regbuf;
+      iov.iov_len = VFP_REGS_SIZE;
+      ret = ptrace (PTRACE_SETREGSET, tid, NT_ARM_VFP, &iov);
+    }
+  else
+    ret = ptrace (PTRACE_SETVFPREGS, tid, 0, regbuf);
 
   if (ret < 0)
     {
@@ -519,13 +679,16 @@ static void
 arm_linux_fetch_inferior_registers (struct target_ops *ops,
 				    struct regcache *regcache, int regno)
 {
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
   if (-1 == regno)
     {
       fetch_regs (regcache);
       fetch_fpregs (regcache);
-      if (arm_linux_has_wmmx_registers)
+      if (tdep->have_wmmx_registers)
 	fetch_wmmx_regs (regcache);
-      if (arm_linux_vfp_register_count > 0)
+      if (tdep->vfp_register_count > 0)
 	fetch_vfp_regs (regcache);
     }
   else 
@@ -534,12 +697,12 @@ arm_linux_fetch_inferior_registers (struct target_ops *ops,
         fetch_register (regcache, regno);
       else if (regno >= ARM_F0_REGNUM && regno <= ARM_FPS_REGNUM)
         fetch_fpregister (regcache, regno);
-      else if (arm_linux_has_wmmx_registers
+      else if (tdep->have_wmmx_registers
 	       && regno >= ARM_WR0_REGNUM && regno <= ARM_WCGR7_REGNUM)
 	fetch_wmmx_regs (regcache);
-      else if (arm_linux_vfp_register_count > 0
+      else if (tdep->vfp_register_count > 0
 	       && regno >= ARM_D0_REGNUM
-	       && regno <= ARM_D0_REGNUM + arm_linux_vfp_register_count)
+	       && regno <= ARM_D0_REGNUM + tdep->vfp_register_count)
 	fetch_vfp_regs (regcache);
     }
 }
@@ -552,13 +715,16 @@ static void
 arm_linux_store_inferior_registers (struct target_ops *ops,
 				    struct regcache *regcache, int regno)
 {
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
   if (-1 == regno)
     {
       store_regs (regcache);
       store_fpregs (regcache);
-      if (arm_linux_has_wmmx_registers)
+      if (tdep->have_wmmx_registers)
 	store_wmmx_regs (regcache);
-      if (arm_linux_vfp_register_count > 0)
+      if (tdep->vfp_register_count > 0)
 	store_vfp_regs (regcache);
     }
   else
@@ -567,12 +733,12 @@ arm_linux_store_inferior_registers (struct target_ops *ops,
         store_register (regcache, regno);
       else if ((regno >= ARM_F0_REGNUM) && (regno <= ARM_FPS_REGNUM))
         store_fpregister (regcache, regno);
-      else if (arm_linux_has_wmmx_registers
+      else if (tdep->have_wmmx_registers
 	       && regno >= ARM_WR0_REGNUM && regno <= ARM_WCGR7_REGNUM)
 	store_wmmx_regs (regcache);
-      else if (arm_linux_vfp_register_count > 0
+      else if (tdep->vfp_register_count > 0
 	       && regno >= ARM_D0_REGNUM
-	       && regno <= ARM_D0_REGNUM + arm_linux_vfp_register_count)
+	       && regno <= ARM_D0_REGNUM + tdep->vfp_register_count)
 	store_vfp_regs (regcache);
     }
 }
@@ -630,8 +796,22 @@ static const struct target_desc *
 arm_linux_read_description (struct target_ops *ops)
 {
   CORE_ADDR arm_hwcap = 0;
-  arm_linux_has_wmmx_registers = 0;
-  arm_linux_vfp_register_count = 0;
+
+  if (have_ptrace_getregset == TRIBOOL_UNKNOWN)
+    {
+      elf_gregset_t gpregs;
+      struct iovec iov;
+      int tid = GET_THREAD_ID (inferior_ptid);
+
+      iov.iov_base = &gpregs;
+      iov.iov_len = sizeof (gpregs);
+
+      /* Check if PTRACE_GETREGSET works.  */
+      if (ptrace (PTRACE_GETREGSET, tid, NT_PRSTATUS, &iov) < 0)
+	have_ptrace_getregset = TRIBOOL_FALSE;
+      else
+	have_ptrace_getregset = TRIBOOL_TRUE;
+    }
 
   if (target_auxv_search (ops, AT_HWCAP, &arm_hwcap) != 1)
     {
@@ -639,10 +819,7 @@ arm_linux_read_description (struct target_ops *ops)
     }
 
   if (arm_hwcap & HWCAP_IWMMXT)
-    {
-      arm_linux_has_wmmx_registers = 1;
-      return tdesc_arm_with_iwmmxt;
-    }
+    return tdesc_arm_with_iwmmxt;
 
   if (arm_hwcap & HWCAP_VFP)
     {
@@ -653,20 +830,11 @@ arm_linux_read_description (struct target_ops *ops)
       /* NEON implies VFPv3-D32 or no-VFP unit.  Say that we only support
 	 Neon with VFPv3-D32.  */
       if (arm_hwcap & HWCAP_NEON)
-	{
-	  arm_linux_vfp_register_count = 32;
-	  result = tdesc_arm_with_neon;
-	}
+	result = tdesc_arm_with_neon;
       else if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-	{
-	  arm_linux_vfp_register_count = 32;
-	  result = tdesc_arm_with_vfpv3;
-	}
+	result = tdesc_arm_with_vfpv3;
       else
-	{
-	  arm_linux_vfp_register_count = 16;
-	  result = tdesc_arm_with_vfpv2;
-	}
+	result = tdesc_arm_with_vfpv2;
 
       /* Now make sure that the kernel supports reading these
 	 registers.  Support was added in 2.6.30.  */
@@ -771,12 +939,20 @@ arm_linux_can_use_hw_breakpoint (struct target_ops *self,
   if (type == bp_hardware_watchpoint || type == bp_read_watchpoint
       || type == bp_access_watchpoint || type == bp_watchpoint)
     {
-      if (cnt + ot > arm_linux_get_hw_watchpoint_count ())
+      int count = arm_linux_get_hw_watchpoint_count ();
+
+      if (count == 0)
+	return 0;
+      else if (cnt + ot > count)
 	return -1;
     }
   else if (type == bp_hardware_breakpoint)
     {
-      if (cnt > arm_linux_get_hw_breakpoint_count ())
+      int count = arm_linux_get_hw_breakpoint_count ();
+
+      if (count == 0)
+	return 0;
+      else if (cnt > count)
 	return -1;
     }
   else

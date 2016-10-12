@@ -61,7 +61,7 @@ static reloc_howto_type h8_elf_howto_table[] =
 #define R_H8_NONE_X 0
   HOWTO (R_H8_NONE,		/* type */
 	 0,			/* rightshift */
-	 0,			/* size (0 = byte, 1 = short, 2 = long) */
+	 3,			/* size (0 = byte, 1 = short, 2 = long) */
 	 0,			/* bitsize */
 	 FALSE,			/* pc_relative */
 	 0,			/* bitpos */
@@ -1742,5 +1742,14 @@ elf32_h8_get_relocated_section_contents (bfd *output_bfd,
                                 elf32_h8_get_relocated_section_contents
 
 #define elf_symbol_leading_char '_'
+
+#include "elf32-target.h"
+
+#undef  TARGET_BIG_SYM
+#define TARGET_BIG_SYM			h8300_elf32_linux_vec
+#undef  TARGET_BIG_NAME
+#define TARGET_BIG_NAME			"elf32-h8300-linux"
+#undef  elf_symbol_leading_char
+#define elf32_bed			elf32_h8300_linux_bed
 
 #include "elf32-target.h"

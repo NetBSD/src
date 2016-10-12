@@ -36,7 +36,7 @@ child_function (void *arg)
       counter++;
 
       watch_me = 1; /* set breakpoint child here */
-      other = 1; /* set thread-specific breakpoint here */
+      other = 1;
       usleep (1);
     }
 

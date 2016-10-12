@@ -42,7 +42,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
 # the name of a debuginfo only file. This file will be stored in the
 # gdb.base/ subdirectory.
 
-if [gdb_gnu_strip_debug $binfile] {
+if [gdb_gnu_strip_debug $binfile$EXEEXT] {
     # check that you have a recent version of strip and objcopy installed
     unsupported "cannot produce separate debug info files"
     return -1
@@ -60,7 +60,7 @@ set new_name [standard_output_file ${testfile}${EXEEXT}]
 remote_exec build "rm -rf [file dirname $new_name]"
 
 remote_exec build "mkdir [file dirname $new_name]"
-remote_exec build "ln -s ${binfile} $new_name"
+remote_exec build "ln -s ${binfile}${EXEEXT} $new_name"
 clean_restart ${testfile}${EXEEXT}
 if { $gdb_file_cmd_debug_info != "debug" } then {
     fail "No debug information found."
@@ -716,10 +716,10 @@ proc test_different_dir {type test_different_dir xfail} {
 # the "set debug-file-directory" command.
 
 set different_dir [standard_output_file ${testfile}.dir]
-set debugfile "${different_dir}/[standard_output_file ${testfile}.debug]"
+set debugfile "${different_dir}/[standard_output_file ${testfile}${EXEEXT}.debug]"
 remote_exec build "rm -rf $different_dir"
 remote_exec build "mkdir -p [file dirname $debugfile]"
-remote_exec build "mv -f [standard_output_file ${testfile}.debug] $debugfile"
+remote_exec build "mv -f [standard_output_file ${testfile}${EXEEXT}.debug] $debugfile"
 
 test_different_dir debuglink $different_dir 0
 
@@ -727,7 +727,7 @@ test_different_dir debuglink $different_dir 0
 # Test CRC mismatch is reported.
 
 if {[build_executable sepdebug.exp sepdebug2 sepdebug2.c debug] != -1
-    && ![gdb_gnu_strip_debug [standard_output_file sepdebug2]]} {
+    && ![gdb_gnu_strip_debug [standard_output_file sepdebug2]$EXEEXT]} {
 
     remote_exec build "cp ${debugfile} [standard_output_file sepdebug2.debug]"
 
@@ -743,7 +743,7 @@ if {[build_executable sepdebug.exp sepdebug2 sepdebug2.c debug] != -1
 
 # NT_GNU_BUILD_ID / .note.gnu.build-id test:
 
-set build_id_debug_filename [build_id_debug_filename_get $binfile]
+set build_id_debug_filename [build_id_debug_filename_get $binfile$EXEEXT]
 if ![string compare $build_id_debug_filename ""] then {
     unsupported "build-id is not supported by the compiler"
 

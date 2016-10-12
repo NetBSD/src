@@ -77,7 +77,7 @@ extern void set_ui_file_put (struct ui_file *stream, ui_file_put_ftype *put);
 
 typedef void (ui_file_delete_ftype) (struct ui_file * stream);
 extern void set_ui_file_data (struct ui_file *stream, void *data,
-			      ui_file_delete_ftype *delete);
+			      ui_file_delete_ftype *to_delete);
 
 typedef int (ui_file_fseek_ftype) (struct ui_file *stream, long offset,
 				   int whence);
