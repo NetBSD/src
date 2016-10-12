@@ -407,8 +407,8 @@ x86_handle_nonaligned_watchpoint (struct x86_debug_reg_state *state,
       int align = addr % max_wp_len;
       /* Four (eight on AMD64) is the maximum length a debug register
 	 can watch.  */
-      int try = (len > max_wp_len ? (max_wp_len - 1) : len - 1);
-      int size = size_try_array[try][align];
+      int attempt = (len > max_wp_len ? (max_wp_len - 1) : len - 1);
+      int size = size_try_array[attempt][align];
 
       if (what == WP_COUNT)
 	{

@@ -224,17 +224,12 @@ extern void regcache_save (struct regcache *dst,
 
 /* Copy/duplicate the contents of a register cache.  By default, the
    operation is pass-through.  Writes to DST and reads from SRC will
-   go through to the target.
+   go through to the target.  See also regcache_cpy_no_passthrough.
 
-   The ``cpy'' functions can not have overlapping SRC and DST buffers.
-
-   ``no passthrough'' versions do not go through to the target.  They
-   only transfer values already in the cache.  */
+   regcache_cpy can not have overlapping SRC and DST buffers.  */
 
 extern struct regcache *regcache_dup (struct regcache *regcache);
 extern void regcache_cpy (struct regcache *dest, struct regcache *src);
-extern void regcache_cpy_no_passthrough (struct regcache *dest,
-					 struct regcache *src);
 
 extern void registers_changed (void);
 extern void registers_changed_ptid (ptid_t);

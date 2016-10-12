@@ -44,6 +44,19 @@ CODE_FRAGMENT
 .    both_direction = 3
 .  };
 .
+.enum bfd_plugin_format
+.  {
+.    bfd_plugin_uknown = 0,
+.    bfd_plugin_yes = 1,
+.    bfd_plugin_no = 2
+.  };
+.
+.struct bfd_build_id
+.  {
+.    bfd_size_type size;
+.    bfd_byte data[1];
+.  };
+.
 .struct bfd
 .{
 .  {* The filename the application opened the BFD with.  *}
@@ -78,7 +91,7 @@ CODE_FRAGMENT
 .  ENUM_BITFIELD (bfd_direction) direction : 2;
 .
 .  {* Format_specific flags.  *}
-.  flagword flags : 17;
+.  flagword flags : 18;
 .
 .  {* Values that may appear in the flags field of a BFD.  These also
 .     appear in the object_flags field of the bfd_target structure, where
@@ -155,14 +168,19 @@ CODE_FRAGMENT
 .  {* BFD is a dummy, for plugins.  *}
 .#define BFD_PLUGIN 0x10000
 .
+.  {* Compress sections in this BFD with SHF_COMPRESSED from gABI.  *}
+.#define BFD_COMPRESS_GABI 0x20000
+.
 .  {* Flags bits to be saved in bfd_preserve_save.  *}
 .#define BFD_FLAGS_SAVED \
-.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN)
+.  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_PLUGIN \
+.   | BFD_COMPRESS_GABI)
 .
 .  {* Flags bits which are for BFD use only.  *}
 .#define BFD_FLAGS_FOR_BFD_USE_MASK \
 .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
-.   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
+.   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT \
+.   | BFD_COMPRESS_GABI)
 .
 .  {* Is the file descriptor being cached?  That is, can it be closed as
 .     needed, and re-opened when accessed later?  *}
@@ -199,6 +217,19 @@ CODE_FRAGMENT
 .
 .  {* Set if this is the linker output BFD.  *}
 .  unsigned int is_linker_output : 1;
+.
+.  {* Set if this is the linker input BFD.  *}
+.  unsigned int is_linker_input : 1;
+.
+.  {* If this is an input for a compiler plug-in library.  *}
+.  ENUM_BITFIELD (bfd_plugin_format) plugin_format : 2;
+.
+.  {* Set if this is a plugin output file.  *}
+.  unsigned int lto_output : 1;
+.
+.  {* Set to dummy BFD created when claimed by a compiler plug-in
+.     library.  *}
+.  bfd *plugin_dummy_bfd;
 .
 .  {* Currently my_archive is tested before adding origin to
 .     anything. I believe that this can become always an add of
@@ -310,6 +341,9 @@ CODE_FRAGMENT
 .     struct objalloc *, but we use void * to avoid requiring the inclusion
 .     of objalloc.h.  *}
 .  void *memory;
+.
+.  {* For input BFDs, the build ID, if the object has one. *}
+.  const struct bfd_build_id *build_id;
 .};
 .
 .{* See note beside bfd_set_section_userdata.  *}
@@ -1922,4 +1956,158 @@ bfd_demangle (bfd *abfd, const char *name, int options)
     }
 
   return res;
+}
+
+/*
+FUNCTION
+	bfd_update_compression_header
+
+SYNOPSIS
+	void bfd_update_compression_header
+	  (bfd *abfd, bfd_byte *contents, asection *sec);
+
+DESCRIPTION
+	Set the compression header at CONTENTS of SEC in ABFD and update
+	elf_section_flags for compression.
+*/
+
+void
+bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
+			       asection *sec)
+{
+  if ((abfd->flags & BFD_COMPRESS) != 0)
+    {
+      if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
+	{
+	  if ((abfd->flags & BFD_COMPRESS_GABI) != 0)
+	    {
+	      const struct elf_backend_data *bed
+		= get_elf_backend_data (abfd);
+
+	      /* Set the SHF_COMPRESSED bit.  */
+	      elf_section_flags (sec) |= SHF_COMPRESSED;
+
+	      if (bed->s->elfclass == ELFCLASS32)
+		{
+		  Elf32_External_Chdr *echdr
+		    = (Elf32_External_Chdr *) contents;
+		  bfd_put_32 (abfd, ELFCOMPRESS_ZLIB, &echdr->ch_type);
+		  bfd_put_32 (abfd, sec->size, &echdr->ch_size);
+		  bfd_put_32 (abfd, 1 << sec->alignment_power,
+			      &echdr->ch_addralign);
+		}
+	      else
+		{
+		  Elf64_External_Chdr *echdr
+		    = (Elf64_External_Chdr *) contents;
+		  bfd_put_64 (abfd, ELFCOMPRESS_ZLIB, &echdr->ch_type);
+		  bfd_put_64 (abfd, sec->size, &echdr->ch_size);
+		  bfd_put_64 (abfd, 1 << sec->alignment_power,
+			      &echdr->ch_addralign);
+		}
+	    }
+	  else
+	    {
+	      /* Clear the SHF_COMPRESSED bit.  */
+	      elf_section_flags (sec) &= ~SHF_COMPRESSED;
+
+	      /* Write the zlib header.  It should be "ZLIB" followed by
+		 the uncompressed section size, 8 bytes in big-endian
+		 order.  */
+	      memcpy (contents, "ZLIB", 4);
+	      bfd_putb64 (sec->size, contents + 4);
+	    }
+	}
+    }
+  else
+    abort ();
+}
+
+/*
+   FUNCTION
+   bfd_check_compression_header
+
+   SYNOPSIS
+	bfd_boolean bfd_check_compression_header
+	  (bfd *abfd, bfd_byte *contents, asection *sec,
+	  bfd_size_type *uncompressed_size);
+
+DESCRIPTION
+	Check the compression header at CONTENTS of SEC in ABFD and
+	store the uncompressed size in UNCOMPRESSED_SIZE if the
+	compression header is valid.
+
+RETURNS
+	Return TRUE if the compression header is valid.
+*/
+
+bfd_boolean
+bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
+			      asection *sec,
+			      bfd_size_type *uncompressed_size)
+{
+  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
+      && (elf_section_flags (sec) & SHF_COMPRESSED) != 0)
+    {
+      Elf_Internal_Chdr chdr;
+      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      if (bed->s->elfclass == ELFCLASS32)
+	{
+	  Elf32_External_Chdr *echdr = (Elf32_External_Chdr *) contents;
+	  chdr.ch_type = bfd_get_32 (abfd, &echdr->ch_type);
+	  chdr.ch_size = bfd_get_32 (abfd, &echdr->ch_size);
+	  chdr.ch_addralign = bfd_get_32 (abfd, &echdr->ch_addralign);
+	}
+      else
+	{
+	  Elf64_External_Chdr *echdr = (Elf64_External_Chdr *) contents;
+	  chdr.ch_type = bfd_get_64 (abfd, &echdr->ch_type);
+	  chdr.ch_size = bfd_get_64 (abfd, &echdr->ch_size);
+	  chdr.ch_addralign = bfd_get_64 (abfd, &echdr->ch_addralign);
+	}
+      if (chdr.ch_type == ELFCOMPRESS_ZLIB
+	  && chdr.ch_addralign == 1U << sec->alignment_power)
+	{
+	  *uncompressed_size = chdr.ch_size;
+	  return TRUE;
+	}
+    }
+
+  return FALSE;
+}
+
+/*
+FUNCTION
+	bfd_get_compression_header_size
+
+SYNOPSIS
+	int bfd_get_compression_header_size (bfd *abfd, asection *sec);
+
+DESCRIPTION
+	Return the size of the compression header of SEC in ABFD.
+
+RETURNS
+	Return the size of the compression header in bytes.
+*/
+
+int
+bfd_get_compression_header_size (bfd *abfd, asection *sec)
+{
+  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
+    {
+      if (sec == NULL)
+	{
+	  if (!(abfd->flags & BFD_COMPRESS_GABI))
+	    return 0;
+	}
+      else if (!(elf_section_flags (sec) & SHF_COMPRESSED))
+	return 0;
+
+      if (get_elf_backend_data (abfd)->s->elfclass == ELFCLASS32)
+	return sizeof (Elf32_External_Chdr);
+      else
+	return sizeof (Elf64_External_Chdr);
+    }
+
+  return 0;
 }

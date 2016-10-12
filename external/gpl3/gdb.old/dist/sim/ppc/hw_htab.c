@@ -549,7 +549,7 @@ htab_map_binary(device *me,
   if ((sizes.text_base <= sizes.data_base
        && sizes.text_bound >= sizes.data_bound)
       || (sizes.data_base <= sizes.text_base
-	  && sizes.data_bound >= sizes.data_bound)
+	  && sizes.data_bound >= sizes.text_bound)
       || (sizes.text_bound > sizes.data_base
 	  && sizes.text_bound <= sizes.data_bound)
       || (sizes.text_base >= sizes.data_base

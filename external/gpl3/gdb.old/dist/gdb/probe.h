@@ -113,6 +113,12 @@ struct probe_ops
 
     void (*destroy) (struct probe *probe);
 
+    /* Return a pointer to a name identifying the probe type.  This is
+       the string that will be displayed in the "Type" column of the
+       `info probes' command.  */
+
+    const char *(*type_name) (struct probe *probe);
+
     /* Function responsible for providing the extra fields that will be
        printed in the `info probes' command.  It should fill HEADS
        with whatever extra fields it needs.  If the backend doesn't need
@@ -132,6 +138,18 @@ struct probe_ops
 
     void (*gen_info_probes_table_values) (struct probe *probe,
 					  VEC (const_char_ptr) **values);
+
+    /* Enable a probe.  The semantics of "enabling" a probe depend on
+       the specific backend and the field can be NULL in case enabling
+       probes is not supported.  */
+
+    void (*enable_probe) (struct probe *probe);
+
+    /* Disable a probe.  The semantics of "disabling" a probe depend
+       on the specific backend and the field can be NULL in case
+       disabling probes is not supported.  */
+
+    void (*disable_probe) (struct probe *probe);
   };
 
 /* Definition of a vector of probe_ops.  */

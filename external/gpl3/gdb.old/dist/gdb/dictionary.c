@@ -806,7 +806,7 @@ dict_hash (const char *string0)
   string = string0;
   if (*string == '_')
     {
-      if (strncmp (string, "_ada_", 5) == 0)
+      if (startswith (string, "_ada_"))
 	string += 5;
       else
 	return msymbol_hash_iw (string0);

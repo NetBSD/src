@@ -101,10 +101,8 @@ extern void read_memory_string (CORE_ADDR, char *, int);
 
 CORE_ADDR read_memory_typed_address (CORE_ADDR addr, struct type *type);
 
-/* This takes a char *, not void *.  This is probably right, because
-   passing in an int * or whatever is wrong with respect to
-   byteswapping, alignment, different sizes for host vs. target types,
-   etc.  */
+/* Same as target_write_memory, but report an error if can't
+   write.  */
 
 extern void write_memory (CORE_ADDR memaddr, const gdb_byte *myaddr,
 			  ssize_t len);
@@ -149,6 +147,13 @@ extern int write_files;
 extern void core_file_command (char *filename, int from_tty);
 
 extern void exec_file_attach (const char *filename, int from_tty);
+
+/* If the filename of the main executable is unknown, attempt to
+   determine it.  If a filename is determined, proceed as though
+   it was just specified with the "file" command.  Do nothing if
+   the filename of the main executable is already known.  */
+
+extern void exec_file_locate_attach (int pid, int from_tty);
 
 extern void exec_file_clear (int from_tty);
 

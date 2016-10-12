@@ -112,6 +112,12 @@ proc test {} {
 	    }
 
 	    if {$attempt < $attempts} {
+		# Kick the time out timer for another round.
+		gdb_test "print again = 1" " = 1" "reset timer in the inferior"
+		# Show the time we had left in the logs, in case
+		# something goes wrong.
+		gdb_test "print seconds_left" " = .*"
+
 		gdb_test "detach" "Detaching from.*"
 	    } else {
 		gdb_test "kill" "" "kill process" "Kill the program being debugged.*y or n. $" "y"
@@ -125,7 +131,12 @@ proc test {} {
     remote_exec target "kill -9 ${testpid}"
 }
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}] == -1} {
+# The test program exits after a while, in case GDB crashes.  Make it
+# wait at least as long as we may wait before declaring a time out
+# failure.
+set options { "additional_flags=-DTIMEOUT=$timeout" debug pthreads }
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile $options] == -1} {
     return -1
 }
 

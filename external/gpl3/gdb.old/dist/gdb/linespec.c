@@ -246,6 +246,7 @@ typedef enum ls_token_type linespec_token_type;
 /* List of keywords  */
 
 static const char * const linespec_keywords[] = { "if", "thread", "task" };
+#define IF_KEYWORD_INDEX 0
 
 /* A token of the linespec lexer  */
 
@@ -289,11 +290,6 @@ struct ls_parser
 
   /* Is the entire linespec quote-enclosed?  */
   int is_quote_enclosed;
-
-  /* Is a keyword syntactically valid at this point?
-     In, e.g., "break thread thread 1", the leading "keyword" must not
-     be interpreted as such.  */
-  int keyword_ok;
 
   /* The state of the parse.  */
   struct linespec_state state;
@@ -418,10 +414,9 @@ linespec_lexer_lex_number (linespec_parser *parser, linespec_token *tokenp)
   return 1;
 }
 
-/* Does P represent one of the keywords?  If so, return
-   the keyword.  If not, return NULL.  */
+/* See linespec.h.  */
 
-static const char *
+const char *
 linespec_lexer_lex_keyword (const char *p)
 {
   int i;
@@ -433,11 +428,34 @@ linespec_lexer_lex_keyword (const char *p)
 	  int len = strlen (linespec_keywords[i]);
 
 	  /* If P begins with one of the keywords and the next
-	     character is not a valid identifier character,
-	     we have found a keyword.  */
+	     character is whitespace, we may have found a keyword.
+	     It is only a keyword if it is not followed by another
+	     keyword.  */
 	  if (strncmp (p, linespec_keywords[i], len) == 0
-	      && !(isalnum (p[len]) || p[len] == '_'))
-	    return linespec_keywords[i];
+	      && isspace (p[len]))
+	    {
+	      int j;
+
+	      /* Special case: "if" ALWAYS stops the lexer, since it
+		 is not possible to predict what is going to appear in
+		 the condition, which can only be parsed after SaLs have
+		 been found.  */
+	      if (i != IF_KEYWORD_INDEX)
+		{
+		  p += len;
+		  p = skip_spaces_const (p);
+		  for (j = 0; j < ARRAY_SIZE (linespec_keywords); ++j)
+		    {
+		      int nextlen = strlen (linespec_keywords[j]);
+
+		      if (strncmp (p, linespec_keywords[j], nextlen) == 0
+			  && isspace (p[nextlen]))
+			return NULL;
+		    }
+		}
+
+	      return linespec_keywords[i];
+	    }
 	}
     }
 
@@ -454,8 +472,7 @@ is_ada_operator (const char *string)
 
   for (mapping = ada_opname_table;
        mapping->encoded != NULL
-	 && strncmp (mapping->decoded, string,
-		     strlen (mapping->decoded)) != 0; ++mapping)
+	 && !startswith (string, mapping->decoded); ++mapping)
     ;
 
   return mapping->decoded == NULL ? 0 : strlen (mapping->decoded);
@@ -735,13 +752,16 @@ linespec_lexer_lex_one (linespec_parser *parser)
       PARSER_STREAM (parser) = skip_spaces_const (PARSER_STREAM (parser));
 
       /* Check for a keyword, they end the linespec.  */
-      keyword = NULL;
-      if (parser->keyword_ok)
-	keyword = linespec_lexer_lex_keyword (PARSER_STREAM (parser));
+      keyword = linespec_lexer_lex_keyword (PARSER_STREAM (parser));
       if (keyword != NULL)
 	{
 	  parser->lexer.current.type = LSTOKEN_KEYWORD;
 	  LS_TOKEN_KEYWORD (parser->lexer.current) = keyword;
+	  /* We do not advance the stream here intentionally:
+	     we would like lexing to stop when a keyword is seen.
+
+	     PARSER_STREAM (parser) +=  strlen (keyword);  */
+
 	  return parser->lexer.current;
 	}
 
@@ -1028,7 +1048,7 @@ iterate_over_all_matching_symtabs (struct linespec_state *state,
       if (objfile->sf)
 	objfile->sf->qf->expand_symtabs_matching (objfile, NULL,
 						  iterate_name_matcher,
-						  ALL_DOMAIN,
+						  NULL, ALL_DOMAIN,
 						  &matcher_data);
 
       ALL_OBJFILE_COMPUNITS (objfile, cu)
@@ -1122,9 +1142,9 @@ find_methods (struct type *t, const char *name,
 	  const char *method_name = TYPE_FN_FIELDLIST_NAME (t, method_counter);
 	  char dem_opname[64];
 
-	  if (strncmp (method_name, "__", 2) == 0 ||
-	      strncmp (method_name, "op", 2) == 0 ||
-	      strncmp (method_name, "type", 4) == 0)
+	  if (startswith (method_name, "__") ||
+	      startswith (method_name, "op") ||
+	      startswith (method_name, "type"))
 	    {
 	      if (cplus_demangle_opname (method_name, dem_opname, DMGL_ANSI))
 		method_name = dem_opname;
@@ -1210,7 +1230,7 @@ find_toplevel_string (const char *haystack, const char *needle)
       if (s != NULL)
 	{
 	  /* Found first char in HAYSTACK;  check rest of string.  */
-	  if (strncmp (s, needle, strlen (needle)) == 0)
+	  if (startswith (s, needle))
 	    return s;
 
 	  /* Didn't find it; loop over HAYSTACK, looking for the next
@@ -2154,7 +2174,7 @@ parse_linespec (linespec_parser *parser, const char **argptr)
 {
   linespec_token token;
   struct symtabs_and_lines values;
-  volatile struct gdb_exception file_exception;
+  struct gdb_exception file_exception = exception_none;
   struct cleanup *cleanup;
 
   /* A special case to start.  It has become quite popular for
@@ -2176,13 +2196,8 @@ parse_linespec (linespec_parser *parser, const char **argptr)
 	}
     }
 
-  /* A keyword at the start cannot be interpreted as such.
-     Consider "b thread thread 42".  */
-  parser->keyword_ok = 0;
-
   parser->lexer.saved_arg = *argptr;
   parser->lexer.stream = argptr;
-  file_exception.reason = 0;
 
   /* Initialize the default symtab and line offset.  */
   initialize_defaults (&PARSER_STATE (parser)->default_symtab,
@@ -2252,9 +2267,6 @@ parse_linespec (linespec_parser *parser, const char **argptr)
   else if (token.type != LSTOKEN_STRING && token.type != LSTOKEN_NUMBER)
     unexpected_linespec_error (parser);
 
-  /* Now we can recognize keywords.  */
-  parser->keyword_ok = 1;
-
   /* Shortcut: If the next token is not LSTOKEN_COLON, we know that
      this token cannot represent a filename.  */
   token = linespec_lexer_peek_token (parser);
@@ -2268,11 +2280,16 @@ parse_linespec (linespec_parser *parser, const char **argptr)
       user_filename = copy_token_string (token);
 
       /* Check if the input is a filename.  */
-      TRY_CATCH (file_exception, RETURN_MASK_ERROR)
+      TRY
 	{
 	  PARSER_RESULT (parser)->file_symtabs
 	    = symtabs_from_filename (user_filename);
 	}
+      CATCH (ex, RETURN_MASK_ERROR)
+	{
+	  file_exception = ex;
+	}
+      END_CATCH
 
       if (file_exception.reason >= 0)
 	{
@@ -3103,7 +3120,6 @@ find_linespec_symbols (struct linespec_state *state,
   struct cleanup *cleanup;
   char *canon;
   const char *lookup_name;
-  volatile struct gdb_exception except;
 
   cleanup = demangle_for_lookup (name, state->language->la_language,
 				 &lookup_name);
@@ -3191,7 +3207,7 @@ find_linespec_symbols (struct linespec_state *state,
       if (!VEC_empty (symbolp, classes))
 	{
 	  /* Now locate a list of suitable methods named METHOD.  */
-	  TRY_CATCH (except, RETURN_MASK_ERROR)
+	  TRY
 	    {
 	      find_method (state, file_symtabs, klass, method, classes,
 			   symbols, minsyms);
@@ -3199,8 +3215,12 @@ find_linespec_symbols (struct linespec_state *state,
 
 	  /* If successful, we're done.  If NOT_FOUND_ERROR
 	     was not thrown, rethrow the exception that we did get.  */
-	  if (except.reason < 0 && except.error != NOT_FOUND_ERROR)
-	    throw_exception (except);
+	  CATCH (except, RETURN_MASK_ERROR)
+	    {
+	      if (except.error != NOT_FOUND_ERROR)
+		throw_exception (except);
+	    }
+	  END_CATCH
 	}
     }
 
@@ -3412,7 +3432,9 @@ collect_symbols (struct symbol *sym, void *data)
 }
 
 /* We've found a minimal symbol MSYMBOL in OBJFILE to associate with our
-   linespec; return the SAL in RESULT.  */
+   linespec; return the SAL in RESULT.  This function should return SALs
+   matching those from find_function_start_sal, otherwise false
+   multiple-locations breakpoints could be placed.  */
 
 static void
 minsym_found (struct linespec_state *self, struct objfile *objfile,
@@ -3434,7 +3456,23 @@ minsym_found (struct linespec_state *self, struct objfile *objfile,
     sal = find_pc_sect_line (pc, NULL, 0);
 
   if (self->funfirstline)
-    skip_prologue_sal (&sal);
+    {
+      if (sal.symtab != NULL
+	  && (COMPUNIT_LOCATIONS_VALID (SYMTAB_COMPUNIT (sal.symtab))
+	      || SYMTAB_LANGUAGE (sal.symtab) == language_asm))
+	{
+	  /* If gdbarch_convert_from_func_ptr_addr does not apply then
+	     sal.SECTION, sal.LINE&co. will stay correct from above.
+	     If gdbarch_convert_from_func_ptr_addr applies then
+	     sal.SECTION is cleared from above and sal.LINE&co. will
+	     stay correct from the last find_pc_sect_line above.  */
+	  sal.pc = MSYMBOL_VALUE_ADDRESS (objfile, msymbol);
+	  sal.pc = gdbarch_convert_from_func_ptr_addr (gdbarch, sal.pc,
+						       &current_target);
+	}
+      else
+	skip_prologue_sal (&sal);
+    }
 
   if (maybe_add_address (self->addr_set, objfile->pspace, sal.pc))
     add_sal_to_sals (self, result, &sal, MSYMBOL_NATURAL_NAME (msymbol), 0);

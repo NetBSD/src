@@ -22,6 +22,9 @@
 #include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/* pthread_yield is a GNU extension.  */
+#define _GNU_SOURCE
 #include <pthread.h>
 
 #include <asm/unistd.h>

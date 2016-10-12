@@ -621,9 +621,47 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
   CORE_ADDR cur_sp = cache->sp;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  int j;
+  int first = 1;
 
-  for (j = 0; ; j++)
+  /* There are at least 3 possibilities to share an unwind info entry:
+     1. Two different runtime_function entries (in .pdata) can point to the
+	same unwind info entry.  There is no such indication while unwinding,
+	so we don't really care about that case.  We suppose this scheme is
+	used to save memory when the unwind entries are exactly the same.
+     2. Chained unwind_info entries, with no unwind codes (no prologue).
+	There is a major difference with the previous case: the pc range for
+	the function is different (in case 1, the pc range comes from the
+	runtime_function entry; in case 2, the pc range for the chained entry
+	comes from the first unwind entry).  Case 1 cannot be used instead as
+	the pc is not in the prologue.  This case is officially documented.
+	(There might be unwind code in the first unwind entry to handle
+	additional unwinding).  GCC (at least until gcc 5.0) doesn't chain
+	entries.
+     3. Undocumented unwind info redirection.  Hard to know the exact purpose,
+	so it is considered as a memory optimization of case 2.
+  */
+
+  if (unwind_info & 1)
+    {
+      /* Unofficially documented unwind info redirection, when UNWIND_INFO
+	 address is odd (http://www.codemachine.com/article_x64deepdive.html).
+      */
+      struct external_pex64_runtime_function d;
+      CORE_ADDR sa, ea;
+
+      if (target_read_memory (cache->image_base + (unwind_info & ~1),
+			      (gdb_byte *) &d, sizeof (d)) != 0)
+	return;
+
+      cache->start_rva
+	= extract_unsigned_integer (d.rva_BeginAddress, 4, byte_order);
+      cache->end_rva
+	= extract_unsigned_integer (d.rva_EndAddress, 4, byte_order);
+      unwind_info
+	= extract_unsigned_integer (d.rva_UnwindData, 4, byte_order);
+    }
+
+  while (1)
     {
       struct external_pex64_unwind_info ex_ui;
       /* There are at most 256 16-bit unwind insns.  */
@@ -633,6 +671,7 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
       unsigned char codes_count;
       unsigned char frame_reg;
       unsigned char frame_off;
+      CORE_ADDR start;
 
       /* Read and decode header.  */
       if (target_read_memory (cache->image_base + unwind_info,
@@ -653,12 +692,13 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 	  && PEX64_UWI_VERSION (ex_ui.Version_Flags) != 2)
 	return;
 
-      if (j == 0
-	  && (cache->pc >=
-	      cache->image_base + cache->start_rva + ex_ui.SizeOfPrologue))
+      start = cache->image_base + cache->start_rva;
+      if (first
+	  && !(cache->pc >= start && cache->pc < start + ex_ui.SizeOfPrologue))
 	{
-	  /* Not in the prologue.  We want to detect if the PC points to an
-	     epilogue. If so, the epilogue detection+decoding function is
+	  /* We want to detect if the PC points to an epilogue.  This needs
+	     to be checked only once, and an epilogue can be anywhere but in
+	     the prologue.  If so, the epilogue detection+decoding function is
 	     sufficient.  Otherwise, the unwinder will consider that the PC
 	     is in the body of the function and will need to decode unwind
 	     info.  */
@@ -711,18 +751,23 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 	{
 	  int reg;
 
-	  if (frame_debug)
-	    fprintf_unfiltered
-	      (gdb_stdlog, "   op #%u: off=0x%02x, insn=0x%02x\n",
-	       (unsigned) (p - insns), p[0], p[1]);
-
-	  /* Virtually execute the operation.  */
-	  if (cache->pc >= cache->image_base + cache->start_rva + p[0])
+	  /* Virtually execute the operation if the pc is after the
+	     corresponding instruction (that does matter in case of break
+	     within the prologue).  Note that for chained info (!first), the
+	     prologue has been fully executed.  */
+	  if (cache->pc >= start + p[0] || cache->pc < start)
 	    {
+	      if (frame_debug)
+		fprintf_unfiltered
+		  (gdb_stdlog, "   op #%u: off=0x%02x, insn=0x%02x\n",
+		   (unsigned) (p - insns), p[0], p[1]);
+
 	      /* If there is no frame registers defined, the current value of
 		 rsp is used instead.  */
 	      if (frame_reg == 0)
 		save_addr = cur_sp;
+
+	      reg = -1;
 
 	      switch (PEX64_UNWCODE_CODE (p[1]))
 		{
@@ -751,12 +796,12 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 		case UWOP_SAVE_NONVOL:
 		  reg = amd64_windows_w2gdb_regnum[PEX64_UNWCODE_INFO (p[1])];
 		  cache->prev_reg_addr[reg] = save_addr
-		    - 8 * extract_unsigned_integer (p + 2, 2, byte_order);
+		    + 8 * extract_unsigned_integer (p + 2, 2, byte_order);
 		  break;
 		case UWOP_SAVE_NONVOL_FAR:
 		  reg = amd64_windows_w2gdb_regnum[PEX64_UNWCODE_INFO (p[1])];
 		  cache->prev_reg_addr[reg] = save_addr
-		    - 8 * extract_unsigned_integer (p + 2, 4, byte_order);
+		    + 8 * extract_unsigned_integer (p + 2, 4, byte_order);
 		  break;
 		case UWOP_SAVE_XMM128:
 		  cache->prev_xmm_addr[PEX64_UNWCODE_INFO (p[1])] =
@@ -787,6 +832,13 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 		default:
 		  return;
 		}
+
+	      /* Display address where the register was saved.  */
+	      if (frame_debug && reg >= 0)
+		fprintf_unfiltered
+		  (gdb_stdlog, "     [reg %s at %s]\n",
+		   gdbarch_register_name (gdbarch, reg),
+		   paddress (gdbarch, cache->prev_reg_addr[reg]));
 	    }
 
 	  /* Adjust with the length of the opcode.  */
@@ -818,19 +870,29 @@ amd64_windows_frame_decode_insns (struct frame_info *this_frame,
 	    }
 	}
       if (PEX64_UWI_FLAGS (ex_ui.Version_Flags) != UNW_FLAG_CHAININFO)
-	break;
+	{
+	  /* End of unwind info.  */
+	  break;
+	}
       else
 	{
 	  /* Read the chained unwind info.  */
 	  struct external_pex64_runtime_function d;
 	  CORE_ADDR chain_vma;
 
+	  /* Not anymore the first entry.  */
+	  first = 0;
+
+	  /* Stay aligned on word boundary.  */
 	  chain_vma = cache->image_base + unwind_info
 	    + sizeof (ex_ui) + ((codes_count + 1) & ~1) * 2;
 
 	  if (target_read_memory (chain_vma, (gdb_byte *) &d, sizeof (d)) != 0)
 	    return;
 
+	  /* Decode begin/end.  This may be different from .pdata index, as
+	     an unwind info may be shared by several functions (in particular
+	     if many functions have the same prolog and handler.  */
 	  cache->start_rva =
 	    extract_unsigned_integer (d.rva_BeginAddress, 4, byte_order);
 	  cache->end_rva =
@@ -940,25 +1002,6 @@ amd64_windows_find_unwind_info (struct gdbarch *gdbarch, CORE_ADDR pc,
        "amd64_windows_find_unwind_data:  image_base=%s, unwind_data=%s\n",
        paddress (gdbarch, base), paddress (gdbarch, *unwind_info));
 
-  if (*unwind_info & 1)
-    {
-      /* Unofficially documented unwind info redirection, when UNWIND_INFO
-	 address is odd (http://www.codemachine.com/article_x64deepdive.html).
-      */
-      struct external_pex64_runtime_function d;
-      CORE_ADDR sa, ea;
-
-      if (target_read_memory (base + (*unwind_info & ~1),
-			      (gdb_byte *) &d, sizeof (d)) != 0)
-	return -1;
-
-      *start_rva =
-	extract_unsigned_integer (d.rva_BeginAddress, 4, byte_order);
-      *end_rva = extract_unsigned_integer (d.rva_EndAddress, 4, byte_order);
-      *unwind_info =
-	extract_unsigned_integer (d.rva_UnwindData, 4, byte_order);
-
-    }
   return 0;
 }
 
@@ -1157,8 +1200,8 @@ amd64_windows_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 
       if (symname)
 	{
-	  if (strncmp (symname, "__imp_", 6) == 0
-	      || strncmp (symname, "_imp_", 5) == 0)
+	  if (startswith (symname, "__imp_")
+	      || startswith (symname, "_imp_"))
 	    destination
 	      = read_memory_unsigned_integer (indirect_addr, 8, byte_order);
 	}

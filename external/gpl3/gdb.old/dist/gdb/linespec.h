@@ -152,4 +152,8 @@ extern struct symtabs_and_lines decode_line_with_current_source (char *, int);
 
 extern struct symtabs_and_lines decode_line_with_last_displayed (char *, int);
 
+/* Does P represent one of the keywords?  If so, return
+   the keyword.  If not, return NULL.  */
+
+extern const char *linespec_lexer_lex_keyword (const char *p);
 #endif /* defined (LINESPEC_H) */

@@ -30,7 +30,7 @@
 #include "inferior.h"
 #include <sys/stat.h>
 #include "inf-child.h"
-#include "gdb/fileio.h"
+#include "fileio.h"
 #include "agent.h"
 #include "gdb_wait.h"
 #include "filestuff.h"
@@ -204,121 +204,34 @@ inf_child_pid_to_exec_file (struct target_ops *self, int pid)
   return NULL;
 }
 
+/* Implementation of to_fileio_open.  */
 
-/* Target file operations.  */
-
-static int
-inf_child_fileio_open_flags_to_host (int fileio_open_flags, int *open_flags_p)
-{
-  int open_flags = 0;
-
-  if (fileio_open_flags & ~FILEIO_O_SUPPORTED)
-    return -1;
-
-  if (fileio_open_flags & FILEIO_O_CREAT)
-    open_flags |= O_CREAT;
-  if (fileio_open_flags & FILEIO_O_EXCL)
-    open_flags |= O_EXCL;
-  if (fileio_open_flags & FILEIO_O_TRUNC)
-    open_flags |= O_TRUNC;
-  if (fileio_open_flags & FILEIO_O_APPEND)
-    open_flags |= O_APPEND;
-  if (fileio_open_flags & FILEIO_O_RDONLY)
-    open_flags |= O_RDONLY;
-  if (fileio_open_flags & FILEIO_O_WRONLY)
-    open_flags |= O_WRONLY;
-  if (fileio_open_flags & FILEIO_O_RDWR)
-    open_flags |= O_RDWR;
-/* On systems supporting binary and text mode, always open files in
-   binary mode. */
-#ifdef O_BINARY
-  open_flags |= O_BINARY;
-#endif
-
-  *open_flags_p = open_flags;
-  return 0;
-}
-
-static int
-inf_child_errno_to_fileio_error (int errnum)
-{
-  switch (errnum)
-    {
-      case EPERM:
-        return FILEIO_EPERM;
-      case ENOENT:
-        return FILEIO_ENOENT;
-      case EINTR:
-        return FILEIO_EINTR;
-      case EIO:
-        return FILEIO_EIO;
-      case EBADF:
-        return FILEIO_EBADF;
-      case EACCES:
-        return FILEIO_EACCES;
-      case EFAULT:
-        return FILEIO_EFAULT;
-      case EBUSY:
-        return FILEIO_EBUSY;
-      case EEXIST:
-        return FILEIO_EEXIST;
-      case ENODEV:
-        return FILEIO_ENODEV;
-      case ENOTDIR:
-        return FILEIO_ENOTDIR;
-      case EISDIR:
-        return FILEIO_EISDIR;
-      case EINVAL:
-        return FILEIO_EINVAL;
-      case ENFILE:
-        return FILEIO_ENFILE;
-      case EMFILE:
-        return FILEIO_EMFILE;
-      case EFBIG:
-        return FILEIO_EFBIG;
-      case ENOSPC:
-        return FILEIO_ENOSPC;
-      case ESPIPE:
-        return FILEIO_ESPIPE;
-      case EROFS:
-        return FILEIO_EROFS;
-      case ENOSYS:
-        return FILEIO_ENOSYS;
-      case ENAMETOOLONG:
-        return FILEIO_ENAMETOOLONG;
-    }
-  return FILEIO_EUNKNOWN;
-}
-
-/* Open FILENAME on the target, using FLAGS and MODE.  Return a
-   target file descriptor, or -1 if an error occurs (and set
-   *TARGET_ERRNO).  */
 static int
 inf_child_fileio_open (struct target_ops *self,
-		       const char *filename, int flags, int mode,
+		       struct inferior *inf, const char *filename,
+		       int flags, int mode, int warn_if_slow,
 		       int *target_errno)
 {
   int nat_flags;
+  mode_t nat_mode;
   int fd;
 
-  if (inf_child_fileio_open_flags_to_host (flags, &nat_flags) == -1)
+  if (fileio_to_host_openflags (flags, &nat_flags) == -1
+      || fileio_to_host_mode (mode, &nat_mode) == -1)
     {
       *target_errno = FILEIO_EINVAL;
       return -1;
     }
 
-  /* We do not need to convert MODE, since the fileio protocol uses
-     the standard values.  */
-  fd = gdb_open_cloexec (filename, nat_flags, mode);
+  fd = gdb_open_cloexec (filename, nat_flags, nat_mode);
   if (fd == -1)
-    *target_errno = inf_child_errno_to_fileio_error (errno);
+    *target_errno = host_to_fileio_error (errno);
 
   return fd;
 }
 
-/* Write up to LEN bytes from WRITE_BUF to FD on the target.
-   Return the number of bytes written, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* Implementation of to_fileio_pwrite.  */
+
 static int
 inf_child_fileio_pwrite (struct target_ops *self,
 			 int fd, const gdb_byte *write_buf, int len,
@@ -340,14 +253,13 @@ inf_child_fileio_pwrite (struct target_ops *self,
     }
 
   if (ret == -1)
-    *target_errno = inf_child_errno_to_fileio_error (errno);
+    *target_errno = host_to_fileio_error (errno);
 
   return ret;
 }
 
-/* Read up to LEN bytes FD on the target into READ_BUF.
-   Return the number of bytes read, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* Implementation of to_fileio_pread.  */
+
 static int
 inf_child_fileio_pread (struct target_ops *self,
 			int fd, gdb_byte *read_buf, int len,
@@ -369,13 +281,28 @@ inf_child_fileio_pread (struct target_ops *self,
     }
 
   if (ret == -1)
-    *target_errno = inf_child_errno_to_fileio_error (errno);
+    *target_errno = host_to_fileio_error (errno);
 
   return ret;
 }
 
-/* Close FD on the target.  Return 0, or -1 if an error occurs
-   (and set *TARGET_ERRNO).  */
+/* Implementation of to_fileio_fstat.  */
+
+static int
+inf_child_fileio_fstat (struct target_ops *self, int fd,
+			struct stat *sb, int *target_errno)
+{
+  int ret;
+
+  ret = fstat (fd, sb);
+  if (ret == -1)
+    *target_errno = host_to_fileio_error (errno);
+
+  return ret;
+}
+
+/* Implementation of to_fileio_close.  */
+
 static int
 inf_child_fileio_close (struct target_ops *self, int fd, int *target_errno)
 {
@@ -383,32 +310,33 @@ inf_child_fileio_close (struct target_ops *self, int fd, int *target_errno)
 
   ret = close (fd);
   if (ret == -1)
-    *target_errno = inf_child_errno_to_fileio_error (errno);
+    *target_errno = host_to_fileio_error (errno);
 
   return ret;
 }
 
-/* Unlink FILENAME on the target.  Return 0, or -1 if an error
-   occurs (and set *TARGET_ERRNO).  */
+/* Implementation of to_fileio_unlink.  */
+
 static int
 inf_child_fileio_unlink (struct target_ops *self,
-			 const char *filename, int *target_errno)
+			 struct inferior *inf, const char *filename,
+			 int *target_errno)
 {
   int ret;
 
   ret = unlink (filename);
   if (ret == -1)
-    *target_errno = inf_child_errno_to_fileio_error (errno);
+    *target_errno = host_to_fileio_error (errno);
 
   return ret;
 }
 
-/* Read value of symbolic link FILENAME on the target.  Return a
-   null-terminated string allocated via xmalloc, or NULL if an error
-   occurs (and set *TARGET_ERRNO).  */
+/* Implementation of to_fileio_readlink.  */
+
 static char *
 inf_child_fileio_readlink (struct target_ops *self,
-			   const char *filename, int *target_errno)
+			   struct inferior *inf, const char *filename,
+			   int *target_errno)
 {
   /* We support readlink only on systems that also provide a compile-time
      maximum path length (PATH_MAX), at least for now.  */
@@ -420,7 +348,7 @@ inf_child_fileio_readlink (struct target_ops *self,
   len = readlink (filename, buf, sizeof buf);
   if (len < 0)
     {
-      *target_errno = inf_child_errno_to_fileio_error (errno);
+      *target_errno = host_to_fileio_error (errno);
       return NULL;
     }
 
@@ -500,6 +428,7 @@ inf_child_target (void)
   t->to_fileio_open = inf_child_fileio_open;
   t->to_fileio_pwrite = inf_child_fileio_pwrite;
   t->to_fileio_pread = inf_child_fileio_pread;
+  t->to_fileio_fstat = inf_child_fileio_fstat;
   t->to_fileio_close = inf_child_fileio_close;
   t->to_fileio_unlink = inf_child_fileio_unlink;
   t->to_fileio_readlink = inf_child_fileio_readlink;

@@ -116,7 +116,7 @@ cache. */\n\
       lf_putstr (file, "/* prime the main loop */\n");
       lf_putstr (file, "SIM_ASSERT (current_cpu == 0);\n");
       lf_putstr (file, "SIM_ASSERT (nr_cpus == 1);\n");
-      lf_putstr (file, "cia = CIA_GET (CPU);\n");
+      lf_putstr (file, "cia = CPU_PC_GET (CPU);\n");
 
       lf_putstr (file, "\n");
       lf_putstr (file, "while (1)\n");
@@ -202,9 +202,9 @@ cache. */\n\
       lf_putstr (file, "/* process any events */\n");
       lf_putstr (file, "if (sim_events_tick (sd))\n");
       lf_putstr (file, "  {\n");
-      lf_putstr (file, "    CIA_SET (CPU, cia);\n");
+      lf_putstr (file, "    CPU_PC_SET (CPU, cia);\n");
       lf_putstr (file, "    sim_events_process (sd);\n");
-      lf_putstr (file, "    cia = CIA_GET (CPU);\n");
+      lf_putstr (file, "    cia = CPU_PC_GET (CPU);\n");
       lf_putstr (file, "  }\n");
 
       lf_indent (file, -4);
@@ -236,7 +236,7 @@ after all the other CPU's and the event queue have been processed */\n\
       lf_putstr (file, "  {\n");
       lf_indent (file, +4);
       lf_putstr (file, "sim_cpu *cpu = STATE_CPU (sd, current_cpu);\n");
-      lf_putstr (file, "instruction_address cia = CIA_GET (cpu);\n");
+      lf_putstr (file, "instruction_address cia = CPU_PC_GET (cpu);\n");
       lf_putstr (file, "\n");
 
       if (!options.gen.icache)
@@ -245,7 +245,7 @@ after all the other CPU's and the event queue have been processed */\n\
 		     options.insn_bit_size);
 	  print_engine_issue_prefix_hook (file);
 	  print_idecode_body (file, table, "cia =");
-	  lf_putstr (file, "CIA_SET (cpu, cia);\n");
+	  lf_putstr (file, "CPU_PC_SET (cpu, cia);\n");
 	  print_engine_issue_postfix_hook (file);
 	}
 

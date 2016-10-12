@@ -44,16 +44,6 @@ proc test_gdb_no_completion { expr } {
     gdb_test_no_output "complete p $expr"
 }
 
-# A convenience function that joins all the arguments together,
-# with a regexp that matches zero-or-more end of lines in between
-# each argument.  This function is ideal to write the expected output
-# of a GDB command that generates more than a couple of lines, as
-# this allows us to write each line as a separate string, which is
-# easier to read by a human being.
-
-proc multi_line { args } {
-    return [join $args "\[\r\n\]*"]
-}
 # Try a global variable, only one match should be found:
 
 test_gdb_complete "my_glob" \

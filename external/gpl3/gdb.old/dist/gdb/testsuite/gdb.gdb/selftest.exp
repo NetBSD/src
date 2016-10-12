@@ -288,9 +288,13 @@ proc test_with_self { executable } {
 	return -1
     }
 
+    # When GDB is built as a C++ program, disassemble shows the full
+    # prototype.
+    set cxx_main_args_re [string_to_regexp "(int, char**)"]
+
     # disassemble yourself
     gdb_test "x/10i main" \
-	    "x/10i.*main.*main.$decimal.*main.$decimal.*" \
+	    "x/10i.*main.*main($cxx_main_args_re)?.$decimal.*main($cxx_main_args_re)?.$decimal.*" \
 	    "Disassemble main"
 
     # Set a breakpoint at main

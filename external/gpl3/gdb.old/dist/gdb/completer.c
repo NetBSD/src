@@ -26,6 +26,7 @@
 #include "target.h"
 #include "reggroups.h"
 #include "user-regs.h"
+#include "arch-utils.h"
 
 #include "cli/cli-decode.h"
 
@@ -395,18 +396,21 @@ expression_completer (struct cmd_list_element *ignore,
   struct type *type = NULL;
   char *fieldname;
   const char *p;
-  volatile struct gdb_exception except;
   enum type_code code = TYPE_CODE_UNDEF;
 
   /* Perform a tentative parse of the expression, to see whether a
      field completion is required.  */
   fieldname = NULL;
-  TRY_CATCH (except, RETURN_MASK_ERROR)
+  TRY
     {
       type = parse_expression_for_completion (text, &fieldname, &code);
     }
-  if (except.reason < 0)
-    return NULL;
+  CATCH (except, RETURN_MASK_ERROR)
+    {
+      return NULL;
+    }
+  END_CATCH
+
   if (fieldname && type)
     {
       for (;;)
@@ -781,9 +785,86 @@ complete_line_internal (const char *text,
 
   return list;
 }
-/* Generate completions all at once.  Returns a vector of strings.
-   Each element is allocated with xmalloc.  It can also return NULL if
-   there are no completions.
+
+/* See completer.h.  */
+
+int max_completions = 200;
+
+/* See completer.h.  */
+
+completion_tracker_t
+new_completion_tracker (void)
+{
+  if (max_completions <= 0)
+    return NULL;
+
+  return htab_create_alloc (max_completions,
+			    htab_hash_string, (htab_eq) streq,
+			    NULL, xcalloc, xfree);
+}
+
+/* Cleanup routine to free a completion tracker and reset the pointer
+   to NULL.  */
+
+static void
+free_completion_tracker (void *p)
+{
+  completion_tracker_t *tracker_ptr = p;
+
+  htab_delete (*tracker_ptr);
+  *tracker_ptr = NULL;
+}
+
+/* See completer.h.  */
+
+struct cleanup *
+make_cleanup_free_completion_tracker (completion_tracker_t *tracker_ptr)
+{
+  if (*tracker_ptr == NULL)
+    return make_cleanup (null_cleanup, NULL);
+
+  return make_cleanup (free_completion_tracker, tracker_ptr);
+}
+
+/* See completer.h.  */
+
+enum maybe_add_completion_enum
+maybe_add_completion (completion_tracker_t tracker, char *name)
+{
+  void **slot;
+
+  if (max_completions < 0)
+    return MAYBE_ADD_COMPLETION_OK;
+  if (max_completions == 0)
+    return MAYBE_ADD_COMPLETION_MAX_REACHED;
+
+  gdb_assert (tracker != NULL);
+
+  if (htab_elements (tracker) >= max_completions)
+    return MAYBE_ADD_COMPLETION_MAX_REACHED;
+
+  slot = htab_find_slot (tracker, name, INSERT);
+
+  if (*slot != HTAB_EMPTY_ENTRY)
+    return MAYBE_ADD_COMPLETION_DUPLICATE;
+
+  *slot = name;
+
+  return (htab_elements (tracker) < max_completions
+	  ? MAYBE_ADD_COMPLETION_OK
+	  : MAYBE_ADD_COMPLETION_OK_MAX_REACHED);
+}
+
+void
+throw_max_completions_reached_error (void)
+{
+  throw_error (MAX_COMPLETIONS_REACHED_ERROR, _("Max completions reached."));
+}
+
+/* Generate completions all at once.  Returns a vector of unique strings
+   allocated with xmalloc.  Returns NULL if there are no completions
+   or if max_completions is 0.  If max_completions is non-negative, this will
+   return at most max_completions strings.
 
    TEXT is the caller's idea of the "word" we are looking at.
 
@@ -796,8 +877,58 @@ complete_line_internal (const char *text,
 VEC (char_ptr) *
 complete_line (const char *text, const char *line_buffer, int point)
 {
-  return complete_line_internal (text, line_buffer, 
-				 point, handle_completions);
+  VEC (char_ptr) *list;
+  VEC (char_ptr) *result = NULL;
+  struct cleanup *cleanups;
+  completion_tracker_t tracker;
+  char *candidate;
+  int ix, max_reached;
+
+  if (max_completions == 0)
+    return NULL;
+  list = complete_line_internal (text, line_buffer, point,
+				 handle_completions);
+  if (max_completions < 0)
+    return list;
+
+  tracker = new_completion_tracker ();
+  cleanups = make_cleanup_free_completion_tracker (&tracker);
+  make_cleanup_free_char_ptr_vec (list);
+
+  /* Do a final test for too many completions.  Individual completers may
+     do some of this, but are not required to.  Duplicates are also removed
+     here.  Otherwise the user is left scratching his/her head: readline and
+     complete_command will remove duplicates, and if removal of duplicates
+     there brings the total under max_completions the user may think gdb quit
+     searching too early.  */
+
+  for (ix = 0, max_reached = 0;
+       !max_reached && VEC_iterate (char_ptr, list, ix, candidate);
+       ++ix)
+    {
+      enum maybe_add_completion_enum add_status;
+
+      add_status = maybe_add_completion (tracker, candidate);
+
+      switch (add_status)
+	{
+	  case MAYBE_ADD_COMPLETION_OK:
+	    VEC_safe_push (char_ptr, result, xstrdup (candidate));
+	    break;
+	  case MAYBE_ADD_COMPLETION_OK_MAX_REACHED:
+	    VEC_safe_push (char_ptr, result, xstrdup (candidate));
+	    max_reached = 1;
+	    break;
+      	  case MAYBE_ADD_COMPLETION_MAX_REACHED:
+	    gdb_assert_not_reached ("more than max completions reached");
+	  case MAYBE_ADD_COMPLETION_DUPLICATE:
+	    break;
+	}
+    }
+
+  do_cleanups (cleanups);
+
+  return result;
 }
 
 /* Complete on command names.  Used by "help".  */
@@ -817,7 +948,7 @@ signal_completer (struct cmd_list_element *ignore,
 {
   VEC (char_ptr) *return_val = NULL;
   size_t len = strlen (word);
-  enum gdb_signal signum;
+  int signum;
   const char *signame;
 
   for (signum = GDB_SIGNAL_FIRST; signum != GDB_SIGNAL_LAST; ++signum)
@@ -826,7 +957,7 @@ signal_completer (struct cmd_list_element *ignore,
       if (signum == GDB_SIGNAL_0)
 	continue;
 
-      signame = gdb_signal_to_name (signum);
+      signame = gdb_signal_to_name ((enum gdb_signal) signum);
 
       /* Ignore the unknown signal case.  */
       if (!signame || strcmp (signame, "?") == 0)
@@ -839,44 +970,82 @@ signal_completer (struct cmd_list_element *ignore,
   return return_val;
 }
 
-/* Complete on a register or reggroup.  */
+/* Bit-flags for selecting what the register and/or register-group
+   completer should complete on.  */
 
-VEC (char_ptr) *
-reg_or_group_completer (struct cmd_list_element *ignore,
-			const char *text, const char *word)
+enum reg_completer_targets
+  {
+    complete_register_names = 0x1,
+    complete_reggroup_names = 0x2
+  };
+
+/* Complete register names and/or reggroup names based on the value passed
+   in TARGETS.  At least one bit in TARGETS must be set.  */
+
+static VEC (char_ptr) *
+reg_or_group_completer_1 (struct cmd_list_element *ignore,
+			  const char *text, const char *word,
+			  enum reg_completer_targets targets)
 {
   VEC (char_ptr) *result = NULL;
   size_t len = strlen (word);
   struct gdbarch *gdbarch;
-  struct reggroup *group;
   const char *name;
-  int i;
 
-  if (!target_has_registers)
-    return result;
+  gdb_assert ((targets & (complete_register_names
+			  | complete_reggroup_names)) != 0);
+  gdbarch = get_current_arch ();
 
-  gdbarch = get_frame_arch (get_selected_frame (NULL));
-
-  for (i = 0;
-       (name = user_reg_map_regnum_to_name (gdbarch, i)) != NULL;
-       i++)
+  if ((targets & complete_register_names) != 0)
     {
-      if (*name != '\0' && strncmp (word, name, len) == 0)
-	VEC_safe_push (char_ptr, result, xstrdup (name));
+      int i;
+
+      for (i = 0;
+	   (name = user_reg_map_regnum_to_name (gdbarch, i)) != NULL;
+	   i++)
+	{
+	  if (*name != '\0' && strncmp (word, name, len) == 0)
+	    VEC_safe_push (char_ptr, result, xstrdup (name));
+	}
     }
 
-  for (group = reggroup_next (gdbarch, NULL);
-       group != NULL;
-       group = reggroup_next (gdbarch, group))
+  if ((targets & complete_reggroup_names) != 0)
     {
-      name = reggroup_name (group);
-      if (strncmp (word, name, len) == 0)
-	VEC_safe_push (char_ptr, result, xstrdup (name));
+      struct reggroup *group;
+
+      for (group = reggroup_next (gdbarch, NULL);
+	   group != NULL;
+	   group = reggroup_next (gdbarch, group))
+	{
+	  name = reggroup_name (group);
+	  if (strncmp (word, name, len) == 0)
+	    VEC_safe_push (char_ptr, result, xstrdup (name));
+	}
     }
 
   return result;
 }
 
+/* Perform completion on register and reggroup names.  */
+
+VEC (char_ptr) *
+reg_or_group_completer (struct cmd_list_element *ignore,
+			const char *text, const char *word)
+{
+  return reg_or_group_completer_1 (ignore, text, word,
+				   (complete_register_names
+				    | complete_reggroup_names));
+}
+
+/* Perform completion on reggroup names.  */
+
+VEC (char_ptr) *
+reggroup_completer (struct cmd_list_element *ignore,
+		    const char *text, const char *word)
+{
+  return reg_or_group_completer_1 (ignore, text, word,
+				   complete_reggroup_names);
+}
 
 /* Get the list of chars that are considered as word breaks
    for the current command.  */
@@ -1019,4 +1188,602 @@ const char *
 skip_quoted (const char *str)
 {
   return skip_quoted_chars (str, NULL, NULL);
+}
+
+/* Return a message indicating that the maximum number of completions
+   has been reached and that there may be more.  */
+
+const char *
+get_max_completions_reached_message (void)
+{
+  return _("*** List may be truncated, max-completions reached. ***");
+}
+
+/* GDB replacement for rl_display_match_list.
+   Readline doesn't provide a clean interface for TUI(curses).
+   A hack previously used was to send readline's rl_outstream through a pipe
+   and read it from the event loop.  Bleah.  IWBN if readline abstracted
+   away all the necessary bits, and this is what this code does.  It
+   replicates the parts of readline we need and then adds an abstraction
+   layer, currently implemented as struct match_list_displayer, so that both
+   CLI and TUI can use it.  We copy all this readline code to minimize
+   GDB-specific mods to readline.  Once this code performs as desired then
+   we can submit it to the readline maintainers.
+
+   N.B. A lot of the code is the way it is in order to minimize differences
+   from readline's copy.  */
+
+/* Not supported here.  */
+#undef VISIBLE_STATS
+
+#if defined (HANDLE_MULTIBYTE)
+#define MB_INVALIDCH(x) ((x) == (size_t)-1 || (x) == (size_t)-2)
+#define MB_NULLWCH(x)   ((x) == 0)
+#endif
+
+#define ELLIPSIS_LEN	3
+
+/* gdb version of readline/complete.c:get_y_or_n.
+   'y' -> returns 1, and 'n' -> returns 0.
+   Also supported: space == 'y', RUBOUT == 'n', ctrl-g == start over.
+   If FOR_PAGER is non-zero, then also supported are:
+   NEWLINE or RETURN -> returns 2, and 'q' -> returns 0.  */
+
+static int
+gdb_get_y_or_n (int for_pager, const struct match_list_displayer *displayer)
+{
+  int c;
+
+  for (;;)
+    {
+      RL_SETSTATE (RL_STATE_MOREINPUT);
+      c = displayer->read_key (displayer);
+      RL_UNSETSTATE (RL_STATE_MOREINPUT);
+
+      if (c == 'y' || c == 'Y' || c == ' ')
+	return 1;
+      if (c == 'n' || c == 'N' || c == RUBOUT)
+	return 0;
+      if (c == ABORT_CHAR || c < 0)
+	{
+	  /* Readline doesn't erase_entire_line here, but without it the
+	     --More-- prompt isn't erased and neither is the text entered
+	     thus far redisplayed.  */
+	  displayer->erase_entire_line (displayer);
+	  /* Note: The arguments to rl_abort are ignored.  */
+	  rl_abort (0, 0);
+	}
+      if (for_pager && (c == NEWLINE || c == RETURN))
+	return 2;
+      if (for_pager && (c == 'q' || c == 'Q'))
+	return 0;
+      displayer->beep (displayer);
+    }
+}
+
+/* Pager function for tab-completion.
+   This is based on readline/complete.c:_rl_internal_pager.
+   LINES is the number of lines of output displayed thus far.
+   Returns:
+   -1 -> user pressed 'n' or equivalent,
+   0 -> user pressed 'y' or equivalent,
+   N -> user pressed NEWLINE or equivalent and N is LINES - 1.  */
+
+static int
+gdb_display_match_list_pager (int lines,
+			      const struct match_list_displayer *displayer)
+{
+  int i;
+
+  displayer->puts (displayer, "--More--");
+  displayer->flush (displayer);
+  i = gdb_get_y_or_n (1, displayer);
+  displayer->erase_entire_line (displayer);
+  if (i == 0)
+    return -1;
+  else if (i == 2)
+    return (lines - 1);
+  else
+    return 0;
+}
+
+/* Return non-zero if FILENAME is a directory.
+   Based on readline/complete.c:path_isdir.  */
+
+static int
+gdb_path_isdir (const char *filename)
+{
+  struct stat finfo;
+
+  return (stat (filename, &finfo) == 0 && S_ISDIR (finfo.st_mode));
+}
+
+/* Return the portion of PATHNAME that should be output when listing
+   possible completions.  If we are hacking filename completion, we
+   are only interested in the basename, the portion following the
+   final slash.  Otherwise, we return what we were passed.  Since
+   printing empty strings is not very informative, if we're doing
+   filename completion, and the basename is the empty string, we look
+   for the previous slash and return the portion following that.  If
+   there's no previous slash, we just return what we were passed.
+
+   Based on readline/complete.c:printable_part.  */
+
+static char *
+gdb_printable_part (char *pathname)
+{
+  char *temp, *x;
+
+  if (rl_filename_completion_desired == 0)	/* don't need to do anything */
+    return (pathname);
+
+  temp = strrchr (pathname, '/');
+#if defined (__MSDOS__)
+  if (temp == 0 && ISALPHA ((unsigned char)pathname[0]) && pathname[1] == ':')
+    temp = pathname + 1;
+#endif
+
+  if (temp == 0 || *temp == '\0')
+    return (pathname);
+  /* If the basename is NULL, we might have a pathname like '/usr/src/'.
+     Look for a previous slash and, if one is found, return the portion
+     following that slash.  If there's no previous slash, just return the
+     pathname we were passed. */
+  else if (temp[1] == '\0')
+    {
+      for (x = temp - 1; x > pathname; x--)
+        if (*x == '/')
+          break;
+      return ((*x == '/') ? x + 1 : pathname);
+    }
+  else
+    return ++temp;
+}
+
+/* Compute width of STRING when displayed on screen by print_filename.
+   Based on readline/complete.c:fnwidth.  */
+
+static int
+gdb_fnwidth (const char *string)
+{
+  int width, pos;
+#if defined (HANDLE_MULTIBYTE)
+  mbstate_t ps;
+  int left, w;
+  size_t clen;
+  wchar_t wc;
+
+  left = strlen (string) + 1;
+  memset (&ps, 0, sizeof (mbstate_t));
+#endif
+
+  width = pos = 0;
+  while (string[pos])
+    {
+      if (CTRL_CHAR (string[pos]) || string[pos] == RUBOUT)
+	{
+	  width += 2;
+	  pos++;
+	}
+      else
+	{
+#if defined (HANDLE_MULTIBYTE)
+	  clen = mbrtowc (&wc, string + pos, left - pos, &ps);
+	  if (MB_INVALIDCH (clen))
+	    {
+	      width++;
+	      pos++;
+	      memset (&ps, 0, sizeof (mbstate_t));
+	    }
+	  else if (MB_NULLWCH (clen))
+	    break;
+	  else
+	    {
+	      pos += clen;
+	      w = wcwidth (wc);
+	      width += (w >= 0) ? w : 1;
+	    }
+#else
+	  width++;
+	  pos++;
+#endif
+	}
+    }
+
+  return width;
+}
+
+/* Print TO_PRINT, one matching completion.
+   PREFIX_BYTES is number of common prefix bytes.
+   Based on readline/complete.c:fnprint.  */
+
+static int
+gdb_fnprint (const char *to_print, int prefix_bytes,
+	     const struct match_list_displayer *displayer)
+{
+  int printed_len, w;
+  const char *s;
+#if defined (HANDLE_MULTIBYTE)
+  mbstate_t ps;
+  const char *end;
+  size_t tlen;
+  int width;
+  wchar_t wc;
+
+  end = to_print + strlen (to_print) + 1;
+  memset (&ps, 0, sizeof (mbstate_t));
+#endif
+
+  printed_len = 0;
+
+  /* Don't print only the ellipsis if the common prefix is one of the
+     possible completions */
+  if (to_print[prefix_bytes] == '\0')
+    prefix_bytes = 0;
+
+  if (prefix_bytes)
+    {
+      char ellipsis;
+
+      ellipsis = (to_print[prefix_bytes] == '.') ? '_' : '.';
+      for (w = 0; w < ELLIPSIS_LEN; w++)
+	displayer->putch (displayer, ellipsis);
+      printed_len = ELLIPSIS_LEN;
+    }
+
+  s = to_print + prefix_bytes;
+  while (*s)
+    {
+      if (CTRL_CHAR (*s))
+        {
+          displayer->putch (displayer, '^');
+          displayer->putch (displayer, UNCTRL (*s));
+          printed_len += 2;
+          s++;
+#if defined (HANDLE_MULTIBYTE)
+	  memset (&ps, 0, sizeof (mbstate_t));
+#endif
+        }
+      else if (*s == RUBOUT)
+	{
+	  displayer->putch (displayer, '^');
+	  displayer->putch (displayer, '?');
+	  printed_len += 2;
+	  s++;
+#if defined (HANDLE_MULTIBYTE)
+	  memset (&ps, 0, sizeof (mbstate_t));
+#endif
+	}
+      else
+	{
+#if defined (HANDLE_MULTIBYTE)
+	  tlen = mbrtowc (&wc, s, end - s, &ps);
+	  if (MB_INVALIDCH (tlen))
+	    {
+	      tlen = 1;
+	      width = 1;
+	      memset (&ps, 0, sizeof (mbstate_t));
+	    }
+	  else if (MB_NULLWCH (tlen))
+	    break;
+	  else
+	    {
+	      w = wcwidth (wc);
+	      width = (w >= 0) ? w : 1;
+	    }
+	  for (w = 0; w < tlen; ++w)
+	    displayer->putch (displayer, s[w]);
+	  s += tlen;
+	  printed_len += width;
+#else
+	  displayer->putch (displayer, *s);
+	  s++;
+	  printed_len++;
+#endif
+	}
+    }
+
+  return printed_len;
+}
+
+/* Output TO_PRINT to rl_outstream.  If VISIBLE_STATS is defined and we
+   are using it, check for and output a single character for `special'
+   filenames.  Return the number of characters we output.
+   Based on readline/complete.c:print_filename.  */
+
+static int
+gdb_print_filename (char *to_print, char *full_pathname, int prefix_bytes,
+		    const struct match_list_displayer *displayer)
+{
+  int printed_len, extension_char, slen, tlen;
+  char *s, c, *new_full_pathname, *dn;
+  extern int _rl_complete_mark_directories;
+
+  extension_char = 0;
+  printed_len = gdb_fnprint (to_print, prefix_bytes, displayer);
+
+#if defined (VISIBLE_STATS)
+ if (rl_filename_completion_desired && (rl_visible_stats || _rl_complete_mark_directories))
+#else
+ if (rl_filename_completion_desired && _rl_complete_mark_directories)
+#endif
+    {
+      /* If to_print != full_pathname, to_print is the basename of the
+	 path passed.  In this case, we try to expand the directory
+	 name before checking for the stat character. */
+      if (to_print != full_pathname)
+	{
+	  /* Terminate the directory name. */
+	  c = to_print[-1];
+	  to_print[-1] = '\0';
+
+	  /* If setting the last slash in full_pathname to a NUL results in
+	     full_pathname being the empty string, we are trying to complete
+	     files in the root directory.  If we pass a null string to the
+	     bash directory completion hook, for example, it will expand it
+	     to the current directory.  We just want the `/'. */
+	  if (full_pathname == 0 || *full_pathname == 0)
+	    dn = "/";
+	  else if (full_pathname[0] != '/')
+	    dn = full_pathname;
+	  else if (full_pathname[1] == 0)
+	    dn = "//";		/* restore trailing slash to `//' */
+	  else if (full_pathname[1] == '/' && full_pathname[2] == 0)
+	    dn = "/";		/* don't turn /// into // */
+	  else
+	    dn = full_pathname;
+	  s = tilde_expand (dn);
+	  if (rl_directory_completion_hook)
+	    (*rl_directory_completion_hook) (&s);
+
+	  slen = strlen (s);
+	  tlen = strlen (to_print);
+	  new_full_pathname = (char *)xmalloc (slen + tlen + 2);
+	  strcpy (new_full_pathname, s);
+	  if (s[slen - 1] == '/')
+	    slen--;
+	  else
+	    new_full_pathname[slen] = '/';
+	  new_full_pathname[slen] = '/';
+	  strcpy (new_full_pathname + slen + 1, to_print);
+
+#if defined (VISIBLE_STATS)
+	  if (rl_visible_stats)
+	    extension_char = stat_char (new_full_pathname);
+	  else
+#endif
+	  if (gdb_path_isdir (new_full_pathname))
+	    extension_char = '/';
+
+	  xfree (new_full_pathname);
+	  to_print[-1] = c;
+	}
+      else
+	{
+	  s = tilde_expand (full_pathname);
+#if defined (VISIBLE_STATS)
+	  if (rl_visible_stats)
+	    extension_char = stat_char (s);
+	  else
+#endif
+	    if (gdb_path_isdir (s))
+	      extension_char = '/';
+	}
+
+      xfree (s);
+      if (extension_char)
+	{
+	  displayer->putch (displayer, extension_char);
+	  printed_len++;
+	}
+    }
+
+  return printed_len;
+}
+
+/* GDB version of readline/complete.c:complete_get_screenwidth.  */
+
+static int
+gdb_complete_get_screenwidth (const struct match_list_displayer *displayer)
+{
+  /* Readline has other stuff here which it's not clear we need.  */
+  return displayer->width;
+}
+
+extern int _rl_completion_prefix_display_length;
+extern int _rl_print_completions_horizontally;
+
+EXTERN_C int _rl_qsort_string_compare (const void *, const void *);
+typedef int QSFUNC (const void *, const void *);
+
+/* GDB version of readline/complete.c:rl_display_match_list.
+   See gdb_display_match_list for a description of MATCHES, LEN, MAX.
+   Returns non-zero if all matches are displayed.  */
+
+static int
+gdb_display_match_list_1 (char **matches, int len, int max,
+			  const struct match_list_displayer *displayer)
+{
+  int count, limit, printed_len, lines, cols;
+  int i, j, k, l, common_length, sind;
+  char *temp, *t;
+  int page_completions = displayer->height != INT_MAX && pagination_enabled;
+
+  /* Find the length of the prefix common to all items: length as displayed
+     characters (common_length) and as a byte index into the matches (sind) */
+  common_length = sind = 0;
+  if (_rl_completion_prefix_display_length > 0)
+    {
+      t = gdb_printable_part (matches[0]);
+      temp = strrchr (t, '/');
+      common_length = temp ? gdb_fnwidth (temp) : gdb_fnwidth (t);
+      sind = temp ? strlen (temp) : strlen (t);
+
+      if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
+	max -= common_length - ELLIPSIS_LEN;
+      else
+	common_length = sind = 0;
+    }
+
+  /* How many items of MAX length can we fit in the screen window? */
+  cols = gdb_complete_get_screenwidth (displayer);
+  max += 2;
+  limit = cols / max;
+  if (limit != 1 && (limit * max == cols))
+    limit--;
+
+  /* If cols == 0, limit will end up -1 */
+  if (cols < displayer->width && limit < 0)
+    limit = 1;
+
+  /* Avoid a possible floating exception.  If max > cols,
+     limit will be 0 and a divide-by-zero fault will result. */
+  if (limit == 0)
+    limit = 1;
+
+  /* How many iterations of the printing loop? */
+  count = (len + (limit - 1)) / limit;
+
+  /* Watch out for special case.  If LEN is less than LIMIT, then
+     just do the inner printing loop.
+	   0 < len <= limit  implies  count = 1. */
+
+  /* Sort the items if they are not already sorted. */
+  if (rl_ignore_completion_duplicates == 0 && rl_sort_completion_matches)
+    qsort (matches + 1, len, sizeof (char *), (QSFUNC *)_rl_qsort_string_compare);
+
+  displayer->crlf (displayer);
+
+  lines = 0;
+  if (_rl_print_completions_horizontally == 0)
+    {
+      /* Print the sorted items, up-and-down alphabetically, like ls. */
+      for (i = 1; i <= count; i++)
+	{
+	  for (j = 0, l = i; j < limit; j++)
+	    {
+	      if (l > len || matches[l] == 0)
+		break;
+	      else
+		{
+		  temp = gdb_printable_part (matches[l]);
+		  printed_len = gdb_print_filename (temp, matches[l], sind,
+						    displayer);
+
+		  if (j + 1 < limit)
+		    for (k = 0; k < max - printed_len; k++)
+		      displayer->putch (displayer, ' ');
+		}
+	      l += count;
+	    }
+	  displayer->crlf (displayer);
+	  lines++;
+	  if (page_completions && lines >= (displayer->height - 1) && i < count)
+	    {
+	      lines = gdb_display_match_list_pager (lines, displayer);
+	      if (lines < 0)
+		return 0;
+	    }
+	}
+    }
+  else
+    {
+      /* Print the sorted items, across alphabetically, like ls -x. */
+      for (i = 1; matches[i]; i++)
+	{
+	  temp = gdb_printable_part (matches[i]);
+	  printed_len = gdb_print_filename (temp, matches[i], sind, displayer);
+	  /* Have we reached the end of this line? */
+	  if (matches[i+1])
+	    {
+	      if (i && (limit > 1) && (i % limit) == 0)
+		{
+		  displayer->crlf (displayer);
+		  lines++;
+		  if (page_completions && lines >= displayer->height - 1)
+		    {
+		      lines = gdb_display_match_list_pager (lines, displayer);
+		      if (lines < 0)
+			return 0;
+		    }
+		}
+	      else
+		for (k = 0; k < max - printed_len; k++)
+		  displayer->putch (displayer, ' ');
+	    }
+	}
+      displayer->crlf (displayer);
+    }
+
+  return 1;
+}
+
+/* Utility for displaying completion list matches, used by both CLI and TUI.
+
+   MATCHES is the list of strings, in argv format, LEN is the number of
+   strings in MATCHES, and MAX is the length of the longest string in
+   MATCHES.  */
+
+void
+gdb_display_match_list (char **matches, int len, int max,
+			const struct match_list_displayer *displayer)
+{
+  /* Readline will never call this if complete_line returned NULL.  */
+  gdb_assert (max_completions != 0);
+
+  /* complete_line will never return more than this.  */
+  if (max_completions > 0)
+    gdb_assert (len <= max_completions);
+
+  if (rl_completion_query_items > 0 && len >= rl_completion_query_items)
+    {
+      char msg[100];
+
+      /* We can't use *query here because they wait for <RET> which is
+	 wrong here.  This follows the readline version as closely as possible
+	 for compatibility's sake.  See readline/complete.c.  */
+
+      displayer->crlf (displayer);
+
+      xsnprintf (msg, sizeof (msg),
+		 "Display all %d possibilities? (y or n)", len);
+      displayer->puts (displayer, msg);
+      displayer->flush (displayer);
+
+      if (gdb_get_y_or_n (0, displayer) == 0)
+	{
+	  displayer->crlf (displayer);
+	  return;
+	}
+    }
+
+  if (gdb_display_match_list_1 (matches, len, max, displayer))
+    {
+      /* Note: MAX_COMPLETIONS may be -1 or zero, but LEN is always > 0.  */
+      if (len == max_completions)
+	{
+	  /* The maximum number of completions has been reached.  Warn the user
+	     that there may be more.  */
+	  const char *message = get_max_completions_reached_message ();
+
+	  displayer->puts (displayer, message);
+	  displayer->crlf (displayer);
+	}
+    }
+}
+
+extern initialize_file_ftype _initialize_completer; /* -Wmissing-prototypes */
+
+void
+_initialize_completer (void)
+{
+  add_setshow_zuinteger_unlimited_cmd ("max-completions", no_class,
+				       &max_completions, _("\
+Set maximum number of completion candidates."), _("\
+Show maximum number of completion candidates."), _("\
+Use this to limit the number of candidates considered\n\
+during completion.  Specifying \"unlimited\" or -1\n\
+disables limiting.  Note that setting either no limit or\n\
+a very large limit can make completion slow."),
+				       NULL, NULL, &setlist, &showlist);
 }

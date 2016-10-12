@@ -69,19 +69,25 @@ gdb_test "p /x \$shadow = *(char *) $bp_address" \
 # and still leave the breakpoint insn planted.  Try twice with
 # different values, in case we happen to be writting exactly what was
 # there already.
-gdb_test "p /x *(char *) $bp_address = 0" \
-    " = 0x0" \
-    "write 0 to breakpoint's address"
-gdb_test "p /x *(char *) $bp_address" \
-    " = 0x0" \
-    "read back 0 from the breakpoint's address"
+foreach test_value {0 1} {
+    set write_test "write $test_value to breakpoint's address"
 
-gdb_test "p /x *(char *) $bp_address = 1" \
-    " = 0x1" \
-    "write 1 to breakpoint's address"
-gdb_test "p /x *(char *) $bp_address" \
-    " = 0x1" \
-    "read back 1 from the breakpoint's address"
+    gdb_test_multiple "p /x *(char *) $bp_address = $test_value" $write_test {
+	-re "Cannot access memory at address $hex.*$gdb_prompt $" {
+
+	    # Some targets do not allow manually writing a breakpoint to a
+	    # certain memory address, like QEMU.  In that case, just bail out.
+	    unsupported "Cannot write to address $bp_address"
+	    return -1
+	}
+	-re " = .*$gdb_prompt $" {
+	    pass $write_test
+	}
+    }
+
+    set read_test "read back $test_value from the breakpoint's address"
+    gdb_test "p /x *(char *) $bp_address" " = 0x$test_value" $read_test
+}
 
 # Restore the original contents.
 gdb_test "p /x *(char *) $bp_address = \$shadow" "" \

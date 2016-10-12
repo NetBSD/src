@@ -223,7 +223,7 @@ static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
 
 /* Unglobalize NAME.  */
 
-const const char *
+const char *
 sparc_sol2_static_transform_name (const char *name)
 {
   /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop,
@@ -244,7 +244,7 @@ sparc_sol2_static_transform_name (const char *name)
 
   if (name[0] == '$')
     {
-      char *p = strrchr (name, '.');
+      const char *p = strrchr (name, '.');
       if (p)
         return p + 1;
     }

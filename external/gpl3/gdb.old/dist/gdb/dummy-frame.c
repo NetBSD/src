@@ -28,6 +28,7 @@
 #include "gdbcmd.h"
 #include "observer.h"
 #include "gdbthread.h"
+#include "infcall.h"
 
 struct dummy_frame_id
 {
@@ -48,6 +49,20 @@ dummy_frame_id_eq (struct dummy_frame_id *id1,
   return frame_id_eq (id1->id, id2->id) && ptid_equal (id1->ptid, id2->ptid);
 }
 
+/* List of dummy_frame destructors.  */
+
+struct dummy_frame_dtor_list
+{
+  /* Next element in the list or NULL if this is the last element.  */
+  struct dummy_frame_dtor_list *next;
+
+  /* If non-NULL, a destructor that is run when this dummy frame is freed.  */
+  dummy_frame_dtor_ftype *dtor;
+
+  /* Arbitrary data that is passed to DTOR.  */
+  void *dtor_data;
+};
+
 /* Dummy frame.  This saves the processor state just prior to setting
    up the inferior function call.  Older targets save the registers
    on the target stack (but that really slows down function calls).  */
@@ -62,12 +77,9 @@ struct dummy_frame
   /* The caller's state prior to the call.  */
   struct infcall_suspend_state *caller_state;
 
-  /* If non-NULL, a destructor that is run when this dummy frame is
-     popped.  */
-  void (*dtor) (void *data);
-
-  /* Arbitrary data that is passed to DTOR.  */
-  void *dtor_data;
+  /* First element of destructors list or NULL if there are no
+     destructors registered for this dummy_frame.  */
+  struct dummy_frame_dtor_list *dtor_list;
 };
 
 static struct dummy_frame *dummy_frame_stack = NULL;
@@ -95,6 +107,15 @@ static void
 remove_dummy_frame (struct dummy_frame **dummy_ptr)
 {
   struct dummy_frame *dummy = *dummy_ptr;
+
+  while (dummy->dtor_list != NULL)
+    {
+      struct dummy_frame_dtor_list *list = dummy->dtor_list;
+
+      dummy->dtor_list = list->next;
+      list->dtor (list->dtor_data, 0);
+      xfree (list);
+    }
 
   *dummy_ptr = dummy->next;
   discard_infcall_suspend_state (dummy->caller_state);
@@ -135,8 +156,14 @@ pop_dummy_frame (struct dummy_frame **dummy_ptr)
 
   gdb_assert (ptid_equal (dummy->id.ptid, inferior_ptid));
 
-  if (dummy->dtor != NULL)
-    dummy->dtor (dummy->dtor_data);
+  while (dummy->dtor_list != NULL)
+    {
+      struct dummy_frame_dtor_list *list = dummy->dtor_list;
+
+      dummy->dtor_list = list->next;
+      list->dtor (list->dtor_data, 1);
+      xfree (list);
+    }
 
   restore_infcall_suspend_state (dummy->caller_state);
 
@@ -209,13 +236,16 @@ register_dummy_frame_dtor (struct frame_id dummy_id, ptid_t ptid,
 {
   struct dummy_frame_id id = { dummy_id, ptid };
   struct dummy_frame **dp, *d;
+  struct dummy_frame_dtor_list *list;
 
   dp = lookup_dummy_frame (&id);
   gdb_assert (dp != NULL);
   d = *dp;
-  gdb_assert (d->dtor == NULL);
-  d->dtor = dtor;
-  d->dtor_data = dtor_data;
+  list = xmalloc (sizeof (*list));
+  list->next = d->dtor_list;
+  d->dtor_list = list;
+  list->dtor = dtor;
+  list->dtor_data = dtor_data;
 }
 
 /* See dummy-frame.h.  */
@@ -226,8 +256,13 @@ find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor, void *dtor_data)
   struct dummy_frame *d;
 
   for (d = dummy_frame_stack; d != NULL; d = d->next)
-    if (d->dtor == dtor && d->dtor_data == dtor_data)
-      return 1;
+    {
+      struct dummy_frame_dtor_list *list;
+
+      for (list = d->dtor_list; list != NULL; list = list->next)
+	if (list->dtor == dtor && list->dtor_data == dtor_data)
+	  return 1;
+    }
   return 0;
 }
 

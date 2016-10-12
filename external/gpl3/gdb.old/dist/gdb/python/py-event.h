@@ -41,12 +41,11 @@
     python.
   DOC Python documentation for the new event type
   BASE the base event for this event usually just event_object_type.
-  QUAL qualification for the create event usually 'static'
 */
 
-#define GDBPY_NEW_EVENT_TYPE(name, py_path, py_name, doc, base, qual) \
+#define GDBPY_NEW_EVENT_TYPE(name, py_path, py_name, doc, base) \
 \
-    qual PyTypeObject name##_event_object_type \
+  PyTypeObject name##_event_object_type		    \
         CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("event_object") \
     = { \
       PyVarObject_HEAD_INIT (NULL, 0)				\

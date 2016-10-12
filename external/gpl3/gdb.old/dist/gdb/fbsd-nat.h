@@ -20,16 +20,8 @@
 #ifndef FBSD_NAT_H
 #define FBSD_NAT_H
 
-/* Return the name of a file that can be opened to get the symbols for
-   the child process identified by PID.  */
-
-extern char *fbsd_pid_to_exec_file (struct target_ops *self, int pid);
-
-/* Iterate over all the memory regions in the current inferior,
-   calling FUNC for each memory region.  OBFD is passed as the last
-   argument to FUNC.  */
-
-extern int fbsd_find_memory_regions (struct target_ops *self,
-				     find_memory_region_ftype func, void *obfd);
+/* Register the customized FreeBSD target.  This should be used
+   instead of calling add_target directly.  */
+extern void fbsd_nat_add_target (struct target_ops *);
 
 #endif /* fbsd-nat.h */

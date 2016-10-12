@@ -56,6 +56,8 @@ frv-dis.c
 frv-ibld.c
 frv-opc.c
 frv-opc.h
+ft32-dis.c
+ft32-opc.c
 h8300-dis.c
 h8500-dis.c
 h8500-opc.h

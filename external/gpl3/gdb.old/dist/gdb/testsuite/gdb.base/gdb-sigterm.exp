@@ -17,9 +17,15 @@
 
 standard_testfile
 
-if { [build_executable ${testfile}.exp ${testfile}] == -1 } {
+# The test program exits after a while, in case GDB crashes.  Make it
+# wait at least as long as we may wait before declaring a time out
+# failure.
+set options { "additional_flags=-DTIMEOUT=$timeout" debug }
+if { [build_executable ${testfile}.exp ${testfile} $srcfile $options] == -1 } {
     return -1
 }
+
+# Return 0 on success, non-zero otherwise.
 
 proc do_test { pass } {
     global testfile gdb_prompt binfile pf_prefix
@@ -42,12 +48,13 @@ proc do_test { pass } {
     gdb_test_multiple "step" $test {
 	-re "infrun: stepping inside range" {
 	    # Suppress pass $test
-	    verbose -log "$pf_prefix $test"
+	    verbose -log "$pf_prefix $test: ran"
 	    set abort 0
 	}
     }
     if $abort {
-	return
+	verbose -log "$pf_prefix $test: did not run"
+	return $abort
     }
 
     set gdb_pid [exp_pid -i [board_info host fileid]]
@@ -56,30 +63,32 @@ proc do_test { pass } {
     set test "expect eof #$pass"
     set abort 1
     set stepping 0
+    # If GDB mishandles the SIGTERM and doesn't exit, this should FAIL
+    # with timeout.  We don't expect a GDB prompt, so we see one,
+    # we'll FAIL too.
     gdb_test_multiple "" $test {
 	eof {
-	    verbose -log "$pf_prefix $test"
+	    verbose -log "$pf_prefix $test: got eof"
 	    set abort 0
 	}
 	-re "infrun: stepping inside range" {
 	    incr stepping
-	    if { $stepping > 200 } {
-		fail "$test (stepping inside range $stepping times)"
-	    } else {
-		exp_continue
-	    }
+	    exp_continue
 	}
     }
-    if $abort {
-	return
-    }
+    verbose -log "$pf_prefix $test: stepped $stepping times"
+    return $abort
 }
 
 # Testcase was FAILing approx. on 10th pass with unpatched GDB.
 # 50 runs should be approx. a safe number to be sure it is fixed now.
+set passes 50
 
-for {set pass 0} {$pass < 50} {incr pass} {
+for {set pass 0} {$pass < $passes} {incr pass} {
     clean_restart ${testfile}
-    do_test $pass
+    if { [do_test $pass] != 0 } {
+	break
+    }
 }
-pass "$pass SIGTERM passes"
+
+gdb_assert {$pass == $passes} "$passes SIGTERM passes"
