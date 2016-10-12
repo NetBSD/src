@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2015 Free Software Foundation, Inc.
+   Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "osabi.h"
 #include "objfiles.h"
 
+#include "arch/arm.h"
 #include "arm-tdep.h"
 #include "solib-svr4.h"
 

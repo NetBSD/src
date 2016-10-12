@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ show_varobjdebug (struct ui_file *file, int from_tty,
 
 /* String representations of gdb's format codes.  */
 char *varobj_format_string[] =
-  { "natural", "binary", "decimal", "hexadecimal", "octal" };
+  { "natural", "binary", "decimal", "hexadecimal", "octal", "zero-hexadecimal" };
 
 /* True if we want to allow Python-based pretty-printing.  */
 static int pretty_printing = 0;
@@ -78,7 +78,7 @@ struct varobj_root
      not NULL.  */
   struct frame_id frame;
 
-  /* The thread ID that this varobj_root belong to.  This field
+  /* The global thread ID that this varobj_root belongs to.  This field
      is only valid if valid_block is not NULL.
      When not 0, indicates which thread 'frame' belongs to.
      When 0, indicates that the thread list was empty when the varobj_root
@@ -136,12 +136,6 @@ struct varobj_dynamic
   varobj_item *saved_item;
 };
 
-struct cpstack
-{
-  char *name;
-  struct cpstack *next;
-};
-
 /* A list of varobjs */
 
 struct vlist
@@ -154,10 +148,9 @@ struct vlist
 
 /* Helper functions for the above subcommands.  */
 
-static int delete_variable (struct cpstack **, struct varobj *, int);
+static int delete_variable (struct varobj *, int);
 
-static void delete_variable_1 (struct cpstack **, int *,
-			       struct varobj *, int, int);
+static void delete_variable_1 (int *, struct varobj *, int, int);
 
 static int install_variable (struct varobj *);
 
@@ -180,10 +173,6 @@ static void free_variable (struct varobj *var);
 static struct cleanup *make_cleanup_free_variable (struct varobj *var);
 
 static enum varobj_display_formats variable_default_display (struct varobj *);
-
-static void cppush (struct cpstack **pstack, char *name);
-
-static char *cppop (struct cpstack **pstack);
 
 static int update_type_if_necessary (struct varobj *var,
 				     struct value *new_value);
@@ -214,13 +203,13 @@ static struct varobj *varobj_add_child (struct varobj *var,
 /* Private data */
 
 /* Mappings of varobj_display_formats enums to gdb's format codes.  */
-static int format_code[] = { 0, 't', 'd', 'x', 'o' };
+static int format_code[] = { 0, 't', 'd', 'x', 'o', 'z' };
 
 /* Header of the list of root variable objects.  */
 static struct varobj_root *rootlist;
 
 /* Prime number indicating the number of buckets in the hash table.  */
-/* A prime large enough to avoid too many colisions.  */
+/* A prime large enough to avoid too many collisions.  */
 #define VAROBJ_TABLE_SIZE 227
 
 /* Pointer to the varobj hash table (built at run time).  */
@@ -245,8 +234,6 @@ varobj_ensure_python_env (const struct varobj *var)
 			    var->root->exp->language_defn);
 }
 #endif
-
-/* Creates a varobj (not its children).  */
 
 /* Return the full FRAME which corresponds to the given CORE_ADDR
    or NULL if no FRAME on the chain corresponds to CORE_ADDR.  */
@@ -279,6 +266,8 @@ find_frame_addr_in_frame_chain (CORE_ADDR frame_addr)
 
   return NULL;
 }
+
+/* Creates a varobj (not its children).  */
 
 struct varobj *
 varobj_create (char *objname,
@@ -380,7 +369,7 @@ varobj_create (char *objname,
 	    error (_("Failed to find the specified frame"));
 
 	  var->root->frame = get_frame_id (fi);
-	  var->root->thread_id = pid_to_thread_id (inferior_ptid);
+	  var->root->thread_id = ptid_to_global_thread_id (inferior_ptid);
 	  old_id = get_frame_id (get_selected_frame (NULL));
 	  select_frame (fi);	 
 	}
@@ -502,51 +491,12 @@ varobj_get_expression (const struct varobj *var)
   return name_of_variable (var);
 }
 
-/* Deletes a varobj and all its children if only_children == 0,
-   otherwise deletes only the children. If DELLIST is non-NULL, it is
-   assigned a malloc'ed list of all the (malloc'ed) names of the variables
-   that have been deleted (NULL terminated).  Returns the number of deleted
-   variables.  */
+/* See varobj.h.  */
 
 int
-varobj_delete (struct varobj *var, char ***dellist, int only_children)
+varobj_delete (struct varobj *var, int only_children)
 {
-  int delcount;
-  int mycount;
-  struct cpstack *result = NULL;
-  char **cp;
-
-  /* Initialize a stack for temporary results.  */
-  cppush (&result, NULL);
-
-  if (only_children)
-    /* Delete only the variable children.  */
-    delcount = delete_variable (&result, var, 1 /* only the children */ );
-  else
-    /* Delete the variable and all its children.  */
-    delcount = delete_variable (&result, var, 0 /* parent+children */ );
-
-  /* We may have been asked to return a list of what has been deleted.  */
-  if (dellist != NULL)
-    {
-      *dellist = xmalloc ((delcount + 1) * sizeof (char *));
-
-      cp = *dellist;
-      mycount = delcount;
-      *cp = cppop (&result);
-      while ((*cp != NULL) && (mycount > 0))
-	{
-	  mycount--;
-	  cp++;
-	  *cp = cppop (&result);
-	}
-
-      if (mycount || (*cp != NULL))
-	warning (_("varobj_delete: assertion failed - mycount(=%d) <> 0"),
-		 mycount);
-    }
-
-  return delcount;
+  return delete_variable (var, only_children);
 }
 
 #if HAVE_PYTHON
@@ -583,6 +533,7 @@ varobj_set_display_format (struct varobj *var,
     case FORMAT_DECIMAL:
     case FORMAT_HEXADECIMAL:
     case FORMAT_OCTAL:
+    case FORMAT_ZHEXADECIMAL:
       var->format = format;
       break;
 
@@ -875,7 +826,7 @@ update_dynamic_varobj_children (struct varobj *var,
 
       *cchanged = 1;
       for (j = i; j < VEC_length (varobj_p, var->children); ++j)
-	varobj_delete (VEC_index (varobj_p, var->children, j), NULL, 0);
+	varobj_delete (VEC_index (varobj_p, var->children, j), 0);
       VEC_truncate (varobj_p, var->children, i);
     }
 
@@ -1312,7 +1263,7 @@ update_type_if_necessary (struct varobj *var, struct value *new_value)
 	      var->type = new_type;
 
 	      /* This information may be not valid for a new type.  */
-	      varobj_delete (var, NULL, 1);
+	      varobj_delete (var, 1);
 	      VEC_free (varobj_p, var->children);
 	      var->num_children = -1;
 	    }
@@ -1570,7 +1521,7 @@ varobj_set_visualizer (struct varobj *var, const char *visualizer)
   Py_XDECREF (constructor);
 
   /* If there are any children now, wipe them.  */
-  varobj_delete (var, NULL, 1 /* children only */);
+  varobj_delete (var, 1 /* children only */);
   var->num_children = -1;
 
   do_cleanups (back_to);
@@ -1721,7 +1672,7 @@ varobj_update (struct varobj **varp, int is_explicit)
 	    {
 	      /* The children are no longer valid; delete them now.
 	         Report the fact that its type changed as well.  */
-	      varobj_delete (v, NULL, 1 /* only_children */);
+	      varobj_delete (v, 1 /* only_children */);
 	      v->num_children = -1;
 	      v->to = -1;
 	      v->from = -1;
@@ -1869,13 +1820,12 @@ varobj_update (struct varobj **varp, int is_explicit)
  */
 
 static int
-delete_variable (struct cpstack **resultp, struct varobj *var,
-		 int only_children_p)
+delete_variable (struct varobj *var, int only_children_p)
 {
   int delcount = 0;
 
-  delete_variable_1 (resultp, &delcount, var,
-		     only_children_p, 1 /* remove_from_parent_p */ );
+  delete_variable_1 (&delcount, var, only_children_p,
+		     1 /* remove_from_parent_p */ );
 
   return delcount;
 }
@@ -1885,8 +1835,7 @@ delete_variable (struct cpstack **resultp, struct varobj *var,
    and the parent is not removed we dump core.  It must be always
    initially called with remove_from_parent_p set.  */
 static void
-delete_variable_1 (struct cpstack **resultp, int *delcountp,
-		   struct varobj *var, int only_children_p,
+delete_variable_1 (int *delcountp, struct varobj *var, int only_children_p,
 		   int remove_from_parent_p)
 {
   int i;
@@ -1900,7 +1849,7 @@ delete_variable_1 (struct cpstack **resultp, int *delcountp,
 	continue;
       if (!remove_from_parent_p)
 	child->parent = NULL;
-      delete_variable_1 (resultp, delcountp, child, 0, only_children_p);
+      delete_variable_1 (delcountp, child, 0, only_children_p);
     }
   VEC_free (varobj_p, var->children);
 
@@ -1913,7 +1862,6 @@ delete_variable_1 (struct cpstack **resultp, int *delcountp,
      yet been installed, don't report it, it belongs to the caller...  */
   if (var->obj_name != NULL)
     {
-      cppush (resultp, xstrdup (var->obj_name));
       *delcountp = *delcountp + 1;
     }
 
@@ -1957,7 +1905,7 @@ install_variable (struct varobj *var)
     error (_("Duplicate variable object name"));
 
   /* Add varobj to hash table.  */
-  newvl = xmalloc (sizeof (struct vlist));
+  newvl = XNEW (struct vlist);
   newvl->next = *(varobj_table + index);
   newvl->var = var;
   *(varobj_table + index) = newvl;
@@ -2115,7 +2063,7 @@ new_variable (void)
 {
   struct varobj *var;
 
-  var = (struct varobj *) xmalloc (sizeof (struct varobj));
+  var = XNEW (struct varobj);
   var->name = NULL;
   var->path_expr = NULL;
   var->obj_name = NULL;
@@ -2125,14 +2073,13 @@ new_variable (void)
   var->num_children = -1;
   var->parent = NULL;
   var->children = NULL;
-  var->format = 0;
+  var->format = FORMAT_NATURAL;
   var->root = NULL;
   var->updated = 0;
   var->print_value = NULL;
   var->frozen = 0;
   var->not_fetched = 0;
-  var->dynamic
-    = (struct varobj_dynamic *) xmalloc (sizeof (struct varobj_dynamic));
+  var->dynamic = XNEW (struct varobj_dynamic);
   var->dynamic->children_requested = 0;
   var->from = -1;
   var->to = -1;
@@ -2150,7 +2097,7 @@ new_root_variable (void)
 {
   struct varobj *var = new_variable ();
 
-  var->root = (struct varobj_root *) xmalloc (sizeof (struct varobj_root));
+  var->root = XNEW (struct varobj_root);
   var->root->lang_ops = NULL;
   var->root->exp = NULL;
   var->root->valid_block = NULL;
@@ -2199,7 +2146,7 @@ free_variable (struct varobj *var)
 static void
 do_free_variable_cleanup (void *var)
 {
-  free_variable (var);
+  free_variable ((struct varobj *) var);
 }
 
 static struct cleanup *
@@ -2247,36 +2194,6 @@ variable_default_display (struct varobj *var)
   return FORMAT_NATURAL;
 }
 
-/* FIXME: The following should be generic for any pointer.  */
-static void
-cppush (struct cpstack **pstack, char *name)
-{
-  struct cpstack *s;
-
-  s = (struct cpstack *) xmalloc (sizeof (struct cpstack));
-  s->name = name;
-  s->next = *pstack;
-  *pstack = s;
-}
-
-/* FIXME: The following should be generic for any pointer.  */
-static char *
-cppop (struct cpstack **pstack)
-{
-  struct cpstack *s;
-  char *v;
-
-  if ((*pstack)->name == NULL && (*pstack)->next == NULL)
-    return NULL;
-
-  s = *pstack;
-  v = s->name;
-  *pstack = (*pstack)->next;
-  xfree (s);
-
-  return v;
-}
-
 /*
  * Language-dependencies
  */
@@ -2365,8 +2282,9 @@ value_of_root_1 (struct varobj **var_handle)
     }
   else
     {
-      ptid_t ptid = thread_id_to_pid (var->root->thread_id);
-      if (in_thread_list (ptid))
+      ptid_t ptid = global_thread_id_to_ptid (var->root->thread_id);
+
+      if (!ptid_equal (minus_one_ptid, ptid))
 	{
 	  switch_to_thread (ptid);
 	  within_scope = check_scope (var);
@@ -2444,7 +2362,7 @@ value_of_root (struct varobj **var_handle, int *type_changed)
          var->root->exp = tmp_var->root->exp;
          tmp_var->root->exp = tmp_exp;
 
-	  varobj_delete (tmp_var, NULL, 0);
+	  varobj_delete (tmp_var, 0);
 	  *type_changed = 0;
 	}
       else
@@ -2452,7 +2370,7 @@ value_of_root (struct varobj **var_handle, int *type_changed)
 	  tmp_var->obj_name = xstrdup (var->obj_name);
 	  tmp_var->from = var->from;
 	  tmp_var->to = var->to;
-	  varobj_delete (var, NULL, 0);
+	  varobj_delete (var, 0);
 
 	  install_variable (tmp_var);
 	  *var_handle = tmp_var;
@@ -2481,7 +2399,7 @@ value_of_root (struct varobj **var_handle, int *type_changed)
 	/* The type has mutated, so the children are no longer valid.
 	   Just delete them, and tell our caller that the type has
 	   changed.  */
-	varobj_delete (var, NULL, 1 /* only_children */);
+	varobj_delete (var, 1 /* only_children */);
 	var->num_children = -1;
 	var->to = -1;
 	var->from = -1;
@@ -2537,7 +2455,6 @@ varobj_value_get_print_value (struct value *value,
   struct type *type = NULL;
   long len = 0;
   char *encoding = NULL;
-  struct gdbarch *gdbarch = NULL;
   /* Initialize it just to avoid a GCC false warning.  */
   CORE_ADDR str_addr = 0;
   int string_print = 0;
@@ -2548,7 +2465,6 @@ varobj_value_get_print_value (struct value *value,
   stb = mem_fileopen ();
   old_chain = make_cleanup_ui_file_delete (stb);
 
-  gdbarch = get_type_arch (value_type (value));
 #if HAVE_PYTHON
   if (gdb_python_initialized)
     {
@@ -2602,6 +2518,7 @@ varobj_value_get_print_value (struct value *value,
 
 		      if (s)
 			{
+			  struct gdbarch *gdbarch;
 			  char *hint;
 
 			  hint = gdbpy_get_display_hint (value_formatter);
@@ -2613,7 +2530,8 @@ varobj_value_get_print_value (struct value *value,
 			    }
 
 			  len = strlen (s);
-			  thevalue = xmemdup (s, len + 1, len + 1);
+			  thevalue = (char *) xmemdup (s, len + 1, len + 1);
+			  gdbarch = get_type_arch (value_type (value));
 			  type = builtin_type (gdbarch)->builtin_char;
 			  xfree (s);
 
@@ -2770,7 +2688,7 @@ varobj_invalidate_iter (struct varobj *var, void *unused)
       if (tmp_var != NULL) 
 	{ 
 	  tmp_var->obj_name = xstrdup (var->obj_name);
-	  varobj_delete (var, NULL, 0);
+	  varobj_delete (var, 0);
 	  install_variable (tmp_var);
 	}
       else
@@ -2794,10 +2712,7 @@ extern void _initialize_varobj (void);
 void
 _initialize_varobj (void)
 {
-  int sizeof_table = sizeof (struct vlist *) * VAROBJ_TABLE_SIZE;
-
-  varobj_table = xmalloc (sizeof_table);
-  memset (varobj_table, 0, sizeof_table);
+  varobj_table = XCNEWVEC (struct vlist *, VAROBJ_TABLE_SIZE);
 
   add_setshow_zuinteger_cmd ("varobj", class_maintenance,
 			     &varobjdebug,

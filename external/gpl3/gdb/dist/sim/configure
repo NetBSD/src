@@ -634,7 +634,8 @@ CFLAGS
 LDFLAGS
 LIBS
 CPPFLAGS'
-ac_subdirs_all='arm
+ac_subdirs_all='aarch64
+arm
 avr
 bfin
 cr16
@@ -662,7 +663,6 @@ ppc
 ft32
 v850
 testsuite
-common
 igen'
 
 # Initialize some variables set by options.
@@ -3621,16 +3621,22 @@ if test "${enable_sim}" != no; then
 
 
 
-sim_common=yes
 sim_igen=no
 sim_arch=
 case "${target}" in
+   aarch64*-*-*)
+
+  sim_arch=aarch64
+
+
+subdirs="$subdirs aarch64"
+
+
+       ;;
    arm*-*-*)
 
   sim_arch=arm
-
-
-subdirs="$subdirs arm"
+  subdirs="$subdirs arm"
 
 
        ;;
@@ -3819,19 +3825,11 @@ subdirs="$subdirs arm"
 
        sim_igen=yes
        ;;
-   *)
-       # No simulator subdir, so the subdir "common" isn't needed.
-       sim_common=no
-       ;;
 esac
 
 
    subdirs="$subdirs testsuite"
 
-   if test "$sim_common" = yes; then
-      subdirs="$subdirs common"
-
-   fi
    if test "$sim_igen" = yes; then
       subdirs="$subdirs igen"
 
