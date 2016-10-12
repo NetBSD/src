@@ -1,4 +1,4 @@
-# Copyright 2011-2015 Free Software Foundation, Inc.
+# Copyright 2011-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,29 +55,11 @@ gdb_test "thread apply 6 thread name threadname_6" \
     "name thread 6"
 
 # Collect thread ids, if any.
+
 gdb_test_multiple "info threads" "collect thread id" {
-    -re ". 6 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
-	set thread6 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 5 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
-	set thread5 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 4 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
-	set thread4 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 3 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
-	set thread3 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 2 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
-	set thread2 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 1 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
-	set thread1 $expect_out(1,string)
+    -re ". (\[0-9\]+) \[^\r\n\]*\[Tt\]hread (\[0-9a-fA-Fx\]+)\[^\r\n\]* \"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set thread$thr_num $expect_out(2,string)
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
@@ -90,29 +72,11 @@ if { [info exists thread6] } then {
 }
 
 # Collect process ids, if any.
+
 gdb_test_multiple "info threads" "collect thread id" {
-    -re ". 6 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
-	set process6 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 5 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
-	set process5 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 4 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
-	set process4 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 3 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
-	set process3 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 2 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
-	set process2 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 1 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
-	set process1 $expect_out(1,string)
+    -re ". (\[0-9\]+) \[^\r\n\]*\[Pp\]rocess (\[0-9a-fA-Fx\]+)\[^\r\n\]* \"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set process$thr_num $expect_out(2,string)
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
@@ -125,29 +89,11 @@ if { [info exists process6] } then {
 }
 
 # Collect lwp ids, if any.
+
 gdb_test_multiple "info threads" "collect thread id" {
-    -re ". 6 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
-	set lwp6 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 5 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
-	set lwp5 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 4 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
-	set lwp4 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 3 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
-	set lwp3 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 2 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
-	set lwp2 $expect_out(1,string)
-	exp_continue
-    }
-    -re ". 1 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
-	set lwp1 $expect_out(1,string)
+    -re ". (\[0-9\]+) \[^\r\n\]*LWP (\[0-9a-fA-Fx\]+)\[^\r\n\]* \"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set lwp$thr_num $expect_out(2,string)
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
@@ -241,36 +187,13 @@ gdb_test "thread find foobarbaz" "No threads match .*" "no thread"
 # Test regular expression
 #
 
-set see1 0
-set see2 0
-set see3 0
-set see4 0
-set see5 0
-set see6 0
-
+for {set i 1} {$i <= 6} {incr i} {
+    set see$i 0
+}
 gdb_test_multiple "thread find threadname_\[345\]" "test regular exp" {
-    -re "Thread 6 has name \[^\r\n\]*" {
-	set see6 1
-	exp_continue
-    }
-    -re "Thread 5 has name \[^\r\n\]*" {
-	set see5 1
-	exp_continue
-    }
-    -re "Thread 4 has name \[^\r\n\]*" {
-	set see4 1
-	exp_continue
-    }
-    -re "Thread 3 has name \[^\r\n\]*" {
-	set see3 1
-	exp_continue
-    }
-    -re "Thread 2 has name \[^\r\n\]*" {
-	set see2 1
-	exp_continue
-    }
-    -re "Thread 1 has name \[^\r\n\]*" {
-	set see1 1
+    -re "Thread (\[0-9\]+) has name \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set see$thr_num 1
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
@@ -286,36 +209,13 @@ gdb_test_multiple "thread find threadname_\[345\]" "test regular exp" {
 # Test info threads on a subset of threads
 #
 
-set see1 0
-set see2 0
-set see3 0
-set see4 0
-set see5 0
-set see6 0
-
+for {set i 1} {$i <= 6} {incr i} {
+    set see$i 0
+}
 gdb_test_multiple "info threads 2 4 6" "info threads 2 4 6" {
-    -re ". 6 \[^\r\n\]*\"threadname_6\" \[^\r\n\]*" {
-	set see6 1
-	exp_continue
-    }
-    -re ". 5 \[^\r\n\]*\"threadname_5\" \[^\r\n\]*" {
-	set see5 1
-	exp_continue
-    }
-    -re ". 4 \[^\r\n\]*\"threadname_4\" \[^\r\n\]*" {
-	set see4 1
-	exp_continue
-    }
-    -re ". 3 \[^\r\n\]*\"threadname_3\" \[^\r\n\]*" {
-	set see3 1
-	exp_continue
-    }
-    -re ". 2 \[^\r\n\]*\"threadname_2\" \[^\r\n\]*" {
-	set see2 1
-	exp_continue
-    }
-    -re ". 1 \[^\r\n\]*\"threadname_1\" \[^\r\n\]*" {
-	set see1 1
+    -re ". (\[0-9\]+) \[^\r\n\]*\"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set see$thr_num 1
 	exp_continue
     }
     -re "$gdb_prompt $" {
@@ -331,36 +231,13 @@ gdb_test_multiple "info threads 2 4 6" "info threads 2 4 6" {
 # Test info threads on a range
 #
 
-set see1 0
-set see2 0
-set see3 0
-set see4 0
-set see5 0
-set see6 0
-
+for {set i 1} {$i <= 6} {incr i} {
+    set see$i 0
+}
 gdb_test_multiple "info threads 3-5" "info threads 3-5" {
-    -re ". 6 .*\"threadname_6\" \[^\r\n\]*" {
-	set see6 1
-	exp_continue
-    }
-    -re ". 5 .*\"threadname_5\" \[^\r\n\]*" {
-	set see5 1
-	exp_continue
-    }
-    -re ". 4 .*\"threadname_4\" \[^\r\n\]*" {
-	set see4 1
-	exp_continue
-    }
-    -re ". 3 .*\"threadname_3\" \[^\r\n\]*" {
-	set see3 1
-	exp_continue
-    }
-    -re ". 2 .*\"threadname_2\" \[^\r\n\]*" {
-	set see2 1
-	exp_continue
-    }
-    -re ". 1 .*\"threadname_1\" \[^\r\n\]*" {
-	set see1 1
+    -re ". (\[0-9\]+) \[^\r\n\]*\"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set see$thr_num 1
 	exp_continue
     }
     -re "$gdb_prompt $" {
@@ -378,36 +255,13 @@ gdb_test "info threads 5-3" "inverted range" "test inverted range"
 
 # Test degenerate range
 
-set see1 0
-set see2 0
-set see3 0
-set see4 0
-set see5 0
-set see6 0
-
+for {set i 1} {$i <= 6} {incr i} {
+    set see$i 0
+}
 gdb_test_multiple "info threads 3-3" "info threads 3-3" {
-    -re ". 6 .*\"threadname_6\" \[^\r\n\]*" {
-	set see6 1
-	exp_continue
-    }
-    -re ". 5 .*\"threadname_5\" \[^\r\n\]*" {
-	set see5 1
-	exp_continue
-    }
-    -re ". 4 .*\"threadname_4\" \[^\r\n\]*" {
-	set see4 1
-	exp_continue
-    }
-    -re ". 3 .*\"threadname_3\" \[^\r\n\]*" {
-	set see3 1
-	exp_continue
-    }
-    -re ". 2 .*\"threadname_2\" \[^\r\n\]*" {
-	set see2 1
-	exp_continue
-    }
-    -re ". 1 .*\"threadname_1\" \[^\r\n\]*" {
-	set see1 1
+    -re ". (\[0-9\]+) .*\"threadname_\[0-9\]+\" \[^\r\n\]*" {
+	set thr_num $expect_out(1,string)
+	set see$thr_num 1
 	exp_continue
     }
     -re ".*$gdb_prompt $" {
@@ -422,9 +276,9 @@ gdb_test_multiple "info threads 3-3" "info threads 3-3" {
 # Test bad input
 
 gdb_test "info thread foo" \
-    "Args must be numbers or '.' variables." \
+    "Invalid thread ID: foo" \
     "info thread foo"
 
 gdb_test "info thread foo -1" \
-    "Args must be numbers or '.' variables." \
+    "Invalid thread ID: foo -1" \
     "info thread foo -1"

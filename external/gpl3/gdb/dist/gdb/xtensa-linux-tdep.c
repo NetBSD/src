@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Xtensa processors.
 
-   Copyright (C) 2007-2015 Free Software Foundation, Inc.
+   Copyright (C) 2007-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -106,6 +106,10 @@ xtensa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				      xtensa_linux_gdb_signal_from_target);
   set_gdbarch_gdb_signal_to_target (gdbarch,
 				    xtensa_linux_gdb_signal_to_target);
+
+  /* Enable TLS support.  */
+  set_gdbarch_fetch_tls_load_module_address (gdbarch,
+                                             svr4_fetch_objfile_link_map);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

@@ -1,4 +1,4 @@
-# Copyright 1992-2015 Free Software Foundation, Inc.
+# Copyright 1992-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ if ![isnative] then {
 # I/O bandwith.
 
 if { [istarget "*-*-*bsd*"]
-     || [istarget "*-*-hpux*"]
      || [istarget "*-*-solaris*"] 
      || [istarget "*-*-darwin*"] 
      || [istarget "*-*-cygwin*"] } {

@@ -25,12 +25,28 @@ proc run_hilo_test {testfile models nops} {
     }
 }
 
+# Runs micromips tests by adding -mmicromips to as options
+proc run_micromips_test { name requested_machs } {
+    global global_as_options;
+    set gas_old $global_as_options;
+    append global_as_options " -mmicromips "
+    run_sim_test $name $requested_machs
+    set global_as_options $gas_old
+}
+
+# Runs all specified tests
+proc run_sim_tests { name requested_machs { requested_micromips_machs "" } } {
+    run_sim_test $name $requested_machs
+    run_micromips_test $name $requested_micromips_machs
+}
 
 # Only test mips*-*-elf (e.g., no mips*-*-linux)
 if {[istarget mips*-*-elf]} {
 
     set dspmodels ""
     set mdmxmodels ""
+    set micromipsmodels ""
+    set micromipsdspmodels ""
 
     if {[istarget mipsisa64sb1*-*-elf]} {
 	set models "sb1"
@@ -46,11 +62,15 @@ if {[istarget mips*-*-elf]} {
 	set submodels ""
 	append dspmodels " mips32r2 mips64r2"
 	append mdmxmodels " mips64 mips32r2 mips64r2"
+	append micromipsmodels " mips32r2"
+	append micromipsdspmodels " mips32r2 mips64r2"
     } elseif {[istarget mipsisa32*-*-elf]} {
 	set models "mips32 mips32r2"
 	set submodels "mips1 mips2"
 	append dspmodels " mips32r2"
 	append mdmxmodels " mips32r2"
+	append micromipsmodels " mips32r2"
+	append micromipsdspmodels " mips32r2"
     } elseif {[istarget mips64vr*-*-elf]} {
 	set models "vr4100 vr4111 vr4120 vr5000 vr5400 vr5500"
 	set submodels "mips1 mips2 mips3 mips4"
@@ -65,12 +85,14 @@ if {[istarget mips*-*-elf]} {
     append submodels " " $models
     set cpu_option -march
 
-    run_sim_test sanity.s $submodels
+    run_sim_tests sanity.s $submodels $micromipsmodels
+
     foreach nops {0 1} {
 	run_hilo_test hilo-hazard-1.s $models $nops
 	run_hilo_test hilo-hazard-2.s $models $nops
     }
     run_hilo_test hilo-hazard-3.s $models 2
+    run_hilo_test hilo-hazard-4.s $micromipsmodels 2
 
     run_sim_test fpu64-ps.s $submodels
     run_sim_test fpu64-ps-sb1.s $submodels
@@ -78,6 +100,7 @@ if {[istarget mips*-*-elf]} {
     run_sim_test mdmx-ob.s $mdmxmodels
     run_sim_test mdmx-ob-sb1.s $mdmxmodels
 
-    run_sim_test mips32-dsp.s $dspmodels
-    run_sim_test mips32-dsp2.s $dspmodels
+    run_sim_tests mips32-dsp.s $dspmodels $micromipsdspmodels
+    run_sim_tests mips32-dsp2.s $dspmodels $micromipsdspmodels
+
 }

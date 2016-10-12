@@ -1,6 +1,6 @@
 /* Intel 387 floating point stuff.
 
-   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+   Copyright (C) 1988-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -449,7 +449,7 @@ i387_supply_fsave (struct regcache *regcache, int regnum, const void *fsave)
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  const gdb_byte *regs = fsave;
+  const gdb_byte *regs = (const gdb_byte *) fsave;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -502,7 +502,7 @@ void
 i387_collect_fsave (const struct regcache *regcache, int regnum, void *fsave)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
-  gdb_byte *regs = fsave;
+  gdb_byte *regs = (gdb_byte *) fsave;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -595,7 +595,7 @@ void
 i387_supply_fxsave (struct regcache *regcache, int regnum, const void *fxsave)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
-  const gdb_byte *regs = fxsave;
+  const gdb_byte *regs = (const gdb_byte *) fxsave;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -678,7 +678,7 @@ void
 i387_collect_fxsave (const struct regcache *regcache, int regnum, void *fxsave)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
-  gdb_byte *regs = fxsave;
+  gdb_byte *regs = (gdb_byte *) fxsave;
   int i;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -896,7 +896,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  const gdb_byte *regs = xsave;
+  const gdb_byte *regs = (const gdb_byte *) xsave;
   int i;
   unsigned int clear_bv;
   static const gdb_byte zero[MAX_REGISTER_SIZE] = { 0 };
@@ -1269,7 +1269,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 {
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  gdb_byte *regs = xsave;
+  gdb_byte *regs = (gdb_byte *) xsave;
   int i;
   enum
     {

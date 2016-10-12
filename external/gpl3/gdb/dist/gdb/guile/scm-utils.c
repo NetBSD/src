@@ -1,6 +1,6 @@
 /* General utility routines for GDB/Scheme code.
 
-   Copyright (C) 2014-2015 Free Software Foundation, Inc.
+   Copyright (C) 2014-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -201,7 +201,7 @@ extract_arg (char format_char, SCM arg, void *argp,
     {
     case 's':
       {
-	char **arg_ptr = argp;
+	char **arg_ptr = (char **) argp;
 
 	CHECK_TYPE (gdbscm_is_true (scm_string_p (arg)), arg, position,
 		    func_name, _("string"));
@@ -210,7 +210,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 't':
       {
-	int *arg_ptr = argp;
+	int *arg_ptr = (int *) argp;
 
 	/* While in Scheme, anything non-#f is "true", we're strict.  */
 	CHECK_TYPE (gdbscm_is_bool (arg), arg, position, func_name,
@@ -220,7 +220,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'i':
       {
-	int *arg_ptr = argp;
+	int *arg_ptr = (int *) argp;
 
 	CHECK_TYPE (scm_is_signed_integer (arg, INT_MIN, INT_MAX),
 		    arg, position, func_name, _("int"));
@@ -229,7 +229,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'u':
       {
-	int *arg_ptr = argp;
+	int *arg_ptr = (int *) argp;
 
 	CHECK_TYPE (scm_is_unsigned_integer (arg, 0, UINT_MAX),
 		    arg, position, func_name, _("unsigned int"));
@@ -238,7 +238,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'l':
       {
-	long *arg_ptr = argp;
+	long *arg_ptr = (long *) argp;
 
 	CHECK_TYPE (scm_is_signed_integer (arg, LONG_MIN, LONG_MAX),
 		    arg, position, func_name, _("long"));
@@ -247,7 +247,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'n':
       {
-	unsigned long *arg_ptr = argp;
+	unsigned long *arg_ptr = (unsigned long *) argp;
 
 	CHECK_TYPE (scm_is_unsigned_integer (arg, 0, ULONG_MAX),
 		    arg, position, func_name, _("unsigned long"));
@@ -256,7 +256,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'L':
       {
-	LONGEST *arg_ptr = argp;
+	LONGEST *arg_ptr = (LONGEST *) argp;
 
 	CHECK_TYPE (scm_is_signed_integer (arg, INT64_MIN, INT64_MAX),
 		    arg, position, func_name, _("LONGEST"));
@@ -265,7 +265,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'U':
       {
-	ULONGEST *arg_ptr = argp;
+	ULONGEST *arg_ptr = (ULONGEST *) argp;
 
 	CHECK_TYPE (scm_is_unsigned_integer (arg, 0, UINT64_MAX),
 		    arg, position, func_name, _("ULONGEST"));
@@ -274,7 +274,7 @@ extract_arg (char format_char, SCM arg, void *argp,
       }
     case 'O':
       {
-	SCM *arg_ptr = argp;
+	SCM *arg_ptr = (SCM *) argp;
 
 	*arg_ptr = arg;
 	break;
@@ -432,8 +432,8 @@ gdbscm_parse_function_args (const char *func_name,
 
   if (num_keywords > 0)
     {
-      SCM *keyword_args = (SCM *) alloca (num_keywords * sizeof (SCM));
-      int *keyword_positions = (int *) alloca (num_keywords * sizeof (int));
+      SCM *keyword_args = XALLOCAVEC (SCM, num_keywords);
+      int *keyword_positions = XALLOCAVEC (int, num_keywords);
 
       gdb_assert (*p == '#');
       ++p;
@@ -587,7 +587,8 @@ char *
 gdbscm_gc_xstrdup (const char *str)
 {
   size_t len = strlen (str);
-  char *result = scm_gc_malloc_pointerless (len + 1, "gdbscm_gc_xstrdup");
+  char *result
+    = (char *) scm_gc_malloc_pointerless (len + 1, "gdbscm_gc_xstrdup");
 
   strcpy (result, str);
   return result;
@@ -607,8 +608,9 @@ gdbscm_gc_dup_argv (char **argv)
 
   /* Allocating "pointerless" works because the pointers are all
      self-contained within the object.  */
-  result = scm_gc_malloc_pointerless (((len + 1) * sizeof (char *))
-				      + string_space, "parameter enum list");
+  result = (char **) scm_gc_malloc_pointerless (((len + 1) * sizeof (char *))
+						+ string_space,
+						"parameter enum list");
   p = (char *) &result[len + 1];
 
   for (i = 0; i < len; ++i)

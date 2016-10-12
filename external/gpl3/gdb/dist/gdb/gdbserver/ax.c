@@ -1,5 +1,5 @@
 /* Agent expression code for remote server.
-   Copyright (C) 2009-2015 Free Software Foundation, Inc.
+   Copyright (C) 2009-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,6 +69,7 @@ static const char *gdb_agent_op_names [gdb_agent_op_last] =
 #undef DEFOP
   };
 
+#ifndef IN_PROCESS_AGENT
 static const unsigned char gdb_agent_op_sizes [gdb_agent_op_last] =
   {
     0
@@ -76,6 +77,7 @@ static const unsigned char gdb_agent_op_sizes [gdb_agent_op_last] =
 #include "ax.def"
 #undef DEFOP
   };
+#endif
 
 /* A wrapper for gdb_agent_op_names that does some bounds-checking.  */
 
@@ -102,9 +104,9 @@ gdb_parse_agent_expr (char **actparm)
   ++act;  /* skip the X */
   act = unpack_varlen_hex (act, &xlen);
   ++act;  /* skip a comma */
-  aexpr = xmalloc (sizeof (struct agent_expr));
+  aexpr = XNEW (struct agent_expr);
   aexpr->length = xlen;
-  aexpr->bytes = xmalloc (xlen);
+  aexpr->bytes = (unsigned char *) xmalloc (xlen);
   hex2bin (act, aexpr->bytes, xlen);
   *actparm = act + (xlen * 2);
   return aexpr;
@@ -129,7 +131,7 @@ gdb_unparse_agent_expr (struct agent_expr *aexpr)
 {
   char *rslt;
 
-  rslt = xmalloc (2 * aexpr->length + 1);
+  rslt = (char *) xmalloc (2 * aexpr->length + 1);
   bin2hex (aexpr->bytes, rslt, aexpr->length);
   return rslt;
 }
@@ -373,7 +375,7 @@ emit_le_goto (int *offset_p, int *size_p)
 /* Scan an agent expression for any evidence that the given PC is the
    target of a jump bytecode in the expression.  */
 
-int
+static int
 is_goto_target (struct agent_expr *aexpr, int pc)
 {
   int i;
@@ -430,7 +432,7 @@ compile_bytecodes (struct agent_expr *aexpr)
 
       /* Record the compiled-code address of the bytecode, for use by
 	 jump instructions.  */
-      aentry = xmalloc (sizeof (struct bytecode_address));
+      aentry = XNEW (struct bytecode_address);
       aentry->pc = pc;
       aentry->address = current_insn_ptr;
       aentry->goto_pc = -1;
@@ -1332,7 +1334,7 @@ gdb_eval_agent_expr (struct eval_agent_expr_context *ctx,
 		    op);
 	  /* If ever GDB generates any of these, we don't have the
 	     option of ignoring.  */
-	  return 1;
+	  return expr_eval_unhandled_opcode;
 
 	default:
 	  ax_debug ("Agent expression op 0x%x not recognized", op);

@@ -1,5 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992-2015 Free Software Foundation, Inc.
+   Copyright (C) 1992-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,9 @@ struct ui_file;
 
 typedef void *serial_ttystate;
 struct serial;
+struct serial_ops;
+
+/* Create a new serial for OPS.  The new serial is not opened.  */
 
 /* Try to open NAME.  Returns a new `struct serial *' on success, NULL
    on failure.  The new serial object has a reference count of 1.
@@ -43,6 +46,10 @@ struct serial;
    necessary.  */
 
 extern struct serial *serial_open (const char *name);
+
+/* Open a new serial stream using OPS.  */
+
+extern struct serial *serial_open_ops (const struct serial_ops *ops);
 
 /* Returns true if SCB is open.  */
 
@@ -68,8 +75,8 @@ extern void serial_ref (struct serial *scb);
 
 extern void serial_unref (struct serial *scb);
 
-/* Create a pipe, and put the read end in files[0], and the write end
-   in filde[1].  Returns 0 for success, negative value for error (in
+/* Create a pipe, and put the read end in FILDES[0], and the write end
+   in FILDES[1].  Returns 0 for success, negative value for error (in
    which case errno contains the error).  */
 
 extern int gdb_pipe (int fildes[2]);
@@ -248,7 +255,6 @@ struct serial
     int timeout_remaining;	/* (ser-unix.c termio{,s} only), we
 				   still need to wait for this many
 				   more seconds.  */
-    char *name;			/* The name of the device or host */
     struct serial *next;	/* Pointer to the next `struct serial *' */
     int debug_p;		/* Trace this serial devices operation.  */
     int async_state;		/* Async internal state.  */

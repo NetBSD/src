@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2015 Free Software Foundation, Inc.
+   Copyright 2014-2016 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@
 const int num_threads = NUM_THREADS;
 /* Allow for as much timeout as DejaGnu wants, plus a bit of
    slack.  */
-#define SECONDS (TIMEOUT + 20)
+
+volatile unsigned int timeout = TIMEOUT;
+#define SECONDS (timeout + 20)
 
 pthread_t child_thread[NUM_THREADS];
 volatile pthread_t signal_thread;
@@ -68,6 +70,11 @@ main (void)
 {
   int res;
   int i;
+
+  /* Call these early so that we're sure their PLTs are quickly
+     resolved now, instead of in the busy threads.  */
+  pthread_kill (pthread_self (), 0);
+  alarm (0);
 
   signal (SIGUSR1, handler);
 

@@ -1,5 +1,5 @@
 /* DWARF 1 find nearest line (_bfd_dwarf1_find_nearest_line).
-   Copyright (C) 1998-2015 Free Software Foundation, Inc.
+   Copyright (C) 1998-2016 Free Software Foundation, Inc.
 
    Written by Gavin Romig-Koch of Cygnus Solutions (gavin@cygnus.com).
 

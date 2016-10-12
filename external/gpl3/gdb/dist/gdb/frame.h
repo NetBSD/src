@@ -1,6 +1,6 @@
 /* Definitions for dealing with stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -69,12 +69,15 @@
 
    */
 
+#include "language.h"
+
 struct symtab_and_line;
 struct frame_unwind;
 struct frame_base;
 struct block;
 struct gdbarch;
 struct ui_file;
+struct ui_out;
 
 /* Status of a given frame's stack.  */
 
@@ -702,6 +705,14 @@ extern CORE_ADDR get_pc_function_start (CORE_ADDR);
 
 extern struct frame_info *find_relative_frame (struct frame_info *, int *);
 
+/* Wrapper over print_stack_frame modifying current_uiout with UIOUT for
+   the function call.  */
+
+extern void print_stack_frame_to_uiout (struct ui_out *uiout,
+					struct frame_info *, int print_level,
+					enum print_what print_what,
+					int set_current_sal);
+
 extern void print_stack_frame (struct frame_info *, int print_level,
 			       enum print_what print_what,
 			       int set_current_sal);
@@ -813,5 +824,20 @@ extern struct frame_info *create_new_frame (CORE_ADDR base, CORE_ADDR pc);
 
 extern int frame_unwinder_is (struct frame_info *fi,
 			      const struct frame_unwind *unwinder);
+
+/* Return the language of FRAME.  */
+
+extern enum language get_frame_language (struct frame_info *frame);
+
+/* Return the first non-tailcall frame above FRAME or FRAME if it is not a
+   tailcall frame.  Return NULL if FRAME is the start of a tailcall-only
+   chain.  */
+
+extern struct frame_info *skip_tailcall_frames (struct frame_info *frame);
+
+/* Return the first frame above FRAME or FRAME of which the code is
+   writable.  */
+
+extern struct frame_info *skip_unwritable_frames (struct frame_info *frame);
 
 #endif /* !defined (FRAME_H)  */

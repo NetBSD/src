@@ -1,5 +1,5 @@
 /* BFD back-end for ieee-695 objects.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    Written by Steve Chamberlain of Cygnus Support.
 
@@ -3863,6 +3863,7 @@ ieee_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
   _bfd_generic_copy_link_hash_symbol_type
 #define ieee_bfd_final_link _bfd_generic_final_link
 #define ieee_bfd_link_split_section  _bfd_generic_link_split_section
+#define ieee_bfd_link_check_relocs   _bfd_generic_link_check_relocs
 
 const bfd_target ieee_vec =
 {

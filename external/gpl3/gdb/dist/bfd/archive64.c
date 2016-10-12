@@ -1,5 +1,5 @@
-/* Support for 64-bit ELF archives.
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+/* Support for 64-bit archives.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -21,7 +21,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-/* This file supports the 64-bit (MIPS) ELF archives.  */
+/* This file supports the 64-bit archives.  We use the same format as
+   the 64-bit (MIPS) ELF archives.  */
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -31,14 +32,10 @@
 /* Irix 6 defines a 64bit archive map format, so that they can
    have archives more than 4 GB in size.  */
 
-bfd_boolean bfd_elf64_archive_slurp_armap (bfd *);
-bfd_boolean bfd_elf64_archive_write_armap
-  (bfd *, unsigned int, struct orl *, unsigned int, int);
-
 /* Read an Irix 6 armap.  */
 
 bfd_boolean
-bfd_elf64_archive_slurp_armap (bfd *abfd)
+_bfd_archive_64_bit_slurp_armap (bfd *abfd)
 {
   struct artdata *ardata = bfd_ardata (abfd);
   char nextname[17];
@@ -150,11 +147,11 @@ release_symdefs:
    linker crashes.  */
 
 bfd_boolean
-bfd_elf64_archive_write_armap (bfd *arch,
-			       unsigned int elength,
-			       struct orl *map,
-			       unsigned int symbol_count,
-			       int stridx)
+_bfd_archive_64_bit_write_armap (bfd *arch,
+				 unsigned int elength,
+				 struct orl *map,
+				 unsigned int symbol_count,
+				 int stridx)
 {
   unsigned int ranlibsize = (symbol_count * 8) + 8;
   unsigned int stringsize = stridx;

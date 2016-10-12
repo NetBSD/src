@@ -1,5 +1,5 @@
 /* Test program for multi-register variable.
-   Copyright 2003-2015 Free Software Foundation, Inc.
+   Copyright 2003-2016 Free Software Foundation, Inc.
 
    This file is part of the gdb testsuite.
 

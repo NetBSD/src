@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -137,9 +137,10 @@ struct target_so_ops
         unsigned o_flags, char **temp_pathname);
 
     /* Hook for looking up global symbols in a library-specific way.  */
-    struct symbol * (*lookup_lib_global_symbol) (struct objfile *objfile,
-						 const char *name,
-						 const domain_enum domain);
+    struct block_symbol (*lookup_lib_global_symbol)
+      (struct objfile *objfile,
+       const char *name,
+       const domain_enum domain);
 
     /* Given two so_list objects, one from the GDB thread list
        and another from the list returned by current_sos, return 1
@@ -192,8 +193,8 @@ extern bfd *solib_bfd_open (char *in_pathname);
 extern struct target_so_ops *current_target_so_ops;
 
 /* Handler for library-specific global symbol lookup in solib.c.  */
-struct symbol *solib_global_lookup (struct objfile *objfile,
-				    const char *name,
-				    const domain_enum domain);
+struct block_symbol solib_global_lookup (struct objfile *objfile,
+					    const char *name,
+					    const domain_enum domain);
 
 #endif

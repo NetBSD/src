@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -126,8 +126,6 @@ static CORE_ADDR ia64_find_global_pointer (struct gdbarch *gdbarch,
 #define NUM_IA64_RAW_REGS 462
 
 static int sp_regnum = IA64_GR12_REGNUM;
-static int fp_regnum = IA64_VFP_REGNUM;
-static int lr_regnum = IA64_VRAP_REGNUM;
 
 /* NOTE: we treat the register stack registers r32-r127 as
    pseudo-registers because they may not be accessible via the ptrace
@@ -1103,7 +1101,7 @@ ia64_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       if ((cfm & 0x7f) > regnum - V32_REGNUM) 
 	{
 	  ULONGEST reg_addr = rse_address_add (bsp, (regnum - V32_REGNUM));
-	  write_memory (reg_addr, (void *) buf, 8);
+	  write_memory (reg_addr, buf, 8);
 	}
     }
   else if (IA64_NAT0_REGNUM <= regnum && regnum <= IA64_NAT31_REGNUM)
@@ -1399,7 +1397,6 @@ examine_prologue (CORE_ADDR pc, CORE_ADDR lim_pc,
       && it == M && ((instr & 0x1ee0000003fLL) == 0x02c00000000LL))
     {
       /* alloc - start of a regular function.  */
-      int sor = (int) ((instr & 0x00078000000LL) >> 27);
       int sol = (int) ((instr & 0x00007f00000LL) >> 20);
       int sof = (int) ((instr & 0x000000fe000LL) >> 13);
       int rN = (int) ((instr & 0x00000001fc0LL) >> 6);
@@ -1850,10 +1847,10 @@ ia64_frame_cache (struct frame_info *this_frame, void **this_cache)
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct ia64_frame_cache *cache;
   gdb_byte buf[8];
-  CORE_ADDR cfm, psr;
+  CORE_ADDR cfm;
 
   if (*this_cache)
-    return *this_cache;
+    return (struct ia64_frame_cache *) *this_cache;
 
   cache = ia64_alloc_frame_cache ();
   *this_cache = cache;
@@ -1868,7 +1865,6 @@ ia64_frame_cache (struct frame_info *this_frame, void **this_cache)
   cache->bsp = extract_unsigned_integer (buf, 8, byte_order);
   
   get_frame_register (this_frame, IA64_PSR_REGNUM, buf);
-  psr = extract_unsigned_integer (buf, 8, byte_order);
 
   get_frame_register (this_frame, IA64_CFM_REGNUM, buf);
   cfm = extract_unsigned_integer (buf, 8, byte_order);
@@ -2240,7 +2236,7 @@ ia64_sigtramp_frame_cache (struct frame_info *this_frame, void **this_cache)
   gdb_byte buf[8];
 
   if (*this_cache)
-    return *this_cache;
+    return (struct ia64_frame_cache *) *this_cache;
 
   cache = ia64_alloc_frame_cache ();
 
@@ -2489,7 +2485,7 @@ ia64_access_reg (unw_addr_space_t as, unw_regnum_t uw_regnum, unw_word_t *val,
 {
   int regnum = ia64_uw2gdb_regnum (uw_regnum);
   unw_word_t bsp, sof, sol, cfm, psr, ip;
-  struct frame_info *this_frame = arg;
+  struct frame_info *this_frame = (struct frame_info *) arg;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   long new_sof, old_sof;
@@ -2552,7 +2548,7 @@ ia64_access_fpreg (unw_addr_space_t as, unw_regnum_t uw_regnum,
 		   unw_fpreg_t *val, int write, void *arg)
 {
   int regnum = ia64_uw2gdb_regnum (uw_regnum);
-  struct frame_info *this_frame = arg;
+  struct frame_info *this_frame = (struct frame_info *) arg;
   
   /* We never call any libunwind routines that need to write registers.  */
   gdb_assert (!write);
@@ -2569,7 +2565,7 @@ ia64_access_rse_reg (unw_addr_space_t as, unw_regnum_t uw_regnum,
 {
   int regnum = ia64_uw2gdb_regnum (uw_regnum);
   unw_word_t bsp, sof, sol, cfm, psr, ip;
-  struct regcache *regcache = arg;
+  struct regcache *regcache = (struct regcache *) arg;
   struct gdbarch *gdbarch = get_regcache_arch (regcache);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   long new_sof, old_sof;
@@ -2633,7 +2629,7 @@ ia64_access_rse_fpreg (unw_addr_space_t as, unw_regnum_t uw_regnum,
 		       unw_fpreg_t *val, int write, void *arg)
 {
   int regnum = ia64_uw2gdb_regnum (uw_regnum);
-  struct regcache *regcache = arg;
+  struct regcache *regcache = (struct regcache *) arg;
   
   /* We never call any libunwind routines that need to write registers.  */
   gdb_assert (!write);
@@ -3723,7 +3719,7 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   int nslots, rseslots, memslots, slotnum, nfuncargs;
   int floatreg;
   ULONGEST bsp;
-  CORE_ADDR funcdescaddr, pc, global_pointer;
+  CORE_ADDR funcdescaddr, global_pointer;
   CORE_ADDR func_addr = find_function_addr (function, NULL);
 
   nslots = 0;
@@ -3854,11 +3850,11 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	  len = TYPE_LENGTH (type);
 	  while (len > 0 && floatreg < IA64_FR16_REGNUM)
 	    {
-	      char to[MAX_REGISTER_SIZE];
+	      gdb_byte to[MAX_REGISTER_SIZE];
 	      convert_typed_floating (value_contents (arg) + argoffset,
 				      float_elt_type, to,
 				      ia64_ext_type (gdbarch));
-	      regcache_cooked_write (regcache, floatreg, (void *)to);
+	      regcache_cooked_write (regcache, floatreg, to);
 	      floatreg++;
 	      argoffset += TYPE_LENGTH (float_elt_type);
 	      len -= TYPE_LENGTH (float_elt_type);
@@ -3963,7 +3959,7 @@ ia64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   if (arches != NULL)
     return arches->gdbarch;
 
-  tdep = xzalloc (sizeof (struct gdbarch_tdep));
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   tdep->size_of_register_frame = ia64_size_of_register_frame;

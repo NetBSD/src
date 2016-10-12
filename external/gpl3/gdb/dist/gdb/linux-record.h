@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,8 +39,7 @@ struct linux_record_tdep
   int size_old_gid_t;
   int size_old_uid_t;
   int size_fd_set;
-  int size_dirent;
-  int size_dirent64;
+  int size_old_dirent;
   int size_statfs;
   int size_statfs64;
   int size_sockaddr;
@@ -81,7 +80,6 @@ struct linux_record_tdep
   int size_epoll_event;
   int size_itimerspec;
   int size_mq_attr;
-  int size_siginfo;
   int size_termios;
   int size_termios2;
   int size_pid_t;
@@ -91,6 +89,7 @@ struct linux_record_tdep
   int size_hayes_esp_config;
   int size_size_t;
   int size_iovec;
+  int size_time_t;
 
   /* The values of the second argument of system call "sys_ioctl".  */
   int ioctl_TCGETS;
@@ -182,6 +181,9 @@ struct linux_record_tdep
    each must provide a mapping from their set to this one.  */
 
 enum gdb_syscall {
+  /* An unknown GDB syscall, not a real syscall.  */
+  gdb_sys_no_syscall = -1,
+
   gdb_sys_restart_syscall = 0,
   gdb_sys_exit = 1,
   gdb_sys_fork = 2,
@@ -502,6 +504,12 @@ enum gdb_syscall {
   gdb_sys_move_pages = 317,
   gdb_sys_getcpu = 318,
   gdb_sys_epoll_pwait = 319,
+  gdb_sys_fallocate = 324,
+  gdb_sys_eventfd2 = 328,
+  gdb_sys_epoll_create1 = 329,
+  gdb_sys_dup3 = 330,
+  gdb_sys_pipe2 = 331,
+  gdb_sys_inotify_init1 = 332,
   gdb_sys_socket = 500,
   gdb_sys_connect = 501,
   gdb_sys_accept = 502,

@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2015 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,8 +41,8 @@ free_one_dll (struct inferior_list_entry *inf)
 static int
 match_dll (struct inferior_list_entry *inf, void *arg)
 {
-  struct dll_info *iter = (void *) inf;
-  struct dll_info *key = arg;
+  struct dll_info *iter = (struct dll_info *) inf;
+  struct dll_info *key = (struct dll_info *) arg;
 
   if (key->base_addr != UNSPECIFIED_CORE_ADDR
       && iter->base_addr == key->base_addr)
@@ -60,8 +60,7 @@ match_dll (struct inferior_list_entry *inf, void *arg)
 void
 loaded_dll (const char *name, CORE_ADDR base_addr)
 {
-  struct dll_info *new_dll = xmalloc (sizeof (*new_dll));
-  memset (new_dll, 0, sizeof (*new_dll));
+  struct dll_info *new_dll = XCNEW (struct dll_info);
 
   new_dll->entry.id = minus_one_ptid;
 
@@ -84,7 +83,7 @@ unloaded_dll (const char *name, CORE_ADDR base_addr)
   key_dll.name = (char *) name;
   key_dll.base_addr = base_addr;
 
-  dll = (void *) find_inferior (&all_dlls, match_dll, &key_dll);
+  dll = (struct dll_info *) find_inferior (&all_dlls, match_dll, &key_dll);
 
   if (dll == NULL)
     /* For some inferiors we might get unloaded_dll events without having

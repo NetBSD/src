@@ -1,6 +1,6 @@
 /* Some commonly-used VEC types.
 
-   Copyright (C) 2012-2015 Free Software Foundation, Inc.
+   Copyright (C) 2012-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,6 +30,8 @@ DEF_VEC_P (char_ptr);
 DEF_VEC_P (const_char_ptr);
 
 DEF_VEC_I (int);
+
+DEF_VEC_I (CORE_ADDR);
 
 extern void free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec);
 

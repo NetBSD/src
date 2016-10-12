@@ -17,24 +17,24 @@ initialize_tdesc_amd64_mpx (void)
   set_tdesc_architecture (result, bfd_scan_arch ("i386:x86-64"));
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.core");
-  field_type = tdesc_create_flags (feature, "i386_eflags", 4);
-  tdesc_add_flag (field_type, 0, "CF");
-  tdesc_add_flag (field_type, 1, "");
-  tdesc_add_flag (field_type, 2, "PF");
-  tdesc_add_flag (field_type, 4, "AF");
-  tdesc_add_flag (field_type, 6, "ZF");
-  tdesc_add_flag (field_type, 7, "SF");
-  tdesc_add_flag (field_type, 8, "TF");
-  tdesc_add_flag (field_type, 9, "IF");
-  tdesc_add_flag (field_type, 10, "DF");
-  tdesc_add_flag (field_type, 11, "OF");
-  tdesc_add_flag (field_type, 14, "NT");
-  tdesc_add_flag (field_type, 16, "RF");
-  tdesc_add_flag (field_type, 17, "VM");
-  tdesc_add_flag (field_type, 18, "AC");
-  tdesc_add_flag (field_type, 19, "VIF");
-  tdesc_add_flag (field_type, 20, "VIP");
-  tdesc_add_flag (field_type, 21, "ID");
+  type = tdesc_create_flags (feature, "i386_eflags", 4);
+  tdesc_add_flag (type, 0, "CF");
+  tdesc_add_flag (type, 1, "");
+  tdesc_add_flag (type, 2, "PF");
+  tdesc_add_flag (type, 4, "AF");
+  tdesc_add_flag (type, 6, "ZF");
+  tdesc_add_flag (type, 7, "SF");
+  tdesc_add_flag (type, 8, "TF");
+  tdesc_add_flag (type, 9, "IF");
+  tdesc_add_flag (type, 10, "DF");
+  tdesc_add_flag (type, 11, "OF");
+  tdesc_add_flag (type, 14, "NT");
+  tdesc_add_flag (type, 16, "RF");
+  tdesc_add_flag (type, 17, "VM");
+  tdesc_add_flag (type, 18, "AC");
+  tdesc_add_flag (type, 19, "VIF");
+  tdesc_add_flag (type, 20, "VIP");
+  tdesc_add_flag (type, 21, "ID");
 
   tdesc_create_reg (feature, "rax", 0, 1, NULL, 64, "int64");
   tdesc_create_reg (feature, "rbx", 1, 1, NULL, 64, "int64");
@@ -112,21 +112,21 @@ initialize_tdesc_amd64_mpx (void)
   field_type = tdesc_named_type (feature, "uint128");
   tdesc_add_field (type, "uint128", field_type);
 
-  field_type = tdesc_create_flags (feature, "i386_mxcsr", 4);
-  tdesc_add_flag (field_type, 0, "IE");
-  tdesc_add_flag (field_type, 1, "DE");
-  tdesc_add_flag (field_type, 2, "ZE");
-  tdesc_add_flag (field_type, 3, "OE");
-  tdesc_add_flag (field_type, 4, "UE");
-  tdesc_add_flag (field_type, 5, "PE");
-  tdesc_add_flag (field_type, 6, "DAZ");
-  tdesc_add_flag (field_type, 7, "IM");
-  tdesc_add_flag (field_type, 8, "DM");
-  tdesc_add_flag (field_type, 9, "ZM");
-  tdesc_add_flag (field_type, 10, "OM");
-  tdesc_add_flag (field_type, 11, "UM");
-  tdesc_add_flag (field_type, 12, "PM");
-  tdesc_add_flag (field_type, 15, "FZ");
+  type = tdesc_create_flags (feature, "i386_mxcsr", 4);
+  tdesc_add_flag (type, 0, "IE");
+  tdesc_add_flag (type, 1, "DE");
+  tdesc_add_flag (type, 2, "ZE");
+  tdesc_add_flag (type, 3, "OE");
+  tdesc_add_flag (type, 4, "UE");
+  tdesc_add_flag (type, 5, "PE");
+  tdesc_add_flag (type, 6, "DAZ");
+  tdesc_add_flag (type, 7, "IM");
+  tdesc_add_flag (type, 8, "DM");
+  tdesc_add_flag (type, 9, "ZM");
+  tdesc_add_flag (type, 10, "OM");
+  tdesc_add_flag (type, 11, "UM");
+  tdesc_add_flag (type, 12, "PM");
+  tdesc_add_flag (type, 15, "FZ");
 
   tdesc_create_reg (feature, "xmm0", 40, 1, NULL, 128, "vec128");
   tdesc_create_reg (feature, "xmm1", 41, 1, NULL, 128, "vec128");
@@ -145,24 +145,6 @@ initialize_tdesc_amd64_mpx (void)
   tdesc_create_reg (feature, "xmm14", 54, 1, NULL, 128, "vec128");
   tdesc_create_reg (feature, "xmm15", 55, 1, NULL, 128, "vec128");
   tdesc_create_reg (feature, "mxcsr", 56, 1, "vector", 32, "i386_mxcsr");
-
-  feature = tdesc_create_feature (result, "org.gnu.gdb.i386.avx");
-  tdesc_create_reg (feature, "ymm0h", 57, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm1h", 58, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm2h", 59, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm3h", 60, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm4h", 61, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm5h", 62, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm6h", 63, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm7h", 64, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm8h", 65, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm9h", 66, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm10h", 67, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm11h", 68, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm12h", 69, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm13h", 70, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm14h", 71, 1, NULL, 128, "uint128");
-  tdesc_create_reg (feature, "ymm15h", 72, 1, NULL, 128, "uint128");
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.i386.mpx");
   type = tdesc_create_struct (feature, "br128");
@@ -195,12 +177,12 @@ initialize_tdesc_amd64_mpx (void)
   field_type = tdesc_named_type (feature, "_bndcfgu");
   tdesc_add_field (type, "config", field_type);
 
-  tdesc_create_reg (feature, "bnd0raw", 73, 1, NULL, 128, "br128");
-  tdesc_create_reg (feature, "bnd1raw", 74, 1, NULL, 128, "br128");
-  tdesc_create_reg (feature, "bnd2raw", 75, 1, NULL, 128, "br128");
-  tdesc_create_reg (feature, "bnd3raw", 76, 1, NULL, 128, "br128");
-  tdesc_create_reg (feature, "bndcfgu", 77, 1, NULL, 64, "cfgu");
-  tdesc_create_reg (feature, "bndstatus", 78, 1, NULL, 64, "status");
+  tdesc_create_reg (feature, "bnd0raw", 57, 1, NULL, 128, "br128");
+  tdesc_create_reg (feature, "bnd1raw", 58, 1, NULL, 128, "br128");
+  tdesc_create_reg (feature, "bnd2raw", 59, 1, NULL, 128, "br128");
+  tdesc_create_reg (feature, "bnd3raw", 60, 1, NULL, 128, "br128");
+  tdesc_create_reg (feature, "bndcfgu", 61, 1, NULL, 64, "cfgu");
+  tdesc_create_reg (feature, "bndstatus", 62, 1, NULL, 64, "status");
 
   tdesc_amd64_mpx = result;
 }

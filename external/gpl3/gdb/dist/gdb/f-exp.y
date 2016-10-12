@@ -1,6 +1,6 @@
 
 /* YACC parser for Fortran expressions, for GDB.
-   Copyright (C) 1986-2015 Free Software Foundation, Inc.
+   Copyright (C) 1986-2016 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -57,65 +57,10 @@
 #define parse_type(ps) builtin_type (parse_gdbarch (ps))
 #define parse_f_type(ps) builtin_f_type (parse_gdbarch (ps))
 
-/* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
-   as well as gratuitiously global symbol names, so we can have multiple
-   yacc generated parsers in gdb.  Note that these are only the variables
-   produced by yacc.  If other parser generators (bison, byacc, etc) produce
-   additional global names that conflict at link time, then those parser
-   generators need to be fixed instead of adding those names to this list.  */
-
-#define	yymaxdepth f_maxdepth
-#define	yyparse f_parse_internal
-#define	yylex	f_lex
-#define	yyerror	f_error
-#define	yylval	f_lval
-#define	yychar	f_char
-#define	yydebug	f_debug
-#define	yypact	f_pact	
-#define	yyr1	f_r1			
-#define	yyr2	f_r2			
-#define	yydef	f_def		
-#define	yychk	f_chk		
-#define	yypgo	f_pgo		
-#define	yyact	f_act		
-#define	yyexca	f_exca
-#define yyerrflag f_errflag
-#define yynerrs	f_nerrs
-#define	yyps	f_ps
-#define	yypv	f_pv
-#define	yys	f_s
-#define	yy_yys	f_yys
-#define	yystate	f_state
-#define	yytmp	f_tmp
-#define	yyv	f_v
-#define	yy_yyv	f_yyv
-#define	yyval	f_val
-#define	yylloc	f_lloc
-#define yyreds	f_reds		/* With YYDEBUG defined */
-#define yytoks	f_toks		/* With YYDEBUG defined */
-#define yyname	f_name		/* With YYDEBUG defined */
-#define yyrule	f_rule		/* With YYDEBUG defined */
-#define yylhs	f_yylhs
-#define yylen	f_yylen
-#define yydefred f_yydefred
-#define yydgoto	f_yydgoto
-#define yysindex f_yysindex
-#define yyrindex f_yyrindex
-#define yygindex f_yygindex
-#define yytable	 f_yytable
-#define yycheck	 f_yycheck
-#define yyss	f_yyss
-#define yysslim	f_yysslim
-#define yyssp	f_yyssp
-#define yystacksize f_yystacksize
-#define yyvs	f_yyvs
-#define yyvsp	f_yyvsp
-
-#ifndef YYDEBUG
-#define	YYDEBUG	1		/* Default to yydebug support */
-#endif
-
-#define YYFPRINTF parser_fprintf
+/* Remap normal yacc parser interface names (yyparse, yylex, yyerror,
+   etc).  */
+#define GDB_YY_REMAP_PREFIX f_
+#include "yy-remap.h"
 
 /* The state of the parser, used internally when we are parsing the
    expression.  */
@@ -313,27 +258,27 @@ arglist	:	arglist ',' exp   %prec ABOVE_COMMA
 /* There are four sorts of subrange types in F90.  */
 
 subrange:	exp ':' exp	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (pstate, OP_F90_RANGE); 
+			{ write_exp_elt_opcode (pstate, OP_RANGE); 
 			  write_exp_elt_longcst (pstate, NONE_BOUND_DEFAULT);
-			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
+			  write_exp_elt_opcode (pstate, OP_RANGE); }
 	;
 
 subrange:	exp ':'	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			{ write_exp_elt_opcode (pstate, OP_RANGE);
 			  write_exp_elt_longcst (pstate, HIGH_BOUND_DEFAULT);
-			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
+			  write_exp_elt_opcode (pstate, OP_RANGE); }
 	;
 
 subrange:	':' exp	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			{ write_exp_elt_opcode (pstate, OP_RANGE);
 			  write_exp_elt_longcst (pstate, LOW_BOUND_DEFAULT);
-			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
+			  write_exp_elt_opcode (pstate, OP_RANGE); }
 	;
 
 subrange:	':'	%prec ABOVE_COMMA
-			{ write_exp_elt_opcode (pstate, OP_F90_RANGE);
+			{ write_exp_elt_opcode (pstate, OP_RANGE);
 			  write_exp_elt_longcst (pstate, BOTH_BOUND_DEFAULT);
-			  write_exp_elt_opcode (pstate, OP_F90_RANGE); }
+			  write_exp_elt_opcode (pstate, OP_RANGE); }
 	;
 
 complexnum:     exp ',' exp 
@@ -487,7 +432,7 @@ exp	:	SIZEOF '(' type ')'	%prec UNARY
 			  write_exp_elt_type (pstate,
 					      parse_f_type (pstate)
 					      ->builtin_integer);
-			  CHECK_TYPEDEF ($3);
+			  $3 = check_typedef ($3);
 			  write_exp_elt_longcst (pstate,
 						 (LONGEST) TYPE_LENGTH ($3));
 			  write_exp_elt_opcode (pstate, OP_LONG); }
@@ -509,23 +454,20 @@ exp	:	STRING_LITERAL
 	;
 
 variable:	name_not_typename
-			{ struct symbol *sym = $1.sym;
+			{ struct block_symbol sym = $1.sym;
 
-			  if (sym)
+			  if (sym.symbol)
 			    {
-			      if (symbol_read_needs_frame (sym))
+			      if (symbol_read_needs_frame (sym.symbol))
 				{
 				  if (innermost_block == 0
-				      || contained_in (block_found, 
+				      || contained_in (sym.block,
 						       innermost_block))
-				    innermost_block = block_found;
+				    innermost_block = sym.block;
 				}
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
-			      /* We want to use the selected frame, not
-				 another more inner frame which happens to
-				 be in the same block.  */
-			      write_exp_elt_block (pstate, NULL);
-			      write_exp_elt_sym (pstate, sym);
+			      write_exp_elt_block (pstate, sym.block);
+			      write_exp_elt_sym (pstate, sym.symbol);
 			      write_exp_elt_opcode (pstate, OP_VAR_VALUE);
 			      break;
 			    }
@@ -859,7 +801,7 @@ static const struct token dot_ops[] =
   { ".GT.", GREATERTHAN, BINOP_END },
   { ".lt.", LESSTHAN, BINOP_END },
   { ".LT.", LESSTHAN, BINOP_END },
-  { NULL, 0, 0 }
+  { NULL, 0, BINOP_END }
 };
 
 struct f77_boolean_val 
@@ -894,7 +836,7 @@ static const struct token f77_keywords[] =
   { "sizeof", SIZEOF, BINOP_END },
   { "real_8", REAL_S8_KEYWORD, BINOP_END },
   { "real", REAL_KEYWORD, BINOP_END },
-  { NULL, 0, 0 }
+  { NULL, 0, BINOP_END }
 }; 
 
 /* Implementation of a dynamically expandable buffer for processing input
@@ -1198,7 +1140,7 @@ yylex (void)
      The caller is not constrained to care about the distinction.  */
   {
     char *tmp = copy_name (yylval.sval);
-    struct symbol *sym;
+    struct block_symbol result;
     struct field_of_this_result is_a_field_of_this;
     enum domain_enum_tag lookup_domains[] =
     {
@@ -1215,17 +1157,18 @@ yylex (void)
 	   way we can refer to it unconditionally below.  */
 	memset (&is_a_field_of_this, 0, sizeof (is_a_field_of_this));
 
-	sym = lookup_symbol (tmp, expression_context_block,
-			     lookup_domains[i],
-			     parse_language (pstate)->la_language
-			     == language_cplus ? &is_a_field_of_this : NULL);
-	if (sym && SYMBOL_CLASS (sym) == LOC_TYPEDEF)
+	result = lookup_symbol (tmp, expression_context_block,
+				lookup_domains[i],
+				parse_language (pstate)->la_language
+				== language_cplus
+				  ? &is_a_field_of_this : NULL);
+	if (result.symbol && SYMBOL_CLASS (result.symbol) == LOC_TYPEDEF)
 	  {
-	    yylval.tsym.type = SYMBOL_TYPE (sym);
+	    yylval.tsym.type = SYMBOL_TYPE (result.symbol);
 	    return TYPENAME;
 	  }
 
-	if (sym)
+	if (result.symbol)
 	  break;
       }
 
@@ -1238,7 +1181,7 @@ yylex (void)
     /* Input names that aren't symbols but ARE valid hex numbers,
        when the input radix permits them, can be names or numbers
        depending on the parse.  Note we support radixes > 16 here.  */
-    if (!sym
+    if (!result.symbol
 	&& ((tokstart[0] >= 'a' && tokstart[0] < 'a' + input_radix - 10)
 	    || (tokstart[0] >= 'A' && tokstart[0] < 'A' + input_radix - 10)))
       {
@@ -1246,14 +1189,14 @@ yylex (void)
 	hextype = parse_number (pstate, tokstart, namelen, 0, &newlval);
 	if (hextype == INT)
 	  {
-	    yylval.ssym.sym = sym;
+	    yylval.ssym.sym = result;
 	    yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
 	    return NAME_OR_INT;
 	  }
       }
     
     /* Any other kind of symbol */
-    yylval.ssym.sym = sym;
+    yylval.ssym.sym = result;
     yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
     return NAME;
   }

@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -65,7 +65,7 @@ parse_mem8 (CGEN_CPU_DESC cd,
   if (**strp == '(')
     {
       const char *s = *strp;
-      
+
       if (s[1] == '-' && s[2] == '-')
 	return _("Bad register in preincrement");
 
@@ -76,7 +76,7 @@ parse_mem8 (CGEN_CPU_DESC cd,
       if (s[0] == ',' || s[0] == ')')
 	return _("Bad register name");
     }
-  else if (cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_gr_names, 
+  else if (cgen_parse_keyword (cd, strp, & xstormy16_cgen_opval_gr_names,
 			       (long *) valuep) == NULL)
     return _("Label conflicts with register name");
   else if (strncasecmp (*strp, "rx,", 3) == 0
@@ -85,7 +85,7 @@ parse_mem8 (CGEN_CPU_DESC cd,
     return _("Label conflicts with `Rx'");
   else if (**strp == '#')
     return _("Bad immediate expression");
-  
+
   return cgen_parse_unsigned_integer (cd, strp, opindex, valuep);
 }
 
@@ -93,7 +93,7 @@ parse_mem8 (CGEN_CPU_DESC cd,
    one for small operands and one for large ones.  We want to use
    the small one when possible, but we do not want to generate relocs
    of the small size.  This is somewhat tricky.  */
-   
+
 static const char *
 parse_small_immediate (CGEN_CPU_DESC cd,
 		       const char **strp,
@@ -110,7 +110,7 @@ parse_small_immediate (CGEN_CPU_DESC cd,
   errmsg = (* cd->parse_operand_fn)
     (cd, CGEN_PARSE_OPERAND_INTEGER, strp, opindex, BFD_RELOC_NONE,
      & result, & value);
-  
+
   if (errmsg)
     return errmsg;
 
@@ -122,7 +122,7 @@ parse_small_immediate (CGEN_CPU_DESC cd,
 }
 
 /* Literal scan be either a normal literal, a @hi() or @lo relocation.  */
-   
+
 static const char *
 parse_immediate16 (CGEN_CPU_DESC cd,
 		   const char **strp,
@@ -157,7 +157,7 @@ parse_immediate16 (CGEN_CPU_DESC cd,
 
       *valuep = value;
       if ((code == BFD_RELOC_HI16 || code == BFD_RELOC_LO16)
-	  && **strp == ')')        
+	  && **strp == ')')
 	*strp += 1;
       else
         {
@@ -279,7 +279,7 @@ xstormy16_cgen_parse_operand (CGEN_CPU_DESC cd,
   return errmsg;
 }
 
-cgen_parse_fn * const xstormy16_cgen_parse_handlers[] = 
+cgen_parse_fn * const xstormy16_cgen_parse_handlers[] =
 {
   parse_insn_normal,
 };
@@ -309,9 +309,9 @@ CGEN_ASM_INIT_HOOK
 
    Returns NULL for success, an error message for failure.  */
 
-char * 
+char *
 xstormy16_cgen_build_insn_regex (CGEN_INSN *insn)
-{  
+{
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
   char rxbuf[CGEN_MAX_RX_ELEMENTS];
@@ -350,18 +350,18 @@ xstormy16_cgen_build_insn_regex (CGEN_INSN *insn)
   /* Copy any remaining literals from the syntax string into the rx.  */
   for(; * syn != 0 && rx <= rxbuf + (CGEN_MAX_RX_ELEMENTS - 7 - 4); ++syn)
     {
-      if (CGEN_SYNTAX_CHAR_P (* syn)) 
+      if (CGEN_SYNTAX_CHAR_P (* syn))
 	{
 	  char c = CGEN_SYNTAX_CHAR (* syn);
 
-	  switch (c) 
+	  switch (c)
 	    {
 	      /* Escape any regex metacharacters in the syntax.  */
-	    case '.': case '[': case '\\': 
-	    case '*': case '^': case '$': 
+	    case '.': case '[': case '\\':
+	    case '*': case '^': case '$':
 
 #ifdef CGEN_ESCAPE_EXTENDED_REGEX
-	    case '?': case '{': case '}': 
+	    case '?': case '{': case '}':
 	    case '(': case ')': case '*':
 	    case '|': case '+': case ']':
 #endif
@@ -391,20 +391,20 @@ xstormy16_cgen_build_insn_regex (CGEN_INSN *insn)
     }
 
   /* Trailing whitespace ok.  */
-  * rx++ = '['; 
-  * rx++ = ' '; 
-  * rx++ = '\t'; 
-  * rx++ = ']'; 
-  * rx++ = '*'; 
+  * rx++ = '[';
+  * rx++ = ' ';
+  * rx++ = '\t';
+  * rx++ = ']';
+  * rx++ = '*';
 
   /* But anchor it after that.  */
-  * rx++ = '$'; 
+  * rx++ = '$';
   * rx = '\0';
 
   CGEN_INSN_RX (insn) = xmalloc (sizeof (regex_t));
   reg_err = regcomp ((regex_t *) CGEN_INSN_RX (insn), rxbuf, REG_NOSUB);
 
-  if (reg_err == 0) 
+  if (reg_err == 0)
     return NULL;
   else
     {
@@ -603,7 +603,7 @@ xstormy16_cgen_assemble_insn (CGEN_CPU_DESC cd,
       const CGEN_INSN *insn = ilist->insn;
       recognized_mnemonic = 1;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not usually needed as unsupported opcodes
 	 shouldn't be in the hash lists.  */
       /* Is this insn supported by the selected cpu?  */
@@ -663,7 +663,7 @@ xstormy16_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
       }
@@ -672,11 +672,11 @@ xstormy16_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s...'"), start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s'"), start);
       }
-      
+
     *errmsg = errbuf;
     return NULL;
   }

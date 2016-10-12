@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2015 Free Software Foundation, Inc.
+   Copyright (C) 2005-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -14,9 +14,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-   MA 02111-1307, USA.  */
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* This file provides routines used by all VxWorks targets.  */
 
@@ -64,7 +62,7 @@ elf_vxworks_add_symbol_hook (bfd *abfd,
      give the symbol weak binding to get the desired samantics.
      This transformation will be undone in
      elf_i386_vxworks_link_output_symbol_hook. */
-  if ((info->shared || abfd->flags & DYNAMIC)
+  if ((bfd_link_pic (info) || abfd->flags & DYNAMIC)
       && elf_vxworks_gott_symbol_p (abfd, *namep))
     {
       sym->st_info = ELF_ST_INFO (STB_WEAK, ELF_ST_TYPE (sym->st_info));
@@ -89,7 +87,7 @@ elf_vxworks_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info,
   htab = elf_hash_table (info);
   bed = get_elf_backend_data (dynobj);
 
-  if (!info->shared)
+  if (!bfd_link_pic (info))
     {
       s = bfd_make_section_anyway_with_flags (dynobj,
 					      bed->default_use_rela_p

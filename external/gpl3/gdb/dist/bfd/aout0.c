@@ -1,5 +1,5 @@
 /* BFD backend for SunOS style a.out with flags set to 0
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

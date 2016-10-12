@@ -1,5 +1,5 @@
 /* Lattice Mico32 ELF support for BFD.
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Jon Beniston <jon@beniston.com>
 
    This file is part of BFD, the Binary File Descriptor library.
