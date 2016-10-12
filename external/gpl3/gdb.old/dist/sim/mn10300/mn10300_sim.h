@@ -8,51 +8,15 @@
 #include "bfd.h"
 #include "sim-fpu.h"
 
-#ifndef INLINE
-#ifdef __GNUC__
-#define INLINE inline
-#else
-#define INLINE
-#endif
-#endif
-
 extern host_callback *mn10300_callback;
 extern SIM_DESC simulator;
 
-#define DEBUG_TRACE		0x00000001
-#define DEBUG_VALUES		0x00000002
-
-extern int mn10300_debug;
-
-#if UCHAR_MAX == 255
-typedef unsigned char uint8;
-typedef signed char int8;
-#else
-#error "Char is not an 8-bit type"
-#endif
-
-#if SHRT_MAX == 32767
-typedef unsigned short uint16;
-typedef signed short int16;
-#else
-#error "Short is not a 16-bit type"
-#endif
-
-#if INT_MAX == 2147483647
-
-typedef unsigned int uint32;
-typedef signed int int32;
-
-#else
-#  if LONG_MAX == 2147483647
-
-typedef unsigned long uint32;
-typedef signed long int32;
-
-#  else
-#  error "Neither int nor long is a 32-bit type"
-#  endif
-#endif
+typedef unsigned8 uint8;
+typedef signed8 int8;
+typedef unsigned16 uint16;
+typedef signed16 int16;
+typedef unsigned32 uint32;
+typedef signed32 int32;
 
 typedef struct
 {
@@ -83,9 +47,6 @@ struct _state
     reg_t fs[32]; /* FS0-31 */
     dword fd[16]; /* FD0,2,...,30 */
   } fpregs;
-  uint8 *mem;			/* main memory */
-  int exception;
-  int exited;
 
   /* All internal state modified by signal_exception() that may need to be
      rolled back for passing moment-of-exception image back to gdb. */
@@ -99,8 +60,6 @@ struct _state
 };
 
 extern struct _state State;
-extern uint32 OP[4];
-extern struct simops Simops[];
 
 #define PC	(State.regs[REG_PC])
 #define SP	(State.regs[REG_SP])
@@ -179,11 +138,6 @@ extern struct simops Simops[];
 #define FPU2FS(F,FS) sim_fpu_to32 (&(FS), &(F))
 #define FPU2FD(F,FD) sim_fpu_to232 (&((FD).high), &((FD).low), &(F))
 
-#ifdef _WIN32
-#define SIGTRAP 5
-#define SIGQUIT 3
-#endif
-
 #define FETCH32(a,b,c,d) \
  ((a)+((b)<<8)+((c)<<16)+((d)<<24))
 
@@ -240,31 +194,12 @@ dw2u64 (dword data)
 
 /* Function declarations.  */
 
-uint32 get_word (uint8 *);
-uint16 get_half (uint8 *);
-uint8 get_byte (uint8 *);
-void put_word (uint8 *, uint32);
-void put_half (uint8 *, uint16);
-void put_byte (uint8 *, uint8);
-
-extern uint8 *map (SIM_ADDR addr);
-
 INLINE_SIM_MAIN (void) genericAdd (unsigned32 source, unsigned32 destReg);
 INLINE_SIM_MAIN (void) genericSub (unsigned32 source, unsigned32 destReg);
 INLINE_SIM_MAIN (void) genericCmp (unsigned32 leftOpnd, unsigned32 rightOpnd);
 INLINE_SIM_MAIN (void) genericOr (unsigned32 source, unsigned32 destReg);
 INLINE_SIM_MAIN (void) genericXor (unsigned32 source, unsigned32 destReg);
 INLINE_SIM_MAIN (void) genericBtst (unsigned32 leftOpnd, unsigned32 rightOpnd);
-INLINE_SIM_MAIN (int) syscall_read_mem (host_callback *cb,
-					struct cb_syscall *sc,
-					unsigned long taddr,
-					char *buf,
-					int bytes);
-INLINE_SIM_MAIN (int) syscall_write_mem (host_callback *cb,
-					 struct cb_syscall *sc,
-					 unsigned long taddr,
-					 const char *buf,
-					 int bytes); 
 INLINE_SIM_MAIN (void) do_syscall (void);
 void program_interrupt (SIM_DESC sd, sim_cpu *cpu, sim_cia cia, SIM_SIGNAL sig);
 

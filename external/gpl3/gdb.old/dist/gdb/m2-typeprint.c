@@ -188,8 +188,12 @@ m2_range (struct type *type, struct ui_file *stream, int show,
 	  int level, const struct type_print_options *flags)
 {
   if (TYPE_HIGH_BOUND (type) == TYPE_LOW_BOUND (type))
-    m2_print_type (TYPE_DOMAIN_TYPE (type), "", stream, show, level,
-		   flags);
+    {
+      /* FIXME: TYPE_TARGET_TYPE used to be TYPE_DOMAIN_TYPE but that was
+	 wrong.  Not sure if TYPE_TARGET_TYPE is correct though.  */
+      m2_print_type (TYPE_TARGET_TYPE (type), "", stream, show, level,
+		     flags);
+    }
   else
     {
       struct type *target = TYPE_TARGET_TYPE (type);
@@ -534,7 +538,7 @@ m2_record_fields (struct type *type, struct ui_file *stream, int show,
   /* Print the tag if it exists.  */
   if (TYPE_TAG_NAME (type) != NULL)
     {
-      if (strncmp (TYPE_TAG_NAME (type), "$$", 2) != 0)
+      if (!startswith (TYPE_TAG_NAME (type), "$$"))
 	{
 	  fputs_filtered (TYPE_TAG_NAME (type), stream);
 	  if (show > 0)

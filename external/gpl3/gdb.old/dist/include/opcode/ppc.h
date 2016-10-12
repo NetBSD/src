@@ -195,6 +195,15 @@ extern const int vle_num_opcodes;
    that isn't a superset of POWER8, we can define this to its own mask.  */
 #define PPC_OPCODE_HTM        PPC_OPCODE_POWER8
 
+/* Opcode is supported by ppc750cl.  */
+#define PPC_OPCODE_750	      0x4000000000ull
+
+/* Opcode is supported by ppc7450.  */
+#define PPC_OPCODE_7450	      0x8000000000ull
+
+/* Opcode is supported by ppc821/850/860.  */
+#define PPC_OPCODE_860	      0x10000000000ull
+
 /* A macro to extract the major opcode from an instruction.  */
 #define PPC_OP(i) (((i) >> 26) & 0x3f)
 
@@ -380,6 +389,11 @@ extern const unsigned int num_powerpc_operands;
 
 /* This is a CR FIELD that does not use symbolic names.  */
 #define PPC_OPERAND_CR_REG (0x200000)
+
+/* This flag is only used with PPC_OPERAND_OPTIONAL.  If this operand
+   is omitted, then the value it should use for the operand is stored
+   in the SHIFT field of the immediatly following operand field.  */
+#define PPC_OPERAND_OPTIONAL_VALUE (0x400000)
 
 /* The POWER and PowerPC assemblers use a few macros.  We keep them
    with the operands table for simplicity.  The macro table is an
@@ -408,5 +422,13 @@ extern const struct powerpc_macro powerpc_macros[];
 extern const int powerpc_num_macros;
 
 extern ppc_cpu_t ppc_parse_cpu (ppc_cpu_t, ppc_cpu_t *, const char *);
+
+static inline long
+ppc_optional_operand_value (const struct powerpc_operand *operand)
+{
+  if ((operand->flags & PPC_OPERAND_OPTIONAL_VALUE) != 0)
+    return (operand+1)->shift;
+  return 0;
+}
 
 #endif /* PPC_H */

@@ -20,7 +20,6 @@
 
 #include "defs.h"
 #include "compile-internal.h"
-#include "gdb_assert.h"
 #include "symtab.h"
 #include "parser-defs.h"
 #include "block.h"
@@ -187,6 +186,8 @@ convert_one_symbol (struct compile_c_instance *context,
 	case LOC_BLOCK:
 	  kind = GCC_C_SYMBOL_FUNCTION;
 	  addr = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
+	  if (is_global && TYPE_GNU_IFUNC (SYMBOL_TYPE (sym)))
+	    addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
 	  break;
 
 	case LOC_CONST:
@@ -336,7 +337,7 @@ convert_symbol_sym (struct compile_c_instance *context, const char *identifier,
 	  && block_found != block_static_block (block_found))
 	{
 	  if (compile_debug)
-	    fprintf_unfiltered (gdb_stdout,
+	    fprintf_unfiltered (gdb_stdlog,
 				"gcc_convert_symbol \"%s\": global symbol\n",
 				identifier);
 	  convert_one_symbol (context, global_sym, 1, 0);
@@ -344,7 +345,7 @@ convert_symbol_sym (struct compile_c_instance *context, const char *identifier,
     }
 
   if (compile_debug)
-    fprintf_unfiltered (gdb_stdout,
+    fprintf_unfiltered (gdb_stdlog,
 			"gcc_convert_symbol \"%s\": local symbol\n",
 			identifier);
   convert_one_symbol (context, sym, 0, is_local_symbol);
@@ -365,6 +366,8 @@ convert_symbol_bmsym (struct compile_c_instance *context,
   gcc_decl decl;
   CORE_ADDR addr;
 
+  addr = MSYMBOL_VALUE_ADDRESS (objfile, msym);
+
   /* Conversion copied from write_exp_msymbol.  */
   switch (MSYMBOL_TYPE (msym))
     {
@@ -376,8 +379,11 @@ convert_symbol_bmsym (struct compile_c_instance *context,
       break;
 
     case mst_text_gnu_ifunc:
-      type = objfile_type (objfile)->nodebug_text_gnu_ifunc_symbol;
+      /* nodebug_text_gnu_ifunc_symbol would cause:
+	 function return type cannot be function  */
+      type = objfile_type (objfile)->nodebug_text_symbol;
       kind = GCC_C_SYMBOL_FUNCTION;
+      addr = gnu_ifunc_resolve_addr (target_gdbarch (), addr);
       break;
 
     case mst_data:
@@ -400,7 +406,6 @@ convert_symbol_bmsym (struct compile_c_instance *context,
     }
 
   sym_type = convert_type (context, type);
-  addr = MSYMBOL_VALUE_ADDRESS (objfile, msym);
   decl = C_CTX (context)->c_ops->build_decl (C_CTX (context),
 					     MSYMBOL_NATURAL_NAME (msym),
 					     kind, sym_type, NULL, addr,
@@ -418,7 +423,6 @@ gcc_convert_symbol (void *datum,
 {
   struct compile_c_instance *context = datum;
   domain_enum domain;
-  volatile struct gdb_exception e;
   int found = 0;
 
   switch (request)
@@ -438,7 +442,7 @@ gcc_convert_symbol (void *datum,
 
   /* We can't allow exceptions to escape out of this callback.  Safest
      is to simply emit a gcc error.  */
-  TRY_CATCH (e, RETURN_MASK_ALL)
+  TRY
     {
       struct symbol *sym;
 
@@ -461,11 +465,14 @@ gcc_convert_symbol (void *datum,
 	}
     }
 
-  if (e.reason < 0)
-    C_CTX (context)->c_ops->error (C_CTX (context), e.message);
+  CATCH (e, RETURN_MASK_ALL)
+    {
+      C_CTX (context)->c_ops->error (C_CTX (context), e.message);
+    }
+  END_CATCH
 
   if (compile_debug && !found)
-    fprintf_unfiltered (gdb_stdout,
+    fprintf_unfiltered (gdb_stdlog,
 			"gcc_convert_symbol \"%s\": lookup_symbol failed\n",
 			identifier);
   return;
@@ -478,13 +485,12 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 		    const char *identifier)
 {
   struct compile_c_instance *context = datum;
-  volatile struct gdb_exception e;
   gcc_address result = 0;
   int found = 0;
 
   /* We can't allow exceptions to escape out of this callback.  Safest
      is to simply emit a gcc error.  */
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       struct symbol *sym;
 
@@ -493,10 +499,12 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
       if (sym != NULL && SYMBOL_CLASS (sym) == LOC_BLOCK)
 	{
 	  if (compile_debug)
-	    fprintf_unfiltered (gdb_stdout,
+	    fprintf_unfiltered (gdb_stdlog,
 				"gcc_symbol_address \"%s\": full symbol\n",
 				identifier);
 	  result = BLOCK_START (SYMBOL_BLOCK_VALUE (sym));
+	  if (TYPE_GNU_IFUNC (SYMBOL_TYPE (sym)))
+	    result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
 	  found = 1;
 	}
       else
@@ -507,21 +515,26 @@ gcc_symbol_address (void *datum, struct gcc_c_context *gcc_context,
 	  if (msym.minsym != NULL)
 	    {
 	      if (compile_debug)
-		fprintf_unfiltered (gdb_stdout,
+		fprintf_unfiltered (gdb_stdlog,
 				    "gcc_symbol_address \"%s\": minimal "
 				    "symbol\n",
 				    identifier);
 	      result = BMSYMBOL_VALUE_ADDRESS (msym);
+	      if (MSYMBOL_TYPE (msym.minsym) == mst_text_gnu_ifunc)
+		result = gnu_ifunc_resolve_addr (target_gdbarch (), result);
 	      found = 1;
 	    }
 	}
     }
 
-  if (e.reason < 0)
-    C_CTX (context)->c_ops->error (C_CTX (context), e.message);
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+      C_CTX (context)->c_ops->error (C_CTX (context), e.message);
+    }
+  END_CATCH
 
   if (compile_debug && !found)
-    fprintf_unfiltered (gdb_stdout,
+    fprintf_unfiltered (gdb_stdlog,
 			"gcc_symbol_address \"%s\": failed\n",
 			identifier);
   return result;
@@ -633,9 +646,8 @@ generate_c_for_for_one_variable (struct compile_c_instance *compiler,
 				 CORE_ADDR pc,
 				 struct symbol *sym)
 {
-  volatile struct gdb_exception e;
 
-  TRY_CATCH (e, RETURN_MASK_ERROR)
+  TRY
     {
       if (is_dynamic_type (SYMBOL_TYPE (sym)))
 	{
@@ -689,17 +701,18 @@ generate_c_for_for_one_variable (struct compile_c_instance *compiler,
 	}
     }
 
-  if (e.reason >= 0)
-    return;
-
-  if (compiler->symbol_err_map == NULL)
-    compiler->symbol_err_map = htab_create_alloc (10,
-						  hash_symbol_error,
-						  eq_symbol_error,
-						  del_symbol_error,
-						  xcalloc,
-						  xfree);
-  insert_symbol_error (compiler->symbol_err_map, sym, e.message);
+  CATCH (e, RETURN_MASK_ERROR)
+    {
+      if (compiler->symbol_err_map == NULL)
+	compiler->symbol_err_map = htab_create_alloc (10,
+						      hash_symbol_error,
+						      eq_symbol_error,
+						      del_symbol_error,
+						      xcalloc,
+						      xfree);
+      insert_symbol_error (compiler->symbol_err_map, sym, e.message);
+    }
+  END_CATCH
 }
 
 /* See compile-internal.h.  */

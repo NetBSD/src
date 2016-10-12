@@ -251,18 +251,11 @@ gdb_test "continue" \
     "get signal TERM"
 gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
 
-set savedtimeout $timeout
-if { [target_info exists gdb,timeout]
-     && $timeout < [target_info gdb,timeout] } {
-    set oldtimeout [target_info gdb,timeout]
-} else {
-    set oldtimeout $timeout
+with_timeout_factor 2 {
+    gdb_test "continue" "\[process \[0-9\]+ .*" "continue to signal exit" \
+	"The next instruction is syscall exit_group.* program...y. or n. " \
+	"yes"
 }
-set timeout [expr $oldtimeout * 2]
-gdb_test "continue" "\[process \[0-9\]+ .*" "continue to signal exit" \
-    "The next instruction is syscall exit_group.* program...y. or n. " \
-    "yes"
-set timeout $savedtimeout
 
 foreach sig [lreverse $signals] {
     test_one_sig_reverse $sig

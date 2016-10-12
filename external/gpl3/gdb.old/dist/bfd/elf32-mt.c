@@ -48,8 +48,8 @@ static reloc_howto_type mt_elf_howto_table [] =
   /* This reloc does nothing.  */
   HOWTO (R_MT_NONE,           /* type */
           0,                      /* rightshift */
-          2,                      /* size (0 = byte, 1 = short, 2 = long) */
-          32,                     /* bitsize */
+          3,                      /* size (0 = byte, 1 = short, 2 = long) */
+          0,                      /* bitsize */
           FALSE,                  /* pc_relative */
           0,                      /* bitpos */
           complain_overflow_dont, /* complain_on_overflow */
@@ -238,7 +238,7 @@ mt_info_to_howto_rela
   r_type = ELF32_R_TYPE (dst->r_info);
   if (r_type >= (unsigned int) R_MT_max)
     {
-      _bfd_error_handler (_("%A: invalid MT reloc number: %d"), abfd, r_type);
+      _bfd_error_handler (_("%B: invalid MT reloc number: %d"), abfd, r_type);
       r_type = 0;
     }
   cache_ptr->howto = & mt_elf_howto_table [r_type];

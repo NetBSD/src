@@ -38,7 +38,9 @@ buffer_read_memory (bfd_vma memaddr,
 
   if (memaddr < info->buffer_vma
       || memaddr - info->buffer_vma > max_addr_offset
-      || memaddr - info->buffer_vma + end_addr_offset > max_addr_offset)
+      || memaddr - info->buffer_vma + end_addr_offset > max_addr_offset
+      || (info->stop_vma && (memaddr >= info->stop_vma
+			     || memaddr + end_addr_offset > info->stop_vma)))
     /* Out of bounds.  Use EIO because GDB uses it.  */
     return EIO;
   memcpy (myaddr, info->buffer + octets, length);

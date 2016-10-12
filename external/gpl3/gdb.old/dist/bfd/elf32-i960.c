@@ -83,7 +83,7 @@ elf32_i960_relocate (bfd *abfd ATTRIBUTE_UNUSED,
 
 static reloc_howto_type elf_howto_table[]=
 {
-  HOWTO (R_960_NONE, 0, 0, 0, FALSE, 0, complain_overflow_bitfield,
+  HOWTO (R_960_NONE, 0, 3, 0, FALSE, 0, complain_overflow_dont,
 	 elf32_i960_relocate, "R_960_NONE", TRUE,
 	 0x00000000, 0x00000000, FALSE),
   EMPTY_HOWTO (1),
@@ -136,7 +136,7 @@ elf32_i960_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   /* PR 17521: file: 9609b8d6.  */
   if (type >= R_960_max)
     {
-      _bfd_error_handler (_("%A; invalid i960 reloc number: %d"), abfd, type);
+      _bfd_error_handler (_("%B: invalid i960 reloc number: %d"), abfd, type);
       type = 0;
     }
 

@@ -44,7 +44,7 @@ set probes { init_start init_complete map_start reloc_complete unmap_start
 	     unmap_complete }
 set test "info probes"
 gdb_test_multiple $test $test {
-    -re "^rtld\[ \t\]+(?:rtld_)?(\[a-z_\]+)\[ \t\]" {
+    -re "^stap\[ \t\]+rtld\[ \t\]+(?:rtld_)?(\[a-z_\]+)\[ \t\]" {
 	set idx [lsearch -exact $probes $expect_out(1,string)]
 	if { $idx >= 0 } {
 	    set probes [lreplace $probes $idx $idx]

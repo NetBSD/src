@@ -990,7 +990,6 @@ gdbscm_register_parameter_x (SCM self)
     = pascm_get_param_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   char *cmd_name;
   struct cmd_list_element **set_list, **show_list;
-  volatile struct gdb_exception except;
 
   if (pascm_is_valid (p_smob))
     scm_misc_error (FUNC_NAME, _("parameter is already registered"), SCM_EOL);
@@ -1014,7 +1013,7 @@ gdbscm_register_parameter_x (SCM self)
 		_("parameter exists, \"show\" command is already defined"));
     }
 
-  TRY_CATCH (except, RETURN_MASK_ALL)
+  TRY
     {
       add_setshow_generic (p_smob->type, p_smob->cmd_class,
 			   p_smob->cmd_name, p_smob,
@@ -1026,7 +1025,11 @@ gdbscm_register_parameter_x (SCM self)
 			   set_list, show_list,
 			   &p_smob->set_command, &p_smob->show_command);
     }
-  GDBSCM_HANDLE_GDB_EXCEPTION (except);
+  CATCH (except, RETURN_MASK_ALL)
+    {
+      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+    }
+  END_CATCH
 
   /* Note: At this point the parameter exists in gdb.
      So no more errors after this point.  */
@@ -1063,16 +1066,22 @@ gdbscm_parameter_value (SCM self)
       const char *arg;
       char *newarg;
       int found = -1;
-      volatile struct gdb_exception except;
+      struct gdb_exception except = exception_none;
 
       name = gdbscm_scm_to_host_string (self, NULL, &except_scm);
       if (name == NULL)
 	gdbscm_throw (except_scm);
       newarg = concat ("show ", name, (char *) NULL);
-      TRY_CATCH (except, RETURN_MASK_ALL)
+      TRY
 	{
 	  found = lookup_cmd_composition (newarg, &alias, &prefix, &cmd);
 	}
+      CATCH (ex, RETURN_MASK_ALL)
+	{
+	  except = ex;
+	}
+      END_CATCH
+
       xfree (name);
       xfree (newarg);
       GDBSCM_HANDLE_GDB_EXCEPTION (except);

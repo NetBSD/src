@@ -34,6 +34,8 @@
    function to work properly.  */
 
 START_RELOC_NUMBERS (elf_nios2_reloc_type)
+  /* Relocs used by both R1 and R2, with different howtos to match
+     the respective encodings.  */
   RELOC_NUMBER (R_NIOS2_NONE,	  0)
   RELOC_NUMBER (R_NIOS2_S16,	  1)
   RELOC_NUMBER (R_NIOS2_U16,	  2)
@@ -80,7 +82,24 @@ START_RELOC_NUMBERS (elf_nios2_reloc_type)
   RELOC_NUMBER (R_NIOS2_GOT_HA, 43)
   RELOC_NUMBER (R_NIOS2_CALL_LO, 44)
   RELOC_NUMBER (R_NIOS2_CALL_HA, 45)
-  RELOC_NUMBER (R_NIOS2_ILLEGAL, 46)
+
+  /* Relocs specific to R2.  */
+  RELOC_NUMBER (R_NIOS2_R2_S12, 64)
+  RELOC_NUMBER (R_NIOS2_R2_I10_1_PCREL, 65)
+  RELOC_NUMBER (R_NIOS2_R2_T1I7_1_PCREL, 66)
+  RELOC_NUMBER (R_NIOS2_R2_T1I7_2, 67)
+  RELOC_NUMBER (R_NIOS2_R2_T2I4, 68)
+  RELOC_NUMBER (R_NIOS2_R2_T2I4_1, 69)
+  RELOC_NUMBER (R_NIOS2_R2_T2I4_2, 70)
+  RELOC_NUMBER (R_NIOS2_R2_X1I7_2, 71)
+  RELOC_NUMBER (R_NIOS2_R2_X2L5, 72)
+  RELOC_NUMBER (R_NIOS2_R2_F1I5_2, 73)
+  RELOC_NUMBER (R_NIOS2_R2_L5I4X1, 74)
+  RELOC_NUMBER (R_NIOS2_R2_T1X1I6, 75)
+  RELOC_NUMBER (R_NIOS2_R2_T1X1I6_2, 76)
+
+  /* Last reloc.  */
+  RELOC_NUMBER (R_NIOS2_ILLEGAL, 77)
 END_RELOC_NUMBERS (R_NIOS2_maxext)
 
 /* Processor-specific section flags.  */
@@ -92,5 +111,10 @@ END_RELOC_NUMBERS (R_NIOS2_maxext)
 
 /* Address of _gp.  */
 #define DT_NIOS2_GP 0x70000002
+
+/* Processor specific flags for the Elf header e_flags field.  */
+
+#define EF_NIOS2_ARCH_R1 0x00000000
+#define EF_NIOS2_ARCH_R2 0x00000001
 
 #endif /* _ELF_NIOS2_H */

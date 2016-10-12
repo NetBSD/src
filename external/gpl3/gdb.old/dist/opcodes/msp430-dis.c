@@ -66,7 +66,7 @@ msp430_nooperands (struct msp430_opcode_s *opcode,
 
   if (opcode->fmt == 0)
     {
-      if ((insn & 0x0f00) != 3 || (insn & 0x0f00) != 2)
+      if ((insn & 0x0f00) != 0x0300 || (insn & 0x0f00) != 0x0200)
 	return 0;
 
       strcpy (comm, "emulated...");

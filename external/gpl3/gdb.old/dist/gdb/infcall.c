@@ -383,10 +383,11 @@ get_function_name (CORE_ADDR funaddr, char *buf, int buf_size)
 static struct gdb_exception
 run_inferior_call (struct thread_info *call_thread, CORE_ADDR real_pc)
 {
-  volatile struct gdb_exception e;
+  struct gdb_exception caught_error = exception_none;
   int saved_in_infcall = call_thread->control.in_infcall;
   ptid_t call_thread_ptid = call_thread->ptid;
   int saved_sync_execution = sync_execution;
+  int was_running = call_thread->state == THREAD_RUNNING;
 
   /* Infcalls run synchronously, in the foreground.  */
   if (target_can_async_p ())
@@ -398,14 +399,14 @@ run_inferior_call (struct thread_info *call_thread, CORE_ADDR real_pc)
 
   disable_watchpoints_before_interactive_call_start ();
 
-  /* We want stop_registers, please...  */
+  /* We want to print return value, please...  */
   call_thread->control.proceed_to_finish = 1;
 
-  TRY_CATCH (e, RETURN_MASK_ALL)
+  TRY
     {
       int was_sync = sync_execution;
 
-      proceed (real_pc, GDB_SIGNAL_0, 0);
+      proceed (real_pc, GDB_SIGNAL_0);
 
       /* Inferior function calls are always synchronous, even if the
 	 target supports asynchronous execution.  Do here what
@@ -423,10 +424,35 @@ run_inferior_call (struct thread_info *call_thread, CORE_ADDR real_pc)
 	    async_disable_stdin ();
 	}
     }
+  CATCH (e, RETURN_MASK_ALL)
+    {
+      caught_error = e;
+    }
+  END_CATCH
 
   /* At this point the current thread may have changed.  Refresh
      CALL_THREAD as it could be invalid if its thread has exited.  */
   call_thread = find_thread_ptid (call_thread_ptid);
+
+  /* If the infcall does NOT succeed, normal_stop will have already
+     finished the thread states.  However, on success, normal_stop
+     defers here, so that we can set back the thread states to what
+     they were before the call.  Note that we must also finish the
+     state of new threads that might have spawned while the call was
+     running.  The main cases to handle are:
+
+     - "(gdb) print foo ()", or any other command that evaluates an
+     expression at the prompt.  (The thread was marked stopped before.)
+
+     - "(gdb) break foo if return_false()" or similar cases where we
+     do an infcall while handling an event (while the thread is still
+     marked running).  In this example, whether the condition
+     evaluates true and thus we'll present a user-visible stop is
+     decided elsewhere.  */
+  if (!was_running
+      && ptid_equal (call_thread_ptid, inferior_ptid)
+      && stop_stack_dummy == STOP_STACK_DUMMY)
+    finish_thread_state (user_visible_resume_ptid (0));
 
   enable_watchpoints_after_interactive_call_stop ();
 
@@ -435,7 +461,7 @@ run_inferior_call (struct thread_info *call_thread, CORE_ADDR real_pc)
      If all error()s out of proceed ended up calling normal_stop
      (and perhaps they should; it already does in the special case
      of error out of resume()), then we wouldn't need this.  */
-  if (e.reason < 0)
+  if (caught_error.reason < 0)
     {
       if (call_thread != NULL)
 	breakpoint_auto_delete (call_thread->control.stop_bpstat);
@@ -446,7 +472,7 @@ run_inferior_call (struct thread_info *call_thread, CORE_ADDR real_pc)
 
   sync_execution = saved_sync_execution;
 
-  return e;
+  return caught_error;
 }
 
 /* A cleanup function that calls delete_std_terminate_breakpoint.  */
@@ -462,6 +488,96 @@ struct value *
 call_function_by_hand (struct value *function, int nargs, struct value **args)
 {
   return call_function_by_hand_dummy (function, nargs, args, NULL, NULL);
+}
+
+/* Data for dummy_frame_context_saver.  Structure can be freed only
+   after both dummy_frame_context_saver_dtor and
+   dummy_frame_context_saver_drop have been called for it.  */
+
+struct dummy_frame_context_saver
+{
+  /* Inferior registers fetched before associated dummy_frame got freed
+     and before any other destructors of associated dummy_frame got called.
+     It is initialized to NULL.  */
+  struct regcache *retbuf;
+
+  /* It is 1 if this dummy_frame_context_saver_drop has been already
+     called.  */
+  int drop_done;
+};
+
+/* Free struct dummy_frame_context_saver.  */
+
+static void
+dummy_frame_context_saver_free (struct dummy_frame_context_saver *saver)
+{
+  regcache_xfree (saver->retbuf);
+  xfree (saver);
+}
+
+/* Destructor for associated dummy_frame.  */
+
+static void
+dummy_frame_context_saver_dtor (void *data_voidp, int registers_valid)
+{
+  struct dummy_frame_context_saver *data = data_voidp;
+
+  gdb_assert (data->retbuf == NULL);
+
+  if (data->drop_done)
+    dummy_frame_context_saver_free (data);
+  else if (registers_valid)
+    data->retbuf = regcache_dup (get_current_regcache ());
+}
+
+/* Caller is no longer interested in this
+   struct dummy_frame_context_saver.  After its associated dummy_frame
+   gets freed struct dummy_frame_context_saver can be also freed.  */
+
+void
+dummy_frame_context_saver_drop (struct dummy_frame_context_saver *saver)
+{
+  saver->drop_done = 1;
+
+  if (!find_dummy_frame_dtor (dummy_frame_context_saver_dtor, saver))
+    dummy_frame_context_saver_free (saver);
+}
+
+/* Stub dummy_frame_context_saver_drop compatible with make_cleanup.  */
+
+void
+dummy_frame_context_saver_cleanup (void *data)
+{
+  struct dummy_frame_context_saver *saver = data;
+
+  dummy_frame_context_saver_drop (saver);
+}
+
+/* Fetch RETBUF field of possibly opaque DTOR_DATA.
+   RETBUF must not be NULL.  */
+
+struct regcache *
+dummy_frame_context_saver_get_regs (struct dummy_frame_context_saver *saver)
+{
+  gdb_assert (saver->retbuf != NULL);
+  return saver->retbuf;
+}
+
+/* Register provider of inferior registers at the time DUMMY_ID frame of
+   PTID gets freed (before inferior registers get restored to those
+   before dummy_frame).  */
+
+struct dummy_frame_context_saver *
+dummy_frame_context_saver_setup (struct frame_id dummy_id, ptid_t ptid)
+{
+  struct dummy_frame_context_saver *saver;
+
+  saver = xmalloc (sizeof (*saver));
+  saver->retbuf = NULL;
+  saver->drop_done = 0;
+  register_dummy_frame_dtor (dummy_id, inferior_ptid,
+			     dummy_frame_context_saver_dtor, saver);
+  return saver;
 }
 
 /* All this stuff with a dummy frame may seem unnecessarily complicated
@@ -485,7 +601,7 @@ call_function_by_hand (struct value *function, int nargs, struct value **args)
 struct value *
 call_function_by_hand_dummy (struct value *function,
 			     int nargs, struct value **args,
-			     call_function_by_hand_dummy_dtor_ftype *dummy_dtor,
+			     dummy_frame_dtor_ftype *dummy_dtor,
 			     void *dummy_dtor_data)
 {
   CORE_ADDR sp;
@@ -508,6 +624,8 @@ call_function_by_hand_dummy (struct value *function,
   struct gdb_exception e;
   char name_buf[RAW_FUNCTION_ADDRESS_SIZE];
   int stack_temporaries = thread_stack_temporaries_enabled_p (inferior_ptid);
+  struct dummy_frame_context_saver *context_saver;
+  struct cleanup *context_saver_cleanup;
 
   if (TYPE_CODE (ftype) == TYPE_CODE_PTR)
     ftype = check_typedef (TYPE_TARGET_TYPE (ftype));
@@ -881,6 +999,11 @@ call_function_by_hand_dummy (struct value *function,
   if (unwind_on_terminating_exception_p)
     set_std_terminate_breakpoint ();
 
+  /* Discard both inf_status and caller_state cleanups.
+     From this point on we explicitly restore the associated state
+     or discard it.  */
+  discard_cleanups (inf_status_cleanup);
+
   /* Everything's ready, push all the info needed to restore the
      caller (and identify the dummy-frame) onto the dummy-frame
      stack.  */
@@ -889,10 +1012,12 @@ call_function_by_hand_dummy (struct value *function,
     register_dummy_frame_dtor (dummy_id, inferior_ptid,
 			       dummy_dtor, dummy_dtor_data);
 
-  /* Discard both inf_status and caller_state cleanups.
-     From this point on we explicitly restore the associated state
-     or discard it.  */
-  discard_cleanups (inf_status_cleanup);
+  /* dummy_frame_context_saver_setup must be called last so that its
+     saving of inferior registers gets called first (before possible
+     DUMMY_DTOR destructor).  */
+  context_saver = dummy_frame_context_saver_setup (dummy_id, inferior_ptid);
+  context_saver_cleanup = make_cleanup (dummy_frame_context_saver_cleanup,
+					context_saver);
 
   /* Register a clean-up for unwind_on_terminating_exception_breakpoint.  */
   terminate_bp_cleanup = make_cleanup (cleanup_delete_std_terminate_breakpoint,
@@ -1000,8 +1125,11 @@ When the function is done executing, GDB will silently stop."),
 
   if (stopped_by_random_signal || stop_stack_dummy != STOP_STACK_DUMMY)
     {
-      const char *name = get_function_name (funaddr,
-					    name_buf, sizeof (name_buf));
+      /* Make a copy as NAME may be in an objfile freed by dummy_frame_pop.  */
+      char *name = xstrdup (get_function_name (funaddr,
+					       name_buf, sizeof (name_buf)));
+      make_cleanup (xfree, name);
+
 
       if (stopped_by_random_signal)
 	{
@@ -1107,12 +1235,7 @@ When the function is done executing, GDB will silently stop."),
      and the dummy frame has already been popped.  */
 
   {
-    struct address_space *aspace = get_regcache_aspace (stop_registers);
-    struct regcache *retbuf = regcache_xmalloc (gdbarch, aspace);
-    struct cleanup *retbuf_cleanup = make_cleanup_regcache_xfree (retbuf);
     struct value *retval = NULL;
-
-    regcache_cpy_no_passthrough (retbuf, stop_registers);
 
     /* Inferior call is successful.  Restore the inferior status.
        At this stage, leave the RETBUF alone.  */
@@ -1140,7 +1263,8 @@ When the function is done executing, GDB will silently stop."),
       {
 	retval = allocate_value (values_type);
 	gdbarch_return_value (gdbarch, function, values_type,
-			      retbuf, value_contents_raw (retval), NULL);
+			      dummy_frame_context_saver_get_regs (context_saver),
+			      value_contents_raw (retval), NULL);
 	if (stack_temporaries && class_or_union_p (values_type))
 	  {
 	    /* Values of class type returned in registers are copied onto
@@ -1155,7 +1279,7 @@ When the function is done executing, GDB will silently stop."),
 	  }
       }
 
-    do_cleanups (retbuf_cleanup);
+    do_cleanups (context_saver_cleanup);
 
     gdb_assert (retval);
     return retval;

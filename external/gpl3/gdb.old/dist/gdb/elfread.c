@@ -49,8 +49,8 @@
 extern void _initialize_elfread (void);
 
 /* Forward declarations.  */
-static const struct sym_fns elf_sym_fns_gdb_index;
-static const struct sym_fns elf_sym_fns_lazy_psyms;
+extern const struct sym_fns elf_sym_fns_gdb_index;
+extern const struct sym_fns elf_sym_fns_lazy_psyms;
 
 /* The struct elfinfo is available only during ELF symbol table and
    psymtab reading.  It is destroyed at the completion of psymtab-reading.
@@ -65,8 +65,6 @@ struct elfinfo
 /* Per-BFD data for probe info.  */
 
 static const struct bfd_data *probe_key = NULL;
-
-static void free_elfinfo (void *);
 
 /* Minimal symbols located at the GOT entries for .plt - that is the real
    pointer where the given entry will jump to.  It gets updated by the real
@@ -236,14 +234,8 @@ elf_symtab_read (struct objfile *objfile, int type,
   CORE_ADDR symaddr;
   CORE_ADDR offset;
   enum minimal_symbol_type ms_type;
-  /* If sectinfo is nonNULL, it contains section info that should end up
-     filed in the objfile.  */
-  struct stab_section_info *sectinfo = NULL;
-  /* If filesym is nonzero, it points to a file symbol, but we haven't
-     seen any section info for it yet.  */
-  asymbol *filesym = 0;
-  /* Name of filesym.  This is either a constant string or is saved on
-     the objfile's filename cache.  */
+  /* Name of the last file symbol.  This is either a constant string or is
+     saved on the objfile's filename cache.  */
   const char *filesymname = "";
   struct dbx_symfile_info *dbx = DBX_SYMFILE_INFO (objfile);
   int stripped = (bfd_get_symcount (objfile->obfd) == 0);
@@ -322,7 +314,7 @@ elf_symtab_read (struct objfile *objfile, int type,
 	     for that section is ".plt".  So, if there is a ".plt"
 	     section, and yet the section name of our symbol does not
 	     start with ".plt", we ignore that symbol.  */
-	  if (strncmp (sect->name, ".plt", 4) != 0
+	  if (!startswith (sect->name, ".plt")
 	      && bfd_get_section_by_name (abfd, ".plt") != NULL)
 	    continue;
 
@@ -345,16 +337,7 @@ elf_symtab_read (struct objfile *objfile, int type,
 	continue;
       if (sym->flags & BSF_FILE)
 	{
-	  /* STT_FILE debugging symbol that helps stabs-in-elf debugging.
-	     Chain any old one onto the objfile; remember new sym.  */
-	  if (sectinfo != NULL)
-	    {
-	      sectinfo->next = dbx->stab_section_info;
-	      dbx->stab_section_info = sectinfo;
-	      sectinfo = NULL;
-	    }
-	  filesym = sym;
-	  filesymname = bcache (filesym->name, strlen (filesym->name) + 1,
+	  filesymname = bcache (sym->name, strlen (sym->name) + 1,
 				objfile->per_bfd->filename_cache);
 	}
       else if (sym->flags & BSF_SECTION_SYM)
@@ -451,77 +434,6 @@ elf_symtab_read (struct objfile *objfile, int type,
 		}
 	      else if (sym->flags & BSF_LOCAL)
 		{
-		  /* Named Local variable in a Data section.
-		     Check its name for stabs-in-elf.  */
-		  int special_local_sect;
-
-		  if (strcmp ("Bbss.bss", sym->name) == 0)
-		    special_local_sect = SECT_OFF_BSS (objfile);
-		  else if (strcmp ("Ddata.data", sym->name) == 0)
-		    special_local_sect = SECT_OFF_DATA (objfile);
-		  else if (strcmp ("Drodata.rodata", sym->name) == 0)
-		    special_local_sect = SECT_OFF_RODATA (objfile);
-		  else
-		    special_local_sect = -1;
-		  if (special_local_sect >= 0)
-		    {
-		      /* Found a special local symbol.  Allocate a
-			 sectinfo, if needed, and fill it in.  */
-		      if (sectinfo == NULL)
-			{
-			  int max_index;
-			  size_t size;
-
-			  max_index = SECT_OFF_BSS (objfile);
-			  if (objfile->sect_index_data > max_index)
-			    max_index = objfile->sect_index_data;
-			  if (objfile->sect_index_rodata > max_index)
-			    max_index = objfile->sect_index_rodata;
-
-			  /* max_index is the largest index we'll
-			     use into this array, so we must
-			     allocate max_index+1 elements for it.
-			     However, 'struct stab_section_info'
-			     already includes one element, so we
-			     need to allocate max_index aadditional
-			     elements.  */
-			  size = (sizeof (struct stab_section_info)
-				  + (sizeof (CORE_ADDR) * max_index));
-			  sectinfo = (struct stab_section_info *)
-			    xmalloc (size);
-			  memset (sectinfo, 0, size);
-			  sectinfo->num_sections = max_index;
-			  if (filesym == NULL)
-			    {
-			      complaint (&symfile_complaints,
-					 _("elf/stab section information %s "
-					   "without a preceding file symbol"),
-					 sym->name);
-			    }
-			  else
-			    {
-			      sectinfo->filename =
-				(char *) filesym->name;
-			    }
-			}
-		      if (sectinfo->sections[special_local_sect] != 0)
-			complaint (&symfile_complaints,
-				   _("duplicated elf/stab section "
-				     "information for %s"),
-				   sectinfo->filename);
-		      /* BFD symbols are section relative.  */
-		      symaddr = sym->value + sym->section->vma;
-		      /* Relocate non-absolute symbols by the
-			 section offset.  */
-		      if (sym->section != bfd_abs_section_ptr)
-			symaddr += offset;
-		      sectinfo->sections[special_local_sect] = symaddr;
-		      /* The special local symbols don't go in the
-			 minimal symbol table, so ignore this one.  */
-		      continue;
-		    }
-		  /* Not a special stabs-in-elf symbol, do regular
-		     symbol processing.  */
 		  if (sym->section->flags & SEC_LOAD)
 		    {
 		      ms_type = mst_file_data;
@@ -1130,11 +1042,8 @@ elf_read_minimal_symbols (struct objfile *objfile, int symfile_flags,
   /* Allocate struct to keep track of the symfile.  */
   dbx = XCNEW (struct dbx_symfile_info);
   set_objfile_data (objfile, dbx_objfile_data_key, dbx);
-  make_cleanup (free_elfinfo, (void *) objfile);
 
-  /* Process the normal ELF symbol table first.  This may write some
-     chain of info into the dbx_symfile_info of the objfile, which can
-     later be used by elfstab_offset_sections.  */
+  /* Process the normal ELF symbol table first.  */
 
   storage_needed = bfd_get_symtab_upper_bound (objfile->obfd);
   if (storage_needed < 0)
@@ -1144,8 +1053,10 @@ elf_read_minimal_symbols (struct objfile *objfile, int symfile_flags,
 
   if (storage_needed > 0)
     {
-      symbol_table = (asymbol **) xmalloc (storage_needed);
-      make_cleanup (xfree, symbol_table);
+      /* Memory gets permanently referenced from ABFD after
+	 bfd_canonicalize_symtab so it must not get freed before ABFD gets.  */
+
+      symbol_table = bfd_alloc (abfd, storage_needed);
       symcount = bfd_canonicalize_symtab (objfile->obfd, symbol_table);
 
       if (symcount < 0)
@@ -1367,28 +1278,6 @@ read_psyms (struct objfile *objfile)
     dwarf2_build_psymtabs (objfile);
 }
 
-/* This cleans up the objfile's dbx symfile info, and the chain of
-   stab_section_info's, that might be dangling from it.  */
-
-static void
-free_elfinfo (void *objp)
-{
-  struct objfile *objfile = (struct objfile *) objp;
-  struct dbx_symfile_info *dbxinfo = DBX_SYMFILE_INFO (objfile);
-  struct stab_section_info *ssi, *nssi;
-
-  ssi = dbxinfo->stab_section_info;
-  while (ssi)
-    {
-      nssi = ssi->next;
-      xfree (ssi);
-      ssi = nssi;
-    }
-
-  dbxinfo->stab_section_info = 0;	/* Just say No mo info about this.  */
-}
-
-
 /* Initialize anything that needs initializing when a completely new symbol
    file is specified (not just adding some symbols from another file, e.g. a
    shared library).
@@ -1423,69 +1312,6 @@ elf_symfile_init (struct objfile *objfile)
      find this causes a significant slowdown in gdb then we could
      set it in the debug symbol readers only when necessary.  */
   objfile->flags |= OBJF_REORDERED;
-}
-
-/* When handling an ELF file that contains Sun STABS debug info,
-   some of the debug info is relative to the particular chunk of the
-   section that was generated in its individual .o file.  E.g.
-   offsets to static variables are relative to the start of the data
-   segment *for that module before linking*.  This information is
-   painfully squirreled away in the ELF symbol table as local symbols
-   with wierd names.  Go get 'em when needed.  */
-
-void
-elfstab_offset_sections (struct objfile *objfile, struct partial_symtab *pst)
-{
-  const char *filename = pst->filename;
-  struct dbx_symfile_info *dbx = DBX_SYMFILE_INFO (objfile);
-  struct stab_section_info *maybe = dbx->stab_section_info;
-  struct stab_section_info *questionable = 0;
-  int i;
-
-  /* The ELF symbol info doesn't include path names, so strip the path
-     (if any) from the psymtab filename.  */
-  filename = lbasename (filename);
-
-  /* FIXME:  This linear search could speed up significantly
-     if it was chained in the right order to match how we search it,
-     and if we unchained when we found a match.  */
-  for (; maybe; maybe = maybe->next)
-    {
-      if (filename[0] == maybe->filename[0]
-	  && filename_cmp (filename, maybe->filename) == 0)
-	{
-	  /* We found a match.  But there might be several source files
-	     (from different directories) with the same name.  */
-	  if (0 == maybe->found)
-	    break;
-	  questionable = maybe;	/* Might use it later.  */
-	}
-    }
-
-  if (maybe == 0 && questionable != 0)
-    {
-      complaint (&symfile_complaints,
-		 _("elf/stab section information questionable for %s"),
-		 filename);
-      maybe = questionable;
-    }
-
-  if (maybe)
-    {
-      /* Found it!  Allocate a new psymtab struct, and fill it in.  */
-      maybe->found++;
-      pst->section_offsets = (struct section_offsets *)
-	obstack_alloc (&objfile->objfile_obstack,
-		       SIZEOF_N_SECTION_OFFSETS (objfile->num_sections));
-      for (i = 0; i < maybe->num_sections; i++)
-	(pst->section_offsets)->offsets[i] = maybe->sections[i];
-      return;
-    }
-
-  /* We were unable to find any offsets for this file.  Complain.  */
-  if (dbx->stab_section_info)	/* If there *is* any info, */
-    complaint (&symfile_complaints,
-	       _("elf/stab section information missing for %s"), filename);
 }
 
 /* Implementation of `sym_get_probes', as documented in symfile.h.  */
@@ -1566,7 +1392,7 @@ static const struct sym_fns elf_sym_fns =
 /* The same as elf_sym_fns, but not registered and lazily reads
    psymbols.  */
 
-static const struct sym_fns elf_sym_fns_lazy_psyms =
+const struct sym_fns elf_sym_fns_lazy_psyms =
 {
   elf_new_init,			/* init anything gbl to entire symtab */
   elf_symfile_init,		/* read initial info, setup for sym_read() */
@@ -1583,7 +1409,7 @@ static const struct sym_fns elf_sym_fns_lazy_psyms =
 
 /* The same as elf_sym_fns, but not registered and uses the
    DWARF-specific GNU index rather than psymtab.  */
-static const struct sym_fns elf_sym_fns_gdb_index =
+const struct sym_fns elf_sym_fns_gdb_index =
 {
   elf_new_init,			/* init anything gbl to entire symab */
   elf_symfile_init,		/* read initial info, setup for sym_red() */

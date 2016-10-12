@@ -34,5 +34,8 @@ if ![runto_main] then {
     return -1
 }
 
+# GDB doesn't skip prologue for asm files, so do one single step to
+# pass instruction "push".
+gdb_test "si" "blx	foo.*" "single step"
 gdb_test "si" "foo \\(\\) at .*${srcfile}.*mov r0,#42.*" "step into foo"
 

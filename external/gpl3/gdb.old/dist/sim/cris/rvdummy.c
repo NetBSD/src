@@ -31,7 +31,6 @@ main (int argc, char *argv[])
 
 #ifdef HAVE_CONFIG_H
 #include "cconfig.h"
-#include "tconfig.h"
 #endif
 
 #include "getopt.h"

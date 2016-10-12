@@ -54,17 +54,21 @@ extern FILE *gdb_fopen_cloexec (const char *filename, const char *opentype);
 /* Like 'socketpair', but ensures that the returned file descriptors
    have the close-on-exec flag set.  */
 
-extern int gdb_socketpair_cloexec (int namespace, int style, int protocol,
+extern int gdb_socketpair_cloexec (int domain, int style, int protocol,
 				   int filedes[2]);
 
 /* Like 'socket', but ensures that the returned file descriptor has
    the close-on-exec flag set.  */
 
-extern int gdb_socket_cloexec (int namespace, int style, int protocol);
+extern int gdb_socket_cloexec (int domain, int style, int protocol);
 
 /* Like 'pipe', but ensures that the returned file descriptors have
    the close-on-exec flag set.  */
 
 extern int gdb_pipe_cloexec (int filedes[2]);
+
+/* Return a new cleanup that closes FD.  */
+
+extern struct cleanup *make_cleanup_close (int fd);
 
 #endif /* FILESTUFF_H */

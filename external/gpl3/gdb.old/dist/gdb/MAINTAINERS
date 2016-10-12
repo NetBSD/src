@@ -115,7 +115,6 @@ affiliation, and they act on behalf of the GNU project.
        Pedro Alves (Red Hat)
        Joel Brobecker (AdaCore)
        Doug Evans (Google)
-       Tom Tromey (Red Hat)
        Eli Zaretskii
 
 		  Global Maintainers
@@ -156,9 +155,8 @@ Andrew Cagney			cagney@gnu.org
 Doug Evans			dje@google.com
 Daniel Jacobowitz		drow@false.org
 Mark Kettenis           	kettenis@gnu.org
-Yao Qi				yao@codesourcery.com
-Stan Shebs			stan@codesourcery.com
-Tom Tromey			tromey@redhat.com
+Yao Qi				yao.qi@arm.com
+Stan Shebs			stanshebs@google.com
 Ulrich Weigand			Ulrich.Weigand@de.ibm.com
 Elena Zannoni			elena.zannoni@oracle.com
 Eli Zaretskii			eliz@gnu.org
@@ -426,6 +424,7 @@ to do so!
 
 PowerPC			Andrew Cagney		cagney@gnu.org
 ARM			Richard Earnshaw	rearnsha@arm.com
+Blackfin		Mike Frysinger		vapier@gentoo.org
 CRIS			Hans-Peter Nilsson	hp@axis.com
 IA64			Jeff Johnston		jjohnstn@redhat.com
 MIPS			Joel Brobecker		brobecker@adacore.com
@@ -465,6 +464,7 @@ David Anderson					davea@sgi.com
 John David Anglin				dave.anglin@nrc-cnrc.gc.ca
 Shrinivas Atre					shrinivasa@kpitcummins.com
 Sterling Augustine				saugustine@google.com
+John Baldwin					jhb@freebsd.org
 Scott Bambrough					scottb@netwinder.org
 Thiago Jung Bauermann				bauerman@br.ibm.com
 Jon Beniston					jon@beniston.com
@@ -515,11 +515,15 @@ Frank Ch. Eigler				fche@redhat.com
 Ben Elliston					bje@gnu.org
 Doug Evans					dje@google.com
 Adam Fedor					fedor@gnu.org
+Max Filippov					jcmvbkbc@gmail.com
 Brian Ford					ford@vss.fsi.com
 Orjan Friberg					orjanf@axis.com
 Andreas From					andreas.from@ericsson.com
 Nathan Froyd					froydnj@codesourcery.com
+Mike Frysinger					vapier@gentoo.org
 Gary Funck					gary@intrepid.com
+Martin Galvan					martin.galvan@tallertechnologies.com
+Chen Gang					gang.chen.5i5j@gmail.com
 Mircea Gherzan					mircea.gherzan@intel.com
 Paul Gilliam					pgilliam@us.ibm.com
 Tristan Gingold					gingold@adacore.com
@@ -556,7 +560,7 @@ Jim Kingdon					kingdon@panix.com
 Paul Koning					paul_koning@dell.com
 Jan Kratochvil					jan.kratochvil@redhat.com
 Maxim Kuvyrkov					maxim@kugelworks.com
-Pierre Langlois 				pierre.langlois@embecosm.com
+Pierre Langlois 				pierre.langlois@arm.com
 Jonathan Larmour				jifl@ecoscentric.com
 Jeff Law					law@redhat.com
 Justin Lebar					justin.lebar@gmail.com
@@ -614,6 +618,7 @@ Frederic Riss					frederic.riss@st.com
 Aleksandar Ristovski				aristovski@qnx.com
 Tom Rix						trix@redhat.com
 Nick Roberts					nickrob@snap.net.nz
+Pierre-Marie de Rodat				derodat@adacore.com
 Bob Rossi 					bob_rossi@cox.net
 Theodore A. Roth				troth@openavr.org
 Ian Roxborough					irox@redhat.com
@@ -630,7 +635,7 @@ Keith Seitz					keiths@redhat.com
 Carlos Eduardo Seo				cseo@linux.vnet.ibm.com
 Ozkan Sezer					sezeroz@gmail.com
 Marcus Shawcroft				marcus.shawcroft@arm.com
-Stan Shebs					stan@codesourcery.com
+Stan Shebs					stanshebs@google.com
 Joel Sherrill					joel.sherrill@oarcorp.com
 Mark Shinwell					shinwell@codesourcery.com
 Craig Silverstein				csilvers@google.com
@@ -650,7 +655,8 @@ Jason Thorpe					thorpej@netbsd.org
 Caroline Tice					ctice@apple.com
 Kai Tietz					ktietz@redhat.com
 Andreas Tobler					andreast@fgznet.ch
-Tom Tromey					tromey@redhat.com
+Antoine Tremblay				antoine.tremblay@ericsson.com
+Jon Turney					jon.turney@dronecode.org.uk
 David Ung					davidu@mips.com
 D Venkatasubramanian				dvenkat@noida.hcltech.com
 Corinna Vinschen				vinschen@redhat.com
@@ -658,6 +664,7 @@ Sami Wagiaalla					swagiaal@redhat.com
 Keith Walker					keith.walker@arm.com
 Ricard Wanderlof				ricardw@axis.com
 Jiong Wang					jiong.wang@arm.com
+Wei-cheng Wang					cole945@gmail.com
 Kris Warkentin					kewarken@qnx.com
 Philippe Waroquiers				philippe.waroquiers@skynet.be
 Ulrich Weigand					uweigand@de.ibm.com
@@ -666,6 +673,7 @@ Mark Wielaard					mjw@redhat.com
 Nathan Williams					nathanw@wasabisystems.com
 Bob Wilson					bob.wilson@acm.org
 Jim Wilson					wilson@tuliptree.org
+Andy Wingo					wingo@igalia.com
 Mike Wrighton					wrighton@codesourcery.com
 Kwok Cheung Yeung				kcy@codesourcery.com
 Elena Zannoni					elena.zannoni@oracle.com

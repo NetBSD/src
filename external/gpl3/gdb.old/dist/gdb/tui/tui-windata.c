@@ -253,7 +253,7 @@ tui_check_data_values (struct frame_info *frame)
 	    has changed (data_element_ptr, frame, &new_value)
 	    {
 	      data_element_ptr->value = new_value;
-	      update the display with the new value, hiliting it.
+	      update the display with the newobj value, hiliting it.
 	    }
 #endif
 	}
