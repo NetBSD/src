@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.17 2014/10/27 12:02:17 christos Exp $
+.\"	$NetBSD: ucom.9,v 1.18 2016/10/12 21:09:36 skrll Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 27, 2014
+.Dd September 12, 2016
 .Dt UCOM 9
 .Os
 .Sh NAME
@@ -58,53 +58,54 @@ struct
 .Sh ATTACHMENT
 .Bd -literal
 struct ucom_attach_args {
-	int portno;
-	int bulkin;
-	int bulkout;
-	u_int ibufsize;
-	u_int ibufsizepad;
-	u_int obufsize;
-	u_int obufsizepad;
-	usbd_device_handle device;
-	usbd_interface_handle iface;
-	struct ucom_methods *methods;
-	void *arg;
+	int ucaa_portno;
+	int ucaa_bulkin;
+	int ucaa_bulkout;
+	u_int ucaa_ibufsize;
+	u_int ucaa_ibufsizepad;
+	u_int ucaa_obufsize;
+	u_int ucaa_opkthdrlen;
+	const char *ucaa_info;
+	struct usbd_device *ucaa_device;
+	struct usbd_interface *ucaa_iface;
+	const struct ucom_methods *ucaa_methods;
+	void *ucaa_arg;
 };
 .Ed
 .Pp
 .Bl -tag -width indent
-.It Dv int portno
+.It Dv int ucaa_portno
 identifies the port if the devices should have more than one
 .Nm
 attached.
 Use the value
 .Dv UCOM_UNK_PORTNO
 if there is only one port.
-.It Dv int bulkin
+.It Dv int ucaa_bulkin
 the number of the bulk input pipe.
-.It Dv int bulkout
+.It Dv int ucaa_bulkout
 the number of the bulk output pipe.
-.It Dv u_int ibufsize
+.It Dv u_int ucaa_ibufsize
 the size of the read requests on the bulk in pipe.
-.It Dv u_int ibufsizepad
+.It Dv u_int ucaa_ibufsizepad
 the size of the input buffer.
 This is usually the same as
 .Dv ibufsize .
-.It Dv u_int obufsize
+.It Dv u_int ucaa_obufsize
 the size of the write requests on the bulk out pipe.
-.It Dv u_int ibufsizepad
+.It Dv u_int ucaa_ibufsizepad
 the size of the output buffer.
 This is usually the same as
-.Dv obufsize .
-.It Dv usbd_device_handle device
+.Dv ucaa_obufsize .
+.It Dv struct usbd_device *ucaa_device
 a handle to the device.
-.It usbd_interface_handle iface
+.It struct usbd_interface *ucaa_iface
 a handle to the interface that should be used.
-.It struct ucom_methods *methods
+.It struct ucom_methods *ucaa_methods
 a pointer to the methods that the
 .Nm
 driver should use for further communication with the driver.
-.It void *arg
+.It void *ucaa_arg
 the value that should be passed as first argument to each method.
 .El
 .Sh METHODS
@@ -122,20 +123,20 @@ driver will use a sensible default.
 .Bd -literal
 struct ucom_methods {
 	void (*ucom_get_status)(void *sc, int portno,
-				u_char *lsr, u_char *msr);
+	    u_char *lsr, u_char *msr);
 	void (*ucom_set)(void *sc, int portno, int reg, int onoff);
 #define UCOM_SET_DTR 1
 #define UCOM_SET_RTS 2
 #define UCOM_SET_BREAK 3
 	int (*ucom_param)(void *sc, int portno, struct termios *);
 	int (*ucom_ioctl)(void *sc, int portno, u_long cmd,
-			  void *data, int flag, struct lwp *l);
+	    void *data, int flag, proc_t *p);
 	int (*ucom_open)(void *sc, int portno);
 	void (*ucom_close)(void *sc, int portno);
 	void (*ucom_read)(void *sc, int portno, u_char **ptr,
-			  uint32_t *count);
+	    uint32_t *count);
 	void (*ucom_write)(void *sc, int portno, u_char *to,
-			   u_char *from, uint32_t *count);
+	    u_char *from, uint32_t *count);
 };
 .Ed
 .Pp
@@ -155,7 +156,7 @@ Set the speed, number of data bit, stop bits, and parity of a port
 according to the
 .Xr termios 4
 struct.
-.It Fn "int (*ucom_ioctl)" "void *sc" "int portno" "u_long cmd" "void *data" "int flag" "struct lwp *l"
+.It Fn "int (*ucom_ioctl)" "void *sc" "int portno" "u_long cmd" "void *data" "int flag" "proc_t *p"
 implements any non-standard
 .Xr ioctl 2
 that a device needs.
@@ -205,11 +206,24 @@ Apart from these methods there is a function
 .Pp
 which should be called by the driver whenever it notices a status change.
 .Sh SEE ALSO
+.\" moscom
 .Xr tty 4 ,
+.Xr u3g 4 ,
+.Xr uark 4 ,
+.Xr ubsa 4 ,
+.Xr uchcom 4 ,
 .Xr uftdi 4 ,
+.Xr ugensa 4 ,
+.Xr uhmodem 4 ,
+.Xr uipaq 4 ,
+.Xr ukyopon
+.Xr umct 4 ,
 .Xr umodem 4 ,
 .Xr usb 4 ,
-.Xr uvisor 4
+.Xr uplcom 4 ,
+.Xr uslsa 4 ,
+.Xr uvisor 4 ,
+.Xr uvscom 4
 .Sh HISTORY
 This
 .Nm
