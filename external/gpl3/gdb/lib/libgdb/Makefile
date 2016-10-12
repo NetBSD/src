@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2016/02/23 22:32:48 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2016/10/12 20:20:39 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ CPPFLAGS+=	-I${.CURDIR} \
 		-I${.CURDIR}/../libdecnumber/arch/${GDB_MACHINE_ARCH} \
 		-I${DIST}/bfd \
 		-I${DIST}/include \
+		-Dsighandler_t=sig_t \
 		-DTARGET_SYSTEM_ROOT=\"\" \
 		-DTARGET_SYSTEM_ROOT_RELOCATABLE=0 \
 		-DBINDIR=\"${BINDIR}\" \
