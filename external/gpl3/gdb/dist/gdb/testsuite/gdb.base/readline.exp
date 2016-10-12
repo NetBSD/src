@@ -1,4 +1,4 @@
-# Copyright 2002-2015 Free Software Foundation, Inc.
+# Copyright 2002-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,68 +150,48 @@ if { ![readline_is_used] } {
     return -1
 }
 
-set oldtimeout1 $timeout
-set timeout 30
+save_vars { timeout env(GDBHISTSIZE) env(GDBHISTFILE) } {
+    set timeout 30
 
+    # A simple test of operate-and-get-next.
+    operate_and_get_next "Simple operate-and-get-next" \
+      "p 1" ".* = 1" \
+      "p 2" ".* = 2" \
+      "p 3" ".* = 3"
 
-# A simple test of operate-and-get-next.
-operate_and_get_next "Simple operate-and-get-next" \
-  "p 1" ".* = 1" \
-  "p 2" ".* = 2" \
-  "p 3" ".* = 3"
+    # Test operate-and-get-next with a secondary prompt.
+    operate_and_get_next "operate-and-get-next with secondary prompt" \
+      "if 1 > 0" "" \
+      "p 5" "" \
+      "end" ".* = 5"
 
-# Test operate-and-get-next with a secondary prompt.
-operate_and_get_next "operate-and-get-next with secondary prompt" \
-  "if 1 > 0" "" \
-  "p 5" "" \
-  "end" ".* = 5"
-
-# Verify that arrow keys work in secondary prompts.  The control
-# sequence is a hard-coded VT100 up arrow.
-gdb_test "print 42" "\\\$\[0-9\]* = 42"
-set msg "arrow keys with secondary prompt"
-gdb_test_multiple "if 1 > 0\n\033\[A\033\[A\nend" $msg {
-    -re ".*\\\$\[0-9\]* = 42\r\n$gdb_prompt $" {
-	pass $msg
+    # Verify that arrow keys work in secondary prompts.  The control
+    # sequence is a hard-coded VT100 up arrow.
+    gdb_test "print 42" "\\\$\[0-9\]* = 42"
+    set msg "arrow keys with secondary prompt"
+    gdb_test_multiple "if 1 > 0\n\033\[A\033\[A\nend" $msg {
+	-re ".*\\\$\[0-9\]* = 42\r\n$gdb_prompt $" {
+	    pass $msg
+	}
+	-re ".*Undefined command:.*$gdb_prompt $" {
+	    fail $msg
+	}
     }
-    -re ".*Undefined command:.*$gdb_prompt $" {
-	fail $msg
-    }
+
+    # Now repeat the first test with a history file that fills the entire
+    # history list.
+
+    set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
+    set env(GDBHISTSIZE) "10"
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+
+    operate_and_get_next "Simple operate-and-get-next" \
+      "p 7" ".* = 7" \
+      "p 8" ".* = 8" \
+      "p 9" ".* = 9"
 }
-
-# Now repeat the first test with a history file that fills the entire
-# history list.
-
-if [info exists env(GDBHISTFILE)] {
-    set old_gdbhistfile $env(GDBHISTFILE)
-}
-if [info exists env(GDBHISTSIZE)] {
-    set old_gdbhistsize $env(GDBHISTSIZE)
-}
-set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
-set env(GDBHISTSIZE) "10"
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-
-operate_and_get_next "Simple operate-and-get-next" \
-  "p 7" ".* = 7" \
-  "p 8" ".* = 8" \
-  "p 9" ".* = 9"
-
-
-# Restore globals modified in this test...
-if [info exists old_gdbhistfile] {
-    set env(GDBHISTFILE) $old_gdbhistfile
-} else {
-    unset env(GDBHISTFILE)
-}
-if [info exists old_gdbhistsize] {
-    set env(GDBHISTSIZE) $old_gdbhistsize
-} else {
-    unset env(GDBHISTSIZE)
-}
-set timeout $oldtimeout1
 
 return 0

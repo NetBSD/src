@@ -1,5 +1,5 @@
 /* Common code for PA ELF implementations.
-   Copyright (C) 1999-2015 Free Software Foundation, Inc.
+   Copyright (C) 1999-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1212,6 +1212,11 @@ elf_hppa_sort_unwind (bfd *abfd)
 static unsigned int
 elf_hppa_action_discarded (asection *sec)
 {
+  /* Ignore relocations in .data.rel.ro.local.  This section can contain
+     PLABEL32 relocations to functions in discarded COMDAT groups.  */
+  if (strcmp (".data.rel.ro.local", sec->name) == 0)
+    return 0;
+
   if (strcmp (".PARISC.unwind", sec->name) == 0)
     return 0;
 

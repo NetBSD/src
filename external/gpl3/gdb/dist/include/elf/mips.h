@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2015 Free Software Foundation, Inc.
+   Copyright (C) 1993-2016 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -29,6 +29,10 @@
 #define _ELF_MIPS_H
 
 #include "elf/reloc-macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Relocation types.  */
 START_RELOC_NUMBERS (elf_mips_reloc_type)
@@ -110,7 +114,8 @@ START_RELOC_NUMBERS (elf_mips_reloc_type)
   RELOC_NUMBER (R_MIPS16_TLS_GOTTPREL, 110)
   RELOC_NUMBER (R_MIPS16_TLS_TPREL_HI16, 111)
   RELOC_NUMBER (R_MIPS16_TLS_TPREL_LO16, 112)
-  FAKE_RELOC (R_MIPS16_max, 113)
+  RELOC_NUMBER (R_MIPS16_PC16_S1, 113)
+  FAKE_RELOC (R_MIPS16_max, 114)
   /* These relocations are specific to VxWorks.  */
   RELOC_NUMBER (R_MIPS_COPY, 126)
   RELOC_NUMBER (R_MIPS_JUMP_SLOT, 127)
@@ -1227,7 +1232,8 @@ extern void bfd_mips_elf_swap_abiflags_v0_out
 #define AFL_ASE_MIPS16       0x00000400 /* MIPS16 ASE.  */
 #define AFL_ASE_MICROMIPS    0x00000800 /* MICROMIPS ASE.  */
 #define AFL_ASE_XPA          0x00001000 /* XPA ASE.  */
-#define AFL_ASE_MASK         0x00001fff /* All ASEs.  */
+#define AFL_ASE_DSPR3        0x00002000 /* DSP R3 ASE.  */
+#define AFL_ASE_MASK         0x00003fff /* All ASEs.  */
 
 /* Values for the isa_ext word of an ABI flags structure.  */
 
@@ -1298,6 +1304,10 @@ enum
   /* Using -mips32r2 -mfp64 -mno-odd-spreg.  */
   Val_GNU_MIPS_ABI_FP_64A = 7,
 
+  /* This is reserved for backward-compatibility with an earlier
+     implementation of the MIPS NaN2008 functionality.  */
+  Val_GNU_MIPS_ABI_FP_NAN2008 = 8,
+
   /* Values defined for Tag_GNU_MIPS_ABI_MSA.  */
 
   /* Not tagged or not using any ABIs affected by the differences.  */
@@ -1306,5 +1316,9 @@ enum
   /* Using 128-bit MSA.  */
   Val_GNU_MIPS_ABI_MSA_128 = 1,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _ELF_MIPS_H */

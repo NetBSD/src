@@ -1,4 +1,4 @@
-# Copyright 1998-2015 Free Software Foundation, Inc.
+# Copyright 1998-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,11 +23,6 @@
 
 standard_testfile .c
 
-# Test depends on printf, which the sparclet stub doesn't support.  
-if { [istarget "sparclet-*-*"] } {
-    return 0
-}
-
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug nowarnings}] != "" } {
     untested "couldn't compile ${srcdir}/${subdir}/${srcfile}"
     return -1
@@ -45,8 +40,7 @@ if [get_compiler_info] {
 # Some targets can't do function calls, so don't even bother with this
 # test.
 if [target_info exists gdb,cannot_call_functions] {
-    setup_xfail "*-*-*" 2416
-    fail "This target can not call functions"
+    unsupported "This target can not call functions"
     continue
 }
 
@@ -87,76 +81,107 @@ gdb_test_multiple "finish" "finish out from loop count" {
 # return value unknown", call that an `unsupported' test; on some
 # architectures, it's impossible to find structs returned by value
 # reliably.
-proc print_struct_call { expr result } {
+proc print_struct_call { expr inf_result gdb_result } {
     global gdb_prompt
+    global inferior_spawn_id gdb_spawn_id
+
+    set inferior_matched 0
+    set gdb_matched 0
 
     set command "print $expr"
     gdb_test_multiple "${command}" "${command}" {
-        -re "$result\[\r\n\]+$gdb_prompt $" {
-            pass "$command"
-        }
+	-i $inferior_spawn_id
+	-re "$inf_result" {
+	    set inferior_matched 1
+	    if {!$gdb_matched} {
+		exp_continue
+	    }
+	}
+
+	-i $gdb_spawn_id
+	-re "$gdb_result\r\n$gdb_prompt $" {
+	    set gdb_matched 1
+	    if {!$inferior_matched} {
+		exp_continue
+	    }
+	}
         -re "Function return value unknown.\[\r\n\]+$gdb_prompt $" {
             unsupported "$command"
+	    return
         }
     }
+
+    verbose -log "inferior_matched=$inferior_matched, gdb_matched=$gdb_matched"
+    gdb_assert {$inferior_matched && $gdb_matched} $command
 }
 
 
 if ![gdb_skip_stdio_test "print print_struct_rep(*struct1)"] {
     print_struct_call "print_struct_rep(*struct1)" \
-            ".*Contents of struct1:\[ \t\n\r\]+22\[ \t\]+0\[ \t\n\r\]+.\[0-9\]+ = \\{value = 5, head = 0\\}"
+	".*Contents of struct1:\[ \t\n\r\]+22\[ \t\]+0\[ \t\n\r\]+" \
+	".\[0-9\]+ = \\{value = 5, head = 0\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_one_large_struct(...)"] {
     print_struct_call "print_one_large_struct(*list1)" \
-            ".*\[ \t\]+4\[ \t\]+1\[ \r\n\]+.\[0-9\]+ = \\{next_index = \\{1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\}, values = \\{4, 6, 8, 10, 12, 14, 16, 18, 20, 22\\}, head = 0\\}"
+	".*\[ \t\]+4\[ \t\]+1\[ \r\n\]+" \
+	".\[0-9\]+ = \\{next_index = \\{1, 2, 3, 4, 5, 6, 7, 8, 9, 10\\}, values = \\{4, 6, 8, 10, 12, 14, 16, 18, 20, 22\\}, head = 0\\}"
 }
 
 if {![gdb_skip_float_test "print print_one_double(*d1)"] && \
         ![gdb_skip_stdio_test "print print_one_double(*d1)"] } {
     print_struct_call "print_one_double(*d1)" \
-	    ".*Contents of one_double_t:\[ \r\n\]+1\\.111110\[ \r\n\]+.\[0-9\]+ = \\{double1 = 1\\.111\[0-9\]*\\}"
+	".*Contents of one_double_t:\[ \r\n\]+1\\.111110\[ \r\n\]+" \
+	".\[0-9\]+ = \\{double1 = 1\\.111\[0-9\]*\\}"
 }
 
 if {![gdb_skip_float_test "print print_two_floats(*f3)"] && \
         ![gdb_skip_stdio_test "print print_two_floats(*f3)"] } {
     print_struct_call "print_two_floats(*f3)" \
-            ".*Contents of two_floats_t:\[ \r\n\]+-2\\.345000\[ \t]+1\\.000000\[ \r\n\]+.\[0-9\]+ = \\{float1 = -2\\.34500003, float2 = 1\\}"
+	".*Contents of two_floats_t:\[ \r\n\]+-2\\.345000\[ \t]+1\\.000000\[ \r\n\]+" \
+	".\[0-9\]+ = \\{float1 = -2\\.34500003, float2 = 1\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_bit_flags_char(*cflags)"] {
     print_struct_call "print_bit_flags_char(*cflags)" \
-            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1 '\\\\001', beta = 0 '\\\\000', gamma = 1 '\\\\001', delta = 0 '\\\\000', epsilon = 1 '\\\\001', omega = 0 '\\\\000'\\}"
+	".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+" \
+	".\[0-9\]+ = \\{alpha = 1 '\\\\001', beta = 0 '\\\\000', gamma = 1 '\\\\001', delta = 0 '\\\\000', epsilon = 1 '\\\\001', omega = 0 '\\\\000'\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_bit_flags_short(*sflags)"] {
     print_struct_call "print_bit_flags_short(*sflags)" \
-            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
+	".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+" \
+	".\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_bit_flags(*flags)"] {
     print_struct_call "print_bit_flags(*flags)" \
-            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
+	".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+" \
+	".\[0-9\]+ = \\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_bit_flags_combo(*flags_combo)"] {
     print_struct_call "print_bit_flags_combo(*flags_combo)" \
-            ".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+ch1: y\[ \t\]+ch2: n\[ \r\n\]+.\[0-9\]+ = \\{alpha = 1, beta = 0, ch1 = 121 'y', gamma = 1, delta = 0, ch2 = 110 'n', epsilon = 1, omega = 0\\}"
+	".*alpha\[ \r\n\]+gamma\[ \r\n\]+epsilon\[ \r\n\]+ch1: y\[ \t\]+ch2: n\[ \r\n\]+" \
+	".\[0-9\]+ = \\{alpha = 1, beta = 0, ch1 = 121 'y', gamma = 1, delta = 0, ch2 = 110 'n', epsilon = 1, omega = 0\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_three_chars(*three_chars)"] {
     print_struct_call "print_three_chars(*three_char)" \
-            ".*Contents of three_char_t:\[ \r\n\]+x\[ \t\]+y\[ \t\]+z\[ \r\n\]+.\[0-9\]+ = \\{ch1 = 120 'x', ch2 = 121 'y', ch3 = 122 'z'\\}"
+	".*Contents of three_char_t:\[ \r\n\]+x\[ \t\]+y\[ \t\]+z\[ \r\n\]+" \
+	".\[0-9\]+ = \\{ch1 = 120 'x', ch2 = 121 'y', ch3 = 122 'z'\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_five_chars(*five_chars)"] {
     print_struct_call "print_five_chars(*five_char)" \
-            ".*Contents of five_char_t:\[ \r\n\]+h\[ \t\]+e\[ \t\]+l\[ \t\]+l\[ \t\]+o\[ \r\n\]+.\[0-9\]+ = \\{ch1 = 104 'h', ch2 = 101 'e', ch3 = 108 'l', ch4 = 108 'l', ch5 = 111 'o'\\}"
+	".*Contents of five_char_t:\[ \r\n\]+h\[ \t\]+e\[ \t\]+l\[ \t\]+l\[ \t\]+o\[ \r\n\]+" \
+	".\[0-9\]+ = \\{ch1 = 104 'h', ch2 = 101 'e', ch3 = 108 'l', ch4 = 108 'l', ch5 = 111 'o'\\}"
 }
 
 if ![gdb_skip_stdio_test "print print_int_char_combo(*int_char_combo)"] {
     print_struct_call "print_int_char_combo(*int_char_combo)" \
-            ".*Contents of int_char_combo_t:\[ \r\n\]+13\[ \t\]+!\[ \r\n\]+.\[0-9\]+ = \\{int1 = 13, ch1 = 33 '!'\\}"
+	".*Contents of int_char_combo_t:\[ \r\n\]+13\[ \t\]+!\[ \r\n\]+" \
+	".\[0-9\]+ = \\{int1 = 13, ch1 = 33 '!'\\}"
 }
 
 return

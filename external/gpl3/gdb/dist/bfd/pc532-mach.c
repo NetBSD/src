@@ -1,5 +1,5 @@
 /* BFD back-end for Mach3/532 a.out-ish binaries.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -31,7 +31,7 @@
    1 and specially define our own N_TXTSIZE.  */
 
 #define N_HEADER_IN_TEXT(x) 1
-#define N_TXTSIZE(x) ((x).a_text)
+#define N_TXTSIZE(x) ((x)->a_text)
 
 #define TEXT_START_ADDR 0x10000       /* from old ld */
 #define TARGET_PAGE_SIZE 0x1000       /* from old ld,  032 & 532 are really 512/4k */
@@ -39,7 +39,7 @@
 /* Use a_entry of 0 to distinguish object files from OMAGIC executables */
 #define N_TXTADDR(x) \
   (N_MAGIC(x) == OMAGIC ? \
-   ((x).a_entry < TEXT_START_ADDR? 0: TEXT_START_ADDR): \
+   ((x)->a_entry < TEXT_START_ADDR? 0: TEXT_START_ADDR): \
    (N_MAGIC(x) == NMAGIC? TEXT_START_ADDR: \
     TEXT_START_ADDR + EXEC_BYTES_SIZE))
 
@@ -89,16 +89,16 @@ MY(write_object_contents) (bfd *abfd)
   switch (bfd_get_mach (abfd))
     {
     case 32032:
-      N_SET_MACHTYPE (*execp, M_NS32032);
+      N_SET_MACHTYPE (execp, M_NS32032);
       break;
     case 32532:
     default:
-      N_SET_MACHTYPE (*execp, M_NS32532);
+      N_SET_MACHTYPE (execp, M_NS32532);
       break;
     }
-  N_SET_FLAGS (*execp, aout_backend_info (abfd)->exec_hdr_flags);
+  N_SET_FLAGS (execp, aout_backend_info (abfd)->exec_hdr_flags);
 
-  WRITE_HEADERS(abfd, execp);
+  WRITE_HEADERS (abfd, execp);
 
   return TRUE;
 }

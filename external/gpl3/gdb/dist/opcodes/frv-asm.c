@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -99,10 +99,10 @@ parse_ldd_annotation (CGEN_CPU_DESC cd,
 	    return errmsg;
 	}
     }
-  
+
   while (**strp == ' ' || **strp == '\t')
     ++*strp;
-  
+
   if (**strp != '@')
     return "missing `@'";
 
@@ -138,10 +138,10 @@ parse_call_annotation (CGEN_CPU_DESC cd,
 	    return errmsg;
 	}
     }
-  
+
   while (**strp == ' ' || **strp == '\t')
     ++*strp;
-  
+
   if (**strp != '@')
     return "missing `@'";
 
@@ -177,10 +177,10 @@ parse_ld_annotation (CGEN_CPU_DESC cd,
 	    return errmsg;
 	}
     }
-  
+
   while (**strp == ' ' || **strp == '\t')
     ++*strp;
-  
+
   if (**strp != '@')
     return "missing `@'";
 
@@ -198,7 +198,7 @@ parse_ulo16 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   if (**strp == '#' || **strp == '%')
     {
       if (strncasecmp (*strp + 1, "lo(", 3) == 0)
@@ -324,7 +324,7 @@ parse_uslo16 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   if (**strp == '#' || **strp == '%')
     {
       if (strncasecmp (*strp + 1, "lo(", 3) == 0)
@@ -450,7 +450,7 @@ parse_uhi16 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   if (**strp == '#' || **strp == '%')
     {
       if (strncasecmp (*strp + 1, "hi(", 3) == 0)
@@ -635,7 +635,7 @@ parse_d12 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   /* Check for small data reference.  */
   if (**strp == '#' || **strp == '%')
     {
@@ -748,7 +748,7 @@ parse_s12 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   /* Check for small data reference.  */
   if (**strp == '#' || **strp == '%')
     {
@@ -864,7 +864,7 @@ parse_u12 (CGEN_CPU_DESC cd,
   const char *errmsg;
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
- 
+
   /* Check for small data reference.  */
   if ((**strp == '#' || **strp == '%')
       && strncasecmp (*strp + 1, "gprel12(", 8) == 0)
@@ -895,7 +895,7 @@ parse_A (CGEN_CPU_DESC cd,
 	 unsigned long A)
 {
   const char *errmsg;
- 
+
   if (**strp == '#')
     ++*strp;
 
@@ -957,7 +957,7 @@ parse_call_label (CGEN_CPU_DESC cd,
 {
   const char *errmsg;
   bfd_vma value;
- 
+
   /* Check for small data reference.  */
   if (opinfo == 0 && (**strp == '#' || **strp == '%'))
     {
@@ -1266,7 +1266,7 @@ frv_cgen_parse_operand (CGEN_CPU_DESC cd,
   return errmsg;
 }
 
-cgen_parse_fn * const frv_cgen_parse_handlers[] = 
+cgen_parse_fn * const frv_cgen_parse_handlers[] =
 {
   parse_insn_normal,
 };
@@ -1296,9 +1296,9 @@ CGEN_ASM_INIT_HOOK
 
    Returns NULL for success, an error message for failure.  */
 
-char * 
+char *
 frv_cgen_build_insn_regex (CGEN_INSN *insn)
-{  
+{
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
   char rxbuf[CGEN_MAX_RX_ELEMENTS];
@@ -1337,18 +1337,18 @@ frv_cgen_build_insn_regex (CGEN_INSN *insn)
   /* Copy any remaining literals from the syntax string into the rx.  */
   for(; * syn != 0 && rx <= rxbuf + (CGEN_MAX_RX_ELEMENTS - 7 - 4); ++syn)
     {
-      if (CGEN_SYNTAX_CHAR_P (* syn)) 
+      if (CGEN_SYNTAX_CHAR_P (* syn))
 	{
 	  char c = CGEN_SYNTAX_CHAR (* syn);
 
-	  switch (c) 
+	  switch (c)
 	    {
 	      /* Escape any regex metacharacters in the syntax.  */
-	    case '.': case '[': case '\\': 
-	    case '*': case '^': case '$': 
+	    case '.': case '[': case '\\':
+	    case '*': case '^': case '$':
 
 #ifdef CGEN_ESCAPE_EXTENDED_REGEX
-	    case '?': case '{': case '}': 
+	    case '?': case '{': case '}':
 	    case '(': case ')': case '*':
 	    case '|': case '+': case ']':
 #endif
@@ -1378,20 +1378,20 @@ frv_cgen_build_insn_regex (CGEN_INSN *insn)
     }
 
   /* Trailing whitespace ok.  */
-  * rx++ = '['; 
-  * rx++ = ' '; 
-  * rx++ = '\t'; 
-  * rx++ = ']'; 
-  * rx++ = '*'; 
+  * rx++ = '[';
+  * rx++ = ' ';
+  * rx++ = '\t';
+  * rx++ = ']';
+  * rx++ = '*';
 
   /* But anchor it after that.  */
-  * rx++ = '$'; 
+  * rx++ = '$';
   * rx = '\0';
 
   CGEN_INSN_RX (insn) = xmalloc (sizeof (regex_t));
   reg_err = regcomp ((regex_t *) CGEN_INSN_RX (insn), rxbuf, REG_NOSUB);
 
-  if (reg_err == 0) 
+  if (reg_err == 0)
     return NULL;
   else
     {
@@ -1590,7 +1590,7 @@ frv_cgen_assemble_insn (CGEN_CPU_DESC cd,
       const CGEN_INSN *insn = ilist->insn;
       recognized_mnemonic = 1;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not usually needed as unsupported opcodes
 	 shouldn't be in the hash lists.  */
       /* Is this insn supported by the selected cpu?  */
@@ -1650,7 +1650,7 @@ frv_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
       }
@@ -1659,11 +1659,11 @@ frv_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s...'"), start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s'"), start);
       }
-      
+
     *errmsg = errbuf;
     return NULL;
   }

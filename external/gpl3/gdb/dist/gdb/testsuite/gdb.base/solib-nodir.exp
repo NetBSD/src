@@ -1,4 +1,4 @@
-# Copyright 2010-2015 Free Software Foundation, Inc.
+# Copyright 2010-2016 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ if { [get_compiler_info]
 }
 
 clean_restart $executable
-gdb_load_shlibs ${binlibfile}
+gdb_load_shlib ${binlibfile}
 
 gdb_test_no_output "set env LD_LIBRARY_PATH=:"
 gdb_test "cd ${binlibfiledir}" "Working directory [string_to_regexp ${binlibfiledir}]\\." "cd OBJDIR/${subdir}"

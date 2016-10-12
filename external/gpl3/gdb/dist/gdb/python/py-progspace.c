@@ -1,6 +1,6 @@
 /* Python interface to program spaces.
 
-   Copyright (C) 2010-2015 Free Software Foundation, Inc.
+   Copyright (C) 2010-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -71,9 +71,7 @@ pspy_get_filename (PyObject *self, void *closure)
       struct objfile *objfile = obj->pspace->symfile_object_file;
 
       if (objfile)
-	return PyString_Decode (objfile_name (objfile),
-				strlen (objfile_name (objfile)),
-				host_charset (), NULL);
+	return host_string_to_python_string (objfile_name (objfile));
     }
   Py_RETURN_NONE;
 }
@@ -99,7 +97,10 @@ static int
 pspy_initialize (pspace_object *self)
 {
   self->pspace = NULL;
-  self->dict = NULL;
+
+  self->dict = PyDict_New ();
+  if (self->dict == NULL)
+    return 0;
 
   self->printers = PyList_New (0);
   if (self->printers == NULL)
@@ -323,7 +324,7 @@ static void
 py_free_pspace (struct program_space *pspace, void *datum)
 {
   struct cleanup *cleanup;
-  pspace_object *object = datum;
+  pspace_object *object = (pspace_object *) datum;
   /* This is a fiction, but we're in a nasty spot: The pspace is in the
      process of being deleted, we can't rely on anything in it.  Plus
      this is one time when the current program space and current inferior
@@ -351,7 +352,7 @@ pspace_to_pspace_object (struct program_space *pspace)
 {
   pspace_object *object;
 
-  object = program_space_data (pspace, pspy_pspace_data_key);
+  object = (pspace_object *) program_space_data (pspace, pspy_pspace_data_key);
   if (!object)
     {
       object = PyObject_New (pspace_object, &pspace_object_type);

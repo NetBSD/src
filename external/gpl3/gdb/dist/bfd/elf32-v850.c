@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -57,7 +57,7 @@ v850_elf_check_relocs (bfd *abfd,
   int other = 0;
   const char *common = NULL;
 
-  if (info->relocatable)
+  if (bfd_link_relocatable (info))
     return TRUE;
 
 #ifdef DEBUG
@@ -2243,7 +2243,7 @@ v850_elf_relocate_section (bfd *output_bfd,
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
 					 rel, 1, relend, howto, 0, contents);
 
-      if (info->relocatable)
+      if (bfd_link_relocatable (info))
 	continue;
 
       /* FIXME: We should use the addend, but the COFF relocations don't.  */
@@ -2271,18 +2271,14 @@ v850_elf_relocate_section (bfd *output_bfd,
 	  switch ((int) r)
 	    {
 	    case bfd_reloc_overflow:
-	      if (! ((*info->callbacks->reloc_overflow)
-		     (info, (h ? &h->root : NULL), name, howto->name,
-		      (bfd_vma) 0, input_bfd, input_section,
-		      rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->reloc_overflow)
+		(info, (h ? &h->root : NULL), name, howto->name,
+		 (bfd_vma) 0, input_bfd, input_section, rel->r_offset);
 	      break;
 
 	    case bfd_reloc_undefined:
-	      if (! ((*info->callbacks->undefined_symbol)
-		     (info, name, input_bfd, input_section,
-		      rel->r_offset, TRUE)))
-		return FALSE;
+	      (*info->callbacks->undefined_symbol)
+		(info, name, input_bfd, input_section, rel->r_offset, TRUE);
 	      break;
 
 	    case bfd_reloc_outofrange:
@@ -2314,10 +2310,8 @@ v850_elf_relocate_section (bfd *output_bfd,
 	      /* fall through */
 
 	    common_error:
-	      if (!((*info->callbacks->warning)
-		    (info, msg, name, input_bfd, input_section,
-		     rel->r_offset)))
-		return FALSE;
+	      (*info->callbacks->warning) (info, msg, name, input_bfd,
+					   input_section, rel->r_offset);
 	      break;
 	    }
 	}
@@ -2361,7 +2355,7 @@ v850_set_note (bfd * abfd, asection * s, enum v850_notes note, unsigned int val)
 
 static asection *
 v850_elf_make_note_section (bfd * abfd)
-{  
+{
   asection *s;
   bfd_byte *data;
   flagword flags;
@@ -2428,10 +2422,10 @@ v850_elf_set_note (bfd * abfd, enum v850_notes note, unsigned int val)
   return TRUE;
 }
 
-/* Copy backend specific data from one object module to another.  */
+/* Copy a v850 note section from one object module to another.  */
 
-static bfd_boolean
-v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
+static void
+v850_elf_copy_notes (bfd *ibfd, bfd *obfd)
 {
   asection * onotes;
   asection * inotes;
@@ -2440,14 +2434,15 @@ v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
      skip the merge.  The normal input to output section
      copying will take care of everythng for us.  */
   if ((onotes = bfd_get_section_by_name (obfd, V850_NOTE_SECNAME)) == NULL)
-    return TRUE;
+    return;
 
-  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) != NULL)
+  if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) == NULL)
+    return;
+
+  if (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes))
     {
       bfd_byte * icont;
       bfd_byte * ocont;
-
-      BFD_ASSERT (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes));
 
       if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
 	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
@@ -2458,12 +2453,19 @@ v850_elf_copy_private_bfd_data (bfd * ibfd, bfd * obfd)
       /* Copy/overwrite notes from the input to the output.  */
       memcpy (ocont, icont, bfd_section_size (obfd, onotes));
     }
+}
 
-  return TRUE;
+/* Copy backend specific data from one object module to another.  */
+
+static bfd_boolean
+v850_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
+{
+  v850_elf_copy_notes (ibfd, obfd);
+  return _bfd_elf_copy_private_bfd_data (ibfd, obfd);
 }
 #define bfd_elf32_bfd_copy_private_bfd_data	v850_elf_copy_private_bfd_data
 
-static bfd_boolean 
+static bfd_boolean
 v850_elf_merge_notes (bfd * ibfd, bfd *obfd)
 {
   asection * onotes;
@@ -2502,7 +2504,7 @@ v850_elf_merge_notes (bfd * ibfd, bfd *obfd)
 
 	  if (ival == 0 || ival == oval)
 	    continue;
-	  
+
 	  if (oval == 0)
 	    {
 	      bfd_put_32 (obfd, ival, odata);
@@ -2587,7 +2589,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     case V850_NOTE_DATA_SIZE:
       fprintf (file, _(" size of doubles: "));
       switch (value)
@@ -2599,7 +2601,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     case V850_NOTE_FPU_INFO:
       fprintf (file, _(" FPU support required: "));
       switch (value)
@@ -2611,7 +2613,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     case V850_NOTE_SIMD_INFO:
       fprintf (file, _("SIMD use: "));
       switch (value)
@@ -2622,7 +2624,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     case V850_NOTE_CACHE_INFO:
       fprintf (file, _("CACHE use: "));
       switch (value)
@@ -2633,7 +2635,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     case V850_NOTE_MMU_INFO:
       fprintf (file, _("MMU use: "));
       switch (value)
@@ -2644,7 +2646,7 @@ print_v850_note (bfd * abfd, FILE * file, bfd_byte * data, enum v850_notes id)
 	}
       fputc ('\n', file);
       break;
-	
+
     default:
       BFD_ASSERT (0);
     }
@@ -3205,7 +3207,6 @@ v850_elf_relax_delete_bytes (bfd *abfd,
   Elf_Internal_Rela *irel;
   Elf_Internal_Rela *irelend;
   struct elf_link_hash_entry *sym_hash;
-  Elf_Internal_Shdr *shndx_hdr;
   Elf_External_Sym_Shndx *shndx;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
@@ -3230,8 +3231,17 @@ v850_elf_relax_delete_bytes (bfd *abfd,
   /* Adjust all the relocs.  */
   irel = elf_section_data (sec)->relocs;
   irelend = irel + sec->reloc_count;
-  shndx_hdr = &elf_tdata (abfd)->symtab_shndx_hdr;
-  shndx = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
+  if (elf_symtab_shndx_list (abfd))
+    {
+      Elf_Internal_Shdr *shndx_hdr;
+
+      shndx_hdr = & elf_symtab_shndx_list (abfd)->hdr;
+      shndx = (Elf_External_Sym_Shndx *) shndx_hdr->contents;
+    }
+  else
+    {
+      shndx = NULL;
+    }
 
   for (; irel < irelend; irel++)
     {
@@ -3433,7 +3443,7 @@ v850_elf_relax_section (bfd *abfd,
 
   *again = FALSE;
 
-  if (link_info->relocatable
+  if (bfd_link_relocatable (link_info)
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return TRUE;

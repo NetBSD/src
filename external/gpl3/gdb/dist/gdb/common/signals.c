@@ -1,5 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990-2015 Free Software Foundation, Inc.
+   Copyright (C) 1990-2016 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.
@@ -331,6 +331,10 @@ gdb_signal_from_host (int hostsig)
   if (hostsig == SIGINFO)
     return GDB_SIGNAL_INFO;
 #endif
+#if defined (SIGLIBRT)
+  if (hostsig == SIGLIBRT)
+    return GDB_SIGNAL_LIBRT;
+#endif
 
 #if defined (REALTIME_LO)
   if (hostsig >= REALTIME_LO && hostsig < REALTIME_HI)
@@ -583,6 +587,10 @@ do_gdb_signal_to_host (enum gdb_signal oursig,
 #if defined (SIGINFO)
     case GDB_SIGNAL_INFO:
       return SIGINFO;
+#endif
+#if defined (SIGLIBRT)
+    case GDB_SIGNAL_LIBRT:
+      return SIGLIBRT;
 #endif
 
     default:

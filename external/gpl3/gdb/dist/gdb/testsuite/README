@@ -25,6 +25,76 @@ The second is to cd to the testsuite directory and invoke the DejaGnu
 (The `site.exp' file contains a handful of useful variables like host
 and target triplets, and pathnames.)
 
+Parallel testing
+****************
+
+If not testing with a remote host (in DejaGnu's sense), you can run
+the GDB test suite in a fully parallel mode.  In this mode, each .exp
+file runs separately and maybe simultaneously.  The test suite ensures
+that all the temporary files created by the test suite do not clash,
+by putting them into separate directories.  This mode is primarily
+intended for use by the Makefile.
+
+For GNU make, the Makefile tries to run the tests in parallel mode if
+any -j option is given.  For a non-GNU make, tests are not
+parallelized.
+
+If RUNTESTFLAGS is not empty, then by default the tests are
+serialized.  This can be overridden by either using the
+`check-parallel' target in the Makefile, or by setting FORCE_PARALLEL
+to any non-empty value:
+
+	make check-parallel RUNTESTFLAGS="--target_board=native-gdbserver"
+	make check RUNTESTFLAGS="--target_board=native-gdbserver" FORCE_PARALLEL=1
+
+If you want to use runtest directly instead of using the Makefile, see
+the description of GDB_PARALLEL below.
+
+Racy testcases
+**************
+
+Sometimes, new testcases are added to the testsuite that are not
+entirely deterministic, and can randomly pass or fail.  We call them
+"racy testcases", and they can be bothersome when one is comparing
+different testsuite runs.  In order to help identifying them, it is
+possible to run the tests several times in a row and ask the testsuite
+machinery to analyze the results.  To do that, you need to specify the
+RACY_ITER environment variable to make:
+
+	make check RACY_ITER=5 -j4
+
+The value assigned to RACY_ITER represents the number of times you
+wish to run the tests in sequence (in the example above, the entire
+testsuite will be executed 5 times in a row, in parallel).  It is also
+possible to check just a specific test:
+
+	make check TESTS='gdb.base/default.exp' RACY_ITER=3
+
+One can also decide to call the Makefile rules by hand inside the
+gdb/testsuite directory, e.g.:
+
+	make check-paralell-racy -j4
+
+In which case the value of the DEFAULT_RACY_ITER variable (inside
+gdb/testsuite/Makefile.in) will be used to determine how many
+iterations will be run.
+
+After running the tests, you shall see a file name 'racy.sum' in the
+gdb/testsuite directory.  You can also inspect the generated *.log and
+*.sum files by looking into the gdb/testsuite/racy_ouputs directory.
+
+If you already have *.sum files generated from previous testsuite runs
+and you would like to analyze them without having to run the testsuite
+again, you can also use the 'analyze-racy-logs.py' script directly.
+It is located in the gdb/testsuite/ directory, and it expects a list
+of two or more *.sum files to be provided as its argument.  For
+example:
+
+	./gdb/testsuite/analyze-racy-logs.py testsuite-01/gdb.sum \
+	  testsuite-02/gdb.sum testsuite-03/gdb.sum
+
+The script will output its analysis report to the standard output.
+
 Running the Performance Tests
 *****************************
 
@@ -125,19 +195,24 @@ a .gdbinit.  For example:
 
 GDB_PARALLEL
 
-When testing natively (that is, not with a remote host), you can run
-the GDB test suite in a fully parallel mode.  In this mode, each .exp
-file runs separately and maybe simultaneously.  The test suite will
-ensure that all the temporary files created by the test suite do not
-clash, by putting them into separate directories.  This mode is
-primarily intended for use by the Makefile.
+To use parallel testing mode without using the the Makefile, set
+GDB_PARALLEL on the runtest command line to "yes".  Before starting
+the tests, you must ensure that the directories cache, outputs, and
+temp in the test suite build directory are either empty or have been
+deleted.  cache in particular is used to share data across invocations
+of runtest, and files there may affect the test results.  The Makefile
+automatically does these deletions.
 
-To use this mode, set the GDB_PARALLEL on the runtest command line.
-Before starting the tests, you must ensure that the directories cache,
-outputs, and temp in the test suite build directory are either empty
-or have been deleted.  cache in particular is used to share data
-across invocations of runtest, and files there may affect the test
-results.  Note that the Makefile automatically does these deletions.
+FORCE_PARALLEL
+
+Setting FORCE_PARALLEL to any non-empty value forces parallel testing
+mode even if RUNTESTFLAGS is not empty.
+
+FORCE_SEPARATE_MI_TTY
+
+Setting FORCE_MI_SEPARATE_UI to 1 forces all MI testing to start GDB
+in console mode, with MI running on a separate TTY, on a secondary UI
+started with "new-ui".
 
 GDB_INOTIFY
 
@@ -369,6 +444,9 @@ gdb,predefined_tsv
 
   The predefined trace state variables the board has.
 
+gdb,no_thread_names
+
+  The target doesn't support thread names.
 
 Testsuite Organization
 **********************

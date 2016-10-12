@@ -1,5 +1,5 @@
 /* Simulator for the moxie processor
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
    Contributed by Anthony Green
 
 This file is part of GDB, the GNU debugger.
@@ -1111,8 +1111,8 @@ sim_engine_run (SIM_DESC sd,
     } while (1);
 }
 
-int
-sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
+static int
+moxie_reg_store (SIM_CPU *scpu, int rn, unsigned char *memory, int length)
 {
   if (rn < NUM_MOXIE_REGS && rn >= 0)
     {
@@ -1131,8 +1131,8 @@ sim_store_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
     return 0;
 }
 
-int
-sim_fetch_register (SIM_DESC sd, int rn, unsigned char *memory, int length)
+static int
+moxie_reg_fetch (SIM_CPU *scpu, int rn, unsigned char *memory, int length)
 {
   if (rn < NUM_MOXIE_REGS && rn >= 0)
     {
@@ -1172,7 +1172,8 @@ free_state (SIM_DESC sd)
 }
 
 SIM_DESC
-sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
+sim_open (SIM_OPEN_KIND kind, host_callback *cb,
+	  struct bfd *abfd, char * const *argv)
 {
   int i;
   SIM_DESC sd = sim_state_alloc (kind, cb);
@@ -1194,9 +1195,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
       return 0;
     }
 
-  /* getopt will print the error message so we just have to exit if this fails.
-     FIXME: Hmmm...  in the case of gdb we need getopt to call
-     print_filtered.  */
+  /* The parser will print an error message for us, so we silently return.  */
   if (sim_parse_args (sd, argv) != SIM_RC_OK)
     {
       free_state (sd);
@@ -1237,6 +1236,8 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
     {
       SIM_CPU *cpu = STATE_CPU (sd, i);
 
+      CPU_REG_FETCH (cpu) = moxie_reg_fetch;
+      CPU_REG_STORE (cpu) = moxie_reg_store;
       CPU_PC_FETCH (cpu) = moxie_pc_get;
       CPU_PC_STORE (cpu) = moxie_pc_set;
 
@@ -1245,13 +1246,6 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb, struct bfd *abfd, char **argv)
 
   return sd;
 }
-
-void
-sim_close (SIM_DESC sd, int quitting)
-{
-  /* nothing to do */
-}
-
 
 /* Load the device tree blob.  */
 
@@ -1273,6 +1267,7 @@ load_dtb (SIM_DESC sd, const char *filename)
   if (size != fread (buf, 1, size, f))
     {
       sim_io_eprintf (sd, "ERROR: error reading ``%s''.\n", filename);
+      fclose (f);
       return;
     }
   sim_core_write_buffer (sd, scpu, write_map, buf, 0xE0000000, size);
@@ -1281,7 +1276,8 @@ load_dtb (SIM_DESC sd, const char *filename)
 }
 
 SIM_RC
-sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd, char **argv, char **env)
+sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
+		     char * const *argv, char * const *env)
 {
   char ** avp;
   int l, argc, i, tp;

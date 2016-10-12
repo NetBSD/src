@@ -1,6 +1,6 @@
 /* Unwinder test program.
 
-   Copyright (C) 2003-2015 Free Software Foundation, Inc.
+   Copyright (C) 2003-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,10 @@ void gdb1253 (void);
 void gdb1718 (void);
 void gdb1338 (void);
 void jump_at_beginning (void);
+void standard (void);
+void stack_align_ecx (void);
+void stack_align_edx (void);
+void stack_align_eax (void);
 
 int
 main (void)

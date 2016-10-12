@@ -7,7 +7,6 @@ Contents
 - Common Makefile Support
 - TAGS support
 - Generating "configure" files
-- tconfig.h
 - C Language Assumptions
 - "dump" commands under gdb
 
@@ -158,16 +157,6 @@ To add the entries to an alternative ChangeLog file, use:
 
 	$  make ChangeLog=MyChangeLog ....
 
-
-tconfig.h
-==========
-
-File tconfig.h defines one or more target configuration macros
-(e.g. a tm.h file).  There are very few that need defining.
-For a list of all of them, see common/tconfig.h.
-It contains them all, commented out.
-The intent is that a new port can just copy this file and
-define the ones it needs.
 
 C Language Assumptions
 ======================

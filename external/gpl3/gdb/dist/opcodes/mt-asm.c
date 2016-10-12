@@ -4,7 +4,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2015 Free Software Foundation, Inc.
+   Copyright (C) 1996-2016 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -52,7 +52,7 @@ static const char * parse_insn_normal
 /* Range checking for signed numbers.  Returns 0 if acceptable
    and 1 if the value is out of bounds for a signed quantity.  */
 
-static int 
+static int
 signed_out_of_bounds (long val)
 {
   if ((val < -32768) || (val > 32767))
@@ -72,7 +72,7 @@ parse_loopsize (CGEN_CPU_DESC cd,
   enum cgen_parse_operand_result result_type;
   bfd_vma value;
 
-  /* Is it a control transfer instructions?  */ 
+  /* Is it a control transfer instructions?  */
   if (opindex == (CGEN_OPERAND_TYPE) MT_OPERAND_LOOPSIZE)
     {
       code = BFD_RELOC_MT_PCINSN8;
@@ -97,7 +97,7 @@ parse_imm16 (CGEN_CPU_DESC cd,
   bfd_reloc_code_real_type code = BFD_RELOC_NONE;
   bfd_vma value;
 
-  /* Is it a control transfer instructions?  */ 
+  /* Is it a control transfer instructions?  */
   if (opindex == (CGEN_OPERAND_TYPE) MT_OPERAND_IMM16O)
     {
       code = BFD_RELOC_16_PCREL;
@@ -144,7 +144,7 @@ parse_imm16 (CGEN_CPU_DESC cd,
 		 value = (value >> 16) & 0xFFFF;
 	       else if (code == BFD_RELOC_LO16)
 		 value = value  & 0xFFFF;
-	       else 
+	       else
 		 errmsg = _("Biiiig Trouble in parse_imm16!");
 	       break;
 
@@ -173,27 +173,27 @@ parse_imm16 (CGEN_CPU_DESC cd,
       if (parse_signed)
 	{
           /* Parse as as signed integer.  */
- 
+
           errmsg = cgen_parse_signed_integer (cd, strp, opindex, valuep);
 
-          if (errmsg == NULL) 
+          if (errmsg == NULL)
 	    {
 #if 0
 	      /* Manual range checking is needed for the signed case.  */
 	      if (*valuep & 0x8000)
                 value = 0xffff0000 | *valuep;
-	      else 
+	      else
                 value = *valuep;
 
 	      if (signed_out_of_bounds (value))
 	        errmsg = _("Operand out of range. Must be between -32768 and 32767.");
 	      /* Truncate to 16 bits. This is necessary
 		 because cgen will have sign extended *valuep.  */
-	      *valuep &= 0xFFFF; 
+	      *valuep &= 0xFFFF;
 #endif
 	    }
 	}
-      else  
+      else
 	{
           /* MT_OPERAND_IMM16Z.  Parse as an unsigned integer.  */
           errmsg = cgen_parse_unsigned_integer (cd, strp, opindex, (unsigned long *) valuep);
@@ -598,7 +598,7 @@ mt_cgen_parse_operand (CGEN_CPU_DESC cd,
   return errmsg;
 }
 
-cgen_parse_fn * const mt_cgen_parse_handlers[] = 
+cgen_parse_fn * const mt_cgen_parse_handlers[] =
 {
   parse_insn_normal,
 };
@@ -628,9 +628,9 @@ CGEN_ASM_INIT_HOOK
 
    Returns NULL for success, an error message for failure.  */
 
-char * 
+char *
 mt_cgen_build_insn_regex (CGEN_INSN *insn)
-{  
+{
   CGEN_OPCODE *opc = (CGEN_OPCODE *) CGEN_INSN_OPCODE (insn);
   const char *mnem = CGEN_INSN_MNEMONIC (insn);
   char rxbuf[CGEN_MAX_RX_ELEMENTS];
@@ -669,18 +669,18 @@ mt_cgen_build_insn_regex (CGEN_INSN *insn)
   /* Copy any remaining literals from the syntax string into the rx.  */
   for(; * syn != 0 && rx <= rxbuf + (CGEN_MAX_RX_ELEMENTS - 7 - 4); ++syn)
     {
-      if (CGEN_SYNTAX_CHAR_P (* syn)) 
+      if (CGEN_SYNTAX_CHAR_P (* syn))
 	{
 	  char c = CGEN_SYNTAX_CHAR (* syn);
 
-	  switch (c) 
+	  switch (c)
 	    {
 	      /* Escape any regex metacharacters in the syntax.  */
-	    case '.': case '[': case '\\': 
-	    case '*': case '^': case '$': 
+	    case '.': case '[': case '\\':
+	    case '*': case '^': case '$':
 
 #ifdef CGEN_ESCAPE_EXTENDED_REGEX
-	    case '?': case '{': case '}': 
+	    case '?': case '{': case '}':
 	    case '(': case ')': case '*':
 	    case '|': case '+': case ']':
 #endif
@@ -710,20 +710,20 @@ mt_cgen_build_insn_regex (CGEN_INSN *insn)
     }
 
   /* Trailing whitespace ok.  */
-  * rx++ = '['; 
-  * rx++ = ' '; 
-  * rx++ = '\t'; 
-  * rx++ = ']'; 
-  * rx++ = '*'; 
+  * rx++ = '[';
+  * rx++ = ' ';
+  * rx++ = '\t';
+  * rx++ = ']';
+  * rx++ = '*';
 
   /* But anchor it after that.  */
-  * rx++ = '$'; 
+  * rx++ = '$';
   * rx = '\0';
 
   CGEN_INSN_RX (insn) = xmalloc (sizeof (regex_t));
   reg_err = regcomp ((regex_t *) CGEN_INSN_RX (insn), rxbuf, REG_NOSUB);
 
-  if (reg_err == 0) 
+  if (reg_err == 0)
     return NULL;
   else
     {
@@ -922,7 +922,7 @@ mt_cgen_assemble_insn (CGEN_CPU_DESC cd,
       const CGEN_INSN *insn = ilist->insn;
       recognized_mnemonic = 1;
 
-#ifdef CGEN_VALIDATE_INSN_SUPPORTED 
+#ifdef CGEN_VALIDATE_INSN_SUPPORTED
       /* Not usually needed as unsupported opcodes
 	 shouldn't be in the hash lists.  */
       /* Is this insn supported by the selected cpu?  */
@@ -982,7 +982,7 @@ mt_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s...'", tmp_errmsg, start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, "%s `%.50s'", tmp_errmsg, start);
       }
@@ -991,11 +991,11 @@ mt_cgen_assemble_insn (CGEN_CPU_DESC cd,
 	if (strlen (start) > 50)
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s...'"), start);
-	else 
+	else
 	  /* xgettext:c-format */
 	  sprintf (errbuf, _("bad instruction `%.50s'"), start);
       }
-      
+
     *errmsg = errbuf;
     return NULL;
   }

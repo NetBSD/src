@@ -342,6 +342,10 @@ _D8demangle4testFaaYv
 demangle.test(char, char, ...)
 #
 --format=dlang
+_D8demangle4testFYv
+demangle.test(...)
+#
+--format=dlang
 _D8demangle4testFaaZv
 demangle.test(char, char)
 #
@@ -390,24 +394,32 @@ _D8demangle4testFDRZaZv
 demangle.test(extern(C++) char() delegate)
 #
 --format=dlang
-_D8demangle4testFFZaZv
+_D8demangle4testFDYZaZv
+demangle.test(extern(Objective-C) char() delegate)
+#
+--format=dlang
+_D8demangle4testFPFZaZv
 demangle.test(char() function)
 #
 --format=dlang
-_D8demangle4testFUZaZv
+_D8demangle4testFPUZaZv
 demangle.test(extern(C) char() function)
 #
 --format=dlang
-_D8demangle4testFWZaZv
+_D8demangle4testFPWZaZv
 demangle.test(extern(Windows) char() function)
 #
 --format=dlang
-_D8demangle4testFVZaZv
+_D8demangle4testFPVZaZv
 demangle.test(extern(Pascal) char() function)
 #
 --format=dlang
-_D8demangle4testFRZaZv
+_D8demangle4testFPRZaZv
 demangle.test(extern(C++) char() function)
+#
+--format=dlang
+_D8demangle4testFPYZaZv
+demangle.test(extern(Objective-C) char() function)
 #
 --format=dlang
 _D8demangle4testFDFNaZaZv
@@ -466,59 +478,59 @@ _D8demangle4testFNjNkDFNjZaZv
 demangle.test(return char() return delegate)
 #
 --format=dlang
-_D8demangle4testFFNaZaZv
+_D8demangle4testFPFNaZaZv
 demangle.test(char() pure function)
 #
 --format=dlang
-_D8demangle4testFFNbZaZv
+_D8demangle4testFPFNbZaZv
 demangle.test(char() nothrow function)
 #
 --format=dlang
-_D8demangle4testFFNcZaZv
+_D8demangle4testFPFNcZaZv
 demangle.test(char() ref function)
 #
 --format=dlang
-_D8demangle4testFFNdZaZv
+_D8demangle4testFPFNdZaZv
 demangle.test(char() @property function)
 #
 --format=dlang
-_D8demangle4testFFNeZaZv
+_D8demangle4testFPFNeZaZv
 demangle.test(char() @trusted function)
 #
 --format=dlang
-_D8demangle4testFFNfZaZv
+_D8demangle4testFPFNfZaZv
 demangle.test(char() @safe function)
 #
 --format=dlang
-_D8demangle4testFFNiZaZv
+_D8demangle4testFPFNiZaZv
 demangle.test(char() @nogc function)
 #
 --format=dlang
-_D8demangle4testFFNaNbZaZv
+_D8demangle4testFPFNaNbZaZv
 demangle.test(char() pure nothrow function)
 #
 --format=dlang
-_D8demangle4testFFNbNaZaZv
+_D8demangle4testFPFNbNaZaZv
 demangle.test(char() nothrow pure function)
 #
 --format=dlang
-_D8demangle4testFFNdNfNaZaZv
+_D8demangle4testFPFNdNfNaZaZv
 demangle.test(char() @property @safe pure function)
 #
 --format=dlang
-_D8demangle4testFNjFZaZv
+_D8demangle4testFNjPFZaZv
 demangle.test(char() function)
 #
 --format=dlang
-_D8demangle4testFNkFZaZv
+_D8demangle4testFNkPFZaZv
 demangle.test(return char() function)
 #
 --format=dlang
-_D8demangle4testFFNjZaZv
+_D8demangle4testFPFNjZaZv
 demangle.test(char() return function)
 #
 --format=dlang
-_D8demangle4testFNjNkFNjZaZv
+_D8demangle4testFNjNkPFNjZaZv
 demangle.test(return char() return function)
 #
 --format=dlang
@@ -719,19 +731,19 @@ demangle.test!('\U000186a0')
 #
 --format=dlang
 _D8demangle17__T4testVde0A8P6Zv
-demangle.test!(42.0000)
+demangle.test!(0x0.A8p6)
 #
 --format=dlang
 _D8demangle16__T4testVdeA8P2Zv
-demangle.test!(42.0000)
+demangle.test!(0xA.8p2)
 #
 --format=dlang
 _D8demangle18__T4testVdeN0A8P6Zv
-demangle.test!(-42.0000)
+demangle.test!(-0x0.A8p6)
 #
 --format=dlang
 _D8demangle31__T4testVde0F6E978D4FDF3B646P7Zv
-demangle.test!(123.456)
+demangle.test!(0x0.F6E978D4FDF3B646p7)
 #
 --format=dlang
 _D8demangle15__T4testVdeNANZv
@@ -747,27 +759,27 @@ demangle.test!(-Inf)
 #
 --format=dlang
 _D8demangle23__T4testVfe0FFFFFFP128Zv
-demangle.test!(3.40282e+38)
+demangle.test!(0x0.FFFFFFp128)
 #
 --format=dlang
 _D8demangle32__T4testVde0FFFFFFFFFFFFF8P1024Zv
-demangle.test!(1.79769e+308)
+demangle.test!(0x0.FFFFFFFFFFFFF8p1024)
 #
 --format=dlang
 _D8demangle19__T4testVfe08PN125Zv
-demangle.test!(1.17549e-38)
+demangle.test!(0x0.8p-125)
 #
 --format=dlang
 _D8demangle20__T4testVde08PN1021Zv
-demangle.test!(2.22507e-308)
+demangle.test!(0x0.8p-1021)
 #
 --format=dlang
 _D8demangle51__T4testVrc0C4CCCCCCCCCCCCCDP4c0B666666666666666P6Zv
-demangle.test!(12.3000+45.6000i)
+demangle.test!(0x0.C4CCCCCCCCCCCCCDp4+0x0.B666666666666666p6i)
 #
 --format=dlang
 _D8demangle52__T4testVrcN0C4CCCCCCCCCCCCCDP4c0B666666666666666P6Zv
-demangle.test!(-12.3000+45.6000i)
+demangle.test!(-0x0.C4CCCCCCCCCCCCCDp4+0x0.B666666666666666p6i)
 #
 --format=dlang
 _D8demangle22__T4testVG3ua3_616263Zv
@@ -787,7 +799,7 @@ demangle.test!([1, 2, 3, 4])
 #
 --format=dlang
 _D8demangle25__T4testVAdA2e08P1eN08P1Zv
-demangle.test!([1.00000, -1.00000])
+demangle.test!([0x0.8p1, -0x0.8p1])
 #
 --format=dlang
 _D8demangle23__T4testVHiiA2i1i2i3i4Zv
@@ -989,7 +1001,7 @@ object.TypeInfo_Array.argTypes(out TypeInfo, out TypeInfo)
 #
 --format=dlang
 _D2rt6dmain211_d_run_mainUiPPaPUAAaZiZ7tryExecMFMDFZvZv
-rt.dmain2._d_run_main(int, char**, extern(C) int(char[][]) function*).tryExec(scope void() delegate)
+rt.dmain2._d_run_main(int, char**, extern(C) int(char[][]) function).tryExec(scope void() delegate)
 #
 --format=dlang
 _D6object9Exception6__ctorMFNaNbNfAyaAyamC6object9ThrowableZC9Exception

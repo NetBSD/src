@@ -1,6 +1,6 @@
 /* Scheme interface to types.
 
-   Copyright (C) 2008-2015 Free Software Foundation, Inc.
+   Copyright (C) 2008-2016 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -139,7 +139,7 @@ tyscm_type_name (struct type *type, SCM *excp)
 static hashval_t
 tyscm_hash_type_smob (const void *p)
 {
-  const type_smob *t_smob = p;
+  const type_smob *t_smob = (const type_smob *) p;
 
   return htab_hash_pointer (t_smob->type);
 }
@@ -149,8 +149,8 @@ tyscm_hash_type_smob (const void *p)
 static int
 tyscm_eq_type_smob (const void *ap, const void *bp)
 {
-  const type_smob *a = ap;
-  const type_smob *b = bp;
+  const type_smob *a = (const type_smob *) ap;
+  const type_smob *b = (const type_smob *) bp;
 
   return (a->type == b->type
 	  && a->type != NULL);
@@ -170,7 +170,7 @@ tyscm_type_map (struct type *type)
   if (objfile == NULL)
     return global_types_map;
 
-  htab = objfile_data (objfile, tyscm_objfile_data_key);
+  htab = (htab_t) objfile_data (objfile, tyscm_objfile_data_key);
   if (htab == NULL)
     {
       htab = gdbscm_create_eqable_gsmob_ptr_map (tyscm_hash_type_smob,
@@ -353,7 +353,7 @@ static int
 tyscm_copy_type_recursive (void **slot, void *info)
 {
   type_smob *t_smob = (type_smob *) *slot;
-  htab_t copied_types = info;
+  htab_t copied_types = (htab_t) info;
   struct objfile *objfile = TYPE_OBJFILE (t_smob->type);
   htab_t htab;
   eqable_gdb_smob **new_slot;
@@ -388,7 +388,7 @@ tyscm_copy_type_recursive (void **slot, void *info)
 static void
 save_objfile_types (struct objfile *objfile, void *datum)
 {
-  htab_t htab = datum;
+  htab_t htab = (htab_t) datum;
   htab_t copied_types;
 
   if (!gdb_scheme_initialized)
@@ -1341,42 +1341,43 @@ static const scheme_integer_constant type_integer_constants[] =
 
 static const scheme_function type_functions[] =
 {
-  { "type?", 1, 0, 0, gdbscm_type_p,
+  { "type?", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_p),
     "\
 Return #t if the object is a <gdb:type> object." },
 
-  { "lookup-type", 1, 0, 1, gdbscm_lookup_type,
+  { "lookup-type", 1, 0, 1, as_a_scm_t_subr (gdbscm_lookup_type),
     "\
 Return the <gdb:type> object representing string or #f if not found.\n\
 If block is given then the type is looked for in that block.\n\
 \n\
   Arguments: string [#:block <gdb:block>]" },
 
-  { "type-code", 1, 0, 0, gdbscm_type_code,
+  { "type-code", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_code),
     "\
 Return the code of the type" },
 
-  { "type-tag", 1, 0, 0, gdbscm_type_tag,
+  { "type-tag", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_tag),
     "\
 Return the tag name of the type, or #f if there isn't one." },
 
-  { "type-name", 1, 0, 0, gdbscm_type_name,
+  { "type-name", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_name),
     "\
 Return the name of the type as a string, or #f if there isn't one." },
 
-  { "type-print-name", 1, 0, 0, gdbscm_type_print_name,
+  { "type-print-name", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_print_name),
     "\
 Return the print name of the type as a string." },
 
-  { "type-sizeof", 1, 0, 0, gdbscm_type_sizeof,
+  { "type-sizeof", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_sizeof),
     "\
 Return the size of the type, in bytes." },
 
-  { "type-strip-typedefs", 1, 0, 0, gdbscm_type_strip_typedefs,
+  { "type-strip-typedefs", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_type_strip_typedefs),
     "\
 Return a type formed by stripping the type of all typedefs." },
 
-  { "type-array", 2, 1, 0, gdbscm_type_array,
+  { "type-array", 2, 1, 0, as_a_scm_t_subr (gdbscm_type_array),
     "\
 Return a type representing an array of objects of the type.\n\
 \n\
@@ -1386,7 +1387,7 @@ Return a type representing an array of objects of the type.\n\
     the array size.\n\
     Valid bounds for array indices are [low-bound,high-bound]." },
 
-  { "type-vector", 2, 1, 0, gdbscm_type_vector,
+  { "type-vector", 2, 1, 0, as_a_scm_t_subr (gdbscm_type_vector),
     "\
 Return a type representing a vector of objects of the type.\n\
 Vectors differ from arrays in that if the current language has C-style\n\
@@ -1399,87 +1400,88 @@ They are first class values.\n\
     the array size.\n\
     Valid bounds for array indices are [low-bound,high-bound]." },
 
-  { "type-pointer", 1, 0, 0, gdbscm_type_pointer,
+  { "type-pointer", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_pointer),
     "\
 Return a type of pointer to the type." },
 
-  { "type-range", 1, 0, 0, gdbscm_type_range,
+  { "type-range", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_range),
     "\
 Return (low high) representing the range for the type." },
 
-  { "type-reference", 1, 0, 0, gdbscm_type_reference,
+  { "type-reference", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_reference),
     "\
 Return a type of reference to the type." },
 
-  { "type-target", 1, 0, 0, gdbscm_type_target,
+  { "type-target", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_target),
     "\
 Return the target type of the type." },
 
-  { "type-const", 1, 0, 0, gdbscm_type_const,
+  { "type-const", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_const),
     "\
 Return a const variant of the type." },
 
-  { "type-volatile", 1, 0, 0, gdbscm_type_volatile,
+  { "type-volatile", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_volatile),
     "\
 Return a volatile variant of the type." },
 
-  { "type-unqualified", 1, 0, 0, gdbscm_type_unqualified,
+  { "type-unqualified", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_unqualified),
     "\
 Return a variant of the type without const or volatile attributes." },
 
-  { "type-num-fields", 1, 0, 0, gdbscm_type_num_fields,
+  { "type-num-fields", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_num_fields),
     "\
 Return the number of fields of the type." },
 
-  { "type-fields", 1, 0, 0, gdbscm_type_fields,
+  { "type-fields", 1, 0, 0, as_a_scm_t_subr (gdbscm_type_fields),
     "\
 Return the list of <gdb:field> objects of fields of the type." },
 
-  { "make-field-iterator", 1, 0, 0, gdbscm_make_field_iterator,
+  { "make-field-iterator", 1, 0, 0,
+    as_a_scm_t_subr (gdbscm_make_field_iterator),
     "\
 Return a <gdb:iterator> object for iterating over the fields of the type." },
 
-  { "type-field", 2, 0, 0, gdbscm_type_field,
+  { "type-field", 2, 0, 0, as_a_scm_t_subr (gdbscm_type_field),
     "\
 Return the field named by string of the type.\n\
 \n\
   Arguments: <gdb:type> string" },
 
-  { "type-has-field?", 2, 0, 0, gdbscm_type_has_field_p,
+  { "type-has-field?", 2, 0, 0, as_a_scm_t_subr (gdbscm_type_has_field_p),
     "\
 Return #t if the type has field named string.\n\
 \n\
   Arguments: <gdb:type> string" },
 
-  { "field?", 1, 0, 0, gdbscm_field_p,
+  { "field?", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_p),
     "\
 Return #t if the object is a <gdb:field> object." },
 
-  { "field-name", 1, 0, 0, gdbscm_field_name,
+  { "field-name", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_name),
     "\
 Return the name of the field." },
 
-  { "field-type", 1, 0, 0, gdbscm_field_type,
+  { "field-type", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_type),
     "\
 Return the type of the field." },
 
-  { "field-enumval", 1, 0, 0, gdbscm_field_enumval,
+  { "field-enumval", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_enumval),
     "\
 Return the enum value represented by the field." },
 
-  { "field-bitpos", 1, 0, 0, gdbscm_field_bitpos,
+  { "field-bitpos", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_bitpos),
     "\
 Return the offset in bits of the field in its containing type." },
 
-  { "field-bitsize", 1, 0, 0, gdbscm_field_bitsize,
+  { "field-bitsize", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_bitsize),
     "\
 Return the size of the field in bits." },
 
-  { "field-artificial?", 1, 0, 0, gdbscm_field_artificial_p,
+  { "field-artificial?", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_artificial_p),
     "\
 Return #t if the field is artificial." },
 
-  { "field-baseclass?", 1, 0, 0, gdbscm_field_baseclass_p,
+  { "field-baseclass?", 1, 0, 0, as_a_scm_t_subr (gdbscm_field_baseclass_p),
     "\
 Return #t if the field is a baseclass." },
 
@@ -1504,7 +1506,7 @@ gdbscm_initialize_types (void)
   /* This function is "private".  */
   tyscm_next_field_x_proc
     = scm_c_define_gsubr ("%type-next-field!", 1, 0, 0,
-			  gdbscm_type_next_field_x);
+			  as_a_scm_t_subr (gdbscm_type_next_field_x));
   scm_set_procedure_property_x (tyscm_next_field_x_proc,
 				gdbscm_documentation_symbol,
 				gdbscm_scm_from_c_string ("\
