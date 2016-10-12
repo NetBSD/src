@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1137 2016/09/29 20:47:18 kre Exp $
+# $NetBSD: mi,v 1.1138 2016/10/12 03:58:37 nat Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -213,6 +213,7 @@
 ./libdata/firmware/if_urtwn/rtl8188eufw.bin	base-firmware-root
 ./libdata/firmware/if_urtwn/rtl8192cfw.bin	base-firmware-root
 ./libdata/firmware/if_urtwn/rtl8192cfwU.bin	base-firmware-root
+./libdata/firmware/if_urtwn/rtl8192eefw.bin	base-firmware-root
 ./libdata/firmware/if_wpi			base-firmware-root
 ./libdata/firmware/if_wpi/LICENSE.ipw3945-ucode	base-obsolete	obsolete
 ./libdata/firmware/if_wpi/LICENSE.iwlwifi-3945-ucode	base-firmware-root
