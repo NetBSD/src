@@ -30,20 +30,6 @@
    global because it is referenced by several modules.  */
 extern const struct objfile_data *dbx_objfile_data_key;
 
-/* The stab_section_info chain remembers info from the ELF symbol table,
-   while psymtabs are being built for the other symbol tables in the 
-   objfile.  It is destroyed at the complation of psymtab-reading.
-   Any info that was used from it has been copied into psymtabs.  */
-
-struct stab_section_info
-  {
-    char *filename;
-    struct stab_section_info *next;
-    int found;			/* Count of times it's found in searching.  */
-    size_t num_sections;
-    CORE_ADDR sections[1];
-  };
-
 /* Information is passed among various dbxread routines for accessing
    symbol files.  A pointer to this structure is kept in the objfile,
    using the dbx_objfile_data_key.  */
@@ -57,9 +43,6 @@ struct dbx_symfile_info
     int stringtab_size;		/* Its size */
     file_ptr symtab_offset;	/* Offset in file to symbol table */
     int symbol_size;		/* Bytes in a single symbol */
-    struct stab_section_info *stab_section_info;    /* Section starting points
-						       of the original .o files
-						       before linking.  */
 
     /* See stabsread.h for the use of the following.  */
     struct header_file *header_files;

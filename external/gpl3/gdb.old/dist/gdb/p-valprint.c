@@ -483,10 +483,10 @@ const char pascal_vtbl_ptr_name[] =
 int
 pascal_object_is_vtbl_ptr_type (struct type *type)
 {
-  const char *typename = type_name_no_tag (type);
+  const char *type_name = type_name_no_tag (type);
 
-  return (typename != NULL
-	  && strcmp (typename, pascal_vtbl_ptr_name) == 0);
+  return (type_name != NULL
+	  && strcmp (type_name, pascal_vtbl_ptr_name) == 0);
 }
 
 /* Return truth value for the assertion that TYPE is of the type
@@ -725,7 +725,6 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
       const char *basename = type_name_no_tag (baseclass);
       const gdb_byte *base_valaddr = NULL;
       int thisoffset;
-      volatile struct gdb_exception ex;
       int skip = 0;
 
       if (BASETYPE_VIA_VIRTUAL (type, i))
@@ -745,18 +744,21 @@ pascal_object_print_value (struct type *type, const gdb_byte *valaddr,
 
       thisoffset = offset;
 
-      TRY_CATCH (ex, RETURN_MASK_ERROR)
+      TRY
 	{
 	  boffset = baseclass_offset (type, i, valaddr, offset, address, val);
 	}
-      if (ex.reason < 0 && ex.error == NOT_AVAILABLE_ERROR)
-	skip = -1;
-      else if (ex.reason < 0)
-	skip = 1;
-      else
+      CATCH (ex, RETURN_MASK_ERROR)
 	{
-	  skip = 0;
+	  if (ex.error == NOT_AVAILABLE_ERROR)
+	    skip = -1;
+	  else
+	    skip = 1;
+	}
+      END_CATCH
 
+      if (skip == 0)
+	{
 	  /* The virtual base class pointer might have been clobbered by the
 	     user program. Make sure that it still points to a valid memory
 	     location.  */

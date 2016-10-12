@@ -301,7 +301,8 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
       gdb_assert ((flags & OBJF_NOT_FILENAME) != 0);
       expanded_name = xstrdup ("<<anonymous objfile>>");
     }
-  else if ((flags & OBJF_NOT_FILENAME) != 0)
+  else if ((flags & OBJF_NOT_FILENAME) != 0
+	   || is_target_filename (name))
     expanded_name = xstrdup (name);
   else
     expanded_name = gdb_abspath (name);
@@ -1500,7 +1501,7 @@ default_iterate_over_objfiles_in_search_order
     }
 }
 
-/* Return canonical name for OBJFILE.  */
+/* See objfiles.h.  */
 
 const char *
 objfile_name (const struct objfile *objfile)
@@ -1509,6 +1510,17 @@ objfile_name (const struct objfile *objfile)
     return bfd_get_filename (objfile->obfd);
 
   return objfile->original_name;
+}
+
+/* See objfiles.h.  */
+
+const char *
+objfile_filename (const struct objfile *objfile)
+{
+  if (objfile->obfd != NULL)
+    return bfd_get_filename (objfile->obfd);
+
+  return NULL;
 }
 
 /* See objfiles.h.  */

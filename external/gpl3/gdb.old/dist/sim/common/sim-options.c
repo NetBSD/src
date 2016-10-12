@@ -33,6 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include "sim-options.h"
 #include "sim-io.h"
 #include "sim-assert.h"
+#include "version.h"
 
 #include "bfd.h"
 
@@ -105,6 +106,7 @@ typedef enum {
   OPTION_MEM_SIZE,
 #endif
   OPTION_HELP,
+  OPTION_VERSION,
 #ifdef SIM_H8300 /* FIXME: Should be movable to h8300 dir.  */
   OPTION_H8300H,
   OPTION_H8300S,
@@ -172,6 +174,9 @@ static const OPTION standard_options[] =
 
   { {"help", no_argument, NULL, OPTION_HELP},
       'H', NULL, "Print help information",
+      standard_option_handler },
+  { {"version", no_argument, NULL, OPTION_VERSION},
+      '\0', NULL, "Print version information",
       standard_option_handler },
 
   { {"architecture", required_argument, NULL, OPTION_ARCHITECTURE},
@@ -453,6 +458,12 @@ standard_option_handler (SIM_DESC sd, sim_cpu *cpu, int opt,
       if (STATE_OPEN_KIND (sd) == SIM_OPEN_STANDALONE)
 	exit (0);
       /* FIXME: 'twould be nice to do something similar if gdb.  */
+      break;
+
+    case OPTION_VERSION:
+      sim_io_printf (sd, "GNU simulator %s%s\n", PKGVERSION, version);
+      if (STATE_OPEN_KIND (sd) == SIM_OPEN_STANDALONE)
+	exit (0);
       break;
 
     case OPTION_SYSROOT:
@@ -993,7 +1004,10 @@ sim_args_command (SIM_DESC sd, const char *cmd)
       sim_cpu *cpu;
 
       if (argv [0] == NULL)
-	return SIM_RC_OK; /* FIXME - perhaps help would be better */
+	{
+	  freeargv (argv);
+	  return SIM_RC_OK; /* FIXME - perhaps help would be better */
+	}
 
       /* First check for a cpu selector.  */
       {

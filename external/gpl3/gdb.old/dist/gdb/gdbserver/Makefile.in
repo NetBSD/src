@@ -49,7 +49,11 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 RANLIB = @RANLIB@
 
+# The name of the compiler to use.
+COMPILER = @COMPILER@
+
 CC = @CC@
+CXX = @CXX@
 AR = @AR@
 AR_FLAGS = rc
 
@@ -60,7 +64,7 @@ depcomp = $(SHELL) $(srcdir)/../depcomp
 
 # Note that these are overridden by GNU make-specific code below if
 # GNU make is used.  The overrides implement dependency tracking.
-COMPILE.pre = $(CC)
+COMPILE.pre = $(COMPILER)
 COMPILE.post = -c -o $@
 COMPILE = $(COMPILE.pre) $(INTERNAL_CFLAGS) $(COMPILE.post)
 POSTCOMPILE = @true
@@ -78,8 +82,8 @@ VPATH = @srcdir@
 
 # Set this up with gcc if you have gnu ld and the loader will print out
 # line numbers for undefinded refs.
-#CC-LD=gcc -static
-CC-LD=${CC}
+#CC_LD=gcc -static
+CC_LD=$(COMPILER)
 
 # Where is the "include" directory?  Traditionally ../include or ./include
 INCLUDE_DIR =  ${srcdir}/../../include
@@ -148,6 +152,7 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/proc-service.list $(srcdir)/regcache.c \
 	$(srcdir)/remote-utils.c $(srcdir)/server.c $(srcdir)/target.c \
 	$(srcdir)/thread-db.c $(srcdir)/utils.c $(srcdir)/debug.c \
+	$(srcdir)/linux-aarch64-low.c \
 	$(srcdir)/linux-arm-low.c $(srcdir)/linux-bfin-low.c \
 	$(srcdir)/linux-cris-low.c $(srcdir)/linux-crisv32-low.c \
 	${srcdir}/x86-low.c $(srcdir)/i387-fp.c \
@@ -155,7 +160,7 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/linux-m32r-low.c \
 	$(srcdir)/linux-m68k-low.c $(srcdir)/linux-mips-low.c \
 	$(srcdir)/linux-nios2-low.c \
-	$(srcdir)/linux-ppc-low.c \
+	$(srcdir)/linux-ppc-low.c $(srcdir)/nat/ppc-linux.c \
 	$(srcdir)/linux-s390-low.c \
 	$(srcdir)/linux-sh-low.c $(srcdir)/linux-sparc-low.c \
 	$(srcdir)/linux-x86-low.c \
@@ -167,12 +172,15 @@ SFILES=	$(srcdir)/gdbreplay.c $(srcdir)/inferiors.c $(srcdir)/dll.c \
 	$(srcdir)/common/vec.c $(srcdir)/common/gdb_vecs.c \
 	$(srcdir)/common/common-utils.c $(srcdir)/common/xml-utils.c \
 	$(srcdir)/nat/linux-osdata.c $(srcdir)/common/ptid.c \
+	$(srcdir)/nat/linux-personality.c \
 	$(srcdir)/common/buffer.c $(srcdir)/nat/linux-btrace.c \
 	$(srcdir)/common/filestuff.c $(srcdir)/target/waitstatus.c \
 	$(srcdir)/nat/mips-linux-watch.c $(srcdir)/common/print-utils.c \
 	$(srcdir)/common/rsp-low.c $(srcdir)/common/errors.c \
 	$(srcdir)/common/common-debug.c $(srcdir)/common/cleanups.c \
-	$(srcdir)/common/common-exceptions.c $(srcdir)/symbol.c
+	$(srcdir)/common/common-exceptions.c $(srcdir)/symbol.c \
+	$(srcdir)/common/btrace-common.c \
+	$(srcdir)/common/fileio.c $(srcdir)/nat/linux-namespaces.c
 
 DEPFILES = @GDBSERVER_DEPFILES@
 
@@ -186,7 +194,7 @@ OBS = agent.o ax.o inferiors.o regcache.o remote-utils.o server.o signals.o \
       mem-break.o hostio.o event-loop.o tracepoint.o xml-utils.o \
       common-utils.o ptid.o buffer.o format.o filestuff.o dll.o notif.o \
       tdesc.o print-utils.o rsp-low.o errors.o common-debug.o cleanups.o \
-      common-exceptions.o symbol.o \
+      common-exceptions.o symbol.o btrace-common.o fileio.o \
       $(XML_BUILTIN) $(DEPFILES) $(LIBOBJS)
 GDBREPLAY_OBS = gdbreplay.o version.o
 GDBSERVER_LIBS = @GDBSERVER_LIBS@
@@ -292,7 +300,7 @@ clean-info: force
 
 gdbserver$(EXEEXT): $(OBS) ${ADD_DEPS} ${CDEPS} $(LIBGNU) $(LIBIBERTY)
 	rm -f gdbserver$(EXEEXT)
-	${CC-LD} $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbserver$(EXEEXT) $(OBS) \
+	$(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbserver$(EXEEXT) $(OBS) \
 	$(LIBGNU) $(LIBIBERTY) $(GDBSERVER_LIBS) $(XM_CLIBS)
 
 $(LIBGNU) $(LIBIBERTY) $(GNULIB_H): all-lib
@@ -302,7 +310,7 @@ all-lib: $(GNULIB_BUILDDIR)/Makefile $(LIBIBERTY_BUILDDIR)/Makefile
 
 gdbreplay$(EXEEXT): $(GDBREPLAY_OBS) $(LIBGNU) $(LIBIBERTY)
 	rm -f gdbreplay$(EXEEXT)
-	${CC-LD} $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) \
+	$(CC_LD) $(INTERNAL_CFLAGS) $(INTERNAL_LDFLAGS) -o gdbreplay$(EXEEXT) $(GDBREPLAY_OBS) \
 	  $(XM_CLIBS) $(LIBGNU) $(LIBIBERTY)
 
 IPA_OBJS=ax-ipa.o tracepoint-ipa.o format-ipa.o utils-ipa.o \
@@ -314,7 +322,7 @@ IPA_LIB=libinproctrace.so
 
 $(IPA_LIB): $(IPA_OBJS) ${ADD_DEPS} ${CDEPS}
 	rm -f $(IPA_LIB)
-	${CC-LD} -shared -fPIC -Wl,--no-undefined $(INTERNAL_CFLAGS) \
+	$(CC_LD) -shared -fPIC -Wl,--no-undefined $(INTERNAL_CFLAGS) \
 	$(INTERNAL_LDFLAGS) -o $(IPA_LIB) ${IPA_OBJS} -ldl -pthread
 
 # Put the proper machine-specific files first, so M-. on a machine
@@ -356,7 +364,9 @@ clean:
 	rm -f s390-linux32.c s390-linux64.c s390x-linux64.c
 	rm -f s390-linux32v1.c s390-linux32v2.c s390-linux64v1.c
 	rm -f s390-linux64v2.c s390x-linux64v1.c s390x-linux64v2.c
-	rm -f s390-te-linux32.c s390-te-linux64.c
+	rm -f s390-te-linux64.c s390x-te-linux64.c
+	rm -f s390-vx-linux64.c s390x-vx-linux64.c
+	rm -f s390-tevx-linux64.c s390x-tevx-linux64.c
 	rm -f tic6x-c64xp-linux.c tic6x-c64x-linux.c tic6x-c62x-linux.c
 	rm -f xml-builtin.c stamp-xml
 	rm -f i386-avx.c i386-avx-linux.c
@@ -518,6 +528,12 @@ rsp-low.o: ../common/rsp-low.c
 common-utils.o: ../common/common-utils.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+posix-strerror.o: ../common/posix-strerror.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+mingw-strerror.o: ../common/mingw-strerror.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 vec.o: ../common/vec.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
@@ -557,6 +573,9 @@ common-exceptions.o: ../common/common-exceptions.c
 waitstatus.o: ../target/waitstatus.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
+fileio.o: ../common/fileio.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
 
 # Native object files rules from ../nat
 
@@ -579,6 +598,24 @@ linux-waitpid.o: ../nat/linux-waitpid.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 mips-linux-watch.o: ../nat/mips-linux-watch.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+ppc-linux.o: ../nat/ppc-linux.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-personality.o: ../nat/linux-personality.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+btrace-common.o: ../common/btrace-common.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+x86-linux.o: ../nat/x86-linux.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+x86-linux-dregs.o: ../nat/x86-linux-dregs.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)
+linux-namespaces.o: ../nat/linux-namespaces.c
 	$(COMPILE) $<
 	$(POSTCOMPILE)
 
@@ -684,6 +721,10 @@ s390-linux64v2.c : $(srcdir)/../regformats/s390-linux64v2.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-linux64v2.dat s390-linux64v2.c
 s390-te-linux64.c : $(srcdir)/../regformats/s390-te-linux64.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-te-linux64.dat s390-te-linux64.c
+s390-vx-linux64.c : $(srcdir)/../regformats/s390-vx-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-vx-linux64.dat s390-vx-linux64.c
+s390-tevx-linux64.c : $(srcdir)/../regformats/s390-tevx-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390-tevx-linux64.dat s390-tevx-linux64.c
 s390x-linux64.c : $(srcdir)/../regformats/s390x-linux64.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-linux64.dat s390x-linux64.c
 s390x-linux64v1.c : $(srcdir)/../regformats/s390x-linux64v1.dat $(regdat_sh)
@@ -692,6 +733,10 @@ s390x-linux64v2.c : $(srcdir)/../regformats/s390x-linux64v2.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-linux64v2.dat s390x-linux64v2.c
 s390x-te-linux64.c : $(srcdir)/../regformats/s390x-te-linux64.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-te-linux64.dat s390x-te-linux64.c
+s390x-vx-linux64.c : $(srcdir)/../regformats/s390x-vx-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-vx-linux64.dat s390x-vx-linux64.c
+s390x-tevx-linux64.c : $(srcdir)/../regformats/s390x-tevx-linux64.dat $(regdat_sh)
+	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/s390x-tevx-linux64.dat s390x-tevx-linux64.c
 
 tic6x-c64xp-linux.c : $(srcdir)/../regformats/tic6x-c64xp-linux.dat $(regdat_sh)
 	$(SHELL) $(regdat_sh) $(srcdir)/../regformats/tic6x-c64xp-linux.dat tic6x-c64xp-linux.c

@@ -117,6 +117,9 @@
 #ifndef elf_backend_caches_rawsize
 #define elf_backend_caches_rawsize 0
 #endif
+#ifndef elf_backend_extern_protected_data
+#define elf_backend_extern_protected_data 0
+#endif
 #ifndef elf_backend_stack_align
 #define elf_backend_stack_align 16
 #endif
@@ -669,6 +672,18 @@
 #define elf_backend_maybe_function_sym _bfd_elf_maybe_function_sym
 #endif
 
+#ifndef elf_backend_get_reloc_section
+#define elf_backend_get_reloc_section _bfd_elf_get_reloc_section
+#endif
+
+#ifndef elf_backend_compact_eh_encoding
+#define elf_backend_compact_eh_encoding NULL
+#endif
+
+#ifndef elf_backend_cant_unwind_opcode
+#define elf_backend_cant_unwind_opcode 0
+#endif
+
 #ifndef elf_match_priority
 #define elf_match_priority \
   (ELF_ARCH == bfd_arch_unknown ? 2 : ELF_OSABI == ELFOSABI_NONE ? 1 : 0)
@@ -766,6 +781,7 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_hash_symbol,
   elf_backend_is_function_type,
   elf_backend_maybe_function_sym,
+  elf_backend_get_reloc_section,
   elf_backend_link_order_error_handler,
   elf_backend_relplt_name,
   ELF_MACHINE_ALT1,
@@ -780,6 +796,8 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_obj_attrs_section_type,
   elf_backend_obj_attrs_order,
   elf_backend_obj_attrs_handle_unknown,
+  elf_backend_compact_eh_encoding,
+  elf_backend_cant_unwind_opcode,
   elf_backend_static_tls_alignment,
   elf_backend_stack_align,
   elf_backend_collect,
@@ -801,7 +819,8 @@ static struct elf_backend_data elfNN_bed =
   elf_backend_want_dynbss,
   elf_backend_want_p_paddr_set_to_zero,
   elf_backend_default_execstack,
-  elf_backend_caches_rawsize
+  elf_backend_caches_rawsize,
+  elf_backend_extern_protected_data
 };
 
 /* Forward declaration for use when initialising alternative_target field.  */
@@ -826,7 +845,8 @@ const bfd_target TARGET_BIG_SYM =
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
-   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
+   | BFD_COMPRESS_GABI),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY
@@ -924,7 +944,8 @@ const bfd_target TARGET_LITTLE_SYM =
 
   /* object_flags: mask of all file flags */
   (HAS_RELOC | EXEC_P | HAS_LINENO | HAS_DEBUG | HAS_SYMS | HAS_LOCALS
-   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+   | DYNAMIC | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS
+   | BFD_COMPRESS_GABI),
 
   /* section_flags: mask of all section flags */
   (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC | SEC_READONLY

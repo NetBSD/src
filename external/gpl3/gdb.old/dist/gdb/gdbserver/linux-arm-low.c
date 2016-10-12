@@ -590,12 +590,12 @@ arm_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
   if (watch)
     {
       count = arm_linux_get_hw_watchpoint_count ();
-      pts = proc->private->arch_private->wpts;
+      pts = proc->priv->arch_private->wpts;
     }
   else
     {
       count = arm_linux_get_hw_breakpoint_count ();
-      pts = proc->private->arch_private->bpts;
+      pts = proc->priv->arch_private->bpts;
     }
 
   for (i = 0; i < count; i++)
@@ -630,12 +630,12 @@ arm_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
   if (watch)
     {
       count = arm_linux_get_hw_watchpoint_count ();
-      pts = proc->private->arch_private->wpts;
+      pts = proc->priv->arch_private->wpts;
     }
   else
     {
       count = arm_linux_get_hw_breakpoint_count ();
-      pts = proc->private->arch_private->bpts;
+      pts = proc->priv->arch_private->bpts;
     }
 
   for (i = 0; i < count; i++)
@@ -703,8 +703,8 @@ arm_new_process (void)
 }
 
 /* Called when a new thread is detected.  */
-static struct arch_lwp_info *
-arm_new_thread (void)
+static void
+arm_new_thread (struct lwp_info *lwp)
 {
   struct arch_lwp_info *info = xcalloc (1, sizeof (*info));
   int i;
@@ -714,7 +714,48 @@ arm_new_thread (void)
   for (i = 0; i < MAX_WPTS; i++)
     info->wpts_changed[i] = 1;
 
-  return info;
+  lwp->arch_private = info;
+}
+
+static void
+arm_new_fork (struct process_info *parent, struct process_info *child)
+{
+  struct arch_process_info *parent_proc_info = parent->priv->arch_private;
+  struct arch_process_info *child_proc_info = child->priv->arch_private;
+  struct lwp_info *child_lwp;
+  struct arch_lwp_info *child_lwp_info;
+  int i;
+
+  /* These are allocated by linux_add_process.  */
+  gdb_assert (parent->priv != NULL
+	      && parent->priv->arch_private != NULL);
+  gdb_assert (child->priv != NULL
+	      && child->priv->arch_private != NULL);
+
+  /* Linux kernel before 2.6.33 commit
+     72f674d203cd230426437cdcf7dd6f681dad8b0d
+     will inherit hardware debug registers from parent
+     on fork/vfork/clone.  Newer Linux kernels create such tasks with
+     zeroed debug registers.
+
+     GDB core assumes the child inherits the watchpoints/hw
+     breakpoints of the parent, and will remove them all from the
+     forked off process.  Copy the debug registers mirrors into the
+     new process so that all breakpoints and watchpoints can be
+     removed together.  The debug registers mirror will become zeroed
+     in the end before detaching the forked off process, thus making
+     this compatible with older Linux kernels too.  */
+
+  *child_proc_info = *parent_proc_info;
+
+  /* Mark all the hardware breakpoints and watchpoints as changed to
+     make sure that the registers will be updated.  */
+  child_lwp = find_lwp_pid (ptid_of (child));
+  child_lwp_info = child_lwp->arch_private;
+  for (i = 0; i < MAX_BPTS; i++)
+    child_lwp_info->bpts_changed[i] = 1;
+  for (i = 0; i < MAX_WPTS; i++)
+    child_lwp_info->wpts_changed[i] = 1;
 }
 
 /* Called when resuming a thread.
@@ -725,7 +766,7 @@ arm_prepare_to_resume (struct lwp_info *lwp)
   struct thread_info *thread = get_lwp_thread (lwp);
   int pid = lwpid_of (thread);
   struct process_info *proc = find_process_pid (pid_of (thread));
-  struct arch_process_info *proc_info = proc->private->arch_private;
+  struct arch_process_info *proc_info = proc->priv->arch_private;
   struct arch_lwp_info *lwp_info = lwp->arch_private;
   int i;
 
@@ -920,6 +961,7 @@ struct linux_target_ops the_low_target = {
   NULL, /* siginfo_fixup */
   arm_new_process,
   arm_new_thread,
+  arm_new_fork,
   arm_prepare_to_resume,
 };
 

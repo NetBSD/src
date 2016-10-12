@@ -20,18 +20,13 @@
 M68HC11_OBJS = interp.o m68hc11int.o m68hc12int.o \
 		emulos.o interrupts.o m68hc11_sim.o
 
-# List of main object files for `run'.
-SIM_RUN_OBJS = nrun.o
-
 SIM_OBJS = $(M68HC11_OBJS) \
 	$(SIM_NEW_COMMON_OBJS) \
 	sim-load.o \
 	sim-hload.o \
-	sim-engine.o \
 	sim-stop.o \
-	sim-hrw.o \
 	sim-reason.o \
-        $(SIM_EXTRA_OBJS)
+	sim-resume.o
 
 SIM_PROFILE= -DPROFILE=1 -DWITH_PROFILE=-1
 # We must use 32-bit addresses to support memory bank switching.
@@ -44,8 +39,6 @@ SIM_EXTRA_CFLAGS = -DWITH_TARGET_WORD_BITSIZE=32 \
 		   -DWITH_TARGET_ADDRESS_BITSIZE=32 \
 		   -DWITH_TARGET_WORD_MSB=31
 SIM_EXTRA_CLEAN = clean-extra
-
-SIM_EXTRA_OBJS = @m68hc11_extra_objs@
 
 INCLUDE = $(srcdir)/../../include/gdb/callback.h \
 	  interrupts.h sim-main.h

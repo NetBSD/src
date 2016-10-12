@@ -44,6 +44,8 @@ case $host in
  vax-*-bsd* | \
  vax-*-netbsd* | \
  vax-*-ultrix* | \
+ hppa*-*-hpux* | \
+ ia64-*-hpux* | \
  null)
     echo "*** Configuration $host is obsolete." >&2
     echo "*** Support has been REMOVED." >&2
@@ -93,8 +95,6 @@ arm*-*-netbsdelf* | arm*-*-knetbsd*-gnu)
 			gdb_host=nbsdelf ;;
 arm*-*-openbsd*)	gdb_host=nbsdelf ;;
 
-hppa*-*-hpux*)
-			gdb_host=hpux ;;
 hppa*-*-linux*)		gdb_host=linux ;;
 hppa*-*-netbsd*)	gdb_host=nbsd ;;
 hppa*-*-openbsd*)	gdb_host=obsd ;;
@@ -117,7 +117,6 @@ i[34567]86-*-solaris2.1[0-9]* | x86_64-*-solaris2.1[0-9]*)
 i[34567]86-*-solaris*)	gdb_host=i386sol2 ;;
 i[34567]86-*-cygwin*)	gdb_host=cygwin ;;
 
-ia64-*-hpux*)		gdb_host=hpux ;;
 ia64-*-linux*)		gdb_host=linux ;;
 
 m68*-*-linux*)		gdb_host=linux ;;
@@ -212,11 +211,6 @@ m68*-*-*)
 	gdb_host_float_format="&floatformat_ieee_single_big"
 	gdb_host_double_format="&floatformat_ieee_double_big"
 	gdb_host_long_double_format="&floatformat_m68881_ext"
-	;;
-ia64-*-hpux*)
-	gdb_host_float_format="&floatformat_ieee_single_big"
-	gdb_host_double_format="&floatformat_ieee_double_big"
-	gdb_host_long_double_format="&floatformat_ia64_quad_big"
 	;;
 *)
 	gdb_host_float_format=0

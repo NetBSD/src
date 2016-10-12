@@ -49,6 +49,8 @@ proc disp_step_cross_syscall { syscall } {
 	    return
 	}
 
+	set is_target_remote [gdb_is_target_remote]
+
 	# Delete the breakpoint on main.
 	gdb_test_no_output "delete break 1"
 
@@ -77,27 +79,34 @@ proc disp_step_cross_syscall { syscall } {
 	gdb_test "display/i \$pc" ".*"
 
 
-	# Single step until we see sysall insn or we reach the upper bound of loop
-	# iterations.
-	set see_syscall_insn 0
-
-	for {set i 0} {$i < 1000 && $see_syscall_insn == 0} {incr i} {
-	    send_gdb "stepi\n"
-	    gdb_expect {
-		-re ".*$syscall_insn.*$gdb_prompt $" {
-		    set see_syscall_insn 1
+	# Single step until we see a syscall insn or we reach the
+	# upper bound of loop iterations.
+	set msg "find syscall insn in $syscall"
+	set steps 0
+	set max_steps 1000
+	gdb_test_multiple "stepi" $msg {
+	    -re ".*$syscall_insn.*$gdb_prompt $" {
+		pass $msg
+	    }
+	    -re "x/i .*=>.*\r\n$gdb_prompt $" {
+		incr steps
+		if {$steps == $max_steps} {
+		    fail $msg
+		} else {
+		    send_gdb "stepi\n"
+		    exp_continue
 		}
-		-re ".*$gdb_prompt $" {}
 	    }
 	}
 
-	if {$see_syscall_insn == 0} then {
-	    fail "find syscall insn in $syscall"
+	if {$steps == $max_steps} {
 	    return -1
 	}
 
 	set syscall_insn_addr [get_hexadecimal_valueof "\$pc" "0"]
-	gdb_test "stepi" ".*" "stepi $syscall insn"
+	if {[gdb_test "stepi" "x/i .*=>.*" "stepi $syscall insn"] != 0} {
+	    return -1
+	}
 	set syscall_insn_next_addr [get_hexadecimal_valueof "\$pc" "0"]
 
 	gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
@@ -121,22 +130,12 @@ proc disp_step_cross_syscall { syscall } {
 	gdb_test_no_output "set displaced-stepping on"
 
 	# Check the address of next instruction of syscall.
-	if {$syscall == "vfork" && [is_remote target]} {
+	if {$syscall == "vfork" && $is_target_remote} {
 	    setup_kfail server/13796 "*-*-*"
 	}
-	set test "single step over $syscall"
-	gdb_test_multiple "stepi" $test {
-	    -re "Program terminated with signal SIGILL,.*\r\n$gdb_prompt $" {
-		fail $test
-		return
-	    }
-	    -re "\\\[Inferior .* exited normally\\\].*\r\n$gdb_prompt $" {
-		fail $test
-		return
-	    }
-	    -re "\r\n$gdb_prompt $" {
-		pass $test
-	    }
+
+	if {[gdb_test "stepi" "x/i .*=>.*" "single step over $syscall"] != 0} {
+	    return -1
 	}
 
 	set syscall_insn_next_addr_found [get_hexadecimal_valueof "\$pc" "0"]

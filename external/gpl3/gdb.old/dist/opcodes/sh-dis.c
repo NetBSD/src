@@ -905,6 +905,8 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 	    size = 2;
 	  else
 	    size = 4;
+	  /* Not reading an instruction - disable stop_vma.  */
+	  info->stop_vma = 0;
 	  status = info->read_memory_func (disp_pc_addr, bytes, size, info);
 	  if (status == 0)
 	    {

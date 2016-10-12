@@ -859,9 +859,12 @@ _bfd_vms_slurp_ehdr (bfd *abfd)
 {
   unsigned char *ptr;
   unsigned char *vms_rec;
+  unsigned char *end;
   int subtype;
 
   vms_rec = PRIV (recrd.rec);
+  /* PR 17512: file: 62736583.  */
+  end = PRIV (recrd.buf) + PRIV (recrd.buf_size);
 
   vms_debug2 ((2, "HDR/EMH\n"));
 
@@ -873,28 +876,42 @@ _bfd_vms_slurp_ehdr (bfd *abfd)
     {
     case EMH__C_MHD:
       /* Module header.  */
+      if (vms_rec + 21 >= end)
+	goto fail;
       PRIV (hdr_data).hdr_b_strlvl = vms_rec[6];
       PRIV (hdr_data).hdr_l_arch1  = bfd_getl32 (vms_rec + 8);
       PRIV (hdr_data).hdr_l_arch2  = bfd_getl32 (vms_rec + 12);
       PRIV (hdr_data).hdr_l_recsiz = bfd_getl32 (vms_rec + 16);
+      if ((vms_rec + 20 + vms_rec[20] + 1) >= end)
+	goto fail;
       PRIV (hdr_data).hdr_t_name   = _bfd_vms_save_counted_string (vms_rec + 20);
       ptr = vms_rec + 20 + vms_rec[20] + 1;
+      if ((ptr + *ptr + 1) >= end)
+	goto fail;
       PRIV (hdr_data).hdr_t_version =_bfd_vms_save_counted_string (ptr);
       ptr += *ptr + 1;
+      if (ptr + 17 >= end)
+	goto fail;
       PRIV (hdr_data).hdr_t_date = _bfd_vms_save_sized_string (ptr, 17);
       break;
 
     case EMH__C_LNM:
+      if (vms_rec + PRIV (recrd.rec_size - 6) > end)
+	goto fail;
       PRIV (hdr_data).hdr_c_lnm =
         _bfd_vms_save_sized_string (vms_rec, PRIV (recrd.rec_size - 6));
       break;
 
     case EMH__C_SRC:
+      if (vms_rec + PRIV (recrd.rec_size - 6) > end)
+	goto fail;
       PRIV (hdr_data).hdr_c_src =
         _bfd_vms_save_sized_string (vms_rec, PRIV (recrd.rec_size - 6));
       break;
 
     case EMH__C_TTL:
+      if (vms_rec + PRIV (recrd.rec_size - 6) > end)
+	goto fail;
       PRIV (hdr_data).hdr_c_ttl =
         _bfd_vms_save_sized_string (vms_rec, PRIV (recrd.rec_size - 6));
       break;
@@ -905,6 +922,7 @@ _bfd_vms_slurp_ehdr (bfd *abfd)
       break;
 
     default:
+    fail:
       bfd_set_error (bfd_error_wrong_format);
       return FALSE;
     }

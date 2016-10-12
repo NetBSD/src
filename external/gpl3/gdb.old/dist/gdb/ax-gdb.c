@@ -885,7 +885,7 @@ gen_conversion (struct agent_expr *ax, struct type *from, struct type *to)
   /* If we're converting to a narrower type, then we need to clear out
      the upper bits.  */
   if (TYPE_LENGTH (to) < TYPE_LENGTH (from))
-    gen_extend (ax, from);
+    gen_extend (ax, to);
 
   /* If the two values have equal width, but different signednesses,
      then we need to extend.  */

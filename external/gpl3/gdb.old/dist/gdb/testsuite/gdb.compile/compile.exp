@@ -71,13 +71,13 @@ gdb_test_no_output "compile -- f = 10" \
 gdb_test "compile f = 10;" ".*= 10;: No such file.*" \
     "Test abbreviations and code collision"
 
-gdb_test_no_output "compile -r -- _gdb_expr(){int i = 5;}" \
+gdb_test_no_output "compile -r -- void _gdb_expr(){int i = 5;}" \
     "Test delimiter with -r"
 
-gdb_test_no_output "compile -raw -- _gdb_expr(){int i = 5;}" \
+gdb_test_no_output "compile -raw -- void _gdb_expr(){int i = 5;}" \
     "Test delimiter with -raw"
 
-gdb_test "compile -- -r  _gdb_expr(){int i = 5;}" \
+gdb_test "compile -- -r  void _gdb_expr(){int i = 5;}" \
     ".* error: 'r' undeclared \\(first use in this function\\).*" \
     "Test delimiter with -r after it"
 
@@ -131,8 +131,8 @@ gdb_test_no_output "compile code globalvar = static_local"
 gdb_test "p globalvar" " = 77000" "check static_local"
 
 gdb_test_no_output "compile code static int staticvar = 5; intptr = &staticvar" \
-    "keep jit in memory"
-gdb_test "p *intptr" " = 5" "expect 5"
+    "do not keep jit in memory"
+gdb_test "p *intptr" "Cannot access memory at address 0x\[0-9a-f\]+" "expect no 5"
 
 gdb_test "compile code func_doesnotexist ();" "warning: Could not find symbol \"func_doesnotexist\" for .*"
 
@@ -189,43 +189,61 @@ gdb_test "p localvar" " = 1"
 # Test setting fields and also many different types.
 #
 
-gdb_test_no_output "compile code struct_object.selffield = &struct_object"
-gdb_test "print struct_object.selffield == &struct_object" " = 1"
+set skip_struct_object 0
+set test "compile code struct_object.selffield = &struct_object"
+gdb_test_multiple $test $test {
+    -re "^$test\r\n$gdb_prompt $" {
+	pass "$test"
+    }
+    -re " error: Unexpected type id from GCC, check you use recent enough GCC\\.\r\n.*\r\n$gdb_prompt $" {
+	xfail "$test (PR compile/18202)"
 
-gdb_test_no_output "compile code struct_object.charfield = 1"
-gdb_test "print struct_object.charfield" " = 1 '\\\\001'"
-gdb_test_no_output "compile code struct_object.ucharfield = 1"
-gdb_test "print struct_object.ucharfield" " = 1 '\\\\001'"
-
-foreach {field value} {
-    shortfield -5
-    ushortfield 5
-    intfield -7
-    uintfield 7
-    bitfield 2
-    longfield -9
-    ulongfield 9
-    enumfield ONE
-    floatfield 1
-    doublefield 2
-} {
-    gdb_test_no_output "compile code struct_object.$field = $value"
-    gdb_test "print struct_object.$field" " = $value"
+	# All following tests will break with the same error message.
+	set skip_struct_object 1
+    }
 }
 
-gdb_test_no_output "compile code struct_object.arrayfield\[2\] = 7"
-gdb_test "print struct_object.arrayfield" \
-    " = \\{0, 0, 7, 0, 0\\}"
+if {$skip_struct_object} {
+    untested "all struct_object tests"
+} else {
+    gdb_test "print struct_object.selffield == &struct_object" " = 1"
 
-gdb_test_no_output "compile code struct_object.complexfield = 7 + 5i"
-gdb_test "print struct_object.complexfield" " = 7 \\+ 5 \\* I"
+    gdb_test_no_output "compile code struct_object.charfield = 1"
+    gdb_test "print struct_object.charfield" " = 1 '\\\\001'"
+    gdb_test_no_output "compile code struct_object.ucharfield = 1"
+    gdb_test "print struct_object.ucharfield" " = 1 '\\\\001'"
 
-gdb_test_no_output "compile code struct_object.boolfield = 1"
-gdb_test "print struct_object.boolfield" " = true"
+    foreach {field value} {
+	shortfield -5
+	ushortfield 5
+	intfield -7
+	uintfield 7
+	bitfield 2
+	longfield -9
+	ulongfield 9
+	enumfield ONE
+	floatfield 1
+	doublefield 2
+    } {
+	gdb_test_no_output "compile code struct_object.$field = $value"
+	gdb_test "print struct_object.$field" " = $value"
+    }
 
-gdb_test_no_output "compile code struct_object.vectorfield\[2\] = 7"
-gdb_test "print struct_object.vectorfield" \
-    " = \\{0, 0, 7, 0\\}"
+    gdb_test_no_output "compile code struct_object.arrayfield\[2\] = 7"
+    gdb_test "print struct_object.arrayfield" \
+	" = \\{0, 0, 7, 0, 0\\}"
+
+    gdb_test_no_output "compile code struct_object.complexfield = 7 + 5i"
+    gdb_test "print struct_object.complexfield" " = 7 \\+ 5 \\* I"
+
+    gdb_test_no_output "compile code struct_object.boolfield = 1"
+    gdb_test "print struct_object.boolfield" " = true"
+
+    gdb_test_no_output "compile code struct_object.vectorfield\[2\] = 7"
+    gdb_test "print struct_object.vectorfield" \
+	" = \\{0, 0, 7, 0\\}"
+
+}
 
 gdb_test_no_output "compile code union_object.typedeffield = 7"
 gdb_test "print union_object.typedeffield" " = 7"
@@ -261,7 +279,7 @@ gdb_test "print 'compile.c'::globalshadow" " = 77000" \
 
 # Test GOT vs. resolving jit function pointers.
 
-gdb_test_no_output "compile -raw -- int func(){return 21;} _gdb_expr(){int (*funcp)()=func; if (funcp()!=21) abort();}" \
+gdb_test_no_output "compile -raw -- int func(){return 21;} void _gdb_expr(){ void abort (void); int (*funcp)()=func; if (funcp()!=21) abort(); }" \
     "pointer to jit function"
 
 #

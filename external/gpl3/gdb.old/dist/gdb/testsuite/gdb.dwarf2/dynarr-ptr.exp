@@ -74,7 +74,7 @@ Dwarf::assemble $asm_file {
 		}
 	    }
             array_ptr_label: DW_TAG_pointer_type {
-                {DW_AT_byte_size :$ptr_size }
+                {DW_AT_byte_size $ptr_size DW_FORM_data1}
                 {DW_AT_type :$array_label}
             }
             array_typedef_label: DW_TAG_typedef {

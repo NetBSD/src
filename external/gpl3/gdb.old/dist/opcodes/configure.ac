@@ -266,12 +266,13 @@ if test x${all_targets} = xfalse ; then
 	bfd_dlx_arch)		ta="$ta dlx-dis.lo" ;;
 	bfd_fr30_arch)		ta="$ta fr30-asm.lo fr30-desc.lo fr30-dis.lo fr30-ibld.lo fr30-opc.lo" using_cgen=yes ;;
 	bfd_frv_arch)		ta="$ta frv-asm.lo frv-desc.lo frv-dis.lo frv-ibld.lo frv-opc.lo" using_cgen=yes ;;
+	bfd_ft32_arch)		ta="$ta ft32-opc.lo ft32-dis.lo" ;;
 	bfd_moxie_arch)		ta="$ta moxie-dis.lo moxie-opc.lo" ;;
 	bfd_h8300_arch)		ta="$ta h8300-dis.lo" ;;
 	bfd_h8500_arch)		ta="$ta h8500-dis.lo" ;;
 	bfd_hppa_arch)		ta="$ta hppa-dis.lo" ;;
 	bfd_i370_arch)		ta="$ta i370-dis.lo i370-opc.lo" ;;
-	bfd_i386_arch|bfd_l1om_arch|bfd_k1om_arch)
+	bfd_i386_arch|bfd_iamcu_arch|bfd_l1om_arch|bfd_k1om_arch)
 				ta="$ta i386-dis.lo i386-opc.lo" ;;
 	bfd_i860_arch)		ta="$ta i860-dis.lo" ;;
 	bfd_i960_arch)		ta="$ta i960-dis.lo" ;;

@@ -42,3 +42,8 @@ gdb_test_no_output "set listsize 1"
 gdb_test "list func_cu1" "4\[ \t\]+File 1 Line 4"
 
 gdb_test "ptype func_cu1" "type = int2 \\(\\)"
+
+gdb_test "p one" "= 1"
+gdb_test "p two" "= 2"
+gdb_test "ptype one" "type = const int1"
+gdb_test "ptype two" "type = const int2"

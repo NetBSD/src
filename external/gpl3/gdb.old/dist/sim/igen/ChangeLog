@@ -1,3 +1,22 @@
+2015-06-12  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
+2015-04-24  David Binderman  <dcb314@hotmail.com>
+	    Nick Clifton  <nickc@redhat.com>
+
+	PR 18273
+	* misc.c (a2i): Fix typos checking for uppercase letters.
+
+2015-04-17  Mike Frysinger  <vapier@gentoo.org>
+
+	* gen-engine.c (print_run_body): Change CIA_GET to CPU_PC_GET and
+	CIA_SET to CPU_PC_SET.
+
+2015-03-31  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
 2014-11-23  Joel Sherrill  <joel.sherrill@oarcorp.com>
 
 	* igen/ld-cache.h, igen/table.h: Change immediatly to immediately.

@@ -158,12 +158,8 @@ END_RELOC_NUMBERS (R_V850_max)
 
 #define EF_RH850_FPU_DOUBLE	0x00000001	/* sizeof(double) == 8.  */
 #define EF_RH850_FPU_SINGLE	0x00000002	/* sizeof(double) == 4.  */
-#define EF_RH850_SIMD		0x00000004
-#define EF_RH850_CACHE		0x00000008
-#define EF_RH850_MMU		0x00000010
 #define EF_RH850_REGMODE22	0x00000020	/* Registers r15-r24 (inclusive) are not used.  */
 #define EF_RH850_REGMODE32	0x00000040
-#define EF_RH850_DATA_ALIGN8	0x00000080	/* 8-byte alignment supported.  */
 #define EF_RH850_GP_FIX		0x00000100	/* r4 is fixed.  */
 #define EF_RH850_GP_NOFIX	0x00000200	/* r4 is callee save.  */
 #define EF_RH850_EP_FIX		0x00000400	/* r30 is fixed.  */
@@ -173,7 +169,7 @@ END_RELOC_NUMBERS (R_V850_max)
 #define EF_RH850_REG2_RESERVE	0x00004000	/* r2 is fixed.  */
 #define EF_RH850_REG2_NORESERVE 0x00008000	/* r2 is callee saved.  */
 
-#define SHT_RNESAS_IOP		SHT_LOUSER	/* Used by Renesas linker.  */
+#define SHT_RENESAS_IOP		SHT_LOUSER	/* Used by Renesas linker.  */
 
 #define SHF_RENESAS_ABS		0x80000000	/* Absolute section.  */
 #define SHF_GHS_ABS		0x00000400	/* Use unknown.  */
@@ -279,5 +275,55 @@ START_RELOC_NUMBERS (v800_reloc_type)
      RELOC_NUMBER (R_V850_OPscttop,  0xe4)
 
 END_RELOC_NUMBERS (R_V800_max)
+
+/* Type for Renesas note sections.  NB/ This is in application space
+   rather than processor space as it refers to the requirements of the
+   binary concerned.  A given processor may be able to handle multiple
+   different types of application.  */
+#define SHT_RENESAS_INFO	0xa0000000
+
+/* Contents of a Renesas note entry:
+
+     namesz +------------------+
+            |    4             |  "REL\0"
+     descsz +------------------+
+            |    4             |  Currently 4byte only
+     type   +------------------+
+            |    ID            |
+     name   +------------------+
+            |    REL\0         |
+     desc   +------------------+
+            |    Value         |
+            +------------------+  */
+
+#define V850_NOTE_SECNAME	".note.renesas"
+#define SIZEOF_V850_NOTE	20
+#define V850_NOTE_NAME		"REL"
+
+enum v850_notes
+{
+  V850_NOTE_ALIGNMENT =	1,	/* Alignment of 8-byte entities.  */
+#define EF_RH850_DATA_ALIGN4	0x0001	/* Aligned to 4-byte bounadries.  */
+#define EF_RH850_DATA_ALIGN8	0x0002	/* Aligned to 8-byte bounadries.  */
+
+  V850_NOTE_DATA_SIZE =	2,	/* Sizeof double and long double.  */
+#define EF_RH850_DOUBLE32	0x0001	/* 32-bits in size.  */
+#define EF_RH850_DOUBLE64	0x0002	/* 64-bits in size.  */
+
+  V850_NOTE_FPU_INFO = 3,	/* Defined if extended floating point insns are used.  */
+#define EF_RH850_FPU20		0x0001	/* Set if [N]]M{ADD|SUB}F.S are used.  */
+#define EF_RH850_FPU30		0x0002	/* Set if ADSF.D or ADDF.D is used.  */
+
+  V850_NOTE_SIMD_INFO = 4,
+#define EF_RH850_SIMD		0x0001
+
+  V850_NOTE_CACHE_INFO = 5,
+#define EF_RH850_CACHE		0x0001
+
+  V850_NOTE_MMU_INFO = 6
+#define EF_RH850_MMU		0x0001
+};
+
+#define NUM_V850_NOTES	V850_NOTE_MMU_INFO
 
 #endif /* _ELF_V850_H */

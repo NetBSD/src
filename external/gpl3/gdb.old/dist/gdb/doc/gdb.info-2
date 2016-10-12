@@ -21,7 +21,7 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+Source-Level Debugger' for GDB (GDB) Version 7.10.1.
 
    Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
@@ -35,6 +35,54 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Expressions,  Next: Ambiguous Expressions,  Up: Data
+
+10.1 Expressions
+================
+
+'print' and many other GDB commands accept an expression and compute its
+value.  Any kind of constant, variable or operator defined by the
+programming language you are using is valid in an expression in GDB.
+This includes conditional expressions, function calls, casts, and string
+constants.  It also includes preprocessor macros, if you compiled your
+program to include this information; see *note Compilation::.
+
+   GDB supports array constants in expressions input by the user.  The
+syntax is {ELEMENT, ELEMENT...}.  For example, you can use the command
+'print {1, 2, 3}' to create an array of three integers.  If you pass an
+array to a function or assign it to a program variable, GDB copies the
+array to memory that is 'malloc'ed in the target program.
+
+   Because C is so widespread, most of the expressions shown in examples
+in this manual are in C. *Note Using GDB with Different Languages:
+Languages, for information on how to use expressions in other languages.
+
+   In this section, we discuss operators that you can use in GDB
+expressions regardless of your programming language.
+
+   Casts are supported in all languages, not just in C, because it is so
+useful to cast a number into a pointer in order to examine a structure
+at that address in memory.
+
+   GDB supports these operators, in addition to those common to
+programming languages:
+
+'@'
+     '@' is a binary operator for treating parts of memory as arrays.
+     *Note Artificial Arrays: Arrays, for more information.
+
+'::'
+     '::' allows you to specify a variable in terms of the file or
+     function where it is defined.  *Note Program Variables: Variables.
+
+'{TYPE} ADDR'
+     Refers to an object of type TYPE stored at address ADDR in memory.
+     The address ADDR may be any expression whose value is an integer or
+     pointer (but parentheses are required around binary operators, just
+     as in a cast).  This construct is allowed regardless of what kind
+     of data is normally supposed to reside at ADDR.
 
 
 File: gdb.info,  Node: Ambiguous Expressions,  Next: Variables,  Prev: Expressions,  Up: Data
@@ -559,6 +607,15 @@ variable '$__'.
 are from the last memory unit printed; this is not the same as the last
 address printed if several units were printed on the last line of
 output.
+
+   Most targets have an addressable memory unit size of 8 bits.  This
+means that to each memory address are associated 8 bits of data.  Some
+targets, however, have other addressable memory unit sizes.  Within GDB
+and this document, the term "addressable memory unit" (or "memory unit"
+for short) is used when explicitly referring to a chunk of data of that
+size.  The word "byte" is used to refer to a chunk of data of 8 bits,
+regardless of the addressable memory unit size of the target.  For most
+systems, addressable memory unit is a synonym of byte.
 
    When you are debugging a program running on a remote target machine
 (*note Remote Debugging::), you may wish to verify the program's image
@@ -1923,6 +1980,38 @@ osdata read::.
 
      On GNU/Linux, the following values of INFOTYPE are valid:
 
+     'cpus'
+          Display the list of all CPUs/cores.  For each CPU/core, GDB
+          prints the available fields from /proc/cpuinfo.  For each
+          supported architecture different fields are available.  Two
+          common entries are processor which gives CPU number and
+          bogomips; a system constant that is calculated during kernel
+          initialization.
+
+     'files'
+          Display the list of open file descriptors on the target.  For
+          each file descriptor, GDB prints the identifier of the process
+          owning the descriptor, the command of the owning process, the
+          value of the descriptor, and the target of the descriptor.
+
+     'modules'
+          Display the list of all loaded kernel modules on the target.
+          For each module, GDB prints the module name, the size of the
+          module in bytes, the number of times the module is used, the
+          dependencies of the module, the status of the module, and the
+          address of the loaded module in memory.
+
+     'msg'
+          Display the list of all System V message queues on the target.
+          For each message queue, GDB prints the message queue key, the
+          message queue identifier, the access permissions, the current
+          number of bytes on the queue, the current number of messages
+          on the queue, the processes that last sent and received a
+          message on the queue, the user and group of the owner and
+          creator of the message queue, the times at which a message was
+          last sent and received on the queue, and the time at which the
+          message queue was last changed.
+
      'processes'
           Display the list of processes on the target.  For each
           process, GDB prints the process identifier, the name of the
@@ -1942,25 +2031,13 @@ osdata read::.
           belonging to the same process group are grouped together and
           the process group leader is listed first.
 
-     'threads'
-          Display the list of threads running on the target.  For each
-          thread, GDB prints the identifier of the process that the
-          thread belongs to, the command of the process, the thread
-          identifier, and the processor core that it is currently
-          running on.  The main thread of a process is not listed.
-
-     'files'
-          Display the list of open file descriptors on the target.  For
-          each file descriptor, GDB prints the identifier of the process
-          owning the descriptor, the command of the owning process, the
-          value of the descriptor, and the target of the descriptor.
-
-     'sockets'
-          Display the list of Internet-domain sockets on the target.
-          For each socket, GDB prints the address and port of the local
-          and remote endpoints, the current state of the connection, the
-          creator of the socket, the IP address family of the socket,
-          and the type of the connection.
+     'semaphores'
+          Display the list of all System V semaphore sets on the target.
+          For each semaphore set, GDB prints the semaphore set key, the
+          semaphore set identifier, the access permissions, the number
+          of semaphores in the set, the user and group of the owner and
+          creator of the semaphore set, and the times at which the
+          semaphore set was operated upon and changed.
 
      'shm'
           Display the list of all System V shared-memory regions on the
@@ -1972,31 +2049,19 @@ osdata read::.
           at which the region was last attached to, detach from, and
           changed.
 
-     'semaphores'
-          Display the list of all System V semaphore sets on the target.
-          For each semaphore set, GDB prints the semaphore set key, the
-          semaphore set identifier, the access permissions, the number
-          of semaphores in the set, the user and group of the owner and
-          creator of the semaphore set, and the times at which the
-          semaphore set was operated upon and changed.
+     'sockets'
+          Display the list of Internet-domain sockets on the target.
+          For each socket, GDB prints the address and port of the local
+          and remote endpoints, the current state of the connection, the
+          creator of the socket, the IP address family of the socket,
+          and the type of the connection.
 
-     'msg'
-          Display the list of all System V message queues on the target.
-          For each message queue, GDB prints the message queue key, the
-          message queue identifier, the access permissions, the current
-          number of bytes on the queue, the current number of messages
-          on the queue, the processes that last sent and received a
-          message on the queue, the user and group of the owner and
-          creator of the message queue, the times at which a message was
-          last sent and received on the queue, and the time at which the
-          message queue was last changed.
-
-     'modules'
-          Display the list of all loaded kernel modules on the target.
-          For each module, GDB prints the module name, the size of the
-          module in bytes, the number of times the module is used, the
-          dependencies of the module, the status of the module, and the
-          address of the loaded module in memory.
+     'threads'
+          Display the list of threads running on the target.  For each
+          thread, GDB prints the identifier of the process that the
+          thread belongs to, the command of the process, the thread
+          identifier, and the processor core that it is currently
+          running on.  The main thread of a process is not listed.
 
 'info os'
      If INFOTYPE is omitted, then list the possible values for INFOTYPE
@@ -2147,8 +2212,8 @@ You can use the commands 'dump', 'append', and 'restore' to copy data
 between target memory and a file.  The 'dump' and 'append' commands
 write data to a file, and the 'restore' command reads data from a file
 back into the inferior's memory.  Files may be in binary, Motorola
-S-record, Intel hex, or Tektronix Hex format; however, GDB can only
-append to binary files.
+S-record, Intel hex, Tektronix Hex, or Verilog Hex format; however, GDB
+can only append to binary files, and cannot read from Verilog Hex files.
 
 'dump [FORMAT] memory FILENAME START_ADDR END_ADDR'
 'dump [FORMAT] value FILENAME EXPR'
@@ -2164,6 +2229,8 @@ append to binary files.
           Motorola S-record format.
      'tekhex'
           Tektronix Hex format.
+     'verilog'
+          Verilog Hex format.
 
      GDB uses the same definitions of these formats as the GNU binary
      utilities, like 'objdump' and 'objcopy'.  If FORMAT is omitted, GDB
@@ -2218,6 +2285,37 @@ special command for that.
 
      Note that this command is implemented only for some systems (as of
      this writing, GNU/Linux, FreeBSD, Solaris, and S390).
+
+     On GNU/Linux, this command can take into account the value of the
+     file '/proc/PID/coredump_filter' when generating the core dump
+     (*note set use-coredump-filter::).
+
+'set use-coredump-filter on'
+'set use-coredump-filter off'
+     Enable or disable the use of the file '/proc/PID/coredump_filter'
+     when generating core dump files.  This file is used by the Linux
+     kernel to decide what types of memory mappings will be dumped or
+     ignored when generating a core dump file.  PID is the process ID of
+     a currently running process.
+
+     To make use of this feature, you have to write in the
+     '/proc/PID/coredump_filter' file a value, in hexadecimal, which is
+     a bit mask representing the memory mapping types.  If a bit is set
+     in the bit mask, then the memory mappings of the corresponding
+     types will be dumped; otherwise, they will be ignored.  This
+     configuration is inherited by child processes.  For more
+     information about the bits that can be set in the
+     '/proc/PID/coredump_filter' file, please refer to the manpage of
+     'core(5)'.
+
+     By default, this option is 'on'.  If this option is turned 'off',
+     GDB does not read the 'coredump_filter' file and instead uses the
+     same default value as the Linux kernel in order to decide which
+     pages will be dumped in the core dump file.  This value is
+     currently '0x33', which means that bits '0' (anonymous private
+     mappings), '1' (anonymous shared mappings), '4' (ELF headers) and
+     '5' (private huge pages) are active.  This will cause these memory
+     mappings to be dumped automatically.
 
 
 File: gdb.info,  Node: Character Sets,  Next: Caching Target Data,  Prev: Core File Generation,  Up: Data
@@ -6987,6 +7085,9 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
         * the directory it was compiled in,
         * its length, in lines,
         * which programming language it is written in,
+        * if the debug information provides it, the program that
+          compiled the file (which may include, e.g., the compiler
+          version and command line arguments),
         * whether the executable includes debugging information for that
           file, and if so, what format the information is in (e.g.,
           STABS, Dwarf 2, etc.), and
@@ -7132,6 +7233,27 @@ looks up the value of 'x' in the scope of the file 'foo.c'.
             }
           }
           (gdb)
+
+'maint set symbol-cache-size SIZE'
+     Set the size of the symbol cache to SIZE.  The default size is
+     intended to be good enough for debugging most applications.  This
+     option exists to allow for experimenting with different sizes.
+
+'maint show symbol-cache-size'
+     Show the size of the symbol cache.
+
+'maint print symbol-cache'
+     Print the contents of the symbol cache.  This is useful when
+     debugging symbol cache issues.
+
+'maint print symbol-cache-statistics'
+     Print symbol cache usage statistics.  This helps determine how well
+     the cache is being utilized.
+
+'maint flush-symbol-cache'
+     Flush the contents of the symbol cache, all entries are removed.
+     This command is useful when debugging the symbol cache.  It is also
+     useful when collecting performance data.
 
 
 File: gdb.info,  Node: Altering,  Next: GDB Files,  Prev: Symbols,  Up: Top
@@ -7289,201 +7411,4 @@ Continuing and Stepping: Continuing and Stepping.
    The most common occasion to use the 'jump' command is to back
 up--perhaps with more breakpoints set--over a portion of a program that
 has already executed, in order to examine its execution in more detail.
-
-
-File: gdb.info,  Node: Signaling,  Next: Returning,  Prev: Jumping,  Up: Altering
-
-17.3 Giving your Program a Signal
-=================================
-
-'signal SIGNAL'
-     Resume execution where your program is stopped, but immediately
-     give it the signal SIGNAL.  The SIGNAL can be the name or the
-     number of a signal.  For example, on many systems 'signal 2' and
-     'signal SIGINT' are both ways of sending an interrupt signal.
-
-     Alternatively, if SIGNAL is zero, continue execution without giving
-     a signal.  This is useful when your program stopped on account of a
-     signal and would ordinarily see the signal when resumed with the
-     'continue' command; 'signal 0' causes it to resume without a
-     signal.
-
-     _Note:_ When resuming a multi-threaded program, SIGNAL is delivered
-     to the currently selected thread, not the thread that last reported
-     a stop.  This includes the situation where a thread was stopped due
-     to a signal.  So if you want to continue execution suppressing the
-     signal that stopped a thread, you should select that same thread
-     before issuing the 'signal 0' command.  If you issue the 'signal 0'
-     command with another thread as the selected one, GDB detects that
-     and asks for confirmation.
-
-     Invoking the 'signal' command is not the same as invoking the
-     'kill' utility from the shell.  Sending a signal with 'kill' causes
-     GDB to decide what to do with the signal depending on the signal
-     handling tables (*note Signals::).  The 'signal' command passes the
-     signal directly to your program.
-
-     'signal' does not repeat when you press <RET> a second time after
-     executing the command.
-
-'queue-signal SIGNAL'
-     Queue SIGNAL to be delivered immediately to the current thread when
-     execution of the thread resumes.  The SIGNAL can be the name or the
-     number of a signal.  For example, on many systems 'signal 2' and
-     'signal SIGINT' are both ways of sending an interrupt signal.  The
-     handling of the signal must be set to pass the signal to the
-     program, otherwise GDB will report an error.  You can control the
-     handling of signals from GDB with the 'handle' command (*note
-     Signals::).
-
-     Alternatively, if SIGNAL is zero, any currently queued signal for
-     the current thread is discarded and when execution resumes no
-     signal will be delivered.  This is useful when your program stopped
-     on account of a signal and would ordinarily see the signal when
-     resumed with the 'continue' command.
-
-     This command differs from the 'signal' command in that the signal
-     is just queued, execution is not resumed.  And 'queue-signal'
-     cannot be used to pass a signal whose handling state has been set
-     to 'nopass' (*note Signals::).
-
-   *Note stepping into signal handlers::, for information on how
-stepping commands behave when the thread has a signal queued.
-
-
-File: gdb.info,  Node: Returning,  Next: Calling,  Prev: Signaling,  Up: Altering
-
-17.4 Returning from a Function
-==============================
-
-'return'
-'return EXPRESSION'
-     You can cancel execution of a function call with the 'return'
-     command.  If you give an EXPRESSION argument, its value is used as
-     the function's return value.
-
-   When you use 'return', GDB discards the selected stack frame (and all
-frames within it).  You can think of this as making the discarded frame
-return prematurely.  If you wish to specify a value to be returned, give
-that value as the argument to 'return'.
-
-   This pops the selected stack frame (*note Selecting a Frame:
-Selection.), and any other frames inside of it, leaving its caller as
-the innermost remaining frame.  That frame becomes selected.  The
-specified value is stored in the registers used for returning values of
-functions.
-
-   The 'return' command does not resume execution; it leaves the program
-stopped in the state that would exist if the function had just returned.
-In contrast, the 'finish' command (*note Continuing and Stepping:
-Continuing and Stepping.) resumes execution until the selected stack
-frame returns naturally.
-
-   GDB needs to know how the EXPRESSION argument should be set for the
-inferior.  The concrete registers assignment depends on the OS ABI and
-the type being returned by the selected stack frame.  For example it is
-common for OS ABI to return floating point values in FPU registers while
-integer values in CPU registers.  Still some ABIs return even floating
-point values in CPU registers.  Larger integer widths (such as 'long
-long int') also have specific placement rules.  GDB already knows the OS
-ABI from its current target so it needs to find out also the type being
-returned to make the assignment into the right register(s).
-
-   Normally, the selected stack frame has debug info.  GDB will always
-use the debug info instead of the implicit type of EXPRESSION when the
-debug info is available.  For example, if you type 'return -1', and the
-function in the current stack frame is declared to return a 'long long
-int', GDB transparently converts the implicit 'int' value of -1 into a
-'long long int':
-
-     Breakpoint 1, func () at gdb.base/return-nodebug.c:29
-     29        return 31;
-     (gdb) return -1
-     Make func return now? (y or n) y
-     #0  0x004004f6 in main () at gdb.base/return-nodebug.c:43
-     43        printf ("result=%lld\n", func ());
-     (gdb)
-
-   However, if the selected stack frame does not have a debug info,
-e.g., if the function was compiled without debug info, GDB has to find
-out the type to return from user.  Specifying a different type by
-mistake may set the value in different inferior registers than the
-caller code expects.  For example, typing 'return -1' with its implicit
-type 'int' would set only a part of a 'long long int' result for a debug
-info less function (on 32-bit architectures).  Therefore the user is
-required to specify the return type by an appropriate cast explicitly:
-
-     Breakpoint 2, 0x0040050b in func ()
-     (gdb) return -1
-     Return value type not available for selected stack frame.
-     Please use an explicit cast of the value to return.
-     (gdb) return (long long int) -1
-     Make selected stack frame return now? (y or n) y
-     #0  0x00400526 in main ()
-     (gdb)
-
-
-File: gdb.info,  Node: Calling,  Next: Patching,  Prev: Returning,  Up: Altering
-
-17.5 Calling Program Functions
-==============================
-
-'print EXPR'
-     Evaluate the expression EXPR and display the resulting value.  The
-     expression may include calls to functions in the program being
-     debugged.
-
-'call EXPR'
-     Evaluate the expression EXPR without displaying 'void' returned
-     values.
-
-     You can use this variant of the 'print' command if you want to
-     execute a function from your program that does not return anything
-     (a.k.a. "a void function"), but without cluttering the output with
-     'void' returned values that GDB will otherwise print.  If the
-     result is not void, it is printed and saved in the value history.
-
-   It is possible for the function you call via the 'print' or 'call'
-command to generate a signal (e.g., if there's a bug in the function, or
-if you passed it incorrect arguments).  What happens in that case is
-controlled by the 'set unwindonsignal' command.
-
-   Similarly, with a C++ program it is possible for the function you
-call via the 'print' or 'call' command to generate an exception that is
-not handled due to the constraints of the dummy frame.  In this case,
-any exception that is raised in the frame, but has an out-of-frame
-exception handler will not be found.  GDB builds a dummy-frame for the
-inferior function call, and the unwinder cannot seek for exception
-handlers outside of this dummy-frame.  What happens in that case is
-controlled by the 'set unwind-on-terminating-exception' command.
-
-'set unwindonsignal'
-     Set unwinding of the stack if a signal is received while in a
-     function that GDB called in the program being debugged.  If set to
-     on, GDB unwinds the stack it created for the call and restores the
-     context to what it was before the call.  If set to off (the
-     default), GDB stops in the frame where the signal was received.
-
-'show unwindonsignal'
-     Show the current setting of stack unwinding in the functions called
-     by GDB.
-
-'set unwind-on-terminating-exception'
-     Set unwinding of the stack if a C++ exception is raised, but left
-     unhandled while in a function that GDB called in the program being
-     debugged.  If set to on (the default), GDB unwinds the stack it
-     created for the call and restores the context to what it was before
-     the call.  If set to off, GDB the exception is delivered to the
-     default C++ exception handler and the inferior terminated.
-
-'show unwind-on-terminating-exception'
-     Show the current setting of stack unwinding in the functions called
-     by GDB.
-
-   Sometimes, a function you wish to call is actually a "weak alias" for
-another function.  In such case, GDB might not pick up the type
-information, including the types of the function arguments, which causes
-GDB to call the inferior function incorrectly.  As a result, the called
-function will function erroneously and may even crash.  A solution to
-that is to use the name of the aliased function instead.
 

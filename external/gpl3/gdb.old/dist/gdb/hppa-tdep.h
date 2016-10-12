@@ -188,39 +188,6 @@ enum unwind_stub_types
 
 struct unwind_table_entry *find_unwind_entry (CORE_ADDR);
 
-/* We use the objfile->obj_private pointer for two things:
- * 1.  An unwind table;
- *
- * 2.  A pointer to any associated shared library object.
- *
- * #defines are used to help refer to these objects.
- */
-
-/* Info about the unwind table associated with an object file.
- * This is hung off of the "objfile->obj_private" pointer, and
- * is allocated in the objfile's psymbol obstack.  This allows
- * us to have unique unwind info for each executable and shared
- * library that we are debugging.
- */
-struct hppa_unwind_info
-  {
-    struct unwind_table_entry *table;	/* Pointer to unwind info */
-    struct unwind_table_entry *cache;	/* Pointer to last entry we found */
-    int last;				/* Index of last entry */
-  };
-
-struct hppa_objfile_private
-  {
-    struct hppa_unwind_info *unwind_info;	/* a pointer */
-    struct so_list *so_info;			/* a pointer  */
-    CORE_ADDR dp;
-
-    int dummy_call_sequence_reg;
-    CORE_ADDR dummy_call_sequence_addr;
-  };
-
-extern const struct objfile_data *hppa_objfile_priv_data;
-
 int hppa_get_field (unsigned word, int from, int to);
 int hppa_extract_5_load (unsigned int);
 unsigned hppa_extract_5R_store (unsigned int);
@@ -243,8 +210,6 @@ extern CORE_ADDR hppa_unwind_pc (struct gdbarch *gdbarch,
 extern struct bound_minimal_symbol
   hppa_lookup_stub_minimal_symbol (const char *name,
                                    enum unwind_stub_types stub_type);
-
-extern struct hppa_objfile_private *hppa_init_objfile_priv_data (struct objfile *objfile);
 
 extern int hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
 					  CORE_ADDR pc);

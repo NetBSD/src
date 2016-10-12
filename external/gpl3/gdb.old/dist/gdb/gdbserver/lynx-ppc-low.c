@@ -17,8 +17,6 @@
 
 #include "server.h"
 #include "lynx-low.h"
-
-#include <stdint.h>
 #include <limits.h>
 #include <sys/ptrace.h>
 

@@ -21,21 +21,15 @@ SH64_OBJS = sh64.o cpu.o sh-desc.o \
 	decode-compact.o sem-compact.o mloop-compact.o \
 	decode-media.o sem-media.o mloop-media.o
 
-CONFIG_DEVICES = dv-sockser.o
-CONFIG_DEVICES =
-
 SIM_OBJS = \
 	$(SIM_NEW_COMMON_OBJS) \
-	sim-cpu.o \
 	sim-hload.o \
-	sim-hrw.o \
 	sim-model.o \
 	sim-reg.o \
 	cgen-utils.o cgen-trace.o cgen-scache.o \
-	cgen-run.o sim-reason.o sim-engine.o sim-stop.o \
+	cgen-run.o sim-reason.o sim-stop.o \
 	sim-if.o arch.o \
-	$(SH64_OBJS) \
-	$(CONFIG_DEVICES)
+	$(SH64_OBJS)
 
 # Extra headers included by sim-main.h.
 SIM_EXTRA_DEPS = \
@@ -44,7 +38,6 @@ SIM_EXTRA_DEPS = \
 
 SIM_EXTRA_CFLAGS =
 
-SIM_RUN_OBJS = nrun.o
 SIM_EXTRA_CLEAN = sh64-clean
 
 ## COMMON_POST_CONFIG_FRAG
