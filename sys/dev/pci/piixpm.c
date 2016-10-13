@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.50 2016/07/18 21:09:05 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.51 2016/10/13 17:11:09 jdolecek Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.50 2016/07/18 21:09:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.51 2016/10/13 17:11:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,8 +256,8 @@ nopowermanagement:
 		if (pci_intr_map(pa, &ih) == 0) {
 			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
 			    sizeof(intrbuf));
-			sc->sc_smb_ih = pci_intr_establish(pa->pa_pc, ih,
-			    IPL_BIO, piixpm_intr, sc);
+			sc->sc_smb_ih = pci_intr_establish_xname(pa->pa_pc, ih,
+			    IPL_BIO, piixpm_intr, sc, device_xname(sc->sc_dev));
 			if (sc->sc_smb_ih != NULL) {
 				aprint_normal("interrupting at %s", intrstr);
 				sc->sc_poll = 0;
