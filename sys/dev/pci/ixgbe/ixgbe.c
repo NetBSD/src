@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.39 2016/07/11 06:14:51 knakahara Exp $*/
+/*$NetBSD: ixgbe.c,v 1.40 2016/10/13 20:05:06 jdolecek Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2516,8 +2516,8 @@ ixgbe_allocate_legacy(struct adapter *adapter,
 		intrstr = pci_intr_string(adapter->osdep.pc, ih, intrbuf,
 		    sizeof(intrbuf));
 	}
-	adapter->osdep.ihs[0] = pci_intr_establish(adapter->osdep.pc, ih,
-	    IPL_NET, ixgbe_legacy_irq, que);
+	adapter->osdep.ihs[0] = pci_intr_establish_xname(adapter->osdep.pc, ih,
+	    IPL_NET, ixgbe_legacy_irq, que, device_xname(dev));
 #else
 	/* Allocation settings */
 	max_type = PCI_INTR_TYPE_MSI;
@@ -2533,8 +2533,9 @@ alloc_retry:
 	adapter->osdep.nintrs = 1;
 	intrstr = pci_intr_string(adapter->osdep.pc, adapter->osdep.intrs[0],
 	    intrbuf, sizeof(intrbuf));
-	adapter->osdep.ihs[0] = pci_intr_establish(adapter->osdep.pc,
-	    adapter->osdep.intrs[0], IPL_NET, ixgbe_legacy_irq, que);
+	adapter->osdep.ihs[0] = pci_intr_establish_xname(adapter->osdep.pc,
+	    adapter->osdep.intrs[0], IPL_NET, ixgbe_legacy_irq, que,
+	    device_xname(dev));
 	if (adapter->osdep.ihs[0] == NULL) {
 		intr_type = pci_intr_type(adapter->osdep.pc,
 		    adapter->osdep.intrs[0]);
@@ -2621,6 +2622,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	struct  	tx_ring *txr = adapter->tx_rings;
 	pci_chipset_tag_t pc;
 	char		intrbuf[PCI_INTRSTR_LEN];
+	char		intr_xname[32];
 	const char	*intrstr = NULL;
 	int 		error, vector = 0;
 	int		cpu_id = 0;
@@ -2660,6 +2662,8 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	kcpuset_create(&affinity, false);
 	for (int i = 0; i < adapter->num_queues; i++, vector++, que++, txr++) {
+		snprintf(intr_xname, sizeof(intr_xname), "%s TX/RX",
+		    device_xname(dev));
 		intrstr = pci_intr_string(pc, adapter->osdep.intrs[i], intrbuf,
 		    sizeof(intrbuf));
 #ifdef IXG_MPSAFE
@@ -2667,8 +2671,9 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		    true);
 #endif
 		/* Set the handler function */
-		que->res = adapter->osdep.ihs[i] = pci_intr_establish(pc,
-		    adapter->osdep.intrs[i], IPL_NET, ixgbe_msix_que, que);
+		que->res = adapter->osdep.ihs[i] = pci_intr_establish_xname(pc,
+		    adapter->osdep.intrs[i], IPL_NET, ixgbe_msix_que, que,
+		    intr_xname);
 		if (que->res == NULL) {
 			pci_intr_release(pc, adapter->osdep.intrs,
 			    adapter->osdep.nintrs);
@@ -2729,6 +2734,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 
 	/* and Link */
 	cpu_id++;
+	snprintf(intr_xname, sizeof(intr_xname), "%s link", device_xname(dev));
 	intrstr = pci_intr_string(pc, adapter->osdep.intrs[vector], intrbuf,
 	    sizeof(intrbuf));
 #ifdef IXG_MPSAFE
@@ -2736,8 +2742,9 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    true);
 #endif
 	/* Set the link handler function */
-	adapter->osdep.ihs[vector] = pci_intr_establish(pc,
-	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter);
+	adapter->osdep.ihs[vector] = pci_intr_establish_xname(pc,
+	    adapter->osdep.intrs[vector], IPL_NET, ixgbe_msix_link, adapter,
+	    intr_xname);
 	if (adapter->osdep.ihs[vector] == NULL) {
 		adapter->res = NULL;
 		aprint_error_dev(dev, "Failed to register LINK handler\n");
