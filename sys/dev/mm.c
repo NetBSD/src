@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.21 2016/07/11 16:13:28 matt Exp $	*/
+/*	$NetBSD: mm.c,v 1.22 2016/10/13 08:56:31 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008, 2010 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.21 2016/07/11 16:13:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.22 2016/10/13 08:56:31 ryo Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -164,7 +164,7 @@ dev_mem_readwrite(struct uio *uio, struct iovec *iov)
 	int color = 0;
 
 	/* Check for wrap around. */
-	if ((intptr_t)uio->uio_offset != uio->uio_offset) {
+	if ((uintptr_t)uio->uio_offset != uio->uio_offset) {
 		return EFAULT;
 	}
 	paddr = uio->uio_offset & ~PAGE_MASK;
