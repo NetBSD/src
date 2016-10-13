@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.970 2016/10/12 20:22:05 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.971 2016/10/13 11:57:55 joerg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1364,7 +1364,8 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
     ${MACHINE} == "sparc"	|| \
     ${MACHINE} == "sparc64"	|| \
     ${MACHINE} == "evbmips"	|| \
-    ${MACHINE} == "x68k"
+    ${MACHINE} == "x68k"	|| \
+    ${MACHINE_CPU} == "aarch64"
 HAVE_XORG_SERVER_VER?=118
 .else
 HAVE_XORG_SERVER_VER?=110
