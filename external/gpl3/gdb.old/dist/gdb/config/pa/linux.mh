@@ -1,0 +1,10 @@
+# Host: Hewlett-Packard PA-RISC machine, running Linux
+NAT_FILE= config/nm-linux.h
+NATDEPFILES= inf-ptrace.o fork-child.o \
+	hppa-linux-nat.o proc-service.o linux-thread-db.o \
+	linux-nat.o linux-osdata.o linux-fork.o \
+	linux-procfs.o linux-ptrace.o linux-waitpid.o \
+	linux-personality.o linux-namespaces.o
+NAT_CDEPS = $(srcdir)/proc-service.list
+
+LOADLIBES = -ldl $(RDYNAMIC)
