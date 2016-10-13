@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.46 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.47 2016/10/13 20:05:06 jdolecek Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.46 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.47 2016/10/13 20:05:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,8 +175,8 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 		if (pci_intr_map(pa, &ih) == 0) {
 			intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf,
 			    sizeof(intrbuf));
-			sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO,
-			    ichsmb_intr, sc);
+			sc->sc_ih = pci_intr_establish_xname(pa->pa_pc, ih,
+			    IPL_BIO, ichsmb_intr, sc, device_xname(sc->sc_dev));
 			if (sc->sc_ih != NULL) {
 				aprint_normal_dev(self, "interrupting at %s\n",
 				    intrstr);
