@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $ */
+/* $NetBSD: machdep.c,v 1.347 2016/10/13 16:18:20 flxd Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.346 2014/10/17 18:14:42 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.347 2016/10/13 16:18:20 flxd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ struct bootinfo_kernel bootinfo;
 
 /* For built-in TCDS */
 #if defined(DEC_3000_300) || defined(DEC_3000_500)
-uint8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
+uint8_t	dec_3000_scsiid[3], dec_3000_scsifast[3];
 #endif
 
 struct platform platform;
