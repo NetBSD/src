@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2016/10/11 07:23:52 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2016/10/13 13:29:39 martin Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -94,8 +94,8 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 
 .if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \
     ${BINUTILS_MACHINE_ARCH} == "sparc64" || \
-    ${BINUTILS_MACHINE_ARCH} == "earm" || \
-    ${BINUTILS_MACHINE_ARCH} == "arm" || \
+    !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
+    !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
     ${BINUTILS_MACHINE_ARCH} == "aarch64" || \
     !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
@@ -104,8 +104,8 @@ FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 # XXX
 #HAS_XC!=	grep '^GENERATE_COMBRELOC_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
-.if ${BINUTILS_MACHINE_ARCH} == "earm" || \
-    ${BINUTILS_MACHINE_ARCH} == "arm" || \
+.if !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
+    !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
     ${BINUTILS_MACHINE_ARCH} == "aarch64"
 HAS_XS=		yes
 .endif
