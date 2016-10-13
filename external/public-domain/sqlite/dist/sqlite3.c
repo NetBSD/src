@@ -11567,23 +11567,31 @@ typedef INT16_TYPE LogEst;
 ** -DSQLITE_RUNTIME_BYTEORDER=1 is set, then byte-order is determined
 ** at run-time.
 */
-#if (defined(i386)     || defined(__i386__)   || defined(_M_IX86) ||    \
+#if defined(HAVE_SYS_ENDIAN_H) && !defined(SQLITE_RUNTIME_BYTEORDER)
+# include <sys/endian.h>
+# define SQLITE_BYTEORDER _BYTE_ORDER
+#elif (defined(i386)   || defined(__i386__)   || defined(_M_IX86) ||    \
      defined(__x86_64) || defined(__x86_64__) || defined(_M_X64)  ||    \
      defined(_M_AMD64) || defined(_M_ARM)     || defined(__x86)   ||    \
      defined(__arm__)) && !defined(SQLITE_RUNTIME_BYTEORDER)
 # define SQLITE_BYTEORDER    1234
-# define SQLITE_BIGENDIAN    0
-# define SQLITE_LITTLEENDIAN 1
-# define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
-#endif
-#if (defined(sparc)    || defined(__ppc__))  \
+#elif (defined(sparc)  || defined(__ppc__))  \
     && !defined(SQLITE_RUNTIME_BYTEORDER)
 # define SQLITE_BYTEORDER    4321
-# define SQLITE_BIGENDIAN    1
-# define SQLITE_LITTLEENDIAN 0
-# define SQLITE_UTF16NATIVE  SQLITE_UTF16BE
 #endif
-#if !defined(SQLITE_BYTEORDER)
+#ifdef SQLITE_BYTEORDER
+# if   SQLITE_BYTEORDER == 1234
+#  define SQLITE_BIGENDIAN    0
+#  define SQLITE_LITTLEENDIAN 1
+#  define SQLITE_UTF16NATIVE  SQLITE_UTF16LE
+# elif SQLITE_BYTEORDER == 4321
+#  define SQLITE_BIGENDIAN    1
+#  define SQLITE_LITTLEENDIAN 0
+#  define SQLITE_UTF16NATIVE  SQLITE_UTF16BE
+# else
+#  error "Unknown byte order."
+# endif
+#else
 # ifdef SQLITE_AMALGAMATION
   const int sqlite3one = 1;
 # else
