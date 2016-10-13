@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.251 2016/10/10 01:22:51 dholland Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.251 2016/10/10 01:22:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.252 2016/10/13 19:10:23 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -346,7 +346,7 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	int i;
 
 	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
-		return 0L;
+		return (0);
 
 	if (iov->iov_len < (size_t) space)
 		space = iov->iov_len;
@@ -362,13 +362,13 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 
 	lva = sokvaalloc(sva, len, so);
 	if (lva == 0)
-		return 0L;
+		return 0;
 
 	error = uvm_loan(&uio->uio_vmspace->vm_map, sva, len,
 	    m->m_ext.ext_pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		sokvafree(lva, len);
-		return 0L;
+		return (0);
 	}
 
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
@@ -1008,7 +1008,7 @@ sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 				    uio->uio_iov->iov_len >= sock_loan_thresh &&
 				    space >= sock_loan_thresh &&
 				    (len = sosend_loan(so, uio, m,
-						       space)) != 0L) {
+						       space)) != 0) {
 					SOSEND_COUNTER_INCR(&sosend_loan_big);
 					space -= len;
 					goto have_data;
@@ -1175,7 +1175,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	if (controlp != NULL)
 		*controlp = NULL;
 	if (flagsp != NULL)
-		flags = *flagsp & ~MSG_EOR;
+		flags = *flagsp &~ MSG_EOR;
 	else
 		flags = 0;
 
