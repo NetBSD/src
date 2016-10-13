@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.206 2016/08/19 10:05:35 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.207 2016/10/13 18:58:00 macallan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,8 +61,9 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 #include <mips/trap.h>
+#include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.206 2016/08/19 10:05:35 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.207 2016/10/13 18:58:00 macallan Exp $")
 
 #include "assym.h"
 
@@ -143,10 +144,10 @@ _C_LABEL(kernel_text):
 	li	t0, MIPS_SR_KX | MIPS_SR_UX	# turn on XKSEG and XKPHYS
 #else
 	li	t0, 0				# Disable interrupts and
-#endif
+#endif /* n32 */
 	mtc0	t0, MIPS_COP_0_STATUS		# the fp coprocessor
 	COP0_SYNC
-#endif
+#endif /* !emips */
 #ifdef HPCMIPS_L1CACHE_DISABLE
 	mfc0	t0, MIPS_COP_0_CONFIG
 	li	t1, 0xfffffff8
@@ -155,7 +156,7 @@ _C_LABEL(kernel_text):
 	mtc0	t0, MIPS_COP_0_CONFIG
 	COP0_SYNC
 #endif /* HPCMIPS_L1CACHE_DISABLE */
-#else
+#else /* NOFPU */
 	mfc0	t0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
 #if defined(_LP64) || defined(__mips_n32)
