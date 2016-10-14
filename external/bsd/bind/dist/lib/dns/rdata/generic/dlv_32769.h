@@ -1,7 +1,7 @@
-/*	$NetBSD: dlv_32769.h,v 1.3 2012/06/05 00:42:08 christos Exp $	*/
+/*	$NetBSD: dlv_32769.h,v 1.3.14.1 2016/10/14 11:42:47 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,14 +22,6 @@
 #ifndef GENERIC_DLV_32769_H
 #define GENERIC_DLV_32769_H 1
 
-typedef struct dns_rdata_dlv {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
-	unsigned char		*digest;
-} dns_rdata_dlv_t;
+typedef struct dns_rdata_ds dns_rdata_dlv_t;
 
 #endif /* GENERIC_DLV_32769_H */

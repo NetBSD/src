@@ -1,7 +1,7 @@
-/*	$NetBSD: check.c,v 1.10.2.2.2.1 2016/03/13 08:00:34 martin Exp $	*/
+/*	$NetBSD: check.c,v 1.10.2.2.2.2 2016/10/14 11:42:45 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1471,6 +1471,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	dns_name_t *zname = NULL;
 	isc_buffer_t b;
 	isc_boolean_t root = ISC_FALSE;
+	isc_boolean_t rfc1918 = ISC_FALSE;
+	isc_boolean_t ula = ISC_FALSE;
 	const cfg_listelt_t *element;
 	isc_boolean_t dlz;
 	dns_masterformat_t masterformat;
@@ -1665,6 +1667,10 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			result = tresult;
 		if (dns_name_equal(zname, dns_rootname))
 			root = ISC_TRUE;
+		else if (dns_name_isrfc1918(zname))
+			rfc1918 = ISC_TRUE;
+		else if (dns_name_isula(zname))
+			ula = ISC_TRUE;
 	}
 
 	/*
@@ -1933,6 +1939,32 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 	if (check_forward(zoptions, obj, logctx) != ISC_R_SUCCESS)
 		result = ISC_R_FAILURE;
+
+	/*
+	 * Check that a RFC 1918 / ULA reverse zone is not forward first
+	 * unless explictly configured to be so.
+	 */
+	if (ztype == FORWARDZONE && (rfc1918 || ula)) {
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "forward", &obj);
+		if (obj == NULL) {
+			/*
+			 * Forward mode not explicity configured.
+			 */
+			if (voptions != NULL)
+				cfg_map_get(voptions, "forward", &obj);
+			if (obj == NULL && goptions != NULL)
+				cfg_map_get(goptions, "forward", &obj);
+			if (obj == NULL ||
+			    strcasecmp(cfg_obj_asstring(obj), "first") == 0)
+				cfg_obj_log(zconfig, logctx, ISC_LOG_WARNING,
+					    "inherited 'forward first;' for "
+					    "%s zone '%s' - did you want "
+					    "'forward only;'?",
+					    rfc1918 ? "rfc1918" : "ula",
+					    znamestr);
+		}
+	}
 
 	/*
 	 * Check validity of static stub server addresses.

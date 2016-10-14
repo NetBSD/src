@@ -1,7 +1,7 @@
-/*	$NetBSD: os.c,v 1.6.2.1.2.1 2016/03/13 08:00:26 martin Exp $	*/
+/*	$NetBSD: os.c,v 1.6.2.1.2.2 2016/10/14 11:42:29 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -314,4 +314,81 @@ ns_os_tzset(void) {
 void
 ns_os_started(void) {
 	ntservice_init();
+}
+
+static char unamebuf[BUFSIZ];
+static char *unamep = NULL;
+
+static void
+getuname(void) {
+	DWORD fvilen;
+	char *fvi;
+	VS_FIXEDFILEINFO *ffi;
+	UINT ffilen;
+	SYSTEM_INFO sysinfo;
+	char *arch;
+
+	fvi = NULL;
+	fvilen = GetFileVersionInfoSize("kernel32.dll", 0);
+	if (fvilen == 0) {
+		goto err;
+	}
+	fvi = (char *)malloc(fvilen);
+	if (fvi == NULL) {
+		goto err;
+	}
+	memset(fvi, 0, fvilen);
+	if (GetFileVersionInfo("kernel32.dll", 0, fvilen, fvi) == 0) {
+		goto err;
+	}
+	ffi = NULL;
+	ffilen = 0;
+	if ((VerQueryValue(fvi, "\\", &ffi, &ffilen) == 0) ||
+	    (ffi == NULL) || (ffilen == 0)) {
+		goto err;
+	}
+	memset(&sysinfo, 0, sizeof(sysinfo));
+	GetSystemInfo(&sysinfo);
+	switch (sysinfo.wProcessorArchitecture) {
+	case PROCESSOR_ARCHITECTURE_INTEL:
+		arch = "x86";
+		break;
+	case PROCESSOR_ARCHITECTURE_ARM:
+		arch = "arm";
+		break;
+	case PROCESSOR_ARCHITECTURE_IA64:
+		arch = "ia64";
+		break;
+	case PROCESSOR_ARCHITECTURE_AMD64:
+		arch = "x64";
+		break;
+	default:
+		arch = "unknown architecture";
+		break;
+	}
+
+	snprintf(unamebuf, sizeof(unamebuf),
+		 "Windows %d %d build %d %d for %s\n",
+		 (ffi->dwProductVersionMS >> 16) & 0xffff,
+		 ffi->dwProductVersionMS & 0xffff,
+		 (ffi->dwProductVersionLS >> 16) & 0xffff,
+		 ffi->dwProductVersionLS & 0xffff,
+		 arch);
+
+    err:
+	if (fvi != NULL) {
+		free(fvi);
+	}
+	unamep = unamebuf;
+}
+
+/*
+ * GetVersionEx() returns 6.2 (aka Windows 8.1) since it was obsoleted
+ * so we had to switch to the recommended way to get the Windows version.
+ */
+char *
+ns_os_uname(void) {
+	if (unamep == NULL)
+		getuname();
+	return (unamep);
 }

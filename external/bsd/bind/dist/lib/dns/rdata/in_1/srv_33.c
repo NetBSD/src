@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.c,v 1.3.14.1 2016/03/13 08:00:36 martin Exp $	*/
+/*	$NetBSD: srv_33.c,v 1.3.14.2 2016/10/14 11:42:47 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,8 @@ fromtext_in_srv(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	dns_name_init(&name, NULL);
 	buffer_fromregion(&buffer, &token.value.as_region);
-	origin = (origin != NULL) ? origin : dns_rootname;
+	if (origin == NULL)
+		origin = dns_rootname;
 	RETTOK(dns_name_fromtext(&name, &buffer, origin, options, target));
 	ok = ISC_TRUE;
 	if ((options & DNS_RDATA_CHECKNAMES) != 0)

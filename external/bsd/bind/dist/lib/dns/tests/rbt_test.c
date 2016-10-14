@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.1.6.1.2.1 2016/03/13 08:00:36 martin Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.1.6.1.2.2 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
- * Copyright (C) 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -49,9 +49,11 @@
 #include <isc/socket.h>
 #include <isc/stdio.h>
 #include <isc/task.h>
+#include <isc/thread.h>
 #include <isc/timer.h>
 #include <isc/util.h>
 #include <isc/print.h>
+#include <isc/time.h>
 
 #include <dns/log.h>
 #include <dns/name.h>
@@ -60,6 +62,8 @@
 #include <dst/dst.h>
 
 #include <ctype.h>
+#include <stdlib.h>
+#include <time.h>
 
 typedef struct {
 	dns_rbt_t *rbt;
@@ -895,237 +899,6 @@ ATF_TC_BODY(rbt_remove, tc) {
 	dns_test_end();
 }
 
-ATF_TC(rbt_remove_empty);
-ATF_TC_HEAD(rbt_remove_empty, tc) {
-	atf_tc_set_md_var(tc, "descr",
-			  "Test removal from a tree when "
-			  "upper nodes are empty");
-}
-ATF_TC_BODY(rbt_remove_empty, tc) {
-	/*
-	 * This test is similar to the rbt_remove test, but checks node
-	 * deletion when upper nodes are empty.
-	 */
-	isc_result_t result;
-	size_t j;
-
-	UNUSED(tc);
-
-	isc_mem_debugging = ISC_MEM_DEBUGRECORD;
-
-	result = dns_test_begin(NULL, ISC_TRUE);
-	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-	/*
-	 * Delete single nodes and check if the rest of the nodes exist.
-	 */
-	for (j = 0; j < ordered_names_count; j++) {
-		dns_rbt_t *mytree = NULL;
-		dns_rbtnode_t *node;
-		size_t i;
-		isc_boolean_t tree_ok;
-		dns_rbtnodechain_t chain;
-		size_t start_node;
-
-		/* Create a tree. */
-		result = dns_rbt_create(mctx, delete_data, NULL, &mytree);
-		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-
-		/* Insert test data into the tree. */
-		for (i = 0; i < domain_names_count; i++) {
-			node = NULL;
-			result = insert_helper(mytree, domain_names[i], &node);
-			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
-		}
-
-		/* Check that all names exist in order. */
-		for (i = 0; i < ordered_names_count; i++) {
-			dns_fixedname_t fname;
-			dns_name_t *name;
-
-			build_name_from_str(ordered_names[i], &fname);
-
-			name = dns_fixedname_name(&fname);
-			node = NULL;
-			result = dns_rbt_findnode(mytree, name, NULL,
-						  &node, NULL,
-						  DNS_RBTFIND_EMPTYDATA,
-						  NULL, NULL);
-			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-
-			/* Check that node data is empty */
-			ATF_REQUIRE(node != NULL);
-			ATF_REQUIRE_EQ(node->data, NULL);
-		}
-
-		/* Now, delete the j'th node from the tree. */
-		{
-			dns_fixedname_t fname;
-			dns_name_t *name;
-
-			build_name_from_str(ordered_names[j], &fname);
-
-			name = dns_fixedname_name(&fname);
-
-			node = NULL;
-			result = dns_rbt_findnode(mytree, name, NULL, &node,
-						  NULL, DNS_RBTFIND_EMPTYDATA,
-						  NULL, NULL);
-			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-
-			result = dns_rbt_deletenode(mytree, node, ISC_FALSE);
-			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-		}
-
-		/* Check RB tree properties. */
-		tree_ok = dns__rbt_checkproperties(mytree);
-		ATF_CHECK_EQ(tree_ok, ISC_TRUE);
-
-		dns_rbtnodechain_init(&chain, mctx);
-
-		/* Now, walk through nodes in order. */
-		if (j == 0) {
-			/*
-			 * Node for ordered_names[0] was already deleted
-			 * above. We start from node 1.
-			 */
-			dns_fixedname_t fname;
-			dns_name_t *name;
-
-			build_name_from_str(ordered_names[0], &fname);
-			name = dns_fixedname_name(&fname);
-			node = NULL;
-			result = dns_rbt_findnode(mytree, name, NULL,
-						  &node, NULL,
-						  DNS_RBTFIND_EMPTYDATA,
-						  NULL, NULL);
-			ATF_CHECK(result != ISC_R_SUCCESS);
-
-			build_name_from_str(ordered_names[1], &fname);
-			name = dns_fixedname_name(&fname);
-			node = NULL;
-			result = dns_rbt_findnode(mytree, name, NULL,
-						  &node, &chain,
-						  DNS_RBTFIND_EMPTYDATA,
-						  NULL, NULL);
-			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-			start_node = 1;
-		} else {
-			/* Start from node 0. */
-			dns_fixedname_t fname;
-			dns_name_t *name;
-
-			build_name_from_str(ordered_names[0], &fname);
-			name = dns_fixedname_name(&fname);
-			node = NULL;
-			result = dns_rbt_findnode(mytree, name, NULL,
-						  &node, &chain,
-						  DNS_RBTFIND_EMPTYDATA,
-						  NULL, NULL);
-			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
-			start_node = 0;
-		}
-
-		/*
-		 * node and chain have been set by the code above at
-		 * this point.
-		 */
-		for (i = start_node; i < ordered_names_count; i++) {
-			dns_fixedname_t fntmp1, fntmp2;
-			dns_name_t *ntmp1, *ntmp2;
-			dns_fixedname_t fname_j, fname_i;
-			dns_name_t *name_j, *name_i;
-
-			build_name_from_str("j.z.d.e.f", &fntmp1);
-			ntmp1 = dns_fixedname_name(&fntmp1);
-			build_name_from_str("z.d.e.f", &fntmp2);
-			ntmp2 = dns_fixedname_name(&fntmp2);
-
-			build_name_from_str(ordered_names[j], &fname_j);
-			name_j = dns_fixedname_name(&fname_j);
-			build_name_from_str(ordered_names[i], &fname_i);
-			name_i = dns_fixedname_name(&fname_i);
-
-			if (dns_name_equal(name_j, ntmp1) &&
-			    dns_name_equal(name_j, ntmp2))
-			{
-				/*
-				 * The only special case in the
-				 * tree. Here, "z.d.e.f" will not exist
-				 * as it would have been removed during
-				 * removal of "j.z.d.e.f".
-				 */
-				continue;
-			}
-
-			if (dns_name_equal(name_i, name_j)) {
-				dns_fixedname_t fntmp3, fntmp4, fntmp5, fntmp6;
-				dns_name_t *ntmp3, *ntmp4, *ntmp5, *ntmp6;
-
-				/*
-				 * This may be true for the last node if
-				 * we seek ahead in the loop using
-				 * dns_rbtnodechain_next() below.
-				 */
-				if (node == NULL) {
-					break;
-				}
-
-				/*
-				 * All ordered nodes are empty
-				 * initially. If an empty removed node
-				 * exists because it is a super-domain,
-				 * just skip it.
-				 */
-				build_name_from_str("d.e.f", &fntmp3);
-				ntmp3 = dns_fixedname_name(&fntmp3);
-				build_name_from_str("w.y.d.e.f", &fntmp4);
-				ntmp4 = dns_fixedname_name(&fntmp4);
-				build_name_from_str("z.d.e.f", &fntmp5);
-				ntmp5 = dns_fixedname_name(&fntmp5);
-				build_name_from_str("g.h", &fntmp6);
-				ntmp6 = dns_fixedname_name(&fntmp6);
-
-				if (dns_name_equal(name_j, ntmp3) ||
-				    dns_name_equal(name_j, ntmp4) ||
-				    dns_name_equal(name_j, ntmp5) ||
-				    dns_name_equal(name_j, ntmp6))
-				{
-					result = dns_rbtnodechain_next(&chain,
-								       NULL,
-								       NULL);
-					if (result == ISC_R_NOMORE) {
-						node = NULL;
-					} else {
-						dns_rbtnodechain_current(&chain,
-									 NULL,
-									 NULL,
-									 &node);
-					}
-				}
-				continue;
-			}
-
-			ATF_REQUIRE(node != NULL);
-
-			result = dns_rbtnodechain_next(&chain, NULL, NULL);
-			if (result == ISC_R_NOMORE) {
-				node = NULL;
-			} else {
-				dns_rbtnodechain_current(&chain, NULL, NULL,
-							 &node);
-			}
-		}
-
-		/* We should have reached the end of the tree. */
-		ATF_REQUIRE_EQ(node, NULL);
-
-		dns_rbt_destroy(&mytree);
-	}
-
-	dns_test_end();
-}
-
 static void
 insert_nodes(dns_rbt_t *mytree, char **names,
 	     size_t *names_count, isc_uint32_t num_names)
@@ -1307,6 +1080,136 @@ ATF_TC_BODY(rbt_insert_and_remove, tc) {
 	dns_test_end();
 }
 
+#ifdef ISC_PLATFORM_USETHREADS
+#ifdef DNS_BENCHMARK_TESTS
+
+/*
+ * XXXMUKS: Don't delete this code. It is useful in benchmarking the
+ * RBT, but we don't require it as part of the unit test runs.
+ */
+
+ATF_TC(benchmark);
+ATF_TC_HEAD(benchmark, tc) {
+	atf_tc_set_md_var(tc, "descr", "Benchmark RBT implementation");
+}
+
+static dns_fixedname_t *fnames;
+static dns_name_t **names;
+static int *values;
+
+static void *
+find_thread(void *arg) {
+	dns_rbt_t *mytree;
+	isc_result_t result;
+	dns_rbtnode_t *node;
+	unsigned int j, i;
+	unsigned int start = 0;
+
+	mytree = (dns_rbt_t *) arg;
+	while (start == 0)
+		start = random() % 4000000;
+
+	/* Query 32 million random names from it in each thread */
+	for (j = 0; j < 8; j++) {
+		for (i = start; i != start - 1; i = (i + 1) % 4000000) {
+			node = NULL;
+			result = dns_rbt_findnode(mytree, names[i], NULL,
+						  &node, NULL,
+						  DNS_RBTFIND_EMPTYDATA,
+						  NULL, NULL);
+			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+			ATF_REQUIRE(node != NULL);
+			ATF_CHECK_EQ(values[i], (intptr_t) node->data);
+		}
+	}
+
+	return (NULL);
+}
+
+ATF_TC_BODY(benchmark, tc) {
+	isc_result_t result;
+	char namestr[sizeof("name18446744073709551616.example.org.")];
+	unsigned int r;
+	dns_rbt_t *mytree;
+	dns_rbtnode_t *node;
+	unsigned int i;
+	unsigned int maxvalue = 1000000;
+	isc_time_t ts1, ts2;
+	double t;
+	unsigned int nthreads;
+	isc_thread_t threads[32];
+
+	UNUSED(tc);
+
+	srandom(time(NULL));
+
+	debug_mem_record = ISC_FALSE;
+
+	result = dns_test_begin(NULL, ISC_TRUE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	fnames = (dns_fixedname_t *) malloc(4000000 * sizeof(dns_fixedname_t));
+	names = (dns_name_t **) malloc(4000000 * sizeof(dns_name_t *));
+	values = (int *) malloc(4000000 * sizeof(int));
+
+	for (i = 0; i < 4000000; i++) {
+		  r = ((unsigned long) random()) % maxvalue;
+		  snprintf(namestr, sizeof(namestr), "name%u.example.org.", r);
+		  build_name_from_str(namestr, &fnames[i]);
+		  names[i] = dns_fixedname_name(&fnames[i]);
+		  values[i] = r;
+	}
+
+	/* Create a tree. */
+	mytree = NULL;
+	result = dns_rbt_create(mctx, NULL, NULL, &mytree);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	/* Insert test data into the tree. */
+	for (i = 0; i < maxvalue; i++) {
+		snprintf(namestr, sizeof(namestr), "name%u.example.org.", i);
+		node = NULL;
+		result = insert_helper(mytree, namestr, &node);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		node->data = (void *) (intptr_t) i;
+	}
+
+	result = isc_time_now(&ts1);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	nthreads = ISC_MIN(isc_os_ncpus(), 32);
+	nthreads = ISC_MAX(nthreads, 1);
+	for (i = 0; i < nthreads; i++) {
+		result = isc_thread_create(find_thread, mytree, &threads[i]);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	}
+
+	for (i = 0; i < nthreads; i++) {
+		result = isc_thread_join(threads[i], NULL);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	}
+
+	result = isc_time_now(&ts2);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	t = isc_time_microdiff(&ts2, &ts1);
+
+	printf("%u findnode calls, %f seconds, %f calls/second\n",
+	       nthreads * 8 * 4000000, t / 1000000.0,
+	       (nthreads * 8 * 4000000) / (t / 1000000.0));
+
+	free(values);
+	free(names);
+	free(fnames);
+
+	dns_rbt_destroy(&mytree);
+
+	dns_test_end();
+}
+
+#endif /* DNS_BENCHMARK_TESTS */
+#endif /* ISC_PLATFORM_USETHREADS */
+
 /*
  * Main
  */
@@ -1318,8 +1221,12 @@ ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, rbt_check_distance_ordered);
 	ATF_TP_ADD_TC(tp, rbt_insert);
 	ATF_TP_ADD_TC(tp, rbt_remove);
-	ATF_TP_ADD_TC(tp, rbt_remove_empty);
 	ATF_TP_ADD_TC(tp, rbt_insert_and_remove);
+#ifdef ISC_PLATFORM_USETHREADS
+#ifdef DNS_BENCHMARK_TESTS
+	ATF_TP_ADD_TC(tp, benchmark);
+#endif /* DNS_BENCHMARK_TESTS */
+#endif /* ISC_PLATFORM_USETHREADS */
 
 	return (atf_no_error());
 }

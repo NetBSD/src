@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;USE_MD5;@CRYPTO@_DEBUG;_WINDOWS;_USRDLL;LIBBIND9_EXPORTS;%(PreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>./;../../../;include;../include;../../isc/win32;../../isc/win32/include;../../isc/include;../../isccfg/include;../../dns/include;@LIBXML2_INC@@GEOIP_INC@%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
@@ -115,6 +115,7 @@
   <ItemGroup>
     <ClInclude Include="..\include\bind9\check.h" />
     <ClInclude Include="..\include\bind9\getaddresses.h" />
+    <ClInclude Include="..\include\bind9\version.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

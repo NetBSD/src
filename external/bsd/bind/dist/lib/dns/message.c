@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.13.2.2.2.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: message.c,v 1.13.2.2.2.2 2016/10/14 11:42:46 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -40,6 +40,7 @@
 #include <dns/masterdump.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
+#include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>
@@ -148,27 +149,6 @@ static const char *opcodetext[] = {
 	"RESERVED14",
 	"RESERVED15"
 };
-
-static const char *rcodetext[] = {
-	"NOERROR",
-	"FORMERR",
-	"SERVFAIL",
-	"NXDOMAIN",
-	"NOTIMP",
-	"REFUSED",
-	"YXDOMAIN",
-	"YXRRSET",
-	"NXRRSET",
-	"NOTAUTH",
-	"NOTZONE",
-	"RESERVED11",
-	"RESERVED12",
-	"RESERVED13",
-	"RESERVED14",
-	"RESERVED15",
-	"BADVERS"
-};
-
 
 /*%
  * "helper" type, which consists of a block of some type, and is linkable.
@@ -858,9 +838,8 @@ dns_message_find(dns_name_t *name, dns_rdataclass_t rdclass,
 {
 	dns_rdataset_t *curr;
 
-	if (rdataset != NULL) {
-		REQUIRE(*rdataset == NULL);
-	}
+	REQUIRE(name != NULL);
+	REQUIRE(rdataset == NULL || *rdataset == NULL);
 
 	for (curr = ISC_LIST_TAIL(name->list);
 	     curr != NULL;
@@ -883,15 +862,13 @@ dns_message_findtype(dns_name_t *name, dns_rdatatype_t type,
 	dns_rdataset_t *curr;
 
 	REQUIRE(name != NULL);
-	if (rdataset != NULL) {
-		REQUIRE(*rdataset == NULL);
-	}
+	REQUIRE(rdataset == NULL || *rdataset == NULL);
 
 	for (curr = ISC_LIST_TAIL(name->list);
 	     curr != NULL;
 	     curr = ISC_LIST_PREV(curr, link)) {
 		if (curr->type == type && curr->covers == covers) {
-			if (rdataset != NULL)
+			if (ISC_UNLIKELY(rdataset != NULL))
 				*rdataset = curr;
 			return (ISC_R_SUCCESS);
 		}
@@ -1308,6 +1285,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			 * it must be the first OPT we've seen.
 			 */
 			if (!dns_name_equal(dns_rootname, name) ||
+			    sectionid != DNS_SECTION_ADDITIONAL ||
 			    msg->opt != NULL)
 				DO_FORMERR;
 			skip_name_search = ISC_TRUE;
@@ -1549,9 +1527,12 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		ISC_LIST_APPEND(rdatalist->rdata, rdata, link);
 
 		/*
-		 * If this is an OPT record, remember it.  Also, set
-		 * the extended rcode.  Note that msg->opt will only be set
-		 * if best-effort parsing is enabled.
+		 * If this is an OPT, SIG(0) or TSIG record, remember it.
+		 * Also, set the extended rcode for TSIG.
+		 *
+		 * Note msg->opt, msg->sig0 and msg->tsig will only be
+		 * already set if best-effort parsing is enabled otherwise
+		 * there will only be at most one of each.
 		 */
 		if (rdtype == dns_rdatatype_opt && msg->opt == NULL) {
 			dns_rcode_t ercode;
@@ -1565,14 +1546,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			msg->rcode |= ercode;
 			isc_mempool_put(msg->namepool, name);
 			free_name = ISC_FALSE;
-		}
-
-		/*
-		 * If this is an SIG(0) or TSIG record, remember it.  Note
-		 * that msg->sig0 or msg->tsig will only be set if best-effort
-		 * parsing is enabled.
-		 */
-		if (issigzero && msg->sig0 == NULL) {
+		} else if (issigzero && msg->sig0 == NULL) {
 			msg->sig0 = rdataset;
 			msg->sig0name = name;
 			rdataset = NULL;
@@ -1756,7 +1730,7 @@ dns_message_renderbegin(dns_message_t *msg, dns_compress_t *cctx,
 	if (r.length < DNS_MESSAGE_HEADERLEN)
 		return (ISC_R_NOSPACE);
 
-	if (r.length < msg->reserved)
+	if (r.length - DNS_MESSAGE_HEADERLEN < msg->reserved)
 		return (ISC_R_NOSPACE);
 
 	/*
@@ -1897,8 +1871,29 @@ norender_rdataset(const dns_rdataset_t *rdataset, unsigned int options,
 
 	return (ISC_TRUE);
 }
-
 #endif
+
+static isc_result_t
+renderset(dns_rdataset_t *rdataset, dns_name_t *owner_name,
+	  dns_compress_t *cctx, isc_buffer_t *target,
+	  unsigned int reserved, unsigned int options, unsigned int *countp)
+{
+	isc_result_t result;
+
+	/*
+	 * Shrink the space in the buffer by the reserved amount.
+	 */
+	if (target->length - target->used < reserved)
+		return (ISC_R_NOSPACE);
+
+	target->length -= reserved;
+	result = dns_rdataset_towire(rdataset, owner_name,
+				     cctx, target, options, countp);
+	target->length += reserved;
+
+	return (result);
+}
+
 isc_result_t
 dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 			  unsigned int options)
@@ -1941,6 +1936,8 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid,
 	/*
 	 * Shrink the space in the buffer by the reserved amount.
 	 */
+	if (msg->buffer->length - msg->buffer->used < msg->reserved)
+		return (ISC_R_NOSPACE);
 	msg->buffer->length -= msg->reserved;
 
 	total = 0;
@@ -2216,9 +2213,8 @@ dns_message_renderend(dns_message_t *msg) {
 		 * Render.
 		 */
 		count = 0;
-		result = dns_rdataset_towire(msg->opt, dns_rootname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->opt, dns_rootname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2234,9 +2230,8 @@ dns_message_renderend(dns_message_t *msg) {
 		if (result != ISC_R_SUCCESS)
 			return (result);
 		count = 0;
-		result = dns_rdataset_towire(msg->tsig, msg->tsigname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->tsig, msg->tsigname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2257,9 +2252,8 @@ dns_message_renderend(dns_message_t *msg) {
 		 * the owner name of a SIG(0) is irrelevant, and will not
 		 * be set in a message being rendered.
 		 */
-		result = dns_rdataset_towire(msg->sig0, dns_rootname,
-					     msg->cctx, msg->buffer, 0,
-					     &count);
+		result = renderset(msg->sig0, dns_rootname, msg->cctx,
+				   msg->buffer, msg->reserved, 0, &count);
 		msg->counts[DNS_SECTION_ADDITIONAL] += count;
 		if (result != ISC_R_SUCCESS)
 			return (result);
@@ -2372,13 +2366,12 @@ dns_message_findname(dns_message_t *msg, dns_section_t section,
 	REQUIRE(msg != NULL);
 	REQUIRE(VALID_SECTION(section));
 	REQUIRE(target != NULL);
-	if (name != NULL)
-		REQUIRE(*name == NULL);
+	REQUIRE(name == NULL || *name == NULL);
+
 	if (type == dns_rdatatype_any) {
 		REQUIRE(rdataset == NULL);
 	} else {
-		if (rdataset != NULL)
-			REQUIRE(*rdataset == NULL);
+		REQUIRE(rdataset == NULL || *rdataset == NULL);
 	}
 
 	result = findname(&foundname, target,
@@ -2395,7 +2388,7 @@ dns_message_findname(dns_message_t *msg, dns_section_t section,
 	/*
 	 * And now look for the type.
 	 */
-	if (type == dns_rdatatype_any)
+	if (ISC_UNLIKELY(type == dns_rdatatype_any))
 		return (ISC_R_SUCCESS);
 
 	result = dns_message_findtype(foundname, type, covers, rdataset);
@@ -3263,6 +3256,9 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	addrlen = isc_buffer_getuint8(ecsbuf);
 	scopelen = isc_buffer_getuint8(ecsbuf);
 
+	if (addrlen == 0 && family != 0)
+		return (DNS_R_OPTERR);
+
 	addrbytes = (addrlen + 7) / 8;
 	if (isc_buffer_remaininglength(ecsbuf) < addrbytes)
 		return (DNS_R_OPTERR);
@@ -3275,15 +3271,23 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	for (i = 0; i < addrbytes; i ++)
 		addr[i] = isc_buffer_getuint8(ecsbuf);
 
-	if (family == 1) {
+	switch (family) {
+	case 0:
+		if (addrlen != 0U || scopelen != 0U)
+			return (DNS_R_OPTERR);
+		strlcpy(addr_text, "0", sizeof(addr_text));
+		break;
+	case 1:
 		if (addrlen > 32 || scopelen > 32)
 			return (DNS_R_OPTERR);
 		inet_ntop(AF_INET, addr, addr_text, sizeof(addr_text));
-	} else if (family == 2) {
+		break;
+	case 2:
 		if (addrlen > 128 || scopelen > 128)
 			return (DNS_R_OPTERR);
 		inet_ntop(AF_INET6, addr, addr_text, sizeof(addr_text));
-	} else {
+		break;
+	default:
 		snprintf(addr_text, sizeof(addr_text),
 			 "Unsupported family %u", family);
 		ADD_STRING(target, addr_text);
@@ -3335,7 +3339,7 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 		mbz &= ~DNS_MESSAGEEXTFLAG_DO;		/* Known Flags. */
 		if (mbz != 0) {
 			ADD_STRING(target, "; MBZ: ");
-			snprintf(buf, sizeof(buf), "%.4x ", mbz);
+			snprintf(buf, sizeof(buf), "0x%.4x", mbz);
 			ADD_STRING(target, buf);
 			ADD_STRING(target, ", udp: ");
 		} else
@@ -3393,11 +3397,17 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 					snprintf(buf, sizeof(buf), "%u", secs);
 					ADD_STRING(target, buf);
 					ADD_STRING(target, " (");
-					dns_ttl_totext(secs, ISC_TRUE, target);
+					result = dns_ttl_totext(secs,
+								ISC_TRUE,
+								target);
+					if (result != ISC_R_SUCCESS)
+						return (result);
 					ADD_STRING(target, ")\n");
 					continue;
 				}
 				ADD_STRING(target, "; EXPIRE");
+			} else if (optcode == DNS_OPT_PAD) {
+				ADD_STRING(target, "; PAD");
 			} else {
 				ADD_STRING(target, "; OPT=");
 				snprintf(buf, sizeof(buf), "%u", optcode);
@@ -3488,7 +3498,8 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 
 isc_result_t
 dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
-		   dns_messagetextflag_t flags, isc_buffer_t *target) {
+		   dns_messagetextflag_t flags, isc_buffer_t *target)
+{
 	char buf[sizeof("1234567890")];
 	isc_result_t result;
 
@@ -3499,12 +3510,9 @@ dns_message_totext(dns_message_t *msg, const dns_master_style_t *style,
 		ADD_STRING(target, ";; ->>HEADER<<- opcode: ");
 		ADD_STRING(target, opcodetext[msg->opcode]);
 		ADD_STRING(target, ", status: ");
-		if (msg->rcode < (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
-			ADD_STRING(target, rcodetext[msg->rcode]);
-		} else {
-			snprintf(buf, sizeof(buf), "%4u", msg->rcode);
-			ADD_STRING(target, buf);
-		}
+		result = dns_rcode_totext(msg->rcode, target);
+		if (result != ISC_R_SUCCESS)
+			return (result);
 		ADD_STRING(target, ", id: ");
 		snprintf(buf, sizeof(buf), "%6u", msg->id);
 		ADD_STRING(target, buf);

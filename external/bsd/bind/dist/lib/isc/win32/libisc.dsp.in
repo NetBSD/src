@@ -563,7 +563,11 @@ SOURCE=..\include\isc\socket.h
 # End Source File
 # Begin Source File
 
-SOURCE=.\include\isc\stats.h
+SOURCE=.\include\isc\stat.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\include\isc\stats.h
 # End Source File
 # Begin Source File
 

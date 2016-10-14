@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -66,7 +66,14 @@
 #include "AccountInfo.h"
 #include "versioninfo.h"
 
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include <config.h>
+
+#undef open
 
 #define MAX_GROUPS	100
 #define MAX_PRIVS	 50
@@ -102,12 +109,14 @@ typedef struct _filedata {
 	enum FileDestinations {TargetDir, BinDir, EtcDir, WinSystem};
 	enum FileImportance {Trivial, Normal, Critical};
 
-	char *filename;
+	char filename[128];
 	int destination;
 	int importance;
 	BOOL checkVer;
 	BOOL withTools;
 } FileData;
+
+#if no_longer_used
 
 const FileData installFiles[] =
 {
@@ -185,7 +194,7 @@ const FileData installFiles[] =
 	{"named-compilezone.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-journalprint.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"named-rrchecker.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
-	{"isc-hmax-fixup.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
+	{"isc-hmac-fixup.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 #ifdef USE_PKCS11
 	{"pkcs11-destroy.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
 	{"pkcs11-keygen.exe", FileData::BinDir, FileData::Normal, FALSE, FALSE},
@@ -200,13 +209,21 @@ const FileData installFiles[] =
 	{NULL, -1, -1}
 };
 
+#else
+
+typedef std::vector<FileData> FileDatas;
+FileDatas installFiles;
+BOOL forwin64 = FALSE;
+BOOL runvcredist = FALSE;
+
+#endif
+
 /////////////////////////////////////////////////////////////////////////////
 // CBINDInstallDlg dialog
 
 CBINDInstallDlg::CBINDInstallDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CBINDInstallDlg::IDD, pParent) {
 	char winsys[MAX_PATH];
-	char progfiles[MAX_PATH];
 
 	//{{AFX_DATA_INIT(CBINDInstallDlg)
 	m_targetDir = _T("");
@@ -227,16 +244,8 @@ CBINDInstallDlg::CBINDInstallDlg(CWnd* pParent /*=NULL*/)
 	GetSystemDirectory(winsys, MAX_PATH);
 	m_winSysDir = winsys;
 
-#ifndef _WIN64
-	SHGetFolderPath(NULL, CSIDL_FLAG_CREATE|CSIDL_PROGRAM_FILESX86,
-			NULL, SHGFP_TYPE_CURRENT, progfiles);
-#else
-	SHGetFolderPath(NULL, CSIDL_FLAG_CREATE|CSIDL_PROGRAM_FILES,
-			NULL, SHGFP_TYPE_CURRENT, progfiles);
-#endif
+	m_defaultDir = "notyetknown";
 
-	m_defaultDir = progfiles;
-	m_defaultDir += "\\ISC BIND 9";
 	m_installed = FALSE;
 	m_accountExists = FALSE;
 	m_accountUsed = FALSE;
@@ -296,6 +305,19 @@ BOOL CBINDInstallDlg::OnInitDialog() {
 	dirname[index] = '\0';
 	CString Dirname(dirname);
 	m_currentDir = Dirname;
+
+	ReadInstallFlags();
+	char progfiles[MAX_PATH];
+	int id_program_files;
+	if (forwin64)
+		id_program_files = CSIDL_PROGRAM_FILES;
+	else
+		id_program_files = CSIDL_PROGRAM_FILESX86;
+	SHGetFolderPath(NULL, CSIDL_FLAG_CREATE|id_program_files,
+			NULL, SHGFP_TYPE_CURRENT, progfiles);
+
+	m_defaultDir = progfiles;
+	m_defaultDir += "\\ISC BIND 9";
 
 	CVersionInfo bindInst(filename);
 	if(bindInst.IsValid())
@@ -429,6 +451,7 @@ void CBINDInstallDlg::OnUninstall() {
 		UninstallTags();
 		UnregisterMessages(TRUE);
 		UnregisterService(TRUE);
+		ReadInstallFileList();
 		DeleteFiles(TRUE);
 		if (m_keepFiles == FALSE)
 			RemoveDirs(TRUE);
@@ -452,9 +475,6 @@ void CBINDInstallDlg::OnUninstall() {
  * User pressed the install button.  Make it go.
  */
 void CBINDInstallDlg::OnInstall() {
-#if _MSC_VER >= 1400
-	char Vcredist_x86[MAX_PATH];
-#endif
 	BOOL success = FALSE;
 	int oldlen;
 
@@ -550,7 +570,6 @@ void CBINDInstallDlg::OnInstall() {
 
 	ProgramGroup(FALSE);
 
-#if _MSC_VER >= 1400
 	/*
 	 * Install Visual Studio libraries.  As per:
 	 * http://blogs.msdn.com/astebner/archive/2006/08/23/715755.aspx
@@ -563,17 +582,19 @@ void CBINDInstallDlg::OnInstall() {
 	 * Enclose full path to Vcredist_x86.exe in quotes as
 	 * m_currentDir may contain spaces.
 	 */
-#ifndef _WIN64
-	sprintf(Vcredist_x86, "\"%s\\Vcredist_x86.exe\"",
-		(LPCTSTR) m_currentDir);
-#else
-	sprintf(Vcredist_x86, "\"%s\\Vcredist_x64.exe\"",
-		(LPCTSTR) m_currentDir);
-#endif
-	system(Vcredist_x86);
-#endif
+	if (runvcredist) {
+		char Vcredist_x86[MAX_PATH];
+		if (forwin64)
+			sprintf(Vcredist_x86, "\"%s\\Vcredist_x64.exe\"",
+				(LPCTSTR) m_currentDir);
+		else
+			sprintf(Vcredist_x86, "\"%s\\Vcredist_x86.exe\"",
+				(LPCTSTR) m_currentDir);
+		system(Vcredist_x86);
+	}
 	try {
 		CreateDirs();
+		ReadInstallFileList();
 		CopyFiles();
 		if (!m_toolsOnly)
 			RegisterService();
@@ -673,26 +694,130 @@ void CBINDInstallDlg::RemoveDirs(BOOL uninstall) {
 		SetItemStatus(IDC_CREATE_DIR, TRUE);
 }
 
+// InstallFlags: runvcredist and forwin64 options
+void CBINDInstallDlg::ReadInstallFlags() {
+	std::ifstream ff(m_currentDir + "\\InstallFlags");
+	if (!ff) {
+		throw(Exception(IDS_FILE_BAD, "InstallFlags", "can't open"));
+	}
+	while (!ff.eof()) {
+		std::string line;
+		getline(ff, line);
+		if (line.compare("runvcredist") == 0)
+			runvcredist = TRUE;
+		else if (line.compare("forwin64") == 0)
+			forwin64 = TRUE;
+	}
+}
+
+// InstallFiles: {filename-divt}*
+//   destination: TBEW
+//   importance: TNC
+//   checkVer and withTools: TF (boolean)
+void CBINDInstallDlg::ReadInstallFileList() {
+	std::ifstream fl(m_currentDir + "\\InstallFiles");
+	if (!fl) {
+		throw(Exception(IDS_FILE_BAD, "InstallFiles", "can't open"));
+	}
+	while (!fl.eof()) {
+		std::string line;
+		getline(fl, line);
+		if (line.empty())
+			continue;
+		if (line[0] == '#')
+			continue;
+		// zip -l adds spurious \r: remove trailing space chars
+		size_t finish = line.find_last_not_of(" \t\r\n\t\v");
+		if ((finish != std::string::npos) &&
+		    (finish + 1 != line.size())) {
+			line.erase(finish + 1);
+		}
+		size_t flags = line.find_last_of('-');
+		if ((flags == std::string::npos) ||
+		    (flags + 5 != line.size()))
+			goto bad;
+		std::string file = line.substr(0, flags);
+		if (file.empty() || (file.size() > 127))
+			goto bad;
+		FileData entry;
+		memmove(entry.filename, file.c_str(), file.size() + 1);
+		switch (line[flags + 1]) {
+		case 'T':
+			entry.destination = FileData::TargetDir;
+			break;
+		case 'B':
+			entry.destination = FileData::BinDir;
+			break;
+		case 'E':
+			entry.destination = FileData::EtcDir;
+			break;
+		case 'W':
+			entry.destination = FileData::WinSystem;
+			break;
+		default:
+			goto bad;
+		}
+		switch (line[flags + 2]) {
+		case 'T':
+			entry.importance = FileData::Trivial;
+			break;
+		case 'N':
+			entry.importance = FileData::Normal;
+			break;
+		case 'C':
+			entry.importance = FileData::Critical;
+			break;
+		default:
+			goto bad;
+		}
+		switch (line[flags + 3]) {
+		case 'T':
+			entry.checkVer = TRUE;
+			break;
+		case 'F':
+			entry.checkVer = FALSE;
+			break;
+		default:
+			goto bad;
+		}
+		switch (line[flags + 4]) {
+		case 'T':
+			entry.withTools = TRUE;
+			break;
+		case 'F':
+			entry.withTools = FALSE;
+			break;
+		default:
+			goto bad;
+		}
+		installFiles.push_back(entry);
+	}
+	return;
+
+bad:
+	throw(Exception(IDS_FILE_BAD, "InstallFiles", "syntax error"));
+}
+
 void CBINDInstallDlg::CopyFiles() {
 	CString destFile;
 
-	for (int i = 0; installFiles[i].filename; i++) {
-		if (m_toolsOnly && !installFiles[i].withTools)
+	for (FileDatas::iterator fd = installFiles.begin();
+	     fd != installFiles.end(); ++fd) {
+		if (m_toolsOnly && !fd->withTools)
 			continue;
-		SetCurrent(IDS_COPY_FILE, installFiles[i].filename);
+		SetCurrent(IDS_COPY_FILE, fd->filename);
 
-		destFile = DestDir(installFiles[i].destination) + "\\" +
-				   installFiles[i].filename;
-		CString filespec = m_currentDir + "\\" + installFiles[i].filename;
+		destFile = DestDir(fd->destination) + "\\" + fd->filename;
+		CString filespec = m_currentDir + "\\" + fd->filename;
 		CVersionInfo bindFile(destFile);
 
 		CVersionInfo origFile(filespec);
-		if (!origFile.IsValid() && installFiles[i].checkVer) {
+		if (!origFile.IsValid() && fd->checkVer) {
 			if (MsgBox(IDS_FILE_BAD, MB_YESNO,
-				  installFiles[i].filename) == IDNO)
+				   fd->filename) == IDNO)
 				throw(Exception(IDS_ERR_COPY_FILE,
-					installFiles[i].filename,
-					GetErrMessage()));
+						fd->filename,
+						GetErrMessage()));
 		}
 
 		try {
@@ -705,17 +830,16 @@ void CBINDInstallDlg::CopyFiles() {
 			bindFile.CopyFileNoVersion(origFile);
 		}
 		catch(...) {
-			if (installFiles[i].importance != FileData::Trivial) {
-				if (installFiles[i].importance ==
-					FileData::Critical ||
-					MsgBox(IDS_ERR_NONCRIT_FILE, MB_YESNO,
-					installFiles[i].filename,
-					GetErrMessage()) == IDNO)
+			if (fd->importance != FileData::Trivial) {
+				if (fd->importance == FileData::Critical ||
+				    MsgBox(IDS_ERR_NONCRIT_FILE, MB_YESNO,
+					   fd->filename,
+					   GetErrMessage()) == IDNO)
 				{
 					SetItemStatus(IDC_COPY_FILE, FALSE);
 					throw(Exception(IDS_ERR_COPY_FILE,
-						installFiles[i].filename,
-						GetErrMessage()));
+							fd->filename,
+							GetErrMessage()));
 				}
 			}
 		}
@@ -727,15 +851,15 @@ void CBINDInstallDlg::CopyFiles() {
 void CBINDInstallDlg::DeleteFiles(BOOL uninstall) {
 	CString destFile;
 
-	for (int i = 0; installFiles[i].filename; i++) {
-		if (installFiles[i].checkVer)
+	for (FileDatas::iterator fd = installFiles.begin();
+	     fd != installFiles.end(); ++fd) {
+		if (fd->checkVer)
 			continue;
 
-		destFile = DestDir(installFiles[i].destination) + "\\" +
-				   installFiles[i].filename;
+		destFile = DestDir(fd->destination) + "\\" + fd->filename;
 
 		if (uninstall)
-			SetCurrent(IDS_DELETE_FILE, installFiles[i].filename);
+			SetCurrent(IDS_DELETE_FILE, fd->filename);
 
 		DeleteFile(destFile);
 	}

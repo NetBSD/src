@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.7.2.1.2.1 2016/03/13 08:00:38 martin Exp $	*/
+/*	$NetBSD: parser.c,v 1.7.2.1.2.2 2016/10/14 11:42:51 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -264,10 +264,11 @@ cfg_print_tuple(cfg_printer_t *pctx, const cfg_obj_t *obj) {
 
 	for (f = fields, i = 0; f->name != NULL; f++, i++) {
 		const cfg_obj_t *fieldobj = obj->value.tuple[i];
-		if (need_space)
-			cfg_print_chars(pctx, " ", 1);
+		if (need_space && fieldobj->type->rep != &cfg_rep_void)
+			cfg_print_cstr(pctx, " ");
 		cfg_print_obj(pctx, fieldobj);
-		need_space = ISC_TF(fieldobj->type->print != cfg_print_void);
+		need_space = ISC_TF(need_space ||
+				    fieldobj->type->print != cfg_print_void);
 	}
 }
 
@@ -279,7 +280,7 @@ cfg_doc_tuple(cfg_printer_t *pctx, const cfg_type_t *type) {
 
 	for (f = fields; f->name != NULL; f++) {
 		if (need_space)
-			cfg_print_chars(pctx, " ", 1);
+			cfg_print_cstr(pctx, " ");
 		cfg_doc_obj(pctx, f->type);
 		need_space = ISC_TF(f->type->print != cfg_print_void);
 	}

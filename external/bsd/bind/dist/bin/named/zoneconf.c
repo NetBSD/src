@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.6.4.1 2015/07/17 04:31:20 snj Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.6.4.1.2.1 2016/10/14 11:42:29 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -907,6 +907,8 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		len = strlen(dlzname) + 5;
 		cpval = isc_mem_allocate(mctx, len);
+		if (cpval == NULL)
+			return (ISC_R_NOMEMORY);
 		snprintf(cpval, len, "dlz %s", dlzname);
 	}
 
@@ -974,7 +976,10 @@ ns_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			      "with 'masterfile-format map'", zname);
 		return (ISC_R_FAILURE);
 	} else if (result == ISC_R_SUCCESS) {
-		dns_ttl_t maxttl = cfg_obj_asuint32(obj);
+		dns_ttl_t maxttl = 0;	/* unlimited */
+
+		if (cfg_obj_isuint32(obj))
+			maxttl = cfg_obj_asuint32(obj);
 		dns_zone_setmaxttl(zone, maxttl);
 		if (raw != NULL)
 			dns_zone_setmaxttl(raw, maxttl);

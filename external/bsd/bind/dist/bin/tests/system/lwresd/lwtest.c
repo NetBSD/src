@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.6.6.1 2016/03/13 08:00:29 martin Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.6.6.2 2016/10/14 11:42:36 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -770,6 +770,14 @@ main(void) {
 	test_getrrsetbyname("e.example1.", 1, 2, 1, 1, 1);
 	test_getrrsetbyname("e.example1.", 1, 46, 2, 0, 1);
 	test_getrrsetbyname("", 1, 1, 0, 0, 0);
+
+	test_getrrsetbyname("123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789.123456789.123456789.123456789."
+			    "123456789", 1, 1, 0, 0, 0);
 
 	if (fails == 0)
 		printf("I:ok\n");

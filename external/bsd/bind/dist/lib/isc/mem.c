@@ -1,7 +1,7 @@
-/*	$NetBSD: mem.c,v 1.10.2.2.2.1 2016/03/13 08:00:37 martin Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.2.2.2.2 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2010, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2010, 2012-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1997,53 +1997,43 @@ isc___mempool_get(isc_mempool_t *mpctx0 FLARG) {
 	/*
 	 * Don't let the caller go over quota
 	 */
-	if (mpctx->allocated >= mpctx->maxalloc) {
+	if (ISC_UNLIKELY(mpctx->allocated >= mpctx->maxalloc)) {
 		item = NULL;
 		goto out;
 	}
 
-	/*
-	 * if we have a free list item, return the first here
-	 */
-	item = mpctx->items;
-	if (item != NULL) {
-		mpctx->items = item->next;
-		INSIST(mpctx->freecount > 0);
-		mpctx->freecount--;
-		mpctx->gets++;
-		mpctx->allocated++;
-		goto out;
-	}
-
-	/*
-	 * We need to dip into the well.  Lock the memory context here and
-	 * fill up our free list.
-	 */
-	MCTXLOCK(mctx, &mctx->lock);
-	for (i = 0; i < mpctx->fillcount; i++) {
-		if ((mctx->flags & ISC_MEMFLAG_INTERNAL) != 0) {
-			item = mem_getunlocked(mctx, mpctx->size);
-		} else {
-			item = mem_get(mctx, mpctx->size);
-			if (item != NULL)
-				mem_getstats(mctx, mpctx->size);
+	if (ISC_UNLIKELY(mpctx->items == NULL)) {
+		/*
+		 * We need to dip into the well.  Lock the memory context
+		 * here and fill up our free list.
+		 */
+		MCTXLOCK(mctx, &mctx->lock);
+		for (i = 0; i < mpctx->fillcount; i++) {
+			if ((mctx->flags & ISC_MEMFLAG_INTERNAL) != 0) {
+				item = mem_getunlocked(mctx, mpctx->size);
+			} else {
+				item = mem_get(mctx, mpctx->size);
+				if (item != NULL)
+					mem_getstats(mctx, mpctx->size);
+			}
+			if (ISC_UNLIKELY(item == NULL))
+				break;
+			item->next = mpctx->items;
+			mpctx->items = item;
+			mpctx->freecount++;
 		}
-		if (item == NULL)
-			break;
-		item->next = mpctx->items;
-		mpctx->items = item;
-		mpctx->freecount++;
+		MCTXUNLOCK(mctx, &mctx->lock);
 	}
-	MCTXUNLOCK(mctx, &mctx->lock);
 
 	/*
 	 * If we didn't get any items, return NULL.
 	 */
 	item = mpctx->items;
-	if (item == NULL)
+	if (ISC_UNLIKELY(item == NULL))
 		goto out;
 
 	mpctx->items = item->next;
+	INSIST(mpctx->freecount > 0);
 	mpctx->freecount--;
 	mpctx->gets++;
 	mpctx->allocated++;

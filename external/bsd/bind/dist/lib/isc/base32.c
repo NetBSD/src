@@ -1,7 +1,7 @@
-/*	$NetBSD: base32.c,v 1.5.4.1 2014/12/22 03:28:46 msaitoh Exp $	*/
+/*	$NetBSD: base32.c,v 1.5.4.1.2.1 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -172,7 +172,7 @@ base32_decode_init(base32_decode_ctx_t *ctx, int length, const char base[],
 
 static inline isc_result_t
 base32_decode_char(base32_decode_ctx_t *ctx, int c) {
-	char *s;
+	const char *s;
 	unsigned int last;
 
 	if (ctx->seen_end)

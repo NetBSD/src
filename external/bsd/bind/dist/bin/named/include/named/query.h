@@ -1,7 +1,7 @@
-/*	$NetBSD: query.h,v 1.5.4.1 2014/12/22 03:28:34 msaitoh Exp $	*/
+/*	$NetBSD: query.h,v 1.5.4.1.2.1 2016/10/14 11:42:29 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2010, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2010, 2011, 2013, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,6 +48,7 @@ struct ns_query {
 	isc_boolean_t			timerset;
 	dns_name_t *			qname;
 	dns_name_t *			origqname;
+	dns_rdatatype_t			qtype;
 	unsigned int			dboptions;
 	unsigned int			fetchoptions;
 	dns_db_t *			gluedb;

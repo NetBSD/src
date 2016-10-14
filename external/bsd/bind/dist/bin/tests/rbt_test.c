@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.5.4.1.2.1 2016/03/13 08:00:27 martin Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.5.4.1.2.2 2016/10/14 11:42:31 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -33,7 +33,7 @@
 #include <dns/fixedname.h>
 #include <dns/result.h>
 
-char *progname;
+const char *progname;
 isc_mem_t *mctx;
 
 #define DNSNAMELEN 255

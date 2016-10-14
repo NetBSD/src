@@ -1,7 +1,7 @@
-/*	$NetBSD: forward.h,v 1.4 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: forward.h,v 1.4.6.1 2016/10/14 11:42:46 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: forward.h,v 1.13 2009/09/02 23:48:02 tbox Exp  */
-
 #ifndef DNS_FORWARD_H
 #define DNS_FORWARD_H 1
 
@@ -26,6 +24,7 @@
 
 #include <isc/lang.h>
 #include <isc/result.h>
+#include <isc/sockaddr.h>
 
 #include <dns/types.h>
 

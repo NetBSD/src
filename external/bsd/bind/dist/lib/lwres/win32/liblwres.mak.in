@@ -113,6 +113,7 @@ ALL : "..\..\..\Build\Release\liblwres.dll"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\compat.obj"
 	-@erase "$(INTDIR)\context.obj"
 	-@erase "$(INTDIR)\DLLMain.obj"
 	-@erase "$(INTDIR)\gai_strerror.obj"
@@ -155,6 +156,7 @@ LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib iphlpapi.lib /nologo /dll /incre
 DEF_FILE= \
 	".\liblwres.def"
 LINK32_OBJS= \
+	"$(INTDIR)\compat.obj" \
 	"$(INTDIR)\context.obj" \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\gai_strerror.obj" \
@@ -196,6 +198,8 @@ ALL : "..\..\..\Build\Debug\liblwres.dll" "$(OUTDIR)\liblwres.bsc"
 
 
 CLEAN :
+	-@erase "$(INTDIR)\compat.obj"
+	-@erase "$(INTDIR)\compat.sbr"
 	-@erase "$(INTDIR)\context.obj"
 	-@erase "$(INTDIR)\context.sbr"
 	-@erase "$(INTDIR)\DLLMain.obj"
@@ -258,6 +262,7 @@ MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32
 BSC32=bscmake.exe
 BSC32_FLAGS=/nologo /o"$(OUTDIR)\liblwres.bsc" 
 BSC32_SBRS= \
+	"$(INTDIR)\compat.sbr" \
 	"$(INTDIR)\context.sbr" \
 	"$(INTDIR)\DLLMain.sbr" \
 	"$(INTDIR)\gai_strerror.sbr" \
@@ -291,6 +296,7 @@ LINK32_FLAGS=user32.lib advapi32.lib ws2_32.lib iphlpapi.lib /nologo /dll /incre
 DEF_FILE= \
 	".\liblwres.def"
 LINK32_OBJS= \
+	"$(INTDIR)\compat.obj" \
 	"$(INTDIR)\context.obj" \
 	"$(INTDIR)\DLLMain.obj" \
 	"$(INTDIR)\gai_strerror.obj" \

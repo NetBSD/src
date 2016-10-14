@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2012, 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -38,3 +38,14 @@ keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
 cat $infile $keyname1.key $keyname2.key >$zonefile
 
 $SIGNER -P -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null
+
+zone=delegation.test.
+infile=delegation.test.db.in
+zonefile=delegation.test.db
+
+keyname1=`$KEYGEN -q -r $RANDFILE -3 -f KSK $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -3 $zone`
+
+cat $infile $keyname1.key $keyname2.key >$zonefile
+
+$SIGNER -A -3 - -P -r $RANDFILE -o $zone -k $keyname1 $zonefile $keyname2 > /dev/null

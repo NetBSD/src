@@ -6,6 +6,8 @@ export PATH
 status=0
 if [ -n "@ATFBIN@" -a -f Atffile ]
 then
+	echo "S:unit:`date`"
+        echo "T:unit:1:A"
 	echo "I: unit tests"
 	atf-run > atf.out
 	status=$?
@@ -20,5 +22,6 @@ then
 	else
 		echo R:FAIL
 	fi
+	echo "E:unit:`date`"
 fi
 exit $status
