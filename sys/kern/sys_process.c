@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.170 2016/09/29 20:40:53 christos Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.171 2016/10/14 08:37:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.170 2016/09/29 20:40:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.171 2016/10/14 08:37:05 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -659,8 +659,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 				signo = tmp;
 				tmp = 0;	/* don't search for LWP */
 			}
-		}
-		else
+		} else
 			tmp = -tmp;
 		
 		if (tmp > 0) {
@@ -710,8 +709,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 * the requested thread, and clear it for other threads.
 		 */
 		LIST_FOREACH(lt2, &t->p_lwps, l_sibling) {
-			if (lt != lt2) 
-			{
+			if (lt != lt2) {
 				lwp_lock(lt2);
 				process_sstep(lt2, 0);
 				lwp_unlock(lt2);
