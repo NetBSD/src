@@ -1518,24 +1518,7 @@
 
 
     
-#ifdef BFD64
-#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_le_vec)
 
-{ "mips*el-*-netbsd*",
-&mips_elf32_trad_le_vec },
-#endif
-
-
-    
-#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_be_vec)
-
-{ "mips*-*-netbsd*",
-&mips_elf32_trad_be_vec },
-#endif
-
-
-    
-#endif
 #if !defined (SELECT_VECS) || defined (HAVE_mips_ecoff_le_vec)
 
 { "mips*-dec-*", NULL },{ "mips*el-*-ecoff*",
@@ -1673,6 +1656,38 @@
 
 { "mips*-*-none",
 &mips_elf32_be_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_ntrad_le_vec)
+
+{ "mips64*el-*-netbsd*",
+&mips_elf32_ntrad_le_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_ntrad_be_vec)
+
+{ "mips64*-*-netbsd*",
+&mips_elf32_ntrad_be_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_le_vec)
+
+{ "mips*el-*-netbsd*",
+&mips_elf32_trad_le_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_trad_be_vec)
+
+{ "mips*-*-netbsd*",
+&mips_elf32_trad_be_vec },
 #endif
 
 
