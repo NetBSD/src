@@ -219,7 +219,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define to 1 if your system has the kinfo_getvmmap function. */
-/* #undef HAVE_KINFO_GETVMMAP */
+#define HAVE_KINFO_GETVMMAP 1
 
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #define HAVE_LANGINFO_CODESET 1
