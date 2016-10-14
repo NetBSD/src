@@ -54,7 +54,7 @@ aarch64*-*-linux*)
 aarch64*-*-netbsd*)
 	# Target: AArch64 NetBSD
 	#gdb_target_obs="aarch64-tdep.o aarch64-netbsd-tdep.o"
-	gdb_target_obs="aarch64-tdep.o"
+	gdb_target_obs="aarch64-tdep.o aarch64-insn.o solib-svr4.o"
 	;;
 
 alpha*-*-osf*)
