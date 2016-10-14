@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.25 2015/10/06 16:40:36 martin Exp $	*/
+/*	$NetBSD: auxio.c,v 1.26 2016/10/14 11:33:08 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2015 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.25 2015/10/06 16:40:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.26 2016/10/14 11:33:08 mlelstv Exp $");
 
 #include "opt_auxio.h"
 
@@ -120,17 +120,17 @@ auxio_blink(void *x)
 void
 auxio_attach_common(struct auxio_softc *sc)
 {
-#ifdef BLINK
 	static int do_once = 1;
 
 	/* only start one blinker */
 	if (do_once) {
 		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+#ifdef BLINK
 		callout_init(&blink_ch, CALLOUT_MPSAFE);
 		auxio_blink(sc);
+#endif
 		do_once = 0;
 	}
-#endif
 	printf("\n");
 }
 
