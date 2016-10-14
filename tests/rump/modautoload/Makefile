@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2016/09/10 11:04:24 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2016/10/14 16:02:35 christos Exp $
 #
 
 .include <bsd.init.mk>
@@ -6,7 +6,7 @@
 TESTSDIR=	${TESTSBASE}/rump/modautoload
 
 TESTS_C=	t_modautoload
-PAXCTL_FLAGS=	+m
+PAXCTL_FLAGS=	+ma
 
 SRCS.t_modautoload+=	t_modautoload.c
 
