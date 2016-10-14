@@ -169,7 +169,7 @@ int i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp,
 STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       const unsigned char **pp,
                                       long length, d2i_of_void *d2i,
-                                      void (*free_func) (OPENSSL_BLOCK),
+                                      void (*freefunc) (OPENSSL_BLOCK),
                                       int ex_tag, int ex_class)
 {
     ASN1_const_CTX c;
@@ -232,8 +232,8 @@ STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
     return (ret);
  err:
     if ((ret != NULL) && ((a == NULL) || (*a != ret))) {
-        if (free_func != NULL)
-            sk_OPENSSL_BLOCK_pop_free(ret, free_func);
+        if (freefunc != NULL)
+            sk_OPENSSL_BLOCK_pop_free(ret, freefunc);
         else
             sk_OPENSSL_BLOCK_free(ret);
     }
