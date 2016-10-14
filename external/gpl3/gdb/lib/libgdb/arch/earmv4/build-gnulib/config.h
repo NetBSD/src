@@ -832,7 +832,7 @@
 #define HAVE_RAW_DECL_STRCASESTR 1
 
 /* Define to 1 if strchrnul is declared even after undefining macros. */
-/* #undef HAVE_RAW_DECL_STRCHRNUL */
+#define HAVE_RAW_DECL_STRCHRNUL 1
 
 /* Define to 1 if strdup is declared even after undefining macros. */
 #define HAVE_RAW_DECL_STRDUP 1
