@@ -537,7 +537,7 @@ int X509_STORE_set_default_paths(X509_STORE *ctx);
 int X509_STORE_CTX_get_ex_new_index(long argl, void *argp,
                                     CRYPTO_EX_new *new_func,
                                     CRYPTO_EX_dup *dup_func,
-                                    CRYPTO_EX_free *free_func);
+                                    CRYPTO_EX_free *freefunc);
 int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data);
 void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx);
 int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);

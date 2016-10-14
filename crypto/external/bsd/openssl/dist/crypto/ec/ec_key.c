@@ -186,7 +186,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
         if (t == NULL)
             return 0;
         if (!EC_EX_DATA_set_data
-            (&dest->method_data, t, d->dup_func, d->free_func,
+            (&dest->method_data, t, d->dup_func, d->freefunc,
              d->clear_free_func))
             return 0;
     }
@@ -502,14 +502,14 @@ void EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
 
 void *EC_KEY_get_key_method_data(EC_KEY *key,
                                  void *(*dup_func) (void *),
-                                 void (*free_func) (void *),
+                                 void (*freefunc) (void *),
                                  void (*clear_free_func) (void *))
 {
     void *ret;
 
     CRYPTO_r_lock(CRYPTO_LOCK_EC);
     ret =
-        EC_EX_DATA_get_data(key->method_data, dup_func, free_func,
+        EC_EX_DATA_get_data(key->method_data, dup_func, freefunc,
                             clear_free_func);
     CRYPTO_r_unlock(CRYPTO_LOCK_EC);
 
@@ -518,17 +518,17 @@ void *EC_KEY_get_key_method_data(EC_KEY *key,
 
 void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
                                     void *(*dup_func) (void *),
-                                    void (*free_func) (void *),
+                                    void (*freefunc) (void *),
                                     void (*clear_free_func) (void *))
 {
     EC_EXTRA_DATA *ex_data;
 
     CRYPTO_w_lock(CRYPTO_LOCK_EC);
     ex_data =
-        EC_EX_DATA_get_data(key->method_data, dup_func, free_func,
+        EC_EX_DATA_get_data(key->method_data, dup_func, freefunc,
                             clear_free_func);
     if (ex_data == NULL)
-        EC_EX_DATA_set_data(&key->method_data, data, dup_func, free_func,
+        EC_EX_DATA_set_data(&key->method_data, data, dup_func, freefunc,
                             clear_free_func);
     CRYPTO_w_unlock(CRYPTO_LOCK_EC);
 
