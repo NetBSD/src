@@ -209,13 +209,13 @@ case "${targ}" in
     want64=true
     ;;
   aarch64-*-netbsd*)
-    targ_defvec=bfd_elf64_littleaarch64_vec
-    targ_selvecs="bfd_elf64_bigaarch64_vec bfd_elf32_littlearm_vec bfd_elf32_bigarm_vec"
+    targ_defvec=aarch64_elf64_le_vec
+    targ_selvecs="aarch64_elf64_be_vec aarch64_elf32_le_vec aarch64_elf32_be_vec arm_elf32_le_vec arm_elf32_be_vec"
     want64=true
     ;;
   aarch64_be-*-netbsd*)
-    targ_defvec=bfd_elf64_bigaarch64_vec
-    targ_selvecs="bfd_elf64_littleaarch64_vec bfd_elf32_bigarm_vec bfd_elf32_littlearm_vec"
+    targ_defvec=aarch64_elf64_be_vec
+    targ_selvecs="aarch64_elf64_le_vec aarch64_elf32_le_vec aarch64_elf32_be_vec arm_elf32_be_vec arm_elf32_le_vec"
     want64=true
     ;;
   alpha*-*-freebsd* | alpha*-*-kfreebsd*-gnu)
