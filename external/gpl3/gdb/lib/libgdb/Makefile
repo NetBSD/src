@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/10/12 20:20:39 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2016/10/14 16:38:27 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -42,8 +42,8 @@ CWARNFLAGS.clang+=	-Wno-switch
 .include "../../Makefile.inc"
 .include <bsd.lib.mk>
 
-.PATH: ${DIST}/gdb ${DIST}/gdb/mi ${DIST}/gdb/cli ${DIST}/gdb/tui \
-    ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
+.PATH: ${DIST}/gdb ${DIST}/gdb/arch ${DIST}/gdb/mi ${DIST}/gdb/cli  \
+    ${DIST}/gdb/tui ${DIST}/gdb/python ${DIST}/gdb/common ${DIST}/gdb/target \
     ${DIST}/gdb/guile ${DIST}/gdb/compile ${DIST}/gdb/doc ${GDBARCHDIR}
 
 #
