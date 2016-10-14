@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2016/10/13 13:29:39 martin Exp $
+#	$NetBSD: Makefile,v 1.26 2016/10/14 15:58:34 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -82,40 +82,21 @@ EMUL_LIB_PATH.${f}=/usr/lib
 EMUL_LIB_PATH.${f}=/usr/lib
 . endif
 
-#GENSCRIPTS = LIB_PATH='${LIB_PATH}' $(SHELL) $(srcdir)/genscripts.sh "${srcdir}" "${libdir}" "${prefix}" "${exec_prefix}" @host@ @target@ @ta rget_alias@ "@EMULATION_LIBPATH@" "@NATIVE_LIB_DIRS@" @use_sysroot@
-
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	${_MKTARGET_CREATE}
 	unset MACHINE || true; \
 	LIB_PATH=${EMUL_LIB_PATH.${f}} NATIVE=yes \
-		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} "/usr" "/usr/bin" \
+		${HOST_SH} ${DIST}/ld/genscripts.sh ${DIST}/ld \
+		${LIBDIR} "/usr" "/usr/bin" \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
-		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array}  ${f} "${G_target_alias}"
+		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array} \
+		${f} "${G_target_alias}"
 
-.if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \
-    ${BINUTILS_MACHINE_ARCH} == "sparc64" || \
-    !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
-    !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
-    ${BINUTILS_MACHINE_ARCH} == "aarch64" || \
-    !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
-FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
-
-# XXX hack to find out if .xs/.xc exists - slow!
-HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
-# XXX
-#HAS_XC!=	grep '^GENERATE_COMBRELOC_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
-.if !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
-    !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
-    ${BINUTILS_MACHINE_ARCH} == "aarch64"
-HAS_XS=		yes
-.endif
-.if !empty(HAS_XS)
-FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
-# only do this if we don't have GENERATE_SHLIB_SCRIPT
-.elif !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
-FILES+= ${f}.xc ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
-.endif
-.endif	# x64_64 || sparc64 || mips64
+. for e in x xbn xc xd xdc xdw xn xr xs xsc xsw xu xw
+.  if exists(ldscripts/${f}.${e})
+FILES+= ${f}.${e}
+.  endif
+. endfor
 
 .endfor
 
