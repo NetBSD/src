@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2016/10/12 18:43:40 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2016/10/14 14:41:59 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,10 +17,12 @@ INSTALL_TARGET=	install-gdb
 
 .include "${.CURDIR}/../Makefile.gmakehost"
 
-CCADDFLAGS=	--sysroot=${DESTDIR} -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
+CCADDFLAGS+= --sysroot=${DESTDIR} -B${DESTDIR}/usr/lib/ -I${.OBJDIR}/.native/gcc/include
+LDADDFLAGS+= -L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 CXXADDFLAGS+= -D__STDC_FORMAT_MACROS
 CXXADDFLAGS+= -D__STDC_LIMIT_MACROS
 CXXADDFLAGS+= -D__STDC_CONSTANT_MACROS
+HOST_CXXFLAGS+= ${CXXADDFLAGS}
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-gdb
