@@ -1,4 +1,6 @@
-<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE book [
+<!ENTITY mdash "&#8212;">
+<!ENTITY ouml "&#xf6;">]>
 <!--
  - Copyright (C) 2014-2016  Internet Systems Consortium, Inc. ("ISC")
  -
@@ -15,106 +17,63 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<sect1 xmlns:xi="http://www.w3.org/2001/XInclude">
-  <xi:include href="noteversion.xml"/>
-  <sect2 id="relnotes_intro">
-    <title>Introduction</title>
+<section xmlns="http://docbook.org/ns/docbook" version="5.0"><info/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="noteversion.xml"/>
+  <section xml:id="relnotes_intro"><info><title>Introduction</title></info>
     <para>
-      This document summarizes changes since BIND 9.10.3:
+      This document summarizes changes since BIND 9.10.4:
     </para>
     <para>
-      BIND 9.10.3-P4 addresses the security issues described in
-      CVE-2016-1285, CVE-2016-1286 and CVE-2016-2088.
+      BIND 9.10.4-P3 addresses the security issue described in
+      CVE-2016-2776 and addresses an interoperability issue with
+      ECS clients.
     </para>
     <para>
-      BIND 9.10.3-P3 addresses the security issues described in
-      CVE-2015-8704 and CVE-2015-8705. It also fixes a serious
-      regression in authoritative server selection that was
-      introduced in BIND 9.10.3.
+      BIND 9.10.4-P2 addresses the security issue described in
+      CVE-2016-2775.
     </para>
     <para>
-      BIND 9.10.3-P2 addresses the security issues described in
-      CVE-2015-3193 (OpenSSL), CVE-2015-8000 and CVE-2015-8461.
+      BIND 9.10.4-P1 addresses Windows installation issues, the %z
+      modifier is not supported under Windows and a race condition
+      in the rbt/rbtdb implementation resulting in named exiting
+      due to assertion failures being detected.
     </para>
-    <para>
-      BIND 9.10.3-P1 was incomplete and was withdrawn prior to publication.
-    </para>
-  </sect2>
-  <sect2 id="relnotes_download">
-    <title>Download</title>
+
+  </section>
+
+  <section xml:id="relnotes_download"><info><title>Download</title></info>
     <para>
       The latest versions of BIND 9 software can always be found at
-      <ulink url="http://www.isc.org/downloads/"
-	>http://www.isc.org/downloads/</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
       There you will find additional information about each release,
       source code, and pre-compiled versions for Microsoft Windows
       operating systems.
     </para>
-  </sect2>
-  <sect2 id="relnotes_security">
-    <title>Security Fixes</title>
+  </section>
+
+  <section xml:id="relnotes_security"><info><title>Security Fixes</title></info>
     <itemizedlist>
       <listitem>
 	<para>
-	  Duplicate EDNS COOKIE options in a response could trigger
-	  an assertion failure. This flaw is disclosed in CVE-2016-2088.
-	  [RT #41809]
+	  It was possible to trigger a assertion when rendering a
+	  message using a specially crafted request. This flaw is
+	  disclosed in CVE-2016-2776. [RT #43139]
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  The resolver could abort with an assertion failure due to
-	  improper DNAME handling when parsing fetch reply
-	  messages. This flaw is disclosed in CVE-2016-1286. [RT #41753]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Malformed control messages can trigger assertions in named
-	  and rndc. This flaw is disclosed in CVE-2016-1285. [RT
-	  #41666]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Certain errors that could be encountered when printing out
-	  or logging an OPT record containing a CLIENT-SUBNET option
-	  could be mishandled, resulting in an assertion failure.
-	  This flaw is disclosed in CVE-2015-8705. [RT #41397]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Specific APL data could trigger an INSIST.  This flaw
-	  is disclosed in CVE-2015-8704. [RT #41396]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Named is potentially vulnerable to the OpenSSL vulnerability
-	  described in CVE-2015-3193.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Incorrect reference counting could result in an INSIST
-	  failure if a socket error occurred while performing a
-	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Insufficient testing when parsing a message allowed
-	  records with an incorrect class to be be accepted,
-	  triggering a REQUIRE failure when those records
-	  were subsequently cached.  This flaw is disclosed
-	  in CVE-2015-8000. [RT #40987]
+	 getrrsetbyname with a non absolute name could trigger an
+	 infinite recursion bug in lwresd and named with lwres
+	 configured if when combined with a search list entry the
+	 resulting name is too long.  This flaw is disclosed in
+	 CVE-2016-2775. [RT #42694]
 	</para>
       </listitem>
     </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_features">
-    <title>New Features</title>
+
+  </section>
+
+  <section xml:id="relnotes_features"><info><title>New Features</title></info>
     <itemizedlist>
       <listitem>
 	<para>
@@ -122,46 +81,65 @@
 	</para>
       </listitem>
     </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_changes">
-    <title>Feature Changes</title>
+  </section>
+
+  <section xml:id="relnotes_changes"><info><title>Feature Changes</title></info>
     <itemizedlist>
       <listitem>
 	<para>
-	  Updated the compiled in addresses for H.ROOT-SERVERS.NET.
+	  None.
 	</para>
       </listitem>
     </itemizedlist>
-  </sect2>
-  <sect2 id="relnotes_bugs">
-    <title>Bug Fixes</title>
+  </section>
+
+  <section xml:id="relnotes_port"><info><title>Porting Changes</title></info>
     <itemizedlist>
       <listitem>
 	<para>
-	  Authoritative servers that were marked as bogus (e.g. blackholed
-	  in configuration or with invalid addresses) were being queried
-	  anyway. [RT #41321]
+	  None.
 	</para>
       </listitem>
     </itemizedlist>
-  </sect2>
-  <sect2 id="end_of_life">
-    <title>End of Life</title>
+  </section>
+
+  <section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  ECS clients with the option set to 0.0.0.0/0/0 or ::/0/0
+	  where incorrectly getting a FORMERR response.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  Windows installs were failing due to triggering UAC without
+	  the installation binary being signed.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A race condition in rbt/rbtdb was leading to INSISTs being
+	  triggered.
+	</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="end_of_life"><info><title>End of Life</title></info>
     <para>
       The end of life for BIND 9.10 is yet to be determined but
       will not be before BIND 9.12.0 has been released for 6 months.
-      <ulink url="https://www.isc.org/downloads/software-support-policy/"
-        >https://www.isc.org/downloads/software-support-policy/</ulink>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/software-support-policy/">https://www.isc.org/downloads/software-support-policy/</link>
     </para>
-  </sect2>
-  <sect2 id="relnotes_thanks">
-    <title>Thank You</title>
+  </section>
+
+  <section xml:id="relnotes_thanks"><info><title>Thank You</title></info>
     <para>
       Thank you to everyone who assisted us in making this release possible.
       If you would like to contribute to ISC to assist us in continuing to
       make quality open source software, please visit our donations page at
-      <ulink url="http://www.isc.org/donate/"
-	>http://www.isc.org/donate/</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/donate/">http://www.isc.org/donate/</link>.
     </para>
-  </sect2>
-</sect1>
+  </section>
+</section>

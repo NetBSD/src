@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,4 +20,5 @@
 # Clean up after resolver tests.
 #
 rm -f */named.memstats
+rm -f */named.run
 rm -f dig.out.*

@@ -1,7 +1,7 @@
-/*	$NetBSD: dbiterator_test.c,v 1.1.1.3 2013/07/27 15:23:17 christos Exp $	*/
+/*	$NetBSD: dbiterator_test.c,v 1.1.1.3.6.1 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
- * Copyright (C) 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2012, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -320,7 +320,7 @@ static void test_seek_empty(const atf_tc_t *tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);
-	ATF_CHECK_EQ(result, ISC_R_NOTFOUND);
+	ATF_CHECK_EQ(result, DNS_R_PARTIALMATCH);
 
 	dns_dbiterator_destroy(&iter);
 	dns_db_detach(&db);
@@ -374,6 +374,12 @@ static void test_seek_nx(const atf_tc_t *tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = make_name("nonexistent." TEST_ORIGIN, seekname);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = dns_dbiterator_seek(iter, seekname);
+	ATF_CHECK_EQ(result, DNS_R_PARTIALMATCH);
+
+	result = make_name("nonexistent.", seekname);
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	result = dns_dbiterator_seek(iter, seekname);

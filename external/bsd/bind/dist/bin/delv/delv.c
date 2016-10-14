@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.2.4.1 2015/07/17 04:31:20 snj Exp $	*/
+/*	$NetBSD: delv.c,v 1.2.4.1.2.1 2016/10/14 11:42:27 martin Exp $	*/
 
 /*
  * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -169,7 +169,8 @@ usage(void) {
 "                 -p port             (specify port number)\n"
 "                 -q name             (specify query name)\n"
 "                 -t type             (specify query type)\n"
-"                 -c class            (specify query class)\n"
+"                 -c class            (option included for compatibility;\n"
+"                                      only IN is supported)\n"
 "                 -4                  (use IPv4 query transport only)\n"
 "                 -6                  (use IPv6 query transport only)\n"
 "                 -i                  (disable DNSSEC validation)\n"
@@ -453,8 +454,8 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 				dns_rdataset_current(rdataset, &rdata);
 				result = dns_rdata_tofmttext(&rdata,
 							     dns_rootname,
-							     styleflags,
-							     0, 60, " ",
+							     styleflags, 0,
+							     splitwidth, " ",
 							     &target);
 				if (result != ISC_R_SUCCESS)
 					break;

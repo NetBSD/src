@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.9.4.1.2.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.9.4.1.2.2 2016/10/14 11:42:46 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2008, 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -294,6 +294,9 @@ axfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 
 	dns_difftuple_t *tuple = NULL;
 
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
 				   name, ttl, rdata, &tuple));
@@ -378,8 +381,11 @@ ixfr_putdata(dns_xfrin_ctx_t *xfr, dns_diffop_t op,
 	     dns_name_t *name, dns_ttl_t ttl, dns_rdata_t *rdata)
 {
 	isc_result_t result;
-
 	dns_difftuple_t *tuple = NULL;
+
+	if (rdata->rdclass != xfr->rdclass)
+		return(DNS_R_BADCLASS);
+
 	if (op == DNS_DIFFOP_ADD)
 		CHECK(dns_zone_checknames(xfr->zone, name, rdata));
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op,
@@ -1249,10 +1255,17 @@ xfrin_recv_done(isc_task_t *task, isc_event_t *ev) {
 			  dns_result_totext(result));
 
 	if (result != ISC_R_SUCCESS || msg->rcode != dns_rcode_noerror ||
+	    msg->opcode != dns_opcode_query ||msg->rdclass != xfr->rdclass ||
 	    (xfr->checkid && msg->id != xfr->id)) {
-		if (result == ISC_R_SUCCESS)
+		if (result == ISC_R_SUCCESS && msg->rcode != dns_rcode_noerror)
 			result = ISC_RESULTCLASS_DNSRCODE + msg->rcode; /*XXX*/
-		if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
+		else if (result == ISC_R_SUCCESS &&
+			 msg->opcode != dns_opcode_query)
+			result = DNS_R_UNEXPECTEDOPCODE;
+		else if (result == ISC_R_SUCCESS &&
+			 msg->rdclass != xfr->rdclass)
+			result = DNS_R_BADCLASS;
+		else if (result == ISC_R_SUCCESS || result == DNS_R_NOERROR)
 			result = DNS_R_UNEXPECTEDID;
 		if (xfr->reqtype == dns_rdatatype_axfr ||
 		    xfr->reqtype == dns_rdatatype_soa)

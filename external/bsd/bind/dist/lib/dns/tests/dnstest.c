@@ -1,7 +1,7 @@
-/*	$NetBSD: dnstest.c,v 1.1.1.4 2014/07/08 04:49:20 spz Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.1.1.4.4.1 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
- * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,6 +59,7 @@ isc_socketmgr_t *socketmgr = NULL;
 dns_zonemgr_t *zonemgr = NULL;
 isc_boolean_t app_running = ISC_FALSE;
 int ncpus;
+isc_boolean_t debug_mem_record = ISC_TRUE;
 
 static isc_boolean_t hash_active = ISC_FALSE, dst_active = ISC_FALSE;
 
@@ -117,7 +118,8 @@ dns_test_begin(FILE *logfile, isc_boolean_t start_managers) {
 
 	if (start_managers)
 		CHECK(isc_app_start());
-	isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
+	if (debug_mem_record)
+		isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 	CHECK(isc_mem_create(0, 0, &mctx));
 	CHECK(isc_entropy_create(mctx, &ectx));
 

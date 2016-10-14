@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.8.2.2 2015/07/17 04:31:35 snj Exp $	*/
+/*	$NetBSD: socket.c,v 1.8.2.2.2.1 2016/10/14 11:42:50 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -409,7 +409,7 @@ sock_dump(isc_socket_t *sock) {
 #endif
 
 	printf("\n\t\tSock Dump\n");
-	printf("\t\tfd: %u\n", sock->fd);
+	printf("\t\tfd: %Iu\n", sock->fd);
 	printf("\t\treferences: %d\n", sock->references);
 	printf("\t\tpending_accept: %d\n", sock->pending_accept);
 	printf("\t\tconnecting: %d\n", sock->pending_connect);
@@ -1107,7 +1107,7 @@ static void
 dump_msg(struct msghdr *msg, isc_socket_t *sock) {
 	unsigned int i;
 
-	printf("MSGHDR %p, Socket #: %u\n", msg, sock->fd);
+	printf("MSGHDR %p, Socket #: %Iu\n", msg, sock->fd);
 	printf("\tname %p, namelen %d\n", msg->msg_name, msg->msg_namelen);
 	printf("\tiov %p, iovlen %d\n", msg->msg_iov, msg->msg_iovlen);
 	for (i = 0; i < (unsigned int)msg->msg_iovlen; i++)
@@ -1345,7 +1345,6 @@ static int
 completeio_send(isc_socket_t *sock, isc_socketevent_t *dev,
 		struct msghdr *messagehdr, int cc, int send_errno)
 {
-	char addrbuf[ISC_SOCKADDR_FORMATSIZE];
 	char strbuf[ISC_STRERRORSIZE];
 
 	if (send_errno != 0) {
@@ -1354,22 +1353,6 @@ completeio_send(isc_socket_t *sock, isc_socketevent_t *dev,
 
 		return (map_socket_error(sock, send_errno, &dev->result,
 			strbuf, sizeof(strbuf)));
-
-		/*
-		 * The other error types depend on whether or not the
-		 * socket is UDP or TCP.  If it is UDP, some errors
-		 * that we expect to be fatal under TCP are merely
-		 * annoying, and are really soft errors.
-		 *
-		 * However, these soft errors are still returned as
-		 * a status.
-		 */
-		isc_sockaddr_format(&dev->address, addrbuf, sizeof(addrbuf));
-		isc__strerror(send_errno, strbuf, sizeof(strbuf));
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "completeio_send: %s: %s",
-				 addrbuf, strbuf);
-		dev->result = isc__errno2result(send_errno);
-		return (DOIO_HARD);
 	}
 
 	/*

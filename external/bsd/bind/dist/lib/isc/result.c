@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.3.12.2 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: result.c,v 1.3.12.2.2.1 2016/10/14 11:42:48 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -106,6 +106,7 @@ static const char *description[ISC_R_NRESULTS] = {
 	"bad base32 encoding",			/*%< 60 */
 	"unset",				/*%< 61 */
 	"multiple",				/*%< 62 */
+	"would block",				/*%< 63 */
 };
 
 #define ISC_RESULT_RESULTSET			2

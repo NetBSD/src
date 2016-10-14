@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- - Copyright (C) 2006-2009, 2012-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2006-2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -52,7 +52,7 @@
 
             function loadGraphs(){
               var g;
-    
+
               while(g = graphs.shift()){
                 // alert("going for: " + g.target);
                 if(g.data.length > 1){
@@ -62,7 +62,7 @@
             }
 
             <xsl:if test="server/counters[@type=&quot;qtype&quot;]/counter">
-              // Server Incoming Query Types         
+              // Server Incoming Query Types
               graphs.push({
                            'title' : "Server Incoming Query Types",
                            'target': 'chart_incoming_qtypes',
@@ -70,7 +70,7 @@
                            'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;qtype&quot;]/counter">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
                            });
             </xsl:if>
-  
+
             <xsl:if test="server/counters[@type=&quot;opcode&quot;]/counter">
               // Server Incoming Requests by opcode
               graphs.push({

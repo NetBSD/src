@@ -1,4 +1,4 @@
-/*	$NetBSD: spnego.c,v 1.7.6.1 2016/03/13 08:00:35 martin Exp $	*/
+/*	$NetBSD: spnego.c,v 1.7.6.2 2016/10/14 11:42:46 martin Exp $	*/
 
 /*
  * Copyright (C) 2006-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -1516,7 +1516,7 @@ spnego_initial(OM_uint32 *minor_status,
 	gss_buffer_desc	krb5_output_token = GSS_C_EMPTY_BUFFER;
 	unsigned char *buf = NULL;
 	size_t buf_size;
-	size_t len;
+	size_t len = 0;	/* XXX: gcc */
 	int ret;
 
 	(void)mech_type;

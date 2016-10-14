@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@ rm -f ns1/*.jnl ns1/update.txt ns1/auth.sock
 rm -f ns1/*.db ns1/K*.key ns1/K*.private
 rm -f ns1/_default.tsigkeys
 rm -f */named.memstats
+rm -f */named.run
 rm -f authsock.pid
 rm -f ns1/core
 rm -f nsupdate.out

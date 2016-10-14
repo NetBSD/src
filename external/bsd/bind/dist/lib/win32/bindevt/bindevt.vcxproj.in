@@ -60,7 +60,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;BINDEVT_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\include;..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>

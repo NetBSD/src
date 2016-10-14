@@ -1,7 +1,7 @@
-/*	$NetBSD: assertions.h,v 1.5 2012/06/05 00:42:33 christos Exp $	*/
+/*	$NetBSD: assertions.h,v 1.5.14.1 2016/10/14 11:42:49 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1997-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -85,7 +85,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_REQUIRE != 0
 #define ISC_REQUIRE(cond) \
-	((void) (/*CONSTCOND*/(cond) || \
+	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_require, \
 					 #cond), 0)))
@@ -95,7 +95,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_ENSURE != 0
 #define ISC_ENSURE(cond) \
-	((void) (/*CONSTCOND*/(cond) || \
+	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_ensure, \
 					 #cond), 0)))
@@ -105,7 +105,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_INSIST != 0
 #define ISC_INSIST(cond) \
-	((void) (/*CONSTCOND*/(cond) || \
+	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_insist, \
 					 #cond), 0)))
@@ -115,7 +115,7 @@ isc_assertion_typetotext(isc_assertiontype_t type);
 
 #if ISC_CHECK_INVARIANT != 0
 #define ISC_INVARIANT(cond) \
-	((void) (/*CONSTCOND*/(cond) || \
+	((void) (/*CONSTCOND*/ISC_LIKELY(cond) || \
 		 ((isc_assertion_failed)(__FILE__, __LINE__, \
 					 isc_assertiontype_invariant, \
 					 #cond), 0)))

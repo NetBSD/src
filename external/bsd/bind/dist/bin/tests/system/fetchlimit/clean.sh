@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-rm -f */named.memstats */ans.run */named.recursing
+rm -f */named.memstats */ans.run */named.recursing */named.run
 rm -f dig.out*
 rm -f ans4/norespond
 rm -f ns3/named.conf ns3/named.stats ns3/named_dump.db

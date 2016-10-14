@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.6.6.1 2016/03/13 08:00:25 martin Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.6.6.2 2016/10/14 11:42:26 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,7 @@ dns_zone_t *zone = NULL;
 dns_zonetype_t zonetype = dns_zone_master;
 static int dumpzone = 0;
 static const char *output_filename;
-static char *prog_name = NULL;
+static const char *prog_name = NULL;
 static const dns_master_style_t *outputstyle = NULL;
 static enum { progmode_check, progmode_compile } progmode;
 

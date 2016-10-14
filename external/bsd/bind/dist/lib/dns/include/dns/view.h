@@ -1,7 +1,7 @@
-/*	$NetBSD: view.h,v 1.9.2.1 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: view.h,v 1.9.2.1.2.1 2016/10/14 11:42:47 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1133,6 +1133,12 @@ dns_view_untrust(dns_view_t *view, dns_name_t *keyname,
 /*%<
  * Remove keys that match 'keyname' and 'dnskey' from the views trust
  * anchors.
+ *
+ * (NOTE: If the configuration specifies that there should be a
+ * trust anchor at 'keyname', but no keys are left after this
+ * operation, that is an error.  We fail closed, inserting a NULL
+ * key so as to prevent validation until a legimitate key has been
+ * provided.)
  *
  * Requires:
  * \li	'view' is valid.

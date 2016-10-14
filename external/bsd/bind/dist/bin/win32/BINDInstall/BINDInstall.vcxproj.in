@@ -59,7 +59,7 @@
       <AdditionalIncludeDirectories>..\..\..;..\include;..\..\..\include;..\..\named\win32\include;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>
       </StringPooling>
-      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(TargetName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderFile>stdafx.h</PrecompiledHeaderFile>
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>

@@ -1,7 +1,7 @@
-/*	$NetBSD: named-rrchecker.c,v 1.1.1.1.10.1 2016/03/13 08:00:32 martin Exp $	*/
+/*	$NetBSD: named-rrchecker.c,v 1.1.1.1.10.2 2016/10/14 11:42:40 martin Exp $	*/
 
 /*
- * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -42,13 +42,15 @@ static isc_lexspecials_t specials;
 
 static void
 usage(void) {
-	fprintf(stderr, "usage: named-rrchecker [-o origin] [-hpCPT]\n");
+	fprintf(stderr, "usage: named-rrchecker [-o origin] [-hpCPTu]\n");
 	fprintf(stderr, "\t-h: print this help message\n");
-	fprintf(stderr, "\t-o origin: set origin to be used when interpeting the record\n");
-	fprintf(stderr, "\t-p: print the record in cannonical format\n");
+	fprintf(stderr, "\t-o origin: set origin to be used when "
+			"interpeting the record\n");
+	fprintf(stderr, "\t-p: print the record in canonical format\n");
 	fprintf(stderr, "\t-C: list the supported class names\n");
-	fprintf(stderr, "\t-T: list the supported standard type names\n");
 	fprintf(stderr, "\t-P: list the supported private type names\n");
+	fprintf(stderr, "\t-T: list the supported standard type names\n");
+	fprintf(stderr, "\t-u: print the record in unknown record format\n");
 }
 
 int

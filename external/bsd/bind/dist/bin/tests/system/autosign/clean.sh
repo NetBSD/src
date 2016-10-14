@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@ rm -f nsupdate.out
 rm -f */core
 rm -f */example.bk
 rm -f */named.memstats
+rm -f */named.run
 rm -f dig.out.*
 rm -f ns1/root.db
 rm -f ns2/example.db
