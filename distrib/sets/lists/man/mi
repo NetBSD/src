@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1536 2016/10/03 18:59:41 rkujawa Exp $
+# $NetBSD: mi,v 1.1537 2016/10/14 16:09:45 spz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3525,8 +3525,10 @@
 ./usr/share/man/html1/openssl.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_CA.pl.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_asn1parse.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_c_rehash.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ca.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_ciphers.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_cms.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_crl.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_crl2pkcs7.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_dgst.html		man-crypto-htmlman	crypto,html
@@ -3538,12 +3540,16 @@
 ./usr/share/man/html1/openssl_enc.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_errstr.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_gendsa.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_genpkey.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_genrsa.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_nseq.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_passwd.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_pkcs12.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_pkcs7.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_pkcs8.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_pkey.html		man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_pkeyparam.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_pkeyutl.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_rand.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_req.html		man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_rsa.html		man-crypto-htmlman	crypto,html
@@ -3555,6 +3561,8 @@
 ./usr/share/man/html1/openssl_smime.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_speed.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_spkac.html	man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_ts.html		man-crypto-htmlman	crypto,html
+./usr/share/man/html1/openssl_tsget.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_verify.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_version.html	man-crypto-htmlman	crypto,html
 ./usr/share/man/html1/openssl_x509.html		man-crypto-htmlman	crypto,html
@@ -6321,8 +6329,10 @@
 ./usr/share/man/man1/openssl.1			man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_c_rehash.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ca.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_ciphers.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_cms.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_crl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_crl2pkcs7.1	man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_dgst.1		man-crypto-man		crypto,.man
@@ -6334,12 +6344,16 @@
 ./usr/share/man/man1/openssl_enc.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_errstr.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_gendsa.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_genpkey.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_genrsa.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_nseq.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_passwd.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_pkcs12.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_pkcs7.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_pkcs8.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_pkey.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_pkeyparam.1	man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_pkeyutl.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_rand.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_req.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_rsa.1		man-crypto-man		crypto,.man
@@ -6351,6 +6365,8 @@
 ./usr/share/man/man1/openssl_smime.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_speed.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_spkac.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_ts.1		man-crypto-man		crypto,.man
+./usr/share/man/man1/openssl_tsget.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_verify.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_version.1		man-crypto-man		crypto,.man
 ./usr/share/man/man1/openssl_x509.1		man-crypto-man		crypto,.man
