@@ -145,10 +145,10 @@ IMPLEMENT_ASN1_FUNCTIONS(X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
+                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc)
 {
     return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509, argl, argp,
-                                   new_func, dup_func, free_func);
+                                   new_func, dup_func, freefunc);
 }
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
