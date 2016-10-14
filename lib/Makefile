@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.247 2016/10/11 17:02:28 macallan Exp $
+#	$NetBSD: Makefile,v 1.248 2016/10/14 17:29:29 macallan Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -40,7 +40,7 @@ LIBC_MACHINE_CPU?=${MACHINE_CPU}
 SUBDIR+=	libc_vfp
 .endif
 .endif
-.if ${MACHINE_CPU} == "mips"
+.if ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
 SUBDIR+=	libc_fp
 .endif
 .if (${MKRUMP} != "no")
