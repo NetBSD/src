@@ -3219,6 +3219,7 @@ ctz (unsigned int mask)
 #endif
 }
 
+#ifndef __NetBSD__
 static inline int
 popcount (unsigned int mask)
 {
@@ -3236,6 +3237,7 @@ popcount (unsigned int mask)
   return sum;
 #endif
 }
+#endif
 
 /* Create an entry in an ARM ELF linker hash table.  */
 
