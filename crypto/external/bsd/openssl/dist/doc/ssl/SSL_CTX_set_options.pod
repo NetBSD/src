@@ -189,7 +189,7 @@ browser has a cert, it will crash/hang.  Works for 3.x and 4.xbeta
 =item SSL_OP_NO_SSLv2
 
 Do not use the SSLv2 protocol.
-As of OpenSSL 1.0.1s the B<SSL_OP_NO_SSLv2> option is set by default.
+As of OpenSSL 1.0.2g the B<SSL_OP_NO_SSLv2> option is set by default.
 
 =item SSL_OP_NO_SSLv3
 
