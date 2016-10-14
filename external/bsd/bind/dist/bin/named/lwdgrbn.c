@@ -1,7 +1,7 @@
-/*	$NetBSD: lwdgrbn.c,v 1.5 2014/03/01 03:24:32 christos Exp $	*/
+/*	$NetBSD: lwdgrbn.c,v 1.5.4.1 2016/10/14 12:01:10 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -186,7 +186,7 @@ iterate_node(lwres_grbnresponse_t *grbn, dns_db_t *db, dns_dbnode_t *node,
 	if (oldlens != NULL)
 		isc_mem_put(mctx, oldlens, oldsize * sizeof(*oldlens));
 	if (newrdatas != NULL)
-		isc_mem_put(mctx, newrdatas, used * sizeof(*oldrdatas));
+		isc_mem_put(mctx, newrdatas, used * sizeof(*newrdatas));
 	return (result);
 }
 
@@ -405,14 +405,18 @@ start_lookup(ns_lwdclient_t *client) {
 	INSIST(client->lookup == NULL);
 
 	dns_fixedname_init(&absname);
-	result = ns_lwsearchctx_current(&client->searchctx,
-					dns_fixedname_name(&absname));
+
 	/*
-	 * This will return failure if relative name + suffix is too long.
-	 * In this case, just go on to the next entry in the search path.
+	 * Perform search across all search domains until success
+	 * is returned. Return in case of failure.
 	 */
-	if (result != ISC_R_SUCCESS)
-		start_lookup(client);
+	while (ns_lwsearchctx_current(&client->searchctx,
+			dns_fixedname_name(&absname)) != ISC_R_SUCCESS) {
+		if (ns_lwsearchctx_next(&client->searchctx) != ISC_R_SUCCESS) {
+			ns_lwdclient_errorpktsend(client, LWRES_R_FAILURE);
+			return;
+		}
+	}
 
 	result = dns_lookup_create(cm->mctx,
 				   dns_fixedname_name(&absname),

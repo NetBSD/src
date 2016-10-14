@@ -1,7 +1,7 @@
-/*	$NetBSD: cds_59.h,v 1.1.1.3.2.2 2014/12/22 03:28:45 msaitoh Exp $	*/
+/*	$NetBSD: cds_59.h,v 1.1.1.3.2.3 2016/10/14 12:01:29 martin Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -20,14 +20,6 @@
 #define GENERIC_CDS_59_H 1
 
 /* CDS records have the same RDATA fields as DS records. */
-typedef struct dns_rdata_cds {
-	dns_rdatacommon_t	common;
-	isc_mem_t		*mctx;
-	isc_uint16_t		key_tag;
-	isc_uint8_t		algorithm;
-	isc_uint8_t		digest_type;
-	isc_uint16_t		length;
-	unsigned char		*digest;
-} dns_rdata_cds_t;
+typedef struct dns_rdata_ds dns_rdata_cds_t;
 
 #endif /* GENERIC_CDS_59_H */

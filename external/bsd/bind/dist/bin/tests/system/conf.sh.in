@@ -66,7 +66,7 @@ RANDFILE=$TOP/bin/tests/system/random.data
 # v6synth
 SUBDIRS="acl additional allow_query addzone autosign builtin
 	 cacheclean case checkconf @CHECKDS@ checknames checkzone
-	 @COVERAGE@ database delv dlv dlvauto dlz dlzexternal
+	 @COVERAGE@ database delv digdelv dlv dlvauto dlz dlzexternal
 	 dlzredir dname dns64 dnssec dsdigest dscp
 	 ecdsa ednscompliance emptyzones
 	 fetchlimit filter-aaaa formerr forward
@@ -103,8 +103,25 @@ else
 	TESTSOCK6=false
 fi
 
+if grep "^#define WANT_IPV6 1" $TOP/config.h > /dev/null 2>&1 ; then
+        TESTSOCK6="$TESTSOCK6"
+else
+        TESTSOCK6=false
+fi
+
+
+PYTHON=@PYTHON@
+
+#
+# Determine if we support various optional features.
+#
+CHECK_DSA=@CHECK_DSA@
+XMLSTATS=@XMLSTATS@
+JSONSTATS=@JSONSTATS@
+ZLIB=@ZLIB@
+
 . ${TOP}/version
 
 export NAMED LWRESD DIG NSUPDATE KEYGEN KEYFRLAB SIGNER KEYSIGNER KEYSETTOOL \
        PERL SUBDIRS RNDC CHECKZONE PK11GEN PK11LIST PK11DEL TESTSOCK6 \
-       JOURNALPRINT ARPANAME RESOLVE RRCHECKER NSLOOKUP DESCRIPTION
+       JOURNALPRINT ARPANAME RESOLVE RRCHECKER NSLOOKUP DESCRIPTION PYTHON

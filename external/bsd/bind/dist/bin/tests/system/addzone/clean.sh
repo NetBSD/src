@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,3 +25,4 @@ rm -f ns2/core*
 rm -f ns2/inline.db.jbk
 rm -f ns2/inline.db.signed
 rm -f ns2/inlineslave.bk*
+rm -f ns*/named.run

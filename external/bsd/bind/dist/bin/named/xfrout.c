@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.6.4.3 2016/03/13 08:06:03 martin Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.6.4.4 2016/10/14 12:01:10 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -1186,7 +1186,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->txmem = NULL;
 	xfr->txmemlen = 0;
 	xfr->nmsg = 0;
-	xfr->many_answers = many_answers,
+	xfr->many_answers = many_answers;
 	xfr->sends = 0;
 	xfr->shuttingdown = ISC_FALSE;
 	xfr->mnemonic = NULL;
@@ -1278,6 +1278,7 @@ sendstream(xfrout_ctx_t *xfr) {
 	dns_rdataset_t *msgrds = NULL;
 	dns_compress_t cctx;
 	isc_boolean_t cleanup_cctx = ISC_FALSE;
+	isc_boolean_t is_tcp;
 
 	int n_rrs;
 
@@ -1285,7 +1286,8 @@ sendstream(xfrout_ctx_t *xfr) {
 	isc_buffer_clear(&xfr->txlenbuf);
 	isc_buffer_clear(&xfr->txbuf);
 
-	if ((xfr->client->attributes & NS_CLIENTATTR_TCP) == 0) {
+	is_tcp = ISC_TF((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0);
+	if (!is_tcp) {
 		/*
 		 * In the UDP case, we put the response data directly into
 		 * the client message.
@@ -1487,9 +1489,17 @@ sendstream(xfrout_ctx_t *xfr) {
 
 		if (! xfr->many_answers)
 			break;
+		/*
+		 * At this stage, at least 1 RR has been rendered into
+		 * the message. Check if we want to clamp this message
+		 * here (TCP only). 20480 was set as an upper limit to
+		 * improve message compression.
+		 */
+		if ((isc_buffer_usedlength(&xfr->buf) >= 20480) && is_tcp)
+			break;
 	}
 
-	if ((xfr->client->attributes & NS_CLIENTATTR_TCP) != 0) {
+	if (is_tcp) {
 		CHECK(dns_compress_init(&cctx, -1, xfr->mctx));
 		dns_compress_setsensitive(&cctx, ISC_TRUE);
 		cleanup_cctx = ISC_TRUE;

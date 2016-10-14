@@ -1,7 +1,7 @@
-/*	$NetBSD: rdata_test.c,v 1.3 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.3.2.1 2016/10/14 12:01:30 martin Exp $	*/
 
 /*
- * Copyright (C) 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2013, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,12 +26,13 @@
 
 #include <unistd.h>
 
+#include <isc/lex.h>
 #include <isc/types.h>
 
+#include <dns/callbacks.h>
 #include <dns/rdata.h>
 
 #include "dnstest.h"
-
 
 /*
  * Individual unit tests
@@ -203,7 +204,7 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 		}
 	};
 	unsigned char buf[1024*1024];
-	isc_buffer_t source, target;
+	isc_buffer_t source, target1;
 	dns_rdata_t rdata;
 	dns_decompress_t dctx;
 	isc_result_t result;
@@ -215,17 +216,17 @@ ATF_TC_BODY(edns_client_subnet, tc) {
 		isc_buffer_init(&source, test_data[i].data, test_data[i].len);
 		isc_buffer_add(&source, test_data[i].len);
 		isc_buffer_setactive(&source, test_data[i].len);
-		isc_buffer_init(&target, buf, sizeof(buf));
+		isc_buffer_init(&target1, buf, sizeof(buf));
 		dns_rdata_init(&rdata);
 		dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
 		result = dns_rdata_fromwire(&rdata, dns_rdataclass_in,
 					    dns_rdatatype_opt, &source,
-					    &dctx, 0, &target);
+					    &dctx, 0, &target1);
 		dns_decompress_invalidate(&dctx);
 		if (test_data[i].ok)
-			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
 		else
-			ATF_REQUIRE(result != ISC_R_SUCCESS);
+			ATF_CHECK(result != ISC_R_SUCCESS);
 	}
 }
 
@@ -377,6 +378,238 @@ ATF_TC_BODY(isdn, tc) {
 	}
 }
 
+static void
+error_callback(dns_rdatacallbacks_t *callbacks, const char *fmt, ...) {
+	UNUSED(callbacks);
+	UNUSED(fmt);
+}
+
+static void
+warn_callback(dns_rdatacallbacks_t *callbacks, const char *fmt, ...) {
+	UNUSED(callbacks);
+	UNUSED(fmt);
+}
+
+ATF_TC(nsec);
+ATF_TC_HEAD(nsec, tc) {
+	atf_tc_set_md_var(tc, "descr", "nsec to/from text/wire");
+}
+ATF_TC_BODY(nsec, tc) {
+	struct {
+		const char *data;
+		isc_boolean_t ok;
+	} text_data[] = {
+		{ "", ISC_FALSE },
+		{ ".", ISC_FALSE },
+		{ ". RRSIG", ISC_TRUE },
+		{ NULL, ISC_FALSE },
+	};
+	struct {
+		unsigned char data[64];
+		size_t len;
+		isc_boolean_t ok;
+	} wire_data[] = {
+		{ { 0x00 }, 0,  ISC_FALSE },
+		{ { 0x00 }, 1, ISC_FALSE },
+		{ { 0x00, 0x00 }, 2, ISC_FALSE },
+		{ { 0x00, 0x00, 0x00 }, 3, ISC_FALSE },
+		{ { 0x00, 0x00, 0x01, 0x02 }, 4, ISC_TRUE }
+	};
+	unsigned char buf1[1024], buf2[1024];
+	isc_buffer_t source, target1, target2;
+	isc_result_t result;
+	size_t i;
+	dns_rdataclass_t rdclass = dns_rdataclass_in;
+	dns_rdatatype_t type = dns_rdatatype_nsec;
+	isc_lex_t *lex = NULL;
+	dns_rdatacallbacks_t callbacks;
+	dns_rdata_nsec_t nsec;
+	dns_decompress_t dctx;
+
+	UNUSED(tc);
+
+	result = dns_test_begin(NULL, ISC_FALSE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = isc_lex_create(mctx, 64, &lex);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	dns_rdatacallbacks_init(&callbacks);
+	callbacks.error = error_callback;
+	callbacks.warn = warn_callback;
+
+	for (i = 0; text_data[i].data != NULL; i++) {
+		size_t length = strlen(text_data[i].data);
+		isc_buffer_constinit(&source, text_data[i].data, length);
+		isc_buffer_add(&source, length);
+		result = isc_lex_openbuffer(lex, &source);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+		isc_buffer_init(&target1, buf1, sizeof(buf1));
+
+		result = dns_rdata_fromtext(NULL, rdclass, type, lex,
+					    dns_rootname, 0, NULL, &target1,
+					    &callbacks);
+		if (text_data[i].ok)
+			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		else
+			ATF_CHECK(result != ISC_R_SUCCESS);
+	}
+	isc_lex_destroy(&lex);
+
+	for (i = 0; i < sizeof(wire_data)/sizeof(wire_data[0]); i++) {
+		dns_rdata_t rdata = DNS_RDATA_INIT;
+
+		isc_buffer_init(&source, wire_data[i].data, wire_data[i].len);
+		isc_buffer_add(&source, wire_data[i].len);
+		isc_buffer_setactive(&source, wire_data[i].len);
+		isc_buffer_init(&target1, buf1, sizeof(buf1));
+		dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
+		result = dns_rdata_fromwire(&rdata, rdclass, type, &source,
+					    &dctx, 0, &target1);
+		dns_decompress_invalidate(&dctx);
+		if (wire_data[i].ok)
+			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		else
+			ATF_REQUIRE(result != ISC_R_SUCCESS);
+		if (result != ISC_R_SUCCESS)
+			continue;
+		result = dns_rdata_tostruct(&rdata, &nsec, NULL);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		isc_buffer_init(&target2, buf2, sizeof(buf2));
+		dns_rdata_reset(&rdata);
+		result = dns_rdata_fromstruct(&rdata, rdclass, type,
+					      &nsec, &target2);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		ATF_REQUIRE_EQ(isc_buffer_usedlength(&target2),
+						     wire_data[i].len);
+		ATF_REQUIRE_EQ(memcmp(buf2, wire_data[i].data,
+				      wire_data[i].len), 0);
+	}
+}
+
+ATF_TC(csync);
+ATF_TC_HEAD(csync, tc) {
+	atf_tc_set_md_var(tc, "descr", "csync to/from struct");
+}
+ATF_TC_BODY(csync, tc) {
+	struct {
+		const char *data;
+		isc_boolean_t ok;
+	} text_data[] = {
+		{ "", ISC_FALSE },
+		{ "0", ISC_FALSE },
+		{ "0 0", ISC_TRUE },
+		{ "0 0 A", ISC_TRUE },
+		{ "0 0 NS", ISC_TRUE },
+		{ "0 0 AAAA", ISC_TRUE },
+		{ "0 0 A AAAA", ISC_TRUE },
+		{ "0 0 A NS AAAA", ISC_TRUE },
+		{ "0 0 A NS AAAA BOGUS", ISC_FALSE },
+		{ NULL, ISC_FALSE },
+	};
+	struct {
+		unsigned char data[64];
+		size_t len;
+		isc_boolean_t ok;
+	} wire_data[] = {
+		/* short */
+		{ { 0x00 }, 0,  ISC_FALSE },
+		/* short */
+		{ { 0x00 }, 1, ISC_FALSE },
+		/* short */
+		{ { 0x00, 0x00 }, 2, ISC_FALSE },
+		/* short */
+		{ { 0x00, 0x00, 0x00 }, 3, ISC_FALSE },
+		/* short */
+		{ { 0x00, 0x00, 0x00, 0x00 }, 4, ISC_FALSE },
+		/* short */
+		{ { 0x00, 0x00, 0x00, 0x00, 0x00 }, 5, ISC_FALSE },
+		/* serial + flags only  */
+		{ { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, 6, ISC_TRUE },
+		/* bad type map */
+		{ { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, 7, ISC_FALSE },
+		/* bad type map */
+		{ { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
+		    8, ISC_FALSE },
+		/* good type map */
+		{ { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02 },
+		    9, ISC_TRUE }
+	};
+	unsigned char buf1[1024];
+	unsigned char buf2[1024];
+	isc_buffer_t source, target1, target2;
+	isc_result_t result;
+	size_t i;
+	dns_rdataclass_t rdclass = dns_rdataclass_in;
+	dns_rdatatype_t type = dns_rdatatype_csync;
+	isc_lex_t *lex = NULL;
+	dns_rdatacallbacks_t callbacks;
+	dns_rdata_csync_t csync;
+	dns_decompress_t dctx;
+
+	UNUSED(tc);
+
+	result = dns_test_begin(NULL, ISC_FALSE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = isc_lex_create(mctx, 64, &lex);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	dns_rdatacallbacks_init(&callbacks);
+	callbacks.error = error_callback;
+	callbacks.warn = warn_callback;
+
+	for (i = 0; text_data[i].data != NULL; i++) {
+		size_t length = strlen(text_data[i].data);
+		isc_buffer_constinit(&source, text_data[i].data, length);
+		isc_buffer_add(&source, length);
+		result = isc_lex_openbuffer(lex, &source);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+		isc_buffer_init(&target1, buf1, sizeof(buf1));
+
+		result = dns_rdata_fromtext(NULL, rdclass, type, lex,
+					    dns_rootname, 0, NULL, &target1,
+					    &callbacks);
+		if (text_data[i].ok)
+			ATF_CHECK_EQ(result, ISC_R_SUCCESS);
+		else
+			ATF_CHECK(result != ISC_R_SUCCESS);
+	}
+	isc_lex_destroy(&lex);
+
+	for (i = 0; i < sizeof(wire_data)/sizeof(wire_data[0]); i++) {
+		dns_rdata_t rdata = DNS_RDATA_INIT;
+
+		isc_buffer_init(&source, wire_data[i].data, wire_data[i].len);
+		isc_buffer_add(&source, wire_data[i].len);
+		isc_buffer_setactive(&source, wire_data[i].len);
+		isc_buffer_init(&target1, buf1, sizeof(buf1));
+		dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_ANY);
+		result = dns_rdata_fromwire(&rdata, rdclass, type, &source,
+					    &dctx, 0, &target1);
+		dns_decompress_invalidate(&dctx);
+		if (wire_data[i].ok)
+			ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		else
+			ATF_REQUIRE(result != ISC_R_SUCCESS);
+		if (result != ISC_R_SUCCESS)
+			continue;
+		result = dns_rdata_tostruct(&rdata, &csync, NULL);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		isc_buffer_init(&target2, buf2, sizeof(buf2));
+		dns_rdata_reset(&rdata);
+		result = dns_rdata_fromstruct(&rdata, rdclass, type,
+					      &csync, &target2);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+		ATF_REQUIRE_EQ(isc_buffer_usedlength(&target2),
+						     wire_data[i].len);
+		ATF_REQUIRE_EQ(memcmp(buf2, wire_data[i].data,
+				      wire_data[i].len), 0);
+	}
+}
+
 /*
  * Main
  */
@@ -385,7 +618,8 @@ ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, edns_client_subnet);
 	ATF_TP_ADD_TC(tp, wks);
 	ATF_TP_ADD_TC(tp, isdn);
+	ATF_TP_ADD_TC(tp, nsec);
+	ATF_TP_ADD_TC(tp, csync);
 
 	return (atf_no_error());
 }
-

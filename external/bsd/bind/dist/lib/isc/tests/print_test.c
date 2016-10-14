@@ -1,4 +1,4 @@
-/*	$NetBSD: print_test.c,v 1.1.1.3.2.4 2016/03/13 08:06:15 martin Exp $	*/
+/*	$NetBSD: print_test.c,v 1.1.1.3.2.5 2016/10/14 12:01:32 martin Exp $	*/
 
 /*
  * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -119,6 +119,12 @@ ATF_TC_BODY(snprintf, tc) {
 	n = isc_print_snprintf(buf, sizeof(buf), "%zo", size);
 	ATF_CHECK_EQ(n, 4);
 	ATF_CHECK_STREQ(buf, "1750");
+
+	zz = 0xf5f5f5f5f5f5f5f5LLU;
+	memset(buf, 0xff, sizeof(buf));
+	n = isc_print_snprintf(buf, sizeof(buf), "0x%"ISC_PRINT_QUADFORMAT"x", zz);
+	ATF_CHECK_EQ(n, 18);
+	ATF_CHECK_STREQ(buf, "0xf5f5f5f5f5f5f5f5");
 }
 
 ATF_TC(fprintf);

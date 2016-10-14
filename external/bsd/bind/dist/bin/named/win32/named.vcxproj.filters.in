@@ -177,6 +177,9 @@
     <ClInclude Include="..\include\named\query.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\named\seccomp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\named\server.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.10.2.2 2016/03/13 08:06:15 martin Exp $	*/
+/*	$NetBSD: task.c,v 1.10.2.3 2016/10/14 12:01:31 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 /*! \file
  * \author Principal Author: Bob Halley
@@ -1647,11 +1645,11 @@ isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
 void
 isc__taskmgr_pause(isc_taskmgr_t *manager0) {
 	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	manager->pause_requested = ISC_TRUE;
 	LOCK(&manager->lock);
 	while (manager->tasks_running > 0) {
 		WAIT(&manager->paused, &manager->lock);
 	}
-	manager->pause_requested = ISC_TRUE;
 	UNLOCK(&manager->lock);
 }
 

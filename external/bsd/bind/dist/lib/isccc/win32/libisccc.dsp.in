@@ -184,6 +184,10 @@ SOURCE=..\include\isccc\types.h
 
 SOURCE=..\include\isccc\util.h
 # End Source File
+# Begin Source File
+
+SOURCE=..\include\isccc\version.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.4.4.1 2016/03/13 08:06:15 martin Exp $	*/
+/*	$NetBSD: stats.c,v 1.4.4.2 2016/10/14 12:01:31 martin Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -37,13 +37,45 @@
 #define ISC_STATS_MAGIC			ISC_MAGIC('S', 't', 'a', 't')
 #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
-#ifndef ISC_STATS_USEMULTIFIELDS
-#if defined(ISC_RWLOCK_USEATOMIC) && defined(ISC_PLATFORM_HAVEXADD) && !defined(ISC_PLATFORM_HAVEXADDQ)
+/*%
+ * Local macro confirming prescence of 64-bit
+ * increment and store operations, just to make
+ * the later macros simpler
+ */
+#if defined(ISC_PLATFORM_HAVEXADDQ) && defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
+#define ISC_STATS_HAVEATOMICQ 1
+#else
+#define ISC_STATS_HAVEATOMICQ 0
+#endif
+
+/*%
+ * Only lock the counters if 64-bit atomic operations are
+ * not available but cheap atomic lock operations are.
+ * On a modern 64-bit system this should never be the case.
+ *
+ * Normal locks are too expensive to be used whenever a counter
+ * is updated.
+ */
+#if !ISC_STATS_HAVEATOMICQ && defined(ISC_RWLOCK_HAVEATOMIC)
+#define ISC_STATS_LOCKCOUNTERS 1
+#else
+#define ISC_STATS_LOCKCOUNTERS 0
+#endif
+
+/*%
+ * If 64-bit atomic operations are not available but
+ * 32-bit operations are then split the counter into two,
+ * using the atomic operations to try to ensure that any carry
+ * from the low word is correctly carried into the high word.
+ *
+ * Otherwise, just rely on standard 64-bit data types
+ * and operations
+ */
+#if !ISC_STATS_HAVEATOMICQ && defined(ISC_PLATFORM_HAVEXADD)
 #define ISC_STATS_USEMULTIFIELDS 1
 #else
 #define ISC_STATS_USEMULTIFIELDS 0
 #endif
-#endif	/* ISC_STATS_USEMULTIFIELDS */
 
 #if ISC_STATS_USEMULTIFIELDS
 typedef struct {
@@ -67,7 +99,7 @@ struct isc_stats {
 	 * Locked by counterlock or unlocked if efficient rwlock is not
 	 * available.
 	 */
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_t	counterlock;
 #endif
 	isc_stat_t	*counters;
@@ -113,7 +145,7 @@ create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 		goto clean_counters;
 	}
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	result = isc_rwlock_init(&stats->counterlock, 0, 0);
 	if (result != ISC_R_SUCCESS)
 		goto clean_copiedcounters;
@@ -133,7 +165,7 @@ create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 clean_counters:
 	isc_mem_put(mctx, stats->counters, sizeof(isc_stat_t) * ncounters);
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 clean_copiedcounters:
 	isc_mem_put(mctx, stats->copiedcounters,
 		    sizeof(isc_stat_t) * ncounters);
@@ -179,7 +211,7 @@ isc_stats_detach(isc_stats_t **statsp) {
 			    sizeof(isc_stat_t) * stats->ncounters);
 		UNLOCK(&stats->lock);
 		DESTROYLOCK(&stats->lock);
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 		isc_rwlock_destroy(&stats->counterlock);
 #endif
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
@@ -200,7 +232,7 @@ static inline void
 incrementcounter(isc_stats_t *stats, int counter) {
 	isc_int32_t prev;
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	/*
 	 * We use a "read" lock to prevent other threads from reading the
 	 * counter while we "writing" a counter field.  The write access itself
@@ -221,7 +253,7 @@ incrementcounter(isc_stats_t *stats, int counter) {
 	 */
 	if (prev == (isc_int32_t)0xffffffff)
 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi, 1);
-#elif defined(ISC_PLATFORM_HAVEXADDQ)
+#elif ISC_STATS_HAVEATOMICQ
 	UNUSED(prev);
 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], 1);
 #else
@@ -229,7 +261,7 @@ incrementcounter(isc_stats_t *stats, int counter) {
 	stats->counters[counter]++;
 #endif
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_read);
 #endif
 }
@@ -238,7 +270,7 @@ static inline void
 decrementcounter(isc_stats_t *stats, int counter) {
 	isc_int32_t prev;
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_lock(&stats->counterlock, isc_rwlocktype_read);
 #endif
 
@@ -247,7 +279,7 @@ decrementcounter(isc_stats_t *stats, int counter) {
 	if (prev == 0)
 		isc_atomic_xadd((isc_int32_t *)&stats->counters[counter].hi,
 				-1);
-#elif defined(ISC_PLATFORM_HAVEXADDQ)
+#elif ISC_STATS_HAVEATOMICQ
 	UNUSED(prev);
 	isc_atomic_xaddq((isc_int64_t *)&stats->counters[counter], -1);
 #else
@@ -255,7 +287,7 @@ decrementcounter(isc_stats_t *stats, int counter) {
 	stats->counters[counter]--;
 #endif
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_read);
 #endif
 }
@@ -264,7 +296,7 @@ static void
 copy_counters(isc_stats_t *stats) {
 	int i;
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	/*
 	 * We use a "write" lock before "reading" the statistics counters as
 	 * an exclusive lock.
@@ -272,19 +304,21 @@ copy_counters(isc_stats_t *stats) {
 	isc_rwlock_lock(&stats->counterlock, isc_rwlocktype_write);
 #endif
 
-#if ISC_STATS_USEMULTIFIELDS
 	for (i = 0; i < stats->ncounters; i++) {
+#if ISC_STATS_USEMULTIFIELDS
 		stats->copiedcounters[i] =
-				(isc_uint64_t)(stats->counters[i].hi) << 32 |
-				stats->counters[i].lo;
-	}
+			(isc_uint64_t)(stats->counters[i].hi) << 32 |
+			stats->counters[i].lo;
+#elif ISC_STATS_HAVEATOMICQ
+		/* use xaddq(..., 0) as an atomic load */
+		stats->copiedcounters[i] =
+			(isc_uint64_t)isc_atomic_xaddq((isc_int64_t *)&stats->counters[i], 0);
 #else
-	UNUSED(i);
-	memmove(stats->copiedcounters, stats->counters,
-		stats->ncounters * sizeof(isc_stat_t));
+		stats->copiedcounters[i] = stats->counters[i];
 #endif
+	}
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_write);
 #endif
 }
@@ -337,7 +371,7 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
 	REQUIRE(ISC_STATS_VALID(stats));
 	REQUIRE(counter < stats->ncounters);
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	/*
 	 * We use a "write" lock before "reading" the statistics counters as
 	 * an exclusive lock.
@@ -348,11 +382,13 @@ isc_stats_set(isc_stats_t *stats, isc_uint64_t val,
 #if ISC_STATS_USEMULTIFIELDS
 	stats->counters[counter].hi = (isc_uint32_t)((val >> 32) & 0xffffffff);
 	stats->counters[counter].lo = (isc_uint32_t)(val & 0xffffffff);
+#elif ISC_STATS_HAVEATOMICQ
+	isc_atomic_storeq((isc_int64_t *)&stats->counters[counter], val);
 #else
 	stats->counters[counter] = val;
 #endif
 
-#ifdef ISC_RWLOCK_USEATOMIC
+#if ISC_STATS_LOCKCOUNTERS
 	isc_rwlock_unlock(&stats->counterlock, isc_rwlocktype_write);
 #endif
 }

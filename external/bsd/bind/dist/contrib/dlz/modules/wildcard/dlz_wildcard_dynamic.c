@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.2 2014/07/08 05:43:39 spz Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.2.2.1 2016/10/14 12:01:23 martin Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -262,6 +262,8 @@ dlz_lookup(const char *zone, const char *name,
 	{
 		size_t len = p - zone;
 		namebuf = malloc(len);
+		if (namebuf == NULL)
+			return (ISC_R_NOMEMORY);
 		strncpy(namebuf, zone, len - 1);
 		namebuf[len - 1] = '\0';
 		cd->record = namebuf;
@@ -434,12 +436,11 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 	DLZ_LIST_INIT(cd->rrs_list);
 
 	cd->zone_pattern = strdup(argv[1]);
-	if (cd->zone_pattern == NULL)
-		goto cleanup;
-
 	cd->axfr_pattern = strdup(argv[2]);
-	if (cd->axfr_pattern == NULL)
+	if (cd->zone_pattern == NULL || cd->axfr_pattern == NULL) {
+		result = ISC_R_NOMEMORY;
 		goto cleanup;
+	}
 
 	def_ttl = strtol(argv[3], &endp, 10);
 	if (*endp != '\0' || def_ttl < 0) {

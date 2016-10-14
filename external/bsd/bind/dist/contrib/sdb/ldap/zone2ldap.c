@@ -1,4 +1,4 @@
-/*	$NetBSD: zone2ldap.c,v 1.3 2012/06/05 00:40:03 christos Exp $	*/
+/*	$NetBSD: zone2ldap.c,v 1.3.12.1 2016/10/14 12:01:24 martin Exp $	*/
 
 /*
  * Copyright (C) 2001 Jeff McNeil <jeff@snapcase.g-rock.net>
@@ -6,7 +6,7 @@
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
- * 
+ *
  * Change Log
  *
  * Tue May  1 19:19:54 EDT 2001 - Jeff McNeil
@@ -38,6 +38,8 @@
 #include <dns/result.h>
 #include <dns/rdatatype.h>
 
+#define LDAP_DEPRECATED 1
+
 #include <ldap.h>
 
 #define DNS_OBJECT 6
@@ -45,7 +47,7 @@
 
 #define VERSION    "0.4-ALPHA"
 
-#define NO_SPEC 0 
+#define NO_SPEC 0
 #define WI_SPEC  1
 
 /* Global Zone Pointer */
@@ -107,8 +109,16 @@ unsigned int debug = 0;
 debug = 1;
 #endif
 
+static void
+fatal(const char *msg) {
+  perror(msg);
+  if (conn != NULL)
+    ldap_unbind_s(conn);
+  exit(1);
+}
+
 int
-main (int *argc, char **argv)
+main (int argc, char **argv)
 {
   isc_mem_t *mctx = NULL;
   isc_entropy_t *ectx = NULL;
@@ -135,13 +145,13 @@ main (int *argc, char **argv)
   int create_base = 0;
   int topt;
 
-  if ((int) argc < 2)
+  if (argc < 2)
     {
       usage ();
       exit (-1);
     }
 
-  while ((topt = getopt ((int) argc, argv, "D:w:b:z:f:h:?dcv")) != -1)
+  while ((topt = getopt (argc, argv, "D:w:b:z:f:h:?dcv")) != -1)
     {
       switch (topt)
 	{
@@ -156,23 +166,35 @@ main (int *argc, char **argv)
 	  break;
 	case 'D':
 	  binddn = strdup (optarg);
+	  if (binddn == NULL)
+	    fatal("strdup");
 	  break;
 	case 'w':
 	  bindpw = strdup (optarg);
+	  if (bindpw == NULL)
+	    fatal("strdup");
 	  break;
 	case 'b':
 	  ldapbase = strdup (optarg);
+	  if (ldapbase == NULL)
+	    fatal("strdup");
 	  break;
 	case 'z':
 	  argzone = strdup (optarg);
 	  // We wipe argzone all to hell when we parse it for the DN */
 	  gbl_zone = strdup(argzone);
+	  if (argzone == NULL || gbl_zone == NULL)
+	    fatal("strdup");
 	  break;
 	case 'f':
 	  zonefile = strdup (optarg);
+	  if (zonefile == NULL)
+	    fatal("strdup");
 	  break;
 	case 'h':
 	  ldapsystem = strdup (optarg);
+	  if (ldapsystem == NULL)
+	    fatal("strdup");
 	  break;
 	case '?':
 	default:
@@ -356,10 +378,10 @@ isc_result_check (isc_result_t res, char *errorstr)
 void
 generate_ldap (dns_name_t * dnsname, dns_rdata_t * rdata, unsigned int ttl)
 {
-  unsigned char name[DNS_NAME_MAXTEXT + 1];
+  char name[DNS_NAME_MAXTEXT + 1];
   unsigned int len;
-  unsigned char type[20];
-  unsigned char data[2048];
+  char type[20];
+  char data[2048];
   char **dc_list;
   char *dn;
 
@@ -414,7 +436,7 @@ locate_by_dn (char *dn)
  * calloc a LDAPMod array, fill in the default "everyone needs this" information,
  * including object classes and dc's. If it locate_by_dn does return, then we'll
  * realloc for more LDAPMod structs, and appened the new data.  If an LDAPMod exists
- * for the parameter we're adding, then we'll realloc the mod_values array, and 
+ * for the parameter we're adding, then we'll realloc the mod_values array, and
  * add the new value to the existing LDAPMod. Finnaly, it assures linkage exists
  * within the Run queue linked ilst*/
 
@@ -438,29 +460,21 @@ add_to_rr_list (char *dn, char *name, char *type,
 
       tmp = (ldap_info *) malloc (sizeof (ldap_info));
       if (tmp == (ldap_info *) NULL)
-	{
-	  fprintf (stderr, "malloc: %s\n", strerror (errno));
-	  ldap_unbind_s (conn);
-	  exit (-1);
-	}
+	fatal("malloc");
 
       tmp->dn = strdup (dn);
+      if (tmp->dn == NULL)
+	fatal("strdup");
+
       tmp->attrs = (LDAPMod **) calloc (sizeof (LDAPMod *), flags);
       if (tmp->attrs == (LDAPMod **) NULL)
-	{
-	  fprintf (stderr, "calloc: %s\n", strerror (errno));
-	  ldap_unbind_s (conn);
-	  exit (-1);
-	}
+	fatal("calloc");
 
       for (i = 0; i < flags; i++)
 	{
 	  tmp->attrs[i] = (LDAPMod *) malloc (sizeof (LDAPMod));
 	  if (tmp->attrs[i] == (LDAPMod *) NULL)
-	    {
-	      fprintf (stderr, "malloc: %s\n", strerror (errno));
-	      exit (-1);
-	    }
+	    fatal("malloc");
 	}
       tmp->attrs[0]->mod_op = LDAP_MOD_ADD;
       tmp->attrs[0]->mod_type = "objectClass";
@@ -482,10 +496,13 @@ add_to_rr_list (char *dn, char *name, char *type,
       tmp->attrs[1]->mod_values = (char **) calloc (sizeof (char *), 2);
 
       if (tmp->attrs[1]->mod_values == (char **)NULL)
-	       exit(-1);
+	fatal("calloc");
 
       tmp->attrs[1]->mod_values[0] = strdup (name);
       tmp->attrs[1]->mod_values[2] = NULL;
+
+      if (tmp->attrs[1]->mod_values[0] == NULL)
+	fatal("strdup");
 
       sprintf (ldap_type_buffer, "%sRecord", type);
 
@@ -493,26 +510,37 @@ add_to_rr_list (char *dn, char *name, char *type,
       tmp->attrs[2]->mod_type = strdup (ldap_type_buffer);
       tmp->attrs[2]->mod_values = (char **) calloc (sizeof (char *), 2);
 
-       if (tmp->attrs[2]->mod_values == (char **)NULL)
-	       exit(-1);
+      if (tmp->attrs[2]->mod_type == NULL ||
+	  tmp->attrs[2]->mod_values == (char **)NULL)
+	 fatal("strdup/calloc");
 
       tmp->attrs[2]->mod_values[0] = strdup (data);
       tmp->attrs[2]->mod_values[1] = NULL;
+
+      if (tmp->attrs[2]->mod_values[0] == NULL)
+	 fatal("strdup");
 
       tmp->attrs[3]->mod_op = LDAP_MOD_ADD;
       tmp->attrs[3]->mod_type = "dNSTTL";
       tmp->attrs[3]->mod_values = (char **) calloc (sizeof (char *), 2);
 
       if (tmp->attrs[3]->mod_values == (char **)NULL)
-	      exit(-1);
+	 fatal("calloc");
 
       sprintf (charttl, "%d", ttl);
       tmp->attrs[3]->mod_values[0] = strdup (charttl);
       tmp->attrs[3]->mod_values[1] = NULL;
 
+      if (tmp->attrs[3]->mod_values[0] == NULL)
+	 fatal("strdup");
+
       tmp->attrs[4]->mod_op = LDAP_MOD_ADD;
       tmp->attrs[4]->mod_type = "zoneName";
       tmp->attrs[4]->mod_values = (char **)calloc(sizeof(char *), 2);
+
+      if (tmp->attrs[4]->mod_values == (char **)NULL)
+	 fatal("calloc");
+
       tmp->attrs[4]->mod_values[0] = gbl_zone;
       tmp->attrs[4]->mod_values[1] = NULL;
 
@@ -537,15 +565,15 @@ add_to_rr_list (char *dn, char *name, char *type,
 				   sizeof (char *) * (attrlist + 1));
 
 	      if (tmp->attrs[i]->mod_values == (char **) NULL)
-		{
-		  fprintf (stderr, "realloc: %s\n", strerror (errno));
-		  ldap_unbind_s (conn);
-		  exit (-1);
-		}
+		fatal("realloc");
+
 	      for (x = 0; tmp->attrs[i]->mod_values[x] != NULL; x++);
 
 	      tmp->attrs[i]->mod_values[x] = strdup (data);
+	      if (tmp->attrs[i]->mod_values[x] == NULL)
+		fatal("strdup");
 	      tmp->attrs[i]->mod_values[x + 1] = NULL;
+
 	      return;
 	    }
 	}
@@ -553,18 +581,23 @@ add_to_rr_list (char *dn, char *name, char *type,
 	(LDAPMod **) realloc (tmp->attrs,
 			      sizeof (LDAPMod) * ++(tmp->attrcnt));
       if (tmp->attrs == NULL)
-	{
-	  fprintf (stderr, "realloc: %s\n", strerror (errno));
-	  ldap_unbind_s (conn);
-	  exit (-1);
-	}
+	fatal("realloc");
 
       for (x = 0; tmp->attrs[x] != NULL; x++);
       tmp->attrs[x] = (LDAPMod *) malloc (sizeof (LDAPMod));
+      if (tmp->attrs[x] == NULL)
+	fatal("malloc");
       tmp->attrs[x]->mod_op = LDAP_MOD_ADD;
       tmp->attrs[x]->mod_type = strdup (ldap_type_buffer);
       tmp->attrs[x]->mod_values = (char **) calloc (sizeof (char *), 2);
+
+      if (tmp->attrs[x]->mod_type == NULL ||
+	  tmp->attrs[x]->mod_values == (char **)NULL)
+	fatal("strdup/calloc");
+
       tmp->attrs[x]->mod_values[0] = strdup (data);
+      if (tmp->attrs[x]->mod_values[0] == NULL)
+	fatal("strdup");
       tmp->attrs[x]->mod_values[1] = NULL;
       tmp->attrs[x + 1] = NULL;
     }
@@ -599,6 +632,8 @@ hostname_to_dn_list (char *hostname, char *zone, unsigned int flags)
   char *hnamebuff;
 
   zname = strdup (hostname);
+  if (zname == NULL)
+	fatal("strdup");
 
   if (flags == DNS_OBJECT)
     {
@@ -608,6 +643,8 @@ hostname_to_dn_list (char *hostname, char *zone, unsigned int flags)
 	  tmp = &zname[strlen (zname) - strlen (zone)];
 	  *--tmp = '\0';
 	  hnamebuff = strdup (zname);
+	  if (hnamebuff == NULL)
+		fatal("strdup");
 	  zname = ++tmp;
 	}
       else
@@ -634,7 +671,7 @@ hostname_to_dn_list (char *hostname, char *zone, unsigned int flags)
 
 
 /* build an sdb compatible LDAP DN from a "dc_list" (char **).
- * will append dNSTTL information to each RR Record, with the 
+ * will append dNSTTL information to each RR Record, with the
  * exception of "@"/SOA. */
 
 char *
@@ -665,11 +702,11 @@ build_dn_from_dc_list (char **dc_list, unsigned int ttl, int flag)
     }
 
 
-      strncat (dn, tmp, sizeof (dn) - strlen (dn));
+      strlcat (dn, tmp, sizeof (dn));
     }
 
   sprintf (tmp, "dc=%s", dc_list[0]);
-  strncat (dn, tmp, sizeof (dn) - strlen (dn));
+  strlcat (dn, tmp, sizeof (dn));
 
 	    fflush(NULL);
   return dn;
@@ -734,5 +771,5 @@ void
 usage ()
 {
   fprintf (stderr,
-	   "zone2ldap -D [BIND DN] -w [BIND PASSWORD] -b [BASE DN] -z [ZONE] -f [ZONE FILE] -h [LDAP HOST]
-	   [-c Create LDAP Base structure][-d Debug Output (lots !)] \n ");}
+	   "zone2ldap -D [BIND DN] -w [BIND PASSWORD] -b [BASE DN] -z [ZONE] -f [ZONE FILE] -h [LDAP HOST] "
+	   "[-c Create LDAP Base structure][-d Debug Output (lots !)] \n ");}

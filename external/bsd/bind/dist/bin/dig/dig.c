@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.c,v 1.9.2.2 2016/03/13 08:06:02 martin Exp $	*/
+/*	$NetBSD: dig.c,v 1.9.2.3 2016/10/14 12:01:09 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -72,9 +72,11 @@ static char sitvalue[256];
 static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
 	ip6_int = ISC_FALSE, plusquest = ISC_FALSE, pluscomm = ISC_FALSE,
 	multiline = ISC_FALSE, nottl = ISC_FALSE, noclass = ISC_FALSE,
-	onesoa = ISC_FALSE, rrcomments = ISC_FALSE, use_usec = ISC_FALSE,
-	nocrypto = ISC_FALSE;
+	onesoa = ISC_FALSE, use_usec = ISC_FALSE, nocrypto = ISC_FALSE;
 static isc_uint32_t splitwidth = 0xffffffff;
+
+/*% rrcomments are neither explicitly enabled nor disabled by default */
+static int rrcomments = 0;
 
 /*% opcode text */
 static const char * const opcodetext[] = {
@@ -216,7 +218,7 @@ help(void) {
 "                 +[no]nsid           (Request Name Server ID)\n"
 "                 +[no]nssearch       (Search all authoritative nameservers)\n"
 "                 +[no]onesoa         (AXFR prints only one soa record)\n"
-"                 +[no]opcode=[###]   (Set the opcode of the request)\n"
+"                 +[no]opcode=###     (Set the opcode of the request)\n"
 "                 +[no]qr             (Print question before sending)\n"
 "                 +[no]question       (Control display of question section)\n"
 "                 +[no]recurse        (Recursive mode)\n"
@@ -346,7 +348,8 @@ say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 		ADD_STRING(buf, " ");
 	}
 
-	if (rrcomments)
+	/* Turn on rrcomments if explicitly enabled */
+	if (rrcomments > 0)
 		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (nocrypto)
 		styleflags |= DNS_STYLEFLAG_NOCRYPTO;
@@ -436,10 +439,11 @@ printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 		styleflags |= DNS_STYLEFLAG_NO_TTL;
 	if (noclass)
 		styleflags |= DNS_STYLEFLAG_NO_CLASS;
-	if (rrcomments)
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (nocrypto)
 		styleflags |= DNS_STYLEFLAG_NOCRYPTO;
+	/* Turn on rrcomments if explicitly enabled */
+	if (rrcomments > 0)
+		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (multiline) {
 		styleflags |= DNS_STYLEFLAG_OMIT_OWNER;
 		styleflags |= DNS_STYLEFLAG_OMIT_CLASS;
@@ -448,7 +452,9 @@ printrdataset(dns_name_t *owner_name, dns_rdataset_t *rdataset,
 		styleflags |= DNS_STYLEFLAG_TTL;
 		styleflags |= DNS_STYLEFLAG_MULTILINE;
 		styleflags |= DNS_STYLEFLAG_COMMENT;
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		/* Turn on rrcomments if not explicitly disabled */
+		if (rrcomments >= 0)
+			styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	}
 
 	if (multiline || (nottl && noclass))
@@ -489,7 +495,8 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 	styleflags |= DNS_STYLEFLAG_REL_OWNER;
 	if (query->lookup->comments)
 		styleflags |= DNS_STYLEFLAG_COMMENT;
-	if (rrcomments)
+	/* Turn on rrcomments if explicitly enabled */
+	if (rrcomments > 0)
 		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (nottl)
 		styleflags |= DNS_STYLEFLAG_NO_TTL;
@@ -504,7 +511,9 @@ printmessage(dig_query_t *query, dns_message_t *msg, isc_boolean_t headers) {
 		styleflags |= DNS_STYLEFLAG_OMIT_TTL;
 		styleflags |= DNS_STYLEFLAG_TTL;
 		styleflags |= DNS_STYLEFLAG_MULTILINE;
-		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
+		/* Turn on rrcomments unless explicitly disabled */
+		if (rrcomments >= 0)
+			styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	}
 	if (multiline || (nottl && noclass))
 		result = dns_master_stylecreate2(&style, styleflags,
@@ -756,7 +765,7 @@ printgreeting(int argc, char **argv, dig_lookup_t *lookup) {
  */
 
 static void
-plus_option(char *option, isc_boolean_t is_batchfile,
+plus_option(const char *option, isc_boolean_t is_batchfile,
 	    dig_lookup_t *lookup)
 {
 	isc_result_t result;
@@ -771,7 +780,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 	strncpy(option_store, option, sizeof(option_store));
 	option_store[sizeof(option_store)-1]=0;
 	ptr = option_store;
-	cmd = next_token(&ptr,"=");
+	cmd = next_token(&ptr, "=");
 	if (cmd == NULL) {
 		printf(";; Invalid option %s\n", option_store);
 		return;
@@ -825,7 +834,6 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 			lookup->section_answer = state;
 			lookup->section_additional = state;
 			lookup->comments = state;
-			rrcomments = state;
 			lookup->stats = state;
 			printcmd = state;
 			break;
@@ -1063,13 +1071,13 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 					lookup->identify = ISC_TRUE;
 					lookup->stats = ISC_FALSE;
 					lookup->comments = ISC_FALSE;
-					rrcomments = ISC_FALSE;
 					lookup->section_additional = ISC_FALSE;
 					lookup->section_authority = ISC_FALSE;
 					lookup->section_question = ISC_FALSE;
 					lookup->rdtype = dns_rdatatype_ns;
 					lookup->rdtypeset = ISC_TRUE;
 					short_form = ISC_TRUE;
+					rrcomments = 0;
 				}
 				break;
 			default:
@@ -1159,7 +1167,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 			break;
 		case 'r': /* rrcomments */
 			FULLCHECK("rrcomments");
-			rrcomments = state;
+			rrcomments = state ? 1 : -1;
 			break;
 		default:
 			goto invalid_option;
@@ -1187,8 +1195,8 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 					lookup->section_authority = ISC_FALSE;
 					lookup->section_question = ISC_FALSE;
 					lookup->comments = ISC_FALSE;
-					rrcomments = ISC_FALSE;
 					lookup->stats = ISC_FALSE;
+					rrcomments = -1;
 				}
 				break;
 			case 'w': /* showsearch */
@@ -1281,6 +1289,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 			}
 			if (lookup->edns == -1)
 				lookup->edns = 0;
+
 			result = parse_netprefix(&lookup->ecs_addr, value);
 			if (result != ISC_R_SUCCESS)
 				fatal("Couldn't parse client");
@@ -1327,7 +1336,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 					lookup->recurse = ISC_FALSE;
 					lookup->identify = ISC_TRUE;
 					lookup->comments = ISC_FALSE;
-					rrcomments = ISC_FALSE;
+					rrcomments = 0;
 					lookup->stats = ISC_FALSE;
 					lookup->section_additional = ISC_FALSE;
 					lookup->section_authority = ISC_TRUE;
@@ -1385,7 +1394,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 	invalid_option:
 	need_value:
 		fprintf(stderr, "Invalid option: +%s\n",
-			 option);
+			option);
 		usage();
 	}
 	return;
@@ -1615,14 +1624,14 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 				 value);
 		return (value_from_next);
 	case 'y':
-		ptr = next_token(&value,":");	/* hmac type or name */
+		ptr = next_token(&value, ":");	/* hmac type or name */
 		if (ptr == NULL) {
 			usage();
 		}
 		ptr2 = next_token(&value, ":");	/* name or secret */
 		if (ptr2 == NULL)
 			usage();
-		ptr3 = next_token(&value,":"); /* secret or NULL */
+		ptr3 = next_token(&value, ":"); /* secret or NULL */
 		if (ptr3 != NULL) {
 			parse_hmac(ptr);
 			ptr = ptr2;

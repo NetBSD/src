@@ -1,7 +1,7 @@
-/*	$NetBSD: nsecify.c,v 1.5 2014/03/01 03:24:33 christos Exp $	*/
+/*	$NetBSD: nsecify.c,v 1.5.4.1 2016/10/14 12:01:13 martin Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -120,7 +120,7 @@ nsecify(char *filename) {
 	dns_db_t *db;
 	dns_dbversion_t *wversion;
 	dns_dbnode_t *node, *nextnode;
-	char *origintext;
+	const char *origintext;
 	dns_fixedname_t fname, fnextname;
 	dns_name_t *name, *nextname, *target;
 	isc_buffer_t b;
@@ -139,7 +139,7 @@ nsecify(char *filename) {
 	else
 		origintext++;	/* Skip '/'. */
 	len = strlen(origintext);
-	isc_buffer_init(&b, origintext, len);
+	isc_buffer_constinit(&b, origintext, len);
 	isc_buffer_add(&b, len);
 	result = dns_name_fromtext(name, &b, dns_rootname, 0, NULL);
 	check_result(result, "dns_name_fromtext()");

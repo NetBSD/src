@@ -1,7 +1,7 @@
-/*	$NetBSD: zone.c,v 1.11.2.4 2016/03/13 08:06:13 martin Exp $	*/
+/*	$NetBSD: zone.c,v 1.11.2.5 2016/10/14 12:01:29 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1094,6 +1094,8 @@ zone_free(dns_zone_t *zone) {
 		isc_task_detach(&zone->task);
 	if (zone->loadtask != NULL)
 		isc_task_detach(&zone->loadtask);
+	if (zone->view != NULL)
+		dns_view_weakdetach(&zone->view);
 
 	/* Unmanaged objects */
 	for (signing = ISC_LIST_HEAD(zone->signing);
@@ -1679,6 +1681,8 @@ dns_zone_rpz_enable(dns_zone_t *zone, dns_rpz_zones_t *rpzs,
 	 */
 	if (strcmp(zone->db_argv[0], "rbt") != 0 &&
 	    strcmp(zone->db_argv[0], "rbt64") != 0)
+		return (ISC_R_NOTIMPLEMENTED);
+	if (zone->masterformat == dns_masterformat_map)
 		return (ISC_R_NOTIMPLEMENTED);
 
 	/*
@@ -3636,7 +3640,8 @@ compute_tag(dns_name_t *name, dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx,
  */
 static void
 trust_key(dns_zone_t *zone, dns_name_t *keyname,
-	  dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx) {
+	  dns_rdata_dnskey_t *dnskey, isc_mem_t *mctx)
+{
 	isc_result_t result;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	unsigned char data[4096];
@@ -8969,12 +8974,11 @@ keyfetch_done(isc_task_t *task, isc_event_t *event) {
 					 */
 					deletekey = ISC_TRUE;
 				} else if (keydata.removehd == 0) {
-					/* Remove from secroots */
+					/*
+					 * Remove key from secroots.
+					 */
 					dns_view_untrust(zone->view, keyname,
 							 &dnskey, mctx);
-
-					/* But ensure there's a null key */
-					fail_secure(zone, keyname);
 
 					/* If initializing, delete now */
 					if (keydata.addhd == 0)
@@ -9284,7 +9288,8 @@ zone_refreshkeys(dns_zone_t *zone) {
 		result = dns_resolver_createfetch(zone->view->resolver,
 						  kname, dns_rdatatype_dnskey,
 						  NULL, NULL, NULL,
-						  DNS_FETCHOPT_NOVALIDATE,
+						  DNS_FETCHOPT_NOVALIDATE|
+						  DNS_FETCHOPT_UNSHARED,
 						  zone->task,
 						  keyfetch_done, kfetch,
 						  &kfetch->dnskeyset,
@@ -9732,6 +9737,7 @@ static void
 dump_done(void *arg, isc_result_t result) {
 	const char me[] = "dump_done";
 	dns_zone_t *zone = arg;
+	dns_zone_t *secure = NULL;
 	dns_db_t *db;
 	dns_dbversion_t *version;
 	isc_boolean_t again = ISC_FALSE;
@@ -9745,30 +9751,54 @@ dump_done(void *arg, isc_result_t result) {
 
 	if (result == ISC_R_SUCCESS && zone->journal != NULL &&
 	    zone->journalsize != -1) {
-
 		/*
 		 * We don't own these, zone->dctx must stay valid.
 		 */
 		db = dns_dumpctx_db(zone->dctx);
 		version = dns_dumpctx_version(zone->dctx);
-
 		tresult = dns_db_getsoaserial(db, version, &serial);
+
+		/*
+		 * Handle lock order inversion.
+		 */
+ again:
+		LOCK_ZONE(zone);
+		if (inline_raw(zone)) {
+			secure = zone->secure;
+			INSIST(secure != zone);
+			TRYLOCK_ZONE(result, secure);
+			if (result != ISC_R_SUCCESS) {
+				UNLOCK_ZONE(zone);
+				secure = NULL;
+#if ISC_PLATFORM_USETHREADS
+				isc_thread_yield();
+#endif
+				goto again;
+			}
+		}
+
 		/*
 		 * If there is a secure version of this zone
 		 * use its serial if it is less than ours.
 		 */
-		if (tresult == ISC_R_SUCCESS && inline_raw(zone) &&
-		    zone->secure->db != NULL)
-		{
+		if (tresult == ISC_R_SUCCESS && secure != NULL) {
 			isc_uint32_t sserial;
 			isc_result_t mresult;
 
-			mresult = dns_db_getsoaserial(zone->secure->db,
-						      NULL, &sserial);
-			if (mresult == ISC_R_SUCCESS &&
-			    isc_serial_lt(sserial, serial))
-				serial = sserial;
+			ZONEDB_LOCK(&secure->dblock, isc_rwlocktype_read);
+			if (secure->db != NULL) {
+				mresult = dns_db_getsoaserial(zone->secure->db,
+							      NULL, &sserial);
+				if (mresult == ISC_R_SUCCESS &&
+				    isc_serial_lt(sserial, serial))
+					serial = sserial;
+			}
+			ZONEDB_UNLOCK(&secure->dblock, isc_rwlocktype_read);
 		}
+		if (secure != NULL)
+			UNLOCK_ZONE(secure);
+		UNLOCK_ZONE(zone);
+
 		/*
 		 * Note: we are task locked here so we can test
 		 * zone->xfr safely.
@@ -10479,6 +10509,9 @@ notify_send(dns_notify_t *notify) {
 	REQUIRE(DNS_NOTIFY_VALID(notify));
 	REQUIRE(LOCKED_ZONE(notify->zone));
 
+	if (DNS_ZONE_FLAG(notify->zone, DNS_ZONEFLG_EXITING))
+		return;
+
 	for (ai = ISC_LIST_HEAD(notify->find->list);
 	     ai != NULL;
 	     ai = ISC_LIST_NEXT(ai, publink)) {
@@ -10554,7 +10587,8 @@ zone_notify(dns_zone_t *zone, isc_time_t *now) {
 	DNS_ZONE_TIME_ADD(now, zone->notifydelay, &zone->notifytime);
 	UNLOCK_ZONE(zone);
 
-	if (! DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED))
+	if (DNS_ZONE_FLAG(zone, DNS_ZONEFLG_EXITING) ||
+	    ! DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED))
 		return;
 
 	if (notifytype == dns_notifytype_no)
@@ -12110,9 +12144,6 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 		INSIST(zone->irefs > 0);
 		zone->irefs--;
 	}
-
-	if (zone->view != NULL)
-		dns_view_weakdetach(&zone->view);
 
 	/*
 	 * We have now canceled everything set the flag to allow exit_check()
@@ -17933,7 +17964,7 @@ dns_zone_keydone(dns_zone_t *zone, const char *keystr) {
 		kd->all = ISC_TRUE;
 	else {
 		isc_textregion_t r;
-		char *algstr;
+		const char *algstr;
 		dns_keytag_t keyid;
 		dns_secalg_t alg;
 		size_t n;

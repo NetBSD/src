@@ -59,5 +59,8 @@
     <ClInclude Include="..\include\isccfg\namedconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isccfg\version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

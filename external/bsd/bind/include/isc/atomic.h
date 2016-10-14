@@ -52,6 +52,17 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 #endif
 }
 
+#ifdef ISC_PLATFORM_HAVEATOMICSTOREQ
+static __inline void
+isc_atomic_storeq(isc_int64_t *p, isc_int64_t val) {
+#ifdef ISC_NO_ATOMIC
+	*p = val;
+#else
+	(void)atomic_swap_64((volatile uint64_t *)p, (uint64_t)val);
+#endif
+}
+#endif
+
 /*
  * This routine atomically replaces the value in 'p' with 'val', if the
  * original value is equal to 'cmpval'.  The original value is returned in any

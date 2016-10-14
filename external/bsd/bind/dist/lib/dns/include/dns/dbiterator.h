@@ -1,7 +1,7 @@
-/*	$NetBSD: dbiterator.h,v 1.3 2012/06/05 00:41:46 christos Exp $	*/
+/*	$NetBSD: dbiterator.h,v 1.3.12.1 2016/10/14 12:01:29 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -168,6 +168,8 @@ dns_dbiterator_seek(dns_dbiterator_t *iterator, dns_name_t *name);
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOTFOUND
+ *\li	#DNS_R_PARTIALMATCH
+ *	(node is at name above requested named when name has children)
  *
  *\li	Other results are possible, depending on the DB implementation.
  */
@@ -288,7 +290,7 @@ dns_dbiterator_setcleanmode(dns_dbiterator_t *iterator, isc_boolean_t mode);
  * Indicate that the given iterator is/is not cleaning the DB.
  *
  * Notes:
- *\li	When 'mode' is ISC_TRUE, 
+ *\li	When 'mode' is ISC_TRUE,
  *
  * Requires:
  *\li	'iterator' is a valid iterator.
