@@ -290,7 +290,7 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 test1_exit(12);
             }
             if (!EVP_CIPHER_CTX_ctrl
-                (&ctx, EVP_CTRL_GCM_SET_TAG, tn, (void *)tag)) {
+                (&ctx, EVP_CTRL_GCM_SET_TAG, tn, (void *)__UNCONST(tag))) {
                 fprintf(stderr, "Set tag failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(14);
@@ -312,7 +312,7 @@ static void test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
                 test1_exit(11);
             }
             if (!EVP_CIPHER_CTX_ctrl
-                (&ctx, EVP_CTRL_CCM_SET_TAG, tn, (void *)tag)) {
+                (&ctx, EVP_CTRL_CCM_SET_TAG, tn, (void *)__UNCONST(tag))) {
                 fprintf(stderr, "Tag length set failed\n");
                 ERR_print_errors_fp(stderr);
                 test1_exit(11);

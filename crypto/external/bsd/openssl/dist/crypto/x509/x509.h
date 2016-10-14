@@ -826,7 +826,7 @@ DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 DECLARE_ASN1_FUNCTIONS(X509_CERT_PAIR)
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+                          CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *freefunc);
 int X509_set_ex_data(X509 *r, int idx, void *arg);
 void *X509_get_ex_data(X509 *r, int idx);
 int i2d_X509_AUX(X509 *a, unsigned char **pp);

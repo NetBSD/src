@@ -116,7 +116,7 @@ _STACK *sk_dup(_STACK *sk)
 }
 
 _STACK *sk_deep_copy(_STACK *sk, void *(*copy_func) (void *),
-                     void (*free_func) (void *))
+                     void (*freefunc) (void *))
 {
     _STACK *ret;
     int i;
@@ -141,7 +141,7 @@ _STACK *sk_deep_copy(_STACK *sk, void *(*copy_func) (void *),
         if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
             while (--i >= 0)
                 if (ret->data[i] != NULL)
-                    free_func(ret->data[i]);
+                    freefunc(ret->data[i]);
             sk_free(ret);
             return NULL;
         }

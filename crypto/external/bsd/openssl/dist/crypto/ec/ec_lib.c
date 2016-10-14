@@ -191,7 +191,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
         if (t == NULL)
             return 0;
         if (!EC_EX_DATA_set_data
-            (&dest->extra_data, t, d->dup_func, d->free_func,
+            (&dest->extra_data, t, d->dup_func, d->freefunc,
              d->clear_free_func))
             return 0;
     }
@@ -555,7 +555,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 /* this has 'package' visibility */
 int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
                         void *(*dup_func) (void *),
-                        void (*free_func) (void *),
+                        void (*freefunc) (void *),
                         void (*clear_free_func) (void *))
 {
     EC_EXTRA_DATA *d;
@@ -564,7 +564,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
         return 0;
 
     for (d = *ex_data; d != NULL; d = d->next) {
-        if (d->dup_func == dup_func && d->free_func == free_func
+        if (d->dup_func == dup_func && d->freefunc == freefunc
             && d->clear_free_func == clear_free_func) {
             ECerr(EC_F_EC_EX_DATA_SET_DATA, EC_R_SLOT_FULL);
             return 0;
@@ -581,7 +581,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
 
     d->data = data;
     d->dup_func = dup_func;
-    d->free_func = free_func;
+    d->freefunc = freefunc;
     d->clear_free_func = clear_free_func;
 
     d->next = *ex_data;
@@ -593,13 +593,13 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
 /* this has 'package' visibility */
 void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *ex_data,
                           void *(*dup_func) (void *),
-                          void (*free_func) (void *),
+                          void (*freefunc) (void *),
                           void (*clear_free_func) (void *))
 {
     const EC_EXTRA_DATA *d;
 
     for (d = ex_data; d != NULL; d = d->next) {
-        if (d->dup_func == dup_func && d->free_func == free_func
+        if (d->dup_func == dup_func && d->freefunc == freefunc
             && d->clear_free_func == clear_free_func)
             return d->data;
     }
@@ -610,7 +610,7 @@ void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *ex_data,
 /* this has 'package' visibility */
 void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
                           void *(*dup_func) (void *),
-                          void (*free_func) (void *),
+                          void (*freefunc) (void *),
                           void (*clear_free_func) (void *))
 {
     EC_EXTRA_DATA **p;
@@ -619,11 +619,11 @@ void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
         return;
 
     for (p = ex_data; *p != NULL; p = &((*p)->next)) {
-        if ((*p)->dup_func == dup_func && (*p)->free_func == free_func
+        if ((*p)->dup_func == dup_func && (*p)->freefunc == freefunc
             && (*p)->clear_free_func == clear_free_func) {
             EC_EXTRA_DATA *next = (*p)->next;
 
-            (*p)->free_func((*p)->data);
+            (*p)->freefunc((*p)->data);
             OPENSSL_free(*p);
 
             *p = next;
@@ -635,7 +635,7 @@ void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
 /* this has 'package' visibility */
 void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
                                 void *(*dup_func) (void *),
-                                void (*free_func) (void *),
+                                void (*freefunc) (void *),
                                 void (*clear_free_func) (void *))
 {
     EC_EXTRA_DATA **p;
@@ -644,7 +644,7 @@ void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
         return;
 
     for (p = ex_data; *p != NULL; p = &((*p)->next)) {
-        if ((*p)->dup_func == dup_func && (*p)->free_func == free_func
+        if ((*p)->dup_func == dup_func && (*p)->freefunc == freefunc
             && (*p)->clear_free_func == clear_free_func) {
             EC_EXTRA_DATA *next = (*p)->next;
 
@@ -669,7 +669,7 @@ void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **ex_data)
     while (d) {
         EC_EXTRA_DATA *next = d->next;
 
-        d->free_func(d->data);
+        d->freefunc(d->data);
         OPENSSL_free(d);
 
         d = next;

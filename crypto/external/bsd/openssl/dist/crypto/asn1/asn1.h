@@ -906,7 +906,7 @@ int i2d_ASN1_SET(STACK_OF(OPENSSL_BLOCK) *a, unsigned char **pp,
 STACK_OF(OPENSSL_BLOCK) *d2i_ASN1_SET(STACK_OF(OPENSSL_BLOCK) **a,
                                       const unsigned char **pp,
                                       long length, d2i_of_void *d2i,
-                                      void (*free_func) (OPENSSL_BLOCK),
+                                      void (*freefunc) (OPENSSL_BLOCK),
                                       int ex_tag, int ex_class);
 
 # ifndef OPENSSL_NO_BIO
@@ -1060,7 +1060,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num,
 
 STACK_OF(OPENSSL_BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
                                          d2i_of_void *d2i,
-                                         void (*free_func) (OPENSSL_BLOCK));
+                                         void (*freefunc) (OPENSSL_BLOCK));
 unsigned char *ASN1_seq_pack(STACK_OF(OPENSSL_BLOCK) *safes, i2d_of_void *i2d,
                              unsigned char **buf, int *len);
 void *ASN1_unpack_string(ASN1_STRING *oct, d2i_of_void *d2i);

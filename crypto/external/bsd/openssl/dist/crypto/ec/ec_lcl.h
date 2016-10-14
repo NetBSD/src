@@ -202,7 +202,7 @@ typedef struct ec_extra_data_st {
     struct ec_extra_data_st *next;
     void *data;
     void *(*dup_func) (void *);
-    void (*free_func) (void *);
+    void (*freefunc) (void *);
     void (*clear_free_func) (void *);
 } EC_EXTRA_DATA;                /* used in EC_GROUP */
 
@@ -282,16 +282,16 @@ struct ec_key_st {
  */
 int EC_EX_DATA_set_data(EC_EXTRA_DATA **, void *data,
                         void *(*dup_func) (void *),
-                        void (*free_func) (void *),
+                        void (*freefunc) (void *),
                         void (*clear_free_func) (void *));
 void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *, void *(*dup_func) (void *),
-                          void (*free_func) (void *),
+                          void (*freefunc) (void *),
                           void (*clear_free_func) (void *));
 void EC_EX_DATA_free_data(EC_EXTRA_DATA **, void *(*dup_func) (void *),
-                          void (*free_func) (void *),
+                          void (*freefunc) (void *),
                           void (*clear_free_func) (void *));
 void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **, void *(*dup_func) (void *),
-                                void (*free_func) (void *),
+                                void (*freefunc) (void *),
                                 void (*clear_free_func) (void *));
 void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
 void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
