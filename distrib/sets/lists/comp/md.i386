@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.157 2016/03/16 05:32:09 mrg Exp $
+# $NetBSD: md.i386,v 1.158 2016/10/14 19:28:06 christos Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -62,8 +62,8 @@
 ./usr/include/clang-3.5/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.6/__wmmintrin_pclmul.h	comp-obsolete		obsolete
-./usr/include/clang-3.6/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/adxintrin.h		comp-obsolete		obsolete
+./usr/include/clang-3.6/ammintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx2intrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx512bwintrin.h	comp-obsolete		obsolete
 ./usr/include/clang-3.6/avx512erintrin.h	comp-obsolete		obsolete
@@ -100,8 +100,8 @@
 ./usr/include/clang-3.6/xopintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/__wmmintrin_aes.h	comp-c-include		llvm
 ./usr/include/clang-3.8/__wmmintrin_pclmul.h	comp-c-include		llvm
-./usr/include/clang-3.8/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/adxintrin.h		comp-c-include		llvm
+./usr/include/clang-3.8/ammintrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/avx2intrin.h		comp-c-include		llvm
 ./usr/include/clang-3.8/avx512bwintrin.h	comp-c-include		llvm
 ./usr/include/clang-3.8/avx512cdintrin.h	comp-c-include		llvm
@@ -403,5 +403,24 @@
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib		pic,picinstall
+./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xd		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xs		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils
+./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
