@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.5.4.1 2016/03/13 08:06:14 martin Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.5.4.2 2016/10/14 12:01:30 martin Exp $	*/
 
 /*
  * Copyright (C) 2005, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -106,7 +106,8 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	case 3:
 		dns_name_init(&name, NULL);
 		buffer_fromregion(&buffer, &token.value.as_region);
-		origin = (origin != NULL) ? origin : dns_rootname;
+		if (origin == NULL)
+			origin = dns_rootname;
 		RETTOK(dns_name_fromtext(&name, &buffer, origin,
 					 options, target));
 		break;

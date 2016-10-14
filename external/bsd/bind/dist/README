@@ -51,29 +51,31 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.4-P3
 
-BIND 9.10.3-P4
+	This version contains a fix for CVE-2016-2776 and addresses
+	an interoperability issue with ECS clients.
 
-	BIND 9.10.3-P4 is a security release addressing the flaws
-	described in CVE-2016-1285, CVE-2016-1286 and CVE-2016-2088.
+BIND 9.10.4-P2
 
-BIND 9.10.3-P3
+	This version contains a fix for CVE-2016-2775 and addresses
+	two regressions introduced with BIND 9.10.4.
 
-	BIND 9.10.3-P3 is a security release addressing the flaws
-	described in CVE-2015-8704 and CVE-2015-8705. It also fixes
-	a serious regression in authoritative server selection that
-	was introduced in BIND 9.10.3.
+BIND 9.10.4-P1
 
-BIND 9.10.3-P2
+	This version contains three urgent fixes to BIND 9.10.4:
+	1) Windows installation was failing without manual updating
+	   of BINDinstall's attributes.
+	2) Windows doesn't support the %z printf modifier.
+	3) A race condition was causing instability in the RBT
+	   tree state.
 
-	BIND 9.10.3-P2 is a security release addressing the flaws
-	described in CVE-2015-3193 (OpenSSL), CVE-2015-8000 and
-	CVE-2015-8461.
+BIND 9.10.4
 
-BIND 9.10.3-P1
-
-	BIND 9.10.3-P1 was incomplete and was withdrawn prior to
-	publication.
+	BIND 9.10.4 is a maintenance release and addresses bugs
+	found in BIND 9.10.3 and earlier, as well as the security
+	flaws described in CVE-2015-8000, CVE-2015-8461, CVE-2015-8704,
+	CVE-2015-8705, CVE-2016-1285, CVE-2016-1286, and CVE-2016-2088.
 
 BIND 9.10.3
 
@@ -104,7 +106,7 @@ BIND 9.10.3
 	  NOTE: These features are NOT built in by default; use
 	  "configure --enable-fetchlimit" to enable them.
 
-	- Dig now supports sending of arbitary EDNS options by specifying
+	- Dig now supports sending of arbitrary EDNS options by specifying
 	  them on the command line.
 
 BIND 9.10.2
@@ -540,6 +542,8 @@ Change Log
 
 	   [tuning]       Changes to built-in configuration defaults
 			  and constants to improve performance
+
+	   [performance]  Other changes to improve server performance
 
 	   [protocol]     Updates to the DNS protocol such as new
 			  RR types

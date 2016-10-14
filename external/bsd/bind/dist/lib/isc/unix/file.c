@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.8.4.1 2016/03/13 08:06:15 martin Exp $	*/
+/*	$NetBSD: file.c,v 1.8.4.2 2016/10/14 12:01:32 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -226,8 +226,9 @@ isc_file_mktemplate(const char *path, char *buf, size_t buflen) {
 
 isc_result_t
 isc_file_template(const char *path, const char *templet, char *buf,
-			size_t buflen) {
-	char *s;
+		  size_t buflen)
+{
+	const char *s;
 
 	REQUIRE(path != NULL);
 	REQUIRE(templet != NULL);
@@ -284,7 +285,7 @@ isc_file_renameunique(const char *file, char *templet) {
 		if (errno != EEXIST)
 			return (isc__errno2result(errno));
 		for (cp = x;;) {
-			char *t;
+			const char *t;
 			if (*cp == '\0')
 				return (ISC_R_FAILURE);
 			t = strchr(alphnum, *cp);
@@ -501,7 +502,7 @@ isc_file_ischdiridempotent(const char *filename) {
 
 const char *
 isc_file_basename(const char *filename) {
-	char *s;
+	const char *s;
 
 	REQUIRE(filename != NULL);
 
@@ -619,9 +620,11 @@ isc_file_safecreate(const char *filename, FILE **fp) {
 }
 
 isc_result_t
-isc_file_splitpath(isc_mem_t *mctx, char *path, char **dirname, char **basename)
+isc_file_splitpath(isc_mem_t *mctx, const char *path, char **dirname,
+		   char const **basename)
 {
-	char *dir, *file, *slash;
+	char *dir;
+	const char *file, *slash;
 
 	if (path == NULL)
 		return (ISC_R_INVALIDFILE);
@@ -676,6 +679,9 @@ isc_file_mmap(void *addr, size_t len, int prot,
 		len = end - offset;
 
 	buf = malloc(len);
+	if (buf == NULL)
+		return (NULL);
+
 	ret = read(fd, buf, len);
 	if (ret != (ssize_t) len) {
 		free(buf);

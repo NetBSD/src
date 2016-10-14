@@ -1,4 +1,4 @@
-# Copyright (C) 2004, 2007, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -120,6 +120,20 @@ grep "status: NOERROR" dig.out.q1 > /dev/null || ret=1
 grep "status: NXDOMAIN" dig.out.q2 > /dev/null || ret=1
 grep "status: NOERROR" dig.out.q3 > /dev/null || ret=1
 grep "status: NOERROR" dig.out.q4 > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that rfc1918 inherited 'forward first;' zones are warned about"
+ret=0
+$CHECKCONF rfc1918-inherited.conf | grep "forward first;" >/dev/null || ret=1
+$CHECKCONF rfc1918-notinherited.conf | grep "forward first;" >/dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking that ULA inherited 'forward first;' zones are warned about"
+ret=0
+$CHECKCONF ula-inherited.conf | grep "forward first;" >/dev/null || ret=1
+$CHECKCONF ula-notinherited.conf | grep "forward first;" >/dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

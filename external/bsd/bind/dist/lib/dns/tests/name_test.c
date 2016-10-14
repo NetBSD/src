@@ -1,7 +1,7 @@
-/*	$NetBSD: name_test.c,v 1.1.1.1.2.2 2015/07/17 04:31:34 snj Exp $	*/
+/*	$NetBSD: name_test.c,v 1.1.1.1.2.3 2016/10/14 12:01:30 martin Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,10 @@
 #include <atf-c.h>
 
 #include <unistd.h>
+
+#include <isc/os.h>
+#include <isc/print.h>
+#include <isc/thread.h>
 
 #include <dns/name.h>
 #include <dns/fixedname.h>
@@ -119,11 +123,114 @@ ATF_TC_BODY(fullcompare, tc) {
 	}
 }
 
+#ifdef ISC_PLATFORM_USETHREADS
+#ifdef DNS_BENCHMARK_TESTS
+
+/*
+ * XXXMUKS: Don't delete this code. It is useful in benchmarking the
+ * name parser, but we don't require it as part of the unit test runs.
+ */
+
+ATF_TC(benchmark);
+ATF_TC_HEAD(benchmark, tc) {
+	atf_tc_set_md_var(tc, "descr",
+			  "Benchmark dns_name_fromwire() implementation");
+}
+
+static void *
+fromwire_thread(void *arg) {
+	unsigned int maxval = 32000000;
+	uint8_t data[] = {
+		3, 'w', 'w', 'w',
+		7, 'e', 'x', 'a', 'm', 'p', 'l', 'e',
+		7, 'i', 'n', 'v', 'a', 'l', 'i', 'd',
+		0
+	};
+	unsigned char output_data[DNS_NAME_MAXWIRE];
+	isc_buffer_t source, target;
+	unsigned int i;
+	dns_decompress_t dctx;
+
+	UNUSED(arg);
+
+	dns_decompress_init(&dctx, -1, DNS_DECOMPRESS_STRICT);
+	dns_decompress_setmethods(&dctx, DNS_COMPRESS_NONE);
+
+	isc_buffer_init(&source, data, sizeof(data));
+	isc_buffer_add(&source, sizeof(data));
+	isc_buffer_init(&target, output_data, sizeof(output_data));
+
+	/* Parse 32 million names in each thread */
+	for (i = 0; i < maxval; i++) {
+		dns_name_t name;
+
+		isc_buffer_clear(&source);
+		isc_buffer_clear(&target);
+		isc_buffer_add(&source, sizeof(data));
+		isc_buffer_setactive(&source, sizeof(data));
+
+		dns_name_init(&name, NULL);
+		(void) dns_name_fromwire(&name, &source, &dctx, 0, &target);
+	}
+
+	return (NULL);
+}
+
+ATF_TC_BODY(benchmark, tc) {
+	isc_result_t result;
+	unsigned int i;
+	isc_time_t ts1, ts2;
+	double t;
+	unsigned int nthreads;
+	isc_thread_t threads[32];
+
+	UNUSED(tc);
+
+	debug_mem_record = ISC_FALSE;
+
+	result = dns_test_begin(NULL, ISC_TRUE);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	result = isc_time_now(&ts1);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	nthreads = ISC_MIN(isc_os_ncpus(), 32);
+	nthreads = ISC_MAX(nthreads, 1);
+	for (i = 0; i < nthreads; i++) {
+		result = isc_thread_create(fromwire_thread, NULL, &threads[i]);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	}
+
+	for (i = 0; i < nthreads; i++) {
+		result = isc_thread_join(threads[i], NULL);
+		ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+	}
+
+	result = isc_time_now(&ts2);
+	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
+
+	t = isc_time_microdiff(&ts2, &ts1);
+
+	printf("%u dns_name_fromwire() calls, %f seconds, %f calls/second\n",
+	       nthreads * 32000000, t / 1000000.0,
+	       (nthreads * 32000000) / (t / 1000000.0));
+
+	dns_test_end();
+}
+
+#endif /* DNS_BENCHMARK_TESTS */
+#endif /* ISC_PLATFORM_USETHREADS */
+
 /*
  * Main
  */
 ATF_TP_ADD_TCS(tp) {
 	ATF_TP_ADD_TC(tp, fullcompare);
+#ifdef ISC_PLATFORM_USETHREADS
+#ifdef DNS_BENCHMARK_TESTS
+	ATF_TP_ADD_TC(tp, benchmark);
+#endif /* DNS_BENCHMARK_TESTS */
+#endif /* ISC_PLATFORM_USETHREADS */
 
 	return (atf_no_error());
 }

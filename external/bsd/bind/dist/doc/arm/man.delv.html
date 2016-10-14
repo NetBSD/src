@@ -14,13 +14,12 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: man.delv.html,v 1.1.1.1.4.6 2016/03/13 08:06:12 martin Exp $ -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>delv</title>
-<meta name="generator" content="DocBook XSL Stylesheets V1.71.1">
-<link rel="start" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
+<meta name="generator" content="DocBook XSL Stylesheets V1.78.1">
+<link rel="home" href="Bv9ARM.html" title="BIND 9 Administrator Reference Manual">
 <link rel="up" href="Bv9ARM.ch13.html" title="Manual pages">
 <link rel="prev" href="man.host.html" title="host">
 <link rel="next" href="man.dnssec-checkds.html" title="dnssec-checkds">
@@ -39,7 +38,7 @@
 </table>
 <hr>
 </div>
-<div class="refentry" lang="en">
+<div class="refentry">
 <a name="man.delv"></a><div class="titlepage"></div>
 <div class="refnamediv">
 <h2>Name</h2>
@@ -52,15 +51,15 @@
 <div class="cmdsynopsis"><p><code class="command">delv</code>  [<code class="option">-v</code>]</p></div>
 <div class="cmdsynopsis"><p><code class="command">delv</code>  [queryopt...] [query...]</p></div>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2617148"></a><h2>DESCRIPTION</h2>
-<p><span><strong class="command">delv</strong></span>
+<div class="refsection">
+<a name="id-1.14.4.7"></a><h2>DESCRIPTION</h2>
+<p><span class="command"><strong>delv</strong></span>
       (Domain Entity Lookup &amp; Validation) is a tool for sending
       DNS queries and validating the results, using the the same internal
-      resolver and validator logic as <span><strong class="command">named</strong></span>.
+      resolver and validator logic as <span class="command"><strong>named</strong></span>.
     </p>
 <p>
-      <span><strong class="command">delv</strong></span> will send to a specified name server all
+      <span class="command"><strong>delv</strong></span> will send to a specified name server all
       queries needed to fetch and validate the requested data; this
       includes the original requested query, subsequent queries to follow
       CNAME or DNAME chains, and queries for DNSKEY, DS and DLV records
@@ -73,39 +72,39 @@
       By default, responses are validated using built-in DNSSEC trust
       anchors for the root zone (".") and for the ISC DNSSEC lookaside
       validation zone ("dlv.isc.org").  Records returned by
-      <span><strong class="command">delv</strong></span> are either fully validated or
+      <span class="command"><strong>delv</strong></span> are either fully validated or
       were not signed.  If validation fails, an explanation of
       the failure is included in the output; the validation process
-      can be traced in detail.  Because <span><strong class="command">delv</strong></span> does
+      can be traced in detail.  Because <span class="command"><strong>delv</strong></span> does
       not rely on an external server to carry out validation, it can
       be used to check the validity of DNS responses in environments
       where local name servers may not be trustworthy.
     </p>
 <p>
       Unless it is told to query a specific name server,
-      <span><strong class="command">delv</strong></span> will try each of the servers listed in
+      <span class="command"><strong>delv</strong></span> will try each of the servers listed in
       <code class="filename">/etc/resolv.conf</code>. If no usable server
-      addresses are found, <span><strong class="command">delv</strong></span> will send
+      addresses are found, <span class="command"><strong>delv</strong></span> will send
       queries to the localhost addresses (127.0.0.1 for IPv4, ::1
       for IPv6).
     </p>
 <p>
       When no command line arguments or options are given,
-      <span><strong class="command">delv</strong></span> will perform an NS query for "."
+      <span class="command"><strong>delv</strong></span> will perform an NS query for "."
       (the root zone).
     </p>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2617221"></a><h2>SIMPLE USAGE</h2>
+<div class="refsection">
+<a name="id-1.14.4.8"></a><h2>SIMPLE USAGE</h2>
 <p>
-      A typical invocation of <span><strong class="command">delv</strong></span> looks like:
+      A typical invocation of <span class="command"><strong>delv</strong></span> looks like:
       </p>
 <pre class="programlisting"> delv @server name type </pre>
 <p>
       where:
 
       </p>
-<div class="variablelist"><dl>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="constant">server</code></span></dt>
 <dd>
 <p>
@@ -113,21 +112,21 @@
 	      can be an IPv4 address in dotted-decimal notation or an IPv6
 	      address in colon-delimited notation.  When the supplied
 	      <em class="parameter"><code>server</code></em> argument is a hostname,
-	      <span><strong class="command">delv</strong></span> resolves that name before
+	      <span class="command"><strong>delv</strong></span> resolves that name before
 	      querying that name server (note, however, that this
 	      initial lookup is <span class="emphasis"><em>not</em></span> validated
 	      by DNSSEC).
 	    </p>
 <p>
 	      If no <em class="parameter"><code>server</code></em> argument is
-	      provided, <span><strong class="command">delv</strong></span> consults
+	      provided, <span class="command"><strong>delv</strong></span> consults
 	      <code class="filename">/etc/resolv.conf</code>; if an
 	      address is found there, it queries the name server at
 	      that address. If either of the <code class="option">-4</code> or
 	      <code class="option">-6</code> options are in use, then
 	      only addresses for the corresponding transport
 	      will be tried.  If no usable addresses are found,
-	      <span><strong class="command">delv</strong></span> will send queries to
+	      <span class="command"><strong>delv</strong></span> will send queries to
 	      the localhost addresses (127.0.0.1 for IPv4,
 	      ::1 for IPv6).
 	    </p>
@@ -143,16 +142,16 @@
 	      <em class="parameter"><code>type</code></em> can be any valid query
 	      type.  If no
 	      <em class="parameter"><code>type</code></em> argument is supplied,
-	      <span><strong class="command">delv</strong></span> will perform a lookup for an
+	      <span class="command"><strong>delv</strong></span> will perform a lookup for an
 	      A record.
 	    </p></dd>
 </dl></div>
 <p>
     </p>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2617352"></a><h2>OPTIONS</h2>
-<div class="variablelist"><dl>
+<div class="refsection">
+<a name="id-1.14.4.9"></a><h2>OPTIONS</h2>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term">-a <em class="replaceable"><code>anchor-file</code></em></span></dt>
 <dd>
 <p>
@@ -170,17 +169,17 @@
 	  </p>
 <p>
 	    Note: When reading the trust anchor file,
-	    <span><strong class="command">delv</strong></span> treats <code class="option">managed-keys</code>
+	    <span class="command"><strong>delv</strong></span> treats <code class="option">managed-keys</code>
 	    statements and <code class="option">trusted-keys</code> statements
 	    identically.  That is, for a managed key, it is the
 	    <span class="emphasis"><em>initial</em></span> key that is trusted; RFC 5011
-	    key management is not supported. <span><strong class="command">delv</strong></span>
+	    key management is not supported. <span class="command"><strong>delv</strong></span>
 	    will not consult the managed-keys database maintained by
-	    <span><strong class="command">named</strong></span>. This means that if either of the
+	    <span class="command"><strong>named</strong></span>. This means that if either of the
 	    keys in <code class="filename">/etc/bind.keys</code> is revoked
 	    and rolled over, it will be necessary to update
 	    <code class="filename">/etc/bind.keys</code> to use DNSSEC
-	    validation in <span><strong class="command">delv</strong></span>.
+	    validation in <span class="command"><strong>delv</strong></span>.
 	  </p>
 </dd>
 <dt><span class="term">-b  <em class="replaceable"><code>address</code></em></span></dt>
@@ -194,7 +193,7 @@
 <dt><span class="term">-c <em class="replaceable"><code>class</code></em></span></dt>
 <dd><p>
 	    Sets the query class for the requested data. Currently,
-	    only class "IN" is supported in <span><strong class="command">delv</strong></span>
+	    only class "IN" is supported in <span class="command"><strong>delv</strong></span>
 	    and any other value is ignored.
 	  </p></dd>
 <dt><span class="term">-d <em class="replaceable"><code>level</code></em></span></dt>
@@ -202,7 +201,7 @@
 	    Set the systemwide debug level to <code class="option">level</code>.
 	    The allowed range is from 0 to 99.
 	    The default is 0 (no debugging).
-	    Debugging traces from <span><strong class="command">delv</strong></span> become
+	    Debugging traces from <span class="command"><strong>delv</strong></span> become
 	    more verbose as the debug level increases.
 	    See the <code class="option">+mtrace</code>, <code class="option">+rtrace</code>,
 	    and <code class="option">+vtrace</code> options below for additional
@@ -210,7 +209,7 @@
 	  </p></dd>
 <dt><span class="term">-h</span></dt>
 <dd><p>
-	    Display the <span><strong class="command">delv</strong></span> help usage output and exit.
+	    Display the <span class="command"><strong>delv</strong></span> help usage output and exit.
 	  </p></dd>
 <dt><span class="term">-i</span></dt>
 <dd><p>
@@ -218,9 +217,9 @@
 	    (Note, however, this does not set the CD bit on upstream
 	    queries. If the server being queried is performing DNSSEC
 	    validation, then it will not return invalid data; this
-	    can cause <span><strong class="command">delv</strong></span> to time out. When it
+	    can cause <span class="command"><strong>delv</strong></span> to time out. When it
 	    is necessary to examine invalid data to debug a DNSSEC
-	    problem, use <span><strong class="command">dig +cd</strong></span>.)
+	    problem, use <span class="command"><strong>dig +cd</strong></span>.)
 	  </p></dd>
 <dt><span class="term">-m</span></dt>
 <dd><p>
@@ -260,7 +259,7 @@
 </dd>
 <dt><span class="term">-v</span></dt>
 <dd><p>
-	    Print the <span><strong class="command">delv</strong></span> version and exit.
+	    Print the <span class="command"><strong>delv</strong></span> version and exit.
 	  </p></dd>
 <dt><span class="term">-x <em class="replaceable"><code>addr</code></em></span></dt>
 <dd><p>
@@ -269,24 +268,24 @@
 	    dotted-decimal notation, or a colon-delimited IPv6 address.
 	    When <code class="option">-x</code> is used, there is no need to provide
 	    the <em class="parameter"><code>name</code></em> or <em class="parameter"><code>type</code></em>
-	    arguments.  <span><strong class="command">delv</strong></span> automatically performs a
+	    arguments.  <span class="command"><strong>delv</strong></span> automatically performs a
 	    lookup for a name like <code class="literal">11.12.13.10.in-addr.arpa</code>
 	    and sets the query type to PTR.  IPv6 addresses are looked up
 	    using nibble format under the IP6.ARPA domain.
 	  </p></dd>
 <dt><span class="term">-4</span></dt>
 <dd><p>
-	    Forces <span><strong class="command">delv</strong></span> to only use IPv4.
+	    Forces <span class="command"><strong>delv</strong></span> to only use IPv4.
 	  </p></dd>
 <dt><span class="term">-6</span></dt>
 <dd><p>
-	    Forces <span><strong class="command">delv</strong></span> to only use IPv6.
+	    Forces <span class="command"><strong>delv</strong></span> to only use IPv6.
 	  </p></dd>
 </dl></div>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2672924"></a><h2>QUERY OPTIONS</h2>
-<p><span><strong class="command">delv</strong></span>
+<div class="refsection">
+<a name="id-1.14.4.10"></a><h2>QUERY OPTIONS</h2>
+<p><span class="command"><strong>delv</strong></span>
       provides a number of query options which affect the way results are
       displayed, and in some cases the way lookups are performed.
     </p>
@@ -300,16 +299,16 @@
       The query options are:
 
       </p>
-<div class="variablelist"><dl>
+<div class="variablelist"><dl class="variablelist">
 <dt><span class="term"><code class="option">+[no]cdflag</code></span></dt>
 <dd><p>
 	      Controls whether to set the CD (checking disabled) bit in
-	      queries sent by <span><strong class="command">delv</strong></span>. This may be useful
+	      queries sent by <span class="command"><strong>delv</strong></span>. This may be useful
 	      when troubleshooting DNSSEC problems from behind a validating
 	      resolver. A validating resolver will block invalid responses,
 	      making it difficult to retrieve them for analysis. Setting
 	      the CD flag on queries will cause the resolver to return
-	      invalid responses, which <span><strong class="command">delv</strong></span> can then
+	      invalid responses, which <span class="command"><strong>delv</strong></span> can then
 	      validate internally and report the errors in detail.
 	    </p></dd>
 <dt><span class="term"><code class="option">+[no]class</code></span></dt>
@@ -326,7 +325,7 @@
 <dd>
 <p>
 	      Toggle resolver fetch logging. This reports the
-	      name and type of each query sent by <span><strong class="command">delv</strong></span>
+	      name and type of each query sent by <span class="command"><strong>delv</strong></span>
 	      in the process of carrying out the resolution and validation
 	      process: this includes including the original query and
 	      all subsequent queries to follow CNAMEs and to establish a
@@ -344,7 +343,7 @@
 <dd>
 <p>
 	      Toggle message logging. This produces a detailed dump of
-	      the responses received by <span><strong class="command">delv</strong></span> in the
+	      the responses received by <span class="command"><strong>delv</strong></span> in the
 	      process of carrying out the resolution and validation process.
 	    </p>
 <p>
@@ -415,7 +414,7 @@
 <dt><span class="term"><code class="option">+[no]all</code></span></dt>
 <dd><p>
 	      Set or clear the display options
-	      <code class="option">+[no]comments</code>, 
+	      <code class="option">+[no]comments</code>,
 	      <code class="option">+[no]rrcomments</code>, and
 	      <code class="option">+[no]trust</code> as a group.
 	    </p></dd>
@@ -424,14 +423,14 @@
 	      Print long records (such as RRSIG, DNSKEY, and SOA records)
 	      in a verbose multi-line format with human-readable comments.
 	      The default is to print each record on a single line, to
-	      facilitate machine parsing of the <span><strong class="command">delv</strong></span>
+	      facilitate machine parsing of the <span class="command"><strong>delv</strong></span>
 	      output.
 	    </p></dd>
 <dt><span class="term"><code class="option">+[no]dnssec</code></span></dt>
 <dd><p>
 	      Indicates whether to display RRSIG records in the
-	      <span><strong class="command">delv</strong></span> output.  The default is to
-	      do so.  Note that (unlike in <span><strong class="command">dig</strong></span>)
+	      <span class="command"><strong>delv</strong></span> output.  The default is to
+	      do so.  Note that (unlike in <span class="command"><strong>dig</strong></span>)
 	      this does <span class="emphasis"><em>not</em></span> control whether to
 	      request DNSSEC records or whether to validate them.
 	      DNSSEC records are always requested, and validation
@@ -464,13 +463,13 @@
 
     </p>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2673372"></a><h2>FILES</h2>
+<div class="refsection">
+<a name="id-1.14.4.11"></a><h2>FILES</h2>
 <p><code class="filename">/etc/bind.keys</code></p>
 <p><code class="filename">/etc/resolv.conf</code></p>
 </div>
-<div class="refsect1" lang="en">
-<a name="id2673460"></a><h2>SEE ALSO</h2>
+<div class="refsection">
+<a name="id-1.14.4.12"></a><h2>SEE ALSO</h2>
 <p><span class="citerefentry"><span class="refentrytitle">dig</span>(1)</span>,
       <span class="citerefentry"><span class="refentrytitle">named</span>(8)</span>,
       <em class="citetitle">RFC4034</em>,
@@ -499,6 +498,6 @@
 </tr>
 </table>
 </div>
-<p style="text-align: center;">BIND 9.10.3-P4</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.10.4-P3</p>
 </body>
 </html>

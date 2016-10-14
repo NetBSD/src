@@ -1,0 +1,26 @@
+
+; <<>> DiG 9.10.2-P3 <<>> -p 5300 axfr mapped @10.53.0.3
+;; global options: +cmd
+mapped.			3600	IN	SOA	. . 0 0 0 2147483647 0
+example.aa.		3600	IN	A	1.2.3.4
+example1.aa.		3600	IN	A	1.2.3.4
+example.bb.		3600	IN	A	1.2.3.4
+example1.bb.		3600	IN	A	1.2.3.4
+example.com.		3600	IN	A	1.2.3.4
+example1.com.		3600	IN	A	1.2.3.4
+bar.dd.			3600	IN	A	1.2.3.4
+foo.ee.			3600	IN	A	1.2.3.4
+foo.ff.			3600	IN	A	1.2.3.4
+foo.gg.			3600	IN	A	1.2.3.4
+foo.hh.			3600	IN	A	1.2.3.4
+foo.ii.			3600	IN	A	1.2.3.4
+foo.jj.			3600	IN	A	1.2.3.4
+foo.kk.			3600	IN	A	1.2.3.4
+foo.ll.			3600	IN	A	1.2.3.4
+mapped.			3600	IN	NS	.
+mapped.			3600	IN	SOA	. . 0 0 0 2147483647 0
+;; Query time: 4 msec
+;; SERVER: 10.53.0.3#5300(10.53.0.3)
+;; WHEN: Tue Feb 16 14:38:25 EST 2016
+;; XFR size: 18 records (messages 1, bytes 468)
+

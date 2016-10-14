@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.8.2.2 2016/03/13 08:06:03 martin Exp $	*/
+/*	$NetBSD: server.h,v 1.8.2.3 2016/10/14 12:01:11 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -16,8 +16,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: server.h,v 1.118 2012/01/31 23:47:31 tbox Exp  */
 
 #ifndef NAMED_SERVER_H
 #define NAMED_SERVER_H 1
@@ -233,7 +231,8 @@ ns_server_flushonshutdown(ns_server_t *server, isc_boolean_t flush);
  */
 
 isc_result_t
-ns_server_reloadcommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_reloadcommand(ns_server_t *server, isc_lex_t *lex,
+			isc_buffer_t *text);
 /*%<
  * Act on a "reload" command from the command channel.
  */
@@ -245,26 +244,28 @@ ns_server_reconfigcommand(ns_server_t *server);
  */
 
 isc_result_t
-ns_server_notifycommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_notifycommand(ns_server_t *server, isc_lex_t *lex,
+			isc_buffer_t *text);
 /*%<
  * Act on a "notify" command from the command channel.
  */
 
 isc_result_t
-ns_server_refreshcommand(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_refreshcommand(ns_server_t *server, isc_lex_t *lex,
+			 isc_buffer_t *text);
 /*%<
  * Act on a "refresh" command from the command channel.
  */
 
 isc_result_t
-ns_server_retransfercommand(ns_server_t *server, char *args,
+ns_server_retransfercommand(ns_server_t *server, isc_lex_t *lex,
 			    isc_buffer_t *text);
 /*%<
  * Act on a "retransfer" command from the command channel.
  */
 
 isc_result_t
-ns_server_togglequerylog(ns_server_t *server, char *args);
+ns_server_togglequerylog(ns_server_t *server, isc_lex_t *lex);
 /*%<
  * Enable/disable logging of queries.  (Takes "yes" or "no" argument,
  * but can also be used as a toggle for backward comptibility.)
@@ -280,25 +281,25 @@ ns_server_dumpstats(ns_server_t *server);
  * Dump the current cache to the dump file.
  */
 isc_result_t
-ns_server_dumpdb(ns_server_t *server, char *args);
+ns_server_dumpdb(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Dump the current security roots to the secroots file.
  */
 isc_result_t
-ns_server_dumpsecroots(ns_server_t *server, char *args);
+ns_server_dumpsecroots(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Change or increment the server debug level.
  */
 isc_result_t
-ns_server_setdebuglevel(ns_server_t *server, char *args);
+ns_server_setdebuglevel(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Flush the server's cache(s)
  */
 isc_result_t
-ns_server_flushcache(ns_server_t *server, char *args);
+ns_server_flushcache(ns_server_t *server, isc_lex_t *lex);
 
 /*%
  * Flush a particular name from the server's cache.  If 'tree' is false,
@@ -306,7 +307,8 @@ ns_server_flushcache(ns_server_t *server, char *args);
  * flush all the names under the specified name.
  */
 isc_result_t
-ns_server_flushnode(ns_server_t *server, char *args, isc_boolean_t tree);
+ns_server_flushnode(ns_server_t *server, isc_lex_t *lex,
+		    isc_boolean_t tree);
 
 /*%
  * Report the server's status.
@@ -324,20 +326,21 @@ ns_server_tsiglist(ns_server_t *server, isc_buffer_t *text);
  * Delete a specific key (with optional view).
  */
 isc_result_t
-ns_server_tsigdelete(ns_server_t *server, char *command, isc_buffer_t *text);
+ns_server_tsigdelete(ns_server_t *server, isc_lex_t *lex,
+		     isc_buffer_t *text);
 
 /*%
  * Enable or disable updates for a zone.
  */
 isc_result_t
-ns_server_freeze(ns_server_t *server, isc_boolean_t freeze, char *args,
-		 isc_buffer_t *text);
+ns_server_freeze(ns_server_t *server, isc_boolean_t freeze,
+		 isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Dump zone updates to disk, optionally removing the journal file
  */
 isc_result_t
-ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_sync(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Update a zone's DNSKEY set from the key repository.  If
@@ -347,7 +350,7 @@ ns_server_sync(ns_server_t *server, char *args, isc_buffer_t *text);
  * take place incrementally.
  */
 isc_result_t
-ns_server_rekey(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_rekey(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Dump the current recursive queries.
@@ -365,7 +368,7 @@ ns_add_reserved_dispatch(ns_server_t *server, const isc_sockaddr_t *addr);
  * Enable or disable dnssec validation.
  */
 isc_result_t
-ns_server_validation(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_validation(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Add a zone to a running process
@@ -377,18 +380,18 @@ ns_server_add_zone(ns_server_t *server, char *args, isc_buffer_t *text);
  * Deletes a zone from a running process
  */
 isc_result_t
-ns_server_del_zone(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_del_zone(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Lists the status of the signing records for a given zone.
  */
 isc_result_t
-ns_server_signing(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_signing(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 
 /*%
  * Lists status information for a given zone (e.g., name, type, files,
  * load time, expiry, etc).
  */
 isc_result_t
-ns_server_zonestatus(ns_server_t *server, char *args, isc_buffer_t *text);
+ns_server_zonestatus(ns_server_t *server, isc_lex_t *lex, isc_buffer_t *text);
 #endif /* NAMED_SERVER_H */

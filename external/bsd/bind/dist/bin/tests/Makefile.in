@@ -135,7 +135,7 @@ XSRCS =		adb_test.c \
 
 @BIND9_MAKE_RULES@
 
-# disable optimization for backtrace test to get the expected result	
+# disable optimization for backtrace test to get the expected result
 BTTEST_CFLAGS =	${BACKTRACECFLAGS} ${EXT_CFLAGS} ${ALL_CPPFLAGS} -g \
 		${ALWAYS_WARNINGS} ${STD_CWARNINGS} ${CWARNINGS}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.6.2.3 2016/03/13 08:06:15 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.6.2.4 2016/10/14 12:01:32 martin Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -112,12 +112,20 @@ const struct in6_addr isc_net_in6addrloop = IN6ADDR_LOOPBACK_INIT;
 
 # if defined(WANT_IPV6)
 static isc_once_t 	once_ipv6only = ISC_ONCE_INIT;
-# endif
 
-# if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
+#  if defined(ISC_PLATFORM_HAVEIN6PKTINFO)
 static isc_once_t 	once_ipv6pktinfo = ISC_ONCE_INIT;
-# endif
+#  endif
+# endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
+
+#ifndef ISC_CMSG_IP_TOS
+#ifdef __APPLE__
+#define ISC_CMSG_IP_TOS 0	/* As of 10.8.2. */
+#else /* ! __APPLE__ */
+#define ISC_CMSG_IP_TOS 1
+#endif /* ! __APPLE__ */
+#endif /* ! ISC_CMSG_IP_TOS */
 
 static isc_once_t 	once = ISC_ONCE_INIT;
 static isc_once_t 	once_dscp = ISC_ONCE_INIT;
@@ -410,6 +418,9 @@ isc_net_probe_ipv6pktinfo(void) {
 	return (ipv6pktinfo_result);
 }
 
+#if ISC_CMSG_IP_TOS || \
+    defined(ISC_NET_BSD44MSGHDR) && defined(IPV6_TCLASS) && defined(WANT_IPV6)
+
 static inline ISC_SOCKADDR_LEN_T
 cmsg_len(ISC_SOCKADDR_LEN_T len) {
 #ifdef CMSG_LEN
@@ -615,6 +626,7 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 	return (ISC_TRUE);
 }
 #endif
+#endif
 
 static void
 try_dscp_v4(void) {
@@ -665,14 +677,6 @@ try_dscp_v4(void) {
 #endif /* IP_RECVTOS */
 
 #ifdef ISC_NET_BSD44MSGHDR
-
-#ifndef ISC_CMSG_IP_TOS
-#ifdef __APPLE__
-#define ISC_CMSG_IP_TOS 0	/* As of 10.8.2. */
-#else /* ! __APPLE__ */
-#define ISC_CMSG_IP_TOS 1
-#endif /* ! __APPLE__ */
-#endif /* ! ISC_CMSG_IP_TOS */
 
 #if ISC_CMSG_IP_TOS
 	if (cmsgsend(s, IPPROTO_IP, IP_TOS, res0))

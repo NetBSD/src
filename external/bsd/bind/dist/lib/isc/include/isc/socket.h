@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.h,v 1.8.4.1 2014/12/22 03:28:46 msaitoh Exp $	*/
+/*	$NetBSD: socket.h,v 1.8.4.2 2016/10/14 12:01:31 martin Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2014, 2016  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -439,7 +439,8 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager,
  *
  * Note:
  *
- *\li   'fd' is the already-opened file descriptor.
+ *\li   'fd' is the already-opened file descriptor (must be less
+ * 	than maxsockets).
  *\li	This function is not available on Windows.
  *\li	The callback function is called "in-line" - this means the function
  *	needs to return as fast as possible, as all other I/O will be suspended
@@ -463,6 +464,7 @@ isc_socket_fdwatchcreate(isc_socketmgr_t *manager,
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_NORESOURCES
  *\li	#ISC_R_UNEXPECTED
+ *\li	#ISC_R_RANGE
  */
 
 isc_result_t

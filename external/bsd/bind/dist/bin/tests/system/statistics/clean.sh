@@ -24,6 +24,7 @@ rm -f ns3/example.bk
 rm -f ns3/internal.bk
 rm -f */named.memstats
 rm -f */named.run
+rm -f */ans.run
 rm -f */named.stats
 rm -f dig.out*
 rm -f curl.out.*

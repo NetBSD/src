@@ -1,4 +1,4 @@
-/*	$NetBSD: loc.c,v 1.4 2013/07/27 19:23:11 christos Exp $	*/
+/*	$NetBSD: loc.c,v 1.4.4.1 2016/10/14 12:01:24 martin Exp $	*/
 
 #include "loc.h"
 
@@ -369,6 +369,10 @@ int responseLen;		/* buffer length */
 
   result = (char *) malloc (256);
   message = (char *) malloc (256);
+  if (result == NULL || message == NULL)
+    {
+      panic ("Malloc failed");
+    }
   /* 
    * Look up the records for the given domain name.
    * We expect the domain to be a fully qualified name, so
@@ -571,6 +575,10 @@ findA (domain)
 	  if (end == NULL)
 	    {
 	      result = (void *) malloc (sizeof (struct list_in_addr));
+	      if (result == NULL)
+		{
+		  panic ("Malloc failed");
+		}
 	      result->addr = addr;
 	      result->next = NULL;
 	      end = result;
@@ -578,6 +586,10 @@ findA (domain)
 	  else
 	    {
 	      end->next = (void *) malloc (sizeof (struct list_in_addr));
+	      if (end->next == NULL)
+		{
+		  panic ("Malloc failed");
+		}
 	      end = end->next;
 	      end->addr = addr;
 	      end->next = NULL;

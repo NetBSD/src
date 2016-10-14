@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.4 2012/06/05 00:42:57 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.4.12.1 2016/10/14 12:01:33 martin Exp $	*/
 
 /*
- * Copyright (C) 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2005, 2007, 2008, 2015, 2016  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -89,19 +89,36 @@ isc_atomic_store(isc_int32_t *p, isc_int32_t val) {
 		"lock;"
 #endif
 		"xchgl (%rax), %edx\n"
-		/*
-		 * XXX: assume %rax will be used as the return value.
-		 */
 		);
 }
 
-static __inline isc_int32_t
+#ifdef ISC_PLATFORM_HAVEATOMICSTOREQ
+static void
+isc_atomic_storeq(isc_int64_t *p, isc_int64_t val) {
+	UNUSED(p);
+	UNUSED(val);
+
+	__asm (
+		"movq %rdi, %rax\n"
+		"movq %rsi, %rdx\n"
+#ifdef ISC_PLATFORM_USETHREADS
+		"lock;"
+#endif
+		"xchgq (%rax), %rdx\n"
+		);
+}
+#endif
+
+static isc_int32_t
 isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 	UNUSED(p);
 	UNUSED(cmpval);
 	UNUSED(val);
 
 	__asm (
+		/*
+		 * p is %rdi, cmpval is %esi, val is %edx.
+		 */
 		"movl %edx, %ecx\n"
 		"movl %esi, %eax\n"
 		"movq %rdi, %rdx\n"
@@ -110,8 +127,12 @@ isc_atomic_cmpxchg(isc_int32_t *p, isc_int32_t cmpval, isc_int32_t val) {
 		"lock;"
 #endif
 		/*
-		 * If (%rdi) == %eax then (%rdi) := %edx.
-		 * %eax is set to old (%ecx), which will be the return value.
+		 * If [%rdi] == %eax then [%rdi] := %ecx (equal to %edx
+		 * from above), and %eax is untouched (equal to %esi)
+		 * from above.
+		 *
+		 * Else if [%rdi] != %eax then [%rdi] := [%rdi]
+		 * (rewritten in write cycle) and %eax := [%rdi].
 		 */
 		"cmpxchgl %ecx, (%rdx)"
 		);

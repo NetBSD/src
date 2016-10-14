@@ -1,7 +1,7 @@
-/*	$NetBSD: t_atomic.c,v 1.4 2013/12/31 20:24:40 christos Exp $	*/
+/*	$NetBSD: t_atomic.c,v 1.4.4.1 2016/10/14 12:01:13 martin Exp $	*/
 
 /*
- * Copyright (C) 2011, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id: t_atomic.c,v 1.2 2011/01/11 23:47:12 tbox Exp  */
 
 #include <config.h>
 
@@ -40,7 +38,9 @@ char *progname;
 isc_mem_t *mctx = NULL;
 isc_taskmgr_t *task_manager = NULL;
 
-#if defined(ISC_PLATFORM_HAVEXADD) || defined(ISC_PLATFORM_HAVEXADDQ)
+#if defined(ISC_PLATFORM_HAVEXADD) || defined(ISC_PLATFORM_HAVEXADDQ) || \
+    defined(ISC_PLATFORM_HAVEATOMICSTORE) || \
+    defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
 static void
 setup(void) {
 	/* 1 */ CHECK(isc_mem_create(0, 0, &mctx));
@@ -67,14 +67,10 @@ typedef struct {
 
 counter_t counters[TASKS];
 
-void do_xaddq(isc_task_t *task, isc_event_t *ev);
-
 #if defined(ISC_PLATFORM_HAVEXADD)
-isc_int32_t counter_32;
+static isc_int32_t counter_32;
 
-void do_xadd(isc_task_t *task, isc_event_t *ev);
-
-void
+static void
 do_xadd(isc_task_t *task, isc_event_t *ev) {
 	counter_t *state = (counter_t *)ev->ev_arg;
 	int i;
@@ -130,11 +126,9 @@ test_atomic_xadd() {
 #endif
 
 #if defined(ISC_PLATFORM_HAVEXADDQ)
-isc_int64_t counter_64;
+static isc_int64_t counter_64;
 
-void do_xaddq(isc_task_t *task, isc_event_t *ev);
-
-void
+static void
 do_xaddq(isc_task_t *task, isc_event_t *ev) {
 	counter_t *state = (counter_t *)ev->ev_arg;
 	int i;
@@ -190,6 +184,151 @@ test_atomic_xaddq() {
 }
 #endif
 
+#ifdef ISC_PLATFORM_HAVEATOMICSTORE
+static isc_int32_t store_32;
+
+static void
+do_store(isc_task_t *task, isc_event_t *ev) {
+	counter_t *state = (counter_t *)ev->ev_arg;
+	int i;
+	isc_uint8_t r;
+	isc_uint32_t val;
+
+	r = random() % 256;
+	val = (r << 24) | (r << 16) | (r << 8) | r;
+
+	for (i = 0 ; i < COUNTS_PER_ITERATION ; i++) {
+		isc_atomic_store(&store_32, val);
+	}
+
+	state->iteration++;
+	if (state->iteration < ITERATIONS) {
+		isc_task_send(task, &ev);
+	} else {
+		isc_event_free(&ev);
+	}
+}
+
+static void
+test_atomic_store() {
+	int test_result;
+	isc_task_t *tasks[TASKS];
+	isc_event_t *event;
+	int i;
+	isc_uint8_t r;
+	isc_uint32_t val;
+
+	t_assert("test_atomic_store", 1, T_REQUIRED, "%s",
+		 "ensure that isc_atomic_store() works.");
+
+	setup();
+
+	memset(counters, 0, sizeof(counters));
+	store_32 = 0;
+
+	/*
+	 * Create our tasks, and allocate an event to get the counters
+	 * going.
+	 */
+	for (i = 0 ; i < TASKS ; i++) {
+		tasks[i] = NULL;
+		CHECK(isc_task_create(task_manager, 0, &tasks[i]));
+		event = isc_event_allocate(mctx, NULL, 1000, do_store,
+					   &counters[i],
+					   sizeof(struct isc_event));
+		isc_task_sendanddetach(&tasks[i], &event);
+	}
+
+	teardown();
+
+	test_result = T_PASS;
+	r = store_32 & 0xff;
+	val = (r << 24) | (r << 16) | (r << 8) | r;
+	t_info("32-bit store 0x%x, expected 0x%x\n",
+	       (isc_uint32_t) store_32, val);
+	if ((isc_uint32_t) store_32 != val)
+		test_result = T_FAIL;
+	t_result(test_result);
+
+	store_32 = 0;
+}
+#endif
+
+#if defined(ISC_PLATFORM_HAVEATOMICSTOREQ)
+static isc_int64_t store_64;
+
+static void
+do_storeq(isc_task_t *task, isc_event_t *ev) {
+	counter_t *state = (counter_t *)ev->ev_arg;
+	int i;
+	isc_uint8_t r;
+	isc_uint64_t val;
+
+	r = random() % 256;
+	val = (((isc_uint64_t) r << 24) |
+	       ((isc_uint64_t) r << 16) |
+	       ((isc_uint64_t) r << 8) |
+	       (isc_uint64_t) r);
+	val |= ((isc_uint64_t) val << 32);
+
+	for (i = 0 ; i < COUNTS_PER_ITERATION ; i++) {
+		isc_atomic_storeq(&store_64, val);
+	}
+
+	state->iteration++;
+	if (state->iteration < ITERATIONS) {
+		isc_task_send(task, &ev);
+	} else {
+		isc_event_free(&ev);
+	}
+}
+
+static void
+test_atomic_storeq() {
+	int test_result;
+	isc_task_t *tasks[TASKS];
+	isc_event_t *event;
+	int i;
+	isc_uint8_t r;
+	isc_uint64_t val;
+
+	t_assert("test_atomic_storeq", 1, T_REQUIRED, "%s",
+		 "ensure that isc_atomic_storeq() works.");
+
+	setup();
+
+	memset(counters, 0, sizeof(counters));
+	store_64 = 0;
+
+	/*
+	 * Create our tasks, and allocate an event to get the counters going.
+	 */
+	for (i = 0 ; i < TASKS ; i++) {
+		tasks[i] = NULL;
+		CHECK(isc_task_create(task_manager, 0, &tasks[i]));
+		event = isc_event_allocate(mctx, NULL, 1000, do_storeq,
+					   &counters[i], sizeof(struct isc_event));
+		isc_task_sendanddetach(&tasks[i], &event);
+	}
+
+	teardown();
+
+	test_result = T_PASS;
+	r = store_64 & 0xff;
+	val = (((isc_uint64_t) r << 24) |
+	       ((isc_uint64_t) r << 16) |
+	       ((isc_uint64_t) r << 8) |
+	       (isc_uint64_t) r);
+	val |= ((isc_uint64_t) val << 32);
+	t_info("64-bit store 0x%"ISC_PRINT_QUADFORMAT"x, expected 0x%"ISC_PRINT_QUADFORMAT"x\n",
+	       (isc_uint64_t) store_64, val);
+	if ((isc_uint64_t) store_64 != val)
+		test_result = T_FAIL;
+	t_result(test_result);
+
+	store_64 = 0;
+}
+#endif /* ISC_PLATFORM_HAVEATOMICSTOREQ */
 
 testspec_t T_testlist[] = {
 #if defined(ISC_PLATFORM_HAVEXADD)
@@ -197,6 +336,12 @@ testspec_t T_testlist[] = {
 #endif
 #if defined(ISC_PLATFORM_HAVEXADDQ)
 	{ (PFV) test_atomic_xaddq,	"test_atomic_xaddq"		},
+#endif
+#ifdef ISC_PLATFORM_HAVEATOMICSTORE
+	{ (PFV) test_atomic_store,	"test_atomic_store"		},
+#endif
+#if defined(ISC_PLATFORM_HAVEXADDQ)
+	{ (PFV) test_atomic_storeq,	"test_atomic_storeq"		},
 #endif
 	{ (PFV) 0,			NULL }
 };

@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.2.6.1 2016/03/13 08:06:02 martin Exp $
+#	$NetBSD: bind2netbsd,v 1.2.6.2 2016/10/14 12:01:08 martin Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@
 #	$ cd src/external/bsd/bind/dist
 #	$ cvs -d cvs.netbsd.org:/cvsroot import -m "Import bind 9.x.y" src/external/bsd/bind/dist ISC bind-9-x-y
 #	$ cd ../../../../../bind-9.x.y
-#	$ run ./configure
+#	$ run ./configure --enable-fetchlimit --enable-sit --enable-fixed-rrset --enable-querytrace
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
 #	  /usr/src/external/bsd/bind/include

@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.13.2.3 2016/03/13 08:06:02 martin Exp $	*/
+/*	$NetBSD: dighost.c,v 1.13.2.4 2016/10/14 12:01:09 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2016  Internet Systems Consortium, Inc. ("ISC")
@@ -468,7 +468,7 @@ append(const char *text, int len, char **p, char *end) {
 
 static isc_result_t
 reverse_octets(const char *in, char **p, char *end) {
-	char *dot = strchr(in, '.');
+	const char *dot = strchr(in, '.');
 	int len;
 	if (dot != NULL) {
 		isc_result_t result;
@@ -1067,39 +1067,46 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
-	isc_uint32_t netmask = 0;
+	isc_uint32_t prefix_length = 0xffffffff;
 	char *slash = NULL;
 	isc_boolean_t parsed = ISC_FALSE;
+	char buf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:XXX.XXX.XXX.XXX/128")];
 
-	if ((slash = strchr(value, '/'))) {
+	if (strlcpy(buf, value, sizeof(buf)) >= sizeof(buf))
+		fatal("invalid prefix '%s'\n", value);
+
+	slash = strchr(buf, '/');
+	if (slash != NULL) {
 		*slash = '\0';
-		result = isc_parse_uint32(&netmask, slash + 1, 10);
+		result = isc_parse_uint32(&prefix_length, slash + 1, 10);
 		if (result != ISC_R_SUCCESS) {
-			*slash = '/';
-			fatal("invalid prefix length '%s': %s\n",
+			fatal("invalid prefix length in '%s': %s\n",
 			      value, isc_result_totext(result));
 		}
+	}
+
+	if (strcmp(buf, "0") == 0) {
+		parsed = ISC_TRUE;
+		prefix_length = 0;
 	}
 
 	sa = isc_mem_allocate(mctx, sizeof(*sa));
 	if (sa == NULL)
 		fatal("out of memory");
-	if (inet_pton(AF_INET6, value, &in6) == 1) {
-		isc_sockaddr_fromin6(sa, &in6, 0);
+	if (inet_pton(AF_INET6, buf, &in6) == 1) {
 		parsed = ISC_TRUE;
-		if (netmask == 0 || netmask > 128)
-			netmask = 128;
-	} else if (inet_pton(AF_INET, value, &in4) == 1) {
+		isc_sockaddr_fromin6(sa, &in6, 0);
+		if (prefix_length > 128)
+			prefix_length = 128;
+	} else if (inet_pton(AF_INET, buf, &in4) == 1) {
 		parsed = ISC_TRUE;
 		isc_sockaddr_fromin(sa, &in4, 0);
-		if (netmask == 0 || netmask > 32)
-			netmask = 32;
-	} else if (netmask != 0) {
-		char buf[64];
+		if (prefix_length > 32)
+			prefix_length = 32;
+	} else if (prefix_length != 0xffffffff && prefix_length != 0) {
 		int i;
 
-		strlcpy(buf, value, sizeof(buf));
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 3 && strlen(buf) < sizeof(buf) - 2; i++) {
 			strlcat(buf, ".0", sizeof(buf));
 			if (inet_pton(AF_INET, buf, &in4) == 1) {
 				parsed = ISC_TRUE;
@@ -1108,20 +1115,21 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 			}
 		}
 
+		if (prefix_length > 32)
+			prefix_length = 32;
 	}
-
-	if (slash != NULL)
-		*slash = '/';
 
 	if (!parsed)
 		fatal("invalid address '%s'", value);
 
-	sa->length = netmask;
+	sa->length = prefix_length;
+	if (prefix_length == 0)
+		sa->type.sa.sa_family = AF_UNSPEC;
+
 	*sap = sa;
 
 	return (ISC_R_SUCCESS);
 }
-
 
 /*
  * Parse HMAC algorithm specification
@@ -2467,62 +2475,63 @@ setup_lookup(dig_lookup_t *lookup) {
 		}
 
 		if (lookup->ecs_addr != NULL) {
-			isc_uint32_t prefixlen;
+			isc_uint8_t addr[16], family, proto;
+			isc_uint32_t plen;
 			struct sockaddr *sa;
 			struct sockaddr_in *sin;
 			struct sockaddr_in6 *sin6;
-			const isc_uint8_t *addr;
 			size_t addrl;
-			isc_uint8_t mask;
 
 			sa = &lookup->ecs_addr->type.sa;
-			prefixlen = lookup->ecs_addr->length;
+			plen = lookup->ecs_addr->length;
 
 			/* Round up prefix len to a multiple of 8 */
-			addrl = (prefixlen + 7) / 8;
-			if (prefixlen % 8 == 0)
-				mask = 0xff;
-			else
-				mask = 0xffU << (8 - (prefixlen % 8));
+			addrl = (plen + 7) / 8;
 
 			INSIST(i < DNS_EDNSOPTIONS);
 			opts[i].code = DNS_OPT_CLIENT_SUBNET;
 			opts[i].length = (isc_uint16_t) addrl + 4;
 			check_result(result, "isc_buffer_allocate");
 			isc_buffer_init(&b, ecsbuf, sizeof(ecsbuf));
-			if (sa->sa_family == AF_INET) {
+
+			/* If prefix length is zero, don't set family */
+			proto = sa->sa_family;
+			if (plen == 0)
+				proto = AF_UNSPEC;
+
+			switch (proto) {
+			case AF_UNSPEC:
+				INSIST(plen == 0);
+				family = 0;
+				break;
+			case AF_INET:
+				family = 1;
 				sin = (struct sockaddr_in *) sa;
-				addr = (isc_uint8_t *) &sin->sin_addr;
-				/* family */
-				isc_buffer_putuint16(&b, 1);
-				/* source prefix-length */
-				isc_buffer_putuint8(&b, prefixlen);
-				/* scope prefix-length */
-				isc_buffer_putuint8(&b, 0);
-				/* address */
-				if (addrl > 0) {
-					isc_buffer_putmem(&b, addr, addrl - 1);
-					isc_buffer_putuint8(&b,
-							    (addr[addrl - 1] &
-							     mask));
-				}
-			} else {
+				memmove(addr, &sin->sin_addr, 4);
+				break;
+			case AF_INET6:
+				family = 2;
 				sin6 = (struct sockaddr_in6 *) sa;
-				addr = (isc_uint8_t *) &sin6->sin6_addr;
-				/* family */
-				isc_buffer_putuint16(&b, 2);
-				/* source prefix-length */
-				isc_buffer_putuint8(&b, prefixlen);
-				/* scope prefix-length */
-				isc_buffer_putuint8(&b, 0);
-				/* address */
-				if (addrl > 0) {
-					isc_buffer_putmem(&b, addr, addrl - 1);
-					isc_buffer_putuint8(&b,
-							    (addr[addrl - 1] &
-							     mask));
-				}
+				memmove(addr, &sin6->sin6_addr, 16);
+				break;
+			default:
+				INSIST(0);
 			}
+
+			/* Mask off last address byte */
+			if (addrl > 0 && (plen % 8) != 0)
+				addr[addrl - 1] &= ~0 << (8 - (plen % 8));
+
+			/* family */
+			isc_buffer_putuint16(&b, family);
+			/* source prefix-length */
+			isc_buffer_putuint8(&b, plen);
+			/* scope prefix-length */
+			isc_buffer_putuint8(&b, 0);
+			/* address */
+			if (addrl > 0)
+				isc_buffer_putmem(&b, addr,
+						  (unsigned)addrl);
 
 			opts[i].value = (isc_uint8_t *) ecsbuf;
 			i++;
@@ -3768,6 +3777,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		l->edns = newedns;
 		n = requeue_lookup(l, ISC_TRUE);
 		n->origin = query->lookup->origin;
+		if (l->trace && l->trace_root)
+			n->rdtype = l->qrdtype;
 		dns_message_destroy(&msg);
 		isc_event_free(&event);
 		clear_query(query);
@@ -3787,6 +3798,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		n = requeue_lookup(l, ISC_TRUE);
 		n->tcp_mode = ISC_TRUE;
 		n->origin = query->lookup->origin;
+		if (l->trace && l->trace_root)
+			n->rdtype = l->qrdtype;
 		dns_message_destroy(&msg);
 		isc_event_free(&event);
 		clear_query(query);

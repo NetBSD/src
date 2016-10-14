@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_perl_driver.c,v 1.1.1.1 2014/02/28 17:40:09 christos Exp $	*/
+/*	$NetBSD: dlz_perl_driver.c,v 1.1.1.1.6.1 2016/10/14 12:01:23 martin Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -568,6 +568,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 		cd->log(ISC_LOG_ERROR,
 			"DLZ Perl '%s': Missing script argument.",
 			dlzname);
+		free(cd);
 		return (ISC_R_FAILURE);
 	}
 
@@ -575,6 +576,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[],
 		cd->log(ISC_LOG_ERROR,
 			"DLZ Perl '%s': Missing class name argument.",
 			dlzname);
+		free(cd);
 		return (ISC_R_FAILURE);
 	}
 	perl_class_name = argv[2];

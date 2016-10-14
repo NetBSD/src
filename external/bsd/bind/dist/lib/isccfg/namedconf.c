@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.9.2.3 2016/03/13 08:06:16 martin Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.9.2.4 2016/10/14 12:01:33 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -58,7 +58,8 @@ parse_enum_or_other(cfg_parser_t *pctx, const cfg_type_t *enumtype,
 		    const cfg_type_t *othertype, cfg_obj_t **ret);
 
 static void
-doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *type);
+doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *enumtype,
+		  const cfg_type_t *othertype);
 
 static isc_result_t
 parse_keyvalue(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret);
@@ -586,8 +587,12 @@ static isc_result_t
 parse_zonestat(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
+static void
+doc_zonestat(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+}
 static cfg_type_t cfg_type_zonestat = {
-	"zonestat", parse_zonestat, cfg_print_ustring, doc_enum_or_other,
+	"zonestat", parse_zonestat, cfg_print_ustring, doc_zonestat,
 	&cfg_rep_string, zonestat_enums
 };
 
@@ -809,13 +814,18 @@ static cfg_type_t cfg_type_serverid = {
 /*%
  * Port list.
  */
+static void
+print_porttuple(cfg_printer_t *pctx, const cfg_obj_t *obj) {
+	cfg_print_cstr(pctx, "range ");
+	cfg_print_tuple(pctx, obj);
+}
 static cfg_tuplefielddef_t porttuple_fields[] = {
 	{ "loport", &cfg_type_uint32, 0 },
 	{ "hiport", &cfg_type_uint32, 0 },
 	{ NULL, NULL, 0 }
 };
 static cfg_type_t cfg_type_porttuple = {
-	"porttuple", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
+	"porttuple", cfg_parse_tuple, print_porttuple, cfg_doc_tuple,
 	&cfg_rep_tuple, porttuple_fields
 };
 
@@ -885,7 +895,6 @@ static cfg_type_t cfg_type_bracketed_portlist = {
 	&cfg_rep_list, &cfg_type_portrange
 };
 
-#ifdef ENABLE_FETCHLIMIT
 /*%
  * fetch-quota-params
  */
@@ -916,8 +925,7 @@ parse_optional_response(cfg_parser_t *pctx, const cfg_type_t *type,
 
 static void
 doc_optional_response(cfg_printer_t *pctx, const cfg_type_t *type) {
-	UNUSED(type);
-	cfg_print_cstr(pctx, "[ ( drop | fail ) ]");
+	doc_enum_or_other(pctx, type, &cfg_type_void);
 }
 
 static cfg_type_t cfg_type_responsetype = {
@@ -935,7 +943,6 @@ static cfg_type_t cfg_type_fetchesper = {
 	"fetchesper", cfg_parse_tuple, cfg_print_tuple, cfg_doc_tuple,
 	&cfg_rep_tuple, fetchesper_fields
 };
-#endif /* ENABLE_FETCHLIMIT */
 
 /*%
  * Clauses that can be found within the top level of the named.conf
@@ -1053,7 +1060,7 @@ options_clauses[] = {
 	{ "transfers-out", &cfg_type_uint32, 0 },
 	{ "treat-cr-as-space", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-id-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
-	{ "use-ixfr", &cfg_type_boolean, 0 },
+	{ "use-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "use-v6-udp-ports", &cfg_type_bracketed_portlist, 0 },
 	{ "version", &cfg_type_qstringornone, 0 },
@@ -1553,6 +1560,10 @@ view_clauses[] = {
 	{ "fetch-quota-params", &cfg_type_fetchquota, 0 },
 	{ "fetches-per-server", &cfg_type_fetchesper, 0 },
 	{ "fetches-per-zone", &cfg_type_fetchesper, 0 },
+#else
+	{ "fetch-quota-params", &cfg_type_fetchquota, CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "fetches-per-server", &cfg_type_fetchesper, CFG_CLAUSEFLAG_NOTCONFIGURED },
+	{ "fetches-per-zone", &cfg_type_fetchesper, CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* ENABLE_FETCHLIMIT */
 	{ "ixfr-from-differences", &cfg_type_ixfrdifftype, 0 },
 	{ "lame-ttl", &cfg_type_uint32, 0 },
@@ -2069,9 +2080,14 @@ parse_size(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_sizeval, ret));
 }
 
+static void
+doc_size(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_sizeval);
+}
+
 static const char *size_enums[] = { "unlimited", "default", NULL };
 static cfg_type_t cfg_type_size = {
-	"size", parse_size, cfg_print_ustring, cfg_doc_terminal,
+	"size", parse_size, cfg_print_ustring, doc_size,
 	&cfg_rep_string, size_enums
 };
 
@@ -2133,12 +2149,34 @@ parse_enum_or_other(cfg_parser_t *pctx, const cfg_type_t *enumtype,
 }
 
 static void
-doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *type) {
-	cfg_doc_terminal(pctx, type);
-#if 0 /* XXX */
-	cfg_print_chars(pctx, "( ", 2);...
-#endif
+doc_enum_or_other(cfg_printer_t *pctx, const cfg_type_t *enumtype,
+		  const cfg_type_t *othertype)
+{
+	const char * const *p;
+	isc_boolean_t first = ISC_TRUE;
 
+	/*
+	 * If othertype is cfg_type_void, it means that enumtype is
+	 * optional.
+	 */
+
+	if (othertype == &cfg_type_void)
+		cfg_print_cstr(pctx, "[ ");
+	cfg_print_cstr(pctx, "( ");
+	for (p = enumtype->of; *p != NULL; p++) {
+		if (!first)
+			cfg_print_cstr(pctx, " | ");
+		first = ISC_FALSE;
+		cfg_print_cstr(pctx, *p);
+	}
+	if (othertype != &cfg_type_void) {
+		if (!first)
+			cfg_print_cstr(pctx, " | ");
+		cfg_doc_terminal(pctx, othertype);
+	}
+	cfg_print_cstr(pctx, " )");
+	if (othertype == &cfg_type_void)
+		cfg_print_cstr(pctx, " ]");
 }
 
 static isc_result_t
@@ -2185,8 +2223,12 @@ static isc_result_t
 parse_dialup_type(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
+static void
+doc_dialup_type(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+}
 static cfg_type_t cfg_type_dialuptype = {
-	"dialuptype", parse_dialup_type, cfg_print_ustring, doc_enum_or_other,
+	"dialuptype", parse_dialup_type, cfg_print_ustring, doc_dialup_type,
 	&cfg_rep_string, dialup_enums
 };
 
@@ -2195,18 +2237,28 @@ static isc_result_t
 parse_notify_type(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
+static void
+doc_notify_type(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+}
 static cfg_type_t cfg_type_notifytype = {
-	"notifytype", parse_notify_type, cfg_print_ustring, doc_enum_or_other,
+	"notifytype", parse_notify_type, cfg_print_ustring, doc_notify_type,
 	&cfg_rep_string, notify_enums,
 };
 
 static const char *ixfrdiff_enums[] = { "master", "slave", NULL };
 static isc_result_t
-parse_ixfrdiff_type(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+parse_ixfrdiff_type(cfg_parser_t *pctx, const cfg_type_t *type,
+		    cfg_obj_t **ret)
+{
 	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
+static void
+doc_ixfrdiff_type(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+}
 static cfg_type_t cfg_type_ixfrdifftype = {
-	"ixfrdiff", parse_ixfrdiff_type, cfg_print_ustring, doc_enum_or_other,
+	"ixfrdiff", parse_ixfrdiff_type, cfg_print_ustring, doc_ixfrdiff_type,
 	&cfg_rep_string, ixfrdiff_enums,
 };
 
@@ -2216,9 +2268,13 @@ parse_filter_aaaa(cfg_parser_t *pctx, const cfg_type_t *type,
 		     cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_boolean, ret));
 }
+static void
+doc_filter_aaaa(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_boolean);
+}
 static cfg_type_t cfg_type_filter_aaaa = {
 	"filter_aaaa", parse_filter_aaaa, cfg_print_ustring,
-	doc_enum_or_other, &cfg_rep_string, filter_aaaa_enums,
+	doc_filter_aaaa, &cfg_rep_string, filter_aaaa_enums,
 };
 
 static keyword_type_t key_kw = { "key", &cfg_type_astring };
@@ -2240,8 +2296,9 @@ static cfg_type_t cfg_type_optional_keyref = {
  */
 static const char *geoiptype_enums[] = {
 	"country", "country3", "countryname", "region", "regionname",
-	"city", "postal", "metrocode", "areacode", "timezone", "continent",
-	"isp", "domain", "asnum", "org", "netspeed", NULL
+	"city", "postalcode", "postal", "metrocode", "metro",
+	"areacode", "area", "timezone", "tz", "continent", "isp",
+	"domain", "asnum", "org", "netspeed", NULL
 };
 static cfg_type_t cfg_type_geoiptype = {
 	"geoiptype", cfg_parse_enum, cfg_print_ustring,
@@ -2485,8 +2542,14 @@ parse_optional_class(cfg_parser_t *pctx, const cfg_type_t *type,
 	return (result);
 }
 
+static void
+doc_optional_class(cfg_printer_t *pctx, const cfg_type_t *type) {
+	UNUSED(type);
+	cfg_print_cstr(pctx, "[ <class> ]");
+}
+
 static cfg_type_t cfg_type_optional_class = {
-	"optional_class", parse_optional_class, NULL, cfg_doc_terminal,
+	"optional_class", parse_optional_class, NULL, doc_optional_class,
 	NULL, NULL
 };
 
@@ -2767,9 +2830,15 @@ parse_optional_facility(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **
 	return (result);
 }
 
+static void
+doc_optional_facility(cfg_printer_t *pctx, const cfg_type_t *type) {
+	UNUSED(type);
+	cfg_print_cstr(pctx, "[ <syslog_facility> ]");
+}
+
 static cfg_type_t cfg_type_optional_facility = {
-	"optional_facility", parse_optional_facility, NULL, cfg_doc_terminal,
-	NULL, NULL };
+	"optional_facility", parse_optional_facility, NULL,
+	doc_optional_facility, NULL, NULL };
 
 
 /*%
@@ -2828,8 +2897,13 @@ parse_logversions(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	return (parse_enum_or_other(pctx, type, &cfg_type_uint32, ret));
 }
 
+static void
+doc_logversions(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_uint32);
+}
+
 static cfg_type_t cfg_type_logversions = {
-	"logversions", parse_logversions, cfg_print_ustring, cfg_doc_terminal,
+	"logversions", parse_logversions, cfg_print_ustring, doc_logversions,
 	&cfg_rep_string, logversions_enums
 };
 
@@ -3208,7 +3282,7 @@ static cfg_type_t cfg_type_masterselement = {
 };
 
 static isc_result_t
-parse_maxttlval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
+parse_ttlval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 	isc_result_t result;
 	cfg_obj_t *obj = NULL;
 	isc_uint32_t ttl;
@@ -3239,15 +3313,20 @@ parse_maxttlval(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 }
 
 /*%
- * A size value (number + optional unit).
+ * A TTL value (number + optional unit).
  */
-static cfg_type_t cfg_type_maxttlval = {
-	"maxttlval", parse_maxttlval, cfg_print_uint64, cfg_doc_terminal,
+static cfg_type_t cfg_type_ttlval = {
+	"ttlval", parse_ttlval, cfg_print_uint64, cfg_doc_terminal,
 	&cfg_rep_uint64, NULL };
 
 static isc_result_t
 parse_maxttl(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
-	return (parse_enum_or_other(pctx, type, &cfg_type_maxttlval, ret));
+	return (parse_enum_or_other(pctx, type, &cfg_type_ttlval, ret));
+}
+
+static void
+doc_maxttl(cfg_printer_t *pctx, const cfg_type_t *type) {
+	doc_enum_or_other(pctx, type, &cfg_type_ttlval);
 }
 
 /*%
@@ -3255,6 +3334,6 @@ parse_maxttl(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
  */
 static const char *maxttl_enums[] = { "unlimited", NULL };
 static cfg_type_t cfg_type_maxttl = {
-	"maxttl_no_default", parse_maxttl, cfg_print_ustring, cfg_doc_terminal,
+	"maxttl_no_default", parse_maxttl, cfg_print_ustring, doc_maxttl,
 	&cfg_rep_string, maxttl_enums
 };
