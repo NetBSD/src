@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2016/10/14 15:58:34 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2016/10/14 23:27:00 mrg Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -92,12 +92,18 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_EMUL} ${LIBDIR} yes ${G_enable_initfini_array} \
 		${f} "${G_target_alias}"
 
-. for e in x xbn xc xd xdc xdw xn xr xs xsc xsw xu xw
-.  if exists(ldscripts/${f}.${e})
+. if ${BINUTILS_MACHINE_ARCH} == "x86_64" || \
+    ${BINUTILS_MACHINE_ARCH} == "sparc64" || \
+    ${BINUTILS_MACHINE_ARCH} == "aarch64" || \
+    !empty(BINUTILS_MACHINE_ARCH:Mearm*) || \
+    !empty(BINUTILS_MACHINE_ARCH:Marm*) || \
+    !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
+.  for e in x xbn xc xd xdc xdw xn xr xs xsc xsw xu xw
+.   if exists(ldscripts/${f}.${e})
 FILES+= ${f}.${e}
-.  endif
-. endfor
-
+.   endif
+.  endfor
+. endif
 .endfor
 
 .include <bsd.prog.mk>
