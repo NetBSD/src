@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.274 2016/10/10 13:28:24 martin Exp $
+$NetBSD: UPDATING,v 1.275 2016/10/14 16:39:05 spz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20161014:
+	a new version of OpenSSL has been imported.
+	Remove the files from obj (crypto/external/bsd/openssl) 
+	if you build.sh -u
 
 20161009:
 	a new version of dhcpcd has been imported with slightly changed
