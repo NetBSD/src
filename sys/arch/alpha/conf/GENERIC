@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.368 2016/03/19 23:21:02 gdt Exp $
+# $NetBSD: GENERIC,v 1.369 2016/10/15 09:57:51 flxd Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.368 $"
+ident		"GENERIC-$Revision: 1.369 $"
 
 maxusers 32
 
@@ -262,6 +262,8 @@ sfb*	at	tc? slot ? offset ?
 #sfbp*	at	tc? slot ? offset ?
 px*	at	tc? slot ? offset ?
 pxg*	at	tc? slot ? offset ?
+tcu*	at	tc? slot ? offset ?
+slhci*	at	tcu?
 
 # TURBOchannel serial attachments
 zstty0	at	zsc0 channel ?			# serial port on B channels
@@ -399,6 +401,9 @@ iopsp*	at iop? tid ?			# SCSI/FC-AL ports
 ld*	at iop? tid ?			# block devices
 # XXX dpti.c wants a processor type that is not assigned for x86-64
 #dpti*	at iop? tid 0			# DPT/Adaptec control interface
+
+# GPIO devices
+gpio*	at gpiobus?
 
 # MII/PHY support
 brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
