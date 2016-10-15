@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.52 2016/07/25 12:11:40 maxv Exp $	*/
+/*	$NetBSD: lapic.c,v 1.53 2016/10/15 09:50:27 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.52 2016/07/25 12:11:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.53 2016/10/15 09:50:27 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -92,7 +92,6 @@ struct pic local_pic = {
 static void
 lapic_map(paddr_t lapic_base)
 {
-	int s;
 	pt_entry_t *pte;
 	vaddr_t va = (vaddr_t)&local_apic;
 
@@ -113,7 +112,6 @@ lapic_map(paddr_t lapic_base)
 	}
 
 	x86_disable_intr();
-	s = lapic_tpr;
 
 	/*
 	 * Map local apic.  If we have a local apic, it's safe to assume
@@ -132,7 +130,7 @@ lapic_map(paddr_t lapic_base)
 	cpu_init_first();	/* catch up to changed cpu_number() */
 #endif
 
-	lapic_tpr = s;
+	i82489_writereg(LAPIC_TPRI, 0);
 	x86_enable_intr();
 }
 
