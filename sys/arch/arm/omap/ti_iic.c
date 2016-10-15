@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.7 2014/03/26 11:59:05 ozaki-r Exp $ */
+/* $NetBSD: ti_iic.c,v 1.8 2016/10/15 15:00:12 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.7 2014/03/26 11:59:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.8 2016/10/15 15:00:12 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -181,6 +181,13 @@ ti_iic_match(device_t parent, cfdata_t match, void *opaque)
 	if (obio->obio_addr == OMAP2_I2C0_BASE ||
 	    obio->obio_addr == OMAP2_I2C1_BASE ||
 	    obio->obio_addr == OMAP2_I2C2_BASE)
+		return 1;
+#endif
+#if defined(OMAP_4430)
+	if (obio->obio_addr == 0x48070000 ||	/* I2C1 */
+	    obio->obio_addr == 0x48072000 ||	/* I2C2 */
+	    obio->obio_addr == 0x48060000 ||	/* I2C3 */
+	    obio->obio_addr == 0x48350000)	/* I2C4 */
 		return 1;
 #endif
 
