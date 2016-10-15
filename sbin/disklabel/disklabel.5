@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.5,v 1.28 2016/09/11 01:59:10 sevan Exp $
+.\"	$NetBSD: disklabel.5,v 1.29 2016/10/15 06:23:28 snj Exp $
 .\"
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -136,7 +136,7 @@ struct disklabel {
 	u_int32_t d_magic;		/* the magic number */
 	u_int16_t d_type;		/* drive type */
 	u_int16_t d_subtype;		/* controller/d_type specific */
-	char	  d_typename[16];	/* type name, e.g "eagle" */
+	char	  d_typename[16];	/* type name, e.g. "eagle" */
 
 	/*
 	 * d_packname contains the pack identifier and is returned when
