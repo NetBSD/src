@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.41 2014/10/13 00:47:03 christos Exp $	*/
+/*	$NetBSD: wchar.h,v 1.42 2016/10/15 14:22:00 kamil Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -116,6 +116,7 @@ size_t	wcslen(const wchar_t *);
 wchar_t	*wcsncat(wchar_t * __restrict, const wchar_t * __restrict, size_t);
 int	wcsncmp(const wchar_t *, const wchar_t *, size_t);
 wchar_t	*wcsncpy(wchar_t * __restrict , const wchar_t * __restrict, size_t);
+size_t	wcsnlen(const wchar_t *, size_t);
 wchar_t	*wcspbrk(const wchar_t *, const wchar_t *);
 wchar_t	*wcsrchr(const wchar_t *, wchar_t);
 size_t	wcsrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
