@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.7 2016/08/04 06:54:47 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.8 2016/10/15 15:24:00 kiyohara Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -268,8 +268,8 @@ cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
 atphy*		at mii? phy ?		# Attansic/Atheros PHYs
 
 # On-board USB. Experimental
-tiotg* 	at mainbus0 base 0x47400000 size 0x5000 intrbase 17
-motg*	at tiotg? port ?
+tiotg*		at mainbus? base 0x47400000 size 0x5000 intrbase 17
+motg*		at tiotg? port ?
 usb*		at motg?
 uhub*		at usb?
 uhub*		at uhub? port ?
@@ -277,12 +277,12 @@ uhub*		at uhub? port ?
 uhidev* 	at uhub?
 
 # USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
+ukbd*		at uhidev? reportid ?
+wskbd*		at ukbd? console ? mux 1
 
 # USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
+ums*		at uhidev? reportid ?
+wsmouse*	at ums? mux 0
 
 umass*		at uhub? port ? configuration ? interface ?
 wd*		at umass?
