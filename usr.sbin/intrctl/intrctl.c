@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.3 2016/09/19 18:46:39 ryo Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.4 2016/10/15 12:06:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.3 2016/09/19 18:46:39 ryo Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.4 2016/10/15 12:06:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -99,7 +99,7 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s list\n", progname);
+	fprintf(stderr, "usage: %s list [-c]\n", progname);
 	fprintf(stderr, "       %s affinity -i interrupt_name -c cpu_index\n", progname);
 	fprintf(stderr, "       %s intr -c cpu_index\n", progname);
 	fprintf(stderr, "       %s nointr -c cpu_index\n", progname);
@@ -117,6 +117,18 @@ intrctl_list(int argc, char **argv)
 	int i, ncpus, *cpucol;
 	void *handle;
 	size_t intridlen;
+	int compact = 0;
+	char ch;
+
+	while ((ch = getopt(argc, argv, "c")) != -1) {
+		switch (ch) {
+		case 'c':
+			compact = 1;
+			break;
+		default:
+			usage();
+		}
+	}
 
 	handle = intrctl_io_alloc(intrctl_io_alloc_retry_count);
 	if (handle == NULL)
@@ -152,21 +164,49 @@ intrctl_list(int argc, char **argv)
 	}
 
 	/* header */
-	printf("%-*s  ", (int)intridlen, "interrupt id");
-	for (i = 0; i < ncpus; i++) {
-		snprintf(buf, sizeof(buf), "CPU%u", i);
-		printf("%*s  ", cpucol[i], buf);
+	printf("%-*s", (int)intridlen, "interrupt id");
+	if (compact) {
+		printf(" %20s ", "total");
+		printf(" %20s ", "affinity");
+	} else {
+		for (i = 0; i < ncpus; i++) {
+			snprintf(buf, sizeof(buf), "CPU%u", i);
+			printf("%*s  ", cpucol[i], buf);
+		}
 	}
 	printf("device name(s)\n");
 
 	/* body */
 	for (illine = intrctl_io_firstline(handle); illine != NULL;
 	    illine = intrctl_io_nextline(handle, illine)) {
-		printf("%-*s  ", (int)intridlen, illine->ill_intrid);
-		for (i = 0; i < ncpus; i++) {
-			struct intrio_list_line_cpu *illc = &illine->ill_cpu[i];
-			printf("%*" PRIu64 "%c ", cpucol[i], illc->illc_count,
-			    illc->illc_assigned ? '*' : ' ');
+		struct intrio_list_line_cpu *illc;
+
+		printf("%-*s ", (int)intridlen, illine->ill_intrid);
+		if (compact) {
+			uint64_t total = 0;
+			char *affinity, *oaffinity = NULL;
+			for (i = 0; i < ncpus; i++) {
+				illc = &illine->ill_cpu[i];
+				total += illc->illc_count;
+				if (illc->illc_assigned) {
+					asprintf(&affinity, "%s%s%d",
+					    oaffinity ? oaffinity : "",
+					    oaffinity ? ", " : "",
+					    i);
+					if (oaffinity)
+						free(oaffinity);
+					oaffinity = affinity;
+				}
+			}
+			printf("%20" PRIu64 " ", total);
+			printf("%20s ", affinity ? affinity : "none");
+			free(affinity);
+		} else {
+			for (i = 0; i < ncpus; i++) {
+				illc = &illine->ill_cpu[i];
+				printf("%*" PRIu64 "%c ", cpucol[i], illc->illc_count,
+				    illc->illc_assigned ? '*' : ' ');
+			}
 		}
 		printf("%s\n", illine->ill_xname);
 	}
