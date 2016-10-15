@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.25 2016/07/07 06:55:41 msaitoh Exp $ */
+/* $NetBSD: pad.c,v 1.26 2016/10/15 07:08:06 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.25 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.26 2016/10/15 07:08:06 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,6 +74,7 @@ static void	pad_attach(device_t, device_t, void *);
 static int	pad_detach(device_t, int);
 static void	pad_childdet(device_t, device_t);
 
+static int	pad_audio_open(void *, int);
 static int	pad_query_encoding(void *, struct audio_encoding *);
 static int	pad_set_params(void *, int, int,
 				audio_params_t *, audio_params_t *,
@@ -99,6 +100,7 @@ static stream_filter_t *pad_swvol_filter_be(struct audio_softc *,
 static void	pad_swvol_dtor(stream_filter_t *);
 
 static const struct audio_hw_if pad_hw_if = {
+	.open = pad_audio_open,
 	.query_encoding = pad_query_encoding,
 	.set_params = pad_set_params,
 	.start_output = pad_start_output,
@@ -341,7 +343,7 @@ pad_close(dev_t dev, int flags, int fmt, struct lwp *l)
 
 #define PAD_BYTES_PER_SEC (44100 * sizeof(int16_t) * 2)
 #define TIMENEXTREAD	(20 * 1000)
-#define BYTESTOSLEEP (PAD_BYTES_PER_SEC / (1000000 / TIMENEXTREAD))
+#define BYTESTOSLEEP ((PAD_BYTES_PER_SEC / (1000000 / TIMENEXTREAD)) + PAD_BLKSIZE)
 
 int
 pad_read(dev_t dev, struct uio *uio, int flags)
@@ -420,6 +422,19 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 }
 
 static int
+pad_audio_open(void *opaque, int flags)
+{
+	pad_softc_t *sc;
+	sc = opaque;
+
+	if (sc->sc_open == 0)
+		return EIO;
+
+	getmicrotime(&sc->sc_last);
+	return 0;
+}
+
+static int
 pad_query_encoding(void *opaque, struct audio_encoding *ae)
 {
 	pad_softc_t *sc;
@@ -477,6 +492,8 @@ pad_start_output(void *opaque, void *block, int blksize,
 	sc = (pad_softc_t *)opaque;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+	if (!sc->sc_open)
+		return EIO;
 
 	sc->sc_intr = intr;
 	sc->sc_intrarg = intrarg;
