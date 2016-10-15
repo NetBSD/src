@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.172 2016/10/14 08:38:31 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.173 2016/10/15 09:09:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.172 2016/10/14 08:38:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.173 2016/10/15 09:09:55 skrll Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -281,7 +281,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		t = proc_find(SCARG(uap, pid));
 		if (t == NULL) {
 			mutex_exit(proc_lock);
-			return (ESRCH);
+			return ESRCH;
 		}
 
 		/* XXX-elad */
@@ -291,7 +291,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		if (error) {
 			mutex_exit(proc_lock);
 			mutex_exit(t->p_lock);
-			return (ESRCH);
+			return ESRCH;
 		}
 	}
 
@@ -556,7 +556,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			 * Can't write to a RAS
 			 */
 			if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
-				return (EACCES);
+				return EACCES;
 			}
 			uio.uio_rw = UIO_WRITE;
 			break;
@@ -1016,9 +1016,9 @@ process_doregs(struct lwp *curl /*tracer*/,
 	}
 
 	uio->uio_offset = 0;
-	return (error);
+	return error;
 #else
-	return (EINVAL);
+	return EINVAL;
 #endif
 }
 
@@ -1027,9 +1027,9 @@ process_validregs(struct lwp *l)
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((l->l_flag & LW_SYSTEM) == 0);
+	return (l->l_flag & LW_SYSTEM) == 0;
 #else
-	return (0);
+	return 0;
 #endif
 }
 
@@ -1065,9 +1065,9 @@ process_dofpregs(struct lwp *curl /*tracer*/,
 			error = process_write_fpregs(l, &r, kl);
 	}
 	uio->uio_offset = 0;
-	return (error);
+	return error;
 #else
-	return (EINVAL);
+	return EINVAL;
 #endif
 }
 
@@ -1076,9 +1076,9 @@ process_validfpregs(struct lwp *l)
 {
 
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-	return ((l->l_flag & LW_SYSTEM) == 0);
+	return (l->l_flag & LW_SYSTEM) == 0;
 #else
-	return (0);
+	return 0;
 #endif
 }
 #endif /* PTRACE */
@@ -1102,7 +1102,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	len = uio->uio_resid;
 
 	if (len == 0)
-		return (0);
+		return 0;
 
 #ifdef PMAP_NEED_PROCWR
 	addr = uio->uio_offset;
@@ -1117,7 +1117,7 @@ process_domem(struct lwp *curl /*tracer*/,
 		p->p_vmspace->vm_refcnt++;  /* XXX */
 	mutex_exit(&vm->vm_map.misc_lock);
 	if (error != 0)
-		return (error);
+		return error;
 	error = uvm_io(&vm->vm_map, uio, pax_mprotect_prot(l));
 	uvmspace_free(vm);
 
@@ -1125,7 +1125,7 @@ process_domem(struct lwp *curl /*tracer*/,
 	if (error == 0 && uio->uio_rw == UIO_WRITE)
 		pmap_procwr(p, addr, len);
 #endif
-	return (error);
+	return error;
 }
 #endif /* KTRACE || PTRACE */
 
