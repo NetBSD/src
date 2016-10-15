@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.5 2016/10/15 12:14:00 jdolecek Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.6 2016/10/15 22:23:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.5 2016/10/15 12:14:00 jdolecek Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.6 2016/10/15 22:23:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -118,7 +118,7 @@ intrctl_list(int argc, char **argv)
 	void *handle;
 	size_t intridlen;
 	int compact = 0;
-	char ch;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "c")) != -1) {
 		switch (ch) {
