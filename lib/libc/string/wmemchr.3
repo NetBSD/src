@@ -1,4 +1,4 @@
-.\"	$NetBSD: wmemchr.3,v 1.16 2016/07/14 17:17:58 abhinav Exp $
+.\"	$NetBSD: wmemchr.3,v 1.17 2016/10/15 14:22:00 kamil Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     from: @(#)strcpy.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 1, 2009
+.Dd October 15, 2016
 .Dt WMEMCHR 3
 .Os
 .Sh NAME
@@ -53,6 +53,7 @@
 .Nm wcsncat ,
 .Nm wcsncmp ,
 .Nm wcsncpy ,
+.Nm wcsnlen ,
 .Nm wcspbrk ,
 .Nm wcsrchr ,
 .Nm wcsspn ,
@@ -95,6 +96,8 @@
 .Fn wcsncmp "const wchar_t *s1" "const wchar_t * s2" "size_t n"
 .Ft wchar_t *
 .Fn wcsncpy "wchar_t * restrict s1" "const wchar_t * restrict s2" "size_t n"
+.Ft size_t
+.Fn wcsnlen "const wchar_t *s" "size_t maxlen"
 .Ft wchar_t *
 .Fn wcspbrk "const wchar_t *s1" "const wchar_t *s2"
 .Ft wchar_t *
@@ -147,16 +150,62 @@ function is strongly recommended to be used.
 .Xr strspn 3 ,
 .Xr strstr 3
 .Sh STANDARDS
-These functions conform to
-.St -isoC-99
-and were first introduced in
-.St -isoC-amd1 ,
-with the exception of
-.Fn wcslcat
+The
+.Fn wmemchr ,
+.Fn wmemcmp ,
+.Fn wmemcpy ,
+.Fn wmemmove ,
+.Fn wmemset ,
+.Fn wcscat ,
+.Fn wcschr ,
+.Fn wcscmp ,
+.Fn wcscpy ,
+.Fn wcscspn ,
+.Fn wcslen ,
+.Fn wcsncat ,
+.Fn wcsncmp ,
+.Fn wcsncpy ,
+.Fn wcspbrk ,
+.Fn wcsrchr ,
+.Fn wcsspn
 and
-.Fn wcslcpy ,
-which are extensions.
+.Fn wcsstr
+functions were first introduced in
+.St -isoC-amd1
+and conform to
+.St -isoC-99 .
+Part of them:
+.Fn wmemmove ,
+.Fn wcscat ,
+.Fn wcscpy ,
+.Fn wcsncat
+and
+.Fn wcsncpy
+were modified in
+.St -isoC-99
+and gained the
+.Dv restrict
+keyword in parameter list,
+this new version is present in
+.Nx .
+.Pp
 The
 .Fn wcswcs
 function conforms to
-.St -xpg4.2 .
+.St -xpg4.2 ,
+it is recommended to use technically equivalent
+.Fn wcsstr
+for maximum portability.
+.Pp
+The
+.Fn wcsnlen
+function conforms to
+.St -p1003.1-2008 .
+.Pp
+The
+.Fn wcslcat
+and
+.Fn wcslcpy
+functions are
+.Nx
+extensions.
