@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.13 2016/09/21 00:00:06 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.14 2016/10/15 16:46:14 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13 2016/09/21 00:00:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.14 2016/10/15 16:46:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,8 +241,8 @@ acpi_md_OsInstallInterruptHandler(uint32_t InterruptNumber,
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
-	ih = intr_establish(irq, pic, pin, type, IPL_TTY,
-	    (int (*)(void *)) ServiceRoutine, Context, false);
+	ih = intr_establish_xname(irq, pic, pin, type, IPL_TTY,
+	    (int (*)(void *)) ServiceRoutine, Context, false, "acpi SCI");
 
 #if NIOAPIC > 0
 	if (mipp) {
