@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2016/10/14 23:27:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2016/10/15 12:30:55 maya Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -70,7 +70,7 @@ EMUL_LIB_PATH.${f}=/usr/lib/i386
 . elif (${BINUTILS_MACHINE_ARCH} == "sparc64" && \
       ("${f}" == "elf32_sparc" || "${f}" == "sparcnbsd"))
 EMUL_LIB_PATH.${f}=/usr/lib/sparc
-. elif ${BINUTILS_MACHINE_ARCH} == "mips64el"
+. elif !empty(BINUTILS_MACHINE_ARCH:Mmips64*)
 .  if "${f}" == "elf32ltsmip" || "${f}" == "elf32btsmip"
 EMUL_LIB_PATH.${f}:=/usr/lib/o32
 .  elif "${f}" == "elf64ltsmip" || "${f}" == "elf64btsmip"
