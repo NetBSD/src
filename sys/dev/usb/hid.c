@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.45 2016/04/27 19:35:17 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.46 2016/10/15 07:10:15 nat Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.45 2016/04/27 19:35:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.46 2016/10/15 07:10:15 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -192,7 +192,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			dval = (int32_t)dval;
 			break;
 		default:
-			printf("BAD LENGTH %d\n", bSize);
+			aprint_normal("BAD LENGTH %d\n", bSize);
 			continue;
 		}
 
@@ -260,7 +260,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				s->nu = 0;
 				return 1;
 			default:
-				printf("Main bTag=%d\n", bTag);
+				aprint_normal("Main bTag=%d\n", bTag);
 				break;
 			}
 			break;
@@ -312,7 +312,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				kmem_free(hi, sizeof(*hi));
 				break;
 			default:
-				printf("Global bTag=%d\n", bTag);
+				aprint_normal("Global bTag=%d\n", bTag);
 				break;
 			}
 			break;
@@ -365,12 +365,12 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				c->set_delimiter = dval;
 				break;
 			default:
-				printf("Local bTag=%d\n", bTag);
+				aprint_normal("Local bTag=%d\n", bTag);
 				break;
 			}
 			break;
 		default:
-			printf("default bType=%d\n", bType);
+			aprint_normal("default bType=%d\n", bType);
 			break;
 		}
 	}
@@ -396,7 +396,8 @@ hid_report_size(const void *buf, int len, enum hid_kind k, uint8_t id)
 				lo = h.loc.pos;
 #ifdef DIAGNOSTIC
 				if (lo != 0) {
-					printf("hid_report_size: lo != 0\n");
+					aprint_normal("hid_report_size:"
+					   " lo != 0\n");
 				}
 #endif
 			}
