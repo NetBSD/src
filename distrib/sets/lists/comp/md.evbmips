@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.21 2016/10/15 11:44:09 christos Exp $
+# $NetBSD: md.evbmips,v 1.22 2016/10/15 17:55:28 maya Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -62,21 +62,21 @@
 ./usr/include/evbmips/vmparam.h			comp-c-include
 ./usr/include/evbmips/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
-./usr/libdata/ldscripts/elf32btsmip.xd		-unknown-		binutils
-./usr/libdata/ldscripts/elf32btsmip.xdc		-unknown-		binutils
-./usr/libdata/ldscripts/elf32btsmip.xdw		-unknown-		binutils
-./usr/libdata/ldscripts/elf32btsmipn32.xd	-unknown-		binutils
-./usr/libdata/ldscripts/elf32btsmipn32.xdc	-unknown-		binutils
-./usr/libdata/ldscripts/elf32btsmipn32.xdw	-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmip.xd		-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmip.xdc		-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmip.xdw		-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmipn32.xd	-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmipn32.xdc	-unknown-		binutils
-./usr/libdata/ldscripts/elf32ltsmipn32.xdw	-unknown-		binutils
-./usr/libdata/ldscripts/elf64btsmip.xd		-unknown-		binutils
-./usr/libdata/ldscripts/elf64btsmip.xdc		-unknown-		binutils
-./usr/libdata/ldscripts/elf64btsmip.xdw		-unknown-		binutils
-./usr/libdata/ldscripts/elf64ltsmip.xd		-unknown-		binutils
-./usr/libdata/ldscripts/elf64ltsmip.xdc		-unknown-		binutils
-./usr/libdata/ldscripts/elf64ltsmip.xdw		-unknown-		binutils
+./usr/libdata/ldscripts/elf32btsmip.xd		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmip.xdc		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xd	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xdc	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32btsmipn32.xdw	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xd		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xdc		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xd	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xdc	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf32ltsmipn32.xdw	-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xd		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xdc		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64btsmip.xdw		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xd		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xdc		-unknown-		binutils,arch64
+./usr/libdata/ldscripts/elf64ltsmip.xdw		-unknown-		binutils,arch64
