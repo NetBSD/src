@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.12 2016/07/12 13:32:14 kiyohara Exp $
+$NetBSD: README.evbarm,v 1.13 2016/10/15 15:33:02 kiyohara Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -16,6 +16,7 @@ CUBIETRUCK	2014/04/11	Cubietech Cubietruck
 CP3100		2006/11/08	Certance IOP321 CP-3100
 DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
+DUOVERO		2016/10/15	Gumstix Inc. DuoVero COMS boards
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
@@ -51,6 +52,7 @@ OSK5912		2007/01/06	TI OMAP 5912 OSK board
 OVERO		2010/07/10	Gumstix Inc. Overo COMS boards
 PANDABOARD	2012/08/20	TI OMAP4430 PandaBoard
 PARALLELLA	2015/01/23	Xilinx Zynq and Epiphany multi-core chips
+PEPPER		2016/10/15	Gumstix Inc. Pepper SBC(Single Board Computer)
 ROCKCHIP	2014/12/26	Radxa Rock/Lite/Pro, MINIX NEO X7, Rayeager PX2
 SHEEVAPLUG	2010/10/02	Marvell SheevaPlug
 SMDK2410	2003/07/31	Samsung SMDK2410 S3C2410 eval board
