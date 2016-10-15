@@ -1,4 +1,4 @@
-/*	$NetBSD: intrctl.c,v 1.4 2016/10/15 12:06:27 jdolecek Exp $	*/
+/*	$NetBSD: intrctl.c,v 1.5 2016/10/15 12:14:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intrctl.c,v 1.4 2016/10/15 12:06:27 jdolecek Exp $");
+__RCSID("$NetBSD: intrctl.c,v 1.5 2016/10/15 12:14:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -167,7 +167,7 @@ intrctl_list(int argc, char **argv)
 	printf("%-*s", (int)intridlen, "interrupt id");
 	if (compact) {
 		printf(" %20s ", "total");
-		printf(" %20s ", "affinity");
+		printf(" %5s ", "aff");
 	} else {
 		for (i = 0; i < ncpus; i++) {
 			snprintf(buf, sizeof(buf), "CPU%u", i);
@@ -199,7 +199,7 @@ intrctl_list(int argc, char **argv)
 				}
 			}
 			printf("%20" PRIu64 " ", total);
-			printf("%20s ", affinity ? affinity : "none");
+			printf("%5s ", affinity ? affinity : "none");
 			free(affinity);
 		} else {
 			for (i = 0; i < ncpus; i++) {
