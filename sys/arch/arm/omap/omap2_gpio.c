@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.18 2016/07/11 14:53:05 kiyohara Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.19 2016/10/15 15:11:56 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.18 2016/07/11 14:53:05 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.19 2016/10/15 15:11:56 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -50,15 +50,26 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.18 2016/07/11 14:53:05 kiyohara Exp
 
 #include <sys/bus.h>
 
+#include <arm/omap/am335x_prcm.h>
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_gpio.h>
+#include <arm/omap/omap2_prcm.h>
+#include <arm/omap/sitara_cm.h>
+#include <arm/omap/sitara_cmreg.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 #endif
+
+static const struct omap_module gpio_module[] = {
+	{ 0, 0 },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO1_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO2_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO3_CLKCTRL },
+};
 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_block_irqs2(struct pic_softc *, size_t, uint32_t);
@@ -318,16 +329,11 @@ omap2gpio_pin_write(void *arg, int pin, int value)
 {
 	struct gpio_softc * const gpio = arg;
 	uint32_t mask = 1 << pin;
-	uint32_t old, new;
 
-	old = GPIO_READ(gpio, GPIO_DATAOUT);
 	if (value)
-		new = old | mask;
+		GPIO_WRITE(gpio, GPIO_SETDATAOUT, mask);
 	else
-		new = old & ~mask;
-
-	if (old != new)
-		GPIO_WRITE(gpio, GPIO_DATAOUT, new);
+		GPIO_WRITE(gpio, GPIO_CLEARDATAOUT, mask);
 }
 
 static void
@@ -524,6 +530,23 @@ gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_normal(", intr %d", oa->obio_intr);
 	}
 	aprint_normal("\n");
+
+#ifdef TI_AM335X
+	switch (oa->obio_addr) {
+	case GPIO0_BASE_TI_AM335X:
+		break;
+	case GPIO1_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[1]);
+		break;
+	case GPIO2_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[2]);
+		break;
+	case GPIO3_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[3]);
+		break;
+	}
+#endif
+
 #if NGPIO > 0
 #if 0
 	config_interrupts(self, gpio_attach1);
