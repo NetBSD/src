@@ -1,4 +1,4 @@
-.\" $NetBSD: tps65217pmic.4,v 1.6 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: tps65217pmic.4,v 1.7 2016/10/15 19:51:48 rkujawa Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,13 +74,17 @@ The
 .Nm
 driver was written by
 .An Radoslaw Kujawa Aq Mt radoslaw.kujawa@gmail.com .
+Voltage change callback for AM335x was added by
+.An Manuel Bouyer .
+White LED (backlight) support was added by
+.An KIYOHARA Takashi .
 .Sh CAVEATS
 The driver can only report current voltage regulator settings.
 It can not measure the real voltage, as the TPS65217 chip lacks hardware to do
 that.
 .Pp
-Modifying voltage regulator parameters was deliberately left unimplemented, as
-these parameters should only be set at the firmware level.
+Modifying voltage regulator parameters from user space was deliberately left 
+unimplemented, as these parameters should only be set at the firmware level.
 Setting wrong parameters may result in permanent hardware damage.
 .Sh BUGS
-Battery, interrupt and WLED (backlight) support is not implemented.
+Battery and interrupt support is not implemented.
