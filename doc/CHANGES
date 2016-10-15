@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2198 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2199 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -383,3 +383,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd(8): Import dhcpcd-6.11.4 [roy 20161009]
 	urtwn(4): Add support for Realtek 8192EU [nat 20161012]
 	gdb(1): Updated to 7.12.  [christos 20161012]
+	libc: Add the wcsnlen(3) function in <wchar.h>. [kamil 20161015]
