@@ -330,6 +330,18 @@
    when building for Cygwin. */
 /* #undef USE_WIN32API */
 
+/* Sim assert settings */
+#define WITH_ASSERT 1
+
+/* Sim default environment */
+#define WITH_ENVIRONMENT 0
+
+/* How to route I/O */
+#define WITH_STDIO 0
+
+/* Sim trace settings */
+#define WITH_TRACE 1
+
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
 #if defined AC_APPLE_UNIVERSAL_BUILD
