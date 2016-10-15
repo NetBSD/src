@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.158 2016/10/14 19:28:06 christos Exp $
+# $NetBSD: md.i386,v 1.159 2016/10/15 11:34:30 christos Exp $
 ./usr/include/clang-3.4/__wmmintrin_aes.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/__wmmintrin_pclmul.h	comp-obsolete		obsolete
 ./usr/include/clang-3.4/ammintrin.h		comp-obsolete		obsolete
@@ -403,24 +403,5 @@
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib		pic,picinstall
-./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xd		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xdc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xdw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xs		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xsc		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
-./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.x		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xbn		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xn		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xr		comp-util-bin		binutils
-./usr/libdata/ldscripts/i386nbsd.xu		comp-util-bin		binutils
 ./usr/libdata/lint/llib-li386.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpmc.ln			comp-c-lintlib		lint
