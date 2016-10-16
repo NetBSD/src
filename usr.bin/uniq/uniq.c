@@ -1,4 +1,4 @@
-/*	$NetBSD: uniq.c,v 1.19 2016/10/14 19:43:59 abhinav Exp $	*/
+/*	$NetBSD: uniq.c,v 1.20 2016/10/16 06:17:51 abhinav Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: uniq.c,v 1.19 2016/10/14 19:43:59 abhinav Exp $");
+__RCSID("$NetBSD: uniq.c,v 1.20 2016/10/16 06:17:51 abhinav Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -65,12 +65,12 @@ static void usage(void) __dead;
 int
 main (int argc, char *argv[])
 {
-	const char *t1, *t2;
+	const char *prevp, *thisp;
 	FILE *ifp, *ofp;
 	int ch;
 	char *prevline, *thisline, *p;
 	size_t prevlinesize, thislinesize, psize;
-	size_t prevlinecompsize, thislinecompsize;
+	size_t prevlen, thislen;
 
 	setprogname(argv[0]);
 	ifp = ofp = NULL;
@@ -127,11 +127,16 @@ done:	argc -= optind;
 
 	if ((p = fgetln(ifp, &psize)) == NULL)
 		return 0;
-	prevlinesize = psize;
+	prevlinesize = prevlen = psize;
 	if ((prevline = malloc(prevlinesize + 1)) == NULL)
 		err(1, "malloc");
 	(void)memcpy(prevline, p, prevlinesize);
 	prevline[prevlinesize] = '\0';
+	
+	if (numfields || numchars)
+		prevp = skip(prevline, &prevlen);
+	else
+		prevp = prevline;
 
 	thislinesize = psize;
 	if ((thisline = malloc(thislinesize + 1)) == NULL)
@@ -143,22 +148,19 @@ done:	argc -= optind;
 				err(1, "realloc");
 			thislinesize = psize;
 		}
+		thislen = psize;
 		(void)memcpy(thisline, p, psize);
 		thisline[psize] = '\0';
-		thislinecompsize = thislinesize;
-		prevlinecompsize = prevlinesize;
 
 		/* If requested get the chosen fields + character offsets. */
 		if (numfields || numchars) {
-			t1 = skip(thisline, &thislinecompsize);
-			t2 = skip(prevline, &prevlinecompsize);
+			thisp = skip(thisline, &thislen);
 		} else {
-			t1 = thisline;
-			t2 = prevline;
+			thisp = thisline;
 		}
 
 		/* If different, print; set previous to new value. */
-		if (thislinecompsize != prevlinecompsize || strcmp(t1, t2)) {
+		if (thislen != prevlen || strcmp(thisp, prevp)) {
 			char *t;
 			size_t ts;
 
@@ -169,6 +171,8 @@ done:	argc -= optind;
 			ts = prevlinesize;
 			prevlinesize = thislinesize;
 			thislinesize = ts;
+			prevp = thisp;
+			prevlen = thislen;
 			repeats = 0;
 		} else
 			++repeats;
