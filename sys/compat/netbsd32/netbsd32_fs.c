@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.74 2016/03/21 22:42:56 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.75 2016/10/16 20:09:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.74 2016/03/21 22:42:56 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.75 2016/10/16 20:09:53 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 	}
 	cnt -= auio.uio_resid;
 	if (ktriov != NULL) {
-		ktrgenio(fd, UIO_WRITE, ktriov, cnt, error);
+		ktrgeniov(fd, UIO_WRITE, ktriov, cnt, error);
 		kmem_free(ktriov, iovlen);
 	}
 	*retval = cnt;
