@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.15 2016/10/09 09:36:09 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.16 2016/10/16 11:18:30 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -625,10 +625,8 @@ smsc_init_locked(struct ifnet *ifp)
 	return 0;
 
 fail3:
-	smsc_tx_list_free(sc);
-fail2:
 	smsc_rx_list_free(sc);
-
+fail2:
 	usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_TX]);
 fail1:
 	usbd_close_pipe(sc->sc_ep[SMSC_ENDPT_RX]);
