@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.7 2016/09/24 21:57:38 mrg Exp $
+# $NetBSD: md.sgimips,v 1.8 2016/10/16 08:20:58 mrg Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		-unknown-	obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		-unknown-	debuglib,xorg,obsolete
@@ -37,7 +37,8 @@
 ./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/crime_drv.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/crime_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/crime_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	-unknown-	xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	-unknown-		xorg,debug
@@ -49,7 +50,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mga_drv.so.1.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	-unknown-		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/newport_drv.so.0.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/newport_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=110
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/newport_drv.so.0.debug	-unknown-		xorg,debug,xorg_server_ver=118,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/s3_drv.so.0.debug	-unknown-	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	-unknown-		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	-unknown-		xorg,debug
