@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.109 2016/08/21 09:53:25 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.110 2016/10/16 10:51:31 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -316,17 +316,12 @@
 #if NLAPIC > 0
 	.align	PAGE_SIZE
 	.globl	_C_LABEL(local_apic)
-	.globl	_C_LABEL(lapic_tpr)
 
 	.type	_C_LABEL(local_apic), @object
 LABEL(local_apic)
-	.space	LAPIC_TPRI
+	.space	PAGE_SIZE
 END(local_apic)
-	.type	_C_LABEL(lapic_tpr), @object
-LABEL(lapic_tpr)
-	.space	PAGE_SIZE-LAPIC_TPRI
-END(lapic_tpr)
-#endif /* NLAPIC > 0 */
+#endif
 
 	.globl	_C_LABEL(tablesize)
 	.globl	_C_LABEL(nox_flag)
