@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.718 2016/10/12 03:07:11 nat Exp $
+$NetBSD: usbdevs,v 1.719 2016/10/16 18:47:49 nat Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1251,6 +1251,9 @@ product CREATIVE3 OPTICAL_MOUSE 0x0001	Notebook Optical Mouse
 /* Cambridge Silicon Radio products */
 product CSR BLUETOOTH		0x0001	Bluetooth USB Adapter
 product CSR BLUETOOTH_NF	0xffff	Bluetooth USB Adapter
+
+/* C-Media Electronics Inc. products */
+product CMEDIA USBAUDIO		0x013c	USB Pnp Sound
 
 /* CTX products */
 product CTX EX1300		0x9999	Ex1300 hub
