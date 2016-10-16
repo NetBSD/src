@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.52 2016/10/15 15:27:18 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.53 2016/10/16 13:54:28 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -192,7 +192,6 @@
 #include <arm/omap/omap3_sdmmcreg.h>
 #include <arm/omap/omap_var.h>
 #include <arm/omap/omap_com.h>
-#include <arm/omap/tifbvar.h>
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 #include <arm/xscale/pxa2x0_gpio.h>
@@ -263,7 +262,6 @@ int comcnmode = CONMODE;
 static char console[16];
 #endif
 
-const struct tifb_panel_info *tifb_panel_info = NULL;
 /* Use TPS65217 White LED Driver */
 bool use_tps65217_wled = false;
 
@@ -1166,14 +1164,6 @@ gumstix_device_register(device_t dev, void *aux)
 		prop_dictionary_set_bool(dict, "dual-volt", dualvolt);
 	}
 	if (device_is_a(dev, "tifb")) {
-		prop_data_t panel_info;
-
-		panel_info = prop_data_create_data_nocopy(tifb_panel_info,
-		    sizeof(struct tifb_panel_info));
-		KASSERT(panel_info != NULL);
-		prop_dictionary_set(dict, "panel-info", panel_info);
-		prop_object_release(panel_info);
-
 		/* enable LCD */
 		omap2_gpio_ctl(59, GPIO_PIN_OUTPUT);
 		omap2_gpio_write(59, 0);	/* reset */
