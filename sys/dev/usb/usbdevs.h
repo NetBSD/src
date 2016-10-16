@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.710 2016/10/12 03:09:10 nat Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.711 2016/10/16 18:49:17 nat Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.718 2016/10/12 03:07:11 nat Exp
+ *	NetBSD: usbdevs,v 1.719 2016/10/16 18:47:49 nat Exp
  */
 
 /*
@@ -1258,6 +1258,9 @@
 /* Cambridge Silicon Radio products */
 #define	USB_PRODUCT_CSR_BLUETOOTH	0x0001		/* Bluetooth USB Adapter */
 #define	USB_PRODUCT_CSR_BLUETOOTH_NF	0xffff		/* Bluetooth USB Adapter */
+
+/* C-Media Electronics Inc. products */
+#define	USB_PRODUCT_CMEDIA_USBAUDIO	0x013c		/* USB Pnp Sound */
 
 /* CTX products */
 #define	USB_PRODUCT_CTX_EX1300	0x9999		/* Ex1300 hub */
