@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.4,v 1.13 2016/10/12 08:43:17 roy Exp $
+.\"	$NetBSD: arp.4,v 1.14 2016/10/16 05:32:30 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,10 +83,11 @@ This is no longer supported.
 .Sh DIAGNOSTICS
 .Bl -diag
 ARP implements Address Conflict Detection.
-When an address is first added to the host, it marked tentative and
+When an address is first added to the host, it is marked tentative and
 ARP probes the network to discover if another host has the address.
 If another host replies with the same address, then the local address is
-marked duplicate and the host will not use it. Otherwise the tentative
+marked duplicate and the host will not use it.
+Otherwise the tentative
 mark is removed and the host can start using the address.
 .Pp
 ARP will defend the host's active address when a conflicting message is
