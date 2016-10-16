@@ -1,4 +1,4 @@
-.\" $NetBSD: tps65217pmic.4,v 1.7 2016/10/15 19:51:48 rkujawa Exp $
+.\" $NetBSD: tps65217pmic.4,v 1.8 2016/10/16 05:25:52 wiz Exp $
 .\"
 .\" Copyright (c) 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ The driver can only report current voltage regulator settings.
 It can not measure the real voltage, as the TPS65217 chip lacks hardware to do
 that.
 .Pp
-Modifying voltage regulator parameters from user space was deliberately left 
+Modifying voltage regulator parameters from user space was deliberately left
 unimplemented, as these parameters should only be set at the firmware level.
 Setting wrong parameters may result in permanent hardware damage.
 .Sh BUGS
