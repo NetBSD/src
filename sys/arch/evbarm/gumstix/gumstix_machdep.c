@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.53 2016/10/16 13:54:28 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.54 2016/10/16 23:07:31 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -1164,11 +1164,13 @@ gumstix_device_register(device_t dev, void *aux)
 		prop_dictionary_set_bool(dict, "dual-volt", dualvolt);
 	}
 	if (device_is_a(dev, "tifb")) {
+#if defined(OMAP2)
 		/* enable LCD */
 		omap2_gpio_ctl(59, GPIO_PIN_OUTPUT);
 		omap2_gpio_write(59, 0);	/* reset */
 		delay(100);
 		omap2_gpio_write(59, 1);
+#endif
 	}
 	if (device_is_a(dev, "tps65217pmic")) {
 #if defined(TI_AM335X)
