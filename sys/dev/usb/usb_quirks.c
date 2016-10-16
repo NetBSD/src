@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.84 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.85 2016/10/16 18:47:49 nat Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.84 2016/04/23 10:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.85 2016/10/16 18:47:49 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,6 +105,7 @@ Static const struct usbd_quirk_entry {
    						    0x101, { UQ_AU_INP_ASYNC }},
  { USB_VENDOR_PLANTRONICS, USB_PRODUCT_PLANTRONICS_HEADSET,
    						    0x004, { UQ_AU_INP_ASYNC }},
+ { USB_VENDOR_CMEDIA, USB_PRODUCT_CMEDIA_USBAUDIO,  ANY,   { UQ_AU_INP_ASYNC }},
  /* XXX These should have a revision number, but I don't know what they are. */
  { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,   { UQ_BROKEN_BIDIR }},
  { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,   { UQ_BROKEN_BIDIR }},
