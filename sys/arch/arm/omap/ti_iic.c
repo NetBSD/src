@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.9 2016/10/15 15:08:59 kiyohara Exp $ */
+/* $NetBSD: ti_iic.c,v 1.10 2016/10/16 13:09:57 kiyohara Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.9 2016/10/15 15:08:59 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.10 2016/10/16 13:09:57 kiyohara Exp $");
 
 #include "opt_omap.h"
 #include "locators.h"
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.9 2016/10/15 15:08:59 kiyohara Exp $");
 #ifndef OMAP2_I2C_SLAVE_ADDR
 #define OMAP2_I2C_SLAVE_ADDR	0x01
 #endif
+
+#define OMAP2_I2C_FIFOBYTES(fd)	(8 << (fd))
 
 #ifdef I2CDEBUG
 #define DPRINTF(args)	printf args
