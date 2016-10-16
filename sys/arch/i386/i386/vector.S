@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.65 2016/08/07 10:17:32 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.66 2016/10/16 10:38:49 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.65 2016/08/07 10:17:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.66 2016/10/16 10:38:49 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -201,12 +201,12 @@ IDTVEC(intrddbipi)
 	movzwl	(%eax),%eax
 	GET_TSS
 	pushl	%eax
-	movl	$0xff,_C_LABEL(lapic_tpr)
+	movl	$0xff,_C_LABEL(local_apic)+LAPIC_TPRI
 	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
 	sti
 	call	_C_LABEL(ddb_ipi_tss)
 	addl	$4,%esp
-	movl	$0,_C_LABEL(lapic_tpr)
+	movl	$0,_C_LABEL(local_apic)+LAPIC_TPRI
 	iret
 	jmp	1b
 IDTVEC_END(intrddbipi)
