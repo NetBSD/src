@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.29 2016/10/14 14:41:59 christos Exp $
+#	$NetBSD: Makefile,v 1.30 2016/10/16 04:37:42 mrg Exp $
 
 .include <bsd.own.mk>
 
 MODULE=		gdb
-GNUHOSTDIST=    ${.CURDIR}/../../external/gpl3/${EXTERNAL_GDB_SUBDIR}/dist
+GDBDIR=		${.CURDIR}/../../external/gpl3/${EXTERNAL_GDB_SUBDIR}
+GNUHOSTDIST=    ${GDBDIR}/dist
 
 FIND_ARGS=	\! \( -type d -name sim -prune \)
 
@@ -14,6 +15,9 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
 ALL_TARGET=	all-gdb
 INSTALL_TARGET=	install-gdb
+
+.include "${GDBDIR}/Makefile.gdb_arch"
+#GDB_MACHINE_ARCH=       ${MACHINE_ARCH:C/e?armv[4-7]h?f?/arm/}
 
 .include "${.CURDIR}/../Makefile.gmakehost"
 
@@ -60,7 +64,8 @@ CONFIGURE_ARGS_SIM+= --disable-sim
 native-gdb: .native/.configure_done
 	@echo 'Extracting GDB configury for a native toolchain.'
 	MAKE=${MAKE:Q} ${HOST_SH} ${MKNATIVE} gdb \
-		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM}
+		${.OBJDIR}/.native ${NEWCONFIGDIR} ${MACHINE_GNU_PLATFORM} \
+		${GDB_MACHINE_ARCH}
 
 .native/.configure_done: ${_GNU_CFGSRC} ${.CURDIR}/Makefile
 	mkdir ${.OBJDIR}/.native 2>/dev/null || true
