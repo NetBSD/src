@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.2 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: udl.h,v 1.3 2016/10/17 20:04:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -108,12 +108,18 @@ struct udl_softc {
 	uint8_t			 sc_nscreens;
 
 	uint8_t			*sc_fbmem;	/* framebuffer for X11 */
+	uint8_t			*sc_fbmem_prev;	/* prev. framebuffer */
 #define UDL_FBMEM_SIZE(sc) \
     ((sc)->sc_width * (sc)->sc_height * ((sc)->sc_depth / 8))
 
 	uint8_t			*sc_huffman;
 	uint8_t			*sc_huffman_base;
 	size_t			 sc_huffman_size;
+
+	kcondvar_t		 sc_thread_cv;
+	kmutex_t		 sc_thread_mtx;
+	bool			 sc_dying;
+	lwp_t			*sc_thread;
 
 	kcondvar_t		 sc_cv;
 	kmutex_t		 sc_mtx;
