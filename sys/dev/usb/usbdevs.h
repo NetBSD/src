@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.711 2016/10/16 18:49:17 nat Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.712 2016/10/17 20:00:25 nat Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.719 2016/10/16 18:47:49 nat Exp
+ *	NetBSD: usbdevs,v 1.720 2016/10/17 19:58:42 nat Exp
  */
 
 /*
@@ -1341,6 +1341,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_VGA10	0x015a		/* CMP-USBVGA10 */
 #define	USB_PRODUCT_DISPLAYLINK_WSDVI	0x0198		/* WS Tech DVI */
 #define	USB_PRODUCT_DISPLAYLINK_EC008	0x019b		/* EasyCAP008 DVI */
+#define	USB_PRODUCT_DISPLAYLINK_FYDVI2	0x019e		/* DisplayLink FY-DVI2 */
 #define	USB_PRODUCT_DISPLAYLINK_GXDVIU2	0x01ac		/* BUFFALO GX-DVI/U2 */
 #define	USB_PRODUCT_DISPLAYLINK_LCD4300U	0x01ba		/* LCD-4300U */
 #define	USB_PRODUCT_DISPLAYLINK_LCD8000U	0x01bb		/* LCD-8000U */
@@ -1358,6 +1359,7 @@
 #define	USB_PRODUCT_DISPLAYLINK_LT1421WIDE	0x03e0		/* Lenovo ThinkVision LT1421 Wide */
 #define	USB_PRODUCT_DISPLAYLINK_SD_U2VDH	0x046d		/* AREA SD-U2VDH */
 #define	USB_PRODUCT_DISPLAYLINK_UM7X0	0x401a		/* nanovision MiMo */
+#define	USB_PRODUCT_DISPLAYLINK_FYDVI	0x8060		/* DisplayLink FY-DVI */
 
 /* D-Link products */
 /*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
