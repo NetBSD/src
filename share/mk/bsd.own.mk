@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.974 2016/10/17 20:25:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.975 2016/10/17 21:42:54 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -130,19 +130,18 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "i386" || \
-    ${MACHINE} == "sparc" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE_ARCH} == "mipsel" || \
-    ${MACHINE_ARCH} == "mipseb" || \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_CPU} == "powerpc"
-HAVE_GDB?=	712
-.else
-# coldfire/hppa/m68000/m68k/mips64/ppc64/sh3*/vax
+.if ${MACHINE} == "evbcf" || \
+    ${MACHINE} == "hppa" || \
+    ${MACHINE} == "sun2" || \
+    ${MACHINE} == "vax" || \
+    ${MACHINE_CPU} == "m68k" || \
+    ${MACHINE_CPU} == "powerpc64" || \
+    ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE_ARCH} == "mips64el" || \
+    ${MACHINE_ARCH} == "mips64eb"
 HAVE_GDB?=	710
+.else
+HAVE_GDB?=	712
 .endif
 
 .if ${HAVE_GDB} == 712
