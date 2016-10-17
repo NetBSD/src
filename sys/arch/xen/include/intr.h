@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.38 2016/10/16 06:40:43 kre Exp $	*/
+/*	$NetBSD: intr.h,v 1.39 2016/10/17 18:23:50 jdolecek Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -164,6 +164,8 @@ void intr_default_setup(void);
 int x86_nmi(void);
 
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
+void *intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *), void *,
+    bool, const char *);
 void intr_disestablish(struct intrhand *);
 const char *intr_string(intr_handle_t);
 void cpu_intr_init(struct cpu_info *);
@@ -184,15 +186,6 @@ void xen_broadcast_ipi(uint32_t);
 #define xen_send_ipi(_i1, _i2) (0) /* nothing */
 #define xen_broadcast_ipi(_i1) ((void) 0) /* nothing */
 #endif /* MULTIPROCESSOR */
-
-/*
- * XXX Hack: allow xen kernels to build with recent (Oct 2016) changes
- *	     to acpi interrupt establishment (until a better solution)
- */
-#define intr_establish_xname(a,b,c,d,e,f,g,h,i) intr_establish(a,b,c,d,e,f,g,h)
-#define isa_intr_establish_xname(a,b,c,d,e,f,g) isa_intr_establish(a,b,c,d,e,f)
-/* kcaH XXX */
-
 #endif /* !_LOCORE */
 
 #endif /* _XEN_INTR_H_ */
