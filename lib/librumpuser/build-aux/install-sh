@@ -345,7 +345,7 @@ do
 	    # is incompatible with FreeBSD 'install' when (umask & 300) != 0.
 	    ;;
 	  *)
-	    tmpdir=${TMPDIR-/tmp}/ins$RANDOM-$$
+	    tmpdir=$(mktemp -d -p ${TMPDIR:-/tmp})
 	    trap 'ret=$?; rmdir "$tmpdir/d" "$tmpdir" 2>/dev/null; exit $ret' 0
 
 	    if (umask $mkdir_umask &&
