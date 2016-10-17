@@ -880,7 +880,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
 { return &aes_##keylen##_##mode; }
 # endif
 
-# if defined(OPENSSL_CPUID_OBJ) && (defined(__arm__) || defined(__arm) || defined(__aarch64__))
+# if defined(OPENSSL_CPUID_OBJ) && (defined(__arm__) || defined(__arm) || defined(__aarch64__)) && defined(AES_ASM)
 #  include "arm_arch.h"
 #  if __ARM_MAX_ARCH__>=7
 #   if defined(BSAES_ASM)
