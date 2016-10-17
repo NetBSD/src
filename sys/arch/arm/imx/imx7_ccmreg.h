@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_ccmreg.h,v 1.1 2016/05/17 06:44:45 ryo Exp $	*/
+/*	$NetBSD: imx7_ccmreg.h,v 1.2 2016/10/17 09:21:51 ryo Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan, Inc.
@@ -974,6 +974,10 @@
 #define CCM_CCGR190_TOG			0x00004bec
 
 /* CCGR mapping */
+#define CCM_CCGR_M4			CCM_CCGR1
+#define CCM_CCGR_M4_SET			(CCM_CCGR_M4 + 4)
+#define CCM_CCGR_M4_CLR			(CCM_CCGR_M4 + 8)
+#define CCM_CCGR_M4_TOG			(CCM_CCGR_M4 + 12)
 #define CCM_CCGR_SIM_MAIN		CCM_CCGR4
 #define CCM_CCGR_SIM_MAIN_SET		(CCM_CCGR_SIM_MAIN + 4)
 #define CCM_CCGR_SIM_MAIN_CLR		(CCM_CCGR_SIM_MAIN + 8)
