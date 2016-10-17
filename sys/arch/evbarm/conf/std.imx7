@@ -1,4 +1,4 @@
-#	$NetBSD: std.imx7,v 1.1 2016/05/17 06:44:46 ryo Exp $
+#	$NetBSD: std.imx7,v 1.2 2016/10/17 10:36:56 ryo Exp $
 #
 # standard NetBSD/evbarm options for i.MX7 board
 
@@ -25,8 +25,8 @@ options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=792000000
 
 options 	KERNEL_BASE_EXT=0x80000000
-makeoptions 	KERNEL_BASE_PHYS="0x80008000"
-makeoptions 	KERNEL_BASE_VIRT="0x80008000"
+makeoptions	KERNEL_BASE_PHYS="0x82000000"
+makeoptions	KERNEL_BASE_VIRT="0x82000000"
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.imx7"
 makeoptions	CPPFLAGS+="-I$S/../../../include"
