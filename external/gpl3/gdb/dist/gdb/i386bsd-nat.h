@@ -25,4 +25,8 @@
 
 extern struct target_ops *i386bsd_target (void);
 
+extern void i386bsd_supply_gregset (struct regcache *, const void *);
+
+extern void i386bsd_collect_gregset (const struct regcache *, void *, int);
+
 #endif /* i386bsd-nat.h */
