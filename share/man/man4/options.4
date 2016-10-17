@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.451 2015/10/29 07:46:08 wiz Exp $
+.\"	$NetBSD: options.4,v 1.452 2016/10/17 20:43:19 maya Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd October 28, 2015
+.Dd October 17, 2016
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -1444,7 +1444,7 @@ file descriptors for each process;
 this value is inherited by its child processes.
 It defaults to
 .Em OPEN_MAX ,
-which is currently defined to be 64.
+which is currently defined to be 128.
 .It Cd options MAXFILES=integer
 Sets the default value of the
 .Em kern.maxfiles
