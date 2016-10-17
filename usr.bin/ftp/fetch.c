@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.224 2016/08/03 12:33:56 maya Exp $	*/
+/*	$NetBSD: fetch.c,v 1.225 2016/10/17 00:52:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.224 2016/08/03 12:33:56 maya Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.225 2016/10/17 00:52:53 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -1296,6 +1296,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	rval = 1;
 
 	initurlinfo(&ui);
+	initurlinfo(&oui);
 	initauthinfo(&wauth, wwwauth);
 	initauthinfo(&pauth, proxyauth);
 
