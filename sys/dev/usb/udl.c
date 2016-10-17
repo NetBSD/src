@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.15 2016/10/17 19:58:42 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.16 2016/10/17 20:04:48 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.15 2016/10/17 19:58:42 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.16 2016/10/17 20:04:48 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.15 2016/10/17 19:58:42 nat Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/condvar.h>
 #include <uvm/uvm.h>
 
 #include <sys/bus.h>
@@ -172,6 +174,7 @@ static uint16_t		udl_lfsr(uint16_t);
 static int		udl_set_resolution(struct udl_softc *,
 			    const struct videomode *);
 static const struct videomode *udl_videomode_lookup(const char *);
+static void		udl_update_thread(void *);
 
 static inline void
 udl_cmd_add_1(struct udl_softc *sc, uint8_t val)
@@ -468,6 +471,12 @@ udl_attach(device_t parent, device_t self, void *aux)
 	    config_found(sc->sc_dev, &aa, wsemuldisplaydevprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev, sc->sc_dev);
+
+	mutex_init(&sc->sc_thread_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_thread_cv, "udlcv");
+	sc->sc_dying = false;
+	kthread_create(PRI_BIO, KTHREAD_MPSAFE | KTHREAD_MUSTJOIN, NULL,
+	    udl_update_thread, sc, &sc->sc_thread, "udlupd");
 }
 
 static int
@@ -492,9 +501,6 @@ udl_detach(device_t self, int flags)
 		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
-	cv_destroy(&sc->sc_cv);
-	mutex_destroy(&sc->sc_mtx);
-
 	/*
 	 * Free Huffman table.
 	 */
@@ -504,6 +510,15 @@ udl_detach(device_t self, int flags)
 	 * Free framebuffer memory.
 	 */
 	udl_fbmem_free(sc);
+	
+	sc->sc_dying = true;
+	cv_broadcast(&sc->sc_thread_cv);
+	kthread_join(sc->sc_thread);
+
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_mtx);
+	cv_destroy(&sc->sc_thread_cv);
+	mutex_destroy(&sc->sc_thread_mtx);
 
 	/*
 	 * Detach wsdisplay.
@@ -637,6 +652,7 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 	if (udl_fbmem_alloc(sc) != 0)
 		return -1;
 
+	cv_broadcast(&sc->sc_thread_cv);
 	vaddr = (vaddr_t)sc->sc_fbmem + off;
 	rv = pmap_extract(pmap_kernel(), vaddr, &paddr);
 	KASSERT(rv);
@@ -810,11 +826,24 @@ static int
 udl_fbmem_alloc(struct udl_softc *sc)
 {
 
+	mutex_enter(&sc->sc_thread_mtx);
 	if (sc->sc_fbmem == NULL) {
-		sc->sc_fbmem = kmem_alloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
-		if (sc->sc_fbmem == NULL)
+		sc->sc_fbmem = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		if (sc->sc_fbmem == NULL) {
+			mutex_exit(&sc->sc_thread_mtx);
 			return -1;
+		}
 	}
+	if (sc->sc_fbmem_prev == NULL) {
+		sc->sc_fbmem_prev = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		if (sc->sc_fbmem_prev == NULL) {
+			kmem_free(sc->sc_fbmem, UDL_FBMEM_SIZE(sc));
+			sc->sc_fbmem = NULL;
+			mutex_exit(&sc->sc_thread_mtx);
+			return -1;
+		}
+	}
+	mutex_exit(&sc->sc_thread_mtx);
 
 	return 0;
 }
@@ -823,10 +852,16 @@ static void
 udl_fbmem_free(struct udl_softc *sc)
 {
 
+	mutex_enter(&sc->sc_thread_mtx);
 	if (sc->sc_fbmem != NULL) {
 		kmem_free(sc->sc_fbmem, UDL_FBMEM_SIZE(sc));
 		sc->sc_fbmem = NULL;
 	}
+	if (sc->sc_fbmem_prev != NULL) {
+		kmem_free(sc->sc_fbmem_prev, UDL_FBMEM_SIZE(sc));
+		sc->sc_fbmem_prev = NULL;
+	}
+	mutex_exit(&sc->sc_thread_mtx);
 }
 
 static int
@@ -1762,4 +1797,83 @@ udl_videomode_lookup(const char *name)
 			return &videomode_list[i];
 
 	return NULL;
+}
+
+static void
+udl_update_thread(void *v)
+{
+	struct udl_softc *sc = v;
+	int stride;
+#ifdef notyet
+	bool update = false;
+	int linecount, x, y;
+	uint16_t *fb, *fbcopy;
+	uint8_t *curfb;
+#else
+	uint16_t *fb;
+	int offs;
+#endif
+
+	mutex_enter(&sc->sc_thread_mtx);
+
+	for (;;) {
+		stride = min(sc->sc_width, UDL_CMD_WIDTH_MAX - 8);
+		if (sc->sc_dying == true) {
+			mutex_exit(&sc->sc_thread_mtx);
+			kthread_exit(0);
+		}
+
+		if (sc->sc_fbmem == NULL)
+			goto thread_wait;
+
+#ifdef notyet
+		curfb = kmem_zalloc(UDL_FBMEM_SIZE(sc), KM_SLEEP);
+		memcpy(curfb, sc->sc_fbmem, sc->sc_height * sc->sc_width * 2);
+		fb = (uint16_t *)curfb;
+		fbcopy = (uint16_t *)sc->sc_fbmem_prev;
+		for (y = 0; y < sc->sc_height; y++) {
+			linecount = 0;
+			update = false;
+			for (x = 0; x < sc->sc_width; x++) {
+				if (linecount >= stride) {
+					udl_draw_line(sc, &fb[y * sc->sc_width
+					    + x - linecount], y * sc->sc_width
+					    + x - linecount, linecount);
+					linecount = 0;
+					update = false;
+				}
+				if (fb[y * sc->sc_width + x] ^ fbcopy[y *
+				    sc->sc_width + x]) {
+					update = true;
+					linecount ++;
+				} else if (update == true) {
+					udl_draw_line(sc, &fb[y * sc->sc_width
+					    + x - linecount], y * sc->sc_width
+					    + x - linecount, linecount);
+					linecount = 0;
+					update = false;
+				}
+			}
+			if (linecount) {
+				udl_draw_line(sc, &fb[y * sc->sc_width + x -
+				    linecount], y * sc->sc_width  + x -
+				    linecount, linecount);
+			}
+		}
+		memcpy(sc->sc_fbmem_prev, curfb, sc->sc_height * sc->sc_width
+		    * 2);
+		kmem_free(curfb, UDL_FBMEM_SIZE(sc));
+#else
+		fb = (uint16_t *)sc->sc_fbmem;
+		for (offs = 0; offs < sc->sc_height * sc->sc_width; offs += stride)
+			udl_draw_line(sc, &fb[offs], offs, stride);
+			
+#endif
+
+		kpause("udlslp", false, (40 * hz)/1000 + 1, &sc->sc_thread_mtx);
+		continue;
+
+thread_wait:
+		cv_wait(&sc->sc_thread_cv, &sc->sc_thread_mtx);
+	}
 }
