@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.973 2016/10/16 19:20:02 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.974 2016/10/17 20:25:34 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -132,12 +132,16 @@ USE_SSP?=	yes
 #
 .if ${MACHINE} == "alpha" || \
     ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386" || \
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
+    ${MACHINE_ARCH} == "mipsel" || \
+    ${MACHINE_ARCH} == "mipseb" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "powerpc"
 HAVE_GDB?=	712
 .else
+# coldfire/hppa/m68000/m68k/mips64/ppc64/sh3*/vax
 HAVE_GDB?=	710
 .endif
 
