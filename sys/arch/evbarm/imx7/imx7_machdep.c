@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7_machdep.c,v 1.3 2016/05/30 17:43:46 dholland Exp $	*/
+/*	$NetBSD: imx7_machdep.c,v 1.4 2016/10/17 10:36:57 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.3 2016/05/30 17:43:46 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7_machdep.c,v 1.4 2016/10/17 10:36:57 ryo Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -220,7 +220,14 @@ initarm(void *arg)
 #endif
 
 	bootconfig.dramblocks = 1;
+#ifdef MEMSIZE_RESERVED
+	/* reserved for Cortex-M4 core */
+	memsize -= MEMSIZE_RESERVED * 1024 * 1024;
+	bootconfig.dram[0].address = KERN_VTOPHYS(KERNEL_BASE) +
+	    MEMSIZE_RESERVED * 1024 * 1024;
+#else
 	bootconfig.dram[0].address = KERN_VTOPHYS(KERNEL_BASE);
+#endif
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
