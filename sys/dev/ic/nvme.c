@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.15 2016/10/05 03:46:38 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.16 2016/10/18 07:48:05 nonaka Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.15 2016/10/05 03:46:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.16 2016/10/18 07:48:05 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ nvme_ns_dobio(struct nvme_softc *sc, uint16_t nsid, void *cookie,
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(q->q_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_PREWRITE);
 	}
 
@@ -726,7 +726,7 @@ nvme_ns_io_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 		bus_dmamap_sync(sc->sc_dmat,
 		    NVME_DMA_MAP(q->q_ccb_prpls),
 		    ccb->ccb_prpl_off,
-		    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+		    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 		    BUS_DMASYNC_POSTWRITE);
 	}
 
@@ -833,7 +833,7 @@ nvme_pt_fill(struct nvme_queue *q, struct nvme_ccb *ccb, void *slot)
 			bus_dmamap_sync(sc->sc_dmat,
 			    NVME_DMA_MAP(q->q_ccb_prpls),
 			    ccb->ccb_prpl_off,
-			    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+			    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 			    BUS_DMASYNC_PREWRITE);
 			htolem64(&sqe->entry.prp[1], ccb->ccb_prpl_dva);
 			break;
@@ -860,7 +860,7 @@ nvme_pt_done(struct nvme_queue *q, struct nvme_ccb *ccb, struct nvme_cqe *cqe)
 			bus_dmamap_sync(sc->sc_dmat,
 			    NVME_DMA_MAP(q->q_ccb_prpls),
 			    ccb->ccb_prpl_off,
-			    sizeof(*ccb->ccb_prpl) * dmap->dm_nsegs - 1,
+			    sizeof(*ccb->ccb_prpl) * (dmap->dm_nsegs - 1),
 			    BUS_DMASYNC_POSTWRITE);
 		}
 
