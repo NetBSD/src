@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.20 2012/07/21 05:49:42 manu Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.21 2016/10/18 17:56:31 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -103,11 +103,18 @@ extern int perfuse_diagflags;
 } while (0 /* CONSTCOND */)
 
 #define DWARN(fmt, ...) do {						\
-									\
 	if (perfuse_diagflags & PDF_SYSLOG) 				\
 		syslog(LOG_WARNING, fmt ": %m", ## __VA_ARGS__);	\
 									\
 	warn(fmt, ## __VA_ARGS__);					\
+} while (0 /* CONSTCOND */)
+
+#define DWARNC(e, fmt, ...) do {					\
+	if (perfuse_diagflags & PDF_SYSLOG) { 				\
+		errno = e;						\
+		syslog(LOG_WARNING, fmt ": %m", ## __VA_ARGS__);	\
+	}								\
+	warnc(e, fmt, ## __VA_ARGS__);					\
 } while (0 /* CONSTCOND */)
 
 /*
