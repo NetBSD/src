@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VTC100,v 1.9 2016/10/18 14:45:05 kiyohara Exp $
+#	$NetBSD: VTC100,v 1.10 2016/10/18 14:48:11 kiyohara Exp $
 #
 #	VTC100 -- NEXCOM VTC100 Kernel
 #
@@ -198,13 +198,13 @@ ld*		at sdmmc?
 #options SDHC_DEBUG
 
 # General-purpose I/O pins
-omapgpio0	at obio0 addr 0x44e07000 size 0x1000 # intrbase 128 intr 29
+omapgpio0	at obio0 addr 0x44e07000 size 0x1000
 gpio0		at omapgpio0
-omapgpio1	at obio1 addr 0x4804c000 size 0x1000 # intrbase 160 intr 30
+omapgpio1	at obio1 addr 0x4804c000 size 0x1000
 gpio1		at omapgpio1
-omapgpio2	at obio1 addr 0x481ac000 size 0x1000 # intrbase 192 intr 32
+omapgpio2	at obio1 addr 0x481ac000 size 0x1000
 gpio2		at omapgpio2
-omapgpio3	at obio1 addr 0x481ae000 size 0x1000 # intrbase 224 intr 32
+omapgpio3	at obio1 addr 0x481ae000 size 0x1000
 gpio3		at omapgpio3
 
 # I2C Controller
