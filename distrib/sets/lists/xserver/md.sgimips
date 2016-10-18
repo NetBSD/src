@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.53 2016/10/16 08:20:58 mrg Exp $	x11
+# $NetBSD: md.sgimips,v 1.54 2016/10/18 12:56:11 christos Exp $	x11
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -10,9 +10,9 @@
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=110
-./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
-./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118,obsolete
+./usr/X11R7/lib/modules/drivers/crime_drv.so		-unknown-	xorg,xorg_server_ver=118
+./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=110
+./usr/X11R7/lib/modules/drivers/crime_drv.so.0		-unknown-	xorg,xorg_server_ver=118
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
