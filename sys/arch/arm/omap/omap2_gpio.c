@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.20 2016/10/18 14:02:48 kiyohara Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.21 2016/10/18 14:08:53 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.20 2016/10/18 14:02:48 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.21 2016/10/18 14:08:53 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -64,12 +64,14 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.20 2016/10/18 14:02:48 kiyohara Exp
 #include <dev/gpio/gpiovar.h>
 #endif
 
+#ifdef TI_AM335X
 static const struct omap_module gpio_module[] = {
 	{ 0, 0 },
 	{ AM335X_PRCM_CM_PER, CM_PER_GPIO1_CLKCTRL },
 	{ AM335X_PRCM_CM_PER, CM_PER_GPIO2_CLKCTRL },
 	{ AM335X_PRCM_CM_PER, CM_PER_GPIO3_CLKCTRL },
 };
+#endif
 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_block_irqs2(struct pic_softc *, size_t, uint32_t);
