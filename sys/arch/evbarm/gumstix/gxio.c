@@ -1,4 +1,4 @@
-/*	$NetBSD: gxio.c,v 1.22 2016/10/16 13:54:28 kiyohara Exp $ */
+/*	$NetBSD: gxio.c,v 1.23 2016/10/18 14:39:52 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.22 2016/10/16 13:54:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.23 2016/10/18 14:39:52 kiyohara Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_gumstix.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gxio.c,v 1.22 2016/10/16 13:54:28 kiyohara Exp $");
 #endif
 #include <arm/omap/omap_var.h>
 #include <arm/omap/ti_iicreg.h>
+#include <arm/omap/tifbvar.h>
 #if defined(CPU_XSCALE)
 #include <arm/xscale/pxa2x0cpu.h>
 #endif
