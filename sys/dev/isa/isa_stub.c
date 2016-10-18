@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_stub.c,v 1.1 2016/10/17 18:23:49 jdolecek Exp $	*/
+/*	$NetBSD: isa_stub.c,v 1.2 2016/10/18 03:38:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.1 2016/10/17 18:23:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.2 2016/10/18 03:38:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.1 2016/10/17 18:23:49 jdolecek Exp $"
 #include <dev/isa/isadmareg.h>
 
 void	*default_isa_intr_establish_xname(isa_chipset_tag_t ic, int irq,
+	    int type,
+	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
+void	*isa_intr_establish_xname(isa_chipset_tag_t ic, int irq,
 	    int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
 __strict_weak_alias(isa_intr_establish_xname, default_isa_intr_establish_xname);
