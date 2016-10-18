@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.358 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.359 2016/10/18 07:30:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.358 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.359 2016/10/18 07:30:30 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1622,12 +1622,12 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFADDR_WRITER_REMOVE(ifa);
 	IFADDR_ENTRY_DESTROY(ifa);
-#if notyet
+#ifdef NET_MPSAFE
 	pserialize_perform(ifnet_psz);
 #endif
 	IFNET_UNLOCK();
 
-#if notyet
+#ifdef NET_MPSAFE
 	psref_target_destroy(&ifa->ifa_psref, ifa_psref_class);
 #endif
 	ifafree(ifa);

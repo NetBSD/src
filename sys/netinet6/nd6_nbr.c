@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.127 2016/08/01 03:15:31 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.128 2016/10/18 07:30:31 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.127 2016/08/01 03:15:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.128 2016/10/18 07:30:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -1099,7 +1100,11 @@ static void
 nd6_dad_stoptimer(struct dadq *dp)
 {
 
+#ifdef NET_MPSAFE
+	callout_halt(&dp->dad_timer_ch, NULL);
+#else
 	callout_halt(&dp->dad_timer_ch, softnet_lock);
+#endif
 }
 
 /*
@@ -1224,8 +1229,10 @@ nd6_dad_timer(struct ifaddr *ifa)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	mutex_enter(&nd6_dad_lock);
 
 	/* Sanity check */
@@ -1321,8 +1328,10 @@ nd6_dad_timer(struct ifaddr *ifa)
 
 done:
 	mutex_exit(&nd6_dad_lock);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 void

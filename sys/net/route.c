@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.174 2016/08/05 00:52:02 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.175 2016/10/18 07:30:30 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,10 +93,11 @@
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_route.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.174 2016/08/05 00:52:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.175 2016/10/18 07:30:30 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -431,7 +432,7 @@ miss:
 	return NULL;
 }
 
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(NET_MPSAFE)
 /*
  * Check the following constraint for each rtcache:
  *   if a rtcache holds a rtentry, the rtentry's refcnt is more than zero,
@@ -460,7 +461,7 @@ rtfree(struct rtentry *rt)
 	KASSERT(rt->rt_refcnt > 0);
 
 	rt->rt_refcnt--;
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(NET_MPSAFE)
 	if (rt_getkey(rt) != NULL)
 		rtcache_check_rtrefcnt(rt_getkey(rt)->sa_family);
 #endif

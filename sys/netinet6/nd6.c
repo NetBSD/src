@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.208 2016/10/18 02:46:50 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.209 2016/10/18 07:30:31 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.208 2016/10/18 02:46:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.209 2016/10/18 07:30:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -443,8 +443,10 @@ nd6_llinfo_timer(void *arg)
 	bool send_ns = false;
 	const struct in6_addr *daddr6 = NULL;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	LLE_WLOCK(ln);
 	if (ln->ln_ntick > 0) {
@@ -558,8 +560,10 @@ nd6_llinfo_timer(void *arg)
 out:
 	if (ln != NULL)
 		LLE_FREE_LOCKED(ln);
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 /*
@@ -577,8 +581,10 @@ nd6_timer_work(struct work *wk, void *arg)
 	callout_reset(&nd6_timer_ch, nd6_prune * hz,
 	    nd6_timer, NULL);
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 
 	/* expire default router list */
 	
@@ -699,8 +705,10 @@ nd6_timer_work(struct work *wk, void *arg)
 		}
 	}
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 static void
@@ -2177,8 +2185,10 @@ nd6_slowtimo(void *ignored_arg)
 	struct ifnet *ifp;
 	int s;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	callout_reset(&nd6_slowtimo_ch, ND6_SLOWTIMER_INTERVAL * hz,
 	    nd6_slowtimo, NULL);
 
@@ -2199,8 +2209,10 @@ nd6_slowtimo(void *ignored_arg)
 	}
 	pserialize_read_exit(s);
 
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#endif
 }
 
 int

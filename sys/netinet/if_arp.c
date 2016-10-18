@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.230 2016/10/11 13:59:30 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.231 2016/10/18 07:30:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.230 2016/10/11 13:59:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.231 2016/10/18 07:30:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_inet.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #ifdef INET
@@ -918,8 +919,10 @@ arpintr(void)
 	int s;
 	int arplen;
 
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
+#endif
 	for (;;) {
 		struct ifnet *rcvif;
 
@@ -971,8 +974,12 @@ badlen:
 		m_freem(m);
 	}
 out:
+#ifndef NET_MPSAFE
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
+#else
+	return; /* XXX gcc */
+#endif
 }
 
 /*
@@ -1532,7 +1539,11 @@ static void
 arp_dad_stoptimer(struct dadq *dp)
 {
 
+#ifdef NET_MPSAFE
+	callout_halt(&dp->dad_timer_ch, NULL);
+#else
 	callout_halt(&dp->dad_timer_ch, softnet_lock);
+#endif
 }
 
 static void

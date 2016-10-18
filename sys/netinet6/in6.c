@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.220 2016/09/13 15:57:50 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.221 2016/10/18 07:30:31 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.220 2016/09/13 15:57:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.221 2016/10/18 07:30:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
+#include "opt_net_mpsafe.h"
 #endif
 
 #include <sys/param.h>
@@ -773,9 +774,13 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	}
 
 	s = splnet();
+#ifndef NET_MPSAFE
 	mutex_enter(softnet_lock);
+#endif
 	error = in6_control1(so , cmd, data, ifp);
+#ifndef NET_MPSAFE
 	mutex_exit(softnet_lock);
+#endif
 	splx(s);
 	return error;
 }
