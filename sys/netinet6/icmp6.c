@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.197 2016/08/26 21:48:31 dholland Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.198 2016/10/18 02:46:21 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.197 2016/08/26 21:48:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.198 2016/10/18 02:46:21 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1132,7 +1132,6 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	sin6.sin6_family = PF_INET6;
 	sin6.sin6_len = sizeof(struct sockaddr_in6);
 	sin6.sin6_addr = *dst;
-	s = pserialize_read_enter();
 	rcvif = m_get_rcvif(m, &s);
 	if (in6_setscope(&sin6.sin6_addr, rcvif, NULL)) {
 		m_put_rcvif(rcvif, &s);
