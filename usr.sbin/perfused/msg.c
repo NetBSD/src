@@ -1,4 +1,4 @@
-/*  $NetBSD: msg.c,v 1.22 2014/08/16 16:32:04 manu Exp $ */
+/*  $NetBSD: msg.c,v 1.23 2016/10/18 15:06:17 manu Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -43,10 +43,40 @@
 
 #include "perfused.h"
 
+static uint32_t bufvar_from_env(const char const *, const uint32_t);
 static int xchg_pb_inloop(struct puffs_usermount *a, struct puffs_framebuf *,
 	int, enum perfuse_xchg_pb_reply);
 static int xchg_pb_early(struct puffs_usermount *a, struct puffs_framebuf *,
 	int, enum perfuse_xchg_pb_reply);
+
+static uint32_t 
+bufvar_from_env(name, defval)
+	const char *name;
+	const uint32_t defval;
+{
+	char valstr[1024];
+	uint32_t retval = defval;
+
+	if (getenv_r(name, valstr, sizeof(valstr)) != -1) {
+		long int val;
+		char *ep;
+
+		errno = 0;
+		val = (int)strtol(valstr, &ep, 10);
+		if (*valstr == '\0' || *ep != '\0')
+			DWARNX("bad %s value \"%s\"", name, valstr);
+		else if (errno != 0)
+			DWARN("bad %s value \"%s\"", name, valstr);
+		else if (val <= 0L ||
+			 (unsigned long int)val > (unsigned long int)UINT32_MAX)
+			DWARNX("%s value %ld out of "
+			       "uint32_t bounds", name, val);
+		else
+			retval = val;
+	}
+
+	return retval;
+}
 
 int
 perfused_open_sock(void)
@@ -80,15 +110,13 @@ perfused_open_sock(void)
 	/*
 	 * Set a buffer lentgh large enough so that a few FUSE packets
 	 * will fit. 
-	 * XXX We will have to find how many packets we need
 	 */
-	opt = 4 * FUSE_BUFSIZE;
+	opt = bufvar_from_env("PERFUSE_BUFSIZE", 16 * FUSE_BUFSIZE);
 	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, &opt, sizeof(opt)) != 0)
-		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
+		DWARN("%s: setsockopt SO_SNDBUF = %d failed", __func__, opt);
 
-	opt = 4 * FUSE_BUFSIZE;
 	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &opt, sizeof(opt)) != 0)
-		DWARN("%s: setsockopt SO_RCVBUF to %d failed", __func__, opt);
+		DWARN("%s: setsockopt SO_RCVBUF = %d failed", __func__, opt);
 
 	/*
 	 * Request peer credentials
