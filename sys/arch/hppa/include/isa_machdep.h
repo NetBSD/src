@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 2016/10/18 22:04:34 jdolecek Exp $	*/
 
 /*	$OpenBSD: isa_machdep.h,v 1.2 1999/05/05 02:36:54 todd Exp $	*/
 
@@ -55,6 +55,8 @@ struct hppa_isa_chipset {
 #define	isa_detach_hook(c, s)						\
     (*(c)->ic_detach_hook)((c), (s))
 #define	isa_intr_establish(c, i, t, l, f, a)			\
+    (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
+#define	isa_intr_establish_xname(c, i, t, l, f, a, x)			\
     (*(c)->ic_intr_establish)((c)->ic_v, (i), (t), (l), (f), (a))
 #define	isa_intr_disestablish(c, h)					\
     (*(c)->ic_intr_disestablish)((c)->ic_v, (h))

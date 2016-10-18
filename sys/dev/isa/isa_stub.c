@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_stub.c,v 1.2 2016/10/18 03:38:50 martin Exp $	*/
+/*	$NetBSD: isa_stub.c,v 1.3 2016/10/18 22:04:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.2 2016/10/18 03:38:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.3 2016/10/18 22:04:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa_stub.c,v 1.2 2016/10/18 03:38:50 martin Exp $");
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmareg.h>
 
+#if !defined(isa_intr_establish_xname)
 void	*default_isa_intr_establish_xname(isa_chipset_tag_t ic, int irq,
-	    int type,
-	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
-void	*isa_intr_establish_xname(isa_chipset_tag_t ic, int irq,
 	    int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg, const char *xname);
 __strict_weak_alias(isa_intr_establish_xname, default_isa_intr_establish_xname);
@@ -58,3 +56,4 @@ default_isa_intr_establish_xname(isa_chipset_tag_t ic, int irq, int type,
 {
 	return isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg);
 }
+#endif
