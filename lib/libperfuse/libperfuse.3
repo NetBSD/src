@@ -1,4 +1,4 @@
-.\" $NetBSD: libperfuse.3,v 1.3 2011/05/10 12:14:37 njoly Exp $
+.\" $NetBSD: libperfuse.3,v 1.4 2016/10/18 15:06:17 manu Exp $
 .\"
 .\" Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
 .\"
@@ -100,6 +100,21 @@ is different than
 .Fn perfuse_open
 handles control to the regular
 .Xr open 2 .
+.Sh ENVIRONMENT
+.Bl -tag -width Er
+.It Ev PERFUSE_OPTIONS
+Comma-separated values controlling the usage of some FUSE methods. Allowed
+values are
+.Li enable_access ,
+.Li disable_access ,
+.Li enable_creat ,
+.Li disable_creat .
+.It Ev PERFUSE_BUFSIZE
+Set the socket buffer sizes used for communication with the filesystem.
+This should be raised as operation throughput requires it. Default is 
+.Li 2162688
+bytes, which is enough to queue 16 FUSE packets of maximum 132 kB length.
+.El
 .Sh RETURN VALUES
 .Fn perfuse_mount
 returns a file descriptor to the
