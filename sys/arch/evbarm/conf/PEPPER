@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PEPPER,v 1.1 2016/10/15 15:29:51 kiyohara Exp $
+#	$NetBSD: PEPPER,v 1.2 2016/10/18 14:47:14 kiyohara Exp $
 #
 #	PEPPER -- Gumstix. Inc. Pepper Single Board Computer platforms kernel
 #
@@ -261,24 +261,24 @@ omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000		# WDT1
 trng*		at obio1 addr 0x48310000 size 0x2000 intr 111	# TRNG
 
 # onboard video, experimental. Video mode is hardcoded in the driver
-#tifb* 	at obio1 addr 0x4830e000 size 0x1000 intr 36
+tifb* 	at obio1 addr 0x4830e000 size 0x1000 intr 36
 
 # make sure the console display is always wsdisplay0
-#wsdisplay*	at wsemuldisplaydev?
+wsdisplay*	at wsemuldisplaydev?
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
-#options 	WSEMUL_VT100
-#options 	WSDISPLAY_COMPAT_PCVT
-#options 	WSDISPLAY_COMPAT_SYSCONS
-#options 	WSDISPLAY_COMPAT_USL
-#options 	WSDISPLAY_SCROLLSUPPORT
-#options 	WS_KERNEL_FG=WSCOL_GREEN
-#options 	WSDISPLAY_DEFAULTSCREENS=4
-#options 	FONT_GALLANT12x22
-#options 	FONT_BOLD8x16
+options 	WSEMUL_VT100
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_DEFAULTSCREENS=4
+options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
 # compatibility to other console drivers
-#options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
+options 	WSDISPLAY_COMPAT_RAWKBD 	# can get raw scancodes
 
 # Ethernet
 cpsw*		at obio2 addr 0x4a100000 size 0x8000 intrbase 40
