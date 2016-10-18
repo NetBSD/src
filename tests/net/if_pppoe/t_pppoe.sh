@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.4 2016/09/14 01:48:08 knakahara Exp $
+#	$NetBSD: t_pppoe.sh,v 1.5 2016/10/18 04:10:24 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -186,42 +186,42 @@ run_test()
 
 atf_test_case pap cleanup
 
-pap_head()
+pppoe_pap_head()
 {
 	atf_set "descr" "Does simple pap tests"
 	atf_set "require.progs" "rump_server pppoectl"
 }
 
-pap_body()
+pppoe_pap_body()
 {
 	run_test pap
 }
 
-pap_cleanup()
+pppoe_pap_cleanup()
 {
 	cleanup
 }
 
 atf_test_case chap cleanup
 
-chap_head()
+pppoe_chap_head()
 {
 	atf_set "descr" "Does simple chap tests"
 	atf_set "require.progs" "rump_server pppoectl"
 }
 
-chap_body()
+pppoe_chap_body()
 {
 	run_test chap
 }
 
-chap_cleanup()
+pppoe_chap_cleanup()
 {
 	cleanup
 }
 
 atf_init_test_cases()
 {
-	atf_add_test_case pap
-	atf_add_test_case chap
+	atf_add_test_case pppoe_pap
+	atf_add_test_case pppoe_chap
 }
