@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.64 2016/07/03 11:40:58 kiyohara Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.64 2016/07/03 11:40:58 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -190,6 +190,7 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.64 2016/07/03 11:40:58 kiyohara
 #  error no prcm device configured.
 # endif
 # include <arm/omap/am335x_prcm.h>
+# include <arm/omap/tifbvar.h>
 # include <dev/i2c/tps65217pmicvar.h>
 # if NSDHC > 0
 #  include <arm/omap/omap2_obiovar.h>
@@ -497,7 +498,13 @@ initarm(void *arg)
 
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
+
+	if (get_bootconf_option(bootargs, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+		use_fb_console = true;
+	}
 	consinit();
+
 #ifdef CPU_CORTEXA15
 #ifdef MULTIPROCESSOR
 	arm_cpu_max = 1 + __SHIFTOUT(armreg_l2ctrl_read(), L2CTRL_NUMCPU);
@@ -618,11 +625,6 @@ initarm(void *arg)
 
 	db_trap_callback = beagle_db_trap;
 
-	if (get_bootconf_option(boot_args, "console",
-		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
-		use_fb_console = true;
-	}
-	
 	return initarm_common(KERNEL_VM_BASE, KERNEL_VM_SIZE, NULL, 0);
 
 }
@@ -688,7 +690,8 @@ consinit(void)
 #endif
 
 #if NUKBD > 0
-	ukbd_cnattach();	/* allow USB keyboard to become console */
+	if (use_fb_console)
+		ukbd_cnattach(); /* allow USB keyboard to become console */
 #endif
 
 	beagle_putchar('f');
@@ -1107,6 +1110,39 @@ beagle_device_register(device_t self, void *aux)
 		return;
 	}
 	if (device_is_a(self, "tifb")) {
+		static const struct tifb_panel_info default_panel_info = {
+			.panel_tft = 1,
+			.panel_mono = false,
+			.panel_bpp = 24,
+
+			.panel_pxl_clk = 30000000,
+			.panel_width = 800,
+			.panel_height = 600,
+			.panel_hfp = 0,
+			.panel_hbp = 47,
+			.panel_hsw = 47,
+			.panel_vfp = 0,
+			.panel_vbp = 10,
+			.panel_vsw = 2,
+			.panel_invert_hsync = 1,
+			.panel_invert_vsync = 1,
+
+			.panel_ac_bias = 255,
+			.panel_ac_bias_intrpt = 0,
+			.panel_dma_burst_sz = 16,
+			.panel_fdd = 0x80,
+			.panel_sync_edge = 0,
+			.panel_sync_ctrl = 1,
+			.panel_invert_pxl_clk = 0,
+		};
+		prop_data_t panel_info;
+
+		panel_info = prop_data_create_data_nocopy(&default_panel_info,
+		    sizeof(struct tifb_panel_info));
+		KASSERT(panel_info != NULL);
+		prop_dictionary_set(dict, "panel-info", panel_info);
+		prop_object_release(panel_info);
+
 		if (use_fb_console)
 			prop_dictionary_set_bool(dict, "is_console", true);
 		return;
