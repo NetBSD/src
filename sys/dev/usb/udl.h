@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.h,v 1.3 2016/10/17 20:04:48 nat Exp $	*/
+/*	$NetBSD: udl.h,v 1.4 2016/10/18 20:17:37 nat Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -119,6 +119,7 @@ struct udl_softc {
 	kcondvar_t		 sc_thread_cv;
 	kmutex_t		 sc_thread_mtx;
 	bool			 sc_dying;
+	bool			 sc_thread_stop;
 	lwp_t			*sc_thread;
 
 	kcondvar_t		 sc_cv;
