@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.342 2016/10/11 05:15:01 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.343 2016/10/18 01:15:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.342 2016/10/11 05:15:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.343 2016/10/18 01:15:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -618,6 +618,7 @@ ip_input(struct mbuf *m)
 		freed = pfil_run_hooks(inet_pfil_hook, &m, ifp, PFIL_IN) != 0;
 		SOFTNET_UNLOCK();
 		if (freed || m == NULL) {
+			m = NULL;
 			goto out;
 		}
 		ip = mtod(m, struct ip *);
@@ -647,6 +648,7 @@ ip_input(struct mbuf *m)
 		if ((*altq_input)(m, AF_INET) == 0) {
 			/* Packet dropped by traffic conditioner. */
 			SOFTNET_UNLOCK();
+			m = NULL;
 			goto out;
 		}
 		SOFTNET_UNLOCK();
@@ -660,8 +662,10 @@ ip_input(struct mbuf *m)
 	 * to be sent and the original packet to be freed).
 	 */
 	ip_nhops = 0;		/* for source routed packets */
-	if (hlen > sizeof (struct ip) && ip_dooptions(m))
+	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
+		m = NULL;
 		goto out;
+	}
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
