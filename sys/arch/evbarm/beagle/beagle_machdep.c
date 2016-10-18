@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.66 2016/10/18 15:10:35 kiyohara Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.66 2016/10/18 15:10:35 kiyohara Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -141,7 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara
 #include "sdhc.h"
 #include "ukbd.h"
 #include "arml2cc.h"
-#include "tps65217pmic.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +190,6 @@ __KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.65 2016/10/18 14:39:52 kiyohara
 # endif
 # include <arm/omap/am335x_prcm.h>
 # include <arm/omap/tifbvar.h>
-# include <dev/i2c/tps65217pmicvar.h>
 # if NSDHC > 0
 #  include <arm/omap/omap2_obiovar.h>
 #  include <arm/omap/omap3_sdmmcreg.h>
@@ -240,9 +238,6 @@ int use_fb_console = true;
 
 #ifdef CPU_CORTEXA15
 uint32_t omap5_cnt_frq;
-#endif
-#if defined(TI_AM335X)
-device_t pmic_dev = NULL;
 #endif
 
 /*
@@ -1153,24 +1148,9 @@ beagle_device_register(device_t self, void *aux)
 	}
 #if defined(TI_AM335X)
 	if (device_is_a(self, "tps65217pmic")) {
-		pmic_dev = self;
+		extern const char *mpu_supply;
+
+		mpu_supply = "DCDC2";
 	}
 #endif
 }
-
-#if defined(TI_AM335X)
-int
-set_mpu_volt(int mvolt)
-{
-
-#if NTPS65217PMIC > 0
-	if (pmic_dev == NULL)
-		return ENODEV;
-
-	/* MPU voltage is on vdcd2 */
-	return tps65217pmic_set_volt(pmic_dev, "DCDC2", mvolt);
-#else
-	return -1;
-#endif
-}
-#endif

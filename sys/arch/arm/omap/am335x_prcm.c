@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.c,v 1.8 2014/09/30 11:34:07 jmcneill Exp $	*/
+/*	$NetBSD: am335x_prcm.c,v 1.9 2016/10/18 15:10:35 kiyohara Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -34,10 +34,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.8 2014/09/30 11:34:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.9 2016/10/18 15:10:35 kiyohara Exp $");
+
+#include "tps65217pmic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/pmf.h>
 
@@ -45,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_prcm.c,v 1.8 2014/09/30 11:34:07 jmcneill Exp
 #include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap2_prcm.h>
 #include <arm/omap/omap_var.h>
+
+#include <dev/i2c/tps65217pmicvar.h>
 
 #define AM335X_CLKCTRL_MODULEMODE_MASK		__BITS(0, 1)
 #define   AM335X_CLKCTRL_MODULEMODE_DISABLED	0
@@ -159,6 +164,25 @@ prcm_mpu_pll_config(u_int mpupll_m)
 	while (prcm_read_4(AM335X_PRCM_CM_WKUP, AM335X_PRCM_CM_IDLEST_DPLL_MPU) != AM335X_PRCM_CM_IDLEST_DPLL_ST_DPLL_CLK_LOCKED) {
 		/* nothing */
 	}
+}
+
+const char *mpu_supply = NULL;
+static int
+set_mpu_volt(int mvolt)
+{
+	device_t dev;
+
+	__USE(dev);	// Simpler than complex ifdef.
+
+	if (mpu_supply == NULL)
+		return ENODEV;
+
+#if NTPS65217PMIC > 0
+	dev = device_find_by_xname("tps65217pmic0");
+	if (dev != NULL)
+		return tps65217pmic_set_volt(dev, mpu_supply, mvolt);
+#endif
+	return ENODEV;
 }
 
 static int
