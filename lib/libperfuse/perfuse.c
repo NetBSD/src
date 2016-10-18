@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.38 2016/10/18 15:06:17 manu Exp $ */
+/*  $NetBSD: perfuse.c,v 1.39 2016/10/18 17:56:31 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -32,6 +32,7 @@
 #include <string.h>
 #include <errno.h>
 #include <puffs.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -51,7 +52,7 @@ extern char **environ;
 
 static struct perfuse_state *init_state(void);
 static int get_fd(const char *);
-static uint32_t bufvar_from_env(const char *, const uint32_t);
+static uint32_t bufvar_from_env(const char *, uint32_t);
 
 
 static struct perfuse_state *
@@ -148,32 +149,22 @@ get_fd(const char *data)
 }
 
 static uint32_t 
-bufvar_from_env(name, defval)
-	const char *name;
-	const uint32_t defval;
+bufvar_from_env(const char *name, uint32_t defval)
 {
 	char valstr[1024];
-	uint32_t retval = defval;
+	int e;
+	uint32_t retval;
 
-	if (getenv_r(name, valstr, sizeof(valstr)) != -1) {
-		long int val;
-		char *ep;
+	if (getenv_r(name, valstr, sizeof(valstr)) == -1)
+		return defval;
 
-		errno = 0;
-		val = (int)strtol(valstr, &ep, 10);
-		if (*valstr == '\0' || *ep != '\0')
-			DWARNX("bad %s value \"%s\"", name, valstr);
-		else if (errno != 0)
-			DWARN("bad %s value \"%s\"", name, valstr);
-		else if (val <= 0L ||
-			 (unsigned long int)val > (unsigned long int)UINT32_MAX)
-			DWARNX("%s value %ld out of "
-			       "uint32_t bounds", name, val);
-		else
-			retval = val;
-	}
+	retval = (uint32_t)strtoi(valstr, NULL, 0, 0, UINT32_MAX, &e);
+	if (!e)
+		return retval;
 
-	return retval;
+	DWARNC(e, "conversion from `%s' to uint32_t failed, using %u",
+	    valstr, defval);
+	return defval;
 }
 
 int
@@ -213,7 +204,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = bufvar_from_env("PERFUSE_BUFSIZE", 16 * FUSE_BUFSIZE);
+	opt = bufvar_from_env("PERFUSE_BUFSIZE", (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
@@ -244,7 +235,7 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = bufvar_from_env("PERFUSE_BUFSIZE", 16 * FUSE_BUFSIZE);
+	opt = bufvar_from_env("PERFUSE_BUFSIZE", (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
