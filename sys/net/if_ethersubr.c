@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.229 2016/10/18 07:30:30 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.228 2016/10/03 11:06:06 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.229 2016/10/18 07:30:30 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -246,17 +246,23 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 
 #ifdef INET
 	case AF_INET:
+#ifndef NET_MPSAFE
 		KERNEL_LOCK(1, NULL);
+#endif
 		if (m->m_flags & M_BCAST)
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if ((error = arpresolve(ifp, rt, m, dst, edst,
 		    sizeof(edst))) != 0) {
+#ifndef NET_MPSAFE
 			KERNEL_UNLOCK_ONE(NULL);
+#endif
 			return error == EWOULDBLOCK ? 0 : error;
 		}
+#ifndef NET_MPSAFE
 		KERNEL_UNLOCK_ONE(NULL);
+#endif
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -884,7 +890,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (__predict_true(pktq)) {
+#ifdef NET_MPSAFE
+		const u_int h = curcpu()->ci_index;
+#else
 		const uint32_t h = pktq_rps_hash(m);
+#endif
 		if (__predict_false(!pktq_enqueue(pktq, m, h))) {
 			m_freem(m);
 		}
