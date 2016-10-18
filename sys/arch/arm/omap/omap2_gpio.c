@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.19 2016/10/15 15:11:56 kiyohara Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.20 2016/10/18 14:02:48 kiyohara Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.19 2016/10/15 15:11:56 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.20 2016/10/18 14:02:48 kiyohara Exp $");
 
 #define _INTR_PRIVATE
 
@@ -488,9 +488,6 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	int error;
 
 	gpio->gpio_dev = self;
-
-	if (oa->obio_intr == OBIOCF_INTR_DEFAULT)
-		panic("\n%s: no intr assigned", device_xname(self));
 
 	if (oa->obio_size == OBIOCF_SIZE_DEFAULT)
 		panic("\n%s: no size assigned", device_xname(self));
