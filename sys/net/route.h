@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.103 2016/09/21 10:50:22 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.104 2016/10/18 09:43:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -447,12 +447,6 @@ rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 	int hit;
 
 	return rtcache_lookup2(ro, dst, clone, &hit);
-}
-
-static inline struct rtentry *
-rtcache_lookup_noclone(struct route *ro, const struct sockaddr *dst)
-{
-	return rtcache_lookup1(ro, dst, 0);
 }
 
 static inline struct rtentry *
