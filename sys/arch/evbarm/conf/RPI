@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.67 2016/04/22 18:13:42 christos Exp $
+#	$NetBSD: RPI,v 1.68 2016/10/18 18:56:32 aymeric Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -138,6 +138,9 @@ iic* at i2cbus?
 # 'DS3231 Raspberry Pi RTC Board Real Time Clock Module for Arduino'
 # sold by linksprite.com
 #dsrtc* at iic1 addr 0x68 flags 3231
+
+# MCP7940 based PiFace Real Time Clock
+#dsrtc* at iic1 addr 0x6f flags 7940
 
 # SPI controller
 bcmspi* at obio?
