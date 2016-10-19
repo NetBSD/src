@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse.c,v 1.39 2016/10/18 17:56:31 christos Exp $ */
+/*  $NetBSD: perfuse.c,v 1.40 2016/10/19 01:30:35 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -52,8 +52,6 @@ extern char **environ;
 
 static struct perfuse_state *init_state(void);
 static int get_fd(const char *);
-static uint32_t bufvar_from_env(const char *, uint32_t);
-
 
 static struct perfuse_state *
 init_state(void)
@@ -148,8 +146,8 @@ get_fd(const char *data)
 
 }
 
-static uint32_t 
-bufvar_from_env(const char *name, uint32_t defval)
+uint32_t 
+perfuse_bufvar_from_env(const char *name, uint32_t defval)
 {
 	char valstr[1024];
 	int e;
@@ -204,7 +202,8 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = bufvar_from_env("PERFUSE_BUFSIZE", (uint32_t)(16 * FUSE_BUFSIZE));
+	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
+	    (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
@@ -235,7 +234,8 @@ perfuse_open(const char *path, int flags, mode_t mode)
 	 * Set a buffer lentgh large enough so that enough FUSE packets
 	 * will fit.
 	 */
-	opt = bufvar_from_env("PERFUSE_BUFSIZE", (uint32_t)(16 * FUSE_BUFSIZE));
+	opt = perfuse_bufvar_from_env("PERFUSE_BUFSIZE",
+	    (uint32_t)(16 * FUSE_BUFSIZE));
 	optlen = sizeof(opt);
 	if (setsockopt(sv[0], SOL_SOCKET, SO_SNDBUF, &opt, optlen) != 0)
 		DWARN("%s: setsockopt SO_SNDBUF to %d failed", __func__, opt);
