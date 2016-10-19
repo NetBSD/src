@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.17 2016/10/19 19:31:23 jdolecek Exp $	*/
+/*	$NetBSD: nvme.c,v 1.18 2016/10/19 19:34:31 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.17 2016/10/19 19:31:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.18 2016/10/19 19:34:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1069,6 +1069,18 @@ nvme_q_complete(struct nvme_softc *sc, struct nvme_queue *q)
 			q->q_cq_phase ^= NVME_CQE_PHASE;
 		}
 
+#ifdef DEBUG
+		/*
+		 * If we get spurious completion notification, something
+		 * is seriously hosed up. Very likely DMA to some random
+		 * memory place happened, so just bail out.
+		 */
+		if ((intptr_t)ccb->ccb_cookie == NVME_CCB_FREE) {
+			panic("%s: invalid ccb detected",
+			    device_xname(sc->sc_dev));
+			/* NOTREACHED */
+		}
+#endif
 		rv = 1;
 
 		/*
@@ -1314,8 +1326,12 @@ nvme_ccb_get(struct nvme_queue *q)
 
 	mutex_enter(&q->q_ccb_mtx);
 	ccb = SIMPLEQ_FIRST(&q->q_ccb_list);
-	if (ccb != NULL)
+	if (ccb != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
+#ifdef DEBUG
+		ccb->ccb_cookie = NULL;
+#endif
+	}
 	mutex_exit(&q->q_ccb_mtx);
 
 	return ccb;
@@ -1326,6 +1342,9 @@ nvme_ccb_put(struct nvme_queue *q, struct nvme_ccb *ccb)
 {
 
 	mutex_enter(&q->q_ccb_mtx);
+#ifdef DEBUG
+	ccb->ccb_cookie = (void *)NVME_CCB_FREE;
+#endif
 	SIMPLEQ_INSERT_HEAD(&q->q_ccb_list, ccb, ccb_entry);
 	mutex_exit(&q->q_ccb_mtx);
 }
