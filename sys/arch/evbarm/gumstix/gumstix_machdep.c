@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.55 2016/10/18 14:39:52 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.56 2016/10/19 14:07:22 kiyohara Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -583,7 +583,7 @@ initarm(void *arg)
 #ifdef MULTIPROCESSOR
 	if (bus_space_map(iot, OMAP4_SCU_BASE, SCU_SIZE, 0, &ioh) != 0)
 		panic("OMAP4_SCU_BASE map failed\n");
-        arm_cpu_max =
+	arm_cpu_max =
 	    1 + (bus_space_read_4(iot, ioh, SCU_CFG) & SCU_CFG_CPUMAX);
 #endif
 #endif
@@ -1067,7 +1067,7 @@ gumstix_device_register(device_t dev, void *aux)
 			 * The iot mainbus supplies is completely wrong since
 			 * it scales addresses by 2.  The simpliest remedy is
 			 * to replace with our bus space used for the armcore
-			 * regisers (which armperiph uses). 
+			 * regisers (which armperiph uses).
 			 */
 			struct mainbus_attach_args * const mb = aux;
 			mb->mb_iot = &omap_bs_tag;
