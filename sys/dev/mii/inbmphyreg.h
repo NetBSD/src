@@ -1,4 +1,4 @@
-/*	$NetBSD: inbmphyreg.h,v 1.5 2016/09/20 09:24:12 msaitoh Exp $	*/
+/*	$NetBSD: inbmphyreg.h,v 1.6 2016/10/19 08:22:57 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -94,6 +94,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #define	HV_KMRN_MODE_CTRL	BME1000_REG(BM_PORT_CTRL_PAGE, 16)
 #define	HV_KMRN_MDIO_SLOW	0x0400
+
+#define	BM_PORT_GEN_CFG		BME1000_REG(BM_PORT_CTRL_PAGE, 17)
 
 #define	IGP3_KMRN_DIAG		BME1000_REG(770, 19)
 #define	IGP3_KMRN_DIAG_PCS_LOCK_LOSS	(1 << 1)
