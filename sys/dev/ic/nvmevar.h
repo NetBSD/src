@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.7 2016/10/19 19:31:23 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.8 2016/10/19 19:34:31 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -53,6 +53,7 @@ struct nvme_ccb {
 	/* command context */
 	uint16_t		ccb_id;
 	void			*ccb_cookie;
+#define NVME_CCB_FREE	0xbeefdeed
 	void			(*ccb_done)(struct nvme_queue *,
 				    struct nvme_ccb *, struct nvme_cqe *);
 
