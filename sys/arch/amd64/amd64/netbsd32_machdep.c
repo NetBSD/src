@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.96 2016/09/02 07:51:05 maxv Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.97 2016/10/19 09:44:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.96 2016/09/02 07:51:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.97 2016/10/19 09:44:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -487,12 +487,12 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
-	regs->r_gs = LSEL(LUCODE32_SEL, SEL_UPL);
-	regs->r_fs = LSEL(LUCODE32_SEL, SEL_UPL);
-	regs->r_es = LSEL(LUCODE32_SEL, SEL_UPL);
-	regs->r_ds = LSEL(LUCODE32_SEL, SEL_UPL);
-	regs->r_eflags = tf->tf_rflags;
 	/* XXX avoid sign extension problems with unknown upper bits? */
+	regs->r_gs = tf->tf_gs & 0xffff;
+	regs->r_fs = tf->tf_fs & 0xffff;
+	regs->r_es = tf->tf_es & 0xffff;
+	regs->r_ds = tf->tf_ds & 0xffff;
+	regs->r_eflags = tf->tf_rflags;
 	regs->r_edi = tf->tf_rdi & 0xffffffff;
 	regs->r_esi = tf->tf_rsi & 0xffffffff;
 	regs->r_ebp = tf->tf_rbp & 0xffffffff;
@@ -501,9 +501,9 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 	regs->r_ecx = tf->tf_rcx & 0xffffffff;
 	regs->r_eax = tf->tf_rax & 0xffffffff;
 	regs->r_eip = tf->tf_rip & 0xffffffff;
-	regs->r_cs = tf->tf_cs;
+	regs->r_cs = tf->tf_cs & 0xffff;
 	regs->r_esp = tf->tf_rsp & 0xffffffff;
-	regs->r_ss = tf->tf_ss;
+	regs->r_ss = tf->tf_ss & 0xffff;
 
 	return (0);
 }
@@ -511,22 +511,52 @@ netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 int
 netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs, size_t *sz)
 {
-	struct fpreg regs64;
-	int error;
-	size_t fp_size;
+
+	__CTASSERT(sizeof *regs == sizeof (struct save87));
+	process_read_fpregs_s87(l, (struct save87 *)regs);
+	return 0;
+}
+
+int
+netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
+{
+	struct trapframe *tf = l->l_md.md_regs;
 
 	/*
-	 * All that stuff makes no sense in i386 code :(
+	 * Check for security violations. Taken from i386/process_machdep.c.
 	 */
+	if (((regs->r_eflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !VALID_USER_CSEL32(regs->r_cs))
+		return EINVAL;
 
-	fp_size = sizeof regs64;
-	error = process_read_fpregs(l, &regs64, &fp_size);
-	if (error)
-		return error;
+	tf->tf_rax = regs->r_eax;
+	tf->tf_rcx = regs->r_ecx;
+	tf->tf_rdx = regs->r_edx;
+	tf->tf_rbx = regs->r_ebx;
+	tf->tf_rsp = regs->r_esp;
+	tf->tf_rbp = regs->r_ebp;
+	tf->tf_rsi = regs->r_esi;
+	tf->tf_rdi = regs->r_edi;
+	tf->tf_rip = regs->r_eip;
+	tf->tf_rflags = regs->r_eflags;
+	tf->tf_cs = regs->r_cs;
+	tf->tf_ss = regs->r_ss;
+	tf->tf_ds = regs->r_ds;
+	tf->tf_es = regs->r_es;
+	tf->tf_fs = regs->r_fs;
+	tf->tf_gs = regs->r_gs;
+
+	return 0;
+}
+
+int
+netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
+    size_t sz)
+{
+
 	__CTASSERT(sizeof *regs == sizeof (struct save87));
-	process_xmm_to_s87(&regs64.fxstate, (struct save87 *)regs);
-
-	return (0);
+	process_write_fpregs_s87(l, (const struct save87 *)regs);
+	return 0;
 }
 
 int
