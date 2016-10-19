@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.21 2016/10/18 17:56:31 christos Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.22 2016/10/19 01:30:35 christos Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -219,5 +219,6 @@ int perfuse_mainloop(struct puffs_usermount *);
 int perfuse_unmount(struct puffs_usermount *);
 void perfuse_trace_dump(struct puffs_usermount *, FILE *);
 void perfuse_fsreq(struct puffs_usermount *, perfuse_msg_t *);
+uint32_t perfuse_bufvar_from_env(const char *, uint32_t);
 
 #endif /* _PERFUSE_IF_H */
