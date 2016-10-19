@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.13 2013/09/12 19:52:50 christos Exp $
+# $NetBSD: ipsec,v 1.14 2016/10/19 21:27:10 christos Exp $
 #
 
 # PROVIDE: ipsec
@@ -30,7 +30,7 @@ ipsec_prestart()
 }
 
 ipsec_getip() {
-	ifconfig $1 | while read what address rest; do
+	ifconfig $1 | while IFS="${IFS}/" read what address rest; do
 		case "$what" in
 		inet)	echo "$address";;
 		esac
