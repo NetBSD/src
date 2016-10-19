@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.204 2016/09/17 02:44:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.205 2016/10/19 09:44:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.204 2016/09/17 02:44:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.205 2016/10/19 09:44:01 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -403,25 +403,6 @@ netbsd32_setuid(struct lwp *l, const struct netbsd32_setuid_args *uap, register_
 
 	NETBSD32TO64_UAP(uid);
 	return (sys_setuid(l, &ua, retval));
-}
-
-int
-netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) req;
-		syscallarg(pid_t) pid;
-		syscallarg(netbsd32_voidp) addr;
-		syscallarg(int) data;
-	} */
-	struct sys_ptrace_args ua;
-
-	NETBSD32TO64_UAP(req);
-	NETBSD32TO64_UAP(pid);
-	NETBSD32TOP_UAP(addr, void *);
-	NETBSD32TO64_UAP(data);
-
-	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
 }
 
 int
