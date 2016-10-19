@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1258 2016/10/04 15:00:40 kiyohara Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1259 2016/10/19 04:00:04 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1266 2016/10/04 14:55:32 kiyohara Exp
+ *	NetBSD: pcidevs,v 1.1267 2016/10/19 03:59:17 msaitoh Exp
  */
 
 /*
@@ -3677,12 +3677,60 @@
 #define	PCI_PRODUCT_INTEL_82GM45_IGD	0x2a42		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_IGD_1	0x2a43		/* 82GM45 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82GM45_KT	0x2a47		/* 82GM45 KT */
+#define	PCI_PRODUCT_INTEL_XE55_QP_SAD	0x2c01		/* QuickPath System Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_LINK0	0x2c10		/* Xeon 5500 QPI Link 0 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_PHYS0	0x2c11		/* Xeon 5500 QPI Physical 0 */
+#define	PCI_PRODUCT_INTEL_XE55_MIRR_LINK0	0x2c12		/* Xeon 5500 Mirror Port Link 0 */
+#define	PCI_PRODUCT_INTEL_XE55_MIRR_LINK1	0x2c13		/* Xeon 5500 Mirror Port Link 1 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_LINK1	0x2c14		/* Xeon 5500 QPI Link 1 */
+#define	PCI_PRODUCT_INTEL_XE55_QPI_PHYS1	0x2c15		/* Xeon 5500 QPI Physical 1 */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_REG	0x2c18		/* Xeon 5500 IMC */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_TAD	0x2c19		/* Xeon 5500 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_RAS	0x2c1a		/* Xeon 5500 IMC RAS */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_TEST	0x2c1c		/* Xeon 5500 IMC Test */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_CTRL	0x2c20		/* Xeon 5500 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_ADDR	0x2c21		/* Xeon 5500 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_RANK	0x2c22		/* Xeon 5500 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH0_THERM	0x2c23		/* Xeon 5500 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_CTRL	0x2c28		/* Xeon 5500 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_ADDR	0x2c29		/* Xeon 5500 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_RANK	0x2c2a		/* Xeon 5500 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH1_THERM	0x2c2b		/* Xeon 5500 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_CTRL	0x2c30		/* Xeon 5500 IMC Channel 2 Control */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_ADDR	0x2c31		/* Xeon 5500 IMC Channel 2 Address */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_RANK	0x2c32		/* Xeon 5500 IMC Channel 2 Rank */
+#define	PCI_PRODUCT_INTEL_XE55_IMC_CH2_THERM	0x2c33		/* Xeon 5500 IMC Channel 2 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE55_QP_REG	0x2c40		/* Xeon 5500 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_CORE_QP_REG_1	0x2c61		/* QuickPath Generic Non-Core Register */
+#define	PCI_PRODUCT_INTEL_XE56_QP_REG	0x2c70		/* Xeon 5600 QuickPath Generic Non-Core Register */
 #define	PCI_PRODUCT_INTEL_CORE_QP_SAD	0x2d01		/* QuickPath Generic System Address Decoder */
 #define	PCI_PRODUCT_INTEL_CORE_QPI_LINK	0x2d10		/* QPI Link */
 #define	PCI_PRODUCT_INTEL_CORE_QPI_PHYS	0x2d11		/* QPI Physical */
 #define	PCI_PRODUCT_INTEL_CORE_RSVD_1	0x2d12		/* Reserved */
 #define	PCI_PRODUCT_INTEL_CORE_RSVD_2	0x2d13		/* Reserved */
+#define	PCI_PRODUCT_INTEL_XE56_QP_SAD	0x2d81		/* QuickPath System Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_LINK0	0x2d90		/* Xeon 5600 QPI Link 0 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_PHYS0	0x2d91		/* Xeon 5600 QPI Physical 0 */
+#define	PCI_PRODUCT_INTEL_XE56_MIRR_LINK0	0x2d92		/* Xeon 5600 Mirror Port Link 0 */
+#define	PCI_PRODUCT_INTEL_XE56_MIRR_LINK1	0x2d93		/* Xeon 5600 Mirror Port Link 1 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_LINK1	0x2d94		/* Xeon 5600 QPI Link 1 */
+#define	PCI_PRODUCT_INTEL_XE56_QPI_PHYS1	0x2d95		/* Xeon 5600 QPI Physical 1 */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_REG	0x2d98		/* Xeon 5600 IMC */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_TAD	0x2d99		/* Xeon 5600 IMC Target Address Decoder */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_RAS	0x2d9a		/* Xeon 5600 IMC RAS */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_TEST	0x2d9c		/* Xeon 5600 IMC Test */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_CTRL	0x2da0		/* Xeon 5600 IMC Channel 0 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_ADDR	0x2da1		/* Xeon 5600 IMC Channel 0 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_RANK	0x2da2		/* Xeon 5600 IMC Channel 0 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH0_THERM	0x2da3		/* Xeon 5600 IMC Channel 0 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_CTRL	0x2da8		/* Xeon 5600 IMC Channel 1 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_ADDR	0x2da9		/* Xeon 5600 IMC Channel 1 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_RANK	0x2daa		/* Xeon 5600 IMC Channel 1 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH1_THERM	0x2dab		/* Xeon 5600 IMC Channel 1 Thermal Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_CTRL	0x2db0		/* Xeon 5600 IMC Channel 2 Control */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_ADDR	0x2db1		/* Xeon 5600 IMC Channel 2 Address */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_RANK	0x2db2		/* Xeon 5600 IMC Channel 2 Rank */
+#define	PCI_PRODUCT_INTEL_XE56_IMC_CH2_THERM	0x2db3		/* Xeon 5600 IMC Channel 2 Thermal Control */
 #define	PCI_PRODUCT_INTEL_82IGD_E_HB	0x2e00		/* 82IGD_E Host Bridge */
 #define	PCI_PRODUCT_INTEL_82IGD_E_IGD	0x2e02		/* 82IGD_E Integrated Graphics */
 #define	PCI_PRODUCT_INTEL_82Q45_KT	0x2e07		/* 82Q45 KT */
