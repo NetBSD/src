@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe.sh,v 1.5 2016/10/18 04:10:24 ozaki-r Exp $
+#	$NetBSD: t_pppoe.sh,v 1.6 2016/10/19 00:19:13 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -184,7 +184,7 @@ run_test()
 	unset RUMP_SERVER
 }
 
-atf_test_case pap cleanup
+atf_test_case pppoe_pap cleanup
 
 pppoe_pap_head()
 {
@@ -202,7 +202,7 @@ pppoe_pap_cleanup()
 	cleanup
 }
 
-atf_test_case chap cleanup
+atf_test_case pppoe_chap cleanup
 
 pppoe_chap_head()
 {
