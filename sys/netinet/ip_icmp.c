@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.151 2016/08/01 03:15:30 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.152 2016/10/19 01:10:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.151 2016/08/01 03:15:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.152 2016/10/19 01:10:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -795,7 +795,8 @@ icmp_reflect(struct mbuf *m)
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
-			ia4_acquire(ifatoia(ifa), &psref_ia);
+			ia = ifatoia(ifa);
+			ia4_acquire(ia, &psref_ia);
 			break;
 		}
 		pserialize_read_exit(s);
