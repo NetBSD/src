@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.12 2014/02/28 05:50:27 matt Exp $ */
+/* $NetBSD: ofwpci.c,v 1.13 2016/10/19 00:08:41 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.12 2014/02/28 05:50:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.13 2016/10/19 00:08:41 nonaka Exp $");
 
 #include "opt_pci.h"
 
@@ -83,6 +83,17 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_evcnt = genppc_pci_intr_evcnt;
 	pc->pc_intr_establish = genppc_pci_intr_establish;
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
+	pc->pc_intr_setattr = genppc_pci_intr_setattr;
+	pc->pc_intr_type = genppc_pci_intr_type;
+	pc->pc_intr_alloc = genppc_pci_intr_alloc;
+	pc->pc_intr_release = genppc_pci_intr_release;
+	pc->pc_intx_alloc = genppc_pci_intx_alloc;
+
+	pc->pc_msi_v = (void *)pc;
+	genppc_pci_chipset_msi_init(pc);
+
+	pc->pc_msix_v = (void *)pc;
+	genppc_pci_chipset_msix_init(pc);
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
 	pc->pc_decompose_tag = genppc_pci_ofmethod_decompose_tag;
