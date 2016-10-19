@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2015/01/23 07:27:05 nonaka Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2016/10/19 00:08:42 nonaka Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -84,6 +84,8 @@
 struct cpu_info;
 
 void 	*intr_establish(int, int, int, int (*)(void *), void *);
+void 	*intr_establish_xname(int, int, int, int (*)(void *), void *,
+	    const char *);
 void 	intr_disestablish(void *);
 void	intr_cpu_attach(struct cpu_info *);
 void	intr_cpu_hatch(struct cpu_info *);
@@ -118,7 +120,8 @@ typedef struct {
 struct trapframe;
 
 struct intrsw {
-	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *);
+	void *(*intrsw_establish)(int, int, int, int (*)(void *), void *,
+	    const char *);
 	void (*intrsw_disestablish)(void *);
 	void (*intrsw_cpu_attach)(struct cpu_info *);
 	void (*intrsw_cpu_hatch)(struct cpu_info *);
