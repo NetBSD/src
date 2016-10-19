@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.16 2016/10/18 07:48:05 nonaka Exp $	*/
+/*	$NetBSD: nvme.c,v 1.17 2016/10/19 19:31:23 jdolecek Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.16 2016/10/18 07:48:05 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.17 2016/10/19 19:31:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1420,19 +1420,38 @@ int
 nvme_intr(void *xsc)
 {
 	struct nvme_softc *sc = xsc;
-	int rv = 0;
 
 	/*
 	 * INTx is level triggered, controller deasserts the interrupt only
 	 * when we advance command queue head via write to the doorbell.
+	 * Tell the controller to block the interrupts while we process
+	 * the queue(s).
 	 */
-	if (nvme_q_complete(sc, sc->sc_admin_q))
-	        rv = 1;
-	if (sc->sc_q != NULL)
-	        if (nvme_q_complete(sc, sc->sc_q[0]))
-	                rv = 1;
+	nvme_write4(sc, NVME_INTMS, 1);
 
-	return rv;
+	softint_schedule(sc->sc_softih[0]);
+
+	/* don't know, might not have been for us */
+	return 1;
+}
+
+void
+nvme_softintr_intx(void *xq)
+{
+	struct nvme_queue *q = xq;
+	struct nvme_softc *sc = q->q_sc;
+
+	nvme_q_complete(sc, sc->sc_admin_q);
+	if (sc->sc_q != NULL)
+	        nvme_q_complete(sc, sc->sc_q[0]);
+
+	/*
+	 * Processing done, tell controller to issue interrupts again. There
+	 * is no race, as NVMe spec requires the controller to maintain state,
+	 * and assert the interrupt whenever there are unacknowledged
+	 * completion queue entries.
+	 */
+	nvme_write4(sc, NVME_INTMC, 1);
 }
 
 int
@@ -1443,7 +1462,10 @@ nvme_intr_msi(void *xq)
 	KASSERT(q && q->q_sc && q->q_sc->sc_softih
 	    && q->q_sc->sc_softih[q->q_id]);
 
-	/* MSI are edge triggered, so can handover processing to softint */
+	/*
+	 * MSI/MSI-X are edge triggered, so can handover processing to softint
+	 * without masking the interrupt.
+	 */
 	softint_schedule(q->q_sc->sc_softih[q->q_id]);
 
 	return 1;
