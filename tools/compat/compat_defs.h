@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.103 2015/09/21 21:50:16 pooka Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.104 2016/10/19 21:54:20 christos Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -272,25 +272,42 @@ struct _dirdesc {
 #endif
 #endif
 
-#if !HAVE_ERR_H
+#if !HAVE_DECL_ERR
 void err(int, const char *, ...);
-void errx(int, const char *, ...);
-void warn(const char *, ...);
-void warnx(const char *, ...);
-void vwarnx(const char *, va_list);
-#endif
-#if !HAVE_DECL_WARNC
-void warnc(int, const char *, ...);
-#endif
-#if !HAVE_DECL_VWARNC
-void vwarnc(int, const char *, va_list);
 #endif
 #if !HAVE_DECL_ERRC
 void errc(int, int, const char *, ...);
 #endif
+#if !HAVE_DECL_ERRX
+void errx(int, const char *, ...);
+#endif
 #if !HAVE_DECL_VERRC
 void verrc(int, int, const char *, va_list);
 #endif
+#if !HAVE_DECL_VERRX
+void verrx(int, const char *, va_list);
+#endif
+#if !HAVE_DECL_WARN
+void warn(const char *, ...);
+#endif
+#if !HAVE_DECL_WARNC
+void warnc(int, const char *, ...);
+#endif
+#if !HAVE_DECL_WARNX
+void warnx(const char *, ...);
+#endif
+#if !HAVE_DECL_VWARNC
+void vwarnc(int, const char *, va_list);
+#endif
+#if !HAVE_DECL_VWARNX
+void vwarnx(const char *, va_list);
+#endif
+
+#if !HAVE_DECL_MI_VECTOR_HASH
+void     mi_vector_hash(const void * __restrict, size_t, uint32_t,
+    uint32_t[3]);
+#endif
+
 
 #if !HAVE_ESETFUNC
 void (*esetfunc(void (*)(int, const char *, ...)))(int, const char *, ...);
@@ -445,6 +462,12 @@ int pwcache_groupdb(int (*)(int), void (*)(void),
     struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
 
+#if !HAVE_DECL_STRLCAT
+size_t		strlcat(char *, const char *, size_t);
+#endif
+#if !HAVE_DECL_STRLCPY
+size_t		strlcpy(char *, const char *, size_t);
+#endif
 #if !HAVE_DECL_STRNDUP
 char		*strndup(const char *, size_t);
 #endif
