@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.112 2016/09/23 14:16:32 skrll Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.113 2016/10/19 09:44:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -281,6 +281,16 @@ struct netbsd32_export_args30 {
 
 /* from <sys/poll.h> */
 typedef netbsd32_pointer_t netbsd32_pollfdp_t;
+
+/* from <sys/ptrace.h> */
+typedef netbsd32_pointer_t netbsd32_ptrace_io_descp_t;
+struct netbsd32_ptrace_io_desc {
+	int	piod_op;		/* I/O operation */
+	netbsd32_voidp piod_offs;	/* child offset */
+	netbsd32_voidp piod_addr;	/* parent offset */
+	netbsd32_size_t piod_len;	/* request length (in) /
+					   actual count (out) */
+};
 
 /* from <sys/quotactl.h> */
 typedef netbsd32_pointer_t netbsd32_quotactlargsp_t;
