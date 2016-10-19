@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.418 2016/10/11 15:48:17 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.419 2016/10/19 08:22:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.418 2016/10/11 15:48:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.419 2016/10/19 08:22:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3900,8 +3900,17 @@ wm_reset(struct wm_softc *sc)
 		break;
 	}
 
-	if (phy_reset != 0)
+	if (phy_reset != 0) {
 		wm_get_cfg_done(sc);
+		delay(10 * 1000);
+		if (sc->sc_type >= WM_T_PCH) {
+			reg = wm_gmii_hv_readreg(sc->sc_dev, 2,
+			    BM_PORT_GEN_CFG);
+			reg &= ~BM_WUC_HOST_WU_BIT;
+			wm_gmii_hv_writereg(sc->sc_dev, 2,
+			    BM_PORT_GEN_CFG, reg);
+		}
+	}
 
 	/* reload EEPROM */
 	switch (sc->sc_type) {
@@ -11464,7 +11473,7 @@ wm_smbustopci(struct wm_softc *sc)
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		CSR_WRITE_FLUSH(sc);
-		delay(10);
+		delay(1000);
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_OVERRIDE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 		CSR_WRITE_FLUSH(sc);
