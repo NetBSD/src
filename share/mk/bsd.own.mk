@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.976 2016/10/17 22:42:34 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.977 2016/10/19 20:29:58 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -94,6 +94,7 @@ _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
 .endif
 
 _LIBC_COMPILER_RT.aarch64=	yes
+_LIBC_COMPILER_RT.aarch64eb=	yes
 _LIBC_COMPILER_RT.i386=		yes
 _LIBC_COMPILER_RT.powerpc=	yes
 _LIBC_COMPILER_RT.powerpc64=	yes
@@ -774,6 +775,7 @@ MKGCC:= no
 
 # No GDB support for aarch64
 MKGDB.aarch64=	no
+MKGDB.aarch64eb=no
 MKGDB.or1k=	no
 MKGDB.riscv32=	no
 MKGDB.riscv64=	no
@@ -1219,6 +1221,7 @@ MKNLS:=		no
 _NEEDS_LIBCXX.${MACHINE_ARCH}=	yes
 .endif
 _NEEDS_LIBCXX.aarch64=		yes
+_NEEDS_LIBCXX.aarch64eb=	yes
 _NEEDS_LIBCXX.i386=		yes
 _NEEDS_LIBCXX.powerpc=		yes
 _NEEDS_LIBCXX.powerpc64=	yes
