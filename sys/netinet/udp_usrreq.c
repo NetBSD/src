@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.226 2016/06/10 13:31:44 ozaki-r Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.227 2016/10/19 01:13:01 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.226 2016/06/10 13:31:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.227 2016/10/19 01:13:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1339,13 +1339,9 @@ udp4_espinudp(struct mbuf **mp, int off, struct sockaddr *src,
 	((u_int16_t *)(tag + 1))[1] = dport;
 	m_tag_prepend(m, tag);
 
-#ifdef IPSEC
 	if (ipsec_used)
 		ipsec4_common_input(m, iphdrlen, IPPROTO_ESP);
 	/* XXX: else */
-#else
-	esp4_input(m, iphdrlen);
-#endif
 
 	/* We handled it, it shouldn't be handled by UDP */
 	*mp = NULL; /* avoid free by caller ... */
