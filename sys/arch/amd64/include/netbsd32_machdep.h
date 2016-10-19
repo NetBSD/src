@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.19 2014/02/07 22:40:22 dsl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.20 2016/10/19 09:44:00 skrll Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -137,5 +137,8 @@ struct x86_64_set_mtrr_args32 {
 
 int netbsd32_process_read_regs(struct lwp *, struct reg32 *);
 int netbsd32_process_read_fpregs(struct lwp *, struct fpreg32 *, size_t *);
+
+int netbsd32_process_write_regs(struct lwp *, const struct reg32 *);
+int netbsd32_process_write_fpregs(struct lwp *, const struct fpreg32 *, size_t);
 
 #endif /* _MACHINE_NETBSD32_H_ */
