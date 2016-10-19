@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.205 2016/09/02 20:25:14 kre Exp $
+# $NetBSD: postinstall,v 1.206 2016/10/19 22:17:08 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1482,7 +1482,7 @@ sdpd sdpd_username
 sysctl defcorename
 "
 
-populate_rc()
+update_rc()
 {
 	local op=$1
 	local dir=$2
@@ -1492,7 +1492,7 @@ populate_rc()
 	    "${rcdir}" "${SRC_DIR}/etc/rc.d"; then
 		return 1
 	fi
-	populate_dir "${op}" true "${dir}" "${DEST_DIR}/etc/rc.d" 555 "${name}"
+	populate_dir "${op}" false "${dir}" "${DEST_DIR}/etc/rc.d" 555 "${name}"
 	return $?
 }
 
@@ -1522,11 +1522,11 @@ do_rc()
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
 
-	populate_rc "${op}" "${dir}" blacklistd \
+	update_rc "${op}" "${dir}" blacklistd \
 	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d"
 	failed=$(( ${failed} + $? ))
 
-	populate_rc "${op}" "${dir}" unbound \
+	update_rc "${op}" "${dir}" unbound \
 	    "${SRC_DIR}/external/bsd/unbound/etc/rc.d"
 	failed=$(( ${failed} + $? ))
 
