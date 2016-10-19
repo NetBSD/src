@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.150 2016/08/22 08:35:42 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.151 2016/10/19 04:23:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.150 2016/08/22 08:35:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.151 2016/10/19 04:23:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3346,6 +3346,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int capoff, int extcapoff)
 /* XXX pci_conf_print_frsq_cap */
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
+/* XXX pci_conf_print_vf_resiz_bar_cap */
 
 #undef	MS
 #undef	SM
@@ -3427,6 +3428,8 @@ static struct {
 	{ PCI_EXTCAP_RTR,	"Readiness Time Reporting",
 	  NULL },
 	{ PCI_EXTCAP_DESIGVNDSP, "Designated Vendor-Specific",
+	  NULL },
+	{ PCI_EXTCAP_VF_RESIZ_BAR, "VF Resizable BARs",
 	  NULL },
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.114 2016/08/17 06:32:01 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.115 2016/10/19 04:23:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1405,6 +1405,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_FRSQ		0x0021	/* Function Reading Status Queueing */
 #define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
+#define	PCI_EXTCAP_VF_RESIZ_BAR	0x0024	/* VF Resizable BAR */
 
 /*
  * Extended capability ID: 0x0001
@@ -1935,6 +1936,11 @@ struct pci_rom {
 /*
  * Extended capability ID: 0x0023
  * Designated Vendor-Specific
+ */
+
+/*
+ * Extended capability ID: 0x0024
+ * VF Resizable BAR
  */
 
 #endif /* _DEV_PCI_PCIREG_H_ */
