@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.180 2016/10/15 12:38:03 skrll Exp $
+#	$NetBSD: Makefile,v 1.181 2016/10/19 09:44:01 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -236,6 +236,7 @@ SUBDIR+=	wmimsi
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
@@ -244,6 +245,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_ptrace
 SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 

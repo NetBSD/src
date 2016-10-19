@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.75 2016/10/16 20:09:53 dholland Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.76 2016/10/19 09:44:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.75 2016/10/16 20:09:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.76 2016/10/19 09:44:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,6 +519,7 @@ netbsd32___getdents30(struct lwp *l,
 	}
 	error = vn_readdir(fp, SCARG_P32(uap, buf),
 	    UIO_USERSPACE, SCARG(uap, count), &done, l, 0, 0);
+	ktrgenio(SCARG(uap, fd), UIO_READ, SCARG_P32(uap, buf), done, error);
 	*retval = done;
  out:
 	fd_putfile(SCARG(uap, fd));

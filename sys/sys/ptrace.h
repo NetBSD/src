@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.46 2015/07/02 03:47:54 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.47 2016/10/19 09:44:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -139,6 +139,13 @@ struct fpreg;
 #endif
 #endif
 
+struct ptrace_methods {
+	int (*ptm_copyinpiod)(struct ptrace_io_desc *, const void *);
+	void (*ptm_copyoutpiod)(const struct ptrace_io_desc *, void *);
+	int (*ptm_doregs)(struct lwp *, struct lwp *, struct uio *);
+	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
+};
+
 void	ptrace_init(void);
 
 int	process_doregs(struct lwp *, struct lwp *, struct uio *);
@@ -152,6 +159,10 @@ int	process_domem(struct lwp *, struct lwp *, struct uio *);
 void	process_stoptrace(void);
 
 void	proc_reparent(struct proc *, struct proc *);
+
+
+int	do_ptrace(struct ptrace_methods *, struct lwp *, int, pid_t, void *,
+	    int, register_t *);
 
 /*
  * 64bit architectures that support 32bit emulation (amd64 and sparc64)
@@ -180,9 +191,21 @@ int	process_set_pc(struct lwp *, void *);
 int	process_sstep(struct lwp *, int);
 #ifdef PT_SETFPREGS
 int	process_write_fpregs(struct lwp *, const struct fpreg *, size_t);
+#ifndef process_write_fpregs32
+#define process_write_fpregs32	process_write_fpregs
+#endif
+#ifndef process_write_fpregs64
+#define process_write_fpregs64	process_write_fpregs
+#endif
 #endif
 #ifdef PT_SETREGS
 int	process_write_regs(struct lwp *, const struct reg *);
+#ifndef process_write_regs32
+#define process_write_regs32	process_write_regs
+#endif
+#ifndef process_write_regs64
+#define process_write_regs64	process_write_regs
+#endif
 #endif
 
 #ifdef __HAVE_PROCFS_MACHDEP

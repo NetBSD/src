@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.173 2016/10/15 09:09:55 skrll Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.174 2016/10/19 09:44:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,11 +118,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.173 2016/10/15 09:09:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.174 2016/10/19 09:44:01 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,6 +233,26 @@ ptrace_init(void)
 	    ptrace_listener_cb, NULL);
 }
 
+static int
+ptrace_copyinpiod(struct ptrace_io_desc *piod, const void *addr)
+{
+	return copyin(addr, piod, sizeof(*piod));
+}
+
+static void
+ptrace_copyoutpiod(const struct ptrace_io_desc *piod, void *addr)
+{
+	(void) copyout(piod, addr, sizeof(*piod));
+}
+
+
+static struct ptrace_methods native_ptm = {
+	.ptm_copyinpiod = ptrace_copyinpiod,
+	.ptm_copyoutpiod = ptrace_copyoutpiod,
+	.ptm_doregs = process_doregs,
+	.ptm_dofpregs = process_dofpregs,
+};
+
 /*
  * Process debugging system call.
  */
@@ -243,6 +265,15 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		syscallarg(void *) addr;
 		syscallarg(int) data;
 	} */
+
+	return do_ptrace(&native_ptm, l, SCARG(uap, req), SCARG(uap, pid),
+	    SCARG(uap, addr), SCARG(uap, data), retval);
+}
+
+int
+do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
+    void *addr, int data, register_t *retval)
+{
 	struct proc *p = l->l_proc;
 	struct lwp *lt;
 #ifdef PT_STEP
@@ -256,15 +287,13 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	struct ptrace_state ps;
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
-	int error, write, tmp, req, pheld;
+	int error, write, tmp, pheld;
 	int signo = 0;
 	int resume_all;
 	ksiginfo_t ksi;
 	char *path;
 	int len = 0;
-
 	error = 0;
-	req = SCARG(uap, req);
 
 	/*
 	 * If attaching or detaching, we need to get a write hold on the
@@ -278,7 +307,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		mutex_enter(t->p_lock);
 	} else {
 		/* Find the process we're supposed to be operating on. */
-		t = proc_find(SCARG(uap, pid));
+		t = proc_find(pid);
 		if (t == NULL) {
 			mutex_exit(proc_lock);
 			return ESRCH;
@@ -507,13 +536,13 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		/*
 		 * Can't write to a RAS
 		 */
-		if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
+		if (ras_lookup(t, addr) != (void *)-1) {
 			error = EACCES;
 			break;
 		}
 #endif
 		write = 1;
-		tmp = SCARG(uap, data);
+		tmp = data;
 		/* FALLTHROUGH */
 
 	case  PT_READ_I:		/* XXX no separate I and D spaces */
@@ -523,7 +552,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		iov.iov_len = sizeof(tmp);
 		uio.uio_iov = &iov;
 		uio.uio_iovcnt = 1;
-		uio.uio_offset = (off_t)(unsigned long)SCARG(uap, addr);
+		uio.uio_offset = (off_t)(unsigned long)addr;
 		uio.uio_resid = sizeof(tmp);
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		UIO_SETUP_SYSSPACE(&uio);
@@ -534,7 +563,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		break;
 
 	case  PT_IO:
-		error = copyin(SCARG(uap, addr), &piod, sizeof(piod));
+		error = ptm->ptm_copyinpiod(&piod, addr);
 		if (error)
 			break;
 
@@ -555,7 +584,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			/*
 			 * Can't write to a RAS
 			 */
-			if (ras_lookup(t, SCARG(uap, addr)) != (void *)-1) {
+			if (ras_lookup(t, addr) != (void *)-1) {
 				return EACCES;
 			}
 			uio.uio_rw = UIO_WRITE;
@@ -586,14 +615,15 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 
 		error = process_domem(l, lt, &uio);
 		piod.piod_len -= uio.uio_resid;
-		(void) copyout(&piod, SCARG(uap, addr), sizeof(piod));
+		(void) ptm->ptm_copyoutpiod(&piod, addr);
+
 		uvmspace_free(vm);
 		break;
 
 	case  PT_DUMPCORE:
-		if ((path = SCARG(uap, addr)) != NULL) {
+		if ((path = addr) != NULL) {
 			char *dst;
-			len = SCARG(uap, data);
+			len = data;
 
 			if (len < 0 || len >= MAXPATHLEN) {
 				error = EINVAL;
@@ -648,7 +678,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		 * For operations other than PT_STEP, data > 0 means
 		 * data is the signo to deliver to the process.
 		 */
-		tmp = SCARG(uap, data);
+		tmp = data;
 		if (tmp >= 0) {
 #ifdef PT_STEP
 			if (req == PT_STEP)
@@ -697,8 +727,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		}
 
 		/* If the address parameter is not (int *)1, set the pc. */
-		if ((int *)SCARG(uap, addr) != (int *)1) {
-			error = process_set_pc(lt, SCARG(uap, addr));
+		if ((int *)addr != (int *)1) {
+			error = process_set_pc(lt, addr);
 			if (error != 0)
 				break;
 		}
@@ -797,26 +827,26 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		goto sendsig;
 
 	case  PT_GET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe)) {
+		if (data != sizeof(pe)) {
 			DPRINTF(("ptrace(%d): %d != %zu\n", req,
-			    SCARG(uap, data), sizeof(pe)));
+			    data, sizeof(pe)));
 			error = EINVAL;
 			break;
 		}
 		memset(&pe, 0, sizeof(pe));
 		pe.pe_set_event = ISSET(t->p_slflag, PSL_TRACEFORK) ?
 		    PTRACE_FORK : 0;
-		error = copyout(&pe, SCARG(uap, addr), sizeof(pe));
+		error = copyout(&pe, addr, sizeof(pe));
 		break;
 
 	case  PT_SET_EVENT_MASK:
-		if (SCARG(uap, data) != sizeof(pe)) {
-			DPRINTF(("ptrace(%d): %d != %zu\n", req,
-			    SCARG(uap, data), sizeof(pe)));
+		if (data != sizeof(pe)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req, data,
+			    sizeof(pe)));
 			error = EINVAL;
 			break;
 		}
-		if ((error = copyin(SCARG(uap, addr), &pe, sizeof(pe))) != 0)
+		if ((error = copyin(addr, &pe, sizeof(pe))) != 0)
 			return error;
 		if (pe.pe_set_event & PTRACE_FORK)
 			SET(t->p_slflag, PSL_TRACEFORK);
@@ -825,9 +855,9 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		break;
 
 	case  PT_GET_PROCESS_STATE:
-		if (SCARG(uap, data) != sizeof(ps)) {
-			DPRINTF(("ptrace(%d): %d != %zu\n", req,
-			    SCARG(uap, data), sizeof(ps)));
+		if (data != sizeof(ps)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req, data,
+			    sizeof(ps)));
 			error = EINVAL;
 			break;
 		}
@@ -836,17 +866,17 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			ps.pe_report_event = PTRACE_FORK;
 			ps.pe_other_pid = t->p_fpid;
 		}
-		error = copyout(&ps, SCARG(uap, addr), sizeof(ps));
+		error = copyout(&ps, addr, sizeof(ps));
 		break;
 
 	case PT_LWPINFO:
-		if (SCARG(uap, data) != sizeof(pl)) {
-			DPRINTF(("ptrace(%d): %d != %zu\n", req,
-			    SCARG(uap, data), sizeof(pl)));
+		if (data != sizeof(pl)) {
+			DPRINTF(("ptrace(%d): %d != %zu\n", req, data,
+			    sizeof(pl)));
 			error = EINVAL;
 			break;
 		}
-		error = copyin(SCARG(uap, addr), &pl, sizeof(pl));
+		error = copyin(addr, &pl, sizeof(pl));
 		if (error)
 			break;
 		tmp = pl.pl_lwpid;
@@ -875,7 +905,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		}
 		mutex_exit(t->p_lock);
 
-		error = copyout(&pl, SCARG(uap, addr), sizeof(pl));
+		error = copyout(&pl, addr, sizeof(pl));
 		break;
 
 #ifdef PT_SETREGS
@@ -887,7 +917,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-		tmp = SCARG(uap, data);
+		tmp = data;
 		if (tmp != 0 && t->p_nlwps > 1) {
 			lwp_delref(lt);
 			mutex_enter(t->p_lock);
@@ -903,19 +933,19 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		if (!process_validregs(lt))
 			error = EINVAL;
 		else {
-			error = proc_vmspace_getref(l->l_proc, &vm);
+			error = proc_vmspace_getref(p, &vm);
 			if (error)
 				break;
-			iov.iov_base = SCARG(uap, addr);
-			iov.iov_len = sizeof(struct reg);
+			iov.iov_base = addr;
+			iov.iov_len = PROC_REGSZ(p);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
-			uio.uio_resid = sizeof(struct reg);
+			uio.uio_resid = iov.iov_len;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
 
-			error = process_doregs(l, lt, &uio);
+			error = ptm->ptm_doregs(l, lt, &uio);
 			uvmspace_free(vm);
 		}
 		break;
@@ -930,7 +960,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-		tmp = SCARG(uap, data);
+		tmp = data;
 		if (tmp != 0 && t->p_nlwps > 1) {
 			lwp_delref(lt);
 			mutex_enter(t->p_lock);
@@ -946,19 +976,19 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		if (!process_validfpregs(lt))
 			error = EINVAL;
 		else {
-			error = proc_vmspace_getref(l->l_proc, &vm);
+			error = proc_vmspace_getref(p, &vm);
 			if (error)
 				break;
-			iov.iov_base = SCARG(uap, addr);
-			iov.iov_len = sizeof(struct fpreg);
+			iov.iov_base = addr;
+			iov.iov_len = PROC_FPREGSZ(p);
 			uio.uio_iov = &iov;
 			uio.uio_iovcnt = 1;
 			uio.uio_offset = 0;
-			uio.uio_resid = sizeof(struct fpreg);
+			uio.uio_resid = iov.iov_len;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_vmspace = vm;
 
-			error = process_dofpregs(l, lt, &uio);
+			error = ptm->ptm_dofpregs(l, lt, &uio);
 			uvmspace_free(vm);
 		}
 		break;
@@ -966,8 +996,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 
 #ifdef __HAVE_PTRACE_MACHDEP
 	PTRACE_MACHDEP_REQUEST_CASES
-		error = ptrace_machdep_dorequest(l, lt,
-		    req, SCARG(uap, addr), SCARG(uap, data));
+		error = ptrace_machdep_dorequest(l, lt, req, addr, data);
 		break;
 #endif
 	}
