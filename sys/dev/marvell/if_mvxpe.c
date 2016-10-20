@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.14 2016/10/10 14:23:35 kiyohara Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.15 2016/10/20 09:53:08 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.14 2016/10/10 14:23:35 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.15 2016/10/20 09:53:08 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -450,7 +450,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), sizeof(ifp->if_xname));
 
 	/*
-	 * Enable DMA engines and Initiazlie Device Regisers.
+	 * Enable DMA engines and Initiazlie Device Registers.
 	 */
 	MVXPE_WRITE(sc, MVXPE_PRXINIT, 0x00000000);
 	MVXPE_WRITE(sc, MVXPE_PTXINIT, 0x00000000);
@@ -1626,7 +1626,7 @@ mvxpe_tick(void *arg)
 	mii_tick(mii);
 	mii_pollstat(&sc->sc_mii);
 
-	/* read mib regisers(clear by read) */
+	/* read mib registers(clear by read) */
 	mvxpe_update_mib(sc);
 
 	/* read counter registers(clear by read) */
