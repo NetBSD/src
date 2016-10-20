@@ -1,4 +1,4 @@
-#	$NetBSD: t_ra.sh,v 1.3 2016/08/10 23:07:57 kre Exp $
+#	$NetBSD: t_ra.sh,v 1.4 2016/10/20 09:51:15 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -72,15 +72,15 @@ shmif0:\
 _EOF
 }
 
-atf_test_case basic cleanup
-basic_head()
+atf_test_case ra_basic cleanup
+ra_basic_head()
 {
 
 	atf_set "descr" "Tests for basic functions of router advaertisement(RA)"
 	atf_set "require.progs" "rump_server rump.rtadvd rump.ndp rump.ifconfig"
 }
 
-basic_body()
+ra_basic_body()
 {
 
 	atf_check -s exit:0 rump_server ${RUMPFLAGS} ${RUMPSRV}
@@ -147,7 +147,7 @@ basic_body()
 	return 0
 }
 
-basic_cleanup()
+ra_basic_cleanup()
 {
 
 	if [ -f ${PIDFILE} ]; then
@@ -162,5 +162,5 @@ basic_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case basic
+	atf_add_test_case ra_basic
 }
