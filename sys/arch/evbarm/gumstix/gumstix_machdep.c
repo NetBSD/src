@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.56 2016/10/19 14:07:22 kiyohara Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.57 2016/10/20 09:53:08 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -1067,7 +1067,7 @@ gumstix_device_register(device_t dev, void *aux)
 			 * The iot mainbus supplies is completely wrong since
 			 * it scales addresses by 2.  The simpliest remedy is
 			 * to replace with our bus space used for the armcore
-			 * regisers (which armperiph uses).
+			 * registers (which armperiph uses).
 			 */
 			struct mainbus_attach_args * const mb = aux;
 			mb->mb_iot = &omap_bs_tag;
