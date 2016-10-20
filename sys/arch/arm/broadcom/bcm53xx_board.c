@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_board.c,v 1.22 2014/09/14 21:06:37 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_board.c,v 1.23 2016/10/20 09:53:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.22 2014/09/14 21:06:37 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bcm53xx_board.c,v 1.23 2016/10/20 09:53:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -604,7 +604,7 @@ bcm53xx_device_register(device_t self, void *aux)
 		 * XXX KLUDGE ALERT XXX
 		 * The iot mainbus supplies is completely wrong since it scales
 		 * addresses by 2.  The simplest remedy is to replace with our
-		 * bus space used for the armcore regisers (which armperiph uses). 
+		 * bus space used for the armcore registers (which armperiph uses). 
 		 */
 		struct mainbus_attach_args * const mb = aux;
 		mb->mb_iot = bcm53xx_armcore_bst;
