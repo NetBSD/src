@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.44 2016/10/20 14:06:18 maxv Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.45 2016/10/20 16:05:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.44 2016/10/20 14:06:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.45 2016/10/20 16:05:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,13 +250,17 @@ acpi_md_sleep_enter(int state)
 void
 acpi_cpu_sleep(struct cpu_info *ci)
 {
+	int s;
+
 	KASSERT(!CPU_IS_PRIMARY(ci));
 	KASSERT(ci == curcpu());
 
+	s = splhigh();
+	fpusave_cpu(true);
 	x86_disable_intr();
 
 	if (acpi_md_sleep_prepare(-1))
-		return;
+		goto out;
 
 	/* Execute Wakeup */
 	cpu_init_msrs(ci, false);
@@ -272,7 +276,9 @@ acpi_cpu_sleep(struct cpu_info *ci)
 	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
 	tsc_sync_ap(ci);
 
+out:
 	x86_enable_intr();
+	splx(s);
 }
 #endif
 
