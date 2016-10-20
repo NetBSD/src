@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.151 2016/10/19 04:23:37 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.152 2016/10/20 04:11:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.151 2016/10/19 04:23:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.152 2016/10/20 04:11:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1080,6 +1080,8 @@ pci_conf_print_msi_cap(const pcireg_t *regs, int capoff)
 	    mme > 0 ? "on" : "off", 1 << mme, mme > 0 ? "s" : "");
 	onoff("64 Bit Address Capable", ctl, PCI_MSI_CTL_64BIT_ADDR);
 	onoff("Per-Vector Masking Capable", ctl, PCI_MSI_CTL_PERVEC_MASK);
+	onoff("Extended Message Data Capable", ctl, PCI_MSI_CTL_EXTMDATA_CAP);
+	onoff("Extended Message Data Enable", ctl, PCI_MSI_CTL_EXTMDATA_EN);
 	printf("    Message Address %sregister: 0x%08x\n",
 	    ctl & PCI_MSI_CTL_64BIT_ADDR ? "(lower) " : "", *regs++);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
@@ -1594,6 +1596,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Unsupported Request Detected", reg, PCIE_DCSR_URD);
 	onoff("Aux Power Detected", reg, PCIE_DCSR_AUX_PWR);
 	onoff("Transaction Pending", reg, PCIE_DCSR_TRANSACTION_PND);
+	onoff("Emergency Power Reduction Detected", reg,
+	    PCIE_DCSR_EMGPWRREDD);
 
 	if (check_link) {
 		/* Link Capability Register */
@@ -1862,6 +1866,23 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("End-End TLP Prefix Supported", reg, PCIE_DCAP2_EETLP_PREF);
 	printf("      Max End-End TLP Prefixes: %u\n",
 	    (unsigned int)(reg & PCIE_DCAP2_MAX_EETLP) >> 22);
+	printf("      Emergency Power Reduction Supported: ");
+	switch (__SHIFTOUT(reg, PCIE_DCAP2_EMGPWRRED)) {
+	case 0x0:
+		printf("Not supported\n");
+		break;
+	case 0x1:
+		printf("Device Specific mechanism\n");
+		break;
+	case 0x2:
+		printf("Form Factor spec or Device Specific mechanism\n");
+		break;
+	case 0x3:
+		printf("Reserved\n");
+		break;
+	}
+	onoff("Emergency Power Reduction Initialization Required", reg,
+	    PCIE_DCAP2_EMGPWRRED_INI);
 	onoff("FRS Supported", reg, PCIE_DCAP2_FRS);
 
 	/* Device Control 2 */
@@ -1876,6 +1897,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("IDO Request Enabled", reg, PCIE_DCSR2_IDO_REQ);
 	onoff("IDO Completion Enabled", reg, PCIE_DCSR2_IDO_COMP);
 	onoff("LTR Mechanism Enabled", reg, PCIE_DCSR2_LTR_MEC);
+	onoff("Emergency Power Reduction Request", reg,
+	    PCIE_DCSR2_EMGPWRRED_REQ);
 	printf("      OBFF: ");
 	switch ((reg & PCIE_DCSR2_OBFF_EN) >> 13) {
 	case 0x0:
@@ -2478,8 +2501,12 @@ pci_conf_print_pwrbdgt_base_power(uint8_t reg)
 	case 0xf2:
 		return "275W < x <= 300W";
 	default:
-		return "Unknown";
+		break;
 	}
+	if (reg >= 0xf3)
+		return "reserved for above 300W";
+
+	return "Unknown";
 }
 
 static const char *
@@ -2513,6 +2540,10 @@ pci_conf_print_pwrbdgt_type(uint8_t reg)
 		return "Idle";
 	case 0x03:
 		return "Sustained";
+	case 0x04:
+		return "Sustained (Emergency Power Reduction)";
+	case 0x05:
+		return "Maximum (Emergency Power Reduction)";
 	case 0x07:
 		return "Maximun";
 	default:
