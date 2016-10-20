@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.43 2016/10/07 10:58:03 skrll Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.44 2016/10/20 14:06:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.43 2016/10/07 10:58:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.44 2016/10/20 14:06:18 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,9 +313,7 @@ acpi_md_sleep(int state)
 		goto out;
 
 	/* Execute Wakeup */
-#ifndef __i386__
 	cpu_init_msrs(&cpu_info_primary, false);
-#endif
 	fpuinit(&cpu_info_primary);
 	i8259_reinit();
 #if NLAPIC > 0
