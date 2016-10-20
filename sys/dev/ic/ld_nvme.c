@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.8 2016/09/27 03:33:32 pgoyette Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.9 2016/10/20 18:42:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.8 2016/09/27 03:33:32 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.9 2016/10/20 18:42:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,7 +186,8 @@ ld_nvme_flush(struct ld_softc *ld, int flags)
 
 	/* wait for the sync to finish */
 	return nvme_ns_sync(sc->sc_nvme, sc->sc_nsid, sc,
-	    NVME_NS_CTX_F_POLL, ld_nvme_syncdone);
+	    (flags & LDFL_POLL) ? NVME_NS_CTX_F_POLL : 0,
+	    ld_nvme_syncdone);
 }
 
 static void
