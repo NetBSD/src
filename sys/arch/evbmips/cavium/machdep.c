@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2016/08/26 13:51:55 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2016/10/20 07:26:03 martin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -114,7 +114,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2016/08/26 13:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2016/10/20 07:26:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,6 +448,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* For proper keyboard command handling */
+		cngetc();
+		cnpollc(0);
 	}
 
 	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
