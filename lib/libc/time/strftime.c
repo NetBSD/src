@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.37 2016/10/07 15:29:42 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.38 2016/10/20 17:41:34 christos Exp $	*/
 
 /* Convert a broken-down time stamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.37 2016/10/07 15:29:42 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.38 2016/10/20 17:41:34 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -494,15 +494,16 @@ label:
 				*/
 				continue;
 			case 'z':
+#if defined TM_GMTOFF || defined USG_COMPAT || defined ALTZONE
 				{
 				long		diff;
 				char const *	sign;
 
 				if (t->tm_isdst < 0)
 					continue;
-#ifdef TM_GMTOFF
+# ifdef TM_GMTOFF
 				diff = (int)t->TM_GMTOFF;
-#else /* !defined TM_GMTOFF */
+# else 
 				/*
 				** C99 says that the UT offset must
 				** be computed by looking only at
@@ -522,20 +523,20 @@ label:
 				** determinable, so output nothing if the
 				** appropriate variables are not available.
 				*/
-#ifndef STD_INSPIRED
+#  ifndef STD_INSPIRED
 				if (t->tm_isdst == 0)
-#ifdef USG_COMPAT
+#   ifdef USG_COMPAT
 					diff = -timezone;
-#else /* !defined USG_COMPAT */
+#   else
 					continue;
-#endif /* !defined USG_COMPAT */
+#   endif
 				else
-#ifdef ALTZONE
+#   ifdef ALTZONE
 					diff = -altzone;
-#else /* !defined ALTZONE */
+#   else
 					continue;
-#endif /* !defined ALTZONE */
-#else /* defined STD_INSPIRED */
+#   endif
+#  else
 				{
 					struct tm tmp;
 					time_t lct, gct;
@@ -563,8 +564,8 @@ label:
 					/* LINTED difference will fit int */
 					diff = (intmax_t)gct - (intmax_t)lct;
 				}
-#endif /* defined STD_INSPIRED */
-#endif /* !defined TM_GMTOFF */
+#  endif
+# endif
 				if (diff < 0) {
 					sign = "-";
 					diff = -diff;
@@ -576,6 +577,7 @@ label:
 				_DIAGASSERT(__type_fit(int, diff));
 				pt = _conv((int)diff, "%04d", pt, ptlim);
 				}
+#endif
 				continue;
 #if 0
 			case '+':

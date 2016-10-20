@@ -5,7 +5,7 @@
 PACKAGE=	tzcode
 
 # Version number for the distribution, overridden in the 'tarballs' rule below.
-VERSION=	2016g
+VERSION=	unknown
 
 # Email address for bug reports.
 BUGEMAIL=	tz@iana.org
@@ -101,7 +101,6 @@ PACKRATDATA=
 YEARISTYPE=	./yearistype
 
 # Non-default libraries needed to link.
-# Add -lintl if you want to use 'gettext' on Solaris.
 LDLIBS=
 
 # Add the following to the end of the "CFLAGS=" line as needed.
@@ -109,9 +108,10 @@ LDLIBS=
 #  -DHAVE_DECL_ASCTIME_R=0 if <time.h> does not declare asctime_r
 #  -DHAVE_DIRECT_H if mkdir needs <direct.h> (MS-Windows)
 #  -DHAVE_DOS_FILE_NAMES if file names have drive specifiers etc. (MS-DOS)
-#  -DHAVE_GETTEXT=1 if 'gettext' works (GNU, Linux, Solaris); also see LDLIBS
+#  -DHAVE_GETTEXT=1 if 'gettext' works (e.g., GNU/Linux, FreeBSD, Solaris)
 #  -DHAVE_INCOMPATIBLE_CTIME_R=1 if your system's time.h declares
-#	ctime_r and asctime_r incompatibly with the POSIX standard (Solaris 8).
+#	ctime_r and asctime_r incompatibly with the POSIX standard
+#	(Solaris when _POSIX_PTHREAD_SEMANTICS is not defined).
 #  -DHAVE_INTTYPES_H=1 if you have a pre-C99 compiler with "inttypes.h"
 #  -DHAVE_LINK=0 if your system lacks a link function
 #  -DHAVE_LOCALTIME_R=0 if your system lacks a localtime_r function
@@ -357,14 +357,14 @@ HEADERS=	tzfile.h private.h
 NONLIBSRCS=	zic.c zdump.c
 NEWUCBSRCS=	date.c strftime.c
 SOURCES=	$(HEADERS) $(LIBSRCS) $(NONLIBSRCS) $(NEWUCBSRCS) \
-			tzselect.ksh version workman.sh
+			tzselect.ksh workman.sh
 MANS=		newctime.3 newstrftime.3 newtzset.3 time2posix.3 \
 			tzfile.5 tzselect.8 zic.8 zdump.8
 MANTXTS=	newctime.3.txt newstrftime.3.txt newtzset.3.txt \
 			time2posix.3.txt \
 			tzfile.5.txt tzselect.8.txt zic.8.txt zdump.8.txt \
 			date.1.txt
-COMMON=		CONTRIBUTING LICENSE Makefile NEWS README Theory
+COMMON=		CONTRIBUTING LICENSE Makefile NEWS README Theory version
 WEB_PAGES=	tz-art.htm tz-how-to.html tz-link.htm
 DOCS=		$(MANS) date.1 $(MANTXTS) $(WEB_PAGES)
 PRIMARY_YDATA=	africa antarctica asia australasia \
@@ -435,16 +435,20 @@ INSTALL:	ALL install date.1
 		cp -f date.1 $(DESTDIR)$(MANDIR)/man1/.
 
 version:	$(VERSION_DEPS)
-		{ V=$$(git describe --match '[0-9][0-9][0-9][0-9][a-z]*' \
-				--abbrev=7 --dirty) || \
+		{ (type git) >/dev/null 2>&1 && \
+		  V=`git describe --match '[0-9][0-9][0-9][0-9][a-z]*' \
+				--abbrev=7 --dirty` || \
 		  V=$(VERSION); } && \
-		printf '%s\n' "$$V" >$@
+		printf '%s\n' "$$V" >$@.out
+		mv $@.out $@
 
 version.h:	version
-		(echo 'static char const PKGVERSION[]="($(PACKAGE)) ";' && \
-		 printf 'static char const TZVERSION[]="%s";\n' \
-		   "$$(cat version)" && \
-		 echo 'static char const REPORT_BUGS_TO[]="$(BUGEMAIL)";') >$@
+		VERSION=`cat version` && printf '%s\n' \
+		  'static char const PKGVERSION[]="($(PACKAGE)) ";' \
+		  "static char const TZVERSION[]=\"$$VERSION\";" \
+		  'static char const REPORT_BUGS_TO[]="$(BUGEMAIL)";' \
+		  >$@.out
+		mv $@.out $@
 
 zdump:		$(TZDOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(TZDOBJS) $(LDLIBS)
@@ -457,7 +461,8 @@ yearistype:	yearistype.sh
 		chmod +x yearistype
 
 leapseconds:	$(LEAP_DEPS)
-		$(AWK) -f leapseconds.awk leap-seconds.list >$@
+		$(AWK) -f leapseconds.awk leap-seconds.list >$@.out
+		mv $@.out $@
 
 # Arguments to pass to submakes of install_data.
 # They can be overridden by later submake arguments.
@@ -515,12 +520,14 @@ $(TZS_NEW):	$(TDATA) zdump zic
 		$(zic) -d tzs.dir $(TDATA)
 		$(AWK) '/^Link/{print $$1 "\t" $$2 "\t" $$3}' \
 		   $(TDATA) | LC_ALL=C sort >$@.out
-		zones=$$($(AWK) -v wd="$$(pwd)" \
+		wd=`pwd` && \
+		zones=`$(AWK) -v wd="$$wd" \
 				'/^Zone/{print wd "/tzs.dir/" $$2}' $(TDATA) \
-			 | LC_ALL=C sort) && \
+			 | LC_ALL=C sort` && \
 		./zdump -i -c $(TZS_YEAR) $$zones >>$@.out
-		sed 's,^TZ=".*tzs\.dir/,TZ=",' $@.out >$@
+		sed 's,^TZ=".*tzs\.dir/,TZ=",' $@.out >$@.sed.out
 		rm -fr tzs.dir $@.out
+		mv $@.sed.out $@
 
 # If $(TZS) does not already exist (e.g., old-format tarballs), create it.
 # If it exists but 'make check_tzs' fails, a maintainer should inspect the
@@ -539,15 +546,16 @@ date:		$(DATEOBJS)
 		$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $(DATEOBJS) $(LDLIBS)
 
 tzselect:	tzselect.ksh version
-		sed \
+		VERSION=`cat version` && sed \
 			-e 's|#!/bin/bash|#!$(KSHELL)|g' \
 			-e 's|AWK=[^}]*|AWK=$(AWK)|g' \
 			-e 's|\(PKGVERSION\)=.*|\1='\''($(PACKAGE)) '\''|' \
 			-e 's|\(REPORT_BUGS_TO\)=.*|\1=$(BUGEMAIL)|' \
 			-e 's|TZDIR=[^}]*|TZDIR=$(TZDIR)|' \
-			-e 's|\(TZVERSION\)=.*|\1='"$$(cat version)"'|' \
-			<$@.ksh >$@
-		chmod +x $@
+			-e 's|\(TZVERSION\)=.*|\1='"$$VERSION"'|' \
+			<$@.ksh >$@.out
+		chmod +x $@.out
+		mv $@.out $@
 
 check:		check_character_set check_white_space check_links check_sorted \
 		  check_tables check_tzs check_web
@@ -555,14 +563,16 @@ check:		check_character_set check_white_space check_links check_sorted \
 check_character_set: $(ENCHILADA)
 		LC_ALL=en_US.utf8 && export LC_ALL && \
 		sharp='#' && \
-		! grep -Env $(SAFE_LINE) Makefile $(MANS) date.1 $(MANTXTS) \
-			$(MISC) $(SOURCES) $(WEB_PAGES) && \
+		! grep -Env $(SAFE_LINE) $(MANS) date.1 $(MANTXTS) \
+			$(MISC) $(SOURCES) $(WEB_PAGES) \
+			CONTRIBUTING LICENSE Makefile README version && \
 		! grep -Env $(SAFE_SHARP_LINE) $(TDATA) backzone \
 			leapseconds yearistype.sh zone.tab && \
 		! grep -Env $(OK_LINE) $(ENCHILADA)
 
 check_white_space: $(ENCHILADA)
-		! grep -En ' '$(TAB_CHAR)"|$$(printf '[\f\r\v]')" $(ENCHILADA)
+		patfmt=' \t|[\f\r\v]' && pat=`printf "$$patfmt\\n"` && \
+		! grep -En "$$pat" $(ENCHILADA)
 		! grep -n '[[:space:]]$$' $(ENCHILADA)
 
 CHECK_CC_LIST = { n = split($$1,a,/,/); for (i=2; i<=n; i++) print a[1], a[i]; }
@@ -620,7 +630,8 @@ zdump.8.txt:	zdump.8
 zic.8.txt:	zic.8
 
 $(MANTXTS):	workman.sh
-		LC_ALL=C sh workman.sh `expr $@ : '\(.*\)\.txt$$'` >$@
+		LC_ALL=C sh workman.sh `expr $@ : '\(.*\)\.txt$$'` >$@.out
+		mv $@.out $@
 
 # Set the time stamps to those of the git repository, if available,
 # and if the files have not changed since then.
@@ -631,7 +642,8 @@ $(MANTXTS):	workman.sh
 # to be the maximum of the files it depends on.
 set-timestamps.out: $(ENCHILADA)
 		rm -f $@
-		if files=`git ls-files $(ENCHILADA)` && \
+		if (type git) >/dev/null 2>&1 && \
+		   files=`git ls-files $(ENCHILADA)` && \
 		   touch -md @1 test.out; then \
 		  rm -f test.out && \
 		  for file in $$files; do \
@@ -648,8 +660,8 @@ set-timestamps.out: $(ENCHILADA)
 		  touch -cmr `ls -t $$file workman.sh | sed 1q` $$file.txt || \
 		    exit; \
 		done
-		touch -cmr $$(ls -t $(TZS_DEPS) | sed 1q) $(TZS)
-		touch -cmr $$(ls -t $(VERSION_DEPS) | sed 1q) version
+		touch -cmr `ls -t $(TZS_DEPS) | sed 1q` $(TZS)
+		touch -cmr `ls -t $(VERSION_DEPS) | sed 1q` version
 		touch $@
 
 # The zics below ensure that each data file can stand on its own.
@@ -673,11 +685,12 @@ check_time_t_alternatives:
 		else \
 		  quiet_option=''; \
 		fi && \
+		wd=`pwd` && \
 		zones=`$(AWK) '/^[^#]/ { print $$3 }' <zone1970.tab` && \
 		for type in $(TIME_T_ALTERNATIVES); do \
 		  mkdir -p time_t.dir/$$type && \
 		  $(MAKE) clean_misc && \
-		  $(MAKE) TOPDIR=$$(pwd)/time_t.dir/$$type \
+		  $(MAKE) TOPDIR="$$wd/time_t.dir/$$type" \
 		    CFLAGS='$(CFLAGS) -Dtime_tz='"'$$type'" \
 		    REDO='$(REDO)' \
 		    install && \
@@ -706,28 +719,39 @@ tarballs signatures: version
 
 tarballs_version: tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz \
 		tzdb-$(VERSION).tar.lz
+tarballs traditional_tarballs signatures traditional_signatures: version
+		VERSION=`cat version` && \
+		$(MAKE) VERSION="$$VERSION" $@_version
+
+tarballs_version: traditional_tarballs_version tzdb-$(VERSION).tar.lz
+traditional_tarballs_version: \
+  tzcode$(VERSION).tar.gz tzdata$(VERSION).tar.gz
+signatures_version: traditional_signatures_version tzdb-$(VERSION).tar.lz.asc
+traditional_signatures_version: \
+  tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc \
 
 tzcode$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - \
 		    $(COMMON) $(DOCS) $(SOURCES) | \
 		  ${TOOL_GZIP} $(GZIPFLAGS) > $@
+		  ${TOOL_GZIP} $(GZIPFLAGS) >$@.out
+		mv $@.out $@
 
 tzdata$(VERSION).tar.gz: set-timestamps.out
 		LC_ALL=C && export LC_ALL && \
 		tar $(TARFLAGS) -cf - $(COMMON) $(DATA) $(MISC) | \
-		  ${TOOL_GZIP} $(GZIPFLAGS) > $@
+		  ${TOOL_GZIP} $(GZIPFLAGS) > $@.out
+		mv $@.out $@
 
 tzdb-$(VERSION).tar.lz: set-timestamps.out
 		rm -fr tzdb-$(VERSION)
 		mkdir tzdb-$(VERSION)
 		ln $(ENCHILADA) tzdb-$(VERSION)
-		touch -cmr $$(ls -t tzdb-$(VERSION)/* | sed 1q) tzdb-$(VERSION)
+		touch -cmr `ls -t tzdb-$(VERSION)/* | sed 1q` tzdb-$(VERSION)
 		LC_ALL=C && export LC_ALL && \
-		tar $(TARFLAGS) -cf - tzdb-$(VERSION) | lzip -9 > $@
-
-signatures_version: tzcode$(VERSION).tar.gz.asc tzdata$(VERSION).tar.gz.asc \
-		tzdb-$(VERSION).tar.lz.asc
+		tar $(TARFLAGS) -cf - tzdb-$(VERSION) | lzip -9 >$@.out
+		mv $@.out $@
 
 tzcode$(VERSION).tar.gz.asc: tzcode$(VERSION).tar.gz
 		gpg --armor --detach-sign $?
