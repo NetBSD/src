@@ -1,5 +1,62 @@
 News for the tz database
 
+Release 2016h - 2016-10-19 23:17:57 -0700
+
+  Changes to future time stamps
+
+    Asia/Gaza and Asia/Hebron end DST on 2016-10-29 at 01:00, not
+    2016-10-21 at 00:00.  (Thanks to Sharef Mustafa.)  Predict that
+    future fall transitions will be on the last Saturday of October
+    at 01:00, which is consistent with predicted spring transitions
+    on the last Saturday of March.  (Thanks to Tim Parenti.)
+
+  Changes to past time stamps
+
+    In Turkey, transitions in 1986-1990 were at 01:00 standard time
+    not at 02:00, and the spring 1994 transition was on March 20, not
+    March 27.  (Thanks to Kıvanç Yazan.)
+
+  Changes to past and future time zone abbreviations
+
+    Asia/Colombo now uses numeric time zone abbreviations like "+0530"
+    instead of alphabetic ones like "IST" and "LKT".  Various
+    English-language sources use "IST", "LKT" and "SLST", with no
+    working consensus.  (Usage of "SLST" mentioned by Sadika
+    Sumanapala.)
+
+  Changes to code
+
+    zic no longer mishandles relativizing file names when creating
+    symbolic links like /etc/localtime, when these symbolic links
+    are outside the usual directory hierarchy.  This fixes a bug
+    introduced in 2016g.  (Problem reported by Andreas Stieger.)
+
+  Changes to build procedure
+
+    New rules 'traditional_tarballs' and 'traditional_signatures' for
+    building just the traditional-format distribution.  (Requested by
+    Deborah Goldsmith.)
+
+    The file 'version' is now put into the tzdata tarball too.
+    (Requested by Howard Hinnant.)
+
+  Changes to documentation and commentary
+
+    The 'Theory' file now has a section on interface stability.
+    (Requested by Paul Koning.)  It also mentions features like
+    tm_zone and localtime_rz that have long been supported by the
+    reference code.
+
+    tz-link.htm has improved coverage of time zone boundaries suitable
+    for geolocation.  (Thanks to heads-ups from Evan Siroky and Matt
+    Johnson.)
+
+    The US commentary now mentions Allen and the "day of two noons".
+
+    The Fiji commentary mentions the government's 2016-10-03 press
+    release.  (Thanks to Raymond Kumar.)
+
+
 Release 2016g - 2016-09-13 08:56:38 -0700
 
   Changes to future time stamps
