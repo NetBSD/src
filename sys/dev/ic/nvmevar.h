@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.8 2016/10/19 19:34:31 jdolecek Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.9 2016/10/20 19:20:40 jdolecek Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -30,10 +30,10 @@ struct nvme_dmamem {
 	size_t			ndm_size;
 	void			*ndm_kva;
 };
-#define NVME_DMA_MAP(_ndm)	((_ndm).ndm_map)
-#define NVME_DMA_LEN(_ndm)	((_ndm).ndm_map->dm_segs[0].ds_len)
-#define NVME_DMA_DVA(_ndm)	((uint64_t)(_ndm).ndm_map->dm_segs[0].ds_addr)
-#define NVME_DMA_KVA(_ndm)	((void *)(_ndm).ndm_kva)
+#define NVME_DMA_MAP(_ndm)	((_ndm)->ndm_map)
+#define NVME_DMA_LEN(_ndm)	((_ndm)->ndm_map->dm_segs[0].ds_len)
+#define NVME_DMA_DVA(_ndm)	((uint64_t)(_ndm)->ndm_map->dm_segs[0].ds_addr)
+#define NVME_DMA_KVA(_ndm)	((void *)(_ndm)->ndm_kva)
 
 struct nvme_softc;
 struct nvme_queue;
@@ -75,8 +75,8 @@ struct nvme_queue {
 	struct nvme_softc	*q_sc;
 	kmutex_t		q_sq_mtx;
 	kmutex_t		q_cq_mtx;
-	struct nvme_dmamem	q_sq_dmamem;
-	struct nvme_dmamem	q_cq_dmamem;
+	struct nvme_dmamem	*q_sq_dmamem;
+	struct nvme_dmamem	*q_cq_dmamem;
 	bus_size_t 		q_sqtdbl; /* submission queue tail doorbell */
 	bus_size_t 		q_cqhdbl; /* completion queue head doorbell */
 	uint16_t		q_id;
@@ -89,7 +89,7 @@ struct nvme_queue {
 	u_int			q_nccbs;
 	struct nvme_ccb		*q_ccbs;
 	SIMPLEQ_HEAD(, nvme_ccb) q_ccb_list;
-	struct nvme_dmamem	q_ccb_prpls;
+	struct nvme_dmamem	*q_ccb_prpls;
 };
 
 struct nvme_namespace {
