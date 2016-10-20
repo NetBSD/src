@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.422 2016/10/20 05:53:27 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.423 2016/10/20 08:03:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.422 2016/10/20 05:53:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.423 2016/10/20 08:03:13 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -495,6 +495,7 @@ struct wm_softc {
 	krndsource_t rnd_source;	/* random source */
 
 	kmutex_t *sc_core_lock;		/* lock for softc operations */
+	kmutex_t *sc_ich_nvmmtx;	/* ICH/PCH specific NVM mutex */
 
 	struct if_percpuq *sc_ipq;	/* softint-based input queues */
 };
@@ -784,6 +785,8 @@ static int	wm_get_swfw_semaphore(struct wm_softc *, uint16_t);
 static void	wm_put_swfw_semaphore(struct wm_softc *, uint16_t);
 static int	wm_get_swfwhw_semaphore(struct wm_softc *);
 static void	wm_put_swfwhw_semaphore(struct wm_softc *);
+static int	wm_get_nvm_ich8lan(struct wm_softc *);		/* For NVM */
+static void	wm_put_nvm_ich8lan(struct wm_softc *);
 static int	wm_get_hw_semaphore_82573(struct wm_softc *);
 static void	wm_put_hw_semaphore_82573(struct wm_softc *);
 
@@ -1896,10 +1899,10 @@ alloc_retry:
 	    || (sc->sc_type == WM_T_PCH_LPT) || (sc->sc_type == WM_T_PCH_SPT))
 		wm_smbustopci(sc);
 
-	/* Reset the chip to a known state. */
-	wm_reset(sc);
+	if (sc->sc_type >= WM_T_ICH8)
+		sc->sc_ich_nvmmtx = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 
-	/* Get some information about the EEPROM. */
+	/* Set PHY, NVM mutex related stuff */
 	switch (sc->sc_type) {
 	case WM_T_82542_2_0:
 	case WM_T_82542_2_1:
@@ -2036,6 +2039,9 @@ alloc_retry:
 	default:
 		break;
 	}
+
+	/* Reset the chip to a known state. */
+	wm_reset(sc);
 
 	/* Ensure the SMBI bit is clear before first NVM or PHY access */
 	switch (sc->sc_type) {
@@ -2661,6 +2667,8 @@ wm_detach(device_t self, int flags __unused)
 
 	if (sc->sc_core_lock)
 		mutex_obj_free(sc->sc_core_lock);
+	if (sc->sc_ich_nvmmtx)
+		mutex_obj_free(sc->sc_ich_nvmmtx);
 
 	return 0;
 }
@@ -10744,11 +10752,9 @@ wm_nvm_acquire(struct wm_softc *sc)
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	/* Always success */
-	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
-		return 0;
-
-	if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
+	if (sc->sc_type >= WM_T_ICH8) {
+		ret = wm_get_nvm_ich8lan(sc);
+	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF) {
 		ret = wm_get_swfwhw_semaphore(sc);
 	} else if (sc->sc_flags & WM_F_LOCK_SWFW) {
 		/* This will also do wm_get_swsm_semaphore() if needed */
@@ -10808,17 +10814,15 @@ wm_nvm_release(struct wm_softc *sc)
 	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
 
-	/* Always success */
-	if ((sc->sc_flags & WM_F_EEPROM_FLASH) != 0)
-		return;
-
 	if (sc->sc_flags & WM_F_LOCK_EECD) {
 		reg = CSR_READ(sc, WMREG_EECD);
 		reg &= ~EECD_EE_REQ;
 		CSR_WRITE(sc, WMREG_EECD, reg);
 	}
 
-	if (sc->sc_flags & WM_F_LOCK_EXTCNF)
+	if (sc->sc_type >= WM_T_ICH8) {
+		wm_put_nvm_ich8lan(sc);
+	} else if (sc->sc_flags & WM_F_LOCK_EXTCNF)
 		wm_put_swfwhw_semaphore(sc);
 	if (sc->sc_flags & WM_F_LOCK_SWFW)
 		wm_put_swfw_semaphore(sc, SWFW_EEP_SM);
@@ -11267,6 +11271,26 @@ wm_put_swfwhw_semaphore(struct wm_softc *sc)
 	ext_ctrl = CSR_READ(sc, WMREG_EXTCNFCTR);
 	ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 	CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
+}
+
+static int
+wm_get_nvm_ich8lan(struct wm_softc *sc)
+{
+
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	mutex_enter(sc->sc_ich_nvmmtx);
+
+	return 0;
+}
+
+static void
+wm_put_nvm_ich8lan(struct wm_softc *sc)
+{
+
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+	mutex_exit(sc->sc_ich_nvmmtx);
 }
 
 static int
