@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.420 2016/10/19 08:55:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.421 2016/10/20 04:06:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.420 2016/10/19 08:55:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.421 2016/10/20 04:06:53 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10047,6 +10047,9 @@ wm_nvm_ready_spi(struct wm_softc *sc)
 	uint32_t val;
 	int usec;
 
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	for (usec = 0; usec < SPI_MAX_RETRIES; delay(5), usec += 5) {
 		wm_eeprom_sendbits(sc, SPI_OPC_RDSR, 8);
 		wm_eeprom_recvbits(sc, &val, 8);
@@ -10648,6 +10651,9 @@ wm_nvm_read_invm(struct wm_softc *sc, int offset, int words, uint16_t *data)
 {
 	int rv = 0;
 	int i;
+	
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	for (i = 0; i < words; i++) {
 		switch (offset + i) {
@@ -11085,6 +11091,9 @@ wm_get_swsm_semaphore(struct wm_softc *sc)
 {
 	int32_t timeout;
 	uint32_t swsm;
+
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	if (sc->sc_flags & WM_F_LOCK_SWSM) {
 		/* Get the SW semaphore. */
