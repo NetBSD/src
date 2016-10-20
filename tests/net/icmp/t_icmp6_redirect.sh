@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp6_redirect.sh,v 1.3 2016/10/02 04:46:07 kre Exp $
+#	$NetBSD: t_icmp6_redirect.sh,v 1.4 2016/10/20 09:51:15 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -57,16 +57,16 @@ get_lladdr()
 	return 0
 }
 
-atf_test_case basic cleanup
+atf_test_case icmp6_redirect_basic cleanup
 
-basic_head()
+icmp6_redirect_basic_head()
 {
 
 	atf_set "descr" "Test for the basically function of the ICMP6 redirect"
 	atf_set "require.progs" "rump_server rump.route rump.ping rump.ifconfig"
 }
 
-basic_body()
+icmp6_redirect_basic_body()
 {
 	local gw1_lladdr0=
 	local gw1_lladdr1=
@@ -156,7 +156,7 @@ basic_body()
 	unset RUMP_SERVER
 }
 
-basic_cleanup()
+icmp6_redirect_basic_cleanup()
 {
 
 	env RUMP_SERVER=$SOCK_LOCAL rump.halt
@@ -168,5 +168,5 @@ basic_cleanup()
 atf_init_test_cases()
 {
 
-	atf_add_test_case basic
+	atf_add_test_case icmp6_redirect_basic
 }
