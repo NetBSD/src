@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.979 2016/10/20 08:11:38 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.980 2016/10/21 06:04:16 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1365,19 +1365,29 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 
 # During transition from xorg-server 1.10 to 1.18
 .if \
-    ${MACHINE} == "amd64"	|| \
-    ${MACHINE} == "i386"	|| \
-    ${MACHINE} == "ofppc"	|| \
-    ${MACHINE} == "macppc"	|| \
-    ${MACHINE} == "shark"	|| \
-    ${MACHINE} == "sparc"	|| \
-    ${MACHINE} == "sparc64"	|| \
-    ${MACHINE} == "evbmips"	|| \
-    ${MACHINE} == "x68k"	|| \
-    ${MACHINE_CPU} == "aarch64"
-HAVE_XORG_SERVER_VER?=118
-.else
+    ${MACHINE} == "alpha"	|| \
+    ${MACHINE} == "amiga"	|| \
+    ${MACHINE} == "bebox"	|| \
+    ${MACHINE} == "cats"	|| \
+    ${MACHINE} == "dreamcast"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
+    ${MACHINE} == "evbarm"	|| \
+    ${MACHINE} == "hp300"	|| \
+    ${MACHINE} == "hpcarm"	|| \
+    ${MACHINE} == "hpcmips"	|| \
+    ${MACHINE} == "hpcsh"	|| \
+    ${MACHINE} == "ibmnws"	|| \
+    ${MACHINE} == "luna68k"	|| \
+    ${MACHINE} == "mac68k"	|| \
+    ${MACHINE} == "netwinder"	|| \
+    ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "prep"	|| \
+    ${MACHINE} == "sgimips"	|| \
+    ${MACHINE} == "vax"		|| \
+    ${MACHINE} == "zaurus"
 HAVE_XORG_SERVER_VER?=110
+.else
+HAVE_XORG_SERVER_VER?=118
 .endif
 
 .if ${HAVE_XORG_SERVER_VER} == "118"
