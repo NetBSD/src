@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.141 2016/10/20 20:17:46 jdolecek Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.142 2016/10/21 19:28:03 jdolecek Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.141 2016/10/20 20:17:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.142 2016/10/21 19:28:03 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -402,10 +402,6 @@ out:
 	}
 	if (error) {
 		if (UFS_WAPBL_BEGIN(mp) == 0) {
-			/*
-			 * This is okay to fail, we'll simply reuse the blocks
-			 * later.
-			 */
 			(void) ffs_truncate(vp, (off_t)0, 0, NOCRED);
 			UFS_WAPBL_END(mp);
 		}
@@ -441,13 +437,9 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		return EACCES;
 
 	if (vp->v_size != 0) {
-		if (UFS_WAPBL_BEGIN(mp) == 0) {
-			/*
-			 * This is okay to fail, we'll simply reuse the blocks
-			 */
-			(void) ffs_truncate(vp, 0, 0, NOCRED);
-			UFS_WAPBL_END(mp);
-		}
+		error = ffs_truncate(vp, 0, 0, NOCRED);
+		if (error)
+			return error;
 	}
 
 	/* Change inode to snapshot type file. */
@@ -456,7 +448,6 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 		return error;
 #if defined(QUOTA) || defined(QUOTA2)
 	/* shapshot inodes are not accounted in quotas */
-	chkdq(ip, -DIP(ip, blocks), l->l_cred, 0);
 	chkiq(ip, -1, l->l_cred, 0);
 #endif
 	ip->i_flags |= (SF_SNAPSHOT | SF_SNAPINVAL);
