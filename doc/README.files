@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.5.12.2.2.1 2016/05/22 10:48:37 snj Exp $
+#	$NetBSD: README.files,v 1.5.12.2.2.2 2016/10/21 05:59:21 snj Exp $
 
 What's in this directory:
 
@@ -8,6 +8,8 @@ CHANGES-7.0	Changes between the creation of the netbsd-7 branch and
 		the 7.0 release.
 
 CHANGES-7.0.1	Changes between the 7.0 and 7.0.1 releases.
+
+CHANGES-7.0.2	Changes between the 7.0.1 and 7.0.2 releases.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
@@ -31,7 +33,7 @@ source/patches/	Post-release source code patches.
 
 In addition to the files and directories listed above, there is one
 directory per architecture, for each of the architectures for which
-NetBSD 7.0.1 has a binary distribution.  The contents of each
+NetBSD 7.0.2 has a binary distribution.  The contents of each
 architecture's directory are described in an "INSTALL" file found in
 that directory.
 
