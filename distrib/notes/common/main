@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.7.2.1 2016/05/22 10:48:37 snj Exp $
+.\"	$NetBSD: main,v 1.510.4.7.2.2 2016/10/21 05:59:21 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd May 22, 2016
+.Dd October 21, 2016
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -480,24 +480,24 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 7.0 and 7.0.1 Releases
+.Ss Changes Between The NetBSD 7.0.1 and 7.0.2 Releases
 .Pp
 .Nx
 \*V
-is the first critical/security update of the NetBSD 7.0 release branch.
+is the second critical/security update of the NetBSD 7.0 release branch.
 It represents a selected subset of fixes deemed critical for security
 or stability reasons.
 .Pp
 The complete list of changes can be found in the
-CHANGES-7.0.1:
-.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0.1/CHANGES-7.0.1
+CHANGES-7.0.2:
+.Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0.2/CHANGES-7.0.2
 file in the top level directory of the
 .Nx
 \*V
 release tree.
 .Pp
 See
-.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.0.1.html
+.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.0.2.html
 for some of the more noteworthy changes in this release.
 .Pp
 .\} \" \n[FOR_RELEASE]
@@ -568,6 +568,8 @@ Changes between the 6.0 and 7.0 releases.
 Changes between the initial 7.0 branch and the final release of 7.0.
 .It Li CHANGES-7.0.1
 Changes between the 7.0 and 7.0.1 releases.
+.It Li CHANGES-7.0.2
+Changes between the 7.0.1 and 7.0.2 releases.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
