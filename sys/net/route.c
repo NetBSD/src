@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.175 2016/10/18 07:30:30 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.176 2016/10/21 03:04:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.175 2016/10/18 07:30:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.176 2016/10/21 03:04:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -962,16 +962,20 @@ bad:
 int
 rt_setgate(struct rtentry *rt, const struct sockaddr *gate)
 {
+	struct sockaddr *new, *old;
 
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
-	if (rt->rt_gateway != NULL)
-		sockaddr_free(rt->rt_gateway);
-	KASSERT(rt->_rt_key != NULL);
-	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
-	if ((rt->rt_gateway = sockaddr_dup(gate, M_ZERO | M_NOWAIT)) == NULL)
+	new = sockaddr_dup(gate, M_ZERO | M_NOWAIT);
+	if (new == NULL)
 		return ENOMEM;
+
+	old = rt->rt_gateway;
+	rt->rt_gateway = new;
+	if (old != NULL)
+		sockaddr_free(old);
+
 	KASSERT(rt->_rt_key != NULL);
 	RT_DPRINTF("rt->_rt_key = %p\n", (void *)rt->_rt_key);
 
