@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.176 2016/10/21 03:04:33 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.177 2016/10/21 09:01:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.176 2016/10/21 03:04:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.177 2016/10/21 09:01:44 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -138,8 +138,13 @@ static struct pool	rtentry_pool;
 static struct pool	rttimer_pool;
 
 static struct callout	rt_timer_ch; /* callout for rt_timer_timer() */
-struct workqueue	*rt_timer_wq;
-struct work		rt_timer_wk;
+static struct workqueue	*rt_timer_wq;
+static struct work	rt_timer_wk;
+
+static void	rt_timer_init(void);
+static void	rt_timer_queue_remove_all(struct rttimer_queue *, int);
+static void	rt_timer_remove_all(struct rtentry *, int);
+static void	rt_timer_timer(void *);
 
 #ifdef RTFLUSH_DEBUG
 static int _rtcache_debug = 0;
@@ -1236,7 +1241,7 @@ static int rt_init_done = 0;
 
 static void rt_timer_work(struct work *, void *);
 
-void
+static void
 rt_timer_init(void)
 {
 	int error;
@@ -1280,7 +1285,7 @@ rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
 	rtq->rtq_timeout = timeout;
 }
 
-void
+static void
 rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 {
 	struct rttimer *r;
@@ -1319,7 +1324,7 @@ rt_timer_count(struct rttimer_queue *rtq)
 	return rtq->rtq_count;
 }
 
-void
+static void
 rt_timer_remove_all(struct rtentry *rt, int destroy)
 {
 	struct rttimer *r;
@@ -1409,7 +1414,7 @@ rt_timer_work(struct work *wk, void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
-void
+static void
 rt_timer_timer(void *arg)
 {
 
