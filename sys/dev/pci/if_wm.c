@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.424 2016/10/21 04:41:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.425 2016/10/21 08:30:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.424 2016/10/21 04:41:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.425 2016/10/21 08:30:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -8088,6 +8088,9 @@ wm_gmii_mediainit(struct wm_softc *sc, pci_product_id_t prodid)
 	struct mii_data *mii = &sc->sc_mii;
 	uint32_t reg;
 
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
+
 	/* We have GMII. */
 	sc->sc_flags |= WM_F_HAS_MII;
 
@@ -8299,6 +8302,8 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	int rc;
 
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
@@ -8722,38 +8727,40 @@ wm_access_phy_wakeup_reg_bm(device_t self, int offset, int16_t *val, int rd)
 	uint16_t regnum = BM_PHY_REG_NUM(offset);
 	uint16_t wuce;
 
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 	/* XXX Gig must be disabled for MDIO accesses to page 800 */
 	if (sc->sc_type == WM_T_PCH) {
 		/* XXX e1000 driver do nothing... why? */
 	}
 
 	/* Set page 769 */
-	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
 
-	wuce = wm_gmii_i82544_readreg(self, 1, BM_WUC_ENABLE_REG);
+	wuce = wm_gmii_mdic_readreg(self, 1, BM_WUC_ENABLE_REG);
 
 	wuce &= ~BM_WUC_HOST_WU_BIT;
-	wm_gmii_i82544_writereg(self, 1, BM_WUC_ENABLE_REG,
+	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG,
 	    wuce | BM_WUC_ENABLE_BIT);
 
 	/* Select page 800 */
-	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_PAGE << BME1000_PAGE_SHIFT);
 
 	/* Write page 800 */
-	wm_gmii_i82544_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
+	wm_gmii_mdic_writereg(self, 1, BM_WUC_ADDRESS_OPCODE, regnum);
 
 	if (rd)
-		*val = wm_gmii_i82544_readreg(self, 1, BM_WUC_DATA_OPCODE);
+		*val = wm_gmii_mdic_readreg(self, 1, BM_WUC_DATA_OPCODE);
 	else
-		wm_gmii_i82544_writereg(self, 1, BM_WUC_DATA_OPCODE, *val);
+		wm_gmii_mdic_writereg(self, 1, BM_WUC_DATA_OPCODE, *val);
 
 	/* Set page 769 */
-	wm_gmii_i82544_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
+	wm_gmii_mdic_writereg(self, 1, MII_IGPHY_PAGE_SELECT,
 	    BM_WUC_ENABLE_PAGE << BME1000_PAGE_SHIFT);
 
-	wm_gmii_i82544_writereg(self, 1, BM_WUC_ENABLE_REG, wuce);
+	wm_gmii_mdic_writereg(self, 1, BM_WUC_ENABLE_REG, wuce);
 }
 
 /*
@@ -8769,6 +8776,8 @@ wm_gmii_hv_readreg(device_t self, int phy, int reg)
 	struct wm_softc *sc = device_private(self);
 	int rv;
 
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 	if (sc->phy.acquire(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
 		    __func__);
@@ -8829,6 +8838,9 @@ static void
 wm_gmii_hv_writereg(device_t self, int phy, int reg, int val)
 {
 	struct wm_softc *sc = device_private(self);
+
+	DPRINTF(WM_DEBUG_NVM, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	if (sc->phy.acquire(sc)) {
 		aprint_error_dev(sc->sc_dev, "%s: failed to get semaphore\n",
@@ -9076,7 +9088,7 @@ wm_kmrn_readreg(struct wm_softc *sc, int reg)
 		return 0;
 	}
 
-	wm_kmrn_readreg_locked(sc, reg);
+	rv = wm_kmrn_readreg_locked(sc, reg);
 
 	if (sc->sc_type == WM_T_80003)
 		wm_put_swfw_semaphore(sc, SWFW_MAC_CSR_SM);
@@ -11943,6 +11955,9 @@ wm_enable_wakeup(struct wm_softc *sc)
 {
 	uint32_t reg, pmreg;
 	pcireg_t pmode;
+
+	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
+		device_xname(sc->sc_dev), __func__));
 
 	if (pci_get_capability(sc->sc_pc, sc->sc_pcitag, PCI_CAP_PWRMGMT,
 		&pmreg, NULL) == 0)
