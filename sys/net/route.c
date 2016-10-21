@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.178 2016/10/21 10:52:47 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.179 2016/10/21 10:56:35 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.178 2016/10/21 10:52:47 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.179 2016/10/21 10:56:35 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -473,7 +473,6 @@ rtfree(struct rtentry *rt)
 	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
-		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
 		ifafree(ifa);
@@ -853,6 +852,7 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 			ifa = NULL;
 		}
 		rttrash++;
+		rt_timer_remove_all(rt);
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
@@ -1336,8 +1336,8 @@ rt_timer_remove_all(struct rtentry *rt)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
-		rtfree(r->rtt_rt);
 		pool_put(&rttimer_pool, r);
+		rt->rt_refcnt--; /* XXX */
 	}
 }
 
