@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.177 2016/10/21 09:01:44 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.178 2016/10/21 10:52:47 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.177 2016/10/21 09:01:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.178 2016/10/21 10:52:47 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -143,7 +143,7 @@ static struct work	rt_timer_wk;
 
 static void	rt_timer_init(void);
 static void	rt_timer_queue_remove_all(struct rttimer_queue *, int);
-static void	rt_timer_remove_all(struct rtentry *, int);
+static void	rt_timer_remove_all(struct rtentry *);
 static void	rt_timer_timer(void *);
 
 #ifdef RTFLUSH_DEBUG
@@ -473,7 +473,7 @@ rtfree(struct rtentry *rt)
 	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
-		rt_timer_remove_all(rt, 0);
+		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		rt->rt_ifa = NULL;
 		ifafree(ifa);
@@ -1325,15 +1325,13 @@ rt_timer_count(struct rttimer_queue *rtq)
 }
 
 static void
-rt_timer_remove_all(struct rtentry *rt, int destroy)
+rt_timer_remove_all(struct rtentry *rt)
 {
 	struct rttimer *r;
 
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
 		LIST_REMOVE(r, rtt_link);
 		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-		if (destroy)
-			(*r->rtt_func)(r->rtt_rt, r);
 		if (r->rtt_queue->rtq_count > 0)
 			r->rtt_queue->rtq_count--;
 		else
