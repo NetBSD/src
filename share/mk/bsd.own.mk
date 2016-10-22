@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.980 2016/10/21 06:04:16 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.981 2016/10/22 11:06:15 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -131,7 +131,7 @@ USE_SSP?=	yes
 #
 # What GDB is used?
 #
-.if ${MACHINE} == "hppa" || \
+.if \
     ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_ARCH} == "mips64el" || \
