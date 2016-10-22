@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.6 2013/10/16 19:59:29 roy Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.7 2016/10/22 21:55:06 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.6 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.7 2016/10/22 21:55:06 christos Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -213,7 +213,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	SET_WCOL( *start, cw );
 	if ( wch->elements > 1 ) {
 		for ( i = 1; i < wch->elements; i++ ) {
-			np = (nschar_t *)malloc(sizeof(nschar_t));
+			np = malloc(sizeof(nschar_t));
 			if (!np)
 				return ERR;
 			np->ch = wch->vals[ i ];
