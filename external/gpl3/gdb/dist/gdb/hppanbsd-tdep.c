@@ -141,7 +141,7 @@ hppanbsd_sigtramp_cache_init (const struct tramp_frame *self,
 /* Core file support.  */
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define HPPANBSD_SIZEOF_GREGS	(46 * 4)
+#define HPPANBSD_SIZEOF_GREGS	(47 * 4)
 
 static int hppanbsd_reg_offset[] =
 {
