@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.h,v 1.6 2011/10/02 18:18:14 christos Exp $	*/
+/*	$NetBSD: pthread_dbg.h,v 1.7 2016/10/22 18:04:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,8 +35,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _LIB_PTHREAD_DBG_H
+#define _LIB_PTHREAD_DBG_H
+
 #include <sys/types.h>
 #include <signal.h>
+
+__BEGIN_DECLS
 
 struct td_proc_st;
 struct td_thread_st;
@@ -188,3 +193,7 @@ int td_thr_suspend(td_thread_t *);
 
 /* Restore a suspended thread to its previous state */
 int td_thr_resume(td_thread_t *);
+
+__END_DECLS
+
+#endif /* _LIB_PTHREAD_DBG_H */
