@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.5 2016/10/22 21:55:06 christos Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.4 2010/02/23 19:48:26 drochner Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.5 2016/10/22 21:55:06 christos Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -309,7 +309,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 				"wadd_wchnstr: as non-spacing char");
 #endif /* DEBUG */
 			for (i = 0; i < chp->elements; i++) {
-				np = (nschar_t *)malloc(sizeof(nschar_t));
+				np = malloc(sizeof(nschar_t));
 				if (!np)
 					return ERR;
 				np->ch = chp->vals[i];
