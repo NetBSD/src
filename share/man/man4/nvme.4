@@ -1,4 +1,4 @@
-.\"	$NetBSD: nvme.4,v 1.8 2016/10/21 20:55:25 jdolecek Exp $
+.\"	$NetBSD: nvme.4,v 1.9 2016/10/22 07:36:36 wiz Exp $
 .\"	$OpenBSD: nvme.4,v 1.2 2016/04/14 11:53:37 jmc Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -56,7 +56,7 @@ Each I/O queue pair has a separate command circular buffer.
 The
 .Nm
 specification allows up to 64k commands per queue, the driver currently
-allocates 1024 entries per queue, or controller maximum, whatever is smaller. 
+allocates 1024 entries per queue, or controller maximum, whatever is smaller.
 Command submissions are done always on the current CPU, the command completion
 interrupt is handled on the CPU corresponding to the I/O queue ID
 - first I/O queue on CPU0, second I/O queue on CPU1, etc.
