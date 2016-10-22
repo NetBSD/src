@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.687 2016/10/04 04:15:25 ozaki-r Exp $
+# $NetBSD: mi,v 1.688 2016/10/22 14:13:39 abhinav Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3816,6 +3816,15 @@
 ./usr/tests/usr.bin/unifdef/d_basic.in		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/unifdef/d_basic.out		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/unifdef/t_basic		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/uniq			tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/Atffile	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_basic.in		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_basic.out	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_input.in		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_counts.out	tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_show_duplicates.out 		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/d_show_uniques.out		tests-usr.bin-tests compattestfile,atf
+./usr/tests/usr.bin/uniq/t_uniq 	tests-usr.bin-tests compattestfile,atf
 ./usr/tests/usr.bin/vmstat			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/vmstat/Atffile		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/vmstat/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
