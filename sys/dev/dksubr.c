@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.89 2016/09/14 23:05:05 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.90 2016/10/22 22:32:33 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.89 2016/09/14 23:05:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.90 2016/10/22 22:32:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,8 @@ dk_attach(struct dk_softc *dksc)
 	/* Attach the device into the rnd source list. */
 	rnd_attach_source(&dksc->sc_rnd_source, dksc->sc_xname,
 	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
+
+	TAILQ_INIT(&dksc->sc_deferred);
 }
 
 void
@@ -378,25 +380,27 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	 *
 	 * So when a diskstart fails, the buffer is saved
 	 * and tried again before the next buffer is fetched.
-	 * dk_drain() handles flushing of a saved buffer.
+	 * dk_drain() handles flushing of a saved buffer(s).
 	 *
 	 * This keeps order of I/O operations, unlike bufq_put.
 	 */
 
-	bp = dksc->sc_deferred;
-	dksc->sc_deferred = NULL;
-
-	if (bp == NULL)
-		bp = bufq_get(dksc->sc_bufq);
-
-	while (bp != NULL) {
+	for(;;) {
+		bp = TAILQ_FIRST(&dksc->sc_deferred);
+		if (__predict_false(bp != NULL))
+			TAILQ_REMOVE(&dksc->sc_deferred, bp, b_actq);
+		else {
+			bp = bufq_get(dksc->sc_bufq);
+			if (bp == NULL)
+				break;
+		}
 
 		disk_busy(&dksc->sc_dkdev);
 		mutex_exit(&dksc->sc_iolock);
 		error = dkd->d_diskstart(dksc->sc_dev, bp);
 		mutex_enter(&dksc->sc_iolock);
 		if (error == EAGAIN) {
-			dksc->sc_deferred = bp;
+			TAILQ_INSERT_TAIL(&dksc->sc_deferred, bp, b_actq);
 			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
 			break;
 		}
@@ -406,8 +410,6 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 			bp->b_resid = bp->b_bcount;
 			dk_done1(dksc, bp, false);
 		}
-
-		bp = bufq_get(dksc->sc_bufq);
 	}
 
 	dksc->sc_busy = false;
@@ -451,9 +453,8 @@ dk_drain(struct dk_softc *dksc)
 	struct buf *bp;
 
 	mutex_enter(&dksc->sc_iolock);
-	bp = dksc->sc_deferred;
-	dksc->sc_deferred = NULL;
-	if (bp != NULL) {
+	while ((bp = TAILQ_FIRST(&dksc->sc_deferred)) != NULL) {
+		TAILQ_REMOVE(&dksc->sc_deferred, bp, b_actq);
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp); 
