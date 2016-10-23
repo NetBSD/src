@@ -1105,11 +1105,11 @@ case "${targ}" in
     ;;
   mips*el-*-netbsd*)
     targ_defvec=mips_elf32_trad_le_vec
-    targ_selvecs="mips_elf32_trad_be_vec mips_elf64_trad_be_vec mips_elf64_trad_le_vec mips_ecoff_le_vec mips_ecoff_be_vec"
+    targ_selvecs="mips_elf32_trad_be_vec mips_elf32_ntrad_le_vec mips_elf32_ntrad_be_vec mips_elf64_trad_be_vec mips_elf64_trad_le_vec mips_ecoff_le_vec mips_ecoff_be_vec"
     ;;
   mips*-*-netbsd*)
     targ_defvec=mips_elf32_trad_be_vec
-    targ_selvecs="mips_elf32_trad_le_vec mips_elf64_trad_be_vec mips_elf64_trad_le_vec mips_ecoff_be_vec mips_ecoff_le_vec"
+    targ_selvecs="mips_elf32_trad_le_vec mips_elf32_ntrad_be_vec mips_elf32_ntrad_le_vec mips_elf64_trad_le_vec mips_elf64_trad_be_vec mips_ecoff_be_vec mips_ecoff_le_vec"
     ;;
   mips64*-*-openbsd*)
     targ_defvec=mips_elf64_trad_be_vec
