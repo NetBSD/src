@@ -82,6 +82,10 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
 
   /* Single stepping.  */
   set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  /* Core support */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, armbsd_iterate_over_regset_sections);
+
 }
   
 static void
