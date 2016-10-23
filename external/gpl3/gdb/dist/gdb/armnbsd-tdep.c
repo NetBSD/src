@@ -87,9 +87,9 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
     (gdbarch, armbsd_iterate_over_regset_sections);
 
 }
-  
+
 static void
-arm_netbsd_aout_init_abi (struct gdbarch_info info, 
+arm_netbsd_aout_init_abi (struct gdbarch_info info,
 			  struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
