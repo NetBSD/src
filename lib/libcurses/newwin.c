@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.47 2009/07/22 16:57:15 roy Exp $	*/
+/*	$NetBSD: newwin.c,v 1.48 2016/10/23 21:20:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.47 2009/07/22 16:57:15 roy Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.48 2016/10/23 21:20:56 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -292,6 +292,7 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 #ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "makenew: win = %p\n", win);
 #endif
+	win->fp = NULL;
 
 	/* Set up line pointer array and line space. */
 	if ((win->alines = malloc(nlines * sizeof(__LINE *))) == NULL) {

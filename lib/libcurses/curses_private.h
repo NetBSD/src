@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.50 2014/02/20 09:42:42 blymn Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.51 2016/10/23 21:20:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -147,6 +147,7 @@ struct __window {		/* Window structure. */
 #ifdef HAVE_WCHAR
 	nschar_t *bnsp;			/* Background non-spacing char list */
 #endif /* HAVE_WCHAR */
+	FILE	*fp;			/* for window formatted printf */
 };
 
 /* Set of attributes unset by 'me' - 'mb', 'md', 'mh', 'mk', 'mp' and 'mr'. */
