@@ -1,4 +1,4 @@
-/*	$NetBSD: funopen.c,v 1.14 2012/03/28 15:21:11 christos Exp $	*/
+/*	$NetBSD: funopen.c,v 1.15 2016/10/23 21:01:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)funopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: funopen.c,v 1.14 2012/03/28 15:21:11 christos Exp $");
+__RCSID("$NetBSD: funopen.c,v 1.15 2016/10/23 21:01:52 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -138,6 +138,8 @@ cclosefn(void *dookie)
 	void *c = d->cookie;
 	int (*cf)(void *) = d->closefn;
 	free(dookie);
+	if (cf == NULL)
+		return 0;
 	return (*cf)(c);
 }
 
@@ -163,8 +165,7 @@ funopen(const void *cookie,
 	    d->readfn ? creadfn : NULL,
 	    d->writefn ? cwritefn : NULL,
 	    d->seekfn ? cseekfn : NULL,
-	    NULL,
-	    d->closefn ? cclosefn : NULL);
+	    NULL, cclosefn);
 	if (fp != NULL)
 		return fp;
 	free(d);
