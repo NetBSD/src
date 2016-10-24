@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.26 2013/10/18 20:47:07 christos Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.27 2016/10/24 00:40:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.26 2013/10/18 20:47:07 christos Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.27 2016/10/24 00:40:17 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,10 +128,17 @@ showbufcache(void)
 	double tvalid, tsize;
 	struct ml_entry *ml;
 	size_t len;
+	static int mib[] = { -1, 0 };
 
+	if (mib[0] == -1) {
+		len = __arraycount(mib);
+		if (sysctlnametomib("vm.bufmem", mib, &len) == -1)
+			error("can't get \"vm.bufmem\" mib: %s",
+			    strerror(errno));
+	}
 	len = sizeof(bufmem);
-	if (sysctlbyname("vm.bufmem", &bufmem, &len, NULL, 0))
-		error("can't get \"vm.bufmmem\": %s", strerror(errno));
+	if (sysctl(mib, 2, &bufmem, &len, NULL, 0) == -1)
+		error("can't get \"vm.bufmem\": %s", strerror(errno));
 
 	mvwprintw(wnd, 0, 0,
 	    "   %*d metadata buffers using             %*"PRIu64" kBytes of "
