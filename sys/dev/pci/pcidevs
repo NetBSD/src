@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1268 2016/10/20 05:52:09 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1269 2016/10/24 06:03:52 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3774,9 +3774,13 @@ product INTEL XE5_V3_QPI_LINK3	0x2f33	Xeon E5 v3 QPI Link 1
 product INTEL XE5_V3_R2PCIE_2	0x2f34	Xeon E5 v3/Core i7-6xxxK PCIe Ring Performance Monitoring
 product INTEL XE5_V3_RQPI_PM_1	0x2f36	Xeon E5 v3/Core i7-6xxxK QPI Ring Performance Monitoring
 product INTEL XE5_V3_RQPI_PM_2	0x2f37	Xeon E5 v3/Core i7-6xxxK QPI Ring Interface Monitoring
+product INTEL XE7_V4_QPI_LINK2	0x2f40	Xeon E7 v4 QPI Link 2
+product INTEL XE7_V4_RQPI_RING	0x2f41	Xeon E7 v4 QPI Ring Interface
 product INTEL XE5_V3_IMC1_MAIN	0x2f68	Xeon E5 v3 IMC Main
 product INTEL XE5_V3_IMC1_TADR1	0x2f6a	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
 product INTEL XE5_V3_IMC1_TADR2	0x2f6b	Xeon E5 v3 IMC Ch 0-1 Target Address Decode Registers
+product INTEL XE7_V4_IMC1_TADR3	0x2f6c	Xeon E7 v4 IMC Ch 0-3 Target Address Decoder
+product INTEL XE7_V4_IMC1_TADR4	0x2f6d	Xeon E7 v4 IMC Ch 0-3 Target Address Decoder
 product INTEL XE5_V3_IMC0_RAS	0x2f71	Xeon E5 v3 IMC RAS Registers
 product INTEL XE5_V3_IMC1_RAS	0x2f79	Xeon E5 v3 IMC Ras Registers
 product INTEL XE5_V3_UBOX_2	0x2f7d	Xeon E5 v3 Scratchpad and Semaphores
@@ -3810,6 +3814,10 @@ product INTEL XE5_V3_IMC1_DDRIO_6 0x2fbd Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC1_DDRIO_7 0x2fbe Xeon E5 v3 IMC DDRIO Multicast
 product INTEL XE5_V3_IMC1_DDRIO_8 0x2fbf Xeon E5 v3 IMC DDRIO Multicast
 product INTEL XE5_V3_PCU_4	0x2fc0	Xeon E5 v3 Power Control Unit
+product INTEL XE7_V4_IMC1_REG3	0x2fd0	Xeon E7 v4 IMC Ch 0-3 Registers
+product INTEL XE7_V4_IMC1_REG4	0x2fd1	Xeon E7 v4 IMC Ch 0-3 Registers
+product INTEL XE7_V4_IMC1_REG5	0x2fd2	Xeon E7 v4 IMC Ch 0-3 Registers
+product INTEL XE7_V4_IMC1_REG6	0x2fd3	Xeon E7 v4 IMC Ch 0-3 Registers
 product INTEL XE5_V3_IMC1_REG5	0x2fd4	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC1_REG6	0x2fd5	Xeon E5 v3 IMC Ch 0-1 Registers
 product INTEL XE5_V3_IMC1_REG7	0x2fd6	Xeon E5 v3 IMC Ch 0-1 Registers
