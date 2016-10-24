@@ -498,6 +498,14 @@ inf_ptrace_xfer_partial (struct target_ops *ops, enum target_object object,
 	/* If the PT_IO request is somehow not supported, fallback on
 	   using PT_WRITE_D/PT_READ_D.  Otherwise we will return zero
 	   to indicate failure.  */
+	if (errno == EACCES)
+	  {
+	    fprintf_unfiltered (gdb_stderr, "Cannot set breakpoint at %p (%s). "
+				"Is PaX MPROTECT active? See security(7), "
+				"sysctl(7), paxctl(8)\n", piod.piod_offs,
+				strerror(errno));
+	    return TARGET_XFER_E_IO;	/* Some other error perhaps? */
+	  }
 	if (errno != EINVAL)
 	  return TARGET_XFER_EOF;
       }
