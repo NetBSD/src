@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.26 2016/10/22 22:32:33 jdolecek Exp $ */
+/* $NetBSD: dkvar.h,v 1.27 2016/10/24 17:14:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct dk_softc {
 	kmutex_t		 sc_iolock;	/* protects buffer queue */
 	struct bufq_state	*sc_bufq;	/* buffer queue */
 	int			 sc_dtype;	/* disk type */
-	TAILQ_HEAD(, buf)	 sc_deferred;	/* retry after start failed */
+	struct buf		*sc_deferred;	/* retry after start failed */
 	bool			 sc_busy;	/* processing buffers */
 	krndsource_t		 sc_rnd_source;	/* entropy source */
 };
