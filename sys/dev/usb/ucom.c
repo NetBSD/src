@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.20 2016/10/25 07:20:11 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.21 2016/10/25 07:23:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.20 2016/10/25 07:20:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.21 2016/10/25 07:23:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,12 +138,11 @@ struct ucom_buffer {
 struct ucom_softc {
 	device_t		sc_dev;		/* base device */
 
-	struct usbd_device *	sc_udev;	/* USB device */
-
-	struct usbd_interface *	sc_iface;	/* data interface */
+	struct usbd_device	*sc_udev;	/* USB device */
+	struct usbd_interface	*sc_iface;	/* data interface */
 
 	int			sc_bulkin_no;	/* bulk in endpoint address */
-	struct usbd_pipe *	sc_bulkin_pipe;	/* bulk in pipe */
+	struct usbd_pipe	*sc_bulkin_pipe;	/* bulk in pipe */
 	u_int			sc_ibufsize;	/* read buffer size */
 	u_int			sc_ibufsizepad;	/* read buffer size padded */
 	struct ucom_buffer	sc_ibuff[UCOM_IN_BUFFS];
@@ -151,7 +150,7 @@ struct ucom_softc {
 	SIMPLEQ_HEAD(, ucom_buffer) sc_ibuff_full;
 
 	int			sc_bulkout_no;	/* bulk out endpoint address */
-	struct usbd_pipe *	sc_bulkout_pipe;/* bulk out pipe */
+	struct usbd_pipe	*sc_bulkout_pipe;/* bulk out pipe */
 	u_int			sc_obufsize;	/* write buffer size */
 	u_int			sc_opkthdrlen;	/* header length of */
 	struct ucom_buffer	sc_obuff[UCOM_OUT_BUFFS];
