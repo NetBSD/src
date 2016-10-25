@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.152 2016/10/19 01:10:15 ozaki-r Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.153 2016/10/25 02:45:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.152 2016/10/19 01:10:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.153 2016/10/25 02:45:09 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1018,8 +1018,7 @@ sysctl_net_inet_icmp_redirtimeout(SYSCTLFN_ARGS)
 	 */
 	if (icmp_redirect_timeout_q != NULL) {
 		if (icmp_redirtimeout == 0) {
-			rt_timer_queue_destroy(icmp_redirect_timeout_q,
-			    true);
+			rt_timer_queue_destroy(icmp_redirect_timeout_q);
 			icmp_redirect_timeout_q = NULL;
 		} else {
 			rt_timer_queue_change(icmp_redirect_timeout_q,
