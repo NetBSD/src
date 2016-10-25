@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.21 2016/10/25 07:23:32 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.22 2016/10/25 07:25:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.21 2016/10/25 07:23:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.22 2016/10/25 07:25:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ struct ucom_softc {
 	u_char			sc_opening;	/* lock during open */
 	u_char			sc_closing;	/* lock during close */
 	int			sc_refcnt;
-	u_char			sc_dying;	/* disconnecting */
+	bool			sc_dying;	/* disconnecting */
 
 	struct pps_state	sc_pps_state;	/* pps state */
 
@@ -290,7 +290,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_opening = 0;
 	sc->sc_closing = 0;
 	sc->sc_refcnt = 0;
-	sc->sc_dying = 0;
+	sc->sc_dying = false;
 
 	sc->sc_si = softint_establish(SOFTINT_USB, ucom_softintr, sc);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
@@ -419,7 +419,7 @@ ucom_detach(device_t self, int flags)
 	DPRINTF("... pipe=%d,%d",sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
-	sc->sc_dying = 1;
+	sc->sc_dying = true;
 	mutex_exit(&sc->sc_lock);
 
 	pmf_device_deregister(self);
@@ -505,7 +505,7 @@ ucom_activate(device_t self, enum devact act)
 	switch (act) {
 	case DVACT_DEACTIVATE:
 		mutex_enter(&sc->sc_lock);
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 		mutex_exit(&sc->sc_lock);
 		return 0;
 	default:
