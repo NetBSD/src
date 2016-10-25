@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_verbose.h,v 1.4 2014/09/21 14:30:22 christos Exp $ */
+/*	$NetBSD: pci_verbose.h,v 1.5 2016/10/25 05:43:40 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ typedef uint32_t pcireg_t;		/* configuration space register XXX */
 #endif
 
 #define	PCI_VENDORSTR_LEN	64
-#define	PCI_PRODUCTSTR_LEN	64
+#define	PCI_PRODUCTSTR_LEN	128
 
 DEV_VERBOSE_DECLARE(pci);
 
