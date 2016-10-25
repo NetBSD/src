@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.105 2016/10/21 09:01:44 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.106 2016/10/25 02:45:09 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -374,7 +374,7 @@ unsigned long
 void	rt_timer_queue_change(struct rttimer_queue *, long);
 struct rttimer_queue *
 	rt_timer_queue_create(u_int);
-void	rt_timer_queue_destroy(struct rttimer_queue *, int);
+void	rt_timer_queue_destroy(struct rttimer_queue *);
 
 void	rt_newmsg(const int, const struct rtentry *);
 struct rtentry *
