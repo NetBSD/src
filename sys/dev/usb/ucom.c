@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.19 2016/10/12 14:40:03 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.20 2016/10/25 07:20:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.19 2016/10/12 14:40:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.20 2016/10/25 07:20:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,6 @@ ucom_attach(device_t parent, device_t self, void *aux)
 {
 	struct ucom_softc *sc = device_private(self);
 	struct ucom_attach_args *ucaa = aux;
-	struct tty *tp;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
@@ -368,7 +367,7 @@ ucom_attach(device_t parent, device_t self, void *aux)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
 	}
 
-	tp = tty_alloc();
+	struct tty *tp = tty_alloc();
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
 	tp->t_hwiflow = ucomhwiflow;
@@ -540,7 +539,6 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int unit = UCOMUNIT(dev);
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
 	struct ucom_buffer *ub;
-	struct tty *tp;
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -559,7 +557,7 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return ENXIO;
 	}
 
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 
 	DPRINTF("unit=%d, tp=%p", unit, tp, 0, 0);
 
@@ -702,7 +700,6 @@ int
 ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
-	struct tty *tp;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
@@ -712,7 +709,7 @@ ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
 		return 0;
 
 	mutex_enter(&sc->sc_lock);
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 
 	while (sc->sc_closing)
 		cv_wait(&sc->sc_opencv, &sc->sc_lock);
@@ -755,7 +752,6 @@ int
 ucomread(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
-	struct tty *tp;
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -769,7 +765,7 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 		return EIO;
 	}
 
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
@@ -787,7 +783,6 @@ int
 ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
-	struct tty *tp;
 	int error;
 
 	if (sc == NULL)
@@ -799,7 +794,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 		return EIO;
 	}
 
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
@@ -816,7 +811,6 @@ int
 ucompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct ucom_softc *sc;
-	struct tty *tp;
 	int revents;
 
 	sc = device_lookup_private(&ucom_cd, UCOMUNIT(dev));
@@ -828,7 +822,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 		mutex_exit(&sc->sc_lock);
 		return POLLHUP;
 	}
-	tp = sc->sc_tty;
+	struct tty *tp = sc->sc_tty;
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
@@ -1356,10 +1350,9 @@ static void
 ucom_softintr(void *arg)
 {
 	struct ucom_softc *sc = arg;
-	struct tty *tp = sc->sc_tty;
-	struct ucom_buffer *ub;
 
 	mutex_enter(&sc->sc_lock);
+	struct tty *tp = sc->sc_tty;
 	mutex_enter(&tty_lock);
 	if (!ISSET(tp->t_state, TS_ISOPEN)) {
 		mutex_exit(&tty_lock);
@@ -1368,7 +1361,7 @@ ucom_softintr(void *arg)
 	}
 	mutex_exit(&tty_lock);
 
-	ub = SIMPLEQ_FIRST(&sc->sc_obuff_full);
+	struct ucom_buffer *ub = SIMPLEQ_FIRST(&sc->sc_obuff_full);
 
 	if (ub != NULL && ub->ub_index == 0)
 		ucom_submit_write(sc, ub);
