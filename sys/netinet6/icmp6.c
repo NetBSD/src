@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.198 2016/10/18 02:46:21 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.199 2016/10/25 02:45:10 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.198 2016/10/18 02:46:21 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.199 2016/10/25 02:45:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2831,8 +2831,7 @@ sysctl_net_inet6_icmp6_redirtimeout(SYSCTLFN_ARGS)
 
 	if (icmp6_redirect_timeout_q != NULL) {
 		if (icmp6_redirtimeout == 0) {
-			rt_timer_queue_destroy(icmp6_redirect_timeout_q,
-			    true);
+			rt_timer_queue_destroy(icmp6_redirect_timeout_q);
 		} else {
 			rt_timer_queue_change(icmp6_redirect_timeout_q,
 			    icmp6_redirtimeout);
