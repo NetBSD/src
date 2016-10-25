@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.22 2016/10/25 07:25:05 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.23 2016/10/25 07:32:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.22 2016/10/25 07:25:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.23 2016/10/25 07:32:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ static int	ucom_to_tiocm(struct ucom_softc *);
 
 static void	ucom_submit_write(struct ucom_softc *, struct ucom_buffer *);
 static void	ucom_write_status(struct ucom_softc *, struct ucom_buffer *,
-			usbd_status);
+		    usbd_status);
 
 static void	ucomwritecb(struct usbd_xfer *, void *, usbd_status);
 static void	ucom_read_complete(struct ucom_softc *);
@@ -416,7 +416,7 @@ ucom_detach(device_t self, int flags)
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
 	DPRINTF("sc=%p flags=%d tp=%p", sc, flags, tp, 0);
-	DPRINTF("... pipe=%d,%d",sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
+	DPRINTF("... pipe=%d,%d", sc->sc_bulkin_no, sc->sc_bulkout_no, 0, 0);
 
 	mutex_enter(&sc->sc_lock);
 	sc->sc_dying = true;
@@ -768,9 +768,10 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
-	error = ((*tp->t_linesw->l_read)(tp, uio, flag));
-	mutex_enter(&sc->sc_lock);
 
+	error = ((*tp->t_linesw->l_read)(tp, uio, flag));
+
+	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
@@ -797,7 +798,9 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
+
 	error = ((*tp->t_linesw->l_write)(tp, uio, flag));
+
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
@@ -825,7 +828,9 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
+
 	revents = ((*tp->t_linesw->l_poll)(tp, events, l));
+
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
@@ -859,17 +864,20 @@ ucomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	sc->sc_refcnt++;
 	mutex_exit(&sc->sc_lock);
+
 	error = ucom_do_ioctl(sc, cmd, data, flag, l);
+
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_broadcast(sc->sc_dev, &sc->sc_detachcv);
 	mutex_exit(&sc->sc_lock);
+
 	return error;
 }
 
 static int
-ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
-	      int flag, struct lwp *l)
+ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
+    struct lwp *l)
 {
 	struct tty *tp = sc->sc_tty;
 	int error;
@@ -888,7 +896,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data,
 
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
-			    sc->sc_portno, cmd, data, flag, l->l_proc);
+		    sc->sc_portno, cmd, data, flag, l->l_proc);
 		if (error != EPASSTHROUGH)
 			return error;
 	}
